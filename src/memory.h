@@ -876,14 +876,22 @@ void *		memory_get_write_ptr(int cpunum, int spacenum, offs_t offset);
 void		memory_set_bankptr(int banknum, void *base);
 
 /* ----- dynamic address space mapping ----- */
-data8_t *	memory_install_read8_handler  (int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, read8_handler handler);
-data16_t *	memory_install_read16_handler (int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, read16_handler handler);
-data32_t *	memory_install_read32_handler (int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, read32_handler handler);
-data64_t *	memory_install_read64_handler (int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, read64_handler handler);
-data8_t *	memory_install_write8_handler (int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, write8_handler handler);
-data16_t *	memory_install_write16_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, write16_handler handler);
-data32_t *	memory_install_write32_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, write32_handler handler);
-data64_t *	memory_install_write64_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, write64_handler handler);
+data8_t *	memory_install_read8_handler         (int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, read8_handler handler);
+data16_t *	memory_install_read16_handler        (int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, read16_handler handler);
+data32_t *	memory_install_read32_handler        (int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, read32_handler handler);
+data64_t *	memory_install_read64_handler        (int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, read64_handler handler);
+data8_t *	memory_install_read8_handler_mirror  (int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, read8_handler handler);
+data16_t *	memory_install_read16_handler_mirror (int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, read16_handler handler);
+data32_t *	memory_install_read32_handler_mirror (int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, read32_handler handler);
+data64_t *	memory_install_read64_handler_mirror (int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, read64_handler handler);
+data8_t *	memory_install_write8_handler        (int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, write8_handler handler);
+data16_t *	memory_install_write16_handler       (int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, write16_handler handler);
+data32_t *	memory_install_write32_handler       (int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, write32_handler handler);
+data64_t *	memory_install_write64_handler       (int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, write64_handler handler);
+data8_t *	memory_install_write8_handler_mirror (int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, write8_handler handler);
+data16_t *	memory_install_write16_handler_mirror(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, write16_handler handler);
+data32_t *	memory_install_write32_handler_mirror(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, write32_handler handler);
+data64_t *	memory_install_write64_handler_mirror(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, write64_handler handler);
 
 
 
