@@ -1,5 +1,5 @@
 /*
-	Handlers for ti990 disk images
+	Handlers for concept floppy images
 
 	Disk images are in MESS format.
 
@@ -16,21 +16,37 @@
 
 #include "snprintf.h"
 
-/* Max sector lenght is bytes.  Both 256 and 512 byte sectors are known. */
-/* I chose a limit of 512. */
-#define MAX_SECTOR_SIZE 512
-#define MIN_SECTOR_SIZE 256
-
 typedef struct UINT16xE
 {
 	UINT8 bytes[2];
 } UINT16xE;
 
+/*
+	get_UINT16xE
+
+	Read a 16-bit word, whether it is little-endian or big-endian
+
+	little_endian (I): non-zero if word is little-endian, zero if word is
+		big-endian
+	word (I): pointer to word to read
+
+	Returns value of word in native format
+*/
 INLINE UINT16 get_UINT16xE(int little_endian, UINT16xE word)
 {
 	return little_endian ? (word.bytes[0] | (word.bytes[1] << 8)) : ((word.bytes[0] << 8) | word.bytes[1]);
 }
 
+/*
+	set_UINT16xE
+
+	Write a 16-bit word, whether it is little-endian or big-endian
+
+	little_endian (I): non-zero if word is little-endian, zero if word is
+		big-endian
+	word (O): pointer to word to write
+	data (I): value to write in word, in native format
+*/
 INLINE void set_UINT16xE(int little_endian, UINT16xE *word, UINT16 data)
 {
 	if (little_endian)
@@ -118,103 +134,56 @@ static void concept_image_info(IMAGE *img, char *string, const int len);
 static int concept_image_beginenum(IMAGE *img, IMAGEENUM **outenum);
 static int concept_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
 static void concept_image_closeenum(IMAGEENUM *enumeration);
-static size_t concept_image_freespace(IMAGE *img);
+static imgtoolerr_t concept_image_freespace(IMAGE *img, size_t *size);
 static int concept_image_readfile(IMAGE *img, const char *fname, STREAM *destf);
-static int concept_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *options_);
+static int concept_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, option_resolution *writeoptions);
 static int concept_image_deletefile(IMAGE *img, const char *fname);
-static int concept_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options_);
+static int concept_image_create(const struct ImageModule *mod, STREAM *f, option_resolution *createoptions);
 
-static int concept_read_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, void *buffer, int length);
-static int concept_write_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, const void *buffer, int length);
-
-IMAGEMODULE(
-	concept,
-	"concept floppy",				/* human readable name */
-	"img",							/* file extension */
-	NULL,							/* crcfile */
-	NULL,							/* crc system name */
-	EOLN_CR,						/* eoln */
-	0,								/* flags */
-	concept_image_init,				/* init function */
-	concept_image_exit,				/* exit function */
-	concept_image_info,				/* info function */
-	concept_image_beginenum,		/* begin enumeration */
-	concept_image_nextenum,			/* enumerate next */
-	concept_image_closeenum,		/* close enumeration */
-	/*concept_image_freespace*/NULL,	/* free space on image */
-	concept_image_readfile,			/* read file */
-	/*concept_image_writefile*/NULL,	/* write file */
-	/*concept_image_deletefile*/NULL,	/* delete file */
-	/*concept_image_create*/NULL,		/* create image */
-	/*concept_read_sector*/NULL,
-	/*concept_write_sector*/NULL,
-	NULL,								/* file options */
-	NULL								/* create options */
-)
-
-#if 0
-/*
-	Convert a C string to a 8-character file name (padded with spaces if necessary)
-*/
-static void str_to_fname(char dst[8], const char *src)
+imgtoolerr_t concept_createmodule(imgtool_library *library)
 {
-	int i;
+	imgtoolerr_t err;
+	struct ImageModule *module;
 
+	err = imgtool_library_createmodule(library, "concept", &module);
+	if (err)
+		return err;
 
-	i = 0;
+	module->description				= "Concept floppy disk image";
+	module->extensions				= "img\0";
+	module->eoln					= EOLN_CR;
 
-	/* copy 8 characters at most */
-	if (src)
-		while ((i<8) && (src[i]!='\0'))
-		{
-			dst[i] = src[i];
-			i++;
-		}
+	module->open					= concept_image_init;
+	module->close					= concept_image_exit;
+	module->info					= concept_image_info;
+	module->begin_enum				= concept_image_beginenum;
+	module->next_enum				= concept_image_nextenum;
+	module->close_enum				= concept_image_closeenum;
+	module->free_space				= concept_image_freespace;
+	module->read_file				= concept_image_readfile;
+	/*module->write_file				= concept_image_writefile;
+	module->delete_file				= concept_image_deletefile;
+	module->create					= concept_image_create;*/
 
-	/* pad with spaces */
-	while (i<8)
-	{
-		dst[i] = ' ';
-		i++;
-	}
-}
-#endif
+	/*module->createimage_optguide	= ...;
+	module->createimage_optspec		= ...;
+	module->writefile_optguide		= ...;
+	module->writefile_optspec		= ...;*/
+	/*module->extra					= NULL;*/
 
-/*
-	Convert a 10-character file name to a C string (removing trailing spaces if necessary)
-*/
-static void fname_to_str(char *dst, const char src[8], int n)
-{
-	int i;
-	int last_nonspace;
-
-
-	/* copy 8 characters at most */
-	if (--n > 8)
-		n = 8;
-
-	/* copy filename */
-	i = 0;
-	last_nonspace = -1;
-
-	while (i<n)
-	{
-		dst[i] = src[i];
-		if (src[i] != ' ')
-			last_nonspace = i;
-		i++;
-	}
-
-	/* terminate with '\0' */
-	dst[last_nonspace+1] = '\0';
+	return IMGTOOLERR_SUCCESS;
 }
 
 /*
-	Read one 512 byte physical record from a disk image
+	read_physical_record
+
+	Read one 512-byte physical record from a disk image
 
 	file_handle: imgtool file handle
 	secnum: physical record address
 	dest: pointer to destination buffer
+
+	Return non-zero on error
 */
 static int read_physical_record(STREAM *file_handle, int secnum, void *dest)
 {
@@ -233,11 +202,15 @@ static int read_physical_record(STREAM *file_handle, int secnum, void *dest)
 }
 
 /*
-	Write one sector to a disk image
+	write_physical_record
+
+	Write one 512-byte physical record to a disk image
 
 	file_handle: imgtool file handle
 	secnum: logical sector address
 	src: pointer to source buffer
+
+	Return non-zero on error
 */
 static int write_physical_record(STREAM *file_handle, int secnum, const void *src)
 {
@@ -255,23 +228,35 @@ static int write_physical_record(STREAM *file_handle, int secnum, const void *sr
 	return 0;
 }
 
-static int get_catalog_entry(concept_image *image, unsigned char *fname, int *entry_index)
+/*
+	Search for a file name on a concept_image
+
+	image (I): image reference
+	fname (I): name of the file to search
+	entry_index (O): index of file in disk catalog
+
+	Return non-zero on error
+*/
+static int get_catalog_entry(concept_image *image, const unsigned char *fname, int *entry_index)
 {
 	int fname_len = fname[0];
 	int i;
 
 	if (fname_len > 15)
+		/* file name is bad */
 		return 1;
 
 	for (i = 0; i < 77; i++)
 	{
 		if (!memcmp(fname, image->dev_dir.file_dir[i].fname, fname_len+1))
 		{
+			/* file found */
 			*entry_index = i;
 			return 0;
 		}
 	}
 
+	/* file not found */
 	return 1;
 }
 
@@ -295,6 +280,7 @@ static int concept_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **
 	image->base.module = mod;
 	image->file_handle = f;
 
+	/* read device directory */
 	for (i=0; i<4; i++)
 	{
 		reply = read_physical_record(f, i+2, ((char *) & image->dev_dir)+i*512);
@@ -302,6 +288,7 @@ static int concept_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **
 			return IMGTOOLERR_READERROR;
 	}
 
+	/* do primitive checks */
 	totphysrecs = get_UINT16xE(image->dev_dir.vol_hdr.disk_flipped, image->dev_dir.vol_hdr.last_block)
 					- get_UINT16xE(image->dev_dir.vol_hdr.disk_flipped, image->dev_dir.vol_hdr.first_block);
 
@@ -319,7 +306,7 @@ static int concept_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **
 }
 
 /*
-	close a ti99_image
+	close a concept_image
 */
 static void concept_image_exit(IMAGE *img)
 {
@@ -330,7 +317,7 @@ static void concept_image_exit(IMAGE *img)
 }
 
 /*
-	get basic information on a ti99_image
+	get basic information on a concept_image
 
 	Currently returns the volume name
 */
@@ -438,11 +425,26 @@ static void concept_image_closeenum(IMAGEENUM *enumeration)
 /*
 	Compute free space on disk image
 */
-static size_t concept_image_freespace(IMAGE *img)
+static imgtoolerr_t concept_image_freespace(IMAGE *img, size_t *size)
 {
-	/* ... */
+	concept_image *image = (concept_image*) img;
+	int free_blocks;
+	int i;
 
-	return 0;
+	/* first get number of data blocks */
+	free_blocks = get_UINT16xE(image->dev_dir.vol_hdr.disk_flipped, image->dev_dir.vol_hdr.last_block)
+					- get_UINT16xE(image->dev_dir.vol_hdr.disk_flipped, image->dev_dir.vol_hdr.next_block);
+
+	/* next substract lenght of each file */
+	for (i=0; (image->dev_dir.file_dir[i].fname[0] != 0) && (i <= 77); i++)
+	{
+		free_blocks -= get_UINT16xE(image->dev_dir.vol_hdr.disk_flipped, image->dev_dir.file_dir[i].next_block)
+						- get_UINT16xE(image->dev_dir.vol_hdr.disk_flipped, image->dev_dir.file_dir[i].first_block);
+	}
+
+	*size = free_blocks;
+
+	return IMGTOOLERR_SUCCESS;
 }
 
 /*
@@ -480,10 +482,11 @@ static int concept_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 	return 0;
 }
 
+#if 0
 /*
 	Add a file to a concept_image.
 */
-static int concept_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *in_options)
+static int concept_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, option_resolution *writeoptions)
 {
 	/* ... */
 
@@ -503,29 +506,10 @@ static int concept_image_deletefile(IMAGE *img, const char *fname)
 /*
 	Create a blank concept_image.
 */
-static int concept_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *in_options)
+static int concept_image_create(const struct ImageModule *mod, STREAM *f, option_resolution *createoptions)
 {
 	/* ... */
 
 	return 0;
 }
-
-/*
-	Read one sector from a concept_image.
-*/
-static int concept_read_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, void *buffer, int length)
-{
-	/* not yet implemented */
-	assert(0);
-	return IMGTOOLERR_UNEXPECTED;
-}
-
-/*
-	Write one sector to a concept_image.
-*/
-static int concept_write_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, const void *buffer, int length)
-{
-	/* not yet implemented */
-	assert(0);
-	return IMGTOOLERR_UNEXPECTED;
-}
+#endif
