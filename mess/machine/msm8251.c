@@ -580,7 +580,7 @@ READ_HANDLER(msm8251_data_r)
 	/* reading clears */
 	uart.status &= ~MSM8251_STATUS_RX_READY;
 	
-	msm8251_update_tx_ready();
+	msm8251_update_rx_ready();
 
 	return uart.data;
 }
