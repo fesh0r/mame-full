@@ -91,3 +91,12 @@ WRITE_HANDLER ( uk101_keyb_w )
 	uk101_keyb = data;
 }
 
+WRITE_HANDLER ( superbrd_keyb_w )
+{
+	/* Voltage values resulting from the 16 possible signals */
+	const static UINT8 voltage[16] = {81,82,84,86,89,92,95,98,109,115,123,133,151,171,204,255};
+
+	uk101_keyb = data;
+	DAC_data_w(0, voltage[(data >> 2) & 0x0f]);
+}
+

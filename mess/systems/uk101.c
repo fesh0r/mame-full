@@ -25,6 +25,7 @@ Hardware:	MC6850
 		F800-FFFF	ROM (monitor)
 **********************************************************************/
 #include "driver.h"
+#include "inputx.h"
 #include "cpu/m6502/m6502.h"
 #include "vidhrdw/generic.h"
 #include "machine/mc6850.h"
@@ -32,65 +33,54 @@ Hardware:	MC6850
 
 /* memory w/r functions */
 
-ADDRESS_MAP_START( uk101_readmem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE(0x0000, 0x0fff) AM_READ( MRA8_BANK1 )
-	AM_RANGE(0x1000, 0x1fff) AM_READ( MRA8_BANK2 )
-	AM_RANGE(0x2000, 0x9fff) AM_READ( MRA8_BANK3 )
-	AM_RANGE(0xa000, 0xbfff) AM_READ( MRA8_ROM)
-	AM_RANGE(0xc000, 0xcfff) AM_READ( MRA8_NOP)
-	AM_RANGE(0xd000, 0xd3ff) AM_READ( videoram_r)
-	AM_RANGE(0xd400, 0xdeff) AM_READ( MRA8_NOP)
-	AM_RANGE(0xdf00, 0xdf00) AM_READ( uk101_keyb_r)
-	AM_RANGE(0xdf01, 0xefff) AM_READ( MRA8_NOP)
-	AM_RANGE(0xf000, 0xf001) AM_READ( acia6850_0_r)
-	AM_RANGE(0xf002, 0xf7ff) AM_READ( MRA8_NOP)
-	AM_RANGE(0xf800, 0xffff) AM_READ( MRA8_ROM)
+ADDRESS_MAP_START( uk101_mem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x0fff) AM_READWRITE( MRA8_BANK1, MWA8_BANK1 )
+	AM_RANGE(0x1000, 0x1fff) AM_READWRITE( MRA8_BANK2, MWA8_BANK2 )
+	AM_RANGE(0x2000, 0x9fff) AM_READWRITE( MRA8_BANK3, MWA8_BANK3 )
+	AM_RANGE(0xa000, 0xbfff) AM_ROM
+	AM_RANGE(0xc000, 0xcfff) AM_NOP
+	AM_RANGE(0xd000, 0xd3ff) AM_READWRITE( videoram_r, videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0xd400, 0xdeff) AM_NOP
+	AM_RANGE(0xdf00, 0xdf00) AM_READWRITE( uk101_keyb_r, uk101_keyb_w )
+	AM_RANGE(0xdf01, 0xefff) AM_NOP
+	AM_RANGE(0xf000, 0xf001) AM_READWRITE( acia6850_0_r, acia6850_0_w )
+	AM_RANGE(0xf002, 0xf7ff) AM_NOP
+	AM_RANGE(0xf800, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
-ADDRESS_MAP_START( uk101_writemem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE(0x0000, 0x0fff) AM_WRITE( MWA8_BANK1 )
-	AM_RANGE(0x1000, 0x1fff) AM_WRITE( MWA8_BANK2 )
-	AM_RANGE(0x2000, 0x9fff) AM_WRITE( MWA8_BANK3 )
-	AM_RANGE(0xa000, 0xbfff) AM_WRITE( MWA8_ROM)
-	AM_RANGE(0xc000, 0xcfff) AM_WRITE( MWA8_NOP)
-	AM_RANGE(0xd000, 0xd3ff) AM_WRITE( videoram_w) AM_BASE( &videoram) AM_SIZE( &videoram_size)
-	AM_RANGE(0xd400, 0xdeff) AM_WRITE( MWA8_NOP)
-	AM_RANGE(0xdf00, 0xdf00) AM_WRITE( uk101_keyb_w)
-	AM_RANGE(0xdf01, 0xefff) AM_WRITE( MWA8_NOP)
-	AM_RANGE(0xf000, 0xf001) AM_WRITE( acia6850_0_w)
-	AM_RANGE(0xf002, 0xf7ff) AM_WRITE( MWA8_NOP)
-	AM_RANGE(0xf800, 0xffff) AM_WRITE( MWA8_ROM)
+
+
+/*
+ Relaxed decoding as implemented in the Superboard II
+
+		0000-0FFF	RAM (standard)
+		1000-1FFF	RAM (expanded)
+		2000-9FFF	RAM	(emulator only)
+		A000-BFFF	ROM (basic)
+		C000-CFFF	NOP
+		D000-D3FF	RAM (video)
+		D400-DBFF	NOP
+		DC00-DFFF	H/W (Keyboard)
+		E000-EFFF	NOP
+		F000-F0FF	H/W (MC6850)
+		F100-F7FF	NOP
+		F800-FFFF	ROM (monitor)
+*/
+ADDRESS_MAP_START( superbrd_mem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x0fff) AM_READWRITE( MRA8_BANK1, MWA8_BANK1 )
+	AM_RANGE(0x1000, 0x1fff) AM_READWRITE( MRA8_BANK2, MWA8_BANK2 )
+	AM_RANGE(0x2000, 0x9fff) AM_READWRITE( MRA8_BANK3, MWA8_BANK3 )
+	AM_RANGE(0xa000, 0xbfff) AM_ROM
+	AM_RANGE(0xc000, 0xcfff) AM_NOP
+	AM_RANGE(0xd000, 0xd7ff) AM_READWRITE( videoram_r, videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0xd800, 0xdbff) AM_NOP
+	AM_RANGE(0xdc00, 0xdfff) AM_READWRITE( uk101_keyb_r, superbrd_keyb_w )
+	AM_RANGE(0xe000, 0xefff) AM_NOP
+	AM_RANGE(0xf000, 0xf0ff) AM_READWRITE( acia6850_0_r, acia6850_0_w )
+	AM_RANGE(0xf100, 0xf7ff) AM_NOP
+	AM_RANGE(0xf800, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
-ADDRESS_MAP_START( superbrd_readmem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE(0x0000, 0x0fff) AM_READ( MRA8_BANK1 )
-	AM_RANGE(0x1000, 0x1fff) AM_READ( MRA8_BANK2 )
-	AM_RANGE(0x2000, 0x9fff) AM_READ( MRA8_BANK3 )
-	AM_RANGE(0xa000, 0xbfff) AM_READ( MRA8_ROM)
-	AM_RANGE(0xc000, 0xcfff) AM_READ( MRA8_NOP)
-	AM_RANGE(0xd000, 0xd7ff) AM_READ( videoram_r)
-	AM_RANGE(0xd800, 0xdeff) AM_READ( MRA8_NOP)
-	AM_RANGE(0xdf00, 0xdf00) AM_READ( uk101_keyb_r)
-	AM_RANGE(0xdf01, 0xefff) AM_READ( MRA8_NOP)
-	AM_RANGE(0xf000, 0xf001) AM_READ( acia6850_0_r)
-	AM_RANGE(0xf002, 0xf7ff) AM_READ( MRA8_NOP)
-	AM_RANGE(0xf800, 0xffff) AM_READ( MRA8_ROM)
-ADDRESS_MAP_END
-
-ADDRESS_MAP_START( superbrd_writemem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE(0x0000, 0x0fff) AM_WRITE( MWA8_BANK1 )
-	AM_RANGE(0x1000, 0x1fff) AM_WRITE( MWA8_BANK2 )
-	AM_RANGE(0x2000, 0x9fff) AM_WRITE( MWA8_BANK3 )
-	AM_RANGE(0xa000, 0xbfff) AM_WRITE( MWA8_ROM)
-	AM_RANGE(0xc000, 0xcfff) AM_WRITE( MWA8_NOP)
-	AM_RANGE(0xd000, 0xd7ff) AM_WRITE( videoram_w) AM_BASE( &videoram) AM_SIZE( &videoram_size)
-	AM_RANGE(0xd800, 0xdeff) AM_WRITE( MWA8_NOP)
-	AM_RANGE(0xdf00, 0xdf00) AM_WRITE( uk101_keyb_w)
-	AM_RANGE(0xdf01, 0xefff) AM_WRITE( MWA8_NOP)
-	AM_RANGE(0xf000, 0xf001) AM_WRITE( acia6850_0_w)
-	AM_RANGE(0xf002, 0xf7ff) AM_WRITE( MWA8_NOP)
-	AM_RANGE(0xf800, 0xffff) AM_WRITE( MWA8_ROM)
-ADDRESS_MAP_END
 
 /* graphics output */
 
@@ -106,9 +96,26 @@ struct GfxLayout uk101_charlayout =
 	8 * 8
 };
 
+struct GfxLayout superbrd_charlayout =
+{
+	8, 8,
+	256,
+	1,
+	{ 0 },
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8 * 8
+};
+
 static struct	GfxDecodeInfo uk101_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &uk101_charlayout, 0, 1},
+	{-1}
+};
+
+static struct	GfxDecodeInfo superbrd_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0x0000, &superbrd_charlayout, 0, 1},
 	{-1}
 };
 
@@ -202,6 +209,114 @@ INPUT_PORTS_START( uk101 )
 	PORT_BITX( 0x80, IP_ACTIVE_LOW, IPT_KEYBOARD, "~", KEYCODE_TILDE, IP_JOY_NONE )
 INPUT_PORTS_END
 
+/* Superboard keyboard
+
+Matrix (see http://www.technology.niagarac.on.ca/people/mcsele/images/OSI600SchematicsPg11-12.jpg)
+
+    C7 C6 C5 C4 C3 C2 C1 C0
+R7   1  2  3  4  5  6  7
+R6   8  9  0  :  - Ro
+R5   .  L  O Lf Cr
+R4   W  E  R  T  Y  U  I
+R3   S  D  F  G  H  J  K
+R2   X  C  V  B  N  M  ,
+R1   Q  A  Z Sp  /  ;  P
+R0  Rp Ct Ec       Ls Rs Sl  
+
+Cr = RETURN, Ct = CTRL, Ec = ESC, Lf= LINE FEED, Ls = left SHIFT, Ro = RUB OUT
+Rp = REPEAT, Rs = right SHIFT, Sl = SHIFT LOCK, Sp = space bar 
+
+Layout (see http://www.technology.niagarac.on.ca/people/mcsele/images/OSISuperboardII.jpg)
+
+! " # $ % & ' ( )   * = RUB
+1 2 3 4 5 6 7 8 9 0 : - OUT
+
+                        LINE
+ESC Q W E R T Y U I O P FEED RETURN
+
+                       + SHIFT
+CTRL A S D F G H J K L ; LOCK  REPEAT BREAK
+
+                    < > ?
+SHIFT Z X C V B N M , . / SHIFT
+
+     ---SPACE BAR---
+*/
+INPUT_PORTS_START( superbrd )
+	PORT_START	/* 0: DF00 & 0x80 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_KEY2( 0x02, IP_ACTIVE_LOW, "7  '", KEYCODE_7, CODE_NONE,	'7',	'\'')	/* 7 ' */
+	PORT_KEY2( 0x04, IP_ACTIVE_LOW, "6  &", KEYCODE_6, CODE_NONE,	'6',	'&')	/* 6 & */
+	PORT_KEY2( 0x08, IP_ACTIVE_LOW, "5  %", KEYCODE_5, CODE_NONE,	'5',	'%')	/* 5 % */
+	PORT_KEY2( 0x10, IP_ACTIVE_LOW, "4  $", KEYCODE_4, CODE_NONE,	'4',	'$')	/* 4 $ */
+	PORT_KEY2( 0x20, IP_ACTIVE_LOW, "3  #", KEYCODE_3, CODE_NONE,	'3',	'#')	/* 3 # */
+	PORT_KEY2( 0x40, IP_ACTIVE_LOW, "2  \"", KEYCODE_2, CODE_NONE,	'2',	'\"')	/* 2 " */
+	PORT_KEY2( 0x80, IP_ACTIVE_LOW, "1  !", KEYCODE_1, CODE_NONE,	'1',	'!')	/* 1 ! */
+	PORT_START /* 1: DF00 & 0x40 */
+	PORT_BIT( 0x03, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_KEY1( 0x04, IP_ACTIVE_LOW, "RUBOUT", KEYCODE_BACKSPACE, CODE_NONE,	8)	/* RUBOUT */
+	PORT_KEY2( 0x08, IP_ACTIVE_LOW, "-  =", KEYCODE_EQUALS, CODE_NONE,		'-',	'=') /* - = */
+	PORT_KEY2( 0x10, IP_ACTIVE_LOW, ":  *", KEYCODE_MINUS, CODE_NONE,		':',	'*') /* : * */
+	PORT_KEY1( 0x20, IP_ACTIVE_LOW, "0   ", KEYCODE_0, CODE_NONE,			'0')
+	PORT_KEY2( 0x40, IP_ACTIVE_LOW, "9  )", KEYCODE_9, CODE_NONE,			'9',	')')	/* 9 ) */
+	PORT_KEY2( 0x80, IP_ACTIVE_LOW, "8  (", KEYCODE_8, CODE_NONE,			'8',	'(')	/* 8 ( */
+	PORT_START /* 2: DF00 & 0x20 */
+	PORT_BIT( 0x07, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_KEY1( 0x08, IP_ACTIVE_LOW, "ENTER",		KEYCODE_ENTER,		CODE_NONE,		13)
+	PORT_KEY1( 0x10, IP_ACTIVE_LOW, "LINE FEED", KEYCODE_OPENBRACE, CODE_NONE, 10) /* LINE FEED */
+	PORT_KEY1( 0x20, IP_ACTIVE_LOW, "O", KEYCODE_O, CODE_NONE,				'O')
+	PORT_KEY1( 0x40, IP_ACTIVE_LOW, "L", KEYCODE_L, CODE_NONE,				'L')
+	PORT_KEY2( 0x80, IP_ACTIVE_LOW, ".  >", KEYCODE_STOP, CODE_NONE,			'.',	'>') /* . > */
+	PORT_START /* 3: DF00 & 0x10 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_KEY1( 0x02, IP_ACTIVE_LOW, "I", KEYCODE_I, CODE_NONE,				'I')
+	PORT_KEY1( 0x04, IP_ACTIVE_LOW, "U", KEYCODE_U, CODE_NONE,				'U')
+	PORT_KEY1( 0x08, IP_ACTIVE_LOW, "Y", KEYCODE_Y, CODE_NONE,				'Y')
+	PORT_KEY1( 0x10, IP_ACTIVE_LOW, "T", KEYCODE_T, CODE_NONE,				'T')
+	PORT_KEY1( 0x20, IP_ACTIVE_LOW, "R", KEYCODE_R, CODE_NONE,				'R')
+	PORT_KEY1( 0x40, IP_ACTIVE_LOW, "E", KEYCODE_E, CODE_NONE,				'E')
+	PORT_KEY1( 0x80, IP_ACTIVE_LOW, "W", KEYCODE_W, CODE_NONE,				'W')
+	PORT_START /* 4: DF00 & 0x08 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_KEY1( 0x02, IP_ACTIVE_LOW, "K", KEYCODE_K, CODE_NONE,				'K')
+	PORT_KEY1( 0x04, IP_ACTIVE_LOW, "J", KEYCODE_J, CODE_NONE,				'J')
+	PORT_KEY1( 0x08, IP_ACTIVE_LOW, "H", KEYCODE_H, CODE_NONE,				'H')
+	PORT_KEY1( 0x10, IP_ACTIVE_LOW, "G", KEYCODE_G, CODE_NONE,				'G')
+	PORT_KEY1( 0x20, IP_ACTIVE_LOW, "F", KEYCODE_F, CODE_NONE,				'F')
+	PORT_KEY1( 0x40, IP_ACTIVE_LOW, "D", KEYCODE_D, CODE_NONE,				'D')
+	PORT_KEY1( 0x80, IP_ACTIVE_LOW, "S", KEYCODE_S, CODE_NONE,				'S')
+	PORT_START /* 5: DF00 & 0x04 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_KEY2( 0x02, IP_ACTIVE_LOW, ",  <", KEYCODE_COMMA, CODE_NONE,		',',	'<') /* , < */
+	PORT_KEY1( 0x04, IP_ACTIVE_LOW, "M", KEYCODE_M, CODE_NONE,				'M')
+	PORT_KEY1( 0x08, IP_ACTIVE_LOW, "N", KEYCODE_N, CODE_NONE,				'N')
+	PORT_KEY1( 0x10, IP_ACTIVE_LOW, "B", KEYCODE_B, CODE_NONE,				'B')
+	PORT_KEY1( 0x20, IP_ACTIVE_LOW, "V", KEYCODE_V, CODE_NONE,				'V')
+	PORT_KEY1( 0x40, IP_ACTIVE_LOW, "C", KEYCODE_C, CODE_NONE,				'C')
+	PORT_KEY1( 0x80, IP_ACTIVE_LOW, "X", KEYCODE_X, CODE_NONE,				'X')
+	PORT_START /* 6: DF00 & 0x02 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_KEY1( 0x02, IP_ACTIVE_LOW, "P", KEYCODE_P, CODE_NONE,				'P')
+	PORT_KEY2( 0x04, IP_ACTIVE_LOW, ";  +", KEYCODE_COLON, CODE_NONE,		';',	'+') /* ; + */
+	PORT_KEY2( 0x08, IP_ACTIVE_LOW, "/  ?", KEYCODE_SLASH, CODE_NONE,		'/',	'?') /* / ? */
+	PORT_KEY1( 0x10, IP_ACTIVE_LOW, "SPACE", KEYCODE_SPACE, CODE_NONE,		' ')
+	PORT_KEY1( 0x20, IP_ACTIVE_LOW, "Z", KEYCODE_Z, CODE_NONE,				'Z')
+	PORT_KEY1( 0x40, IP_ACTIVE_LOW, "A", KEYCODE_A, CODE_NONE,				'A')
+	PORT_KEY1( 0x80, IP_ACTIVE_LOW, "Q", KEYCODE_Q, CODE_NONE,				'Q')
+	PORT_START /* 7: DF00 & 0x01 */
+	/* PORT_BITX( 0x01, IP_ACTIVE_LOW, IPT_KEYBOARD | IPF_TOGGLE, "Caps Lock", KEYCODE_CAPSLOCK, IP_JOY_NONE ) */
+	/* PORT_KEY1( 0x01, IP_ACTIVE_LOW, "SHIFT LOCK", KEYCODE_CAPSLOCK, CODE_NONE,		UCHAR_MAMEKEY(CAPSLOCK)) */
+	PORT_BIT_NAME(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD | IPF_TOGGLE, "SHIFT LOCK")	
+	PORT_CODE(KEYCODE_QUOTE, CODE_NONE)
+	PORT_UCHAR(UCHAR_MAMEKEY(CAPSLOCK))	
+	PORT_KEY1( 0x02, IP_ACTIVE_LOW, "R-SHIFT",	KEYCODE_RSHIFT,		CODE_NONE,	UCHAR_SHIFT_1)
+	PORT_KEY1( 0x04, IP_ACTIVE_LOW, "L-SHIFT",	KEYCODE_LSHIFT,		CODE_NONE,	UCHAR_SHIFT_1)
+	PORT_BIT( 0x18, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_KEY1( 0x20, IP_ACTIVE_LOW, "ESC",		KEYCODE_TAB,		CODE_NONE,	27)
+	PORT_KEY1( 0x40, IP_ACTIVE_LOW, "CTRL",		KEYCODE_CAPSLOCK,	CODE_NONE,	UCHAR_SHIFT_2)
+	PORT_KEY1( 0x80, IP_ACTIVE_LOW, "REPEAT",	KEYCODE_BACKSLASH, 		CODE_NONE,	'\\') /* REPEAT */
+INPUT_PORTS_END
+
 static INTERRUPT_GEN( uk101_interrupt )
 {
 	cpu_set_irq_line(0, 0, PULSE_LINE);
@@ -211,7 +326,7 @@ static INTERRUPT_GEN( uk101_interrupt )
 static MACHINE_DRIVER_START( uk101 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M6502, 1000000)
-	MDRV_CPU_PROGRAM_MAP( uk101_readmem, uk101_writemem )
+	MDRV_CPU_PROGRAM_MAP( uk101_mem, 0 )
 	MDRV_CPU_VBLANK_INT(uk101_interrupt, 1)
 	MDRV_FRAMES_PER_SECOND(50)
 	MDRV_VBLANK_DURATION(2500)
@@ -230,14 +345,23 @@ static MACHINE_DRIVER_START( uk101 )
 	MDRV_VIDEO_UPDATE( uk101 )
 MACHINE_DRIVER_END
 
+static struct DACinterface superbrd_DAC_interface =
+{
+    1,          /* number of DACs */
+    { 100 }     /* volume */
+};
 
 static MACHINE_DRIVER_START( superbrd )
 	MDRV_IMPORT_FROM( uk101 )
 	MDRV_CPU_MODIFY( "main" )
-	MDRV_CPU_PROGRAM_MAP( superbrd_readmem, superbrd_writemem )
-	MDRV_SCREEN_SIZE(64 * 8, 16 * 16)
-	MDRV_VISIBLE_AREA(0, 64 * 8 - 1, 0, 16 * 16 - 1)
+	MDRV_GFXDECODE( superbrd_gfxdecodeinfo )
+	MDRV_CPU_PROGRAM_MAP( superbrd_mem, 0 )
+	MDRV_SCREEN_SIZE(32 * 8, 32 * 8)
+	MDRV_VISIBLE_AREA(0, 32 * 8 - 1, 0, 32 * 8 - 1)
 	MDRV_VIDEO_UPDATE( superbrd )
+	MDRV_INTERLEAVE(0)
+	/* sound hardware */
+	MDRV_SOUND_ADD(DAC, superbrd_DAC_interface)
 MACHINE_DRIVER_END
 
 ROM_START(uk101)
@@ -257,9 +381,9 @@ ROM_START(superbrd)
 	ROM_LOAD("basuk02.rom", 0xa800, 0x0800, CRC(0039ef6a))
 	ROM_LOAD("basus03.rom", 0xb000, 0x0800, CRC(ca25f8c1))
 	ROM_LOAD("basus04.rom", 0xb800, 0x0800, CRC(8ee6030e))
-	ROM_LOAD("monus02.rom", 0xf800, 0x0800, CRC(e5b7028d))
+	ROM_LOAD("monde01.rom", 0xf800, 0x0800, CRC(95a44d2e))
 	ROM_REGION(0x800, REGION_GFX1,0)
-	ROM_LOAD("chgsuper.rom", 0x0000, 0x0800, BAD_DUMP CRC(136b5018))
+	ROM_LOAD("chgsup2.rom", 0x0000, 0x0800, CRC(735f5e0a))
 ROM_END
 
 SYSTEM_CONFIG_START(uk101)
@@ -271,5 +395,5 @@ SYSTEM_CONFIG_END
 
 /*    YEAR	NAME		PARENT	COMPAT	MACHINE		INPUT	INIT	CONFIG  COMPANY				FULLNAME */
 COMP( 1979,	uk101,		0,		0,		uk101,		uk101,	uk101,	uk101,	"Compukit",			"UK101" )
-COMP( 1979, superbrd,	uk101,	0,		superbrd,	uk101,	uk101,	uk101,	"Ohio Scientific",	"Superboard II" )
+COMP( 1979, superbrd,	uk101,	0,		superbrd,	superbrd,	uk101,	uk101,	"Ohio Scientific",	"Superboard II" )
 

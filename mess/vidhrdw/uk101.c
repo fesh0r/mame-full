@@ -29,12 +29,12 @@ VIDEO_UPDATE( superbrd )
 {
 	int sx, sy;
 
-	for (sy = 0; sy < 16; sy++)
+	for (sy = 0; sy < 32; sy++)
 	{
-		for (sx = 0; sx < 64; sx++)
+		for (sx = 0; sx < 32; sx++)
 		{
-			drawgfx (bitmap, Machine->gfx[0], videoram[sy * 64 + sx], 1,
-				0, 0, sx * 8, sy * 16, &Machine->visible_area,
+			drawgfx (bitmap, Machine->gfx[0], videoram[sy * 32 + sx], 1,
+				0, 0, sx * 8, sy * 8, &Machine->visible_area,
 				TRANSPARENCY_NONE, 0);
 		}
 	}

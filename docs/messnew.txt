@@ -31,6 +31,10 @@ System Driver Changes:
   With one cartridge supplied the FM-PAC is still set in slot 2 so 
   R-Type and other ROM cartridges can still use it. [Sean Young]
 
+- [SUPERBRD] Updated driver with a better BIOS set and keyboard layout and
+  added sound.  [Claudio Nieder]
+
+
 
 User Interface Changes:
 -----------------------
