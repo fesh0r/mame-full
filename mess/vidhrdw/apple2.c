@@ -10,7 +10,7 @@
 
 /***************************************************************************/
 
-static APPLE2_STRUCT old_a2;
+static UINT32 old_a2;
 static struct tilemap *text_tilemap;
 static struct tilemap *dbltext_tilemap;
 static struct tilemap *lores_tilemap;
@@ -345,7 +345,7 @@ static void apple2_draw_tilemap(struct mame_bitmap *bitmap, const struct rectang
 	if (new_cliprect.min_y > new_cliprect.max_y)
 		return;
 
-	if (a2.RAMRD)
+	if (a2 & VAR_RAMRD)
 		raw_videobase += 0x10000;
 
 	if (raw_videobase != *tm_videobase)
@@ -389,13 +389,13 @@ static UINT32 apple2_text_getmemoryoffset(UINT32 col, UINT32 row, UINT32 num_col
 
 static UINT32 apple2_dbltext_getmemoryoffset(UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows)
 {
-	return apple2_text_getmemoryoffset(col / 2, row, num_cols / 2, num_rows) + ((col % 2) ? 0x800 : 0x400);
+	return apple2_text_getmemoryoffset(col / 2, row, num_cols / 2, num_rows) + ((col % 2) ? 0x00000 : 0x10000);
 }
 
 static void apple2_text_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int page, int beginrow, int endrow)
 {
-	if (a2.COL80)
-		apple2_draw_tilemap(bitmap, cliprect, beginrow, endrow, dbltext_tilemap, 0, &dbltext_videobase);
+	if (a2 & VAR_80COL)
+		apple2_draw_tilemap(bitmap, cliprect, beginrow, endrow, dbltext_tilemap, page ? 0x800 : 0x400, &dbltext_videobase);
 	else
 		apple2_draw_tilemap(bitmap, cliprect, beginrow, endrow, text_tilemap, page ? 0x800 : 0x400, &text_videobase);
 }
@@ -508,7 +508,7 @@ static void apple2_hires_draw(struct mame_bitmap *bitmap, const struct rectangle
 		return;
 
 	dtparams.vram = mess_ram + (page ? 0x4000 : 0x2000);
-	if (a2.RAMRD)
+	if (a2 & VAR_RAMRD)
 		dtparams.vram += 0x10000;
 
 	dtparams.bitmap = bitmap;
@@ -636,38 +636,36 @@ VIDEO_START( apple2c )
 	return video_start_apple_common(TRUE);
 }
 
+#define A2VAR_MASK		(VAR_TEXT | VAR_MIXED | VAR_HIRES | VAR_80COL | VAR_PAGE2)
+
 VIDEO_UPDATE( apple2 )
 {
 	int page;
 
-	page = (a2.PAGE2>>7);
+	page = (a2 & VAR_PAGE2) ? 1 : 0;
 
-	if ((a2.TEXT != old_a2.TEXT) || (a2.MIXED != old_a2.MIXED) || (a2.HIRES != old_a2.HIRES) || (a2.COL80 != old_a2.COL80) || (a2.PAGE2 != old_a2.PAGE2))
+	if ((a2 & A2VAR_MASK) != old_a2)
 	{
-		old_a2.TEXT = a2.TEXT;
-		old_a2.MIXED = a2.MIXED;
-		old_a2.HIRES = a2.HIRES;
-		old_a2.COL80 = a2.COL80;
-		old_a2.PAGE2 = a2.PAGE2;
+		old_a2 = a2 & A2VAR_MASK;
 		tilemap_mark_all_tiles_dirty(text_tilemap);
 		tilemap_mark_all_tiles_dirty(dbltext_tilemap);
 		tilemap_mark_all_tiles_dirty(lores_tilemap);
 	}
 
-	if (a2.TEXT)
+	if (a2 & VAR_TEXT)
 	{
 		apple2_text_draw(bitmap, cliprect, page, 0, 191);
 	}
-	else if ((a2.HIRES) && (a2.MIXED))
+	else if ((a2 & VAR_HIRES) && (a2 & VAR_MIXED))
 	{
 		apple2_hires_draw(bitmap, cliprect, page, 0, 159);
 		apple2_text_draw(bitmap, cliprect, page, 160, 191);
 	}
-	else if (a2.HIRES)
+	else if (a2 & VAR_HIRES)
 	{
 		apple2_hires_draw(bitmap, cliprect, page, 0, 191);
 	}
-	else if (a2.MIXED)
+	else if (a2 & VAR_MIXED)
 	{
 		apple2_lores_draw(bitmap, cliprect, page, 0, 159);
 		apple2_text_draw(bitmap, cliprect, page, 160, 191);

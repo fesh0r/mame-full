@@ -13,66 +13,67 @@ This family of computers bank-switches everything up the wazoo.
 #include "snprintf.h"
 
 static MEMORY_READ_START( readmem_apple2 )
-    { 0x0000, 0x01ff, MRA_BANK4 },
-    { 0x0200, 0xbfff, MRA_BANK5 },
-    { 0xc000, 0xc00f, apple2_c00x_r },
-    { 0xc010, 0xc01f, apple2_c01x_r },
-    { 0xc020, 0xc02f, MRA_NOP },
-    { 0xc030, 0xc03f, apple2_c03x_r },
-    { 0xc040, 0xc04f, MRA_NOP },
-    { 0xc050, 0xc05f, apple2_c05x_r },
-    { 0xc060, 0xc06f, apple2_c06x_r },
-    { 0xc070, 0xc07f, apple2_c07x_r },
-    { 0xc080, 0xc08f, apple2_c08x_r },
-    { 0xc090, 0xc09f, apple2_c0xx_slot1_r },
-    { 0xc0a0, 0xc0af, apple2_c0xx_slot2_r },
-    { 0xc0b0, 0xc0bf, apple2_c0xx_slot3_r },
-    { 0xc0c0, 0xc0cf, apple2_c0xx_slot4_r },
-    { 0xc0d0, 0xc0df, apple2_c0xx_slot5_r },
-    { 0xc0e0, 0xc0ef, apple2_c0xx_slot6_r },
-    { 0xc0f0, 0xc0ff, apple2_c0xx_slot7_r },
-    { 0xc400, 0xc4ff, apple2_slot4_r },
-    { 0xc100, 0xc7ff, MRA_BANK3 },
-    { 0xc800, 0xcffe, MRA_BANK6 },
-    { 0xd000, 0xdfff, MRA_BANK1 },
-    { 0xe000, 0xffff, MRA_BANK2 },
+	{ 0x0000, 0x01ff, MRA_BANK4 },
+	{ 0x0200, 0x03ff, MRA_BANK5 },
+	{ 0x0400, 0x07ff, MRA_BANK7 },
+	{ 0x0800, 0x1fff, MRA_BANK8 },
+	{ 0x2000, 0x3fff, MRA_BANK9 },
+	{ 0x4000, 0xbfff, MRA_BANK10 },
+	{ 0xc000, 0xc00f, apple2_c00x_r },
+	{ 0xc010, 0xc01f, apple2_c01x_r },
+	{ 0xc020, 0xc02f, MRA_NOP },
+	{ 0xc030, 0xc03f, apple2_c03x_r },
+	{ 0xc040, 0xc04f, MRA_NOP },
+	{ 0xc050, 0xc05f, apple2_c05x_r },
+	{ 0xc060, 0xc06f, apple2_c06x_r },
+	{ 0xc070, 0xc07f, apple2_c07x_r },
+	{ 0xc080, 0xc08f, apple2_c08x_r },
+	{ 0xc090, 0xc09f, apple2_c0xx_slot1_r },
+	{ 0xc0a0, 0xc0af, apple2_c0xx_slot2_r },
+	{ 0xc0b0, 0xc0bf, apple2_c0xx_slot3_r },
+	{ 0xc0c0, 0xc0cf, apple2_c0xx_slot4_r },
+	{ 0xc0d0, 0xc0df, apple2_c0xx_slot5_r },
+	{ 0xc0e0, 0xc0ef, apple2_c0xx_slot6_r },
+	{ 0xc0f0, 0xc0ff, apple2_c0xx_slot7_r },
+	{ 0xc400, 0xc4ff, apple2_slot4_r },
+	{ 0xc100, 0xc7ff, MRA_BANK3 },
+	{ 0xc800, 0xcffe, MRA_BANK6 },
+	{ 0xd000, 0xdfff, MRA_BANK1 },
+	{ 0xe000, 0xffff, MRA_BANK2 },
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem_apple2 )
-    { 0x0000, 0x01ff, MWA_BANK4 },
-    { 0x0200, 0xbfff, MWA_BANK5 },
-    { 0xc000, 0xc00f, apple2_c00x_w },
-    { 0xc010, 0xc01f, apple2_c01x_w },
-    { 0xc020, 0xc02f, MWA_NOP },
-    { 0xc030, 0xc03f, apple2_c03x_w },
+	{ 0x0000, 0x01ff, MWA_BANK4 },
+	{ 0x0200, 0x03ff, MWA_BANK5 },
+	{ 0x0400, 0x07ff, MWA_BANK7 },
+	{ 0x0800, 0x1fff, MWA_BANK8 },
+	{ 0x2000, 0x3fff, MWA_BANK9 },
+	{ 0x4000, 0xbfff, MWA_BANK10 },
+	{ 0xc000, 0xc00f, apple2_c00x_w },
+	{ 0xc010, 0xc01f, apple2_c01x_w },
+	{ 0xc020, 0xc02f, MWA_NOP },
+	{ 0xc030, 0xc03f, apple2_c03x_w },
 	{ 0xc040, 0xc04f, MWA_NOP },
-    { 0xc050, 0xc05f, apple2_c05x_w },
+	{ 0xc050, 0xc05f, apple2_c05x_w },
 	{ 0xc060, 0xc06f, MWA_NOP },
 	{ 0xc070, 0xc07f, apple2_c07x_w },
-    { 0xc080, 0xc08f, apple2_c08x_w },
-    { 0xc090, 0xc09f, apple2_c0xx_slot1_w },
-    { 0xc0a0, 0xc0af, apple2_c0xx_slot2_w },
-    { 0xc0b0, 0xc0bf, apple2_c0xx_slot3_w },
-    { 0xc0c0, 0xc0cf, apple2_c0xx_slot4_w },
-    { 0xc0d0, 0xc0df, apple2_c0xx_slot5_w },
-    { 0xc0e0, 0xc0ef, apple2_c0xx_slot6_w },
-    { 0xc0f0, 0xc0ff, apple2_c0xx_slot7_w },
-    { 0xc100, 0xc1ff, apple2_slot1_w, &apple2_slot1 },
-    { 0xc200, 0xc2ff, apple2_slot2_w, &apple2_slot2 },
-    { 0xc300, 0xc3ff, apple2_slot3_w, &apple2_slot3 },
-    { 0xc400, 0xc4ff, apple2_slot4_w, &apple2_slot4 },
-    { 0xc500, 0xc5ff, apple2_slot5_w, &apple2_slot5 },
-    { 0xc600, 0xc6ff, apple2_slot6_w, &apple2_slot6 },
-    { 0xc700, 0xc7ff, apple2_slot7_w, &apple2_slot7 },
-    { 0xc100, 0xc7ff, MWA_BANK3, &apple2_slot_rom }, /* Just here to initialize the pointer */
-    { 0xd000, 0xdfff, MWA_BANK1 },
-    { 0xe000, 0xffff, MWA_BANK2 },
+	{ 0xc080, 0xc08f, apple2_c08x_w },
+	{ 0xc090, 0xc09f, apple2_c0xx_slot1_w },
+	{ 0xc0a0, 0xc0af, apple2_c0xx_slot2_w },
+	{ 0xc0b0, 0xc0bf, apple2_c0xx_slot3_w },
+	{ 0xc0c0, 0xc0cf, apple2_c0xx_slot4_w },
+	{ 0xc0d0, 0xc0df, apple2_c0xx_slot5_w },
+	{ 0xc0e0, 0xc0ef, apple2_c0xx_slot6_w },
+	{ 0xc0f0, 0xc0ff, apple2_c0xx_slot7_w },
+	{ 0xc100, 0xc7ff, MWA_BANK3 },
+	{ 0xd000, 0xdfff, MWA_BANK1 },
+	{ 0xe000, 0xffff, MWA_BANK2 },
 MEMORY_END
 
 /**************************************************************************
 ***************************************************************************/
 
-#define JOYSTICK_DELTA			10
+#define JOYSTICK_DELTA			80
 #define JOYSTICK_SENSITIVITY	100
 
 INPUT_PORTS_START( apple2 )
@@ -260,7 +261,6 @@ static MACHINE_DRIVER_START( apple2e )
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2)
 	MDRV_SCREEN_SIZE(280*2, 192)
 	MDRV_VISIBLE_AREA(0, (280*2)-1,0,192-1)
-	//MDRV_GFXDECODE(apple2_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(sizeof(apple2_palette)/3)
 	MDRV_COLORTABLE_LENGTH(sizeof(apple2_colortable)/sizeof(unsigned short))
 	MDRV_PALETTE_INIT(apple2)
