@@ -41,6 +41,7 @@ Historical notes: TI made several last minute design changes.
 #include "machine/ti99_4x.h"
 #include "machine/tms9901.h"
 #include "sndhrdw/spchroms.h"
+#include "machine/99_peb.h"
 #include "machine/994x_ser.h"
 #include "machine/99_dsk.h"
 #include "machine/99_ide.h"
@@ -55,7 +56,7 @@ static MEMORY_READ16_START (readmem)
 
 	{ 0x0000, 0x1fff, MRA16_ROM },			/*system ROM*/
 	{ 0x2000, 0x3fff, ti99_rw_null8bits },	/*lower 8kb of RAM extension - installed dynamically*/
-	{ 0x4000, 0x5fff, ti99_rw_expansion },	/*DSR ROM space*/
+	{ 0x4000, 0x5fff, ti99_4x_peb_r },		/*DSR ROM space*/
 	{ 0x6000, 0x7fff, ti99_rw_cartmem },	/*cartridge memory*/
 	{ 0x8000, 0x80ff, MRA16_BANK1 },		/*RAM PAD, mirrors 0x8300-0x83ff*/
 	{ 0x8100, 0x81ff, MRA16_BANK2 },		/*RAM PAD, mirrors 0x8300-0x83ff*/
@@ -76,7 +77,7 @@ static MEMORY_WRITE16_START (writemem)
 
 	{ 0x0000, 0x1fff, MWA16_ROM },			/*system ROM*/
 	{ 0x2000, 0x3fff, ti99_ww_null8bits },	/*lower 8kb of RAM extension - installed dynamically*/
-	{ 0x4000, 0x5fff, ti99_ww_expansion },	/*DSR ROM space*/
+	{ 0x4000, 0x5fff, ti99_4x_peb_w },		/*DSR ROM space*/
 	{ 0x6000, 0x7fff, ti99_ww_cartmem },	/*cartridge memory (some carts include RAM or a pager chip)*/
 	{ 0x8000, 0x80ff, MWA16_BANK1 },		/*RAM PAD, mirrors 0x8300-0x83ff*/
 	{ 0x8100, 0x81ff, MWA16_BANK2 },		/*RAM PAD, mirrors 0x8300-0x83ff*/
@@ -98,7 +99,7 @@ static MEMORY_READ16_START (readmem_4ev)
 
 	{ 0x0000, 0x1fff, MRA16_ROM },			/*system ROM*/
 	{ 0x2000, 0x3fff, ti99_rw_null8bits },	/*lower 8kb of RAM extension - installed dynamically*/
-	{ 0x4000, 0x5fff, ti99_rw_expansion },	/*DSR ROM space*/
+	{ 0x4000, 0x5fff, ti99_4x_peb_r },		/*DSR ROM space*/
 	{ 0x6000, 0x7fff, ti99_rw_cartmem },	/*cartridge memory*/
 	{ 0x8000, 0x80ff, MRA16_BANK1 },		/*RAM PAD, mirrors 0x8300-0x83ff*/
 	{ 0x8100, 0x81ff, MRA16_BANK2 },		/*RAM PAD, mirrors 0x8300-0x83ff*/
@@ -119,7 +120,7 @@ static MEMORY_WRITE16_START (writemem_4ev)
 
 	{ 0x0000, 0x1fff, MWA16_ROM },			/*system ROM*/
 	{ 0x2000, 0x3fff, ti99_ww_null8bits },	/*lower 8kb of RAM extension - installed dynamically*/
-	{ 0x4000, 0x5fff, ti99_ww_expansion },	/*DSR ROM space*/
+	{ 0x4000, 0x5fff, ti99_4x_peb_w },		/*DSR ROM space*/
 	{ 0x6000, 0x7fff, ti99_ww_cartmem },	/*cartridge memory (some carts include RAM or a pager chip)*/
 	{ 0x8000, 0x80ff, MWA16_BANK1 },		/*RAM PAD, mirrors 0x8300-0x83ff*/
 	{ 0x8100, 0x81ff, MWA16_BANK2 },		/*RAM PAD, mirrors 0x8300-0x83ff*/
@@ -143,14 +144,14 @@ MEMORY_END
 static PORT_WRITE16_START(writecru)
 
 	{0x0000<<1, 0x07ff<<1, tms9901_0_CRU_write16},
-	{0x0800<<1, 0x0fff<<1, ti99_expansion_CRU_w},
+	{0x0800<<1, 0x0fff<<1, ti99_4x_peb_CRU_w},
 
 PORT_END
 
 static PORT_READ16_START(readcru)
 
 	{0x0000<<1, 0x00ff<<1, tms9901_0_CRU_read16},
-	{0x0100<<1, 0x01ff<<1, ti99_expansion_CRU_r},
+	{0x0100<<1, 0x01ff<<1, ti99_4x_peb_CRU_r},
 
 PORT_END
 
@@ -164,13 +165,13 @@ INPUT_PORTS_START(ti99_4a)
 
 	PORT_START	/* config */
 		PORT_BITX( config_xRAM_mask << config_xRAM_bit, xRAM_kind_TI << config_xRAM_bit, IPT_DIPSWITCH_NAME, "RAM extension", KEYCODE_NONE, IP_JOY_NONE )
-		    PORT_DIPSETTING( xRAM_kind_none << config_xRAM_bit,				"none" )
-		    PORT_DIPSETTING( xRAM_kind_TI << config_xRAM_bit,				"Texas Instruments 32kb")
-		    PORT_DIPSETTING( xRAM_kind_super_AMS << config_xRAM_bit,		"Super AMS 1Mb")
-		    PORT_DIPSETTING( xRAM_kind_foundation_128k << config_xRAM_bit,	"Foundation 128kb")
-		    PORT_DIPSETTING( xRAM_kind_foundation_512k << config_xRAM_bit,	"Foundation 512kb")
-		    PORT_DIPSETTING( xRAM_kind_myarc_128k << config_xRAM_bit,		"Myarc look-alike 128kb")
-		    PORT_DIPSETTING( xRAM_kind_myarc_512k << config_xRAM_bit,		"Myarc look-alike 512kb")
+			PORT_DIPSETTING( xRAM_kind_none << config_xRAM_bit,				"none" )
+			PORT_DIPSETTING( xRAM_kind_TI << config_xRAM_bit,				"Texas Instruments 32kb")
+			PORT_DIPSETTING( xRAM_kind_super_AMS << config_xRAM_bit,		"Super AMS 1Mb")
+			PORT_DIPSETTING( xRAM_kind_foundation_128k << config_xRAM_bit,	"Foundation 128kb")
+			PORT_DIPSETTING( xRAM_kind_foundation_512k << config_xRAM_bit,	"Foundation 512kb")
+			PORT_DIPSETTING( xRAM_kind_myarc_128k << config_xRAM_bit,		"Myarc look-alike 128kb")
+			PORT_DIPSETTING( xRAM_kind_myarc_512k << config_xRAM_bit,		"Myarc look-alike 512kb")
 		PORT_BITX( config_speech_mask << config_speech_bit, 1 << config_speech_bit, IPT_DIPSWITCH_NAME, "Speech synthesis", KEYCODE_NONE, IP_JOY_NONE )
 			PORT_DIPSETTING( 0x0000, DEF_STR( Off ) )
 			PORT_DIPSETTING( 1 << config_speech_bit, DEF_STR( On ) )
@@ -277,13 +278,13 @@ INPUT_PORTS_START(ti99_4)
 
 	PORT_START	/* config */
 		PORT_BITX( config_xRAM_mask << config_xRAM_bit, xRAM_kind_TI << config_xRAM_bit, IPT_DIPSWITCH_NAME, "RAM extension", KEYCODE_NONE, IP_JOY_NONE )
-		    PORT_DIPSETTING( xRAM_kind_none << config_xRAM_bit,				"none" )
-		    PORT_DIPSETTING( xRAM_kind_TI << config_xRAM_bit,				"Texas Instruments 32kb")
-		    PORT_DIPSETTING( xRAM_kind_super_AMS << config_xRAM_bit,		"Super AMS 1Mb")
-		    PORT_DIPSETTING( xRAM_kind_foundation_128k << config_xRAM_bit,	"Foundation 128kb")
-		    PORT_DIPSETTING( xRAM_kind_foundation_512k << config_xRAM_bit,	"Foundation 512kb")
-		    PORT_DIPSETTING( xRAM_kind_myarc_128k << config_xRAM_bit,		"Myarc look-alike 128kb")
-		    PORT_DIPSETTING( xRAM_kind_myarc_512k << config_xRAM_bit,		"Myarc look-alike 512kb")
+			PORT_DIPSETTING( xRAM_kind_none << config_xRAM_bit,				"none" )
+			PORT_DIPSETTING( xRAM_kind_TI << config_xRAM_bit,				"Texas Instruments 32kb")
+			PORT_DIPSETTING( xRAM_kind_super_AMS << config_xRAM_bit,		"Super AMS 1Mb")
+			PORT_DIPSETTING( xRAM_kind_foundation_128k << config_xRAM_bit,	"Foundation 128kb")
+			PORT_DIPSETTING( xRAM_kind_foundation_512k << config_xRAM_bit,	"Foundation 512kb")
+			PORT_DIPSETTING( xRAM_kind_myarc_128k << config_xRAM_bit,		"Myarc look-alike 128kb")
+			PORT_DIPSETTING( xRAM_kind_myarc_512k << config_xRAM_bit,		"Myarc look-alike 512kb")
 		PORT_BITX( config_speech_mask << config_speech_bit, 1 << config_speech_bit, IPT_DIPSWITCH_NAME, "Speech synthesis", KEYCODE_NONE, IP_JOY_NONE )
 			PORT_DIPSETTING( 0x0000, DEF_STR( Off ) )
 			PORT_DIPSETTING( 1 << config_speech_bit, DEF_STR( On ) )

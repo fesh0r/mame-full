@@ -20,8 +20,9 @@
 	Raphael Nabet, 2003.
 */
 
-
+#include "driver.h"
 #include "ti99_4x.h"
+#include "99_peb.h"
 #include "tms9902.h"
 #include "994x_ser.h"
 
@@ -57,7 +58,7 @@ static int pio_write = 1/*0*/;	// 1 if image is to be written to
 
 static mame_file *rs232_fp;
 
-static const ti99_exp_card_handlers_t rs232_handlers =
+static const ti99_peb_card_handlers_t rs232_handlers =
 {
 	rs232_cru_r,
 	rs232_cru_w,
@@ -157,7 +158,7 @@ void ti99_rs232_init(void)
 {
 	rs232_DSR = memory_region(region_dsr) + offset_rs232_dsr;
 
-	ti99_exp_set_card_handlers(0x1300, & rs232_handlers);
+	ti99_peb_set_card_handlers(0x1300, & rs232_handlers);
 
 	pio_direction = 0;
 	pio_handshakeout = 0;
@@ -188,19 +189,19 @@ static void int_callback(int which, int INT)
 	switch (which)
 	{
 	case 0:
-		ti99_exp_set_ila_bit(inta_rs232_1_bit, INT);
+		ti99_peb_set_ila_bit(inta_rs232_1_bit, INT);
 		break;
 
 	case 1:
-		ti99_exp_set_ila_bit(inta_rs232_2_bit, INT);
+		ti99_peb_set_ila_bit(inta_rs232_2_bit, INT);
 		break;
 
 	case 2:
-		ti99_exp_set_ila_bit(inta_rs232_3_bit, INT);
+		ti99_peb_set_ila_bit(inta_rs232_3_bit, INT);
 		break;
 
 	case 3:
-		ti99_exp_set_ila_bit(inta_rs232_4_bit, INT);
+		ti99_peb_set_ila_bit(inta_rs232_4_bit, INT);
 		break;
 	}
 }

@@ -30,8 +30,10 @@
 #include "machine/ti99_4x.h"
 #include "machine/tms9901.h"
 #include "sndhrdw/spchroms.h"
+#include "machine/99_peb.h"
 #include "machine/994x_ser.h"
 #include "machine/99_dsk.h"
+#include "machine/99_ide.h"
 #include "devices/basicdsk.h"
 
 static MEMORY_READ16_START (readmem)
@@ -39,7 +41,7 @@ static MEMORY_READ16_START (readmem)
 	{ 0x0000, 0x1fff, MRA16_BANK1 },		/*system ROM*/
 	{ 0x2000, 0x2fff, MRA16_BANK3 },		/*lower 8kb of RAM extension: AMS bank 2*/
 	{ 0x3000, 0x3fff, MRA16_BANK4 },		/*lower 8kb of RAM extension: AMS bank 3*/
-	{ 0x4000, 0x5fff, ti99_4p_rw_expansion },	/*DSR ROM space*/
+	{ 0x4000, 0x5fff, ti99_4p_peb_r },		/*DSR ROM space*/
 	{ 0x6000, 0x7fff, ti99_rw_cartmem },	/*cartridge memory*/
 	{ 0x8000, 0x83ff, MRA16_BANK2 },		/*RAM PAD*/
 	{ 0x8400, 0x87ff, ti99_rw_null8bits },	/*soundchip write*/
@@ -63,7 +65,7 @@ static MEMORY_WRITE16_START (writemem)
 	{ 0x0000, 0x1fff, MWA16_BANK1 },		/*system ROM*/
 	{ 0x2000, 0x2fff, MWA16_BANK3 },		/*lower 8kb of RAM extension: AMS bank 2*/
 	{ 0x3000, 0x3fff, MWA16_BANK4 },		/*lower 8kb of RAM extension: AMS bank 3*/
-	{ 0x4000, 0x5fff, ti99_4p_ww_expansion },	/*DSR ROM space*/
+	{ 0x4000, 0x5fff, ti99_4p_peb_w },		/*DSR ROM space*/
 	{ 0x6000, 0x7fff, ti99_ww_cartmem },	/*cartridge memory (some carts include RAM or a pager chip)*/
 	{ 0x8000, 0x83ff, MWA16_BANK2 },		/*RAM PAD*/
 	{ 0x8400, 0x87ff, ti99_ww_wsnd },		/*soundchip write*/
@@ -85,14 +87,14 @@ MEMORY_END
 static PORT_WRITE16_START(writecru)
 
 	{0x0000<<1, 0x01ff<<1, tms9901_0_CRU_write16},
-	{0x0200<<1, 0x0fff<<1, ti99_4p_expansion_CRU_w},
+	{0x0200<<1, 0x0fff<<1, ti99_4p_peb_CRU_w},
 
 PORT_END
 
 static PORT_READ16_START(readcru)
 
 	{0x0000<<1, 0x003f<<1, tms9901_0_CRU_read16},
-	{0x0040<<1, 0x01ff<<1, ti99_4p_expansion_CRU_r},
+	{0x0040<<1, 0x01ff<<1, ti99_4p_peb_CRU_r},
 
 PORT_END
 
@@ -326,6 +328,7 @@ ROM_END
 SYSTEM_CONFIG_START(ti99_4p)
 	CONFIG_DEVICE_CASSETTE			(2, "",												ti99_cassette_load)
 	CONFIG_DEVICE_FLOPPY_BASICDSK	(3,	"dsk\0",										ti99_floppy_load)
+	CONFIG_DEVICE_LEGACY			(IO_HARDDISK, 	1, "hd\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_RW_OR_READ, NULL, NULL, ti99_ide_load, ti99_ide_unload, NULL)
 	CONFIG_DEVICE_LEGACY			(IO_PARALLEL,	1, "",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_CREATE_OR_READ,	NULL,	NULL,	ti99_4_pio_load,	ti99_4_pio_unload,		NULL)
 	CONFIG_DEVICE_LEGACY			(IO_SERIAL,		1, "",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_CREATE_OR_READ,	NULL,	NULL,	ti99_4_rs232_load,	ti99_4_rs232_unload,	NULL)
 SYSTEM_CONFIG_END

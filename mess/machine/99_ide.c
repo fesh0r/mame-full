@@ -21,6 +21,7 @@
 #include "devices/idedrive.h"
 #include "machine/rtc65271.h"
 #include "ti99_4x.h"
+#include "99_peb.h"
 #include "99_ide.h"
 
 
@@ -40,7 +41,7 @@ enum
 	page_mask = /*0xff*/0x3f
 };
 
-static const ti99_exp_card_handlers_t ide_handlers =
+static const ti99_peb_card_handlers_t ide_handlers =
 {
 	ide_cru_r,
 	ide_cru_w,
@@ -148,7 +149,7 @@ void ti99_ide_init(void)
 
 	ti99_ide_RAM = memory_region(region_dsr) + offset_ide_ram;
 
-	ti99_exp_set_card_handlers(0x1000, & ide_handlers);
+	ti99_peb_set_card_handlers(0x1000, & ide_handlers);
 
 	ide_hd_machine_init(0, 0, & ti99_ide_interface);
 

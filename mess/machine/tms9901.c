@@ -588,6 +588,16 @@ void tms9901_CRU_write(int which, int offset, int data)
 	}
 }
 
+READ_HANDLER ( tms9901_0_CRU_read )
+{
+	return tms9901_CRU_read(0, offset);
+}
+
+WRITE_HANDLER ( tms9901_0_CRU_write )
+{
+	tms9901_CRU_write(0, offset, data);
+}
+
 READ16_HANDLER ( tms9901_0_CRU_read16 )
 {
 	return tms9901_CRU_read(0, offset);

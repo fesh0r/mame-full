@@ -43,6 +43,11 @@ void tms9901_set_single_int(int which, int pin_number, int state);
 int tms9901_CRU_read(int which, int offset);
 void tms9901_CRU_write(int which, int offset, int data);
 
+/*********************** Standard 8-bit CPU interfaces *********************/
+
+READ_HANDLER ( tms9901_0_CRU_read );
+WRITE_HANDLER ( tms9901_0_CRU_write );
+
 /*********************** Standard 16-bit CPU interfaces *********************/
 
 READ16_HANDLER ( tms9901_0_CRU_read16 );

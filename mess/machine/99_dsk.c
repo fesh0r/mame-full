@@ -26,6 +26,7 @@
 #include "includes/wd179x.h"
 #include "smc92x4.h"
 #include "ti99_4x.h"
+#include "99_peb.h"
 #include "99_dsk.h"
 #include "mm58274c.h"
 
@@ -232,7 +233,7 @@ static int motor_on;
 /* count 4.23s from rising edge of motor_on */
 void *motor_on_timer;
 
-static const ti99_exp_card_handlers_t fdc_handlers =
+static const ti99_peb_card_handlers_t fdc_handlers =
 {
 	fdc_cru_r,
 	fdc_cru_w,
@@ -256,7 +257,7 @@ void ti99_fdc_init(void)
 	motor_on = 0;
 	motor_on_timer = timer_alloc(motor_on_timer_callback);
 
-	ti99_exp_set_card_handlers(0x1100, & fdc_handlers);
+	ti99_peb_set_card_handlers(0x1100, & fdc_handlers);
 
 	wd179x_init(WD_TYPE_179X, fdc_callback);		/* initialize the floppy disk controller */
 	wd179x_set_density(DEN_FM_LO);
@@ -288,11 +289,11 @@ static void fdc_callback(int event)
 	{
 	case WD179X_IRQ_CLR:
 		DRQ_IRQ_status &= ~fdc_IRQ;
-		ti99_exp_set_ilb_bit(intb_fdc_bit, 0);
+		ti99_peb_set_ilb_bit(intb_fdc_bit, 0);
 		break;
 	case WD179X_IRQ_SET:
 		DRQ_IRQ_status |= fdc_IRQ;
-		ti99_exp_set_ilb_bit(intb_fdc_bit, 1);
+		ti99_peb_set_ilb_bit(intb_fdc_bit, 1);
 		break;
 	case WD179X_DRQ_CLR:
 		DRQ_IRQ_status &= ~fdc_DRQ;
@@ -497,7 +498,7 @@ static void bwg_cru_w(int offset, int data);
 static READ_HANDLER(bwg_mem_r);
 static WRITE_HANDLER(bwg_mem_w);
 
-static const ti99_exp_card_handlers_t bwg_handlers =
+static const ti99_peb_card_handlers_t bwg_handlers =
 {
 	bwg_cru_r,
 	bwg_cru_w,
@@ -530,7 +531,7 @@ void ti99_bwg_init(void)
 	motor_on = 0;
 	motor_on_timer = timer_alloc(motor_on_timer_callback);
 
-	ti99_exp_set_card_handlers(0x1100, & bwg_handlers);
+	ti99_peb_set_card_handlers(0x1100, & bwg_handlers);
 
 	wd179x_init(WD_TYPE_179X, fdc_callback);		/* initialize the floppy disk controller */
 	wd179x_set_density(DEN_MFM_LO);
@@ -798,7 +799,7 @@ static void hfdc_cru_w(int offset, int data);
 static READ_HANDLER(hfdc_mem_r);
 static WRITE_HANDLER(hfdc_mem_w);
 
-static const ti99_exp_card_handlers_t hfdc_handlers =
+static const ti99_peb_card_handlers_t hfdc_handlers =
 {
 	hfdc_cru_r,
 	hfdc_cru_w,
@@ -926,7 +927,7 @@ void ti99_hfdc_init(void)
 	motor_on = 0;
 	motor_on_timer = timer_alloc(motor_on_timer_callback);
 
-	ti99_exp_set_card_handlers(0x1100, & hfdc_handlers);
+	ti99_peb_set_card_handlers(0x1100, & hfdc_handlers);
 
 	/* initialize the floppy disk controller */
 	smc92x4_init(0, & hfdc_intf);
