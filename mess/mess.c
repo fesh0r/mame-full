@@ -1153,7 +1153,6 @@ static int try_driver(const struct GameDriver *gamedrv)
 
 void messtestdriver(const struct GameDriver *gamedrv, const char *(*getfodderimage)(unsigned int index, int *foddertype))
 {
-	int error;
 	struct GameOptions saved_options;
 
 	/* preserve old options; the MESS GUI needs this */
