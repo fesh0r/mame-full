@@ -24,7 +24,7 @@ EXTERN_EFFECT char *rotate_dbbuf4;
 EXTERN_EFFECT char *rotate_dbbuf5;
 
 /* from video.c, needed to scale the display according to the requirements of the effect */
-extern int normal_widthscale, normal_heightscale;
+extern int normal_widthscale, normal_heightscale, normal_yarbsize;
 
 /* called from config.c to set scale parameters */
 void effect_init1();

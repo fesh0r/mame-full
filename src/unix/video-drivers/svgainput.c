@@ -216,7 +216,7 @@ int svga_input_init(void)
 	if(mouse_fd < 0)
 	{
 		perror("mouse_init");
-		fprintf(stderr_file,"SVGALib: failed to open mouse device\n");
+		fprintf(stderr, "SVGALib: failed to open mouse device\n");
 	}
 
 	return 0;

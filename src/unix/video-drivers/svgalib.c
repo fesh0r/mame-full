@@ -241,8 +241,6 @@ int sysdep_create_display(int depth)
 	video_mem        = NULL;
 	doublebuffer_buffer = NULL;
 
-	scaled_visual_width  = visual_width  * widthscale;
-	scaled_visual_height = yarbsize ? yarbsize : visual_height * heightscale;
 
 	for (i=1; (my_modeinfo=vga_getmodeinfo(i)); i++)
 	{
@@ -333,6 +331,9 @@ int sysdep_create_display(int depth)
 	fprintf(stderr_file, "Svgalib: Info: Choose videomode %dx%dx%d\n",
 			video_modeinfo.width, video_modeinfo.height, video_modeinfo.colors);
 
+	mode_fix_aspect((double)(video_modeinfo.width)/video_modeinfo.height);
+	scaled_visual_width  = visual_width  * widthscale;
+	scaled_visual_height = yarbsize ? yarbsize : visual_height * heightscale;
 	startx = ((video_modeinfo.width  - scaled_visual_width ) / 2) & ~7;
 	starty =  (video_modeinfo.height - scaled_visual_height) / 2;
 

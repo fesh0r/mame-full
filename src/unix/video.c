@@ -23,7 +23,7 @@
 static const int safety = 16;
 static int current_widthscale = 1, current_heightscale = 1;
 int normal_widthscale = 1, normal_heightscale = 1;
-int yarbsize = 0;
+int current_yarbsize = 0, normal_yarbsize = 0;
 static char *vector_res = NULL;
 static int use_auto_double = 1;
 static int frameskipper = 0;
@@ -94,7 +94,7 @@ struct rc_option video_opts[] = {
    { "bpp",		"b",			rc_int,		&options.color_depth,
      "0",		0,			0,		video_verify_bpp,
      "Specify the colordepth the core should render, one of: auto(0), 8, 16" },
-   { "arbheight",	"ah",			rc_int,		&yarbsize,
+   { "arbheight",	"ah",			rc_int,		&normal_yarbsize,
      "0",		0,			4096,		NULL,
      "Scale video to exactly this height (0 = disable)" },
    { "heightscale",	"hs",			rc_int,		&normal_heightscale,
@@ -554,6 +554,7 @@ int osd_create_display(const struct osd_create_params *params,
 
 	widthscale		= current_widthscale  = normal_widthscale;
 	heightscale		= current_heightscale = normal_heightscale;
+	yarbsize		= current_yarbsize    = normal_yarbsize;
 	use_aspect_ratio	= normal_use_aspect_ratio;
 	video_fps		= params->fps;
 
@@ -653,8 +654,8 @@ void osd_close_display(void)
 
 static void change_display_settings(struct rectangle *new_visual,
 		struct sysdep_palette_struct *new_palette, int new_widthscale,
-		int new_heightscale, int new_use_aspect_ratio,
-		int force_new_visual)
+		int new_heightscale, int new_yarbsize,
+		int new_use_aspect_ratio, int force_new_visual)
 {
 	int new_visual_width, new_visual_height;
 
@@ -673,6 +674,7 @@ static void change_display_settings(struct rectangle *new_visual,
 			|| visual_height != new_visual_height
 			|| current_widthscale != new_widthscale
 			|| current_heightscale != new_heightscale
+			|| current_yarbsize != new_yarbsize
 			|| use_aspect_ratio != new_use_aspect_ratio)
 	{
 		int new_depth = bitmap_depth;
@@ -683,8 +685,11 @@ static void change_display_settings(struct rectangle *new_visual,
 
 		visual_width     = new_visual_width;
 		visual_height    = new_visual_height;
+		/* keep our own copy of the scaling stuff, since the
+		   display driver might change these */
 		widthscale	 = current_widthscale  = new_widthscale;
 		heightscale	 = current_heightscale = new_heightscale;
+		yarbsize         = current_yarbsize    = new_yarbsize;
 		use_aspect_ratio = new_use_aspect_ratio;
 
 		if (sysdep_create_display(new_depth) != OSD_OK)
@@ -766,7 +771,7 @@ static void update_visible_area(struct mame_display *display)
 	if (!debugger_has_focus)
 		change_display_settings(&normal_visual, normal_palette,
 				normal_widthscale, normal_heightscale,
-				normal_use_aspect_ratio, 0);
+				normal_yarbsize, normal_use_aspect_ratio, 0);
 
 	set_ui_visarea(display->game_visible_area.min_x,
 			display->game_visible_area.min_y,
@@ -881,11 +886,11 @@ void change_debugger_focus(int new_debugger_focus)
 	{
 		if (new_debugger_focus)
 			change_display_settings(&debug_visual, debug_palette,
-					1, 1, 0, 1);
+					1, 1, 0, 0, 1);
 		else
 			change_display_settings(&normal_visual, normal_palette,
 					normal_widthscale, normal_heightscale,
-					normal_use_aspect_ratio, 1);
+					normal_yarbsize, normal_use_aspect_ratio, 1);
 
 		debugger_has_focus = new_debugger_focus;
 	}
@@ -1003,6 +1008,9 @@ void osd_update_video_and_audio(struct mame_display *display)
 		{
 			normal_widthscale  += widthscale_mod;
 			normal_heightscale += heightscale_mod;
+			
+			if (normal_yarbsize && heightscale_mod)
+			   normal_yarbsize += heightscale_mod * visual_height;
 
 			if (normal_widthscale > 8)
 				normal_widthscale = 8;
@@ -1013,12 +1021,13 @@ void osd_update_video_and_audio(struct mame_display *display)
 				normal_heightscale = 8;
 			else if (normal_heightscale < 1)
 				normal_heightscale = 1;
-
+				
 			if (!debugger_has_focus)
 				change_display_settings(&normal_visual,
 						normal_palette,
 						normal_widthscale,
 						normal_heightscale,
+						normal_yarbsize,
 						normal_use_aspect_ratio, 0);
 		}
 	}

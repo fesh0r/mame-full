@@ -48,17 +48,8 @@ typedef struct {
 
 int winwidth = 0;
 int winheight = 0;
-int fullscreen_width = 0;
-int fullscreen_height = 0;
-int orig_width = 0;
-int orig_height = 0;
-int visual_orientated_width = 0;
-int visual_orientated_height = 0;
-static int is_fullscreen=0;
 int bilinear=1; /* Do binlinear filtering? */
 int alphablending=0; /* alphablending */
-
-int fullscreen = 0;
 int antialias=0;
 int translucency = 0;
 int force_text_width_height = 0;
@@ -77,7 +68,8 @@ char * libGLName=0;
 char * libGLUName=0;
 
 static char *gl_res = NULL;
-
+static int fullscreen = 0;
+static int customSize=0;
 static const char * xgl_version_str = 
 	"\nGLmame v0.94 - the_peace_version , by Sven Goethel, http://www.jausoft.com, sgoethel@jausoft.com,\nbased upon GLmame v0.6 driver for xmame, written by Mike Oliphant\n\n";
 
@@ -122,6 +114,9 @@ struct rc_option display_opts[] = {
    { "glres",	        NULL,			rc_string,	&gl_res,
      NULL,		0,			0,		NULL,
      "Always scale games to XresxYres, keeping their aspect ratio. This overrides the scale options" },
+   { NULL,              NULL,                   rc_link,        mode_opts,
+     NULL,              0,                      0,              NULL,
+     NULL },
    { NULL,		NULL,			rc_link,	x11_input_opts,
      NULL,		0,			0,		NULL,
      NULL },
@@ -178,8 +173,6 @@ void sysdep_close(void)
 {
    XCloseDisplay(display);
 
-   fprintf(stderr, xgl_version_str);
-  
 #ifndef NDEBUG
    printf("GLINFO: xgl closed !\n");
 #endif
@@ -199,33 +192,29 @@ int sysdep_create_display(int depth)
   unsigned long winmask;
   Atom mwmatom;
   char *glxfx;
-  int resizeEvtMask = 0;
   VisualGC vgc;
   int ownwin = 1;
-  int customSize=0;
+  int vw, vh;
 
   /* If using 3Dfx, Resize the window to fullscreen so we don't lose focus
      We have to do this after glXMakeCurrent(), or else the voodoo driver
      will give us the wrong resolution */
-  /* HDG: this breaks openGL on my voodoo2, so disable this for now
-  if((glxfx=getenv("MESA_GLX_FX")) && (glxfx[0]=='f') )
-  	fullscreen=1; */
+  if((glxfx=getenv("MESA_GLX_FX")) && (glxfx[0]=='f'))
+  {
+    if(gl_res == NULL)
+      gl_res = "640x480";
+  }
 
   if(gl_res!=NULL)
   {
-     if( sscanf(gl_res, "%dx%d", &fullscreen_width, &fullscreen_height) != 2)
+     if( sscanf(gl_res, "%dx%d", &winwidth, &winheight) != 2)
      {
         fprintf(stderr, "error: invalid value for glres: %s\n", gl_res);
      } else {
         customSize=1;
-	orig_width = fullscreen_width;
-	orig_height = fullscreen_height;
+        fullscreen=0;
      }
   }
-
-
-  if(!fullscreen) 
-	  resizeEvtMask = StructureNotifyMask ;
 
   fprintf(stderr, xgl_version_str);
   
@@ -235,32 +224,29 @@ int sysdep_create_display(int depth)
   
   if(!customSize)
   {
-  	fullscreen_width = screen->width;
-  	fullscreen_height = screen->height;
-
 	if( ! blit_swapxy )
 	{
-		  visual_orientated_width  = visual_width;
-		  visual_orientated_height = visual_height;
-		  orig_width  = visual_width*widthscale;
-		  orig_height = visual_height*heightscale;
+		  winwidth  = visual_width*widthscale;
+		  winheight = visual_height*heightscale;
 	} else {
-		  visual_orientated_width  = visual_height;
-		  visual_orientated_height = visual_width;
-		  orig_width  = visual_height*heightscale;
-		  orig_height = visual_width*widthscale;
+		  winwidth  = visual_height*heightscale;
+		  winheight = visual_width*widthscale;
 	}
   }
 
   if(fullscreen)
   {
-	winwidth = fullscreen_width;
-	winheight = fullscreen_height;
-	is_fullscreen=1;
+	winwidth  = screen->width;
+	winheight = screen->height;
+	winmask   = CWBorderPixel | CWBackPixel | CWEventMask | CWColormap |
+	            CWDontPropagate | CWCursor;
+  	hints.flags   = PMinSize | PMaxSize | USPosition | USSize;
   } else {
-	winwidth = orig_width;
-	winheight = orig_height;
-	is_fullscreen=0;
+        winmask   = CWBorderPixel | CWBackPixel | CWEventMask | CWColormap;
+        if (customSize)
+          hints.flags   = PMinSize | PMaxSize;
+        else
+  	  hints.flags   = PSize;
   }
 
   window_attr.background_pixel=0;
@@ -274,14 +260,6 @@ int sysdep_create_display(int depth)
   window_attr.do_not_propagate_mask=0;
   window_attr.colormap=0; /* done later, within findVisualGlX .. */
   window_attr.cursor=None;
-
-  if(fullscreen) 
-      winmask = CWBorderPixel | CWBackPixel | CWEventMask | CWDontPropagate | 
-                CWColormap    | CWCursor
-	        ;
-  else
-      winmask = CWBorderPixel | CWBackPixel | CWEventMask | CWColormap    
-	        ;
 
   fetch_GL_FUNCS (libGLName, libGLUName, 1 /* force refetch ... */);
 
@@ -330,35 +308,17 @@ int sysdep_create_display(int depth)
   alphablending= (glCaps.alphaBits>0)?1:0;
   doublebuffer = (glCaps.buffer==BUFFER_DOUBLE)?1:0;
 
-  /*  Placement hints etc. */
-  
-  hints.flags=PMinSize|PMaxSize;
-  
-  if(fullscreen) 
-  { 
-  	hints.flags|=USPosition|USSize;
-  } else {
-  	hints.flags|=PSize;
-  }
-
-  hints.min_width	= hints.max_width = hints.base_width = winwidth;
-  hints.min_height= hints.max_height = hints.base_height = winheight;
+  hints.min_width  = hints.max_width  = hints.base_width  = winwidth;
+  hints.min_height = hints.max_height = hints.base_height = winheight;
   
   wm_hints.input=TRUE;
   wm_hints.flags=InputHint;
   
   XSetWMHints(display,window,&wm_hints);
-
-  if(fullscreen) 
-	  XSetWMNormalHints(display,window,&hints);
+  XSetWMNormalHints(display,window,&hints);
 
   XStoreName(display,window,title);
   
-  if(fullscreen) 
-	  XDefineCursor(display,window,create_invisible_cursor (display, window));
-  else
-	  XDefineCursor(display,window,cursor);
-
   /* Hack to get rid of window title bar */
   if(fullscreen) 
   {
@@ -368,7 +328,10 @@ int sysdep_create_display(int depth)
   
 	XChangeProperty(display,window,mwmatom,mwmatom,32,
 			PropModeReplace,(unsigned char *)&mwmhints,4);
+	XDefineCursor(display,window,create_invisible_cursor (display, window));
   }
+  else
+	XDefineCursor(display,window,cursor);
   
   /* Map and expose the window. */
 
@@ -381,8 +344,7 @@ int sysdep_create_display(int depth)
 				 KeyPressMask      | KeyReleaseMask | 
 				 EnterWindowMask   | LeaveWindowMask |
 				 PointerMotionMask | ButtonMotionMask |
-				 ButtonPressMask   | ButtonReleaseMask |
-				 resizeEvtMask 
+				 ButtonPressMask   | ButtonReleaseMask
 				 );
 	
 	XGrabPointer(display,
@@ -398,8 +360,7 @@ int sysdep_create_display(int depth)
 	XSelectInput(display, 
 				 window, 
 				 FocusChangeMask | ExposureMask | 
-				 KeyPressMask | KeyReleaseMask  |
-				 resizeEvtMask 
+				 KeyPressMask | KeyReleaseMask
 				 );
   }
   
@@ -407,16 +368,19 @@ int sysdep_create_display(int depth)
   XClearWindow(display,window);
   XWindowEvent(display,window,ExposureMask,&event);
   
-  XResizeWindow(display,window,winwidth,winheight);
-
-  if(fullscreen) {
-	hints.min_width	= hints.max_width = hints.base_width = screen->width;
-	hints.min_height= hints.max_height = hints.base_height = screen->height;
-
-	XSetWMNormalHints(display,window,&hints);
+  mode_clip_aspect(winwidth, winheight, &vw, &vh, (double)screen->width/screen->height);
+  if (!fullscreen && !cabview && !customSize)
+  {
+     XResizeWindow(display, window, vw, vh);
+     winwidth  = vw;
+     winheight = vh;
   }
 
-  InitVScreen(depth);
+  if (InitVScreen(vw, vh))
+  {
+	sysdep_display_close();
+	return OSD_NOT_OK; 
+  }
 
 #ifndef NDEBUG
   printf("GLINFO: xgl display created !\n");
@@ -461,47 +425,29 @@ void SwapBuffers(void)
   disp__glXSwapBuffers(display,window);
 }
 
-void toggleFullscreen()
+void
+sysdep_update_display (struct mame_bitmap *bitmap)
 {
-   if(is_fullscreen)
-   {
-	XMoveResizeWindow(display, window, 
-			  (fullscreen_width-orig_width)/2, 
-			  (fullscreen_height-orig_height)/2,
-			  orig_width, orig_height);
-        XSync(display,False); /* send all events to sync; */
-   } else {
-	Window rootwin, childwin;
-	int rx, ry, x, y, dx, dy;
-	int w, h;
-	unsigned int mask;
-	Bool ok;
-
-	/* sync with root window to coord 0/0 */
-	XMoveWindow(display,window, 0, 0);
-        XSync(display,False); /* send all events to sync; */
-
-	/* get the diff of both orig. coord */
-	ok = XQueryPointer(display, window, &rootwin, &childwin,
-			    &rx, &ry, &x, &y, &mask);
-	dx = rx-x;
-	dy = ry-y;
-	
-	/* get the aspect future full screen size */
-	w = fullscreen_width;
-	h = fullscreen_height;
-	xgl_fixaspectratio(&w, &h);
-
-	/* the new coords .. */
-	x = ( fullscreen_width  - w  ) / 2 - dx;
-	y = ( fullscreen_height - h ) / 2 - dy;
-
-#ifndef NDEBUG
-	printf("GLINFO: switching to max aspect %d/%d, %dx%d\n", x, y, w, h);
-#endif
-
-	XMoveResizeWindow(display, window, x, y, w, h);
-        XSync(display,False); /* send all events to sync; */
+  Window _dw;
+  int _dint;
+  unsigned int _duint,w,h;
+  
+  XGetGeometry(display, window, &_dw, &_dint, &_dint, &w, &h, &_duint, &_duint);
+  
+  if ( (w != winwidth) || (h != winheight) )
+  {
+    int vw, vh;
+    
+    mode_clip_aspect(w, h, &vw, &vh, (double)screen->width/screen->height);
+    if (!fullscreen && !cabview && !customSize)
+    {
+       XResizeWindow(display, window, vw, vh);
+       w = vw;
+       h = vh;
     }
-    is_fullscreen = !is_fullscreen;
+    
+    gl_resize(w, h, vw, vh);
+  }
+
+  UpdateVScreen(bitmap);
 }

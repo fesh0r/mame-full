@@ -76,7 +76,6 @@ static int mit_shm_attached = 0;
 static XShmSegmentInfo shm_info;
 static int use_mit_shm = 1;  /* use mitshm if available */
 #endif
-static int private_cmap_allocated = 0;
 
 #ifdef USE_HWSCALE
 static int hwscale_bpp=0;
@@ -86,8 +85,7 @@ static int hwscale_yv12=0;
 static unsigned int *hwscale_yuvlookup=NULL;
 static char *hwscale_yv12_rotate_buf0=NULL;
 static char *hwscale_yv12_rotate_buf1=NULL;
-static int hwscale_perfect_yv12=0;
-static float hwscale_resolution_aspect=0.0;
+static int hwscale_perfect_yuv=1;
 int hwscale_fullscreen = 0;
 #define FOURCC_YUY2 0x32595559
 #define FOURCC_YV12 0x32315659
@@ -128,6 +126,8 @@ static int use_xsync = 0;
 static int root_window_id; /* root window id (for swallowing the mame window) */
 static char *geometry = NULL;
 static int cursors_allocated = 0;
+static double x11_resolution_aspect=0.0;
+static int private_cmap_allocated = 0;
 
 /* we need to look a lookup table for pseudo modes since X doesn't give us full
    access to the palette */
@@ -152,7 +152,7 @@ struct rc_option x11_window_opts[] = {
 #ifdef USE_HWSCALE
 	{ "yuv", NULL, rc_bool, &hwscale_yuv, "0", 0, 0, NULL, "Force YUV mode (for video cards with broken RGB hwscales)" },
 	{ "yv12", NULL, rc_bool, &hwscale_yv12, "0", 0, 0, NULL, "Force YV12 mode (for video cards with broken RGB hwscales)" },
-	{ "perfect-yv12", NULL, rc_bool, &hwscale_perfect_yv12, "0", 0, 0, NULL, "Use perfect (slower) blitting code for XV YV12 blits" },
+	{ "perfect-yuv", NULL, rc_bool, &hwscale_perfect_yuv, "1", 0, 0, NULL, "Use perfect (slower) blitting code for XV YUV blits" },
 #endif
 	{ "xsync", "xs", rc_bool, &use_xsync, "1", 0, 0, NULL, "Use/don't use XSync instead of XFlush as screen refresh method" },
 	{ "privatecmap", "p", rc_bool, &use_private_cmap, "0", 0, 0, NULL, "Enable/disable use of private color map" },
@@ -538,6 +538,15 @@ int x11_window_create_display (int bitmap_depth)
 	pseudo_color_lookup_dirty = FALSE;
 	pseudo_color_use_rw_palette = FALSE;
 	pseudo_color_warn_low_on_colors = TRUE;
+	screen           = DefaultScreenOfDisplay (display);
+	screen_no        = DefaultScreen (display);
+
+        /* fix the aspect ratio, do this here since
+           this can change yarbsize */
+        x11_resolution_aspect = (float)
+          DisplayWidth(display, screen_no) /
+          DisplayHeight(display, screen_no);
+        mode_fix_aspect(x11_resolution_aspect);
 
 	window_width     = widthscale  * visual_width;
 	window_height    = yarbsize ? yarbsize : (heightscale * visual_height);
@@ -546,8 +555,6 @@ int x11_window_create_display (int bitmap_depth)
 	orig_widthscale  = widthscale;
 	orig_heightscale = heightscale;
 	orig_yarbsize    = yarbsize;
-	screen           = DefaultScreenOfDisplay (display);
-	screen_no        = DefaultScreen (display);
 #ifdef USE_HWSCALE
         use_hwscale	 = 0;
 
@@ -725,6 +732,7 @@ int x11_window_create_display (int bitmap_depth)
 		case X11_XV:
 			/* Create an XV MITSHM image. */
                         fprintf (stderr_file, "MIT-SHM & XV Extensions Available. trying to use... ");
+                        /* find a suitable format */
                         if(!hwscale_yuv)
                         {
                                 if(!(FindRGBXvFormat(display, &xv_port,&hwscale_format,&hwscale_bpp)))
@@ -733,56 +741,63 @@ int x11_window_create_display (int bitmap_depth)
                                         fprintf(stderr,"\nCan't find a suitable RGB format - trying YUY2 instead... ");
                                 }
                         }
-                        if(hwscale_yuv)
+                        if(hwscale_yuv && !hwscale_yv12)
                         {
                                 hwscale_redmask=0xff0000;
                                 hwscale_greenmask=0xff00;
                                 hwscale_bluemask=0xff;
                                 hwscale_bpp=32;
                                 hwscale_format=FOURCC_YUY2;
-                                if(!hwscale_yv12)
+                                if(!(FindXvPort(display, hwscale_format, &xv_port)))
                                 {
-                                        if(!(FindXvPort(display, hwscale_format, &xv_port)))
-                                        {
-                                                fprintf(stderr,"\nYUY2 not available - trying YV12... ");
-                                                hwscale_yv12=1;
-                                        }
+                                        fprintf(stderr,"\nYUY2 not available - trying YV12... ");
+                                        hwscale_yv12=1;
                                 }
-                                if(hwscale_yv12)
+                                else if (!effect && hwscale_perfect_yuv)
                                 {
-                                        hwscale_format=FOURCC_YV12;
-                                        if(!(FindXvPort(display, hwscale_format, &xv_port)))
+                                        image_width  = 2*visual_width;
+                                        widthscale   = 2;
+                                }
+                        }
+                        if(hwscale_yv12)
+                        {
+                                hwscale_redmask=0xff0000;
+                                hwscale_greenmask=0xff00;
+                                hwscale_bluemask=0xff;
+                                hwscale_bpp=32;
+                                hwscale_format=FOURCC_YV12;
+                                if(!(FindXvPort(display, hwscale_format, &xv_port)))
+                                {
+                                        fprintf(stderr,"\nError: Couldn't initialise Xv port - ");
+                                        fprintf(stderr,"\n  Either all ports are in use, or the video card");
+                                        fprintf(stderr,"\n  doesn't provide a suitable format.\n");
+                                        use_xv = 0;
+                                }
+                                else
+                                {
+                                        fprintf(stderr,"\nWarning: YV12 support is incomplete... ");
+                                        if (effect)
+                                          fprintf(stderr, "\nWarning: YV12 doesn't do effects... ");
+                                        if (hwscale_perfect_yuv)
                                         {
-                                                fprintf(stderr,"\nError: Couldn't initialise Xv port - ");
-                                                fprintf(stderr,"\n  Either all ports are in use, or the video card");
-                                                fprintf(stderr,"\n  doesn't provide a suitable format.\n");
-                                                use_xv = 0;
+                                          /* hack */
+                                          image_width  = 2*visual_width;
+                                          image_height = 2*visual_height;
+                                          widthscale   = 2;
+                                          heightscale  = 2;
+                                          yarbsize     = 0;
                                         }
-                                        else
+                                        else /* we don't do effects! */
                                         {
-                                                fprintf(stderr,"\nWarning: YV12 support is incomplete... ");
-                                                if (effect)
-                                                  fprintf(stderr, "\nWarning: YV12 doesn't do effects... ");
-                                                if (hwscale_perfect_yv12)
-                                                {
-                                                  /* hack */
-                                                  image_width  = 2*visual_width;
-                                                  image_height = 2*visual_height;
-                                                  widthscale   = 2;
-                                                  heightscale  = 2;
-                                                  yarbsize     = 0;
-                                                }
-                                                else /* we don't do effects! */
-                                                {
-                                                  image_width  = visual_width;
-                                                  image_height = visual_height;
-                                                  widthscale   = 1;
-                                                  heightscale  = 1;
-                                                  yarbsize     = 0;
-                                                }
+                                          image_width  = visual_width;
+                                          image_height = visual_height;
+                                          widthscale   = 1;
+                                          heightscale  = 1;
+                                          yarbsize     = 0;
                                         }
                                 }
                         }
+                        /* if use_xv is still set we've found a suitable format */
                         if (use_xv)
                         {
                                 int i;
@@ -882,9 +897,6 @@ int x11_window_create_display (int bitmap_depth)
                                 {
                                         fprintf (stderr_file, "Success.\nUsing Xv & Shared Memory Features to speed up\n");
                                         XSetErrorHandler (None);  /* Restore error handler to default */
-                                        hwscale_resolution_aspect = (float)
-                                          DisplayWidth(display, screen_no) /
-                                          DisplayHeight(display, screen_no);
                                         mit_shm_attached = 1;
                                         use_hwscale = 1;
                                         break;
@@ -1036,11 +1048,13 @@ int x11_window_create_display (int bitmap_depth)
 #ifdef USE_HWSCALE
 		if(use_hwscale)
 		{
-                    
 			if(!hwscale_fullscreen)
 			{
 			        hints.flags = PSize;
                                 XSetWMNormalHints (display, window, &hints);
+                                
+                                mode_stretch_aspect(window_width, window_height, &window_width, &window_height, x11_resolution_aspect);
+                                XResizeWindow(display, window, window_width, window_height);
                         }
                         else    
                         {
@@ -1069,15 +1083,6 @@ int x11_window_create_display (int bitmap_depth)
                 {
                         event_mask |= ButtonPressMask | ButtonReleaseMask;
                 }
-                
-                #if defined(__sgi) && ! defined(MESS)
-                /*
-                 * In Xmame, we want to know when we are unmapped (iconified) or mapped,
-                 * so that the game can be paused/restarted automatically
-                 * (boss hanging around mode :)
-                 */
-                event_mask |= StructureNotifyMask;
-                #endif
                 
                 XSelectInput (display, window, event_mask);
 	}
@@ -1128,7 +1133,7 @@ int x11_window_create_display (int bitmap_depth)
                                                   return OSD_NOT_OK;
                                                 }
                                         }
-					if (hwscale_perfect_yv12)
+					if (hwscale_perfect_yuv)
 						x11_window_update_display_func
 							= x11_window_update_32_to_YV12_direct_perfect;
 					else
@@ -1190,7 +1195,7 @@ int x11_window_create_display (int bitmap_depth)
                                                   return OSD_NOT_OK;
                                                 }
                                         }
-					if (hwscale_perfect_yv12)
+					if (hwscale_perfect_yuv)
 						x11_window_update_display_func
 							= x11_window_update_16_to_YV12_perfect;
 					else
@@ -1577,64 +1582,19 @@ void x11_window_refresh_screen (void)
             Window _dw;
             int _dint;
 	    unsigned int _w,_h,_duint;
-            long pw,ph;
+            int pw,ph;
+
             XGetGeometry(display, window, &_dw, &_dint, &_dint, &_w, &_h, &_duint, &_duint);
-
-            if (use_aspect_ratio)
+            mode_clip_aspect(_w, _h, &pw, &ph, x11_resolution_aspect);
+            if (!hwscale_fullscreen && (pw!=_w || ph!=_h))
             {
-                double pixel_aspect_ratio;
-
-                /* first of all calculate the pixel aspect_ratio the game has */
-                if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
-                {
-                   pixel_aspect_ratio = 1.0;
-                }
-                else
-                {
-                   pixel_aspect_ratio = visual_width /
-                                          (visual_height * aspect_ratio);
-                                          
-                   if ((Machine->drv->video_attributes &
-                        VIDEO_PIXEL_ASPECT_RATIO_MASK) ==
-                       VIDEO_PIXEL_ASPECT_RATIO_1_2)
-                   {
-                      if (blit_swapxy)
-                         pixel_aspect_ratio *= 2.0;
-                      else
-                         pixel_aspect_ratio *= 0.5;
-                   }
-
-                   if ((Machine->drv->video_attributes &
-                        VIDEO_PIXEL_ASPECT_RATIO_MASK) ==
-                       VIDEO_PIXEL_ASPECT_RATIO_2_1)
-                   {
-                      if (blit_swapxy)
-                         pixel_aspect_ratio *= 0.5;
-                      else
-                         pixel_aspect_ratio *= 2.0;
-                   }
-                }
-/*              printf("aspect: %f, pixel: %f, res:%f, disp: %f\n",
-                  aspect_ratio, pixel_aspect_ratio,
-                  (double)hwscale_resolution_aspect,
-                  (double)display_aspect_ratio); */
-                pw = aspect_ratio * pixel_aspect_ratio * _h *
-                     (hwscale_resolution_aspect/display_aspect_ratio);
+               XResizeWindow(display, window, pw, ph);
+               _w = pw;
+               _h = ph;
             }
-            else
-		pw = ((double)HWSCALE_WIDTH / (double)HWSCALE_HEIGHT) * _h;
-                
-            ph = _h;
-
-            if (pw > _w)
-            {
-                    ph *= ((double)_w / (double)pw);
-                    pw = _w;
-            }
-
             XvShmPutImage (display, xv_port, window, gc, xvimage,
-            0, 0, HWSCALE_WIDTH, HWSCALE_HEIGHT,
-            (_w-pw)/2, (_h-ph)/2, pw, ph, True);
+              0, 0, HWSCALE_WIDTH, HWSCALE_HEIGHT,
+              (_w-pw)/2, (_h-ph)/2, pw, ph, True);
          }
 #endif
          break;
@@ -1655,9 +1615,9 @@ void x11_window_refresh_screen (void)
 #define BMASK 0x0000ff
 
 #define RGB2YUV(r,g,b,y,u,v) \
-    (y) = (( 9836*(r) + 19310*(g) + 3750*(b) ) >> 15); \
-    (u) = (( -5527*(r) - 10921*(g) + 16448*(b) ) >> 15) + 128; \
-    (v) = (( 16448*(r) - 13783*(g) - 2665*(b) ) >> 15) + 128;
+    (y) = (( 9836*(r) + 19310*(g) + 3750*(b) ) / 32768); \
+    (u) = (( -5527*(r) - 10921*(g) + 16448*(b) ) / 32768) + 128; \
+    (v) = (( 16448*(r) - 13783*(g) - 2665*(b) ) / 32768) + 128;
 static void x11_window_make_yuv_lookup()
 {
    int i,r,g,b,y,u,v,n;
@@ -1679,6 +1639,18 @@ static void x11_window_make_yuv_lookup()
         b=(b&BMASK);
 
         RGB2YUV(r,g,b,y,u,v);
+        if (y > 255)
+           y = 255;
+        else if (y < 0)
+           y = 0;
+        if (u > 255)
+           u = 255;
+        else if (u < 0)
+           u = 0;
+        if (v > 255)
+           v = 255;
+        else if (v < 0)
+           v = 0;
 
         /* Storing this data in YUYV order simplifies using the data for
            YUY2, both with and without smoothing... */

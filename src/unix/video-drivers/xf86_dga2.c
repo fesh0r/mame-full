@@ -328,7 +328,6 @@ int xf86_dga2_create_display(int bitmap_depth)
 		fprintf(stderr_file,"no suitable mode found\n");
 		return OSD_NOT_OK;
 	}
-
 	xf86ctx.device = XDGASetMode(display,xf86ctx.screen,bestmode);
 	if (xf86ctx.device == NULL) {
 		fprintf(stderr_file,"XDGASetMode failed\n");
@@ -361,6 +360,9 @@ int xf86_dga2_create_display(int bitmap_depth)
 	if (x11_init_palette_info() != OSD_OK)
 	    return OSD_NOT_OK;
         
+	mode_fix_aspect((double)(xf86ctx.device->mode.viewportWidth)/
+		xf86ctx.device->mode.viewportHeight);
+
 	if(xf86_dga_setup_graphics(xf86ctx.device->mode, bitmap_depth))
 		return OSD_NOT_OK;
 	

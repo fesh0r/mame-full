@@ -166,9 +166,9 @@ void effect_init1()
       break;
   }
 
-  if (yarbsize && disable_arbscale) {
+  if (normal_yarbsize && disable_arbscale) {
     printf("Using effects -- disabling arbitrary scaling\n");
-    yarbsize = 0;
+    normal_yarbsize = 0;
   }
 }
 

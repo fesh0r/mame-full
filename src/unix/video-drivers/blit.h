@@ -243,7 +243,7 @@ case 1:
       } \
    }
 #endif /* ifdef LSB_FIRST */
-#else  /* HWSCLALE_YUY2, not indirect */
+#else  /* HWSCALE_YUY2, not indirect (for 32 bpp direct color) */
 #define COPY_LINE2(SRC, END, DST) \
    {\
       SRC_PIXEL  *src = SRC; \
@@ -271,7 +271,7 @@ case 1:
          *dst++=v; \
       }\
    }
-#endif /* HWSCLALE_YUY2 direct or indirect */
+#endif /* HWSCALE_YUY2 direct or indirect */
 #else  /* normal */
 /* speedup hack for 1x widthscale and GETPIXEL(src) == (src) */
 #if !defined INDIRECT && !defined CONVERT_PIXEL
@@ -304,8 +304,6 @@ LOOP()
 break;
 
 
-/* HWSCALE always uses widthscale=1 for non effect blits */
-#ifndef BLIT_HWSCALE_YUY2 
 case 2:
 #ifdef PACK_BITS
 #define COPY_LINE2(SRC, END, DST) \
@@ -320,7 +318,43 @@ case 2:
       *(dst+2) = (GETPIXEL(*(src+1))>>16) | (GETPIXEL(*(src+1))<<8); \
    } \
 }
-#else /* not pack bits */
+#elif defined BLIT_HWSCALE_YUY2
+/* HWSCALE_YUY2 has seperate code for direct / indirect, see above */
+#ifdef INDIRECT
+#define COPY_LINE2(SRC, END, DST) \
+   {\
+      SRC_PIXEL  *src = SRC; \
+      SRC_PIXEL  *end = END; \
+      unsigned long *dst = (unsigned long *)DST; \
+      for(;src<end;) \
+      { \
+         *dst++=GETPIXEL(*src++); \
+      } \
+   }
+#else  /* HWSCALE_YUY2, not indirect (for 32 bpp direct color) */
+#define COPY_LINE2(SRC, END, DST) \
+   {\
+      SRC_PIXEL  *src = SRC; \
+      SRC_PIXEL  *end = END; \
+      unsigned char *dst = (unsigned char *)DST; \
+      int r,g,b,y,u,v; \
+      for(;src<end;) \
+      { \
+         r=g=b=*src++; \
+         r&=RMASK;  r>>=16; \
+         g&=GMASK;  g>>=8; \
+         b&=BMASK;  b>>=0; \
+         y = (( 9836*r + 19310*g + 3750*b ) >> 15); \
+         *dst++=y; \
+         u = (( -5527*r - 10921*g + 16448*b ) >> 15) + 128; \
+         *dst++=u; \
+         v = (( 16448*r - 13783*g - 2665*b ) >> 15 ) + 128; \
+         *dst++=y; \
+         *dst++=v; \
+      }\
+   }
+#endif /* HWSCALE_YUY2 direct or indirect */
+#else /* normal */
 #define COPY_LINE2(SRC, END, DST) \
 { \
    SRC_PIXEL  *src = SRC; \
@@ -346,6 +380,8 @@ LOOP()
 break;
 
 
+/* HWSCALE always uses widthscale <=2 for non effect blits */
+#ifndef BLIT_HWSCALE_YUY2 
 #ifndef PACK_BITS /* no optimised 3x COPY_LINE2 for PACK_BITS */
 case 3:
 #define COPY_LINE2(SRC, END, DST) \

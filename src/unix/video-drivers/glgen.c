@@ -52,7 +52,6 @@ static void CalcFlatTexPoint( int x, int y, GLdouble texwpervw, GLdouble texhper
 static void SetupFrustum (void);
 static void SetupOrtho (void);
 
-
 static void WAvg (GLdouble perc, GLdouble x1, GLdouble y1, GLdouble z1,
 	   GLdouble x2, GLdouble y2, GLdouble z2,
 	   GLdouble * ax, GLdouble * ay, GLdouble * az);
@@ -64,24 +63,6 @@ static void UpdateGLDisplay (struct mame_bitmap *bitmap);
 static int cabspecified;
 /* int cabview=0;  .. Do we want a cabinet view or not? */
 static int cabload_err;
-
-/**
- *
- * Flat-Screen Ratio:
- *
- * scrnaspect : orig screen width/height ratio (view-coord)
- * vscrnaspect: zoomed screen width/height ratio (view-coord)
- * vscrnwidth : final screen width (view-coord)
- * vscrnheight: final screen height (view-coord)
- * vscrndx: 	  final screen dx to start of game-screen (view-coord)
- * vscrndy: 	  final screen dy to start of game-screen (view-coord)
- *
- */
-double scrnaspect, vscrnaspect;
-static GLdouble vscrnwidth;
-static GLdouble vscrnheight;
-static GLdouble vscrndx;
-static GLdouble vscrndy;
 
 static GLint   gl_internal_format;
 static GLenum  gl_bitmap_format;
@@ -213,7 +194,6 @@ static int panframe = 0;
 int gl_is_initialized;
 static int vecgame = 0;
 static int do_snapshot;
-static int do_xgl_resize=0;
 static unsigned short *colorBlittedMemory;
 static int line_len=0;
 
@@ -229,7 +209,6 @@ void gl_bootstrap_resources()
   cabspecified = 0;
   if(cabname!=NULL) cabname[0]=0;
 
-  scrnaspect=0; vscrnaspect=0;
   gl_bitmap_type=0;
   gl_bitmap_format=0;
   text_width=0;
@@ -239,10 +218,6 @@ void gl_bootstrap_resources()
 
   texnumx=0;
   texnumy=0;
-  vscrndx=0;
-  vscrndy=0;
-  vscrnwidth=0;
-  vscrnheight=0;
   
   colorBlittedMemory=NULL;
   
@@ -261,7 +236,6 @@ void gl_bootstrap_resources()
   gl_is_initialized = 0;
 
   do_snapshot=0;
-  do_xgl_resize=0;
 }
 
 void gl_reset_resources()
@@ -276,20 +250,13 @@ void gl_reset_resources()
   texgrid = 0;
   cpan=0;
 
-  scrnaspect=0; vscrnaspect=0;
   gl_bitmap_type=0;
   gl_bitmap_format=0;
   cabload_err=0;
 
   texnumx=0;
   texnumy=0;
-  vscrndx=0;
-  vscrndy=0;
-  vscrnwidth=0;
-  vscrnheight=0;
   
-  if (colorBlittedMemory) free(colorBlittedMemory);
-    
   colorBlittedMemory=NULL;
   
   vx_cscr_p1=0; vy_cscr_p1=0; vz_cscr_p1=0; vx_cscr_p2=0; vy_cscr_p2=0; vz_cscr_p2=0;
@@ -310,7 +277,6 @@ void gl_reset_resources()
   gl_is_initialized = 0;
   
   do_snapshot=0;
-  do_xgl_resize=0;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -497,20 +463,29 @@ int sysdep_display_16bpp_capable (void)
   return 1; /* direct color */
 }
 
-void InitVScreen (int depth)
+int InitVScreen (int vw, int vh)
 {
   const unsigned char * glVersion;
   double game_aspect ;
   double cabn_aspect ;
   GLdouble vx_gscr_p4b, vy_gscr_p4b, vz_gscr_p4b; 
   GLdouble t1;
+  int visual_orientated_width;
+  int visual_orientated_height;
 
   gl_reset_resources();
 
-  /* clear the buffer */
-
   if (glContext == 0)
-    return;
+    return 1;
+
+  if( ! blit_swapxy )
+  {
+            visual_orientated_width  = visual_width;
+            visual_orientated_height = visual_height;
+  } else {
+            visual_orientated_width  = visual_height;
+            visual_orientated_height = visual_width;
+  }
 
   fetch_GL_FUNCS (libGLName, libGLUName, 0);
 
@@ -528,8 +503,7 @@ void InitVScreen (int depth)
        (glVersion[0]=='1' && glVersion[2]>='2') ) )
   {
        printf("error: an OpenGL >= 1.2 capable driver is required!\n");
-       /* FIXME */
-       exit(1);
+       return 1;
   }
 
   printf("GLINFO: swapxy=%d, flipx=%d, flipy=%d\n",
@@ -541,7 +515,7 @@ void InitVScreen (int depth)
 
   gl_init_cabview ();
 
-  xgl_resize(winwidth, winheight,1);
+  gl_resize(winwidth, winheight, vw, vh);
 
   disp__glDepthFunc (GL_LEQUAL);
 
@@ -758,8 +732,6 @@ void InitVScreen (int depth)
   /* fill the display_palette_info struct */
   memset (&display_palette_info, 0, sizeof (struct sysdep_palette_info));
 
-  display_palette_info.depth = depth;
-
   /* no alpha .. important, because mame has no alpha set ! */
   gl_internal_format=GL_RGB;
 
@@ -812,6 +784,8 @@ void InitVScreen (int depth)
   } else {
 	printf("GLINFO: Using true color mode (no color indices, but direct color)!!\n");
   }
+  
+  return 0;
 }
 
 /* Close down the virtual screen */
@@ -826,8 +800,11 @@ void CloseVScreen (void)
     glvec_exit();
 
   if(colorBlittedMemory!=NULL)
+  {
   	free(colorBlittedMemory);
-  	
+        colorBlittedMemory = NULL;
+  }
+  
   if (gl_is_initialized != 0)
   {
     CHECK_GL_BEGINEND();
@@ -1305,6 +1282,8 @@ void CalcCabPointbyViewpoint(
 void
 SetupFrustum (void)
 {
+  double vscrnaspect = (double) winwidth / (double) winheight;
+
   CHECK_GL_BEGINEND();
 
   disp__glMatrixMode (GL_PROJECTION);
@@ -1365,88 +1344,25 @@ void SetupOrtho (void)
   	
 }
 
-/* Set up the virtual screen */
-
-static void SetWindowRatio()
+void gl_resize(int w, int h, int vw, int vh)
 {
-  /**
-   *
-   * Flat-Screen Ratio:
-   *
-   * scrnaspect : orig screen width/height ratio (view-coord)
-   * vscrnaspect: zoomed screen width/height ratio (view-coord)
-   * vscrnwidth : final screen width (view-coord)
-   * vscrnheight: final screen height (view-coord)
-   * vscrndx: 	  final screen dx to start of game-screen (view-coord)
-   * vscrndy: 	  final screen dy to start of game-screen (view-coord)
-   *
-   */
+  int vscrndx;
+  int vscrndy;
 
-  scrnaspect = (double) visual_orientated_width / (double) visual_orientated_height;
-  vscrnaspect = (double) winwidth / (double) winheight;
+  winheight = h;
+  winwidth  = w;
 
-  if (scrnaspect < vscrnaspect)
-  {
-    vscrnheight = (GLdouble) winheight;
-    vscrnwidth = vscrnheight * scrnaspect;
-    vscrndx = ((GLdouble) winwidth - vscrnwidth) / 2.0;
-    vscrndy = 0.0;
-  }
-  else
-  {
-    vscrnwidth = (GLdouble) winwidth;
-    vscrnheight = vscrnwidth / scrnaspect;
-    vscrndx = 0.0;
-    vscrndy = ((GLdouble) winheight - vscrnheight) / 2.0;
-  }
-
-#ifndef NDEBUG
-	fprintf (stderr, "GLINFO: SetWindowRatio: win (%dx%d), visual (%dx%d)\n",
-		winwidth, winheight, visual_orientated_width, visual_orientated_height);
-	fprintf (stderr, "\t vscrnwidth %f, vscrnheight %f\n",
-		vscrnwidth, vscrnheight);
-	fprintf (stderr, "\t x-diff %f, y-diff %f\n",
-		(double)winwidth - vscrnwidth, (double)winheight - vscrnheight);
-	fprintf (stderr, "\t scrnaspect=%f, vscrnaspect=%f\n",
-		scrnaspect, vscrnaspect);
-	fflush(stderr);
-#endif
-}
-
-void xgl_fixaspectratio(int *w, int *h)
-{
-	vscrnaspect = (double) *w / (double) *h;
-
-	if (scrnaspect < vscrnaspect)
-		*w = *h * scrnaspect;
-	else
-		*h= *w / scrnaspect;
-}
-
-void xgl_resize(int w, int h, int now)
-{
-  winheight= h;
-  winwidth = w;
-
-  if(!now)
-  {
-	do_xgl_resize=1;
-	return;
-  }
-
-  do_xgl_resize=0;
+  vscrndx = (winwidth  - vw) / 2;
+  vscrndy = (winheight - vh) / 2;
 
   CHECK_GL_BEGINEND();
 
   if (glContext!=NULL)
   {
-	SetWindowRatio();
-
 	if (cabview)
 		disp__glViewport (0, 0, winwidth, winheight);
 	else
-		disp__glViewport ((int)(vscrndx+0.5), (int)(vscrndy+0.5),
-		            (int)(vscrnwidth+0.5), (int)(vscrnheight+0.5));
+		disp__glViewport (vscrndx, vscrndy, vw, vh);
 
 /*
 		disp__glViewport (0, 0, winwidth, winheight);
@@ -1459,8 +1375,8 @@ void xgl_resize(int w, int h, int now)
 	else
 		SetupOrtho ();
 
-	fprintf(stderr, "GLINFO: xgl_resize to %dx%d\n", winwidth, winheight);
-	fflush(stderr);
+/*	fprintf(stderr, "GLINFO: xgl_resize to %dx%d\n", winwidth, winheight);
+	fflush(stderr); */
   }
 }
 
@@ -1866,7 +1782,10 @@ void UpdateCabDisplay (struct mame_bitmap *bitmap)
     gl_save_screen_snapshot();
     do_snapshot = 0;
     /* reset upside down .. */
-    xgl_resize(winwidth, winheight, 1);
+    if (cabview)
+            SetupFrustum ();
+    else
+            SetupOrtho ();
   }
 
   if (doublebuffer)
@@ -1950,7 +1869,10 @@ UpdateFlatDisplay (struct mame_bitmap *bitmap)
     gl_save_screen_snapshot();
     do_snapshot = 0;
     /* reset upside down .. */
-    xgl_resize(winwidth, winheight, 1);
+    if (cabview)
+            SetupFrustum ();
+    else
+            SetupOrtho ();
   }
 
   if (doublebuffer)
@@ -1975,6 +1897,7 @@ UpdateFlatDisplay (struct mame_bitmap *bitmap)
  *    - no swapxy, flipx or flipy and no resize !
  *    - shall be Machine->scrbitmap
  */
+
 void UpdateGLDisplay (struct mame_bitmap *bitmap)
 {
   if ( ! texture_init ) InitTextures (bitmap);
@@ -1983,8 +1906,13 @@ void UpdateGLDisplay (struct mame_bitmap *bitmap)
     return;
 
   /* upside down .. to make a good snapshot ;-) */
-  if (do_xgl_resize || do_snapshot)
-	xgl_resize(winwidth, winheight, 1);
+  if (do_snapshot)
+  {
+    if (cabview)
+            SetupFrustum ();
+    else
+            SetupOrtho ();
+  }
 
   if (cabview && !cabload_err)
     UpdateCabDisplay (bitmap);
@@ -1995,24 +1923,12 @@ void UpdateGLDisplay (struct mame_bitmap *bitmap)
   CHECK_GL_ERROR ();
 }
 
-/* used when expose events received */
-
-void
-osd_refresh_screen (void)
-{
-  /* Just re-draw the whole screen */
-  UpdateGLDisplay(NULL);
-}
-
-/* invoked by main tree code to update bitmap into screen */
-
 /**
  * the given bitmap MUST be the original mame core bitmap !!!
  *    - no swapxy, flipx or flipy and no resize !
  *    - shall be Machine->scrbitmap
  */
-void
-sysdep_update_display (struct mame_bitmap *bitmap)
+void UpdateVScreen(struct mame_bitmap *bitmap)
 {
   UpdateGLDisplay (bitmap);
 
@@ -2032,10 +1948,6 @@ sysdep_update_display (struct mame_bitmap *bitmap)
     {
       gl_set_cabview (1-cabview);
       printf("GLINFO: switched cabinet := %d\n", cabview);
-    }
-    else if (code_pressed_memory (KEYCODE_F))
-    {
-	toggleFullscreen();
     }
     else if (code_pressed_memory (KEYCODE_PLUS_PAD))
     {

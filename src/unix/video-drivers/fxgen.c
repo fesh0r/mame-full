@@ -67,10 +67,10 @@ extern int emulation_paused;
 
 int fxwidth = 640;
 int fxheight = 480;
-float vscrntlx;
-float vscrntly;
-float vscrnwidth;
-float vscrnheight;
+int vscrntlx;
+int vscrntly;
+int vscrnwidth;
+int vscrnheight;
 
 static int black;
 static int white;
@@ -98,8 +98,6 @@ static int texdestwidth;
 static int texdestheight;
 static int firsttexdestwidth;
 static int firsttexdestheight;
-static int destwidth;
-static int destheight;
 static int vecgame=0;
 
 struct rc_option fx_opts[] = {
@@ -110,9 +108,9 @@ struct rc_option fx_opts[] = {
    { "resolution",	"res",			rc_use_function, NULL,
      "640x480",		0,			0,		SetResolution,
      "Specify the resolution/ windowsize to use in the form of XRESxYRES" },
-   { "keepaspect",	NULL,			rc_bool,	&normal_use_aspect_ratio,
-     "1",		0,			0,		NULL,
-     "Try / don't try to keep the aspect ratio of a game" },
+   { NULL,              NULL,                   rc_link,        mode_opts,
+     NULL,              0,                      0,              NULL,
+     NULL },
    { NULL,		NULL,			rc_end,		NULL,
      NULL,		0,			0,		NULL,
      NULL }
@@ -237,10 +235,18 @@ void InitTextures(void)
   texnumy=visual_height/texsize;
   if(texnumy*texsize!=visual_height) texnumy++;
   
-  texpercx=(float)texsize/(float)destwidth;
+  if (blit_swapxy)
+  {
+    texpercx=(float)texsize/(float)visual_height;
+    texpercy=(float)texsize/(float)visual_width;
+  }
+  else
+  {
+    texpercx=(float)texsize/(float)visual_width;
+    texpercy=(float)texsize/(float)visual_height;
+  }
+
   if(texpercx>1.0) texpercx=1.0;
-  
-  texpercy=(float)texsize/(float)destheight;
   if(texpercy>1.0) texpercy=1.0;
 
   texdestwidth=vscrnwidth*texpercx;
@@ -445,8 +451,6 @@ static int SetResolution(struct rc_option *option, const char *arg,
 
 int InitVScreen(void)
 {
-  float scrnaspect,vscrnaspect;
-
   grGlideGetVersion(version);
 
   if(Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
@@ -466,64 +470,13 @@ int InitVScreen(void)
      "info: screen resolution set to %dx%d\n", fxwidth, fxheight);
 
   /* clear the buffer */
-
   grBufferClear(0,0,0);
-  if (blit_swapxy)
-  {
-     destwidth  = visual_height;
-     destheight = visual_width;
-  }
-  else
-  {
-     destwidth  = visual_width;
-     destheight = visual_height;
-  }
   
-  if (use_aspect_ratio)
-  {
-     scrnaspect=(float)destwidth/(float)destheight;
-     vscrnaspect=(float)fxwidth/(float)fxheight;
-     
-     if ((Machine->drv->video_attributes &
-           VIDEO_PIXEL_ASPECT_RATIO_MASK) ==
-          VIDEO_PIXEL_ASPECT_RATIO_2_1)
-     {
-       if (blit_swapxy)
-          scrnaspect *= 0.5;
-       else
-          scrnaspect *= 2.0;
-     }
-     
-     if ((Machine->drv->video_attributes &
-           VIDEO_PIXEL_ASPECT_RATIO_MASK) ==
-          VIDEO_PIXEL_ASPECT_RATIO_1_2)
-     {
-       if (blit_swapxy)
-          scrnaspect *= 2.0;
-       else
-          scrnaspect *= 0.5;
-     }
-     
-     if(scrnaspect<vscrnaspect) {
-   	vscrnheight=(float)fxheight;
-   	vscrnwidth=vscrnheight*scrnaspect;
-   	vscrntlx=((float)fxwidth-vscrnwidth)/2.0;
-   	vscrntly=0.0;
-     }
-     else {
-   	vscrnwidth=(float)fxwidth;
-   	vscrnheight=vscrnwidth/scrnaspect;
-   	vscrntlx=0.0;
-   	vscrntly=((float)fxheight-vscrnheight)/2.0;
-     }
-  }
-  else
-  {
-     vscrnwidth=(float)fxwidth;
-     vscrnheight=(float)fxheight;
-     vscrntlx=0.0;
-     vscrntly=0.0;
-  }
+  /* calculate the vscreen boundaries */
+  mode_clip_aspect(fxwidth, fxheight, &vscrnwidth, &vscrnheight,
+     (double)fxwidth/fxheight);
+  vscrntlx=(fxwidth -vscrnwidth )/2;
+  vscrntly=(fxheight-vscrnheight)/2;
   
   /* fill the display_palette_info struct */
   memset(&display_palette_info, 0, sizeof(struct sysdep_palette_info));
@@ -724,15 +677,6 @@ void UpdateFXDisplay(struct mame_bitmap *bitmap)
   grBufferClear(0,0,0);
 
   ui_was_dirty=ui_dirty;
-}
-
-/* used when expose events received */
-
-void osd_refresh_screen(void)
-{
-  /* Just re-draw the whole screen */
-
-  UpdateFXDisplay(NULL);
 }
 
 

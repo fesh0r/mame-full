@@ -349,6 +349,7 @@ int xf86_dga1_create_display(int bitmap_depth)
 		fprintf(stderr_file,"no suitable mode found\n");
 		return OSD_NOT_OK;
 	}
+	mode_fix_aspect((double)(bestmode->hdisplay)/bestmode->vdisplay);
 
 	if(xf86_dga_setup_graphics(bestmode, bitmap_depth))
 		return OSD_NOT_OK;
@@ -360,7 +361,7 @@ int xf86_dga1_create_display(int bitmap_depth)
 	}
 
 	fprintf(stderr_file,"VidMode Switching To Mode: %d x %d\n",
-			bestmode->hdisplay,bestmode->vdisplay);
+		bestmode->hdisplay, bestmode->vdisplay);
 
 	if(!XF86VidModeSwitchToMode(display,xf86ctx.screen,bestmode))
 	{
@@ -368,7 +369,6 @@ int xf86_dga1_create_display(int bitmap_depth)
 		return OSD_NOT_OK;
 	}
 	xf86ctx.vidmode_changed = TRUE;
-
 	if(XGrabKeyboard(display,window,True,
 				GrabModeAsync,GrabModeAsync,CurrentTime))
 	{

@@ -59,17 +59,10 @@ extern char * libGLName;
 extern char * libGLUName;
 extern GLXContext glContext;
 extern int antialias;
-extern int fullscreen_width;
-extern int fullscreen_height;
 extern int winwidth;
 extern int winheight;
-extern int orig_width;
-extern int orig_height;
-extern int visual_orientated_width;
-extern int visual_orientated_height;
 extern int bilinear;
 extern int alphablending;
-extern int fullscreen;
 extern int force_text_width_height;
 
 /* glvec.c */
@@ -90,7 +83,6 @@ extern int cabview;
 extern char *cabname; /* 512 bytes reserved ... */
 
 /* xgl.c */
-void toggleFullscreen();
 void SwapBuffers (void);
 
 /* glvec.c */
@@ -114,7 +106,7 @@ int LoadCabinet (const char *fname);
 /* start sequence */
 void gl_bootstrap_resources();
 int  sysdep_display_16bpp_capable (void);
-void InitVScreen (int depth);
+int  InitVScreen (int vw, int vh);
 void gl_reset_resources();
 int  sysdep_display_alloc_palette (int writable_colors);
 void InitTextures (struct mame_bitmap *bitmap);
@@ -124,6 +116,7 @@ void CloseVScreen (void);
 void gl_reset_resources();
 
 /* misc sequence */
+void UpdateVScreen(struct mame_bitmap *bitmap);
 void  gl_set_bilinear(int new_value);
 void  gl_init_cabview ();
 void  gl_set_cabview(int new_value);
@@ -131,8 +124,7 @@ int   gl_stream_antialias (int aa);
 void  gl_set_antialias(int new_value);
 int   gl_stream_alphablending (int alpha);
 void  gl_set_alphablending(int new_value);
-void  xgl_fixaspectratio(int *w, int *h);
-void  xgl_resize(int w, int h, int now);
+void  gl_resize(int w, int h, int vw, int vh);
 void  CalcCabPointbyViewpoint( 
 		   GLdouble vx_gscr_view, GLdouble vy_gscr_view, 
                    GLdouble *vx_p, GLdouble *vy_p, GLdouble *vz_p

@@ -89,7 +89,7 @@ EXTERN double		aspect_ratio;
 EXTERN int		sound_enabled;
 EXTERN int	 	widthscale;        /* X scale */
 EXTERN int	 	heightscale;       /* Y scale */
-extern int		yarbsize;          /* arbitrary height */
+EXTERN int		yarbsize;          /* arbitrary height */
 EXTERN int		video_colors_used; /* max colors used by any palette */
 EXTERN float		video_fps;
 EXTERN int		video_width;
@@ -139,8 +139,6 @@ int  sysdep_display_alloc_palette(int writable_colors);
 int  sysdep_display_set_pen(int pen, unsigned char red, unsigned char green, unsigned char blue);
 int  sysdep_display_16bpp_capable(void);
 void sysdep_update_display(struct mame_bitmap *bitmap);
-int  sysdep_set_video_mode(void);
-void sysdep_set_text_mode(void);
 void sysdep_set_leds(int leds);
 
 /* input related */
@@ -170,6 +168,11 @@ void osd_debug_close(void);
 /* mode handling functions */
 int mode_disabled(int width, int height, int depth);
 int mode_match(int width, int height);
+void mode_clip_aspect(int width, int height, int *corr_width, int *corr_height,
+  double display_resolution_aspect_ratio);
+void mode_stretch_aspect(int width, int height, int *corr_width, int *corr_height,
+  double display_resolution_aspect_ratio);
+void mode_fix_aspect(double display_resolution_aspect_ratio);
 
 /* frameskip functions */
 int dos_skip_next_frame();

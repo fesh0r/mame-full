@@ -10,11 +10,6 @@
 #include "x11.h"
 #include "xkeyboard.h"
 
-#ifdef xgl
-#include "glmame.h"
-static int xgl_aspect_resize_action = 0;
-#endif
-
 static int current_mouse[MOUSE_AXES] = {0,0,0,0,0,0,0,0};
 static int x11_use_winkeys = 0;
 
@@ -101,33 +96,6 @@ void sysdep_update_keyboard (void)
 					if ( E.xexpose.count == 0 ) x11_window_refresh_screen();
 					break;
 #endif
-#ifdef xgl
-				case ConfigureNotify:
-					if(E.xany.window == window)
-					{
-						if( xgl_aspect_resize_action == 0 &&
-								(
-								 abs(winwidth - E.xconfigure.width) > 50 ||
-								 abs(winheight - E.xconfigure.height) > 50
-								)
-						  )
-						{
-							xgl_aspect_resize_action = 1;
-
-							winwidth  = E.xconfigure.width;
-							winheight = E.xconfigure.height; 
-
-							xgl_fixaspectratio(&winwidth, &winheight);
-
-							XResizeWindow(display,window,winwidth, winheight);
-
-							xgl_resize(winwidth, winheight, 0);
-						} else {
-							xgl_aspect_resize_action = 0;
-						}
-					}
-					break;
-#endif
 				case FocusIn:
 					/* check for multiple events and ignore them */
 					if (focus) break;
@@ -168,7 +136,7 @@ void sysdep_update_keyboard (void)
 					update_xil_window_size( E.xconfigure.width, E.xconfigure.height );
 					break;
 #endif
-					/* input events */    
+				/* input events */
 				case MotionNotify:
 					current_mouse[0] += E.xmotion.x_root;
 					current_mouse[1] += E.xmotion.y_root;
@@ -206,41 +174,17 @@ void sysdep_update_keyboard (void)
 
 					xmame_keyboard_register_event(&event);
 					break;
-#if defined USE_XINPUT_DEVICES || defined X11_JOYSTICK
 				default:
-#endif
 #ifdef USE_XINPUT_DEVICES
 					if (XInputProcessEvent(&E)) break;
 #endif
-
-#if defined(__sgi) && !defined(MESS)
-					/*
-					 * Push the pause keycode in the Xmame keyboard queue, accordingly to
-					 * to the three rules explained below. This should pause/run the game if
-					 * Xmame window is unmapped/mapped.
-					 *
-					 * Rules:
-					 * - mapped with game paused by unmap -> restart the game
-					 * - unmapped with game running -> pause the game and flag the condition
-					 * - unmapped with game paused  -> no action (already paused by the user)
-					 */
-				case MapNotify:
-					game_paused_by_unmap = FALSE;
-					break;
-
-				case UnmapNotify:
-					if (! is_game_paused())
-						game_paused_by_unmap = TRUE;
-					break;
-#endif
-
 #ifdef X11_JOYSTICK
 					/* grrr we can't use case here since the event types for XInput devices
 					   aren't hardcoded, since we should have caught anything else above,
 					   just asume it's an XInput event */
 					process_x11_joy_event(&E);
-					break;
 #endif
+					break;
 			} /* switch */
 		} /* while */
 }

@@ -1,5 +1,9 @@
 #include "xmame.h"
 #include "driver.h"
+#include <math.h>
+
+static int disabled_modes_count = 0;
+static int perfect_aspect = 0;
 
 static int mode_disable(struct rc_option *option, const char *s, int priority);
 
@@ -11,6 +15,9 @@ struct rc_option mode_opts[] = {
    { "keepaspect",	"ka",			rc_bool,	&normal_use_aspect_ratio,
      "1",		0,			0,		NULL,
      "Try / don't try to keep the aspect ratio of a game when selecting the best videomode" },
+   { "perfectaspect",   "pa",                   rc_bool,        &perfect_aspect,
+     "0",		0,			0,		NULL,
+     "Automaticly set yarbsize to get the perfect aspect ratio" },
    { "displayaspectratio", "dar",		rc_float,	&display_aspect_ratio,
      "1.33",		0.5,			2.0,		NULL,
      "Set the display aspect ratio of your monitor. This is used for -keepaspect The default = 1.33 (4/3). Use 0.75 (3/4) for a portrait monitor" },
@@ -23,8 +30,6 @@ struct rc_option mode_opts[] = {
 };
 
 #define MODE_DISABLED_MAX 32
-
-static int disabled_modes_count = 0;
 
 static struct 
 {
@@ -89,66 +94,122 @@ int mode_disabled(int width, int height, int depth)
    return FALSE;
 }
 
-void mode_perfect(int *width, int *height)
-{
-   double pixel_aspect_ratio;
-   static int first_time = TRUE;
-   
-   if (use_aspect_ratio)
-   {
-      /* first of all calculate the pixel aspect_ratio the game has */
-      if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
-      {
-         pixel_aspect_ratio = 1.0;
-      }
-      else
-      {
-         pixel_aspect_ratio = (visual_width * widthscale) / 
-	   ( (yarbsize ? yarbsize : (visual_height * heightscale)) *
-             aspect_ratio);
-      }
-      
-      /* should we maximize the used height, or the used width? */
-      if (display_aspect_ratio >= aspect_ratio)
-      {
-	*height = yarbsize ? yarbsize : (visual_height * heightscale);
-	*width  = *height * pixel_aspect_ratio * display_aspect_ratio;
-      }
-      else
-      {
-         *width  = visual_width  * widthscale;
-         *height = *width / (pixel_aspect_ratio * display_aspect_ratio);
-      }
-      if (first_time)
-      {
-         fprintf(stderr_file, "OSD: Info: Ideal mode for this game = %dx%d\n",
-            *width, *height);
-         first_time = FALSE;
-      }
-   }
-   else
-   {
-      *width  = visual_width;
-      *height = visual_height;
-   }
-}
-
 /* match a given mode to the needed width, height and aspect ratio to
    perfectly display a game.
    This function returns 0 for a not usable mode and 100 for the perfect mode.
 */
-
 int mode_match(int width, int height)
 {
-   int wanted_width, wanted_height;
-   mode_perfect(&wanted_width, &wanted_height);
-       
-   /* does the game fit at all ? */
-   if(width  < (visual_width  * widthscale) ||
-      height < (yarbsize ? yarbsize : (visual_height * heightscale)))
-      return 0;
+  int viswidth, visheight;
+  double perfect_width, perfect_height, perfect_aspect;
+  double aspect = (double)width / height;
+  static int first_time = TRUE;
+  
+  /* setup yarbsize to get the aspect right */
+  mode_fix_aspect(aspect);
+  visheight  = yarbsize ? yarbsize : (visual_height * heightscale);
+  viswidth   = visual_width  * widthscale;
+  
+  /* does the game fit at all ? */
+  if(width  < viswidth ||
+     height < visheight)
+    return 0;
    
-   return ( 100 *
-      ((float)wanted_width  / (abs(width -wanted_width )+wanted_width )) *
-      ((float)wanted_height / (abs(height-wanted_height)+wanted_height)));
+  if (use_aspect_ratio)
+  {
+    if (blit_swapxy)
+      perfect_width = (visheight / aspect_ratio) /
+        (aspect/display_aspect_ratio);
+    else
+      perfect_width = (visheight * aspect_ratio) /
+        (aspect/display_aspect_ratio);
+    
+    perfect_height = visheight;
+         
+    if (perfect_width < viswidth)
+    {
+      perfect_height *= viswidth / perfect_width;
+      perfect_width   = viswidth;
+    }
+
+    if (first_time)
+    {
+      fprintf(stderr_file, "OSD: Info: Ideal mode for this game = %.0fx%.0f\n",
+         perfect_width, perfect_height);
+      first_time = FALSE;
+    }
+    perfect_aspect = perfect_width/perfect_height;
+  }
+  else
+  {
+    perfect_width  = viswidth;
+    perfect_height = visheight;
+    perfect_aspect = aspect;
+  }
+
+  return ( 100 *
+    (perfect_width  / (fabs(width -perfect_width )+perfect_width )) *
+    (perfect_height / (fabs(height-perfect_height)+perfect_height)));
+/*  (perfect_aspect / (fabs(aspect-perfect_aspect)+perfect_aspect))); */
+}
+
+/* calculate a virtual screen contained within the given dimensions
+   which will give the game the correct aspect ratio */
+void mode_clip_aspect(int width, int height, int *corr_width, int *corr_height,
+  double display_resolution_aspect_ratio)
+{
+  double ch, cw;
+
+  ch = height;
+  
+  if (use_aspect_ratio)
+  {
+    cw = height * aspect_ratio *
+      (display_resolution_aspect_ratio/display_aspect_ratio);
+    if ((int)(cw + 0.5) > width )
+    {
+      ch *= width / cw;
+      cw  = width;
+    }
+  }
+  else
+    cw = width;
+  
+  *corr_width  = cw + 0.5;
+  *corr_height = ch + 0.5;
+}
+
+/* calculate a screen with at least the given dimensions
+   which will give the game the correct aspect ratio */
+void mode_stretch_aspect(int width, int height, int *corr_width, int *corr_height,
+  double display_resolution_aspect_ratio)
+{
+  double ch, cw;
+
+  ch = height;
+  
+  if (use_aspect_ratio)
+  {
+    cw = height * aspect_ratio *
+      (display_resolution_aspect_ratio/display_aspect_ratio);
+    if ((int)(cw+0.5) < width )
+    {
+      ch *= (double)width / cw;
+      cw  = width;
+    }
+  }
+  else
+    cw = width;
+  
+  *corr_width  = cw + 0.5;
+  *corr_height = ch + 0.5;
+}
+
+void mode_fix_aspect(double display_resolution_aspect_ratio)
+{
+  if(!use_aspect_ratio || !perfect_aspect)
+    return;
+    
+  yarbsize = (visual_width * widthscale) / 
+    (aspect_ratio * (display_resolution_aspect_ratio/display_aspect_ratio));
 }

@@ -275,7 +275,7 @@ static int set_video_mode(int depth)
     fprintf(stderr_file,"set_video_mode called\n");
 #endif
     scaled_visual_width = visual_width  * widthscale;
-    scaled_visual_height = visual_height * heightscale;
+    scaled_visual_height = yarbsize? yarbsize:visual_height * heightscale;
 
     if (force_x == 0)
         video_width = scaled_visual_width;
@@ -321,6 +321,7 @@ static int set_video_mode(int depth)
                 }
             }
         }
+        
         if (! best_score) {
             fprintf(stderr_file, "GGI: Couldn't find a suitable mode for a resolution of %dx%d\n"
                     "Trying to get any mode....\n",
@@ -341,8 +342,11 @@ static int set_video_mode(int depth)
 
     if (ggiSetMode(vis, &mode) != 0)
        return(FALSE);
+       
+    mode_fix_aspect((double)video_width/video_height);
 
  mode_set:
+    scaled_visual_height = yarbsize? yarbsize:visual_height * heightscale;
 
     ggiGetMode(vis, &mode); /* Maybe we did not get what we asked for */
     if ((mode.visible.x < scaled_visual_width)||
