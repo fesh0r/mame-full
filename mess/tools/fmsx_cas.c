@@ -5,7 +5,7 @@
 #include "formats/fmsx_cas.h"
 #include "imgtool.h"
 #include "osdtools.h"
-#include "mess/utils.h"
+#include "../mess/utils.h"
 
 /*
 	MSX module
