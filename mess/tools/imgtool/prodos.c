@@ -399,6 +399,15 @@ static imgtoolerr_t prodos_save_block(imgtool_image *image,
 
 
 
+static imgtoolerr_t prodos_clear_block(imgtool_image *image, int block)
+{
+	UINT8 buffer[BLOCK_SIZE];
+	memset(buffer, 0, sizeof(buffer));
+	return prodos_save_block(image, block, buffer);
+}
+
+
+
 /* ----------------------------------------------------------------------- */
 
 static imgtoolerr_t prodos_diskimage_open(imgtool_image *image)
@@ -562,7 +571,7 @@ static imgtoolerr_t prodos_alloc_block(imgtool_image *image, UINT8 *bitmap,
 		err = prodos_load_volume_bitmap(image, &alloc_bitmap);
 		if (err)
 			goto done;
-		alloc_bitmap = bitmap;
+		bitmap = alloc_bitmap;
 	}
 
 	for (i = (di->volume_bitmap_block + bitmap_blocks); i < di->total_blocks; i++)
@@ -762,10 +771,11 @@ static imgtoolerr_t prodos_lookup_path(imgtool_image *image, const char *path,
 	struct prodos_direnum my_direnum;
 	UINT32 block = ROOTDIR_BLOCK;
 	const char *old_path;
-	UINT32 this_block;
+	UINT16 this_block;
 	UINT32 this_index;
-	UINT32 free_block = 0;
+	UINT16 free_block = 0;
 	UINT32 free_index = 0;
+	UINT8 buffer[BLOCK_SIZE];
 
 	if (!direnum)
 		direnum = &my_direnum;
@@ -775,7 +785,7 @@ static imgtoolerr_t prodos_lookup_path(imgtool_image *image, const char *path,
 		memset(direnum, 0, sizeof(*direnum));
 		err = prodos_enum_seek(image, direnum, block, 0);
 		if (err)
-			return err;
+			goto done;
 
 		do
 		{
@@ -784,7 +794,7 @@ static imgtoolerr_t prodos_lookup_path(imgtool_image *image, const char *path,
 
 			err = prodos_get_next_dirent(image, direnum, ent);
 			if (err)
-				return err;
+				goto done;
 
 			/* if we need to create a file entry and this is free, track it */
 			if (create && direnum->block && !free_block && !ent->storage_type)
@@ -803,23 +813,51 @@ static imgtoolerr_t prodos_lookup_path(imgtool_image *image, const char *path,
 		{
 			/* next part of the file */
 			if (!is_dir_storagetype(ent->storage_type))
-				return IMGTOOLERR_FILENOTFOUND;
+			{
+				err = IMGTOOLERR_FILENOTFOUND;
+				goto done;
+			}
 			block = ent->key_pointer;
 		}
 		else if (!direnum->block)
 		{
 			/* did not find file; maybe we need to create it */
 			if (create == CREATE_NONE)
-				return IMGTOOLERR_FILENOTFOUND;
+			{
+				err = IMGTOOLERR_FILENOTFOUND;
+				goto done;
+			}
 
-			/* we dont support expanding the directory yet */
+			/* do we need to expand the directory? */
 			if (!free_block)
-				return IMGTOOLERR_UNIMPLEMENTED;
+			{
+				err = prodos_load_block(image, this_block, buffer);
+				if (err)
+					goto done;
+
+				/* allocate a block */
+				err = prodos_alloc_block(image, NULL, &free_block);
+				if (err)
+					goto done;
+
+				/* clear out this new block */
+				err = prodos_clear_block(image, free_block);
+				if (err)
+					goto done;
+
+				/* save this link */
+				place_integer(buffer, 2, 2, free_block);
+				err = prodos_save_block(image, this_block, buffer);
+				if (err)
+					goto done;
+
+				free_index = 0;
+			}
 
 			/* seek back to the free space */
 			err = prodos_enum_seek(image, direnum, free_block, free_index);
 			if (err)
-				return err;
+				goto done;
 
 			/* prepare the dirent */
 			memset(ent, 0, sizeof(*ent));
@@ -830,10 +868,13 @@ static imgtoolerr_t prodos_lookup_path(imgtool_image *image, const char *path,
 			/* and place it */
 			err = prodos_put_dirent(image, direnum, ent);
 			if (err)
-				return err;
+				goto done;
 		}
 	}
-	return IMGTOOLERR_SUCCESS;
+
+	err = IMGTOOLERR_SUCCESS;
+done:
+	return err;
 }
 
 

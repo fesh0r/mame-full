@@ -509,7 +509,9 @@ void report_message(messtest_messagetype_t msgtype, const char *fmt, ...)
 	va_list va;
 	const char *prefix1;
 	const char *prefix2;
-	int width = 64;
+	int column_filename = 15;
+	int column_tag = 3;
+	int column_message = 80 - column_filename - column_tag;
 	int last_space, base, i;
 
 	va_start(va, fmt);
@@ -524,13 +526,16 @@ void report_message(messtest_messagetype_t msgtype, const char *fmt, ...)
 	i = 0;
 	do
 	{
-		if ((buf[i] == '\0') || (i - base > width))
+		if ((buf[i] == '\0') || (i - base > column_message))
 		{
 			if (buf[i] && (last_space > 0))
 				buf[last_space] = '\0';
 			else
 				last_space = i;
-			printf("%-15s %-3s %s\n", prefix1, prefix2, &buf[base]);
+			printf("%-*s %-*s %s\n",
+				column_filename, prefix1,
+				column_tag, prefix2,
+				&buf[base]);
 
 			base = last_space + 1;
 			last_space = -1;
