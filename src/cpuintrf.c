@@ -605,7 +605,7 @@ const struct cpu_interface cpuintrf[] =
 #endif
 #if (HAS_CP1600)
 #define cp1600_ICount cp1600_icount
-	CPU0(CP1600,   cp1600,	 0,  0,1.00, 8, 16,	  0,16,LE,1, 3	),
+	CPU0(CP1600,   cp1600,	 4,  0,1.00, 16, 24bew,  -1,17,BE,2,3	),
 #endif
 #if (HAS_F8)
 #define f8_ICount f8_icount

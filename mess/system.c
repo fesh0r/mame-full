@@ -161,8 +161,8 @@ TESTDRIVER( coleconb )	/* ColecoVision (No BIOS load)						*/
 //	DRIVER( raaspec )	/* RA+A Spectrum - Modified Vectrex 				*/
 
 	/* MATTEL */
-//	DRIVER( intv )      /* Mattel Intellivision - 1979 AKA INTV				*/
-//	DRIVER( intvsrs )   /* Intellivision (Sears License) - 19??				*/
+	DRIVER( intv )      /* Mattel Intellivision - 1979 AKA INTV				*/
+	DRIVER( intvsrs )   /* Intellivision (Sears License) - 19??				*/
 
 	/* ENTEX */
 	DRIVER( advision )	/* Adventurevision									*/

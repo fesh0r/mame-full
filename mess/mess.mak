@@ -70,7 +70,7 @@ CPUS+=TMS99010@
 #CPUS+=Z8000@
 #CPUS+=TMS320C10@
 #CPUS+=CCPU@
-#CPUS+=PDP1@
+CPUS+=PDP1@
 #CPUS+=ADSP2100@
 #CPUS+=ADSP2105@
 #CPUS+=PSXCPU@
@@ -202,7 +202,7 @@ DRVLIBS = \
 	$(OBJ)/hp48.a     \
 	$(OBJ)/cpschngr.a \
 	$(OBJ)/gce.a	  \
-#	$(OBJ)/pdp1.a	  \
+	$(OBJ)/pdp1.a	  \
 
 
 
