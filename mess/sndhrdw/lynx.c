@@ -1,5 +1,6 @@
 /***************************************************************************
 ***************************************************************************/
+#include <assert.h>
 #include <math.h>
 #include "osd_cpu.h"
 #include "sound/streams.h"
@@ -8,6 +9,15 @@
 #include "sound/mixer.h"
 
 #include "includes/lynx.h"
+
+/* accordingly to atari's reference manual
+   there were no stereo lynx produced (the manual knows only production until mid 1991)
+   the howard/developement board might have stereo support
+   the revised lynx 2 hardware might have stereo support at least at the stereo jacks
+
+   some games support stereo
+*/
+
 
 /*
 AUDIO_A	EQU $FD20
@@ -74,6 +84,8 @@ AUD_A_RIGHT	EQU %00000001
  */
 static int mixer_channel;
 static int usec_per_sample;
+static int *shift_mask;
+static int *shift_xor;
 
 typedef struct {
     int nr;
@@ -91,6 +103,8 @@ typedef struct {
 	} n;
     } reg;
     UINT8 attenuation;
+    int mask;
+    int shifter;
     int ticks;
     int count;
 } LYNX_AUDIO;
@@ -125,15 +139,25 @@ static void lynx_audio_execute(LYNX_AUDIO *channel)
 	} else {
 	    int t=1<<(channel->reg.n.control1&7);
 	    for (;;) {
-		for (;(channel->ticks>=t)&&channel->count<=channel->reg.n.counter/2; channel->ticks-=t)
-		    channel->count++;
+		for (;(channel->ticks>=t)&&channel->count>=0; channel->ticks-=t)
+		    channel->count--;
 		if (channel->ticks<t) break;
-		for (;(channel->ticks>=t)&&channel->count<=channel->reg.n.counter; channel->ticks-=t)
-		    channel->count++;
-		if (channel->count>=channel->reg.n.counter) channel->count=0;
-		if (channel->ticks<t) break;
+		if (channel->count<0) {
+		    channel->count=channel->reg.n.counter;
+		    channel->shifter=((channel->shifter<<1)&0x3ff)
+			|shift_xor[channel->shifter&channel->mask];
+		    if (channel->reg.n.control1&0x20) {
+			if (channel->shifter&1) {
+			    channel->reg.n.output+=channel->reg.n.volume;
+			} else {
+			    channel->reg.n.output-=channel->reg.n.volume;
+			}
+		    }
+		}
 	    }
-	    channel->reg.n.output=channel->count<channel->reg.n.counter/2?channel->reg.n.volume:0;
+	    if (!(channel->reg.n.control1&0x20)) {
+		channel->reg.n.output=channel->shifter&1?0-channel->reg.n.volume:channel->reg.n.volume;
+	    }
 	}
     } else {
 	channel->ticks=0;
@@ -149,24 +173,30 @@ UINT8 lynx_audio_read(int offset)
     UINT8 data=0;
     stream_update(mixer_channel,0);
     switch (offset) {
-    case 0x20: case 0x21: case 0x22: case 0x23: case 0x24: case 0x25: case 0x26: case 0x27:
-    case 0x28: case 0x29: case 0x2a: case 0x2b: case 0x2c: case 0x2d: case 0x2e: case 0x2f:
-    case 0x30: case 0x31: case 0x32: case 0x33: case 0x34: case 0x35: case 0x36: case 0x37:
-    case 0x38: case 0x39: case 0x3a: case 0x3b: case 0x3c: case 0x3d: case 0x3e: case 0x3f:
+    case 0x20: case 0x21: case 0x22: case 0x24: case 0x25:
+    case 0x28: case 0x29: case 0x2a: case 0x2c: case 0x2d: 
+    case 0x30: case 0x31: case 0x32: case 0x34: case 0x35: 
+    case 0x38: case 0x39: case 0x3a: case 0x3c: case 0x3d: 
 	data=lynx_audio[(offset>>3)&3].reg.data[offset&7];
-//	logerror("%.6f audio channel %d read %.2x %.2x\n", timer_get_time(), (offset>>3)&3, offset&7, data);
+	break;
+    case 0x23: case 0x2b: case 0x33: case 0x3b: 
+	data=lynx_audio[(offset>>3)&3].shifter&0xff;
+	break;
+    case 0x26:case 0x2e:case 0x36:case 0x3e:
+	data=lynx_audio[(offset>>3)&3].count;
+	break;
+    case 0x27: case 0x2f: case 0x37: case 0x3f:
+	data=(lynx_audio[(offset>>3)&3].shifter>>4)&0xf0;
+	data|=lynx_audio[(offset>>3)&3].reg.data[offset&7]&0x0f;
 	break;
     case 0x40: case 0x41: case 0x42: case 0x43: 
 	data=lynx_audio[offset&3].attenuation;
-//	logerror("%.6f audio read %.2x %.2x\n", timer_get_time(), offset, data);
 	break;
     case 0x44: 
 	data=attenuation_enable;
-//	logerror("%.6f audio read %.2x %.2x\n", timer_get_time(), offset, data);
 	break;
     case 0x50:
 	data=master_enable;
-//	logerror("%.6f audio read %.2x %.2x\n", timer_get_time(), offset, data);
 	break;
     }
     return data;
@@ -174,26 +204,42 @@ UINT8 lynx_audio_read(int offset)
 
 void lynx_audio_write(int offset, UINT8 data)
 {
+//	logerror("%.6f audio write %.2x %.2x\n", timer_get_time(), offset, data);
+    LYNX_AUDIO *channel=lynx_audio+((offset>>3)&3);
     stream_update(mixer_channel,0);
     switch (offset) {
-    case 0x20: case 0x21: case 0x22: case 0x23: case 0x24: case 0x25: case 0x26: case 0x27:
-    case 0x28: case 0x29: case 0x2a: case 0x2b: case 0x2c: case 0x2d: case 0x2e: case 0x2f:
-    case 0x30: case 0x31: case 0x32: case 0x33: case 0x34: case 0x35: case 0x36: case 0x37:
-    case 0x38: case 0x39: case 0x3a: case 0x3b: case 0x3c: case 0x3d: case 0x3e: case 0x3f:
+    case 0x20: case 0x22: case 0x24: case 0x26:
+    case 0x28: case 0x2a: case 0x2c: case 0x2e:
+    case 0x30: case 0x32: case 0x34: case 0x36:
+    case 0x38: case 0x3a: case 0x3c: case 0x3e:
 	lynx_audio[(offset>>3)&3].reg.data[offset&7]=data;
-//	logerror("%.6f audio channel %d write %.2x %.2x\n", timer_get_time(), (offset>>3)&3, offset&7, data);
 	break;
-    case 0x40: case 0x41: case 0x42: case 0x43: 
+    case 0x23: case 0x2b: case 0x33: case 0x3b: 
+	lynx_audio[(offset>>3)&3].reg.data[offset&7]=data;
+	lynx_audio[(offset>>3)&3].shifter&=~0xff;
+	lynx_audio[(offset>>3)&3].shifter|=data;
+	break;
+    case 0x27: case 0x2f: case 0x37: case 0x3f:
+	lynx_audio[(offset>>3)&3].reg.data[offset&7]=data;
+	lynx_audio[(offset>>3)&3].shifter&=~0xf00;
+	lynx_audio[(offset>>3)&3].shifter|=(data&0xf0)<<4;
+	break;
+    case 0x21: case 0x25:
+    case 0x29: case 0x2d:
+    case 0x31: case 0x35:
+    case 0x39: case 0x3d:
+	channel->reg.data[offset&7]=data;
+	channel->mask=channel->reg.n.feedback;
+	channel->mask|=(channel->reg.data[5]&0x80)<<1;
+	break;
+    case 0x40: case 0x41: case 0x42: case 0x43: // lynx2 only, howard extension board
 	lynx_audio[offset&3].attenuation=data;
-//	logerror("%.6f audio write %.2x %.2x\n", timer_get_time(), offset, data);
 	break;
     case 0x44: 
-	attenuation_enable=data;
-//	logerror("%.6f audio write %.2x %.2x\n", timer_get_time(), offset, data);
+	attenuation_enable=data; //lynx2 only, howard extension board
 	break;
     case 0x50:
-	master_enable=data;
-//	logerror("%.6f audio write %.2x %.2x\n", timer_get_time(), offset, data);
+	master_enable=data;//lynx2 only, howard write only
 	break;
     }
 }
@@ -201,7 +247,24 @@ void lynx_audio_write(int offset, UINT8 data)
 /************************************/
 /* Sound handler update             */
 /************************************/
-void lynx_update (int param, INT16 **buffer, int length)
+void lynx_update (int param, INT16 *buffer, int length)
+{
+    int i, j;
+    LYNX_AUDIO *channel;
+    int v;
+    
+    for (i = 0; i < length; i++, buffer++)
+    {
+	*buffer = 0;
+	for (channel=lynx_audio, j=0; j<ARRAY_LENGTH(lynx_audio); j++, channel++) {
+	    lynx_audio_execute(channel);
+	    v=channel->reg.n.output;
+	    *buffer+=v*15;
+	}
+    }
+}
+
+void lynx2_update (int param, INT16 **buffer, int length)
 {
     INT16 *left=buffer[0], *right=buffer[1];
     int i, j;
@@ -233,20 +296,64 @@ void lynx_update (int param, INT16 **buffer, int length)
     }
 }
 
+static void lynx_sound_init(void)
+{
+    int i;
+    shift_mask=(int*)malloc(512*sizeof(int));
+    assert(shift_mask!=0);
+
+    shift_xor=(int*)malloc(4096*sizeof(int));
+    assert(shift_xor!=0);
+
+    for (i=0; i<512; i++) {
+	shift_mask[i]=0;
+	if (i&1) shift_mask[i]|=1;
+	if (i&2) shift_mask[i]|=2;
+	if (i&4) shift_mask[i]|=4;
+	if (i&8) shift_mask[i]|=8;
+	if (i&0x10) shift_mask[i]|=0x10;
+	if (i&0x20) shift_mask[i]|=0x20;
+	if (i&0x40) shift_mask[i]|=0x400;
+	if (i&0x80) shift_mask[i]|=0x800;
+	if (i&0x100) shift_mask[i]|=0x80;
+    }
+    for (i=0; i<4096; i++) {
+	int j;
+	shift_xor[i]=1;
+	for (j=4096/2; j>0; j>>=1) {
+	    if (i&j) shift_xor[i]^=1;
+	}
+    }
+}
+
 /************************************/
 /* Sound handler start              */
 /************************************/
 int lynx_custom_start (const struct MachineSound *driver)
+{
+    if (!options.samplerate) return 0;
+
+    mixer_channel = stream_init("lynx", MIXER(50, MIXER_PAN_CENTER), 
+				options.samplerate, 0, lynx_update);
+
+    usec_per_sample=1000000/options.samplerate;
+    
+    lynx_sound_init();
+    return 0;
+}
+
+int lynx2_custom_start (const struct MachineSound *driver)
 {
     const int vol[2]={ MIXER(50, MIXER_PAN_LEFT), MIXER(50, MIXER_PAN_RIGHT) };
     const char *names[2]= { "lynx", "lynx" };
 	
     if (!options.samplerate) return 0;
 
-    mixer_channel = stream_init_multi(2, names, vol, options.samplerate, 0, lynx_update);
+    mixer_channel = stream_init_multi(2, names, vol, options.samplerate, 0, lynx2_update);
 
     usec_per_sample=1000000/options.samplerate;
     
+    lynx_sound_init();
     return 0;
 }
 
@@ -255,6 +362,8 @@ int lynx_custom_start (const struct MachineSound *driver)
 /************************************/
 void lynx_custom_stop (void)
 {
+    free(shift_xor);
+    free(shift_mask);
 }
 
 void lynx_custom_update (void)
