@@ -405,7 +405,7 @@ static int GetMessIcon(int nGame, int nSoftwareType)
     char buffer[32];
 	const char *iconname;
 
-    if (nSoftwareType < IO_ALIAS) {
+    if ((nSoftwareType > IO_END) && (nSoftwareType < IO_ALIAS)) {
 		iconname = lookupdevice(nSoftwareType)->shortname;
         index = (nGame * IO_COUNT) + nSoftwareType;
 
