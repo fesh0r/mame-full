@@ -11,6 +11,7 @@ System Driver Changes:
 - [PDP1] Added support for lightpen with variable tip size. [Raphael Nabet]
 - [COCO] Scaled the joystick port to 64 quanta rather than 256 (bug #340).
   [tim lindner]
+- [MAC] Improved mouse emulation when moving diagonally. [Raphael Nabet]
 
 Source Changes:
 ---------------
