@@ -82,6 +82,22 @@ static void putfile_start_handler(struct messtest_state *state, const char **att
 
 static void putfile_end_handler(struct messtest_state *state, const void *buffer, size_t size)
 {
+	imgtoolerr_t err;
+	imgtool_stream *stream;
+	
+	stream = stream_open_mem((void *) buffer, size);
+	if (!stream)
+	{
+		error_outofmemory(state);
+		return;
+	}
+
+	err = img_writefile(image, filename_buffer, stream, NULL, NULL);
+	if (err)
+	{
+		error_imgtoolerr(state, err);
+		return;
+	}
 }
 
 
@@ -125,6 +141,12 @@ static void checkdirectory_end_handler(struct messtest_state *state, const void 
 	imgtool_dirent ent;
 	char filename_buffer[1024];
 	int i;
+
+	if (!image)
+	{
+		error_report(state, "Image not loaded");
+		return;
+	}
 
 	memset(&ent, 0, sizeof(ent));
 	ent.filename = filename_buffer;

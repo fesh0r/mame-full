@@ -25,7 +25,8 @@ enum blobparse_state
 	BLOBSTATE_INITIAL,
 	BLOBSTATE_AFTER_0,
 	BLOBSTATE_HEX,
-	BLOBSTATE_INQUOTES
+	BLOBSTATE_SINGLEQUOTES,
+	BLOBSTATE_DOUBLEQUOTES
 };
 
 struct messtest_state
@@ -200,9 +201,14 @@ static void data_handler_binary(struct messtest_state *state, const XML_Char *s,
 				state->blobstate = BLOBSTATE_AFTER_0;
 				i++;
 			}
+			else if (s[i] == '\'')
+			{
+				state->blobstate = BLOBSTATE_SINGLEQUOTES;
+				i++;
+			}
 			else if (s[i] == '\"')
 			{
-				state->blobstate = BLOBSTATE_INQUOTES;
+				state->blobstate = BLOBSTATE_DOUBLEQUOTES;
 				i++;
 			}
 			else
@@ -236,8 +242,9 @@ static void data_handler_binary(struct messtest_state *state, const XML_Char *s,
 			}
 			break;
 
-		case BLOBSTATE_INQUOTES:
-			if (s[i] == '\"')
+		case BLOBSTATE_SINGLEQUOTES:
+		case BLOBSTATE_DOUBLEQUOTES:
+			if (s[i] == (state->blobstate == BLOBSTATE_SINGLEQUOTES ? '\'' : '\"'))
 			{
 				state->blobstate = BLOBSTATE_INITIAL;
 				i++;
@@ -255,7 +262,7 @@ static void data_handler_binary(struct messtest_state *state, const XML_Char *s,
 	return;
 
 parseerror:
-	error_outofmemory(state);
+	error_report(state, "Parse Error");
 	return;
 }
 
