@@ -73,6 +73,7 @@ enum { IPT_END=1,IPT_PORT,
 	IPT_KEYBOARD, IPT_UCHAR,
 	IPT_CONFIG_NAME, IPT_CONFIG_SETTING,
 	IPT_MOUSE_X, IPT_MOUSE_Y,
+	IPT_START, IPT_SELECT,
 #endif
 /* Many games poll an input bit to check for vertical blanks instead of using */
 /* interrupts. This special value allows you to handle that. If you set one of the */

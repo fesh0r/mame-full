@@ -140,8 +140,8 @@ INPUT_PORTS_START( gameboy )
 	PORT_BIT_NAME( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN,  "Down" )
 	PORT_BIT_NAME( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1,        "Button A" )
 	PORT_BIT_NAME( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2,        "Button B" )
-	PORT_BIT_NAME( 0x80, IP_ACTIVE_LOW, IPT_START1,         "Start" )
-	PORT_BIT_NAME( 0x40, IP_ACTIVE_LOW, IPT_SELECT1,        "Select" )
+	PORT_BIT_NAME( 0x80, IP_ACTIVE_LOW, IPT_START,          "Start" )
+	PORT_BIT_NAME( 0x40, IP_ACTIVE_LOW, IPT_SELECT,         "Select" )
 INPUT_PORTS_END
 
 static unsigned char palette[] =

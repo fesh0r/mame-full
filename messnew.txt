@@ -22,7 +22,8 @@ User Interface Changes:
   were formerly represented with DIP switches.  [Nate Woods]
   
 - [Windows] Revamped options menu, and added a keyboard customization menu.
-  [Nate Woods]
+  Also added the ability to create artwork for controller configuration
+  screens (used NES as a testbed).  [Nate Woods]
 
 Imgtool Changes:
 ----------------
@@ -32,4 +33,9 @@ Source Changes:
 ---------------
 - Fixed a bug that would cause a hang when parsing certain invalid filenames
   (for example, D:\FOO\D:\FOO\BAR.ZIP). [Nate Woods]
+
+- Revamped some inputs, added IPT_MOUSE, IPT_START, and IPT_SELECT.  The
+  latter two can be used with IPF_PLAYER masks.  Also removed legacy
+  IPT_SELECT1-4, and IPT_START1-4 should no longer be used by MESS. 
+  [Nate Woods]
 

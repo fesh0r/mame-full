@@ -878,6 +878,8 @@ static int categorize_port_type(UINT32 type)
 	case IPT_LIGHTGUN_Y:
 	case IPT_MOUSE_X:
 	case IPT_MOUSE_Y:
+	case IPT_START:
+	case IPT_SELECT:
 		result = INPUT_CATEGORY_CONTROLLER;
 		break;
 
@@ -902,19 +904,30 @@ static int categorize_port_type(UINT32 type)
 
 
 
-int inputx_categorize_port(const struct InputPort *port)
+int input_categorize_port(const struct InputPort *port)
 {
+	if ((port->type & ~IPF_MASK) == IPT_EXTENSION)
+		port--;
 	return categorize_port_type(port->type);
 }
 
 
 
-int inputx_has_input_category(int category)
+int input_player_number(const struct InputPort *port)
+{
+	if ((port->type & ~IPF_MASK) == IPT_EXTENSION)
+		port--;
+	return (port->type & IPF_PLAYERMASK) / IPF_PLAYER2;
+}
+
+
+
+int input_has_input_category(int category)
 {
 	struct InputPort *in;
 	for (in = Machine->input_ports; in->type != IPT_END; in++)
 	{
-		if (inputx_categorize_port(in) == category)
+		if (input_categorize_port(in) == category)
 			return TRUE;
 	}
 	return FALSE;
@@ -922,7 +935,7 @@ int inputx_has_input_category(int category)
 
 
 
-int inputx_count_players(void)
+int input_count_players(void)
 {
 	const struct InputPortTiny *in;
 	int joystick_count;

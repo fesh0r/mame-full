@@ -76,8 +76,10 @@ struct _dialog_box
 	struct dialog_info_trigger *trigger_first;
 	struct dialog_info_trigger *trigger_last;
 	WORD item_count;
-	WORD cx, cy;
+	WORD size_x, size_y;
 	WORD pos_x, pos_y;
+	WORD cursize_x, cursize_y;
+	WORD home_y;
 	int combo_string_count;
 	int combo_default_value;
 	memory_pool mempool;
@@ -267,6 +269,8 @@ static int dialog_write(struct _dialog_box *di, const void *ptr, size_t sz, int 
 static int dialog_write_string(dialog_box *di, const char *str)
 {
 	const WCHAR *wstr;
+	if (!str)
+		str = "";
 	wstr = A2W(str);	
 	return dialog_write(di, wstr, (wcslen(wstr) + 1) * sizeof(WCHAR), 2);
 }
@@ -276,7 +280,7 @@ static int dialog_write_string(dialog_box *di, const char *str)
 //============================================================
 
 static int dialog_write_item(dialog_box *di, DWORD style, short x, short y,
-	 short cx, short cy, const char *str, WORD class_atom, WORD *id)
+	 short width, short height, const char *str, WORD class_atom, WORD *id)
 {
 	DLGITEMTEMPLATE item_template;
 	WORD w[2];
@@ -285,8 +289,8 @@ static int dialog_write_item(dialog_box *di, DWORD style, short x, short y,
 	item_template.style = style;
 	item_template.x = x;
 	item_template.y = y;
-	item_template.cx = cx;
-	item_template.cy = cy;
+	item_template.cx = width;
+	item_template.cy = height;
 	item_template.id = di->item_count + 1;
 
 	if (dialog_write(di, &item_template, sizeof(item_template), 4))
@@ -388,8 +392,8 @@ static void dialog_prime(dialog_box *di)
 
 	dlg_template = (DLGTEMPLATE *) GlobalLock(di->handle);
 	dlg_template->cdit = di->item_count;
-	dlg_template->cx = di->cx;
-	dlg_template->cy = di->cy;
+	dlg_template->cx = di->size_x;
+	dlg_template->cy = di->size_y;
 	GlobalUnlock(di->handle);
 }
 
@@ -404,6 +408,58 @@ static LRESULT dialog_get_combo_value(HWND dialog_item, UINT message, WPARAM wpa
 	if (idx == CB_ERR)
 		return 0;
 	return SendMessage(dialog_item, CB_GETITEMDATA, idx, 0);
+}
+
+//============================================================
+//	compute_dlgunits_multiple
+//============================================================
+
+static void compute_dlgunits_multiple(float *xratio, float *yratio)
+{
+	dialog_box *dialog;
+	short offset_x = 2048;
+	short offset_y = 2048;
+	const char *wnd_title = "Foo";
+	WORD id;
+	HWND dlg_window, child_window;
+	RECT r;
+	
+	dialog = win_dialog_init(NULL);
+	if (!dialog)
+		return;
+
+	if (dialog_write_item(dialog, WS_CHILD | WS_VISIBLE | SS_LEFT,
+			0, 0, offset_x, offset_y, wnd_title, DLGITEM_STATIC, &id))
+		return;
+
+	dialog_prime(dialog);
+	dlg_window = CreateDialogIndirectParam(NULL, dialog->handle, win_video_window, NULL, 0);
+	child_window = GetDlgItem(dlg_window, id);
+	GetWindowRect(child_window, &r);
+	CloseWindow(dlg_window);
+
+	win_dialog_exit(dialog);
+
+	*xratio = (float)(r.right - r.left) / offset_x;
+	*yratio = (float)(r.bottom - r.top) / offset_y;
+}
+
+//============================================================
+//	pixels_to_dlgunits
+//============================================================
+
+static void pixels_to_dlgunits(WORD *x, WORD *y)
+{
+	static float xratio, yratio;
+
+	if ((xratio == 0) || (yratio == 0))
+	{
+		compute_dlgunits_multiple(&xratio, &yratio);
+		if ((xratio == 0) || (yratio == 0))
+			return;
+	}
+	*x /= xratio;
+	*y /= yratio;
 }
 
 //============================================================
@@ -463,8 +519,8 @@ static void dialog_new_control(struct _dialog_box *di, short *x, short *y)
 {
 	if (di->pos_y >= MAX_DIALOG_HEIGHT)
 	{
-		di->pos_x = di->cx;
-		di->pos_y = 0;
+		di->pos_x = di->cursize_x;
+		di->pos_y = di->home_y;
 	}
 
 	*x = di->pos_x + DIM_HORIZONTAL_SPACING;
@@ -482,10 +538,14 @@ static void dialog_finish_control(struct _dialog_box *di, short x, short y)
 	di->pos_y = y;
 
 	/* update dialog size */
-	if (x > di->cx)
-		di->cx = x;
-	if (y > di->cy)
-		di->cy = y;
+	if (x > di->size_x)
+		di->size_x = x;
+	if (y > di->size_y)
+		di->size_y = y;
+	if (x > di->cursize_x)
+		di->cursize_x = x;
+	if (y > di->cursize_y)
+		di->cursize_y = y;
 }
 
 
@@ -693,7 +753,7 @@ static int dialog_add_single_seqselect(struct _dialog_box *di, short x, short y,
 
 	code = input_port_seq(port);
 
-	if (dialog_write_item(di, WS_CHILD | WS_VISIBLE | ES_CENTER,
+	if (dialog_write_item(di, WS_CHILD | WS_VISIBLE | SS_ENDELLIPSIS | ES_CENTER | SS_SUNKEN,
 			x, y, cx, cy, "", DLGITEM_EDIT, NULL))
 		return 1;
 	stuff = (struct seqselect_stuff *) pool_malloc(&di->mempool, sizeof(struct seqselect_stuff));
@@ -713,33 +773,46 @@ static int dialog_add_single_seqselect(struct _dialog_box *di, short x, short y,
 //	win_dialog_add_seqselect
 //============================================================
 
-int win_dialog_add_portselect(dialog_box *dialog, struct InputPort *port)
+int win_dialog_add_portselect(dialog_box *dialog, struct InputPort *port, RECT *r)
 {
 	dialog_box *di = dialog;
 	short x;
 	short y;
-	int rows;
+	short height;
+	short width;
 	const char *port_name;
 
 	port_name = input_port_name(port);
-	rows = 1;
 
-	dialog_new_control(di, &x, &y);
+	if (!r)
+	{
+		dialog_new_control(di, &x, &y);
 
-	if (dialog_write_item(di, WS_CHILD | WS_VISIBLE | SS_LEFT,
-			x, y + (rows - 1) * (DIM_NORMAL_ROW_HEIGHT + DIM_VERTICAL_SPACING * 2)/2,
-			DIM_LABEL_WIDTH, DIM_NORMAL_ROW_HEIGHT, port_name, DLGITEM_STATIC, NULL))
-		return 1;
-	x += DIM_LABEL_WIDTH + DIM_HORIZONTAL_SPACING;
+		if (dialog_write_item(di, WS_CHILD | WS_VISIBLE | SS_LEFT, x, y, 
+				DIM_LABEL_WIDTH, DIM_NORMAL_ROW_HEIGHT, port_name, DLGITEM_STATIC, NULL))
+			return 1;
+		x += DIM_LABEL_WIDTH + DIM_HORIZONTAL_SPACING;
 
-	if (dialog_add_single_seqselect(di, x, y, DIM_SEQ_WIDTH, DIM_NORMAL_ROW_HEIGHT, port))
-		return 1;
-	y += DIM_VERTICAL_SPACING + DIM_NORMAL_ROW_HEIGHT;
-	x += DIM_SEQ_WIDTH + DIM_HORIZONTAL_SPACING;
+		if (dialog_add_single_seqselect(di, x, y, DIM_SEQ_WIDTH, DIM_NORMAL_ROW_HEIGHT, port))
+			return 1;
+		y += DIM_VERTICAL_SPACING + DIM_NORMAL_ROW_HEIGHT;
+		x += DIM_SEQ_WIDTH + DIM_HORIZONTAL_SPACING;
 
-	port++;
+		dialog_finish_control(di, x, y);
+	}
+	else
+	{
+		x = r->left;
+		y = r->top;
+		width = r->right - r->left;
+		height = r->bottom - r->top;
 
-	dialog_finish_control(di, x, y);
+		pixels_to_dlgunits(&x, &y);
+		pixels_to_dlgunits(&width, &height);
+
+		if (dialog_add_single_seqselect(di, x, y, width, height, port))
+			return 1;
+	}
 	return 0;
 }
 
@@ -753,8 +826,8 @@ int win_dialog_add_standard_buttons(dialog_box *dialog)
 	short x;
 	short y;
 
-	x = di->cx - DIM_HORIZONTAL_SPACING - DIM_BUTTON_WIDTH;
-	y = di->cy + DIM_VERTICAL_SPACING;
+	x = di->size_x - DIM_HORIZONTAL_SPACING - DIM_BUTTON_WIDTH;
+	y = di->size_y + DIM_VERTICAL_SPACING;
 
 	if (dialog_write_item(di, WS_CHILD | WS_VISIBLE | SS_LEFT,
 			x, y, DIM_BUTTON_WIDTH, DIM_BUTTON_ROW_HEIGHT, DLGTEXT_CANCEL, DLGITEM_BUTTON, NULL))
@@ -764,7 +837,7 @@ int win_dialog_add_standard_buttons(dialog_box *dialog)
 	if (dialog_write_item(di, WS_CHILD | WS_VISIBLE | SS_LEFT,
 			x, y, DIM_BUTTON_WIDTH, DIM_BUTTON_ROW_HEIGHT, DLGTEXT_OK, DLGITEM_BUTTON, NULL))
 		return 1;
-	di->cy += DIM_BUTTON_ROW_HEIGHT + DIM_VERTICAL_SPACING * 2;
+	di->size_y += DIM_BUTTON_ROW_HEIGHT + DIM_VERTICAL_SPACING * 2;
 	return 0;
 }
 
@@ -838,21 +911,41 @@ int win_dialog_add_image(dialog_box *dialog, const struct png_info *png)
 {
 	WORD id;
 	HBITMAP bitmap;
+	short x, y;
+	short width, height;
+
+	width = png->width;
+	height = png->height;
+	pixels_to_dlgunits(&width, &height);
 
 	bitmap = create_png_bitmap(png);
 	if (!bitmap)
 		return 1;
 
+	dialog_new_control(dialog, &x, &y);
 	if (dialog_write_item(dialog, WS_CHILD | WS_VISIBLE | SS_LEFT | SS_BITMAP,
-			10, 10, 5, 5, "", DLGITEM_STATIC, &id))
+			x, y, width, height, "", DLGITEM_STATIC, &id))
 		return 1;
 	if (dialog_add_trigger(dialog, id, TRIGGER_INITDIALOG, STM_SETIMAGE, NULL, (WPARAM)IMAGE_BITMAP, (LPARAM) bitmap, NULL))
 		return 1;
 	if (dialog_add_object(dialog, bitmap))
 		return 1;
+	x += width;
+	y += height;
+	dialog_finish_control(dialog, x, y);
 	return 0;
 }
 
+//============================================================
+//	win_dialog_add_separator
+//============================================================
+
+int win_dialog_add_separator(dialog_box *dialog)
+{
+	dialog->home_y = dialog->cursize_y;
+	dialog->cursize_x = 0;
+	return 0;
+}
 
 //============================================================
 //	win_dialog_exit

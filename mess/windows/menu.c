@@ -23,6 +23,7 @@
 #include "utils.h"
 #include "artwork.h"
 #include "tapedlg.h"
+#include "artworkx.h"
 
 #ifdef UNDER_CE
 #include "invokegx.h"
@@ -118,19 +119,47 @@ static void customize_input(const char *title, int player, int category)
 {
 	dialog_box *dlg;
 	struct InputPort *in;
+	struct png_info png;
+	struct inputform_customization customizations[128];
+	RECT r, *pr;
+	int i;
+	int this_category, this_player;
 
-	player *= IPF_PLAYER2;
-	
+	artwork_get_inputscreen_customizations(&png, customizations, sizeof(customizations) / sizeof(customizations[0]));
+
 	dlg = win_dialog_init(title);
 	if (!dlg)
 		goto done;
 
+	if (png.width > 0)
+	{
+		win_dialog_add_image(dlg, &png);
+		win_dialog_add_separator(dlg);
+	}
+
 	in = Machine->input_ports;
 	while(in->type != IPT_END)
 	{
-		if (((in->type & IPF_PLAYERMASK) == player) && (inputx_categorize_port(in) == category))
+		this_category = input_categorize_port(in);
+		this_player = input_player_number(in);
+
+		if ((this_player == player) && (this_category == category))
 		{
-			if (win_dialog_add_portselect(dlg, in))
+			pr = NULL;
+			for (i = 0; customizations[i].ipt != IPT_END; i++)
+			{
+				if ((in->type & ~IPF_MASK) == customizations[i].ipt)
+				{
+					r.left = customizations[i].x;
+					r.top = customizations[i].y;
+					r.right = r.left + customizations[i].width;
+					r.bottom = r.top + customizations[i].height;
+					pr = &r;
+					break;
+				}
+			}
+
+			if (win_dialog_add_portselect(dlg, in, pr))
 				goto done;
 		}
 		in++;
@@ -573,9 +602,9 @@ static void prepare_menus(void)
 	if (!win_menu_bar)
 		return;
 
-	has_config		= inputx_has_input_category(INPUT_CATEGORY_CONFIG);
-	has_dipswitch	= inputx_has_input_category(INPUT_CATEGORY_DIPSWITCH);
-	has_keyboard	= inputx_has_input_category(INPUT_CATEGORY_KEYBOARD);
+	has_config		= input_has_input_category(INPUT_CATEGORY_CONFIG);
+	has_dipswitch	= input_has_input_category(INPUT_CATEGORY_DIPSWITCH);
+	has_keyboard	= input_has_input_category(INPUT_CATEGORY_KEYBOARD);
 
 	set_command_state(win_menu_bar, ID_EDIT_PASTE,				inputx_can_post()							? MFS_ENABLED : MFS_GRAYED);
 
@@ -995,7 +1024,7 @@ int win_setup_menus(HMENU menu_bar)
 
 	// set up joystick menu
 #ifndef UNDER_CE
-	joystick_count = inputx_count_players();
+	joystick_count = input_count_players();
 #endif
 	set_command_state(menu_bar, ID_OPTIONS_JOYSTICKS, joystick_count ? MFS_ENABLED : MFS_GRAYED);
 	if (joystick_count > 0)

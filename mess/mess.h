@@ -1,16 +1,35 @@
-#include <stdarg.h>
+/*********************************************************************
+
+	mess.h
+
+	Core MESS headers
+
+*********************************************************************/
 
 #ifndef MESS_H
 #define MESS_H
+
+#include <stdarg.h>
 
 #include "osdepend.h"
 #include "device.h"
 #include "driver.h"
 #include "image.h"
+#include "artworkx.h"
 
-extern int devices_inited;
+/***************************************************************************
+
+	Constants
+
+***************************************************************************/
 
 #define LCD_FRAMES_PER_SECOND	30
+
+
+
+/**************************************************************************/
+
+extern int devices_inited;
 
 /* MESS_DEBUG is a debug switch (for developers only) for
    debug code, which should not be found in distributions, like testdrivers,...
@@ -58,13 +77,6 @@ int filemanager(struct mame_bitmap *bitmap, int selected);
 int tapecontrol(struct mame_bitmap *bitmap, int selected);
 void tapecontrol_gettime(char *timepos, size_t timepos_size, mess_image *img, int *curpos, int *endpos);
 #endif
-
-/* driver.h - begin */
-#define IPT_SELECT1		IPT_COIN1
-#define IPT_SELECT2		IPT_COIN2
-#define IPT_SELECT3		IPT_COIN3
-#define IPT_SELECT4		IPT_COIN4
-/* driver.h - end */
 
 /* IODevice Initialisation return values.  Use these to determine if */
 /* the emulation can continue if IODevice initialisation fails */
@@ -175,10 +187,6 @@ extern void ram_dump(const char *filename);
 
 /* gets the path to the MESS executable */
 extern const char *mess_path;
-
-/* artwork callbacks for MESS */
-extern struct artwork_callbacks mess_artwork_callbacks;
-void artwork_use_device_art(mess_image *img, const char *defaultartfile);
 
 void machine_hard_reset(void);
 
