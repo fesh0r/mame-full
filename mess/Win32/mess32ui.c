@@ -1336,19 +1336,29 @@ static INT_PTR CALLBACK FileManagerProc(HWND hDlg, UINT message, WPARAM wParam, 
 {
 	BOOL bResult;
 	HWND hSoftwarePicker;
-	RECT r;
+	RECT rDlg, rPicker;
 
 	hSoftwarePicker = GetDlgItem(hDlg, IDC_LIST2);
 
 	switch(message) {
 	case WM_INITDIALOG:
-		ShowWindow(hDlg, SW_SHOWMAXIMIZED);
-		GetClientRect(hDlg, &r);
-		r.left += 10;
-		r.right -= 10;
-		r.top += 10;
-		r.bottom -= 10;
-		SetWindowPos(hSoftwarePicker, HWND_TOP, r.left, r.top, r.right - r.left, r.bottom - r.top, SWP_DRAWFRAME);
+		CenterSubDialog(MAME32App.m_hWnd, hDlg, FALSE);
+
+		GetClientRect(hDlg, &rDlg);
+
+		rPicker.left	= rDlg.left		+ 10;
+		rPicker.top		= rDlg.top		+ 10;
+		rPicker.right	= rDlg.right	- 10;
+		rPicker.bottom	= rDlg.bottom	- 10;
+
+		SetWindowPos(hSoftwarePicker, HWND_TOP,
+			rPicker.left,
+			rPicker.top,
+			rPicker.right - rPicker.left,
+			rPicker.bottom - rPicker.top,\
+			SWP_DRAWFRAME);
+
+		/* Initialize */
 		InitMessPicker(hSoftwarePicker, FALSE);
 		break;
 
