@@ -43,10 +43,8 @@ extern int PreviousFE;
 extern unsigned char *spectrum_128_screen_location;
 extern unsigned char *ts2068_ram;
 
-
 extern void spectrum_128_update_memory(void);
 extern void spectrum_plus3_update_memory(void);
-
 
 extern int  spectrum_vh_start(void);
 extern void spectrum_vh_stop(void);
@@ -62,6 +60,8 @@ extern void ts2068_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh
 
 extern void tc2048_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 
+extern unsigned char *spectrum_characterram;
+extern unsigned char *spectrum_colorram;
 extern WRITE_HANDLER ( spectrum_characterram_w );
 extern READ_HANDLER  ( spectrum_characterram_r );
 extern WRITE_HANDLER ( spectrum_colorram_w );

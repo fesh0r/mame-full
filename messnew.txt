@@ -14,6 +14,11 @@ System Driver Changes:
 
 - [A7800] Fixed interrupt handling bug - more carts run again [Ben Bruscella]
 
+- [SPECTRUM] 48k machines are now able to run code in screen memory (Bug #46).
+  Fixed problem with interrupt vector set to 0xffff (much more 128k games works
+  now). Corrected frames per second value for 48k and 128k Sincalir machines.
+  Remaped some Spectrum+ keys. Added support to load .SP snapshots. Added .BLK
+  tape images support. [Krzysztof Strzecha]
 
 Source Changes:
 ---------------

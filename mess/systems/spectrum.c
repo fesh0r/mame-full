@@ -57,7 +57,7 @@ Changes:
 09/5/2000		DJR - Spectrum +2 (France, Spain), +3 (Spain).
 17/5/2000		DJR - Dipswitch to enable/disable disk drives on +3 and clones.
 27/6/2000		DJR - Changed 128K/+3 port decoding (sound now works in Zub 128K).
-06/8/2000		DJR - Fixed +3 Floppy support
+06/8/2000	 	DJR - Fixed +3 Floppy support
 10/2/2001		KT  - re-arranged code and split into each model emulated
 					Code is split into 48k, 128k, +3, tc2048 and ts2048 segments.
 					128k uses some of the functions in 48k, +3 uses some functions in 128,
@@ -67,24 +67,60 @@ Changes:
 					and write functions changed to use WRITE_HANDLER
 					Added Scorpion256 preliminary.
 18/6/2001		DJR - Added support for Interface 2 cartridges.
+xx/xx/2001		KS - TS-2068 sound fixed.
+			     Added support for DOCK cartridges for TS-2068.
+			     Added Spectrum 48k Psycho modified rom driver.
+			     Added UK-2086 driver.
+23/12/2001		KS - 48k machines are now able to run code in screen memory.
+					Programs which keep their code in screen memory
+					like monitors, tape copiers, decrunchers, etc.
+					works now.
+			     Fixed problem with interrupt vector set to 0xffff (much more 128k games works now)
+					A useful used trick on the Spectrum is to set
+					interrupt vector to 0xffff (using the table 
+					which contain 0xff's) and put a byte 0x18 hex,
+					the opcode for JR, at this address. The first
+					byte of the ROM is a 0xf3 (DI), so the JR will
+					jump to 0xfff4, where a long JP to the actual
+					interrupt routine is put. Due to unideal
+					bankswitching in MAME this JP were to 0001 what
+					causes Spectrum to reset. Fixing this problem made
+					much more software runing (i.e. Paperboy).
+			     Corrected frames per second value for 48k and 128k Sincalir machines.
+					There are 50.08 frames per second for Spectrum 48k
+					what gives 69888 cycles for each frame and 50.021 for
+					Spectrum 128/+2/+2A/+3 what gives 70908 cycles for
+					each frame. 
+			     Remaped some Spectrum+ keys.
+					Presing F3 to reset was seting 0xf7 on keyboard input
+					port. Problem occured for snapshots of some programms
+					where it was readed as pressing key 4 (which is exit
+					in Tapecopy by R. Dannhoefer for example).
+			     Added support to load .SP snapshots.
+			     Added .BLK tape images dupport.
+					.BLK files are identical to .TAP ones, extension is
+					an only difference.
 
  Initialisation values used when determining which model is being emulated.
    48K	   Spectrum doesn't use either port.
-   128K/+2 Bank switches with port 7ffd only.
+   
+128K/+2 Bank switches with port 7ffd only.
    +3/+2a  Bank switches with both ports.
 
 	Notes:
 
-48K machines can't run code in screen memory (128K, TS2068, TC2048 etc. OK).
 Port #FF Vertical refresh not emulated (Arkanoid doesn't run).
 No contented memory.
 No hi-res colour effects (need contended memory first for accurate timing).
 Multiface 1 and Interface 1 not supported.
 Horace and the Spiders cartridge doesn't run properly.
-.TZX files not supported.
+Tape images not supported: .TZX, .SPC, .ITM, .PAN, .TAP(Warajevo), .VOC, .ZXS.
+Snapshot images not supported: .ACH, .PRG, .RAW, .SEM, .SIT, .SNX, .ZX, .ZXS, .ZX82.
 128K emulation is not perfect - the 128K machines crash and hang while
 running quite a lot of games.
 Disk errors occur on some +3 games.
+Border of all machines is timed incorrectly.
+EXROM and HOME cartridges are not emulated.
 
 The TK90X and TK95 roms output 0 to port #df on start up.
 The purpose of this port is unknown (probably display mode as TS2068) and
@@ -242,7 +278,6 @@ READ_HANDLER(spectrum_port_fe_r)
 	Issue 3 Spectrums default to having bits 5 & 7 set and bit 6 reset. */
 	if (readinputport(16) & 0x80)
 		data ^= (0x40);
-
 	return data;
 }
 
@@ -338,7 +373,6 @@ static void spectrum_free_ram(void)
 
 int spectrum_128_port_7ffd_data = -1;
 unsigned char *spectrum_128_screen_location = NULL;
-
 
 static WRITE_HANDLER(spectrum_128_port_7ffd_w)
 {
@@ -492,7 +526,6 @@ static PORT_WRITE_START (spectrum_128_writeport)
 	{0x0000, 0xffff, spectrum_128_port_w},
 PORT_END
 
-
 static MEMORY_READ_START (spectrum_128_readmem)
 	{ 0x0000, 0x3fff, MRA_BANK1 },
 	{ 0x4000, 0x7fff, MRA_BANK2 },
@@ -506,7 +539,6 @@ static MEMORY_WRITE_START (spectrum_128_writemem)
 	{ 0x8000, 0xbfff, MWA_BANK7 },
 	{ 0xc000, 0xffff, MWA_BANK8 },
 MEMORY_END
-
 
 void spectrum_128_init_machine(void)
 {
@@ -2002,10 +2034,10 @@ INPUT_PORTS_START( spectrum )
 		PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "B  BORDER  *      BIN      BRIGHT",  KEYCODE_B,  IP_JOY_NONE )
 
 		PORT_START /* Spectrum+ Keys (set CAPS + 1-5) */
-		PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "EDIT          (CAPS + 1)",  KEYCODE_F1,         IP_JOY_NONE )
+		PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "EDIT          (CAPS + 1)",  KEYCODE_INSERT,     IP_JOY_NONE )
 		PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "CAPS LOCK     (CAPS + 2)",  KEYCODE_CAPSLOCK,   IP_JOY_NONE )
-		PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "TRUE VID      (CAPS + 3)",  KEYCODE_F2,         IP_JOY_NONE )
-		PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "INV VID       (CAPS + 4)",  KEYCODE_F3,         IP_JOY_NONE )
+		PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "TRUE VID      (CAPS + 3)",  KEYCODE_HOME,         IP_JOY_NONE )
+		PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "INV VID       (CAPS + 4)",  KEYCODE_END,         IP_JOY_NONE )
 		PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "Cursor left   (CAPS + 5)",  KEYCODE_LEFT,       IP_JOY_NONE )
 		PORT_BIT(0xe0, IP_ACTIVE_LOW, IPT_UNUSED)
 
@@ -2148,7 +2180,7 @@ static struct MachineDriver machine_driver_spectrum =
 			spec_interrupt,1,
 		},
 	},
-	50, 2500,		/* frames per second, vblank duration */
+	50.08, 2500,		/* frames per second, vblank duration */
 	1,
 	spectrum_init_machine,
 	spectrum_shutdown_machine,
@@ -2195,7 +2227,7 @@ static struct MachineDriver machine_driver_spectrum_128 =
 			spec_interrupt,1,
 		},
 	},
-	50, 2500,		/* frames per second, vblank duration */
+	50.021, 2500,		/* frames per second, vblank duration */
 	1,
 	spectrum_128_init_machine,
 	spectrum_128_exit_machine,
@@ -2247,7 +2279,7 @@ static struct MachineDriver machine_driver_spectrum_plus3 =
 			spec_interrupt,1,
 		},
 	},
-	50, 2500,		/* frames per second, vblank duration */
+	50.01, 2500,		/* frames per second, vblank duration */
 	1,
 	spectrum_plus3_init_machine,
 	spectrum_plus3_exit_machine,
@@ -2714,7 +2746,7 @@ static const struct IODevice io_spectrum[] = {
 	{
 		IO_SNAPSHOT,		/* type */
 		1,					/* count */
-		"sna\0z80\0",       /* file extensions */
+		"sna\0z80\0sp\0",       /* file extensions */
 		IO_RESET_ALL,		/* reset if file changed */
 		0,
 		spectrum_snap_load,	/* init */
@@ -2730,7 +2762,7 @@ static const struct IODevice io_spectrum[] = {
 		NULL				/* output_chunk */
 	},
 		IODEVICE_SPEC_QUICK,
-		IO_CASSETTE_WAVE(1,"wav\0tap\0", NULL,spectrum_cassette_init, spectrum_cassette_exit),
+		IO_CASSETTE_WAVE(1,"wav\0tap\0blk\0", NULL,spectrum_cassette_init, spectrum_cassette_exit),
 	{
 		IO_CARTSLOT,		/* type */
 		1,					/* count */
@@ -2756,7 +2788,7 @@ static const struct IODevice io_specpls3[] = {
 	{
 		IO_SNAPSHOT,		/* type */
 		1,					/* count */
-		"sna\0z80\0",       /* file extensions */
+		"sna\0z80\0sp\0",       /* file extensions */
 		IO_RESET_ALL,		/* reset if file changed */
 		0,
 		spectrum_snap_load,	/* init */
@@ -2772,7 +2804,7 @@ static const struct IODevice io_specpls3[] = {
 		NULL				/* output_chunk */
 	},
 		IODEVICE_SPEC_QUICK,
-		IO_CASSETTE_WAVE(1,"wav\0tap\0", NULL,spectrum_cassette_init, spectrum_cassette_exit),
+		IO_CASSETTE_WAVE(1,"wav\0tap\0blk\0", NULL,spectrum_cassette_init, spectrum_cassette_exit),
 	{
 		IO_FLOPPY,			/* type */
 		2,					/* count */
@@ -2798,7 +2830,7 @@ static const struct IODevice io_ts2068[] = {
 	{
 		IO_SNAPSHOT,		/* type */
 		1,					/* count */
-		"sna\0z80\0",       /* file extensions */
+		"sna\0z80\0sp\0",       /* file extensions */
 		IO_RESET_ALL,		/* reset if file changed */
 		0,
 		spectrum_snap_load,	/* init */
@@ -2814,7 +2846,7 @@ static const struct IODevice io_ts2068[] = {
 		NULL				/* output_chunk */
 	},
 		IODEVICE_SPEC_QUICK,
-		IO_CASSETTE_WAVE(1,"wav\0tap\0", NULL,spectrum_cassette_init, spectrum_cassette_exit),
+		IO_CASSETTE_WAVE(1,"wav\0tap\0blk\0", NULL,spectrum_cassette_init, spectrum_cassette_exit),
 	{
 		IO_CARTSLOT,			/* type */
 		1,				/* count */
