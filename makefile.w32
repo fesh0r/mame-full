@@ -43,7 +43,7 @@ RSC = @rc
 ASM = @nasmw
 ASMFLAGS = -f win32
 RM = @rm -f
-MD = @mkdir
+MD = -mkdir
 
 ifdef DEBUG
 NAME = $(TARGET)32d
@@ -94,12 +94,17 @@ else
 CFLAGS += -DNOMIDAS
 endif
 
-#if obj subdirectory doesn't exist, create the tree before proceeding
-ifeq ($(wildcard $(OBJ)),)
-noobj: maketree all
+OBJDIRS = $(OBJ) $(OBJ)/cpu $(OBJ)/sound $(OBJ)/Win32 $(OBJ)/Win32/hlp \
+	$(OBJ)/drivers $(OBJ)/machine $(OBJ)/vidhrdw $(OBJ)/sndhrdw
+
+ifdef MESS
+# MESS object directories
+OBJDIRS += $(OBJ)/mess $(OBJ)/mess/systems $(OBJ)/mess/machine \
+	$(OBJ)/mess/vidhrdw $(OBJ)/mess/sndhrdw $(OBJ)/mess/tools \
+	$(OBJ)/mess/formats $(OBJ)/mess/Win32
 endif
 
-all:	$(EMULATOR) $(HELPFILES) extra
+all:	maketree $(EMULATOR) $(HELPFILES) extra
 
 IMGTOOL_OBJS = $(OBJ)/mess/$(OS)/dirio.o
 INCLUDE_PATH = -Isrc -Isrc/Win32 -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
@@ -210,29 +215,10 @@ $(OBJ)/%.a:
 makedir:
 	@echo make makedir is no longer necessary, just type make
 
-maketree:
-	@echo Making MAME object tree in $(OBJ)...
-	@md $(OBJ)
-	@md $(OBJ)\cpu
-	@md $(OBJ)\sound
-	@md $(OBJ)\Win32
-	@md $(OBJ)\Win32\hlp
-	@md $(OBJ)\drivers
-	@md $(OBJ)\machine
-	@md $(OBJ)\vidhrdw
-	@md $(OBJ)\sndhrdw
-ifdef MESS
-	@echo Making MESS object tree in $(OBJ)\mess...
-	@md $(OBJ)\mess
-	@md $(OBJ)\mess\systems
-	@md $(OBJ)\mess\machine
-	@md $(OBJ)\mess\vidhrdw
-	@md $(OBJ)\mess\sndhrdw
-	@md $(OBJ)\mess\tools
-	@md $(OBJ)\mess\formats
-	@md $(OBJ)\mess\Win32
-endif
-	$MD $(sort $(OBJDIRS))
+$(sort $(OBJDIRS)):
+	$(MD) $@
+
+maketree: $(sort $(OBJDIRS))
 
 clean:
 	@echo Deleting object tree $(OBJ)...
