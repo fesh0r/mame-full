@@ -21,6 +21,11 @@
 #include "990_hd.h"
 #include "image.h"
 
+#define USE_STANDARD_FORMAT 1
+
+#include "harddisk.h"
+#include "devices/mess_hd.h"
+
 static void update_interrupt(void);
 
 /* max disk units per controller: 4 is the protocol limit, but it may be
@@ -33,6 +38,8 @@ standard 512-byte-long sectors. */
 /* I chose a limit of 512.  No need to use more until someone write CD-ROMs
 for TI990. */
 #define MAX_SECTOR_SIZE 512
+
+/* Description of custom format */
 
 /* machine-independant big-endian 32-bit integer */
 typedef struct UINT32BE
@@ -74,7 +81,9 @@ enum
 typedef struct hd_unit_t
 {
 	mess_image *img;			/* image descriptor */
-	mame_file *fd;				/* file descriptor */
+	enum { format_mame, format_old } format;
+	void *hd_handle;			/* mame hard disk descriptor - only if format == format_mame */
+	mame_file *fd;				/* file descriptor - only if format == format_old */
 	unsigned int wp : 1;		/* TRUE if disk is write-protected */
 	unsigned int unsafe : 1;	/* TRUE when a disk has just been connected */
 
@@ -156,6 +165,9 @@ static const UINT16 w_mask[8] =
 static hdc_t hdc;
 
 
+/*
+	Initialize hard disk unit
+*/
 DEVICE_INIT( ti990_hd )
 {
 	hd_unit_t *d;
@@ -169,6 +181,8 @@ DEVICE_INIT( ti990_hd )
 	memset(d, 0, sizeof(*d));
 
 	d->img = image;
+	d->format = format_mame;	/* don't care */
+	d->hd_handle = NULL;
 	d->fd = NULL;
 	d->wp = 1;
 	d->unsafe = 1;
@@ -176,7 +190,7 @@ DEVICE_INIT( ti990_hd )
 	/* clear attention line */
 	/*hdc.w[0] &= ~ (0x80 >> id);*/
 
-	return INIT_PASS;
+	return device_init_mess_hd(image);
 }
 
 /*DEVICE_EXIT( ti990_hd )
@@ -189,10 +203,12 @@ DEVICE_INIT( ti990_hd )
 */
 DEVICE_LOAD( ti990_hd )
 {
-	hd_unit_t *d;
-	disk_image_header header;
-	int bytes_read;
 	int id = image_index_in_device(image);
+	hd_unit_t *d;
+	char tag[8];
+	const struct hard_disk_header *standard_header;
+	disk_image_header custom_header;
+	int bytes_read;
 
 
 	if ((id < 0) || (id >= MAX_DISK_UNIT))
@@ -200,29 +216,71 @@ DEVICE_LOAD( ti990_hd )
 
 	d = &hdc.d[id];
 
-	/* open file */
-	d->fd = file;
-	/* tell whether the image is writable */
-	d->wp = ! image_is_writable(image);
+	bytes_read = mame_fread(file, tag, sizeof(tag));
+	if (bytes_read != sizeof(tag))
+		return INIT_FAIL;;
+	if (! strncmp(tag, "MComprHD", 8))
+	{
+		/* standard hard disk format */
+
+		/* open image */
+		if (device_load_mess_hd(image, file))
+			return INIT_FAIL;
+
+		/* set file descriptor */
+		d->format = format_mame;
+		d->hd_handle = mess_hd_get_hard_disk_handle(image);
+		d->fd = NULL;
+		/* tell whether the image is writable */
+		d->wp = ! mess_hd_is_writable(image);
+	}
+	else
+	{
+		/* older, custom format */
+
+		/* set file descriptor */
+		d->format = format_old;
+		d->hd_handle = NULL;
+		d->fd = file;
+		/* tell whether the image is writable */
+		d->wp = ! image_is_writable(image);
+	}
 
 	d->unsafe = 1;
 	/* set attention line */
 	hdc.w[0] |= (0x80 >> id);
 
-	/* set geometry: use new headered disk image format. */
-	/* to convert old images to new format, insert a 16-byte header as follow:
-	00 00 03 8f  00 00 00 05  00 00 00 21  00 00 01 00 */
-	bytes_read = mame_fread(d->fd, &header, sizeof(header));
-	if (bytes_read != sizeof(header))
+	/* read geometry */
+	switch (d->format)
 	{
-		device_unload_ti990_hd(image);
-		return INIT_FAIL;
-	}
+	case format_mame:
+		/* use standard hard disk image header. */
+		standard_header = hard_disk_get_header(d->hd_handle);
 
-	d->cylinders = get_UINT32BE(header.cylinders);
-	d->heads = get_UINT32BE(header.heads);
-	d->sectors_per_track = get_UINT32BE(header.sectors_per_track);
-	d->bytes_per_sector = get_UINT32BE(header.bytes_per_sector);
+		d->cylinders = standard_header->cylinders;
+		d->heads = standard_header->heads;
+		d->sectors_per_track = standard_header->sectors;
+		d->bytes_per_sector = standard_header->seclen;
+		break;
+
+	case format_old:
+		/* use custom image header. */
+		/* to convert old header-less images to this format, insert a 16-byte
+		header as follow: 00 00 03 8f  00 00 00 05  00 00 00 21  00 00 01 00 */
+		mame_fseek(d->fd, 0, SEEK_SET);
+		bytes_read = mame_fread(d->fd, &custom_header, sizeof(custom_header));
+		if (bytes_read != sizeof(custom_header))
+		{
+			device_unload_ti990_hd(image);
+			return INIT_FAIL;
+		}
+
+		d->cylinders = get_UINT32BE(custom_header.cylinders);
+		d->heads = get_UINT32BE(custom_header.heads);
+		d->sectors_per_track = get_UINT32BE(custom_header.sectors_per_track);
+		d->bytes_per_sector = get_UINT32BE(custom_header.bytes_per_sector);
+		break;
+	}
 
 	if (d->bytes_per_sector > MAX_SECTOR_SIZE)
 	{
@@ -246,15 +304,46 @@ DEVICE_UNLOAD( ti990_hd )
 
 	d = &hdc.d[id];
 
-	if (d->fd)
+	switch (d->format)
 	{
-		d->fd = NULL;
-		d->wp = 1;
-		d->unsafe = 1;
+	case format_mame:
+		device_unload_mess_hd(image);
+		break;
 
-		/* clear attention line */
-		hdc.w[0] &= ~ (0x80 >> id);
+	case format_old:
+		/* no additional clean up is needed */
+		break;
 	}
+
+	d->format = format_mame;	/* don't care */
+	d->hd_handle = NULL;
+	d->fd = NULL;
+	d->wp = 1;
+	d->unsafe = 1;
+
+	/* clear attention line */
+	hdc.w[0] &= ~ (0x80 >> id);
+}
+
+/*
+	Return true if a HD image has been loaded
+*/
+INLINE int is_unit_loaded(int unit)
+{
+	int reply = 0;
+
+	switch (hdc.d[unit].format)
+	{
+	case format_mame:
+		reply = (hdc.d[unit].hd_handle != NULL);
+		break;
+
+	case format_old:
+		reply = (hdc.d[unit].fd != NULL);
+		break;
+	}
+
+	return reply;
 }
 
 /*
@@ -269,7 +358,7 @@ void ti990_hdc_init(void (*interrupt_callback)(int state))
 	hdc.w[7] = w7_idle;
 	/* set attention lines */
 	for (i=0; i<MAX_DISK_UNIT; i++)
-		if (hdc.d[i].fd)
+		if (is_unit_loaded(i))
 			hdc.w[0] |= (0x80 >> i);
 
 	hdc.interrupt_callback = interrupt_callback;
@@ -345,31 +434,66 @@ static int check_sector_address(int unit, unsigned int cylinder, unsigned int he
 /*
 	Seek to sector whose address is given
 */
-static int seek_to_sector(int unit, unsigned int cylinder, unsigned int head, unsigned int sector)
+static int sector_to_lba(int unit, unsigned int cylinder, unsigned int head, unsigned int sector, unsigned int *lba)
 {
-	unsigned long byte_position;
-
-	if (! hdc.d[unit].fd)
-	{	/* offline */
-		hdc.w[0] |= w0_offline | w0_not_ready;
-		hdc.w[7] |= w7_idle | w7_error | w7_unit_err;
-		update_interrupt();
-		return 1;
-	}
-
 	if (check_sector_address(unit, cylinder, head, sector))
 		return 1;
 
-	byte_position = ((cylinder*hdc.d[unit].heads + head)*hdc.d[unit].sectors_per_track + sector)*hdc.d[unit].bytes_per_sector + header_len;
-
-	if (mame_fseek(hdc.d[unit].fd, byte_position, SEEK_SET))
-	{
-			hdc.w[0] |= w0_unsafe | w0_pack_change;
-			hdc.w[7] |= w7_idle | w7_error | w7_unit_err;
-		return 1;
-	}
+	* lba = (cylinder*hdc.d[unit].heads + head)*hdc.d[unit].sectors_per_track + sector;
 
 	return 0;
+}
+
+/*
+	Read one given sector
+*/
+static int read_sector(int unit, unsigned int lba, void *buffer, unsigned int bytes_to_read)
+{
+	unsigned long byte_position;
+	unsigned int bytes_read;
+
+	switch (hdc.d[unit].format)
+	{
+	case format_mame:
+		bytes_read = hdc.d[unit].bytes_per_sector * hard_disk_read(hdc.d[unit].hd_handle, lba, 1, buffer);
+		if (bytes_read > bytes_to_read)
+			bytes_read = bytes_to_read;
+		break;
+
+	case format_old:
+		byte_position = lba*hdc.d[unit].bytes_per_sector + header_len;
+		mame_fseek(hdc.d[unit].fd, byte_position, SEEK_SET);
+		bytes_read = mame_fread(hdc.d[unit].fd, buffer, bytes_to_read);
+		break;
+	}
+
+	return bytes_read;
+}
+
+/*
+	Write one given sector
+*/
+static int write_sector(int unit, unsigned int lba, const void *buffer, unsigned int bytes_to_write)
+{
+	unsigned long byte_position;
+	unsigned int bytes_written;
+
+	switch (hdc.d[unit].format)
+	{
+	case format_mame:
+		bytes_written = hdc.d[unit].bytes_per_sector * hard_disk_write(hdc.d[unit].hd_handle, lba, 1, buffer);
+		if (bytes_written > bytes_to_write)
+			bytes_written = bytes_to_write;
+		break;
+
+	case format_old:
+		byte_position = lba*hdc.d[unit].bytes_per_sector + header_len;
+		mame_fseek(hdc.d[unit].fd, byte_position, SEEK_SET);
+		bytes_written = mame_fwrite(hdc.d[unit].fd, buffer, bytes_to_write);
+		break;
+	}
+
+	return bytes_written;
 }
 
 /*
@@ -393,7 +517,7 @@ static void store_registers(void)
 		update_interrupt();
 		return;
 	}
-	else if (! hdc.d[dsk_sel].fd)
+	else if (! is_unit_loaded(dsk_sel))
 	{	/* offline */
 		hdc.w[0] |= w0_offline | w0_not_ready;
 		hdc.w[7] |= w7_idle | w7_error | w7_unit_err;
@@ -437,6 +561,7 @@ static void store_registers(void)
 static void write_format(void)
 {
 	unsigned int cylinder, head, sector;
+	unsigned int lba;
 
 	UINT8 buffer[MAX_SECTOR_SIZE];
 	int bytes_written;
@@ -451,7 +576,7 @@ static void write_format(void)
 		update_interrupt();
 		return;
 	}
-	else if (! hdc.d[dsk_sel].fd)
+	else if (! is_unit_loaded(dsk_sel))
 	{	/* offline */
 		hdc.w[0] |= w0_offline | w0_not_ready;
 		hdc.w[7] |= w7_idle | w7_error | w7_unit_err;
@@ -476,14 +601,14 @@ static void write_format(void)
 	cylinder = hdc.w[3];
 	head = hdc.w[1] & w1_head_address;
 
-	if (seek_to_sector(dsk_sel, cylinder, head, 0))
+	if (sector_to_lba(dsk_sel, cylinder, head, 0, &lba))
 		return;
 
 	memset(buffer, 0, hdc.d[dsk_sel].bytes_per_sector);
 
 	for (sector=0; sector<hdc.d[dsk_sel].sectors_per_track; sector++)
 	{
-		bytes_written = mame_fwrite(hdc.d[dsk_sel].fd, buffer, hdc.d[dsk_sel].bytes_per_sector);
+		bytes_written = write_sector(dsk_sel, lba, buffer, hdc.d[dsk_sel].bytes_per_sector);
 
 		if (bytes_written != hdc.d[dsk_sel].bytes_per_sector)
 		{
@@ -492,6 +617,8 @@ static void write_format(void)
 			update_interrupt();
 			return;
 		}
+
+		lba++;
 	}
 
 	hdc.w[7] |= w7_idle | w7_complete;
@@ -507,6 +634,7 @@ static void read_data(void)
 	int byte_count;
 
 	unsigned int cylinder, head, sector;
+	unsigned int lba;
 
 	UINT8 buffer[MAX_SECTOR_SIZE];
 	int bytes_to_read;
@@ -523,7 +651,7 @@ static void read_data(void)
 		update_interrupt();
 		return;
 	}
-	else if (! hdc.d[dsk_sel].fd)
+	else if (! is_unit_loaded(dsk_sel))
 	{	/* offline */
 		hdc.w[0] |= w0_offline | w0_not_ready;
 		hdc.w[7] |= w7_idle | w7_error | w7_unit_err;
@@ -545,7 +673,7 @@ static void read_data(void)
 	head = hdc.w[1] & w1_head_address;
 	sector = hdc.w[2] & 0xff;
 
-	if (seek_to_sector(dsk_sel, cylinder, head, sector))
+	if (sector_to_lba(dsk_sel, cylinder, head, sector, &lba))
 		return;
 
 	while (byte_count)
@@ -559,7 +687,7 @@ static void read_data(void)
 		}
 
 		bytes_to_read = (byte_count < hdc.d[dsk_sel].bytes_per_sector) ? byte_count : hdc.d[dsk_sel].bytes_per_sector;
-		bytes_read = mame_fread(hdc.d[dsk_sel].fd, buffer, bytes_to_read);
+		bytes_read = read_sector(dsk_sel, lba, buffer, bytes_to_read);
 
 		if (bytes_read != bytes_to_read)
 		{	/* behave as if the controller could not found the sector ID mark */
@@ -579,6 +707,7 @@ static void read_data(void)
 		byte_count -= bytes_read;
 
 		/* update sector address to point to next sector */
+		lba++;
 		sector++;
 		if (sector == hdc.d[dsk_sel].sectors_per_track)
 		{
@@ -605,6 +734,7 @@ static void write_data(void)
 	int byte_count;
 
 	unsigned int cylinder, head, sector;
+	unsigned int lba;
 
 	UINT8 buffer[MAX_SECTOR_SIZE];
 	UINT16 word;
@@ -621,7 +751,7 @@ static void write_data(void)
 		update_interrupt();
 		return;
 	}
-	else if (! hdc.d[dsk_sel].fd)
+	else if (! is_unit_loaded(dsk_sel))
 	{	/* offline */
 		hdc.w[0] |= w0_offline | w0_not_ready;
 		hdc.w[7] |= w7_idle | w7_error | w7_unit_err;
@@ -650,7 +780,7 @@ static void write_data(void)
 	head = hdc.w[1] & w1_head_address;
 	sector = hdc.w[2] & 0xff;
 
-	if (seek_to_sector(dsk_sel, cylinder, head, sector))
+	if (sector_to_lba(dsk_sel, cylinder, head, sector, &lba))
 		return;
 
 	while (byte_count > 0)
@@ -676,7 +806,7 @@ static void write_data(void)
 		for (; i<hdc.d[dsk_sel].bytes_per_sector; i+=2)
 			buffer[i] = buffer[i+1] = 0;
 
-		bytes_written = mame_fwrite(hdc.d[dsk_sel].fd, buffer, hdc.d[dsk_sel].bytes_per_sector);
+		bytes_written = write_sector(dsk_sel, lba, buffer, hdc.d[dsk_sel].bytes_per_sector);
 
 		if (bytes_written != hdc.d[dsk_sel].bytes_per_sector)
 		{
@@ -689,6 +819,7 @@ static void write_data(void)
 		byte_count -= bytes_written;
 
 		/* update sector address to point to next sector */
+		lba++;
 		sector++;
 		if (sector == hdc.d[dsk_sel].sectors_per_track)
 		{
@@ -729,7 +860,7 @@ static void unformatted_read(void)
 		update_interrupt();
 		return;
 	}
-	else if (! hdc.d[dsk_sel].fd)
+	else if (! is_unit_loaded(dsk_sel))
 	{	/* offline */
 		hdc.w[0] |= w0_offline | w0_not_ready;
 		hdc.w[7] |= w7_idle | w7_error | w7_unit_err;
@@ -795,7 +926,7 @@ static void restore(void)
 		update_interrupt();
 		return;
 	}
-	else if (! hdc.d[dsk_sel].fd)
+	else if (! is_unit_loaded(dsk_sel))
 	{	/* offline */
 		hdc.w[0] |= w0_offline | w0_not_ready;
 		hdc.w[7] |= w7_idle | w7_error | w7_unit_err;
@@ -805,8 +936,8 @@ static void restore(void)
 
 	hdc.d[dsk_sel].unsafe = 0;		/* I think */
 
-	if (seek_to_sector(dsk_sel, 0, 0, 0))
-		return;
+	/*if (seek_to_sector(dsk_sel, 0, 0, 0))
+		return;*/
 
 	hdc.w[7] |= w7_idle | w7_complete;
 	update_interrupt();
