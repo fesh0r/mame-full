@@ -346,7 +346,6 @@ static const struct IODevice io_atom[] =
 		NULL					/* output_chunk */
 	},
     /* these are not working properly yet! */
-    IO_PRINTER_PORT (1, "prn\0"),
 	{ IO_END }
 };
 
@@ -354,6 +353,7 @@ static const struct IODevice io_atom[] =
 
 SYSTEM_CONFIG_START(atom)
 	CONFIG_DEVICE_CASSETTE(1, "", atom_cassette_init)
+	CONFIG_DEVICE_PRINTER(1)
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      CONFIG   COMPANY   FULLNAME */

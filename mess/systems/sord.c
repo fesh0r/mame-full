@@ -893,20 +893,15 @@ ROM_END
 		NULL					/* output_chunk */\
 	}
 
-#define sord_m5_printer \
-	IO_PRINTER_PORT(1,"prn\0")
-
 static const struct IODevice io_sordm5[] =
 {
 	sord_m5_cart_device,
-	sord_m5_printer,
 	{IO_END},
 };
 
 static const struct IODevice io_srdm5fd5[] = 
 {
 	sord_m5_cart_device,
-	sord_m5_printer,
 	{
 		IO_FLOPPY,				/* type */
 		4,						/* count */
@@ -934,6 +929,7 @@ static const struct IODevice io_srdm5fd5[] =
 SYSTEM_CONFIG_START(sordm5)
 	CONFIG_RAM_DEFAULT(64 * 1024)
 	CONFIG_DEVICE_CASSETTE(1, "", sord_cassette_init)
+	CONFIG_DEVICE_PRINTER(1)
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME       PARENT  MACHINE    INPUT     INIT     CONFIG,  COMPANY               FULLNAME */

@@ -2825,14 +2825,10 @@ ROM_END
 		NULL						/* output_chunk */ \
 	}
 
-#define AMSTRAD_IO_PRINTER \
-	IO_PRINTER_PORT(1,"prn\0")
-
 static const struct IODevice io_cpc6128[] =
 {
 	AMSTRAD_IO_SNAPSHOT,
 	AMSTRAD_IO_DISK,
-	AMSTRAD_IO_PRINTER,
 	{IO_END}
 };
 
@@ -2844,7 +2840,6 @@ static const struct IODevice io_cpcplus[] =
 {
 	AMSTRAD_IO_SNAPSHOT,
 	AMSTRAD_IO_DISK,
-	AMSTRAD_IO_PRINTER,
 	{
 		IO_CARTSLOT,				/* type */
 		1,							/* count */
@@ -2874,6 +2869,7 @@ static const struct IODevice io_cpcplus[] =
 SYSTEM_CONFIG_START(amstrad)
 	CONFIG_RAM_DEFAULT(128 * 1024)
 	CONFIG_DEVICE_CASSETTE(1, "", amstrad_cassette_init)
+	CONFIG_DEVICE_PRINTER(1)
 SYSTEM_CONFIG_END
 
 

@@ -1721,7 +1721,6 @@ static const struct IODevice io_ibmpc[] = {
         NULL,               /* input_chunk */
         NULL                /* output_chunk */
     },
-	IO_PRINTER_PORT(3,"prn\0"),
     { IO_END }
 };
 
@@ -1743,6 +1742,7 @@ static const struct IODevice io_ibmpc[] = {
 #define io_xtvga io_ibmpc
 
 SYSTEM_CONFIG_START(ibmpc)
+	CONFIG_DEVICE_PRINTER(3)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

@@ -1775,7 +1775,6 @@ static const struct IODevice io_einstein[] =
 		NULL,						/* input_chunk */ 
 		NULL						/* output_chunk */ 
 	},
-	IO_PRINTER_PORT(1,"prn\0"),
 	{IO_END}
 };
 
@@ -1783,6 +1782,7 @@ static const struct IODevice io_einstein[] =
 
 SYSTEM_CONFIG_START(einstein)
 	CONFIG_RAM_DEFAULT(65536)
+	CONFIG_DEVICE_PRINTER(1)
 SYSTEM_CONFIG_END
 
 /*     YEAR  NAME       PARENT  MACHINE    INPUT     INIT  CONFIG,   COMPANY   FULLNAME */

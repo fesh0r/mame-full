@@ -536,7 +536,6 @@ ROM_END
 
 static const struct IODevice io_oric1[] =
 {
- 	IO_PRINTER_PORT(1,"prn\0"),
 	{
 		IO_FLOPPY,				/* type */
 		4,						/* count */
@@ -562,7 +561,6 @@ static const struct IODevice io_oric1[] =
 
 static const struct IODevice io_prav8[] =
 {
- 	IO_PRINTER_PORT(1,"prn\0"),
 	{
 		IO_FLOPPY,				/* type */
 		1,						/* count */
@@ -594,6 +592,7 @@ static const struct IODevice io_prav8[] =
 
 SYSTEM_CONFIG_START(oric)
 	CONFIG_DEVICE_CASSETTE(1, "tap\0", oric_cassette_init)
+	CONFIG_DEVICE_PRINTER(1)
 SYSTEM_CONFIG_END
 
 /*    YEAR   NAME       PARENT  MACHINE     INPUT       INIT    CONFIG    COMPANY         FULLNAME */

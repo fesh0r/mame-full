@@ -110,8 +110,6 @@ extern void coco_vhd_exit(int id);
 extern READ_HANDLER(coco_vhd_io_r);
 extern WRITE_HANDLER(coco_vhd_io_w);
 extern int coco_bitbanger_init (int id);
-extern void coco_bitbanger_exit (int id);
-extern void coco_bitbanger_output (int id, int data);
 extern READ_HANDLER( coco_pia_1_r );
 extern READ_HANDLER( coco3_pia_1_r );
 extern void dragon_sound_update(void);

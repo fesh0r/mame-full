@@ -2040,16 +2040,6 @@ int coco_bitbanger_init (int id)
 	return bitbanger_init(id, &cfg);
 }
 
-void coco_bitbanger_exit (int id)
-{
-	printer_exit(id);
-}
-
-void coco_bitbanger_output (int id, int data)
-{
-	bitbanger_output(id, data);
-}
-
 /***************************************************************************
   Machine Initialization
 ***************************************************************************/

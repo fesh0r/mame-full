@@ -727,7 +727,6 @@ static const struct IODevice io_ibmat[] = {
         NULL,               /* input_chunk */
         NULL                /* output_chunk */
     },
-	IO_PRINTER_PORT(3,"prn\0"),
     { IO_END }
 };
 
@@ -739,6 +738,7 @@ static const struct IODevice io_ibmat[] = {
 #define io_at486 io_ibmat
 
 SYSTEM_CONFIG_START(ibmat)
+	CONFIG_DEVICE_PRINTER(3)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

@@ -95,11 +95,6 @@ struct SystemConfigurationParamBlock
 		cfg->dev = &device;																	\
 	}																						\
 
-
-#define CONFIG_DEVICE_PRINTER(init,exit,output)												\
-	CONFIG_DEVICE(IO_PRINTER, 1, "prn\0", IO_RESET_NONE, OSD_FOPEN_WRITE, (init), (exit),	\
-		NULL, NULL, NULL, NULL, NULL, NULL, NULL, (output), NULL)							\
-
 #define CONFIG_DEVICE_CARTSLOT(file_extensions,count,init,exit,partialcrc)					\
 	CONFIG_DEVICE(IO_CARTSLOT, (count), (file_extensions), IO_RESET_CPU, OSD_FOPEN_READ,	\
 		(init), (exit),	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, (partialcrc))		\

@@ -1578,12 +1578,12 @@ static const struct IODevice io_pcw16[] =
         NULL,               /* input_chunk */
         NULL                /* output_chunk */
     },
-//	IO_PRINTER_PORT(1,"\0"),
 	{IO_END}
 };
 
 SYSTEM_CONFIG_START(pcw16)
 	CONFIG_RAM_DEFAULT(2048 * 1024)
+	//CONFIG_DEVICE_PRINTER(1)
 SYSTEM_CONFIG_END
 
 /*     YEAR  NAME     PARENT    MACHINE    INPUT     INIT   CONFIG,  COMPANY          FULLNAME */

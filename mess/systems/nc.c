@@ -1829,7 +1829,6 @@ static const struct IODevice io_nc100[] =
 			NULL,                   /* input chunk */
 			NULL,                   /* output chunk */
 	},
-	IO_PRINTER_PORT(1,"\0"),
 	{IO_END}
 };
 
@@ -1895,7 +1894,6 @@ static const struct IODevice io_nc200[] =
 			NULL,                   /* input chunk */
 			NULL,                   /* output chunk */
 	},
-	IO_PRINTER_PORT(1,"\0"),
 	{IO_END}
 };
 
@@ -1904,11 +1902,13 @@ static const struct IODevice io_nc200[] =
 
 SYSTEM_CONFIG_START(nc100)
 	CONFIG_RAM_DEFAULT(64 * 1024)
+	CONFIG_DEVICE_PRINTER(1)
 SYSTEM_CONFIG_END
 
 
 SYSTEM_CONFIG_START(nc200)
 	CONFIG_RAM_DEFAULT(128 * 1024)
+	CONFIG_DEVICE_PRINTER(1)
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME       PARENT  MACHINE    INPUT     INIT     CONFIG,  COMPANY               FULLNAME */

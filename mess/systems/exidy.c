@@ -819,7 +819,6 @@ ROM_END
 
 static const struct IODevice io_exidy[] =
 {
-	IO_PRINTER_PORT(1,"prn\0"),
 	{
 		IO_FLOPPY,					/* type */
 		4,							/* count */
@@ -845,6 +844,7 @@ static const struct IODevice io_exidy[] =
 
 SYSTEM_CONFIG_START(exidy)
 	//CONFIG_DEVICE_CASSETTE(2, "", exidy_cassette_init)
+	CONFIG_DEVICE_PRINTER(1)
 SYSTEM_CONFIG_END
 
 /*	  YEAR	NAME	PARENT	MACHINE	INPUT	INIT	CONFIG	COMPANY        FULLNAME */
