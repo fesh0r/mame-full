@@ -215,6 +215,7 @@ struct GameOptions
 	struct ImageFile image_files[MAX_IMAGES];
 	int image_count;
 	int (*mess_printf_output)(char *fmt, va_list arg);
+	int disable_normal_ui;
 	#endif
 };
 

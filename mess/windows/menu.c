@@ -553,7 +553,7 @@ static void prepare_menus(void)
 void win_toggle_menubar(void)
 {
 	SetMenu(win_video_window, GetMenu(win_video_window) ? NULL : win_menu_bar);
-	win_update_cursor_state();
+	win_adjust_window();
 }
 
 
@@ -841,4 +841,14 @@ int osd_keyboard_disabled(void)
 {
 	return win_use_natural_keyboard;
 }
+
+//============================================================
+//	osd_trying_to_quit
+//============================================================
+
+int osd_trying_to_quit(void)
+{
+	return win_trying_to_quit;
+}
+
 

@@ -542,6 +542,10 @@ BEGIN
                     HIDC_KEEPASPECT
     CONTROL         "Throttle",IDC_THROTTLE,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,16,81,77,9,0,HIDC_THROTTLE
+#ifdef MESS
+    CONTROL         "Use new UI",IDC_USE_NEW_UI,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,16,93,77,9,0
+#endif
     GROUPBOX        "Rotation",IDC_STATIC,7,105,100,74
     COMBOBOX        IDC_ROTATE,16,118,83,72,CBS_DROPDOWNLIST | WS_VSCROLL |
                     WS_TABSTOP,0,HIDC_ROTATE

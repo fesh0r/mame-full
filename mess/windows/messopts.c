@@ -62,6 +62,7 @@ static int specify_ram(struct rc_option *option, const char *arg, int priority)
 struct rc_option mess_opts[] = {
 	/* FIXME - these option->names should NOT be hardcoded! */
 	{ "MESS specific options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
+	{ "newui",     "nu",   rc_bool,   &options.disable_normal_ui,	"1", 0, 0, NULL,			"use the new MESS UI" },
 	{ "cartridge", "cart", rc_string, &dev_opts,					NULL, 0, 0, add_device,		"attach software to cartridge device" },
 	{ "floppydisk","flop", rc_string, &dev_opts,					NULL, 0, 0, add_device,		"attach software to floppy disk device" },
 	{ "harddisk",  "hard", rc_string, &dev_opts,					NULL, 0, 0, add_device,		"attach software to hard disk device" },
@@ -76,9 +77,7 @@ struct rc_option mess_opts[] = {
 	{ "quickload", "quik", rc_string, &dev_opts,					NULL, 0, 0, add_device,		"attach software to quickload device" },
 	{ "ramsize",   "ram",  rc_string, &dev_opts,					NULL, 0, 0, specify_ram,	"size of RAM (if supported by driver)" },
 	{ "threads",   "thr",  rc_int,    &win_task_count,				NULL, 0, 0, NULL,			"number of threads to use for parallel operations" },
-#if 0
 	{ "natural",   "nat",  rc_bool,   &win_use_natural_keyboard,	NULL, 0, 0, NULL,			"specifies whether to use a natural keyboard or not" },
-#endif
 	{ NULL, NULL, rc_end, NULL, NULL, 0, 0, NULL, NULL }
 };
 

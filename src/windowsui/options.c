@@ -265,7 +265,7 @@ static REG_OPTIONS regGameOpts[] =
 	,
 	{ "extra_software",			RO_STRING,	&gOpts.extra_software_paths,	0, 0},
 	{ "printer",				RO_STRING,	&gOpts.printer,					0, 0},
-	{ "use_new_filemgr",		RO_BOOL,	&gOpts.use_new_filemgr,			0, 0},
+	{ "use_new_ui",				RO_BOOL,	&gOpts.use_new_ui,				0, 0},
 	{ "ram_size",				RO_INT,		&gOpts.ram_size,				0, 0}
 #endif
 };
@@ -499,7 +499,7 @@ void OptionsInit(int total_games)
 
 
 #ifdef MESS
-	global.use_new_filemgr = TRUE;
+	global.use_new_ui = TRUE;
 	memset(global.extra_software_paths, '\0', sizeof(global.extra_software_paths));
 #endif
 

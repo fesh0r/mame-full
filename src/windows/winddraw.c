@@ -100,6 +100,7 @@ static int blit_and_flip(LPDIRECTDRAWSURFACE target_surface, LPRECT src, LPRECT 
 
 
 
+#if WINDOW_HAS_MENU
 //============================================================
 //	win_get_top_height
 //============================================================
@@ -123,6 +124,7 @@ static int win_get_top_height(void)
 	}
 	return top_height;
 }
+#endif /* WINDOW_HAS_MENU */
 
 //============================================================
 //	erase_outer_rect

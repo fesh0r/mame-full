@@ -200,7 +200,7 @@ INLINE int wnd_extra_width(void)
 	if (!win_window_mode)
 		return 0;
 #endif
-	AdjustWindowRectEx(&window, WINDOW_STYLE, WINDOW_HAS_MENU, WINDOW_STYLE_EX);
+	AdjustWindowRectEx(&window, WINDOW_STYLE, WINDOW_HAS_MENU && GetMenu(win_video_window), WINDOW_STYLE_EX);
 	return (window.right - window.left) - 100;
 }
 
@@ -217,7 +217,7 @@ INLINE int wnd_extra_height(void)
 	if (!win_window_mode)
 		return 0;
 #endif
-	AdjustWindowRectEx(&window, win_window_mode ? WINDOW_STYLE : FULLSCREEN_STYLE, WINDOW_HAS_MENU,
+	AdjustWindowRectEx(&window, win_window_mode ? WINDOW_STYLE : FULLSCREEN_STYLE, WINDOW_HAS_MENU && GetMenu(win_video_window),
 		win_window_mode ? WINDOW_STYLE_EX : FULLSCREEN_STYLE_EX);
 	return (window.bottom - window.top) - 100;
 }
@@ -233,7 +233,7 @@ INLINE int wnd_extra_left(void)
 	RECT window = { 100, 100, 200, 200 };
 	if (!win_window_mode)
 		return 0;
-	AdjustWindowRectEx(&window, WINDOW_STYLE, WINDOW_HAS_MENU, WINDOW_STYLE_EX);
+	AdjustWindowRectEx(&window, WINDOW_STYLE, WINDOW_HAS_MENU && GetMenu(win_video_window), WINDOW_STYLE_EX);
 	return 100 - window.left;
 }
 
@@ -442,9 +442,12 @@ int win_init_window(void)
 #else
 	sprintf(title, "MESS: %s [%s]", Machine->gamedrv->description, Machine->gamedrv->name);
 #if WINDOW_HAS_MENU
-	menu = win_create_menus();
-	if (!menu)
-		return 1;
+	if (options.disable_normal_ui)
+	{
+		menu = win_create_menus();
+		if (!menu)
+			return 1;
+	}
 #endif
 #endif
 
@@ -731,18 +734,7 @@ static LRESULT CALLBACK video_window_proc(HWND wnd, UINT message, WPARAM wparam,
 		// destroy: close down the app
 		case WM_DESTROY:
 			win_ddraw_kill();
-#ifdef MESS
-			/* NPW 11-Jan-2002 - The MAME way of quiting the emulation doesn't work	in MESS,
-			 * because ScrLk can be used to block UI keys.  Therefore, we should use the
-			 * input_ui_post() function that I originally made for MESSCE.
-			 *
-			 * Personally, I think that input_ui_post() should be integrated into the MAME
-			 * core and thus the need for the 'win_trying_to_quit' hack would be eliminated
-			 */
-			input_ui_post(IPT_UI_CANCEL);
-#else
 			win_trying_to_quit = 1;
-#endif
 			win_video_window = 0;
 			break;
 

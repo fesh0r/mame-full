@@ -122,7 +122,7 @@ static DWORD WINAPI task_proc(void *param)
 
 int win_parallel_init(void)
 {
-	typedef DWORD (*set_thread_ideal_processor_proc)(HANDLE hThread, DWORD dwIdealProcessor);
+	typedef DWORD (WINAPI *set_thread_ideal_processor_proc)(HANDLE hThread, DWORD dwIdealProcessor);
 
 	int i;
 	int processor_count;
@@ -171,6 +171,8 @@ int win_parallel_init(void)
 			if (set_thread_ideal_processor)
 				set_thread_ideal_processor(tasks[i].thread, (i+1) % processor_count);
 		}
+		if (set_thread_ideal_processor)
+			set_thread_ideal_processor(GetCurrentThread(), 0);
 	}
 	return 0;
 

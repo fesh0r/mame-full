@@ -1659,9 +1659,12 @@ void osd_customize_inputport_defaults(struct ipd *defaults)
 
 #if WINDOW_HAS_MENU
 				case IPT_OSD_2:
-					idef->type = next_reserved;
-					idef->name = "Toggle menubar";
-					seq_set_1 (&idef->seq, KEYCODE_PRTSCR);
+					if (options.disable_normal_ui)
+					{
+						idef->type = next_reserved;
+						idef->name = "Toggle menubar";
+						seq_set_1 (&idef->seq, KEYCODE_SCRLOCK);
+					}
 				break;
 #endif
 				default:

@@ -8,7 +8,7 @@
 #define IDC_FILTER_COMPUTER             2002
 #define IDC_FILTER_CONSOLE              2003
 #define IDC_FILTER_MODIFIED             2004
-#define IDC_NEW_FILEMGR                 2005
+#define IDC_USE_NEW_UI                  2005
 #define IDC_RAM_COMBOBOX				2006
 #define IDC_RAM_CAPTION					2007
 #define IDC_PRINTER_CAPTION				2008

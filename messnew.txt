@@ -20,6 +20,13 @@ Source Changes:
 - Updated all drivers device declarations to new system and removed old dev
   array. [Nate Woods]
 
+- New options.disable_normal_ui and osd_trying_to_quit() functions created, to
+  support the new Win32 UI. [Nate Woods]
+
+- [Win32] New user interface replaces old UI; this is on by default but can be
+  disabled with the -nonewui command switch.  This new UI uses Windows native
+  menus and should be much easier to use. [Nate Woods]
+
 - [Win32 GUI] Fixed an incredibly MORONIC bug where RAM preferences were stored
   as booleans (!?!) rather than integers (bug #260) [Nate Woods]
 

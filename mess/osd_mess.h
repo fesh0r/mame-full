@@ -10,6 +10,10 @@ int osd_select_file (int sel, char *filename);
 /* returns 1 if input of type IPT_KEYBOARD should be supressed */
 int osd_keyboard_disabled(void);
 
+/* returns 1 if trying to quit; only called when options.disable_normal_ui */
+/* is set */
+int osd_trying_to_quit(void);
+
 /******************************************************************************
 
   Parallel processing (for SMP)

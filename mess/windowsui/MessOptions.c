@@ -127,10 +127,10 @@ void SetCrcDir(const char *crcdir)
         settings.crcdir = strdup(crcdir);
 }
 
-BOOL GetUseNewFileMgr(int num_game)
+BOOL GetUseNewUI(int num_game)
 {
     assert(0 <= num_game && num_game < num_games);
 
-    return game[num_game].use_new_filemgr;
+    return game[num_game].use_new_ui;
 }
 

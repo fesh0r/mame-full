@@ -3614,6 +3614,16 @@ int handle_user_interface(struct mame_bitmap *bitmap)
 #ifdef MESS
 	static int mess_pause_for_ui = 0;
 	char buf[2048];
+
+	if (osd_trying_to_quit())
+		return 1;
+
+	if (options.disable_normal_ui)
+	{
+		if (show_profiler) profiler_show(bitmap);
+		return 0;
+	}
+
 	if (Machine->gamedrv->flags & GAME_COMPUTER)
 	{
 		static int ui_active = 0, ui_toggle_key = 0;

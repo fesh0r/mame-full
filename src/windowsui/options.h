@@ -202,7 +202,7 @@ typedef struct
 	BOOL   leds;
 
 #ifdef MESS
-	BOOL   use_new_filemgr;
+	BOOL   use_new_ui;
 	char   extra_software_paths[MAX_PATH * 10];
 	char   printer[MAX_PATH];
 	UINT32 ram_size;
