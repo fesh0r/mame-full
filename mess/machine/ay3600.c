@@ -92,7 +92,7 @@ static int anykey_clearstrobe;
 void AY3600_init(void)
 {
 	/* Set Caps Lock light to ON, since that's how we default it. */
-	led_set_status(1,1);
+	set_led_status(1,1);
 
 	/* Init the key remapping table */
 	memset(a2_keys,0,sizeof(a2_keys));
@@ -120,10 +120,10 @@ void AY3600_interrupt(void)
 	if (readinputport(8) & 0x01)
 	{
 		caps_lock = 1;
-		led_set_status(1,1);
+		set_led_status(1,1);
 	}
 	else
-		led_set_status(1,0);
+		set_led_status(1,0);
 
 	switchkey = A2_KEY_NORMAL;
 
