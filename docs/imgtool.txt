@@ -314,6 +314,27 @@ Parameters for create:
 --protection=[0|1]: when set to 1, the disk will be protected and some (but not
 	all) TI99 programs won't overwrite the disk.
 
+Examples:
+
+Create a SSSD image compatible with all controllers and any TI-99 with a SS
+floppy disks:
+imgtool create v9t9 test.dsk --density=1 --sides=1 --sectors=9
+
+Create a DSSD image compatible with all controllers:
+imgtool create v9t9 test.dsk --density=1 --sectors=9
+
+Create a DSDD image compatible with BwG and HFDC controllers:
+imgtool create v9t9 test.dsk
+
+Create a 80-track DSDD image compatible with the HFDC controller:
+imgtool create v9t9 test.dsk --density=3 --tracks=80
+
+Create a DSHD image compatible with the Geneve with an HFDC controller:
+imgtool create v9t9 test.dsk --density=3 --tracks=80 --sectors=36
+
+List an image:
+imgtool dir v9t9
+
 
 TI990 disk images (ti990hd)
 ---------------------------
