@@ -78,6 +78,14 @@ CC	= gcc
 # optimization levels above -O.  If you run into problems using -O2 or higher,
 # try using -O instead. 
 #
+# Note 6:
+# Known problems with gcc 3.0.x on x86 platforms:
+# * Version 3.0.2 has a buggy -fomit-frame-pointer that can produce invalid
+#   code.  It is unknown whether this ever causes problems with xmame, but the
+#   bug is fixed in 3.0.3 at any rate.
+# * Using -funroll-loops with -O2 appears to miscompile src/sndhrdw/williams.c,
+#   causing narc (and possibly other games) to segfault.
+#
 ### for normal optimization, full warnings
 CFLAGS    = -O -Wall
 ### for common optimizations, full warnings except unused vars
