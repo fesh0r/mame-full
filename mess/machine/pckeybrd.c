@@ -303,9 +303,9 @@ void at_keyboard_init(void)
 	keyboard.input_state = 0;
 	memset(&keyboard.make[0], 0, sizeof(UINT8)*128);
 	/* set default led state */
-	osd_led_w(2, 0);
-	osd_led_w(0, 0);
-	osd_led_w(1, 0);
+	set_led_status(2, 0);
+	set_led_status(0, 0);
+	set_led_status(1, 0);
 
 	keyboard.scan_code_set = 3;
 }
@@ -712,9 +712,9 @@ void at_keyboard_write(UINT8 data)
 			
 			/* led's in same order as my keyboard leds. */
 			/* num lock, caps lock, scroll lock */
-			osd_led_w(2, (data & 0x01));
-			osd_led_w(0, ((data & 0x02)>>1));
-			osd_led_w(1, ((data & 0x04)>>2));
+			set_led_status(2, (data & 0x01));
+			set_led_status(0, ((data & 0x02)>>1));
+			set_led_status(1, ((data & 0x04)>>2));
 
 		}
 		break;

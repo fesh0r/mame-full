@@ -978,10 +978,10 @@ static void stop_rev_timer( int drive ) {
 static void fdc_setup_leds( int drive ) {
 
 	if ( drive == 0 )
-		osd_led_w( 1, fdc_status[drive].motor_on ); /* update internal drive led */
+		set_led_status( 1, fdc_status[drive].motor_on ); /* update internal drive led */
 
 	if ( drive == 1 )
-		osd_led_w( 2, fdc_status[drive].motor_on ); /* update external drive led */
+		set_led_status( 2, fdc_status[drive].motor_on ); /* update external drive led */
 }
 
 static void fdc_stepdrive( int drive ) {
@@ -1273,7 +1273,7 @@ static int cia_0_portB_r( void ) {
 
 static void cia_0_portA_w( int data ) {
 	/* bit 1 = overlay (data & 1 ) */
-	osd_led_w( 0, ( data & 2 ) ? 0 : 1 ); /* bit 2 = Power Led on Amiga*/
+	set_led_status( 0, ( data & 2 ) ? 0 : 1 ); /* bit 2 = Power Led on Amiga*/
 }
 
 static void cia_0_portB_w( int data ) {

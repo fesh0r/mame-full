@@ -871,7 +871,7 @@ void pet_frame_interrupt (int param)
 	}
 	quickload = QUICKLOAD;
 
-	osd_led_w (1 /*KB_CAPSLOCK_FLAG */ , KEY_B_SHIFTLOCK ? 1 : 0);
+	set_led_status (1 /*KB_CAPSLOCK_FLAG */ , KEY_B_SHIFTLOCK ? 1 : 0);
 }
 
 void pet_state(PRASTER *This)

@@ -635,7 +635,7 @@ int vc20_frame_interrupt (void)
 
 	vc20_tape_config (DATASSETTE, DATASSETTE_TONE);
 	vc20_tape_buttons (DATASSETTE_PLAY, DATASSETTE_RECORD, DATASSETTE_STOP);
-	osd_led_w (1 /*KB_CAPSLOCK_FLAG */ , (KEYBOARD_EXTRA & KEY_SHIFTLOCK) ? 1 : 0);
+	set_led_status (1 /*KB_CAPSLOCK_FLAG */ , (KEYBOARD_EXTRA & KEY_SHIFTLOCK) ? 1 : 0);
 
 	return ignore_interrupt ();
 }
