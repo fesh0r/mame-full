@@ -669,7 +669,8 @@ $(OBJ)/intv.a:     \
 $(OBJ)/apf.a:      \
 	$(OBJ)/mess/systems/apf.o	\
     $(OBJ)/mess/machine/apf.o	\
-    $(OBJ)/mess/vidhrdw/apf.o
+    $(OBJ)/mess/vidhrdw/apf.o   \
+    $(OBJ)/mess/formats/apfapt.o
 
 $(OBJ)/sord.a:     \
 	$(OBJ)/mess/systems/sord.o
