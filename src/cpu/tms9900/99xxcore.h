@@ -1156,28 +1156,28 @@ WRITE_HANDLER(tms9995_internal2_w)
 
 		switch(I.mapper_cru_read_register)
 		{
-		case 0b000:
+		case 0xb000:
 			reply = I.map_files[I.cur_map].B[0];
 			break;
-		case 0b001:
+		case 0xb001:
 			reply = I.map_files[I.cur_map].B[1];
 			break;
-		case 0b010:
+		case 0xb010:
 			reply = I.map_files[I.cur_map].B[2];
 			break;
-		case 0b011:
+		case 0xb011:
 			reply = I.map_files[I.cur_map].L[0];
 			break;
-		case 0b100:
+		case 0xb100:
 			reply = I.map_files[I.cur_map].L[1];
 			break;
-		case 0b101:
+		case 0xb101:
 			reply = I.map_files[I.cur_map].L[2];
 			break;
-		case 0b110:
+		case 0xb110:
 			reply = I.mapper_address_latch;
 			break;
-		case 0b111:
+		case 0xb111:
 			reply = I.mapper_address_latch >> 16;
 			break;
 		}
