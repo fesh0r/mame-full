@@ -248,6 +248,8 @@ imgtoolerr_t img_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
 	/* This makes it so that drivers don't have to take care of clearing
 	 * the attributes if they don't apply
 	 */
+	if (ent->filename_len)
+		ent->filename[0] = '\0';
 	if (ent->attr_len)
 		ent->attr[0] = '\0';
 
@@ -256,6 +258,45 @@ imgtoolerr_t img_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
 		return markerrorsource(err);
 
 	return IMGTOOLERR_SUCCESS;
+}
+
+
+
+imgtoolerr_t img_getdirent(imgtool_image *img, const char *path, int index, imgtool_dirent *ent)
+{
+	imgtoolerr_t err;
+	imgtool_imageenum *imgenum = NULL;
+
+	if (index < 0)
+	{
+		err = IMGTOOLERR_PARAMTOOSMALL;
+		goto done;
+	}
+
+	err = img_beginenum(img, path, &imgenum);
+	if (err)
+		goto done;
+
+	do
+	{
+		err = img_nextenum(imgenum, ent);
+		if (err)
+			goto done;
+
+		if (ent->eof)
+		{
+			err = IMGTOOLERR_FILENOTFOUND;
+			goto done;
+		}
+	}
+	while(index--);
+
+done:
+	if (err)
+		memset(ent->filename, 0, ent->filename_len);
+	if (imgenum)
+		img_closeenum(imgenum);
+	return err;
 }
 
 

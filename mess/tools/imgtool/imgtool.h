@@ -170,6 +170,19 @@ imgtoolerr_t img_beginenum(imgtool_image *img, const char *path, imgtool_imageen
  */
 imgtoolerr_t img_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent);
 
+/* img_getdirent
+ *
+ * Description:
+ *		Retrieves the nth directory entry within an image
+ *
+ * Parameters:
+ *		img:				The image to enumerate
+ *		path:				The directory path to enumerate
+ *		index:				Zero counted index
+ *		ent:				Place to receive directory entry
+ */
+imgtoolerr_t img_getdirent(imgtool_image *img, const char *path, int index, imgtool_dirent *ent);
+
 /* img_countfiles
  *
  * Description:

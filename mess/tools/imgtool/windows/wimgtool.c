@@ -67,8 +67,8 @@ static imgtoolerr_t get_selected_dirent(HWND window, imgtool_dirent *entry)
 {
 	struct wimgtool_info *info;
 	int selected_item;
-	imgtool_imageenum *imageenum = NULL;
 	imgtoolerr_t err;
+	LVITEM item;
 	
 	info = get_wimgtool_info(window);
 	if (!info->image)
@@ -83,27 +83,21 @@ static imgtoolerr_t get_selected_dirent(HWND window, imgtool_dirent *entry)
 		goto done;
 	}
 
-	err = img_beginenum(info->image, info->current_directory, &imageenum);
+	item.mask = LVIF_PARAM;
+	item.iItem = selected_item;
+	ListView_GetItem(info->listview, &item);
+
+	if (item.lParam < 0)
+	{
+		err = IMGTOOLERR_UNEXPECTED;
+		goto done;
+	}
+
+	err = img_getdirent(info->image, info->current_directory, item.lParam, entry);
 	if (err)
 		goto done;
-	do
-	{
-		err = img_nextenum(imageenum, entry);
-		if (err)
-			goto done;
-		if (entry->eof)
-		{
-			err = IMGTOOLERR_FILENOTFOUND;
-			goto done;
-		}
-	}
-	while(selected_item--);
 
 done:
-	if (err)
-		memset(entry->filename, 0, entry->filename_len);
-	if (imageenum)
-		img_closeenum(imageenum);
 	return err;
 }
 
@@ -153,7 +147,7 @@ static int append_associated_icon(HWND window, const char *extension)
 
 
 
-static imgtoolerr_t append_dirent(HWND window, const imgtool_dirent *entry)
+static imgtoolerr_t append_dirent(HWND window, int index, const imgtool_dirent *entry)
 {
 	LVITEM lvi;
 	int new_index;
@@ -178,7 +172,7 @@ static imgtoolerr_t append_dirent(HWND window, const imgtool_dirent *entry)
 
 		ptr = pile_getptr(&info->iconlist_extensions);
 		size = pile_size(&info->iconlist_extensions);
-		icon_index = 0;
+		icon_index = 2;
 		for (i = 0; i < size; i += strlen(&ptr[i]) + 1)
 		{
 			if (!stricmp(&ptr[i], extension))
@@ -203,10 +197,18 @@ static imgtoolerr_t append_dirent(HWND window, const imgtool_dirent *entry)
 	lvi.mask = LVIF_TEXT | LVIF_PARAM | LVIF_IMAGE;
 	lvi.pszText = entry->filename;
 	lvi.iImage = icon_index;
+	lvi.lParam = index;
 	new_index = ListView_InsertItem(info->listview, &lvi);
 
-	_sntprintf(buffer, sizeof(buffer) / sizeof(buffer[0]),
-		TEXT("%d"), entry->filesize);
+	if (entry->directory)
+	{
+		_sntprintf(buffer, sizeof(buffer) / sizeof(buffer[0]), TEXT("<DIR>"));
+	}
+	else
+	{
+		_sntprintf(buffer, sizeof(buffer) / sizeof(buffer[0]),
+			TEXT("%d"), entry->filesize);
+	}
 	ListView_SetItemText(info->listview, new_index, 1, buffer);
 
 	if (entry->attr)
@@ -228,6 +230,8 @@ static imgtoolerr_t refresh_image(HWND window)
 	char size_buf[32];
 	imgtool_dirent entry;
 	UINT64 filesize;
+	int i;
+	BOOL is_root_directory;
 
 	info = get_wimgtool_info(window);
 	size_buf[0] = '\0';
@@ -236,9 +240,18 @@ static imgtoolerr_t refresh_image(HWND window)
 
 	if (info->image)
 	{
-		err = img_beginenum(info->image, NULL, &imageenum);
-		if (err)
-			goto done;
+		is_root_directory = TRUE;
+		if (is_root_directory)
+		{
+			for (i = 0; info->current_directory[i]; i++)
+			{
+				if (info->current_directory[i] != img_module(info->image)->path_separator)
+				{
+					is_root_directory = FALSE;
+					break;
+				}
+			}
+		}
 
 		memset(&entry, 0, sizeof(entry));
 		entry.filename = filename_buf;
@@ -246,6 +259,22 @@ static imgtoolerr_t refresh_image(HWND window)
 		entry.attr = attributes_buf;
 		entry.attr_len = sizeof(attributes_buf) / sizeof(attributes_buf[0]);
 
+		if (!is_root_directory)
+		{
+			strcpy(entry.filename, "..");
+			entry.directory = 1;
+			entry.attr[0] = '\0';
+			err = append_dirent(window, -1, &entry);
+			if (err)
+				goto done;
+		}
+
+
+		err = img_beginenum(info->image, info->current_directory, &imageenum);
+		if (err)
+			goto done;
+
+		i = 0;
 		do
 		{
 			err = img_nextenum(imageenum, &entry);
@@ -254,7 +283,7 @@ static imgtoolerr_t refresh_image(HWND window)
 
 			if (entry.filename[0])
 			{
-				err = append_dirent(window, &entry);
+				err = append_dirent(window, i++, &entry);
 				if (err)
 					goto done;
 			}
@@ -847,6 +876,104 @@ done:
 
 
 
+static imgtoolerr_t change_directory(HWND window, const char *dir)
+{
+	struct wimgtool_info *info;
+	char *new_current_dir;
+	char buf[2];
+	char path_separator;
+	int i;
+
+	info = get_wimgtool_info(window);
+	path_separator = img_module(info->image)->path_separator;
+
+	if (!strcmp(dir, ".."))
+	{
+		i = strlen(info->current_directory);
+		if (i > 0)
+			i--;
+		while((i > 0) && (info->current_directory[i-1] != path_separator))
+			i--;
+		info->current_directory[i] = '\0';
+	}
+	else
+	{
+		new_current_dir = realloc(info->current_directory,
+			strlen(info->current_directory) + 1 + strlen(dir) + 1);
+		if (!new_current_dir)
+			return IMGTOOLERR_OUTOFMEMORY;
+
+		buf[0] = path_separator;
+		buf[1] = '\0';
+
+		info->current_directory = new_current_dir;
+		strcat(info->current_directory, dir);	
+		strcat(info->current_directory, buf);
+	}
+	return full_refresh_image(window);
+}
+
+
+
+static imgtoolerr_t double_click(HWND window)
+{
+	imgtoolerr_t err;
+	struct wimgtool_info *info;
+	LVHITTESTINFO htinfo;
+	LVITEM item;
+	POINTS pt;
+	RECT r;
+	DWORD pos;
+	imgtool_dirent entry;
+	int selected_item;
+	char buf[256];
+
+	info = get_wimgtool_info(window);
+
+	memset(&htinfo, 0, sizeof(htinfo));
+	pos = GetMessagePos();
+	pt = MAKEPOINTS(pos);
+	GetWindowRect(info->listview, &r);
+	htinfo.pt.x = pt.x - r.left;
+	htinfo.pt.y = pt.y - r.top;
+	ListView_HitTest(info->listview, &htinfo);
+	
+	if (htinfo.flags & LVHT_ONITEM)
+	{
+		memset(&entry, 0, sizeof(entry));
+		entry.filename = buf;
+		entry.filename_len = sizeof(buf) / sizeof(buf[0]);
+
+		item.mask = LVIF_PARAM;
+		item.iItem = htinfo.iItem;
+		ListView_GetItem(info->listview, &item);
+
+		selected_item = item.lParam;
+	
+		if (selected_item < 0)
+		{
+			strcpy(entry.filename, "..");
+			entry.directory = 1;
+		}
+		else
+		{
+			err = img_getdirent(info->image, info->current_directory, selected_item, &entry);
+			if (err)
+				return err;
+		}
+
+		if (entry.directory)
+		{
+			err = change_directory(window, entry.filename);
+			if (err)
+				return err;
+		}
+	}
+	return IMGTOOLERR_SUCCESS;
+}
+
+
+
 static BOOL context_menu(HWND window, LONG x, LONG y)
 {
 	struct wimgtool_info *info;
@@ -985,6 +1112,10 @@ static LRESULT CALLBACK wimgtool_wndproc(HWND window, UINT message, WPARAM wpara
 			notify = (NMHDR *) lparam;
 			switch(notify->code)
 			{
+				case NM_DBLCLK:
+					double_click(window);
+					break;
+
 				case LVN_BEGINDRAG:
 					pt.x = 8;
 					pt.y = 8;

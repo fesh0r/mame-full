@@ -32,6 +32,8 @@ Imgtool Changes:
 - Added an 'identify' command that can be used to attempt to identify the
   type of any given image.  [Nate Woods]
 
+- Preliminary CoCo OS-9 disk image module.  [Nate Woods]
+
 
 
 Source Changes:

@@ -65,7 +65,7 @@ MODULE(concept)
 MODULE(mac)
 MODULE(mess_hd)
 MODULE(rsdos)
-/*MODULE(os9)*/
+MODULE(os9)
 MODULE(ti99)
 MODULE(ti990)
 
