@@ -2443,15 +2443,15 @@ Software: it is a mono-tasking OS, with source-level compatibility with the
 UCSD p-system, and vague reminiscences of UNIX.
 
 The Concept has a bitmapped screen, which enables to mix text in any style and
-size with graphics, and some programs were reportedly WYSIWYG (which was still
-relatively uncommon at the time).  The system includes a primitive window
-manager, but don't delude yourself: it is no GUI.  The most original feature is
-probably the rotatable screen that can be used either in horizontal or vertical
-position: however you need to reboot the computer after flipping the screen. 
-Another feature of interest is the integrated network support: the Concept can
-be used either as a disk-less network computer or as a full-featured personal
-computer, and you could connect Concepts, Apple IIs and IBM PCs in an
-heterogeneous Omninet LAN.
+size with graphics, and some programs were reportedly WYSIWYG (which was
+uncommon at the time).  The system includes a primitive window manager, but
+don't delude yourself: it is no GUI.  The most original feature is probably the
+rotatable screen that can be used either in horizontal or vertical position:
+however you need to reboot the computer after flipping the screen.   Another
+feature of interest is the integrated network support: the Concept can be used
+either as a disk-less network computer or as a full-featured personal computer,
+and you could connect Concepts, Apple IIs and IBM PCs in an heterogeneous
+Omninet LAN.
 
 Available programs were mostly business applications: word processor,
 spreadsheet, grapher, database, accounting...  Thanks to its large screen, its
