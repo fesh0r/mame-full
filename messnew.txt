@@ -15,13 +15,15 @@ System Driver Changes:
   resemble the LCD screen(Bug #87). Games which originally have no sound
   don't produce bass sound at start up (Bug #195) [Anthony Kruize]
 
-- [CGENIE] Floppy initialisation fixed for when no floppy attached 
+- [CGENIE] Floppy initialization fixed for when no floppy attached 
   (Bug #95) [Ben Bruscella]
 
-- [JUPITER] Cartridge and Cassette Initialisation fixed 
+- [UK101/SUPERBOARD] Cassette Initialization fixed [Stefano Priore]
+
+- [JUPITER] Cartridge and Cassette Initialization fixed 
   (Bug #126) [Ben Bruscella]
 
-- [NASCOM]  Cassette Initialisation fixed
+- [NASCOM]  Cassette Initialization fixed
   (Bug #183) [Ben Bruscella]
 
 - [A7800] Fixed interrupt handling bug - more carts run again [Ben Bruscella]
