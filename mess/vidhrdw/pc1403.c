@@ -115,13 +115,13 @@ static const POCKETC_FIGURE busy={
 	"11  11  1 1",
 	"1   1 1 1 1",
 	"1   1 1  1e" 
-}, kana={ 
+}, kana={ // katakana charset
 	"  1     1 ",
 	" 11111 111",
 	"  1  1  1 ",
 	" 1   1  1 ",
 	"1   1  1e" 
-}, kana_small={
+}, shoo={ // minor
 	"    1    ",
 	" 1  1  1 ",
 	"1   1   1",
@@ -211,7 +211,7 @@ void pc1403_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
     
     pocketc_draw_special(bitmap,RIGHT+100,DOWN-13,kana,
 			 pc1403_lcd.reg[0x3c]&1?color[1]:color[0]);
-    pocketc_draw_special(bitmap,RIGHT+120,DOWN-13,kana_small,
+    pocketc_draw_special(bitmap,RIGHT+120,DOWN-13,shoo,
 			 pc1403_lcd.reg[0x3c]&2?color[1]:color[0]);
     pocketc_draw_special(bitmap,RIGHT+160,DOWN-13,sml,
 			 pc1403_lcd.reg[0x3c]&4?color[1]:color[0]);
@@ -240,7 +240,7 @@ void pc1403_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
     pocketc_draw_special(bitmap,RIGHT+232,DOWN+27,line/*matrix*/, 
 			 pc1403_lcd.reg[0x3c]&0x10?color[1]:color[0]);
     pocketc_draw_special(bitmap,RIGHT+253,DOWN+27,line/*stat*/,
-			 pc1403_lcd.reg[0x3c]&8/*not tested*/?color[1]:color[0]);
+			 pc1403_lcd.reg[0x3c]&8?color[1]:color[0]);
     pocketc_draw_special(bitmap,RIGHT+274,DOWN+27,line/*print*/,
 			 pc1403_lcd.reg[0x7c]&0x40/*not tested*/?color[1]:color[0]);    
 }
