@@ -658,6 +658,16 @@ ROM_START( ep128 )
         ROM_LOAD("exdos.rom",0x1c000,0x8000, 0xd1d7e157)
 ROM_END
 
+ROM_START( ep128a )
+        /* 128k ram + 32k rom (OS) + 16k rom (BASIC) + 32k rom (EXDOS) */
+        ROM_REGION(0x24000,REGION_CPU1)
+        ROM_LOAD("exos.rom",0x10000,0x8000,  0xd421795f)
+        ROM_LOAD("exbas.rom",0x18000,0x4000, 0x683cf455)
+        ROM_LOAD("exdos.rom",0x1c000,0x8000, 0x982a3b44)
+ROM_END
+
+#define io_ep128a io_ep128
+
 static const struct IODevice io_ep128[] = {
 	{
 		IO_FLOPPY,			/* type */
@@ -688,6 +698,7 @@ static const struct IODevice io_ep128[] = {
 ***************************************************************************/
 
 /*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	  COMPANY	FULLNAME */
-COMPX( 1985, ep128,	  0,		ep128,	  ep128,	0,		  "Intelligent Software", "Enterprise 128K", GAME_NO_SOUND )
+COMPX( 1984, ep128,	  0,		ep128,	  ep128,	0,		  "Intelligent Software", "Enterprise 128", GAME_NO_SOUND )
+COMPX( 1984, ep128a,  ep128,		ep128,	  ep128,	0,		  "Intelligent Software", "Enterprise 128 (EXOS 2.1)", GAME_NO_SOUND )
 
 
