@@ -40,7 +40,7 @@
 #include "driver.h"
 #include "cpu/tms9900/tms9900.h"
 #include "machine/tms9901.h"
-/*#include "vidhrdw/generic.h"*/
+#include "machine/tms9902.h"
 #include "vidhrdw/tms9928a.h"
 #include "devices/cassette.h"
 
@@ -169,6 +169,22 @@ static const tms9901reset_param sys9901reset_param =
 	2000000.
 };
 
+static void rts_callback(int which, int RTS);
+static void xmit_callback(int which, int data);
+
+static const tms9902reset_param tms9902_params =
+{
+	2000000.,				/* clock rate (2MHz) */
+	NULL,/*int_callback,*/	/* called when interrupt pin state changes */
+	rts_callback,			/* called when Request To Send pin state changes */
+	NULL,/*brk_callback,*/	/* called when BReaK state changes */
+	xmit_callback			/* called when a character is transmitted */
+};
+
+static mame_file *rs232_fp;
+static UINT8 rs232_rts;
+static void *rs232_input_timer;
+
 static void machine_init_tm990_189(void)
 {
 	displayena_timer = timer_alloc(NULL);
@@ -179,6 +195,8 @@ static void machine_init_tm990_189(void)
 	tms9901_init(1, &sys9901reset_param);
 	tms9901_reset(0);
 	tms9901_reset(1);
+
+	tms9902_init(0, &tms9902_params);
 }
 
 
@@ -197,6 +215,8 @@ static void machine_init_tm990_189_v(void)
 	tms9901_init(1, &sys9901reset_param);
 	tms9901_reset(0);
 	tms9901_reset(1);
+
+	tms9902_init(0, &tms9902_params);
 
 	TMS9928A_reset();
 }
@@ -423,6 +443,71 @@ static void sys9901_tapewdata_w(int offset, int data)
 }
 
 /*
+	serial interface
+*/
+
+static void rs232_input_callback(int dummy)
+{
+	UINT8 buf;
+
+	if (/*rs232_rts &&*/ /*(mame_ftell(rs232_fp) < mame_fsize(rs232_fp))*/1)
+	{
+		if (mame_fread(rs232_fp, &buf, 1) == 1)
+			tms9902_push_data(0, buf);
+	}
+}
+
+/*
+	Initialize rs232 unit and open image
+*/
+static DEVICE_LOAD( tm990_189_rs232 )
+{
+	int id = image_index_in_device(image);
+
+	if (id != 0)
+		return INIT_FAIL;
+
+	rs232_fp = file;
+
+	tms9902_set_dsr(id, 1);
+	rs232_input_timer = timer_alloc(rs232_input_callback);
+	timer_adjust(rs232_input_timer, 0., 0, TIME_IN_SEC(.01));
+
+	return INIT_PASS;
+}
+
+/*
+	close a rs232 image
+*/
+static DEVICE_UNLOAD( tm990_189_rs232 )
+{
+	int id = image_index_in_device(image);
+
+	if (id != 0)
+		return;
+
+	rs232_fp = NULL;
+
+	tms9902_set_dsr(id, 0);
+
+	timer_remove(rs232_input_timer);
+}
+
+static void rts_callback(int which, int RTS)
+{
+	rs232_rts = RTS;
+	tms9902_set_cts(which, RTS);
+}
+
+static void xmit_callback(int which, int data)
+{
+	UINT8 buf = data;
+
+	if (rs232_fp)
+		mame_fwrite(rs232_fp, &buf, 1);
+}
+
+/*
 	External instruction decoding
 */
 
@@ -430,7 +515,7 @@ static WRITE_HANDLER(ext_instr_decode)
 {
 	int ext_op_ID;
 
-	ext_op_ID = (offset >> 11) & 0x3;
+	ext_op_ID = ((offset+0x800) >> 11) & 0x3;
 	if (data)
 		ext_op_ID |= 4;
 	switch (ext_op_ID)
@@ -443,12 +528,20 @@ static WRITE_HANDLER(ext_instr_decode)
 
 	case 5: /* CKON: set DECKCONTROL */
 		LED_state |= 0x20;
-		/* ... */
+		{
+			mess_image *img = image_from_devtype_and_index(IO_CASSETTE, 0);
+
+			device_status(img, device_status(img, -1) & ~ WAVE_STATUS_MOTOR_INHIBIT);
+		}
 		break;
 
 	case 6: /* CKOF: clear DECKCONTROL */
 		LED_state &= ~0x20;
-		/* ... */
+		{
+			mess_image *img = image_from_devtype_and_index(IO_CASSETTE, 0);
+
+			device_status(img, device_status(img, -1) | WAVE_STATUS_MOTOR_INHIBIT);
+		}
 		break;
 
 	case 7: /* LREX: trigger LOAD */
@@ -476,10 +569,10 @@ static READ_HANDLER(video_vdp_r)
 
 	/* When the tms9980 reads @>2000 or @>2001, it actually does a word access:
 	it reads @>2000 first, then @>2001.  According to schematics, both access
-	are decoded to the VDP, and read accesses are bogus, all the more so since
-	the two reads are too close (1us) for the VDP to be able to reload the read
-	buffer: the read address pointer is probably incremented by 2, but only the
-	first byte is valid.  There is a work around for this problem, though: all
+	are decoded to the VDP: read accesses are therefore bogus, all the more so
+	since the two reads are too close (1us) for the VDP to be able to reload
+	the read buffer: the read address pointer is probably incremented by 2, but
+	only the first byte is valid.  There is a work around for this problem: all
 	you need is reloading the address pointer before each read.  However,
 	software always uses the second byte, which is very weird, particularly
 	for the status port.  Presumably, since the read buffer has not been
@@ -672,7 +765,7 @@ static PORT_WRITE_START ( tm990_189_writeport )
 
 	{ 0x000, 0x1ff, tms9901_0_CRU_write },	/* user I/O tms9901 */
 	{ 0x200, 0x3ff, tms9901_1_CRU_write },	/* system I/O tms9901 */
-	{ 0x400, 0x5ff, MWA_NOP },				/* optional tms9902 is not implemented */
+	{ 0x400, 0x5ff, tms9902_0_CRU_write },	/* optional tms9902 */
 
 	{0x0800,0x1fff, ext_instr_decode },		/* external instruction decoding (IDLE, RSET, CKON, CKOF, LREX) */
 
@@ -682,7 +775,7 @@ static PORT_READ_START ( tm990_189_readport )
 
 	{ 0x00, 0x3f, tms9901_0_CRU_read },		/* user I/O tms9901 */
 	{ 0x40, 0x6f, tms9901_1_CRU_read },		/* system I/O tms9901 */
-	{ 0x80, 0xcf, MRA_NOP },				/* optional tms9902 is not implemented */
+	{ 0x80, 0xcf, tms9902_0_CRU_read },		/* optional tms9902 */
 
 PORT_END
 
@@ -933,6 +1026,7 @@ INPUT_PORTS_END
 SYSTEM_CONFIG_START(tm990_189)
 	/* a tape interface and a rs232 interface... */
 	CONFIG_DEVICE_CASSETTE		(1, "",		device_load_tm990_189_cassette)
+	CONFIG_DEVICE_LEGACY		(IO_SERIAL,		1, "\0",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_CREATE_OR_READ,	NULL,	NULL,	device_load_tm990_189_rs232,	device_unload_tm990_189_rs232,	NULL)
 SYSTEM_CONFIG_END
 
 /*	  YEAR	NAME	  PARENT	COMPAT	MACHINE		INPUT		INIT	CONFIG		COMPANY					FULLNAME */
