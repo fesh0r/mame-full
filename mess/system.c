@@ -347,6 +347,7 @@ TESTDRIVER( c128d )		/* Commodore 128D - NTSC 						  */
 /*	DRIVER( cbm900 )*/	/* Commodore 900 Prototype (z8000)				  */
 
 	DRIVER( amiga ) 	/* Commodore Amiga								  */
+    TESTDRIVER( cdtv )
 
 	DRIVER( c65 )		/* C65 / C64DX (Prototype, NTSC, 911001)		  */
 	DRIVER( c65e )		/* C65 / C64DX (Prototype, NTSC, 910828)		  */
@@ -388,7 +389,7 @@ TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS		  */
 /*	DRIVER( at386)*/	/*												  */
 
 	/* microchannel */
-/*	DRIVER( ibm8550 )*/	/* 1987 IBM PS2 Model 50 (80826)					*/
+/*	DRIVER( ibm8550 )*/	/* 1987 IBM PS2 Model 50 (80286)					*/
 
 /*	DRIVER( ibm8580 )*/	/* 1987 IBM PS2 Model 80 (80386)					*/
 
