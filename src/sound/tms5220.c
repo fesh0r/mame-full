@@ -119,15 +119,6 @@ static int schedule_dummy_read;			/* set after each load address, so that next r
 static UINT8 data_register;				/* data register, used by read command */
 static int RDB_flag;					/* whether we should read data register or status register */
 
-#if 0
-
-static void (* ready_func)(int state);	/* called when the chip receive data whereas its FIFO is full */
-/* This results into the chip clearing its ready line until next frame ; if
-the ready pin is connected to the halt pin of the CPU, this results into
-locking the CPU, and you should provide a callback which asserts the CPU
-halt line to lock the CPU. */
-
-#endif
 
 /**********************************************************************************************
 
@@ -220,18 +211,6 @@ void tms5220_set_read_and_branch(void (*func)(void))
 {
 	read_and_branch_callback = func;
 }
-
-
-/**********************************************************************************************
-
-     tms5220_set_ready_func -- sets the chip halt handler
-
-***********************************************************************************************/
-
-/*void tms5220_set_ready_func (void (*func)(int state))
-{
-	ready_func = func;
-}*/
 
 
 /**********************************************************************************************
