@@ -6,7 +6,8 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
-- [SNES] Various mode 7 fixes. [Anthony Kruize]
+- [SNES] Improved 16x16 background tile mode. Various mode 7 fixes.
+  [Anthony Kruize]
 
 - [TI99] Added support for Thierry Nouspickel's IDE card prototype. Added
   preliminary (i.e. buggy and incomplete) support for the HFDC disk controller
