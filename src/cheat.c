@@ -27,77 +27,77 @@
 ;  -Address in Hexadecimal (where to poke)
 ;  -Data to put at this address in hexadecimal (what to poke)
 ;  -Special (see below) usually 000
-;   -000 : the byte is poked every time and the cheat remains in active list.
-;   -001 : the byte is poked once and the cheat is removed from active list.
-;   -002 : the byte is poked every one second and the cheat remains in active
-;          list.
-;   -003 : the byte is poked every two seconds and the cheat remains in active
-;          list.
-;   -004 : the byte is poked every five seconds and the cheat remains in active
-;          list.
-;   -005 : the byte is poked one second after the original value has changed
-;          and the cheat remains in active list.
-;   -006 : the byte is poked two seconds after the original value has changed
-;          and the cheat remains in active list.
-;   -007 : the byte is poked five seconds after the original value has changed
-;          and the cheat remains in active list.
-;   -008 : the byte is poked unless the original value in being decremented by
-;          1 each frame and the cheat remains in active list.
-;   -009 : the byte is poked unless the original value in being decremented by
-;          2 each frame and the cheat remains in active list.
-;   -010 : the byte is poked unless the original value in being decremented by
-;          3 each frame and the cheat remains in active list.
-;   -011 : the byte is poked unless the original value in being decremented by
-;          4 each frame and the cheat remains in active list.
-;   -020 : the bits are set every time and the cheat remains in active list.
-;   -021 : the bits are set once and the cheat is removed from active list.
-;   -040 : the bits are reset every time and the cheat remains in active list.
-;   -041 : the bits are reset once and the cheat is removed from active list.
-;   -060 : the user selects a decimal value from 0 to byte
-;          (display : 0 to byte) - the value is poked once when it changes and
-;          the cheat is removed from the active list.
-;   -061 : the user selects a decimal value from 0 to byte
-;          (display : 1 to byte+1) - the value is poked once when it changes
-;          and the cheat is removed from the active list.
-;   -062 : the user selects a decimal value from 1 to byte
-;          (display : 1 to byte) - the value is poked once when it changes and
-;          the cheat is removed from the active list.
-;   -063 : the user selects a BCD value from 0 to byte
-;          (display : 0 to byte) - the value is poked once when it changes and
-;          the cheat is removed from the active list.
-;   -064 : the user selects a BCD value from 0 to byte
-;          (display : 1 to byte+1) - the value is poked once when it changes
-;          and the cheat is removed from the active list.
-;   -065 : the user selects a decimal value from 1 to byte
-;          (display : 1 to byte) - the value is poked once when it changes and
-;          the cheat is removed from the active list.
-;   -070 : the user selects a decimal value from 0 to byte
-;          (display : 0 to byte) - the value is poked once and the cheat is
-;          removed from the active list.
-;   -071 : the user selects a decimal value from 0 to byte
-;          (display : 1 to byte+1) - the value is poked once and the cheat is
-;          removed from the active list.
-;   -072 : the user selects a decimal value from 1 to byte
-;          (display : 1 to byte) - the value is poked once and the cheat is
-;          removed from the active list.
-;   -073 : the user selects a BCD value from 0 to byte
-;          (display : 0 to byte) - the value is poked once and the cheat is
-;          removed from the active list.
-;   -074 : the user selects a BCD value from 0 to byte
-;          (display : 1 to byte+1) - the value is poked once and the cheat is
-;          removed from the active list.
-;   -075 : the user selects a decimal value from 1 to byte
-;          (display : 1 to byte) - the value is poked once and the cheat is
-;          removed from the active list.
-;   -500 to 575: These cheat types are identical to types 000 to 075 except
-;                they are used in linked cheats (i.e. of 1/8 type). The first
-;                cheat in the link list will be the normal type (eg type 000)
-;                and the remaining cheats (eg 2/8...8/8) will be of this type
-;                (eg type 500).
-;   -998 : this is used as a watch cheat, ideal for showing answers in quiz
-;          games .
-;   -999 : this is used for comments only, cannot be enabled/selected by the
-;          user.
+;	-000 : the byte is poked every time and the cheat remains in active list.
+;	-001 : the byte is poked once and the cheat is removed from active list.
+;	-002 : the byte is poked every one second and the cheat remains in active
+;		   list.
+;	-003 : the byte is poked every two seconds and the cheat remains in active
+;		   list.
+;	-004 : the byte is poked every five seconds and the cheat remains in active
+;		   list.
+;	-005 : the byte is poked one second after the original value has changed
+;		   and the cheat remains in active list.
+;	-006 : the byte is poked two seconds after the original value has changed
+;		   and the cheat remains in active list.
+;	-007 : the byte is poked five seconds after the original value has changed
+;		   and the cheat remains in active list.
+;	-008 : the byte is poked unless the original value in being decremented by
+;		   1 each frame and the cheat remains in active list.
+;	-009 : the byte is poked unless the original value in being decremented by
+;		   2 each frame and the cheat remains in active list.
+;	-010 : the byte is poked unless the original value in being decremented by
+;		   3 each frame and the cheat remains in active list.
+;	-011 : the byte is poked unless the original value in being decremented by
+;		   4 each frame and the cheat remains in active list.
+;	-020 : the bits are set every time and the cheat remains in active list.
+;	-021 : the bits are set once and the cheat is removed from active list.
+;	-040 : the bits are reset every time and the cheat remains in active list.
+;	-041 : the bits are reset once and the cheat is removed from active list.
+;	-060 : the user selects a decimal value from 0 to byte
+;		   (display : 0 to byte) - the value is poked once when it changes and
+;		   the cheat is removed from the active list.
+;	-061 : the user selects a decimal value from 0 to byte
+;		   (display : 1 to byte+1) - the value is poked once when it changes
+;		   and the cheat is removed from the active list.
+;	-062 : the user selects a decimal value from 1 to byte
+;		   (display : 1 to byte) - the value is poked once when it changes and
+;		   the cheat is removed from the active list.
+;	-063 : the user selects a BCD value from 0 to byte
+;		   (display : 0 to byte) - the value is poked once when it changes and
+;		   the cheat is removed from the active list.
+;	-064 : the user selects a BCD value from 0 to byte
+;		   (display : 1 to byte+1) - the value is poked once when it changes
+;		   and the cheat is removed from the active list.
+;	-065 : the user selects a decimal value from 1 to byte
+;		   (display : 1 to byte) - the value is poked once when it changes and
+;		   the cheat is removed from the active list.
+;	-070 : the user selects a decimal value from 0 to byte
+;		   (display : 0 to byte) - the value is poked once and the cheat is
+;		   removed from the active list.
+;	-071 : the user selects a decimal value from 0 to byte
+;		   (display : 1 to byte+1) - the value is poked once and the cheat is
+;		   removed from the active list.
+;	-072 : the user selects a decimal value from 1 to byte
+;		   (display : 1 to byte) - the value is poked once and the cheat is
+;		   removed from the active list.
+;	-073 : the user selects a BCD value from 0 to byte
+;		   (display : 0 to byte) - the value is poked once and the cheat is
+;		   removed from the active list.
+;	-074 : the user selects a BCD value from 0 to byte
+;		   (display : 1 to byte+1) - the value is poked once and the cheat is
+;		   removed from the active list.
+;	-075 : the user selects a decimal value from 1 to byte
+;		   (display : 1 to byte) - the value is poked once and the cheat is
+;		   removed from the active list.
+;	-500 to 575: These cheat types are identical to types 000 to 075 except
+;				 they are used in linked cheats (i.e. of 1/8 type). The first
+;				 cheat in the link list will be the normal type (eg type 000)
+;				 and the remaining cheats (eg 2/8...8/8) will be of this type
+;				 (eg type 500).
+;	-998 : this is used as a watch cheat, ideal for showing answers in quiz
+;		   games .
+;	-999 : this is used for comments only, cannot be enabled/selected by the
+;		   user.
 ;  -Name of the cheat
 ;  -Description for the cheat
 
@@ -125,7 +125,7 @@ extern unsigned char *memory_find_base (int cpu, int offset);
 
 
 #define SUBCHEAT_FLAG_DONE		0x0001
-#define SUBCHEAT_FLAG_TIMED		0x0002
+#define SUBCHEAT_FLAG_TIMED 	0x0002
 
 struct subcheat_struct
 {
@@ -133,7 +133,7 @@ struct subcheat_struct
 	offs_t address;
 	data_t data;
 #ifdef MESS
-	data_t olddata;					/* old data for code patch when cheat is turned OFF */
+	data_t olddata; 				/* old data for code patch when cheat is turned OFF */
 #endif
 	data_t backup;					/* The original value of the memory location, checked against the current */
 	UINT32 code;
@@ -141,7 +141,7 @@ struct subcheat_struct
 	data_t min;
 	data_t max;
 	UINT32 frames_til_trigger;			/* the number of frames until this cheat fires (does not change) */
-	UINT32 frame_count;				/* decrementing frame counter to determine if cheat should fire */
+	UINT32 frame_count; 			/* decrementing frame counter to determine if cheat should fire */
 };
 
 #define CHEAT_FLAG_ACTIVE	0x01
@@ -152,7 +152,7 @@ struct cheat_struct
 {
 #ifdef MESS
 	unsigned int crc;					/* CRC of the game */
-	char patch;						/* 'C' : code patch - 'D' : data patch */
+	char patch; 					/* 'C' : code patch - 'D' : data patch */
 #endif
 	char *name;
 	char *comment;
@@ -195,9 +195,9 @@ enum
 	kCheatSpecial_m0d0 = 70,			/* minimum value 0, display range 0 to byte */
 	kCheatSpecial_m0d1 = 71,			/* minimum value 0, display range 1 to byte+1 */
 	kCheatSpecial_m1d1 = 72,			/* minimum value 1, display range 1 to byte */
-	kCheatSpecial_m0d0bcd = 73,			/* BCD, minimum value 0, display range 0 to byte */
-	kCheatSpecial_m0d1bcd = 74,			/* BCD, minimum value 0, display range 1 to byte+1 */
-	kCheatSpecial_m1d1bcd = 75,			/* BCD, minimum value 1, display range 1 to byte */
+	kCheatSpecial_m0d0bcd = 73, 		/* BCD, minimum value 0, display range 0 to byte */
+	kCheatSpecial_m0d1bcd = 74, 		/* BCD, minimum value 0, display range 1 to byte+1 */
+	kCheatSpecial_m1d1bcd = 75, 		/* BCD, minimum value 1, display range 1 to byte */
 	kCheatSpecial_UserLast = 75,
 	kCheatSpecial_Last = 99,
 	kCheatSpecial_LinkStart = 500,		/* only used when loading the database */
@@ -225,7 +225,7 @@ int he_did_cheat;
 
 enum {
 	kSearch_None = 0,
-	kSearch_Value =	1,
+	kSearch_Value = 1,
 	kSearch_Time,
 	kSearch_Energy,
 	kSearch_Bit,
@@ -289,13 +289,13 @@ void computer_writemem_byte(int cpu, int addr, int value);
 
 /* Some macros to simplify the code */
 #define READ_CHEAT		computer_readmem_byte (subcheat->cpu, subcheat->address)
-#define WRITE_CHEAT		computer_writemem_byte (subcheat->cpu, subcheat->address, subcheat->data)
+#define WRITE_CHEAT 	computer_writemem_byte (subcheat->cpu, subcheat->address, subcheat->data)
 #define COMPARE_CHEAT		(computer_readmem_byte (subcheat->cpu, subcheat->address) != subcheat->data)
 #define CPU_AUDIO_OFF(index)	((Machine->drv->cpu[index].cpu_type & CPU_AUDIO_CPU) && (Machine->sample_rate == 0))
 
 /* Steph */
 #ifdef MESS
-#define WRITE_OLD_CHEAT		computer_writemem_byte (subcheat->cpu, subcheat->address, subcheat->olddata)
+#define WRITE_OLD_CHEAT 	computer_writemem_byte (subcheat->cpu, subcheat->address, subcheat->olddata)
 #endif
 
 /* Local prototypes */
@@ -504,7 +504,7 @@ void cheat_set_status (int cheat_num, int active)
 		for (i = 0; i <= CheatTable[cheat_num].num_sub; i ++)
 		{
 #ifdef MESS
-            struct subcheat_struct *subcheat = &CheatTable[cheat_num].subcheat[i];  /* Steph */
+			struct subcheat_struct *subcheat = &CheatTable[cheat_num].subcheat[i];	/* Steph */
 #endif
 			/* Reset the active variables */
 			CheatTable[cheat_num].subcheat[i].frame_count = 0;
@@ -1133,7 +1133,7 @@ INT32 AddEditCheatMenu (struct osd_bitmap *bitmap, INT32 selected)
 	/* No submenu active, do the watchpoint menu */
 	menu_item[total++] = ui_getstring (UI_returntoprior);
 	menu_item[total] = NULL; /* TODO: add help string */
-	menu_item[total+1] = 0;	/* terminate array */
+	menu_item[total+1] = 0; /* terminate array */
 
 	ui_displaymenu(bitmap,menu_item,0,0,sel,0);
 
@@ -1579,11 +1579,11 @@ static int build_tables (int cpu)
 	int MemoryNeeded = 0;
 
 	/* Search speedup : (the games should be dasmed to confirm this) */
-	/* Games based on Exterminator driver should scan BANK1		   */
+	/* Games based on Exterminator driver should scan BANK1 	   */
 	/* Games based on SmashTV driver should scan BANK2		   */
-	/* NEOGEO games should only scan BANK1 (0x100000 -> 0x01FFFF)    */
+	/* NEOGEO games should only scan BANK1 (0x100000 -> 0x01FFFF)	 */
 	int CpuToScan = -1;
-	int BankToScanTable[9];	 /* 0 for RAM & 1-8 for Banks 1-8 */
+	int BankToScanTable[9];  /* 0 for RAM & 1-8 for Banks 1-8 */
 
 	for (i = 0; i < 9;i ++)
 	BankToScanTable[i] = ( fastsearch != 2 );
@@ -1809,11 +1809,11 @@ INT32 PerformSearch (struct osd_bitmap *bitmap, INT32 selected)
  * In all cases, backup the ram.
  *
  * Ask the user to select one of the following:
- *	1 - Lives or other number (byte) (exact)        ask a start value, ask new value
- *	2 - Timers (byte) (+ or - X)                    nothing at start,  ask +-X
- *	3 - Energy (byte) (less, equal or greater)	    nothing at start,  ask less, equal or greater
- *	4 - Status (bit)  (true or false)               nothing at start,  ask same or opposite
- *	5 - Slow but sure (Same as start or different)  nothing at start,  ask same or different
+ *	1 - Lives or other number (byte) (exact)		ask a start value, ask new value
+ *	2 - Timers (byte) (+ or - X)					nothing at start,  ask +-X
+ *	3 - Energy (byte) (less, equal or greater)		nothing at start,  ask less, equal or greater
+ *	4 - Status (bit)  (true or false)				nothing at start,  ask same or opposite
+ *	5 - Slow but sure (Same as start or different)	nothing at start,  ask same or different
  *
  * Another method is used in the Pro action Replay the Energy method
  *	you can tell that the value is now 25%/50%/75%/100% as the start
@@ -1837,7 +1837,7 @@ INT32 StartSearch (struct osd_bitmap *bitmap, INT32 selected)
 		Menu_Total
 	};
 
-	const char *menu_item[Menu_Total];
+	const char *menu_item[Menu_Total+1];
 	const char *menu_subitem[Menu_Total];
 	char setting[Menu_Total][30];
 	INT32 sel;
@@ -2126,7 +2126,7 @@ void RestoreSearch (void)
 		case kRestore_NoInit: restoreString = UI_search_noinit; break;
 		case kRestore_NoSave: restoreString = UI_search_nosave; break;
 		case kRestore_Done:   restoreString = UI_search_done; break;
-		case kRestore_OK:     restoreString = UI_search_OK; break;
+		case kRestore_OK:	  restoreString = UI_search_OK; break;
 	}
 	usrintf_showmessage_secs(4, "%s", ui_getstring(restoreString));
 
@@ -2831,8 +2831,8 @@ void DoCheat(struct osd_bitmap *bitmap)
 
 						/* 8,9,10,11 do not change the location if the value change by X every frames
 						  This is to try to not change the value of an energy bar
-				 		  when a bonus is awarded to it at the end of a level
-				 		  See Kung Fu Master */
+						  when a bonus is awarded to it at the end of a level
+						  See Kung Fu Master */
 						case 8:
 						case 9:
 						case 10:
@@ -2943,3 +2943,4 @@ void DoCheat(struct osd_bitmap *bitmap)
   }
 #endif
 }
+
