@@ -39,9 +39,8 @@ static int loadconfig = 1;
 static char *language = NULL;
 static char *gamename = NULL;
 char *rompath_extra = NULL;
-#ifndef MESS
 static char *defaultgamename;
-#else
+#ifdef MESS
 static const char *mess_opts;
 void build_crc_database_filename(int game_index);
 
