@@ -375,20 +375,21 @@ imgtool: $(IMGTOOL_OBJS) $(PLATFORM_IMGTOOL_OBJS)
 	$(CC_COMMENT) @echo Compiling $@...
 	$(CC_COMPILE) $(LD) $(LDFLAGS) $^ -lz -o $@
 
-messtest: maketree $(OBJS) $(DRVLIBS) $(MESSTEST_OBJS) \
-		$(OBJ)/mess/tools/messtest/messtest.o \
-		$(OBJ)/mess/tools/messtest/testexec.o \
-		$(OBJ)/mess/tools/messtest/tststubs.o \
-		$(OBJ)/mess/tools/messtest/tstutils.o \
-		$(OBJDIR)/dirio.o \
-		$(OBJDIR)/fileio.o \
-		$(OBJDIR)/ticker.o \
-		$(OBJDIR)/parallel.o \
-		$(OBJDIR)/sysdep/misc.o \
-		$(OBJDIR)/sysdep/rc.o \
-		$(OBJDIR)/tststubs.o
+messtest: $(OBJS) $(DRVLIBS) $(MESSTEST_OBJS) \
+	$(OBJ)/mess/tools/messtest/messtest.o \
+	$(OBJ)/mess/tools/messtest/testexec.o \
+	$(OBJ)/mess/tools/messtest/tststubs.o \
+	$(OBJ)/mess/tools/messtest/tstutils.o \
+	$(OBJDIR)/dirio.o \
+	$(OBJDIR)/fileio.o \
+	$(OBJDIR)/ticker.o \
+	$(OBJDIR)/parallel.o \
+	$(OBJDIR)/sysdep/misc.o \
+	$(OBJDIR)/sysdep/rc.o \
+	$(OBJDIR)/tststubs.o \
+	$(OBJDIR)/vector.o
 	$(CC_COMMENT) @echo Linking $@...
-	$(CC_COMPILE) $(LD) $(LDFLAGS) $(MY_LIBS) $(VECTOR) $^ -o $@
+	$(CC_COMPILE) $(LD) $(LDFLAGS) $(MY_LIBS) $^ -o $@
 
 $(OBJDIR)/tststubs.o: src/unix/tststubs.c
 	$(CC_COMPILE) $(CC) $(MY_CFLAGS) -o $@ -c $<
