@@ -38,9 +38,9 @@
 
 	- The 'greyscale' text modes (0 and 2) behave just like the 'color'
 	  ones (1 and 3). On a color monitor both are in color; on a mono
-	  monitor both are in greyscale. 
+	  monitor both are in greyscale.
 	- Mode 5 (the 'greyscale' graphics mode) displays in color, using
-	  an alternative color palette: Cyan, Red and White. 
+	  an alternative color palette: Cyan, Red and White.
 	- The undocumented 160x100x16 "graphics" mode works correctly.
 
 	(source John Elliott http://www.seasip.info/AmstradXT/pc1512disp.html)
@@ -706,7 +706,7 @@ pc_video_update_proc pc_cga_choosevideomode(int *width, int *height, struct crtc
 		cga_text_inten_bw,	cga_text_inten_bw,	cga_gfx_2bpp_bw,	cga_gfx_2bpp_bw,
 
 		/* 0x10 - 0x1f */
-		cga_text_inten,		cga_text_inten,		cga_gfx_2bpp,		cga_gfx_2bpp,
+		cga_text_inten,		cga_text_inten,		cga_gfx_1bpp,		cga_gfx_1bpp,
 		cga_gfx_1bpp,		cga_gfx_1bpp,		cga_gfx_1bpp,		cga_gfx_1bpp,
 
 		/* 0x20 - 0x2f */
@@ -714,7 +714,7 @@ pc_video_update_proc pc_cga_choosevideomode(int *width, int *height, struct crtc
 		cga_text_blink_bw,	cga_text_blink_bw,	cga_gfx_2bpp_bw,	cga_gfx_2bpp_bw,
 
 		/* 0x30 - 0x3f */
-		cga_text_blink,		cga_text_blink,		cga_gfx_2bpp,		cga_gfx_2bpp,
+		cga_text_blink,		cga_text_blink,		cga_gfx_1bpp,		cga_gfx_1bpp,
 		cga_gfx_1bpp,		cga_gfx_1bpp,		cga_gfx_1bpp,		cga_gfx_1bpp
 	};
 
@@ -750,28 +750,56 @@ pc_video_update_proc pc_cga_choosevideomode(int *width, int *height, struct crtc
 		procarray = videoprocs[crtc6845_get_personality(crtc)];
 		proc = procarray[mode];
 
-		if (proc == cga_gfx_1bpp || proc == pc1512_gfx_4bpp) 
+		if (proc == cga_gfx_1bpp || proc == pc1512_gfx_4bpp)
 			*width *= 16;
-		else	
+		else
 			*width *= 8;
 	}
 	return proc;
 }
 
 static struct {
-	UINT8 write, read;
+	UINT8 reg, write, read;
 } pc1512;
 
 extern WRITE_HANDLER ( pc1512_w )
 {
+	UINT8 char_height;
+
 	switch (offset) {
-	case 0xd: pc1512.write=data;break;
-	case 0xe: pc1512.read=data;cpu_setbank(1,videoram+videoram_offset[data&3]);break;
-	/* The PC1512 doesn't have a full 6845; writes to the first 9 6845 
+
+	/* Trap writes to the 6845 character height register, and set the number of
+	 * character lines (which MESS uses but a real PC1512 doesn't) from it.
+	 * This is also done at mode change (below). */
+
+	case 0x0: case 0x2: case 0x4: case 0x6:
+		pc1512.reg = data;
+		pc_CGA_w(offset,data);
+		break;
+
+	case 0x1: case 0x3: case 0x5: case 0x7:
+		pc_CGA_w(offset,data);
+		if (pc1512.reg == 9) /* character height */
+		{
+			char_height = crtc6845_get_char_height(crtc6845);
+			crtc6845_set_char_lines(crtc6845, 200 / char_height);
+		}
+		break;
+
+	case 0xd: pc1512.write=data;
+		break;
+
+	case 0xe: pc1512.read=data;
+		cpu_setbank(1,videoram+videoram_offset[data&3]);
+		break;
+
+	/* The PC1512 doesn't have a full 6845; writes to the first 9 6845
 	 * registers are ignored, and screen resolution is entirely controlled
-	 * by the mode control register. Since MESS does actually use the 
+	 * by the mode control register. Since MESS does actually use the
 	 * character columns register, program it manually. */
+
 	case 0x8:
+		char_height = crtc6845_get_char_height(crtc6845);
 		if (data & 2) /* Graphics */
 		{
 			crtc6845_set_char_columns(crtc6845, 40);
@@ -787,8 +815,10 @@ extern WRITE_HANDLER ( pc1512_w )
 				crtc6845_set_char_columns(crtc6845, 40);
 			}
 		}
+		crtc6845_set_char_lines(crtc6845, 200 / char_height);
 		pc_CGA_w(offset, data);
 		break;
+
 	default: pc_CGA_w(offset,data);
 	}
 }
