@@ -1,4 +1,4 @@
-0.69
+0.70
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
@@ -56,7 +56,7 @@ Imgtool Changes:
 
 Source Changes:
 ---------------
-- The core is based on MAME 0.69.  This incorporates all features of the
+- The core is based on MAME 0.70.  This incorporates all features of the
   update to this core.  [MAME team]
 
 - Modified flopdrv.c to reset pDrive->id_index to zero when head is moved

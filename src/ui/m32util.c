@@ -315,8 +315,8 @@ BOOL DriverHasOptionalBIOS(int driver_index)
 		{
 			for (rom=rom_first_file(region);rom;rom=rom_next_file(rom))
 			{
-				//dprintf("%s %i %i",ROM_GETNAME(rom),ROM_GETFLAGS(rom),ROM_BIOSFLAGS(rom));
-				if (ROM_BIOSFLAGS(rom) != 0)
+				//dprintf("%s %i %i",ROM_GETNAME(rom),ROM_GETFLAGS(rom),ROM_GETBIOSFLAGS(rom));
+				if (ROM_GETBIOSFLAGS(rom) != 0)
 					return TRUE;
 			}
 		}

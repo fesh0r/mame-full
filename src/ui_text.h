@@ -135,7 +135,9 @@ enum
 	UI_loadcard,
 	UI_ejectcard,
 	UI_createcard,
+#ifdef MESS
 	UI_resetcard,
+#endif
 	UI_loadfailed,
 	UI_loadok,
 	UI_cardejected,

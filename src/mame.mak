@@ -822,6 +822,7 @@ $(OBJ)/gaelco.a: \
 
 $(OBJ)/kaneko.a: \
 	$(OBJ)/vidhrdw/airbustr.o $(OBJ)/drivers/airbustr.o \
+	$(OBJ)/vidhrdw/djboy.o $(OBJ)/drivers/djboy.o \
 	$(OBJ)/vidhrdw/galpanic.o $(OBJ)/drivers/galpanic.o \
 	$(OBJ)/vidhrdw/galpani2.o $(OBJ)/drivers/galpani2.o \
 	$(OBJ)/vidhrdw/kaneko16.o $(OBJ)/drivers/kaneko16.o \

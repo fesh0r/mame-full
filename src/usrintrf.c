@@ -3087,10 +3087,10 @@ static void setup_menu_init(void)
 	menu_item[menu_total] = ui_getstring (UI_dipswitches); menu_action[menu_total++] = UI_SWITCH;
 
 #ifdef XMAME
-        {
-                extern int rapidfire_enable;
+	{
+		extern int rapidfire_enable;
 
-                if(rapidfire_enable != 0)
+		if (rapidfire_enable != 0)
 		{
 			menu_item[menu_total] = "Rapid Fire";
 			menu_action[menu_total++] = UI_RAPIDFIRE;
@@ -3180,7 +3180,7 @@ static int setup_menu(struct mame_bitmap *bitmap, int selected)
 		switch (menu_action[sel & SEL_MASK])
 		{
 #ifdef XMAME
-		        case UI_RAPIDFIRE:
+			case UI_RAPIDFIRE:
 				res = setrapidfire(bitmap, sel >> SEL_BITS);
 				break;
 #endif

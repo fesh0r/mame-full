@@ -506,7 +506,47 @@ static READ_HANDLER( maketrax_special_port3_r )
 	}
 }
 
+static READ_HANDLER( korosuke_special_port2_r )
+{
+	int data = input_port_2_r(offset);
+	int pc = activecpu_get_previouspc();
 
+	if ((pc == 0x196e) || (pc == 0x2387)) return data | 0x40;
+
+	switch (offset)
+	{
+		case 0x01:
+		case 0x04:
+			data |= 0x40; break;
+		case 0x05:
+			data |= 0xc0; break;
+		default:
+			data &= 0x3f; break;
+	}
+
+	return data;
+}
+
+static READ_HANDLER( korosuke_special_port3_r )
+{
+	int pc = activecpu_get_previouspc();
+
+	if (pc == 0x0445) return 0x20;
+
+	if ((pc == 0x115b) || (pc == 0x3ae6)) return 0x00;
+
+	switch (offset)
+	{
+		case 0x00:
+			return 0x1f;
+		case 0x09:
+			return 0x30;
+		case 0x0c:
+			return 0x00;
+		default:
+			return 0x20;
+	}
+}
 
 /*************************************
  *
@@ -1035,6 +1075,51 @@ INPUT_PORTS_START( maketrax )
 	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( korosuke )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Cocktail ) )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )  /* Protection */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )  /* Protection */
+
+	PORT_START	/* DSW 1 */
+	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x04, "4" )
+	PORT_DIPSETTING(    0x08, "5" )
+	PORT_DIPSETTING(    0x0c, "6" )
+	PORT_DIPNAME( 0x10, 0x10, "First Pattern" )
+	PORT_DIPSETTING(    0x10, "Easy" )
+	PORT_DIPSETTING(    0x00, "Hard" )
+	PORT_DIPNAME( 0x20, 0x20, "Teleport Holes" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+ 	PORT_BIT( 0xc0, IP_ACTIVE_HIGH, IPT_UNUSED )  /* Protection */
+
+	PORT_START	/* DSW 2 */
+	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
+INPUT_PORTS_END
 
 INPUT_PORTS_START( mbrush )
 	PORT_START	/* IN0 */
@@ -2841,6 +2926,28 @@ ROM_START( maketrxb )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, CRC(77245b66) SHA1(0c4d0bee858b97632411c440bea6948a74759746) )	/* timing - not used */
 ROM_END
 
+ROM_START( korosuke )
+	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )	/* 64k for code + 64k for opcode copy to hack protection */
+	ROM_LOAD( "kr.6e",        0x0000, 0x1000, CRC(69f6e2da) SHA1(5f06523122d81a079bed080a16b44adb90aa95ad) )
+	ROM_LOAD( "kr.6f",        0x1000, 0x1000, CRC(abf34d23) SHA1(6ae16fb8208037fd8b752076dd97e3da09e5cb8f) )
+	ROM_LOAD( "kr.6h",        0x2000, 0x1000, CRC(76a2e2e2) SHA1(570aaed91279caab9274024e5a6176bdfe85bedd) )
+	ROM_LOAD( "kr.6j",        0x3000, 0x1000, CRC(33e0e3bb) SHA1(43f5da486b9c44b0e4e8c909000786ee8ffee87f) )
+
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "kr.5e",        0x0000, 0x1000, CRC(e0380be8) SHA1(96eb7c5ef91342be67bd2a6c4958412d2572ba2a) )
+
+	ROM_REGION( 0x1000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "kr.5f",        0x0000, 0x1000, CRC(63fec9ee) SHA1(7d136362e08cceba9395c2c469d8fec451c5e396) )
+
+	ROM_REGION( 0x0120, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, CRC(2fc650bd) SHA1(8d0268dee78e47c712202b0ec4f1f51109b1f2a5) )
+	ROM_LOAD( "2s140.4a",     0x0020, 0x0100, CRC(63efb927) SHA1(5c144a613fc4960a1dfd7ead89e7fee258a63171) )
+
+	ROM_REGION( 0x0200, REGION_SOUND1, 0 )	/* sound PROMs */
+	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, CRC(a9cc86bf) SHA1(bbcec0570aeceb582ff8238a4bc8546a23430081) )
+	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, CRC(77245b66) SHA1(0c4d0bee858b97632411c440bea6948a74759746) )	/* timing - not used */
+ROM_END
+
 
 ROM_START( mbrush )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
@@ -3444,6 +3551,38 @@ static DRIVER_INIT( maketrax )
 	maketrax_rom_decode();
 }
 
+static void korosuke_rom_decode(void)
+{
+	unsigned char *rom = memory_region(REGION_CPU1);
+	int diff = memory_region_length(REGION_CPU1) / 2;
+
+
+	/* patch protection using a copy of the opcodes so ROM checksum */
+	/* tests will not fail */
+	memory_set_opcode_base(0,rom+diff);
+
+	memcpy(rom+diff,rom,diff);
+
+	rom[0x044c + diff] = 0xc9;
+	rom[0x1973 + diff] = 0x18;
+	rom[0x238c + diff] = 0xc9;
+	rom[0x3ae9 + diff] = 0xe6;	// not changed
+	rom[0x3aeb + diff] = 0x00;
+	rom[0x3aec + diff] = 0xc9;
+	rom[0x3af1 + diff] = 0x86;
+	rom[0x3af2 + diff] = 0xc0;
+	rom[0x3af3 + diff] = 0xb0;
+}
+
+static DRIVER_INIT( korosuke )
+{
+	/* set up protection handlers */
+	install_mem_read_handler(0, 0x5080, 0x5080, korosuke_special_port2_r);
+	install_mem_read_handler(0, 0x50c0, 0x50ff, korosuke_special_port3_r);
+
+	korosuke_rom_decode();
+}
+
 static DRIVER_INIT( ponpoko )
 {
 	int i, j;
@@ -3574,6 +3713,7 @@ GAME( 1981, crush2,   crush,    pacman,   maketrax, 0,        ROT90,  "Kural Esc
 GAME( 1981, crush3,   crush,    pacman,   maketrax, eyes,     ROT90,  "Kural Electric", "Crush Roller (Kural - bootleg?)" )
 GAME( 1981, maketrax, crush,    pacman,   maketrax, maketrax, ROT270, "[Kural] (Williams license)", "Make Trax (set 1)" )
 GAME( 1981, maketrxb, crush,    pacman,   maketrax, maketrax, ROT270, "[Kural] (Williams license)", "Make Trax (set 2)" )
+GAME( 1981, korosuke, crush,    pacman,   korosuke, korosuke, ROT90,  "Kural Electric", "Korosuke Roller" )
 GAME( 1981, mbrush,   crush,    pacman,   mbrush,   0,        ROT90,  "bootleg", "Magic Brush" )
 GAME( 1981, paintrlr, crush,    pacman,   paintrlr, 0,        ROT90,  "bootleg", "Paint Roller" )
 GAME( 1982, ponpoko,  0,        pacman,   ponpoko,  ponpoko,  ROT0,   "Sigma Ent. Inc.", "Ponpoko" )

@@ -353,6 +353,33 @@ static void print_game_input(int OUTPUT_XML, FILE* out, const struct GameDriver*
 	fprintf(out, SELECT(L2E L1N, "/>\n"));
 }
 
+static void print_game_bios(int OUTPUT_XML, FILE* out, const struct GameDriver* game)
+{
+	const struct SystemBios *thisbios;
+
+	if(!game->bios)
+		return;
+
+	thisbios = game->bios;
+
+	/* Match against bios short names */
+	while(!BIOSENTRY_ISEND(thisbios))
+	{
+		fprintf(out, SELECT(L1P "biosset" L2B, "\t\t<biosset"));
+
+		if (thisbios->_name)
+			fprintf(out, SELECT(L2P "name %s" L2N, " name=\"%s\""), thisbios->_name);
+		if (thisbios->_description)
+			fprintf(out, SELECT(L2P "description \"%s\"" L2N, " description=\"%s\""), thisbios->_description);
+		if (thisbios->value == 0)
+			fprintf(out, SELECT(L2P "default yes" L2N, " default=\"yes\""));
+
+		fprintf(out, SELECT(L2E L1N, "/>\n"));
+
+		thisbios++;
+	}
+}
+
 static void print_game_rom(int OUTPUT_XML, FILE* out, const struct GameDriver* game)
 {
 	const struct RomModule *region, *rom, *chunk;
@@ -365,12 +392,13 @@ static void print_game_rom(int OUTPUT_XML, FILE* out, const struct GameDriver* g
 	for (region = rom_first_region(game); region; region = rom_next_region(region))
 		for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
 		{
-			int offset, length, in_parent, is_disk, i;
-			char name[100];
+			int offset, length, in_parent, is_disk, is_bios, found_bios, i;
+			char name[100], bios_name[100];
 
 			strcpy(name,ROM_GETNAME(rom));
 			offset = ROM_GETOFFSET(rom);
 			is_disk = ROMREGION_ISDISKDATA(region);
+			is_bios = ROM_GETBIOSFLAGS(rom);
 
 			in_parent = 0;
 			length = 0;
@@ -390,6 +418,25 @@ static void print_game_rom(int OUTPUT_XML, FILE* out, const struct GameDriver* g
 						}
 			}
 
+			found_bios = 0;
+			if(!is_disk && is_bios && game->bios)
+			{
+				const struct SystemBios *thisbios = game->bios;
+
+				/* Match against bios short names */
+				while(!found_bios && !BIOSENTRY_ISEND(thisbios) )
+				{
+					if((is_bios-1) == thisbios->value) /* Note '-1' */
+					{
+						strcpy(bios_name,thisbios->_name);
+						found_bios = 1;
+					}
+
+					thisbios++;
+				}
+			}
+
+
 			if (!is_disk)
 				fprintf(out, SELECT(L1P "rom" L2B, "\t\t<rom"));
 			else
@@ -399,6 +446,8 @@ static void print_game_rom(int OUTPUT_XML, FILE* out, const struct GameDriver* g
 				fprintf(out, SELECT(L2P "name %s" L2N, " name=\"%s\""), name);
 			if (!is_disk && in_parent)
 				fprintf(out, SELECT(L2P "merge %s" L2N, " merge=\"%s\""), ROM_GETNAME(fprom));
+			if (!is_disk && found_bios)
+				fprintf(out, SELECT(L2P "bios %s" L2N, " bios=\"%s\""), bios_name);
 			if (!is_disk)
 				fprintf(out, SELECT(L2P "size %d" L2N, " size=\"%d\""), length);
 
@@ -802,6 +851,7 @@ static void print_game_info(int OUTPUT_XML, FILE* out, const struct GameDriver* 
 	}
 
 	print_game_history(OUTPUT_XML, out, game);
+	print_game_bios(OUTPUT_XML, out, game);
 	print_game_rom(OUTPUT_XML, out, game);
 	print_game_sample(OUTPUT_XML, out, game);
 	print_game_micro(OUTPUT_XML, out, game);
@@ -842,6 +892,7 @@ static void print_resource_info(int OUTPUT_XML, FILE* out, const struct GameDriv
 		fprintf(out, SELECT(L1N, "</manufacturer>\n"));
 	}
 
+	print_game_bios(OUTPUT_XML, out, game);
 	print_game_rom(OUTPUT_XML, out, game);
 	print_game_sample(OUTPUT_XML, out, game);
 
@@ -897,8 +948,13 @@ void print_mame_xml(FILE* out, const struct GameDriver* games[])
 		"\t\t<!ELEMENT year (#PCDATA)>\n"
 		"\t\t<!ELEMENT manufacturer (#PCDATA)>\n"
 		"\t\t<!ELEMENT history (#PCDATA)>\n"
+		"\t\t<!ELEMENT biosset EMPTY>\n"
+		"\t\t\t<!ATTLIST biosset name CDATA #REQUIRED>\n"
+		"\t\t\t<!ATTLIST biosset description CDATA #REQUIRED>\n"
+		"\t\t\t<!ATTLIST biosset default (yes|no) \"no\">\n"
 		"\t\t<!ELEMENT rom EMPTY>\n"
 		"\t\t\t<!ATTLIST rom name CDATA #REQUIRED>\n"
+		"\t\t\t<!ATTLIST rom bios CDATA #IMPLIED>\n"
 		"\t\t\t<!ATTLIST rom size CDATA #REQUIRED>\n"
 		"\t\t\t<!ATTLIST rom crc CDATA #IMPLIED>\n"
 		"\t\t\t<!ATTLIST rom md5 CDATA #IMPLIED>\n"

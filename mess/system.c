@@ -32,6 +32,7 @@ struct GameDriver driver_0 =
 	0,
 	0,
 	0,
+	0,
 	NOT_A_DRIVER,
 };
 

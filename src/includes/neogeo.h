@@ -26,7 +26,7 @@ extern int memcard_number;
 extern int memcard_manager;
 extern UINT8 *neogeo_memcard;
 
-data8_t *neogeo_game_vectors;
+extern data8_t *neogeo_game_vectors;
 
 MACHINE_INIT( neogeo );
 DRIVER_INIT( neogeo );

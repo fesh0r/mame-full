@@ -74,6 +74,8 @@ data8_t *generic_nvram;
 /* hard disks */
 static void *hard_disk_handle[4];
 
+/* system BIOS */
+static int system_bios;
 
 
 /***************************************************************************
@@ -1502,7 +1504,7 @@ static int process_rom_entries(struct rom_load_data *romdata, const struct RomMo
 		/* handle files */
 		else if (ROMENTRY_ISFILE(romp))
 		{
-			if (!ROM_BIOSFLAGS(romp) || (ROM_BIOSFLAGS(romp) == (options.bios+1))) /* alternate bios sets */
+			if (!ROM_GETBIOSFLAGS(romp) || (ROM_GETBIOSFLAGS(romp) == (system_bios+1))) /* alternate bios sets */
 			{
 			const struct RomModule *baserom = romp;
 			int explength = 0;
@@ -1705,6 +1707,51 @@ fatalerror:
 
 
 /*-------------------------------------------------
+	determine_bios_rom - determine system_bios
+	from SystemBios structure and options.bios
+-------------------------------------------------*/
+
+int determine_bios_rom(const struct SystemBios *bios)
+{
+	const struct SystemBios *firstbios = bios;
+
+	/* set to default */
+	int bios_no = 0;
+
+	/* Not system_bios_0 and options.bios is set  */
+	if(bios && (options.bios != NULL))
+	{
+		/* Allow -bios n to still be used */
+		while(!BIOSENTRY_ISEND(bios))
+		{
+			char bios_number[3];
+			sprintf(bios_number, "%d", bios->value);
+
+			if(!strcmp(bios_number, options.bios))
+				bios_no = bios->value;
+
+			bios++;
+		}
+
+		bios = firstbios;
+
+		/* Test for bios short names */
+		while(!BIOSENTRY_ISEND(bios))
+		{
+			if(!strcmp(bios->_name, options.bios))
+				bios_no = bios->value;
+
+			bios++;
+		}
+	}
+
+	debugload("Using System BIOS: %d\n", bios_no);
+
+	return bios_no;
+}
+
+
+/*-------------------------------------------------
 	rom_load - new, more flexible ROM
 	loading system
 -------------------------------------------------*/
@@ -1726,6 +1773,9 @@ int rom_load(const struct RomModule *romp)
 
 	/* reset the disk list */
 	memset(hard_disk_handle, 0, sizeof(hard_disk_handle));
+
+	/* determine the correct biosset to load based on options.bios string */
+	system_bios = determine_bios_rom(Machine->gamedrv->bios);
 
 	/* loop until we hit the end */
 	for (region = romp, regnum = 0; region; region = rom_next_region(region), regnum++)

@@ -1,134 +1,127 @@
-/* PGM Protection related */
-
 #include "driver.h"
 
 extern data16_t *pgm_mainram;
 
-/*** ASIC 3 - Protection? ****************************************************/
+/*** ASIC 3 (oriental legends protection) ****************************************/
 
-/* this isn't right, we patch the branch instructions for now */
+static UINT8 asic3_reg, asic3_latch[3], asic3_x, asic3_y, asic3_z, asic3_h1, asic3_h2;
+static UINT16 asic3_hold;
 
-READ16_HANDLER ( orlegend_kludge_r )
+static UINT32 bt(UINT32 v, int bit)
 {
-	/* the game reads from within this address range, starting at 0x820000,
-	and increasing to 0x??????, and seems to corrupt ram based on the result? */
-
-	return 0x2;
+	return (v & (1<<bit)) != 0;
 }
 
-READ16_HANDLER( orlegnde_prot_r )
+static void asic3_compute_hold(void)
 {
-	int res;
-	res = -1;
+	// The mode is dependant on the region
+	static int modes[4] = { 1, 1, 3, 2 };
+	int mode = modes[readinputport(4) & 3];
 
-	/* Start of Boot Up */
-	if (activecpu_get_pc() == 0x145bda) res = 0x80;
-	if (activecpu_get_pc() == 0x145c00) res = 0x00; // NOT 0x80 set
-	if (activecpu_get_pc() == 0x145c28) res = 0x84;
-	if (activecpu_get_pc() == 0x145c54) res = 0x80;
-	if (activecpu_get_pc() == 0x145c80) res = 0x04;
-	if (activecpu_get_pc() == 0x145caa) res = 0x00; // NOT 0x84 set
-	if (activecpu_get_pc() == 0x145cd2) res = 0x20;
-	if (activecpu_get_pc() == 0x145cfc) res = 0x00; // NOT 0x20 set
+	switch(mode) {
+	case 1:
+		asic3_hold =
+			(asic3_hold << 1)
+			^0x2bad
+			^bt(asic3_hold, 15)^bt(asic3_hold, 10)^bt(asic3_hold, 8)^bt(asic3_hold, 5)
+			^bt(asic3_z, asic3_y)
+			^(bt(asic3_x, 0) << 1)^(bt(asic3_x, 1) << 6)^(bt(asic3_x, 2) << 10)^(bt(asic3_x, 3) << 14);
+		break;
+	case 2:
+		asic3_hold =
+			(asic3_hold << 1)
+			^0x2bad
+			^bt(asic3_hold, 15)^bt(asic3_hold, 7)^bt(asic3_hold, 6)^bt(asic3_hold, 5)
+			^bt(asic3_z, asic3_y)
+			^(bt(asic3_x, 0) << 4)^(bt(asic3_x, 1) << 6)^(bt(asic3_x, 2) << 10)^(bt(asic3_x, 3) << 12);
+		break;
+	case 3:
+		asic3_hold =
+			(asic3_hold << 1)
+			^0x2bad
+			^bt(asic3_hold, 15)^bt(asic3_hold, 10)^bt(asic3_hold, 8)^bt(asic3_hold, 5)
+			^bt(asic3_z, asic3_y)
+			^(bt(asic3_x, 0) << 4)^(bt(asic3_x, 1) << 6)^(bt(asic3_x, 2) << 10)^(bt(asic3_x, 3) << 12);
+		break;
+	}
+}
 
+READ16_HANDLER( pgm_asic3_r )
+{
+	unsigned char res = 0;
 	/* region is supplied by the protection device */
-	if (activecpu_get_pc() == 0x145D8E) res = (readinputport(4) & 1) << 3;
-	if (activecpu_get_pc() == 0x145D72) res = (readinputport(4) & 2) << 6;
 
-
-	if (res != -1) logerror("%06x: prot_r %04x\n",activecpu_get_pc(),res);
-	else logerror("%06x: prot_r unknown\n",activecpu_get_pc());
-
-	if (res == -1) res = 0x00;
+	switch(asic3_reg) {
+	case 0x00: res = (asic3_latch[0] & 0xf7) | ((readinputport(4) << 3) & 0x08); break;
+	case 0x01: res = asic3_latch[1]; break;
+	case 0x02: res = (asic3_latch[2] & 0x7f) | ((readinputport(4) << 6) & 0x80); break;
+	case 0x03:
+		res = (bt(asic3_hold, 15) << 0)
+			| (bt(asic3_hold, 12) << 1)
+			| (bt(asic3_hold, 13) << 2)
+			| (bt(asic3_hold, 10) << 3)
+			| (bt(asic3_hold,  7) << 4)
+			| (bt(asic3_hold,  9) << 5)
+			| (bt(asic3_hold,  2) << 6)
+			| (bt(asic3_hold,  5) << 7);
+		break;
+	case 0x20: res = 0x49; break;
+	case 0x21: res = 0x47; break;
+	case 0x22: res = 0x53; break;
+	case 0x24: res = 0x41; break;
+	case 0x25: res = 0x41; break;
+	case 0x26: res = 0x7f; break;
+	case 0x27: res = 0x41; break;
+	case 0x28: res = 0x41; break;
+	case 0x2a: res = 0x3e; break;
+	case 0x2b: res = 0x41; break;
+	case 0x2c: res = 0x49; break;
+	case 0x2d: res = 0xf9; break;
+	case 0x2e: res = 0x0a; break;
+	case 0x30: res = 0x26; break;
+	case 0x31: res = 0x49; break;
+	case 0x32: res = 0x49; break;
+	case 0x33: res = 0x49; break;
+	case 0x34: res = 0x32; break;
+	}
 
 	return res;
 }
 
-void remove_orlegend_commonprot(void)
+WRITE16_HANDLER( pgm_asic3_w )
 {
-	data16_t *mem16 = (data16_t *)memory_region(REGION_CPU1);
-	mem16[0x145D48/2]=0x4e71; mem16[0x145D4a/2]=0x4e71; /* dif to others. */
-
-	mem16[0x145D02/2]=0x4e71; mem16[0x145D04/2]=0x4e71;
-	mem16[0x145CDC/2]=0x4e71; mem16[0x145CDE/2]=0x4e71;
-	mem16[0x145CB0/2]=0x4e71; mem16[0x145CB2/2]=0x4e71;
-	mem16[0x145C8A/2]=0x4e71; mem16[0x145C8C/2]=0x4e71;
-	mem16[0x145C5E/2]=0x4e71; mem16[0x145C60/2]=0x4e71;
-	mem16[0x145C32/2]=0x4e71; mem16[0x145C34/2]=0x4e71;
-	mem16[0x145C06/2]=0x4e71; mem16[0x145C08/2]=0x4e71;
-	mem16[0x145BE4/2]=0x4e71; mem16[0x145BE6/2]=0x4e71;
+	if(ACCESSING_LSB)
+	{
+		if(asic3_reg < 3)
+			asic3_latch[asic3_reg] = data << 1;
+		else if(asic3_reg == 0xa0) {
+			asic3_hold = 0;
+		} else if(asic3_reg == 0x40) {
+			asic3_h2 = asic3_h1;
+			asic3_h1 = data;
+		} else if(asic3_reg == 0x48) {
+			asic3_x = 0;
+			if(!(asic3_h2 & 0x0a))
+				asic3_x |= 8;
+			if(!(asic3_h2 & 0x90))
+				asic3_x |= 4;
+			if(!(asic3_h1 & 0x06))
+				asic3_x |= 2;
+			if(!(asic3_h1 & 0x90))
+				asic3_x |= 1;
+		} else if(asic3_reg >= 0x80 && asic3_reg <= 0x87) {
+			asic3_y = asic3_reg & 7;
+			asic3_z = data;
+			asic3_compute_hold();
+		}
+	}
 }
 
-void remove_orlegend_prot(void)
+WRITE16_HANDLER( pgm_asic3_reg_w )
 {
-	data16_t *mem16 = (data16_t *)memory_region(REGION_CPU1);
-	mem16[0x146AE4/2]=0x4e71; mem16[0x146AE6/2]=0x4e71;
-	remove_orlegend_commonprot();
+	if(ACCESSING_LSB)
+		asic3_reg = data & 0xff;
 }
-
-void remove_orlegnde_prot(void)
-{
-	data16_t *mem16 = (data16_t *)memory_region(REGION_CPU1);
-	mem16[0x146AF4/2]=0x4e71; mem16[0x146AF6/2]=0x4e71;
-	remove_orlegend_commonprot();
-}
-
-/*
-
-ASIC3 is the orlegend protection, its not perfect as it still needs 1 of the
-patches.
-
-ASIC3 emulation:
-
-unsigned short BACKREGS1[]={'I','G', 'S', 'A', 'A', 0x7f,'A', 'A', 0x3e,'A',
-'I', 0xf9,0xa, '&', 'I','I', 'I',  '2'};
-unsigned short REGS[]=
-{0x20,0x21,0x22,0x24,0x25,0x26,0x27,0x28,0x2a,0x2b,0x2c,0x2d,0x2e,0x30,0x31,
-0x32,0x33,0x34};
-unsigned short Backup[0x100];
-unsigned short BLastReg=0;
-
-
-ASIC3Init()
-{
-  Backup[0]=0xff;
-  for(int i=0;i<0x12;++i)
-      Backup[REGS[i]]=BACKREGS1[i];
-}
-
-
-unsigned shortASIC3Read16(unsigned int addr)
-{
-  addr&=0xff;
-  if(addr==0xe)
-  {
-//   if(BLastReg==3)
-//    return 0xfc;
-//   else
-
-   if(BLastReg<0x20 || BLastReg>0x34
-     )
-     return Backup[BLastReg]*2;
-   else
-    return Backup[BLastReg];
-}
-
-void ASIC3Write16(unsigned int addr,unsigned short val)
-{
-  addr&=0xff;
-  if(addr==0)
-   BLastReg=data;
-  else if(addr==0xe)
-  {
-   if(BLastReg!=3 &&
-      (BLastReg<0x20 || BLastReg>0x34)
-     )
-    Backup[BLastReg]=data;
-  }
-}
-
-*/
-
 
 /*** Knights of Valour / Sango Protection (from ElSemi) (ASIC28) ***/
 
@@ -377,3 +370,4 @@ READ16_HANDLER (dw2_d80000_r )
 		return d2;
 	}
 }
+

@@ -205,6 +205,10 @@ struct rc_option video_opts[] =
 #endif
 	{ "rdtsc", NULL, rc_bool, &win_force_rdtsc, "0", 0, 0, NULL, "prefer RDTSC over QueryPerformanceCounter for timing" },
 	{ "high_priority", NULL, rc_bool, &win_high_priority, "0", 0, 0, NULL, "increase thread priority" },
+
+	{ NULL, NULL, rc_link, win_d3d_opts, NULL, 0, 0, NULL, NULL },
+
+
 	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
 };
 

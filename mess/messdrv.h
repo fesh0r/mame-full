@@ -159,6 +159,7 @@ const struct GameDriver driver_##NAME = 	\
 	__FILE__,								\
 	&driver_##PARENT,						\
 	#NAME,									\
+	system_bios_0,							\
 	FULLNAME,								\
 	#YEAR,									\
 	COMPANY,								\
@@ -180,6 +181,7 @@ const struct GameDriver driver_##NAME = 	\
 	__FILE__,								\
 	&driver_##PARENT,						\
 	#NAME,									\
+	system_bios_0,							\
 	FULLNAME,								\
 	#YEAR,									\
 	COMPANY,								\
@@ -201,6 +203,7 @@ const struct GameDriver driver_##NAME = 	\
 	__FILE__,								\
 	&driver_##PARENT,						\
 	#NAME,									\
+	system_bios_0,							\
 	FULLNAME,								\
 	#YEAR,									\
 	COMPANY,								\
@@ -222,6 +225,7 @@ const struct GameDriver driver_##NAME = 	\
 	__FILE__,								\
 	&driver_##PARENT,						\
 	#NAME,									\
+	system_bios_0,							\
 	FULLNAME,								\
 	#YEAR,									\
 	COMPANY,								\

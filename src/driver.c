@@ -30,6 +30,7 @@ struct GameDriver driver_0 =
 	0,
 	0,
 	0,
+	0,
 	NOT_A_DRIVER
 };
 
@@ -117,6 +118,7 @@ const struct GameDriver *test_drivers[] =
 	DRIVER( mschamp )	/* hack */
 	DRIVER( maketrax )	/* (c) 1981 Williams, high score table says KRL (fur Kural) */
 	DRIVER( maketrxb )	/* (c) 1981 [Kural] (Williams license) */
+	DRIVER( korosuke )	/* (c) 1981 Kural Electric */
 	DRIVER( crush )		/* (c) 1981 Kural Samno Electric Ltd */
 	DRIVER( crush2 )	/* (c) 1981 Kural Esco Electric Ltd - bootleg? */
 	DRIVER( crush3 )	/* Kural Electric Ltd - bootleg? */
@@ -510,7 +512,7 @@ TESTDRIVER( survival )	/* (c) 1982 Rock-ola */
 	DRIVER( galagab2 )	/* bootleg */
 	DRIVER( galaga84 )	/* hack */
 	DRIVER( nebulbee )	/* hack */
-	DRIVER( catsbee )	/* (c) 1984 Uchida / hack */
+	DRIVER( gatsbee )	/* (c) 1984 Uchida / hack */
 	DRIVER( digdug )	/* (c) 1982 */
 	DRIVER( digdugb )	/* (c) 1982 */
 	DRIVER( digdugat )	/* (c) 1982 Atari */
@@ -4262,6 +4264,7 @@ TESTDRIVER( touchgo )	/* (c) 1995 - Ref 950510-1 */
 	/* Kaneko games */
 	DRIVER( airbustr )	/* (c) 1990 Kaneko + Namco */
 	DRIVER( airbustj )	/* (c) 1990 Kaneko + Namco (Japan) */
+TESTDRIVER( djboy )		/* ?? */
 	DRIVER( galpanic )	/* (c) 1990 Kaneko */
 	DRIVER( galpanib )	/* (c) 1990 Kaneko */
 TESTDRIVER( galpani2 )	/* (c) 1993 Kaneko */
@@ -4984,7 +4987,8 @@ TESTDRIVER( portrait )	/* (c) 1983 Olympia */
 	DRIVER( rbff2a )	/* 0240 (c) 1998 SNK */
 	DRIVER( mslug2 )	/* 0241 (c) 1998 SNK */
 	DRIVER( kof98 )		/* 0242 (c) 1998 SNK */
-	DRIVER( kof98a )		/* 0242 (c) 1998 SNK */
+	DRIVER( kof98a )	/* 0242 (c) 1998 SNK */
+	DRIVER( kof98e )	/* 0242 (c) 1998 SNK */
 	DRIVER( lastbld2 )	/* 0243 (c) 1998 SNK */
 	DRIVER( neocup98 )	/* 0244 (c) 1998 SNK */
 	DRIVER( breakrev )	/* 0245 (c) 1998 Visco */

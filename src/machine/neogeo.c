@@ -25,6 +25,8 @@ int memcard_number=0;		/* 000...999, -1=None */
 int memcard_manager=0;		/* 0=Normal boot 1=Call memcard manager */
 UINT8 *neogeo_memcard;		/* Pointer to 2kb RAM zone */
 
+data8_t *neogeo_game_vectors;
+
 
 
 static void neogeo_custom_memory(void);
