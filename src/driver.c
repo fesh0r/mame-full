@@ -1127,6 +1127,10 @@ TESTDRIVER( fixeight )	/* TP-026 (c) 1992 + Taito license */
 	DRIVER( batsugun )	/* TP-030 (c) 1993 Toaplan */
 	DRIVER( batugnsp )	/* TP-??? (c) 1993 Toaplan */
 	DRIVER( snowbro2 )	/* TP-??? (c) 1994 Hanafram */
+	DRIVER( mahoudai )	/* TP-??? (c) 1994 Raizing (Able license) */
+	DRIVER( shippumd )	/* TP-??? (c) 1994 Raizing */
+	DRIVER( battleg )	/* TP-??? (c) 1996 Raizing */
+	DRIVER( batrider )	/* TP-??? (c) 1998 Raizing */
 
 /*
 Toa Plan's board list
