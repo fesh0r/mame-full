@@ -7,7 +7,7 @@
 ** - add support for serial ports
 ** - fix mouse support
 ** - add support for SCC+ and megaRAM
-** - add support for diskdrives
+** - diskdrives support doesn't work yet!
 **
 ** Sean Young
 */
@@ -18,6 +18,7 @@
 #include "cpu/z80/z80.h"
 #include "machine/8255ppi.h"
 #include "includes/tc8521.h"
+#include "includes/wd179x.h"
 #include "vidhrdw/tms9928a.h"
 #include "vidhrdw/v9938.h"
 #include "formats/fmsx_cas.h"
@@ -107,7 +108,7 @@ static int msx_probe_type (UINT8* pmem, int size)
         return (asc8 > asc16) ? 4 : 5;
 }
 
-static UINT16 DiskPatches[] = { 0x10,0x13,0x16,0x1C,0x1F,0 };
+/* static UINT16 DiskPatches[] = { 0x10,0x13,0x16,0x1C,0x1F,0 }; */
 
 int msx_load_rom (int id)
 {
@@ -119,7 +120,7 @@ int msx_load_rom (int id)
         "konami4 without SCC", "ASCII/8kB", "ASCII//16kB",
         "Konami Game Master 2", "ASCII/8kB with 8kB SRAM",
         "ASCII/16kB with 2kB SRAM", "R-Type", "Konami Majutsushi",
-        "Panasonic FM-PAC", "ASCII/16kB (bogus; use type 5)",
+        "Panasonic FM-PAC", "Super Load Runner",
         "Konami Synthesizer", "Cross Blaim", "Disk ROM" };
 
     /* try to load it */
@@ -434,7 +435,7 @@ int msx_load_rom (int id)
         msx1.cart[id].mem = pmem;
         break;
     case 5: /* ASCII 16kb */
-    case 12: /* Gall Force */
+    case 12: /* Super Load Runner */
         msx1.cart[id].banks[0] = 0;
         msx1.cart[id].banks[1] = 1;
         msx1.cart[id].banks[2] = 0;
@@ -450,6 +451,7 @@ int msx_load_rom (int id)
 		msx1.cart[id].mem = pmem;
 		memset (pmem + 0x4000, 0xff, 0x4000);
 		i = 0;
+#if 0
 		while (DiskPatches[i])
 			{
 			pmem[DiskPatches[i]] = 0xd3; /* out (n),A */
@@ -457,6 +459,7 @@ int msx_load_rom (int id)
 			pmem[DiskPatches[i]+2] = 0xc9; /* ret */
 			i++;
 			}
+#endif
 		break;
 	}
 
@@ -571,9 +574,15 @@ static int z80_table_num[5] = { Z80_TABLE_op, Z80_TABLE_xy,
 	Z80_TABLE_ed, Z80_TABLE_cb, Z80_TABLE_xycb };
 static UINT8 *old_z80_tables[5], *z80_table;
 
+static void msx_wd179x_int (int state);
+
 void init_msx (void)
     {
     int i,n;
+
+	wd179x_init (msx_wd179x_int);
+	wd179x_set_density (DEN_FM_HI);
+	msx1.dsk_stat = 0x7f;
 
     /* adjust z80 cycles for the M1 wait state */
     z80_table = malloc (0x500);
@@ -616,6 +625,7 @@ void msx_ch_stop (void)
 		free (z80_table);
 		}
     msx1.run = 0;
+	wd179x_exit ();
 	}
 
 void msx2_ch_stop (void)
@@ -644,12 +654,6 @@ int msx_interrupt()
 
     TMS9928A_set_spriteslimit (readinputport (8) & 0x20);
     TMS9928A_interrupt();
-
-	/* floppy stuff */
-	device_status (IO_FLOPPY, 0, (readinputport (8) & 0x0010) > 0);
-	device_output (IO_FLOPPY, 0, readinputport (8) & 0x000f);
-	device_status (IO_FLOPPY, 1, (readinputport (8) & 0x1000) > 0);
-	device_output (IO_FLOPPY, 1, (readinputport (8) & 0x0f00) / 256);
 
     return ignore_interrupt();
 	}
@@ -824,153 +828,28 @@ void msx2_nvram (void *file, int write_local)
 ** The evil disk functions ...
 */
 
-WRITE_HANDLER (msx_dsk_w)
+static void msx_wd179x_int (int state)
 	{
-	int ret, msx_write, sects, drive, trans, sect;
-	UINT8 sector[512];
-
-	switch (z80_get_pc () )
+	switch (state)
 		{
-		case 0x4012:
-			msx_write = (z80_get_reg (Z80_AF) & 1);
-			sects = (z80_get_reg (Z80_BC) / 256) * 512;
-			drive = (z80_get_reg (Z80_AF) / 256);
-			trans = z80_get_reg (Z80_HL);
-			sect = z80_get_reg (Z80_DE) * 512;
-			device_seek (IO_FLOPPY, drive, sect, 0);
-			if (msx_write)
-				{
-				/*ret =*/ device_output_chunk (IO_FLOPPY, drive,
-					msx1.ram + trans, sects);
-				ret = 0;
-				}
-			else
-				{
-				/*ret =*/ device_input_chunk (IO_FLOPPY, drive,
-					msx1.ram + trans, sects);
-				ret = 0;
-				}
-
-			switch (ret & MSX_DSK_ERR_MASK)
-				{
-				case MSX_DSK_ERR_OFFLINE:
-					z80_set_reg (Z80_AF, 0x0201); break;
-				case MSX_DSK_ERR_SECTORNOTFOUND:
-					z80_set_reg (Z80_AF, 0x0601); break;
-				case MSX_DSK_ERR_WRITEPROTECTED:
-					z80_set_reg (Z80_AF, 0x0001); break;
-				default:
-					z80_set_reg (Z80_AF, 0);
-				}
-
-			sects = (ret & ~MSX_DSK_ERR_MASK) / 512;
-			z80_set_reg (Z80_BC, sects * 256);
-			z80_set_reg (Z80_IFF1, 0);
-
-
-			break;
-
-		case 0x4015:
-			drive = z80_get_reg (Z80_AF) / 256;
-			if (drive > 1)
-				{
-				z80_set_reg (Z80_AF, 0x0c01);
-				break;
-				}
-
-			if ( !device_status (IO_FLOPPY, drive, -1) )
-				{
-				z80_set_reg (Z80_AF, 0x0201);
-				break;
-				}
-
-			z80_set_reg (Z80_AF, z80_get_reg (Z80_AF) & 0xfffe);
-			z80_set_reg (Z80_BC, z80_get_reg (Z80_BC) & 0x00ff);
-		case 0x4018:
-            {
-            int       BytesPerSector, SectorsPerDisk,
-                      SectorsPerFAT,ReservedSectors, I, J ;
-            UINT16 wAddress ;
-
-			drive = z80_get_reg (Z80_AF) / 256;
-			device_seek (IO_FLOPPY, drive, 0, SEEK_SET);
-			ret = device_input_chunk (IO_FLOPPY, drive, sector, 512);
-			switch (ret & MSX_DSK_ERR_MASK)
-				{
-				case MSX_DSK_ERR_OFFLINE:
-					z80_set_reg (Z80_AF, 0x0201); break;
-				case MSX_DSK_ERR_SECTORNOTFOUND:
-					z80_set_reg (Z80_AF, 0x0601); break;
-				case MSX_DSK_ERR_WRITEPROTECTED:
-					z80_set_reg (Z80_AF, 0x0001); break;
-				}
-
-            BytesPerSector  = (int)sector[0x0C]*256 + sector[0x0B] ;
-            SectorsPerDisk  = (int)sector[0x14]*256 + sector[0x13] ;
-            SectorsPerFAT   = (int)sector[0x17]*256 + sector[0x16] ;
-            ReservedSectors = (int)sector[0x0F]*256 + sector[0x0E] ;
-
-            wAddress = z80_get_reg (Z80_HL) + 1;
-
-            /* Format ID [F8h-FFh] */
-            msx1.ram[wAddress++] = sector[0x15] ;
-            /* Sector size         */
-            msx1.ram[wAddress++] = sector[0x0B] ;
-            msx1.ram[wAddress++] = sector[0x0C] ;
-            /* Directory mask/shft */
-            J=(BytesPerSector>>5)-1;
-            for(I=0;J&(1<<I);I++);
-            msx1.ram[wAddress++] = (UINT8)J ;
-            msx1.ram[wAddress++] = (UINT8)I ;
-            /* Cluster mask/shift  */
-            J=sector[0x0D]-1;
-            for(I=0;J&(1<<I);I++);
-            msx1.ram[wAddress++] = (UINT8)J ;
-            msx1.ram[wAddress++] = (UINT8)(I+1) ;
-            /* Sector # of 1st FAT */
-            msx1.ram[wAddress++] = sector[0x0E] ;
-            msx1.ram[wAddress++] = sector[0x0F] ;
-            /* Number of FATs      */
-            msx1.ram[wAddress++] = sector[0x10] ;
-            /* Number of dirent-s  */
-            msx1.ram[wAddress++] = sector[0x11] ;
-            J=ReservedSectors+sector[0x10]*SectorsPerFAT;
-            if (BytesPerSector)
-                J+=32*sector[0x11]/BytesPerSector ;
-            else
-                J=0 ;
-            /* Sector # of data    */
-            msx1.ram[wAddress++] = J & 0xff;
-            msx1.ram[wAddress++] = J / 256 ;
-            if (sector[0x0D])
-                J=(SectorsPerDisk-J)/sector[0x0D] ;
-            else
-                J=0 ;
-            /* Number of clusters  */
-            msx1.ram[wAddress++] = J & 0xff;
-            msx1.ram[wAddress++] = J / 256 ;
-            /* Sectors per FAT     */
-            msx1.ram[wAddress++] = sector[0x16] ;
-            J=ReservedSectors+sector[0x10]*SectorsPerFAT;
-            /* Sector # of dir.    */
-            msx1.ram[wAddress++] = J & 0xff ;
-            msx1.ram[wAddress++] = J / 256;
-
-			z80_set_reg (Z80_AF, 0);
-			z80_set_reg (Z80_IFF1, 0);
-
-			break;
-			}
-		case 0x401e:
-			/* format disk */
-			break;
-		case 0x4021: /* stop drives */
-			/* NOP */
-			break;
-		default:
-			logerror ("Uncaught trap: %04x\n", z80_get_pc ());
+		case WD179X_IRQ_CLR: msx1.dsk_stat |= 0x40; break;
+		case WD179X_IRQ_SET: msx1.dsk_stat &= ~0x40; break;
+		case WD179X_DRQ_CLR: msx1.dsk_stat &= ~0x80; break;
+		case WD179X_DRQ_SET: msx1.dsk_stat |= 0x80; break;
 		}
+	}
 
+READ_HANDLER (msx_disk_r)
+	{
+	switch (offset)
+		{
+		case 0x1ff8: return wd179x_status_r (0); 
+		case 0x1ff9: return wd179x_track_r (0); 
+		case 0x1ffa: return wd179x_sector_r (0); 
+		case 0x1ffb: return wd179x_data_r (0); 
+		case 0x1fff: return msx1.dsk_stat | 0x3f;
+		default: return msx1.disk[offset];
+		}
 	}
 
 /*
@@ -1016,7 +895,6 @@ static int msx_ppi_port_b_r (int chip)
     else return 0xff;
 	}
 
-
 /*
 ** The memory functions
 */
@@ -1035,10 +913,13 @@ static void msx_set_slot_0 (int page)
 }
 
 static void msx_set_slot_1 (int page) {
-    int i,n;
+    int n;
     unsigned char *ROM;
     ROM = memory_region(REGION_CPU1);
 
+	if (page == 1)
+		memory_set_bankhandler_r (4, 0, MRA_BANK4);
+		
     if (msx1.cart[0].type == 0 && msx1.cart[0].mem)
     {
         cpu_setbank (1 + page * 2, msx1.cart[0].mem + page * 0x4000);
@@ -1059,18 +940,24 @@ static void msx_set_slot_1 (int page) {
             return;
         }
         n = (page - 1) * 2;
-        for (i=0;i<2;i++)
-        {
-            cpu_setbank (3 + i + n,
-            msx1.cart[0].mem + msx1.cart[0].banks[i + n] * 0x2000);
-        }
+        cpu_setbank (3 + n, msx1.cart[0].mem + msx1.cart[0].banks[n] * 0x2000);
+        cpu_setbank (4 + n, msx1.cart[0].mem + msx1.cart[0].banks[1 + n] * 0x2000);
+		if (page == 1) {
+			if (msx1.cart[0].type == 15) {
+				memory_set_bankhandler_r (4, 0, msx_disk_r);
+				msx1.disk = msx1.cart[0].mem + 0x2000;
+			}
+		}
     }
 }
 
 static void msx_set_slot_2 (int page)
 {
-    int i,n;
+    int n;
 
+	if (page == 1)
+		memory_set_bankhandler_r (4, 0, MRA_BANK4);
+		
     if (msx1.cart[1].type == 0 && msx1.cart[1].mem)
     {
         cpu_setbank (1 + page * 2, msx1.cart[1].mem + page * 0x4000);
@@ -1083,11 +970,14 @@ static void msx_set_slot_2 (int page)
             return;
         }
         n = (page - 1) * 2;
-        for (i=0;i<2;i++)
-        {
-            cpu_setbank (3 + i + n,
-            msx1.cart[1].mem + msx1.cart[1].banks[i + n] * 0x2000);
-        }
+        cpu_setbank (3 + n, msx1.cart[1].mem + msx1.cart[1].banks[n] * 0x2000);
+        cpu_setbank (4 + n, msx1.cart[1].mem + msx1.cart[1].banks[1 + n] * 0x2000);
+		if (page == 1) {
+			if (msx1.cart[1].type == 15) {
+				memory_set_bankhandler_r (4, 0, msx_disk_r);
+				msx1.disk = msx1.cart[1].mem + 0x2000;
+			}
+		}
     }
 }
 
@@ -1109,11 +999,27 @@ static void msx_set_all_mem_banks (void)
         msx_set_slot[(ppi8255_0_r(0)>>(i*2))&3](i);
 }
 
+static void msx_cart_write (int cart, int offset, int data);
+
 WRITE_HANDLER ( msx_writemem0 )
-{
-     if ( (ppi8255_0_r(0) & 0x03) == 0x03 )
+	{
+	if (!offset)
+		{
+		/* 
+         * Super Load Runner ignores the CS, it responds to any
+         * write to address 0x0000 (!).
+		 */
+		
+		if (msx1.cart[0].type == 12)
+			msx_cart_write (0, -1, data);
+
+		if (msx1.cart[1].type == 12)
+			msx_cart_write (1, -1, data);
+		}
+	
+    if ( (ppi8255_0_r(0) & 0x03) == 0x03 )
         msx1.ram[offset] = data;
-}
+	}
 
 static int msx_cart_page_2 (int cart)
 {
@@ -1192,7 +1098,22 @@ static void msx_cart_write (int cart, int offset, int data)
                 cpu_setbank (3+(offset/0x800),msx1.cart[cart].mem + n * 0x2000);
         }
         break;
-    case 12: /* Gall Force */
+    case 12: /* Super Load Runner */
+		if (offset == -1)
+			{
+            n = (data * 2) & msx1.cart[cart].bank_mask;
+
+            /* page 2 */
+            msx1.cart[cart].banks[2] = n;
+            msx1.cart[cart].banks[3] = n + 1;
+            if (msx_cart_page_2 (cart))
+                {
+                cpu_setbank (5,msx1.cart[cart].mem + n * 0x2000);
+                cpu_setbank (6,msx1.cart[cart].mem + (n + 1) * 0x2000);
+                }
+			}
+
+		break;
     case 5: /* ASCII 16kB */
         if ( (offset & 0x6800) == 0x2000)
         {
@@ -1392,6 +1313,34 @@ static void msx_cart_write (int cart, int offset, int data)
     case 13: /* Konami Synthesizer */
         if (!offset) DAC_data_w (0, data);
         break;
+	case 15: /* disk rom */
+		switch (offset)
+			{
+			case 0x3ff8: 
+				wd179x_command_w (0, data); 
+				break;
+			case 0x3ff9: 
+				wd179x_track_w (0, data); 
+				break;
+			case 0x3ffa: 
+				wd179x_sector_w (0, data); 
+				break;
+			case 0x3ffb: 
+				wd179x_data_w (0, data); 
+				break;
+			case 0x3ffc: 
+				wd179x_set_side (data & 1);
+				msx1.cart[cart].mem[0x3ffc] = data | 0xfe;
+				break;
+			case 0x3ffd:
+				wd179x_set_drive (data & 3);
+				msx1.cart[cart].mem[0x3ffd] = data | 0x7c;
+				break;
+			default:
+				logerror ("Write %02x to %04x in diskrom (PC = %04x\n", 
+					data, offset + 0x4000, cpu_get_pc () );
+			}
+		break;
     }
 }
 

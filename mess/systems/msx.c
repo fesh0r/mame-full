@@ -11,6 +11,7 @@
 #include "vidhrdw/tms9928a.h"
 #include "vidhrdw/v9938.h"
 #include "includes/msx.h"
+#include "includes/basicdsk.h"
 #include "printer.h"
 
 static MEMORY_READ_START (readmem)
@@ -47,7 +48,6 @@ static PORT_WRITE_START (writeport)
     { 0xa8, 0xab, ppi8255_0_w },
 	{ 0x98, 0x98, TMS9928A_vram_w },
 	{ 0x99, 0x99, TMS9928A_register_w },
-	{ 0xd0, 0xd0, msx_dsk_w },
 PORT_END
 
 static PORT_READ_START (readport2)
@@ -70,7 +70,6 @@ static PORT_WRITE_START (writeport2)
     { 0x9b, 0x9b, v9938_register_w },
 	{ 0xb4, 0xb4, msx_rtc_latch_w },
 	{ 0xb5, 0xb5, msx_rtc_reg_w },
-    { 0xd0, 0xd0, msx_dsk_w },
 PORT_END
 
 /* start define for the special ports (DIPS, joystick, mouse) */
@@ -109,32 +108,6 @@ PORT_END
   PORT_DIPNAME( 0x20, 0x20, "Enforce 4 sprites/line")    \
    PORT_DIPSETTING( 0, DEF_STR( No ) )    \
    PORT_DIPSETTING( 0x20, DEF_STR( Yes ) )    \
- PORT_DIPNAME(0x000f, 0, "Multi disk A:")        \
-  PORT_DIPSETTING(0, "1")       \
-  PORT_DIPSETTING(1, "2")       \
-  PORT_DIPSETTING(2, "3")       \
-  PORT_DIPSETTING(3, "4")       \
-  PORT_DIPSETTING(4, "5")       \
-  PORT_DIPSETTING(5, "6")       \
-  PORT_DIPSETTING(6, "7")       \
-  PORT_DIPSETTING(7, "8")       \
-  PORT_DIPSETTING(8, "9")       \
- PORT_DIPNAME( 0x10, 0, "Disk A: Write Protected")    \
-   PORT_DIPSETTING( 0x00, DEF_STR ( No ) )    \
-   PORT_DIPSETTING( 0x10, DEF_STR ( Yes ) )    \
- PORT_DIPNAME(0x0f00, 0, "Multi disk B:")        \
-  PORT_DIPSETTING(0x0000, "1")  \
-  PORT_DIPSETTING(0x0100, "2")  \
-  PORT_DIPSETTING(0x0200, "3")  \
-  PORT_DIPSETTING(0x0400, "4")  \
-  PORT_DIPSETTING(0x0300, "5")  \
-  PORT_DIPSETTING(0x0500, "6")  \
-  PORT_DIPSETTING(0x0600, "7")  \
-  PORT_DIPSETTING(0x0700, "8")  \
-  PORT_DIPSETTING(0x0800, "9")  \
- PORT_DIPNAME( 0x1000, 0, "Disk B: Write Protected")    \
-   PORT_DIPSETTING( 0x0000, DEF_STR ( No ) )    \
-   PORT_DIPSETTING( 0x1000, DEF_STR ( Yes ) )    \
     \
  PORT_START /* 9 */    \
   PORT_ANALOGX( 0xff00, 0x00, IPT_TRACKBALL_X | IPF_PLAYER1, 100, 0, 0, 0, KEYCODE_NONE, KEYCODE_NONE, JOYCODE_NONE, JOYCODE_NONE)    \
@@ -614,7 +587,6 @@ static struct YM2413interface ym2413_interface=
     1,                      /* 1 chip */
     3579545,                /* 3.57Mhz.. ? */
     { 10 },                 /* Volume */
-    { 0 }                   /* IRQ handler */
 };
 
 static struct Wave_interface wave_interface = {
@@ -893,25 +865,25 @@ static const struct IODevice io_msx[] = {
     NULL,                       /* input_chunk */
     NULL                        /* output_chunk */
 },
-{
-    IO_FLOPPY,                	/* type */
-    2,              		 	/* count */
-    "dsk\0",                    /* file extensions */
-    IO_RESET_NONE,              /* reset if file changed */
-    msx_dsk_id,                 /* id */
-	msx_dsk_init,               /* init */
-    msx_dsk_exit,               /* exit */
-    NULL,                       /* info */
-    NULL,                       /* open */
-    NULL,                       /* close */
-    msx_dsk_status,             /* status */
-    msx_dsk_seek,               /* seek */
-    msx_dsk_tell,               /* tell */
-    msx_dsk_input,              /* input */
-    msx_dsk_output,             /* output */
-    msx_dsk_input_chunk,        /* input_chunk */
-    msx_dsk_output_chunk		/* output_chunk */
-},
+    {
+        IO_FLOPPY,              /* type */
+        2,                      /* count */
+        "dsk\0",                /* file extensions */
+        IO_RESET_NONE,          /* reset if file changed */
+        basicdsk_floppy_id,     /* id */
+        basicdsk_floppy_init,   /* init */
+        basicdsk_floppy_exit,   /* exit */
+        NULL,                   /* info */
+        NULL,                   /* open */
+        NULL,                   /* close */
+        floppy_status,          /* status */
+        NULL,                   /* seek */
+        NULL,                   /* tell */
+        NULL,                   /* input */
+        NULL,                   /* output */
+        NULL,                   /* input_chunk */
+        NULL                    /* output_chunk */
+    },
     IO_CASSETTE_WAVE (1, "cas\0wav\0", NULL, msx_cassette_init, msx_cassette_exit),
 	IO_PRINTER_PORT (1, "prn\0"),
     { IO_END }
@@ -942,18 +914,4 @@ COMP( 1985, expert11, msx,    msx,     expert11, msx,   "Gradiente",         "XP
 COMPX( 1985, msx2,    msx,    msx2,    msx,      msx2,   "ASCII & Microsoft", "MSX 2", GAME_NOT_WORKING )
 COMPX( 1985, msx2a,   msx,    msx2,    msx,      msx2,   "ASCII & Microsoft", "MSX 2 (BASIC 2.1)", GAME_NOT_WORKING )
 COMPX( 1985, msx2j,  msx,    msx2,     msxj,     msx2,   "ASCII & Microsoft", "MSX 2 (Japan)", GAME_NOT_WORKING )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

@@ -28,6 +28,8 @@ typedef struct {
     int mouse_stat[2];
 	/* rtc */
 	int rtc_latch;
+	/* disk */
+    UINT8 dsk_stat, *disk;
 } MSX;
 
 /* start/stop functions */
@@ -69,21 +71,4 @@ WRITE_HANDLER ( msx_writemem3 );
 /* cassette functions */
 int msx_cassette_init (int id);
 void msx_cassette_exit (int id);
-
-/* disk functions */
-int msx_dsk_id (int id);
-int msx_dsk_init (int id);
-void msx_dsk_exit (int id);
-int msx_dsk_seek (int id, int offset, int whence);
-int msx_dsk_tell (int id);
-int msx_dsk_output_chunk (int id, void *src, int chunks);
-int msx_dsk_input_chunk (int id, void *dst, int chunks);
-void msx_dsk_output (int id, int);
-int msx_dsk_status (int id, int);
-int msx_dsk_input (int id);
-
-#define MSX_DSK_ERR_OFFLINE			(0x10000000)
-#define MSX_DSK_ERR_SECTORNOTFOUND	(0x20000000)
-#define MSX_DSK_ERR_WRITEPROTECTED 	(0x30000000)
-#define MSX_DSK_ERR_MASK 			(0xf0000000)
 
