@@ -4359,7 +4359,7 @@ void *z80_get_cycle_table (int which)
  ****************************************************************************/
 void z80_set_cycle_table (int which, void *new_table)
 {
-	if (which >= 0 && which <= Z80_TABLE_xycb)
+	if (which >= 0 && which <= Z80_TABLE_ex)
 		cc[which] = new_table;
 }
 
