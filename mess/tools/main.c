@@ -27,12 +27,17 @@ static void writeusage(FILE *f, int write_word_usage, struct command *c, char *a
 
 /* ----------------------------------------------------------------------- */
 
-static int parse_options(int argc, char *argv[], int minunnamed, int maxunnamed, struct NamedOption *opts, int optcount)
+static int parse_options(int argc, char *argv[], int minunnamed, int maxunnamed, struct NamedOption *opts, int optcount, FILTERMODULE *filter)
 {
 	int i;
 	int optpos = 0;
 	int lastunnamed = 0;
 	char *s;
+	char *name = NULL;
+	char *value = NULL;
+
+	if (filter)
+		*filter = NULL;
 
 	memset(opts, 0, sizeof(struct NamedOption) * optcount);
 
@@ -51,16 +56,40 @@ static int parse_options(int argc, char *argv[], int minunnamed, int maxunnamed,
 				goto error; /* Too many */
 
 			/* Named */
-			opts[optpos].name = argv[i] + 2;
-			s = strchr(opts[optpos].name, '=');
+			name = argv[i] + 2;
+			s = strchr(name, '=');
 			if (!s)
 				goto error;
-			*(s++) = 0;
-			opts[optpos].value = s;
-			optpos++;
+			*s = 0;
+			value = s + 1;
+			if (!strcmp(name, "filter")) {
+				/* Filter option */
+				if (!filter)
+					goto error; /* This command doesn't use filters */
+				if (*filter)
+					goto filteralreadyspecified;
+				*filter = filter_lookup(value);
+				if (!(*filter))
+					goto filternotfound;
+
+			}
+			else {
+				/* Other named option */
+				opts[optpos].name = name;
+				opts[optpos].value = value;
+				optpos++;
+			}
 		}
 	}
 	return lastunnamed;
+
+filternotfound:
+	fprintf(stderr, "%s: Unknown filter type\n", value);
+	return -1;
+
+filteralreadyspecified:
+	fprintf(stderr, "Cannot specify multiple filters\n");
+	return -1;
 
 error:
 	fprintf(stderr, "%s: Unrecognized option\n", argv[i]);
@@ -231,9 +260,10 @@ static int cmd_put(struct command *c, int argc, char *argv[])
 	IMAGE *img;
 	char *newfname;
 	int unnamedargs;
+	FILTERMODULE filter;
 	struct NamedOption nopts[32];
 
-	unnamedargs = parse_options(argc, argv, 3, 4, nopts, sizeof(nopts) / sizeof(nopts[0]));
+	unnamedargs = parse_options(argc, argv, 3, 4, nopts, sizeof(nopts) / sizeof(nopts[0]), &filter);
 	if (unnamedargs < 0)
 		return -1;
 	newfname = (unnamedargs == 4) ? argv[3] : NULL;
@@ -242,7 +272,7 @@ static int cmd_put(struct command *c, int argc, char *argv[])
 	if (err)
 		goto error;
 
-	err = img_putfile(img, newfname, argv[2], nopts, NULL);
+	err = img_putfile(img, newfname, argv[2], nopts, filter);
 	img_close(img);
 	if (err)
 		goto error;
@@ -260,6 +290,7 @@ static int cmd_getall(struct command *c, int argc, char *argv[])
 	IMAGE *img;
 	IMAGEENUM *imgenum;
 	imgtool_dirent ent;
+	FILTERMODULE filter = NULL;
 	char buf[128];
 
 	err = img_open_byname(argv[0], argv[1], OSD_FOPEN_READ, &img);
@@ -279,7 +310,7 @@ static int cmd_getall(struct command *c, int argc, char *argv[])
 	while (((err = img_nextenum(imgenum, &ent)) == 0) && !ent.eof) {
 		fprintf(stdout, "Retrieving %s (%i bytes)\n", ent.fname, ent.filesize);
 
-		err = img_getfile(img, ent.fname, NULL, NULL);
+		err = img_getfile(img, ent.fname, NULL, filter);
 		if (err)
 			break;
 	}
@@ -440,7 +471,7 @@ static int cmd_create(struct command *c, int argc, char *argv[])
 	char *label;
 	struct NamedOption nopts[32];
 
-	unnamedargs = parse_options(argc, argv, 2, 3, nopts, sizeof(nopts) / sizeof(nopts[0]));
+	unnamedargs = parse_options(argc, argv, 2, 3, nopts, sizeof(nopts) / sizeof(nopts[0]), NULL);
 	if (unnamedargs < 0)
 		return -1;
 

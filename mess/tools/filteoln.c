@@ -1,3 +1,4 @@
+#include <string.h>
 #include "imgtool.h"
 #include "osdutils.h"
 
@@ -38,19 +39,19 @@ static int filter_eoln_proc(struct filter_info *fi, void *buf, int buflen)
 			break;
 		}
 
-		filterstate->after_cr = (c == '\0x0d');
+		filterstate->after_cr = (c == '\x0d');
 	}
 	if (base != i)
 		result += fi->sendproc(fi, &cbuf[base], i - base);
 	return result;
 }
 
-static void *filter_eoln_calcreadparam(struct ImageModule *imgmod)
+static void *filter_eoln_calcreadparam(const struct ImageModule *imgmod)
 {
 	return (void *) EOLN;
 }
 
-static void *filter_eoln_calcwriteparam(struct ImageModule *imgmod)
+static void *filter_eoln_calcwriteparam(const struct ImageModule *imgmod)
 {
 	return (void *) imgmod->eoln;
 }

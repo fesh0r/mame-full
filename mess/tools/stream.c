@@ -1,9 +1,35 @@
 #include <stdio.h>
 #include <string.h>
 #include <zlib.h>
+#include <assert.h>
 #include "unzip.h"
 #include "osdepend.h"
 #include "imgtool.h"
+
+enum {
+	IMG_FILE,
+	IMG_MEM,
+	IMG_FILTER
+};
+
+struct stream_internal {
+	int imgtype;
+	int write_protect;
+	const char *name; // needed for clear
+	union {
+		FILE *f;
+		struct {
+			char *buf;
+			size_t bufsz;
+			size_t pos;
+		} m;
+		struct {
+			STREAM *s;
+			FILTER *f;
+			size_t totalread;
+		} filt;
+	} u;
+};
 
 static size_t fsize(FILE *f)
 {
@@ -21,11 +47,11 @@ STREAM *stream_open(const char *fname, int read_or_write)
 {
 	const char *ext;
 	ZIP *z = NULL;
-	STREAM *imgfile;
+	struct stream_internal *imgfile;
 	struct zipent *zipent;
 	static char *write_modes[] = {"rb","wb","r+b","r+b","w+b"};
 
-	imgfile = malloc(sizeof(STREAM));
+	imgfile = malloc(sizeof(struct stream_internal));
 
 	ext = strrchr(fname, '.');
 	if (ext && !stricmp(ext, ".zip")) {
@@ -78,10 +104,11 @@ error:
 
 STREAM *stream_open_write_stream(int size)
 {
-	STREAM *imgfile;
+	struct stream_internal *imgfile;
 
-	imgfile = malloc(sizeof(STREAM));
-	if (!imgfile) return NULL;
+	imgfile = malloc(sizeof(struct stream_internal));
+	if (!imgfile)
+		return NULL;
 
 	imgfile->imgtype = IMG_MEM;
 	imgfile->write_protect = 0;
@@ -94,15 +121,16 @@ STREAM *stream_open_write_stream(int size)
 		free(imgfile);
 		return NULL;
 	}
-	return imgfile;
+	return (STREAM *) imgfile;
 }
 
 STREAM *stream_open_mem(void *buf, size_t sz)
 {
-	STREAM *imgfile;
+	struct stream_internal *imgfile;
 
-	imgfile = malloc(sizeof(STREAM));
-	if (!imgfile) return NULL;
+	imgfile = malloc(sizeof(struct stream_internal));
+	if (!imgfile)
+		return NULL;
 
 	imgfile->imgtype = IMG_MEM;
 	imgfile->write_protect = 0;
@@ -110,107 +138,167 @@ STREAM *stream_open_mem(void *buf, size_t sz)
 
 	imgfile->u.m.bufsz = sz;
 	imgfile->u.m.buf = buf;
-	return imgfile;
+	return (STREAM *) imgfile;
 }
 
-void stream_close(STREAM *f)
+STREAM *stream_open_filter(STREAM *s, FILTER *f)
 {
-	switch(f->imgtype) {
+	struct stream_internal *imgfile;
+
+	imgfile = malloc(sizeof(struct stream_internal));
+	if (!imgfile)
+		return NULL;
+
+	imgfile->imgtype = IMG_FILTER;
+	imgfile->u.filt.s = s;
+	imgfile->u.filt.f = f;
+	imgfile->u.filt.totalread = 0;
+	return (STREAM *) imgfile;
+}
+
+void stream_close(STREAM *s)
+{
+	struct stream_internal *si = (struct stream_internal *) s;
+
+	switch(si->imgtype) {
 	case IMG_FILE:
-		fclose(f->u.f);
+		fclose(si->u.f);
 		break;
 
 	case IMG_MEM:
-		free(f->u.m.buf);
+		free(si->u.m.buf);
+		break;
+
+	case IMG_FILTER:
+		filter_term(si->u.filt.f);
+		break;
+
+	default:
+		assert(0);
 		break;
 	}
-	free((void *) f);
+	free((void *) si);
 }
 
-size_t stream_read(STREAM *f, void *buf, size_t sz)
+size_t stream_read(STREAM *s, void *buf, size_t sz)
 {
 	size_t result = 0;
+	struct stream_internal *si = (struct stream_internal *) s;
 
-	switch(f->imgtype) {
+	switch(si->imgtype) {
 	case IMG_FILE:
-		result = fread(buf, 1, sz, f->u.f);
+		result = fread(buf, 1, sz, si->u.f);
 		break;
 
 	case IMG_MEM:
-		if ((f->u.m.pos + sz) > f->u.m.bufsz)
-			result = f->u.m.bufsz - f->u.m.pos;
+		if ((si->u.m.pos + sz) > si->u.m.bufsz)
+			result = si->u.m.bufsz - si->u.m.pos;
 		else
 			result = sz;
-		memcpy(buf, f->u.m.buf + f->u.m.pos, result);
-		f->u.m.pos += result;
+		memcpy(buf, si->u.m.buf + si->u.m.pos, result);
+		si->u.m.pos += result;
+		break;
+
+	case IMG_FILTER:
+		result = filter_readfromstream(si->u.filt.f, si->u.filt.s, buf, sz);
+		si->u.filt.totalread += result;
+		break;
+
+	default:
+		assert(0);
 		break;
 	}
 	return result;
 }
 
-size_t stream_write(STREAM *f, const void *buf, size_t sz)
+size_t stream_write(STREAM *s, const void *buf, size_t sz)
 {
 	size_t result = 0;
+	struct stream_internal *si = (struct stream_internal *) s;
 
-	switch(f->imgtype) {
+	switch(si->imgtype) {
 	case IMG_MEM:
-		if (!f->write_protect) {
-			if (f->u.m.bufsz<f->u.m.pos+sz) {
-				f->u.m.buf=realloc(f->u.m.buf,f->u.m.pos+sz);
-				f->u.m.bufsz=f->u.m.pos+sz;
+		if (!si->write_protect) {
+			if (si->u.m.bufsz<si->u.m.pos+sz) {
+				si->u.m.buf=realloc(si->u.m.buf,si->u.m.pos+sz);
+				si->u.m.bufsz=si->u.m.pos+sz;
 			}
-			memcpy(f->u.m.buf+f->u.m.pos, buf, sz);
-			f->u.m.pos+=sz;
+			memcpy(si->u.m.buf+si->u.m.pos, buf, sz);
+			si->u.m.pos+=sz;
 			result=sz;
 		}
 		break;
+
 	case IMG_FILE:
-		result = fwrite(buf, 1, sz, f->u.f);
+		result = fwrite(buf, 1, sz, si->u.f);
+		break;
+
+	case IMG_FILTER:
+		result = filter_writetostream(si->u.filt.f, si->u.filt.s, buf, sz);
+		break;
+
+	default:
+		assert(0);
 		break;
 	}
 	return result;
 }
 
-size_t stream_size(STREAM *f)
+size_t stream_size(STREAM *s)
 {
 	size_t result = 0;
+	struct stream_internal *si = (struct stream_internal *) s;
 
-	switch(f->imgtype) {
+	switch(si->imgtype) {
 	case IMG_FILE:
-		result = fsize(f->u.f);
+		result = fsize(si->u.f);
 		break;
 
 	case IMG_MEM:
-		result = f->u.m.bufsz;
+		result = si->u.m.bufsz;
+		break;
+
+	case IMG_FILTER:
+		si->u.filt.totalread += filter_readintobuffer(si->u.filt.f, si->u.filt.s);
+		result = si->u.filt.totalread;
+		break;
+
+	default:
+		assert(0);
 		break;
 	}
 	return result;
 }
 
-int stream_seek(STREAM *f, size_t pos, int where)
+int stream_seek(STREAM *s, size_t pos, int where)
 {
 	int result = 0;
+	struct stream_internal *si = (struct stream_internal *) s;
 
-	switch(f->imgtype) {
+	switch(si->imgtype) {
 	case IMG_FILE:
-		result = fseek(f->u.f, pos, where);
+		result = fseek(si->u.f, pos, where);
 		break;
 
 	case IMG_MEM:
 		switch(where) {
 		case SEEK_CUR:
-			pos += f->u.m.pos;
+			pos += si->u.m.pos;
 			break;
 		case SEEK_END:
-			pos += f->u.m.bufsz;
+			pos += si->u.m.bufsz;
 			break;
 		}
-		if ((pos > f->u.m.bufsz) || (pos < 0)) {
+		if ((pos > si->u.m.bufsz) || (pos < 0)) {
 			result = -1;
 		}
 		else {
-			f->u.m.pos = pos;
+			si->u.m.pos = pos;
 		}
+		break;
+
+	default:
+		assert(0);
 		break;
 	}
 	return result;
@@ -235,23 +323,24 @@ size_t stream_transfer_all(STREAM *dest, STREAM *source)
 	return stream_transfer(dest, source, stream_size(source));
 }
 
-int stream_crc(STREAM *f, unsigned long *result)
+int stream_crc(STREAM *s, unsigned long *result)
 {
 	size_t sz;
 	void *ptr;
+	struct stream_internal *si = (struct stream_internal *) s;
 
-	switch(f->imgtype) {
+	switch(si->imgtype) {
 	case IMG_MEM:
-		*result = crc32(0, (unsigned char*)f->u.m.buf, f->u.m.bufsz);
+		*result = crc32(0, (unsigned char*)si->u.m.buf, si->u.m.bufsz);
 		break;
 
 	default:
-		sz = stream_size(f);
+		sz = stream_size(s);
 		ptr = malloc(sz);
 		if (!ptr)
 			return IMGTOOLERR_OUTOFMEMORY;
-		stream_seek(f, 0, SEEK_SET);
-		if (stream_read(f, ptr, sz) != sz)
+		stream_seek(s, 0, SEEK_SET);
+		if (stream_read(s, ptr, sz) != sz)
 			return IMGTOOLERR_READERROR;
 		*result = crc32(0, ptr, sz);
 		free(ptr);
@@ -289,19 +378,31 @@ size_t stream_fill(STREAM *f, unsigned char b, size_t sz)
 	return outsz;
 }
 
-void stream_clear(STREAM *f)
+void stream_clear(STREAM *s)
 {
-	/* Need to implement */
-	switch(f->imgtype) {
-	case IMG_MEM: break;
+	struct stream_internal *si = (struct stream_internal *) s;
+
+	switch(si->imgtype) {
 	case IMG_FILE:
-		if (!f->write_protect) {
-			fclose(f->u.f);
-			f->u.f=fopen(f->name,"wb+");
-			if (f->u.f==NULL) ;
-			fclose(f->u.f);
-			f->u.f=fopen(f->name,"wb");
+		if (!si->write_protect) {
+			fclose(si->u.f);
+			si->u.f=fopen(si->name,"wb+");
+			if (si->u.f==NULL) ;
+			fclose(si->u.f);
+			si->u.f=fopen(si->name,"wb");
 		}
+		break;
+
+	default:
+		/* Need to implement */
+		assert(0);
 		break;
 	}
 }
+
+int stream_isreadonly(STREAM *s)
+{
+	struct stream_internal *si = (struct stream_internal *) s;
+	return si->write_protect;
+}
+

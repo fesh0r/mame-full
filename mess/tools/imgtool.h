@@ -65,23 +65,8 @@ typedef struct {
 
 /* ----------------------------------------------------------------------- */
 
-enum {
-	IMG_FILE,
-	IMG_MEM
-};
-
 typedef struct {
-	int imgtype;
-	int write_protect;
-	const char *name; // needed for clear
-	union {
-		FILE *f;
-		struct {
-			char *buf;
-			size_t bufsz;
-			size_t pos;
-		} m;
-	} u;
+	int dummy;
 } STREAM;
 
 STREAM *stream_open(const char *fname, int read_or_write);	/* similar params to osd_fopen */
@@ -109,6 +94,9 @@ size_t stream_fill(STREAM *f, unsigned char b, size_t sz);
 int stream_crc(STREAM *f, unsigned long *result);
 int file_crc(const char *fname,  unsigned long *result);
 
+/* Returns whether a stream is read only or not */
+int stream_isreadonly(STREAM *f);
+
 /* -----------------------------------------------------------------------
  * Filters                                                            
  * ----------------------------------------------------------------------- */
@@ -125,8 +113,8 @@ struct ImageModule;
 struct filter_module {
 	const char *name;
 	const char *longname;
-	void *(*calcreadparam)(struct ImageModule *imgmod);
-	void *(*calcwriteparam)(struct ImageModule *imgmod);
+	void *(*calcreadparam)(const struct ImageModule *imgmod);
+	void *(*calcwriteparam)(const struct ImageModule *imgmod);
 	int (*filterproc)(struct filter_info *fi, void *buf, int buflen);
 	int statesize;
 };
@@ -135,19 +123,24 @@ typedef struct {
 	int dummy;
 } FILTER;
 
+typedef const struct filter_module *FILTERMODULE;
+
 enum {
 	PURPOSE_READ,
 	PURPOSE_WRITE
 };
 
-FILTER *filter_init(struct filter_module *filter, struct ImageModule *imgmod, int purpose);
+FILTER *filter_init(FILTERMODULE filter, const struct ImageModule *imgmod, int purpose);
 void filter_term(FILTER *f);
-int filter_writetostream(FILTER *f, STREAM *s, void *buf, int buflen);
+int filter_writetostream(FILTER *f, STREAM *s, const void *buf, int buflen);
 int filter_readfromstream(FILTER *f, STREAM *s, void *buf, int buflen);
+int filter_readintobuffer(FILTER *f, STREAM *s);
 
-const struct filter_module *filters[];
+FILTERMODULE filters[];
 
-const struct filter_module *filter_lookup(const char *name);
+FILTERMODULE filter_lookup(const char *name);
+
+STREAM *stream_open_filter(STREAM *s, FILTER *f);
 
 /* ----------------------------------------------------------------------- */
 
@@ -431,7 +424,7 @@ int img_freespace(IMAGE *img, int *sz);
  *      filter:             Filter to use, or NULL if none
  */
 int img_readfile(IMAGE *img, const char *fname, STREAM *destf,
-	const struct filter_module *filter);
+	FILTERMODULE filter);
 
 /* img_writefile
  *
@@ -446,7 +439,7 @@ int img_readfile(IMAGE *img, const char *fname, STREAM *destf,
  *      filter:             Filter to use, or NULL if none
  */
 int img_writefile(IMAGE *img, const char *fname, STREAM *sourcef,
-	const struct NamedOption *_options, const struct filter_module *filter);
+	const struct NamedOption *_options, FILTERMODULE filter);
 
 /* img_getfile
  *
@@ -460,7 +453,7 @@ int img_writefile(IMAGE *img, const char *fname, STREAM *sourcef,
  *      filter:             Filter to use, or NULL if none
  */
 int img_getfile(IMAGE *img, const char *fname, const char *dest,
-	const struct filter_module *filter);
+	FILTERMODULE filter);
 
 /* img_putfile
  *
@@ -476,7 +469,7 @@ int img_getfile(IMAGE *img, const char *fname, const char *dest,
  *      filter:             Filter to use, or NULL if none
  */
 int img_putfile(IMAGE *img, const char *newfname, const char *source,
-	const struct NamedOption *_options, const struct filter_module *filter);
+	const struct NamedOption *_options, FILTERMODULE filter);
 
 /* img_deletefile
  *

@@ -243,17 +243,48 @@ int img_freespace(IMAGE *img, int *sz)
 	return 0;
 }
 
-int img_readfile(IMAGE *img, const char *fname, STREAM *destf, const struct filter_module *filter)
+static int process_filter(STREAM **mainstream, STREAM **newstream, const struct ImageModule *imgmod, FILTERMODULE filter, int purpose)
+{
+	FILTER *f;
+
+	if (filter) {
+		f = filter_init(filter, imgmod, purpose);
+		if (!f)
+			return IMGTOOLERR_OUTOFMEMORY;
+
+		*newstream = stream_open_filter(*mainstream, f);
+		if (!(*newstream))
+			return IMGTOOLERR_OUTOFMEMORY;
+
+		*mainstream = *newstream;
+	}
+	return 0;
+}
+
+int img_readfile(IMAGE *img, const char *fname, STREAM *destf, FILTERMODULE filter)
 {
 	int err;
+	STREAM *newstream = NULL;
 
-	if (!img->module->readfile)
-		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
+	if (!img->module->readfile) {
+		err = IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
+		goto done;
+	}
+
+	/* Custom filter? */
+	err = process_filter(&destf, &newstream, img->module, filter, PURPOSE_READ);
+	if (err)
+		goto done;
 
 	err = img->module->readfile(img, fname, destf);
-	if (err)
-		return markerrorsource(err);
+	if (err) {
+		err = markerrorsource(err);
+		goto done;
+	}
 
+done:
+	if (newstream)
+		stream_close(newstream);
 	return 0;
 }
 
@@ -332,13 +363,13 @@ static int resolve_options(const struct OptionTemplate *opttemplate, const struc
 	return 0;
 }
 
-int img_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const struct NamedOption *nopts, const struct filter_module *filter)
+int img_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const struct NamedOption *nopts, FILTERMODULE filter)
 {
 	int err;
 	ResolvedOption ropts[MAX_OPTIONS];
 	char *buf = NULL;
 	char *s;
-	FILTER *f;
+	STREAM *newstream = NULL;
 
 	if (!img->module->writefile) {
 		err = IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
@@ -363,6 +394,11 @@ int img_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const struct N
 		fname = buf;
 	}
 
+	/* Custom filter? */
+	err = process_filter(&sourcef, &newstream, img->module, filter, PURPOSE_WRITE);
+	if (err)
+		goto done;
+
 	err = img->module->writefile(img, fname, sourcef, ropts);
 	if (err) {
 		err = markerrorsource(err);
@@ -372,10 +408,12 @@ int img_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const struct N
 done:
 	if (buf)
 		free(buf);
+	if (newstream)
+		stream_close(newstream);
 	return err;
 }
 
-int img_getfile(IMAGE *img, const char *fname, const char *dest, const struct filter_module *filter)
+int img_getfile(IMAGE *img, const char *fname, const char *dest, FILTERMODULE filter)
 {
 	int err;
 	STREAM *f;
@@ -384,15 +422,22 @@ int img_getfile(IMAGE *img, const char *fname, const char *dest, const struct fi
 		dest = fname;
 
 	f = stream_open(dest, OSD_FOPEN_WRITE);
-	if (!f)
-		return IMGTOOLERR_FILENOTFOUND | IMGTOOLERR_SRC_NATIVEFILE;
+	if (!f) {
+		err = IMGTOOLERR_FILENOTFOUND | IMGTOOLERR_SRC_NATIVEFILE;
+		goto done;
+	}
 
 	err = img_readfile(img, fname, f, filter);
-	stream_close(f);
+	if (err)
+		goto done;
+
+done:
+	if (f)
+		stream_close(f);
 	return err;
 }
 
-int img_putfile(IMAGE *img, const char *newfname, const char *source, const struct NamedOption *nopts, const struct filter_module *filter)
+int img_putfile(IMAGE *img, const char *newfname, const char *source, const struct NamedOption *nopts, FILTERMODULE filter)
 {
 	int err;
 	STREAM *f;

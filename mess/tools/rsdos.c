@@ -398,7 +398,7 @@ static int rsdos_diskimage_writefile(IMAGE *img, const char *fname, STREAM *sour
 	unsigned char *gptr;
 
 	/* Can we write to this image? */
-	if (rsimg->f->write_protect)
+	if (stream_isreadonly(rsimg->f))
 		return IMGTOOLERR_READONLY;
 
 	/* Is there enough space? */
@@ -419,8 +419,6 @@ static int rsdos_diskimage_writefile(IMAGE *img, const char *fname, STREAM *sour
 
 	rsimg->granulemap_dirty = 1;
 	g = 0xff;
-
-	stream_seek(sourcef, 0, SEEK_SET);
 
 	do {
 		g = find_unused_granule(rsimg, g);

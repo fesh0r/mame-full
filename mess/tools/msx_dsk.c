@@ -73,7 +73,7 @@ IMAGEMODULE(
 static int msx_dsk_image_init(STREAM *f, IMAGE **outimg)
 	{
 	DSK_IMAGE *image;
-	int pos, len, name_len, format;
+	int pos, len, format /*,name_len */;
     UINT8 header[4], byt;
 	char *pbase, default_name[] = "msxdisk";
 
@@ -99,13 +99,13 @@ static int msx_dsk_image_init(STREAM *f, IMAGE **outimg)
 			len--;
 			break;
 		case 720*1024:
-			if (f->name)
+/*			if (f->name)
 				{
 				name_len = strlen (f->name);
 				if (name_len > 4 || !strcmpi (f->name + name_len - 4, ".msx") )
 					format = MSX_2DD;
 				}
-			break;
+*/			break;
 		case 720*1024+0x1800:
 			len -= 0x1800;
 			format = DDI_2DD;
@@ -126,8 +126,8 @@ static int msx_dsk_image_init(STREAM *f, IMAGE **outimg)
 
 	if (format != XSA_2DD)
 		{
-	    if (f->name) pbase = (char*)osd_basename (f->name);
-		else pbase = default_name;
+	    /*if (f->name) pbase = (char*)osd_basename (f->name);
+		else */pbase = default_name;
 
    		len = strlen (pbase);
 

@@ -1,8 +1,9 @@
 #include <assert.h>
+#include <string.h>
 #include "imgtool.h"
 
 struct filter_instance {
-	struct filter_module *module;
+	FILTERMODULE module;
 	void *filterparam;
 	void *bufferbase;
 	UINT8 *buffer;
@@ -12,7 +13,7 @@ struct filter_instance {
 
 /* ----------------------------------------------------------------------- */
 
-FILTER *filter_init(struct filter_module *filter, struct ImageModule *imgmod, int purpose)
+FILTER *filter_init(FILTERMODULE filter, const struct ImageModule *imgmod, int purpose)
 {
 	int instancesize;
 	void *param;
@@ -121,6 +122,7 @@ int filter_readfromstream(FILTER *f, STREAM *s, void *buf, int buflen)
 {
 	int sz;
 	int result = 0;
+	UINT8 *bbuf = (UINT8 *) buf;
 	struct filter_instance *instance = (struct filter_instance *) f;
 	struct filter_info fi;
 	struct filter_readfromstream_param param;
@@ -128,13 +130,15 @@ int filter_readfromstream(FILTER *f, STREAM *s, void *buf, int buflen)
 
 	sz = MIN(instance->buffersize, buflen);
 	if (sz) {
-		memcpy(buf, instance->buffer, sz);
+		memcpy(bbuf, instance->buffer, sz);
 		instance->buffersize -= sz;
 		if (instance->buffersize == 0) {
 			free(instance->bufferbase);
 			instance->bufferbase = NULL;
 			instance->buffer = NULL;
 		}
+		bbuf += sz;
+		buflen -= sz;
 		result += sz;
 	}
 
@@ -142,12 +146,14 @@ int filter_readfromstream(FILTER *f, STREAM *s, void *buf, int buflen)
 	fi.filterstate = (void *) &instance->statedata;
 	fi.filterparam = instance->filterparam;
 	fi.internalparam = (void *) &param;
-	param.buf = buf;
+	param.buf = bbuf;
 	param.buflen = buflen;
 	param.extrabuf = NULL;
 	param.extrabuflen = 0;
 
-	while (buflen > 0) {
+	sz = -1;
+
+	while (sz && (buflen > 0)) {
 		sz = stream_read(s, localbuffer, MIN(buflen, sizeof(localbuffer) / sizeof(localbuffer[0])));
 		instance->module->filterproc(&fi, localbuffer, sz);
 		buflen -= sz;
@@ -161,6 +167,48 @@ int filter_readfromstream(FILTER *f, STREAM *s, void *buf, int buflen)
 
 	return result;
 }
+
+/* This function processes all data, reads it into its buffer, and returns the size of the data */
+int filter_readintobuffer(FILTER *f, STREAM *s)
+{
+	int sz;
+	int result = 0;
+	struct filter_instance *instance = (struct filter_instance *) f;
+	struct filter_info fi;
+	struct filter_readfromstream_param param;
+	char localbuffer[1024];
+
+	/* Need to normalize buffer */
+	if (instance->bufferbase != instance->buffer) {
+		memmove(instance->bufferbase, instance->buffer, instance->buffersize);
+		instance->buffer = instance->bufferbase;
+	}
+
+	fi.sendproc = filter_readfromstream_sendproc;
+	fi.filterstate = (void *) &instance->statedata;
+	fi.filterparam = instance->filterparam;
+	fi.internalparam = (void *) &param;
+	param.buf = NULL;
+	param.buflen = 0;
+	param.extrabuf = instance->buffer;
+	param.extrabuflen = instance->buffersize;
+
+	result = -param.extrabuflen;
+
+	do {
+		sz = stream_read(s, localbuffer, sizeof(localbuffer) / sizeof(localbuffer[0]));
+		instance->module->filterproc(&fi, localbuffer, sz);
+	}
+	while(sz > 0);
+
+	result += param.extrabuflen;
+	instance->buffer = param.extrabuf;
+	instance->bufferbase = param.extrabuf;
+	instance->buffersize = param.extrabuflen;
+
+	return result;
+}
+
 
 /* ----------------------------------------------------------------------- */
 
