@@ -1,4 +1,3 @@
-#include <math.h>
 #include <stdlib.h>
 #include "timer.h"
 #include "machine/counter.h"
@@ -53,7 +52,7 @@ unsigned long counter_get_value(void *which)
 	counter_t *counter;
 
 	counter = (counter_t *) which;
-	return (unsigned long) ceil(timer_timeleft(counter->timer) / counter->period);
+	return (unsigned long) (timer_timeleft(counter->timer) / counter->period + 0.5);
 }
 
 void counter_set_value(void *which, unsigned long value)
