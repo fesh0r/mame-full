@@ -1263,7 +1263,7 @@ static int do_status(int unit)
 	/* detect if disk is in the drive */
 	if (detect_disk_in_drive(unit))
 	{
-		status |= FLOPPY_DRIVE_DISK_PRESENT;
+		status |= FLOPPY_DRIVE_DISK_INSERTED;
 	}
 
 	if (out_nec(0x04))					/* sense drive status */
