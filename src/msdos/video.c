@@ -275,8 +275,8 @@ static void (*updaters16_palettized[MAX_X_MULTIPLY16][MAX_Y_MULTIPLY16][2][2])(s
 static int video_depth,video_fps,video_attributes,video_orientation;
 static int modifiable_palette;
 static int screen_colors;
-static unsigned char *current_palette;
-static const unsigned char *dbg_palette;
+static UINT8 *current_palette;
+static const UINT8 *dbg_palette;
 static unsigned int *dirtycolor;
 static int dirtypalette;
 static int dirty_bright;
@@ -1655,43 +1655,33 @@ void osd_close_display(void)
 
 void osd_debugger_focus(int debugger_has_focus)
 {
-	static UINT8 saved_palette[16*3];
-
     if (show_debugger != debugger_has_focus)
 	{
 		int i;
 		show_debugger = debugger_has_focus;
 		debugger_focus_changed = 1;
-
-		for (i = 0; i < 16; i++)
-		{
-			if (show_debugger)
-			{
-				saved_palette[i*3+0] = current_palette[i*3+0];
-				saved_palette[i*3+1] = current_palette[i*3+1];
-				saved_palette[i*3+2] = current_palette[i*3+2];
-#ifdef MAME_DEBUG
-				current_palette[i*3+0] = dbg_palette[i*3+0];
-				current_palette[i*3+1] = dbg_palette[i*3+1];
-				current_palette[i*3+2] = dbg_palette[i*3+2];
-#endif
-            }
-			else
-			{
-				current_palette[i*3+0] = saved_palette[i*3+0];
-				current_palette[i*3+1] = saved_palette[i*3+1];
-				current_palette[i*3+2] = saved_palette[i*3+2];
-			}
+		for (i = 0;i < screen_colors;i++)
 			dirtycolor[i] = 1;
-		}
 		dirtypalette = 1;
+
+		if (!show_debugger)
+		{
+			/* silly way to clear the screen */
+			struct osd_bitmap *clrbitmap;
+			clrbitmap = osd_alloc_bitmap(gfx_display_columns,gfx_display_lines,video_depth);
+			if (clrbitmap)
+			{
+				update_screen(clrbitmap);
+				osd_free_bitmap(clrbitmap);
+			}
+		}
 	}
 }
 
 
 int osd_allocate_colors(unsigned int totalcolors,
-		const unsigned char *palette,unsigned short *pens,int modifiable,
-		const unsigned char *debug_palette,unsigned short *debug_pens)
+		const UINT8 *palette,UINT16 *pens,int modifiable,
+		const UINT8 *debug_palette,UINT16 *debug_pens)
 {
 	int i;
 
@@ -2212,30 +2202,46 @@ void osd_update_video_and_audio(struct osd_bitmap *game_bitmap,struct osd_bitmap
 			if (dirtypalette)
 			{
 				dirtypalette = 0;
-				for (i = 0;i < screen_colors;i++)
+
+				if (show_debugger)
 				{
-					if (dirtycolor[i])
+					for (i = 0;i < DEBUGGER_TOTAL_COLORS;i++)
 					{
 						RGB adjusted_palette;
 
-						dirtycolor[i] = 0;
-
-						adjusted_palette.r = current_palette[3*i+0];
-						adjusted_palette.g = current_palette[3*i+1];
-						adjusted_palette.b = current_palette[3*i+2];
-						if (i != Machine->uifont->colortable[1])	/* don't adjust the user interface text */
-						{
-							adjusted_palette.r = bright_lookup[adjusted_palette.r];
-							adjusted_palette.g = bright_lookup[adjusted_palette.g];
-							adjusted_palette.b = bright_lookup[adjusted_palette.b];
-						}
-						else
-						{
-							adjusted_palette.r >>= 2;
-							adjusted_palette.g >>= 2;
-							adjusted_palette.b >>= 2;
-						}
+						adjusted_palette.r = dbg_palette[3*i+0] >> 2;
+						adjusted_palette.g = dbg_palette[3*i+1] >> 2;
+						adjusted_palette.b = dbg_palette[3*i+2] >> 2;
 						set_color(i,&adjusted_palette);
+					}
+				}
+				else
+				{
+					for (i = 0;i < screen_colors;i++)
+					{
+						if (dirtycolor[i])
+						{
+							RGB adjusted_palette;
+
+							dirtycolor[i] = 0;
+
+							adjusted_palette.r = current_palette[3*i+0];
+							adjusted_palette.g = current_palette[3*i+1];
+							adjusted_palette.b = current_palette[3*i+2];
+							if (i != Machine->uifont->colortable[1])	/* don't adjust the user interface text */
+							{
+								adjusted_palette.r = bright_lookup[adjusted_palette.r];
+								adjusted_palette.g = bright_lookup[adjusted_palette.g];
+								adjusted_palette.b = bright_lookup[adjusted_palette.b];
+							}
+							else
+							{
+								adjusted_palette.r >>= 2;
+								adjusted_palette.g >>= 2;
+								adjusted_palette.b >>= 2;
+							}
+							set_color(i,&adjusted_palette);
+						}
 					}
 				}
 			}
@@ -2256,24 +2262,40 @@ void osd_update_video_and_audio(struct osd_bitmap *game_bitmap,struct osd_bitmap
 				if (use_dirty) init_dirty(1);	/* have to redraw the whole screen */
 
 				dirtypalette = 0;
-				for (i = 0;i < screen_colors;i++)
+
+				if (show_debugger)
 				{
-					if (dirtycolor[i])
+					for (i = 0;i < DEBUGGER_TOTAL_COLORS;i++)
 					{
 						int r,g,b;
 
-						dirtycolor[i] = 0;
-
-						r = current_palette[3*i+0];
-						g = current_palette[3*i+1];
-						b = current_palette[3*i+2];
-						if (i != Machine->uifont->colortable[1])	/* don't adjust the user interface text */
-						{
-							r = bright_lookup[r];
-							g = bright_lookup[g];
-							b = bright_lookup[b];
-						}
+						r = dbg_palette[3*i+0];
+						g = dbg_palette[3*i+1];
+						b = dbg_palette[3*i+2];
 						palette_16bit_lookup[i] = makecol(r,g,b) * 0x10001;
+					}
+				}
+				else
+				{
+					for (i = 0;i < screen_colors;i++)
+					{
+						if (dirtycolor[i])
+						{
+							int r,g,b;
+
+							dirtycolor[i] = 0;
+
+							r = current_palette[3*i+0];
+							g = current_palette[3*i+1];
+							b = current_palette[3*i+2];
+							if (i != Machine->uifont->colortable[1])	/* don't adjust the user interface text */
+							{
+								r = bright_lookup[r];
+								g = bright_lookup[g];
+								b = bright_lookup[b];
+							}
+							palette_16bit_lookup[i] = makecol(r,g,b) * 0x10001;
+						}
 					}
 				}
 			}
