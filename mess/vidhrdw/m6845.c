@@ -277,32 +277,50 @@ void check_display_enabled(void)
 /* calculate the number of cycles to the next vsync */
 int     crtc6845_cycles_to_vsync(void)
 {
+        int rows;
         int cycles_to_vsync;
 
         if (Character_Row_Counter<R7_vertical_sync_position)
         {
                 /* not yet reached the vertical sync position */
-                int rows;
 
                 rows = R7_vertical_sync_position - Character_Row_Counter;
-
-                cycles_to_vsync = rows * R9_scan_lines_per_character;
 
         }
         else
         {
                 /* passed vertical sync position */
-
-                int rows;
-
+        
                 /* rows to end of frame */
                 rows = (R4_vertical_total - Character_Row_Counter);
                 /* plus the number of rows to the vertical sync position */
                 rows += R7_vertical_sync_position;
-
-                cycles_to_vsync = rows * R9_scan_lines_per_character;
-
         }
+
+        cycles_to_vsync = 0;
+        if (Scan_Line_Counter!=0)
+        {
+           int scan_lines;
+
+           rows--;
+
+           scan_lines = R9_scan_lines_per_character - Scan_Line_Counter;
+
+           if (Horizontal_Counter!=0)
+           {
+                scan_lines--;
+
+                /* add time remaining on this line */
+                cycles_to_vsync+=R0_horizontal_total - Horizontal_Counter;
+           }
+
+           /* add time for complete scan line */
+           cycles_to_vsync+=(R0_horizontal_total + 1)*scan_lines;
+        }
+
+        /* add on time for complete rows */
+        cycles_to_vsync = rows*(R9_scan_lines_per_character+1)*(R0_horizontal_total+1);
+       
 
         return cycles_to_vsync;
 
@@ -311,7 +329,7 @@ int     crtc6845_cycles_to_vsync(void)
 /* calculate the number of CRTC cycles for VSYNC */
 int     crtc6845_length_of_vsync_in_cycles(void)
 {
-        return R0_horizontal_total*vertical_sync_width;
+        return (R0_horizontal_total+1)*vertical_sync_width;
 }
 
 
@@ -350,8 +368,13 @@ void crtc6845_clock(void)
 				Vertical_Display_Enabled=True;
 				check_display_enabled();
 
+                                /* KT - As it stands it emulates the UM6845R well */
 				Memory_Address=(Memory_Address_of_this_Character_Row=screen_start_address);
-			}
+                                /* HD6845S/MC6845 */
+                                Memory_Address_of_next_Character_Row = Memory_Address;
+
+
+                        }
 			/* Check for end of All Vertical Character rows */
 			if (Character_Row_Counter>=R4_vertical_total)
 			{
@@ -429,14 +452,17 @@ void crtc6845_clock(void)
                 }
         }
 
-	/* Check for end of Horizontal Sync Pulse */
-        if (Horizontal_Sync_Width_Counter>=horizontal_sync_width)
-	{
-		Horizontal_Sync_Width_Counter=0;
-		HSYNC=False;
-		if (crct6845_calls.out_HS_func) (crct6845_calls.out_HS_func)(0,HSYNC); /* call HS update */
-	}
-
+        if (HSYNC)
+        {
+                /* Check for end of Horizontal Sync Pulse */
+                if (Horizontal_Sync_Width_Counter>=horizontal_sync_width)
+                {
+               
+                        Horizontal_Sync_Width_Counter=0;
+                        HSYNC=False;
+                        if (crct6845_calls.out_HS_func) (crct6845_calls.out_HS_func)(0,HSYNC); /* call HS update */
+                }
+        }
 	if (crct6845_calls.out_MA_func) (crct6845_calls.out_MA_func)(0,Memory_Address);	/* call MA update */
 
 
