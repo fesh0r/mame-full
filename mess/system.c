@@ -648,11 +648,11 @@ TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS		  */
 	/* system 80 trs80 compatible */
 
 	/* VIDEO TECHNOLOGY */
-//	DRIVER( laser110 )	/* 1983 Laser 110								  */
-//	DRIVER( laser200 )	/* 1983 Laser 200								  */
-//	DRIVER( laser210 )	/* 1983 Laser 210 (indentical to Laser 200 ?)	  */
-//	DRIVER( laser310 )	/* 1983 Laser 310 (210 with diff. keyboard and RAM) */
-//	DRIVER( vz200 ) 	/* 1983 Dick Smith Electronics / Sanyo VZ200	  */
+	DRIVER( laser110 )	/* 1983 Laser 110								  */
+	DRIVER( laser200 )	/* 1983 Laser 200								  */
+	DRIVER( laser210 )	/* 1983 Laser 210 (indentical to Laser 200 ?)	  */
+	DRIVER( laser310 )	/* 1983 Laser 310 (210 with diff. keyboard and RAM) */
+	DRIVER( vz200 ) 	/* 1983 Dick Smith Electronics / Sanyo VZ200	  */
 //	DRIVER( vz300 ) 	/* 1983 Dick Smith Electronics / Sanyo VZ300	  */
 //	DRIVER( fellow )	/* 1983 Salora Fellow (Finland) 				  */
 //	DRIVER( tx8000 )	/* 1983 Texet TX-8000 (U.K.)					  */

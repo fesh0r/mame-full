@@ -8,10 +8,10 @@ extern int vtech1_frame_time;
 extern int vtech1_latch;
 
 extern void init_vtech1(void);
-extern void laser110_init_machine(void);
-extern void laser210_init_machine(void);
-extern void laser310_init_machine(void);
-extern void vtech1_shutdown_machine(void);
+extern MACHINE_INIT( laser110 );
+extern MACHINE_INIT( laser210 );
+extern MACHINE_INIT( laser310 );
+extern MACHINE_STOP( vtech1 );
 
 extern int vtech1_cassette_init(int id);
 extern void vtech1_cassette_exit(int id);
@@ -29,21 +29,12 @@ extern READ_HANDLER ( vtech1_joystick_r );
 extern READ_HANDLER ( vtech1_keyboard_r );
 extern WRITE_HANDLER ( vtech1_latch_w );
 
-extern int vtech1_interrupt(void);
+extern void vtech1_interrupt(void);
+
 #ifdef OLD_VIDEO
 /* from vidhrdw/vtech1.c */
-extern int  vtech1_vh_start(void);
-extern void vtech1_vh_stop(void);
-extern void vtech1_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+extern VIDEO_UPDATE( vtech1 );
 #else
-extern int  vtech1_vh_start(void);
-
+extern VIDEO_START( vtech1 );
 #endif
 
-#ifdef RUNTIME_LOADER
-# ifdef __cplusplus
-	extern "C" void vtech1_runtime_loader_init(void);
-# else
-	extern void vtech1_runtime_loader_init(void);
-# endif
-#endif

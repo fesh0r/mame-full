@@ -30,6 +30,7 @@
 #include "vidhrdw/generic.h"
 #include "vidhrdw/m6847.h"
 #include "includes/vtech1.h"
+#include "cpu/z80/z80.h"
 
 int vtech1_latch = -1;
 
@@ -88,7 +89,7 @@ static void common_init_machine(void)
     }
 }
 
-void laser110_init_machine(void)
+MACHINE_INIT( laser110 )
 {
     if( readinputport(0) & 0x80 )
     {
@@ -103,7 +104,7 @@ void laser110_init_machine(void)
 	common_init_machine();
 }
 
-void laser210_init_machine(void)
+MACHINE_INIT( laser210 )
 {
     if( readinputport(0) & 0x80 )
     {
@@ -118,7 +119,7 @@ void laser210_init_machine(void)
 	common_init_machine();
 }
 
-void laser310_init_machine(void)
+MACHINE_INIT( laser310 )
 {
     if( readinputport(0) & 0x80 )
     {
@@ -133,7 +134,7 @@ void laser310_init_machine(void)
 	common_init_machine();
 }
 
-void vtech1_shutdown_machine(void)
+MACHINE_STOP( vtech1 )
 {
 	int i;
 	for( i = 0; i < 2; i++ )
@@ -771,9 +772,9 @@ WRITE_HANDLER( vtech1_latch_w )
     vtech1_latch = data;
 }
 
-int vtech1_interrupt(void)
+void vtech1_interrupt(void)
 {
 	if( vtech1_snapshot_size > 0 )
 		vtech1_snapshot_copy();
-	return interrupt();
+	cpu_set_irq_line(0, 0, PULSE_LINE);
 }

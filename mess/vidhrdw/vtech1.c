@@ -34,9 +34,10 @@
 char vtech1_frame_message[64+1];
 int vtech1_frame_time = 0;
 
-void vtech1_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( vtech1 )
 {
     int offs;
+	int full_refresh = 1;
 
 	if( vtech1_frame_time > 0 )
     {
@@ -127,7 +128,7 @@ static void vtech1_charproc(UINT8 c)
 	m6847_intext_w(0,	0);
 }
 
-int vtech1_vh_start(void)
+VIDEO_START( vtech1 )
 {
 	struct m6847_init_params p;
 

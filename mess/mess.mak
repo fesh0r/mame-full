@@ -148,6 +148,8 @@ DRVLIBS = \
 	$(OBJ)/atari.a    \
 	$(OBJ)/advision.a \
 	$(OBJ)/mbee.a	  \
+	$(OBJ)/vtech.a	  \
+#	$(OBJ)/jupiter.a  \
 #	$(OBJ)/arcadia.a  \
 #	$(OBJ)/coleco.a   \
 #	$(OBJ)/bally.a	  \
@@ -160,8 +162,6 @@ DRVLIBS = \
 #	$(OBJ)/p2000.a	  \
 #	$(OBJ)/ep128.a	  \
 #	$(OBJ)/tangerin.a \
-#	$(OBJ)/vtech.a	  \
-#	$(OBJ)/jupiter.a  \
 #	$(OBJ)/nascom1.a  \
 #	$(OBJ)/samcoupe.a \
 #	$(OBJ)/aquarius.a \
@@ -525,9 +525,9 @@ $(OBJ)/vtech.a :   \
 	  $(OBJ)/mess/vidhrdw/vtech1.o	 \
 	  $(OBJ)/mess/machine/vtech1.o	 \
 	  $(OBJ)/mess/systems/vtech1.o	 \
-	  $(OBJ)/mess/vidhrdw/vtech2.o	 \
-	  $(OBJ)/mess/machine/vtech2.o	 \
-	  $(OBJ)/mess/systems/vtech2.o
+#	  $(OBJ)/mess/vidhrdw/vtech2.o	 \
+#	  $(OBJ)/mess/machine/vtech2.o	 \
+#	  $(OBJ)/mess/systems/vtech2.o
 
 $(OBJ)/jupiter.a : \
 	  $(OBJ)/mess/vidhrdw/jupiter.o  \
