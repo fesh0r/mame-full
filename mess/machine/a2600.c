@@ -1,15 +1,19 @@
-/* The book of Revelations according to LollypopMan */
-/*                      aka                         */
-/*         Machine functions for the a2600          */
-/*      The Blaggers Guide to Emu Programming       */
-/*                                                  */
-/*  Thanks to Cowering for the research efforts ;)  */
+/***************************************************************************
 
-/* TODO: Better Comments ;) */
+	          The book of Revelations according to LollypopMan
+
+                                  aka
+                      Machine functions for the a2600
+                  The Blaggers Guide to Emu Programming
+
+              Thanks to Cowering for the research efforts ;)
+
+                         TODO: Better Comments ;)
+
+***************************************************************************/
 
 
 #include "driver.h"
-//#include "includes/riot6532.h"
 #include "sound/tiaintf.h"
 #include "sound/tiasound.h"
 #include "cpuintrf.h"
@@ -79,7 +83,7 @@ UINT8 bit_flip_table[] = {
 		0x1f,0x9f,0x5f,0xdf,0x3f,0xbf,0x7f,0xff
 };
 
-
+/* Back buffer */
 struct rectangle stella_size = {0, 227, 0, 281};
 
 /* for detailed logging */
@@ -98,7 +102,6 @@ UINT8 TIA_player_1_tick = 8;
 
 UINT8 PF_Data[160];
 
-
 TIA tia;
 
 UINT8 TMR_Intim = 0;
@@ -109,13 +112,11 @@ UINT8 PF1_Rendered = 0;
 UINT8 PF2_Rendered = 0;
 UINT8 TIA_hmp0 = 0;
 UINT8 TIA_hmp1 = 0;
-static char TIA_movement_table[] =
-{0, 1, 2, 3, 4, 5, 6, 7, -8, -7, -6, -5, -4, -3, -2, -1};
+static char TIA_movement_table[] = {0, 1, 2, 3, 4, 5, 6, 7, -8, -7, -6, -5, -4, -3, -2, -1};
 static char TIA_motion_player_0 = 0;
 static char TIA_motion_player_1 = 0;
 UINT32 a2600_Cycle_Count = 0;
 UINT8 TIA_vblank;
-UINT8 halted = 0;
 UINT32 global_tia_cycle = 0;
 UINT32 previous_tia_cycle = 0;
 
@@ -152,50 +153,20 @@ UINT8 TIA_player_pattern_1_tmp = 0;
 UINT8 TIA_player_delay_1 = 0;
 
 UINT8 HSYNC_colour_clock = 3;
-int flashycolour = 0;
-
-UINT8 RIOT_passedzero = 0;
 
 static void a2600_main_cb(int param);
 
 static void a2600_scanline_cb(void);
 static void a2600_Cycle_cb(int param);
 
-/*static int cpu_current_state;*/
-
 static void *HSYNC_timer;
-
-#ifdef USE_RIOT
-static int a2600_riot_a_r(int chip);
-static int a2600_riot_b_r(int chip);
-static void a2600_riot_a_w(int chip, int offset, int data);
-static void a2600_riot_b_w(int chip, int offset, int data);
-
-
-
-static struct RIOTinterface a2600_riot =
-{
-	1,									/* number of chips */
-	{1190000},							/* baseclock of chip */
-	{a2600_riot_a_r},					/* port a input */
-	{a2600_riot_b_r},					/* port b input */
-	{a2600_riot_a_w},					/* port a output */
-	{a2600_riot_b_w},					/* port b output */
-	{NULL}								/* interrupt callback */
-};
-
-#endif
-
 
 static int msize0 = 0;
 static int msize1 = 0;
 
-static int cpu_current_state = 1;		/*running */
-
 /* bitmap */
 static struct osd_bitmap *stella_bitmap = NULL;
 static struct osd_bitmap *stella_backbuffer = NULL;
-
 
 /* local */
 static unsigned char *a2600_cartridge_rom;
@@ -203,35 +174,12 @@ static unsigned char *a2600_cartridge_rom;
 /* scanline */
 static int currentline = 0;
 
-#ifdef USE_RIOT
-static int a2600_riot_a_r(int chip)
-{
-	/* joystick !? */
-	return readinputport(0);
-}
 
-static int a2600_riot_b_r(int chip)
-{
-	/* console switches !? */
-	return readinputport(1);
-}
+/***************************************************************************
 
-static void a2600_riot_a_w(int chip, int offset, int data)
-{
-	UINT8 *ROM = memory_region(REGION_CPU1);
+  Bankswitching stuff
 
-	ROM[offset] = data;
-}
-
-static void a2600_riot_b_w(int chip, int offset, int data)
-{
-	UINT8 *ROM = memory_region(REGION_CPU1);
-
-	ROM[offset] = data;
-}
-#endif
-
-/* Bankswitching stuff */
+***************************************************************************/
 READ_HANDLER  ( a2600_bs_r )
 {
 	UINT8 value;
@@ -387,20 +335,14 @@ READ_HANDLER( a2600_riot_r )
 	case 0x00:
 		return readinputport(0);
 
-
 	case 0x01:
 		return readinputport(1);
-
 
 	case 0x02:
 		return readinputport(2);
 
-
 	case 0x04:							/*TIMER READ */
-
-		{
-			return TMR_Intim;
-		}
+		return TMR_Intim;
 
 	}
 
@@ -412,12 +354,10 @@ READ_HANDLER( a2600_riot_r )
   RIOT Writes.
 
 ***************************************************************************/
-
 WRITE_HANDLER( a2600_riot_w )
 {
 
 	UINT8 *ROM = memory_region(REGION_CPU1);
-
 	{
 		INT32 riotdiff = (global_tia_cycle + TIME_TO_CYCLES(0, timer_timeelapsed(HSYNC_timer))) - previous_tia_cycle;
 
@@ -438,7 +378,6 @@ WRITE_HANDLER( a2600_riot_w )
 		TMR_tmp = 1;
 		ROM[0x284] = (int) data;
 		previous_tia_cycle = global_tia_cycle + TIME_TO_CYCLES(0, timer_timeelapsed(HSYNC_timer));
-
 		break;
 
 
@@ -456,7 +395,6 @@ WRITE_HANDLER( a2600_riot_w )
 		TMR_tmp = 64;
 		ROM[0x284] = (int) data;
 		previous_tia_cycle = global_tia_cycle + TIME_TO_CYCLES(0, timer_timeelapsed(HSYNC_timer));
-
 		break;
 
 	case 0x17:							/* Timer 1024 Start */
@@ -465,22 +403,11 @@ WRITE_HANDLER( a2600_riot_w )
 		TMR_tmp = 1024;
 		ROM[0x284] = (int) data;
 		previous_tia_cycle = global_tia_cycle + TIME_TO_CYCLES(0, timer_timeelapsed(HSYNC_timer));
-
 		break;
-
-
-
-
-
 	}
+
 	ROM[offset] = data;
-
 }
-
-
-
-
-
 
 
 /***************************************************************************
@@ -488,7 +415,6 @@ WRITE_HANDLER( a2600_riot_w )
   TIA Reads.
 
 ***************************************************************************/
-
 READ_HANDLER( a2600_TIA_r )
 {
 	UINT8 *ROM = memory_region(REGION_CPU1);
@@ -570,7 +496,6 @@ READ_HANDLER( a2600_TIA_r )
   TIA Writes.
 
 ***************************************************************************/
-
 WRITE_HANDLER( a2600_TIA_w )
 {
 	UINT8 *ROM = memory_region(REGION_CPU1);
@@ -596,15 +521,12 @@ WRITE_HANDLER( a2600_TIA_w )
 	case VSYNC:
 		if (!(data & 0x02))
 		{
-			/* plot_pixel(stella_backbuffer, 69, currentline + Machine->visible_area.min_y, Machine->pens[flashycolour]); */
-
 			logerror("TIA_w - VSYNC Stop\n");
 
 		}
 		else if (data & 0x02)
 		{
 			logerror("TIA_w - VSYNC Start\n");
-			/* plot_pixel(stella_backbuffer, 69, currentline + Machine->visible_area.min_y, Machine->pens[flashycolour]); */
 		}
 		break;
 
@@ -614,9 +536,6 @@ WRITE_HANDLER( a2600_TIA_w )
 		{
 
 			TIA_vblank = 0;
-			/* plot_pixel(stella_backbuffer, 69, currentline + Machine->visible_area.min_y, Machine->pens[flashycolour]); */
-			flashycolour++;
-			flashycolour = flashycolour & 0x0f;
 
 			currentline = 0;
 			copybitmap(stella_bitmap, stella_backbuffer, 0, 0, 0, 0, &stella_size, TRANSPARENCY_NONE, 0);
@@ -628,7 +547,6 @@ WRITE_HANDLER( a2600_TIA_w )
 		else if (data & 0x02)
 		{
 			TIA_vblank = 1;
-			/* plot_pixel(stella_backbuffer, 69, currentline + Machine->visible_area.min_y, Machine->pens[flashycolour]); */
 			logerror("TIA_w - VBLANK Start\n");
 
 		}
@@ -640,8 +558,6 @@ WRITE_HANDLER( a2600_TIA_w )
 		{
 			logerror("TIA_w - WSYNC \n");
 			timer_reset(HSYNC_timer, TIME_IN_CYCLES(76, 0));
-			halted = 1;
-
 			a2600_main_cb(0);
 
 		}
@@ -832,11 +748,6 @@ WRITE_HANDLER( a2600_TIA_w )
 		break;
 
 
-
-
-
-
-
 	case AUDC0:						/* audio control */
 	case AUDC1:						/* audio control */
 	case AUDF0:						/* audio frequency */
@@ -856,7 +767,6 @@ WRITE_HANDLER( a2600_TIA_w )
 	case GRP1:							/* 0x1C Graphics Register Player 0 */
 		TIA_player_pattern_1 = data;
 		TIA_player_pattern_1_tmp = data;
-
 		break;
 
 	case ENAM0:						/* 0x1D Graphics Enable Missle 0 */
@@ -930,10 +840,15 @@ WRITE_HANDLER( a2600_TIA_w )
 	}
 }
 
+
+/***************************************************************************
+
+  Stop MAchine
+
+***************************************************************************/
 void a2600_stop_machine(void)
 {
-	/* Make sane the hardware ;) */
-
+	/* Make sane the hardware */
 	timer_reset(HSYNC_timer, TIME_IN_CYCLES(76, 0));
 	TIA_pixel_clock = 0;
 	TIA_player_0_finished = 0;
@@ -959,7 +874,6 @@ void a2600_stop_machine(void)
 	TIA_motion_player_1 = 0;
 	a2600_Cycle_Count = 0;
 
-	halted = 0;
 	global_tia_cycle = 0;
 	previous_tia_cycle = 0;
 	TIA_player_0_mask_bit = 10;
@@ -991,180 +905,14 @@ void a2600_stop_machine(void)
 	TIA_player_delay_1 = 0;
 
 	HSYNC_colour_clock = 3;
-	flashycolour = 0;
 
-	RIOT_passedzero = 0;
 	currentline = 0;
 	msize0 = 0;
 	msize1 = 0;
 }
 
-int a2600_load_rom(int id)
-{
-	FILE *cartfile;
-	UINT8 *ROM = memory_region(REGION_CPU1);
 
-	if (device_filename(IO_CARTSLOT, id) == NULL)
-	{
-		printf("a2600 Requires Cartridge!\n");
-		return INIT_FAIL;
-	}
 
-	/* A cartridge isn't strictly mandatory, but it's recommended */
-	cartfile = NULL;
-	if (!(cartfile = (FILE*)image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, 0)))
-	{
-		return 1;
-	}
-
-	a2600_cartridge_rom = &(ROM[0x10000]);	/* Load the cart outside the cpuspace for b/s purposes */
-
-	if (cartfile != NULL)
-	{
-		UINT32 crc;
-		int cart_size;
-
-		cart_size = osd_fsize(cartfile);
-		osd_fread(cartfile, a2600_cartridge_rom, cart_size);		/* testing everything now :) */
-		osd_fclose(cartfile);
-		/* copy to mirrorred memory regions */
-		crc = (UINT32) crc32(0L,&ROM[0x10000], cart_size);
-		Bankswitch_Method = 0;
-
-		switch(cart_size)
-		{
-			case 0x10000:
-						break;
-			case 0x08000:
-						break;
-			case 0x04000:
-						break;
-			case 0x03000:
-						break;
-			case 0x02000:
-						switch(crc)
-						{
-
-							case 0x91b8f1b2:
-										Bankswitch_Method = 0xFE;
-										logerror("Decathlon detected and loaded\n");
-										break;
-							case 0xfd8c81e5:
-										Bankswitch_Method = 0xE0;
-										logerror("Tooth Protectors detected and loaded\n");
-										break;
-							case 0x0886a55d:
-										Bankswitch_Method = 0xE0;
-										logerror("SW: Death Star Battle detected and loaded\n");
-										break;
-							case 0x0d78e8a9:
-										Bankswitch_Method = 0xE0;
-										logerror("Gyruss detected and loaded\n");
-										break;
-							case 0x34d3ffc8:
-										Bankswitch_Method = 0xE0;
-										logerror("James Bond 007 detected and loaded\n");
-										break;
-							case 0xde97103d:
-										Bankswitch_Method = 0xE0;
-										logerror("Super Cobra detected and loaded\n");
-										break;
-							case 0xec959bf2:
-										Bankswitch_Method = 0xE0;
-										logerror("Tutankham detected and loaded\n");
-										break;
-							case 0x7d287f20:
-										Bankswitch_Method = 0xE0;
-										logerror("Popeye detected and loaded\n");
-										break;
-							case 0x65c31ca4:
-										Bankswitch_Method = 0xE0;
-										logerror("SW: Arcade Game detected and loaded\n");
-										break;
-							case 0xa87be8fd:
-										Bankswitch_Method = 0xE0;
-										logerror("Q*Bert's Qubes detected and loaded\n");
-										break;
-							case 0x3ba0d9bf:
-										Bankswitch_Method = 0xE0;
-										logerror("Frogger ][: Threeedeep detected and loaded\n");
-										break;
-							case 0xe680a1c9:
-										Bankswitch_Method = 0xE0;
-										logerror("Montezuma's Revenge detected and loaded\n");
-										break;
-							case 0x044735b9:
-										Bankswitch_Method = 0xE0;
-										logerror("Mr. Do's Castle detected and loaded\n");
-										break;
-							case 0xc820bd75:
-										Bankswitch_Method = 0x3F;
-										logerror("River Patrol detected and loaded\n");
-										break;
-							case 0xdd183a4f:
-										Bankswitch_Method = 0x3F;
-										logerror("Springer detected and loaded\n");
-										break;
-							case 0xdb376663:
-										Bankswitch_Method = 0x3F;
-										logerror("Polaris detected and loaded\n");
-										break;
-							case 0xbd08d915:
-										Bankswitch_Method = 0x3F;
-										logerror("Miner 2049'er detected and loaded\n");
-										break;
-							case 0xbfa477cd:
-										Bankswitch_Method = 0x3F;
-										logerror("Miner 2049'er Volume ][ detected and loaded\n");
-										break;
-							case 0x34b80a97:
-										Bankswitch_Method = 0x3F;
-										logerror("Espial detected and loaded\n");
-										break;
-							default:
-										Bankswitch_Method = 0xf8;
-										break;
-						}
-
-						switch(Bankswitch_Method)
-						{
-							case 0xf8:
-										memcpy(&ROM[0x1000], &ROM[0x11000], 0x1000);
-										memcpy(&ROM[0xf000], &ROM[0x11000], 0x1000);
-										break;
-							case 0xe0:
-										memcpy(&ROM[0x1000], &ROM[0x10000], 0x1000);
-										memcpy(&ROM[0x1400], &ROM[0x10400], 0x1000);
-										memcpy(&ROM[0x1800], &ROM[0x10800], 0x1000);
-										memcpy(&ROM[0x1c00], &ROM[0x11c00], 0x1000);
-
-										memcpy(&ROM[0xf000], &ROM[0x10000], 0x1000);
-										memcpy(&ROM[0xf400], &ROM[0x10400], 0x1000);
-										memcpy(&ROM[0xf800], &ROM[0x10800], 0x1000);
-										memcpy(&ROM[0xfc00], &ROM[0x11c00], 0x1000);
-										break;
-						}
-						break;
-			case 0x01000:
-						memcpy(&ROM[0x1000], &ROM[0x10000], 0x1000);
-						memcpy(&ROM[0xf000], &ROM[0x10000], 0x1000);
-						break;
-			case 0x00800:
-						memcpy(&ROM[0x1000], &ROM[0x10000], 0x0800);
-						memcpy(&ROM[0x1800], &ROM[0x10000], 0x0800);
-						memcpy(&ROM[0xf000], &ROM[0x10000], 0x0800);
-						memcpy(&ROM[0xf800], &ROM[0x10000], 0x0800);
-						break;
-		}
-		logerror("cartridge crc = %08x\n", crc);
-	}
-	else
-	{
-		return 1;
-	}
-
-	return 0;
-}
 
 /* Video functions for the a2600         */
 /* Since all software drivern, have here */
@@ -1175,7 +923,6 @@ int a2600_load_rom(int id)
   Start the video hardware emulation.
 
 ***************************************************************************/
-
 int a2600_vh_start(void)
 {
 	if ((stella_bitmap = bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0)
@@ -1196,7 +943,11 @@ void a2600_vh_stop(void)
 }
 
 
-/* when called, update the bitmap. */
+/***************************************************************************
+
+  Update Bitmap When called
+
+***************************************************************************/
 static void a2600_scanline_cb(void)
 {
 	int regpos;
@@ -1247,6 +998,12 @@ static void a2600_scanline_cb(void)
 	profiler_mark(PROFILER_END);
 }
 
+
+/***************************************************************************
+
+  Main callback - 76 Cycle Timer callback!
+
+***************************************************************************/
 static void a2600_main_cb(int param)
 {
 	INT32 riotdiff = (global_tia_cycle + 76) - previous_tia_cycle;
@@ -1277,6 +1034,12 @@ static void a2600_main_cb(int param)
 
 }
 
+
+/***************************************************************************
+
+  Cycle Callback to Provide accurate timing
+
+***************************************************************************/
 static void a2600_Cycle_cb(int param)
 {
 	int forecolour;
@@ -1608,12 +1371,16 @@ static void a2600_Cycle_cb(int param)
 }
 
 
+/***************************************************************************
+
+  Machine Initialisation
+
+***************************************************************************/
 void a2600_init_machine(void)
 {
 
 	/* start RIOT interface */
 
-	cpu_current_state = 1;
 	currentline = 0;
 	HSYNC_timer = timer_pulse(TIME_IN_CYCLES(76, 0), 0, a2600_main_cb);
 	TIA_pf_mask.shiftreg = 0x080000;
@@ -1624,10 +1391,183 @@ void a2600_init_machine(void)
 /***************************************************************************
 
   Refresh the video screen
+	This routine is called at the start of vblank to refresh the screen
 
 ***************************************************************************/
-/* This routine is called at the start of vblank to refresh the screen */
 void a2600_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	copybitmap(bitmap, stella_bitmap, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_NONE, 0);
+}
+
+
+/***************************************************************************
+
+  Cartridge Loading
+
+***************************************************************************/
+int a2600_load_rom(int id)
+{
+	FILE *cartfile;
+	UINT8 *ROM = memory_region(REGION_CPU1);
+
+	if (device_filename(IO_CARTSLOT, id) == NULL)
+	{
+		printf("a2600 Requires Cartridge!\n");
+		return INIT_FAIL;
+	}
+
+	/* A cartridge isn't strictly mandatory, but it's recommended */
+	cartfile = NULL;
+	if (!(cartfile = (FILE*)image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, 0)))
+	{
+		return 1;
+	}
+
+	a2600_cartridge_rom = &(ROM[0x10000]);	/* Load the cart outside the cpuspace for b/s purposes */
+
+	if (cartfile != NULL)
+	{
+		UINT32 crc;
+		int cart_size;
+
+		cart_size = osd_fsize(cartfile);
+		osd_fread(cartfile, a2600_cartridge_rom, cart_size);		/* testing everything now :) */
+		osd_fclose(cartfile);
+		/* copy to mirrorred memory regions */
+		crc = (UINT32) crc32(0L,&ROM[0x10000], cart_size);
+		Bankswitch_Method = 0;
+
+		switch(cart_size)
+		{
+			case 0x10000:
+						break;
+			case 0x08000:
+						break;
+			case 0x04000:
+						break;
+			case 0x03000:
+						break;
+			case 0x02000:
+						switch(crc)
+						{
+
+							case 0x91b8f1b2:
+										Bankswitch_Method = 0xFE;
+										logerror("Decathlon detected and loaded\n");
+										break;
+							case 0xfd8c81e5:
+										Bankswitch_Method = 0xE0;
+										logerror("Tooth Protectors detected and loaded\n");
+										break;
+							case 0x0886a55d:
+										Bankswitch_Method = 0xE0;
+										logerror("SW: Death Star Battle detected and loaded\n");
+										break;
+							case 0x0d78e8a9:
+										Bankswitch_Method = 0xE0;
+										logerror("Gyruss detected and loaded\n");
+										break;
+							case 0x34d3ffc8:
+										Bankswitch_Method = 0xE0;
+										logerror("James Bond 007 detected and loaded\n");
+										break;
+							case 0xde97103d:
+										Bankswitch_Method = 0xE0;
+										logerror("Super Cobra detected and loaded\n");
+										break;
+							case 0xec959bf2:
+										Bankswitch_Method = 0xE0;
+										logerror("Tutankham detected and loaded\n");
+										break;
+							case 0x7d287f20:
+										Bankswitch_Method = 0xE0;
+										logerror("Popeye detected and loaded\n");
+										break;
+							case 0x65c31ca4:
+										Bankswitch_Method = 0xE0;
+										logerror("SW: Arcade Game detected and loaded\n");
+										break;
+							case 0xa87be8fd:
+										Bankswitch_Method = 0xE0;
+										logerror("Q*Bert's Qubes detected and loaded\n");
+										break;
+							case 0x3ba0d9bf:
+										Bankswitch_Method = 0xE0;
+										logerror("Frogger ][: Threeedeep detected and loaded\n");
+										break;
+							case 0xe680a1c9:
+										Bankswitch_Method = 0xE0;
+										logerror("Montezuma's Revenge detected and loaded\n");
+										break;
+							case 0x044735b9:
+										Bankswitch_Method = 0xE0;
+										logerror("Mr. Do's Castle detected and loaded\n");
+										break;
+							case 0xc820bd75:
+										Bankswitch_Method = 0x3F;
+										logerror("River Patrol detected and loaded\n");
+										break;
+							case 0xdd183a4f:
+										Bankswitch_Method = 0x3F;
+										logerror("Springer detected and loaded\n");
+										break;
+							case 0xdb376663:
+										Bankswitch_Method = 0x3F;
+										logerror("Polaris detected and loaded\n");
+										break;
+							case 0xbd08d915:
+										Bankswitch_Method = 0x3F;
+										logerror("Miner 2049'er detected and loaded\n");
+										break;
+							case 0xbfa477cd:
+										Bankswitch_Method = 0x3F;
+										logerror("Miner 2049'er Volume ][ detected and loaded\n");
+										break;
+							case 0x34b80a97:
+										Bankswitch_Method = 0x3F;
+										logerror("Espial detected and loaded\n");
+										break;
+							default:
+										Bankswitch_Method = 0xf8;
+										break;
+						}
+
+						switch(Bankswitch_Method)
+						{
+							case 0xf8:
+										memcpy(&ROM[0x1000], &ROM[0x11000], 0x1000);
+										memcpy(&ROM[0xf000], &ROM[0x11000], 0x1000);
+										break;
+							case 0xe0:
+										memcpy(&ROM[0x1000], &ROM[0x10000], 0x1000);
+										memcpy(&ROM[0x1400], &ROM[0x10400], 0x1000);
+										memcpy(&ROM[0x1800], &ROM[0x10800], 0x1000);
+										memcpy(&ROM[0x1c00], &ROM[0x11c00], 0x1000);
+
+										memcpy(&ROM[0xf000], &ROM[0x10000], 0x1000);
+										memcpy(&ROM[0xf400], &ROM[0x10400], 0x1000);
+										memcpy(&ROM[0xf800], &ROM[0x10800], 0x1000);
+										memcpy(&ROM[0xfc00], &ROM[0x11c00], 0x1000);
+										break;
+						}
+						break;
+			case 0x01000:
+						memcpy(&ROM[0x1000], &ROM[0x10000], 0x1000);
+						memcpy(&ROM[0xf000], &ROM[0x10000], 0x1000);
+						break;
+			case 0x00800:
+						memcpy(&ROM[0x1000], &ROM[0x10000], 0x0800);
+						memcpy(&ROM[0x1800], &ROM[0x10000], 0x0800);
+						memcpy(&ROM[0xf000], &ROM[0x10000], 0x0800);
+						memcpy(&ROM[0xf800], &ROM[0x10000], 0x0800);
+						break;
+		}
+		logerror("cartridge crc = %08x\n", crc);
+	}
+	else
+	{
+		return 1;
+	}
+
+	return 0;
 }
