@@ -1,3 +1,52 @@
+0.37b7 
+
+Note: .inp record/playback does still not work currently.
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+- Amstrad NC200 (preliminary) [Kev Thacker]
+
+
+System Driver Changes:
+----------------------
+
+- [SAM COUPE] Updated Sam Coupe to use WD179x code (same as WD1772). However, this
+may not work because the implementation of how this works in the Sam Coupe
+hardware is not complete yet [Kev Thacker]
+
+Other Changes:
+--------------
+- The core is based on MAME 0.37b7. This incorporates all 
+  features of the update to this core.  [MAME team] 
+
+
+- Fixed write protect reporting in WD179x [Kev Thacker]
+
+- Added "Disk Control" menu to the user interface. With this you can
+enable/disable a drive (e.g. this is comparable to connecting a disconnecting
+a drive to the real machine), set write enable/write protect of the disc,
+and selecting between disc image and real drive access. Real drive access
+is currently limited to the drivers which use the WD179x, NEC765 and Intel
+8271 floppy disc controllers. [Kev Thacker]
+
+- Removed hard-coded disk image format in the WD179x code. This floppy
+disc controller emulation uses the same disk image access as the NEC765 and
+Intel 8271. It can now support different disk image formats, and as before
+real discs in a real drive [Kev Thacker]
+
+- NEC765 and Intel 8271 can now use real disc access in DOS version
+of MESS. Run under pure DOS, or in a Windows 95
+DOS box mode for this to work correct. [Kev Thacker]
+
+- CRC and sysinfo updates will now be appearing at the official MESS homepage:
+  http://mess.emuverse.com
+  Please send all CRC/sysinfo file contributions to Chris Henry. 
+  (battlepriest@hotmail.com).
+
+
+
+------------------------
+
 0.37b6 
 
 Note: DELETE mess.cfg!
