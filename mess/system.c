@@ -527,9 +527,9 @@ TESTDRIVER( einstei2 )
 
 	/* VEB MIKROELEKTRONIK */
 	/* KC compact is partial CPC compatible */
-//	DRIVER( kc85_4 )	/* VEB KC 85/4										*/
-//	DRIVER( kc85_3 )    /* VEB KC 85/3										*/
-//TESTDRIVER( kc85_4d )   /* VEB KC 85/4 with disk interface					*/
+	DRIVER( kc85_4 )	/* VEB KC 85/4										*/
+	DRIVER( kc85_3 )    /* VEB KC 85/3										*/
+TESTDRIVER( kc85_4d )   /* VEB KC 85/4 with disk interface					*/
 
 	/* MICROBEE SYSTEMS */
 	DRIVER( mbee )		/* Microbee 32 IC									*/

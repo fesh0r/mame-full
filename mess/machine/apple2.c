@@ -137,10 +137,10 @@ struct apple2_bankmap_entry
 	{ start, end, 0, bank, 0, start, 0, auxsw_base_mask, auxsw_off_mask, auxsw_on_mask, ausw_off_handler, auxsw_on_handler }
 
 #define BANK_RSPEC(start, end, rom_mask, bank, bankswitch_mask, auxswitch_mask, baseswitch_off_offset, baseswitch_on_offset) \
-	{ start, end, rom_mask, bank, bankswitch_mask, baseswitch_off_offset, baseswitch_on_offset, 0, auxswitch_mask, 0, NULL, NULL }
+	{ start, end, rom_mask, +bank, bankswitch_mask, baseswitch_off_offset, baseswitch_on_offset, 0, auxswitch_mask, auxswitch_mask, NULL, NULL }
 
 #define BANK_WSPEC(start, end, rom_mask, bank, bankswitch_mask, auxswitch_mask, baseswitch_off_offset, baseswitch_on_offset) \
-	{ start, end, rom_mask, bank, bankswitch_mask, baseswitch_off_offset, baseswitch_on_offset, 0, auxswitch_mask, auxswitch_mask, NULL, NULL }
+	{ start, end, rom_mask, -bank, bankswitch_mask, baseswitch_off_offset, baseswitch_on_offset, 0, auxswitch_mask, auxswitch_mask, NULL, NULL }
 
 static const struct apple2_bankmap_entry apple2_bankmap[] =
 {
@@ -199,7 +199,7 @@ static void apple2_setvar(UINT32 val, UINT32 mask)
 		write8_handler handler;
 
 		entry = &apple2_bankmap[i];
-		if (mask & (entry->rom_mask | entry->baseswitch_mask | entry->auxswitch_base_mask | entry->auxswitch_off_mask | entry->auxswitch_on_mask))
+		if (mask & (VAR_ROMSWITCH | entry->rom_mask | entry->baseswitch_mask | entry->auxswitch_base_mask | entry->auxswitch_off_mask | entry->auxswitch_on_mask))
 		{
 			if ((a2 & entry->rom_mask) || (entry->rom_mask == 0))
 			{

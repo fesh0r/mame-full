@@ -325,20 +325,20 @@ $(OBJ)/amiga.a: \
 	$(OBJ)/mess/systems/amiga.o
 
 $(OBJ)/cbmshare.a: \
-	$(OBJ)/mess/machine/tpi6525.o  \
-	$(OBJ)/mess/machine/cia6526.o  \
-	$(OBJ)/mess/machine/cbm.o	     \
-	$(OBJ)/mess/sndhrdw/sid.o      \
-	$(OBJ)/mess/sndhrdw/sidenvel.o \
-	$(OBJ)/mess/sndhrdw/sidvoice.o \
-	$(OBJ)/mess/sndhrdw/sid6581.o  \
-	$(OBJ)/mess/machine/cbmdrive.o \
-	$(OBJ)/mess/machine/cbmieeeb.o \
-	$(OBJ)/mess/machine/cbmserb.o  \
-	$(OBJ)/mess/vidhrdw/vic6567.o	 \
+	$(OBJ)/mess/machine/tpi6525.o	\
+	$(OBJ)/mess/machine/cia6526.o	\
+	$(OBJ)/mess/machine/cbm.o		\
+	$(OBJ)/mess/sndhrdw/sid.o		\
+	$(OBJ)/mess/sndhrdw/sidenvel.o	\
+	$(OBJ)/mess/sndhrdw/sidvoice.o	\
+	$(OBJ)/mess/sndhrdw/sid6581.o	\
+	$(OBJ)/mess/machine/cbmdrive.o	\
+	$(OBJ)/mess/machine/cbmieeeb.o	\
+	$(OBJ)/mess/machine/cbmserb.o	\
+	$(OBJ)/mess/vidhrdw/vic6567.o	\
 	$(OBJ)/mess/machine/vc20tape.o	\
-	$(OBJ)/mess/machine/vc1541.o	 \
-#	$(OBJ)/mess/machine/c64.o      \
+	$(OBJ)/mess/machine/vc1541.o	\
+#	$(OBJ)/mess/machine/c64.o		\
 
 $(OBJ)/cbm.a: \
 	$(OBJ)/mess/vidhrdw/pet.o	     \
@@ -548,7 +548,7 @@ $(OBJ)/amstrad.a:  \
 $(OBJ)/veb.a:      \
 	$(OBJ)/mess/vidhrdw/kc.o	\
 	$(OBJ)/mess/systems/kc.o	\
-#	$(OBJ)/mess/machine/kc.o	\
+	$(OBJ)/mess/machine/kc.o	\
 
 $(OBJ)/nec.a:	   \
 	$(OBJ)/mess/vidhrdw/vdc.o	 \
