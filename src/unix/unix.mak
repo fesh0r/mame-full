@@ -214,7 +214,8 @@ endif
 # CONFIG are the cflags used to build the unix tree, this is where most defines
 # go
 CONFIG = $(MY_CFLAGS) $(CFLAGS.$(DISPLAY_METHOD)) -DNAME='\"x$(TARGET)\"' \
-	-DDISPLAY_METHOD='\"$(DISPLAY_METHOD)\"' -DXMAMEROOT='\"$(XMAMEROOT)\"'
+	-DDISPLAY_METHOD='\"$(DISPLAY_METHOD)\"' \
+	-DXMAMEROOT='\"$(XMAMEROOT)\"' -DSYSCONFDIR='\"$(SYSCONFDIR)\"'
 
 ifdef HAVE_GETTIMEOFDAY
 CONFIG += -DHAVE_GETTIMEOFDAY
