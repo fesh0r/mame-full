@@ -45,15 +45,15 @@ struct rc_option x11_input_opts[] = {
  */
 void sysdep_update_keyboard (void)
 {
-  XEvent 		E;
-  KeySym 		keysym;
-  char			keyname[16+1];
-  int			mask;
-  struct keyboard_event event;
-  static int		old_grab_mouse = FALSE;
+  XEvent			E;
+  KeySym			keysym;
+  char				keyname[16+1];
+  int				mask;
+  struct xmame_keyboard_event	event;
+  static int			old_grab_mouse = FALSE;
   /* grrr some windowmanagers send multiple focus events, this is used to
      filter them. */
-  static int            focus = FALSE;
+  static int			focus = FALSE;
   
   /* handle winkey mappings */
   if (x11_use_winkeys)
@@ -139,7 +139,7 @@ void sysdep_update_keyboard (void)
         focus = TRUE;
 	/* to avoid some meta-keys to get locked when wm iconify xmame, we must
 	perform a key reset whenever we retrieve keyboard focus */
-	keyboard_clear();
+	xmame_keyboard_clear();
 	if (old_grab_mouse)
 	{
             if (!XGrabPointer(display, window, True, 0, GrabModeAsync,
@@ -209,13 +209,18 @@ void sysdep_update_keyboard (void)
 	
 	event.unicode = keyname[0];
 
-	keyboard_register_event(&event);
+	xmame_keyboard_register_event(&event);
 	break;
+#if defined USE_XINPUT_DEVICES || defined X11_JOYSTICK
+      default:
+#endif
+#ifdef USE_XINPUT_DEVICES
+	if (XInputProcessEvent(&E)) break;
+#endif
 #ifdef X11_JOYSTICK
       /* grrr we can't use case here since the event types for XInput devices
          aren't hardcoded, since we should have caught anything else above,
          just asume it's an XInput event */
-      default:
 	  process_x11_joy_event(&E);
 	  break;
 #endif
