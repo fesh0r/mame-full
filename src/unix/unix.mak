@@ -132,10 +132,17 @@ VPATH=src $(wildcard src/cpu/*)
 IMGTOOL_OBJS = $(OBJ)/unix.$(DISPLAY_METHOD)/dirio.o
 
 include src/core.mak
-include src/$(TARGET).mak
+
+ifeq ($(TARGET), mess)
+include mess/mess.mak
+else
+include src/mame.mak
+endif
+
 include src/rules.mak
-ifdef MESS
-include src/rules_ms.mak
+
+ifeq ($(TARGET), mess)
+include mess/rules_ms.mak
 endif
 
 # Perhaps one day original mame/mess sources will use POSIX strcasecmp and
