@@ -3,8 +3,13 @@
 #include "includes/europc.h"
 #include "includes/pc.h"
 #include "includes/pit8253.h"
+#include "includes/pc_aga.h"
 #include "bcd.h"
 #include "julian.h"
+
+/*
+
+ */
 
 /*
   europc
@@ -21,7 +26,9 @@
     fdb3e 0x8..0xc
 	fd7f8
      fdb5f
-  fe172 fecc5 // 801a video setup error
+  fe172 
+   fecc5 // 801a video setup error
+    fd6c9
    copyright output
   fe1b7
   fe1be di bits set mean output text!!!,
@@ -68,6 +75,8 @@
 
 static struct {
 	UINT8 data[16];
+	UINT8 state;
+	AGA_MODE mode;
 } europc_jim= { { 0 } } ;
 
 /*
@@ -84,10 +93,35 @@ static struct {
   250 bit 0: mouse on
 	  bit 1: joystick on
   254..257 r/w memory ? JIM asic? ram behaviour
+
 */
 extern WRITE_HANDLER ( europc_jim_w )
 {
 	switch (offset) {
+	case 2:
+		if (!(data&0x80)) {
+			switch (data) {
+			case 0x1f:
+			case 0x0b: europc_jim.mode=AGA_MONO; break;
+			case 0xe: //80 columns?
+			case 0xd: //40 columns?
+			case 0x18:
+			case 0x1a: europc_jim.mode=AGA_COLOR; break;
+			default: europc_jim.mode=AGA_OFF; break;
+			}
+		}
+//		mode= data&0x10?AGA_COLOR:AGA_MONO;
+//		mode= data&0x10?AGA_COLOR:AGA_OFF;
+		pc_aga_set_mode(europc_jim.mode);
+		if (data&0x80) europc_jim.state=0;
+		break;
+	case 4:
+		switch(data&0xc0) {
+		case 0x00: timer_set_overclock(0, 1.0/2);break;
+		case 0x40: timer_set_overclock(0, 3.0/4);break;
+		default: timer_set_overclock(0, 1);break;
+		}
+		break;
 	case 0xa:
 		europc_rtc_w(0, data);
 		return;
@@ -105,6 +139,23 @@ extern READ_HANDLER ( europc_jim_r )
 	case 0xa: return europc_rtc_r(0);
 	}
 	return data;
+}
+
+extern READ_HANDLER ( europc_jim2_r )
+{
+	switch (europc_jim.state) {
+	case 0: europc_jim.state++; return 0;
+	case 1: europc_jim.state++; return 0x80;
+	case 2: 
+		europc_jim.state=0;
+		switch (europc_jim.mode) {
+		case AGA_COLOR: return 0x87; // for color;
+		case AGA_MONO: return 0x90; //for mono
+		case AGA_OFF: return 0x80; // for vram
+//		return 0x97; //for error
+		}
+	}
+	return 0;
 }
 
 /* port 2e0 polling!? at fd6e1 */
