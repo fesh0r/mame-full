@@ -27,6 +27,10 @@
 #include "includes/centroni.h"
 #include "printer.h"
 
+#include "formats/orictap.h"
+#include "formats/orictap.c"
+
+
 /* timer used to refresh via cb input, which will trigger ints on pulses
 from tape */
 static void *oric_tape_timer = NULL;
@@ -1152,7 +1156,7 @@ READ_HANDLER ( oric_IO_r )
 		break;
 	}
 
-	logerror("via 0 r: %04x\n",offset);
+	//logerror("via 0 r: %04x\n",offset);
 
 	/* it is repeated */
 	return via_0_r(offset & 0x0f);
@@ -1188,11 +1192,61 @@ WRITE_HANDLER ( oric_IO_w )
 		break;
 	}
 
-	logerror("via 0 w: %04x %02x\n",offset,data);
+	//logerror("via 0 w: %04x %02x\n",offset,data);
 
 	via_0_w(offset & 0x0f,data);
 }
 
+
+int oric_cassette_init(int id)
+{
+	void *file;
+	struct wave_args wa;
+
+	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+	if( file )
+	{
+		oric_wave_size = osd_fsize(file);
+
+		logerror("oric wave size: %04x\n",oric_wave_size);
+
+		memset(&wa, 0, sizeof(&wa));
+		wa.file = file;
+		/* note the length of the data is automatically adjusted for UINT16 size */
+		/* the length of the data is automatically adjusted for file size */
+		wa.chunk_size = 30000; /* each chunk is 1 byte */
+		wa.chunk_samples = 14 * 4; /* each byte takes 14 bits, with max 4 samples per bit */
+		wa.smpfreq = ORIC_WAV_FREQUENCY; 
+		wa.fill_wave = oric_cassette_fill_wave;
+		wa.header_samples = 0;
+		wa.trailer_samples = 0;
+		wa.display = 1;
+		if( device_open(IO_CASSETTE,id,0,&wa) )
+			return INIT_FAILED;
+
+		/* immediately inhibit/mute/play the output */
+     //   device_status(IO_CASSETTE,id, WAVE_STATUS_MOTOR_ENABLE|WAVE_STATUS_MUTED|WAVE_STATUS_MOTOR_INHIBIT);
+		return INIT_OK;
+	}
+
+	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW_CREATE);
+	if( file )
+    {
+		memset(&wa, 0, sizeof(&wa));
+		wa.file = file;
+		wa.display = 1;
+		wa.smpfreq = 19200;
+		if( device_open(IO_CASSETTE,id,1,&wa) )
+            return INIT_FAILED;
+
+		/* immediately inhibit/mute/play the output */
+     //   device_status(IO_CASSETTE,id, WAVE_STATUS_MOTOR_ENABLE|WAVE_STATUS_MUTED|WAVE_STATUS_MOTOR_INHIBIT);
+		return INIT_OK;
+    }
+
+	return INIT_FAILED;
+}
+#if 0
 
 int oric_cassette_init(int id)
 {
@@ -1227,6 +1281,7 @@ int oric_cassette_init(int id)
 
 	return INIT_FAILED;
 }
+#endif
 
 void oric_cassette_exit(int id)
 {
