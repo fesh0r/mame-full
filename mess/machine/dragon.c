@@ -1417,6 +1417,7 @@ void coco_cassette_exit(int id)
 static int haltenable;
 static int dskreg;
 static void coco_fdc_callback(int event);
+static int ff4b_count;
 
 enum {
 	HW_COCO,
@@ -1427,6 +1428,7 @@ static void coco_fdc_init(void)
 {
     wd179x_init(coco_fdc_callback);
 	dskreg = -1;
+	ff4b_count = 0x100;
 }
 
 static void raise_nmi(int dummy)
@@ -1447,7 +1449,7 @@ static void coco_fdc_callback(int event)
 		cpu_set_nmi_line(0, CLEAR_LINE);
 		break;
 	case WD179X_IRQ_SET:
-		timer_set(COCO_CPU_SPEED * 11 / timer_get_overclock(0), 0, raise_nmi);
+		/* timer_set(COCO_CPU_SPEED * 11 / timer_get_overclock(0), 0, raise_nmi); */
 		break;
 	case WD179X_DRQ_CLR:
 		cpu_set_halt_line(0, CLEAR_LINE);
@@ -1559,6 +1561,8 @@ static int dc_floppy_r(int offset)
 		result = wd179x_sector_r(0);
 		break;
 	case 11:
+		if (ff4b_count-- == 0)
+			raise_nmi(0);
 		result = wd179x_data_r(0);
 		break;
 	}
@@ -1580,6 +1584,7 @@ static void dc_floppy_w(int offset, int data, int hardware)
 		break;
 	case 8:
 		wd179x_command_w(0, data);
+		ff4b_count = 0x100;
 		break;
 	case 9:
 		wd179x_track_w(0, data);
@@ -1588,7 +1593,10 @@ static void dc_floppy_w(int offset, int data, int hardware)
 		wd179x_sector_w(0, data);
 		break;
 	case 11:
-		wd179x_data_w(0, data);
+		if (ff4b_count-- == 0)
+			raise_nmi(0);
+		else
+			wd179x_data_w(0, data);
 		break;
 	};
 }
