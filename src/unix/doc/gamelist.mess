@@ -1,0 +1,227 @@
+This is the complete list of games supported by xmess 0.37 BETA 6 (Aug 25 2000)
+
+The list is generated automatically and is not 100% accurate, particularly in
+the "Screen Flip" column. Please let us know of any errors you find so we can
+correct them.
+
+The meanings of the columns are as follows:
+Working - "No" means that the emulation has shortcomings that cause the game
+  not to work correctly. This can be anywhere from just showing a black screen
+  to being playable with major problems.
+Correct Colors - "Yes" means that colors should be identical to the original,
+  "Close" that they are very similar but wrong in places, "No" that they are
+  completely wrong. In some cases, we were not able to find the color PROMs of
+  the game. Those PROMs will be reported as "NO GOOD DUMP KNOWN" on startup,
+  and the game will have wrong colors. The game is still reported as "Yes" in
+  this column, because the code to handle the color PROMs is in the driver and
+  if you provide them colors will be correct.
+Sound - "Partial" means that sound support is either incomplete or not entirely
+  accurate. Note that, due to analog circuitry which is difficult to emulate,
+  sound may be significantly different from the real board. A common case is
+  the presence of low pass filters that make the real board sound less harsh
+  than the emulation.
+Screen Flip - A large number of games have a dip switch setting for "Cocktail"
+  cabinet, meaning that the players sit in front of each other, and the screen
+  is flipped when player 2 is playing. Some games also have a "Flip Screen" dip
+  switch. Those need special support in the driver, which is missing in many
+  cases.
+Internal Name - This is the unique name that should be specified on the command
+  line to run the game. ROMs must be placed in the ROM path, either in a .zip
+  file or in a subdirectory of the same name. The former is suggested, because
+  the files will be identified by their CRC instead of requiring specific
+  names.
+
++----------------------------------+-------+-------+-------+-------+----------+
+|                                  |       |Correct|       |Screen | Internal |
+| Game Name                        |Working|Colors | Sound | Flip  |   Name   |
++----------------------------------+-------+-------+-------+-------+----------+
+| Atari 2600                       |   No  |   No  |   No  |  Yes  | a2600    |
+| Atari 5200                       |  Yes  |  Yes  |  Yes  |  Yes  | a5200    |
+| Atari 7800                       |  Yes  |  Yes  |  Yes  |  Yes  | a7800    |
+| Bally Pro Arcade/Astrocade       |  Yes  |  Yes  |  Yes  |  Yes  | astrocde |
+| Channel F                        |  Yes  |  Yes  |   No  |  Yes  | channelf |
+| Colecovision                     |  Yes  |  Yes  |  Yes  |  Yes  | coleco   |
+| Nintendo Entertainment System (NT|  Yes  |  Yes  |  Yes  |  Yes  | nes      |
+| Nintendo Entertainment System (PA|  Yes  |  Yes  |  Yes  |  Yes  | nespal   |
+| Famicom                          |  Yes  |  Yes  |  Yes  |  Yes  | famicom  |
+| GameBoy                          |   No  |  Yes  |   No  |  Yes  | gameboy  |
+| Super Nintendo Entertainment Syst|   No  |  Yes  |   No  |  Yes  | snes     |
+| PC Engine/TurboGrafx 16          |   No  |  Yes  |   No  |  Yes  | pce      |
+| Game Gear                        |  Yes  |  Yes  |  Yes  |  Yes  | gamegear |
+| Master System                    |  Yes  |  Yes  |  Yes  |  Yes  | sms      |
+| Megadrive / Genesis              |  Yes  |  Yes  |  Yes  |  Yes  | genesis  |
+| Vectrex                          |  Yes  |  Yes  |  Yes  |  Yes  | vectrex  |
+| Spectrum I+                      |  Yes  |  Yes  |  Yes  |  Yes  | raaspec  |
+| Adventurevision                  |  Yes  |  Yes  |   No  |  Yes  | advision |
+| CPS Changer (Street Fighter ZERO)|  Yes  |  Yes  |  Yes  |  Yes  | sfzch    |
+| Apple I                          |  Yes  |  Yes  |  Yes  |  Yes  | apple1   |
+| Apple //c                        |  Yes  |  Yes  |  Yes  |  Yes  | apple2c  |
+| Apple //c (3.5 ROM)              |  Yes  |  Yes  |  Yes  |  Yes  | apple2c0 |
+| Apple //c Plus                   |  Yes  |  Yes  |  Yes  |  Yes  | apple2cp |
+| Apple //e                        |  Yes  |  Yes  |  Yes  |  Yes  | apple2e  |
+| Apple //e (enhanced)             |  Yes  |  Yes  |  Yes  |  Yes  | apple2ee |
+| Apple //e (Platinum)             |  Yes  |  Yes  |  Yes  |  Yes  | apple2ep |
+| Macintosh 512ke                  |  Yes  |  Yes  |  Yes  |  Yes  | mac512ke |
+| Macintosh Plus                   |  Yes  |  Yes  |  Yes  |  Yes  | macplus  |
+| Lisa2                            |   No  |  Yes  |  Yes  |  Yes  | lisa2    |
+| Atari 400 (NTSC)                 |  Yes  |  Yes  |  Yes  |  Yes  | a400     |
+| Atari 400 (PAL)                  |  Yes  |  Yes  |  Yes  |  Yes  | a400pal  |
+| Atari 800 (NTSC)                 |  Yes  |  Yes  |  Yes  |  Yes  | a800     |
+| Atari 800 (PAL)                  |  Yes  |  Yes  |  Yes  |  Yes  | a800pal  |
+| Atari 800XL                      | No(1) |  Yes  |  Yes  |  Yes  | a800xl   |
+| KIM-1                            |  Yes  |  Yes  |  Yes  |  Yes  | kim1     |
+| PET2001/CBM20xx Series (Basic 1) |  Yes  |  Yes  |   No  |  Yes  | pet      |
+| Commodore 30xx (Basic 2)         |  Yes  |  Yes  |   No  |  Yes  | cbm30    |
+| Commodore 30xx (Basic 2) (busines|  Yes  |  Yes  |   No  |  Yes  | cbm30b   |
+| Commodore 40xx FAT (CRTC) 60Hz   |  Yes  |  Yes  |   No  |  Yes  | cbm40    |
+| Commodore 40xx FAT (CRTC) 50Hz   |  Yes  |  Yes  |   No  |  Yes  | cbm40pal |
+| Commodore 40xx THIN (business key|  Yes  |  Yes  |   No  |  Yes  | cbm40b   |
+| Commodore 80xx 60Hz              |  Yes  |  Yes  |   No  |  Yes  | cbm80    |
+| Commodore 80xx 50Hz              |  Yes  |  Yes  |   No  |  Yes  | cbm80pal |
+| Commodore 80xx German (50Hz)     |  Yes  |  Yes  |   No  |  Yes  | cbm80ger |
+| Commodore 80xx Swedish (50Hz)    |  Yes  |  Yes  |   No  |  Yes  | cbm80swe |
+| Commodore SP9000/MMF9000 (50Hz)  | No(1) |  Yes  |   No  |  Yes  | superpet |
+| VIC20 (NTSC)                     |  Yes  |  Yes  |Partial|  Yes  | vic20    |
+| VC20 (PAL)                       |  Yes  |  Yes  |Partial|  Yes  | vc20     |
+| VIC20 PAL, Swedish Expansion Kit |  Yes  |  Yes  |Partial|  Yes  | vic20swe |
+| VIC20 (NTSC), IEEE488 Interface (|  Yes  |  Yes  |Partial|  Yes  | vic20i   |
+| Commodore Max (Ultimax/VC10)     |  Yes  |  Yes  |Partial|  Yes  | max      |
+| Commodore 64 (NTSC)              |  Yes  |  Yes  |Partial|  Yes  | c64      |
+| Commodore 64/VC64/VIC64 (PAL)    |  Yes  |  Yes  |Partial|  Yes  | c64pal   |
+| Commodore 64 Swedish (PAL)       |  Yes  |  Yes  |Partial|  Yes  | vic64s   |
+| CBM4064/PET64/Educator64 (NTSC)  |  Yes  |  Yes  |Partial|  Yes  | cbm4064  |
+| C64GS (PAL)                      |  Yes  |  Yes  |Partial|  Yes  | c64gs    |
+| Commodore B128-40/Pet-II/P500 60H|   No  |  Yes  |Partial|  Yes  | cbm500   |
+| Commodore B128-80LP/610 60Hz     |   No  |  Yes  |Partial|  Yes  | cbm610   |
+| Commodore B256-80LP/620 Hungarian|   No  |  Yes  |Partial|  Yes  | cbm620   |
+| Commodore B128-80HP/710          |   No  |  Yes  |Partial|  Yes  | cbm710   |
+| Commodore B256-80HP/720          |   No  |  Yes  |Partial|  Yes  | cbm720   |
+| Commodore 16/116/232/264 (PAL)   |  Yes  | Close |Partial|  Yes  | c16      |
+| Commodore 16 (PAL), Hungarian Cha|  Yes  | Close |Partial|  Yes  | c16hun   |
+| Commodore 16/116/232/264 (PAL), 1| No(1) | Close |Partial|  Yes  | c16c     |
+| Commodore +4 (NTSC)              |  Yes  | Close |Partial|  Yes  | plus4    |
+| Commodore +4 (NTSC), 1551        | No(1) | Close |Partial|  Yes  | plus4c   |
+| Commodore 364 (Prototype)        |  Yes  | Close |Partial|  Yes  | c364     |
+| Commodore 128 NTSC               |  Yes  |  Yes  |Partial|  Yes  | c128     |
+| Commodore 128 German (PAL)       |  Yes  |  Yes  |Partial|  Yes  | c128ger  |
+| Commodore 128 French (PAL)       |  Yes  |  Yes  |Partial|  Yes  | c128fra  |
+| Commodore 128 Italian (PAL)      |  Yes  |  Yes  |Partial|  Yes  | c128ita  |
+| Amiga 500 (NTSC)                 |   No  |  Yes  |  Yes  |  Yes  | amiga    |
+| C65 / C64DX (Prototype, NTSC, 911|   No  |  Yes  |Partial|  Yes  | c65      |
+| C65 / C64DX (Prototype, NTSC, 910|   No  |  Yes  |Partial|  Yes  | c65e     |
+| C65 / C64DX (Prototype, NTSC, 910|   No  |  Yes  |Partial|  Yes  | c65d     |
+| C65 / C64DX (Prototype, NTSC, 910|   No  |  Yes  |Partial|  Yes  | c65c     |
+| C65 / C64DX (Prototype, German PA|   No  |  Yes  |Partial|  Yes  | c65ger   |
+| C65 / C64DX (Prototype, NTSC, 910|   No  |  Yes  |Partial|  Yes  | c65a     |
+| Amstrad/Schneider CPC464         |  Yes  |  Yes  |  Yes  |  Yes  | cpc464   |
+| Amstrad/Schneider CPC664         |  Yes  |  Yes  |  Yes  |  Yes  | cpc664   |
+| Amstrad/Schneider CPC6128        |  Yes  |  Yes  |  Yes  |  Yes  | cpc6128  |
+| PCW8256                          |  Yes  |  Yes  |  Yes  |  Yes  | pcw8256  |
+| PCW8512                          |  Yes  |  Yes  |  Yes  |  Yes  | pcw8512  |
+| PCW9256                          |  Yes  |  Yes  |  Yes  |  Yes  | pcw9256  |
+| PCW9512 (+)                      |  Yes  |  Yes  |  Yes  |  Yes  | pcw9512  |
+| PCW10                            |  Yes  |  Yes  |  Yes  |  Yes  | pcw10    |
+| PCW16                            |  Yes  |  Yes  |  Yes  |  Yes  | pcw16    |
+| NC100                            |  Yes  |  Yes  |  Yes  |  Yes  | nc100    |
+| KC Compact                       |  Yes  |  Yes  |  Yes  |  Yes  | kccomp   |
+| KC 85/4                          |   No  |  Yes  |  Yes  |  Yes  | kc85_4   |
+| Jupiter Ace                      |  Yes  |  Yes  |  Yes  |  Yes  | jupiter  |
+| Enterprise 128                   |  Yes  |  Yes  |   No  |  Yes  | ep128    |
+| Enterprise 128 (EXOS 2.1)        |  Yes  |  Yes  |   No  |  Yes  | ep128a   |
+| Kaypro 2x                        |  Yes  |  Yes  |  Yes  |  Yes  | kaypro   |
+| Microbee 32K                     |  Yes  |  Yes  |  Yes  |  Yes  | mbee     |
+| Microbee 56K (CP/M)              |  Yes  |  Yes  |  Yes  |  Yes  | mbee56k  |
+| TRS-80 Model I (Level I Basic)   |  Yes  |  Yes  |  Yes  |  Yes  | trs80l1  |
+| TRS-80 Model I (Radio Shack Level|  Yes  |  Yes  |  Yes  |  Yes  | trs80    |
+| TRS-80 Model I (R/S L2 Basic)    |  Yes  |  Yes  |  Yes  |  Yes  | trs80alt |
+| Color Computer                   |  Yes  |  Yes  |  Yes  |  Yes  | coco     |
+| Color Computer 3                 |  Yes  |  Yes  |  Yes  |  Yes  | coco3    |
+| Color Computer 3 (6309)          | No(1) |  Yes  |  Yes  |  Yes  | coco3h   |
+| Prologica CP400                  |  Yes  |  Yes  |  Yes  |  Yes  | cp400    |
+| MC-10                            |  Yes  |  Yes  |  Yes  |  Yes  | mc10     |
+| Dragon 32                        |  Yes  |  Yes  |  Yes  |  Yes  | dragon32 |
+| Colour Genie EG2000              |  Yes  |  Yes  |  Yes  |  Yes  | cgenie   |
+| System-80                        |  Yes  |  Yes  |  Yes  |  Yes  | sys80    |
+| Laser 110                        |  Yes  |  Yes  |  Yes  |  Yes  | laser110 |
+| Laser 200                        |  Yes  |  Yes  |  Yes  |  Yes  | laser200 |
+| Laser 210                        |  Yes  |  Yes  |  Yes  |  Yes  | laser210 |
+| Laser 310                        |  Yes  |  Yes  |  Yes  |  Yes  | laser310 |
+| Sanyo / Dick Smith VZ200         |  Yes  |  Yes  |  Yes  |  Yes  | vz200    |
+| Sanyo / Dick Smith VZ300         |  Yes  |  Yes  |  Yes  |  Yes  | vz300    |
+| Salora Fellow                    |  Yes  |  Yes  |  Yes  |  Yes  | fellow   |
+| Texet TX8000                     |  Yes  |  Yes  |  Yes  |  Yes  | tx8000   |
+| Laser 350                        |  Yes  |  Yes  |  Yes  |  Yes  | laser350 |
+| Laser 500                        |  Yes  |  Yes  |  Yes  |  Yes  | laser500 |
+| Laser 700                        |  Yes  |  Yes  |  Yes  |  Yes  | laser700 |
+| Microtan 65                      |  Yes  |  Yes  |  Yes  |  Yes  | microtan |
+| Oric 1                           |  Yes  |  Yes  |  Yes  |  Yes  | oric1    |
+| Oric Atmos                       |  Yes  |  Yes  |  Yes  |  Yes  | orica    |
+| TI99/4 Home Computer (US)        |  Yes  |  Yes  |  Yes  |  Yes  | ti99_4   |
+| TI99/4 Home Computer (Europe)    |  Yes  |  Yes  |  Yes  |  Yes  | ti99_4e  |
+| TI99/4A Home Computer (US)       |  Yes  |  Yes  |  Yes  |  Yes  | ti99_4a  |
+| TI99/4A Home Computer (Europe)   |  Yes  |  Yes  |  Yes  |  Yes  | ti99_4ae |
+| PC                               |  Yes  |  Yes  |  Yes  |  Yes  | pc       |
+| PC-XT (MDA)                      |  Yes  |  Yes  |  Yes  |  Yes  | pcmda    |
+| PC-XT (CGA)                      |  Yes  |  Yes  |  Yes  |  Yes  | pccga    |
+| Tandy 1000HX                     |  Yes  | Close |  Yes  |  Yes  | t1000hx  |
+| Amstrad PC1512                   | No(1) |  Yes  |  Yes  |  Yes  | pc1512   |
+| Amstrad PC1640 / PC6400 (US)     | No(1) |  Yes  |  Yes  |  Yes  | pc1640   |
+| PC-XT (VGA, MF2 Keyboard)        | No(1) |  Yes  |  Yes  |  Yes  | xtvga    |
+| PC-AT (CGA, MF2 Keyboard)        | No(1) |  Yes  |  Yes  |  Yes  | atcga    |
+| Philips P2000T                   |  Yes  |  Yes  |  Yes  |  Yes  | p2000t   |
+| Philips P2000M                   |  Yes  |  Yes  |  Yes  |  Yes  | p2000m   |
+| UK101                            |  Yes  |  Yes  |  Yes  |  Yes  | uk101    |
+| Superboard II                    |  Yes  |  Yes  |  Yes  |  Yes  | superbrd |
+| ZX-80                            |   No  |  Yes  |  Yes  |  Yes  | zx80     |
+| ZX-81                            |   No  |  Yes  |  Yes  |  Yes  | zx81     |
+| TS1000                           |   No  |  Yes  |  Yes  |  Yes  | ts1000   |
+| ZX.Aszmic                        |   No  |  Yes  |  Yes  |  Yes  | aszmic   |
+| PC8300                           |   No  |  Yes  |  Yes  |  Yes  | pc8300   |
+| Power 3000                       |   No  |  Yes  |  Yes  |  Yes  | pow3000  |
+| ZX Spectrum                      |  Yes  |  Yes  |  Yes  |  Yes  | spectrum |
+| ZX Spectrum (BusySoft Upgrade)   |  Yes  |  Yes  |  Yes  |  Yes  | specbusy |
+| ZX Spectrum (De Groot's Upgrade) |  Yes  |  Yes  |  Yes  |  Yes  | specgrot |
+| ZX Spectrum (Collier's Upgrade)  |  Yes  |  Yes  |  Yes  |  Yes  | specimc  |
+| ZX Spectrum (LEC Upgrade)        |  Yes  |  Yes  |  Yes  |  Yes  | speclec  |
+| Inves Spectrum 48K+              |  Yes  |  Yes  |  Yes  |  Yes  | inves    |
+| TK90x Color Computer             |  Yes  |  Yes  |  Yes  |  Yes  | tk90x    |
+| TK95 Color Computer              |  Yes  |  Yes  |  Yes  |  Yes  | tk95     |
+| TC2048                           |  Yes  |  Yes  |  Yes  |  Yes  | tc2048   |
+| TS2068                           |  Yes  |  Yes  |  Yes  |  Yes  | ts2068   |
+| ZX Spectrum 128                  |   No  |  Yes  |  Yes  |  Yes  | spec128  |
+| ZX Spectrum 128 (Spain)          |   No  |  Yes  |  Yes  |  Yes  | spec128s |
+| ZX Spectrum +2                   |   No  |  Yes  |  Yes  |  Yes  | specpls2 |
+| ZX Spectrum +2a                  |   No  |  Yes  |  Yes  |  Yes  | specpl2a |
+| ZX Spectrum +2 (France)          |   No  |  Yes  |  Yes  |  Yes  | specp2fr |
+| ZX Spectrum +2 (Spain)           |   No  |  Yes  |  Yes  |  Yes  | specp2sp |
+| ZX Spectrum +3                   |   No  |  Yes  |  Yes  |  Yes  | specpls3 |
+| ZX Spectrum +3 (Spain)           |   No  |  Yes  |  Yes  |  Yes  | specp3sp |
+| ZX Spectrum +3e                  |   No  |  Yes  |  Yes  |  Yes  | specpl3e |
+| ZX Spectrum +4                   |  Yes  |  Yes  |  Yes  |  Yes  | specpls4 |
+| MSX1                             |  Yes  |  Yes  |  Yes  |  Yes  | msx      |
+| MSX1 (Japan)                     |  Yes  |  Yes  |  Yes  |  Yes  | msxj     |
+| MSX1 (Korean)                    |  Yes  |  Yes  |  Yes  |  Yes  | msxkr    |
+| MSX1 (UK)                        |  Yes  |  Yes  |  Yes  |  Yes  | msxuk    |
+| Nascom 1                         |  Yes  |  Yes  |  Yes  |  Yes  | nascom1  |
+| Nascom 2                         |  Yes  |  Yes  |  Yes  |  Yes  | nascom2  |
+| Atom                             |  Yes  |  Yes  |  Yes  |  Yes  | atom     |
+| BBC Micro Model A                |   No  |  Yes  |  Yes  |  Yes  | bbca     |
+| BBC Micro Model B                |   No  |  Yes  |  Yes  |  Yes  | bbcb     |
+| Archimedes 310                   |  Yes  |  Yes  |  Yes  |  Yes  | a310     |
+| Sam Coupé                        |  Yes  |  Yes  |  Yes  |  Yes  | coupe    |
+| Pocket Computer 1251             |   No  |  Yes  |  Yes  |  Yes  | pc1251   |
+| Pocket Computer 1401             |   No  |  Yes  |  Yes  |  Yes  | pc1401   |
+| Pocket Computer 1402             |   No  |  Yes  |  Yes  |  Yes  | pc1402   |
+| Pocket Computer 1350             |   No  |  Yes  |  Yes  |  Yes  | pc1350   |
+| MZ-700                           |  Yes  |  Yes  |  Yes  |  Yes  | mz700    |
+| MZ-700 (Japan)                   |  Yes  |  Yes  |  Yes  |  Yes  | mz700j   |
+| PDP-1 (Spacewar!)                |  Yes  |  Yes  |  Yes  |  Yes  | pdp1     |
+| MTX 512                          |  Yes  |  Yes  |  Yes  |  Yes  | mtx512   |
+| Aquarius                         |  Yes  |   No  |  Yes  |  Yes  | aquarius |
++----------------------------------+-------+-------+-------+-------+----------+
+
+(1) There are variants of the game (usually bootlegs) that work correctly
+(2) Needs samples provided separately
+
+
+Total Supported: 183
