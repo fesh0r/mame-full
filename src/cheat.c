@@ -207,7 +207,7 @@ enum
 	kCheatSpecial_Timed = 1000
 };
 
-char *cheatfile = "cheat.dat";
+char *cheatfile = NULL;
 
 char database[CHEAT_FILENAME_MAXLEN+1];
 
