@@ -207,10 +207,13 @@ enum
 	kCheatSpecial_Timed = 1000
 };
 
-char *cheatfile = "cheat.dat";
+char cheatfile[256] = "cheat.dat";
 
 #ifndef MESS
+/* HJB: what was this? */
+#if 0
 sprintf(cheatfile,"%s.cdb",(char *)(Machine->gamedrv->name));
+#endif
 #endif
 
 char database[CHEAT_FILENAME_MAXLEN+1];
@@ -507,7 +510,9 @@ void cheat_set_status (int cheat_num, int active)
 	{
 		for (i = 0; i <= CheatTable[cheat_num].num_sub; i ++)
 		{
-			struct subcheat_struct *subcheat = &CheatTable[cheat_num].subcheat[i];	/* Steph */
+#ifdef MESS
+            struct subcheat_struct *subcheat = &CheatTable[cheat_num].subcheat[i];  /* Steph */
+#endif
 
 			/* Reset the active variables */
 			CheatTable[cheat_num].subcheat[i].frame_count = 0;

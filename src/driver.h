@@ -234,6 +234,9 @@ enum
 #if (HAS_SC61860)
 	CPU_SC61860,
 #endif
+#if (HAS_ARM)
+	CPU_ARM,
+#endif
     CPU_COUNT
 };
 

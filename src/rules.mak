@@ -536,6 +536,14 @@ $(OBJ)/cpu/sc61860/sc61860.o: src/cpu/sc61860/sc61860.h \
 	src/cpu/sc61860/sc.h src/cpu/sc61860/ops.c src/cpu/sc61860/table.c
 endif
 
+CPU=$(strip $(findstring ARM@,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_ARM=1
+CPUOBJS += $(OBJ)/cpu/arm/arm.o
+DBGOBJS += $(OBJ)/cpu/arm/dasm.o
+$(OBJ)/cpu/arm/arm.o: src/cpu/arm/arm.h
+endif
+
 
 SOUND=$(strip $(findstring CUSTOM@,$(SOUNDS)))
 ifneq ($(SOUND),)
@@ -632,6 +640,12 @@ SOUNDDEFS += -DHAS_Y8950=1
 SOUNDOBJS += $(OBJ)/sound/3812intf.o $(OBJ)/sound/fmopl.o $(OBJ)/sound/ymdeltat.o
 endif
 
+SOUND=$(strip $(findstring YMZ280B@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_YMZ280B=1
+SOUNDOBJS += $(OBJ)/sound/2203intf.o $(OBJ)/sound/ymz280b.o
+endif
+
 SOUND=$(strip $(findstring SN76477@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_SN76477=1
@@ -653,7 +667,7 @@ endif
 SOUND=$(strip $(findstring TIA@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_TIA=1
-SOUNDOBJS += $(OBJ)/sound/tiasound.o $(OBJ)/sound/tiaintf.o
+SOUNDOBJS += $(OBJ)/sound/tiaintf.o $(OBJ)/sound/tiasound.o
 endif
 
 SOUND=$(strip $(findstring NES@,$(SOUNDS)))

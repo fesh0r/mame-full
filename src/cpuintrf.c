@@ -109,6 +109,9 @@
 #if (HAS_SC61860)
 #include "cpu/sc61860/sc61860.h"
 #endif
+#if (HAS_ARM)
+#include "cpu/arm/arm.h"
+#endif
 
 
 /* these are triggers sent to the timer system for various interrupt events */
@@ -520,6 +523,9 @@ struct cpu_interface cpuintf[] =
 #if (HAS_SC61860)
 	#define sc61860_ICount sc61860_icount
 	CPU0(SC61860,  sc61860,  1,  0,1.00,-1,				   -1,			   -1,			   16,    0,16,BE,1, 4,16	),
+#endif
+#if (HAS_ARM)
+	CPU0(ARM,	   arm, 	 2,  0,1.00,ARM_INT_NONE,	   ARM_FIRQ,	   ARM_IRQ, 	   26lew, 0,26,LE,4, 4,26LEW),
 #endif
 };
 
