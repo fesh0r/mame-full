@@ -33,7 +33,6 @@
 #define __MACHINE_GB_C
 
 #include "driver.h"
-#include "machine/gb.h"
 #include "includes/gb.h"
 #include "image.h"
 
@@ -60,14 +59,15 @@ UINT8 *gb_ram;
 
 void (*refresh_scanline)(void);
 
-#define Verbose 0x00
 #define CheckCRC 1
-#define LineDelay 0
-#define IFreq 60
+#ifdef MAME_DEBUG
+/* #define V_GENERAL*/		/* Display general debug information */
+/* #define V_BANK*/			/* Display bank switching debug information */
+#endif
 
-MACHINE_INIT( gb )
+static void gb_init(void)
 {
-	int i;
+	int ii;
 
 	/* Initialize the memory banks */
 	MBC1Mode = 0;
@@ -77,7 +77,7 @@ MACHINE_INIT( gb )
 	cpu_setbank (1, ROMMap[ROMBank] ? ROMMap[ROMBank] : gb_ram + 0x4000);
 	cpu_setbank (2, RAMMap[RAMBank] ? RAMMap[RAMBank] : gb_ram + 0xA000);
 
-	/* Initialise the registers */
+	/* Initialize the registers */
 	LCDSTAT = 0x00;
 	CURLINE = CMPLINE = 0x00;
 	IFLAGS = ISWITCH = 0x00;
@@ -85,37 +85,80 @@ MACHINE_INIT( gb )
 	SIOCONT = 0x7E;
 	SCROLLX = SCROLLY = 0x00;
 	WNDPOSX = WNDPOSY = 0x00;
-	gb_w_io( 0x05, 0x00 );	/* TIMECNT */
-	gb_w_io( 0x06, 0x00 );	/* TIMEMOD */
-	gb_w_io( 0x07, 0x00 );	/* TIMEFRQ */
-	gb_w_io( 0x40, 0x91 );	/* LCDCONT */
-	gb_w_io( 0x47, 0xFC );	/* BGRDPAL */
-	gb_w_io( 0x48, 0xFC );	/* SPR0PAL */
-	gb_w_io( 0x49, 0xFC );	/* SPR1PAL */
+	gb_io_w( 0x05, 0x00 );		/* TIMECNT */
+	gb_io_w( 0x06, 0x00 );		/* TIMEMOD */
+	gb_io_w( 0x07, 0x00 );		/* TIMEFRQ */
+	gb_video_w( 0x0, 0x91 );	/* LCDCONT */
+	gb_video_w( 0x7, 0xFC );	/* BGRDPAL */
+	gb_video_w( 0x8, 0xFC );	/* SPR0PAL */
+	gb_video_w( 0x9, 0xFC );	/* SPR1PAL */
 
 	/* Initialise the Sound Registers */
-	gameboy_sound_w(0xFF26,0xF1); /*Gameboy, F0 for SGB*/ /* set this first */
-	gameboy_sound_w(0xFF10,0x80);
-	gameboy_sound_w(0xFF11,0xBF);
-	gameboy_sound_w(0xFF12,0xF3);
-	gameboy_sound_w(0xFF14,0x3F); /* NOTE: Should be 0xBF but it causes a tone at startup */
-	gameboy_sound_w(0xFF16,0x3F);
-	gameboy_sound_w(0xFF17,0x00);
-	gameboy_sound_w(0xFF19,0xBF);
-	gameboy_sound_w(0xFF1A,0x7F);
-	gameboy_sound_w(0xFF1B,0xFF);
-	gameboy_sound_w(0xFF1C,0x9F);
-	gameboy_sound_w(0xFF1E,0xBF);
-	gameboy_sound_w(0xFF20,0xFF);
-	gameboy_sound_w(0xFF21,0x00);
-	gameboy_sound_w(0xFF22,0x00);
-	gameboy_sound_w(0xFF23,0xBF);
-	gameboy_sound_w(0xFF24,0x77);
-	gameboy_sound_w(0xFF25,0xF3);
+	gb_sound_w(0x16,0xF1); /*Gameboy, F0 for SGB*/ /* set this first */
+	gb_sound_w(0x00,0x80);
+	gb_sound_w(0x01,0xBF);
+	gb_sound_w(0x02,0xF3);
+	gb_sound_w(0x04,0x3F); /* NOTE: Should be 0xBF but it causes a tone at startup */
+	gb_sound_w(0x06,0x3F);
+	gb_sound_w(0x07,0x00);
+	gb_sound_w(0x09,0xBF);
+	gb_sound_w(0x0A,0x7F);
+	gb_sound_w(0x0B,0xFF);
+	gb_sound_w(0x0C,0x9F);
+	gb_sound_w(0x0E,0xBF);
+	gb_sound_w(0x10,0xFF);
+	gb_sound_w(0x11,0x00);
+	gb_sound_w(0x12,0x00);
+	gb_sound_w(0x13,0xBF);
+	gb_sound_w(0x14,0x77);
+	gb_sound_w(0x15,0xF3);
 
 	/* Initialize palette arrays */
-	for( i = 0; i < 4; i++ )
-		gb_bpal[i] = gb_spal0[i] = gb_spal1[i] = i;
+	for( ii = 0; ii < 4; ii++ )
+		gb_bpal[ii] = gb_spal0[ii] = gb_spal1[ii] = ii;
+
+	/* Set handlers based on the Memory Bank Controller in the cart */
+	switch( MBCType )
+	{
+		case NONE:
+		case TAMA5:	/* Definitely wrong, but don't know how this one works */
+			install_mem_write_handler( 0, 0x0000, 0x1fff, MWA_ROM );
+			install_mem_write_handler( 0, 0x2000, 0x3fff, MWA_ROM );
+			install_mem_write_handler( 0, 0x4000, 0x5fff, MWA_ROM );
+			install_mem_write_handler( 0, 0x6000, 0x7fff, MWA_ROM );
+			break;
+		case MBC1:
+			install_mem_write_handler( 0, 0x0000, 0x1fff, gb_ram_enable );	/* We don't emulate RAM enable yet */
+			install_mem_write_handler( 0, 0x2000, 0x3fff, gb_rom_bank_select_mbc1 );
+			install_mem_write_handler( 0, 0x4000, 0x5fff, gb_ram_bank_select_mbc1 );
+			install_mem_write_handler( 0, 0x6000, 0x7fff, gb_mem_mode_select_mbc1 );
+			break;
+		case MBC2:
+			install_mem_write_handler( 0, 0x0000, 0x1fff, MWA_ROM );
+			install_mem_write_handler( 0, 0x2000, 0x3fff, gb_rom_bank_select_mbc2 );
+			install_mem_write_handler( 0, 0x4000, 0x5fff, MWA_ROM );
+			install_mem_write_handler( 0, 0x6000, 0x7fff, MWA_ROM );
+			break;
+		case MBC3:
+		case HUC1:	/* Possibly wrong */
+		case HUC3:	/* Possibly wrong */
+			install_mem_write_handler( 0, 0x0000, 0x1fff, gb_ram_enable );	/* We don't emulate RAM enable yet */
+			install_mem_write_handler( 0, 0x2000, 0x3fff, gb_rom_bank_select_mbc3 );
+			install_mem_write_handler( 0, 0x4000, 0x5fff, gb_ram_bank_select_mbc3 );
+			install_mem_write_handler( 0, 0x6000, 0x7fff, gb_mem_mode_select_mbc3 );
+			break;
+		case MBC5:
+			install_mem_write_handler( 0, 0x0000, 0x1fff, gb_ram_enable );
+			install_mem_write_handler( 0, 0x2000, 0x3fff, gb_rom_bank_select_mbc5 );
+			install_mem_write_handler( 0, 0x4000, 0x5fff, gb_ram_bank_select_mbc5 );
+			install_mem_write_handler( 0, 0x6000, 0x7fff, MWA_ROM );
+			break;
+	}
+}
+
+MACHINE_INIT( gb )
+{
+	gb_init();
 
 	/* set the scanline refresh function */
 	refresh_scanline = gb_refresh_scanline;
@@ -123,18 +166,13 @@ MACHINE_INIT( gb )
 
 MACHINE_INIT( sgb )
 {
-	/* Call GameBoy init */
-	machine_init_gb();
+	gb_init();
 
-	if( new_memory_region( REGION_GFX1, 0x2000, 0 ) )
-	{
-		logerror("Memory allocation failed for SGB border tiles!\n");
-	}
 	sgb_tile_data = (UINT8 *)memory_region( REGION_GFX1 );
 	memset( sgb_tile_data, 0, 0x2000 );
 
 	/* Initialize the Sound Registers */
-	gameboy_sound_w(0xFF26,0xF0); /* F0 for SGB */
+	gb_sound_w(0x16,0xF0);	/* F0 for SGB */
 
 	sgb_window_mask = 0;
 	memset( sgb_pal_map, 0, 20*18 );
@@ -156,16 +194,15 @@ MACHINE_INIT( sgb )
 
 MACHINE_INIT( gbc )
 {
-	int I;
+	int ii;
 
-	/* Call GameBoy init */
-	machine_init_gb();
+	gb_init();
 
 	/* Allocate memory for internal ram */
-	for( I = 0; I < 8; I++ )
+	for( ii = 0; ii < 8; ii++ )
 	{
-		if ((GBC_RAMMap[I] = malloc (0x1000)))
-			memset (GBC_RAMMap[I], 0, 0x1000);
+		if( (GBC_RAMMap[ii] = malloc (0x1000)) )
+			memset (GBC_RAMMap[ii], 0, 0x1000);
 		else
 		{
 			logerror("Error allocating memory\n");
@@ -175,11 +212,11 @@ MACHINE_INIT( gbc )
 	cpu_setbank (3, GBC_RAMMap[GBC_RAMBank]);
 
 	/* Allocate memory for video ram */
-	for( I = 0; I < 2; I++ )
+	for( ii = 0; ii < 2; ii++ )
 	{
-		if ((GBC_VRAMMap[I] = malloc (0x2000)))
+		if( (GBC_VRAMMap[ii] = malloc (0x2000)) )
 		{
-			memset (GBC_VRAMMap[I], 0, 0x2000);
+			memset (GBC_VRAMMap[ii], 0, 0x2000);
 		}
 		else
 		{
@@ -195,13 +232,13 @@ MACHINE_INIT( gbc )
 	gbc_bgdtab = gbc_wndtab = GBC_VRAMMap[1] + 0x1C00;
 
 	/* Initialise registers */
-	gb_w_io( 0x6C, 0xFE );
-	gb_w_io( 0x72, 0x00 );
-	gb_w_io( 0x73, 0x00 );
-	gb_w_io( 0x74, 0x8F );
-	gb_w_io( 0x75, 0x00 );
-	gb_w_io( 0x76, 0x00 );
-	gb_w_io( 0x77, 0x00 );
+	gb_io_w( 0x6C, 0xFE );
+	gb_io_w( 0x72, 0x00 );
+	gb_io_w( 0x73, 0x00 );
+	gb_io_w( 0x74, 0x8F );
+	gb_io_w( 0x75, 0x00 );
+	gb_io_w( 0x76, 0x00 );
+	gb_io_w( 0x77, 0x00 );
 
 	/* Are we in colour or mono mode? */
 	if( gb_ram[0x143] == 0x80 || gb_ram[0x143] == 0xC0 )
@@ -242,7 +279,7 @@ MACHINE_STOP( gb )
 		free( battery_ram );
 	}
 
-	/* We should release memory here, but this function is called upon reset
+	/* FIXME: We should release memory here, but this function is called upon reset
 	   and we don't reload the rom, so we're going to have to leak for now. */
 /*	for( I = 0; I < RAMBanks; I++ )
 	{
@@ -254,126 +291,159 @@ MACHINE_STOP( gb )
 	}*/
 }
 
-WRITE_HANDLER ( gb_rom_bank_select )
+WRITE_HANDLER( gb_rom_bank_select_mbc1 )
 {
-	/* No need to bank switch if there is no controller */
-	if( !MBCType )
-		return;
-
-	data &= ROMMask;
-
-	/* Selecting bank 0 == selecting bank 1 except with an MBC5 */
-	if( !data && MBCType != MBC5 )
-		data = 1;
-
 	if( ROMMask )
 	{
-		switch( MBCType )
-		{
-		case MBC1:
-			ROMBank = data & 0x1F; /* Only uses lower 5 bits */
-			break;
-		case MBC2:
-			/* The least significant bit of the upper address byte must be 1 */
-			if( offset & 0x0100 )
-				ROMBank = data;
-			break;
-		case MBC3:
-		case HUC1:	/* NOTE: Probably wrong */
-		case HUC3:	/* NOTE: Probably wrong */
-			ROMBank = data;
-			break;
-		case MBC5:
-			/* MBC5 has a 9 bit bank select */
-			if( offset < 0x1000 )
-			{
-				ROMBank = (ROMBank & 0x100 ) | data;
-			}
-			else
-			{
-				ROMBank = (ROMBank & 0xFF ) | ((UINT16)(data & 0x1) << 8);
-			}
-			break;
-		}
+		data &= ROMMask;
+		/* Selecting bank 0 == selecting bank 1 */
+		if( data == 0 )
+			data = 1;
 
+		ROMBank = data & 0x1F; /* Only uses lower 5 bits */
 		/* Switch banks */
 		cpu_setbank (1, ROMMap[ROMBank] ? ROMMap[ROMBank] : gb_ram + 0x4000);
-		if (Verbose & 0x08)
-			printf ("ROM: Bank %d selected\n", ROMBank);
 	}
 }
 
-WRITE_HANDLER ( gb_ram_bank_select )
+WRITE_HANDLER( gb_rom_bank_select_mbc2 )
 {
-	/* No need to bank switch if no controller or MBC2 */
-	if( !MBCType || MBCType == MBC2 )
-		return;
+	if( ROMMask )
+	{
+		data &= ROMMask;
+		/* Selecting bank 0 == selecting bank 1 */
+		if( data == 0 )
+			data = 1;
 
-	data &= RAMMask;
+		/* The least significant bit of the upper address byte must be 1 */
+		if( offset & 0x0100 )
+			ROMBank = data;
+		/* Switch banks */
+		cpu_setbank (1, ROMMap[ROMBank] ? ROMMap[ROMBank] : gb_ram + 0x4000);
+	}
+}
+
+WRITE_HANDLER( gb_rom_bank_select_mbc3 )
+{
+	if( ROMMask )
+	{
+		data &= ROMMask;
+		/* Selecting bank 0 == selecting bank 1 */
+		if( data == 0 )
+			data = 1;
+
+		ROMBank = data;
+		/* Switch banks */
+		cpu_setbank (1, ROMMap[ROMBank] ? ROMMap[ROMBank] : gb_ram + 0x4000);
+	}
+}
+
+WRITE_HANDLER( gb_rom_bank_select_mbc5 )
+{
+	if( ROMMask )
+	{
+		data &= ROMMask;
+		/* MBC5 has a 9 bit bank select */
+		if( offset < 0x1000 )
+		{
+			ROMBank = (ROMBank & 0x100 ) | data;
+		}
+		else
+		{
+			ROMBank = (ROMBank & 0xFF ) | ((UINT16)(data & 0x1) << 8);
+		}
+		/* Switch banks */
+		cpu_setbank (1, ROMMap[ROMBank] ? ROMMap[ROMBank] : gb_ram + 0x4000);
+	}
+}
+
+WRITE_HANDLER( gb_ram_bank_select_mbc1 )
+{
 	if( RAMMask )
 	{
-		switch( MBCType )
+		data &= RAMMask;
+		data &= 0x3; /* Only uses the lower 2 bits */
+		if( MBC1Mode )
 		{
-		case MBC1:
-			data &= 0x3; /* Only uses the lower 2 bits */
-			if( MBC1Mode )
-			{
-				/* Select the upper bits of the ROMMask */
-				ROMBank |= data << 5;
-				cpu_setbank (1, ROMMap[ROMBank] ? ROMMap[ROMBank] : gb_ram + 0x4000);
-				return;
-			}
-			else
-			{
-				RAMBank = data;
-			}
-			break;
-		case MBC3:
-			if( data & 0x8 )	/* RTC banks */
-			{
-				MBC3RTCBank = (data & 0xf) - 8;
-				cpu_setbank (2, &MBC3RTCMap[MBC3RTCBank]);
-				return;
-			}
-			else	/* RAM banks */
-			{
-				RAMBank = data & 0x3;
-			}
-			break;
-		case MBC5:
-			if( CartType & RUMBLE )
-			{
-				logerror( "Rumble motor: %s\n", data & 0x8 ? "On" : "Off" );
-				data &= 0x7;
-			}
-			RAMBank = data;
-			break;
+			/* Select the upper bits of the ROMMask */
+			ROMBank |= data << 5;
+			cpu_setbank (1, ROMMap[ROMBank] ? ROMMap[ROMBank] : gb_ram + 0x4000);
+			return;
 		}
-
+		else
+		{
+			RAMBank = data;
+		}
 		/* Switch banks */
 		cpu_setbank (2, RAMMap[RAMBank] ? RAMMap[RAMBank] : gb_ram + 0xA000);
-		if (Verbose & 0x08)
-			printf ("RAM: Bank %d selected\n", RAMBank);
 	}
 }
 
-WRITE_HANDLER ( gb_mem_mode_select )
+WRITE_HANDLER( gb_ram_bank_select_mbc3 )
 {
-	switch( MBCType )
+	if( RAMMask )
 	{
-		case MBC1:
-			MBC1Mode = data & 0x1;
-			break;
-		case MBC3:
-			if( CartType & TIMER )
-			{
-				/* FIXME: RTC Latch goes here */
-			}
-			break;
+		data &= RAMMask;
+		if( data & 0x8 )	/* RTC banks */
+		{
+			MBC3RTCBank = (data & 0xf) - 8;
+			cpu_setbank (2, &MBC3RTCMap[MBC3RTCBank]);
+			return;
+		}
+		else	/* RAM banks */
+		{
+			RAMBank = data & 0x3;
+		}
+		/* Switch banks */
+		cpu_setbank (2, RAMMap[RAMBank] ? RAMMap[RAMBank] : gb_ram + 0xA000);
 	}
 }
 
-WRITE_HANDLER ( gb_w_io )
+WRITE_HANDLER( gb_ram_bank_select_mbc5 )
+{
+	if( RAMMask )
+	{
+		data &= RAMMask;
+		if( CartType & RUMBLE )
+		{
+			data &= 0x7;
+		}
+		RAMBank = data;
+		/* Switch banks */
+		cpu_setbank (2, RAMMap[RAMBank] ? RAMMap[RAMBank] : gb_ram + 0xA000);
+	}
+}
+
+WRITE_HANDLER ( gb_ram_enable )
+{
+	/* FIXME: Currently we don't handle this, but a value of 0xA will enable
+	 * writing to the cart's RAM banks */
+}
+
+WRITE_HANDLER( gb_mem_mode_select_mbc1 )
+{
+	MBC1Mode = data & 0x1;
+}
+
+WRITE_HANDLER( gb_mem_mode_select_mbc3 )
+{
+	if( CartType & TIMER )
+	{
+		/* FIXME: RTC Latch goes here */
+	}
+}
+
+READ_HANDLER( gb_echoram_r )
+{
+	return cpu_readmem16( 0xc000 + offset );
+}
+
+WRITE_HANDLER( gb_echoram_w )
+{
+	cpu_writemem16( 0xc000 + offset, data );
+}
+
+WRITE_HANDLER ( gb_io_w )
 {
 	static UINT8 timer_shifts[4] = {10, 4, 6, 8};
 
@@ -412,55 +482,12 @@ WRITE_HANDLER ( gb_w_io )
 	case 0xFF0F:						/* IF - Interrupt flag */
 		data &= 0x1F;
 		break;
-	case 0xFF40:						/* LCDC - LCD Control */
-		gb_chrgen = gb_ram + ((data & 0x10) ? 0x8000 : 0x8800);
-		gb_tile_no_mod = (data & 0x10) ? 0x00 : 0x80;
-		gb_bgdtab = gb_ram + ((data & 0x08) ? 0x9C00 : 0x9800);
-		gb_wndtab = gb_ram + ((data & 0x40) ? 0x9C00 : 0x9800);
-		break;
-	case 0xFF41:						/* STAT - LCD Status */
-		data = (data & 0xF8) | (LCDSTAT & 0x07);
-		break;
-	case 0xFF44:						/* LY - LCD Y-coordinate */
-		data = 0;
-		break;
-	case 0xFF46:						/* DMA - DMA Transfer and Start Address */
-		{
-			UINT8 *P = gb_ram + 0xFE00;
-			offset = (UINT16) data << 8;
-			for (data = 0; data < 0xA0; data++)
-				*P++ = cpu_readmem16 (offset++);
-		}
-		return;
-	case 0xFF47:						/* BGP - Background Palette */
-		gb_bpal[0] = data & 0x3;
-		gb_bpal[1] = (data & 0xC) >> 2;
-		gb_bpal[2] = (data & 0x30) >> 4;
-		gb_bpal[3] = (data & 0xC0) >> 6;
-		break;
-	case 0xFF48:						/* OBP0 - Object Palette 0 */
-		gb_spal0[0] = data & 0x3;
-		gb_spal0[1] = (data & 0xC) >> 2;
-		gb_spal0[2] = (data & 0x30) >> 4;
-		gb_spal0[3] = (data & 0xC0) >> 6;
-		break;
-	case 0xFF49:						/* OBP1 - Object Palette 1 */
-		gb_spal1[0] = data & 0x3;
-		gb_spal1[1] = (data & 0xC) >> 2;
-		gb_spal1[2] = (data & 0x30) >> 4;
-		gb_spal1[3] = (data & 0xC0) >> 6;
-		break;
-	default:
-		/* Sound Registers */
-		if ((offset >= 0xFF10) && (offset <= 0xFF26))
-		{
-			gameboy_sound_w(offset, data);
-			return;
-		}
 	}
+
 	gb_ram [offset] = data;
 }
 
+#ifdef MAME_DEBUG
 static const char *sgbcmds[26] =
 {
 	"PAL01   ",
@@ -490,8 +517,9 @@ static const char *sgbcmds[26] =
 	"OBJ_TRN ",
 	"????????",
 };
+#endif
 
-WRITE_HANDLER ( sgb_w_io )
+WRITE_HANDLER ( sgb_io_w )
 {
 	static UINT8 sgb_bitcount = 0, sgb_bytecount = 0, sgb_start = 0, sgb_rest = 0;
 	static UINT8 sgb_controller_no = 0, sgb_controller_mode = 0;
@@ -536,19 +564,18 @@ WRITE_HANDLER ( sgb_w_io )
 				}
 				JOYPAD = 0x1F & ((readinputport (0) >> 4) | 0xF0);
 				break;
-			case 0x20:				   /* data false */
+			case 0x20:				/* data false */
 				if (sgb_rest)
 				{
 					if( sgb_bytecount == 16 && sgb_packets == -1 )
 					{
-						if( Verbose )
-						{
-							logerror("SGB: %s (%02X) pkts: %d data: %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X\n",
-									sgbcmds[sgb_data[0] >> 3],sgb_data[0] >> 3, sgb_data[0] & 0x07, sgb_data[1], sgb_data[2], sgb_data[3],
-									sgb_data[4], sgb_data[5], sgb_data[6], sgb_data[7],
-									sgb_data[8], sgb_data[9], sgb_data[10], sgb_data[11],
-									sgb_data[12], sgb_data[13], sgb_data[14], sgb_data[15]);
-						}
+#ifdef MAME_DEBUG
+						logerror("SGB: %s (%02X) pkts: %d data: %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X\n",
+								sgbcmds[sgb_data[0] >> 3],sgb_data[0] >> 3, sgb_data[0] & 0x07, sgb_data[1], sgb_data[2], sgb_data[3],
+								sgb_data[4], sgb_data[5], sgb_data[6], sgb_data[7],
+								sgb_data[8], sgb_data[9], sgb_data[10], sgb_data[11],
+								sgb_data[12], sgb_data[13], sgb_data[14], sgb_data[15]);
+#endif
 						sgb_packets = sgb_data[0] & 0x07;
 						sgb_start = 0;
 					}
@@ -599,8 +626,6 @@ WRITE_HANDLER ( sgb_w_io )
 							case 0x04:	/* ATTR_BLK */
 								{
 									UINT8 I, J, K, o;
-									if( Verbose )
-										logerror( "\tBLOCK: %d datasets\n", sgb_data[1] );
 									for( K = 0; K < sgb_data[1]; K++ )
 									{
 										o = K * 6;
@@ -614,17 +639,14 @@ WRITE_HANDLER ( sgb_w_io )
 												}
 											}
 										}
-										if( Verbose )
-											logerror( "\tBlock: %d,%d to %d,%d\n", sgb_data[o + 4], sgb_data[o + 5], sgb_data[o + 6], sgb_data[o + 7] );
 									}
 								}
 								break;
 							case 0x05:	/* ATTR_LIN */
 								{
 									UINT8 J, K;
-									if( Verbose )
-										logerror( "\tLINE: %d datasets\n", sgb_data[1] );
-									if( sgb_data[1] > 15 ) sgb_data[1] = 15;
+									if( sgb_data[1] > 15 )
+										sgb_data[1] = 15;
 									for( K = 0; K < sgb_data[1]; K++ )
 									{
 										if( sgb_data[K + 1] & 0x80 )
@@ -647,8 +669,6 @@ WRITE_HANDLER ( sgb_w_io )
 							case 0x06:	/* ATTR_DIV */
 								{
 									UINT8 I, J;
-									if( Verbose )
-										logerror( "\tDIV: %s - line %d pal1: %d pal2: %d pal3: %d\n", (sgb_data[1] & 0x40)?"Vertical":"Horizontal", sgb_data[2], (sgb_data[1] & 0xc) >> 2, (sgb_data[1] & 0x30) >> 4, sgb_data[1] & 0x3 );
 									if( sgb_data[1] & 0x40 ) /* Vertical */
 									{
 										for( I = 0; I < sgb_data[2]; I++ )
@@ -697,12 +717,6 @@ WRITE_HANDLER ( sgb_w_io )
 								{
 									UINT16 I, sets;
 									UINT8 x, y;
-
-									if( Verbose )
-									{
-										logerror( "\tCHAR: %d datasets  ", sgb_data[3] | (sgb_data[4] << 8) );
-										logerror( "x: %d   y: %d\n", sgb_data[1], sgb_data[2] );
-									}
 									sets = (sgb_data[3] | (sgb_data[4] << 8) );
 									if( sets > 360 )
 										sets = 360;
@@ -797,8 +811,6 @@ WRITE_HANDLER ( sgb_w_io )
 							case 0x08:	/* SOUND */
 								/* This command enables internal sound effects */
 								/* Not Implemented */
-								if( Verbose )
-									logerror( "\tSOUND: Effect A: %x  Effect B: %x\n", sgb_data[1], sgb_data[2] );
 								break;
 							case 0x09:	/* SOU_TRN */
 								/* This command sends data to the SNES sound processor.
@@ -955,8 +967,7 @@ WRITE_HANDLER ( sgb_w_io )
 								/* Not Implemented */
 								break;
 							default:
-								if( Verbose )
-									logerror( "\tSGB: Unknown Command!\n" );
+								logerror( "\tSGB: Unknown Command!\n" );
 						}
 
 						sgb_start = 0;
@@ -994,154 +1005,7 @@ WRITE_HANDLER ( sgb_w_io )
 			return;
 		default:
 			/* we didn't handle the write, so pass it to the GB handler */
-			gb_w_io( offset - 0xFF00, data );
-			return;
-	}
-
-	gb_ram [offset] = data;
-}
-
-WRITE_HANDLER ( gbc_w_io )
-{
-	static const UINT16 gbc_to_gb_pal[4] = {32767, 21140, 10570, 0};
-	static UINT16 BP = 0, OP = 0;
-
-	offset += 0xFF00;
-
-	switch( offset )
-	{
-		case 0xFF40:
-			gb_chrgen = GBC_VRAMMap[0] + ((data & 0x10) ? 0x0000 : 0x0800);
-			gbc_chrgen = GBC_VRAMMap[1] + ((data & 0x10) ? 0x0000 : 0x0800);
-			gb_tile_no_mod = (data & 0x10) ? 0x00 : 0x80;
-			gb_bgdtab = GBC_VRAMMap[0] + ((data & 0x08) ? 0x1C00 : 0x1800);
-			gbc_bgdtab = GBC_VRAMMap[1] + ((data & 0x08) ? 0x1C00 : 0x1800);
-			gb_wndtab = GBC_VRAMMap[0] + ((data & 0x40) ? 0x1C00 : 0x1800);
-			gbc_wndtab = GBC_VRAMMap[1] + ((data & 0x40) ? 0x1C00 : 0x1800);
-			break;
-		case 0xFF47:	/* BGP - GB background palette */
-			if( gbc_mode == GBC_MODE_MONO ) /* Some GBC games are lazy and still call this */
-			{
-				Machine->remapped_colortable[0] = gbc_to_gb_pal[(data & 0x03)];
-				Machine->remapped_colortable[1] = gbc_to_gb_pal[(data & 0x0C) >> 2];
-				Machine->remapped_colortable[2] = gbc_to_gb_pal[(data & 0x30) >> 4];
-				Machine->remapped_colortable[3] = gbc_to_gb_pal[(data & 0xC0) >> 6];
-			}
-			break;
-		case 0xFF48:	/* OBP0 - GB Object 0 palette */
-			if( gbc_mode == GBC_MODE_MONO ) /* Some GBC games are lazy and still call this */
-			{
-				Machine->remapped_colortable[4] = gbc_to_gb_pal[(data & 0x03)];
-				Machine->remapped_colortable[5] = gbc_to_gb_pal[(data & 0x0C) >> 2];
-				Machine->remapped_colortable[6] = gbc_to_gb_pal[(data & 0x30) >> 4];
-				Machine->remapped_colortable[7] = gbc_to_gb_pal[(data & 0xC0) >> 6];
-			}
-			break;
-		case 0xFF49:	/* OBP1 - GB Object 1 palette */
-			if( gbc_mode == GBC_MODE_MONO ) /* Some GBC games are lazy and still call this */
-			{
-				Machine->remapped_colortable[8] = gbc_to_gb_pal[(data & 0x03)];
-				Machine->remapped_colortable[9] = gbc_to_gb_pal[(data & 0x0C) >> 2];
-				Machine->remapped_colortable[10] = gbc_to_gb_pal[(data & 0x30) >> 4];
-				Machine->remapped_colortable[11] = gbc_to_gb_pal[(data & 0xC0) >> 6];
-			}
-			break;
-		case 0xFF4D:	/* KEY1 - Prepare speed switch */
-			if( data & 0x1 )
-			{
-				data = (gb_ram[offset] & 0x80)?0x00:0x80;
-//				timer_set_overclock( 0, (data & 0x80)?2.0:1.0 );
-				logerror( "Switched to %s mode.\n", (data & 0x80) ? "FAST":"NORMAL" );
-			}
-			break;
-		case 0xFF4F:	/* VBK - VRAM bank select */
-			GBC_VRAMBank = data & 0x1;
-			cpu_setbank (4, GBC_VRAMMap[GBC_VRAMBank]);
-			data |= 0xFE;
-			break;
-		case 0xFF51:	/* HDMA1 - HBL General DMA - Source High */
-			break;
-		case 0xFF52:	/* HDMA2 - HBL General DMA - Source Low */
-			data &= 0xF0;
-			break;
-		case 0xFF53:	/* HDMA3 - HBL General DMA - Destination High */
-			data &= 0x1F;
-			break;
-		case 0xFF54:	/* HDMA4 - HBL General DMA - Destination Low */
-			data &= 0xF0;
-			break;
-		case 0xFF55:	/* HDMA5 - HBL General DMA - Mode, Length */
-			if( !(data & 0x80) )
-			{
-				/* General DMA */
-				gbc_hdma( ((data & 0x7F) + 1) * 0x10 );
-				data = 0xff;
-			}
-			else
-			{
-				/* H-Blank DMA */
-				gbc_hdma_enabled = 1;
-				data &= 0x7f;
-			}
-			break;
-		case 0xFF56:	/* RP - Infrared port */
-			break;
-		case 0xFF68:	/* BCPS - Background palette specification */
-			break;
-		case 0xFF69:	/* BCPD - background palette data */
-			if( GBCBCPS & 0x1 )
-			{
-//				BP = Machine->remapped_colortable[(GBCBCPS & 0x3e) >> 1];
-//				Machine->remapped_colortable[(GBCBCPS & 0x3e) >> 1] = data + (BP & 0xFF00);
-//				Machine->remapped_colortable[((GBCBCPS & 0x38) >> 1) + ((GBCBCPS & 0x6) >> 1)] = ((UINT16)(data & 0x7f) << 8) | BP;
-				Machine->remapped_colortable[(GBCBCPS & 0x3e) >> 1] = ((UINT16)(data & 0x7f) << 8) | BP;
-			}
-			else
-			{
-//				BP = Machine->remapped_colortable[(GBCBCPS & 0x3e) >> 1];
-//				Machine->remapped_colortable[(GBCBCPS & 0x3e) >> 1] = ((data << 8) + (BP & 0xFF));
-				BP = data;
-			}
-
-			if( GBCBCPS & 0x80 )
-			{
-				GBCBCPS += 1;
-				GBCBCPS &= 0xBF;
-			}
-			break;
-		case 0xFF6A:	/* OCPS - Object palette specification */
-			break;
-		case 0xFF6B:	/* OCPD - Object palette data */
-			if( GBCOCPS & 0x1 )
-			{
-				Machine->remapped_colortable[GBC_PAL_OBJ_OFFSET + ((GBCOCPS & 0x3e) >> 1)] = ((UINT16)(data & 0x7f) << 8) | OP;
-			}
-			else
-				OP = data;
-
-			if( GBCOCPS & 0x80 )
-			{
-				GBCOCPS += 1;
-				GBCOCPS &= 0xBF;
-			}
-			break;
-		case 0xFF70:	/* SVBK - RAM bank select */
-			GBC_RAMBank = data & 0x7;
-			cpu_setbank (3, GBC_RAMMap[GBC_RAMBank]);
-			break;
-		/* Undocumented registers */
-		case 0xFF6C:
-		case 0xFF72:
-		case 0xFF73:
-		case 0xFF74:
-		case 0xFF75:
-		case 0xFF76:
-		case 0xFF77:
-			logerror( "Write to undoco'ed register: %X = %X\n", offset, data );
-			return;
-		default:
-			/* we didn't handle the write, so pass it to the GB handler */
-			gb_w_io( offset - 0xFF00, data );
+			gb_io_w( offset - 0xFF00, data );
 			return;
 	}
 
@@ -1149,13 +1013,13 @@ WRITE_HANDLER ( gbc_w_io )
 }
 
 /* Interrupt Enable register */
-WRITE_HANDLER ( gb_w_ie )
+WRITE_HANDLER ( gb_ie_w )
 {
 	gb_ram[0xFFFF] = data & 0x1F;
 }
 
 /* IO read */
-READ_HANDLER ( gb_r_io )
+READ_HANDLER ( gb_io_r )
 {
 	offset += 0xFF00;
 
@@ -1193,6 +1057,22 @@ READ_HANDLER ( gb_r_io )
 		case 0xFF24:
 		case 0xFF25:
 		case 0xFF26:
+		case 0xFF30:
+		case 0xFF31:
+		case 0xFF32:
+		case 0xFF33:
+		case 0xFF34:
+		case 0xFF35:
+		case 0xFF36:
+		case 0xFF37:
+		case 0xFF38:
+		case 0xFF39:
+		case 0xFF3A:
+		case 0xFF3B:
+		case 0xFF3C:
+		case 0xFF3D:
+		case 0xFF3E:
+		case 0xFF3F:
 		case 0xFF40:
 		case 0xFF41:
 		case 0xFF42:
@@ -1354,8 +1234,6 @@ int gb_cart_load(int id, mame_file *F, int open_mode)
 	};
 
 	int Checksum, I, J;
-	const char *P;
-	char S[50];
 	int rambanks[5] = {0, 1, 1, 4, 16};
 
 	for (I = 0; I < 256; I++)
@@ -1363,7 +1241,7 @@ int gb_cart_load(int id, mame_file *F, int open_mode)
 
 	if( new_memory_region(REGION_CPU1, 0x10000,0) )
 	{
-		logerror("Memory allocation failed reading roms!\n");
+		logerror("Error loading cartridge: Memory allocation failed reading roms!\n");
 		return INIT_FAIL;
 	}
 
@@ -1380,7 +1258,7 @@ int gb_cart_load(int id, mame_file *F, int open_mode)
 
 	if (mame_fread (F, gb_ram, 0x4000) != 0x4000)
 	{
-		logerror("Error while reading from file: %s\n", image_filename(IO_CARTSLOT,id));
+		logerror("Error loading cartridge: Unable to read from file: %s.\n", image_filename(IO_CARTSLOT,id));
 		return INIT_FAIL;
 	}
 
@@ -1481,44 +1359,45 @@ int gb_cart_load(int id, mame_file *F, int open_mode)
 
 	if ( CartType & UNKNOWN )
 	{
-		logerror("Error loading cartridge: Unknown ROM type\n");
+		logerror("Error loading cartridge: Unknown ROM type.\n");
 		return INIT_FAIL;
 	}
 
-	if (Verbose)
+	/* Log cart information */
 	{
+		const char *P;
+		char S[50];
+
 		strncpy (S, (char *)&gb_ram[0x0134], 16);
 		S[16] = '\0';
-		logerror("OK\n  Name: %s\n", S);
-		logerror("  Type: %s [%Xh]\n", CartTypes[gb_ram[0x0147]], gb_ram[0x0147] );
-		logerror("  GameBoy : %s\n", (gb_ram[0x0143] == 0xc0) ? "No" : "Yes" );
-		logerror("  Super GB: %s [%Xh]\n", (gb_ram[0x0146] == 0x03) ? "Yes" : "No", gb_ram[0x0146] );
-		logerror("  Color GB: %s [%Xh]\n", (gb_ram[0x0143] == 0x80 || gb_ram[0x0143] == 0xc0) ? "Yes" : "No", gb_ram[0x0143] );
-		logerror("  ROM Size: %d 16kB Banks [%X]\n", ROMBanks, gb_ram[0x0148]);
+		logerror("Cart Information\n");
+		logerror("\tName:             %s\n", S);
+		logerror("\tType:             %s [0x%2X]\n", CartTypes[gb_ram[0x0147]], gb_ram[0x0147] );
+		logerror("\tGameBoy:          %s\n", (gb_ram[0x0143] == 0xc0) ? "No" : "Yes" );
+		logerror("\tSuper GB:         %s [0x%2X]\n", (gb_ram[0x0146] == 0x03) ? "Yes" : "No", gb_ram[0x0146] );
+		logerror("\tColor GB:         %s [0x%2X]\n", (gb_ram[0x0143] == 0x80 || gb_ram[0x0143] == 0xc0) ? "Yes" : "No", gb_ram[0x0143] );
+		logerror("\tROM Size:         %d 16kB Banks [0x%2X]\n", ROMBanks, gb_ram[0x0148]);
 		J = (gb_ram[0x0149] & 0x03) * 2;
 		J = J ? (1 << (J - 1)) : 0;
-		logerror("  RAM Size: %d kB [%X]\n", J, gb_ram[0x0149]);
-		logerror("  License code %X%Xh\n", gb_ram[0x0145], gb_ram[0x0144] );
+		logerror("\tRAM Size:         %d kB [0x%2X]\n", J, gb_ram[0x0149]);
+		logerror("\tLicense code:     0x%2X%2X\n", gb_ram[0x0145], gb_ram[0x0144] );
 		J = ((UINT16) gb_ram[0x014B] << 8) + gb_ram[0x014A];
 		for (I = 0, P = NULL; !P && Companies[I].Name; I++)
 			if (J == Companies[I].Code)
 				P = Companies[I].Name;
-		logerror("  Manufacturer ID: %Xh", J);
+		logerror("\tManufacturer ID:  0x%2X", J);
 		logerror(" [%s]\n", P ? P : "?");
-
-		logerror("  Version Number: %Xh\n", gb_ram[0x014C]);
-		logerror("  Complement Check: %Xh\n", gb_ram[0x014D]);
-		logerror("  Checksum: %Xh\n", Checksum);
+		logerror("\tVersion Number:   0x%2X\n", gb_ram[0x014C]);
+		logerror("\tComplement Check: 0x%2X\n", gb_ram[0x014D]);
+		logerror("\tChecksum:         0x%2X\n", Checksum);
 		J = ((UINT16) gb_ram[0x0103] << 8) + gb_ram[0x0102];
-		logerror("  Start Address: %Xh\n", J);
+		logerror("\tStart Address:    0x%2X\n", J);
 	}
 
 	Checksum += gb_ram[0x014E] + gb_ram[0x014F];
 	for (I = 0; I < 0x4000; I++)
 		Checksum -= gb_ram[I];
 
-	if (Verbose)
-		logerror("Loading %dx16kB ROM banks:.", ROMBanks);
 	for (I = 1; I < ROMBanks; I++)
 	{
 		if ((ROMMap[I] = malloc (0x4000)))
@@ -1527,18 +1406,16 @@ int gb_cart_load(int id, mame_file *F, int open_mode)
 			{
 				for (J = 0; J < 0x4000; J++)
 					Checksum -= ROMMap[I][J];
-				if (Verbose)
-					putchar ('.');
 			}
 			else
 			{
-				logerror("Error while reading from file: %s\n", image_filename(IO_CARTSLOT,id));
+				logerror("Error loading cartridge: Unable to read from file: %s.\n", image_filename(IO_CARTSLOT,id));
 				break;
 			}
 		}
 		else
 		{
-			logerror("Error allocating memory\n");
+			logerror("Error loading cartridge: Unable to allocate memory.\n");
 			break;
 		}
 	}
@@ -1548,7 +1425,7 @@ int gb_cart_load(int id, mame_file *F, int open_mode)
 
 	if (CheckCRC && (Checksum & 0xFFFF))
 	{
-		logerror("Error loading cartridge: Checksum is wrong");
+		logerror("Error loading cartridge: Checksum is wrong.");
 		return INIT_FAIL;
 	}
 
@@ -1564,7 +1441,7 @@ int gb_cart_load(int id, mame_file *F, int open_mode)
 				memset (RAMMap[I], 0, 0x2000);
 			else
 			{
-				logerror("Error alocating memory\n");
+				logerror("Error loading cartridge: Unable to allocate memory.\n");
 				return INIT_FAIL;
 			}
 		}
@@ -1584,7 +1461,6 @@ int gb_cart_load(int id, mame_file *F, int open_mode)
 				memcpy( RAMMap[I], ptr, 0x2000 );
 				ptr += 0x2000;
 			}
-
 			free( battery_ram );
 		}
 	}
@@ -1661,7 +1537,6 @@ void gb_scanline_interrupt (void)
 					cpu_set_irq_line(0, LCD_INT, HOLD_LINE);
 			}
 		}
-
 		CURLINE = (CURLINE + 1) % 154;
 	}
 
@@ -1703,8 +1578,6 @@ void gbc_hdma(UINT16 length)
 	src = ((UINT16)HDMA1 << 8) | (HDMA2 & 0xF0);
 	dst = ((UINT16)(HDMA3 & 0x1F) << 8) | (HDMA4 & 0xF0);
 	dst |= 0x8000;
-	if( Verbose )
-		printf( "\tsrc=%X  dst=%X  length=%X\n", src, dst, length );
 	while( length > 0 )
 	{
 		cpu_writemem16( dst++, cpu_readmem16( src++ ) );
@@ -1720,4 +1593,196 @@ void gbc_hdma(UINT16 length)
 		HDMA5 = 0xff;
 		gbc_hdma_enabled = 0;
 	}
+}
+
+WRITE_HANDLER ( gb_video_w )
+{
+	offset += 0xFF40;
+
+	switch (offset)
+	{
+	case 0xFF40:						/* LCDC - LCD Control */
+		gb_chrgen = gb_ram + ((data & 0x10) ? 0x8000 : 0x8800);
+		gb_tile_no_mod = (data & 0x10) ? 0x00 : 0x80;
+		gb_bgdtab = gb_ram + ((data & 0x08) ? 0x9C00 : 0x9800);
+		gb_wndtab = gb_ram + ((data & 0x40) ? 0x9C00 : 0x9800);
+		break;
+	case 0xFF41:						/* STAT - LCD Status */
+		data = (data & 0xF8) | (LCDSTAT & 0x07);
+		break;
+	case 0xFF44:						/* LY - LCD Y-coordinate */
+		data = 0;
+		break;
+	case 0xFF46:						/* DMA - DMA Transfer and Start Address */
+		{
+			UINT8 *P = gb_ram + 0xFE00;
+			offset = (UINT16) data << 8;
+			for (data = 0; data < 0xA0; data++)
+				*P++ = cpu_readmem16 (offset++);
+		}
+		return;
+	case 0xFF47:						/* BGP - Background Palette */
+		gb_bpal[0] = data & 0x3;
+		gb_bpal[1] = (data & 0xC) >> 2;
+		gb_bpal[2] = (data & 0x30) >> 4;
+		gb_bpal[3] = (data & 0xC0) >> 6;
+		break;
+	case 0xFF48:						/* OBP0 - Object Palette 0 */
+		gb_spal0[0] = data & 0x3;
+		gb_spal0[1] = (data & 0xC) >> 2;
+		gb_spal0[2] = (data & 0x30) >> 4;
+		gb_spal0[3] = (data & 0xC0) >> 6;
+		break;
+	case 0xFF49:						/* OBP1 - Object Palette 1 */
+		gb_spal1[0] = data & 0x3;
+		gb_spal1[1] = (data & 0xC) >> 2;
+		gb_spal1[2] = (data & 0x30) >> 4;
+		gb_spal1[3] = (data & 0xC0) >> 6;
+		break;
+	}
+	gb_ram [offset] = data;
+}
+
+WRITE_HANDLER ( gbc_video_w )
+{
+	static const UINT16 gbc_to_gb_pal[4] = {32767, 21140, 10570, 0};
+	static UINT16 BP = 0, OP = 0;
+
+	offset += 0xFF40;
+
+	switch( offset )
+	{
+		case 0xFF40:	/* LCDC - LCD Control */
+			gb_chrgen = GBC_VRAMMap[0] + ((data & 0x10) ? 0x0000 : 0x0800);
+			gbc_chrgen = GBC_VRAMMap[1] + ((data & 0x10) ? 0x0000 : 0x0800);
+			gb_tile_no_mod = (data & 0x10) ? 0x00 : 0x80;
+			gb_bgdtab = GBC_VRAMMap[0] + ((data & 0x08) ? 0x1C00 : 0x1800);
+			gbc_bgdtab = GBC_VRAMMap[1] + ((data & 0x08) ? 0x1C00 : 0x1800);
+			gb_wndtab = GBC_VRAMMap[0] + ((data & 0x40) ? 0x1C00 : 0x1800);
+			gbc_wndtab = GBC_VRAMMap[1] + ((data & 0x40) ? 0x1C00 : 0x1800);
+			break;
+		case 0xFF47:	/* BGP - GB background palette */
+			if( gbc_mode == GBC_MODE_MONO ) /* Some GBC games are lazy and still call this */
+			{
+				Machine->remapped_colortable[0] = gbc_to_gb_pal[(data & 0x03)];
+				Machine->remapped_colortable[1] = gbc_to_gb_pal[(data & 0x0C) >> 2];
+				Machine->remapped_colortable[2] = gbc_to_gb_pal[(data & 0x30) >> 4];
+				Machine->remapped_colortable[3] = gbc_to_gb_pal[(data & 0xC0) >> 6];
+			}
+			break;
+		case 0xFF48:	/* OBP0 - GB Object 0 palette */
+			if( gbc_mode == GBC_MODE_MONO ) /* Some GBC games are lazy and still call this */
+			{
+				Machine->remapped_colortable[4] = gbc_to_gb_pal[(data & 0x03)];
+				Machine->remapped_colortable[5] = gbc_to_gb_pal[(data & 0x0C) >> 2];
+				Machine->remapped_colortable[6] = gbc_to_gb_pal[(data & 0x30) >> 4];
+				Machine->remapped_colortable[7] = gbc_to_gb_pal[(data & 0xC0) >> 6];
+			}
+			break;
+		case 0xFF49:	/* OBP1 - GB Object 1 palette */
+			if( gbc_mode == GBC_MODE_MONO ) /* Some GBC games are lazy and still call this */
+			{
+				Machine->remapped_colortable[8] = gbc_to_gb_pal[(data & 0x03)];
+				Machine->remapped_colortable[9] = gbc_to_gb_pal[(data & 0x0C) >> 2];
+				Machine->remapped_colortable[10] = gbc_to_gb_pal[(data & 0x30) >> 4];
+				Machine->remapped_colortable[11] = gbc_to_gb_pal[(data & 0xC0) >> 6];
+			}
+			break;
+		case 0xFF4D:	/* KEY1 - Prepare speed switch */
+			if( data & 0x1 )
+			{
+				data = (gb_ram[offset] & 0x80)?0x00:0x80;
+/*				timer_set_overclock( 0, (data & 0x80)?2.0:1.0 );*/
+#ifdef V_GENERAL
+				logerror( "Switched to %s mode.\n", (data & 0x80) ? "FAST":"NORMAL" );
+#endif /* V_GENERAL */
+			}
+			break;
+		case 0xFF4F:	/* VBK - VRAM bank select */
+			GBC_VRAMBank = data & 0x1;
+			cpu_setbank (4, GBC_VRAMMap[GBC_VRAMBank]);
+			data |= 0xFE;
+			break;
+		case 0xFF51:	/* HDMA1 - HBL General DMA - Source High */
+			break;
+		case 0xFF52:	/* HDMA2 - HBL General DMA - Source Low */
+			data &= 0xF0;
+			break;
+		case 0xFF53:	/* HDMA3 - HBL General DMA - Destination High */
+			data &= 0x1F;
+			break;
+		case 0xFF54:	/* HDMA4 - HBL General DMA - Destination Low */
+			data &= 0xF0;
+			break;
+		case 0xFF55:	/* HDMA5 - HBL General DMA - Mode, Length */
+			if( !(data & 0x80) )
+			{
+				if( gbc_hdma_enabled )
+				{
+					gbc_hdma_enabled = 0;
+					data = HDMA5 & 0x80;
+				}
+				else
+				{
+					/* General DMA */
+					gbc_hdma( ((data & 0x7F) + 1) * 0x10 );
+					lcd_time -= ((KEY1 & 0x80)?110:220) + (((data & 0x7F) + 1) * 7.68);
+					data = 0xff;
+				}
+			}
+			else
+			{
+				/* H-Blank DMA */
+				gbc_hdma_enabled = 1;
+				data &= 0x7f;
+			}
+			break;
+		case 0xFF56:	/* RP - Infrared port */
+		case 0xFF68:	/* BCPS - Background palette specification */
+			break;
+		case 0xFF69:	/* BCPD - background palette data */
+			if( GBCBCPS & 0x1 )
+				Machine->remapped_colortable[(GBCBCPS & 0x3e) >> 1] = ((UINT16)(data & 0x7f) << 8) | BP;
+			else
+				BP = data;
+			if( GBCBCPS & 0x80 )
+			{
+				GBCBCPS++;
+				GBCBCPS &= 0xBF;
+			}
+			break;
+		case 0xFF6A:	/* OCPS - Object palette specification */
+			break;
+		case 0xFF6B:	/* OCPD - Object palette data */
+			if( GBCOCPS & 0x1 )
+				Machine->remapped_colortable[GBC_PAL_OBJ_OFFSET + ((GBCOCPS & 0x3e) >> 1)] = ((UINT16)(data & 0x7f) << 8) | OP;
+			else
+				OP = data;
+			if( GBCOCPS & 0x80 )
+			{
+				GBCOCPS++;
+				GBCOCPS &= 0xBF;
+			}
+			break;
+		case 0xFF70:	/* SVBK - RAM bank select */
+			GBC_RAMBank = data & 0x7;
+			cpu_setbank (3, GBC_RAMMap[GBC_RAMBank]);
+			break;
+		/* Undocumented registers */
+		case 0xFF6C:
+		case 0xFF72:
+		case 0xFF73:
+		case 0xFF74:
+		case 0xFF75:
+		case 0xFF76:
+		case 0xFF77:
+			logerror( "Write to undoco'ed register: %X = %X\n", offset, data );
+			return;
+		default:
+			/* we didn't handle the write, so pass it to the GB handler */
+			gb_video_w( offset - 0xFF40, data );
+			return;
+	}
+
+	gb_ram [offset] = data;
 }
