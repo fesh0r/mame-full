@@ -148,7 +148,7 @@ ifdef USE_DRMINGW
 DBGDEFS += -DUSE_DRMINGW
 endif
 
-extra:	romcmp$(EXE) $(TOOLS) $(TEXTS)
+extra:	$(TEXTS) $(TOOLS) 
 
 # combine the various definitions to one
 CDEFS = $(DEFS) $(COREDEFS) $(CPUDEFS) $(SOUNDDEFS) $(ASMDEFS) $(DBGDEFS)
