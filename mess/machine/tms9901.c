@@ -442,7 +442,7 @@ READ16_HANDLER ( tms9901_CRU_read )
 }
 
 /*
-	Read 1 bit to tms9901.
+	Write 1 bit to tms9901.
 
 	signification :
 	bit 0 : write mode9901
