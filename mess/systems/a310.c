@@ -97,27 +97,41 @@ void a310_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	}
 }
 
-static MEMORY_READ_START (readmem)
-	{ 0x00000000, 0x007fffff, MRA_BANK1 },
-	{ 0x00800000, 0x00ffffff, MRA_BANK2 },
-	{ 0x01000000, 0x017fffff, MRA_BANK3 },
-	{ 0x01800000, 0x01ffffff, MRA_BANK4 },
-	{ 0x02000000, 0x027fffff, MRA_BANK5 },
-	{ 0x02800000, 0x02ffffff, MRA_BANK6 },
-	{ 0x03000000, 0x037fffff, MRA_BANK7 },
-	{ 0x03800000, 0x03ffffff, MRA_BANK8 },
+static MEMORY_READ32_START (readmem)
+	{ 0x00000000, 0x007fffff, MRA32_BANK1 },
+	{ 0x00800000, 0x00ffffff, MRA32_BANK2 },
+	{ 0x01000000, 0x017fffff, MRA32_BANK3 },
+	{ 0x01800000, 0x01ffffff, MRA32_BANK4 },
+	{ 0x02000000, 0x027fffff, MRA32_BANK5 },
+	{ 0x02800000, 0x02ffffff, MRA32_BANK6 },
+	{ 0x03000000, 0x037fffff, MRA32_BANK7 },
+	{ 0x03800000, 0x03ffffff, MRA32_BANK8 },
 MEMORY_END
 
-static MEMORY_WRITE_START (writemem)
-	{ 0x00000000, 0x007fffff, MWA_BANK1 },
-    { 0x001ff000, 0x001fffff, videoram_w, &videoram, &videoram_size },
-	{ 0x00800000, 0x00ffffff, MWA_BANK2 },
-	{ 0x01000000, 0x017fffff, MWA_BANK3 },
-	{ 0x01800000, 0x01ffffff, MWA_BANK4 },
-	{ 0x02000000, 0x027fffff, MWA_BANK5 },
-	{ 0x02800000, 0x02ffffff, MWA_BANK6 },
-	{ 0x03000000, 0x037fffff, MWA_BANK7 },
-	{ 0x03800000, 0x03ffffff, MWA_BANK8 },
+/* R Nabet : no idea what this is supposed to do */
+static WRITE32_HANDLER( a310_videoram_w )
+{
+	if (((UINT32 *)videoram)[offset] != data)
+	{
+		dirtybuffer[offset << 2] = 1;
+		dirtybuffer[(offset << 2) + 1] = 1;
+		dirtybuffer[(offset << 2) + 2] = 1;
+		dirtybuffer[(offset << 2) + 3] = 1;
+
+		COMBINE_DATA(((UINT32 *)videoram)+offset);
+	}
+}
+
+static MEMORY_WRITE32_START (writemem)
+	{ 0x00000000, 0x007fffff, MWA32_BANK1 },
+    { 0x001ff000, 0x001fffff, a310_videoram_w, (data32_t**)&videoram, &videoram_size },
+	{ 0x00800000, 0x00ffffff, MWA32_BANK2 },
+	{ 0x01000000, 0x017fffff, MWA32_BANK3 },
+	{ 0x01800000, 0x01ffffff, MWA32_BANK4 },
+	{ 0x02000000, 0x027fffff, MWA32_BANK5 },
+	{ 0x02800000, 0x02ffffff, MWA32_BANK6 },
+	{ 0x03000000, 0x037fffff, MWA32_BANK7 },
+	{ 0x03800000, 0x03ffffff, MWA32_BANK8 },
 MEMORY_END
 
 INPUT_PORTS_START( a310 )
