@@ -677,10 +677,10 @@ gamelist.txt: $(EMULATOR)
 makedep/makedep$(EXE):
 	make -Cmakedep
 
-depend $(NAME).dep: makedep/makedep$(EXE)
-	makedep/makedep$(EXE) -f - -p$(TARGET).obj/ -- $(CFLAGS) $(INCLUDES) -- \
+depend $(TARGET).obj/$(TARGET).dep: makedep/makedep$(EXE)
+	makedep/makedep$(EXE) -f - -p$(TARGET).obj/ -Y. -- $(INCLUDE_PATH) -- \
 	src/*.c src/cpu/*/*.c src/sound/*.c src/drivers/*.c src/machine/*.c \
-	src/vidhrdw/*.c src/sndhrdw/*.c >$(NAME).dep
+	src/vidhrdw/*.c src/sndhrdw/*.c >$(TARGET).obj/$(TARGET).dep
 
 # uncomment the following line to include dependencies
-# include $(NAME).dep
+include $(TARGET).obj/$(TARGET).dep
