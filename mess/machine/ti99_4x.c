@@ -1,7 +1,7 @@
 /*
 	Machine code for TI99/4, TI-99/4A, TI99/4P.
 	Raphael Nabet, 1999-2002.
-	Some code derived from Ed Swartz's V9T9.
+	Some code was originally derived from Ed Swartz's V9T9.
 
 	References:
 	* The TI-99/4A Tech Pages <http://www.nouspikel.com/ti99/titech.htm>.  Great site.
@@ -16,58 +16,30 @@
 
 Emulated:
 	* All TI99 basic console hardware, except a few tricks in TMS9901 emulation.
-	* Cartridge with ROM (either non-paged or paged) and GROM (GRAM or extra GPL ports are possible).
+	* Cartridge with ROM (either non-paged or paged) and GROM (GRAM or extra
+	  GPL ports are possible, but not effectively supported yet).
 	* Speech Synthesizer, with standard speech ROM (no speech ROM expansion).
 	* Disk emulation (only SSSD disk images, and timings are completely wrong).
 
 	Compatibility looks quite good.
+
+Issues:
+	* disk images in MESS format are not quite the same a images in MESS
+	  format: they are identical for single-sided floppies, but not
+	  double-sided ones.
+		DS image (V9T9): side0 Trk0, side0 Trk1,... side0 Trk39, side1 Trk0,... side1 Trk39
+		DS image (MESS): side0 Trk0, side1 Trk0, side0 Trk1,... side0 Trk39, side1 Trk39
 
 TODO:
 	* DUMP THIS BLOODY TI99/4 ROM
 	* Submit speech improvements to Nicola again
 	* support for other peripherals and DSRs as documentation permits
 	* find programs which use super AMS or any other extended memory card
-	* finish 99/4p support: ROM6, HSGPL and EVPC cards
-
-New (9911):
-	* updated for 16 bit handlers.
-	* added some timing (OK, it's a trick...).
-New (991202):
-	* fixed the CRU base for disk
-New (991206):
-	* "Juergenified" the timer code
-New (991210):
-	* "Juergenified" code to use region accessor
-New (000125):
-	* Many small improvements, and bug fixes
-	* Moved tms9901 code to tms9901.c
-New (000204):
-	* separated tms9901 code from ti99/4a code further
-	* created drivers for 50hz versions of ti99/4x
-New (000305):
-	* updated for new MESS devices interfaces
-	* added tape support (??? Does not work on me...)
-New (0004):
-	* uses file extensions (Norberto Bensa)
-New (0005):
-	* fixed problems caused by the former patch
-	* fixed some tape bugs.  The CS1 unit now works occasionally
-New (000531):
-	* various small bugfixes
-New (001004):
-	* updated for new mem handling
-New (020327):
-	This is a big rewrite.  The code should be more flexible and more readable.
-	* updated tms9901 code
-	* fdc, speech synthesizer, memory extension can be disabled
-	* support for multiple extension cards
-	* support for super AMS, foundation, and a myarc look-alike memory extension cards
-	* support for multiple GROM ports
-	* better GROM and speech timings
+	* find specs for the EVPC palette chip
+	* finish 99/4p support: ROM6, HSGPL
 */
 
 #include <math.h>
-#include <time.h>
 #include "driver.h"
 #include "includes/wd179x.h"
 #include "tms9901.h"
@@ -2508,18 +2480,20 @@ static WRITE_HANDLER(fdc_mem_w)
 	* this card supports Double Density.
 	* as this card includes its own RAM, it does not need to allocate a portion
 	of VDP RAM to store I/O buffers.
-	* this card includes an RTC.
+	* this card includes a MM58274C RTC.
 
-	TODO:
-	* Finish RTC support (need the datasheet)
+	Reference:
+	* BwG Disketten-Controller: Beschreibung der DSR
+		<http://home.t-online.de/home/harald.glaab/snug/bwg.pdf>
 */
+
+#include "mm58274c.h"
 
 /* prototypes */
 static int bwg_cru_r(int offset);
 static void bwg_cru_w(int offset, int data);
 static READ_HANDLER(bwg_mem_r);
 static WRITE_HANDLER(bwg_mem_w);
-static void increment_rtc(int dummy);
 
 static const expansion_port_t bwg_handlers =
 {
@@ -2533,23 +2507,6 @@ static int bwg_rtc_enable;
 static int bwg_ram_offset;
 static int bwg_rom_offset;
 static UINT8 *bwg_ram;
-static struct
-{
-	int wday;		/* day of the week (1-7 (1=monday, 7=sunday)) */
-	int years1;		/* years (BCD: 0-99) */
-	int years2;
-	int months1;	/* months (BCD: 1-12) */
-	int months2;
-	int days1;		/* days (BCD: 1-31) */
-	int days2;
-	int hours1;		/* hours (BCD : 0-23) */
-	int hours2;
-	int minutes1;	/* minutes (BCD : 0-59) */
-	int minutes2;
-	int seconds1;	/* seconds (BCD : 0-59) */
-	int seconds2;
-	int tenths;		/* tenths of second (BCD : 0-9) */
-} rtc_regs;
 
 
 /*
@@ -2574,121 +2531,10 @@ static void ti99_bwg_init(void)
 	ti99_set_expansion_card_handlers(0x1100, & bwg_handlers);
 
 	wd179x_init(WD_TYPE_179X, fdc_callback);		/* initialize the floppy disk controller */
-	wd179x_set_density(DEN_FM_LO);
+	wd179x_set_density(DEN_MFM_LO);
 
 
-
-	{
-		/* Now we copy the host clock into the rtc */
-		/* All these functions should be ANSI */
-		time_t cur_time = time(NULL);
-		struct tm expanded_time = *localtime(& cur_time);
-
-		/* The clock count starts on 1st January 1900 */
-		rtc_regs.wday = expanded_time.tm_wday ? expanded_time.tm_wday : 7;
-		rtc_regs.years1 = (expanded_time.tm_year / 10) % 10;
-		rtc_regs.years2 = expanded_time.tm_year % 10;
-		rtc_regs.months1 = (expanded_time.tm_mon + 1) / 10;
-		rtc_regs.months2 = (expanded_time.tm_mon + 1) % 10;
-		rtc_regs.days1 = expanded_time.tm_mday / 10;
-		rtc_regs.days2 = expanded_time.tm_mday % 10;
-		rtc_regs.hours1 = expanded_time.tm_hour / 10;
-		rtc_regs.hours2 = expanded_time.tm_hour % 10;
-		rtc_regs.minutes1 = expanded_time.tm_min / 10;
-		rtc_regs.minutes2 = expanded_time.tm_min % 10;
-		rtc_regs.seconds1 = expanded_time.tm_sec / 10;
-		rtc_regs.seconds2 = expanded_time.tm_sec % 10;
-		rtc_regs.tenths = 0;
-	}
-	timer_pulse(TIME_IN_SEC(.1), 0, increment_rtc);
-}
-
-
-/*
-	Increment RTC clock (timed interrupt every 1/10s)
-*/
-static void increment_rtc(int dummy)
-{
-	(void) dummy;
-
-	if ((++rtc_regs.tenths) == 10)
-	{
-		rtc_regs.tenths = 0;
-
-		if ((++rtc_regs.seconds2) == 10)
-		{
-			rtc_regs.seconds2 = 0;
-
-			if ((++rtc_regs.seconds1) == 6)
-			{
-				rtc_regs.seconds1 = 0;
-
-				if ((++rtc_regs.minutes2) == 10)
-				{
-					rtc_regs.minutes2 = 0;
-
-					if ((++rtc_regs.minutes1) == 6)
-					{
-						rtc_regs.minutes1 = 0;
-
-						if ((++rtc_regs.hours2) == 10)
-						{
-							rtc_regs.hours2 = 0;
-
-							rtc_regs.hours1++;
-						}
-
-						if ((rtc_regs.hours1*10 + rtc_regs.hours2) == 24)
-						{
-							int days_in_month;
-
-							rtc_regs.hours1 = rtc_regs.hours2 = 0;
-
-							if ((++rtc_regs.days2) == 10)
-							{
-								rtc_regs.days2 = 0;
-
-								rtc_regs.days1++;
-							}
-
-							if ((++rtc_regs.wday) == 8)
-								rtc_regs.wday = 1;
-
-							days_in_month = gregorian_days_in_month(rtc_regs.months1*10 + rtc_regs.months2,
-																	1900 + rtc_regs.years1*10 + rtc_regs.years2);
-
-							if ((rtc_regs.days1*10 + rtc_regs.days2) == days_in_month+1)
-							{
-								rtc_regs.days1 = 0;
-								rtc_regs.days2 = 1;
-
-								if ((++rtc_regs.months2) == 10)
-								{
-									rtc_regs.months2 = 0;
-
-									rtc_regs.months1++;
-								}
-
-								if ((rtc_regs.months1*10 + rtc_regs.months2) == 13)
-								{
-									rtc_regs.months1 = 0;
-									rtc_regs.months2 = 1;
-
-									if ((++rtc_regs.years2) == 10)
-									{
-										rtc_regs.years2 = 0;
-
-										if ((++rtc_regs.years1) == 10)
-											rtc_regs.years1 = 0;
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
+	mm58274c_init();	/* initialize the RTC */
 }
 
 
@@ -2719,6 +2565,7 @@ static int bwg_cru_r(int offset)
 
 	return reply;
 }
+
 
 /*
 	Write disk CRU interface
@@ -2796,6 +2643,7 @@ static void bwg_cru_w(int offset, int data)
 
 	case 10:
 		/* double density enable (active low) */
+		wd179x_set_density(data ? DEN_FM_LO : DEN_MFM_LO);
 		break;
 
 	case 11:
@@ -2849,57 +2697,8 @@ static READ_HANDLER(bwg_mem_r)
 		reply = bwg_ram[bwg_ram_offset+(offset-0x1c00)];
 	else if (bwg_rtc_enable)
 	{
-		switch (offset)
-		{
-		case 0x1FE2:	/*Zehntel Sekunden*/
-			reply = rtc_regs.tenths;
-			break;
-		case 0x1FE4:	/*Einer Sekunden*/
-			reply = rtc_regs.seconds2;
-			break;
-		case 0x1FE6:	/*Zehner Sekunden*/
-			reply = rtc_regs.seconds1;
-			break;
-		case 0x1FE8:	/*Einer Minuten*/
-			reply = rtc_regs.minutes2;
-			break;
-		case 0x1FEA:	/*Zehner Minuten*/
-			reply = rtc_regs.minutes1;
-			break;
-		case 0x1FEC:	/*Einer Stunden*/
-			reply = rtc_regs.hours2;
-			break;
-		case 0x1FEE:	/*Zehner Stunden*/
-			reply = rtc_regs.hours1;
-			break;
-		case 0x1FF0:	/*Einer Tag*/
-			reply = rtc_regs.days2;
-			break;
-		case 0x1FF2:	/*Zehner Tag*/
-			reply = rtc_regs.days1;
-			break;
-		case 0x1FF4:	/*Einer Monat*/
-			reply = rtc_regs.months2;
-			break;
-		case 0x1FF6:	/*Zehner Monat*/
-			reply = rtc_regs.months1;
-			break;
-		case 0x1FF8:	/*Einer Jahr*/
-			reply = rtc_regs.years2;
-			break;
-		case 0x1FFA:	/*Zehner Jahr*/
-			reply = rtc_regs.years1;
-			break;
-		case 0x1FFC:	/*Wochentag*/
-			reply = rtc_regs.wday;
-			break;
-
-		case 0x1FE0:	/* Control Register */
-		case 0x1FFE:	/* Clock Set & Interrupt Control Register */
-		default:
-			reply = 0;
-			break;
-		}
+		if (! (offset & 1))
+			reply = mm58274c_r((offset - 0x1FE0) >> 1);
 	}
 	else
 	{
@@ -2940,12 +2739,8 @@ static WRITE_HANDLER(bwg_mem_w)
 		bwg_ram[bwg_ram_offset+(offset-0x1c00)] = data;
 	else if (bwg_rtc_enable)
 	{
-		switch (offset)
-		{
-		default:
-			logerror("unemulated write to bwg offset=%d, data=%d", (int)offset, (int)data);
-			break;
-		}
+		if (! (offset & 1))
+			mm58274c_w((offset - 0x1FE0) >> 1, data);
 	}
 	else
 	{
@@ -2986,7 +2781,7 @@ static READ_HANDLER(ide_mem_r);
 static WRITE_HANDLER(ide_mem_w);
 
 /* pointer to the IDE SRAM area */
-/* static UINT8 *ti99_ide_SRAM; */
+static UINT8 *ti99_ide_SRAM;
 
 static const expansion_port_t ide_handlers =
 {
@@ -2996,15 +2791,22 @@ static const expansion_port_t ide_handlers =
 	ide_mem_w
 };
 
+static int sram_enable;
+static int sram_enable_dip = 0;
+static int cru_bits;
+/*enum
+{
+};*/
+static int input_latch, output_latch;
 
 /*
 	Reset ide card, set up handlers
 */
 static void ti99_ide_init(void)
 {
-	/*ti99_ide_SRAM = memory_region(region_dsr) + offset_ide_sram;*/
+	ti99_ide_SRAM = memory_region(region_dsr) + offset_ide_ram;
 
-	/*ti99_set_expansion_card_handlers(0x1100, & ide_handlers);*/
+	ti99_set_expansion_card_handlers(0x1000, & ide_handlers);
 }
 
 /*
@@ -3029,30 +2831,32 @@ static int ide_cru_r(int offset)
 */
 static void ide_cru_w(int offset, int data)
 {
+	offset &= 7;
+
+
 	switch (offset)
 	{
-	case 0:
+	case 0:			/* turn card on: handled by core */
 		break;
 
-	case 1:
+	case 1:			/* enable SRAM or registers in 0x4000-0x40ff */
+		sram_enable = data;
 		break;
 
-	case 2:
-		break;
+	case 2:			/* enable SRAM page switching */
+	case 3:			/* force SRAM page 0 */
+	case 4:			/* enable SRAM in 0x6000-0x7000 */
+	case 5:			/* write-protect RAM */
+	case 6:			/* not used */
+	case 7:			/* reset drive */
+		if (data)
+			cru_bits |= 1 << offset;
+		else
+			cru_bits &= ~ (1 << offset);
 
-	case 3:
-		break;
-
-	case 4:
-		break;
-
-	case 5:
-		break;
-
-	case 6:
-		break;
-
-	case 7:
+		if ((offset == 7) && data)
+			/* TODO: reset IDE drive */
+			;
 		break;
 	}
 }
@@ -3063,11 +2867,60 @@ static void ide_cru_w(int offset, int data)
 */
 static READ_HANDLER(ide_mem_r)
 {
-	switch (offset)
-	{
-	default:
-		return 0;
+	int reply = 0;
+
+
+	if ((offset <= 0xff) && (sram_enable == sram_enable_dip))
+	{	/* registers */
+		switch ((offset >> 5) & 0x3)
+		{
+		case 0:		/* RTC RAM */
+			if (offset & 0x80)
+				/* RTC RAM page register */
+				;
+			else
+				/* RTC RAM write */
+				;
+			break;
+		case 1:		/* RTC registers */
+			if (offset == 0x20)
+				/* register data */
+				;
+			else if (offset == 0x30)
+				/* register select */
+				;
+			break;
+		case 2:		/* IDE registers set 1 (CS1Fx) */
+			if (offset & 1)
+			{
+				if (! (offset & 0x10))
+					/*reply = ide_r((offset >> 1) & 0x7)*/;
+
+				input_latch = (reply >> 8) & 0xff;
+				reply &= 0xff;
+			}
+			else
+				reply = input_latch;
+			break;
+		case 3:		/* IDE registers set 2 (CS3Fx) */
+			if (offset & 1)
+			{
+				if (! (offset & 0x10))
+					/*reply = ide_r(((offset >> 1) & 0x7) + 0x8)*/;
+
+				input_latch = (reply >> 8) & 0xff;
+				reply &= 0xff;
+			}
+			else
+				reply = input_latch;
+			break;
+		}
 	}
+	else
+	{	/* sram */
+	}
+
+	return reply;
 }
 
 /*
@@ -3075,8 +2928,42 @@ static READ_HANDLER(ide_mem_r)
 */
 static WRITE_HANDLER(ide_mem_w)
 {
-	switch (offset)
-	{
+	if ((offset <= 0xff) && (sram_enable == sram_enable_dip))
+	{	/* registers */
+		switch ((offset >> 5) & 0x3)
+		{
+		case 0:		/* RTC RAM */
+			if (offset & 0x80)
+				/* RTC RAM page register */
+				;
+			else
+				/* RTC RAM write */
+				;
+			break;
+		case 1:		/* RTC registers */
+			if (offset == 0x20)
+				/* register data */
+				;
+			else if (offset == 0x30)
+				/* register select */
+				;
+			break;
+		case 2:		/* IDE registers set 1 (CS1Fx) */
+			if (offset & 1)
+				output_latch = data;
+			else
+				/*ide_w((offset >> 1) & 0x7, ((int) data << 8) | output_latch);*/
+			break;
+		case 3:		/* IDE registers set 2 (CS3Fx) */
+			if (offset & 1)
+				output_latch = data;
+			else
+				/*ide_w(((offset >> 1) & 0x7) + 0x8, ((int) data << 8) | output_latch);*/
+			break;
+		}
+	}
+	else
+	{	/* sram */
 	}
 }
 

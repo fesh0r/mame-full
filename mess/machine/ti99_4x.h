@@ -38,11 +38,12 @@ enum
 /* offsets for region_dsr */
 enum
 {
-	offset_fdc_dsr = 0x0000,
-	offset_bwg_dsr = 0x2000,
-	offset_bwg_ram = 0xa000,
-	offset_evpc_dsr= 0xa800,
-	region_dsr_len = 0x1a800
+	offset_fdc_dsr = 0x0000,		/* TI FDC DSR (8kbytes) */
+	offset_bwg_dsr = 0x2000,		/* BwG FDC DSR (32kbytes) */
+	offset_bwg_ram = 0xa000,		/* BwG FDC RAM (2kbytes) */
+	offset_evpc_dsr= 0xa800,		/* EVPC DSR (64kbytes) */
+	offset_ide_ram = 0x1a800,		/* IDE card RAM (32 to 512kbytes) */
+	region_dsr_len = 0x11a800
 };
 
 /* enum for RAM config */
