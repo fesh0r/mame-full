@@ -42,10 +42,20 @@ static const double *vectrex_imager_angles = unknown_game_angles;
 static unsigned char vectrex_imager_pinlevel=0x00;
 static double imager_wheel_time = 0;
 
+
+static int vectrex_varify_cart (char *data)
+{
+	/* Verify the file is accepted by the Vectrex bios */
+	if (!memcmp(data,"g GCE", 5))
+		return IMAGE_VERIFY_PASS;
+	else
+		return IMAGE_VERIFY_FAIL;
+}
+
 /*********************************************************************
   ROM load and id functions
  *********************************************************************/
-int vectrex_load_rom (int id)
+int vectrex_init_cart (int id)
 {
 	const char *name;
 	FILE *cartfile = 0;
@@ -61,8 +71,24 @@ int vectrex_load_rom (int id)
 	{
 		osd_fread (cartfile, memory_region(REGION_CPU1), 0x8000);
 		osd_fclose (cartfile);
-	}
 
+		/* check image! */
+		if (vectrex_varify_cart((char*)memory_region(REGION_CPU1)) == IMAGE_VERIFY_FAIL)
+		{
+			logerror("Invalid image!\n");
+			return INIT_FAIL;
+		}
+
+	}
+	else
+	{
+		if (device_filename(IO_CARTSLOT,id))
+		{
+			logerror("Coleco - Cart specified but not found!\n");
+			return INIT_FAIL;
+		}
+
+	}
 	vectrex_imager_angles = unknown_game_angles;
 	name = device_filename(IO_CARTSLOT,id);
 	if (name)
@@ -82,31 +108,6 @@ int vectrex_load_rom (int id)
 
 	return INIT_PASS;
 }
-
-#ifdef VERIFY_IMAGE
-int vectrex_id_rom (int id)
-{
-	const char *gamename = device_filename(IO_CARTSLOT,id);
-	void *romfile;
-	char magic[5];
-
-	/* If no file was specified, don't bother */
-	if (!gamename || strlen(gamename)==0)
-		return ID_OK;
-
-	if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
-		return ID_FAILED;
-
-	/* Verify the file is accepted by the Vectrex bios */
-	osd_fread (romfile, magic, 5);
-	osd_fclose (romfile);
-
-	if (!memcmp(magic,"g GCE", 5))
-		return ID_OK;
-	else
-		return ID_FAILED;
-}
-#endif
 
 /*********************************************************************
   Vectrex memory handler

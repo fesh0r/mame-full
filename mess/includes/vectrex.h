@@ -2,7 +2,7 @@
 extern unsigned char *vectrex_ram;
 extern READ_HANDLER  ( vectrex_mirrorram_r );
 extern WRITE_HANDLER ( vectrex_mirrorram_w );
-extern int vectrex_load_rom (int id);
+extern int vectrex_init_cart (int id);
 
 /* From machine/vectrex.c */
 extern int vectrex_refresh_with_T2;
