@@ -8,7 +8,8 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
-(none)
+- [APPLE2] Changed joystick default key mapping so not conflict with keyboard
+  mappings.  [Nate Woods]
 
 
 
