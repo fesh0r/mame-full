@@ -275,7 +275,8 @@ int xv_open_display(int reopen)
           gc = XCreateGC (display, window, 0, &xgcv);
 
 	  /* open xinput */
-	  xinput_open(sysdep_display_params.fullscreen, 0);
+          xinput_open(sysdep_display_params.fullscreen?
+            X11_FORCE_MOUSE_GRAB:X11_NO_FORCED_GRAB, 0);
         }
         else
         {

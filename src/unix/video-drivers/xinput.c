@@ -459,7 +459,7 @@ int xinput_open(int force_grab, int event_mask)
     xinput_invisible_cursor  = xinput_create_invisible_cursor (display, window);
     xinput_cursors_allocated = 1;
 
-    if (xinput_mouse_grabbed || !xinput_show_cursor || xinput_force_grab)
+    if (xinput_mouse_grabbed || !xinput_show_cursor)
  	XDefineCursor (display, window, xinput_invisible_cursor);
     else
     	XDefineCursor (display, window, xinput_normal_cursor);
@@ -470,7 +470,7 @@ int xinput_open(int force_grab, int event_mask)
     XSelectInput (display, window, event_mask);
   }
 
-  if ((xinput_force_grab == 2) || xinput_grab_keyboard)
+  if ((xinput_force_grab == X11_FORCE_INPUT_GRAB) || xinput_grab_keyboard)
   {
     /* keyboard grab failing could be fatal so let the caller know */
     if (XGrabKeyboard(display, window, True, GrabModeAsync, GrabModeAsync,
@@ -538,7 +538,8 @@ void xinput_update(int keyb_leds, int flags)
   }
 
   /* toggle keyboard grabbing */
-  if ((xinput_force_grab!=2) && (flags & SYSDEP_DISPLAY_HOTKEY_GRABKEYB))
+  if ((xinput_force_grab!=X11_FORCE_INPUT_GRAB) &&
+      (flags & SYSDEP_DISPLAY_HOTKEY_GRABKEYB))
   {
     if (xinput_keyboard_grabbed)
     {

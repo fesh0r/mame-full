@@ -42,10 +42,16 @@
 
 static SDL_Surface* video_surface = NULL;
 static int startx, starty;
-static int doublebuf=0;
-static int cursor_state; /* previous mouse cursor state */
 static blit_func_p blit_func;
 static int scaled_height, scaled_width;
+static int first_update;
+static int sdl_input_grabbed = SDL_GRAB_OFF;
+
+/* options, these get initialised by the rc-code */
+static int sdl_grab_input;
+static int sdl_show_cursor;
+static int sdl_always_use_mouse;
+static int doublebuf;
 
 static int sdl_mapkey(struct rc_option *option, const char *arg, int priority);
 
@@ -53,8 +59,11 @@ struct rc_option sysdep_display_opts[] = {
   /* name, shortname, type, dest, deflt, min, max, func, help */
   { NULL, NULL, rc_link, aspect_opts, NULL, 0, 0, NULL, NULL },
   { "SDL Related", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
-  { "doublebuf", NULL, rc_bool, &doublebuf, "0", 0, 0, NULL,
+  { "doublebuf", NULL, rc_bool, &doublebuf, "1", 0, 0, NULL,
     "Use double buffering to reduce flicker/tearing" },
+  { "grabinput", "gi", rc_bool, &sdl_grab_input, "0", 0, 0, NULL, "Select input grabbing (left-ctrl + delete)" },
+  { "alwaysusemouse", "aum", rc_bool, &sdl_always_use_mouse, "0", 0, 0, NULL, "Always use mouse movements as input, even when not grabbed and not fullscreen (default disabled)" },
+  { "cursor", "cu", rc_bool, &sdl_show_cursor, "1", 0, 0, NULL, "Show/don't show the cursor" },
   { "sdlmapkey", "sdlmk", rc_use_function, NULL, NULL, 0, 0, sdl_mapkey,
     "Set a specific key mapping, see xmamerc.dist" },
   { NULL, NULL, rc_link, mode_opts, NULL, 0, 0, NULL, NULL },
@@ -359,16 +368,28 @@ int sysdep_display_driver_open(int reopen)
       break;
   }
 
-  /* Setup event mask */
-  SDL_EventState(SDL_KEYUP, SDL_ENABLE);
-  SDL_EventState(SDL_KEYDOWN, SDL_ENABLE);
-  SDL_EnableUNICODE(1);
+  /* Setup input */
+  if (!reopen)
+  {
+    SDL_EventState(SDL_KEYUP, SDL_ENABLE);
+    SDL_EventState(SDL_KEYDOWN, SDL_ENABLE);
+    SDL_EnableUNICODE(1);
+    if (sdl_grab_input)
+      sdl_input_grabbed = SDL_WM_GrabInput(SDL_GRAB_ON);
+  }
   
-  /* Hide mouse cursor and save its previous status */
-  cursor_state = SDL_ShowCursor(0);
+  /* Hide/Show mouse cursor? */
+  if ((sdl_input_grabbed == SDL_GRAB_ON) || !sdl_show_cursor ||
+      sysdep_display_params.fullscreen)
+    SDL_ShowCursor(0);
+  else
+    SDL_ShowCursor(1);
 
   /* Set window title */
   SDL_WM_SetCaption(sysdep_display_params.title, NULL);
+  /* let sysdep_display_update know that it's the first call after
+     an (re)open */
+  first_update = 1;
 
   return sysdep_display_effect_open();
 }
@@ -403,6 +424,13 @@ const char *sysdep_display_update(struct mame_bitmap *bitmap,
   unsigned char *video_mem = video_surface->pixels;
   video_mem += startx * video_surface->format->BytesPerPixel;
   video_mem += starty * video_surface->pitch;
+  
+  /* do we need todo a full update? */
+  if (first_update)
+  {
+    *dirty_area = *vis_in_dest_out;
+    first_update = 0;
+  }  
 
   SDL_LockSurface(video_surface);
     
@@ -421,6 +449,31 @@ const char *sysdep_display_update(struct mame_bitmap *bitmap,
     drect.w = (vis_in_dest_out->max_x + 1) - vis_in_dest_out->min_x;
     drect.h = (vis_in_dest_out->max_y + 1) - vis_in_dest_out->min_y;
     SDL_UpdateRects(video_surface,1, &drect);
+  }
+  
+  if ((flags & SYSDEP_DISPLAY_HOTKEY_GRABMOUSE) &&
+      !sysdep_display_params.fullscreen)
+  {
+    if(sdl_input_grabbed == SDL_GRAB_ON)
+    {
+      sdl_input_grabbed = SDL_WM_GrabInput(SDL_GRAB_OFF);
+      if (sdl_input_grabbed == SDL_GRAB_OFF)
+        sdl_grab_input = 0;
+    }
+    else
+    {
+      sdl_input_grabbed = SDL_WM_GrabInput(SDL_GRAB_ON);
+      if (sdl_input_grabbed == SDL_GRAB_ON)
+        sdl_grab_input = 1;
+    }
+    /* Show/Hide mouse cursor */
+    if (sdl_show_cursor)
+    {
+      if (sdl_input_grabbed == SDL_GRAB_ON)
+        SDL_ShowCursor(0);
+      else
+        SDL_ShowCursor(1);
+    }
   }
       
   return NULL;
@@ -456,9 +509,6 @@ void sysdep_display_driver_clear_buffer(void)
 void sysdep_display_close(void)
 {
    sysdep_display_effect_close();
-
-   /* Restore cursor state */
-   SDL_ShowCursor(cursor_state);
 }
 
 void sysdep_display_update_mouse(void)
@@ -467,11 +517,23 @@ void sysdep_display_update_mouse(void)
    int x,y;
    Uint8 buttons;
 
-   buttons = SDL_GetRelativeMouseState( &x, &y);
-   sysdep_display_mouse_data[0].deltas[0] = x;
-   sysdep_display_mouse_data[0].deltas[1] = y;
-   for(i=0;i<SYSDEP_DISPLAY_MOUSE_BUTTONS;i++) {
-      sysdep_display_mouse_data[0].buttons[i] = buttons & (0x01 << i);
+   if(sdl_always_use_mouse || (sdl_input_grabbed == SDL_GRAB_ON) ||
+      sysdep_display_params.fullscreen)
+   {
+     buttons = SDL_GetRelativeMouseState( &x, &y);
+     sysdep_display_mouse_data[0].deltas[0] = x;
+     sysdep_display_mouse_data[0].deltas[1] = y;
+     for(i=0;i<SYSDEP_DISPLAY_MOUSE_BUTTONS;i++) {
+        sysdep_display_mouse_data[0].buttons[i] = buttons & (0x01 << i);
+     }
+   }
+   else
+   {
+     sysdep_display_mouse_data[0].deltas[0] = 0;
+     sysdep_display_mouse_data[0].deltas[1] = 0;
+     for(i=0;i<SYSDEP_DISPLAY_MOUSE_BUTTONS;i++) {
+        sysdep_display_mouse_data[0].buttons[i] = 0;
+     }
    }
 }
 
@@ -506,6 +568,7 @@ int sysdep_display_driver_update_keyboard()
                retval |= SYSDEP_DISPLAY_QUIT_REQUESTED;
                break;
     	    case SDL_JOYAXISMOTION:   
+	    case SDL_JOYBUTTONDOWN:
 	    case SDL_JOYBUTTONUP:
 	       /* ignore, these are polled by the SDL joystick driver */
                break;

@@ -143,7 +143,7 @@ int x11_window_open_display(int reopen)
           else
           {
                   /* create the actual window */
-                  if (x11_create_window(&window_width, &window_height, 0))
+                  if (x11_create_window(&window_width, &window_height, X11_FIXED))
                           return 1;
           }
 
@@ -151,7 +151,7 @@ int x11_window_open_display(int reopen)
           gc = XCreateGC (display, window, 0, &xgcv);
 
 	  /* open xinput */
-          xinput_open(0, ExposureMask);
+          xinput_open(X11_NO_FORCED_GRAB, ExposureMask);
         }
         else
         {
@@ -164,11 +164,11 @@ int x11_window_open_display(int reopen)
           if(!run_in_root_window)
           {
             /* set window hints to resizable */
-            x11_set_window_hints(window_width, window_height, 2);
+            x11_set_window_hints(window_width, window_height, X11_RESIZABLE);
             /* resize */
             XResizeWindow(display, window, window_width, window_height);
             /* set window hints to nonresizable */
-            x11_set_window_hints(window_width, window_height, 0);
+            x11_set_window_hints(window_width, window_height, X11_FIXED);
           }
         }
 

@@ -118,8 +118,8 @@ int xgl_open_display(int reopen)
       window_width  = 640;
       window_height = 480;
     }
-    window_type = 0; /* non resizable */
-    force_grab  = 2; /* grab mouse and keyb */
+    window_type = X11_FIXED; /* non resizable */
+    force_grab  = X11_FORCE_INPUT_GRAB; /* grab mouse and keyb */
   }
   else if(sysdep_display_params.fullscreen)
   {
@@ -127,8 +127,8 @@ int xgl_open_display(int reopen)
                     CWColormap | CWDontPropagate | CWCursor;
     window_width  = screen->width;
     window_height = screen->height;
-    window_type   = 3; /* fullscreen */
-    force_grab    = 1; /* grab mouse */
+    window_type   = X11_FULLSCREEN; /* fullscreen */
+    force_grab    = X11_FORCE_MOUSE_GRAB; /* grab mouse */
   }
   else
   {
@@ -146,10 +146,10 @@ int xgl_open_display(int reopen)
       mode_stretch_aspect(window_width, window_height, &window_width, &window_height);
     }
     if (cabview)
-      window_type = 2; /* resizable */
+      window_type = X11_RESIZABLE; /* resizable */
     else
-      window_type = 1; /* resizable, keep aspect */
-    force_grab    = 0; /* no grab */
+      window_type = X11_RESIZABLE_ASPECT; /* resizable, keep aspect */
+    force_grab    = X11_NO_FORCED_GRAB;   /* no grab */
   }
 
   if(!reopen)
@@ -225,10 +225,11 @@ int xgl_open_display(int reopen)
   }
   else
   {
-    if((window_type == 1) || (window_type == 2))
+    if((window_type == X11_RESIZABLE_ASPECT) ||
+       (window_type == X11_RESIZABLE))
     {
       /* set window hints to resizable, no aspect */
-      x11_set_window_hints(window_width, window_height, 2);
+      x11_set_window_hints(window_width, window_height, X11_RESIZABLE);
       /* resize */
       XResizeWindow(display, window, window_width, window_height);
       /* set window hints back */
@@ -294,14 +295,18 @@ const char *xgl_update_display(struct mame_bitmap *bitmap,
     if(cabview)
     {
       msg = "cabinet view on";
-      if((window_type == 1) || (window_type == 2))
-        x11_set_window_hints(window_width, window_height, 2); /* resizable */
+      if((window_type == X11_RESIZABLE_ASPECT) ||
+         (window_type == X11_RESIZABLE))
+        x11_set_window_hints(window_width, window_height,
+          X11_RESIZABLE); /* resizable */
     }
     else
     {
       msg = "cabinet view off";
-      if((window_type == 1) || (window_type == 2))
-        x11_set_window_hints(window_width, window_height, 1); /* keep aspect */
+      if((window_type == X11_RESIZABLE_ASPECT) ||
+         (window_type == X11_RESIZABLE))
+        x11_set_window_hints(window_width, window_height,
+          X11_RESIZABLE_ASPECT); /* keep aspect */
     }
   }
   

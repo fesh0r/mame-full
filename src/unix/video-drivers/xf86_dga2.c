@@ -292,7 +292,7 @@ int xf86_dga2_open_display(int reopen)
 	} while(i<32);
 
         /* 2 means grab keyb and mouse ! */
-	if(xinput_open(2, 0))
+	if(xinput_open(X11_FORCE_INPUT_GRAB, 0))
 	{
 	    fprintf(stderr,"XGrabKeyboard failed\n");
 	    return 1;

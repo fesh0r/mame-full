@@ -45,13 +45,13 @@ int xfx_open_display(int reopen)
 {
   if (!reopen)
   {
-    if (x11_create_window(&fxwidth, &fxheight, 0))
+    if (x11_create_window(&fxwidth, &fxheight, X11_FIXED))
       return 1;
       
     window_width  = fxwidth;
     window_height = fxheight;
       
-    xinput_open(2, 0);
+    xinput_open(X11_FORCE_INPUT_GRAB, 0);
   }
   
   if (InitVScreen(reopen) != 0)

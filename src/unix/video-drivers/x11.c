@@ -347,7 +347,7 @@ int x11_create_resizable_window(unsigned int *width, unsigned int *height)
 	}
 	
 	if(sysdep_display_params.fullscreen)
-                return x11_create_window(width, height, 3);
+                return x11_create_window(width, height, X11_FULLSCREEN);
 
         /* determine window size */
         if (custom_window_width)
@@ -367,7 +367,7 @@ int x11_create_resizable_window(unsigned int *width, unsigned int *height)
             width, height);
         }
         
-        return x11_create_window(width, height, 1);
+        return x11_create_window(width, height, X11_RESIZABLE_ASPECT);
 }
 
 void x11_resize_resizable_window(unsigned int *width, unsigned int *height)
@@ -394,11 +394,11 @@ void x11_resize_resizable_window(unsigned int *width, unsigned int *height)
         }
 
         /* set window hints to resizable */
-        x11_set_window_hints(window_width, window_height, 2);
+        x11_set_window_hints(window_width, window_height, X11_RESIZABLE);
         /* resize */
         XResizeWindow(display, window, window_width, window_height);
         /* set window hints to keep aspect resizable */
-        x11_set_window_hints(window_width, window_height, 1);
+        x11_set_window_hints(window_width, window_height, X11_RESIZABLE_ASPECT);
 }
 
 /* Create a window, type can be:
@@ -416,16 +416,16 @@ int x11_create_window(unsigned int *width, unsigned int *height, int type)
 	
 	switch (type)
 	{
-	    case 0: /* fixed size */
-	    case 1: /* resizable, keep aspect */
-	    case 2: /* resizable */
+	    case X11_FIXED: /* fixed size */
+	    case X11_RESIZABLE_ASPECT: /* resizable, keep aspect */
+	    case X11_RESIZABLE: /* resizable */
 	        x = x11_init_hints.x;
 	        y = x11_init_hints.y;
 	        win_gravity = x11_init_hints.win_gravity;
 	        if (root_window_id)
 	           root = root_window_id;
 		break;
-	    case 3: /* fullscreen */
+	    case X11_FULLSCREEN: /* fullscreen */
 		*width  = screen->width;
 		*height = screen->height;
 		break;
@@ -487,10 +487,10 @@ void x11_set_window_hints(unsigned int width, unsigned int height, int type)
 	/* Size hints */
 	switch (type)
 	{
-	    case 0: /* fixed size */
+	    case X11_FIXED: /* fixed size */
 		hints.flags |= PSize | PMinSize | PMaxSize;
 		break;
-	    case 1: /* resizable, keep aspect */
+	    case X11_RESIZABLE_ASPECT: /* resizable, keep aspect */
 	    	/* detect -keepaspect */
 	        option = rc_get_option2(aspect_opts, "keepaspect");
 	    	if (option && *((int *)option->dest))
@@ -506,10 +506,10 @@ void x11_set_window_hints(unsigned int width, unsigned int height, int type)
 	    	  hints.max_aspect.y = y;
 		  hints.flags |= PAspect;
 		}
-	    case 2: /* resizable */
+	    case X11_RESIZABLE: /* resizable */
 		hints.flags |= PSize;
 		break;
-	    case 3: /* fullscreen */
+	    case X11_FULLSCREEN: /* fullscreen */
 		hints.x = hints.y = 0;
 		hints.flags = PMinSize|PMaxSize|USPosition|USSize;
 		break;
@@ -520,7 +520,7 @@ void x11_set_window_hints(unsigned int width, unsigned int height, int type)
         XSetWMNormalHints (display, window, &hints);
         
         /* Hack to get rid of window title bar */
-        if(type == 3)
+        if(type == X11_FULLSCREEN)
         {
                 Atom mwmatom;
                 MotifWmHints mwmhints;

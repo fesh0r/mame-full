@@ -88,7 +88,8 @@ int xil_open_display(int reopen)
           sysdep_display_properties.vector_renderer            = NULL;
 
           /* init the input code */
-          xinput_open(sysdep_display_params.fullscreen, 0);
+          xinput_open(sysdep_display_params.fullscreen?
+            X11_FORCE_MOUSE_GRAB:X11_NO_FORCED_GRAB, 0);
         }
         else
         {

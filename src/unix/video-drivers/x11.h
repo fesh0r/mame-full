@@ -11,6 +11,8 @@
 #endif
 
 enum { X11_WINDOW, X11_XV, X11_OPENGL, X11_GLIDE, X11_XIL, X11_DGA };
+enum { X11_FIXED, X11_RESIZABLE_ASPECT, X11_RESIZABLE, X11_FULLSCREEN };
+enum { X11_NO_FORCED_GRAB, X11_FORCE_MOUSE_GRAB, X11_FORCE_INPUT_GRAB };
 
 extern struct rc_option x11_window_opts[];
 extern struct rc_option	x11_input_opts[];
@@ -71,13 +73,13 @@ int x11_init_palette_info(void);
    sysdep_display_params.fullscreen, return width and height in width
    and height. */
 int x11_create_resizable_window(unsigned int *width, unsigned int *height);
+void x11_resize_resizable_window(unsigned int *width, unsigned int *height);
 /* Create a window, type can be:
    0: Fixed size of width and height
    1: Resizable initial size is width and height, aspect is always
       kept to sysdep_display_params.aspect .
    2: Resizable initial size is width and height
    3: Fullscreen return width and height in width and height */
-void x11_resize_resizable_window(unsigned int *width, unsigned int *height);
 int x11_create_window(unsigned int *width, unsigned int *height, int type);
 /* Set the hints for a window, window-type can be:
    0: Fixed size

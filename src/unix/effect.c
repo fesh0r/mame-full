@@ -47,6 +47,7 @@
 #include <string.h>
 #include "osd_cpu.h"
 #include "sysdep/sysdep_display_priv.h"
+#include "video-drivers/pixel_convert.h"
 #include "effect.h"
 
 const struct sysdep_display_effect_properties_struct sysdep_display_effect_properties[] = {
@@ -82,9 +83,9 @@ char *_6tap2x_buf5 = NULL;
 #define GMASK32_INV(P) ((P) & 0x00ff00ff)
 #define BMASK32_INV(P) ((P) & 0x00ffff00)
 
-#define FOURCC_YUY2 0x32595559
-#define FOURCC_YV12 0x32315659
-
+/* We differentiate between 5 different destination types */
+enum { EFFECT_UNKNOWN = -1, EFFECT_15, EFFECT_16, EFFECT_32, EFFECT_YUY2,
+  EFFECT_YV12, EFFECT_COLOR_FORMATS };
 
 /* RGB16 to YUV like conversion, used for lq2x/hq2x calculations */
 static int rgb2yuv[65536];
@@ -201,10 +202,10 @@ void sysdep_display_check_effect_params(
    building the effect funcs tables, so that we don't have to declare
    prototypes for all these variants (me lazy) */
 
-/* for effects which have 2 steps, most have 3 addline functions
+/* For effects which have 2 steps, most have 3 addline functions
    for 15, 16 and 32 bpp src's and 5 render functions for
-   15, 16, 32, YUY2 and YV12 dest's, the templates for these functions are
-   in effect_renderers.h, where the addline functions are
+   15, 16, 32, YUY2 and YV12 dest's, the templates for both the renderers and
+   the addline functions are in effect_renderers.h, with the addline functions
    surrounded by a #if DEST_DEPTH != YUY2  */
 #define DEST_DEPTH 15
 #include "effect_renderers.h"
@@ -257,8 +258,7 @@ void sysdep_display_check_effect_params(
 /* done */
 #undef GETPIXEL
 
-#define COLOR_FORMATS 5 /* 15,16,32,YUY2,YV12 */
-#define SYSDEP_DISPLAY_EFFECT_MODES (COLOR_FORMATS*3) /* 15,16,32 */
+#define SYSDEP_DISPLAY_EFFECT_MODES (EFFECT_COLOR_FORMATS*3) /* 15,16,32 src */
 /* arrays with all the effect functions:
    5x 15 to ... + 5x 16 to ... + 5x 32 to ...
    15
@@ -410,7 +410,7 @@ static effect_6tap_render_func_p effect_6tap_render_funcs[] = {
  * done, to free (partly) allocated buffers */
 int sysdep_display_effect_open(void)
 {
-  const char *display_name[COLOR_FORMATS] = {
+  const char *display_name[EFFECT_COLOR_FORMATS] = {
     "RGB 555",
     "RGB 565",
     "RGB 888",
@@ -418,7 +418,7 @@ int sysdep_display_effect_open(void)
     "YV12"
   };
   int effect_ok = 0;
-  int effect_index = -1;
+  int effect_index = EFFECT_UNKNOWN;
 
   /* FIXME only allocate if needed and of the right size */
   if (!(effect_dbbuf = malloc(sysdep_display_params.max_width*sysdep_display_params.widthscale*sysdep_display_params.heightscale*4)))
@@ -430,37 +430,37 @@ int sysdep_display_effect_open(void)
     switch(sysdep_display_properties.palette_info.fourcc_format)
     {
       case FOURCC_YUY2:
-        effect_index = 3;
+        effect_index = EFFECT_YUY2;
         break;
       case FOURCC_YV12:
-        effect_index = 4;
+        effect_index = EFFECT_YV12;
         break;
       case 0:
         if ( (sysdep_display_properties.palette_info.bpp == 16) &&
              (sysdep_display_properties.palette_info.red_mask   == (0x1F << 10)) &&
              (sysdep_display_properties.palette_info.green_mask == (0x1F <<  5)) &&
              (sysdep_display_properties.palette_info.blue_mask  == (0x1F      )))
-          effect_index = 0;
+          effect_index = EFFECT_15;
         if ( (sysdep_display_properties.palette_info.bpp == 16) &&
              (sysdep_display_properties.palette_info.red_mask   == (0x1F << 11)) &&
              (sysdep_display_properties.palette_info.green_mask == (0x3F <<  5)) &&
              (sysdep_display_properties.palette_info.blue_mask  == (0x1F      )))
-          effect_index = 1;
+          effect_index = EFFECT_16;
         if ( ( (sysdep_display_properties.palette_info.bpp == 24) ||
                (sysdep_display_properties.palette_info.bpp == 32) ) &&
              (sysdep_display_properties.palette_info.red_mask   == (0xFF << 16)) &&
              (sysdep_display_properties.palette_info.green_mask == (0xFF <<  8)) &&
              (sysdep_display_properties.palette_info.blue_mask  == (0xFF      )))
-          effect_index = 2;
+          effect_index = EFFECT_32;
     }
-    if (effect_index == -1)
+    if (effect_index == EFFECT_UNKNOWN)
     {
       fprintf(stderr, "Warning: Your current color format is not supported by the effect code, disabling effects\n");
       sysdep_display_params.effect = 0;
     }
     else
     {
-      effect_index += (sysdep_display_params.depth / 16) * COLOR_FORMATS;
+      effect_index += (sysdep_display_params.depth / 16) * EFFECT_COLOR_FORMATS;
       switch (sysdep_display_params.effect)
       {
         case SYSDEP_DISPLAY_EFFECT_SCAN2:
@@ -477,7 +477,7 @@ int sysdep_display_effect_open(void)
           break;
         case SYSDEP_DISPLAY_EFFECT_HQ2X:
           /* we might need a yuv lookup table */
-          init_rgb2yuv(effect_index%COLOR_FORMATS);
+          init_rgb2yuv(effect_index%EFFECT_COLOR_FORMATS);
           effect_scale2x_func = effect_scale2x_funcs[effect_index+2*SYSDEP_DISPLAY_EFFECT_MODES];
           break;
         case SYSDEP_DISPLAY_EFFECT_RGBSCAN:
@@ -488,7 +488,7 @@ int sysdep_display_effect_open(void)
           break;
         case SYSDEP_DISPLAY_EFFECT_6TAP2X:
           effect_6tap_addline_func = effect_6tap_addline_funcs[sysdep_display_params.depth/16];
-          effect_6tap_render_func  = effect_6tap_render_funcs[effect_index%COLOR_FORMATS];
+          effect_6tap_render_func  = effect_6tap_render_funcs[effect_index%EFFECT_COLOR_FORMATS];
           effect_6tap_clear_func   = effect_6tap_clear;
           break;
       }
@@ -517,7 +517,7 @@ int sysdep_display_effect_open(void)
           break;
         case SYSDEP_DISPLAY_EFFECT_FAKESCAN:
           /* handled by normal blitting, not supported on YV12 for now */
-          if ((effect_index%COLOR_FORMATS) != 4) 
+          if ((effect_index%EFFECT_COLOR_FORMATS) != 4) 
           {
             effect_ok = 1;
             sysdep_display_driver_clear_buffer();
@@ -529,13 +529,13 @@ int sysdep_display_effect_open(void)
         fprintf(stderr,
           "Initialized %s: bitmap depth = %d, color format = %s\n",
           sysdep_display_effect_properties[sysdep_display_params.effect].name,
-          sysdep_display_params.depth, display_name[effect_index%COLOR_FORMATS]);
+          sysdep_display_params.depth, display_name[effect_index%EFFECT_COLOR_FORMATS]);
       else
       {
         fprintf(stderr,
           "Warning effect %s is not supported with color format %s, disabling effects\n",
           sysdep_display_effect_properties[sysdep_display_params.effect].name,
-          display_name[effect_index%COLOR_FORMATS]);
+          display_name[effect_index%EFFECT_COLOR_FORMATS]);
         sysdep_display_params.effect = 0;
       }
     }
