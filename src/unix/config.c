@@ -328,13 +328,13 @@ int config_init (int argc, char *argv[])
 	   lowest priority */
 	if(loadconfig)
 	{
-		snprintf(buffer, BUF_SIZE, "%s/%src", XMAMEROOT, NAME);
+		snprintf(buffer, BUF_SIZE, "%s/%src", SYSCONFDIR, NAME);
 		if(rc_load(rc, buffer, 1, 1))
 			return OSD_NOT_OK;
 		snprintf(buffer, BUF_SIZE, "%s/"PATH_LEADER"%s/%src", home_dir, NAME, NAME);
 		if(rc_load(rc, buffer, 1, 1))
 			return OSD_NOT_OK;
-		snprintf(buffer, BUF_SIZE, "%s/%s-%src", XMAMEROOT, NAME, DISPLAY_METHOD);
+		snprintf(buffer, BUF_SIZE, "%s/%s-%src", SYSCONFDIR, NAME, DISPLAY_METHOD);
 		if(rc_load(rc, buffer, 1, 1))
 			return OSD_NOT_OK;
 		snprintf(buffer, BUF_SIZE, "%s/"PATH_LEADER"%s/%s-%src", home_dir, NAME, NAME,
@@ -541,7 +541,7 @@ int config_init (int argc, char *argv[])
 	/* now that we've got the gamename parse the game specific configfile */
 	if (loadconfig)
 	{
-		snprintf(buffer, BUF_SIZE, "%s/rc/%src", XMAMEROOT,
+		snprintf(buffer, BUF_SIZE, "%s/rc/%src", SYSCONFDIR,
 				drivers[game_index]->name);
 		if(rc_load(rc, buffer, 1, 1))
 			return OSD_NOT_OK;
@@ -682,15 +682,15 @@ void show_usage(void)
 	/* footer */
 	fprintf(stdout_file, "\nFiles:\n\n");
 	fprintf(stdout_file, "Config Files are parsed in the following order:\n");
-	fprint_columns(stdout_file, XMAMEROOT"/"NAME"rc",
+	fprint_columns(stdout_file, SYSCONFDIR"/"NAME"rc",
 			"Global configuration config file");
 	fprint_columns(stdout_file, "${HOME}/."NAME"/"NAME"rc",
 			"User configuration config file");
-	fprint_columns(stdout_file, XMAMEROOT"/"NAME"-"DISPLAY_METHOD"rc",
+	fprint_columns(stdout_file, SYSCONFDIR"/"NAME"-"DISPLAY_METHOD"rc",
 			"Global per display method config file");
 	fprint_columns(stdout_file, "${HOME}/."NAME"/"NAME"-"DISPLAY_METHOD"rc",
 			"User per display method config file");
-	fprint_columns(stdout_file, XMAMEROOT"/rc/<game>rc",
+	fprint_columns(stdout_file, SYSCONFDIR"/rc/<game>rc",
 			"Global per game config file");
 	fprint_columns(stdout_file, "${HOME}/."NAME"/rc/<game>rc",
 			"User per game config file");
