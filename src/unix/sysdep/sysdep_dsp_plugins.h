@@ -48,6 +48,12 @@ extern struct plugin_struct sysdep_dsp_esound;
 #ifdef SYSDEP_DSP_ALSA
 extern struct plugin_struct sysdep_dsp_alsa;
 #endif
+#ifdef SYSDEP_DSP_ARTS_TEIRA
+extern struct plugin_struct sysdep_dsp_arts;
+#endif
+#ifdef SYSDEP_DSP_ARTS_SMOTEK
+extern struct plugin_struct sysdep_dsp_arts;
+#endif
 
 #include "end_code.h"
 #endif /* ifndef __SYSDEP_DSP_PLUGINS_H */
