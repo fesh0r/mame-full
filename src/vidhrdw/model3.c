@@ -619,6 +619,7 @@ void real3d_vrom_texture_dma(UINT32 src, UINT32 dst, int length, int byteswap)
 	if((dst & 0xff) == 0) {
 
 		UINT32 address, header;
+		UINT32 *rom;
 		if (byteswap) {
 			address = BYTE_REVERSE32(program_read_dword_64le((src+0)^4));
 			header = BYTE_REVERSE32(program_read_dword_64le((src+4)^4));
@@ -626,7 +627,7 @@ void real3d_vrom_texture_dma(UINT32 src, UINT32 dst, int length, int byteswap)
 			address = program_read_dword_64le((src+0)^4);
 			header = program_read_dword_64le((src+4)^4);
 		}
-		UINT32 *rom = (UINT32*)memory_region(REGION_USER2);
+		rom = (UINT32*)memory_region(REGION_USER2);
 		real3d_upload_texture(header, (UINT32*)&rom[address]);
 	}
 }
@@ -1110,6 +1111,8 @@ static void draw_model(UINT32 *model)
 	int polynum = 0;
 	MATRIX transform_matrix;
 	int texture_format;
+	float center_x;
+	float center_y;
 
 	if(model3_step < 0x15) {	/* position coordinates are 17.15 fixed-point in Step 1.0 */
 		fixed_point_fraction = 32768.0f;
@@ -1120,8 +1123,8 @@ static void draw_model(UINT32 *model)
 	get_top_matrix(&transform_matrix);
 
 	/* current viewport center coordinates on screen */
-	float center_x = (float)(viewport_region_x + (viewport_region_width / 2));
-	float center_y = (float)(viewport_region_y + (viewport_region_height / 2));
+	center_x = (float)(viewport_region_x + (viewport_region_width / 2));
+	center_y = (float)(viewport_region_y + (viewport_region_height / 2));
 
 	while(!last_polygon)
 	{
