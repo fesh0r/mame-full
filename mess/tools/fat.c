@@ -15,12 +15,12 @@
   no code in bootsector (traps), should print a message and reboot or boot from harddisk
 */
 
-// all is loaded into memory
-//#define ALL_IN_MEMORY
+/* all is loaded into memory */
+/* #define ALL_IN_MEMORY */
 
-// binary words are stored in little endian order
+/* binary words are stored in little endian order */
 
-// sorry nathan, but for unaligned words stored in little endian order
+/* sorry nathan, but for unaligned words stored in little endian order */
 typedef struct { 
 	unsigned char low, high;
 } littleuword;
@@ -38,7 +38,7 @@ typedef struct {
 typedef struct {
 	unsigned char code[0x1be];
 	struct { 
-		unsigned char bootflag; // 0x80 boot activ
+		unsigned char bootflag; /* 0x80 boot activ */
 		struct { 
 			unsigned char head;
 			littleuword sector_cylinder;
@@ -58,7 +58,7 @@ typedef struct {
 	unsigned char id[2];
 } PARTITION_TABLE;
 
-static PARTITION_TABLE table={
+static PARTITION_TABLE partition_table={
 	{ 0 },
 	{
 		{ 0 }
@@ -94,8 +94,8 @@ static PARTITION_TABLE table={
 	buffer[0x1bd] = SECTORS;					/* some non zero value */
 #endif
 
-// byte alignment !
-// I think not directly doable with every compiler
+/* byte alignment ! */
+/* I think not directly doable with every compiler */
 typedef struct {
 	char jump[3];
 	char name[8];
@@ -106,7 +106,7 @@ typedef struct {
 	unsigned char fat_count;
 	littleuword max_entries_in_root_directory;
 	littleuword sectors;
-	unsigned char media_descriptor; // do not use
+	unsigned char media_descriptor; /* do not use */
 	littleuword sectors_in_fat;
 	littleuword sectors_per_track;
 	littleuword heads;
@@ -118,7 +118,7 @@ typedef struct {
 static FAT_HEADER fat_header={ 
 	{ 0,0,0 },
 	{ 'M', 'E', 'S', 'S', '0', '.', '1', '@' },
-	{ 0, 2 }, // 0x200
+	{ 0, 2 }, /* 0x200 */
 	2,
 	{ 1, 0 },
 	2,
@@ -152,7 +152,7 @@ typedef struct {
 #define PACK_TIME(sec, min, hour) ((sec>>1)|(minutes<<5)|(hours<<11))
 
 #define DATE_GET_DAY(word) (word&0x1f)
-#define DATE_GET_MONTH(word) (((word&0x1e0)>>5)-1) // 0..11
+#define DATE_GET_MONTH(word) (((word&0x1e0)>>5)-1) /* 0..11 */
 #define DATE_GET_YEAR(word) (((word&0xfe00)>>9)+1980)
 #define PACK_DATE(day, month, year) ((day)|((month+1)<<5)|((year-1980)<<9))
 
@@ -179,7 +179,7 @@ typedef struct _fat_image{
 	int size;
 	int modified;
 	unsigned char *complete_image;
-	unsigned char *data; // pointer to start of d64 image
+	unsigned char *data; /* pointer to start of fat image */
 } fat_image;
 
 static int fat_calc_pos(fat_image *image, int head, int track, int sector)
@@ -268,14 +268,14 @@ static int fat_calc_cluster_pos(fat_image *image,int cluster)
 typedef struct {
 	IMAGEENUM base;
 	fat_image *image;
-	int level; //directory level
+	int level; /* directory level */
 	struct {
 		char name[200];
 		int offset;
 		int index;
 		int count;
 		int cluster;
-	} directory[8]; // I read somewhere, MSDOS does only support some directory levels
+	} directory[8]; /* I read somewhere, MSDOS does only support some directory levels */
 } fat_iterator;
 
 /* searches program with given name in directory
@@ -293,12 +293,12 @@ static FAT_DIRECTORY *fat_image_findfile (fat_image *image,
 		entry=(FAT_DIRECTORY*)(image->data+offset)+i;
 		if (entry->name[0]&&!(entry->attribut&ATTRIBUT_LABEL)) {
 			fat_filename(entry, tname);
-			if (strcmp(tname, name)==0) return entry;
-			if ((strncmp(tname, name, strlen(tname))==0)
+			if (strcmp(tname, (const char *)name)==0) return entry;
+			if ((strncmp(tname, (const char *)name, strlen(tname))==0)
 				&&(name[strlen(tname)]=='\\')
 				&&(entry->attribut&ATTRIBUT_SUBDIRECTORY)) {
 				name+=strlen(tname+1);
-				// sub directory to do
+				/* sub directory to do */
 			}
 		}
 	}
@@ -464,7 +464,7 @@ static int fathd_image_init(STREAM *f, IMAGE **outimg)
 
 	table=(PARTITION_TABLE*)image->complete_image;
 
-	// currently fixed to the 4th partition
+	/* currently fixed to the 4th partition */
 
 	image->heads=GET_UWORD(((FAT_HEADER*)image->data)->heads);
 	image->sector_size=GET_UWORD(((FAT_HEADER*)image->data)->sector_size);
@@ -691,8 +691,8 @@ static int fat_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, c
 	int i;
 
 	fsize=stream_size(sourcef);
-	if ((entry=fat_image_findfile(image, fname))!=NULL ) {
-		// override file !!!
+	if ((entry=fat_image_findfile(image, (const unsigned char *)fname))!=NULL ) {
+		/* override file !!! */
 		if (fat_image_freespace(img)+(GET_ULONG(entry->size)|(image->cluster_size-1))<fsize) 
 			return IMGTOOLERR_NOSPACE;
 
@@ -706,19 +706,19 @@ static int fat_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, c
 	} else {
 		int count=GET_UWORD(((FAT_HEADER*)image->data)->max_entries_in_root_directory);
 		if (fat_image_freespace(img)<fsize) return IMGTOOLERR_NOSPACE;
-		// find free entry for directory
+		/* find free entry for directory */
 		entry=(FAT_DIRECTORY*)(image->data+image->root_offset);
 		for (i=0; i<count; i++, entry++) {
 			if (entry->name[0]==0) break;
 		}
-		if (count==i) return IMGTOOLERR_NOSPACE; // in root directory
+		if (count==i) return IMGTOOLERR_NOSPACE; /* in root directory */
 	}
 
 	for ( i=0; (i<9)&&(fname[i]!='.')&&(fname[i]!=0); i++) ;
 
 	memset(entry->name, ' ', 11);
 	memcpy(entry->name, fname, i);
-	if ((i<9)&&(fname[i]!=0)) { // with extension		
+	if ((i<9)&&(fname[i]!=0)) { /* with extension */
 		memcpy(entry->extension, fname+i, strlen(fname+i));
 	}
 	SET_ULONG(entry->size, fsize);
@@ -754,7 +754,7 @@ static int fat_image_deletefile(IMAGE *img, const char *fname)
     FAT_DIRECTORY *entry;
 	int cluster;
 
-	if ((entry=fat_image_findfile(image, fname))==NULL ) {
+	if ((entry=fat_image_findfile(image, (const unsigned char *)fname))==NULL ) {
 		return IMGTOOLERR_MODULENOTFOUND;
 	}
 	cluster=GET_UWORD(entry->start_cluster);
@@ -792,7 +792,7 @@ static int fat_write_sector(IMAGE *img, int head, int track, int sector,
 	fat_image *image=(fat_image*)img;
 	int pos;
 
-	if (size!=image->sector_size) ; //problem
+	if (size!=image->sector_size) ; /* problem */
 
 	pos=fat_calc_pos(image, head, track, sector);
 	memcpy(image->data+pos, buffer, size);
@@ -808,17 +808,17 @@ typedef struct {
 } FAT_FORMAT;
 
 static FAT_FORMAT fat_formats[]={
-	// standard formats
-	{ 8, 1, 40, 0x200, 2, 0x400, 112 }, // 160
-	{ 8, 2, 40, 0x200, 2, 0x400, 112 }, // 180
-	{ 9, 1, 40, 0x200, 2, 0x400, 112 }, // 320
-	{ 9, 2, 40, 0x200, 2, 0x400, 112 }, // 360 ok
-	{ 9, 2, 80, 0x200, 2, 0x400, 112 }, // 720 ok
-	{ 15, 2, 80, 0x200, 2, 0x400, 112 }, // 1.2
-	{ 18, 2, 80, 0x200, 2, 0x400, 112 }, // 1.44
-	{ 36, 2, 80, 0x200, 2, 0x400, 112 } // 2.88
-	// tons of extended xdf formats
-	// use of larger and mixed sector sizes, more tracks
+	/* standard formats */
+	{ 8, 1, 40, 0x200, 2, 0x400, 112 }, /* 160 */
+	{ 8, 2, 40, 0x200, 2, 0x400, 112 }, /* 180 */
+	{ 9, 1, 40, 0x200, 2, 0x400, 112 }, /* 320 */
+	{ 9, 2, 40, 0x200, 2, 0x400, 112 }, /* 360 ok */
+	{ 9, 2, 80, 0x200, 2, 0x400, 112 }, /* 720 ok */
+	{ 15, 2, 80, 0x200, 2, 0x400, 112 }, /* 1.2 */
+	{ 18, 2, 80, 0x200, 2, 0x400, 112 }, /* 1.44 */
+	{ 36, 2, 80, 0x200, 2, 0x400, 112 } /* 2.88 */
+	/* tons of extended xdf formats */
+	/* use of larger and mixed sector sizes, more tracks */
 };
 
 static int fat_image_create(STREAM *f, const geometry_options *options)
@@ -831,7 +831,7 @@ static int fat_image_create(STREAM *f, const geometry_options *options)
 	int fat16=0;
 	int sectors_in_fat=2, i, j, s;
 
-//	SET_UWORD(fat_header.sector_size, format->sector_size);
+/*	SET_UWORD(fat_header.sector_size, format->sector_size); */
 	SET_UWORD(fat_header.heads, format->heads);
 	SET_UWORD(fat_header.sectors_per_track, format->sectors);
 	SET_UWORD(fat_header.sectors, sectors);
@@ -875,20 +875,22 @@ static int fathd_image_create(STREAM *f, const geometry_options *options)
 {
 	unsigned char sector[0x200]={ 0 };
 	int s, h;
+	PARTITION_TABLE *table = &partition_table;
 
-	table.partition[0].bootflag=0x80;
 
-	SET_UWORD(table.partition[0].begin.sector_cylinder, PACK_SECTOR_CYLINDER(1,0));
-	table.partition[0].begin.head=1;
+	table->partition[0].bootflag=0x80;
 
-	SET_UWORD(table.partition[0].begin.sector_cylinder, 
+	SET_UWORD(table->partition[0].begin.sector_cylinder, PACK_SECTOR_CYLINDER(1,0));
+	table->partition[0].begin.head=1;
+
+	SET_UWORD(table->partition[0].begin.sector_cylinder,
 			  PACK_SECTOR_CYLINDER(options->sectors,options->cylinders));
-	table.partition[0].end.head=options->heads;
+	table->partition[0].end.head=options->heads;
 
-	SET_ULONG(table.partition[0].start_sector,options->sectors);
-	SET_ULONG(table.partition[0].sectors,
+	SET_ULONG(table->partition[0].start_sector,options->sectors);
+	SET_ULONG(table->partition[0].sectors,
 			  options->sectors*options->heads*options->cylinders
-			  -GET_ULONG(table.partition[0].start_sector));
+			  -GET_ULONG(table->partition[0].start_sector));
 
 	h=0;
 	for (s=0; s<options->sectors; s++) {
@@ -901,7 +903,7 @@ static int fathd_image_create(STREAM *f, const geometry_options *options)
 		}
 	}
 
-	// write this fat partition
+	/* write this fat partition */
 	
 	return 0;
 }
