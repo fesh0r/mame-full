@@ -729,7 +729,7 @@ static void coco3_getvideoinfo(int full_refresh, struct rasterbits_source *rs,
 			&RAM[coco3_vidbase],
 			1, (full_refresh ? bordercolor : -1), 2,
 			readinputport(12) & 3,
-			17, coco3_getcolorrgb);
+			64, coco3_getcolorrgb);
 	}
 
 	/* Now translate the pens */
