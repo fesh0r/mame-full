@@ -315,11 +315,9 @@ static void pak_load_trailer_callback(int param)
 	pak_load_trailer(&trailer);
 }
 
-static int generic_rom_load(int id, UINT8 *rambase, UINT8 *rombase, UINT8 *pakbase)
+static int generic_pak_load(int id, UINT8 *rambase, UINT8 *rombase, UINT8 *pakbase)
 {
 	void *fp;
-
-	cart_inserted = 0;
 
 	fp = image_fopen (IO_SNAPSHOT, id, OSD_FILETYPE_IMAGE_R, 0);
 	if (fp)
@@ -419,22 +417,68 @@ static int generic_rom_load(int id, UINT8 *rambase, UINT8 *rombase, UINT8 *pakba
 	return INIT_OK;
 }
 
+int dragon32_pak_load(int id)
+{
+	UINT8 *ROM = memory_region(REGION_CPU1);
+	return generic_pak_load(id, &ROM[0], &ROM[0x8000], &ROM[0xc000]);
+}
+
+int dragon64_pak_load(int id)
+{
+	UINT8 *ROM = memory_region(REGION_CPU1);
+	return generic_pak_load(id, &ROM[0], &ROM[0x10000], &ROM[0x14000]);
+}
+
+int coco3_pak_load(int id)
+{
+	UINT8 *ROM = memory_region(REGION_CPU1);
+	return generic_pak_load(id, &ROM[0x70000], &ROM[0x80000], &ROM[0x8c000]);
+}
+
+/***************************************************************************
+  ROM files
+
+  ROM files are simply raw dumps of cartridges.  I believe that they should
+  be used in place of PAK files, when possible
+***************************************************************************/
+
+static int generic_rom_load(int id, UINT8 *dest, UINT16 destlength)
+{
+	UINT16 romsize;
+	void *fp;
+
+	cart_inserted = 0;
+
+	fp = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0);
+	if (fp) {
+		romsize = (UINT16) osd_fsize(fp);
+		if (romsize > destlength)
+			romsize = destlength;
+
+		osd_fread(fp, dest, romsize);
+
+		cart_inserted = 1;
+		osd_fclose(fp);
+	}
+	return INIT_OK;
+}
+
 int dragon32_rom_load(int id)
 {
 	UINT8 *ROM = memory_region(REGION_CPU1);
-	return generic_rom_load(id, &ROM[0], &ROM[0x8000], &ROM[0xc000]);
+	return generic_rom_load(id, &ROM[0xc000], 0x4000);
 }
 
 int dragon64_rom_load(int id)
 {
 	UINT8 *ROM = memory_region(REGION_CPU1);
-	return generic_rom_load(id, &ROM[0], &ROM[0x10000], &ROM[0x14000]);
+	return generic_rom_load(id, &ROM[0x14000], 0x4000);
 }
 
 int coco3_rom_load(int id)
 {
 	UINT8 *ROM = memory_region(REGION_CPU1);
-	return generic_rom_load(id, &ROM[0x70000], &ROM[0x80000], &ROM[0x8c000]);
+	return generic_rom_load(id, &ROM[0x8c000], 0x8000);
 }
 
 /***************************************************************************
@@ -1174,7 +1218,7 @@ static void coco3_timer_cannonicalize(int newvalue)
 		if (elapsed) {
 			coco3_timer_value -= elapsed;
 			
-			/* HACK HACK - I don't know why I have to do this */
+			/* HACKHACK - I don't know why I have to do this */
 			if (coco3_timer_value < 0)
 				coco3_timer_value = 0;
 
@@ -2067,6 +2111,11 @@ static void generic_init_machine(struct pia6821_interface *piaintf, struct sam68
 	pia_config(0, PIA_STANDARD_ORDERING | PIA_8BIT, &piaintf[0]);
 	pia_config(1, PIA_STANDARD_ORDERING | PIA_8BIT, &piaintf[1]);
 	pia_reset();
+
+	if (cart_inserted) {
+		/* HACK */
+		timer_set(0.25, 1, cartcallback->cart_w);
+	}
 
 	sam_init(samintf);
 

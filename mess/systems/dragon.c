@@ -732,7 +732,8 @@ ROM_END
 #define rom_coco3h	rom_coco3
 
 static const struct IODevice io_coco[] = {
-	IO_SNAPSHOT_COCOPAK(dragon64_rom_load),
+	IO_CARTRIDGE_COCO(dragon64_rom_load),
+	IO_SNAPSHOT_COCOPAK(dragon64_pak_load),
 	IO_CASSETTE_WAVE(1, "cas\0wav\0", NULL, coco_cassette_init, coco_cassette_exit),
 	IO_FLOPPY_COCO,
 	IO_BITBANGER_PORT,
@@ -740,7 +741,8 @@ static const struct IODevice io_coco[] = {
 };
 
 static const struct IODevice io_dragon32[] = {
-	IO_SNAPSHOT_COCOPAK(dragon32_rom_load),
+	IO_CARTRIDGE_COCO(dragon32_rom_load),
+	IO_SNAPSHOT_COCOPAK(dragon32_pak_load),
 	IO_CASSETTE_WAVE(1, "cas\0wav\0", NULL, coco_cassette_init, coco_cassette_exit),
 	IO_FLOPPY_COCO,
 	IO_BITBANGER_PORT,
@@ -748,7 +750,8 @@ static const struct IODevice io_dragon32[] = {
 };
 
 static const struct IODevice io_cp400[] = {
-	IO_SNAPSHOT_COCOPAK(dragon64_rom_load),
+	IO_CARTRIDGE_COCO(dragon64_rom_load),
+	IO_SNAPSHOT_COCOPAK(dragon64_pak_load),
 	IO_CASSETTE_WAVE(1, "cas\0wav\0", NULL, coco_cassette_init, coco_cassette_exit),
 	IO_FLOPPY_COCO,
 	IO_BITBANGER_PORT,
@@ -756,7 +759,8 @@ static const struct IODevice io_cp400[] = {
 };
 
 static const struct IODevice io_coco3[] = {
-	IO_SNAPSHOT_COCOPAK(coco3_rom_load),
+	IO_CARTRIDGE_COCO(coco3_rom_load),
+	IO_SNAPSHOT_COCOPAK(coco3_pak_load),
 	IO_CASSETTE_WAVE(1, "cas\0wav\0", NULL, coco_cassette_init, coco_cassette_exit),
 	IO_FLOPPY_COCO,
 	IO_BITBANGER_PORT,

@@ -66,6 +66,9 @@ extern void coco_cassette_exit(int id);
 extern int dragon32_rom_load(int id);
 extern int dragon64_rom_load(int id);
 extern int coco3_rom_load(int id);
+extern int dragon32_pak_load(int id);
+extern int dragon64_pak_load(int id);
+extern int coco3_pak_load(int id);
 extern READ_HANDLER ( dragon_mapped_irq_r );
 extern READ_HANDLER ( coco3_mapped_irq_r );
 //extern WRITE_HANDLER ( dragon64_sam_himemmap );
@@ -122,6 +125,26 @@ extern int coco3_mmu_translatelogicaladdr(int logicaladdr);
         NULL,\
         NULL,\
         NULL \
+    }
+
+#define IO_CARTRIDGE_COCO(loadproc) \
+	{\
+		IO_CARTSLOT,\
+		1,\
+		"rom\0",\
+		IO_RESET_ALL,\
+        NULL,\
+		loadproc,\
+		NULL,\
+        NULL,\
+        NULL,\
+        NULL,\
+        NULL,\
+        NULL,\
+        NULL,\
+        NULL,\
+        NULL,\
+        NULL\
     }
 
 #define IO_SNAPSHOT_COCOPAK(loadproc) \

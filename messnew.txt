@@ -13,6 +13,9 @@ System Driver Changes:
 ----------------------
 - Sfz (cps changer) fixed to work with the new MAME code [Ben]
 
+- [DRAGON/COCO1-2-3] Added support for raw Program Pak dumps (use file extenion .ROM)
+  [Nate Woods]
+
 - [DRAGON/COCO1-2] Basic save state support added. [Nate Woods]
 
 Other Changes:
