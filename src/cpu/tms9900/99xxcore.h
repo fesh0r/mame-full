@@ -1152,7 +1152,7 @@ WRITE_HANDLER(tms9995_internal2_w)
 #if (TMS99XX_MODEL == TI990_10_ID)
 	READ16_HANDLER(ti990_10_mapper_cru_r)
 	{
-		int reply;
+		int reply = 0;
 
 		switch(I.mapper_cru_read_register)
 		{
