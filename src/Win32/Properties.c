@@ -1,7 +1,7 @@
 /***************************************************************************
 
     M.A.M.E.32  -  Multiple Arcade Machine Emulator for Win32
-    Win32 Portions Copyright (C) 1997-98 Michael Soderstrom and Chris Kirmse
+  Win32 Portions Copyright (C) 1997-2001 Michael Soderstrom and Chris Kirmse
     
     This file is part of MAME32, and may only be used, modified and
     distributed under the terms of the MAME license, in "readme.txt".
@@ -293,23 +293,28 @@ BOOL FindRomSet(int game)
  */
 BOOL GameUsesSamples(int game)
 {
-
-#if defined(SOUND_SAMPLES)
+#if (HAS_SAMPLES == 1) || (HAS_VLM5030 == 1)
 
     int i;
     static const struct GameDriver *gamedrv;
 
     gamedrv = drivers[game];
     
-	for( i = 0; gamedrv->drv->sound[i].sound_type && i < MAX_SOUND; i++ )
+    for (i = 0; gamedrv->drv->sound[i].sound_type && i < MAX_SOUND; i++)
     {
         const char **samplenames = NULL;
 
-        if( gamedrv->drv->sound[i].sound_type != SOUND_SAMPLES )
-            continue;
+#if (HAS_SAMPLES == 1)
+        if (gamedrv->drv->sound[i].sound_type == SOUND_SAMPLES)
+            samplenames = ((struct Samplesinterface *)gamedrv->drv->sound[i].sound_interface)->samplenames;
+#endif
 
-        samplenames = ((struct Samplesinterface *)gamedrv->drv->sound[i].sound_interface)->samplenames;
-		if (samplenames != 0 && samplenames[0] != 0)
+#if (HAS_VLM5030 == 1)
+        if (gamedrv->drv->sound[i].sound_type == SOUND_VLM5030)
+            samplenames = ((struct VLM5030interface *)gamedrv->drv->sound[i].sound_interface)->samplenames;
+#endif
+
+        if (samplenames != 0 && samplenames[0] != 0)
             return TRUE;
     }
 
@@ -321,12 +326,12 @@ BOOL GameUsesSamples(int game)
 /* Checks for all samples in a sample set.
  * Returns TRUE if all samples are found, FALSE if any are missing.
  */
-BOOL FindSampleSet (int game)
+BOOL FindSampleSet(int game)
 {
-#if defined(SOUND_SAMPLES)
+#if (HAS_SAMPLES == 1) || (HAS_VLM5030 == 1)
 
     static const struct GameDriver *gamedrv;
-    const char  *sharedname;
+    const char* sharedname;
     BOOL bStatus;
     int  skipfirst;
     int  count = 0;
@@ -337,16 +342,21 @@ BOOL FindSampleSet (int game)
 
     gamedrv = drivers[game];
     
-	for( i = 0; gamedrv->drv->sound[i].sound_type && i < MAX_SOUND; i++ )
+    for (i = 0; gamedrv->drv->sound[i].sound_type && i < MAX_SOUND; i++)
     {
         const char **samplenames = NULL;
 
-        if( gamedrv->drv->sound[i].sound_type != SOUND_SAMPLES )
-			continue;
-        
-        samplenames = ((struct Samplesinterface *)gamedrv->drv->sound[i].sound_interface)->samplenames;
+#if (HAS_SAMPLES == 1)
+        if (gamedrv->drv->sound[i].sound_type == SOUND_SAMPLES)
+            samplenames = ((struct Samplesinterface *)gamedrv->drv->sound[i].sound_interface)->samplenames;
+#endif
 
-		if (samplenames != 0 && samplenames[0] != 0)
+#if (HAS_VLM5030 == 1)
+        if (gamedrv->drv->sound[i].sound_type == SOUND_VLM5030)
+            samplenames = ((struct VLM5030interface *)gamedrv->drv->sound[i].sound_interface)->samplenames;
+#endif
+        
+        if (samplenames != 0 && samplenames[0] != 0)
         {
             BOOL have_samples = FALSE;
             BOOL have_shared  = FALSE;
@@ -363,30 +373,30 @@ BOOL FindSampleSet (int game)
             }
 
             /* do we have samples for this game? */
-            have_samples = osd_faccess (gamedrv->name, OSD_FILETYPE_SAMPLE);
+            have_samples = osd_faccess(gamedrv->name, OSD_FILETYPE_SAMPLE);
 
             /* try shared samples */
             if (skipfirst)
-                have_shared = osd_faccess (sharedname, OSD_FILETYPE_SAMPLE);
+                have_shared = osd_faccess(sharedname, OSD_FILETYPE_SAMPLE);
 
             /* if still not found, we're done */
             if (!have_samples && !have_shared)
                 return FALSE;
-				
+
             for (j = skipfirst; samplenames[j] != 0; j++)
             {
                 bStatus = FALSE;
 
                 /* skip empty definitions */
-                if (strlen (samplenames[j]) == 0)
+                if (strlen(samplenames[j]) == 0)
                     continue;
 
                 if (have_samples)
-                    bStatus = File_Status (gamedrv->name, samplenames[j], OSD_FILETYPE_SAMPLE);
+                    bStatus = File_Status(gamedrv->name, samplenames[j], OSD_FILETYPE_SAMPLE);
 
                 if (!bStatus && have_shared)
                 {
-                    bStatus = File_Status (sharedname, samplenames[j], OSD_FILETYPE_SAMPLE);
+                    bStatus = File_Status(sharedname, samplenames[j], OSD_FILETYPE_SAMPLE);
                     if (!bStatus)
                     {
                         return FALSE;
@@ -1008,7 +1018,7 @@ static INT_PTR CALLBACK GameDisplayOptionsProc(HWND hDlg, UINT Msg, WPARAM wPara
             break;
 
         case PSN_HELP:
-            // User wants help for this property page
+            /* User wants help for this property page */
             break;
 
 #ifdef MESS
@@ -1531,18 +1541,18 @@ void SetPropEnabledControls(HWND hWnd)
     ComboBox_Enable(GetDlgItem(hWnd, IDC_DISPLAYS),(screen == FALSE) && 
                     (DirectDraw_GetNumDisplays() > 1));
 
-    if (nIndex == -1 || Joystick.Available(1) || GameUsesTrackball(nIndex))
+    if (nIndex == -1 || Joystick.Available() || GameUsesTrackball(nIndex))
         EnableWindow(GetDlgItem(hWnd, IDC_INPUTDEVTEXT), TRUE);
     else
         EnableWindow(GetDlgItem(hWnd, IDC_INPUTDEVTEXT), FALSE);
 
     hCtrl = GetDlgItem(hWnd, IDC_JOYSTICK);
     if (hCtrl)
-        Button_Enable(hCtrl, Joystick.Available(1));
+        Button_Enable(hCtrl, Joystick.Available());
 
     hCtrl = GetDlgItem(hWnd, IDC_DIJOYSTICK);
     if (hCtrl)
-        Button_Enable(hCtrl, DIJoystick.Available(1));
+        Button_Enable(hCtrl, DIJoystick.Available());
 
     hCtrl = GetDlgItem(hWnd, IDC_DIKEYBOARD);
     if (hCtrl)
@@ -1805,7 +1815,7 @@ static void SetYM3812Enabled(HWND hWnd, int index)
 
 static void SetSamplesEnabled(HWND hWnd, int index)
 {
-#if defined(SOUND_SAMPLES)
+#if (HAS_SAMPLES == 1) || (HAS_VLM5030 == 1)
     int i;
     BOOL enabled = FALSE;
     HWND hCtrl;
@@ -1816,8 +1826,11 @@ static void SetSamplesEnabled(HWND hWnd, int index)
         for (i = 0; i < MAX_SOUND; i++)
         {
             if (index == -1
-            /* ||  drivers[index]->samplenames != 0 */
-            ||  drivers[index]->drv->sound[i].sound_type == SOUND_SAMPLES)
+            ||  drivers[index]->drv->sound[i].sound_type == SOUND_SAMPLES
+#if HAS_VLM5030
+            ||  drivers[index]->drv->sound[i].sound_type == SOUND_VLM5030
+#endif
+			)
                 enabled = TRUE;
         }
         
@@ -1843,8 +1856,8 @@ static void InitializeOptions(HWND hDlg)
 /* Moved here because it is called in several places */
 static void InitializeMisc(HWND hDlg)
 {
-    Button_Enable(GetDlgItem(hDlg, IDC_JOYSTICK),   Joystick.Available(1));
-    Button_Enable(GetDlgItem(hDlg, IDC_DIJOYSTICK), DIJoystick.Available(1));
+    Button_Enable(GetDlgItem(hDlg, IDC_JOYSTICK),   Joystick.Available());
+    Button_Enable(GetDlgItem(hDlg, IDC_DIJOYSTICK), DIJoystick.Available());
     Button_Enable(GetDlgItem(hDlg, IDC_DIKEYBOARD), DIKeyboard_Available());
 
     Edit_LimitText(GetDlgItem(hDlg, IDC_SKIP_LINES), 4);

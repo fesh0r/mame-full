@@ -91,7 +91,7 @@ static int              DIJoystick_is_joy_pressed(int joycode);
 static const char*      DIJoystick_joy_name(int joycode);
 static void             DIJoystick_analogjoy_read(int player, int *analog_x, int *analog_y);
 static int              DIJoystick_standard_analog_read(int player, int axis);
-static BOOL             DIJoystick_Available(int nJoyStick);
+static BOOL             DIJoystick_Available(void);
 static BOOL             DIJoystick_OnMessage(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam, LRESULT* pResult);
 
 static BOOL CALLBACK DIJoystick_EnumDeviceProc(LPDIDEVICEINSTANCE pdidi, LPVOID pv);
@@ -221,7 +221,7 @@ static int DIJoystick_init(options_type *options)
     hr = IDirectInput_EnumDevices(di, DIDEVTYPE_JOYSTICK,
                  (LPDIENUMDEVICESCALLBACK)DIJoystick_EnumDeviceProc,
                  NULL,
-                 DIEDFL_ALLDEVICES);
+                 DIEDFL_ATTACHEDONLY);
     if (FAILED(hr))
     {
         ErrorMsg("DirectInput EnumDevices() failed: %s", DirectXDecodeError(hr));
@@ -550,7 +550,7 @@ static int DIJoystick_standard_analog_read(int player, int axis)
 }
 
 
-static BOOL DIJoystick_Available(int nJoyStick)
+static BOOL DIJoystick_Available(void)
 {
     static BOOL bBeenHere = FALSE;
     static BOOL bAvailable = FALSE;
@@ -573,7 +573,7 @@ static BOOL DIJoystick_Available(int nJoyStick)
     hr = IDirectInput_EnumDevices(di, DIDEVTYPE_JOYSTICK,
                  (LPDIENUMDEVICESCALLBACK)inputEnumDeviceProc,
                  &guidDevice,
-                 DIEDFL_ALLDEVICES);
+                 DIEDFL_ATTACHEDONLY);
     if (FAILED(hr))
     {
        return FALSE;

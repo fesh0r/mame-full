@@ -32,17 +32,17 @@
 #define MAX_JOY              256
 #define MAX_JOY_NAME_LEN     20
 
-#define OSD_ANALOGMAX       (127.0)
+#define OSD_ANALOGMAX       ( 127.0)
 #define OSD_ANALOGMIN       (-128.0)
 
 #define NUM_JOYSTICKS       4
 
 /* Not sure if this is supported via the Multimedia API. */
 #ifndef JOYSTICKID3
-#define JOYSTICKID3 3
+#define JOYSTICKID3 2
 #endif
 #ifndef JOYSTICKID4
-#define JOYSTICKID4 4
+#define JOYSTICKID4 3
 #endif
 
 /***************************************************************************
@@ -56,7 +56,7 @@ static const struct JoystickInfo *Joystick_get_joy_list(void);
 static int              Joystick_is_joy_pressed(int joycode);
 static void             Joystick_analogjoy_read(int player, int *analog_x, int *analog_y);
 static int              Joystick_standard_analog_read(int player, int axis);
-static BOOL             Joystick_Available(int nJoyStick);
+static BOOL             Joystick_Available(void);
 static BOOL             Joystick_OnMessage(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam, LRESULT* pResult);
 
 static DWORD            Joystick_DeadZoneMin(DWORD dwMin, DWORD dwMax, UINT nDeadZone);
@@ -135,6 +135,14 @@ static struct JoystickInfo      joylist[MAX_JOY] =
 	{ 0, 0, 0 }	/* end of table */
 };
 
+static const UINT g_nJoyID[NUM_JOYSTICKS] =
+{
+    JOYSTICKID1,
+    JOYSTICKID2,
+    JOYSTICKID3,
+    JOYSTICKID4
+};
+
 /***************************************************************************
     External OSD functions  
  ***************************************************************************/
@@ -154,11 +162,8 @@ static int Joystick_init(options_type *options)
     {
         This.m_Joy[i].m_bUseJoystick = TRUE;
         This.m_Joy[i].m_nDeadZone    = 75;    /* No way to set dead zone right now */
+        This.m_Joy[i].m_uJoyID       = g_nJoyID[i];
     }
-    This.m_Joy[0].m_uJoyID = JOYSTICKID1;
-    This.m_Joy[1].m_uJoyID = JOYSTICKID2;
-    This.m_Joy[2].m_uJoyID = JOYSTICKID3;
-    This.m_Joy[3].m_uJoyID = JOYSTICKID4;
 
     /* User turned off joy option or a joy driver is not installed. */
     if (!options->use_joystick
@@ -486,32 +491,24 @@ static int Joystick_standard_analog_read(int player, int axis)
     return 0;
 }
 
-static BOOL Joystick_Available(int nJoyStick)
+static BOOL Joystick_Available(void)
 {
-    MMRESULT    mmResult;
-    JOYINFOEX   JoyInfoEx;
+    MMRESULT  mmResult;
+    JOYINFOEX JoyInfoEx;
+    int       i;
 
-    JoyInfoEx.dwSize  = sizeof(JoyInfoEx);
+    memset(&JoyInfoEx, 0, sizeof(JoyInfoEx));
+    JoyInfoEx.dwSize  = sizeof(JOYINFOEX);
     JoyInfoEx.dwFlags = JOY_RETURNBUTTONS | JOY_RETURNX | JOY_RETURNY;
 
-    if (nJoyStick == 1)
-        mmResult = joyGetPosEx(JOYSTICKID1, &JoyInfoEx);
-    else
-    if (nJoyStick == 2)
-        mmResult = joyGetPosEx(JOYSTICKID2, &JoyInfoEx);
-    else
-    if (nJoyStick == 3)
-        mmResult = joyGetPosEx(JOYSTICKID3, &JoyInfoEx);
-    else
-    if (nJoyStick == 4)
-        mmResult = joyGetPosEx(JOYSTICKID4, &JoyInfoEx);
-    else
-        return FALSE;
+    for (i = 0; i < NUM_JOYSTICKS; i++)
+    {
+        mmResult = joyGetPosEx(g_nJoyID[i], &JoyInfoEx);
+        if (mmResult == JOYERR_NOERROR)
+            return TRUE;
+    }
 
-    if (mmResult == JOYERR_NOERROR)
-        return TRUE;
-    else
-        return FALSE;
+    return FALSE;
 }
 
 static BOOL Joystick_OnMessage(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam, LRESULT* pResult)

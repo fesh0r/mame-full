@@ -25,7 +25,7 @@ struct OSDJoystick
     void        (*analogjoy_read)(int player, int *analog_x, int *analog_y);
     int         (*standard_analog_read)(int player, int axis);
 
-    BOOL        (*Available)(int nJoyStick);
+    BOOL        (*Available)(void);
     BOOL        (*OnMessage)(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam, LRESULT* pResult);
 };
 
