@@ -6,6 +6,12 @@ New System Drivers Supported (in no particular order):
 
 
 
+System Driver Changes:
+----------------------
+- [APPLE2] Recalibrated Joysticks. (bug #648) [Nate Woods]
+
+
+
 User Interface Changes:
 -----------------------
 (none)

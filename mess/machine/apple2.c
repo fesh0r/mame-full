@@ -1062,12 +1062,14 @@ READ8_HANDLER ( apple2_c06x_r )
 
 READ8_HANDLER ( apple2_c07x_r )
 {
+	double calibration = TIME_IN_USEC(15.0);
+
 	if (offset == 0)
 	{
-		joystick_x1_time = timer_get_time() + TIME_IN_USEC(12.0) * readinputportbytag("joystick_1_x");
-		joystick_y1_time = timer_get_time() + TIME_IN_USEC(12.0) * readinputportbytag("joystick_1_y");
-		joystick_x2_time = timer_get_time() + TIME_IN_USEC(12.0) * readinputportbytag("joystick_2_x");
-		joystick_y2_time = timer_get_time() + TIME_IN_USEC(12.0) * readinputportbytag("joystick_2_y");
+		joystick_x1_time = timer_get_time() + calibration * readinputportbytag("joystick_1_x");
+		joystick_y1_time = timer_get_time() + calibration * readinputportbytag("joystick_1_y");
+		joystick_x2_time = timer_get_time() + calibration * readinputportbytag("joystick_2_x");
+		joystick_y2_time = timer_get_time() + calibration * readinputportbytag("joystick_2_y");
 	}
 	return 0;
 }
