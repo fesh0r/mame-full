@@ -226,6 +226,7 @@ static int internal_floppy_device_load(mess_image *image, mame_file *file, int c
 	if (image_has_been_created(image))
 	{
 		/* creating an image */
+		assert(create_format >= 0);
 		err = floppy_create(file, &mess_ioprocs, &floppy_options[create_format], create_args, &flopimg->floppy);
 		if (err)
 			goto error;

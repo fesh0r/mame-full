@@ -28,6 +28,18 @@
 	<memverify start="0xE00" end="0x25FF">0xFF</memverify>
 </test>
 
+<test name="coco_003" driver="coco2b">
+	<wait time="2"/>
+	<imagecreate type="flop"/>
+	<input>10 CLS 7&#13;</input>
+	<input>20 GOTO 20&#13;</input>
+	<input>SAVE "TEST"&#13;</input>
+	<wait time="4"/>
+	<input>RUN "TEST"&#13;</input>
+	<wait time="4"/>
+	<memverify start="0x400" end="0x5FF">0xef</memverify>
+</test>
+
 <test name="coco3_000" driver="coco3">
 	<wait time="2"/>
 	<memverify start="0x70400" end="0x7040C">"DISK&#96;EXTENDED"</memverify>

@@ -137,6 +137,8 @@ int osd_trying_to_quit(void)
 void osd_update_video_and_audio(struct mame_display *display)
 {
 	int i;
+	int device_type;
+	int device_slot;
 	offs_t offset, offset_start, offset_end;
 	const UINT8 *verify_data;
 	size_t verify_data_size;
@@ -145,6 +147,9 @@ void osd_update_video_and_audio(struct mame_display *display)
 	double time_limit;
 	double current_time;
 	int region;
+	const char *filename;
+	char buf[128];
+	mess_image *image;
 
 	/* if we have already aborted or completed, our work is done */
 	if ((state == STATE_ABORTED) || (state == STATE_DONE))
@@ -188,6 +193,35 @@ void osd_update_video_and_audio(struct mame_display *display)
 			inputx_post_utf8(current_command->u.input_chars);
 		}
 		state = inputx_is_posting() ? STATE_INCOMMAND : STATE_READY;
+		break;
+
+	case MESSTEST_COMMAND_IMAGE_CREATE:
+		device_slot = current_command->u.image_args.device_slot;
+		device_type = current_command->u.image_args.device_type;
+
+		image = image_from_devtype_and_index(device_type, device_slot);
+		if (!image)
+		{
+			message(MSG_FAILURE, "Image slot '%s %i' does not exist",
+				device_typename(device_type), device_slot);
+			break;
+		}
+
+		filename = current_command->u.image_args.filename;
+		if (!filename)
+		{
+			snprintf(buf, sizeof(buf) / sizeof(buf[0]),	"%s.%s",
+				current_testcase->name,
+				device_find(Machine->gamedrv, device_type)->file_extensions);
+			filename = buf;
+		}
+
+		/* actually create the image */
+		if (image_create(image, filename, 0, NULL))
+		{
+			message(MSG_FAILURE, "Failed to create image '%s'", filename);
+			break;
+		}
 		break;
 
 	case MESSTEST_COMMAND_VERIFY_MEMORY:

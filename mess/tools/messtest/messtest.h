@@ -9,6 +9,7 @@ enum messtest_command_type
 	MESSTEST_COMMAND_END,
 	MESSTEST_COMMAND_WAIT,
 	MESSTEST_COMMAND_INPUT,
+	MESSTEST_COMMAND_IMAGE_CREATE,
 	MESSTEST_COMMAND_VERIFY_MEMORY
 };
 
@@ -34,6 +35,12 @@ struct messtest_command
 			const void *verify_data;
 			size_t verify_data_size;
 		} verify_args;
+		struct
+		{
+			const char *filename;
+			int device_type;
+			int device_slot;
+		} image_args;
 	} u;
 };
 

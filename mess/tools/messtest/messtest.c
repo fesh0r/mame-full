@@ -122,6 +122,7 @@ static void start_handler(void *data, const XML_Char *tagname, const XML_Char **
 	const char *attr_name;
 	struct messtest_command cmd;
 	int region;
+	int device_type;
 
 	switch(state->phase) {
 	case STATE_ROOT:
@@ -169,6 +170,7 @@ static void start_handler(void *data, const XML_Char *tagname, const XML_Char **
 		memset(&state->current_command, 0, sizeof(state->current_command));
 		if (!strcmp(tagname, "wait"))
 		{
+			/* <wait> - waits for a duration of emulated time */
 			attr_name = "time";
 			s = find_attribute(attributes, attr_name);
 			if (!s)
@@ -179,10 +181,37 @@ static void start_handler(void *data, const XML_Char *tagname, const XML_Char **
 		}
 		else if (!strcmp(tagname, "input"))
 		{
+			/* <input> - inputs natural keyboard data into a system */
 			state->current_command.command_type = MESSTEST_COMMAND_INPUT;
+		}
+		else if (!strcmp(tagname, "imagecreate"))
+		{
+			/* <imagecreate> - creates an image */
+			state->current_command.command_type = MESSTEST_COMMAND_IMAGE_CREATE;
+
+			/* 'filename' attribute */
+			s1 = find_attribute(attributes, "filename");
+
+			/* 'type' attribute */
+			attr_name = "type";
+			s2 = find_attribute(attributes, attr_name);
+			if (!s2)
+				goto missing_attribute;
+			device_type = device_typeid(s2);
+			if (device_type < 0)
+				goto bad_device_type;
+			
+			/* 'slot' attribute */
+			s3 = find_attribute(attributes, "slot");
+
+			state->current_command.u.image_args.filename =
+				s1 ? pool_strdup(&state->pool, s1) : NULL;
+			state->current_command.u.image_args.device_type = device_type;
+			state->current_command.u.image_args.device_slot = s3 ? atoi(s3) : 0;
 		}
 		else if (!strcmp(tagname, "memverify"))
 		{
+			/* <memverify> - verifies that a range of memory contains specific data */
 			attr_name = "start";
 			s1 = find_attribute(attributes, attr_name);
 			if (!s1)
@@ -230,6 +259,10 @@ unknowntag:
 
 invalid_memregion:
 	report_parseerror(state, "Invalid memory region '%s'\n", s3);
+	return;
+
+bad_device_type:
+	report_parseerror(state, "Bad device type '%s'\n", s2);
 	return;
 }
 
