@@ -2848,6 +2848,7 @@ static DRIVER_INIT(konamigx)
 	else if (!strcmp(Machine->gamedrv->name, "tkmmpzdm"))
 	{
 		data32_t *rom = (data32_t*)memory_region(REGION_CPU1);
+		int i;
 
 		// The display is initialized after POST but the copyright screen disabled
 		// planes B,C,D and didn't bother restoring them. I've spent a good
@@ -2866,11 +2867,13 @@ static DRIVER_INIT(konamigx)
 		konamigx_cfgport = 7;
 
 		// boost voice(chip 1 channel 3-7)
-		for (int i=3; i<=7; i++) K054539_set_gain(1, i, 2.0);
+		for (i=3; i<=7; i++) K054539_set_gain(1, i, 2.0);
 	}
 
 	else if (!strcmp(Machine->gamedrv->name, "dragoonj"))
 	{
+		int i;
+
 		#if GX_SKIPIDLE
 			ADD_SKIPPER32(0x202f48, 0xc00000, 0x1020, 0x1020, 0xff00, 0x0000ff00)
 		#endif
@@ -2879,7 +2882,7 @@ static DRIVER_INIT(konamigx)
 		konamigx_cfgport = 7;
 
 		// soften percussions(chip 1 channel 0-3), boost voice(chip 1 channel 4-7)
-		for (int i=0; i<=3; i++)
+		for (i=0; i<=3; i++)
 		{
 			K054539_set_gain(1, i, 0.8);
 			K054539_set_gain(1, i+4, 2.0);
