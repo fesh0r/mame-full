@@ -397,6 +397,8 @@ static void command_image_loadcreate(void)
 			return;
 		}
 		break;
+	default:
+		break;
 	}
 }
 
