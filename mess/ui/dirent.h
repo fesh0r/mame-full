@@ -12,7 +12,6 @@
 #ifdef WIN32
 
 #include <windows.h>
-#include <direct.h>
 #include <sys/types.h>
 
 #if !defined(__GNUC__)

@@ -434,7 +434,9 @@ $(OBJ)/ti99.a:	   \
 	  $(OBJ)/mess/machine/mm58274c.o \
 	  $(OBJ)/mess/machine/994x_ser.o \
 	  $(OBJ)/mess/systems/ti99_4p.o  \
+	  $(OBJ)/mess/machine/99_dsk.o   \
 	  $(OBJ)/mess/machine/99_ide.o   \
+	  $(OBJ)/mess/machine/smc92x4.o  \
 #	  $(OBJ)/mess/systems/ti99_2.o	 \
 #	  $(OBJ)/mess/systems/ti990_4.o  \
 
@@ -748,6 +750,7 @@ COREOBJS += \
 	$(OBJ)/mess/devices/snapquik.o \
 	$(OBJ)/mess/devices/basicdsk.o \
 	$(OBJ)/mess/devices/flopdrv.o  \
+	$(OBJ)/mess/devices/idedrive.o \
 	$(OBJ)/mess/machine/6551.o     \
 	$(OBJ)/mess/vidhrdw/m6847.o    \
 	$(OBJ)/mess/vidhrdw/m6845.o    \

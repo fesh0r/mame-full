@@ -152,7 +152,7 @@ void    floppy_drive_write_sector_data(int drive, int side, int index1, char *pB
 int		floppy_drive_get_datarate_in_us(DENSITY density);
 
 #ifdef __cplusplus
-}
+};
 #endif
 
 

@@ -3,13 +3,15 @@
 #ifndef BASICDSK_H
 #define BASICDSK_H
 
+#include "driver.h"
+#include "devices/flopdrv.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include "devices/flopdrv.h"
-
-typedef struct {
+typedef struct
+{
 	UINT8	 track;
 	UINT8	 sector;
 	UINT8	 status;

@@ -967,7 +967,7 @@ static void snes_update_backplane(void)
 {
 	UINT16 ii;
 
-#ifdef MAME_DEBUG
+#ifdef SNES_DBG_VIDHRDW
 	if( debug_options.bg_disabled[5] )
 	{
 		return;

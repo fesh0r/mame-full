@@ -37,7 +37,7 @@ typedef struct hfdc_t
 
 enum
 {
-	disk_sel_none = -1
+	disk_sel_none = (UINT8) -1
 };
 
 enum
@@ -115,9 +115,10 @@ static int floppy_write_sector(int which, int disk_unit, int cylinder, int head,
 static void floppy_seek(int which, int disk_unit, int direction);
 static UINT8 floppy_get_disk_status(int which, int disk_unit);
 
-static int hard_disk_read_sector(int which, int disk_unit, int cylinder, int head, int sector, int *dma_address);
+/*static int hard_disk_read_sector(int which, int disk_unit, int cylinder, int head, int sector, int *dma_address);
 static int hard_disk_write_sector(int which, int disk_unit, int cylinder, int head, int sector, int *dma_address);
 static UINT8 hard_disk_get_disk_status(int which, int disk_unit);
+*/
 
 static disk_interface_t floppy_disk_interface =
 {
@@ -157,7 +158,7 @@ static int floppy_find_sector(int which, int disk_unit, int cylinder, int head, 
 				/* get ddam status */
 				//* ddam = id.flags & ID_FLAG_DELETED_DATA;
 				/* got record type here */
-#if VERBOSE
+#ifdef VERBOSE
 				logerror("sector found! C:$%02x H:$%02x R:$%02x N:$%02x%s\n", id.C, id.H, id.R, id.N, w->ddam ? " DDAM" : "");
 #endif
 				return TRUE;
@@ -172,7 +173,7 @@ static int floppy_find_sector(int which, int disk_unit, int cylinder, int head, 
 		}
 	}
 
-#if VERBOSE
+#ifdef VERBOSE
 	logerror("track %d sector %d not found!\n", w->track_reg, w->sector);
 #endif
 

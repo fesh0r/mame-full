@@ -102,4 +102,7 @@ typedef union {
 	UINT32 d;
 }	PAIR;
 
+#define INVALID_SET_FILE_POINTER ((DWORD)-1)
+#define INVALID_FILE_ATTRIBUTES ((DWORD)-1)
+
 #endif	/* defined OSD_CPU_H */

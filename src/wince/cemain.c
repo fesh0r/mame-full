@@ -11,8 +11,8 @@
 #include "resource.h"
 #include "driver.h"
 #include "mamece.h"
-#include "../windowsui/SmartListView.h"
-#include "../windowsui/SoftwareList.h"
+#include "ui/SmartListView.h"
+#include "ui/SoftwareList.h"
 #include "strconv.h"
 
 struct status_of_data
@@ -716,10 +716,10 @@ static BOOL FindRomSet(int game)
 	romp = gamedrv->rom;
 
 	if (romp && rom_first_file(romp)) {
-		if (!osd_faccess (gamedrv->name, OSD_FILETYPE_ROM)) {
+		if (!mame_faccess (gamedrv->name, FILETYPE_ROM)) {
 			// if the game is a clone, try loading the ROM from the main version //
 			if (gamedrv->clone_of->clone_of == 0 ||
-				!osd_faccess(gamedrv->clone_of->name,OSD_FILETYPE_ROM))
+				!mame_faccess(gamedrv->clone_of->name, FILETYPE_ROM))
 	          return FALSE; 
 		}
 	}

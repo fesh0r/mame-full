@@ -16,13 +16,13 @@ OSOBJS = \
 		$(OBJ)/wince/rc.o \
 		$(OBJ)/wince/ticker.o \
 		$(OBJ)/wince/fronthlp.o \
-		$(OBJ)/windows/fileio.o \
+		$(OBJ)/wince/fileio.o \
 		$(OBJ)/windows/snprintf.o \
 		$(OBJ)/mess/windows/menu.o \
 		$(OBJ)/mess/windows/dialog.o \
 		$(OBJ)/mess/windows/strconv.o \
-		$(OBJ)/mess/windowsui/SmartListView.o \
-		$(OBJ)/mess/windowsui/SoftwareList.o \
+		$(OBJ)/mess/ui/smartlistview.o \
+		$(OBJ)/mess/ui/softwarelist.o \
 		$(OBJ)/zlib/crc32.o \
 		$(OBJ)/zlib/adler32.o \
 		$(OBJ)/zlib/compress.o \
