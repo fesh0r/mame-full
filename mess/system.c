@@ -658,15 +658,15 @@ TESTDRIVER( hp48g ) 	/* HP48 G/GX										*/
 
 	/* Sony */
 TESTDRIVER( psx )
-TESTDRIVER( psxa )
-TESTDRIVER( psxb )
-TESTDRIVER( psxc )
-TESTDRIVER( psxd )
-TESTDRIVER( psxe )
-TESTDRIVER( psxf )
-TESTDRIVER( psxg )
-TESTDRIVER( psxh )
-TESTDRIVER( psxi )
+TESTDRIVER( psxj22 )
+TESTDRIVER( psxa22 )
+TESTDRIVER( psxe22 )
+TESTDRIVER( psxj30 )
+TESTDRIVER( psxa30 )
+TESTDRIVER( psxe30 )
+TESTDRIVER( psxj40 )
+TESTDRIVER( psxa41 )
+TESTDRIVER( psxe41 )
 
 /****************Games*******************************************************/
 	/* Computer Electronic */
