@@ -59,9 +59,9 @@ LD = link
 RC = rc
 ASM = nasmw
 ASMFLAGS = -f win32
-RM = del
+RM = rm
 RMDIR = rd /S /Q
-MD = -md
+MD = -mkdir
 
 WINDOWS_PROGRAM = -subsystem:windows
 CONSOLE_PROGRAM = -subsystem:console
@@ -76,7 +76,7 @@ endif
 # some structures and thus they can't be linked against each other.
 # cleantiny isn't needed anymore, because the tiny build has its
 # own object directory too.
-OBJ = obj\$(NAME)
+OBJ = obj/$(NAME)
 
 EMULATOR = $(NAME)$(EXE)
 
@@ -137,7 +137,8 @@ ifeq "$(TARGET)" "mess"
 INCLUDES += \
         -Imess \
         -Imess/includes \
-        -Imess/Win32
+        -Imess/Win32 \
+		-Imess/windows
 endif
 
 ifdef DX_INCPATH
@@ -145,12 +146,12 @@ INCLUDES += -I$(DX_INCPATH)
 endif
 
 ifdef ZLIB_INCPATH
-INCLUDES += -I$(ZLIB_INCPATH)
+INCLUDES += -I$(subst \,\\,$(ZLIB_INCPATH)) 
 endif
 
 ifdef MIDAS
 ifdef MIDAS_INCPATH
-INCLUDES += -I$(MIDAS_INCPATH)
+INCLUDES += -I$(subst \,\\,$(MIDAS_INCPATH))
 endif
 endif
 
@@ -207,16 +208,16 @@ endif
 ifdef MIDAS
 LIBS    += MIDASDLL.lib
 ifdef MIDAS_LIBPATH
-LDFLAGS += -LIBPATH:$(MIDAS_LIBPATH)
+LDFLAGS += -LIBPATH:$(subst \,\\,$(MIDAS_LIBPATH))
 endif
 endif
 
 ifdef DX_LIBPATH
-LDFLAGS += -LIBPATH:$(DX_LIBPATH)
+LDFLAGS += -LIBPATH:$(subst \,\\,$(DX_LIBPATH))
 endif
 
 ifdef ZLIB_LIBPATH
-LDFLAGS += -LIBPATH:$(ZLIB_LIBPATH)
+LDFLAGS += -LIBPATH:$(subst \,\\,$(ZLIB_LIBPATH))
 endif
 
 LDFLAGS += -machine:x86 -nologo
@@ -256,11 +257,11 @@ OBJDIRS += \
         $(OBJ)/mess/vidhrdw \
         $(OBJ)/mess/sndhrdw \
         $(OBJ)/mess/tools \
-        $(OBJ)/mess/tools\dat2html \
-        $(OBJ)/mess/tools\imgtool \
-        $(OBJ)/mess/tools\mkhdimg \
-        $(OBJ)/mess/tools\messroms \
-        $(OBJ)/mess/tools\mkimage \
+        $(OBJ)/mess/tools/dat2html \
+        $(OBJ)/mess/tools/imgtool \
+        $(OBJ)/mess/tools/mkhdimg \
+        $(OBJ)/mess/tools/messroms \
+        $(OBJ)/mess/tools/mkimage \
         $(OBJ)/mess/formats \
         $(OBJ)/mess/windows \
         $(OBJ)/mess/Win32
@@ -389,24 +390,20 @@ $(OBJ)/cpu/m68000/68020.o:  $(OBJ)/cpu/m68000/68020.asm
 
 $(OBJ)/%.a:
 	@echo Archiving $@...
-	@if exist $@ $(RM) $(subst /,\,$@)
+	@-$(RM) $(subst /,\,$@)
 	$(AR) -out:$@ $^
 
 makedir:
 	@echo make makedir is no longer necessary, just type make
 
 $(sort $(OBJDIRS)):
-	$(MD) $(subst /,\,$@)
+	$(MD) $(subst /,\\,$@)
 
 maketree: $(sort $(OBJDIRS))
 
 clean:
 	@echo Deleting object tree $(OBJ)...
-	@if exist $(OBJ) $(RMDIR) $(OBJ)
-ifdef BSCMAKE
-	@echo Deleting browser information $(OBJ)...
-	@if exist $(OBJ:%.o=%.sbr) $(RMDIR) $(OBJ:%.o=%.sbr)
-	@if exist $(EMULATOR:%.exe=%.bsc) $(RM) $(EMULATOR:%.exe=%.bsc)
-endif
+	@-$(RM) -r $(OBJ)
 	@echo Deleting $(EMULATOR)...
-	@if exist $(EMULATOR) $(RM) $(EMULATOR)
+	@-$(RM) $(EMULATOR)
+
