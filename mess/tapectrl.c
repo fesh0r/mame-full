@@ -32,9 +32,9 @@ int tapecontrol(struct mame_bitmap *bitmap, int selected)
 	device_seek(IO_CASSETTE,id,t0,SEEK_SET);
 
 	if( t1 )
-		sprintf(timepos, "%3d%%", t0*100/t1);
+		sprintf(timepos, "%04d/%04d", t0/11025, t1/11025);
 	else
-		sprintf(timepos, "%3d%%", 0);
+		sprintf(timepos, "%04d/%04d", 0, t1/11025);
 	menu_item[total] = (device_status(IO_CASSETTE,id,-1) & 1) ? "playing" : "stopped";
 	menu_subitem[total] = timepos;
     flag[total] = 0;

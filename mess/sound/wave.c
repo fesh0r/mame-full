@@ -427,7 +427,7 @@ static void wave_display(int id)
 		n = (w->play_pos * 4 / w->smpfreq) & 3;
 		t0 = w->play_pos / w->smpfreq;
 		t1 = w->samples / w->smpfreq;
-		sprintf(buf, "%c%c %2d:%02d [%2d:%02d]", n*2+2,n*2+3, t0/60,t0%60, t1/60,t1%60);
+		sprintf(buf, "%c%c %02d:%02d (%04d) [%02d:%02d (%04d)]", n*2+2,n*2+3, t0/60,t0%60, t0, t1/60, t1%60, t1);
 		ui_text(Machine->scrbitmap,buf, x, y);
 		tape_pos = w->play_pos;
     }
