@@ -14,18 +14,19 @@
   the DSP being emulated, there's no sound even if the code is being executed.
   I need to figure out how to get the 65816 and the SPC700 to stay in sync.
 
-  Todo:
-    - Emulate extra chips. (fx, dsp2 etc).
+  The memory map included below is setup in a way to make it easier to handle
+  Mode 20 and Mode 21 ROMs.
+
+  Todo (in no particular order):
+    - Emulate extra chips - superfx, dsp2, sa-1 etc.
     - Add sound emulation. Currently the SPC700 is emulated, but that's it.
-    - Add transparency(main/sub screens), windows etc to the video emulation.
-    - Add support for Mode 7.
-    - Fix up HDMA and possibly GDMA too.
+    - Add transparency(fixed colour), windows etc to the video emulation.
+    - Add fullgraphic,mosaic etc.
+    - Add support for Mode 7. (In Progress)
     - Figure out how games determine if they are running on a PAL or NTSC
       system.
-    - Handle more rom formats, like .fig, and maybe multi-part roms???
-    - Figure out how to handle HIROMS.
-    - Add support for running at 2.68Mhz and 3.58Mhz at appropriate times.
-    - Add HBlank interrupts.
+    - Handle interleaved and maybe even multi-part roms???
+    - Add support for running at 3.58Mhz at the appropriate time.
     - I'm sure there's lots more.
 
 ***************************************************************************/
@@ -34,47 +35,25 @@
 #include "includes/snes.h"
 
 static MEMORY_READ_START( snes_readmem )
-	{ 0x000000, 0x3fffff, snes_r_bank },	/* This section of RAM repeats heaps */
-	{ 0x400000, 0x6fffff, MRA_ROM },		/* ROM */
-	{ 0x700000, 0x7cffff, MRA_RAM },		/* SRAM - i think...? */
-
-	/* For LoROM */
-	{ 0x7d0000, 0x7dffff, MRA_RAM },		/* 4kb SRAM - or is it? */
-	/* For HiROM */
-/*	{ 0x7d0000, 0x7dffff, MRA_ROM },*/		/* ROM */
-
-	{ 0x7e0000, 0x7e1fff, MRA_RAM },		/* 8kb Shadow RAM - shadowed in banks 00-3f */
-	{ 0x7e2000, 0x7fffff, MRA_RAM },		/* System RAM */
-	{ 0x800000, 0xefffff, snes_r_mirror },	/* Mirror of 0x000000-0x6fffff */
-	{ 0xfd0000, 0xfdffff, MRA_RAM },		/* 4kb SRAM */
-
-	/* For LoROM */
-	{ 0xfe0000, 0xfe1fff, MRA_RAM },		/* Shadow RAM  - is it the same as the previous shadow ram? */
-	{ 0xfe2000, 0xffffff, MRA_RAM },		/* System RAM */
-	/* For HiROM */
-/*	{ 0xfe0000, 0xffffff, MRA_ROM },*/		/* 64k ROM chunk */
+	{ 0x000000, 0x2fffff, snes_r_bank1 },	/* I/O and ROM (repeats for each bank) */
+	{ 0x300000, 0x3fffff, snes_r_bank2 },	/* I/O and ROM (repeats for each bank) */
+	{ 0x400000, 0x5fffff, snes_r_bank3 },	/* ROM (and reserved in Mode 20) */
+	{ 0x600000, 0x6fffff, MRA_NOP },		/* Reserved */
+	{ 0x700000, 0x77ffff, MRA_RAM },		/* 256KB Mode 20 save ram */
+	{ 0x780000, 0x7dffff, MRA_NOP },		/* Reserved */
+	{ 0x7e0000, 0x7fffff, MRA_RAM },		/* 8KB Low RAM, 24KB High RAM, 96KB Expanded RAM */
+	{ 0x800000, 0xffffff, snes_r_bank4 },	/* Mirror and ROM */
 MEMORY_END
 
 static MEMORY_WRITE_START( snes_writemem )
-	{ 0x000000, 0x3fffff, snes_w_bank },	/* This section of RAM repeats heaps */
-	{ 0x400000, 0x6fffff, MWA_ROM },		/* ROM */
-	{ 0x700000, 0x7cffff, MWA_RAM },		/* SRAM - i think...? */
-
-	/* For LoROM */
-	{ 0x7d0000, 0x7dffff, MWA_RAM },		/* 4kb SRAM  - or is it? */
-	/* For HiROM */
-/*	{ 0x7d0000, 0x7dffff, MWA_ROM },*/		/* ROM */
-
-	{ 0x7e0000, 0x7e1fff, MWA_RAM },		/* 8kb Shadow RAM - shadowed in banks 00-3f */
-	{ 0x7e2000, 0x7fffff, MWA_RAM },		/* System RAM */
-	{ 0x800000, 0xefffff, snes_w_mirror },	/* Mirror of 0x000000-0x6fffff */
-	{ 0xfd0000, 0xfdffff, MWA_RAM },		/* 4kb SRAM */
-
-	/* For LoROM */
-	{ 0xfe0000, 0xfe1fff, MWA_RAM },		/* Shadow RAM  - is it the same as the previous shadow ram? */
-	{ 0xfe2000, 0xffffff, MWA_RAM },		/* System RAM */
-	/* For HiROM */
-/*	{ 0xfe0000, 0xffffff, MWA_ROM },*/		/* 64k ROM chunk */
+	{ 0x000000, 0x2fffff, snes_w_bank1 },	/* I/O and ROM (repeats for each bank) */
+	{ 0x300000, 0x3fffff, snes_w_bank2 },	/* I/O and ROM (repeats for each bank) */
+	{ 0x400000, 0x5fffff, MWA_ROM },		/* ROM (and reserved in Mode 20) */
+	{ 0x600000, 0x6fffff, MWA_NOP },		/* Reserved */
+	{ 0x700000, 0x77ffff, MWA_RAM },		/* 256KB Mode 20 save ram */
+	{ 0x780000, 0x7dffff, MWA_NOP },		/* Reserved */
+	{ 0x7e0000, 0x7fffff, MWA_RAM },		/* 8KB Low RAM, 24KB High RAM, 96KB Expanded RAM */
+	{ 0x800000, 0xffffff, snes_w_bank4 },	/* Mirror and ROM */
 MEMORY_END
 
 static MEMORY_READ_START( spc_readmem )
@@ -174,24 +153,15 @@ INPUT_PORTS_START( snes )
 	PORT_DIPSETTING(   0xc, "8bpl"  )
 
 	PORT_START	/* IN 10 : debug switches */
-	PORT_DIPNAME( 0x1, 0x1, "BG 1" )
-	PORT_DIPSETTING(   0x0, DEF_STR( Off ) )
-	PORT_DIPSETTING(   0x1, DEF_STR( On ) )
-	PORT_DIPNAME( 0x2, 0x2, "BG 2" )
-	PORT_DIPSETTING(   0x0, DEF_STR( Off ) )
-	PORT_DIPSETTING(   0x2, DEF_STR( On ) )
-	PORT_DIPNAME( 0x4, 0x4, "BG 3" )
-	PORT_DIPSETTING(   0x0, DEF_STR( Off ) )
-	PORT_DIPSETTING(   0x4, DEF_STR( On ) )
-	PORT_DIPNAME( 0x8, 0x8, "BG 4" )
-	PORT_DIPSETTING(   0x0, DEF_STR( Off ) )
-	PORT_DIPSETTING(   0x8, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, "Objects" )
-	PORT_DIPSETTING(   0x0, DEF_STR( Off ) )
-	PORT_DIPSETTING(   0x10, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, "Windows" )
-	PORT_DIPSETTING(   0x0, DEF_STR( Off ) )
-	PORT_DIPSETTING(   0x20, DEF_STR( On ) )
+	PORT_BIT_NAME( 0x1, IP_ACTIVE_HIGH, IPT_BUTTON7  | IPF_PLAYER2, "BG 1 toggle" )
+	PORT_BIT_NAME( 0x2, IP_ACTIVE_HIGH, IPT_BUTTON8  | IPF_PLAYER2, "BG 2 toggle" )
+	PORT_BIT_NAME( 0x4, IP_ACTIVE_HIGH, IPT_BUTTON9  | IPF_PLAYER2, "BG 3 toggle" )
+	PORT_BIT_NAME( 0x8, IP_ACTIVE_HIGH, IPT_BUTTON10 | IPF_PLAYER2, "BG 4 toggle" )
+	PORT_BIT_NAME( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON7 | IPF_PLAYER3, "Object toggle" )
+
+	PORT_START	/* IN 11 : debug input */
+	PORT_BIT_NAME( 0x1, IP_ACTIVE_HIGH, IPT_BUTTON9,  "Pal prev" )
+	PORT_BIT_NAME( 0x2, IP_ACTIVE_HIGH, IPT_BUTTON10, "Pal next" )
 #endif
 INPUT_PORTS_END
 
@@ -258,7 +228,7 @@ static MACHINE_DRIVER_START( snespal )
 MACHINE_DRIVER_END
 
 #define io_snes		io_NULL
-#define io_snespal  io_NULL
+#define io_snespal	io_NULL
 
 SYSTEM_CONFIG_START(snes)
 	CONFIG_DEVICE_CARTSLOT(1, "smc\0sfc\0fig\0", snes_load_rom, NULL, NULL)
@@ -288,6 +258,6 @@ ROM_START(snespal)
 	ROM_LOAD_OPTIONAL("spc700.rom", 0xFFC0, 0x40, 0x38000B6B)	/* boot rom */
 ROM_END
 
-/*     YEAR  NAME     PARENT  MACHINE  INPUT  INIT	CONFIG	COMPANY     FULLNAME                                      FLAGS */
-CONSX( 1989, snes,    0,      snes,    snes,  0,	snes,	"Nintendo", "Super Nintendo Entertainment System (NTSC)", GAME_NOT_WORKING )
-CONSX( 1989, snespal, snes,   snespal, snes,  0,	snes,	"Nintendo", "Super Nintendo Entertainment System (PAL)",  GAME_NOT_WORKING )
+/*     YEAR  NAME     PARENT  MACHINE  INPUT  INIT  CONFIG  COMPANY     FULLNAME                                      FLAGS */
+CONSX( 1989, snes,    0,      snes,    snes,  0,    snes,   "Nintendo", "Super Nintendo Entertainment System (NTSC)", GAME_NOT_WORKING )
+CONSX( 1989, snespal, snes,   snespal, snes,  0,    snes,   "Nintendo", "Super Nintendo Entertainment System (PAL)",  GAME_NOT_WORKING )
