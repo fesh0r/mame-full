@@ -23,6 +23,11 @@
 #include <stdlib.h>
 #include "utils.h"
 
+/* The Win32 port requires this constant for variable arg routines and main */
+#ifndef CLIB_DECL
+#define CLIB_DECL
+#endif
+
 typedef unsigned char	byte;
 typedef unsigned short	word;
 
