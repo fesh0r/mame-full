@@ -47,6 +47,8 @@ New (0005) :
 	* fixed some tape bugs.  The CS1 unit now works occasionally
 New (000531) :
 	* various small bugfixes
+New (001004) :
+	* updated for new mem handling
 */
 
 #include "driver.h"
@@ -532,7 +534,7 @@ WRITE16_HANDLER ( ti99_ww_xramlow )
 {
 	tms9900_ICount -= 4;
 
-	WRITE_WORD(ti99_xRAM_low + offset, data | (READ_WORD(ti99_xRAM_low + offset) & (data >> 16)));
+	COMBINE_DATA((data16_t *) (ti99_xRAM_low + offset));
 }
 
 /* high 24 kb : 0xa000-0xffff */
@@ -547,7 +549,7 @@ WRITE16_HANDLER ( ti99_ww_xramhigh )
 {
 	tms9900_ICount -= 4;
 
-	WRITE_WORD(ti99_xRAM_high + offset, data | (READ_WORD(ti99_xRAM_high + offset) & (data >> 16)));
+	COMBINE_DATA((data16_t *) (ti99_xRAM_high + offset));
 }
 
 /*
@@ -568,9 +570,9 @@ WRITE16_HANDLER ( ti99_ww_cartmem )
 	tms9900_ICount -= 4;
 
 	if (cartidge_minimemory && offset >= 0x1000)
-		WRITE_WORD(current_page_ptr+offset, data | (READ_WORD(current_page_ptr+offset) & (data >> 16)));
+		COMBINE_DATA((data16_t *) (current_page_ptr+offset));
 	else if (cartidge_paged)
-		current_page_ptr = cartidge_pages[( offset >> 1 )& 1];
+		current_page_ptr = cartidge_pages[(offset >> 1) & 1];
 }
 
 /*----------------------------------------------------------------
@@ -591,8 +593,7 @@ READ16_HANDLER ( ti99_rw_scratchpad )
 */
 WRITE16_HANDLER ( ti99_ww_scratchpad )
 {
-	WRITE_WORD(ti99_scratch_RAM + (offset & 0xff),
-				data | (READ_WORD(ti99_scratch_RAM + (offset & 0xff)) & (data >> 16)));
+	COMBINE_DATA((data16_t *) (ti99_scratch_RAM + (offset & 0xff)));
 }
 
 /*----------------------------------------------------------------
