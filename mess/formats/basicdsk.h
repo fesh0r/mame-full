@@ -21,6 +21,7 @@ struct basicdsk_geometry
 	UINT64 offset;
 
 	int (*translate_sector)(floppy_image *floppy, int sector);
+	int (*translate_track)(floppy_image *floppy, int track);
 };
 
 floperr_t basicdsk_construct(floppy_image *floppy, const struct basicdsk_geometry *geometry);
