@@ -43,7 +43,7 @@ INPUT_PORTS_START( arcadia )
 	DIPS_HELPER( 0x08, "Player 1/Left 1", KEYCODE_1, CODE_NONE)
 	DIPS_HELPER( 0x04, "Player 1/Left 4", KEYCODE_4, KEYCODE_Q)
 	DIPS_HELPER( 0x02, "Player 1/Left 7", KEYCODE_7, KEYCODE_A)
-	DIPS_HELPER( 0x01, "Player 1/Left Enter", KEYCODE_ENTER, KEYCODE_Z)
+	DIPS_HELPER( 0x01, "Player 1/Left Clear", KEYCODE_BACKSPACE, KEYCODE_Z)
 	PORT_START
 	DIPS_HELPER( 0x08, "Player 1/Left 2/Button", KEYCODE_2, KEYCODE_LCONTROL)
 	DIPS_HELPER( 0x04, "Player 1/Left 5", KEYCODE_5, KEYCODE_W)
@@ -53,12 +53,14 @@ INPUT_PORTS_START( arcadia )
 	DIPS_HELPER( 0x08, "Player 1/Left 3", KEYCODE_3, CODE_NONE)
 	DIPS_HELPER( 0x04, "Player 1/Left 6", KEYCODE_6, KEYCODE_E)
 	DIPS_HELPER( 0x02, "Player 1/Left 9", KEYCODE_9, KEYCODE_D)
-	DIPS_HELPER( 0x01, "Player 1/Left Clear", KEYCODE_C, KEYCODE_ESC)
+	DIPS_HELPER( 0x01, "Player 1/Left Enter", KEYCODE_ENTER, KEYCODE_C)
+	PORT_START
+// used in palladium
 	PORT_START
 	DIPS_HELPER( 0x08, "Player 2/Right 1", KEYCODE_1_PAD, CODE_NONE)
 	DIPS_HELPER( 0x04, "Player 2/Right 4", KEYCODE_4_PAD, CODE_NONE)
 	DIPS_HELPER( 0x02, "Player 2/Right 7", KEYCODE_7_PAD, CODE_NONE)
-	DIPS_HELPER( 0x02, "Player 2/Right ENTER", KEYCODE_ENTER_PAD, CODE_NONE)
+	DIPS_HELPER( 0x01, "Player 2/Right Clear", KEYCODE_DEL_PAD, CODE_NONE)
 	PORT_START
 	DIPS_HELPER( 0x08, "Player 2/Right 2/Button", KEYCODE_2_PAD, KEYCODE_LALT)
 	DIPS_HELPER( 0x04, "Player 2/Right 5", KEYCODE_5_PAD, CODE_NONE)
@@ -68,7 +70,77 @@ INPUT_PORTS_START( arcadia )
 	DIPS_HELPER( 0x08, "Player 2/Right 3", KEYCODE_3_PAD, CODE_NONE)
 	DIPS_HELPER( 0x04, "Player 2/Right 6", KEYCODE_6_PAD, CODE_NONE)
 	DIPS_HELPER( 0x02, "Player 2/Right 9", KEYCODE_9_PAD, CODE_NONE)
+	DIPS_HELPER( 0x01, "Player 2/Right ENTER", KEYCODE_ENTER_PAD, CODE_NONE)
+	PORT_START
+// used in palladium
+#if 0
+    // shit, auto centering too slow, so only using 5 bits, and scaling at videoside
+    PORT_START
+PORT_ANALOGX(0x1ff,0x10,IPT_AD_STICK_X|IPF_CENTER,1,2000,0,0x1f,KEYCODE_LEFT,KEYCODE_RIGHT,JOYCODE_1_LEFT,JOYCODE_1_RIGHT)
+    PORT_START
+PORT_ANALOGX(0x1ff,0x10,IPT_AD_STICK_Y|IPF_CENTER,1,2000,0,0x1f,KEYCODE_UP,KEYCODE_DOWN,JOYCODE_1_UP,JOYCODE_1_DOWN)
+    PORT_START
+PORT_ANALOGX(0x1ff,0x10,IPT_AD_STICK_X|IPF_CENTER|IPF_PLAYER2,100,10,0,0x1f,KEYCODE_DEL,KEYCODE_PGDN,JOYCODE_2_LEFT,JOYCODE_2_RIGHT)
+    PORT_START
+PORT_ANALOGX(0x1ff,0x10,IPT_AD_STICK_Y|IPF_CENTER|IPF_PLAYER2,100,10,0,0x1f,KEYCODE_HOME,KEYCODE_END,JOYCODE_2_UP,JOYCODE_2_DOWN)
+#else
+	PORT_START
+	DIPS_HELPER( 0x01, "Player 1/left", KEYCODE_LEFT, CODE_NONE)
+	DIPS_HELPER( 0x02, "Player 1/right", KEYCODE_RIGHT, CODE_NONE)
+	DIPS_HELPER( 0x04, "Player 1/down", KEYCODE_DOWN, CODE_NONE)
+	DIPS_HELPER( 0x08, "Player 1/up", KEYCODE_UP, CODE_NONE)
+	DIPS_HELPER( 0x10, "Player 2/left", KEYCODE_DEL, CODE_NONE)
+	DIPS_HELPER( 0x20, "Player 2/right", KEYCODE_PGDN, CODE_NONE)
+	DIPS_HELPER( 0x40, "Player 2/down", KEYCODE_END, CODE_NONE)
+	DIPS_HELPER( 0x80, "Player 2/up", KEYCODE_HOME, CODE_NONE)
+#endif
+INPUT_PORTS_END
+
+INPUT_PORTS_START( paladium )
+	PORT_START
+	DIPS_HELPER( 0x01, "Start", KEYCODE_F1, CODE_NONE)
+	DIPS_HELPER( 0x02, "Selector A", KEYCODE_F2, CODE_NONE)
+	DIPS_HELPER( 0x04, "Selector B", KEYCODE_F5, CODE_NONE)
+	PORT_START
+	DIPS_HELPER( 0x08, "Player 1/Left 1", KEYCODE_1, CODE_NONE)
+	DIPS_HELPER( 0x04, "Player 1/Left 4", KEYCODE_4, KEYCODE_Q)
+	DIPS_HELPER( 0x02, "Player 1/Left 7", KEYCODE_7, KEYCODE_A)
+	DIPS_HELPER( 0x01, "Player 1/Left Clear", KEYCODE_BACKSPACE, KEYCODE_Z)
+	PORT_START
+	DIPS_HELPER( 0x08, "Player 1/Left 2/Button", KEYCODE_2, KEYCODE_LCONTROL)
+	DIPS_HELPER( 0x04, "Player 1/Left 5", KEYCODE_5, KEYCODE_W)
+	DIPS_HELPER( 0x02, "Player 1/Left 8", KEYCODE_8, KEYCODE_S)
+	DIPS_HELPER( 0x01, "Player 1/Left 0", KEYCODE_0, KEYCODE_X)
+	PORT_START
+	DIPS_HELPER( 0x08, "Player 1/Left 3", KEYCODE_3, CODE_NONE)
+	DIPS_HELPER( 0x04, "Player 1/Left 6", KEYCODE_6, KEYCODE_E)
+	DIPS_HELPER( 0x02, "Player 1/Left 9", KEYCODE_9, KEYCODE_D)
+	DIPS_HELPER( 0x01, "Player 1/Left Enter", KEYCODE_ENTER, KEYCODE_C)
+	PORT_START
+	DIPS_HELPER( 0x01, "Player 1/Left x1", KEYCODE_R, CODE_NONE)
+	DIPS_HELPER( 0x02, "Player 1/Left x2", KEYCODE_F, CODE_NONE)
+	DIPS_HELPER( 0x04, "Player 1/Left x3", KEYCODE_V, CODE_NONE)
+	DIPS_HELPER( 0x08, "Player 1/Left x4", KEYCODE_G, CODE_NONE)
+	PORT_START
+	DIPS_HELPER( 0x08, "Player 2/Right 1", KEYCODE_1_PAD, CODE_NONE)
+	DIPS_HELPER( 0x04, "Player 2/Right 4", KEYCODE_4_PAD, CODE_NONE)
+	DIPS_HELPER( 0x02, "Player 2/Right 7", KEYCODE_7_PAD, CODE_NONE)
 	DIPS_HELPER( 0x01, "Player 2/Right Clear", KEYCODE_DEL_PAD, CODE_NONE)
+	PORT_START
+	DIPS_HELPER( 0x08, "Player 2/Right 2/Button", KEYCODE_2_PAD, KEYCODE_LALT)
+	DIPS_HELPER( 0x04, "Player 2/Right 5", KEYCODE_5_PAD, CODE_NONE)
+	DIPS_HELPER( 0x02, "Player 2/Right 8", KEYCODE_8_PAD, CODE_NONE)
+	DIPS_HELPER( 0x01, "Player 2/Right 0", KEYCODE_0_PAD, CODE_NONE)
+	PORT_START
+	DIPS_HELPER( 0x08, "Player 2/Right 3", KEYCODE_3_PAD, CODE_NONE)
+	DIPS_HELPER( 0x04, "Player 2/Right 6", KEYCODE_6_PAD, CODE_NONE)
+	DIPS_HELPER( 0x02, "Player 2/Right 9", KEYCODE_9_PAD, CODE_NONE)
+	DIPS_HELPER( 0x01, "Player 2/Right ENTER", KEYCODE_ENTER_PAD, CODE_NONE)
+	PORT_START
+	DIPS_HELPER( 0x01, "Player 2/Right x1", KEYCODE_ASTERISK, CODE_NONE)
+	DIPS_HELPER( 0x02, "Player 2/Right x2", KEYCODE_SLASH_PAD, CODE_NONE)
+	DIPS_HELPER( 0x04, "Player 2/Right x3", KEYCODE_MINUS_PAD, CODE_NONE)
+	DIPS_HELPER( 0x08, "Player 2/Right x4", KEYCODE_PLUS_PAD, CODE_NONE)
 #if 0
     // shit, auto centering too slow, so only using 5 bits, and scaling at videoside
     PORT_START
@@ -199,6 +271,11 @@ ROM_START(arcadia)
 	ROM_REGION(0x100,REGION_GFX1, 0)
 ROM_END
 
+ROM_START(paladium)
+	ROM_REGION(0x8000,REGION_CPU1, 0)
+	ROM_REGION(0x100,REGION_GFX1, 0)
+ROM_END
+
 static int arcadia_id_rom(int id)
 {
 	return ID_OK;	/* no id possible */
@@ -287,6 +364,7 @@ static const struct IODevice io_arcadia[] = {
     { IO_END }
 };
 
+#define io_paladium io_arcadia
 
 void init_arcadia(void)
 {
@@ -305,16 +383,75 @@ void init_arcadia(void)
 		0x1b, 0x01, // bctr,a $0004
 		0x17, // retc a
 		0x76, 0x20, // ppsu ii
+
+		// fill screen
 		0x04, 0x00, // lodi,0 0
-		0xcc, 0x78, 0x00, // stra,0 $1800,r0
-		0x84, 0x01, // addi,0 1
-		0xe4, 0x40, // comi,0 64
-		0x98, 0x77, // bcfr,0 -9
+		0x04|1, 0x00, // lodi,1 0
+		0xcc|1, 0x78, 0x00, //a: stra,0 $1800,r1
+		0x75,9, //cpsl wc|c
+		0x84,0x41, // addi,0 0x41
+		0x75,9, //cpsl wc|c
+		0x84|1, 0x01, // addi,1 1
+		0xe4|1, 0x40, // comi,1 40
+		0x98, 0x80-15, // bcfr,0 a
+
 		0x04, 0x07, // lodi,0 7
-		0xcc, 0x19, 0xf9, // stra,0 $19f9
-		0x1b, 0x7e // bctr,a -2
+//		0xcc, 0x19, 0xf9, // stra,0 $19f9
+		0xcc, 0x19, 0xbf, // stra,0 $19bf
+		
+		//loop: 0x001e
+		// print keyboards
+		0x04|1, 0x00, //y:lodi,1 0
+		0x0c|1, 0x79, 0x00, //x: ldra,0 1900,r1
+		0x44|0, 0x0f, //andi,0 0f
+		0x64|0, 0x10, //ori,0  10
+		0xcc|1, 0x78, 0x40, //stra,0 1840,r1
+		0x75,9, //cpsl wc|c
+		0x84|1, 0x01, //addi,1 1
+		0xe4|1, 0x09, //comi,1 9
+		0x98, 0x80-18, //bcfr,0 x
+
+		// cycle colors
+		0x0c|1, 0x19, 0x00, //ldra,1 1900
+		0x44|1, 0xf, //andi,0 0f		
+		0xe4|1, 1, //comi,1 1
+		0x98, +8, //bcfr,0 c
+		0x0c, 0x19, 0xbf,//ldra,0 19f9,0
+		0x84, 1, //addi,0 1
+		0xcc, 0x19, 0xbf, //stra,0 19f9,0
+		0xe4|1, 2, //c:comi,1 2
+		0x98, +8, //bcfr,0 d
+		0x0c, 0x19, 0xbf, //ldra,0 19f9,0
+		0x84, 8, //addi,0 8
+		0xcc, 0x19, 0xbf, //stra,0 19f9,0
+
+		0x0c, 0x19, 0xbf, //ldra,0 19bf
+		0xcc, 0x19, 0xf9, //stra,0 19f9
+		0x44|0, 7, //andi,0 7
+		0x64|0, 0x10, //ori,0  10
+		0xcc, 0x18, 0x51, //stra,0 1851
+		0x0c, 0x19, 0xbf, //x: ldra,0 19bf
+		0x50, 0x50, 0x50, //shr,0 3
+		0x44|0, 7, //andi,0 7
+		0x64|0, 0x10, //ori,0  10
+		0xcc, 0x18, 0x50, //stra,0 1850
+
+		0x0c, 0x19, 0x00, //b: ldra,0 1900
+		0x44|0, 0xf, //andi,0 0f
+		0xe4, 0, //comi,0 0
+		0x98, 0x80-9, //bcfr,0 b
+
+		0x0c, 0x18, 0x00, //ldra,0 1800
+		0x84, 1, //addi,0 1
+		0xcc, 0x18, 0x00, //stra,0 1800
+
+//		0x1b, 0x80-20-29-26-9-8-2 // bctr,a y
+		0x1c|3, 0, 0x1e, // bcta,3 loop
+
+		// calling too many subdirectories causes cpu to reset!
+		// bxa causes trap
 	    };
-#if 0
+#if 1
 	    FILE *f;
 	    f=fopen("chartest.bin","wb");
 	    fwrite(prog, ARRAY_LENGTH(prog), sizeof(prog[0]), f);
@@ -327,9 +464,17 @@ void init_arcadia(void)
 }
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
+// marketed from several firms/names
+
 CONSX( 1982, arcadia,	0,	arcadia,  arcadia,  arcadia,		"Emerson",		"Arcadia 2001", GAME_IMPERFECT_COLORS|GAME_IMPERFECT_SOUND )
 // schmid tvg 2000 (developer? PAL)
-// several other firms/names
+
+// different cartridge connector
+// hanimex mpt 03 model
+
+// different cartridge connector (same size as mpt03, but different pinout!)
+// 16 keys instead of 12
+CONSX( 198?, paladium,	arcadia,arcadia,  paladium,  arcadia,		"Palladium",		"Palladium", GAME_IMPERFECT_COLORS|GAME_IMPERFECT_SOUND )
 
 
 #ifdef RUNTIME_LOADER
@@ -338,6 +483,7 @@ extern void arcadia_runtime_loader_init(void)
 	int i;
 	for (i=0; drivers[i]; i++) {
 		if ( strcmp(drivers[i]->name,"arcadia")==0) drivers[i]=&driver_arcadia;
+		if ( strcmp(drivers[i]->name,"paladium")==0) drivers[i]=&driver_paladium;
 	}
 }
 #endif
