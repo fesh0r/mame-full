@@ -499,6 +499,15 @@ WRITE_HANDLER(at_8042_8_w)
 			at_8042.keyboard.on = 1;
 			break;
 		case 0xc0:	/* read input port */
+			/*	|7|6|5|4|3 2 1 0|  8042 Input Port
+			 *	 | | | |    |    
+			 *	 | | | |    `------- undefined
+			 *	 | | | |
+			 *	 | | | `--------- 1=enable 2nd 256k of Motherboard RAM
+			 *	 | | `---------- 1=manufacturing jumper installed
+			 *	 | `----------- 1=primary display is MDA, 0=CGA
+			 *	 `------------ 1=keyboard not inhibited; 0=inhibited
+			 */
 			at_8042_receive(at_8042.inport);
 			break;
 		case 0xc1:	/* read input port 3..0 until write to 0x60 */
@@ -534,6 +543,10 @@ WRITE_HANDLER(at_8042_8_w)
 			 * written to input register a port at 60h is sent to the
 			 * auxiliary device  */
 			at_8042.operation_write_state = 4;
+			break;
+		case 0xe0:
+			/* read test inputs; read T1/T0 test inputs into bit 1/0 */
+			at_8042_receive(0x00);
 			break;
 
 		case 0xf0:

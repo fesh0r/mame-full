@@ -411,7 +411,10 @@ static void I386OP(call_rel16)(void)		// Opcode 0xe8
 	INT16 disp = FETCH16();
 
 	PUSH16( I.eip );
-	I.eip += disp;
+	if (I.sreg[CS].d)
+		I.eip += disp;
+	else
+		I.eip = (I.eip & 0xFFFF0000) | (UINT16) (I.eip + disp);
 	CHANGE_PC(I.eip);
 	CYCLES(7 + 1);		/* TODO: Timing = 7 + m */
 }
@@ -2615,8 +2618,8 @@ static void I386OP(retf16)(void)			// Opcode 0xcb
 {
 	I.eip = POP16();
 	I.sreg[CS].selector = POP16();
-	CHANGE_PC(I.eip);
 	i386_load_segment_descriptor( CS );
+	CHANGE_PC(I.eip);
 
 	CYCLES(1);	// TODO: deduct proper cycle count
 }
