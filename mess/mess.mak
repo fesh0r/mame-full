@@ -471,6 +471,9 @@ $(OBJ)/apple.a:   \
 	$(OBJ)/mess/vidhrdw/apple2.o		\
 	$(OBJ)/mess/machine/apple2.o		\
 	$(OBJ)/mess/systems/apple2.o		\
+	$(OBJ)/mess/vidhrdw/apple2gs.o		\
+	$(OBJ)/mess/machine/apple2gs.o		\
+	$(OBJ)/mess/systems/apple2gs.o		\
 	$(OBJ)/mess/formats/ap2_dsk.o		\
 	$(OBJ)/mess/formats/ap_dsk35.o		\
 	$(OBJ)/mess/machine/ay3600.o		\

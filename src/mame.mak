@@ -682,7 +682,7 @@ $(OBJ)/konami.a: \
 	$(OBJ)/machine/am53cf96.o $(OBJ)/drivers/konamigq.o \
 	$(OBJ)/machine/intelfsh.o $(OBJ)/drivers/konamigv.o \
 	$(OBJ)/drivers/gticlub.o \
-	$(OBJ)/drivers/hornet.o \
+	$(OBJ)/machine/timekpr.o $(OBJ)/drivers/hornet.o \
 	$(OBJ)/drivers/nwk-tr.o \
 	$(OBJ)/drivers/zr107.o \
 

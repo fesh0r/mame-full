@@ -1057,7 +1057,7 @@ void sound_frame_update(void)
 					for (sample = 0; sample < samples_this_frame; sample++)
 						leftmix[sample] += stream_buf[sample];
 				
-				/* if the speaker is to the right, send only to the left */
+				/* if the speaker is to the right, send only to the right */
 				else
 					for (sample = 0; sample < samples_this_frame; sample++)
 						rightmix[sample] += stream_buf[sample];
