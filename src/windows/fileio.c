@@ -8,6 +8,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <ctype.h>
+#include <tchar.h>
 
 // MAME headers
 #include "driver.h"
@@ -23,6 +24,12 @@
 
 #define MAX_OPEN_FILES		16
 #define FILE_BUFFER_SIZE	256
+
+#ifdef UNICODE
+#define appendstring(dest,src)	wsprintf((dest) + wcslen(dest), TEXT("%S"), (src))
+#else
+#define appendstring(dest,src)	strcat((dest), (src))
+#endif // UNICODE
 
 
 //============================================================
@@ -126,7 +133,7 @@ struct rc_option fileio_opts[] =
 //	is_pathsep
 //============================================================
 
-INLINE int is_pathsep(char c)
+INLINE int is_pathsep(TCHAR c)
 {
 	return (c == '/' || c == '\\' || c == ':');
 }
@@ -137,9 +144,9 @@ INLINE int is_pathsep(char c)
 //	find_reverse_path_sep
 //============================================================
 
-static char *find_reverse_path_sep(char *name)
+static TCHAR *find_reverse_path_sep(TCHAR *name)
 {
-	char *p = name + strlen(name) - 1;
+	TCHAR *p = name + tcslen(name) - 1;
 	while (p >= name && !is_pathsep(*p))
 		p--;
 	return (p >= name) ? p : NULL;
@@ -151,9 +158,9 @@ static char *find_reverse_path_sep(char *name)
 //	create_path
 //============================================================
 
-static void create_path(char *path, int has_filename)
+static void create_path(TCHAR *path, int has_filename)
 {
-	char *sep = find_reverse_path_sep(path);
+	TCHAR *sep = find_reverse_path_sep(path);
 	DWORD attributes;
 
 	/* if there's still a separator, and it's not the root, nuke it and recurse */
@@ -385,10 +392,10 @@ static const char *get_path_for_filetype(int filetype, int pathindex, DWORD *cou
 //	compose_path
 //============================================================
 
-static void compose_path(char *output, int pathtype, int pathindex, const char *filename)
+static void compose_path(TCHAR *output, int pathtype, int pathindex, const char *filename)
 {
 	const char *basepath = get_path_for_filetype(pathtype, pathindex, NULL);
-	char *p;
+	TCHAR *p;
 
 #ifdef MESS
 	if (osd_is_absolute_path(filename))
@@ -398,10 +405,10 @@ static void compose_path(char *output, int pathtype, int pathindex, const char *
 	/* compose the full path */
 	*output = 0;
 	if (basepath)
-		strcat(output, basepath);
-	if (*output && !is_pathsep(output[strlen(output) - 1]))
-		strcat(output, "\\");
-	strcat(output, filename);
+		appendstring(output, basepath);
+	if (*output && !is_pathsep(output[tcslen(output) - 1]))
+		appendstring(output, "\\");
+	appendstring(output, filename);
 
 	/* convert forward slashes to backslashes */
 	for (p = output; *p; p++)
@@ -432,7 +439,7 @@ int osd_get_path_count(int pathtype)
 
 int osd_get_path_info(int pathtype, int pathindex, const char *filename)
 {
-	char fullpath[1024];
+	TCHAR fullpath[1024];
 	DWORD attributes;
 
 	/* compose the full path */
@@ -457,7 +464,7 @@ int osd_get_path_info(int pathtype, int pathindex, const char *filename)
 osd_file *osd_fopen(int pathtype, int pathindex, const char *filename, const char *mode)
 {
 	DWORD disposition = 0, access = 0;
-	char fullpath[1024];
+	TCHAR fullpath[1024];
 	LONG upperPos = 0;
 	osd_file *file;
 	int i;
@@ -683,7 +690,7 @@ void osd_fclose(osd_file *file)
 
 int osd_create_directory(int pathtype, int pathindex, const char *dirname)
 {
-	char fullpath[1024];
+	TCHAR fullpath[1024];
 
 	/* compose the full path */
 	compose_path(fullpath, pathtype, pathindex, dirname);

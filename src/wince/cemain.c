@@ -8,7 +8,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
-#include "resource.h"
+#include "ceres.h"
 #include "driver.h"
 #include "mamece.h"
 #include "ui/SmartListView.h"

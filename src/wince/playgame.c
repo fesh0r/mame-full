@@ -227,3 +227,7 @@ void CLIB_DECL logerror(const char *text,...)
 	va_end(arg);
 #endif
 }
+
+void osd_begin_final_unloading(void)
+{
+}

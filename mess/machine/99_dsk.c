@@ -50,7 +50,7 @@ int ti99_floppy_load(int id, mame_file *fp, int open_mode)
 
 	ti99_vib vib;
 	int totsecs;
-	int tracksperside, sides, secspertrack, density;
+	int tracksperside = 0, sides = 0, secspertrack = 0, density = 0;
 	int done;
 
 

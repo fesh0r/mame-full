@@ -198,15 +198,7 @@ endif
 # C Compiler flags
 #
 
-CFLAGS = -W1 -nologo $(INCLUDES)
-
-ifeq "$(MAMEOS)" "wince"
-ifeq "$(PLATFORM)" "MS Pocket PC"
-CFLAGS += -Gz
-else
-CFLAGS += -Gd
-endif
-endif
+CFLAGS = -W1 -nologo $(INCLUDES) -Gz
 
 ifdef DEBUG
 CFLAGS += -Zi -Od
@@ -219,7 +211,7 @@ endif
 
 RCDEFS = $(MAME_NET) $(MAME_MMX) -DNDEBUG $(MAME_VERSION)
 
-RCFLAGS = -l 0x409 $(DBGDEFS) -Isrc/ui/res -Imess/windows
+RCFLAGS = -l 0x409 $(DBGDEFS) -Isrc/wince -Isrc/ui/res -Imess/windows
 
 ifdef MESS
 RCFLAGS += -DMESS -Imess/ui/res

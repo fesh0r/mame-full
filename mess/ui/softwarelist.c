@@ -25,11 +25,13 @@ extern void osd_change_directory(const char *);
 
 static int s_nGame;
 
+#ifndef ZEXPORT
 #ifdef _MSC_VER
 #define ZEXPORT WINAPI
 #define alloca _alloca
 #else
 #define ZEXPORT
+#endif
 #endif
 
 extern unsigned int ZEXPORT crc32 (unsigned int crc, const unsigned char *buf, unsigned int len);
@@ -257,6 +259,7 @@ static BOOL MessSetImage(int nDriver, int imagenum, int entry)
 {
     char *filename;
     mess_image_type imagetypes[64];
+	int nDeviceType;
 
     if (!mess_images_index || (imagenum >= mess_images_count))
         return FALSE;		/* Invalid image index */
@@ -266,9 +269,18 @@ static BOOL MessSetImage(int nDriver, int imagenum, int entry)
 
     SetupImageTypes(nDriver, imagetypes, sizeof(imagetypes) / sizeof(imagetypes[0]), TRUE, IO_COUNT);
 
+	nDeviceType = MessDiscoverImageType(filename, imagetypes, TRUE, NULL);
+	if ((nDeviceType == IO_UNKNOWN) || (nDeviceType == IO_BAD) || (nDeviceType == IO_ZIP))
+	{
+		free(filename);
+		return FALSE;
+	}
+	assert(nDeviceType > 0);
+	assert(nDeviceType < IO_COUNT);
+
 	if (options.image_files[entry].name)
 		free((void *) options.image_files[entry].name);
-    options.image_files[entry].type = MessDiscoverImageType(filename, imagetypes, TRUE, NULL);
+    options.image_files[entry].type = nDeviceType;
     options.image_files[entry].name = filename;
 
     mess_image_nums[entry] = imagenum;

@@ -105,6 +105,8 @@ enum
 static void emit_regreg_shift(struct blitter_params *params, INT32 opcode, unsigned int rd, unsigned int r1,
 	unsigned int r2, INT32 shift_type, unsigned int shift)
 {
+	struct drccore *drc = params->blitter;
+
 	assert(rd < 16);
 	assert(r1 < 16);
 	assert(r2 < 16);
@@ -114,7 +116,7 @@ static void emit_regreg_shift(struct blitter_params *params, INT32 opcode, unsig
 		shift_type = LSL;
 
 	opcode |= AL  | (rd << 12) | (r1 << 16) | (r2 << 0) | shift_type | (shift << 7);
-	emit_int32(params, opcode);
+	OP(opcode);
 }
 
 static void emit_regreg(struct blitter_params *params, INT32 opcode, unsigned int rd, unsigned int r1, unsigned int r2)
@@ -145,6 +147,7 @@ static void emit_regi(struct blitter_params *params, INT32 opcode, int rd, int r
 	UINT32 tmp;
 	INT32 subopcode1;
 	INT32 subopcode2;
+	struct drccore *drc = params->blitter;
 
 	assert(rd < 16);
 	assert(r1 < 16);
@@ -237,13 +240,15 @@ static void emit_regi(struct blitter_params *params, INT32 opcode, int rd, int r
 	}
 
 	opcode |= AL | (1 << 25) | (rd << 12) | (r1 << 16) | (ror << 8) | (new_operand << 0);
-	emit_int32(params, opcode);
+	OP(opcode);
 }
 
 void emit_header(struct blitter_params *params)
 {
+	struct drccore *drc = params->blitter;
+
 	// stmfd	sp!,	{r4, r5, r6, r7, r8}
-	emit_int32(params, AL | 0x09200000 | (0x10000 * RSP) | 0x01f0);
+	OP(AL | 0x09200000 | (0x10000 * RSP) | 0x01f0);
 	
 	// mov		r4, dest_height
 	emit_regi(params, MOV, RROWS, 0, params->dest_height);
@@ -262,8 +267,10 @@ void emit_header(struct blitter_params *params)
 
 void emit_footer(struct blitter_params *params)
 {
+	struct drccore *drc = params->blitter;
+
 	// ldmfd	sp!, {r8, r7, r6, r5, r4}
-	emit_int32(params, AL | 0x08b00000 | (0x10000 * RSP) | 0x01f0);
+	OP(AL | 0x08b00000 | (0x10000 * RSP) | 0x01f0);
 
 	// mov		pc, r14
 	emit_regreg(params, MOV, RPC, 0, RLINK);
@@ -281,8 +288,10 @@ void emit_increment_destbits(struct blitter_params *params, INT32 adjustment)
 
 void emit_copy_pixel(struct blitter_params *params, int pixel_mode, int divisor)
 {
+	struct drccore *drc = params->blitter;
+
 	// ldrh	r5, [r0]
-	emit_int32(params, AL | 0x00500000 | (RSRC << 16) | (RSCH << 12) | 0x000000b0);
+	_ldrh_r16_m16bd(AL, RSCH, RSRC, 0);
 
 	if (params->source_palette)
 	{
@@ -290,7 +299,7 @@ void emit_copy_pixel(struct blitter_params *params, int pixel_mode, int divisor)
 		emit_regreg_shift(params, MOV, RSC2, 0, RSCH, LSL, 2);
 
 		// ldrh	r5, [r6 +r2]
-		emit_int32(params, AL | 0x01900000 | (RSC2 << 16) | (RSCH << 12) | 0x000000b0 | (RPAL << 0));
+		_ldrh_r16_m16id(AL, RSCH, RSC2, RPAL);
 	}
 
 	switch(divisor) {
@@ -321,7 +330,7 @@ void emit_copy_pixel(struct blitter_params *params, int pixel_mode, int divisor)
 
 	case PIXELMODE_SOLO:
 		// strh	r5, [r1]
-		emit_int32(params, AL | 0x00400000 | (RDEST << 16) | (RSCH << 12) | 0x000000b0);
+		OP(AL | 0x00400000 | (RDEST << 16) | (RSCH << 12) | 0x000000b0);
 		break;
 
 	case PIXELMODE_BEGIN:
@@ -342,13 +351,12 @@ void emit_begin_loop(struct blitter_params *params)
 	emit_regi(params, SUBS, RROWS, RROWS, 1);
 }
 
-void emit_finish_loop(struct blitter_params *params, size_t loop_begin)
+void emit_finish_loop(struct blitter_params *params, void *loop_begin)
 {
-	INT32 adjustment;
+	struct drccore *drc = params->blitter;
 
 	// bne	begin
-	adjustment = loop_begin - params->blitter_size - 8;
-	emit_int32(params, NE | 0x0a000000 | (adjustment >> 2) & 0x00ffffff);
+	_bcc(COND_NE, loop_begin);
 }
 
 void emit_filler(void *dest, size_t sz)

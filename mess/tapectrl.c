@@ -1,6 +1,7 @@
 #include "driver.h"
 #include "image.h"
 #include "ui_text.h"
+#include "snprintf.h"
 
 #if HAS_WAVE
 

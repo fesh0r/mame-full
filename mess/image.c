@@ -4,6 +4,7 @@
 #include "config.h"
 #include "utils.h"
 #include "mscommon.h"
+#include "snprintf.h"
 
 /* ----------------------------------------------------------------------- */
 

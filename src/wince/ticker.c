@@ -11,6 +11,8 @@
 // MAME headers
 #include "driver.h"
 
+
+
 //============================================================
 //	PROTOTYPES
 //============================================================
@@ -20,6 +22,7 @@ static cycles_t init_cycle_counter(void);
 static cycles_t rdtsc_cycle_counter(void);
 #endif // _X86_
 static cycles_t tickcount_cycle_counter(void);
+static cycles_t nop_cycle_counter(void);
 
 //============================================================
 //	STATIC VARIABLES
@@ -27,6 +30,7 @@ static cycles_t tickcount_cycle_counter(void);
 
 // global cycle_counter function and divider
 static cycles_t	(*cycle_counter)(void) = init_cycle_counter;
+static cycles_t	(*ticks_counter)(void) = init_cycle_counter;
 static cycles_t	cycles_per_sec;
 static cycles_t suspend_adjustment;
 static cycles_t suspend_time;
@@ -62,18 +66,20 @@ static cycles_t init_cycle_counter(void)
 	suspend_adjustment = 0;
 	suspend_time = 0;
 
-	// if the RDTSC instruction is available use it because
-	// it is more precise and has less overhead than GetTickCount()
 #ifdef _X86_
 	if (has_rdtsc())
 	{
+		// if the RDTSC instruction is available use it because
+		// it is more precise and has less overhead than timeGetTime()
 		cycle_counter = rdtsc_cycle_counter;
+		ticks_counter = rdtsc_cycle_counter;
 		logerror("using RDTSC for timing ... ");
 	}
 	else
 #endif // _X86_
 	{
 		cycle_counter = tickcount_cycle_counter;
+		ticks_counter = nop_cycle_counter;
 		logerror("using GetTickCount for timing ... ");
 	}
 
@@ -149,6 +155,18 @@ static cycles_t tickcount_cycle_counter(void)
 }
 
 
+
+//============================================================
+//	nop_cycle_counter
+//============================================================
+
+static cycles_t nop_cycle_counter(void)
+{
+	return 0;
+}
+
+
+
 //============================================================
 //	osd_cycles
 //============================================================
@@ -167,6 +185,17 @@ cycles_t osd_cycles(void)
 cycles_t osd_cycles_per_second(void)
 {
 	return cycles_per_sec;
+}
+
+
+
+//============================================================
+//	osd_profiling_ticks
+//============================================================
+
+cycles_t osd_profiling_ticks(void)
+{
+	return (*ticks_counter)();
 }
 
 

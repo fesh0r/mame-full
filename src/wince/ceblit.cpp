@@ -32,8 +32,7 @@ typedef void (__cdecl *blitter_func)(void *dest_bits, const void *source_bits);
 //	PARAMETERS
 //============================================================
 
-#define MAX_BLITTER_SIZE	32768
-#define DEBUG_BLITTERS		1
+#define DEBUG_BLITTERS		0
 
 //#define PROFILER_GAPI		PROFILER_USER4
 
@@ -41,11 +40,10 @@ typedef void (__cdecl *blitter_func)(void *dest_bits, const void *source_bits);
 //	LOCAL VARIABLES
 //============================================================
 
-static UINT8 current_blitter[MAX_BLITTER_SIZE];
 static int current_source_pitch, current_source_width, current_source_height;
 static const UINT32 *current_palette;
 static GXDisplayProperties display_properties;
-
+static struct drccore *current_blitter;
 
 
 //============================================================
@@ -84,54 +82,12 @@ INT32 calc_blend_mask(struct blitter_params *params, int divisor)
 }
 
 //============================================================
-//	emit functions
-//
-//  we can assume that since this is emitting CPU instructions
-//	that alignment faults are not an issue
-//============================================================
-
-static int preemit(struct blitter_params *params, int len)
-{
-	if (!params->blitter)
-		return 1;
-	if (params->blitter_size + len > params->blitter_max_size)
-	{
-		params->blitter = NULL;
-		return 1;
-	}
-	return 0;
-}
-
-void emit_byte(struct blitter_params *params, UINT8 b)
-{
-	if (preemit(params, 1))
-		return;
-	params->blitter[params->blitter_size++] = b;
-}
-
-void emit_int16(struct blitter_params *params, INT16 i)
-{
-	if (preemit(params, 2))
-		return;
-	*((UINT16 *) &params->blitter[params->blitter_size]) = i;
-	params->blitter_size += 2;
-}
-
-void emit_int32(struct blitter_params *params, INT32 i)
-{
-	if (preemit(params, 4))
-		return;
-	*((UINT32 *) &params->blitter[params->blitter_size]) = i;
-	params->blitter_size += 4;
-}
-
-
-//============================================================
 //	generate_blitter 
 //============================================================
 
-static int generate_blitter(int orientation)
+static struct drccore *generate_blitter(int orientation)
 {
+	struct drcconfig drcfg;
 	struct blitter_params params;
 	UINT32 dest_width = display_properties.cxWidth;
 	UINT32 dest_height = display_properties.cyHeight;
@@ -142,7 +98,8 @@ static int generate_blitter(int orientation)
 	INT32 shown_width, shown_height;
 	INT32 i, j;
 	INT32 source_linepos, source_lineposnext, pixels_to_blit;
-	size_t loop_begin;
+	void *blit_begin;
+	void *loop_begin;
 	int flags;
 	int pixel_mode;
 
@@ -189,12 +146,16 @@ static int generate_blitter(int orientation)
 		flags |= BLIT_MUST_BLEND;
 
 	memset(&params, 0, sizeof(params));
-	params.blitter = current_blitter;
-	params.blitter_max_size = sizeof(current_blitter) / sizeof(current_blitter[0]);
 	params.flags = flags;
 	params.source_palette = current_palette;
 	params.dest_width = shown_width;
 	params.dest_height = shown_height;
+
+	memset(&drcfg, 0, sizeof(drcfg));
+	drcfg.cachesize = 65536;
+	params.blitter = drc_init(0, &drcfg);
+
+	blit_begin = params.blitter->cache_top;
 
 	// set up blend mask
 	if (display_properties.ffFormat & kfDirect444)
@@ -226,7 +187,7 @@ static int generate_blitter(int orientation)
 	emit_increment_sourcebits(&params, source_base_adjustment);
 	emit_increment_destbits(&params, dest_base_adjustment);
 
-	loop_begin = params.blitter_size;
+	loop_begin = params.blitter->cache_top;
 	emit_begin_loop(&params);
 
 	source_linepos = 0;
@@ -259,23 +220,10 @@ static int generate_blitter(int orientation)
 	emit_footer(&params);
 
 	if (!params.blitter)
-		return 1;
+		return NULL;
 
-#ifdef MAME_DEBUG
-	emit_filler(&params.blitter[params.blitter_size], params.blitter_max_size - params.blitter_size);
-#endif
-
-#if DEBUG_BLITTERS
-	// generate files with the results; use ndisasmw to disassemble them
-	{
-		FILE *out;
-
-		out = fopen("ceblit.com", "wb");
-		fwrite(params.blitter, 1, params.blitter_size, out);
-		fclose(out);
-	}
-#endif
-	return 0;
+	*((void **) &params.blitter->entry_point) = blit_begin;
+	return params.blitter;
 }
 
 
@@ -301,11 +249,15 @@ extern "C" void ce_blit(struct mame_bitmap *bitmap, int orientation, const UINT3
 	if ((source_pitch != current_source_pitch) || (source_width != current_source_width)
 		|| (source_height != current_source_height) || (palette != current_palette))
 	{
+		if (current_blitter)
+			drc_exit(current_blitter);
+
 		current_source_pitch = source_pitch;
 		current_source_width = source_width;
 		current_source_height = source_height;
 		current_palette = palette;
-		if (generate_blitter(orientation))
+		current_blitter = generate_blitter(orientation);
+		if (!current_blitter)
 		{
 			current_source_width = 0;
 			return;
@@ -324,7 +276,7 @@ extern "C" void ce_blit(struct mame_bitmap *bitmap, int orientation, const UINT3
 
 	if (dest_bits)
 	{
-		((blitter_func) (void *) current_blitter)(dest_bits, source_bits);
+		((blitter_func) (void *) current_blitter->entry_point)(dest_bits, source_bits);
 
 #ifdef PROFILER_GAPI
 		profiler_mark(PROFILER_GAPI);

@@ -15,141 +15,94 @@
 #include "emitblit.h"
 
 //============================================================
-// enumerations
-//============================================================
 
-enum
-{
-	EAX,
-	EBX,
-	ECX,
-	EDX
-};
+#define _mov_m32bd_r32(base, disp, dreg) \
+	do { OP1(0x89); MODRM_MBD(dreg, base, disp); } while (0)
+
+#define _mov_m16bd_r16(base, disp, dreg) \
+	do { OP1(0x66); OP1(0x89); MODRM_MBD(dreg, base, disp); } while (0)
 
 //============================================================
-
-static void emit_increment_register(struct blitter_params *params, int reg, INT32 value)
-{
-	UINT8 inc_opcode;
-	UINT8 dec_opcode;
-	INT32 abs_value;
-
-	if (value != 0)
-	{
-		if (reg == EAX)
-		{
-			emit_byte(params, 0x05);
-			emit_int32(params, value);
-		}
-		else
-		{
-			switch(reg)
-			{
-				case ECX:	inc_opcode = 0xc1;	dec_opcode = 0xe9;	break;
-				case EDX:	inc_opcode = 0xc2;	dec_opcode = 0xea;	break;
-				default:	assert(0);								return;
-			}
-		
-			abs_value = (value < 0) ? -value : value;
-
-			emit_byte(params, (UINT8) (abs_value < 128 ? 0x83 : 0x81));
-			emit_byte(params, (UINT8) (value > 0 ? inc_opcode : dec_opcode));
-
-			if (abs_value < 128)
-				emit_byte(params, (UINT8) abs_value);
-			else
-				emit_int32(params, abs_value);
-		}
-	}
-}
 
 void emit_header(struct blitter_params *params)
 {
+	struct drccore *drc = params->blitter;
+
 	// mov ecx, dword ptr [source_bits]
-	emit_byte(params, 0x8b);
-	emit_byte(params, 0x4c);
-	emit_byte(params, 0x24);
-	emit_byte(params, 0x08);
+	_mov_r32_m32bd(REG_ECX, REG_ESP, 0x08);
 
 	// mov edx, dword ptr [dest_bits]
-	emit_byte(params, 0x8b);
-	emit_byte(params, 0x54);
-	emit_byte(params, 0x24);
-	emit_byte(params, 0x04);
+	_mov_r32_m32bd(REG_EDX, REG_ESP, 0x04);
 
 	if (params->source_palette)
 	{
 		// mov ebx, palette
-		emit_byte(params, 0xbb);
-		emit_pointer(params, params->source_palette);
+		_mov_r32_imm(REG_EBX, params->source_palette);
 	}
 
 	// push ebp
-	emit_byte(params, 0x55);
+	_push_r32(REG_EBP);
 
 	// push	shown_height
-	emit_byte(params, 0x68);
-	emit_int32(params, params->dest_height);
+	_push_imm(params->dest_height);
 
 	if (params->flags & BLIT_MUST_BLEND)
 	{
 		// push 0
-		emit_byte(params, 0x68);
-		emit_int32(params, 0);
+		_push_imm(0);
 	}
 }
 
 void emit_footer(struct blitter_params *params)
 {
+	struct drccore *drc = params->blitter;
+
 	// pop eax
-	emit_byte(params, 0x58);
+	_pop_r32(REG_EAX);
 
 	if (params->flags & BLIT_MUST_BLEND)
 	{
 		// pop eax
-		emit_byte(params, 0x58);
+		_pop_r32(REG_EAX);
 	}
 
 	// pop ebp
-	emit_byte(params, 0x5d);
+	_pop_r32(REG_EBP);
 
 	// ret
-	emit_byte(params, 0xc3);
+	_ret();
 }
 
 void emit_increment_sourcebits(struct blitter_params *params, INT32 adjustment)
 {
-	emit_increment_register(params, ECX, adjustment);
+	struct drccore *drc = params->blitter;
+	_add_r32_imm(REG_ECX, adjustment);
 }
 
 void emit_increment_destbits(struct blitter_params *params, INT32 adjustment)
 {
-	emit_increment_register(params, EDX, adjustment);
+	struct drccore *drc = params->blitter;
+	_add_r32_imm(REG_EDX, adjustment);
 }
 
 void emit_copy_pixel(struct blitter_params *params, int pixel_mode, int divisor)
 {
+	struct drccore *drc = params->blitter;
 	if (params->source_palette)
 	{
-		// xor	eax, eax
-		emit_byte(params, 0x33);
-		emit_byte(params, 0xc0);
+		// mov	eax, 0
+		_mov_r32_imm(REG_EAX, 0);
 
 		// mov	eax, word ptr [ecx]
-		emit_byte(params, 0x66);
-		emit_byte(params, 0x8b);
-		emit_byte(params, 0x01);
+		_mov_r16_m16bd(REG_EAX, REG_ECX, 0);
 
 		// mov	eax, dword ptr [ebx+eax*4]
-		emit_byte(params, 0x8b);
-		emit_byte(params, 0x04);
-		emit_byte(params, 0x83);
+		_mov_r32_m32bisd(REG_EAX, REG_EBX, REG_EAX, 4, 0);
 	}
 	else
 	{
 		// mov	eax, dword ptr [ecx]
-		emit_byte(params, 0x8b);
-		emit_byte(params, 0x01);
+		_mov_r32_m32bd(REG_EAX, REG_ECX, 0);
 	}
 
 	switch(divisor) {
@@ -161,13 +114,10 @@ void emit_copy_pixel(struct blitter_params *params, int pixel_mode, int divisor)
 	case 8:
 	case 16:
 		// and	eax, mask
-		emit_byte(params, 0x25);
-		emit_int32(params, calc_blend_mask(params, divisor));
+		_and_r32_imm(REG_EAX, calc_blend_mask(params, divisor));
 
 		// shr	eax, (log2 pixel_total)
-		emit_byte(params, 0xc1);
-		emit_byte(params, 0xe8);
-		emit_byte(params, (UINT8) intlog2(divisor));
+		_shr_r32_imm(REG_EAX, intlog2(divisor));
 		break;
 
 	default:
@@ -178,27 +128,22 @@ void emit_copy_pixel(struct blitter_params *params, int pixel_mode, int divisor)
 	switch(pixel_mode) {
 	case PIXELMODE_END:
 		//	add	eax, ebp
-		emit_byte(params, 0x03);
-		emit_byte(params, 0xc5);
+		_add_r32_r32(REG_EAX, REG_EBP);
 		// fallthrough
 
 	case PIXELMODE_SOLO:
 		// mov	word ptr [edx], ax
-		emit_byte(params, 0x66);
-		emit_byte(params, 0x89);
-		emit_byte(params, 0x02);
+		_mov_m16bd_r16(REG_EDX, 0, REG_AX);
 		break;
 
 	case PIXELMODE_BEGIN:
 		// mov	ebp, eax
-		emit_byte(params, 0x8b);
-		emit_byte(params, 0xe8);
+		_mov_r32_r32(REG_EBP, REG_EAX);
 		break;
 
 	case PIXELMODE_MIDDLE:
 		// add	ebp, eax
-		emit_byte(params, 0x03);
-		emit_byte(params, 0xe8);
+		_add_r32_r32(REG_EBP, REG_EAX);
 		break;
 	}
 }
@@ -207,55 +152,38 @@ void emit_begin_loop(struct blitter_params *params)
 {
 }
 
-void emit_finish_loop(struct blitter_params *params, size_t loop_begin)
+void emit_finish_loop(struct blitter_params *params, void *loop_begin)
 {
+	struct drccore *drc = params->blitter;
 	if (params->flags & BLIT_MUST_BLEND)
 	{
 		// mov eax, [esp+4]
-		emit_byte(params, 0x8b);
-		emit_byte(params, 0x44);
-		emit_byte(params, 0x24);
-		emit_byte(params, 0x04);
+		_mov_r32_m32bd(REG_EAX, REG_ESP, 4);
 	}
 	else
 	{
 		// mov eax, [esp]
-		emit_byte(params, 0x8b);
-		emit_byte(params, 0x04);
-		emit_byte(params, 0x24);
+		_mov_r32_m32bd(REG_EAX, REG_ESP, 0);
 	}
 
 	// dec eax
-	emit_byte(params, 0x48);
+	_sub_r32_imm(REG_EAX, 1);
 
 	if (params->flags & BLIT_MUST_BLEND)
 	{
 		// mov [esp+4], eax
-		emit_byte(params, 0x89);
-		emit_byte(params, 0x44);
-		emit_byte(params, 0x24);
-		emit_byte(params, 0x04);
+		_mov_m32bd_r32(REG_ESP, 4, REG_EAX);
 	}
 	else
 	{
 		// mov [esp], eax
-		emit_byte(params, 0x89);
-		emit_byte(params, 0x04);
-		emit_byte(params, 0x24);
+		_mov_m32bd_r32(REG_ESP, 0, REG_EAX);
 	}
 
 	// test eax, eax
-	emit_byte(params, 0x85);
-	emit_byte(params, 0xc0);
+	_cmp_r32_imm(REG_EAX, 0);
 
 	// jne begin
-	emit_byte(params, 0x0f);
-	emit_byte(params, 0x85);
-	emit_int32(params, loop_begin - (params->blitter_size + 4));
-}
-
-void emit_filler(void *dest, size_t sz)
-{
-	memset(dest, 0xcc, sz);
+	_jcc(COND_NE, loop_begin);
 }
 

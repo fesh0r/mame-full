@@ -13,6 +13,7 @@ This file is a set of function calls and defs required for MESS.
 #include "state.h"
 #include "image.h"
 #include "inputx.h"
+#include "snprintf.h"
 
 extern struct GameOptions options;
 

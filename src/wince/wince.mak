@@ -20,6 +20,7 @@ OSOBJS = \
 		$(OBJ)/windows/snprintf.o \
 		$(OBJ)/mess/windows/menu.o \
 		$(OBJ)/mess/windows/dialog.o \
+		$(OBJ)/mess/windows/dirutils.o \
 		$(OBJ)/mess/windows/strconv.o \
 		$(OBJ)/mess/ui/smartlistview.o \
 		$(OBJ)/mess/ui/softwarelist.o \
@@ -43,6 +44,7 @@ endif
 
 ifeq "$(WCEPLAT)"	"arm"
 OSOBJS += $(OBJ)/wince/emitarm.o
+OSOBJS += $(OBJ)/wince/armdrc.o
 endif
 
 ifdef MESS
