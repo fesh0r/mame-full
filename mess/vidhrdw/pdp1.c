@@ -32,6 +32,8 @@ Theory of operation for CRT:
 	Based on earlier work by Chris Salomon
 */
 
+#include <math.h>
+
 #include "driver.h"
 
 #include "cpu/pdp1/pdp1.h"
@@ -641,7 +643,7 @@ void pdp1_update_lightpen_state(const lightpen_t *new_state)
 }
 
 #if 1
-static void pdp1_draw_circle(struct mame_bitmap *bitmap, int x, int y, int radius, int color)
+static void pdp1_draw_circle(struct mame_bitmap *bitmap, int x, int y, int radius, int color_)
 {
 	int interval;
 	int a;
@@ -657,22 +659,22 @@ static void pdp1_draw_circle(struct mame_bitmap *bitmap, int x, int y, int radiu
 		int b = sqrt(radius*radius-a*a) + .5;
 
 		if ((x-a >= 0) && (y-b >= 0))
-			plot_pixel(bitmap, x-a, y-b, color);
+			plot_pixel(bitmap, x-a, y-b, color_);
 		if ((x-a >= 0) && (y+b <= crt_window_height-1))
-			plot_pixel(bitmap, x-a, y+b, color);
+			plot_pixel(bitmap, x-a, y+b, color_);
 		if ((x+a <= crt_window_width-1) && (y-b >= 0))
-			plot_pixel(bitmap, x+a, y-b, color);
+			plot_pixel(bitmap, x+a, y-b, color_);
 		if ((x+a <= crt_window_width-1) && (y+b <= crt_window_height-1))
-			plot_pixel(bitmap, x+a, y+b, color);
+			plot_pixel(bitmap, x+a, y+b, color_);
 
 		if ((x-b >= 0) && (y-a >= 0))
-			plot_pixel(bitmap, x-b, y-a, color);
+			plot_pixel(bitmap, x-b, y-a, color_);
 		if ((x-b >= 0) && (y+a <= crt_window_height-1))
-			plot_pixel(bitmap, x-b, y+a, color);
+			plot_pixel(bitmap, x-b, y+a, color_);
 		if ((x+b <= crt_window_width-1) && (y-a >= 0))
-			plot_pixel(bitmap, x+b, y-a, color);
+			plot_pixel(bitmap, x+b, y-a, color_);
 		if ((x+b <= crt_window_width-1) && (y+a <= crt_window_height-1))
-			plot_pixel(bitmap, x+b, y+a, color);
+			plot_pixel(bitmap, x+b, y+a, color_);
 	}
 }
 #else
@@ -728,7 +730,7 @@ static void pdp1_draw_lightpen(struct mame_bitmap *bitmap)
 {
 	if (lightpen_state.active)
 	{
-		int color = lightpen_state.down ? pen_lightpen_pressed : pen_lightpen_nonpressed;
+		int color_ = lightpen_state.down ? pen_lightpen_pressed : pen_lightpen_nonpressed;
 		/*if (lightpen_state.x>0)
 			plot_pixel(bitmap, lightpen_state.x/2-1, lightpen_state.y/2, color);
 		if (lightpen_state.x<1023)
@@ -737,7 +739,7 @@ static void pdp1_draw_lightpen(struct mame_bitmap *bitmap)
 			plot_pixel(bitmap, lightpen_state.x/2, lightpen_state.y/2-1, color);
 		if (lightpen_state.y<1023)
 			plot_pixel(bitmap, lightpen_state.x/2, lightpen_state.y/2+1, color);*/
-		pdp1_draw_circle(bitmap, lightpen_state.x, lightpen_state.y, lightpen_state.radius, color);
+		pdp1_draw_circle(bitmap, lightpen_state.x, lightpen_state.y, lightpen_state.radius, color_);
 	}
 	previous_lightpen_state = lightpen_state;
 }
