@@ -2819,6 +2819,8 @@ TESTDRIVER( shogwarr )
 
 	/* other Kaneko games */
 	DRIVER( galpanic )	/* (c) 1990 Kaneko */
+	DRIVER( fantasia )	/* (c) 1994 Comad & New Japan System */
+	DRIVER( newfant )	/* (c) 1995 Comad & New Japan System */
 	DRIVER( missw96 )	/* (c) 1996 Comad */
 	DRIVER( airbustr )	/* (c) 1990 Kaneko */
 
