@@ -1,8 +1,16 @@
 /*
  * msx_slot.c : definitions of the different slots 
  *
- * This hopefully contains all the possible cartridges and memory types that
- * exist in the world msx. :)
+ * Copyright (C) 2004 Sean Young
+ *
+ * Missing:
+ * - Holy Qu'ran
+ * - Harry Fox
+ * - Halnote
+ * - Playball
+ * - Some ascii8 w/ sram need 32kb sram?
+ * - MegaRAM
+ * - fmsx painter.rom
  */
 
 #include "driver.h"
@@ -309,8 +317,12 @@ MSX_SLOT_MAP(konami_scc)
 	case 2:
 		cpu_setbank (5, state->mem + state->banks[2] * 0x2000);
 		cpu_setbank (6, state->mem + state->banks[3] * 0x2000);
-		memory_set_bankhandler_r (5, 0, 
+		install_mem_read_handler (0, 0x8000, 0x9fff, 
 				state->cart.scc.active ? konami_scc_bank5 : MRA8_BANK5);
+		/*
+		memory_set_bankhandler_r (5, 0, 
+			state->cart.sccp.scc_active ? soundcartridge_scc : MRA8_BANK5);
+		*/
 		break;
 	case 3:
 		cpu_setbank (7, state->mem + state->banks[0] * 0x2000);
@@ -936,38 +948,33 @@ MSX_SLOT_MAP(gmaster2)
 {
 	switch (page) {
 	case 0:
-		cpu_setbank (1, msx1.empty);
-		cpu_setbank (2, msx1.empty);
-		break;
 	case 1:
-		cpu_setbank (3, state->mem); /* bank 0 is hardwired */
+		cpu_setbank (1 + page * 2, state->mem); /* bank 0 is hardwired */
 		if (state->banks[1] > 15) {
-			cpu_setbank (4, state->cart.sram.mem + 
+			cpu_setbank (2 + page * 2, state->cart.sram.mem + 
 					(state->banks[1] - 16) * 0x2000);
 		}
 		else {
-			cpu_setbank (4, state->mem + state->banks[1] * 0x2000);
+			cpu_setbank (2 + page * 2, state->mem + state->banks[1] * 0x2000);
 		}
 		break;
 	case 2:
+	case 3:
 		if (state->banks[2] > 15) {
-			cpu_setbank (5, state->cart.sram.mem +
+			cpu_setbank (5 + page * 2, state->cart.sram.mem +
 					(state->banks[2] - 16) * 0x2000);
 		}
 		else {
-			cpu_setbank (5, state->mem + state->banks[2] * 0x2000);
+			cpu_setbank (5 + page * 2, state->mem + state->banks[2] * 0x2000);
 		}
 		if (state->banks[3] > 15) {
-			cpu_setbank (6, state->cart.sram.mem +
+			cpu_setbank (6 + page * 2, state->cart.sram.mem +
 					(state->banks[3] - 16) * 0x2000);
 		}
 		else {
-			cpu_setbank (6, state->mem + state->banks[3] * 0x2000);
+			cpu_setbank (6 + page * 2, state->mem + state->banks[3] * 0x2000);
 		}
 		break;
-	case 3:
-		cpu_setbank (7, msx1.empty);
-		cpu_setbank (8, msx1.empty);
 	}
 }
 
@@ -982,6 +989,9 @@ MSX_SLOT_WRITE(gmaster2)
 		}
 		state->banks[1] = val;
 		slot_gmaster2_map (state, 1);
+		if (msx1.state[0] == state) {
+			slot_gmaster2_map (state, 0);
+		}
 	}
 	else if (addr >= 0x8000 && addr < 0x9000) {
 		if (val & 0x10) {
@@ -992,6 +1002,9 @@ MSX_SLOT_WRITE(gmaster2)
 		}
 		state->banks[2] = val;
 		slot_gmaster2_map (state, 2);
+		if (msx1.state[3] == state) {
+			slot_gmaster2_map (state, 3);
+		}
 	}
 	else if (addr >= 0xa000 && addr < 0xb000) {
 		if (val & 0x10) {
@@ -1002,6 +1015,9 @@ MSX_SLOT_WRITE(gmaster2)
 		}
 		state->banks[3] = val;
 		slot_gmaster2_map (state, 2);
+		if (msx1.state[3] == state) {
+			slot_gmaster2_map (state, 3);
+		}
 	}
 	else if (addr >= 0xb000 && addr < 0xc000) {
 		addr &= 0x0fff;
@@ -1080,7 +1096,7 @@ MSX_SLOT_INIT(diskrom)
 
 MSX_SLOT_RESET(diskrom)
 {
-	/* improve: reset disk controller */
+	wd179x_reset ();
 }
 
 static READ_HANDLER (msx_diskrom_page1_r)
@@ -1090,23 +1106,35 @@ static READ_HANDLER (msx_diskrom_page1_r)
 	case 0x1ff9: return wd179x_track_r (0);
 	case 0x1ffa: return wd179x_sector_r (0);
 	case 0x1ffb: return wd179x_data_r (0);
-	case 0x1fff: return msx1.dsk_stat;
-	default: return msx1.state[1]->mem[offset + 0x2000];
+	case 0x1fff: 
+		return msx1.dsk_stat;
+	default: 
+		return msx1.state[1]->mem[offset + 0x2000];
 	}
 }
 																				
 static READ_HANDLER (msx_diskrom_page2_r)
 {
-	switch (offset) {
-	case 0x1ff8: return wd179x_status_r (0);
-	case 0x1ff9: return wd179x_track_r (0);
-	case 0x1ffa: return wd179x_sector_r (0);
-	case 0x1ffb: return wd179x_data_r (0);
-	case 0x1fff: return msx1.dsk_stat;
-	default: return msx1.state[2]->mem[offset + 0x2000];
+	if (offset >= 0x1ff8) {
+		switch (offset) {
+		case 0x1ff8: 
+			return wd179x_status_r (0);
+		case 0x1ff9: 
+			return wd179x_track_r (0);
+		case 0x1ffa: 
+			return wd179x_sector_r (0);
+		case 0x1ffb: 
+			return wd179x_data_r (0);
+		case 0x1fff: 
+			return msx1.dsk_stat;
+		default: 
+			return msx1.state[2]->mem[offset + 0x2000];
+		}
+	}
+	else {
+		return 0xff;
 	}
 }
-																				
 
 MSX_SLOT_MAP(diskrom)
 {
@@ -1118,12 +1146,14 @@ MSX_SLOT_MAP(diskrom)
 	case 1:
 		cpu_setbank (3, state->mem);
 		cpu_setbank (4, state->mem + 0x2000);
-		memory_set_bankhandler_r (4, 0, msx_diskrom_page1_r);
+		install_mem_read_handler (0, 0x6000, 0x7fff, msx_diskrom_page1_r);
+		/* memory_set_bankhandler_r (4, 0, msx_diskrom_page1_r); */
 		break;
 	case 2:
 		cpu_setbank (5, msx1.empty);
 		cpu_setbank (6, msx1.empty);
-		memory_set_bankhandler_r (6, 0, msx_diskrom_page2_r);
+		install_mem_read_handler (0, 0xa000, 0xbfff, msx_diskrom_page2_r);
+		/* memory_set_bankhandler_r (6, 0, msx_diskrom_page2_r); */
 		break;
 	case 3:
 		cpu_setbank (7, msx1.empty);
@@ -1136,7 +1166,6 @@ MSX_SLOT_WRITE(diskrom)
 	if (addr >= 0xa000 && addr < 0xc000) {
 		addr -= 0x4000;
 	}
-
 	switch (addr) {
 	case 0x7ff8:
 		wd179x_command_w (0, val);
@@ -1158,7 +1187,7 @@ MSX_SLOT_WRITE(diskrom)
 		if ((state->mem[0x3ffd] ^ val) & 0x40) {
 			set_led_status (0, !(val & 0x40));
 		}
-		state->mem[0x3ffd] = (val & 0xfb) | 0x38;
+		state->mem[0x3ffd] = (val | 0x7c) & ~0x04;
 		break;
 	}
 }
@@ -1753,15 +1782,16 @@ MSX_SLOT_INIT(soundcartridge)
 {
 	UINT8 *p;
 
-	p = auto_malloc (0x10000);
+	p = auto_malloc (0x20000);
 	if (!p) {
 		logerror ("soundcartridge: error: failed to malloc ram\n");
 		return 1;
 	}
-	memset (p, 0, 0x10000);
+	memset (p, 0, 0x20000);
 
 	state->mem = p;
-	state->size = 0x10000;
+	state->size = 0x20000;
+	state->bank_mask = 15;
 	state->type = SLOT_SOUNDCARTRIDGE;
 
 	return 0;
@@ -1846,11 +1876,17 @@ MSX_SLOT_MAP(soundcartridge)
 	case 2:
 		cpu_setbank (5, state->mem + state->banks[2] * 0x2000);
 		cpu_setbank (6, state->mem + state->banks[3] * 0x2000);
+		install_mem_read_handler (0, 0x8000, 0x9fff, 
+			state->cart.sccp.scc_active ? soundcartridge_scc : MRA8_BANK5);
+		install_mem_read_handler (0, 0xa000, 0xbfff, 
+			state->cart.sccp.sccp_active ? soundcartridge_sccp : MRA8_BANK6); 
+
+		/*	state->cart.sccp.sccp_active ? soundcartridge_sccp : MRA8_BANK6);
 	    memory_set_bankhandler_r (5, 0, 
 			state->cart.sccp.scc_active ? soundcartridge_scc : MRA8_BANK5);
-
 	    memory_set_bankhandler_r (6, 0, 
-			state->cart.sccp.sccp_active ? soundcartridge_sccp : MRA8_BANK6);
+			state->cart.sccp.sccp_active ? soundcartridge_sccp : MRA8_BANK6); 
+			*/
 		break;
 	case 3:
 		cpu_setbank (7, state->mem + state->banks[0] * 0x2000);
@@ -1871,7 +1907,7 @@ MSX_SLOT_WRITE(soundcartridge)
 			state->mem[state->banks[0] * 0x2000 + (addr & 0x1fff)] = val;
 		}
 		else if (addr >= 0x5000 && addr < 0x5800) {
-			state->banks[0] = val & 7;
+			state->banks[0] = val & state->bank_mask;
 			state->cart.sccp.banks_saved[0] = val;
 			slot_soundcartridge_map (state, 1);
 			if (msx1.state[3] == state) {
@@ -1884,7 +1920,7 @@ MSX_SLOT_WRITE(soundcartridge)
 			state->mem[state->banks[1] * 0x2000 + (addr & 0x1fff)] = val;
 		}
 		else if (addr >= 0x7000 && addr < 0x7800) {
-			state->banks[1] = val & 7;
+			state->banks[1] = val & state->bank_mask;
 			state->cart.sccp.banks_saved[1] = val;
 			if (msx1.state[3] == state) {
 				slot_soundcartridge_map (state, 3);
@@ -1897,7 +1933,7 @@ MSX_SLOT_WRITE(soundcartridge)
 			state->mem[state->banks[2] * 0x2000 + (addr & 0x1fff)] = val;
 		}
 		else if (addr >= 0x9000 && addr < 0x9800) {
-			state->banks[2] = val & 7;
+			state->banks[2] = val & state->bank_mask;
 			state->cart.sccp.banks_saved[2] = val;
 			state->cart.sccp.scc_active = 
 					(((val & 0x3f) == 0x3f) && !(state->cart.sccp.mode & 0x20));
@@ -1939,7 +1975,7 @@ MSX_SLOT_WRITE(soundcartridge)
 		}
 		else if (addr >= 0xb000 && addr < 0xb800) {
 			state->cart.sccp.banks_saved[3] = val;
-			state->banks[3] = val & 7;
+			state->banks[3] = val & state->bank_mask;
 			state->cart.sccp.sccp_active = 
 					(val & 0x80) && (state->cart.sccp.mode & 0x20);
 			slot_soundcartridge_map (state, 2);

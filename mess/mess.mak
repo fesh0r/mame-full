@@ -570,8 +570,8 @@ $(OBJ)/ep128.a :   \
 $(OBJ)/ascii.a :   \
 	$(OBJ)/mess/formats/fmsx_cas.o \
 	$(OBJ)/mess/systems/msx.o	\
-#	$(OBJ)/mess/machine/msx_slot.o	 \
-#	$(OBJ)/mess/machine/msx.o	 \
+	$(OBJ)/mess/machine/msx_slot.o	 \
+	$(OBJ)/mess/machine/msx.o	 \
 
 $(OBJ)/kim1.a :    \
 	$(OBJ)/mess/vidhrdw/kim1.o	 \

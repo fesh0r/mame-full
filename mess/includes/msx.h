@@ -28,6 +28,7 @@ typedef struct {
 	const msx_slot *slot[4];
 	UINT8 *ram_pages[4];
 	UINT8 *empty, ram_mapper[4];
+	UINT8 ramio_set_bits;
 	slot_state *all_state[4][4][4];
 	int slot_expanded[4];
 	UINT8 primary_slot;

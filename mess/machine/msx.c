@@ -1,15 +1,15 @@
 /*
-** msx.c : MSX emulation
-**
-** Todo:
-**
-** - add support for serial ports
-** - fix mouse support
-** - add support for megaRAM
-** - cassette support doesn't work
-**
-** Sean Young
-*/
+ * msx.c: MSX emulation
+ *
+ * Copyright (C) 2004 Sean Young
+ *
+ * Todo:
+ *
+ * - fix mouse support
+ * - cassette support doesn't work
+ * - Ensure changing cartridge after boot works
+ * - wd2793, nms8255
+ */
 
 #include "driver.h"
 #include "includes/msx_slot.h"
@@ -32,7 +32,10 @@
 #define MAX(x, y) ((x) < (y) ? (y) : (x) )
 #endif
 
+#define VERBOSE 0
+
 MSX msx1;
+static slot_state *cart_state[MSX_MAX_CARTS];
 
 static int msx_probe_type (UINT8* pmem, int size)
 {
@@ -223,11 +226,17 @@ DEVICE_LOAD (msx_cart)
 		}
 	}
 
+	/* kludge */
+	if (type == 0) {
+		type = SLOT_ROM;
+	}
+
 	/* allocate and set slot_state for this cartridge */
 	state = (slot_state*)auto_malloc (sizeof (slot_state));
 	if (!state) {
 		logerror ("cart #%d: error: cannot allocate memory for "
 				  "cartridge state\n", id);
+		return INIT_FAIL;
 	}
 	memset (state, 0, sizeof (slot_state));
 
@@ -252,7 +261,7 @@ DEVICE_LOAD (msx_cart)
 		msx_slot_list[type].loadsram (state);
 	}
 
-	msx1.cart_state[id] = state;
+	msx1.cart_state[id] = cart_state[id] = state;
 	msx_memory_set_carts ();
 
 	return INIT_PASS;
@@ -326,15 +335,19 @@ static struct tc8521_interface tc = { NULL };
 
 DRIVER_INIT( msx )
 {
-	int i,n;
+	int i, n;
 
-	wd179x_init (WD_TYPE_179X,msx_wd179x_int);
+	memset (&msx1, 0, sizeof (MSX));
+	/* LOAD_DEVICE is called before DRIVER_INIT */
+	for (i=0; i<MSX_MAX_CARTS; i++) {
+		msx1.cart_state[i] = cart_state[i];
+	}
+
+	wd179x_init (WD_TYPE_179X, msx_wd179x_int);
 	wd179x_set_density (DEN_FM_HI);
 	msx1.dsk_stat = 0x7f;
 
-	/* set interrupt stuff */
-	cpu_irq_line_vector_w(0,0,0xff);
-	/* setup PPI */
+	cpu_irq_line_vector_w (0, 0, 0xff);
 	ppi8255_init (&msx_ppi8255_interface);
 
 	msx_memory_init ();
@@ -343,8 +356,8 @@ DRIVER_INIT( msx )
 	for (i=0; z80_cycle_table[i].table != -1; i++) {
 		UINT8 *table = auto_malloc (0x100);
 
-		z80_cycle_table[i].old_table = 
-				z80_get_cycle_table (z80_cycle_table[i].table);
+		z80_cycle_table[i].old_table = cpunum_get_info_ptr (0,
+				CPUINFO_PTR_Z80_CYCLE_TABLE + z80_cycle_table[i].table);
 		memcpy (table, z80_cycle_table[i].old_table, 0x100);
 
 		if (z80_cycle_table[i].table == Z80_TABLE_ex) {
@@ -361,7 +374,9 @@ DRIVER_INIT( msx )
 				}
 			}
 		}
-		activecpu_set_info_ptr(CPUINFO_PTR_Z80_CYCLE_TABLE, (void*)table);
+		cpunum_set_info_ptr (0,
+					CPUINFO_PTR_Z80_CYCLE_TABLE + z80_cycle_table[i].table,
+					(void*)table);
 	}
 }
 
@@ -375,10 +390,10 @@ MACHINE_STOP( msx )
 {
 	int i;
 
-	for (i=0; z80_cycle_table[i].table != -1; i++)
-	{
-		activecpu_set_info_ptr(CPUINFO_PTR_Z80_CYCLE_TABLE, (void*)table);
-			(void*)z80_cycle_table[i].old_table);
+	for (i=0; z80_cycle_table[i].table != -1; i++) {
+		cpunum_set_info_ptr (0,
+						CPUINFO_PTR_Z80_CYCLE_TABLE + z80_cycle_table[i].table, 
+						(void*)z80_cycle_table[i].old_table);
 	}
 }
 
@@ -520,20 +535,20 @@ WRITE_HANDLER ( msx_psg_port_b_w )
 
 WRITE_HANDLER ( msx_printer_w )
 {
-	if (readinputport (8) & 0x80)
-	{
-	/* SIMPL emulation */
+	if (readinputport (8) & 0x80) {
+		/* SIMPL emulation */
 		if (offset == 1)
 			DAC_signed_data_w (0, data);
 	}
-	else
-	{
-		if (offset == 1)
+	else {
+
+		if (offset == 1) {
 			msx1.prn_data = data;
-		else
-		{
-			if ( (msx1.prn_strobe & 2) && !(data & 2) )
+		}
+		else {
+			if ((msx1.prn_strobe & 2) && !(data & 2)) {
 				device_output(printer_image(), msx1.prn_data);
+			}
 
 			msx1.prn_strobe = data;
 		}
@@ -549,14 +564,16 @@ READ_HANDLER ( msx_printer_r )
 	return 0xff;
 }
 
-WRITE_HANDLER ( msx_fmpac_w )
+WRITE_HANDLER (msx_fmpac_w)
 {
-	if (msx1.opll_active & 1)
-	{
-		if (offset == 1)
+	if (msx1.opll_active) {
+
+		if (offset == 1) {
 			YM2413_data_port_0_w (0, data);
-		else
+		}
+		else {
 			YM2413_register_port_0_w (0, data);
+		}
 	}
 }
 
@@ -581,18 +598,16 @@ READ_HANDLER (msx_rtc_reg_r)
 
 NVRAM_HANDLER( msx2 )
 {
-	if (file)
-	{
-		if (read_or_write)
+	if (file) {
+
+		if (read_or_write) {
 			tc8521_save_stream (file);
-		else
+		}
+		else {
 			tc8521_load_stream (file);
+		}
 	}
 }
-
-/*
-** The evil disk functions ...
-*/
 
 /*
 From: erbo@xs4all.nl (erik de boer)
@@ -627,14 +642,13 @@ set on 7FFDH bit 2 always to 0 (some use it as disk change reset)
 
 static void msx_wd179x_int (int state)
 	{
-	switch (state)
-		{
+	switch (state) {
 		case WD179X_IRQ_CLR: msx1.dsk_stat |= 0x40; break;
 		case WD179X_IRQ_SET: msx1.dsk_stat &= ~0x40; break;
 		case WD179X_DRQ_CLR: msx1.dsk_stat |= 0x80; break;
 		case WD179X_DRQ_SET: msx1.dsk_stat &= ~0x80; break;
-		}
 	}
+}
 
 
 DEVICE_LOAD( msx_floppy )
@@ -673,7 +687,9 @@ DEVICE_LOAD( msx_floppy )
 static WRITE_HANDLER ( msx_ppi_port_a_w )
 {
 	msx1.primary_slot = ppi8255_peek (0,0);
+#if VERBOSE
 	logerror ("write to primary slot select: %02x\n", msx1.primary_slot);
+#endif
 	msx_memory_map_all ();
 }
 
@@ -783,16 +799,17 @@ void msx_memory_init (void)
 			size = layout->size;
 			option = layout->option;
 
+#if VERBOSE
 			logerror ("slot %d/%d/%d-%d: type %s, size 0x%x\n",
 					prim, sec, page, page + extent - 1, slot->name, size);
+#endif
 
 			st = (slot_state*)NULL;
 			if (layout->type == SLOT_CARTRIDGE1) {
 				st = msx1.cart_state[0];
 				if (!st) {
 					slot = &msx_slot_list[SLOT_SOUNDCARTRIDGE];
-					mem = (UINT8*)NULL;
-					size = 0x10000;
+					size = 0x20000;
 				}
 			}
 			if (layout->type == SLOT_CARTRIDGE2) {
@@ -841,6 +858,9 @@ void msx_memory_init (void)
 		case MSX_LAYOUT_KANJI_ENTRY:
 			msx1.kanji_mem = memory_region(REGION_CPU1) + layout->option;
 			break;
+		case MSX_LAYOUT_RAMIO_SET_BITS_ENTRY:
+			msx1.ramio_set_bits = (UINT8)layout->option;
+			break;
 		}
 	}
 }
@@ -857,10 +877,8 @@ void msx_memory_reset (void)
 		for (sec=0; sec<4; sec++) {
 			for (page=0; page<4; page++) {
 				state = msx1.all_state[prim][sec][page];
-				if (state) {
-					if (state != last_state) {
-						msx_slot_list[state->type].reset (state);
-					}
+				if (state && state != last_state) {
+					msx_slot_list[state->type].reset (state);
 				}
 				last_state = state;
 			}
@@ -909,6 +927,17 @@ void msx_memory_map_page (int page)
 	slot_state *state;
 	const msx_slot *slot;
 
+	switch (page) {
+	case 1:
+		install_mem_read_handler (0, 0x4000, 0x5fff, MRA8_BANK3);
+		install_mem_read_handler (0, 0x6000, 0x7fff, MRA8_BANK4);
+		break;
+	case 2:
+		install_mem_read_handler (0, 0x8000, 0x9fff, MRA8_BANK5);
+		install_mem_read_handler (0, 0xa000, 0xbfff, MRA8_BANK6);
+		break;
+	}
+
 	slot_primary = (msx1.primary_slot >> (page * 2)) & 3;
 	slot_secondary = (msx1.secondary_slot[slot_primary] >> (page * 2)) & 3;
 
@@ -916,8 +945,10 @@ void msx_memory_map_page (int page)
 	slot = state ? &msx_slot_list[state->type] : &msx_slot_list[SLOT_EMPTY];
 	msx1.state[page] = state;
 	msx1.slot[page] = slot;
+#if VERBOSE
 	logerror ("mapping %s in %d/%d/%d\n", slot->name, slot_primary, 
 			slot_secondary, page);
+#endif
 	slot->map (state, page);
 }
 
@@ -987,7 +1018,9 @@ WRITE_HANDLER (msx_sec_slot_w)
 {
 	int slot = msx1.primary_slot >> 6;
 	if (msx1.slot_expanded[slot]) {
+#if VERBOSE
 		logerror ("write to secondary slot %d select: %02x\n", slot, data);
+#endif
 		msx1.secondary_slot[slot] = data;
 		msx_memory_map_all ();
 	}
@@ -1003,7 +1036,12 @@ READ_HANDLER (msx_sec_slot_r)
 		return ~msx1.secondary_slot[slot];
 	}
 	else {
-		return 0xff; /* FIXME!! */
+		if (msx1.slot[3]->mem_type == MSX_MEM_RAM) {
+			return msx1.ram_pages[3][0x3fff];
+		}
+		else {
+			return 0xff; /* FIXME!! */
+		}
 	}
 }
 
@@ -1017,7 +1055,7 @@ WRITE_HANDLER (msx_ram_mapper_w)
 
 READ_HANDLER (msx_ram_mapper_r)
 {
-	return msx1.ram_mapper[offset];
+	return msx1.ram_mapper[offset] | msx1.ramio_set_bits;
 }
 
 WRITE_HANDLER (msx_90in1_w)

@@ -598,19 +598,20 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 			*/
 	DRIVER( superbrd )	/* 1979 Superboard II								*/
 
 	/* ASCII & MICROSOFT */
-//	DRIVER( msx )		/* 1983 MSX 										*/
-//	DRIVER( msxj )		/* 1983 MSX Jap 									*/
-//	DRIVER( fs4000 )	/* 1985 MSX Jap 									*/
-//	DRIVER( msxkr ) 	/* 1983 MSX Korean									*/
-//	DRIVER( msxuk ) 	/* 1983 MSX UK										*/
-//	DRIVER( hotbit11 )	/* 198? ???											*/
-//	DRIVER( hotbit12 )	/* 198? ???											*/
-//	DRIVER( expert10 )	/* 198? ???											*/
-//	DRIVER( expert11 )	/* 198? ???											*/
-//	DRIVER( msx2 ) 		/* 1985 MSX2										*/
-//	DRIVER( hbf700p )	/* 1985 MSX2 Sony									*/
-//	DRIVER( msx2a )		/* 1985 MSX2										*/
-//	DRIVER( msx2j ) 	/* 1983 MSX2 Jap									*/
+	DRIVER( msx )		/* 1983 MSX 										*/
+	DRIVER( msxj )		/* 1983 MSX Jap 									*/
+	DRIVER( fs4000 )	/* 1985 MSX Jap 									*/
+	DRIVER( msxkr ) 	/* 1983 MSX Korean									*/
+	DRIVER( hb75p ) 	/* 1983 MSX UK										*/
+	DRIVER( hotbit11 )	/* 198? ???											*/
+	DRIVER( hotbit12 )	/* 198? ???											*/
+	DRIVER( expert10 )	/* 198? ???											*/
+	DRIVER( expert11 )	/* 198? ???											*/
+	DRIVER( msx2 ) 		/* 1985 MSX2										*/
+	DRIVER( hbf700p )	/* 1985 MSX2 Sony									*/
+	DRIVER( nms8245 )	/* 1985 MSX2										*/
+	DRIVER( nms8255 )	/* 1985 MSX2										*/
+	DRIVER( msx2j ) 	/* 1983 MSX2 Jap									*/
 
 	/* NASCOM MICROCOMPUTERS */
 	DRIVER( nascom1 )	/* 1978 Nascom 1									*/
