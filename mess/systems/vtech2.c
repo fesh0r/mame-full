@@ -66,6 +66,8 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+#include "includes/vtech2.h"
+
 #define VERBOSE 0
 
 #if VERBOSE
@@ -73,41 +75,6 @@
 #else
 #define LOG(x)	/* x */
 #endif
-
-/* from mame.c */
-extern int bitmap_dirty;
-
-/* from machine/laser350.c */
-extern int laser_latch;
-
-extern void init_laser(void);
-extern void laser350_init_machine(void);
-extern void laser500_init_machine(void);
-extern void laser700_init_machine(void);
-extern void laser_shutdown_machine(void);
-
-extern int laser_rom_id(int id);
-extern int laser_rom_init(int id);
-extern void laser_rom_exit(int id);
-
-extern int laser_floppy_id(int id);
-extern int laser_floppy_init(int id);
-extern void laser_floppy_exit(int id);
-
-extern int laser_cassette_id(int id);
-extern int laser_cassette_init(int id);
-extern void laser_cassette_exit(int id);
-
-extern READ_HANDLER ( laser_fdc_r );
-extern WRITE_HANDLER ( laser_fdc_w );
-extern WRITE_HANDLER ( laser_bank_select_w );
-
-/* from vidhrdw/laser350.c */
-extern int laser_vh_start(void);
-extern void laser_vh_stop(void);
-extern void laser_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
-extern WRITE_HANDLER ( laser_bg_mode_w );
-extern WRITE_HANDLER ( laser_two_color_w );
 
 static MEMORY_READ_START( readmem )
 	{ 0x00000, 0x03fff, MRA_BANK1 },
@@ -749,3 +716,14 @@ COMP( 1984?, laser350, 0,		 laser350, laser350, laser,    "Video Technology",  "
 COMP( 1984?, laser500, laser350, laser500, laser500, laser,    "Video Technology",  "Laser 500" )
 COMP( 1984?, laser700, laser350, laser700, laser500, laser,    "Video Technology",  "Laser 700" )
 
+#ifdef RUNTIME_LOADER
+extern void vtech2_runtime_loader_init(void)
+{
+	int i;
+	for (i=0; drivers[i]; i++) {
+		if ( strcmp(drivers[i]->name,"laser350")==0) drivers[i]=&driver_laser350;
+		if ( strcmp(drivers[i]->name,"laser500")==0) drivers[i]=&driver_laser500;
+		if ( strcmp(drivers[i]->name,"laser700")==0) drivers[i]=&driver_laser700;
+	}
+}
+#endif

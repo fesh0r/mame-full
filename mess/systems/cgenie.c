@@ -28,66 +28,8 @@ NMI
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "vidhrdw/cgenie.h"
+#include "includes/cgenie.h"
 #include "includes/basicdsk.h"
-
-extern UINT8 *cgenie_fontram;
-
-extern int cgenie_cassette_init(int id);
-extern int cgenie_floppy_init(int id);
-extern int cgenie_rom_load(int id);
-extern int cgenie_rom_id(int id);
-
-extern int cgenie_vh_start(void);
-extern void cgenie_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
-
-extern void cgenie_sh_sound_init(const char * gamename);
-extern WRITE_HANDLER ( cgenie_sh_control_port_w );
-extern WRITE_HANDLER ( cgenie_sh_data_port_w );
-extern READ_HANDLER ( cgenie_sh_control_port_r );
-extern READ_HANDLER ( cgenie_sh_data_port_r );
-
-extern READ_HANDLER ( cgenie_psg_port_a_r);
-extern READ_HANDLER ( cgenie_psg_port_b_r );
-extern WRITE_HANDLER ( cgenie_psg_port_a_w );
-extern WRITE_HANDLER ( cgenie_psg_port_b_w );
-
-extern void init_cgenie(void);
-extern void cgenie_init_machine(void);
-extern void cgenie_stop_machine(void);
-
-extern READ_HANDLER ( cgenie_colorram_r );
-extern READ_HANDLER ( cgenie_fontram_r );
-
-extern void cgenie_dos_rom_w(int offset, int data);
-extern void cgenie_ext_rom_w(int offset, int data);
-extern WRITE_HANDLER ( cgenie_colorram_w );
-extern WRITE_HANDLER ( cgenie_fontram_w );
-
-extern WRITE_HANDLER ( cgenie_port_ff_w );
-extern READ_HANDLER ( cgenie_port_ff_r );
-extern int cgenie_port_xx_r(int offset);
-
-extern int cgenie_timer_interrupt(void);
-extern int cgenie_frame_interrupt(void);
-
-extern READ_HANDLER ( cgenie_status_r );
-extern READ_HANDLER ( cgenie_track_r );
-extern READ_HANDLER ( cgenie_sector_r );
-extern READ_HANDLER ( cgenie_data_r );
-
-extern WRITE_HANDLER ( cgenie_command_w );
-extern WRITE_HANDLER ( cgenie_track_w );
-extern WRITE_HANDLER ( cgenie_sector_w );
-extern WRITE_HANDLER ( cgenie_data_w );
-
-extern READ_HANDLER ( cgenie_irq_status_r );
-
-extern WRITE_HANDLER ( cgenie_motor_w );
-
-extern READ_HANDLER ( cgenie_keyboard_r );
-extern int cgenie_videoram_r(int offset);
-extern WRITE_HANDLER ( cgenie_videoram_w );
 
 static MEMORY_READ_START (readmem)
 	{ 0x0000, 0x3fff, MRA_ROM },
@@ -614,3 +556,12 @@ static const struct IODevice io_cgenie[] = {
 /*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	  COMPANY	FULLNAME */
 COMP( 1982, cgenie,   0,		cgenie,   cgenie,	cgenie,   "EACA Computers Ltd.",  "Colour Genie EG2000" )
 
+#ifdef RUNTIME_LOADER
+extern void cgenie_runtime_loader_init(void)
+{
+	int i;
+	for (i=0; drivers[i]; i++) {
+		if ( strcmp(drivers[i]->name,"cgenie")==0) drivers[i]=&driver_cgenie;
+	}
+}
+#endif

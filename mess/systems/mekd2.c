@@ -29,6 +29,8 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+#include "includes/mekd2.h"
+
 #ifndef VERBOSE
 #define VERBOSE 1
 #endif
@@ -38,21 +40,6 @@
 #else
 #define LOG(x)	/* x */
 #endif
-
-/* from src/mess/machine/mekd2.c */
-extern void init_mekd2(void);
-extern void mekd2_init_machine(void);
-
-extern int mekd2_rom_load (int id);
-extern int mekd2_rom_id (int id);
-
-extern int mekd2_interrupt(void);
-
-/* from src/mess/vidhrdw/mekd2.c */
-extern void mekd2_init_colors (unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom);
-extern int mekd2_vh_start (void);
-extern void mekd2_vh_stop (void);
-extern void mekd2_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
 
 static READ_HANDLER(mekd2_pia_r) { return 0xff; }
 static READ_HANDLER(mekd2_cas_r) { return 0xff; }
@@ -259,3 +246,12 @@ static const struct IODevice io_mekd2[] = {
 /*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	  COMPANY	  FULLNAME */
 CONS( 1977, mekd2,	   0,		mekd2,	  mekd2,	mekd2,	  "Motorola", "MEK6800D2" )
 
+#ifdef RUNTIME_LOADER
+extern void mekd2_runtime_loader_init(void)
+{
+	int i;
+	for (i=0; drivers[i]; i++) {
+		if ( strcmp(drivers[i]->name,"mekd2")==0) drivers[i]=&driver_mekd2;
+	}
+}
+#endif

@@ -71,6 +71,8 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+#include "includes/vtech1.h"
+
 #define VERBOSE 0
 
 #if VERBOSE
@@ -78,42 +80,6 @@
 #else
 #define LOG(x)  /* x */
 #endif
-
-/* from machine/vz.c */
-
-extern int vtech1_latch;
-
-extern void init_vtech1(void);
-extern void laser110_init_machine(void);
-extern void laser210_init_machine(void);
-extern void laser310_init_machine(void);
-extern void vtech1_shutdown_machine(void);
-
-extern int vtech1_cassette_id(int id);
-extern int vtech1_cassette_init(int id);
-extern void vtech1_cassette_exit(int id);
-
-extern int vtech1_snapshot_id(int id);
-extern int vtech1_snapshot_init(int id);
-extern void vtech1_snapshot_exit(int id);
-
-extern int vtech1_floppy_id(int id);
-extern int vtech1_floppy_init(int id);
-extern void vtech1_floppy_exit(int id);
-
-extern READ_HANDLER ( vtech1_fdc_r );
-extern WRITE_HANDLER ( vtech1_fdc_w );
-
-extern READ_HANDLER ( vtech1_joystick_r );
-extern READ_HANDLER ( vtech1_keyboard_r );
-extern WRITE_HANDLER ( vtech1_latch_w );
-
-extern int vtech1_interrupt(void);
-
-/* from vidhrdw/vz.c */
-extern int  vtech1_vh_start(void);
-extern void vtech1_vh_stop(void);
-extern void vtech1_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 
 MEMORY_READ_START( readmem_laser110 )
     { 0x0000, 0x3fff, MRA_ROM },
@@ -656,3 +622,19 @@ COMPX( 1983, tx8000,   laser210, laser210, vtech1,   vtech1,   "Video Technology
 COMP ( 1983, laser310, 0,        laser310, vtech1,   vtech1,   "Video Technology", "Laser 310" )
 COMPX( 1983, vz300,    laser310, laser310, vtech1,   vtech1,   "Video Technology", "Sanyo / Dick Smith VZ300", GAME_ALIAS )
 
+#ifdef RUNTIME_LOADER
+extern void vtech1_runtime_loader_init(void)
+{
+	int i;
+	for (i=0; drivers[i]; i++) {
+		if ( strcmp(drivers[i]->name,"laser110")==0) drivers[i]=&driver_laser110;
+		if ( strcmp(drivers[i]->name,"laser210")==0) drivers[i]=&driver_laser210;
+		if ( strcmp(drivers[i]->name,"laser200")==0) drivers[i]=&driver_laser200;
+		if ( strcmp(drivers[i]->name,"vz200")==0) drivers[i]=&driver_vz200;
+		if ( strcmp(drivers[i]->name,"fellow")==0) drivers[i]=&driver_fellow;
+		if ( strcmp(drivers[i]->name,"tx8000")==0) drivers[i]=&driver_tx8000;
+		if ( strcmp(drivers[i]->name,"laser310")==0) drivers[i]=&driver_laser310;
+		if ( strcmp(drivers[i]->name,"vz300")==0) drivers[i]=&driver_vz300;
+	}
+}
+#endif

@@ -105,26 +105,7 @@
 #include "sound/hc55516.h"
 #include "machine/riot.h"
 
-/* vidhrdw/a2600.c */
-extern int a2600_vh_start(void);
-extern void a2600_vh_stop(void);
-extern int a2600_scanline_interrupt(void);
-extern void a2600_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
-
-
-/* machine/a2600.c */
-extern READ_HANDLER  ( a2600_TIA_r );
-extern WRITE_HANDLER ( a2600_TIA_w );
-extern READ_HANDLER  ( a2600_riot_r );
-extern WRITE_HANDLER ( a2600_riot_w );
-extern READ_HANDLER  ( a2600_bs_r );
-
-extern void a2600_init_machine(void);
-extern void a2600_stop_machine(void);
-extern int  a2600_id_rom (int id);
-extern int  a2600_load_rom(int id);
-extern READ_HANDLER ( a2600_ROM_r );
-
+#include "includes/a2600.h"
 
 /* horrid memory mirroring ahead */
 static MEMORY_READ_START( readmem )
@@ -946,3 +927,12 @@ static const struct IODevice io_a2600[] =
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
 CONSX(19??, a2600,    0,        a2600,    a2600,    a2600,    "Atari",  "Atari 2600", GAME_NOT_WORKING | GAME_NO_SOUND | GAME_WRONG_COLORS)
 
+#ifdef RUNTIME_LOADER
+extern void vcs_runtime_loader_init(void)
+{
+	int i;
+	for (i=0; drivers[i]; i++) {
+		if ( strcmp(drivers[i]->name,"a2600")==0) drivers[i]=&driver_a2600;
+	}
+}
+#endif

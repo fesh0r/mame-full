@@ -13,35 +13,7 @@
 #include "cpu/m6502/m6502.h"
 #include "sound/tiaintf.h"
 
-/* vidhrdw/a7800.c */
-extern int a7800_vh_start(void);
-extern void a7800_vh_stop(void);
-extern void a7800_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
-extern int a7800_interrupt(void);
-extern READ_HANDLER  ( a7800_MARIA_r);
-extern WRITE_HANDLER ( a7800_MARIA_w );
-
-
-/* machine/a7800.c */
-extern unsigned char *a7800_ram;
-extern unsigned char *a7800_cartridge_rom;
-extern void a7800_init_machine(void);
-extern void a7800_stop_machine(void);
-extern int a7800_id_rom (int id);
-extern UINT32 a7800_partialcrc(const unsigned char *,unsigned int);
-extern int a7800_load_rom (int id);
-extern void a7800_exit_rom (int id);
-extern READ_HANDLER  ( a7800_TIA_r );
-extern WRITE_HANDLER ( a7800_TIA_w );
-extern READ_HANDLER  ( a7800_RIOT_r );
-extern WRITE_HANDLER ( a7800_RIOT_w );
-extern READ_HANDLER  ( a7800_MAINRAM_r );
-extern WRITE_HANDLER ( a7800_MAINRAM_w );
-extern READ_HANDLER  ( a7800_RAM0_r );
-extern WRITE_HANDLER ( a7800_RAM0_w );
-extern READ_HANDLER  ( a7800_RAM1_r );
-extern WRITE_HANDLER ( a7800_RAM1_w );
-extern WRITE_HANDLER ( a7800_cart_w );
+#include "includes/a7800.h"
 
 static MEMORY_READ_START( readmem )
     { 0x0000, 0x001f, a7800_TIA_r },
@@ -334,3 +306,12 @@ static const struct IODevice io_a7800[] = {
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
 CONS( 1986, a7800,    0,        a7800,    a7800,    0,        "Atari",  "Atari 7800" )
 
+#ifdef RUNTIME_LOADER
+extern void a7800_runtime_loader_init(void)
+{
+	int i;
+	for (i=0; drivers[i]; i++) {
+		if ( strcmp(drivers[i]->name,"a7800")==0) drivers[i]=&driver_a7800;
+	}
+}
+#endif

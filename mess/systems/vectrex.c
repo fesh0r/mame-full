@@ -12,23 +12,7 @@ Bruce Tomlin (hardware info)
 #include "vidhrdw/vector.h"
 #include "machine/6522via.h"
 
-/* From machine/vectrex.c */
-extern unsigned char *vectrex_ram;
-extern READ_HANDLER  ( vectrex_mirrorram_r );
-extern WRITE_HANDLER ( vectrex_mirrorram_w );
-extern int vectrex_load_rom (int id);
-extern int vectrex_id_rom (int id);
-
-/* From vidhrdw/vectrex.c */
-extern int vectrex_start(void);
-extern void vectrex_stop (void);
-extern void vectrex_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-extern void vectrex_vh_update (struct osd_bitmap *bitmap, int full_refresh);
-
-extern int raaspec_start(void);
-extern WRITE_HANDLER  ( raaspec_led_w );
-extern void raaspec_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-extern void raaspec_vh_update (struct osd_bitmap *bitmap, int full_refresh);
+#include "includes/vectrex.h"
 
 MEMORY_READ_START( vectrex_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
@@ -300,3 +284,14 @@ ROM_END
 /*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	  COMPANY	FULLNAME */
 CONS( 1982, vectrex,  0, 		vectrex,  vectrex,	0,		  "General Consumer Electronics",   "Vectrex" )
 CONS( 1984, raaspec,  vectrex,	raaspec,  raaspec,	0,		  "Roy Abel & Associates",   "Spectrum I+" )
+
+#ifdef RUNTIME_LOADER
+extern void vectrex_runtime_loader_init(void)
+{
+	int i;
+	for (i=0; drivers[i]; i++) {
+		if ( strcmp(drivers[i]->name,"vectrex")==0) drivers[i]=&driver_vectrex;
+		if ( strcmp(drivers[i]->name,"raaspec")==0) drivers[i]=&driver_raaspec;
+	}
+}
+#endif
