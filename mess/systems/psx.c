@@ -16,7 +16,84 @@ psxe30
 
 #include "driver.h"
 #include "cpu/mips/mips.h"
+#include "devices/snapquik.h"
 #include "includes/psx.h"
+
+typedef struct 
+{
+	unsigned char id[ 8 ];
+	unsigned long text;		/* SCE only */
+	unsigned long data;		/* SCE only */
+	unsigned long pc0;
+	unsigned long gp0;		/* SCE only */
+	unsigned long t_addr;
+	unsigned long t_size;
+	unsigned long d_addr;	/* SCE only */
+	unsigned long d_size;	/* SCE only */
+	unsigned long b_addr;	/* SCE only */
+	unsigned long b_size;	/* SCE only */
+	unsigned long s_addr;
+	unsigned long s_size;
+	unsigned long SavedSP;
+	unsigned long SavedFP;
+	unsigned long SavedGP;
+	unsigned long SavedRA;
+	unsigned long SavedS0;
+	unsigned char dummy[ 0x800 - 76 ];
+} EXE_HEADER;
+
+static EXE_HEADER quickload_exe;
+static UINT8 *quickload_buff;
+
+static OPBASE_HANDLER( psx_setopbase )
+{
+	if( address == 0x80030000 )
+	{
+		logerror( "psx_load_exe: start %08x\n", (unsigned int)quickload_exe.t_addr );
+		logerror( "psx_load_exe: len   %08x\n", (unsigned int)quickload_exe.t_size );
+		logerror( "psx_load_exe: pc0   %08x\n", (unsigned int)quickload_exe.pc0 );
+		logerror( "psx_load_exe: gp0   %08x\n", (unsigned int)quickload_exe.gp0 );
+		logerror( "psx_load_exe: sp    %08x\n", (unsigned int)quickload_exe.s_addr );
+
+		memcpy( memory_region( REGION_CPU1 ) + ( quickload_exe.t_addr % memory_region_length( REGION_CPU1 ) ), quickload_buff, quickload_exe.t_size );
+		free( quickload_buff );
+
+		activecpu_set_reg( MIPS_PC, quickload_exe.pc0 );
+		activecpu_set_reg( MIPS_R28, quickload_exe.gp0 );
+		activecpu_set_reg( MIPS_R29, quickload_exe.s_addr );
+
+		memory_set_opbase_handler( 0, NULL );
+		mips_stop();
+	}
+	return address;
+}
+
+static QUICKLOAD_LOAD( psx_load_exe )
+{
+	if( mame_fread( fp, &quickload_exe, sizeof( quickload_exe ) ) != sizeof( quickload_exe ) )
+	{
+		logerror( "psx_load_exe: invalid exe\n" );
+		return INIT_FAIL;
+	}
+	if( memcmp( quickload_exe.id, "PS-X EXE", 8 ) != 0 )
+	{
+		logerror( "psx_load_exe: invalid header id\n" );
+		return INIT_FAIL;
+	}
+	quickload_buff = malloc( quickload_exe.t_size );
+	if( quickload_buff == NULL )
+	{
+		logerror( "psx_load_exe: out of memory\n" );
+		return INIT_FAIL;
+	}
+	if( mame_fread( fp, quickload_buff, quickload_exe.t_size ) != quickload_exe.t_size )
+	{
+		logerror( "psx_load_exe: invalid size\n" );
+		return INIT_FAIL;
+	}
+	memory_set_opbase_handler( 0, psx_setopbase );
+	return INIT_PASS;
+}
 
 static MEMORY_WRITE32_START( psx_writemem )
 	{ 0x00000000, 0x001fffff, MWA32_RAM },	/* ram */
@@ -27,7 +104,8 @@ static MEMORY_WRITE32_START( psx_writemem )
 	{ 0x1f801800, 0x1f801803, psx_cd_w },
 	{ 0x1f801810, 0x1f801817, psxgpu_w },
 	{ 0x80000000, 0x801fffff, MWA32_BANK2 },	/* ram mirror */
-	{ 0xa0000000, 0xa01fffff, MWA32_BANK3 },	/* ram mirror */
+	{ 0x80600000, 0x807fffff, MWA32_BANK3 },	/* ram mirror */
+	{ 0xa0000000, 0xa01fffff, MWA32_BANK4 },	/* ram mirror */
 	{ 0xbfc00000, 0xbfc7ffff, MWA32_ROM },	/* bios */
 MEMORY_END
 
@@ -40,16 +118,18 @@ static MEMORY_READ32_START( psx_readmem )
 	{ 0x1f801800, 0x1f801803, psx_cd_r },
 	{ 0x1f801810, 0x1f801817, psxgpu_r },
 	{ 0x80000000, 0x801fffff, MRA32_BANK2 },	/* ram mirror */
-	{ 0xa0000000, 0xa01fffff, MRA32_BANK3 },	/* ram mirror */
-	{ 0xbfc00000, 0xbfc7ffff, MRA32_BANK4 },	/* bios */
+	{ 0x80600000, 0x807fffff, MRA32_BANK3 },	/* ram mirror */
+	{ 0xa0000000, 0xa01fffff, MRA32_BANK4 },	/* ram mirror */
+	{ 0xbfc00000, 0xbfc7ffff, MRA32_BANK5 },	/* bios */
 MEMORY_END
 
 static DRIVER_INIT( psx )
 {
-	cpu_setbank( 1, memory_region( REGION_CPU1 ) + 0x200000 );
+	cpu_setbank( 1, memory_region( REGION_USER1 ) );
 	cpu_setbank( 2, memory_region( REGION_CPU1 ) );
 	cpu_setbank( 3, memory_region( REGION_CPU1 ) );
-	cpu_setbank( 4, memory_region( REGION_USER1 ) );
+	cpu_setbank( 4, memory_region( REGION_CPU1 ) );
+	cpu_setbank( 5, memory_region( REGION_USER2 ) );
 }
 
 INPUT_PORTS_START( psx )
@@ -126,76 +206,87 @@ static MACHINE_DRIVER_START( psx )
 MACHINE_DRIVER_END
 
 ROM_START( psx )
-	ROM_REGION( 0x200400, REGION_CPU1, 0 )
+	ROM_REGION( 0x200000, REGION_CPU1, 0 )
+	ROM_REGION( 0x000400, REGION_USER1, 0 )
 
-	ROM_REGION32_LE( 0x080000, REGION_USER1, 0 )
+	ROM_REGION32_LE( 0x080000, REGION_USER2, 0 )
 	ROM_LOAD( "scph1000.bin",  0x0000000, 0x080000, CRC(3b601fc8) SHA1(343883a7b555646da8cee54aadd2795b6e7dd070) )
 ROM_END
 
 ROM_START( psxj22 )
-	ROM_REGION( 0x200400, REGION_CPU1, 0 )
+	ROM_REGION( 0x200000, REGION_CPU1, 0 )
+	ROM_REGION( 0x000400, REGION_USER1, 0 )
 
-	ROM_REGION32_LE( 0x080000, REGION_USER1, 0 )
+	ROM_REGION32_LE( 0x080000, REGION_USER2, 0 )
 	ROM_LOAD( "scph5000.bin",  0x0000000, 0x080000, CRC(24fc7e17) SHA1(ffa7f9a7fb19d773a0c3985a541c8e5623d2c30d) ) /* bad 0x8c93a399 */
 ROM_END
 
 ROM_START( psxa22 )
-	ROM_REGION( 0x200400, REGION_CPU1, 0 )
+	ROM_REGION( 0x200000, REGION_CPU1, 0 )
+	ROM_REGION( 0x000400, REGION_USER1, 0 )
 
-	ROM_REGION32_LE( 0x080000, REGION_USER1, 0 )
+	ROM_REGION32_LE( 0x080000, REGION_USER2, 0 )
 	ROM_LOAD( "scph1001.bin",  0x0000000, 0x080000, CRC(37157331) SHA1(10155d8d6e6e832d6ea66db9bc098321fb5e8ebf) )
 ROM_END
 
 ROM_START( psxe22 )
-	ROM_REGION( 0x200400, REGION_CPU1, 0 )
+	ROM_REGION( 0x200000, REGION_CPU1, 0 )
+	ROM_REGION( 0x000400, REGION_USER1, 0 )
 
-	ROM_REGION32_LE( 0x080000, REGION_USER1, 0 )
+	ROM_REGION32_LE( 0x080000, REGION_USER2, 0 )
 	ROM_LOAD( "dtlh3002.bin",  0x0000000, 0x080000, CRC(1e26792f) SHA1(b6a11579caef3875504fcf3831b8e3922746df2c) )
 ROM_END
 
 ROM_START( psxj30 )
-	ROM_REGION( 0x200400, REGION_CPU1, 0 )
+	ROM_REGION( 0x200000, REGION_CPU1, 0 )
+	ROM_REGION( 0x000400, REGION_USER1, 0 )
 
-	ROM_REGION32_LE( 0x080000, REGION_USER1, 0 )
+	ROM_REGION32_LE( 0x080000, REGION_USER2, 0 )
 	ROM_LOAD( "scph5500.bin",  0x0000000, 0x080000, CRC(ff3eeb8c) SHA1(b05def971d8ec59f346f2d9ac21fb742e3eb6917) )
 ROM_END
 
 ROM_START( psxa30 )
-	ROM_REGION( 0x200400, REGION_CPU1, 0 )
+	ROM_REGION( 0x200000, REGION_CPU1, 0 )
+	ROM_REGION( 0x000400, REGION_USER1, 0 )
 
-	ROM_REGION32_LE( 0x080000, REGION_USER1, 0 )
+	ROM_REGION32_LE( 0x080000, REGION_USER2, 0 )
 	ROM_LOAD( "scph7003.bin",  0x0000000, 0x080000, CRC(8d8cb7e4) SHA1(0555c6fae8906f3f09baf5988f00e55f88e9f30b) )
 ROM_END
 
 ROM_START( psxe30 )
-	ROM_REGION( 0x200400, REGION_CPU1, 0 )
+	ROM_REGION( 0x200000, REGION_CPU1, 0 )
+	ROM_REGION( 0x000400, REGION_USER1, 0 )
 
-	ROM_REGION32_LE( 0x080000, REGION_USER1, 0 )
+	ROM_REGION32_LE( 0x080000, REGION_USER2, 0 )
 	ROM_LOAD( "scph5502.bin",  0x0000000, 0x080000, CRC(4d9e7c86) SHA1(f8de9325fc36fcfa4b29124d291c9251094f2e54) )
 ROM_END
 
 ROM_START( psxj40 )
-	ROM_REGION( 0x200400, REGION_CPU1, 0 )
+	ROM_REGION( 0x200000, REGION_CPU1, 0 )
+	ROM_REGION( 0x000400, REGION_USER1, 0 )
 
-	ROM_REGION32_LE( 0x080000, REGION_USER1, 0 )
+	ROM_REGION32_LE( 0x080000, REGION_USER2, 0 )
 	ROM_LOAD( "scph7000.bin",  0x0000000, 0x080000, CRC(ec541cd0) SHA1(77b10118d21ac7ffa9b35f9c4fd814da240eb3e9) )
 ROM_END
 
 ROM_START( psxa41 )
-	ROM_REGION( 0x200400, REGION_CPU1, 0 )
+	ROM_REGION( 0x200000, REGION_CPU1, 0 )
+	ROM_REGION( 0x000400, REGION_USER1, 0 )
 
-	ROM_REGION32_LE( 0x080000, REGION_USER1, 0 )
+	ROM_REGION32_LE( 0x080000, REGION_USER2, 0 )
 	ROM_LOAD( "scph7001.bin",  0x0000000, 0x080000, CRC(502224b6) SHA1(14df4f6c1e367ce097c11deae21566b4fe5647a9) )
 ROM_END
 
 ROM_START( psxe41 )
-	ROM_REGION( 0x200400, REGION_CPU1, 0 )
+	ROM_REGION( 0x200000, REGION_CPU1, 0 )
+	ROM_REGION( 0x000400, REGION_USER1, 0 )
 
-	ROM_REGION32_LE( 0x080000, REGION_USER1, 0 )
+	ROM_REGION32_LE( 0x080000, REGION_USER2, 0 )
 	ROM_LOAD( "scph7502.bin",  0x0000000, 0x080000, CRC(318178bf) SHA1(8d5de56a79954f29e9006929ba3fed9b6a418c1d) )
 ROM_END
 
 SYSTEM_CONFIG_START( psx )
+	CONFIG_DEVICE_QUICKLOAD( "exe\0", psx_load_exe )
 SYSTEM_CONFIG_END
 
 /*
