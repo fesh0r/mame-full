@@ -9,7 +9,11 @@
 #else
 #ifndef WIN32
 #   include <dirent.h>
+#ifdef __sgi
+#   include <errno.h>
+#else
 #   include <sys/errno.h>
+#endif
 #else
 #    include "dirent.h"
 #endif
