@@ -115,6 +115,7 @@ static HMENU win_menu_bar;
 static int is_paused;
 static HICON device_icons[IO_COUNT];
 
+static int add_filter_entry(char *dest, size_t dest_len, const char *description, const char *extensions);
 
 
 //============================================================
@@ -133,7 +134,7 @@ static void customize_input(const char *title, int cust_type, int player, int ca
 
 	artwork_get_inputscreen_customizations(&png, cust_type, customizations, sizeof(customizations) / sizeof(customizations[0]));
 
-	dlg = win_dialog_init(title);
+	dlg = win_dialog_init(title, NULL);
 	if (!dlg)
 		goto done;
 
@@ -228,7 +229,7 @@ static void setswitchmenu(int title_string_num, UINT32 ipt_name, UINT32 ipt_sett
 	const char *switch_name = NULL;
 	UINT32 type;
 	
-	dlg = win_dialog_init(ui_getstring(title_string_num));
+	dlg = win_dialog_init(ui_getstring(title_string_num), NULL);
 	if (!dlg)
 		goto done;
 
@@ -381,7 +382,7 @@ struct file_dialog_params
 	option_resolution **create_args;
 };
 
-static void format_combo_changed(dialog_box *dialog, HWND format_combo, void *changed_param)
+static void format_combo_changed(dialog_box *dialog, HWND dlgwnd, NMHDR *notification, void *changed_param)
 {
 	HWND wnd;
 	int format_combo_val;
@@ -398,7 +399,7 @@ static void format_combo_changed(dialog_box *dialog, HWND format_combo, void *ch
 	params = (struct file_dialog_params *) changed_param;
 
 	// locate the format control
-	format_combo_val = SendMessage(format_combo, CB_GETCURSEL, 0, 0);
+	format_combo_val = notification ? (((OFNOTIFY *) notification)->lpOFN->nFilterIndex - 1) : 0;
 	if (format_combo_val < 0)
 		format_combo_val = 0;
 	*(params->create_format) = format_combo_val;
@@ -408,8 +409,8 @@ static void format_combo_changed(dialog_box *dialog, HWND format_combo, void *ch
 	guide = dev->createimage_optguide;	
 	optspec = dev->createimage_options[format_combo_val].optspec;
 
-	wnd = format_combo;
-	while((wnd = GetNextWindow(wnd, GW_HWNDNEXT)) != NULL)
+	wnd = NULL;
+	while((wnd = FindWindowEx(dlgwnd, wnd, NULL, NULL)) != NULL)
 	{
 		// get label text, removing trailing NULL
 		GetWindowText(wnd, buf1, sizeof(buf1) / sizeof(buf1[0]));
@@ -455,6 +456,7 @@ static void format_combo_changed(dialog_box *dialog, HWND format_combo, void *ch
 					}
 				}
 				
+				// if there is only one option, it is effectively disabled
 				if (option_count <= 1)
 					has_option = FALSE;
 
@@ -462,6 +464,12 @@ static void format_combo_changed(dialog_box *dialog, HWND format_combo, void *ch
 					SendMessage(wnd, CB_SETCURSEL, current_index, 0);
 				else if (default_index >= 0)
 					SendMessage(wnd, CB_SETCURSEL, default_index, 0);
+			}
+			else
+			{
+				// this item is non applicable
+				SendMessage(wnd, CB_ADDSTRING, 0, (LPARAM) TEXT("N/A"));
+				SendMessage(wnd, CB_SETCURSEL, 0, 0);
 			}
 			EnableWindow(wnd, has_option ? TRUE : FALSE);
 		}
@@ -471,7 +479,7 @@ static void format_combo_changed(dialog_box *dialog, HWND format_combo, void *ch
 
 
 //============================================================
-//	build_option_dialog
+//	storeval_option_resolution
 //============================================================
 
 struct storeval_optres_params
@@ -510,17 +518,27 @@ static void storeval_option_resolution(void *storeval_param, int val)
 //	build_option_dialog
 //============================================================
 
-static dialog_box *build_option_dialog(const struct IODevice *dev, int *create_format, option_resolution **create_args)
+static dialog_box *build_option_dialog(const struct IODevice *dev, char *filter, size_t filter_len, int *create_format, option_resolution **create_args)
 {
 	dialog_box *dialog;
 	const struct OptionGuide *guide_entry;
-	int found, i;
+	int found, i, pos;
 	char buf[256];
 	struct file_dialog_params *params;
 	struct storeval_optres_params *storeval_params;
+	const struct dialog_layout filedialog_layout = { 44, 220 };
+
+	// make the filter
+	pos = 0;
+	for (i = 0; dev->createimage_options[i].optspec; i++)
+	{
+		pos += add_filter_entry(filter + pos, filter_len - pos,
+			dev->createimage_options[i].description,
+			dev->createimage_options[i].extensions);
+	}
 
 	// create the dialog
-	dialog = win_dialog_init(NULL);
+	dialog = win_dialog_init(NULL, &filedialog_layout);
 	if (!dialog)
 		goto error;
 
@@ -532,20 +550,9 @@ static dialog_box *build_option_dialog(const struct IODevice *dev, int *create_f
 	params->create_format = create_format;
 	params->create_args = create_args;
 
-	// do we have a "singleton" option type, or do we support multiple formats?
-	if (dev->createimage_options[1].optspec)
-	{
-		// multiple formats; add the combo box
-		if (win_dialog_add_active_combobox(dialog, TEXT("Format:"), 0, NULL, NULL, format_combo_changed, (void *) params))
-			goto error;
-
-		// and the format combo box items
-		for (i = 0; dev->createimage_options[i].optspec; i++)
-		{
-			if (win_dialog_add_combobox_item(dialog, dev->createimage_options[i].description, i))
-				goto error;
-		}
-	}
+	// set the notify handler; so that we get notified when the format dialog changed
+	if (win_dialog_add_notification(dialog, CDN_TYPECHANGE, format_combo_changed, params))
+		goto error;
 
 	// loop through the entries
 	for (guide_entry = dev->createimage_optguide; guide_entry->option_type != OPTIONTYPE_END; guide_entry++)
@@ -594,6 +601,88 @@ error:
 
 
 //============================================================
+//	add_filter_entry
+//============================================================
+
+static int add_filter_entry(char *dest, size_t dest_len, const char *description, const char *extensions)
+{
+	const char *s;
+	int pos = 0;
+
+	// add the description
+	pos += snprintf(dest + pos, dest_len - pos, "%s (", description);
+	
+	// add the extensions to the description
+	s = extensions;
+	while(*s)
+	{
+		pos += snprintf(dest + pos, dest_len - pos, "%s*.%s", (s == extensions) ? "" : ";", s);
+		s += strlen(s) + 1;
+	}
+
+	// add the trailing rparen
+	pos += snprintf(dest + pos, dest_len - pos, ")", s);
+
+	// get past the \0
+	if (dest_len > 0)
+	{
+		pos++;
+		dest_len--;
+	}
+
+	// now add the extension list itself
+	s = extensions;
+	while(*s)
+	{
+		pos += snprintf(dest + pos, dest_len - pos, "*.%s;", s);
+		s += strlen(s) + 1;
+	}
+
+
+	// get past the \0
+	if (dest_len > 0)
+	{
+		pos++;
+		dest_len--;
+		if (dest_len > 0)
+			dest[pos] = '\0';
+	}
+
+	return pos;
+}
+
+
+
+//============================================================
+//	build_generic_filter
+//============================================================
+
+static void build_generic_filter(const struct IODevice *dev, int is_save, char *filter, size_t filter_len)
+{
+	char *s;
+
+	s = filter;
+
+	// common image types
+	s += add_filter_entry(filter, filter_len, "Common image types", dev->file_extensions);
+
+	// all files
+	s += sprintf(s, "All files (*.*)") + 1;
+	s += sprintf(s, "*.*") + 1;
+
+	// compressed
+	if (!is_save)
+	{
+		s += sprintf(s, "Compressed Images (*.zip)") + 1;
+		s += sprintf(s, "*.zip") + 1;
+	}
+
+	*(s++) = '\0';
+}
+
+
+
+//============================================================
 //	change_device
 //============================================================
 
@@ -603,7 +692,6 @@ static void change_device(mess_image *img, int is_save)
 	char filter[2048];
 	char filename[MAX_PATH];
 	char *s;
-	const char *ext;
 	const struct IODevice *dev = image_device(img);
 	const char *initial_dir;
 	BOOL result;
@@ -611,38 +699,6 @@ static void change_device(mess_image *img, int is_save)
 	option_resolution *create_args = NULL;
 
 	assert(dev);
-
-	s = filter;
-	s += sprintf(s, "Common image types (");
-	ext = dev->file_extensions;
-	while(*ext)
-	{
-		s += sprintf(s, "*.%s;", ext);
-		ext += strlen(ext) + 1;
-	}
-	s += sprintf(s, "*.zip)");
-	s++;
-	ext = dev->file_extensions;
-	while(*ext)
-	{
-		s += sprintf(s, "*.%s;", ext);
-		ext += strlen(ext) + 1;
-	}
-	s += sprintf(s, "*.zip");
-	s++;
-
-	// All files
-	s += sprintf(s, "All files (*.*)") + 1;
-	s += sprintf(s, "*.*") + 1;
-
-	// Compressed
-	if (!is_save)
-	{
-		s += sprintf(s, "Compressed Images (*.zip)") + 1;
-		s += sprintf(s, "*.zip") + 1;
-	}
-
-	*(s++) = '\0';
 
 	// get the file
 	if (image_exists(img))
@@ -665,9 +721,14 @@ static void change_device(mess_image *img, int is_save)
 	// add custom dialog elements, if appropriate
 	if (dev->createimage_optguide && dev->createimage_options[0].optspec)
 	{
-		dialog = build_option_dialog(dev, &create_format, &create_args);
+		dialog = build_option_dialog(dev, filter, sizeof(filter) / sizeof(filter[0]), &create_format, &create_args);
 		if (!dialog)
 			goto done;
+	}
+	else
+	{
+		// build a normal filter
+		build_generic_filter(dev, is_save, filter, sizeof(filter) / sizeof(filter[0]));
 	}
 
 	// display the dialog

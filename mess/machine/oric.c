@@ -1415,43 +1415,6 @@ WRITE_HANDLER ( oric_IO_w )
 }
 
 
-#if 0
-
-int oric_cassette_init(int id)
-{
-	mame_file *file;
-	int effective_mode;
-
-
-	file = image_fopen_new(IO_CASSETTE, id, & effective_mode);
-	if( file )
-	{
-		if (! image_has_been_created(image))
-		{
-			struct wave_args_legacy wa = {0,};
-			wa.file = file;
-
-			if (device_open(IO_CASSETTE, id, 0, &wa))
-				return INIT_FAIL;
-
-			return INIT_PASS;
-		}
-		/* HJB 02/18: no file, created a new file instead */
-		else
-		{
-			struct wave_args_legacy wa = {0,};
-			wa.file = file;
-			wa.smpfreq = 22050; /* maybe 11025 Hz would be sufficient? */
-			/* open in write mode */
-			if (device_open(IO_CASSETTE, id, 1, &wa))
-				return INIT_FAIL;
-			return INIT_PASS;
-		}
-	}
-
-	return INIT_FAIL;
-}
-#endif
 
 /**** TELESTRAT ****/
 

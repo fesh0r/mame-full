@@ -8,8 +8,6 @@
 
 /* ----------------------------------------------------------------------- */
 
-static mame_file *image_fopen_new(mess_image *img);
-
 enum
 {
 	IMAGE_STATUS_ISLOADING		= 1,
@@ -93,9 +91,21 @@ static int image_load_internal(mess_image *img, const char *name, int create_for
 	const struct IODevice *dev;
 	char *newname;
 	int err = INIT_PASS;
-	mame_file *fp = NULL;
+	mame_file *file = NULL;
 	UINT8 *buffer = NULL;
 	UINT64 size;
+	int i;
+
+	static int file_modes[][4] =
+	{
+		{ OSD_FOPEN_READ, -1 },										/* OSD_FOPEN_READ */
+		{ OSD_FOPEN_WRITE, -1 },									/* OSD_FOPEN_WRITE */
+		{ OSD_FOPEN_RW, -1 },										/* OSD_FOPEN_RW */
+		{ OSD_FOPEN_RW_CREATE, -1 },								/* OSD_FOPEN_RW_CREATE */
+		{ OSD_FOPEN_RW, OSD_FOPEN_READ, -1 },						/* OSD_FOPEN_RW_OR_READ */
+		{ OSD_FOPEN_RW, OSD_FOPEN_READ, OSD_FOPEN_RW_CREATE, -1 },	/* OSD_FOPEN_RW_CREATE_OR_READ */
+		{ OSD_FOPEN_READ, OSD_FOPEN_WRITE, -1 }						/* OSD_FOPEN_READ_OR_WRITE */
+	};
 
 	/* unload if we are loaded */
 	if (img->status & IMAGE_STATUS_ISLOADED)
@@ -127,48 +137,50 @@ static int image_load_internal(mess_image *img, const char *name, int create_for
 	if ((timer_get_time() > 0) && (dev->flags & DEVICE_LOAD_RESETS_CPU))
 		machine_reset();
 
-	if ((dev->open_mode == OSD_FOPEN_NONE) || !image_exists(img))
+	if ((dev->open_mode >= 0) && (dev->open_mode < (sizeof(file_modes) / sizeof(file_modes[0]))))
 	{
-		fp = NULL;
-	}
-	else
-	{
-		fp = image_fopen_new(img);
-		if (fp == NULL)
-			goto error;
-	}
-
-	/* if applicable, call device verify */
-	if (dev->imgverify)
-	{
-		size = mame_fsize(fp);
-		buffer = malloc(size);
-		if (!buffer)
+		/* attempt to open the file with the various modes */
+		i = 0;
+		while(!file && (file_modes[dev->open_mode][i] >= 0))
+		{
+			img->effective_mode = file_modes[dev->open_mode][i++];
+			file = image_fopen_custom(img, FILETYPE_IMAGE, img->effective_mode);
+		}
+		if (!file)
 			goto error;
 
-		if (mame_fread(fp, buffer, (UINT32) size) != size)
-			goto error;
+		/* if applicable, call device verify */
+		if (dev->imgverify)
+		{
+			size = mame_fsize(file);
+			buffer = malloc(size);
+			if (!buffer)
+				goto error;
 
-		err = dev->imgverify(buffer, size);
-		if (err)
-			goto error;
+			if (mame_fread(file, buffer, (UINT32) size) != size)
+				goto error;
 
-		mame_fseek(fp, 0, SEEK_SET);
+			err = dev->imgverify(buffer, size);
+			if (err)
+				goto error;
 
-		free(buffer);
-		buffer = NULL;
+			mame_fseek(file, 0, SEEK_SET);
+
+			free(buffer);
+			buffer = NULL;
+		}
 	}
 
 	/* call device load or create */
 	if (image_has_been_created(img) && dev->create)
 	{
-		err = dev->create(img, fp, create_format, create_args);
+		err = dev->create(img, file, create_format, create_args);
 		if (err)
 			goto error;
 	}
 	else if (dev->load)
 	{
-		err = dev->load(img, fp);
+		err = dev->load(img, file);
 		if (err)
 			goto error;
 	}
@@ -178,8 +190,8 @@ static int image_load_internal(mess_image *img, const char *name, int create_for
 	return INIT_PASS;
 
 error:
-	if (fp)
-		mame_fclose(fp);
+	if (file)
+		mame_fclose(file);
 	if (buffer)
 		free(buffer);
 	if (img)
@@ -281,78 +293,7 @@ void image_unload_all(int ispreload)
 	}
 }
 
-/* ----------------------------------------------------------------------- */
 
-static mame_file *image_fopen_new(mess_image *img)
-{
-	mame_file *fref;
-	const struct IODevice *dev;
-
-	dev = image_device(img);
-
-	switch (dev->open_mode) {
-	case OSD_FOPEN_NONE:
-	default:
-		/* unsupported modes */
-		printf("Internal Error in file \""__FILE__"\", line %d\n", __LINE__);
-		fref = NULL;
-		img->effective_mode = OSD_FOPEN_NONE;
-		break;
-
-	case OSD_FOPEN_READ:
-	case OSD_FOPEN_WRITE:
-	case OSD_FOPEN_RW:
-	case OSD_FOPEN_RW_CREATE:
-		/* supported modes */
-		fref = image_fopen_custom(img, FILETYPE_IMAGE, dev->open_mode);
-		img->effective_mode = dev->open_mode;
-		break;
-
-	case OSD_FOPEN_RW_OR_READ:
-		/* R/W or read-only: emulated mode */
-		fref = image_fopen_custom(img, FILETYPE_IMAGE, OSD_FOPEN_RW);
-		if (fref)
-			img->effective_mode = OSD_FOPEN_RW;
-		else
-		{
-			fref = image_fopen_custom(img, FILETYPE_IMAGE, OSD_FOPEN_READ);
-			img->effective_mode = OSD_FOPEN_READ;
-		}
-		break;
-
-	case OSD_FOPEN_RW_CREATE_OR_READ:
-		/* R/W, read-only, or create new R/W image: emulated mode */
-		fref = image_fopen_custom(img, FILETYPE_IMAGE, OSD_FOPEN_RW);
-		if (fref)
-			img->effective_mode = OSD_FOPEN_RW;
-		else
-		{
-			fref = image_fopen_custom(img, FILETYPE_IMAGE, OSD_FOPEN_READ);
-			if (fref)
-				img->effective_mode = OSD_FOPEN_READ;
-			else
-			{
-				fref = image_fopen_custom(img, FILETYPE_IMAGE, OSD_FOPEN_RW_CREATE);
-				img->effective_mode = OSD_FOPEN_RW_CREATE;
-			}
-		}
-		break;
-
-	case OSD_FOPEN_READ_OR_WRITE:
-		/* read or write: emulated mode */
-		fref = image_fopen_custom(img, FILETYPE_IMAGE, OSD_FOPEN_READ);
-		if (fref)
-			img->effective_mode = OSD_FOPEN_READ;
-		else
-		{
-			fref = image_fopen_custom(img, FILETYPE_IMAGE, /*OSD_FOPEN_WRITE*/OSD_FOPEN_RW_CREATE);
-			img->effective_mode = OSD_FOPEN_WRITE;
-		}
-		break;
-	}
-
-	return fref;
-}
 
 /****************************************************************************
   Tag management functions.

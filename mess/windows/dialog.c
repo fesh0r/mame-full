@@ -89,6 +89,12 @@ struct _dialog_box
 	int combo_default_value;
 	memory_pool mempool;
 	struct dialog_object_pool *objpool;
+	const struct dialog_layout *layout;
+
+	// singular notification callback; hack
+	UINT notify_code;
+	dialog_notification notify_callback;
+	void *notify_param;
 };
 
 //============================================================
@@ -103,16 +109,15 @@ extern void win_poll_input(void);
 //	PARAMETERS
 //============================================================
 
-#define DIM_VERTICAL_SPACING	2
-#define DIM_HORIZONTAL_SPACING	2
+#define DIM_VERTICAL_SPACING	3
+#define DIM_HORIZONTAL_SPACING	5
 #define DIM_NORMAL_ROW_HEIGHT	10
 #define DIM_COMBO_ROW_HEIGHT	12
 #define DIM_BUTTON_ROW_HEIGHT	12
-#define DIM_LABEL_WIDTH			80
-#define DIM_SEQ_WIDTH			120
-#define DIM_COMBO_WIDTH			140
+#define DIM_EDIT_WIDTH			120
 #define DIM_BUTTON_WIDTH		50
 #define DIM_SCROLLBAR_WIDTH		10
+#define DIM_BOX_VERTSKEW		-3
 
 #define WNDLONG_DIALOG			GWLP_USERDATA
 
@@ -148,6 +153,8 @@ extern void win_poll_input(void);
 static double pixels_to_xdlgunits;
 static double pixels_to_ydlgunits;
 
+static const struct dialog_layout default_layout = { 80, 140 };
+
 
 
 //============================================================
@@ -177,7 +184,8 @@ static void calc_dlgunits_multiple(void)
 
 	if ((pixels_to_xdlgunits == 0) || (pixels_to_ydlgunits == 0))
 	{
-		dialog = win_dialog_init(NULL);
+		// create a bogus dialog
+		dialog = win_dialog_init(NULL, NULL);
 		if (!dialog)
 			goto done;
 
@@ -606,11 +614,15 @@ static LRESULT dialog_get_combo_value(dialog_box *dialog, HWND dialog_item, UINT
 //	win_dialog_init
 //============================================================
 
-dialog_box *win_dialog_init(const char *title)
+dialog_box *win_dialog_init(const char *title, const struct dialog_layout *layout)
 {
 	struct _dialog_box *di;
 	DLGTEMPLATE dlg_template;
 	WORD w[2];
+
+	// use default layout if not specified
+	if (!layout)
+		layout = &default_layout;
 
 	// create the dialog structure
 	di = malloc(sizeof(struct _dialog_box));
@@ -618,6 +630,7 @@ dialog_box *win_dialog_init(const char *title)
 		goto error;
 	memset(di, 0, sizeof(*di));
 
+	di->layout = layout;
 	pool_init(&di->mempool);
 
 	memset(&dlg_template, 0, sizeof(dlg_template));
@@ -715,12 +728,14 @@ int win_dialog_add_active_combobox(dialog_box *dialog, const char *item_label, i
 	dialog_new_control(dialog, &x, &y);
 
 	if (dialog_write_item(dialog, WS_CHILD | WS_VISIBLE | SS_LEFT,
-			x, y, DIM_LABEL_WIDTH, DIM_COMBO_ROW_HEIGHT, item_label, DLGITEM_STATIC, NULL))
+			x, y, dialog->layout->label_width, DIM_COMBO_ROW_HEIGHT, item_label, DLGITEM_STATIC, NULL))
 		goto error;
 
-	x += DIM_LABEL_WIDTH + DIM_HORIZONTAL_SPACING;
+	y += DIM_BOX_VERTSKEW;
+
+	x += dialog->layout->label_width + DIM_HORIZONTAL_SPACING;
 	if (dialog_write_item(dialog, WS_CHILD | WS_VISIBLE | CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP,
-			x, y, DIM_COMBO_WIDTH, DIM_COMBO_ROW_HEIGHT * 8, "", DLGITEM_COMBOBOX, NULL))
+			x, y, dialog->layout->combo_width, DIM_COMBO_ROW_HEIGHT * 8, "", DLGITEM_COMBOBOX, NULL))
 		goto error;
 	dialog->combo_string_count = 0;
 	dialog->combo_default_value = default_value;
@@ -736,7 +751,7 @@ int win_dialog_add_active_combobox(dialog_box *dialog, const char *item_label, i
 			goto error;
 	}
 
-	x += DIM_COMBO_WIDTH + DIM_HORIZONTAL_SPACING;
+	x += dialog->layout->combo_width + DIM_HORIZONTAL_SPACING;
 	y += DIM_COMBO_ROW_HEIGHT + DIM_VERTICAL_SPACING * 2;
 
 	dialog_finish_control(dialog, x, y);
@@ -976,14 +991,14 @@ int win_dialog_add_portselect(dialog_box *dialog, struct InputPort *port, RECT *
 		dialog_new_control(di, &x, &y);
 
 		if (dialog_write_item(di, WS_CHILD | WS_VISIBLE | SS_LEFT, x, y, 
-				DIM_LABEL_WIDTH, DIM_NORMAL_ROW_HEIGHT, port_name, DLGITEM_STATIC, NULL))
+				dialog->layout->label_width, DIM_NORMAL_ROW_HEIGHT, port_name, DLGITEM_STATIC, NULL))
 			return 1;
-		x += DIM_LABEL_WIDTH + DIM_HORIZONTAL_SPACING;
+		x += dialog->layout->label_width + DIM_HORIZONTAL_SPACING;
 
-		if (dialog_add_single_seqselect(di, x, y, DIM_SEQ_WIDTH, DIM_NORMAL_ROW_HEIGHT, port))
+		if (dialog_add_single_seqselect(di, x, y, DIM_EDIT_WIDTH, DIM_NORMAL_ROW_HEIGHT, port))
 			return 1;
 		y += DIM_VERTICAL_SPACING + DIM_NORMAL_ROW_HEIGHT;
-		x += DIM_SEQ_WIDTH + DIM_HORIZONTAL_SPACING;
+		x += DIM_EDIT_WIDTH + DIM_HORIZONTAL_SPACING;
 
 		dialog_finish_control(di, x, y);
 	}
@@ -1009,86 +1024,17 @@ int win_dialog_add_portselect(dialog_box *dialog, struct InputPort *port, RECT *
 
 
 //============================================================
-//	storeval_option_resolution
+//	win_dialog_add_notification
 //============================================================
 
-struct storeval_optres_param
+int win_dialog_add_notification(dialog_box *dialog, UINT notification,
+	dialog_notification callback, void *param)
 {
-	option_resolution *resolution;
-	const struct OptionGuide *guide_entry;
-};
-
-static void storeval_option_resolution(void *storeval_param, int val)
-{
-	struct storeval_optres_param *optres_param;
-	char param_str[32];
-	char value_str[16];
-	
-	optres_param = (struct storeval_optres_param *) storeval_param;
-	snprintf(param_str, sizeof(param_str) / sizeof(param_str[0]), "%s", optres_param->guide_entry->identifier);
-	snprintf(value_str, sizeof(value_str) / sizeof(value_str[0]), "%d", val);
-	option_resolution_add_param(optres_param->resolution, param_str, value_str);
-}
-
-
-
-//============================================================
-//	win_dialog_add_resolved_option
-//============================================================
-
-int win_dialog_add_option_resolution(dialog_box *dialog, option_resolution *resolution)
-{
-	int indx = 0;
-	int i, j;
-	optreserr_t err;
-	const struct OptionGuide *guide_entry;
-	const char *optspec;
-	struct OptionRange ranges[100]; 
-	char buf[256];
-	int val;
-	struct storeval_optres_param *optres_param;
-
-	optspec = option_resolution_specification(resolution);
-
-	while((guide_entry = option_resolution_index_option(resolution, indx++)) != NULL)
-	{
-		switch(guide_entry->option_type) {
-		case OPTIONTYPE_INT:
-		case OPTIONTYPE_ENUM_BEGIN:
-			err = option_resolution_listranges(optspec, guide_entry->parameter, ranges, sizeof(ranges) / sizeof(ranges[0]));
-			if (err)
-				goto done;
-
-			err = option_resolution_getdefault(optspec, guide_entry->parameter, &val);
-			if (err)
-				goto done;
-
-			optres_param = pool_malloc(&dialog->mempool, sizeof(*optres_param));
-			if (!optres_param)
-				goto done;
-			optres_param->resolution = resolution;
-			optres_param->guide_entry = guide_entry;
-
-			win_dialog_add_combobox(dialog, guide_entry->display_name, val, storeval_option_resolution, optres_param);
-
-			// loop through the options
-			for (i = 0; ranges[i].min >= 0; i++)
-			{
-				for (j = ranges[i].min; j <= ranges[i].max; j++)
-				{
-					snprintf(buf, sizeof(buf) / sizeof(buf[0]), "%i", j);
-					win_dialog_add_combobox_item(dialog, buf, j);
-				}
-			}
-			break;
-
-		case OPTIONTYPE_STRING:
-		default:
-			break;
-		}
-	}
-
-done:
+	// hack
+	assert(!dialog->notify_callback);
+	dialog->notify_code = notification;
+	dialog->notify_callback = callback;
+	dialog->notify_param = param;
 	return 0;
 }
 
@@ -1316,6 +1262,7 @@ static UINT_PTR CALLBACK file_dialog_hook(HWND dlgwnd, UINT message, WPARAM wpar
 	dialog_box *dialog;
 	UINT_PTR rc = 0;
 	LPNMHDR notify;
+	LONG_PTR l;
 
 	switch(message) {
 	case WM_INITDIALOG:
@@ -1325,6 +1272,10 @@ static UINT_PTR CALLBACK file_dialog_hook(HWND dlgwnd, UINT message, WPARAM wpar
 		SetWindowLongPtr(dlgwnd, WNDLONG_DIALOG, (LONG_PTR) dialog);
 		dialog_trigger(dlgwnd, TRIGGER_INITDIALOG);
 		rc = 1;
+
+		// hack
+		if (dialog->notify_callback && (dialog->notify_code == CDN_TYPECHANGE))
+			dialog->notify_callback(dialog, dlgwnd, NULL, dialog->notify_param);
 		break;
 
 	case WM_NOTIFY:
@@ -1334,6 +1285,12 @@ static UINT_PTR CALLBACK file_dialog_hook(HWND dlgwnd, UINT message, WPARAM wpar
 			dialog_trigger(dlgwnd, TRIGGER_APPLY);
 			break;
 		}
+
+		// hack
+		l = GetWindowLongPtr(dlgwnd, WNDLONG_DIALOG);
+		dialog = (dialog_box *) l;
+		if (dialog->notify_callback && (notify->code == dialog->notify_code))
+			dialog->notify_callback(dialog, dlgwnd, notify, dialog->notify_param);
 		break;
 
 	case WM_COMMAND:

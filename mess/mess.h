@@ -106,7 +106,7 @@ void tapecontrol_gettime(char *timepos, size_t timepos_size, mess_image *img, in
  *	if both, OSD_FOPEN_RW and OSD_FOPEN_READ modes, failed.
  *
  * extra values for IODevice openmode field (modes are not supported by
- * mame_fopen() yet, image_fopen_new emulates them):
+ * mame_fopen() yet):
  * OSD_FOPEN_RW_OR_READ
  *  open existing file in read/write mode.  If it fails, try to open it as
  *  read-only.

@@ -14,11 +14,18 @@
 
 typedef struct _dialog_box dialog_box;
 
+struct dialog_layout
+{
+	short label_width;
+	short combo_width;
+};
+
 typedef void (*dialog_itemstoreval)(void *param, int val);
 typedef void (*dialog_itemchangedproc)(dialog_box *dialog, HWND dlgitem, void *changed_param);
+typedef void (*dialog_notification)(dialog_box *dialog, HWND dlgwnd, NMHDR *notification, void *param);
 
 /* dialog allocation / termination */
-dialog_box *win_dialog_init(const char *title);
+dialog_box *win_dialog_init(const char *title, const struct dialog_layout *layout);
 void win_dialog_exit(dialog_box *dialog);
 
 /* dialog memory allocation */
@@ -36,6 +43,8 @@ int win_dialog_add_portselect(dialog_box *dialog, struct InputPort *port, RECT *
 int win_dialog_add_standard_buttons(dialog_box *dialog);
 int win_dialog_add_image(dialog_box *dialog, const struct png_info *png);
 int win_dialog_add_separator(dialog_box *dialog);
+int win_dialog_add_notification(dialog_box *dialog, UINT notification,
+	dialog_notification callback, void *param);
 
 
 enum file_dialog_type

@@ -67,9 +67,9 @@ OPTION_GUIDE_START(floppy_option_guide)
 	OPTION_INT('H', "heads",			"Heads")
 	OPTION_INT('T', "tracks",			"Tracks")
 	OPTION_INT('S', "sectors",			"Sectors")
-	OPTION_INT('L', "sectorlength",		"Sector Length")
+	OPTION_INT('L', "sectorlength",		"Sector Bytes")
 	OPTION_INT('I', "interleave",		"Interleave")
-	OPTION_INT('F', "firstsectorid",	"First Sector ID")
+	OPTION_INT('F', "firstsectorid",	"First Sector")
 OPTION_GUIDE_END
 
 

@@ -221,7 +221,6 @@ extern void superpet_driver_init(void);
 extern MACHINE_INIT( pet );
 extern INTERRUPT_GEN( pet_frame_interrupt );
 
-int pet_rom_id (int id);
 void pet_rom_load(void);
 
 #endif

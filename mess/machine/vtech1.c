@@ -170,32 +170,7 @@ static void vtech1_snapshot_copy(UINT8 *vtech1_snapshot_data, int vtech1_snapsho
     }
 }
 
-/*
-int vtech1_snapshot_id(int id)
-{
-	UINT8 buff[256];
-    mame_file *file;
 
-	logerror("VTECH snapshot_id\n");
-    file = image_fopen_new(IO_SNAPSHOT, id, NULL);
-    if( file )
-    {
-        mame_fread(file, buff, sizeof(buff));
-		mame_fclose(file);
-		if( memcmp(buff, "  \0\0", 4) == 0 && buff[21] == 0xf1 )
-        {
-			logerror("vtech1_snapshot_id: MCODE magic found '%s'\n", buff+4);
-			return ID_OK;
-        }
-		if( memcmp(buff, "VZF0", 4) == 0 && buff[21] == 0xf0 )
-        {
-			logerror("vtech1_snapshot_id: BASIC magic found %s\n", buff+4);
-			return ID_OK;
-        }
-    }
-	return ID_FAILED;
-}
-*/
 
 SNAPSHOT_LOAD(vtech1)
 {

@@ -544,31 +544,7 @@ MACHINE_INIT( pet )
 	pet_rom_load();
 }
 
-int pet_rom_id (int id)
-{
-#if 0
-	/* magic lowrom at offset 0x8003: $c3 $c2 $cd $38 $30 */
-	/* jumped to offset 0 (0x8000) */
-	int retval = 0;
-	unsigned char magic[] =
-	{0xc3, 0xc2, 0xcd, 0x38, 0x30}, buffer[sizeof (magic)];
-	mame_file *romfile;
-	char *cp;
 
-	logerror("c64_rom_id %s\n", image_filename(IO_CARTSLOT,id));
-	retval = 0;
-	if (!(romfile = image_fopen_new(IO_CARTSLOT, id, NULL)))
-	{
-		logerror("rom %s not found\n", image_filename(IO_CARTSLOT,id));
-		return 0;
-	}
-
-	mame_fseek (romfile, 3, SEEK_SET);
-	mame_fread (romfile, buffer, sizeof (magic));
-	mame_fclose (romfile);
-#endif
-	return 1;
-}
 
 void pet_rom_load(void)
 {

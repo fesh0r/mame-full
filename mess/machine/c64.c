@@ -924,55 +924,7 @@ MACHINE_INIT( c64 )
 		c64_bankswitch (1);
 }
 
-#ifdef VERIFY_IMAGE
-int c64_rom_id (int id)
-{
-	/* magic lowrom at offset 0x8003: $c3 $c2 $cd $38 $30 */
-	/* jumped to offset 0 (0x8000) */
-	int retval = 0;
-	unsigned char magic[] =
-	{0xc3, 0xc2, 0xcd, 0x38, 0x30}, buffer[sizeof (magic)];
-	mame_file *romfile;
-	char *cp;
 
-	logerror("c64_rom_id %s\n", image_filename(IO_CARTSLOT,id));
-	retval = 0;
-	if (!(romfile = image_fopen_new(IO_CARTSLOT, id, NULL)))
-	{
-		logerror("rom %s not found\n", image_filename(IO_CARTSLOT,id));
-		return 0;
-	}
-
-	mame_fseek (romfile, 3, SEEK_SET);
-	mame_fread (romfile, buffer, sizeof (magic));
-	mame_fclose (romfile);
-
-	if (memcmp (magic, buffer, sizeof (magic)) == 0)
-	{
-		/* cartridgetype=CartridgeC64; */
-		retval = 1;
-	}
-	else if ((cp = strrchr (image_filename(IO_CARTSLOT,id), '.')) != NULL)
-	{
-		if ((stricmp (cp + 1, "prg") == 0)
-			|| (stricmp (cp + 1, "crt") == 0)
-			|| (stricmp (cp + 1, "80") == 0)
-			|| (stricmp (cp + 1, "90") == 0)
-			|| (stricmp (cp + 1, "e0") == 0)
-			|| (stricmp (cp + 1, "f0") == 0)
-			|| (stricmp (cp + 1, "a0") == 0)
-			|| (stricmp (cp + 1, "b0") == 0)
-			|| (stricmp (cp + 1, "lo") == 0) || (stricmp (cp + 1, "hi") == 0))
-			retval = 1;
-	}
-
-	if (retval)
-		logerror("rom %s recognized\n", image_filename(IO_CARTSLOT,id) );
-	else
-		logerror("rom %s not recognized\n", image_filename(IO_CARTSLOT,id));
-	return retval;
-}
-#endif
 
 #define BETWEEN(value1,value2,bottom,top) \
     ( ((value2)>=(bottom))&&((value1)<(top)) )
