@@ -300,11 +300,10 @@ static void read_binary_forward(void)
 		goto update_registers;
 	}
 
-	/*logerror("read binary forward: rec lenght %d, requested %d\n", reclen, char_count);*/
-
 	/* skip blanks as needed */
 	while (reclen == 0)
 	{
+		logerror("read binary forward: skipping NULL record\n");
 		bytes_read = osd_fread(tpc.t[tap_sel].fd, buffer, 4);
 		if (bytes_read != 4)
 		{
@@ -392,12 +391,15 @@ static void read_binary_forward(void)
 				goto update_registers;
 			}
 
+			logerror("read binary forward: found EOF, requested %d\n", char_count);
 			tpc.w[0] |= w0_EOF;
 			tpc.w[7] |= w7_idle | w7_error | w7_tape_error;
 			update_interrupt();
 			goto update_registers;
 		}
 	}
+
+	logerror("read binary forward: rec lenght %d, requested %d\n", reclen, char_count);
 
 #if 0
 	if (reclen > 0x8000)
@@ -468,6 +470,10 @@ static void read_binary_forward(void)
 		}
 	}
 
+#if 0
+	/* I removed this to work around a problem in the tape build program, which unwittingly
+	requests to read 800 bytes instead of 134.  It looks like a bug in the build program
+	itself, and I can't understand how it could run on the original hardware. */
 	if (char_count)
 	{
 		tpc.w[0] |= w0_EOR;
@@ -475,6 +481,7 @@ static void read_binary_forward(void)
 		update_interrupt();
 		goto skip_trailer;
 	}
+#endif
 	if (rec_count)
 	{	/* skip end of record */
 		if (osd_fseek(tpc.t[tap_sel].fd, rec_count, SEEK_CUR))
