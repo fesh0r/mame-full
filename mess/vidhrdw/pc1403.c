@@ -30,13 +30,11 @@ int pc1403_vh_start(void)
 READ_HANDLER(pc1403_lcd_read)
 {
     UINT8 data=pc1403_lcd.reg[offset];
-    logerror ("lcd read %.4x %.2x\n",offset, data);
     return data;
 }
 
 WRITE_HANDLER(pc1403_lcd_write)
 {
-    logerror ("lcd write %.4x %.2x\n",offset, data);
     pc1403_lcd.reg[offset]=data;
 }
 
@@ -155,42 +153,47 @@ void pc1403_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
     else
 	fillbitmap (bitmap, Machine->pens[0], &Machine->visible_area);
     
-    for (x=RIGHT,y=DOWN,i=0; i<6*5;x+=2) {
-	for (j=0; j<5;j++,i++,x+=2)
-	    drawgfx(bitmap, Machine->gfx[0], pc1403_lcd.reg[i],CONTRAST,0,0,
-		    x,y,
-		    0, TRANSPARENCY_NONE,0);
+    if (pc1403_portc&1) {
+	for (x=RIGHT,y=DOWN,i=0; i<6*5;x+=2) {
+	    for (j=0; j<5;j++,i++,x+=2)
+		drawgfx(bitmap, Machine->gfx[0], pc1403_lcd.reg[i],CONTRAST,0,0,
+			x,y,
+			0, TRANSPARENCY_NONE,0);
+	}
+	for (i=9*5; i<12*5;x+=2) {
+	    for (j=0; j<5;j++,i++,x+=2)
+		drawgfx(bitmap, Machine->gfx[0], pc1403_lcd.reg[i],CONTRAST,0,0,
+			x,y,
+			0, TRANSPARENCY_NONE,0);
+	}
+	for (i=6*5; i<9*5;x+=2) {
+	    for (j=0; j<5;j++,i++,x+=2)
+		drawgfx(bitmap, Machine->gfx[0], pc1403_lcd.reg[i],CONTRAST,0,0,
+			x,y,
+			0, TRANSPARENCY_NONE,0);
+	}
+	for (i=0x7b-3*5; i>0x7b-6*5;x+=2) {
+	    for (j=0; j<5;j++,i--,x+=2)
+		drawgfx(bitmap, Machine->gfx[0], pc1403_lcd.reg[i],CONTRAST,0,0,
+			x,y,
+			0, TRANSPARENCY_NONE,0);
+	}
+	for (i=0x7b; i>0x7b-3*5;x+=2) {
+	    for (j=0; j<5;j++,i--,x+=2)
+		drawgfx(bitmap, Machine->gfx[0], pc1403_lcd.reg[i],CONTRAST,0,0,
+			x,y,
+			0, TRANSPARENCY_NONE,0);
+	}
+	for (i=0x7b-6*5; i>0x7b-12*5;x+=2) {
+	    for (j=0; j<5;j++,i--,x+=2)
+		drawgfx(bitmap, Machine->gfx[0], pc1403_lcd.reg[i],CONTRAST,0,0,
+			x,y,
+			0, TRANSPARENCY_NONE,0);
+	}
+    } else {
+	osd_mark_dirty(RIGHT, DOWN, RIGHT+(24*(5+1)-1)*2-1, DOWN+7*3-1);
     }
-    for (i=9*5; i<12*5;x+=2) {
-	for (j=0; j<5;j++,i++,x+=2)
-	    drawgfx(bitmap, Machine->gfx[0], pc1403_lcd.reg[i],CONTRAST,0,0,
-		    x,y,
-		    0, TRANSPARENCY_NONE,0);
-    }
-    for (i=6*5; i<9*5;x+=2) {
-	for (j=0; j<5;j++,i++,x+=2)
-	    drawgfx(bitmap, Machine->gfx[0], pc1403_lcd.reg[i],CONTRAST,0,0,
-		    x,y,
-		    0, TRANSPARENCY_NONE,0);
-    }
-    for (i=0x7b-3*5; i>0x7b-6*5;x+=2) {
-	for (j=0; j<5;j++,i--,x+=2)
-	    drawgfx(bitmap, Machine->gfx[0], pc1403_lcd.reg[i],CONTRAST,0,0,
-		    x,y,
-		    0, TRANSPARENCY_NONE,0);
-    }
-    for (i=0x7b; i>0x7b-3*5;x+=2) {
-	for (j=0; j<5;j++,i--,x+=2)
-	    drawgfx(bitmap, Machine->gfx[0], pc1403_lcd.reg[i],CONTRAST,0,0,
-		    x,y,
-		    0, TRANSPARENCY_NONE,0);
-    }
-    for (i=0x7b-6*5; i>0x7b-12*5;x+=2) {
-	for (j=0; j<5;j++,i--,x+=2)
-	    drawgfx(bitmap, Machine->gfx[0], pc1403_lcd.reg[i],CONTRAST,0,0,
-		    x,y,
-		    0, TRANSPARENCY_NONE,0);
-    }
+
 
     pocketc_draw_special(bitmap,RIGHT,DOWN-13,busy,
 			 pc1403_lcd.reg[0x3d]&1?color[1]:color[0]);

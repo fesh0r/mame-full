@@ -149,51 +149,55 @@ void pc1401_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
     if (pocketc_backdrop)
         copybitmap (bitmap, pocketc_backdrop->artwork, 0, 0, 0, 0, NULL, 
 					TRANSPARENCY_NONE, 0);
-	else
-		fillbitmap (bitmap, Machine->pens[0], &Machine->visible_area);
-
+    else
+	fillbitmap (bitmap, Machine->pens[0], &Machine->visible_area);
+    
+    if (pc1401_portc&1) {
 	for (x=RIGHT,y=DOWN,i=0; i<0x28;x+=2) {
-		for (j=0; j<5;j++,i++,x+=2)
-			drawgfx(bitmap, Machine->gfx[0], pc1401_lcd.reg[i],CONTRAST,0,0,
-					x,y,
-					0, TRANSPARENCY_NONE,0);
+	    for (j=0; j<5;j++,i++,x+=2)
+		drawgfx(bitmap, Machine->gfx[0], pc1401_lcd.reg[i],CONTRAST,0,0,
+			x,y,
+			0, TRANSPARENCY_NONE,0);
 	}
 	for (i=0x67; i>=0x40;x+=2) {
-		for (j=0; j<5;j++,i--,x+=2)
-			drawgfx(bitmap, Machine->gfx[0], pc1401_lcd.reg[i],CONTRAST,0,0,
-					x,y,
-					0, TRANSPARENCY_NONE,0);
+	    for (j=0; j<5;j++,i--,x+=2)
+		drawgfx(bitmap, Machine->gfx[0], pc1401_lcd.reg[i],CONTRAST,0,0,
+			x,y,
+			0, TRANSPARENCY_NONE,0);
 	}
-	pocketc_draw_special(bitmap,RIGHT+149,DOWN+24,line,
-						pc1401_lcd.reg[0x3c]&8?color[1]:color[0]);
-	pocketc_draw_special(bitmap,RIGHT,DOWN-10,busy,
-						pc1401_lcd.reg[0x3d]&1?color[1]:color[0]);
-	pocketc_draw_special(bitmap,RIGHT+18,DOWN-10,def,
-						pc1401_lcd.reg[0x3d]&2?color[1]:color[0]);
-	pocketc_draw_special(bitmap,RIGHT+43,DOWN-10,shift,
-						pc1401_lcd.reg[0x3d]&4?color[1]:color[0]);
-	pocketc_draw_special(bitmap,RIGHT+63,DOWN-10,hyp,
-						pc1401_lcd.reg[0x3d]&8?color[1]:color[0]);
-	pocketc_draw_special(bitmap,RIGHT+38,DOWN+24,line,
-						pc1401_lcd.reg[0x3d]&0x10?color[1]:color[0]);
-	pocketc_draw_special(bitmap,RIGHT+23,DOWN+24,line,
-						pc1401_lcd.reg[0x3d]&0x20?color[1]:color[0]);
-	pocketc_draw_special(bitmap,RIGHT+8,DOWN+24,line,
-						pc1401_lcd.reg[0x3d]&0x40?color[1]:color[0]);
-	pocketc_draw_special(bitmap,RIGHT+183,DOWN-10,e,
-						pc1401_lcd.reg[0x7c]&1?color[1]:color[0]);
-	pocketc_draw_special(bitmap,RIGHT+176,DOWN-10,m,
-						pc1401_lcd.reg[0x7c]&2?color[1]:color[0]);
-	pocketc_draw_special(bitmap,RIGHT+168,DOWN-10,braces,
-						pc1401_lcd.reg[0x7c]&4?color[1]:color[0]);
-	pocketc_draw_special(bitmap,RIGHT+138,DOWN-10,rad,
-						pc1401_lcd.reg[0x7c]&8?color[1]:color[0]);
-	pocketc_draw_special(bitmap,RIGHT+134,DOWN-10,g,
-						pc1401_lcd.reg[0x7c]&0x10?color[1]:color[0]);
-	pocketc_draw_special(bitmap,RIGHT+126,DOWN-10,de,
-						pc1401_lcd.reg[0x7c]&0x20?color[1]:color[0]);
-	pocketc_draw_special(bitmap,RIGHT+165,DOWN+24,line,
-						pc1401_lcd.reg[0x7c]&0x40?color[1]:color[0]);
+    } else {
+	osd_mark_dirty(RIGHT, DOWN, RIGHT+(16*(5+1)-1)*2-1, DOWN+7*3-1);
+    }
+    pocketc_draw_special(bitmap,RIGHT+149,DOWN+24,line,
+			 pc1401_lcd.reg[0x3c]&8?color[1]:color[0]);
+    pocketc_draw_special(bitmap,RIGHT,DOWN-10,busy,
+			 pc1401_lcd.reg[0x3d]&1?color[1]:color[0]);
+    pocketc_draw_special(bitmap,RIGHT+18,DOWN-10,def,
+			 pc1401_lcd.reg[0x3d]&2?color[1]:color[0]);
+    pocketc_draw_special(bitmap,RIGHT+43,DOWN-10,shift,
+			 pc1401_lcd.reg[0x3d]&4?color[1]:color[0]);
+    pocketc_draw_special(bitmap,RIGHT+63,DOWN-10,hyp,
+			 pc1401_lcd.reg[0x3d]&8?color[1]:color[0]);
+    pocketc_draw_special(bitmap,RIGHT+38,DOWN+24,line,
+			 pc1401_lcd.reg[0x3d]&0x10?color[1]:color[0]);
+    pocketc_draw_special(bitmap,RIGHT+23,DOWN+24,line,
+			 pc1401_lcd.reg[0x3d]&0x20?color[1]:color[0]);
+    pocketc_draw_special(bitmap,RIGHT+8,DOWN+24,line,
+			 pc1401_lcd.reg[0x3d]&0x40?color[1]:color[0]);
+    pocketc_draw_special(bitmap,RIGHT+183,DOWN-10,e,
+			 pc1401_lcd.reg[0x7c]&1?color[1]:color[0]);
+    pocketc_draw_special(bitmap,RIGHT+176,DOWN-10,m,
+			 pc1401_lcd.reg[0x7c]&2?color[1]:color[0]);
+    pocketc_draw_special(bitmap,RIGHT+168,DOWN-10,braces,
+			 pc1401_lcd.reg[0x7c]&4?color[1]:color[0]);
+    pocketc_draw_special(bitmap,RIGHT+138,DOWN-10,rad,
+			 pc1401_lcd.reg[0x7c]&8?color[1]:color[0]);
+    pocketc_draw_special(bitmap,RIGHT+134,DOWN-10,g,
+			 pc1401_lcd.reg[0x7c]&0x10?color[1]:color[0]);
+    pocketc_draw_special(bitmap,RIGHT+126,DOWN-10,de,
+			 pc1401_lcd.reg[0x7c]&0x20?color[1]:color[0]);
+    pocketc_draw_special(bitmap,RIGHT+165,DOWN+24,line,
+			 pc1401_lcd.reg[0x7c]&0x40?color[1]:color[0]);
 
 /*
   603c: 3 STAT
