@@ -301,36 +301,45 @@ int xf86_dga1_create_display(int bitmap_depth)
 	xf86ctx.palette_dirty  = FALSE;
 	xf86ctx.old_grab_mouse = x11_grab_mouse;
 	x11_grab_mouse         = FALSE;
-	
+
 	xvisual = DefaultVisual(display,xf86ctx.screen);
 	window  = RootWindow(display,xf86ctx.screen);
 	/* dirty hack 24bpp can be either 24bpp packed or 32 bpp sparse */
 	pixmaps = XListPixmapFormats(display, &count);
 	if (!pixmaps)
 	{
-	   fprintf(stderr_file, "X11-Error: Couldn't list pixmap formats.\n"
-	      "Probably out of memory.\n");
-	   return OSD_NOT_OK;
+		fprintf(stderr_file, "X11-Error: Couldn't list pixmap formats.\n"
+				"Probably out of memory.\n");
+		return OSD_NOT_OK;
 	}
-        for(i=0; i<count; i++)
-        {
-           if(pixmaps[i].depth==DefaultDepth(display,xf86ctx.screen))
-           {
-	      depth = pixmaps[i].bits_per_pixel;
-	      break;
-           }  
-        }
-        if(i==count)
-        {
-           fprintf(stderr_file, "Couldn't find a zpixmap with the defaultcolordepth\nThis should not happen!\n");
-           return OSD_NOT_OK;
-        }
-        XFree(pixmaps);
-        
+
+	/* HACK HACK HACK, keys get stuck when they are pressed when
+	   XDGASetMode is called, so wait for all keys to be released */
+	do {
+		char keys[32];
+		XQueryKeymap(display, keys);
+		for (i=0; (i<32) && (keys[i]==0); i++) {}
+	} while(i<32);
+
+	for(i=0; i<count; i++)
+	{
+		if(pixmaps[i].depth==DefaultDepth(display,xf86ctx.screen))
+		{
+			depth = pixmaps[i].bits_per_pixel;
+			break;
+		}  
+	}
+	if(i==count)
+	{
+		fprintf(stderr_file, "Couldn't find a zpixmap with the defaultcolordepth\nThis should not happen!\n");
+		return OSD_NOT_OK;
+	}
+	XFree(pixmaps);
+
 	/* setup the palette_info struct now we have the depth */
 	if (x11_init_palette_info() != OSD_OK)
-	    return OSD_NOT_OK;
-        
+		return OSD_NOT_OK;
+
 	if(xf86_dga_vidmode_check_exts())
 		return OSD_NOT_OK;
 
@@ -343,7 +352,7 @@ int xf86_dga1_create_display(int bitmap_depth)
 
 	if(xf86_dga_setup_graphics(bestmode, bitmap_depth))
 		return OSD_NOT_OK;
-	
+
 	if (first_time)
 	{
 		if(xf86_dga_vidmode_setup_mode_restore())
@@ -361,7 +370,7 @@ int xf86_dga1_create_display(int bitmap_depth)
 	xf86ctx.vidmode_changed = TRUE;
 
 	if(XGrabKeyboard(display,window,True,
-		GrabModeAsync,GrabModeAsync,CurrentTime))
+				GrabModeAsync,GrabModeAsync,CurrentTime))
 	{
 		fprintf(stderr_file,"XGrabKeyboard failed\n");
 		return OSD_NOT_OK;
@@ -371,8 +380,8 @@ int xf86_dga1_create_display(int bitmap_depth)
 	if(use_mouse)
 	{
 		if(XGrabPointer(display,window,True,
-			PointerMotionMask|ButtonPressMask|ButtonReleaseMask,
-			GrabModeAsync,GrabModeAsync,None,None,CurrentTime))
+					PointerMotionMask|ButtonPressMask|ButtonReleaseMask,
+					GrabModeAsync,GrabModeAsync,None,None,CurrentTime))
 		{
 			fprintf(stderr_file, "XGrabPointer failed, mouse disabled\n");
 			use_mouse = 0;
@@ -392,7 +401,7 @@ int xf86_dga1_create_display(int bitmap_depth)
 	}
 
 	if(!XF86DGADirectVideo(display,xf86ctx.screen,
-		XF86DGADirectGraphics|XF86DGADirectMouse|XF86DGADirectKeyb))
+				XF86DGADirectGraphics|XF86DGADirectMouse|XF86DGADirectKeyb))
 	{
 		fprintf(stderr_file,"XF86DGADirectVideo failed\n");
 		return OSD_NOT_OK;
@@ -407,7 +416,7 @@ int xf86_dga1_create_display(int bitmap_depth)
 	memset(xf86ctx.base_addr,0,xf86ctx.bank_size);
 
 	effect_init2(bitmap_depth, depth, xf86ctx.width);
-	
+
 	return OSD_OK;
 }
 
