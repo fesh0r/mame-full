@@ -424,7 +424,6 @@ ROM_START( bigkarnk )
 	ROM_LOAD( "d1",	0x000000, 0x040000, 0x26444ad1 )
 ROM_END
 
-GAME( 1991, bigkarnk, 0, bigkarnk, bigkarnk, 0, ROT0_16BIT, "Gaelco", "Big Karnak" )
 
 
 /*============================================================================
@@ -698,7 +697,6 @@ ROM_START( splash )
 ROM_END
 
 
-GAME( 1992, splash,   0, splash,   splash,  0, ROT0_16BIT, "Gaelco", "Splash!" )
 
 /*============================================================================
 					BIOMECHANICAL TOY & MANIAC SQUARE
@@ -993,5 +991,8 @@ ROM_START( biomtoy )
 	ROM_LOAD( "c3",	0x0c0000, 0x080000, 0x914e4bbc )
 ROM_END
 
+GAME( 1991, bigkarnk, 0, bigkarnk, bigkarnk,0, ROT0_16BIT, "Gaelco", "Big Karnak" )
+GAME( 1992, splash,   0, splash,   splash,  0, ROT0_16BIT, "Gaelco", "Splash!" )
 GAME( 1995, biomtoy,  0, maniacsq, biomtoy, 0, ROT0_16BIT, "Gaelco", "Biomechanical Toy (Unprotected)" )
 GAME( 1996, maniacsq, 0, maniacsq, maniacsq,0, ROT0_16BIT, "Gaelco", "Maniac Square (Prototype)" )
+

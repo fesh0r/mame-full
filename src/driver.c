@@ -68,6 +68,9 @@ const struct GameDriver *drivers[] =
 
 #else	/* DRIVER_RECURSIVE */
 
+#undef TESTDRIVER
+#define TESTDRIVER DRIVER
+
 #ifndef NEOMAME
 
 	/* "Pacman hardware" games */
@@ -2709,7 +2712,10 @@ TESTDRIVER( bounty )
 */
 
 	/* Gaelco games */
-	DRIVER( splash )	/* (c) 1992 Gaelco */
+	DRIVER( bigkarnk )	/* (c) 1991 Gaelco */
+    DRIVER( splash )    /* (c) 1992 Gaelco */
+	DRIVER( biomtoy )	/* (c) 1995 Gaelco */
+	DRIVER( maniacsq )	/* (c) 1996 Gaelco */
 /*
 Gaelco Game list:
 =================
