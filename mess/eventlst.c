@@ -15,6 +15,8 @@ static char *pEventListBuffer = NULL;
 /* Cycle count at last frame draw - used for timing offset calculations */
 static int LastFrameStartTime = 0;
 
+static int CyclesPerFrame=0;
+
 /* initialise */
 
 /* if the CPU is the controlling factor, the size of the buffer
@@ -49,6 +51,7 @@ void    EventList_Finish(void)
 		pEventListBuffer = NULL;
 	}
         TotalEvents = 0;
+	CyclesPerFrame = 0;
 }
 
 /* reset the change list */
@@ -84,10 +87,9 @@ void    EventList_SetOffsetStartTime(int StartTime)
 /* add an event to the buffer with a time index offset from a specified time */
 void    EventList_AddItemOffset(int ID, int Data, int Time)
 {
-        static int CyclesPerFrame=0;
 
         if (!CyclesPerFrame)
-                CyclesPerFrame = (int)(Machine->drv->cpu[0].cpu_clock / Machine->drv->frames_per_second);
+                CyclesPerFrame = cpu_getfperiod();	//totalcycles();	//_(int)(Machine->drv->cpu[0].cpu_clock / Machine->drv->frames_per_second);
 
         if (NumEvents < TotalEvents)
         {
