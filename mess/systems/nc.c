@@ -334,6 +334,7 @@ static void nc_refresh_memory_bank_config(int bank)
         switch (mem_type)
         {
                 /* ROM */
+				case 3:
                 case 0:
                 {
                    unsigned char *addr;
@@ -409,20 +410,6 @@ static void nc_refresh_memory_bank_config(int bank)
 					}
                 }
                 break;
-
-                /* ?? */
-                default:
-                case 3:
-                {
-#ifdef VERBOSE
-						logerror("Invalid memory selection\n");
-#endif
-						memory_set_bankhandler_r(bank+1, 0, MRA_NOP);
-						memory_set_bankhandler_w(bank+5, 0, MWA_NOP);
-                }
-                break;
-
-
         }
 
 
@@ -1113,10 +1100,10 @@ PORT_READ_START( readport_nc100 )
 	{0x000, 0x00f, nc_unmapped_io_r},
     {0x010, 0x013, nc_memory_management_r},
 	{0x014, 0x08f, nc_unmapped_io_r},
-    {0x090, 0x090, nc_irq_status_r},
-	{0x091, 0x09f, nc_unmapped_io_r},
-	{0x0a0, 0x0a0, nc100_card_battery_status_r},
-	{0x0a1, 0x0af, nc_unmapped_io_r},   
+    /* repeated 16 times */
+	{0x090, 0x09f, nc_irq_status_r},
+	/* repeated 16 times */
+	{0x0a0, 0x0af, nc100_card_battery_status_r},
 	{0x0b0, 0x0b9, nc_key_data_in_r},
 	{0x0ba, 0x0bf, nc_unmapped_io_r},
 	{0x0c0, 0x0c0, msm8251_data_r},
