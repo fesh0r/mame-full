@@ -49,6 +49,8 @@ static void SoftwareList_Run(struct SmartListView *pListView)
 	int nItem;
 	int nError;
 	size_t nFailedAlloc;
+	LPTSTR lpError;
+	LPTSTR lpMessError = NULL;
 	TCHAR szBuffer[32];
 
 	nItem = SingleItemSmartListView_GetSelectedItem(s_pGameListView);
@@ -56,16 +58,33 @@ static void SoftwareList_Run(struct SmartListView *pListView)
 
 	nError = play_game(nGame, &tUI);
 	if (nError) {
+		/* an error occured; find out where */
 		nFailedAlloc = outofmemory_occured();
 		if (nFailedAlloc)
+		{
+			/* out of memory */
 			wsprintf(szBuffer, TEXT("Out of memory (allocation for %i bytes failed)"), nFailedAlloc);
+			lpError = szBuffer;
+		}
+		else if ((lpMessError = get_mess_output()) != NULL)
+		{
+			/* error reported with mess_printf() */
+			lpError = lpMessError;
+		}
 		else
-			tcscpy(szBuffer, TEXT("Failed to run"));
-		MessageBox(pListView->hwndListView, szBuffer, NULL, MB_OK);
+		{
+			/* unknown error */
+			lpError = TEXT("Failed to run");
+		}
+		MessageBox(pListView->hwndListView, lpError, NULL, MB_OK);
 	}
 
 	SmartListView_SetVisible(s_pGameListView, TRUE);
 	SmartListView_SetVisible(pListView, FALSE);
+
+	/* if this is returned to us, we have to free it */
+	if (lpMessError)
+		free(lpMessError);
 }
 
 static LPCTSTR s_lpSoftwareColumnNames[] = 

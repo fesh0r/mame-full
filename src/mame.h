@@ -114,6 +114,7 @@ struct GameOptions {
 	#ifdef MESS
 	struct ImageFile image_files[MAX_IMAGES];
 	int image_count;
+	int (DECL_SPEC *mess_printf_output)(char *fmt, va_list arg);
 	#endif
 };
 

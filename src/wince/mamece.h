@@ -15,6 +15,7 @@ extern "C" {
 #define tcsrchr		_tcsrchr
 #define snprintf	_snprintf
 #define tcscpy		_tcscpy
+#define tcslen		_tcslen
 
 char *strdup(const char *s);
 
@@ -44,6 +45,12 @@ char *__wide2ascii(char *dest, const WCHAR *widestr);
 #define T2A(widestr)	W2A(widestr)
 #else
 #error Non-Unicode not supported
+#endif
+
+// --------------------------------------------------------------------------
+
+#ifdef MESS
+LPTSTR get_mess_output(void);
 #endif
 
 // --------------------------------------------------------------------------

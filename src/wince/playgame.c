@@ -5,6 +5,47 @@
 #include "rc.h"
 #include "..\windows\window.h"
 
+/* ------------------------------------------------------------------------*/
+#ifdef MESS
+LPTSTR messages = NULL;
+
+static int DECL_SPEC wince_mess_vprintf(char *fmt, va_list arg)
+{
+	int length;
+	int old_length;
+	LPTSTR new_messages;
+	LPCTSTR tbuffer;
+	char buffer[256];
+
+	/* get into a buffer */
+	length = vsnprintf(buffer, sizeof(buffer) / sizeof(buffer[0]), fmt, arg);
+	tbuffer = A2T(buffer);
+
+	/* output to debugger */
+	OutputDebugString(tbuffer);
+
+	/* append the buffer to the rest of the messages */
+	old_length = messages ? tcslen(messages) : 0;
+	new_messages = realloc(messages, (old_length + tcslen(tbuffer) + 1) * sizeof(TCHAR));
+	if (new_messages)
+	{
+		messages = new_messages;
+		tcscpy(messages + old_length, tbuffer);
+	}
+	return length;
+}
+
+LPTSTR get_mess_output(void)
+{
+	LPTSTR m;
+	m = messages;
+	messages = NULL;
+	return m;
+}
+
+#endif /* MESS */
+/* ------------------------------------------------------------------------*/
+
 char *rompath_extra = NULL;
 
 #define localconcat(s1, s2)	((s1) ? ((s2) ? __localconcat(_alloca(strlen(s1) + strlen(s2) + 1), (s1), (s2)) : (s1)) : (s2))
@@ -92,6 +133,12 @@ int play_game(int game_index, struct ui_options *opts)
 	options.mame_debug = 0;
 	options.playback = NULL;
 	options.record = NULL;
+	options.gui_host = 1;
+
+#ifdef MESS
+	options.mess_printf_output = wince_mess_vprintf;
+#endif
+
 	gamma_correct = 1;
 	attenuation = 0;
 	use_dirty = opts->enable_dirtyline;
