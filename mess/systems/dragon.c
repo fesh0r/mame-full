@@ -907,6 +907,7 @@ static const struct IODevice io_coco3[] = {
 	IO_CASSETTE_WAVE(1, "cas\0wav\0", NULL, coco_cassette_init, coco_cassette_exit),
 	IO_FLOPPY_COCO,
 	IO_BITBANGER_PORT,
+	IO_VHD_PORT,
     { IO_END }
 };
 

@@ -94,6 +94,10 @@ extern int coco3_mmu_translate(int bank, int offset);
 extern int dragon_floppy_init(int id);
 extern int dragon_floppy_id(int id);
 extern void dragon_floppy_exit(int id);
+extern int coco_vhd_init(int id);
+extern void coco_vhd_exit(int id);
+extern READ_HANDLER(coco_vhd_io_r);
+extern WRITE_HANDLER(coco_vhd_io_w);
 extern int coco_bitbanger_init (int id);
 extern void coco_bitbanger_exit (int id);
 extern void coco_bitbanger_output (int id, int data);
@@ -192,5 +196,30 @@ extern int coco3_mmu_translatelogicaladdr(int logicaladdr);
 	NULL,						/* input chunk */		\
 	NULL						/* output chunk */		\
 }
+
+#define IO_VHD IO_HARDDISK
+
+#define IO_VHD_PORT								\
+{														\
+	IO_VHD,						/* type */				\
+	1,							/* count */				\
+	"vhd\0",					/* file extensions */	\
+	IO_RESET_NONE,				/* reset depth */		\
+	NULL,						/* id */				\
+	coco_vhd_init,				/* init */				\
+	coco_vhd_exit,				/* exit */				\
+	NULL,						/* info */				\
+	NULL,						/* open */				\
+	NULL,						/* close */				\
+	NULL,						/* status */			\
+	NULL,						/* seek */				\
+	NULL,						/* tell */				\
+	NULL,						/* input */				\
+	NULL,						/* output */			\
+	NULL,						/* input chunk */		\
+	NULL						/* output chunk */		\
+}
+
+
 
 #endif /* DRAGON_H */
