@@ -1203,21 +1203,6 @@ void	oric_floppy_exit(int id)
 	oric_floppy_type[id] = ORIC_FLOPPY_NONE;
 }
 
-#ifdef VERIFY_IMAGE
-int		oric_floppy_id(int id)
-{
-	int result;
-
-	/* check if it's a mfm disk first */
-	result = mfm_disk_floppy_id(id);
-
-	if (result==1)
-		return 1;
-
-	return 1;
-}
-#endif
-
 void oric_common_init_machine(void)
 {
     /* clear all irqs */
