@@ -524,11 +524,14 @@ void list_mess_info(char *gamename, char *arg, int listclones)
 						const char **samplenames = 0;
 						for (j = 0;drivers[i]->drv->sound[j].sound_type && j < MAX_SOUND; j++)
 						{
+
+						#if (HAS_SAMPLES)
 							if (drivers[i]->drv->sound[j].sound_type == SOUND_SAMPLES)
 							{
 								samplenames = ((struct Samplesinterface *)drivers[i]->drv->sound[j].sound_interface)->samplenames;
 								break;
 							}
+						#endif
 						}
 						if (drivers[i]->flags & GAME_NO_SOUND)
 							printf("|   No  ");
