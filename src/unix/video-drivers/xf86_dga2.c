@@ -362,10 +362,12 @@ int xf86_dga2_create_display(int bitmap_depth)
 	xf86ctx.base_addr = xf86ctx.device->data;
 	xf86ctx.vidmode_changed = TRUE;
 
-	if (bitmap_depth == 32)
-		depth = xf86ctx.device->mode.bitsPerPixel;
-	else
-		depth = xf86ctx.device->mode.depth;
+	depth = xf86ctx.device->mode.bitsPerPixel;
+
+	fprintf(stderr_file, "Debug: bitmap_depth =%d   mode.bitsPerPixel = %d"
+			"   mode.depth = %d\n", bitmap_depth, 
+			xf86ctx.device->mode.bitsPerPixel, 
+			xf86ctx.device->mode.depth);
 
 	fprintf(stderr_file,"VidMode Switching To Mode: %d x %d\n",
 		xf86ctx.device->mode.viewportWidth,
