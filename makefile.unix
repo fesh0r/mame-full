@@ -63,8 +63,10 @@ CC	= gcc
 # Note3:
 # OpenStep needs -traditional-cpp
 #
-### for normal optimalisation, full warnings
-CFLAGS    = -O -Wall
+### for normal optimization, full warnings
+# CFLAGS    = -O -Wall
+### for common optimizations, full warnings except unused vars
+CFLAGS    = -O2 -Wall -Wno-unused
 ### this should work with all compilers 
 # CFLAGS    =
 ### to get full optimization under gcc/x Intel based OS's..
@@ -99,7 +101,7 @@ IL	= '-DINLINE=static __inline__'
 # *** Choose your linker & linker flags (some OSes need native linker
 # instead GNU one)
 # normal
-LD	= $(CC) -s
+LD	= $(CC) -Wl,-s
 # to profile with gcc and gprof
 # LD	= $(CC) -pg
 # no profiling (less strace output), but with debug info
@@ -117,8 +119,19 @@ SEPARATE_LIBM = 1
 RANLIB = ranlib
 # RANLIB = true
 
-# *** How to install executable? ( some OS's doesn't support install command )
-INSTALL = cp
+# *** How to install executable, man pages, and data?
+# OSes that don't have install command should use provided install.sh script
+# INSTALL =            install-sh
+# INSTALL =            /bin/install
+INSTALL =              /usr/bin/install
+INSTALL_PROGRAM_DIR =  $(INSTALL) -d    -o root -g bin -m  755
+INSTALL_MAN_DIR =      $(INSTALL) -d    -o root -g 0   -m  755
+INSTALL_DATA_DIR =     $(INSTALL) -d    -o root -g bin -m  755
+INSTALL_PROGRAM =      $(INSTALL) -c -s -o root -g bin -m  555
+INSTALL_PROGRAM_SUID = $(INSTALL) -c -s -o root -g bin -m 4555
+INSTALL_MAN =          $(INSTALL) -c    -o root -g bin -m  444
+INSTALL_DATA =         $(INSTALL) -c    -o root -g bin -m  644
+
 
 # *** Extra include and or library paths, sometimes needed for zlib,
 # with suse linux -L/usr/X11R6/lib is needed for example,
@@ -143,16 +156,19 @@ HAVE_GETTIMEOFDAY = 1
 # *** Configuration files and directories
 ##############################################################################
 
-# *** Select destination directory for your compiled program , manual page
+# *** Select destination directory for your compiled program, manual page
 # and binary distribution ( if you want to... )
 # ( only needed to install, not to compile... )
-DESTDIR = /usr/games
-MANDIR  = /usr/local/man/man6
+ifndef PREFIX
+PREFIX = /usr/local
+endif
+BINDIR = $(PREFIX)/bin
+MANDIR = $(PREFIX)/man/man6
 
 # *** xmameroot, this is the default rompath, place where the highscores are
 # stored, global rc location etc. Since most of these are configurable through
 # the rc-file anyway, there are no longer seperate defines for each.
-XMAMEROOT = /usr/games/lib/x$(TARGET)
+XMAMEROOT = $(PREFIX)/lib/x$(TARGET)
 
 
 ##############################################################################
@@ -313,9 +329,10 @@ GLLIBS= -lGL -lGLU
 # supported for some 386 machines with nasm-0.96 or higher available in your
 # path! the asm 68k core could cause problem with certain games, please test
 # with the c-core before reporting any problems.
-# uncomment next line to use Assembler 68k engine
-# This is currently not working ! (Hint: leave commented)
-# X86_ASM_68K = 1
+# uncomment next line to use Assembler 68000 engine
+# X86_ASM_68000 = 1
+# uncomment next line to use Assembler 68020 engine
+# X86_ASM_68020 = 1
 #
 # And choose elf / or aout
 # ELF settings: no leading underscores + elf object format Tested with
