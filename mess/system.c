@@ -61,7 +61,11 @@ const struct GameDriver *drivers[] =
 #undef DRIVER
 #undef TESTDRIVER
 #define DRIVER(NAME) &driver_##NAME,
+#ifdef DEVELOPING
+#define TESTDRIVER(NAME) &driver_##NAME,
+#else
 #define TESTDRIVER(NAME)
+#endif
 const struct GameDriver *drivers[] =
 {
 #include "system.c"
@@ -84,17 +88,17 @@ const struct GameDriver *drivers[] =
 
 	/* COLECO */
 	DRIVER( coleco )	/* ColecoVision (Original BIOS )				  */
-						/* Please dont include these next 2 in a distribution, they are Hacks	*/
-TESTDRIVER( colecofb )	/* ColecoVision (Fast BIOS load)				  */
-TESTDRIVER( coleconb )	/* ColecoVision (No BIOS load)					  */
-
+#if 0						/* Please dont include these next 2 in a distribution, they are Hacks	*/
+	DRIVER( colecofb )	/* ColecoVision (Fast BIOS load)				  */
+	DRIVER( coleconb )	/* ColecoVision (No BIOS load)					  */
+#endif
 	/* NINTENDO */
 	DRIVER( nes )		/* Nintendo Entertainment System				  */
 	DRIVER( nespal )	/* Nintendo Entertainment System				  */
 	DRIVER( famicom )
 	DRIVER( gameboy )	/* Nintendo GameBoy Handheld					  */
     DRIVER (snes)		/* Nintendo Super Nintendo                        */
-TESTDRIVER (vboy)		/* Nintendo Virtual Boy                           */
+/*	DRIVER (vboy)	*/	/* Nintendo Virtual Boy                           */
 
 	/* NEC */
 	DRIVER( pce )		/* PC/Engine - Turbo Graphics-16  NEC 1989-1993   */
@@ -146,10 +150,10 @@ TESTDRIVER (vboy)		/* Nintendo Virtual Boy                           */
 	DRIVER( apple2e )	/* 1983 Apple //e								  */
 	DRIVER( apple2ee )	/* 1985 Apple //e Enhanced						  */
 	DRIVER( apple2ep )	/* 1987 Apple //e Platinum						  */
-TESTDRIVER( mac512k )	/* 1984 Apple Macintosh 512k					  */
+/*	DRIVER( mac512k )*/	/* 1984 Apple Macintosh 512k					  */
     DRIVER( mac512ke )  /* 1986 Apple Macintosh 512ke                     */
 	DRIVER( macplus )	/* 1986 Apple Macintosh Plus					  */
-TESTDRIVER( mac2 )		/* 1987 Apple Macintosh II						  */
+/*	DRIVER( mac2 )*/	/* 1987 Apple Macintosh II						  */
 	DRIVER( lisa2 )
 
 	/* ATARI */
@@ -161,39 +165,7 @@ TESTDRIVER( mac2 )		/* 1987 Apple Macintosh II						  */
 
 #ifndef MESS_EXCLUDE_CBM
 	/* COMMODORE */
-	DRIVER( kim1 )		/* 1975 Commodore (MOS) KIM-1					  */
-	DRIVER( c16 )		/* Commodore 16 								  */
-	DRIVER( c16c )		/* Commodore 16  c1551							  */
-TESTDRIVER( c16v )		/* Commodore 16  vc1541 						  */
-	DRIVER( plus4 ) 	/* Commodore +4  c1551							  */
-	DRIVER( plus4c )	/* Commodore +4  vc1541 						  */
-TESTDRIVER( plus4v )	/* Commodore +4 								  */
-	DRIVER( c364 )		/* Commodore 364 - Prototype					  */
-
-	DRIVER( c64 )		/* Commodore 64 - NTSC							  */
-	DRIVER( c64pal )	/* Commodore 64 - PAL							  */
-	DRIVER( c64gs ) 	/* Commodore 64 - NTSC							  */
-	DRIVER( cbm4064 )	/* Commodore CBM4064							  */
-TESTDRIVER( sx64 )		/* Commodore SX 64 - PAL						  */
-	DRIVER( max )		/* Ultimax										  */
-	DRIVER( vic64s )	/*												  */
-
-	DRIVER( c65 )		/* C65 / C64DX (Prototype, NTSC, 911001)		  */
-	DRIVER( c65e )		/* C65 / C64DX (Prototype, NTSC, 910828)		  */
-	DRIVER( c65d )		/* C65 / C64DX (Prototype, NTSC, 910626)		  */
-	DRIVER( c65c )		/* C65 / C64DX (Prototype, NTSC, 910523)		  */
-	DRIVER( c65ger )	/* C65 / C64DX (Prototype, German PAL, 910429)	  */
-	DRIVER( c65a )		/* C65 / C64DX (Prototype, NTSC, 910111)		  */
-
-	DRIVER( c128 )		/* Commodore 128 - NTSC 						  */
-	DRIVER( c128ger )	/* Commodore 128 - PAL (german) 				  */
-	DRIVER( c128fra )	/* Commodore 128 - PAL (french) 				  */
-	DRIVER( c128ita )	/* Commodore 128 - PAL (italian)				  */
-
-	DRIVER( vic20 ) 	/* Commodore Vic-20 NTSC						  */
-	DRIVER( vic20swe )	/* Commodore Vic-20 Sweden						  */
-	DRIVER( vc20 )		/* Commodore Vic-20 PAL 						  */
-	DRIVER( vic20i )	/* Commodore Vic-20 IEEE488 Interface			  */
+	DRIVER( kim1 )		/* Commodore (MOS) KIM-1 1975					  */
 
 	DRIVER( pet )		/* PET2001/CBM20xx Series (Basic 1) 			  */
 	DRIVER( cbm30 ) 	/* Commodore 30xx (Basic 2) 					  */
@@ -207,22 +179,56 @@ TESTDRIVER( sx64 )		/* Commodore SX 64 - PAL						  */
 	DRIVER( cbm80swe )	/* Commodore 80xx Swedish (50Hz)				  */
 	DRIVER( superpet )	/* Commodore SP9000/MMF9000 (50Hz)				  */
 
-	DRIVER( cbm500 )	/* 1983 Commodore B128-40/Pet-II/P500 60Hz		  */
-	DRIVER( cbm610 )	/* 1983 Commodore B128-80LP/610 60Hz			  */
-	DRIVER( cbm620 )	/* 1983 Commodore B256-80LP/620 Hungarian 50Hz	  */
-	DRIVER( cbm710 )	/* 1983 Commodore B128-80HP/710 				  */
-	DRIVER( cbm720 )	/* 1983 Commodore B256-80HP/720 				  */
+	DRIVER( vic20 ) 	/* Commodore Vic-20 NTSC						  */
+	DRIVER( vc20 )		/* Commodore Vic-20 PAL 						  */
+	DRIVER( vic20swe )	/* Commodore Vic-20 Sweden						  */
+	DRIVER( vic20i )	/* Commodore Vic-20 IEEE488 Interface			  */
+
+	DRIVER( max )		/* Max (Japan)/Ultimax (US)/VC10 (German)		  */
+	DRIVER( c64 )		/* Commodore 64 - NTSC							  */
+	DRIVER( c64pal )	/* Commodore 64 - PAL							  */
+	DRIVER( vic64s )	/* Commodore VIC64S (Swedish)					  */
+	DRIVER( cbm4064 )	/* Commodore CBM4064							  */
+TESTDRIVER( sx64 )		/* Commodore SX 64 - PAL						  */
+	DRIVER( c64gs ) 	/* Commodore 64 - NTSC							  */
+
+	DRIVER( cbm500 )	/* Commodore 500/P128-40						  */
+	DRIVER( cbm610 )    /* Commodore 610/B128LP                           */
+	DRIVER( cbm620 )    /* Commodore 620/B256LP                           */
+	DRIVER( cbm710 )    /* Commodore 710/B128HP                           */
+	DRIVER( cbm720 )    /* Commodore 620/B256HP                           */
+
+	DRIVER( c16 )		/* Commodore 16 								  */
+	DRIVER( c16hun )	/* Commodore 16 Hungarian Character Set Hack	  */
+	DRIVER( c16c )		/* Commodore 16  c1551							  */
+TESTDRIVER( c16v )		/* Commodore 16  vc1541 						  */
+	DRIVER( plus4 ) 	/* Commodore +4  c1551							  */
+	DRIVER( plus4c )	/* Commodore +4  vc1541 						  */
+TESTDRIVER( plus4v )	/* Commodore +4 								  */
+	DRIVER( c364 )		/* Commodore 364 - Prototype					  */
+
+	DRIVER( c128 )		/* Commodore 128 - NTSC 						  */
+	DRIVER( c128ger )	/* Commodore 128 - PAL (german) 				  */
+	DRIVER( c128fra )	/* Commodore 128 - PAL (french) 				  */
+	DRIVER( c128ita )	/* Commodore 128 - PAL (italian)				  */
 
 	DRIVER( amiga ) 	/* Commodore Amiga								  */
+
+	DRIVER( c65 )		/* C65 / C64DX (Prototype, NTSC, 911001)		  */
+	DRIVER( c65e )		/* C65 / C64DX (Prototype, NTSC, 910828)		  */
+	DRIVER( c65d )		/* C65 / C64DX (Prototype, NTSC, 910626)		  */
+	DRIVER( c65c )		/* C65 / C64DX (Prototype, NTSC, 910523)		  */
+	DRIVER( c65ger )	/* C65 / C64DX (Prototype, German PAL, 910429)	  */
+	DRIVER( c65a )		/* C65 / C64DX (Prototype, NTSC, 910111)		  */
+
 #endif
 
 #ifndef MESS_EXCLUDE_AMSTRAD
-	/* AMSTRAD */
 	DRIVER( cpc464 )	/* Amstrad (Schneider in Germany) 1984			  */
 	DRIVER( cpc664 )	/* Amstrad (Schneider in Germany) 1985			  */
 	DRIVER( cpc6128 )	/* Amstrad (Schneider in Germany) 1985			  */
-TESTDRIVER( cpc464p )	/* Amstrad CPC464  Plus - 1987					  */
-TESTDRIVER( cpc6128p )	/* Amstrad CPC6128 Plus - 1987					  */
+/*	DRIVER( cpc464p )*/	/* Amstrad CPC464  Plus - 1987					  */
+/*	DRIVER( cpc6128p )*//* Amstrad CPC6128 Plus - 1987					  */
 	DRIVER( pcw8256 )	/* 198? PCW8256 								  */
 	DRIVER( pcw8512 )	/* 198? PCW8512 								  */
 	DRIVER( pcw9256 )	/* 198? PCW9256 								  */
@@ -230,9 +236,12 @@ TESTDRIVER( cpc6128p )	/* Amstrad CPC6128 Plus - 1987					  */
 	DRIVER( pcw10 ) 	/* 198? PCW10									  */
 	DRIVER( pcw16 ) 	/* 1995 PCW16									  */
 	DRIVER( nc100 ) 	/* 19?? NC100									  */
-
+#endif
+#ifndef MESS_EXCLUDE_ACORN
 	DRIVER( z88 )
 	DRIVER( avigo )
+#endif
+#ifndef MESS_EXCLUDE_AMSTRAD
 	/* VEB MIKROELEKTRONIK */
 	DRIVER( kccomp )	/* KC compact									  */
 	DRIVER( kc85_4 )	/* KC 85/4										  */
@@ -260,7 +269,7 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
 	DRIVER( coco )		/* Color Computer								  */
 	DRIVER( coco3 ) 	/* Color Computer 3 							  */
 	DRIVER( cp400 ) 	/* Prologica CP400								  */
-	DRIVER( mc10 )		/* MC-10														  */
+	DRIVER( mc10 )		/* MC-10									      */
 
 	/* DRAGON DATA LTD */
 	DRIVER( dragon32 )	/* Dragon32 									  */
@@ -288,8 +297,8 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
 	DRIVER( orica ) 	/* Oric Atmos									  */
 
 	/* TEXAS INSTRUMENTS */
-TESTDRIVER( ti99_2_24 ) /* Texas Instruments TI 99/2					  */
-TESTDRIVER( ti99_2_32 ) /* Texas Instruments TI 99/2					  */
+/*DRIVER( ti99_2_24 )*/ /* Texas Instruments TI 99/2					  */
+/*DRIVER( ti99_2_32 )*/ /* Texas Instruments TI 99/2					  */
 	DRIVER( ti99_4 )	/* Texas Instruments TI 99/4					  */
 	DRIVER( ti99_4e )	/* Texas Instruments TI 99/4E					  */
 	DRIVER( ti99_4a )	/* Texas Instruments TI 99/4A					  */
@@ -297,16 +306,16 @@ TESTDRIVER( ti99_2_32 ) /* Texas Instruments TI 99/2					  */
 
 #ifndef MESS_EXCLUDE_IBMPC
 	/* IBM & Clones */
-	DRIVER( pc )		/* IBM PC  - parent Driver, so no need			  */
-	DRIVER( pcmda ) 	/* IBM PC/XT with MDA (MGA aka Hercules)		  */
-	DRIVER( pccga ) 	/* IBM PC/XT with CGA							  */
+	DRIVER( pc )		/* PC											  */
+	DRIVER( pcmda ) 	/* PC/XT with MDA (MGA aka Hercules)		      */
+	DRIVER( pccga ) 	/* PC/XT with CGA							      */
 
-	DRIVER( t1000hx )	/* Tandy 1000TX (similiar to PCJr)				  */
+	DRIVER( t1000hx )	/* Tandy 1000HX (similiar to PCJr)				  */
 
-	DRIVER( pc1512 )
-	DRIVER( pc1640 )
+	DRIVER( pc1512 )	/* Amstrad PC1512 (XT, CGA compatible)			  */
+	DRIVER( pc1640 )    /* Amstrad PC1640 (XT, EGA compatible)			  */
 
-	DRIVER( xtcga ) 	/*												  */
+TESTDRIVER( xtcga ) 	/* 												  */
 	DRIVER( xtvga ) 	/*												  */
 	DRIVER( atcga ) 	/*												  */
 TESTDRIVER( atvga ) 	/*												  */
@@ -365,16 +374,19 @@ TESTDRIVER( atvga ) 	/*												  */
 	DRIVER( nascom2 )	/* Nascom 2 									  */
 
 	/* ACORN */
+#ifndef MESS_EXCLUDE_ACORN
 	DRIVER( atom )		/* Acorn Atom									  */
 	DRIVER( bbca )		/* BBC Micro									  */
 	DRIVER( bbcb )		/* BBC Micro									  */
 TESTDRIVER( a310 )		/* Acorn Archimedes 310 						  */
+#endif
 
 	/* MILES GORDON TECHNOLOGY */
 	DRIVER( coupe ) 	/*												  */
 
 #ifndef MESS_EXCLUDE_SHARP
 	/* SHARP */
+	DRIVER( pc1251 )	/* Pocket Computer 1251 						  */
 	DRIVER( pc1401 )	/* Pocket Computer 1401 						  */
 	DRIVER( pc1402 )	/* Pocket Computer 1402 						  */
 	DRIVER( pc1350 )	/* Pocket Computer 1350 						  */
@@ -384,7 +396,7 @@ TESTDRIVER( a310 )		/* Acorn Archimedes 310 						  */
 #endif
 
 	/* MOTOROLA */
-TESTDRIVER( mekd2 ) 	/* Motorola Evaluation Kit						  */
+/*	DRIVER( mekd2 )*/ 	/* Motorola Evaluation Kit						  */
 
 	/* DEC */
 	DRIVER( pdp1 )		/* DEC PDP1 for SPACEWAR! - 1962				  */
