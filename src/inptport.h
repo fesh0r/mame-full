@@ -127,6 +127,7 @@ enum { IPT_UNUSED=0, IPT_END=1,IPT_PORT,
 #ifdef MESS
 	IPT_KEYBOARD,
 	IPT_CONFIG_NAME, IPT_CONFIG_SETTING,
+	IPT_CATEGORY_NAME, IPT_CATEGORY_SETTING,
 	IPT_START, IPT_SELECT,
 #endif
 /* Many games poll an input bit to check for vertical blanks instead of using */
