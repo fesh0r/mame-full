@@ -423,7 +423,7 @@ READ_HANDLER(avigo_key_data_read_r)
 	UINT8 data;
 
 	data = 0x0ff;
-
+        data &= ~(1<<5);
 
 	if (avigo_key_line & 0x01)
 	{
@@ -706,5 +706,5 @@ static const struct IODevice io_avigo[] =
 
 
 /*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT COMPANY   FULLNAME */
-COMP( 19??, avigo,   0,                avigo,  avigo,      0,       "TI", "avigo")
+COMP( 1997, avigo,   0,                avigo,  avigo,      0,       "TI", "avigo")
 
