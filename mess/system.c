@@ -37,9 +37,9 @@ struct GameDriver driver_0 =
 #endif
 
 #ifdef TINY_COMPILE
-extern struct GameDriver TINY_NAME;
+extern const struct GameDriver TINY_NAME;
 
-const struct GameDriver *drivers[] =
+const struct GameDriver * drivers[] =
 {
   &TINY_NAME,
   0             /* end of array */
@@ -52,8 +52,8 @@ const struct GameDriver *drivers[] =
 #define DRIVER_RECURSIVE
 
 /* step 1: declare all external references */
-#define DRIVER(NAME) extern struct GameDriver driver_##NAME;
-#define TESTDRIVER(NAME) extern struct GameDriver driver_##NAME;
+#define DRIVER(NAME) extern const struct GameDriver driver_##NAME;
+#define TESTDRIVER(NAME) extern const struct GameDriver driver_##NAME;
 #include "system.c"
 
 /* step 2: define the drivers[] array */

@@ -280,6 +280,7 @@ extern int mess_keep_going;
  ******************************************************************************/
 #define CONS(YEAR,NAME,PARENT,MACHINE,INPUT,INIT,COMPANY,FULLNAME)	\
 extern const struct GameDriver driver_##PARENT; \
+extern const struct GameDriver driver_##NAME;   \
 const struct GameDriver driver_##NAME = 	\
 {											\
 	__FILE__,								\
@@ -298,6 +299,7 @@ const struct GameDriver driver_##NAME = 	\
 
 #define CONSX(YEAR,NAME,PARENT,MACHINE,INPUT,INIT,COMPANY,FULLNAME,FLAGS)	\
 extern const struct GameDriver driver_##PARENT;   \
+extern const struct GameDriver driver_##NAME;   \
 const struct GameDriver driver_##NAME = 	\
 {											\
 	__FILE__,								\
@@ -316,6 +318,7 @@ const struct GameDriver driver_##NAME = 	\
 
 #define COMP(YEAR,NAME,PARENT,MACHINE,INPUT,INIT,COMPANY,FULLNAME)	\
 extern const struct GameDriver driver_##PARENT;   \
+extern const struct GameDriver driver_##NAME;   \
 const struct GameDriver driver_##NAME = 	\
 {											\
 	__FILE__,								\
@@ -334,6 +337,7 @@ const struct GameDriver driver_##NAME = 	\
 
 #define COMPX(YEAR,NAME,PARENT,MACHINE,INPUT,INIT,COMPANY,FULLNAME,FLAGS)	\
 extern const struct GameDriver driver_##PARENT;   \
+extern const struct GameDriver driver_##NAME;   \
 const struct GameDriver driver_##NAME = 	\
 {											\
 	__FILE__,								\
@@ -350,7 +354,8 @@ const struct GameDriver driver_##NAME = 	\
 	ROT0|GAME_COMPUTER|(FLAGS)	 			\
 };
 
-extern const struct GameDriver *drivers[];
+//duplicate declaration!
+//extern const struct GameDriver *drivers[];
 
 #ifdef __cplusplus
 }
