@@ -465,6 +465,10 @@ static int read_sector(int unit, unsigned int lba, void *buffer, unsigned int by
 		mame_fseek(hdc.d[unit].fd, byte_position, SEEK_SET);
 		bytes_read = mame_fread(hdc.d[unit].fd, buffer, bytes_to_read);
 		break;
+
+	default:
+		bytes_read = 0;
+		break;
 	}
 
 	return bytes_read;
@@ -490,6 +494,10 @@ static int write_sector(int unit, unsigned int lba, const void *buffer, unsigned
 		byte_position = lba*hdc.d[unit].bytes_per_sector + header_len;
 		mame_fseek(hdc.d[unit].fd, byte_position, SEEK_SET);
 		bytes_written = mame_fwrite(hdc.d[unit].fd, buffer, bytes_to_write);
+		break;
+
+	default:
+		bytes_written = 0;
 		break;
 	}
 
