@@ -69,6 +69,7 @@ typedef struct {
 	UINT8 *loadedtrack_data;
 	unsigned int loadedtrack_len;
 	unsigned int loadedtrack_pos;
+	unsigned int loadedtrack_bitpos;
 } floppy;
 
 static const UINT8 iwm_tracklen_800kb[80] = {
@@ -313,8 +314,16 @@ static void iwm_denibblize35(UINT8 *out, const UINT8 *nib_ptr/*, UINT8 *csum*/)
 */
 static void iwm_filltrack(floppy *f, UINT8 data)
 {
-	f->loadedtrack_data[f->loadedtrack_pos++] = data;
+	/*f->loadedtrack_data[f->loadedtrack_pos++] = data;
+	f->loadedtrack_pos %= f->loadedtrack_len;*/
+
+	f->loadedtrack_data[f->loadedtrack_pos] &= 0xFF << (8 - f->loadedtrack_bitpos);
+	f->loadedtrack_data[f->loadedtrack_pos] |= data >> f->loadedtrack_bitpos;
+	f->loadedtrack_pos++;
 	f->loadedtrack_pos %= f->loadedtrack_len;
+
+	f->loadedtrack_data[f->loadedtrack_pos] &= 0xFF >> f->loadedtrack_bitpos;
+	f->loadedtrack_data[f->loadedtrack_pos] |= data << (8 - f->loadedtrack_bitpos);
 }
 
 /*
@@ -322,8 +331,26 @@ static void iwm_filltrack(floppy *f, UINT8 data)
 */
 static UINT8 iwm_fetchtrack(floppy *f)
 {
-	UINT8 data = f->loadedtrack_data[f->loadedtrack_pos++];
+	UINT8 data;
+	data = f->loadedtrack_data[f->loadedtrack_pos++] << f->loadedtrack_bitpos;
 	f->loadedtrack_pos %= f->loadedtrack_len;
+
+	data |= f->loadedtrack_data[f->loadedtrack_pos] >> (8 - f->loadedtrack_bitpos);
+
+	while (! (data & 0x80))
+	{
+		/* let's shift one additionnal bit in from disk */
+		f->loadedtrack_bitpos++;
+		data <<= 1;
+		data |= f->loadedtrack_data[f->loadedtrack_pos] >> (8 - f->loadedtrack_bitpos) /*& 0x01*/;
+		if (f->loadedtrack_bitpos == 8)
+		{
+			f->loadedtrack_bitpos = 0;
+			f->loadedtrack_pos++;
+			f->loadedtrack_pos %= f->loadedtrack_len;
+		}
+	}
+
 	return data;
 }
 
@@ -355,27 +382,36 @@ static int iwm_get_track(void)
 	 *	bytes.  Here is the layout of the physical sector:
 	 *
 	 *	Pos
-	 *	0-65	0xFF
-	 *	66		0xD5
-	 *	67		0xAA
-	 *	68		0x96
-	 *	69		diskbytes[(track number) & 0x3F]
-	 *	70		diskbytes[(sector number)]
-	 *	71		diskbytes[("side")]
-	 *	72		diskbytes[0x22]
-	 *	73		diskbytes[("sum")]
-	 *	74		0xDE
-	 *	75		0xAA
-	 *	76-81	0xFF
-	 *	82		0xD5
-	 *	83		0xAA
-	 *	84		0xAD
-	 *	85		diskbytes[(sector number)]
-	 *	86-784	"nibblized" sector data	...
-	 *	785-788	checksum
-	 *	789		0xDE
-	 *	790		0xAA
-	 *	791		0xFF
+	 *	0		0xFF (pad byte where head is turned on ???)
+	 *  1-35	self synch 0xFFs (7*5) (42 bytes actually written to media)
+	 *	36		0xD5
+	 *	37		0xAA
+	 *	38		0x96
+	 *	39		diskbytes[(track number) & 0x3F]
+	 *	40		diskbytes[(sector number)]
+	 *	41		diskbytes[("side")]
+	 *	42		diskbytes[0x22]
+	 *	43		diskbytes[("sum")]
+	 *	44		0xDE
+	 *	45		0xAA
+	 *	46		pad byte where head is turned off/on (0xFF here)
+	 *  47-51	self synch 0xFFs (6 bytes actually written to media)
+	 *	52		0xD5
+	 *	53		0xAA
+	 *	54		0xAD
+	 *	55		diskbytes[(sector number)]
+	 *	56-754	"nibblized" sector data	...
+	 *	755-758	checksum
+	 *	759		0xDE
+	 *	760		0xAA
+	 *	761		pad byte where head is turned off (0xFF here)
+	 *
+	 * Nota : "Self synch refers to a technique whereby two zeroes are inserted between each synch
+	 *  byte written to the disk.", i.e. "0xFF, 0xFF, 0xFF, 0xFF, 0xFF" is actually "0xFF, 0x3F,
+	 *  0xCF, 0xF3, 0xFC, 0xFF" on disk.  Since the IWM assumes the data transfer is complete when
+	 *  the MSBit of its shift register is 1, we do read 4 0xFF, even though they are not
+	 *  contiguous on the disk media.  Some reflexion shows that 4 synch bytes allow the IWM to
+	 *  synchronize with the trailing data.
 	 *
 	 */
 
@@ -393,16 +429,28 @@ static int iwm_get_track(void)
 
 	static const UINT8 blk1[] =
 	{
-		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-		0xFF, 0xD5, 0xAA, 0x96
+		/*0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+		0xFF, 0xFF, 0xD5, 0xAA, 0x96*/
+		0xFF,
+		0xFF, 0x3F, 0xCF, 0xF3, 0xFC, 0xFF,
+		0xFF, 0x3F, 0xCF, 0xF3, 0xFC, 0xFF,
+		0xFF, 0x3F, 0xCF, 0xF3, 0xFC, 0xFF,
+		0xFF, 0x3F, 0xCF, 0xF3, 0xFC, 0xFF,
+		0xFF, 0x3F, 0xCF, 0xF3, 0xFC, 0xFF,
+		0xFF, 0x3F, 0xCF, 0xF3, 0xFC, 0xFF,
+		0xFF, 0x3F, 0xCF, 0xF3, 0xFC, 0xFF,
+		0xD5, 0xAA, 0x96
 	};
 	static const UINT8 blk2[] =
 	{
-		0xDE, 0xAA, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xD5, 0xAA, 0xAD
+		0xDE, 0xAA, 0xFF, 0xFF, 0x3F, 0xCF, 0xF3, 0xFC, 0xFF, 0xD5, 0xAA, 0xAD
 	};
 	static const UINT8 blk3[] =
 	{
@@ -415,7 +463,7 @@ static int iwm_get_track(void)
 	floppy *f;
 	unsigned int len;
 	unsigned int sector;
-	unsigned int oldpos;
+	unsigned int oldpos, oldbitpos;
 	int i, sum, side;
 	int imgpos;
 
@@ -523,10 +571,12 @@ static int iwm_get_track(void)
 	}
 	f->loadedtrack_valid = 1;
 	f->loadedtrack_dirty = 0;
-	memset(f->loadedtrack_data, 0xff, f->loadedtrack_len);
+	memset(f->loadedtrack_data, 0xff, f->loadedtrack_len);	/* fill with 0xffs */
 
 	oldpos = f->loadedtrack_pos;
+	oldbitpos = f->loadedtrack_bitpos;
 	f->loadedtrack_pos = 0;
+	f->loadedtrack_bitpos = 0;
 
 	side = (f->sides && f->head) ? 0x20 : 0x00;
 	if (f->track & 0x40)
@@ -566,7 +616,11 @@ static int iwm_get_track(void)
 		#endif
 	}
 
-	f->loadedtrack_pos = oldpos % f->loadedtrack_len;
+	f->loadedtrack_pos = oldpos % f->loadedtrack_len;	/* geez... who cares ? */
+	f->loadedtrack_bitpos = oldbitpos;
+
+	f->loadedtrack_num = f->track;
+	f->loadedtrack_head = f->head;
 
 	return 0;
 }
@@ -647,14 +701,15 @@ static int iwm_put_track(void)
 	floppy *f;
 	unsigned int len;
 	unsigned int sector;
-	unsigned int oldpos;
+	unsigned int oldpos, oldbitpos;
 	int i, j, sum, side;
 	int imgpos;
-	unsigned char sector_found[12];
+	unsigned char sector_found[12] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 	UINT8 val;
 
 	/* NPW 10-Nov-2000 - Removed ={} and added memset(); Win32 doesn't like what you just did */
-	memset(sector_found, '\0', sizeof(sector_found));
+	/* R Nabet : how about the new initializer ? My previous code was wrong, anyway. */
+	/*memset(sector_found, '\0', sizeof(sector_found));*/
 
 	f = &iwm_floppy[iwm_floppy_select];
 	len = iwm_tracklen_800kb[f->loadedtrack_num];
@@ -669,13 +724,16 @@ static int iwm_put_track(void)
 	}
 
 	oldpos = f->loadedtrack_pos;
+	oldbitpos = f->loadedtrack_bitpos;
 	f->loadedtrack_pos = 0;
+	f->loadedtrack_bitpos = 0;
 
 	side = (f->sides &&  f->loadedtrack_head) ? 0x20 : 0x00;
 	if (f->loadedtrack_num & 0x40)
 		side |= 0x01;
 
-	for (j = 0; j < (f->loadedtrack_len /*+ 1000*/); j++)
+	/* do 2 rotations, in case the bit slip stuff prevent us to read the first sector */
+	for (j = 0; j < (f->loadedtrack_len * 2); j++)
 	{
 		if (iwm_fetchtrack(f) != 0xD5)
 			continue;
@@ -720,7 +778,8 @@ static int iwm_put_track(void)
 			continue;
 		j++;
 
-#if 0
+#if 1
+		/* This code should work, but it does not */
 		while ((val = iwm_fetchtrack(f)) == 0xFF)
 			j++;
 #else
@@ -734,7 +793,10 @@ static int iwm_put_track(void)
 #endif
 
 		if (val != 0xD5)
+		{
+			logerror("iwm_put_track(): lost bit slip mark!");
 			continue;
+		}
 		j++;
 
 		if (iwm_fetchtrack(f) != 0xAA)
@@ -788,6 +850,7 @@ static int iwm_put_track(void)
 	}
 
 	f->loadedtrack_pos = oldpos % f->loadedtrack_len;
+	f->loadedtrack_bitpos = oldbitpos;
 
 	val = 0;	/* error flag */
 	for (i=0; i<len; i++)
@@ -886,7 +949,7 @@ static int iwm_put_track(void)
 	imgpos *= 512;
 
 #if LOG_IWM
-	logerror("iwm_put_track(): Loading track %d (%d sectors, imgpos=0x%08x)\n",
+	logerror("iwm_put_track(): Saving track %d (%d sectors, imgpos=0x%08x)\n",
 					(int) f->loadedtrack_num, (int) len, (int) imgpos);
 #endif
 
@@ -968,10 +1031,9 @@ static int iwm_readdata(void)
 		#endif
 
 		/* Now actually read the data */
-		result = f->loadedtrack_data[f->loadedtrack_pos++];
-		f->loadedtrack_pos %= f->loadedtrack_len;
-		f->loadedtrack_num = f->track;
-		f->loadedtrack_head = f->head;
+		result = iwm_fetchtrack(f);
+		/*result = f->loadedtrack_data[f->loadedtrack_pos++];
+		f->loadedtrack_pos %= f->loadedtrack_len;*/
 	}
 
 	#if LOG_IWM_EXTRA
@@ -1023,10 +1085,9 @@ static void iwm_writedata(int data)
 		#endif
 
 		/* Now actually write the data */
-		f->loadedtrack_data[f->loadedtrack_pos++] = data;
-		f->loadedtrack_pos %= f->loadedtrack_len;
-		f->loadedtrack_num = f->track;
-		f->loadedtrack_head = f->head;
+		iwm_filltrack(f, data);
+		/*f->loadedtrack_data[f->loadedtrack_pos++] = data;
+		f->loadedtrack_pos %= f->loadedtrack_len;*/
 
 		f->loadedtrack_dirty = 1;
 	}
