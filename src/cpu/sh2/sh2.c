@@ -2487,7 +2487,7 @@ void sh2_set_irq_line(int irqline, int state)
 	}
 	else
     {
-		int prior = (sh2.m[SH2_IRPB & 0x1ff] & 15) << 4;
+	/* 	int prior = (sh2.m[SH2_IRPB & 0x1ff] & 15) << 4; */
 		logerror("SH-2 #%d assert irq #%d\n", cpu_getactivecpu(), irqline);
 		sh2.pending_irq |= 1 << irqline;
     }
