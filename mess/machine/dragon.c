@@ -1695,7 +1695,10 @@ static void coco3_mmu_update(int lowblock, int hiblock)
 
 READ_HANDLER(coco3_mmu_r)
 {
-	return (coco3_mmu[offset] & 0x3f) | 0x40;
+	/* The high two bits are floating (high resistance).  Therefore their
+	 * value is undefined.  But we are exposing them anyways here
+	 */
+	return coco3_mmu[offset];
 }
 
 WRITE_HANDLER(coco3_mmu_w)

@@ -440,8 +440,6 @@ INLINE void sts_ex( void );
 INLINE void pref10( void );
 INLINE void pref11( void );
 
-INLINE void emu_dbg( void );
-
 static UINT8 flags8i[256]=	 /* increment */
 {
 CC_Z,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -809,7 +807,7 @@ static void (*hd6309_page11[0x100])(void) = {
 			IIError, IIError, IIError, addf_ix, IIError, IIError, IIError, IIError,
 
 /* 0xFX */  subf_ex, cmpf_ex, IIError, IIError, IIError, IIError, ldf_ex,  stf_ex,
-			IIError, IIError, IIError, addf_ex, emu_dbg, IIError, IIError, IIError
+			IIError, IIError, IIError, addf_ex, IIError, IIError, IIError, IIError
 
 };
 

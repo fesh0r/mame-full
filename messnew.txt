@@ -6,13 +6,12 @@ New System Drivers Supported (in no particular order):
 - GameBoy Color (preliminary) [Anthony Kruize]
 - Innumerable Sega Master System Variants [Mike Luong]
 
-Regressions:
+Removed drivers:
 ----------------------
-- [PCE] Assertion fails on startup
-- [Amstrad] Crashes on startup
-- [MK1] Fails to boot
-- [ZX] Doesn't boot up anymore
-- [STUDIO2] ???
+- Amstrad
+- Chess Champion I
+- Sinclair ZX Family
+- Studio 2
 
 System Driver Changes:
 ----------------------
@@ -33,6 +32,9 @@ System Driver Changes:
 
 - [COCO3] Adjusted composite colors slightly with help from SockMaster (Bug
   #227) [John Kowalski, Nate Woods]
+  
+- [COCO3] Exposed the two high bits on MMU registers (even though their value
+  is undefined) to fix a problem with SockMaster's LSAVEM utility. [Nate Woods]
   
 - [COLECO] The Coleco driver now recognizes the *.col extension for Coleco
   cartridges. [Nate Woods]
@@ -109,5 +111,5 @@ Source Changes:
      SHIFT+UP/DOWN as PgUp/PgDown and
      CTRL+UP/DOWN as Home/End. [Stefano Priore]
 
-- Sockmaster was kind enough to look over the opcode timings in the 6309 core
-  Now they are more accurate [tim lindner]
+- With help from SockMaster, fixed some very subtle timer bugs in the m6809
+  and hd6309 CPU cores [Nate Woods, tim lindner, John Kowalski]

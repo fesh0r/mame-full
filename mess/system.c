@@ -135,7 +135,7 @@ const struct GameDriver *drivers[] =
 
 	/* RCA */
 TESTDRIVER( vip )		/* Cosmac VIP										*/
-	DRIVER( studio2 )	/* Studio II										*/
+TESTDRIVER( studio2 )	/* Studio II										*/
 
 	/* FAIRCHILD */
 	DRIVER( channelf )	/* Fairchild Channel F VES - 1976					*/
@@ -196,21 +196,21 @@ TESTDRIVER( a310 )      /* 1988 Acorn Archimedes 310						*/
 	DRIVER( z88 )		/*													*/
 
 	/* AMSTRAD */
-	DRIVER( cpc464 )	/* Amstrad (Schneider in Germany) 1984				*/
-	DRIVER( cpc664 )	/* Amstrad (Schneider in Germany) 1985				*/
-	DRIVER( cpc6128 )	/* Amstrad (Schneider in Germany) 1985				*/
-	DRIVER( cpc464p )	/* Amstrad CPC464  Plus - 1987						*/
-	DRIVER( cpc6128p )	/* Amstrad CPC6128 Plus - 1987						*/
-	DRIVER( kccomp )	/* VEB KC compact									*/
-	DRIVER( pcw8256 )	/* 198? PCW8256 									*/
-	DRIVER( pcw8512 )	/* 198? PCW8512 									*/
-	DRIVER( pcw9256 )	/* 198? PCW9256 									*/
-	DRIVER( pcw9512 )	/* 198? PCW9512 (+) 								*/
-	DRIVER( pcw10 ) 	/* 198? PCW10										*/
-	DRIVER( pcw16 )     /* 1995 PCW16										*/
-	DRIVER( nc100 ) 	/* 19?? NC100										*/
-	DRIVER( nc100a ) 	/* 19?? NC100										*/
-	DRIVER( nc200 )     /* 19?? NC200										*/
+TESTDRIVER( cpc464 )	/* Amstrad (Schneider in Germany) 1984				*/
+TESTDRIVER( cpc664 )	/* Amstrad (Schneider in Germany) 1985				*/
+TESTDRIVER( cpc6128 )	/* Amstrad (Schneider in Germany) 1985				*/
+TESTDRIVER( cpc464p )	/* Amstrad CPC464  Plus - 1987						*/
+TESTDRIVER( cpc6128p )	/* Amstrad CPC6128 Plus - 1987						*/
+TESTDRIVER( kccomp )	/* VEB KC compact									*/
+TESTDRIVER( pcw8256 )	/* 198? PCW8256 									*/
+TESTDRIVER( pcw8512 )	/* 198? PCW8512 									*/
+TESTDRIVER( pcw9256 )	/* 198? PCW9256 									*/
+TESTDRIVER( pcw9512 )	/* 198? PCW9512 (+) 								*/
+TESTDRIVER( pcw10 ) 	/* 198? PCW10										*/
+TESTDRIVER( pcw16 )     /* 1995 PCW16										*/
+TESTDRIVER( nc100 ) 	/* 19?? NC100										*/
+TESTDRIVER( nc100a ) 	/* 19?? NC100										*/
+TESTDRIVER( nc200 )     /* 19?? NC200										*/
 
 	/* APPLE */
 /*
@@ -387,15 +387,15 @@ TESTDRIVER( atvga ) 	/*													*/
 TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS			*/
 
 	/* SINCLAIR */
-	DRIVER( zx80 )		/* Sinclair ZX-80									*/
-	DRIVER( zx81 )		/* Sinclair ZX-81									*/
-	DRIVER( zx81a )
-	DRIVER( zx81b )
-	DRIVER( ts1000 )	/* Timex Sinclair 1000								*/
-	DRIVER( aszmic )	/* ASZMIC ZX-81 ROM swap							*/
-	DRIVER( pc8300 )	/* Your Computer - PC8300							*/
-	DRIVER( pow3000 )	/* Creon Enterprises - Power 3000					*/
-	DRIVER( lambda )	/* Lambda 8300										*/
+TESTDRIVER( zx80 )		/* Sinclair ZX-80									*/
+TESTDRIVER( zx81 )		/* Sinclair ZX-81									*/
+TESTDRIVER( zx81a )
+TESTDRIVER( zx81b )
+TESTDRIVER( ts1000 )	/* Timex Sinclair 1000								*/
+TESTDRIVER( aszmic )	/* ASZMIC ZX-81 ROM swap							*/
+TESTDRIVER( pc8300 )	/* Your Computer - PC8300							*/
+TESTDRIVER( pow3000 )	/* Creon Enterprises - Power 3000					*/
+TESTDRIVER( lambda )	/* Lambda 8300										*/
 
 	DRIVER( spectrum )	/* 1982 ZX Spectrum 								*/
 	DRIVER( specpls4 )	/* 2000 ZX Spectrum +4								*/
@@ -645,7 +645,7 @@ TESTDRIVER( hp48g ) 	/* HP48 G/GX										*/
 
 /****************Games*******************************************************/
 	/* Computer Electronic */
-	DRIVER( mk1 )		/* Chess Champion MK I								*/
+TESTDRIVER( mk1 )		/* Chess Champion MK I								*/
 	/* Quelle International */
 	DRIVER( mk2 )		/* Chess Champion MK II								*/
 	/* NOVAG Industries Ltd. */
