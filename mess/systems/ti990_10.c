@@ -1,18 +1,29 @@
 /*
   Experimental ti990/10 driver
 
-  We emulate a ti990/10 board.
+	This driver boots the DX10 build tape. However, this will not help much until a terminal is
+	emulated.
 
 TODO :
-* everything
+* finish CPU emulation
+* finish tape emulation
+* write disk emulation
+* emulate a 911 or 913 VDT terminal
+* add additionnal bells and whistle as need appears
+*/
 
+/*
+	CRU map:
+
+	1fa0-1fbe: map file CRU interface
+	1fc0-1fde: error interrupt register
+	1fe0-1ffe: control panel
 */
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/tms9900/tms9900.h"
-
-static void *timer;
+#include "machine/mt3200.h"
 
 static void clear_load(int dummy)
 {
@@ -22,7 +33,9 @@ static void clear_load(int dummy)
 static void ti990_10_init_machine(void)
 {
 	cpu_set_nmi_line(0, ASSERT_LINE);
-	timer = timer_set(TIME_IN_MSEC(100), 0, clear_load);
+	timer_set(TIME_IN_MSEC(100), 0, clear_load);
+
+	mt3200_reset();
 }
 
 static void ti990_10_stop_machine(void)
@@ -82,7 +95,7 @@ F : flag
 static READ16_HANDLER ( ti990_10_panel_read )
 {
 	if (offset == 1)
-		return 0x08;
+		return 0x48;
 
 	return 0;
 }
@@ -132,18 +145,24 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static MEMORY_READ16_START (ti990_10_readmem)
 
-	{ 0x000000, 0x001fff, MRA16_RAM },		/* 8kb RAM board */
-	{ 0x002000, 0x1ff7ff, MRA16_NOP },		/* free TILINE space */
-	{ 0x1ff800, 0x1ffbff, MRA16_NOP },		/* TPCS */
+	{ 0x000000, 0x00ffff, MRA16_RAM },		/* 64kb RAM board */
+	{ 0x010000, 0x1ff7ff, MRA16_NOP },		/* free TILINE space */
+	{ 0x1ff800, 0x1ff81f, MRA16_NOP },		/* disk controller TPCS */
+	{ 0x1ff820, 0x1ff87f, MRA16_NOP },		/* free TPCS */
+	{ 0x1ff880, 0x1ff89f, mt3200_r },		/* tape controller TPCS */
+	{ 0x1ff8a0, 0x1ffbff, MRA16_NOP },		/* free TPCS */
 	{ 0x1ffc00, 0x1fffff, MRA16_ROM },		/* LOAD ROM */
 
 MEMORY_END
 
 static MEMORY_WRITE16_START (ti990_10_writemem)
 
-	{ 0x000000, 0x001fff, MWA16_RAM },		/* 8kb RAM board */
-	{ 0x002000, 0x1ff7ff, MWA16_NOP },		/* free TILINE space */
-	{ 0x1ff800, 0x1ffbff, MWA16_NOP },		/* TPCS */
+	{ 0x000000, 0x00ffff, MWA16_RAM },		/* 64kb RAM board */
+	{ 0x010000, 0x1ff7ff, MWA16_NOP },		/* free TILINE space */
+	{ 0x1ff800, 0x1ff81f, MWA16_NOP },		/* disk controller TPCS */
+	{ 0x1ff820, 0x1ff87f, MWA16_NOP },		/* free TPCS */
+	{ 0x1ff880, 0x1ff89f, mt3200_w },		/* tape controller TPCS */
+	{ 0x1ff8a0, 0x1ffbff, MWA16_NOP },		/* free TPCS */
 	{ 0x1ffc00, 0x1fffff, MWA16_ROM },		/* LOAD ROM */
 
 MEMORY_END
@@ -261,7 +280,26 @@ static void init_ti990_10(void)
 
 static const struct IODevice io_ti990_10[] =
 {
-	/* of course, there were I/O devices, but I am not advanced enough... */
+	/* tape reader - only IO device we support */
+	{
+		IO_CASSETTE,			/* type */
+		2,						/* count */
+		"tap\0",				/* file extensions */
+		IO_RESET_NONE,			/* reset if file changed */
+		0,
+		mt3200_tape_init,		/* init */
+		mt3200_tape_exit,		/* exit */
+		NULL,					/* info */
+		NULL,					/* open */
+		NULL,					/* close */
+		NULL,					/* status */
+		NULL,					/* seek */
+		NULL,					/* tell */
+		NULL,					/* input */
+		NULL,					/* output */
+		NULL,					/* input_chunk */
+		NULL					/* output_chunk */
+	},
 	{ IO_END }
 };
 
