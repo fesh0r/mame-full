@@ -17,7 +17,7 @@ void inputx_init(void);
 void inputx_update(unsigned short *ports);
 
 #ifdef MAME_DEBUG
-void inputx_validitycheck(struct GameDriver *gamedrv);
+void inputx_validitycheck(const struct GameDriver *gamedrv);
 #endif
 
 /* these can be called from FEs */

@@ -1,5 +1,6 @@
 #include <ctype.h>
 #include <assert.h>
+#include <wctype.h>
 
 #include "inputx.h"
 #include "inptport.h"
@@ -201,7 +202,7 @@ static void build_codes(const struct GameDriver *gamedrv, struct InputCode *code
 ***************************************************************************/
 
 #ifdef MAME_DEBUG
-void inputx_validitycheck(struct GameDriver *gamedrv)
+void inputx_validitycheck(const struct GameDriver *gamedrv)
 {
 	char buf[CODE_BUFFER_SIZE];
 	struct InputCode *codes;
