@@ -605,7 +605,8 @@ COREOBJS += \
 #	  $(OBJ)/machine/6821pia.o	 \
 
 # additional tools
-TOOLS +=  dat2html$(EXE) mkhdimg$(EXE) imgtool$(EXE) 
+TOOLS +=  dat2html$(EXE) mkhdimg$(EXE) imgtool$(EXE) messroms$(EXE)
+#TOOLS +=  dat2html$(EXE) mkhdimg$(EXE) imgtool$(EXE) 
 
 dat2html$(EXE): $(OBJ)/mess/tools/dat2html.o $(OBJ)/mess/utils.o
 	@echo Linking $@...
@@ -641,6 +642,12 @@ imgtool$(EXE):	     \
 	  $(OBJ)/mess/tools/rom16.o     \
 	  $(OBJ)/mess/tools/zip.o     \
 	  $(OBJ)/mess/tools/fs.o
+	@echo Linking $@...
+	$(LD) $(LDFLAGS) $^ $(LIBS) $(IMGTOOL_LIBS) -o $@
+
+
+messroms$(EXE):		\
+	  $(OBJ)/mess/messroms/main.o $(OBJ)/unzip.o
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ $(LIBS) $(IMGTOOL_LIBS) -o $@
 
