@@ -423,7 +423,7 @@ INPUT_PORTS_END
 
 ROM_START( mac2 )
 	ROM_REGION(0x00900000,REGION_CPU1,0) /* for ram, etc */
-	ROM_LOAD_WIDE( "256k.rom",  0x800000, 0x40000, CRC(00000000))
+	ROM_LOAD_WIDE( "256k.rom",  0x800000, 0x40000, NO_DUMP)
 ROM_END
 
 COMPX( 1987, mac2,	   0,		 mac2,	   mac2,	 0/*mac2*/,  "Apple Computer",    "Macintosh II",  GAME_NOT_WORKING )
