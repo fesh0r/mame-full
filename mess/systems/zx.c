@@ -24,93 +24,71 @@
 #define LOG(x)						   /* x */
 #endif
 
-static struct MemoryReadAddress readmem_zx80[] =
-{
+MEMORY_READ_START( readmem_zx80 )
 	{0x0000, 0x0fff, MRA_ROM},
 	{0x4000, 0x43ff, MRA_RAM},
 	{0x8000, 0xffff, MRA_NOP},
-	{-1}							   /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_zx80[] =
-{
+MEMORY_WRITE_START( writemem_zx80 )
 	{0x0000, 0x0fff, MWA_ROM},
 	{0x4000, 0x43ff, MWA_RAM},
 	{0x8000, 0xffff, MWA_NOP},
-	{-1}							   /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress readmem_zx81[] =
-{
+
+MEMORY_READ_START( readmem_zx81 )
 	{0x0000, 0x1fff, MRA_ROM},
 	{0x4000, 0x43ff, MRA_RAM},
 	{0x8000, 0xffff, MRA_NOP},
-	{-1}							   /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_zx81[] =
-{
+MEMORY_WRITE_START( writemem_zx81 )
 	{0x0000, 0x3fff, MWA_ROM},
 	{0x4000, 0x43ff, MWA_RAM},
 	{0x8000, 0xffff, MWA_NOP},
-	{-1}							   /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress readmem_pc8300[] =
-{
+MEMORY_READ_START( readmem_pc8300 )
 	{0x0000, 0x1fff, MRA_ROM},
 	{0x4000, 0x7fff, MRA_RAM},		   /* PC8300 comes with 16K RAM */
 	{0x8000, 0xffff, MRA_NOP},
-	{-1}							   /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_pc8300[] =
-{
+MEMORY_WRITE_START( writemem_pc8300 )
 	{0x0000, 0x3fff, MWA_ROM},
 	{0x4000, 0x7fff, MWA_RAM},		   /* PC8300 comes with 16K RAM */
 	{0x8000, 0xffff, MWA_NOP},
-	{-1}							   /* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort readport[] =
-{
+static PORT_READ_START (readport)
 	{0x0000, 0xffff, zx_io_r},
-	{-1}
-};
+PORT_END
 
-static struct IOWritePort writeport[] =
-{
+static PORT_WRITE_START (writeport)
 	{0x0000, 0xffff, zx_io_w},
-	{-1}
-};
+PORT_END
 
-static struct MemoryReadAddress readmem_pow3000[] =
-{
+MEMORY_READ_START( readmem_pow3000 )
 	{0x0000, 0x1fff, MRA_ROM},
 	{0x4000, 0x7fff, MRA_RAM},		   /* Power 3000 comes with 16K RAM */
 	{0x8000, 0xffff, MRA_NOP},
 	{-1}							   /* end of table */
 };
 
-static struct MemoryWriteAddress writemem_pow3000[] =
-{
+MEMORY_WRITE_START( writemem_pow3000 )
 	{0x0000, 0x3fff, MWA_ROM},
 	{0x4000, 0x7fff, MWA_RAM},		   /* Power 3000 comes with 16K RAM */
 	{0x8000, 0xffff, MWA_NOP},
-	{-1}							   /* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort readport_pow3000[] =
-{
+static PORT_READ_START (readport_pow3000)
 	{0x0000, 0xffff, pow3000_io_r},
-	{-1}
-};
+PORT_END
 
-static struct IOWritePort writeport_pow3000[] =
-{
+static PORT_WRITE_START (writeport_pow3000)
 	{0x0000, 0xffff, zx_io_w},
-	{-1}
-};
+PORT_END
 
 INPUT_PORTS_START(zx80)
 PORT_START							   /* IN0 */
