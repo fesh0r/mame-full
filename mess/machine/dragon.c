@@ -80,7 +80,7 @@ static int pia0_irq_a, pia0_irq_b;
 static int pia1_firq_a, pia1_firq_b;
 static int gime_firq, gime_irq;
 static int cart_inserted;
-static UINT8 pia0_pb, sound_mux, tape_motor;
+static UINT8 pia0_pb, soundmux_status, tape_motor;
 static UINT8 joystick_axis, joystick;
 static int d_dac;
 static int d_sam_memory_size;
@@ -669,14 +669,90 @@ static int coco_hiresjoy_ry(void)
 }
 
 /***************************************************************************
+  Sound MUX
+
+  The sound MUX has 4 possible settings, depend on SELA and SELB inputs:
+
+  00	- DAC (digital - analog converter)
+  01	- CSN (???; NYI)
+  10	- SND input from cartridge (NYI because we only support the FDC)
+  11	- Grounded (0)
+
+  Source - Tandy Color Computer Service Manual
+***************************************************************************/
+
+#define SOUNDMUX_STATUS_ENABLE	4
+#define SOUNDMUX_STATUS_SEL2	2
+#define SOUNDMUX_STATUS_SEL1	1
+
+static void soundmux_update(void)
+{
+	int casstatus, new_casstatus;
+
+	casstatus = device_status(IO_CASSETTE, 0, -1);
+	new_casstatus = casstatus | WAVE_STATUS_MUTED;
+
+	switch(soundmux_status) {
+	case SOUNDMUX_STATUS_ENABLE:
+		/* DAC */
+		DAC_data_w(0, d_dac);
+		break;
+
+	case SOUNDMUX_STATUS_ENABLE | SOUNDMUX_STATUS_SEL1:
+		/* CSN */
+		new_casstatus &= ~WAVE_STATUS_MUTED;
+		break;
+
+	default:
+		/* Other */
+		DAC_data_w(0, 0);
+		break;
+	}
+
+	if (casstatus != new_casstatus) {
+#if LOG_WAVE
+		logerror("CoCo: Turning cassette speaker %s\n", data ? "on" : "off");
+#endif
+		device_status(IO_CASSETTE, 0, new_casstatus);
+	}
+}
+
+static void soundmux_enable_w(int data)
+{
+	if (data)
+		soundmux_status |= SOUNDMUX_STATUS_ENABLE;
+	else
+		soundmux_status &= ~SOUNDMUX_STATUS_ENABLE;
+	soundmux_update();
+}
+
+static void soundmux_sel1_w(int data)
+{
+	if (data)
+		soundmux_status |= SOUNDMUX_STATUS_SEL1;
+	else
+		soundmux_status &= ~SOUNDMUX_STATUS_SEL1;
+	soundmux_update();
+}
+
+static void soundmux_sel2_w(int data)
+{
+	if (data)
+		soundmux_status |= SOUNDMUX_STATUS_SEL2;
+	else
+		soundmux_status &= ~SOUNDMUX_STATUS_SEL2;
+	soundmux_update();
+}
+
+/***************************************************************************
   PIA0 ($FF00-$FF1F) (Chip U8)
 
   PIA0 PA0-PA7	- Keyboard/Joystick read
   PIA0 PB0-PB7	- Keyboard write
   PIA0 CA1		- M6847 HS (Horizontal Sync)
-  PIA0 CA2		- MUX SEL 1 (NYI)
+  PIA0 CA2		- SEL1 (Used by sound mux and joystick)
   PIA0 CB1		- M6847 FS (Field Sync)
-  PIA0 CB2		- MUX SEL 2 (NYI)
+  PIA0 CB2		- SEL2 (Used by sound mux and joystick)
 ***************************************************************************/
 
 static READ_HANDLER ( d_pia0_ca1_r )
@@ -689,14 +765,16 @@ static READ_HANDLER ( d_pia0_cb1_r )
 	return m6847_fs_r(0);
 }
 
-static WRITE_HANDLER ( d_pia0_cb2_w )
-{
-	joystick = data;
-}
-
 static WRITE_HANDLER ( d_pia0_ca2_w )
 {
 	joystick_axis = data;
+	soundmux_sel1_w(data);
+}
+
+static WRITE_HANDLER ( d_pia0_cb2_w )
+{
+	joystick = data;
+	soundmux_sel2_w(data);
 }
 
 static int keyboard_r(void)
@@ -784,19 +862,7 @@ static READ_HANDLER ( d_pia1_cb1_r )
 
 static WRITE_HANDLER ( d_pia1_cb2_w )
 {
-	int status;
-
-#if LOG_WAVE
-	logerror("CoCo: Turning cassette speaker %s\n", data ? "on" : "off");
-#endif
-
-	status = device_status(IO_CASSETTE, 0, -1);
-	status &= ~WAVE_STATUS_MUTED;
-	if (!data)
-		status |= WAVE_STATUS_MUTED;
-	device_status(IO_CASSETTE, 0, status);
-
-	sound_mux = data;
+	soundmux_enable_w(data);
 }
 
 static WRITE_HANDLER ( d_pia1_pa_w )
@@ -809,9 +875,9 @@ static WRITE_HANDLER ( d_pia1_pa_w )
 	 *    1:	Serial out
 	 */
 	d_dac = data & 0xfc;
-	if (sound_mux)
-		DAC_data_w(0,d_dac);
-	else if (joystick_mode() == JOYSTICKMODE_HIRES)
+	soundmux_update();
+
+	if (joystick_mode() == JOYSTICKMODE_HIRES)
 		coco_hiresjoy_w(d_dac >= 0x80);
 	else
 		device_output(IO_CASSETTE, 0, ((int) d_dac - 0x80) * 0x100);
@@ -836,6 +902,12 @@ static WRITE_HANDLER( d_pia1_pb_w )
 	m6847_intext_w(0,	data & 0x10);
 	m6847_css_w(0,		data & 0x08);
 	schedule_full_refresh();
+
+	/* NYI - When SNDEN if false, PB1 will drive the sound output.  This is a
+	 * single bit sound mode that I never even heard of.
+	 *
+	 * Source:  Page 31 of the Tandy Color Computer Serice Manual
+	 */
 }
 
 static WRITE_HANDLER( coco3_pia1_pb_w )
@@ -1866,7 +1938,7 @@ static void generic_init_machine(struct pia6821_interface *piaintf)
 	pia1_firq_a = CLEAR_LINE;
 	pia1_firq_b = CLEAR_LINE;
 
-	pia0_pb = sound_mux = tape_motor = 0;
+	pia0_pb = soundmux_status = tape_motor = 0;
 	joystick_axis = joystick = 0;
 	d_dac = 0;
 

@@ -23,6 +23,9 @@ header. Load the file then type MENU and it should appear in the list, now you
 can type the name of the program to run it.
 [Kev Thacker]
 
+- [COCO] Reworked m6847 synchronization and sound mux signals to make them much
+more accurate. [Nate Woods]
+
 Other Changes:
 --------------
 
