@@ -22,6 +22,13 @@ UINT8 pmd85_ppi_port_outputs[1][3];
 
 static UINT8 startup_mem_map = 0;
 
+static struct msm8251_interface pmd85_uart_interface=
+{
+	NULL,
+	NULL,
+	NULL
+};
+
 static READ_HANDLER ( pmd85_ppi_0_porta_r )
 {
 	return 0xff;
@@ -62,13 +69,20 @@ READ_HANDLER ( pmd85_io_r )
 	{
 		return 0xff;
 	}
-	else
+
+	if ((offset & 0x80) && !(offset & 0x08))	/* 8255 */
+		return ppi8255_0_r(offset & 0x03);
+	if ((offset & 0xf8) == 0x18)			/* 8251 */
 	{
-		if ((offset & 0x80) && !(offset & 0x08))
-			return ppi8255_0_r(offset & 0x03);
-		logerror ("Reading from unmapped port: %02x\n", offset);
-		return 0xff;
+		switch (offset & 0x01)
+		{
+			case 0x00: return msm8251_data_r(offset & 0x01);
+			case 0x01: return msm8251_status_r(offset & 0x01);
+		}
 	}
+
+	logerror ("Reading from unmapped port: %02x\n", offset);
+	return 0xff;
 }
 
 WRITE_HANDLER ( pmd85_io_w )
@@ -83,10 +97,17 @@ WRITE_HANDLER ( pmd85_io_w )
 		cpu_setbank(1, mess_ram);
 	}
 
-	if ((offset & 0x80) && !(offset & 0x08))
+	if ((offset & 0x80) && !(offset & 0x08))	/* 8255 */
 		ppi8255_0_w(offset & 0x03, data);
-	else
-		logerror ("Writing to unmapped port: %02x, value: %02x\n", offset, data);
+
+	if ((offset & 0xf8) == 0x18)			/* 8251 */
+	{
+		switch (offset & 0x01)
+		{
+			case 0x00: msm8251_data_w(offset & 0x01, data);
+			case 0x01: msm8251_control_w(offset & 0x01, data);
+		}
+	}
 }
 
 
@@ -104,6 +125,7 @@ static ppi8255_interface pmd85_ppi8255_interface =
 MACHINE_INIT( pmd85 )
 {
 	ppi8255_init(&pmd85_ppi8255_interface);
+	msm8251_init(&pmd85_uart_interface);
 
 	startup_mem_map = 1;
 

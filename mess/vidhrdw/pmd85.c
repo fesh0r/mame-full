@@ -48,7 +48,7 @@ VIDEO_UPDATE( pmd85 )
 			data = pmd85_video_ram[x/6+0x40*y];
 
 			pen0 = 0;
-			pen1 = 1;
+			pen1 = data & 0x80 ? 1 : 2;
 
 			plot_pixel(bitmap, x+5, y, Machine->pens[(data & 0x20) ? pen1 : pen0]);
 			plot_pixel(bitmap, x+4, y, Machine->pens[(data & 0x10) ? pen1 : pen0]);
