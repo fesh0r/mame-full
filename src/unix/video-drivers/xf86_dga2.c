@@ -29,7 +29,7 @@ static void xf86_dga_update_display_8_to_32bpp(struct osd_bitmap *bitmap);
 static void xf86_dga_update_display_16_to_16bpp(struct osd_bitmap *bitmap);
 static void xf86_dga_update_display_16_to_24bpp(struct osd_bitmap *bitmap);
 static void xf86_dga_update_display_16_to_32bpp(struct osd_bitmap *bitmap);
-static void xf86_dga_update_display_rgb_direct(struct osd_bitmap *bitmap);
+static void xf86_dga_update_display_32_to_32bpp_direct(struct osd_bitmap *bitmap);
 
 static struct
 {
@@ -115,7 +115,8 @@ static int xf86_dga_vidmode_find_best_vidmode(int bitmap_depth)
 	{
 		if (mode_disabled(xf86ctx.modes[i].viewportWidth, xf86ctx.modes[i].viewportHeight, bitmap_depth))
 			continue;
-		if (Machine->drv->video_attributes & VIDEO_RGB_DIRECT)
+		if ((Machine->drv->video_attributes & VIDEO_RGB_DIRECT)
+			&& bitmap_depth == 32)
 		{
 			if (xf86ctx.modes[i].bitsPerPixel != 32)
 				continue;
@@ -208,10 +209,14 @@ static int xf86_dga_setup_graphics(XDGAMode modeinfo, int bitmap_depth)
 {
 	int sizeof_pixel;
 
-	if (Machine->drv->video_attributes & VIDEO_RGB_DIRECT)
+	if (bitmap_depth == 32)
 	{
+	    if (depth == 32 
+		&& Machine->drv->video_attributes & VIDEO_RGB_DIRECT)
+	    {
 		xf86ctx.xf86_dga_update_display_func =
-			xf86_dga_update_display_rgb_direct;
+			xf86_dga_update_display_32_to_32bpp_direct;
+	    }
 	}
 	else if (bitmap_depth == 16)
 	{
@@ -256,7 +261,7 @@ static int xf86_dga_setup_graphics(XDGAMode modeinfo, int bitmap_depth)
 	
 	if (xf86ctx.xf86_dga_update_display_func == NULL)
 	{
-		fprintf(stderr_file, "unsupported depth %dbpp\n",depth);
+		fprintf(stderr_file, "Error: Unsupported bitmap depth = %dbpp, video depth = %dbpp\n", bitmap_depth, depth);
 		return OSD_NOT_OK;
 	}
 	
@@ -315,7 +320,8 @@ int xf86_dga2_create_display(int bitmap_depth)
 	xf86ctx.base_addr = xf86ctx.device->data;
 	xf86ctx.vidmode_changed = TRUE;
 
-	if (Machine->drv->video_attributes & VIDEO_RGB_DIRECT)
+	if (Machine->drv->video_attributes & VIDEO_RGB_DIRECT
+		&& bitmap_depth == 32)
 		depth = xf86ctx.device->mode.bitsPerPixel;
 	else
 		depth = xf86ctx.device->mode.depth;
@@ -474,12 +480,12 @@ static void xf86_dga_update_display_16_to_32bpp(struct osd_bitmap *bitmap)
 #undef  INDIRECT
 #undef  SRC_PIXEL
 #define SRC_PIXEL unsigned int
-#undef  DEST_PIXEL
-#define DEST_PIXEL unsigned int
-static void xf86_dga_update_display_rgb_direct(struct osd_bitmap *bitmap)
+
+static void xf86_dga_update_display_32_to_32bpp_direct(struct osd_bitmap *bitmap)
 {
 #include "blit.h"
 }
+
 #undef DEST_PIXEL
 
 void xf86_dga2_update_display(struct osd_bitmap *bitmap)

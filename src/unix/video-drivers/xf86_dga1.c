@@ -11,6 +11,7 @@
 #include <X11/extensions/xf86dga.h>
 #include <X11/extensions/xf86vmode.h>
 #endif
+#include "driver.h"
 #include "xmame.h"
 #include "x11.h"
 
@@ -23,6 +24,7 @@ static void xf86_dga_update_display_8_to_32bpp(struct osd_bitmap *bitmap);
 static void xf86_dga_update_display_16_to_16bpp(struct osd_bitmap *bitmap);
 static void xf86_dga_update_display_16_to_24bpp(struct osd_bitmap *bitmap);
 static void xf86_dga_update_display_16_to_32bpp(struct osd_bitmap *bitmap);
+static void xf86_dga_update_display_32_to_32bpp_direct(struct osd_bitmap *bitmap);
 
 static struct
 {
@@ -238,8 +240,17 @@ static int xf86_dga_setup_graphics(XF86VidModeModeInfo *modeinfo, int bitmap_dep
 		fprintf(stderr_file,"banked graphics modes not supported\n");
 		return OSD_NOT_OK;
 	}
-	
-	if (bitmap_depth == 16)
+
+	if (bitmap_depth == 32)
+	{
+	    if (depth == 32 
+		&& Machine->drv->video_attributes & VIDEO_RGB_DIRECT)
+	    {
+		xf86ctx.xf86_dga_update_display_func =
+			xf86_dga_update_display_32_to_32bpp_direct;
+	    }
+	}
+	else if (bitmap_depth == 16)
 	{
 	    switch(depth)
 	    {
@@ -527,6 +538,16 @@ static void xf86_dga_update_display_16_to_32bpp(struct osd_bitmap *bitmap)
 {
 #include "blit.h"
 }
+
+#undef  INDIRECT
+#undef  SRC_PIXEL
+#define SRC_PIXEL unsigned int
+
+static void xf86_dga_update_display_32_to_32bpp_direct(struct osd_bitmap *bitmap)
+{
+#include "blit.h"
+}
+
 #undef DEST_PIXEL
 
 void xf86_dga1_update_display(struct osd_bitmap *bitmap)

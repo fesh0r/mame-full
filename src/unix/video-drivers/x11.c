@@ -180,6 +180,12 @@ void sysdep_update_display (struct osd_bitmap *bitmap)
    int new_video_mode = x11_video_mode;
    int current_palette_normal = (current_palette == normal_palette);
 
+   int bitmap_depth = bitmap->depth;
+   if (bitmap_depth == 15)
+   {
+      bitmap_depth = 16;
+   }
+
    if (keyboard_pressed (KEYCODE_LALT))
    { 
       if (keyboard_pressed_memory (KEYCODE_INSERT))
@@ -191,13 +197,13 @@ void sysdep_update_display (struct osd_bitmap *bitmap)
    if (new_video_mode != x11_video_mode && mode_available[new_video_mode])
    {
       (*x_func[x11_video_mode].close_display)();
-      if ((*x_func[new_video_mode].create_display)(bitmap->depth) != OSD_OK)
+      if ((*x_func[new_video_mode].create_display)(bitmap_depth) != OSD_OK)
       {
          fprintf(stderr_file,
             "X11: Warning: Couldn't create display for new x11-mode\n"
             "   Trying again with the old x11-mode\n");
          (*x_func[new_video_mode].close_display)();
-         if ((*x_func[x11_video_mode].create_display)(bitmap->depth) != OSD_OK)
+         if ((*x_func[x11_video_mode].create_display)(bitmap_depth) != OSD_OK)
             goto barf;
       }
       else

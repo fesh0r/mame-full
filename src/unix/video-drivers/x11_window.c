@@ -33,6 +33,7 @@ static void x11_window_update_8_to_8bpp_direct (struct osd_bitmap *bitmap);
 static void x11_window_update_16_to_16bpp (struct osd_bitmap *bitmap);
 static void x11_window_update_16_to_24bpp (struct osd_bitmap *bitmap);
 static void x11_window_update_16_to_32bpp (struct osd_bitmap *bitmap);
+static void x11_window_update_32_to_32bpp_direct (struct osd_bitmap *bitmap);
 static void (*x11_window_update_display_func) (struct osd_bitmap *bitmap) = NULL;
 
 /* hmm we need these to do the clean up correctly, or we could just 
@@ -551,7 +552,12 @@ int x11_window_create_display (int bitmap_depth)
       return OSD_NOT_OK;
 
    fprintf(stderr_file, "Actual bits per pixel = %d... ", depth);
-   if (bitmap_depth == 16)
+   if (bitmap_depth == 32)
+   {
+      if (depth == 32 && Machine->drv->video_attributes & VIDEO_RGB_DIRECT)
+         x11_window_update_display_func = x11_window_update_32_to_32bpp_direct;
+   }
+   else if (bitmap_depth == 16)
    {
       switch(depth)
       {
@@ -587,7 +593,7 @@ int x11_window_create_display (int bitmap_depth)
    
    if (x11_window_update_display_func == NULL)
    {
-      fprintf(stderr_file, "Error: Unsupported\n");
+      fprintf(stderr_file, "Error: Unsupported bitmap depth = %dbpp, video depth = %dbpp\n", bitmap_depth, depth);
       return OSD_NOT_OK;
    }
    fprintf(stderr_file, "Ok\n");
@@ -999,6 +1005,16 @@ static void x11_window_update_16_to_32bpp (struct osd_bitmap *bitmap)
 #include "blit.h"
 }
 
-#undef  DEST_PIXEL
+#undef  INDIRECT
+#undef  SRC_PIXEL
+#define SRC_PIXEL unsigned int
+
+static void x11_window_update_32_to_32bpp_direct(struct osd_bitmap *bitmap)
+{
+#include "blit.h"
+}
+
+#undef DEST_PIXEL
+#undef SRC_PIXEL
 
 #endif /* ifdef x11 */
