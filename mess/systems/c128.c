@@ -1372,7 +1372,7 @@ static struct MachineDriver machine_driver_c128d =
 	656,							   /* screen width */
 	216,							   /* screen height */
 	{0, 656 - 1, 0, 216 - 1},		   /* visible_area */
-	0,								   /* graphics decode info */
+	c128_gfxdecodeinfo,								   /* graphics decode info */
 	(sizeof (vic2_palette) +sizeof(vdc8563_palette))
 	 / sizeof (vic2_palette[0]) / 3,
 	0x100*2,
@@ -1422,7 +1422,7 @@ static struct MachineDriver machine_driver_c128pal =
 	656,							   /* screen width */
 	216,							   /* screen height */
 	{0, 656 - 1, 0, 216 - 1},		   /* visible_area */
-	0,								   /* graphics decode info */
+	c128_gfxdecodeinfo,								   /* graphics decode info */
 	(sizeof (vic2_palette) +sizeof(vdc8563_palette))
 	 / sizeof (vic2_palette[0]) / 3,
 	0x100*2,
