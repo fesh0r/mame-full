@@ -84,7 +84,7 @@ void tnzs_vh_draw_background(struct mame_bitmap *bitmap,unsigned char *m)
 	   at f302-f303 */
 
 	/* f301 controls how many columns are drawn. */
-	tot = tnzs_objctrl[1] & 0xf;
+	tot = tnzs_objctrl[1] & 0x1f;
 	if (tot == 1) tot = 16;
 
 	upperbits = tnzs_objctrl[2] + tnzs_objctrl[3] * 256;
@@ -123,6 +123,14 @@ void tnzs_vh_draw_background(struct mame_bitmap *bitmap,unsigned char *m)
 						color,
 						flipx,flipy,
 						sx + scrollx,(sy + scrolly) & 0xff,
+						0,TRANSPARENCY_PEN,0);
+
+				/* wrap around x */
+				drawgfx(bitmap,Machine->gfx[0],
+						code,
+						color,
+						flipx,flipy,
+						sx + 512 + scrollx,(sy + scrolly) & 0xff,
 						0,TRANSPARENCY_PEN,0);
 			}
 		}
@@ -177,6 +185,14 @@ void tnzs_vh_draw_foreground(struct mame_bitmap *bitmap,
 				color,
 				flipx,flipy,
 				sx,sy+2,
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
+
+		/* wrap around x */
+		drawgfx(bitmap,Machine->gfx[0],
+				code,
+				color,
+				flipx,flipy,
+				sx + 512,sy+2,
 				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

@@ -667,6 +667,26 @@ void *memory_get_write_ptr(int cpunum, int spacenum, offs_t offset)
 
 
 /*-------------------------------------------------
+	memory_get_op_ptr - return a pointer to the
+	base of opcode RAM associated with the given
+	CPU and offset
+-------------------------------------------------*/
+
+void *memory_get_op_ptr(int cpunum, offs_t offset)
+{
+	offs_t opbase = ~0;
+
+	if (cpudata[cpunum].opbase)
+		opbase = cpudata[cpunum].opbase(offset);
+
+	if (opbase == ~0)
+		return memory_get_read_ptr(cpunum, ADDRESS_SPACE_PROGRAM, offset);
+	else
+		return (void *) (opbase + offset);
+}
+
+
+/*-------------------------------------------------
 	memory_set_bankptr - set the base of a bank
 -------------------------------------------------*/
 

@@ -1188,6 +1188,15 @@ void konami_rom_deinterleave_2(int mem_region)
 	shuffle((UINT16 *)memory_region(mem_region),memory_region_length(mem_region)/2);
 }
 
+/* hacked version of rom_deinterleave_2_half for Lethal Enforcers */
+void konami_rom_deinterleave_2_half(int mem_region)
+{
+	data8_t *rgn = memory_region(mem_region);
+
+	shuffle((UINT16 *)rgn,memory_region_length(mem_region)/4);
+	shuffle((UINT16 *)(rgn+memory_region_length(mem_region)/2),memory_region_length(mem_region)/4);
+}
+
 /* helper function to join four 16-bit ROMs and form a 64-bit data stream */
 void konami_rom_deinterleave_4(int mem_region)
 {
@@ -2895,6 +2904,7 @@ static int K053244_rombank;
 static int K053245_ramsize;
 static data16_t *K053245_ram, *K053245_buffer;
 static data8_t K053244_regs[0x10];
+static int K053245_dx, K053245_dy;
 
 int K053245_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int plane3,
 		void (*callback)(int *code,int *color,int *priority))
@@ -2905,7 +2915,7 @@ int K053245_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int 
 		16,16,
 		0,				/* filled in later */
 		4,
-		{ 0, 0, 0, 0 },	/* filled in later */
+  		{ 0, 0, 0, 0 },	/* filled in later */
 		{ 0, 1, 2, 3, 4, 5, 6, 7,
 				8*32+0, 8*32+1, 8*32+2, 8*32+3, 8*32+4, 8*32+5, 8*32+6, 8*32+7 },
 		{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
@@ -2962,6 +2972,7 @@ int K053245_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int 
 	K053244_rombank = 0;
 	K053245_ramsize = 0x800;
 	K053245_ram = auto_malloc(K053245_ramsize);
+	K053245_dx = K053245_dy = 0;
 	if (!K053245_ram) return 1;
 
 	K053245_buffer = auto_malloc(K053245_ramsize);
@@ -2972,6 +2983,12 @@ int K053245_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int 
 	memset(K053245_buffer,0,K053245_ramsize);
 
 	return 0;
+}
+
+void K053245_set_SpriteOffset(int offsx, int offsy)
+{
+	K053245_dx = offsx;
+	K053245_dy = offsy;
 }
 
 READ16_HANDLER( K053245_word_r )
@@ -3211,6 +3228,9 @@ void K053245_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cli
 
 		ox = K053245_buffer[offs+3] + spriteoffsX;
 		oy = K053245_buffer[offs+2];
+
+		ox += K053245_dx;
+		oy += K053245_dy;
 
 		flipx = K053245_buffer[offs] & 0x1000;
 		flipy = K053245_buffer[offs] & 0x2000;
@@ -5587,6 +5607,8 @@ static int K056832_SelectedPage;
 static int K056832_SelectedPagex4096;
 static int K056832_UpdateMode;
 static int K056832_linemap_enabled;
+static int K056832_use_ext_linescroll;
+static int K056832_uses_tile_banks, K056832_cur_tile_bank;
 
 #define K056832_mark_line_dirty(P,L) if (L<0x100) K056832_LineDirty[P][L>>5] |= 1<<(L&0x1f)
 #define K056832_mark_all_lines_dirty(P) K056832_AllLinesDirty[P] = 1
@@ -5675,6 +5697,18 @@ if (stricmp(Machine->gamedrv->source_file+12, "djmain.c") || K056832_LayerAssoci
 
 	// refresh associated tilemaps
 	K056832_MarkAllTilemapsDirty();
+}
+
+int K056832_get_lookup(int bits)
+{
+	int res;
+
+	res = (K056832_regs[0x1c] >> (bits << 2)) & 0x0f;
+
+	if (K056832_uses_tile_banks)	/* Asterix */
+		res |= K056832_cur_tile_bank << 4;
+
+	return res;
 }
 
 static void (*K056832_callback)(int, int *, int *);
@@ -5771,8 +5805,35 @@ int K056832_get_current_rambank(void)
 
 static void K056832_change_rombank(void)
 {
-	int bank = K056832_regs[0x1a] | (K056832_regs[0x1b] << 16);
+	int bank;
+
+	if (K056832_uses_tile_banks)	/* Asterix */
+	{
+		bank = (K056832_regs[0x1a] >> 8) | (K056832_regs[0x1b] << 4) | (K056832_cur_tile_bank << 6);
+	}
+	else
+	{
+		bank = K056832_regs[0x1a] | (K056832_regs[0x1b] << 16);
+	}
+
 	K056832_CurGfxBank = bank % K056832_NumGfxBanks;
+}
+
+void K056832_set_tile_bank(int bank)
+{
+	K056832_uses_tile_banks = 1;
+
+	if (K056832_cur_tile_bank != bank)
+	{
+		K056832_cur_tile_bank = bank;
+
+		K056832_mark_plane_dirty(0);
+		K056832_mark_plane_dirty(1);
+		K056832_mark_plane_dirty(2);
+		K056832_mark_plane_dirty(3);
+	}
+
+	K056832_change_rombank();
 }
 
 int K056832_vh_start(int gfx_memory_region, int bpp, int big, int (*scrolld)[4][2], void (*callback)(int, int *, int *))
@@ -5789,6 +5850,17 @@ int K056832_vh_start(int gfx_memory_region, int bpp, int big, int (*scrolld)[4][
 		{ 0, 1, 2, 3, 4, 5, 6, 7 },
 		{ 0, 8*8, 8*8*2, 8*8*3, 8*8*4, 8*8*5, 8*8*6, 8*8*7 },
 		8*8*8
+	};
+	struct GfxLayout charlayout8le =
+	{
+		8, 8,
+		0,
+		8,
+//		{ 0, 1, 2, 3, 0+(0x200000*8), 1+(0x200000*8), 2+(0x200000*8), 3+(0x200000*8) },
+		{ 0+(0x200000*8), 1+(0x200000*8), 2+(0x200000*8), 3+(0x200000*8), 0, 1, 2, 3 },
+		{ 2*4, 3*4, 0*4, 1*4, 6*4, 7*4, 4*4, 5*4 },
+		{ 0*8*4, 1*8*4, 2*8*4, 3*8*4, 4*8*4, 5*8*4, 6*8*4, 7*8*4 },
+		8*8*4
 	};
 	struct GfxLayout charlayout6 =
 	{
@@ -5813,7 +5885,7 @@ int K056832_vh_start(int gfx_memory_region, int bpp, int big, int (*scrolld)[4][
 	struct GfxLayout charlayout4 =
 	{
 		8, 8,
-		0, /* filled in later */
+		0,
 		4,
 		{ 0, 1, 2, 3 },
 		{ 2*4, 3*4, 0*4, 1*4, 6*4, 7*4, 4*4, 5*4 },
@@ -5876,6 +5948,14 @@ int K056832_vh_start(int gfx_memory_region, int bpp, int big, int (*scrolld)[4][
 			Machine->gfx[gfx_index] = decodegfx(memory_region(gfx_memory_region), &charlayout8);
 			break;
 
+		case K056832_BPP_8LE:
+			/* tweak the structure for the number of tiles we have */
+			charlayout8le.total = memory_region_length(gfx_memory_region) / (i*8);
+
+			/* decode the graphics */
+			Machine->gfx[gfx_index] = decodegfx(memory_region(gfx_memory_region), &charlayout8le);
+			break;
+
 		case K056832_BPP_4dj:
 			charlayout4dj.total = memory_region_length(gfx_memory_region) / (i*4);
 
@@ -5907,6 +5987,8 @@ int K056832_vh_start(int gfx_memory_region, int bpp, int big, int (*scrolld)[4][
 	K056832_rombase = memory_region(gfx_memory_region);
 	K056832_NumGfxBanks = memory_region_length(gfx_memory_region) / 0x2000;
 	K056832_CurGfxBank = 0;
+	K056832_use_ext_linescroll = 0;
+	K056832_uses_tile_banks = 0;
 
 	for (i=0; i<4; i++)
 	{
@@ -5989,6 +6071,12 @@ int K056832_vh_start(int gfx_memory_region, int bpp, int big, int (*scrolld)[4][
 	state_save_register_func_postload(K056832_change_rombank);
 
 	return 0;
+}
+
+/* call if a game uses external linescroll */
+void K056832_SetExtLinescroll(void)
+{
+	K056832_use_ext_linescroll = 1;
 }
 
 /* generic helper routine for ROM checksumming */
@@ -6130,6 +6218,13 @@ READ16_HANDLER( K056832_rom_word_r )
 	return ret;
 }
 
+READ16_HANDLER( K056832_old_rom_word_r )
+{
+	int addr = 0x2000*K056832_CurGfxBank + 2*offset;
+
+	return K056832_rombase[addr+1] | (K056832_rombase[addr] << 8);
+}
+
 READ32_HANDLER( K056832_rom_long_r )
 {
 	offset <<= 1;
@@ -6143,6 +6238,11 @@ READ16_HANDLER( K056832_ram_word_r )
 	K056832_rom_half = 0;
 
 	return K056832_videoram[K056832_SelectedPagex4096+offset];
+}
+
+READ16_HANDLER( K056832_ram_half_word_r )
+{
+	return K056832_videoram[K056832_SelectedPagex4096+(((offset << 1) & 0xffe) | ((offset >> 11) ^ 1))];
 }
 
 READ32_HANDLER( K056832_ram_long_r )
@@ -6268,6 +6368,25 @@ WRITE16_HANDLER( K056832_ram_word_w )
 			tilemap_mark_tile_dirty(K056832_tilemap[K056832_SelectedPage], offset);
 		else
 			K056832_mark_line_dirty(K056832_SelectedPage, offset);
+	}
+}
+
+WRITE16_HANDLER( K056832_ram_half_word_w )
+{
+	data16_t *adr = &K056832_videoram[K056832_SelectedPagex4096+(((offset << 1) & 0xffe) | 1)];
+	data16_t old = *adr;
+
+	COMBINE_DATA(adr);
+	if(*adr != old)
+	{
+		int dofs = (((offset << 1) & 0xffe) | 1);
+
+		dofs >>= 1;
+
+		if (K056832_PageTileMode[K056832_SelectedPage])
+			tilemap_mark_tile_dirty(K056832_tilemap[K056832_SelectedPage], dofs);
+		else
+       			K056832_mark_line_dirty(K056832_SelectedPage, dofs);
 	}
 }
 
@@ -6594,6 +6713,11 @@ void K056832_tilemap_draw(struct mame_bitmap *bitmap, const struct rectangle *cl
 	int scrollbank = ((K056832_regs[0x18]>>1) & 0xc) | (K056832_regs[0x18] & 3);
 	int scrollmode = K056832_regs[0x05]>>(K056832_LSRAMPage[layer][0]<<1) & 3;
 
+	if (K056832_use_ext_linescroll)
+	{
+		scrollbank = K056832_PAGE_COUNT;
+	}
+
 	height = rowspan * K056832_PAGE_HEIGHT;
 	width  = colspan * K056832_PAGE_WIDTH;
 
@@ -6635,6 +6759,7 @@ void K056832_tilemap_draw(struct mame_bitmap *bitmap, const struct rectangle *cl
 			sdat_adv = 2;
 		break;
 		case 2: // rowscroll
+
 			pScrollData = &K056832_videoram[scrollbank<<12] + (K056832_LSRAMPage[layer][1]>>1);
 			line_height = 8;
 			sdat_wrapmask = 0x3ff;

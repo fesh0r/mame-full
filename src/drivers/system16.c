@@ -189,8 +189,6 @@ WRITE8_HANDLER( sys16_7751_sh_rom_select_w );
 
 /***************************************************************************/
 
-int sys16_wwfix=0, sys16_alienfix=0; //*
-
 static data16_t coinctrl;
 
 static WRITE16_HANDLER( sys16_3d_coinctrl_w )
@@ -212,7 +210,6 @@ static WRITE16_HANDLER( sys16_3d_coinctrl_w )
 
 static INTERRUPT_GEN( sys16_interrupt )
 {
-	if(sys16_custom_irq) sys16_custom_irq();
 	cpunum_set_input_line(0, 4, HOLD_LINE); /* Interrupt vector 4, used by VBlank */
 }
 
@@ -420,7 +417,6 @@ static WRITE8_HANDLER( upd7759_bank_w ) //*
 	int offs, size = memory_region_length(REGION_CPU2) - 0x10000;
 
 	upd7759_reset_w(0, data & 0x40);
-	if (sys16_alienfix && (data&0x30)==0x20) data-=2;
 	offs = 0x10000 + (data * 0x4000) % size;
 	cpu_setbank(1, memory_region(REGION_CPU2) + offs);
 }
@@ -1838,7 +1834,6 @@ static MACHINE_INIT( shinobl )
 		1,3,5,7
 	};
 	sys16_obj_bank = bank;
-	sys16_textmode=1;
 	sys16_spritesystem = sys16_sprite_quartet2;
 	sys16_sprxoffset = -0xbc;
 	sys16_fgxoffset = sys16_bgxoffset = 7;
@@ -2765,4 +2760,4 @@ GAME( 1988, passshtb, passsht,  passsht,  passsht,  passsht,  ROT270, "bootleg",
 GAMEX(1988, passht4b, passsht,  passht4b, passht4b, passht4b, ROT270, "bootleg", "Passing Shot (4 Players) (bootleg)", GAME_NO_SOUND )
 GAME( 1988, tetrisbl, tetris,   tetrisbl, tetris,   tetrisbl, ROT0,   "bootleg", "Tetris (bootleg)" )
 GAMEX(1989, tturfbl,  tturf,    tturfbl,  tturf,    tturfbl,  ROT0,   "bootleg", "Tough Turf (bootleg)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND)
-GAME( 1988, wb3bbl,   wb3b,     wb3bbl,   wb3b,     wb3bbl, ROT0,   "bootleg", "Wonder Boy III - Monster Lair (bootleg)" )
+GAME( 1988, wb3bbl,   wb3,     wb3bbl,   wb3b,     wb3bbl, ROT0,   "bootleg", "Wonder Boy III - Monster Lair (bootleg)" )

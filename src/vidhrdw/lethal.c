@@ -5,32 +5,14 @@
 
  Video hardware emulation.
 
- The 4 modes toggled during the color test:
- cpu #0 (PC=0000094C): unmapped program memory byte write to 000047FE = 00
- cpu #0 (PC=0000094C): unmapped program memory byte write to 000047FF = 1F
- cpu #0 (PC=0000095C): unmapped program memory byte write to 000040C8 = 61
- cpu #0 (PC=0000095F): unmapped program memory byte write to 000040CC = 66
-
- cpu #0 (PC=0000094C): unmapped program memory byte write to 000047FE = 03
- cpu #0 (PC=0000094C): unmapped program memory byte write to 000047FF = E0
- cpu #0 (PC=0000095C): unmapped program memory byte write to 000040C8 = 51
- cpu #0 (PC=0000095F): unmapped program memory byte write to 000040CC = 55
-
- cpu #0 (PC=0000094C): unmapped program memory byte write to 000047FE = 7C
- cpu #0 (PC=0000094C): unmapped program memory byte write to 000047FF = 00
- cpu #0 (PC=0000095C): unmapped program memory byte write to 000040C8 = 41
- cpu #0 (PC=0000095F): unmapped program memory byte write to 000040CC = 44
-
- cpu #0 (PC=0000094C): unmapped program memory byte write to 000047FE = 7F
- cpu #0 (PC=0000094C): unmapped program memory byte write to 000047FF = FF
- cpu #0 (PC=0000095C): unmapped program memory byte write to 000040C8 = 71
- cpu #0 (PC=0000095F): unmapped program memory byte write to 000040CC = 77
-
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/konamiic.h"
+
+#define GUNX( a ) ( ( readinputport( a ) * 287 ) / 0xff )
+#define GUNY( a ) ( ( readinputport( a ) * 223 ) / 0xff )
 
 static int sprite_colorbase;
 static int layer_colorbase[4];
@@ -57,9 +39,12 @@ VIDEO_START(lethalen)
 {
 	K053251_vh_start();
 
-	K056832_vh_start(REGION_GFX1, K056832_BPP_4, 1, NULL, lethalen_tile_callback);
+	K056832_vh_start(REGION_GFX1, K056832_BPP_8LE, 1, NULL, lethalen_tile_callback);
 	if (K053245_vh_start(REGION_GFX2,NORMAL_PLANE_ORDER, lethalen_sprite_callback))
 		return 1;
+
+	// this game uses external linescroll RAM
+	K056832_SetExtLinescroll();
 
 	// the US and Japanese cabinets apparently use different mirror setups
 	if (!strcmp(Machine->gamedrv->name, "lethalen"))
@@ -68,6 +53,7 @@ VIDEO_START(lethalen)
 		K056832_set_LayerOffset(1, -64, 0);
 		K056832_set_LayerOffset(2, -64, 0);
 		K056832_set_LayerOffset(3, -64, 0);
+		K053245_set_SpriteOffset(96, -8);
 	}
 	else
 	{
@@ -75,6 +61,7 @@ VIDEO_START(lethalen)
 		K056832_set_LayerOffset(1, 64, 0);
 		K056832_set_LayerOffset(2, 64, 0);
 		K056832_set_LayerOffset(3, 64, 0);
+		K053245_set_SpriteOffset(-96, 8);
 	}
 
 	layer_colorbase[0] = 0x00;
@@ -94,7 +81,6 @@ WRITE8_HANDLER(le_palette_control)
 			layer_colorbase[1] = (((data>>4) & 0x7)-1) * 0x40;
 			K056832_mark_plane_dirty(0);
 			K056832_mark_plane_dirty(1);
-			logerror("PCU1: %02x => %x %x\n", data, layer_colorbase[0], layer_colorbase[1]);
 			break;
 
 		case 4: // 40cc - PCU2 from schematics
@@ -102,37 +88,29 @@ WRITE8_HANDLER(le_palette_control)
 			layer_colorbase[3] = (((data>>4) & 0x7)-1) * 0x40;
 			K056832_mark_plane_dirty(2);
 			K056832_mark_plane_dirty(3);
-			logerror("PCU2: %02x => %x %x\n", data, layer_colorbase[2], layer_colorbase[3]);
 			break;
 
 		case 8:	// 40d0 - PCU3 from schematics
 			sprite_colorbase = ((data & 0x7)-1) * 0x40;
-			logerror("PCU3: %02x => %x\n", data, sprite_colorbase);
 			break;
 	}
 }
 
-
 VIDEO_UPDATE(lethalen)
 {
-	fillbitmap(bitmap, get_black_pen(), cliprect);
+	fillbitmap(bitmap, 7168, cliprect);
 	fillbitmap(priority_bitmap, 0, cliprect);
 
-#if 0
-	if (code_pressed_memory(KEYCODE_U)) { layer_colorbase[0] -= 0x10; K056832_mark_plane_dirty(0); printf("%02x %02x %02x %02x\n", layer_colorbase[0], layer_colorbase[1], layer_colorbase[2], layer_colorbase[3]); }
-	if (code_pressed_memory(KEYCODE_I)) { layer_colorbase[0] += 0x10; K056832_mark_plane_dirty(0); printf("%02x %02x %02x %02x\n", layer_colorbase[0], layer_colorbase[1], layer_colorbase[2], layer_colorbase[3]); }
-	if (code_pressed_memory(KEYCODE_O)) { layer_colorbase[1] -= 0x10; K056832_mark_plane_dirty(1); printf("%02x %02x %02x %02x\n", layer_colorbase[0], layer_colorbase[1], layer_colorbase[2], layer_colorbase[3]); }
-	if (code_pressed_memory(KEYCODE_P)) { layer_colorbase[1] += 0x10; K056832_mark_plane_dirty(1); printf("%02x %02x %02x %02x\n", layer_colorbase[0], layer_colorbase[1], layer_colorbase[2], layer_colorbase[3]); }
-	if (code_pressed_memory(KEYCODE_H)) { layer_colorbase[2] -= 0x10; K056832_mark_plane_dirty(2); printf("%02x %02x %02x %02x\n", layer_colorbase[0], layer_colorbase[1], layer_colorbase[2], layer_colorbase[3]); }
-	if (code_pressed_memory(KEYCODE_J)) { layer_colorbase[2] += 0x10; K056832_mark_plane_dirty(2); printf("%02x %02x %02x %02x\n", layer_colorbase[0], layer_colorbase[1], layer_colorbase[2], layer_colorbase[3]); }
-	if (code_pressed_memory(KEYCODE_K)) { layer_colorbase[3] -= 0x10; K056832_mark_plane_dirty(3); printf("%02x %02x %02x %02x\n", layer_colorbase[0], layer_colorbase[1], layer_colorbase[2], layer_colorbase[3]); }
-	if (code_pressed_memory(KEYCODE_L)) { layer_colorbase[3] += 0x10; K056832_mark_plane_dirty(3); printf("%02x %02x %02x %02x\n", layer_colorbase[0], layer_colorbase[1], layer_colorbase[2], layer_colorbase[3]); }
-#endif
 
 	K056832_tilemap_draw(bitmap, cliprect, 3, 0, 1);
 	K056832_tilemap_draw(bitmap, cliprect, 2, 0, 2);
 	K056832_tilemap_draw(bitmap, cliprect, 1, 0, 4);
-	K056832_tilemap_draw(bitmap, cliprect, 0, 0, 8);
 
 	K053245_sprites_draw(bitmap, cliprect);
+
+	// force "A" layer over top of everything
+	K056832_tilemap_draw(bitmap, cliprect, 0, 0, 0);
+
+	draw_crosshair(bitmap, GUNX(2)+216, 240-GUNY(3), cliprect);
+	draw_crosshair(bitmap, GUNX(4)+216, 240-GUNY(5), cliprect);
 }

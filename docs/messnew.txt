@@ -1,4 +1,4 @@
-0.91.1
+0.92
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
@@ -44,7 +44,7 @@ Imgtool Changes:
 
 Source Changes:
 ----------------
-- The core is based on MAME 0.91u2.  This incorporates all features of the
+- The core is based on MAME 0.92.  This incorporates all features of the
   update to this core.  [MAME team]
   
 - Changed core to support multiple devices of the same IO_* enum value.  Note

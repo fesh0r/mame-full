@@ -127,18 +127,16 @@ PALETTE_INIT( pacman )
 
 UINT32 pacman_scan_rows( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )
 {
-	if( col < 2 )
-	{
-		return row + ( ( col + 30 ) * 32 ) + 2;
-	}
-	else if( col < 34 )
-	{
-		return ( col - 2 ) + ( row * 32 ) + 64;
-	}
+	int offs;
+
+	row += 2;
+	col -= 2;
+	if (col & 0x20)
+		offs = row + ((col & 0x1f) << 5);
 	else
-	{
-		return row + ( ( col - 34 ) * 32 ) + 2;
-	}
+		offs = col + (row << 5);
+
+	return offs;
 }
 
 static void pacman_get_tile_info(int tile_index)
@@ -474,19 +472,17 @@ Jr. Pac-Man
 
 UINT32 jrpacman_scan_rows( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )
 {
-	if( col < 2 && row < 28 )
-	{
-		return row + ( ( col + 58 ) * 32 ) + 2;
-	}
-	else if( col >= 2 && col < 34 )
-	{
-		return ( col - 2 ) + ( row * 32 ) + 64;
-	}
-	else if( col >= 34 && row < 28 )
-	{
-		return row + ( ( ( col - 34 ) + 56 ) * 32 ) + 2;
-	}
-	return 0;
+	int offs;
+
+	row += 2;
+	col -= 2;
+	if ((col & 0x20) && (row & 0x20))
+		offs = 0;
+	else if (col & 0x20)
+		offs = row + (((col&0x3) | 0x38)<< 5);
+	else
+		offs = col + (row << 5);
+	return offs;
 }
 
 static void jrpacman_get_tile_info(int tile_index)

@@ -594,46 +594,54 @@ static void (*hyperstone_op[0x100])(void) = {
 };
 
 // 4Kb IRAM (On-Chip Memory)
-#if 1
+#if (HAS_E116T || HAS_GMS30C2116)
 
 static ADDRESS_MAP_START( e116_4k_iram_map, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0xc0000000, 0xc0000fff) AM_RAM
-ADDRESS_MAP_END
-
-#else
-
-static ADDRESS_MAP_START( e116_4k_iram_map, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0xc0000000, 0xdfffffff) AM_RAM AM_MASK(0xfff)
+	AM_RANGE(0xc0000000, 0xc0000fff) AM_RAM AM_MIRROR(0x1ffff000)
 ADDRESS_MAP_END
 
 #endif
+
+#if (HAS_E132N || HAS_E132T || HAS_GMS30C2132)
 
 static ADDRESS_MAP_START( e132_4k_iram_map, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0xc0000000, 0xdfffffff) AM_RAM AM_MASK(0xfff)
-ADDRESS_MAP_END
-
-#if 0 // disabled for now
-
-// 8Kb IRAM (On-Chip Memory)
-static ADDRESS_MAP_START( e116_8k_iram_map, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0xc0000000, 0xdfffffff) AM_RAM AM_MASK(0x1fff)
+	AM_RANGE(0xc0000000, 0xc0000fff) AM_RAM AM_MIRROR(0x1ffff000)
 ADDRESS_MAP_END
 
 #endif
 
-static ADDRESS_MAP_START( e132_8k_iram_map, ADDRESS_SPACE_PROGRAM, 32 )
-//	AM_RANGE(0xc0000000, 0xdfffffff) AM_RAM AM_MASK(0x1fff)
+// 8Kb IRAM (On-Chip Memory)
+
+#if (HAS_E116XT || HAS_GMS30C2216)
+
+static ADDRESS_MAP_START( e116_8k_iram_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0xc0000000, 0xc0001fff) AM_RAM AM_MIRROR(0x1fffe000)
 ADDRESS_MAP_END
 
-#if 0 // disabled for now
+#endif
+
+#if (HAS_E132XN || HAS_E132XT || HAS_GMS30C2232)
+
+static ADDRESS_MAP_START( e132_8k_iram_map, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0xc0000000, 0xc0001fff) AM_RAM AM_MIRROR(0x1fffe000)
+ADDRESS_MAP_END
+
+#endif
 
 // 16Kb IRAM (On-Chip Memory)
+
+#if (HAS_E116XS || HAS_E116XSR)
+
 static ADDRESS_MAP_START( e116_16k_iram_map, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0xc0000000, 0xdfffffff) AM_RAM AM_MASK(0x3fff)
+	AM_RANGE(0xc0000000, 0xc0003fff) AM_RAM AM_MIRROR(0x1fffc000)
 ADDRESS_MAP_END
 
+#endif
+
+#if (HAS_E132XS || HAS_E132XSR)
+
 static ADDRESS_MAP_START( e132_16k_iram_map, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0xc0000000, 0xdfffffff) AM_RAM AM_MASK(0x3fff)
+	AM_RANGE(0xc0000000, 0xc0003fff) AM_RAM AM_MIRROR(0x1fffc000)
 ADDRESS_MAP_END
 
 #endif
@@ -5646,7 +5654,7 @@ void gms30c2216_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 16;					break;
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 16;					break;
 
-		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM: info->internal_map = &construct_map_e132_8k_iram_map; break;
+		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM: info->internal_map = &construct_map_e116_8k_iram_map; break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_INIT:							info->init = e116_init;				break;

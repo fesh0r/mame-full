@@ -70,7 +70,6 @@ Other notes:
 
 void fd1094_machine_init(void);
 void fd1094_driver_init(void);
-extern WRITE16_HANDLER( sys18_extrombank_w );
 
 /* vidhrdw/segac2.c */
 extern void update_system18_vdp( struct mame_bitmap *bitmap, const struct rectangle *cliprect );
@@ -473,25 +472,6 @@ static READ16_HANDLER( vdp_r )
 */
 
 static int io_reg[0x10];
-
-void sys18_io_reset(void)
-{
-	// All output latches are reset
-	io_reg[0x00] = 0x00;
-	io_reg[0x01] = 0x00;
-	io_reg[0x02] = 0x00;
-	io_reg[0x03] = 0x00;
-	io_reg[0x04] = 0x00;
-	io_reg[0x05] = 0x00;
-	io_reg[0x06] = 0x00;
-	io_reg[0x07] = 0x00;
-
-	// CNT2-0 pins reset
-	io_reg[0x0E] = 0x00;
-
-	// All ports are inputs
-	io_reg[0x0F] = 0x00;
-}
 
 static READ16_HANDLER( sys18_io_r )
 {

@@ -103,6 +103,8 @@ Label	Printed*	Position
 Push Button Test Switch
 
 
+Memory map (from the schematics)
+
 Address          Dir Data     Name      Description
 ---------------- --- -------- --------- -----------------------
 000xxxxxxxxxxxxx R   xxxxxxxx PROM      program ROM (banked)
@@ -144,6 +146,12 @@ Address          Dir Data     Name      Description
 1xxxxxxxxxxxxxxx R   xxxxxxxx PROM      program ROM
 
 
+TODO:
+
+- Sprite decode
+- Sprite banking (? - the reload indicator)
+- Sprite priorities
+- Guns need reworking in Japan set -  you move backwards right now, it's unnatural a bit :)
 
 ***************************************************************************/
 
@@ -155,6 +163,9 @@ Address          Dir Data     Name      Description
 #include "cpu/hd6309/hd6309.h"
 #include "cpu/z80/z80.h"
 #include "machine/eeprom.h"
+
+#define GUNX( a ) (( ( readinputport( a ) * 287 ) / 0xff ) + 16)
+#define GUNY( a ) (( ( readinputport( a ) * 223 ) / 0xff ) + 10)
 
 VIDEO_START(lethalen);
 VIDEO_UPDATE(lethalen);
@@ -199,13 +210,13 @@ static READ8_HANDLER( control2_r )
 
 static WRITE8_HANDLER( control2_w )
 {
-	/* bit 0  is data */
-	/* bit 1  is cs (active low) */
-	/* bit 2  is clock (active high) */
-	/* bit 3  is "MUT" on the schematics (?) */
-	/* bit 4  bankswitches the 4800-4fff region: 0 = registers, 1 = RAM ("CBNK" on schematics) */
-	/* bit 6  is "SHD0" (some kind of shadow control) */
-	/* bit 7  is "SHD1" (ditto) */
+	/* bit 0 is data */
+	/* bit 1 is cs (active low) */
+	/* bit 2 is clock (active high) */
+	/* bit 3 is "MUT" on the schematics (audio mute?) */
+	/* bit 4 bankswitches the 4800-4fff region: 0 = registers, 1 = RAM ("CBNK" on schematics) */
+	/* bit 6 is "SHD0" (some kind of shadow control) */
+	/* bit 7 is "SHD1" (ditto) */
 
 	cur_control2 = data;
 
@@ -268,6 +279,41 @@ static READ8_HANDLER( le_4800_r )
 					return K053244_r(offset-0x40);
 					break;
 
+				case 0x80:
+				case 0x81:
+				case 0x82:
+				case 0x83:
+				case 0x84:
+				case 0x85:
+				case 0x86:
+				case 0x87:
+				case 0x88:
+				case 0x89:
+				case 0x8a:
+				case 0x8b:
+				case 0x8c:
+				case 0x8d:
+				case 0x8e:
+				case 0x8f:
+				case 0x90:
+				case 0x91:
+				case 0x92:
+				case 0x93:
+				case 0x94:
+				case 0x95:
+				case 0x96:
+				case 0x97:
+				case 0x98:
+				case 0x99:
+				case 0x9a:
+				case 0x9b:
+				case 0x9c:
+				case 0x9d:
+				case 0x9e:
+				case 0x9f:
+					return K054000_r(offset-0x80);
+					break;
+
 				case 0xca:
 					return sound_status_r(0);
 					break;
@@ -318,8 +364,43 @@ static WRITE8_HANDLER( le_4800_w )
 					K053244_w(offset-0x40, data);
 					break;
 
+				case 0x80:
+				case 0x81:
+				case 0x82:
+				case 0x83:
+				case 0x84:
+				case 0x85:
+				case 0x86:
+				case 0x87:
+				case 0x88:
+				case 0x89:
+				case 0x8a:
+				case 0x8b:
+				case 0x8c:
+				case 0x8d:
+				case 0x8e:
+				case 0x8f:
+				case 0x90:
+				case 0x91:
+				case 0x92:
+				case 0x93:
+				case 0x94:
+				case 0x95:
+				case 0x96:
+				case 0x97:
+				case 0x98:
+				case 0x99:
+				case 0x9a:
+				case 0x9b:
+				case 0x9c:
+				case 0x9d:
+				case 0x9e:
+				case 0x9f:
+					K054000_w(offset-0x80, data);
+					break;
+
 				default:
-					logerror("Unknown LE 48xx register write: %x to %x\n", data, offset);
+					logerror("Unknown LE 48xx register write: %x to %x (PC=%x)\n", data, offset, activecpu_get_pc());
 					break;
 			}
 		}
@@ -336,20 +417,65 @@ static WRITE8_HANDLER( le_4800_w )
 	}
 }
 
+// use one more palette entry for the BG color
+static WRITE8_HANDLER(le_bgcolor_w)
+{
+	paletteram_xBBBBBGGGGGRRRRR_swap_w(0x3800+offset, data);
+}
+
+static READ8_HANDLER(guns_r)
+{
+	switch (offset)
+	{
+		case 0:
+			return GUNX(2)>>1;
+			break;
+		case 1:
+			if ((240-GUNY(3)) == 7)
+				return 0;
+			else
+				return (240-GUNY(3));
+			break;
+		case 2:
+			return GUNX(4)>>1;
+			break;
+		case 3:
+			if ((240-GUNY(5)) == 7)
+				return 0;
+			else
+				return (240-GUNY(5));
+			break;
+	}
+
+	return 0;
+}
+
+static READ8_HANDLER(gunsaux_r)
+{
+	int res = 0;
+
+	if (GUNX(2) & 1) res |= 0x80;
+	if (GUNX(4) & 1) res |= 0x40;
+
+	return res;
+}
+
 static ADDRESS_MAP_START( le_main, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_BANK1) AM_WRITE(MWA8_ROM)
 	AM_RANGE(0x2000, 0x3fff) AM_RAM				// work RAM
 	AM_RANGE(0x4000, 0x403f) AM_WRITE(K056832_w)
 	AM_RANGE(0x4040, 0x404f) AM_WRITE(K056832_b_w)
 	AM_RANGE(0x4080, 0x4080) AM_READ(MRA8_NOP)		// watchdog
-	AM_RANGE(0x40a0, 0x40a0) AM_READNOP			// gun input related?
+	AM_RANGE(0x4090, 0x4090) AM_READNOP
+	AM_RANGE(0x40a0, 0x40a0) AM_READNOP
 	AM_RANGE(0x40c4, 0x40c4) AM_WRITE(control2_w)
 	AM_RANGE(0x40c8, 0x40d0) AM_WRITE(le_palette_control)	// PCU1-PCU3 on the schematics
-	AM_RANGE(0x40d4, 0x40d7) AM_READNOP			// gun inputs?
+	AM_RANGE(0x40d4, 0x40d7) AM_READ(guns_r)
 	AM_RANGE(0x40d8, 0x40d8) AM_READ(control2_r)
 	AM_RANGE(0x40d9, 0x40d9) AM_READ(input_port_0_r)
-	AM_RANGE(0x40db, 0x40db) AM_READNOP			// gun input related?
+	AM_RANGE(0x40db, 0x40db) AM_READ(gunsaux_r)		// top X bit of guns
 	AM_RANGE(0x40dc, 0x40dc) AM_WRITE(le_bankswitch_w)
+	AM_RANGE(0x47fe, 0x47ff) AM_WRITE(le_bgcolor_w)		// BG color
 	AM_RANGE(0x4800, 0x7fff) AM_READWRITE(le_4800_r, le_4800_w)	AM_BASE(&paletteram) // bankswitched: RAM and registers
 	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_BANK2) AM_WRITE(MWA8_ROM)
 ADDRESS_MAP_END
@@ -360,11 +486,13 @@ static ADDRESS_MAP_START( le_sound, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xf800, 0xfa2f) AM_READWRITE(K054539_0_r, K054539_0_w)
 	AM_RANGE(0xfc00, 0xfc00) AM_WRITE(soundlatch2_w)
 	AM_RANGE(0xfc02, 0xfc02) AM_READ(soundlatch_r)
+	AM_RANGE(0xfc03, 0xfc03) AM_READNOP
 ADDRESS_MAP_END
 
 /* sound */
 
 INPUT_PORTS_START( lethalen )
+	/* IN 0 */
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -375,6 +503,7 @@ INPUT_PORTS_START( lethalen )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
+	/* IN 1 */
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -392,6 +521,22 @@ INPUT_PORTS_START( lethalen )
 	PORT_DIPNAME( 0x0080, 0x0080, "Sound Output" )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Mono ) )
 	PORT_DIPSETTING(      0x0080, DEF_STR( Stereo ) )
+
+	/* IN 2 */
+	PORT_START
+	PORT_BIT( 0xff, 0x00, IPT_LIGHTGUN_X ) PORT_MINMAX(0,0xff) PORT_SENSITIVITY(25) PORT_KEYDELTA(15) PORT_PLAYER(1)
+
+	/* IN 3 */
+	PORT_START
+	PORT_BIT( 0xff, 0x00, IPT_LIGHTGUN_Y ) PORT_MINMAX(0,0xff) PORT_SENSITIVITY(25) PORT_KEYDELTA(15) PORT_PLAYER(1)
+
+	/* IN 4 */
+	PORT_START
+	PORT_BIT( 0xff, 0x00, IPT_LIGHTGUN_X ) PORT_MINMAX(0,0xff) PORT_SENSITIVITY(25) PORT_KEYDELTA(15) PORT_PLAYER(2)
+
+	/* IN 5 */
+	PORT_START
+	PORT_BIT( 0xff, 0x00, IPT_LIGHTGUN_Y ) PORT_MINMAX(0,0xff) PORT_SENSITIVITY(25) PORT_KEYDELTA(15) PORT_PLAYER(2)
 INPUT_PORTS_END
 
 static struct K054539interface k054539_interface =
@@ -432,9 +577,9 @@ static MACHINE_DRIVER_START( lethalen )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_HAS_SHADOWS)
 	MDRV_SCREEN_SIZE(64*8, 32*8)
-	MDRV_VISIBLE_AREA(220, 64*8-1, 0, 32*8-1)
+	MDRV_VISIBLE_AREA(216, 504-1, 16, 240-1)
 
-	MDRV_PALETTE_LENGTH(7168)
+	MDRV_PALETTE_LENGTH(7168+1)
 
 	MDRV_VIDEO_START(lethalen)
 	MDRV_VIDEO_UPDATE(lethalen)
@@ -442,6 +587,12 @@ static MACHINE_DRIVER_START( lethalen )
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(K054539, k054539_interface)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( lethalej )
+	MDRV_IMPORT_FROM(lethalen)
+
+	MDRV_VISIBLE_AREA(224, 512-1, 16, 240-1)
 MACHINE_DRIVER_END
 
 ROM_START( lethalen )	// US version UAE
@@ -458,13 +609,14 @@ ROM_START( lethalen )	// US version UAE
 	/* tilemaps */
 	ROM_LOAD32_WORD( "191a08", 0x000002, 0x100000, CRC(555bd4db) SHA1(d2e55796b4ab2306ae549fa9e7288e41eaa8f3de) )
 	ROM_LOAD32_WORD( "191a10", 0x000000, 0x100000, CRC(2fa9bf51) SHA1(1e4ec56b41dfd8744347a7b5799e3ebce0939adc) )
-	ROM_LOAD32_WORD( "191a07", 0x100002, 0x100000, CRC(1dad184c) SHA1(b2c4a8e48084005056aef2c8eaccb3d2eca71b73) )
-	ROM_LOAD32_WORD( "191a09", 0x100000, 0x100000, CRC(e2028531) SHA1(63ccce7855d829763e9e248a6c3eb6ea89ab17ee) )
+	ROM_LOAD32_WORD( "191a07", 0x200002, 0x100000, CRC(1dad184c) SHA1(b2c4a8e48084005056aef2c8eaccb3d2eca71b73) )
+	ROM_LOAD32_WORD( "191a09", 0x200000, 0x100000, CRC(e2028531) SHA1(63ccce7855d829763e9e248a6c3eb6ea89ab17ee) )
 
-	ROM_REGION( 0x200000, REGION_GFX2, 0 )
+	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_ERASE00 )
 	/* sprites */
 	ROM_LOAD( "191a04", 0x000000, 0x100000, CRC(5c3eeb2b) SHA1(33ea8b3968b78806334b5a0aab3a2c24e45c604e) )
 	ROM_LOAD( "191a05", 0x100000, 0x100000, CRC(f2e3b58b) SHA1(0bbc2fe87a4fd00b5073a884bcfebcf9c2c402ad) )
+	ROM_LOAD( "191a06", 0x200000, 0x100000, CRC(ee11fc08) SHA1(ec6dd684e8261b181d65b8bf1b9e97da5c4468f7) )
 
 	ROM_REGION( 0x200000, REGION_SOUND1, 0 )
 	/* K054539 samples */
@@ -485,13 +637,14 @@ ROM_START( lethalej )	// Japan version JAD
 	/* tilemaps */
 	ROM_LOAD32_WORD( "191a08", 0x000002, 0x100000, CRC(555bd4db) SHA1(d2e55796b4ab2306ae549fa9e7288e41eaa8f3de) )
 	ROM_LOAD32_WORD( "191a10", 0x000000, 0x100000, CRC(2fa9bf51) SHA1(1e4ec56b41dfd8744347a7b5799e3ebce0939adc) )
-	ROM_LOAD32_WORD( "191a07", 0x100002, 0x100000, CRC(1dad184c) SHA1(b2c4a8e48084005056aef2c8eaccb3d2eca71b73) )
-	ROM_LOAD32_WORD( "191a09", 0x100000, 0x100000, CRC(e2028531) SHA1(63ccce7855d829763e9e248a6c3eb6ea89ab17ee) )
+	ROM_LOAD32_WORD( "191a07", 0x200002, 0x100000, CRC(1dad184c) SHA1(b2c4a8e48084005056aef2c8eaccb3d2eca71b73) )
+	ROM_LOAD32_WORD( "191a09", 0x200000, 0x100000, CRC(e2028531) SHA1(63ccce7855d829763e9e248a6c3eb6ea89ab17ee) )
 
-	ROM_REGION( 0x200000, REGION_GFX2, 0 )
+	ROM_REGION( 0x400000, REGION_GFX2, 0 )
 	/* sprites */
 	ROM_LOAD( "191a04", 0x000000, 0x100000, CRC(5c3eeb2b) SHA1(33ea8b3968b78806334b5a0aab3a2c24e45c604e) )
 	ROM_LOAD( "191a05", 0x100000, 0x100000, CRC(f2e3b58b) SHA1(0bbc2fe87a4fd00b5073a884bcfebcf9c2c402ad) )
+	ROM_LOAD( "191a06", 0x200000, 0x100000, CRC(ee11fc08) SHA1(ec6dd684e8261b181d65b8bf1b9e97da5c4468f7) )
 
 	ROM_REGION( 0x200000, REGION_SOUND1, 0 )
 	/* K054539 samples */
@@ -500,10 +653,10 @@ ROM_END
 
 static DRIVER_INIT( lethalen )
 {
-	konami_rom_deinterleave_2(REGION_GFX2);
+	konami_rom_deinterleave_2_half(REGION_GFX2);
 
 	state_save_register_int("LE", 0, "control2", &cur_control2);
 }
 
 GAMEX( 1992, lethalen, 0,        lethalen, lethalen, lethalen, ORIENTATION_FLIP_Y, "Konami", "Lethal Enforcers (US ver UAE)", GAME_NOT_WORKING)
-GAMEX( 1992, lethalej, lethalen, lethalen, lethalen, lethalen, ORIENTATION_FLIP_X, "Konami", "Lethal Enforcers (Japan ver JAD)", GAME_NOT_WORKING)
+GAMEX( 1992, lethalej, lethalen, lethalej, lethalen, lethalen, ORIENTATION_FLIP_X, "Konami", "Lethal Enforcers (Japan ver JAD)", GAME_NOT_WORKING)
