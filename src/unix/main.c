@@ -39,7 +39,7 @@ int main (int argc, char **argv)
 {
 	int res;
 #ifdef xgl
-	int i, color_deepth;
+	int i, color_depth;
 #endif
 	
 	/* some display methods need to do some stuff with root rights */
@@ -82,38 +82,38 @@ int main (int argc, char **argv)
 	Machine->drv = Machine->gamedrv->drv;
 
 	i=0; 
-	color_deepth=1;
+	color_depth=1;
 	while(i<Machine->drv->color_table_len)
 	{
-		color_deepth*=2;
-		i=(int)pow(2,color_deepth);
+		color_depth*=2;
+		i=(int)pow(2,color_depth);
 	}
 
 	fprintf(stderr,"**** machine orig. color number: %d\n", 
 		Machine->drv->color_table_len);
 
-	fprintf(stderr,"**** machine's orig. color_deepth: %d\n", color_deepth);
+	fprintf(stderr,"**** machine's orig. color_depth: %d\n", color_depth);
 
 	if( (Machine->drv->video_attributes & VIDEO_RGB_DIRECT) >0 )
 	{
-		if(color_deepth==16) color_deepth=15;
-		else color_deepth=32;
+		if(color_depth==16) color_depth=15;
+		else color_depth=32;
 	} else {
 		if(Machine->drv->color_table_len>256)
-			color_deepth=16;
+			color_depth=16;
 	}
 
-	fprintf(stderr,"**** color_deepth regarding video attr.: %d\n", color_deepth);
+	fprintf(stderr,"**** color_depth regarding video attr.: %d\n", color_depth);
 
 	if(  options.color_depth==0 ||
-	    (options.color_depth==16 && color_deepth==15)
+	    (options.color_depth==16 && color_depth==15)
 	  )
 	{
-		options.color_depth = color_deepth;
-		fprintf(stderr,"****  setting options.color_deepth := %d\n",
+		options.color_depth = color_depth;
+		fprintf(stderr,"****  setting options.color_depth := %d\n",
 			options.color_depth);
 	} else {
-		fprintf(stderr,"****  given options.color_deepth := %d\n",
+		fprintf(stderr,"****  given options.color_depth := %d\n",
 			options.color_depth);
 	}
 #endif
