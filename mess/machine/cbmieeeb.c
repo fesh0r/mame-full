@@ -286,7 +286,7 @@ Pin  Signal              Abbreviation  Source
                                      
 -    Gary Pfeiffer, Hewlett-Packard
 -    Nick Hampshire
--    Marko Mäkelä
+-    Marko Makela
 
 
 

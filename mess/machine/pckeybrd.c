@@ -24,16 +24,16 @@
 	  description of the scan code sets (see the PS/2 Technical Reference
 	  manuals for more information on scan code sets 2 and 3):
 
-	ù  set 1, each key has a base scan code.  Some keys generate
+	-  set 1, each key has a base scan code.  Some keys generate
 	   extra scan codes to generate artificial shift states.  This
 	   is similar to the standard scan code set used on the PC and XT.
-	ù  set 2, each key sends one make scan code and two break scan
+	-  set 2, each key sends one make scan code and two break scan
 	   codes bytes (F0 followed by the make code).	This scan code
 	   set is available on the IBM AT also.
-	ù  set 3, each key sends one make scan code and two break scan
+	-  set 3, each key sends one make scan code and two break scan
 	   codes bytes (F0 followed by the make code) and no keys are
 	   altered by Shift/Alt/Ctrl keys.
-	ù  typematic scan codes are the same as the make scan code
+	-  typematic scan codes are the same as the make scan code
 
 */
 
