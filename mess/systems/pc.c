@@ -1620,6 +1620,9 @@ ROM_START( pc20 )
     ROM_REGION16_LE(0x100000,REGION_CPU1, 0)
     ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, CRC(8e9e2bd4))
 	// special bios at 0xe0000 !?
+	// This is probably referring to a check for the Amstrad RP5-2 diagnostic
+	// card, which can be plugged into an Amstrad XT for troubleshooting purposes.
+	// - John Elliott
     ROM_LOAD16_BYTE("pc20v2.0", 0xfc001, 0x2000, CRC(41302eb8)) // v2
     ROM_LOAD16_BYTE("pc20v2.1", 0xfc000, 0x2000, CRC(71b84616)) // v2
 	// also mapped to f0000, f4000, f8000
