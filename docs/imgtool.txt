@@ -262,22 +262,40 @@ data format similar to the one used on ti99 floppies (i.e. logical records are
 grouped in records of 256 bytes matching the sector size of 256 bytes), with
 a custom 128-byte header, and it is supported by many ti99 utilities.)
 
-Parameters for create:
---label=...: an optional string of up to 10 characters.  May include any upper
-	case ASCII character (lower case is not recommended because TI99/4 does not
-	support it), except period ('.'), as this character is used as a path
-	separator by TI systems.  (Of course, the TI99 fdc DSR only implements one
-	directory level (i.e. the root directory), but other TI systems implement
-	this convention extensively.)
---density=[1|2]: 1 for single density (FM), 2 for double density (MFM).  The
-	original TI floppy disk controller only supports single density.
---sides=[1|2]: 1 for single-sided, 2 for double-sided
---tracks=[1-40]: number of track per side.  From 1 to 40.
---sectors=[1-18]:	number of sectors per track.  From 1 to 9 in single density
-	(FM), from 1 to 18 in double density (MFM).
+Legal characters for volume and file names are upper case ASCII characters,
+except period ('.') and space (' ').  Lower case characters are not recommended
+because they are not supported by TI99/4.  You had better avoid control
+characters and non-ASCII characters, too.  (Additionally, the NULL character is
+forbidden in file name, but I think nobody in his right sense would even try to
+enter a NULL character in a file name.)  The restriction on period may sound
+strange to users of other OSes, but this character is used as a path separator
+by TI systems.  (As a matter of fact, all TI99 fdc DSRs (except the HFDC DSR)
+implements only one directory level (i.e. the root directory), but other TI
+systems implement this convention extensively.)  Since period is used as the
+path separator, TI99 users often use the slash character ('/') as the file
+extension separator; note, however, the use of file extensions is never
+systematic in TI99: you may use file extensions if you find them useful, just
+like you may use any other file naming scheme, but no program enforce or
+require filename extensions as it is often the case in the DOS/windows world.
 
-Create can only create 5.25'' floppy images.  Other utilities should support 3.5''
-floppy images fine.
+Parameters for create:
+--label=...: an optional string of up to 10 characters.
+--density=[1|2|3]: 1 for 40-track single density (FM), 2 for 40-track double
+	density (MFM), 3 for 80-track double density and high density (MFM).  The
+	original TI floppy disk controller only supports 40-track single density.
+	The BwG disk controller supports 40-track double density as well.  Only the
+	HFDC controller supports 80-track drives and disks correctly.  No emulated
+	disk controller supports HD: AFAIK, the HFDC hardware is actually able to
+	read and write HD, but the software in the DSR ROM is incomplete and does
+	not implement HD support completely.
+--sides=[1|2]: 1 for single-sided, 2 for double-sided
+--tracks=[1-80]: number of track per side.  From 1 to 40 on 40-track disks,
+	from 1 to 80 on 80-track disks.
+--sectors=[1-36]: number of sectors per track.  From 1 to 9 in single density
+	(FM), from 1 to 18 in double density (MFM), from 1 to 36 in high density
+	(MFM).
+--protection=[0|1]: when set to 1, the disk will be protected and some (but not
+	all) TI99 programs won't overwrite the disk.
 
 
 TI990 disk images (ti990hd)
