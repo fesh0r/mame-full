@@ -41,6 +41,8 @@ struct rc_option xf86_dga_opts[] = {
      NULL }
 };
 
+#ifdef USE_DGA
+
 int xf86_dga_init(void)
 {
 	int i, j;
@@ -115,3 +117,5 @@ int  xf86_dga_16bpp_capable(void)
 {
 	return (*p_xf86_dga_16bpp_capable)();
 }
+
+#endif /*def USE_DGA*/
