@@ -816,10 +816,12 @@ static void overlay_draw(struct osd_bitmap *dest, struct osd_bitmap *source)
 	{
 		if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
 		{
-			UINT8 *dst, *ovr, *src;
+			UINT8 *dst, *ovr, *src, *trans;
 			UINT8 *bright = artwork_overlay->brightness;
 			UINT8 *tab = artwork_overlay->pTable;
 			int bp;
+
+			trans = artwork_overlay->transparency;
 
 			copybitmap(dest, artwork_overlay->artwork ,0,0,0,0,NULL,TRANSPARENCY_NONE,0);
 			for ( j = 0; j < height; j++)
@@ -1110,14 +1112,18 @@ int overlay_set_palette (UINT8 *palette, int num_shades)
 					step = hist[i] * j / 256.0;
 					if (step == 0)
 						/* no beam, just overlay over black screen */
-						artwork_overlay->pTable[i * 256 + j] = i + artwork_overlay->start_pen;
+						artwork_overlay->pTable[(i << 8) + j] = i + artwork_overlay->start_pen;
 					else
-						artwork_overlay->pTable[i * 256 + j] = artwork_overlay->num_pens_used +
-															   shades + step - 1 + artwork_overlay->start_pen;
+						artwork_overlay->pTable[(i << 8) + j] = artwork_overlay->num_pens_used +
+							shades + step - 1 + artwork_overlay->start_pen;
 				}
 				shades += hist[i] - 1;
 			}
 		}
+		/* add the opaque colors */
+		for (i = artwork_overlay->num_pens_trans; i < artwork_overlay->num_pens_used; i++)
+			for (j = 0; j < 256; j++)
+				artwork_overlay->pTable[(i << 8) + j] = i + artwork_overlay->start_pen;
 	}
 	else
 		memcpy (palette, artwork_overlay->orig_palette, 3 * artwork_overlay->num_pens_used);
