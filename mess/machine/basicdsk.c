@@ -191,8 +191,8 @@ void basicdsk_set_geometry(UINT8 drive, UINT8 tracks, UINT8 heads, UINT8 sec_per
 
 
 #if VERBOSE
-	logerror("basicdsk geometry for drive #%d is %d tracks, %d heads, %d sec/track\n",
-		drive, tracks, heads, sec_per_track);
+	logerror("basicdsk geometry for drive #%d is %d tracks, %d heads, %d sec/track, %d bytes per sector, first sector id: %d, file offset to track 0: %d\n",
+		drive, tracks, heads, sec_per_track, sector_length, first_sector_id, offset_track_zero);
 #endif
 
 	pDisk->tracks = tracks;
@@ -201,6 +201,8 @@ void basicdsk_set_geometry(UINT8 drive, UINT8 tracks, UINT8 heads, UINT8 sec_per
 	pDisk->sec_per_track = sec_per_track;
 	pDisk->sector_length = sector_length;
 	pDisk->offset = offset_track_zero;
+	
+	floppy_drive_set_geometry_absolute( drive, tracks, heads );
 	
 	pDisk->image_size = pDisk->tracks * pDisk->heads * pDisk->sec_per_track * pDisk->sector_length;
 
