@@ -587,6 +587,23 @@ INLINE UINT32 blend_over(UINT32 game, UINT32 pre, UINT32 yrgb)
 
 
 
+/*-------------------------------------------------
+	use_artwork_system - decides whether it is
+	appropriate to use the artwork system or not
+-------------------------------------------------*/
+
+static int use_artwork_system(struct osd_create_params *params)
+{
+#ifdef MESS
+	if ((params->width < options.min_width) && (params->height < options.min_height))
+	{
+		options.artwork_res = 2;
+		return 1;
+	}
+#endif
+	return artwork_list != NULL;
+}
+
 #if 0
 #pragma mark -
 #pragma mark OSD FRONTENDS
@@ -616,19 +633,8 @@ int artwork_create_display(struct osd_create_params *params, UINT32 *rgb_compone
 	artwork_list = NULL;
 	if (!artwork_load(Machine->gamedrv, original_width, original_height))
 		return 1;
-	if (!artwork_list)
-#ifdef MESS
-	{
-		if ((params->width < 200) && (params->height < 200))
-		{
-			options.artwork_res = 2;
-		}
-		else
-#endif
+	if (!use_artwork_system(params))
 		return osd_create_display(params, rgb_components);
-#ifdef MESS
-	}
-#endif
 
 	/* determine the game bitmap scale factor */
 	gamescale = options.artwork_res;
