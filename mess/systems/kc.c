@@ -261,7 +261,7 @@ static struct MachineDriver machine_driver_kc85_4 =
 	{
 			/* MachineCPU */
 		{
-			CPU_Z80,  /* type */
+			CPU_Z80_MSX,  /* type */
 			KC85_4_CLOCK,
 			readmem_kc85_4,		   /* MemoryReadAddress */
 			writemem_kc85_4,		   /* MemoryWriteAddress */
@@ -316,7 +316,7 @@ static struct MachineDriver machine_driver_kc85_4d =
 	{
 			/* MachineCPU */
 		{
-			CPU_Z80 | CPU_16BIT_PORT,  /* type */
+			CPU_Z80_MSX | CPU_16BIT_PORT,  /* type */
 			KC85_4_CLOCK,
 			readmem_kc85_4,		   /* MemoryReadAddress */
 			writemem_kc85_4,		   /* MemoryWriteAddress */
@@ -372,7 +372,7 @@ static struct MachineDriver machine_driver_kc85_3 =
 	{
 			/* MachineCPU */
 		{
-			CPU_Z80,  /* type */
+			CPU_Z80_MSX,  /* type */
 			KC85_3_CLOCK,
 			readmem_kc85_3,		   /* MemoryReadAddress */
 			writemem_kc85_3,		   /* MemoryWriteAddress */
