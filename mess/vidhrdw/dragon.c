@@ -750,7 +750,7 @@ void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 				rs.db = full_refresh ? NULL : dirtybuffer;
 				rvm.bytesperrow = bytesperrow;
 				rvm.height = rows / linesperrow;
-				rvm.u.metapalette = NULL;
+				rvm.metapalette = NULL;
 				rvm.flags = RASTERBITS_FLAG_GRAPHICS;
 				rf.width = (coco3_gimevhreg[1] & 0x04) ? 640 : 512;
 				rf.height = rows;
