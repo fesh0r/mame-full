@@ -442,7 +442,7 @@ void debug_view_set_property(struct debug_view *view, int property, const void *
 
 		case DVP_UPDATE_CALLBACK:
 			debug_view_begin_update(view);
-			view->update_func = (void (*)(struct debug_view *)) (genf *) value;
+			memcpy(&view->update_func, &value, sizeof(view->update_func));
 			view->update_pending = 1;
 			debug_view_end_update(view);
 			break;
