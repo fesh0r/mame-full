@@ -15,16 +15,13 @@ int xexex_vh_start(void);
 void xexex_vh_stop(void);
 void xexex_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 WRITE_HANDLER( xexex_palette_w );
-
-WRITE_HANDLER( K053157_ram_w );
-WRITE_HANDLER( K053157_w );
-READ_HANDLER( K053157_r );
+WRITE_HANDLER( xexex_sprite_w );
 
 static int cur_rombank;
 static int cur_back_select, cur_back_ctrla;
 static int cur_control2;
 
-unsigned char *xexex_palette_ram;
+extern unsigned char *xexex_paletteram, *xexex_spriteram;
 
 static int init_eeprom_count;
 
@@ -103,6 +100,8 @@ static WRITE_HANDLER( control2_w )
 	/* bit 0  is data */
 	/* bit 1  is cs (active low) */
 	/* bit 2  is clock (active high) */
+	/* bit 5  is enable irq 6 */
+	/* bit 6  is enable irq 5 */
 	/* bit 11 is watchdog */
 
 	EEPROM_write_bit(data & 0x01);
@@ -119,15 +118,18 @@ static int xexex_interrupt(void)
 	switch (cpu_getiloops())
 	{
 		case 0:
-			if (K053247_is_IRQ_enabled()) return 4;	/* ??? */
+			if (K053246_is_IRQ_enabled())
+				return 4;
 			break;
 
 		case 1:
-			if (K053247_is_IRQ_enabled()) return 5;	/* ??? */
+			if (K053246_is_IRQ_enabled() && (cur_control2 & 0x0040))
+				return 5;
 			break;
 
 		case 2:
-//			if (K053247_is_IRQ_enabled()) return 6;	/* ??? */
+			if (K053246_is_IRQ_enabled() && (cur_control2 & 0x0020))
+				return 6;	 
 			break;
 	}
 	return ignore_interrupt();
@@ -139,7 +141,7 @@ static WRITE_HANDLER( sound_cmd_w )
 {
 	logerror("Sound command : %d\n", data & 0xff);
 	sound_cmd = data & 0xff;
-	//	cpu_set_irq_line(1, 0, HOLD_LINE);
+	/*	cpu_set_irq_line(1, 0, HOLD_LINE); */
 	if(sound_cmd == 0xfe)
 	  sound_status = 0x7f;
 }
@@ -207,10 +209,11 @@ static READ_HANDLER( backrom_r )
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x000000, 0x07ffff, MRA_ROM },
-	{ 0x080000, 0x097fff, MRA_BANK1 },			// Main RAM
+	{ 0x080000, 0x08ffff, MRA_BANK1 },			/* Main RAM */
+	{ 0x090000, 0x097fff, MRA_BANK3 },			/* Sprites */
 	{ 0x0c0000, 0x0c003f, K053157_r },
 	{ 0x0c4000, 0x0c4001, K053246_word_r },
-	{ 0x0c6000, 0x0c6fff, MRA_BANK4 },			// Sprites
+	{ 0x0c6000, 0x0c6fff, MRA_BANK4 },			/* Effects? */
 	{ 0x0c800a, 0x0c800b, back_ctrla_r },
 	{ 0x0c800e, 0x0c800f, back_select_r },
 	{ 0x0d6014, 0x0d6015, sound_status_r },
@@ -220,8 +223,8 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x0dc002, 0x0dc003, control1_r },
 	{ 0x0de000, 0x0de001, control2_r },
 	{ 0x100000, 0x17ffff, MRA_ROM },
-	{ 0x180000, 0x181fff, MRA_BANK2 },			// Graphic planes
-	{ 0x190000, 0x191fff, MRA_BANK6 }, 			// Passthrough to tile roms
+	{ 0x180000, 0x181fff, MRA_BANK2 },			/* Graphic planes */
+	{ 0x190000, 0x191fff, MRA_BANK6 }, 			/* Passthrough to tile roms */
 	{ 0x1a0000, 0x1a1fff, backrom_r },
 	{ 0x1b0000, 0x1b1fff, MRA_BANK5 },
 	{ -1 }
@@ -230,17 +233,19 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x080000, 0x097fff, MWA_BANK1 },
+	{ 0x080000, 0x08ffff, MWA_BANK1 },
+	{ 0x090000, 0x097fff, xexex_sprite_w, &xexex_spriteram },
 	{ 0x0c0000, 0x0c003f, K053157_w },
 	{ 0x0c2000, 0x0c2007, K053246_word_w },
 	{ 0x0c6000, 0x0c6fff, MWA_BANK4 },
 	{ 0x0c800a, 0x0c800b, back_ctrla_w },
 	{ 0x0c800e, 0x0c800f, back_select_w },
+	{ 0x0cc000, 0x0cc01f, K053251_word_w },
 	{ 0x0d600c, 0x0d600d, sound_cmd_w },
 	{ 0x0de000, 0x0de001, control2_w },
 	{ 0x100000, 0x17ffff, MWA_ROM },
 	{ 0x180000, 0x181fff, K053157_ram_w },
-	{ 0x1b0000, 0x1b1fff, xexex_palette_w, &xexex_palette_ram },
+	{ 0x1b0000, 0x1b1fff, xexex_palette_w, &xexex_paletteram },
 	{ -1 }
 };
 
@@ -279,8 +284,8 @@ INPUT_PORTS_START( xexex )
 	PORT_BIT( 0xcc, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED )	// EEPROM data
-	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_UNUSED )	// EEPROM ready (always 1)
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED )	/* EEPROM data */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_UNUSED )	/* EEPROM ready (always 1) */
 	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 	PORT_BIT( 0xf4, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
@@ -306,20 +311,8 @@ INPUT_PORTS_START( xexex )
 
 INPUT_PORTS_END
 
-static struct GfxLayout char_layout =
-{
-	8, 8,
-	0x200000*8/(8*8*4),
-	4,
-	{ 0, 1, 2, 3 },
-	{ 2*4, 3*4, 0*4, 1*4, 6*4, 7*4, 4*4, 5*4 },
-	{ 0*8*4, 1*8*4, 2*8*4, 3*8*4, 4*8*4, 5*8*4, 6*8*4, 7*8*4 },
-	8*8*4,
-};
-
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0x000000, &char_layout, 0, 128 },
 	{ -1 }
 };
 
@@ -335,7 +328,7 @@ static struct MachineDriver machine_driver_xexex =
 #if 0
 		{
 			CPU_Z80,
-			2000000,	/* 2 MHz ? (xtal is 32MHz/19.432MHz) */
+			2000000,	/* 2 MHz ? (xtal is 32MHz/19.432Mhz) */
 			sound_readmem, sound_writemem, 0, 0,
 			ignore_interrupt, 1
 		},
@@ -346,8 +339,8 @@ static struct MachineDriver machine_driver_xexex =
 	0,
 
 	/* video hardware */
-	64*8, 32*8,
-	{ 0*8, 64*8-1, 0*8, 32*8-1 },
+	48*8, 32*8,
+	{ 0*8, 48*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
 	2048, 2048,
 	0,
@@ -393,6 +386,32 @@ ROM_START( xexex )
 	ROM_LOAD( "xex_b08.rom", 0x000000, 0x080000, 0xca816b7b )
 ROM_END
 
+ROM_START( xexexjp )
+	ROM_REGION( 0x180000, REGION_CPU1 )
+	ROM_LOAD_EVEN( "067jaa01.16d", 0x000000,  0x40000, 0x06e99784 )
+	ROM_LOAD_ODD ( "067jaa02.16e", 0x000000,  0x40000, 0x30ae5bc4 )
+	ROM_LOAD_EVEN( "xex_b03.rom", 0x100000,  0x40000, 0x97833086 )
+	ROM_LOAD_ODD ( "xex_b04.rom", 0x100000,  0x40000, 0x26ec5dc8 )
+
+	ROM_REGION( 0x30000, REGION_CPU2 )
+	ROM_LOAD( "067jaa05.4e", 0x000000, 0x020000, 0x2f4dd0a8 )
+	ROM_RELOAD(              0x010000, 0x020000 )
+
+	ROM_REGION( 0x200000, REGION_GFX1 )
+	ROM_LOAD( "xex_b14.rom", 0x000000, 0x100000, 0x02a44bfa )
+	ROM_LOAD( "xex_b13.rom", 0x100000, 0x100000, 0x633c8eb5 )
+
+	ROM_REGION( 0x400000, REGION_GFX2 )
+	ROM_LOAD( "xex_b12.rom", 0x000000, 0x100000, 0x08d611b0 )
+	ROM_LOAD( "xex_b11.rom", 0x100000, 0x100000, 0xa26f7507 )
+	ROM_LOAD( "xex_b10.rom", 0x200000, 0x100000, 0xee31db8d )
+	ROM_LOAD( "xex_b09.rom", 0x300000, 0x100000, 0x88f072ef )
+
+	ROM_REGION( 0x80000, REGION_GFX3 )
+	ROM_LOAD( "xex_b08.rom", 0x000000, 0x080000, 0xca816b7b )
+ROM_END
 
 
-GAME( 1991, xexex, 0, xexex, xexex, xexex, ORIENTATION_FLIP_Y, "Konami", "Xexex" )
+
+GAME( 1991, xexex,   0,     xexex, xexex, xexex, 0, "Konami", "Xexex" )
+GAME( 1991, xexexjp, xexex, xexex, xexex, xexex, 0, "Konami", "Xexex (Japanese set)" )

@@ -276,7 +276,7 @@ static int simpsons_irq(void)
 {
 	if (cpu_getiloops() == 0)
 	{
-		if (simpsons_firq_enabled && K053247_is_IRQ_enabled())
+		if (simpsons_firq_enabled && K053246_is_IRQ_enabled())
 			return KONAMI_INT_FIRQ;
 	}
 	else
