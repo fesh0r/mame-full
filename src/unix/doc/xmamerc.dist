@@ -31,7 +31,7 @@ antialias               1
 translucency            1
 
 ### X11 Related ###
-x11-mode                0
+video-mode              0
 
 ### X11-window Related ###
 cursor                  1
