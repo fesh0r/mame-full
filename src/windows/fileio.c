@@ -207,11 +207,15 @@ static const char *parse_variable(const char **start, const char *end)
 	for (src = *start; src < end && is_variablechar(*src); src++)
 		*dest++ = *src;
 
+	// an empty variable means "$" and should not be expanded
+	if(src == *start)
+		return("$");
+
 	/* NULL terminate and return a pointer to the end */
 	*dest = 0;
 	*start = src;
 
-	/* return the actuval variable value */
+	/* return the actual variable value */
 	var = getenv(variable);
 	return (var) ? var : "";
 }

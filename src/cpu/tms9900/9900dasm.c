@@ -25,8 +25,8 @@
 
 #include "tms9900.h"
 
-#define RDOP(A) (cpu_readop(A) << 8) + (cpu_readop(A+1))
-#define RDWORD(A) (cpu_readop_arg(A) << 8) + (cpu_readop_arg(A+1))
+#define RDOP(A) (cpu_readop(A) << 8) + (cpu_readop((A+1) & 0xffff))
+#define RDWORD(A) (cpu_readop_arg(A) << 8) + (cpu_readop_arg((A+1) & 0xffff))
 
 #define BITS_0to3	((OP>>12) & 0xf)
 #define BITS_2to5	((OP>>10) & 0xf)

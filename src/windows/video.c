@@ -606,13 +606,19 @@ static void throttle_speed(void)
 			if (allow_sleep && (!autoframeskip || frameskip == 0) &&
 				(target - curr) > (cycles_t)(ticks_per_sleep_msec * 1.1))
 			{
+				cycles_t next;
+
 				// keep track of how long we actually slept
 				Sleep(1);
-				ticks_per_sleep_msec = (ticks_per_sleep_msec * 0.90) + ((double)(osd_cycles() - curr) * 0.10);
+				next = osd_cycles();
+				ticks_per_sleep_msec = (ticks_per_sleep_msec * 0.90) + ((double)(next - curr) * 0.10);
+				curr = next;
 			}
-
-			// update the current time
-			curr = osd_cycles();
+			else
+			{
+				// update the current time
+				curr = osd_cycles();
+			}
 		}
 	}
 
