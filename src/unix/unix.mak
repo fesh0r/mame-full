@@ -688,29 +688,29 @@ $(OBJ)/unix.$(DISPLAY_METHOD)/effect_asm.o: src/unix/effect_asm.asm
 	$(CC_COMMENT) @echo Assembling $<...
 	$(CC_COMPILE) nasm $(NASM_FMT) -o $@ $<
 
-doc: doc/xmame-doc.txt doc/x$(TARGET)rc.dist doc/gamelist.$(TARGET) doc/x$(TARGET).6
+doc: src/unix/doc/xmame-doc.txt src/unix/doc/x$(TARGET)rc.dist doc/gamelist.$(TARGET) src/unix/doc/x$(TARGET).6
 
-doc/xmame-doc.txt: doc/xmame-doc.sgml
+src/unix/doc/xmame-doc.txt: src/unix/doc/xmame-doc.sgml
 	cd doc; \
 	sgml2txt   -l en -p a4 -f          xmame-doc.sgml; \
 	sgml2html  -l en -p a4             xmame-doc.sgml; \
 	sgml2latex -l en -p a4 --output=ps xmame-doc.sgml; \
 	rm -f xmame-doc.lyx~
 
-doc/x$(TARGET)rc.dist: all src/unix/xmamerc-keybinding-notes.txt
+src/unix/doc/x$(TARGET)rc.dist: all src/unix/xmamerc-keybinding-notes.txt
 	./x$(TARGET).$(DISPLAY_METHOD) -noloadconfig -showconfig | \
-	 grep -v loadconfig | tr "\033" \# > doc/x$(TARGET)rc.dist
-	cat src/unix/xmamerc-keybinding-notes.txt >> doc/x$(TARGET)rc.dist
+	 grep -v loadconfig | tr "\033" \# > src/unix/doc/x$(TARGET)rc.dist
+	cat src/unix/xmamerc-keybinding-notes.txt >> src/unix/doc/x$(TARGET)rc.dist
 
-doc/gamelist.$(TARGET): all
-	./x$(TARGET).$(DISPLAY_METHOD) -listgamelistheader > doc/gamelist.$(TARGET)
-	./x$(TARGET).$(DISPLAY_METHOD) -listgamelist >> doc/gamelist.$(TARGET)
+src/unix/doc/gamelist.$(TARGET): all
+	./x$(TARGET).$(DISPLAY_METHOD) -listgamelistheader > src/unix/doc/gamelist.$(TARGET)
+	./x$(TARGET).$(DISPLAY_METHOD) -listgamelist >> src/unix/doc/gamelist.$(TARGET)
 
-doc/x$(TARGET).6: all src/unix/xmame.6-1 src/unix/xmame.6-3
-	cat src/unix/xmame.6-1 > doc/x$(TARGET).6
+src/unix/doc/x$(TARGET).6: all src/unix/xmame.6-1 src/unix/xmame.6-3
+	cat src/unix/xmame.6-1 > src/unix/doc/x$(TARGET).6
 	./x$(TARGET).$(DISPLAY_METHOD) -noloadconfig -manhelp | \
-	 tr "\033" \# >> doc/x$(TARGET).6
-	cat src/unix/xmame.6-3 >> doc/x$(TARGET).6
+	 tr "\033" \# >> src/unix/doc/x$(TARGET).6
+	cat src/unix/xmame.6-3 >> src/unix/doc/x$(TARGET).6
 
 install: $(INST.$(DISPLAY_METHOD)) install-man
 	@echo $(NAME) for $(ARCH)-$(MY_CPU) installation completed
@@ -718,7 +718,7 @@ install: $(INST.$(DISPLAY_METHOD)) install-man
 install-man:
 	@echo installing manual pages under $(MANDIR) ...
 	-$(INSTALL_MAN_DIR) $(MANDIR)
-	$(INSTALL_MAN) doc/x$(TARGET).6 $(MANDIR)/x$(TARGET).6
+	$(INSTALL_MAN) src/unix/doc/x$(TARGET).6 $(MANDIR)/x$(TARGET).6
 
 doinstall:
 	@echo installing binaries under $(BINDIR)...
