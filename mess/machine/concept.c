@@ -83,9 +83,6 @@ static void concept_fdc_init(int slot);
 
 DEVICE_LOAD( corvus_floppy )
 {
-	int id = image_index_in_device(image);
-
-
 	if (device_load_basicdsk_floppy(image, file) == INIT_PASS)
 	{
 #if 1
