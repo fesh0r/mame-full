@@ -18,6 +18,13 @@
  *	   terms of its usage and license at any time, including retroactively
  *	 - This entire notice must remain in the source code.
  *
+ * History of changes:
+ * 29.7.2001 Several changes listed below taken by Mario Konegger
+ *           (konegger@itp.tu-graz.ac.at)
+ *           Added 0x7f to set_reg, to prevent p,q,r, overflow.
+ *         Changed 512ms timerinterval from 256 to 128, thus the
+ *         duration of one period is 512ms.
+ *         Extended execute procudure with HLT-mode of CPU.
  *****************************************************************************/
 #include <stdio.h>
 #include "driver.h"
@@ -81,14 +88,15 @@ static UINT8 sc61860_win_layout[] = {
 };
 
 /****************************************************************************
- * The 6502 registers.
+ * The 61860 registers.
  ****************************************************************************/
 typedef struct
 {
     SC61860_CONFIG *config;
     UINT8 ram[0x60]; // internal special ram
     UINT8 p, q, r; //7 bits only?
-    
+
+    UINT8 c;        // port c, used for HLT.    
     UINT8 d, h;
     UINT16 oldpc, pc, dp;
     
@@ -106,7 +114,7 @@ UINT8 *sc61860_internal_ram(void) { return sc61860.ram; }
 void sc61860_2ms_tick(int param)
 {
 	if (--sc61860.timer.count==0) {
-		sc61860.timer.count=256;
+		sc61860.timer.count=128;
 		sc61860.timer.t512ms=!sc61860.timer.t512ms;
 	}
 	sc61860.timer.t2ms=!sc61860.timer.t2ms;
@@ -216,9 +224,9 @@ void sc61860_set_reg (int regnum, unsigned val)
 	{
 	case SC61860_PC: sc61860.pc=val;break;
 	case SC61860_DP: sc61860.dp=val;break;
-	case SC61860_P: sc61860.p=val;break;
-	case SC61860_Q: sc61860.q=val;break;
-	case SC61860_R: sc61860.r=val;break;
+	case SC61860_P: sc61860.p=val&0x7f;break;
+	case SC61860_Q: sc61860.q=val&0x7f;break;
+	case SC61860_R: sc61860.r=val&0x7f;break;
 	case SC61860_CARRY: sc61860.carry=val;break;
 	case SC61860_ZERO: sc61860.zero=val;break;
 #if 0
@@ -238,6 +246,7 @@ void sc61860_set_reg (int regnum, unsigned val)
 	}
 }
 
+/* SC61860 has no IRQ's */
 INLINE void sc61860_take_irq(void)
 {
 }
@@ -255,6 +264,20 @@ int sc61860_execute(int cycles)
 		CALL_MAME_DEBUG;
 
 		sc61860_instruction();
+
+               /* Are we in HLT-mode? */
+               /*if (sc61860.c & 4)
+		 {
+		 if ((sc61860.config && sc61860.config->ina && (sc61860.config->ina()!=0)) || sc61860.timer.t512ms)
+		 {
+                 sc61860.c&=0xfb;
+                 if (sc61860.config->outc) sc61860.config->outc(sc61860.c);
+		 }
+		 sc61860_icount-=4;
+		 }
+		 else if(sc61860.c & 8) {}
+		 
+		 else sc61860_instruction();*/
 
 	} while (sc61860_icount > 0);
 
