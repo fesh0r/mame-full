@@ -476,7 +476,7 @@ static int generic_rom_load(int id, UINT8 *dest, UINT16 destlength)
 
 	fp = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, 0);
 	if (fp) {
-		
+
 		romsize = osd_fsize(fp);
 
 		/* The following hack is for Arkanoid running on the CoCo2.
@@ -485,7 +485,7 @@ static int generic_rom_load(int id, UINT8 *dest, UINT16 destlength)
 		   32K starting at 0x8000. The first 16K is totally inaccessable
 		   from a CoCo2. Thus we need to skip ahead in the ROM file. On
 		   the CoCo3 the entire 32K ROM is accessable. */
-		
+
 		if ( device_crc(IO_CARTSLOT, 0) == 0x25C3AA70 )     /* Test for Arkanoid  */
 		{
 			if ( destlength == 0x4000 )						/* Test if CoCo2      */
@@ -494,7 +494,7 @@ static int generic_rom_load(int id, UINT8 *dest, UINT16 destlength)
 				romsize -= 0x4000;							/* Adjust ROM size    */
 			}
 		}
-		
+
 		if (romsize > destlength)
 			romsize = destlength;
 
@@ -535,12 +535,12 @@ int coco3_rom_load(int id)
 	UINT8 	*ROM = memory_region(REGION_CPU1);
 	int		count;
 	void	*fp;
-	
+
 	fp = image_fopen(IO_CARTSLOT, 0, OSD_FILETYPE_IMAGE, 0);
 	count = count_bank();
 	if (fp)
 		osd_fclose(fp);
-	
+
 	if( count == 0 )
 		/* Load roms starting at 0x8000 and mirror upwards. */
 		/* ROM size is 32K max */
@@ -842,7 +842,7 @@ static void soundmux_update(void)
 	 * It also calls a function into the cartridges device to tell it if it is
 	 * switch on or off.
 	 */
-	 
+
 	int casstatus, new_casstatus;
 
 	casstatus = device_status(IO_CASSETTE, 0, -1);
@@ -867,12 +867,12 @@ static void soundmux_update(void)
 	}
 }
 
-void sound_update(void)
+void dragon_sound_update(void)
 {
 	/* Call this function whenever you need to update the sound. It will
 	 * automatically mute any devices that are switched out.
 	 */
-	 
+
 	if (soundmux_status & SOUNDMUX_STATUS_ENABLE) {
 		switch(soundmux_status) {
 		case SOUNDMUX_STATUS_ENABLE:
@@ -1076,8 +1076,8 @@ static WRITE_HANDLER ( d_pia1_pa_w )
 	 *    1:	Serial out
 	 */
 	d_dac = data & 0xfc;
-	sound_update();
-	
+	dragon_sound_update();
+
 	if (joystick_mode() == JOYSTICKMODE_HIRES)
 		coco_hiresjoy_w(d_dac >= 0x80);
 	else
@@ -1110,9 +1110,9 @@ static WRITE_HANDLER( d_pia1_pb_w )
 	 *
 	 * Source:  Page 31 of the Tandy Color Computer Serice Manual
 	 */
-	 
+
 	 pia1_pb1 = ((data & 0x02) ? 127 : 0);
-	 sound_update();
+	 dragon_sound_update();
 }
 
 static WRITE_HANDLER( coco3_pia1_pb_w )
@@ -1146,11 +1146,11 @@ static READ_HANDLER ( d_pia1_pb_r_dragon )
 	/* This handles the reading of the memory sense switch (pb2) for the Dragon and CoCo 1,
 	 * and serial-in (pb0). Serial-in not yet implemented.
 	 */
-	
+
 	switch( readinputport(12) & 0x18 )		/* Read dip switch setting "on motherboard" */
 	{
 		case 0x00: /* 32/64K: wire output of pia0_pb7 to input pia1_pb2  */
-			return (pia0_pb & 0x80) >> 5;	
+			return (pia0_pb & 0x80) >> 5;
 			break;
 		case 0x08: /* 16K: wire pia1_pb2 high */
 			return 0x04;
@@ -1167,11 +1167,11 @@ static READ_HANDLER ( d_pia1_pb_r_coco2 )
 	/* This handles the reading of the memory sense switch (pb2) for the CoCo 2 and 3,
 	 * and serial-in (pb0). Serial-in not yet implemented.
 	 */
-	
+
 	switch( readinputport(12) & 0x18 )		/* Read dip switch setting "on motherboard" */
 	{
 		case 0x00: /* 32/64K: wire output of pia0_pb6 to input pia1_pb2  */
-			return (pia0_pb & 0x40) >> 4;	
+			return (pia0_pb & 0x40) >> 4;
 			break;
 		case 0x08: /* 16K: wire pia1_pb2 high */
 			return 0x04;
@@ -1782,7 +1782,7 @@ static struct cassette_args coco_cassette_args =
 		| WAVE_STATUS_MOTOR_INHIBIT,				/* initial_status */
 	coco_cassette_fill_wave,									/* fill_wave */
 	coco_cassette_calcchunkinfo,					/* calc_chunk_info */
-	4800,											/* input_smpfreq */	
+	4800,											/* input_smpfreq */
 	COCO_WAVESAMPLES_HEADER,						/* header_samples */
 	COCO_WAVESAMPLES_TRAILER,						/* trailer_samples */
 	0,												/* NA */
@@ -1907,9 +1907,9 @@ static int count_bank(void)
 {
 	unsigned int	crc;
 	/* This function, and all calls of it, are hacks for bankswitched games */
-	
+
 	crc = device_crc(IO_CARTSLOT, 0);
-	
+
 	switch( crc )
 	{
 		case 0x83bd6056:		/* Mind-Roll */
@@ -1931,9 +1931,9 @@ static int is_Orch90(void)
 {
 	unsigned int	crc;
 	/* This function, and all calls of it, are hacks for bankswitched games */
-	
+
 	crc = device_crc(IO_CARTSLOT, 0);
-	
+
 	return crc == 0x15FB39AF;
 }
 
