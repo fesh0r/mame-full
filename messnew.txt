@@ -59,6 +59,7 @@ System Driver Changes:
   interactive typewriter display and Spacewar! supports hyperspace controls
   now. IO code has been rewrote and timings are greatly improved.
   Teletyper output can be logged to a file (via -printer switch).
+  Added support for sequence break system.
   Simulation of CRT remanence. WARNING: .rim files must be run pressing
   LCTRL+ENTER to switch into read-in mode! [Raphael Nabet]
 
