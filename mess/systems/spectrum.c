@@ -212,19 +212,19 @@ static WRITE_HANDLER(spectrum_port_fe_w)
 
 
 
-static MEMORY_READ_START (spectrum_readmem)
-	{ 0x0000, 0x3fff, MRA8_ROM },
-	{ 0x4000, 0x57ff, spectrum_characterram_r },
-	{ 0x5800, 0x5aff, spectrum_colorram_r },
-	{ 0x5b00, 0xffff, MRA8_RAM },
-MEMORY_END
+static ADDRESS_MAP_START (spectrum_readmem, ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x3fff) AM_READ( MRA8_ROM )
+	AM_RANGE( 0x4000, 0x57ff) AM_READ( spectrum_characterram_r )
+	AM_RANGE( 0x5800, 0x5aff) AM_READ( spectrum_colorram_r )
+	AM_RANGE( 0x5b00, 0xffff) AM_READ( MRA8_RAM )
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START (spectrum_writemem)
-	{ 0x0000, 0x3fff, MWA8_ROM },
-	{ 0x4000, 0x57ff, spectrum_characterram_w },
-	{ 0x5800, 0x5aff, spectrum_colorram_w },
-	{ 0x5b00, 0xffff, MWA8_RAM },
-MEMORY_END
+static ADDRESS_MAP_START (spectrum_writemem, ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x3fff) AM_WRITE( MWA8_ROM )
+	AM_RANGE( 0x4000, 0x57ff) AM_WRITE( spectrum_characterram_w )
+	AM_RANGE( 0x5800, 0x5aff) AM_WRITE( spectrum_colorram_w )
+	AM_RANGE( 0x5b00, 0xffff) AM_WRITE( MWA8_RAM )
+ADDRESS_MAP_END
 
 /* KT: more accurate keyboard reading */
 /* DJR: Spectrum+ keys added */
@@ -343,15 +343,15 @@ static WRITE_HANDLER ( spectrum_port_w )
 
 /* ports are not decoded full.
 The function decodes the ports appropriately */
-static PORT_READ_START (spectrum_readport)
-		{0x0000, 0xffff, spectrum_port_r},
-PORT_END
+static ADDRESS_MAP_START (spectrum_readport, ADDRESS_SPACE_IO, 8)
+		AM_RANGE(0x0000, 0xffff) AM_READ( spectrum_port_r)
+ADDRESS_MAP_END
 
 /* ports are not decoded full.
 The function decodes the ports appropriately */
-static PORT_WRITE_START (spectrum_writeport)
-		{0x0000, 0xffff, spectrum_port_w},
-PORT_END
+static ADDRESS_MAP_START (spectrum_writeport, ADDRESS_SPACE_IO, 8)
+		AM_RANGE(0x0000, 0xffff) AM_WRITE( spectrum_port_w)
+ADDRESS_MAP_END
 
 
 /****************************************************************************************************/
@@ -517,29 +517,29 @@ static WRITE_HANDLER ( spectrum_128_port_w )
 
 /* ports are not decoded full.
 The function decodes the ports appropriately */
-static PORT_READ_START (spectrum_128_readport)
-	{0x0000, 0xffff, spectrum_128_port_r},
-PORT_END
+static ADDRESS_MAP_START (spectrum_128_readport, ADDRESS_SPACE_IO, 8)
+	AM_RANGE(0x0000, 0xffff) AM_READ( spectrum_128_port_r)
+ADDRESS_MAP_END
 
 /* ports are not decoded full.
 The function decodes the ports appropriately */
-static PORT_WRITE_START (spectrum_128_writeport)
-	{0x0000, 0xffff, spectrum_128_port_w},
-PORT_END
+static ADDRESS_MAP_START (spectrum_128_writeport, ADDRESS_SPACE_IO, 8)
+	AM_RANGE(0x0000, 0xffff) AM_WRITE( spectrum_128_port_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START (spectrum_128_readmem)
-	{ 0x0000, 0x3fff, MRA8_BANK1 },
-	{ 0x4000, 0x7fff, MRA8_BANK2 },
-	{ 0x8000, 0xbfff, MRA8_BANK3 },
-	{ 0xc000, 0xffff, MRA8_BANK4 },
-MEMORY_END
+static ADDRESS_MAP_START (spectrum_128_readmem, ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x3fff) AM_READ( MRA8_BANK1 )
+	AM_RANGE( 0x4000, 0x7fff) AM_READ( MRA8_BANK2 )
+	AM_RANGE( 0x8000, 0xbfff) AM_READ( MRA8_BANK3 )
+	AM_RANGE( 0xc000, 0xffff) AM_READ( MRA8_BANK4 )
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START (spectrum_128_writemem)
-	{ 0x0000, 0x3fff, MWA8_BANK5 },
-	{ 0x4000, 0x7fff, MWA8_BANK6 },
-	{ 0x8000, 0xbfff, MWA8_BANK7 },
-	{ 0xc000, 0xffff, MWA8_BANK8 },
-MEMORY_END
+static ADDRESS_MAP_START (spectrum_128_writemem, ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x3fff) AM_WRITE( MWA8_BANK5 )
+	AM_RANGE( 0x4000, 0x7fff) AM_WRITE( MWA8_BANK6 )
+	AM_RANGE( 0x8000, 0xbfff) AM_WRITE( MWA8_BANK7 )
+	AM_RANGE( 0xc000, 0xffff) AM_WRITE( MWA8_BANK8 )
+ADDRESS_MAP_END
 
 static MACHINE_INIT( spectrum_128 )
 {
@@ -861,15 +861,15 @@ static WRITE_HANDLER ( spectrum_plus3_port_w )
 
 /* ports are not decoded full.
 The function decodes the ports appropriately */
-static PORT_READ_START (spectrum_plus3_readport)
-		{0x0000, 0xffff, spectrum_plus3_port_r},
-PORT_END
+static ADDRESS_MAP_START (spectrum_plus3_readport, ADDRESS_SPACE_IO, 8)
+		AM_RANGE(0x0000, 0xffff) AM_READ( spectrum_plus3_port_r)
+ADDRESS_MAP_END
 
 /* ports are not decoded full.
 The function decodes the ports appropriately */
-static PORT_WRITE_START (spectrum_plus3_writeport)
-		{0x0000, 0xffff, spectrum_plus3_port_w},
-PORT_END
+static ADDRESS_MAP_START (spectrum_plus3_writeport, ADDRESS_SPACE_IO, 8)
+		AM_RANGE(0x0000, 0xffff) AM_WRITE( spectrum_plus3_port_w)
+ADDRESS_MAP_END
 
 
 static MACHINE_INIT( spectrum_plus3 )
@@ -1192,7 +1192,7 @@ extern void ts2068_update_memory(void)
 							cpu_setbank(5, DOCK+0x8000);
 							memory_set_bankhandler_r(5, 0, MRA8_BANK5);
 							if (timex_cart_chunks&0x10)
-								memory_set_bankhandler_w(13, 0, MWA_BANK13);
+								memory_set_bankhandler_w(13, 0, MWA8_BANK13);
 							else
 								memory_set_bankhandler_w(13, 0, MWA8_ROM);
 						}
@@ -1209,7 +1209,7 @@ extern void ts2068_update_memory(void)
 				cpu_setbank(5, ts2068_ram + 0x4000);
 				cpu_setbank(13, ts2068_ram + 0x4000);
 				memory_set_bankhandler_r(5, 0, MRA8_BANK5);
-				memory_set_bankhandler_w(13, 0, MWA_BANK13);
+				memory_set_bankhandler_w(13, 0, MWA8_BANK13);
 				logerror("8000-9fff RAM\n");
 		}
 
@@ -1229,7 +1229,7 @@ extern void ts2068_update_memory(void)
 							cpu_setbank(6, DOCK+0xa000);
 							memory_set_bankhandler_r(6, 0, MRA8_BANK6);
 							if (timex_cart_chunks&0x20)
-								memory_set_bankhandler_w(14, 0, MWA_BANK14);
+								memory_set_bankhandler_w(14, 0, MWA8_BANK14);
 							else
 								memory_set_bankhandler_w(14, 0, MWA8_ROM);
 						}
@@ -1246,7 +1246,7 @@ extern void ts2068_update_memory(void)
 				cpu_setbank(6, ts2068_ram + 0x6000);
 				cpu_setbank(14, ts2068_ram + 0x6000);
 				memory_set_bankhandler_r(6, 0, MRA8_BANK6);
-				memory_set_bankhandler_w(14, 0, MWA_BANK14);
+				memory_set_bankhandler_w(14, 0, MWA8_BANK14);
 				logerror("a000-bfff RAM\n");
 		}
 
@@ -1266,7 +1266,7 @@ extern void ts2068_update_memory(void)
 							cpu_setbank(7, DOCK+0xc000);
 							memory_set_bankhandler_r(7, 0, MRA8_BANK7);
 							if (timex_cart_chunks&0x40)
-								memory_set_bankhandler_w(15, 0, MWA_BANK15);
+								memory_set_bankhandler_w(15, 0, MWA8_BANK15);
 							else
 								memory_set_bankhandler_w(15, 0, MWA8_ROM);
 						}
@@ -1283,7 +1283,7 @@ extern void ts2068_update_memory(void)
 				cpu_setbank(7, ts2068_ram + 0x8000);
 				cpu_setbank(15, ts2068_ram + 0x8000);
 				memory_set_bankhandler_r(7, 0, MRA8_BANK7);
-				memory_set_bankhandler_w(15, 0, MWA_BANK15);
+				memory_set_bankhandler_w(15, 0, MWA8_BANK15);
 				logerror("c000-dfff RAM\n");
 		}
 
@@ -1303,7 +1303,7 @@ extern void ts2068_update_memory(void)
 							cpu_setbank(8, DOCK+0xe000);
 							memory_set_bankhandler_r(8, 0, MRA8_BANK8);
 							if (timex_cart_chunks&0x80)
-								memory_set_bankhandler_w(16, 0, MWA_BANK16);
+								memory_set_bankhandler_w(16, 0, MWA8_BANK16);
 							else
 								memory_set_bankhandler_w(16, 0, MWA8_ROM);
 						}
@@ -1320,41 +1320,41 @@ extern void ts2068_update_memory(void)
 				cpu_setbank(8, ts2068_ram + 0xa000);
 				cpu_setbank(16, ts2068_ram + 0xa000);
 				memory_set_bankhandler_r(8, 0, MRA8_BANK8);
-				memory_set_bankhandler_w(16, 0, MWA_BANK16);
+				memory_set_bankhandler_w(16, 0, MWA8_BANK16);
 				logerror("e000-ffff RAM\n");
 		}
 }
 
 
-static PORT_READ_START (ts2068_readport)
-	{0x0000, 0x0ffff, ts2068_port_r},
-PORT_END
+static ADDRESS_MAP_START (ts2068_readport, ADDRESS_SPACE_IO, 8)
+	AM_RANGE(0x0000, 0x0ffff) AM_READ( ts2068_port_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START (ts2068_writeport)
-	{0x0000, 0x0ffff, ts2068_port_w},
-PORT_END
+static ADDRESS_MAP_START (ts2068_writeport, ADDRESS_SPACE_IO, 8)
+	AM_RANGE(0x0000, 0x0ffff) AM_WRITE( ts2068_port_w)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START (ts2068_readmem)
-	{ 0x0000, 0x1fff, MRA8_BANK1 },
-	{ 0x2000, 0x3fff, MRA8_BANK2 },
-	{ 0x4000, 0x5fff, MRA8_BANK3 },
-	{ 0x6000, 0x7fff, MRA8_BANK4 },
-	{ 0x8000, 0x9fff, MRA8_BANK5 },
-	{ 0xa000, 0xbfff, MRA8_BANK6 },
-	{ 0xc000, 0xdfff, MRA8_BANK7 },
-	{ 0xe000, 0xffff, MRA8_BANK8 },
-MEMORY_END
+static ADDRESS_MAP_START (ts2068_readmem, ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x1fff) AM_READ( MRA8_BANK1 )
+	AM_RANGE( 0x2000, 0x3fff) AM_READ( MRA8_BANK2 )
+	AM_RANGE( 0x4000, 0x5fff) AM_READ( MRA8_BANK3 )
+	AM_RANGE( 0x6000, 0x7fff) AM_READ( MRA8_BANK4 )
+	AM_RANGE( 0x8000, 0x9fff) AM_READ( MRA8_BANK5 )
+	AM_RANGE( 0xa000, 0xbfff) AM_READ( MRA8_BANK6 )
+	AM_RANGE( 0xc000, 0xdfff) AM_READ( MRA8_BANK7 )
+	AM_RANGE( 0xe000, 0xffff) AM_READ( MRA8_BANK8 )
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START (ts2068_writemem)
-	{ 0x0000, 0x1fff, MWA8_BANK9 },
-	{ 0x2000, 0x3fff, MWA8_BANK10 },
-	{ 0x4000, 0x5fff, MWA8_BANK11 },
-	{ 0x6000, 0x7fff, MWA8_BANK12 },
-	{ 0x8000, 0x9fff, MWA_BANK13 },
-	{ 0xa000, 0xbfff, MWA_BANK14 },
-	{ 0xc000, 0xdfff, MWA_BANK15 },
-	{ 0xe000, 0xffff, MWA_BANK16 },
-MEMORY_END
+static ADDRESS_MAP_START (ts2068_writemem, ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x1fff) AM_WRITE( MWA8_BANK9 )
+	AM_RANGE( 0x2000, 0x3fff) AM_WRITE( MWA8_BANK10 )
+	AM_RANGE( 0x4000, 0x5fff) AM_WRITE( MWA8_BANK11 )
+	AM_RANGE( 0x6000, 0x7fff) AM_WRITE( MWA8_BANK12 )
+	AM_RANGE( 0x8000, 0x9fff) AM_WRITE( MWA8_BANK13 )
+	AM_RANGE( 0xa000, 0xbfff) AM_WRITE( MWA8_BANK14 )
+	AM_RANGE( 0xc000, 0xdfff) AM_WRITE( MWA8_BANK15 )
+	AM_RANGE( 0xe000, 0xffff) AM_WRITE( MWA8_BANK16 )
+ADDRESS_MAP_END
 
 
 
@@ -1379,10 +1379,10 @@ static MACHINE_INIT( ts2068 )
 	memory_set_bankhandler_w(10, 0, MWA8_BANK10);
 	memory_set_bankhandler_w(11, 0, MWA8_BANK11);
 	memory_set_bankhandler_w(12, 0, MWA8_BANK12);
-	memory_set_bankhandler_w(13, 0, MWA_BANK13);
-	memory_set_bankhandler_w(14, 0, MWA_BANK14);
-	memory_set_bankhandler_w(15, 0, MWA_BANK15);
-	memory_set_bankhandler_w(16, 0, MWA_BANK16);
+	memory_set_bankhandler_w(13, 0, MWA8_BANK13);
+	memory_set_bankhandler_w(14, 0, MWA8_BANK14);
+	memory_set_bankhandler_w(15, 0, MWA8_BANK15);
+	memory_set_bankhandler_w(16, 0, MWA8_BANK16);
 
 	ts2068_port_ff_data = 0;
 	ts2068_port_f4_data = 0;
@@ -1432,26 +1432,26 @@ static WRITE_HANDLER ( tc2048_port_w )
 
 /* ports are not decoded full.
 The function decodes the ports appropriately */
-static PORT_READ_START (tc2048_readport)
-	{0x0000, 0x0ffff, tc2048_port_r},
-PORT_END
+static ADDRESS_MAP_START (tc2048_readport, ADDRESS_SPACE_IO, 8)
+	AM_RANGE(0x0000, 0x0ffff) AM_READ( tc2048_port_r)
+ADDRESS_MAP_END
 
 /* ports are not decoded full.
 The function decodes the ports appropriately */
-static PORT_WRITE_START (tc2048_writeport)
-	{0x0000, 0x0ffff, tc2048_port_w},
-PORT_END
+static ADDRESS_MAP_START (tc2048_writeport, ADDRESS_SPACE_IO, 8)
+	AM_RANGE(0x0000, 0x0ffff) AM_WRITE( tc2048_port_w)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START (tc2048_readmem)
-	{ 0x0000, 0x3fff, MRA8_ROM },
-	{ 0x4000, 0xffff, MRA8_BANK1 },
-MEMORY_END
+static ADDRESS_MAP_START (tc2048_readmem, ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x3fff) AM_READ( MRA8_ROM )
+	AM_RANGE( 0x4000, 0xffff) AM_READ( MRA8_BANK1 )
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START (tc2048_writemem)
-	{ 0x0000, 0x3fff, MWA8_ROM },
-	{ 0x4000, 0xffff, MWA8_BANK2 },
-MEMORY_END
+static ADDRESS_MAP_START (tc2048_writemem, ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x3fff) AM_WRITE( MWA8_ROM )
+	AM_RANGE( 0x4000, 0xffff) AM_WRITE( MWA8_BANK2 )
+ADDRESS_MAP_END
 
 static MACHINE_INIT( tc2048 )
 {
@@ -1860,15 +1860,15 @@ static WRITE_HANDLER(scorpion_port_w)
 
 /* ports are not decoded full.
 The function decodes the ports appropriately */
-static PORT_READ_START (scorpion_readport)
-		{0x0000, 0xffff, scorpion_port_r},
-PORT_END
+static ADDRESS_MAP_START (scorpion_readport, ADDRESS_SPACE_IO, 8)
+		AM_RANGE(0x0000, 0xffff) AM_READ( scorpion_port_r)
+ADDRESS_MAP_END
 
 /* KT: Changed it to this because the ports are not decoded fully.
 The function decodes the ports appropriately */
-static PORT_WRITE_START (scorpion_writeport)
-		{0x0000, 0xffff, scorpion_port_w},
-PORT_END
+static ADDRESS_MAP_START (scorpion_writeport, ADDRESS_SPACE_IO, 8)
+		AM_RANGE(0x0000, 0xffff) AM_WRITE( scorpion_port_w)
+ADDRESS_MAP_END
 
 
 static MACHINE_INIT( scorpion )
@@ -1917,15 +1917,15 @@ static WRITE_HANDLER(pentagon_port_w)
 
 /* ports are not decoded full.
 The function decodes the ports appropriately */
-static PORT_READ_START (pentagon_readport)
-		{0x0000, 0xffff, pentagon_port_r},
-PORT_END
+static ADDRESS_MAP_START (pentagon_readport, ADDRESS_SPACE_IO, 8)
+		AM_RANGE(0x0000, 0xffff) AM_READ( pentagon_port_r)
+ADDRESS_MAP_END
 
 /* KT: Changed it to this because the ports are not decoded fully.
 The function decodes the ports appropriately */
-static PORT_WRITE_START (pentagon_writeport)
-		{0x0000, 0xffff, pentagon_port_w},
-PORT_END
+static ADDRESS_MAP_START (pentagon_writeport, ADDRESS_SPACE_IO, 8)
+		AM_RANGE(0x0000, 0xffff) AM_WRITE( pentagon_port_w)
+ADDRESS_MAP_END
 
 
 static MACHINE_INIT( pentagon )
@@ -2162,8 +2162,8 @@ static MACHINE_DRIVER_START( spectrum )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80, 3500000)        /* 3.5 Mhz */
 	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
-	MDRV_CPU_MEMORY(spectrum_readmem,spectrum_writemem)
-	MDRV_CPU_PORTS(spectrum_readport,spectrum_writeport)
+	MDRV_CPU_PROGRAM_MAP(spectrum_readmem,spectrum_writemem)
+	MDRV_CPU_IO_MAP(spectrum_readport,spectrum_writeport)
 	MDRV_CPU_VBLANK_INT(spec_interrupt,1)
 	MDRV_FRAMES_PER_SECOND(50.08)
 	MDRV_VBLANK_DURATION(2500)
@@ -2195,8 +2195,8 @@ static MACHINE_DRIVER_START( spectrum_128 )
 
 	MDRV_CPU_REPLACE("main", Z80, 3500000)        /* 3.5 Mhz */
 	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
-	MDRV_CPU_MEMORY(spectrum_128_readmem,spectrum_128_writemem)
-	MDRV_CPU_PORTS(spectrum_128_readport,spectrum_128_writeport)
+	MDRV_CPU_PROGRAM_MAP(spectrum_128_readmem,spectrum_128_writemem)
+	MDRV_CPU_IO_MAP(spectrum_128_readport,spectrum_128_writeport)
 	MDRV_FRAMES_PER_SECOND(50.021)
 
 	MDRV_MACHINE_INIT( spectrum_128 )
@@ -2213,7 +2213,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( spectrum_plus3 )
 	MDRV_IMPORT_FROM( spectrum_128 )
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PORTS(spectrum_plus3_readport,spectrum_plus3_writeport)
+	MDRV_CPU_IO_MAP(spectrum_plus3_readport,spectrum_plus3_writeport)
 	MDRV_FRAMES_PER_SECOND(50.01)
 
 	MDRV_MACHINE_INIT( spectrum_plus3 )
@@ -2224,8 +2224,8 @@ static MACHINE_DRIVER_START( ts2068 )
 	MDRV_IMPORT_FROM( spectrum_128 )
 	MDRV_CPU_REPLACE("main", Z80, 3580000)        /* 3.58 Mhz */
 	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
-	MDRV_CPU_MEMORY(ts2068_readmem,ts2068_writemem)
-	MDRV_CPU_PORTS(ts2068_readport,ts2068_writeport)
+	MDRV_CPU_PROGRAM_MAP(ts2068_readmem,ts2068_writemem)
+	MDRV_CPU_IO_MAP(ts2068_readport,ts2068_writeport)
 	MDRV_FRAMES_PER_SECOND(60)
 
 	MDRV_MACHINE_INIT( ts2068 )
@@ -2249,8 +2249,8 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( tc2048 )
 	MDRV_IMPORT_FROM( spectrum )
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_MEMORY(tc2048_readmem,tc2048_writemem)
-	MDRV_CPU_PORTS(tc2048_readport,tc2048_writeport)
+	MDRV_CPU_PROGRAM_MAP(tc2048_readmem,tc2048_writemem)
+	MDRV_CPU_IO_MAP(tc2048_readport,tc2048_writeport)
 	MDRV_FRAMES_PER_SECOND(50)
 
 	MDRV_MACHINE_INIT( tc2048 )
@@ -2268,7 +2268,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( scorpion )
 	MDRV_IMPORT_FROM( spectrum_128 )
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PORTS(scorpion_readport,scorpion_writeport)
+	MDRV_CPU_IO_MAP(scorpion_readport,scorpion_writeport)
 	MDRV_MACHINE_INIT( scorpion )
 MACHINE_DRIVER_END
 
@@ -2276,7 +2276,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( pentagon )
 	MDRV_IMPORT_FROM( spectrum_128 )
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PORTS(pentagon_readport,pentagon_writeport)
+	MDRV_CPU_IO_MAP(pentagon_readport,pentagon_writeport)
 	MDRV_MACHINE_INIT( pentagon )
 MACHINE_DRIVER_END
 

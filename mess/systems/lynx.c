@@ -20,23 +20,23 @@ int lynx_rotate;
 static int lynx_line_y;
 UINT32 lynx_palette[0x10];
 
-static MEMORY_READ_START( lynx_readmem )
-	{ 0x0000, 0xfbff, MRA8_RAM },
-	{ 0xfc00, 0xfcff, MRA8_BANK1 },
-	{ 0xfd00, 0xfdff, MRA8_BANK2 },
-	{ 0xfe00, 0xfff7, MRA8_BANK3 },
-	{ 0xfff8, 0xfff9, MRA8_RAM },
-    { 0xfffa, 0xffff, MRA8_BANK4 },
-MEMORY_END
+static ADDRESS_MAP_START( lynx_readmem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0xfbff) AM_READ( MRA8_RAM )
+	AM_RANGE( 0xfc00, 0xfcff) AM_READ( MRA8_BANK1 )
+	AM_RANGE( 0xfd00, 0xfdff) AM_READ( MRA8_BANK2 )
+	AM_RANGE( 0xfe00, 0xfff7) AM_READ( MRA8_BANK3 )
+	AM_RANGE( 0xfff8, 0xfff9) AM_READ( MRA8_RAM )
+    AM_RANGE( 0xfffa, 0xffff) AM_READ( MRA8_BANK4 )
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( lynx_writemem )
-	{ 0x0000, 0xfbff, MWA8_RAM },
-	{ 0xfc00, 0xfcff, MWA8_BANK1 },
-	{ 0xfd00, 0xfdff, MWA8_BANK2 },
-	{ 0xfe00, 0xfff8, MWA8_RAM },
-    { 0xfff9, 0xfff9, lynx_memory_config },
-    { 0xfffa, 0xffff, MWA8_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( lynx_writemem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0xfbff) AM_WRITE( MWA8_RAM )
+	AM_RANGE( 0xfc00, 0xfcff) AM_WRITE( MWA8_BANK1 )
+	AM_RANGE( 0xfd00, 0xfdff) AM_WRITE( MWA8_BANK2 )
+	AM_RANGE( 0xfe00, 0xfff8) AM_WRITE( MWA8_RAM )
+    AM_RANGE( 0xfff9, 0xfff9) AM_WRITE( lynx_memory_config )
+    AM_RANGE( 0xfffa, 0xffff) AM_WRITE( MWA8_RAM )
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( lynx )
 	PORT_START
@@ -221,7 +221,7 @@ struct CustomSound_interface lynx2_sound_interface =
 static MACHINE_DRIVER_START( lynx )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M65SC02, 4000000)        /* vti core, integrated in vlsi, stz, but not bbr bbs */
-	MDRV_CPU_MEMORY(lynx_readmem,lynx_writemem)
+	MDRV_CPU_PROGRAM_MAP(lynx_readmem,lynx_writemem)
 	MDRV_CPU_VBLANK_INT(lynx_frame_int, 1)
 	MDRV_FRAMES_PER_SECOND(LCD_FRAMES_PER_SECOND)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

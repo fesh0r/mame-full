@@ -155,12 +155,12 @@ TESTDRIVER( saturn )	/* Sega Saturn										*/
 	DRIVER( channelf )	/* Fairchild Channel F VES - 1976					*/
 
 	/* COLECO */
-//	DRIVER( coleco )	/* ColecoVision (Original BIOS)						*/
-//	DRIVER( colecoa )	/* ColecoVision (Thick Characters)					*/
-//	DRIVER( adam )		/* Coleco Adam										*/
+	DRIVER( coleco )	/* ColecoVision (Original BIOS)						*/
+	DRIVER( colecoa )	/* ColecoVision (Thick Characters)					*/
+	DRIVER( adam )		/* Coleco Adam										*/
 
 	/* NEC */
-//	DRIVER( pce )		/* PC/Engine - Turbo Graphics-16  NEC 1989-1993		*/
+	DRIVER( pce )		/* PC/Engine - Turbo Graphics-16  NEC 1989-1993		*/
 
 //	DRIVER( arcadia )	/* Emerson Arcadia 2001								*/
 //TESTDRIVER( vcg )		/* Palladium Video-Computer-Game					*/
@@ -178,13 +178,13 @@ TESTDRIVER( saturn )	/* Sega Saturn										*/
 	DRIVER( advision )	/* Adventurevision									*/
 
 	/* CAPCOM */
-//	DRIVER( sfzch ) 	/* CPS Changer (Street Fighter ZERO)				*/
+	DRIVER( sfzch ) 	/* CPS Changer (Street Fighter ZERO)				*/
 
 	/* MAGNAVOX */
-//	DRIVER( odyssey2 )	/* Magnavox Odyssey 2 - 1978-1983					*/
+	DRIVER( odyssey2 )	/* Magnavox Odyssey 2 - 1978-1983					*/
 
 	/* WATARA */
-//	DRIVER( svision )	/* Super Vision	Handheld							*/
+	DRIVER( svision )	/* Super Vision	Handheld							*/
 
 	/* INTERON */
 //TESTDRIVER( vc4000 )	/* Interton vc4000									*/
@@ -511,8 +511,8 @@ TESTDRIVER( ti99_4p )	/* 1996 SNUG 99/4P (a.k.a. SGCPU)					*/
 //	DRIVER( sordm5 )
 
 	/* APF Electronics Inc. */
-//	DRIVER( apfm1000 )
-//	DRIVER( apfimag )
+	DRIVER( apfm1000 )
+	DRIVER( apfimag )
 
 	/* Tatung */
 //	DRIVER( einstein )
@@ -613,11 +613,11 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 			*/
 //	DRIVER( msx2j ) 	/* 1983 MSX2 Jap									*/
 
 	/* NASCOM MICROCOMPUTERS */
-//	DRIVER( nascom1 )	/* 1978 Nascom 1									*/
-//	DRIVER( nascom1a )  /**/
-//	DRIVER( nascom1b )  /**/
-//	DRIVER( nascom2 )	/* 1979 Nascom 2									*/
-//	DRIVER( nascom2a )	/* 1979 Nascom 2									*/
+	DRIVER( nascom1 )	/* 1978 Nascom 1									*/
+	DRIVER( nascom1a )  /**/
+	DRIVER( nascom1b )  /**/
+	DRIVER( nascom2 )	/* 1979 Nascom 2									*/
+	DRIVER( nascom2a )	/* 1979 Nascom 2									*/
 
 
 	/* MILES GORDON TECHNOLOGY */
@@ -653,7 +653,7 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 			*/
 
 	/* Team Concepts */
 	/* CPU not known, else should be easy, look into systems/comquest.c */
-//TESTDRIVER( comquest )	/* Comquest Plus German								*/
+TESTDRIVER( comquest )	/* Comquest Plus German								*/
 
 	/* Hewlett Packard */
 //TESTDRIVER( hp48s ) 	/* HP48 S/SX										*/
@@ -692,9 +692,9 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 			*/
 
 /****************Games*******************************************************/
 	/* Computer Electronic */
-//TESTDRIVER( mk1 )		/* Chess Champion MK I								*/
+TESTDRIVER( mk1 )		/* Chess Champion MK I								*/
 	/* Quelle International */
-//	DRIVER( mk2 )		/* Chess Champion MK II								*/
+	DRIVER( mk2 )		/* Chess Champion MK II								*/
 	/* NOVAG Industries Ltd. */
 //TESTDRIVER( ssystem3 )	/* Chess Champion Super System III / MK III			*/
 

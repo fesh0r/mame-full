@@ -326,7 +326,7 @@ static void bank4_RAM(UINT8 *mem)
 {
 	cpu_setbank(4, &mem[0x0a000]);
 	memory_set_bankhandler_r(4, 0, MRA8_BANK4);
-	memory_set_bankhandler_w(4, 0, MWA_BANK4);
+	memory_set_bankhandler_w(4, 0, MWA8_BANK4);
 }
 
 static void bank4_VID(UINT8 *mem)

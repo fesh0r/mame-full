@@ -97,37 +97,37 @@ static READ_HANDLER ( pce_psg_r )
     return 0x00;
 }
 
-MEMORY_READ_START( pce_readmem )
-    { 0x000000, 0x1EDFFF, MRA8_ROM },
-    { 0x1EE000, 0x1EFFFF, MRA8_RAM },
-    { 0x1F0000, 0x1F1FFF, MRA8_RAM },
-    { 0x1FE000, 0x1FE003, vdc_r },
-    { 0x1FE400, 0x1FE407, vce_r },
-    { 0x1FE800, 0x1FE80F, pce_psg_r },
-    { 0x1FEC00, 0x1FEC00, pce_timer_r },
-    { 0x1FF000, 0x1FF000, pce_joystick_r },
-    { 0x1FF402, 0x1FF403, pce_irq_r },
-MEMORY_END
+ADDRESS_MAP_START( pce_readmem , ADDRESS_SPACE_PROGRAM, 8)
+    AM_RANGE( 0x000000, 0x1EDFFF) AM_READ( MRA8_ROM )
+    AM_RANGE( 0x1EE000, 0x1EFFFF) AM_READ( MRA8_RAM )
+    AM_RANGE( 0x1F0000, 0x1F1FFF) AM_READ( MRA8_RAM )
+    AM_RANGE( 0x1FE000, 0x1FE003) AM_READ( vdc_r )
+    AM_RANGE( 0x1FE400, 0x1FE407) AM_READ( vce_r )
+    AM_RANGE( 0x1FE800, 0x1FE80F) AM_READ( pce_psg_r )
+    AM_RANGE( 0x1FEC00, 0x1FEC00) AM_READ( pce_timer_r )
+    AM_RANGE( 0x1FF000, 0x1FF000) AM_READ( pce_joystick_r )
+    AM_RANGE( 0x1FF402, 0x1FF403) AM_READ( pce_irq_r )
+ADDRESS_MAP_END
 
-MEMORY_WRITE_START( pce_writemem )
-    { 0x000000, 0x1EDFFF, MWA8_ROM },
-    { 0x1EE000, 0x1EFFFF, MWA8_RAM, &pce_save_ram },
-    { 0x1F0000, 0x1F1FFF, MWA8_RAM, &pce_user_ram },
-    { 0x1FE000, 0x1FE003, vdc_w },
-    { 0x1FE400, 0x1FE407, vce_w },
-    { 0x1FE800, 0x1FE80F, pce_psg_w },
-    { 0x1FEC00, 0x1FEC01, pce_timer_w },
-    { 0x1FF000, 0x1FF000, pce_joystick_w },
-    { 0x1FF402, 0x1FF403, pce_irq_w },
-MEMORY_END
+ADDRESS_MAP_START( pce_writemem , ADDRESS_SPACE_PROGRAM, 8)
+    AM_RANGE( 0x000000, 0x1EDFFF) AM_WRITE( MWA8_ROM )
+    AM_RANGE( 0x1EE000, 0x1EFFFF) AM_WRITE( MWA8_RAM) AM_BASE( &pce_save_ram )
+    AM_RANGE( 0x1F0000, 0x1F1FFF) AM_WRITE( MWA8_RAM) AM_BASE( &pce_user_ram )
+    AM_RANGE( 0x1FE000, 0x1FE003) AM_WRITE( vdc_w )
+    AM_RANGE( 0x1FE400, 0x1FE407) AM_WRITE( vce_w )
+    AM_RANGE( 0x1FE800, 0x1FE80F) AM_WRITE( pce_psg_w )
+    AM_RANGE( 0x1FEC00, 0x1FEC01) AM_WRITE( pce_timer_w )
+    AM_RANGE( 0x1FF000, 0x1FF000) AM_WRITE( pce_joystick_w )
+    AM_RANGE( 0x1FF402, 0x1FF403) AM_WRITE( pce_irq_w )
+ADDRESS_MAP_END
 
-PORT_READ_START( pce_readport )
-    { 0x00, 0x03, vdc_r },
-PORT_END
+ADDRESS_MAP_START( pce_readport , ADDRESS_SPACE_IO, 8)
+    AM_RANGE( 0x00, 0x03) AM_READ( vdc_r )
+ADDRESS_MAP_END
 
-PORT_WRITE_START( pce_writeport )
-    { 0x00, 0x03, vdc_w },
-PORT_END
+ADDRESS_MAP_START( pce_writeport , ADDRESS_SPACE_IO, 8)
+    AM_RANGE( 0x00, 0x03) AM_WRITE( vdc_w )
+ADDRESS_MAP_END
 
 /* todo: alternate forms of input (multitap, mouse, etc.) */
 INPUT_PORTS_START( pce )
@@ -181,15 +181,16 @@ static struct GfxDecodeInfo pce_gfxdecodeinfo[] =
 {
    { 1, 0x0000, &pce_bg_layout, 0, 0x10 },
    { 1, 0x0000, &pce_obj_layout, 0x100, 0x10 },
-MEMORY_END
+	{-1}
+};
 #endif
 
 
 static MACHINE_DRIVER_START( pce )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(H6280, 7195090)
-	MDRV_CPU_MEMORY(pce_readmem, pce_writemem)
-	MDRV_CPU_PORTS(pce_readport, pce_writeport)
+	MDRV_CPU_PROGRAM_MAP(pce_readmem, pce_writemem)
+	MDRV_CPU_IO_MAP(pce_readport, pce_writeport)
 	MDRV_CPU_VBLANK_INT(pce_interrupt, VDC_LPF)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

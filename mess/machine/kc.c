@@ -207,7 +207,7 @@ READ_HANDLER(kc85_disc_interface_ram_r)
 
 	logerror("interface ram r: %04x\n",addr);
 
-	return cpu_readmem16(addr|0x0f000);
+	return program_read_byte(addr|0x0f000);
 }
 
 /* 4-bit latch used to reset disc interface etc */

@@ -109,13 +109,13 @@ static WRITE_HANDLER(kc85_4_port_w)
 }
 
 
-PORT_READ_START( readport_kc85_4 )
-	{ 0x0000, 0x0ffff, kc85_4_port_r },
-PORT_END
+ADDRESS_MAP_START( readport_kc85_4 , ADDRESS_SPACE_IO, 8)
+	AM_RANGE( 0x0000, 0x0ffff) AM_READ( kc85_4_port_r )
+ADDRESS_MAP_END
 
-PORT_WRITE_START( writeport_kc85_4 )
-	{0x0000, 0x0ffff, kc85_4_port_w},
-PORT_END
+ADDRESS_MAP_START( writeport_kc85_4 , ADDRESS_SPACE_IO, 8)
+	AM_RANGE(0x0000, 0x0ffff) AM_WRITE( kc85_4_port_w)
+ADDRESS_MAP_END
 
 static READ_HANDLER(kc85_4d_port_r)
 {
@@ -210,45 +210,45 @@ static WRITE_HANDLER(kc85_4d_port_w)
 	logerror("unhandled port w: %04x\n",offset);
 }
 
-PORT_READ_START( readport_kc85_4d )
-	{0x0000, 0x0ffff, kc85_4d_port_r},
-PORT_END
+ADDRESS_MAP_START( readport_kc85_4d , ADDRESS_SPACE_IO, 8)
+	AM_RANGE(0x0000, 0x0ffff) AM_READ( kc85_4d_port_r)
+ADDRESS_MAP_END
 
-PORT_WRITE_START( writeport_kc85_4d )
-	{0x0000, 0x0ffff, kc85_4d_port_w},
-PORT_END
+ADDRESS_MAP_START( writeport_kc85_4d , ADDRESS_SPACE_IO, 8)
+	AM_RANGE(0x0000, 0x0ffff) AM_WRITE( kc85_4d_port_w)
+ADDRESS_MAP_END
 
-MEMORY_READ_START( readmem_kc85_4 )
-	{0x00000, 0x03fff, MRA8_BANK1},
-	{0x04000, 0x07fff, MRA8_BANK2},
-	{0x08000, 0x0a7ff, MRA8_BANK3},
+ADDRESS_MAP_START( readmem_kc85_4 , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x00000, 0x03fff) AM_READ( MRA8_BANK1)
+	AM_RANGE(0x04000, 0x07fff) AM_READ( MRA8_BANK2)
+	AM_RANGE(0x08000, 0x0a7ff) AM_READ( MRA8_BANK3)
 	//{0x0a800, 0x0bfff, MRA8_RAM},
-	{0x0a800, 0x0bfff, MRA8_BANK4},
-	{0x0c000, 0x0dfff, MRA8_BANK5},
-	{0x0e000, 0x0ffff, MRA8_BANK6},
-MEMORY_END
+	AM_RANGE(0x0a800, 0x0bfff) AM_READ( MRA8_BANK4)
+	AM_RANGE(0x0c000, 0x0dfff) AM_READ( MRA8_BANK5)
+	AM_RANGE(0x0e000, 0x0ffff) AM_READ( MRA8_BANK6)
+ADDRESS_MAP_END
 
-MEMORY_WRITE_START( writemem_kc85_4 )
-	{0x00000, 0x03fff, MWA8_BANK7},
-	{0x04000, 0x07fff, MWA8_BANK8},
-	{0x08000, 0x0a7ff, MWA8_BANK9},
+ADDRESS_MAP_START( writemem_kc85_4 , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x00000, 0x03fff) AM_WRITE( MWA8_BANK7)
+	AM_RANGE(0x04000, 0x07fff) AM_WRITE( MWA8_BANK8)
+	AM_RANGE(0x08000, 0x0a7ff) AM_WRITE( MWA8_BANK9)
 	//{0x0a800, 0x0bfff, MWA8_RAM},
-	{0x0a800, 0x0bfff, MWA8_BANK10},
-MEMORY_END
+	AM_RANGE(0x0a800, 0x0bfff) AM_WRITE( MWA8_BANK10)
+ADDRESS_MAP_END
 
-MEMORY_READ_START( readmem_kc85_3 )
-	{0x00000, 0x03fff, MRA8_BANK1},
-	{0x04000, 0x07fff, MRA8_BANK2},
-	{0x08000, 0x0bfff, MRA8_BANK3},
-	{0x0c000, 0x0dfff, MRA8_BANK4},
-	{0x0e000, 0x0ffff, MRA8_BANK5},
-MEMORY_END
+ADDRESS_MAP_START( readmem_kc85_3 , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x00000, 0x03fff) AM_READ( MRA8_BANK1)
+	AM_RANGE(0x04000, 0x07fff) AM_READ( MRA8_BANK2)
+	AM_RANGE(0x08000, 0x0bfff) AM_READ( MRA8_BANK3)
+	AM_RANGE(0x0c000, 0x0dfff) AM_READ( MRA8_BANK4)
+	AM_RANGE(0x0e000, 0x0ffff) AM_READ( MRA8_BANK5)
+ADDRESS_MAP_END
 
-MEMORY_WRITE_START( writemem_kc85_3 )
-	{0x00000, 0x03fff, MWA8_BANK6},
-	{0x04000, 0x07fff, MWA8_BANK7},
-	{0x08000, 0x0bfff, MWA8_BANK8},
-MEMORY_END
+ADDRESS_MAP_START( writemem_kc85_3 , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x00000, 0x03fff) AM_WRITE( MWA8_BANK6)
+	AM_RANGE(0x04000, 0x07fff) AM_WRITE( MWA8_BANK7)
+	AM_RANGE(0x08000, 0x0bfff) AM_WRITE( MWA8_BANK8)
+ADDRESS_MAP_END
 
 static READ_HANDLER(kc85_3_port_r)
 {
@@ -312,13 +312,13 @@ static WRITE_HANDLER(kc85_3_port_w)
 }
 
 
-PORT_READ_START( readport_kc85_3 )
-	{ 0x0000, 0x0ffff, kc85_3_port_r},
-PORT_END
+ADDRESS_MAP_START( readport_kc85_3 , ADDRESS_SPACE_IO, 8)
+	AM_RANGE( 0x0000, 0x0ffff) AM_READ( kc85_3_port_r)
+ADDRESS_MAP_END
 
-PORT_WRITE_START( writeport_kc85_3 )
-	{ 0x0000, 0x0ffff, kc85_3_port_w},
-PORT_END
+ADDRESS_MAP_START( writeport_kc85_3 , ADDRESS_SPACE_IO, 8)
+	AM_RANGE( 0x0000, 0x0ffff) AM_WRITE( kc85_3_port_w)
+ADDRESS_MAP_END
 
 
 
@@ -330,34 +330,34 @@ INPUT_PORTS_END
 /********************/
 /** DISC INTERFACE **/
 
-MEMORY_READ_START( readmem_kc85_disc_hw )
-	{0x0000, 0x0ffff, MRA8_RAM},
-MEMORY_END
+ADDRESS_MAP_START( readmem_kc85_disc_hw , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x0ffff) AM_READ( MRA8_RAM)
+ADDRESS_MAP_END
 
-MEMORY_WRITE_START( writemem_kc85_disc_hw )
-	{0x0000, 0x0ffff, MWA8_RAM},
-MEMORY_END
+ADDRESS_MAP_START( writemem_kc85_disc_hw , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x0ffff) AM_WRITE( MWA8_RAM)
+ADDRESS_MAP_END
 
-PORT_READ_START( readport_kc85_disc_hw )
-	{0x0f0, 0x0f0, nec765_status_r},
-	{0x0f1, 0x0f1, nec765_data_r},
-	{0x0f2, 0x0f3, nec765_dack_r},
-	{0x0f4, 0x0f5, kc85_disc_hw_input_gate_r},
+ADDRESS_MAP_START( readport_kc85_disc_hw , ADDRESS_SPACE_IO, 8)
+	AM_RANGE(0x0f0, 0x0f0) AM_READ( nec765_status_r)
+	AM_RANGE(0x0f1, 0x0f1) AM_READ( nec765_data_r)
+	AM_RANGE(0x0f2, 0x0f3) AM_READ( nec765_dack_r)
+	AM_RANGE(0x0f4, 0x0f5) AM_READ( kc85_disc_hw_input_gate_r)
 	/*{0x0f6, 0x0f7, MRA8_NOP},*/			/* for controller */
-	{0x0fc, 0x0ff, kc85_disk_hw_ctc_r},
-PORT_END
+	AM_RANGE(0x0fc, 0x0ff) AM_READ( kc85_disk_hw_ctc_r)
+ADDRESS_MAP_END
 
-PORT_WRITE_START( writeport_kc85_disc_hw )
-	{0x0f1, 0x0f1, nec765_data_w},
-	{0x0f2, 0x0f3, nec765_dack_w},
-	{0x0f8, 0x0f9, kc85_disc_hw_terminal_count_w}, /* terminal count */
-	{0x0fc, 0x0ff, kc85_disk_hw_ctc_w},
-PORT_END
+ADDRESS_MAP_START( writeport_kc85_disc_hw , ADDRESS_SPACE_IO, 8)
+	AM_RANGE(0x0f1, 0x0f1) AM_WRITE( nec765_data_w)
+	AM_RANGE(0x0f2, 0x0f3) AM_WRITE( nec765_dack_w)
+	AM_RANGE(0x0f8, 0x0f9) AM_WRITE( kc85_disc_hw_terminal_count_w) /* terminal count */
+	AM_RANGE(0x0fc, 0x0ff) AM_WRITE( kc85_disk_hw_ctc_w)
+ADDRESS_MAP_END
 
 MACHINE_DRIVER_START( cpu_kc_disc )
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_MEMORY(readmem_kc85_disc_hw, writemem_kc85_disc_hw)
-	MDRV_CPU_PORTS(readport_kc85_disc_hw, writeport_kc85_disc_hw)
+	MDRV_CPU_PROGRAM_MAP(readmem_kc85_disc_hw, writemem_kc85_disc_hw)
+	MDRV_CPU_IO_MAP(readport_kc85_disc_hw, writeport_kc85_disc_hw)
 MACHINE_DRIVER_END
 
 
@@ -379,8 +379,8 @@ static MACHINE_DRIVER_START( kc85_3 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80, KC85_3_CLOCK)
 	MDRV_CPU_FLAGS( CPU_16BIT_PORT )
-	MDRV_CPU_MEMORY(readmem_kc85_3, writemem_kc85_3)
-	MDRV_CPU_PORTS(readport_kc85_3, writeport_kc85_3)
+	MDRV_CPU_PROGRAM_MAP(readmem_kc85_3, writemem_kc85_3)
+	MDRV_CPU_IO_MAP(readport_kc85_3, writeport_kc85_3)
 	MDRV_CPU_CONFIG(kc85_daisy_chain)
 	MDRV_FRAMES_PER_SECOND(50)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -410,8 +410,8 @@ static MACHINE_DRIVER_START( kc85_4 )
 
 	MDRV_CPU_REPLACE("main", Z80, KC85_4_CLOCK)
 	MDRV_CPU_FLAGS( CPU_16BIT_PORT )
-	MDRV_CPU_MEMORY(readmem_kc85_4, writemem_kc85_4)
-	MDRV_CPU_PORTS(readport_kc85_4, writeport_kc85_4)
+	MDRV_CPU_PROGRAM_MAP(readmem_kc85_4, writemem_kc85_4)
+	MDRV_CPU_IO_MAP(readport_kc85_4, writeport_kc85_4)
 
 	MDRV_MACHINE_INIT( kc85_4 )
 	MDRV_VIDEO_START( kc85_4 )

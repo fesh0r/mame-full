@@ -56,41 +56,41 @@ Nascom Memory map
 
 /* port i/o functions */
 
-PORT_READ_START( nascom1_readport )
-	{ 0x00, 0x00, nascom1_port_00_r},
-	{ 0x01, 0x01, nascom1_port_01_r},
-	{ 0x02, 0x02, nascom1_port_02_r},
-PORT_END
+ADDRESS_MAP_START( nascom1_readport , ADDRESS_SPACE_IO, 8)
+	AM_RANGE( 0x00, 0x00) AM_READ( nascom1_port_00_r)
+	AM_RANGE( 0x01, 0x01) AM_READ( nascom1_port_01_r)
+	AM_RANGE( 0x02, 0x02) AM_READ( nascom1_port_02_r)
+ADDRESS_MAP_END
 
-PORT_WRITE_START( nascom1_writeport )
-	{ 0x00, 0x00, nascom1_port_00_w},
-	{ 0x01, 0x01, nascom1_port_01_w},
-PORT_END
+ADDRESS_MAP_START( nascom1_writeport , ADDRESS_SPACE_IO, 8)
+	AM_RANGE( 0x00, 0x00) AM_WRITE( nascom1_port_00_w)
+	AM_RANGE( 0x01, 0x01) AM_WRITE( nascom1_port_01_w)
+ADDRESS_MAP_END
 
 /* Memory w/r functions */
 
-MEMORY_READ_START( nascom1_readmem )
-	{0x0000, 0x07ff, MRA8_ROM},
-	{0x0800, 0x0bff, videoram_r},
-	{0x0c00, 0x0fff, MRA8_RAM},
-	{0x1000, 0x13ff, MRA8_RAM},
-	{0x1000, 0x13ff, MRA8_RAM},	/* 1Kb */
-	{0x1400, 0x4fff, MRA8_RAM},	/* 16Kb */
-	{0x5000, 0x8fff, MRA8_RAM},	/* 32Kb */
-	{0x9000, 0xafff, MRA8_RAM},	/* 40Kb */
-	{0xb000, 0xffff, MRA8_ROM},
-MEMORY_END
+ADDRESS_MAP_START( nascom1_readmem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x07ff) AM_READ( MRA8_ROM)
+	AM_RANGE(0x0800, 0x0bff) AM_READ( videoram_r)
+	AM_RANGE(0x0c00, 0x0fff) AM_READ( MRA8_RAM)
+	AM_RANGE(0x1000, 0x13ff) AM_READ( MRA8_RAM)
+	AM_RANGE(0x1000, 0x13ff) AM_READ( MRA8_RAM)	/* 1Kb */
+	AM_RANGE(0x1400, 0x4fff) AM_READ( MRA8_RAM)	/* 16Kb */
+	AM_RANGE(0x5000, 0x8fff) AM_READ( MRA8_RAM)	/* 32Kb */
+	AM_RANGE(0x9000, 0xafff) AM_READ( MRA8_RAM)	/* 40Kb */
+	AM_RANGE(0xb000, 0xffff) AM_READ( MRA8_ROM)
+ADDRESS_MAP_END
 
-MEMORY_WRITE_START( nascom1_writemem )
-	{0x0000, 0x07ff, MWA8_ROM},
-	{0x0800, 0x0bff, videoram_w, &videoram, &videoram_size},
-	{0x0c00, 0x0fff, MWA8_RAM},
-	{0x1000, 0x13ff, MWA8_RAM},
-	{0x1400, 0x4fff, MWA8_RAM},
-	{0x5000, 0x8fff, MWA8_RAM},
-	{0x9000, 0xafff, MWA8_RAM},
-	{0xb000, 0xffff, MWA8_ROM},
-MEMORY_END
+ADDRESS_MAP_START( nascom1_writemem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE( MWA8_ROM)
+	AM_RANGE(0x0800, 0x0bff) AM_WRITE( videoram_w) AM_BASE( &videoram) AM_SIZE( &videoram_size)
+	AM_RANGE(0x0c00, 0x0fff) AM_WRITE( MWA8_RAM)
+	AM_RANGE(0x1000, 0x13ff) AM_WRITE( MWA8_RAM)
+	AM_RANGE(0x1400, 0x4fff) AM_WRITE( MWA8_RAM)
+	AM_RANGE(0x5000, 0x8fff) AM_WRITE( MWA8_RAM)
+	AM_RANGE(0x9000, 0xafff) AM_WRITE( MWA8_RAM)
+	AM_RANGE(0xb000, 0xffff) AM_WRITE( MWA8_ROM)
+ADDRESS_MAP_END
 
 /* graphics output */
 
@@ -109,7 +109,8 @@ struct	GfxLayout	nascom1_charlayout =
 static	struct	GfxDecodeInfo	nascom1_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &nascom1_charlayout, 0, 1},
-MEMORY_END
+	{-1}
+};
 
 struct	GfxLayout	nascom2_charlayout =
 {
@@ -126,7 +127,8 @@ struct	GfxLayout	nascom2_charlayout =
 static	struct	GfxDecodeInfo	nascom2_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &nascom2_charlayout, 0, 1},
-MEMORY_END
+	{-1}
+};
 
 static	unsigned	char	nascom1_palette[] =
 {
@@ -241,8 +243,8 @@ static INTERRUPT_GEN( nascom_interrupt )
 static MACHINE_DRIVER_START( nascom1 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80, 1000000)
-	MDRV_CPU_MEMORY(nascom1_readmem, nascom1_writemem)
-	MDRV_CPU_PORTS(nascom1_readport, nascom1_writeport)
+	MDRV_CPU_PROGRAM_MAP(nascom1_readmem, nascom1_writemem)
+	MDRV_CPU_IO_MAP(nascom1_readport, nascom1_writeport)
 	MDRV_CPU_VBLANK_INT(nascom_interrupt, 1)
 	MDRV_FRAMES_PER_SECOND(50)
 	MDRV_VBLANK_DURATION(2500)

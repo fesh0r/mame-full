@@ -323,7 +323,7 @@ WRITE_HANDLER(cbm8096_w)
 		if (!(data&1)) {
 			memory_set_bankhandler_w(2, 0, MWA8_BANK2);
 			memory_set_bankhandler_w(3, 0, MWA8_BANK3);
-			memory_set_bankhandler_w(4, 0, MWA_BANK4);
+			memory_set_bankhandler_w(4, 0, MWA8_BANK4);
 		} else {
 			memory_set_bankhandler_w(2, 0, MWA8_NOP);
 			memory_set_bankhandler_w(3, 0, MWA8_NOP);

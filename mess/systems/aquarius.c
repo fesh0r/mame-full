@@ -33,37 +33,36 @@ Aquarius Memory map
 
 /* port i/o functions */
 
-PORT_READ_START( aquarius_readport )
-	{0xfe, 0xfe, aquarius_port_fe_r},
-	{0xff, 0xff, aquarius_port_ff_r},
-PORT_END
+ADDRESS_MAP_START( aquarius_readport , ADDRESS_SPACE_IO, 8)
+	AM_RANGE(0xfe, 0xfe) AM_READ( aquarius_port_fe_r)
+	AM_RANGE(0xff, 0xff) AM_READ( aquarius_port_ff_r)
+ADDRESS_MAP_END
 
-PORT_WRITE_START( aquarius_writeport )
-	{0xfc, 0xfc, aquarius_port_fc_w},
-	{0xfe, 0xfe, aquarius_port_fe_w},
-	{0xff, 0xff, aquarius_port_ff_w},
-PORT_END
+ADDRESS_MAP_START( aquarius_writeport , ADDRESS_SPACE_IO, 8)
+	AM_RANGE(0xfc, 0xfc) AM_WRITE( aquarius_port_fc_w)
+	AM_RANGE(0xfe, 0xfe) AM_WRITE( aquarius_port_fe_w)
+	AM_RANGE(0xff, 0xff) AM_WRITE( aquarius_port_ff_w)
+ADDRESS_MAP_END
 
 /* Memory w/r functions */
 
-MEMORY_READ_START( aquarius_readmem )
-	{0x0000, 0x1fff, MRA8_ROM},
-	{0x2000, 0x2fff, MRA8_NOP},
-	{0x3000, 0x37ff, videoram_r},
-	{0x3800, 0x3fff, MRA8_RAM},
-	{0x4000, 0x7fff, MRA8_NOP},
-	{0x8000, 0xffff, MRA8_NOP},
+ADDRESS_MAP_START( aquarius_readmem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x1fff) AM_READ( MRA8_ROM)
+	AM_RANGE(0x2000, 0x2fff) AM_READ( MRA8_NOP)
+	AM_RANGE(0x3000, 0x37ff) AM_READ( videoram_r)
+	AM_RANGE(0x3800, 0x3fff) AM_READ( MRA8_RAM)
+	AM_RANGE(0x4000, 0x7fff) AM_READ( MRA8_NOP)
+	AM_RANGE(0x8000, 0xffff) AM_READ( MRA8_NOP)
+ADDRESS_MAP_END
 
-MEMORY_END
-
-MEMORY_WRITE_START( aquarius_writemem )
-	{0x0000, 0x1fff, MWA8_ROM},
-	{0x2000, 0x2fff, MWA8_NOP},
-	{0x3000, 0x37ff, aquarius_videoram_w, &videoram, &videoram_size},
-	{0x3800, 0x3fff, MWA8_RAM},
-	{0x4000, 0x7fff, MWA8_NOP},
-	{0x8000, 0xffff, MWA8_NOP},
-MEMORY_END
+ADDRESS_MAP_START( aquarius_writemem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE( MWA8_ROM)
+	AM_RANGE(0x2000, 0x2fff) AM_WRITE( MWA8_NOP)
+	AM_RANGE(0x3000, 0x37ff) AM_WRITE( aquarius_videoram_w) AM_BASE( &videoram) AM_SIZE( &videoram_size)
+	AM_RANGE(0x3800, 0x3fff) AM_WRITE( MWA8_RAM)
+	AM_RANGE(0x4000, 0x7fff) AM_WRITE( MWA8_NOP)
+	AM_RANGE(0x8000, 0xffff) AM_WRITE( MWA8_NOP)
+ADDRESS_MAP_END
 
 /* graphics output */
 
@@ -232,8 +231,8 @@ static INTERRUPT_GEN( aquarius_interrupt )
 static MACHINE_DRIVER_START( aquarius )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80, 3500000)
-	MDRV_CPU_MEMORY(aquarius_readmem, aquarius_writemem)
-	MDRV_CPU_PORTS(aquarius_readport, aquarius_writeport)
+	MDRV_CPU_PROGRAM_MAP(aquarius_readmem, aquarius_writemem)
+	MDRV_CPU_IO_MAP(aquarius_readport, aquarius_writeport)
 	MDRV_CPU_VBLANK_INT( aquarius_interrupt, 1 )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

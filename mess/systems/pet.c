@@ -191,7 +191,7 @@ static MEMORY_WRITE_START( pet80_writemem )
 	{0x8000, 0x8fff, MWA8_BANK1, &videoram },
 	{0x9000, 0x9fff, MWA8_BANK2 },
 	{0xa000, 0xafff, MWA8_BANK3 },
-	{0xb000, 0xbfff, MWA_BANK4 },
+	{0xb000, 0xbfff, MWA8_BANK4 },
 	{0xc000, 0xe7ff, MWA8_BANK6 },
 #if 1
 	{0xe800, 0xefff, MWA8_BANK7 },

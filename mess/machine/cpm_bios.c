@@ -793,7 +793,7 @@ WRITE_HANDLER ( cpm_bios_command_w )
 			/* DAD B   */
 			hl += bc;
 			/* MOV A,M */
-			af = (af & 0xff) | ( cpu_readmem16(hl) << 8);
+			af = (af & 0xff) | ( program_read_byte(hl) << 8);
 			/* MOV L,A */
 			hl = (hl & 0xff00) | (af >> 8);
 		}

@@ -14,21 +14,21 @@ Bruce Tomlin (hardware info)
 #include "includes/vectrex.h"
 #include "devices/cartslot.h"
 
-MEMORY_READ_START( vectrex_readmem )
-	{ 0x0000, 0x7fff, MRA8_ROM },
-	{ 0xc800, 0xcbff, MRA8_RAM },
-	{ 0xcc00, 0xcfff, vectrex_mirrorram_r },
-	{ 0xd000, 0xd7ff, via_0_r },    /* VIA 6522 */
-	{ 0xe000, 0xffff, MRA8_ROM },
-MEMORY_END
+ADDRESS_MAP_START( vectrex_readmem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x7fff) AM_READ( MRA8_ROM )
+	AM_RANGE( 0xc800, 0xcbff) AM_READ( MRA8_RAM )
+	AM_RANGE( 0xcc00, 0xcfff) AM_READ( vectrex_mirrorram_r )
+	AM_RANGE( 0xd000, 0xd7ff) AM_READ( via_0_r )    /* VIA 6522 */
+	AM_RANGE( 0xe000, 0xffff) AM_READ( MRA8_ROM )
+ADDRESS_MAP_END
 
-MEMORY_WRITE_START( vectrex_writemem )
-	{ 0x0000, 0x7fff, MWA8_ROM },
-	{ 0xc800, 0xcbff, MWA8_RAM, &vectrex_ram },
-	{ 0xcc00, 0xcfff, vectrex_mirrorram_w },
-	{ 0xd000, 0xd7ff, via_0_w },    /* VIA 6522 */
-	{ 0xe000, 0xffff, MWA8_ROM },
-MEMORY_END
+ADDRESS_MAP_START( vectrex_writemem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x7fff) AM_WRITE( MWA8_ROM )
+	AM_RANGE( 0xc800, 0xcbff) AM_WRITE( MWA8_RAM) AM_BASE( &vectrex_ram )
+	AM_RANGE( 0xcc00, 0xcfff) AM_WRITE( vectrex_mirrorram_w )
+	AM_RANGE( 0xd000, 0xd7ff) AM_WRITE( via_0_w )    /* VIA 6522 */
+	AM_RANGE( 0xe000, 0xffff) AM_WRITE( MWA8_ROM )
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( vectrex )
 	PORT_START
@@ -98,7 +98,7 @@ static struct AY8910interface ay8910_interface =
 static MACHINE_DRIVER_START( vectrex )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M6809, 1500000)        /* 1.5 Mhz */
-	MDRV_CPU_MEMORY(vectrex_readmem, vectrex_writemem)
+	MDRV_CPU_PROGRAM_MAP(vectrex_readmem, vectrex_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
 
@@ -143,24 +143,24 @@ ROM_END
 
 *****************************************************************/
 
-MEMORY_READ_START( raaspec_readmem )
-	{ 0x0000, 0x7fff, MRA8_ROM },
-	{ 0x8000, 0x87ff, MRA8_RAM }, /* Battery backed RAM for the Spectrum I+ */
-	{ 0xc800, 0xcbff, MRA8_RAM },
-	{ 0xcc00, 0xcfff, vectrex_mirrorram_r },
-	{ 0xd000, 0xd7ff, via_0_r },
-	{ 0xe000, 0xffff, MRA8_ROM },
-MEMORY_END
+ADDRESS_MAP_START( raaspec_readmem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x7fff) AM_READ( MRA8_ROM )
+	AM_RANGE( 0x8000, 0x87ff) AM_READ( MRA8_RAM ) /* Battery backed RAM for the Spectrum I+ */
+	AM_RANGE( 0xc800, 0xcbff) AM_READ( MRA8_RAM )
+	AM_RANGE( 0xcc00, 0xcfff) AM_READ( vectrex_mirrorram_r )
+	AM_RANGE( 0xd000, 0xd7ff) AM_READ( via_0_r )
+	AM_RANGE( 0xe000, 0xffff) AM_READ( MRA8_ROM )
+ADDRESS_MAP_END
 
-MEMORY_WRITE_START( raaspec_writemem )
-	{ 0x0000, 0x7fff, MWA8_ROM },
-	{ 0x8000, 0x87ff, MWA8_RAM },
-	{ 0xa000, 0xa000, raaspec_led_w },
-	{ 0xc800, 0xcbff, MWA8_RAM, &vectrex_ram },
-	{ 0xcc00, 0xcfff, vectrex_mirrorram_w },
-	{ 0xd000, 0xd7ff, via_0_w },
-	{ 0xe000, 0xffff, MWA8_ROM },
-MEMORY_END
+ADDRESS_MAP_START( raaspec_writemem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x7fff) AM_WRITE( MWA8_ROM )
+	AM_RANGE( 0x8000, 0x87ff) AM_WRITE( MWA8_RAM )
+	AM_RANGE( 0xa000, 0xa000) AM_WRITE( raaspec_led_w )
+	AM_RANGE( 0xc800, 0xcbff) AM_WRITE( MWA8_RAM) AM_BASE( &vectrex_ram )
+	AM_RANGE( 0xcc00, 0xcfff) AM_WRITE( vectrex_mirrorram_w )
+	AM_RANGE( 0xd000, 0xd7ff) AM_WRITE( via_0_w )
+	AM_RANGE( 0xe000, 0xffff) AM_WRITE( MWA8_ROM )
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( raaspec )
 	PORT_START
@@ -182,7 +182,7 @@ INPUT_PORTS_END
 static MACHINE_DRIVER_START( raaspec )
 	MDRV_IMPORT_FROM( vectrex )
 	MDRV_CPU_MODIFY( "main" )
-	MDRV_CPU_MEMORY( raaspec_readmem, raaspec_writemem )
+	MDRV_CPU_PROGRAM_MAP( raaspec_readmem, raaspec_writemem )
 
 	MDRV_PALETTE_LENGTH(254)
 

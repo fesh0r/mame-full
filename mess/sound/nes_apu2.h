@@ -25,7 +25,7 @@
 ** nes_apu.h
 **
 ** NES APU emulation header file
-** $Id: nes_apu2.h,v 1.1 2001/03/17 01:02:40 ben Exp $
+** $Id: nes_apu2.h,v 1.2 2004/02/06 02:49:59 npwoods Exp $
 */
 
 #ifndef _NES_APU_H_
@@ -58,7 +58,7 @@
 /* detect if this is included from MAME/MESS */
 #ifndef HOLD_LINE
 #define HOLE_LINE 1
-#define cpunum_readmem(cpu,address) cpu_readmem16(address)
+#define cpunum_readmem(cpu,address) program_read_byte(address)
 #define cpu_set_irq_line(cpu,line,state) n2a03_irq()
 #endif
 
@@ -302,6 +302,13 @@ extern void apu_write(uint32 address, uint8 value);
 
 /*
 ** $Log: nes_apu2.h,v $
+** Revision 1.2  2004/02/06 02:49:59  npwoods
+**
+**
+** Converted the address map of a slew of drivers, and enabled them when possible.
+** Also did a few other conversions (cpu_readmem16 --> program_read_byte, for
+** example)
+**
 ** Revision 1.1  2001/03/17 01:02:40  ben
 ** moved sound CPU cores
 **

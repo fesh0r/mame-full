@@ -191,58 +191,58 @@ TO DO:
 #include "devices/mflopimg.h"
 #include "formats/adam_dsk.h"
 
-static MEMORY_READ_START( adam_readmem )
-	{ 0x00000, 0x01fff, MRA8_BANK1 },
-	{ 0x02000, 0x03fff, MRA8_BANK2 },
-	{ 0x04000, 0x05fff, MRA8_BANK3 },
-	{ 0x06000, 0x07fff, MRA8_BANK4 },
-	{ 0x08000, 0x0ffff, MRA8_BANK5 },
-MEMORY_END
+static ADDRESS_MAP_START( adam_readmem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x00000, 0x01fff) AM_READ( MRA8_BANK1 )
+	AM_RANGE( 0x02000, 0x03fff) AM_READ( MRA8_BANK2 )
+	AM_RANGE( 0x04000, 0x05fff) AM_READ( MRA8_BANK3 )
+	AM_RANGE( 0x06000, 0x07fff) AM_READ( MRA8_BANK4 )
+	AM_RANGE( 0x08000, 0x0ffff) AM_READ( MRA8_BANK5 )
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( adam_writemem )
-	{ 0x00000, 0x01fff, MWA8_BANK6 },
-	{ 0x02000, 0x03fff, MWA8_BANK7 },
-	{ 0x04000, 0x05fff, MWA8_BANK8 },
-	{ 0x06000, 0x07fff, MWA8_BANK9 },
-	{ 0x08000, 0x0ffff, common_writes_w},
-MEMORY_END
+static ADDRESS_MAP_START( adam_writemem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x00000, 0x01fff) AM_WRITE( MWA8_BANK6 )
+	AM_RANGE( 0x02000, 0x03fff) AM_WRITE( MWA8_BANK7 )
+	AM_RANGE( 0x04000, 0x05fff) AM_WRITE( MWA8_BANK8 )
+	AM_RANGE( 0x06000, 0x07fff) AM_WRITE( MWA8_BANK9 )
+	AM_RANGE( 0x08000, 0x0ffff) AM_WRITE( common_writes_w)
+ADDRESS_MAP_END
 
-static PORT_READ_START ( adam_readport )
-    { 0x20, 0x3F, adamnet_r },
-    { 0x60, 0x7F, adam_memory_map_controller_r },
-    { 0xA0, 0xBF, adam_video_r },
-    { 0xE0, 0xFF, adam_paddle_r },
-PORT_END
+static ADDRESS_MAP_START ( adam_readport , ADDRESS_SPACE_IO, 8)
+    AM_RANGE( 0x20, 0x3F) AM_READ( adamnet_r )
+    AM_RANGE( 0x60, 0x7F) AM_READ( adam_memory_map_controller_r )
+    AM_RANGE( 0xA0, 0xBF) AM_READ( adam_video_r )
+    AM_RANGE( 0xE0, 0xFF) AM_READ( adam_paddle_r )
+ADDRESS_MAP_END
 
-static PORT_WRITE_START ( adam_writeport )
-    { 0x20, 0x3F, adamnet_w },
-    { 0x60, 0x7F, adam_memory_map_controller_w },
-    { 0x80, 0x9F, adam_paddle_toggle_off },
-    { 0xA0, 0xBF, adam_video_w },
-    { 0xC0, 0xDF, adam_paddle_toggle_on },
-    { 0xE0, 0xFF, SN76496_0_w },
-PORT_END
+static ADDRESS_MAP_START ( adam_writeport , ADDRESS_SPACE_IO, 8)
+    AM_RANGE( 0x20, 0x3F) AM_WRITE( adamnet_w )
+    AM_RANGE( 0x60, 0x7F) AM_WRITE( adam_memory_map_controller_w )
+    AM_RANGE( 0x80, 0x9F) AM_WRITE( adam_paddle_toggle_off )
+    AM_RANGE( 0xA0, 0xBF) AM_WRITE( adam_video_w )
+    AM_RANGE( 0xC0, 0xDF) AM_WRITE( adam_paddle_toggle_on )
+    AM_RANGE( 0xE0, 0xFF) AM_WRITE( SN76496_0_w )
+ADDRESS_MAP_END
 
 /*
 I do now know the real memory map of the Master 6801...
 and the 6801 ASM code is a replacement coded for this driver.
 */
 
-static MEMORY_READ_START( master6801_readmem )
-	{ 0x0000, 0x001f, m6803_internal_registers_r },
-	{ 0x0020, 0x007f, MRA8_NOP }, /* Unused */
-	{ 0x0080, 0x00ff, MRA8_RAM }, /* 6801 internal RAM */
-	{ 0x0100, 0x3fff, MRA8_ROM }, /* Replacement Master ROM code */
-	{ 0x4000, 0xffff, master6801_ram_r }, /* RAM Memory shared with Z80 not banked*/
-MEMORY_END
+static ADDRESS_MAP_START( master6801_readmem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x001f) AM_READ( m6803_internal_registers_r )
+	AM_RANGE( 0x0020, 0x007f) AM_READ( MRA8_NOP ) /* Unused */
+	AM_RANGE( 0x0080, 0x00ff) AM_READ( MRA8_RAM ) /* 6801 internal RAM */
+	AM_RANGE( 0x0100, 0x3fff) AM_READ( MRA8_ROM ) /* Replacement Master ROM code */
+	AM_RANGE( 0x4000, 0xffff) AM_READ( master6801_ram_r ) /* RAM Memory shared with Z80 not banked*/
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( master6801_writemem )
-	{ 0x0000, 0x001f, m6803_internal_registers_w },
-	{ 0x0020, 0x007f, MWA8_NOP }, /* Unused */
-	{ 0x0080, 0x00ff, MWA8_NOP }, /* 6801 internal RAM */
-	{ 0x0100, 0x3fff, MWA8_NOP }, /* Unused */
-    { 0x4000, 0xffff, master6801_ram_w }, /* RAM Memory shared with Z80 not banked*/
-MEMORY_END
+static ADDRESS_MAP_START( master6801_writemem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x001f) AM_WRITE( m6803_internal_registers_w )
+	AM_RANGE( 0x0020, 0x007f) AM_WRITE( MWA8_NOP ) /* Unused */
+	AM_RANGE( 0x0080, 0x00ff) AM_WRITE( MWA8_NOP ) /* 6801 internal RAM */
+	AM_RANGE( 0x0100, 0x3fff) AM_WRITE( MWA8_NOP ) /* Unused */
+    AM_RANGE( 0x4000, 0xffff) AM_WRITE( master6801_ram_w ) /* RAM Memory shared with Z80 not banked*/
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( adam )
     PORT_START  /* IN0 */
@@ -635,12 +635,12 @@ static const TMS9928a_interface tms9928a_interface =
 static MACHINE_DRIVER_START( adam )
 	/* Machine hardware */
 	MDRV_CPU_ADD_TAG("Main", Z80, 3579545)       /* 3.579545 Mhz */
-	MDRV_CPU_MEMORY(adam_readmem,adam_writemem)
-	MDRV_CPU_PORTS(adam_readport,adam_writeport)
+	MDRV_CPU_PROGRAM_MAP(adam_readmem,adam_writemem)
+	MDRV_CPU_IO_MAP(adam_readport,adam_writeport)
 
     /* Master M6801 AdamNet controller */
 	//MDRV_CPU_ADD(M6800, 4000000)       /* 4.0 Mhz */
-	//MDRV_CPU_MEMORY(master6801_readmem,master6801_writemem)
+	//MDRV_CPU_PROGRAM_MAP(master6801_readmem,master6801_writemem)
 
 	MDRV_CPU_VBLANK_INT(adam_interrupt,1)
 	MDRV_FRAMES_PER_SECOND(60)

@@ -469,100 +469,100 @@ static READ_HANDLER(apf_wd179x_data_r)
 	return wd179x_data_r(offset);
 }
 
-static MEMORY_READ_START( apf_imagination_readmem )
-	{ 0x00000, 0x003ff, apf_video_r},
-	{ 0x00400, 0x007ff, apf_video_r},
-	{ 0x00800, 0x00bff, apf_video_r},
-	{ 0x00c00, 0x00fff, apf_video_r},
-	{ 0x01000, 0x01fff, apf_video_r},
-	{ 0x01000, 0x013ff, apf_video_r},
-	{ 0x01400, 0x017ff, apf_video_r},
-	{ 0x01800, 0x01bff, apf_video_r},
-	{ 0x01c00, 0x01fff, apf_video_r},
-	{ 0x02000, 0x03fff, apf_pia_0_r},		
-	{ 0x04000, 0x047ff, MRA8_BANK1},
-	{ 0x04800, 0x04fff, MRA8_BANK2},
-	{ 0x05000, 0x057ff, MRA8_BANK3},
-	{ 0x05800, 0x05fff, MRA8_BANK4},
-	{ 0x06000, 0x063ff, apf_pia_1_r},
-	{ 0x06400, 0x064ff, serial_r},
-	{ 0x06500, 0x06500, apf_wd179x_status_r},
-	{ 0x06501, 0x06501, apf_wd179x_track_r},
-	{ 0x06502, 0x06502, apf_wd179x_sector_r},
-	{ 0x06503, 0x06503, apf_wd179x_data_r},
-	{ 0x06800, 0x077ff, MRA8_ROM},
-	{ 0x07800, 0x07fff, MRA8_NOP},
-	{ 0x08000, 0x09fff, MRA8_ROM},
-	{ 0x0a000, 0x0dfff, MRA8_RAM},
-	{ 0x0e000, 0x0e7ff, MRA8_BANK5},
-	{ 0x0e800, 0x0efff, MRA8_BANK6},
-	{ 0x0f000, 0x0f7ff, MRA8_BANK7},
-	{ 0x0f800, 0x0ffff, MRA8_BANK8},
-MEMORY_END
+static ADDRESS_MAP_START( apf_imagination_readmem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x00000, 0x003ff) AM_READ( apf_video_r)
+	AM_RANGE( 0x00400, 0x007ff) AM_READ( apf_video_r)
+	AM_RANGE( 0x00800, 0x00bff) AM_READ( apf_video_r)
+	AM_RANGE( 0x00c00, 0x00fff) AM_READ( apf_video_r)
+	AM_RANGE( 0x01000, 0x01fff) AM_READ( apf_video_r)
+	AM_RANGE( 0x01000, 0x013ff) AM_READ( apf_video_r)
+	AM_RANGE( 0x01400, 0x017ff) AM_READ( apf_video_r)
+	AM_RANGE( 0x01800, 0x01bff) AM_READ( apf_video_r)
+	AM_RANGE( 0x01c00, 0x01fff) AM_READ( apf_video_r)
+	AM_RANGE( 0x02000, 0x03fff) AM_READ( apf_pia_0_r)		
+	AM_RANGE( 0x04000, 0x047ff) AM_READ( MRA8_BANK1)
+	AM_RANGE( 0x04800, 0x04fff) AM_READ( MRA8_BANK2)
+	AM_RANGE( 0x05000, 0x057ff) AM_READ( MRA8_BANK3)
+	AM_RANGE( 0x05800, 0x05fff) AM_READ( MRA8_BANK4)
+	AM_RANGE( 0x06000, 0x063ff) AM_READ( apf_pia_1_r)
+	AM_RANGE( 0x06400, 0x064ff) AM_READ( serial_r)
+	AM_RANGE( 0x06500, 0x06500) AM_READ( apf_wd179x_status_r)
+	AM_RANGE( 0x06501, 0x06501) AM_READ( apf_wd179x_track_r)
+	AM_RANGE( 0x06502, 0x06502) AM_READ( apf_wd179x_sector_r)
+	AM_RANGE( 0x06503, 0x06503) AM_READ( apf_wd179x_data_r)
+	AM_RANGE( 0x06800, 0x077ff) AM_READ( MRA8_ROM)
+	AM_RANGE( 0x07800, 0x07fff) AM_READ( MRA8_NOP)
+	AM_RANGE( 0x08000, 0x09fff) AM_READ( MRA8_ROM)
+	AM_RANGE( 0x0a000, 0x0dfff) AM_READ( MRA8_RAM)
+	AM_RANGE( 0x0e000, 0x0e7ff) AM_READ( MRA8_BANK5)
+	AM_RANGE( 0x0e800, 0x0efff) AM_READ( MRA8_BANK6)
+	AM_RANGE( 0x0f000, 0x0f7ff) AM_READ( MRA8_BANK7)
+	AM_RANGE( 0x0f800, 0x0ffff) AM_READ( MRA8_BANK8)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE_START( apf_imagination_writemem )
-	{ 0x00000, 0x003ff, apf_video_w},
-	{ 0x00400, 0x007ff, apf_video_w},
-	{ 0x00800, 0x00bff, apf_video_w},
-	{ 0x00c00, 0x00fff, apf_video_w},
-	{ 0x01000, 0x01fff, apf_video_w},
-	{ 0x01000, 0x013ff, apf_video_w},
-	{ 0x01400, 0x017ff, apf_video_w},
-	{ 0x01800, 0x01bff, apf_video_w},
-	{ 0x01c00, 0x01fff, apf_video_w},
-	{ 0x02000, 0x02003, pia_0_w},
-	{ 0x04000, 0x05fff, MWA8_ROM},
-	{ 0x06000, 0x063ff, apf_pia_1_w},
-	{ 0x06400, 0x064ff, serial_w},
-	{ 0x06500, 0x06500, apf_wd179x_command_w},
-	{ 0x06501, 0x06501, apf_wd179x_track_w},
-	{ 0x06502, 0x06502, apf_wd179x_sector_w},
-	{ 0x06503, 0x06503, apf_wd179x_data_w},
-	{ 0x06600, 0x06600, apf_dischw_w},
-	{ 0x0a000, 0x0dfff, MWA8_RAM},
-	{ 0x0e000, 0x0ffff, MWA8_ROM},
-MEMORY_END
+static ADDRESS_MAP_START( apf_imagination_writemem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x00000, 0x003ff) AM_WRITE( apf_video_w)
+	AM_RANGE( 0x00400, 0x007ff) AM_WRITE( apf_video_w)
+	AM_RANGE( 0x00800, 0x00bff) AM_WRITE( apf_video_w)
+	AM_RANGE( 0x00c00, 0x00fff) AM_WRITE( apf_video_w)
+	AM_RANGE( 0x01000, 0x01fff) AM_WRITE( apf_video_w)
+	AM_RANGE( 0x01000, 0x013ff) AM_WRITE( apf_video_w)
+	AM_RANGE( 0x01400, 0x017ff) AM_WRITE( apf_video_w)
+	AM_RANGE( 0x01800, 0x01bff) AM_WRITE( apf_video_w)
+	AM_RANGE( 0x01c00, 0x01fff) AM_WRITE( apf_video_w)
+	AM_RANGE( 0x02000, 0x02003) AM_WRITE( pia_0_w)
+	AM_RANGE( 0x04000, 0x05fff) AM_WRITE( MWA8_ROM)
+	AM_RANGE( 0x06000, 0x063ff) AM_WRITE( apf_pia_1_w)
+	AM_RANGE( 0x06400, 0x064ff) AM_WRITE( serial_w)
+	AM_RANGE( 0x06500, 0x06500) AM_WRITE( apf_wd179x_command_w)
+	AM_RANGE( 0x06501, 0x06501) AM_WRITE( apf_wd179x_track_w)
+	AM_RANGE( 0x06502, 0x06502) AM_WRITE( apf_wd179x_sector_w)
+	AM_RANGE( 0x06503, 0x06503) AM_WRITE( apf_wd179x_data_w)
+	AM_RANGE( 0x06600, 0x06600) AM_WRITE( apf_dischw_w)
+	AM_RANGE( 0x0a000, 0x0dfff) AM_WRITE( MWA8_RAM)
+	AM_RANGE( 0x0e000, 0x0ffff) AM_WRITE( MWA8_ROM)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START(apf_m1000_readmem)
-	{ 0x00000, 0x003ff, apf_video_r},
-	{ 0x00400, 0x007ff, apf_video_r},
-	{ 0x00800, 0x00bff, apf_video_r},
-	{ 0x00c00, 0x00fff, apf_video_r},
-	{ 0x01000, 0x01fff, apf_video_r},
-	{ 0x01000, 0x013ff, apf_video_r},
-	{ 0x01400, 0x017ff, apf_video_r},
-	{ 0x01800, 0x01bff, apf_video_r},
-	{ 0x01c00, 0x01fff, apf_video_r},
-	{ 0x02000, 0x03fff, apf_pia_0_r},		
-	{ 0x04000, 0x047ff, MRA8_BANK1},
-	{ 0x04800, 0x04fff, MRA8_BANK2},
-	{ 0x05000, 0x057ff, MRA8_BANK3},
-	{ 0x05800, 0x05fff, MRA8_BANK4},
-	{ 0x06800, 0x077ff, MRA8_ROM},
-	{ 0x08000, 0x09fff, MRA8_ROM},
-	{ 0x0a000, 0x0dfff, MRA8_RAM},
-	{ 0x0e000, 0x0e7ff, MRA8_BANK5},
-	{ 0x0e800, 0x0efff, MRA8_BANK6},
-	{ 0x0f000, 0x0f7ff, MRA8_BANK7},
-	{ 0x0f800, 0x0ffff, MRA8_BANK8},
-MEMORY_END
+static ADDRESS_MAP_START(apf_m1000_readmem, ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x00000, 0x003ff) AM_READ( apf_video_r)
+	AM_RANGE( 0x00400, 0x007ff) AM_READ( apf_video_r)
+	AM_RANGE( 0x00800, 0x00bff) AM_READ( apf_video_r)
+	AM_RANGE( 0x00c00, 0x00fff) AM_READ( apf_video_r)
+	AM_RANGE( 0x01000, 0x01fff) AM_READ( apf_video_r)
+	AM_RANGE( 0x01000, 0x013ff) AM_READ( apf_video_r)
+	AM_RANGE( 0x01400, 0x017ff) AM_READ( apf_video_r)
+	AM_RANGE( 0x01800, 0x01bff) AM_READ( apf_video_r)
+	AM_RANGE( 0x01c00, 0x01fff) AM_READ( apf_video_r)
+	AM_RANGE( 0x02000, 0x03fff) AM_READ( apf_pia_0_r)		
+	AM_RANGE( 0x04000, 0x047ff) AM_READ( MRA8_BANK1)
+	AM_RANGE( 0x04800, 0x04fff) AM_READ( MRA8_BANK2)
+	AM_RANGE( 0x05000, 0x057ff) AM_READ( MRA8_BANK3)
+	AM_RANGE( 0x05800, 0x05fff) AM_READ( MRA8_BANK4)
+	AM_RANGE( 0x06800, 0x077ff) AM_READ( MRA8_ROM)
+	AM_RANGE( 0x08000, 0x09fff) AM_READ( MRA8_ROM)
+	AM_RANGE( 0x0a000, 0x0dfff) AM_READ( MRA8_RAM)
+	AM_RANGE( 0x0e000, 0x0e7ff) AM_READ( MRA8_BANK5)
+	AM_RANGE( 0x0e800, 0x0efff) AM_READ( MRA8_BANK6)
+	AM_RANGE( 0x0f000, 0x0f7ff) AM_READ( MRA8_BANK7)
+	AM_RANGE( 0x0f800, 0x0ffff) AM_READ( MRA8_BANK8)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( apf_m1000_writemem )
-	{ 0x00000, 0x003ff, apf_video_w},
-	{ 0x00400, 0x007ff, apf_video_w},
-	{ 0x00800, 0x00bff, apf_video_w},
-	{ 0x00c00, 0x00fff, apf_video_w},
-	{ 0x01000, 0x01fff, apf_video_w},
-	{ 0x01000, 0x013ff, apf_video_w},
-	{ 0x01400, 0x017ff, apf_video_w},
-	{ 0x01800, 0x01bff, apf_video_w},
-	{ 0x01c00, 0x01fff, apf_video_w},
-	{ 0x02000, 0x03fff, apf_pia_0_w},		
-	{ 0x04000, 0x05fff, MWA8_ROM},
-	{ 0x0a000, 0x0dfff, MWA8_RAM},
-	{ 0x0e000, 0x0ffff, MWA8_ROM},
-MEMORY_END
+static ADDRESS_MAP_START( apf_m1000_writemem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x00000, 0x003ff) AM_WRITE( apf_video_w)
+	AM_RANGE( 0x00400, 0x007ff) AM_WRITE( apf_video_w)
+	AM_RANGE( 0x00800, 0x00bff) AM_WRITE( apf_video_w)
+	AM_RANGE( 0x00c00, 0x00fff) AM_WRITE( apf_video_w)
+	AM_RANGE( 0x01000, 0x01fff) AM_WRITE( apf_video_w)
+	AM_RANGE( 0x01000, 0x013ff) AM_WRITE( apf_video_w)
+	AM_RANGE( 0x01400, 0x017ff) AM_WRITE( apf_video_w)
+	AM_RANGE( 0x01800, 0x01bff) AM_WRITE( apf_video_w)
+	AM_RANGE( 0x01c00, 0x01fff) AM_WRITE( apf_video_w)
+	AM_RANGE( 0x02000, 0x03fff) AM_WRITE( apf_pia_0_w)		
+	AM_RANGE( 0x04000, 0x05fff) AM_WRITE( MWA8_ROM)
+	AM_RANGE( 0x0a000, 0x0dfff) AM_WRITE( MWA8_RAM)
+	AM_RANGE( 0x0e000, 0x0ffff) AM_WRITE( MWA8_ROM)
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( apf_m1000)
 	/* line 0 */
@@ -742,7 +742,7 @@ static	struct	Speaker_interface apf_sh_interface =
 static MACHINE_DRIVER_START( apf_imagination )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M6800, 3750000)        /* 7.8336 Mhz */
-	MDRV_CPU_MEMORY(apf_imagination_readmem,apf_imagination_writemem)
+	MDRV_CPU_PROGRAM_MAP(apf_imagination_readmem,apf_imagination_writemem)
 	MDRV_CPU_VBLANK_INT(m6847_vh_interrupt, M6847_INTERRUPTS_PER_FRAME)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -761,7 +761,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( apf_m1000 )
 	MDRV_IMPORT_FROM( apf_imagination )
 	MDRV_CPU_MODIFY( "main" )
-	MDRV_CPU_MEMORY( apf_m1000_readmem,apf_m1000_writemem )
+	MDRV_CPU_PROGRAM_MAP( apf_m1000_readmem,apf_m1000_writemem )
 	MDRV_MACHINE_INIT( apf_m1000 )
 MACHINE_DRIVER_END
 

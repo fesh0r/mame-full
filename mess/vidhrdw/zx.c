@@ -93,7 +93,7 @@ static void zx_ula_nmi(int param)
 
 	r.min_y = r.max_y = cpu_getscanline();
 	fillbitmap(Machine->scrbitmap, Machine->pens[1], &r);
-	logerror("ULA %3d[%d] NMI, R:$%02X, $%04x\n", cpu_getscanline(), ula_scancode_count, activecpu_get_reg(Z80_R), activecpu_get_pc());
+	logerror("ULA %3d[%d] NMI, R:$%02X, $%04x\n", cpu_getscanline(), ula_scancode_count, (unsigned) activecpu_get_reg(Z80_R), activecpu_get_pc());
 	cpu_set_nmi_line(0, PULSE_LINE);
 	if (++ula_scanline_count == Machine->drv->screen_height)
 		ula_scanline_count = 0;
@@ -106,7 +106,7 @@ static void zx_ula_irq(int param)
 	 * bit 6 goes low. In MESS this IRQ timed from the first read
 	 * from the copy of the DFILE in the upper 32K in zx_ula_r().
 	 */
-	logerror("ULA %3d[%d] IRQ, R:$%02X, $%04x\n", cpu_getscanline(), ula_scancode_count, activecpu_get_reg(Z80_R), activecpu_get_pc());
+	logerror("ULA %3d[%d] IRQ, R:$%02X, $%04x\n", cpu_getscanline(), ula_scancode_count, (unsigned) activecpu_get_reg(Z80_R), (unsigned) activecpu_get_pc());
 	ula_irq_active = 0;
 	if (++ula_scancode_count == 8)
 		ula_scancode_count = 0;

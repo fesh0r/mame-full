@@ -43,40 +43,40 @@ MOS MPS 6332 005 2179
   83, 84 contains display variables
  */
 // only lower 12 address bits on bus!
-static MEMORY_READ_START( mk2_readmem )
+static ADDRESS_MAP_START( mk2_readmem , ADDRESS_SPACE_PROGRAM, 8)
 #ifdef M6504_MEMORY_LAYOUT
-	MEMORY_ADDRESS_BITS(13) // m6504
-	{ 0x0000, 0x01ff, MRA8_RAM }, // 2 2111, should be mirrored
-	{ 0x0b00, 0x0b0f, rriot_0_r },
-	{ 0x0b80, 0x0bbf, MRA8_RAM }, // rriot ram
-	{ 0x0c00, 0x0fff, MRA8_ROM }, // rriot rom
-	{ 0x1000, 0x1fff, MRA8_ROM },
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(13) ) // m6504
+	AM_RANGE( 0x0000, 0x01ff) AM_READ( MRA8_RAM ) // 2 2111, should be mirrored
+	AM_RANGE( 0x0b00, 0x0b0f) AM_READ( rriot_0_r )
+	AM_RANGE( 0x0b80, 0x0bbf) AM_READ( MRA8_RAM ) // rriot ram
+	AM_RANGE( 0x0c00, 0x0fff) AM_READ( MRA8_ROM ) // rriot rom
+	AM_RANGE( 0x1000, 0x1fff) AM_READ( MRA8_ROM )
 #else
-	{ 0x0000, 0x01ff, MRA8_RAM }, // 2 2111, should be mirrored
-	{ 0x8009, 0x8009, MRA8_NOP },// bit $8009 (ora #$80) causes false accesses
-	{ 0x8b00, 0x8b0f, rriot_0_r },
-	{ 0x8b80, 0x8bbf, MRA8_RAM }, // rriot ram
-	{ 0x8c00, 0x8fff, MRA8_ROM }, // rriot rom
-	{ 0xf000, 0xffff, MRA8_ROM },
+	AM_RANGE( 0x0000, 0x01ff) AM_READ( MRA8_RAM ) // 2 2111, should be mirrored
+	AM_RANGE( 0x8009, 0x8009) AM_READ( MRA8_NOP )// bit $8009 (ora #$80) causes false accesses
+	AM_RANGE( 0x8b00, 0x8b0f) AM_READ( rriot_0_r )
+	AM_RANGE( 0x8b80, 0x8bbf) AM_READ( MRA8_RAM ) // rriot ram
+	AM_RANGE( 0x8c00, 0x8fff) AM_READ( MRA8_ROM ) // rriot rom
+	AM_RANGE( 0xf000, 0xffff) AM_READ( MRA8_ROM )
 #endif
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( mk2_writemem )
+static ADDRESS_MAP_START( mk2_writemem , ADDRESS_SPACE_PROGRAM, 8)
 #ifdef M6504_MEMORY_LAYOUT
-	MEMORY_ADDRESS_BITS(13) // m6504
-	{ 0x0000, 0x01ff, MWA8_RAM },
-	{ 0x0b00, 0x0b0f, rriot_0_w },
-	{ 0x0b80, 0x0bbf, MWA8_RAM },
-	{ 0x0c00, 0x0fff, MWA8_ROM },
-	{ 0x1000, 0x1fff, MWA8_ROM },
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(13) ) // m6504
+	AM_RANGE( 0x0000, 0x01ff) AM_WRITE( MWA8_RAM )
+	AM_RANGE( 0x0b00, 0x0b0f) AM_WRITE( rriot_0_w )
+	AM_RANGE( 0x0b80, 0x0bbf) AM_WRITE( MWA8_RAM )
+	AM_RANGE( 0x0c00, 0x0fff) AM_WRITE( MWA8_ROM )
+	AM_RANGE( 0x1000, 0x1fff) AM_WRITE( MWA8_ROM )
 #else
-	{ 0x0000, 0x01ff, MWA8_RAM },
-	{ 0x8b00, 0x8b0f, rriot_0_w },
-	{ 0x8b80, 0x8bbf, MWA8_RAM },
-	{ 0x8c00, 0x8fff, MWA8_ROM },
-	{ 0xf000, 0xffff, MWA8_ROM },
+	AM_RANGE( 0x0000, 0x01ff) AM_WRITE( MWA8_RAM )
+	AM_RANGE( 0x8b00, 0x8b0f) AM_WRITE( rriot_0_w )
+	AM_RANGE( 0x8b80, 0x8bbf) AM_WRITE( MWA8_RAM )
+	AM_RANGE( 0x8c00, 0x8fff) AM_WRITE( MWA8_ROM )
+	AM_RANGE( 0xf000, 0xffff) AM_WRITE( MWA8_ROM )
 #endif
-MEMORY_END
+ADDRESS_MAP_END
 
 #define DIPS_HELPER(bit, name, keycode, r) \
    PORT_BITX(bit, IP_ACTIVE_HIGH, IPT_KEYBOARD, name, keycode, r)
@@ -127,7 +127,7 @@ static struct DACinterface mk2_dac={ 1, {80}}; // silence is golden
 static MACHINE_DRIVER_START( mk2 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502, 1000000)        /* 6504 */
-	MDRV_CPU_MEMORY(mk2_readmem,mk2_writemem)
+	MDRV_CPU_PROGRAM_MAP(mk2_readmem,mk2_writemem)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1)

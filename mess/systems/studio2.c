@@ -10,27 +10,27 @@
 #include "devices/cartslot.h"
 #include "includes/studio2.h"
 
-static MEMORY_READ_START( studio2_readmem )
-	{ 0x0000, 0x07ff, MRA8_ROM },
-	{ 0x0800, 0x09ff, MRA8_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( studio2_readmem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x07ff) AM_READ( MRA8_ROM )
+	AM_RANGE( 0x0800, 0x09ff) AM_READ( MRA8_RAM )
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( studio2_writemem )
-	{ 0x0000, 0x07ff, MWA8_ROM },
-	{ 0x0800, 0x09ff, MWA8_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( studio2_writemem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x07ff) AM_WRITE( MWA8_ROM )
+	AM_RANGE( 0x0800, 0x09ff) AM_WRITE( MWA8_RAM )
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( vip_readmem )
-    { 0x0000, 0x03ff, MRA8_BANK1 }, // rom mapped in at reset, switched to ram with out 4
-	{ 0x0400, 0x0fff, MRA8_RAM },
-	{ 0x8000, 0x83ff, MRA8_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( vip_readmem , ADDRESS_SPACE_PROGRAM, 8)
+    AM_RANGE( 0x0000, 0x03ff) AM_READ( MRA8_BANK1 ) // rom mapped in at reset, switched to ram with out 4
+	AM_RANGE( 0x0400, 0x0fff) AM_READ( MRA8_RAM )
+	AM_RANGE( 0x8000, 0x83ff) AM_READ( MRA8_ROM )
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( vip_writemem )
-	{ 0x0000, 0x03ff, MWA8_RAM },
-	{ 0x0400, 0x0fff, MWA8_RAM },
-	{ 0x8000, 0x83ff, MWA8_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( vip_writemem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x03ff) AM_WRITE( MWA8_RAM )
+	AM_RANGE( 0x0400, 0x0fff) AM_WRITE( MWA8_RAM )
+	AM_RANGE( 0x8000, 0x83ff) AM_WRITE( MWA8_ROM )
+ADDRESS_MAP_END
 
 #define DIPS_HELPER(bit, name, keycode, r) \
    PORT_BITX(bit, IP_ACTIVE_HIGH, IPT_KEYBOARD, name, keycode, r)
@@ -223,7 +223,7 @@ static struct beep_interface studio2_sound=
 static MACHINE_DRIVER_START( studio2 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", CDP1802, 1780000/8)
-	MDRV_CPU_MEMORY(studio2_readmem,studio2_writemem)
+	MDRV_CPU_PROGRAM_MAP(studio2_readmem,studio2_writemem)
 	MDRV_CPU_VBLANK_INT(studio2_frame_int, 1)
 	MDRV_CPU_CONFIG(studio2_config)
 	MDRV_FRAMES_PER_SECOND(60)
@@ -252,7 +252,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( vip )
 	MDRV_IMPORT_FROM( studio2 )
 	MDRV_CPU_MODIFY( "main" )
-	MDRV_CPU_MEMORY( vip_readmem,vip_writemem )
+	MDRV_CPU_PROGRAM_MAP( vip_readmem,vip_writemem )
 	MDRV_CPU_CONFIG( vip_config )
 	MDRV_MACHINE_INIT( vip )
 MACHINE_DRIVER_END

@@ -101,26 +101,26 @@ static WRITE_HANDLER(mk1_f8_w)
 	if (!(mk1_f8[1]&8)) mk1_led[3]=mk1_f8[0];
 }
 
-static MEMORY_READ_START( mk1_readmem )
-	{ 0x0000, 0x07ff, MRA8_ROM },
-	{ 0x1800, 0x18ff, MRA8_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( mk1_readmem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x07ff) AM_READ( MRA8_ROM )
+	AM_RANGE( 0x1800, 0x18ff) AM_READ( MRA8_RAM )
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( mk1_writemem )
-	{ 0x0000, 0x07ff, MWA8_ROM },
-	{ 0x1800, 0x18ff, MWA8_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( mk1_writemem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x07ff) AM_WRITE( MWA8_ROM )
+	AM_RANGE( 0x1800, 0x18ff) AM_WRITE( MWA8_RAM )
+ADDRESS_MAP_END
 
 
-static PORT_READ_START( mk1_readport )
-{ 0x0, 0x1, mk1_f8_r },
-{ 0xc, 0xf, f3853_r },
-PORT_END
+static ADDRESS_MAP_START( mk1_readport , ADDRESS_SPACE_IO, 8)
+AM_RANGE( 0x0, 0x1) AM_READ( mk1_f8_r )
+AM_RANGE( 0xc, 0xf) AM_READ( f3853_r )
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( mk1_writeport )
-{ 0x0, 0x1, mk1_f8_w },
-{ 0xc, 0xf, f3853_w },
-PORT_END
+static ADDRESS_MAP_START( mk1_writeport , ADDRESS_SPACE_IO, 8)
+AM_RANGE( 0x0, 0x1) AM_WRITE( mk1_f8_w )
+AM_RANGE( 0xc, 0xf) AM_WRITE( f3853_w )
+ADDRESS_MAP_END
 
 #define DIPS_HELPER(bit, name, keycode, r) \
    PORT_BITX(bit, IP_ACTIVE_HIGH, IPT_KEYBOARD, name, keycode, r)
@@ -164,8 +164,8 @@ static MACHINE_INIT( mk1 )
 static MACHINE_DRIVER_START( mk1 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(F8, 1000000)        /* MK3850 */
-	MDRV_CPU_MEMORY(mk1_readmem,mk1_writemem)
-	MDRV_CPU_PORTS(mk1_readport,mk1_writeport)
+	MDRV_CPU_PROGRAM_MAP(mk1_readmem,mk1_writemem)
+	MDRV_CPU_IO_MAP(mk1_readport,mk1_writeport)
 	MDRV_FRAMES_PER_SECOND(LCD_FRAMES_PER_SECOND)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1)

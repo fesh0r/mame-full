@@ -134,7 +134,7 @@ MEMORY_WRITE_START( writemem_mz800 )
 	{ 0x01000, 0x01fff, MWA8_BANK2 },
 	{ 0x02000, 0x07fff, MWA8_RAM },
 	{ 0x08000, 0x09fff, MWA8_BANK3 },
-	{ 0x0a000, 0x0bfff, MWA_BANK4 },
+	{ 0x0a000, 0x0bfff, MWA8_BANK4 },
 	{ 0x0c000, 0x0cfff, MWA8_BANK5 },
 	{ 0x0d000, 0x0d7ff, MWA8_BANK6 },
 	{ 0x0d800, 0x0dfff, MWA8_BANK7 },

@@ -62,7 +62,7 @@ VIDEO_UPDATE( exidy )
 			int ch;
 
 			/* get char from z80 address space */
-			ch = cpu_readmem16(0x0f080 + (y<<6) + x) & 0x0ff;
+			ch = program_read_byte(0x0f080 + (y<<6) + x) & 0x0ff;
 
 			/* prom at 0x0f800, user chars from 0x0fc00 */
 			char_addr = 0x0f800 + (ch<<3);
@@ -74,7 +74,7 @@ VIDEO_UPDATE( exidy )
 
 				/* read byte of graphics data from z80 memory */
 				/* either prom or ram */
-				byte = cpu_readmem16(char_addr+cheight);
+				byte = program_read_byte(char_addr+cheight);
 
 				px = (x<<3);
 				py = (y<<3)+cheight;

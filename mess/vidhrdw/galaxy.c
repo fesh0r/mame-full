@@ -72,10 +72,10 @@ VIDEO_UPDATE( galaxy )
 		return;
 	}
 
-	if (horizontal_pos!=cpu_readmem16(0x2ba8))
+	if (horizontal_pos!=program_read_byte(0x2ba8))
 	{
 		full_refresh=1;
-		horizontal_pos = cpu_readmem16(0x2ba8);
+		horizontal_pos = program_read_byte(0x2ba8);
 		if (horizontal_pos > 0x0b)
 		{
 			black_area.min_x =  0; 

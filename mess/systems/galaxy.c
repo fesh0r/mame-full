@@ -53,38 +53,39 @@ Ports:
 #include "includes/galaxy.h"
 #include "devices/snapquik.h"
 
-PORT_READ_START( galaxy_readport )
-PORT_END
+ADDRESS_MAP_START( galaxy_readport , ADDRESS_SPACE_IO, 8)
+ADDRESS_MAP_END
 
-PORT_WRITE_START( galaxy_writeport )
-PORT_END
+ADDRESS_MAP_START( galaxy_writeport , ADDRESS_SPACE_IO, 8)
+ADDRESS_MAP_END
 
 
-MEMORY_READ_START( galaxy_readmem )
-	{0x0000, 0x0fff, MRA8_ROM},
-	{0x1000, 0x1fff, MRA8_ROM},
-	{0x2000, 0x2035, galaxy_kbd_r},
-	{0x2036, 0x27ff, MRA8_RAM},
-	{0x2800, 0x29ff, videoram_r},
-	{0x2a00, 0x3fff, MRA8_RAM},
-	{0x4000, 0xffff, MRA8_NOP},
-MEMORY_END
+ADDRESS_MAP_START( galaxy_readmem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x0fff) AM_READ( MRA8_ROM)
+	AM_RANGE(0x1000, 0x1fff) AM_READ( MRA8_ROM)
+	AM_RANGE(0x2000, 0x2035) AM_READ( galaxy_kbd_r)
+	AM_RANGE(0x2036, 0x27ff) AM_READ( MRA8_RAM)
+	AM_RANGE(0x2800, 0x29ff) AM_READ( videoram_r)
+	AM_RANGE(0x2a00, 0x3fff) AM_READ( MRA8_RAM)
+	AM_RANGE(0x4000, 0xffff) AM_READ( MRA8_NOP)
+ADDRESS_MAP_END
 
-MEMORY_WRITE_START( galaxy_writemem )
-	{0x0000, 0x0fff, MWA8_ROM},
-	{0x1000, 0x1fff, MWA8_ROM},
-	{0x2000, 0x2035, galaxy_kbd_w},
-	{0x2036, 0x27ff, MWA8_RAM},
-	{0x2800, 0x29ff, videoram_w, &videoram, &videoram_size},
-	{0x2a00, 0x3fff, MWA8_RAM},
-	{0x4000, 0xffff, MWA8_NOP},
-MEMORY_END
+ADDRESS_MAP_START( galaxy_writemem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE( MWA8_ROM)
+	AM_RANGE(0x1000, 0x1fff) AM_WRITE( MWA8_ROM)
+	AM_RANGE(0x2000, 0x2035) AM_WRITE( galaxy_kbd_w)
+	AM_RANGE(0x2036, 0x27ff) AM_WRITE( MWA8_RAM)
+	AM_RANGE(0x2800, 0x29ff) AM_WRITE( videoram_w) AM_BASE( &videoram) AM_SIZE( &videoram_size)
+	AM_RANGE(0x2a00, 0x3fff) AM_WRITE( MWA8_RAM)
+	AM_RANGE(0x4000, 0xffff) AM_WRITE( MWA8_NOP)
+ADDRESS_MAP_END
 
 
 static struct GfxDecodeInfo galaxy_gfxdecodeinfo[] =
 {
 	{REGION_GFX1, 0x0000, &galaxy_charlayout, 0, 2},
-MEMORY_END
+	{-1}
+};
 
 
 INPUT_PORTS_START (galaxy)
@@ -157,8 +158,8 @@ INPUT_PORTS_END
 static MACHINE_DRIVER_START( galaxy )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 3072000)
-	MDRV_CPU_MEMORY(galaxy_readmem, galaxy_writemem)
-	MDRV_CPU_PORTS(galaxy_readport, galaxy_writeport)
+	MDRV_CPU_PROGRAM_MAP(galaxy_readmem, galaxy_writemem)
+	MDRV_CPU_IO_MAP(galaxy_readport, galaxy_writeport)
 	MDRV_CPU_VBLANK_INT(galaxy_interrupt, 1)
 	MDRV_FRAMES_PER_SECOND(50)
 	MDRV_VBLANK_DURATION(0)

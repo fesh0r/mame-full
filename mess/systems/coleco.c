@@ -61,19 +61,19 @@
 #include "includes/coleco.h"
 #include "devices/cartslot.h"
 
-static MEMORY_READ_START( coleco_readmem )
-    { 0x0000, 0x1FFF, MRA8_ROM },  /* COLECO.ROM (ColecoVision OS7 Bios) */
-    { 0x2000, 0x5FFF, MRA8_NOP },  /* No memory here */
-    { 0x6000, 0x7fff, coleco_mem_r },  /* 1Kbyte RAM mapped on 8Kbyte Slot */
-    { 0x8000, 0xFFFF, MRA8_ROM },  /* Cartridge (32k max)*/
-MEMORY_END
+static ADDRESS_MAP_START( coleco_readmem , ADDRESS_SPACE_PROGRAM, 8)
+    AM_RANGE( 0x0000, 0x1FFF) AM_READ( MRA8_ROM )  /* COLECO.ROM (ColecoVision OS7 Bios) */
+    AM_RANGE( 0x2000, 0x5FFF) AM_READ( MRA8_NOP )  /* No memory here */
+    AM_RANGE( 0x6000, 0x7fff) AM_READ( coleco_mem_r )  /* 1Kbyte RAM mapped on 8Kbyte Slot */
+    AM_RANGE( 0x8000, 0xFFFF) AM_READ( MRA8_ROM )  /* Cartridge (32k max)*/
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( coleco_writemem )
-    { 0x0000, 0x1FFF, MWA8_ROM }, /* COLECO.ROM (ColecoVision OS7 Bios) */
-    { 0x2000, 0x5FFF, MWA8_NOP }, /* No memory here */
-    { 0x6000, 0x7fff, coleco_mem_w }, /* 1Kbyte RAM mapped on 8Kbyte Slot */
-    { 0x8000, 0xFFFF, MWA8_ROM }, /* Cartridge (32k max)*/
-MEMORY_END
+static ADDRESS_MAP_START( coleco_writemem , ADDRESS_SPACE_PROGRAM, 8)
+    AM_RANGE( 0x0000, 0x1FFF) AM_WRITE( MWA8_ROM ) /* COLECO.ROM (ColecoVision OS7 Bios) */
+    AM_RANGE( 0x2000, 0x5FFF) AM_WRITE( MWA8_NOP ) /* No memory here */
+    AM_RANGE( 0x6000, 0x7fff) AM_WRITE( coleco_mem_w ) /* 1Kbyte RAM mapped on 8Kbyte Slot */
+    AM_RANGE( 0x8000, 0xFFFF) AM_WRITE( MWA8_ROM ) /* Cartridge (32k max)*/
+ADDRESS_MAP_END
 
 READ_HANDLER(coleco_mem_r)
 {
@@ -85,17 +85,17 @@ WRITE_HANDLER(coleco_mem_w)
     memory_region(REGION_CPU1)[0x6000+(offset&0x3ff)] = data;
 }
 
-static PORT_READ_START (coleco_readport)
-    { 0xA0, 0xBF, coleco_video_r },
-    { 0xE0, 0xFF, coleco_paddle_r },
-PORT_END
+static ADDRESS_MAP_START (coleco_readport, ADDRESS_SPACE_IO, 8)
+    AM_RANGE( 0xA0, 0xBF) AM_READ( coleco_video_r )
+    AM_RANGE( 0xE0, 0xFF) AM_READ( coleco_paddle_r )
+ADDRESS_MAP_END
 
-static PORT_WRITE_START (coleco_writeport)
-    { 0x80, 0x9F, coleco_paddle_toggle_off },
-    { 0xA0, 0xBF, coleco_video_w },
-    { 0xC0, 0xDF, coleco_paddle_toggle_on },
-    { 0xE0, 0xFF, SN76496_0_w },
-PORT_END
+static ADDRESS_MAP_START (coleco_writeport, ADDRESS_SPACE_IO, 8)
+    AM_RANGE( 0x80, 0x9F) AM_WRITE( coleco_paddle_toggle_off )
+    AM_RANGE( 0xA0, 0xBF) AM_WRITE( coleco_video_w )
+    AM_RANGE( 0xC0, 0xDF) AM_WRITE( coleco_paddle_toggle_on )
+    AM_RANGE( 0xE0, 0xFF) AM_WRITE( SN76496_0_w )
+ADDRESS_MAP_END
 
 READ_HANDLER(coleco_video_r)
 {  
@@ -252,8 +252,8 @@ static const TMS9928a_interface tms9928a_interface =
 static MACHINE_DRIVER_START( coleco )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 3579545)       /* 3.579545 Mhz */
-	MDRV_CPU_MEMORY(coleco_readmem,coleco_writemem)
-	MDRV_CPU_PORTS(coleco_readport,coleco_writeport)
+	MDRV_CPU_PROGRAM_MAP(coleco_readmem,coleco_writemem)
+	MDRV_CPU_IO_MAP(coleco_readport,coleco_writeport)
 	MDRV_CPU_VBLANK_INT(coleco_interrupt,1)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

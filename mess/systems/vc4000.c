@@ -41,25 +41,25 @@ static READ_HANDLER(vc4000_key_r)
 }
 
 
-static MEMORY_READ_START( vc4000_readmem )
-	{ 0x0000, 0x07ff, MRA8_ROM },
-{ 0x1e88, 0x1e8e, vc4000_key_r },
-	{ 0x1f00, 0x1fff, vc4000_video_r },
-MEMORY_END
+static ADDRESS_MAP_START( vc4000_readmem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x07ff) AM_READ( MRA8_ROM )
+AM_RANGE( 0x1e88, 0x1e8e) AM_READ( vc4000_key_r )
+	AM_RANGE( 0x1f00, 0x1fff) AM_READ( vc4000_video_r )
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( vc4000_writemem )
-	{ 0x0000, 0x07ff, MWA8_ROM },
-	{ 0x1f00, 0x1fff, vc4000_video_w },
-MEMORY_END
+static ADDRESS_MAP_START( vc4000_writemem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x07ff) AM_WRITE( MWA8_ROM )
+	AM_RANGE( 0x1f00, 0x1fff) AM_WRITE( vc4000_video_w )
+ADDRESS_MAP_END
 
-static PORT_READ_START( vc4000_readport )
+static ADDRESS_MAP_START( vc4000_readport , ADDRESS_SPACE_IO, 8)
 //{ S2650_CTRL_PORT,S2650_CTRL_PORT, },
 //{ S2650_DATA_PORT,S2650_DATA_PORT, },
-{ S2650_SENSE_PORT,S2650_SENSE_PORT, vc4000_vsync_r},
-PORT_END
+AM_RANGE( S2650_SENSE_PORT,S2650_SENSE_PORT) AM_READ( vc4000_vsync_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( vc4000_writeport )
-PORT_END
+static ADDRESS_MAP_START( vc4000_writeport , ADDRESS_SPACE_IO, 8)
+ADDRESS_MAP_END
 
 #define DIPS_HELPER(bit, name, keycode, r) \
    PORT_BITX(bit, IP_ACTIVE_HIGH, IPT_KEYBOARD, name, keycode, r)
@@ -189,8 +189,8 @@ static PALETTE_INIT( vc4000 )
 static MACHINE_DRIVER_START( vc4000 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(S2650, 3000000/3)        /* 3580000/3, 4430000/3 */
-	MDRV_CPU_MEMORY(vc4000_readmem,vc4000_writemem)
-	MDRV_CPU_PORTS(vc4000_readport,vc4000_writeport)
+	MDRV_CPU_PROGRAM_MAP(vc4000_readmem,vc4000_writemem)
+	MDRV_CPU_IO_MAP(vc4000_readport,vc4000_writeport)
 	MDRV_CPU_PERIODIC_INT(vc4000_video_line,312*50)
 	MDRV_FRAMES_PER_SECOND(50)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

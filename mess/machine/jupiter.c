@@ -61,7 +61,7 @@ OPBASE_HANDLER( jupiter_opbaseoverride )
 			cpu_writemem16(0x3c39, 0x00);
 			cpu_writemem16(0x3c3a, 0x00);
 
-			tmpword = cpu_readmem16(0x3c3b) + cpu_readmem16(0x3c3c) * 256 + jupiter_tape.hdr_len;
+			tmpword = program_read_byte(0x3c3b) + program_read_byte(0x3c3c) * 256 + jupiter_tape.hdr_len;
 
 			cpu_writemem16(0x3c3b, tmpword & 0xff);
 			cpu_writemem16(0x3c3c, (tmpword >> 8) & 0xff);
@@ -71,7 +71,7 @@ OPBASE_HANDLER( jupiter_opbaseoverride )
 			cpu_writemem16(0x3c4c, jupiter_tape.hdr_3c4c);
 			cpu_writemem16(0x3c4d, jupiter_tape.hdr_3c4d);
 
-			if (!cpu_readmem16(0x3c57) && !cpu_readmem16(0x3c58))
+			if (!program_read_byte(0x3c57) && !program_read_byte(0x3c58))
 			{
 				cpu_writemem16(0x3c57, 0x49);
 				cpu_writemem16(0x3c58, 0x3c);

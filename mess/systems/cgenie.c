@@ -32,60 +32,60 @@ NMI
 #include "devices/basicdsk.h"
 #include "devices/cartslot.h"
 
-static MEMORY_READ_START (readmem)
-	{ 0x0000, 0x3fff, MRA8_ROM },
-	{ 0x4000, 0x7fff, MRA8_RAM },
+static ADDRESS_MAP_START (readmem, ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x3fff) AM_READ( MRA8_ROM )
+	AM_RANGE( 0x4000, 0x7fff) AM_READ( MRA8_RAM )
 //	{ 0x8000, 0xbfff, MRA8_RAM },	// only if 32K RAM is enabled
 //	{ 0xc000, 0xdfff, MRA8_ROM },	// installed in cgenie_init_machine
 //	{ 0xe000, 0xefff, MRA8_ROM },	// installed in cgenie_init_machine
-	{ 0xf000, 0xf3ff, cgenie_colorram_r },
-	{ 0xf400, 0xf7ff, cgenie_fontram_r	},
-	{ 0xf800, 0xf8ff, cgenie_keyboard_r },
-	{ 0xf900, 0xffdf, MRA8_NOP },
-	{ 0xffe0, 0xffe3, cgenie_irq_status_r },
-	{ 0xffe4, 0xffeb, MRA8_NOP },
-	{ 0xffec, 0xffec, cgenie_status_r },
-	{ 0xffe4, 0xffeb, MRA8_NOP },
-	{ 0xffed, 0xffed, cgenie_track_r },
-	{ 0xffee, 0xffee, cgenie_sector_r },
-	{ 0xffef, 0xffef, cgenie_data_r },
-	{ 0xfff0, 0xffff, MRA8_NOP },
-MEMORY_END
+	AM_RANGE( 0xf000, 0xf3ff) AM_READ( cgenie_colorram_r )
+	AM_RANGE( 0xf400, 0xf7ff) AM_READ( cgenie_fontram_r	)
+	AM_RANGE( 0xf800, 0xf8ff) AM_READ( cgenie_keyboard_r )
+	AM_RANGE( 0xf900, 0xffdf) AM_READ( MRA8_NOP )
+	AM_RANGE( 0xffe0, 0xffe3) AM_READ( cgenie_irq_status_r )
+	AM_RANGE( 0xffe4, 0xffeb) AM_READ( MRA8_NOP )
+	AM_RANGE( 0xffec, 0xffec) AM_READ( cgenie_status_r )
+	AM_RANGE( 0xffe4, 0xffeb) AM_READ( MRA8_NOP )
+	AM_RANGE( 0xffed, 0xffed) AM_READ( cgenie_track_r )
+	AM_RANGE( 0xffee, 0xffee) AM_READ( cgenie_sector_r )
+	AM_RANGE( 0xffef, 0xffef) AM_READ( cgenie_data_r )
+	AM_RANGE( 0xfff0, 0xffff) AM_READ( MRA8_NOP )
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START (writemem)
-	{ 0x0000, 0x3fff, MWA8_ROM },
-	{ 0x4000, 0x7fff, cgenie_videoram_w, &videoram },
+static ADDRESS_MAP_START (writemem, ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x3fff) AM_WRITE( MWA8_ROM )
+	AM_RANGE( 0x4000, 0x7fff) AM_WRITE( cgenie_videoram_w) AM_BASE( &videoram )
 //	{ 0x8000, 0xbfff, MWA8_RAM },	// only if 32K RAM is enabled
 //	{ 0xc000, 0xdfff, MWA8_ROM },	// installed in cgenie_init_machine
 //	{ 0xe000, 0xefff, MWA8_ROM },	// installed in cgenie_init_machine
-	{ 0xf000, 0xf3ff, cgenie_colorram_w, &colorram },
-	{ 0xf400, 0xf7ff, cgenie_fontram_w, &cgenie_fontram },
-	{ 0xf800, 0xf8ff, MWA8_NOP },
-	{ 0xf900, 0xffdf, MWA8_NOP },
-	{ 0xffe0, 0xffe3, cgenie_motor_w },
-	{ 0xffe4, 0xffeb, MWA8_NOP },
-	{ 0xffec, 0xffec, cgenie_command_w },
-	{ 0xffed, 0xffed, cgenie_track_w },
-	{ 0xffee, 0xffee, cgenie_sector_w },
-	{ 0xffef, 0xffef, cgenie_data_w },
-	{ 0xfff0, 0xffff, MWA8_NOP },
-MEMORY_END
+	AM_RANGE( 0xf000, 0xf3ff) AM_WRITE( cgenie_colorram_w) AM_BASE( &colorram )
+	AM_RANGE( 0xf400, 0xf7ff) AM_WRITE( cgenie_fontram_w) AM_BASE( &cgenie_fontram )
+	AM_RANGE( 0xf800, 0xf8ff) AM_WRITE( MWA8_NOP )
+	AM_RANGE( 0xf900, 0xffdf) AM_WRITE( MWA8_NOP )
+	AM_RANGE( 0xffe0, 0xffe3) AM_WRITE( cgenie_motor_w )
+	AM_RANGE( 0xffe4, 0xffeb) AM_WRITE( MWA8_NOP )
+	AM_RANGE( 0xffec, 0xffec) AM_WRITE( cgenie_command_w )
+	AM_RANGE( 0xffed, 0xffed) AM_WRITE( cgenie_track_w )
+	AM_RANGE( 0xffee, 0xffee) AM_WRITE( cgenie_sector_w )
+	AM_RANGE( 0xffef, 0xffef) AM_WRITE( cgenie_data_w )
+	AM_RANGE( 0xfff0, 0xffff) AM_WRITE( MWA8_NOP )
+ADDRESS_MAP_END
 
-static PORT_READ_START (readport)
-	{ 0xf8, 0xf8, cgenie_sh_control_port_r },
-	{ 0xf9, 0xf9, cgenie_sh_data_port_r },
-	{ 0xfa, 0xfa, cgenie_index_r },
-	{ 0xfb, 0xfb, cgenie_register_r },
-	{ 0xff, 0xff, cgenie_port_ff_r },
-PORT_END
+static ADDRESS_MAP_START (readport, ADDRESS_SPACE_IO, 8)
+	AM_RANGE( 0xf8, 0xf8) AM_READ( cgenie_sh_control_port_r )
+	AM_RANGE( 0xf9, 0xf9) AM_READ( cgenie_sh_data_port_r )
+	AM_RANGE( 0xfa, 0xfa) AM_READ( cgenie_index_r )
+	AM_RANGE( 0xfb, 0xfb) AM_READ( cgenie_register_r )
+	AM_RANGE( 0xff, 0xff) AM_READ( cgenie_port_ff_r )
+ADDRESS_MAP_END
 
-static PORT_WRITE_START (writeport)
-	{ 0xf8, 0xf8, cgenie_sh_control_port_w },
-	{ 0xf9, 0xf9, cgenie_sh_data_port_w },
-	{ 0xfa, 0xfa, cgenie_index_w },
-	{ 0xfb, 0xfb, cgenie_register_w },
-	{ 0xff, 0xff, cgenie_port_ff_w },
-PORT_END
+static ADDRESS_MAP_START (writeport, ADDRESS_SPACE_IO, 8)
+	AM_RANGE( 0xf8, 0xf8) AM_WRITE( cgenie_sh_control_port_w )
+	AM_RANGE( 0xf9, 0xf9) AM_WRITE( cgenie_sh_data_port_w )
+	AM_RANGE( 0xfa, 0xfa) AM_WRITE( cgenie_index_w )
+	AM_RANGE( 0xfb, 0xfb) AM_WRITE( cgenie_register_w )
+	AM_RANGE( 0xff, 0xff) AM_WRITE( cgenie_port_ff_w )
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( cgenie )
 	PORT_START /* IN0 */
@@ -409,8 +409,8 @@ static struct DACinterface DAC_interface =
 static MACHINE_DRIVER_START( cgenie )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80, 2216800)        /* 2,2168 Mhz */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(cgenie_frame_interrupt,1)
 	MDRV_CPU_PERIODIC_INT(cgenie_timer_interrupt,40)
 	MDRV_FRAMES_PER_SECOND(60)

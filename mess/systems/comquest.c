@@ -55,16 +55,16 @@ static WRITE_HANDLER(comquest_write)
 	logerror("comquest read %.4x %.2x\n",offset,data);
 }
 
-static MEMORY_READ_START( comquest_readmem )
+static ADDRESS_MAP_START( comquest_readmem , ADDRESS_SPACE_PROGRAM, 8)
 //	{ 0x0000, 0x7fff, MRA8_BANK1 },
-	{ 0x0000, 0xffff, MRA8_ROM },
+	AM_RANGE( 0x0000, 0xffff) AM_READ( MRA8_ROM )
 //	{ 0x8000, 0xffff, MRA8_RAM }, // batterie buffered
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( comquest_writemem )
-	{ 0x0000, 0x7fff, MWA8_ROM },
-	{ 0x8000, 0xffff, MWA8_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( comquest_writemem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x7fff) AM_WRITE( MWA8_ROM )
+	AM_RANGE( 0x8000, 0xffff) AM_WRITE( MWA8_RAM )
+ADDRESS_MAP_END
 
 #define DIPS_HELPER(bit, name, keycode, r) \
    PORT_BITX(bit, IP_ACTIVE_HIGH, IPT_KEYBOARD, name, keycode, r)
@@ -262,7 +262,7 @@ static MACHINE_DRIVER_START( comquest )
 	not epson e0c88
 */
 
-	MDRV_CPU_MEMORY(comquest_readmem,comquest_writemem)
+	MDRV_CPU_PROGRAM_MAP(comquest_readmem,comquest_writemem)
 	MDRV_CPU_CONFIG( amask )
 	MDRV_FRAMES_PER_SECOND(LCD_FRAMES_PER_SECOND)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

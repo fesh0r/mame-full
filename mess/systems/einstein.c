@@ -739,17 +739,17 @@ static READ_HANDLER(einstein_psg_r)
 /* keyboard int->ctc/adc->pio */
 
 
-MEMORY_READ_START( readmem_einstein )
-	{0x0000, 0x01fff, MRA8_BANK1},
-	{0x2000, 0x0ffff, MRA8_BANK2},
-MEMORY_END
+ADDRESS_MAP_START( readmem_einstein , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x01fff) AM_READ( MRA8_BANK1)
+	AM_RANGE(0x2000, 0x0ffff) AM_READ( MRA8_BANK2)
+ADDRESS_MAP_END
 
 
 
-MEMORY_WRITE_START( writemem_einstein )
-	{0x0000, 0x01fff, MWA8_BANK3},
-	{0x2000, 0x0ffff, MWA_BANK4},
-MEMORY_END
+ADDRESS_MAP_START( writemem_einstein , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x01fff) AM_WRITE( MWA8_BANK3)
+	AM_RANGE(0x2000, 0x0ffff) AM_WRITE( MWA8_BANK4)
+ADDRESS_MAP_END
 
 static void einstein_page_rom(void)
 {
@@ -1271,45 +1271,45 @@ static WRITE_HANDLER(einstein_port_w)
 }
 
 
-PORT_READ_START( readport_einstein2 )
-	{0x0000,0x0ffff, einstein2_port_r},
-PORT_END
+ADDRESS_MAP_START( readport_einstein2 , ADDRESS_SPACE_IO, 8)
+	AM_RANGE(0x0000,0x0ffff) AM_READ( einstein2_port_r)
+ADDRESS_MAP_END
 
-PORT_WRITE_START( writeport_einstein2 )
-	{0x0000,0x0ffff, einstein2_port_w},
-PORT_END
+ADDRESS_MAP_START( writeport_einstein2 , ADDRESS_SPACE_IO, 8)
+	AM_RANGE(0x0000,0x0ffff) AM_WRITE( einstein2_port_w)
+ADDRESS_MAP_END
 
-PORT_READ_START( readport_einstein )
-	{0x0000,0x0ffff, einstein_port_r},
-PORT_END
+ADDRESS_MAP_START( readport_einstein , ADDRESS_SPACE_IO, 8)
+	AM_RANGE(0x0000,0x0ffff) AM_READ( einstein_port_r)
+ADDRESS_MAP_END
 
-PORT_WRITE_START( writeport_einstein )
-	{0x0000,0x0ffff, einstein_port_w},
-PORT_END
+ADDRESS_MAP_START( writeport_einstein , ADDRESS_SPACE_IO, 8)
+	AM_RANGE(0x0000,0x0ffff) AM_WRITE( einstein_port_w)
+ADDRESS_MAP_END
 #if 0
-PORT_READ_START( readport_einstein )
-	{0x000, 0x007, einstein_psg_r},
-	{0x008, 0x00f, einstein_vdp_r},
-	{0x010, 0x017, einstein_serial_r},
-	{0x018, 0x01f, einstein_fdc_r},
-	{0x020, 0x020, einstein_key_int_r},	
-	{0x028, 0x02f, einstein_ctc_r},
-	{0x030, 0x037, einstein_pio_r},
+ADDRESS_MAP_START( readport_einstein , ADDRESS_SPACE_IO, 8)
+	AM_RANGE(0x000, 0x007) AM_READ( einstein_psg_r)
+	AM_RANGE(0x008, 0x00f) AM_READ( einstein_vdp_r)
+	AM_RANGE(0x010, 0x017) AM_READ( einstein_serial_r)
+	AM_RANGE(0x018, 0x01f) AM_READ( einstein_fdc_r)
+	AM_RANGE(0x020, 0x020) AM_READ( einstein_key_int_r)	
+	AM_RANGE(0x028, 0x02f) AM_READ( einstein_ctc_r)
+	AM_RANGE(0x030, 0x037) AM_READ( einstein_pio_r)
 //	{0x040, 0x0ff, einstein_unmapped_r},
-PORT_END
+ADDRESS_MAP_END
 
-PORT_WRITE_START( writeport_einstein )
-	{0x000, 0x007, einstein_psg_w},
-	{0x008, 0x00f, einstein_vdp_w},
-	{0x010, 0x017, einstein_serial_w},
-	{0x018, 0x01f, einstein_fdc_w},
-	{0x020, 0x020, einstein_key_int_w},
-	{0x023, 0x023, einstein_drive_w},
-	{0x024, 0x024, einstein_rom_w},
-	{0x028, 0x02f, einstein_ctc_w},
-	{0x030, 0x037, einstein_pio_w},
+ADDRESS_MAP_START( writeport_einstein , ADDRESS_SPACE_IO, 8)
+	AM_RANGE(0x000, 0x007) AM_WRITE( einstein_psg_w)
+	AM_RANGE(0x008, 0x00f) AM_WRITE( einstein_vdp_w)
+	AM_RANGE(0x010, 0x017) AM_WRITE( einstein_serial_w)
+	AM_RANGE(0x018, 0x01f) AM_WRITE( einstein_fdc_w)
+	AM_RANGE(0x020, 0x020) AM_WRITE( einstein_key_int_w)
+	AM_RANGE(0x023, 0x023) AM_WRITE( einstein_drive_w)
+	AM_RANGE(0x024, 0x024) AM_WRITE( einstein_rom_w)
+	AM_RANGE(0x028, 0x02f) AM_WRITE( einstein_ctc_w)
+	AM_RANGE(0x030, 0x037) AM_WRITE( einstein_pio_w)
 //	{0x040, 0x0ff, einstein_unmapped_w},
-PORT_END
+ADDRESS_MAP_END
 #endif
 
 
@@ -1687,8 +1687,8 @@ static const TMS9928a_interface tms9928a_interface =
 static MACHINE_DRIVER_START( einstein )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80, EINSTEIN_SYSTEM_CLOCK)
-	MDRV_CPU_MEMORY(readmem_einstein,writemem_einstein)
-	MDRV_CPU_PORTS(readport_einstein,writeport_einstein)
+	MDRV_CPU_PROGRAM_MAP(readmem_einstein,writemem_einstein)
+	MDRV_CPU_IO_MAP(readport_einstein,writeport_einstein)
 	MDRV_CPU_CONFIG(einstein_daisy_chain)
 	MDRV_FRAMES_PER_SECOND(50)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -1708,7 +1708,7 @@ static MACHINE_DRIVER_START( einstei2 )
 	MDRV_IMPORT_FROM( einstein )
 
 	MDRV_CPU_MODIFY( "main" )
-	MDRV_CPU_PORTS(readport_einstein2,writeport_einstein2)
+	MDRV_CPU_IO_MAP(readport_einstein2,writeport_einstein2)
 	MDRV_MACHINE_INIT( einstein2 )
 
     /* video hardware */

@@ -36,50 +36,50 @@ Ports:
 
 /* port i/o functions */
 
-PORT_READ_START( jupiter_readport )
-	{ 0xfefe, 0xfefe, jupiter_port_fefe_r },
-	{ 0xfdfe, 0xfdfe, jupiter_port_fdfe_r },
-	{ 0xfbfe, 0xfbfe, jupiter_port_fbfe_r },
-	{ 0xf7fe, 0xf7fe, jupiter_port_f7fe_r },
-	{ 0xeffe, 0xeffe, jupiter_port_effe_r },
-	{ 0xdffe, 0xdffe, jupiter_port_dffe_r },
-	{ 0xbffe, 0xbffe, jupiter_port_bffe_r },
-	{ 0x7ffe, 0x7ffe, jupiter_port_7ffe_r },
-PORT_END
+ADDRESS_MAP_START( jupiter_readport , ADDRESS_SPACE_IO, 8)
+	AM_RANGE( 0xfefe, 0xfefe) AM_READ( jupiter_port_fefe_r )
+	AM_RANGE( 0xfdfe, 0xfdfe) AM_READ( jupiter_port_fdfe_r )
+	AM_RANGE( 0xfbfe, 0xfbfe) AM_READ( jupiter_port_fbfe_r )
+	AM_RANGE( 0xf7fe, 0xf7fe) AM_READ( jupiter_port_f7fe_r )
+	AM_RANGE( 0xeffe, 0xeffe) AM_READ( jupiter_port_effe_r )
+	AM_RANGE( 0xdffe, 0xdffe) AM_READ( jupiter_port_dffe_r )
+	AM_RANGE( 0xbffe, 0xbffe) AM_READ( jupiter_port_bffe_r )
+	AM_RANGE( 0x7ffe, 0x7ffe) AM_READ( jupiter_port_7ffe_r )
+ADDRESS_MAP_END
 
-PORT_WRITE_START( jupiter_writeport )
-	{ 0x00fe, 0xfffe, jupiter_port_fe_w },
-PORT_END
+ADDRESS_MAP_START( jupiter_writeport , ADDRESS_SPACE_IO, 8)
+	AM_RANGE( 0x00fe, 0xfffe) AM_WRITE( jupiter_port_fe_w )
+ADDRESS_MAP_END
 
 /* memory w/r functions */
 
-MEMORY_READ_START( jupiter_readmem )
-	{ 0x0000, 0x1fff, MRA8_ROM },
-	{ 0x2000, 0x22ff, MRA8_NOP },
-	{ 0x2300, 0x23ff, MRA8_RAM },
-	{ 0x2400, 0x26ff, videoram_r },
-	{ 0x2700, 0x27ff, MRA8_RAM },
-	{ 0x2800, 0x2bff, MRA8_NOP },
-	{ 0x2c00, 0x2fff, MRA8_RAM },	/* char RAM */
-	{ 0x3000, 0x3bff, MRA8_NOP },
-	{ 0x3c00, 0x47ff, MRA8_RAM },
-	{ 0x4800, 0x87ff, MRA8_RAM },
-	{ 0x8800, 0xffff, MRA8_RAM },
-MEMORY_END
+ADDRESS_MAP_START( jupiter_readmem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x1fff) AM_READ( MRA8_ROM )
+	AM_RANGE( 0x2000, 0x22ff) AM_READ( MRA8_NOP )
+	AM_RANGE( 0x2300, 0x23ff) AM_READ( MRA8_RAM )
+	AM_RANGE( 0x2400, 0x26ff) AM_READ( videoram_r )
+	AM_RANGE( 0x2700, 0x27ff) AM_READ( MRA8_RAM )
+	AM_RANGE( 0x2800, 0x2bff) AM_READ( MRA8_NOP )
+	AM_RANGE( 0x2c00, 0x2fff) AM_READ( MRA8_RAM )	/* char RAM */
+	AM_RANGE( 0x3000, 0x3bff) AM_READ( MRA8_NOP )
+	AM_RANGE( 0x3c00, 0x47ff) AM_READ( MRA8_RAM )
+	AM_RANGE( 0x4800, 0x87ff) AM_READ( MRA8_RAM )
+	AM_RANGE( 0x8800, 0xffff) AM_READ( MRA8_RAM )
+ADDRESS_MAP_END
 
-MEMORY_WRITE_START( jupiter_writemem )
-	{ 0x0000, 0x1fff, MWA8_ROM },
-	{ 0x2000, 0x22ff, MWA8_NOP },
-	{ 0x2300, 0x23ff, MWA8_RAM },
-	{ 0x2400, 0x26ff, videoram_w, &videoram, &videoram_size },
-	{ 0x2700, 0x27ff, MWA8_RAM },
-	{ 0x2800, 0x2bff, MWA8_NOP },
-	{ 0x2c00, 0x2fff, jupiter_vh_charram_w, &jupiter_charram, &jupiter_charram_size },
-	{ 0x3000, 0x3bff, MWA8_NOP },
-	{ 0x3c00, 0x47ff, MWA8_RAM },
-	{ 0x4800, 0x87ff, MWA8_RAM },
-	{ 0x8800, 0xffff, MWA8_RAM },
-MEMORY_END
+ADDRESS_MAP_START( jupiter_writemem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x1fff) AM_WRITE( MWA8_ROM )
+	AM_RANGE( 0x2000, 0x22ff) AM_WRITE( MWA8_NOP )
+	AM_RANGE( 0x2300, 0x23ff) AM_WRITE( MWA8_RAM )
+	AM_RANGE( 0x2400, 0x26ff) AM_WRITE( videoram_w) AM_BASE( &videoram) AM_SIZE( &videoram_size )
+	AM_RANGE( 0x2700, 0x27ff) AM_WRITE( MWA8_RAM )
+	AM_RANGE( 0x2800, 0x2bff) AM_WRITE( MWA8_NOP )
+	AM_RANGE( 0x2c00, 0x2fff) AM_WRITE( jupiter_vh_charram_w) AM_BASE( &jupiter_charram) AM_SIZE( &jupiter_charram_size )
+	AM_RANGE( 0x3000, 0x3bff) AM_WRITE( MWA8_NOP )
+	AM_RANGE( 0x3c00, 0x47ff) AM_WRITE( MWA8_RAM )
+	AM_RANGE( 0x4800, 0x87ff) AM_WRITE( MWA8_RAM )
+	AM_RANGE( 0x8800, 0xffff) AM_WRITE( MWA8_RAM )
+ADDRESS_MAP_END
 
 /* graphics output */
 
@@ -97,7 +97,8 @@ struct GfxLayout jupiter_charlayout =
 static struct GfxDecodeInfo jupiter_gfxdecodeinfo[] =
 {
 	{REGION_CPU1, 0x2c00, &jupiter_charlayout, 0, 2},
-MEMORY_END								   /* end of array */
+	{-1}
+};								   /* end of array */
 
 static unsigned char jupiter_palette[] =
 {
@@ -202,8 +203,8 @@ static MACHINE_DRIVER_START( jupiter )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80, 3250000)        /* 3.25 Mhz */
 	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
-	MDRV_CPU_MEMORY(jupiter_readmem, jupiter_writemem)
-	MDRV_CPU_PORTS(jupiter_readport, jupiter_writeport)
+	MDRV_CPU_PROGRAM_MAP(jupiter_readmem, jupiter_writemem)
+	MDRV_CPU_IO_MAP(jupiter_readport, jupiter_writeport)
 	MDRV_CPU_VBLANK_INT(jupiter_interrupt,1)
 	MDRV_FRAMES_PER_SECOND(50)
 	MDRV_VBLANK_DURATION(2500)

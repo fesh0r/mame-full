@@ -42,7 +42,7 @@ static MEMORY_WRITE_START (wswan_writemem)
 	{ 0x10000, 0x1ffff, MWA8_BANK1 },	/* SRAM bank */
 	{ 0x20000, 0x2ffff, MWA8_BANK2 },	/* ROM bank 1 */
 	{ 0x30000, 0x3ffff, MWA8_BANK3 },	/* ROM bank 2 */
-	{ 0x40000, 0x4ffff, MWA_BANK4 },	/* ROM bank 3 */
+	{ 0x40000, 0x4ffff, MWA8_BANK4 },	/* ROM bank 3 */
 	{ 0x50000, 0x5ffff, MWA8_BANK5 },	/* ROM bank 4 */
 	{ 0x60000, 0x6ffff, MWA8_BANK6 },	/* ROM bank 5 */
 	{ 0x70000, 0x7ffff, MWA8_BANK7 },	/* ROM bank 6 */
@@ -51,9 +51,9 @@ static MEMORY_WRITE_START (wswan_writemem)
 	{ 0xA0000, 0xAffff, MWA8_BANK10 },	/* ROM bank 9 */
 	{ 0xB0000, 0xBffff, MWA8_BANK11 },	/* ROM bank 10 */
 	{ 0xC0000, 0xCffff, MWA8_BANK12 },	/* ROM bank 11 */
-	{ 0xD0000, 0xDffff, MWA_BANK13 },	/* ROM bank 12 */
-	{ 0xE0000, 0xEffff, MWA_BANK14 },	/* ROM bank 13 */
-	{ 0xF0000, 0xFffff, MWA_BANK15 },	/* ROM bank 14 */
+	{ 0xD0000, 0xDffff, MWA8_BANK13 },	/* ROM bank 12 */
+	{ 0xE0000, 0xEffff, MWA8_BANK14 },	/* ROM bank 13 */
+	{ 0xF0000, 0xFffff, MWA8_BANK15 },	/* ROM bank 14 */
 MEMORY_END
 
 static MEMORY_READ_START (wsc_readmem)
@@ -82,7 +82,7 @@ static MEMORY_WRITE_START (wsc_writemem)
 	{ 0x10000, 0x1ffff, MWA8_BANK1 },	/* SRAM bank */
 	{ 0x20000, 0x2ffff, MWA8_BANK2 },	/* ROM bank 1 */
 	{ 0x30000, 0x3ffff, MWA8_BANK3 },	/* ROM bank 2 */
-	{ 0x40000, 0x4ffff, MWA_BANK4 },	/* ROM bank 3 */
+	{ 0x40000, 0x4ffff, MWA8_BANK4 },	/* ROM bank 3 */
 	{ 0x50000, 0x5ffff, MWA8_BANK5 },	/* ROM bank 4 */
 	{ 0x60000, 0x6ffff, MWA8_BANK6 },	/* ROM bank 5 */
 	{ 0x70000, 0x7ffff, MWA8_BANK7 },	/* ROM bank 6 */
@@ -91,9 +91,9 @@ static MEMORY_WRITE_START (wsc_writemem)
 	{ 0xA0000, 0xAffff, MWA8_BANK10 },	/* ROM bank 9 */
 	{ 0xB0000, 0xBffff, MWA8_BANK11 },	/* ROM bank 10 */
 	{ 0xC0000, 0xCffff, MWA8_BANK12 },	/* ROM bank 11 */
-	{ 0xD0000, 0xDffff, MWA_BANK13 },	/* ROM bank 12 */
-	{ 0xE0000, 0xEffff, MWA_BANK14 },	/* ROM bank 13 */
-	{ 0xF0000, 0xFffff, MWA_BANK15 },	/* ROM bank 14 */
+	{ 0xD0000, 0xDffff, MWA8_BANK13 },	/* ROM bank 12 */
+	{ 0xE0000, 0xEffff, MWA8_BANK14 },	/* ROM bank 13 */
+	{ 0xF0000, 0xFffff, MWA8_BANK15 },	/* ROM bank 14 */
 MEMORY_END
 
 static PORT_READ_START (wswan_readport)

@@ -11,26 +11,26 @@
 #include "includes/arcadia.h"
 #include "devices/cartslot.h"
 
-static MEMORY_READ_START( arcadia_readmem )
-	{ 0x0000, 0x0fff, MRA8_ROM },
-	{ 0x1800, 0x1aff, arcadia_video_r },
-	{ 0x2000, 0x2fff, MRA8_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( arcadia_readmem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x0fff) AM_READ( MRA8_ROM )
+	AM_RANGE( 0x1800, 0x1aff) AM_READ( arcadia_video_r )
+	AM_RANGE( 0x2000, 0x2fff) AM_READ( MRA8_ROM )
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( arcadia_writemem )
+static ADDRESS_MAP_START( arcadia_writemem , ADDRESS_SPACE_PROGRAM, 8)
 //	{ 0x0000, 0x0fff, MWA8_ROM },
-	{ 0x1800, 0x1aff, arcadia_video_w },
+	AM_RANGE( 0x1800, 0x1aff) AM_WRITE( arcadia_video_w )
 //	{ 0x2000, 0x2fff, MWA8_ROM },
-MEMORY_END
+ADDRESS_MAP_END
 
-static PORT_READ_START( arcadia_readport )
+static ADDRESS_MAP_START( arcadia_readport , ADDRESS_SPACE_IO, 8)
 //{ S2650_CTRL_PORT,S2650_CTRL_PORT, },
 //{ S2650_DATA_PORT,S2650_DATA_PORT, },
-{ S2650_SENSE_PORT,S2650_SENSE_PORT, arcadia_vsync_r},
-PORT_END
+AM_RANGE( S2650_SENSE_PORT,S2650_SENSE_PORT) AM_READ( arcadia_vsync_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( arcadia_writeport )
-PORT_END
+static ADDRESS_MAP_START( arcadia_writeport , ADDRESS_SPACE_IO, 8)
+ADDRESS_MAP_END
 
 #define DIPS_HELPER(bit, name, keycode, r) \
    PORT_BITX(bit, IP_ACTIVE_HIGH, IPT_KEYBOARD, name, keycode, r)
@@ -231,8 +231,8 @@ static PALETTE_INIT( arcadia )
 static MACHINE_DRIVER_START( arcadia )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", S2650, 3580000/3)        /* 1.796 Mhz */
-	MDRV_CPU_MEMORY(arcadia_readmem,arcadia_writemem)
-	MDRV_CPU_PORTS(arcadia_readport,arcadia_writeport)
+	MDRV_CPU_PROGRAM_MAP(arcadia_readmem,arcadia_writemem)
+	MDRV_CPU_IO_MAP(arcadia_readport,arcadia_writeport)
 	MDRV_CPU_PERIODIC_INT(arcadia_video_line, 262*60)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

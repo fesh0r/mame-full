@@ -48,39 +48,39 @@
 #define LOG(x)  /* x */
 #endif
 
-static MEMORY_READ_START( readmem_mtan )
-    { 0x0000, 0x03ff, MRA8_RAM },
+static ADDRESS_MAP_START( readmem_mtan , ADDRESS_SPACE_PROGRAM, 8)
+    AM_RANGE( 0x0000, 0x03ff) AM_READ( MRA8_RAM )
 /*  { 0x0400, 0x1fff, MRA8_RAM },    */  /* TANEX 7K RAM */
 /*  { 0x2000, 0xbbff, MRA8_RAM },    */  /* TANRAM 40K RAM */
-    { 0xbc00, 0xbc00, MRA8_NOP },
-    { 0xbc01, 0xbc01, AY8910_read_port_0_r },
-    { 0xbc02, 0xbc02, MRA8_NOP },
-    { 0xbc03, 0xbc03, AY8910_read_port_1_r },
-    { 0xbfc0, 0xbfcf, microtan_via_0_r },
-    { 0xbfd0, 0xbfd3, microtan_sio_r },
-    { 0xbfe0, 0xbfef, microtan_via_1_r },
-    { 0xbff0, 0xbfff, microtan_bffx_r },
-    { 0xc000, 0xe7ff, MRA8_ROM },
-    { 0xf000, 0xffff, MRA8_ROM },
-MEMORY_END
+    AM_RANGE( 0xbc00, 0xbc00) AM_READ( MRA8_NOP )
+    AM_RANGE( 0xbc01, 0xbc01) AM_READ( AY8910_read_port_0_r )
+    AM_RANGE( 0xbc02, 0xbc02) AM_READ( MRA8_NOP )
+    AM_RANGE( 0xbc03, 0xbc03) AM_READ( AY8910_read_port_1_r )
+    AM_RANGE( 0xbfc0, 0xbfcf) AM_READ( microtan_via_0_r )
+    AM_RANGE( 0xbfd0, 0xbfd3) AM_READ( microtan_sio_r )
+    AM_RANGE( 0xbfe0, 0xbfef) AM_READ( microtan_via_1_r )
+    AM_RANGE( 0xbff0, 0xbfff) AM_READ( microtan_bffx_r )
+    AM_RANGE( 0xc000, 0xe7ff) AM_READ( MRA8_ROM )
+    AM_RANGE( 0xf000, 0xffff) AM_READ( MRA8_ROM )
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_mtan )
-    { 0x0000, 0x01ff, MWA8_RAM },
-    { 0x0200, 0x03ff, microtan_videoram_w, &videoram, &videoram_size },
+static ADDRESS_MAP_START( writemem_mtan , ADDRESS_SPACE_PROGRAM, 8)
+    AM_RANGE( 0x0000, 0x01ff) AM_WRITE( MWA8_RAM )
+    AM_RANGE( 0x0200, 0x03ff) AM_WRITE( microtan_videoram_w) AM_BASE( &videoram) AM_SIZE( &videoram_size )
 /*  { 0x0400, 0x1fff, MRA8_RAM },    */  /* TANEX 7K RAM */
 /*  { 0x2000, 0xbbff, MRA8_RAM },    */  /* TANRAM 40K RAM */
-    { 0xbc00, 0xbc00, AY8910_control_port_0_w },
-    { 0xbc01, 0xbc01, AY8910_write_port_0_w },
-    { 0xbc02, 0xbc02, AY8910_control_port_1_w },
-    { 0xbc03, 0xbc03, AY8910_write_port_1_w },
-    { 0xbc04, 0xbc04, microtan_sound_w },
-    { 0xbfc0, 0xbfcf, microtan_via_0_w },
-    { 0xbfd0, 0xbfd3, microtan_sio_w },
-    { 0xbfe0, 0xbfef, microtan_via_1_w },
-    { 0xbff0, 0xbfff, microtan_bffx_w },
-    { 0xc000, 0xe7ff, MWA8_ROM },
-    { 0xf000, 0xffff, MWA8_ROM },
-MEMORY_END
+    AM_RANGE( 0xbc00, 0xbc00) AM_WRITE( AY8910_control_port_0_w )
+    AM_RANGE( 0xbc01, 0xbc01) AM_WRITE( AY8910_write_port_0_w )
+    AM_RANGE( 0xbc02, 0xbc02) AM_WRITE( AY8910_control_port_1_w )
+    AM_RANGE( 0xbc03, 0xbc03) AM_WRITE( AY8910_write_port_1_w )
+    AM_RANGE( 0xbc04, 0xbc04) AM_WRITE( microtan_sound_w )
+    AM_RANGE( 0xbfc0, 0xbfcf) AM_WRITE( microtan_via_0_w )
+    AM_RANGE( 0xbfd0, 0xbfd3) AM_WRITE( microtan_sio_w )
+    AM_RANGE( 0xbfe0, 0xbfef) AM_WRITE( microtan_via_1_w )
+    AM_RANGE( 0xbff0, 0xbfff) AM_WRITE( microtan_bffx_w )
+    AM_RANGE( 0xc000, 0xe7ff) AM_WRITE( MWA8_ROM )
+    AM_RANGE( 0xf000, 0xffff) AM_WRITE( MWA8_ROM )
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( microtan )
     PORT_START /* DIP switches */
@@ -220,7 +220,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
     { REGION_GFX1, 0, &char_layout, 0, 1 },
     { REGION_GFX2, 0, &chunky_layout, 0, 1 },
-MEMORY_END   /* end of array */
+	{-1}
+};   /* end of array */
 
 static struct Wave_interface wave_interface = {
     1,
@@ -247,7 +248,7 @@ static struct AY8910interface ay8910_interface =
 static MACHINE_DRIVER_START( microtan )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M6502, 750000)        /* 750 kHz */
-	MDRV_CPU_MEMORY(readmem_mtan,writemem_mtan)
+	MDRV_CPU_PROGRAM_MAP(readmem_mtan,writemem_mtan)
 	MDRV_CPU_VBLANK_INT(microtan_interrupt, 1)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

@@ -34,54 +34,54 @@ Philips P2000 1 Memory map
 
 /* port i/o functions */
 
-static PORT_READ_START( p2000t_readport )
-	{0x00, 0x0f, p2000t_port_000f_r},
-	{0x20, 0x2f, p2000t_port_202f_r},
-PORT_END
+static ADDRESS_MAP_START( p2000t_readport , ADDRESS_SPACE_IO, 8)
+	AM_RANGE(0x00, 0x0f) AM_READ( p2000t_port_000f_r)
+	AM_RANGE(0x20, 0x2f) AM_READ( p2000t_port_202f_r)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( p2000t_writeport )
-	{0x10, 0x1f, p2000t_port_101f_w},
-	{0x30, 0x3f, p2000t_port_303f_w},
-	{0x50, 0x5f, p2000t_port_505f_w},
-	{0x70, 0x7f, p2000t_port_707f_w},
-	{0x88, 0x8b, p2000t_port_888b_w},
-	{0x8c, 0x90, p2000t_port_8c90_w},
-	{0x94, 0x94, p2000t_port_9494_w},
-PORT_END
+static ADDRESS_MAP_START( p2000t_writeport , ADDRESS_SPACE_IO, 8)
+	AM_RANGE(0x10, 0x1f) AM_WRITE( p2000t_port_101f_w)
+	AM_RANGE(0x30, 0x3f) AM_WRITE( p2000t_port_303f_w)
+	AM_RANGE(0x50, 0x5f) AM_WRITE( p2000t_port_505f_w)
+	AM_RANGE(0x70, 0x7f) AM_WRITE( p2000t_port_707f_w)
+	AM_RANGE(0x88, 0x8b) AM_WRITE( p2000t_port_888b_w)
+	AM_RANGE(0x8c, 0x90) AM_WRITE( p2000t_port_8c90_w)
+	AM_RANGE(0x94, 0x94) AM_WRITE( p2000t_port_9494_w)
+ADDRESS_MAP_END
 
 /* Memory w/r functions */
 
-static MEMORY_READ_START( p2000t_readmem )
-	{0x0000, 0x0fff, MRA8_ROM},
-	{0x1000, 0x4fff, MRA8_RAM},
-	{0x5000, 0x57ff, videoram_r},
-	{0x5800, 0x9fff, MRA8_RAM},
-	{0xa000, 0xffff, MRA8_NOP},
-MEMORY_END
+static ADDRESS_MAP_START( p2000t_readmem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x0fff) AM_READ( MRA8_ROM)
+	AM_RANGE(0x1000, 0x4fff) AM_READ( MRA8_RAM)
+	AM_RANGE(0x5000, 0x57ff) AM_READ( videoram_r)
+	AM_RANGE(0x5800, 0x9fff) AM_READ( MRA8_RAM)
+	AM_RANGE(0xa000, 0xffff) AM_READ( MRA8_NOP)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( p2000t_writemem )
-	{0x0000, 0x0fff, MWA8_ROM},
-	{0x1000, 0x4fff, MWA8_RAM},
-	{0x5000, 0x57ff, videoram_w, &videoram, &videoram_size},
-	{0x5800, 0x9fff, MWA8_RAM},
-	{0xa000, 0xffff, MWA8_NOP},
-MEMORY_END
+static ADDRESS_MAP_START( p2000t_writemem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE( MWA8_ROM)
+	AM_RANGE(0x1000, 0x4fff) AM_WRITE( MWA8_RAM)
+	AM_RANGE(0x5000, 0x57ff) AM_WRITE( videoram_w) AM_BASE( &videoram) AM_SIZE( &videoram_size)
+	AM_RANGE(0x5800, 0x9fff) AM_WRITE( MWA8_RAM)
+	AM_RANGE(0xa000, 0xffff) AM_WRITE( MWA8_NOP)
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( p2000m_readmem )
-	{0x0000, 0x0fff, MRA8_ROM},
-	{0x1000, 0x4fff, MRA8_RAM},
-	{0x5000, 0x5fff, videoram_r},
-	{0x6000, 0x9fff, MRA8_RAM},
-	{0xa000, 0xffff, MRA8_NOP},
-MEMORY_END
+static ADDRESS_MAP_START( p2000m_readmem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x0fff) AM_READ( MRA8_ROM)
+	AM_RANGE(0x1000, 0x4fff) AM_READ( MRA8_RAM)
+	AM_RANGE(0x5000, 0x5fff) AM_READ( videoram_r)
+	AM_RANGE(0x6000, 0x9fff) AM_READ( MRA8_RAM)
+	AM_RANGE(0xa000, 0xffff) AM_READ( MRA8_NOP)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( p2000m_writemem )
-	{0x0000, 0x0fff, MWA8_ROM},
-	{0x1000, 0x4fff, MWA8_RAM},
-	{0x5000, 0x5fff, videoram_w, &videoram, &videoram_size},
-	{0x6000, 0x9fff, MWA8_RAM},
-	{0xa000, 0xffff, MWA8_NOP},
-MEMORY_END
+static ADDRESS_MAP_START( p2000m_writemem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE( MWA8_ROM)
+	AM_RANGE(0x1000, 0x4fff) AM_WRITE( MWA8_RAM)
+	AM_RANGE(0x5000, 0x5fff) AM_WRITE( videoram_w) AM_BASE( &videoram) AM_SIZE( &videoram_size)
+	AM_RANGE(0x6000, 0x9fff) AM_WRITE( MWA8_RAM)
+	AM_RANGE(0xa000, 0xffff) AM_WRITE( MWA8_NOP)
+ADDRESS_MAP_END
 
 /* graphics output */
 
@@ -234,8 +234,8 @@ static INTERRUPT_GEN( p2000_interrupt )
 static MACHINE_DRIVER_START( p2000t )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 2500000)
-	MDRV_CPU_MEMORY(p2000t_readmem, p2000t_writemem)
-	MDRV_CPU_PORTS(p2000t_readport, p2000t_writeport)
+	MDRV_CPU_PROGRAM_MAP(p2000t_readmem, p2000t_writemem)
+	MDRV_CPU_IO_MAP(p2000t_readport, p2000t_writeport)
 	MDRV_CPU_VBLANK_INT(p2000_interrupt, 1)
 
     /* video hardware */
@@ -250,8 +250,8 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( p2000m )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 2500000)
-	MDRV_CPU_MEMORY(p2000m_readmem, p2000m_writemem)
-	MDRV_CPU_PORTS(p2000t_readport, p2000t_writeport)
+	MDRV_CPU_PROGRAM_MAP(p2000m_readmem, p2000m_writemem)
+	MDRV_CPU_IO_MAP(p2000t_readport, p2000t_writeport)
 	MDRV_CPU_VBLANK_INT(p2000_interrupt, 1)
 	MDRV_FRAMES_PER_SECOND(50)
 	MDRV_VBLANK_DURATION(2500)

@@ -250,7 +250,7 @@ static MEMORY_WRITE_START( c64_writemem )
 	{0x0002, 0x7fff, MWA8_RAM},
 	{0x8000, 0x9fff, MWA8_BANK2},
 	{0xa000, 0xcfff, MWA8_RAM},
-//	{0xa000, 0xcfff, MWA_BANK16},
+//	{0xa000, 0xcfff, MWA8_BANK16},
 #if 1
 	{0xd000, 0xdfff, MWA8_BANK6},
 #else

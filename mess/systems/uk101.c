@@ -32,65 +32,65 @@ Hardware:	MC6850
 
 /* memory w/r functions */
 
-MEMORY_READ_START( uk101_readmem )
-	{0x0000, 0x0fff, MRA8_BANK1 },
-	{0x1000, 0x1fff, MRA8_BANK2 },
-	{0x2000, 0x9fff, MRA8_BANK3 },
-	{0xa000, 0xbfff, MRA8_ROM},
-	{0xc000, 0xcfff, MRA8_NOP},
-	{0xd000, 0xd3ff, videoram_r},
-	{0xd400, 0xdeff, MRA8_NOP},
-	{0xdf00, 0xdf00, uk101_keyb_r},
-	{0xdf01, 0xefff, MRA8_NOP},
-	{0xf000, 0xf001, acia6850_0_r},
-	{0xf002, 0xf7ff, MRA8_NOP},
-	{0xf800, 0xffff, MRA8_ROM},
-MEMORY_END
+ADDRESS_MAP_START( uk101_readmem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x0fff) AM_READ( MRA8_BANK1 )
+	AM_RANGE(0x1000, 0x1fff) AM_READ( MRA8_BANK2 )
+	AM_RANGE(0x2000, 0x9fff) AM_READ( MRA8_BANK3 )
+	AM_RANGE(0xa000, 0xbfff) AM_READ( MRA8_ROM)
+	AM_RANGE(0xc000, 0xcfff) AM_READ( MRA8_NOP)
+	AM_RANGE(0xd000, 0xd3ff) AM_READ( videoram_r)
+	AM_RANGE(0xd400, 0xdeff) AM_READ( MRA8_NOP)
+	AM_RANGE(0xdf00, 0xdf00) AM_READ( uk101_keyb_r)
+	AM_RANGE(0xdf01, 0xefff) AM_READ( MRA8_NOP)
+	AM_RANGE(0xf000, 0xf001) AM_READ( acia6850_0_r)
+	AM_RANGE(0xf002, 0xf7ff) AM_READ( MRA8_NOP)
+	AM_RANGE(0xf800, 0xffff) AM_READ( MRA8_ROM)
+ADDRESS_MAP_END
 
-MEMORY_WRITE_START( uk101_writemem )
-	{0x0000, 0x0fff, MWA8_BANK1 },
-	{0x1000, 0x1fff, MWA8_BANK2 },
-	{0x2000, 0x9fff, MWA8_BANK3 },
-	{0xa000, 0xbfff, MWA8_ROM},
-	{0xc000, 0xcfff, MWA8_NOP},
-	{0xd000, 0xd3ff, videoram_w, &videoram, &videoram_size},
-	{0xd400, 0xdeff, MWA8_NOP},
-	{0xdf00, 0xdf00, uk101_keyb_w},
-	{0xdf01, 0xefff, MWA8_NOP},
-	{0xf000, 0xf001, acia6850_0_w},
-	{0xf002, 0xf7ff, MWA8_NOP},
-	{0xf800, 0xffff, MWA8_ROM},
-MEMORY_END
+ADDRESS_MAP_START( uk101_writemem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE( MWA8_BANK1 )
+	AM_RANGE(0x1000, 0x1fff) AM_WRITE( MWA8_BANK2 )
+	AM_RANGE(0x2000, 0x9fff) AM_WRITE( MWA8_BANK3 )
+	AM_RANGE(0xa000, 0xbfff) AM_WRITE( MWA8_ROM)
+	AM_RANGE(0xc000, 0xcfff) AM_WRITE( MWA8_NOP)
+	AM_RANGE(0xd000, 0xd3ff) AM_WRITE( videoram_w) AM_BASE( &videoram) AM_SIZE( &videoram_size)
+	AM_RANGE(0xd400, 0xdeff) AM_WRITE( MWA8_NOP)
+	AM_RANGE(0xdf00, 0xdf00) AM_WRITE( uk101_keyb_w)
+	AM_RANGE(0xdf01, 0xefff) AM_WRITE( MWA8_NOP)
+	AM_RANGE(0xf000, 0xf001) AM_WRITE( acia6850_0_w)
+	AM_RANGE(0xf002, 0xf7ff) AM_WRITE( MWA8_NOP)
+	AM_RANGE(0xf800, 0xffff) AM_WRITE( MWA8_ROM)
+ADDRESS_MAP_END
 
-MEMORY_READ_START( superbrd_readmem )
-	{0x0000, 0x0fff, MRA8_BANK1 },
-	{0x1000, 0x1fff, MRA8_BANK2 },
-	{0x2000, 0x9fff, MRA8_BANK3 },
-	{0xa000, 0xbfff, MRA8_ROM},
-	{0xc000, 0xcfff, MRA8_NOP},
-	{0xd000, 0xd7ff, videoram_r},
-	{0xd800, 0xdeff, MRA8_NOP},
-	{0xdf00, 0xdf00, uk101_keyb_r},
-	{0xdf01, 0xefff, MRA8_NOP},
-	{0xf000, 0xf001, acia6850_0_r},
-	{0xf002, 0xf7ff, MRA8_NOP},
-	{0xf800, 0xffff, MRA8_ROM},
-MEMORY_END
+ADDRESS_MAP_START( superbrd_readmem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x0fff) AM_READ( MRA8_BANK1 )
+	AM_RANGE(0x1000, 0x1fff) AM_READ( MRA8_BANK2 )
+	AM_RANGE(0x2000, 0x9fff) AM_READ( MRA8_BANK3 )
+	AM_RANGE(0xa000, 0xbfff) AM_READ( MRA8_ROM)
+	AM_RANGE(0xc000, 0xcfff) AM_READ( MRA8_NOP)
+	AM_RANGE(0xd000, 0xd7ff) AM_READ( videoram_r)
+	AM_RANGE(0xd800, 0xdeff) AM_READ( MRA8_NOP)
+	AM_RANGE(0xdf00, 0xdf00) AM_READ( uk101_keyb_r)
+	AM_RANGE(0xdf01, 0xefff) AM_READ( MRA8_NOP)
+	AM_RANGE(0xf000, 0xf001) AM_READ( acia6850_0_r)
+	AM_RANGE(0xf002, 0xf7ff) AM_READ( MRA8_NOP)
+	AM_RANGE(0xf800, 0xffff) AM_READ( MRA8_ROM)
+ADDRESS_MAP_END
 
-MEMORY_WRITE_START( superbrd_writemem )
-	{0x0000, 0x0fff, MWA8_BANK1 },
-	{0x1000, 0x1fff, MWA8_BANK2 },
-	{0x2000, 0x9fff, MWA8_BANK3 },
-	{0xa000, 0xbfff, MWA8_ROM},
-	{0xc000, 0xcfff, MWA8_NOP},
-	{0xd000, 0xd7ff, videoram_w, &videoram, &videoram_size},
-	{0xd800, 0xdeff, MWA8_NOP},
-	{0xdf00, 0xdf00, uk101_keyb_w},
-	{0xdf01, 0xefff, MWA8_NOP},
-	{0xf000, 0xf001, acia6850_0_w},
-	{0xf002, 0xf7ff, MWA8_NOP},
-	{0xf800, 0xffff, MWA8_ROM},
-MEMORY_END
+ADDRESS_MAP_START( superbrd_writemem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE( MWA8_BANK1 )
+	AM_RANGE(0x1000, 0x1fff) AM_WRITE( MWA8_BANK2 )
+	AM_RANGE(0x2000, 0x9fff) AM_WRITE( MWA8_BANK3 )
+	AM_RANGE(0xa000, 0xbfff) AM_WRITE( MWA8_ROM)
+	AM_RANGE(0xc000, 0xcfff) AM_WRITE( MWA8_NOP)
+	AM_RANGE(0xd000, 0xd7ff) AM_WRITE( videoram_w) AM_BASE( &videoram) AM_SIZE( &videoram_size)
+	AM_RANGE(0xd800, 0xdeff) AM_WRITE( MWA8_NOP)
+	AM_RANGE(0xdf00, 0xdf00) AM_WRITE( uk101_keyb_w)
+	AM_RANGE(0xdf01, 0xefff) AM_WRITE( MWA8_NOP)
+	AM_RANGE(0xf000, 0xf001) AM_WRITE( acia6850_0_w)
+	AM_RANGE(0xf002, 0xf7ff) AM_WRITE( MWA8_NOP)
+	AM_RANGE(0xf800, 0xffff) AM_WRITE( MWA8_ROM)
+ADDRESS_MAP_END
 
 /* graphics output */
 
@@ -109,7 +109,8 @@ struct GfxLayout uk101_charlayout =
 static struct	GfxDecodeInfo uk101_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &uk101_charlayout, 0, 1},
-MEMORY_END
+	{-1}
+};
 
 static unsigned char uk101_palette[2 * 3] =
 {
@@ -210,7 +211,7 @@ static INTERRUPT_GEN( uk101_interrupt )
 static MACHINE_DRIVER_START( uk101 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M6502, 1000000)
-	MDRV_CPU_MEMORY( uk101_readmem, uk101_writemem )
+	MDRV_CPU_PROGRAM_MAP( uk101_readmem, uk101_writemem )
 	MDRV_CPU_VBLANK_INT(uk101_interrupt, 1)
 	MDRV_FRAMES_PER_SECOND(50)
 	MDRV_VBLANK_DURATION(2500)
@@ -235,7 +236,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( superbrd )
 	MDRV_IMPORT_FROM( uk101 )
 	MDRV_CPU_MODIFY( "main" )
-	MDRV_CPU_MEMORY( superbrd_readmem, superbrd_writemem )
+	MDRV_CPU_PROGRAM_MAP( superbrd_readmem, superbrd_writemem )
 	MDRV_SCREEN_SIZE(64 * 8, 16 * 16)
 	MDRV_VISIBLE_AREA(0, 64 * 8 - 1, 0, 16 * 16 - 1)
 	MDRV_VIDEO_UPDATE( superbrd )

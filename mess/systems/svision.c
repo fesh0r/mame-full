@@ -217,21 +217,21 @@ static WRITE_HANDLER(svision_w)
 	}
 }
 
-static MEMORY_READ_START( readmem )
-    { 0x0000, 0x1fff, MRA8_RAM },
-    { 0x2000, 0x3fff, svision_r },
-    { 0x4000, 0x5fff, MRA8_RAM }, //?
-	{ 0x6000, 0x7fff, MRA8_ROM },
-	{ 0x8000, 0xbfff, MRA8_BANK1 },
-	{ 0xc000, 0xffff, MRA8_BANK2 },
-MEMORY_END
+static ADDRESS_MAP_START( readmem , ADDRESS_SPACE_PROGRAM, 8)
+    AM_RANGE( 0x0000, 0x1fff) AM_READ( MRA8_RAM )
+    AM_RANGE( 0x2000, 0x3fff) AM_READ( svision_r )
+    AM_RANGE( 0x4000, 0x5fff) AM_READ( MRA8_RAM ) //?
+	AM_RANGE( 0x6000, 0x7fff) AM_READ( MRA8_ROM )
+	AM_RANGE( 0x8000, 0xbfff) AM_READ( MRA8_BANK1 )
+	AM_RANGE( 0xc000, 0xffff) AM_READ( MRA8_BANK2 )
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x1fff, MWA8_RAM },
-    { 0x2000, 0x3fff, svision_w, &svision_reg },
-	{ 0x4000, 0x5fff, MWA8_RAM },
-	{ 0x6000, 0xffff, MWA8_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x1fff) AM_WRITE( MWA8_RAM )
+    AM_RANGE( 0x2000, 0x3fff) AM_WRITE( svision_w) AM_BASE( &svision_reg )
+	AM_RANGE( 0x4000, 0x5fff) AM_WRITE( MWA8_RAM )
+	AM_RANGE( 0x6000, 0xffff) AM_WRITE( MWA8_ROM )
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( svision )
 	PORT_START
@@ -328,7 +328,7 @@ struct CustomSound_interface svision_sound_interface =
 static MACHINE_DRIVER_START( svision )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M65C02, 4000000)        /* ? stz used! speed? */
-	MDRV_CPU_MEMORY(readmem, writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem, writemem)
 	MDRV_CPU_VBLANK_INT(svision_frame_int, 1)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

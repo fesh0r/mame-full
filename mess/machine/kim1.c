@@ -795,7 +795,7 @@ READ_HANDLER ( m6530_002_r )
 
 READ_HANDLER ( kim1_mirror_r )
 {
-	return cpu_readmem16(offset & 0x1fff);
+	return program_read_byte(offset & 0x1fff);
 }
 
 static void m6530_w(int chip, int offset, int data)

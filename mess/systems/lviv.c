@@ -292,29 +292,29 @@ Timings:
 
 /* I/O ports */
 
-PORT_READ_START( lviv_readport )
-	{ 0x00, 0xff, lviv_io_r },
-PORT_END
+ADDRESS_MAP_START( lviv_readport , ADDRESS_SPACE_IO, 8)
+	AM_RANGE( 0x00, 0xff) AM_READ( lviv_io_r )
+ADDRESS_MAP_END
 
-PORT_WRITE_START( lviv_writeport )
-	{ 0x00, 0xff, lviv_io_w },
-PORT_END
+ADDRESS_MAP_START( lviv_writeport , ADDRESS_SPACE_IO, 8)
+	AM_RANGE( 0x00, 0xff) AM_WRITE( lviv_io_w )
+ADDRESS_MAP_END
 
 /* memory w/r functions */
 
-MEMORY_READ_START( lviv_readmem )
-	{0x0000, 0x3fff, MRA8_BANK1},
-	{0x4000, 0x7fff, MRA8_BANK2},
-	{0x8000, 0xbfff, MRA8_BANK3},
-	{0xc000, 0xffff, MRA8_BANK4},
-MEMORY_END
+ADDRESS_MAP_START( lviv_readmem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x3fff) AM_READ( MRA8_BANK1)
+	AM_RANGE(0x4000, 0x7fff) AM_READ( MRA8_BANK2)
+	AM_RANGE(0x8000, 0xbfff) AM_READ( MRA8_BANK3)
+	AM_RANGE(0xc000, 0xffff) AM_READ( MRA8_BANK4)
+ADDRESS_MAP_END
 
-MEMORY_WRITE_START( lviv_writemem )
-	{0x0000, 0x3fff, MWA8_BANK1},
-	{0x4000, 0x7fff, MWA8_BANK2},
-	{0x8000, 0xbfff, MWA8_BANK3},
-	{0xc000, 0xffff, MWA_BANK4},
-MEMORY_END
+ADDRESS_MAP_START( lviv_writemem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x3fff) AM_WRITE( MWA8_BANK1)
+	AM_RANGE(0x4000, 0x7fff) AM_WRITE( MWA8_BANK2)
+	AM_RANGE(0x8000, 0xbfff) AM_WRITE( MWA8_BANK3)
+	AM_RANGE(0xc000, 0xffff) AM_WRITE( MWA8_BANK4)
+ADDRESS_MAP_END
 
 
 /* keyboard input */
@@ -439,8 +439,8 @@ static struct Wave_interface lviv_wave_interface = {
 static MACHINE_DRIVER_START( lviv )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(8080, 2500000)
-	MDRV_CPU_MEMORY(lviv_readmem, lviv_writemem)
-	MDRV_CPU_PORTS(lviv_readport, lviv_writeport)
+	MDRV_CPU_PROGRAM_MAP(lviv_readmem, lviv_writemem)
+	MDRV_CPU_IO_MAP(lviv_readport, lviv_writeport)
 	MDRV_FRAMES_PER_SECOND(50)
 	MDRV_VBLANK_DURATION(0)
 	MDRV_INTERLEAVE(1)

@@ -53,42 +53,42 @@
 */
 
 
-static MEMORY_READ_START(oric_readmem)
-    { 0x0000, 0x02FF, MRA8_RAM },
+static ADDRESS_MAP_START(oric_readmem, ADDRESS_SPACE_PROGRAM, 8)
+    AM_RANGE( 0x0000, 0x02FF) AM_READ( MRA8_RAM )
 
 	/* { 0x0300, 0x03ff, oric_IO_r }, */
-    { 0x0400, 0xBFFF, MRA8_RAM },
+    AM_RANGE( 0x0400, 0xBFFF) AM_READ( MRA8_RAM )
 
-    { 0xc000, 0xdFFF, MRA8_BANK1 },
-	{ 0xe000, 0xf7ff, MRA8_BANK2 },
-	{ 0xf800, 0xffff, MRA8_BANK3 },
-MEMORY_END
+    AM_RANGE( 0xc000, 0xdFFF) AM_READ( MRA8_BANK1 )
+	AM_RANGE( 0xe000, 0xf7ff) AM_READ( MRA8_BANK2 )
+	AM_RANGE( 0xf800, 0xffff) AM_READ( MRA8_BANK3 )
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START(oric_writemem)
-    { 0x0000, 0x02FF, MWA8_RAM },
+static ADDRESS_MAP_START(oric_writemem, ADDRESS_SPACE_PROGRAM, 8)
+    AM_RANGE( 0x0000, 0x02FF) AM_WRITE( MWA8_RAM )
     /* { 0x0300, 0x03ff, oric_IO_w }, */
-    { 0x0400, 0xbFFF, MWA8_RAM },
-    { 0xc000, 0xdFFF, MWA8_BANK5 },
-    { 0xe000, 0xf7ff, MWA8_BANK6 },
-	{ 0xf800, 0xffff, MWA8_BANK7 },
-MEMORY_END
+    AM_RANGE( 0x0400, 0xbFFF) AM_WRITE( MWA8_RAM )
+    AM_RANGE( 0xc000, 0xdFFF) AM_WRITE( MWA8_BANK5 )
+    AM_RANGE( 0xe000, 0xf7ff) AM_WRITE( MWA8_BANK6 )
+	AM_RANGE( 0xf800, 0xffff) AM_WRITE( MWA8_BANK7 )
+ADDRESS_MAP_END
 
 /*
 The telestrat has the memory regions split into 16k blocks.
 Memory region &c000-&ffff can be ram or rom. */
-static MEMORY_READ_START(telestrat_readmem)
-    { 0x0000, 0x02FF, MRA8_RAM },
-    { 0x0300, 0x03ff, telestrat_IO_r },
-    { 0x0400, 0xBFFF, MRA8_RAM },
-    { 0xc000, 0xfFFF, MRA8_BANK1 },
-MEMORY_END
+static ADDRESS_MAP_START(telestrat_readmem, ADDRESS_SPACE_PROGRAM, 8)
+    AM_RANGE( 0x0000, 0x02FF) AM_READ( MRA8_RAM )
+    AM_RANGE( 0x0300, 0x03ff) AM_READ( telestrat_IO_r )
+    AM_RANGE( 0x0400, 0xBFFF) AM_READ( MRA8_RAM )
+    AM_RANGE( 0xc000, 0xfFFF) AM_READ( MRA8_BANK1 )
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START(telestrat_writemem)
-    { 0x0000, 0x02FF, MWA8_RAM },
-    { 0x0300, 0x03ff, telestrat_IO_w },
-    { 0x0400, 0xbFFF, MWA8_RAM },
-    { 0xc000, 0xffff, MWA8_BANK2 },
-MEMORY_END
+static ADDRESS_MAP_START(telestrat_writemem, ADDRESS_SPACE_PROGRAM, 8)
+    AM_RANGE( 0x0000, 0x02FF) AM_WRITE( MWA8_RAM )
+    AM_RANGE( 0x0300, 0x03ff) AM_WRITE( telestrat_IO_w )
+    AM_RANGE( 0x0400, 0xbFFF) AM_WRITE( MWA8_RAM )
+    AM_RANGE( 0xc000, 0xffff) AM_WRITE( MWA8_BANK2 )
+ADDRESS_MAP_END
 
 #define INPUT_PORT_ORIC \
 	PORT_START /* IN0 */ \
@@ -462,7 +462,7 @@ static struct AY8910interface oric_ay_interface =
 static MACHINE_DRIVER_START( oric )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M6502, 1000000)
-	MDRV_CPU_MEMORY(oric_readmem,oric_writemem)
+	MDRV_CPU_PROGRAM_MAP(oric_readmem,oric_writemem)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1)
@@ -490,7 +490,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( telstrat)
 	MDRV_IMPORT_FROM( oric )
 	MDRV_CPU_MODIFY( "main" )
-	MDRV_CPU_MEMORY( telestrat_readmem,telestrat_writemem )
+	MDRV_CPU_PROGRAM_MAP( telestrat_readmem,telestrat_writemem )
 
 	MDRV_MACHINE_INIT( telestrat )
 	MDRV_MACHINE_STOP( telestrat )

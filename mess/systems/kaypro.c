@@ -13,27 +13,27 @@
 #include "includes/kaypro.h"
 #include "devices/basicdsk.h"
 
-static MEMORY_READ_START( readmem_kaypro )
-    { 0x0000, 0xffff, MRA8_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_kaypro , ADDRESS_SPACE_PROGRAM, 8)
+    AM_RANGE( 0x0000, 0xffff) AM_READ( MRA8_RAM )
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem_kaypro )
-    { 0x0000, 0xffff, MWA8_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_kaypro , ADDRESS_SPACE_PROGRAM, 8)
+    AM_RANGE( 0x0000, 0xffff) AM_WRITE( MWA8_RAM )
+ADDRESS_MAP_END
 
-PORT_READ_START( readport_kaypro )
-    { BIOS_CONST,  BIOS_CONST,  kaypro_const_r },
-    { BIOS_CONIN,  BIOS_CONIN,  kaypro_conin_r },
-    { BIOS_CONOUT, BIOS_CONOUT, kaypro_conout_r },
-    { BIOS_CMD,    BIOS_CMD,    cpm_bios_command_r },
-PORT_END
+ADDRESS_MAP_START( readport_kaypro , ADDRESS_SPACE_IO, 8)
+    AM_RANGE( BIOS_CONST,  BIOS_CONST) AM_READ(  kaypro_const_r )
+    AM_RANGE( BIOS_CONIN,  BIOS_CONIN) AM_READ(  kaypro_conin_r )
+    AM_RANGE( BIOS_CONOUT, BIOS_CONOUT) AM_READ( kaypro_conout_r )
+    AM_RANGE( BIOS_CMD,    BIOS_CMD) AM_READ(    cpm_bios_command_r )
+ADDRESS_MAP_END
 
-PORT_WRITE_START( writeport_kaypro )
-    { BIOS_CONST,  BIOS_CONST,  kaypro_const_w },
-    { BIOS_CONIN,  BIOS_CONIN,  kaypro_conin_w },
-    { BIOS_CONOUT, BIOS_CONOUT, kaypro_conout_w },
-    { BIOS_CMD,    BIOS_CMD,    cpm_bios_command_w },
-PORT_END
+ADDRESS_MAP_START( writeport_kaypro , ADDRESS_SPACE_IO, 8)
+    AM_RANGE( BIOS_CONST,  BIOS_CONST) AM_WRITE(  kaypro_const_w )
+    AM_RANGE( BIOS_CONIN,  BIOS_CONIN) AM_WRITE(  kaypro_conin_w )
+    AM_RANGE( BIOS_CONOUT, BIOS_CONOUT) AM_WRITE( kaypro_conout_w )
+    AM_RANGE( BIOS_CMD,    BIOS_CMD) AM_WRITE(    cpm_bios_command_w )
+ADDRESS_MAP_END
 
 /*
  * The KAYPRO keyboard has roughly the following layout:
@@ -204,7 +204,8 @@ static struct GfxLayout charlayout =
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
     { 1, 0, &charlayout, 0, 4},
-MEMORY_END   /* end of array */
+	{-1}
+};   /* end of array */
 
 static unsigned char kaypro_palette[] =
 {
@@ -239,8 +240,8 @@ static PALETTE_INIT( kaypro )
 static MACHINE_DRIVER_START( kaypro )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80, 4000000)        /* 4 Mhz */
-	MDRV_CPU_MEMORY(readmem_kaypro,writemem_kaypro)
-	MDRV_CPU_PORTS(readport_kaypro,writeport_kaypro)
+	MDRV_CPU_PROGRAM_MAP(readmem_kaypro,writemem_kaypro)
+	MDRV_CPU_IO_MAP(readport_kaypro,writeport_kaypro)
 	MDRV_CPU_VBLANK_INT(kaypro_interrupt, 1)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.25 2004/02/04 02:14:42 npwoods Exp $
+  $Id: pc8801.c,v 1.26 2004/02/06 02:50:05 npwoods Exp $
 
 ***************************************************************************/
 
@@ -398,7 +398,7 @@ MEMORY_WRITE_START( pc8801_writemem )
     { 0x0000, 0x5fff, MWA8_BANK1 },
     { 0x6000, 0x7fff, MWA8_BANK2 },
     { 0x8000, 0x83ff, MWA8_BANK3 },
-    { 0x8400, 0xbfff, MWA_BANK4 },
+    { 0x8400, 0xbfff, MWA8_BANK4 },
     { 0xc000, 0xefff, MWA8_BANK5 },
     { 0xf000, 0xffff, MWA8_BANK6 },
 MEMORY_END

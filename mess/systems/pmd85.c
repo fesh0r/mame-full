@@ -44,23 +44,23 @@ Memory map:
 
 /* I/O ports */
 
-PORT_READ_START( pmd85_readport )
-	{ 0x00, 0xff, pmd85_io_r },
-PORT_END
+ADDRESS_MAP_START( pmd85_readport , ADDRESS_SPACE_IO, 8)
+	AM_RANGE( 0x00, 0xff) AM_READ( pmd85_io_r )
+ADDRESS_MAP_END
 
-PORT_WRITE_START( pmd85_writeport )
-	{ 0x00, 0xff, pmd85_io_w },
-PORT_END
+ADDRESS_MAP_START( pmd85_writeport , ADDRESS_SPACE_IO, 8)
+	AM_RANGE( 0x00, 0xff) AM_WRITE( pmd85_io_w )
+ADDRESS_MAP_END
 
 /* memory w/r functions */
 
-MEMORY_READ_START( pmd85_readmem )
-	{ 0x0000, 0xffff, pmd85_mem_r },
-MEMORY_END
+ADDRESS_MAP_START( pmd85_readmem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0xffff) AM_READ( pmd85_mem_r )
+ADDRESS_MAP_END
 
-MEMORY_WRITE_START( pmd85_writemem )
-	{ 0x0000, 0xffff, pmd85_mem_w },
-MEMORY_END
+ADDRESS_MAP_START( pmd85_writemem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0xffff) AM_WRITE( pmd85_mem_w )
+ADDRESS_MAP_END
 
 
 /* keyboard input */
@@ -215,8 +215,8 @@ INPUT_PORTS_END
 static MACHINE_DRIVER_START( pmd85 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(8080, 2000000)
-	MDRV_CPU_MEMORY(pmd85_readmem, pmd85_writemem)
-	MDRV_CPU_PORTS(pmd85_readport, pmd85_writeport)
+	MDRV_CPU_PROGRAM_MAP(pmd85_readmem, pmd85_writemem)
+	MDRV_CPU_IO_MAP(pmd85_readport, pmd85_writeport)
 	MDRV_FRAMES_PER_SECOND(50)
 	MDRV_VBLANK_DURATION(0)
 	MDRV_INTERLEAVE(1)

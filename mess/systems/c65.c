@@ -62,7 +62,7 @@ static MEMORY_WRITE_START( c65_writemem )
 	{0x3e000, 0x3ffff, MWA8_ROM}, /* &c65_kernal}, */
 	{0x40000, 0x7ffff, MWA8_NOP},
 	{0x80000, 0xfffff, MWA8_RAM},
-/*	{0x80000, 0xfffff, MWA_BANK16}, */
+/*	{0x80000, 0xfffff, MWA8_BANK16}, */
 MEMORY_END
 
 #define DIPS_HELPER(bit, name, keycode) \

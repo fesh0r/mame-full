@@ -290,20 +290,20 @@ static WRITE_HANDLER (	enterprise_wd177x_write )
 
 /* I've done this because the ram is banked in 16k blocks, and
 the rom can be paged into bank 0 and bank 3. */
-MEMORY_READ_START( readmem_enterprise )
-	{ 0x00000, 0x03fff, MRA8_BANK1 },
-	{ 0x04000, 0x07fff, MRA8_BANK2 },
-	{ 0x08000, 0x0bfff, MRA8_BANK3 },
-	{ 0x0c000, 0x0ffff, MRA8_BANK4 },
-MEMORY_END
+ADDRESS_MAP_START( readmem_enterprise , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x00000, 0x03fff) AM_READ( MRA8_BANK1 )
+	AM_RANGE( 0x04000, 0x07fff) AM_READ( MRA8_BANK2 )
+	AM_RANGE( 0x08000, 0x0bfff) AM_READ( MRA8_BANK3 )
+	AM_RANGE( 0x0c000, 0x0ffff) AM_READ( MRA8_BANK4 )
+ADDRESS_MAP_END
 
 
-MEMORY_WRITE_START( writemem_enterprise )
-	{ 0x00000, 0x03fff, MWA8_BANK5 },
-	{ 0x04000, 0x07fff, MWA8_BANK6 },
-	{ 0x08000, 0x0bfff, MWA8_BANK7 },
-	{ 0x0c000, 0x0ffff, MWA8_BANK8 },
-MEMORY_END
+ADDRESS_MAP_START( writemem_enterprise , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x00000, 0x03fff) AM_WRITE( MWA8_BANK5 )
+	AM_RANGE( 0x04000, 0x07fff) AM_WRITE( MWA8_BANK6 )
+	AM_RANGE( 0x08000, 0x0bfff) AM_WRITE( MWA8_BANK7 )
+	AM_RANGE( 0x0c000, 0x0ffff) AM_WRITE( MWA8_BANK8 )
+ADDRESS_MAP_END
 
 /* bit 0 - select drive 0,
    bit 1 - select drive 1,
@@ -394,21 +394,21 @@ static READ_HANDLER ( exdos_card_r )
 	return EXDOS_CARD_R;
 }
 
-PORT_READ_START( readport_enterprise )
-	{ 0x010, 0x017, enterprise_wd177x_read },
-	{ 0x018, 0x018, exdos_card_r },
-	{ 0x01c, 0x01c, exdos_card_r },
-	{ 0x0a0, 0x0bf, Dave_reg_r },
-PORT_END
+ADDRESS_MAP_START( readport_enterprise , ADDRESS_SPACE_IO, 8)
+	AM_RANGE( 0x010, 0x017) AM_READ( enterprise_wd177x_read )
+	AM_RANGE( 0x018, 0x018) AM_READ( exdos_card_r )
+	AM_RANGE( 0x01c, 0x01c) AM_READ( exdos_card_r )
+	AM_RANGE( 0x0a0, 0x0bf) AM_READ( Dave_reg_r )
+ADDRESS_MAP_END
 
 
-PORT_WRITE_START( writeport_enterprise )
-	{ 0x010, 0x017, enterprise_wd177x_write },
-	{ 0x018, 0x018, exdos_card_w },
-	{ 0x01c, 0x01c, exdos_card_w },
-	{ 0x080, 0x08f, Nick_reg_w },
-	{ 0x0a0, 0x0bf, Dave_reg_w },
-PORT_END
+ADDRESS_MAP_START( writeport_enterprise , ADDRESS_SPACE_IO, 8)
+	AM_RANGE( 0x010, 0x017) AM_WRITE( enterprise_wd177x_write )
+	AM_RANGE( 0x018, 0x018) AM_WRITE( exdos_card_w )
+	AM_RANGE( 0x01c, 0x01c) AM_WRITE( exdos_card_w )
+	AM_RANGE( 0x080, 0x08f) AM_WRITE( Nick_reg_w )
+	AM_RANGE( 0x0a0, 0x0bf) AM_WRITE( Dave_reg_w )
+ADDRESS_MAP_END
 
 /*
 Enterprise Keyboard Matrix
@@ -566,8 +566,8 @@ static struct CustomSound_interface dave_custom_sound=
 static MACHINE_DRIVER_START( ep128 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_MEMORY(readmem_enterprise,writemem_enterprise)
-	MDRV_CPU_PORTS(readport_enterprise,writeport_enterprise)
+	MDRV_CPU_PROGRAM_MAP(readmem_enterprise,writemem_enterprise)
+	MDRV_CPU_IO_MAP(readport_enterprise,writeport_enterprise)
 	MDRV_FRAMES_PER_SECOND(50)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1)

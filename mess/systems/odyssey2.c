@@ -12,32 +12,32 @@
 #include "includes/odyssey2.h"
 #include "devices/cartslot.h"
 
-MEMORY_READ_START( readmem )
-	{ 0x0000, 0x03FF, MRA8_ROM },
-	{ 0x0400, 0x0bFF, MRA8_BANK1 },
-	{ 0x0c00, 0x0FFF, MRA8_BANK2 },
-MEMORY_END
+ADDRESS_MAP_START( readmem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x03FF) AM_READ( MRA8_ROM )
+	AM_RANGE( 0x0400, 0x0bFF) AM_READ( MRA8_BANK1 )
+	AM_RANGE( 0x0c00, 0x0FFF) AM_READ( MRA8_BANK2 )
+ADDRESS_MAP_END
 
-MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x03FF, MWA8_ROM },
-	{ 0x0400, 0x0bFF, MWA8_BANK1 },
-	{ 0x0c00, 0x0FFF, MWA8_BANK2 },
-MEMORY_END
+ADDRESS_MAP_START( writemem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x03FF) AM_WRITE( MWA8_ROM )
+	AM_RANGE( 0x0400, 0x0bFF) AM_WRITE( MWA8_BANK1 )
+	AM_RANGE( 0x0c00, 0x0FFF) AM_WRITE( MWA8_BANK2 )
+ADDRESS_MAP_END
 
-PORT_READ_START( readport )
-	{ 0x00, 	0xff,	  odyssey2_bus_r},
-	{ I8039_p1, I8039_p1, odyssey2_getp1 },
-	{ I8039_p2, I8039_p2, odyssey2_getp2 },
-	{ I8039_bus, I8039_bus, odyssey2_getbus },
-	{ I8039_t1, I8039_t1, odyssey2_t1_r },
-PORT_END
+ADDRESS_MAP_START( readport , ADDRESS_SPACE_IO, 8)
+	AM_RANGE( 0x00, 	0xff) AM_READ(	  odyssey2_bus_r)
+	AM_RANGE( I8039_p1, I8039_p1) AM_READ( odyssey2_getp1 )
+	AM_RANGE( I8039_p2, I8039_p2) AM_READ( odyssey2_getp2 )
+	AM_RANGE( I8039_bus, I8039_bus) AM_READ( odyssey2_getbus )
+	AM_RANGE( I8039_t1, I8039_t1) AM_READ( odyssey2_t1_r )
+ADDRESS_MAP_END
 
-PORT_WRITE_START( writeport )
-	{ 0x00, 	0xff,	  odyssey2_bus_w },
-	{ I8039_p1, I8039_p1, odyssey2_putp1 },
-	{ I8039_p2, I8039_p2, odyssey2_putp2 },
-	{ I8039_bus, I8039_bus, odyssey2_putbus },
-PORT_END
+ADDRESS_MAP_START( writeport , ADDRESS_SPACE_IO, 8)
+	AM_RANGE( 0x00, 	0xff) AM_WRITE(	  odyssey2_bus_w )
+	AM_RANGE( I8039_p1, I8039_p1) AM_WRITE( odyssey2_putp1 )
+	AM_RANGE( I8039_p2, I8039_p2) AM_WRITE( odyssey2_putp2 )
+	AM_RANGE( I8039_bus, I8039_bus) AM_WRITE( odyssey2_putbus )
+ADDRESS_MAP_END
 
 #define DIPS_HELPER(bit, name, keycode, r) \
    PORT_BITX(bit, IP_ACTIVE_LOW, IPT_KEYBOARD, name, keycode, r)
@@ -161,8 +161,8 @@ static struct GfxDecodeInfo odyssey2_gfxdecodeinfo[] =
 static MACHINE_DRIVER_START( odyssey2 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(I8048, 1790000/5)         /* 1.79 MHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(odyssey2_line, 262)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

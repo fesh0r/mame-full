@@ -32,19 +32,19 @@ Changes:
 #include "includes/wd179x.h"
 #include "devices/basicdsk.h"
 
-MEMORY_READ_START( coupe_readmem )	 {
-	 0x0000, 0x3FFF, MRA8_BANK1 },
-	{ 0x4000, 0x7FFF, MRA8_BANK2 },
-	{ 0x8000, 0xBFFF, MRA8_BANK3 },
-	{ 0xC000, 0xFFFF, MRA8_BANK4 },
-MEMORY_END
+ADDRESS_MAP_START( coupe_readmem , ADDRESS_SPACE_PROGRAM, 8)
+	 AM_RANGE(	 0x0000, 0x3FFF) AM_READ( MRA8_BANK1 )
+	AM_RANGE( 0x4000, 0x7FFF) AM_READ( MRA8_BANK2 )
+	AM_RANGE( 0x8000, 0xBFFF) AM_READ( MRA8_BANK3 )
+	AM_RANGE( 0xC000, 0xFFFF) AM_READ( MRA8_BANK4 )
+ADDRESS_MAP_END
 
-MEMORY_WRITE_START( coupe_writemem )	 {
-	 0x0000, 0x3FFF, MWA8_BANK1 },
-	{ 0x4000, 0x7FFF, MWA8_BANK2 },
-	{ 0x8000, 0xBFFF, MWA8_BANK3 },
-	{ 0xC000, 0xFFFF, MWA_BANK4 },
-MEMORY_END
+ADDRESS_MAP_START( coupe_writemem , ADDRESS_SPACE_PROGRAM, 8)
+	 AM_RANGE(	 0x0000, 0x3FFF) AM_WRITE( MWA8_BANK1 )
+	AM_RANGE( 0x4000, 0x7FFF) AM_WRITE( MWA8_BANK2 )
+	AM_RANGE( 0x8000, 0xBFFF) AM_WRITE( MWA8_BANK3 )
+	AM_RANGE( 0xC000, 0xFFFF) AM_WRITE( MWA8_BANK4 )
+ADDRESS_MAP_END
 
 static INTERRUPT_GEN( coupe_line_interrupt )
 {
@@ -267,16 +267,17 @@ static WRITE_HANDLER( coupe_port_w )
 	}
 }
 
-PORT_READ_START( coupe_readport )	 {
-	0x0000, 0x0ffff, coupe_port_r},
-PORT_END
+ADDRESS_MAP_START( coupe_readport , ADDRESS_SPACE_IO, 8)	
+ AM_RANGE(	0x0000, 0x0ffff) AM_READ( coupe_port_r)
+ADDRESS_MAP_END
 
-PORT_WRITE_START( coupe_writeport )	 {
-	0x0000, 0x0ffff, coupe_port_w},
-PORT_END
+ADDRESS_MAP_START( coupe_writeport , ADDRESS_SPACE_IO, 8)
+	 AM_RANGE(	0x0000, 0x0ffff) AM_WRITE( coupe_port_w)
+ADDRESS_MAP_END
 
 static struct GfxDecodeInfo coupe_gfxdecodeinfo[] = {
-MEMORY_END	 /* end of array */
+	{-1}
+};	 /* end of array */
 
 INPUT_PORTS_START( coupe )
 	PORT_START // FE  0
@@ -427,8 +428,8 @@ static MACHINE_DRIVER_START( coupe )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 6000000)        /* 6 Mhz */
 	MDRV_CPU_FLAGS( CPU_16BIT_PORT )
-	MDRV_CPU_MEMORY(coupe_readmem,coupe_writemem)
-	MDRV_CPU_PORTS(coupe_readport,coupe_writeport)
+	MDRV_CPU_PROGRAM_MAP(coupe_readmem,coupe_writemem)
+	MDRV_CPU_IO_MAP(coupe_readport,coupe_writeport)
 	MDRV_CPU_VBLANK_INT(coupe_line_interrupt, 192 + 10)	/* 192 scanlines + 10 lines of vblank (approx).. */
 	MDRV_FRAMES_PER_SECOND(50)
 	MDRV_VBLANK_DURATION(0)

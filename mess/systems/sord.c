@@ -52,16 +52,16 @@ static MACHINE_INIT( sord_m5 );
 
 static unsigned char fd5_databus;
 
-MEMORY_READ_START( readmem_sord_fd5 )
-	{0x0000, 0x03fff, MRA8_ROM},	/* internal rom */
-	{0x4000, 0x0ffff, MRA8_RAM},
-MEMORY_END
+ADDRESS_MAP_START( readmem_sord_fd5 , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x03fff) AM_READ( MRA8_ROM)	/* internal rom */
+	AM_RANGE(0x4000, 0x0ffff) AM_READ( MRA8_RAM)
+ADDRESS_MAP_END
 
 
-MEMORY_WRITE_START( writemem_sord_fd5 )
-	{0x0000, 0x03fff, MWA8_ROM}, /* internal rom */
-	{0x4000, 0x0ffff, MWA8_RAM},
-MEMORY_END
+ADDRESS_MAP_START( writemem_sord_fd5 , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x03fff) AM_WRITE( MWA8_ROM) /* internal rom */
+	AM_RANGE(0x4000, 0x0ffff) AM_WRITE( MWA8_RAM)
+ADDRESS_MAP_END
 
 static int obfa,ibfa, intra;
 static int fd5_port_0x020_data;
@@ -152,20 +152,20 @@ static WRITE_HANDLER(fd5_tc_w)
 /* 0x030 fd5 reads from this port to communicate with m5 */
 /* 0x040 */
 /* 0x050 */
-PORT_READ_START( readport_sord_fd5 )
-	{ 0x000, 0x000, nec765_status_r},
-	{ 0x001, 0x001, nec765_data_r},
-	{ 0x010, 0x010, fd5_data_r},
-	{ 0x030, 0x030, fd5_communication_r},
-PORT_END
+ADDRESS_MAP_START( readport_sord_fd5 , ADDRESS_SPACE_IO, 8)
+	AM_RANGE( 0x000, 0x000) AM_READ( nec765_status_r)
+	AM_RANGE( 0x001, 0x001) AM_READ( nec765_data_r)
+	AM_RANGE( 0x010, 0x010) AM_READ( fd5_data_r)
+	AM_RANGE( 0x030, 0x030) AM_READ( fd5_communication_r)
+ADDRESS_MAP_END
 
-PORT_WRITE_START( writeport_sord_fd5 )
-	{ 0x001, 0x001, nec765_data_w},
-	{ 0x010, 0x010, fd5_data_w},	
-	{ 0x020, 0x020, fd5_communication_w},
-	{ 0x040, 0x040, fd5_drive_control_w},
-	{ 0x050, 0x050, fd5_tc_w},
-PORT_END
+ADDRESS_MAP_START( writeport_sord_fd5 , ADDRESS_SPACE_IO, 8)
+	AM_RANGE( 0x001, 0x001) AM_WRITE( nec765_data_w)
+	AM_RANGE( 0x010, 0x010) AM_WRITE( fd5_data_w)	
+	AM_RANGE( 0x020, 0x020) AM_WRITE( fd5_communication_w)
+	AM_RANGE( 0x040, 0x040) AM_WRITE( fd5_drive_control_w)
+	AM_RANGE( 0x050, 0x050) AM_WRITE( fd5_tc_w)
+ADDRESS_MAP_END
 
 /* nec765 data request is connected to interrupt of z80 inside fd5 interface */
 static void sord_fd5_fdc_interrupt(int state)
@@ -382,19 +382,19 @@ static READ_HANDLER ( sord_keyboard_r )
 	return readinputport(offset);
 }
 
-MEMORY_READ_START( readmem_sord_m5 )
-	{0x0000, 0x01fff, MRA8_ROM},	/* internal rom */
-	{0x2000, 0x06fff, MRA8_BANK1},
-	{0x7000, 0x0ffff, MRA8_RAM},
-MEMORY_END
+ADDRESS_MAP_START( readmem_sord_m5 , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x01fff) AM_READ( MRA8_ROM)	/* internal rom */
+	AM_RANGE(0x2000, 0x06fff) AM_READ( MRA8_BANK1)
+	AM_RANGE(0x7000, 0x0ffff) AM_READ( MRA8_RAM)
+ADDRESS_MAP_END
 
 
 
-MEMORY_WRITE_START( writemem_sord_m5 )
-	{0x0000, 0x01fff, MWA8_ROM}, /* internal rom */
-	{0x02000, 0x06fff, MWA8_NOP},	
-	{0x7000, 0x0ffff, MWA8_RAM},
-MEMORY_END
+ADDRESS_MAP_START( writemem_sord_m5 , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x01fff) AM_WRITE( MWA8_ROM) /* internal rom */
+	AM_RANGE(0x02000, 0x06fff) AM_WRITE( MWA8_NOP)	
+	AM_RANGE(0x7000, 0x0ffff) AM_WRITE( MWA8_RAM)
+ADDRESS_MAP_END
 
 static READ_HANDLER(sord_ctc_r)
 {
@@ -502,38 +502,38 @@ static WRITE_HANDLER(sord_printer_w)
 	centronics_write_data(0,data);
 }
 
-PORT_READ_START( readport_sord_m5 )
-	{ 0x000, 0x00f, sord_ctc_r},
-	{ 0x010, 0x01f, sord_video_r},
-	{ 0x030, 0x03f, sord_keyboard_r},
-	{ 0x050, 0x050, sord_sys_r},
-PORT_END
+ADDRESS_MAP_START( readport_sord_m5 , ADDRESS_SPACE_IO, 8)
+	AM_RANGE( 0x000, 0x00f) AM_READ( sord_ctc_r)
+	AM_RANGE( 0x010, 0x01f) AM_READ( sord_video_r)
+	AM_RANGE( 0x030, 0x03f) AM_READ( sord_keyboard_r)
+	AM_RANGE( 0x050, 0x050) AM_READ( sord_sys_r)
+ADDRESS_MAP_END
 
-PORT_READ_START( readport_srdm5fd5 )
-	{ 0x000, 0x00f, sord_ctc_r},
-	{ 0x010, 0x01f, sord_video_r},
-	{ 0x030, 0x03f, sord_keyboard_r},
-	{ 0x050, 0x050, sord_sys_r},
-	{ 0x070, 0x073, ppi8255_0_r},
-PORT_END
+ADDRESS_MAP_START( readport_srdm5fd5 , ADDRESS_SPACE_IO, 8)
+	AM_RANGE( 0x000, 0x00f) AM_READ( sord_ctc_r)
+	AM_RANGE( 0x010, 0x01f) AM_READ( sord_video_r)
+	AM_RANGE( 0x030, 0x03f) AM_READ( sord_keyboard_r)
+	AM_RANGE( 0x050, 0x050) AM_READ( sord_sys_r)
+	AM_RANGE( 0x070, 0x073) AM_READ( ppi8255_0_r)
+ADDRESS_MAP_END
 
 
-PORT_WRITE_START( writeport_sord_m5 )
-	{ 0x000, 0x00f, sord_ctc_w},
-	{ 0x010, 0x01f, sord_video_w},
-	{ 0x020, 0x02f, SN76496_0_w},
-	{ 0x040, 0x040, sord_printer_w}, 
-	{ 0x050, 0x050, sord_sys_w},
-PORT_END
+ADDRESS_MAP_START( writeport_sord_m5 , ADDRESS_SPACE_IO, 8)
+	AM_RANGE( 0x000, 0x00f) AM_WRITE( sord_ctc_w)
+	AM_RANGE( 0x010, 0x01f) AM_WRITE( sord_video_w)
+	AM_RANGE( 0x020, 0x02f) AM_WRITE( SN76496_0_w)
+	AM_RANGE( 0x040, 0x040) AM_WRITE( sord_printer_w) 
+	AM_RANGE( 0x050, 0x050) AM_WRITE( sord_sys_w)
+ADDRESS_MAP_END
 
-PORT_WRITE_START( writeport_srdm5fd5 )
-	{ 0x000, 0x00f, sord_ctc_w},
-	{ 0x010, 0x01f, sord_video_w},
-	{ 0x020, 0x02f, SN76496_0_w},
-	{ 0x040, 0x040, sord_printer_w}, 
-	{ 0x050, 0x050, sord_sys_w},
-	{ 0x070, 0x073, ppi8255_0_w},
-PORT_END
+ADDRESS_MAP_START( writeport_srdm5fd5 , ADDRESS_SPACE_IO, 8)
+	AM_RANGE( 0x000, 0x00f) AM_WRITE( sord_ctc_w)
+	AM_RANGE( 0x010, 0x01f) AM_WRITE( sord_video_w)
+	AM_RANGE( 0x020, 0x02f) AM_WRITE( SN76496_0_w)
+	AM_RANGE( 0x040, 0x040) AM_WRITE( sord_printer_w) 
+	AM_RANGE( 0x050, 0x050) AM_WRITE( sord_sys_w)
+	AM_RANGE( 0x070, 0x073) AM_WRITE( ppi8255_0_w)
+ADDRESS_MAP_END
 
 //static void cassette_timer_callback(int dummy)
 //{
@@ -788,8 +788,8 @@ static const TMS9928a_interface tms9928a_interface =
 static MACHINE_DRIVER_START( sord_m5 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80, 3800000)
-	MDRV_CPU_MEMORY(readmem_sord_m5,writemem_sord_m5)
-	MDRV_CPU_PORTS(readport_sord_m5,writeport_sord_m5)
+	MDRV_CPU_PROGRAM_MAP(readmem_sord_m5,writemem_sord_m5)
+	MDRV_CPU_IO_MAP(readport_sord_m5,writeport_sord_m5)
 	MDRV_CPU_VBLANK_INT(sord_interrupt, 1)
 	MDRV_CPU_CONFIG( sord_m5_daisy_chain )
 	MDRV_FRAMES_PER_SECOND(50)
@@ -810,11 +810,11 @@ static MACHINE_DRIVER_START( sord_m5_fd5 )
 	MDRV_IMPORT_FROM( sord_m5 )
 
 	MDRV_CPU_REPLACE("main", Z80, 3800000)
-	MDRV_CPU_PORTS(readport_srdm5fd5,writeport_srdm5fd5)
+	MDRV_CPU_IO_MAP(readport_srdm5fd5,writeport_srdm5fd5)
 
 	MDRV_CPU_ADD(Z80, 3800000)
-	MDRV_CPU_MEMORY(readmem_sord_fd5,writemem_sord_fd5)
-	MDRV_CPU_PORTS(readport_sord_fd5,writeport_sord_fd5)
+	MDRV_CPU_PROGRAM_MAP(readmem_sord_fd5,writemem_sord_fd5)
+	MDRV_CPU_IO_MAP(readport_sord_fd5,writeport_sord_fd5)
 
 	MDRV_INTERLEAVE(20)
 	MDRV_MACHINE_INIT( sord_m5_fd5 )

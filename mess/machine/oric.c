@@ -124,7 +124,7 @@ static void oric_dump_ram(void)
 		{
 			char data;
 
-			data = cpu_readmem16(i);
+			data = program_read_byte(i);
 
 			mame_fwrite(file, &data, 1);
 
@@ -153,14 +153,14 @@ static void    oric_dump_video(void)
 
                 for (i=0; i<16; i++)
                 {
-                  fprintf(fh,"%02x ",cpu_readmem16(addr+i));
+                  fprintf(fh,"%02x ",program_read_byte(addr+i));
                 }
 		    fprintf(fh,"   ");
 		    for (i=0; i<16; i++)
 			{
 				int code;
 
-				code = cpu_readmem16(addr+i);
+				code = program_read_byte(addr+i);
 
 				if ((code<32) || (code>127))
 				{

@@ -350,7 +350,7 @@ static MEMORY_WRITE_START( c128_z80_writemem )
 	{0x0000, 0x03ff, MWA8_BANK1, &c64_memory},
 	{0x0400, 0x0fff, MWA8_BANK2},
 	{0x1000, 0x1fff, MWA8_BANK3},
-	{0x2000, 0x3fff, MWA_BANK4},
+	{0x2000, 0x3fff, MWA8_BANK4},
 	{0x4000, 0xbfff, MWA8_BANK5},
 	{0xc000, 0xdfff, MWA8_BANK6},
 	{0xe000, 0xefff, MWA8_BANK7},
@@ -425,7 +425,7 @@ static MEMORY_WRITE_START( c128_writemem )
 	{0x0002, 0x00ff, MWA8_BANK1},
 	{0x0100, 0x01ff, MWA8_BANK2},
 	{0x0200, 0x03ff, MWA8_BANK3},
-	{0x0400, 0x0fff, MWA_BANK4},
+	{0x0400, 0x0fff, MWA8_BANK4},
 	{0x1000, 0x1fff, MWA8_BANK5},
 	{0x2000, 0x3fff, MWA8_BANK6},
 

@@ -455,7 +455,7 @@ static WRITE_HANDLER(c65_ram_expansion_w)
 
 #if 0
 	if ( (data==0)&&(C65_MAIN_MEMORY==C65_512KB) ) {
-		memory_set_bankhandler_w (16, 0, MWA_BANK16);
+		memory_set_bankhandler_w (16, 0, MWA8_BANK16);
 	} else {
 		memory_set_bankhandler_w (16, 0, MWA8_NOP);
 	}
