@@ -6,6 +6,12 @@ New System Drivers Supported (in no particular order):
 
 
 
+System Driver Changes:
+----------------------
+- [SVISION] Fixed aspect ratio.  [PeT]
+
+
+
 User Interface Changes:
 -----------------------
 (none)
