@@ -8,7 +8,7 @@ static void MessColumnEncodeString(void* data, char *str);
 static void MessColumnDecodeString(const char* str, void* data);
 static void MessColumnDecodeWidths(const char* str, void* data);
 
-#include "windowsui/options.c"
+#include "ui/options.c"
 
 static void MessColumnEncodeString(void* data, char *str)
 {

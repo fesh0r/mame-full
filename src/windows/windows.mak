@@ -60,6 +60,7 @@ endif
 CURPATH = ./
 
 # if building with a UI, set the C flags and include the ui.mak
-ifdef MESS
-include src/windowsui/windowsui.mak
+ifneq ($(WINUI),)
+CFLAGS+= -DWINUI=1
+include src/ui/ui.mak
 endif

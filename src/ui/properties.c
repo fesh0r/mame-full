@@ -2019,7 +2019,7 @@ static void UpdateDisplayModeUI(HWND hwnd, DWORD dwDepth, DWORD dwRefresh)
 	if (nPick != 0 && nPick != CB_ERR)
 	{
 		ComboBox_GetText(GetDlgItem(hwnd, IDC_SIZES), buf, 100);
-		if (sscanf(buf, "%ld x %ld", &w, &h) != 2)
+		if (sscanf(buf, "%ld x %ld", (long *) &w, (long *) &h) != 2)
 		{
 			w = 0;
 			h = 0;

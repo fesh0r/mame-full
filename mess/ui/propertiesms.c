@@ -8,9 +8,9 @@
 #include <string.h>
 #include <assert.h>
 
-#include "windowsui/mame32.h"
-#include "windowsui/Directories.h"
-#include "MessResource.h"
+#include "ui/mame32.h"
+#include "ui/directories.h"
+#include "resourcems.h"
 #include "mess.h"
 #include "utils.h"
 
@@ -30,7 +30,7 @@ static BOOL PropSheetFilter_Config(const struct InternalMachineDriver *drv, cons
 #endif
 
 /* Include the actual Properties.c */
-#include "../../src/windowsui/Properties.c"
+#include "../../src/ui/properties.c"
 
 extern BOOL BrowseForDirectory(HWND hwnd, const char* pStartDir, char* pResult);
 BOOL g_bModifiedSoftwarePaths = FALSE;

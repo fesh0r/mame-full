@@ -835,7 +835,7 @@ int  GetSplitterPos(int splitterId)
 		return settings.splitter[splitterId];
 
 	return -1; /* Error */
-};
+}
 
 void SetColumnOrder(int order[])
 {

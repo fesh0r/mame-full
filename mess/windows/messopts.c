@@ -13,6 +13,7 @@
 #include "parallel.h"
 #include "menu.h"
 #include "device.h"
+#include "configms.h"
 
 static const char *dev_opts;
 

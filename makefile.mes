@@ -47,6 +47,7 @@ WINDOWS_PROGRAM = -mwindows
 CONSOLE_PROGRAM = -mconsole
 
 SUFFIX =
+WINUI = 1
 
 ifdef DEBUG
 NAME = $(TARGET)$(SUFFIX)d
@@ -133,7 +134,7 @@ OBJDIRS += 	$(OBJ)/mess         $(OBJ)/mess/$(MAMEOS)            \
 		$(OBJ)/mess/tools/dat2html $(OBJ)/mess/tools/mkhdimg \
 		$(OBJ)/mess/tools/messroms $(OBJ)/mess/tools/imgtool \
 		$(OBJ)/mess/tools/mkimage  $(OBJ)/mess/sound \
-		$(OBJ)/windowsui $(OBJ)/mess/windowsui
+		$(OBJ)/ui $(OBJ)/mess/ui
 
 PLATFORM_IMGTOOL_OBJS =				\
 	$(OBJ)/mess/windows/glob.o		\
@@ -177,7 +178,7 @@ $(EMULATORDLL): $(OBJS) $(COREOBJS) $(OSOBJS) $(DRVLIBS) $(RESFILE)
 	@dllwrap --output-lib=lib$(NAME).a --dllname=$@ --driver-name=gcc $(LDFLAGS) $(OBJS) $(COREOBJS) $(OSOBJS) $(LIBS) $(DRVLIBS) $(RESFILE)
 
 # gui target
-$(EMULATORGUI):	$(EMULATORDLL) $(OBJ)/mess/windowsui/guimain.o $(GUIRESFILE)
+$(EMULATORGUI):	$(EMULATORDLL) $(OBJ)/mess/ui/guimain.o $(GUIRESFILE)
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $(WINDOWS_PROGRAM) $^ -o $@
 
@@ -266,7 +267,7 @@ $(OBJ)/%.a:
 	$(AR) cr $@ $^
 
 mess.chm::
-	cscript mess\\windowsui\\help\\makehelp.vbs
+	cscript mess\\ui\\help\\makehelp.vbs
 
 makedir:
 	@echo make makedir is no longer necessary, just type make

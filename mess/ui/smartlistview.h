@@ -14,7 +14,7 @@
 #define HAS_COLUMNEDIT		1
 #define HAS_CONTEXTMENU		1
 #define HAS_EXTRACOLUMNTEXT	0
-#include "windowsui/Screenshot.h"
+#include "ui/screenshot.h"
 #endif
 
 struct SmartListView;

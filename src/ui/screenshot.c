@@ -202,11 +202,11 @@ HANDLE GetScreenShotHandle()
 {
 	return m_hDDB;
 }
-	
+
 int GetScreenShotWidth(void)
-	{
+{
 	return ((LPBITMAPINFO)m_hDIB)->bmiHeader.biWidth;
-	}
+}
 
 int GetScreenShotHeight(void)
 {

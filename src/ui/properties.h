@@ -16,7 +16,7 @@
 /* Get title string to display in the top of the property page,
  * Called also in Audit32.c
  */
-char*   GameInfoTitle(UINT nIndex);
+char * GameInfoTitle(UINT nIndex);
 
 /* Called in win32ui.c to create the property page */
 void    InitPropertyPage(HINSTANCE hInst, HWND hwnd, int game_num, HICON hIcon);

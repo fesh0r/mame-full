@@ -15,15 +15,15 @@
 #include <stdlib.h> /* For malloc and free */
 #include <string.h>
 
-#include "windowsui/TreeView.h"
-#include "windowsui/M32Util.h"
-#include "windowsui/resource.h"
-#include "windowsui/MessResource.h"
-#include "windowsui/ms32util.h"
-#include "windowsui/directories.h"
-#include "windowsui/options.h"
-#include "windowsui/Splitters.h"
-#include "windowsui/help.h"
+#include "ui/treeview.h"
+#include "ui/m32util.h"
+#include "ui/resource.h"
+#include "ui/resourcems.h"
+#include "ui/ms32util.h"
+#include "ui/directories.h"
+#include "ui/options.h"
+#include "ui/splitters.h"
+#include "ui/help.h"
 
 FOLDERDATA g_folderData[] =
 {

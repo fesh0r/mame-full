@@ -1,11 +1,11 @@
 #include <malloc.h>
 #include <assert.h>
 #include <tchar.h>
-#include "SmartListView.h"
-#include "windowsui/resource.h"
+#include "smartlistview.h"
+#include "ui/resource.h"
 
 #if HAS_COLUMNEDIT
-#include "windowsui/ColumnEdit.h"
+#include "ui/ColumnEdit.h"
 #endif
 
 /* Compensating for a Mingw bug */

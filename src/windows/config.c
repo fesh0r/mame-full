@@ -39,8 +39,7 @@ extern struct rc_option sound_opts[];
 extern struct rc_option video_opts[];
 
 #ifdef MESS
-extern struct rc_option mess_opts[];
-void build_crc_database_filename(int game_index);
+#include "configms.h"
 #endif
 
 extern int frontend_help(char *gamename);

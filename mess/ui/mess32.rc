@@ -1,5 +1,5 @@
 #include "resource.h"
-#include "MessResource.h"
+#include "resourcems.h"
 #include "windows.h"
 #include "commctrl.h"
 
@@ -58,4 +58,4 @@ END
 
 /////////////////////////////////////////////////////////////////////////////
 
-#include "windowsui/mame32.rc"
+#include "ui/mame32.rc"

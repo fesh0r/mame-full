@@ -1,7 +1,7 @@
-#ifndef MESSRESOURCE_H
-#define MESSRESOURCE_H
+#ifndef RESOURCEMS_H
+#define RESOURCEMS_H
 
-#include "windowsui/resource.h"
+#include "ui/resource.h"
 
 #define IDC_SPLITTER3				    2000
 #define IDC_LIST2                       2001
@@ -29,4 +29,4 @@
 #define IDD_PROP_CONFIGURATION          2203
 #define IDD_FILEMGR                     2204
 
-#endif /* MESSRESOURCE_H */
+#endif /* RESOURCEMS_H */

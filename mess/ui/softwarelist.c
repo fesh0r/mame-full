@@ -7,7 +7,7 @@
 #include "driver.h"
 #include "unzip.h"
 #include "osd_cpu.h"
-#include "windowsui/mame32.h"
+#include "ui/mame32.h"
 #include "strconv.h"
 #include "snprintf.h"
 
@@ -200,18 +200,18 @@ static int MessDiscoverImageType(const char *filename, mess_image_type *imagetyp
 			if (imgtype) {
                 type = imgtype->type;
 #if HAS_CRC
-				if (crc && zipcrc) {
-					if (imgtype->partialcrc) {
-						char *buf = NULL;
+				if (crc && zipcrc)
+				{
+					if (imgtype->partialcrc)
+					{
+						unsigned char *buf = NULL;
 						assert(pZipEnt);
-						buf = malloc(pZipEnt->uncompressed_size);
-						if (buf) {
-							readuncompresszip(pZip, pZipEnt, buf);
-							*crc = imgtype->partialcrc(buf, pZipEnt->uncompressed_size);
-							free(buf);
-						}
+						buf = alloca(pZipEnt->uncompressed_size);
+						readuncompresszip(pZip, pZipEnt, (char *) buf);
+						*crc = imgtype->partialcrc(buf, (unsigned int) pZipEnt->uncompressed_size);
 					}
-					else {
+					else
+					{
 						*crc = zipcrc;
 					}
 				}

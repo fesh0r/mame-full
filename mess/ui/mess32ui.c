@@ -6,8 +6,8 @@
 #include <commdlg.h>
 #include <wingdi.h>
 
-#include "windowsui/mame32.h"
-#include "windowsui/MessResource.h"
+#include "ui/mame32.h"
+#include "ui/resourcems.h"
 #include "mess.h"
 #include "config.h"
 #include "SmartListView.h"
@@ -81,7 +81,7 @@ static void MessTestsDoneIdle(void);
 #undef bool
 #endif
 
-#include "windowsui/win32ui.c"
+#include "ui/win32ui.c"
 
 struct deviceentry
 {

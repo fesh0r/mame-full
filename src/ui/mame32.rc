@@ -1,9 +1,10 @@
 //Microsoft Developer Studio generated resource script.
 //
+
 #include "resource.h"
 
 #ifdef MESS
-#include "MessResource.h"
+#include "resourcems.h"
 #endif
 
 // Generated Help ID header file

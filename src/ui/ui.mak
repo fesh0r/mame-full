@@ -2,11 +2,11 @@
 # make SUFFIX=32
 
 # don't create gamelist.txt
-# TEXTS=
+TEXTS = gamelist.txt
 
 ifndef MSVC
 # remove pedantic
-$(OBJ)/windowsui/%.o: src/windowsui/%.c
+$(OBJ)/ui/%.o: src/windowsui/%.c
 	@echo Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGS) -c $< -o $@
 
@@ -16,39 +16,39 @@ $(OBJ)/mess/windowsui/%.o: mess/windowsui/%.c
 	$(CC) $(CDEFS) $(CFLAGS) -c $< -o $@
 endif
 
-OBJDIRS += $(OBJ)/windowsui
+OBJDIRS += $(OBJ)/ui
 
 # only OS specific output files and rules
 OSOBJS += \
-	$(OBJ)/windowsui/MAME32.o \
-	$(OBJ)/windowsui/M32Util.o \
-	$(OBJ)/windowsui/DirectInput.o \
-	$(OBJ)/windowsui/DIJoystick.o \
-	$(OBJ)/windowsui/DirectDraw.o \
-	$(OBJ)/windowsui/directories.o \
-	$(OBJ)/windowsui/audit32.o \
-	$(OBJ)/windowsui/ColumnEdit.o \
-	$(OBJ)/windowsui/Screenshot.o \
-	$(OBJ)/windowsui/TreeView.o \
-	$(OBJ)/windowsui/Splitters.o \
-	$(OBJ)/windowsui/Bitmask.o \
-	$(OBJ)/windowsui/DataMap.o \
-	$(OBJ)/windowsui/dxdecode.o \
-	$(OBJ)/windowsui/help.o \
-	$(OBJ)/mess/windowsui/layoutms.o \
-	$(OBJ)/mess/windowsui/mess32ui.o \
-	$(OBJ)/mess/windowsui/ms32util.o \
-	$(OBJ)/mess/windowsui/MessOptions.o \
-	$(OBJ)/mess/windowsui/MessProperties.o \
-	$(OBJ)/mess/windowsui/SmartListView.o \
-	$(OBJ)/mess/windowsui/SoftwareList.o
+        $(OBJ)/ui/mame32.o \
+        $(OBJ)/ui/m32util.o \
+        $(OBJ)/ui/directinput.o \
+        $(OBJ)/ui/dijoystick.o \
+        $(OBJ)/ui/directdraw.o \
+        $(OBJ)/ui/directories.o \
+        $(OBJ)/ui/audit32.o \
+        $(OBJ)/ui/columnedit.o \
+        $(OBJ)/ui/screenshot.o \
+        $(OBJ)/ui/treeview.o \
+        $(OBJ)/ui/splitters.o \
+        $(OBJ)/ui/bitmask.o \
+        $(OBJ)/ui/datamap.o \
+        $(OBJ)/ui/dxdecode.o \
+		$(OBJ)/ui/help.o \
+		$(OBJ)/mess/ui/layoutms.o \
+		$(OBJ)/mess/ui/mess32ui.o \
+		$(OBJ)/mess/ui/ms32util.o \
+		$(OBJ)/mess/ui/optionsms.o \
+		$(OBJ)/mess/ui/propertiesms.o \
+		$(OBJ)/mess/ui/smartlistview.o \
+		$(OBJ)/mess/ui/softwarelist.o
 
-        #$(OBJ)/windowsui/Win32ui.o \ 		<<--- included from MESS' version
-        #$(OBJ)/windowsui/Properties.o \	<<--- included from MESS' version
-        #$(OBJ)/windowsui/options.o \		<<--- included from MESS' version
+        #$(OBJ)/ui/Win32ui.o \ 		<<--- included from MESS' version
+        #$(OBJ)/ui/Properties.o \	<<--- included from MESS' version
+        #$(OBJ)/ui/options.o \		<<--- included from MESS' version
 
 # add resource file
-GUIRESFILE = $(OBJ)/mess/windowsui/mess32.res
+GUIRESFILE = $(OBJ)/mess/ui/mess32.res
 
 #####################################################################
 # compiler
@@ -61,17 +61,14 @@ DEFS += -DDIRECTSOUND_VERSION=0x0300 \
         -DDIRECTINPUT_VERSION=0x0500 \
         -DDIRECTDRAW_VERSION=0x0300 \
         -DWINVER=0x0400 \
-        -D_WIN32_IE=0x0400 \
+        -D_WIN32_IE=0x0500 \
         -D_WIN32_WINNT=0x0400 \
         -DWIN32 \
         -UWINNT \
         -DCLIB_DECL=__cdecl \
-        -DDECL_SPEC=__cdecl \
+	-DDECL_SPEC= \
         -DZEXTERN=extern \
-        -DMAME32HELP=\"mess.chm\" \
 
-DEFS += -DEXTRA_FOLDER \
-	-DCPUSND_FOLDER
 
 #####################################################################
 # Resources
@@ -81,13 +78,13 @@ RC = windres --use-temp-file
 
 RCDEFS = -DMESS -DNDEBUG -D_WIN32_IE=0x0400
 
-RCFLAGS = -O coff --include-dir src --include-dir mess/windowsui --include-dir src/windowsui
+RCFLAGS = -O coff --include-dir src --include-dir mess/ui --include-dir src/ui
 
 ifdef DEBUG
 RCFLAGS += -DMAME_DEBUG
 endif
 
-$(OBJ)/windowsui/%.res: src/windowsui/%.rc
+$(OBJ)/ui/%.res: src/windowsui/%.rc
 	@echo Compiling resources $<...
 	$(RC) $(RCDEFS) $(RCFLAGS) -o $@ -i $<
 
@@ -95,7 +92,7 @@ $(OBJ)/mess/windows/%.res: mess/windows/%.rc
 	@echo Compiling resources $<...
 	$(RC) $(RCDEFS) $(RCFLAGS) -o $@ -i $<
 
-$(OBJ)/mess/windowsui/%.res: mess/windowsui/%.rc
+$(OBJ)/mess/ui/%.res: mess/ui/%.rc
 	@echo Compiling resources $<...
 	$(RC) $(RCDEFS) $(RCFLAGS) -o $@ -i $<
 endif

@@ -12,7 +12,8 @@
 
 #ifdef MESS
 #ifdef _MSC_VER
-#include "windowsui/dirent.h"
+#include "ui/dirent.h"
+#define S_ISDIR(mode) ((mode) & _S_IFDIR)
 #endif
 #endif
 
@@ -110,7 +111,7 @@ struct rc_option frontend_opts[] = {
 int silentident,knownstatus;
 
 #ifdef _MSC_VER
-#define ZEXPORT WINAPI
+#define ZEXPORT __stdcall
 #else
 #define ZEXPORT
 #endif
