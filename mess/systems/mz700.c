@@ -307,6 +307,8 @@ static struct Wave_interface wave_interface =
 	{ 50 }
 };
 
+#if 0
+
 static struct MachineDriver machine_driver_mz700 =
 {
 	/* basic machine hardware */
@@ -351,6 +353,53 @@ static struct MachineDriver machine_driver_mz700 =
     }
 };
 
+#else
+
+static MACHINE_DRIVER_START(mz700)
+
+	/* basic machine hardware */
+	/* Z80 CPU @ 3.5 MHz */
+	MDRV_CPU_ADD(Z80, 3500000)
+	/*MDRV_CPU_FLAGS(0)*/
+	/*MDRV_CPU_CONFIG(0)*/
+	MDRV_CPU_MEMORY(readmem_mz700, writemem_mz700)
+	MDRV_CPU_PORTS(readport_mz700, writeport_mz700)
+	MDRV_CPU_VBLANK_INT(mz700_interrupt, 1)
+	/*MDRV_CPU_PERIODIC_INT(func, rate)*/
+
+	MDRV_FRAMES_PER_SECOND(50)
+	MDRV_VBLANK_DURATION(2500)
+	/*MDRV_INTERLEAVE(interleave)*/
+
+	MDRV_MACHINE_INIT( mz700 )
+	MDRV_MACHINE_STOP( mz700 )
+	/*MDRV_NVRAM_HANDLER( NULL )*/
+
+	/* video hardware - include overscan */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER/* | VIDEO_SUPPORTS_DIRTY*/)
+	/*MDRV_ASPECT_RATIO(num, den)*/
+	MDRV_SCREEN_SIZE(40*8, 25*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8 - 1, 0*8, 25*8 - 1)
+
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(8)
+	MDRV_COLORTABLE_LENGTH(2*256)
+
+	MDRV_PALETTE_INIT(mz700)
+	MDRV_VIDEO_START(mz700)
+	/*MDRV_VIDEO_EOF(mz700)*/
+	MDRV_VIDEO_UPDATE(mz700)
+
+	MDRV_SOUND_ATTRIBUTES(0)
+	MDRV_SOUND_ADD(BEEP, mz700_beep_interface)
+	MDRV_SOUND_ADD(WAVE, wave_interface)
+
+MACHINE_DRIVER_END
+
+#endif
+
+#if 0
+
 static struct MachineDriver machine_driver_mz800 =
 {
 	/* basic machine hardware */
@@ -394,6 +443,51 @@ static struct MachineDriver machine_driver_mz800 =
 		},
     }
 };
+
+#else
+
+static MACHINE_DRIVER_START(mz800)
+
+	/* basic machine hardware */
+	/* Z80 CPU @ 3.5 MHz */
+	MDRV_CPU_ADD(Z80, 3500000)
+	/*MDRV_CPU_FLAGS(0)*/
+	/*MDRV_CPU_CONFIG(0)*/
+	MDRV_CPU_MEMORY(readmem_mz800, writemem_mz800)
+	MDRV_CPU_PORTS(readport_mz800, writeport_mz800)
+	MDRV_CPU_VBLANK_INT(mz700_interrupt, 1)
+	/*MDRV_CPU_PERIODIC_INT(func, rate)*/
+
+	MDRV_FRAMES_PER_SECOND(50)
+	MDRV_VBLANK_DURATION(2500)
+	/*MDRV_INTERLEAVE(interleave)*/
+
+	MDRV_MACHINE_INIT( mz700 )
+	MDRV_MACHINE_STOP( mz700 )
+	/*MDRV_NVRAM_HANDLER( NULL )*/
+
+	/* video hardware - include overscan */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER/* | VIDEO_SUPPORTS_DIRTY*/)
+	/*MDRV_ASPECT_RATIO(num, den)*/
+	MDRV_SCREEN_SIZE(40*8, 25*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8 - 1, 0*8, 25*8 - 1)
+
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(8)
+	MDRV_COLORTABLE_LENGTH(2*256)
+
+	MDRV_PALETTE_INIT(mz700)
+	MDRV_VIDEO_START(mz700)
+	/*MDRV_VIDEO_EOF(mz700)*/
+	MDRV_VIDEO_UPDATE(mz700)
+
+	MDRV_SOUND_ATTRIBUTES(0)
+	MDRV_SOUND_ADD(BEEP, mz700_beep_interface)
+	MDRV_SOUND_ADD(WAVE, wave_interface)
+
+MACHINE_DRIVER_END
+
+#endif
 
 ROM_START(mz700)
 	ROM_REGION(0x18000,REGION_CPU1,0)

@@ -64,7 +64,7 @@ PIT8253_CONFIG pit8253 = {
 	}
 };
 
-int mz700_interrupt(void)
+INTERRUPT_GEN(mz700_interrupt)
 {
 	if (readinputport(12) & 0x20)
 	{
@@ -81,8 +81,6 @@ int mz700_interrupt(void)
 
 	if (readinputport(12) & 0x80)
 		device_seek(IO_CASSETTE, 0, 0, SEEK_SET);
-
-    return ignore_interrupt();
 }
 
 static void ne556_callback(int param)
@@ -98,15 +96,19 @@ void init_mz700(void)
     mz700_bank_w(4, 0);
 }
 
-void mz700_init_machine(void)
+MACHINE_INIT(mz700)
 {
     ppi8255_init(&ppi8255);
     pit8253_config(0, &pit8253);
-    ne556_timer[0] = timer_pulse(TIME_IN_HZ(1.5), 0, ne556_callback);
-	ne556_timer[1] = timer_pulse(TIME_IN_HZ(34.5), 1, ne556_callback);
+	ne556_timer[0] = timer_alloc(ne556_callback);
+	timer_adjust(ne556_timer[0], TIME_IN_HZ(1.5), 0, TIME_IN_HZ(1.5));
+	/*timer_pulse(TIME_IN_HZ(1.5), 0, ne556_callback)*/
+	ne556_timer[1] = timer_alloc(ne556_callback);
+	timer_adjust(ne556_timer[1], TIME_IN_HZ(34.5), 1, TIME_IN_HZ(34.5));
+	/*timer_pulse(TIME_IN_HZ(34.5), 1, ne556_callback)*/
 }
 
-void mz700_stop_machine(void)
+MACHINE_STOP(mz700)
 {
 	if (ne556_timer[0])
 		timer_remove(ne556_timer[0]);
@@ -1093,7 +1095,7 @@ WRITE_HANDLER( mz800_ramdisk_w )
 /* port EB */
 WRITE_HANDLER( mz800_ramaddr_w )
 {
-	mz800_ramaddr = (cpu_get_reg(Z80_BC) & 0xff00) | (data & 0xff);
+	mz800_ramaddr = (cpunum_get_reg(0, Z80_BC) & 0xff00) | (data & 0xff);
 	LOG(1,"mz800_ramaddr_w",("%04X\n", mz800_ramaddr));
 }
 

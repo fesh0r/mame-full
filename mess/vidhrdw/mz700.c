@@ -25,15 +25,14 @@
 char mz700_frame_message[64+1];
 int mz700_frame_time = 0;
 
-void mz700_init_colors (unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom)
+//void mz700_init_colors (unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom)
+PALETTE_INIT(mz700)
 {
 	int i;
 
     for (i = 0; i < 8; i++)
 	{
-		palette[i*3+0] = (i & 2) ? 0xff : 0x00;
-		palette[i*3+1] = (i & 4) ? 0xff : 0x00;
-		palette[i*3+2] = (i & 1) ? 0xff : 0x00;
+		palette_set_color(i, (i & 2) ? 0xff : 0x00, (i & 4) ? 0xff : 0x00, (i & 1) ? 0xff : 0x00);
 	}
 
 	for (i = 0; i < 256; i++)
@@ -43,20 +42,18 @@ void mz700_init_colors (unsigned char *palette, unsigned short *colortable, cons
 	}
 }
 
-int mz700_vh_start(void)
+VIDEO_START(mz700)
 {
 	if (video_start_generic())
 		return 1;
     return 0;
 }
 
-void mz700_vh_stop(void)
-{
-}
-
-void mz700_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+//void mz700_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE(mz700)
 {
     int offs;
+    int full_refresh = 1;
 
 	if( mz700_frame_time > 0 )
     {
