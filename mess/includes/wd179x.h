@@ -104,6 +104,7 @@ typedef struct {
 	int 	dam_cnt;				/* valid number of entries in the dam_list */
 	UINT16	sector_length;			/* sector length (byte) */
 
+	UINT8	ddam;					/* ddam of sector found - used when reading */
 	UINT8	sector_data_id;
 }	WD179X;
 
