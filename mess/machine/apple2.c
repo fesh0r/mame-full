@@ -719,6 +719,7 @@ MACHINE_INIT( apple2 )
 
 	need_intcxrom = !strcmp(Machine->gamedrv->name, "apple2c")
 		|| !strcmp(Machine->gamedrv->name, "apple2c0")
+		|| !strcmp(Machine->gamedrv->name, "apple2c3")
 		|| !strcmp(Machine->gamedrv->name, "apple2cp");
 	apple2_setvar(need_intcxrom ? VAR_INTCXROM : 0, ~0);
 
@@ -1593,7 +1594,8 @@ DRIVER_INIT( apple2 )
 		a2_cfg.keyboard_type = AP2_KEYBOARD_2;
 
 	/* specify slots */
-	if (!strcmp(Machine->gamedrv->name, "apple2c0"))
+	if (!strcmp(Machine->gamedrv->name, "apple2c0") ||
+		!strcmp(Machine->gamedrv->name, "apple2c3"))
 	{
 		a2_cfg.slots[0] = &apple2_slot_langcard;
 		a2_cfg.slots[4] = &apple2_slot_mockingboard;
