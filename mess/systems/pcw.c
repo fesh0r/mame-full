@@ -100,7 +100,6 @@
 // pcw video hardware
 #include "includes/pcw.h"
 // pcw/pcw16 beeper
-#include "includes/beep.h"
 
 // uncomment for debug log output
 //#define VERBOSE
@@ -676,14 +675,14 @@ WRITE_HANDLER(pcw_system_control_w)
 		/* beep on */
 		case 11:
 		{
-			beep_set_state(1);
+                        beep_set_state(0,1);
 		}
 		break;
 
 		/* beep off */
 		case 12:
 		{
-			beep_set_state(0);
+                        beep_set_state(0,0);
 		}
 		break;
 
@@ -891,8 +890,8 @@ void pcw_init_machine(void)
 
 	pcw_int_timer = timer_pulse(TIME_IN_HZ(300), 0, pcw_timer_interrupt);
 
-	beep_set_state(0);
-	beep_set_frequency(3750);
+        beep_set_state(0,0);
+        beep_set_frequency(0,3750);
 }
 
 void pcw_init_memory(int size)
@@ -1156,11 +1155,9 @@ INPUT_PORTS_START(pcw)
 
 INPUT_PORTS_END
 
-static struct CustomSound_interface pcw_custom_interface =
+static struct beep_interface pcw_beep_interface =
 {
-	beep_sh_start,
-	beep_sh_stop,
-	beep_sh_update
+        1
 };
 
 /* PCW8256, PCW8512, PCW9256 */
@@ -1206,8 +1203,8 @@ static struct MachineDriver machine_driver_pcw =
 	0,0,0,0,
 	{
 		{
-			SOUND_CUSTOM,
-			&pcw_custom_interface
+                        SOUND_BEEP,
+                        &pcw_beep_interface
 		}
 	},
 };
@@ -1255,8 +1252,8 @@ static struct MachineDriver machine_driver_pcw9512 =
 	0,0,0,0,
 	{
 		{
-			SOUND_CUSTOM,
-			&pcw_custom_interface
+                        SOUND_BEEP,
+                        &pcw_beep_interface
 		}
 	},
 };

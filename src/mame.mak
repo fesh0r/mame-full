@@ -110,6 +110,7 @@ SOUNDS+=C140@
 SOUNDS+=QSOUND@
 #SOUNDS+=SPEAKER@
 #SOUNDS+=WAVE@
+#SOUNDS+=BEEP@
 
 DRVLIBS = \
 	$(OBJ)/pacman.a $(OBJ)/nichibut.a \

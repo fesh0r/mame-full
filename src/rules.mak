@@ -836,3 +836,8 @@ SOUNDDEFS += -DHAS_WAVE=1
 SOUNDOBJS += $(OBJ)/sound/wave.o
 endif
 
+SOUND=$(strip $(findstring BEEP@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_BEEP=1
+SOUNDOBJS += $(OBJ)/sound/beep.o
+endif
