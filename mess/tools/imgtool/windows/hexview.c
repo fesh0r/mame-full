@@ -8,6 +8,7 @@
 #include <tchar.h>
 #include "hexview.h"
 #include "utils.h"
+#include "winutils.h"
 
 const TCHAR hexview_class[] = "hexview_class";
 
@@ -35,22 +36,18 @@ static struct hexview_info *get_hexview_info(HWND hexview)
 
 
 
-static int hexview_create(HWND hexview, CREATESTRUCT *cs)
+static void calc_hexview_bytesperrow(HWND hexview, const TEXTMETRIC *metrics,
+	LONG *bytes_per_row)
 {
+	RECT r;
 	struct hexview_info *info;
 
-	info = (struct hexview_info *) malloc(sizeof(*info));
-	if (!info)
-		return -1;
-	memset(info, '\0', sizeof(*info));
+	info = get_hexview_info(hexview);
+	GetWindowRect(hexview, &r);
 
-	info->index_width = 4;
-	info->left_margin = 8;
-	info->right_margin = 8;
-	info->byte_spacing = 1;
-
-	SetWindowLongPtr(hexview, GWLP_USERDATA, (LONG_PTR) info);
-	return 0;
+	*bytes_per_row = ((r.right - r.left) - info->left_margin - info->right_margin - metrics->tmMaxCharWidth * info->index_width)
+		/ (metrics->tmMaxCharWidth * (3 + info->byte_spacing));
+	*bytes_per_row = MAX(*bytes_per_row, 1);
 }
 
 
@@ -80,10 +77,7 @@ static void hexview_paint(HWND hexview)
 
 	// figure out how many bytes go in one row
 	GetTextMetrics(dc, &metrics);
-	GetWindowRect(hexview, &r);
-	bytes_per_row = ((r.right - r.left) - info->left_margin - info->right_margin - metrics.tmMaxCharWidth * info->index_width)
-		/ (metrics.tmMaxCharWidth * (3 + info->byte_spacing));
-	bytes_per_row = MAX(bytes_per_row, 1);
+	calc_hexview_bytesperrow(hexview, &metrics, &bytes_per_row);
 
 	// draw the relevant rows
 	begin_row = ps.rcPaint.top / metrics.tmHeight;
@@ -126,6 +120,62 @@ static void hexview_paint(HWND hexview)
 
 
 
+static void calc_scrollbar(HWND hexview)
+{
+	struct hexview_info *info;
+	HDC dc;
+	RECT r;
+	LONG bytes_per_row, absolute_rows, page_rows, scroll_rows;
+	TEXTMETRIC metrics;
+	SCROLLINFO si;
+
+	info = get_hexview_info(hexview);
+	dc = GetDC(hexview);
+	if (info->font)
+		SelectObject(dc, info->font);
+	GetTextMetrics(dc, &metrics);
+	GetWindowRect(hexview, &r);
+
+	calc_hexview_bytesperrow(hexview, &metrics, &bytes_per_row);
+
+	absolute_rows = (info->data_size + bytes_per_row - 1) / bytes_per_row;
+	page_rows = (r.bottom - r.top) / metrics.tmHeight;
+	scroll_rows = MAX(absolute_rows - page_rows, 0);
+
+	memset(&si, 0, sizeof(si));
+	si.cbSize = sizeof(si);
+	si.fMask = SIF_PAGE | SIF_RANGE;
+	si.nMin = 0;
+	si.nMax = scroll_rows;
+	si.nPage = page_rows;
+	//SetScrollInfo(hexview, SB_VERT, &si, FALSE);
+
+	ReleaseDC(hexview, dc);
+}
+
+
+
+static int hexview_create(HWND hexview, CREATESTRUCT *cs)
+{
+	struct hexview_info *info;
+
+	info = (struct hexview_info *) malloc(sizeof(*info));
+	if (!info)
+		return -1;
+	memset(info, '\0', sizeof(*info));
+
+	info->index_width = 4;
+	info->left_margin = 8;
+	info->right_margin = 8;
+	info->byte_spacing = 1;
+
+	SetWindowLongPtr(hexview, GWLP_USERDATA, (LONG_PTR) info);
+	calc_scrollbar(hexview);
+	return 0;
+}
+
+
+
 static LRESULT CALLBACK hexview_wndproc(HWND hexview, UINT message, WPARAM wparam, LPARAM lparam)
 {
 	struct hexview_info *info;
@@ -150,6 +200,7 @@ static LRESULT CALLBACK hexview_wndproc(HWND hexview, UINT message, WPARAM wpara
 			break;
 
 		case WM_SIZE:
+			calc_scrollbar(hexview);
 			InvalidateRect(hexview, NULL, TRUE);
 			break;
 
@@ -161,6 +212,10 @@ static LRESULT CALLBACK hexview_wndproc(HWND hexview, UINT message, WPARAM wpara
 
 		case WM_GETFONT:
 			return (LRESULT) info->font;
+
+		case WM_VSCROLL:
+			win_scroll_window(hexview, wparam, SB_VERT, 10);
+			break;
 	}
 	return DefWindowProc(hexview, message, wparam, lparam);
 }
@@ -186,6 +241,7 @@ BOOL hexview_setdata(HWND hexview, const void *data, size_t data_size)
 		info->data = data_copy;
 		info->data_size = data_size;
 
+		calc_scrollbar(hexview);
 		InvalidateRect(hexview, NULL, TRUE);
 	}
 	return TRUE;

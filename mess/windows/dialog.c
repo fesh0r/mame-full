@@ -17,6 +17,7 @@
 #include "strconv.h"
 #include "mscommon.h"
 #include "pool.h"
+#include "winutils.h"
 
 #ifdef UNDER_CE
 #include "invokegx.h"
@@ -340,8 +341,6 @@ static INT_PTR CALLBACK dialog_proc(HWND dlgwnd, UINT msg, WPARAM wparam, LPARAM
 	TCHAR buf[32];
 	const char *str;
 	WORD command;
-	int scroll_pos;
-	SCROLLINFO si;
 
 #if LOG_WINMSGS
 	logerror("dialog_proc(): dlgwnd=0x%08x msg=0x%08x wparam=0x%08x lparam=0x%08x\n",
@@ -401,52 +400,8 @@ static INT_PTR CALLBACK dialog_proc(HWND dlgwnd, UINT msg, WPARAM wparam, LPARAM
 		}
 		else
 		{
-			// retrieve vital info about the scroll bar
-			memset(&si, 0, sizeof(si));
-			si.cbSize = sizeof(si);
-			si.fMask = SIF_PAGE | SIF_RANGE | SIF_POS;
-			GetScrollInfo(dlgwnd, SB_VERT, &si);
-
-			scroll_pos = si.nPos;
-
-			// change scroll_pos in accordance with this message
-			switch(LOWORD(wparam)) {
-			case SB_BOTTOM:
-				scroll_pos = si.nMax;
-				break;
-			case SB_LINEDOWN:
-				scroll_pos += SCROLL_DELTA_LINE;
-				break;
-			case SB_LINEUP:
-				scroll_pos -= SCROLL_DELTA_LINE;
-				break;
-			case SB_PAGEDOWN:
-				scroll_pos += SCROLL_DELTA_PAGE;
-				break;
-			case SB_PAGEUP:
-				scroll_pos -= SCROLL_DELTA_PAGE;
-				break;
-			case SB_THUMBPOSITION:
-			case SB_THUMBTRACK:
-				scroll_pos = HIWORD(wparam);
-				break;
-			case SB_TOP:
-				scroll_pos = si.nMin;
-				break;
-			}
-
-			// max out the scroll bar value
-			if (scroll_pos < si.nMin)
-				scroll_pos = si.nMin;
-			else if (scroll_pos > (si.nMax - si.nPage))
-				scroll_pos = (si.nMax - si.nPage);
-
-			// if the value changed, set the scroll position
-			if (scroll_pos != si.nPos)
-			{
-				SetScrollPos(dlgwnd, SB_VERT, scroll_pos, TRUE);
-				ScrollWindow(dlgwnd, 0, si.nPos - scroll_pos, NULL, NULL);
-			}
+			// scroll the dialog
+			win_scroll_window(dlgwnd, wparam, SB_VERT, SCROLL_DELTA_LINE);
 		}
 		break;
 

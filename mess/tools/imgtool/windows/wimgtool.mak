@@ -3,6 +3,7 @@ WIMGTOOL_OBJS=\
 	$(OBJ)/mess/pile.o								\
 	$(OBJ)/mess/windows/opcntrl.o					\
 	$(OBJ)/mess/windows/strconv.o					\
+	$(OBJ)/mess/windows/winutils.o					\
 	$(OBJ)/mess/tools/imgtool/stubs.o				\
 	$(OBJ)/mess/tools/imgtool/windows/wmain.o		\
 	$(OBJ)/mess/tools/imgtool/windows/wimgtool.o	\
