@@ -4220,7 +4220,7 @@ static int BT_check(mac_BTref *BTref, int is_extent)
 	UINT32 run_bit_len;
 	UINT32 actualFreeNodes;
 	int errorcode;
-	UINT32 maxExtentAB, maxExtentNode, extentEOL;	/* if is_extent is TRUE */
+	UINT32 maxExtentAB = 0, maxExtentNode = 0, extentEOL = 0;	/* if is_extent is TRUE */
 
 	if (is_extent)
 	{
