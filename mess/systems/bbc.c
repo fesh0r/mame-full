@@ -75,8 +75,7 @@ READ_HANDLER ( BBC_NOP_FF_r )
 	return 0xFF;
 }
 
-static struct MemoryReadAddress readmem_bbca[] =
-{
+static MEMORY_READ_START(readmem_bbca)
 	{ 0x0000, 0x3fff, MRA_RAM		   },
 	{ 0x4000, 0x7fff, MRA_BANK1 	   },  /* bank 1 is a repeat of the memory at 0x0000 to 0x3fff	 */
 	{ 0x8000, 0xbfff, MRA_BANK2 	   },
@@ -95,11 +94,9 @@ static struct MemoryReadAddress readmem_bbca[] =
 	{ 0xfec0, 0xfedf, BBC_NOP_00_r	   },  /* &c0-&df  uPD7002		 1 Analogue to digital converter */
 	{ 0xfee0, 0xfeff, BBC_NOP_FE_r	   },  /* &e0-&ff  Tube ULA 	 1 Tube system interface		 */
 	{ 0xff00, 0xffff, MRA_ROM		   },  /* Hardware marked with a 1 is not present in a Model A	 */
-	{-1}
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_bbca[] =
-{
+static MEMORY_WRITE_START(writemem_bbca)
 	{ 0x0000, 0x3fff, memory_w		   },
 	{ 0x4000, 0x7fff, memory_w		   },  /* this is a repeat of the memory at 0x0000 to 0x3fff	 */
 	{ 0x8000, 0xdfff, MWA_NOP		   },
@@ -118,12 +115,10 @@ static struct MemoryWriteAddress writemem_bbca[] =
 	{ 0xfec0, 0xfedf, MWA_NOP		   },  /* &c0-&df  uPD7002		 1 Analogue to digital converter */
 	{ 0xfee0, 0xfeff, MWA_NOP		   },  /* &e0-&ff  Tube ULA 	 1 Tube system interface		 */
 	{ 0xff00, 0xffff, MWA_ROM		   },  /* Hardware marked with a 1 is not present in a Model A	 */
-	{-1}
-};
+MEMORY_END
 
 
-static struct MemoryReadAddress readmem_bbcb[] =
-{
+static MEMORY_READ_START(readmem_bbcb)
 	{ 0x0000, 0x7fff, MRA_RAM		   },
 	{ 0x8000, 0xbfff, MRA_BANK2 	   },
 	{ 0xc000, 0xfbff, MRA_ROM		   },
@@ -145,11 +140,9 @@ static struct MemoryReadAddress readmem_bbcb[] =
 	{ 0xfec0, 0xfedf, BBC_NOP_00_r	   },  /* &c0-&df  uPD7002		 Analogue to digital converter */
 	{ 0xfee0, 0xfeff, BBC_NOP_FE_r	   },  /* &e0-&ff  Tube ULA 	 Tube system interface		   */
 	{ 0xff00, 0xffff, MRA_ROM		   },
-	{-1}
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_bbcb[] =
-{
+static MEMORY_WRITE_START(writemem_bbcb)
 	{ 0x0000, 0x7fff, memory_w		   },
 	{ 0x8000, 0xdfff, MWA_NOP		   },
 	{ 0xc000, 0xfdff, MWA_NOP		   },
@@ -171,8 +164,7 @@ static struct MemoryWriteAddress writemem_bbcb[] =
 	{ 0xfec0, 0xfedf, MWA_NOP		   },  /* &c0-&df  uPD7002		 Analogue to digital converter */
 	{ 0xfee0, 0xfeff, MWA_NOP		   },  /* &e0-&ff  Tube ULA 	 Tube system interface		   */
 	{ 0xff00, 0xffff, MWA_ROM		   },
-	{-1}
-};
+MEMORY_END
 
 unsigned short bbc_colour_table[8]=
 {

@@ -224,7 +224,7 @@ static void bbcb_IC32_initialise(void)
 	b7_shift_lock_led=0x01;
 }
 
-static void bbcb_via0_write_porta(int offset, int data)
+WRITE_HANDLER( bbcb_via0_write_porta )
 {
 	via0_porta=data;
 	if (b0_sound==0)
@@ -246,7 +246,8 @@ static void bbcb_via0_write_porta(int offset, int data)
 
 }
 
-static void bbcb_via0_write_portb(int offset, int data)
+
+WRITE_HANDLER( bbcb_via0_write_portb )
 {
 	int bit,value;
 	bit=data & 0x07;
@@ -355,39 +356,39 @@ static void bbcb_via0_write_portb(int offset, int data)
 
 }
 
-static int bbcb_via0_read_porta(int offset)
+READ_HANDLER( bbcb_via0_read_porta )
 {
   return via0_porta;
 }
 
-static int bbcb_via0_read_portb(int offset)
+READ_HANDLER( bbcb_via0_read_portb )
 {
   return 0xff;
 }
 
 /* vertical sync pulse from video circuit */
-static int bbcb_via0_read_ca1(int offset)
+READ_HANDLER( bbcb_via0_read_ca1 )
 {
   return 0xf0;
 }
 
 
 /* joystick EOC (not emulated yet) */
-static int bbcb_via0_read_cb1(int offset)
+READ_HANDLER( bbcb_via0_read_cb1 )
 {
   return 1;
 }
 
 
 /* keyboard pressed detect */
-static int bbcb_via0_read_ca2(int offset)
+READ_HANDLER( bbcb_via0_read_ca2 )
 {
   return 0x01;
 }
 
 
 /* light pen strobe detect (not emulated yet) */
-static int bbcb_via0_read_cb2(int offset)
+READ_HANDLER( bbcb_via0_read_cb2 )
 {
   return 0x01;
 }
@@ -395,14 +396,14 @@ static int bbcb_via0_read_cb2(int offset)
 
 /* this is wired as in input port so writing to this port would be bad */
 
-static void bbcb_via0_write_ca2(int offset, int data)
+WRITE_HANDLER( bbcb_via0_write_ca2 )
 {
   //if( errorlog ) fprintf(errorlog, "via0_write_ca2: $%02X\n", data);
 }
 
 /* this is wired as in input port so writing to this port would be bad */
 
-static void bbcb_via0_write_cb2(int offset, int data)
+WRITE_HANDLER( bbcb_via0_write_cb2 )
 {
   //if( errorlog ) fprintf(errorlog, "via0_write_cb2: $%02X\n", data);
 }
@@ -567,11 +568,11 @@ static int previous_wd179x_int_state;
         -----------------
         7,6       Not used.
          5        Reset drive controller chip. (0 = reset controller, 1 = no reset)
-         4        Interrupt Enable (0 = enable int, 1 = disable int) 
+         4        Interrupt Enable (0 = enable int, 1 = disable int)
          3        Double density select (0 = double, 1 = single).
          2        Side select (0 = side 0, 1 = side 1).
-         1        Drive select 1. 
-         0        Drive select 0. 
+         1        Drive select 1.
+         0        Drive select 0.
 */
 
 /*
@@ -590,10 +591,10 @@ void bbc_wd179x_callback(int event)
 	/* WD179X_IRQ_SET and latch bit 4 (nmi_enable) are NAND'ED together
 	   WD179X_DRQ_SET and latch bit 4 (nmi_enable) are NAND'ED together
 	   the output of the above two NAND gates are then OR'ED together and sent to the 6502 NMI line.
-		DRQ and IRQ are active low outputs from wd179x. We use WD179X_DRQ_SET for DRQ = 0, 
+		DRQ and IRQ are active low outputs from wd179x. We use WD179X_DRQ_SET for DRQ = 0,
 		and WD179X_DRQ_CLR for DRQ = 1. Similarly WD179X_IRQ_SET for IRQ = 0 and WD179X_IRQ_CLR
 		for IRQ = 1.
-	
+
 	  The above means that if IRQ or DRQ are set, a interrupt should be generated.
 	  The nmi_enable decides if interrupts are actually triggered.
 	  The nmi is edge triggered, and triggers on a +ve edge.
@@ -668,7 +669,7 @@ void bbc_wd179x_status_w(int offset,int data)
 	{
 		drive = 0;
 	}
-	
+
 	if ((data & 0x03)==2)
 	{
 		drive = 1;
@@ -678,7 +679,7 @@ void bbc_wd179x_status_w(int offset,int data)
 	wd179x_set_drive(drive);
 	/* set side */
 	wd179x_set_side((data>>2) & 0x01);
-	
+
     if ((data & (1<<3))!=0)
 	{
 		/* low-density */
@@ -689,13 +690,13 @@ void bbc_wd179x_status_w(int offset,int data)
 		/* double density */
 		density = DEN_MFM_LO;
 	}
-	
+
 	wd179x_set_density(density);
 }
 
 
 
-READ_HANDLER ( bbc_wd1770_read)
+READ_HANDLER ( bbc_wd1770_read )
 {
 	int retval=0xff;
 	switch (offset)
