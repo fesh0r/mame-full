@@ -9,6 +9,8 @@ System Driver Changes:
 - [COCO] CoCo joystick buttons can now be mapped to the mouse buttons (bug
   #317).  [Nate Woods]
 
+- [SNES] Improved sprite to sprite priority. [Anthony Kruize]
+
 User Interface Changes:
 -----------------------
 (none)
