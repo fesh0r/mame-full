@@ -40,6 +40,14 @@ struct rc_option display_opts[] = {
    { NULL,		NULL,			rc_link,	xf86_dga_opts,
      NULL,		0,			0,		NULL,
      NULL },
+#ifdef USE_XV
+   { "DGA and Xv Related",	NULL,		rc_seperator,	NULL,
+     NULL,		0,			0,		NULL,
+     NULL },
+   { NULL,		NULL,			rc_link,	mode_opts,
+     NULL,		0,			0,		NULL,
+     NULL },
+#endif
    { NULL,		NULL,			rc_link,	x11_input_opts,
      NULL,		0,			0,		NULL,
      NULL },

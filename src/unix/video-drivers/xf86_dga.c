@@ -27,7 +27,7 @@ static int  (*p_xf86_dga_16bpp_capable)(void);
 
 struct rc_option xf86_dga_opts[] = {
    /* name, shortname, type, dest, deflt, min, max, func, help */
-#ifdef USE_DGA
+#if defined USE_DGA && !defined USE_XV
    { "XFree86 DGA Related", NULL,		rc_seperator,	NULL,
      NULL,		0,			0,		NULL,
      NULL },
