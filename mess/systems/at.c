@@ -21,7 +21,6 @@
 #include "devices/pc_hdc.h"
 #include "includes/pc_ide.h"
 #include "includes/pc_fdc_h.h"
-#include "devices/pc_flopp.h"
 #include "includes/pckeybrd.h"
 #include "includes/pclpt.h"
 #include "includes/sblaster.h"
@@ -32,6 +31,9 @@
 #include "includes/ps2.h"
 
 #include "includes/pcshare.h"
+
+#include "devices/mflopimg.h"
+#include "formats/pc_dsk.h"
 
 /* window resizing with dirtybuffering traping in xmess window */
 
@@ -649,7 +651,7 @@ ROM_END
 
 SYSTEM_CONFIG_START(ibmat)
 	CONFIG_DEVICE_PRINTER(3)
-	CONFIG_DEVICE_PC_FLOPPY(2)
+	CONFIG_DEVICE_FLOPPY(2, pc)
 	CONFIG_DEVICE_PC_HARDDISK(4)
 	CONFIG_QUEUE_CHARS( at_keyboard )
 	CONFIG_ACCEPT_CHAR( at_keyboard )

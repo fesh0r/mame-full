@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.21 2003/05/20 22:18:59 rnabet Exp $
+  $Id: pc8801.c,v 1.22 2003/10/29 02:01:48 npwoods Exp $
 
 ***************************************************************************/
 
@@ -15,24 +15,24 @@
 
 static struct GfxLayout char_layout_40L_h =
 {
-        8, 4,           /* 16 x 4 graphics */
-        1024,            /* 256 codes */
-        1,                      /* 1 bit per pixel */
-        { 0x1000*8 },          /* no bitplanes */
-        { 0, 0, 1, 1, 2, 2, 3, 3 },
-        { 0*8, 0*8, 1*8, 1*8 },
-        8 * 2           /* code takes 8 times 8 bits */
+	8, 4,						/* 16 x 4 graphics */
+	1024,						/* 256 codes */
+	1,							/* 1 bit per pixel */
+	{ 0x1000*8 },				/* no bitplanes */
+	{ 0, 0, 1, 1, 2, 2, 3, 3 },
+	{ 0*8, 0*8, 1*8, 1*8 },
+	8 * 2						/* code takes 8 times 8 bits */
 };
 
 static struct GfxLayout char_layout_40R_h =
 {
-        8, 4,           /* 16 x 4 graphics */
-        1024,            /* 256 codes */
-        1,                      /* 1 bit per pixel */
-        { 0x1000*8 },          /* no bitplanes */
-        { 4, 4, 5, 5, 6, 6, 7, 7 },
-        { 0*8, 0*8, 1*8, 1*8 },
-        8 * 2           /* code takes 8 times 8 bits */
+	8, 4,						/* 16 x 4 graphics */
+	1024,						/* 256 codes */
+	1,							/* 1 bit per pixel */
+	{ 0x1000*8 },				/* no bitplanes */
+	{ 4, 4, 5, 5, 6, 6, 7, 7 },
+	{ 0*8, 0*8, 1*8, 1*8 },
+	8 * 2						/* code takes 8 times 8 bits */
 };
 
 static struct GfxLayout char_layout_80_h =
@@ -514,20 +514,20 @@ static INTERRUPT_GEN( pc8801fd_interrupt )
 }
 
 MEMORY_READ_START( pc8801fd_readmem )
-    { 0x0000, 0x07ff, MRA_ROM },
-    { 0x4000, 0x7fff, MRA_RAM },
+	{ 0x0000, 0x07ff, MRA_ROM },
+	{ 0x4000, 0x7fff, MRA_RAM },
 MEMORY_END
 
 MEMORY_WRITE_START( pc8801fd_writemem )
-    { 0x0000, 0x07ff, MWA_ROM },
-    { 0x4000, 0x7fff, MWA_RAM },
+	{ 0x0000, 0x07ff, MWA_ROM },
+	{ 0x4000, 0x7fff, MWA_RAM },
 MEMORY_END
 
 PORT_READ_START( pc8801fd_readport )
-    { 0xf8, 0xf8, pc8801fd_nec765_tc },
-    { 0xfa, 0xfa, nec765_status_r },
-    { 0xfb, 0xfb, nec765_data_r },
-    { 0xfc, 0xff, ppi8255_1_r },
+	{ 0xf8, 0xf8, pc8801fd_nec765_tc },
+	{ 0xfa, 0xfa, nec765_status_r },
+	{ 0xfb, 0xfb, nec765_data_r },
+	{ 0xfc, 0xff, ppi8255_1_r },
 PORT_END
 
 PORT_WRITE_START( pc8801fd_writeport )
@@ -641,7 +641,7 @@ static MACHINE_DRIVER_START( pc88srh )
 MACHINE_DRIVER_END
 
 SYSTEM_CONFIG_START(pc88)
-	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 2, "d88\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_RW_CREATE_OR_READ, device_init_d88image_floppy, NULL, device_load_d88image_floppy, NULL, floppy_status)
+	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 2, "d88\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_RW_OR_READ, device_init_d88image_floppy, NULL, device_load_d88image_floppy, NULL, floppy_status)
 SYSTEM_CONFIG_END
 
 

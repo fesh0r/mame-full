@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.13 2003/05/10 14:53:32 rnabet Exp $
+  $Id: pc8801.c,v 1.14 2003/10/29 02:01:46 npwoods Exp $
 
 ***************************************************************************/
 
@@ -696,53 +696,63 @@ MACHINE_INIT( pc88srh )
 	pc88sr_ch_reset(1);
 }
 
-/*
-  5 inch floppy drive
-  */
-static UINT8 reg_8255_main_A, reg_8255_main_B, reg_8255_main_C;
-static UINT8 reg_8255_sub_A, reg_8255_sub_B, reg_8255_sub_C;
+/* 5 inch floppy drive */
+static char save_8255A[2];
+static char save_8255B[2];
+static char save_8255C[2];
 
-#define AAA(sn,on,sh,oh) \
-static WRITE_HANDLER(save_8255_##sh##_##sn) \
-{ \
-  reg_8255_##sh##_##sn=data; \
-} \
-static READ_HANDLER(load_8255_##sh##_##sn) \
-{ \
-  return use_5FD ? reg_8255_##oh##_##on : 0xff; \
+static void save_8255_A(int chip, int data)
+{
+	save_8255A[chip]=data;
+}
+static int load_8255_A(int chip)
+{
+	return use_5FD ? save_8255B[1-chip] : 0xff;
 }
 
-AAA(A,B,main,sub)
-AAA(A,B,sub,main)
-AAA(B,A,main,sub)
-AAA(B,A,sub,main)
-
-#undef AAA
-
-#define AAA(s,o) \
-static WRITE_HANDLER(save_8255_##s##_C) \
-{ \
-  reg_8255_##s##_C=data; \
-} \
-static READ_HANDLER(load_8255_##s##_C) \
-{ \
-  return use_5FD ? (((reg_8255_##o##_C>>4)&0x0f)| \
-		    ((reg_8255_##o##_C<<4)&0xf0)) : 0xff; \
+static void save_8255_B(int chip, int data)
+{
+	save_8255B[chip]=data;
+}
+static int load_8255_B(int chip)
+{
+	return use_5FD ? save_8255A[1-chip] : 0xff;
 }
 
-AAA(main,sub)
-AAA(sub,main)
+static void save_8255_C(int chip, int data)
+{
+	save_8255C[chip]=data;
+}
 
-#undef AAA
+static int load_8255_C(int chip)
+{
+	return use_5FD ? (((save_8255C[1-chip]>>4)&0x0f)|
+		((save_8255C[1-chip]<<4)&0xf0)) : 0xff;
+}
 
-ppi8255_interface pc8801_8255_config = {
-  2,
-  {load_8255_main_A,load_8255_sub_A},
-  {load_8255_main_B,load_8255_sub_B},
-  {load_8255_main_C,load_8255_sub_C},
-  {save_8255_main_A,save_8255_sub_A},
-  {save_8255_main_B,save_8255_sub_B},
-  {save_8255_main_C,save_8255_sub_C},
+static READ_HANDLER( load_8255_chip0_A )	{ return load_8255_A(0); }
+static READ_HANDLER( load_8255_chip1_A )	{ return load_8255_A(1); }
+static WRITE_HANDLER( save_8255_chip0_A )	{ save_8255_A(0, data); }
+static WRITE_HANDLER( save_8255_chip1_A )	{ save_8255_A(1, data); }
+static READ_HANDLER( load_8255_chip0_B )	{ return load_8255_B(0); }
+static READ_HANDLER( load_8255_chip1_B )	{ return load_8255_B(1); }
+static WRITE_HANDLER( save_8255_chip0_B )	{ save_8255_B(0, data); }
+static WRITE_HANDLER( save_8255_chip1_B )	{ save_8255_B(1, data); }
+static READ_HANDLER( load_8255_chip0_C )	{ return load_8255_C(0); }
+static READ_HANDLER( load_8255_chip1_C )	{ return load_8255_C(1); }
+static WRITE_HANDLER( save_8255_chip0_C )	{ save_8255_C(0, data); }
+static WRITE_HANDLER( save_8255_chip1_C )	{ save_8255_C(1, data); }
+
+
+ppi8255_interface pc8801_8255_config =
+{
+	2,
+	{ load_8255_chip0_A, load_8255_chip1_A },
+	{ load_8255_chip0_B, load_8255_chip1_B },
+	{ load_8255_chip0_C, load_8255_chip1_C },
+	{ save_8255_chip0_A, save_8255_chip1_A },
+	{ save_8255_chip0_B, save_8255_chip1_B },
+	{ save_8255_chip0_C, save_8255_chip1_C },
 };
 
 READ_HANDLER(pc8801fd_nec765_tc)
@@ -765,8 +775,8 @@ static void pc8801_fdc_dma_drq(int state, int read_)
 
 static struct nec765_interface pc8801_fdc_interface=
 {
-        pc8801_fdc_interrupt,
-        pc8801_fdc_dma_drq
+	pc8801_fdc_interrupt,
+	pc8801_fdc_dma_drq
 };
 
 void pc8801_init_5fd(void)

@@ -34,7 +34,6 @@
 #include "includes/pc_mda.h"
 #include "includes/pc_aga.h"
 
-#include "devices/pc_flopp.h"
 #include "includes/pc_mouse.h"
 #include "includes/pckeybrd.h"
 #include "includes/pc_fdc_h.h"

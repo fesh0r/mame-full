@@ -804,7 +804,6 @@ COREOBJS += \
 	$(OBJ)/mess/devices/flopdrv.o  \
 	$(OBJ)/mess/devices/mess_hd.o  \
 	$(OBJ)/mess/devices/idedrive.o \
-	$(OBJ)/mess/devices/pc_flopp.o \
 	$(OBJ)/mess/devices/dsk.o      \
 	$(OBJ)/mess/machine/6551.o     \
 	$(OBJ)/mess/vidhrdw/m6847.o    \

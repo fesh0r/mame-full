@@ -20,7 +20,6 @@
 #include "sound/3812intf.h"
 #include "machine/8255ppi.h"
 #include "vidhrdw/generic.h"
-#include "devices/printer.h"
 
 #include "includes/uart8250.h"
 #include "includes/pic8259.h"
@@ -34,10 +33,8 @@
 #include "includes/pc_t1t.h"
 #include "includes/pc_video.h"
 
-#include "devices/pc_hdc.h"
 #include "includes/pc_ide.h"
 #include "includes/pc_fdc_h.h"
-#include "devices/pc_flopp.h"
 #include "includes/pckeybrd.h"
 #include "includes/pclpt.h"
 #include "includes/sblaster.h"
@@ -51,7 +48,10 @@
 #include "includes/pcshare.h"
 #include "includes/pc.h"
 
-/* window resizing with dirtybuffering traping in xmess window */
+#include "devices/pc_hdc.h"
+#include "devices/printer.h"
+#include "devices/mflopimg.h"
+#include "formats/pc_dsk.h"
 
 #define ym3812_StdClock 3579545
 
@@ -1731,7 +1731,7 @@ ROM_END
 SYSTEM_CONFIG_START(ibmpc)
 	CONFIG_RAM_DEFAULT( 640 * 1024 )
 	CONFIG_DEVICE_PRINTER(3)
-	CONFIG_DEVICE_PC_FLOPPY(2)
+	CONFIG_DEVICE_FLOPPY(2, pc)
 	CONFIG_DEVICE_PC_HARDDISK(4)
 	CONFIG_QUEUE_CHARS( at_keyboard )
 	CONFIG_ACCEPT_CHAR( at_keyboard )

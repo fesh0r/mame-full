@@ -97,7 +97,8 @@
 // change to superio later
 #include "includes/pc_fdc_h.h"
 // for pc disk images
-#include "devices/pc_flopp.h"
+#include "devices/mflopimg.h"
+#include "formats/pc_dsk.h"
 // for pc com port
 #include "includes/uart8250.h"
 // for pc serial mouse
@@ -1542,7 +1543,7 @@ ROM_END
 SYSTEM_CONFIG_START(pcw16)
 	CONFIG_RAM_DEFAULT(2048 * 1024)
 	/*CONFIG_DEVICE_PRINTER(1)*/
-	CONFIG_DEVICE_PC_FLOPPY(2)
+	CONFIG_DEVICE_FLOPPY(2, pc)
 SYSTEM_CONFIG_END
 
 /*     YEAR  NAME     PARENT	COMPAT	MACHINE    INPUT     INIT   CONFIG,  COMPANY          FULLNAME */

@@ -26,7 +26,6 @@
 #include "includes/pc_aga.h"
 #include "includes/pc_t1t.h"
 
-#include "devices/pc_flopp.h"
 #include "includes/pc_mouse.h"
 #include "includes/pckeybrd.h"
 
