@@ -15,6 +15,10 @@ New System Drivers Supported (in no particular order):
 System Driver Changes:
 ----------------------
 
+- [ATOMEB] Eproms were not being selected; now fixed. Random data is poked into address 8,9,$A,$B,
+  this is used by the OS to seed the random number generator. Thanks to Kees van Oss for providing
+  this information [Kev Thacker]
+
 - [KC85/4] Implemented keyboard hardware. Previous hack has been removed.
   Seperated machine/kc.c into machine/kc.c and systems/kc.c.
   Merged all headers into includes/kc.h, and added all defines here.
@@ -55,6 +59,8 @@ Other Changes:
 
 - The core is based on MAME 0.37b11. This incorporates all 
   features of the update to this core.  [MAME team] 
+
+- [Intel 8271 Floppy disc controller] Writing should work now. [Kev Thacker]
  
 - [src/machine/z80fmly] Added support for BSTB and ASTB inputs for Z80 PIO.
   These are required by KC85/4 and KC85/3 systems. Added code to execute callback for 
