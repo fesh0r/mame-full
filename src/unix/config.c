@@ -704,10 +704,10 @@ void show_usage(void)
   fprintf(stdout_file, "\n"
 #ifdef MESS
      "M.E.S.S. - Multi-Emulator Super System\n"
-     "Copyright (C) 1998-2001 by the MESS team\n"
+     "Copyright (C) 1998-2002 by the MESS team\n"
 #else
      "M.A.M.E. - Multiple Arcade Machine Emulator\n"
-     "Copyright (C) 1997-2001 by Nicola Salmoria and the MAME Team\n"
+     "Copyright (C) 1997-2002 by Nicola Salmoria and the MAME Team\n"
 #endif
      "%s port maintained by Lawrence Gold\n", NAME);
 }

@@ -244,7 +244,7 @@ BEGIN
             VALUE "FileDescription", "Multiple Arcade Machine Emulator for Win32\0"
             VALUE "FileVersion", "0, 53, 0, 0\0"
             VALUE "InternalName", "MAME32\0"
-            VALUE "LegalCopyright", "Copyright © 1997-2001 Nicola Salmoria and the MAME team\0"
+            VALUE "LegalCopyright", "Copyright © 1997-2002 Nicola Salmoria and the MAME team\0"
 #endif
             VALUE "LegalTrademarks", "\0"
 #ifdef MESS
@@ -325,7 +325,7 @@ BEGIN
     CTEXT           "Multi Emulator Super System",IDC_STATIC,147,7,142,
                     11,NOT WS_GROUP
     CTEXT           "Version 0",IDC_VERSION,147,18,142,11,NOT WS_GROUP
-    CTEXT           "Copyright (C) 1998-2001 The MESS Team",IDC_STATIC,147,
+    CTEXT           "Copyright (C) 1998-2002 The MESS Team",IDC_STATIC,147,
                     29,142,10,NOT WS_GROUP
     CTEXT           "MESS GUI based on MAME32 version by",IDC_STATIC,147,51,142,10,NOT
                     WS_GROUP
@@ -341,7 +341,7 @@ BEGIN
     CTEXT           "Multiple Arcade Machine Emulator",IDC_STATIC,147,7,142,
                     11,NOT WS_GROUP
     CTEXT           "Version 0",IDC_VERSION,147,18,142,11,NOT WS_GROUP
-    CTEXT           "Copyright (C) 1997-2001 The MAME Team",IDC_STATIC,147,
+    CTEXT           "Copyright (C) 1997-2002 The MAME Team",IDC_STATIC,147,
                     29,142,10,NOT WS_GROUP
     CTEXT           "MAME32 version by",IDC_STATIC,147,51,142,10,NOT
                     WS_GROUP
