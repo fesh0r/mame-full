@@ -1,5 +1,6 @@
 #include "driver.h"
 #include "image.h"
+#include "ui_text.h"
 
 int tapecontrol(struct mame_bitmap *bitmap, int selected)
 {
@@ -37,36 +38,36 @@ int tapecontrol(struct mame_bitmap *bitmap, int selected)
 	else
 		sprintf(timepos, "%04d/%04d", 0, t1/11025);
 	status = device_status(IO_CASSETTE,id,-1);
-	menu_item[total] = (status & WAVE_STATUS_MOTOR_ENABLE)
+	menu_item[total] = ui_getstring((status & WAVE_STATUS_MOTOR_ENABLE)
 							? (status & WAVE_STATUS_MOTOR_INHIBIT)
-								? ((status & WAVE_STATUS_WRITE_ONLY) ? "(recording)" : "(playing)")
-								: ((status & WAVE_STATUS_WRITE_ONLY) ? "recording" : "playing")
-							: "stopped";
+								? ((status & WAVE_STATUS_WRITE_ONLY) ? UI_recording_inhibited : UI_playing_inhibited)
+								: ((status & WAVE_STATUS_WRITE_ONLY) ? UI_recording : UI_playing)
+							: UI_stopped);
 	menu_subitem[total] = timepos;
     flag[total] = 0;
 	total++;
 
-    menu_item[total] = "Pause/Stop";
+    menu_item[total] = ui_getstring(UI_pauseorstop);
 	menu_subitem[total] = 0;
     flag[total] = 0;
 	total++;
 
-	menu_item[total] = (status & WAVE_STATUS_WRITE_ONLY) ? "Record" : "Play";
+	menu_item[total] = ui_getstring((status & WAVE_STATUS_WRITE_ONLY) ? UI_record : UI_play);
 	menu_subitem[total] = 0;
     flag[total] = 0;
 	total++;
 
-	menu_item[total] = "Rewind";
+	menu_item[total] = ui_getstring(UI_rewind);
 	menu_subitem[total] = 0;
 	flag[total] = 0;
     total++;
 
-	menu_item[total] = "Fast forward";
+	menu_item[total] = ui_getstring(UI_fastforward);
 	menu_subitem[total] = 0;
 	flag[total] = 0;
     total++;
 
-    menu_item[total] = "Return to Main Menu";
+    menu_item[total] = ui_getstring(UI_returntomain);
     menu_subitem[total] = 0;
     flag[total] = 0;
     total++;

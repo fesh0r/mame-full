@@ -171,8 +171,6 @@ int win_parallel_init(void)
 			if (set_thread_ideal_processor)
 				set_thread_ideal_processor(tasks[i].thread, (i+1) % processor_count);
 		}
-		if (set_thread_ideal_processor)
-			set_thread_ideal_processor(GetCurrentThread(), 0);
 	}
 	return 0;
 

@@ -34,6 +34,17 @@ extern UINT8 win_trying_to_quit;
 
 #define MAX_JOYSTICKS				((IPF_PLAYERMASK / IPF_PLAYER2) + 1)
 
+enum
+{
+	DEVOPTION_MOUNT,
+	DEVOPTION_UNMOUNT,
+	DEVOPTION_CASSETTE_PLAYRECORD,
+	DEVOPTION_CASSETTE_STOPPAUSE,
+	DEVOPTION_CASSETTE_REWIND,
+	DEVOPTION_CASSETTE_FASTFORWARD,
+	DEVOPTION_MAX
+};
+
 //============================================================
 //	GLOBAL VARIABLES
 //============================================================
@@ -442,6 +453,17 @@ static void set_command_state(HMENU menu_bar, UINT command, UINT state)
 }
 
 //============================================================
+//	append_menu
+//============================================================
+
+static void append_menu(HMENU menu, UINT flags, UINT_PTR id, int uistring)
+{
+	LPCTSTR str;
+	str = (uistring >= 0) ? ui_getstring(uistring) : NULL;
+	AppendMenu(menu, flags, id, str);
+}
+
+//============================================================
 //	prepare_menus
 //============================================================
 
@@ -452,6 +474,10 @@ static void prepare_menus(void)
 	TCHAR buf[MAX_PATH];
 	const char *s;
 	HMENU device_menu;
+	HMENU sub_menu;
+	UINT_PTR new_item;
+	UINT flags_for_exists;
+	int status;
 
 	if (!win_menu_bar)
 		return;
@@ -480,9 +506,28 @@ static void prepare_menus(void)
 	{
 		for (i = 0; i < dev->count; i++)
 		{
-			s = image_exists(dev->type, i) ? image_filename(dev->type, i) : "<empty>";
+			new_item = ID_DEVICE_0 + ((dev->type * MAX_DEV_INSTANCES) + i) * DEVOPTION_MAX;
+			flags_for_exists = MF_STRING;
+			if (!image_exists(dev->type, i))
+				flags_for_exists |= MF_GRAYED;
+
+			sub_menu = CreateMenu();
+			append_menu(sub_menu, MF_STRING,		new_item + DEVOPTION_MOUNT,	UI_mount);
+			append_menu(sub_menu, flags_for_exists,	new_item + DEVOPTION_UNMOUNT,	UI_unmount);
+
+			if (dev->type == IO_CASSETTE)
+			{
+				status = device_status(IO_CASSETTE, i, -1);
+				append_menu(sub_menu, MF_SEPARATOR, 0, -1);
+				append_menu(sub_menu, flags_for_exists | (status & WAVE_STATUS_MOTOR_ENABLE) ? 0 : MF_CHECKED,	new_item + DEVOPTION_CASSETTE_STOPPAUSE,	UI_pauseorstop);
+				append_menu(sub_menu, flags_for_exists | (status & WAVE_STATUS_MOTOR_ENABLE) ? MF_CHECKED : 0,	new_item + DEVOPTION_CASSETTE_PLAYRECORD,	(status & WAVE_STATUS_WRITE_ONLY) ? UI_record : UI_play);
+				append_menu(sub_menu, flags_for_exists,															new_item + DEVOPTION_CASSETTE_REWIND,		UI_rewind);
+				append_menu(sub_menu, flags_for_exists,															new_item + DEVOPTION_CASSETTE_FASTFORWARD,	UI_fastforward);
+			}
+			s = image_exists(dev->type, i) ? image_filename(dev->type, i) : ui_getstring(UI_emptyslot);
+
 			snprintf(buf, sizeof(buf) / sizeof(buf[0]), "%s: %s", device_typename_id(dev->type, i), s);
-			AppendMenu(device_menu, MF_STRING, ID_DEVICE_0 + (dev->type * MAX_DEV_INSTANCES) + i, buf);
+			AppendMenu(device_menu, MF_POPUP, (UINT_PTR) sub_menu, buf);
 		}
 	}
 }
@@ -497,6 +542,52 @@ void win_toggle_menubar(void)
 	SetMenu(win_video_window, GetMenu(win_video_window) ? NULL : win_menu_bar);
 }
 
+
+//============================================================
+//	device_command
+//============================================================
+
+static void device_command(const struct IODevice *dev, int id, int devoption)
+{
+	int status;
+
+	switch(devoption) {
+	case DEVOPTION_MOUNT:
+		change_device(dev, id);
+		break;
+
+	case DEVOPTION_UNMOUNT:
+		image_unload(dev->type, id);
+		break;
+
+	default:
+		switch(dev->type) {
+		case IO_CASSETTE:
+			status = device_status(IO_CASSETTE, id, -1);
+			switch(devoption) {
+			case DEVOPTION_CASSETTE_PLAYRECORD:
+				device_status(IO_CASSETTE, id, status | WAVE_STATUS_MOTOR_ENABLE);
+				break;
+
+			case DEVOPTION_CASSETTE_STOPPAUSE:
+				if ((status & 1) == 0)
+					device_seek(IO_CASSETTE,id,0,SEEK_SET);
+				device_status(IO_CASSETTE, id, status & ~WAVE_STATUS_MOTOR_ENABLE);
+				break;
+
+			case DEVOPTION_CASSETTE_REWIND:
+				device_seek(IO_CASSETTE, id, -11025, SEEK_CUR);
+				break;
+
+			case DEVOPTION_CASSETTE_FASTFORWARD:
+				device_seek(IO_CASSETTE, id, +11025, SEEK_CUR);
+				break;
+			}
+
+		}
+	}
+}
+
 //============================================================
 //	invoke_command
 //============================================================
@@ -505,6 +596,7 @@ static int invoke_command(UINT command)
 {
 	const struct IODevice *dev;
 	int handled = 1;
+	int dev_id, dev_command;
 
 	switch(command) {
 	case ID_FILE_LOADSTATE:
@@ -569,11 +661,13 @@ static int invoke_command(UINT command)
 			frameskip = command - ID_FRAMESKIP_0;
 			autoframeskip = 0;
 		}
-		else if ((command >= ID_DEVICE_0) && (command < ID_DEVICE_0 + (MAX_DEV_INSTANCES*IO_COUNT)))
+		else if ((command >= ID_DEVICE_0) && (command < ID_DEVICE_0 + (MAX_DEV_INSTANCES*IO_COUNT*DEVOPTION_MAX)))
 		{
 			command -= ID_DEVICE_0;
-			dev = device_find(Machine->gamedrv, command / MAX_DEV_INSTANCES);
-			change_device(dev, command % MAX_DEV_INSTANCES);
+			dev = device_find(Machine->gamedrv, command / MAX_DEV_INSTANCES / DEVOPTION_MAX);
+			dev_id = (command / DEVOPTION_MAX) % MAX_DEV_INSTANCES;
+			dev_command = command % DEVOPTION_MAX;
+			device_command(dev, dev_id, dev_command);
 		}
 		else if ((command >= ID_JOYSTICK_0) && (command < ID_JOYSTICK_0 + MAX_JOYSTICKS))
 		{
@@ -625,6 +719,7 @@ HMENU win_create_menus(void)
 	TCHAR buf[32];
 	int i, joystick_count;
 
+	assert((ID_DEVICE_0 + IO_COUNT * MAX_DEV_INSTANCES * DEVOPTION_MAX) < ID_JOYSTICK_0);
 	is_paused = 0;
 	
 	module = GetModuleHandle(EMULATORDLL);
@@ -667,6 +762,8 @@ HMENU win_create_menus(void)
 
 LRESULT win_mess_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam)
 {
+	extern void win_timer_enable(int enabled);
+
 	switch(message) {
 	case WM_INITMENU:
 		prepare_menus();
@@ -677,13 +774,18 @@ LRESULT win_mess_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lpara
 			inputx_postc(wparam);
 		break;
 
+	// suspend sound and timer if we are resizing or a menu is coming up
 	case WM_ENTERMENULOOP:
+	case WM_ENTERSIZEMOVE:
 		osd_sound_enable(0);
-		DrawMenuBar(win_video_window);
+		win_timer_enable(0);
 		break;
 
+	// resume sound and timer if we dome with resizing or a menu
 	case WM_EXITMENULOOP:
+	case WM_EXITSIZEMOVE:
 		osd_sound_enable(1);
+		win_timer_enable(1);
 		break;
 
 	case WM_COMMAND:

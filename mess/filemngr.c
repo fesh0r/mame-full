@@ -1,6 +1,7 @@
 #include "driver.h"
 #include "utils.h"
 #include "image.h"
+#include "ui_text.h"
 
 #ifndef MIN
 #define MIN(x,y) ((x)<(y)?(x):(y))
@@ -13,8 +14,6 @@ static int count_chars_entered;
 static char *enter_string;
 static int enter_string_size;
 static int enter_filename_mode;
-
-static char fs_label_none[] = "[empty slot]";
 
 static char entered_filename[512];
 
@@ -252,7 +251,7 @@ static void fs_free(void)
 			switch(fs_types[i]) {
 			case FILESELECT_FILE:
 			case FILESELECT_DIRECTORY:
-				if (fs_item[i] != fs_label_none)
+				if (fs_item[i] != ui_getstring(UI_emptyslot))
 					free((char *)fs_item[i]);
 				break;
 			}
@@ -376,7 +375,7 @@ static void fs_generate_filelist(void)
 
 	/* insert empty specifier */
 	n = fs_alloc();
-	fs_item[n] = fs_label_none;
+	fs_item[n] = ui_getstring(UI_emptyslot);
 	fs_subitem[n] = "";
 	fs_types[n] = FILESELECT_FILE;
 	fs_flags[n] = 0;
@@ -631,7 +630,7 @@ static int fileselect(struct mame_bitmap *bitmap, int selected, const char *defa
 
 				case FILESELECT_FILE:
 					/* copy filename */
-					if (fs_item[sel] == fs_label_none)
+					if (fs_item[sel] == ui_getstring(UI_emptyslot))
 					{
 						entered_filename[0] = '\0';
 					}

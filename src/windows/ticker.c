@@ -35,6 +35,14 @@ cycles_t		cycles_per_sec;
 
 
 //============================================================
+//	STATIC VARIABLES
+//============================================================
+
+static cycles_t suspend_adjustment;
+static cycles_t suspend_time;
+
+
+//============================================================
 //	init_cycle_counter
 //============================================================
 
@@ -89,6 +97,9 @@ static cycles_t init_cycle_counter(void)
 	cycles_t start, end;
 	DWORD a, b;
 	int priority;
+
+	suspend_adjustment = 0;
+	suspend_time = 0;
 
 	// if the RDTSC instruction is available use it because
 	// it is more precise and has less overhead than timeGetTime()
@@ -200,7 +211,7 @@ static cycles_t time_cycle_counter(void)
 
 cycles_t osd_cycles(void)
 {
-	return (*cycle_counter)();
+	return suspend_time ? suspend_time : (*cycle_counter)() - suspend_adjustment;
 }
 
 
@@ -213,3 +224,26 @@ cycles_t osd_cycles_per_second(void)
 {
 	return cycles_per_sec;
 }
+
+
+
+//============================================================
+//	win_timer_enable
+//============================================================
+
+void win_timer_enable(int enabled)
+{
+	cycles_t actual_cycles;
+
+	actual_cycles = (*cycle_counter)();
+	if (!enabled)
+	{
+		suspend_time = actual_cycles;
+	}
+	else if (suspend_time > 0)
+	{
+		suspend_adjustment += actual_cycles - suspend_time;
+		suspend_time = 0;
+	}
+}
+
