@@ -11,7 +11,7 @@
 #endif
 
 /* Verbose outputs to error.log ? */
-#define VERBOSE 	1
+#define VERBOSE 	0
 
 /* Use the file cache ? */
 #define FILE_CACHE	1
