@@ -276,6 +276,7 @@ SNDOBJS = \
          $(OBJ)/sound/qsound.o \
          $(OBJ)/sound/tiasound.o \
          $(OBJ)/sound/tiaintf.o \
+		 $(OBJ)/sound/saa1099.o \
          $(OBJ)/sound/wave.o \
          $(OBJ)/sound/speaker.o \
 		 $(OBJ)/sound/beep.o

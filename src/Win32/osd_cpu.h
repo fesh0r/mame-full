@@ -304,6 +304,7 @@ typedef union {
 #define HAS_CEM3394     0
 #define HAS_C140        0
 #define HAS_QSOUND      1
+#define HAS_SAA1099     1
 #define HAS_SPEAKER     1
 #define HAS_WAVE        1
 #define HAS_BEEP        1
@@ -350,6 +351,7 @@ typedef union {
 #define HAS_CEM3394     1
 #define HAS_C140        1
 #define HAS_QSOUND      1
+#define HAS_SAA1099     0
 #define HAS_SPEAKER     0
 #define HAS_WAVE        0
 #define HAS_BEEP        0

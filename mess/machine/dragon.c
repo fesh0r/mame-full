@@ -605,9 +605,9 @@ static WRITE_HANDLER ( d_pia1_cb2_w )
 #endif
 
 	status = device_status(IO_CASSETTE, 0, -1);
-	status &= ~2;
+	status &= ~WAVE_STATUS_MUTED;
 	if (!data)
-		status |= 2;
+		status |= WAVE_STATUS_MUTED;
 	device_status(IO_CASSETTE, 0, status);
 
 	sound_mux = data;
@@ -660,9 +660,9 @@ static WRITE_HANDLER ( d_pia1_ca2_w )
 	if (tape_motor ^ data)
 	{
 		status = device_status(IO_CASSETTE, 0, -1);
-		status &= ~4;
+		status &= ~WAVE_STATUS_MOTOR_INHIBIT;
 		if (!data)
-			status |= 4;
+			status |= WAVE_STATUS_MOTOR_INHIBIT;
 		device_status(IO_CASSETTE, 0, status);
 		tape_motor = data;
 	}
@@ -1395,7 +1395,7 @@ int coco_cassette_init(int id)
 			return INIT_FAILED;
 
 		/* immediately inhibit/mute/play the output */
-        device_status(IO_CASSETTE,id,7);
+        device_status(IO_CASSETTE,id, WAVE_STATUS_MOTOR_ENABLE|WAVE_STATUS_MUTED|WAVE_STATUS_MOTOR_INHIBIT);
 		return INIT_OK;
 	}
 
@@ -1410,7 +1410,7 @@ int coco_cassette_init(int id)
             return INIT_FAILED;
 
 		/* immediately inhibit/mute/play the output */
-        device_status(IO_CASSETTE,id,7);
+        device_status(IO_CASSETTE,id, WAVE_STATUS_MOTOR_ENABLE|WAVE_STATUS_MUTED|WAVE_STATUS_MOTOR_INHIBIT);
 		return INIT_OK;
     }
 
