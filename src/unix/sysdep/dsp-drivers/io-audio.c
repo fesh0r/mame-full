@@ -46,7 +46,7 @@ based on the OSS source code...
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
-#include <sys/asoundlib.h>
+#include <alsa/asoundlib.h>
 #include "sysdep/sysdep_dsp.h"
 #include "sysdep/sysdep_dsp_priv.h"
 #include "sysdep/plugin_manager.h"
