@@ -1483,7 +1483,10 @@ static void *generic_fopen(int pathc, const char **pathv, const char *gamename, 
 
 #ifdef MESS
 		if ((flags & FILEFLAG_CREATE_GAME_DIR) && *name && cache_stat(name, &stat_buffer))
+		{
 			osd_mkdir(name);
+			flush_cache();
+		}
 #endif
 
 		// if the directory exists, proceed
