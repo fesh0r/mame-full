@@ -27,9 +27,9 @@ System Driver Changes:
 - [SUPERGB/GBCOLOR] No longer marked as clones of the GameBoy.[Anthony Kruize]
 
 - [TI99] Added support for Thierry Nouspickel's IDE card prototype. Added
-  preliminary (i.e. buggy and incomplete) support for the HFDC disk controller
-  card and 80-track drives. Fixed AMS memory card emulation. Enabled support
-  for ti99 disk images larger than 1600 sectors in imgtool. [Raphael Nabet]
+  incomplete but working support for the HFDC disk controller card and 80-track
+  drives. Added support for a fourth floppy drive with non-TI floppy
+  controllers. Fixed Super AMS memory card emulation. [Raphael Nabet]
 
 Source Changes:
 ---------------
@@ -47,3 +47,8 @@ Source Changes:
 
 - [Windows GUI] Fixed a bug whereby extra software paths with spaces in them
   would not be properly persisted (bug #369). [Nate Woods]
+
+- [Imgtool] Enabled support for ti99 disk formats with more than 1600 sectors.
+  Added support for v9t9 and pc99 disk image formats (note that these image
+  formats are supported by imgtool, but not by the ti99 driver).
+  [Raphael Nabet]
