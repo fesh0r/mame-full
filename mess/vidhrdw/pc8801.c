@@ -1,11 +1,14 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.6 2001/09/02 18:52:41 npwoods Exp $
+  $Id: pc8801.c,v 1.7 2001/10/24 03:35:27 npwoods Exp $
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "includes/pc8801.h"
+
+/* NPW 23-Oct-2001 - Adding this so that it compiles */
+#define palette_transparent_pen	0
 
 unsigned char *pc88sr_textRAM=NULL;
 int pc8801_is_24KHz;

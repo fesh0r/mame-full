@@ -35,16 +35,14 @@ int d88image_floppy_init(int id)
 	unsigned long toffset;
 
 	const char *name = device_filename(IO_FLOPPY, id);
+	/* do we have an image name ? */
+	if (!name)
+		return INIT_PASS;
 
 	if (id < d88image_MAX_DRIVES)
 	{
 		d88image *w = &d88image_drives[id];
 
-		/* do we have an image name ? */
-		if (!name || !name[0])
-		{
-			return INIT_FAIL;
-		}
 		w->mode = 1;
 		w->image_file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW);
 		if( !w->image_file )

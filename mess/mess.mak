@@ -78,7 +78,7 @@ CPUS+=SC61860@
 CPUS+=ARM@
 CPUS+=G65816@
 #CPUS+=SPC700@
-#CPUS+=SATURN@
+CPUS+=SATURN@
 #CPUS+=LH5801@
 #CPUS+=ASAP@
 CPUS+=APEXC@
@@ -200,7 +200,7 @@ DRVLIBS = \
 	$(OBJ)/sym1.a     \
 	$(OBJ)/avigo.a    \
 	$(OBJ)/cpschngr.a \
-#	$(OBJ)/hp48.a     \
+	$(OBJ)/hp48.a     \
 
 
 
@@ -471,7 +471,7 @@ $(OBJ)/nec.a:	   \
 $(OBJ)/necpc.a:	   \
 	  $(OBJ)/mess/machine/pc8801.o	 \
 	  $(OBJ)/mess/systems/pc8801.o	 \
-#	  $(OBJ)/mess/vidhrdw/pc8801.o
+	  $(OBJ)/mess/vidhrdw/pc8801.o
 
 $(OBJ)/ep128.a :   \
 	  $(OBJ)/mess/sndhrdw/dave.o	 \

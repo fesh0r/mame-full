@@ -81,7 +81,7 @@ const struct GameDriver *drivers[] =
 
 	/* ATARI */
 	DRIVER( a2600 ) 	/* Atari 2600						*/
-//	DRIVER( a5200 ) 	/* Atari 5200						*/
+	DRIVER( a5200 ) 	/* Atari 5200						*/
 	DRIVER( a7800 ) 	/* Atari 7800						*/
 	DRIVER( lynx )		/* Atari Lynx Handheld					*/
 	DRIVER( lynxa )		/* Atari Lynx Handheld alternate rom save		*/
@@ -438,12 +438,10 @@ TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS		  */
 	/* sinclair pc200 professional series ibmxt compatible*/
 
 	/* SHARP */
-#if 0
 TESTDRIVER( pc1500 )	/* 1982 Pocket Computer 1500						*/
 TESTDRIVER( trs80pc2 )	/* 1982 Tandy TRS80 PC 2							*/
 TESTDRIVER( pc1500a )	/* 1984 Pocket Computer 1500A						*/
 /*	DRIVER( pc1600 )*/	/* 1986 Pocket Computer 1600						*/
-#endif
 	DRIVER( pc1251 )	/* Pocket Computer 1251 						  */
 TESTDRIVER( trs80pc3 )	/* Tandy TRS80 PC-3									*/
 
@@ -540,7 +538,6 @@ TESTDRIVER( ti99_232 )	/* 1983 TI 99/2 								  */
 /* TI-92 (M68000 10 MHz) */
 /* TI-92 Plus (M68000) */
 
-#if 0
 	/* NEC */
 	/* TK80 series i8080 based */
 	/* PC-100 series i8086 based */
@@ -574,7 +571,7 @@ TESTDRIVER( ti99_232 )	/* 1983 TI 99/2 								  */
 	/* DRIVER( pc88va3 ) */	/* PC-88VA3 */
 
 	/* PC-9801 series i8086 based (V30, i386, ..) */
-#endif
+
 	/* CANTAB */
 	DRIVER( jupiter )	/* Jupiter Ace									  */
 
@@ -724,10 +721,8 @@ TESTDRIVER( mekd2 )     /* 1977 Motorola Evaluation Kit                   */
 TESTDRIVER( comquest )	/* Comquest Plus German							*/
 
 	/* Hewlett Packard */
-#if 0
 TESTDRIVER( hp48s ) 	/* HP48 S/SX										*/
 TESTDRIVER( hp48g ) 	/* HP48 G/GX										*/
-#endif
 
 	/* SpectraVideo */
 	DRIVER( svi318 ) 	/* SVI-318										  */

@@ -25,6 +25,7 @@
 #ifdef MAME_DEBUG
 #include "driver.h"
 #include "mamedbg.h"
+#include "snprintf.h"
 
 #include "saturn.h"
 #include "sat.h"
