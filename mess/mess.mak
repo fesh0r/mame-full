@@ -175,6 +175,7 @@ DRVLIBS = \
 	$(OBJ)/ascii.a	  \
 	$(OBJ)/kaypro.a   \
 	$(OBJ)/svi.a      \
+	$(OBJ)/ti85.a     \
 #	$(OBJ)/necpc.a	  \
 #	$(OBJ)/nec.a	  \
 #	$(OBJ)/sharp.a    \
@@ -199,7 +200,6 @@ DRVLIBS = \
 #	$(OBJ)/aim65.a    \
 #	$(OBJ)/sinclair.a \
 #	$(OBJ)/ti99.a     \
-#	$(OBJ)/ti85.a     \
 #	$(OBJ)/avigo.a    \
 
 

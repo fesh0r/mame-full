@@ -470,6 +470,7 @@ TESTDRIVER( ti99_232 )	/* 1983 TI 99/2 								  */
 //	DRIVER( ti99_4ae )	/* 1981 TI 99/4AE								  */
 
 //    DRIVER( avigo )     /*                                                */
+#endif
 
 /* Texas Instruments Calculators */
 
@@ -539,6 +540,7 @@ TESTDRIVER( ti99_232 )	/* 1983 TI 99/2 								  */
 /* TI-92 (M68000 10 MHz) */
 /* TI-92 Plus (M68000) */
 
+#if 0
 	/* NEC */
 	/* TK80 series i8080 based */
 	/* PC-100 series i8086 based */
