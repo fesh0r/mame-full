@@ -189,8 +189,6 @@ void dst_comp_adder_step(struct node_description *node)
  ************************************************************************/
 void dst_clamp_step(struct node_description *node)
 {
-//	struct dss_ramp_context *context = node->context;
-
 	if(node->input[0])
 	{
 		if(node->input[1] < node->input[2]) node->output=node->input[2];

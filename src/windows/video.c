@@ -978,7 +978,7 @@ void osd_update_video_and_audio(struct mame_display *display)
 	check_inputs();
 
 	// poll the joystick values here
-	win_process_events();
+	win_process_events(1);
 	win_poll_input();
 }
 

@@ -3,7 +3,7 @@
 FD1094 key dumper
 
 This file is not part of MAME, it is a standalone program that reads 128MB of
-data extracted from the FD1094 CPU and produces a 2KB keyfile, used by
+data extracted from the FD1094 CPU and produces a 8KB keyfile, used by
 fd1094.c to decrypt the ROM data.
 
 *****************************************************************************/
@@ -212,32 +212,30 @@ static int parametric_decode(int val,int mainkey,int key_F,int gkey1,int gkey2,i
 	int global_xor0,global_xor1;
 	int global_swap0a,global_swap1,global_swap2,global_swap3,global_swap4;
 	int global_swap0b;
-	int global_key0a_invert;
 
 	key_6a = BIT(mainkey,6);
 	key_7a = BIT(mainkey,7);
 
-	global_xor0         = 1^BIT(gkey1,7);	// could be bit 5
-	global_key0a_invert = 1^BIT(gkey1,5);	// could be bit 7
+	global_xor0         = 1^BIT(gkey1,5);	// could be bit 7
 	global_xor1         = 1^BIT(gkey1,2);
 	global_swap2        = 1^BIT(gkey1,0);
 
-	global_swap0a       = 1^BIT(gkey2,6);	// could be bit 7 or 5
+	global_swap0a       = 1^BIT(gkey2,5);
 	global_swap0b       = 1^BIT(gkey2,2);
 
 	global_swap3        = 1^BIT(gkey3,7);	// could be bit 6 or 5
 	global_swap1        = 1^BIT(gkey3,4);
 	global_swap4        = 1^BIT(gkey3,2);
 
-	key_6b = key_6a ^ 1^global_key0a_invert;
+	key_6b = key_6a ^ BIT(gkey2,7);	// could be bit 6
 	key_6a ^= BIT(gkey2,1);
 	key_7a ^= BIT(gkey2,4);
 
-	key_0a = BIT(mainkey,0) ^ 1^global_key0a_invert;
-	key_0b = BIT(mainkey,0) ^ BIT(gkey3,1);
-	key_0c = BIT(mainkey,0) ^ BIT(gkey1,1);;
+	key_0a = BIT(mainkey,0) ^ BIT(gkey3,1);
+	key_0b = BIT(mainkey,0) ^ BIT(gkey1,1);;
+	key_0c = BIT(mainkey,0) ^ BIT(gkey1,7);	// could be bit 5
 
-	key_1a = BIT(mainkey,1) ^ BIT(gkey2,5);	// could be bit 7 or 6;
+	key_1a = BIT(mainkey,1) ^ BIT(gkey2,6);	// could be bit 7;
 	key_1b = BIT(mainkey,1) ^ BIT(gkey1,3);
 
 	key_2a = BIT(mainkey,2) ^ BIT(gkey3,6);	// could be bit 7 or 5;
@@ -245,7 +243,7 @@ static int parametric_decode(int val,int mainkey,int key_F,int gkey1,int gkey2,i
 
 	key_3a = BIT(mainkey,3) ^ BIT(gkey2,0);
 	key_3b = BIT(mainkey,3) ^ BIT(gkey3,3);
-	key_3c = key_3b         ^ BIT(gkey2,7);	// could be bit 6 or 5;
+	key_3c = key_3b         ^ 1^global_swap0a;
 
 	key_4a = BIT(mainkey,4) ^ BIT(gkey2,3);
 	key_4b = BIT(mainkey,4) ^ BIT(gkey3,0);
@@ -263,7 +261,7 @@ static int parametric_decode(int val,int mainkey,int key_F,int gkey1,int gkey2,i
 			if (!global_xor1)				if (~val & 0x0008) val ^= 0x2410;
 											if (~val & 0x0004) val ^= 0x0022;
 			if (!key_1b)					if (~val & 0x1000) val ^= 0x0848;
-			if (!key_0c && !global_swap2)	val ^= 0x4101;
+			if (!key_0b && !global_swap2)	val ^= 0x4101;
 			val ^= 0x56a4;
 			if (!key_2b)	val = BITSWAP16(val, 15,12,10,13, 3, 9, 0,14, 6, 5, 7,11, 8, 1, 4, 2);
 			else			val = BITSWAP16(val, 15, 9,10,13, 3,12, 0,14, 6, 5, 2,11, 8, 1, 4, 7);
@@ -273,7 +271,7 @@ static int parametric_decode(int val,int mainkey,int key_F,int gkey1,int gkey2,i
 			if (!global_xor0)		if (val & 0x0800) val ^= 0x9048;
 			if (!key_3a)			if (val & 0x0004) val ^= 0x0202;
 			if (!key_6a)			if (val & 0x0400) val ^= 0x0004;
-			if (!key_0a && !key_5b)	val ^= 0x08a1;
+			if (!key_0c && !key_5b)	val ^= 0x08a1;
 			val ^= 0x02ed;
 			if (!global_swap0b)	val = BITSWAP16(val, 10,14, 7, 0, 4, 6, 8, 2, 1,15, 3,11,12,13, 5, 9);
 			else				val = BITSWAP16(val, 13,14, 7, 0, 8, 6, 4, 2, 1,15, 3,11,12,10, 5, 9);
@@ -283,7 +281,7 @@ static int parametric_decode(int val,int mainkey,int key_F,int gkey1,int gkey2,i
 			if (!key_4a)				if (val & 0x0100) val ^= 0x4210;
 			if (!key_1a)				if (val & 0x0040) val ^= 0x0080;
 			if (!key_7a)				if (val & 0x0001) val ^= 0x110a;
-			if (!key_0b && !key_4b)		val ^= 0x0040;
+			if (!key_0a && !key_4b)		val ^= 0x0040;
 			if (!global_swap0a && !key_6b)	val ^= 0x0404;
 			val ^= 0x55d2;
 			if (!key_5b)	val = BITSWAP16(val, 10, 2,13, 7, 8, 5, 3,14, 6, 0, 1,15, 9, 4,11,12);
@@ -360,7 +358,6 @@ static void print_global_key(int gkey1,int gkey2,int gkey3)
 
 	if (BIT(gkey2,7) == 0) { printf("gkey[2],7 == 0! Contact MAMEDEV!\n"); exit(0); }
 	if (BIT(gkey2,6) == 0) { printf("gkey[2],6 == 0! Contact MAMEDEV!\n"); exit(0); }
-	if (BIT(gkey2,5) == 0) { printf("gkey[2],5 == 0! Contact MAMEDEV!\n"); exit(0); }
 
 	if (BIT(gkey3,7) == 0) { printf("gkey[3],7 == 0! Contact MAMEDEV!\n"); exit(0); }
 	if (BIT(gkey3,6) == 0) { printf("gkey[3],6 == 0! Contact MAMEDEV!\n"); exit(0); }
@@ -446,7 +443,7 @@ void find_global_key(void)
 									for (key3 = gkey3 & 0x1f;key3 < 0x100;key3 += 0x20)
 									{
 										load_table(6);
-										if (check_key(key3,BIT(key3,6),gkey1,global_key2,gkey3))
+										if (check_key(key3,BIT(key3,6),gkey1,gkey2,gkey3))
 										{
 											printf("key: ");
 											print_binary(key1);

@@ -298,11 +298,11 @@ $(OBJ)/sega.a:						\
 
 $(OBJ)/atari.a:						\
 	$(OBJ)/vidhrdw/tia.o			\
-	$(OBJ)/mess/machine/atari.o		\
-	$(OBJ)/mess/vidhrdw/antic.o		\
-	$(OBJ)/mess/vidhrdw/gtia.o		\
+	$(OBJ)/machine/atari.o			\
+	$(OBJ)/vidhrdw/atari.o			\
+	$(OBJ)/vidhrdw/antic.o			\
+	$(OBJ)/vidhrdw/gtia.o			\
 	$(OBJ)/mess/systems/atari.o		\
-	$(OBJ)/mess/vidhrdw/atari.o		\
 	$(OBJ)/mess/machine/a7800.o		\
 	$(OBJ)/mess/systems/a7800.o		\
 	$(OBJ)/mess/vidhrdw/a7800.o		\

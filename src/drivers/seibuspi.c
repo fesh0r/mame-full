@@ -495,6 +495,60 @@ Raiden Fighters Jet    (All Mask ROMs stamped 'RAIDEN-FJET')
                        PCM-D.U0227  MX23C1610 (SOP44 MaskROM)
                        SOUND1.U0222 MX27C4000 (DIP32 EPROM)
 
+
+SXX2G (C)1998
+|-----------------------------------------------------------------------------|
+|                       |--------|          PCM-D  rfj-4                      |
+|                       |YMF271-F|                 rfj-05   obj-3 obj-2 obj-1 |
+|                       |        |16.3840MHz                                  |
+|  VOL                  |        |                                            |
+|          YAC516-M     |--------|                                            |
+|                                    Z84C0004PCS  D43256BGU-70L               |
+|--|            CY7C421-65PC                                                  |
+   |                                                                          |
+|--|       |------|             4.9152MHz                                     |
+|          |SIE150|       61256                                |---------|    |
+|          |      |                                            |RISE11   |    |
+|          |------|       61256                                |9823 GAX1|    |
+|                                |---------|    D43256BGU-70L  |         |    |
+|                         61256  |SEI400   |    D43256BGU-70L  |         |    |
+|J          ST93C46              |SB07-3460|                   |---------|    |
+|A                        61256  |         |                                  |
+|M                               |         |                    28.63636MHz   |
+|M   JP031                       |---------|                                  |
+|A                                                 TC551664BJ-20      rfj-06  |
+|                                                  TC551664BJ-20              |
+|--|                                                                  rfj-07  |
+   |                                 |---------|     |-------|                |
+|--|                                 |SEI600   |     |AM386DX|        rfj-08  |
+|                                    |SB08-1513|     |  40   |                |
+|   rfj-01    bg-1p  bg-1d           |         |     |-------|        rfj-09  |
+|   rfj-02                           |         |                              |
+|   rfj-03    bg-2p  bg-2d           |---------|       28.63636MHz            |
+|                                                                    SW1      |
+|-----------------------------------------------------------------------------|
+
+     AM386DX   - Advanced Micro Devices AM386DX/DX-40 (QFP132)
+     Z80       - Zilog Z84C0004PCS (DIP40)
+     YMF271-F  - Yamaha YMF271-F running at 16.3840MHz
+     TC551664  - Toshiba TC551664BJ-15 64K x16 SRAM (SOJ44)
+     YAC516-M  - Yamaha YAC516-M DAC (SOIC16)
+     JP031     - Slide Switch to flip screen
+     ST93C46   - EEPROM
+
+RFJ-01 - FIX0   27C512
+RFJ-02 - FIX1   27C512
+RFJ-03 - FIXP   27C512
+
+RFJ-04 - SOUND1  27C040
+RFJ-05 - ZPRG    27C020
+
+
+RFJ-06 - PRG0   27C040
+RFJ-07 - PRG1   27C040
+RFJ-08 - PRG2   27C040
+RFJ-09 - PRG3   27C040
+
 */
 
 #include "driver.h"
@@ -1851,7 +1905,7 @@ ROM_START(rf2_eur)
 
 ROM_END
 
-ROM_START(rfjet)
+ROM_START(rfjet) /* SPI Cart, Europe */
 	ROM_REGION(0x40000, REGION_CPU1, 0)
 	ROM_REGION(0x200000, REGION_USER1, 0)	/* i386 program */
 	ROM_LOAD32_BYTE("prg0.u0211", 0x000000, 0x80000, CRC(e5a3b304) SHA1(f7285f9c69c589fcc71082dc0b9225fdccec855f) )
@@ -1882,6 +1936,67 @@ ROM_START(rfjet)
 	ROM_LOAD("sound1.u0222", 0x200000, 0x80000, CRC(d4fc3da1) SHA1(a03bd97e36a21d27a834b9691b27a7eb7ac51ff2) )
 ROM_END
 
+ROM_START(rfjetu) /* SPI Cart, US */
+	ROM_REGION(0x40000, REGION_CPU1, 0)
+	ROM_REGION(0x200000, REGION_USER1, 0)	/* i386 program */
+	ROM_LOAD32_BYTE("prg0u.u0211", 0x000000, 0x80000, CRC(15ac2040) SHA1(7309a9dd9c91fef0e761dcf8639f421ce7abc97f) )
+	ROM_LOAD32_BYTE("prg1.u0212",  0x000001, 0x80000, CRC(395e6da7) SHA1(736f777cb1b6bf5541832b8ea89594738ca6d829) )
+	ROM_LOAD32_BYTE("prg2.u0221",  0x000002, 0x80000, CRC(82f7a57e) SHA1(5300015e25d5f2f82eda3ed54bc105d645518498) )
+	ROM_LOAD32_BYTE("prg3.u0220",  0x000003, 0x80000, CRC(cbdf100d) SHA1(c9efd11103429f7f36c1652cadb5384d925cb767) )
+
+	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_ERASEFF)
+	ROM_LOAD24_BYTE("fix0.u0524", 0x000000, 0x10000, CRC(8bc080be) SHA1(ad296fb98242c963072346a8de289e704b445ad4) )
+	ROM_LOAD24_BYTE("fix1.u0518", 0x000001, 0x10000, CRC(bded85e7) SHA1(ccb8c438ce6b9a742e3ab15be970b1e636783626) )
+	ROM_LOAD24_BYTE("fixp.u0514", 0x000002, 0x10000, CRC(015d0748) SHA1(b1e8eaeba63a7914f1dc27d7e3ca5d0b6db202ed) )
+
+	ROM_REGION( 0x900000, REGION_GFX2, 0)	/* background layer roms */
+	ROM_LOAD24_WORD_SWAP("bg-1d.u0543", 0x000000, 0x400000, CRC(edfd96da) SHA1(4813267f104619f569e5777e75b75304321abb49) )
+	ROM_LOAD24_BYTE("bg-1p.u0544", 0x000002, 0x200000, CRC(a4cc4631) SHA1(cc1c4f4de8a078ca774f5a328a9a58291949b1fb) )
+	ROM_LOAD24_WORD_SWAP("bg-2d.u0545", 0x600000, 0x200000, CRC(731fbb59) SHA1(13cd29ec4d4c73582c5fb363218e737886826e5f) )
+	ROM_LOAD24_BYTE("bg-2p.u0546", 0x600002, 0x100000, CRC(03652c25) SHA1(c0d77285111bc84e008362981ac02a246678ed0a) )
+
+	ROM_REGION( 0x1800000, REGION_GFX3, 0)	/* sprites */
+	ROM_LOAD("obj-1.u0442", 0x0000000, 0x800000, CRC(58a59896) SHA1(edeaaa69987bd5d08c47ed9bf47a3901e2dcc892) )
+	ROM_LOAD("obj-2.u0443", 0x0800000, 0x800000, CRC(a121d1e3) SHA1(1851ae81f2ae9d3404aadd9fbc0ed7f9230290b9) )
+	ROM_LOAD("obj-3.u0444", 0x1000000, 0x800000, CRC(bc2c0c63) SHA1(c8d395722f7012c3be366a0fc9b224c537afabae) )
+
+	ROM_REGION(0x40000, REGION_CPU2, 0)		/* 256k for the Z80 */
+
+	ROM_REGION(0x280000, REGION_SOUND1, 0)	/* YMF271 sound data */
+	ROM_LOAD("pcm-d.u0227", 0x000000, 0x200000, CRC(8ee3ff45) SHA1(2801b23495866c91c8f8bebd37d5fcae7a625838) )
+	ROM_LOAD("sound1.u0222", 0x200000, 0x80000, CRC(d4fc3da1) SHA1(a03bd97e36a21d27a834b9691b27a7eb7ac51ff2) )
+ROM_END
+
+ROM_START(rfjeta) /* SPI Cart, Asia */
+	ROM_REGION(0x40000, REGION_CPU1, 0)
+	ROM_REGION(0x200000, REGION_USER1, 0)	/* i386 program */
+	ROM_LOAD32_BYTE("prg0a.u0211", 0x000000, 0x80000, CRC(3418d4f5) SHA1(f8766d7b3708a196de417ee757787220b2a9ced1) )
+	ROM_LOAD32_BYTE("prg1.u0212",  0x000001, 0x80000, CRC(395e6da7) SHA1(736f777cb1b6bf5541832b8ea89594738ca6d829) )
+	ROM_LOAD32_BYTE("prg2.u0221",  0x000002, 0x80000, CRC(82f7a57e) SHA1(5300015e25d5f2f82eda3ed54bc105d645518498) )
+	ROM_LOAD32_BYTE("prg3.u0220",  0x000003, 0x80000, CRC(cbdf100d) SHA1(c9efd11103429f7f36c1652cadb5384d925cb767) )
+
+	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_ERASEFF)
+	ROM_LOAD24_BYTE("fix0.u0524", 0x000000, 0x10000, CRC(8bc080be) SHA1(ad296fb98242c963072346a8de289e704b445ad4) )
+	ROM_LOAD24_BYTE("fix1.u0518", 0x000001, 0x10000, CRC(bded85e7) SHA1(ccb8c438ce6b9a742e3ab15be970b1e636783626) )
+	ROM_LOAD24_BYTE("fixp.u0514", 0x000002, 0x10000, CRC(015d0748) SHA1(b1e8eaeba63a7914f1dc27d7e3ca5d0b6db202ed) )
+
+	ROM_REGION( 0x900000, REGION_GFX2, 0)	/* background layer roms */
+	ROM_LOAD24_WORD_SWAP("bg-1d.u0543", 0x000000, 0x400000, CRC(edfd96da) SHA1(4813267f104619f569e5777e75b75304321abb49) )
+	ROM_LOAD24_BYTE("bg-1p.u0544", 0x000002, 0x200000, CRC(a4cc4631) SHA1(cc1c4f4de8a078ca774f5a328a9a58291949b1fb) )
+	ROM_LOAD24_WORD_SWAP("bg-2d.u0545", 0x600000, 0x200000, CRC(731fbb59) SHA1(13cd29ec4d4c73582c5fb363218e737886826e5f) )
+	ROM_LOAD24_BYTE("bg-2p.u0546", 0x600002, 0x100000, CRC(03652c25) SHA1(c0d77285111bc84e008362981ac02a246678ed0a) )
+
+	ROM_REGION( 0x1800000, REGION_GFX3, 0)	/* sprites */
+	ROM_LOAD("obj-1.u0442", 0x0000000, 0x800000, CRC(58a59896) SHA1(edeaaa69987bd5d08c47ed9bf47a3901e2dcc892) )
+	ROM_LOAD("obj-2.u0443", 0x0800000, 0x800000, CRC(a121d1e3) SHA1(1851ae81f2ae9d3404aadd9fbc0ed7f9230290b9) )
+	ROM_LOAD("obj-3.u0444", 0x1000000, 0x800000, CRC(bc2c0c63) SHA1(c8d395722f7012c3be366a0fc9b224c537afabae) )
+
+	ROM_REGION(0x40000, REGION_CPU2, 0)		/* 256k for the Z80 */
+
+	ROM_REGION(0x280000, REGION_SOUND1, 0)	/* YMF271 sound data */
+	ROM_LOAD("pcm-d.u0227", 0x000000, 0x200000, CRC(8ee3ff45) SHA1(2801b23495866c91c8f8bebd37d5fcae7a625838) )
+	ROM_LOAD("sound1.u0222", 0x200000, 0x80000, CRC(d4fc3da1) SHA1(a03bd97e36a21d27a834b9691b27a7eb7ac51ff2) )
+ROM_END
 
 ROM_START(rfjetus)	/* Single board version SXX2G */
 	ROM_REGION(0x40000, REGION_CPU1, 0)
@@ -1908,7 +2023,7 @@ ROM_START(rfjetus)	/* Single board version SXX2G */
 	ROM_LOAD("obj-3.u0444", 0x1000000, 0x800000, CRC(bc2c0c63) SHA1(c8d395722f7012c3be366a0fc9b224c537afabae) )
 
 	ROM_REGION(0x40000, REGION_CPU2, 0)		/* 256k for the Z80 */
-	ROM_LOAD("rfj-05.u91", 0x000000, 0x40000, CRC(a55e8799) SHA1(5d4ca9ae920ab54e23ee3b1b33db72711e744516) ) /* ZPRG */
+	ROM_LOAD("rfj-05.u091", 0x000000, 0x40000, CRC(a55e8799) SHA1(5d4ca9ae920ab54e23ee3b1b33db72711e744516) ) /* ZPRG */
 
 	ROM_REGION(0x280000, REGION_SOUND1, 0)	/* YMF271 sound data */
 	ROM_LOAD("pcm-d.u0227", 0x000000, 0x200000, CRC(8ee3ff45) SHA1(2801b23495866c91c8f8bebd37d5fcae7a625838) )
@@ -1969,6 +2084,8 @@ GAMEX( 1996, rdftau,	rdft,    spi, spi_3button, rdft,	ROT270,	"Seibu Kaihatsu",	
 GAMEX( 1997, rf2_eur,	0,       spi, spi_2button, rf2_eur,		ROT270,	"Seibu Kaihatsu",	"Raiden Fighters 2 (EUR, SPI)", GAME_NOT_WORKING )
 
 GAMEX( 1998, rfjet,	0,       spi, spi_2button, rfjet,		ROT270,	"Seibu Kaihatsu",	"Raiden Fighters Jet", GAME_NOT_WORKING )
+GAMEX( 1998, rfjetu,	rfjet,   spi, spi_2button, rfjet,		ROT270,	"Seibu Kaihatsu",	"Raiden Fighters Jet (US)", GAME_NOT_WORKING )
+GAMEX( 1998, rfjeta,	rfjet,   spi, spi_2button, rfjet,		ROT270,	"Seibu Kaihatsu",	"Raiden Fighters Jet (ASIAN)", GAME_NOT_WORKING )
 
 /* there is another rf dump rf_spi_asia.zip but it seems strange, 1 program rom, cart pic seems to show others as a different type of rom */
 

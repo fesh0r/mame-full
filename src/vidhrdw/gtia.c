@@ -85,7 +85,7 @@ void gtia_reset(void)
  *
  **************************************************************/
 
- READ8_HANDLER ( atari_gtia_r )
+READ8_HANDLER ( atari_gtia_r )
 {
     switch (offset & 31)
     {
@@ -124,7 +124,7 @@ void gtia_reset(void)
 		case 29: return gtia.r.gtia1d;
 		case 30: return gtia.r.gtia1e;
 
-		case 31: return gtia.r.cons = (input_port_0_r(0) | gtia.w.cons) & 0x07;
+		case 31: return gtia.r.cons = (atari_readinputport(0) | gtia.w.cons) & 0x07;
     }
     return 0xff;
 }

@@ -32,16 +32,6 @@
 
 #define NUM_TEMP_VARIABLES	10
 
-enum
-{
-	EXECUTION_STATE_STOPPED,
-	EXECUTION_STATE_RUNNING,
-	EXECUTION_STATE_NEXT_CPU,
-	EXECUTION_STATE_STEP_INTO,
-	EXECUTION_STATE_STEP_OVER,
-	EXECUTION_STATE_STEP_OUT
-};
-
 
 
 /*###################################################################################################
@@ -62,13 +52,16 @@ static UINT64 wpdata;
 static UINT64 wpaddr;
 
 static int execution_state;
+static UINT32 execution_counter;
 static int next_index = 1;
 static int within_debugger_code = 0;
 static int last_cpunum;
+static int last_stopped_cpunum;
 static int steps_until_stop;
 static offs_t step_overout_breakpoint;
 static int step_overout_cpunum;
 static int key_check_counter;
+static cycles_t last_periodic_update_time;
 
 static struct debug_cpu_info debug_cpuinfo[MAX_CPU];
 
@@ -230,9 +223,12 @@ void debug_cpu_init(void)
 	int cpunum, spacenum, regnum;
 	
 	/* reset globals */
-	next_index = 1;
 	execution_state = EXECUTION_STATE_STOPPED;
+	execution_counter = 0;
+	next_index = 1;
+	within_debugger_code = 0;
 	last_cpunum = 0;
+	last_stopped_cpunum = 0;
 	steps_until_stop = 0;
 	step_overout_breakpoint = ~0;
 	step_overout_cpunum = 0;
@@ -511,6 +507,28 @@ void debug_refresh_display(void)
 
 
 /*-------------------------------------------------
+	debug_get_execution_state - return the
+	current execution state
+-------------------------------------------------*/
+
+int debug_get_execution_state(void)
+{
+	return execution_state;
+}
+
+
+/*-------------------------------------------------
+	debug_get_execution_counter - return the
+	current execution counter
+-------------------------------------------------*/
+
+UINT32 debug_get_execution_counter(void)
+{
+	return execution_counter;
+}
+
+
+/*-------------------------------------------------
 	get_wpaddr - getter callback for the
 	'wpaddr' symbol
 -------------------------------------------------*/
@@ -613,8 +631,15 @@ void MAME_Debug(void)
 	int cpunum = cpu_getactivecpu();
 	struct debug_cpu_info *info = &debug_cpuinfo[cpunum];
 	
+	/* quick out if we are ignoring */
+	if (info->ignoring)
+		return;
+	
 	/* note that we are in the debugger code */
 	within_debugger_code = 1;
+	
+	/* bump the counter */
+	execution_counter++;
 	
 	/* are we tracing? */
 	if (info->trace.file)
@@ -623,57 +648,44 @@ void MAME_Debug(void)
 	/* check for execution breakpoints */
 	if (execution_state != EXECUTION_STATE_STOPPED)
 	{
-		/* skip this stuff if we are ignoring */
-		if (!info->ignoring)
+		/* see if the CPU changed and break if we are waiting for that to happen */
+		if (cpunum != last_cpunum)
 		{
-			/* see if the CPU changed and break if we are waiting for that to happen */
-			if (cpunum != last_cpunum)
-			{
-				if (execution_state == EXECUTION_STATE_NEXT_CPU)
-					execution_state = EXECUTION_STATE_STOPPED;
-				last_cpunum = cpunum;
-			}
-			
-			/* check the temp running breakpoint and break if we hit it */
-			if (info->temp_breakpoint_pc != ~0 && execution_state == EXECUTION_STATE_RUNNING && activecpu_get_pc() == info->temp_breakpoint_pc)
-			{
+			if (execution_state == EXECUTION_STATE_NEXT_CPU)
 				execution_state = EXECUTION_STATE_STOPPED;
-				debug_console_printf("Stopped at temporary breakpoint %X on CPU %d\n", info->temp_breakpoint_pc, cpunum);
-				info->temp_breakpoint_pc = ~0;
-			}
-			
-			/* check for execution breakpoints */
-			if (info->first_bp)
-				debug_check_breakpoints(cpunum, activecpu_get_pc());
-			
-			/* handle single stepping */
-			if (steps_until_stop > 0 && (execution_state >= EXECUTION_STATE_STEP_INTO && execution_state <= EXECUTION_STATE_STEP_OUT))
+			last_cpunum = cpunum;
+		}
+		
+		/* check the temp running breakpoint and break if we hit it */
+		if (info->temp_breakpoint_pc != ~0 && execution_state == EXECUTION_STATE_RUNNING && activecpu_get_pc() == info->temp_breakpoint_pc)
+		{
+			execution_state = EXECUTION_STATE_STOPPED;
+			debug_console_printf("Stopped at temporary breakpoint %X on CPU %d\n", info->temp_breakpoint_pc, cpunum);
+			info->temp_breakpoint_pc = ~0;
+		}
+		
+		/* check for execution breakpoints */
+		if (info->first_bp)
+			debug_check_breakpoints(cpunum, activecpu_get_pc());
+		
+		/* handle single stepping */
+		if (steps_until_stop > 0 && (execution_state >= EXECUTION_STATE_STEP_INTO && execution_state <= EXECUTION_STATE_STEP_OUT))
+		{
+			/* is this an actual step? */
+			if (step_overout_breakpoint == ~0 || (cpunum == step_overout_cpunum && activecpu_get_pc() == step_overout_breakpoint))
 			{
-				/* if we're stepping into, always count every instruction */
-				if (execution_state == EXECUTION_STATE_STEP_INTO)
-					steps_until_stop--;
-				
-				/* if we're stepping out/over, only count if we're on the targeted CPU */
-				else if (cpunum == step_overout_cpunum)
-				{
-					/* if there's a step over breakpoint, we have to hit that in order to count a step */
-					if (step_overout_breakpoint != ~0)
-					{
-						if (activecpu_get_pc() == step_overout_breakpoint)
-						{
-							steps_until_stop--;
-							step_overout_breakpoint = ~0;
-						}
-					}
-					
-					/* otherwise, we count every instruction on the targeted CPU */
-					else
-						steps_until_stop--;
-				}
-				
-				/* stop when we hit 0 */
+				/* decrement the count and reset the breakpoint */
+				steps_until_stop--;
+				step_overout_breakpoint = ~0;
+
+				/* if we hit 0, stop; otherwise, we might want to update everything */
 				if (steps_until_stop == 0)
 					execution_state = EXECUTION_STATE_STOPPED;
+				else if (execution_state != EXECUTION_STATE_STEP_OUT)
+				{
+					debug_view_update_all();
+					debug_refresh_display();
+				}
 			}
 		}
 
@@ -685,6 +697,13 @@ void MAME_Debug(void)
 			{
 				execution_state = EXECUTION_STATE_STOPPED;
 				debug_console_printf("User-initiated break\n");
+			}
+
+			/* while we're here, check for a periodic update */
+			if (cpunum == last_stopped_cpunum && execution_state != EXECUTION_STATE_STOPPED && osd_cycles() > last_periodic_update_time + osd_cycles_per_second()/4)
+			{
+				debug_view_update_all();
+				last_periodic_update_time = osd_cycles();
 			}
 		}
 	}
@@ -698,10 +717,14 @@ void MAME_Debug(void)
 
 		/* update all views */
 		debug_view_update_all();
+		debug_refresh_display();
 		
 		/* wait for the debugger */
 		while (execution_state == EXECUTION_STATE_STOPPED)
 			osd_wait_for_debugger();
+		
+		/* remember the last cpunum where we stopped */
+		last_stopped_cpunum = cpunum;
 	}
 	
 	/* handle step out/over on the instruction we are about to execute */
@@ -1160,7 +1183,12 @@ const int *debug_watchpoint_count_ptr(int cpunum)
 
 data8_t debug_read_byte(int spacenum, offs_t address)
 {
-	return (*address_space[spacenum].accessors->read_byte)(address);
+	data8_t result;
+	
+	memory_set_debugger_access(1);
+	result = (*address_space[spacenum].accessors->read_byte)(address);
+	memory_set_debugger_access(0);
+	return result;
 }
 
 
@@ -1171,17 +1199,24 @@ data8_t debug_read_byte(int spacenum, offs_t address)
 
 data16_t debug_read_word(int spacenum, offs_t address)
 {
-	data8_t byte0, byte1;
+	data16_t result;
 
 	if (address_space[spacenum].accessors->read_word)
-		return (*address_space[spacenum].accessors->read_word)(address);
-
-	byte0 = debug_read_byte(spacenum, address + 0);
-	byte1 = debug_read_byte(spacenum, address + 1);
-	if (debug_cpuinfo[cpu_getactivecpu()].endianness == CPU_IS_LE)
-		return byte0 | (byte1 << 8);
+	{
+		memory_set_debugger_access(1);
+		result = (*address_space[spacenum].accessors->read_word)(address);
+		memory_set_debugger_access(0);
+	}
 	else
-		return byte1 | (byte0 << 8);
+	{
+		data8_t byte0 = debug_read_byte(spacenum, address + 0);
+		data8_t byte1 = debug_read_byte(spacenum, address + 1);
+		if (debug_cpuinfo[cpu_getactivecpu()].endianness == CPU_IS_LE)
+			result = byte0 | (byte1 << 8);
+		else
+			result = byte1 | (byte0 << 8);
+	}
+	return result;
 }
 
 
@@ -1192,17 +1227,24 @@ data16_t debug_read_word(int spacenum, offs_t address)
 
 data32_t debug_read_dword(int spacenum, offs_t address)
 {
-	data16_t word0, word1;
+	data32_t result;
 
 	if (address_space[spacenum].accessors->read_dword)
-		return (*address_space[spacenum].accessors->read_dword)(address);
-
-	word0 = debug_read_word(spacenum, address + 0);
-	word1 = debug_read_word(spacenum, address + 2);
-	if (debug_cpuinfo[cpu_getactivecpu()].endianness == CPU_IS_LE)
-		return word0 | (word1 << 16);
+	{
+		memory_set_debugger_access(1);
+		result = (*address_space[spacenum].accessors->read_dword)(address);
+		memory_set_debugger_access(0);
+	}
 	else
-		return word1 | (word0 << 16);
+	{
+		data16_t word0 = debug_read_word(spacenum, address + 0);
+		data16_t word1 = debug_read_word(spacenum, address + 2);
+		if (debug_cpuinfo[cpu_getactivecpu()].endianness == CPU_IS_LE)
+			result = word0 | (word1 << 16);
+		else
+			result = word1 | (word0 << 16);
+	}
+	return result;
 }
 
 
@@ -1213,17 +1255,24 @@ data32_t debug_read_dword(int spacenum, offs_t address)
 
 data64_t debug_read_qword(int spacenum, offs_t address)
 {
-	data32_t dword0, dword1;
+	data64_t result;
 
 	if (address_space[spacenum].accessors->read_qword)
-		return (*address_space[spacenum].accessors->read_qword)(address);
-
-	dword0 = debug_read_dword(spacenum, address + 0);
-	dword1 = debug_read_dword(spacenum, address + 4);
-	if (debug_cpuinfo[cpu_getactivecpu()].endianness == CPU_IS_LE)
-		return dword0 | ((data64_t)dword1 << 32);
+	{
+		memory_set_debugger_access(1);
+		result = (*address_space[spacenum].accessors->read_qword)(address);
+		memory_set_debugger_access(0);
+	}
 	else
-		return dword1 | ((data64_t)dword0 << 32);
+	{
+		data32_t dword0 = debug_read_dword(spacenum, address + 0);
+		data32_t dword1 = debug_read_dword(spacenum, address + 4);
+		if (debug_cpuinfo[cpu_getactivecpu()].endianness == CPU_IS_LE)
+			result = dword0 | ((data64_t)dword1 << 32);
+		else
+			result = dword1 | ((data64_t)dword0 << 32);
+	}
+	return result;
 }
 
 
@@ -1234,7 +1283,9 @@ data64_t debug_read_qword(int spacenum, offs_t address)
 
 void debug_write_byte(int spacenum, offs_t address, data8_t data)
 {
+	memory_set_debugger_access(1);
 	(*address_space[spacenum].accessors->write_byte)(address, data);
+	memory_set_debugger_access(0);
 }
 
 
@@ -1246,9 +1297,12 @@ void debug_write_byte(int spacenum, offs_t address, data8_t data)
 void debug_write_word(int spacenum, offs_t address, data16_t data)
 {
 	if (address_space[spacenum].accessors->write_word)
+	{
+		memory_set_debugger_access(1);
 		(*address_space[spacenum].accessors->write_word)(address, data);
-
-	if (debug_cpuinfo[cpu_getactivecpu()].endianness == CPU_IS_LE)
+		memory_set_debugger_access(0);
+	}
+	else if (debug_cpuinfo[cpu_getactivecpu()].endianness == CPU_IS_LE)
 	{
 		debug_write_byte(spacenum, address + 0, data >> 0);
 		debug_write_byte(spacenum, address + 1, data >> 8);
@@ -1269,9 +1323,12 @@ void debug_write_word(int spacenum, offs_t address, data16_t data)
 void debug_write_dword(int spacenum, offs_t address, data32_t data)
 {
 	if (address_space[spacenum].accessors->write_dword)
+	{
+		memory_set_debugger_access(1);
 		(*address_space[spacenum].accessors->write_dword)(address, data);
-
-	if (debug_cpuinfo[cpu_getactivecpu()].endianness == CPU_IS_LE)
+		memory_set_debugger_access(0);
+	}
+	else if (debug_cpuinfo[cpu_getactivecpu()].endianness == CPU_IS_LE)
 	{
 		debug_write_word(spacenum, address + 0, data >> 0);
 		debug_write_word(spacenum, address + 2, data >> 16);
@@ -1292,9 +1349,12 @@ void debug_write_dword(int spacenum, offs_t address, data32_t data)
 void debug_write_qword(int spacenum, offs_t address, data64_t data)
 {
 	if (address_space[spacenum].accessors->write_qword)
+	{
+		memory_set_debugger_access(1);
 		(*address_space[spacenum].accessors->write_qword)(address, data);
-
-	if (debug_cpuinfo[cpu_getactivecpu()].endianness == CPU_IS_LE)
+		memory_set_debugger_access(0);
+	}
+	else if (debug_cpuinfo[cpu_getactivecpu()].endianness == CPU_IS_LE)
 	{
 		debug_write_dword(spacenum, address + 0, data >> 0);
 		debug_write_dword(spacenum, address + 4, data >> 32);

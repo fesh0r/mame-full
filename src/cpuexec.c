@@ -1514,6 +1514,16 @@ void cpu_spinuntil_trigger(int trigger)
 	cpu[cpunum].trigger = trigger;
 }
 
+void cpunum_spinuntil_trigger( int cpunum, int trigger )
+{
+	VERIFY_CPUNUM_VOID(cpunum_spinuntil_trigger);
+	
+	/* suspend the CPU immediately if it's not already */
+	cpunum_suspend(cpunum, SUSPEND_REASON_TRIGGER, 1);
+
+	/* set the trigger */
+	cpu[cpunum].trigger = trigger;
+}
 
 void cpu_yielduntil_trigger(int trigger)
 {

@@ -328,7 +328,10 @@ CMDERR debug_console_execute_command(const char *command, int echo)
 	
 	/* update all views */
 	if (echo)
+	{
 		debug_view_update_all();
+		debug_refresh_display();
+	}
 	return result;
 }
 

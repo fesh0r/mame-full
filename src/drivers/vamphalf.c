@@ -21,115 +21,115 @@
 #include "driver.h"
 #include "machine/eeprom.h"
 
-static data32_t hyperstone_iram[0x1000];
-static data32_t *tiles, *wram;
+static data16_t *tiles, *wram;
 static int flip_bit, flipscreen = 0;
 static int palshift;
 
-static WRITE32_HANDLER( hyperstone_iram_w )
-{
-	COMBINE_DATA(&hyperstone_iram[offset&0xfff]);
-}
-
-static READ32_HANDLER( hyperstone_iram_r )
-{
-	return hyperstone_iram[offset&0xfff];
-}
-
-static WRITE32_HANDLER( paletteram32_wordx2_w )
+static WRITE16_HANDLER( vamphalf_palette_w )
 {
 	int r,g,b;
-	COMBINE_DATA(&paletteram32[offset]);
+	COMBINE_DATA(&paletteram16[offset]);
 
-	r = ((paletteram32[offset] & 0x00007c00) >> 10);
-	g = ((paletteram32[offset] & 0x000003e0) >> 5);
-	b = ((paletteram32[offset] & 0x0000001f) >> 0);
+	r = ((paletteram16[offset] & 0x7c00) >> 10);
+	g = ((paletteram16[offset] & 0x03e0) >> 5);
+	b = ((paletteram16[offset] & 0x001f) >> 0);
 
-	palette_set_color((offset*2)+1,r<<3,g<<3,b<<3);
-
-	r = ((paletteram32[offset] & 0x7c000000) >> 26);
-	g = ((paletteram32[offset] & 0x03e00000) >> 21);
-	b = ((paletteram32[offset] & 0x001f0000) >> 16);
-
-	palette_set_color(offset*2,r<<3,g<<3,b<<3);
+	palette_set_color(offset,r<<3,g<<3,b<<3);
 }
 
-static READ32_HANDLER( oki_r )
+static READ16_HANDLER( oki_r )
 {
-	return OKIM6295_status_0_r(0);
-}
-
-static WRITE32_HANDLER( oki_w )
-{
-	OKIM6295_data_0_w(0, data);
-}
-
-static READ32_HANDLER( ym2151_status_r )
-{
-	return YM2151_status_port_0_r(0);
-}
-
-static WRITE32_HANDLER( ym2151_data_w )
-{
-	YM2151_data_port_0_w(0, data);
-}
-
-static WRITE32_HANDLER( ym2151_register_w )
-{
-	YM2151_register_port_0_w(0,data);
-}
-
-static READ32_HANDLER( eeprom_r )
-{
-	return EEPROM_read_bit();
-}
-
-static WRITE32_HANDLER( eeprom_w )
-{
-	EEPROM_write_bit(data & 0x01);
-	EEPROM_set_cs_line((data & 0x04) ? CLEAR_LINE : ASSERT_LINE );
-	EEPROM_set_clock_line((data & 0x02) ? ASSERT_LINE : CLEAR_LINE );
-}
-
-static WRITE32_HANDLER( flipscreen_w )
-{
-	if(data & flip_bit)
-		flipscreen = 1;
+	if(offset)
+		return OKIM6295_status_0_r(0);
 	else
-		flipscreen = 0;
+		return 0;
 }
 
-static ADDRESS_MAP_START( common_map, ADDRESS_SPACE_PROGRAM, 32 )
+static WRITE16_HANDLER( oki_w )
+{
+	if(offset)
+		OKIM6295_data_0_w(0, data);
+}
+
+static READ16_HANDLER( ym2151_status_r )
+{
+	if(offset)
+		return YM2151_status_port_0_r(0);
+	else
+		return 0;
+}
+
+static WRITE16_HANDLER( ym2151_data_w )
+{
+	if(offset)
+		YM2151_data_port_0_w(0, data);
+}
+
+static WRITE16_HANDLER( ym2151_register_w )
+{
+	if(offset)
+		YM2151_register_port_0_w(0,data);
+}
+
+static READ16_HANDLER( eeprom_r )
+{
+	if(offset)
+		return EEPROM_read_bit();
+	else
+		return 0;
+}
+
+static WRITE16_HANDLER( eeprom_w )
+{
+	if(offset)
+	{
+		EEPROM_write_bit(data & 0x01);
+		EEPROM_set_cs_line((data & 0x04) ? CLEAR_LINE : ASSERT_LINE );
+		EEPROM_set_clock_line((data & 0x02) ? ASSERT_LINE : CLEAR_LINE );
+	}
+}
+
+static WRITE16_HANDLER( flipscreen_w )
+{
+	if(offset)
+	{
+		if(data & flip_bit)
+			flipscreen = 1;
+		else
+			flipscreen = 0;
+	}
+}
+
+static ADDRESS_MAP_START( common_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x00000000, 0x001fffff) AM_RAM AM_BASE(&wram)
 	AM_RANGE(0x40000000, 0x4003ffff) AM_RAM AM_BASE(&tiles)
-	AM_RANGE(0x80000000, 0x8000ffff) AM_READ(MRA32_RAM) AM_WRITE(paletteram32_wordx2_w) AM_BASE(&paletteram32)
-	AM_RANGE(0xc0000000, 0xdfffffff) AM_READ(hyperstone_iram_r) AM_WRITE(hyperstone_iram_w)
+	AM_RANGE(0x80000000, 0x8000ffff) AM_READ(MRA16_RAM) AM_WRITE(vamphalf_palette_w) AM_BASE(&paletteram16)
 	AM_RANGE(0xfff00000, 0xffffffff) AM_ROM AM_REGION(REGION_USER1,0)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( vamphalf_io, ADDRESS_SPACE_IO, 32 )
+static ADDRESS_MAP_START( vamphalf_io, ADDRESS_SPACE_IO, 16 )
 	AM_RANGE(0x0c0, 0x0c3) AM_READWRITE(oki_r, oki_w)
 	AM_RANGE(0x140, 0x143) AM_WRITE(ym2151_register_w)
 	AM_RANGE(0x144, 0x147) AM_READWRITE(ym2151_status_r, ym2151_data_w)
 	AM_RANGE(0x1c0, 0x1c3) AM_READ(eeprom_r)
 	AM_RANGE(0x240, 0x243) AM_WRITE(flipscreen_w)
-	AM_RANGE(0x600, 0x603) AM_READ(input_port_1_dword_r)
-	AM_RANGE(0x604, 0x607) AM_READ(input_port_0_dword_r)
+	AM_RANGE(0x600, 0x603) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x604, 0x607) AM_READ(input_port_0_word_r)
 	AM_RANGE(0x608, 0x60b) AM_WRITE(eeprom_w)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( misncrft_io, ADDRESS_SPACE_IO, 32 )
+static ADDRESS_MAP_START( misncrft_io, ADDRESS_SPACE_IO, 16 )
 	AM_RANGE(0x100, 0x103) AM_WRITE(flipscreen_w)
-	AM_RANGE(0x200, 0x203) AM_READ(input_port_0_dword_r)
-	AM_RANGE(0x240, 0x243) AM_READ(input_port_1_dword_r)
+	AM_RANGE(0x200, 0x203) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x240, 0x243) AM_READ(input_port_1_word_r)
 	AM_RANGE(0x3c0, 0x3c3) AM_WRITE(eeprom_w)
 	AM_RANGE(0x580, 0x583) AM_READ(eeprom_r)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( coolmini_io, ADDRESS_SPACE_IO, 32 )
+static ADDRESS_MAP_START( coolmini_io, ADDRESS_SPACE_IO, 16 )
 	AM_RANGE(0x200, 0x203) AM_WRITE(flipscreen_w)
-	AM_RANGE(0x300, 0x303) AM_READ(input_port_1_dword_r)
-	AM_RANGE(0x304, 0x307) AM_READ(input_port_0_dword_r)
+	AM_RANGE(0x300, 0x303) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x304, 0x307) AM_READ(input_port_0_word_r)
 	AM_RANGE(0x308, 0x30b) AM_WRITE(eeprom_w)
 	AM_RANGE(0x4c0, 0x4c3) AM_READWRITE(oki_r, oki_w)
 	AM_RANGE(0x540, 0x543) AM_WRITE(ym2151_register_w)
@@ -137,10 +137,10 @@ static ADDRESS_MAP_START( coolmini_io, ADDRESS_SPACE_IO, 32 )
 	AM_RANGE(0x7c0, 0x7c3) AM_READ(eeprom_r)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( suplup_io, ADDRESS_SPACE_IO, 32 )
+static ADDRESS_MAP_START( suplup_io, ADDRESS_SPACE_IO, 16 )
 	AM_RANGE(0x020, 0x023) AM_WRITE(eeprom_w)
-	AM_RANGE(0x040, 0x043) AM_READ(input_port_0_dword_r)
-	AM_RANGE(0x060, 0x063) AM_READ(input_port_1_dword_r)
+	AM_RANGE(0x040, 0x043) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x060, 0x063) AM_READ(input_port_1_word_r)
 	AM_RANGE(0x080, 0x083) AM_READWRITE(oki_r, oki_w)
 	AM_RANGE(0x0c0, 0x0c3) AM_WRITE(ym2151_register_w)
 	AM_RANGE(0x0c4, 0x0c7) AM_READWRITE(ym2151_status_r, ym2151_data_w)
@@ -151,17 +151,21 @@ ADDRESS_MAP_END
 Sprite list:
 
 Offset+0
--------- -------- xxxxxxxx xxxxxxxx Data
--------- xxxxxxxx -------- -------- Y offs
-x------- -------- -------- -------- Flip X
--x------ -------- -------- -------- Flip Y
+-------- xxxxxxxx Y offs
+-------x -------- Don't draw the sprite
+x------- -------- Flip X
+-x------ -------- Flip Y
 
 Offset+1
-xxxxxxxx xxxxxxxx -------- -------- Color
--------- -------- -------x xxxxxxxx X offs
+xxxxxxxx xxxxxxxx Sprite number
 
--------- -------- -------- --------
--------- -------- -------- --------
+Offset+2
+-------- -xxxxxxx Color
+or
+-xxxxxxx -------- Color
+
+Offset+3
+-------x xxxxxxxx X offs
 */
 
 static void draw_sprites(struct mame_bitmap *bitmap)
@@ -190,17 +194,17 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 
 		for (cnt=0; cnt<0x800; cnt+=8)
 		{
-			offs = (block + cnt) / 4;
-			if(tiles[offs] & 0x01000000) continue;
+			offs = (block + cnt) / 2;
+			if(tiles[offs] & 0x0100) continue;
 
-			code  = tiles[offs] & 0x0000ffff;
-			color = (tiles[offs+1] >> palshift) &0xff;
+			code  = tiles[offs+1] & 0xffff;
+			color = (tiles[offs+2] >> (palshift)) & 0x7f;
 
-			x = tiles[offs+1] & 0x000001ff;
-			y = 256 - ((tiles[offs] & 0x00ff0000) >> 16);
+			x = tiles[offs+3] & 0x01ff;
+			y = 256 - (tiles[offs] & 0x00ff);
 
-			fx = (tiles[offs] & 0x80000000) >> 31;
-			fy = (tiles[offs] & 0x40000000) >> 30;
+			fx = tiles[offs] & 0x8000;
+			fy = tiles[offs] & 0x4000;
 
 			if(flipscreen)
 			{
@@ -344,9 +348,8 @@ void nvram_handler_93C46_vamphalf(mame_file *file,int read_or_write)
 	}
 }
 
-
 static MACHINE_DRIVER_START( common )
-	MDRV_CPU_ADD_TAG("main", E132XS, 100000000/2)		 /* ?? */
+	MDRV_CPU_ADD_TAG("main", E116T, 50000000)	/* 50 MHz */
 	MDRV_CPU_PROGRAM_MAP(common_map,0)
 	MDRV_CPU_VBLANK_INT(common_interrupts, 2)
 
@@ -366,23 +369,30 @@ static MACHINE_DRIVER_START( common )
 	MDRV_VIDEO_UPDATE(common)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( sound_ym_oki )
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(OKIM6295, m6295_interface)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( sound_qs1000 )
+	/* TODO */
+MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( vamphalf )
 	MDRV_IMPORT_FROM(common)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_IO_MAP(vamphalf_io,0)
 
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, m6295_interface)
+	MDRV_IMPORT_FROM(sound_ym_oki)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( misncrft )
 	MDRV_IMPORT_FROM(common)
-	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_REPLACE("main", GMS30C2116, 50000000)	/* 50 MHz */
 	MDRV_CPU_IO_MAP(misncrft_io,0)
 
-	/* sound */
+	MDRV_IMPORT_FROM(sound_qs1000)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( coolmini )
@@ -390,9 +400,7 @@ static MACHINE_DRIVER_START( coolmini )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_IO_MAP(coolmini_io,0)
 
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, m6295_interface)
+	MDRV_IMPORT_FROM(sound_ym_oki)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( suplup )
@@ -400,9 +408,7 @@ static MACHINE_DRIVER_START( suplup )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_IO_MAP(suplup_io,0)
 
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(OKIM6295, m6295_interface)
+	MDRV_IMPORT_FROM(sound_ym_oki)
 MACHINE_DRIVER_END
 
 /*
@@ -451,7 +457,7 @@ ROML* / U*:    Graphics, device is MX29F1610ML (surface mounted SOP44 MASK ROM)
 */
 
 ROM_START( vamphalf )
-	ROM_REGION32_BE( 0x100000, REGION_USER1, ROMREGION_ERASE00 ) /* Hyperstone CPU Code */
+	ROM_REGION16_BE( 0x100000, REGION_USER1, ROMREGION_ERASE00 ) /* Hyperstone CPU Code */
 	/* 0 - 0x80000 empty */
 	ROM_LOAD( "prom1", 0x80000, 0x80000, CRC(f05e8e96) SHA1(c860e65c811cbda2dc70300437430fb4239d3e2d) )
 
@@ -512,7 +518,7 @@ Notes:
 */
 
 ROM_START( misncrft )
-	ROM_REGION32_BE( 0x100000, REGION_USER1, ROMREGION_ERASE00 ) /* Hyperstone CPU Code */
+	ROM_REGION16_BE( 0x100000, REGION_USER1, ROMREGION_ERASE00 ) /* Hyperstone CPU Code */
 	/* 0 - 0x80000 empty */
 	ROM_LOAD( "prg-rom2.bin", 0x80000, 0x80000, CRC(059ae8c1) SHA1(2c72fcf560166cb17cd8ad665beae302832d551c) )
 
@@ -534,7 +540,7 @@ ROM_END
 
 
 ROM_START( coolmini )
-	ROM_REGION32_BE( 0x100000, REGION_USER1, ROMREGION_ERASE00 ) /* Hyperstone CPU Code */
+	ROM_REGION16_BE( 0x100000, REGION_USER1, ROMREGION_ERASE00 ) /* Hyperstone CPU Code */
 	ROM_LOAD( "cm-rom1.040", 0x00000, 0x80000, CRC(9688fa98) SHA1(d5ebeb1407980072f689c3b3a5161263c7082e9a) )
 	ROM_LOAD( "cm-rom2.040", 0x80000, 0x80000, CRC(9d588fef) SHA1(7b6b0ba074c7fa0aecda2b55f411557b015522b6) )
 
@@ -595,14 +601,11 @@ Notes:
            ROML00/01, ROMU00/01 - Macronix MX29F1610MC-12 SOP44 16MBit FlashROM
            VROM1                - Macronix MX27C2000 2MBit DIP32 EPROM
            ROM1/2               - ST M27C4001 4MBit DIP32 EPROM
-
-
-
 */
 
 
 ROM_START( suplup )
-	ROM_REGION32_BE( 0x100000, REGION_USER1, ROMREGION_ERASE00 ) /* Hyperstone CPU Code */
+	ROM_REGION16_BE( 0x100000, REGION_USER1, ROMREGION_ERASE00 ) /* Hyperstone CPU Code */
 	ROM_LOAD( "rom1.bin", 0x00000, 0x80000, CRC(61fb2dbe) SHA1(21cb8f571b2479de6779b877b656d1ffe5b3516f) )
 	ROM_LOAD( "rom2.bin", 0x80000, 0x80000, CRC(0c176c57) SHA1(f103a1afc528c01cbc18639273ab797fb9afacb1) )
 
@@ -625,7 +628,7 @@ static int irq_active(void)
 		return 0;
 }
 
-static READ32_HANDLER( vamphalf_speedup_r )
+static READ16_HANDLER( vamphalf_speedup_r )
 {
 	if(activecpu_get_pc() == 0x82de)
 	{
@@ -633,13 +636,12 @@ static READ32_HANDLER( vamphalf_speedup_r )
 			cpu_spinuntil_int();
 		else
 			activecpu_eat_cycles(50);
-
 	}
 
-	return wram[0x4a6d0/4];
+	return wram[(0x4a6d0/2)+offset];
 }
 
-static READ32_HANDLER( misncrft_speedup_r )
+static READ16_HANDLER( misncrft_speedup_r )
 {
 	if(activecpu_get_pc() == 0xecc8)
 	{
@@ -649,10 +651,10 @@ static READ32_HANDLER( misncrft_speedup_r )
 			activecpu_eat_cycles(50);
 	}
 
-	return wram[0x72eb4/4];
+	return wram[(0x72eb4/2)+offset];
 }
 
-static READ32_HANDLER( coolmini_speedup_r )
+static READ16_HANDLER( coolmini_speedup_r )
 {
 	if(activecpu_get_pc() == 0x75f7a)
 	{
@@ -662,10 +664,10 @@ static READ32_HANDLER( coolmini_speedup_r )
 			activecpu_eat_cycles(50);
 	}
 
-	return wram[0xd2e80/4];
+	return wram[(0xd2e80/2)+offset];
 }
 
-static READ32_HANDLER( suplup_speedup_r )
+static READ16_HANDLER( suplup_speedup_r )
 {
 	if(activecpu_get_pc() == 0xaf18a )
 	{
@@ -675,42 +677,43 @@ static READ32_HANDLER( suplup_speedup_r )
 			activecpu_eat_cycles(50);
 	}
 
-	return wram[0x11605c/4];
+	return wram[(0x11605c/2)+offset];
 
 }
 
 DRIVER_INIT( vamphalf )
 {
-	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0004a6d0, 0x0004a6d3, 0, 0, vamphalf_speedup_r );
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x0004a6d0, 0x0004a6d3, 0, 0, vamphalf_speedup_r );
 
-	palshift = 16;
+	palshift = 0;
 	flip_bit = 0x80;
 }
 
 DRIVER_INIT( misncrft )
 {
-	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00072eb4, 0x00072eb7, 0, 0, misncrft_speedup_r );
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x00072eb4, 0x00072eb7, 0, 0, misncrft_speedup_r );
 
-	palshift = 16;
+	palshift = 0;
 	flip_bit = 1;
 }
 
 DRIVER_INIT( coolmini )
 {
-	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x000d2e80, 0x000d2e83, 0, 0, coolmini_speedup_r );
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x000d2e80, 0x000d2e83, 0, 0, coolmini_speedup_r );
 
-	palshift = 16;
+	palshift = 0;
 	flip_bit = 1;
 }
 
 DRIVER_INIT( suplup )
 {
-	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0011605c, 0x0011605f, 0, 0, suplup_speedup_r );
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x0011605c, 0x0011605f, 0, 0, suplup_speedup_r );
 
-	palshift = 24;
+	palshift = 8;
+	/* no flipscreen */
 }
 
 GAME( 1999, suplup,   0, suplup,   common, suplup,   ROT0,  "Omega System",      "Super Lup Lup Puzzle / Zhuan Zhuan Puzzle (version 4.0 / 990518)" ) // also has 'Puzzle Bang Bang' title but it can't be selected
 GAME( 1999, vamphalf, 0, vamphalf, common, vamphalf, ROT0,  "Danbi & F2 System", "Vamp 1/2 (Korea)" )
-GAMEX(2000, misncrft, 0, misncrft, common, misncrft, ROT90, "Sun",               "Mission Craft (version 2.4)",					GAME_NO_SOUND )
-GAMEX(19??, coolmini, 0, coolmini, common, coolmini, ROT0,  "Semicom",           "Cool Mini",									GAME_NOT_WORKING )
+GAMEX(2000, misncrft, 0, misncrft, common, misncrft, ROT90, "Sun",               "Mission Craft (version 2.4)",	GAME_NO_SOUND )
+GAMEX(19??, coolmini, 0, coolmini, common, coolmini, ROT0,  "Semicom",           "Cool Mini",					GAME_NOT_WORKING )

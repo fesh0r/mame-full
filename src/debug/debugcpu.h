@@ -24,6 +24,16 @@
 #define WATCHPOINT_WRITE		2
 #define WATCHPOINT_READWRITE	(WATCHPOINT_READ | WATCHPOINT_WRITE)
 
+enum
+{
+	EXECUTION_STATE_STOPPED,
+	EXECUTION_STATE_RUNNING,
+	EXECUTION_STATE_NEXT_CPU,
+	EXECUTION_STATE_STEP_INTO,
+	EXECUTION_STATE_STEP_OVER,
+	EXECUTION_STATE_STEP_OUT
+};
+
 
 
 /*###################################################################################################
@@ -112,6 +122,8 @@ void				debug_cpu_exit(void);
 const struct debug_cpu_info *debug_get_cpu_info(int cpunum);
 void				debug_halt_on_next_instruction(void);
 void				debug_refresh_display(void);
+int					debug_get_execution_state(void);
+UINT32				debug_get_execution_counter(void);
 
 /* execution control */
 void				debug_cpu_single_step(int numsteps);

@@ -51,7 +51,7 @@ extern struct SN76477interface invaders_sn76477_interface;
 extern struct Samplesinterface invaders_samples_interface;
 extern struct SN76477interface invad2ct_sn76477_interface;
 extern struct Samplesinterface invad2ct_samples_interface;
-extern struct discrete_sound_block polaris_sound_interface[];
+extern struct discrete_sound_block polaris_discrete_interface[];
 extern struct DACinterface schaser_dac_interface;
 extern struct CustomSound_interface schaser_custom_interface;
 extern struct SN76477interface schaser_sn76477_interface;

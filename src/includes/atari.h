@@ -47,9 +47,11 @@ extern ATARI_PIA atari_pia;
 
 MACHINE_INIT( a400 );
 MACHINE_INIT( a800 );
+MACHINE_INIT( a600xl );
 MACHINE_INIT( a800xl );
 MACHINE_INIT( a5200 );
 
+#ifdef MESS
 DEVICE_LOAD( a800_floppy );
 
 DEVICE_LOAD( a800_cart );
@@ -60,6 +62,7 @@ DEVICE_UNLOAD( a800xl_cart );
 
 DEVICE_LOAD( a5200_cart );
 DEVICE_UNLOAD( a5200_cart );
+#endif
 
  READ8_HANDLER ( atari_gtia_r );
  READ8_HANDLER ( atari_pia_r );
@@ -453,11 +456,11 @@ void a800xl_interrupt(void);
 void a5200_interrupt(void);
 
 #if ACCURATE_ANTIC_READMEM
-#define RDANTIC()	program_read_byte(antic.dpage+antic.doffs)
-#define RDVIDEO(o)	program_read_byte(antic.vpage+((antic.voffs+(o))&VOFFS))
-#define RDCHGEN(o)	program_read_byte(antic.chbase+(o))
-#define RDPMGFXS(o) program_read_byte(antic.pmbase_s+(o)+(antic.scanline>>1))
-#define RDPMGFXD(o) program_read_byte(antic.pmbase_d+(o)+antic.scanline)
+#define RDANTIC()	cpunum_read_byte(0, antic.dpage+antic.doffs)
+#define RDVIDEO(o)	cpunum_read_byte(0, antic.vpage+((antic.voffs+(o))&VOFFS))
+#define RDCHGEN(o)	cpunum_read_byte(0, antic.chbase+(o))
+#define RDPMGFXS(o) cpunum_read_byte(0, antic.pmbase_s+(o)+(antic.scanline>>1))
+#define RDPMGFXD(o) cpunum_read_byte(0, antic.pmbase_d+(o)+antic.scanline)
 #else
 #define RDANTIC()	Machine->memory_region[0][antic.dpage+antic.doffs]
 #define RDVIDEO(o)	Machine->memory_region[0][antic.vpage+((antic.voffs+(o))&VOFFS)]
@@ -792,6 +795,8 @@ extern int atari_frame_counter;
 #define PORT_JOY_2_3		2
 #define PORT_JOY_BUTTONS	3
 #define PORT_KEYBOARD_BASE	4
+
+int atari_readinputport(int port);
 
 #endif /* ATARI_H */
 

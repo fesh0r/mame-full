@@ -34,6 +34,11 @@
 #define DVP_UPDATE_CALLBACK					(7)		/* r/w - void (*update)(struct debug_view *) */ 
 #define DVP_VIEW_DATA						(8)		/* r/o - struct debug_view_char * */ 
 #define DVP_CPUNUM							(9)		/* r/w - UINT32 */
+#define DVP_SUPPORTS_CURSOR					(10)	/* r/o - UINT32 */
+#define DVP_CURSOR_VISIBLE					(11)	/* r/w - UINT32 */
+#define DVP_CURSOR_ROW						(12)	/* r/w - UINT32 */
+#define DVP_CURSOR_COL						(13)	/* r/w - UINT32 */
+#define DVP_CHARACTER						(14)	/* w/o - UINT32 */
 
 /* properties available for memory/disassembly views */
 #define DVP_EXPRESSION						(100)	/* const char * */
@@ -48,10 +53,17 @@
 /* attribute bits for debug_view_char.attrib */
 #define DCA_NORMAL							(0x00)	/* in Windows: black on white */
 #define DCA_CHANGED							(0x01)	/* in Windows: red foreground */
-#define DCA_SELECTED						(0x02)	/* in Windows: yellow background */
+#define DCA_SELECTED						(0x02)	/* in Windows: light red background */
 #define DCA_INVALID							(0x04)	/* in Windows: dark blue foreground */
 #define DCA_DISABLED						(0x08)	/* in Windows: darker foreground */
 #define DCA_ANCILLARY						(0x10)	/* in Windows: grey background */
+#define DCA_CURRENT							(0x20)	/* in Windows: yellow background */
+
+/* special characters that can be passed as a DVP_CHARACTER */
+#define DCH_UP								(1)		/* up arrow */
+#define DCH_DOWN							(2)		/* down arrow */
+#define DCH_LEFT							(3)		/* left arrow */
+#define DCH_RIGHT							(4)		/* right arrow */
 
 
 

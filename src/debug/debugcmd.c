@@ -62,6 +62,7 @@ static void execute_step(int ref, int params, const char **param);
 static void execute_over(int ref, int params, const char **param);
 static void execute_out(int ref, int params, const char **param);
 static void execute_go(int ref, int params, const char **param);
+static void execute_focus(int ref, int params, const char **param);
 static void execute_ignore(int ref, int params, const char **param);
 static void execute_observe(int ref, int params, const char **param);
 static void execute_next(int ref, int params, const char **param);
@@ -111,8 +112,9 @@ void debug_command_init(void)
 	debug_console_register_command("g",         0, 0, 1, execute_go);
 	debug_console_register_command("next",      0, 0, 0, execute_next);
 	debug_console_register_command("n",         0, 0, 0, execute_next);
-	debug_console_register_command("ignore",    0, 0, 1, execute_ignore);
-	debug_console_register_command("observe",   0, 0, 1, execute_observe);
+	debug_console_register_command("focus",     0, 1, 1, execute_focus);
+	debug_console_register_command("ignore",    0, 0, MAX_COMMAND_PARAMS, execute_ignore);
+	debug_console_register_command("observe",   0, 0, MAX_COMMAND_PARAMS, execute_observe);
 
 	debug_console_register_command("bpset",     0, 1, 3, execute_bpset);
 	debug_console_register_command("bp",        0, 1, 3, execute_bpset);
@@ -496,15 +498,47 @@ static void execute_next(int ref, int params, const char *param[])
 
 
 /*-------------------------------------------------
+	execute_focus - execute the focus command
+-------------------------------------------------*/
+
+static void execute_focus(int ref, int params, const char *param[])
+{
+	UINT64 cpuwhich;
+	int cpunum;
+
+	/* validate params */
+	if (!validate_parameter_number(param[0], &cpuwhich))
+		return;
+	if (cpuwhich >= cpu_gettotalcpu())
+	{
+		debug_console_printf("Invalid CPU number!");
+		return;
+	}
+
+	/* first clear the ignore flag on the focused CPU */		
+	debug_cpu_ignore_cpu(cpuwhich, 0);
+
+	/* then loop over CPUs and set the ignore flags on all other CPUs */
+	for (cpunum = 0; cpunum < MAX_CPU; cpunum++)
+	{
+		const struct debug_cpu_info *info = debug_get_cpu_info(cpunum);
+		if (info && info->valid && cpunum != cpuwhich)
+			debug_cpu_ignore_cpu(cpunum, 1);
+	}
+	debug_console_printf("Now focused on CPU %d", (int)cpuwhich);
+}
+
+
+/*-------------------------------------------------
 	execute_ignore - execute the ignore command
 -------------------------------------------------*/
 
 static void execute_ignore(int ref, int params, const char *param[])
 {
+	UINT64 cpuwhich[MAX_COMMAND_PARAMS];
+	int cpunum, paramnum;
 	char buffer[100];
-	UINT64 cpuwhich;
 	int buflen = 0;
-	int cpunum;
 
 	/* if there are no parameters, dump the ignore list */
 	if (params == 0)
@@ -528,13 +562,40 @@ static void execute_ignore(int ref, int params, const char *param[])
 		debug_console_write_line(buffer);
 	}
 	
-	/* otherwise set the ignore flag */
-	else if (!validate_parameter_number(param[0], &cpuwhich))
-		return;
+	/* otherwise clear the ignore flag on all requested CPUs */
 	else
 	{
-		debug_cpu_ignore_cpu(cpuwhich, 1);
-		debug_console_printf("Now ignoring CPU %d", (int)cpuwhich);
+		/* validate parameters */
+		for (paramnum = 0; paramnum < params; paramnum++)
+		{
+			if (!validate_parameter_number(param[paramnum], &cpuwhich[paramnum]))
+				return;
+			if (cpuwhich[paramnum] >= cpu_gettotalcpu())
+			{
+				debug_console_printf("Invalid CPU number! (%d)", (int)cpuwhich[paramnum]);
+				return;
+			}
+		}
+
+		/* set the ignore flags */
+		for (paramnum = 0; paramnum < params; paramnum++)
+		{
+			/* make sure this isn't the last live CPU */
+			for (cpunum = 0; cpunum < MAX_CPU; cpunum++)
+			{
+				const struct debug_cpu_info *info = debug_get_cpu_info(cpunum);
+				if (cpunum != cpuwhich[paramnum] && info && info->valid && !info->ignoring)
+					break;
+			}
+			if (cpunum == MAX_CPU)
+			{
+				debug_console_printf("Can't ignore all CPUs!\n");
+				return;
+			}
+			
+			debug_cpu_ignore_cpu(cpuwhich[paramnum], 1);
+			debug_console_printf("Now ignoring CPU %d", (int)cpuwhich[paramnum]);
+		}
 	}
 }
 
@@ -545,10 +606,10 @@ static void execute_ignore(int ref, int params, const char *param[])
 
 static void execute_observe(int ref, int params, const char *param[])
 {
+	UINT64 cpuwhich[MAX_COMMAND_PARAMS];
+	int cpunum, paramnum;
 	char buffer[100];
-	UINT64 cpuwhich;
 	int buflen = 0;
-	int cpunum;
 
 	/* if there are no parameters, dump the ignore list */
 	if (params == 0)
@@ -572,13 +633,27 @@ static void execute_observe(int ref, int params, const char *param[])
 		debug_console_write_line(buffer);
 	}
 	
-	/* otherwise set the ignore flag */
-	else if (!validate_parameter_number(param[0], &cpuwhich))
-		return;
+	/* otherwise set the ignore flag on all requested CPUs */
 	else
 	{
-		debug_cpu_ignore_cpu(cpuwhich, 0);
-		debug_console_printf("Now observing CPU %d", (int)cpuwhich);
+		/* validate parameters */
+		for (paramnum = 0; paramnum < params; paramnum++)
+		{
+			if (!validate_parameter_number(param[paramnum], &cpuwhich[paramnum]))
+				return;
+			if (cpuwhich[paramnum] >= cpu_gettotalcpu())
+			{
+				debug_console_printf("Invalid CPU number! (%d)", (int)cpuwhich[paramnum]);
+				return;
+			}
+		}
+
+		/* clear the ignore flags */
+		for (paramnum = 0; paramnum < params; paramnum++)
+		{
+			debug_cpu_ignore_cpu(cpuwhich[paramnum], 0);
+			debug_console_printf("Now observing CPU %d", (int)cpuwhich[paramnum]);
+		}
 	}
 }
 

@@ -57,7 +57,7 @@ void antic_reset(void)
  * Read ANTIC hardware registers
  *
  **************************************************************/
- READ8_HANDLER ( atari_antic_r )
+READ8_HANDLER ( atari_antic_r )
 {
 	data8_t data = 0xff;
 
@@ -94,7 +94,7 @@ void antic_reset(void)
 		data = antic.r.antic09;
 		break;
 	case 10: /* WSYNC read */
-		cpu_spinuntil_trigger(TRIGGER_HSYNC);
+		cpunum_spinuntil_trigger(0, TRIGGER_HSYNC);
 		antic.w.wsync = 1;
 		data = antic.r.antic0a;
 		break;
@@ -151,8 +151,6 @@ WRITE8_HANDLER ( atari_antic_w )
 		antic.chxor = (data & 2) ? 0xff : 0x00;
 		break;
 	case  2:
-		if( data == antic.w.dlistl )
-			break;
 		LOG(("ANTIC 02 write DLISTL $%02X\n", data));
 		antic.w.dlistl = data;
 		temp = (antic.w.dlisth << 8) + antic.w.dlistl;
@@ -160,8 +158,6 @@ WRITE8_HANDLER ( atari_antic_w )
 		antic.doffs = temp & DOFFS;
 		break;
 	case  3:
-		if( data == antic.w.dlisth )
-			break;
 		LOG(("ANTIC 03 write DLISTH $%02X\n", data));
 		antic.w.dlisth = data;
 		temp = (antic.w.dlisth << 8) + antic.w.dlistl;
@@ -208,7 +204,7 @@ WRITE8_HANDLER ( atari_antic_w )
 		break;
 	case 10: /* WSYNC write */
 		LOG(("ANTIC 0A write WSYNC  $%02X\n", data));
-		cpu_spinuntil_trigger(TRIGGER_HSYNC);
+		cpunum_spinuntil_trigger(0, TRIGGER_HSYNC);
 		antic.w.wsync = 1;
 		break;
 	case 11:

@@ -141,7 +141,9 @@ struct discrete_module module_list[] =
 	/* from disc_inp.c */
 	{ DSS_ADJUSTMENT  ,"DSS_ADJUSTMENT"  ,sizeof(struct dss_adjustment_context)  ,dss_adjustment_reset  ,dss_adjustment_step  },
 	{ DSS_CONSTANT    ,"DSS_CONSTANT"    ,0                                      ,NULL                  ,dss_constant_step    },
-	{ DSS_INPUT       ,"DSS_INPUT"       ,0                                      ,dss_input_reset       ,dss_input_step       },
+	{ DSS_INPUT_DATA  ,"DSS_INPUT_DATA"  ,0                                      ,dss_input_reset       ,dss_input_step       },
+	{ DSS_INPUT_LOGIC ,"DSS_INPUT_LOGIC" ,0                                      ,dss_input_reset       ,dss_input_step       },
+	{ DSS_INPUT_NOT   ,"DSS_INPUT_NOT"   ,0                                      ,dss_input_reset       ,dss_input_step       },
 	{ DSS_INPUT_PULSE ,"DSS_INPUT_PULSE" ,0                                      ,dss_input_reset       ,dss_input_pulse_step },
 
 	/* from disc_wav.c */
@@ -177,6 +179,7 @@ struct discrete_module module_list[] =
 	{ DST_LOGIC_XOR   ,"DST_LOGIC_XOR"   ,0                                      ,NULL                  ,dst_logic_xor_step   },
 	{ DST_LOGIC_NXOR  ,"DST_LOGIC_NXOR"  ,0                                      ,NULL                  ,dst_logic_nxor_step  },
 	{ DST_LOGIC_DFF   ,"DST_LOGIC_DFF"   ,sizeof(struct dst_dflipflop_context)   ,dst_logic_dff_reset   ,dst_logic_dff_step   },
+	{ DST_MULTIPLEX   ,"DST_MULTIPLEX"   ,0                                      ,NULL                  ,NULL                 },
 	{ DST_ONESHOT     ,"DST_ONESHOT"     ,sizeof(struct dst_oneshot_context)     ,dst_oneshot_reset     ,dst_oneshot_step     },
 	{ DST_RAMP        ,"DST_RAMP"        ,sizeof(struct dss_ramp_context)        ,dst_ramp_reset        ,dst_ramp_step        },
 	{ DST_SAMPHOLD    ,"DST_SAMPHOLD"    ,sizeof(struct dst_samphold_context)    ,dst_samphold_reset    ,dst_samphold_step    },
@@ -196,7 +199,7 @@ struct discrete_module module_list[] =
 	{ DST_FILTER2     ,"DST_FILTER2"     ,sizeof(struct dss_filter2_context)     ,dst_filter2_reset     ,dst_filter2_step     },
 	/* Component specific modules */
 	{ DST_CRFILTER    ,"DST_CRFILTER"    ,sizeof(struct dst_rcfilter_context)    ,dst_crfilter_reset    ,dst_crfilter_step    },
-	{ DST_OP_AMP_FILT ,"DST_OP_AMP_FILT" ,sizeof(struct dst_op_amp_filt_context),dst_op_amp_filt_reset ,dst_op_amp_filt_step  },
+	{ DST_OP_AMP_FILT ,"DST_OP_AMP_FILT" ,sizeof(struct dst_op_amp_filt_context) ,dst_op_amp_filt_reset ,dst_op_amp_filt_step },
 	{ DST_RCDISC      ,"DST_RCDISC"      ,sizeof(struct dst_rcdisc_context)      ,dst_rcdisc_reset      ,dst_rcdisc_step      },
 	{ DST_RCDISC2     ,"DST_RCDISC2"     ,sizeof(struct dst_rcdisc_context)      ,dst_rcdisc2_reset     ,dst_rcdisc2_step     },
 	{ DST_RCFILTER    ,"DST_RCFILTER"    ,sizeof(struct dst_rcfilter_context)    ,dst_rcfilter_reset    ,dst_rcfilter_step    },
@@ -206,6 +209,8 @@ struct discrete_module module_list[] =
 	{ DST_RCDISC2N    ,"DST_RCDISC2N"    ,sizeof(struct dss_rcdisc2_context)     ,dst_rcdisc2N_reset    ,dst_rcdisc2N_step    },
 
 	/* from disc_dev.c */
+	/* generic modules */
+	{ DST_CUSTOM      ,"DST_CUSTOM"      ,0                                      ,NULL                  ,dst_transform_step   },
 	/* Component specific modules */
 	{ DSD_555_ASTBL   ,"DSD_555_ASTBL"   ,sizeof(struct dsd_555_astbl_context)   ,dsd_555_astbl_reset   ,dsd_555_astbl_step   },
 	{ DSD_555_MSTBL   ,"DSD_555_MSTBL"   ,sizeof(struct dsd_555_mstbl_context)   ,dsd_555_mstbl_reset   ,dsd_555_mstbl_step   },
@@ -226,6 +231,7 @@ struct discrete_module module_list[] =
 
 struct node_description *discrete_find_node(int node)
 {
+	if (node < NODE_START || node > NODE_END) return NULL;
 	return indexed_node[node - NODE_START];
 }
 
@@ -285,12 +291,6 @@ int discrete_sh_start(const struct MachineSound *msound)
 	if (!indexed_node)
 		osd_die("discrete_sh_start() - Out of memory allocating indexed_node\n");
 	memset(indexed_node, 0, DISCRETE_MAX_NODES * sizeof(indexed_node[0]));
-
-	/* allocate memory to hold the input map */
-	dss_input_map = auto_malloc(DSS_INPUT_SPACE * sizeof(dss_input_map[0]));
-	if (!dss_input_map)
-		osd_die("discrete_sh_start() - Out of memory allocating dss_input_map\n");
-	memset(dss_input_map, 0, DSS_INPUT_SPACE * sizeof(dss_input_map[0]));
 
 	/* initialize the node data */
 	init_nodes(intf);
@@ -478,7 +478,7 @@ static void init_nodes(struct discrete_sound_block *block_list)
 			if (module_list[modulenum].type == block->type)
 				break;
 		if (module_list[modulenum].type != block->type)
-			osd_die("init_nodes() - Unable to find discrete module typer %d for NODE_%03d\n", block->type, block->node - NODE_START);
+			osd_die("init_nodes() - Unable to find discrete module type %d for NODE_%03d\n", block->type, block->node - NODE_START);
 
 		/* static inits */
 		node->node = block->node;

@@ -256,6 +256,13 @@ ADDRESS_MAP_END
 
 
 
+int atari_readinputport(int port)
+{
+	return readinputport(port);
+}
+
+
+
 #define JOYSTICK_DELTA			10
 #define JOYSTICK_SENSITIVITY	200
 

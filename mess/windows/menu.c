@@ -950,7 +950,7 @@ static void pause(void)
 		{
 			update_video_and_audio();
 			WaitMessage();
-			win_process_events();
+			win_process_events(1);
 		}
 		mame_pause(0);
 	}

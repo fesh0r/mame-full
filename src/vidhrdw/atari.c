@@ -789,7 +789,11 @@ VIDEO_START( atari )
  ************************************************************************/
 VIDEO_UPDATE( atari )
 {
+#ifdef MESS
 	video_update_generic_bitmapped(bitmap, cliprect, do_skip);
+#else
+	video_update_generic_bitmapped(bitmap, cliprect);
+#endif
 
 	if( tv_artifacts != (readinputport(0) & 0x40) )
 	{
@@ -995,16 +999,66 @@ static void antic_linerefresh(void)
 	dst[0] = antic.color_lookup[PBK] | antic.color_lookup[PBK] << 16;
 	dst[1] = antic.color_lookup[PBK] | antic.color_lookup[PBK] << 16;
 	dst[2] = antic.color_lookup[PBK] | antic.color_lookup[PBK] << 16;
-	dst[3] = antic.color_lookup[src[BYTE_XOR(0)]] | antic.color_lookup[src[BYTE_XOR(1)]] << 16;
-    src += 2;
-	dst += 4;
-	for( x = 1; x < HCHARS-1; x++ )
+	if ( (antic.cmd & ANTIC_HSCR) == 0  || (antic.pfwidth == 48) || (antic.pfwidth == 32))
 	{
-		*dst++ = antic.color_lookup[src[BYTE_XOR(0)]] | antic.color_lookup[src[BYTE_XOR(1)]] << 16;
-		*dst++ = antic.color_lookup[src[BYTE_XOR(2)]] | antic.color_lookup[src[BYTE_XOR(3)]] << 16;
-		src += 4;
-    }
-	dst[0] = antic.color_lookup[src[BYTE_XOR(0)]] | antic.color_lookup[src[BYTE_XOR(1)]] << 16;
+		/* no hscroll */
+		dst[3] = antic.color_lookup[src[BYTE_XOR(0)]] | antic.color_lookup[src[BYTE_XOR(1)]] << 16;
+		src += 2;
+		dst += 4;
+		for( x = 1; x < HCHARS-1; x++ )
+		{
+			*dst++ = antic.color_lookup[src[BYTE_XOR(0)]] | antic.color_lookup[src[BYTE_XOR(1)]] << 16;
+			*dst++ = antic.color_lookup[src[BYTE_XOR(2)]] | antic.color_lookup[src[BYTE_XOR(3)]] << 16;
+			src += 4;
+		}
+		dst[0] = antic.color_lookup[src[BYTE_XOR(0)]] | antic.color_lookup[src[BYTE_XOR(1)]] << 16;
+	}
+	else
+	{
+		/* if hscroll is enabled, more data are fetched by ANTIC, but it still renders playfield
+		   of width defined by pfwidth. */
+		switch( antic.pfwidth )
+		{
+			case 0:
+				{
+					dst[3] = antic.color_lookup[PBK] | antic.color_lookup[PBK] << 16;
+					dst += 4;
+					for ( x = 1; x < HCHARS-1; x++ )
+					{
+						*dst++ = antic.color_lookup[PBK] | antic.color_lookup[PBK] << 16;
+						*dst++ = antic.color_lookup[PBK] | antic.color_lookup[PBK] << 16;
+					}
+					dst[0] = antic.color_lookup[PBK] | antic.color_lookup[PBK] << 16;
+				}
+				break;
+			/* support for narrow playfield (32) with horizontal scrolling should be added here */
+			case 40:
+				{
+					dst[3] = antic.color_lookup[PBK] | antic.color_lookup[PBK] << 16;
+					dst += 4;				
+					for ( x = 1; x < HCHARS-2; x++ )
+					{
+						if ( x == 1 )
+						{
+							*dst++ = antic.color_lookup[PBK] | antic.color_lookup[PBK] << 16;
+						}
+						else
+						{
+							*dst++ = antic.color_lookup[src[BYTE_XOR(0)]] | antic.color_lookup[src[BYTE_XOR(1)]] << 16;
+						}
+						*dst++ = antic.color_lookup[src[BYTE_XOR(2)]] | antic.color_lookup[src[BYTE_XOR(3)]] << 16;
+						src += 4;
+					}
+					for ( ; x < HCHARS-1; x++ )
+					{
+						*dst++ = antic.color_lookup[PBK] | antic.color_lookup[PBK] << 16;
+						*dst++ = antic.color_lookup[PBK] | antic.color_lookup[PBK] << 16;
+					}
+					dst[0] = antic.color_lookup[PBK] | antic.color_lookup[PBK] << 16;
+				}
+				break;
+		}
+	}
 	dst[1] = antic.color_lookup[PBK] | antic.color_lookup[PBK] << 16;
 	dst[2] = antic.color_lookup[PBK] | antic.color_lookup[PBK] << 16;
 	dst[3] = antic.color_lookup[PBK] | antic.color_lookup[PBK] << 16;
@@ -1097,6 +1151,7 @@ static  renderer_function renderer[2][19][5] = {
  *****************************************************************************/
 static void antic_line_done(int param)
 {
+	LOG(("           @cycle #%3d antic_line_done\n", cycle()));
 	if( antic.w.wsync )
     {
 		LOG(("           @cycle #%3d release WSYNC\n", cycle()));
@@ -1127,7 +1182,7 @@ static void antic_steal_cycles(int param)
 	LOG(("           @cycle #%3d steal %d cycles\n", cycle(), antic.steal_cycles));
 	after(antic.steal_cycles, antic_line_done, "antic_line_done");
     antic.steal_cycles = 0;
-    cpu_spinuntil_trigger(TRIGGER_STEAL);
+	cpunum_spinuntil_trigger( 0, TRIGGER_STEAL );
 }
 
 
@@ -1464,7 +1519,7 @@ static void generic_atari_interrupt(void (*handle_keyboard)(void), int button_co
 
     if( antic.scanline == VBL_START )
     {
-		button_port = readinputport(PORT_JOY_BUTTONS);
+		button_port = atari_readinputport(PORT_JOY_BUTTONS);
 
 		/* specify buttons relevant to this Atari variant */
 		for (i = 0; i < button_count; i++)

@@ -8,8 +8,6 @@
 		* Lunar Lander
 
 	Known bugs:
-		* sound emu isn't perfect - sometimes explosions don't register in Asteroids
-		* the low background thrust in Lunar Lander isn't emulated
 		* the ERROR message in Asteroids Deluxe self test is related to a pokey problem
 
 ****************************************************************************
@@ -627,7 +625,7 @@ static MACHINE_DRIVER_START( asteroid )
 	MDRV_VIDEO_UPDATE(vector)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD_TAG("disc", DISCRETE, asteroid_sound_interface)
+	MDRV_SOUND_ADD_TAG("disc", DISCRETE, asteroid_discrete_interface)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( asterock )
@@ -635,7 +633,7 @@ static MACHINE_DRIVER_START( asterock )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(asteroid)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_VBLANK_INT(asterock_interrupt,4)	/* 250 Hz */	
+	MDRV_CPU_VBLANK_INT(asterock_interrupt,4)	/* 250 Hz */
 MACHINE_DRIVER_END
 
 
@@ -649,7 +647,7 @@ static MACHINE_DRIVER_START( astdelux )
 	MDRV_NVRAM_HANDLER(atari_vg)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("disc", DISCRETE, astdelux_sound_interface)
+	MDRV_SOUND_REPLACE("disc", DISCRETE, astdelux_discrete_interface)
 	MDRV_SOUND_ADD(POKEY, pokey_interface)
 MACHINE_DRIVER_END
 
@@ -673,7 +671,7 @@ static MACHINE_DRIVER_START( llander )
 	MDRV_VIDEO_UPDATE(vector)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("disc", DISCRETE, llander_sound_interface)
+	MDRV_SOUND_REPLACE("disc", DISCRETE, llander_discrete_interface)
 MACHINE_DRIVER_END
 
 
@@ -839,4 +837,3 @@ GAME( 1980, astdelux, 0,        astdelux, astdelux, astdelux, ROT0, "Atari", "As
 GAME( 1980, astdelu1, astdelux, astdelux, astdelux, astdelux, ROT0, "Atari", "Asteroids Deluxe (rev 1)" )
 GAME( 1979, llander,  0,        llander,  llander,  0,        ROT0, "Atari", "Lunar Lander (rev 2)" )
 GAME( 1979, llander1, llander,  llander,  llander1, 0,        ROT0, "Atari", "Lunar Lander (rev 1)" )
-

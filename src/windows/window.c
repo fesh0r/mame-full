@@ -1410,7 +1410,7 @@ void win_process_events_periodic(void)
 	cycles_t curr = osd_cycles();
 	if (curr - last_event_check < osd_cycles_per_second() / 8)
 		return;
-	win_process_events();
+	win_process_events(1);
 }
 
 
@@ -1419,14 +1419,19 @@ void win_process_events_periodic(void)
 //	win_process_events
 //============================================================
 
-int win_process_events(void)
+int win_process_events(int ingame)
 {
-#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
-#define IS_DEBUGGER_VISIBLE() (options.mame_debug && debugwin_is_debugger_visible())
-#else
-#define IS_DEBUGGER_VISIBLE() (0)
-#endif
+	int is_debugger_visible = 0;
 	MSG message;
+
+	// if we're running, disable some parts of the debugger
+#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
+	if (ingame)
+	{
+		is_debugger_visible = (options.mame_debug && debugwin_is_debugger_visible());
+		debugwin_update_during_game();
+	}
+#endif
 
 	// remember the last time we did this
 	last_event_check = osd_cycles();
@@ -1451,40 +1456,40 @@ int win_process_events(void)
 			case WM_KEYDOWN:
 			case WM_CHAR:
 #endif
-				dispatch = IS_DEBUGGER_VISIBLE();
+				dispatch = is_debugger_visible;
 				break;
 
 			case WM_LBUTTONDOWN:
 				input_mouse_button_down(0,GET_X_LPARAM(message.lParam),GET_Y_LPARAM(message.lParam));
-				dispatch = IS_DEBUGGER_VISIBLE();
+				dispatch = is_debugger_visible;
 				break;
 			case WM_RBUTTONDOWN:
 				input_mouse_button_down(1,GET_X_LPARAM(message.lParam),GET_Y_LPARAM(message.lParam));
-				dispatch = IS_DEBUGGER_VISIBLE();
+				dispatch = is_debugger_visible;
 				break;
 			case WM_MBUTTONDOWN:
 				input_mouse_button_down(2,GET_X_LPARAM(message.lParam),GET_Y_LPARAM(message.lParam));
-				dispatch = IS_DEBUGGER_VISIBLE();
+				dispatch = is_debugger_visible;
 				break;
 			case WM_XBUTTONDOWN:
 				input_mouse_button_down(3,GET_X_LPARAM(message.lParam),GET_Y_LPARAM(message.lParam));
-				dispatch = IS_DEBUGGER_VISIBLE();
+				dispatch = is_debugger_visible;
 				break;
 			case WM_LBUTTONUP:
 				input_mouse_button_up(0);
-				dispatch = IS_DEBUGGER_VISIBLE();
+				dispatch = is_debugger_visible;
 				break;
 			case WM_RBUTTONUP:
 				input_mouse_button_up(1);
-				dispatch = IS_DEBUGGER_VISIBLE();
+				dispatch = is_debugger_visible;
 				break;
 			case WM_MBUTTONUP:
 				input_mouse_button_up(2);
-				dispatch = IS_DEBUGGER_VISIBLE();
+				dispatch = is_debugger_visible;
 				break;
 			case WM_XBUTTONUP:
 				input_mouse_button_up(3);
-				dispatch = IS_DEBUGGER_VISIBLE();
+				dispatch = is_debugger_visible;
 				break;
 		}
 

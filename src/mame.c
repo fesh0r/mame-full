@@ -1877,7 +1877,7 @@ int mame_validitychecks(void)
 						/* check to make sure that this CPU core has the necessities filled out */
 						const struct cpu_interface *cpuintrf;
 						union cpuinfo info;
-						const INT8 *reg;
+						const UINT8 *reg;
 						int incomplete_cpu_core = 0;
 						static const int required_info[] =
 						{
@@ -1896,12 +1896,12 @@ int mame_validitychecks(void)
 
 						memset(&info, 0, sizeof(info));
 						cpuintrf->get_info(CPUINFO_PTR_REGISTER_LAYOUT, &info);
-						reg = (const INT8 *) info.p;
+						reg = (const UINT8 *) info.p;
 						if (reg)
 						{
 							for (j = 0; reg[j]; j++)
 							{
-								if (reg[j] != -1)
+								if (reg[j] != (UINT8)-1)
 								{
 									memset(&info, 0, sizeof(info));
 									cpuintrf->get_info(CPUINFO_STR_REGISTER + reg[j], &info);

@@ -131,6 +131,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( pengob )	/* bootleg */
 	DRIVER( penta )		/* bootleg */
 	DRIVER( jrpacman )	/* (c) 1983 Midway */
+	DRIVER( jrpacmbl )	/* bootleg on Pengo HW */
 	DRIVER( jumpshot )	/* (c) 1985 Bally Midway */
 	DRIVER( shootbul )	/* (c) 1985 Bally Midway */
 	DRIVER( bigbucks )	/* (c) 1986 Dynasoft Inc. */
@@ -2919,14 +2920,16 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( tturf )		/* (c) 1989 Sega / Sunsoft */
 	DRIVER( tturfbl )	/* (c) 1989 (Datsu bootleg) */
 	DRIVER( tturfu )	/* (c) 1989 Sega / Sunsoft */
-	DRIVER( wb3 )		/* (c) 1988 Sega / Westone */
+	DRIVER( wb3b )		/* (c) 1988 Sega / Westone */
+	DRIVER( wb3ba )		/* (c) 1988 Sega / Westone (FD1094, decrypted) */
+	DRIVER( wb3bb )		/* (c) 1988 Sega / Westone (FD1094, decrypted) */
+	DRIVER( wb3bbl )		/* BOOTLEG */
 	DRIVER( wb3a )		/* (c) 1988 Sega / Westone (FD1094, decrypted) */
-	DRIVER( wb3b )		/* (c) 1988 Sega / Westone (FD1094, decrypted) */
-	DRIVER( wb3bl )		/* BOOTLEG */
 	DRIVER( wrestwar )	/* (c) 1989 */
 
 	/* System 18 */
 	DRIVER( astorm )	/* (c) 1990 (FD1094, decrypted) */
+	DRIVER( astorma )	/* (c) 1990 */
 	DRIVER( astorm2p )	/* (c) 1990 (protected 2 Players) */
 	DRIVER( astormbl )	/* BOOTLEG */
 	DRIVER( bloxeed )	/* (protected) */
@@ -2940,10 +2943,10 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( ddcrewc )	/* (protected) */
 	DRIVER( cltchitr )	/* (c) 1991 (FD1094, decrypted) */
 	DRIVER( cltchtrj )	/* (protected) */
-	DRIVER( moonwalk )	/* (c) 1990 (protected) */
-	DRIVER( moonwlka )	/* (c) 1990 (protected) */
-	DRIVER( moonwlkc )	/* (c) 1990 (protected) */
-	DRIVER( moonwlkb )	/* BOOTLEG */
+	DRIVER( mwalk )		/* (c) 1990 (protected) */
+	DRIVER( mwalka )	/* (c) 1990 (protected) */
+	DRIVER( mwalkb )	/* (c) 1990 (protected) */
+	DRIVER( mwalkbl )	/* BOOTLEG */
 	DRIVER( lghost )	/* (protected) */
 	DRIVER( lghosta )   /* (protected) */
 	DRIVER( lghostb )	/* (protected) */
@@ -2996,6 +2999,7 @@ Sep.1994 Quiz Ghost Hunter
 */
 	/* playable */
 	DRIVER( hotrod )	/* (c) 1988 */
+	DRIVER( hotroda )	/* (c) 1988 */
 	DRIVER( hotrodj )	/* (c) 1988 */
 	DRIVER( bnzabros )	/* (c) 1990 */
 	DRIVER( dcclub )	/* (c) 1991 */
@@ -3190,6 +3194,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( tfrceac )	/* (c) 1990 Sega / Technosoft */
 	DRIVER( tfrceacj )	/* (c) 1990 Sega / Technosoft */
 	DRIVER( tfrceacb )	/* bootleg */
+	DRIVER( twinsqua )	/* (c) 1991 Sega */
 	DRIVER( ribbit )	/* (c) 1991 Sega */
 	DRIVER( tantr )		/* (c) 1992 Sega */
 	DRIVER( tantrbl )	/* bootleg */
@@ -4010,6 +4015,12 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( hitnmis2 )	/* (c) 1987 */
 	DRIVER( whodunit )	/* (c) 1988 */
 	DRIVER( showdown )	/* (c) 1988 */
+
+	/* Exidy Max-A-Flex */
+	DRIVER( mf_achas )
+	DRIVER( mf_brist )
+	DRIVER( mf_flip )
+	DRIVER( mf_bdash )
 
 	/* Atari b/w games */
 	DRIVER( tank8 )		/* ??????			1976/04 [6800] */
@@ -4932,6 +4943,8 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( rf2_eur )
 	DRIVER( rf2_2k )
 	DRIVER( rfjet )
+	DRIVER( rfjetu )
+	DRIVER( rfjeta )
 	DRIVER( rfjetus )
 
 	/* Tad games (Tad games run on Seibu hardware) */

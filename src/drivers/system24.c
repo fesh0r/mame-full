@@ -1628,7 +1628,17 @@ INPUT_PORTS_START( mahmajn )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
+
 ROM_START( hotrod )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* 68000 code */
+	ROM_LOAD16_BYTE( "epr11339.bin", 0x000000, 0x20000, CRC(75130e73) SHA1(e079739f4a3da3807aac570442c5afef1a7d7b0e) )
+	ROM_LOAD16_BYTE( "epr11338.bin", 0x000001, 0x20000, CRC(7d4a7ff3) SHA1(3d3af04d990d232ba0a8fe155de59bc632a0a461) )
+
+	ROM_REGION( 0x1d6000, REGION_USER2, 0)
+	ROM_LOAD( "ds3-5000-01d_3p_turbo.bin", 0x000000, 0x1d6000, CRC(627e8053) SHA1(d1a95f99078f5a29cccacfb1b30c3c9ead7b605c) )
+ROM_END
+
+ROM_START( hotroda )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* 68000 code */
 	ROM_LOAD16_BYTE( "epr11339.bin", 0x000000, 0x20000, CRC(75130e73) SHA1(e079739f4a3da3807aac570442c5afef1a7d7b0e) )
 	ROM_LOAD16_BYTE( "epr11338.bin", 0x000001, 0x20000, CRC(7d4a7ff3) SHA1(3d3af04d990d232ba0a8fe155de59bc632a0a461) )
@@ -1835,9 +1845,9 @@ static MACHINE_DRIVER_START( system24 )
 	MDRV_SOUND_ADD(DAC,    dac_interface)
 MACHINE_DRIVER_END
 
-
-GAME( 1988, hotrod,   0,        system24, hotrod,   hotrod,   ROT0,   "Sega", "Hot Rod (World, 3 Players, Turbo)")
-GAME( 1988, hotrodj,  hotrod,   system24, hotrodj,  hotrod,   ROT0,   "Sega", "Hot Rod (Japan, 4 Players)")
+GAME( 1988, hotrod,   0,        system24, hotrod,   hotrod,   ROT0,   "Sega", "Hot Rod (World, 3 Players, Turbo set 1)")
+GAMEX( 1988, hotroda,  hotrod,   system24, hotrod,   hotrod,   ROT0,   "Sega", "Hot Rod (World, 3 Players, Turbo set 2)", GAME_NO_SOUND)
+GAMEX( 1988, hotrodj,  hotrod,   system24, hotrod,  hotrod,   ROT0,   "Sega", "Hot Rod (Japan, 4 Players)", GAME_NO_SOUND)
 GAME( 1990, bnzabros, 0,        system24, bnzabros, bnzabros, ROT0,   "Sega", "Bonanza Bros")
 GAME( 1991, dcclub,   0,        system24, dcclub,   dcclub,   ROT0,   "Sega", "Dynamic Country Club")
 GAME( 1992, mahmajn,  0,        system24, mahmajn,  mahmajn,  ROT0,   "Sega", "Tokoro San no MahMahjan")

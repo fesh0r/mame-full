@@ -175,7 +175,7 @@ void adsp2181_get_info(UINT32 state, union cpuinfo *info);
 #if (HAS_SPC700)
 #include "cpu/spc700/spc700.h"
 #endif
-#if (HAS_E132XS)
+#if (HAS_E116T || HAS_E116XT || HAS_E116XS || HAS_E116XSR || HAS_E132N || HAS_E132T || HAS_E132XN || HAS_E132XT || HAS_E132XS || HAS_E132XSR || HAS_GMS30C2116 || HAS_GMS30C2132 || HAS_GMS30C2216 || HAS_GMS30C2232)
 #include "cpu/e132xs/e132xs.h"
 #endif
 #if (HAS_I386)
@@ -648,8 +648,47 @@ const struct
 #if (HAS_SPC700)
 	{ CPU_SPC700, spc700_get_info },
 #endif
+#if (HAS_E116T)
+	{ CPU_E116T, e116t_get_info },
+#endif
+#if (HAS_E116XT)
+	{ CPU_E116XT, e116xt_get_info },
+#endif
+#if (HAS_E116XS)
+	{ CPU_E116XS, e116xs_get_info },
+#endif
+#if (HAS_E116XSR)
+	{ CPU_E116XSR, e116xsr_get_info },
+#endif
+#if (HAS_E132N)
+	{ CPU_E132N, e132n_get_info },
+#endif
+#if (HAS_E132T)
+	{ CPU_E132T, e132t_get_info },
+#endif
+#if (HAS_E132XN)
+	{ CPU_E132XN, e132xn_get_info },
+#endif
+#if (HAS_E132XT)
+	{ CPU_E132XT, e132xt_get_info },
+#endif
 #if (HAS_E132XS)
 	{ CPU_E132XS, e132xs_get_info },
+#endif
+#if (HAS_E132XSR)
+	{ CPU_E132XSR, e132xsr_get_info },
+#endif
+#if (HAS_GMS30C2116)
+	{ CPU_GMS30C2116, gms30c2116_get_info },
+#endif
+#if (HAS_GMS30C2132)
+	{ CPU_GMS30C2132, gms30c2132_get_info },
+#endif
+#if (HAS_GMS30C2216)
+	{ CPU_GMS30C2216, gms30c2216_get_info },
+#endif
+#if (HAS_GMS30C2232)
+	{ CPU_GMS30C2232, gms30c2232_get_info },
 #endif
 #if (HAS_I386)
 	{ CPU_I386, i386_get_info },

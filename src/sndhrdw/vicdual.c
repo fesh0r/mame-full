@@ -7,15 +7,23 @@
 #include "driver.h"
 #include "vicdual.h"
 
+/* Discrete Sound Input Nodes */
+#define FROGS_FLY_EN		NODE_01
+#define FROGS_JUMP_EN		NODE_03
+#define FROGS_HOP_EN		NODE_04
+#define FROGS_TONGUE_EN		NODE_05
+#define FROGS_CAPTURE_EN	NODE_06
+#define FROGS_SPLASH_EN		NODE_08
+
 
 WRITE8_HANDLER( frogs_sh_port2_w )
 {
-		discrete_sound_w(2, data & 0x01);			// Hop
-		discrete_sound_w(1, (data & 0x02) >> 1);	// Jump
-		discrete_sound_w(3, (data & 0x04) >> 2);	// Tongue
-		discrete_sound_w(4, (data & 0x08) >> 3);	// Capture
-		discrete_sound_w(0, (data & 0x10) >> 4);	// Fly
-		discrete_sound_w(5, (data & 0x80) >> 7);	// Splash
+		discrete_sound_w(FROGS_HOP_EN, data & 0x01);
+		discrete_sound_w(FROGS_JUMP_EN, data & 0x02);
+		discrete_sound_w(FROGS_TONGUE_EN, data & 0x04);
+		discrete_sound_w(FROGS_CAPTURE_EN, data & 0x08);
+		discrete_sound_w(FROGS_FLY_EN, data & 0x10);
+		discrete_sound_w(FROGS_SPLASH_EN, data & 0x80);
 }
 
 /************************************************************************
@@ -23,13 +31,6 @@ WRITE8_HANDLER( frogs_sh_port2_w )
  * Oct 2004, Derrick Renaud
  ************************************************************************/
 
-/* Nodes - Inputs */
-#define FROGS_FLY_EN		NODE_01
-#define FROGS_JUMP_EN		NODE_03
-#define FROGS_HOP_EN		NODE_04
-#define FROGS_TONGUE_EN		NODE_05
-#define FROGS_CAPTURE_EN	NODE_06
-#define FROGS_SPLASH_EN		NODE_08
 /* Nodes - Sounds */
 #define FROGS_BUZZZ_SND		NODE_11
 #define FROGS_BOING_SND		NODE_13
@@ -67,17 +68,16 @@ const struct discrete_mixer_desc frogsMixer =
 
 DISCRETE_SOUND_START(frogs_discrete_interface)
 	/************************************************
-	 * Input register mapping for skydiver
+	 * Input register mapping for frogs
 	 *
 	 * All inputs are inverted by initial transistor.
-	 ************************************************
-	 *              NODE              ADDR  MASK     GAIN    OFFSET  INIT */
-	DISCRETE_INPUTX(FROGS_FLY_EN,     0x00, 0x000f,  -1,     1,       0.0)
-	DISCRETE_INPUTX(FROGS_JUMP_EN,    0x01, 0x000f,  -1,     1,       0.0)
-	DISCRETE_INPUTX(FROGS_HOP_EN,     0x02, 0x000f,  -1,     1,       0.0)
-	DISCRETE_INPUTX(FROGS_TONGUE_EN,  0x03, 0x000f,  -1,     1,       0.0)
-	DISCRETE_INPUTX(FROGS_CAPTURE_EN, 0x04, 0x000f,  -1,     1,       0.0)
-	DISCRETE_INPUTX(FROGS_SPLASH_EN,  0x05, 0x000f,  -1,     1,       0.0)
+	 ************************************************/
+	DISCRETE_INPUT_NOT(FROGS_FLY_EN)
+	DISCRETE_INPUT_NOT(FROGS_JUMP_EN)
+	DISCRETE_INPUT_NOT(FROGS_HOP_EN)
+	DISCRETE_INPUT_NOT(FROGS_TONGUE_EN)
+	DISCRETE_INPUT_NOT(FROGS_CAPTURE_EN)
+	DISCRETE_INPUT_NOT(FROGS_SPLASH_EN)
 
 	DISCRETE_ADJUSTMENT(FROGS_R93, 1, RES_M(1), RES_K(10), DISC_LOGADJ, 2)
 

@@ -388,7 +388,7 @@ UINT32 RRdis_format(char *source, char *dest, UINT16 op, UINT16 next_op, unsigne
 	return ret;
 }
 
-unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag, int private_fp)
+unsigned dasm_hyperstone(char *buffer, unsigned pc, unsigned h_flag, int private_fp)
 {
 	UINT16 op = 0;
 	UINT8 op_num;

@@ -133,7 +133,7 @@ void win_update_video_window(struct mame_bitmap *bitmap, const struct rectangle 
 
 void win_set_palette_entry(int _index, UINT8 red, UINT8 green, UINT8 blue);
 
-int win_process_events(void);
+int win_process_events(int ingame);
 void win_process_events_periodic(void);
 void osd_set_leds(int state);
 int osd_get_leds(void);

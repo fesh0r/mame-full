@@ -10,18 +10,28 @@
 #include "driver.h"
 #include "cpu/m6502/m6502.h"
 #include "includes/atari.h"
+#ifdef MESS
 #include "image.h"
 #include "state.h"
+#endif
 
 #define VERBOSE_POKEY	0
 #define VERBOSE_SERIAL	0
 #define VERBOSE_TIMERS	0
 #define VERBOSE_CHKSUM	0
 
+#ifndef TRUE
+#define TRUE    1
+#endif
+
+#ifndef FALSE
+#define FALSE   0
+#endif
+
 //#define LOG(x) if (errorlog) fprintf x
 
-ATARI_FDC atari_fdc;
 ATARI_PIA atari_pia;
+ATARI_FDC atari_fdc;
 
 typedef struct {
 	UINT8 *image;		/* malloc'd image */
@@ -47,12 +57,16 @@ static int atari = 0;
 #define ATARI_5200	0
 #define ATARI_400	1
 #define ATARI_800	2
-#define ATARI_800XL 3
+#define ATARI_600XL 3
+#define ATARI_800XL 4
 
+#ifdef MESS
 static int a800_cart_loaded = 0;
 static int a800_cart_is_16k = 0;
+#endif
 
 static void a800xl_mmu(UINT8 old_mmu, UINT8 new_mmu);
+static void a600xl_mmu(UINT8 old_mmu, UINT8 new_mmu);
 
 static void pokey_reset(void);
 static void atari_pia_reset(void);
@@ -62,6 +76,7 @@ static void clr_serout(int expect_data);
 static void clr_serin(int ser_delay);
 static void add_serin(UINT8 data, int with_checksum);
 
+#ifdef MESS
 static void a800_setbank(int n)
 {
 	void *read_addr;
@@ -98,6 +113,7 @@ static void a800_setbank(int n)
 	if (write_addr)
 		cpu_setbank(1, write_addr);
 }
+#endif
 
 static void machine_init_atari_generic(int machine_type, int has_cart, int has_pia)
 {
@@ -109,8 +125,10 @@ static void machine_init_atari_generic(int machine_type, int has_cart, int has_p
 		atari_pia_reset();
 	antic_reset();
 
+#ifdef MESS
 	if (has_cart && a800_cart_loaded)
 		a800_setbank(1);
+#endif
 }
 
 MACHINE_INIT( a400 )
@@ -123,6 +141,7 @@ MACHINE_INIT( a800 )
 	machine_init_atari_generic(ATARI_800, TRUE, TRUE);
 }
 
+#ifdef MESS
 DEVICE_LOAD( a800_cart )
 {
 	UINT8 *mem = memory_region(REGION_CPU1);
@@ -159,6 +178,18 @@ DEVICE_UNLOAD( a800_cart )
 		a800_setbank(0);
     }
 }
+#endif
+
+/**************************************************************
+ *
+ * Atari 600XL (for MAME only)
+ *
+ **************************************************************/
+MACHINE_INIT(a600xl)
+{
+	machine_init_atari_generic(ATARI_600XL, FALSE, TRUE);
+	a600xl_mmu(atari_pia.w.pbout, atari_pia.w.pbout);
+}
 
 /**************************************************************
  *
@@ -172,6 +203,7 @@ MACHINE_INIT( a800xl)
 	a800xl_mmu(atari_pia.w.pbout, atari_pia.w.pbout);
 }
 
+#ifdef MESS
 DEVICE_LOAD( a800xl_cart )
 {
 	UINT8 *mem = memory_region(REGION_CPU1);
@@ -206,7 +238,7 @@ DEVICE_LOAD( a800xl_cart )
 
 	return INIT_PASS;
 }
-
+#endif
 /**************************************************************
  *
  * Atari 5200 console
@@ -218,6 +250,7 @@ MACHINE_INIT( a5200 )
 	machine_init_atari_generic(ATARI_5200, FALSE, FALSE);
 }
 
+#ifdef MESS
 DEVICE_LOAD( a5200_cart )
 {
 	UINT8 *mem = memory_region(REGION_CPU1);
@@ -251,11 +284,14 @@ DEVICE_UNLOAD( a5200_cart )
     /* zap the cartridge memory (again) */
 	memset(&mem[0x4000], 0x00, 0x8000);
 }
+#endif
 
 static void pokey_reset(void)
 {
 	pokey1_w(15,0);
 }
+
+#ifdef MESS
 
 #define FORMAT_XFD	0
 #define FORMAT_ATR	1
@@ -317,7 +353,7 @@ static	xfd_format xfd_formats[] = {
 	{(80 * 18 * 2 - 3) * 256 + 3 * 128, {2,80,1,0,18,1,4,1,  0,255,0,0,0,13,"80 DS/DD"}},
 	{0, {0,}}
 };
-
+#endif
 
 /*****************************************************************************
  *
@@ -327,7 +363,7 @@ static	xfd_format xfd_formats[] = {
  *
  *****************************************************************************/
 #define MAXSIZE 5760 * 256 + 80
-
+#ifdef MESS
 DEVICE_LOAD( a800_floppy )
 {
 	int size, i;
@@ -509,6 +545,7 @@ DEVICE_LOAD( a800_floppy )
 			drv[id].seclen);
 	return INIT_PASS;
 }
+#endif
 
 static	void make_chksum(UINT8 * chksum, UINT8 data)
 {
@@ -862,7 +899,7 @@ int i, drive, sector, offset;
 	}
 }
 
- READ8_HANDLER ( atari_serin_r )
+READ8_HANDLER ( atari_serin_r )
 {
 	int data = 0x00;
 	int ser_delay = 0;
@@ -952,18 +989,18 @@ void atari_interrupt_cb(int mask)
  *
  **************************************************************/
 
- READ8_HANDLER ( atari_pia_r )
+READ8_HANDLER ( atari_pia_r )
 {
 	data8_t result;
 	switch (offset & 3)
 	{
 		case 0: /* PIA port A */
-			atari_pia.r.painp = readinputport(PORT_JOY_1_2);
+			atari_pia.r.painp = atari_readinputport(PORT_JOY_1_2);
 			result = (atari_pia.w.paout & atari_pia.h.pamsk) | (atari_pia.r.painp & ~atari_pia.h.pamsk);
 			break;
 
 		case 1: /* PIA port B */
-			atari_pia.r.pbinp = readinputport(PORT_JOY_2_3);
+			atari_pia.r.pbinp = atari_readinputport(PORT_JOY_2_3);
 			result =  (atari_pia.w.pbout & atari_pia.h.pbmsk) | (atari_pia.r.pbinp & ~atari_pia.h.pbmsk);
 			break;
 
@@ -1002,7 +1039,13 @@ WRITE8_HANDLER ( atari_pia_w )
 			if( atari_pia.rw.pbctl & 0x04 )
 			{
 				if( atari == ATARI_800XL )
+				{
 					a800xl_mmu(atari_pia.w.pbout, data);
+				}
+				else if ( atari == ATARI_600XL )
+				{
+					a600xl_mmu(atari_pia.w.pbout, data);
+				}
 				atari_pia.w.pbout = data;	/* output */
 			}
 			else
@@ -1043,6 +1086,37 @@ static void	atari_pia_reset(void)
 	atari_pia_w(2,0);
 	atari_pia_w(1,0);
 	atari_pia_w(0,0);
+}
+
+void a600xl_mmu(UINT8 old_mmu, UINT8 new_mmu)
+{
+	UINT8 changes = new_mmu ^ old_mmu;
+	read8_handler rbank2;
+	write8_handler wbank2;
+
+	if( changes == 0 )
+		return;
+
+	logerror("%s MMU old:%02x new:%02x\n", Machine->gamedrv->name, old_mmu, new_mmu);
+
+	/* check if self-test ROM changed */
+	if( changes & 0x80 )
+	{
+		if ( new_mmu & 0x80 )
+		{
+			logerror("%s MMU SELFTEST RAM\n", Machine->gamedrv->name);
+			rbank2 = MRA8_NOP;
+			wbank2 = MWA8_NOP;
+		}
+		else
+		{
+			logerror("%s MMU SELFTEST ROM\n", Machine->gamedrv->name);
+			rbank2 = MRA8_ROM;
+			wbank2 = MWA8_ROM;
+		}
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x5000, 0x57ff, 0, 0, rbank2);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x5000, 0x57ff, 0, 0, wbank2);
+	}
 }
 
 void a800xl_mmu(UINT8 old_mmu, UINT8 new_mmu)
@@ -1125,6 +1199,7 @@ void a800xl_mmu(UINT8 old_mmu, UINT8 new_mmu)
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x5000, 0x57ff, 0, 0, wbank2);
 	}
 }
+
 
 /**************************************************************
  *
@@ -1527,8 +1602,7 @@ void a5200_handle_keypads(void)
 	atari_last = 0xff;
 }
 
-
-
+#ifdef MESS
 DRIVER_INIT( atari )
 {
 	offs_t ram_top;
@@ -1551,4 +1625,5 @@ DRIVER_INIT( atari )
 	state_save_register_UINT8("atari", 0, "gtia_r", (UINT8 *) &gtia.r, sizeof(gtia.r));
 	state_save_register_UINT8("atari", 0, "gtia_w", (UINT8 *) &gtia.w, sizeof(gtia.w));
 }
+#endif
 
