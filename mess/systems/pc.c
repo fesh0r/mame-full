@@ -109,13 +109,8 @@ static PORT_READ_START( pc_readport )
 	{ 0x0060, 0x0063, ppi8255_0_r },
 	{ 0x0080, 0x0087, pc_page_r },
 	{ 0x0200, 0x0207, pc_JOY_r },
-<<<<<<< pc.c
-	{ 0x0240, 0x0257, pc_rtc_r },
-//	{ 0x0240, 0x0257, return_0xff }, // anonymous bios should not recognized realtimeclock
-=======
 	{ 0x0240, 0x257, pc_rtc_r },
 //	{ 0x0240, 0x257, return_0xff }, // anonymous bios should not recognized realtimeclock
->>>>>>> 1.46
 #ifdef EXP_ON
 	{ 0x0210, 0x0217, pc_EXP_r },
 #endif
