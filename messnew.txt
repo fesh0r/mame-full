@@ -18,6 +18,11 @@ System Driver Changes:
 - [TS2068] Support for DOCK cartridges added. Support for Z80 snapshots added.
   AY sound added. [Krzysztof Strzecha]
 
+- [DRAGON/COCO] Improved one bit sound out. Improved support for DMK file format;
+  now supports multiple sector sizes. Fixed double sided disk access in OS-9.
+  Added support for the memory sense switch used to select between 64/32, 16 and
+  4K. [tim lindner]
+  
 Source Changes:
 ---------------
 
@@ -49,3 +54,5 @@ Source Changes:
 - [Windows] Added support for transparent zip paths
   (e.g. C:\imgs\mule.zip\mule.atr) [Nate Woods]
 
+- Added a call to flopdrv.c to allow the driver to manualy set the number of
+  tracks and sides. [tim lindner]
