@@ -203,7 +203,9 @@ static UINT8 SZ_BIT[256];	/* zero, sign and parity/overflow (=zero) flags for BI
 static UINT8 SZP[256];		/* zero, sign and parity flags */
 static UINT8 SZHV_inc[256]; /* zero, sign, half carry and overflow flags INC r8 */
 static UINT8 SZHV_dec[256]; /* zero, sign, half carry and overflow flags DEC r8 */
+
 #include "z80daa.h"
+
 #if BIG_FLAGS_ARRAY
 #include <signal.h>
 static UINT8 *SZHVC_add = 0;
@@ -695,7 +697,7 @@ INLINE UINT32 ARG16(void)
 	if( _PCD == oldpc ) 										\
 	{															\
 		if( !after_EI ) 										\
-			BURNODD( z80_ICount, 1, 10 );						\
+			BURNODD( z80_ICount, 1, cc[Z80_TABLE_op][0xc3] );	\
 	}															\
 	else														\
 	{															\
@@ -706,7 +708,8 @@ INLINE UINT32 ARG16(void)
 			if ( op == 0x00 || op == 0xfb ) 					\
 			{													\
 				if( !after_EI ) 								\
-					BURNODD( z80_ICount-4, 2, 4+10 );			\
+					BURNODD( z80_ICount-cc[Z80_TABLE_op][0x00], \
+						2, cc[Z80_TABLE_op][0x00]+cc[Z80_TABLE_op][0xc3]); \
 			}													\
 		}														\
 		else													\
@@ -714,7 +717,8 @@ INLINE UINT32 ARG16(void)
 		if( _PCD == oldpc-3 && op == 0x31 ) 					\
 		{														\
 			if( !after_EI ) 									\
-				BURNODD( z80_ICount-10, 2, 10+10 ); 			\
+				BURNODD( z80_ICount-cc[Z80_TABLE_op][0x31], 	\
+					2, cc[Z80_TABLE_op][0x31]+cc[Z80_TABLE_op][0xc3]); \
 		}														\
 	}															\
 }
@@ -764,7 +768,8 @@ INLINE UINT32 ARG16(void)
 			if ( op == 0x00 || op == 0xfb ) 					\
 			{													\
 				if( !after_EI ) 								\
-					BURNODD( z80_ICount-4, 2, cc[Z80_TABLE_op][0x00] + cc[Z80_TABLE_op][0x18]); \
+				   BURNODD( z80_ICount-cc[Z80_TABLE_op][0x00],	\
+					   2, cc[Z80_TABLE_op][0x00]+cc[Z80_TABLE_op][0x18]); \
 			}													\
 		}														\
 		else													\
@@ -772,7 +777,8 @@ INLINE UINT32 ARG16(void)
 		if( _PCD == oldpc-3 && op == 0x31 ) 					\
 		{														\
 			if( !after_EI ) 									\
-				BURNODD( z80_ICount-12, 2, 10+12 ); 			\
+			   BURNODD( z80_ICount-cc[Z80_TABLE_op][0x31],		\
+				   2, cc[Z80_TABLE_op][0x31]+cc[Z80_TABLE_op][0x18]); \
 		}														\
     }                                                           \
 }
@@ -3639,9 +3645,14 @@ if( _BC > 1 && _PCD < 0xfffc ) {									\
 		UINT8 op4 = cpu_readop(_PCD+3); 							\
 		if( op3==0x20 && op4==0xfb )								\
 		{															\
-			while( _BC > 0 && z80_ICount > 4+4+12+6 )				\
+			int cnt =												\
+				cc[Z80_TABLE_op][0x78] +							\
+				cc[Z80_TABLE_op][0xb1] +							\
+				cc[Z80_TABLE_op][0x20] +							\
+				cc[Z80_TABLE_ex][0x20]; 							\
+			while( _BC > 0 && z80_ICount > cnt )					\
 			{														\
-				BURNODD( 4+4+12+6, 4, 4+4+12+6 );					\
+				BURNODD( cnt, 4, cnt ); 							\
 				_BC--;												\
 			}														\
 		}															\
@@ -3652,9 +3663,14 @@ if( _BC > 1 && _PCD < 0xfffc ) {									\
 			UINT8 ad2 = cpu_readop_arg(_PCD+4); 					\
 			if( (ad1 + 256 * ad2) == (_PCD - 1) )					\
 			{														\
-				while( _BC > 0 && z80_ICount > 4+4+10+6 )			\
+				int cnt =											\
+					cc[Z80_TABLE_op][0x78] +						\
+					cc[Z80_TABLE_op][0xb1] +						\
+					cc[Z80_TABLE_op][0xc2] +						\
+					cc[Z80_TABLE_ex][0xc2]; 						\
+				while( _BC > 0 && z80_ICount > cnt )				\
 				{													\
-					BURNODD( 4+4+10+6, 4, 4+4+10+6 );				\
+					BURNODD( cnt, 4, cnt ); 						\
 					_BC--;											\
 				}													\
 			}														\
@@ -3672,9 +3688,14 @@ if( _DE > 1 && _PCD < 0xfffc ) {                                    \
 		UINT8 op4 = cpu_readop(_PCD+3); 							\
 		if( op3==0x20 && op4==0xfb )								\
 		{															\
-			while( _DE > 0 && z80_ICount > 4+4+12+6 )				\
+			int cnt =												\
+				cc[Z80_TABLE_op][0x7a] +							\
+				cc[Z80_TABLE_op][0xb3] +							\
+				cc[Z80_TABLE_op][0x20] +							\
+                cc[Z80_TABLE_ex][0x20];                             \
+			while( _DE > 0 && z80_ICount > cnt )					\
 			{														\
-				BURNODD( 4+4+12+6, 4, 4+4+12+6 );					\
+				BURNODD( cnt, 4, cnt ); 							\
 				_DE--;												\
 			}														\
 		}															\
@@ -3685,9 +3706,14 @@ if( _DE > 1 && _PCD < 0xfffc ) {                                    \
 			UINT8 ad2 = cpu_readop_arg(_PCD+4); 					\
 			if( (ad1 + 256 * ad2) == (_PCD - 1) )					\
 			{														\
-				while( _DE > 0 && z80_ICount > 4+4+10+6 )			\
+				int cnt =											\
+					cc[Z80_TABLE_op][0x7a] +						\
+					cc[Z80_TABLE_op][0xb3] +						\
+					cc[Z80_TABLE_op][0xc2] +						\
+                    cc[Z80_TABLE_ex][0xc2];                         \
+				while( _DE > 0 && z80_ICount > cnt )				\
 				{													\
-					BURNODD( 4+4+10+6, 4, 4+4+10+6 );				\
+					BURNODD( cnt, 4, cnt ); 						\
 					_DE--;											\
 				}													\
 			}														\
@@ -3705,9 +3731,14 @@ if( _HL > 1 && _PCD < 0xfffc ) {                                    \
 		UINT8 op4 = cpu_readop(_PCD+3); 							\
 		if( op3==0x20 && op4==0xfb )								\
 		{															\
-			while( _HL > 0 && z80_ICount > 4+4+12+6 )				\
+			int cnt =												\
+				cc[Z80_TABLE_op][0x7c] +							\
+				cc[Z80_TABLE_op][0xb5] +							\
+				cc[Z80_TABLE_op][0x20] +							\
+                cc[Z80_TABLE_ex][0x20];                             \
+			while( _HL > 0 && z80_ICount > cnt )					\
 			{														\
-				BURNODD( 4+4+12+6, 4, 4+4+12+6 );					\
+				BURNODD( cnt, 4, cnt ); 							\
 				_HL--;												\
 			}														\
 		}															\
@@ -3718,9 +3749,14 @@ if( _HL > 1 && _PCD < 0xfffc ) {                                    \
 			UINT8 ad2 = cpu_readop_arg(_PCD+4); 					\
 			if( (ad1 + 256 * ad2) == (_PCD - 1) )					\
 			{														\
-				while( _HL > 0 && z80_ICount > 4+4+10+6 )			\
+				int cnt =											\
+					cc[Z80_TABLE_op][0x7c] +						\
+					cc[Z80_TABLE_op][0xb5] +						\
+					cc[Z80_TABLE_op][0xc2] +						\
+                    cc[Z80_TABLE_ex][0xc2];                         \
+				while( _HL > 0 && z80_ICount > cnt )				\
 				{													\
-					BURNODD( 4+4+10+6, 4, 4+4+10+6 );				\
+					BURNODD( cnt, 4, cnt ); 						\
 					_HL--;											\
 				}													\
 			}														\
