@@ -32,6 +32,12 @@ void inputx_postn(const unicode_char_t *text, size_t text_len);
 void inputx_post_utf16(const utf16_char_t *text);
 void inputx_postn_utf16(const utf16_char_t *text, size_t text_len);
 
+/* given an InputPort; figure out if it and the adjacent ports refer to the
+ * same control, and arrange them in arranged_ports (left/right/up/down).
+ * returns the total control count (1 or 2 or 4)
+ */
+int inputx_orient_ports(struct InputPort *port, struct InputPort **arranged_ports);
+
 #define UCHAR_SHIFT_1		(0xf700)
 #define UCHAR_SHIFT_2		(0xf701)
 #define UCHAR_MAMEKEY_BEGIN	(0xf702)

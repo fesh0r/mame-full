@@ -10,6 +10,7 @@
 #include "mame.h"
 #include "../windows/window.h"
 #include "ui_text.h"
+#include "inputx.h"
 
 //============================================================
 //	These defines are necessary because the MinGW headers do
@@ -74,8 +75,11 @@ struct dialog_info
 
 #define DIM_VERTICAL_SPACING	2
 #define DIM_HORIZONTAL_SPACING	2
-#define DIM_ROW_HEIGHT			12
+#define DIM_NORMAL_ROW_HEIGHT	10
+#define DIM_COMBO_ROW_HEIGHT	12
+#define DIM_BUTTON_ROW_HEIGHT	12
 #define DIM_LABEL_WIDTH			80
+#define DIM_SEQ_WIDTH			60
 #define DIM_COMBO_WIDTH			140
 #define DIM_BUTTON_WIDTH		50
 
@@ -400,12 +404,12 @@ int win_dialog_add_combobox(void *dialog, const char *item_label, UINT16 *value)
 	y = di->cy + DIM_VERTICAL_SPACING;
 
 	if (dialog_write_item(di, WS_CHILD | WS_VISIBLE | SS_LEFT,
-			x, y, DIM_LABEL_WIDTH, DIM_ROW_HEIGHT, item_label, DLGITEM_STATIC))
+			x, y, DIM_LABEL_WIDTH, DIM_COMBO_ROW_HEIGHT, item_label, DLGITEM_STATIC))
 		return 1;
 
 	x += DIM_LABEL_WIDTH + DIM_HORIZONTAL_SPACING;
 	if (dialog_write_item(di, WS_CHILD | WS_VISIBLE | CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP,
-			x, y, DIM_COMBO_WIDTH, DIM_ROW_HEIGHT * 8, "", DLGITEM_COMBOBOX))
+			x, y, DIM_COMBO_WIDTH, DIM_COMBO_ROW_HEIGHT * 8, "", DLGITEM_COMBOBOX))
 		return 1;
 	di->combo_string_count = 0;
 	di->combo_default_value = *value;
@@ -417,7 +421,7 @@ int win_dialog_add_combobox(void *dialog, const char *item_label, UINT16 *value)
 
 	if (x > di->cx)
 		di->cx = x;
-	di->cy += DIM_ROW_HEIGHT + DIM_VERTICAL_SPACING * 2;
+	di->cy += DIM_COMBO_ROW_HEIGHT + DIM_VERTICAL_SPACING * 2;
 	return 0;
 }
 
@@ -462,6 +466,7 @@ static INT_PTR CALLBACK seqselect_wndproc(HWND editwnd, UINT msg, WPARAM wparam,
 
 	switch(msg) {
 	case WM_KEYDOWN:
+	case WM_SYSKEYDOWN:
 		keylist = osd_get_key_list();
 		while(keylist->name)
 		{
@@ -527,12 +532,15 @@ static LRESULT seqselect_apply(HWND editwnd, UINT message, WPARAM wparam, LPARAM
 //============================================================
 
 static int dialog_add_single_seqselect(struct dialog_info *di, short x, short y,
-	short cx, short cy, InputSeq *code)
+	short cx, short cy, struct InputPort *port)
 {
 	struct seqselect_stuff *stuff;
+	InputSeq *code;
 
-	if (dialog_write_item(di, WS_CHILD | WS_VISIBLE | SS_LEFT,
-			x, y, DIM_LABEL_WIDTH, DIM_ROW_HEIGHT, "", DLGITEM_EDIT))
+	code = input_port_seq(port);
+
+	if (dialog_write_item(di, WS_CHILD | WS_VISIBLE | ES_CENTER,
+			x, y, cx, cy, "", DLGITEM_EDIT))
 		return 1;
 	stuff = pool_malloc(&di->memory_pool, sizeof(struct seqselect_stuff));
 	if (!stuff)
@@ -549,30 +557,107 @@ static int dialog_add_single_seqselect(struct dialog_info *di, short x, short y,
 //	win_dialog_add_seqselect
 //============================================================
 
-int win_dialog_add_seqselect(void *dialog, const char *item_label, InputSeq *code)
+int win_dialog_add_portselect(void *dialog, const char *item_label, struct InputPort *port, int *span)
 {
 	struct dialog_info *di = (struct dialog_info *) dialog;
 	short x;
 	short y;
+	struct InputPort *arranged_ports[4];
+	int rows;
 
 	assert(item_label);
+	*span = inputx_orient_ports(port, arranged_ports);
+
+	rows = arranged_ports[2] ? (arranged_ports[0] ? 3 : 2) : 1;
 
 	x = DIM_HORIZONTAL_SPACING;
 	y = di->cy + DIM_VERTICAL_SPACING;
 
 	if (dialog_write_item(di, WS_CHILD | WS_VISIBLE | SS_LEFT,
-			x, y, DIM_LABEL_WIDTH, DIM_ROW_HEIGHT, item_label, DLGITEM_STATIC))
+			x, y + (rows - 1) * (DIM_NORMAL_ROW_HEIGHT + DIM_VERTICAL_SPACING * 2)/2,
+			DIM_LABEL_WIDTH, DIM_NORMAL_ROW_HEIGHT, item_label, DLGITEM_STATIC))
 		return 1;
-
 	x += DIM_LABEL_WIDTH + DIM_HORIZONTAL_SPACING;
-	if (dialog_add_single_seqselect(di, x, y, DIM_LABEL_WIDTH, DIM_ROW_HEIGHT, code))
+
+	switch(*span) {
+	case 1:
+		if (dialog_add_single_seqselect(di, x, y, DIM_SEQ_WIDTH, DIM_NORMAL_ROW_HEIGHT, port))
+			return 1;
+		y += DIM_VERTICAL_SPACING + DIM_NORMAL_ROW_HEIGHT;
+		x += DIM_SEQ_WIDTH + DIM_HORIZONTAL_SPACING;
+		break;
+
+	case 2:
+		switch(rows) {
+		case 1:
+			/* left */
+			if (dialog_add_single_seqselect(di, x, y,
+					DIM_SEQ_WIDTH, DIM_NORMAL_ROW_HEIGHT, arranged_ports[0]))
+				return 1;
+
+			/* right */
+			if (dialog_add_single_seqselect(di, x, y,
+					DIM_SEQ_WIDTH, DIM_NORMAL_ROW_HEIGHT, arranged_ports[1]))
+				return 1;
+			y += DIM_VERTICAL_SPACING + DIM_NORMAL_ROW_HEIGHT;
+			x += DIM_SEQ_WIDTH*2 + DIM_HORIZONTAL_SPACING*2;
+			break;
+
+		case 2:
+			/* up */
+			if (dialog_add_single_seqselect(di, x, y, DIM_SEQ_WIDTH, DIM_NORMAL_ROW_HEIGHT, arranged_ports[2]))
+				return 1;
+			y += DIM_VERTICAL_SPACING + DIM_NORMAL_ROW_HEIGHT;
+
+			/* down */
+			if (dialog_add_single_seqselect(di, x, y, DIM_SEQ_WIDTH, DIM_NORMAL_ROW_HEIGHT, arranged_ports[3]))
+				return 1;
+			y += DIM_VERTICAL_SPACING + DIM_NORMAL_ROW_HEIGHT;
+			x += DIM_SEQ_WIDTH + DIM_HORIZONTAL_SPACING;
+			break;
+
+		default:
+			assert(0);
+			return 1;
+		}
+		break;
+
+	case 4:
+		/* up */
+		if (dialog_add_single_seqselect(di, x + (DIM_SEQ_WIDTH + DIM_HORIZONTAL_SPACING) / 2, y,
+				DIM_SEQ_WIDTH, DIM_NORMAL_ROW_HEIGHT, arranged_ports[2]))
+			return 1;
+		y += DIM_VERTICAL_SPACING + DIM_NORMAL_ROW_HEIGHT;
+
+		/* left */
+		if (dialog_add_single_seqselect(di, x, y,
+				DIM_SEQ_WIDTH, DIM_NORMAL_ROW_HEIGHT, arranged_ports[0]))
+			return 1;
+
+		/* right */
+		if (dialog_add_single_seqselect(di, x + DIM_SEQ_WIDTH + DIM_HORIZONTAL_SPACING, y,
+				DIM_SEQ_WIDTH, DIM_NORMAL_ROW_HEIGHT, arranged_ports[1]))
+			return 1;
+		y += DIM_VERTICAL_SPACING + DIM_NORMAL_ROW_HEIGHT;
+
+		/* down */
+		if (dialog_add_single_seqselect(di, x + (DIM_SEQ_WIDTH + DIM_HORIZONTAL_SPACING) / 2, y,
+				DIM_SEQ_WIDTH, DIM_NORMAL_ROW_HEIGHT, arranged_ports[3]))
+			return 1;
+		y += DIM_VERTICAL_SPACING + DIM_NORMAL_ROW_HEIGHT;
+		x += DIM_SEQ_WIDTH*2 + DIM_HORIZONTAL_SPACING*2;
+		break;
+
+	default:
+		assert(0);
 		return 1;
+	}
+	port++;
 
-	x += DIM_LABEL_WIDTH + DIM_HORIZONTAL_SPACING;
+	/* update dialog size */
 	if (x > di->cx)
 		di->cx = x;
-	di->cy += DIM_ROW_HEIGHT + DIM_VERTICAL_SPACING * 2;
-
+	di->cy = y;
 	return 0;
 }
 
@@ -590,14 +675,14 @@ int win_dialog_add_standard_buttons(void *dialog)
 	y = di->cy + DIM_VERTICAL_SPACING;
 
 	if (dialog_write_item(di, WS_CHILD | WS_VISIBLE | SS_LEFT,
-			x, y, DIM_BUTTON_WIDTH, DIM_ROW_HEIGHT, DLGTEXT_CANCEL, DLGITEM_BUTTON))
+			x, y, DIM_BUTTON_WIDTH, DIM_BUTTON_ROW_HEIGHT, DLGTEXT_CANCEL, DLGITEM_BUTTON))
 		return 1;
 
 	x -= DIM_HORIZONTAL_SPACING + DIM_BUTTON_WIDTH;
 	if (dialog_write_item(di, WS_CHILD | WS_VISIBLE | SS_LEFT,
-			x, y, DIM_BUTTON_WIDTH, DIM_ROW_HEIGHT, DLGTEXT_OK, DLGITEM_BUTTON))
+			x, y, DIM_BUTTON_WIDTH, DIM_BUTTON_ROW_HEIGHT, DLGTEXT_OK, DLGITEM_BUTTON))
 		return 1;
-	di->cy += DIM_ROW_HEIGHT + DIM_VERTICAL_SPACING * 2;
+	di->cy += DIM_BUTTON_ROW_HEIGHT + DIM_VERTICAL_SPACING * 2;
 	return 0;
 }
 
@@ -628,6 +713,8 @@ void win_dialog_runmodal(void *dialog)
 	di = (struct dialog_info *) dialog;
 	assert(di);
 	dialog_prime(di);
+	osd_sound_enable(0);
 	DialogBoxIndirectParam(NULL, di->handle, win_video_window, dialog_proc, (LPARAM) di);
+	osd_sound_enable(1);
 }
 
