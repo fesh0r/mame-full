@@ -691,7 +691,8 @@ COREOBJS += \
 		$(OBJ)/mess/machine/dsk.o      \
 		$(OBJ)/mess/machine/flopdrv.o  \
 		$(OBJ)/mess/machine/nec765.o   \
-		$(OBJ)/mess/vidhrdw/rstrbits.o
+		$(OBJ)/mess/vidhrdw/rstrbits.o \
+		$(OBJ)/mess/vidhrdw/rstrtrck.o
 
 
 # additional tools

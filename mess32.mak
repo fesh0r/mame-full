@@ -312,7 +312,9 @@ COREOBJS = \
 		$(OBJ)/mess/tapectrl.o         \
 		$(OBJ)/mess/printer.o \
 		$(OBJ)/mess/menuentr.o \
-		$(OBJ)/mess/utils.o \
+		$(OBJ)/mess/utils.o            \
+		$(OBJ)/mess/bcd.o              \
+		$(OBJ)/mess/julian.o			\
 		$(OBJ)/mess/vidhrdw/state.o \
 		$(OBJ)/mess/machine/rriot.o	 \
 		$(OBJ)/mess/machine/mc146818.o \
@@ -328,6 +330,7 @@ COREOBJS = \
 		$(OBJ)/mess/machine/dsk.o \
 		$(OBJ)/mess/machine/nec765.o	\
 		$(OBJ)/mess/vidhrdw/rstrbits.o	 \
+		$(OBJ)/mess/vidhrdw/rstrtrck.o	 \
 	 $(OBJ)/mess/Win32/fileio.o    \
 	 $(OBJ)/mess/Win32/dirio.o	       \
 	 $(OBJ)/mess/Win32/fdc.o
@@ -504,20 +507,21 @@ DRV_OBJS = \
           $(OBJ)/mess/systems/uk101.o	\
           $(OBJ)/machine/8255ppi.o       \
 	  $(OBJ)/mess/machine/flopdrv.o  \
-          $(OBJ)/mess/vidhrdw/amstrad.o  \
-          $(OBJ)/mess/vidhrdw/kc.o       \
-          $(OBJ)/mess/machine/amstrad.o  \
-          $(OBJ)/mess/machine/kc.o       \
-          $(OBJ)/mess/systems/amstrad.o  \
-          $(OBJ)/mess/vidhrdw/pcw.o      \
-          $(OBJ)/mess/systems/pcw.o      \
-          $(OBJ)/mess/vidhrdw/nc.o       \
-          $(OBJ)/mess/systems/nc.o       \
-          $(OBJ)/mess/machine/nc.o       \
-          $(OBJ)/mess/machine/tc8521.o   \
-		  $(OBJ)/mess/systems/pcw16.o		\
-		  $(OBJ)/mess/machine/msm8251.o     \
-		  $(OBJ)/mess/vidhrdw/pcw16.o	\
+	  $(OBJ)/mess/vidhrdw/amstrad.o  \
+	  $(OBJ)/mess/machine/amstrad.o  \
+	  $(OBJ)/mess/vidhrdw/pcw.o	 \
+	  $(OBJ)/mess/systems/pcw.o	 \
+	  $(OBJ)/mess/vidhrdw/nc.o	 \
+	  $(OBJ)/mess/systems/nc.o	 \
+	  $(OBJ)/mess/machine/nc.o	 \
+	  $(OBJ)/mess/machine/tc8521.o	 \
+	  $(OBJ)/mess/systems/pcw16.o	 \
+	  $(OBJ)/mess/machine/msm8251.o  \
+	  $(OBJ)/mess/vidhrdw/pcw16.o    \
+	  $(OBJ)/mess/systems/amstrad.o  \
+    $(OBJ)/mess/machine/serial.o	\
+	  $(OBJ)/mess/vidhrdw/kc.o	 \
+	  $(OBJ)/mess/machine/kc.o	 \
           $(OBJ)/mess/vidhrdw/vdc.o      \
           $(OBJ)/mess/machine/pce.o      \
           $(OBJ)/mess/systems/pce.o	\

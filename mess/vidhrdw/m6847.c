@@ -387,6 +387,8 @@ void internal_m6847_vh_screenrefresh(struct rasterbits_source *rs,
 	rvm->height = 192 / rowheights[currentstate->video_vmode >> 1];
 	rf->width = 256 * wf;
 	rf->height = 192;
+	rf->total_scanlines = -1;
+	rf->top_scanline = -1;
 	rf->border_pen = (border_color == -1) ? -1 : Machine->pens[border_color];
 
 	if (full_refresh) {
@@ -423,7 +425,7 @@ void internal_m6847_vh_screenrefresh(struct rasterbits_source *rs,
 	}
 	else
 	{
-		rvm->flags = RASTERBITS_FLAG_TEXT;
+		rvm->flags = RASTERBITS_FLAG_TEXT | RASTERBITS_FLAG_TEXTMODULO;
 		rvm->bytesperrow = 32;
 		rvm->width = 32;
 		rvm->depth = 8;
@@ -439,7 +441,7 @@ void internal_m6847_vh_screenrefresh(struct rasterbits_source *rs,
 			rvm->u.text.mapper = mapper_text;
 			rvm->u.text.mapper_param = currentstate->video_gmode & 0x7;
 		}
-		rvm->u.text.modulo = 12;
+		rvm->u.text.fontheight = 12;
 	}
 }
 

@@ -75,12 +75,14 @@ extern READ_HANDLER ( coco_floppy_r );
 extern WRITE_HANDLER ( coco_floppy_w );
 extern READ_HANDLER(dragon_floppy_r);
 extern WRITE_HANDLER ( dragon_floppy_w );
-extern void coco3_vblank(void);
+extern int coco3_hblank(void);
+/*extern int coco3_vblank(void);*/
 extern int coco3_mmu_translate(int block, int offset);
 extern int dragon_floppy_init(int id);
 extern int coco_bitbanger_init (int id);
 extern void coco_bitbanger_exit (int id);
 extern void coco_bitbanger_output (int id, int data);
+extern int coco3_calculate_rows(int *bordertop, int *borderbottom);
 
 /* Returns whether a given piece of logical memory is contiguous or not */
 extern int coco3_mmu_ismemorycontiguous(int logicaladdr, int len);

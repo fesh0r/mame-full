@@ -21,7 +21,8 @@ enum {
 
 	/* text flags */
 	RASTERBITS_FLAG_BLINKNOW		= 0x02, /* this frame represents a transition frame (blinking <==> non-blinking) */
-	RASTERBITS_FLAG_BLINKING		= 0x04	/* we are currently blinking (i.e. - blinking out) */
+	RASTERBITS_FLAG_BLINKING		= 0x04,	/* we are currently blinking (i.e. - blinking out) */
+	RASTERBITS_FLAG_TEXTMODULO		= 0x08, /* bits from the font are displayed modulo the line, as opposed to from the beginning */
 };
 
 enum {
@@ -42,7 +43,7 @@ struct rasterbits_videomode {
 		struct {
 			UINT8 *(*mapper)(UINT8 *mem, int param, int *fg, int *bg, int *attr);
 			int mapper_param;
-			int modulo;
+			int fontheight;			/* height of all characters in the mapper font */
 		} text;
 	} u;
 
@@ -53,6 +54,8 @@ struct rasterbits_frame {
 	int width;
 	int height;
 	int border_pen;
+	int total_scanlines;
+	int top_scanline;	/* The scanline right after the border top */
 };
 
 struct rasterbits_clip {

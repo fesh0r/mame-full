@@ -41,6 +41,7 @@
 #include "vidhrdw/generic.h"
 #include "includes/dragon.h"
 #include "includes/rstrbits.h"
+#include "includes/rstrtrck.h"
 
 static int coco3_hires;
 static int coco3_gimevhreg[8];
@@ -53,6 +54,17 @@ static int coco3_blinkstatus;
 #define LOG_PALETTE	0
 #define LOG_GIME	0
 #define LOG_VIDEO	0
+
+/* -------------------------------------------------- */
+
+static void coco3_getvideoinfo(int full_refresh, struct rasterbits_source *rs,
+	struct rasterbits_videomode *rvm, struct rasterbits_frame *rf);
+
+static const struct rastertrack_info coco3_ri = {
+	262,
+	240,
+	coco3_getvideoinfo
+};
 
 /* --------------------------------------------------
  * CoCo 1/2 Stuff
@@ -135,75 +147,6 @@ WRITE_HANDLER(dragon_sam_vdg_mode)
  * CoCo 3 Stuff
  * -------------------------------------------------- */
 
-struct GfxElement *build_coco3_font(void)
-{
-	static unsigned short colortable[2];
-	static struct GfxLayout fontlayout8x8 =
-	{
-		8,8,	/* 8*8 characters */
-		128+1,	 /* 128 characters + 1 "underline" */
-		1,	/* 1 bit per pixel */
-		{ 0 },
-		{ 0, 1, 2, 3, 4, 5, 6, 7, },	/* straightforward layout */
-		{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-		8*8	/* every char takes 12 consecutive bytes */
-	};
-
-	unsigned char buf[129 * 8];
-	struct GfxElement *font;
-	UINT8 *mem;
-
-	mem = memory_region(REGION_CPU1);
-
-	/* The font info for the CoCo 3 hi res text modes happens to be
-	 * same as the font info used for the HPRINT command, which is in
-	 * the CoCo 3 ROM, so we get it from there
-	 */
-
-	/* Characters 0-31 are at $FA10 - $FB0F */
-	memcpy(buf, &mem[0x80000 + 0xfa10 - 0x8000], 32 * 8);
-
-	/* Characters 32-127 are at $F09D - $F39C */
-	memcpy(&buf[8*32], &mem[0x80000 + 0xf09d - 0x8000], 96 * 8);
-
-	/* The underline character is stored as "Character 128" */
-	buf[8 * 128 + 0] = 0;
-	buf[8 * 128 + 1] = 0;
-	buf[8 * 128 + 2] = 0;
-	buf[8 * 128 + 3] = 0;
-	buf[8 * 128 + 4] = 0;
-	buf[8 * 128 + 5] = 0;
-	buf[8 * 128 + 6] = 0;
-	buf[8 * 128 + 7] = 0xff;
-
-	font = decodegfx(buf,&fontlayout8x8);
-	if (font)
-	{
-		/* colortable will be set at run time */
-		memset(colortable,0,sizeof(colortable));
-		font->colortable = colortable;
-		font->total_colors = 2;
-	}
-	return font;
-}
-
-static void drawgfx_wf(struct osd_bitmap *dest,const struct GfxElement *gfx,
-	unsigned int code,int sx,int sy,
-	const struct rectangle *clip,int transparency,int transparent_color, int wf)
-{
-	if (wf == 1) {
-		drawgfx(dest, gfx, code, 0, 0, 0, sx, sy, clip, transparency, transparent_color);
-	}
-	else {
-		/* drawgfxzoom doesnt directly take TRANSPARENCY_NONE */
-		if (transparency == TRANSPARENCY_NONE) {
-			transparency = TRANSPARENCY_PEN;
-			transparent_color = -1;
-		}
-		drawgfxzoom(dest, gfx, code, 0, 0, 0, sx, sy, clip, transparency, transparent_color, (1<<16) * wf, 1<<16);
-	}
-}
-
 int coco3_vh_start(void)
 {
     int i;
@@ -229,6 +172,8 @@ int coco3_vh_start(void)
 
 	coco3_hires = coco3_blinkstatus = 0;
 	coco3_borderred = coco3_bordergreen = coco3_borderblue = -1;
+
+	rastertrack_init(&coco3_ri);
 	return 0;
 }
 
@@ -423,23 +368,39 @@ static void coco3_artifact_blue(int *artifactcolors)
 	artifactcolors[2] = 17;
 }
 
-static int coco3_calculate_rows(void)
+int coco3_calculate_rows(int *bordertop, int *borderbottom)
 {
-	int rows=0;
+	int rows = 0;
+	int t = 0;
+	int b = 0;
+
 	switch((coco3_gimevhreg[1] & 0x60) >>5) {
 	case 0:
 		rows = 192;
+		t = 43;
+		b = 28;
 		break;
 	case 1:
-		rows = 200;
+		rows = 199;
+		t = 41;
+		b = 23;
 		break;
 	case 2:
-		rows = 210;
+		rows = 0;	/* NYI - This is "zero/infinite" lines, according to Sock Master */
+		t = 132;
+		b = 131;
 		break;
 	case 3:
 		rows = 225;
+		t = 26;
+		b = 12;
 		break;
 	}
+
+	if (bordertop)
+		*bordertop = t;
+	if (borderbottom)
+		*borderbottom = b;
 	return rows;
 }
 
@@ -467,7 +428,7 @@ static int coco3_hires_linesperrow(void)
 	int indexx;
 	indexx = coco3_gimevhreg[0] & 7;
 
-	return (indexx == 7) ? coco3_calculate_rows() : hires_linesperrow[indexx];
+	return (indexx == 7) ? coco3_calculate_rows(NULL, NULL) : hires_linesperrow[indexx];
 }
 
 static int coco3_hires_vidbase(void)
@@ -511,7 +472,7 @@ static void log_video(void)
 			logerror("CoCo3 HiRes Video: ??? colors\n");
 			return;
 		}
-		rows = coco3_calculate_rows() / coco3_hires_linesperrow();
+		rows = coco3_calculate_rows(NULL, NULL) / coco3_hires_linesperrow();
 		logerror(" @ %dx%d\n", cols, rows);
 
 		vidbase = coco3_hires_vidbase();
@@ -566,6 +527,13 @@ static UINT8 *coco3_textmapper_attr(UINT8 *mem, int param, int *fg, int *bg, int
  */
 void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
+	rastertrack_sync();
+	rastertrack_refresh(bitmap, full_refresh);
+}
+
+static void coco3_getvideoinfo(int full_refresh, struct rasterbits_source *rs,
+	struct rasterbits_videomode *rvm, struct rasterbits_frame *rf)
+{
 	UINT8 *RAM = memory_region(REGION_CPU1);
 	static int coco3_metapalette[] = {
 		0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
@@ -576,9 +544,6 @@ void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 		coco3_artifact_blue
 	};
 	static int old_cmprgb;
-	struct rasterbits_source rs;
-	struct rasterbits_videomode rvm;
-	struct rasterbits_frame rf;
 	int cmprgb, i;
 
 	/* Did the user change between CMP and RGB? */
@@ -592,16 +557,14 @@ void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 			coco3_vh_palette_change_color(i, paletteram[i]);
 	}
 
-	/* clear vblank */
-	coco3_vblank();
-
 	if (coco3_hires) {
 		static int last_blink;
 		int linesperrow, rows = 0;
 		int borderred, bordergreen, borderblue;
 		int visualbytesperrow;
+		int bordertop, borderbottom;
 
-		rows = coco3_calculate_rows();
+		rows = coco3_calculate_rows(&bordertop, &borderbottom);
 		linesperrow = coco3_hires_linesperrow();
 
 		/* check border */
@@ -622,75 +585,77 @@ void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 		 * error when rows is divided by linesperrow
 		 */
 
-		rs.videoram = RAM;
-		rs.size = 0x80000;
-		rs.position = coco3_hires_vidbase();
-		rs.db = full_refresh ? NULL : dirtybuffer;
-		rvm.height = rows / linesperrow;
-		rvm.metapalette = NULL;
-		rvm.flags = (coco3_gimevhreg[0] & 0x80) ? RASTERBITS_FLAG_GRAPHICS : RASTERBITS_FLAG_TEXT;
-		rf.width = (coco3_gimevhreg[1] & 0x04) ? 640 : 512;
-		rf.height = rows;
-		rf.border_pen = full_refresh ? Machine->pens[16] : -1;
+		rs->videoram = RAM;
+		rs->size = 0x80000;
+		rs->position = coco3_hires_vidbase();
+		rs->db = full_refresh ? NULL : dirtybuffer;
+		rvm->height = (rows + linesperrow - 1) / linesperrow;
+		rvm->metapalette = NULL;
+		rvm->flags = (coco3_gimevhreg[0] & 0x80) ? RASTERBITS_FLAG_GRAPHICS : RASTERBITS_FLAG_TEXT;
+		rf->width = (coco3_gimevhreg[1] & 0x04) ? 640 : 512;
+		rf->height = rows;
+		rf->border_pen = full_refresh ? Machine->pens[16] : -1;
+		rf->total_scanlines = 263;
+		rf->top_scanline = bordertop;
 
 		if (coco3_gimevhreg[0] & 0x80) {
 			/* Graphics */
-			rvm.flags = RASTERBITS_FLAG_GRAPHICS;
+			rvm->flags = RASTERBITS_FLAG_GRAPHICS;
 			switch(coco3_gimevhreg[1] & 3) {
 			case 0:
 				/* Two colors */
-				rvm.depth = 1;
+				rvm->depth = 1;
 				break;
 			case 1:
 				/* Four colors */
-				rvm.depth = 2;
+				rvm->depth = 2;
 				break;
 			case 2:
 				/* Sixteen colors */
-				rvm.depth = 4;
+				rvm->depth = 4;
 				break;
 			case 3:
 				/* Blank screen */
 				/* TODO - Draw a blank screen! */
-				rvm.depth = 4;
+				rvm->depth = 4;
 				break;
 			}
 			visualbytesperrow = 16 << ((coco3_gimevhreg[1] & 0x18) >> 3);
 		}
 		else {
 			/* Text */
-			rvm.flags = RASTERBITS_FLAG_TEXT;
+			rvm->flags = RASTERBITS_FLAG_TEXT;
 			visualbytesperrow = (coco3_gimevhreg[1] & 0x10) ? 64 : 32;
 
 			if (coco3_gimevhreg[1] & 1) {
 				/* With attributes */
-				rvm.depth = 16;
-				rvm.u.text.mapper = coco3_textmapper_attr;
+				rvm->depth = 16;
+				rvm->u.text.mapper = coco3_textmapper_attr;
 				visualbytesperrow *= 2;
 
 				if (coco3_blinkstatus != last_blink)
-					rvm.flags |= RASTERBITS_FLAG_BLINKNOW;
+					rvm->flags |= RASTERBITS_FLAG_BLINKNOW;
 				if (coco3_blinkstatus)
-					rvm.flags |= RASTERBITS_FLAG_BLINKING;
+					rvm->flags |= RASTERBITS_FLAG_BLINKING;
 				last_blink = coco3_blinkstatus;				
 			}
 			else {
 				/* Without attributes */
-				rvm.depth = 8;
-				rvm.u.text.mapper = coco3_textmapper_noattr;
+				rvm->depth = 8;
+				rvm->u.text.mapper = coco3_textmapper_noattr;
 			}
-			rvm.u.text.mapper_param = (int) RAM;
-			rvm.u.text.modulo = 8;
+			rvm->u.text.mapper_param = (int) RAM;
+			rvm->u.text.fontheight = 8;
 		}
 
 		if (coco3_gimevhreg[1] & 0x04)
 			visualbytesperrow |= (visualbytesperrow / 4);
 
-		rvm.width = visualbytesperrow * 8 / rvm.depth;
-		rvm.bytesperrow = (coco3_gimevhreg[7] & 0x80) ? 256 : visualbytesperrow;
+		rvm->width = visualbytesperrow * 8 / rvm->depth;
+		rvm->bytesperrow = (coco3_gimevhreg[7] & 0x80) ? 256 : visualbytesperrow;
 
 		if (full_refresh)
-			memset(dirtybuffer, 0, ((rows + linesperrow - 1) / linesperrow) * rvm.bytesperrow);
+			memset(dirtybuffer, 0, ((rows + linesperrow - 1) / linesperrow) * rvm->bytesperrow);
 	}
 	else {
 		int borderred, bordergreen, borderblue;
@@ -700,13 +665,12 @@ void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 		if (palette_recalc())
 			full_refresh = 1;
 
-		internal_m6847_vh_screenrefresh(&rs, &rvm, &rf,
+		internal_m6847_vh_screenrefresh(rs, rvm, rf,
 			full_refresh, coco3_metapalette,
 			&RAM[coco3_lores_vidbase()], &the_state,
 			TRUE, (full_refresh ? 16 : -1), 2,
 			artifacts[readinputport(12) & 3]);
 	}
-	raster_bits(bitmap, &rs, &rvm, &rf, NULL);
 }
 
 static void coco3_ram_w(int offset, int data, int block)
@@ -805,7 +769,7 @@ WRITE_HANDLER(coco3_gimevh_w)
 		 */
 		if (xorval & 0xB7) {
 			coco3_borderred = -1;	/* force border to redraw */
-			schedule_full_refresh();
+			rastertrack_touchvideomode();
 #if LOG_GIME
 			logerror("CoCo3 GIME: $ff98 forcing refresh\n");
 #endif
@@ -824,7 +788,7 @@ WRITE_HANDLER(coco3_gimevh_w)
 		 */
 		if (xorval) {
 			coco3_borderred = -1;	/* force border to redraw */
-			schedule_full_refresh();
+			rastertrack_touchvideomode();
 		}
 		break;
 
@@ -841,7 +805,7 @@ WRITE_HANDLER(coco3_gimevh_w)
 		 *		! Bits 0-3 VSC Vertical Scroll bits
 		 */
 		if (xorval)
-			schedule_full_refresh();
+			rastertrack_touchvideomode();
 		break;
 
 	case 5:
@@ -857,7 +821,7 @@ WRITE_HANDLER(coco3_gimevh_w)
 		 *	GIME, the GIME crashes
 		 */
 		if (xorval) {
-			schedule_full_refresh();
+			rastertrack_touchvideomode();
 #if LOG_GIME
 			logerror("CoCo3 GIME: HiRes Video at $%05x\n", coco3_hires_vidbase());
 #endif
@@ -873,7 +837,7 @@ void coco3_vh_sethires(int hires)
 #if LOG_GIME
 		logerror("CoCo3 GIME: %s hires graphics/text\n", hires ? "Enabling" : "Disabling");
 #endif
-		schedule_full_refresh();
+		rastertrack_touchvideomode();
 	}
 }
 
