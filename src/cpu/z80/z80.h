@@ -8,8 +8,7 @@ enum {
 	Z80_PC=1, Z80_SP, Z80_AF, Z80_BC, Z80_DE, Z80_HL,
 	Z80_IX, Z80_IY,	Z80_AF2, Z80_BC2, Z80_DE2, Z80_HL2,
 	Z80_R, Z80_I, Z80_IM, Z80_IFF1, Z80_IFF2, Z80_HALT,
-	Z80_NMI_STATE, Z80_IRQ_STATE, Z80_DC0, Z80_DC1, Z80_DC2, Z80_DC3,
-	Z80_NMI_NESTING
+	Z80_NMI_STATE, Z80_IRQ_STATE, Z80_DC0, Z80_DC1, Z80_DC2, Z80_DC3
 };
 
 enum {
@@ -17,7 +16,8 @@ enum {
 	Z80_TABLE_cb,
 	Z80_TABLE_ed,
 	Z80_TABLE_xy,
-	Z80_TABLE_xycb
+	Z80_TABLE_xycb,
+	Z80_TABLE_ex	/* cycles counts for taken jr/jp/call and interrupt latency (rst opcodes) */
 };
 
 extern int z80_ICount;              /* T-state count                        */
@@ -25,9 +25,6 @@ extern int z80_ICount;              /* T-state count                        */
 #define Z80_IGNORE_INT  -1          /* Ignore interrupt                     */
 #define Z80_NMI_INT 	-2			/* Execute NMI							*/
 #define Z80_IRQ_INT 	-1000		/* Execute IRQ							*/
-
-/* Port number written to when entering/leaving HALT state */
-#define Z80_HALT_PORT   0x10000
 
 extern void z80_reset (void *param);
 extern void z80_exit (void);
