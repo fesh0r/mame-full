@@ -9,7 +9,7 @@
 #ifndef COCO_CAS_H
 #define COCO_CAS_H
 
-#include "cassimg.h"
+#include "formats/cassimg.h"
 
 extern struct CassetteFormat coco_cas_format;
 

@@ -9,7 +9,7 @@
 #ifndef SORD_CAS_H
 #define SORD_CAS_H
 
-#include "cassimg.h"
+#include "formats/cassimg.h"
 
 CASSETTE_FORMATLIST_EXTERN(sordm5_cassette_formats);
 

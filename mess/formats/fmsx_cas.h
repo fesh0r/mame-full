@@ -9,7 +9,7 @@
 #ifndef FMSX_CAS_H
 #define FMSX_CAS_H
 
-#include "cassimg.h"
+#include "formats/cassimg.h"
 
 CASSETTE_FORMATLIST_EXTERN(fmsx_cassette_formats);
 
