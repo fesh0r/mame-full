@@ -9,6 +9,7 @@
 #include "vidhrdw/m6847.h"
 #include "includes/dragon.h"
 #include "includes/basicdsk.h"
+#include "printer.h"
 
 static MEMORY_READ_START( dragon32_readmem )
 	{ 0x0000, 0x7fff, MRA_RAM },
@@ -669,50 +670,11 @@ ROM_END
 
 #define rom_coco3h	rom_coco3
 
-#define IO_FLOPPY_COCO \
-	{\
-		IO_FLOPPY,\
-		4,\
-		"dsk\0",\
-		IO_RESET_NONE,\
-		basicdsk_floppy_id,\
-		dragon_floppy_init,\
-		basicdsk_floppy_exit,\
-        NULL,\
-        NULL,\
-        NULL,\
-        NULL,\
-        NULL,\
-        NULL,\
-        NULL,\
-        NULL,\
-        NULL \
-    }
-
-#define IO_SNAPSHOT_COCOPAK(loadproc) \
-	{\
-		IO_SNAPSHOT,\
-		1,\
-		"pak\0",\
-		IO_RESET_ALL,\
-        NULL,\
-		loadproc,\
-		NULL,\
-        NULL,\
-        NULL,\
-        NULL,\
-        NULL,\
-        NULL,\
-        NULL,\
-        NULL,\
-        NULL,\
-        NULL\
-    }
-
 static const struct IODevice io_coco[] = {
 	IO_SNAPSHOT_COCOPAK(dragon64_rom_load),
 	IO_CASSETTE_WAVE(1, "cas\0wav\0", NULL, coco_cassette_init, coco_cassette_exit),
 	IO_FLOPPY_COCO,
+	IO_BITBANGER_PORT,
     { IO_END }
 };
 
@@ -720,6 +682,7 @@ static const struct IODevice io_dragon32[] = {
 	IO_SNAPSHOT_COCOPAK(dragon32_rom_load),
 	IO_CASSETTE_WAVE(1, "cas\0wav\0", NULL, coco_cassette_init, coco_cassette_exit),
 	IO_FLOPPY_COCO,
+	IO_BITBANGER_PORT,
     { IO_END }
 };
 
@@ -727,6 +690,7 @@ static const struct IODevice io_cp400[] = {
 	IO_SNAPSHOT_COCOPAK(dragon64_rom_load),
 	IO_CASSETTE_WAVE(1, "cas\0wav\0", NULL, coco_cassette_init, coco_cassette_exit),
 	IO_FLOPPY_COCO,
+	IO_BITBANGER_PORT,
     { IO_END }
 };
 
@@ -734,6 +698,7 @@ static const struct IODevice io_coco3[] = {
 	IO_SNAPSHOT_COCOPAK(coco3_rom_load),
 	IO_CASSETTE_WAVE(1, "cas\0wav\0", NULL, coco_cassette_init, coco_cassette_exit),
 	IO_FLOPPY_COCO,
+	IO_BITBANGER_PORT,
     { IO_END }
 };
 

@@ -86,6 +86,9 @@ extern WRITE_HANDLER ( dragon_floppy_w );
 extern void coco3_vblank(void);
 extern int coco3_mmu_translate(int block, int offset);
 extern int dragon_floppy_init(int id);
+extern int coco_bitbanger_init (int id);
+extern void coco_bitbanger_exit (int id);
+extern void coco_bitbanger_output (int id, int data);
 
 /* Returns whether a given piece of logical memory is contiguous or not */
 extern int coco3_mmu_ismemorycontiguous(int logicaladdr, int len);
@@ -95,5 +98,68 @@ extern void coco3_mmu_readlogicalmemory(UINT8 *buffer, int logicaladdr, int len)
 
 /* Translates a logical address to a physical address */
 extern int coco3_mmu_translatelogicaladdr(int logicaladdr);
+
+#define IO_FLOPPY_COCO \
+	{\
+		IO_FLOPPY,\
+		4,\
+		"dsk\0",\
+		IO_RESET_NONE,\
+		basicdsk_floppy_id,\
+		dragon_floppy_init,\
+		basicdsk_floppy_exit,\
+        NULL,\
+        NULL,\
+        NULL,\
+        NULL,\
+        NULL,\
+        NULL,\
+        NULL,\
+        NULL,\
+        NULL \
+    }
+
+#define IO_SNAPSHOT_COCOPAK(loadproc) \
+	{\
+		IO_SNAPSHOT,\
+		1,\
+		"pak\0",\
+		IO_RESET_ALL,\
+        NULL,\
+		loadproc,\
+		NULL,\
+        NULL,\
+        NULL,\
+        NULL,\
+        NULL,\
+        NULL,\
+        NULL,\
+        NULL,\
+        NULL,\
+        NULL\
+    }
+
+#define IO_BITBANGER IO_PRINTER
+
+#define IO_BITBANGER_PORT								\
+{														\
+	IO_BITBANGER,				/* type */				\
+	1,							/* count */				\
+	"prn\0",					/* file extensions */	\
+	IO_RESET_NONE,				/* reset depth */		\
+	NULL,						/* id */				\
+	coco_bitbanger_init,		/* init */				\
+	coco_bitbanger_exit,		/* exit */				\
+	NULL,						/* info */				\
+	NULL,						/* open */				\
+	NULL,						/* close */				\
+	NULL,						/* status */			\
+	NULL,						/* seek */				\
+	NULL,						/* tell */				\
+	NULL,						/* input */				\
+	coco_bitbanger_output,		/* output */			\
+	NULL,						/* input chunk */		\
+	NULL						/* output chunk */		\
+}
 
 #endif /* DRAGON_H */

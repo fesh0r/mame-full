@@ -29,6 +29,8 @@ System Driver Changes:
   the "Tape Control" menu. However the Oric cassette emulation is not working 
   fully yet. [Kev Thacker]
 
+- [COCO/DRAGON] Added support for printer. [Nate Woods]
+
 Other Changes:
 --------------
 - The core is based on MAME 0.37b8. This incorporates all 

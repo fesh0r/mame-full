@@ -19,7 +19,6 @@
 		- Discussions with L. Curtis Boyle (LCB) and John Kowalski (JK)
 
   TODO:
-		- Implement serial/printer
 		- Implement unimplemented SAM registers
 		- Implement unimplemented interrupts (serial)
 		- Choose and implement more appropriate ratios for the speed up poke
@@ -631,6 +630,7 @@ static WRITE_HANDLER ( d_pia1_pa_w )
 	else
 		device_output(IO_CASSETTE, 0, ((int) d_dac - 0x80) * 0x100);
 
+	device_output(IO_BITBANGER, 0, (data & 2) >> 1);
 }
 
 /*
@@ -1635,6 +1635,49 @@ WRITE_HANDLER(dragon_floppy_w)
 }
 
 /***************************************************************************
+  Bitbanger port
+***************************************************************************/
+
+static void *bitbanger_file;
+static int bitbanger_word;
+static int bitbanger_line;
+
+static void coco_bitbanger_poll(int dummy)
+{
+	char c;
+
+	bitbanger_word >>= 1;
+	if (bitbanger_line)
+		bitbanger_word |= 0x400;
+
+	if ((bitbanger_word & 0x403) == 0x401) {
+		c = (char) (bitbanger_word >> 2);
+		if (bitbanger_file)
+			osd_fwrite(bitbanger_file, &c, 1);
+		bitbanger_word = 0;
+	}
+}
+
+int coco_bitbanger_init (int id)
+{
+	bitbanger_word = 0;
+	bitbanger_line = 0;
+	bitbanger_file = image_fopen (IO_BITBANGER, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW_CREATE);
+	return INIT_OK;
+}
+
+void coco_bitbanger_exit (int id)
+{
+	if (bitbanger_file)
+		osd_fclose(bitbanger_file);
+}
+
+void coco_bitbanger_output (int id, int data)
+{
+	bitbanger_line = data;
+}
+
+/***************************************************************************
   Machine Initialization
 ***************************************************************************/
 
@@ -1679,6 +1722,8 @@ static void generic_init_machine(struct pia6821_interface *piaintf)
 
 	coco_fdc_init();
 	autocenter_init(12, 0x04);
+
+	timer_pulse(TIME_IN_HZ(600), 0, coco_bitbanger_poll);
 }
 
 void dragon32_init_machine(void)
