@@ -11,6 +11,11 @@
 #include "xkeyboard.h"
 #include "keyboard.h"
 
+#ifdef xgl
+	#include "glmame.h"
+	static int xgl_aspect_resize_action = 0;
+#endif
+
 static int current_mouse[MOUSE_AXIS] = {0,0,0,0,0,0,0,0};
 static int x11_use_winkeys = 0;
 
@@ -99,6 +104,37 @@ void sysdep_update_keyboard (void)
 #ifdef x11
       case Expose:
   	if ( E.xexpose.count == 0 ) x11_window_refresh_screen();
+	break;
+#endif
+#ifdef xgl
+      case ConfigureNotify:
+        if(E.xany.window == window)
+	{
+	   if( xgl_aspect_resize_action == 0 &&
+	       (
+		       abs(winwidth - E.xconfigure.width) > 50 ||
+		       abs(winheight - E.xconfigure.height) > 50
+	       )
+	     )
+	   {
+		xgl_aspect_resize_action = 1;
+
+		winwidth = E.xconfigure.width;
+		winheight= E.xconfigure.height;
+
+		vscrnaspect = (double) winwidth / (double) winheight;
+
+		if (scrnaspect < vscrnaspect)
+			winwidth = winheight * scrnaspect;
+		else
+			winheight= winwidth / scrnaspect;
+
+		XResizeWindow(display,window,winwidth,winheight);
+		xgl_resize(winwidth, winheight);
+	   } else {
+		xgl_aspect_resize_action = 0;
+	   }
+	}
 	break;
 #endif
       case FocusIn:

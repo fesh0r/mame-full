@@ -6,6 +6,8 @@
 
     http://www.ling.ed.ac.uk/~oliphant/glmame
 
+  Improved by Sven Goethel, http://www.jausoft.com, sgoethel@jausoft.com
+
   This code may be used and distributed under the terms of the
   Mame license
 
@@ -26,6 +28,7 @@
 #include <GL/glx.h>
 #include <GL/glu.h>
 #include "xmame.h"
+#include "glmame.h"
 #include "x11.h"
 
 void InitVScreen(void);
@@ -42,32 +45,55 @@ typedef struct {
   long input_mode;
 } MotifWmHints;
 
-int winwidth = 640;
-int winheight = 480;
+int winwidth = 0;
+int winheight = 0;
 int doublebuffer = 1;
+int bilinear=1; /* Do binlinear filtering? */
+int alphablending=0; /* alphablending */
+int bitmap_lod=0; /* level of bitmap-texture detail */
 
-static int dbdepat[]={GLX_RGBA,GLX_DOUBLEBUFFER,GLX_DEPTH_SIZE,16,None};
-static int sbdepat[]={GLX_RGBA,GLX_DEPTH_SIZE,16,None};
-static int dbnodepat[]={GLX_RGBA,GLX_DOUBLEBUFFER,None};
-static int sbnodepat[]={GLX_RGBA,None};
-static GLXContext cx;
+int fullscreen = 0;
+int antialias=0;
 
-extern int screendirty;
-extern int dodepth;
+int translucency;
 
-static int xgl_handle_resolution(struct rc_option *option, const char *arg,
-   int priority)
+GLXContext glContext=NULL;
+
+int visualAttribList[64];
+
+static void setVisualAttribList(int color, int accumPerColor, 
+				int alpha, int dbuffer, int stencil)
 {
-  int width, height;
-  
-  if (sscanf(arg, "%dx%d", &width, &height) != 2)
-  {
-      fprintf(stderr, "error: invalid resolution: \"%s\".\n", arg);
-      return -1;
-  }
-  winwidth  = width;
-  winheight = height;
-  return 0;
+    int i=0;
+    visualAttribList[i++] = GLX_RED_SIZE;
+    visualAttribList[i++] = 1;
+    visualAttribList[i++] = GLX_GREEN_SIZE;
+    visualAttribList[i++] = 1;
+    visualAttribList[i++] = GLX_BLUE_SIZE;
+    visualAttribList[i++] = 1;
+    visualAttribList[i++] = GLX_DEPTH_SIZE;
+    visualAttribList[i++] = 1;
+    visualAttribList[i++] = GLX_ACCUM_RED_SIZE;
+    visualAttribList[i++] = (accumPerColor>0)?1:0;
+    visualAttribList[i++] = GLX_ACCUM_GREEN_SIZE;
+    visualAttribList[i++] = (accumPerColor>0)?1:0;
+    visualAttribList[i++] = GLX_ACCUM_BLUE_SIZE;
+    visualAttribList[i++] = (accumPerColor>0)?1:0;
+
+    if(GLX_RGBA == color)
+    {
+	    visualAttribList[i++] = GLX_RGBA;
+	    visualAttribList[i++] = GLX_ALPHA_SIZE;
+	    visualAttribList[i++] = (alpha>0)?1:0;
+	    visualAttribList[i++] = GLX_ACCUM_ALPHA_SIZE;
+	    visualAttribList[i++] = (accumPerColor>0)?1:0;
+    }
+    if(dbuffer)
+	    visualAttribList[i++] = GLX_DOUBLEBUFFER;
+
+    visualAttribList[i++] = GLX_STENCIL_SIZE;
+    visualAttribList[i++] = stencil;
+    visualAttribList[i] = None;
 }
 
 struct rc_option display_opts[] = {
@@ -75,14 +101,35 @@ struct rc_option display_opts[] = {
    { "OpenGL Related",	NULL,			rc_seperator,	NULL,
      NULL,		0,			0,		NULL,
      NULL },
-   { "resolution",	"res",			rc_use_function, NULL,
-     "640x480",		0,			0,		xgl_handle_resolution,
-     "Specify the resolution/ windowsize to use in the form of XRESxYRES" },
-   { "dblbuffer",	NULL,			rc_bool,	&doublebuffer,
+   { "fullscreen",   NULL,    rc_bool,       &fullscreen,
+      "0",           0,       0,             NULL,
+      "Start fullscreen" },
+   { "gldblbuffer",	NULL,			rc_bool,	&doublebuffer,
      "1",		0,			0,		NULL,
      "Enable/disable double buffering" },
-   { "cabview",		NULL,			rc_bool,	&cabview,
+   { "gltexture_size",	NULL,			rc_int,	&force_text_width_height,
+     "0",		0,			0,		NULL,
+     "Force the max width and height of one texture segment (default: autosize)" },
+   { "glbilinear",	"glbilin",		rc_bool,	&bilinear,
      "1",		0,			0,		NULL,
+     "Enable/disable bilinear filtering" },
+   { "glbeam",		NULL,			rc_float,	&gl_beam,
+     "1.0",		1.0,			16.0,		NULL,
+     "Set the beam size for vector games" },
+   { "glalphablending",	"glalpha",		rc_bool,	&alphablending,
+     "0",		0,			0,		NULL,
+     "Enable/disable alphablending (auto on if using vector games, else off)" },
+   { "glantialias",	"glaa",			rc_bool,	&antialias,
+     "0",		0,			0,		NULL,
+     "Enable/disable antialiasing" },
+   { "gltranslucency",	"gltrans",		rc_float,	&gl_translucency,
+     "1.0",		0,			0,		NULL,
+     "Enable/disable tranlucency" },
+   { "gllod",	NULL,			rc_int,	&bitmap_lod,
+     "0",		0,			0,		NULL,
+     "level of bitmap-texture detail" },
+   { "cabview",		NULL,			rc_bool,	&cabview,
+     "0",		0,			0,		NULL,
      "Start/ don't start in cabinet view mode" },
    { "cabinet",		NULL,			rc_string,	&cabname,
      "glmame",		0,			0,		NULL,
@@ -97,7 +144,8 @@ struct rc_option display_opts[] = {
 
 int sysdep_init(void)
 {
-   fprintf(stdout, "Using GLmame v0.6 driver for xmame, written by Mike Oliphant\n");
+   fprintf(stdout, "GLmame v0.7, by Sven Goethel, http://www.jausoft.com, sgoethel@jausoft.com,\n");
+   fprintf(stdout, "based upon GLmame v0.6 driver for xmame, written by Mike Oliphant\n");
 
    /* Open the display. */
    display=XOpenDisplay(NULL);
@@ -127,41 +175,40 @@ int sysdep_create_display(int depth)
   XSizeHints 	hints;
   XWMHints 	wm_hints;
   MotifWmHints	mwmhints;
+  unsigned long winmask;
   Atom mwmatom;
   char *glxfx;
-  int fx = 0;
-  int x, y;
+  int resizeEvtMask = 0;
 
-  if(depth == 16)
-  {
-     fprintf(stderr_file, "%s doesn't support 16bpp video modes\n", title);
-     return OSD_NOT_OK;
-  }
+  /* If using 3Dfx, Resize the window to fullscreen so we don't lose focus
+     We have to do this after glXMakeCurrent(), or else the voodoo driver
+     will give us the wrong resolution */
+  if((glxfx=getenv("MESA_GLX_FX")) && (glxfx[0]=='f') )
+  	fullscreen=1;
 
-  printf("Using GLmame v0.6 driver for xmame, written by Mike Oliphant\n");
+  if(!fullscreen) 
+	  resizeEvtMask = StructureNotifyMask ;
+
+  fprintf(stdout, "Using GLmame v0.7, by Sven Goethel, http://www.jausoft.com, sgoethel@jausoft.com,\n");
+  fprintf(stdout, "based upon GLmame v0.6 driver for xmame, written by Mike Oliphant\n");
   
-  if ((glxfx=getenv("MESA_GLX_FX")) && (glxfx[0]=='f') )
-  {
-     fx=1;
-     putenv("FX_GLIDE_NO_SPLASH=");
-  }
-
   screen=DefaultScreenOfDisplay(display);
   myscreen=DefaultScreen(display);
   cursor=XCreateFontCursor(display,XC_trek);
   
-  if(doublebuffer) {
-	if(dodepth)
-	  myvisual=glXChooseVisual(display,myscreen,dbdepat);
-	else 
-	  myvisual=glXChooseVisual(display,myscreen,dbnodepat);
+  if(fullscreen)
+  {
+	winwidth = screen->width;
+	winheight = screen->height;
+  } else {
+	winwidth = visual_width*widthscale;
+	winheight = visual_height*heightscale;
   }
-  else {
-	if(dodepth)
-	  myvisual=glXChooseVisual(display,myscreen,sbdepat);
-	else
-	  myvisual=glXChooseVisual(display,myscreen,sbnodepat);
-  }
+
+  setVisualAttribList(GLX_RGBA, 0 /* accum */, alphablending, doublebuffer, 
+  		      0 /* stencil */);
+
+  myvisual=glXChooseVisual(display,myscreen,visualAttribList);
 
   if(!myvisual) {
 	fprintf(stderr,"OSD ERROR: failed to obtain visual.\n");
@@ -169,17 +216,17 @@ int sysdep_create_display(int depth)
 	return OSD_NOT_OK; 
   }
 
-  cx=glXCreateContext(display,myvisual,0,GL_TRUE);
+  glContext=glXCreateContext(display,myvisual,0,GL_TRUE);
 
-  if(!cx) {
+  if(!glContext) {
 	fprintf(stderr,"OSD ERROR: failed to create OpenGL context.\n");
 	sysdep_display_close();
 	return OSD_NOT_OK; 
   }
   
   colormap=XCreateColormap(display,
-						   RootWindow(display,myvisual->screen),
-						   myvisual->visual,AllocNone);
+			   RootWindow(display,myvisual->screen),
+			   myvisual->visual,AllocNone);
 
   winattr.background_pixel=0;
   winattr.border_pixel=WhitePixelOfScreen(screen);
@@ -188,17 +235,24 @@ int sysdep_create_display(int depth)
   winattr.backing_store=NotUseful;
   winattr.override_redirect=False;
   winattr.save_under=False;
-  winattr.event_mask=0;
+  winattr.event_mask=0; 
   winattr.do_not_propagate_mask=0;
   winattr.colormap=colormap;
   winattr.cursor=None;
 
-  window=XCreateWindow(display,RootWindowOfScreen(screen),0,0,winwidth,winheight,
-					   0,myvisual->depth,
-					   InputOutput,myvisual->visual,
-					   CWBorderPixel | CWBackPixel |
-					   CWEventMask | CWDontPropagate |
-					   CWColormap | CWCursor,&winattr);
+  if(fullscreen) 
+      winmask = CWBorderPixel | CWBackPixel | CWEventMask | CWDontPropagate | 
+                CWColormap    | CWCursor
+	        ;
+  else
+      winmask = CWBorderPixel | CWBackPixel | CWEventMask | CWColormap    
+	        ;
+
+  window=XCreateWindow(display,RootWindowOfScreen(screen),
+		       0,0,winwidth,winheight,
+		       0,myvisual->depth,
+		       InputOutput,myvisual->visual,
+		       winmask, &winattr);
   
   if (!window) {
 	fprintf(stderr,"OSD ERROR: failed in XCreateWindow().\n");
@@ -210,8 +264,12 @@ int sysdep_create_display(int depth)
   
   hints.flags=PMinSize|PMaxSize;
   
-  if(fx) hints.flags|=USPosition|USSize;
-  else hints.flags|=PSize;
+  if(fullscreen) 
+  { 
+  	hints.flags|=USPosition|USSize;
+  } else {
+  	hints.flags|=PSize;
+  }
 
   hints.min_width	= hints.max_width = hints.base_width = winwidth;
   hints.min_height= hints.max_height = hints.base_height = winheight;
@@ -220,20 +278,26 @@ int sysdep_create_display(int depth)
   wm_hints.flags=InputHint;
   
   XSetWMHints(display,window,&wm_hints);
-  XSetWMNormalHints(display,window,&hints);
+
+  if(fullscreen) 
+	  XSetWMNormalHints(display,window,&hints);
+
   XStoreName(display,window,title);
   
-  XDefineCursor(display,window,cursor);
+  if(fullscreen) 
+	  XDefineCursor(display,window,None);
+  else
+	  XDefineCursor(display,window,cursor);
 
   /* Hack to get rid of window title bar */
-  
-  if(fx) {
+  if(fullscreen) 
+  {
 	mwmhints.flags=MWM_HINTS_DECORATIONS;
 	mwmhints.decorations=0;
 	mwmatom=XInternAtom(display,"_MOTIF_WM_HINTS",0);
   
 	XChangeProperty(display,window,mwmatom,mwmatom,32,
-					PropModeReplace,(unsigned char *)&mwmhints,4);
+			PropModeReplace,(unsigned char *)&mwmhints,4);
   }
   
   /* Map and expose the window. */
@@ -247,7 +311,8 @@ int sysdep_create_display(int depth)
 				 KeyPressMask      | KeyReleaseMask | 
 				 EnterWindowMask   | LeaveWindowMask |
 				 PointerMotionMask | ButtonMotionMask |
-				 ButtonPressMask   | ButtonReleaseMask
+				 ButtonPressMask   | ButtonReleaseMask |
+				 resizeEvtMask 
 				 );
 	
 	XGrabPointer(display,
@@ -263,7 +328,8 @@ int sysdep_create_display(int depth)
 	XSelectInput(display, 
 				 window, 
 				 FocusChangeMask | ExposureMask | 
-				 KeyPressMask | KeyReleaseMask
+				 KeyPressMask | KeyReleaseMask  |
+				 resizeEvtMask 
 				 );
   }
   
@@ -271,15 +337,13 @@ int sysdep_create_display(int depth)
   XClearWindow(display,window);
   XWindowEvent(display,window,ExposureMask,&event);
   
-  glXMakeCurrent(display,window,cx);
+  glXMakeCurrent(display,window,glContext);
 
-  /* If using 3Dfx, Resize the window to fullscreen so we don't lose focus
-     We have to do this after glXMakeCurrent(), or else the voodoo driver
-     will give us the wrong resolution */
+  XResizeWindow(display,window,winwidth,winheight);
 
-  if(fx) {
-	XResizeWindow(display,window,screen->width,screen->height);
+  fprintf(stdout, "using window size(%dx%d)\n", winwidth, winheight);
 
+  if(fullscreen) {
 	hints.min_width	= hints.max_width = hints.base_width = screen->width;
 	hints.min_height= hints.max_height = hints.base_height = screen->height;
 
@@ -298,7 +362,7 @@ int sysdep_create_display(int depth)
 
 void sysdep_display_close (void)
 {
-   glXDestroyContext(display,cx);
+   glXDestroyContext(display,glContext);
 
    XFreeColormap(display, colormap);
      
