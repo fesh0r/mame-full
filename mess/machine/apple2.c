@@ -385,7 +385,7 @@ READ_HANDLER ( apple2_c05x_r )
 		case 0x0F:		a2.AN3   = 0x00; break;
 	}
 
-	return 0;
+	return ((offset == 0) && (input_port_0_r(0) & 0x40)) ? 0x80 : 0;
 }
 
 /***************************************************************************
