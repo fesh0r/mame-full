@@ -1682,7 +1682,7 @@ static int ti99_handset_poll_bus(void)
 	ti99_handset_ack_callback()
 
 	Handle data acknowledge sent by the ti-99/4 handset ISR (through tms9901
-	line P0).  This function is called by a delayed timer 30ms after the state
+	line P0).  This function is called by a delayed timer 30us after the state
 	of P0 is changed, because, in one occasion, the ISR asserts the line before
 	it reads the data, so we need to delay the acknowledge process.
 */
