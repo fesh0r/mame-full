@@ -1083,7 +1083,11 @@ END
 // Bitmap
 //
 
+#ifdef MESS
+IDB_ABOUT               BITMAP  DISCARDABLE     "res\\about_mess.bmp"
+#else
 IDB_ABOUT               BITMAP  DISCARDABLE     "res\\about.bmp"
+#endif
 IDB_TOOLBAR             BITMAP  DISCARDABLE     "res\\toolbar.bmp"
 
 /////////////////////////////////////////////////////////////////////////////
