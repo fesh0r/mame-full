@@ -480,7 +480,7 @@ int x11_window_create_display (int bitmap_depth)
 	{
 		if(x11_find_best_visual(bitmap_depth))
 		{
-			fprintf(stderr_file, "X11: Error: Couldn't find a suitable visual\n");
+			fprintf(stderr_file, "X11: Error: Couldn't find a suitable visual, 8bpp video modes are no longer supported by the MAME core.\n");
 			return OSD_NOT_OK;
 		}
 		if ( (xvisual->class != DefaultVisual(display, screen_no)->class) ||
