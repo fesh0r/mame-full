@@ -443,14 +443,9 @@ static MACHINE_DRIVER_START( lviv )
 	MDRV_SOUND_ADD(WAVE, lviv_wave_interface)
 MACHINE_DRIVER_END
 
-
-static const struct IODevice io_lviv[] = {
-    IO_CASSETTE_WAVE(1,"lv?\0wav\0",NULL,lviv_tape_init,cassette_exit),
-    { IO_END }
-};
-
-#define io_lviva io_lviv
-#define io_lvive io_lviv
+#define io_lviv		io_NULL
+#define io_lviva	io_NULL
+#define io_lvive	io_NULL
 
 ROM_START(lviv)
 	ROM_REGION(0x14000,REGION_CPU1,0)
@@ -469,6 +464,7 @@ ROM_END
 
 SYSTEM_CONFIG_START(lviv)
 	CONFIG_RAM_DEFAULT(64 * 1024)
+	CONFIG_DEVICE_CASSETTE(1, "lv?\0", lviv_tape_init)
 SYSTEM_CONFIG_END
 
 

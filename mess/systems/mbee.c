@@ -386,7 +386,6 @@ static const struct IODevice io_mbee[] = {
         NULL,                   /* input_chunk */
         NULL                    /* output_chunk */
     },
-    IO_CASSETTE_WAVE(1,"wav\0",NULL,mbee_cassette_init,cassette_exit),
     {
         IO_FLOPPY,              /* type */
         4,                      /* count */
@@ -415,6 +414,7 @@ static const struct IODevice io_mbee[] = {
 #define io_mbee56    io_mbee
 
 SYSTEM_CONFIG_START(mbee)
+	CONFIG_DEVICE_CASSETTE(1, "", mbee_cassette_init)
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      CONFIG	COMPANY   FULLNAME */

@@ -699,7 +699,6 @@ static const struct IODevice io_ti99_4[] =
 		NULL,				/* input_chunk */
 		NULL				/* output_chunk */
 	},
-	IO_CASSETTE_WAVE(2,"wav\0",NULL,ti99_cassette_init,cassette_exit),
 	{
 		IO_FLOPPY,				/* type */
 		3,						/* count */
@@ -735,6 +734,7 @@ static const struct IODevice io_ti99_4[] =
 #define rom_ti99_4ae rom_ti99_4a
 
 SYSTEM_CONFIG_START(ti99_4)
+	CONFIG_DEVICE_CASSETTE(2, "", ti99_cassette_init)
 SYSTEM_CONFIG_END
 
 /*	  YEAR	NAME	  PARENT   MACHINE		 INPUT	  INIT		CONFIG	COMPANY				FULLNAME */

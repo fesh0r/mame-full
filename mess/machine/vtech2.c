@@ -27,8 +27,6 @@ static int laser_bank_mask = 0x0000;	/* up to 16 4K banks supported */
 static int laser_bank[4] = {-1,-1,-1,-1};
 static int laser_video_bank = 0;
 
-static UINT8 *cassette_image = NULL;
-
 #define TRKSIZE_VZ	0x9a0	/* arbitrary (actually from analyzing format) */
 #define TRKSIZE_FM	3172	/* size of a standard FM mode track */
 
@@ -552,13 +550,6 @@ int laser_cassette_init(int id)
         return INIT_PASS;
     }
     return INIT_FAIL;
-}
-
-void laser_cassette_exit(int id)
-{
-	if( cassette_image )
-		free(cassette_image);
-	cassette_image = NULL;
 }
 
 int laser_floppy_init(int id)

@@ -819,7 +819,6 @@ ROM_END
 
 static const struct IODevice io_exidy[] =
 {
-	//IO_CASSETTE_WAVE(2,"wav\0",NULL,exidy_cassette_init,cassette_exit),
 	IO_PRINTER_PORT(1,"prn\0"),
 	{
 		IO_FLOPPY,					/* type */
@@ -845,6 +844,7 @@ static const struct IODevice io_exidy[] =
 };
 
 SYSTEM_CONFIG_START(exidy)
+	//CONFIG_DEVICE_CASSETTE(2, "", exidy_cassette_init)
 SYSTEM_CONFIG_END
 
 /*	  YEAR	NAME	PARENT	MACHINE	INPUT	INIT	CONFIG	COMPANY        FULLNAME */

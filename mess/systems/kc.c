@@ -473,8 +473,7 @@ ROM_END
    NULL,               /* output */ \
    NULL,               /* input_chunk */ \
    NULL                /* output_chunk */ \
-}, \
-IO_CASSETTE_WAVE(1,"wav\0",NULL,kc_cassette_device_init,cassette_exit)
+}
 
 
 static const struct IODevice io_kc85_4[] =
@@ -511,6 +510,7 @@ static const struct IODevice io_kc85_4d[] =
 #define io_kc85_3 io_kc85_4
 
 SYSTEM_CONFIG_START(kc85)
+	CONFIG_DEVICE_CASSETTE(1, "", kc_cassette_device_init)
 SYSTEM_CONFIG_END
 
 /*     YEAR  NAME      PARENT   MACHINE  INPUT     INIT  CONFIG  COMPANY   FULLNAME */

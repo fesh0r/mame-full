@@ -322,7 +322,6 @@ ROM_END
 
 static const struct IODevice io_ti99_4p[] =
 {
-	IO_CASSETTE_WAVE(2,"wav\0",NULL,ti99_cassette_init,cassette_exit),
 	{
 		IO_FLOPPY,				/* type */
 		3,						/* count */
@@ -347,6 +346,7 @@ static const struct IODevice io_ti99_4p[] =
 };
 
 SYSTEM_CONFIG_START(ti99_4p)
+	CONFIG_DEVICE_CASSETTE(2, "", ti99_cassette_init)
 SYSTEM_CONFIG_END
 
 /*	  YEAR	NAME	  PARENT   MACHINE		ÊINPUT	  INIT	   CONFIG	COMPANY		FULLNAME */

@@ -417,7 +417,6 @@ ROM_END
 ***************************************************************************/
 
 static const struct IODevice io_laser[] = {
-    IO_CASSETTE_WAVE(1,"wav\0cas\0",0,vtech1_cassette_init,cassette_exit),
     {
         IO_SNAPSHOT,            /* type */
         1,                      /* count */
@@ -471,6 +470,7 @@ static const struct IODevice io_laser[] = {
 #define io_vz300    io_laser
 
 SYSTEM_CONFIG_START(vtech1)
+	CONFIG_DEVICE_CASSETTE(1, "cas\0", vtech1_cassette_init)
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT    CONFIG,	COMPANY   FULLNAME */

@@ -413,7 +413,6 @@ static const struct IODevice io_svi318[] = {
     	NULL,                       /* input_chunk */
     	NULL                        /* output_chunk */
 	},
-		IO_CASSETTE_WAVE (1, "cas\0wav\0", NULL, svi318_cassette_init,cassette_exit),
 		IO_PRINTER_PORT (1, "prn\0"),
 		{ IO_END }
 	};
@@ -422,6 +421,7 @@ static const struct IODevice io_svi318[] = {
 #define io_svi328a io_svi318
 
 SYSTEM_CONFIG_START(svi318)
+	CONFIG_DEVICE_CASSETTE(1, "cas\0", svi318_cassette_init)
 SYSTEM_CONFIG_END
 
 /*   YEAR	NAME		PARENT	MACHINE	INPUT	INIT	CONFIG	COMPANY FULLNAME */

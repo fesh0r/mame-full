@@ -710,7 +710,7 @@ SYSTEM_CONFIG_START( generic_coco )
 	CONFIG_DEVICE_PRINTER	( coco_bitbanger_init, coco_bitbanger_exit, coco_bitbanger_output )
 
 	/* cassette */
-	CONFIG_DEVICE_CASSETTE	(1, "cas\0wav\0", coco_cassette_init)
+	CONFIG_DEVICE_CASSETTE	(1, "cas\0", coco_cassette_init)
 
 	/* floppy */
 	CONFIG_DEVICE_FLOPPY	(1, coco, coco_jvc )

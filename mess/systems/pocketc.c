@@ -757,21 +757,18 @@ ROM_END
 
 #define rom_pc1403h rom_pc1403
 
-static const struct IODevice io_pc1401[] = {
-//	IO_CASSETTE_WAVE(1,"wav\0",mycas_id,mycas_init,mycas_exit),
-    { IO_END }
-};
-
-#define io_pc1402 io_pc1401
-#define io_pc1350 io_pc1401
-#define io_pc1251 io_pc1401
-#define io_trs80pc3 io_pc1401
+#define io_pc1401	io_NULL
+#define io_pc1402	io_NULL
+#define io_pc1350	io_NULL
+#define io_pc1251	io_NULL
+#define io_trs80pc3	io_NULL
 
 // disk drive support
 #define io_pc1403 io_pc1401
 #define io_pc1403h io_pc1403
 
 SYSTEM_CONFIG_START(pocketc)
+//	CONFIG_DEVICE_CASSETTE(1, "", mycas_init)
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      MONITOR	COMPANY   FULLNAME */

@@ -876,7 +876,6 @@ static const struct IODevice io_msx[] = {
         NULL,                   /* input_chunk */
         NULL                    /* output_chunk */
     },
-    IO_CASSETTE_WAVE (1, "cas\0wav\0", NULL, msx_cassette_init,cassette_exit),
 	IO_PRINTER_PORT (1, "prn\0"),
     { IO_END }
 };
@@ -894,6 +893,7 @@ static const struct IODevice io_msx[] = {
 #define io_expert11 io_msx
 
 SYSTEM_CONFIG_START(msx)
+	CONFIG_DEVICE_CASSETTE(1, "cas\0", msx_cassette_init)
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME      PARENT  MACHINE  INPUT     INIT   CONFIG  COMPANY              FULLNAME */

@@ -195,6 +195,8 @@ const struct GameDriver driver_##NAME = 	\
 
 #define construct_sysconfig_NULL	(NULL)
 
+extern const struct IODevice io_NULL[];
+
 #endif /* MESSDRV_H */
 
 

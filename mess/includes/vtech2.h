@@ -17,7 +17,6 @@ extern int laser_floppy_init(int id);
 extern void laser_floppy_exit(int id);
 
 extern int laser_cassette_init(int id);
-extern void laser_cassette_exit(int id);
 
 extern READ_HANDLER ( laser_fdc_r );
 extern WRITE_HANDLER ( laser_fdc_w );

@@ -296,7 +296,6 @@ ROM_END
 
 
 static const struct IODevice io_microtan[] = {
-    IO_CASSETTE_WAVE(1,"tap\0",0,microtan_cassette_init,cassette_exit),
     {
         IO_SNAPSHOT,        /* type */
         1,                  /* count */
@@ -341,6 +340,7 @@ static const struct IODevice io_microtan[] = {
 };
 
 SYSTEM_CONFIG_START(microtan)
+	CONFIG_DEVICE_CASSETTE(1, "tap\0", microtan_cassette_init)
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      CONFIG    COMPANY      FULLNAME */

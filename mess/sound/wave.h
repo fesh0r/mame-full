@@ -64,9 +64,10 @@ extern void cassette_exit(int id);
 	wave_output_chunk	/* output_chunk */				\
 }
 
-#define CONFIG_DEVICE_CASSETTE(count,fileext,init)															\
-	CONFIG_DEVICE(IO_CASSETTE, (count), (fileext), IO_RESET_NONE, OSD_FOPEN_DUMMY, (init), cassette_exit,	\
-		wave_info, wave_open, wave_close, wave_status, wave_seek, wave_tell, wave_input, wave_output, NULL)	\
+#define CONFIG_DEVICE_CASSETTE(count,fileext,init)											\
+	CONFIG_DEVICE(IO_CASSETTE, (count), "wav\0" fileext, IO_RESET_NONE, OSD_FOPEN_DUMMY,	\
+		(init), cassette_exit,	wave_info, wave_open, wave_close, wave_status, wave_seek,	\
+		wave_tell, wave_input, wave_output, NULL)											\
 
 /*****************************************************************************
  * Use this structure for the "void *args" argument of device_open()

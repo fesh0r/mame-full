@@ -15,6 +15,11 @@ This file is a set of function calls and defs required for MESS.
 extern struct GameOptions options;
 extern const struct Devices devices[];
 
+const struct IODevice io_NULL[] =
+{
+    { IO_END }
+};
+
 /* Globals */
 const char *mess_path;
 UINT32 mess_ram_size;

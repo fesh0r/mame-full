@@ -594,7 +594,6 @@ static const struct IODevice io_laser[] = {
         NULL,               /* input_chunk */
         NULL                /* output_chunk */
     },
-	IO_CASSETTE_WAVE(1,"wav\0cas\0",0,laser_cassette_init,laser_cassette_exit),
 	{
 		IO_FLOPPY,			/* type */
 		2,					/* count */
@@ -623,6 +622,7 @@ static const struct IODevice io_laser[] = {
 #define io_laser700 io_laser
 
 SYSTEM_CONFIG_START(laser)
+	CONFIG_DEVICE_CASSETTE(1, "cas\0", laser_cassette_init)
 SYSTEM_CONFIG_END
 
 /*	  YEAR	 NAME	   PARENT	 MACHINE   INPUT	 INIT	   CONFIG	COMPANY	 FULLNAME */

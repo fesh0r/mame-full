@@ -2825,9 +2825,6 @@ ROM_END
 		NULL						/* output_chunk */ \
 	}
 
-#define AMSTRAD_IO_CASSETTE \
-	IO_CASSETTE_WAVE(1,"wav\0",NULL,amstrad_cassette_init,cassette_exit)
-
 #define AMSTRAD_IO_PRINTER \
 	IO_PRINTER_PORT(1,"prn\0")
 
@@ -2835,7 +2832,6 @@ static const struct IODevice io_cpc6128[] =
 {
 	AMSTRAD_IO_SNAPSHOT,
 	AMSTRAD_IO_DISK,
-	AMSTRAD_IO_CASSETTE,
 	AMSTRAD_IO_PRINTER,
 	{IO_END}
 };
@@ -2848,7 +2844,6 @@ static const struct IODevice io_cpcplus[] =
 {
 	AMSTRAD_IO_SNAPSHOT,
 	AMSTRAD_IO_DISK,
-	AMSTRAD_IO_CASSETTE,
 	AMSTRAD_IO_PRINTER,
 	{
 		IO_CARTSLOT,				/* type */
@@ -2878,6 +2873,7 @@ static const struct IODevice io_cpcplus[] =
 
 SYSTEM_CONFIG_START(amstrad)
 	CONFIG_RAM_DEFAULT(128 * 1024)
+	CONFIG_DEVICE_CASSETTE(1, "", amstrad_cassette_init)
 SYSTEM_CONFIG_END
 
 
@@ -2886,6 +2882,6 @@ COMPX( 1984, cpc464,   0,		amstrad,  amstrad,	0,		amstrad, "Amstrad plc", "Amstr
 COMPX( 1985, cpc664,   cpc464,	amstrad,  amstrad,	0,	    amstrad, "Amstrad plc", "Amstrad/Schneider CPC664", GAME_NOT_WORKING)
 COMPX( 1985, cpc6128,  cpc464,	amstrad,  amstrad,	0,	    amstrad, "Amstrad plc", "Amstrad/Schneider CPC6128", GAME_NOT_WORKING)
 COMPX( 1990, cpc464p,  0,		cpcplus,  amstrad,	0,	    amstrad, "Amstrad plc", "Amstrad 464plus", GAME_NOT_WORKING)
-COMPX( 1990, cpc6128p,  0,		cpcplus,  amstrad,	0,	    amstrad, "Amstrad plc", "Amstrad 6128plus", GAME_NOT_WORKING)
+COMPX( 1990, cpc6128p, 0,		cpcplus,  amstrad,	0,	    amstrad, "Amstrad plc", "Amstrad 6128plus", GAME_NOT_WORKING)
 COMPX( 1989, kccomp,   cpc464,	kccomp,   kccomp,	0,	    amstrad, "VEB Mikroelektronik", "KC Compact", GAME_NOT_WORKING)
 
