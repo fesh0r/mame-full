@@ -153,6 +153,8 @@ void lightgun_event_abs_init(void)
 	}
 }
 
+static int trigger[4] = { 0,0,0,0 };
+
 void lightgun_event_abs_poll(void)
 {
 	int i, fds, rd;
@@ -210,18 +212,16 @@ void lightgun_event_abs_poll(void)
 				lg_devices[i].last[LG_X_AXIS] = ev->value;
 			} else if (ev->type == EV_ABS && ev->code == ABS_Y) {
 				lg_devices[i].last[LG_Y_AXIS] = ev->value;
-			} else if (ev->type == EV_KEY && (ev->code == BTN_MIDDLE
-						|| ev->code == BTN_MOUSE)) {
-				joy_data[i].buttons[0] = ev->value;
-				if (!ev->value) {
-					lg_devices[i].last[LG_X_AXIS] =
-						lg_devices[i].min[LG_X_AXIS];
-					lg_devices[i].last[LG_Y_AXIS] =
-						lg_devices[i].min[LG_Y_AXIS];
-				}
-			} else if (ev->type == EV_KEY && (ev->code == BTN_SIDE
-						|| ev->code == BTN_RIGHT)) {
-				joy_data[i].buttons[0] = ev->value;
+			} else if (ev->type == EV_KEY && (ev->code == BTN_MIDDLE ||
+                                                          ev->code == BTN_MOUSE)) {
+				trigger[i] = ev->value;
+			} else if (ev->type == EV_KEY && (ev->code == BTN_SIDE  ||
+                                                          ev->code == BTN_RIGHT)) {
+				lg_devices[i].last[LG_X_AXIS] =
+					lg_devices[i].min[LG_X_AXIS];
+				lg_devices[i].last[LG_Y_AXIS] =
+					lg_devices[i].min[LG_Y_AXIS];
+                                trigger[i] = ev->value;
 			}
 		}
 	}
@@ -241,6 +241,7 @@ int lightgun_event_abs_read(int player, int *deltax, int *deltay)
 	*deltay = (((lg_devices[player].last[LG_Y_AXIS] -
 		     lg_devices[player].min[LG_Y_AXIS]) * 256) /
 		   (lg_devices[player].range[LG_Y_AXIS] - 1)) - 128;
+        joy_data[player].buttons[0] = trigger[player];
 
 	return 1;
 }
