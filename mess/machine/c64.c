@@ -77,9 +77,28 @@ static enum
 	CartridgeSuperGames, CartridgeRobocop2
 }
 cartridgetype = CartridgeAuto;
-static UINT8 cia0porta;
+static UINT8 cia0porta, cia0portb;
 static UINT8 serial_clock, serial_data, serial_atn;
-static UINT8 vicirq = 0, cia0irq = 0;
+static UINT8 vicirq = 0, cia0irq = 0, cia1irq = 0;
+
+static void c64_nmi(void)
+{
+    static int nmilevel = 0;
+    if (nmilevel != KEY_RESTORE||cia1irq)
+    {
+	if (c128) {
+	    if (cpu_getactivecpu()==0) { /* z80 */
+		cpu_set_nmi_line (0, KEY_RESTORE||cia1irq);
+	    } else {
+		cpu_set_nmi_line (1, KEY_RESTORE||cia1irq);
+	    }
+	} else {
+	    cpu_set_nmi_line (0, KEY_RESTORE||cia1irq);
+	}
+	nmilevel = KEY_RESTORE||cia1irq;
+    }
+}
+
 
 /*
  * cia 0
@@ -99,62 +118,153 @@ static UINT8 vicirq = 0, cia0irq = 0;
  */
 int c64_cia0_port_a_r (int offset)
 {
-	int value = 0xff;
+    int value = 0xff;
 
-	if (JOYSTICK_SWAP) value = c64_keyline[8];
+    if (!(cia0portb&0x80)) {
+	UINT8 t=0xff;
+	if (!(c64_keyline[7]&0x80)) t&=~0x80;
+	if (!(c64_keyline[6]&0x80)) t&=~0x40;
+	if (!(c64_keyline[5]&0x80)) t&=~0x20;
+	if (!(c64_keyline[4]&0x80)) t&=~0x10;
+	if (!(c64_keyline[3]&0x80)) t&=~0x08;
+	if (!(c64_keyline[2]&0x80)) t&=~0x04;
+	if (!(c64_keyline[1]&0x80)) t&=~0x02;
+	if (!(c64_keyline[0]&0x80)) t&=~0x01;
+	value &=t;
+    }
+    if (!(cia0portb&0x40)) {
+	UINT8 t=0xff;
+	if (!(c64_keyline[7]&0x40)) t&=~0x80;
+	if (!(c64_keyline[6]&0x40)) t&=~0x40;
+	if (!(c64_keyline[5]&0x40)) t&=~0x20;
+	if (!(c64_keyline[4]&0x40)) t&=~0x10;
+	if (!(c64_keyline[3]&0x40)) t&=~0x08;
+	if (!(c64_keyline[2]&0x40)) t&=~0x04;
+	if (!(c64_keyline[1]&0x40)) t&=~0x02;
+	if (!(c64_keyline[0]&0x40)) t&=~0x01;
+	value &=t;
+    }
+    if (!(cia0portb&0x20)) {
+	UINT8 t=0xff;
+	if (!(c64_keyline[7]&0x20)) t&=~0x80;
+	if (!(c64_keyline[6]&0x20)) t&=~0x40;
+	if (!(c64_keyline[5]&0x20)) t&=~0x20;
+	if (!(c64_keyline[4]&0x20)) t&=~0x10;
+	if (!(c64_keyline[3]&0x20)) t&=~0x08;
+	if (!(c64_keyline[2]&0x20)) t&=~0x04;
+	if (!(c64_keyline[1]&0x20)) t&=~0x02;
+	if (!(c64_keyline[0]&0x20)) t&=~0x01;
+	value &=t;
+    }
+    if (!(cia0portb&0x10)) {
+	UINT8 t=0xff;
+	if (!(c64_keyline[7]&0x10)) t&=~0x80;
+	if (!(c64_keyline[6]&0x10)) t&=~0x40;
+	if (!(c64_keyline[5]&0x10)) t&=~0x20;
+	if (!(c64_keyline[4]&0x10)) t&=~0x10;
+	if (!(c64_keyline[3]&0x10)) t&=~0x08;
+	if (!(c64_keyline[2]&0x10)) t&=~0x04;
+	if (!(c64_keyline[1]&0x10)) t&=~0x02;
+	if (!(c64_keyline[0]&0x10)) t&=~0x01;
+	value &=t;
+    }
+    if (!(cia0portb&0x08)) {
+	UINT8 t=0xff;
+	if (!(c64_keyline[7]&0x08)) t&=~0x80;
+	if (!(c64_keyline[6]&0x08)) t&=~0x40;
+	if (!(c64_keyline[5]&0x08)) t&=~0x20;
+	if (!(c64_keyline[4]&0x08)) t&=~0x10;
+	if (!(c64_keyline[3]&0x08)) t&=~0x08;
+	if (!(c64_keyline[2]&0x08)) t&=~0x04;
+	if (!(c64_keyline[1]&0x08)) t&=~0x02;
+	if (!(c64_keyline[0]&0x08)) t&=~0x01;
+	value &=t;
+    }
+    if (!(cia0portb&0x04)) {
+	UINT8 t=0xff;
+	if (!(c64_keyline[7]&0x04)) t&=~0x80;
+	if (!(c64_keyline[6]&0x04)) t&=~0x40;
+	if (!(c64_keyline[5]&0x04)) t&=~0x20;
+	if (!(c64_keyline[4]&0x04)) t&=~0x10;
+	if (!(c64_keyline[3]&0x04)) t&=~0x08;
+	if (!(c64_keyline[2]&0x04)) t&=~0x04;
+	if (!(c64_keyline[1]&0x04)) t&=~0x02;
+	if (!(c64_keyline[0]&0x04)) t&=~0x01;
+	value &=t;
+    }
+    if (!(cia0portb&0x02)) {
+	UINT8 t=0xff;
+	if (!(c64_keyline[7]&0x02)) t&=~0x80;
+	if (!(c64_keyline[6]&0x02)) t&=~0x40;
+	if (!(c64_keyline[5]&0x02)) t&=~0x20;
+	if (!(c64_keyline[4]&0x02)) t&=~0x10;
+	if (!(c64_keyline[3]&0x02)) t&=~0x08;
+	if (!(c64_keyline[2]&0x02)) t&=~0x04;
+	if (!(c64_keyline[1]&0x02)) t&=~0x02;
+	if (!(c64_keyline[0]&0x02)) t&=~0x01;
+	value &=t;
+    }
+    if (!(cia0portb&0x01)) {
+	UINT8 t=0xff;
+	if (!(c64_keyline[7]&0x01)) t&=~0x80;
+	if (!(c64_keyline[6]&0x01)) t&=~0x40;
+	if (!(c64_keyline[5]&0x01)) t&=~0x20;
+	if (!(c64_keyline[4]&0x01)) t&=~0x10;
+	if (!(c64_keyline[3]&0x01)) t&=~0x08;
+	if (!(c64_keyline[2]&0x01)) t&=~0x04;
+	if (!(c64_keyline[1]&0x01)) t&=~0x02;
+	if (!(c64_keyline[0]&0x01)) t&=~0x01;
+	value &=t;
+    }
+
+    if (JOYSTICK_SWAP) value = c64_keyline[8];
     else value = c64_keyline[9];
-	return value;
+
+    return value;
 }
 
 int c64_cia0_port_b_r (int offset)
 {
-	int value = 0xff;
+    int value = 0xff;
+    
+    if (!(cia0porta & 0x80)) value &= c64_keyline[7];
+    if (!(cia0porta & 0x40)) value &= c64_keyline[6];
+    if (!(cia0porta & 0x20)) value &= c64_keyline[5];
+    if (!(cia0porta & 0x10)) value &= c64_keyline[4];
+    if (!(cia0porta & 8)) value &= c64_keyline[3];
+    if (!(cia0porta & 4)) value &= c64_keyline[2];
+    if (!(cia0porta & 2)) value &= c64_keyline[1];
+    if (!(cia0porta & 1)) value &= c64_keyline[0];
+    
+    if (JOYSTICK_SWAP) value &= c64_keyline[9];
+    else value &= c64_keyline[8];
+    
+    if (c128)
+    {
+	if (!vic2e_k0_r ())
+	    value &= c128_keyline[0];
+	if (!vic2e_k1_r ())
+	    value &= c128_keyline[1];
+	if (!vic2e_k2_r ())
+	    value &= c128_keyline[2];
+    }
+    if (c65) {
+	if (!(c65_6511_port&2))
+	    value&=c65_keyline;
+    }
 
-	if (!(cia0porta & 0x80))
-		value &= c64_keyline[7];
-	if (!(cia0porta & 0x40))
-		value &= c64_keyline[6];
-	if (!(cia0porta & 0x20))
-		value &= c64_keyline[5];
-	if (!(cia0porta & 0x10))
-		value &= c64_keyline[4];
-	if (!(cia0porta & 8))
-		value &= c64_keyline[3];
-	if (!(cia0porta & 4))
-		value &= c64_keyline[2];
-	if (!(cia0porta & 2))
-		value &= c64_keyline[1];
-	if (!(cia0porta & 1))
-		value &= c64_keyline[0];
-
-	if (JOYSTICK_SWAP) value &= c64_keyline[9];
-	else value &= c64_keyline[8];
-
-	if (c128)
-	{
-		if (!vic2e_k0_r ())
-			value &= c128_keyline[0];
-		if (!vic2e_k1_r ())
-			value &= c128_keyline[1];
-		if (!vic2e_k2_r ())
-			value &= c128_keyline[2];
-	}
-	if (c65) {
-		if (!(c65_6511_port&2))
-			value&=c65_keyline;
-	}
-
-	return value;
+    return value;
 }
 
 void c64_cia0_port_a_w (int offset, int data)
 {
-	cia0porta = data;
+    cia0porta = data;
 }
 
 static void c64_cia0_port_b_w (int offset, int data)
 {
-	vic2_lightpen_write (data & 0x10);
+    cia0portb =data;
+    vic2_lightpen_write (data & 0x10);
 }
 
 static void c64_irq (int level)
@@ -253,13 +363,18 @@ static void c64_cia1_port_a_w (int offset, int data)
 static void c64_cia1_interrupt (int level)
 {
 	static int old_level = 0;
+	cia1irq=level;
+	c64_nmi();
+#if 0
 
 	if (level != old_level)
 	{
 		DBG_LOG (1, "mos6510", ("nmi %s\n", level ? "start" : "end"));
+
 		/*      cpu_set_nmi_line(0, level); */
 		old_level = level;
 	}
+#endif
 }
 
 struct cia6526_interface c64_cia0 =
@@ -468,10 +583,11 @@ static void c64_bankswitch (int reset)
 	charen = (data & 4) ? 1 : 0;
 
 	if ((!c64_game && c64_exrom)
-		|| (loram && hiram && !c64_exrom))
+	    || (loram && !c64_exrom)) // for omega race cartridge
+//	    || (loram && hiram && !c64_exrom))
 	{
 		cpu_setbank (1, roml);
-		memory_set_bankhandler_w (2, 0, MWA_NOP);
+		memory_set_bankhandler_w (2, 0, MWA_RAM); // always ram: pitstop
 	}
 	else
 	{
@@ -479,12 +595,17 @@ static void c64_bankswitch (int reset)
 		memory_set_bankhandler_w (2, 0, MWA_RAM);
 	}
 
+#if 1
+	if ((!c64_game && !c64_exrom && hiram)
+	    /*|| (!c64_exrom)*/) // must be disabled for 8kb c64 cartridges! like space action, super expander, ...
+#else
 	if ((!c64_game && c64_exrom && hiram)
-		|| (!c64_exrom))
+	    || (!c64_exrom) )
+#endif
 	{
 		cpu_setbank (3, romh);
 	}
-	else if (loram && hiram)
+	else if (loram && hiram &&c64_game)
 	{
 		cpu_setbank (3, c64_basic);
 	}
@@ -864,146 +985,136 @@ int c64_rom_id (int id)
 
 void c64_rom_recognition (void)
 {
-	int i;
-	cartridgetype=CartridgeAuto;
-	for (i=0; (i<sizeof(cbm_rom)/sizeof(cbm_rom[0]))
-			 &&(cbm_rom[i].size!=0); i++) {
-		cartridge=1;
-		if ( BETWEEN(0xa000, 0xbfff, cbm_rom[i].addr,
-					 cbm_rom[i].addr+cbm_rom[i].size) ) {
-			cartridgetype=CartridgeC64;
-		} else if ( BETWEEN(0xe000, 0xffff, cbm_rom[i].addr,
-							cbm_rom[i].addr+cbm_rom[i].size) ) {
-			cartridgetype=CartridgeUltimax;
-		}
+    int i;
+    cartridgetype=CartridgeAuto;
+    for (i=0; (i<sizeof(cbm_rom)/sizeof(cbm_rom[0]))
+	     &&(cbm_rom[i].size!=0); i++) {
+	cartridge=1;
+	if ( BETWEEN(0xa000, 0xbfff, cbm_rom[i].addr,
+		     cbm_rom[i].addr+cbm_rom[i].size) ) {
+	    cartridgetype=CartridgeC64;
+	} else if ( BETWEEN(0xe000, 0xffff, cbm_rom[i].addr,
+			    cbm_rom[i].addr+cbm_rom[i].size) ) {
+	    cartridgetype=CartridgeUltimax;
 	}
-	if (i==4) cartridgetype=CartridgeSuperGames;
-	if (i==32) cartridgetype=CartridgeRobocop2;
+    }
+    if (i==4) cartridgetype=CartridgeSuperGames;
+    if (i==32) cartridgetype=CartridgeRobocop2;
 }
 
 void c64_rom_load(void)
 {
-	int i;
-
-	c64_exrom = 1;
-	c64_game = 1;
-	if (cartridge)
+    int i;
+    
+    c64_exrom = 1;
+    c64_game = 1;
+    if (cartridge)
+    {
+	if (AUTO_MODULE && (cartridgetype == CartridgeAuto))
 	{
-		if (AUTO_MODULE && (cartridgetype == CartridgeAuto))
-		{
-			logerror("Cartridge type not recognized using Machine type\n");
-		}
-		if (C64_MODULE && (cartridgetype == CartridgeUltimax))
-		{
-			logerror("Cartridge could be ultimax type!?\n");
-		}
-		if (ULTIMAX_MODULE && (cartridgetype == CartridgeC64))
-		{
-			logerror("Cartridge could be c64 type!?\n");
-		}
-		if (C64_MODULE)
-			cartridgetype = CartridgeC64;
-		else if (ULTIMAX_MODULE)
-			cartridgetype = CartridgeUltimax;
-		else if (SUPERGAMES_MODULE)
-			cartridgetype = CartridgeSuperGames;
-		else if (ROBOCOP2_MODULE)
-			cartridgetype = CartridgeRobocop2;
-		if (ultimax || (cartridgetype == CartridgeUltimax)) {
-			c64_game = 0;
-		} else {
-			c64_exrom = 0;
-		}
-		if (ultimax) {
-			for (i=0; (i<sizeof(cbm_rom)/sizeof(cbm_rom[0]))
-					 &&(cbm_rom[i].size!=0); i++) {
-				if (cbm_rom[i].addr==CBM_ROM_ADDR_LO) {
-					memcpy(c64_memory+0x8000+0x2000-cbm_rom[i].size,
-						   cbm_rom[i].chip, cbm_rom[i].size);
-				} else if ((cbm_rom[i].addr==CBM_ROM_ADDR_HI)
-						   ||(cbm_rom[i].addr==CBM_ROM_ADDR_UNKNOWN)) {
-					memcpy(c64_memory+0xe000+0x2000-cbm_rom[i].size,
-						   cbm_rom[i].chip, cbm_rom[i].size);
-				} else {
-					memcpy(c64_memory+cbm_rom[i].addr, cbm_rom[i].chip,
-						   cbm_rom[i].size);
-				}
-			}
-        } else if ( (cartridgetype==CartridgeRobocop2)
-					||(cartridgetype==CartridgeSuperGames) ) {
-			roml=0;
-			romh=0;
-			for (i=0; (i<sizeof(cbm_rom)/sizeof(cbm_rom[0]))
-					 &&(cbm_rom[i].size!=0); i++) {
-				if (!roml
-					&& ((cbm_rom[i].addr==CBM_ROM_ADDR_UNKNOWN)
-						||(cbm_rom[i].addr==CBM_ROM_ADDR_LO)
-						||(cbm_rom[i].addr==0x8000)) ) {
-					roml=cbm_rom[i].chip;
-				}
-				if (!romh
-					&& ((cbm_rom[i].addr==CBM_ROM_ADDR_HI)
-						||(cbm_rom[i].addr==0xa000) ) ){
-					romh=cbm_rom[i].chip;
-				}
-				if (!romh
-					&& (cbm_rom[i].addr==0x8000)
-					&&(cbm_rom[i].size=0x4000) ){
-					romh=cbm_rom[i].chip+0x2000;
-				}
-			}
-		} else /*if ((cartridgetype == CartridgeC64)||
-				 (cartridgetype == CartridgeUltimax) )*/{
-			roml=c64_roml;
-			romh=c64_romh;
-			memset(roml, 0, 0x2000);
-			memset(romh, 0, 0x2000);
-			for (i=0; (i<sizeof(cbm_rom)/sizeof(cbm_rom[0]))
-					 &&(cbm_rom[i].size!=0); i++) {
-				if ((cbm_rom[i].addr==CBM_ROM_ADDR_UNKNOWN)
-					||(cbm_rom[i].addr==CBM_ROM_ADDR_LO) ) {
-					memcpy(roml+0x2000-cbm_rom[i].size,
-						   cbm_rom[i].chip, cbm_rom[i].size);
-				} else if ( ((cartridgetype == CartridgeC64)
-					  &&(cbm_rom[i].addr==CBM_ROM_ADDR_HI))
-					 ||((cartridgetype==CartridgeUltimax)
-						&&(cbm_rom[i].addr==CBM_ROM_ADDR_HI)) ) {
-					memcpy(romh+0x2000-cbm_rom[i].size,
-						   cbm_rom[i].chip, cbm_rom[i].size);
-				} else if (cbm_rom[i].addr<0xc000) {
-					memcpy(roml+cbm_rom[i].addr-0x8000, cbm_rom[i].chip,
-						   cbm_rom[i].size);
-				} else {
-					memcpy(romh+cbm_rom[i].addr-0xe000,
-						   cbm_rom[i].chip, cbm_rom[i].size);
-				}
-			}
-		}
+	    logerror("Cartridge type not recognized using Machine type\n");
 	}
+	if (C64_MODULE && (cartridgetype == CartridgeUltimax))
+	{
+	    logerror("Cartridge could be ultimax type!?\n");
+	}
+	if (ULTIMAX_MODULE && (cartridgetype == CartridgeC64))
+	{
+	    logerror("Cartridge could be c64 type!?\n");
+	}
+	if (C64_MODULE)
+	    cartridgetype = CartridgeC64;
+	else if (ULTIMAX_MODULE)
+	    cartridgetype = CartridgeUltimax;
+	else if (SUPERGAMES_MODULE)
+	    cartridgetype = CartridgeSuperGames;
+	else if (ROBOCOP2_MODULE)
+	    cartridgetype = CartridgeRobocop2;
+	if ((cbm_c64_exrom!=-1)&&(cbm_c64_game!=-1)) {
+	    c64_exrom=cbm_c64_exrom;
+	    c64_game=cbm_c64_game;
+	} else if (ultimax || (cartridgetype == CartridgeUltimax)) {
+	    c64_game = 0;
+	} else {
+	    c64_exrom = 0;
+	}
+	if (ultimax) {
+	    for (i=0; (i<sizeof(cbm_rom)/sizeof(cbm_rom[0]))
+		     &&(cbm_rom[i].size!=0); i++) {
+		if (cbm_rom[i].addr==CBM_ROM_ADDR_LO) {
+		    memcpy(c64_memory+0x8000+0x2000-cbm_rom[i].size,
+			   cbm_rom[i].chip, cbm_rom[i].size);
+		} else if ((cbm_rom[i].addr==CBM_ROM_ADDR_HI)
+			   ||(cbm_rom[i].addr==CBM_ROM_ADDR_UNKNOWN)) {
+		    memcpy(c64_memory+0xe000+0x2000-cbm_rom[i].size,
+			   cbm_rom[i].chip, cbm_rom[i].size);
+		} else {
+		    memcpy(c64_memory+cbm_rom[i].addr, cbm_rom[i].chip,
+			   cbm_rom[i].size);
+		}
+	    }
+        } else if ( (cartridgetype==CartridgeRobocop2)
+		    ||(cartridgetype==CartridgeSuperGames) ) {
+	    roml=0;
+	    romh=0;
+	    for (i=0; (i<sizeof(cbm_rom)/sizeof(cbm_rom[0]))
+		     &&(cbm_rom[i].size!=0); i++) {
+		if (!roml
+		    && ((cbm_rom[i].addr==CBM_ROM_ADDR_UNKNOWN)
+			||(cbm_rom[i].addr==CBM_ROM_ADDR_LO)
+			||(cbm_rom[i].addr==0x8000)) ) {
+		    roml=cbm_rom[i].chip;
+		}
+		if (!romh
+		    && ((cbm_rom[i].addr==CBM_ROM_ADDR_HI)
+			||(cbm_rom[i].addr==0xa000) ) ){
+		    romh=cbm_rom[i].chip;
+		}
+		if (!romh
+		    && (cbm_rom[i].addr==0x8000)
+		    &&(cbm_rom[i].size=0x4000) ){
+		    romh=cbm_rom[i].chip+0x2000;
+		}
+	    }
+	} else /*if ((cartridgetype == CartridgeC64)||
+				 (cartridgetype == CartridgeUltimax) )*/{
+	    roml=c64_roml;
+	    romh=c64_romh;
+	    memset(roml, 0, 0x2000);
+	    memset(romh, 0, 0x2000);
+	    for (i=0; (i<sizeof(cbm_rom)/sizeof(cbm_rom[0]))
+		     &&(cbm_rom[i].size!=0); i++) {
+		if ((cbm_rom[i].addr==CBM_ROM_ADDR_UNKNOWN)
+		    ||(cbm_rom[i].addr==CBM_ROM_ADDR_LO) ) {
+		    memcpy(roml+0x2000-cbm_rom[i].size,
+			   cbm_rom[i].chip, cbm_rom[i].size);
+		} else if ( ((cartridgetype == CartridgeC64)
+			     &&(cbm_rom[i].addr==CBM_ROM_ADDR_HI))
+			    ||((cartridgetype==CartridgeUltimax)
+			       &&(cbm_rom[i].addr==CBM_ROM_ADDR_HI)) ) {
+		    memcpy(romh+0x2000-cbm_rom[i].size,
+			   cbm_rom[i].chip, cbm_rom[i].size);
+		} else if (cbm_rom[i].addr<0xc000) {
+		    memcpy(roml+cbm_rom[i].addr-0x8000, cbm_rom[i].chip,
+			   cbm_rom[i].size);
+		} else {
+		    memcpy(romh+cbm_rom[i].addr-0xe000,
+			   cbm_rom[i].chip, cbm_rom[i].size);
+		}
+	    }
+	}
+    }
 }
 
 int c64_frame_interrupt (void)
 {
 	static int quickload = 0;
-	static int nmilevel = 0;
 	static int monitor=-1;
 	int value, value2;
 
 	sid6581_update();
 
-	if (nmilevel != KEY_RESTORE)
-	{
-		if (c128) {
-			if (cpu_getactivecpu()==0) { /* z80 */
-				cpu_set_nmi_line (0, KEY_RESTORE);
-			} else {
-				cpu_set_nmi_line (1, KEY_RESTORE);
-			}
-		} else {
-			cpu_set_nmi_line (0, KEY_RESTORE);
-		}
-		nmilevel = KEY_RESTORE;
-	}
+	c64_nmi();
 
 	if (!quickload && QUICKLOAD) {
 		if (c65) {
