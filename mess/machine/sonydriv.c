@@ -89,8 +89,8 @@ typedef struct
 
 	unsigned int loadedtrack_valid : 1;	/* is data in track buffer valid ? */
 	unsigned int loadedtrack_dirty : 1;	/* has data in track buffer been modified? */
-	UINT32 loadedtrack_size;			/* size of loaded track */
-	UINT32 loadedtrack_pos;				/* position within loaded track */
+	size_t loadedtrack_size;			/* size of loaded track */
+	size_t loadedtrack_pos;				/* position within loaded track */
 	UINT8 *loadedtrack_data;			/* pointer to track buffer */
 } floppy;
 
