@@ -120,12 +120,12 @@ static int rom16_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
 
 static int rom16_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 {
-    int pos;
+    int pos = 0;
 	rom16_iterator *iter=(rom16_iterator*)enumeration;
 
 	ent->corrupt=0;
 	ent->eof=0;
-	
+
 	switch (iter->index) {
 	case 0:
 	    pos=0;
@@ -179,7 +179,7 @@ static int rom16_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 	return 0;
 }
 
-static int rom16_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, 
+static int rom16_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef,
 							   const ResolvedOption *options)
 {
 	rom16_image *image=(rom16_image*)img;
@@ -210,7 +210,7 @@ static int rom16_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef,
 static int rom16_image_create(STREAM *f, const ResolvedOption *options)
 {
 //	if (options->label) strcpy(header.name, options->label);
-	return (stream_write(f, &header, sizeof(crt_header)) == sizeof(crt_header)) 
+	return (stream_write(f, &header, sizeof(crt_header)) == sizeof(crt_header))
 		? 0 : IMGTOOLERR_WRITEERROR;
 }
 #endif
