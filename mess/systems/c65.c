@@ -363,13 +363,13 @@ static SID6581_interface ntsc_sound_interface =
 	2,
 	{
 		{
-			MIXER(50, MIXER_PAN_LEFT),
+			MIXER(50, MIXER_PAN_RIGHT),
 			MOS8580,
 			985248,
 			c64_paddle_read
 		},
 		{
-			MIXER(50, MIXER_PAN_RIGHT),
+			MIXER(50, MIXER_PAN_LEFT),
 			MOS8580,
 			985248,
 			NULL
@@ -387,13 +387,13 @@ static SID6581_interface pal_sound_interface =
 	2,
 	{
 		{
-			MIXER(50, MIXER_PAN_LEFT),
+			MIXER(50, MIXER_PAN_RIGHT),
 			MOS8580,
 			1022727,
 			c64_paddle_read
 		},
 		{
-			MIXER(50, MIXER_PAN_RIGHT),
+			MIXER(50, MIXER_PAN_LEFT),
 			MOS8580,
 			1022727,
 			NULL
