@@ -1,5 +1,5 @@
 #include "driver.h"
-#include "gregoria.h"
+#include "mscommon.h"
 #include "includes/pcshare.h"
 #include "includes/ibmpc.h"
 

@@ -8,7 +8,7 @@
 
 #include "includes/pc_mda.h"
 #include "includes/pc_cga.h" //for the cga palette hack
-#include "statetxt.h"
+#include "mscommon.h"
 
 #define VERBOSE_MDA 0		/* MDA (Monochrome Display Adapter) */
 

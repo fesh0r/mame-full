@@ -55,7 +55,7 @@ TODO:
 #include "includes/basicdsk.h"
 #include "cassette.h"
 #include "image.h"
-#include "gregoria.h"
+#include "mscommon.h"
 #include "ti99_4x.h"
 
 

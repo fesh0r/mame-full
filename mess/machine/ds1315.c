@@ -1,7 +1,7 @@
 #include <time.h>
 #include "driver.h"
 #include "ds1315.h"
-#include "bcd.h"
+#include "mscommon.h"
 
 /* This is an emulation of Dallas Semiconductor's Phantom Time Chip.
    DS1315.

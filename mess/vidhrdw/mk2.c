@@ -4,7 +4,7 @@
 #include "driver.h"
 #include "artwork.h"
 #include "vidhrdw/generic.h"
-#include "led.h"
+#include "mscommon.h"
 
 #include "includes/mk2.h"
 

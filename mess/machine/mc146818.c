@@ -9,8 +9,7 @@
 #include "driver.h"
 
 #include "includes/mc146818.h"
-#include "bcd.h"
-#include "gregoria.h"
+#include "mscommon.h"
 
 #if 0
 #define DBG_LOG(level, text, print) \

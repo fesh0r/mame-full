@@ -60,7 +60,7 @@
 #include "osd_cpu.h"
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "statetxt.h"
+#include "mscommon.h"
 #include "utils.h"
 
 

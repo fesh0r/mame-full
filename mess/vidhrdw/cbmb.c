@@ -8,7 +8,7 @@
 
 #include "vidhrdw/generic.h"
 #include "includes/crtc6845.h"
-#include "statetxt.h"
+#include "mscommon.h"
 #include "includes/cbmb.h"
 
 static int cbmb_font=0;

@@ -18,7 +18,7 @@
 #include "includes/vic6567.h"
 #include "includes/crtc6845.h"
 #include "includes/sid6581.h"
-#include "statetxt.h"
+#include "mscommon.h"
 
 #include "includes/cbmb.h"
 

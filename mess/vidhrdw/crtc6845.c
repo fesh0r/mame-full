@@ -11,7 +11,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-#include "statetxt.h"
+#include "mscommon.h"
 #include "includes/crtc6845.h"
 
 #define VERBOSE 0

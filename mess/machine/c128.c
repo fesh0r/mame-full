@@ -19,7 +19,7 @@
 #include "includes/vic6567.h"
 #include "includes/vdc8563.h"
 #include "includes/sid6581.h"
-#include "statetxt.h"
+#include "mscommon.h"
 
 #include "includes/c128.h"
 
@@ -845,25 +845,6 @@ VIDEO_UPDATE( c128 )
 void c128_state(void)
 {
 	char text[70];
-
-#if VERBOSE_DBG
-# if 0
-	cia6526_status (text, sizeof (text));
-	statetext_display_text (This, text, &y);
-
-#  if 1
-	snprintf (text, size, "c128 vic:%.5x m6510:%d exrom:%d game:%d",
-			  c128_vicaddr - c64_memory, c64_port6510 & 7,
-			  c64_exrom, c64_game);
-#  else
-	snprintf (text, size, "size:%.4x %s %s %.6x %s %.6x %.6x",
-			  MMU_SIZE, MMU_BOTTOM?"bottom":"", MMU_TOP?"top":"",MMU_RAM_ADDR, MMU_IO_ON?"io":"",
-			  MMU_PAGE0, MMU_PAGE1);
-#  endif
-	statetext_display_text (text);
-# endif
-
-#endif
 
 	vc20_tape_status (text, sizeof (text));
 	statetext_display_text (text);

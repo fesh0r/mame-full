@@ -61,9 +61,6 @@ static int in_sync = 0; 		/* flag if writing to tape detected the sync header A5
 static int put_cycles = 0;		/* cycle count at last output port change */
 static int get_cycles = 0;		/* cycle count at last input port read */
 
-int trs80_videoram_r(int offset);
-void trs80_videoram_w(int offset, int data);
-
 static void tape_put_byte(UINT8 value);
 static void tape_get_open(void);
 static void tape_put_close(void);

@@ -7,7 +7,7 @@
 #include <time.h>
 #include "driver.h"
 #include "m6242b.h"
-#include "bcd.h"
+#include "mscommon.h"
 
 static void UpdateTimeRegisters( void );
 

@@ -16,7 +16,7 @@
 #include <assert.h>
 #include "osd_cpu.h"
 #include "driver.h"
-#include "statetxt.h"
+#include "mscommon.h"
 
 #include "includes/crtc6845.h" // include only several register defines
 #include "includes/vdc8563.h"

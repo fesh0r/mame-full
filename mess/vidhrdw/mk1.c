@@ -5,7 +5,7 @@
 #include "driver.h"
 #include "artwork.h"
 #include "vidhrdw/generic.h"
-#include "led.h"
+#include "mscommon.h"
 
 #include "includes/mk1.h"
 
@@ -28,13 +28,12 @@ PALETTE_INIT( mk1 )
 
 VIDEO_START( mk1 )
 {
-	// artwork seams to need this
+	/* artwork seams to need this */
     videoram_size = 6 * 2 + 24;
     videoram = (UINT8*)auto_malloc (videoram_size);
 	if (!videoram)
         return 1;
-
-	return video_start_generic();
+	return 0;
 }
 
 UINT8 mk1_led[4]= {0};
@@ -95,7 +94,8 @@ VIDEO_UPDATE( mk1 )
 {
 	int i;
 
-	for (i=0; i<4; i++) {
+	for (i = 0; i < 4; i++)
+	{
 		mk1_draw_9segment(bitmap, mk1_led[i], mk1_led_pos[i].x, mk1_led_pos[i].y);
 		mk1_led[i]=0;
 	}

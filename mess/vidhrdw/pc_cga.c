@@ -5,11 +5,10 @@
 ***************************************************************************/
 #include "driver.h"
 #include "vidhrdw/generic.h"
-//#include "includes/pc.h"
 
 #include "includes/crtc6845.h"
 #include "includes/pc_cga.h"
-#include "statetxt.h"
+#include "mscommon.h"
 
 #define VERBOSE_CGA 0		/* CGA (Color Graphics Adapter) */
 

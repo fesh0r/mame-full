@@ -46,7 +46,7 @@
 #include "includes/nec765.h"
 
 #include "includes/pcshare.h"
-#include "statetxt.h"
+#include "mscommon.h"
 
 #define VERBOSE_DBG 0       /* general debug messages */
 #if VERBOSE_DBG

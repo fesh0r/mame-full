@@ -12,7 +12,7 @@
 
 #include "includes/crtc6845.h"
 #include "includes/vga.h"
-#include "statetxt.h"
+#include "mscommon.h"
 
 //#define VGA_GFX
 

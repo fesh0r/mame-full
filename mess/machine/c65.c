@@ -16,7 +16,7 @@
 #include "includes/vc1541.h"
 #include "includes/vic4567.h"
 #include "includes/sid6581.h"
-#include "statetxt.h"
+#include "mscommon.h"
 
 #include "includes/c65.h"
 

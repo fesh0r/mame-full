@@ -26,7 +26,7 @@
 #include "includes/vic6567.h"
 #include "includes/vdc8563.h"
 #include "includes/sid6581.h"
-#include "statetxt.h"
+#include "mscommon.h"
 
 #include "includes/c128.h"
 #include "includes/c65.h"

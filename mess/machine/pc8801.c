@@ -1,11 +1,11 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.8 2002/09/11 15:53:13 rnabet Exp $
+  $Id: pc8801.c,v 1.9 2002/12/12 18:07:03 npwoods Exp $
 
 ***************************************************************************/
 
 #include <time.h>
-#include "bcd.h"
+#include "mscommon.h"
 #include "driver.h"
 #include "timer.h"
 #include "includes/pc8801.h"

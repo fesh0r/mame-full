@@ -2,7 +2,7 @@
 #include "vidhrdw/vector.h"
 #include "vidhrdw/generic.h"
 #include "machine/6522via.h"
-#include "led.h"
+#include "mscommon.h"
 
 #include "includes/vectrex.h"
 

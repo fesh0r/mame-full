@@ -9,7 +9,7 @@
 #include "cpu/m6809/m6809.h"
 
 #include "vidhrdw/generic.h"
-#include "statetxt.h"
+#include "mscommon.h"
 
 #define VERBOSE_DBG 1
 #include "includes/cbm.h"

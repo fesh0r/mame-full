@@ -20,7 +20,7 @@
 
 #include "includes/pic8259.h"
 #include "includes/dma8237.h"
-#include "statetxt.h"
+#include "mscommon.h"
 
 #include "includes/pc_hdc.h"
 

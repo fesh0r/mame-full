@@ -4,8 +4,7 @@
 #include "includes/pcshare.h"
 #include "includes/pit8253.h"
 #include "includes/pc_aga.h"
-#include "bcd.h"
-#include "gregoria.h"
+#include "mscommon.h"
 
 /*
 

@@ -10,7 +10,7 @@
 #include "includes/pc_cga.h" // cga monitor palette
 #include "includes/pc_aga.h" //europc charset
 #include "includes/pc_t1t.h"
-#include "statetxt.h"
+#include "mscommon.h"
 
 #define VERBOSE_T1T 1		/* T1T (Tandy 1000 Graphics Adapter) */
 

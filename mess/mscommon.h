@@ -9,9 +9,18 @@
 #ifndef MSCOMMON_H
 #define MSCOMMON_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "driver.h"
 
-/* terminal code */
+/***************************************************************************
+
+	Terminal code
+
+***************************************************************************/
+
 struct terminal;
 
 struct terminal *terminal_create(
@@ -25,13 +34,84 @@ void terminal_putchar(struct terminal *terminal, int x, int y, int ch);
 int terminal_getchar(struct terminal *terminal, int x, int y);
 void terminal_setcursor(struct terminal *terminal, int x, int y);
 void terminal_hidecursor(struct terminal *terminal);
-void terminal_setcursor(struct terminal *terminal, int x, int y);
-void terminal_hidecursor(struct terminal *terminal);
+void terminal_getcursor(struct terminal *terminal, int *x, int *y);
+void terminal_clear(struct terminal *terminal, int val);
 
-/* handy functions for memory pools */
+/***************************************************************************
+
+	LED code
+
+***************************************************************************/
+
+/* draw_led() will both draw led (where the pixels are identified by '1' or
+ * x-segment displays (where the pixels are masked with lowercase letters)
+ *
+ * the value of 'valueorcolor' is a mask when lowercase letters are in the led
+ * string or is a color when '1' characters are in the led string
+ */
+void draw_led(struct mame_bitmap *bitmap, const char *led, int valueorcolor, int x, int y);
+
+/* a radius two led:
+ *
+ *	" 111\r"
+ *	"11111\r"
+ *	"11111\r"
+ *	"11111\r"
+ *	" 111";
+ */
+extern const char *radius_2_led;
+
+/***************************************************************************
+
+	Pool code
+
+***************************************************************************/
+
 void pool_init(void **pool);
 void pool_exit(void **pool);
 void *pool_malloc(void **pool, size_t size);
 char *pool_strdup(void **pool, const char *src);
+
+/***************************************************************************
+
+	Binary coded decimal
+
+***************************************************************************/
+
+int bcd_adjust(int value);
+int dec_2_bcd(int a);
+int bcd_2_dec(int a);
+
+/***************************************************************************
+
+	Gregorian calendar code
+
+***************************************************************************/
+
+int	gregorian_is_leap_year(int year);
+
+/* months are one counted */
+int gregorian_days_in_month(int month, int year);
+
+/***************************************************************************
+
+	PeT's state text code
+
+***************************************************************************/
+
+/* call this at init time to add your state functions */
+void statetext_add_function(void (*function)(void));
+
+/* call this in your state function to output text */
+void statetext_display_text(const char *text);
+
+/* call this at last after updating your frame */
+void statetext_display(struct mame_bitmap *bitmap);
+
+/**************************************************************************/
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* MSCOMMON_H */
