@@ -121,7 +121,7 @@ Versions:
 
 */
 
-UINT32 a7800_partialcrc(const unsigned char *buf,unsigned int size)
+UINT32 a7800_partialcrc(const unsigned char *buf, size_t size)
 {
 	UINT32 crc;
 	if(size < 129)
