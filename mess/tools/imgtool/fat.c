@@ -1010,7 +1010,7 @@ static imgtoolerr_t fat_seek_file(imgtool_image *image, struct fat_file *file, U
 		}
 
 		/* skip ahead clusters */
-		while((file->cluster_index + disk_info->cluster_size) < pos)
+		while((file->cluster_index + disk_info->cluster_size) <= pos)
 		{
 			if (!fat_table)
 			{
@@ -1898,7 +1898,6 @@ static imgtoolerr_t fat_lookup_path(imgtool_image *image, const char *path,
 		if (ent.eof)
 		{
 			/* it seems that we have reached the end of this directory */
-
 			if (!created_entry)
 			{
 				err = IMGTOOLERR_FILENOTFOUND;
@@ -1935,6 +1934,8 @@ static imgtoolerr_t fat_lookup_path(imgtool_image *image, const char *path,
 				}
 				while(bumped_sfn);
 			}
+
+			LOG(("fat_lookup_path(): creating entry; pos=%u length=%u\n", freeent.position, freeent.required_size));
 
 			err = fat_set_file_size(image, file, MAX(file->filesize, freeent.position + created_entry_len));
 			if (err)
