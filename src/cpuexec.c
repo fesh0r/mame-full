@@ -282,6 +282,10 @@ static void cpu_pre_run(void)
 
 static void cpu_post_run(void)
 {
+#ifdef MESS
+	image_unload_all(FALSE);
+#endif
+
 	/* write hi scores to disk - No scores saving if cheat */
 	hs_close();
 

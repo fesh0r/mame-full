@@ -62,7 +62,6 @@ static int distribute_images(struct distributed_images *images)
 	{
 		int type = options.image_files[i].type;
 
-		assert(options.image_files[i].name);
 		assert(type < IO_COUNT);
 
 		/* Do we have too many devices? */
@@ -290,7 +289,7 @@ void devices_exit(void)
 	int id;
 
 	/* unload all devices */
-	image_unload_all();
+	image_unload_all(TRUE);
 
 	/* exit all devices */
 	for(dev = device_first(Machine->gamedrv); dev; dev = device_next(Machine->gamedrv, dev))

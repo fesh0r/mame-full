@@ -12,7 +12,7 @@ void image_exit(int type, int id);
 /* can be called by front ends */
 int image_load(int type, int id, const char *name);
 void image_unload(int type, int id);
-void image_unload_all(void);
+void image_unload_all(int ispreload);
 
 mame_file *image_fp(int type, int id);
 

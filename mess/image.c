@@ -138,6 +138,8 @@ int image_load(int type, int id, const char *name)
 	img->name = newname;
 	img->dir = NULL;
 
+	osd_image_load_status_changed(type, id);
+
 	if (!dev->load)
 		goto error;
 
@@ -183,7 +185,6 @@ int image_load(int type, int id, const char *name)
 
 	img->status &= ~IMAGE_STATUS_ISLOADING;
 	img->status |= IMAGE_STATUS_ISLOADED;
-	osd_image_load_status_changed(type, id);
 	return INIT_PASS;
 
 error:
@@ -197,6 +198,9 @@ error:
 		img->name = NULL;
 		img->status &= ~IMAGE_STATUS_ISLOADING|IMAGE_STATUS_ISLOADED;
 	}
+
+	osd_image_load_status_changed(type, id);
+
 	return INIT_FAIL;
 }
 
@@ -221,14 +225,26 @@ void image_unload(int type, int id)
 	osd_image_load_status_changed(type, id);
 }
 
-void image_unload_all(void)
+void image_unload_all(int ispreload)
 {
-	int type, id;
+	int id;
+	const struct IODevice *dev;
 
-	for (type = 0; type < IO_COUNT; type++)
+	/* normalize ispreload */
+	ispreload = ispreload ? DEVICE_LOAD_AT_INIT : 0;
+
+	/* unload all devices with matching preload */
+	for(dev = device_first(Machine->gamedrv); dev; dev = device_next(Machine->gamedrv, dev))
 	{
-		for (id = 0; id < MAX_DEV_INSTANCES; id++)
-			image_unload(type, id);
+		if ((dev->flags & DEVICE_LOAD_AT_INIT) == ispreload)
+		{
+			/* all instances */
+			for( id = 0; id < dev->count; id++ )
+			{
+				/* unload this image */
+				image_unload(dev->type, id);
+			}
+		}
 	}
 }
 
@@ -460,7 +476,8 @@ const char *image_filetype(int type, int id)
 {
 	const char *s;
 	s = image_filename(type, id);
-	s = strrchr(s, '.');
+	if (s)
+		s = strrchr(s, '.');
 	return s ? s+1 : NULL;
 }
 
