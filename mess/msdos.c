@@ -607,10 +607,12 @@ void list_mess_info(char *gamename, char *arg, int listclones)
 			   "    parsec = -cart parsecg.bin -cart parsecc.bin \n\n"
 			   "So to load these files, you would simply then type:\n\n"
 			   "    MESS ti99_4a -alias parsec\n\n"
-			   "and both cartridges will be attached to the TI99_4a.\n\n\n\n\n");
+			   "and both cartridges will be attached to the TI99_4a.\n\n\n");
 
 
-
+		printf("To automatically create the individual system directories in the \n"
+		       "SOFTWARE folder, use:\n"
+		       "MESS -createdir\n\n\n\n\n\n");
 
 		printf("DEVICE support list\n");
 		printf("===================\n");
