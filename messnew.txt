@@ -23,6 +23,11 @@ System Driver Changes:
   Added support for the memory sense switch used to select between 64/32, 16 and
   4K. [tim lindner]
   
+- [APF Imagination] Cassette loading and saving is working. Disc emulation is working.
+  Added some more key definitions. [Kev Thacker]
+
+- [ORIC] Fixed cassette loading and saving. [Kev Thacker, Mathis Rosenhauer]
+
 Source Changes:
 ---------------
 
