@@ -10,6 +10,7 @@ UINT32 *back_ram, *mid_ram, *fore_ram, *scroll_ram;
 UINT32 bg_2layer;
 
 static UINT32 layer_bank;
+static UINT32 layer_enable;
 
 READ32_HANDLER( spi_layer_bank_r )
 {
@@ -19,6 +20,14 @@ READ32_HANDLER( spi_layer_bank_r )
 WRITE32_HANDLER( spi_layer_bank_w )
 {
 	COMBINE_DATA( &layer_bank );
+}
+
+WRITE32_HANDLER( spi_layer_enable_w )
+{
+	COMBINE_DATA( &layer_enable );
+	tilemap_set_enable(back_layer, (layer_enable & 0x1) ^ 0x1);
+	tilemap_set_enable(mid_layer, ((layer_enable >> 2) & 0x1) ^ 0x1);
+	tilemap_set_enable(fore_layer, ((layer_enable >> 1) & 0x1) ^ 0x1);
 }
 
 static int sprite_xtable[2][8] =
@@ -34,7 +43,8 @@ static int sprite_ytable[2][8] =
 
 static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri_mask)
 {
-	int xpos, ypos, tile_num, color;
+	INT16 xpos, ypos;
+	int tile_num, color;
 	int width, height;
 	int flip_x = 0, flip_y = 0;
 	int a;
@@ -47,12 +57,8 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 		if( !tile_num )
 			continue;
 
-		xpos = spriteram32[a + 1] & 0x3fff;
-		if( xpos & 0x2000 )
-			xpos |= 0xffffc000;
-		ypos = (spriteram32[a + 1] >> 16) & 0x3fff;
-		if( ypos & 0x2000 )
-			ypos |= 0xffffc000;
+		xpos = spriteram32[a + 1] & 0xffff;
+		ypos = (spriteram32[a + 1] >> 16) & 0xffff;
 		color = (spriteram32[a + 0] & 0x3f);
 
 		width = ((spriteram32[a + 0] >> 8) & 0x7) + 1;
@@ -208,16 +214,20 @@ static void set_scroll(struct tilemap *layer, int scroll)
 
 VIDEO_UPDATE( spi )
 {
-	set_scroll(back_layer, 1);
-	set_scroll(mid_layer, 2);
-	set_scroll(fore_layer, 3);
+	set_scroll(back_layer, 0);
+	set_scroll(mid_layer, 1);
+	set_scroll(fore_layer, 2);
+
+	if( layer_enable & 0x1 )
+		fillbitmap(bitmap, 0, cliprect);
 
 	tilemap_draw(bitmap, cliprect, back_layer, 0,0);
 	if( !bg_2layer )
 		tilemap_draw(bitmap, cliprect, mid_layer, 0,0);
 	tilemap_draw(bitmap, cliprect, fore_layer, 0,0);
 
-	draw_sprites(bitmap, cliprect, 0);
+	if( (layer_enable & 0x10) == 0 )
+		draw_sprites(bitmap, cliprect, 0);
 
 	tilemap_draw(bitmap, cliprect, text_layer, 0,0);
 }

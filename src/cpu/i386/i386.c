@@ -490,8 +490,7 @@ static UINT8 i386_win_layout[] =
 unsigned i386_dasm(char *buffer, unsigned pc)
 {
 #ifdef MAME_DEBUG
-	extern unsigned DasmI386(char *, unsigned, unsigned, unsigned);
-	return DasmI386(buffer, pc, I.sreg[CS].d, I.sreg[CS].d);
+	return i386_dasm_one(buffer, pc, I.sreg[CS].d, I.sreg[CS].d);
 #else
 	sprintf( buffer, "$%02X", READ8(pc) );
 	return 1;

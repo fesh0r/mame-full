@@ -246,6 +246,7 @@ ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/i386
 CPUDEFS += -DHAS_I386=1
 CPUOBJS += $(OBJ)/cpu/i386/i386.o
+DBGOBJS += $(OBJ)/cpu/i386/i386dasm.o
 $(OBJ)/cpu/i386/i386.o: i386.c i386.h i386intf.h i386op16.c i386op16.h i386op32.c i386op32.h i386ops.c
 else
 CPUDEFS += -DHAS_I386=0

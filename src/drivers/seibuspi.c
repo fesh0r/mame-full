@@ -39,6 +39,8 @@
 #include "driver.h"
 #include "cpuintrf.h"
 #include "vidhrdw/generic.h"
+#include "machine/ds2404.h"
+#include "machine/eeprom.h"
 
 void seibuspi_text_decrypt(unsigned char *rom);
 void seibuspi_bg_decrypt(unsigned char *rom);
@@ -53,53 +55,19 @@ WRITE32_HANDLER( spi_fore_layer_w );
 WRITE32_HANDLER( spi_paletteram32_xBBBBBGGGGGRRRRR_w );
 READ32_HANDLER( spi_layer_bank_r );
 WRITE32_HANDLER( spi_layer_bank_w );
+WRITE32_HANDLER( spi_layer_enable_w );
 
 extern UINT32 *back_ram, *mid_ram, *fore_ram, *scroll_ram;
 extern int bg_2layer;
 
 /********************************************************************/
 static int z80_fifo_pos = 0;
-static int spi_single_board = 0;
 
 static UINT8 z80_semaphore = 0;
 static UINT8 z80_com = 0;
 static UINT8 i386_semaphore = 1;
 
 static int z80_lastbank;
-
-READ32_HANDLER( sound_0x400_r )
-{
-	return 0xffff;
-}
-
-READ32_HANDLER( sound_0x600_r )
-{
-	return 0xffffffff;
-}
-
-WRITE32_HANDLER( sound_0x600_w )
-{
-
-}
-
-READ32_HANDLER( sound_0x608_r )
-{
-	return 0xffffffff;
-}
-
-READ32_HANDLER( sound_6d0_r )
-{
-	if( ACCESSING_LSB32 ) {
-		return 0;
-	}
-	return 0;
-}
-
-static UINT32 sound_6d0;
-WRITE32_HANDLER( sound_6d0_w )
-{
-	COMBINE_DATA( &sound_6d0 );
-}
 
 READ32_HANDLER( sound_com_r )
 {
@@ -122,31 +90,67 @@ READ32_HANDLER( sound_semaphore_r )
 	return i386_semaphore;
 }
 
-WRITE32_HANDLER( sound_status_w )
+READ32_HANDLER( spi_unknown_r )
 {
+	return 0xffffffff;
+}
 
+WRITE32_HANDLER( ds2404_reset_w )
+{
+	if( ACCESSING_LSB32 ) {
+		DS2404_1W_reset_w(offset, data);
+	}
+}
+
+READ32_HANDLER( ds2404_data_r )
+{
+	if( ACCESSING_LSB32 ) {
+		return DS2404_data_r(offset);
+	}
+	return 0;
+}
+
+WRITE32_HANDLER( ds2404_data_w )
+{
+	if( ACCESSING_LSB32 ) {
+		DS2404_data_w(offset, data);
+	}
+}
+
+WRITE32_HANDLER( ds2404_clk_w )
+{
+	if( ACCESSING_LSB32 ) {
+		DS2404_clk_w(offset, data);
+	}
+}
+
+READ32_HANDLER( eeprom_r )
+{
+	/* TODO */
+	return 0;
+}
+
+WRITE32_HANDLER( eeprom_w )
+{
+	/* TODO */
 }
 
 WRITE32_HANDLER( z80_fifo_w )
 {
 	UINT8* ram = memory_region(REGION_CPU2);
-	if( !spi_single_board ) {
-		if( (mem_mask & 0xff) == 0 ) {
-			ram[z80_fifo_pos] = data & 0xff;
-			z80_fifo_pos++;
-		}
+	if( ACCESSING_LSB32 ) {
+		ram[z80_fifo_pos] = data & 0xff;
+		z80_fifo_pos++;
 	}
 }
 
 WRITE32_HANDLER( z80_enable_w )
 {
 	z80_fifo_pos = 0;
-	if( !spi_single_board ) {
-		if( data & 0x1 ) {
-			cpunum_set_halt_line( 1, CLEAR_LINE );
-		} else {
-			cpunum_set_halt_line( 1, ASSERT_LINE );
-		}
+	if( data & 0x1 ) {
+		cpunum_set_reset_line( 1, CLEAR_LINE );
+	} else {
+		cpunum_set_reset_line( 1, ASSERT_LINE );
 	}
 }
 
@@ -169,10 +173,6 @@ READ32_HANDLER( spi_controls2_r )
 	return 0xffffffff;
 }
 
-
-
-static UINT32 adpcm_data_0, adpcm_data_1;
-
 READ32_HANDLER( spi_6295_0_r )
 {
 	return OKIM6295_status_0_r(0);
@@ -185,17 +185,15 @@ READ32_HANDLER( spi_6295_1_r )
 
 WRITE32_HANDLER( spi_6295_0_w )
 {
-	COMBINE_DATA(&adpcm_data_0);
 	if( ACCESSING_LSB32 ) {
-		OKIM6295_data_0_w(0, adpcm_data_0 & 0xff);
+		OKIM6295_data_0_w(0, data & 0xff);
 	}
 }
 
 WRITE32_HANDLER( spi_6295_1_w )
 {
-	COMBINE_DATA(&adpcm_data_1);
 	if( ACCESSING_LSB32 ) {
-		OKIM6295_data_1_w(0, adpcm_data_1 & 0xff);
+		OKIM6295_data_1_w(0, data & 0xff);
 	}
 }
 
@@ -240,20 +238,24 @@ static READ8_HANDLER( z80_unk_r )
 static ADDRESS_MAP_START( spi_readmem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00000000, 0x00000417) AM_READ(MRA32_RAM)			/* Unknown */
 	AM_RANGE(0x00000418, 0x0000041b) AM_READ(spi_layer_bank_r)
-	AM_RANGE(0x0000041c, 0x0000042b) AM_READ(MRA32_RAM) AM_BASE(&scroll_ram)
+	AM_RANGE(0x0000041c, 0x0000041f) AM_READ(MRA32_NOP)
+	AM_RANGE(0x00000420, 0x0000042b) AM_READ(MRA32_RAM) AM_BASE(&scroll_ram)
 	AM_RANGE(0x0000042c, 0x000005ff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x00000600, 0x00000603) AM_READ(sound_0x600_r)		/* Unknown */
+	AM_RANGE(0x00000600, 0x00000603) AM_READ(spi_unknown_r)		/* Unknown */
 	AM_RANGE(0x00000604, 0x00000607) AM_READ(spi_controls1_r)	/* Player controls */
-	AM_RANGE(0x00000608, 0x0000060b) AM_READ(sound_0x608_r)		/* Unknown */
+	AM_RANGE(0x00000608, 0x0000060b) AM_READ(spi_unknown_r)		/* Unknown */
 	AM_RANGE(0x0000060c, 0x0000060f) AM_READ(spi_controls2_r)	/* Player controls (start) */
-	AM_RANGE(0x00000680, 0x00000683) AM_READ(sound_com_r)		/* Used in checksum checking */
+	AM_RANGE(0x00000680, 0x00000683) AM_READ(sound_com_r)
 	AM_RANGE(0x00000684, 0x00000687) AM_READ(sound_semaphore_r)
-	AM_RANGE(0x000006d0, 0x000006df) AM_READ(sound_6d0_r)
+	AM_RANGE(0x000006dc, 0x000006df) AM_READ(ds2404_data_r)
 	AM_RANGE(0x00000800, 0x00036fff) AM_READ(MRA32_RAM)
 	AM_RANGE(0x00037000, 0x00037fff) AM_READ(MRA32_RAM)		/* Sprites */
 	AM_RANGE(0x00038000, 0x000387ff) AM_READ(MRA32_RAM)		/* Background layer */
+	AM_RANGE(0x00038800, 0x00038fff) AM_READ(MRA32_RAM)
 	AM_RANGE(0x00039000, 0x000397ff) AM_READ(MRA32_RAM)		/* Foreground layer */
+	AM_RANGE(0x00039800, 0x00039fff) AM_READ(MRA32_RAM)
 	AM_RANGE(0x0003a000, 0x0003a7ff) AM_READ(MRA32_RAM)		/* Middle layer */
+	AM_RANGE(0x0003a800, 0x0003afff) AM_READ(MRA32_RAM)
 	AM_RANGE(0x0003b000, 0x0003bfff) AM_READ(MRA32_RAM)	 	/* Text layer */
 	AM_RANGE(0x0003c000, 0x0003efff) AM_READ(MRA32_RAM)	 	/* Palette */
 	AM_RANGE(0x0003f000, 0x0003ffff) AM_READ(MRA32_RAM)	 	/* Stack */
@@ -264,19 +266,23 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( spi_writemem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00000000, 0x00000417) AM_WRITE(MWA32_RAM)		/* Unknown */
 	AM_RANGE(0x00000418, 0x0000041b) AM_WRITE(spi_layer_bank_w)
-	AM_RANGE(0x0000041c, 0x0000042b) AM_WRITE(MWA32_RAM) AM_BASE(&scroll_ram)
+	AM_RANGE(0x0000041c, 0x0000041f) AM_WRITE(spi_layer_enable_w)
+	AM_RANGE(0x00000420, 0x0000042b) AM_WRITE(MWA32_RAM) AM_BASE(&scroll_ram)
 	AM_RANGE(0x0000042c, 0x000005ff) AM_WRITE(MWA32_RAM)
-	AM_RANGE(0x00000600, 0x00000603) AM_WRITE(sound_0x600_w)	/* Unknown */
-	AM_RANGE(0x00000680, 0x00000683) AM_WRITE(sound_com_w)		/* Used in checksum checking */
-	AM_RANGE(0x00000684, 0x00000687) AM_WRITE(sound_status_w)	/* Unknown */
-	AM_RANGE(0x00000688, 0x0000068b) AM_WRITE(z80_fifo_w)		/* FIFO port for Z80 code */
-	AM_RANGE(0x0000068c, 0x0000068f) AM_WRITE(z80_enable_w)		/* Used to enable Z80 after sending the program */
-	AM_RANGE(0x000006d0, 0x000006df) AM_WRITE(sound_6d0_w)
+	AM_RANGE(0x00000600, 0x00000603) AM_WRITE(MWA32_NOP)		/* Unknown */
+	AM_RANGE(0x00000680, 0x00000683) AM_WRITE(sound_com_w)
+	AM_RANGE(0x00000684, 0x00000687) AM_WRITE(MWA32_NOP)		/* Unknown */
+	AM_RANGE(0x000006d0, 0x000006d3) AM_WRITE(ds2404_reset_w)
+	AM_RANGE(0x000006d4, 0x000006d7) AM_WRITE(ds2404_data_w)
+	AM_RANGE(0x000006d8, 0x000006db) AM_WRITE(ds2404_clk_w)
 	AM_RANGE(0x00000800, 0x00036fff) AM_WRITE(MWA32_RAM)
 	AM_RANGE(0x00037000, 0x00037fff) AM_WRITE(MWA32_RAM) AM_BASE(&spriteram32) AM_SIZE(&spriteram_size)	/* Sprites */
 	AM_RANGE(0x00038000, 0x000387ff) AM_WRITE(spi_back_layer_w) AM_BASE(&back_ram)	/* Background layer */
+	AM_RANGE(0x00038800, 0x00038fff) AM_WRITE(MWA32_RAM)
 	AM_RANGE(0x00039000, 0x000397ff) AM_WRITE(spi_fore_layer_w) AM_BASE(&fore_ram)	/* Foreground layer */
+	AM_RANGE(0x00039800, 0x00039fff) AM_WRITE(MWA32_RAM)
 	AM_RANGE(0x0003a000, 0x0003a7ff) AM_WRITE(spi_mid_layer_w) AM_BASE(&mid_ram)	/* Middle layer */
+	AM_RANGE(0x0003a800, 0x0003afff) AM_WRITE(MWA32_RAM)
 	AM_RANGE(0x0003b000, 0x0003bfff) AM_WRITE(spi_textlayer_w) AM_BASE(&videoram32)	/* Text layer */
 	AM_RANGE(0x0003c000, 0x0003efff) AM_WRITE(spi_paletteram32_xBBBBBGGGGGRRRRR_w) AM_BASE(&paletteram32)
 	AM_RANGE(0x0003f000, 0x0003ffff) AM_WRITE(MWA32_RAM)			/* Stack */
@@ -325,15 +331,22 @@ static struct YMF271interface ymf271_interface =
 /********************************************************************/
 
 static ADDRESS_MAP_START( seibu386_readmem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x00000000, 0x000003ff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x0000041c, 0x0000042b) AM_READ(MRA32_RAM) AM_BASE(&scroll_ram)
+	AM_RANGE(0x00000000, 0x00000417) AM_READ(MRA32_RAM)
+	AM_RANGE(0x00000418, 0x0000041b) AM_READ(spi_layer_bank_r)
+	AM_RANGE(0x0000041c, 0x0000041f) AM_READ(MRA32_NOP)
+	AM_RANGE(0x00000420, 0x0000042b) AM_READ(MRA32_RAM) AM_BASE(&scroll_ram)
+	AM_RANGE(0x0000042c, 0x00000603) AM_READ(MRA32_NOP)
 	AM_RANGE(0x00000604, 0x00000607) AM_READ(spi_controls1_r)	/* Player controls */
+	AM_RANGE(0x00000608, 0x0000060b) AM_READ(eeprom_r)
 	AM_RANGE(0x0000060c, 0x0000060f) AM_READ(spi_controls2_r)	/* Player controls (start) */
 	AM_RANGE(0x00000800, 0x00036fff) AM_READ(MRA32_RAM)
 	AM_RANGE(0x00037000, 0x00037fff) AM_READ(MRA32_RAM)		/* Sprites */
 	AM_RANGE(0x00038000, 0x000387ff) AM_READ(MRA32_RAM)		/* Background layer */
+	AM_RANGE(0x00038800, 0x00038fff) AM_READ(MRA32_RAM)
 	AM_RANGE(0x00039000, 0x000397ff) AM_READ(MRA32_RAM)		/* Foreground layer */
+	AM_RANGE(0x00039800, 0x00039fff) AM_READ(MRA32_RAM)
 	AM_RANGE(0x0003a000, 0x0003a7ff) AM_READ(MRA32_RAM)		/* Middle layer */
+	AM_RANGE(0x0003a800, 0x0003afff) AM_READ(MRA32_RAM)
 	AM_RANGE(0x0003b000, 0x0003bfff) AM_READ(MRA32_RAM)	 	/* Text layer */
 	AM_RANGE(0x0003c000, 0x0003efff) AM_READ(MRA32_RAM)	 	/* Palette */
 	AM_RANGE(0x0003f000, 0x0003ffff) AM_READ(MRA32_RAM)	 	/* Stack */
@@ -344,13 +357,20 @@ static ADDRESS_MAP_START( seibu386_readmem, ADDRESS_SPACE_PROGRAM, 32 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( seibu386_writemem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x00000000, 0x000003ff) AM_WRITE(MWA32_RAM)
-	AM_RANGE(0x0000041c, 0x0000042b) AM_WRITE(MWA32_RAM) AM_BASE(&scroll_ram)
+	AM_RANGE(0x00000000, 0x00000417) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0x00000418, 0x0000041b) AM_WRITE(spi_layer_bank_w)
+	AM_RANGE(0x0000041c, 0x0000041f) AM_WRITE(spi_layer_enable_w)
+	AM_RANGE(0x00000420, 0x0000042b) AM_WRITE(MWA32_RAM) AM_BASE(&scroll_ram)
+	AM_RANGE(0x0000042c, 0x00000603) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0x0000068c, 0x0000068f) AM_WRITE(eeprom_w)
 	AM_RANGE(0x00000800, 0x00036fff) AM_WRITE(MWA32_RAM)
 	AM_RANGE(0x00037000, 0x00037fff) AM_WRITE(MWA32_RAM) AM_BASE(&spriteram32) AM_SIZE(&spriteram_size)	/* Sprites */
 	AM_RANGE(0x00038000, 0x000387ff) AM_WRITE(spi_back_layer_w) AM_BASE(&back_ram)	/* Background layer */
+	AM_RANGE(0x00038800, 0x00038fff) AM_WRITE(MWA32_RAM)
 	AM_RANGE(0x00039000, 0x000397ff) AM_WRITE(spi_fore_layer_w) AM_BASE(&fore_ram)	/* Foreground layer */
+	AM_RANGE(0x00039800, 0x00039fff) AM_WRITE(MWA32_RAM)
 	AM_RANGE(0x0003a000, 0x0003a7ff) AM_WRITE(spi_mid_layer_w) AM_BASE(&mid_ram)	/* Middle layer */
+	AM_RANGE(0x0003a800, 0x0003afff) AM_WRITE(MWA32_RAM)
 	AM_RANGE(0x0003b000, 0x0003bfff) AM_WRITE(spi_textlayer_w) AM_BASE(&videoram32)	/* Text layer */
 	AM_RANGE(0x0003c000, 0x0003efff) AM_WRITE(spi_paletteram32_xBBBBBGGGGGRRRRR_w) AM_BASE(&paletteram32)
 	AM_RANGE(0x0003f000, 0x0003ffff) AM_WRITE(MWA32_RAM)			/* Stack */
@@ -427,35 +447,52 @@ INPUT_PORTS_END
 
 /* E-Jan Highschool has a keyboard with the following keys
    The keys are encoded with 6 bits
-   A - 000010
-   B - 010000
-   E - 000011
-   F - 011000
-   I - 000100
-   J - 100000
-   M - 000101
-   N - 101000
-   KAN - 000110
-   REACH - 110000
-   Start - 000111
+   A - 000010 port 0
+   B - 010000 port 0
+   C - 000010 port 1
+   D - 010000 port 1
+   E - 000011 port 0
+   F - 011000 port 0
+   G - 000011 port 1
+   H - 011000 port 1
+   I - 000100 port 0
+   J - 100000 port 0
+   K - 000100 port 1
+   L - 100000 port 1
+   M - 000101 port 0
+   N - 101000 port 0
+   CHI - 000101 port 1
+   PON - 101000 port 1
+   KAN - 000110 port 0
+   REACH - 110000 port 0
+   RON - 000110 port 1
+   Start - 000111 port 0
 */
 
 INPUT_PORTS_START( spi_ejanhs )
 	PORT_START
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
-	PORT_BIT( 0x03, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
-	PORT_BIT( 0x18, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON6 | IPF_PLAYER1 )
-	PORT_BIT( 0x05, IP_ACTIVE_LOW, IPT_BUTTON7 | IPF_PLAYER1 )
-	PORT_BIT( 0x28, IP_ACTIVE_LOW, IPT_BUTTON8 | IPF_PLAYER1 )
-	PORT_BIT( 0x06, IP_ACTIVE_LOW, IPT_BUTTON9 | IPF_PLAYER1 )
-	PORT_BIT( 0x30, IP_ACTIVE_LOW, IPT_BUTTON10 | IPF_PLAYER1 )
+	PORT_BIT( 0x03, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER1 )
+	PORT_BIT( 0x18, IP_ACTIVE_LOW, IPT_BUTTON6 | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON8 | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON9 | IPF_PLAYER1 )
+	PORT_BIT( 0x05, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x28, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
+	PORT_BIT( 0x06, IP_ACTIVE_LOW, IPT_BUTTON7 | IPF_PLAYER2 )
+	PORT_BIT( 0x30, IP_ACTIVE_LOW, IPT_BUTTON8 | IPF_PLAYER2 )
 	PORT_BIT( 0x07, IP_ACTIVE_LOW, IPT_START1 | IPF_PLAYER1 )
 
 	PORT_START
-	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )
+	PORT_BIT( 0x03, IP_ACTIVE_LOW, IPT_BUTTON6 | IPF_PLAYER1 )
+	PORT_BIT( 0x18, IP_ACTIVE_LOW, IPT_BUTTON7 | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x05, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER2 )
+	PORT_BIT( 0x28, IP_ACTIVE_LOW, IPT_BUTTON6 | IPF_PLAYER2 )
+	PORT_BIT( 0x06, IP_ACTIVE_LOW, IPT_BUTTON9 | IPF_PLAYER2 )
 
 	PORT_START
 	PORT_BITX( 0x04, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE ) /* Test Button */
@@ -620,6 +657,30 @@ static struct GfxDecodeInfo spi_gfxdecodeinfo[] =
 
 /********************************************************************************/
 
+static NVRAM_HANDLER( spi )
+{
+	if( read_or_write ) {
+		DS2404_save(file);
+	} else {
+		DS2404_init();
+
+		if(file)
+			DS2404_load(file);
+	}
+}
+
+static NVRAM_HANDLER( sxx2f )
+{
+	if( read_or_write ) {
+		EEPROM_save(file);
+	} else {
+		EEPROM_init(&eeprom_interface_93C46);
+
+		if(file)
+			EEPROM_load(file);
+	}
+}
+
 static INTERRUPT_GEN( spi_interrupt )
 {
 	cpu_set_irq_line( 0, 0x20, ASSERT_LINE );
@@ -631,9 +692,10 @@ static MACHINE_INIT( spi )
 {
 	UINT8* rom = memory_region(REGION_USER1);
 
-	if( !spi_single_board ) {
-		cpunum_set_halt_line( 1, ASSERT_LINE );
-	}
+	cpunum_set_reset_line( 1, ASSERT_LINE );
+
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00000688, 0x0000068b, 0, z80_fifo_w);
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000068c, 0x0000068f, 0, z80_enable_w);
 
 	if( bg_2layer ) {
 		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0039800, 0x003a7ff, 0, spi_textlayer_w);
@@ -658,6 +720,7 @@ static MACHINE_DRIVER_START( spi )
 
 	MDRV_FRAMES_PER_SECOND(54)
 	MDRV_VBLANK_DURATION(0)
+	MDRV_INTERLEAVE(200)
 
 	MDRV_MACHINE_INIT(spi)
 
@@ -675,6 +738,21 @@ static MACHINE_DRIVER_START( spi )
 	MDRV_SOUND_ADD(YMF271, ymf271_interface)
 
 MACHINE_DRIVER_END
+
+static MACHINE_INIT( sxx2f )
+{
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00000688, 0x0000068b, 0, eeprom_r);
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000068c, 0x0000068f, 0, eeprom_w);
+}
+
+static MACHINE_DRIVER_START( sxx2f )
+
+	MDRV_IMPORT_FROM(spi)
+	MDRV_MACHINE_INIT(sxx2f)
+	MDRV_NVRAM_HANDLER(sxx2f)
+
+MACHINE_DRIVER_END
+
 
 static DRIVER_INIT( spi )
 {
@@ -744,10 +822,6 @@ static DRIVER_INIT( viperp1o )
 	bg_2layer = 1;
 }
 
-static DRIVER_INIT( spi_single )
-{
-	spi_single_board = 1;
-}
 
 
 /* SYS386 */
@@ -767,6 +841,7 @@ static MACHINE_DRIVER_START( seibu386 )
 	MDRV_FRAMES_PER_SECOND(54)
 	MDRV_VBLANK_DURATION(0)
 
+	MDRV_NVRAM_HANDLER(sxx2f)
 	MDRV_MACHINE_INIT(seibu386)
 
  	/* video hardware */
@@ -786,7 +861,6 @@ MACHINE_DRIVER_END
 /*******************************************************************/
 #define ROM_LOAD24_BYTE(name,offset,length,hash)		ROMX_LOAD(name, offset, length, hash, ROM_SKIP(2))
 #define ROM_LOAD24_WORD(name,offset,length,hash)		ROMX_LOAD(name, offset, length, hash, ROM_GROUPWORD | ROM_SKIP(1) | ROM_REVERSE)
-#define ROM_LOAD48_WORD(name,offset,length,hash)		ROMX_LOAD(name, offset, length, hash, ROM_GROUPWORD | ROM_SKIP(4) | ROM_REVERSE)
 
 /* SPI games */
 
@@ -811,7 +885,7 @@ ROM_START(senkyu)
 	ROM_LOAD("fb_obj-2.324", 0x400000, 0x400000, CRC(c9e3130b) SHA1(12b5d5363142e8efb3b7fc44289c0afffa5011c6) )
 	ROM_LOAD("fb_obj-3.323", 0x800000, 0x400000, CRC(f6c3bc49) SHA1(d0eb9c6aa3954d94e3a442a48e0fe6cc279f5513) )
 
-	ROM_REGION(0x80000, REGION_CPU2, 0)		/* 512k for the Z80 */
+	ROM_REGION(0x40000, REGION_CPU2, 0)		/* 256k for the Z80 */
 
 	ROM_REGION(0x280000, REGION_SOUND1, 0) /* samples?*/
 	ROM_LOAD("fb_pcm-1.215",  0x000000, 0x100000, CRC(1d83891c) SHA1(09502437562275c14c0f3a0e62b19e91bedb4693) )
@@ -839,7 +913,7 @@ ROM_START(batlball)
 	ROM_LOAD("fb_obj-2.324", 0x400000, 0x400000, CRC(c9e3130b) SHA1(12b5d5363142e8efb3b7fc44289c0afffa5011c6) )
 	ROM_LOAD("fb_obj-3.323", 0x800000, 0x400000, CRC(f6c3bc49) SHA1(d0eb9c6aa3954d94e3a442a48e0fe6cc279f5513) )
 
-	ROM_REGION(0x80000, REGION_CPU2, 0)		/* 512k for the Z80 */
+	ROM_REGION(0x40000, REGION_CPU2, 0)		/* 256k for the Z80 */
 
 	ROM_REGION(0x280000, REGION_SOUND1, 0) /* samples?*/
 	ROM_LOAD("fb_pcm-1.215",  0x000000, 0x100000, CRC(1d83891c) SHA1(09502437562275c14c0f3a0e62b19e91bedb4693) )
@@ -869,7 +943,7 @@ ROM_START(ejanhs)
 	ROM_LOAD("ej3_obj2.324", 0x400000, 0x400000, CRC(1116ad08) SHA1(d5c81383b3f9ede7dd03e6be35487b40740b1f8f) )
 	ROM_LOAD("ej3_obj3.323", 0x800000, 0x400000, CRC(ccfe02b6) SHA1(368bc8efe9d6677ba3d0cfc0f450a4bda32988be) )
 
-	ROM_REGION(0x80000, REGION_CPU2, 0)		/* 512k for the Z80 */
+	ROM_REGION(0x40000, REGION_CPU2, 0)		/* 256k for the Z80 */
 
 	ROM_REGION(0x280000, REGION_SOUND1, 0) /* samples?*/
 	ROM_LOAD("ej3_pcm1.215",  0x000000, 0x100000, CRC(a92a3a82) SHA1(b86c27c5a2831ddd2a1c2b071018a99afec14018) )
@@ -900,7 +974,7 @@ ROM_START(viperp1)
 	ROM_LOAD("v_obj-2.324",  0x400000, 0x400000, CRC(924153b4) SHA1(db5dadcfb4cd5e6efe9d995085936ce4f4eb4254) )
 	ROM_LOAD("v_obj-3.323",  0x800000, 0x400000, CRC(e9fb9062) SHA1(18e97b4c5cced2b529e6e72d8041c6f78fcec76e) )
 
-	ROM_REGION(0x80000, REGION_CPU2, 0)		/* 512k for the Z80 */
+	ROM_REGION(0x40000, REGION_CPU2, 0)		/* 256k for the Z80 */
 
 	ROM_REGION(0x280000, REGION_SOUND1, 0) /* samples?*/
 	ROM_LOAD("v_pcm.215",  0x000000, 0x100000, CRC(e3111b60) SHA1(f7a7747f29c392876e43efcb4e6c0741454082f2) )
@@ -929,7 +1003,7 @@ ROM_START(viperp1o)
 	ROM_LOAD("v_obj-2.324",  0x400000, 0x400000, CRC(924153b4) SHA1(db5dadcfb4cd5e6efe9d995085936ce4f4eb4254) )
 	ROM_LOAD("v_obj-3.323",  0x800000, 0x400000, CRC(e9fb9062) SHA1(18e97b4c5cced2b529e6e72d8041c6f78fcec76e) )
 
-	ROM_REGION(0x80000, REGION_CPU2, 0)		/* 512k for the Z80 */
+	ROM_REGION(0x40000, REGION_CPU2, 0)		/* 256k for the Z80 */
 
 	ROM_REGION(0x280000, REGION_SOUND1, 0) /* samples?*/
 	ROM_LOAD("v_pcm.215",  0x000000, 0x100000, CRC(e3111b60) SHA1(f7a7747f29c392876e43efcb4e6c0741454082f2) )
@@ -959,7 +1033,7 @@ ROM_START(raidnfgt)
 	ROM_LOAD("gd_obj-2.324", 0x400000, 0x400000, CRC(1ceb0b6f) SHA1(97225a9b3e7be18080aa52f6570af2cce8f25c06) )
 	ROM_LOAD("gd_obj-3.323", 0x800000, 0x400000, CRC(36e93234) SHA1(51917a80b7da5c32a9434a1076fc2916d62e6a3e) )
 
-	ROM_REGION(0x80000, REGION_CPU2, 0)		/* 512k for the Z80 */
+	ROM_REGION(0x40000, REGION_CPU2, 0)		/* 256k for the Z80 */
 
 	ROM_REGION(0x280000, REGION_SOUND1, 0)	/* YMF271 sound data, music ? */
 	ROM_LOAD("gd_pcm.217", 0x000000, 0x200000, CRC(31253ad7) SHA1(c81c8d50f8f287f5cbfaec77b30d969b01ce11a9) )
@@ -1010,7 +1084,7 @@ ROM_START(rf2_us)
 	ROM_REGION( 0x1200000, REGION_GFX3, 0)	/* sprites */
 	/* Not dumped ? */
 
-	ROM_REGION(0x80000, REGION_CPU2, 0)		/* 512k for the Z80 */
+	ROM_REGION(0x40000, REGION_CPU2, 0)		/* 256k for the Z80 */
 	ROM_LOAD("zprg.bin", 0x000000, 0x20000, CRC(cc543c4f) SHA1(6e5c93fd3d21c594571b071d4a830211e1f162b2) )
 
 	ROM_REGION(0x280000, REGION_SOUND1, 0)	/* YMF271 sound data */
@@ -1039,7 +1113,7 @@ ROM_START(rf2_eur)
 	ROM_REGION( 0x1200000, REGION_GFX3, 0)	/* sprites */
 	/* Not dumped ? */
 
-	ROM_REGION(0x80000, REGION_CPU2, 0)		/* 512k for the Z80 */
+	ROM_REGION(0x40000, REGION_CPU2, 0)		/* 256k for the Z80 */
 //	ROM_LOAD("zprg.bin", 0x000000, 0x20000, CRC(91238498) ) // not in this set? single board version only
 
 	ROM_REGION(0x280000, REGION_SOUND1, 0)	/* YMF271 sound data */
@@ -1095,7 +1169,7 @@ GAMEX( 1997, rf2_eur,	0,       spi, spi_2button, spi,			ROT270,	"Seibu Kaihatsu"
 /* there is another rf dump rf_spi_asia.zip but it seems strange, 1 program rom, cart pic seems to show others as a different type of rom */
 
 /* SXX2F */
-GAMEX( 1997, rf2_us,    rf2_eur,	    spi, spi_2button, spi_single,	ROT270,	"Seibu Kaihatsu",	"Raiden Fighters 2 (US, Single Board)", GAME_NOT_WORKING )
+GAMEX( 1997, rf2_us,    rf2_eur,	  sxx2f, spi_2button, 0,	ROT270,	"Seibu Kaihatsu",	"Raiden Fighters 2 (US, Single Board)", GAME_NOT_WORKING )
 
 /* SYS386 */
 GAMEX( 2000, rf2_2k,    rf2_eur,	seibu386, spi_2button, 0,	ROT270,	"Seibu Kaihatsu",	"Raiden Fighters 2 - 2000", GAME_NOT_WORKING )

@@ -3,6 +3,10 @@
 
 #define I386OP(XX)		i386_##XX
 
+#ifdef MAME_DEBUG
+extern int i386_dasm_one(char *buffer, UINT32 pc, int addr_size, int op_size);
+#endif
+
 typedef enum { ES, CS, SS, DS, FS, GS } SREGS;
 
 #ifdef LSB_FIRST
@@ -161,6 +165,7 @@ static UINT32 i386_translate(int, UINT32);
 int parity_table[256];
 
 #define PROTECTED_MODE		(I.cr[0] & 0x1)
+#define STACK_32BIT			(I.sreg[SS].d)
 
 #define SetOF_Add32(r,s,d)	(I.OF = (((r) ^ (s)) & ((r) ^ (d)) & 0x80000000) ? 1: 0)
 #define SetOF_Add16(r,s,d)	(I.OF = (((r) ^ (s)) & ((r) ^ (d)) & 0x8000) ? 1 : 0)
@@ -486,59 +491,69 @@ INLINE UINT32 DEC32(UINT32 dst)
 
 
 
-INLINE void PUSH8(UINT8 value)
-{
-	UINT32 ea;
-	if( I.operand_size ) {
-		REG32(ESP) -= 4;
-		ea = i386_translate( SS, REG32(ESP) );
-		WRITE32( ea, (INT32)(INT8)value );
-	} else {
-		REG32(ESP) -= 2;
-		ea = i386_translate( SS, REG32(ESP) );
-		WRITE16( ea, (INT16)(INT8)value );
-	}
-}
 INLINE void PUSH16(UINT16 value)
 {
 	UINT32 ea;
-	REG32(ESP) -= 2;
-	ea = i386_translate( SS, REG32(ESP) );
-	WRITE16( ea, value );
+	if( STACK_32BIT ) {
+		REG32(ESP) -= 2;
+		ea = i386_translate( SS, REG32(ESP) );
+		WRITE16( ea, value );
+	} else {
+		REG16(SP) -= 2;
+		ea = i386_translate( SS, REG16(SP) );
+		WRITE16( ea, value );
+	}
 }
 INLINE void PUSH32(UINT32 value)
 {
 	UINT32 ea;
-	REG32(ESP) -= 4;
-	ea = i386_translate( SS, REG32(ESP) );
-	WRITE32( ea, value );
+	if( STACK_32BIT ) {
+		REG32(ESP) -= 4;
+		ea = i386_translate( SS, REG32(ESP) );
+		WRITE32( ea, value );
+	} else {
+		REG16(SP) -= 4;
+		ea = i386_translate( SS, REG16(SP) );
+		WRITE32( ea, value );
+	}
+}
+INLINE void PUSH8(UINT8 value)
+{
+	if( I.operand_size ) {
+		PUSH32((INT32)(INT8)value);
+	} else {
+		PUSH16((INT16)(INT8)value);
+	}
 }
 
-INLINE UINT8 POP8(void)
-{
-	UINT8 value;
-	UINT32 ea;
-	ea = i386_translate( SS, REG32(ESP) );
-	value = READ8( ea );
-	REG32(ESP) += 1;
-	return value;
-}
 INLINE UINT16 POP16(void)
 {
 	UINT16 value;
 	UINT32 ea;
-	ea = i386_translate( SS, REG32(ESP) );
-	value = READ16( ea );
-	REG32(ESP) += 2;
+	if( STACK_32BIT ) {
+		ea = i386_translate( SS, REG32(ESP) );
+		value = READ16( ea );
+		REG32(ESP) += 2;
+	} else {
+		ea = i386_translate( SS, REG16(SP) );
+		value = READ16( ea );
+		REG16(SP) += 2;
+	}
 	return value;
 }
 INLINE UINT32 POP32(void)
 {
 	UINT32 value;
 	UINT32 ea;
-	ea = i386_translate( SS, REG32(ESP) );
-	value = READ32( ea );
-	REG32(ESP) += 4;
+	if( STACK_32BIT ) {
+		ea = i386_translate( SS, REG32(ESP) );
+		value = READ32( ea );
+		REG32(ESP) += 4;
+	} else {
+		ea = i386_translate( SS, REG16(SP) );
+		value = READ32( ea );
+		REG16(SP) += 4;
+	}
 	return value;
 }
 

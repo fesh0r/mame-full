@@ -2359,13 +2359,19 @@ static void I386OP(groupFF_16)(void)		// Opcode 0xff
 static void I386OP(group0F01_16)(void)		// Opcode 0x0f 01
 {
 	UINT8 modrm = FETCH();
+	UINT16 address;
+	UINT32 ea;
 
 	switch( (modrm >> 3) & 0x7 )
 	{
 		case 0:			/* SGDT */
 			{
-				UINT16 address = FETCH16();
-				UINT32 ea = i386_translate( CS, address );
+				if( modrm >= 0xc0 ) {
+					address = LOAD_RM16(modrm);
+					ea = i386_translate( CS, address );
+				} else {
+					ea = GetEA(modrm);
+				}
 				WRITE16(ea, I.gdtr.limit);
 				WRITE32(ea + 2, I.gdtr.base & 0xffffff);
 				CYCLES(9);
@@ -2373,8 +2379,12 @@ static void I386OP(group0F01_16)(void)		// Opcode 0x0f 01
 			}
 		case 2:			/* LGDT */
 			{
-				UINT16 address = FETCH16();
-				UINT32 ea = i386_translate( CS, address );
+				if( modrm >= 0xc0 ) {
+					address = LOAD_RM16(modrm);
+					ea = i386_translate( CS, address );
+				} else {
+					ea = GetEA(modrm);
+				}
 				I.gdtr.limit = READ16(ea);
 				I.gdtr.base = READ32(ea + 2) & 0xffffff;
 				CYCLES(11);
@@ -2382,8 +2392,12 @@ static void I386OP(group0F01_16)(void)		// Opcode 0x0f 01
 			}
 		case 3:			/* LIDT */
 			{
-				UINT16 address = FETCH16();
-				UINT32 ea = i386_translate( CS, address );
+				if( modrm >= 0xc0 ) {
+					address = LOAD_RM16(modrm);
+					ea = i386_translate( CS, address );
+				} else {
+					ea = GetEA(modrm);
+				}
 				I.idtr.limit = READ16(ea);
 				I.idtr.base = READ32(ea + 2) & 0xffffff;
 				CYCLES(11);
