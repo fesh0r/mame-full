@@ -1,3 +1,31 @@
+/*****************************************************************************
+ *
+ *	 scops.c
+ *	 portable sharp 61860 emulator interface
+ *   (sharp pocket computers)
+ *
+ *	 Copyright (c) 2000 Peter Trauner, all rights reserved.
+ *
+ *	 - This source code is released as freeware for non-commercial purposes.
+ *	 - You are free to use and redistribute this code in modified or
+ *	   unmodified form, provided you list me in the credits.
+ *	 - If you modify this source code, you must add a notice to each modified
+ *	   source file that it has been changed.  If you're a nice person, you
+ *	   will clearly mark each change too.  :)
+ *	 - If you wish to use this for commercial purposes, please contact me at
+ *	   peter.trauner@jk.uni-linz.ac.at
+ *	 - The author of this copywritten work reserves the right to change the
+ *	   terms of its usage and license at any time, including retroactively
+ *	 - This entire notice must remain in the source code.
+ *
+ * History of changes:
+ * 21.07.2001 Several changes listed below were made by Mario Konegger
+ *            (konegger@itp.tu-graz.ac.at)
+ *	      replaced buggy BCD-commands add_bcd, sub_bcd, add_bcd_a,
+ *            sub_bcd_a and changed out_c, to implement HLT-mode of the CPU.
+ *
+ *****************************************************************************/
+
 INLINE UINT8 READ_OP(void)
 {
 	return cpu_readop(sc61860.pc++);
@@ -370,13 +398,15 @@ INLINE void sc61860_reset_carry(void)
 INLINE void sc61860_out_a(void)
 {
 	sc61860.q=IA;
-	if (sc61860.config&&sc61860.config->outa) sc61860.config->outa(sc61860.ram[IA]);
+	if (sc61860.config&&sc61860.config->outa) 
+	    sc61860.config->outa(sc61860.ram[IA]);
 }
 
 INLINE void sc61860_out_b(void)
 {
 	sc61860.q=IB;
-	if (sc61860.config&&sc61860.config->outb) sc61860.config->outb(sc61860.ram[IB]);
+	if (sc61860.config&&sc61860.config->outb) 
+	    sc61860.config->outb(sc61860.ram[IB]);
 }
 
 INLINE void sc61860_out_f(void)
@@ -395,8 +425,10 @@ INLINE void sc61860_out_f(void)
    c6 beeper steuerung*/
 INLINE void sc61860_out_c(void)
 {
-	sc61860.q=C;
-	if (sc61860.config&&sc61860.config->outc) sc61860.config->outc(sc61860.ram[C]);
+    sc61860.q=C;
+    if (sc61860.config&&sc61860.config->outc) 
+	sc61860.config->outc(sc61860.ram[C]);
+    sc61860.c=sc61860.ram[C];
 }
 
 INLINE void sc61860_in_a(void)
@@ -442,74 +474,85 @@ INLINE void sc61860_test_special(void)
 // p-=I+1 sideeffect
 INLINE void sc61860_add_bcd_a(void)
 {
-	int i,t, v=sc61860.ram[A];
-	sc61860.zero=true;
-	for (i=0; i<=sc61860.ram[I]; i++) {
-		t=(sc61860.ram[sc61860.p]&0xf)+(v&0xf);
-		if ((t&0xf)>9) t=t+0x10-10;
-		t+=(sc61860.ram[sc61860.p]&0xf0)+(v&0xf0);
-		if ((t&0xf0)>=0xa0) { t=t+0x100-0xa0; }
-		sc61860.ram[sc61860.p--]=t;
-		sc61860.zero=sc61860.zero&&(t&0xff)==0;
-		sc61860.carry=t>=0x100;
-		v=(sc61860.carry)?1:0;
-		sc61860_icount-=3;
-	}
+ UINT8 help = sc61860.ram[A];
+ int i, hlp, hlp1 = 0; sc61860.zero=1;
+ for ( i=0; i <= sc61860.ram[I]; i++)
+ {
+  hlp1 = (sc61860.ram[sc61860.p] & 0x0f) + (help & 0x0f ) + hlp1;
+  if (hlp1 > 9) { hlp = hlp1 - 0x0a; hlp1 = 0x10; }
+  else {hlp = hlp1; hlp1 = 0x00;}
+  hlp1 = (sc61860.ram[sc61860.p] & 0xf0) + (help & 0xf0) + hlp1;
+  if (hlp1 > 0x90) { sc61860.ram[sc61860.p] = hlp1 - 0xa0 + hlp; hlp1 = 1; }
+  else {sc61860.ram[sc61860.p] = hlp1 + hlp; hlp1 = 0;}
+  if ( sc61860.ram[sc61860.p--] != 0 ) sc61860.zero = 0;
+  help = 0;
+ }
+ sc61860.carry= ( hlp1 ) ? 1 : 0;
+ sc61860_icount-=3*(sc61860.ram[I]+1);
 }
 
 
 // p-=I+1, q-=I+2 sideeffect
 INLINE void sc61860_add_bcd(void)
 {
-	int i,t,v=0;
-	sc61860.zero=true;
-	for (i=0; i<=sc61860.ram[I]; i++) {
-		t=(sc61860.ram[sc61860.p]&0xf)+(sc61860.ram[sc61860.q]&0xf)+v;
-		if (t>=10) t=t+0x10-10;
-		t+=(sc61860.ram[sc61860.p]&0xf0)+(sc61860.ram[sc61860.q--]&0xf0);
-		if ((t&0xf0)>=0xa0) { t=t+0x100-0xa0; }
-		sc61860.ram[sc61860.p--]=t;
-		sc61860.zero=sc61860.zero&&(t&0xff)==0;
-		sc61860.carry=t>=0x100;
-		v=(sc61860.carry)?1:0;
-		sc61860_icount-=3;
-	}
-	sc61860.q--;
+ int i, hlp, hlp1 = 0; sc61860.zero=1;
+ for ( i=0; i <= sc61860.ram[I]; i++)
+ {
+  hlp1 = (sc61860.ram[sc61860.p] & 0x0f) + (sc61860.ram[sc61860.q] & 0x0f ) + 
+hlp1;
+  if (hlp1 > 9) { hlp = hlp1 - 0x0a; hlp1 = 0x10; }
+  else {hlp = hlp1; hlp1 = 0x00;}
+  hlp1 = (sc61860.ram[sc61860.p] & 0xf0) + (sc61860.ram[sc61860.q--] & 0xf0) + 
+hlp1;
+  if (hlp1 > 0x90) { sc61860.ram[sc61860.p] = hlp1 - 0xa0 + hlp; hlp1 = 1; }
+  else {sc61860.ram[sc61860.p] = hlp1 + hlp; hlp1 = 0;}
+  if ( sc61860.ram[sc61860.p--] != 0 ) sc61860.zero = 0;
+ }
+ sc61860.carry= ( hlp1 ) ? 1 : 0;
+ sc61860_icount-=3*(sc61860.ram[I]+1);
+ sc61860.q--;
 }
 
+
+// p-=I+1 sideeffect
 INLINE void sc61860_sub_bcd_a(void)
 {
-	int i,t, v=sc61860.ram[A];
-	sc61860.zero=true;
-	for (i=0; i<=sc61860.ram[I]; i++) {
-		t=(sc61860.ram[sc61860.p]&0xf)-(v&0xf);
-		if (t<0) t=t-0x10+10;
-		t+=(sc61860.ram[sc61860.p]&0xf0)-(v&0xf0);
-		if (t<0) { t=t-0x100+0xa0; }
-		sc61860.ram[sc61860.p--]=t;
-		sc61860.zero=sc61860.zero&&(t&0xff)==0;
-		sc61860.carry=t<0;
-		v=(sc61860.carry)?1:0;
-		sc61860_icount-=3;
-	}
+ UINT8 help = sc61860.ram[A];
+ int i, hlp, hlp1 = 0; sc61860.zero=1;
+ for ( i=0; i <= sc61860.ram[I]; i++)
+ {
+  hlp1 = (sc61860.ram[sc61860.p]&0x0f) - (help&0x0f) - hlp1;
+  if ( hlp1 < 0 ) { hlp = hlp1 + 0x0a; hlp1 = 0x10;}
+  else { hlp = hlp1; hlp1 = 0x00;}
+  hlp1 = (sc61860.ram[sc61860.p]&0xf0) - (help&0xf0) - hlp1;
+  if ( hlp1 < 0 ) { sc61860.ram[sc61860.p] = hlp1 + 0xa0 + hlp; hlp1 = 1;}
+  else {sc61860.ram[sc61860.p] = hlp1 + hlp; hlp1 = 0;}
+  if ( sc61860.ram[sc61860.p--] != 0 ) sc61860.zero = 0;
+  help = 0;
+ }
+ sc61860.carry= ( hlp1 ) ? 1 : 0;
+ sc61860_icount-=3*(sc61860.ram[I]+1);
 }
 
+
+// p-=I+1, q-=I+2 sideeffect
 INLINE void sc61860_sub_bcd(void)
 {
-	int i,t,v=0;
-	sc61860.zero=true;
-	for (i=0; i<=sc61860.ram[I]; i++) {
-		t=(sc61860.ram[sc61860.p]&0xf)-(sc61860.ram[sc61860.q]&0xf)-v;
-		if (t<0) t=t-0x10+10;
-		t+=(sc61860.ram[sc61860.p]&0xf0)-(sc61860.ram[sc61860.q--]&0xf0);
-		if (t<0) { t=t-0x100+0xa0; }
-		sc61860.ram[sc61860.p--]=t;
-		sc61860.zero=sc61860.zero&&(t&0xff)==0;
-		sc61860.carry=t<0;
-		v=(sc61860.carry)?1:0;
-		sc61860_icount-=3;
-	}
-	sc61860.q--;
+ int i, hlp, hlp1 = 0; sc61860.zero=1;
+ for ( i=0; i <= sc61860.ram[I]; i++)
+ {
+  hlp1 = (sc61860.ram[sc61860.p]&0x0f) - (sc61860.ram[sc61860.q]&0x0f) - hlp1;
+  if ( hlp1 < 0 ) { hlp = hlp1 + 0x0a; hlp1 = 0x10;}
+  else { hlp = hlp1; hlp1 = 0x00;}
+  hlp1 = (sc61860.ram[sc61860.p]&0xf0) - (sc61860.ram[sc61860.q--]&0xf0) - 
+hlp1;
+  if ( hlp1 < 0 ) { sc61860.ram[sc61860.p] = hlp1 + 0xa0 + hlp; hlp1 = 1;}
+  else {sc61860.ram[sc61860.p] = hlp1 + hlp; hlp1 = 0;}
+  if ( sc61860.ram[sc61860.p--] != 0 ) sc61860.zero = 0;
+ }
+ sc61860.carry= ( hlp1 ) ? 1 : 0;
+ sc61860_icount-=3*(sc61860.ram[I]+1);
+ sc61860.q--;
 }
 
 /* side effect p-i-1 -> p correct! */
@@ -685,5 +728,7 @@ INLINE void sc61860_wait_x(bool level)
 	}
     }
 }
+
+
 
 
