@@ -434,7 +434,7 @@ const struct ImageModule *find_filter_module(int filter_index,
 
 
 
-static imgtoolerr_t open_image(HWND window, const struct ImageModule *module,
+imgtoolerr_t wimgtool_open_image(HWND window, const struct ImageModule *module,
 	const char *filename, int read_or_write)
 {
 	imgtoolerr_t err;
@@ -504,7 +504,7 @@ static void menu_new(HWND window)
 	if (err)
 		goto done;
 
-	err = open_image(window, module, filename, OSD_FOPEN_RW);
+	err = wimgtool_open_image(window, module, filename, OSD_FOPEN_RW);
 	if (err)
 		goto done;
 
@@ -541,7 +541,7 @@ static void menu_open(HWND window)
 
 	module = find_filter_module(ofn.nFilterIndex, FALSE);
 
-	err = open_image(window, module, filename, (ofn.Flags & OFN_READONLY)
+	err = wimgtool_open_image(window, module, filename, (ofn.Flags & OFN_READONLY)
 		? OSD_FOPEN_READ : OSD_FOPEN_RW);
 	if (err)
 		goto done;

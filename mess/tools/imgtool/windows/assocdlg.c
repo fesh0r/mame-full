@@ -46,7 +46,7 @@ static INT_PTR CALLBACK win_association_dialog_proc(HWND dialog, UINT message,
 			ok_button = GetDlgItem(dialog, IDOK);
 			cancel_button = GetDlgItem(dialog, IDCANCEL);
 			font = SendMessage(ok_button, WM_GETFONT, 0, 0);
-			l = (LONG_PTR) &dlginfo;
+			l = (LONG_PTR) dlginfo;
 			SetWindowLongPtr(dialog, GWLP_USERDATA, l);
 
 			GetWindowRect(cancel_button, &r1);
@@ -65,8 +65,8 @@ static INT_PTR CALLBACK win_association_dialog_proc(HWND dialog, UINT message,
 				if (!control)
 					return -1;
 
-				if (win_is_extension_associated(&assoc_info, dlginfo->extensions[i]))
-					SendMessage(control, BM_SETSTATE, TRUE, 0);
+				if (win_is_extension_associated(&assoc_info, buf))
+					SendMessage(control, BM_SETCHECK, TRUE, 0);
 				SendMessage(control, WM_SETFONT, font, 0);
 				SetWindowLong(control, GWL_ID, CONTROL_START + i);
 
@@ -99,13 +99,15 @@ static INT_PTR CALLBACK win_association_dialog_proc(HWND dialog, UINT message,
 					{
 						for (i = 0; i < dlginfo->extension_count; i++)
 						{
-							is_set = SendMessage(GetDlgItem(dialog, CONTROL_START + i), BM_GETSTATE, 0, 0);
-							currently_set = win_is_extension_associated(&assoc_info, dlginfo->extensions[i]);
+							is_set = SendMessage(GetDlgItem(dialog, CONTROL_START + i), BM_GETCHECK, 0, 0);
+
+							_sntprintf(buf, sizeof(buf) / sizeof(buf[0]), TEXT(".%s"), U2T(dlginfo->extensions[i]));
+							currently_set = win_is_extension_associated(&assoc_info, buf);
 
 							if (is_set && !currently_set)
-								win_associate_extension(&assoc_info, dlginfo->extensions[i], TRUE);
+								win_associate_extension(&assoc_info, buf, TRUE);
 							else if (!is_set && currently_set)
-								win_associate_extension(&assoc_info, dlginfo->extensions[i], FALSE);
+								win_associate_extension(&assoc_info, buf, FALSE);
 						}
 					}
 

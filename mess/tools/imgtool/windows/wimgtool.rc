@@ -71,8 +71,8 @@ BEGIN
         MENUITEM "&Icons",                      ID_VIEW_ICONS
         MENUITEM "&List",                       ID_VIEW_LIST
         MENUITEM "&Details",                    ID_VIEW_DETAILS
-//        MENUITEM SEPARATOR
-//        MENUITEM "&File Assocations...",        ID_VIEW_ASSOCIATIONS
+        MENUITEM SEPARATOR
+        MENUITEM "&File Assocations...",        ID_VIEW_ASSOCIATIONS
     END
 END
 

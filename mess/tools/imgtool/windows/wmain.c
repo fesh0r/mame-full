@@ -24,7 +24,6 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE prev_instance,
 	imgtoolerr_t err;
 	HACCEL accel = NULL;
 	
-
 	// Initialize Windows classes
 	InitCommonControls();
 	if (!wimgtool_registerclass())
@@ -40,6 +39,9 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE prev_instance,
 		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, NULL, NULL);
 	if (!window)
 		goto done;
+
+	if (command_line && command_line[0])
+		wimgtool_open_image(window, NULL, command_line, OSD_FOPEN_RW);
 
 #ifdef MAME_DEBUG
 	if (imgtool_validitychecks())

@@ -398,7 +398,7 @@ wimgtool$(EXE): \
 		$(OBJ)/mess/tools/imgtool/windows/assocdlg.o	\
 		$(OBJ)/mess/tools/imgtool/windows/wimgtool.res
 	@echo Compiling $@...
-	$(LD) $(LDFLAGS) $(LIBS) $(WINDOWS_PROGRAM) $^ $(ZLIB) -out:$@
+	$(LD) $(LDFLAGS) $(LIBS) $(WINDOWS_PROGRAM) shlwapi.lib $^ $(ZLIB) -out:$@
 
 messtest$(EXE):	$(OBJS) $(COREOBJS) $(DRVLIBS) $(MESSTEST_OBJS) \
 		$(OBJ)/windows/asmtile.o				\

@@ -17,5 +17,7 @@ extern imgtool_library *library;
 
 BOOL wimgtool_registerclass(void);
 
+imgtoolerr_t wimgtool_open_image(HWND window, const struct ImageModule *module,
+	const char *filename, int read_or_write);
 
 #endif // WIMGTOOL_H

@@ -1,6 +1,8 @@
 #include <windows.h>
 #include <tchar.h>
 #include <ctype.h>
+#include <shlwapi.h>
+
 #include "strconv.h"
 #include "assoc.h"
 
@@ -106,32 +108,42 @@ BOOL win_associate_extension(const struct win_association_info *assoc,
 	TCHAR buf[1024];
 	BOOL rc = FALSE;
 
-	if (!win_association_exists(assoc))
+	if (!is_set)
 	{
-		if (RegCreateKeyEx(HKEY_CLASSES_ROOT, assoc->file_class, 0, NULL, 0,
-				KEY_ALL_ACCESS, NULL, &key1, &disposition))
-			goto done;
-		if (RegCreateKeyEx(key1, TEXT("shell"), 0, NULL, 0,
-				KEY_ALL_ACCESS, NULL, &key2, &disposition))
-			goto done;
-		if (RegCreateKeyEx(key2, TEXT("open"), 0, NULL, 0,
-				KEY_ALL_ACCESS, NULL, &key3, &disposition))
-			goto done;
-		if (RegCreateKeyEx(key3, TEXT("command"), 0, NULL, 0,
-				KEY_ALL_ACCESS, NULL, &key4, &disposition))
-			goto done;
+		if (win_is_extension_associated(assoc, extension))
+		{
+			SHDeleteKey(HKEY_CLASSES_ROOT, A2T(extension));
+		}
+	}
+	else
+	{
+		if (!win_association_exists(assoc))
+		{
+			if (RegCreateKeyEx(HKEY_CLASSES_ROOT, assoc->file_class, 0, NULL, 0,
+					KEY_ALL_ACCESS, NULL, &key1, &disposition))
+				goto done;
+			if (RegCreateKeyEx(key1, TEXT("shell"), 0, NULL, 0,
+					KEY_ALL_ACCESS, NULL, &key2, &disposition))
+				goto done;
+			if (RegCreateKeyEx(key2, TEXT("open"), 0, NULL, 0,
+					KEY_ALL_ACCESS, NULL, &key3, &disposition))
+				goto done;
+			if (RegCreateKeyEx(key3, TEXT("command"), 0, NULL, 0,
+					KEY_ALL_ACCESS, NULL, &key4, &disposition))
+				goto done;
 
-		get_open_command(assoc, buf, sizeof(buf) / sizeof(buf[0]));
-		if (RegSetValue(key4, NULL, REG_SZ, buf, sizeof(buf)))
+			get_open_command(assoc, buf, sizeof(buf) / sizeof(buf[0]));
+			if (RegSetValue(key4, NULL, REG_SZ, buf, sizeof(buf)))
+				goto done;
+		}
+
+		if (RegCreateKeyEx(HKEY_CLASSES_ROOT, A2T(extension), 0, NULL, 0,
+				KEY_ALL_ACCESS, NULL, &key5, &disposition))
+			goto done;
+		if (RegSetValue(key5, NULL, REG_SZ, assoc->file_class,
+				(_tcslen(assoc->file_class) + 1) * sizeof(TCHAR)))
 			goto done;
 	}
-
-	if (RegCreateKeyEx(HKEY_CLASSES_ROOT, A2T(extension), 0, NULL, 0,
-			KEY_ALL_ACCESS, NULL, &key5, &disposition))
-		goto done;
-	if (RegSetValue(key5, NULL, REG_SZ, assoc->file_class,
-			(_tcslen(assoc->file_class) + 1) * sizeof(TCHAR)))
-		goto done;
 
 	rc = TRUE;
 

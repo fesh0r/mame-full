@@ -330,7 +330,7 @@ wimgtool$(EXE): \
 		$(OBJ)/mess/tools/imgtool/windows/assocdlg.o	\
 		$(OBJ)/mess/tools/imgtool/windows/wimgtool.res
 	@echo Compiling $@...
-	$(LD) $(LDFLAGS) $(LIBS) $(WINDOWS_PROGRAM) $^ -lz -lcomctl32 -o $@
+	$(LD) $(LDFLAGS) $(LIBS) $(WINDOWS_PROGRAM) $^ -lz -lcomctl32 -lshlwapi -o $@
 
 messtest$(EXE):	$(OBJS) $(COREOBJS) $(DRVLIBS) $(MESSTEST_OBJS) \
 		$(OBJ)/windows/asmtile.o				\
