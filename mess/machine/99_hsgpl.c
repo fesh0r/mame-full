@@ -336,7 +336,7 @@ READ16_HANDLER ( ti99_hsgpl_gpl_r )
 	int reply;
 
 
-	//tms9900_ICount -= 4;
+	//activecpu_adjust_icount(-4);
 
 	port = hsgpl.cur_port = (offset & 0x1FE) >> 1;
 
@@ -448,7 +448,7 @@ WRITE16_HANDLER ( ti99_hsgpl_gpl_w )
 	int port;
 
 
-	//tms9900_ICount -= 4;
+	//activecpu_adjust_icount(-4);
 
 	port = hsgpl.cur_port = (offset & 0x1FE) >> 1;
 

@@ -308,7 +308,7 @@ static UINT8 tms9900_win_layout[] = {
 	 0,23,80, 1,	/* command line window (bottom rows) */
 };
 
-int TMS99XX_ICOUNT = 0;
+static int TMS99XX_ICOUNT = 0;
 
 
 /* tms9900 ST register bits. */

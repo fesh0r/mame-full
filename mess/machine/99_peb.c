@@ -164,8 +164,7 @@ void (*inta_callback)(int state);
 void (*intb_callback)(int state);
 
 /* tms9900_ICount, tms9995_ICount: used to implement memory waitstates (hack) */
-extern int tms9900_ICount;
-extern int tms9995_ICount;
+/* NPW 23-Feb-2004 - externs no longer needed because we now use activecpu_adjust_icount() */
 
 
 /*
@@ -353,7 +352,7 @@ READ16_HANDLER ( ti99_4x_peb_r )
 	int reply = 0;
 	read8_handler handler;
 
-	tms9900_ICount -= 4;
+	activecpu_adjust_icount(-4);
 
 	if (active_card != -1)
 	{
@@ -375,7 +374,7 @@ WRITE16_HANDLER ( ti99_4x_peb_w )
 {
 	write8_handler handler;
 
-	tms9900_ICount -= 4;
+	activecpu_adjust_icount(-4);
 
 	/* simulate byte write */
 	data = (tmp_buffer & mem_mask) | (data & ~mem_mask);
@@ -449,7 +448,7 @@ READ_HANDLER ( geneve_peb_r )
 	int reply = 0;
 	read8_handler handler;
 
-	tms9995_ICount -= 8;
+	activecpu_adjust_icount(-8);
 
 	if (active_card != -1)
 	{
@@ -468,7 +467,7 @@ WRITE_HANDLER ( geneve_peb_w )
 {
 	write8_handler handler;
 
-	tms9995_ICount -= 8;
+	activecpu_adjust_icount(-8);
 
 	if (active_card != -1)
 	{
@@ -535,7 +534,7 @@ READ_HANDLER ( ti99_8_peb_r )
 	int reply = 0;
 	read8_handler handler;
 
-	tms9995_ICount -= 4;
+	activecpu_adjust_icount(-4);
 
 	if (active_card != -1)
 	{
@@ -554,7 +553,7 @@ WRITE_HANDLER ( ti99_8_peb_w )
 {
 	write8_handler handler;
 
-	tms9995_ICount -= 4;
+	activecpu_adjust_icount(-4);
 
 	if (active_card != -1)
 	{
@@ -642,13 +641,13 @@ READ16_HANDLER ( ti99_4p_peb_r )
 
 
 	if (active_card == -1)
-		tms9900_ICount -= 4;	/* ??? */
+		activecpu_adjust_icount(-4);	/* ??? */
 	else
 	{
 
 		if (ti99_4p_expansion_ports[active_card].width == width_8bit)
 		{
-			tms9900_ICount -= 4;
+			activecpu_adjust_icount(-4);
 
 			handler = ti99_4p_expansion_ports[active_card].w.width_8bit.mem_read;
 			if (handler)
@@ -659,7 +658,7 @@ READ16_HANDLER ( ti99_4p_peb_r )
 		}
 		else
 		{
-			tms9900_ICount -= 1;	/* ??? */
+			activecpu_adjust_icount(-1);	/* ??? */
 
 			handler16 = ti99_4p_expansion_ports[active_card].w.width_16bit.mem_read;
 			if (handler16)
@@ -691,7 +690,7 @@ WRITE16_HANDLER ( ti99_4p_peb_w )
 	write16_handler handler16;
 
 	if (active_card == -1)
-		tms9900_ICount -= 4;	/* ??? */
+		activecpu_adjust_icount(-4);	/* ??? */
 	else
 	{
 		/* simulate byte write */
@@ -699,7 +698,7 @@ WRITE16_HANDLER ( ti99_4p_peb_w )
 
 		if (ti99_4p_expansion_ports[active_card].width == width_8bit)
 		{
-			tms9900_ICount -= 4;
+			activecpu_adjust_icount(-4);
 
 			handler = ti99_4p_expansion_ports[active_card].w.width_8bit.mem_write;
 			if (handler)
@@ -710,7 +709,7 @@ WRITE16_HANDLER ( ti99_4p_peb_w )
 		}
 		else
 		{
-			tms9900_ICount -= 1;	/* ??? */
+			activecpu_adjust_icount(-1);	/* ??? */
 
 			handler16 = ti99_4p_expansion_ports[active_card].w.width_16bit.mem_write;
 			if (handler16)

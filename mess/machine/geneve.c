@@ -171,7 +171,7 @@ enum
 };
 
 /* tms9995_ICount: used to implement memory waitstates (hack) */
-extern int tms9995_ICount;
+/* NPW 23-Feb-2004 - externs no longer needed because we now use activecpu_adjust_icount() */
 
 
 
@@ -332,7 +332,7 @@ static void intb_callback(int state)
 */
 static READ_HANDLER ( geneve_speech_r )
 {
-	tms9995_ICount -= 8;		/* this is just a minimum, it can be more */
+	activecpu_adjust_icount(-8);		/* this is just a minimum, it can be more */
 
 	return tms5220_status_r(offset);
 }
@@ -358,7 +358,7 @@ static void speech_kludge_callback(int dummy)
 */
 static WRITE_HANDLER ( geneve_speech_w )
 {
-	tms9995_ICount -= 32*4;		/* this is just an approx. minimum, it can be much more */
+	activecpu_adjust_icount(-32*4);		/* this is just an approx. minimum, it can be much more */
 
 #if 1
 	/* the stupid design of the tms5220 core means that ready is cleared when
@@ -372,7 +372,7 @@ static WRITE_HANDLER ( geneve_speech_w )
 
 		logerror("time to ready: %f -> %d\n", time_to_ready, (int) cycles_to_ready);
 
-		tms9995_ICount -= cycles_to_ready;
+		activecpu_adjust_icount(-cycles_to_ready);
 		timer_set(TIME_NOW, 0, /*speech_kludge_callback*/NULL);
 	}
 #endif
