@@ -11,8 +11,8 @@
 
 #include <stdarg.h>
 #include "driver.h"
-#include "cpu/m6502/m6502.h"
 #include "machine/6821pia.h"
+#include "cpu/m6502/m6502.h"
 #include "inptport.h"
 #include "includes/apple1.h"
 
