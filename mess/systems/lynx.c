@@ -60,7 +60,7 @@ static int lynx_frame_int(void)
 {
     lynx_rotate=rotate;
     if ((readinputport(2)&3)!=3) lynx_rotate=readinputport(2)&3;
-    return 0;
+    return ignore_interrupt();
 }
 
 int lynx_vh_start(void)
