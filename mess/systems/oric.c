@@ -129,24 +129,25 @@ MEMORY_END
 INPUT_PORTS_START(oric)
 	INPUT_PORT_ORIC
 	PORT_START
-	/* microdisc interface on/off */
-    PORT_BITX(0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Microdisc Interface", IP_KEY_NONE, IP_JOY_NONE)
-	PORT_DIPSETTING(0x0, DEF_STR( Off) )
-	PORT_DIPSETTING(0x1, DEF_STR( On) )
+	/* floppy interface  */
+	PORT_DIPNAME( 0x03, 0x00, "Floppy disc interface" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPSETTING(    0x01, "Microdisc" )
+	PORT_DIPSETTING(    0x02, "Jasmin" )
 	/* vsync cable hardware. This is a simple cable connected to the video output
 	to the monitor/television. The sync signal is connected to the cassette input
 	allowing interrupts to be generated from the vsync signal. */
-    PORT_BITX(0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Vsync cable hardware", IP_KEY_NONE, IP_JOY_NONE)
+    PORT_BITX(0x04, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Vsync cable hardware", IP_KEY_NONE, IP_JOY_NONE)
 	PORT_DIPSETTING(0x0, DEF_STR( Off) )
-	PORT_DIPSETTING(0x2, DEF_STR( On) )	
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_VBLANK)
+	PORT_DIPSETTING(0x4, DEF_STR( On) )	
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_VBLANK)
 INPUT_PORTS_END
 
 
 INPUT_PORTS_START(prav8d)
 	INPUT_PORT_ORIC
 	PORT_START
-	PORT_BIT (0x07, 0x00, IPT_UNUSED)
+	PORT_BIT (0x0f, 0x00, IPT_UNUSED)
 INPUT_PORTS_END
 
 
@@ -156,11 +157,11 @@ INPUT_PORTS_START(telstrat)
 	/* vsync cable hardware. This is a simple cable connected to the video output
 	to the monitor/television. The sync signal is connected to the cassette input
 	allowing interrupts to be generated from the vsync signal. */
-	PORT_BIT (0x01, 0x00, IPT_UNUSED)
-	PORT_BITX(0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Vsync cable hardware", IP_KEY_NONE, IP_JOY_NONE)
+	PORT_BIT (0x03, 0x00, IPT_UNUSED)
+	PORT_BITX(0x04, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Vsync cable hardware", IP_KEY_NONE, IP_JOY_NONE)
 	PORT_DIPSETTING(0x0, DEF_STR( Off) )
-	PORT_DIPSETTING(0x2, DEF_STR( On) )	
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_VBLANK)	
+	PORT_DIPSETTING(0x4, DEF_STR( On) )	
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_VBLANK)	
 	/* left joystick port */
 	PORT_START
 	PORT_BITX(0x001, IP_ACTIVE_LOW, IPT_KEYBOARD, "JOYSTICK 0 UP", IP_KEY_NONE, JOYCODE_1_RIGHT)
@@ -311,15 +312,17 @@ static struct MachineDriver machine_driver_telstrat =
 };
 
 ROM_START(oric1)
-	ROM_REGION(0x10000+0x04000+0x02000,REGION_CPU1,0)
+	ROM_REGION(0x10000+0x04000+0x02000+0x0800,REGION_CPU1,0)
 	ROM_LOAD ("basic10.rom", 0x10000, 0x4000, 0xf18710b4)
-	ROM_LOAD ("microdis.rom",0x014000, 0x02000, 0xa9664a9c)
+	ROM_LOAD_OPTIONAL ("microdis.rom",0x014000, 0x02000, 0xa9664a9c)
+	ROM_LOAD_OPTIONAL ("jasmin.rom", 0x016000, 0x800, 0x37220e89)
 ROM_END
 
 ROM_START(orica)
-	ROM_REGION(0x10000+0x04000+0x02000,REGION_CPU1,0)
+	ROM_REGION(0x10000+0x04000+0x02000+0x0800,REGION_CPU1,0)
 	ROM_LOAD ("basic11b.rom", 0x10000, 0x4000, 0xc3a92bef)
-	ROM_LOAD ("microdis.rom",0x014000, 0x02000, 0xa9664a9c)
+	ROM_LOAD_OPTIONAL ("microdis.rom",0x014000, 0x02000, 0xa9664a9c)
+	ROM_LOAD_OPTIONAL ("jasmin.rom", 0x016000, 0x800, 0x37220e89)
 ROM_END
 
 ROM_START(telstrat)
