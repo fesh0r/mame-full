@@ -92,9 +92,9 @@ CPU=$(strip $(findstring M6509@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/m6502
 CPUDEFS += -DHAS_M6509=1
-CPUOBJS += $(OBJ)/cpu/m6502/m6502.o
+CPUOBJS += $(OBJ)/cpu/m6502/m6509.o
 DBGOBJS += $(OBJ)/cpu/m6502/6502dasm.o
-$(OBJ)/cpu/m6502/m6502.o: m6502.c m6502.h ops02.h t6502.c t65c02.c t65sc02.c t6510.c tdeco16.c t6509.c
+$(OBJ)/cpu/m6502/m6509.o: m6509.c m6509.h ops09.h t6509.c
 else
 CPUDEFS += -DHAS_M6509=0
 endif

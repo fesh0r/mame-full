@@ -37,6 +37,9 @@ void z180_get_info(UINT32 state, union cpuinfo *info);
 #if (HAS_M6502 || HAS_M65C02 || HAS_M65SC02 || HAS_M6510 || HAS_M6510T || HAS_M7501 || HAS_M8502 || HAS_N2A03 || HAS_DECO16 || HAS_M6509)
 #include "cpu/m6502/m6502.h"
 #endif
+#if (HAS_M6509)
+#include "cpu/m6502/m6509.h"
+#endif
 #if (HAS_M4510)
 #include "cpu/m6502/m4510.h"
 #endif
