@@ -53,7 +53,8 @@ enum
 	FLAG_INVAL_LINEINFO		= 2,
 	FLAG_BORDER_MODIFIED	= 4,
 	FLAG_ENDIAN_FLIP		= 8,
-	FLAG_FULL_REFRESH		= 16
+	FLAG_FULL_REFRESH		= 16,
+	FLAG_AFTER_FULL_REFRESH	= 32
 };
 static UINT8 flags;
 
@@ -800,10 +801,15 @@ VIDEO_UPDATE(videomap)
 	{
 		/* writing to buffered bitmap; partial refresh (except on first draw) */
 		is_partial_update = memcmp(cliprect, &Machine->visible_area, sizeof(*cliprect));
-		full_refresh = (is_partial_update || (flags & FLAG_FULL_REFRESH)) ? 1 : 0;
+		full_refresh = (is_partial_update || (flags & (FLAG_FULL_REFRESH|FLAG_AFTER_FULL_REFRESH))) ? 1 : 0;
+		bmp = tmpbitmap;
+
 		if (!is_partial_update)
 			flags &= ~FLAG_FULL_REFRESH;
-		bmp = tmpbitmap;
+		if (full_refresh)
+			flags |= FLAG_AFTER_FULL_REFRESH;
+		else
+			flags &= ~FLAG_AFTER_FULL_REFRESH;
 	}
 	else
 	{

@@ -6,25 +6,25 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
+- [A2600/A5200/COLECO/COCO/INTV/MSX/SNES/VECTREX] Added support for new
+  GoodTools file extensions. (bugs #277, #278, #279, #350) [Nate Woods]
+
 - [C16/VC20] Fixed crashes in quickloader. [Nate Woods]
 
 - [C16] Improved TED7360 sound emulation. [Attila Grosz]
 
-- [PDP1] Added support for lightpen with variable tip size. [Raphael Nabet]
+- [COCO] Added direct support for OS-9 floppy disk images. If an attached disk's
+  filename ends in .os9, the first sector will be analyzed for geometry
+  information. [Tim Lindner]
 
 - [COCO] Scaled the joystick port to 64 quanta rather than 256. (bug #340)
   [Tim Lindner]
 
+- [COCO] Fixed bug #359. [Nate Woods]
+
 - [MAC] Improved mouse emulation when moving diagonally. [Raphael Nabet]
 
-- [A2600/A5200/COLECO/COCO/INTV/MSX/SNES/VECTREX] Added support for new
-  GoodTools file extensions. (bugs #277, #278, #279, #350) [Nate Woods]
-
-- [TI99] Added support for new disk geometries (9 sec/trk DSSD, 16 sec/trk SSDD,
-  16 sec/trk DSDD). [Raphael Nabet]
-
-- [TOOLS] Added CGAFont, a tool to help people reconstructing PC character ROMs
-  without using an EPROM reader. [John Elliott]
+- [MC10] Fixed bug #358. [Nate Woods]
 
 - [PC200] Replaced generic character ROM with one reconstructed using CGAFont.
   [John Elliott]
@@ -35,11 +35,13 @@ System Driver Changes:
 - [PC1640] Added definition for the character ROM in ROM_LOAD structure.
   [Stefano Priore]
 
-- [COCO] Added direct support for OS-9 floppy disk images. If an attached disk's
-  filename ends in .os9, the first sector will be analyzed for geometry
-  information. [Tim Lindner]
+- [PDP1] Added support for lightpen with variable tip size. [Raphael Nabet]
 
-- [MC10] Fixed bug #358.[Nate Woods]
+- [TI99] Added support for new disk geometries (9 sec/trk DSSD, 16 sec/trk SSDD,
+  16 sec/trk DSDD). [Raphael Nabet]
+
+- [TOOLS] Added CGAFont, a tool to help people reconstructing PC character ROMs
+  without using an EPROM reader. [John Elliott]
 
 Source Changes:
 ---------------
