@@ -20,6 +20,9 @@ System Driver Changes:
 - [APPLE2] Workaround for apple2/apple2p inverse colors.  (bug #475) [Nate
   Woods]
 
+- [APPLE2] Synchronized the floppy disk controllers with the Apple II's ROM
+  routines, speeding up floppy access.  [Nick Westgate]
+
 
 
 User Interface Changes:

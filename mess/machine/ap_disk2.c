@@ -51,6 +51,7 @@ struct apple2_drive
 	UINT8 state;			/* bits 0-3 are the phase; bits 4-5 is q6-7 */
 	UINT8 transient_state;
 	int position;
+	int spin_count; 		/* simulate drive spin to fool RWTS test at $BD34 */
 	UINT8 track_data[APPLE2_NIBBLE_SIZE * APPLE2_SECTOR_COUNT];
 };
 
@@ -298,9 +299,14 @@ READ8_HANDLER ( apple2_c0xx_slot6_r )
 	case 0x0C:		/* Q6L - set transistor Q6 low */
 		cur_disk->state &= ~Q6_MASK;
 		if (read_state)
-			result = process_byte(cur_image, cur_disk, -1);
+		{
+			if ((++cur_disk->spin_count & 0x0F) != 0)
+				result = process_byte(cur_image, cur_disk, -1);
+		}
 		else
+		{
 			process_byte(cur_image, cur_disk, disk6byte);
+		}
 		break;
 	
 	case 0x0D:		/* Q6H - set transistor Q6 high */
