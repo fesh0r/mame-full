@@ -190,7 +190,7 @@ static struct MachineDriver machine_driver_coleco =
     TMS9928A_COLORTABLE_SIZE,
     tms9928A_init_palette,
 
-    VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+    VIDEO_TYPE_RASTER,
     0,
     coleco_vh_start,
     TMS9928A_stop,
