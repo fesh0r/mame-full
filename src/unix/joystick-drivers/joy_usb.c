@@ -15,12 +15,16 @@ struct rc_option joy_usb_opts[] = {
 
 #ifdef USB_JOYSTICK
 
-#if !defined(__ARCH_netbsd)
-#error "USB joysticks are only supported under NetBSD. "
+#if !defined(__ARCH_netbsd) && !defined(__ARCH_freebsd)
+#error "USB joysticks are only supported under NetBSD and FreeBSD. "
    "Patches to support other archs are welcome ;)"
 #endif
 
+#if defined(__ARCH_netbsd)
 #include <usb.h>
+#elif defined(__ARCH_freebsd)
+#include <libusb.h>
+#endif
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>
 

@@ -488,7 +488,7 @@ void sysdep_mouse_poll (void)
 
 /* Keyboard procs */
 /* Lighting keyboard leds */
-void osd_led_w (int led, int on) 
+void sysdep_set_leds(int leds) 
 {
 }
 

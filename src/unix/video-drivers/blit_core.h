@@ -12,10 +12,9 @@
 #define DEST_SCALE_Y_8(Y) SCALE_Y_8(Y)
 #endif
 
-switch(use_dirty)
-{
-   case 0: /* non dirty */
+   if (!use_dirty)
    {
+      /* non dirty */
 #ifdef DEST
       int src_width = (((SRC_PIXEL *)bitmap->line[1]) -
          ((SRC_PIXEL *)bitmap->line[0]));
@@ -30,12 +29,10 @@ switch(use_dirty)
 #ifdef PUT_IMAGE
       PUT_IMAGE(0, 0, SCALE_X(visual_width), SCALE_Y(visual_height))
 #endif      
-      break;
    }
-   case 1: /* normal dirty */
-      osd_dirty_merge();
-   case 2: /* vector */
+   else
    {
+      /* normal dirty */
       int y, max_y = (visual.max_y+1) >> 3;
 #ifdef DEST
       DEST_PIXEL *line_dest = (DEST_PIXEL *)(DEST) - DEST_SCALE_X(visual.min_x);
@@ -82,9 +79,7 @@ switch(use_dirty)
             dirty_lines[y] = 0;
          }
       }
-      break;
    }
-}
 
 #undef DEST_SCALE_X
 #undef DEST_SCALE_X_8

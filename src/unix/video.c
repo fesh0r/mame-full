@@ -305,35 +305,42 @@ int osd_create_display(int width, int height, int depth,
    debug_visual.min_y = 0;
    debug_visual.max_y = options.debug_height - 1;
 
-   /* Can we do dirty? First check if its a vector game */
-   if (attributes & VIDEO_TYPE_VECTOR)
-   {
-      if (use_dirty) use_dirty  = 2;
-   }
-   else if ( (attributes & VIDEO_SUPPORTS_DIRTY) == 0 )
+   /* Can we do dirty? */
+   if ( (attributes & VIDEO_SUPPORTS_DIRTY) == 0 )
    {
       use_dirty = FALSE;
    }
    
-   if(use_auto_double &&
-      (attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK) ==
-      VIDEO_PIXEL_ASPECT_RATIO_1_2)
+   if(use_auto_double)
    {
-      if (orientation & ORIENTATION_SWAP_XY)
-         normal_widthscale  *= 2;
-      else
-         normal_heightscale *= 2;
+      if ( (attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK) ==
+         VIDEO_PIXEL_ASPECT_RATIO_1_2)
+      {
+         if (orientation & ORIENTATION_SWAP_XY)
+            normal_widthscale  *= 2;
+         else
+            normal_heightscale *= 2;
+      }
+      if ( (attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK) ==
+         VIDEO_PIXEL_ASPECT_RATIO_2_1)
+      {
+         if (orientation & ORIENTATION_SWAP_XY)
+            normal_heightscale *= 2;
+         else
+            normal_widthscale  *= 2;
+      }
    }
   
 #if !defined xgl
    if (osd_dirty_init()!=OSD_OK) return -1;
 #endif
 
-   visual_width  = width;
-   visual_height = height;
-   widthscale    = normal_widthscale;
-   heightscale   = normal_heightscale;
-   video_fps     = fps;
+   visual_width     = width;
+   visual_height    = height;
+   widthscale       = normal_widthscale;
+   heightscale      = normal_heightscale;
+   use_aspect_ratio = normal_use_aspect_ratio;
+   video_fps        = fps;
    
    if (sysdep_create_display(depth) != OSD_OK)
       return -1;
@@ -361,7 +368,7 @@ void osd_close_display (void)
 
 static void osd_change_display_settings(struct my_rectangle *new_visual,
    struct sysdep_palette_struct *new_palette, int new_widthscale,
-   int new_heightscale)
+   int new_heightscale, int new_use_aspect_ratio)
 {
    int new_visual_width, new_visual_height, palette_dirty = 0;
    
@@ -378,17 +385,19 @@ static void osd_change_display_settings(struct my_rectangle *new_visual,
       palette_dirty = 1;
    }
    
-   if( (visual_width  != new_visual_width ) ||
-       (visual_height != new_visual_height) ||
-       (widthscale    != new_widthscale   ) ||
-       (heightscale   != new_heightscale  ) )
+   if( (visual_width     != new_visual_width    ) ||
+       (visual_height    != new_visual_height   ) ||
+       (widthscale       != new_widthscale      ) ||
+       (heightscale      != new_heightscale     ) ||
+       (use_aspect_ratio != new_use_aspect_ratio) )
    {
       sysdep_display_close();
       
-      visual_width  = new_visual_width;
-      visual_height = new_visual_height;
-      widthscale    = new_widthscale;
-      heightscale   = new_heightscale;
+      visual_width     = new_visual_width;
+      visual_height    = new_visual_height;
+      widthscale       = new_widthscale;
+      heightscale      = new_heightscale;
+      use_aspect_ratio = new_use_aspect_ratio;
       
       if (sysdep_create_display(bitmap_depth) != OSD_OK)
       {
@@ -474,7 +483,7 @@ void osd_set_visible_area(int min_x,int max_x,int min_y,int max_y)
    
    if(!debugger_has_focus)
       osd_change_display_settings(&normal_visual, normal_palette,
-         normal_widthscale, normal_heightscale);
+         normal_widthscale, normal_heightscale, normal_use_aspect_ratio);
    
    set_ui_visarea (normal_visual.min_x, normal_visual.min_y, normal_visual.max_x, normal_visual.max_y);
 }
@@ -661,20 +670,21 @@ void osd_debugger_focus(int new_debugger_focus)
    {
       if(new_debugger_focus)
          osd_change_display_settings(&debug_visual, debug_palette,
-            1, 1);
+            1, 1, 0);
       else
          osd_change_display_settings(&normal_visual, normal_palette,
-            normal_widthscale, normal_heightscale);
+            normal_widthscale, normal_heightscale, normal_use_aspect_ratio);
       
       debugger_has_focus = new_debugger_focus;
    }
 }
 
 /* Update the display. */
-void osd_update_video_and_audio(struct osd_bitmap *normal_bitmap, struct osd_bitmap *debug_bitmap, int leds_status)
+void osd_update_video_and_audio(struct osd_bitmap *normal_bitmap,
+   struct osd_bitmap *debug_bitmap, int leds_status)
 {
    int i;
-   static int showfps=0, showfpstemp=0, old_leds_status = 0; 
+   static int showfps=0, showfpstemp=0; 
    int skip_this_frame;
    int need_to_clear_bitmap=0;
    struct osd_bitmap *current_bitmap = normal_bitmap;
@@ -682,17 +692,6 @@ void osd_update_video_and_audio(struct osd_bitmap *normal_bitmap, struct osd_bit
    /* save the active bitmap for use in osd_clearbitmap, I know this
       sucks blame the core ! */
    scrbitmap = normal_bitmap;
-
-   if (leds_status != old_leds_status)
-   {
-	   int leds_changes = old_leds_status ^ leds_status;
-	   extern void osd_led_w(int led, int on);
-	   old_leds_status = leds_status;
-	   if (leds_changes & 1) osd_led_w(0, (leds_status & 1) ? 1 : 0);
-	   if (leds_changes & 2) osd_led_w(1, (leds_status & 2) ? 1 : 0);
-	   if (leds_changes & 4) osd_led_w(2, (leds_status & 4) ? 1 : 0);
-   }
-   
    
    if (input_ui_pressed(IPT_UI_FRAMESKIP_INC))
    {
@@ -771,7 +770,7 @@ void osd_update_video_and_audio(struct osd_bitmap *normal_bitmap, struct osd_bit
    
    if (debug_bitmap)
    {
-      if (keyboard_pressed_memory(KEYCODE_F5))
+      if (input_ui_pressed(IPT_UI_TOGGLE_DEBUG))
          osd_debugger_focus(!debugger_has_focus);
       if (debugger_has_focus)
          current_bitmap = debug_bitmap;
@@ -819,7 +818,7 @@ void osd_update_video_and_audio(struct osd_bitmap *normal_bitmap, struct osd_bit
          
          if (!debugger_has_focus)
             osd_change_display_settings(&normal_visual, normal_palette,
-               normal_widthscale, normal_heightscale);
+               normal_widthscale, normal_heightscale, normal_use_aspect_ratio);
       }
    }
    
@@ -846,7 +845,8 @@ void osd_update_video_and_audio(struct osd_bitmap *normal_bitmap, struct osd_bit
    }
    
    if (need_to_clear_bitmap) osd_clearbitmap(normal_bitmap);
-
+   
+   sysdep_set_leds(leds_status);
    osd_poll_joysticks();
 }
 

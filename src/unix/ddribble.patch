@@ -1,0 +1,28 @@
+diff -ur mame-0.37b5.orig.fixed/src/drivers/ddrible.c xmame-0.37b5.1/src/drivers/ddrible.c
+--- mame-0.37b5.orig.fixed/src/drivers/ddrible.c	Fri Aug 25 19:25:58 2000
++++ xmame-0.37b5.1/src/drivers/ddrible.c	Tue Aug 22 10:29:22 2000
+@@ -10,8 +10,8 @@
+ #include "cpu/m6809/m6809.h"
+ #include "vidhrdw/generic.h"
+ 
+-extern int ddrible_int_enable_0;
+-extern int ddrible_int_enable_1;
++int ddrible_int_enable_0;
++int ddrible_int_enable_1;
+ 
+ static unsigned char *ddrible_sharedram;
+ static unsigned char *ddrible_snd_sharedram;
+diff -ur mame-0.37b5.orig.fixed/src/machine/ddrible.c xmame-0.37b5.1/src/machine/ddrible.c
+--- mame-0.37b5.orig.fixed/src/machine/ddrible.c	Fri Aug 25 19:25:56 2000
++++ xmame-0.37b5.1/src/machine/ddrible.c	Tue Aug 22 10:29:22 2000
+@@ -12,7 +12,9 @@
+ 
+ unsigned char *ddrible_sharedram;
+ unsigned char *ddrible_snd_sharedram;
+-int ddrible_int_enable_0, ddrible_int_enable_1;
++
++extern int ddrible_int_enable_0;
++extern int ddrible_int_enable_1;
+ 
+ void ddrible_init_machine( void )
+ {

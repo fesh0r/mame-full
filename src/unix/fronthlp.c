@@ -466,14 +466,24 @@ int frontend_list(char *gamename)
 
                      {
                         const char **samplenames = 0;
-#if (HAS_SAMPLES)
+#if (HAS_SAMPLES || HAS_VLM5030)
                         for (j = 0;drivers[i]->drv->sound[j].sound_type && j < MAX_SOUND; j++)
                         {
+#if (HAS_SAMPLES)
                            if (drivers[i]->drv->sound[j].sound_type == SOUND_SAMPLES)
                            {
                               samplenames = ((struct Samplesinterface *)drivers[i]->drv->sound[j].sound_interface)->samplenames;
                               break;
                            }
+#endif
+#if (HAS_VLM5030)
+                           if (drivers[i]->drv->sound[j].sound_type == SOUND_VLM5030)
+                           {
+                              samplenames = ((struct Samplesinterface *)drivers[i]->drv->sound[j].sound_interface)->samplenames;
+                              break;
+                           }
+#endif
+
                         }
 #endif
                         if (drivers[i]->flags & GAME_NO_SOUND)
@@ -593,7 +603,7 @@ int frontend_list(char *gamename)
                      }
                   }
                   break;
-#if (HAS_SAMPLES)
+#if (HAS_SAMPLES || HAS_VLM5030)
                case LIST_SAMPLES: /* game samples list */
                case LIST_SAMDIR:  /* games list with samples directories */
                   {
@@ -601,11 +611,16 @@ int frontend_list(char *gamename)
                      
                      for( j = 0; drivers[i]->drv->sound[j].sound_type && j < MAX_SOUND; j++ )
                      {
-                        const char **samplenames;
-                        if( drivers[i]->drv->sound[j].sound_type != SOUND_SAMPLES )
-                           continue;
-                        samplenames = ((struct Samplesinterface *)drivers[i]->drv->sound[j].sound_interface)->samplenames;
-                        if (samplenames != 0 && samplenames[0] != 0)
+                        const char **samplenames = NULL;
+#if (HAS_SAMPLES)
+                        if( drivers[i]->drv->sound[j].sound_type == SOUND_SAMPLES )
+                           samplenames = ((struct Samplesinterface *)drivers[i]->drv->sound[j].sound_interface)->samplenames;
+#endif                        
+#if (HAS_VLM5030)
+                        if( drivers[i]->drv->sound[j].sound_type == SOUND_VLM5030 )
+                           samplenames = ((struct Samplesinterface *)drivers[i]->drv->sound[j].sound_interface)->samplenames;
+#endif                        
+                        if (samplenames && samplenames[0])
                         {
                            found = 1;
                            
@@ -641,8 +656,16 @@ int frontend_list(char *gamename)
                      const char **samplenames = NULL;
                      
                      for( j = 0; drivers[i]->drv->sound[j].sound_type && j < MAX_SOUND; j++ )
+                     {
+#if (HAS_SAMPLES)
                         if( drivers[i]->drv->sound[j].sound_type == SOUND_SAMPLES )
                            samplenames = ((struct Samplesinterface *)drivers[i]->drv->sound[j].sound_interface)->samplenames;
+#endif
+#if (HAS_VLM5030)
+                        if( drivers[i]->drv->sound[j].sound_type == SOUND_VLM5030 )
+                           samplenames = ((struct Samplesinterface *)drivers[i]->drv->sound[j].sound_interface)->samplenames;
+#endif
+                     }
                      
                      /* ignore games that need no samples */
                      if (samplenames == NULL || samplenames[0] == NULL)

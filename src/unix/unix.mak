@@ -96,14 +96,12 @@ endif
 ##############################################################################
 OBJ     = $(TARGET).obj
 
-OBJDIRS = $(OBJ) $(OBJ)/cpu $(OBJ)/sound $(OBJ)/drivers $(OBJ)/machine \
-	$(OBJ)/vidhrdw $(OBJ)/sndhrdw
-ifeq ($(TARGET),mess)
-OBJDIRS += $(OBJ)/mess $(OBJ)/mess/systems $(OBJ)/mess/machine $(OBJ)/mess/vidhrdw \
-	$(OBJ)/mess/sndhrdw $(OBJ)/mess/tools $(OBJ)/mess/formats
-endif
-IMGTOOL_OBJS = $(OBJ)/unix.$(DISPLAY_METHOD)/dirio.o
-INCLUDE_PATH = -Isrc -Imess -Isrc/unix -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
+CORE_OBJDIRS = $(OBJ) \
+	$(OBJ)/drivers $(OBJ)/machine $(OBJ)/vidhrdw $(OBJ)/sndhrdw \
+	$(OBJ)/cpu $(OBJ)/sound \
+	$(OBJ)/mess $(OBJ)/mess/formats $(OBJ)/mess/systems $(OBJ)/mess/machine \
+	$(OBJ)/mess/vidhrdw $(OBJ)/mess/sndhrdw $(OBJ)/mess/tools
+
 
 ##############################################################################
 # "Calculate" the final CFLAGS, unix CONFIG, LIBS and OBJS
@@ -112,7 +110,7 @@ ifdef ZLIB
 ZLIB    = contrib/cutzlib-1.1.3/libz.a
 endif
 
-all: maketree $(ZLIB) $(OBJDIRS) osdepend x$(TARGET).$(DISPLAY_METHOD)
+all: $(ZLIB) objdirs osdepend x$(TARGET).$(DISPLAY_METHOD)
 
 # CPU core include paths
 VPATH=src $(wildcard src/cpu/*)
@@ -187,6 +185,9 @@ endif
 OBJS  += $(subst $(OBJ)/vidhrdw/vector.o, ,$(COREOBJS)) $(DRVLIBS) \
  $(OBJ)/unix.$(DISPLAY_METHOD)/osdepend.a $(OBJ)/unix.$(DISPLAY_METHOD)/vector.o
 
+MY_OBJDIRS = $(CORE_OBJDIRS) $(sort $(OBJDIRS))
+
+
 ##############################################################################
 # Begin of the real makefile.
 ##############################################################################
@@ -196,7 +197,9 @@ x$(TARGET).$(DISPLAY_METHOD): $(OBJS)
 
 tools: $(ZLIB) $(OBJDIRS) $(TOOLS)
 
-$(sort $(OBJDIRS)):
+objdirs: $(MY_OBJDIRS)
+
+$(MY_OBJDIRS):
 	-mkdir $@
 
 xlistdev: contrib/tools/xlistdev.c
@@ -237,7 +240,6 @@ $(OBJ)/%.o: src/%.c
 
 $(OBJ)/%.a:
 	$(CC_COMMENT) @echo 'Archiving $@ ...'
-	$(CC_COMPILE) rm -f $@
 	$(CC_COMPILE) ar $(AR_OPTS) $@ $^
 	$(CC_COMPILE) $(RANLIB) $@
 
@@ -268,6 +270,7 @@ $(OBJ)/cpu/m68000/68kem.o: $(OBJ)/cpu/m68000/68kem.asm
 	$(CC_COMMENT) @echo 'Assembling $< ...'
 	$(CC_COMPILE) $(ASM_STRIP) $<
 	$(CC_COMPILE) nasm $(NASM_FMT) -o $@ $<
+
 
 #some tricks, since vector.o these days is display-method dependent:
 $(OBJ)/unix.$(DISPLAY_METHOD)/vector.o: src/vidhrdw/vector.c
@@ -324,5 +327,3 @@ copycab:
 clean: 
 	rm -fr $(OBJ) x$(TARGET).* xlistdev contrib/cutzlib-1.1.3/libz.a contrib/cutzlib-1.1.3/*.o $(TARGET).dep
 #	cd makedep; make clean
-
-maketree: $(sort $(OBJDIRS))

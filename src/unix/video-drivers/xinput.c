@@ -265,6 +265,6 @@ void sysdep_mouse_poll (void)
 	}
 }
 
-void osd_led_w(int led,int on) 
+void sysdep_set_leds(int leds)
 {
 }

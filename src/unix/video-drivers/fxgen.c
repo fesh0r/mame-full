@@ -44,7 +44,6 @@ static GrTexInfo texinfo;
 static int palette_changed=0;
 static int bilinear=1; /* Do binlinear filtering? */
 static int screendirty=1;  /* Has the bitmap been modified since the last frame? */
-static int use_aspect_ratio=1;
 static const int texsize=256;
 
 /* The squares that are tiled to make up the game screen polygon */
@@ -85,7 +84,7 @@ struct rc_option fx_opts[] = {
    { "resolution",	"res",			rc_use_function, NULL,
      "640x480",		0,			0,		SetResolution,
      "Specify the resolution/ windowsize to use in the form of XRESxYRES" },
-   { "keepaspect",	NULL,			rc_bool,	&use_aspect_ratio,
+   { "keepaspect",	NULL,			rc_bool,	&normal_use_aspect_ratio,
      "1",		0,			0,		NULL,
      "Try / don't try to keep the aspect ratio of a game" },
    { NULL,		NULL,			rc_end,		NULL,

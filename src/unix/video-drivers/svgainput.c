@@ -320,19 +320,24 @@ void sysdep_mouse_poll (void)
 	mouse_setposition_6d(0, 0, 0, 0, 0, 0, MOUSE_6DIM);
 }
 
-static const int led_flags[3] = {
-  LED_NUM,
-  LED_CAP,
-  LED_SCR
-};
-
-void osd_led_w(int led,int on)
+void sysdep_set_leds(int new_leds)
 {
-	if (led>=3) return;
-	if (on)
-		leds |=  led_flags[led];
-	else
-		leds &= ~led_flags[led];
-	if (console_fd >= 0)
-		ioctl(console_fd, KDSETLED, leds);
+   static int old_leds = 0;
+   
+   if (old_leds != new_leds)
+   {
+      leds = 0;
+      
+      if (new_leds & 0x01)
+         leds |= LED_NUM;
+      if (new_leds & 0x02)
+         leds |= LED_CAP;
+      if (new_leds & 0x04)
+         leds |= LED_SCR;
+      
+      if (console_fd >= 0)
+         ioctl(console_fd, KDSETLED, leds);
+      
+      old_leds = new_leds;
+   }
 }

@@ -76,8 +76,6 @@ struct my_rectangle
 #if !defined xgl
 EXTERN unsigned char *dirty_lines;
 EXTERN unsigned char **dirty_blocks;
-EXTERN unsigned char *old_dirty_lines;
-EXTERN unsigned char **old_dirty_blocks;
 #endif
 
 /* global variables and miscellaneous flags */
@@ -101,6 +99,8 @@ EXTERN char		*cabname;
 EXTERN float		display_aspect_ratio;
 EXTERN int 		sleep_idle;
 EXTERN int 		max_autoframeskip;
+EXTERN int		use_aspect_ratio;
+EXTERN int		normal_use_aspect_ratio;
 EXTERN struct sysdep_palette_info display_palette_info;
 EXTERN struct sysdep_palette_struct *current_palette;
 EXTERN struct sysdep_palette_struct *normal_palette;
@@ -130,6 +130,7 @@ int  sysdep_display_16bpp_capable(void);
 void sysdep_update_display(struct osd_bitmap *bitmap);
 int  sysdep_set_video_mode(void);
 void sysdep_set_text_mode(void);
+void sysdep_set_leds(int leds);
 
 /* input related */
 int  osd_input_initpre(void);
@@ -142,7 +143,6 @@ void sysdep_mouse_poll(void);
 /* dirty functions */
 int  osd_dirty_init(void);
 void osd_dirty_close(void);
-void osd_dirty_merge(void);
 
 /* network funtions */
 int  osd_net_init(void);

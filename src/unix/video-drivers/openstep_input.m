@@ -419,6 +419,6 @@ sysdep_update_keyboard(void)
  * We do not have access to the keyboard LED's
  */
 
-void osd_led_w(int led,int on) 
+void sysdep_set_leds(int leds)
 {
 }

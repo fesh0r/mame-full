@@ -14,6 +14,7 @@
 #include "sysdep/misc.h"
 
 /* from ... */
+extern char *cheatfile;
 extern char *db_filename;
 extern char *history_filename;
 extern char *mameinfo_filename;
@@ -266,6 +267,8 @@ int config_init (int argc, char *argv[])
    /* some settings which are static for xmame and thus aren't controled
       by options */
    options.use_emulated_ym3812 = TRUE;
+   options.gui_host = 1;
+   cheatfile = NULL;
    db_filename = NULL;
    history_filename = NULL;
    mameinfo_filename = NULL;

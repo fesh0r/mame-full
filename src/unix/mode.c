@@ -3,14 +3,12 @@
 
 static int mode_disable(struct rc_option *option, const char *s, int priority);
 
-static int use_aspect_ratio = 1;
-
 struct rc_option mode_opts[] = {
    /* name, shortname, type, dest, deflt, min, max, func, help */
    { "Video Mode Selection Related", NULL,	rc_seperator,	NULL,
      NULL,		0,			0,		NULL,
      NULL },
-   { "keepaspect",	"ka",			rc_bool,	&use_aspect_ratio,
+   { "keepaspect",	"ka",			rc_bool,	&normal_use_aspect_ratio,
      "1",		0,			0,		NULL,
      "Try / don't try to keep the aspect ratio of a game when selecting the best videomode" },
    { "displayaspectratio", "dar",		rc_float,	&display_aspect_ratio,
