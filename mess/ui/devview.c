@@ -356,6 +356,7 @@ static BOOL DevView_Setup(HWND hwndDevView)
 	if (!pDevViewInfo)
 		return FALSE;
 	memset(pDevViewInfo, 0, sizeof(*pDevViewInfo));
+	pDevViewInfo->nGame = -1;
 	SetWindowLongPtr(hwndDevView, GWLP_USERDATA, (LONG_PTR) pDevViewInfo);
 
 	pDevViewInfo->hFont = CreateFont(10, 0, 0, 0, FW_NORMAL, 0, 0, 0, 0, 0,

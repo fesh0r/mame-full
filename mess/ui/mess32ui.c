@@ -349,14 +349,16 @@ static void MyFillSoftwareList(int nGame, BOOL bForce)
 	LPCSTR *pathsv;
 	HWND hwndSoftwarePicker;
 	HWND hwndSoftwareDevView;
+	
+	hwndSoftwarePicker = GetDlgItem(hMain, IDC_SWLIST);
+	hwndSoftwareDevView = GetDlgItem(hMain, IDC_SWDEVVIEW);
+
+	// Set up the device view
+	DevView_SetDriver(hwndSoftwareDevView, nGame);
 
 	if (!bForce && (s_nGame == nGame))
 		return;
 	s_nGame = nGame;
-
-	nGame = Picker_GetSelectedItem(hwndList);
-	hwndSoftwarePicker = GetDlgItem(hMain, IDC_SWLIST);
-	hwndSoftwareDevView = GetDlgItem(hMain, IDC_SWDEVVIEW);
 
 	// Set up the software picker
 	SoftwarePicker_Clear(hwndSoftwarePicker);
@@ -368,9 +370,6 @@ static void MyFillSoftwareList(int nGame, BOOL bForce)
 		drv = mess_next_compatible_driver(drv);
 	}
 	AddSoftwarePickerDirs(hwndSoftwarePicker, GetExtraSoftwarePaths(nGame), NULL);
-	
-	// Set up the device view
-	DevView_SetDriver(hwndSoftwareDevView, nGame);
 }
 
 
@@ -411,10 +410,11 @@ static BOOL MessApproveImageList(HWND hParent, int nGame)
 		}
 
 		// Must this device be loaded?
-		if ((pDevice->flags & DEVICE_MUST_BE_LOADED) && (nCount != pDevice->count))
+		if ((pDevice->flags & DEVICE_MUST_BE_LOADED) && (nCount < pDevice->count))
 		{
 			snprintf(szMessage, sizeof(szMessage) / sizeof(szMessage[0]),
-				"Driver requires that device %s must have an image to load\n",
+				"System '%s' requires that device %s must have an image to load\n",
+				pDriver->description,
 				device_typename(pDevice->type));
 			goto error;
 		}
@@ -423,7 +423,8 @@ static BOOL MessApproveImageList(HWND hParent, int nGame)
 		if (nCount > pDevice->count)
 		{
 			snprintf(szMessage, sizeof(szMessage) / sizeof(szMessage[0]),
-				"Too many images specified; cannot run emulation\n");
+				"Too many images specified for system '%s'; cannot run emulation\n",
+				pDriver->description);
 			goto error;
 		}
 	}
