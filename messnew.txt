@@ -21,18 +21,18 @@ Sharp PC1403/1403H (preliminary) [PeT]
 
 System Driver Changes:
 ----------------------
-- [APPLE I] Support for the correct chargen ROM. Character grid has now the correct
-  dimensions [JoJo]
+- [APPLE I] Support for the correct chargen ROM. Character grid has now the 
+  correct dimensions [JoJo]
 
 - [AQUARIUS] Added correct palette. [JoJo]
 
 - [ATARI5200] Changed the cart loading strategy. Many more carts work now. [PeT]
 
-- [COLECO] Changed MEMORY handlers which allows more carts to work (like aqua attack 
-  and tutankham).  Small fix to input handling which means Defender and Centipede now 
-  work.  Accurate NMI handling added which fixes remaining carts like Buck Rogers, 
-  DragonFire, Zenji, Bump and Jump, etc.  Also, keys are configurable from the OSD 
-  for both controllers. [Ben, Sean Young]
+- [COLECO] Changed MEMORY handlers which allows more carts to work (like aqua 
+  attack and tutankham). Small fix to input handling which means Defender and 
+  Centipede now work. Accurate NMI handling added which fixes remaining carts 
+  like Buck Rogers, DragonFire, Zenji, Bump and Jump, etc. Also, keys are 
+  configurable from the OSD for both controllers. [Ben, Sean Young]
 
 - [DRAGON/COCO1-2-3] Completely rewritten midframe video mode rendering, which
   now applies not just to the CoCo 3, but to all systems that use the m6847 and
@@ -44,13 +44,10 @@ System Driver Changes:
   work properly, including Mind-Roll which is banked.  Also, properly NOP'd
   invalid memory areas, which prevented Arkanoid from running.  [Nate Woods]
 
-- [MSX] DAC synthesizer fixed. [Sean Young]
-
 - [MSX2] The V9938 emulation is improved, added interlaced mode, fixed blitter 
   timings, sprites, and GRAPHIC 5 (SCREEN 6). The MSX2 now has a 128kB memory 
-  mapper, so now many more games run. [Sean Young]
-  Preliminary save state support and numeric keypad emulation added. [Sean Young]
-  K051649 has been fixed (F1 Spirits now works correctly). [Sean Young]
+  mapper, so now many more games run. Numeric keypad emulation added. Fix to
+  the K051649 (SCC) now F1 Spirit sound works. [Sean Young]
 
 - [C128] VIC charracter rom switching and color ram banking added. [PeT]
 
@@ -65,16 +62,15 @@ System Driver Changes:
 - [C64] added support for game/exrom cartridge lines in crt files
   bankswitching fixes [PeT]
   
-- [VIC20] power up strategy changed (RAM is not filled with 0xff 0x00 pattern like in VICE
-  anymore, real SRAM is indeed filled with random pattern). Power up "support" for jelly
-  monsters. 
-  Keyboard polling support for second/alternate matrix io selection.
-  Some "dipswitch" fixes. [PeT]
+- [VIC20] power up strategy changed (RAM is not filled with 0xff 0x00 pattern 
+  like in VICE anymore, real SRAM is indeed filled with random pattern). Power 
+  up "support" for jelly monsters. Keyboard polling support for second/alternate 
+  matrix io selection. Some "dipswitch" fixes. [PeT]
 
 - [C16] TED timer 1 reloading on underrun changed. [PeT]
   ECM and Multicolor mode: cursor and character inversion disabled.
-  TED sound channels simplified to generate only rectangular signals:
-  digisound working, less static, clearer sound. Now the driver uses MOS 8580. [PeT]
+  TED sound channels simplified to generate only rectangular signals: digisound 
+  working, less static, clearer sound. Now the driver uses MOS 8580. [PeT]
 
 - [C16/C64/CBM B/C128/C65] SID cleanup, realtime modifications, digisound support
   (fx sound good now, random number generation ok). [PeT]
@@ -91,8 +87,8 @@ System Driver Changes:
 
 - [SPECTRUM] Interface 2 emulation. [David Robertson]
 
-- [SATURN] Many fixes. The driver now boots up and displays splash screen, but it's
-  still non-functional. [James Forshaw]
+- [SATURN] Many fixes. The driver now boots up and displays splash screen, but 
+  it's still non-functional. [James Forshaw]
 
 - [SNES] Added preliminary tile-mosaic effect and fixed a small matrix bug in 
   mode 7, F-zero now renders the screen the correct way [Lee Ward]
@@ -143,14 +139,15 @@ Source:
 - M, D and V registers support in the state saving engine and MD register's
   behaviour fixed in the HD6309 code. [Tim Lindner]
 
-- Z80 CPU now behaves correctly after an IRQ: this fixed a bug in PC8801 emulation.
-  [Sean Young]
+- Z80 CPU now behaves correctly after an IRQ: this fixed a bug in PC8801 
+  emulation. [Sean Young]
 
 - Added save sate support to TMS34010 CPU. [Nate Woods]
 
 - Many fixes to the SC61860 CPU. [PeT]
 
-- Added a static memory interface, interrupt functionality and runtime loader support to the F8 CPU core. [PeT]
+- Added a static memory interface, interrupt functionality and runtime loader 
+  support to the F8 CPU core. [PeT]
 
 -------------------------------------------------------------------------------  
 0.37b14
