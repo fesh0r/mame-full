@@ -114,7 +114,7 @@ void mekd2_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
         memset (videoram, 0x0f, videoram_size);
     }
 	if (artwork_backdrop == NULL)
-		fillbitmap (bitmap, Machine->pens[0], &Machine->drv->visible_area);
+		fillbitmap (bitmap, Machine->pens[0], &Machine->visible_area);
 
     for (x = 0; x < 6; x++)
     {
