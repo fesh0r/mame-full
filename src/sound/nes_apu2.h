@@ -25,7 +25,7 @@
 ** nes_apu.h
 **
 ** NES APU emulation header file
-** $Id: nes_apu2.h,v 1.1 2000/11/14 13:49:12 ben Exp $
+** $Id: nes_apu2.h,v 1.2 2000/12/13 02:07:11 rnabet Exp $
 */
 
 #ifndef _NES_APU_H_
@@ -38,8 +38,12 @@
 #define uint16 unsigned short
 #define uint32 unsigned int
 #define boolean uint8
+#ifndef TRUE
 #define	TRUE 1
+#endif
+#ifndef FALSE
 #define FALSE 0
+#endif
 
 #ifndef INLINE
 #ifdef __GNUC__
@@ -298,6 +302,9 @@ extern void apu_write(uint32 address, uint8 value);
 
 /*
 ** $Log: nes_apu2.h,v $
+** Revision 1.2  2000/12/13 02:07:11  rnabet
+** conditionalized "#define TRUE 1" and "#define FALSE 0" so that it compiles here.
+**
 ** Revision 1.1  2000/11/14 13:49:12  ben
 ** MAME37b9 files!
 **
