@@ -23,24 +23,24 @@
 static MEMORY_READ_START( readmem )
     { 0x0000, 0x001f, a7800_TIA_r },
     { 0x0020, 0x003f, a7800_MARIA_r },
-    { 0x0040, 0x00FF, a7800_RAM0_r },
+    { 0x0040, 0x00FF, MRA_BANK5 },		/* RAM0 */
     { 0x0100, 0x011f, a7800_TIA_r },
     { 0x0120, 0x013f, a7800_MARIA_r },
-    { 0x0140, 0x01FF, a7800_RAM1_r },
+    { 0x0140, 0x01FF, MRA_BANK6 },		/* RAM1 */
     { 0x0200, 0x021f, a7800_TIA_r },
     { 0x0220, 0x023f, a7800_MARIA_r },
     { 0x0280, 0x02FF, a7800_RIOT_r },
     { 0x0300, 0x031f, a7800_TIA_r },
     { 0x0320, 0x033f, a7800_MARIA_r },
-    { 0x0480, 0x04ff, MRA_RAM },    /* RIOT RAM */
+    { 0x0480, 0x04ff, MRA_RAM },		/* RIOT RAM */
     { 0x1800, 0x27FF, MRA_RAM },
-    { 0x2800, 0x2FFF, a7800_MAINRAM_r },
-    { 0x3000, 0x37FF, a7800_MAINRAM_r },
-    { 0x3800, 0x3FFF, a7800_MAINRAM_r },
-    { 0x4000, 0x7FFF, MRA_BANK1 },	/* f18 hornet */
-    { 0x8000, 0x9FFF, MRA_BANK2 },	/* sc */
-    { 0xA000, 0xBFFF, MRA_BANK3 },	/* sc + ac */
-    { 0xC000, 0xDFFF, MRA_BANK4 },	/* ac */
+    { 0x2800, 0x2FFF, MRA_BANK7 },		/* MAINRAM */
+    { 0x3000, 0x37FF, MRA_BANK7 },		/* MAINRAM */
+    { 0x3800, 0x3FFF, MRA_BANK7 },		/* MAINRAM */
+    { 0x4000, 0x7FFF, MRA_BANK1 },		/* f18 hornet */
+    { 0x8000, 0x9FFF, MRA_BANK2 },		/* sc */
+    { 0xA000, 0xBFFF, MRA_BANK3 },		/* sc + ac */
+    { 0xC000, 0xDFFF, MRA_BANK4 },		/* ac */
     { 0xE000, 0xFFFF, MRA_ROM },
 MEMORY_END
 
@@ -50,17 +50,17 @@ static MEMORY_WRITE_START( writemem )
     { 0x0040, 0x00FF, a7800_RAM0_w },
     { 0x0100, 0x011f, a7800_TIA_w },
     { 0x0120, 0x013f, a7800_MARIA_w },
-    { 0x0140, 0x01FF, a7800_RAM1_w },
+    { 0x0140, 0x01FF, MWA_BANK6 },		/* RAM1 */
     { 0x0200, 0x021f, a7800_TIA_w },
     { 0x0220, 0x023f, a7800_MARIA_w },
     { 0x0280, 0x02FF, a7800_RIOT_w },
     { 0x0300, 0x031f, a7800_TIA_w },
     { 0x0320, 0x033f, a7800_MARIA_w },
-    { 0x0480, 0x04ff, MWA_RAM },  /* RIOT RAM */
+    { 0x0480, 0x04ff, MWA_RAM },		/* RIOT RAM */
     { 0x1800, 0x27FF, MWA_RAM },
-    { 0x2800, 0x2FFF, a7800_MAINRAM_w },
-    { 0x3000, 0x37FF, a7800_MAINRAM_w },
-    { 0x3800, 0x3FFF, a7800_MAINRAM_w },
+    { 0x2800, 0x2FFF, MWA_BANK7 },		/* MAINRAM */
+    { 0x3000, 0x37FF, MWA_BANK7 },		/* MAINRAM */
+    { 0x3800, 0x3FFF, MWA_BANK7 },		/* MAINRAM */
     { 0x4000, 0xFFFF, a7800_cart_w },
 MEMORY_END
 

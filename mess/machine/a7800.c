@@ -4,11 +4,11 @@
 
 	Machine file to handle emulation of the Atari 7800.
 
-	2002/05/14 kubecj fixed Fatal Run - adding simple riot timer helped.
+	14-May-2002	kubecj fixed Fatal Run - adding simple riot timer helped.
 							maybe someone with knowledge should add full fledged
 							riot emulation?
 
-	2002/05/13 kubecj	fixed a7800_cart_type not to be too short ;-D
+	13-May-2002 kubecj	fixed a7800_cart_type not to be too short ;-D
 							fixed for loading of bank6 cart (uh, I hope)
 							fixed for loading 64k supercarts
 							fixed for using PAL bios
@@ -54,35 +54,37 @@ unsigned long a7800_cart_size;
 unsigned char a7800_stick_type;
 static UINT8 *ROM;
 
-static void a7800_init_machine_cmn(void)
+static void a7800_common_init_machine(int ispal, int lines)
 {
+	ROM = memory_region(REGION_CPU1);
+
+	a7800_ispal = ispal;
+	a7800_lines = lines;
+
 	a7800_ctrl_lock = 0;
 	a7800_ctrl_reg = 0;
-	maria_flag=0;
+	maria_flag = 0;
 
 	/* pokey cartridge */
-	if( a7800_cart_type & 0x01 )
-	{
-		install_mem_write_handler(0,0x4000,0x7FFF,pokey1_w);
-	}
+	if (a7800_cart_type & 0x01)
+		install_mem_write_handler(0, 0x4000, 0x7FFF, pokey1_w);
+
+	/* standard banks */
+	cpu_setbank(5, &ROM[0x2040]);		/* RAM0 */
+	cpu_setbank(6, &ROM[0x2140]);		/* RAM1 */
+	cpu_setbank(7, &ROM[0x2000]);		/* MAINRAM */
 }
 
 /* NTSC machine init */
 MACHINE_INIT( a7800 )
 {
-	a7800_ispal = 0;
-	a7800_lines = 262;
-
-	a7800_init_machine_cmn();
+	a7800_common_init_machine(FALSE, 262);
 }
 
 /* PAL machine init */
 MACHINE_INIT( a7800p )
 {
-	a7800_ispal = 1;
-	a7800_lines = 312;
-
-	a7800_init_machine_cmn();
+	a7800_common_init_machine(TRUE, 312);
 }
 
 #define MBANK_TYPE_ATARI 0x0000
@@ -426,37 +428,11 @@ WRITE_HANDLER( a7800_RIOT_w )
 
 /****** RAM Mirroring ******************************/
 
-READ_HANDLER( a7800_MAINRAM_r )
-{
-	return ROM[0x2000 + offset];
-}
-
-WRITE_HANDLER( a7800_MAINRAM_w )
-{
-	ROM[0x2000 + offset] = data;
-}
-
-READ_HANDLER( a7800_RAM0_r )
-{
-	return ROM[0x2040 + offset];
-}
-
 WRITE_HANDLER( a7800_RAM0_w )
 {
 	ROM[0x2040 + offset] = data;
 	ROM[0x40 + offset] = data;
 }
-
-READ_HANDLER( a7800_RAM1_r )
-{
-	return ROM[0x2140 + offset];
-}
-
-WRITE_HANDLER( a7800_RAM1_w )
-{
-	ROM[0x2140 + offset] = data;
-}
-
 
 WRITE_HANDLER( a7800_cart_w )
 {

@@ -7,6 +7,9 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
+- [A7800] Fixed RAM0 and RAM1 bank handling, which has been broken since MESS
+  0.61.  Ikari Warriors now runs, among other games most likely.  [Nate Woods]
+
 - [AMSTRAD, MSX, SORD, KC] Changed CPU core on these systems from Z80_MSX to
   Z80.  Since the MAME core now has CPU opcode reading safety now, Z80_MSX is
   no longer necessary.  [Nate Woods]
