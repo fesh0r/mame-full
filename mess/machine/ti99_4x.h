@@ -92,8 +92,12 @@ enum
 {
 	input_port_config = 0,
 	input_port_keyboard,
-	input_port_caps_lock = input_port_keyboard+4,		/* /4a only */
-	input_port_IR_joysticks = input_port_keyboard+4,	/* /4 only */
+	input_port_mouse_buttons = input_port_keyboard+3,	/* optional mouse */
+		input_port_mouse_buttons_shift = 13,			/* hack: we share this port with the wired joysticks */
+	input_port_mousex = input_port_keyboard+4,			/* optional mouse */
+	input_port_mousey,									/* optional mouse */
+	input_port_caps_lock = input_port_mousey+1,			/* /4a only */
+	input_port_IR_joysticks = input_port_mousey+1,		/* /4 only */
 	input_port_IR_keypads = input_port_IR_joysticks+8	/* /4 only */
 };
 
@@ -114,7 +118,9 @@ enum
 	config_ide_bit		= 8,
 	config_ide_mask		= 0x1,
 	config_hsgpl_bit	= 9,
-	config_hsgpl_mask	= 0x1
+	config_hsgpl_mask	= 0x1,
+	config_mecmouse_bit	= 10,
+	config_mecmouse_mask= 0x1
 };
 
 

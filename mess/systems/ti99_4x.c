@@ -191,6 +191,9 @@ INPUT_PORTS_START(ti99_4a)
 		PORT_BITX( config_hsgpl_mask << config_hsgpl_bit, 0/*1 << config_hsgpl_bit*/, IPT_DIPSWITCH_NAME, "SNUG HSGPL card", KEYCODE_NONE, IP_JOY_NONE )
 			PORT_DIPSETTING( 0x0000, DEF_STR( Off ) )
 			PORT_DIPSETTING( 1 << config_hsgpl_bit, DEF_STR( On ) )
+		PORT_BITX( config_mecmouse_mask << config_mecmouse_bit, 0, IPT_DIPSWITCH_NAME, "Mechatronics Mouse", KEYCODE_NONE, IP_JOY_NONE )
+			PORT_DIPSETTING( 0x0000, DEF_STR( Off ) )
+			PORT_DIPSETTING( 1 << config_mecmouse_bit, DEF_STR( On ) )
 
 	PORT_START	/* col 0 */
 		PORT_BITX(0x0088, IP_ACTIVE_LOW, IPT_UNUSED, DEF_STR( Unused ), IP_KEY_NONE, IP_JOY_NONE)
@@ -262,12 +265,25 @@ INPUT_PORTS_START(ti99_4a)
 		PORT_BIT(0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER1/*, "(1LEFT)", IP_KEY_NONE, OSD_JOY_LEFT, 0*/)
 		PORT_BIT(0x0001, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1/*, "(1FIRE)", IP_KEY_NONE, OSD_JOY_FIRE, 0*/)
 			/* col 7: "wired handset 2" (= joystick 2) */
-		PORT_BITX(0xE000, IP_ACTIVE_LOW, IPT_UNUSED, DEF_STR( Unused ), IP_KEY_NONE, IP_JOY_NONE)
+		//PORT_BITX(0xE000, IP_ACTIVE_LOW, IPT_UNUSED, DEF_STR( Unused ), IP_KEY_NONE, IP_JOY_NONE)
 		PORT_BIT(0x1000, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2/*, "(2UP)", IP_KEY_NONE, OSD_JOY2_UP, 0*/)
 		PORT_BIT(0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2/*, "(2DOWN)", IP_KEY_NONE, OSD_JOY2_DOWN, 0*/)
 		PORT_BIT(0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2/*, "(2RIGHT)", IP_KEY_NONE, OSD_JOY2_RIGHT, 0*/)
 		PORT_BIT(0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2/*, "(2LEFT)", IP_KEY_NONE, OSD_JOY2_LEFT, 0*/)
 		PORT_BIT(0x0100, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2/*, "(2FIRE)", IP_KEY_NONE, OSD_JOY2_FIRE, 0*/)
+
+		/* mouse buttons (sorry, but I had to recycle unused input bytes) */
+		PORT_BIT(0x2000, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1)
+		PORT_BIT(0x4000, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER1)
+
+
+	/* 2 ports for mouse */
+	PORT_START /* Mouse - X AXIS */
+		PORT_ANALOGX( 0xff, 0x00, IPT_TRACKBALL_X | IPF_PLAYER1, 100, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
+
+	PORT_START /* Mouse - Y AXIS */
+		PORT_ANALOGX( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_PLAYER1, 100, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
+
 
 	PORT_START	/* one more port for Alpha line */
 		PORT_BITX(0x0010, IP_ACTIVE_HIGH, IPT_KEYBOARD | IPF_TOGGLE, "Alpha Lock", KEYCODE_CAPSLOCK, IP_JOY_NONE)
@@ -310,6 +326,9 @@ INPUT_PORTS_START(ti99_4)
 		PORT_BITX( config_hsgpl_mask << config_hsgpl_bit, 0/*1 << config_hsgpl_bit*/, IPT_DIPSWITCH_NAME, "SNUG HSGPL card", KEYCODE_NONE, IP_JOY_NONE )
 			PORT_DIPSETTING( 0x0000, DEF_STR( Off ) )
 			PORT_DIPSETTING( 1 << config_hsgpl_bit, DEF_STR( On ) )
+		PORT_BITX( config_mecmouse_mask << config_mecmouse_bit, 0, IPT_DIPSWITCH_NAME, "Mechatronics Mouse", KEYCODE_NONE, IP_JOY_NONE )
+			PORT_DIPSETTING( 0x0000, DEF_STR( Off ) )
+			PORT_DIPSETTING( 1 << config_mecmouse_bit, DEF_STR( On ) )
 
 	PORT_START	/* col 0 */
 		PORT_KEY2(0x0080, IP_ACTIVE_LOW, "1 !", KEYCODE_1, IP_JOY_NONE,			'1',	'!')
@@ -377,6 +396,19 @@ INPUT_PORTS_START(ti99_4)
 		PORT_BIT(0x0001, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2/*, "(2FIRE)", IP_KEY_NONE, OSD_JOY2_FIRE, 0*/)
 				/* col 7: never used (selects IR remote handset instead) */
 		/*PORT_BITX(0xFF00, IP_ACTIVE_LOW, IPT_UNUSED, DEF_STR( Unused ), IP_KEY_NONE, IP_JOY_NONE)*/
+
+
+		/* mouse buttons (sorry, but I had to recycle unused input bytes) */
+		PORT_BIT(0x2000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1)
+		PORT_BIT(0x4000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2)
+
+
+	/* 2 ports for mouse */
+	PORT_START /* Mouse - X AXIS */
+	PORT_ANALOGX( 0xff, 0x00, IPT_TRACKBALL_X | IPF_PLAYER1, 100, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
+
+	PORT_START /* Mouse - Y AXIS */
+	PORT_ANALOGX( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_PLAYER1, 100, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
 
 
 	/* 13 pseudo-ports for IR remote handsets */
@@ -525,19 +557,6 @@ static struct TMS5220interface tms5220interface =
 };
 
 /*
-	we use a DAC to emulate "audio gate", even thought
-	a) there was no DAC in an actual TI99
-	b) this is a 2-level output (whereas a DAC provides a 256-level output...)
-*/
-static struct DACinterface aux_sound_intf =
-{
-	1,				/* total number of DACs */
-	{
-		20			/* volume for audio gate*/
-	}
-};
-
-/*
 	2 tape units
 */
 static struct Wave_interface tape_input_intf =
@@ -604,7 +623,6 @@ static MACHINE_DRIVER_START(ti99_4_60hz)
 	MDRV_SOUND_ATTRIBUTES(0)
 	MDRV_SOUND_ADD(SN76496, tms9919interface)
 	MDRV_SOUND_ADD(TMS5220, tms5220interface)
-	MDRV_SOUND_ADD(DAC, aux_sound_intf)
 	MDRV_SOUND_ADD(WAVE, tape_input_intf)
 
 MACHINE_DRIVER_END
@@ -635,7 +653,6 @@ static MACHINE_DRIVER_START(ti99_4_50hz)
 	MDRV_SOUND_ATTRIBUTES(0)
 	MDRV_SOUND_ADD(SN76496, tms9919interface)
 	MDRV_SOUND_ADD(TMS5220, tms5220interface)
-	MDRV_SOUND_ADD(DAC, aux_sound_intf)
 	MDRV_SOUND_ADD(WAVE, tape_input_intf)
 
 MACHINE_DRIVER_END
@@ -666,7 +683,6 @@ static MACHINE_DRIVER_START(ti99_4a_60hz)
 	MDRV_SOUND_ATTRIBUTES(0)
 	MDRV_SOUND_ADD(SN76496, tms9919interface)
 	MDRV_SOUND_ADD(TMS5220, tms5220interface)
-	MDRV_SOUND_ADD(DAC, aux_sound_intf)
 	MDRV_SOUND_ADD(WAVE, tape_input_intf)
 
 MACHINE_DRIVER_END
@@ -697,7 +713,6 @@ static MACHINE_DRIVER_START(ti99_4a_50hz)
 	MDRV_SOUND_ATTRIBUTES(0)
 	MDRV_SOUND_ADD(SN76496, tms9919interface)
 	MDRV_SOUND_ADD(TMS5220, tms5220interface)
-	MDRV_SOUND_ADD(DAC, aux_sound_intf)
 	MDRV_SOUND_ADD(WAVE, tape_input_intf)
 
 MACHINE_DRIVER_END
@@ -740,7 +755,6 @@ static MACHINE_DRIVER_START(ti99_4ev_60hz)
 	MDRV_SOUND_ATTRIBUTES(0)
 	MDRV_SOUND_ADD(SN76496, tms9919interface)
 	MDRV_SOUND_ADD(TMS5220, tms5220interface)
-	MDRV_SOUND_ADD(DAC, aux_sound_intf)
 	MDRV_SOUND_ADD(WAVE, tape_input_intf)
 
 MACHINE_DRIVER_END

@@ -78,12 +78,10 @@ static int ti99_R9901_3(int offset);
 
 static void ti99_handset_set_ack(int offset, int data);
 static void ti99_handset_task(void);
-static void ti99_KeyC2(int offset, int data);
-static void ti99_KeyC1(int offset, int data);
-static void ti99_KeyC0(int offset, int data);
+static void mecmouse_poll(void);
+static void ti99_KeyC(int offset, int data);
 static void ti99_AlphaW(int offset, int data);
-static void ti99_CS1_motor(int offset, int data);
-static void ti99_CS2_motor(int offset, int data);
+static void ti99_CS_motor(int offset, int data);
 static void ti99_audio_gate(int offset, int data);
 static void ti99_CS_output(int offset, int data);
 
@@ -125,6 +123,8 @@ static char has_rs232;
 static char has_handset;
 /* TRUE if hsgpl card present */
 static char has_hsgpl;
+/* TRUE if mechatronics mouse present */
+static char has_mecmouse;
 
 
 /* tms9901 setup */
@@ -142,12 +142,12 @@ static const tms9901reset_param tms9901reset_param_ti99 =
 	{	/* write handlers */
 		ti99_handset_set_ack,
 		NULL,
-		ti99_KeyC2,
-		ti99_KeyC1,
-		ti99_KeyC0,
+		ti99_KeyC,
+		ti99_KeyC,
+		ti99_KeyC,
 		ti99_AlphaW,
-		ti99_CS1_motor,
-		ti99_CS2_motor,
+		ti99_CS_motor,
+		ti99_CS_motor,
 		ti99_audio_gate,
 		ti99_CS_output,
 		NULL,
@@ -174,6 +174,12 @@ enum
 {
 	max_handsets = 4
 };
+
+/* mechatronics  */
+static int mecmouse_sel;
+static int mecmouse_read_y;
+static int mecmouse_x, mecmouse_y;
+static int mecmouse_x_buf, mecmouse_y_buf;
 
 /* keyboard interface */
 static int KeyCol;
@@ -705,6 +711,12 @@ void machine_init_ti99(void)
 
 	if (has_evpc)
 		ti99_evpc_init();
+
+	/* initialize mechatronics mouse */
+	mecmouse_sel = 0;
+	mecmouse_read_y = 0;
+	mecmouse_x = 0;
+	mecmouse_y = 0;
 }
 
 void machine_stop_ti99(void)
@@ -739,11 +751,22 @@ void ti99_vblank_interrupt(void)
 	TMS9928A_interrupt();
 	if (has_handset)
 		ti99_handset_task();
+	has_mecmouse = (readinputport(input_port_config) >> config_mecmouse_bit) & config_mecmouse_mask;
+	if (has_mecmouse)
+		mecmouse_poll();
 }
 
 void ti99_4ev_hblank_interrupt(void)
 {
+	static int line_count;
 	v9938_interrupt();
+	if (++line_count == 262)
+	{
+		line_count = 0;
+		has_mecmouse = (readinputport(input_port_config) >> config_mecmouse_bit) & config_mecmouse_mask;
+		if (has_mecmouse)
+			mecmouse_poll();
+	}
 }
 
 /*
@@ -1004,9 +1027,9 @@ static void speech_kludge_callback(int dummy)
 	{
 		/* Weirdly enough, we are always seeing some problems even though
 		everything is working fine. */
-		/*double time_to_ready = tms5220_time_to_ready();
+		double time_to_ready = tms5220_time_to_ready();
 		logerror("ti99/4a speech says aaargh!\n");
-		logerror("(time to ready: %f -> %d)\n", time_to_ready, (int) ceil(3000000*time_to_ready));*/
+		logerror("(time to ready: %f -> %d)\n", time_to_ready, (int) ceil(3000000*time_to_ready));
 	}
 }
 
@@ -1436,6 +1459,83 @@ static void ti99_handset_task(void)
 /*===========================================================================*/
 #if 0
 #pragma mark -
+#pragma mark MECHATRONICS MOUSE
+#endif
+
+static void mecmouse_select(int sel)
+{
+	if (mecmouse_sel != (sel != 0))
+	{
+		mecmouse_sel = (sel != 0);
+		if (mecmouse_sel)
+		{
+			if (! mecmouse_read_y)
+			{
+				/* sample mouse data for both axes */
+				if (mecmouse_x < -4)
+					mecmouse_x_buf = -4;
+				else if (mecmouse_x > 3)
+					mecmouse_x_buf = 3;
+				else
+					mecmouse_x_buf = mecmouse_x;
+				mecmouse_x -= mecmouse_x_buf;
+				mecmouse_x_buf = (mecmouse_x_buf-1) & 7;
+
+				if (mecmouse_y < -4)
+					mecmouse_y_buf = -4;
+				else if (mecmouse_y > 3)
+					mecmouse_y_buf = 3;
+				else
+					mecmouse_y_buf = mecmouse_y;
+				mecmouse_y -= mecmouse_y_buf;
+				mecmouse_y_buf = (mecmouse_y_buf-1) & 7;
+			}
+		}
+		else
+			mecmouse_read_y = ! mecmouse_read_y;
+	}
+}
+
+static void mecmouse_poll(void)
+{
+	static int last_mx = 0, last_my = 0;
+	int new_mx, new_my;
+	int delta_x, delta_y;
+
+	new_mx = readinputport(input_port_mousex);
+	new_my = readinputport(input_port_mousey);
+
+	/* compute x delta */
+	delta_x = new_mx - last_mx;
+
+	/* check for wrap */
+	if (delta_x > 0x80)
+		delta_x = 0x100-delta_x;
+	if  (delta_x < -0x80)
+		delta_x = -0x100-delta_x;
+
+	last_mx = new_mx;
+
+	/* compute y delta */
+	delta_y = new_my - last_my;
+
+	/* check for wrap */
+	if (delta_y > 0x80)
+		delta_y = 0x100-delta_y;
+	if  (delta_y < -0x80)
+		delta_y = -0x100-delta_y;
+
+	last_my = new_my;
+
+	/* update state */
+	mecmouse_x += delta_x;
+	mecmouse_y += delta_y;
+}
+
+
+/*===========================================================================*/
+#if 0
+#pragma mark -
 #pragma mark TMS9901 INTERFACE
 #endif
 /*
@@ -1531,6 +1631,19 @@ static int ti99_R9901_0(int offset)
 
 	if ((ti99_model == model_99_4) && (KeyCol == 7))
 		answer = (ti99_handset_poll_bus() << 3) | 0x80;
+	else if (has_mecmouse && (KeyCol == ((ti99_model == model_99_4) ? 6 : 7)))
+	{
+		int buttons = (readinputport(input_port_mouse_buttons) >> input_port_mouse_buttons_shift) & 3;
+
+		answer = (mecmouse_read_y ? mecmouse_y_buf : mecmouse_x_buf) << 4;
+
+		if (! (buttons & 1))
+			/* action button */
+			answer |= 0x08;
+		if (! (buttons & 2))
+			/* home button */
+			answer |= 0x80;
+	}
 	else
 	{
 		answer = ((readinputport(input_port_keyboard + (KeyCol >> 1)) >> ((KeyCol & 1) * 8)) << 3) & 0xF8;
@@ -1550,7 +1663,7 @@ static int ti99_R9901_0(int offset)
 
 	signification:
 	 bit 0-2: keyboard status bits 5 to 7
-	 bit 3: weird, not emulated
+	 bit 3: tape input mirror
 	 (bit 4: IR remote handset interrupt)
 	 bit 5-7: weird, not emulated
 */
@@ -1559,10 +1672,14 @@ static int ti99_R9901_1(int offset)
 	int answer;
 
 
-	if ((ti99_model == model_99_4) && (KeyCol == 7))
+	if (/*(ti99_model == model_99_4) &&*/ (KeyCol == 7))
 		answer = 0x07;
 	else
 		answer = ((readinputport(input_port_keyboard + (KeyCol >> 1)) >> ((KeyCol & 1) * 8)) >> 5) & 0x07;
+
+	/* we don't take CS2 into account, as CS2 is a write-only unit */
+	/*if (device_input(image_from_devtype_and_index(IO_CASSETTE, 0)) > 0)
+		answer |= 8;*/
 
 	return answer;
 }
@@ -1601,36 +1718,17 @@ static int ti99_R9901_3(int offset)
 
 
 /*
-	WRITE column number bit 2 (P2)
+	WRITE key column select (P2-P4)
 */
-static void ti99_KeyC2(int offset, int data)
+static void ti99_KeyC(int offset, int data)
 {
 	if (data)
-		KeyCol |= 1;
+		KeyCol |= 1 << (offset-2);
 	else
-		KeyCol &= (~1);
-}
+		KeyCol &= ~ (1 << (offset-2));
 
-/*
-	WRITE column number bit 1 (P3)
-*/
-static void ti99_KeyC1(int offset, int data)
-{
-	if (data)
-		KeyCol |= 2;
-	else
-		KeyCol &= (~2);
-}
-
-/*
-	WRITE column number bit 0 (P4)
-*/
-static void ti99_KeyC0(int offset, int data)
-{
-	if (data)
-		KeyCol |= 4;
-	else
-		KeyCol &= (~4);
+	if (has_mecmouse)
+		mecmouse_select(KeyCol == ((ti99_model == model_99_4) ? 6 : 7));
 }
 
 /*
@@ -1642,9 +1740,13 @@ static void ti99_AlphaW(int offset, int data)
 		AlphaLockLine = data;
 }
 
-static void ti99_CSx_motor(int data, int cassette_id)
+/*
+	command CS1/CS2 tape unit motor (P6-P7)
+*/
+static void ti99_CS_motor(int offset, int data)
 {
-	mess_image *img = image_from_devtype_and_index(IO_CASSETTE, cassette_id);
+	mess_image *img = image_from_devtype_and_index(IO_CASSETTE, offset-6);
+
 	if (data)
 		device_status(img, device_status(img, -1) & ~ WAVE_STATUS_MOTOR_INHIBIT);
 	else
@@ -1652,37 +1754,16 @@ static void ti99_CSx_motor(int data, int cassette_id)
 }
 
 /*
-	command CS1 tape unit motor (P6)
-*/
-static void ti99_CS1_motor(int offset, int data)
-{
-	ti99_CSx_motor(data, 0);
-}
-
-/*
-	command CS2 tape unit motor (P7)
-*/
-static void ti99_CS2_motor(int offset, int data)
-{
-	ti99_CSx_motor(data, 1);
-}
-
-/*
 	audio gate (P8)
 
-	connected to the AUDIO IN pin of TMS9919
+	Set to 1 before using tape: this enables the mixing of tape input sound
+	with computer sound.
 
-	set to 1 before using tape (in order not to burn the TMS9901 ??)
-	Must actually control the mixing of tape sound with computer sound.
-
-	I am not sure about polarity.
+	We do not really need to emulate this as the tape recorder generates sound
+	on its own.
 */
 static void ti99_audio_gate(int offset, int data)
 {
-	if (data)
-		DAC_data_w(0, 0xFF);
-	else
-		DAC_data_w(0, 0);
 }
 
 /*
