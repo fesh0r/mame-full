@@ -3,6 +3,7 @@
 	Krzysztof Strzecha, Nathan Woods, 2003
 	Based on TMS9901 emulator by Raphael Nabet
 
+	06-Mar-2004 -   Fixed bug in sensor input.
 	01-Mar-2004 -	Interrupt queue overrun problem fixed.
 	19-Oct-2003 -	Status register added. Reset fixed. Some cleanups.
 			INTA enable/disable.
@@ -14,7 +15,7 @@
 #include "driver.h"
 #include "tms5501.h"
 
-#define DEBUG_TMS5501	1
+#define DEBUG_TMS5501	0
 
 #if DEBUG_TMS5501
 	#define LOG_TMS5501(n, message, data) logerror ("TMS5501 %d: %s %02x\n", n, message, data)
@@ -285,7 +286,8 @@ void tms5501_sensor (int which, UINT8 data)
 
 	tms5501[which].sensor = data;
 
-	tms5501_field_interrupts(which);
+	if (tms5501[which].pending_interrupts &= TMS5501_SENSOR_INT)
+		tms5501_field_interrupts(which);
 }
 
 UINT8 tms5501_read (int which, UINT16 offset)
