@@ -570,8 +570,8 @@ void osd_update_video_and_audio(struct osd_bitmap *bitmap, struct osd_bitmap *de
       extern void osd_led_w(int led, int on);
       old_leds_status = leds_status;
       if (leds_changes & 1) osd_led_w(0, (leds_status & 1) ? 1 : 0);
-      if (leds_changes & 2) osd_led_w(0, (leds_status & 2) ? 1 : 0);
-      if (leds_changes & 4) osd_led_w(0, (leds_status & 4) ? 1 : 0);
+      if (leds_changes & 2) osd_led_w(1, (leds_status & 2) ? 1 : 0);
+      if (leds_changes & 4) osd_led_w(2, (leds_status & 4) ? 1 : 0);
    }
    
    if (input_ui_pressed(IPT_UI_FRAMESKIP_INC))
