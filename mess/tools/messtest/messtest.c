@@ -536,14 +536,6 @@ outofmemory:
 
 
 
-static int entity_handler(XML_Parser parser, const XML_Char *context,
-	const XML_Char *base, const XML_Char *systemId, const XML_Char *publicId)
-{
-	return -1;
-}
-
-
-
 int messtest(const char *script_filename, int flags, int *test_count, int *failure_count)
 {
 	struct messtest_state state;
@@ -589,7 +581,6 @@ int messtest(const char *script_filename, int flags, int *test_count, int *failu
 	XML_SetUserData(state.parser, &state);
 	XML_SetElementHandler(state.parser, start_handler, end_handler);
 	XML_SetCharacterDataHandler(state.parser, data_handler);
-	XML_SetExternalEntityRefHandler(state.parser, entity_handler);
 
 	do
 	{

@@ -767,7 +767,7 @@ extern struct GameDriver driver_neogeo;
     External functions
  ***************************************************************************/
 
-static void CreateCommandLine(int nGameIndex, char* pCmdLine)
+static void CreateCommandLine(int nGameIndex, const char* pDieOutputFile, char* pCmdLine)
 {
 	char pModule[_MAX_PATH];
 	options_type* pOpts;
@@ -965,6 +965,9 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 		sprintf(&pCmdLine[strlen(pCmdLine)]," -skip_gameinfo");
 	if (GetHighPriority() == TRUE)
 		sprintf(&pCmdLine[strlen(pCmdLine)]," -high_priority");
+	
+	if (pDieOutputFile)
+		sprintf(&pCmdLine[strlen(pCmdLine)]," -dieoutputfile \"%s\"", pDieOutputFile);
 
 	dprintf("Launching MAME32:");
 	dprintf("%s",pCmdLine);
@@ -1006,11 +1009,20 @@ static int RunMAME(int nGameIndex)
 	double elapsedtime;
 	HWND hGameWnd = NULL;
 	long lGameWndStyle = 0;
-	
+	char szTempDir[MAX_PATH];
+	char szTempFile[MAX_PATH];
+	HANDLE hFile;
+	void *pBuf;
+	DWORD dwSize, dwDummy;
+
 #ifdef MESS
 	SaveGameOptions(nGameIndex);
 #endif
-	CreateCommandLine(nGameIndex, pCmdLine );
+
+	GetTempPath(sizeof(szTempDir) / sizeof(szTempDir[0]), szTempDir);
+	GetTempFileName(szTempDir, TEXT("tmp"), 0, szTempFile);
+
+	CreateCommandLine(nGameIndex, szTempFile, pCmdLine);
 
 	ZeroMemory(&si, sizeof(si));
 	ZeroMemory(&pi, sizeof(pi));
@@ -1057,15 +1069,44 @@ static int RunMAME(int nGameIndex)
 		elapsedtime = end - start;
 		if( dwExitCode == 0 )
 		{
-			/*Check the exitcode before incrementing Playtime*/
+			// Check the exitcode before incrementing Playtime
 			IncrementPlayTime(nGameIndex, elapsedtime);
 			ListView_RedrawItems(hwndList, GetSelectedPick(), GetSelectedPick());
 		}
 
 		ShowWindow(hMain, SW_SHOW);
+
 		// Close process and thread handles.
 		CloseHandle(pi.hProcess);
 		CloseHandle(pi.hThread);
+
+		if( dwExitCode != 0 )
+		{
+			// We had a bad exit code; check to see if we have an error
+			// file
+			hFile = CreateFile(szTempFile, GENERIC_READ, FILE_SHARE_READ, NULL,
+				OPEN_EXISTING, 0, NULL);
+			if (hFile != INVALID_HANDLE_VALUE)
+			{
+				dwSize = GetFileSize(hFile, NULL);
+				if (dwSize)
+				{
+					pBuf = malloc(dwSize + 1);
+					if (pBuf)
+					{
+						if (ReadFile(hFile, pBuf, dwSize, &dwDummy, NULL))
+						{
+							((char *) pBuf)[dwSize] = '\0';
+							MessageBox(hMain, (char *) pBuf, MAME32NAME, MB_OK);
+						}
+						free(pBuf);
+					}
+				}
+				CloseHandle(hFile);
+			}
+		}
+
+		DeleteFile(szTempFile);
 
 #ifdef MESS
 		LoadGameOptions(nGameIndex);

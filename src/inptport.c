@@ -820,10 +820,19 @@ int load_input_port_settings(void)
 
 	/* propogate that forward to the live list and apply the config on top of that */
 	memcpy(inputport_list, inputport_list_backup, sizeof(inputport_list));
-	config_load_default(inputport_list_backup, inputport_list);
 
-	/* now load the game-specific info */
-	loaded = config_load(Machine->input_ports_default, Machine->input_ports);
+	if (!options.ignore_cfg)
+	{
+		config_load_default(inputport_list_backup, inputport_list);
+
+		/* now load the game-specific info */
+		loaded = config_load(Machine->input_ports_default, Machine->input_ports);
+	}
+	else
+	{
+		/* not loading config files */
+		loaded = 0;
+	}
 
 	/* initialize the various port states */
 	inputport_init();
@@ -836,9 +845,12 @@ int load_input_port_settings(void)
 
 void save_input_port_settings(void)
 {
-	/* save the default config and the game-specific config */
-	config_save_default(inputport_list_backup, inputport_list);
-	config_save(Machine->input_ports_default, Machine->input_ports);
+	if (!options.ignore_cfg)
+	{
+		/* save the default config and the game-specific config */
+		config_save_default(inputport_list_backup, inputport_list);
+		config_save(Machine->input_ports_default, Machine->input_ports);
+	}
 }
 
 
