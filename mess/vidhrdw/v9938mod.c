@@ -128,8 +128,12 @@ V9938_MODE_FUNC (mode_text2)
 	UINT8 *nametbl, *patterntbl, *colourtbl;	
 	
 	patterntbl = vdp.vram + (vdp.contReg[4] << 11);	
-	colourtbl = vdp.vram + ((vdp.contReg[3] & 0xf8) << 6) + (vdp.contReg[10] << 14);	
-	colourmask = ((vdp.contReg[3] & 7) << 5) | 0x1f; /* verify! */	
+	colourtbl = vdp.vram + ((vdp.contReg[3] & 0xf8) << 6) + (vdp.contReg[10] << 14);
+#if 0
+	colourmask = ((vdp.contReg[3] & 7) << 5) | 0x1f; /* cause a bug in Forth+ v1.0 on Geneve */
+#else
+	colourmask = ((vdp.contReg[3] & 7) << 6) | 0x3f; /* verify! */
+#endif
 	nametbl = vdp.vram + ((vdp.contReg[2] & 0xfc) << 10);	
 	patternmask = ((vdp.contReg[2] & 3) << 10) | 0x3ff; /* seems correct */	
 	

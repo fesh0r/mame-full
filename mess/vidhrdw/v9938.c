@@ -689,20 +689,14 @@ READ_HANDLER (v9938_status_r)
 
 #define V9938_SECOND_FIELD ( !(((vdp.contReg[9] & 0x04) && !(vdp.statReg[2] & 2)) || vdp.blink)) 
 
-#define V9938_WIDTH	(512 + 32)
-#define V9938_BPP	(8)
-#include "v9938mod.c"
-#undef	V9938_BPP
 #define V9938_BPP	(16)
+#define V9938_WIDTH	(512 + 32)
 #include "v9938mod.c"
 #undef 	V9938_WIDTH
 #define V9938_WIDTH	(256 + 16)
 #include "v9938mod.c"
-#undef	V9938_BPP
-#define V9938_BPP	(8)
-#include "v9938mod.c"
-#undef	V9938_BPP
 #undef 	V9938_WIDTH
+#undef	V9938_BPP
 
 static void v9938_sprite_mode1 (int line, UINT8 *col)
 	{
@@ -958,110 +952,104 @@ skip_first_cc_set:
 
 typedef struct {
 	UINT8 m;
-	void (*visible_8)(UINT8*, int);
 	void (*visible_16)(UINT16*, int);
-	void (*visible_8s)(UINT8*, int);
 	void (*visible_16s)(UINT16*, int);
-	void (*border_8)(UINT8*);
 	void (*border_16)(UINT16*);
-	void (*border_8s)(UINT8*);
 	void (*border_16s)(UINT16*);
 	void (*sprites)(int, UINT8*);
-	void (*draw_sprite_8)(UINT8*, UINT8*);
 	void (*draw_sprite_16)(UINT16*, UINT8*);
-	void (*draw_sprite_8s)(UINT8*, UINT8*);
 	void (*draw_sprite_16s)(UINT16*, UINT8*);
 } V9938_MODE;
 
 static const V9938_MODE modes[] = {
 	{ 0x02,
-		v9938_mode_text1_8, v9938_mode_text1_16,
-		v9938_mode_text1_8s, v9938_mode_text1_16s,
-		v9938_default_border_8, v9938_default_border_16,
-		v9938_default_border_8s, v9938_default_border_16s,
+		v9938_mode_text1_16,
+		v9938_mode_text1_16s,
+		v9938_default_border_16,
+		v9938_default_border_16s,
 		NULL, 
-		NULL, NULL,
-		NULL, NULL },
+		NULL,
+		NULL },
 	{ 0x01,
-		v9938_mode_multi_8, v9938_mode_multi_16,
-		v9938_mode_multi_8s, v9938_mode_multi_16s,
-		v9938_default_border_8, v9938_default_border_16,
-		v9938_default_border_8s, v9938_default_border_16s,
+		v9938_mode_multi_16,
+		v9938_mode_multi_16s,
+		v9938_default_border_16,
+		v9938_default_border_16s,
 		v9938_sprite_mode1, 
-		v9938_default_draw_sprite_8, v9938_default_draw_sprite_16,
-		v9938_default_draw_sprite_8s, v9938_default_draw_sprite_16s },
+		v9938_default_draw_sprite_16,
+		v9938_default_draw_sprite_16s },
 	{ 0x00,
-		v9938_mode_graphic1_8, v9938_mode_graphic1_16,
-		v9938_mode_graphic1_8s, v9938_mode_graphic1_16s,
-		v9938_default_border_8, v9938_default_border_16,
-		v9938_default_border_8s, v9938_default_border_16s,
+		v9938_mode_graphic1_16,
+		v9938_mode_graphic1_16s,
+		v9938_default_border_16,
+		v9938_default_border_16s,
 		v9938_sprite_mode1, 
-		v9938_default_draw_sprite_8, v9938_default_draw_sprite_16,
-		v9938_default_draw_sprite_8s, v9938_default_draw_sprite_16s },
+		v9938_default_draw_sprite_16,
+		v9938_default_draw_sprite_16s },
 	{ 0x04,
-		v9938_mode_graphic23_8, v9938_mode_graphic23_16,
-		v9938_mode_graphic23_8s, v9938_mode_graphic23_16s,
-		v9938_default_border_8, v9938_default_border_16,
-		v9938_default_border_8s, v9938_default_border_16s,
+		v9938_mode_graphic23_16,
+		v9938_mode_graphic23_16s,
+		v9938_default_border_16,
+		v9938_default_border_16s,
 		v9938_sprite_mode1, 
-		v9938_default_draw_sprite_8, v9938_default_draw_sprite_16,
-		v9938_default_draw_sprite_8s, v9938_default_draw_sprite_16s },
+		v9938_default_draw_sprite_16,
+		v9938_default_draw_sprite_16s },
 	{ 0x08,
-		v9938_mode_graphic23_8, v9938_mode_graphic23_16,
-		v9938_mode_graphic23_8s, v9938_mode_graphic23_16s,
-		v9938_default_border_8, v9938_default_border_16,
-		v9938_default_border_8s, v9938_default_border_16s,
+		v9938_mode_graphic23_16,
+		v9938_mode_graphic23_16s,
+		v9938_default_border_16,
+		v9938_default_border_16s,
 		v9938_sprite_mode2, 
-		v9938_default_draw_sprite_8, v9938_default_draw_sprite_16,
-		v9938_default_draw_sprite_8s, v9938_default_draw_sprite_16s },
+		v9938_default_draw_sprite_16,
+		v9938_default_draw_sprite_16s },
 	{ 0x0c,
-		v9938_mode_graphic4_8, v9938_mode_graphic4_16,
-		v9938_mode_graphic4_8s, v9938_mode_graphic4_16s,
-		v9938_default_border_8, v9938_default_border_16,
-		v9938_default_border_8s, v9938_default_border_16s,
+		v9938_mode_graphic4_16,
+		v9938_mode_graphic4_16s,
+		v9938_default_border_16,
+		v9938_default_border_16s,
 		v9938_sprite_mode2, 
-		v9938_default_draw_sprite_8, v9938_default_draw_sprite_16,
-		v9938_default_draw_sprite_8s, v9938_default_draw_sprite_16s },
+		v9938_default_draw_sprite_16,
+		v9938_default_draw_sprite_16s },
 	{ 0x10,
-		v9938_mode_graphic5_8, v9938_mode_graphic5_16,
-		v9938_mode_graphic5_8s, v9938_mode_graphic5_16s,
-		v9938_graphic5_border_8, v9938_graphic5_border_16,
-		v9938_graphic5_border_8s, v9938_graphic5_border_16s,
+		v9938_mode_graphic5_16,
+		v9938_mode_graphic5_16s,
+		v9938_graphic5_border_16,
+		v9938_graphic5_border_16s,
 		v9938_sprite_mode2, 
-		v9938_graphic5_draw_sprite_8, v9938_graphic5_draw_sprite_16,
-		v9938_graphic5_draw_sprite_8s, v9938_graphic5_draw_sprite_16s },
+		v9938_graphic5_draw_sprite_16,
+		v9938_graphic5_draw_sprite_16s },
 	{ 0x14,
-		v9938_mode_graphic6_8, v9938_mode_graphic6_16,
-		v9938_mode_graphic6_8s, v9938_mode_graphic6_16s,
-		v9938_default_border_8, v9938_default_border_16,
-		v9938_default_border_8s, v9938_default_border_16s,
+		v9938_mode_graphic6_16,
+		v9938_mode_graphic6_16s,
+		v9938_default_border_16,
+		v9938_default_border_16s,
 		v9938_sprite_mode2, 
-		v9938_default_draw_sprite_8, v9938_default_draw_sprite_16,
-		v9938_default_draw_sprite_8s, v9938_default_draw_sprite_16s },
+		v9938_default_draw_sprite_16,
+		v9938_default_draw_sprite_16s },
 	{ 0x1c,
-		v9938_mode_graphic7_8, v9938_mode_graphic7_16,
-		v9938_mode_graphic7_8s, v9938_mode_graphic7_16s,
-		v9938_graphic7_border_8, v9938_graphic7_border_16,
-		v9938_graphic7_border_8s, v9938_graphic7_border_16s,
+		v9938_mode_graphic7_16,
+		v9938_mode_graphic7_16s,
+		v9938_graphic7_border_16,
+		v9938_graphic7_border_16s,
 		v9938_sprite_mode2, 
-		v9938_graphic7_draw_sprite_8, v9938_graphic7_draw_sprite_16,
-		v9938_graphic7_draw_sprite_8s, v9938_graphic7_draw_sprite_16s },
+		v9938_graphic7_draw_sprite_16,
+		v9938_graphic7_draw_sprite_16s },
 	{ 0x0a,
-		v9938_mode_text2_8, v9938_mode_text2_16,
-		v9938_mode_text2_8s, v9938_mode_text2_16s,
-		v9938_default_border_8, v9938_default_border_16,
-		v9938_default_border_8s, v9938_default_border_16s,
+		v9938_mode_text2_16,
+		v9938_mode_text2_16s,
+		v9938_default_border_16,
+		v9938_default_border_16s,
 		NULL, 
-		NULL, NULL,
-		NULL, NULL },
+		NULL,
+		NULL },
 	{ 0xff,
-		v9938_mode_unknown_8, v9938_mode_unknown_16,
-		v9938_mode_unknown_8s, v9938_mode_unknown_16s,
-		v9938_default_border_8, v9938_default_border_16,
-		v9938_default_border_8s, v9938_default_border_16s,
+		v9938_mode_unknown_16,
+		v9938_mode_unknown_16s,
+		v9938_default_border_16,
+		v9938_default_border_16s,
 		NULL, 
-		NULL, NULL,
-		NULL, NULL },
+		NULL,
+		NULL },
 };
 
 static void v9938_set_mode (void)
