@@ -234,20 +234,20 @@ int		floppy_drive_get_flag_state(int id, int flag)
             /* get state from real drive */
             fdd_status = osd_fdc_get_status(drives[id].fdd_unit);
     
-            if (flag & FLOPPY_DRIVE_HEAD_AT_TRACK_0)
-            {
+      //      if (flag & FLOPPY_DRIVE_HEAD_AT_TRACK_0)
+          //  {
                 flags |= fdd_status & FLOPPY_DRIVE_HEAD_AT_TRACK_0;
-            }
+          //  }
     
-            if (flag & FLOPPY_DRIVE_DISK_WRITE_PROTECTED)
-            {
+        //    if (flag & FLOPPY_DRIVE_DISK_WRITE_PROTECTED)
+          //  {
                 flags |= fdd_status & FLOPPY_DRIVE_DISK_WRITE_PROTECTED;
-            }
+          //  }
              
-            if (flag & FLOPPY_DRIVE_DISK_INSERTED)
-            {
+          //  if (flag & FLOPPY_DRIVE_DISK_INSERTED)
+          //  {
                 flags |= fdd_status & FLOPPY_DRIVE_DISK_INSERTED;
-            }
+          //  }
         }
     }
 	else
@@ -257,19 +257,19 @@ int		floppy_drive_get_flag_state(int id, int flag)
 /*		logerror("emulated fdd status\r\n"); */
 
 		/* emulated fdd drive head at track 0? */
-		if (flag & FLOPPY_DRIVE_HEAD_AT_TRACK_0)
-		{
+	//	if (flag & FLOPPY_DRIVE_HEAD_AT_TRACK_0)
+	//	{
 			/* return state of track 0 flag */
 			flags |= drive_flags & FLOPPY_DRIVE_HEAD_AT_TRACK_0;
-		}
+	//	}
 
 		/* disk image inserted into drive? */
-		if (flag & FLOPPY_DRIVE_DISK_INSERTED)
-		{
-			flags |= drive_flags & flag;
-		}
+	//	if (flag & FLOPPY_DRIVE_DISK_INSERTED)
+	//	{
+			flags |= drive_flags & FLOPPY_DRIVE_DISK_INSERTED;
+	//	}
 
-		if (flag & FLOPPY_DRIVE_DISK_WRITE_PROTECTED)
+	//	if (flag & FLOPPY_DRIVE_DISK_WRITE_PROTECTED)
 		{
 			/* if disk image is read-only return write protected all the time */
 			if (drive_flags & FLOPPY_DRIVE_DISK_IMAGE_READ_ONLY)
