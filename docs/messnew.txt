@@ -22,13 +22,19 @@ User Interface Changes:
 
 Imgtool Changes:
 ----------------
-(none)
+- Major source code reorg and cleanup; uses new generic floppy and parameter
+  system.  [Nate Woods]
 
 
 Source Changes:
 ---------------
 - The core is based on MAME 0.75.  This incorporates all features of the
   update to this core.  [MAME team]
+
+- Overhaul on generic floppy image system; added new generic parameter layer.
+  Moved CoCo, Apple II and PC drivers onto the new system.  [Nate Woods]
+
+- Fixed cheat engine.  [Nate Woods]
 
 - The documentation was gutted and integrated with Paul Vince's easyEmu
   guide.  All of the documentation is now under docs/ in the source tree.

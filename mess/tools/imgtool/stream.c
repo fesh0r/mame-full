@@ -5,14 +5,17 @@
 #include "unzip.h"
 #include "osdepend.h"
 #include "imgtool.h"
+#include "utils.h"
 
-enum {
+enum
+{
 	IMG_FILE,
 	IMG_MEM,
 	IMG_FILTER
 };
 
-struct stream_internal {
+struct stream_internal
+{
 	int imgtype;
 	int write_protect;
 	const char *name; // needed for clear
@@ -48,9 +51,16 @@ static STREAM *stream_open_zip(const char *zipname, const char *subname, int rea
 	struct stream_internal *imgfile = NULL;
 	ZIP *z = NULL;
 	struct zipent *zipent;
+	FILE *f;
 
 	if (read_or_write)
 		goto error;
+
+	/* check to see if the file exists */
+	f = fopen(zipname, "r");
+	if (!f)
+		goto error;
+	fclose(f);
 
 	imgfile = malloc(sizeof(struct stream_internal));
 	if (!imgfile)
@@ -136,6 +146,8 @@ STREAM *stream_open(const char *fname, int read_or_write)
 				}
 			}
 			free(buf);
+			buf = NULL;
+
 			if (s)
 				return s;
 		}

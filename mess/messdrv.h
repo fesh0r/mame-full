@@ -2,7 +2,7 @@
 #define MESSDRV_H
 
 #include <assert.h>
-#include "formats.h"
+#include "formats/flopimg.h"
 #include "fileio.h"
 #include "osdepend.h"
 

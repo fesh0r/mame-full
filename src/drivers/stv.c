@@ -62,12 +62,12 @@ Preliminary Memory map:
 -Find a better fix to avoid the hanagumi hang skip kludge.
 -Clean-ups and split up the various chips(SCU,SMPC,SCSP...)into their respective files.
 
-\-Games issues:
--hanagumi:Service mode hangs.
--prikura:Fix the compile bug which makes DMA to not work at all.
--shienryu:Sprite list is missing from VDP1 vram...
+-prikura:Fix the compile bug which makes DMA to not work at all(now fixed?).
 -groovef:Hangs soon after loaded.
--shanhigw:Find idle skip if possible.
+-groovef,shanhigw:Find idle skip if possible.
+-groovef,shanhigw:these increments *intentionally* the credit counter by two
+                  at every start-up.Missing/wrong irq I guess.
+-vmahjong:locks up the emulation due to various DMA/irq issues.
 
 */
 
@@ -97,6 +97,7 @@ static data16_t* scsp_regs;
 int stv_vblank;
 /*SMPC stuff*/
 static UINT8 SCSP_reset;
+static void system_reset(void);
 /*SCU stuff*/
 static int 	  timer_0;				/* Counter for Timer 0 irq*/
 /*Maybe add these in a struct...*/
@@ -289,6 +290,19 @@ UINT8 PDR2;
 #define SMPC_CONTROL_MODE_PORT_1 IOSEL1 = 0
 #define SMPC_CONTROL_MODE_PORT_2 IOSEL2 = 0
 
+static void system_reset()
+{
+	/*Only backup ram and SMPC ram is retained after that this command is issued.*/
+	memset(stv_scu      ,0x00,0x000100);
+	memset(scsp_regs    ,0x00,0x001000);
+	memset(stv_workram_h,0x00,0x100000);
+	memset(stv_workram_l,0x00,0x100000);
+	//vdp1
+	//vdp2
+	//A-Bus
+	/*Order is surely wrong but whatever...*/
+}
+
 static UINT8 stv_SMPC_r8 (int offset)
 {
 //	logerror ("8-bit SMPC Read from Offset %02x Returns %02x\n", offset, smpc_ram[offset]);
@@ -335,7 +349,6 @@ static void stv_SMPC_w8 (int offset, UINT8 data)
 			logerror("SMPC: M68k off\n");
 			cpu_set_halt_line(2, ASSERT_LINE);
 		}
-
 		PDR2 = (data & 0x60);
 	}
 
@@ -398,6 +411,7 @@ static void stv_SMPC_w8 (int offset, UINT8 data)
 				logerror ("SMPC: System Reset\n");
 				smpc_ram[0x5f]=0x0d;
 				cpu_set_reset_line(0, PULSE_LINE);
+				system_reset();
 				break;
 			case 0x0e:
 				logerror ("SMPC: Change Clock to 352\n");
@@ -456,7 +470,7 @@ static void stv_SMPC_w8 (int offset, UINT8 data)
 
 		// we've processed the command, clear status flag
 		smpc_ram[0x63] = 0x00;
-		/*We have to simulate the timing of each command somehow...*/
+		/*TODO:emulate the timing of each command...*/
 	}
 }
 
@@ -738,10 +752,10 @@ Registers are in long words.
 25    0064
 26    0068
 27    006c
-28    0070	DMA Status Register
+28    0070	<Free>
 29    0074
 30    0078
-31    007c
+31    007c  DMA Status Register
 32    0080	DSP Program Control Port
 33    0084	DSP Program RAM Data Port
 34    0088	DSP Data RAM Address Port
@@ -778,15 +792,63 @@ DMA TODO:
 #define INDIRECT_MODE(_lv_)			  (stv_scu[5+(_lv_*8)] & 0x01000000)
 #define DRUP(_lv_)					  (stv_scu[5+(_lv_*8)] & 0x00010000)
 #define DWUP(_lv_)                    (stv_scu[5+(_lv_*8)] & 0x00000100)
+/*
+DMA Status Register:
+31
+30
+29
+28
+27
+26
+25
+24
+
+23
+22 - DMA DSP-Bus access
+21 - DMA B-Bus access
+20 - DMA A-Bus access
+19
+18
+17 - DMA lv 1 interrupt
+16 - DMA lv 0 interrupt
+
+15
+14
+13 - DMA lv 2 in stand-by
+12 - DMA lv 2 in operation
+11
+10
+09 - DMA lv 1 in stand-by
+08 - DMA lv 1 in operation
+
+07
+06
+05 - DMA lv 0 in stand-by
+04 - DMA lv 0 in operation
+03
+02
+01 - DSP side DMA in stand-by
+00 - DSP side DMA in operation
+*/
+#define DMA_STATUS				(stv_scu[31])
+/*These macros sets the various DMA status flags.*/
+#define SET_D0MV_FROM_0_TO_1	if(!(DMA_STATUS & 0x10))    DMA_STATUS^=0x10
+#define SET_D1MV_FROM_0_TO_1	if(!(DMA_STATUS & 0x100))   DMA_STATUS^=0x100
+#define SET_D2MV_FROM_0_TO_1	if(!(DMA_STATUS & 0x1000))  DMA_STATUS^=0x1000
+#define SET_D0MV_FROM_1_TO_0	if(DMA_STATUS & 0x10) 	    DMA_STATUS^=0x10
+#define SET_D1MV_FROM_1_TO_0	if(DMA_STATUS & 0x100) 	    DMA_STATUS^=0x100
+#define SET_D2MV_FROM_1_TO_0	if(DMA_STATUS & 0x1000)     DMA_STATUS^=0x1000
 
 READ32_HANDLER( stv_scu_r32 )
 {
 	/*TODO: write only registers must return 0...*/
+	//usrintf_showmessage("%02x",DMA_STATUS);
 	return stv_scu[offset];
 }
 
 WRITE32_HANDLER( stv_scu_w32 )
 {
+	/*Here we are removing out the read-only registers.*/
 	COMBINE_DATA(&stv_scu[offset]);
 
 	switch(offset)
@@ -800,7 +862,7 @@ WRITE32_HANDLER( stv_scu_w32 )
 		if(stv_scu[3] & 0x100)
 			scu_src_add_0 = 4;
 		else
-			scu_src_add_0 = 0;
+			scu_src_add_0 = 0;//could be 2...
 
 		/*Write address add value for DMA lv 0*/
 		switch(stv_scu[3] & 7)
@@ -840,7 +902,7 @@ WRITE32_HANDLER( stv_scu_w32 )
 			logerror("Indirect Mode DMA lv 0 set\n");
 
 		/*Start factor enable bits,bit 2,bit 1 and bit 0*/
-		if(!(stv_scu[5] & 7))
+		if((stv_scu[5] & 7) != 7)
 			logerror("Start factor chosen for lv 0 = %d\n",stv_scu[5] & 7);
 		break;
 		/*LV 1 DMA*/
@@ -882,7 +944,7 @@ WRITE32_HANDLER( stv_scu_w32 )
 		if(INDIRECT_MODE(1))
 			logerror("Indirect Mode DMA lv 1 set\n");
 
-		if(!(stv_scu[13] & 7))
+		if((stv_scu[13] & 7) != 7)
 			logerror("Start factor chosen for lv 1 = %d\n",stv_scu[13] & 7);
 		break;
 		/*LV 2 DMA*/
@@ -924,9 +986,10 @@ WRITE32_HANDLER( stv_scu_w32 )
 		if(INDIRECT_MODE(2))
 			logerror("Indirect Mode DMA lv 2 set\n");
 
-		if(!(stv_scu[21] & 7))
+		if((stv_scu[21] & 7) != 7)
 			logerror("Start factor chosen for lv 0 = %d\n",stv_scu[21] & 7);
 		break;
+		case 31: logerror("Warning: DMA status WRITE! Offset %02x(%d)\n",offset*4,offset); break;
 		case 36: logerror("timer 0 compare data = %03x\n",stv_scu[36]);break;
 		case 40:
 		/*An interrupt is masked when his specific bit is 1.*/
@@ -974,6 +1037,8 @@ static void dma_direct_lv0()
 			 "Start %08x End %08x Size %04x\n",scu_src_0,scu_dst_0,scu_size_0);
 	logerror("Start Add %04x Destination Add %04x\n",scu_src_add_0,scu_dst_add_0);
 
+	SET_D0MV_FROM_0_TO_1;
+
 	tmp_size = scu_size_0;
 	if(!(DRUP(0))) tmp_src = scu_src_0;
 	if(!(DWUP(0))) tmp_dst = scu_dst_0;
@@ -996,6 +1061,8 @@ static void dma_direct_lv0()
 	logerror("DMA transfer END\n");
 	if(!(stv_scu[40] & 0x800))/*Lv 0 DMA end irq*/
 		cpu_set_irq_line_and_vector(0, 5, HOLD_LINE , 0x4b);
+
+	SET_D0MV_FROM_1_TO_0;
 }
 
 static void dma_direct_lv1()
@@ -1004,6 +1071,8 @@ static void dma_direct_lv1()
 	logerror("DMA lv 1 transfer START\n"
 			 "Start %08x End %08x Size %04x\n",scu_src_1,scu_dst_1,scu_size_1);
 	logerror("Start Add %04x Destination Add %04x\n",scu_src_add_1,scu_dst_add_1);
+
+	SET_D1MV_FROM_0_TO_1;
 
 	tmp_size = scu_size_1;
 	if(!(DRUP(1))) tmp_src = scu_src_1;
@@ -1027,6 +1096,8 @@ static void dma_direct_lv1()
 	logerror("DMA transfer END\n");
 	if(!(stv_scu[40] & 0x400))/*Lv 1 DMA end irq*/
 		cpu_set_irq_line_and_vector(0, 6, HOLD_LINE , 0x4a);
+
+	SET_D1MV_FROM_1_TO_0;
 }
 
 static void dma_direct_lv2()
@@ -1035,6 +1106,8 @@ static void dma_direct_lv2()
 	logerror("DMA lv 2 transfer START\n"
 			 "Start %08x End %08x Size %04x\n",scu_src_2,scu_dst_2,scu_size_2);
 	logerror("Start Add %04x Destination Add %04x\n",scu_src_add_2,scu_dst_add_2);
+
+	SET_D2MV_FROM_0_TO_1;
 
 	tmp_size = scu_size_2;
 	if(!(DRUP(2))) tmp_src = scu_src_2;
@@ -1058,6 +1131,8 @@ static void dma_direct_lv2()
 	logerror("DMA transfer END\n");
 	if(!(stv_scu[40] & 0x200))/*Lv 2 DMA end irq*/
 		cpu_set_irq_line_and_vector(0, 6, HOLD_LINE , 0x49);
+
+	SET_D2MV_FROM_1_TO_0;
 }
 
 static void dma_indirect_lv0()
@@ -1066,6 +1141,8 @@ static void dma_indirect_lv0()
 	UINT8 job_done = 0;
 	/*temporary storage for the transfer data*/
 	UINT32 tmp_src;
+
+	SET_D0MV_FROM_0_TO_1;
 
 	do{
 		tmp_src = scu_dst_0;
@@ -1108,6 +1185,8 @@ static void dma_indirect_lv0()
 
 	if(!(stv_scu[40] & 0x800))/*Lv 0 DMA end irq*/
 		cpu_set_irq_line_and_vector(0, 5, HOLD_LINE , 0x4b);
+
+	SET_D0MV_FROM_1_TO_0;
 }
 
 static void dma_indirect_lv1()
@@ -1116,6 +1195,8 @@ static void dma_indirect_lv1()
 	UINT8 job_done = 0;
 	/*temporary storage for the transfer data*/
 	UINT32 tmp_src;
+
+	SET_D1MV_FROM_0_TO_1;
 
 	do{
 		tmp_src = scu_dst_1;
@@ -1157,6 +1238,8 @@ static void dma_indirect_lv1()
 
 	if(!(stv_scu[40] & 0x400))/*Lv 1 DMA end irq*/
 		cpu_set_irq_line_and_vector(0, 6, HOLD_LINE , 0x4a);
+
+	SET_D1MV_FROM_1_TO_0;
 }
 
 static void dma_indirect_lv2()
@@ -1165,6 +1248,8 @@ static void dma_indirect_lv2()
 	UINT8 job_done = 0;
 	/*temporary storage for the transfer data*/
 	UINT32 tmp_src;
+
+	SET_D2MV_FROM_0_TO_1;
 
 	do{
 		tmp_src = scu_dst_2;
@@ -1206,6 +1291,8 @@ static void dma_indirect_lv2()
 
 	if(!(stv_scu[40] & 0x200))/*Lv 2 DMA end irq*/
 		cpu_set_irq_line_and_vector(0, 6, HOLD_LINE , 0x49);
+
+	SET_D2MV_FROM_1_TO_0;
 }
 
 
@@ -1333,7 +1420,6 @@ offsets
 |SCILV2|SCILV1|SCILV0|
 | bit2 | bit1 | bit0 |
 ----------------------
-"offsets"(in bits)
 15
 14
 13
@@ -1774,7 +1860,6 @@ DRIVER_INIT ( stv )
 	cpu_setbank(4,&stv_workram_l[0x000000]);
 	cpu_setbank(5,&stv_backupram[0x000000]);
 
-
 /* idle skip bios? .. not 100% sure this is safe .. we'll see */
 	install_mem_read32_handler(0, 0x60335d0, 0x60335d3, stv_speedup_r );
 	install_mem_read32_handler(0, 0x60335bc, 0x60335bf, stv_speedup2_r );
@@ -1983,7 +2068,7 @@ static MACHINE_DRIVER_START( stv )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK | VIDEO_RGB_DIRECT )
 	MDRV_SCREEN_SIZE(32*16, 32*16)
-	MDRV_VISIBLE_AREA(0*8, 32*16-1, 0*8, 32*16-1)
+	MDRV_VISIBLE_AREA(0*8, 512-1, 0*8, 512-1) // we need to use a resolution as high as the max size it can change to
 //	MDRV_VISIBLE_AREA(0*8, 320-1, 0*8, 224-1)
 	MDRV_PALETTE_LENGTH(2048)
 	MDRV_GFXDECODE(gfxdecodeinfo)

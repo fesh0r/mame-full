@@ -23,7 +23,7 @@
 #include "includes/6551.h"
 #include "formats/coco_dsk.h"
 #include "devices/printer.h"
-#include "devices/messfmts.h"
+#include "devices/mflopimg.h"
 #include "devices/cassette.h"
 #include "devices/bitbngr.h"
 #include "devices/snapquik.h"
@@ -755,7 +755,7 @@ SYSTEM_CONFIG_START( generic_coco )
 	CONFIG_DEVICE_CASSETTE	(1, "cas\0", device_load_coco_cassette)
 
 	/* floppy */
-	CONFIG_DEVICE_FLOPPY	(4, coco, coco_jvc )
+	CONFIG_DEVICE_FLOPPY	(4, coco )
 
 	/* custom devicename */
 	CONFIG_GET_CUSTOM_DEVICENAME( coco )

@@ -2975,6 +2975,29 @@ ROM_START( fightfev )
 	ROM_LOAD16_BYTE( "060-c4.bin", 0x0400001, 0x200000, CRC(026f3b62) SHA1(d608483b70d60e7aa0e41f25a8b3fed508129eb7) ) /* Plane 2,3 */
 ROM_END
 
+ROM_START( fightfva )
+	ROM_REGION( 0x200000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "060-p1a.bin", 0x0000000, 0x100000, CRC(2a104b50) SHA1(3eb663d3df7074e1cdf4c0e450a35c9cf55d8979) )
+	/* there was also a copy of the 060-p1.bin with the name 060-p2.bin maybe it should be loaded over the top or this
+	   larger rom is an older revision... */
+
+	NEO_SFIX_128K( "060-s1.bin", CRC(70727a1e) SHA1(e0d226be0578adbe7c1d41baba79e61d4d8fac39) )
+
+	NEO_BIOS_SOUND_128K( "060-m1.bin", CRC(0b7c4e65) SHA1(999a1e784de18db3f1332b30bc425836ea6970be) )
+
+	ROM_REGION(  0x300000, REGION_SOUND1, ROMREGION_SOUNDONLY )
+	ROM_LOAD( "060-v1.bin", 0x000000, 0x200000, CRC(f417c215) SHA1(0f53b8dd056f43b5d880628e8b74c2b27881ffac) )
+	ROM_LOAD( "060-v2.bin", 0x200000, 0x100000, CRC(64470036) SHA1(eb2b34b3c01eb5c1a0a40cff6f4c0f2eee7bf7f2) )
+
+	NO_DELTAT_REGION
+
+	ROM_REGION( 0x0800000, REGION_GFX3, 0 )
+	ROM_LOAD16_BYTE( "060-c1.bin", 0x0000000, 0x200000, CRC(8908fff9) SHA1(f8c16ab0248b60f3a62e0d4d65c456e2f8e4da49) ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "060-c2.bin", 0x0000001, 0x200000, CRC(c6649492) SHA1(5d39b077387ed6897ac075ede4a2aa94bb64545e) ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "060-c3.bin", 0x0400000, 0x200000, CRC(0956b437) SHA1(c70be8b5cebf321afe4c3f5e9a12413c3077694a) ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "060-c4.bin", 0x0400001, 0x200000, CRC(026f3b62) SHA1(d608483b70d60e7aa0e41f25a8b3fed508129eb7) ) /* Plane 2,3 */
+ROM_END
+
 ROM_START( ssideki2 )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )
 	ROM_LOAD16_WORD_SWAP( "061-p1.bin", 0x000000, 0x100000, CRC(5969e0dc) SHA1(78abea880c125ec5a85bef6404478512a34b5513) )
@@ -4028,6 +4051,33 @@ ROM_END
 ROM_START( kof96 )
 	ROM_REGION( 0x300000, REGION_CPU1, 0 )
 	ROM_LOAD16_WORD_SWAP( "214-p1.bin", 0x000000, 0x100000, CRC(52755d74) SHA1(4232d627f1d2e6ea9fc8cf01571d77d4d5b8a1bb) )
+	ROM_LOAD16_WORD_SWAP( "214-p2.bin", 0x100000, 0x200000, CRC(002ccb73) SHA1(3ae8df682c75027ca82db25491021eeba00a267e) )
+
+	NEO_SFIX_128K( "214-s1.bin", CRC(1254cbdb) SHA1(fce5cf42588298711a3633e9c9c1d4dcb723ac76) )
+
+	NEO_BIOS_SOUND_128K( "214-m1.bin", CRC(dabc427c) SHA1(b76722ed142ee7addceb4757424870dbd003e8b3) )
+
+	ROM_REGION( 0xa00000, REGION_SOUND1, ROMREGION_SOUNDONLY )
+	ROM_LOAD( "214-v1.bin", 0x000000, 0x400000, CRC(63f7b045) SHA1(1353715f1a8476dca6f8031d9e7a401eacab8159) )
+	ROM_LOAD( "214-v2.bin", 0x400000, 0x400000, CRC(25929059) SHA1(6a721c4cb8f8dc772774023877d4a9f50d5a9e31) )
+	ROM_LOAD( "214-v3.bin", 0x800000, 0x200000, CRC(92a2257d) SHA1(5064aec78fa0d104e5dd5869b95382aa170214ee) )
+
+	NO_DELTAT_REGION
+
+	ROM_REGION( 0x2000000, REGION_GFX3, 0 )
+	ROM_LOAD16_BYTE( "214-c1.bin", 0x0000000, 0x400000, CRC(7ecf4aa2) SHA1(f773c4c1f05d58dd37e7bb2ac1d1e0ec43998a71) ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "214-c2.bin", 0x0000001, 0x400000, CRC(05b54f37) SHA1(cc31653fe4cb05201fba234e080cb9c7a7592b1b) ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "214-c3.bin", 0x0800000, 0x400000, CRC(64989a65) SHA1(e6f3749d43be0afa9dad7b085cb782ba694252ca) ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "214-c4.bin", 0x0800001, 0x400000, CRC(afbea515) SHA1(ae875052728de33174827705646bd14cf3937b5c) ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "214-c5.bin", 0x1000000, 0x400000, CRC(2a3bbd26) SHA1(7c1a7e50a10a1b082e0d0d515c34135ee9f995ac) ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "214-c6.bin", 0x1000001, 0x400000, CRC(44d30dc7) SHA1(c8ae001e37224b55d9e4a4d99f6578b4f6eb055f) ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "214-c7.bin", 0x1800000, 0x400000, CRC(3687331b) SHA1(2be95caab76d7af51674f93884330ba73a6053e4) ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "214-c8.bin", 0x1800001, 0x400000, CRC(fa1461ad) SHA1(6c71a7f08e4044214223a6bf80984582ab5e0328) ) /* Plane 2,3 */
+ROM_END
+
+ROM_START( kof96h )
+	ROM_REGION( 0x300000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "214-pg1.bin",0x000000, 0x100000, CRC(bd3757c9) SHA1(35392a044117e46c088ff0fdd07d69a3faa4f96e) )
 	ROM_LOAD16_WORD_SWAP( "214-p2.bin", 0x100000, 0x200000, CRC(002ccb73) SHA1(3ae8df682c75027ca82db25491021eeba00a267e) )
 
 	NEO_SFIX_128K( "214-s1.bin", CRC(1254cbdb) SHA1(fce5cf42588298711a3633e9c9c1d4dcb723ac76) )
@@ -6060,7 +6110,8 @@ GAMEB( 1995, kof95a,   kof95,    neogeo, neogeo, neogeo,  neogeo,   ROT0, "SNK",
 GAMEB( 1995, samsho3,  neogeo,   neogeo, raster, neogeo,  neogeo,   ROT0, "SNK", "Samurai Shodown III / Samurai Spirits - Zankurou Musouken" )
 GAMEB( 1995, rbff1,    neogeo,   neogeo, neo320, neogeo,  neogeo,   ROT0, "SNK", "Real Bout Fatal Fury / Real Bout Garou Densetsu" )
 GAMEB( 1996, aof3,     neogeo,   neogeo, neogeo, neogeo,  neogeo,   ROT0, "SNK", "Art of Fighting 3 - The Path of the Warrior / Art of Fighting - Ryuuko no Ken Gaiden" )
-GAMEB( 1996, kof96,    neogeo,   neogeo, neogeo, neogeo,  neogeo,   ROT0, "SNK", "The King of Fighters '96" )
+GAMEB( 1996, kof96,    neogeo,   neogeo, neogeo, neogeo,  neogeo,   ROT0, "SNK", "The King of Fighters '96 (set 1)" )
+GAMEB( 1996, kof96h,   kof96,    neogeo, neogeo, neogeo,  neogeo,   ROT0, "SNK", "The King of Fighters '96 (set 2)" )
 GAMEB( 1996, ssideki4, neogeo,   neogeo, ras320, neogeo,  neogeo,   ROT0, "SNK", "Ultimate 11 - The SNK Football Championship / Tokuten Ou - Honoo no Libero, The" )
 GAMEB( 1996, kizuna,   neogeo,   neogeo, neogeo, neogeo,  neogeo,   ROT0, "SNK", "Kizuna Encounter - Super Tag Battle / Fu'un Super Tag Battle" )
 GAMEB( 1996, samsho4,  neogeo,   neogeo, neo320, neogeo,  neogeo,   ROT0, "SNK", "Samurai Shodown IV - Amakusa's Revenge / Samurai Spirits - Amakusa Kourin" )
@@ -6186,7 +6237,8 @@ GAMEB( 1998, blazstar, neogeo,   neogeo, neo320, neogeo,  neogeo,   ROT0, "Yumek
 GAMEB( 1999, preisle2, neogeo,   neogeo, neogeo, neogeo,  preisle2, ROT0, "Yumekobo", "Prehistoric Isle 2" ) /* Encrypted GFX */
 
 /* Viccom */
-GAMEB( 1994, fightfev, neogeo,   neogeo, neogeo, neogeo,  neogeo,   ROT0, "Viccom", "Fight Fever / Crystal Legacy" )
+GAMEB( 1994, fightfev, neogeo,   neogeo, neogeo, neogeo,  neogeo,   ROT0, "Viccom", "Fight Fever (set 1)" )
+GAMEB( 1994, fightfva, fightfev, neogeo, neogeo, neogeo,  neogeo,   ROT0, "Viccom", "Fight Fever (set 2)" )
 
 /* Video System Co. */
 GAMEB( 1994, pspikes2, neogeo,   neogeo, ras320, neogeo,  neogeo,   ROT0, "Video System Co.", "Power Spikes II" )

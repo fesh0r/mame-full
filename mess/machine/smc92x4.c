@@ -202,7 +202,7 @@ static int floppy_find_sector(int which, int disk_unit, int cylinder, int head, 
 	return FALSE;
 }
 
-static int floppy_read_sector(int which, int disk_unit, int cylinder, int head, int check_secnum, int sector, int *dma_address)
+static int smc92x4_floppy_read_sector(int which, int disk_unit, int cylinder, int head, int check_secnum, int sector, int *dma_address)
 {
 	int sector_data_id, sector_len;
 	UINT8 buf[MAX_SECTOR_LEN];
@@ -224,7 +224,7 @@ static int floppy_read_sector(int which, int disk_unit, int cylinder, int head, 
 	return TRUE;
 }
 
-static int floppy_write_sector(int which, int disk_unit, int cylinder, int head, int check_secnum, int sector, int *dma_address)
+static int smc92x4_floppy_write_sector(int which, int disk_unit, int cylinder, int head, int check_secnum, int sector, int *dma_address)
 {
 	int sector_data_id, sector_len;
 	UINT8 buf[MAX_SECTOR_LEN];
@@ -842,7 +842,7 @@ static void do_read(int which, int physical_flag, int mode)
 
 		case sm_floppy_slow:
 		case sm_floppy_fast:
-			if (! floppy_read_sector(which, disk_unit, cylinder, head, 1, sector, &dma_address))
+			if (! smc92x4_floppy_read_sector(which, disk_unit, cylinder, head, 1, sector, &dma_address))
 				goto cleanup;
 			break;
 		}
@@ -951,7 +951,7 @@ static void do_write(int which, int physical_flag, int mode)
 
 		case sm_floppy_slow:
 		case sm_floppy_fast:
-			if (!floppy_write_sector(which, disk_unit, cylinder, head, 1, sector, &dma_address))
+			if (!smc92x4_floppy_write_sector(which, disk_unit, cylinder, head, 1, sector, &dma_address))
 				goto cleanup;
 			break;
 		}

@@ -1,18 +1,16 @@
-#ifndef __FLOP_DRIVE_HEADER_INCLUDED__
-#define __FLOP_DRIVE_HEADER_INCLUDED__
+#ifndef FLOPDRV_H
+#define FLOPDRV_H
 
 /* flopdrv provides simple emulation of a disc drive */
 /* the 8271, nec765 and wd179x use this */
+#include "image.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-typedef enum {
-        DEN_FM_LO = 0,
-        DEN_FM_HI,
-        DEN_MFM_LO,
-        DEN_MFM_HI
+typedef enum
+{
+	DEN_FM_LO = 0,
+	DEN_FM_HI,
+	DEN_MFM_LO,
+	DEN_MFM_HI
 } DENSITY;
 
 /* sector has a deleted data address mark */
@@ -58,16 +56,23 @@ typedef struct floppy_interface
 	with the data */
 
 	/* get number of sectors per track on side specified */
-	int (*get_sectors_per_track)(mess_image *img, int physical_side);
+	int (*get_sectors_per_track)(mess_image *image, int physical_side);
+
 	/* get id from current track and specified side */
-	void (*get_id_callback)(mess_image *img, chrn_id *, int id_index, int physical_side);
+	void (*get_id_callback)(mess_image *image, chrn_id *, int id_index, int physical_side);
 
 	/* read sector data into buffer, length = number of bytes to read */
-	void (*read_sector_data_into_buffer)(mess_image *img, int side,int data_id,char *, int length);
+	void (*read_sector_data_into_buffer)(mess_image *image, int side,int data_id,char *, int length);
+
 	/* write sector data from buffer, length = number of bytes to read  */
-	void (*write_sector_data_from_buffer)(mess_image *img, int side,int data_id, const char *, int length, int ddam);
+	void (*write_sector_data_from_buffer)(mess_image *image, int side,int data_id, const char *, int length, int ddam);
+
 	/* Read track in buffer, length = number of bytes to read */
-	void (*read_track_data_info_buffer)(mess_image *img, int side, char *ptr, int *length );
+	void (*read_track_data_info_buffer)(mess_image *image, int side, void *ptr, int *length );
+
+	/* Write track in buffer, length = number of bytes to read */
+	void (*write_track_data_info_buffer)(mess_image *image, int side, const void *ptr, int *length );
+
 	/* format */
 	void (*format_sector)(mess_image *img, int side, int sector_index,int c, int h, int r, int n, int filler);
 } floppy_interface;
@@ -90,8 +95,6 @@ struct floppy_drive
 	void	(*index_pulse_callback)(mess_image *img);
 
 	void	(*ready_state_change_callback)(mess_image *img, int state);
-    /* physical real drive unit */
-    int fdd_unit;
 
 	unsigned char id_buffer[4];
 
@@ -137,22 +140,15 @@ void floppy_drive_set_motor_state(mess_image *img, int state);
 /* set interface for disk image functions */
 void floppy_drive_set_disk_image_interface(mess_image *img, floppy_interface *);
 
-/* set real fdd unit */
-void floppy_drive_set_real_fdd_unit(mess_image *img, unsigned char);
-
 /* seek up or down */
 void floppy_drive_seek(mess_image *img, signed int signed_tracks);
 
-void floppy_drive_read_track_data_info_buffer(mess_image *img, int side, char *ptr, int *length );
+void floppy_drive_read_track_data_info_buffer(mess_image *img, int side, void *ptr, int *length );
+void floppy_drive_write_track_data_info_buffer(mess_image *img, int side, const void *ptr, int *length );
 void floppy_drive_format_sector(mess_image *img, int side, int sector_index, int c, int h, int r, int n, int filler);
-void floppy_drive_read_sector_data(mess_image *img, int side, int index1, char *pBuffer, int length);
-void floppy_drive_write_sector_data(mess_image *img, int side, int index1, const char *pBuffer, int length, int ddam);
+void floppy_drive_read_sector_data(mess_image *img, int side, int index1, void *pBuffer, int length);
+void floppy_drive_write_sector_data(mess_image *img, int side, int index1, const void *pBuffer, int length, int ddam);
 int	floppy_drive_get_datarate_in_us(DENSITY density);
 
-/* managed buffer functions */
-#ifdef __cplusplus
-};
-#endif
 
-
-#endif
+#endif /* FLOPDRV_H */

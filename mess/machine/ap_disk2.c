@@ -21,9 +21,9 @@
 
 #include "driver.h"
 #include "image.h"
+#include "devices/flopdrv.h"
 #include "includes/apple2.h"
-#include "devices/basicdsk.h"
-#include "formats/ap2_disk.h"
+#include "formats/ap2_dsk.h"
 
 #ifdef MAME_DEBUG
 #define LOG(x)	logerror x
@@ -47,9 +47,8 @@ static int a2_drives_num;
 struct apple2_drive
 {
 	UINT8 state;			/* bits 0-3 are the phase; bits 4-5 is q6-7 */
-	UINT8 transient_state;	/* state that just reflects the dirtiness of the track data */
+	UINT8 transient_state;
 	int position;
-	int image_type;
 	UINT8 track_data[APPLE2_NIBBLE_SIZE * APPLE2_SECTOR_COUNT];
 };
 
@@ -58,6 +57,7 @@ static struct apple2_drive *apple2_drives;
 /***************************************************************************
   apple2_slot6_init
 ***************************************************************************/
+
 void apple2_slot6_init(void)
 {
 	apple2_drives = auto_malloc(sizeof(struct apple2_drive) * 2);
@@ -66,88 +66,27 @@ void apple2_slot6_init(void)
 	memset(apple2_drives, 0, sizeof(struct apple2_drive) * 2);
 }
 
-DEVICE_LOAD(apple2_floppy)
-{
-	int image_type;
-	struct apple2_drive *drive;
-
-	image_type = apple2_choose_image_type(image_filetype(image), mame_fsize(file));
-	if (image_type == APPLE2_IMAGE_UNKNOWN)
-		return INIT_FAIL;
-
-	if (device_load_basicdsk_floppy(image, file) != INIT_PASS)
-		return INIT_FAIL;
-
-	basicdsk_set_geometry(image, APPLE2_TRACK_COUNT, 1, APPLE2_SECTOR_COUNT, APPLE2_SECTOR_SIZE, 0, 0, FALSE);
-	floppy_drive_seek(image, -999);
-	floppy_drive_seek(image, +APPLE2_TRACK_COUNT/2);
-
-	/* set up the apple2 disk structure */
-	drive = &apple2_drives[image_index_in_device(image)];
-	memset(drive, 0, sizeof(*drive));
-	drive->state = TWEEN_TRACKS;
-	drive->transient_state = 0;
-	drive->image_type = image_type;
-
-	return INIT_PASS;
-}
-
 
 
 /**************************************************************************/
 
 static void load_current_track(mess_image *image, struct apple2_drive *disk)
 {
-	int track, sector, skewed_sector;
-	UINT8 data[APPLE2_SECTOR_SIZE];
-	UINT8 *this_sector;
-	
-	memset(data, 0, sizeof(data));
-	memset(disk->track_data, 0xff, sizeof(disk->track_data));
-
-	track = floppy_drive_get_current_track(image);
-
-	for (sector = 0; sector < APPLE2_SECTOR_COUNT; sector++)
-	{
-		skewed_sector = apple2_skew_sector(sector, disk->image_type);
-		this_sector = &disk->track_data[sector * APPLE2_NIBBLE_SIZE];
-		floppy_drive_read_sector_data(image, 0, skewed_sector, (void *) data, APPLE2_SECTOR_SIZE);
-		apple2_disk_encode_nib(this_sector, data, 254, track, sector);
-	}
+	int len = sizeof(disk->track_data);
+	floppy_drive_read_track_data_info_buffer(image, 0, disk->track_data, &len);
 	disk->transient_state |= TRSTATE_LOADED;
 }
 
 
 
-/**************************************************************************/
-
 static void save_current_track(mess_image *image, struct apple2_drive *disk)
 {
-	int track, sector, skewed_sector;
-	UINT8 data[APPLE2_SECTOR_SIZE];
-	const UINT8 *this_sector;
-
-	if (disk->transient_state & TRSTATE_DIRTY)
-	{
-		track = floppy_drive_get_current_track(image);
-
-		if (image_is_writable(image))
-		{
-			for (sector = 0; sector < APPLE2_SECTOR_COUNT; sector++)
-			{
-				skewed_sector = apple2_skew_sector(sector, disk->image_type);
-				this_sector = &disk->track_data[sector * APPLE2_NIBBLE_SIZE];
-				apple2_disk_decode_nib(data, &disk->track_data[sector * APPLE2_NIBBLE_SIZE], NULL, NULL, NULL);
-				floppy_drive_write_sector_data(image, 0, skewed_sector, (void *) data, APPLE2_SECTOR_SIZE, 0);
-			}
-		}
-		disk->transient_state &= ~TRSTATE_DIRTY;
-	}
+	int len = sizeof(disk->track_data);
+	floppy_drive_write_track_data_info_buffer(image, 0, disk->track_data, &len);
+	disk->transient_state &= ~TRSTATE_DIRTY;
 }
 
 
-
-/**************************************************************************/
 
 /* reads/writes a byte; write_value is -1 for read only */
 static UINT8 process_byte(mess_image *img, struct apple2_drive *disk, int write_value)
@@ -210,9 +149,12 @@ static void seek_disk(mess_image *img, struct apple2_drive *disk, signed int ste
 		disk->state &= ~TWEEN_TRACKS;
 }
 
+
+
 /***************************************************************************
   apple2_c0xx_slot6_r
 ***************************************************************************/
+
 READ_HANDLER ( apple2_c0xx_slot6_r )
 {
 	struct apple2_drive *cur_disk;
@@ -281,14 +223,14 @@ READ_HANDLER ( apple2_c0xx_slot6_r )
 	
 	case 0x0D:		/* Q6H - set transistor Q6 high */
 		cur_disk->state |= Q6_MASK;
-		if (floppy_drive_get_flag_state(cur_image, FLOPPY_DRIVE_DISK_WRITE_PROTECTED))
+		if (!image_is_writable(cur_image))
 			result = 0x80;
 		break;
 
 	case 0x0E:		/* Q7L - set transistor Q7 low */
 		cur_disk->state &= ~Q7_MASK;
 		read_state = 1;
-		if (floppy_drive_get_flag_state(cur_image, FLOPPY_DRIVE_DISK_WRITE_PROTECTED))
+		if (!image_is_writable(cur_image))
 			result = 0x80;
 		break;
 
@@ -302,9 +244,12 @@ READ_HANDLER ( apple2_c0xx_slot6_r )
 	return result;
 }
 
+
+
 /***************************************************************************
   apple2_c0xx_slot6_w
 ***************************************************************************/
+
 WRITE_HANDLER ( apple2_c0xx_slot6_w )
 {
 	profiler_mark(PROFILER_SLOT6);
@@ -323,11 +268,13 @@ WRITE_HANDLER ( apple2_c0xx_slot6_w )
 	profiler_mark(PROFILER_END);
 }
 
+
+
 /***************************************************************************
   apple2_slot6_w
 ***************************************************************************/
+
 WRITE_HANDLER (  apple2_slot6_w )
 {
-	return;
 }
 

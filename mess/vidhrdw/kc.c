@@ -160,7 +160,9 @@ static void kc85_draw_8_pixels(struct mame_bitmap *bitmap,int x,int y, unsigned 
 }
 
 
-#define min(a,b) ((a<b) ? a : b)
+#ifndef MIN
+#define MIN(a,b) ((a<b) ? a : b)
+#endif /* MIN */
 
 /* height of screen in lines */
 #define KC85_SCREEN_HEIGHT 256
@@ -291,7 +293,7 @@ static void kc85_common_process_cycles(struct video_update_state *video_update, 
 		int cycles_to_do;
 
 		/* do as many cycles up to end of current state */
-		cycles_to_do = min(video_update->horizontal.cycles_remaining_in_state, cycles);
+		cycles_to_do = MIN(video_update->horizontal.cycles_remaining_in_state, cycles);
 
 		//logerror("process cycles: cycles_to_do %d\n",cycles_to_do);
 
@@ -377,7 +379,7 @@ static int kc85_common_vh_process_line(struct video_update_state *video_update, 
 	while ((video_update->horizontal.cycles_remaining!=0) && (cycles!=0))
 	{
 		/* do as many cycles as will fit onto the line */
-		cycles_to_do = min(cycles,video_update->horizontal.cycles_remaining);
+		cycles_to_do = MIN(cycles,video_update->horizontal.cycles_remaining);
 	
 		//logerror("process line: cycles_to_do: %d\n",cycles_to_do);
 		
@@ -426,7 +428,7 @@ static void kc85_common_vh_process_lines(struct video_update_state *video_update
 		int cycles_to_do;
 		int cycles_done;
 		
-		cycles_to_do = min(cycles, KC85_CYCLES_PER_LINE);
+		cycles_to_do = MIN(cycles, KC85_CYCLES_PER_LINE);
 		cycles_done = cycles_to_do;
 
 		//logerror("process lines: cycles_to_do: %d\n",cycles_to_do);

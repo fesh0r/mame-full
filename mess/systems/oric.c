@@ -16,9 +16,10 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "includes/oric.h"
-#include "devices/flopdrv.h"
 #include "includes/centroni.h"
 #include "devices/printer.h"
+#include "devices/mflopimg.h"
+#include "formats/ap2_dsk.h"
 
 #include "includes/apple2.h"
 
@@ -546,7 +547,7 @@ SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(prav8)
 	CONFIG_IMPORT_FROM(oric_common)
-	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 1, "dsk\0bin\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_READ, NULL, NULL, device_load_apple2_floppy, NULL, NULL)
+	CONFIG_DEVICE_FLOPPY( 1, apple2 )
 SYSTEM_CONFIG_END
 
 

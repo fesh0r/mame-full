@@ -48,8 +48,6 @@ int floppy_drive_init(mess_image *img, const floppy_interface *iface)
 	/* all drives are double-sided 80 track - can be overriden in driver! */
 	floppy_drive_set_geometry(img, FLOPPY_DRIVE_DS_80);
 
-	pDrive->fdd_unit = image_index_in_device(img);
-
 	/* initialise id index - not so important */
 	pDrive->id_index = 0;
 	/* initialise track */
@@ -110,11 +108,6 @@ int	floppy_status(mess_image *img, int new_status)
 
 	/* return current status */
 	return floppy_drive_get_flag_state(img,0x0ff);
-}
-
-void floppy_drive_set_real_fdd_unit(mess_image *img, UINT8 unit_id)
-{
-	get_drive(img)->fdd_unit = unit_id;
 }
 
 /* set interface for image interface */
@@ -401,13 +394,23 @@ int	floppy_drive_get_current_track(mess_image *img)
 	return drv->current_track;
 }
 
-void floppy_drive_read_track_data_info_buffer(mess_image *img, int side, char *ptr, int *length )
+void floppy_drive_read_track_data_info_buffer(mess_image *img, int side, void *ptr, int *length )
 {
 	if (image_exists(img))
 	{
 		struct floppy_drive *drv = get_drive(img);
 		if (drv->interface.read_track_data_info_buffer)
 			drv->interface.read_track_data_info_buffer(img, side, ptr, length);
+	}
+}
+
+void floppy_drive_write_track_data_info_buffer(mess_image *img, int side, const void *ptr, int *length )
+{
+	if (image_exists(img))
+	{
+		struct floppy_drive *drv = get_drive(img);
+		if (drv->interface.write_track_data_info_buffer)
+			drv->interface.write_track_data_info_buffer(img, side, ptr, length);
 	}
 }
 
@@ -421,7 +424,7 @@ void floppy_drive_format_sector(mess_image *img, int side, int sector_index,int 
 	}
 }
 
-void floppy_drive_read_sector_data(mess_image *img, int side, int index1, char *pBuffer, int length)
+void floppy_drive_read_sector_data(mess_image *img, int side, int index1, void *pBuffer, int length)
 {
 	if (image_exists(img))
 	{
@@ -431,7 +434,7 @@ void floppy_drive_read_sector_data(mess_image *img, int side, int index1, char *
 	}
 }
 
-void floppy_drive_write_sector_data(mess_image *img, int side, int index1, const char *pBuffer,int length, int ddam)
+void floppy_drive_write_sector_data(mess_image *img, int side, int index1, const void *pBuffer,int length, int ddam)
 {
 	if (image_exists(img))
 	{

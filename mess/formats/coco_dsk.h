@@ -1,9 +1,22 @@
-#include "formats.h"
+/*********************************************************************
 
-BLOCKDEVICE_FORMATDRIVER_EXTERN( coco_jvc );
-BLOCKDEVICE_FORMATDRIVER_EXTERN( coco_vdk );
-BLOCKDEVICE_FORMATDRIVER_EXTERN( coco_o9t );
-BLOCKDEVICE_FORMATDRIVER_EXTERN( coco_vhd );
-BLOCKDEVICE_FORMATDRIVER_EXTERN( coco_dmk );
+	formats/coco_dsk.h
 
-BLOCKDEVICE_FORMATCHOICES_EXTERN( coco );
+	Tandy Color Computer / Dragon disk images
+
+*********************************************************************/
+
+#ifndef COCO_DSK_H
+#define COCO_DSK_H
+
+#include "flopimg.h"
+
+
+/**************************************************************************/
+
+FLOPPY_OPTIONS_EXTERN(coco);
+
+floperr_t coco_dmk_identify(floppy_image *floppy, int *vote);
+floperr_t coco_dmk_construct(floppy_image *floppy, option_resolution *params);
+
+#endif /* COCO_DSK_H */

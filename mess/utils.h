@@ -49,6 +49,14 @@
 #define FUNCATTR_CONST
 #endif
 
+#ifndef MIN
+#define MIN(a, b)		((a) < (b) ? (a) : (b))
+#endif /* MIN */
+
+#ifndef MAX
+#define MAX(a, b)		((a) > (b) ? (a) : (b))
+#endif /* MIN */
+
 /* -----------------------------------------------------------------------
  * strncpyz
  * strncatz
@@ -112,6 +120,13 @@ char *osd_basename (char *name);
 void *memset16 (void *dest, int value, size_t size);
 #endif /* memset16 */
 
+
+/* -----------------------------------------------------------------------
+ * CRC stuff
+ * ----------------------------------------------------------------------- */
+unsigned short ccitt_crc16(unsigned short crc, const unsigned char *buffer, size_t buffer_len);
+
+
 /* -----------------------------------------------------------------------
  * Miscellaneous
  * ----------------------------------------------------------------------- */
@@ -124,6 +139,7 @@ void *memset16 (void *dest, int value, size_t size);
 
 char *stripspace(const char *src);
 char *strip_extension(const char *filename);
+int compute_log2(int val);
 
 /* Endian macros */
 #define FLIPENDIAN_INT16(x)	((((x) >> 8) | ((x) << 8)) & 0xffff)

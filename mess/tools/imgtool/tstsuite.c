@@ -24,7 +24,6 @@ int cmd_testsuite(struct command *c, int argc, char *argv[])
 	IMAGEENUM *imgenum;
 	imgtool_dirent imgdirent;
 	int err = -1, i;
-	struct disk_geometry geometry;
 
 	testsuitefile = argv[0];
 
@@ -132,23 +131,6 @@ int cmd_testsuite(struct command *c, int argc, char *argv[])
 				if (strcmp(directive_value, buffer2))
 				{
 					fprintf(stderr, "*** expected files '%s', but instead got '%s'", directive_value, buffer2);
-					goto error;
-				}
-			}
-			else if (!strcmpi(directive, "geometry"))
-			{
-				/* geometry directive */
-				img_get_geometry(img, &geometry);
-				snprintf(buffer2, sizeof(buffer2), "%i-%i/%i/%i-%i/%i", 
-					0,	(int) geometry.tracks-1,
-					(int) geometry.heads,
-					(int) geometry.first_sector_id,
-					(int) geometry.sectors - 1 + geometry.first_sector_id,
-					(int) geometry.sector_size);
-
-				if (strcmp(directive_value, buffer2))
-				{
-					fprintf(stderr, "*** expected geometry '%s', but instead got '%s'", directive_value, buffer2);
 					goto error;
 				}
 			}

@@ -2582,32 +2582,6 @@ ROM_START( gwingj )
 	ROM_LOAD16_WORD_SWAP( "ggw.12",   0x400000, 0x400000, CRC(4bee4e8f) SHA1(c440b5a38359ec3b8002f39690b79bf78703f5d0) )
 ROM_END
 
-ROM_START( jgokushi )
-	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )      /* 68000 code */
-	ROM_LOAD16_WORD_SWAP( "majj.03", 0x000000, 0x80000, CRC(4614a3b2) )
-
-	ROM_REGION16_BE( CODE_SIZE, REGION_USER1, 0 )
-//	ROM_LOAD16_WORD_SWAP( "majjx.03", 0x000000, 0x80000, NO_DUMP )
-
-	ROM_REGION( 0x1000000, REGION_GFX1, 0 )
-//	ROMX_LOAD( "maj-sim.01c",   0x0000000, 0x200000, NO_DUMP , ROM_GROUPBYTE | ROM_SKIP(7) ) // Not dumped, ROM on a simm
-//	ROMX_LOAD( "maj-sim.01d",   0x0000001, 0x200000, NO_DUMP , ROM_GROUPBYTE | ROM_SKIP(7) ) // Not dumped, ROM on a simm
-//	ROMX_LOAD( "maj-sim.01a",   0x0000002, 0x200000, NO_DUMP , ROM_GROUPBYTE | ROM_SKIP(7) ) // Not dumped, ROM on a simm
-//	ROMX_LOAD( "maj-sim.01b",   0x0000003, 0x200000, NO_DUMP , ROM_GROUPBYTE | ROM_SKIP(7) ) // Not dumped, ROM on a simm
-//	ROMX_LOAD( "maj-sim.03c",   0x0000004, 0x200000, NO_DUMP , ROM_GROUPBYTE | ROM_SKIP(7) ) // Not dumped, ROM on a simm
-//	ROMX_LOAD( "maj-sim.03d",   0x0000005, 0x200000, NO_DUMP , ROM_GROUPBYTE | ROM_SKIP(7) ) // Not dumped, ROM on a simm
-//	ROMX_LOAD( "maj-sim.03a",   0x0000006, 0x200000, NO_DUMP , ROM_GROUPBYTE | ROM_SKIP(7) ) // Not dumped, ROM on a simm
-//	ROMX_LOAD( "maj-sim.03b",   0x0000007, 0x200000, NO_DUMP , ROM_GROUPBYTE | ROM_SKIP(7) ) // Not dumped, ROM on a simm
-
-	ROM_REGION( QSOUND_SIZE, REGION_CPU2, 0 ) /* 64k for the audio CPU (+banks) */
-	ROM_LOAD( "maj.01",   0x00000, 0x08000, CRC(1fe8c213) )
-	ROM_CONTINUE(         0x10000, 0x18000 )
-
-	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* QSound samples */
-//	ROM_LOAD16_WORD_SWAP( "maj-sim.05a",   0x000000, 0x200000, NO_DUMP ) // Not dumped, ROM on a simm
-//	ROM_LOAD16_WORD_SWAP( "maj-sim.05b",   0x200000, 0x200000, NO_DUMP ) // Not dumped, ROM on a simm
-ROM_END
-
 ROM_START( megaman2 )
 	ROM_REGION(CODE_SIZE, REGION_CPU1, 0 )      /* 68000 code */
 	ROM_LOAD16_WORD_SWAP( "rm2u.03", 0x000000, 0x80000, CRC(8ffc2cd1) SHA1(919ef08311008288b31ed42fb13172580d50433a) )
@@ -3760,49 +3734,6 @@ ROM_START( smbombr1 )
 	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* QSound samples */
 	ROM_LOAD16_WORD_SWAP( "smb.11",   0x000000, 0x200000, CRC(c56935f9) SHA1(ca1705e48e31ddc13505e6297bceca2bec1bb209) )
 	ROM_LOAD16_WORD_SWAP( "smb.12",   0x200000, 0x200000, CRC(955b0782) SHA1(ee09500e7b44e923126533613bfe26cdabc7ab5f) )
-ROM_END
-
-ROM_START( rckmanj )
-	ROM_REGION(CODE_SIZE, REGION_CPU1, 0 )      /* 68000 code */
-	ROM_LOAD16_WORD_SWAP( "rcmj.03a", 0x000000, 0x80000, CRC(30559f60) )
-	ROM_LOAD16_WORD_SWAP( "rcmj.04a", 0x080000, 0x80000, CRC(5efc9366) )
-	ROM_LOAD16_WORD_SWAP( "rcmj.05a", 0x100000, 0x80000, CRC(517ccde2) )
-
-	ROM_REGION16_BE( CODE_SIZE, REGION_USER1, 0 )
-//	ROM_LOAD16_WORD_SWAP( "rcmjx.03a", 0x000000, 0x80000, NO_DUMP )
-
-	ROM_REGION( 0x1000000, REGION_GFX1, 0 )
-	ROM_FILL(              0x000000, 0x800000, 0 )
-	ROMX_LOAD( "rcm.73",   0x800000, 0x80000, CRC(774c6e04) , ROM_GROUPWORD | ROM_SKIP(6) )
-	ROMX_LOAD( "rcm.74",   0x880000, 0x80000, CRC(004ec725) , ROM_GROUPWORD | ROM_SKIP(6) )
-	ROMX_LOAD( "rcm.75",   0x900000, 0x80000, CRC(70a73f99) , ROM_GROUPWORD | ROM_SKIP(6) )
-	ROMX_LOAD( "rcm.76",   0x980000, 0x80000, CRC(89a889ad) , ROM_GROUPWORD | ROM_SKIP(6) )
-	ROMX_LOAD( "rcm.63",   0x800002, 0x80000, CRC(acad7c62) , ROM_GROUPWORD | ROM_SKIP(6) )
-	ROMX_LOAD( "rcm.64",   0x880002, 0x80000, CRC(65c0464e) , ROM_GROUPWORD | ROM_SKIP(6) )
-	ROMX_LOAD( "rcm.65",   0x900002, 0x80000, CRC(ecedad3d) , ROM_GROUPWORD | ROM_SKIP(6) )
-	ROMX_LOAD( "rcm.66",   0x980002, 0x80000, CRC(1300eb7b) , ROM_GROUPWORD | ROM_SKIP(6) )
-	ROMX_LOAD( "rcm.83",   0x800002, 0x80000, CRC(6af30499) , ROM_GROUPWORD | ROM_SKIP(6) )
-	ROMX_LOAD( "rcm.84",   0x880004, 0x80000, CRC(fb3097cc) , ROM_GROUPWORD | ROM_SKIP(6) )
-	ROMX_LOAD( "rcm.85",   0x900004, 0x80000, CRC(3d6186d8) , ROM_GROUPWORD | ROM_SKIP(6) )
-	ROMX_LOAD( "rcm.86",   0x980004, 0x80000, CRC(6d974ebd) , ROM_GROUPWORD | ROM_SKIP(6) )
-	ROMX_LOAD( "rcm.93",   0x800006, 0x80000, CRC(7a5a5166) , ROM_GROUPWORD | ROM_SKIP(6) )
-	ROMX_LOAD( "rcm.94",   0x880006, 0x80000, CRC(2e16557a) , ROM_GROUPWORD | ROM_SKIP(6) )
-	ROMX_LOAD( "rcm.95",   0x900006, 0x80000, CRC(8c7700f1) , ROM_GROUPWORD | ROM_SKIP(6) )
-	ROMX_LOAD( "rcm.96",   0x980006, 0x80000, CRC(7da4cd24) , ROM_GROUPWORD | ROM_SKIP(6) )
-
-	ROM_REGION(QSOUND_SIZE, REGION_CPU2, 0 ) /* 64k for the audio CPU (+banks) */
-	ROM_LOAD( "rcm.01",   0x00000, 0x08000, CRC(d60cf8a3) )
-	ROM_CONTINUE(         0x10000, 0x18000 )
-
-	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* QSound samples */
-	ROM_LOAD16_WORD_SWAP( "rcm.51",   0x000000, 0x80000, CRC(b6d07080) )
-	ROM_LOAD16_WORD_SWAP( "rcm.52",   0x080000, 0x80000, CRC(dfddc493) )
-	ROM_LOAD16_WORD_SWAP( "rcm.53",   0x100000, 0x80000, CRC(6062ae3a) )
-	ROM_LOAD16_WORD_SWAP( "rcm.54",   0x180000, 0x80000, CRC(08c6f3bf) )
-	ROM_LOAD16_WORD_SWAP( "rcm.55",   0x200000, 0x80000, CRC(f97dfccc) )
-	ROM_LOAD16_WORD_SWAP( "rcm.56",   0x280000, 0x80000, CRC(ade475bc) )
-	ROM_LOAD16_WORD_SWAP( "rcm.57",   0x300000, 0x80000, CRC(075effb3) )
-	ROM_LOAD16_WORD_SWAP( "rcm.58",   0x380000, 0x80000, CRC(5b39ea33) )
 ROM_END
 
 ROM_START( sfa )
@@ -6156,7 +6087,6 @@ GAMEX(1995, nwarrh,   nwarr,   cps2, ssf2,    cps2, ROT0,   "Capcom", "Night War
 GAMEX(1995, nwarrb,   nwarr,   cps2, ssf2,    cps2, ROT0,   "Capcom", "Night Warriors: Darkstalkers' Revenge (Brazil 950403)", GAME_NOT_WORKING )
 GAME( 1995, vhuntj,   nwarr,   cps2, ssf2,    cps2, ROT0,   "Capcom", "Vampire Hunter: Darkstalkers' Revenge (Japan 950316)" )
 GAME( 1995, vhuntjr1, nwarr,   cps2, ssf2,    cps2, ROT0,   "Capcom", "Vampire Hunter: Darkstalkers' Revenge (Japan 950302)" )
-GAMEX(1995, rckmanj,  0,       cps2, sgemf,   cps2, ROT0,   "Capcom", "Rockman: The Power Battle (Japan 950922)", GAME_NOT_WORKING )
 GAME( 1995, sfa,      0,       cps2, ssf2,    cps2, ROT0,   "Capcom", "Street Fighter Alpha: Warriors' Dreams (Euro 950727)" )
 GAME( 1995, sfar1,    sfa,     cps2, ssf2,    cps2, ROT0,   "Capcom", "Street Fighter Alpha: Warriors' Dreams (Euro 950718)" )
 GAME( 1995, sfar2,    sfa,     cps2, ssf2,    cps2, ROT0,   "Capcom", "Street Fighter Alpha: Warriors' Dreams (Euro 950605)" )
@@ -6240,7 +6170,6 @@ GAME( 1998, sfa3r1,   sfa3,    cps2, ssf2,    cps2, ROT0,   "Capcom", "Street Fi
 GAME( 1998, sfz3j,    sfa3,    cps2, ssf2,    cps2, ROT0,   "Capcom", "Street Fighter Zero 3 (Japan 980727)" )
 GAME( 1998, sfz3jr1,  sfa3,    cps2, ssf2,    cps2, ROT0,   "Capcom", "Street Fighter Zero 3 (Japan 980629)" )
 GAME( 1998, sfz3a,    sfa3,    cps2, ssf2,    cps2, ROT0,   "Capcom", "Street Fighter Zero 3 (Asia 980701)" )
-GAMEX(1999, jgokushi, 0,       cps2, cps2,    cps2, ROT0,   "Capcom", "Jyangokushi: Haoh no Saihai (Japan 990527)", GAME_NOT_WORKING )
 
 /* Games released on CPS-2 hardware by Takumi */
 

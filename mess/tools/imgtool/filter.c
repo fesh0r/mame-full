@@ -1,8 +1,10 @@
 #include <assert.h>
 #include <string.h>
 #include "imgtool.h"
+#include "utils.h"
 
-struct filter_instance {
+struct filter_instance
+{
 	FILTERMODULE module;
 	int (*filterproc)(struct filter_info *fi, void *buf, int buflen);
 	void *filterparam;

@@ -120,6 +120,57 @@ NEP-16
        U8 and U10 are socketed 27C040 EPROM
        All other ROMs are surface mounted SOP44 MASK ROM
 
+Cart Layout
+-----------
+
+SUPER KANEKO NOVA SYSTEM
+ROM 4 BOARD
+NEP-16
+
+Top Side:
+ /-                                                    /-
+ ||SS300-00 SS210-00     SS102-00 SS103-00   SS201-00  ||
+ ||U1       U3           U8       U32        U9        ||
+ ||                                                    ||
+ ||                                                    ||
+ || 082*    SG01A  SG01A  #      #                     ||
+ ||          U4     U6    U29    U30                   ||
+ \-                                                    \-
+
+Bottom Side:
+ /-                                                    /-
+ ||SS200-00 SS000-00     SS101-00       ^       ^      ||
+ ||U17      U21          U20            U24     U26    ||
+ ||                                                    ||
+ ||                                                    ||
+ ||                                  NEC     NEC       ||
+ ||                                  D431000 D43100    ||
+ \-                                                    \-
+
+* Kaneko (208 pin PQFP)    # Empty sockets for 27C4001 / 27C040
+  ROM0                     ^ Empty sockets for uPD23C32000
+  082                        Full NEC ram number: D431000AGW-70LL
+  9709PK002
+
+
+Cart Layout
+-----------
+
+SUPER-KANEKO-NOVA-SYSTEM
+ROM-2-BOARD
+NEP-16
+
+
+ /-                                                    /-
+ ||PZL-300-00 * PAL PAL  *   PZL-200-00 PZL-210-00  *  ||
+ ||                                                    ||
+ ||                             D431000 D431000        ||
+ ||                                                    ||
+ ||          PZ01U  PZ01U  #    #                      ||
+ ||          U8     U10    U43  U44   *   * PZL-100-00 ||
+ \-                                                    \-
+
+
 */
 
 #include "driver.h"

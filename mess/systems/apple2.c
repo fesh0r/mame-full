@@ -183,13 +183,12 @@ Apple 3.5 and Apple 5.25 drives - up to three devices
 ***************************************************************************/
 
 #include "driver.h"
+#include "inputx.h"
 #include "vidhrdw/generic.h"
 #include "includes/apple2.h"
-#include "inputx.h"
-#include "snprintf.h"
 #include "machine/ay3600.h"
-#include "devices/basicdsk.h"
-#include "formats/ap2_disk.h"
+#include "devices/mflopimg.h"
+#include "formats/ap2_dsk.h"
 
 static MEMORY_READ_START( readmem_apple2 )
 	{ 0x0000, 0x01ff, MRA_BANK4 },
@@ -649,7 +648,7 @@ ROM_START(apple2cp)
 ROM_END
 
 SYSTEM_CONFIG_START(apple2_common)
-	CONFIG_DEVICE_FLOPPY_BASICDSK( 2, "dsk\0bin\0do\0po\0", device_load_apple2_floppy )
+	CONFIG_DEVICE_FLOPPY( 2, apple2 )
 	CONFIG_GET_CUSTOM_DEVICENAME( apple2 )
 	CONFIG_QUEUE_CHARS			( AY3600 )
 	CONFIG_ACCEPT_CHAR			( AY3600 )

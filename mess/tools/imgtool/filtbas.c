@@ -3,15 +3,18 @@
 #include <assert.h>
 #include "imgtool.h"
 #include "osdutils.h"
+#include "utils.h"
 
-struct basictoken_tableent {
+struct basictoken_tableent
+{
 	UINT8 shift;
 	UINT8 base;
 	const char **tokens;
 	int num_tokens;
 };
 
-struct basictokens {
+struct basictokens
+{
 	UINT16 baseaddress;
 	const struct basictoken_tableent *entries;
 	int num_entries;

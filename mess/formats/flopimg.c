@@ -1,0 +1,870 @@
+/*********************************************************************
+
+	flopimg.c
+
+	Floppy disk image abstraction code
+
+*********************************************************************/
+
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <ctype.h>
+#include <assert.h>
+
+#include "formats/flopimg.h"
+#include "pool.h"
+
+#define TRACK_LOADED		0x01
+#define TRACK_DIRTY			0x02
+
+#ifndef MIN
+#define MIN(a,b)		(((a) < (b)) ? (a) : (b))
+#endif
+
+#ifndef TRUE
+#define TRUE		1
+#endif
+
+#ifndef FALSE
+#define FALSE		0
+#endif
+
+
+struct _floppy_image
+{
+	void *fp;
+	const struct io_procs *ioprocs;
+
+	const struct FloppyOption *floppy_option;
+	struct FloppyFormat format;
+
+	/* loaded track stuff */
+	int loaded_track_head;
+	int loaded_track_index;
+	UINT32 loaded_track_size;
+	void *loaded_track_data;
+	UINT8 loaded_track_status;
+	UINT8 filler;
+	UINT8 flags;
+
+	/* tagging system */
+	tag_pool tags;
+};
+
+
+
+struct _floppy_params
+{
+	int param;
+	int value;
+};
+
+
+
+static floperr_t floppy_track_unload(floppy_image *floppy);
+
+OPTION_GUIDE_START(floppy_option_guide)
+	OPTION_INT('H', "heads",			"Heads")
+	OPTION_INT('T', "tracks",			"Tracks")
+	OPTION_INT('S', "sectors",			"Sectors")
+	OPTION_INT('L', "sectorlength",		"Sector Length")
+	OPTION_INT('I', "interleave",		"Interleave")
+	OPTION_INT('F', "firstsectorid",	"First Sector ID")
+OPTION_GUIDE_END
+
+
+static void floppy_close_internal(floppy_image *floppy, int close_file);
+
+/*********************************************************************
+	opening, closing and creating of floppy images
+*********************************************************************/
+
+static int findextension(const char *extensions, const char *ext)
+{
+	while(*extensions)
+	{
+		if (!strcmpi(extensions, ext))
+			return 1;
+		extensions += strlen(extensions) + 1;
+	}
+	return 0;
+}
+
+
+
+/* basic floppy_image initialization common to floppy_open() and floppy_create() */
+static floppy_image *floppy_init(void *fp, const struct io_procs *procs, int flags)
+{
+	floppy_image *floppy;
+
+	floppy = malloc(sizeof(struct _floppy_image));
+	if (!floppy)
+		return NULL;
+
+	memset(floppy, 0, sizeof(*floppy));
+	tagpool_init(&floppy->tags);
+	floppy->fp = fp;
+	floppy->ioprocs = procs;
+	floppy->filler = 0xFF;
+	floppy->flags = (UINT8) flags;
+	return floppy;
+}
+
+
+
+static floperr_t floppy_open_internal(void *fp, const struct io_procs *procs, const char *extension,
+	const struct FloppyOption *floppy_options, size_t max_options, int flags, floppy_image **outfloppy)
+{
+	floperr_t err;
+	floppy_image *floppy;
+	const struct FloppyOption *best_option;
+	int best_vote, vote;
+
+	floppy = floppy_init(fp, procs, flags);
+	if (!floppy)
+	{
+		err = FLOPPY_ERROR_OUTOFMEMORY;
+		goto error;
+	}
+
+	/* vote on the best format */
+	best_option = NULL;
+	best_vote = 0;
+	while(floppy_options->construct && max_options--)
+	{
+		if (!extension || !floppy_options->extensions || findextension(floppy_options->extensions, extension))
+		{
+			if (floppy_options->identify)
+			{
+				vote = 0;
+				err = floppy_options->identify(floppy, &vote);
+				if (err)
+					goto error;
+			}
+			else
+			{
+				vote = 1;
+			}
+
+			/* is this option a better one? */
+			if (vote > best_vote)
+			{
+				best_vote = vote;
+				best_option = floppy_options;
+			}
+		}
+		floppy_options++;
+	}
+
+	/* did we find a format? */
+	if (!best_option)
+	{
+		err = FLOPPY_ERROR_INVALIDIMAGE;
+		goto error;
+	}
+
+	/* call the format constructor */
+	err = best_option->construct(floppy, NULL);
+	if (err)
+		goto error;
+
+	floppy->floppy_option = best_option;
+	*outfloppy = floppy;
+	return FLOPPY_ERROR_SUCCESS;
+
+error:
+	if (floppy)
+		floppy_close_internal(floppy, FALSE);
+	*outfloppy = NULL;
+	return err;
+}
+
+
+
+floperr_t floppy_open(void *fp, const struct io_procs *procs, const char *extension, const struct FloppyOption *format, int flags, floppy_image **outfloppy)
+{
+	return floppy_open_internal(fp, procs, extension, format, 1, flags, outfloppy);
+}
+
+
+
+floperr_t floppy_open_choices(void *fp, const struct io_procs *procs, const char *extension, const struct FloppyOption *formats, int flags, floppy_image **outfloppy)
+{
+	return floppy_open_internal(fp, procs, extension, formats, (size_t) -1, flags, outfloppy);
+}
+
+
+
+static floperr_t option_to_floppy_error(optreserr_t oerr)
+{
+	floperr_t err;
+	switch(oerr) {
+	case OPTIONRESOLUTION_ERROR_SUCCESS:
+		err = FLOPPY_ERROR_SUCCESS;
+		break;
+	case OPTIONRESOLUTION_ERROR_OUTOFMEMORY:
+		err = FLOPPY_ERROR_OUTOFMEMORY;
+		break;
+	case OPTIONRESOLUTION_ERROR_PARAMOUTOFRANGE:
+	case OPTIONRESOLUTION_ERROR_PARAMNOTSPECIFIED:
+	case OPTIONRESOLUTION_ERROR_PARAMNOTFOUND:
+	case OPTIONRESOLUTION_ERROR_PARAMALREADYSPECIFIED:
+	case OPTIONRESOLUTION_ERROR_BADPARAM:
+	case OPTIONRESOLUTION_ERROR_SYNTAX:
+	default:
+		err = FLOPPY_ERROR_INTERNAL;
+		break;
+	};
+	return err;
+}
+
+
+
+floperr_t floppy_create(void *fp, const struct io_procs *procs, const struct FloppyOption *format, option_resolution *parameters, floppy_image **outfloppy)
+{
+	floppy_image *floppy = NULL;
+	optreserr_t oerr;
+	floperr_t err;
+	int heads, tracks, h, t;
+	option_resolution *alloc_resolution = NULL;
+
+	/* create the new image */
+	floppy = floppy_init(fp, procs, 0);
+	if (!floppy)
+	{
+		err = FLOPPY_ERROR_OUTOFMEMORY;
+		goto done;
+	}
+
+	if (!parameters)
+	{
+		alloc_resolution = option_resolution_create(floppy_option_guide, format->param_guidelines);
+		if (!alloc_resolution)
+		{
+			err = FLOPPY_ERROR_OUTOFMEMORY;
+			goto done;
+		}
+		parameters = alloc_resolution;
+	}
+
+	oerr = option_resolution_finish(parameters);
+	if (oerr)
+	{
+		err = option_to_floppy_error(oerr);
+		goto done;
+	}
+
+	/* call the format constructor */
+	err = format->construct(floppy, parameters);
+	if (err)
+		goto done;
+
+	/* format the disk, ignoring if formatting not implemented */
+	if (floppy->format.format_track)
+	{
+		heads = floppy_get_heads_per_disk(floppy);
+		tracks = floppy_get_tracks_per_disk(floppy);
+
+		for (h = 0; h < heads; h++)
+		{
+			for (t = 0; t < tracks; t++)
+			{
+				err = floppy->format.format_track(floppy, h, t, parameters);
+				if (err)
+					goto done;
+			}
+		}
+	}
+
+	floppy->floppy_option = format;
+	err = FLOPPY_ERROR_SUCCESS;
+
+done:
+	if (err && floppy)
+	{
+		floppy_close_internal(floppy, FALSE);
+		floppy = NULL;
+	}
+
+	if (outfloppy)
+		*outfloppy = floppy;
+	else if (floppy)
+		floppy_close_internal(floppy, FALSE);
+
+	if (alloc_resolution)
+		option_resolution_close(alloc_resolution);
+	return err;
+}
+
+
+
+static void floppy_close_internal(floppy_image *floppy, int close_file)
+{
+	assert(floppy);
+
+	floppy_track_unload(floppy);
+	if (close_file && floppy->ioprocs->closeproc)
+		floppy->ioprocs->closeproc(floppy->fp);
+	if (floppy->loaded_track_data)
+		free(floppy->loaded_track_data);
+	tagpool_exit(&floppy->tags);
+
+	free(floppy);
+}
+
+
+
+void floppy_close(floppy_image *floppy)
+{
+	floppy_close_internal(floppy, TRUE);
+}
+
+
+
+/*********************************************************************
+	functions useful in format constructors
+*********************************************************************/
+
+struct FloppyFormat *floppy_format(floppy_image *floppy)
+{
+	return &floppy->format;
+}
+
+
+
+void *floppy_tag(floppy_image *floppy, const char *tagname)
+{
+	return tagpool_lookup(&floppy->tags, tagname);
+}
+
+
+
+void *floppy_create_tag(floppy_image *floppy, const char *tagname, size_t tagsize)
+{
+	return tagpool_alloc(&floppy->tags, tagname, tagsize);
+}
+
+
+
+UINT8 floppy_get_filler(floppy_image *floppy)
+{
+	return floppy->filler;
+}
+
+
+
+void floppy_set_filler(floppy_image *floppy, UINT8 filler)
+{
+	floppy->filler = filler;
+}
+
+
+
+/*********************************************************************
+	calls for accessing the raw disk image
+*********************************************************************/
+
+static void floppy_image_seek(floppy_image *floppy, UINT64 offset)
+{
+	floppy->ioprocs->seekproc(floppy->fp, offset, SEEK_SET);
+}
+
+
+
+void floppy_image_read(floppy_image *floppy, void *buffer, UINT64 offset, size_t length)
+{
+	UINT64 size;
+	size_t bytes_read;
+
+	size = floppy_image_size(floppy);
+	if (size <= offset)
+	{
+		bytes_read = 0;
+	}
+	else
+	{
+		floppy_image_seek(floppy, offset);
+		bytes_read = floppy->ioprocs->readproc(floppy->fp, buffer, length);
+	}
+	memset(((UINT8 *) buffer) + bytes_read, floppy->filler, length - bytes_read);
+}
+
+
+
+void floppy_image_write(floppy_image *floppy, const void *buffer, UINT64 offset, size_t length)
+{
+	UINT64 filler_size = 0;
+	char filler_buffer[1024];
+	size_t bytes_to_write;
+	UINT64 size;
+
+	size = floppy_image_size(floppy);
+
+	if (size < offset)
+	{
+		filler_size = offset - size;
+		offset = size;
+	}
+
+	floppy_image_seek(floppy, offset);
+
+	if (filler_size)
+	{
+		memset(filler_buffer, floppy->filler, sizeof(buffer));
+		do
+		{
+			bytes_to_write = (filler_size > sizeof(filler_buffer)) ? sizeof(filler_buffer) : (size_t) filler_size;
+			floppy->ioprocs->writeproc(floppy->fp, filler_buffer, bytes_to_write);
+			filler_size -= bytes_to_write;
+		}
+		while(filler_size > 0);
+	}
+
+	if (length > 0)
+		floppy->ioprocs->writeproc(floppy->fp, buffer, length);
+}
+
+
+
+void floppy_image_write_filler(floppy_image *floppy, UINT8 filler, UINT64 offset, size_t length)
+{
+	UINT8 buffer[512];
+	size_t this_length;
+
+	memset(buffer, filler, length > sizeof(buffer) ? sizeof(buffer) : length);
+
+	while(length > 0)
+	{
+		this_length = length > sizeof(buffer) ? sizeof(buffer) : length;
+		floppy_image_write(floppy, buffer, offset, this_length);
+		offset += this_length;
+		length -= this_length;
+	}
+}
+
+
+
+UINT64 floppy_image_size(floppy_image *floppy)
+{
+	return floppy->ioprocs->filesizeproc(floppy->fp);
+}
+
+
+
+/*********************************************************************
+	calls for accessing disk image data
+*********************************************************************/
+
+static floperr_t get_max_read_sector(floppy_image *floppy, int head, int track, int sector, UINT32 *sector_length)
+{
+	floperr_t err;
+	const struct FloppyFormat *fmt;
+	
+	fmt = floppy_format(floppy);
+	if (fmt->get_sector_length)
+	{
+		err = fmt->get_sector_length(floppy, head, track, sector, sector_length);
+		if (err)
+			return err;
+	}
+	else
+	{
+		*sector_length = (UINT32) -1;
+	}
+	return FLOPPY_ERROR_SUCCESS;
+}
+
+
+
+static floperr_t floppy_readwrite_sector(floppy_image *floppy, int head, int track, int sector, int offset,
+	void *buffer, size_t buffer_len, int writing)
+{
+	floperr_t err;
+	const struct FloppyFormat *fmt;
+	size_t this_buffer_len;
+	UINT8 *alloc_buf = NULL;
+	UINT8 *new_alloc_buf;
+	UINT32 sector_length;
+	UINT8 *buffer_ptr = buffer;
+
+	fmt = floppy_format(floppy);
+
+	if (!fmt->get_sector_length || !fmt->read_sector || (writing && !fmt->write_sector))
+	{
+		err = FLOPPY_ERROR_UNSUPPORTED;
+		goto done;
+	}
+
+	/* main loop */
+	while(buffer_len > 0)
+	{
+		err = fmt->get_sector_length(floppy, head, track, sector, &sector_length);
+		if (err)
+			goto done;
+
+		/* do we even do anything with this sector? */
+		if (offset < sector_length)
+		{
+			/* ok we will be doing something */
+			if ((offset > 0) || (buffer_len < sector_length))
+			{
+				/* we will be doing an partial read/write; in other words we
+				 * will not be reading/writing a full sector */
+				new_alloc_buf = realloc(alloc_buf, sector_length);
+				if (!new_alloc_buf)
+				{
+					err = FLOPPY_ERROR_OUTOFMEMORY;
+					goto done;
+				}
+				alloc_buf = new_alloc_buf;
+
+				/* read the sector (we need to do this even when writing */
+				err = fmt->read_sector(floppy, head, track, sector, alloc_buf, sector_length);
+				if (err)
+					goto done;
+
+				this_buffer_len = MIN(buffer_len, sector_length - offset);
+
+				if (writing)
+				{
+					memcpy(alloc_buf + offset, buffer_ptr, this_buffer_len);
+
+					err = fmt->write_sector(floppy, head, track, sector, alloc_buf, sector_length);
+					if (err)
+						goto done;
+				}
+				else
+				{
+					memcpy(buffer_ptr, alloc_buf + offset, this_buffer_len);
+				}
+				offset += this_buffer_len;
+				offset %= sector_length;
+			}
+			else
+			{
+				this_buffer_len = sector_length;
+
+				if (writing)
+					err = fmt->write_sector(floppy, head, track, sector, buffer_ptr, sector_length);
+				else
+					err = fmt->read_sector(floppy, head, track, sector, buffer_ptr, sector_length);
+				if (err)
+					goto done;
+			}
+		}
+		else
+		{
+			/* skip this sector */
+			offset -= sector_length;
+			this_buffer_len = 0;
+		}
+
+		buffer_ptr += this_buffer_len;
+		buffer_len -= this_buffer_len;
+		sector++;
+	}
+
+	err = FLOPPY_ERROR_SUCCESS;
+
+done:
+	if (alloc_buf)
+		free(alloc_buf);
+	return err;
+}
+
+
+
+floperr_t floppy_read_sector(floppy_image *floppy, int head, int track, int sector, int offset,	void *buffer, size_t buffer_len)
+{
+	return floppy_readwrite_sector(floppy, head, track, sector, offset, buffer, buffer_len, FALSE);
+}
+
+
+
+floperr_t floppy_write_sector(floppy_image *floppy, int head, int track, int sector, int offset, const void *buffer, size_t buffer_len)
+{
+	return floppy_readwrite_sector(floppy, head, track, sector, offset, (void *) buffer, buffer_len, TRUE);
+}
+
+
+
+floperr_t floppy_read_track(floppy_image *floppy, int head, int track, void *buffer, size_t buffer_len)
+{
+	floperr_t err;
+	const struct FloppyFormat *format;
+
+	format = floppy_format(floppy);
+
+	if (!format->read_track)
+		return FLOPPY_ERROR_UNSUPPORTED;
+
+	err = floppy_track_unload(floppy);
+	if (err)
+		return err;
+
+	err = format->read_track(floppy, head, track, buffer, buffer_len);
+	if (err)
+		return err;
+
+	return FLOPPY_ERROR_SUCCESS;
+}
+
+
+
+floperr_t floppy_write_track(floppy_image *floppy, int head, int track, const void *buffer, size_t buffer_len)
+{
+	floperr_t err;
+
+	/* track writing supported? */
+	if (!floppy_format(floppy)->write_track)
+		return FLOPPY_ERROR_UNSUPPORTED;
+
+	/* read only? */
+	if (floppy->flags & FLOPPY_FLAGS_READONLY)
+		return FLOPPY_ERROR_READONLY;
+
+	err = floppy_track_unload(floppy);
+	if (err)
+		return err;
+
+	err = floppy_format(floppy)->write_track(floppy, head, track, buffer, buffer_len);
+	if (err)
+		return err;
+
+	return FLOPPY_ERROR_SUCCESS;
+}
+
+
+
+floperr_t floppy_format_track(floppy_image *floppy, int head, int track, option_resolution *parameters)
+{
+	floperr_t err;
+	struct FloppyFormat *format;
+	option_resolution *alloc_resolution = NULL;
+	optreserr_t oerr;
+
+	/* supported? */
+	format = floppy_format(floppy);
+	if (!format->format_track)
+	{
+		err = FLOPPY_ERROR_UNSUPPORTED;
+		goto done;
+	}
+
+	/* create a dummy resolution; if no parameters were specified */
+	if (!parameters)
+	{
+		alloc_resolution = option_resolution_create(floppy_option_guide, floppy->floppy_option->param_guidelines);
+		if (!alloc_resolution)
+		{
+			err = FLOPPY_ERROR_OUTOFMEMORY;
+			goto done;
+		}
+		parameters = alloc_resolution;
+	}
+
+	oerr = option_resolution_finish(parameters);
+	if (oerr)
+	{
+		err = option_to_floppy_error(oerr);
+		goto done;
+	}
+
+	err = format->format_track(floppy, head, track, parameters);
+	if (err)
+		goto done;
+
+done:
+	if (alloc_resolution)
+		option_resolution_close(alloc_resolution);
+	return err;
+}
+
+
+
+int floppy_get_tracks_per_disk(floppy_image *floppy)
+{
+	return floppy_format(floppy)->get_tracks_per_disk(floppy);
+}
+
+
+
+int floppy_get_heads_per_disk(floppy_image *floppy)
+{
+	return floppy_format(floppy)->get_heads_per_disk(floppy);
+}
+
+
+
+UINT32 floppy_get_track_size(floppy_image *floppy, int head, int track)
+{
+	return floppy_format(floppy)->get_track_size(floppy, head, track);
+}
+
+
+
+floperr_t floppy_get_sector_length(floppy_image *floppy, int head, int track, int sector, UINT32 *sector_length)
+{
+	const struct FloppyFormat *fmt;
+
+	fmt = floppy_format(floppy);
+	if (!fmt->get_sector_length)
+		return FLOPPY_ERROR_UNSUPPORTED;
+
+	return fmt->get_sector_length(floppy, head, track, sector, sector_length);
+}
+
+
+
+floperr_t floppy_get_indexed_sector_info(floppy_image *floppy, int head, int track, int sector_index, int *sector, UINT32 *sector_length)
+{
+	const struct FloppyFormat *fmt;
+
+	fmt = floppy_format(floppy);
+	if (!fmt->get_indexed_sector_info)
+		return FLOPPY_ERROR_UNSUPPORTED;
+
+	return fmt->get_indexed_sector_info(floppy, head, track, sector_index, sector, sector_length);
+}
+
+
+
+floperr_t floppy_get_sector_count(floppy_image *floppy, int head, int track, int *sector_count)
+{
+	floperr_t err;
+	int sector_index = 0;
+
+	do
+	{
+		err = floppy_get_indexed_sector_info(floppy, head, track, sector_index, NULL, NULL);
+		if (!err)
+			sector_index++;
+	}
+	while(!err);
+
+	if (sector_index && (err == FLOPPY_ERROR_SEEKERROR))
+		err = FLOPPY_ERROR_SUCCESS;
+	if (sector_count)
+		*sector_count = err ? 0 : sector_index;
+	return err;
+}
+
+
+
+int floppy_is_read_only(floppy_image *floppy)
+{
+	return floppy->flags & FLOPPY_FLAGS_READONLY;
+}
+
+
+
+/*********************************************************************
+	calls for track based IO
+*********************************************************************/
+
+floperr_t floppy_load_track(floppy_image *floppy, int head, int track, int dirtify, void **track_data, size_t *track_length)
+{
+	floperr_t err;
+	void *new_loaded_track_data;
+	UINT32 track_size;
+
+	/* have we already loaded this track? */
+	if (((floppy->loaded_track_status & TRACK_LOADED) == 0) || (head != floppy->loaded_track_head) || (track != floppy->loaded_track_index))
+	{
+		err = floppy_track_unload(floppy);
+		if (err)
+			goto error;
+
+		track_size = floppy_format(floppy)->get_track_size(floppy, head, track);
+
+		new_loaded_track_data = realloc(floppy->loaded_track_data, track_size);
+		if (!new_loaded_track_data)
+		{
+			err = FLOPPY_ERROR_OUTOFMEMORY;
+			goto error;
+		}
+
+		floppy->loaded_track_data = new_loaded_track_data;
+		floppy->loaded_track_size = track_size;
+		floppy->loaded_track_head = head;
+		floppy->loaded_track_index = track;
+
+		err = floppy_format(floppy)->read_track(floppy, floppy->loaded_track_head, floppy->loaded_track_index, floppy->loaded_track_data, floppy->loaded_track_size);
+		if (err)
+			goto error;
+
+		floppy->loaded_track_status |= TRACK_LOADED | (dirtify ? TRACK_DIRTY : 0);
+	}
+
+	if (track_data)
+		*track_data = floppy->loaded_track_data;
+	if (track_length)
+		*track_length = floppy->loaded_track_size;
+	return FLOPPY_ERROR_SUCCESS;
+
+error:
+	if (track_data)
+		*track_data = NULL;
+	if (track_length)
+		*track_length = 0;
+	return err;
+}
+
+
+
+static floperr_t floppy_track_unload(floppy_image *floppy)
+{
+	int err;
+
+	if (floppy->loaded_track_status & TRACK_DIRTY)
+	{
+		err = floppy_format(floppy)->write_track(floppy, floppy->loaded_track_head, floppy->loaded_track_index, floppy->loaded_track_data, floppy->loaded_track_size);
+		if (err)
+			return err;
+	}
+
+	floppy->loaded_track_status &= ~(TRACK_LOADED | TRACK_DIRTY);
+	return FLOPPY_ERROR_SUCCESS;
+}
+
+
+
+/*********************************************************************
+	accessors for meta information about the image
+*********************************************************************/
+
+const char *floppy_format_description(floppy_image *floppy)
+{
+	return floppy->floppy_option->description;
+}
+
+
+
+/*********************************************************************
+	misc calls
+*********************************************************************/
+
+const char *floppy_error(floperr_t err)
+{
+	const char *error_messages[] =
+	{
+		"The operation completed successfully",
+		"Fatal internal error",
+		"This operation is unsupported",
+		"Out of memory",
+		"Seek error",
+		"Invalid image",
+		"Attempted to write to read only image",
+		"No space left on image",
+		"Parameter out of range",
+		"Required parameter not specified"
+	};
+
+	if ((err < 0) || (err >= sizeof(error_messages) / sizeof(error_messages[0])))
+		return NULL;
+	return error_messages[err];
+}
+
+
+

@@ -400,11 +400,11 @@ $(OBJ)/apple.a:   \
 	  $(OBJ)/mess/systems/lisa.o     \
 	  $(OBJ)/mess/machine/iwm.o	     \
 	  $(OBJ)/mess/machine/sonydriv.o \
-	  $(OBJ)/mess/machine/ap_disk2.o \
-	  $(OBJ)/mess/vidhrdw/apple2.o	 \
-	  $(OBJ)/mess/machine/apple2.o	 \
-	  $(OBJ)/mess/systems/apple2.o   \
-	  $(OBJ)/mess/formats/ap2_disk.o \
+	  $(OBJ)/mess/machine/ap_disk2.o	\
+	  $(OBJ)/mess/vidhrdw/apple2.o		\
+	  $(OBJ)/mess/machine/apple2.o		\
+	  $(OBJ)/mess/systems/apple2.o		\
+	  $(OBJ)/mess/formats/ap2_dsk.o		\
 	  $(OBJ)/mess/machine/ay3600.o	 \
 	  $(OBJ)/mess/sndhrdw/mac.o	     \
 	  $(OBJ)/mess/machine/sonydriv.o \
@@ -773,13 +773,13 @@ $(OBJ)/bandai.a:     \
 
 # MESS specific core $(OBJ)s
 COREOBJS += \
-	$(OBJ)/cheat.o  			   \
-	$(OBJ)/vidhrdw/tms9928a.o      \
-	$(OBJ)/mess/mess.o			   \
-	$(OBJ)/mess/image.o		       \
-	$(OBJ)/mess/system.o	       \
-	$(OBJ)/mess/device.o	       \
-	$(OBJ)/mess/crcfile.o	       \
+	$(OBJ)/cheat.o					\
+	$(OBJ)/vidhrdw/tms9928a.o		\
+	$(OBJ)/mess/mess.o				\
+	$(OBJ)/mess/image.o				\
+	$(OBJ)/mess/system.o			\
+	$(OBJ)/mess/device.o			\
+	$(OBJ)/mess/crcfile.o			\
 	$(OBJ)/mess/inputx.o		   \
 	$(OBJ)/mess/artworkx.o		   \
 	$(OBJ)/mess/mesintrf.o	       \
@@ -789,10 +789,14 @@ COREOBJS += \
 	$(OBJ)/mess/utils.o            \
 	$(OBJ)/mess/eventlst.o         \
 	$(OBJ)/mess/videomap.o         \
-	$(OBJ)/mess/formats.o          \
 	$(OBJ)/mess/mscommon.o         \
+	$(OBJ)/mess/pool.o             \
+	$(OBJ)/mess/opresolv.o			\
+	$(OBJ)/mess/formats/flopimg.o	\
+	$(OBJ)/mess/formats/basicdsk.o	\
+	$(OBJ)/mess/formats/pc_dsk.o	\
+	$(OBJ)/mess/devices/mflopimg.o	\
 	$(OBJ)/mess/devices/cartslot.o \
-	$(OBJ)/mess/devices/messfmts.o \
 	$(OBJ)/mess/devices/printer.o  \
 	$(OBJ)/mess/devices/cassette.o \
 	$(OBJ)/mess/devices/bitbngr.o  \
@@ -863,48 +867,56 @@ tools/imgtool$(EXE):	                   \
 	  $(PLATFORM_IMGTOOL_OBJS)	           \
 	  $(OBJ)/unzip.o	                   \
 	  $(OBJ)/harddisk.o	                   \
-	  $(OBJ)/md5.o	                   \
+	  $(OBJ)/md5.o					       \
 	  $(OBJ)/mess/crcfile.o	               \
 	  $(OBJ)/mess/utils.o	               \
-	  $(OBJ)/mess/formats.o                \
+	  $(OBJ)/mess/pool.o	               \
+	  $(OBJ)/mess/opresolv.o	           \
+	  $(OBJ)/mess/snprintf.o				\
+	  $(OBJ)/mess/formats/flopimg.o        \
+	  $(OBJ)/mess/formats/basicdsk.o       \
 	  $(OBJ)/mess/formats/coco_dsk.o       \
-	  $(OBJ)/mess/formats/fmsx_cas.o       \
-	  $(OBJ)/mess/formats/svi_cas.o        \
-	  $(OBJ)/mess/formats/cococas.o        \
-	  $(OBJ)/mess/formats/ti85_ser.o       \
 	  $(OBJ)/mess/tools/imgtool/stubs.o    \
 	  $(OBJ)/mess/tools/imgtool/main.o     \
-	  $(OBJ)/mess/tools/imgtool/imghd.o    \
-	  $(OBJ)/mess/tools/imgtool/imgtool.o  \
-	  $(OBJ)/mess/tools/imgtool/imgwave.o  \
-	  $(OBJ)/mess/tools/imgtool/imgtfmts.o \
-	  $(OBJ)/mess/tools/imgtool/imgtest.o  \
-	  $(OBJ)/mess/tools/imgtool/tstsuite.o \
+	  $(OBJ)/mess/tools/imgtool/stream.o   \
+	  $(OBJ)/mess/tools/imgtool/library.o  \
+	  $(OBJ)/mess/tools/imgtool/modules.o  \
+	  $(OBJ)/mess/tools/imgtool/iflopimg.o \
 	  $(OBJ)/mess/tools/imgtool/filter.o   \
 	  $(OBJ)/mess/tools/imgtool/filteoln.o \
 	  $(OBJ)/mess/tools/imgtool/filtbas.o  \
-	  $(OBJ)/mess/tools/imgtool/cococas.o  \
-	  $(OBJ)/mess/tools/imgtool/vmsx_tap.o \
-	  $(OBJ)/mess/tools/imgtool/vmsx_gm2.o \
-	  $(OBJ)/mess/tools/imgtool/fmsx_cas.o \
-	  $(OBJ)/mess/tools/imgtool/svi_cas.o  \
-	  $(OBJ)/mess/tools/imgtool/msx_dsk.o  \
-	  $(OBJ)/mess/tools/imgtool/xsa.o      \
+	  $(OBJ)/mess/tools/imgtool/imgtool.o  \
+	  $(OBJ)/mess/tools/imgtool/imgfile.o  \
+	  $(OBJ)/mess/tools/imgtool/imgterrs.o \
 	  $(OBJ)/mess/tools/imgtool/rsdos.o    \
-	  $(OBJ)/mess/tools/imgtool/stream.o   \
-	  $(OBJ)/mess/tools/imgtool/t64.o      \
-	  $(OBJ)/mess/tools/imgtool/lynx.o     \
-	  $(OBJ)/mess/tools/imgtool/crt.o      \
-	  $(OBJ)/mess/tools/imgtool/d64.o      \
-	  $(OBJ)/mess/tools/imgtool/fat.o      \
-	  $(OBJ)/mess/tools/imgtool/mac.o      \
-	  $(OBJ)/mess/tools/imgtool/rom16.o    \
-	  $(OBJ)/mess/tools/imgtool/nccard.o   \
-	  $(OBJ)/mess/tools/imgtool/ti85.o     \
-	  $(OBJ)/mess/tools/imgtool/ti99.o     \
-	  $(OBJ)/mess/tools/imgtool/ti990hd.o  \
-	  $(OBJ)/mess/tools/imgtool/concept.o  \
-	  $(OBJ)/mess/snprintf.o
+	  $(OBJ)/mess/tools/imgtool/imgtest.o  \
+#	  $(OBJ)/mess/tools/imgtool/tstsuite.o \
+#	  $(OBJ)/mess/formats/fmsx_cas.o       \
+#	  $(OBJ)/mess/formats/svi_cas.o        \
+#	  $(OBJ)/mess/formats/cococas.o        \
+#	  $(OBJ)/mess/formats/ti85_ser.o       \
+#	  $(OBJ)/mess/tools/imgtool/imghd.o    \
+#	  $(OBJ)/mess/tools/imgtool/imgfile.o  \
+#	  $(OBJ)/mess/tools/imgtool/imgwave.o  \
+#	  $(OBJ)/mess/tools/imgtool/cococas.o  \
+#	  $(OBJ)/mess/tools/imgtool/vmsx_tap.o \
+#	  $(OBJ)/mess/tools/imgtool/vmsx_gm2.o \
+#	  $(OBJ)/mess/tools/imgtool/fmsx_cas.o \
+#	  $(OBJ)/mess/tools/imgtool/svi_cas.o  \
+#	  $(OBJ)/mess/tools/imgtool/msx_dsk.o  \
+#	  $(OBJ)/mess/tools/imgtool/xsa.o      \
+#	  $(OBJ)/mess/tools/imgtool/t64.o      \
+#	  $(OBJ)/mess/tools/imgtool/lynx.o     \
+#	  $(OBJ)/mess/tools/imgtool/crt.o      \
+#	  $(OBJ)/mess/tools/imgtool/d64.o      \
+#	  $(OBJ)/mess/tools/imgtool/fat.o      \
+#	  $(OBJ)/mess/tools/imgtool/mac.o      \
+#	  $(OBJ)/mess/tools/imgtool/rom16.o    \
+#	  $(OBJ)/mess/tools/imgtool/nccard.o   \
+#	  $(OBJ)/mess/tools/imgtool/ti85.o     \
+#	  $(OBJ)/mess/tools/imgtool/ti99.o     \
+#	  $(OBJ)/mess/tools/imgtool/ti990hd.o  \
+#	  $(OBJ)/mess/tools/imgtool/concept.o  \
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ $(LIBS) $(IMGTOOL_LIBS) $(OUTOPT)
 

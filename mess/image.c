@@ -3,7 +3,7 @@
 #include "devices/flopdrv.h"
 #include "crcfile.h"
 #include "utils.h"
-#include "mscommon.h"
+#include "pool.h"
 #include "snprintf.h"
 
 /* ----------------------------------------------------------------------- */
