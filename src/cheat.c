@@ -345,10 +345,6 @@ is selected
 #include "machine/eeprom.h"
 #include <ctype.h>
 
-#ifdef MESS
-#include "image.h"
-#endif
-
 #define OSD_READKEY_KLUDGE	1
 
 /**** Macros *****************************************************************/

@@ -76,7 +76,9 @@ struct rc_option mess_opts[] = {
 	{ "quickload", "quik", rc_string, &dev_opts,					NULL, 0, 0, add_device,		"attach software to quickload device" },
 	{ "ramsize",   "ram",  rc_string, &dev_opts,					NULL, 0, 0, specify_ram,	"size of RAM (if supported by driver)" },
 	{ "threads",   "thr",  rc_int,    &win_task_count,				NULL, 0, 0, NULL,			"number of threads to use for parallel operations" },
+#if 0
 	{ "natural",   "nat",  rc_bool,   &win_use_natural_keyboard,	NULL, 0, 0, NULL,			"specifies whether to use a natural keyboard or not" },
+#endif
 	{ NULL, NULL, rc_end, NULL, NULL, 0, 0, NULL, NULL }
 };
 

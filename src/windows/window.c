@@ -52,7 +52,7 @@ extern UINT8 win_trying_to_quit;
 #ifndef MESS
 #define WINDOW_HAS_MENU			FALSE
 #else
-#define WINDOW_HAS_MENU			TRUE
+#define WINDOW_HAS_MENU			FALSE
 #endif
 
 // debugger window styles
@@ -441,9 +441,11 @@ int win_init_window(void)
 	sprintf(title, "MAME: %s [%s]", Machine->gamedrv->description, Machine->gamedrv->name);
 #else
 	sprintf(title, "MESS: %s [%s]", Machine->gamedrv->description, Machine->gamedrv->name);
+#if WINDOW_HAS_MENU
 	menu = win_create_menus();
 	if (!menu)
 		return 1;
+#endif
 #endif
 
 	// create the window, but don't show it yet

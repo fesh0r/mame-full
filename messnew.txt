@@ -15,7 +15,7 @@ System Driver Changes:
   [Nate Woods]
 
 - [COCO] Fixed a recent stupid bug in m6847 timing that had an effect on
-  certain timing (bug #249) [Nate Woods]
+  certain timing situations (bug #249) [Nate Woods]
 
 - [COCO3] Fixed a palette timing bug that affected mid-frame video rendering.
   (bug #253) [Nate Woods]
@@ -29,6 +29,9 @@ System Driver Changes:
   
 - [COCO1/2/3] Made sure that SAM (and GIME on the CoCo 3) registers are
   properly reset after a crash. [Nate Woods]
+
+- [DRAGON32/64] Made artifacting disabled by default, as this is how PAL systems
+  would normally be.  [Nate Woods]
 
 - [DRAGON64] Fixed a bug that prevented the system to run (the dragon64 driver
   was using the coco memory map) [Nate Woods]
