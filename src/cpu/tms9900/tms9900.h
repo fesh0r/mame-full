@@ -247,7 +247,7 @@ extern unsigned tms99000_dasm(char *buffer, unsigned pc);
 #endif
 */
 #ifdef MAME_DEBUG
-extern unsigned Dasm9900 (char *buffer, unsigned pc, int model_id);
+unsigned Dasm9900 (char *buffer, unsigned pc, int model_id, data16_t (*readop)(offs_t address), data16_t (*readop_arg)(offs_t address));
 #endif
 
 #endif
