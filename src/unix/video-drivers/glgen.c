@@ -53,7 +53,6 @@ static void WAvg (GLdouble perc, GLdouble x1, GLdouble y1, GLdouble z1,
 	   GLdouble x2, GLdouble y2, GLdouble z2,
 	   GLdouble * ax, GLdouble * ay, GLdouble * az);
 
-static GLint   gl_internal_format;
 static GLenum  gl_bitmap_format;
 static GLenum  gl_bitmap_type;
 static GLsizei text_width;
@@ -62,6 +61,7 @@ static int texnumx;
 static int texnumy;
 static int maxtexnumx;
 static int maxtexnumy;
+static int bitmap_dirty;
 
 /* The squares that are tiled to make up the game screen polygon */
 struct TexSquare
@@ -177,10 +177,9 @@ static int lastpan    = 0;
 static int panframe   = 0;
 
 /* Misc variables */
-static int gl_texture_init = 0;
+static int gl_texture_init;
+static int cab_loaded;
 static unsigned short *colorBlittedMemory = NULL;
-static int colorBlittedMemorySize;
-static int cab_loaded = 0;
 static unsigned char *empty_text = NULL;
 
 /* Vector variables */
@@ -324,9 +323,6 @@ int gl_open_display (int reopen)
   int bytes_per_pixel = (sysdep_display_params.depth + 7) / 8;
   static int firsttime = 1;
 
-  /* force init of textures on first update */  
-  gl_texture_init = 0;
-
   if (firsttime)
   {
     glVersion = disp__glGetString(GL_VERSION);
@@ -349,14 +345,28 @@ int gl_open_display (int reopen)
     fprintf(stderr, "\tversion %s\n",
           disp__gluGetString(GLU_VERSION));
 
-    cab_loaded = LoadCabinet (cabname);
-    if (cabview && !cab_loaded)
-    {
-      fprintf(stderr, "GLERROR: Unable to load cabinet %s\n", cabname);
-      cabview = 0;
-    }
+    firsttime = 0;
+  }
 
-    if (cab_loaded)
+  disp__glClearColor (0, 0, 0, 1);
+  RETURN_IF_GL_ERROR ();
+  disp__glClear (GL_COLOR_BUFFER_BIT);
+  RETURN_IF_GL_ERROR ();
+  disp__glFlush ();
+  RETURN_IF_GL_ERROR ();
+  disp__glDepthFunc (GL_LEQUAL);
+  RETURN_IF_GL_ERROR ();
+  disp__glBlendFunc (GL_SRC_ALPHA, GL_ONE);
+  RETURN_IF_GL_ERROR ();
+
+  if(!reopen)
+  {
+    if (gl_set_antialias (antialias))
+      return 1;
+    if (gl_set_beam(gl_beam))
+      return 1;
+
+    if ((cab_loaded = LoadCabinet (cabname)))
     {
       /* Calulate delta vectors for screen height and width */
       DeltaVec (vx_cscr_p1, vy_cscr_p1, vz_cscr_p1, vx_cscr_p2, vy_cscr_p2, vz_cscr_p2,
@@ -414,28 +424,24 @@ int gl_open_display (int reopen)
   #endif
 
     }
-    firsttime = 0;
+    else if (cabview)
+    {
+      fprintf(stderr, "GLERROR: Unable to load cabinet %s\n", cabname);
+      cabview = 0;
+    }
+  }
+  else if(colorBlittedMemory)
+  {
+    free(colorBlittedMemory);
+    colorBlittedMemory = NULL;
   }
 
-  disp__glClearColor (0, 0, 0, 1);
-  RETURN_IF_GL_ERROR ();
-  disp__glClear (GL_COLOR_BUFFER_BIT);
-  RETURN_IF_GL_ERROR ();
-  disp__glFlush ();
-  RETURN_IF_GL_ERROR ();
-  disp__glDepthFunc (GL_LEQUAL);
-  RETURN_IF_GL_ERROR ();
-  disp__glBlendFunc (GL_SRC_ALPHA, GL_ONE);
-  RETURN_IF_GL_ERROR ();
-
+  /* draw vectors? */
   if (sysdep_display_params.vec_src_bounds && !veclist)
   {
     veclist=disp__glGenLists(1);
     RETURN_IF_GL_ERROR ();
   }
-
-  /* no alpha .. important, because mame has no alpha set ! */
-  gl_internal_format=GL_RGB;
 
   /* fill the sysdep_display_properties struct & determine bitmap format */
   sysdep_display_properties.palette_info.fourcc_format = 0;
@@ -510,7 +516,7 @@ int gl_open_display (int reopen)
     while(!format_ok && text_width>=64 && text_height>=64)
     {
       disp__glTexImage2D (GL_PROXY_TEXTURE_2D, 0,
-                    gl_internal_format,
+                    GL_RGB,
                     text_width, text_height,
                     0, gl_bitmap_format, gl_bitmap_type, 0);
       CHECK_GL_ERROR ();
@@ -595,7 +601,7 @@ int gl_open_display (int reopen)
         RETURN_IF_GL_ERROR ();
 
         disp__glTexImage2D (GL_TEXTURE_2D, 0,
-                      gl_internal_format,
+                      GL_RGB,
                       text_width, text_height,
                       0, gl_bitmap_format, gl_bitmap_type, empty_text);
         RETURN_IF_GL_ERROR ();
@@ -616,26 +622,11 @@ int gl_open_display (int reopen)
       return 1;
   }
   
-  if(!reopen)
-  {
-    if (gl_set_antialias (antialias))
-
-      return 1;
-    if (gl_set_beam(gl_beam))
-      return 1;
-  }
-
   /* do we need a buffer to write the bitmap to after palette lookup? */
   if(sysdep_display_params.depth == 16)
   {
-    if (!colorBlittedMemory || (colorBlittedMemorySize <
-        (sysdep_display_params.width * sysdep_display_params.height *
-         bytes_per_pixel)))
-    {
-      colorBlittedMemorySize = sysdep_display_params.max_width *
-        sysdep_display_params.max_height * bytes_per_pixel;
-      colorBlittedMemory = malloc(colorBlittedMemorySize);
-    }
+    colorBlittedMemory = malloc(sysdep_display_params.max_width *
+      sysdep_display_params.max_height * bytes_per_pixel);
     if (!colorBlittedMemory)
     {
       fprintf(stderr, "GLERROR: couldn't allocate memory\n");
@@ -643,11 +634,6 @@ int gl_open_display (int reopen)
     }
     fprintf(stderr, "GLINFO: Using bit blit to map color indices !!\n");
   } else {
-    if(colorBlittedMemory!=NULL)
-    {
-      free(colorBlittedMemory);
-      colorBlittedMemory = NULL;
-    }
     fprintf(stderr, "GLINFO: Using true color mode (no color indices, but direct color)!!\n");
   }
 
@@ -656,6 +642,8 @@ int gl_open_display (int reopen)
 		sysdep_display_params.depth, 
 		sysdep_display_properties.palette_info.red_mask, sysdep_display_properties.palette_info.green_mask, 
 		sysdep_display_properties.palette_info.blue_mask);
+  gl_texture_init = 0;
+  bitmap_dirty    = 2;
   
   return gl_set_windowsize();
 }
@@ -680,6 +668,8 @@ void gl_close_display (void)
 {
   CHECK_GL_BEGINEND();
   CHECK_GL_ERROR();
+  
+  /* FIXME unload cabinet */
 
   if(colorBlittedMemory!=NULL)
   {
@@ -980,7 +970,6 @@ static void InitTextures (struct mame_bitmap *bitmap, struct rectangle *vis_area
         sysdep_display_params.vec_src_bounds->min_y) * 65536.0;
     }
   }
-
   gl_texture_init = 1;
 }
 
@@ -1396,14 +1385,11 @@ static void drawTextureDisplay (struct mame_bitmap *bitmap,
   struct TexSquare *square;
   int x = 0, y = 0;
   static const double z_pos = 0.9f;
-  int updateTexture = 1;
-  static int ui_was_dirty=0;
 
-  if(sysdep_display_params.vec_src_bounds && !(flags & SYSDEP_DISPLAY_UI_DIRTY)
-     && !ui_was_dirty)
-    updateTexture = 0;
+  if(!sysdep_display_params.vec_src_bounds || (flags & SYSDEP_DISPLAY_UI_DIRTY))
+    bitmap_dirty=2;
 
-  if (updateTexture && (sysdep_display_params.depth == 16))
+  if (bitmap_dirty && (sysdep_display_params.depth == 16))
   {
     	unsigned short *dest=colorBlittedMemory;
     	int y,x;
@@ -1451,12 +1437,13 @@ static void drawTextureDisplay (struct mame_bitmap *bitmap,
       CHECK_GL_ERROR ();
 
       /* This is the quickest way I know of to update the texture */
-      if (updateTexture)
+      if (bitmap_dirty)
       {
 	disp__glTexSubImage2D (GL_TEXTURE_2D, 0, 0, 0,
 		width, height,
 		gl_bitmap_format, gl_bitmap_type, square->texture);
         CHECK_GL_ERROR ();
+        bitmap_dirty--;
       }
 
       if (cabview)
@@ -1541,8 +1528,6 @@ static void drawTextureDisplay (struct mame_bitmap *bitmap,
     /* restore normal antialias settings */
     gl_set_antialias (antialias);
   }
-
-  ui_was_dirty = flags & SYSDEP_DISPLAY_UI_DIRTY;
 }
 
 /* Draw a frame in Cabinet mode */

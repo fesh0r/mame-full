@@ -307,8 +307,8 @@ int InitVScreen(int reopen)
   }
   sysdep_display_properties.vector_renderer = fxvec_renderer;
   
-  /* force an update of the bitmap for the first frame */
-  bitmap_dirty = 1;
+  /* force an update of the bitmap for the first 2 frames */
+  bitmap_dirty = 2;
 
   /* init the textures */   
   texinfo.smallLod=texinfo.largeLod=GR_LOD_256;
