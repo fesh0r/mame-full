@@ -25,6 +25,9 @@ System Driver Changes:
   Implemented extra VDP ports in ti99 mode.  Implemented third mouse button.
   [Raphael Nabet]
 
+- [LISA] Implemented some missing MMU feature.  The Lisa OS still won't boot,
+  though. [Raphael Nabet]
+
 - [PC] Added support for natural keyboard handling.  Also fixed a bug in hard
   disk handling (bug #403). [Nate Woods]
 
@@ -41,7 +44,7 @@ System Driver Changes:
 - [TI99, GENEVE] Added hfdc HD support.  Changed floppy disk image format
   from the previous MESS-specific format to the more universal v9t9 format.
   This does make any difference for single-sided images, but you will need to
-  convert double-sided image. [Raphael Nabet]
+  convert existing double-sided image to the new format. [Raphael Nabet]
 
 User Interface Changes:
 -----------------------
@@ -52,7 +55,9 @@ User Interface Changes:
 Imgtool Changes:
 ----------------
 - Renamed the ti99 module to ti99_old, since the format it handles has been
-  obsoleted by changes in the ti99 driver.  [Raphael Nabet]
+  obsoleted by changes in the ti99 driver. [Raphael Nabet]
+
+- Added support for Corvus Concept disk images. [Raphael Nabet]
 
 Source Changes:
 ---------------
