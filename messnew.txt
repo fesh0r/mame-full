@@ -7,7 +7,7 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
-(none)
+- [SNES] Various mode 7 fixes. [Anthony Kruize]
 
 Source Changes:
 ---------------
