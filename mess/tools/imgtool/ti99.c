@@ -278,8 +278,8 @@ static int find_fdr(ti99_image *image, char fname[10], ti99_fdr *fdr, int *catal
 
 
 	i = 0;
-	if (image->catalog[0].fdr_secnum == 0)
-		i = 1;		/* skip in case it is a non-listable catalog */
+	if ((image->catalog[0].fdr_secnum == 0) && (image->catalog[1].fdr_secnum != 0))
+		i = 1;	/* skip empty entry 0 (it must be a non-listable catalog) */
 
 	for (; (i<128) && ((fdr_secnum = image->catalog[i].fdr_secnum) != 0); i++)
 	{
@@ -507,8 +507,8 @@ static int new_file(ti99_image *image, char fname[10], int *out_fdr_secnum/*, ti
 
 	/* find insertion point in catalog */
 	i = 0;
-	if (image->catalog[0].fdr_secnum == 0)
-		i = 1;		/* skip in case it is a non-listable catalog */
+	if ((image->catalog[0].fdr_secnum == 0) && (image->catalog[1].fdr_secnum != 0))
+		i = 1;	/* skip empty entry 0 (it must be a non-listable catalog) */
 
 	for (; (i<128) && ((fdr_secnum = image->catalog[i].fdr_secnum) != 0) && ((reply = memcmp(image->catalog[i].fname, fname, 10)) < 0); i++)
 		;
@@ -527,7 +527,7 @@ static int new_file(ti99_image *image, char fname[10], int *out_fdr_secnum/*, ti
 			return reply;
 
 		/* look for first free entry in catalog */
-		for (i=catalog_index; (fdr_secnum = image->catalog[i].fdr_secnum) != 0; i++)
+		for (i=catalog_index; image->catalog[i].fdr_secnum != 0; i++)
 			;
 
 		if (i == 128)
@@ -546,6 +546,24 @@ static int new_file(ti99_image *image, char fname[10], int *out_fdr_secnum/*, ti
 	}
 
 	return 0;
+}
+
+/*
+	Compare two (possibly empty) catalog entry for qsort
+*/
+static int qsort_catalog_compare(const void *p1, const void *p2)
+{
+	const catalog_entry *entry1 = p1;
+	const catalog_entry *entry2 = p2;
+
+	if ((entry1->fdr_secnum == 0) && (entry2->fdr_secnum == 0))
+		return 0;
+	else if (entry1->fdr_secnum == 0)
+		return +1;
+	else if (entry2->fdr_secnum == 0)
+		return -1;
+	else
+		return memcmp(entry1->fname, entry2->fname, 10);
 }
 
 /*
@@ -622,17 +640,24 @@ static int ti99_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **out
 
 	/* check catalog */
 	i = 0;
-	if (image->catalog[0].fdr_secnum == 0)
-		i = 1;	/* skip in case it is a non-listable catalog */
+	if ((image->catalog[0].fdr_secnum == 0) && (image->catalog[1].fdr_secnum != 0))
+		i = 1;	/* skip empty entry 0 (it must be a non-listable catalog) */
 
 	for (; i<127; i++)
 	{
 		if (((! image->catalog[i].fdr_secnum) && image->catalog[i+1].fdr_secnum)
 			|| ((image->catalog[i].fdr_secnum && image->catalog[i+1].fdr_secnum) && (memcmp(image->catalog[i].fname, image->catalog[i+1].fname, 10) >= 0)))
 		{
-			free(image);
-			*outimg = NULL;
-			return IMGTOOLERR_CORRUPTIMAGE;
+			/* we should repair the catalog instead */
+			#if 0
+				free(image);
+				*outimg = NULL;
+				return IMGTOOLERR_CORRUPTIMAGE;
+			#else
+				qsort(image->catalog, sizeof(image->catalog)/sizeof(image->catalog[0]),
+						sizeof(image->catalog[0]), qsort_catalog_compare);
+				break;
+			#endif
 		}
 	}
 
@@ -685,8 +710,8 @@ static int ti99_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
 	iter->image = image;
 	iter->index = 0;
 
-	if (image->catalog[0].fdr_secnum == 0)
-		iter->index = 1;	/* skip in case it is a non-listable catalog */
+	if ((image->catalog[0].fdr_secnum == 0) && (image->catalog[1].fdr_secnum != 0))
+		iter->index = 1;	/* skip empty entry 0 (it must be a non-listable catalog) */
 
 	return 0;
 }
