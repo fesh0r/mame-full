@@ -1388,11 +1388,11 @@ INTERRUPT_GEN(snes_scanline_interrupt)
 	/* Let's draw the current line */
 	if( snes_ppu.beam.current_vert < snes_ppu.beam.last_visible_line )
 	{
+		snes_refresh_scanline( snes_ppu.beam.current_vert );
+
 		/* Do HDMA */
 		if( snes_ram[HDMAEN] )
 			snes_hdma();
-
-		snes_refresh_scanline( snes_ppu.beam.current_vert );
 	}
 
 	/* Vertical IRQ timer */
