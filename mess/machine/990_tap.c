@@ -100,7 +100,11 @@ static tpc_t tpc;
 	2 bytes: record len - little-endian
 	2 bytes: always 0s (length MSBs?)
 
-	4 0s: EOF mark?
+	4 0s: erased portion on tape???
+
+	EOF mark looks like a 4-byte record containing "EOD " (including the space character).
+	This is weird, and I am wondering whether this record was recorded with special sync
+	or parity encoding to avoid confusion with a data record.
 */
 
 
@@ -263,7 +267,6 @@ static void read_binary_forward(void)
 	char_count = tpc.w[4];
 	read_offset = tpc.w[3];
 
-retry:
 	bytes_read = osd_fread(tpc.t[tap_sel].fd, buffer, 4);
 	if (bytes_read != 4)
 	{
@@ -297,7 +300,106 @@ retry:
 		goto update_registers;
 	}
 
-#if 1
+	/*logerror("read binary forward: rec lenght %d, requested %d\n", reclen, char_count);*/
+
+	/* skip blanks as needed */
+	while (reclen == 0)
+	{
+		bytes_read = osd_fread(tpc.t[tap_sel].fd, buffer, 4);
+		if (bytes_read != 4)
+		{
+			if (bytes_read == 0)
+			{	/* legitimate EOF */
+				tpc.w[0] |= w0_EOT;	/* or should it be w0_command_timeout? */
+				tpc.w[7] |= w7_idle | w7_error | w7_tape_error;
+				update_interrupt();
+				goto update_registers;
+			}
+			else
+			{	/* illegitimate EOF */
+				/* No idea what to report... */
+				/* eject tape to avoid catastrophes */
+				device_filename_change(IO_CASSETTE, tap_sel, NULL);
+				tpc.w[0] |= w0_offline;
+				tpc.w[7] |= w7_idle | w7_error | w7_hard_error;
+				update_interrupt();
+				goto update_registers;
+			}
+		}
+		reclen = (((int) buffer[1]) << 8) | buffer[0];
+		if (buffer[2] || buffer[3])
+		{	/* no idea what these bytes mean */
+			logerror("Tape format looks gooofy\n");
+			/* eject tape to avoid catastrophes */
+			device_filename_change(IO_CASSETTE, tap_sel, NULL);
+			tpc.w[0] |= w0_offline;
+			tpc.w[7] |= w7_idle | w7_error | w7_hard_error;
+			update_interrupt();
+			goto update_registers;
+		}
+	}
+
+	/* test for EOF mark */
+	if (reclen == 4)
+	{	/* read contents ("EOD " for EOF) */
+		if (osd_fread(tpc.t[tap_sel].fd, buffer, 4) != 4)
+		{	/* eject tape */
+			device_filename_change(IO_CASSETTE, tap_sel, NULL);
+			tpc.w[0] |= w0_offline;
+			tpc.w[7] |= w7_idle | w7_error | w7_hard_error;
+			update_interrupt();
+			goto update_registers;
+		}
+		if (memcmp(buffer, "EOD ", 4))
+		{	/* huh, this does not match.  Just rewind to start of record data, so
+			that we can resume normal operation. */
+			if (osd_fseek(tpc.t[tap_sel].fd, -4, SEEK_CUR))
+			{	/* eject tape */
+				device_filename_change(IO_CASSETTE, tap_sel, NULL);
+				tpc.w[0] |= w0_offline;
+				tpc.w[7] |= w7_idle | w7_error | w7_hard_error;
+				update_interrupt();
+				goto update_registers;
+			}
+		}
+		else
+		{
+			if (osd_fread(tpc.t[tap_sel].fd, buffer, 4) != 4)
+			{	/* eject tape */
+				device_filename_change(IO_CASSETTE, tap_sel, NULL);
+				tpc.w[0] |= w0_offline;
+				tpc.w[7] |= w7_idle | w7_error | w7_hard_error;
+				update_interrupt();
+				goto update_registers;
+			}
+
+			if (reclen != ((((int) buffer[1]) << 8) | buffer[0]))
+			{	/* eject tape */
+				device_filename_change(IO_CASSETTE, tap_sel, NULL);
+				tpc.w[0] |= w0_offline;
+				tpc.w[7] |= w7_idle | w7_error | w7_hard_error;
+				update_interrupt();
+				goto update_registers;
+			}
+			if (buffer[2] || buffer[3])
+			{	/* no idea what these bytes mean */
+				logerror("Tape format looks gooofy\n");
+				/* eject tape to avoid catastrophes */
+				device_filename_change(IO_CASSETTE, tap_sel, NULL);
+				tpc.w[0] |= w0_offline;
+				tpc.w[7] |= w7_idle | w7_error | w7_hard_error;
+				update_interrupt();
+				goto update_registers;
+			}
+
+			tpc.w[0] |= w0_EOF;
+			tpc.w[7] |= w7_idle | w7_error | w7_tape_error;
+			update_interrupt();
+			goto update_registers;
+		}
+	}
+
+#if 0
 	if (reclen > 0x8000)
 	{	/* eject tape (correct?) */
 		device_filename_change(IO_CASSETTE, tap_sel, NULL);
@@ -307,20 +409,6 @@ retry:
 		goto update_registers;
 	}
 #endif
-
-	logerror("read binary forward: rec lenght %d, requested %d\n", reclen, char_count);
-
-	if (reclen == 0)
-	{	/* EOF mark (mere guess) */
-#if 0
-		tpc.w[0] |= w0_EOF;
-		tpc.w[7] |= w7_idle | w7_error | w7_tape_error;
-		update_interrupt();
-		goto update_registers;
-#else
-		goto retry;
-#endif
-	}
 
 	rec_count = reclen;
 
@@ -448,6 +536,283 @@ static void record_skip_forward(void)
 
 }
 
+static void record_skip_reverse(void)
+{
+	UINT8 buffer[4];
+	int reclen;
+
+	int record_count;
+
+	int bytes_read;
+
+	int tap_sel = cur_tape_unit();
+
+	if (tap_sel == -1)
+	{
+		/* No idea what to report... */
+		tpc.w[7] |= w7_idle | w7_error | w7_hard_error;
+		update_interrupt();
+		return;
+	}
+	else if (! tpc.t[tap_sel].fd)
+	{	/* offline */
+		tpc.w[0] |= w0_offline;
+		tpc.w[7] |= w7_idle | w7_error | w7_tape_error;
+		update_interrupt();
+		return;
+	}
+#if 0
+	else if (0)
+	{	/* rewind in progress */
+		tpc.w[0] |= 0x80 >> tap_sel;
+		tpc.w[7] |= w7_idle | w7_error | w7_tape_error;
+		update_interrupt();
+		return;
+	}
+#endif
+
+	record_count = tpc.w[4];
+
+	while (record_count > 0)
+	{
+		if (osd_ftell(tpc.t[tap_sel].fd) == 0)
+		{	/* bot */
+			tpc.t[tap_sel].bot = 1;
+			tpc.w[0] |= w0_BOT;
+			tpc.w[7] |= w7_idle | w7_error | w7_hard_error;
+			update_interrupt();
+			goto update_registers;
+		}
+		if (osd_fseek(tpc.t[tap_sel].fd, -4, SEEK_CUR))
+		{	/* eject tape */
+			device_filename_change(IO_CASSETTE, tap_sel, NULL);
+			tpc.w[0] |= w0_offline;
+			tpc.w[7] |= w7_idle | w7_error | w7_hard_error;
+			update_interrupt();
+			goto update_registers;
+		}
+		bytes_read = osd_fread(tpc.t[tap_sel].fd, buffer, 4);
+		if (bytes_read != 4)
+		{
+			/* illegitimate EOF */
+			/* No idea what to report... */
+			/* eject tape to avoid catastrophes */
+			device_filename_change(IO_CASSETTE, tap_sel, NULL);
+			tpc.w[0] |= w0_offline;
+			tpc.w[7] |= w7_idle | w7_error | w7_hard_error;
+			update_interrupt();
+			goto update_registers;
+		}
+		reclen = (((int) buffer[1]) << 8) | buffer[0];
+		if (buffer[2] || buffer[3])
+		{	/* no idea what these bytes mean */
+			logerror("Tape format looks gooofy\n");
+			/* eject tape to avoid catastrophes */
+			device_filename_change(IO_CASSETTE, tap_sel, NULL);
+			tpc.w[0] |= w0_offline;
+			tpc.w[7] |= w7_idle | w7_error | w7_hard_error;
+			update_interrupt();
+			goto update_registers;
+		}
+
+		/* skip blanks as needed */
+		while (reclen == 0)
+		{
+			if (osd_ftell(tpc.t[tap_sel].fd) == 4)
+			{	/* bot */
+				if (osd_fseek(tpc.t[tap_sel].fd, -4, SEEK_CUR))
+				{	/* eject tape */
+					device_filename_change(IO_CASSETTE, tap_sel, NULL);
+					tpc.w[0] |= w0_offline;
+					tpc.w[7] |= w7_idle | w7_error | w7_hard_error;
+					update_interrupt();
+					goto update_registers;
+				}
+				tpc.t[tap_sel].bot = 1;
+				tpc.w[0] |= w0_BOT;
+				tpc.w[7] |= w7_idle | w7_error | w7_hard_error;
+				update_interrupt();
+				goto update_registers;
+			}
+			if (osd_fseek(tpc.t[tap_sel].fd, -8, SEEK_CUR))
+			{	/* eject tape */
+				device_filename_change(IO_CASSETTE, tap_sel, NULL);
+				tpc.w[0] |= w0_offline;
+				tpc.w[7] |= w7_idle | w7_error | w7_hard_error;
+				update_interrupt();
+				goto update_registers;
+			}
+			bytes_read = osd_fread(tpc.t[tap_sel].fd, buffer, 4);
+			if (bytes_read != 4)
+			{
+				if (bytes_read == 0)
+				{	/* legitimate EOF */
+					tpc.w[0] |= w0_EOT;	/* or should it be w0_command_timeout? */
+					tpc.w[7] |= w7_idle | w7_error | w7_tape_error;
+					update_interrupt();
+					goto update_registers;
+				}
+				else
+				{	/* illegitimate EOF */
+					/* No idea what to report... */
+					/* eject tape to avoid catastrophes */
+					device_filename_change(IO_CASSETTE, tap_sel, NULL);
+					tpc.w[0] |= w0_offline;
+					tpc.w[7] |= w7_idle | w7_error | w7_hard_error;
+					update_interrupt();
+					goto update_registers;
+				}
+			}
+			reclen = (((int) buffer[1]) << 8) | buffer[0];
+			if (buffer[2] || buffer[3])
+			{	/* no idea what these bytes mean */
+				logerror("Tape format looks gooofy\n");
+				/* eject tape to avoid catastrophes */
+				device_filename_change(IO_CASSETTE, tap_sel, NULL);
+				tpc.w[0] |= w0_offline;
+				tpc.w[7] |= w7_idle | w7_error | w7_hard_error;
+				update_interrupt();
+				goto update_registers;
+			}
+		}
+
+#if 0
+		if (reclen > 0x8000)
+		{	/* eject tape (correct?) */
+			device_filename_change(IO_CASSETTE, tap_sel, NULL);
+			tpc.w[0] |= w0_offline;
+			tpc.w[7] |= w7_idle | w7_error | w7_hard_error;
+			update_interrupt();
+			goto update_registers;
+		}
+#endif
+
+		/* test for EOF mark */
+		if (reclen == 4)
+		{
+			if (osd_fseek(tpc.t[tap_sel].fd, -12, SEEK_CUR))
+			{	/* eject tape */
+				device_filename_change(IO_CASSETTE, tap_sel, NULL);
+				tpc.w[0] |= w0_offline;
+				tpc.w[7] |= w7_idle | w7_error | w7_hard_error;
+				update_interrupt();
+				goto update_registers;
+			}
+			/* read record length */
+			if (osd_fread(tpc.t[tap_sel].fd, buffer, 4) != 4)
+			{	/* eject tape */
+				device_filename_change(IO_CASSETTE, tap_sel, NULL);
+				tpc.w[0] |= w0_offline;
+				tpc.w[7] |= w7_idle | w7_error | w7_hard_error;
+				update_interrupt();
+				goto update_registers;
+			}
+			if (reclen != ((((int) buffer[1]) << 8) | buffer[0]))
+			{	/* eject tape */
+				device_filename_change(IO_CASSETTE, tap_sel, NULL);
+				tpc.w[0] |= w0_offline;
+				tpc.w[7] |= w7_idle | w7_error | w7_hard_error;
+				update_interrupt();
+				goto update_registers;
+			}
+			if (buffer[2] || buffer[3])
+			{	/* no idea what these bytes mean */
+				logerror("Tape format looks gooofy\n");
+				/* eject tape to avoid catastrophes */
+				device_filename_change(IO_CASSETTE, tap_sel, NULL);
+				tpc.w[0] |= w0_offline;
+				tpc.w[7] |= w7_idle | w7_error | w7_hard_error;
+				update_interrupt();
+				goto update_registers;
+			}
+			/* read contents ("EOD ") */
+			if (osd_fread(tpc.t[tap_sel].fd, buffer, 4) != 4)
+			{	/* eject tape */
+				device_filename_change(IO_CASSETTE, tap_sel, NULL);
+				tpc.w[0] |= w0_offline;
+				tpc.w[7] |= w7_idle | w7_error | w7_hard_error;
+				update_interrupt();
+				goto update_registers;
+			}
+			if (osd_fseek(tpc.t[tap_sel].fd, -8, SEEK_CUR))
+			{	/* eject tape */
+				device_filename_change(IO_CASSETTE, tap_sel, NULL);
+				tpc.w[0] |= w0_offline;
+				tpc.w[7] |= w7_idle | w7_error | w7_hard_error;
+				update_interrupt();
+				goto update_registers;
+			}
+			if (memcmp(buffer, "EOD ", 4))
+			{	/* huh, this does not match */
+				/* must be a normal record, after all */
+				record_count--;
+				continue;
+			}
+			else
+			{	/* this is an EOF */
+				record_count--;
+				tpc.w[0] |= w0_EOF;
+				tpc.w[7] |= w7_idle | w7_error | w7_tape_error;
+				update_interrupt();
+				goto update_registers;
+			}
+		}
+
+		if (osd_fseek(tpc.t[tap_sel].fd, -reclen-8, SEEK_CUR))
+		{	/* eject tape */
+			device_filename_change(IO_CASSETTE, tap_sel, NULL);
+			tpc.w[0] |= w0_offline;
+			tpc.w[7] |= w7_idle | w7_error | w7_hard_error;
+			update_interrupt();
+			goto update_registers;
+		}
+
+		if (osd_fread(tpc.t[tap_sel].fd, buffer, 4) != 4)
+		{	/* eject tape */
+			device_filename_change(IO_CASSETTE, tap_sel, NULL);
+			tpc.w[0] |= w0_offline;
+			tpc.w[7] |= w7_idle | w7_error | w7_hard_error;
+			update_interrupt();
+			goto update_registers;
+		}
+		if (reclen != ((((int) buffer[1]) << 8) | buffer[0]))
+		{	/* eject tape */
+			device_filename_change(IO_CASSETTE, tap_sel, NULL);
+			tpc.w[0] |= w0_offline;
+			tpc.w[7] |= w7_idle | w7_error | w7_hard_error;
+			update_interrupt();
+			goto update_registers;
+		}
+		if (buffer[2] || buffer[3])
+		{	/* no idea what these bytes mean */
+			logerror("Tape format looks gooofy\n");
+			/* eject tape to avoid catastrophes */
+			device_filename_change(IO_CASSETTE, tap_sel, NULL);
+			tpc.w[0] |= w0_offline;
+			tpc.w[7] |= w7_idle | w7_error | w7_hard_error;
+			update_interrupt();
+			goto update_registers;
+		}
+
+		if (osd_fseek(tpc.t[tap_sel].fd, -4, SEEK_CUR))
+		{	/* eject tape */
+			device_filename_change(IO_CASSETTE, tap_sel, NULL);
+			tpc.w[0] |= w0_offline;
+			tpc.w[7] |= w7_idle | w7_error | w7_hard_error;
+			update_interrupt();
+			goto update_registers;
+		}
+
+		record_count--;
+	}
+
+	tpc.w[7] |= w7_idle | w7_complete;
+	update_interrupt();
+
+update_registers:
+	tpc.w[4] = record_count;
+}
+
 /*
 	Handle the read transport status command: return the current tape status.
 */
@@ -520,11 +885,8 @@ static void execute_command(void)
 		update_interrupt();
 		break;
 	case 0b0011:
-		/* record skip reverse - not emulated */
-		logerror("record skip reverse\n");
-		/* ... */
-		tpc.w[7] |= w7_idle | w7_error | w7_hard_error;
-		update_interrupt();
+		/* record skip reverse - not fully tested */
+		record_skip_reverse();
 		break;
 	case 0b0100:
 		/* read binary forward */
@@ -606,8 +968,8 @@ WRITE16_HANDLER(ti990_tpc_w)
 		{
 			UINT16 old_data = tpc.w[offset];
 
-			/* Only write writable bits */
-			tpc.w[offset] = (tpc.w[offset] & ~w_mask[offset]) | (data & w_mask[offset]);
+			/* Only write writable bits AND honor byte accesses (ha!) */
+			tpc.w[offset] = (tpc.w[offset] & ((~w_mask[offset]) | mem_mask)) | (data & w_mask[offset] & ~mem_mask);
 
 			if ((offset == 0) || (offset == 7))
 				update_interrupt();
