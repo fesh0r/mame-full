@@ -360,7 +360,7 @@ endif
 # Inlining
 ###########################################################################
 
-# This can very noticably increase xmame's performance, so enabling this 
+# This can very noticeably increase xmame's performance, so enabling this 
 # is encouraged.  It works fine with GCC and probably with most other 
 # compilers.
 IL	= '-DINLINE=static __inline__'
@@ -732,6 +732,14 @@ X11_JOYNAME = "Joystick"
 
 # The name of your sdl-config executable
 SDL_CONFIG	= sdl-config
+
+
+##############################################################################
+# 3Dfx options (only needed when xfx or svgafx is the display method)
+##############################################################################
+
+# Uncomment if you want to build against GLIDE2x instead of GLIDE3.
+# GLIDE2 = 1
 
 
 ##############################################################################
