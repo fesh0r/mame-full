@@ -105,10 +105,8 @@ int LoadCabinet (const char *fname);
 
 /* start sequence */
 void gl_bootstrap_resources();
-int  sysdep_display_16bpp_capable (void);
 int  InitVScreen (int vw, int vh);
 void gl_reset_resources();
-int  sysdep_display_alloc_palette (int writable_colors);
 void InitTextures (struct mame_bitmap *bitmap);
 
 /* quit sequence */

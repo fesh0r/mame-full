@@ -47,6 +47,13 @@
 #include "osd_cpu.h"
 #include "effect.h"
 
+static char *_6tap2x_buf0 = NULL;
+static char *_6tap2x_buf1 = NULL;
+static char *_6tap2x_buf2 = NULL;
+static char *_6tap2x_buf3 = NULL;
+static char *_6tap2x_buf4 = NULL;
+static char *_6tap2x_buf5 = NULL;
+
 /* divide R, G, and B to darken pixels */
 #define SHADE16_HALF(P)   (((P)>>1) & 0x7bef)
 #define SHADE16_FOURTH(P) (((P)>>2) & 0x39e7)
@@ -192,8 +199,8 @@ void effect_init2(int src_depth, int dst_depth, int dst_width)
   }
 
   free(effect_dbbuf);
-  effect_dbbuf = malloc(dst_width*normal_heightscale*rddepth/8);
-  memset(effect_dbbuf, dst_width*normal_heightscale*rddepth/8, 0);
+  effect_dbbuf = malloc(visual_width*normal_widthscale*normal_heightscale*rddepth/8);
+  memset(effect_dbbuf, visual_width*normal_widthscale*normal_heightscale*rddepth/8, 0);
 
   if (effect) {
     fprintf(stderr, "Initializing video effect %d: bitmap depth = %d, display depth = %d\n", effect, src_depth, rddepth);
@@ -326,36 +333,48 @@ void effect_init2(int src_depth, int dst_depth, int dst_width)
       break;
     }
 
+    /* add safety if +- 16 pixels, since some effects assume that this
+       is present and otherwise segfault */
+    if (rotate_dbbuf0)
+    {
+       rotate_dbbuf0 -= 16;
+       free(rotate_dbbuf0);
+    }
+    rotate_dbbuf0 = calloc(visual_width*video_depth/8 + 32, sizeof(char));
+    rotate_dbbuf0 += 16;
+
     if ((effect == EFFECT_SCALE2X) ||
         (effect == EFFECT_HQ2X)    ||
         (effect == EFFECT_LQ2X)) {
-      free(rotate_dbbuf0);
-      free(rotate_dbbuf1);
-      free(rotate_dbbuf2);
-      rotate_dbbuf0 = calloc(visual_width*video_depth/8, sizeof(char));
-      rotate_dbbuf1 = calloc(visual_width*video_depth/8, sizeof(char));
-      rotate_dbbuf2 = calloc(visual_width*video_depth/8, sizeof(char));
-    } else {
-      free(rotate_dbbuf);
-      rotate_dbbuf = calloc(visual_width*video_depth/8, sizeof(char));
+      if (rotate_dbbuf1)
+      {
+         rotate_dbbuf1 -= 16;
+         rotate_dbbuf2 -= 16;
+         free(rotate_dbbuf1);
+         free(rotate_dbbuf2);
+      }
+      rotate_dbbuf1 = calloc(visual_width*video_depth/8 + 32, sizeof(char));
+      rotate_dbbuf2 = calloc(visual_width*video_depth/8 + 32, sizeof(char));
+      rotate_dbbuf1 += 16;
+      rotate_dbbuf2 += 16;
     }
   }
 
   /* I need these buffers regardless of whether the display is rotated or not */
   if (effect == EFFECT_6TAP2X)
     {
-    free(rotate_dbbuf0);
-    free(rotate_dbbuf1);
-    free(rotate_dbbuf2);
-    free(rotate_dbbuf3);
-    free(rotate_dbbuf4);
-    free(rotate_dbbuf5);
-    rotate_dbbuf0 = calloc(visual_width*8, sizeof(char));
-    rotate_dbbuf1 = calloc(visual_width*8, sizeof(char));
-    rotate_dbbuf2 = calloc(visual_width*8, sizeof(char));
-    rotate_dbbuf3 = calloc(visual_width*8, sizeof(char));
-    rotate_dbbuf4 = calloc(visual_width*8, sizeof(char));
-    rotate_dbbuf5 = calloc(visual_width*8, sizeof(char));
+    free(_6tap2x_buf0);
+    free(_6tap2x_buf1);
+    free(_6tap2x_buf2);
+    free(_6tap2x_buf3);
+    free(_6tap2x_buf4);
+    free(_6tap2x_buf5);
+    _6tap2x_buf0 = calloc(visual_width*8, sizeof(char));
+    _6tap2x_buf1 = calloc(visual_width*8, sizeof(char));
+    _6tap2x_buf2 = calloc(visual_width*8, sizeof(char));
+    _6tap2x_buf3 = calloc(visual_width*8, sizeof(char));
+    _6tap2x_buf4 = calloc(visual_width*8, sizeof(char));
+    _6tap2x_buf5 = calloc(visual_width*8, sizeof(char));
     }
 }
 
@@ -394,7 +413,7 @@ void effect_scale2x_16_16
   UINT16 *u16src1 = (UINT16 *)src1;
   UINT16 *u16src2 = (UINT16 *)src2;
   UINT32 *u32lookup = (UINT32 *)lookup;
-
+  
   while (count) {
 
     if (u16src1[-1] == u16src0[0] && u16src2[0] != u16src0[0] && u16src1[1] != u16src0[0])
@@ -727,12 +746,12 @@ void effect_scale2x_32_32_direct
 
 void effect_6tap_clear(unsigned count)
 {
-  memset(rotate_dbbuf0, 0, count << 3);
-  memset(rotate_dbbuf1, 0, count << 3);
-  memset(rotate_dbbuf2, 0, count << 3);
-  memset(rotate_dbbuf3, 0, count << 3);
-  memset(rotate_dbbuf4, 0, count << 3);
-  memset(rotate_dbbuf5, 0, count << 3);
+  memset(_6tap2x_buf0, 0, count << 3);
+  memset(_6tap2x_buf1, 0, count << 3);
+  memset(_6tap2x_buf2, 0, count << 3);
+  memset(_6tap2x_buf3, 0, count << 3);
+  memset(_6tap2x_buf4, 0, count << 3);
+  memset(_6tap2x_buf5, 0, count << 3);
 }
 
 #ifndef EFFECT_MMX_ASM
@@ -747,23 +766,23 @@ void effect_6tap_addline_16_32(const void *src0, unsigned count, const void *loo
   char *tmp;
 
   /* first, move the existing lines up by one */
-  tmp = rotate_dbbuf0;
-  rotate_dbbuf0 = rotate_dbbuf1;
-  rotate_dbbuf1 = rotate_dbbuf2;
-  rotate_dbbuf2 = rotate_dbbuf3;
-  rotate_dbbuf3 = rotate_dbbuf4;
-  rotate_dbbuf4 = rotate_dbbuf5;
-  rotate_dbbuf5 = tmp;
+  tmp = _6tap2x_buf0;
+  _6tap2x_buf0 = _6tap2x_buf1;
+  _6tap2x_buf1 = _6tap2x_buf2;
+  _6tap2x_buf2 = _6tap2x_buf3;
+  _6tap2x_buf3 = _6tap2x_buf4;
+  _6tap2x_buf4 = _6tap2x_buf5;
+  _6tap2x_buf5 = tmp;
 
   /* if there's no new line, clear the last one and return */
   if (!src0)
     {
-	memset(rotate_dbbuf5, 0, count << 3);
+	memset(_6tap2x_buf5, 0, count << 3);
 	return;
     }
 
   /* we have a new line, so first do the palette lookup and zoom by 2 */
-  u32dest = (UINT32 *) rotate_dbbuf5;
+  u32dest = (UINT32 *) _6tap2x_buf5;
   for (i = 0; i < count; i++)
     {
     *u32dest++ = u32lookup[*u16src++];
@@ -774,12 +793,12 @@ void effect_6tap_addline_16_32(const void *src0, unsigned count, const void *loo
   u32dest[-1] = u32dest[-2];
   u32dest[-3] = u32dest[-4];
   u32dest[-5] = u32dest[-6];
-  u32dest = (UINT32 *) rotate_dbbuf5;
+  u32dest = (UINT32 *) _6tap2x_buf5;
   u32dest[1] = u32dest[0];
   u32dest[3] = u32dest[2];
 
   /* finally, do the horizontal 6-tap filter for the remaining half-pixels */
-  u8dest = ((UINT8 *) rotate_dbbuf5) + 20;
+  u8dest = ((UINT8 *) _6tap2x_buf5) + 20;
   for (i = 2; i < count - 3; i++)
     {
 	/* first, do the blue part */
@@ -820,23 +839,23 @@ void effect_6tap_addline_32_32_direct(const void *src0, unsigned count)
   char *tmp;
 
   /* first, move the existing lines up by one */
-  tmp = rotate_dbbuf0;
-  rotate_dbbuf0 = rotate_dbbuf1;
-  rotate_dbbuf1 = rotate_dbbuf2;
-  rotate_dbbuf2 = rotate_dbbuf3;
-  rotate_dbbuf3 = rotate_dbbuf4;
-  rotate_dbbuf4 = rotate_dbbuf5;
-  rotate_dbbuf5 = tmp;
+  tmp = _6tap2x_buf0;
+  _6tap2x_buf0 = _6tap2x_buf1;
+  _6tap2x_buf1 = _6tap2x_buf2;
+  _6tap2x_buf2 = _6tap2x_buf3;
+  _6tap2x_buf3 = _6tap2x_buf4;
+  _6tap2x_buf4 = _6tap2x_buf5;
+  _6tap2x_buf5 = tmp;
 
   /* if there's no new line, clear the last one and return */
   if (!src0)
     {
-	memset(rotate_dbbuf5, 0, count << 3);
+	memset(_6tap2x_buf5, 0, count << 3);
 	return;
     }
 
   /* we have a new line, so zoom by 2 */
-  u32dest = (UINT32 *) rotate_dbbuf5;
+  u32dest = (UINT32 *) _6tap2x_buf5;
   for (i = 0; i < count; i++)
     {
     *u32dest++ = *u32src++;
@@ -847,12 +866,12 @@ void effect_6tap_addline_32_32_direct(const void *src0, unsigned count)
   u32dest[-1] = u32dest[-2];
   u32dest[-3] = u32dest[-4];
   u32dest[-5] = u32dest[-6];
-  u32dest = (UINT32 *) rotate_dbbuf5;
+  u32dest = (UINT32 *) _6tap2x_buf5;
   u32dest[1] = u32dest[0];
   u32dest[3] = u32dest[2];
 
   /* finally, do the horizontal 6-tap filter for the remaining half-pixels */
-  u8dest = ((UINT8 *) rotate_dbbuf5) + 20;
+  u8dest = ((UINT8 *) _6tap2x_buf5) + 20;
   for (i = 2; i < count - 3; i++)
     {
 	/* first, do the blue part */
@@ -886,17 +905,17 @@ void effect_6tap_addline_32_32_direct(const void *src0, unsigned count)
 void effect_6tap_render_32(void *dst0, void *dst1, unsigned count)
 {
   UINT8 *u8dest = (UINT8 *) dst1;
-  UINT8 *src0 = (UINT8 *) rotate_dbbuf0;
-  UINT8 *src1 = (UINT8 *) rotate_dbbuf1;
-  UINT8 *src2 = (UINT8 *) rotate_dbbuf2;
-  UINT8 *src3 = (UINT8 *) rotate_dbbuf3;
-  UINT8 *src4 = (UINT8 *) rotate_dbbuf4;
-  UINT8 *src5 = (UINT8 *) rotate_dbbuf5;
+  UINT8 *src0 = (UINT8 *) _6tap2x_buf0;
+  UINT8 *src1 = (UINT8 *) _6tap2x_buf1;
+  UINT8 *src2 = (UINT8 *) _6tap2x_buf2;
+  UINT8 *src3 = (UINT8 *) _6tap2x_buf3;
+  UINT8 *src4 = (UINT8 *) _6tap2x_buf4;
+  UINT8 *src5 = (UINT8 *) _6tap2x_buf5;
   UINT32 i;
   INT32 pixel;
 
   /* first we need to just copy the 3rd line into the first destination line */
-  memcpy(dst0, rotate_dbbuf2, count << 3);
+  memcpy(dst0, _6tap2x_buf2, count << 3);
 
   /* then we need to vertically filter for the second line */
   for (i = 0; i < (count << 1); i++)
@@ -944,23 +963,23 @@ void effect_6tap_addline_16_16(const void *src0, unsigned count, const void *loo
   char *tmp;
 
   /* first, move the existing lines up by one */
-  tmp = rotate_dbbuf0;
-  rotate_dbbuf0 = rotate_dbbuf1;
-  rotate_dbbuf1 = rotate_dbbuf2;
-  rotate_dbbuf2 = rotate_dbbuf3;
-  rotate_dbbuf3 = rotate_dbbuf4;
-  rotate_dbbuf4 = rotate_dbbuf5;
-  rotate_dbbuf5 = tmp;
+  tmp = _6tap2x_buf0;
+  _6tap2x_buf0 = _6tap2x_buf1;
+  _6tap2x_buf1 = _6tap2x_buf2;
+  _6tap2x_buf2 = _6tap2x_buf3;
+  _6tap2x_buf3 = _6tap2x_buf4;
+  _6tap2x_buf4 = _6tap2x_buf5;
+  _6tap2x_buf5 = tmp;
 
   /* if there's no new line, clear the last one and return */
   if (!src0)
     {
-	memset(rotate_dbbuf5, 0, count << 3);
+	memset(_6tap2x_buf5, 0, count << 3);
 	return;
     }
 
   /* we have a new line, so first do the palette lookup and zoom by 2 */
-  u32dest = (UINT32 *) rotate_dbbuf5;
+  u32dest = (UINT32 *) _6tap2x_buf5;
   for (i = 0; i < count; i++)
     {
     *u32dest++ = (RMASK16(u32lookup[*u16src]) << 8) |
@@ -974,12 +993,12 @@ void effect_6tap_addline_16_16(const void *src0, unsigned count, const void *loo
   u32dest[-1] = u32dest[-2];
   u32dest[-3] = u32dest[-4];
   u32dest[-5] = u32dest[-6];
-  u32dest = (UINT32 *) rotate_dbbuf5;
+  u32dest = (UINT32 *) _6tap2x_buf5;
   u32dest[1] = u32dest[0];
   u32dest[3] = u32dest[2];
 
   /* finally, do the horizontal 6-tap filter for the remaining half-pixels */
-  u8dest = ((UINT8 *) rotate_dbbuf5) + 20;
+  u8dest = ((UINT8 *) _6tap2x_buf5) + 20;
   for (i = 2; i < count - 3; i++)
     {
 	/* first, do the blue part */
@@ -1019,23 +1038,23 @@ void effect_6tap_addline_16_16_direct(const void *src0, unsigned count)
   char *tmp;
 
   /* first, move the existing lines up by one */
-  tmp = rotate_dbbuf0;
-  rotate_dbbuf0 = rotate_dbbuf1;
-  rotate_dbbuf1 = rotate_dbbuf2;
-  rotate_dbbuf2 = rotate_dbbuf3;
-  rotate_dbbuf3 = rotate_dbbuf4;
-  rotate_dbbuf4 = rotate_dbbuf5;
-  rotate_dbbuf5 = tmp;
+  tmp = _6tap2x_buf0;
+  _6tap2x_buf0 = _6tap2x_buf1;
+  _6tap2x_buf1 = _6tap2x_buf2;
+  _6tap2x_buf2 = _6tap2x_buf3;
+  _6tap2x_buf3 = _6tap2x_buf4;
+  _6tap2x_buf4 = _6tap2x_buf5;
+  _6tap2x_buf5 = tmp;
 
   /* if there's no new line, clear the last one and return */
   if (!src0)
     {
-	memset(rotate_dbbuf5, 0, count << 3);
+	memset(_6tap2x_buf5, 0, count << 3);
 	return;
     }
 
   /* we have a new line, so first do the palette lookup and zoom by 2 */
-  u32dest = (UINT32 *) rotate_dbbuf5;
+  u32dest = (UINT32 *) _6tap2x_buf5;
   for (i = 0; i < count; i++)
     {
     *u32dest++ = ((UINT32) RMASK16(*u16src) << 8) |
@@ -1049,12 +1068,12 @@ void effect_6tap_addline_16_16_direct(const void *src0, unsigned count)
   u32dest[-1] = u32dest[-2];
   u32dest[-3] = u32dest[-4];
   u32dest[-5] = u32dest[-6];
-  u32dest = (UINT32 *) rotate_dbbuf5;
+  u32dest = (UINT32 *) _6tap2x_buf5;
   u32dest[1] = u32dest[0];
   u32dest[3] = u32dest[2];
 
   /* finally, do the horizontal 6-tap filter for the remaining half-pixels */
-  u8dest = ((UINT8 *) rotate_dbbuf5) + 20;
+  u8dest = ((UINT8 *) _6tap2x_buf5) + 20;
   for (i = 2; i < count - 3; i++)
     {
 	/* first, do the blue part */
@@ -1088,13 +1107,13 @@ void effect_6tap_render_16(void *dst0, void *dst1, unsigned count)
 {
   UINT16 *u16dest0 = (UINT16 *) dst0;
   UINT16 *u16dest1 = (UINT16 *) dst1;
-  UINT8 *src0 = (UINT8 *) rotate_dbbuf0;
-  UINT8 *src1 = (UINT8 *) rotate_dbbuf1;
-  UINT8 *src2 = (UINT8 *) rotate_dbbuf2;
-  UINT8 *src3 = (UINT8 *) rotate_dbbuf3;
-  UINT8 *src4 = (UINT8 *) rotate_dbbuf4;
-  UINT8 *src5 = (UINT8 *) rotate_dbbuf5;
-  UINT32 *src32 = (UINT32 *) rotate_dbbuf2;
+  UINT8 *src0 = (UINT8 *) _6tap2x_buf0;
+  UINT8 *src1 = (UINT8 *) _6tap2x_buf1;
+  UINT8 *src2 = (UINT8 *) _6tap2x_buf2;
+  UINT8 *src3 = (UINT8 *) _6tap2x_buf3;
+  UINT8 *src4 = (UINT8 *) _6tap2x_buf4;
+  UINT8 *src5 = (UINT8 *) _6tap2x_buf5;
+  UINT32 *src32 = (UINT32 *) _6tap2x_buf2;
   UINT32 i;
   INT32 red, green, blue;
 
@@ -1822,17 +1841,17 @@ void effect_scan3_16_16 (void *dst0, void *dst1, void *dst2, const void *src, un
     *(u16dst0+1) = *(u16dst0+0) =
       SHADE16_HALF(u32lookup[*u16src]) + SHADE16_FOURTH(u32lookup[*u16src]);
     *(u16dst0+2) =
-      SHADE16_HALF( MEAN16( u32lookup[*u16src], u32lookup[*u16src+1] ) )
+      SHADE16_HALF( MEAN16( u32lookup[*u16src], u32lookup[*(u16src+1)] ) )
       +
-      SHADE16_FOURTH( MEAN16( u32lookup[*u16src], u32lookup[*u16src+1] ) );
+      SHADE16_FOURTH( MEAN16( u32lookup[*u16src], u32lookup[*(u16src+1)] ) );
 
     *(u16dst1+0) = *(u16dst1+1) = u32lookup[*u16src];
-    *(u16dst1+2) = MEAN16( u32lookup[*u16src], u32lookup[*u16src+1] );
+    *(u16dst1+2) = MEAN16( u32lookup[*u16src], u32lookup[*(u16src+1)] );
 
     *(u16dst2+0) = *(u16dst2+1) =
       SHADE16_HALF(u32lookup[*u16src]);
     *(u16dst2+2) =
-      SHADE16_HALF( MEAN16( u32lookup[*u16src], u32lookup[*u16src+1] ) );
+      SHADE16_HALF( MEAN16( u32lookup[*u16src], u32lookup[*(u16src+1)] ) );
 
     ++u16src;
     u16dst0 += 3;
@@ -1855,17 +1874,17 @@ void effect_scan3_16_16_direct(void *dst0, void *dst1, void *dst2, const void *s
     *(u16dst0+1) = *(u16dst0+0) =
       SHADE16_HALF(*u16src) + SHADE16_FOURTH(*u16src);
     *(u16dst0+2) =
-      SHADE16_HALF( MEAN16( *u16src, *u16src+1 ) )
+      SHADE16_HALF( MEAN16( *u16src, *(u16src+1) ) )
       +
-      SHADE16_FOURTH( MEAN16( *u16src, *u16src+1 ) );
+      SHADE16_FOURTH( MEAN16( *u16src, *(u16src+1) ) );
 
     *(u16dst1+0) = *(u16dst1+1) = *u16src;
-    *(u16dst1+2) = MEAN16( *u16src, *u16src+1 );
+    *(u16dst1+2) = MEAN16( *u16src, *(u16src+1) );
 
     *(u16dst2+0) = *(u16dst2+1) =
       SHADE16_HALF(*u16src);
     *(u16dst2+2) =
-      SHADE16_HALF( MEAN16( *u16src, *u16src+1 ) );
+      SHADE16_HALF( MEAN16( *u16src, *(u16src+1) ) );
 
     ++u16src;
     u16dst0 += 3;
@@ -1889,17 +1908,17 @@ void effect_scan3_16_24 (void *dst0, void *dst1, void *dst2, const void *src, un
     *(u32dst0+1) = *(u32dst0+0) =
       SHADE32_HALF(u32lookup[*u16src]) + SHADE32_FOURTH(u32lookup[*u16src]);
     *(u32dst0+2) =
-      SHADE32_HALF( MEAN32( u32lookup[*u16src], u32lookup[*u16src+1] ) )
+      SHADE32_HALF( MEAN32( u32lookup[*u16src], u32lookup[*(u16src+1)] ) )
       +
-      SHADE32_FOURTH( MEAN32( u32lookup[*u16src], u32lookup[*u16src+1] ) );
+      SHADE32_FOURTH( MEAN32( u32lookup[*u16src], u32lookup[*(u16src+1)] ) );
 
     *(u32dst1+0) = *(u32dst1+1) = u32lookup[*u16src];
-    *(u32dst1+2) = MEAN32( u32lookup[*u16src], u32lookup[*u16src+1] );
+    *(u32dst1+2) = MEAN32( u32lookup[*u16src], u32lookup[*(u16src+1)] );
 
     *(u32dst2+0) = *(u32dst2+1) =
       SHADE32_HALF(u32lookup[*u16src]);
     *(u32dst2+2) =
-      SHADE32_HALF( MEAN32( u32lookup[*u16src], u32lookup[*u16src+1] ) );
+      SHADE32_HALF( MEAN32( u32lookup[*u16src], u32lookup[*(u16src+1)] ) );
 
     ++u16src;
     u32dst0 += 3;
@@ -1923,17 +1942,17 @@ void effect_scan3_16_32 (void *dst0, void *dst1, void *dst2, const void *src, un
     *(u32dst0+1) = *(u32dst0+0) =
       SHADE32_HALF(u32lookup[*u16src]) + SHADE32_FOURTH(u32lookup[*u16src]);
     *(u32dst0+2) =
-      SHADE32_HALF( MEAN32( u32lookup[*u16src], u32lookup[*u16src+1] ) )
+      SHADE32_HALF( MEAN32( u32lookup[*u16src], u32lookup[*(u16src+1)] ) )
       +
-      SHADE32_FOURTH( MEAN32( u32lookup[*u16src], u32lookup[*u16src+1] ) );
+      SHADE32_FOURTH( MEAN32( u32lookup[*u16src], u32lookup[*(u16src+1)] ) );
 
     *(u32dst1+0) = *(u32dst1+1) = u32lookup[*u16src];
-    *(u32dst1+2) = MEAN32( u32lookup[*u16src], u32lookup[*u16src+1] );
+    *(u32dst1+2) = MEAN32( u32lookup[*u16src], u32lookup[*(u16src+1)] );
 
     *(u32dst2+0) = *(u32dst2+1) =
       SHADE32_HALF(u32lookup[*u16src]);
     *(u32dst2+2) =
-      SHADE32_HALF( MEAN32( u32lookup[*u16src], u32lookup[*u16src+1] ) );
+      SHADE32_HALF( MEAN32( u32lookup[*u16src], u32lookup[*(u16src+1)] ) );
 
     ++u16src;
     u32dst0 += 3;

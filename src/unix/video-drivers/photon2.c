@@ -49,31 +49,22 @@ struct ph_func_struct {
    int  (*create_display)(int depth);
    void (*close_display)(void);
    void (*update_display)(struct mame_bitmap *bitmap);
-   int  (*alloc_palette)(int writable_colors);
-   int  (*modify_pen)(int pen, unsigned char red, unsigned char green, unsigned char blue);
-   int  (*_16bpp_capable)(void);
 };
 
 struct ph_func_struct ph_func[PH_MODE_COUNT] = {
 { NULL,
   ph_window_create_display,
   ph_window_close_display,
-  ph_window_update_display,
-  ph_window_alloc_palette,
-  ph_window_modify_pen,
-  ph_window_16bpp_capable },
+  ph_window_update_display },
 #if 1
 /*
 { NULL,
   ph_ovr_create_display,
   ph_ovr_close_display,
-  ph_ovr_update_display,
-  ph_ovr_alloc_palette,
-  ph_ovr_modify_pen,
-  ph_ovr_16bpp_capable }
+  ph_ovr_update_display }
 */
 #else
-  {NULL,NULL,NULL,NULL,NULL,NULL,NULL}
+  {NULL,NULL,NULL,NULL}
 #endif
 };
 
@@ -110,27 +101,6 @@ void sysdep_close(void)
 {
    if(ph_ctx)
       PhDetach(ph_ctx);
-}
-
-int sysdep_display_16bpp_capable(void)
-{
-   if (ph_video_mode >= PH_MODE_COUNT)
-   {
-      fprintf (stderr_file,
-         "info: photon-mode %d does not exist, falling back to normal window code\n",
-         ph_video_mode);
-      ph_video_mode = PH_WINDOW;
-   }
-
-   if (!mode_available[ph_video_mode])
-   {
-      fprintf (stderr_file,
-         "info: photon-mode %d not available, falling back to normal window code\n",
-         ph_video_mode);
-      ph_video_mode = PH_WINDOW;
-   }
-
-   return (*ph_func[ph_video_mode]._16bpp_capable) ();
 }
 
 /* This name doesn't really cover this function, since it also sets up mouse
@@ -174,17 +144,6 @@ int ph_init_palette_info(void)
 	}
 #endif
    return OSD_OK;
-}
-
-int sysdep_display_alloc_palette (int writable_colors)
-{
-   return (*ph_func[ph_video_mode].alloc_palette) (writable_colors);
-}
-
-int sysdep_display_set_pen (int pen, unsigned char red, unsigned char green,
-   unsigned char blue)
-{
-   return (*ph_func[ph_video_mode].modify_pen) (pen, red, green, blue);
 }
 
 void sysdep_update_display (struct mame_bitmap *bitmap)
@@ -248,16 +207,4 @@ barf:
    fprintf (stderr_file,
       "error: could not create new display while switching display modes\n");
    exit (1);              /* ugly, anyone know a better way ? */
-}
-
-/* these aren't nescesarry under photon since we have both a graphics window and
-   a textwindow (pterm) */
-int sysdep_set_video_mode (void)
-{
-   return OSD_OK;
-}
-
-void sysdep_set_text_mode (void)
-{
-
 }

@@ -402,31 +402,3 @@ sysdep_update_display(struct mame_bitmap *bitmap)
 	PSWait();
 #endif
 }
-
-/*
- * OpenStep system are always 16bpp capable.
- */
-
-int
-sysdep_display_16bpp_capable(void)
-{
-	return 1;
-}
-
-/*
- * The following functions are dummies - we always generate 16 bit
- * colour output on OpenStep systems.
- */
-
-int
-sysdep_display_alloc_palette(int writable_colours)
-{
-	return OSD_OK;
-}
-
-int
-sysdep_display_set_pen(int pen,
-		unsigned char r, unsigned char g, unsigned char b)
-{
-	return OSD_OK;
-}

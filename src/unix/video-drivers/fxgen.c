@@ -10,29 +10,6 @@
   This code may be used and distributed under the terms of the
   Mame license
   
-ChangeLog:
-
-16 August 2004 (Hans de Goede):
--fixed crash when using 16bpp palettised modes
--added support for rotated/flipped games, set blit_hardware_rotation to 1
- to notify the rest of xmame of this.
--removed some unused variables and macros
--inverted (corrected) emulation paused test
--added support for compiling and linking against glide3 instead of glide2
--revived fxvec.c and modified it to use: vector_register_aux_renderer,
- now we no longer need any core modifcations, and
- the code is somewhat cleaner.
--added support for vector clipping, this fixes mhavoc
-
-17 August 2004 (Hans de Goede):
--cleaned up vector handling, removed dummy_renderer hack
--fixed vector rotation
-
-18 August 2004 (Hans de Goede):
--use video_real_depth, this fixes 32 bpp game support, and makes
- 15 bpp direct RGB games not go through the lookup table for a small speedup
--modifed 15 bpp direct RGB support to use memcpy for a small speedup
-
 *****************************************************************/
 
 #if defined xfx || defined svgafx
@@ -118,25 +95,6 @@ struct rc_option fx_opts[] = {
 };
 
 struct sysdep_display_prop_struct sysdep_display_properties = { fxvec_renderer, 1 };
-
-int sysdep_display_16bpp_capable(void)
-{
-   return 1;
-}
-
-/* Allocate a palette */
-int sysdep_display_alloc_palette(int writable_colors)
-{
-  InitTextures();
-  return 0;
-}
-
-/* Change the color of a pen */
-int sysdep_display_set_pen(int pen, unsigned char red,unsigned char green,
-					unsigned char blue) 
-{
-  return 0;
-}
 
 void CalcPoint(GrVertex *vert,int x,int y)
 {
@@ -511,6 +469,8 @@ int InitVScreen(void)
    
   black = video_colors_used -2;
   white = video_colors_used -1;
+
+  InitTextures();
 
   return OSD_OK;
 }

@@ -660,70 +660,6 @@ void sysdep_display_close(void)
    SDL_ShowCursor(cursor_state);
 }
 
-/*
- * In 8 bpp we should alloc pallete - some ancient people  
- * are still using 8bpp displays
- */
-int sysdep_display_alloc_palette(int totalcolors)
-{
-   int ncolors;
-   int i;
-   ncolors = totalcolors;
-
-   fprintf (stderr, "SDL: sysdep_display_alloc_palette(%d);\n",totalcolors);
-   if (Vid_depth != 8)
-      return 0;
-
-#ifndef DIRECT_HERMES
-   Colors = (SDL_Color*) malloc (totalcolors * sizeof(SDL_Color));
-   if( !Colors )
-      return 1;
-   for (i=0;i<totalcolors;i++) {
-      (Colors + i)->r = 0xFF;
-      (Colors + i)->g = 0x00;
-      (Colors + i)->b = 0x00;
-   }
-   SDL_SetColors (Offscreen_surface,Colors,0,totalcolors-1);
-#else /* DIRECT_HERMES */
-   H_PaletteHandle = Hermes_PaletteInstance();
-   if ( !(H_Palette = Hermes_PaletteGet(H_PaletteHandle)) ) {
-      fprintf (stderr_file, "Hermes: Info: PaletteHandle invalid");
-      exit(OSD_NOT_OK);
-   }
-#endif /* DIRECT_HERMES */
-
-   fprintf (stderr, "SDL: Info: Palette with %d colors allocated\n", totalcolors);
-   return 0;
-}
-
-int sysdep_display_set_pen(int pen,unsigned char red, unsigned char green, unsigned char blue)
-{
-   static int warned = 0;
-#ifdef SDL_DEBUG
-   fprintf(stderr,"sysdep_display_set_pen(%d,%d,%d,%d)\n",pen,red,green,blue);
-#endif
-
-#ifndef DIRECT_HERMES
-   if( Colors ) {
-      (Colors + pen)->r = red;
-      (Colors + pen)->g = green;
-      (Colors + pen)->b = blue;
-      if ( (! SDL_SetColors(Offscreen_surface, Colors + pen, pen,1)) && (! warned)) {
-         printf ("Color allocation failed, or > 8 bit display\n");
-         warned = 0;
-      }
-   }
-#else /* DIRECT_HERMES */
-   *(H_Palette + pen) = (red<<16) | ((green) <<8) | (blue );
-   H_Palette_modified = 1; 
-#endif 
-
-#ifdef SDL_DEBUG
-   fprintf(stderr, "STD: Debug: Pen %d modification: r %d, g %d, b, %d\n", pen, red,green,blue);
-#endif /* SDL_DEBUG */
-   return 0;
-}
-
 void sysdep_mouse_poll (void)
 {
    int i;
@@ -810,14 +746,6 @@ void sysdep_update_keyboard()
     joy_evaluate_moves ();
       }
    }
-}
-
-/* added funcions */
-int sysdep_display_16bpp_capable(void)
-{
-   const SDL_VideoInfo* video_info;
-   video_info = SDL_GetVideoInfo();
-   return ( video_info->vfmt->BitsPerPixel >=16);
 }
 
 int list_sdl_modes(struct rc_option *option, const char *arg, int priority)

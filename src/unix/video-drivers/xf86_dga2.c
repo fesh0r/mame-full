@@ -75,26 +75,6 @@ int xf86_dga2_init(void)
 	return OSD_OK;
 }
 
-int xf86_dga2_16bpp_capable(void)
-{
-	int i, modecount = 0;
-	int result = 0;
-	XDGAMode *modes;
-
-	modes = XDGAQueryModes(display, xf86ctx.screen, &modecount);
-	for(i=0;i<modecount;i++)
-        {
-		if (modes[i].depth >= 16)
-		{
-			result = 1;
-			break;
-		}
-	}
-	XFree(modes);
-
-	return result;
-}
-
 static int xf86_dga_vidmode_find_best_vidmode(int bitmap_depth)
 {
 	int bestmode = 0;
@@ -205,32 +185,6 @@ static int xf86_dga_vidmode_setup_mode_restore(void)
 	}
 
 	return OSD_OK;
-}
-
-int xf86_dga2_alloc_palette(int writable_colors)
-{
-	XColor color;
-	int i;
-
-	if (xf86ctx.device->mode.depth != 8) {
-		xf86ctx.cmap = XDGACreateColormap(display, xf86ctx.screen,
-						  xf86ctx.device, AllocNone);
-	} else {
-		xf86ctx.cmap = XDGACreateColormap(display, xf86ctx.screen,
-						  xf86ctx.device, AllocAll);
-		for(i=0;i<writable_colors;i++)
-		{
-			color.pixel = i;
-			color.red   = 0;
-			color.green = 0;
-			color.blue  = 0;
-			color.flags = DoRed | DoGreen | DoBlue;
-
-			XStoreColor(display,xf86ctx.cmap,&color);
-		}
-	}
-	XDGAInstallColormap(display,xf86ctx.screen,xf86ctx.cmap);
-	return 0;
 }
 
 static int xf86_dga_setup_graphics(XDGAMode modeinfo, int bitmap_depth)
@@ -385,24 +339,14 @@ int xf86_dga2_create_display(int bitmap_depth)
 		       * xf86ctx.device->mode.imageHeight);
 	}
 
+	/* setup the colormap */
+	xf86ctx.cmap = XDGACreateColormap(display, xf86ctx.screen,
+					  xf86ctx.device, AllocNone);
+	XDGAInstallColormap(display,xf86ctx.screen,xf86ctx.cmap);
+
 	effect_init2(bitmap_depth, depth, xf86ctx.width);
 	
 	return OSD_OK;
-}
-
-
-int xf86_dga2_modify_pen(int pen,
-	unsigned char red,unsigned char green,unsigned char blue)
-{
-	XColor color;
-	color.pixel = pen;
-	color.red   = red   << 8;
-	color.green = green << 8;
-	color.blue  = blue  << 8;
-	color.flags = DoRed | DoGreen | DoBlue;
-
-	XStoreColor(display,xf86ctx.cmap,&color);
-	return 0;
 }
 
 #define DEST xf86ctx.addr

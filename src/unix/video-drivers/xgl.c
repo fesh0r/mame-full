@@ -280,7 +280,6 @@ int sysdep_create_display(int depth)
 
   myvisual =vgc.visual;
   glContext=vgc.gc;
-  colormap=window_attr.colormap;
 
   if (!window) {
 	fprintf(stderr,"OSD ERROR: failed in XCreateWindow().\n");

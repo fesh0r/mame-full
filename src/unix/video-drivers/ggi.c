@@ -172,13 +172,6 @@ void sysdep_close(void)
     ggiExit();
 }
 
-
-int sysdep_display_16bpp_capable(void)
-{
-   /* ehm ? */
-   return 1;
-}
-
 /*
  * check whether a given mode exists
  * try 8bit and >8bit color depths as needed
@@ -514,36 +507,6 @@ static void ggi_cleanup(void)
     }
     if (doublebuffer_buffer) free(doublebuffer_buffer);
 }
-
-
-int sysdep_display_alloc_palette(int writable_colors)
-{
-#ifdef GGI_DEBUG
-    fprintf(stderr_file,"sysdep_alloc_palette called\n");
-#endif
-
-    return 0;
-}
-
-
-int sysdep_display_set_pen(int pen,unsigned char red, unsigned char green,
-   unsigned char blue)
-{
-    ggi_color gpen;
-
-#if 0 && defined(GGI_DEBUG)
-    fprintf(stderr_file,"sysdep_modify_pen called\n");
-#endif
-    if (!vis) return -1; /* visual not initialized yet -- do nothing */
-
-    gpen.r = red << 8;
-    gpen.g = green << 8;
-    gpen.b = blue << 8;
-    ggiSetPalette(vis, pen, 1, &gpen);
-    
-    return 0;
-}
-
 
 /*
  * low-level update routines

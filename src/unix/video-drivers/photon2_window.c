@@ -40,7 +40,6 @@ static void (*ph_window_update_display_func) (struct mame_bitmap *bitmap) = NULL
 /* hmm we need these to do the clean up correctly, or we could just 
    trust unix & X to clean up after us but lett's keep things clean */
 
-static int private_cmap_allocated = 0;
 static PdOffscreenContext_t *image = NULL;
 static int orig_widthscale, orig_heightscale;
 enum { PH_NORMAL };
@@ -70,9 +69,6 @@ struct ph_func_struct {
    int  (*create_display)(int depth);
    void (*close_display)(void);
    void (*update_display)(struct mame_bitmap *bitmap);
-   int  (*alloc_palette)(int writable_colors);
-   int  (*modify_pen)(int pen, unsigned char red, unsigned char green, unsigned char blue);
-   int  (*_16bpp_capable)(void);
 };
 
 extern struct ph_func_struct ph_func[];
@@ -307,11 +303,6 @@ getevent_done:
 															
 }
 
-int ph_window_16bpp_capable(void)
-{
-   return 1;
-}
-
 int ph_window_create_display (int bitmap_depth)
 {
 	PtArg_t arg[9];
@@ -477,137 +468,6 @@ void ph_window_close_display (void)
       PtUnrealizeWidget(P_mainWindow);
       P_mainWindow=NULL;
    }
-}
-
-
-int ph_window_alloc_palette (int writable_colors)
-{
-#if 0
-   int i;
-   
-   if(!(pseudo_color_lookup = malloc(writable_colors * sizeof(unsigned long))))
-   {
-      fprintf(stderr_file, "error: malloc failed for pseudo color lookup table\n");
-      return -1;
-   }
-   
-   /* set the palette to black */
-   for (i = 0; i < writable_colors; i++)
-      pseudo_color_lookup[i] = black_pen;
-
-   /* allocate color cells */
-   if (XAllocColorCells (display, colormap, 0, 0, 0, pseudo_color_lookup,
-      writable_colors))
-   {
-      pseudo_color_use_rw_palette = 1;
-      fprintf (stderr_file, "info: using r/w palette entries to speed up, good\n");
-      for (i = 0; i < writable_colors; i++)
-         if (pseudo_color_lookup[i] != i) break;
-   }
-   else
-   {
-      if (!(pseudo_color_allocated = calloc(writable_colors, sizeof(char))))
-      {
-         fprintf(stderr_file, "error: malloc failed for pseudo color lookup table\n");
-         free(pseudo_color_lookup);
-         pseudo_color_lookup=NULL;
-         return -1;
-      }
-   }
-#endif
-   return 0;
-}
-
-int ph_window_modify_pen (int pen, unsigned char red, unsigned char green,
-   unsigned char blue)
-{
-#if 0
-   PgColor_t color;
-
-   /* Translate 0-255 values of new color to X 0-65535 values. */
-   color.flags = (DoRed | DoGreen | DoBlue);
-   color.red = (int) red << 8;
-   color.green = (int) green << 8;
-   color.blue = (int) blue << 8;
-   color.pixel = pseudo_color_lookup[pen];
-
-   if (pseudo_color_use_rw_palette)
-   {
-      XStoreColor (display, colormap, &color);
-   }
-   else
-   {
-      /* free previously allocated color */
-      if (pseudo_color_allocated[pen])
-      {
-         XFreeColors (display, colormap, &pseudo_color_lookup[pen], 1, 0);
-         pseudo_color_allocated[pen] = FALSE;
-      }
-
-      /* allocate new color and assign it to pen index */
-      if (XAllocColor (display, colormap, &color))
-      {
-         if (pseudo_color_lookup[pen] != color.pixel)
-            pseudo_color_lookup_dirty = TRUE;
-         pseudo_color_lookup[pen] = color.pixel;
-         pseudo_color_allocated[pen] = TRUE;
-      }
-      else /* try again with the closest match */
-      {
-         int i;
-         XColor colors[256];
-         int my_red   = (int)red << 8;
-         int my_green = (int)green << 8;
-         int my_blue  = (int)blue << 8;
-         int best_pixel = black_pen;
-         float best_diff = FLT_MAX;
-         
-         for(i=0;i<256;i++)
-            colors[i].pixel = i;
-         
-         XQueryColors(display, colormap, colors, 256);
-         for(i=0;i<256;i++)
-         {
-            #define SQRT(x) ((float)(x)*(x))
-            float diff = SQRT(my_red - colors[i].red) + 
-               SQRT(my_green - colors[i].green) +
-               SQRT(my_blue - colors[i].blue);
-            if (diff < best_diff)
-            {
-               best_pixel = colors[i].pixel;
-               best_diff  = diff;
-            }
-         }
-         
-         color = colors[best_pixel];
-         
-         if (XAllocColor (display, colormap, &color))
-         {
-            if (pseudo_color_lookup[pen] != color.pixel)
-               pseudo_color_lookup_dirty = TRUE;
-            pseudo_color_lookup[pen] = color.pixel;
-            pseudo_color_allocated[pen] = TRUE;
-         }
-         else
-         {
-            if (pseudo_color_warn_low_on_colors)
-            {
-               pseudo_color_warn_low_on_colors = 0;
-               fprintf (stderr_file,
-                  "warning: Closest color match alloc failed\n"
-                  "Couldn't allocate all colors, some parts of the emulation may be black\n"
-                  "Try running mame with the -privatecmap option\n");
-            }
-            
-            /* If color allocation failed, use black to ensure the
-               pen is not left set to an invalid color */
-            pseudo_color_lookup[pen] = black_pen;
-            return -1;
-         }
-      }
-   }
-#endif
-   return 0;
 }
 
 /* invoked by main tree code to update bitmap into screen */

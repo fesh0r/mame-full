@@ -49,7 +49,6 @@ EXTERN Display 		*display;
 EXTERN Window		window;
 EXTERN char	 	xkey[128];
 EXTERN Screen 		*screen;
-EXTERN Colormap		colormap;
 EXTERN Visual		*xvisual;
 EXTERN int		depth;
 EXTERN unsigned char	*scaled_buffer_ptr;
@@ -60,7 +59,6 @@ EXTERN int		x11_video_mode;
 EXTERN int		x11_grab_mouse;
 EXTERN int		run_in_root_window;
 EXTERN int		show_cursor;
-EXTERN int		use_private_cmap;
 EXTERN int		use_xil;
 EXTERN int		use_mt_xil;
 extern struct rc_option xf86_dga_opts[];
@@ -89,20 +87,14 @@ void process_x11_joy_event(XEvent *event);
 /* Normal photon window functions */
 int  ph_window_create_display(int depth);
 void ph_window_close_display(void);
-int  ph_window_modify_pen(int pen, unsigned char red,unsigned char green,unsigned char blue);
 void ph_window_update_display(struct mame_bitmap *bitmap);
-int  ph_window_alloc_palette(int writable_colors);
 void ph_window_refresh_screen(void);
-int  ph_window_16bpp_capable(void);
 
 /* photon video overlay functions */
 int  ph_ovr_init(void);
 int  ph_ovr_create_display(int depth);
 void ph_ovr_close_display(void);
-int  ph_ovr_modify_pen(int pen, unsigned char red,unsigned char green,unsigned char blue);
 void ph_ovr_update_display(struct mame_bitmap *bitmap);
-int  ph_ovr_alloc_palette(int writable_colors);
-int  ph_ovr_16bpp_capable(void);
 
 #if 0
 /* XIL functions */

@@ -150,12 +150,6 @@ void sysdep_update_keyboard (void)
             x11_grab_mouse = FALSE;
         }
         break;
-      case EnterNotify:
-	if (use_private_cmap) XInstallColormap(display,colormap);
-	break;	
-      case LeaveNotify:
-	if (use_private_cmap) XInstallColormap(display,DefaultColormapOfScreen(screen));
-	break;	
 #ifdef USE_XIL
       case ConfigureNotify:
 	update_xil_window_size( E.xconfigure.width, E.xconfigure.height );

@@ -46,27 +46,18 @@ struct x_func_struct {
 	int  (*create_display)(int depth);
 	void (*close_display)(void);
 	void (*update_display)(struct mame_bitmap *bitmap);
-	int  (*alloc_palette)(int writable_colors);
-	int  (*modify_pen)(int pen, unsigned char red, unsigned char green, unsigned char blue);
-	int  (*_16bpp_capable)(void);
 };
 
 static struct x_func_struct x_func[X11_MODE_COUNT] = {
 { NULL,
   x11_window_create_display,
   x11_window_close_display,
-  x11_window_update_display,
-  x11_window_alloc_palette,
-  x11_window_modify_pen,
-  x11_window_16bpp_capable },
+  x11_window_update_display },
 #ifdef USE_DGA
 { xf86_dga_init,
   xf86_dga_create_display,
   xf86_dga_close_display,
-  xf86_dga_update_display,
-  xf86_dga_alloc_palette,
-  xf86_dga_modify_pen,
-  xf86_dga_16bpp_capable },
+  xf86_dga_update_display },
 #else
 { NULL, NULL, NULL, NULL, NULL, NULL, NULL },
 #endif
@@ -74,20 +65,14 @@ static struct x_func_struct x_func[X11_MODE_COUNT] = {
 { NULL,
   x11_window_create_display,
   x11_window_close_display,
-  x11_window_update_display,
-  x11_window_alloc_palette,
-  x11_window_modify_pen,
-  x11_window_16bpp_capable },
+  x11_window_update_display },
 { NULL,
   x11_window_create_display,
   x11_window_close_display,
-  x11_window_update_display,
-  x11_window_alloc_palette,
-  x11_window_modify_pen,
-  x11_window_16bpp_capable }
+  x11_window_update_display }
 #else
-{ NULL, NULL, NULL, NULL, NULL, NULL, NULL },
-{ NULL, NULL, NULL, NULL, NULL, NULL, NULL }
+{ NULL, NULL, NULL, NULL },
+{ NULL, NULL, NULL, NULL }
 #endif
 };
 
@@ -122,7 +107,10 @@ void sysdep_close(void)
 		XCloseDisplay (display);
 }
 
-int sysdep_display_16bpp_capable(void)
+/* This name doesn't really cover this function, since it also sets up mouse
+   and keyboard. This is done over here, since on most display targets the
+   mouse and keyboard can't be setup before the display has. */
+int sysdep_create_display (int depth)
 {
 	if (x11_video_mode >= X11_MODE_COUNT)
 	{
@@ -139,15 +127,6 @@ int sysdep_display_16bpp_capable(void)
 				x11_video_mode);
 		x11_video_mode = X11_WINDOW;
 	}
-
-	return (*x_func[x11_video_mode]._16bpp_capable) ();
-}
-
-/* This name doesn't really cover this function, since it also sets up mouse
-   and keyboard. This is done over here, since on most display targets the
-   mouse and keyboard can't be setup before the display has. */
-int sysdep_create_display (int depth)
-{
 	return (*x_func[x11_video_mode].create_display)(depth);
 }
 
@@ -192,17 +171,6 @@ int x11_init_palette_info(void)
 		}
 	}
 	return OSD_OK;
-}
-
-int sysdep_display_alloc_palette (int writable_colors)
-{
-	return (*x_func[x11_video_mode].alloc_palette) (writable_colors);
-}
-
-int sysdep_display_set_pen (int pen, unsigned char red, unsigned char green,
-		unsigned char blue)
-{
-	return (*x_func[x11_video_mode].modify_pen) (pen, red, green, blue);
 }
 
 void sysdep_update_display (struct mame_bitmap *bitmap)
@@ -271,10 +239,7 @@ void sysdep_update_display (struct mame_bitmap *bitmap)
 		else
 			current_palette = debug_palette;
 
-		if (sysdep_display_alloc_palette(video_colors_used))
-			goto barf;
-
-		/* Force the palette lookup table to be updated.  This is necessary 
+		/* Force the palette lookup table to be updated. This is necessary 
 		 * because switching to/from fullscreen mode could cause the screen 
 		 * depth to change. */
 		force_dirty_palette = 1;  
@@ -294,17 +259,6 @@ barf:
 	fprintf (stderr_file,
 			"X11: Error: couldn't create new display while switching display modes\n");
 	exit (1);              /* ugly, anyone know a better way ? */
-}
-
-/* these aren't nescesarry under x11 since we have both a graphics window and
-   a textwindow (xterm) */
-int sysdep_set_video_mode (void)
-{
-	return OSD_OK;
-}
-
-void sysdep_set_text_mode (void)
-{
 }
 
 #endif /* ifdef x11 */

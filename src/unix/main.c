@@ -80,10 +80,6 @@ int main(int argc, char **argv)
 	if ((res = config_init(argc, argv)) != 1234 || res2 == OSD_NOT_OK)
 		goto leave;
 
-	/* Check the colordepth we're requesting */
-	if (!options.color_depth && !sysdep_display_16bpp_capable())
-		options.color_depth = 8;
-
 	/* 
 	 * Initialize whatever is needed before the display is actually 
 	 * opened, e.g., artwork setup.

@@ -33,6 +33,7 @@ extern struct rc_option fx_opts[];
 
 static Cursor        cursor;
 static XVisualInfo   myvisual;
+static Colormap      colormap;
 
 struct rc_option display_opts[] = {
    /* name, shortname, type, dest, deflt, min, max, func, help */

@@ -32,7 +32,6 @@ static void (*ph_ovr_update_display_func) (struct mame_bitmap *bitmap) = NULL;
 /* hmm we need these to do the clean up correctly, or we could just 
    trust unix & X to clean up after us but lett's keep things clean */
 
-static int private_cmap_allocated = 0;
 static PdOffscreenContext_t *image = NULL;
 static int orig_widthscale, orig_heightscale;
 enum { PH_NORMAL };
@@ -74,11 +73,6 @@ static int overlay_on=0;
 extern int I_GetEvent(PtWidget_t *widget, void *data, PtCallbackInfo_t *cbinfo );
 
 extern int phovr_filteron;
-
-int ph_ovr_16bpp_capable(void)
-{
-	return 1;
-}
 
 /* I've commented out the fprintf's in this function.
    It'll keep the compiler quiet. I'm not exacally
@@ -385,20 +379,6 @@ void ph_ovr_close_display (void)
  
 	PtUnrealizeWidget(P_mainWindow);
 	P_mainWindow=NULL;
-}
-
-/*
- * Set the screen colors using the given palette.
- *
- */
-int ph_ovr_alloc_palette (int writable_colors)
-{
-	return 0;
-}
- 
-int ph_ovr_modify_pen (int pen, unsigned char red, unsigned char green, unsigned char blue)
-{
-	return 0;
 }
 
 //* invoked by main tree code to update bitmap into screen */

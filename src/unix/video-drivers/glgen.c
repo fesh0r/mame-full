@@ -454,15 +454,6 @@ void gl_set_alphablending (int new_value)
   alphablending = gl_stream_alphablending(new_value);
 }
 
-int sysdep_display_16bpp_capable (void)
-{
-  #ifndef NDEBUG
-    printf("GLINFO: sysdep_display_16bpp_capable\n");
-  #endif
-
-  return 1; /* direct color */
-}
-
 int InitVScreen (int vw, int vh)
 {
   const unsigned char * glVersion;
@@ -817,16 +808,6 @@ void sysdep_clear_screen (void)
 #endif
 
 static int texture_init = 0;
-
-int sysdep_display_alloc_palette (int writable_colors)
-{
-  if (glContext == 0)
-    return 1;
-
-  texture_init = 0;
-
-  return 0;
-}
 
 /**
  * the given bitmap MUST be the original mame core bitmap !!!

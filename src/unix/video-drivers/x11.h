@@ -16,14 +16,12 @@ enum { X11_WINDOW, X11_DGA, X11_XV_WINDOW, X11_XV_FULLSCREEN };
 EXTERN Display 		*display;
 EXTERN Window		window;
 EXTERN Screen 		*screen;
-EXTERN Colormap		colormap;
 EXTERN Visual		*xvisual;
 EXTERN int		depth;
 EXTERN unsigned char	*scaled_buffer_ptr;
 EXTERN int		mode_available[X11_MODE_COUNT];
 EXTERN int		x11_video_mode;
 EXTERN int		run_in_root_window;
-EXTERN int		use_private_cmap;
 #ifdef USE_XIL
 EXTERN int		use_xil;
 EXTERN int		use_mt_xil;
@@ -65,34 +63,22 @@ void xinput_check_hotkeys(void);
 /* Normal x11_window functions */
 int  x11_window_create_display(int depth);
 void x11_window_close_display(void);
-int  x11_window_modify_pen(int pen, unsigned char red,unsigned char green,unsigned char blue);
 void x11_window_update_display(struct mame_bitmap *bitmap);
-int  x11_window_alloc_palette(int writable_colors);
 void x11_window_refresh_screen(void);
-int  x11_window_16bpp_capable(void);
 
 /* Xf86_dga functions */
 int  xf86_dga_init(void);
 int  xf86_dga_create_display(int depth);
 void xf86_dga_close_display(void);
-int  xf86_dga_modify_pen(int pen, unsigned char red,unsigned char green,unsigned char blue);
 void xf86_dga_update_display(struct mame_bitmap *bitmap);
-int  xf86_dga_alloc_palette(int writable_colors);
-int  xf86_dga_16bpp_capable(void);
 int  xf86_dga1_init(void);
 int  xf86_dga1_create_display(int depth);
 void xf86_dga1_close_display(void);
-int  xf86_dga1_modify_pen(int pen, unsigned char red,unsigned char green,unsigned char blue);
 void xf86_dga1_update_display(struct mame_bitmap *bitmap);
-int  xf86_dga1_alloc_palette(int writable_colors);
-int  xf86_dga1_16bpp_capable(void);
 int  xf86_dga2_init(void);
 int  xf86_dga2_create_display(int depth);
 void xf86_dga2_close_display(void);
-int  xf86_dga2_modify_pen(int pen, unsigned char red,unsigned char green,unsigned char blue);
 void xf86_dga2_update_display(struct mame_bitmap *bitmap);
-int  xf86_dga2_alloc_palette(int writable_colors);
-int  xf86_dga2_16bpp_capable(void);
 
 /* XIL functions */
 #ifdef USE_XIL

@@ -14,14 +14,9 @@ enum {EFFECT_NONE, EFFECT_SCALE2X, EFFECT_SCAN2, EFFECT_RGBSTRIPE, EFFECT_RGBSCA
 
 /* buffer for doublebuffering */
 EXTERN_EFFECT char *effect_dbbuf;
-EXTERN_EFFECT char *rotate_dbbuf;
 EXTERN_EFFECT char *rotate_dbbuf0;
 EXTERN_EFFECT char *rotate_dbbuf1;
 EXTERN_EFFECT char *rotate_dbbuf2;
-/* these are used for the 6-tap filter */
-EXTERN_EFFECT char *rotate_dbbuf3;
-EXTERN_EFFECT char *rotate_dbbuf4;
-EXTERN_EFFECT char *rotate_dbbuf5;
 
 /* from video.c, needed to scale the display according to the requirements of the effect */
 extern int normal_widthscale, normal_heightscale, normal_yarbsize;

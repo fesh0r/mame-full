@@ -443,14 +443,9 @@ void osd_video_initpre()
 	 * work for the time being.
 	 */
 	effect_dbbuf = NULL;
-	rotate_dbbuf = NULL;
 	rotate_dbbuf0 = NULL;
 	rotate_dbbuf1 = NULL;
 	rotate_dbbuf2 = NULL;
-	/* these are used for the 6-tap filter */
-	rotate_dbbuf3 = NULL;
-	rotate_dbbuf4 = NULL;
-	rotate_dbbuf5 = NULL;
 }
 
 static void orient_rect(struct rectangle *rect)
@@ -576,13 +571,6 @@ int osd_create_display(const struct osd_create_params *params,
 	if (!(normal_palette = sysdep_palette_create(&display_palette_info, params->depth)))
 		return 1;
 
-	/* alloc the total number of colors that can be used by the palette */
-	if (sysdep_display_alloc_palette(65536))
-	{
-		osd_free_colors();
-		return 1;
-	}
-
 	current_palette = normal_palette;
 
 	/* fill in the resulting RGB components */
@@ -662,16 +650,6 @@ static void change_display_settings(struct rectangle *new_visual,
 		{
 			/* oops this sorta sucks */
 			fprintf(stderr_file, "Argh, resizing the display failed in osd_set_visible_area, aborting\n");
-			exit(1);
-		}
-
-		/* only realloc the palette if it has been initialised */
-		if (current_palette && sysdep_display_alloc_palette(video_colors_used))
-		{
-			/* better restore the video mode before calling exit() */
-			sysdep_display_close();
-			/* oops this sorta sucks */
-			fprintf(stderr_file, "Argh, (re)allocating the palette failed in osd_set_visible_area, aborting\n");
 			exit(1);
 		}
 

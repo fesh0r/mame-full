@@ -125,9 +125,9 @@ ChangeLog:
 if (!blit_hardware_rotation && current_palette != debug_palette \
                  && (blit_flipx || blit_flipy || blit_swapxy)) { \
   for (y = visual.min_y; y <= visual.max_y; line_dest+=REPS_FOR_Y(CORRECTED_DEST_WIDTH,y,visual_height), y++) { \
-           rotate_func(rotate_dbbuf, bitmap, y); \
-           line_src = (SRC_PIXEL *)rotate_dbbuf; \
-           line_end = (SRC_PIXEL *)rotate_dbbuf + visual_width; \
+           rotate_func(rotate_dbbuf0, bitmap, y); \
+           line_src = (SRC_PIXEL *)rotate_dbbuf0; \
+           line_end = (SRC_PIXEL *)rotate_dbbuf0 + visual_width; \
            COPY_LINE_FOR_Y(y, visual_height, line_src, line_end, line_dest); \
   } \
 } else { \
@@ -489,11 +489,18 @@ break;
 #undef LOOP
 #undef GETPIXEL
 
+#ifdef CONVERT_PIXEL
+/* the effect code renders in SRC_PIXEL format and we convert this afterwards
+   in the MEMCPY macro, so DEST_PIXEL_SIZE for the effect code ==
+   sizeof(SRC_PIXEL) */
+#undef DEST_PIXEL_SIZE
+#define DEST_PIXEL_SIZE sizeof(SRC_PIXEL)
 /* we must double buffer when converting pixels, since the pixel conversion
    is done in the MEMCPY macro */
-#if defined CONVERT_PIXEL && !defined DOUBLEBUFFER
+#ifndef DOUBLEBUFFER
 #define DOUBLEBUFFER
 #define DOUBLEBUFFER_defined
+#endif
 #endif
    
 #include "blit_effect.h"

@@ -57,8 +57,6 @@ void joy_pad_poll(void);
 
 void joy_pad_init(void)
 {
-  int i;
-  
   joy_poll_func  = joy_pad_poll;
   lPadLastButton = 0;
  

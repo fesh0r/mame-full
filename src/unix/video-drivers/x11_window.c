@@ -118,20 +118,10 @@ enum { X11_NORMAL, X11_MITSHM, X11_XV, X11_XIL };
 static int x11_window_update_method = X11_NORMAL;
 static int startx = 0;
 static int starty = 0;
-static unsigned long black_pen;
 static int use_xsync = 0;
 static int root_window_id; /* root window id (for swallowing the mame window) */
 static char *geometry = NULL;
 static double x11_resolution_aspect=0.0;
-static int private_cmap_allocated = 0;
-
-/* we need to look a lookup table for pseudo modes since X doesn't give us full
-   access to the palette */
-static char *pseudo_color_allocated;
-static unsigned long *pseudo_color_lookup;
-static int pseudo_color_lookup_dirty;
-static int pseudo_color_use_rw_palette;
-static int pseudo_color_warn_low_on_colors;
 
 struct rc_option x11_window_opts[] = {
 	/* name, shortname, type, dest, deflt, min, max, func, help */
@@ -150,7 +140,6 @@ struct rc_option x11_window_opts[] = {
 	{ "perfect-yuv", NULL, rc_bool, &hwscale_perfect_yuv, "1", 0, 0, NULL, "Use perfect (slower) blitting code for XV YUV blits" },
 #endif
 	{ "xsync", "xs", rc_bool, &use_xsync, "1", 0, 0, NULL, "Use/don't use XSync instead of XFlush as screen refresh method" },
-	{ "privatecmap", "p", rc_bool, &use_private_cmap, "0", 0, 0, NULL, "Enable/disable use of private color map" },
 	{ "run-in-root-window", "root", rc_bool, &run_in_root_window, "0", 0, 0, NULL, "Enable/disable running in root window" },
 	{ "root_window_id", "rid", rc_int, &root_window_id,
  "0", 0, 0, NULL, "Create the xmame window in an alternate root window; mostly useful for front-ends!" },
@@ -329,54 +318,6 @@ void ClearYV12()
 }
 #endif
 
-static int x11_find_best_visual(int bitmap_depth)
-{
-   XVisualInfo visualinfo;
-   int screen_no = DefaultScreen (display);
-
-   if (XMatchVisualInfo (display, screen_no, 32, TrueColor, &visualinfo))
-   {
-      xvisual = visualinfo.visual;
-      depth   = 32;
-      return 0;
-   }
-
-   if (XMatchVisualInfo (display, screen_no, 24, TrueColor, &visualinfo))
-   {
-      xvisual = visualinfo.visual;
-      depth   = 24;
-      return 0;
-   }
-
-   if (XMatchVisualInfo (display, screen_no, 16, TrueColor, &visualinfo))
-   {
-      xvisual = visualinfo.visual;
-      depth   = 16;
-      return 0;
-   }
-
-   if (XMatchVisualInfo (display, screen_no, 15, TrueColor, &visualinfo))
-   {
-      xvisual = visualinfo.visual;
-      depth   = 15;
-      return 0;
-   }
-
-   if (bitmap_depth == 8 &&
-      XMatchVisualInfo (display, screen_no, 8, PseudoColor, &visualinfo))
-   {
-      xvisual = visualinfo.visual;
-      depth   = 8;
-      return 0;
-   }
-   return -1;
-}
-
-int x11_window_16bpp_capable(void)
-{
-   return !x11_find_best_visual(16);
-}
-
 static int x11_window_create_window(XSizeHints *hints, int width, int height)
 {
         XWMHints wm_hints;
@@ -384,7 +325,7 @@ static int x11_window_create_window(XSizeHints *hints, int width, int height)
 	XEvent event;
 
         /* Create and setup the window. No buttons, no fancy stuff. */
-        winattr.background_pixel  = black_pen;
+        winattr.background_pixel  = BlackPixelOfScreen (screen);
         winattr.border_pixel      = WhitePixelOfScreen (screen);
         winattr.bit_gravity       = ForgetGravity;
         winattr.win_gravity       = hints->win_gravity;
@@ -393,7 +334,7 @@ static int x11_window_create_window(XSizeHints *hints, int width, int height)
         winattr.save_under        = False;
         winattr.event_mask        = 0;
         winattr.do_not_propagate_mask = 0;
-        winattr.colormap          = colormap;
+        winattr.colormap          = DefaultColormapOfScreen (screen);
         winattr.cursor            = None;
         
         if (root_window_id == 0)
@@ -475,7 +416,6 @@ int x11_window_create_display (int bitmap_depth)
 	int window_width, window_height;
 	int effect_dest_depth;
 	int event_mask = 0;
-	int my_use_private_cmap = use_private_cmap;
 
 	/* set all the default values */
 	window = 0;
@@ -486,12 +426,6 @@ int x11_window_create_display (int bitmap_depth)
 #ifdef USE_MITSHM
 	mit_shm_attached = 0;
 #endif
-	private_cmap_allocated = 0;
-	pseudo_color_allocated = NULL;
-	pseudo_color_lookup = NULL;
-	pseudo_color_lookup_dirty = FALSE;
-	pseudo_color_use_rw_palette = FALSE;
-	pseudo_color_warn_low_on_colors = TRUE;
 	screen           = DefaultScreenOfDisplay (display);
 	screen_no        = DefaultScreen (display);
 
@@ -525,28 +459,6 @@ int x11_window_create_display (int bitmap_depth)
         if (use_xv)
            use_mit_shm=1;
 #endif
-
-        /* get a visual */
-	if(run_in_root_window)
-	{
-		xvisual = DefaultVisual(display, screen_no);
-		depth   = DefaultDepth(display, screen_no);
-		my_use_private_cmap = 0;
-	}
-	else
-	{
-		if(x11_find_best_visual(bitmap_depth))
-		{
-			fprintf(stderr_file, "X11: Error: Couldn't find a suitable visual, 8bpp video modes are no longer supported by the MAME core.\n");
-			return OSD_NOT_OK;
-		}
-		if ( (xvisual->class != DefaultVisual(display, screen_no)->class) ||
-				(DefaultDepth(display, screen_no) != depth) )
-		{
-			my_use_private_cmap = TRUE;
-		}
-	}
-	fprintf(stderr_file, "Using a Visual with a depth of %dbpp.\n", depth);
 
 	/* check the available extensions if compiled in */
 #ifdef USE_MITSHM
@@ -618,19 +530,10 @@ int x11_window_create_display (int bitmap_depth)
 	   use_xv = 0;
 #endif
 
-	/* create / asign a colormap */
-	if (my_use_private_cmap)
-	{
-		colormap = XCreateColormap (display, RootWindowOfScreen (screen), xvisual, AllocNone);
-		private_cmap_allocated = 1;
-		black_pen = 0;
-		fprintf (stderr_file, "Using private color map\n");
-	}
-	else
-	{
-		colormap = DefaultColormapOfScreen (screen);
-		black_pen = BlackPixelOfScreen (screen);
-	}
+        /* get a visual */
+	xvisual = DefaultVisual(display, screen_no);
+	depth   = DefaultDepth(display, screen_no);
+	fprintf(stderr_file, "Using a Visual with a depth of %dbpp.\n", depth);
 
 	/* create a window */
 	if (run_in_root_window)
@@ -1036,8 +939,6 @@ int x11_window_create_display (int bitmap_depth)
 			}
 		}
 #endif
-                /* Select event mask */
-                event_mask |= EnterWindowMask | LeaveWindowMask;
 	}
 
 	/* verify the number of bits per pixel and choose the correct update method */
@@ -1203,8 +1104,6 @@ int x11_window_create_display (int bitmap_depth)
  */
 void x11_window_close_display (void)
 {
-   int i;
-
    widthscale  = orig_widthscale;
    heightscale = orig_heightscale;
    yarbsize    = orig_yarbsize;
@@ -1214,26 +1113,6 @@ void x11_window_close_display (void)
    
    /* ungrab keyb and mouse */
    xinput_close();
-
-   /* better free any allocated colors before freeing the colormap */
-   if (pseudo_color_lookup)
-   {
-      if (pseudo_color_use_rw_palette)
-      {
-         XFreeColors (display, colormap, pseudo_color_lookup,
-            256, 0);
-      }
-      else
-      {
-         for (i = 0; i < 256; i++)
-         {
-            if (pseudo_color_allocated[i])
-               XFreeColors (display, colormap, &pseudo_color_lookup[i], 1, 0);
-         }
-         free(pseudo_color_allocated);
-      }
-      free(pseudo_color_lookup);
-   }
 
    /* now just free everything else */
    if (window)
@@ -1287,147 +1166,7 @@ void x11_window_close_display (void)
       hwscale_yv12_rotate_buf1 = NULL;
    }
 
-   if (private_cmap_allocated)
-      XFreeColormap (display, colormap);
-
    XSync (display, True); /* send all events to sync; discard events */
-}
-
-/*
- * Set the screen colors using the given palette.
- *
- */
-int x11_window_alloc_palette (int writable_colors)
-{
-   int i;
-
-   /* this is only relevant for 8bpp displays */
-   if (depth != 8)
-      return 0;
-
-   if(!(pseudo_color_lookup = malloc(writable_colors * sizeof(unsigned long))))
-   {
-      fprintf(stderr_file, "X11-window: Error: Malloc failed for pseudo color lookup table\n");
-      return -1;
-   }
-
-   /* set the palette to black */
-   for (i = 0; i < writable_colors; i++)
-      pseudo_color_lookup[i] = black_pen;
-
-   /* allocate color cells */
-   if (XAllocColorCells (display, colormap, 0, 0, 0, pseudo_color_lookup,
-      writable_colors))
-   {
-      pseudo_color_use_rw_palette = 1;
-      fprintf (stderr_file, "Using r/w palette entries to speed up, good\n");
-      for (i = 0; i < writable_colors; i++)
-         if (pseudo_color_lookup[i] != i) break;
-   }
-   else
-   {
-      if (!(pseudo_color_allocated = calloc(writable_colors, sizeof(char))))
-      {
-         fprintf(stderr_file, "X11-window: Error: Malloc failed for pseudo color lookup table\n");
-         XFreeColors (display, colormap, pseudo_color_lookup,
-            writable_colors, 0);
-         free(pseudo_color_lookup);
-         pseudo_color_lookup=NULL;
-         return -1;
-      }
-   }
-
-   return 0;
-}
-
-int x11_window_modify_pen (int pen, unsigned char red, unsigned char green,
-   unsigned char blue)
-{
-   XColor color;
-
-   /* Translate 0-255 values of new color to X 0-65535 values. */
-   color.flags = (DoRed | DoGreen | DoBlue);
-   color.red = (int) red << 8;
-   color.green = (int) green << 8;
-   color.blue = (int) blue << 8;
-   color.pixel = pseudo_color_lookup[pen];
-
-   if (pseudo_color_use_rw_palette)
-   {
-      XStoreColor (display, colormap, &color);
-   }
-   else
-   {
-      /* free previously allocated color */
-      if (pseudo_color_allocated[pen])
-      {
-         XFreeColors (display, colormap, &pseudo_color_lookup[pen], 1, 0);
-         pseudo_color_allocated[pen] = FALSE;
-      }
-
-      /* allocate new color and assign it to pen index */
-      if (XAllocColor (display, colormap, &color))
-      {
-         if (pseudo_color_lookup[pen] != color.pixel)
-            pseudo_color_lookup_dirty = TRUE;
-         pseudo_color_lookup[pen] = color.pixel;
-         pseudo_color_allocated[pen] = TRUE;
-      }
-      else /* try again with the closest match */
-      {
-         int i;
-         XColor colors[256];
-         int my_red   = (int)red << 8;
-         int my_green = (int)green << 8;
-         int my_blue  = (int)blue << 8;
-         int best_pixel = black_pen;
-         float best_diff = FLT_MAX;
-
-         for(i=0;i<256;i++)
-            colors[i].pixel = i;
-
-         XQueryColors(display, colormap, colors, 256);
-         for(i=0;i<256;i++)
-         {
-            #define SQRT(x) ((float)(x)*(x))
-            float diff = SQRT(my_red - colors[i].red) +
-               SQRT(my_green - colors[i].green) +
-               SQRT(my_blue - colors[i].blue);
-            if (diff < best_diff)
-            {
-               best_pixel = colors[i].pixel;
-               best_diff  = diff;
-            }
-         }
-
-         color = colors[best_pixel];
-
-         if (XAllocColor (display, colormap, &color))
-         {
-            if (pseudo_color_lookup[pen] != color.pixel)
-               pseudo_color_lookup_dirty = TRUE;
-            pseudo_color_lookup[pen] = color.pixel;
-            pseudo_color_allocated[pen] = TRUE;
-         }
-         else
-         {
-            if (pseudo_color_warn_low_on_colors)
-            {
-               pseudo_color_warn_low_on_colors = 0;
-               fprintf (stderr_file,
-                  "X11-palette: Warning: Closest color match alloc failed\n"
-                  "Couldn't allocate all colors, some parts of the emulation may be black\n"
-                  "Try running xmame with the -privatecmap option\n");
-            }
-
-            /* If color allocation failed, use black to ensure the
-               pen is not left set to an invalid color */
-            pseudo_color_lookup[pen] = black_pen;
-            return -1;
-         }
-      }
-   }
-   return 0;
 }
 
 /* invoked by main tree code to update bitmap into screen */
@@ -1492,7 +1231,6 @@ void x11_window_refresh_screen (void)
 
 #define DEST_WIDTH image_width
 #define DEST scaled_buffer_ptr
-#define SRC_PIXEL unsigned short
 
 #ifdef USE_HWSCALE
 #define RMASK 0xff0000

@@ -51,6 +51,9 @@ int sysdep_init(void)
 void sysdep_close(void)
 {
    svga_input_exit();
+
+   /* close svgalib (again) just to be sure */
+   vga_setmode(TEXT);
 }
 
 static void release_function(void)

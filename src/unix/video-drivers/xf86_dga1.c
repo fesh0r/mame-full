@@ -71,12 +71,6 @@ int xf86_dga1_init(void)
 	return OSD_OK;
 }
 
-int xf86_dga1_16bpp_capable(void)
-{
-   int screen_no = DefaultScreen (display);
-   return (DefaultDepth(display, screen_no) >= 15);
-}
-
 static int xf86_dga_vidmode_check_exts(void)
 {
 	int major,minor,event_base,error_base;
@@ -195,30 +189,6 @@ static int xf86_dga_vidmode_setup_mode_restore(void)
 	}
 
 	return OSD_OK;
-}
-
-int xf86_dga1_alloc_palette(int writable_colors)
-{
-	XColor color;
-	int i;
-
-	/* this is only relevant for 8bpp displays */
-	if (depth != 8)
-	   return 0;
-
-	xf86ctx.cmap = XCreateColormap(display,window,xvisual,AllocAll);
-
-	for(i=0;i<writable_colors;i++)
-	{
-		color.pixel = i;
-		color.red   = 0;
-		color.green = 0;
-		color.blue  = 0;
-		color.flags = DoRed | DoGreen | DoBlue;
-
-		XStoreColor(display,xf86ctx.cmap,&color);
-	}
-	return 0;
 }
 
 static int xf86_dga_setup_graphics(XF86VidModeModeInfo *modeinfo, int bitmap_depth)
@@ -400,22 +370,6 @@ int xf86_dga1_create_display(int bitmap_depth)
 	effect_init2(bitmap_depth, depth, xf86ctx.width);
 
 	return OSD_OK;
-}
-
-
-int xf86_dga1_modify_pen(int pen,
-	unsigned char red,unsigned char green,unsigned char blue)
-{
-	XColor color;
-	color.pixel = pen;
-	color.red   = red   << 8;
-	color.green = green << 8;
-	color.blue  = blue  << 8;
-	color.flags = DoRed | DoGreen | DoBlue;
-
-	XStoreColor(display,xf86ctx.cmap,&color);
-	xf86ctx.palette_dirty = TRUE;
-	return 0;
 }
 
 #define DEST xf86ctx.addr
