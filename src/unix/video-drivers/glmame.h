@@ -70,6 +70,7 @@ extern GLdouble vx_cscr_p1, vy_cscr_p1, vz_cscr_p1,
         vx_cscr_p2, vy_cscr_p2, vz_cscr_p2,
         vx_cscr_p3, vy_cscr_p3, vz_cscr_p3, 
 	vx_cscr_p4, vy_cscr_p4, vz_cscr_p4;
+extern GLdouble vecx, vecy, vecscalex, vecscaley;
 
 /* glvec.c */
 int glvec_renderer(point *start, int num_points);

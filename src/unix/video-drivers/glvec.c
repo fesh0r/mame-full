@@ -35,111 +35,215 @@ Todo:
 #define VDIRTY  1
 #define VCLIP   2
 
-static int vecwidth, vecheight;
+enum { NONE, LINE, POINT };
 
-/* Convert an xy point to xyz in the 3D scene */
-static void PointConvert(int x,int y,GLdouble *sx,GLdouble *sy,GLdouble *sz)
-{
-  GLdouble dx,dy;
-
-  x = (x+0x8000) >> 16;
-  y = (y+0x8000) >> 16;
-
-  dx=(GLdouble)x/(GLdouble)vecwidth;
-  dy=(GLdouble)y/(GLdouble)vecheight;
-
-  if(!cabview) {
-	  *sx=dx;
-	  *sy=dy;
-  } else {
-	CalcCabPointbyViewpoint ( dx*s__cscr_w_view,
-	                          dy*s__cscr_h_view,
-				  sx, sy, sz );
-  }
-}
+static GLdouble xmin, ymin, xmax, ymax = 0.0;
 
 /*
  * Adds a line end point to the vertices list. The vector processor emulation
  * needs to call this.
  */
-static void glvec_add_point (int x, int y, rgb_t color, int intensity)
+INLINE void glvec_add_point (GLdouble x, GLdouble y)
 {
-  double red, green, blue;
-  GLdouble sx,sy,sz;
-  static GLdouble vecoldx,vecoldy;
+  if(!cabview) {
+    disp__glVertex2d(x,y);
+  } else {
+    GLdouble z;
+    CalcCabPointbyViewpoint(x*sysdep_display_params.orig_width,
+      y*sysdep_display_params.orig_height, &x, &y, &z);
+    disp__glVertex3d(x,y,z);
+  }
+}
+
+INLINE int glvec_clip_line_get_flags(GLdouble *x, GLdouble *y)
+{
+  int flags=0; 
+
+  if (*x < xmin)
+    flags |= 0x01;
+
+  if (*x > xmax)
+    flags |= 0x02;
+
+  if (*y < ymin)
+    flags |= 0x04;
+
+  if (*y > ymax)
+    flags |= 0x08;
+
+  return flags;
+}
+
+/* Cohen-Sutherland line-clipping algorithm,
+   based on the article: http://www.nondot.org/~sabre/graphpro/line6.html */
+INLINE int glvec_clip_line(GLdouble *x1, GLdouble *y1, GLdouble *x2,
+  GLdouble *y2)
+{
+  int flags1 = glvec_clip_line_get_flags(x1, y1);
+  int flags2 = glvec_clip_line_get_flags(x2, y2);
   
-  PointConvert(x,y,&sx,&sy,&sz);
-
-  red   = ((color & 0xff0000) * intensity) / (255.0 * 255.0 * 65536);
-  green = ((color & 0x00ff00) * intensity) / (255.0 * 255.0 * 256);
-  blue  = ((color & 0x0000ff) * intensity) / (255.0 * 255.0);
-
-  if(intensity==0)
+  while(flags1 || flags2)
   {
-        GL_END();
-        GL_BEGIN(GL_LINE_STRIP);
+    int flags;
+    GLdouble t,x,y;
+
+    /* line completly outside viewport? */
+    if (flags1 & flags2)
+      return 0;
+  
+    /* deterine which endpoint to clip */
+    if (flags1)
+      flags = flags1;
+    else
+      flags = flags2;
+    
+    /* do the actual clipping */    
+    if (flags&0x01)          /* x < xmin */
+    {
+      t = (xmin-*x1)/(*x2-*x1);
+      x = xmin;
+      y = *y1 + t*(*y2-*y1);
+    }
+    else if (flags&0x02)     /* x > xmax */
+    {
+      t = (xmax-*x1)/(*x2-*x1);
+      x = xmax;
+      y = *y1 + t*(*y2-*y1);
+    }
+    else if (flags&0x04)     /* y < ymin */
+    {
+      t = (ymin-*y1)/(*y2-*y1);
+      y = ymin;
+      x = *x1 + t*(*x2-*x1);
+    }
+    else /* (flags&0x08) */  /* y > ymax */
+    {
+      t = (ymax-*y1)/(*y2-*y1);
+      y = ymax;
+      x = *x1 + t*(*x2-*x1);
+    }
+
+    /* update x,y and flags */
+    if (flags1)
+    {
+      *x1 = x;
+      *y1 = y;
+      flags1 = glvec_clip_line_get_flags(x1, y1);
+    }
+    else
+    {
+      *x2 = x;
+      *y2 = y;
+      flags2 = glvec_clip_line_get_flags(x2, y2);
+    }
   }
-
-  disp__glColor3d(blue, green, red); /* we use bgr not rgb ! */
-
-  if((fabs(sx-vecoldx) < 0.001) && (fabs(sy-vecoldy) < 0.001))
-  {
-	  /* Hack to draw points -- very short lines don't show up
-	   *
-	   * But games, e.g. tacscan have zero lines within the LINE_STRIP,
-	   * so we do try to continue the line strip :-) */
-	GL_END();
-	GL_BEGIN(GL_POINTS);
-
-	if(cabview)
-	  disp__glVertex3d(sx,sy,sz);
-	else disp__glVertex2d(sx,sy);
-
-	GL_END();
-	GL_BEGIN(GL_LINE_STRIP);
-  }
-
-  if(cabview)
-    disp__glVertex3d(sx,sy,sz);
-  else disp__glVertex2d(sx,sy);
-
-  vecoldx=sx; vecoldy=sy;
+  return 1;
 }
 
 int glvec_renderer(point *pt, int num_points)
 {
   if (num_points)
   {
-    vecwidth  =sysdep_display_params.vec_src_bounds->max_x-sysdep_display_params.vec_src_bounds->min_x;
-    vecheight =sysdep_display_params.vec_src_bounds->max_y-sysdep_display_params.vec_src_bounds->min_y;
-
-    disp__glNewList(veclist,GL_COMPILE);
-
-    CHECK_GL_ERROR ();
-
-    disp__glColor4d(1.0,1.0,1.0,1.0);
-
-    GL_BEGIN(GL_LINE_STRIP);
+    GLdouble x1,x2,y1,y2,oldx=0.0,oldy=0.0;
+    int state = NONE;
     
+    disp__glNewList(veclist,GL_COMPILE);
+    CHECK_GL_ERROR ();
+    
+    xmin = 0.0;
+    ymin = 0.0;
+    xmax = 1.0;
+    ymax = 1.0;
+
     while(num_points)
     {
       if (pt->status == VCLIP)
       {
-        /* FIXME !!! */
+        xmin = vecx + pt->x/vecscalex;
+        ymin = vecy + pt->y/vecscaley;
+        xmax = vecx + pt->arg1/vecscalex;
+        ymax = vecy + pt->arg2/vecscaley;
       }
       else
       {
-        if (pt->callback)
-          glvec_add_point(pt->x, pt->y, pt->callback(), pt->intensity);
-        else
-          glvec_add_point(pt->x, pt->y, pt->col, pt->intensity);
+        x1 = oldx;
+        y1 = oldy;
+        x2 = vecx + pt->x/vecscalex;
+        y2 = vecy + pt->y/vecscaley;
+        oldx = x2;
+        oldy = y2;
+        
+        if (pt->intensity && glvec_clip_line(&x1, &y1, &x2, &y2))
+        {
+          int red, green, blue;
+          rgb_t color;
+          
+          if (pt->callback)
+            color = pt->callback();
+          else
+            color = pt->col;
+        
+          red   = (color & 0xff0000) >> 16;
+          green = (color & 0x00ff00) >> 8;
+          blue  = (color & 0x0000ff);
+
+          disp__glColor4ub(red, green, blue, pt->intensity);
+          
+          if((fabs(x1-x2) < 0.001) && (fabs(y1-y2) < 0.001))
+          {
+            /* Hack to draw points -- very short lines don't show up
+             *
+             * But games, e.g. tacscan have zero lines within the LINE_STRIP,
+             * so we do try to continue the line strip :-) */
+            switch(state)
+            {
+              case LINE:
+                GL_END();
+              case NONE:
+                GL_BEGIN(GL_POINTS);
+                state = POINT;
+                break;
+              case POINT:
+                break;
+            }
+          }
+          else
+          {
+            switch(state)
+            {
+              case POINT:
+                GL_END();
+              case NONE:
+                GL_BEGIN(GL_LINE_STRIP);
+                state = LINE;
+                glvec_add_point(x1, y1);
+                break;
+              case LINE:
+                break;
+            }
+          }
+          glvec_add_point(x2, y2);
+        }
+        /* end the linestrip if the intensity is 0 or we've clipped the last
+           coordinate */
+        if((state == LINE) && ((pt->intensity==0) || (x2!=oldx) || (y2!=oldy)))
+        {
+          GL_END();
+          state = NONE;
+        }
       }
       pt++;
       num_points--;
     }
+    CHECK_GL_ERROR ();
 
-    GL_END();
+    if (state != NONE)
+      GL_END();
+    CHECK_GL_BEGINEND();
+    CHECK_GL_ERROR ();
+
     disp__glEndList();
+    CHECK_GL_ERROR ();
   }
   return 0;
 }

@@ -83,7 +83,6 @@ int fxvec_renderer(point *pt, int num_points)
   if (num_points)
   {
     GrVertex v1,v2;
-    int vertexcount = 0;
     
     vecsrcwidth  = (sysdep_display_params.vec_src_bounds->max_x + 1) -
       sysdep_display_params.vec_src_bounds->min_x;
@@ -131,8 +130,6 @@ int fxvec_renderer(point *pt, int num_points)
       }
       else
       {
-        vertexcount++;
-        
         if (pt->callback)
           fxvec_fill_vert(&v2, pt->x, pt->y, pt->callback(), pt->intensity);
         else

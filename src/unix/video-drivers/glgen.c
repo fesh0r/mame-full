@@ -178,7 +178,10 @@ static unsigned short *colorBlittedMemory = NULL;
 static int cab_loaded = 0;
 static int texture_init = 0;
 static unsigned char *empty_text = NULL;
+
+/* Vector variables */
 GLuint veclist=0;
+GLdouble vecx, vecy, vecscalex, vecscaley;
 
 #define RETURN_IF_GL_ERROR() \
       if((err = disp__glGetError ())) \
@@ -567,10 +570,11 @@ int gl_open_display (void)
   if (sysdep_display_params.vec_src_bounds)
   {
     veclist=disp__glGenLists(1);
+    RETURN_IF_GL_ERROR ();
+    disp__glBlendFunc (GL_SRC_ALPHA, GL_ONE);
+    RETURN_IF_GL_ERROR ();
     if (gl_set_beam(gl_beam))
       return 1;
-    disp__glBlendFunc (GL_ONE, GL_ONE);
-    RETURN_IF_GL_ERROR ();
   }
 
   /* no alpha .. important, because mame has no alpha set ! */
@@ -908,6 +912,36 @@ static void InitTextures (struct mame_bitmap *bitmap, struct rectangle *vis_area
         ( (y * text_height * line_len) + (x * text_width)) * bytes_per_pixel;
     }	/* for all texnumx */
   }  /* for all texnumy */
+
+  if (sysdep_display_params.vec_src_bounds)
+  {
+    if(sysdep_display_params.vec_dest_bounds)
+    {
+      vecx = (GLdouble)sysdep_display_params.vec_dest_bounds->min_x/
+        sysdep_display_params.orig_width;
+      vecy = (GLdouble)sysdep_display_params.vec_dest_bounds->min_y/
+        sysdep_display_params.orig_height;
+      vecscalex = (65536.0 * sysdep_display_params.orig_width *
+        (sysdep_display_params.vec_src_bounds->max_x-
+         sysdep_display_params.vec_src_bounds->min_x)) /
+        ((sysdep_display_params.vec_dest_bounds->max_x + 1) -
+         sysdep_display_params.vec_dest_bounds->min_x);
+      vecscaley = (65536.0 * sysdep_display_params.orig_height *
+        (sysdep_display_params.vec_src_bounds->max_y-
+         sysdep_display_params.vec_src_bounds->min_y)) /
+        ((sysdep_display_params.vec_dest_bounds->max_y + 1) -
+         sysdep_display_params.vec_dest_bounds->min_y);
+    }
+    else
+    {
+      vecx = 0.0;
+      vecy = 0.0;
+      vecscalex = (sysdep_display_params.vec_src_bounds->max_x-
+        sysdep_display_params.vec_src_bounds->min_x) * 65536.0;
+      vecscaley = (sysdep_display_params.vec_src_bounds->max_y-
+        sysdep_display_params.vec_src_bounds->min_y) * 65536.0;
+    }
+  }
 
   texture_init = 1;
 }
