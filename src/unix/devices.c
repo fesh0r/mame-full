@@ -21,6 +21,7 @@
 
 #include "xmame.h"
 #include "devices.h"
+#include "keycodes.h"
 #include "driver.h"
 #include "ui_text.h"
 #include "sysdep/rc.h"

@@ -11,7 +11,7 @@
 
 /* TRAVIS'S NOTE: This may be removed at a later date.... */
 
-#include "devices.h"
+#include "keycodes.h"
 
 /* translation table from Photon codes to raw keyboard scan codes */
 /* the idea is make a re-definable lookup table, instead a long case switch */

@@ -15,6 +15,7 @@
 #import "osdepend.h"
 #import "driver.h"
 #import "devices.h"
+#import "keycodes.h"
 
 /*
  * Keyboard variables

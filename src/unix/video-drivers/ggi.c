@@ -28,6 +28,7 @@
 #include "xmame.h"
 #include "driver.h"
 #include "devices.h"
+#include "keycodes.h"
 #include "effect.h"
 
 static int video_width,video_height;

@@ -39,6 +39,7 @@
 #include "xmame.h"
 #include "devices.h"
 #include "driver.h"
+#include "keycodes.h"
 #include "SDL-keytable.h"
 #ifdef DIRECT_HERMES 
 #include <Hermes/Hermes.h>
