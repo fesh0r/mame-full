@@ -350,22 +350,16 @@ int ti99_cassette_init(int id, void *fp, int open_mode)
 	1st ROM: GROM (up to 40kb)
 	2nd ROM: CPU ROM (8kb)
 	3rd ROM: CPU ROM, 2nd page (8kb)
+
+	We don't need to support 99/4p, as it has no cartridge port.
 */
 int ti99_load_rom(int id, void *cartfile, int open_mode)
 {
 	const char *name = image_filename(IO_CARTSLOT,id);
 
 
-	if (ti99_model == model_99_4p)
-	{
-		cartridge_pages[0] = (UINT16 *) (memory_region(REGION_CPU1)+offset_cart_4p);
-		cartridge_pages[1] = (UINT16 *) (memory_region(REGION_CPU1)+offset_cart_4p + 0x2000);
-	}
-	else
-	{
-		cartridge_pages[0] = (UINT16 *) (memory_region(REGION_CPU1)+offset_cart);
-		cartridge_pages[1] = (UINT16 *) (memory_region(REGION_CPU1)+offset_cart + 0x2000);
-	}
+	cartridge_pages[0] = (UINT16 *) (memory_region(REGION_CPU1)+offset_cart);
+	cartridge_pages[1] = (UINT16 *) (memory_region(REGION_CPU1)+offset_cart + 0x2000);
 
 
 	if (cartfile == NULL)
@@ -469,7 +463,7 @@ void ti99_rom_cleanup(int id)
 
 
 /*
-	ti99_init_machine() ; launched AFTER ti99_load_rom...
+	ti99_init_machine(); called AFTER ti99_load_rom...
 */
 void machine_init_ti99(void)
 {
