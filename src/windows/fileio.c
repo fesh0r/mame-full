@@ -261,10 +261,10 @@ void *osd_fopen(const char *gamename, const char *filename, int filetype, int op
 #ifndef MESS
 				int flags = FILEFLAG_OPENREAD;
 #else
-				int flags = FILEFLAG_CAN_BE_ABSOLUTE | FILEFLAG_CRC | FILEFLAG_OPEN_ZIPS;
+				int flags = FILEFLAG_CAN_BE_ABSOLUTE | FILEFLAG_OPEN_ZIPS;
 				switch(openforwrite) {
 				case OSD_FOPEN_READ:
-					flags |= FILEFLAG_OPENREAD;
+					flags |= FILEFLAG_OPENREAD | FILEFLAG_CRC;
 					break;
 
 				case OSD_FOPEN_WRITE:
@@ -1496,7 +1496,11 @@ static void *generic_fopen(int pathc, const char **pathv, const char *gamename, 
 			compose_path(name, dir_name, gamename, filename, extension);
 
 			// if we need a CRC, load it into RAM and compute it along the way
+#ifdef MESS
+			if ((flags & FILEFLAG_CRC) && !((flags & FILEFLAG_OPEN_ZIPS) && is_zipfile(name)))
+#else
 			if (flags & FILEFLAG_CRC)
+#endif
 			{
 				if (checksum_file(name, &file.data, &file.length, &file.crc) == 0)
 				{
