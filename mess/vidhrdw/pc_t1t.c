@@ -32,7 +32,7 @@
 
 static PALETTE_INIT( pcjr );
 static VIDEO_START( pc_t1t );
-static pc_video_update_proc pc_t1t_choosevideomode(int *xfactor, int *yfactor);
+static pc_video_update_proc pc_t1t_choosevideomode(int *width, int *height);
 
 /***************************************************************************
 
@@ -233,8 +233,7 @@ static struct crtc6845_config config= { 14318180 /*?*/, pc_t1t_cursor };
 
 static VIDEO_START( pc_t1t )
 {
-	videoram_size = 0x8000;
-	return pc_video_start(&config, pc_t1t_choosevideomode) ? INIT_PASS : INIT_FAIL;
+	return pc_video_start(&config, pc_t1t_choosevideomode, 0x8000) ? INIT_PASS : INIT_FAIL;
 }
 
 READ_HANDLER ( pc_t1t_videoram_r )
@@ -576,7 +575,7 @@ static void t1t_text_inten(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 						k=cursor.bottom-cursor.top+1;
 
 					if (k>0)
-						plot_box(Machine->scrbitmap, r.min_x, 
+						plot_box(bitmap, r.min_x, 
 									r.min_y+cursor.top, 
 									8, k, Machine->pens[7]);
 				}
@@ -634,7 +633,7 @@ static void t1t_text_blink(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 						k = cursor.bottom - cursor.top + 1;
 
 					if (k>0)
-						plot_box(Machine->scrbitmap, r.min_x, 
+						plot_box(bitmap, r.min_x, 
 							r.min_y+cursor.top, 
 							8, k, Machine->pens[7]);
 				}
@@ -831,12 +830,11 @@ static void t1t_gfx_4bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
   Choose the appropriate video mode
 ***************************************************************************/
 
-static pc_video_update_proc pc_t1t_choosevideomode(int *xfactor, int *yfactor)
+static pc_video_update_proc pc_t1t_choosevideomode(int *width, int *height)
 {
+	int xfactor = 8;
+	int yfactor = 1;
 	pc_video_update_proc proc = NULL;
-
-	*xfactor = 8;
-	*yfactor = 1;
 
 	switch( pcjr.mode_control & 0x3b ) {
 	case 0x08:
@@ -858,12 +856,12 @@ static pc_video_update_proc pc_t1t_choosevideomode(int *xfactor, int *yfactor)
 
 		case 0x80:
 			proc = t1t_gfx_4bpp;
-			*xfactor = 4;
+			xfactor = 4;
 			break;
 
 		case 0xc0:
 			proc = t1t_gfx_4bpp;
-			*xfactor = 4;
+			xfactor = 4;
 			break;
 		}
 		break;
@@ -874,7 +872,7 @@ static pc_video_update_proc pc_t1t_choosevideomode(int *xfactor, int *yfactor)
 		case 0x00:	/* hmm.. text in graphics? */
 		case 0x40:
 			proc = t1t_gfx_1bpp;
-			*xfactor = 16;
+			xfactor = 16;
 			break;
 
 		case 0x80:
@@ -884,5 +882,8 @@ static pc_video_update_proc pc_t1t_choosevideomode(int *xfactor, int *yfactor)
         }
 		break;
     }
+
+	*width *= xfactor;
+	*height *= yfactor;
 	return proc;
 }

@@ -187,7 +187,7 @@ void pc_mda_europc_init(void)
 VIDEO_START( pc_mda )
 {
 	pc_mda_init_video();
-	return pc_video_start(&config, pc_mda_choosevideomode) ? INIT_PASS : INIT_FAIL;
+	return pc_video_start(&config, pc_mda_choosevideomode, 0) ? INIT_PASS : INIT_FAIL;
 }
 
 /*
@@ -308,7 +308,7 @@ static void mda_text_inten(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 					if (cursor.bottom<height) k=cursor.bottom-cursor.top+1;
 
 					if (k>0)
-						plot_box(Machine->scrbitmap, r.min_x, 
+						plot_box(bitmap, r.min_x, 
 								 r.min_y+cursor.top, 
 								 char_width, k, Machine->pens[2/*?*/]);
 				}
@@ -370,7 +370,7 @@ static void mda_text_blink(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 					if (cursor.bottom<height) k=cursor.bottom-cursor.top+1;
 
 					if (k>0)
-						plot_box(Machine->scrbitmap, r.min_x, 
+						plot_box(bitmap, r.min_x, 
 								 r.min_y+cursor.top, 
 								 char_width, k, Machine->pens[2/*?*/]);
 				}
@@ -466,23 +466,23 @@ static void hercules_gfx(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 /***************************************************************************
   Choose the appropriate video mode
 ***************************************************************************/
-pc_video_update_proc pc_mda_choosevideomode(int *xfactor, int *yfactor)
+pc_video_update_proc pc_mda_choosevideomode(int *width, int *height)
 {
 	pc_video_update_proc proc = NULL;
 
 	switch (mda.mode_control & 0x2a) { /* text and gfx modes */
 	case 0x08:
 		proc = mda_text_inten;
-		*xfactor = Machine->scrbitmap->width / 80;
+		*width *= Machine->scrbitmap->width / 80;
 		break;
 	case 0x28:
 		proc = mda_text_blink;
-		*xfactor = Machine->scrbitmap->width / 80;
+		*width *= Machine->scrbitmap->width / 80;
 		break;
 	case 0x0a:
 	case 0x2a:
 		proc = hercules_gfx;
-		*xfactor = 16;
+		*width *= 16;
 		break;
     }
 	return proc;

@@ -30,6 +30,7 @@
 
 #include "includes/crtc6845.h"
 #include "includes/pc_vga.h"
+#include "includes/pc_video.h"
 #include "mscommon.h"
 
 /***************************************************************************
@@ -61,8 +62,8 @@ static PALETTE_INIT( ega );
 static PALETTE_INIT( vga );
 static VIDEO_START( ega );
 static VIDEO_START( vga );
-static VIDEO_UPDATE( ega );
-static VIDEO_UPDATE( vga );
+static pc_video_update_proc pc_vga_choosevideomode(int *width, int *height);
+static pc_video_update_proc pc_ega_choosevideomode(int *width, int *height);
 
 /***************************************************************************
 
@@ -169,7 +170,7 @@ MACHINE_DRIVER_START( pcvideo_vga )
 	MDRV_PALETTE_INIT(vga)
 
 	MDRV_VIDEO_START(vga)
-	MDRV_VIDEO_UPDATE(vga)
+	MDRV_VIDEO_UPDATE(pc_video)
 MACHINE_DRIVER_END
 
 MACHINE_DRIVER_START( pcvideo_pc1640 )
@@ -181,7 +182,7 @@ MACHINE_DRIVER_START( pcvideo_pc1640 )
 	MDRV_PALETTE_INIT(ega)
 
 	MDRV_VIDEO_START(ega)
-	MDRV_VIDEO_UPDATE(ega)
+	MDRV_VIDEO_UPDATE(pc_video)
 MACHINE_DRIVER_END
 
 /***************************************************************************/
@@ -1000,12 +1001,13 @@ static void vga_timer(int param)
 
 VIDEO_START( ega )
 {
-	vga.monitor.get_clock=ega_get_clock;
-	vga.monitor.get_lines=ega_get_crtc_lines;
-	vga.monitor.get_columns=ega_get_crtc_columns;
-	vga.monitor.get_sync_lines=vga_get_crtc_sync_lines;
-	vga.monitor.get_sync_columns=vga_get_crtc_sync_columns;
-	timer_pulse(1.0/60,0,vga_timer);
+	vga.monitor.get_clock = ega_get_clock;
+	vga.monitor.get_lines = ega_get_crtc_lines;
+	vga.monitor.get_columns = ega_get_crtc_columns;
+	vga.monitor.get_sync_lines = vga_get_crtc_sync_lines;
+	vga.monitor.get_sync_columns = vga_get_crtc_sync_columns;
+	timer_pulse(1.0/60, 0, vga_timer);
+	pc_video_start(NULL, pc_ega_choosevideomode, 0);
 	return 0;
 }
 
@@ -1016,14 +1018,15 @@ VIDEO_START( vga )
 	vga.monitor.get_columns=vga_get_crtc_columns;
 	vga.monitor.get_sync_lines=vga_get_crtc_sync_lines;
 	vga.monitor.get_sync_columns=vga_get_crtc_sync_columns;
-	timer_pulse(1.0/60,0,vga_timer);
+	timer_pulse(1.0/60, 0, vga_timer);
+	pc_video_start(NULL, pc_vga_choosevideomode, 0);
 	return 0;
 }
 
 #define myMIN(a, b) ((a) < (b) ? (a) : (b))
 #define myMAX(a, b) ((a) > (b) ? (a) : (b))
 
-static void vga_vh_text(struct mame_bitmap *bitmap)
+static void vga_vh_text(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
 	UINT8 ch, attr;
 	UINT8 bits;
@@ -1083,14 +1086,14 @@ static void vga_vh_text(struct mame_bitmap *bitmap)
 					 (h<=CRTC6845_CURSOR_BOTTOM)&&(h<height)&&(line+h<TEXT_LINES);
 					 h++)
 				{
-					plot_box(Machine->scrbitmap, column*width, line+h, width, 1, vga.pens[attr&0xf]);
+					plot_box(bitmap, column*width, line+h, width, 1, vga.pens[attr&0xf]);
 				}
 			}
 		}
 	}
 }
 
-static void vga_vh_ega(struct mame_bitmap *bitmap)
+static void vga_vh_ega(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
 	int pos, line, column, c, addr, i;
 	int height = CRTC6845_CHAR_HEIGHT;
@@ -1135,7 +1138,7 @@ static void vga_vh_ega(struct mame_bitmap *bitmap)
 	}
 }
 
-static void vga_vh_vga(struct mame_bitmap *bitmap)
+static void vga_vh_vga(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 {
 	int pos, line, column, c, addr;
 	UINT16 *bitmapline;
@@ -1165,45 +1168,35 @@ static void vga_vh_vga(struct mame_bitmap *bitmap)
 	}
 }
 
-VIDEO_UPDATE( ega )
+static pc_video_update_proc pc_ega_choosevideomode(int *width, int *height)
 {
-	static int columns=720, rows=480;
-	int new_columns, new_rows;
+	pc_video_update_proc proc = NULL;
 	int i;
 
 	if (CRTC_ON)
 	{
-		for (i=0; i<16;i++)
-		{
+		for (i = 0; i < 16; i++)
 			vga.pens[i]=Machine->pens[i/*vga.attribute.data[i]&0x3f*/];
-		}
+
 		if (!GRAPHIC_MODE)
 		{
-			vga_vh_text(bitmap);
-			new_rows=TEXT_LINES;
-			new_columns=TEXT_COLUMNS*CHAR_WIDTH;
+			proc = vga_vh_text;
+			*height = TEXT_LINES;
+			*width = TEXT_COLUMNS*CHAR_WIDTH;
 		}
 		else
 		{
-			vga_vh_ega(bitmap);
-			new_rows=LINES;
-			new_columns=EGA_COLUMNS*8;
-		}
-		if ((new_columns!=columns)||(new_rows!=rows))
-		{
-			rows=new_rows;
-			columns=new_columns;
-			if ((columns>100)&&(rows>100))
-				set_visible_area(0,columns-1,0, rows-1);
-			else logerror("video %d %d\n",columns, rows);
+			proc = vga_vh_ega;
+			*height = LINES;
+			*width = EGA_COLUMNS*8;
 		}
 	}
+	return proc;
 }
 
-VIDEO_UPDATE( vga )
+static pc_video_update_proc pc_vga_choosevideomode(int *width, int *height)
 {
-	static int columns=720, rows=480;
-	int new_columns, new_rows;
+	pc_video_update_proc proc = NULL;
 	int i;
 
 	if (CRTC_ON)
@@ -1212,18 +1205,18 @@ VIDEO_UPDATE( vga )
 		{
 			for (i=0; i<256;i++)
 			{
-				palette_set_color(i,(vga.dac.color[i].red&0x3f)<<2,
-									 (vga.dac.color[i].green&0x3f)<<2,
-									 (vga.dac.color[i].blue&0x3f)<<2);
+				palette_set_color(i,(vga.dac.color[i].red & 0x3f) << 2,
+									 (vga.dac.color[i].green & 0x3f) << 2,
+									 (vga.dac.color[i].blue & 0x3f) << 2);
 			}
-			vga.dac.dirty=0;
+			vga.dac.dirty = 0;
 		}
 
-		if (vga.attribute.data[0x10]&0x80)
+		if (vga.attribute.data[0x10] & 0x80)
 		{
 			for (i=0; i<16;i++)
 			{
-				vga.pens[i]=Machine->pens[(vga.attribute.data[i]&0x0f)
+				vga.pens[i] = Machine->pens[(vga.attribute.data[i]&0x0f)
 										 |((vga.attribute.data[0x14]&0xf)<<4)];
 			}
 		}
@@ -1238,41 +1231,22 @@ VIDEO_UPDATE( vga )
 
 		if (!GRAPHIC_MODE)
 		{
-			vga_vh_text(bitmap);
-			new_rows=TEXT_LINES;
-			new_columns=TEXT_COLUMNS*CHAR_WIDTH;
+			proc = vga_vh_text;
+			*height = TEXT_LINES;
+			*width = TEXT_COLUMNS * CHAR_WIDTH;
 		}
 		else if (vga.gc.data[5]&0x40)
 		{
-			vga_vh_vga(bitmap);
-			new_rows=LINES;
-			new_columns=VGA_COLUMNS*8;
+			proc = vga_vh_vga;
+			*height = LINES;
+			*width = VGA_COLUMNS * 8;
 		}
 		else
 		{
-			vga_vh_ega(bitmap);
-			new_rows=LINES;
-			new_columns=EGA_COLUMNS*8;
-		}
-
-		if ((new_columns!=columns)||(new_rows!=rows))
-		{
-			rows = new_rows;
-			columns = new_columns;
-
-			if (columns > Machine->scrbitmap->width)
-				columns = Machine->scrbitmap->width;
-			if (rows > Machine->scrbitmap->height)
-				rows = Machine->scrbitmap->height;
-
-			if ((columns > 100) && (rows > 100))
-			{
-				set_visible_area(0,columns-1,0, rows-1);
-			}
-			else
-			{
-				logerror("video %d %d\n",columns, rows);
-			}
+			proc = vga_vh_ega;
+			*height = LINES;
+			*width = EGA_COLUMNS * 8;
 		}
 	}
+	return proc;
 }

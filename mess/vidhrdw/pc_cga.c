@@ -221,7 +221,7 @@ static struct crtc6845_config config= { 14318180 /*?*/, pc_cga_cursor };
 
 VIDEO_START( pc_cga )
 {
-	return pc_video_start(&config, pc_cga_choosevideomode) ? INIT_PASS : INIT_FAIL;
+	return pc_video_start(&config, pc_cga_choosevideomode, 0) ? INIT_PASS : INIT_FAIL;
 }
 
 /*
@@ -348,7 +348,7 @@ static void cga_text_inten(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 
 					if (k>0)
 					{
-						plot_box(Machine->scrbitmap, r.min_x, 
+						plot_box(bitmap, r.min_x, 
 								 r.min_y+cursor.top, 
 								 8, k, Machine->pens[7]);
 					}
@@ -409,7 +409,7 @@ static void cga_text_blink(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 
 					if (k > 0)
 					{
-						plot_box(Machine->scrbitmap, r.min_x, 
+						plot_box(bitmap, r.min_x, 
 								 r.min_y+cursor.top, 
 								 8, k, Machine->pens[7]);
 					}
@@ -612,7 +612,7 @@ extern void pc_cga_timer(void)
 /***************************************************************************
   Choose the appropriate video mode
 ***************************************************************************/
-pc_video_update_proc pc_cga_choosevideomode(int *xfactor, int *yfactor)
+pc_video_update_proc pc_cga_choosevideomode(int *width, int *height)
 {
 	pc_video_update_proc proc = NULL;
 	pc_video_update_proc *procarray;
@@ -663,7 +663,7 @@ pc_video_update_proc pc_cga_choosevideomode(int *xfactor, int *yfactor)
 		procarray = (cga.type == TYPE_PC1512) ? videoprocs_pc1512 : videoprocs_cga;
 		proc = procarray[mode];
 
-		*xfactor = (proc == cga_gfx_1bpp) ? 16 : 8;
+		*width *= (proc == cga_gfx_1bpp) ? 16 : 8;
 	}
 	return proc;
 }

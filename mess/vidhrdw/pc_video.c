@@ -1,49 +1,58 @@
 #include "includes/pc_video.h"
 #include "vidhrdw/generic.h"
 
-static pc_video_update_proc (*pc_choosevideomode)(int *xfactor, int *yfactor);
+static pc_video_update_proc (*pc_choosevideomode)(int *width, int *height);
 static struct crtc6845 *pc_crtc;
+static int pc_anythingdirty;
 
 struct crtc6845 *pc_video_start(struct crtc6845_config *config,
-	pc_video_update_proc (*choosevideomode)(int *xfactor, int *yfactor))
+	pc_video_update_proc (*choosevideomode)(int *width, int *height),
+	size_t vramsize)
 {
 	pc_choosevideomode = choosevideomode;
-	pc_crtc = crtc6845_init(config);
+	pc_crtc = NULL;
+	pc_anythingdirty = 1;
+	videoram_size = vramsize;
+
+	if (config)
+	{
+		pc_crtc = crtc6845_init(config);
+		if (!pc_crtc)
+			return NULL;
+	}
+
+	if (videoram_size)
+	{
+		if (video_start_generic())
+			return NULL;
+	}
+
 	return pc_crtc;
 }
 
 VIDEO_UPDATE( pc_video )
 {
 	static int width=0, height=0;
-	int w, h;
-	int xfactor = 1, yfactor = 1;
+	int w = 0, h = 0;
 	pc_video_update_proc video_update;
 
-    /* draw entire scrbitmap because of usrintrf functions
-	   called osd_clearbitmap or attr change / scanline change */
-	/*if( crtc6845_do_full_refresh(cga.crtc)||full_refresh )
+	if (pc_crtc)
 	{
-		cga.full_refresh = 0;
-		memset(dirtybuffer, 1, videoram_size);
-		fillbitmap(bitmap, Machine->pens[0], &Machine->visible_area);
-    }*/
+		w = crtc6845_get_char_columns(pc_crtc);
+		h = crtc6845_get_char_height(pc_crtc) * crtc6845_get_char_lines(pc_crtc);
+	}
 
-	w = crtc6845_get_char_columns(pc_crtc);
-	h = crtc6845_get_char_height(pc_crtc) * crtc6845_get_char_lines(pc_crtc);
-
-	video_update = pc_choosevideomode(&xfactor, &yfactor);
+	video_update = pc_choosevideomode(&w, &h);
 
 	if (video_update)
 	{
-		video_update(bitmap, pc_crtc);
-
-		w *= xfactor;
-		h *= yfactor;
+		video_update(tmpbitmap ? tmpbitmap : bitmap, pc_crtc);
 
 		if ((width != w) || (height != h)) 
 		{
 			width = w;
 			height = h;
+			pc_anythingdirty = 1;
 
 			if (width > Machine->scrbitmap->width)
 				width = Machine->scrbitmap->width;
@@ -55,6 +64,13 @@ VIDEO_UPDATE( pc_video )
 			else
 				logerror("video %d %d\n",width, height);
 		}
+
+		if (tmpbitmap)
+		{
+			copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, cliprect, TRANSPARENCY_NONE, 0);
+			*do_skip = !pc_anythingdirty;
+			pc_anythingdirty = 0;
+		}
 	}
 }
 
@@ -65,5 +81,6 @@ WRITE_HANDLER ( pc_video_videoram_w )
 		videoram[offset] = data;
 		if (dirtybuffer)
 			dirtybuffer[offset] = 1;
+		pc_anythingdirty = 1;
 	}
 }
