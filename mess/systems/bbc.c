@@ -137,7 +137,7 @@ static ADDRESS_MAP_START(bbcbp_mem, ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0xfe18, 0xfe1f) AM_NOP											/*    &18-&1f  INTOFF/STATID 1 ECONET Interrupt Off / ID No. */
 	AM_RANGE(0xfe20, 0xfe2f) AM_WRITE(videoULA_w)							/* R: &20-&2f  INTON         1 ECONET Interrupt On		     */
 																			/* W: &20-&2f  Video ULA	 Video system chip				 */
-	AM_RANGE(0xfe30, 0xfe3f) AM_READWRITE(return8_FE, page_selectb_w)		/* R: &30-&3f  NC    		 Not Connected		 		     */
+	AM_RANGE(0xfe30, 0xfe3f) AM_READWRITE(return8_FE, page_selectbp_w)		/* R: &30-&3f  NC    		 Not Connected		 		     */
 																			/* W: &30-&3f  84LS161		 Paged ROM selector 			 */
 	AM_RANGE(0xfe40, 0xfe5f) AM_READWRITE(via_0_r, via_0_w)					/*    &40-&5f  6522 VIA 	 SYSTEM VIA 					 */
 	AM_RANGE(0xfe60, 0xfe7f) AM_READWRITE(via_1_r, via_1_w)					/*    &60-&7f  6522 VIA 	 1 USER VIA 					 */
@@ -166,7 +166,7 @@ static ADDRESS_MAP_START(bbcbp128_mem, ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0xfe18, 0xfe1f) AM_NOP											/*    &18-&1f  INTOFF/STATID 1 ECONET Interrupt Off / ID No. */
 	AM_RANGE(0xfe20, 0xfe2f) AM_WRITE(videoULA_w)							/* R: &20-&2f  INTON         1 ECONET Interrupt On		     */
 																			/* W: &20-&2f  Video ULA	 Video system chip				 */
-	AM_RANGE(0xfe30, 0xfe3f) AM_READWRITE(return8_FE, page_selectb_w)		/* R: &30-&3f  NC    		 Not Connected		 		     */
+	AM_RANGE(0xfe30, 0xfe3f) AM_READWRITE(return8_FE, page_selectbp_w)		/* R: &30-&3f  NC    		 Not Connected		 		     */
 																			/* W: &30-&3f  84LS161		 Paged ROM selector 			 */
 	AM_RANGE(0xfe40, 0xfe5f) AM_READWRITE(via_0_r, via_0_w)					/*    &40-&5f  6522 VIA 	 SYSTEM VIA 					 */
 	AM_RANGE(0xfe60, 0xfe7f) AM_READWRITE(via_1_r, via_1_w)					/*    &60-&7f  6522 VIA 	 1 USER VIA 					 */
@@ -970,7 +970,7 @@ static MACHINE_DRIVER_START( bbca )
 	MDRV_INTERLEAVE(1)
 
 	MDRV_MACHINE_INIT( bbca )
-	
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(800,300)
