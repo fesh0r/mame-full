@@ -209,7 +209,7 @@ struct rc_option video_opts[] = {
      "Enable/disable tranlucency" },
    { "hardware-vectors", "hwvec",		rc_int,		&use_hw_vectors,
      "1",		0,			2,		NULL,
-     "Use the videocard todo the drawing of vectors in vector games:\n0 never\n1 auto\n2 always" },
+     "Use the video card to draw the vectors in vector games:\n0 never\n1 auto\n2 always" },
    { NULL,		NULL,			rc_link,	sysdep_display_opts,
      NULL,		0,			0,		NULL,
      NULL },
