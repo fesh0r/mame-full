@@ -118,16 +118,15 @@ static void mk1_draw_9segment(struct osd_bitmap *bitmap,int value, int x, int y)
 	for (i=0, xi=0, yi=0; led[i]; i++) {
 		mask=0;
 		switch (led[i]) {
-		case 'a': mask=1; break;
-		case 'b': mask=2; break;
-		case 'c': mask=4; break;
-		case 'd': mask=8; break;
-		case 'e': mask=0x10; break;
-		case 'f': mask=0x20; break;
-		case 'g': mask=0x40; break;
+		case 'a': mask=0x80; break;
+		case 'b': mask=0x40; break;
+		case 'c': mask=0x20; break;
+		case 'd': mask=0x10; break;
+		case 'e': mask=0x08; break;
+		case 'f': mask=0x02; break;
+		case 'g': mask=0x04; break;
 		case 'h': 
-			// this is more likely wired to the separate leds
-			mask=0x80; 
+			mask=0x01; 
 			break;
 		case 'i': 
 			mask=0x100; 
