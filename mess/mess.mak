@@ -754,6 +754,8 @@ COREOBJS += \
 	$(OBJ)/mess/devices/basicdsk.o \
 	$(OBJ)/mess/devices/flopdrv.o  \
 	$(OBJ)/mess/devices/idedrive.o \
+	$(OBJ)/mess/devices/pc_flopp.o \
+	$(OBJ)/mess/devices/dsk.o      \
 	$(OBJ)/mess/machine/6551.o     \
 	$(OBJ)/mess/vidhrdw/m6847.o    \
 	$(OBJ)/mess/vidhrdw/m6845.o    \
@@ -774,12 +776,11 @@ COREOBJS += \
 	$(OBJ)/mess/machine/centroni.o \
 	$(OBJ)/mess/machine/pckeybrd.o \
 	$(OBJ)/mess/machine/pc_fdc_h.o \
-	$(OBJ)/mess/devices/pc_flopp.o \
-	$(OBJ)/mess/devices/dsk.o      \
 	$(OBJ)/mess/machine/d88.o      \
 	$(OBJ)/mess/machine/nec765.o   \
 	$(OBJ)/mess/machine/wd179x.o   \
-	$(OBJ)/mess/machine/serial.o
+	$(OBJ)/mess/machine/serial.o   \
+	$(OBJ)/mess/formats/wavfile.o
 
 
 # additional tools

@@ -7,6 +7,7 @@
 
 ****************************************************************************/
 #include "driver.h"
+#include "formats/wavfile.h"
 
 /* Our private wave file structure */
 struct wave_file
@@ -26,7 +27,7 @@ struct wave_file
 	int resolution; 		/* sample resolution in bits/sample (8 or 16) */
 	int max_samples;		/* number of samples that could be stored in data */
 	int samples;
-	int length; 			/* length in bytes (max_samples * resolution / 8) */
+	UINT32 length; 			/* length in bytes (max_samples * resolution / 8) */
 	void *data; 			/* sample data */
 	int status;				/* other status (mute, motor inhibit) */
 };
@@ -72,50 +73,28 @@ static int wave_read(mess_image *img)
 	UINT16 channels, blockAlign, bitsPerSample, temp16;
 	unsigned sample_padding;
 	char buf[32];
+	struct wav_header hdr;
+	struct wav_tag tag;
 
     /* read the core header and make sure it's a WAVE file */
-	offset += mame_fread(image_fp(img), buf, 4);
-	if( offset < 4 )
+	offset += mame_fread(image_fp(img), &hdr, sizeof(hdr));
+	if (offset < sizeof(hdr))
 	{
 		logerror("WAVE read error at offs %d\n", offset);
 		return WAVE_ERR;
 	}
-	if( memcmp (&buf[0], "RIFF", 4) != 0 )
+	filesize = wavfile_decode_header(&hdr);
+	if (filesize == 0)
 	{
-		logerror("WAVE header not 'RIFF'\n");
+		logerror("WAVE header error\n");
 		return WAVE_FMT;
     }
-
-	/* get the total size */
-	offset += mame_fread(image_fp(img), &temp32, 4);
-	if( offset < 8 )
-	{
-		logerror("WAVE read error at offs %d\n", offset);
-		return WAVE_ERR;
-	}
-	filesize = LITTLE_ENDIANIZE_INT32(temp32);
-	logerror("WAVE filesize %u bytes\n", filesize);
-
-	/* read the RIFF file type and make sure it's a WAVE file */
-	offset += mame_fread(image_fp(img), buf, 4);
-	if( offset < 12 )
-	{
-		logerror("WAVE read error at offs %d\n", offset);
-		return WAVE_ERR;
-	}
-	if( memcmp (&buf[0], "WAVE", 4) != 0 )
-	{
-		logerror("WAVE RIFF type not 'WAVE'\n");
-		return WAVE_FMT;
-	}
 
 	/* seek until we find a format tag */
 	while( 1 )
 	{
-		offset += mame_fread(image_fp(img), buf, 4);
-		offset += mame_fread(image_fp(img), &temp32, 4);
-		w->length = LITTLE_ENDIANIZE_INT32(temp32);
-		if( memcmp(&buf[0], "fmt ", 4) == 0 )
+		offset += mame_fread(image_fp(img), &tag, sizeof(tag));
+		if (wavfile_decode_tag(&tag, &w->length) == WAV_TAGTYPE_FMT)
 			break;
 
 		/* seek to the next block */
@@ -130,7 +109,7 @@ static int wave_read(mess_image *img)
 
 	/* read the format -- make sure it is PCM */
 	offset += mame_fread_lsbfirst(image_fp(img), &temp16, 2);
-	if( temp16 != 1 )
+	if( temp16 != WAV_FORMAT_PCM )
 	{
 		logerror("WAVE format %d not supported (not = 1 PCM)\n", temp16);
 		return WAVE_ERR;
