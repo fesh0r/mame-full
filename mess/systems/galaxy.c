@@ -7,6 +7,7 @@ Miodrag Jevremovic.
 There is the need to find more information about this system, without it the 
 progress in developing driver is nearly impossible.
 
+19/09/2002 malloc() replaced by image_malloc().
 15/09/2002 Snapshot loading fixed. Code cleanup.
 31/01/2001 Snapshot loading corrected.
 09/01/2001 Fast mode implemented (many thanks to Kevin Thacker).
@@ -177,6 +178,8 @@ static MACHINE_DRIVER_START( galaxy )
 	MDRV_VIDEO_UPDATE( galaxy )
 MACHINE_DRIVER_END
 
+#define io_galaxy	io_NULL
+
 ROM_START (galaxy)
 	ROM_REGION (0x10000, REGION_CPU1,0)
 	ROM_LOAD ("galrom1.bin", 0x0000, 0x1000, 0x365f3e24)
@@ -185,12 +188,8 @@ ROM_START (galaxy)
 	ROM_LOAD ("galchr.bin", 0x0000, 0x0800, 0x5c3b5bb5)
 ROM_END
 
-static const struct IODevice io_galaxy[] = {
-	{ IO_END }
-};
-
 SYSTEM_CONFIG_START(galaxy)
-	CONFIG_DEVICE_SNAPSHOT	( "gal\0", 1, galaxy_snapshot_load, galaxy_snapshot_exit )
+	CONFIG_DEVICE_SNAPSHOT	( "gal\0", 1, galaxy_snapshot_load, NULL )
 SYSTEM_CONFIG_END
 
 

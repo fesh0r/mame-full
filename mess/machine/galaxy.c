@@ -130,7 +130,7 @@ int galaxy_snapshot_load(int id)
 			return INIT_FAIL;
 		}
 
-		if (!(galaxy_snapshot_data = (UINT8 *) malloc (GALAXY_SNAPSHOT_SIZE)))
+		if (!(galaxy_snapshot_data = image_malloc(IO_SNAPSHOT, id, GALAXY_SNAPSHOT_SIZE)))
 		{
 			logerror ("Unable to load snapshot file\n");
 			osd_fclose(file);
@@ -148,14 +148,6 @@ int galaxy_snapshot_load(int id)
 	return INIT_PASS;
 }
 
-void galaxy_snapshot_exit (int id)
-{
-	if (galaxy_snapshot_data)
-	{
-		free (galaxy_snapshot_data);
-		galaxy_snapshot_data = NULL;
-	}
-}
 
 /***************************************************************************
   Machine Initialization
