@@ -1532,9 +1532,13 @@ void a5200_handle_keypads(void)
 DRIVER_INIT( atari )
 {
 	offs_t ram_top;
+	offs_t ram_size;
+
+	ram_size = !strcmp(Machine->gamedrv->name, "a400") || !strcmp(Machine->gamedrv->name, "a800")
+		? 0xA000 : 0x8000;
 	
 	/* install RAM */
-	ram_top = MIN(mess_ram_size, 0x8000) - 1;
+	ram_top = MIN(mess_ram_size, ram_size) - 1;
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM,
 		0x0000, ram_top, 0, 0, MRA8_BANK2);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM,
