@@ -504,20 +504,27 @@ MACHINE_DRIVER_END
 
 ROM_START(apple2)
 	ROM_REGION(0x4700,REGION_CPU1,0)
+	ROM_LOAD_OPTIONAL ( "progaid1.rom", 0x1000, 0x0800, 0x4234e88a )
+	
+/* The area $D800-$DFFF in Apple II is reserved for 3rd party add-ons:
+   Maybe MESS should map this space to a CARTSLOT device?              */
+
 	ROM_LOAD ( "a2.e0", 0x2000, 0x0800, 0xc0a4ad3b )
 	ROM_LOAD ( "a2.e8", 0x2800, 0x0800, 0xa99c2cf6 )
 	ROM_LOAD ( "a2.f0", 0x3000, 0x0800, 0x62230d38 )
 	ROM_LOAD ( "a2.f8", 0x3800, 0x0800, 0x020a86d0 )
+	ROM_LOAD ( "disk2_33.rom", 0x4500, 0x0100, 0xce7144f6 ) /* Disk II ROM - DOS 3.3 version */
 ROM_END
 
 ROM_START(apple2p)
 	ROM_REGION(0x4700,REGION_CPU1,0)
-	ROM_LOAD ( "a2p.d0", 0x2000, 0x0800, 0x6f05f949 )
-	ROM_LOAD ( "a2p.d8", 0x2800, 0x0800, 0x1f08087c )
+	ROM_LOAD ( "a2p.d0", 0x1000, 0x0800, 0x6f05f949 )
+	ROM_LOAD ( "a2p.d8", 0x1800, 0x0800, 0x1f08087c )
 	ROM_LOAD ( "a2p.e0", 0x2000, 0x0800, 0x2b8d9a89 )
 	ROM_LOAD ( "a2p.e8", 0x2800, 0x0800, 0x5719871a )
 	ROM_LOAD ( "a2p.f0", 0x3000, 0x0800, 0x9a04eecf )
 	ROM_LOAD ( "a2p.f8", 0x3800, 0x0800, 0xecffd453 )
+	ROM_LOAD ( "disk2_33.rom", 0x4500, 0x0100, 0xce7144f6 ) /* Disk II ROM - DOS 3.3 version */
 ROM_END
 
 ROM_START(apple2e)
@@ -562,12 +569,12 @@ SYSTEM_CONFIG_START(apple2)
 SYSTEM_CONFIG_END
 
 /*     YEAR  NAME      PARENT    MACHINE   INPUT     INIT      CONFIG	COMPANY            FULLNAME */
-COMPX( 1977, apple2,   0,        apple2e,  apple2,   apple2,   apple2,	"Apple Computer", "Apple //",	GAME_NOT_WORKING)
-COMPX( 1979, apple2p,  apple2,   apple2e,  apple2,   apple2,   apple2,	"Apple Computer", "Apple //+",	GAME_NOT_WORKING)
+COMP ( 1977, apple2,   0,        apple2e,  apple2,   apple2,   apple2,	"Apple Computer", "Apple //" )
+COMP ( 1979, apple2p,  apple2,   apple2e,  apple2,   apple2,   apple2,	"Apple Computer", "Apple //+" )
 COMP ( 1983, apple2e,  0,        apple2e,  apple2,   apple2,   apple2,	"Apple Computer", "Apple //e" )
 COMP ( 1985, apple2ee, apple2e,  apple2ee, apple2,   apple2,   apple2,	"Apple Computer", "Apple //e (enhanced)" )
 COMP ( 1987, apple2ep, apple2e,  apple2ee, apple2,   apple2,   apple2,	"Apple Computer", "Apple //e (Platinum)" )
 COMP ( 1984, apple2c,  0,        apple2c,  apple2,   apple2,   apple2,	"Apple Computer", "Apple //c" )
-COMPX( 1985, apple2c0, apple2c,  apple2c,  apple2,   apple2,   apple2,	"Apple Computer", "Apple //c (3.5 ROM)",	GAME_NOT_WORKING )
+COMPX( 1985, apple2c0, apple2c,  apple2c,  apple2,   apple2,   apple2,	"Apple Computer", "Apple //c (UniDisk 3.5)",	GAME_NOT_WORKING )
 COMPX( 1988, apple2cp, apple2c,  apple2c,  apple2,   apple2,   apple2,	"Apple Computer", "Apple //c Plus",			GAME_NOT_WORKING )
 

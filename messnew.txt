@@ -4,6 +4,8 @@ New System Drivers Supported (in no particular order):
 ------------------------------------------------------
 - Myarc Geneve 9640 [Raphael Nabet]
 
+- Apple II, Apple II+ [Stefano Priore]
+
 System Driver Changes:
 ----------------------
 - [APPLE2] Enhanced models now have the M65C02 processor specified; apple2c
