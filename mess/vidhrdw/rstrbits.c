@@ -143,7 +143,7 @@ static void build_scanline1a(UINT8 *scanline, UINT8 *vram, int length, int scale
 	static int artifactcorrection[64][2] = {
 		{ 0,  0}, { 0,  0}, { 0,  8}, { 0,  3},
 		{ 5,  7}, { 5,  7}, { 1,  2}, { 1, 11},
-		{10,  8}, {10, 14}, {10, 11}, {10,  9},
+		{10,  8}, {10, 14}, {10,  9}, {10,  9},
 		{ 4,  4}, { 4, 15}, {12, 12}, {12, 15},
 
 		{ 5, 13}, { 5, 13}, {13,  0}, {13,  3},
@@ -271,7 +271,7 @@ static void map_artifact_palette(UINT16 c0, UINT16 c1, const struct rasterbits_a
 	int i, j;
 	int totalcolors, palettebase;
 	const double *table;
-	/*char*/UINT8 myrgb[3];
+	UINT8 myrgb[3];
 	UINT8 rgb0[3];
 	UINT8 rgb1[3];
 
