@@ -41,23 +41,23 @@ static struct GfxLayout fontlayout_8bit =
 struct GfxDecodeInfo vdt911_gfxdecodeinfo[] =
 {	/* array must use same order as vdt911_model_t!!! */
 	/* US */
-	{ vdt911_chr_region, vdt911_US_chr_offset, &fontlayout_7bit, 0, 2 },
+	{ vdt911_chr_region, vdt911_US_chr_offset, &fontlayout_7bit, 0, 4 },
 	/* UK */
-	{ vdt911_chr_region, vdt911_UK_chr_offset, &fontlayout_7bit, 0, 2 },
+	{ vdt911_chr_region, vdt911_UK_chr_offset, &fontlayout_7bit, 0, 4 },
 	/* French */
-	{ vdt911_chr_region, vdt911_US_chr_offset, &fontlayout_7bit, 0, 2 },
+	{ vdt911_chr_region, vdt911_US_chr_offset, &fontlayout_7bit, 0, 4 },
 	/* German */
-	{ vdt911_chr_region, vdt911_german_chr_offset, &fontlayout_7bit, 0, 2 },
+	{ vdt911_chr_region, vdt911_german_chr_offset, &fontlayout_7bit, 0, 4 },
 	/* Swedish */
-	{ vdt911_chr_region, vdt911_swedish_chr_offset, &fontlayout_7bit, 0, 2 },
+	{ vdt911_chr_region, vdt911_swedish_chr_offset, &fontlayout_7bit, 0, 4 },
 	/* Norwegian */
-	{ vdt911_chr_region, vdt911_norwegian_chr_offset, &fontlayout_7bit, 0, 2 },
+	{ vdt911_chr_region, vdt911_norwegian_chr_offset, &fontlayout_7bit, 0, 4 },
 	/* Japanese */
-	{ vdt911_chr_region, vdt911_japanese_chr_offset, &fontlayout_8bit, 0, 2 },
+	{ vdt911_chr_region, vdt911_japanese_chr_offset, &fontlayout_8bit, 0, 4 },
 	/* Arabic */
-	/*{ vdt911_chr_region, vdt911_arabic_chr_offset, &fontlayout_8bit, 0, 2 },*/
+	/*{ vdt911_chr_region, vdt911_arabic_chr_offset, &fontlayout_8bit, 0, 4 },*/
 	/* FrenchWP */
-	{ vdt911_chr_region, vdt911_frenchWP_chr_offset, &fontlayout_7bit, 0, 2 },
+	{ vdt911_chr_region, vdt911_frenchWP_chr_offset, &fontlayout_7bit, 0, 4 },
 	{ -1 }	/* end of array */
 };
 
@@ -70,8 +70,10 @@ unsigned char vdt911_palette[] =
 
 unsigned short vdt911_colortable[] =
 {
-	0, 2,
-	0, 1
+	0, 2,	/* high intensity */
+	0, 1,	/* low intensity */
+	2, 0,	/* high intensity, reverse */
+	2, 1	/* low intensity, reverse */
 };
 
 typedef struct vdt_t
@@ -90,7 +92,9 @@ typedef struct vdt_t
 	unsigned int keyboard_data_ready : 1;
 	unsigned int keyboard_interrupt_enable : 1;
 
+	unsigned int display_enable : 1;
 	unsigned int dual_intensity_enable : 1;
+	unsigned int display_cursor : 1;
 
 	unsigned int word_select : 1;
 	unsigned int previous_word_select : 1;
@@ -270,7 +274,7 @@ void vdt911_cru_w(int offset, int data, int unit)
 
 		case 0xe:
 			/* display enable */
-			/* ... */
+			vdt[unit].display_enable = data;
 			break;
 
 		case 0xf:
@@ -311,7 +315,7 @@ void vdt911_cru_w(int offset, int data, int unit)
 
 		case 0xc:
 			/* display cursor */
-			/* ... */
+			vdt[unit].display_cursor = data;
 			break;
 
 		case 0xd:
@@ -363,20 +367,39 @@ void vdt911_refresh(struct mame_bitmap *bitmap, int full_refresh, int unit, int 
 	/*if (use_8bit_charcode)
 		color = vdt[unit].dual_intensity_enable ? 1 : 0;*/
 
-	for (i=0; i<height; i++)
+	if (! vdt[unit].display_enable)
 	{
-		for (j=0; j<80; j++)
-		{
-			cur_char = vdt[unit].display_RAM[address++];
-			/* does dual intensity work with 8-bit character set? */
-			color = (vdt[unit].dual_intensity_enable && (cur_char & 0x80)) ? 1 : 0;
-			if (! use_8bit_charcode)
-				cur_char &= 0x7f;
+		struct rectangle my_rect;
 
-			drawgfx(bitmap, gfx, cur_char, color, 0, 0,
-					x+j*7, y+i*10, &Machine->visible_area, TRANSPARENCY_NONE, 0);
-		}
+		my_rect.min_x = x;
+		my_rect.max_x = x + 80*7 - 1;
+
+		my_rect.min_y = y;
+		my_rect.max_y = y + height*10 - 1;
+
+		fillbitmap(bitmap, 0, &my_rect);
 	}
+	else
+		for (i=0; i<height; i++)
+		{
+			for (j=0; j<80; j++)
+			{
+				cur_char = vdt[unit].display_RAM[address];
+				/* does dual intensity work with 8-bit character set? */
+				color = (vdt[unit].dual_intensity_enable && (cur_char & 0x80)) ? 1 : 0;
+				if (! use_8bit_charcode)
+					cur_char &= 0x7f;
+
+				/* display cursor in reverse video */
+				if (vdt[unit].display_cursor && (address == vdt[unit].cursor_address))
+					color += 2;
+
+				address++;
+
+				drawgfx(bitmap, gfx, cur_char, color, 0, 0,
+						x+j*7, y+i*10, &Machine->visible_area, TRANSPARENCY_NONE, 0);
+			}
+		}
 }
 
 

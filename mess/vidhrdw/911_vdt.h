@@ -27,7 +27,7 @@ extern unsigned short vdt911_colortable[];
 enum
 {
 	vdt911_palette_size = 3 * 3,
-	vdt911_colortable_size = 2 * 2
+	vdt911_colortable_size = 4 * 2
 };
 
 
