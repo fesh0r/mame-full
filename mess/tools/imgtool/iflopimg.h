@@ -30,6 +30,9 @@ struct ImgtoolFloppyCallbacks
 	unsigned int open_is_strict : 1;
 	unsigned int supports_creation_time : 1;
 	unsigned int supports_lastmodified_time : 1;
+	unsigned int tracks_are_called_cylinders : 1;	/* used for hard drivers */
+	unsigned int writing_untested : 1;				/* used when we support writing, but not in main build */
+	unsigned int creation_untested : 1;				/* used when we support creation, but not in main build */
 
 	imgtoolerr_t	(*create)		(imgtool_image *img, option_resolution *opts);
 	imgtoolerr_t	(*open)			(imgtool_image *img);

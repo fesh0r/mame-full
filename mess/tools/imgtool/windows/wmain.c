@@ -35,7 +35,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE prev_instance,
 		goto done;
 
 	// Initialize the Imgtool library
-	err = imgtool_create_cannonical_library(&library);
+	err = imgtool_create_cannonical_library(TRUE, &library);
 	if (!library)
 		goto done;
 	imgtool_library_sort(library, ITLS_DESCRIPTION);

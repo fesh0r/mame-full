@@ -190,7 +190,7 @@ int imgtool_validitychecks(void)
 	const struct OptionGuide *guide_entry;
 	struct imgtool_module_features features;
 
-	err = imgtool_create_cannonical_library(&library);
+	err = imgtool_create_cannonical_library(TRUE, &library);
 	if (err)
 		goto done;
 

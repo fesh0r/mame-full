@@ -449,7 +449,7 @@ void testimgtool_start_handler(const char **attributes)
 
 	if (!library)
 	{
-		err = imgtool_create_cannonical_library(&library);
+		err = imgtool_create_cannonical_library(FALSE, &library);
 		if (err)
 		{
 			report_imgtoolerr(err);

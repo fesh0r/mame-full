@@ -16,12 +16,14 @@ static imgtoolerr_t (*modules[])(imgtool_library *library) =
 };
 
 /* step 3: declare imgtool_create_cannonical_library() */
-imgtoolerr_t imgtool_create_cannonical_library(imgtool_library **library)
+imgtoolerr_t imgtool_create_cannonical_library(int omit_untested, imgtool_library **library)
 {
 	imgtoolerr_t err;
 	size_t i;
 	imgtool_library *lib;
+	struct ImageModule *module;
 
+	/* list of modules that we drop */
 	static const char *irrelevant_modules[] =
 	{
 		"coco_os9_rsdos"
@@ -46,6 +48,31 @@ imgtoolerr_t imgtool_create_cannonical_library(imgtool_library **library)
 			/ sizeof(irrelevant_modules[0]); i++)
 	{
 		imgtool_library_unlink(lib, irrelevant_modules[i]);
+	}
+
+	/* if we are omitting untested, go through and block out the functionality in question */
+	if (omit_untested)
+	{
+		module = NULL;
+		while((module = imgtool_library_iterate(lib, module)) != NULL)
+		{
+			if (module->writing_untested)
+			{
+				module->write_file = NULL;
+				module->delete_file = NULL;
+				module->create_dir = NULL;
+				module->delete_dir = NULL;
+				module->writefile_optguide = NULL;
+				module->writefile_optspec = NULL;
+				module->write_sector = NULL;
+			}
+			if (module->creation_untested)
+			{
+				module->create = NULL;
+				module->createimage_optguide = NULL;
+				module->createimage_optspec = NULL;
+			}
+		}
 	}
 
 	*library = lib;

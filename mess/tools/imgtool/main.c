@@ -856,7 +856,7 @@ int CLIB_DECL main(int argc, char *argv[])
 					goto cmderror;
 
 				/* build module library */
-				err = imgtool_create_cannonical_library(&library);
+				err = imgtool_create_cannonical_library(TRUE, &library);
 				if (err)
 				{
 					reporterror(err, NULL, NULL, NULL, NULL, NULL, NULL);

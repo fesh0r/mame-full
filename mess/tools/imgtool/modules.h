@@ -11,6 +11,6 @@
 
 #include "library.h"
 
-imgtoolerr_t imgtool_create_cannonical_library(imgtool_library **library);
+imgtoolerr_t imgtool_create_cannonical_library(int omit_untested, imgtool_library **library);
 
 #endif /* MODULES_H */

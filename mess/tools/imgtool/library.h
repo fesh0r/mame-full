@@ -72,7 +72,9 @@ struct ImageModule
 	unsigned int open_is_strict : 1;
 	unsigned int supports_creation_time : 1;
 	unsigned int supports_lastmodified_time : 1;
-	unsigned int tracks_are_called_cylinders : 1;
+	unsigned int tracks_are_called_cylinders : 1;	/* used for hard drivers */
+	unsigned int writing_untested : 1;				/* used when we support writing, but not in main build */
+	unsigned int creation_untested : 1;				/* used when we support creation, but not in main build */
 
 	imgtoolerr_t	(*open)			(imgtool_image *image, imgtool_stream *f);
 	void			(*close)		(imgtool_image *image);
@@ -126,9 +128,9 @@ const struct ImageModule *imgtool_library_findmodule(
 void *imgtool_library_alloc(imgtool_library *library, size_t mem);
 char *imgtool_library_strdup(imgtool_library *library, const char *s);
 
-const struct ImageModule *imgtool_library_iterate(
+struct ImageModule *imgtool_library_iterate(
 	imgtool_library *library, const struct ImageModule *module);
-const struct ImageModule *imgtool_library_index(
+struct ImageModule *imgtool_library_index(
 	imgtool_library *library, int i);
 
 #endif /* LIBRARY_H */

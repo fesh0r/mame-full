@@ -1252,6 +1252,7 @@ static imgtoolerr_t apple2_prodos_module_populate(imgtool_library *library, stru
 	module->open_is_strict				= 1;
 	module->supports_creation_time		= 1;
 	module->supports_lastmodified_time	= 1;
+	module->writing_untested			= 1;
 	module->image_extra_bytes			+= sizeof(struct prodos_diskinfo);
 	module->imageenum_extra_bytes		+= sizeof(struct prodos_direnum);
 	module->eoln						= EOLN_CR;
