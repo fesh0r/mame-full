@@ -51,6 +51,12 @@ static OPBASE_HANDLER(dai_opbaseoverride)
 
 /* Memory */
 
+WRITE_HANDLER( dai_stack_interrupt_circuit_w )
+{
+	tms5501_sensor (0, 1);
+	tms5501_sensor (0, 0);
+}
+
 static void dai_update_memory (int dai_rom_bank)
 {
 	cpu_setbank(2, memory_region(REGION_CPU1) + 0x010000 + dai_rom_bank*0x1000);

@@ -4,6 +4,7 @@ DAI driver by Krzysztof Strzecha and Nathan Woods
 
 What's new:
 -----------
+06.03.2004	Stack overflow interrupt added.
 05.09.2003      Rundom number generator added. Few video hardware bugs fixed.
 		Fixed few i8080 instructions, making much more BASIC games playable.
 
@@ -91,7 +92,7 @@ ADDRESS_MAP_START( dai_writemem , ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE( 0x0000, 0xbfff) AM_WRITE( MWA8_BANK1 )
 	AM_RANGE( 0xc000, 0xdfff) AM_WRITE( MWA8_ROM )
 	AM_RANGE( 0xe000, 0xefff) AM_WRITE( MWA8_ROM )
-	AM_RANGE( 0xf000, 0xf7ff) AM_WRITE( MWA8_NOP )
+	AM_RANGE( 0xf000, 0xf7ff) AM_WRITE( dai_stack_interrupt_circuit_w )
 	AM_RANGE( 0xf800, 0xf8ff) AM_WRITE( MWA8_RAM )
 	AM_RANGE( 0xfb00, 0xfbff) AM_WRITE( amd9511_w )
 	AM_RANGE( 0xfc00, 0xfcff) AM_WRITE( pit8253_0_w )
@@ -242,5 +243,5 @@ SYSTEM_CONFIG_START(dai)
 SYSTEM_CONFIG_END
 
 
-/*     YEAR  NAME	PARENT  COMPAT	MACHINE	INPUT	INIT	CONFIG	COMPANY	FULLNAME */
-COMP( 1978, dai,	0,      0,		dai,	dai,	dai,	dai,	"Data Applications International",	"DAI Personal Computer")
+/*    YEAR  NAME PARENT  COMPAT	MACHINE	INPUT	INIT	CONFIG	COMPANY				   FULLNAME */
+COMP( 1978, dai, 0,      0,	dai,	dai,	dai,	dai,	"Data Applications International", "DAI Personal Computer")
