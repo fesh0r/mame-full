@@ -11,7 +11,7 @@ BETA_VERSION = -DBETA_VERSION=9
 # RELEASE_CANDIDATE = -DRELEASE_CANDIDATE=1
 
 # uncomment out the MAME_DEBUG = line to build a version of MAME for debugging games
-# MAME_DEBUG = -DMAME_DEBUG
+MAME_DEBUG = -DMAME_DEBUG
 
 # if MAME_MMX is defined, MMX will be compiled in
 MAME_MMX = -DMAME_MMX
@@ -43,7 +43,7 @@ ASMFLAGS = -f win32
 ASMDEFS =
 
 # uncomment out the DEBUG = line to build a debugging version of mame32.
-# DEBUG = 1
+DEBUG = 1
 
 # uncomment next line to do a smaller compile including only one driver
 # TINY_COMPILE = 1

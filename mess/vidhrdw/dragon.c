@@ -48,7 +48,6 @@ static int coco3_borderred, coco3_bordergreen, coco3_borderblue;
 static int sam_videomode;
 static int coco3_somethingdirty;
 static int coco3_blinkstatus;
-static struct GfxElement *coco3font;
 
 #define MAX_HIRES_VRAM	57600
 
@@ -218,11 +217,6 @@ int coco3_vh_start(void)
 	m6847_set_vram(memory_region(REGION_CPU1) + 0x70000, 0xffff);
 	m6847_set_artifact_dipswitch(12);
 
-	if ((coco3font = build_coco3_font())==NULL) {
-		paletteram = NULL;
-		return 1;
-	}
-
 	paletteram = malloc(16 * sizeof(int));
 	if (!paletteram)
 		return 1;
@@ -367,11 +361,6 @@ static void coco3_vh_palette_recompute(void)
 	int i;
 	for (i = 0; i < 16; i++)
 		coco3_vh_palette_change_color(i, paletteram[i]);
-}
-
-static void coco3_vh_drawborder(struct osd_bitmap *bitmap, int screenx, int screeny)
-{
-	internal_m6847_drawborder(bitmap, screenx, screeny, 16);
 }
 
 static int coco3_vh_setborder(int red, int green, int blue)
@@ -535,6 +524,44 @@ static void log_video(void)
 }
 #endif
 
+static UINT8 *coco3_textmapper_noattr(UINT8 *mem, int param, int *fg, int *bg, int *attr)
+{
+	UINT8 *result;
+	UINT8 *RAM;
+	int b;
+	
+	RAM = (UINT8 *) param;
+	b = (*mem) & 0x7f;
+	if (b < 32) {
+		/* Characters 0-31 are at $FA10 - $FB0F */
+		result = &RAM[0x80000 + 0xfa10 - 0x8000 + (b * 8)];
+	}
+	else {
+		/* Characters 32-127 are at $F09D - $F39C */
+		result = &RAM[0x80000 + 0xf09d - 0x8000 + ((b - 32) * 8)];
+	}
+	return result;
+}
+
+static UINT8 *coco3_textmapper_attr(UINT8 *mem, int param, int *fg, int *bg, int *attr)
+{
+	int b;
+	int a;
+
+	b = mem[1];
+	*bg = b & 0x07;
+	*fg = 8 + ((b & 0x38) >> 3);
+
+	a = 0;
+	if (b & 0x80)
+		a |= RASTERBITS_CHARATTR_BLINKING;
+	if (b & 0x40)
+		a |= RASTERBITS_CHARATTR_UNDERLINE;
+	*attr = a;
+	
+	return coco3_textmapper_noattr(mem, param, NULL, NULL, NULL);
+}
+
 /*
  * All models of the CoCo has 262 scan lines.  However, we pretend that it has
  * 240 so that the emulation fits on a 640x480 screen
@@ -552,7 +579,6 @@ void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	};
 	static int old_cmprgb;
 	int cmprgb, i;
-	int use_mark_dirty;
 
 	/* Did the user change between CMP and RGB? */
 	cmprgb = readinputport(12) & 0x08;
@@ -570,27 +596,15 @@ void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 	if (coco3_hires) {
 		static int last_blink;
-		int blink_switch=0;
-		int vidbase, bytesperrow, linesperrow, rows = 0, x, y, basex = 0, basey, wf = 0;
-		int use_attr, charsperrow = 0, underlined = 0;
-		int visualbytesperrow;
+		int linesperrow, rows = 0;
 		int borderred, bordergreen, borderblue;
-		UINT8 *vram, *db;
-		UINT8 b;
-
-		vidbase = coco3_hires_vidbase();
-		if (coco3_gimevhreg[7] & 0x80) {
-			bytesperrow = 256;
-		}
-		else {
-			bytesperrow = 0;
-
-		}
+		int visualbytesperrow;
+		struct rasterbits_source rs;
+		struct rasterbits_videomode rvm;
+		struct rasterbits_frame rf;
 
 		rows = coco3_calculate_rows();
 		linesperrow = coco3_hires_linesperrow();
-
-		basey = (bitmap->height - rows) / 2;
 
 		/* check border */
 		coco3_compute_color(coco3_gimevhreg[2] & 0x3f, &borderred, &bordergreen, &borderblue);
@@ -606,184 +620,82 @@ void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 #endif
 		}
 
-		/* Draw border if appropriate */
-		if (full_refresh)
-			coco3_vh_drawborder(bitmap, coco3_gimevhreg[1] & 0x04 ? 640 : 512, rows * linesperrow);
+		/*
+		 * TODO - We should support the case where there is a rounding
+		 * error when rows is divided by linesperrow
+		 */
 
-		use_mark_dirty = 1;
+		rs.videoram = RAM;
+		rs.size = 0x80000;
+		rs.position = coco3_hires_vidbase();
+		rs.db = full_refresh ? NULL : dirtybuffer;
+		rvm.height = rows / linesperrow;
+		rvm.metapalette = NULL;
+		rvm.flags = (coco3_gimevhreg[0] & 0x80) ? RASTERBITS_FLAG_GRAPHICS : RASTERBITS_FLAG_TEXT;
+		rf.width = (coco3_gimevhreg[1] & 0x04) ? 640 : 512;
+		rf.height = rows;
+		rf.border_pen = full_refresh ? Machine->pens[16] : -1;
 
-		switch(coco3_gimevhreg[0] & 0x80) {
-		case 0x00:	/* Text */
-			if (full_refresh)
-				memset(dirtybuffer, 1, MAX_HIRES_VRAM);
-
-			use_attr = coco3_gimevhreg[1] & 1;
-			if (use_attr) {
-				/* Resolve blink */
-				blink_switch = coco3_blinkstatus == last_blink;
-				last_blink = coco3_blinkstatus;
-			}
-			else {
-				/* Set colortable to be default */
-				coco3font->colortable[0] = Machine->pens[0];
-				coco3font->colortable[1] = Machine->pens[1];
-				underlined = 0;
-			}
-
-			if (coco3_somethingdirty) {
-				rows /= 8;
-				switch(coco3_gimevhreg[1] & 0x14) {
-				case 0x14:
-					charsperrow = 80;
-					basex = (bitmap->width - 640) / 2;
-					wf = 1;
-					break;
-				case 0x10:
-					charsperrow = 64;
-					basex = (bitmap->width - 512) / 2;
-					wf = 1;
-					break;
-				case 0x04:
-					charsperrow = 40;
-					basex = (bitmap->width - 640) / 2;
-					wf = 2;
-					break;
-				case 0x00:
-					charsperrow = 32;
-					basex = (bitmap->width - 512) / 2;
-					wf = 2;
-					break;
-				}
-				if (!bytesperrow)
-					bytesperrow = charsperrow * (use_attr + 1);
-
-				for (y = 0; y < rows; y++) {
-					i = y * bytesperrow;
-					vram = &RAM[(vidbase + i) & 0x7FFFF];
-					db = dirtybuffer + i;
-
-					for (x = 0; x < charsperrow; x++) {
-						if (db[0] || (use_attr && (db[1] || (blink_switch && (vram[1] & 0x80))))) {
-							b = *vram & 0x7f;
-
-							if (use_attr) {
-								coco3font->colortable[0] = Machine->pens[vram[1] & 7];
-								coco3font->colortable[1] = Machine->pens[8 + ((vram[1] >> 3) & 7)];
-
-								/* Are we blinking? */
-								if (coco3_blinkstatus && (vram[1] & 0x80)) {
-									b = 0x20;
-									underlined = 0;
-								}
-								else {
-									/* Are we underlined? */
-									underlined = vram[1] & 0x40;
-								}
-							}
-
-							drawgfx_wf(bitmap, coco3font, b, x*8*wf+basex, y*8+basey, 0, TRANSPARENCY_NONE, 0, wf);
-							if (underlined)
-								drawgfx_wf(bitmap, coco3font, 128, x*8*wf+basex, y*8+basey, 0, TRANSPARENCY_PEN, 0, wf);
-							if (use_mark_dirty)
-								osd_mark_dirty(x*8*wf+basex, y*8+basey, (x+1)*8*wf-1+basex, y*8+7+basey);
-
-							db[0] = 0;
-							if (use_attr)
-								db[1] = 0;
-						}
-						vram++;
-						db++;
-						vram += use_attr;
-						db += use_attr;
-
-						if (vram > &RAM[0x80000])
-							vram -= 0x80000;
-					}
-				}
-				coco3_somethingdirty = 0;
-			}
-			break;
-
-		case 0x80:	/* Graphics */
-			visualbytesperrow = 16 << ((coco3_gimevhreg[1] & 0x18) >> 3);
+		if (coco3_gimevhreg[0] & 0x80) {
+			/* Graphics */
+			rvm.flags = RASTERBITS_FLAG_GRAPHICS;
 			switch(coco3_gimevhreg[1] & 3) {
 			case 0:
 				/* Two colors */
-				wf = 64 / visualbytesperrow;
+				rvm.depth = 1;
 				break;
 			case 1:
 				/* Four colors */
-				wf = 128 / visualbytesperrow;
+				rvm.depth = 2;
 				break;
 			case 2:
-			case 3:
 				/* Sixteen colors */
-				wf = 256 / visualbytesperrow;
-
-				/* BUG - 'case 3' should actually show just a blank screen */
+				rvm.depth = 4;
+				break;
+			case 3:
+				/* Blank screen */
+				/* TODO - Draw a blank screen! */
+				rvm.depth = 4;
 				break;
 			}
+			visualbytesperrow = 16 << ((coco3_gimevhreg[1] & 0x18) >> 3);
+		}
+		else {
+			/* Text */
+			rvm.flags = RASTERBITS_FLAG_TEXT;
+			visualbytesperrow = (coco3_gimevhreg[1] & 0x10) ? 64 : 32;
 
-			if (coco3_gimevhreg[1] & 0x04) {
-				visualbytesperrow |= (visualbytesperrow / 4);
-				basex = (bitmap->width - 640) / 2;
+			if (coco3_gimevhreg[1] & 1) {
+				/* With attributes */
+				rvm.depth = 16;
+				rvm.u.text.mapper = coco3_textmapper_attr;
+				visualbytesperrow *= 2;
+
+				if (coco3_blinkstatus != last_blink)
+					rvm.flags |= RASTERBITS_FLAG_BLINKNOW;
+				if (coco3_blinkstatus)
+					rvm.flags |= RASTERBITS_FLAG_BLINKING;
+				last_blink = coco3_blinkstatus;				
 			}
 			else {
-				basex = (bitmap->width - 512) / 2;
+				/* Without attributes */
+				rvm.depth = 8;
+				rvm.u.text.mapper = coco3_textmapper_noattr;
 			}
-
-			if (!bytesperrow)
-				bytesperrow = visualbytesperrow;
-
-			/*
-			 * TODO - We should support the case where there is a rounding
-			 * error when rows is divided by linesperrow
-			 */
-			{
-				struct rasterbits_source rs;
-				struct rasterbits_videomode rvm;
-				struct rasterbits_frame rf;
-
-				rs.videoram = RAM;
-				rs.size = 0x80000;
-				rs.position = vidbase;
-				rs.db = full_refresh ? NULL : dirtybuffer;
-				rvm.bytesperrow = bytesperrow;
-				rvm.height = rows / linesperrow;
-				rvm.metapalette = NULL;
-				rvm.flags = RASTERBITS_FLAG_GRAPHICS;
-				rf.width = (coco3_gimevhreg[1] & 0x04) ? 640 : 512;
-				rf.height = rows;
-				rf.border_pen = -1;
-
-				switch(coco3_gimevhreg[1] & 3) {
-				case 0:
-					/* Two colors */
-					rvm.depth = 1;
-					break;
-				case 1:
-					/* Four colors */
-					rvm.depth = 2;
-					break;
-				case 2:
-					/* Sixteen colors */
-					rvm.depth = 4;
-					break;
-				case 3:
-					/* Blank screen */
-					/* TODO - Draw a blank screen! */
-					rvm.depth = 4;
-					break;
-				}
-				rvm.width = visualbytesperrow * 8 / rvm.depth;
-				raster_bits(bitmap, &rs, &rvm, &rf, NULL);
-			}
-
-
-			if (full_refresh)
-				memset(dirtybuffer, 0, ((rows + linesperrow - 1) / linesperrow) * bytesperrow);
-			break;
+			rvm.u.text.mapper_param = (int) RAM;
+			rvm.u.text.modulo = 8;
 		}
+
+		if (coco3_gimevhreg[1] & 0x04)
+			visualbytesperrow |= (visualbytesperrow / 4);
+
+		rvm.width = visualbytesperrow * 8 / rvm.depth;
+		rvm.bytesperrow = (coco3_gimevhreg[7] & 0x80) ? 256 : visualbytesperrow;
+
+		raster_bits(bitmap, &rs, &rvm, &rf, NULL);
+
+		if (full_refresh)
+			memset(dirtybuffer, 0, ((rows + linesperrow - 1) / linesperrow) * rvm.bytesperrow);
 	}
 	else {
 		int borderred, bordergreen, borderblue;
@@ -792,12 +704,10 @@ void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 		full_refresh += coco3_vh_setborder(borderred, bordergreen, borderblue);
 		if (palette_recalc())
 			full_refresh = 1;
-		if (full_refresh)
-			coco3_vh_drawborder(bitmap, 512, 192);
 
 		internal_m6847_vh_screenrefresh(bitmap, full_refresh, coco3_metapalette,
 			&RAM[coco3_lores_vidbase()], &the_state,
-			TRUE, (bitmap->width - 512) / 2, (bitmap->height - 192) / 2, 2,
+			TRUE, (full_refresh ? 16 : -1), 2,
 			artifacts[readinputport(12) & 3]);
 	}
 }

@@ -20,8 +20,8 @@ enum {
 											 * metapalette is of a size twice the size the depth would imply */
 
 	/* text flags */
-	RASTERBITS_FLAG_BLINKNOW		= 0x02, /* this frame, we are now blinking */
-	RASTERBITS_FLAG_BLINKING		= 0x04	/* we are currently blinking */
+	RASTERBITS_FLAG_BLINKNOW		= 0x02, /* this frame represents a transition frame (blinking <==> non-blinking) */
+	RASTERBITS_FLAG_BLINKING		= 0x04	/* we are currently blinking (i.e. - blinking out) */
 };
 
 enum {

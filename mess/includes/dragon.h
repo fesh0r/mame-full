@@ -8,11 +8,10 @@
  * ----------------------------------------------------------------------- */
 
 typedef void (*artifactproc)(int *artifactcolors);
-void internal_m6847_drawborder(struct osd_bitmap *bitmap, int screenx, int screeny, int pen);
 int internal_m6847_vh_start(int maxvram);
 void internal_m6847_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh,
 	const int *metapalette, UINT8 *vrambase, struct m6847_state *currentstate,
-	int has_lowercase, int basex, int basey, int wf, artifactproc artifact);
+	int has_lowercase, int border_color, int wf, artifactproc artifact);
 
 /* ----------------------------------------------------------------------- *
  * from vidhrdw/dragon.c                                                   *

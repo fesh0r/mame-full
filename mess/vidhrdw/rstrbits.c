@@ -378,7 +378,7 @@ static void raster_text(struct osd_bitmap *bitmap, struct rasterbits_source *src
 	UINT8 *db;
 	UINT8 b;
 	UINT8 *thechar;
-	int fg, bg, attr;
+	int fg, bg, fgc, bgc, attr;
 	int additionalrowbytes;
 	int c[16];
 
@@ -390,6 +390,8 @@ static void raster_text(struct osd_bitmap *bitmap, struct rasterbits_source *src
 
 	bytesperchar = mode->depth / 8;
 	db = src->db;
+	fg = 0;
+	bg = 0;
 	attr = 0;
 
 	/* Build up our pen table; save some work later */
@@ -417,15 +419,15 @@ drawchar:
 #if COUNTDIRTYCHARS
 				dirtychars++;
 #endif
-				if ((mode->flags & RASTERBITS_FLAG_BLINKNOW) && (attr & RASTERBITS_CHARATTR_BLINKING))
+				if ((mode->flags & RASTERBITS_FLAG_BLINKING) && (attr & RASTERBITS_CHARATTR_BLINKING))
 					thechar = NULL;
 
 				charleft = x * scalex + basex;
 
 				if (thechar) {
 					/* We're a bonafide character */
-					fg = c[fg];
-					bg = c[bg];
+					fgc = c[fg];
+					bgc = c[bg];
 					for (yi = chartop; yi <= charbottom; yi++) {
 						if ((attr & RASTERBITS_CHARATTR_UNDERLINE) && (yi == charbottom))
 							b = 0xff;
@@ -434,14 +436,14 @@ drawchar:
 
 						switch(b) {
 						case 0x00:
-							plot_box(bitmap, charleft, yi, scalex, 1, bg);
+							plot_box(bitmap, charleft, yi, scalex, 1, bgc);
 							break;
 						case 0xff:
-							plot_box(bitmap, charleft, yi, scalex, 1, fg);
+							plot_box(bitmap, charleft, yi, scalex, 1, fgc);
 							break;
 						default:
 							for (xi = 0; xi < scalex; xi+=(scalex/8)) {
-								plot_box(bitmap, xi + charleft, yi, scalex / 8, 1, (b & 0x80) ? fg : bg);
+								plot_box(bitmap, xi + charleft, yi, scalex / 8, 1, (b & 0x80) ? fgc : bgc);
 								b <<= 1;
 							}
 							break;

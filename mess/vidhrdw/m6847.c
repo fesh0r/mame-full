@@ -372,14 +372,10 @@ static UINT8 *mapper_text(UINT8 *mem, int param, int *fg, int *bg, int *attr)
  */
 void internal_m6847_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh,
 	const int *metapalette, UINT8 *vrambase, struct m6847_state *currentstate,
-	int has_lowercase, int basex, int basey, int wf, artifactproc artifact)
+	int has_lowercase, int border_color, int wf, artifactproc artifact)
 {
-//	int x, y, fg, bg, x2, y2;
 	int artifacting;
-//	UINT8 *db;
-//	UINT8 b;
 	int artifactpalette[4];
-//	UINT8 *cptr;
 	int vrampos;
 	int vramsize;
 	int video_rowheight;
@@ -404,7 +400,7 @@ void internal_m6847_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh
 	rvm.height = 192 / video_rowheight;
 	rf.width = 256 * wf;
 	rf.height = 192;
-	rf.border_pen = -1;
+	rf.border_pen = (border_color == -1) ? -1 : Machine->pens[border_color];
 
 	if (full_refresh) {
 		memset(dirtybuffer, 1, videoram_size);
@@ -467,78 +463,6 @@ void internal_m6847_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh
 			rvm.u.text.mapper_param = currentstate->video_gmode & 0x7;
 		}
 		rvm.u.text.modulo = 12;
-
-#if 0
-		UINT8 *vidram;
-
-		vidram = vrambase + vrampos;
-
-		for (y = 0; y < (192 / video_rowheight); y++) {
-			for (x = 0; x < 32; x++) {
-				if (*db) {
-					b = *vidram;
-
-					if (!has_lowercase && (currentstate->video_gmode & 0x02)) {
-						/* Semigraphics 6 */
-						bg = 8;
-						fg = ((b >> 6) & 0x3) + (currentstate->video_gmode & 0x1 ? 4: 0);
-						b = 64 + (b & 0x3f);
-					}
-					else if (*vidram & 0x80) {
-						/* Semigraphics 4 */
-						bg = 8;
-						fg = (b >> 4) & 0x7;
-						b = 128 + (b & 0x0f);
-					}
-					else {
-						/* Text */
-						bg = (currentstate->video_gmode & 0x01) ? 14 : 12;
-
-						/* On the M6847T1 and the CoCo 3 GIME chip, bit 2 of video_gmode
-						 * reversed the colors
-						 *
-						 * TODO: Find out what the normal M6847 did with bit 2
-						 */
-						if (currentstate->video_gmode & 0x04)
-							bg ^= 1;
-
-						/* Is this character lowercase or inverse? */
-						if ((currentstate->video_gmode & 0x02) && (b < 0x20)) {
-							/* This character is lowercase */
-							b += 144;
-						}
-						else if (b < 0x40) {
-							/* This character is inverse */
-							bg ^= 1;
-						}
-
-						fg = bg;
-						bg ^= 1;
-						b &= 0xbf;
-					}
-
-					cptr = &fontdata8x12[((int) b) * 12];
-					bg = Machine->pens[metapalette[bg]];
-					fg = Machine->pens[metapalette[fg]];
-
-					for (y2 = (y * video_rowheight); y2 < ((y+1) * video_rowheight); y2++) {
-						b = cptr[y2 % 12];
-						for (x2 = 0; x2 < (8*wf); x2++) {
-							plot_pixel(bitmap, x*8*wf+x2+basex, y2+basey, b & (1<<(7-(x2/wf))) ? fg : bg);
-						}
-					}
-
-					*db = 0;
-				}
-				vidram++;
-				db++;
-			}
-		}
-
-		/* Check to see if the video RAM has wrapped around */
-		if (vidram > vrambase + vramsize)
-			vidram -= vramsize;
-#endif
 	}
 	raster_bits(bitmap, &rs, &rvm, &rf, NULL);
 }
@@ -572,37 +496,7 @@ static void m6847_artifact_blue(int *artifactcolors)
 	}
 }
 
-void internal_m6847_drawborder(struct osd_bitmap *bitmap, int screenx, int screeny, int pen)
-{
-	int left, right, top, bottom;
-	int borderpen;
-	struct rectangle r;
-
-	borderpen = Machine->pens[pen];
-
-	left = (bitmap->width - screenx) / 2;
-	right = left + screenx;
-	top = (bitmap->height - screeny) / 2;
-	bottom = top + screeny;
-
-	r.min_x = 0;
-	r.min_y = 0;
-	r.max_x = bitmap->width - 1;
-	r.max_y = top-1;
-	fillbitmap(bitmap, borderpen, &r);
-	r.min_y = bottom;
-	r.max_y = bitmap->height - 1;
-	fillbitmap(bitmap, borderpen, &r);
-	r.min_y = top;
-	r.max_x = left-1;
-	r.max_y = bottom-1;
-	fillbitmap(bitmap, borderpen, &r);
-	r.min_x = right;
-	r.max_x = bitmap->width - 1;
-	fillbitmap(bitmap, borderpen, &r);
-}
-
-static void m6847_drawborder(struct osd_bitmap *bitmap, int screenx, int screeny)
+static int m6847_bordercolor(void)
 {
 	int pen = 0;
 
@@ -620,7 +514,7 @@ static void m6847_drawborder(struct osd_bitmap *bitmap, int screenx, int screeny
 		pen = 8;
 		break;
 	}
-	internal_m6847_drawborder(bitmap, screenx, screeny, pen);
+	return pen;
 }
 
 void m6847_vh_update(struct osd_bitmap *bitmap,int full_refresh)
@@ -640,12 +534,8 @@ void m6847_vh_update(struct osd_bitmap *bitmap,int full_refresh)
 
 	artifact_value = (artifact_dipswitch == -1) ? 0 : readinputport(artifact_dipswitch);
 
-	if (full_refresh)
-		m6847_drawborder(bitmap, 256, 192);
-
 	internal_m6847_vh_screenrefresh(bitmap, full_refresh, m6847_metapalette, videoram,
-		&the_state, FALSE,
-		(bitmap->width - 256) / 2, (bitmap->height - 192) / 2,
+		&the_state, FALSE, (full_refresh ? m6847_bordercolor() : -1),
 		1, artifacts[artifact_value & 3]);
 }
 
