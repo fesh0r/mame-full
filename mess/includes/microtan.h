@@ -17,6 +17,7 @@
 #include "cpu/m6502/m6502.h"
 #include "machine/6522via.h"
 #include "sound/ay8910.h"
+#include "includes/6551.h"
 
 /* from src/mess/vidhrdw/microtan.c */
 

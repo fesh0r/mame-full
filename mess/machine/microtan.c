@@ -32,8 +32,6 @@ static int snapshot_size;
 
 static void *microtan_timer = NULL;
 
-static int sio_baudrate = 110;
-
 static int via_0_irq_line = CLEAR_LINE;
 static int via_1_irq_line = CLEAR_LINE;
 static int kbd_irq_line = CLEAR_LINE;
@@ -362,7 +360,8 @@ void microtan_read_cassette(int param)
 
 READ_HANDLER( microtan_sio_r )
 {
-    int data = 0;
+    int data;
+	data = acia_6551_r(offset);
     LOG(("microtan_sio_r: %d -> %02x\n", offset, data));
     return data;
 }
@@ -370,29 +369,7 @@ READ_HANDLER( microtan_sio_r )
 WRITE_HANDLER( microtan_sio_w )
 {
     LOG(("microtan_sio_w: %d <- %02x\n", offset, data));
-    switch( offset )
-    {
-    case 2: /* baudrate */
-        switch( data )
-        {
-        case 0x91: sio_baudrate =    50; break;
-        case 0x92: sio_baudrate =    75; break;
-        case 0x93: sio_baudrate =   110; break;
-        case 0x94: sio_baudrate =   135; break;
-        case 0x95: sio_baudrate =   150; break;
-        case 0x96: sio_baudrate =   300; break;
-        case 0x97: sio_baudrate =   600; break;
-        case 0x98: sio_baudrate =  1200; break;
-        case 0x99: sio_baudrate =  1800; break;
-        case 0x9a: sio_baudrate =  2400; break;
-        case 0x9b: sio_baudrate =  3600; break;
-        case 0x9c: sio_baudrate =  4800; break;
-        case 0x9d: sio_baudrate =  7200; break;
-        case 0x9e: sio_baudrate =  9600; break;
-        case 0x9f: sio_baudrate = 19200; break;
-        }
-        break;
-    }
+	acia_6551_w(offset,data);
 }
 
 
