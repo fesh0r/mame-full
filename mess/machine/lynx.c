@@ -47,7 +47,7 @@ static void lynx_blit_2color_line(UINT8 *dest, const int xdir)
 			PLOT_PIXEL(dest, xi, blitter.color[b>>7]);
 		}
 		wi-=blitter.width;
-		
+
 		b&=~0x80;
 		for (;(wi<blitter.width);wi+=0x100, xi+=xdir) {
 			if ((xi>=0)&&(xi<160)) {
@@ -55,7 +55,7 @@ static void lynx_blit_2color_line(UINT8 *dest, const int xdir)
 			}
 		}
 		wi-=blitter.width;
-		
+
 		b&=~0x40;
 		for (;(wi<blitter.width);wi+=0x100, xi+=xdir) {
 			if ((xi>=0)&&(xi<160)) {
@@ -63,7 +63,7 @@ static void lynx_blit_2color_line(UINT8 *dest, const int xdir)
 			}
 		}
 		wi-=blitter.width;
-		
+
 		b&=~0x20;
 		for (;(wi<blitter.width);wi+=0x100, xi+=xdir) {
 			if ((xi>=0)&&(xi<160)) {
@@ -71,7 +71,7 @@ static void lynx_blit_2color_line(UINT8 *dest, const int xdir)
 			}
 		}
 		wi-=blitter.width;
-		
+
 		b&=~0x10;
 		for (;(wi<blitter.width);wi+=0x100, xi+=xdir) {
 			if ((xi>=0)&&(xi<160)) {
@@ -79,7 +79,7 @@ static void lynx_blit_2color_line(UINT8 *dest, const int xdir)
 			}
 		}
 		wi-=blitter.width;
-		
+
 		b&=~8;
 		for (;(wi<blitter.width);wi+=0x100, xi+=xdir) {
 			if ((xi>=0)&&(xi<160)) {
@@ -87,7 +87,7 @@ static void lynx_blit_2color_line(UINT8 *dest, const int xdir)
 			}
 		}
 		wi-=blitter.width;
-		
+
 		b&=~4;
 		for (;(wi<blitter.width);wi+=0x100, xi+=xdir) {
 			if ((xi>=0)&&(xi<160)) {
@@ -95,7 +95,7 @@ static void lynx_blit_2color_line(UINT8 *dest, const int xdir)
 			}
 		}
 		wi-=blitter.width;
-		
+
 		b&=~2;
 		for (;(wi<blitter.width);wi+=0x100, xi+=xdir) {
 			if ((xi>=0)&&(xi<160)) {
@@ -113,7 +113,7 @@ static void lynx_blit_4color_line(UINT8 *dest, const int xdir)
 
 	i=blitter.mem[blitter.bitmap];
 	for (xi=blitter.x, j=1, wi=0; (j<i); j++) {
-		
+
 		b=blitter.mem[blitter.bitmap+j];
 		for (;(wi<blitter.width);wi+=0x100, xi+=xdir) {
 			if ((xi>=0)&&(xi<160)) {
@@ -121,7 +121,7 @@ static void lynx_blit_4color_line(UINT8 *dest, const int xdir)
 			}
 		}
 		wi-=blitter.width;
-		
+
 		b&=~0xc0;
 		for (;(wi<blitter.width);wi+=0x100, xi+=xdir) {
 			if ((xi>=0)&&(xi<160)) {
@@ -129,7 +129,7 @@ static void lynx_blit_4color_line(UINT8 *dest, const int xdir)
 			}
 		}
 		wi-=blitter.width;
-		
+
 		b&=~0x30;
 		for (;(wi<blitter.width);wi+=0x100, xi+=xdir) {
 			if ((xi>=0)&&(xi<160)) {
@@ -137,7 +137,7 @@ static void lynx_blit_4color_line(UINT8 *dest, const int xdir)
 			}
 		}
 		wi-=blitter.width;
-		
+
 		b&=~0xc;
 		for (;(wi<blitter.width);wi+=0x100, xi+=xdir) {
 			if ((xi>=0)&&(xi<160)) {
@@ -188,7 +188,7 @@ static void lynx_blit_16color_line_odd(UINT8 *dest, const int xdir)
 			}
 		}
 		wi-=blitter.width;
-		
+
 		if ((j+1)!=i) {
 			b&=~0xf0;
 			for (;(wi<blitter.width);wi+=0x100, xi+=xdir) {
@@ -370,11 +370,11 @@ static void lynx_blit_16color_rle_line(UINT8 *dest, const int xdir)
 		}
 	}
 }
-	
+
 static void lynx_blit_lines(void)
 {
 	int i, hi, y;
-	int ydir, xdir;
+	int ydir=0, xdir=0;
 	int flip=0;
 
 	switch (blitter.mem[blitter.cmd]&0x30) {
@@ -413,7 +413,7 @@ static void lynx_blit_lines(void)
 				blitter.line_function(blitter.mem+blitter.screen+y*80,xdir);
 		}
 		hi-=blitter.height;
-	}	
+	}
 }
 
 /*
@@ -439,24 +439,24 @@ static void lynx_blit_lines(void)
   word y
   word width
   word height
-  
+
   pixel c0 90 20 0000 datapointer x y 0100 0100 color (8 colorbytes)
   4 bit direct?
   datapointer 2 10 0
   98 (0 colorbytes)
-  
+
   box c0 90 20 0000 datapointer x y width height color
   datapointer 2 10 0
 
   c1 98 00 4 bit direct without color bytes (raycast)
 
   40 10 20 4 bit rle (sprdemo2)
-  
+
   line c1 b0 20 0000 datapointer x y 0100 0100 0000 0000 color (8 color bytes)
   or
   line c0 b0 20 0000 datapointer x y 0100 0100 0000 0000 color
   datapointer 2 11 0
-  
+
   text ?(04) 90 20 0000 datapointer x y width height color
   datapointer 2 10 0
 
@@ -471,8 +471,8 @@ static void lynx_blitter(void)
 	blitter.yoff=GET_WORD(suzy.data,6);
 
 	logerror("blitter start\n");
-	
-	for (blitter.cmd=GET_WORD(suzy.data, 0x10); blitter.cmd; 
+
+	for (blitter.cmd=GET_WORD(suzy.data, 0x10); blitter.cmd;
 		 blitter.cmd=GET_WORD(blitter.mem, blitter.cmd+3) ) {
 
 		blitter.bitmap=GET_WORD(blitter.mem,blitter.cmd+5);
@@ -585,13 +585,13 @@ READ_HANDLER(suzy_read)
 {
 	UINT8 data=0;
 	switch (offset) {
-	case 0x88: 
+	case 0x88:
 		data=1; // must not be 0 for correct power up
-		break; 
+		break;
 	case 0x92:
 		data=suzy.data[offset]&0x7f; // math finished
 		break;
-	case 0xb0: 
+	case 0xb0:
 		if (suzy.data[0x92]&8) {
 			data=0;
 			if (readinputport(0)&0x80) data|=0x40;
@@ -641,7 +641,7 @@ WRITE_HANDLER(suzy_write)
  0xfd87 w bit 1 !clr bit 0 blocknumber clk
  0xfd8b w bit 1 blocknumber hi B
  0xfd94 w 0
- 0xfd95 w 4 
+ 0xfd95 w 4
  0xfda0-f rw farben 0..15
  0xfdb0-f rw bit0..3 farben 0..15
 */
@@ -747,7 +747,7 @@ static void lynx_timer_write(LYNX_TIMER *This, int offset, UINT8 data)
 		if ((This->data[1]&7)!=7) {
 			t=This->data[0]?This->data[0]:0x100;
 			if (This->data[1]&0x10) {
-				This->timer=timer_pulse(t*times[This->data[1]&7], 
+				This->timer=timer_pulse(t*times[This->data[1]&7],
 										This->nr, lynx_timer_shot);
 			} else {
 				This->timer=timer_set(t*times[This->data[1]&7],
@@ -806,7 +806,7 @@ WRITE_HANDLER(mikey_write)
 			}
 		} else {
 			suzy.high=0;
-			suzy.low=0;			
+			suzy.low=0;
 		}
 //		logerror("mikey high %.2x low %.4x\n",suzy.high,suzy.low);
 		break;
@@ -815,7 +815,7 @@ WRITE_HANDLER(mikey_write)
 	case 0xb0: case 0xb1: case 0xb2: case 0xb3: case 0xb4: case 0xb5: case 0xb6: case 0xb7:
 	case 0xb8: case 0xb9: case 0xba: case 0xbb: case 0xbc: case 0xbd: case 0xbe: case 0xbf:
 		mikey.data[offset]=data;
-		palette_change_color(offset&0xf, 
+		palette_change_color(offset&0xf,
 							 (mikey.data[0xa0+(offset&0xf)]&0xf)<<4,
 							 (mikey.data[0xb0+(offset&0xf)]&0xf)<<4,
 							 mikey.data[0xb0+(offset&0xf)]&0xf0 );

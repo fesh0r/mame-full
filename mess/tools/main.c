@@ -599,7 +599,7 @@ static int cmd_listdriveroptions(struct command *c, int argc, char *argv[])
 
 	opttemplate = mod->fileoptions_template;
 	if (opttemplate) {
-		fprintf(stdout, "Image specific file options (usable on the 'put' command):\n\n", argv[0]);
+		fprintf(stdout, "Image specific file options (usable on the 'put' command): %s\n\n", argv[0]);
 		listoptions(opttemplate);
 		puts("\n");
 	}
@@ -609,7 +609,7 @@ static int cmd_listdriveroptions(struct command *c, int argc, char *argv[])
 
 	opttemplate = mod->createoptions_template;
 	if (opttemplate) {
-		fprintf(stdout, "Image specific creation options (usable on the 'create' command):\n\n", argv[0]);
+		fprintf(stdout, "Image specific creation options (usable on the 'create' command):%s\n\n", argv[0]);
 		listoptions(opttemplate);
 		puts("\n");
 	}
