@@ -229,7 +229,7 @@ endif
 
 clean:
 	@echo Deleting object tree $(OBJ)...
-	deltree /Y $(OBJ)
+	rm -rf $(OBJ)
 	@echo Deleting $(EMULATOR)...
 	@del $(EMULATOR)
 
