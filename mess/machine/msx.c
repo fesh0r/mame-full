@@ -33,7 +33,7 @@ static ppi8255_interface msx_ppi8255_interface = {
     NULL,
     msx_ppi_port_b_r,
     NULL,
-    msx_ppi_port_a_w, 
+    msx_ppi_port_a_w,
     NULL,
     msx_ppi_port_c_w
 };
@@ -290,7 +290,7 @@ int msx_load_rom (int id)
             free (msx1.cart[id].mem); msx1.cart[id].mem = NULL;
             return 1;
         }
-		
+
 		i = 0;
         F = osd_fopen (Machine->gamedrv->name, msx1.cart[id].sramfile,
                 OSD_FILETYPE_MEMCARD, 0);
@@ -299,7 +299,7 @@ int msx_load_rom (int id)
 			n = osd_fsize (F);
 			if (n == 0x2000)
 				{
-	        	if (osd_fread (F, pmem + 0x21000, 0x2000) == 0x2000) 
+	        	if (osd_fread (F, pmem + 0x21000, 0x2000) == 0x2000)
 	   		    	{
    	         		memcpy (pmem + 0x20000, pmem + 0x21000, 0x1000);
             		memcpy (pmem + 0x23000, pmem + 0x22000, 0x1000);
@@ -310,7 +310,7 @@ int msx_load_rom (int id)
 			/* if it's an Virtual MSX Game Master 2 file, convert */
 			if (n == 0x4000)
 				{
-	        	if (osd_fread (F, pmem + 0x20000, 0x4000) == 0x4000) 
+	        	if (osd_fread (F, pmem + 0x20000, 0x4000) == 0x4000)
 	   		    	{
    	         		memcpy (pmem + 0x20000, pmem + 0x21000, 0x1000);
             		memcpy (pmem + 0x22000, pmem + 0x23000, 0x1000);
@@ -552,7 +552,7 @@ void msx_ch_reset(void) {
 }
 
 /* z80 stuff */
-static int z80_table_num[5] = { Z80_TABLE_op, Z80_TABLE_xy, 
+static int z80_table_num[5] = { Z80_TABLE_op, Z80_TABLE_xy,
 	Z80_TABLE_ed, Z80_TABLE_cb, Z80_TABLE_xycb };
 static UINT8 *old_z80_tables[5], *z80_table;
 
@@ -562,7 +562,7 @@ void init_msx (void)
 
     /* this function is called at a very early stage, and not after a reset. */
     TMS9928A_int_callback(msx_vdp_interrupt);
-	
+
     /* adjust z80 cycles for the M1 wait state */
     z80_table = malloc (0x500);
     if (!z80_table)
@@ -577,11 +577,11 @@ void init_msx (void)
 				z80_table[i*0x100+n] = old_z80_tables[i][n] + (i > 1 ? 2 : 1);
 				}
 			z80_set_cycle_table (i, z80_table + i*0x100);
-			}	
+			}
 		}
     }
 
-void msx_ch_stop (void) 
+void msx_ch_stop (void)
 	{
 	int i;
 
@@ -591,7 +591,7 @@ void msx_ch_stop (void)
 		{
 		for (i=0;i<5;i++)
 			z80_set_cycle_table (i, old_z80_tables[i]);
-			
+
 		free (z80_table);
 		}
     msx1.run = 0;
@@ -741,13 +741,13 @@ WRITE_HANDLER ( msx_printer_w )
 		}
 	else
 		{
-   		if (offset == 1) 
+   		if (offset == 1)
 			msx1.prn_data = data;
 		else
 			{
 			if ( (msx1.prn_strobe & 2) && !(data & 2) )
 				device_output (IO_PRINTER, 0, msx1.prn_data);
-	
+
 			msx1.prn_strobe = data;
 			}
 		}
@@ -755,7 +755,7 @@ WRITE_HANDLER ( msx_printer_w )
 
 READ_HANDLER ( msx_printer_r )
 	{
-	if (offset == 0 && ! (readinputport (11) & 0x80) && 
+	if (offset == 0 && ! (readinputport (11) & 0x80) &&
 		device_status (IO_PRINTER, 0, 0) )
 		return 253;
 
@@ -777,49 +777,49 @@ WRITE_HANDLER ( msx_fmpac_w )
 
 WRITE_HANDLER (msx_dsk_w)
 	{
-	int ret, write, sects, drive, trans, sect;
+	int ret, msx_write, sects, drive, trans, sect;
 	UINT8 sector[512];
 
 	switch (z80_get_pc () )
 		{
 		case 0x4012:
-			write = (z80_get_reg (Z80_AF) & 1);
+			msx_write = (z80_get_reg (Z80_AF) & 1);
 			sects = (z80_get_reg (Z80_BC) / 256) * 512;
 			drive = (z80_get_reg (Z80_AF) / 256);
 			trans = z80_get_reg (Z80_HL);
 			sect = z80_get_reg (Z80_DE) * 512;
 			device_seek (IO_FLOPPY, drive, sect, 0);
-			if (write)
+			if (msx_write)
 				{
-				/*ret =*/ device_output_chunk (IO_FLOPPY, drive, 
+				/*ret =*/ device_output_chunk (IO_FLOPPY, drive,
 					msx1.ram + trans, sects);
 				ret = 0;
 				}
 			else
 				{
-				/*ret =*/ device_input_chunk (IO_FLOPPY, drive, 
+				/*ret =*/ device_input_chunk (IO_FLOPPY, drive,
 					msx1.ram + trans, sects);
 				ret = 0;
 				}
 
 			switch (ret & MSX_DSK_ERR_MASK)
 				{
-				case MSX_DSK_ERR_OFFLINE: 
+				case MSX_DSK_ERR_OFFLINE:
 					z80_set_reg (Z80_AF, 0x0201); break;
-				case MSX_DSK_ERR_SECTORNOTFOUND: 
+				case MSX_DSK_ERR_SECTORNOTFOUND:
 					z80_set_reg (Z80_AF, 0x0601); break;
-				case MSX_DSK_ERR_WRITEPROTECTED: 
+				case MSX_DSK_ERR_WRITEPROTECTED:
 					z80_set_reg (Z80_AF, 0x0001); break;
-				default: 	
+				default:
 					z80_set_reg (Z80_AF, 0);
 				}
-			
+
 			sects = (ret & ~MSX_DSK_ERR_MASK) / 512;
 			z80_set_reg (Z80_BC, sects * 256);
 
 			break;
-		
-		case 0x4015: 
+
+		case 0x4015:
 			drive = z80_get_reg (Z80_AF) / 256;
 			if (drive > 1)
 				{
@@ -835,7 +835,7 @@ WRITE_HANDLER (msx_dsk_w)
 
 			z80_set_reg (Z80_AF, z80_get_reg (Z80_AF) & 0xff00);
 			z80_set_reg (Z80_BC, z80_get_reg (Z80_BC) & 0x00ff);
-		case 0x4018: 
+		case 0x4018:
             {
             int       BytesPerSector, SectorsPerDisk,
                       SectorsPerFAT,ReservedSectors, I, J ;
@@ -846,14 +846,14 @@ WRITE_HANDLER (msx_dsk_w)
 			ret = device_input_chunk (IO_FLOPPY, drive, sector, 512);
 			switch (ret & MSX_DSK_ERR_MASK)
 				{
-				case MSX_DSK_ERR_OFFLINE: 
+				case MSX_DSK_ERR_OFFLINE:
 					z80_set_reg (Z80_AF, 0x0201); break;
-				case MSX_DSK_ERR_SECTORNOTFOUND: 
+				case MSX_DSK_ERR_SECTORNOTFOUND:
 					z80_set_reg (Z80_AF, 0x0601); break;
-				case MSX_DSK_ERR_WRITEPROTECTED: 
+				case MSX_DSK_ERR_WRITEPROTECTED:
 					z80_set_reg (Z80_AF, 0x0001); break;
 				}
-			
+
             BytesPerSector  = (int)sector[0x0C]*256 + sector[0x0B] ;
             SectorsPerDisk  = (int)sector[0x14]*256 + sector[0x13] ;
             SectorsPerFAT   = (int)sector[0x17]*256 + sector[0x16] ;
@@ -1200,7 +1200,7 @@ static void msx_cart_write (int cart, int offset, int data)
                 cpu_setbank (6,msx1.cart[cart].mem + (n + 1) * 0x2000);
                 }
 			}
-		break; 
+		break;
     case 8: /* ASCII 16kB */
         if ( (offset & 0x6800) == 0x2000)
         {
@@ -1388,7 +1388,7 @@ static int check_fmsx_cas (void *f)
 
     caslen = osd_fsize (f);
 	if (caslen < 9) return -1;
-	
+
     casdata = (UINT8*)malloc (caslen);
     if (!casdata)
 	{
