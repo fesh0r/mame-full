@@ -186,6 +186,7 @@ extern PALETTE_INIT( dkong3 );
 extern VIDEO_START( dkong );
 extern VIDEO_UPDATE( radarscp );
 extern VIDEO_UPDATE( dkong );
+extern VIDEO_UPDATE( pestplce);
 
 extern WRITE_HANDLER( dkong_sh_w );
 extern WRITE_HANDLER( dkongjr_sh_death_w );
@@ -276,6 +277,7 @@ static MEMORY_READ_START( readmem )
 	{ 0x7d00, 0x7d00, dkong_in2_r },	/* IN2/DSW2 */
 	{ 0x7d80, 0x7d80, input_port_3_r },	/* DSW1 */
 	{ 0x8000, 0x9fff, MRA_ROM },	/* DK3 and bootleg DKjr only */
+	{ 0xb000, 0xbfff, MRA_ROM },	/* Pest Place only */
 MEMORY_END
 
 static MEMORY_READ_START( dkong3_readmem )
@@ -471,16 +473,38 @@ static MEMORY_WRITE_START( dkongjr_writemem )
 	{ 0x7d06, 0x7d06, dkongjr_sh_snapjaw_w },
 	{ 0x7d07, 0x7d07, dkongjr_sh_walk_w },	/* controls pitch of the walk/climb? */
 	{ 0x7d80, 0x7d80, dkongjr_sh_death_w },
-	{ 0x7d81, 0x7d81, dkongjr_sh_drop_w },   /* active when Junior is falling */{ 0x7d84, 0x7d84, interrupt_enable_w },
+	{ 0x7d81, 0x7d81, dkongjr_sh_drop_w },   /* active when Junior is falling */
+	{ 0x7d84, 0x7d84, interrupt_enable_w },
 	{ 0x7d82, 0x7d82, dkong_flipscreen_w },
 	{ 0x7d86, 0x7d87, dkong_palettebank_w },
 	{ 0x8000, 0x9fff, MWA_ROM },	/* bootleg DKjr only */
 MEMORY_END
 
-
-
-
-
+static MEMORY_WRITE_START( pestplce_writemem )
+	{ 0x0000, 0x5fff, MWA_ROM },
+	{ 0x6000, 0x68ff, MWA_RAM },
+	{ 0x6900, 0x6a7f, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x6a80, 0x6fff, MWA_RAM },
+	{ 0x7400, 0x77ff, dkong_videoram_w, &videoram },
+	{ 0x7800, 0x7803, MWA_RAM },	/* ???? */
+	{ 0x7808, 0x7808, MWA_RAM },	/* ???? */
+	{ 0x7c00, 0x7c00, dkongjr_sh_tuneselect_w },
+	{ 0x7c80, 0x7c80, dkongjr_gfxbank_w },
+	{ 0x7c81, 0x7c81, dkongjr_sh_test6_w },
+	{ 0x7d00, 0x7d00, MWA_RAM }, /* walk */
+	{ 0x7d01, 0x7d01, MWA_RAM }, /* jump */
+	{ 0x7d02, 0x7d02, MWA_RAM },
+	{ 0x7d03, 0x7d03, MWA_RAM },
+	{ 0x7d04, 0x7d04, dkong_sh_sound4_w },
+	{ 0x7d05, 0x7d05, dkong_sh_sound5_w },
+	{ 0x7d06, 0x7d06, MWA_RAM },
+	{ 0x7d80, 0x7d80, MWA_RAM },
+	{ 0x7d82, 0x7d82, MWA_RAM },
+	{ 0x7d85, 0x7d85, MWA_RAM },
+	{ 0x7d84, 0x7d84, interrupt_enable_w },
+	{ 0x7d86, 0x7d87, dkong_palettebank_w },
+	{ 0xb000, 0xbfff, MWA_ROM },
+MEMORY_END
 
 
 WRITE_HANDLER( dkong3_2a03_reset_w )
@@ -870,6 +894,62 @@ INPUT_PORTS_START( herodk )
 INPUT_PORTS_END
 
 
+INPUT_PORTS_START( pestplce )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START      /* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* status from sound cpu */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 )
+
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPSETTING(    0x03, "6" )
+	PORT_DIPNAME( 0x1c, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x14, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x1c, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x20, 0x20, "2 Players Game" )
+	PORT_DIPSETTING(    0x00, "1 Credit" )
+	PORT_DIPSETTING(    0x20, "2 Credits" )
+	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "20000" )
+	PORT_DIPSETTING(    0x40, "30000" )
+	PORT_DIPSETTING(    0x80, "40000" )
+	PORT_DIPSETTING(    0xc0, "None" )
+INPUT_PORTS_END
+
 static struct GfxLayout dkong_charlayout =
 {
 	8,8,	/* 8*8 characters */
@@ -914,8 +994,18 @@ static struct GfxLayout dkong3_spritelayout =
 			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
 	16*8	/* every sprite takes 16 consecutive bytes */
 };
-
-
+static struct GfxLayout pestplce_spritelayout =
+{
+	16,16,	/* 16*16 sprites */
+	128,	/* 128 sprites */
+	2,	/* 2 bits per pixel */
+	{ 256*16*16, 0 },	/* the two bitplanes are separated */
+	{ 128*16*16+0, 128*16*16+1, 128*16*16+2, 128*16*16+3, 128*16*16+4, 128*16*16+5, 128*16*16+6, 128*16*16+7,  /* the two halves of the sprite are separated */
+		0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
+	16*8	/* every sprite takes 16 consecutive bytes */
+};
 
 static struct GfxDecodeInfo dkong_gfxdecodeinfo[] =
 {
@@ -927,6 +1017,12 @@ static struct GfxDecodeInfo dkongjr_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &dkongjr_charlayout, 0, 64 },
 	{ REGION_GFX2, 0x0000, &dkong_spritelayout, 0, 64 },
+	{ -1 } /* end of array */
+};
+static struct GfxDecodeInfo pestplce_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0x0000, &dkongjr_charlayout,		0, 64 },
+	{ REGION_GFX2, 0x0000, &pestplce_spritelayout,  0, 64 },
 	{ -1 } /* end of array */
 };
 static struct GfxDecodeInfo dkong3_gfxdecodeinfo[] =
@@ -1144,7 +1240,37 @@ static MACHINE_DRIVER_START( dkongjr )
 	MDRV_SOUND_ADD(SAMPLES, dkongjr_samples_interface)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( pestplce )
 
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz (?) */
+	MDRV_CPU_MEMORY(readmem,pestplce_writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_CPU_ADD(I8035,6000000/15)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 6MHz crystal */
+	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+	MDRV_CPU_PORTS(readport_sound,writeport_sound)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(pestplce_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(64*4)
+
+	MDRV_PALETTE_INIT(dkong)
+	MDRV_VIDEO_START(dkong)
+	MDRV_VIDEO_UPDATE(pestplce)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(DAC, dkong_dac_interface)
+//	MDRV_SOUND_ADD(SAMPLES, dkong_samples_interface)
+MACHINE_DRIVER_END
 
 static struct NESinterface nes_interface =
 {
@@ -1568,6 +1694,43 @@ ROM_START( dkngjnrb )
 	ROM_LOAD( "v-2n.bpr",  0x0200, 0x0100, CRC(dbf185bf) SHA1(2697a991a4afdf079dd0b7e732f71c7618f43b70) )	/* character color codes on a per-column basis */
 ROM_END
 
+ROM_START( pestplce )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "pest.1p",      0x0000, 0x1000, CRC(80d50721) SHA1(9c0e7571b1664dce741595a2d13dc9d7709b35a9) )
+	ROM_CONTINUE(			  0x3000, 0x1000 )
+	ROM_LOAD( "pest.2p",      0x2000, 0x0800, CRC(9c3681cc) SHA1(c12e8e7ab79c9fde92cca2c589904f68cf52cbf1) )
+	ROM_CONTINUE(			  0x4800, 0x0800 )
+	ROM_CONTINUE(			  0x1000, 0x0800 )
+	ROM_CONTINUE(			  0x5800, 0x0800 )
+	ROM_LOAD( "pest.3p",      0x4000, 0x0800, CRC(49853922) SHA1(1e8a29fdb1af52a39c07ef214f5e7c2d56b35ea5) )
+	ROM_CONTINUE(			  0x2800, 0x0800 )
+	ROM_CONTINUE(			  0x5000, 0x0800 )
+	ROM_CONTINUE(			  0x1800, 0x0800 )
+	ROM_LOAD( "pest.0",       0xb000, 0x1000, CRC(28952b56) SHA1(fa8abe594a88a61e85f074d03822d7e0dcd52fb2) )
+
+	ROM_REGION( 0x1000, REGION_CPU2, 0 )	/* sound */
+	ROM_LOAD( "pest.4",       0x0000, 0x1000, CRC(715da5f8) SHA1(f708c3fd374da65cbd9fe2e191152f5d865414a0) )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	// this has FIXED BITS (xxxxxxxxxx1xxxxx)
+	ROM_LOAD( "pest.o",       0x0000, 0x1000, BAD_DUMP CRC(22874444) SHA1(23d4744c99d48ae9f5e1ef8a214ff279a1fa0a3e) )
+	ROM_LOAD( "pest.k",       0x1000, 0x1000, CRC(2acacedf) SHA1(f91863f46aeb8986226b0b0854bac00217d6e7cf) )
+	ROM_RELOAD(				  0x0000, 0x1000 ) // for now we overwrite the bad rom
+
+	// all have FIRST AND SECOND HALF IDENTICAL
+	ROM_REGION( 0x4000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "pest.a",       0x0000, 0x1000, CRC(22d89c23) SHA1(c5dbf97c8d7ef7acff8395ae083ce29c0c203160) )
+	ROM_LOAD( "pest.b",       0x1000, 0x1000, CRC(543b15ae) SHA1(486152fa86aa5b01f1364ff95462f71ce2a93f92) )
+	ROM_LOAD( "pest.c",       0x2000, 0x1000, CRC(ebf68c21) SHA1(9a734f13e2b89c72a71bce77dd0d5ed54f2c6ae5) )
+	ROM_LOAD( "pest.d",       0x3000, 0x1000, CRC(3c6781ac) SHA1(61c53d9d27e0c78a3a152ea45b7e686850e8a5e1) )
+
+	// are these the same as dkongjr ?
+	ROM_REGION( 0x0300, REGION_PROMS, 0 )
+	ROM_LOAD( "pest-2e.bpr",  0x0000, 0x0100, NO_DUMP/*BAD_DUMP CRC(463dc7ad) SHA1(b2c9f22facc8885be2d953b056eb8dcddd4f34cb)*/ )	/* palette low 4 bits (inverted) */
+	ROM_LOAD( "pest-2f.bpr",  0x0100, 0x0100, NO_DUMP/*BAD_DUMP CRC(47ba0042) SHA1(dbec3f4b8013628c5b8f83162e5f8b1f82f6ee5f)*/ )	/* palette high 4 bits (inverted) */
+	ROM_LOAD( "pest-2n.bpr",  0x0200, 0x0100, NO_DUMP/*BAD_DUMP CRC(dbf185bf) SHA1(2697a991a4afdf079dd0b7e732f71c7618f43b70)*/ )	/* character color codes on a per-column basis */
+ROM_END
+
 ROM_START( dkong3 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "dk3c.7b",      0x0000, 0x2000, CRC(38d5f38e) SHA1(5a6bb0e5070211515e3d56bd7d4c2d1655ac1621) )
@@ -1798,3 +1961,5 @@ GAMEX(1983, hunchbkd, hunchbak, hunchbkd, hunchbkd, 0,        ROT90, "Century El
 
 GAME( 1984, herodk,   hero,     hunchbkd, herodk,   herodk,   ROT90, "Seatongrove Ltd (Crown license)", "Hero in the Castle of Doom (DK conversion)" )
 GAME( 1984, herodku,  hero,     hunchbkd, herodk,   0,        ROT90, "Seatongrove Ltd (Crown license)", "Hero in the Castle of Doom (DK conversion not encrypted)" )
+
+GAMEX(1983, pestplce, mario,	pestplce, pestplce, 0,        ROT180, "bootleg", "Pest Place", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )

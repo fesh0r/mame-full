@@ -311,6 +311,26 @@ ROM_START( pirates )
 	ROM_LOAD( "s89_49d4.bin", 0x000000, 0x080000, CRC(63a739ec) SHA1(c57f657225e62b3c9c5f0c7185ad7a87794d55f4) )
 ROM_END
 
+ROM_START( genix )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* 68000 Code (encrypted) */
+	ROM_LOAD16_BYTE( "genix2.bin",  0x00000, 0x80000, CRC(d26abfb0) SHA1(4a89ba7504f86cb612796c376f359ab61ec3d902) )
+	ROM_LOAD16_BYTE( "genix1.bin",  0x00001, 0x80000, CRC(a14a25b4) SHA1(9fa64c6514bdee56b5654b001f8367283b461e8a) )
+
+	ROM_REGION( 0x200000, REGION_GFX1, 0 ) /* GFX (encrypted) */
+	ROM_LOAD( "p4.bin", 0x000000, 0x080000, NO_DUMP )
+	ROM_LOAD( "p2.bin", 0x080000, 0x080000, NO_DUMP )
+	ROM_LOAD( "p1.bin", 0x100000, 0x080000, NO_DUMP )
+	ROM_LOAD( "p8.bin", 0x180000, 0x080000, NO_DUMP )
+
+	ROM_REGION( 0x200000, REGION_GFX2, 0 ) /* GFX (encrypted) */
+	ROM_LOAD( "s1.bin", 0x000000, 0x080000, NO_DUMP )
+	ROM_LOAD( "s2.bin", 0x080000, 0x080000, NO_DUMP )
+	ROM_LOAD( "s4.bin", 0x100000, 0x080000, NO_DUMP )
+	ROM_LOAD( "s8.bin", 0x180000, 0x080000, NO_DUMP )
+
+	ROM_REGION( 0x080000, REGION_SOUND1, 0) /* OKI samples (encrypted) */
+	ROM_LOAD( "s8.bin", 0x000000, 0x080000, NO_DUMP )
+ROM_END
 
 /* Init */
 
@@ -435,7 +455,21 @@ static DRIVER_INIT( pirates )
 	rom[0x62c0/2] = 0x6006; // beq -> bra
 }
 
+static DRIVER_INIT( genix )
+{
+//	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
+
+	pirates_decrypt_68k();
+	pirates_decrypt_p();
+	pirates_decrypt_s();
+	pirates_decrypt_oki();
+
+	/* patch out protection check */
+//	not done for this game yet
+}
+
 
 /* GAME */
 
 GAME(1994, pirates, 0, pirates, pirates, pirates, 0, "NIX", "Pirates" )
+GAME(199?, genix,   0, pirates, pirates, genix,   0, "NIX", "Genix" )

@@ -13,7 +13,9 @@
 #include "driver.h"
 #include "includes/snes.h"
 #include "cpu/g65816/g65816.h"
+#ifdef MESS
 #include "image.h"
+#endif
 
 /* -- Useful Defines -- */
 #define USE_SPCSKIPPER		/* Use the SPCSkipper instead of the SPC700 */
@@ -69,6 +71,8 @@ static void snes_init_ram(void)
 	vram_read_offset = 2;
 }
 
+/* should we treat this as nvram in MAME? */
+#ifdef MESS
 /* Loads the battery backed RAM into the appropriate memory area */
 static void snes_load_sram(void)
 {
@@ -129,6 +133,7 @@ static void snes_save_sram(void)
 
 	free( battery_ram );
 }
+#endif
 
 MACHINE_INIT( snes )
 {
@@ -141,12 +146,14 @@ MACHINE_INIT( snes )
 		snes_ram[STAT78] = SNES_PAL;
 }
 
+#ifdef MESS
 MACHINE_STOP( snes )
 {
 	/* Save SRAM */
 	if( cart.sram > 0 )
 		snes_save_sram();
 }
+#endif
 
 /* Handle reading of Mode 20 SRAM */
 /* 0x700000 - 0x77ffff */
@@ -1087,6 +1094,7 @@ static int snes_validate_infoblock( UINT8 *infoblock, UINT16 offset )
 	return valid;
 }
 
+#ifdef MESS
 DEVICE_LOAD(snes_cart)
 {
 	int i;
@@ -1305,6 +1313,58 @@ DEVICE_LOAD(snes_cart)
 	/* All done */
 	return INIT_PASS;
 }
+#else /* for mame we use an init, maybe we will need more dfor the different games */
+DRIVER_INIT( snes )
+{
+	int i;
+	UINT16 totalblocks, readblocks;
+	UINT8  *rom;
+
+	rom = memory_region( REGION_USER3 );
+	snes_ram = memory_region( REGION_CPU1 );
+	memset( snes_ram, 0, 0x1000000 );
+
+	cart.sram_max = 0x40000;
+
+	/* Find the number of blocks in this ROM */
+	//totalblocks = ((mame_fsize(file) - offset) >> (cart.mode == MODE_20 ? 15 : 16));
+	totalblocks = (memory_region_length(REGION_USER3) / 0x8000) - 1;
+
+	/* FIXME: Insert crc check here */
+
+	readblocks = 0;
+	{
+		/* In mode 20, all blocks are 32kb. There are upto 96 blocks, giving a
+		 * total of 24mbit(3mb) of ROM.
+		 * The first 48 blocks are located in banks 0x00 to 0x2f at the address
+		 * 0x8000.  They are mirrored in banks 0x80 to 0xaf.
+		 * The next 16 blocks are located in banks 0x30 to 0x3f at address
+		 * 0x8000.  They are mirrored in banks 0xb0 to 0xbf.
+		 * The final 32 blocks are located in banks 0x40 - 0x5f at address
+		 * 0x8000.  They are mirrord in banks 0xc0 to 0xdf.
+		 */
+		i = 0;
+		while( i < 96 && readblocks <= totalblocks )
+		{
+			//mame_fread( file, &snes_ram[(i++ * 0x10000) + 0x8000], 0x8000);
+			memcpy(&snes_ram[(i * 0x10000) + 0x8000], &rom[i * 0x8000], 0x8000);
+			i++;
+			readblocks++;
+		}
+	}
+
+	/* Find the amount of sram */
+	cart.sram = snes_r_bank1(0x00ffd8);
+	if( cart.sram > 0 )
+	{
+		cart.sram = ((1 << (cart.sram + 3)) / 8);
+		if( cart.sram > cart.sram_max )
+			cart.sram = cart.sram_max;
+	}
+
+	free_memory_region(REGION_USER3);
+}
+#endif
 
 INTERRUPT_GEN(snes_scanline_interrupt)
 {

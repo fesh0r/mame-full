@@ -61,6 +61,20 @@ static void mia_tile_callback(int layer,int bank,int *code,int *color)
 	}
 }
 
+static void cuebrckj_tile_callback(int layer,int bank,int *code,int *color)
+{
+	if (layer == 0)
+	{
+		*code |= ((*color & 0x01) << 8);
+		*color = layer_colorbase[layer]  + ((*color & 0x80) >> 5) + ((*color & 0x10) >> 1); 
+	}
+	else
+	{
+		*code |= ((*color & 0xf) << 8);
+		*color = layer_colorbase[layer] + ((*color & 0xe0) >> 5);
+	}
+}
+
 static void tmnt_tile_callback(int layer,int bank,int *code,int *color)
 {
 	*code |= ((*color & 0x03) << 8) | ((*color & 0x10) << 6) | ((*color & 0x0c) << 9)
@@ -182,6 +196,19 @@ VIDEO_START( mia )
 	layer_colorbase[2] = 40;
 	sprite_colorbase = 16;
 	if (K052109_vh_start(REGION_GFX1,NORMAL_PLANE_ORDER,mia_tile_callback))
+		return 1;
+	if (K051960_vh_start(REGION_GFX2,REVERSE_PLANE_ORDER,mia_sprite_callback))
+		return 1;
+	return 0;
+}
+
+VIDEO_START( cuebrckj )
+{
+	layer_colorbase[0] = 0;
+	layer_colorbase[1] = 32;
+	layer_colorbase[2] = 40;
+	sprite_colorbase = 16;
+	if (K052109_vh_start(REGION_GFX1,NORMAL_PLANE_ORDER,cuebrckj_tile_callback))
 		return 1;
 	if (K051960_vh_start(REGION_GFX2,REVERSE_PLANE_ORDER,mia_sprite_callback))
 		return 1;

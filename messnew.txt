@@ -1,50 +1,21 @@
-0.71
+0.71.1
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
-- Atari Jaguar [Nate Woods]
+(none)
 
 System Driver Changes:
 ----------------------
-- [APPLE2] Moved Apple 2 disks over to use the standard floppy device code.
-  [Nate Woods]
-
-- [GENEVE] Fixed a bug with undocumented VDP behaviour.  Fixed Mouse buttons.
-  [Raphael Nabet]
-
-- [PC] Fixed a bug in keyboard handling that caused a 'stuck key' keyboard
-  error to be displayed (bug #427). [Colin Howell, Nate Woods]
-
-- [PC] Added support for CGA 160x100 mode (bug #225).  [Nate Woods]
-
-- [PC] Fixed a bug that would occasionally cause garbage to be displayed on
-  the screen after a screen resolution change (bug #100).  [Nate Woods]
-
-- [PC1512] Fixed a few more video modes. [John Elliott]
-
-- [TI99] Added support for Mechatronics mouse [Raphael Nabet]
-
-- [TRS80] Fixed a crash on startup. [Nate Woods]
+(none)
 
 User Interface Changes:
 -----------------------
-- [WIN32] Fixed some resizing problems in windowed mode when the system
-  resized the screen (bug #100). [Nate Woods]
-
-- [WIN32 FE] Fixed a bug whereby refreshing would reset the current system to
-  the last saved one (bug #384). [Nate Woods]
-
-- [WIN32 FE] Missing optional BIOSes no longer trigger audit errors (bug
-  #424). [Nate Woods]
+(none)
 
 Imgtool Changes:
 ----------------
-- [TI99] Added support for HFDC subdirectories. [Raphael Nabet]
+(none)
 
 Source Changes:
 ---------------
-- The core is based on MAME 0.71.  This incorporates all features of the
-  update to this core.  [MAME team]
-  
-- Fixed a bug in the code that chooses artwork files for software images (bug
-  #112). [Nate Woods]
+(none)

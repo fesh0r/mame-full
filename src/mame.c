@@ -1570,12 +1570,22 @@ void *mame_hard_disk_open(const char *filename, const char *mode)
 	/* look for read-only drives first in the ROM path */
 	if (mode[0] == 'r' && !strchr(mode, '+'))
 	{
-		mame_file *file = mame_fopen(Machine->gamedrv->name, filename, FILETYPE_IMAGE, 0);
-		return (void *)file;
+		const struct GameDriver *drv;
+
+		/* attempt reading up the chain through the parents */
+		for (drv = Machine->gamedrv; drv != NULL; drv = drv->clone_of)
+		{
+			void* file = mame_fopen(drv->name, filename, FILETYPE_IMAGE, 0);
+
+			if (file != NULL)
+				return file;
+		}
+
+		return NULL;
 	}
 
 	/* look for read/write drives in the diff area */
-	return (void *)mame_fopen(NULL, filename, FILETYPE_IMAGE_DIFF, 1);
+	return mame_fopen(NULL, filename, FILETYPE_IMAGE_DIFF, 1);
 }
 
 

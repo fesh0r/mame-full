@@ -285,9 +285,9 @@ $(OBJ)/nintendo.a:                   \
 	  $(OBJ)/mess/vidhrdw/gb.o       \
 	  $(OBJ)/mess/machine/gb.o       \
 	  $(OBJ)/mess/systems/gb.o       \
-	  $(OBJ)/mess/sndhrdw/snes.o	 \
-	  $(OBJ)/mess/vidhrdw/snes.o	 \
-	  $(OBJ)/mess/machine/snes.o	 \
+	  $(OBJ)/sndhrdw/snes.o          \
+	  $(OBJ)/machine/snes.o          \
+	  $(OBJ)/vidhrdw/snes.o          \
 	  $(OBJ)/mess/systems/snes.o	 
 
 $(OBJ)/amiga.a: \

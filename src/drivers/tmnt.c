@@ -56,6 +56,7 @@ WRITE16_HANDLER( ssriders_1c0300_w );
 WRITE16_HANDLER( prmrsocr_122000_w );
 WRITE16_HANDLER( tmnt_priority_w );
 READ16_HANDLER( glfgreat_ball_r );
+VIDEO_START( cuebrckj );
 VIDEO_START( mia );
 VIDEO_START( tmnt );
 VIDEO_START( punkshot );
@@ -72,6 +73,8 @@ VIDEO_UPDATE( glfgreat );
 VIDEO_UPDATE( tmnt2 );
 VIDEO_UPDATE( thndrx2 );
 static int tmnt_soundlatch;
+static int cbj_snd_irqlatch, cbj_nvram_bank;
+static data16_t cbj_nvram[0x400*0x20];	// 32k paged in a 1k window
 
 static READ16_HANDLER( K052109_word_noA12_r )
 {
@@ -152,7 +155,21 @@ static WRITE16_HANDLER( K053244_word_noA1_w )
 		K053244_w(offset + 1,data & 0xff);
 }
 
+static INTERRUPT_GEN(cbj_interrupt)
+{
+	// cheap IRQ multiplexing to avoid losing sound IRQs
+	switch (cpu_getiloops())
+	{
+		case 0:
+			cpu_set_irq_line(0, MC68000_IRQ_5, HOLD_LINE);
+			break;
 
+		default:
+			if (cbj_snd_irqlatch)
+				cpu_set_irq_line(0, MC68000_IRQ_6, HOLD_LINE);
+			break;
+	}
+}
 
 static INTERRUPT_GEN( punkshot_interrupt )
 {
@@ -647,6 +664,71 @@ static WRITE16_HANDLER( prmrsocr_eeprom_w )
 	}
 }
 
+static READ16_HANDLER( cbj_snd_r )
+{
+	return YM2151_status_port_0_r(0)<<8;
+}
+
+static WRITE16_HANDLER( cbj_snd_w )
+{
+	if (offset)
+	{
+		YM2151_data_port_0_w(0, data>>8);
+	}
+	else
+	{
+		YM2151_register_port_0_w(0, data>>8);
+	}
+}
+
+static READ16_HANDLER( cbj_nv_r )
+{
+	return cbj_nvram[offset + (cbj_nvram_bank*0x400/2)];
+}
+
+static WRITE16_HANDLER( cbj_nv_w )
+{
+       COMBINE_DATA(&cbj_nvram[offset + (cbj_nvram_bank*0x400/2)]);
+}
+
+static WRITE16_HANDLER( cbj_nvbank_w )
+{
+	cbj_nvram_bank = (data>>8);
+}
+
+static MEMORY_READ16_START( cuebrckj_readmem )
+	{ 0x000000, 0x01ffff, MRA16_ROM },
+	{ 0x040000, 0x043fff, MRA16_RAM },	/* main RAM */
+	{ 0x060000, 0x063fff, MRA16_RAM },	/* main RAM */
+	{ 0x080000, 0x080fff, MRA16_RAM },
+	{ 0x0a0000, 0x0a0001, input_port_0_word_r },
+	{ 0x0a0002, 0x0a0003, input_port_1_word_r },
+	{ 0x0a0004, 0x0a0005, input_port_2_word_r },
+	{ 0x0a0010, 0x0a0011, input_port_3_word_r },
+	{ 0x0a0012, 0x0a0013, input_port_4_word_r },
+	{ 0x0a0018, 0x0a0019, input_port_5_word_r },
+	{ 0x0b0000, 0x0b03ff, cbj_nv_r },
+	{ 0x0c0000, 0x0c0003, cbj_snd_r },
+	{ 0x100000, 0x107fff, K052109_word_noA12_r },
+	{ 0x140000, 0x140007, K051937_word_r },
+	{ 0x140400, 0x1407ff, K051960_word_r },
+MEMORY_END
+
+static MEMORY_WRITE16_START( cuebrckj_writemem )
+	{ 0x000000, 0x01ffff, MWA16_ROM },
+	{ 0x040000, 0x043fff, MWA16_RAM },	/* main RAM */
+	{ 0x060000, 0x063fff, MWA16_RAM },	/* main RAM */
+	{ 0x080000, 0x080fff, tmnt_paletteram_word_w, &paletteram16 },
+	{ 0x0a0000, 0x0a0001, tmnt_0a0000_w },
+	{ 0x0a0008, 0x0a0009, tmnt_sound_command_w },
+	{ 0x0a0010, 0x0a0011, watchdog_reset16_w },
+	{ 0x0b0000, 0x0b03ff, cbj_nv_w },
+	{ 0x0b0400, 0x0b0401, cbj_nvbank_w },
+	{ 0x0c0000, 0x0c0003, cbj_snd_w },
+	{ 0x100000, 0x107fff, K052109_word_noA12_w },
+	{ 0x140000, 0x140007, K051937_word_w },
+	{ 0x140400, 0x1407ff, K051960_word_w },
+MEMORY_END
 
 
 static MEMORY_READ16_START( mia_readmem )
@@ -2064,6 +2146,18 @@ INPUT_PORTS_START( prmrsocr )
 INPUT_PORTS_END
 
 
+static void cbj_irq_handler(int state)
+{
+	cbj_snd_irqlatch = state;
+}
+
+static struct YM2151interface ym2151_interface_cbj =
+{
+	1,			/* 1 chip */
+	3579545,	/* 3.579545 MHz */
+	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
+	{ cbj_irq_handler }
+};
 
 static struct YM2151interface ym2151_interface =
 {
@@ -2137,6 +2231,30 @@ static struct K053260_interface glfgreat_k053260_interface =
 //	{ sound_nmi_callback },
 };
 
+
+static MACHINE_DRIVER_START( cuebrckj )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 8000000)	/* 8 MHz */
+	MDRV_CPU_MEMORY(cuebrckj_readmem,cuebrckj_writemem)
+	MDRV_CPU_VBLANK_INT(cbj_interrupt,10)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(14*8, (64-14)*8-1, 2*8, 30*8-1 )
+	MDRV_PALETTE_LENGTH(1024)
+	MDRV_NVRAM_HANDLER(generic_0fill)
+
+	MDRV_VIDEO_START(cuebrckj)
+	MDRV_VIDEO_UPDATE(mia)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(YM2151, ym2151_interface_cbj)
+MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( mia )
 
@@ -2493,6 +2611,28 @@ MACHINE_DRIVER_END
   Game driver(s)
 
 ***************************************************************************/
+
+ROM_START( cuebrckj )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )	/* 2*128k and 2*64k for 68000 code */
+	ROM_LOAD16_BYTE( "903d25.g12",   0x00000, 0x10000, CRC(8d575663) SHA1(0e308e04936efa80351bf808ac304d3fcc82f19a) )
+	ROM_LOAD16_BYTE( "903d24.f12",   0x00001, 0x10000, CRC(2973625d) SHA1(e2496704390930761204624d4bf6b0b68d3133ab) )
+
+	ROM_REGION( 0x40000, REGION_USER1, 0 )	/* 2*128k and 2*64k for 68000 code */
+	ROM_LOAD16_BYTE( "903d25.g12",   0x00000, 0x10000, CRC(8d575663) SHA1(0e308e04936efa80351bf808ac304d3fcc82f19a) )
+	ROM_LOAD16_BYTE( "903d24.f12",   0x00001, 0x10000, CRC(2973625d) SHA1(e2496704390930761204624d4bf6b0b68d3133ab) )
+
+	ROM_REGION( 0x40000, REGION_GFX1, 0 ) /* graphics (addressable by the main CPU) */
+	ROM_LOAD16_BYTE( "903c29.k21",  0x000000, 0x10000, CRC(fada986d) SHA1(79d13dcee5433457c25a8cca0093bddd55165a72) )
+	ROM_LOAD16_BYTE( "903c27.k17",  0x000001, 0x10000, CRC(5bd4b8e1) SHA1(0bc5e508af20e479c7913fab1ef158165fe67079) )
+	ROM_LOAD16_BYTE( "903c28.k19",  0x020000, 0x10000, CRC(80d2bfaf) SHA1(3b38558d4f17309154457e9e7780a25577d1858d) )
+	ROM_LOAD16_BYTE( "903c26.k15",  0x020001, 0x10000, CRC(f808fa3d) SHA1(2b0fa1581acc5c4f7055e6faad97664ef16cc082) )
+
+	ROM_REGION( 0x40000, REGION_GFX2, 0 )	/* graphics (addressable by the main CPU) */
+	ROM_LOAD16_BYTE( "903d23.k12",  0x000000, 0x10000, CRC(c39fc9fd) SHA1(fe5a63e5d898f985f9ab9be5b701af4a8e2a9049) )        /* 8x8 tiles */
+	ROM_LOAD16_BYTE( "903d21.k8",   0x000001, 0x10000, CRC(3c7bf8cd) SHA1(c487e0109f56b3b0e2aa2c4db2dfb30ad74fb0ab) )        /* 8x8 tiles */
+	ROM_LOAD16_BYTE( "903d22.k10",  0x020000, 0x10000, CRC(95ad8591) SHA1(4e3c8c794be1cd78044eb0eebfa3c755e2aaf54f) )        /* 8x8 tiles */
+	ROM_LOAD16_BYTE( "903d20.k6",   0x020001, 0x10000, CRC(2872a1bb) SHA1(da7c7a41860283eac49facaa3beb712d3be7db56) )        /* 8x8 tiles */
+ROM_END
 
 ROM_START( mia )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )	/* 2*128k and 2*64k for 68000 code */
@@ -3572,7 +3712,17 @@ static DRIVER_INIT( glfgreat )
 	shuffle(memory_region(REGION_GFX2),memory_region_length(REGION_GFX2));
 }
 
+static DRIVER_INIT( cuebrckj )
+{
+	generic_nvram = (data8_t *)cbj_nvram;
+	generic_nvram_size = 0x400*0x20;
 
+	/* ROMs are interleaved at byte level */
+	shuffle(memory_region(REGION_GFX1),memory_region_length(REGION_GFX1));
+	shuffle(memory_region(REGION_GFX2),memory_region_length(REGION_GFX2));
+}
+
+GAMEX( 1989, cuebrckj, cuebrick, cuebrckj, mia,      cuebrckj, ROT0,  "Konami", "Cue Brick (Japan version D)", GAME_IMPERFECT_GRAPHICS )
 
 GAME( 1989, mia,      0,        mia,      mia,      mia,      ROT0,  "Konami", "Missing in Action (version T)" )
 GAME( 1989, mia2,     mia,      mia,      mia,      mia,      ROT0,  "Konami", "Missing in Action (version S)" )

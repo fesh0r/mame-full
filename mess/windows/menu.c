@@ -822,7 +822,7 @@ static int invoke_command(UINT command)
 		break;
 
 	case ID_FILE_SAVESCREENSHOT:
-		artwork_save_snapshot(artwork_get_ui_bitmap());
+		save_screen_snapshot(artwork_get_ui_bitmap());
 		break;
 
 	case ID_FILE_EXIT:

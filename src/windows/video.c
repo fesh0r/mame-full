@@ -930,35 +930,32 @@ void osd_update_video_and_audio(struct mame_display *display)
 
 
 //============================================================
-//	osd_save_snapshot
+//	osd_override_snapshot
 //============================================================
 
-void osd_save_snapshot(struct mame_bitmap *bitmap, const struct rectangle *bounds)
+struct mame_bitmap *osd_override_snapshot(struct mame_bitmap *bitmap, struct rectangle *bounds)
 {
 	struct rectangle newbounds;
 	struct mame_bitmap *copy;
 	int x, y, w, h, t;
 
-	// if we can send it in raw, do it
+	// if we can send it in raw, no need to override anything
 	if (!blit_swapxy && !blit_flipx && !blit_flipy)
-	{
-		save_screen_snapshot(bitmap, bounds);
-		return;
-	}
+		return NULL;
 
 	// allocate a copy
 	w = blit_swapxy ? bitmap->height : bitmap->width;
 	h = blit_swapxy ? bitmap->width : bitmap->height;
 	copy = bitmap_alloc_depth(w, h, bitmap->depth);
 	if (!copy)
-		return;
-	
+		return NULL;
+
 	// populate the copy
 	for (y = bounds->min_y; y <= bounds->max_y; y++)
 		for (x = bounds->min_x; x <= bounds->max_x; x++)
 		{
 			int tx = x, ty = y;
-			
+
 			// apply the rotation/flipping
 			if (blit_swapxy)
 			{
@@ -968,7 +965,7 @@ void osd_save_snapshot(struct mame_bitmap *bitmap, const struct rectangle *bound
 				tx = copy->width - tx - 1;
 			if (blit_flipy)
 				ty = copy->height - ty - 1;
-			
+
 			// read the old pixel and copy to the new location
 			switch (copy->depth)
 			{
@@ -977,14 +974,14 @@ void osd_save_snapshot(struct mame_bitmap *bitmap, const struct rectangle *bound
 					*((UINT16 *)copy->base + ty * copy->rowpixels + tx) =
 							*((UINT16 *)bitmap->base + y * bitmap->rowpixels + x);
 					break;
-				
+
 				case 32:
 					*((UINT32 *)copy->base + ty * copy->rowpixels + tx) =
 							*((UINT32 *)bitmap->base + y * bitmap->rowpixels + x);
 					break;
 			}
 		}
-	
+
 	// compute the oriented bounds
 	newbounds = *bounds;
 
@@ -994,7 +991,7 @@ void osd_save_snapshot(struct mame_bitmap *bitmap, const struct rectangle *bound
 		t = newbounds.min_x; newbounds.min_x = newbounds.min_y; newbounds.min_y = t;
 		t = newbounds.max_x; newbounds.max_x = newbounds.max_y; newbounds.max_y = t;
 	}
-	
+
 	// apply X flip
 	if (blit_flipx)
 	{
@@ -1002,7 +999,7 @@ void osd_save_snapshot(struct mame_bitmap *bitmap, const struct rectangle *bound
 		newbounds.min_x = copy->width - newbounds.max_x - 1;
 		newbounds.max_x = t;
 	}
-	
+
 	// apply Y flip
 	if (blit_flipy)
 	{
@@ -1010,10 +1007,9 @@ void osd_save_snapshot(struct mame_bitmap *bitmap, const struct rectangle *bound
 		newbounds.min_y = copy->height - newbounds.max_y - 1;
 		newbounds.max_y = t;
 	}
-	
-	// now save the copy and nuke it when done
-	save_screen_snapshot(copy, &newbounds);
-	bitmap_free(copy);
+
+	*bounds = newbounds;
+	return copy;
 }
 
 
