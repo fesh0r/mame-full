@@ -14,6 +14,12 @@
 #define __DIRECTDRAW_H__
 
 #include <multimon.h>
+
+/* multimon.h likes to redefine GetSystemMetrics */
+#ifdef GetSystemMetrics
+#undef GetSystemMetrics
+#endif /* GetSystemMetrics */
+
 #include <ddraw.h>
 
 /************************************************************************/

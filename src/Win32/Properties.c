@@ -1119,11 +1119,6 @@ static void SoftwareDirectories_GetList(HWND hDlg, LPSTR lpBuf, UINT iBufLen)
 	*lpBuf = '\0';
 }
 
-/* multimon.h likes to redefine GetSystemMetrics */
-#ifdef GetSystemMetrics
-#undef GetSystemMetrics
-#endif /* GetSystemMetrics */
-
 static void SoftwareDirectories_InitList(HWND hDlg, LPCSTR lpList)
 {
 	HWND hList;

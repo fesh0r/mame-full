@@ -1,6 +1,13 @@
 Whats new:
 
 ----------
+0.37 BETA 12
+------------
+
+- Updated MESS32 to properly recognize the new device types (cylinders, punch
+  cards and punch tapes) introduced with the ApexC driver.
+
+----------
 0.37 BETA 11
 ------------
 

@@ -66,36 +66,62 @@ static BOOL CreateMessIcons(void);
 
 #include "win32ui.c"
 
-/* Taken from src/mess/msdos.c */
+struct deviceentry {
+	int icon;
+	const char *shortname;
+	const char *longname;
+};
+
+static const struct deviceentry *lookupdevice(int d)
+{
+	/* TODO - We need to make icons for Cylinders, Punch Cards, and Punch Tape! */
+
+	static struct deviceentry devices[] =
+	{
+		{ 1, "cart",	"cartridge" },	/* IO_CARTSLOT */
+		{ 4, "flop",	"floppy" },		/* IO_FLOPPY */
+		{ 9, "hard",	"harddisk" },	/* IO_HARDDISK */
+		{ 2, "cyln",	"cylinder" },	/* IO_CYLINDER */
+		{ 5, "cass",	"cassette" },	/* IO_CASSETTE */
+		{ 2, "pncd",	"punchcard" },	/* IO_PUNCHCARD */
+		{ 2, "pntp",	"punchtape" },	/* IO_PUNCHTAPE */
+		{ 8, "prin",	"printer" },	/* IO_PRINTER */
+		{ 6, "serl",	"serial" },		/* IO_SERIAL */
+		{ 7, "snap",	"snapshot" },	/* IO_SNAPSHOT */
+		{ 7, "quik",	"quickload" }	/* IO_QUICKLOAD */
+	};
+
+	assert((sizeof(devices) / sizeof(devices[0])) + 1 == IO_ALIAS);
+	assert((d > 0) && (d < IO_ALIAS));
+
+	return &devices[d - 1];
+}
+
 static int requested_device_type(char *tchar)
 {
+	const struct deviceentry *ent;
+	int device = IO_END;
+	int i;
 
     logerror("Requested device is %s\n", tchar);
 
-    if      (!stricmp(tchar, "-cartridge")  || !stricmp(tchar, "-cart"))
-            return(IO_CARTSLOT);
-    else if (!stricmp(tchar, "-floppydisk") || !stricmp(tchar, "-flop"))
-            return(IO_FLOPPY);
-    else if (!stricmp(tchar, "-harddisk")   || !stricmp(tchar, "-hard"))
-            return(IO_HARDDISK);
-    else if (!stricmp(tchar, "-cassette")   || !stricmp(tchar, "-cass"))
-            return(IO_CASSETTE);
-    else if (!stricmp(tchar, "-printer")    || !stricmp(tchar, "-prin"))
-            return(IO_PRINTER);
-    else if (!stricmp(tchar, "-serial")     || !stricmp(tchar, "-serl"))
-            return(IO_SERIAL);
-    else if (!stricmp(tchar, "-snapshot")   || !stricmp(tchar, "-snap"))
-            return(IO_SNAPSHOT);
-    else if (!stricmp(tchar, "-quickload")  || !stricmp(tchar, "-quik"))
-            return(IO_QUICKLOAD);
-    else if (!stricmp(tchar, "-alias"))
-            return(IO_ALIAS);
-    /* all other switches set type to -1 */
-    else
-    {
+	if (*tchar == '-') {
+		tchar++;
+
+		for (i = IO_END+1; i < IO_ALIAS; i++) {
+			ent = lookupdevice(i);
+			if (!stricmp(tchar, ent->shortname) || !stricmp(tchar, ent->longname)) {
+				device = i;
+				break;
+			}
+		}
+	}
+
+	if (i == IO_END) {
         logerror("Requested Device not supported!!\n");
         return -1;
     }
+	return i;
 }
 
 static void MessSetupCrc(int game_index)
@@ -380,27 +406,16 @@ static int GetMessIcon(int nGame, int nSoftwareType)
     HICON hIcon;
     const struct GameDriver *drv;
     char buffer[32];
+	const char *iconname;
 
-    static const char *iconnames[IO_COUNT] = {
-        NULL,   /* IO_END */
-        "cart", /* IO_CARTSLOT */
-        "flop", /* IO_FLOPPY */
-        "hard", /* IO_HARDDISK */
-        "cass", /* IO_CASSETTE */
-        "prin", /* IO_PRINTER */
-        "serl", /* IO_SERIAL */
-        "snap", /* IO_SNAPSHOT */
-        "quik", /* IO_QUICKLOAD */
-        NULL,   /* IO_ALIAS */
-    };
-
-    if ((nSoftwareType < IO_COUNT) && iconnames[nSoftwareType]) {
+    if (nSoftwareType < IO_ALIAS) {
+		iconname = lookupdevice(nSoftwareType)->shortname;
         index = (nGame * IO_COUNT) + nSoftwareType;
 
         nIconPos = mess_icon_index[index];
         if (!nIconPos) {
             for (drv = drivers[nGame]; drv; drv = drv->clone_of) {
-                sprintf(buffer, "%s/%s", drv->name, iconnames[nSoftwareType]);
+                sprintf(buffer, "%s/%s", drv->name, iconname);
                 hIcon = LoadIconFromFile(buffer);
                 if (hIcon)
                     break;
@@ -420,20 +435,6 @@ static int GetMessIcon(int nGame, int nSoftwareType)
 
 static int WhichMessIcon(int nItem)
 {
-    static const int nMessImageIcons[] = {
-        1, /* IO_END */
-        1, /* IO_CARTSLOT */
-        4, /* IO_FLOPPY */
-        9, /* IO_HARDDISK */
-        5, /* IO_CASSETTE */
-        8, /* IO_PRINTER */
-        6, /* IO_SERIAL */
-        7, /* IO_SNAPSHOT */
-        7, /* IO_QUICKLOAD */
-        2, /* IO_ALIAS (actually, unknowns) */
-        3  /* IO_COUNT (actually, bad files) */
-    };
-
     int nType;
     int nIcon;
 
@@ -441,9 +442,21 @@ static int WhichMessIcon(int nItem)
     
     nIcon = GetMessIcon(nTheCurrentGame, nType);
     if (!nIcon) {
-        if (nType > (sizeof(nMessImageIcons) / sizeof(nMessImageIcons[0])))
-            nType = IO_END;
-        nIcon = nMessImageIcons[nType];
+		switch(nType) {
+		case IO_ALIAS:
+			/* Unknowns */
+			nIcon = 2;
+			break;
+		
+		case IO_COUNT:
+			/* Bad files */
+			nIcon = 3;
+			break;
+
+		default:
+			nIcon = lookupdevice(nType)->icon;
+			break;
+		}
     }
     return nIcon;
 }
