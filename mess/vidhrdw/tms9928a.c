@@ -77,7 +77,7 @@
 	E Gray          0.80	0.47	0.47	0.80	0.80	0.80	204	204	204
 	F White         1.00	0.47	0.47	1.00	1.00	1.00	255	255	255
 */
-unsigned char TMS9928A_palette[16*3] =
+static unsigned char TMS9928A_palette[16*3] =
 {
 	0, 0, 0,
 	0, 0, 0,
@@ -151,12 +151,29 @@ static void (*ModeHandlers[])(struct osd_bitmap*) = {
 #define TMS_MODE ( (tms.model == TMS99x8A ? (tms.Regs[0] & 2) : 0) | \
 	((tms.Regs[1] & 0x10)>>4) | ((tms.Regs[1] & 8)>>1))
 
+typedef struct {
+    /* TMS9928A internal settings */
+    UINT8 ReadAhead,Regs[8],StatusReg,oldStatusReg;
+    int Addr,FirstByte,INT,BackColour,Change,mode;
+    int colour,pattern,nametbl,spriteattribute,spritepattern;
+    int colourmask,patternmask;
+    void (*INTCallback)(int);
+    /* memory */
+    UINT8 *vMem, *dBackMem;
+    struct osd_bitmap *tmpbmp;
+    int vramsize, model;
+    /* emulation settings */
+    int LimitSprites; /* max 4 sprites on a row, like original TMS9918A */
+    /* dirty tables */
+    char anyDirtyColour, anyDirtyName, anyDirtyPattern;
+    char *DirtyColour, *DirtyName, *DirtyPattern;
+} TMS9928A;
+
 static TMS9928A tms;
 
-
-
-
-/* initial the palette */
+/*
+** initialize the palette 
+*/
 void tms9928A_init_palette (unsigned char *palette, 
 	unsigned short *colortable,const unsigned char *color_prom) {
     memcpy (palette, &TMS9928A_palette, sizeof(TMS9928A_palette));
