@@ -798,6 +798,6 @@ COMPX (1981,   zx81,    0,       zx81,     zx81,        zx,     "Sinclair Resear
 COMPX (198?,   zx81a,   zx81,	 zx81,	   zx81,	zx,	"Sinclair Research", "ZX-81 (2nd rev)",	GAME_NOT_WORKING)
 COMPX (198?,   zx81b,   zx81,    zx81,     zx81,        zx,     "Sinclair Research", "ZX-81 (3rd rev)", GAME_NOT_WORKING)
 COMPX (1982,   ts1000,  zx81,	 ts1000,   zx81,	zx,	"Timex Sinclair",    "Timex Sinclair 1000",		GAME_NOT_WORKING | GAME_ALIAS)
-COMPX (1982,   pc8300,  zx81,	 pc8300,   pow3000,	zx,	"Your Computer",     "PC8300",		GAME_NOT_WORKING)
-COMPX (1982,   pow3000, zx81,	 pow3000,  pow3000,  	zx,	"Creon Enterprises", "Power 3000",	GAME_NOT_WORKING)
+COMPX (1984,   pc8300,  zx81,	 pc8300,   pow3000,	zx,	"Your Computer",     "PC8300",		GAME_NOT_WORKING)
+COMPX (1983,   pow3000, zx81,	 pow3000,  pow3000,  	zx,	"Creon Enterprises", "Power 3000",	GAME_NOT_WORKING)
 COMPX (1982,   lambda,  zx81,    pc8300,   pow3000,    	zx,	"Lambda Electronics Ltd","Lambda 8300",	GAME_NOT_WORKING)

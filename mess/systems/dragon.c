@@ -749,8 +749,8 @@ COMPUTER_CONFIG_END
 /*     YEAR  NAME       PARENT  MACHINE    INPUT     INIT     CONFIG,  COMPANY               FULLNAME */
 COMPC(  1980, coco,      0,		coco,      coco,     0,		  coco,    "Tandy Radio Shack",  "Color Computer" )
 COMPC(  1981, cocoe,     coco,	coco,      coco,     0,		  coco,    "Tandy Radio Shack",  "Color Computer (Extended BASIC 1.0)" )
-COMPC(  198?, coco2,     coco,	coco2,     coco,     0,		  coco2,   "Tandy Radio Shack",  "Color Computer 2" )
-COMPC(  198?, coco2b,    coco,	coco2b,    coco,     0,		  coco2,   "Tandy Radio Shack",  "Color Computer 2B" )
+COMPC(  1983, coco2,     coco,	coco2,     coco,     0,		  coco2,   "Tandy Radio Shack",  "Color Computer 2" )
+COMPC(  1985?, coco2b,    coco,	coco2b,    coco,     0,		  coco2,   "Tandy Radio Shack",  "Color Computer 2B" )
 COMPC(  1986, coco3,     coco, 	coco3,	   coco3,    0,		  coco3,   "Tandy Radio Shack",  "Color Computer 3 (NTSC)" )
 COMPC(  1986, coco3p,    coco, 	coco3,	   coco3,    0,		  coco3,   "Tandy Radio Shack",  "Color Computer 3 (PAL)" )
 COMPCX( 19??, coco3h,	 coco,	coco3h,    coco3,	 0, 	  coco3,   "Tandy Radio Shack",  "Color Computer 3 (NTSC; HD6309)", GAME_COMPUTER_MODIFIED|GAME_ALIAS)

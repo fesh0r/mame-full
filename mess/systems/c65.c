@@ -451,12 +451,12 @@ static const struct IODevice io_c65[] =
 #define io_c65a io_c65
 
 /*		YEAR	NAME	PARENT	MACHINE INPUT	INIT		COMPANY 							FULLNAME */
-COMPX ( 199?,	c65,	0,		c65,	c65,	c65,		"Commodore Business Machines Co.",  "C65 / C64DX (Prototype, NTSC, 911001)",        GAME_NOT_WORKING)
-COMPX ( 199?,	c65e,	c65,	c65,	c65,	c65,		"Commodore Business Machines Co.",  "C65 / C64DX (Prototype, NTSC, 910828)",        GAME_NOT_WORKING)
-COMPX ( 199?,	c65d,	c65,	c65,	c65,	c65,		"Commodore Business Machines Co.",  "C65 / C64DX (Prototype, NTSC, 910626)",        GAME_NOT_WORKING)
-COMPX ( 199?,	c65c,	c65,	c65,	c65,	c65,		"Commodore Business Machines Co.",  "C65 / C64DX (Prototype, NTSC, 910523)",        GAME_NOT_WORKING)
-COMPX ( 199?,	c65ger, c65,	c65pal, c65ger, c65pal, 	"Commodore Business Machines Co.",  "C65 / C64DX (Prototype, German PAL, 910429)",  GAME_NOT_WORKING)
-COMPX ( 199?,	c65a,	c65,	c65,	c65,	c65_alpha1, "Commodore Business Machines Co.",  "C65 / C64DX (Prototype, NTSC, 910111)",        GAME_NOT_WORKING)
+COMPX ( 1991,	c65,	0,		c65,	c65,	c65,		"Commodore Business Machines Co.",  "C65 / C64DX (Prototype, NTSC, 911001)",        GAME_NOT_WORKING)
+COMPX ( 1991,	c65e,	c65,	c65,	c65,	c65,		"Commodore Business Machines Co.",  "C65 / C64DX (Prototype, NTSC, 910828)",        GAME_NOT_WORKING)
+COMPX ( 1991,	c65d,	c65,	c65,	c65,	c65,		"Commodore Business Machines Co.",  "C65 / C64DX (Prototype, NTSC, 910626)",        GAME_NOT_WORKING)
+COMPX ( 1991,	c65c,	c65,	c65,	c65,	c65,		"Commodore Business Machines Co.",  "C65 / C64DX (Prototype, NTSC, 910523)",        GAME_NOT_WORKING)
+COMPX ( 1991,	c65ger, c65,	c65pal, c65ger, c65pal, 	"Commodore Business Machines Co.",  "C65 / C64DX (Prototype, German PAL, 910429)",  GAME_NOT_WORKING)
+COMPX ( 1991,	c65a,	c65,	c65,	c65,	c65_alpha1, "Commodore Business Machines Co.",  "C65 / C64DX (Prototype, NTSC, 910111)",        GAME_NOT_WORKING)
 
 #ifdef RUNTIME_LOADER
 extern void c65_runtime_loader_init(void)

@@ -2962,7 +2962,7 @@ COMPX( 1987, speclec,  spectrum, spectrum, spectrum,	0, "Sinclair Research",	"ZX
 COMP ( 1986, inves,    spectrum, spectrum, spectrum,	0, "Investronica",	"Inves Spectrum 48K+" )
 COMP ( 1985, tk90x,    spectrum, spectrum, spectrum,	0, "Micro Digital",	"TK-90x Color Computer" )
 COMP ( 1986, tk95,     spectrum, spectrum, spectrum,	0, "Micro Digital",	"TK-95 Color Computer" )
-COMP ( 198?, tc2048,   spectrum, tc2048,   spectrum,	0, "Timex of Portugal",	"TC-2048" )
+COMP ( 1984, tc2048,   spectrum, tc2048,   spectrum,	0, "Timex of Portugal",	"TC-2048" )
 COMP ( 1983, ts2068,   spectrum, ts2068,   spectrum,	0, "Timex Sinclair",	"TS-2068" )
 COMP ( 1986, uk2086,   spectrum, uk2086,   spectrum,	0, "Unipolbrit",	"UK-2086 ver. 1.2" )
 
