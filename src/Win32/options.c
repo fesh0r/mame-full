@@ -666,24 +666,6 @@ const char *GetDefaultGame(void)
     return settings.default_game;
 }
 
-#ifdef MESS
-void SetDefaultSoftware(const char *name)
-{
-    if (settings.default_software != NULL)
-    {
-        free(settings.default_software);
-        settings.default_software = NULL;
-    }
-
-    settings.default_software = strdup(name ? name : "");
-}
-
-const char *GetDefaultSoftware(void)
-{
-    return settings.default_software ? settings.default_software : "";
-}
-#endif
-
 void SetWindowArea(AREA *area)
 {
     memcpy(&settings.area, area, sizeof(AREA));
@@ -736,24 +718,6 @@ void GetColumnWidths(int width[])
         width[i] = settings.column_width[i];
 }
 
-#ifdef MESS
-void SetMessColumnWidths(int width[])
-{
-    int i;
-
-    for (i=0; i < MESS_COLUMN_MAX; i++)
-        settings.mess_column_width[i] = width[i];
-}
-
-void GetMessColumnWidths(int width[])
-{
-    int i;
-
-    for (i=0; i < MESS_COLUMN_MAX; i++)
-        width[i] = settings.mess_column_width[i];
-}
-#endif
-
 void SetSplitterPos(int splitterId, int pos)
 {
     if (splitterId < SPLITTER_MAX)
@@ -799,40 +763,6 @@ void GetColumnShown(int shown[])
     for (i = 0; i < COLUMN_MAX; i++)
         shown[i] = settings.column_shown[i];
 }
-
-#ifdef MESS
-void SetMessColumnOrder(int order[])
-{
-    int i;
-
-    for (i = 0; i < MESS_COLUMN_MAX; i++)
-        settings.mess_column_order[i] = order[i];
-}
-
-void GetMessColumnOrder(int order[])
-{
-    int i;
-
-    for (i = 0; i < MESS_COLUMN_MAX; i++)
-        order[i] = settings.mess_column_order[i];
-}
-
-void SetMessColumnShown(int shown[])
-{
-    int i;
-
-    for (i = 0; i < MESS_COLUMN_MAX; i++)
-        settings.mess_column_shown[i] = shown[i];
-}
-
-void GetMessColumnShown(int shown[])
-{
-    int i;
-
-    for (i = 0; i < MESS_COLUMN_MAX; i++)
-        shown[i] = settings.mess_column_shown[i];
-}
-#endif
 
 void SetSortColumn(int column)
 {
@@ -900,25 +830,6 @@ void SetSampleDirs(const char* paths)
     if (paths != NULL)
         settings.sampledirs = strdup(paths);
 }
-
-#ifdef MESS
-const char* GetSoftwareDirs(void)
-{
-    return settings.softwaredirs;
-}
-
-void SetSoftwareDirs(const char* paths)
-{
-    if (settings.softwaredirs != NULL)
-    {
-        free(settings.softwaredirs);
-        settings.softwaredirs = NULL;
-    }
-
-    if (paths != NULL)
-        settings.softwaredirs = strdup(paths);
-}
-#endif
 
 const char* GetCfgDir(void)
 {

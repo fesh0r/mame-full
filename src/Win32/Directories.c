@@ -56,7 +56,11 @@ enum {
 #define NUMDIRS  (LASTDIR - NUMPATHS)
 
 char *dir_names[LASTDIR] = {
+#ifdef MESS
+	"BIOSes",  /* path */
+#else
     "ROMs",    /* path */
+#endif
 #if HASDIR_SOFTWARE
     "Software",/* path */
 #endif
@@ -177,7 +181,7 @@ INT_PTR CALLBACK DirectoriesDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARA
     Internal function definitions
  ***************************************************************************/
 
-static void DirInfo_SetDir(struct tDirInfo* pInfo, int nType, int nItem, const char* pText)
+static BOOL IsMultiDir(int nType)
 {
     switch (nType)
     {
@@ -188,13 +192,22 @@ static void DirInfo_SetDir(struct tDirInfo* pInfo, int nType, int nItem, const c
 #if HASDIR_SAMPLE
     case SAMPLE:
 #endif
+		return TRUE;
+	}
+	return FALSE;
+}
+
+static void DirInfo_SetDir(struct tDirInfo* pInfo, int nType, int nItem, const char* pText)
+{
+    if (IsMultiDir(nType))
+    {
         strcpy(DirInfo_Path(pInfo, nType, nItem), pText);
         pInfo->m_Paths[nType].m_bModified = TRUE;
-        break;
-	default:
-		if (nType < LASTDIR)
-	        strcpy(DirInfo_Dir(pInfo, nType), pText);
-        break;
+    }
+    else
+    {
+        if (nType < LASTDIR)
+            strcpy(DirInfo_Dir(pInfo, nType), pText);
     }
 }
 
@@ -242,15 +255,8 @@ static void UpdateDirectoryList(HWND hDlg)
     Item.mask = LVIF_TEXT;
 
     nType = ComboBox_GetCurSel(hCombo);
-    switch (nType)
+    if (IsMultiDir(nType))
     {
-    case ROM:
-#if HASDIR_SOFTWARE
-    case SOFTWARE:
-#endif
-#if HASDIR_SAMPLE
-    case SAMPLE:
-#endif
         Item.pszText = "<               >";
         ListView_InsertItem(hList, &Item);
         for (i = DirInfo_NumDir(pDirInfo, nType) - 1; 0 <= i; i--)
@@ -258,14 +264,14 @@ static void UpdateDirectoryList(HWND hDlg)
             Item.pszText = DirInfo_Path(pDirInfo, nType, i);
             ListView_InsertItem(hList, &Item);
         }
-        break;
-	default:
-		if (nType < LASTDIR)
-		{
-	        Item.pszText = DirInfo_Dir(pDirInfo, nType);
-		    ListView_InsertItem(hList, &Item);
-		}
-        break;
+    }
+    else
+    {
+        if (nType < LASTDIR)
+        {
+            Item.pszText = DirInfo_Dir(pDirInfo, nType);
+            ListView_InsertItem(hList, &Item);
+        }
     }
 
     /* select first one */
@@ -495,16 +501,8 @@ static void Directories_OnInsert(HWND hDlg)
             nItem = 0;
 
         nType = ComboBox_GetCurSel(GetDlgItem(hDlg, IDC_DIR_COMBO));
-        switch (nType)
-        {
-        case ROM:
-#if HASDIR_SOFTWARE
-		case SOFTWARE:
-#endif
-#if HASDIR_SAMPLE
-		case SAMPLE:
-#endif
-
+		if (IsMultiDir(nType))
+		{
             if (MAX_DIRS <= DirInfo_NumDir(pDirInfo, nType))
                 return;
 
@@ -516,8 +514,6 @@ static void Directories_OnInsert(HWND hDlg)
             DirInfo_NumDir(pDirInfo, nType)++;
 
             pDirInfo->m_Paths[nType].m_bModified = TRUE;
-
-            break;
         }
 
         UpdateDirectoryList(hDlg);
@@ -541,16 +537,8 @@ static void Directories_OnBrowse(HWND hDlg)
         return;
 
     nType = ComboBox_GetCurSel(GetDlgItem(hDlg, IDC_DIR_COMBO));
-    switch (nType)
-    {
-    case ROM:
-#if HASDIR_SOFTWARE
-    case SOFTWARE:
-#endif
-#if HASDIR_SAMPLE
-    case SAMPLE:
-#endif
-
+    if (IsMultiDir(nType))
+	{
         /* Last item is placeholder for append */
         if (nItem == ListView_GetItemCount(hList) - 1)
         {
@@ -588,16 +576,8 @@ static void Directories_OnDelete(HWND hDlg)
         return;
 
     nType = ComboBox_GetCurSel(GetDlgItem(hDlg, IDC_DIR_COMBO));
-    switch (nType)
-    {
-    case ROM:
-#if HASDIR_SOFTWARE
-    case SOFTWARE:
-#endif
-#if HASDIR_SAMPLE
-    case SAMPLE:
-#endif
-
+    if (IsMultiDir(nType))
+	{
         for (i = nItem; i < DirInfo_NumDir(pDirInfo, nType) - 1; i++)
             strcpy(DirInfo_Path(pDirInfo, nType, i),
                    DirInfo_Path(pDirInfo, nType, i + 1));
@@ -606,8 +586,6 @@ static void Directories_OnDelete(HWND hDlg)
         DirInfo_NumDir(pDirInfo, nType)--;
 
         pDirInfo->m_Paths[nType].m_bModified = TRUE;
-
-        break;
     }
 
     UpdateDirectoryList(hDlg);
@@ -634,16 +612,8 @@ static BOOL Directories_OnBeginLabelEdit(HWND hDlg, NMHDR* pNMHDR)
     LVITEM*       pItem = &pDispInfo->item;
 
     nType = ComboBox_GetCurSel(GetDlgItem(hDlg, IDC_DIR_COMBO));
-    switch (nType)
-    {
-    case ROM:
-#if HASDIR_SOFTWARE
-	case SOFTWARE:
-#endif
-#if HASDIR_SAMPLE
-	case SAMPLE:
-#endif
-
+    if (IsMultiDir(nType))
+	{
         /* Last item is placeholder for append */
         if (pItem->iItem == ListView_GetItemCount(GetDlgItem(hDlg, IDC_DIR_LIST)) - 1)
         {
@@ -652,7 +622,6 @@ static BOOL Directories_OnBeginLabelEdit(HWND hDlg, NMHDR* pNMHDR)
 
             Edit_SetText(ListView_GetEditControl(GetDlgItem(hDlg, IDC_DIR_LIST)), "");
         }
-        break;
     }
 
     return bResult;
@@ -693,50 +662,44 @@ static BOOL Directories_OnEndLabelEdit(HWND hDlg, NMHDR* pNMHDR)
         int i;
 
         nType = ComboBox_GetCurSel(GetDlgItem(hDlg, IDC_DIR_COMBO));
-        switch (nType)
-        {
-        case ROM:
-#if HASDIR_SOFTWARE
-		case SOFTWARE:
-#endif
-#if HASDIR_SAMPLE
-		case SAMPLE:
-#endif
+		if (IsMultiDir(nType))
+		{
+			/* Last item is placeholder for append */
+			if (pItem->iItem == ListView_GetItemCount(GetDlgItem(hDlg, IDC_DIR_LIST)) - 1)
+			{
+				if (MAX_DIRS <= DirInfo_NumDir(pDirInfo, nType))
+					return FALSE;
 
-            /* Last item is placeholder for append */
-            if (pItem->iItem == ListView_GetItemCount(GetDlgItem(hDlg, IDC_DIR_LIST)) - 1)
-            {
-                if (MAX_DIRS <= DirInfo_NumDir(pDirInfo, nType))
-                    return FALSE;
+				for (i = DirInfo_NumDir(pDirInfo, nType); pItem->iItem < i; i--)
+					strcpy(DirInfo_Path(pDirInfo, nType, i),
+						   DirInfo_Path(pDirInfo, nType, i - 1));
 
-                for (i = DirInfo_NumDir(pDirInfo, nType); pItem->iItem < i; i--)
-                    strcpy(DirInfo_Path(pDirInfo, nType, i),
-                           DirInfo_Path(pDirInfo, nType, i - 1));
+				strcpy(DirInfo_Path(pDirInfo, nType, pItem->iItem), pItem->pszText);
+				pDirInfo->m_Paths[nType].m_bModified = TRUE;
 
-                strcpy(DirInfo_Path(pDirInfo, nType, pItem->iItem), pItem->pszText);
-                pDirInfo->m_Paths[nType].m_bModified = TRUE;
-
-                DirInfo_NumDir(pDirInfo, nType)++;
-            }
-            else
-                DirInfo_SetDir(pDirInfo, nType, pItem->iItem, pItem->pszText);
-
-
-            break;
-
-        case CFG:
-        case HI:
-        case IMG:
-        case INP:
-        case STATE:
-        case ART:
-		case MEMCARD:
-		case FLYER:
-		case CABINET:
-		case MARQUEE:
-		case NVRAM:
-            DirInfo_SetDir(pDirInfo, nType, pItem->iItem, pItem->pszText);
-            break;
+				DirInfo_NumDir(pDirInfo, nType)++;
+			}
+			else
+				DirInfo_SetDir(pDirInfo, nType, pItem->iItem, pItem->pszText);
+		}
+		else
+		{
+			switch (nType)
+			{
+			case CFG:
+			case HI:
+			case IMG:
+			case INP:
+			case STATE:
+			case ART:
+			case MEMCARD:
+			case FLYER:
+			case CABINET:
+			case MARQUEE:
+			case NVRAM:
+				DirInfo_SetDir(pDirInfo, nType, pItem->iItem, pItem->pszText);
+				break;
+			}
         }
 
         UpdateDirectoryList(hDlg);

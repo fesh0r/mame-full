@@ -29,12 +29,10 @@ OSOBJS = \
         $(OBJ)/Win32/fmsynth.o \
         $(OBJ)/Win32/NTFMSynth.o \
         $(OBJ)/Win32/audit32.o \
-        $(OBJ)/Win32/Properties.o \
         $(OBJ)/Win32/ColumnEdit.o \
         $(OBJ)/Win32/Screenshot.o \
         $(OBJ)/Win32/TreeView.o \
         $(OBJ)/Win32/Splitters.o \
-        $(OBJ)/Win32/options.o \
         $(OBJ)/Win32/Bitmask.o \
         $(OBJ)/Win32/DataMap.o \
         $(OBJ)/Win32/Avi.o \
@@ -67,10 +65,15 @@ endif
 ifdef MESS
 OSOBJS += \
         $(OBJ)/mess/Win32/mess32ui.o \
+        $(OBJ)/mess/Win32/MessProperties.o \
+        $(OBJ)/mess/Win32/MessOptions.o \
         $(OBJ)/mess/Win32/fdc.o \
         $(OBJ)/mess/Win32/fileio.o \
         $(OBJ)/mess/Win32/dirio.o
 else
-OSOBJS += $(OBJ)/Win32/Win32ui.o
+OSOBJS += \
+        $(OBJ)/Win32/Win32ui.o \
+        $(OBJ)/Win32/Properties.o \
+        $(OBJ)/Win32/options.o
 endif
 
