@@ -20,20 +20,21 @@ Overview :
 	It communicates with the TMS9900 with the CRU bus, and with the rest of the world with
 	a number of parallel I/O pins.
 
-	I/O and timer functions should work with any other 990/99xx/99xxx CPU.  Since interrupt bus is
-	different on each CPU, I guess interrupt handling was only used on tms9900-based systems.
+	I/O and timer functions should work with any other 990/99xx/99xxx CPU.  Since the interrupt
+	bus is different on each CPU, I guess interrupt handling was only used on tms9900-based
+	systems.
 
 
 TODO :
 	* support reset
-	* support multiple 9901
+	* support multiple 9901s
 
 Pins :
 	Reset
 	INT1-INT7 : used as interrupt/input pins.
 	P0-P7 : used as input/output pins.
 	INT8/P15-INT15/P8 : used as both interrupt/input or input/output pins.  Note you can
-	simulteanously use a pin as output and interrupt.  (Mostly obvious - but it imply you cannot
+	simulteanously use a pin as output and interrupt.  (Mostly obvious - but it implies you cannot
 	raise an interrupt with a write, which is not SO obvious.)
 
 Interrupt handling :
@@ -138,6 +139,7 @@ static double clock_rate;
 */
 
 static void tms9901_field_interrupts(void);
+static void decrementer_callback(int ignored);
 static void reset_tms9901_timer(void);
 
 
@@ -242,6 +244,9 @@ void tms9901_init(const tms9901reset_param *param)
 
 	mode9901 = 0;
 
+
+	tms9901_timer = timer_alloc(decrementer_callback);
+
 	clockinvl = 0;
 	reset_tms9901_timer();
 }
@@ -333,16 +338,17 @@ static void decrementer_callback(int ignored)
 */
 static void reset_tms9901_timer(void)
 {
-	if (tms9901_timer)
+	/*if (tms9901_timer)
 	{
 		timer_remove(tms9901_timer);
 		tms9901_timer = NULL;
-	}
+	}*/
 
 	/* clock interval == 0 -> no timer */
 	if (clockinvl)
 	{
-		tms9901_timer = timer_pulse((double) clockinvl / (clock_rate / 64.), 0, decrementer_callback);
+		//tms9901_timer = timer_pulse((double) clockinvl / (clock_rate / 64.), 0, decrementer_callback);
+		timer_adjust(tms9901_timer, (double) clockinvl / (clock_rate / 64.), 0, (double) clockinvl / (clock_rate / 64.));
 	}
 }
 
@@ -470,7 +476,7 @@ WRITE16_HANDLER ( tms9901_CRU_write )
 
 			if (mode9901)
 			{
-				if (tms9901_timer)
+				if (/*tms9901_timer*/clockinvl)
 					latchedtimer = ceil(timer_timeleft(tms9901_timer) * 46875.);
 				else
 					latchedtimer = 0;		/* timer inactive... */

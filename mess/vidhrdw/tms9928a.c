@@ -1,7 +1,7 @@
 /*
 ** File: tms9928a.c -- software implementation of the Texas Instruments
-**                     TMS9918A and TMS9928A, used by the Coleco, MSX and
-**                     TI99/4A.
+**                     TMS9918(A), TMS9928(A) and TMS9929(A), used by the Coleco, MSX and
+**                     TI99/4(A).
 **
 ** All undocumented features as described in the following file
 ** should be emulated.
@@ -175,9 +175,12 @@ static TMS9928A tms;
 /*
 ** initialize the palette
 */
-void tms9928A_init_palette (unsigned char *palette,
-	unsigned short *colortable,const unsigned char *color_prom) {
-    memcpy (palette, &TMS9928A_palette, sizeof(TMS9928A_palette));
+void palette_init_tms9928a(unsigned short *colortable, const unsigned char *color_prom)
+{
+	int i;
+
+	for (i=0; i<TMS9928A_PALETTE_SIZE; i++)
+		palette_set_color(i, TMS9928A_palette[i*3], TMS9928A_palette[i*3+1], TMS9928A_palette[i*3+2]);
 }
 
 
@@ -295,7 +298,8 @@ void TMS9928A_post_load (void) {
 	if (tms.INTCallback) tms.INTCallback (tms.INT);
 }
 
-void TMS9928A_stop () {
+void video_stop_tms9928a()
+{
 	free (tms.vMem); tms.vMem = NULL;
     free (tms.dBackMem); tms.dBackMem = NULL;
     free (tms.DirtyColour); tms.DirtyColour = NULL;
@@ -495,7 +499,8 @@ void TMS9928A_set_spriteslimit (int limit) {
 /*
 ** Updates the screen (the dMem memory area).
 */
-void TMS9928A_refresh (struct mame_bitmap *bmp, int full_refresh) {
+void video_update_tms9928a(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+{
     int c;
 
     if (tms.Change) {
@@ -508,26 +513,20 @@ void TMS9928A_refresh (struct mame_bitmap *bmp, int full_refresh) {
         }
     }
 
-	if (full_refresh) {
-		_TMS9928A_set_dirty (1);
-		tms.Change = 1;
+	if (tms.Change)
+	{
+		if (tms.Regs[1] & 0x40)
+			(*ModeHandlers[tms.mode])(tms.tmpbmp);
 	}
-
-    if (tms.Change || full_refresh) {
-        if (! (tms.Regs[1] & 0x40) ) {
-            fillbitmap (bmp, Machine->pens[tms.BackColour],
-                &Machine->visible_area);
-        } else {
-            if (tms.Change) ModeHandlers[tms.mode] (tms.tmpbmp);
-            copybitmap (bmp, tms.tmpbmp, 0, 0, 0, 0,
-                &Machine->visible_area, TRANSPARENCY_NONE, 0);
-            if (TMS_SPRITES_ENABLED) {
-                _TMS9928A_sprites (bmp);
-            }
-        }
-    } else {
+	else
 		tms.StatusReg = tms.oldStatusReg;
-    }
+
+	if (! (tms.Regs[1] & 0x40))
+		fillbitmap(bitmap, Machine->pens[tms.BackColour], &Machine->visible_area);
+	else
+		copybitmap(bitmap, tms.tmpbmp, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_NONE, 0);
+		if (TMS_SPRITES_ENABLED)
+			_TMS9928A_sprites(bitmap);
 
     /* store Status register, so it can be restored at the next frame
        if there are no changes (sprite collision bit is lost) */

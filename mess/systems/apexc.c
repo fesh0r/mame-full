@@ -8,17 +8,18 @@
 
 #include "driver.h"
 #include "cpu/apexc/apexc.h"
+#include "vidhrdw/generic.h"
 
 static void apexc_teletyper_init(void);
 static void apexc_teletyper_putchar(int character);
 
 
-static void apexc_init_machine(void)
+static void machine_init_apexc(void)
 {
 	apexc_teletyper_init();
 }
 
-static void apexc_stop_machine(void)
+static void machine_stop_apexc(void)
 {
 }
 
@@ -319,7 +320,7 @@ static UINT32 panel_data_reg;	/* value of a data register on the control panel w
 /*
 	Not a real interrupt - just handle keyboard input
 */
-static int apexc_interrupt(void)
+static void apexc_interrupt(void)
 {
 	UINT32 edit_keys;
 	int control_keys;
@@ -412,9 +413,6 @@ static int apexc_interrupt(void)
 
 	/* remember new state of control keys */
 	old_control_keys = control_keys;
-
-
-	return ignore_interrupt();
 }
 
 /*
@@ -465,13 +463,17 @@ static const struct rectangle teletyper_scroll_clear_window =
 };
 static const int var_teletyper_scroll_step = - teletyper_scroll_step;
 
-static void apexc_init_palette(unsigned char *palette, unsigned short *colortable, const unsigned char *dummy)
+static void palette_init_apexc(unsigned short *colortable, const unsigned char *dummy)
 {
-	memcpy(palette, & apexc_palette, sizeof(apexc_palette));
+	int i;
+
+	for (i=0; i<APEXC_PALETTE_SIZE; i++)
+		palette_set_color(i, apexc_palette[i*3], apexc_palette[i*3+1], apexc_palette[i*3+2]);
+
 	memcpy(colortable, & apexc_colortable, sizeof(apexc_colortable));
 }
 
-static int apexc_vh_start(void)
+static int video_start_apexc(void)
 {
 	if ((apexc_bitmap1 = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == NULL)
 		return 1;
@@ -487,7 +489,7 @@ static int apexc_vh_start(void)
 	return 0;
 }
 
-static void apexc_vh_stop(void)
+static void video_stop_apexc(void)
 {
 	bitmap_free(apexc_bitmap1);
 	apexc_bitmap1 = NULL;
@@ -525,12 +527,13 @@ static void apexc_draw_string(struct mame_bitmap *bitmap, const char *buf, int x
 }
 
 
-static void apexc_vh_refresh(struct mame_bitmap *bitmap, int full_refresh)
+static void video_update_apexc(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	int i;
 	char the_char;
+	/*int full_refresh = get_vh_global_attribute_changed();
 
-	if (full_refresh)
+	if (full_refresh)*/
 	{
 		fillbitmap(bitmap, Machine->pens[0], &/*Machine->visible_area*/panel_window);
 		apexc_draw_string(bitmap, "power", 8, 0, 0);
@@ -809,49 +812,45 @@ static PORT_WRITE32_START(writeport)
 	{0, 0, tape_write},
 PORT_END
 
-static struct MachineDriver machine_driver_apexc =
-{
+
+static MACHINE_DRIVER_START(apexc)
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_APEXC,
-			2000,	/* 2.0 kHz (memory word clock frequency) */
-			readmem, writemem, readport, writeport,
-			apexc_interrupt, 1,	/* handles the control panel */
-			0, 0,
-			0
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration : meaningless */
-	1,
-	apexc_init_machine,
-	apexc_stop_machine,
+	/* APEXC CPU @ 2.0 kHz (memory word clock frequency) */
+	MDRV_CPU_ADD(APEXC, 2000)
+	/*MDRV_CPU_FLAGS(0)*/
+	/*MDRV_CPU_CONFIG(NULL)*/
+	MDRV_CPU_MEMORY(readmem, writemem)
+	MDRV_CPU_PORTS(readport, writeport)
+	/* dummy interrupt: handles the control panel */
+	MDRV_CPU_VBLANK_INT(apexc_interrupt, 1)
+	/*MDRV_CPU_PERIODIC_INT(func, rate)*/
 
-	/* video hardware */
-	256,						/* screen width */
-	192,						/* screen height */
-	{ 0, 256-1, 0, 192-1},		/* visible_area */
-	gfxdecodeinfo,				/* graphics decode info (???)*/
-	APEXC_PALETTE_SIZE,			/* palette is 3*total_colors bytes long */
-	APEXC_COLORTABLE_SIZE,		/* length in shorts of the color lookup table */
-	apexc_init_palette,			/* palette init */
+	/* video hardware does not exist, but we display a control panel and the typewriter output */
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	/*MDRV_INTERLEAVE(interleave)*/
 
-	VIDEO_TYPE_RASTER,
-	0,
-	apexc_vh_start,
-	apexc_vh_stop,
-	apexc_vh_refresh,
+	MDRV_MACHINE_INIT( apexc )
+	MDRV_MACHINE_STOP( apexc )
+	/*MDRV_NVRAM_HANDLER( NULL )*/
 
-	/* sound hardware */
-	0,
-	0,0,0,
-	{
-		{(int)NULL,},
-	},
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	/*MDRV_ASPECT_RATIO(num, den)*/
+	MDRV_SCREEN_SIZE(256, 192)
+	MDRV_VISIBLE_AREA(0, 256-1, 0, 192-1)
 
-	/* NVRAM handler */
-	NULL
-};
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(APEXC_PALETTE_SIZE)
+	MDRV_COLORTABLE_LENGTH(APEXC_COLORTABLE_SIZE)
+
+	MDRV_PALETTE_INIT(apexc)
+	MDRV_VIDEO_START(apexc)
+	MDRV_VIDEO_STOP(apexc)
+	/*MDRV_VIDEO_EOF(name)*/
+	MDRV_VIDEO_UPDATE(apexc)
+
+MACHINE_DRIVER_END
 
 static const struct IODevice io_apexc[] =
 {

@@ -493,7 +493,7 @@ void ti99_rom_cleanup(int id)
 /*
 	ti99_init_machine() ; launched AFTER ti99_load_rom...
 */
-void ti99_init_machine(void)
+void machine_init_ti99(void)
 {
 	int i;
 
@@ -621,7 +621,7 @@ void ti99_init_machine(void)
 	}
 }
 
-void ti99_stop_machine(void)
+void machine_stop_ti99(void)
 {
 	if (has_fdc)
 	{
@@ -634,17 +634,17 @@ void ti99_stop_machine(void)
 /*
 	video initialization.
 */
-int ti99_4_vh_start(void)
+int video_start_ti99_4(void)
 {
 	return TMS9928A_start(TMS99x8, 0x4000);		/* tms9918/28/29 with 16 kb of video RAM */
 }
 
-int ti99_4a_vh_start(void)
+int video_start_ti99_4a(void)
 {
 	return TMS9928A_start(TMS99x8A, 0x4000);	/* tms9918a/28a/29a with 16 kb of video RAM */
 }
 
-int ti99_4ev_vh_start(void)
+int video_start_ti99_4ev(void)
 {
 	return v9938_init(MODEL_V9938, 0x20000, tms9901_set_int2);	/* v38 with 128 kb of video RAM */
 }
@@ -653,18 +653,14 @@ int ti99_4ev_vh_start(void)
 	VBL interrupt  (mmm... actually, it happens when the beam enters the lower border, so it is not
 	a genuine VBI, but who cares ?)
 */
-int ti99_vblank_interrupt(void)
+void ti99_vblank_interrupt(void)
 {
 	TMS9928A_interrupt();
-
-	return ignore_interrupt();
 }
 
-int ti99_4ev_vblank_interrupt(void)
+void ti99_4ev_hblank_interrupt(void)
 {
 	v9938_interrupt();
-
-	return ignore_interrupt();
 }
 
 
@@ -2238,6 +2234,7 @@ static WRITE16_HANDLER ( ti99_ww_myarcxramhigh )
 
 /* prototypes */
 static void fdc_callback(int);
+static void motor_on_timer_callback(int dummy);
 static int fdc_cru_r(int offset);
 static void fdc_cru_w(int offset, int data);
 static READ_HANDLER(fdc_mem_r);
@@ -2295,7 +2292,8 @@ static void ti99_fdc_init(void)
 
 	DVENA = 0;
 	motor_on = 0;
-	motor_on_timer = NULL;
+	//motor_on_timer = NULL;
+	motor_on_timer = timer_alloc(motor_on_timer_callback);
 
 	ti99_set_expansion_card_handlers(0x1100, & fdc_handlers);
 
@@ -2313,9 +2311,9 @@ static void ti99_fdc_init(void)
 static void fdc_handle_hold(void)
 {
 	if (DSKhold && (!DRQ_IRQ_status) && DVENA)
-		cpu_set_halt_line(1, ASSERT_LINE);
+		cpu_set_halt_line(0, ASSERT_LINE);
 	else
-		cpu_set_halt_line(1, CLEAR_LINE);
+		cpu_set_halt_line(0, CLEAR_LINE);
 }
 
 /*
@@ -2351,8 +2349,6 @@ static void motor_on_timer_callback(int dummy)
 {
 	DVENA = 0;
 	fdc_handle_hold();
-
-	motor_on_timer = NULL;
 }
 
 /*
@@ -2407,9 +2403,7 @@ static void fdc_cru_w(int offset, int data)
 		{	/* on rising edge, set DVENA for 4.23s */
 			DVENA = 1;
 			fdc_handle_hold();
-			if (motor_on_timer)
-				timer_remove(motor_on_timer);
-			motor_on_timer = timer_set(4.23, 0, motor_on_timer_callback);
+			timer_adjust(motor_on_timer, 4.23, 0, 0.);
 		}
 		motor_on = data;
 		break;

@@ -83,8 +83,8 @@ void init_ti99_4a(void);
 void init_ti99_4ev(void);
 void init_ti99_4p(void);
 
-void ti99_init_machine(void);
-void ti99_stop_machine(void);
+void machine_init_ti99(void);
+void machine_stop_ti99(void);
 
 int ti99_floppy_init(int id);
 
@@ -94,11 +94,11 @@ void ti99_cassette_exit(int id);
 int ti99_load_rom(int id);
 void ti99_rom_cleanup(int id);
 
-int ti99_4_vh_start(void);
-int ti99_4a_vh_start(void);
-int ti99_4ev_vh_start(void);
-int ti99_vblank_interrupt(void);
-int ti99_4ev_vblank_interrupt(void);
+int video_start_ti99_4(void);
+int video_start_ti99_4a(void);
+int video_start_ti99_4ev(void);
+void ti99_vblank_interrupt(void);
+void ti99_4ev_hblank_interrupt(void);
 
 READ16_HANDLER ( ti99_rw_null8bits );
 WRITE16_HANDLER ( ti99_ww_null8bits );

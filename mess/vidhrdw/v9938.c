@@ -106,34 +106,43 @@ b0 is set if b2 and b1 are set (remember, color bus is 3 bits)
 
 */
 
-void v9938_init_palette (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
-	{
-	int	i,red;
+void palette_init_v9938(unsigned short *colortable, const unsigned char *color_prom)
+{
+	int	i, red, green, blue;
 
 	if (Machine->scrbitmap->depth == 8)
-		{
+	{
 		/* create 256 colour palette -- this is actually the graphic 7
 		   palette, with duplicate entries so the core fill shrink it to
 		   256 colours */
 		for (i=0;i<512;i++)
-			{
-			(*palette++) = (unsigned char)(((i >> 6) & 7) * 36); /* red */
-			(*palette++) = (unsigned char)(((i >> 3) & 7) * 36); /* green */
-			red = (i & 6); if (red == 6) red++;
-			(*palette++) = (unsigned char)red * 36; /* blue */
-			}
-		}
-	else
 		{
-		/* create the full 512 colour palette */
-		for (i=0;i<512;i++)
-			{
-			(*palette++) = (unsigned char)(((i >> 6) & 7) * 36); /* red */
-			(*palette++) = (unsigned char)(((i >> 3) & 7) * 36); /* green */
-			(*palette++) = (unsigned char)((i & 7) * 36); /* blue */
-			}
+			red = (i >> 6) & 7;		/* red */
+			red = (red << 5) | (red << 2) | (red >> 1);			/* convert to 8 bits */
+			green = (i >> 3) & 7;	/* green */
+			green = (green << 5) | (green << 2) | (green >> 1);	/* convert to 8 bits */
+			blue = (i >> 1) & 3;	/* blue */
+			blue = (blue << 6) | (blue << 4) | (blue << 2) | blue;	/* convert to 8 bits */
+			palette_set_color(i, red, green, blue);
 		}
 	}
+	else
+	{
+		/* create the full 512 colour palette */
+		for (i=0;i<512;i++)
+		{
+			red = (i >> 6) & 7;		/* red */
+			red = (red << 5) | (red << 2) | (red >> 1);			/* convert to 8 bits */
+			green = (i >> 3) & 7;	/* green */
+			green = (green << 5) | (green << 2) | (green >> 1);	/* convert to 8 bits */
+			blue = i & 7;			/* blue */
+			blue = (blue << 5) | (blue << 2) | (blue >> 1);		/* convert to 8 bits */
+			palette_set_color(i, red, green, blue);
+		}
+	}
+
+	
+}
 
 /*
 
@@ -146,78 +155,79 @@ to emulate this. Also it keeps the palette a reasonable size. :)
 
 */
 
-void v9958_init_palette (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
-    {
+void palette_init_v9958(unsigned short *colortable,const unsigned char *color_prom)
+{
 	int r,g,b,y,j,k,i,k0,j0,n;
-	unsigned char *pal;
+	unsigned char pal[19268*3];
 
-	pal = palette + 512*3;
-	v9938_init_palette (palette, colortable, color_prom);
+	/* init v9938 256-color palette */
+	palette_init_v9938(colortable, color_prom);
 
 	/* set up YJK table */
 	if (!pal_indYJK)
-		{
-		pal_indYJK = malloc (0x20000 * sizeof (UINT16) );
+	{
+		pal_indYJK = malloc(0x20000 * sizeof(UINT16));
 		if (!pal_indYJK)
-			{
+		{
 			logerror ("Fatal: cannot malloc () in v9958_init_palette (), cannot exit\n");
 			return;
-			}
 		}
+	}
 
 	logerror ("Building YJK table for V9958 screens, may take a while ... \n");
 	i = 0;
 	for (y=0;y<32;y++) for (k=0;k<64;k++) for (j=0;j<64;j++)
-		{
+	{
 		/* calculate the color */
 		if (k >= 32) k0 = (k - 64); else k0 = k;
 		if (j >= 32) j0 = (j - 64); else j0 = j;
 		r = y + j0;
-        b = (y * 5 - 2 * j0 - k0) / 4;
-        g = y + k0;
+		b = (y * 5 - 2 * j0 - k0) / 4;
+		g = y + k0;
 		if (r < 0) r = 0; else if (r > 31) r = 31;
 		if (g < 0) g = 0; else if (g > 31) g = 31;
 		if (b < 0) b = 0; else if (b > 31) b = 31;
 
 		if (Machine->scrbitmap->depth == 8)
-			{
+		{
 			/* we don't have the space for more entries, so map it to the
 			   256 colours we already have */
 			r /= 4; g /= 4; b /= 4;
 			pal_indYJK[y | j << 5 | k << (5 + 6)] = (r << 6) | (g << 3) | b;
-			}
+		}
 		else
-			{
-			r = (255 * r) / 31;
-			b = (255 * g) / 31;
-			g = (255 * r) / 31;
-			/* have we seen this one before */
+		{
+			r = (r << 3) | (r >> 2);
+			b = (b << 3) | (b >> 2);
+			g = (g << 3) | (g >> 2);
+			/* have we seen this one before? */
 			n = 0;
 			while (n < i)
-				{
+			{
 				if (pal[n*3+0] == r && pal[n*3+1] == g && pal[n*3+2] == b)
-					{
+				{
 					pal_indYJK[y | j << 5 | k << (5 + 6)] = n + 512;
 					break;
-					}
-				n++;
 				}
+				n++;
+			}
 
 			if (i == n)
-				{
+			{
 				/* so we haven't; add it */
 				pal[i*3+0] = r;
 				pal[i*3+1] = g;
 				pal[i*3+2] = b;
+				palette_set_color(i+512, r, g, b);
 				pal_indYJK[y | j << 5 | k << (5 + 6)] = i + 512;
 				i++;
-				}
 			}
 		}
+	}
 
 	if (i != 19268)
 		logerror ("Table creation failed - %d colours out of 19286 created\n", i);
-	}
+}
 
 /*
 
@@ -485,13 +495,17 @@ void v9938_reset (void)
 	vdp.scanline = 0;
 	}
 
-void v9938_exit (void)
-	{
+void video_stop_v9938(void)
+{
 	free (vdp.vram);
-	if (vdp.vram_exp) free (vdp.vram_exp);
+	if (vdp.vram_exp)
+		free (vdp.vram_exp);
 	if (pal_indYJK)
-		{ free (pal_indYJK); pal_indYJK = NULL; }
+	{
+		free (pal_indYJK);
+		pal_indYJK = NULL;
 	}
+}
 
 static void v9938_check_int (void)
 	{
@@ -1208,10 +1222,10 @@ static void v9938_refresh_line (struct mame_bitmap *bmp, int line)
 		}
 	}
 
-void v9938_refresh (struct mame_bitmap *bmp, int fullrefresh)
-	{
+void video_update_v9938(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+{
 	/* already been rendered, since we're using scanline stuff */
-	}
+}
 
 /*
 
