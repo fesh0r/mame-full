@@ -3,8 +3,10 @@ extern void lviv_init_machine (void);
 extern void lviv_stop_machine (void);
 extern unsigned char * lviv_ram;
 extern unsigned char * lviv_video_ram;
-extern void lviv_snap_exit (int id);
-extern int lviv_snap_load (int id);
+extern void lviv_snap_exit (int);
+extern int lviv_snap_load (int);
+extern int lviv_tape_init(int);
+extern void lviv_tape_exit(int);
 
 
 /* vidhrdw/lviv.c */

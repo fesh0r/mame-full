@@ -2,6 +2,12 @@
 
 PK-01 Lviv driver by Krzysztof Strzecha
 
+Notes:
+1. Only one colour palette is emulated.
+2. .lvt tape images are not supported.
+3. LIST command crash Lviv.
+4. Printer is not emulated. 
+
 Lviv technical information
 --------------------------
 CPU:
@@ -171,6 +177,16 @@ INPUT_PORTS_START (lviv)
 		PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_KEYBOARD, "Down",	KEYCODE_DOWN,		IP_JOY_NONE )
 INPUT_PORTS_END
 
+static struct Speaker_interface lviv_speaker_interface=
+{
+ 1,
+ {50},
+};
+
+static struct Wave_interface lviv_wave_interface = {
+	1,		/* 1 cassette recorder */
+	{ 50 }		/* mixing levels in percent */
+};
 
 /* machine definition */
 
@@ -210,10 +226,16 @@ static	struct MachineDriver machine_driver_lviv =
 	/* sound hardware */
 	0, 0, 0, 0,
 	{
-		{ 0 }
+		{
+			SOUND_SPEAKER,
+			&lviv_speaker_interface,
+		},
+		{
+			SOUND_WAVE,
+			&lviv_wave_interface
+		}
 	}
 };
-
 
 static const struct IODevice io_lviv[] = {
     {
@@ -235,6 +257,7 @@ static const struct IODevice io_lviv[] = {
         NULL,               	/* input_chunk */
         NULL                	/* output_chunk */
     },
+    IO_CASSETTE_WAVE(1,"wav\0",NULL,lviv_tape_init,lviv_tape_exit),
     { IO_END }
 };
 

@@ -11,6 +11,7 @@
 
 #include <stdarg.h>
 #include "driver.h"
+#include "cassette.h"
 #include "cpu/i8085/i8085.h"
 #include "includes/lviv.h"
 #include "machine/8255ppi.h"
@@ -65,7 +66,10 @@ READ_HANDLER ( lviv_ppi_0_portb_r )
 
 READ_HANDLER ( lviv_ppi_0_portc_r )
 {
-	return 0xff;
+	UINT8 data = 0xff;
+	if (!(device_input(IO_CASSETTE,0) > 255))
+		data &= 0xef;
+	return data;
 }
 
 WRITE_HANDLER ( lviv_ppi_0_porta_w )
@@ -81,6 +85,8 @@ WRITE_HANDLER ( lviv_ppi_0_portb_w )
 WRITE_HANDLER ( lviv_ppi_0_portc_w )	/* tape in/out, video memory on/off */
 {
 	lviv_ppi_port_outputs[0][2] = data;
+	speaker_level_w(0, data&0x01);
+	device_output(IO_CASSETTE, 0, (data & 0x01) ? -32768 : 32767);
 	lviv_update_memory();
 }
 
@@ -262,3 +268,15 @@ static OPBASE_HANDLER( lviv_opbaseoverride )
 	return (activecpu_get_reg(REG_PC) & 0x0ffff);
 }
 
+int lviv_tape_init(int id)
+{
+	struct cassette_args args;
+	memset(&args, 0, sizeof(args));
+	args.create_smpfreq = 44100;
+	return cassette_init(id, &args);
+}
+
+void lviv_tape_exit(int id)
+{
+	device_close(IO_CASSETTE, id);
+}
