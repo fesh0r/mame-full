@@ -184,10 +184,10 @@ const struct GameDriver *drivers[] =
 ////	DRIVER( bbcb1770 )  /* 1981 BBC Micro Model B with WD 1770 disc       */
 ////	DRIVER( bbcbp )     /* 198? BBC Micro Model B+ 64K                    */
 ////	DRIVER( bbcbp128 )  /* 198? BBC Micro Model B+ 128K                   */
-TESTDRIVER( bbcb6502 )  /* 198? BBC B WD1770 with a 6502 second processor */
+//TESTDRIVER( bbcb6502 )  /* 198? BBC B WD1770 with a 6502 second processor */
 /*//	DRIVER( electron )*//* 198? Acorn Electron							  */
 
-TESTDRIVER( a310 )      /* 1988 Acorn Archimedes 310                      */
+//TESTDRIVER( a310 )      /* 1988 Acorn Archimedes 310                      */
 
 ////	DRIVER( z88 )		/*												  */
 
@@ -248,9 +248,9 @@ TESTDRIVER( a310 )      /* 1988 Acorn Archimedes 310                      */
  * Lisa 2 				 January			 1984
  * Macintosh XL 		 January			 1985
  */
-//	DRIVER( lisa2 ) 	/* 1984 Apple Lisa 2							  */
-//	DRIVER( lisa210 ) 	/* 1984 Apple Lisa 2/10							  */
-//	DRIVER( macxl ) 	/* 1984 Apple Macintosh XL						  */
+	DRIVER( lisa2 ) 	/* 1984 Apple Lisa 2							  */
+	DRIVER( lisa210 ) 	/* 1984 Apple Lisa 2/10							  */
+	DRIVER( macxl ) 	/* 1984 Apple Macintosh XL						  */
 /*
  * Macintosh 			 January			 1984
  * Macintosh 512k		 July?				 1984
@@ -291,8 +291,8 @@ XL/XE 16kB OS roms
 
 	/* COMMODORE */
 //	DRIVER( kim1 )		/* Commodore (MOS) KIM-1 1975					  */
-TESTDRIVER( sym1 )		/* Synertek SYM1								  */
-TESTDRIVER( aim65 )		/* Rockwell AIM65								  */
+//TESTDRIVER( sym1 )		/* Synertek SYM1								  */
+//TESTDRIVER( aim65 )		/* Rockwell AIM65								  */
 
 //	DRIVER( pet )		/* PET2001/CBM20xx Series (Basic 1) 			  */
 //	DRIVER( cbm30 ) 	/* Commodore 30xx (Basic 2) 					  */
@@ -305,14 +305,14 @@ TESTDRIVER( aim65 )		/* Rockwell AIM65								  */
 //	DRIVER( cbm80ger )	/* Commodore 80xx German (50Hz) 				  */
 //	DRIVER( cbm80swe )	/* Commodore 80xx Swedish (50Hz)				  */
 //	DRIVER( superpet )	/* Commodore SP9000/MMF9000 (50Hz)				  */
-TESTDRIVER( mmf9000 )	/* Commodore MMF9000 Swedish					  */
+//TESTDRIVER( mmf9000 )	/* Commodore MMF9000 Swedish					  */
 
 //	DRIVER( vic20 ) 	/* Commodore Vic-20 NTSC						  */
 //	DRIVER( vic1001 )	/* Commodore VIC-1001 (VIC20 Japan)				  */
 //	DRIVER( vc20 )		/* Commodore Vic-20 PAL 						  */
 //	DRIVER( vic20swe )	/* Commodore Vic-20 Sweden						  */
-TESTDRIVER( vic20v ) 	/* Commodore Vic-20 NTSC, VC1540				  */
-TESTDRIVER( vc20v ) 	/* Commodore Vic-20 PAL, VC1541					  */
+//TESTDRIVER( vic20v ) 	/* Commodore Vic-20 NTSC, VC1540				  */
+//TESTDRIVER( vc20v ) 	/* Commodore Vic-20 PAL, VC1541					  */
 //	DRIVER( vic20i )	/* Commodore Vic-20 IEEE488 Interface			  */
 
 //	DRIVER( max )		/* Max (Japan)/Ultimax (US)/VC10 (German)		  */
@@ -321,9 +321,9 @@ TESTDRIVER( vc20v ) 	/* Commodore Vic-20 PAL, VC1541					  */
 //	DRIVER( c64pal )	/* Commodore 64 - PAL							  */
 //	DRIVER( vic64s )	/* Commodore VIC64S (Swedish)					  */
 //	DRIVER( cbm4064 )	/* Commodore CBM4064							  */
-TESTDRIVER( sx64 )		/* Commodore SX 64 - PAL						  */
-TESTDRIVER( vip64 )		/* Commodore VIP64 (SX64, PAL, Swedish)			  */
-TESTDRIVER( dx64 )		/* Commodore DX 64 - PROTOTPYE, PAL						  */
+//TESTDRIVER( sx64 )		/* Commodore SX 64 - PAL						  */
+//TESTDRIVER( vip64 )		/* Commodore VIP64 (SX64, PAL, Swedish)			  */
+//TESTDRIVER( dx64 )		/* Commodore DX 64 - PROTOTPYE, PAL						  */
 //	DRIVER( c64gs ) 	/* Commodore 64 Games System					  */
 
 //	DRIVER( cbm500 )	/* Commodore 500/P128-40						  */
@@ -339,10 +339,10 @@ TESTDRIVER( dx64 )		/* Commodore DX 64 - PROTOTPYE, PAL						  */
 //	DRIVER( c16 )		/* Commodore 16 								  */
 //	DRIVER( c16hun )	/* Commodore 16 Novotrade (Hungarian Character Set)	  */
 //	DRIVER( c16c )		/* Commodore 16  c1551							  */
-TESTDRIVER( c16v )		/* Commodore 16  vc1541 						  */
+//TESTDRIVER( c16v )		/* Commodore 16  vc1541 						  */
 //	DRIVER( plus4 ) 	/* Commodore +4  c1551							  */
 //	DRIVER( plus4c )	/* Commodore +4  vc1541 						  */
-TESTDRIVER( plus4v )	/* Commodore +4 								  */
+//TESTDRIVER( plus4v )	/* Commodore +4 								  */
 //	DRIVER( c364 )		/* Commodore 364 - Prototype					  */
 
 //	DRIVER( c128 )		/* Commodore 128 - NTSC 						  */
@@ -350,16 +350,16 @@ TESTDRIVER( plus4v )	/* Commodore +4 								  */
 //	DRIVER( c128fra )	/* Commodore 128 - PAL (french) 				  */
 //	DRIVER( c128ita )	/* Commodore 128 - PAL (italian)				  */
 //	DRIVER( c128swe )	/* Commodore 128 - PAL (swedish)				  */
-TESTDRIVER( c128nor )	/* Commodore 128 - PAL (norwegian)				  */
-TESTDRIVER( c128d )		/* Commodore 128D - NTSC 						  */
-TESTDRIVER( c128dita )	/* Commodore 128D - PAL (italian) cost reduced set	  */
+//TESTDRIVER( c128nor )	/* Commodore 128 - PAL (norwegian)				  */
+//TESTDRIVER( c128d )		/* Commodore 128D - NTSC 						  */
+//TESTDRIVER( c128dita )	/* Commodore 128D - PAL (italian) cost reduced set	  */
 
 /*//	DRIVER( lcd )*/		/* Commodore LCD Prototype (m65c102 based)		  */
 
 /*//	DRIVER( cbm900 )*/	/* Commodore 900 Prototype (z8000)				  */
 
-TESTDRIVER( amiga ) 	/* Commodore Amiga								  */
-TESTDRIVER( cdtv )
+//TESTDRIVER( amiga ) 	/* Commodore Amiga								  */
+//TESTDRIVER( cdtv )
 
 //	DRIVER( c65 )		/* C65 / C64DX (Prototype, NTSC, 911001)		  */
 //	DRIVER( c65e )		/* C65 / C64DX (Prototype, NTSC, 910828)		  */
@@ -452,7 +452,7 @@ TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS		  */
 //TESTDRIVER( pc1500a )	/* 1984 Pocket Computer 1500A						*/
 /*//	DRIVER( pc1600 )*/	/* 1986 Pocket Computer 1600						*/
 //	DRIVER( pc1251 )	/* Pocket Computer 1251 						  */
-TESTDRIVER( trs80pc3 )	/* Tandy TRS80 PC-3									*/
+//TESTDRIVER( trs80pc3 )	/* Tandy TRS80 PC-3									*/
 
 //	DRIVER( pc1401 )	/* Pocket Computer 1401 						  */
 //	DRIVER( pc1402 )	/* Pocket Computer 1402 						  */
@@ -464,22 +464,22 @@ TESTDRIVER( trs80pc3 )	/* Tandy TRS80 PC-3									*/
 
 //	DRIVER( mz700 ) 	/* 1982 Sharp MZ700 							  */
 //	DRIVER( mz700j )	/* 1982 Sharp MZ700 Japan						  */
-TESTDRIVER( mz800  )	/* 1982 Sharp MZ800 							  */
+//TESTDRIVER( mz800  )	/* 1982 Sharp MZ800 							  */
 
 /*//	DRIVER( x68000 )*/	/* X68000										  */
 
 	/* TEXAS INSTRUMENTS */
-//	DRIVER( ti990_10 )	/* 1975 TI 990/10								  */
-TESTDRIVER( ti990_4 )	/* 1976 TI 990/4								  */
+	DRIVER( ti990_10 )	/* 1975 TI 990/10								  */
+//TESTDRIVER( ti990_4 )	/* 1976 TI 990/4								  */
 
-TESTDRIVER( ti99_224 )	/* 1983 TI 99/2 (24kb ROMs) 					  */
-TESTDRIVER( ti99_232 )	/* 1983 TI 99/2 (32kb ROMs) 					  */
-//	DRIVER( ti99_4 )	/* 1979 TI 99/4 								  */
-//	DRIVER( ti99_4e )	/* 1980 TI 99/4 with 50Hz video					  */
-//	DRIVER( ti99_4a )	/* 1981 TI 99/4A								  */
-//	DRIVER( ti99_4ae )	/* 1981 TI 99/4A with 50Hz video				  */
-//	DRIVER( ti99_4ev)	/* 1994 TI 99/4A with EVPC video card			  */
-TESTDRIVER( ti99_4p )	/* 1996 SNUG 99/4P (a.k.a. SGCPU)				  */
+//TESTDRIVER( ti99_224 )	/* 1983 TI 99/2 (24kb ROMs) 					  */
+//TESTDRIVER( ti99_232 )	/* 1983 TI 99/2 (32kb ROMs) 					  */
+	DRIVER( ti99_4 )	/* 1979 TI 99/4 								  */
+	DRIVER( ti99_4e )	/* 1980 TI 99/4 with 50Hz video					  */
+	DRIVER( ti99_4a )	/* 1981 TI 99/4A								  */
+	DRIVER( ti99_4ae )	/* 1981 TI 99/4A with 50Hz video				  */
+	DRIVER( ti99_4ev)	/* 1994 TI 99/4A with EVPC video card			  */
+//TESTDRIVER( ti99_4p )	/* 1996 SNUG 99/4P (a.k.a. SGCPU)				  */
 
 ////	DRIVER( avigo )     /*                                                */
 
@@ -543,7 +543,7 @@ TESTDRIVER( ti99_4p )	/* 1996 SNUG 99/4P (a.k.a. SGCPU)				  */
 //	DRIVER( ti86 )		/*TI 86 rom ver. 1.2 */
 //	DRIVER( ti86v13 )	/*TI 86 rom ver. 1.3 */
 //	DRIVER( ti86v14 )	/*TI 86 rom ver. 1.4 */
-	TESTDRIVER( ti86v15 )	/*TI 86 rom ver. 1.5 */
+//	TESTDRIVER( ti86v15 )	/*TI 86 rom ver. 1.5 */
 //	DRIVER( ti86v16 )	/*TI 86 rom ver. 1.6 */
 //	DRIVER( ti86grom )	/*TI 86 homebrew rom by Daniel Foesch */
 
@@ -609,7 +609,7 @@ TESTDRIVER( ti99_4p )	/* 1996 SNUG 99/4P (a.k.a. SGCPU)				  */
 	/* KC compact is partial CPC compatible */
 ////	DRIVER( kc85_4 )	/* VEB KC 85/4									  */
 //////	DRIVER( kc85_3 )    /* VEB KC 85/3                                    */
-TESTDRIVER( kc85_4d )   /* VEB KC 85/4 with disk interface                */
+//TESTDRIVER( kc85_4d )   /* VEB KC 85/4 with disk interface                */
     /* pc1715 z80/u880 based */
 	/* pc1715w z80/u880 based */
 	/* a5105 z80/u880 based */
@@ -629,7 +629,7 @@ TESTDRIVER( kc85_4d )   /* VEB KC 85/4 with disk interface                */
 //	DRIVER( sys80 ) 	/* EACA System 80								  */
 //	DRIVER( lnw80 ) 	/* LNW Research LNW-80							  */
 /*//	DRIVER( trs80m2 )*/	/* TRS-80 Model II -							  */
-TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
+//TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
 
 	DRIVER( coco )		/* Color Computer								  */
 	DRIVER( cocoe )		/* Color Computer (Extended BASIC 1.0)			  */
@@ -709,10 +709,10 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
 //	DRIVER( coupe512 )	/* 1989 Sam Coupe 512K RAM						  */
 
 	/* MOTOROLA */
-TESTDRIVER( mekd2 )     /* 1977 Motorola Evaluation Kit                   */
+//TESTDRIVER( mekd2 )     /* 1977 Motorola Evaluation Kit                   */
 
 	/* DEC */
-//	DRIVER( pdp1 )      /* 1961 DEC PDP1                                  */
+	DRIVER( pdp1 )      /* 1961 DEC PDP1                                  */
 
 	/* MEMOTECH */
 //	DRIVER( mtx512 )    /* 1983 Memotech MTX512                           */
@@ -735,11 +735,11 @@ TESTDRIVER( mekd2 )     /* 1977 Motorola Evaluation Kit                   */
 
 	/* Team Concepts */
 	/* CPU not known, else should be easy, look into systems/comquest.c */
-TESTDRIVER( comquest )	/* Comquest Plus German							*/
+//TESTDRIVER( comquest )	/* Comquest Plus German							*/
 
 	/* Hewlett Packard */
-TESTDRIVER( hp48s ) 	/* HP48 S/SX										*/
-TESTDRIVER( hp48g ) 	/* HP48 G/GX										*/
+//TESTDRIVER( hp48s ) 	/* HP48 S/SX										*/
+//TESTDRIVER( hp48g ) 	/* HP48 G/GX										*/
 
 	/* SpectraVideo */
 //	DRIVER( svi318 ) 	/* SVI-318										  */
@@ -747,7 +747,7 @@ TESTDRIVER( hp48g ) 	/* HP48 G/GX										*/
 //	DRIVER( svi328a ) 	/* SVI-328	(BASIC 1.11)						  */
 
 	/* Booth (this is the builder, not a company) */
-//	DRIVER( apexc )		/* 1951(?) APEXC : All-Purpose Electronic X-ray Computer */
+	DRIVER( apexc )		/* 1951(?) APEXC : All-Purpose Electronic X-ray Computer */
 
 /****************Games*******************************************************/
 
@@ -761,7 +761,7 @@ TESTDRIVER( hp48g ) 	/* HP48 G/GX										*/
 	/* Quelle International */
 //	DRIVER( mk2 )		/* Chess Champion MK II							  */
 	/* NOVAG Industries Ltd. */
-TESTDRIVER( ssystem3 )	/* Chess Champion Super System III / MK III		  */
+//TESTDRIVER( ssystem3 )	/* Chess Champion Super System III / MK III		  */
 
 	/* tchibo */
 	/* single chip with ram, rom, io without label, how to dump? */
