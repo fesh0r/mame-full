@@ -341,6 +341,7 @@ static void AY3600_poll(int dummy)
 		if (pressed_specialkey(SPECIALKEY_RESET)) {
 			if (!reset_flag) {
 				reset_flag = 1;
+				/* using PULSE_LINE does not allow us to press and hold key */
 				cpunum_set_input_line(0, INPUT_LINE_RESET, ASSERT_LINE);
 			}
 			return;
