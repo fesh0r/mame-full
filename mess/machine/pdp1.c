@@ -184,9 +184,14 @@ static OPBASE_HANDLER(setOPbasefunc)
 
 void pdp1_init_machine(void)
 {
-	memory_set_opbase_handler(0,setOPbasefunc);
+	int config;
 
-	pdp1_reset_param.extend_support = readinputport(pdp1_config);
+	memory_set_opbase_handler(0, setOPbasefunc);
+
+	config = readinputport(pdp1_config);
+	pdp1_reset_param.extend_support = config >> pdp1_config_extend_bit & pdp1_config_extend_mask;
+	pdp1_reset_param.hw_multiply = config >> pdp1_config_hw_multiply_bit & pdp1_config_hw_multiply_mask;
+	pdp1_reset_param.hw_divide = config >> pdp1_config_hw_divide_bit & pdp1_config_hw_divide_mask;
 }
 
 

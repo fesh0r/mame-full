@@ -408,6 +408,10 @@ typedef struct
 
 	int extended_address_mask;	/* 07777 with no extend support, 077777 or 0177777 with extend support */
 	int address_extension_mask;	/* 00000 with no extend support, 070000 or 0170000 with extend support */
+
+	/* 1 to use hardware multiply/divide (MUL, DIV) instead of MUS, DIS */
+	int hw_multiply;
+	int hw_divide;
 }
 pdp1_Regs;
 
@@ -477,6 +481,8 @@ void pdp1_reset (void *untyped_param)
 									: intern_iot;
 	pdp1.io_sc_callback = (param) ? param->io_sc_callback : 0;
 	pdp1.extend_support = (param) ? param->extend_support : 0;
+	pdp1.hw_multiply = (param) ? param->hw_multiply : 0;
+	pdp1.hw_divide = (param) ? param->hw_divide : 0;
 
 	switch (pdp1.extend_support)
 	{
@@ -1001,19 +1007,158 @@ static void execute_instruction(void)
 		if (AC == (MB = READ_PDP_18BIT(MA)))
 			INCREMENT_PC;
 		break;
-	case MUS:		/* Multiply Step */
-		if ((IO & 1) == 1)
-		{
-			AC = AC + (MB = READ_PDP_18BIT(MA));
+	case MUS_MUL:	/* Multiply Step or Multiply */
+		if (pdp1.hw_multiply)
+		{	/* MUL */
+			int scr;
+			int smb, srm;
+			double etime = 4.;		/* approximative */
+
+			IO = MB = AC;
+			MB = READ_PDP_18BIT(MA);
+			scr = 0;
+			if (MB & 0400000)
+			{
+				smb = 1;
+				MB = MB ^ 0777777;
+			}
+			else
+				smb = 0;
+			if (IO & 0400000)
+			{
+				srm = 1;
+				IO = IO ^ 0777777;
+			}
+			else
+				srm = 0;
+			AC = 0;
+			scr++;
+			while (scr < 022)
+			{
+				if (IO & 1)
+				{
+#if 0
+					AC = (AC + MB);
+					AC = (AC + (AC >> 18)) & 0777777;
+#else
+					AC = (AC + MB) & 0777777;	/* we can save correction since both numbers are positive */
+#endif
+					etime += .65;		/* approximative */
+				}
+				IO = (IO >> 1) | ((AC & 1) << 17);
+				AC = AC >> 1;
+				scr++;
+			}
+			if (smb ^ srm)
+			{
+				AC = AC ^ 0777777;
+				IO = IO ^ 0777777;
+			}
+
+			pdp1_ICount -= etime+.5;	/* round to closest */
+		}
+		else
+		{	/* MUS */
+			if ((IO & 1) == 1)
+			{
+				AC = AC + (MB = READ_PDP_18BIT(MA));
+				AC = (AC + (AC >> 18)) & 0777777;
+				if (AC == 0777777)
+					AC = 0;
+			}
+			IO = (IO >> 1 | AC << 17) & 0777777;
+			AC >>= 1;
+		}
+		break;
+	case DIS_DIV:	/* Divide Step or Divide */
+		if (pdp1.hw_divide)
+		{	/* DIV */
+			int acl;
+			int scr;
+			int smb, srm;
+			double etime = 0;		/* approximative */
+
+			MB = READ_PDP_18BIT(MA);
+			scr = 0;
+			if (MB & 0400000)
+			{
+				smb = 1;
+			}
+			else
+			{
+				smb = 0;
+				MB = MB ^ 0777777;
+			}
+			if (AC & 0400000)
+			{
+				srm = 1;
+				AC = AC ^ 0777777;
+				IO = IO ^ 0777777;
+			}
+			else
+				srm = 0;
+			while (1)
+			{
+				AC = (AC + MB);
+				AC = (AC + (AC >> 18)) & 0777777;
+				if (AC == 0777777)
+					AC = 0;
+				if (MB & 0400000)
+					MB = MB ^ 0777777;
+
+				if (((scr == 0) && ! (AC & 0400000))
+					|| (scr == 022))
+					break;
+
+				scr++;
+
+				if (! (AC & 0400000))
+					MB = MB ^ 0777777;
+
+				acl = AC >> 17;
+				AC = (AC << 1 | IO >> 17) & 0777777;
+				IO = ((IO << 1 | acl) & 0777777) ^ 1;
+				if (acl)
+				{
+					AC++;
+					AC = (AC + (AC >> 18)) & 0777777;
+					etime += .6;		/* approximative */
+				}
+			}
+
+			AC = (AC + MB);
 			AC = (AC + (AC >> 18)) & 0777777;
 			if (AC == 0777777)
 				AC = 0;
+
+			if (scr)
+			{
+				INCREMENT_PC;
+				AC = AC >> 1;
+			}
+
+			if (srm && (AC != 0))
+				AC = AC ^ 0777777;
+
+			if (((! scr) && (srm))
+					|| (scr && (srm ^ smb) && (IO != 0)))
+				IO = IO ^ 0777777;
+
+			if (scr)
+			{
+				MB = AC;
+				AC = IO;
+				IO = MB;
+			}
+			if (scr)
+				etime += 20;		/* approximative */
+			else
+				etime += 2;			/* approximative */
+
+			pdp1_ICount -= etime+.5;	/* round to closest */
 		}
-		IO = (IO >> 1 | AC << 17) & 0777777;
-		AC >>= 1;
-		break;
-	case DIS:		/* Divide Step */
-		{
+		else
+		{	/* DIS */
 			int acl;
 
 			acl = AC >> 17;
@@ -1031,8 +1176,8 @@ static void execute_instruction(void)
 			AC = (AC + (AC >> 18)) & 0777777;
 			if (AC == 0777777)
 				AC = 0;
-			break;
 		}
+		break;
 	case JMP:		/* Jump */
 		if (pdp1.exc)
 			PC = MB & EXTENDED_ADDRESS_MASK;

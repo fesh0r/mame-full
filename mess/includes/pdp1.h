@@ -66,6 +66,16 @@ enum
 #define THRUST_PLAYER2            0x40
 #define FIRE_PLAYER2              0x80
 
+/* defines for each field in input port pdp1_config */
+enum
+{
+	pdp1_config_extend_bit				= 0,
+	pdp1_config_extend_mask				= 0x3,	/* 2 bits */
+	pdp1_config_hw_multiply_bit	= 2,
+	pdp1_config_hw_multiply_mask	= 0x1,
+	pdp1_config_hw_divide_bit		= 3,
+	pdp1_config_hw_divide_mask	= 0x1
+};
 
 /* defines for our font */
 enum

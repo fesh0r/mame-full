@@ -137,7 +137,7 @@ INPUT_PORTS_START( pdp1 )
     PORT_START		/* 2: operator control panel sense switches */
 	PORT_BITX(	  040, 000, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Sense Switch 1", KEYCODE_1_PAD, IP_JOY_NONE )
     PORT_DIPSETTING(    000, DEF_STR( Off ) )
-    PORT_DIPSETTING(    040, DEF_STR( On )	 )
+    PORT_DIPSETTING(    040, DEF_STR( On ) )
 	PORT_BITX(	  020, 000, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Sense Switch 2", KEYCODE_2_PAD, IP_JOY_NONE )
     PORT_DIPSETTING(    000, DEF_STR( Off ) )
     PORT_DIPSETTING(    020, DEF_STR( On ) )
@@ -259,10 +259,16 @@ INPUT_PORTS_START( pdp1 )
 	PORT_BITX(0x8000, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Return", KEYCODE_ENTER, IP_JOY_NONE)
 
 	PORT_START		/* 10: pseudo-input port with config */
-	PORT_BITX(	  003, 002, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "RAM size", KEYCODE_1_PAD, IP_JOY_NONE )
-    PORT_DIPSETTING(    000, "4kw" )
-    PORT_DIPSETTING(    001, "32kw")
-    PORT_DIPSETTING(    002, "64kw")
+	PORT_BITX( 0x0003, 0x0002, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "RAM size", KEYCODE_NONE, IP_JOY_NONE )
+    PORT_DIPSETTING(   0x0000, "4kw" )
+    PORT_DIPSETTING(   0x0001, "32kw")
+    PORT_DIPSETTING(   0x0002, "64kw")
+	PORT_BITX( 0x0004, 0x0000, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Hardware multiply", KEYCODE_NONE, IP_JOY_NONE )
+    PORT_DIPSETTING(   0x0000, DEF_STR( Off ) )
+    PORT_DIPSETTING(   0x0004, DEF_STR( On ) )
+	PORT_BITX( 0x0008, 0x0000, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Hardware divide", KEYCODE_NONE, IP_JOY_NONE )
+    PORT_DIPSETTING(   0x0000, DEF_STR( Off ) )
+    PORT_DIPSETTING(   0x0008, DEF_STR( On ) )
 
 
 INPUT_PORTS_END
@@ -328,7 +334,9 @@ pdp1_reset_param_t pdp1_reset_param =
 	pdp1_iot,
 	pdp1_tape_read_binary,
 	pdp1_io_sc_callback,
-	0	/* extend mode support defined in input ports and pdp1_init_machine */
+	0,	/* extend mode support defined in input ports and pdp1_init_machine */
+	0,	/* hardware multiply support defined in input ports and pdp1_init_machine */
+	0	/* hardware divide support defined in input ports and pdp1_init_machine */
 };
 
 

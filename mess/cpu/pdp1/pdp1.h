@@ -31,6 +31,9 @@ typedef struct pdp1_reset_param_t
 
 	/* 0: no extend support, 1: extend with 15-bit address, 2: extend with 16-bit address */
 	int extend_support;
+	/* 1 to use hardware multiply/divide (MUL, DIV) instead of MUS, DIS */
+	int hw_multiply;
+	int hw_divide;
 } pdp1_reset_param_t;
 
 #define IOT_NO_COMPLETION_PULSE -1
@@ -77,8 +80,8 @@ extern int pdp1_ICount;
 #define ISP 023
 #define SAD 024
 #define SAS 025
-#define MUS 026
-#define DIS 027
+#define MUS_MUL 026
+#define DIS_DIV 027
 #define JMP 030
 #define JSP 031
 #define SKP 032

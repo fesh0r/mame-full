@@ -135,13 +135,13 @@ unsigned dasmpdp1 (char *buffer, unsigned _pc)
 		IN;
 		etime = 10;
 		break;
-	case MUS:
+	case MUS_MUL:
 		ea ();
 		sprintf (buffer, "MUS (0%06o)", y);
 		IN;
 		etime = 10;
 		break;
-	case DIS:
+	case DIS_DIV:
 		ea ();
 		sprintf (buffer, "DIS (0%06o)", y);
 		IN;
