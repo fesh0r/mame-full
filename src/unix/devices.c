@@ -1,5 +1,5 @@
 /*
- * file input.c
+ * file devices.c
  *
  * Routines for Pointers device processing
  *
@@ -40,7 +40,6 @@ extern int verbose;
 /*============================================================ */
 
 #define STRUCTSIZE(x)		((dinput_version == 0x0300) ? sizeof(x##_DX3) : sizeof(x))
-
 #define ELEMENTS(x)		(sizeof(x) / sizeof((x)[0]))
 
 
@@ -67,10 +66,10 @@ static cycles_t			last_poll;
 
 /* Controller override options */
 static float			a2d_deadzone;
-static int			use_joystick;
-static int			use_lightgun;
 static int			steadykey;
+static int			analogstick = 0;
 static int			ugcicoin;
+static int			dummy;
 
 /* additional key data */
 static INT8			key[KEY_CODES];
@@ -79,9 +78,15 @@ static INT8			currkey[KEY_CODES];
 struct kbd_fifo_struct;
 static struct kbd_fifo_struct *kbd_fifo = NULL;
 
+/* joystick states */
+static UINT8			joystick_digital[JOY_MAX][JOY_AXES];
+
 /*============================================================ */
 /*	OPTIONS */
 /*============================================================ */
+
+/* prototypes */
+static int decode_digital(struct rc_option *option, const char *arg, int priority);
 
 /* global input options */
 struct rc_option input_opts[] =
@@ -97,6 +102,7 @@ struct rc_option input_opts[] =
 		"5 NetBSD USB joystick driver (if compiled in)\n"
 		"6 PS2-Linux native pad (if compiled in)\n"
 		"7 SDL joystick driver" },
+	{ "analogstick", "as", rc_bool, &analogstick, "0", 0, 0, NULL, "Use Joystick as analog for analog controls" },
 	{ NULL, NULL, rc_link, joy_i386_opts, NULL, 0, 0, NULL, NULL },
 	{ NULL, NULL, rc_link, joy_pad_opts, NULL, 0, 0, NULL, NULL },
 	{ NULL, NULL, rc_link, joy_x11_opts, NULL, 0, 0, NULL, NULL },
@@ -114,6 +120,9 @@ struct rc_option input_opts[] =
 #endif
 	{ "steadykey", "steady", rc_bool, &steadykey, "0", 0, 0, NULL, "Enable steadykey support" },
 	{ "a2d_deadzone", "a2d", rc_float, &a2d_deadzone, "0.3", 0.0, 1.0, NULL, "Minimal analog value for digital input" },
+	{ "ctrlr", NULL, rc_string, &options.controller, 0, 0, 0, NULL, "Preconfigure for specified controller" },
+	{ "digital", NULL, rc_string, &dummy, "none", 1, 0, decode_digital, "Mark certain joysticks or axes as digital (none|all|j<N>*|j<N>a<M>[,...])" },
+	{ "usbpspad", "pspad", rc_bool, &is_usb_ps_gamepad, "0", 0, 0, NULL, "The joystick(s) are USB PS gamepads" },
 	{ "rapidfire", "rapidf", rc_bool, &rapidfire_enable, "0", 0, 0, NULL, "Enable rapid-fire support for joysticks" },
 	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
 };
@@ -951,9 +960,6 @@ static void init_joycodes(void)
 		{
 			for (axis = 0; axis < JOY_AXES; axis++)
 			{
-				joy_data[stick].axis[axis].min = -10;
-				joy_data[stick].axis[axis].max =  10;
-
 				snprintf(tempname, JOY_NAME_LEN, "Joy %d axis %d %s", stick + 1, axis + 1, "neg");
 				add_joylist_entry(tempname, JOYCODE(stick, CODETYPE_JOYAXIS, axis), CODE_OTHER_ANALOG_ABSOLUTE);
 
@@ -1068,7 +1074,7 @@ static INT32 get_joycode_value(os_code_t joycode)
 			int top = joy_data[joynum].axis[joyindex].max;	
 			int bottom = joy_data[joynum].axis[joyindex].min;	
 
-			if (!use_joystick)
+			if (joytype == JOY_NONE)
 				return 0;
 			val = (INT64)val * (INT64)(ANALOG_VALUE_MAX - ANALOG_VALUE_MIN) / (INT64)(top - bottom) + ANALOG_VALUE_MIN;
 			if (val < ANALOG_VALUE_MIN)
@@ -1461,6 +1467,9 @@ void osd_poll_joysticks(void)
 
 		(*joy_poll_func) ();
 
+		/* evaluate joystick movements */
+		joy_evaluate_moves();
+
 		if (rapidfire_enable)
 		{
 			store_button_state();
@@ -1620,6 +1629,91 @@ void osd_customize_inputport_list(struct InputPortDefinition *defaults)
 		/* find the next one */
 		idef++;
 	}
+}
+
+
+
+/*============================================================ */
+/*	decode_digital */
+/*============================================================ */
+
+static int decode_digital(struct rc_option *option, const char *arg, int priority)
+{
+	if (strcmp(arg, "none") == 0)
+		memset(joystick_digital, 0, sizeof(joystick_digital));
+	else if (strcmp(arg, "all") == 0)
+		memset(joystick_digital, 1, sizeof(joystick_digital));
+	else
+	{
+		/* scan the string */
+		while (1)
+		{
+			int joynum = 0;
+			int axisnum = 0;
+			
+			/* stop if we hit the end */
+			if (arg[0] == 0)
+				break;
+			
+			/* we require the next bits to be j<N> */
+			if (tolower(arg[0]) != 'j' || sscanf(&arg[1], "%d", &joynum) != 1)
+				goto usage;
+			arg++;
+			while (arg[0] != 0 && isdigit(arg[0]))
+				arg++;
+			
+			/* if we are followed by a comma or an end, mark all the axes digital */
+			if (arg[0] == 0 || arg[0] == ',')
+			{
+				if (joynum != 0 && joynum - 1 < JOY_MAX)
+					memset(&joystick_digital[joynum - 1], 1, sizeof(joystick_digital[joynum - 1]));
+				if (arg[0] == 0)
+					break;
+				arg++;
+				continue;
+			}
+
+			/* loop over axes */
+			while (1)
+			{
+				/* stop if we hit the end */
+				if (arg[0] == 0)
+					break;
+				
+				/* if we hit a comma, skip it and break out */
+				if (arg[0] == ',')
+				{
+					arg++;
+					break;
+				}
+				
+				/* we require the next bits to be a<N> */
+				if (tolower(arg[0]) != 'a' || sscanf(&arg[1], "%d", &axisnum) != 1)
+					goto usage;
+				arg++;
+				while (arg[0] != 0 && isdigit(arg[0]))
+					arg++;
+				
+				/* set that axis to digital */
+				if (joynum != 0 && joynum - 1 < JOY_MAX && axisnum < JOY_AXES)
+					joystick_digital[joynum - 1][axisnum] = 1;
+			}
+		}
+	}
+	option->priority = priority;
+	return 0;
+
+usage:
+	fprintf(stderr, "error: invalid value for digital: %s -- valid values are:\n", arg);
+	fprintf(stderr, "         none -- no axes on any joysticks are digital\n");
+	fprintf(stderr, "         all -- all axes on all joysticks are digital\n");
+	fprintf(stderr, "         j<N> -- all axes on joystick <N> are digital\n");
+	fprintf(stderr, "         j<N>a<M> -- axis <M> on joystick <N> is digital\n");
+	fprintf(stderr, "    Multiple axes can be specified for one joystick:\n");
+	fprintf(stderr, "         j1a5a6 -- axes 5 and 6 on joystick 1 are digital\n");
+	fprintf(stderr, "    Multiple joysticks can be specified separated by commas:\n");
+	fprintf(stderr, "         j1,j2a2 -- all joystick 1 axes and axis 2 on joystick 2 are digital\n");
+	return -1;
 }
 
 

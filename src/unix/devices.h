@@ -1,5 +1,5 @@
-#ifndef __DEVICES_H
-#define __DEVICES_H
+#ifndef __DEVICES_H_
+#define __DEVICES_H_
 
 #ifdef __DEVICES_C_
 #define EXTERN
@@ -249,4 +249,4 @@ void joy_ps2_exit(void);
 void joy_SDL_init(void);
 #undef EXTERN
 
-#endif /* ifndef __DEVICES_H */
+#endif /* ifndef __DEVICES_H_ */
