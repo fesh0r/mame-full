@@ -863,7 +863,7 @@ struct snd_interface sndintf[] =
 		K051649_sh_start,
 		K051649_sh_stop,
 		0,
-		0
+		K051649_sh_reset	
 	},
 #endif
 #if (HAS_K053260)
