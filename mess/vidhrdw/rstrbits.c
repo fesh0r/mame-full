@@ -720,17 +720,17 @@ void raster_bits(struct osd_bitmap *bitmap, struct rasterbits_source *src, struc
 					artifactpalette[0] = mode->metapalette[0];
 					artifactpalette[3] = mode->metapalette[1];
 					mode->u.artifact(artifactpalette);
-					blitgraphics4artifact(bitmap, clip, src->videoram, src->position, src->size, src->db, artifactpalette,
+					blitgraphics4artifact(bitmap, &myclip, src->videoram, src->position, src->size, src->db, artifactpalette,
 						mode->width / 8, mode->height, basex, basey, scalex, scaley);
 				}
 				else {
-					blitgraphics2(bitmap, clip, src->videoram, src->position, src->size, src->db, mode->metapalette,
+					blitgraphics2(bitmap, &myclip, src->videoram, src->position, src->size, src->db, mode->metapalette,
 						mode->width / 8, mode->height, basex, basey, scalex, scaley, mode->bytesperrow - (mode->width / 8));
 				}
 				break;
 
 			case 2:
-				blitgraphics4(bitmap, clip, src->videoram, src->position, src->size, src->db, mode->metapalette,
+				blitgraphics4(bitmap, &myclip, src->videoram, src->position, src->size, src->db, mode->metapalette,
 					mode->width / 4, mode->height, basex, basey, scalex, scaley, mode->bytesperrow - (mode->width / 4));
 				break;
 

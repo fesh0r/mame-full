@@ -155,6 +155,8 @@ static size_t process_rsdos_file(rsdos_dirent *ent, rsdos_diskimage *img, STREAM
 	if ((i < 0xc0) || (i > 0xc9))
 		return (size_t) -1;
 
+	if (lastgransize)
+		i--;
 	lastgransize += (256 * (i - 0xc0));
 
 	if (destf) {
@@ -427,7 +429,7 @@ static int rsdos_diskimage_writefile(IMAGE *img, const char *fname, STREAM *sour
 	}
 	while(sz > 0);
 
-	*gptr = 0xc0 + ((i - 1) / 256);
+	*gptr = 0xc0 + ((i + 255) / 256);
 
 	i = 0;
 	do {
