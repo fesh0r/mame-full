@@ -105,7 +105,7 @@ typedef struct {
 
 	UINT8	buffer[6144];			/* I/O buffer (holds up to a whole track) */
 	UINT32	data_offset;			/* offset into I/O buffer */
-	UINT32	data_count; 			/* transfer count from/into I/O buffer */
+	INT32	data_count; 			/* transfer count from/into I/O buffer */
 
 	UINT8	*fmt_sector_data[256];	/* pointer to data after formatting a track */
 

@@ -19,7 +19,7 @@
 #include "includes/wd179x.h"
 #include "includes/flopdrv.h"
 
-#define VERBOSE 0
+#define VERBOSE 1
 
 /* structure describing a double density track */
 #define TRKSIZE_DD		6144
@@ -332,8 +332,12 @@ static void read_track(WD179X * w)
 		}
 	}
 #endif
-	w->data_offset = 0;
+
 	w->data_count = (w->density) ? TRKSIZE_DD : TRKSIZE_SD;
+
+	floppy_drive_read_track_data_info_buffer( drv, hd, (char *)w->buffer, &(w->data_count) );
+	
+	w->data_offset = 0;
 
 	wd179x_set_data_request();
 	w->status |= STA_2_BUSY;
@@ -634,7 +638,7 @@ static void wd179x_set_data_request(void)
 	if (w->status & STA_2_DRQ)
 	{
 		w->status |= STA_2_LOST_DAT;
-		return;
+//		return;
 	}
 
 	/* set drq */
@@ -753,7 +757,7 @@ READ_HANDLER ( wd179x_data_r )
 {
 	WD179X *w = &wd;
 
-	if (w->data_count > 0)
+	if (w->data_count >= 0)
 	{
 		/* clear data request */
 		wd179x_clear_data_request();
@@ -761,8 +765,11 @@ READ_HANDLER ( wd179x_data_r )
 		/* yes */
 		w->data = w->buffer[w->data_offset++];
 
+#if VERBOSE
+		logerror("wd179x_data_r: $%02X (data_count %d)\n", w->data, w->data_count);
+#endif
 		/* any bytes remaining? */
-		if (--w->data_count <= 0)
+		if (--w->data_count < 0)
 		{
 			/* no */
 			w->data_offset = 0;
@@ -787,14 +794,10 @@ READ_HANDLER ( wd179x_data_r )
 			wd179x_timed_data_request();		
 		}
 	}
-//#if VERBOSE
-//	else
+	else
 	{
-#if VERBOSE
-		logerror("wd179x_data_r: $%02X (data_count 0)\n", w->data);
-#endif
+		logerror("wd179x_data_r: (no new data) $%02X (data_count %d)\n", w->data, w->data_count);
 	}
-//#endif
 	return w->data;
 }
 
@@ -921,8 +924,8 @@ WRITE_HANDLER ( wd179x_command_w )
 			w->command_type = TYPE_III;
 			w->status &= ~STA_2_LOST_DAT;
 			wd179x_clear_data_request();
-#if 0
-			w->status = seek(w, w->track, w->head, w->sector);
+#if 1
+//			w->status = seek(w, w->track, w->head, w->sector);
 			if (w->status == 0)
 				read_track(w);
 #endif
@@ -1157,16 +1160,16 @@ WRITE_HANDLER ( wd179x_data_w )
 		wd179x_clear_data_request();
 
 		/* put byte into buffer */
+#if VERBOSE
+		logerror("WD179X buffered data: $%02X at offset %d.\n", data, w->data_offset);
+#endif
+	
 		w->buffer[w->data_offset++] = data;
 		
 		if (--w->data_count <= 0)
 		{
 			w->data_offset = 0;
 
-#if VERBOSE
-			logerror("WD179X buffered %d byte\n", w->data_offset);
-#endif
-	
 			if (w->command == FDC_WRITE_TRK)
 				write_track(w);
 			else
