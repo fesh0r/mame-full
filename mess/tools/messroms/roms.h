@@ -753,6 +753,12 @@ static struct {
 	{ 0x79a924bc , 0x2000, "PC1350 cpu rom" },
 	{ 0x158b28e2 , 0x8000, "PC1350 basic rom" },
 
+	{ 0x588c500b, 0x2000, "PC1403 internal" },
+	{ 0x1fa65140, 0x4000, "PC1403 external 1of4" },
+	{ 0x4a7da6ab, 0x4000, "PC1403 external 2of4" },
+	{ 0x9925174f, 0x4000, "PC1403 external 3of4" },
+	{ 0xfa5df9ec, 0x4000, "PC1403 external 4of4" },
+
 	{ 0x9f3195f1 ,0xc0000, "X68000 charset" },
 	{ 0x72bdf532 ,0x20000, "X68000 1.00 1987/05/07" },
 
