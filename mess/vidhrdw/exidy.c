@@ -62,7 +62,7 @@ void exidy_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 			int ch;
 
 			/* get char from z80 address space */
-			ch = cpu_readmem16(0x0f080 + (y<<6) + x);
+			ch = cpu_readmem16(0x0f080 + (y<<6) + x) & 0x0ff;
 
 			/* prom at 0x0f800, user chars from 0x0fc00 */
 			char_addr = 0x0f800 + (ch<<3);
@@ -91,4 +91,3 @@ void exidy_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	}
 }
 
-  

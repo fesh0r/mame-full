@@ -2,13 +2,164 @@
 
   Exidy Sorcerer system driver
 
-		Kevin Thacker [MESS driver]
+
+	port fc:
+	========
+	input/output:
+		hd6402 uart data
+   
+	port fd:
+	========
+	input: hd6402 uart status 
+		bit 4: parity error
+		bit 3: framing error
+		bit 2: over-run
+		bit 1: data available
+		bit 0: transmit buffer empty
+
+	output: 
+		bit 4: no parity
+		bit 3: parity type
+		bit 2: number of stop bits
+		bit 1: number of bits per char bit 2
+		bit 0: number of bits per char bit 1
+
+	port fe:
+	========
+
+	output:
+
+		bit 7: rs232 enable (1=enable rs232, 0=disable rs232)
+		bit 6: baud rate (1=1200, 0=600)
+		bit 5: cassette motor 1
+		bit 4: cassette motor 0
+		bit 3..0: keyboard line select 
+
+	input:
+		bit 7..6: parallel control
+				7: must be 1 to read data from parallel port
+				6: must be 1 to send data out of parallel port
+		bit 5: vsync 
+		bit 4..0: keyboard line data 
+
+	port ff:
+	========
+	  parallel port in/out
+
+	When cassette is selected, it is connected to the uart data input via the cassette
+	interface hardware.
+
+	The cassette interface hardware converts square-wave pulses into bits which the uart receives.
+	
+			
+	Kevin Thacker [MESS driver]
 
  ******************************************************************************/
 #include "driver.h"
-#include "cpu/z80/z80.h"
 #include "includes/exidy.h"
 #include "printer.h"
+#include "includes/centroni.h"
+#include "includes/hd6402.h"
+#include "cpu/z80/z80.h"
+
+//static unsigned char exidy_fc;
+//static unsigned char exidy_fd;
+static unsigned char exidy_fe;
+//static unsigned char exidy_ff;
+
+//static int exidy_parallel_control;
+static int exidy_keyboard_line;
+static unsigned long exidy_hd6402_state;
+
+static WRITE_HANDLER(exidy_fe_port_w);
+
+
+
+/* timer to read cassette waveforms */
+static void *cassette_timer;
+
+/* cassette data is converted into bits which are clocked into serial chip */
+static struct serial_connection cassette_serial_connection;
+
+/* two flip-flops used to store state of bit comming from cassette */
+static int cassette_input_ff[2];
+/* state of clock, used to clock in bits */
+static int cassette_clock_state;
+/* a up-counter. when this reaches a fixed value, the cassette clock state is changed */
+static int cassette_clock_counter;
+
+/*	1. the cassette format: "frequency shift" is converted
+	into the uart data format "non-return to zero" 
+	
+	2. on cassette a 1 data bit is stored as a high frequency
+	and a 0 data bit as a low frequency 
+	- At 1200hz, a logic is 1 cycle of 1200hz and a logic 0 is 1/2
+	cycle of 600hz.
+	- At 300hz, a 1 is 8 cycles of 2400hz and a logic 0 is 4 cycles
+	of 1200hz.
+
+	Attenuation is applied to the signal and the square
+	wave edges are rounded.
+
+	A manchester encoder is used. A flip-flop synchronises input
+	data on the positive-edge of the clock pulse.
+
+	Interestingly the data on cassette is stored in xmodem-checksum.
+
+
+*/
+
+/* only works for one cassette so far */
+static void exidy_cassette_timer_callback(int dummy)
+{
+	cassette_clock_counter++;
+
+	if (cassette_clock_counter==(4800/1200))
+	{
+		/* reset counter */
+		cassette_clock_counter = 0;
+
+		/* toggle state of clock */
+		cassette_clock_state^=0x0ffffffff;
+
+		/* previously was 0, now gone 1 */
+		/* +ve edge detected */
+		if (cassette_clock_state)
+		{			
+			int bit;
+
+			/* clock bits into cassette flip flops */
+			/* bit is inverted! */
+
+			/* detect level */
+			bit = 1;
+			if (device_input(IO_CASSETTE,0) > 255)
+				bit = 0;
+			cassette_input_ff[0] = bit;
+			/* detect level */
+			bit = 1;
+			if (device_input(IO_CASSETTE,1) > 255)
+				bit = 0;
+
+			cassette_input_ff[1] = bit;
+
+			logerror("cassette bit: %0d\n",bit);
+
+			/* set out data bit */
+			set_out_data_bit(cassette_serial_connection.State, cassette_input_ff[0]);
+			/* output through serial connection */
+			serial_connection_out(&cassette_serial_connection);
+		}
+	}
+}
+
+static void exidy_hd6402_callback(int mask, int data)
+{
+	exidy_hd6402_state &=~mask;
+	exidy_hd6402_state |= (data & mask);
+
+	logerror("hd6402 state: %04x %04x\n",mask,data);
+}
 
 
 static OPBASE_HANDLER( exidy_opbaseoverride )
@@ -20,22 +171,82 @@ static OPBASE_HANDLER( exidy_opbaseoverride )
 	return (cpu_get_pc() & 0x0ffff);
 }
 
+static void exidy_printer_handshake_in(int number, int data, int mask)
+{
+	if (mask & CENTRONICS_ACKNOWLEDGE)
+	{
+		if (data & CENTRONICS_ACKNOWLEDGE)
+		{
+		}
+	}
+}
+
+static CENTRONICS_CONFIG exidy_cent_config[1]={
+	{
+		PRINTER_CENTRONICS,
+		exidy_printer_handshake_in
+	},
+};
+
+static void cassette_serial_in(int id, unsigned long state)
+{
+//	int cassette_output;
+
+	cassette_serial_connection.input_state = state;
+
+//	cassette_output = 32768;
+//	if (get_in_data_bit(cassette_serial_connection.input_state))
+//	{
+//		cassette_output = -cassette_output;
+//	}
+//
+//	device_output(IO_CASSETTE, 0, cassette_output);
+}
 
 void exidy_init_machine(void)
 {
+	hd6402_init();
+	hd6402_set_callback(exidy_hd6402_callback);
+	hd6402_reset();
+
+	centronics_config(0, exidy_cent_config);
+	/* assumption: select is tied low */
+	centronics_write_handshake(0, CENTRONICS_SELECT | CENTRONICS_NO_RESET, CENTRONICS_SELECT| CENTRONICS_NO_RESET);
+
+	cassette_timer = NULL;
+
+	serial_connection_init(&cassette_serial_connection);
+	serial_connection_set_in_callback(&cassette_serial_connection, cassette_serial_in);
+	
+	exidy_fe_port_w(0,0);
+
+
 	/* this is temporary. Normally when a Z80 is reset, it will
 	execute address 0. The exidy starts executing from 0x0e000 */
 	memory_set_opbase_handler(0, exidy_opbaseoverride);
-
 }
 
 void exidy_shutdown_machine(void)
 {
+	hd6402_exit();
+
+	if (cassette_timer)
+	{
+		timer_remove(cassette_timer);
+		cassette_timer = NULL;
+	}
 }
+
+static READ_HANDLER(exidy_unmapped_r)
+{
+	return 0x0ff;
+}
+
 
 
 MEMORY_READ_START( readmem_exidy )
 	{0x00000, 0x07fff, MRA_RAM},		/* ram 32k machine */
+	{0x08000, 0x0bfff, exidy_unmapped_r},
 	{0x0c000, 0x0efff, MRA_ROM},		/* rom pac */
 	{0x0f000, 0x0f7ff, MRA_RAM},		/* screen ram */	
 	{0x0f800, 0x0fbff, MRA_ROM},		/* char rom */
@@ -51,105 +262,203 @@ MEMORY_WRITE_START( writemem_exidy )
 	{0x0fc00, 0x0ffff, MWA_RAM},		/* programmable chars */
 MEMORY_END
 
-static READ_HANDLER(exidy_unmapped_port_r)
-{
-	return 0x0ff;
-}
-
-/* output port:
-
-	bits 4-7 cassette 
-	bits 3-0 keyboard scan
-
-  input port:
-	bits 5,6,7 handshake for user port (0x0ff)
-	bits 4..0 keyboard data
-
-
-  parallel output 5,6,7,8 chooses keyboard line
-*/
-
-
-/* port fc:
-	uart data
-   port fd:
-	uart status 
-	used to initialise cassette!
-*/
-/* 
-	port fe:
-
-	output:
-
-	bit 7: rs232 enable (1=enable rs232, 0=disable rs232)
-	bit 6: baud rate (1=1200, 0=600)
-	
-	  
-	bit 3..0: keyboard line select (output);
-
-
-  
-	input:
-	bit 5: vsync (input)
-	bit 4..0: keyboard data (output);
-*/
-
-/* port ff:
-	data
-	bit 7: out: printer strobe (-ve) in: busy signal (+ve)
-
-  parallel output ji* 
-
-	port ff:
-	parallel input 
-
-  handshake resets data available latch
-*/
-static unsigned char exidy_fc;
-static unsigned char exidy_fd;
-static unsigned char exidy_fe;
-static unsigned char exidy_ff;
-static int exidy_keyboard_line;
-
 static WRITE_HANDLER(exidy_fc_port_w)
 {
+	logerror("exidy fc w: %04x %02x\n",offset,data);
 
-
-
+	hd6402_set_input(HD6402_INPUT_TBRL, HD6402_INPUT_TBRL);
+	hd6402_data_w(offset,data);
 }
 
 
 static WRITE_HANDLER(exidy_fd_port_w)
 {
+	logerror("exidy fd w: %04x %02x\n",offset,data);
 
+	/* bit 0,1: char length select */
+	if (data & (1<<0))
+	{
+		hd6402_set_input(HD6402_INPUT_CLS1, HD6402_INPUT_CLS1);
+	}
+	else
+	{
+		hd6402_set_input(HD6402_INPUT_CLS1, 0);
+	}
 
+	if (data & (1<<1))
+	{
+		hd6402_set_input(HD6402_INPUT_CLS2, HD6402_INPUT_CLS2);
+	}
+	else
+	{
+		hd6402_set_input(HD6402_INPUT_CLS2, 0);
+	}
 
+	/* bit 2: stop bit count */
+	if (data & (1<<2))
+	{
+		hd6402_set_input(HD6402_INPUT_SBS, HD6402_INPUT_SBS);
+	}
+	else
+	{
+		hd6402_set_input(HD6402_INPUT_SBS, 0);
+	}
+
+	/* bit 3: parity type select */
+	if (data & (1<<3))
+	{
+		hd6402_set_input(HD6402_INPUT_EPE, HD6402_INPUT_EPE);
+	}
+	else
+	{
+		hd6402_set_input(HD6402_INPUT_EPE, 0);
+	}
+
+	/* bit 4: inhibit parity (no parity) */
+	if (data & (1<<4))
+	{
+		hd6402_set_input(HD6402_INPUT_PI, HD6402_INPUT_PI);
+	}
+	else
+	{
+		hd6402_set_input(HD6402_INPUT_PI, 0);
+	}
 }
+
+#define EXIDY_CASSETTE_MOTOR_MASK ((1<<4)|(1<<5))
+
 
 static WRITE_HANDLER(exidy_fe_port_w)
 {
+	int changed_bits;
+
 	exidy_keyboard_line = data & 0x0f;
+
+	changed_bits = exidy_fe^data;
+
+	/* either cassette motor state changed */
+	if ((changed_bits & EXIDY_CASSETTE_MOTOR_MASK)!=0)
+	{
+		/* cassette 1 motor */
+		device_status(IO_CASSETTE, 0, ((data>>4) & 0x01));
+		/* cassette 2 motor */
+		device_status(IO_CASSETTE, 1, ((data>>5) & 0x01));
+
+		if ((data & EXIDY_CASSETTE_MOTOR_MASK)==0)
+		{
+			/* both are now off */
+
+			/* stop timer */
+			if (cassette_timer)
+			{
+				timer_remove(cassette_timer);
+				cassette_timer = NULL;
+			}
+		}
+		else
+		{
+			/* if both motors were off previously, at least one motor
+			has been switched on */
+			if ((exidy_fe & EXIDY_CASSETTE_MOTOR_MASK)==0)
+			{
+				cassette_clock_counter = 0;
+				cassette_clock_state = 0;
+				/* start timer */
+				cassette_timer = timer_pulse(TIME_IN_HZ(4800), 0, exidy_cassette_timer_callback);
+			}
+		}
+	}
+
+	if (data & 0x080)
+	{
+		/* connect to serial device */
+	}
+	else
+	{
+		/* connect to tape */
+		hd6402_connect(&cassette_serial_connection);
+	}
+
+	if ((changed_bits & (1<<6))!=0)
+	{
+		int baud_rate;
+
+		baud_rate = 300;
+		if (data & (1<<6))
+		{
+			baud_rate = 1200;
+		}
+	
+		hd6402_set_receive_baud_rate(baud_rate);
+		hd6402_set_transmit_baud_rate(baud_rate);
+	}
 
 	exidy_fe = data;
 }
 
 static WRITE_HANDLER(exidy_ff_port_w)
 {
+	logerror("exidy ff w: %04x %02x\n",offset,data);
 
-
-
+	/* printer */
+	/* bit 7 = strobe, bit 6..0 = data */
+	centronics_write_handshake(0, CENTRONICS_SELECT | CENTRONICS_NO_RESET, CENTRONICS_SELECT| CENTRONICS_NO_RESET);
+	centronics_write_handshake(0, (data>>7) & 0x01, CENTRONICS_STROBE);
+	centronics_write_data(0,data & 0x07f);
 }
 
 static READ_HANDLER(exidy_fc_port_r)
 {
-	return 0x0ff;
+	int data;
 
+	hd6402_set_input(HD6402_INPUT_DRR, HD6402_INPUT_DRR);
+	data = hd6402_data_r(offset);
+
+	logerror("exidy fc r: %04x %02x\n",offset,data);
+
+	return data;
 }
 
 static READ_HANDLER(exidy_fd_port_r)
 {
-	return 0x0ff;
+	int data;
 
+	data = 0;
+
+	/* bit 4: parity error */
+	if (exidy_hd6402_state & HD6402_OUTPUT_PE)
+	{
+		data |= (1<<4);
+	}
+
+	/* bit 3: framing error */
+	if (exidy_hd6402_state & HD6402_OUTPUT_FE)
+	{
+		data |= (1<<3);
+	}
+
+	/* bit 2: over-run error */
+	if (exidy_hd6402_state & HD6402_OUTPUT_OE)
+	{
+		data |= (1<<2);
+	}
+
+	/* bit 1: data receive ready - data ready in receive reg */
+	if (exidy_hd6402_state & HD6402_OUTPUT_DR)
+	{
+		data |= (1<<1);
+	}
+
+	/* bit 0: transmitter buffer receive empty */
+	if (exidy_hd6402_state & HD6402_OUTPUT_TBRE)
+	{
+		data |= (1<<0);
+	}
+
+
+	logerror("exidy fd r: %04x %02x\n",offset,data);
+
+	return data;
 }
 
 static READ_HANDLER(exidy_fe_port_r)
@@ -161,19 +470,28 @@ static READ_HANDLER(exidy_fe_port_r)
 	data |= (readinputport(0) & 0x01)<<5;
 	/* keyboard data */
 	data |= (readinputport(exidy_keyboard_line+1) & 0x01f);
-
 	return data;
 }
 
 static READ_HANDLER(exidy_ff_port_r)
 {
-	return 0x0ff;
+	int data;
 
+	data = 0;
+	/* bit 7 = printer busy */
+	/* 0 = printer is not busy */
+
+	if (device_status (IO_PRINTER, 0, 0)==0 )
+		data |= 0x080;
+	
+	logerror("exidy ff r: %04x %02x\n",offset,data);
+
+	return data;
 }
 
 
 PORT_READ_START( readport_exidy )
-	{0x000, 0x0fb, exidy_unmapped_port_r},
+	{0x000, 0x0fb, exidy_unmapped_r},
 	{0x0fc, 0x0fc, exidy_fc_port_r},
 	{0x0fd, 0x0fd, exidy_fd_port_r},
 	{0x0fe, 0x0fe, exidy_fe_port_r},
@@ -198,15 +516,16 @@ INPUT_PORTS_START(exidy)
 	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "Shift", KEYCODE_RSHIFT, IP_JOY_NONE)
 	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "Shift Lock", KEYCODE_CAPSLOCK, IP_JOY_NONE)
 	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "Control", KEYCODE_LCONTROL, IP_JOY_NONE)
-	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "Graphic", IP_KEY_NONE, IP_JOY_NONE)
-	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "Stop", IP_KEY_NONE, IP_JOY_NONE)
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "Control", KEYCODE_RCONTROL, IP_JOY_NONE)
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "Graphic", KEYCODE_F1, IP_JOY_NONE)
+	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "Stop", KEYCODE_ESC, IP_JOY_NONE)
 	/* line 1 */
 	PORT_START
-	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "(Sel)", IP_KEY_NONE, IP_JOY_NONE)
-	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "Skip", IP_KEY_NONE, IP_JOY_NONE)
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "(Sel)", KEYCODE_F2, IP_JOY_NONE)
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "Skip", KEYCODE_F3, IP_JOY_NONE)
 	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "Space", KEYCODE_SPACE, IP_JOY_NONE)
-	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "Repeat", KEYCODE_RCONTROL, IP_JOY_NONE)
-	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "Clear", IP_KEY_NONE, IP_JOY_NONE)
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "Repeat", KEYCODE_F4, IP_JOY_NONE)
+	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "Clear", KEYCODE_BACKSPACE, IP_JOY_NONE)
 	/* line 2 */
 	PORT_START
 	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "1", KEYCODE_1, IP_JOY_NONE)
@@ -232,9 +551,9 @@ INPUT_PORTS_START(exidy)
 	PORT_START
 	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "5", KEYCODE_5, IP_JOY_NONE)
 	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "T", KEYCODE_T, IP_JOY_NONE)
-	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "?", IP_KEY_NONE, IP_JOY_NONE)
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "G", KEYCODE_G, IP_JOY_NONE)
 	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "V", KEYCODE_V, IP_JOY_NONE)
-	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "?", IP_KEY_NONE, IP_JOY_NONE)
+	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "B", KEYCODE_B, IP_JOY_NONE)
 	/* line 6 */
 	PORT_START
 	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "6", KEYCODE_6, IP_JOY_NONE)
@@ -273,15 +592,15 @@ INPUT_PORTS_START(exidy)
 	/* line 11 */
 	PORT_START
 	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "-", KEYCODE_MINUS, IP_JOY_NONE)
-	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "^", IP_KEY_NONE, IP_JOY_NONE)
-	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "LINE FEED", IP_KEY_NONE, IP_JOY_NONE)
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "^", KEYCODE_F7, IP_JOY_NONE)
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "LINE FEED", KEYCODE_F8, IP_JOY_NONE)
 	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "RETURN", KEYCODE_ENTER, IP_JOY_NONE)
-	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "_", IP_KEY_NONE, IP_JOY_NONE)
+	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "_", KEYCODE_F9, IP_JOY_NONE)
 	/* line 12 */
 	PORT_START
-	PORT_BIT (0x10, 0x00, IPT_UNUSED)
+	PORT_BIT (0x10, 0x10, IPT_UNUSED)
 	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "- (PAD)", KEYCODE_MINUS_PAD, IP_JOY_NONE)
-	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "/ (PAD)", KEYCODE_SLASH_PAD, IP_JOY_NONE)
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "/ (PAD)", KEYCODE_F10, IP_JOY_NONE)
 	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "* (PAD)", KEYCODE_ASTERISK, IP_JOY_NONE)
 	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "+ (PAD)", KEYCODE_PLUS_PAD, IP_JOY_NONE)
 	/* line 13 */
@@ -301,10 +620,10 @@ INPUT_PORTS_START(exidy)
 	/* line 15 */
 	PORT_START
 	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "3 (PAD)", KEYCODE_3_PAD, IP_JOY_NONE)
-	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "? (PAD)", IP_KEY_NONE, IP_JOY_NONE)
-	PORT_BIT (0x04, 0x00, IPT_UNUSED)
-	PORT_BIT (0x02, 0x00, IPT_UNUSED)
-	PORT_BIT (0x01, 0x00, IPT_UNUSED)
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "? (PAD)", KEYCODE_9_PAD, IP_JOY_NONE)
+	PORT_BIT (0x04, 0x04, IPT_UNUSED)
+	PORT_BIT (0x02, 0x02, IPT_UNUSED)
+	PORT_BIT (0x01, 0x01, IPT_UNUSED)
 INPUT_PORTS_END
 
 
@@ -323,12 +642,12 @@ static struct MachineDriver machine_driver_exidy =
 			readport_exidy,                  /* IOReadPort */
 			writeport_exidy,                 /* IOWritePort */
 			0,						   /* VBlank Interrupt */
-			0,				   /* vblanks per frame */
+			1,				   /* vblanks per frame */
 			0, 0,   /* every scanline */
 		},
 	},
     50,                                                     /* frames per second */
-	DEFAULT_60HZ_VBLANK_DURATION,	   /* vblank duration */
+	200,	   /* vblank duration */
 	1,								   /* cpu slices per frame */
 	exidy_init_machine,                      /* init machine */
 	exidy_shutdown_machine,
@@ -353,8 +672,9 @@ static struct MachineDriver machine_driver_exidy =
 	0,								   /* sh start */
 	0,								   /* sh stop */
 	0,								   /* sh update */
-	{
-	}
+//	{
+//		{
+//	}
 };
 
 
@@ -367,25 +687,29 @@ static struct MachineDriver machine_driver_exidy =
 ROM_START(exidy)
 		/* these are common to all because they are inside the machine */
         ROM_REGION(64*1024+32, REGION_CPU1,0)
+
 		/* char rom */
 		ROM_LOAD("exchr-1.dat",0x0f800, 1024, 0x4a7e1cdd)
+
 		/* video prom */
         ROM_LOAD("bruce.dat", 0x010000, 32, 0xfae922cb)
 
 		ROM_LOAD("exmo1-1.dat", 0x0e000, 0x0800, 0xac924f67)
 		ROM_LOAD("exmo1-2.dat", 0x0e800, 0x0800, 0xead1d0f6)
+
 		ROM_LOAD_OPTIONAL("exsb1-1.dat", 0x0c000, 0x0800, 0x1dd20d80)
 		ROM_LOAD_OPTIONAL("exsb1-2.dat", 0x0c800, 0x0800, 0x1068a3f8)
 		ROM_LOAD_OPTIONAL("exsb1-3.dat", 0x0d000, 0x0800, 0xe6332518)
-		ROM_LOAD_OPTIONAL("exsb1-4.dat", 0x0d800, 0x0800, 0xa370cb19)		
+		ROM_LOAD_OPTIONAL("exsb1-4.dat", 0x0d800, 0x0800, 0xa370cb19)	
 ROM_END
 
 static const struct IODevice io_exidy[] =
 {
+	IO_CASSETTE_WAVE(2,"wav\0",NULL,exidy_cassette_init,exidy_cassette_exit),
 	IO_PRINTER_PORT(1,"prn\0"),
 	{IO_END}
 };
 
 
 /*	  YEAR	NAME	 PARENT	MACHINE INPUT 	INIT COMPANY        FULLNAME */
-COMP( 1979, exidy,   0,     exidy,  exidy,  0,   "Exidy Inc", "Sorcerer")
+COMPX( 1979, exidy,   0,     exidy,  exidy,  0,   "Exidy Inc", "Sorcerer", GAME_NOT_WORKING | GAME_NO_SOUND)
