@@ -99,7 +99,7 @@
 	are accessed, and when the second byte of the GPL address is written.  A
 	weird consequence of this is the fact that GPL data is always off by one
 	byte, i.e. GPL bytes 0, 1, 2... are stored in bytes 1, 2, 3... of pages 
-	>38->3f (byte 0 of page >38 is has GPL address >ffff).
+	>38->3f (byte 0 of page >38 corresponds to GPL address >ffff).
 
 	I think that I have once read that the geneve GROM emulator does not
 	emulate wrap-around within a GROM, i.e. address >1fff is followed by >2000
@@ -108,14 +108,14 @@
 	There are two ways to implement GPL address load and store.
 	One is maintaining 2 flags (one for address read and one for address write)
 	that tell if you are accessing address LSB: these flags must be cleared
-	whenever data is read, and the read flag must be clered when the write
+	whenever data is read, and the read flag must be cleared when the write
 	address port is written to.
-	The other is when always reading/writing the MSByte of the address pointer.
-	The LSByte is copied to the MSbyte when the address is read, whereas the
-	former MSByte is copied to the LSByte when the address is written.  The
-	address pointer must be incremented after the address is written to.  It
-	will not harm if it is incremented after the address is read, provided the
-	LSByte has been cleared.
+	The other is to shift the register and always read/write the MSByte of the
+	address pointer.  The LSByte is copied to the MSbyte when the address is
+	read, whereas the former MSByte is copied to the LSByte when the address is
+	written.  The address pointer must be incremented after the address is
+	written to.  It will not harm if it is incremented after the address is
+	read, provided the LSByte has been cleared.
 
 
 	Cartridge emulator:
@@ -264,7 +264,7 @@ INPUT_PORTS_START(geneve)
 		PORT_BITX( config_ide_mask << config_ide_bit, /*1 << config_ide_bit*/0, IPT_DIPSWITCH_NAME, "Nouspickel's IDE card", KEYCODE_NONE, IP_JOY_NONE )
 			PORT_DIPSETTING( 0x0000, DEF_STR( Off ) )
 			PORT_DIPSETTING( 1 << config_ide_bit, DEF_STR( On ) )
-		PORT_BITX( config_rs232_mask << config_rs232_bit, /*1 << config_rs232_bit*/0, IPT_DIPSWITCH_NAME, "TI RS232 card", KEYCODE_NONE, IP_JOY_NONE )
+		PORT_BITX( config_rs232_mask << config_rs232_bit, 1 << config_rs232_bit, IPT_DIPSWITCH_NAME, "TI RS232 card", KEYCODE_NONE, IP_JOY_NONE )
 			PORT_DIPSETTING( 0x0000, DEF_STR( Off ) )
 			PORT_DIPSETTING( 1 << config_rs232_bit, DEF_STR( On ) )
 
@@ -536,8 +536,8 @@ ROM_END
 SYSTEM_CONFIG_START(geneve)
 	CONFIG_DEVICE_FLOPPY_BASICDSK	(4,	"dsk\0",										device_load_ti99_floppy)
 	CONFIG_DEVICE_LEGACY			(IO_HARDDISK, 	/*4*/3, "hd\0",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_OR_READ,device_init_ti99_hd, NULL, device_load_ti99_hd, device_unload_ti99_hd, NULL)
-	/*CONFIG_DEVICE_LEGACY			(IO_PARALLEL,	1, "",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_CREATE_OR_READ,	NULL,	NULL,	ti99_4_pio_load,	ti99_4_pio_unload,		NULL)
-	CONFIG_DEVICE_LEGACY			(IO_SERIAL,		1, "",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_CREATE_OR_READ,	NULL,	NULL,	ti99_4_rs232_load,	ti99_4_rs232_unload,	NULL)*/
+	CONFIG_DEVICE_LEGACY			(IO_PARALLEL,	1, "",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_CREATE_OR_READ,	NULL,	NULL,	device_load_ti99_4_pio,	device_unload_ti99_4_pio,		NULL)
+	CONFIG_DEVICE_LEGACY			(IO_SERIAL,		1, "",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_CREATE_OR_READ,	NULL,	NULL,	device_load_ti99_4_rs232,	device_unload_ti99_4_rs232,	NULL)
 SYSTEM_CONFIG_END
 
 /*	  YEAR	NAME	  PARENT	COMPAT	MACHINE		 INPUT	  INIT		CONFIG	COMPANY		FULLNAME */
