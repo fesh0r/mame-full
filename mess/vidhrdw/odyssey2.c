@@ -215,19 +215,21 @@ extern READ_HANDLER ( odyssey2_t1_r )
 
 INLINE void odyssey2_draw_box(UINT8 bg[][320], int x, int y, int width, int height, UINT8 color)
 {
-    for (int y1=0; y1<height; y1++) {
-	for (int x1=0; x1<width; x1++) {
+    int x1,y1;
+    for (y1=0; y1<height; y1++) {
+	for (x1=0; x1<width; x1++) {
 	    bg[y+y1][x+x1]|=color;
 	}
     }
 }
 
-INLINE void odyssey2_draw(UINT8 bg[][320], UINT8 code,int x, int y, int scale_x, int scale_y, UINT8 color)
+INLINE void odyssey2_draw(UINT8 bg[][320], UINT8 code, int x, int y, int scale_x, int scale_y, UINT8 color)
 {
-    for (int m=0x80; m>0; m>>=1, x+=scale_x) {
+    int m,x1,y1;
+    for (m=0x80; m>0; m>>=1, x+=scale_x) {
 	if (code&m) {
-	    for (int y1=0; y1<scale_y; y1++) {
-		for (int x1=0; x1<scale_x; x1++) {
+	    for (y1=0; y1<scale_y; y1++) {
+		for (x1=0; x1<scale_x; x1++) {
 		    bg[y+y1][x+x1]|=color;
 		}
 	    }
@@ -236,12 +238,13 @@ INLINE void odyssey2_draw(UINT8 bg[][320], UINT8 code,int x, int y, int scale_x,
 }
 
 // different bit ordering, maybe I should change rom
-INLINE void odyssey2_draw_sprite(UINT8 bg[][320], UINT8 code,int x, int y, int scale_x, int scale_y, UINT8 color)
+INLINE void odyssey2_draw_sprite(UINT8 bg[][320], UINT8 code, int x, int y, int scale_x, int scale_y, UINT8 color)
 {
-    for (int m=1; m<=0x80; m<<=1, x+=scale_x) {
+    int m,x1,y1;
+    for (m=1; m<=0x80; m<<=1, x+=scale_x) {
 	if (code&m) {
-	    for (int y1=0; y1<scale_y; y1++) {
-		for (int x1=0; x1<scale_x; x1++) {
+	    for (y1=0; y1<scale_y; y1++) {
+		for (x1=0; x1<scale_x; x1++) {
 		    bg[y+y1][x+x1]|=color;
 		}
 	    }
@@ -295,8 +298,8 @@ void odyssey2_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	color|=(o2_vdc.s.color>>3)&8;
 	for (i=0, x=0; x<9; x++, i++) {
 	    for (j=1, y=0; y<9; y++, j<<=1) {
-		if ( (j<=0x80)&&(o2_vdc.s.hgrid[0][i]&j)
-		     ||(j>0x80)&&(o2_vdc.s.hgrid[1][i]&1) ) {
+		if ( ((j<=0x80)&&(o2_vdc.s.hgrid[0][i]&j))
+		     ||((j>0x80)&&(o2_vdc.s.hgrid[1][i]&1)) ) {
 		    odyssey2_draw_box(bg,8+x*WIDTH,24+y*HEIGHT, WIDTH,3, 0x20);
 		    plot_box(bitmap,8+x*WIDTH,24+y*HEIGHT,WIDTH,3,Machine->pens[color]);
 		}
