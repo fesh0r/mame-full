@@ -43,7 +43,7 @@
 #include "cpu/sh2/sh2.h"
 
 #ifndef VERBOSE
-#define VERBOSE 0
+#define VERBOSE 1
 #endif
 
 #if VERBOSE
@@ -286,7 +286,7 @@ WRITE_HANDLER( saturn_cs2_w )	/* CS2 */
 /********************************************************
  *	Compact Disc
  ********************************************************/
-struct cdblock {
+struct cdblock_s {
 	UINT16 hirq;
 	UINT16 hm;
 	UINT16 cr1;
@@ -295,7 +295,7 @@ struct cdblock {
 	UINT16 cr4;
 };
 
-struct cdblock acdblock;
+struct cdblock_s cdblock;
 
 enum {
 	ST_BUSY    = 0x00,
@@ -313,182 +313,182 @@ enum {
 
 static void hirq_w(data_t data)
 {
-	logerror("  CD:           write hirq %04x (PC=%8X)\n", data, cpu_get_reg(SH2_PC));
-	acdblock.hirq &= (1 | ~data);
+	logerror("saturn_cd_w     hirq %04x (PC=%08x)\n", data & 0x0000ffff, cpu_get_reg(SH2_PC));
+	cdblock.hirq &= (1 | ~data);
 	/* ### irqs */
 }
 
 static void do_command(void)
 {
-	switch(acdblock.cr1>>8)
+	switch(cdblock.cr1>>8)
 	{
 	case 0x00:
-		logerror("  CD:           Get status\n");
+		logerror("  do_command:   Get status\n");
 		break;
 	case 0x01:
-		logerror("  CD:           Get hardware info\n");
-		acdblock.cr1 = ST_NODISC << 8;
-		acdblock.cr2 = 0;
-		acdblock.cr3 = 0;
-		acdblock.cr4 = 0;
-		acdblock.hirq |= 0x0fe1;
-		/* acdblock.hirq |= 0xffff; */
+		logerror("  do_command:   Get hardware info\n");
+		cdblock.cr1 = ST_NODISC << 8;
+		cdblock.cr2 = 0;
+		cdblock.cr3 = 0;
+		cdblock.cr4 = 0;
+		cdblock.hirq |= 0x0fe1;
+		/* cdblock.hirq |= 0xffff; */
 		break;
 	case 0x02:
-		logerror("  CD:           Get TOC\n");
+		logerror("  do_command:   Get TOC\n");
 		break;
 	case 0x03:
-		logerror("  CD:           Get session info\n");
+		logerror("  do_command:   Get session info\n");
 		break;
 	case 0x04:
-		logerror("  CD:           Initialize, stdby=%d, ecc=%d, rf=%d\n\n");
+		logerror("  do_command:   Initialize, stdby=%d, ecc=%d, rf=%d\n\n");
 		break;
 	case 0x05:
-		logerror("  CD:           Open CD tray\n");
+		logerror("  do_command:   Open CD tray\n");
 		break;
 	case 0x06:
-		logerror("  CD:           End data transfer\n");
-		acdblock.cr1 = ST_NODISC<<8;
-		acdblock.cr2 = 0;
-		acdblock.cr3 = 0;
-		acdblock.cr4 = 0;
-		acdblock.hirq |= 0x0001;
+		logerror("  do_command:   End data transfer\n");
+		cdblock.cr1 = ST_NODISC<<8;
+		cdblock.cr2 = 0;
+		cdblock.cr3 = 0;
+		cdblock.cr4 = 0;
+		cdblock.hirq |= 0x0001;
 		break;
 	case 0x10:
-		logerror("  CD:           play disk\n");
+		logerror("  do_command:   play disk\n");
 		break;
 	case 0x11:
-		logerror("  CD:           disk seek\n");
+		logerror("  do_command:   disk seek\n");
 		break;
 	case 0x12:
-		logerror("  CD:           CD scan\n");
+		logerror("  do_command:   CD scan\n");
 		break;
 	case 0x20:
-		logerror("  CD:           get subcode\n");
+		logerror("  do_command:   get subcode\n");
 		break;
 	case 0x30:
-		logerror("  CD:           set device\n");
+		logerror("  do_command:   set device\n");
 		break;
 	case 0x31:
-		logerror("  CD:           get device\n");
+		logerror("  do_command:   get device\n");
 		break;
 	case 0x32:
-		logerror("  CD:           get last destination\n");
+		logerror("  do_command:   get last destination\n");
 		break;
 	case 0x40:
-		logerror("  CD:           set filter range\n");
+		logerror("  do_command:   set filter range\n");
 		break;
 	case 0x41:
-		logerror("  CD:           get filter range\n");
+		logerror("  do_command:   get filter range\n");
 		break;
 	case 0x42:
-		logerror("  CD:           set filter subheader conditions\n");
+		logerror("  do_command:   set filter subheader conditions\n");
 		break;
 	case 0x43:
-		logerror("  CD:           get filter subheader conditions\n");
+		logerror("  do_command:   get filter subheader conditions\n");
 		break;
 	case 0x44:
-		logerror("  CD:           set filter mode\n");
+		logerror("  do_command:   set filter mode\n");
 		break;
 	case 0x45:
-		logerror("  CD:           get filter mode\n");
+		logerror("  do_command:   get filter mode\n");
 		break;
 	case 0x46:
-		logerror("  CD:           set filter connexion\n");
+		logerror("  do_command:   set filter connexion\n");
 		break;
 	case 0x47:
-		logerror("  CD:           get filter connexion\n");
+		logerror("  do_command:   get filter connexion\n");
 		break;
 	case 0x48:
-		logerror("  CD:           reset selector\n");
+		logerror("  do_command:   reset selector\n");
 		break;
 	case 0x50:
-		logerror("  CD:           get CD block size\n");
+		logerror("  do_command:   get CD block size\n");
 		break;
 	case 0x51:
-		logerror("  CD:           get buffer size\n");
+		logerror("  do_command:   get buffer size\n");
 		break;
 	case 0x52:
-		logerror("  CD:           calculate actual size\n");
+		logerror("  do_command:   calculate actual size\n");
 		break;
 	case 0x53:
-		logerror("  CD:           get actual size\n");
+		logerror("  do_command:   get actual size\n");
 		break;
 	case 0x54:
-		logerror("  CD:           get sector info\n");
+		logerror("  do_command:   get sector info\n");
 		break;
 	case 0x55:
-		logerror("  CD:           execute FAD search\n");
+		logerror("  do_command:   execute FAD search\n");
 		break;
 	case 0x56:
-		logerror("  CD:           get FAD search results\n");
+		logerror("  do_command:   get FAD search results\n");
 		break;
 	case 0x60:
-		logerror("  CD:           get sector length\n");
+		logerror("  do_command:   get sector length\n");
 		break;
 	case 0x61:
-		logerror("  CD:           get sector data\n");
+		logerror("  do_command:   get sector data\n");
 		break;
 	case 0x62:
-		logerror("  CD:           delete sector data\n");
+		logerror("  do_command:   delete sector data\n");
 		break;
 	case 0x63:
-		logerror("  CD:           get and delete sector data\n");
+		logerror("  do_command:   get and delete sector data\n");
 		break;
 	case 0x65:
-		logerror("  CD:           copy sector data\n");
+		logerror("  do_command:   copy sector data\n");
 		break;
 	case 0x66:
-		logerror("  CD:           move sector data\n");
+		logerror("  do_command:   move sector data\n");
 		break;
 	case 0x67:
-		logerror("  CD:           get copy error\n");
-		acdblock.cr1 = ST_STANDBY<<8;
-		acdblock.cr2 = 0;
-		acdblock.cr3 = 0;
-		acdblock.cr4 = 0;
-		/* acdblock.hirq |= 0xffff; */
+		logerror("  do_command:   get copy error\n");
+		cdblock.cr1 = ST_STANDBY<<8;
+		cdblock.cr2 = 0;
+		cdblock.cr3 = 0;
+		cdblock.cr4 = 0;
+		/* cdblock.hirq |= 0xffff; */
 		break;
 	case 0x70:
-		logerror("  CD:           change directory\n");
+		logerror("  do_command:   change directory\n");
 		break;
 	case 0x72:
-		logerror("  CD:           get file system scope\n");
+		logerror("  do_command:   get file system scope\n");
 		break;
 	case 0x73:
-		logerror("  CD:           get file info\n");
+		logerror("  do_command:   get file info\n");
 		break;
 	case 0x74:
-		logerror("  CD:           read file\n");
+		logerror("  do_command:   read file\n");
 		break;
 	case 0x75:
-		logerror("  CD:           abort file\n");
-		acdblock.cr1 = ST_STANDBY<<8;
-		acdblock.cr2 = 0;
-		acdblock.cr3 = 0;
-		acdblock.cr4 = 0;
-		acdblock.hirq |= 0x0201;
+		logerror("  do_command:   abort file\n");
+		cdblock.cr1 = ST_STANDBY<<8;
+		cdblock.cr2 = 0;
+		cdblock.cr3 = 0;
+		cdblock.cr4 = 0;
+		cdblock.hirq |= 0x0201;
 		break;
 	default:
-		logerror("  CD:           executing command %02x\n", acdblock.cr1>>8);
-		acdblock.cr1 = ST_STANDBY<<8;
-		/* acdblock.cr2 = 0; */
-		/* acdblock.cr3 = 0; */
-		/* acdblock.cr4 = 0; */
-		acdblock.hirq |= 0x0fe1;
+		logerror("  do_command:   executing command %02x\n", cdblock.cr1>>8);
+		cdblock.cr1 = ST_STANDBY<<8;
+		/* cdblock.cr2 = 0; */
+		/* cdblock.cr3 = 0; */
+		/* cdblock.cr4 = 0; */
+		cdblock.hirq |= 0x0fe1;
 		break;
 	}
 }
 
 void cd_init(void)
 {
-	acdblock.cr1 =			  'C';
-	acdblock.cr2 = ('D'<<8) | 'B';
-	acdblock.cr3 = ('L'<<8) | 'O';
-	acdblock.cr4 = ('C'<<8) | 'K';
+	cdblock.cr1 =			 'C';
+	cdblock.cr2 = ('D'<<8) | 'B';
+	cdblock.cr3 = ('L'<<8) | 'O';
+	cdblock.cr4 = ('C'<<8) | 'K';
 
-	acdblock.hirq = 1;
-	acdblock.hm = 0;
+	cdblock.hirq = 1;
+	cdblock.hm = 0;
 }
 
 READ_HANDLER( saturn_cd_r )    /* CD */
@@ -499,27 +499,27 @@ READ_HANDLER( saturn_cd_r )    /* CD */
 	switch(offset & 0xfffff)
     {
     case 0x90008:
-		data = acdblock.hirq;
-		logerror("  CD:           read hirq %04x (PC=%08x)\n", data, cpu_get_reg(SH2_PC));
+		data = cdblock.hirq;
+		logerror("saturn_cd_r     hirq %04x (PC=%08x)\n", data, cpu_get_reg(SH2_PC));
 		break;
     case 0x90018:
-        data = acdblock.cr1;
-		logerror("  CD:           read cr1  %04x (PC=%08x)\n", data, cpu_get_reg(SH2_PC));
+		data = cdblock.cr1;
+		logerror("saturn_cd_r     cr1  %04x (PC=%08x)\n", data, cpu_get_reg(SH2_PC));
 		break;
     case 0x9001c:
-        data = acdblock.cr2;
-		logerror("  CD:           read cr2  %04x (PC=%08x)\n", data, cpu_get_reg(SH2_PC));
+		data = cdblock.cr2;
+		logerror("saturn_cd_r     cr2  %04x (PC=%08x)\n", data, cpu_get_reg(SH2_PC));
 		break;
     case 0x90020:
-        data = acdblock.cr3;
-		logerror("  CD:           read cr3  %04x (PC=%08x)\n", data, cpu_get_reg(SH2_PC));
+		data = cdblock.cr3;
+		logerror("saturn_cd_r     cr3  %04x (PC=%08x)\n", data, cpu_get_reg(SH2_PC));
         break;
     case 0x90024:
-        data = acdblock.cr4;
-		logerror("  CD:           read cr4  %04x (PC=%08x)\n", data, cpu_get_reg(SH2_PC));
+		data = cdblock.cr4;
+		logerror("saturn_cd_r     cr4  %04x (PC=%08x)\n", data, cpu_get_reg(SH2_PC));
 		break;
     default:
-		logerror("  CD:           read %04x %04x (PC=%08x)\n", offset, data, cpu_get_reg(SH2_PC));
+		logerror("saturn_cd_r     %04x %04x (PC=%08x)\n", offset, data, cpu_get_reg(SH2_PC));
     }
 	return data;
 }
@@ -532,26 +532,26 @@ WRITE_HANDLER( saturn_cd_w )   /* CD */
 		hirq_w(data);
         break;
     case 0x90018:
-		acdblock.cr1 = data;
+		cdblock.cr1 = data;
         break;
     case 0x9001c:
-		acdblock.cr2 = data;
+		cdblock.cr2 = data;
         break;
     case 0x90020:
-		acdblock.cr3 = data;
+		cdblock.cr3 = data;
         break;
     case 0x90024:
-		acdblock.cr4 = data;
+		cdblock.cr4 = data;
         do_command();
         break;
     default:
 		if ((data & 0xffff0000) == 0xffff0000)
-			logerror("  CD:           write %04x %04x (PC=%08x)\n", offset, data & 0x0000ffff, cpu_get_reg(SH2_PC));
+			logerror("saturn_cd_w     %07x <- %04x (PC=%08x)\n", offset, data & 0x0000ffff, cpu_get_reg(SH2_PC));
 		else
 		if ((data & 0xffff0000) == 0xff000000)
-			logerror("  CD:           write %04x xx%02x (PC=%08x)\n", offset, (data & 0x000000ff), cpu_get_reg(SH2_PC));
+			logerror("saturn_cd_w     %07x <- xx%02x (PC=%08x)\n", offset, (data & 0x000000ff), cpu_get_reg(SH2_PC));
 		else
-			logerror("  CD:           write %04x %02xxx (PC=%08x)\n", offset, (data & 0x0000ff00) >> 8, cpu_get_reg(SH2_PC));
+			logerror("saturn_cd_w     %07x <- %02xxx (PC=%08x)\n", offset, (data & 0x0000ff00) >> 8, cpu_get_reg(SH2_PC));
 	}
 }
 
@@ -623,6 +623,344 @@ WRITE_HANDLER( saturn_dsp_w )  /* DSP */
 /********************************************************
  *	VDP1
  ********************************************************/
+struct vdp1_s {
+	UINT16 tv_mode;
+	UINT16 fb_mode;
+	UINT16 trigger;
+	UINT16 ew_data;
+	UINT16 ew_ul;
+	UINT16 ew_lr;
+
+	int line_bytes, line_count, line_pixels, pix_size;
+	int ew_offset, ew_lines, ew_words, ew_jump;
+
+	UINT8 *work_fb, *show_fb;
+	int erase_next, trig;
+};
+
+struct vdp1_s vdp1;
+
+const char* vdp1_reg_names[] =
+{
+	"tvmr", "fbcr", "ptmr", "ewdr", "ewlr", "ewrr", "endr", "-", "edsr", "lopr", "copr", "modr"
+};
+
+static void flip_fbs(void)
+{
+	if (vdp1.work_fb == &mem[SATURN_FB1_RAM_BASE])
+	{
+		vdp1.work_fb = &mem[SATURN_FB2_RAM_BASE];
+		vdp1.show_fb = &mem[SATURN_FB1_RAM_BASE];
+	}
+	else
+	{
+		vdp1.work_fb = &mem[SATURN_FB1_RAM_BASE];
+		vdp1.show_fb = &mem[SATURN_FB2_RAM_BASE];
+	}
+}
+
+static void vdp1_calc_erase(void)
+{
+	int x1 = (vdp1.ew_ul >> 9) & 0x3f;
+	int y1 = vdp1.ew_ul & 0x1ff;
+	int x2 = (vdp1.ew_lr >> 9) & 0x7f;
+	int y2 = vdp1.ew_lr & 0x1ff;
+
+	switch (vdp1.tv_mode & 7)
+	{
+	case 0:
+		vdp1.line_bytes = 1024;
+		vdp1.line_count = 256;
+		vdp1.line_pixels = 512;
+		vdp1.pix_size = 2;
+		break;
+	case 1:
+		vdp1.line_bytes = 1024;
+		vdp1.line_count = 256;
+		vdp1.line_pixels = 1024;
+		vdp1.pix_size = 1;
+		break;
+	case 2:
+		vdp1.line_bytes = 1024;
+		vdp1.line_count = 256;
+		vdp1.line_pixels = 512;
+		vdp1.pix_size = 2;
+		break;
+	case 3:
+		vdp1.line_bytes = 512;
+		vdp1.line_count = 512;
+		vdp1.line_pixels = 512;
+		vdp1.pix_size = 1;
+		break;
+	default:
+		vdp1.line_bytes = 1024;
+		vdp1.line_count = 256;
+		vdp1.line_pixels = 512;
+		vdp1.pix_size = 2;
+		break;
+	}
+
+	vdp1.ew_offset = x1 * 16 + y1 * vdp1.line_bytes;
+	vdp1.ew_lines = y2 - y1 + 1;
+	vdp1.ew_words = (x2 - x1) * 8;
+	vdp1.ew_jump = vdp1.line_bytes - vdp1.ew_words * 2;
+}
+
+static void vdp1_erase_write(void)
+{
+	int i, j;
+	UINT16 data = vdp1.ew_data;
+	UINT16 *buf = (UINT16 *)(vdp1.show_fb + vdp1.ew_offset);
+	int words = vdp1.ew_words;
+	int lines = vdp1.ew_lines;
+	int jump = vdp1.ew_jump;
+
+	for (i = 0; i < lines; i++)
+	{
+		for (j = 0; j < words; j++)
+			*buf++ = data;
+		buf = (UINT16 *) (((UINT8 *) buf) + jump);
+	}
+}
+
+enum
+{
+	EDC_RGB = 0x7fff
+};
+
+static void sprite_rgb_replace_es_xy(UINT16 * src, INT16 sx, INT16 sy, INT16 x, INT16 y)
+{
+	UINT16 *dst = (UINT16 *) (vdp1.work_fb + (x << 1) + y * vdp1.line_bytes);
+	INT16 xx, yy;
+
+	for (yy = 0; yy < sy; yy++)
+	{
+		UINT16 *src1 = src;
+		UINT16 *dst1 = dst;
+		int ec = 0;
+
+		for (xx = 0; xx < sx; xx++)
+		{
+			UINT16 color = *src1++;
+
+			if (color == EDC_RGB)
+			{
+				if (ec)
+					break;
+				*dst1++ = 0x7c00;
+			}
+			else if (!color)
+				dst1++;
+			else
+				*dst1++ = color;
+		}
+		src += sx;
+		dst = (UINT16 *) (((UINT8 *) dst) + vdp1.line_bytes);
+	}
+	// logerror("sprite_rgb_replace_es_xy activated\n");
+}
+
+static void draw_commands(void)
+{
+	UINT8 *cmd = &mem[SATURN_VDP1_RAM_BASE];
+	UINT8 *back = cmd;
+	UINT16 scx = 0, scy = 0;
+	UINT16 lx = 0, ly = 0;
+
+	//	logerror("VDP1: draw commands\n");
+
+	for (;;)
+	{
+		UINT8 byte0 = cmd[0];
+		UINT8 byte1 = cmd[1];
+
+		if (byte0 & 0x80)
+			break;
+
+		if (!(byte0 & 0x40))
+		{
+			switch (byte1 & 15)
+			{
+			case 0:
+				{
+					UINT8 byte4 = cmd[4];
+					UINT8 byte5 = cmd[5];
+					void *cadr = &mem[SATURN_VDP1_RAM_BASE] + (256 * cmd[0x08] + cmd[0x09]) * 8;
+					INT16 sx = cmd[0x0a] << 3;
+					INT16 sy = cmd[0x0b];
+					INT16 x = (256 * cmd[0x0c] + cmd[0x0d]) + lx;
+					INT16 y = (256 * cmd[0x0e] + cmd[0x0f]) + ly;
+
+					switch ((byte5 >> 3) & 7)
+					{					// Color mode
+					case 5:
+						switch (byte5 & 7)
+						{				// Color calculation
+						case 0:
+							switch (byte5 & 0xc0)
+							{
+							case 0:
+								switch (byte1 & 0x30)
+								{
+								case 0:
+									sprite_rgb_replace_es_xy(cadr, sx, sy, x, y);
+									break;
+								default:
+									goto bail0;
+								}
+								break;
+							default:
+								goto bail0;
+							}
+							break;
+						default:
+							goto bail0;
+						}
+						break;
+					default:
+						goto bail0;
+					}
+					break;
+				  bail0:
+#if VERBOSE
+					logerror("VDP1: sprite draw, ih=%d, iv=%d, x=%d, y=%d, sx=%d, sy=%d, adr=%08x\n",
+						(byte1 & 0x10) != 0, (byte1 & 0x20) != 0, x, y, sx, sy, cadr);
+					logerror("       clip=%d, uce=%d, ecd=%d, spd=%d, cmode=%d, ccalc=%d, mon=%d\n",
+						   (byte4 & 2) != 0,
+						   (byte4 & 1) != 0,
+						   (byte5 & 0x80) != 0,
+						   (byte5 & 0x40) != 0,
+						   (byte5 >> 3) & 7,
+						   byte5 & 7,
+						   (byte4 & 0x80) != 0);
+#endif
+					break;
+				}
+			case 1:
+#if VERBOSE
+				logerror("VDP1: scaled sprite draw\n");
+#endif
+				break;
+			case 2:
+				{
+					UINT8 byte4 = cmd[4];
+					UINT8 byte5 = cmd[5];
+					void *cadr = &mem[SATURN_VDP1_RAM_BASE] + (256 * cmd[0x08] + cmd[0x09]) * 8;
+					INT16 x1 = (256 * cmd[0x0c] + cmd[0x0d]) + lx;
+					INT16 y1 = (256 * cmd[0x0e] + cmd[0x0f]) + ly;
+					INT16 x2 = (256 * cmd[0x10] + cmd[0x11]) + lx;
+					INT16 y2 = (256 * cmd[0x12] + cmd[0x13]) + ly;
+					INT16 x3 = (256 * cmd[0x14] + cmd[0x15]) + lx;
+					INT16 y3 = (256 * cmd[0x16] + cmd[0x17]) + ly;
+					INT16 x4 = (256 * cmd[0x18] + cmd[0x19]) + lx;
+					INT16 y4 = (256 * cmd[0x1a] + cmd[0x1b]) + ly;
+                    (void)cadr;
+#if VERBOSE
+					logerror("VDP1: distorted sprite draw\n");
+					logerror("      (%d, %d)-(%d, %d)-(%d, %d)-(%d, %d)\n", x1, y1, x2, y2, x3, y3, x4, y4);
+					{
+						int i;
+
+						for (i = 0; i < 0x20; i++)
+							logerror(" %02x", cmd[i]);
+						logerror("\n");
+					}
+					logerror("VDP1: distorded sprite draw, ih=%d, iv=%d, adr=%08x\n", (byte1 & 0x10) != 0, (byte1 & 0x20) != 0,
+						   0x5c00000 | (cmd[0x08] << 11 | cmd[0x09] << 3));
+					logerror("       clip=%d, uce=%d, ecd=%d, spd=%d, cmode=%d, ccalc=%d, mon=%d\n",
+						   (byte4 & 2) != 0,
+						   (byte4 & 1) != 0,
+						   (byte5 & 0x80) != 0,
+						   (byte5 & 0x40) != 0,
+						   (byte5 >> 3) & 7,
+						   byte5 & 7,
+						   (byte4 & 0x80) != 0);
+#endif
+					break;
+				}
+			case 4:
+#if VERBOSE
+				logerror("VDP1: polygon draw\n");
+#endif
+				break;
+			case 5:
+#if VERBOSE
+				logerror("VDP1: polyline draw\n");
+#endif
+				break;
+			case 6:
+#if VERBOSE
+				logerror("VDP1: line draw\n");
+#endif
+				break;
+			case 8:
+#if VERBOSE
+				logerror("VDP1: user clipping\n");
+#endif
+				break;
+			case 9:
+				scx = cmd[0x14] << 8 | cmd[0x15];
+				scy = cmd[0x16] << 8 | cmd[0x17];
+				break;
+			case 10:
+				lx = cmd[0x0c] << 8 | cmd[0x0d];
+				ly = cmd[0x0e] << 8 | cmd[0x0f];
+				break;
+			default:
+				logerror("VDP1: Unknown command %d\n", byte1 & 15);
+				break;
+			}
+		}
+
+		switch (byte0 & 0x30)
+		{
+		case 0x00:
+			cmd += 0x20;
+			break;
+		case 0x10:
+			{
+				int link = (cmd[2] << 11) | (cmd[3] << 3);
+
+				cmd = &mem[SATURN_VDP1_RAM_BASE] + link;
+				break;
+			}
+		case 0x20:
+			{
+				int link = (cmd[2] << 11) | (cmd[3] << 3);
+
+				back = cmd + 0x20;
+				cmd = &mem[SATURN_VDP1_RAM_BASE] + link;
+				break;
+			}
+		case 0x30:
+		default:
+			cmd = back;
+			break;
+		}
+	}
+}
+
+void vdp1_vblout_draw(void)
+{
+	int mode = vdp1.fb_mode & 3;
+
+	if ((vdp1.tv_mode & 4) || vdp1.erase_next || (mode == 0))
+		vdp1_erase_write();
+
+    if ((mode == 0) || ((mode == 3) && vdp1.trig))
+	{
+		flip_fbs();
+		if ((vdp1.trigger & 3) == 2)
+			draw_commands();
+	}
+
+	vdp1.erase_next = (mode == 2) && vdp1.trig ? 1 : 0;
+	vdp1.trig = 0;
+	vdp1.tv_mode &= ~4;
+}
+
+#define VDP1_REG_NAME(adr) vdp1_reg_names[(adr)>>1]
+
 READ_HANDLER( saturn_vdp1_r )   /* VDP1 registers */
 {
 	data_t data = 0x0000;
@@ -632,13 +970,65 @@ READ_HANDLER( saturn_vdp1_r )   /* VDP1 registers */
 
 WRITE_HANDLER( saturn_vdp1_w )	/* VDP1 registers */
 {
-	if ((data & 0xffff0000) == 0xffff0000)
-		logerror("saturn_vdp1_w   %07x <- %04x\n", offset, data & 0x0000ffff);
-	else
-	if ((data & 0xffff0000) == 0xff000000)
-		logerror("saturn_vdp1_w   %07x <- xx%02x\n", offset, data & 0x000000ff);
-	else
-		logerror("saturn_vdp1_w   %07x <- %02xxx\n", offset, (data & 0x0000ff00) >> 8);
+	switch(offset & 0x1ffff)
+	{
+	case 0x00:
+		vdp1.tv_mode = data;
+		logerror("saturn_vdp1_w   screen mode hdtv=%d, rotation=%d, depth=%d\n", (data&4)!=0, (data&2)!=0, (data&1) ? 8 : 16);
+		vdp1_calc_erase();
+		break;
+	case 0x02:
+		vdp1.fb_mode = data;
+		vdp1.trig = 1;
+		if(data & 12)
+			logerror("saturn_vdp1_w   screen mode 2 die=%d, dil=%d\n", (data&8)!=0, (data&4)!=0);
+		break;
+	case 0x04:
+		vdp1.trigger = data;
+		if((data & 3)==1)
+			draw_commands();
+		break;
+	case 0x06:
+		vdp1.ew_data = data;
+		break;
+	case 0x08:
+		vdp1.ew_ul = data;
+		vdp1_calc_erase();
+		break;
+	case 0x0a:
+		vdp1.ew_lr = data;
+		vdp1_calc_erase();
+		break;
+	case 0x0c:
+		logerror("saturn_vdp1_w   forced drawing termination\n");
+		break;
+	default:
+		if ((data & 0xffff0000) == 0xffff0000)
+			logerror("saturn_vdp1_w   %07x <- %04x\n", offset, data & 0x0000ffff);
+		else
+		if ((data & 0xffff0000) == 0xff000000)
+			logerror("saturn_vdp1_w   %07x <- xx%02x\n", offset, data & 0x000000ff);
+		else
+			logerror("saturn_vdp1_w   %07x <- %02xxx\n", offset, (data & 0x0000ff00) >> 8);
+    }
+}
+
+static void saturn_vdp1_init(void)
+{
+	vdp1.tv_mode = 0;
+	vdp1.fb_mode = 0;
+	vdp1.trigger = 0;
+	vdp1.ew_data = 0;
+	vdp1.ew_ul = 0;
+	vdp1.ew_lr = 0;
+
+	vdp1.trig = 0;
+	vdp1.erase_next = 0;
+
+	vdp1.work_fb = &mem[SATURN_FB1_RAM_BASE];
+	vdp1.show_fb = &mem[SATURN_FB2_RAM_BASE];
+
+	vdp1_calc_erase();
 }
 
 /********************************************************
@@ -724,9 +1114,9 @@ static const char *irq_names[16] =
 
 static void set_imask(void)
 {
-	logerror("SCU: Interrupt mask change.  Allowed:");
+	logerror("saturn_scu_w    interrupt mask change.  Allowed:");
 	if ((ascu.imask.d & 0xbfff) == 0xbfff)
-		printf(" <none>\n");
+		logerror(" <none>");
 	else
 	{
 		int i;
@@ -734,8 +1124,8 @@ static void set_imask(void)
 		for (i = 0; i < 16; i++)
 			if (!((1 << i) & ascu.imask.d))
 				logerror(" %s", irq_names[i]);
-		logerror("\n");
 	}
+	logerror("\n");
 	/* ### irqs */
 }
 
@@ -756,18 +1146,29 @@ void scu_pulse_interrupt(int irq)
 {
 	if (irq >= INT_ABUS)
 	{
-		logerror("SCU: pulsed abus irq\n");
+		logerror("saturn_scu_w    pulsed abus irq\n");
 	}
 	else
-	if (!(ascu.imask.d & (1 << irq)))
-		do_irq(irq);
+	{
+		logerror("saturn_scu_w    pulsed irq %d", irq);
+		if (!(ascu.imask.d & (1 << irq)))
+		{
+			logerror(" - ok");
+			do_irq(irq);
+		}
+		else
+		{
+			logerror(" - masked");
+		}
+		logerror("\n");
+	}
 }
 
 static void dma_run(int dma)
 {
 	if (ascu.dma[dma].mode.d & 0x1000000)
 	{
-		logerror("SCU: DMA %d indirect mode activated\n", dma);
+		logerror("saturn_scu_w    DMA %d indirect mode activated\n", dma);
 	}
 	else
 	{
@@ -811,12 +1212,12 @@ static void dma_enable(int dma)
 static void dma_mode(int dma)
 {
 	if ((ascu.dma[dma].enable.d & 7) != 7)
-		logerror("SCU: DMA %d in mode %d\n", dma, ascu.dma[dma].enable.d & 7);
+		logerror("saturn_scu_w    DMA %d in mode %d\n", dma, ascu.dma[dma].enable.d & 7);
 }
 
 static void dsp_run(int step)
 {
-	logerror("SCU: DSP %s\n", step ? "stepped" : "started");
+	logerror("saturn_scu_w    DSP %s\n", step ? "stepped" : "started");
 }
 
 static const char *scu_reg_names[] =
@@ -830,130 +1231,89 @@ static const char *scu_reg_names[] =
 	"-",        "scuramsel", "scuvers",   "-"
 };
 
-#define REG_NAME(adr) scu_reg_names[(adr)>>2]
+#define SCU_REG_NAME(adr) scu_reg_names[(adr)>>2]
 
 READ_HANDLER( saturn_scu_r )    /* SCU, DMA/DSP */
 {
-	data_t data = 0;
-
-	logerror("saturn_scu_r   %07x %02x\n", offset, data);
+	data_t data = 0x0000;
+	logerror("saturn_scu_r    %07x -> %04x\n", offset, data);
 	return data;
 }
 
 WRITE_HANDLER( saturn_scu_w )   /* SCU, DMA/DSP */
 {
-	data &= 0xff;
-    logerror("saturn_scu_w   %07x %02x\n", offset, data);
+	data_t oldword = READ_WORD((UINT8 *)&ascu + offset);
+    data_t newword = COMBINE_WORD(oldword, data);
 
-    switch (offset & 0x1ffff)
+	switch (offset & 0x1fffe)
 	{
-	case 0x00: ascu.dma[0].radr.b.h3 = data; break;
-	case 0x01: ascu.dma[0].radr.b.h2 = data; break;
-	case 0x02: ascu.dma[0].radr.b.h = data; break;
-	case 0x03: ascu.dma[0].radr.b.l = data; break;
+	case 0x00: ascu.dma[0].radr.w.h = newword; break;
+	case 0x02: ascu.dma[0].radr.w.l = newword; break;
 
-	case 0x04: ascu.dma[0].wadr.b.h3 = data; break;
-	case 0x05: ascu.dma[0].wadr.b.h2 = data; break;
-	case 0x06: ascu.dma[0].wadr.b.h = data; break;
-	case 0x07: ascu.dma[0].wadr.b.l = data; break;
+	case 0x04: ascu.dma[0].wadr.w.h = newword; break;
+	case 0x06: ascu.dma[0].wadr.w.l = newword; break;
 
-	case 0x08: ascu.dma[0].bytes.b.h3 = data; break;
-	case 0x09: ascu.dma[0].bytes.b.h2 = data; break;
-	case 0x0a: ascu.dma[0].bytes.b.h = data; break;
-	case 0x0b: ascu.dma[0].bytes.b.l = data; break;
+	case 0x08: ascu.dma[0].bytes.w.h = newword; break;
+	case 0x0a: ascu.dma[0].bytes.w.l = newword; break;
 
-	case 0x0c: ascu.dma[0].add.b.h3 = data; break;
-	case 0x0d: ascu.dma[0].add.b.h2 = data; break;
-	case 0x0e: ascu.dma[0].add.b.h = data; break;
-	case 0x0f: ascu.dma[0].add.b.l = data; break;
+	case 0x0c: ascu.dma[0].add.w.h = newword; break;
+	case 0x0e: ascu.dma[0].add.w.l = newword; break;
 
-	case 0x10: ascu.dma[0].enable.b.h3 = data; break;
-	case 0x11: ascu.dma[0].enable.b.h2 = data; break;
-	case 0x12: ascu.dma[0].enable.b.h = data; break;
-	case 0x13: ascu.dma[0].enable.b.l = data; dma_enable(0); break;
+	case 0x10: ascu.dma[0].enable.w.h = newword; break;
+	case 0x12: ascu.dma[0].enable.w.l = newword; dma_enable(0); break;
 
-	case 0x14: ascu.dma[0].mode.b.h3 = data; break;
-	case 0x15: ascu.dma[0].mode.b.h2 = data; break;
-	case 0x16: ascu.dma[0].mode.b.h = data; break;
-	case 0x17: ascu.dma[0].mode.b.l = data; dma_mode(0); break;
+	case 0x14: ascu.dma[0].mode.w.h = newword; break;
+	case 0x16: ascu.dma[0].mode.w.l = newword; dma_mode(0); break;
 
-	case 0x20: ascu.dma[1].radr.b.h3 = data; break;
-	case 0x21: ascu.dma[1].radr.b.h2 = data; break;
-	case 0x22: ascu.dma[1].radr.b.h = data; break;
-	case 0x23: ascu.dma[1].radr.b.l = data; break;
+	case 0x20: ascu.dma[1].radr.w.h = newword; break;
+	case 0x22: ascu.dma[1].radr.w.l = newword; break;
 
-	case 0x24: ascu.dma[1].wadr.b.h3 = data; break;
-	case 0x25: ascu.dma[1].wadr.b.h2 = data; break;
-	case 0x26: ascu.dma[1].wadr.b.h = data; break;
-	case 0x27: ascu.dma[1].wadr.b.l = data; break;
+	case 0x24: ascu.dma[1].wadr.w.h = newword; break;
+	case 0x26: ascu.dma[1].wadr.w.l = newword; break;
 
-	case 0x28: ascu.dma[1].bytes.b.h3 = data; break;
-	case 0x29: ascu.dma[1].bytes.b.h2 = data; break;
-	case 0x2a: ascu.dma[1].bytes.b.h = data; break;
-	case 0x2b: ascu.dma[1].bytes.b.l = data; break;
+	case 0x28: ascu.dma[1].bytes.w.h = newword; break;
+	case 0x2a: ascu.dma[1].bytes.w.l = newword; break;
 
-	case 0x2c: ascu.dma[1].add.b.h3 = data; break;
-	case 0x2d: ascu.dma[1].add.b.h2 = data; break;
-	case 0x2e: ascu.dma[1].add.b.h = data; break;
-	case 0x2f: ascu.dma[1].add.b.l = data; break;
+	case 0x2c: ascu.dma[1].add.w.h = newword; break;
+	case 0x2e: ascu.dma[1].add.w.l = newword; break;
 
-	case 0x30: ascu.dma[1].enable.b.h3 = data; break;
-	case 0x31: ascu.dma[1].enable.b.h2 = data; break;
-	case 0x32: ascu.dma[1].enable.b.h = data; break;
-	case 0x33: ascu.dma[1].enable.b.l = data; dma_enable(1); break;
+	case 0x30: ascu.dma[1].enable.w.h = newword; break;
+	case 0x32: ascu.dma[1].enable.w.l = newword; dma_enable(1); break;
 
-	case 0x34: ascu.dma[1].mode.b.h3 = data; break;
-	case 0x35: ascu.dma[1].mode.b.h2 = data; break;
-	case 0x36: ascu.dma[1].mode.b.h = data; break;
-	case 0x37: ascu.dma[1].mode.b.l = data; dma_mode(1); break;
+	case 0x34: ascu.dma[1].mode.w.h = newword; break;
+	case 0x36: ascu.dma[1].mode.w.l = newword; dma_mode(1); break;
 
-	case 0x40: ascu.dma[2].radr.b.h3 = data; break;
-	case 0x41: ascu.dma[2].radr.b.h2 = data; break;
-	case 0x42: ascu.dma[2].radr.b.h = data; break;
-	case 0x43: ascu.dma[2].radr.b.l = data; break;
+	case 0x40: ascu.dma[2].radr.w.h = newword; break;
+	case 0x42: ascu.dma[2].radr.w.l = newword; break;
 
-	case 0x44: ascu.dma[2].wadr.b.h3 = data; break;
-	case 0x45: ascu.dma[2].wadr.b.h2 = data; break;
-	case 0x46: ascu.dma[2].wadr.b.h = data; break;
-	case 0x47: ascu.dma[2].wadr.b.l = data; break;
+	case 0x44: ascu.dma[2].wadr.w.h = newword; break;
+	case 0x46: ascu.dma[2].wadr.w.h = newword; break;
 
-	case 0x48: ascu.dma[2].bytes.b.h3 = data; break;
-	case 0x49: ascu.dma[2].bytes.b.h2 = data; break;
-	case 0x4a: ascu.dma[2].bytes.b.h = data; break;
-	case 0x4b: ascu.dma[2].bytes.b.l = data; break;
+	case 0x48: ascu.dma[2].bytes.w.h = newword; break;
+	case 0x4a: ascu.dma[2].bytes.w.l = newword; break;
 
-	case 0x4c: ascu.dma[2].add.b.h3 = data; break;
-	case 0x4d: ascu.dma[2].add.b.h2 = data; break;
-	case 0x4e: ascu.dma[2].add.b.h = data; break;
-	case 0x4f: ascu.dma[2].add.b.l = data; break;
+	case 0x4c: ascu.dma[2].add.w.h = newword; break;
+	case 0x4e: ascu.dma[2].add.w.l = newword; break;
 
-	case 0x50: ascu.dma[2].enable.b.h3 = data; break;
-	case 0x51: ascu.dma[2].enable.b.h2 = data; break;
-	case 0x52: ascu.dma[2].enable.b.h = data; break;
-	case 0x53: ascu.dma[2].enable.b.l = data; dma_enable(2); break;
+	case 0x50: ascu.dma[2].enable.w.h = newword; break;
+	case 0x52: ascu.dma[2].enable.w.l = newword; dma_enable(2); break;
 
-	case 0x54: ascu.dma[2].mode.b.h3 = data; break;
-	case 0x55: ascu.dma[2].mode.b.h2 = data; break;
-	case 0x56: ascu.dma[2].mode.b.h = data; break;
-	case 0x57: ascu.dma[2].mode.b.l = data; dma_mode(2); break;
+	case 0x54: ascu.dma[2].mode.w.h = newword; break;
+	case 0x56: ascu.dma[2].mode.w.l = newword; dma_mode(2); break;
 
 	case 0x60: break;
-	case 0x61: break;
-	case 0x62: break;
-	case 0x63:
-		if (data & 1)
-			logerror("SCU: Dma forced stop\n");
+	case 0x62:
+		if (newword & 1)
+			logerror("saturn_scu_w    DMA forced stop\n");
 		break;
 
-	case 0x80: ascu.pctrl.b.h3 = data; break;
-	case 0x81: ascu.pctrl.b.h2 = data; break;
-	case 0x82: ascu.pctrl.b.h = data; break;
-	case 0x83: ascu.pctrl.b.l = data;
-		logerror("SCU: pctrl: %08x\n", ascu.pctrl.d);
+	case 0x80: ascu.pctrl.w.h = newword; break;
+	case 0x82: ascu.pctrl.w.l = newword;
+		logerror("saturn_scu_w    pctrl %08x\n", ascu.pctrl.d);
 		if (ascu.pctrl.d & 0x100)
 		{
 			ascu.dsp_pc.d = ascu.pctrl.d & 255;
-			logerror("SCU: dsp PC=%x\n", ascu.dsp_pc);
+			logerror("saturn_scu_w    DSP PC=%x\n", ascu.dsp_pc);
 		}
 		if (ascu.pctrl.d & 0x10000)
 			dsp_run(0);
@@ -962,41 +1322,29 @@ WRITE_HANDLER( saturn_scu_w )   /* SCU, DMA/DSP */
 			dsp_run(1);
 		break;
 
-	case 0x90: ascu.t0cmp.b.h3 = data; break;
-	case 0x91: ascu.t0cmp.b.h2 = data; break;
-	case 0x92: ascu.t0cmp.b.h = data; break;
-	case 0x93: ascu.t0cmp.b.l = data;
+	case 0x90: ascu.t0cmp.w.h = newword; break;
+	case 0x92: ascu.t0cmp.w.l = newword;
 		if (ascu.t0cmp.d < 720)
-			logerror("SCU: timer 0 activated on pixel %d\n", ascu.t0cmp.d);
+			logerror("saturn_scu_w    timer 0 activated on pixel %d\n", ascu.t0cmp.d);
 		break;
 
-	case 0x94: ascu.t1data.b.h3 = data; break;
-	case 0x95: ascu.t1data.b.h2 = data; break;
-	case 0x96: ascu.t1data.b.h = data; break;
-	case 0x97: ascu.t1data.b.l = data; break;
+	case 0x94: ascu.t1data.w.h = newword; break;
+	case 0x96: ascu.t1data.w.l = newword; break;
 
-	case 0x98: ascu.t1mode.b.h3 = data; break;
-	case 0x99: ascu.t1mode.b.h2 = data; break;
-	case 0x9a: ascu.t1mode.b.h = data; break;
-	case 0x9b: ascu.t1mode.b.l = data;
+	case 0x98: ascu.t1mode.w.h = newword; break;
+	case 0x99: ascu.t1mode.b.l = newword;
 		if (ascu.t1mode.d & 1)
-			logerror("SCU: timer 1 activated\n");
+			logerror("saturn_scu_w    timer 1 activated\n");
 		break;
 
-	case 0xa0: ascu.imask.b.h3 = data; break;
-	case 0xa1: ascu.imask.b.h2 = data; break;
-	case 0xa2: ascu.imask.b.h = data; break;
-	case 0xa3: ascu.imask.b.l = data; set_imask(); break;
+	case 0xa0: ascu.imask.w.h = newword; break;
+	case 0xa2: ascu.imask.w.l = newword; set_imask(); break;
 
-	case 0xa4: ascu.istat.b.h3 &= ~data; break;
-	case 0xa5: ascu.istat.b.h2 &= ~data; break;
-	case 0xa6: ascu.istat.b.h &= ~data; break;
-	case 0xa7: ascu.istat.b.l &= ~data; break;
+	case 0xa4: ascu.istat.w.h &= ~newword; break;
+	case 0xa6: ascu.istat.w.l &= ~newword; break;
 
-	case 0xa8: ascu.aiack.b.h3 = data; break;
-	case 0xa9: ascu.aiack.b.h2 = data; break;
-	case 0xaa: ascu.aiack.b.h = data; break;
-	case 0xab: ascu.aiack.b.l = data; break;
+	case 0xa8: ascu.aiack.w.h = newword; break;
+	case 0xaa: ascu.aiack.w.l = newword; break;
 
 	case 0xb0:
 		break;
@@ -1009,7 +1357,13 @@ WRITE_HANDLER( saturn_scu_w )   /* SCU, DMA/DSP */
 		break;
 
 	default:
-		logerror("           SCU: write %5X [%s] (%X) (PC=%8X)\n", offset, REG_NAME(offset & 0x1ffff), data, cpu_get_reg(SH2_PC));
+		if ((data & 0xffff0000) == 0xffff0000)
+			logerror("saturn_scu_w    %07x <- %04x (%s, PC=%08x)\n", offset, data & 0x0000ffff, SCU_REG_NAME(offset & 0x1ffff), cpu_get_reg(SH2_PC));
+		else
+		if ((data & 0xffff0000) == 0xff000000)
+			logerror("saturn_scu_w    %07x <- xx%02x (%s, PC=%08x)\n", offset, data & 0x000000ff, SCU_REG_NAME(offset & 0x1ffff), cpu_get_reg(SH2_PC));
+		else
+			logerror("saturn_scu_w    %07x <- %02xxx (%s, PC=%08x)\n", offset, (data & 0x0000ff00) >> 8, SCU_REG_NAME(offset & 0x1ffff), cpu_get_reg(SH2_PC));
 		break;
     }
 }

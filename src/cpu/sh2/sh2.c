@@ -2264,7 +2264,8 @@ WRITE_HANDLER( sh2_internal_w )
 			b |= sh2.m[(SH2_DVSR +1)&0x1ff] << 16;
 			b |= sh2.m[(SH2_DVSR +2)&0x1ff] <<	8;
 			b |= sh2.m[(SH2_DVSR +3)&0x1ff] <<	0;
-			if (b)
+			logerror("SH2 #%d div+mod %d/%d\n", a, b);
+            if (b)
 			{
 				q = a / b;
 				r = q % b;
@@ -2300,7 +2301,8 @@ WRITE_HANDLER( sh2_internal_w )
 			b |= sh2.m[(SH2_DVSR  +1)&0x1ff] << 16;
 			b |= sh2.m[(SH2_DVSR  +2)&0x1ff] <<  8;
 			b |= sh2.m[(SH2_DVSR  +3)&0x1ff] <<  0;
-			if (b)
+			logerror("SH2 #%d div+mod %ld/%ld\n", a, b);
+            if (b)
 			{
 				q = DIV_64_64_32(a,b);
 				r = MOD_32_64_32(a,b);
@@ -2336,7 +2338,7 @@ WRITE_HANDLER( sh2_internal_w )
 				if (offset == FREGS[i].offs)
 					logerror("SH2 #%d wr %-16s $%02x\n", cpu, FREGS[i].name, data);
 				else
-					logerror("SH2 #%d wr %s+%d%*s $%02x\n", cpu, FREGS[i].name, offset - FREGS[i].offs, 14 - strlen(FREGS[i].name), "", data);
+					logerror("SH2 #%d wr %s+%3d%*s $%02x\n", cpu, FREGS[i].name, offset - FREGS[i].offs, 12 - strlen(FREGS[i].name), "", data);
 			}
 		}
 	}
@@ -2350,7 +2352,10 @@ READ_HANDLER( sh2_internal_r )
 
 	switch( offset )
 	{
-	case SH2_BCR1: case SH2_BCR1+1: case SH2_BCR1+2: case SH2_BCR1+3:
+	case SH2_BCR1:
+	case SH2_BCR1+1:
+	case SH2_BCR1+2:
+	case SH2_BCR1+3:
 		sh2.m[(SH2_BCR1+0)&0x1ff] = 0x00;
 		sh2.m[(SH2_BCR1+1)&0x1ff] = 0x00;
 		sh2.m[(SH2_BCR1+2)&0x1ff] = cpu ? 0x80 : 0x00;
@@ -2370,7 +2375,7 @@ READ_HANDLER( sh2_internal_r )
 				if (offset == FREGS[i].offs)
 					logerror("SH2 #%d rd %-16s $%02x\n", cpu, FREGS[i].name, data);
 				else
-					logerror("SH2 #%d rd %s+%d%*s $%02x\n", cpu, FREGS[i].name, offset - FREGS[i].offs, 14 - strlen(FREGS[i].name), "", data);
+					logerror("SH2 #%d rd %s+%3d%*s $%02x\n", cpu, FREGS[i].name, offset - FREGS[i].offs, 12 - strlen(FREGS[i].name), "", data);
 			}
 		}
 	}
