@@ -66,6 +66,9 @@ static UINT8 track_SD[][2] = {
 #endif
 
 static void wd179x_complete_command(WD179X *);
+static void wd179x_clear_data_request(void);
+static void wd179x_set_data_request(void);
+static void wd179x_timed_data_request(void);
 
 /* one wd controlling multiple drives */
 WD179X wd;
@@ -110,6 +113,7 @@ void wd179x_init(void (*callback)(int))
 
 	wd.callback = callback;
 	wd.status_ipl = STA_1_IPL;
+	wd.density = DEN_MFM_LO;
 
 #if 0
 
@@ -283,21 +287,25 @@ static void read_track(WD179X * w)
 			cnt--;			   /* until end */
 		}
 	}
-
+#endif
 	w->data_offset = 0;
 	w->data_count = (w->density) ? TRKSIZE_DD : TRKSIZE_SD;
 
-	w->status_drq = STA_2_DRQ;
-	if (w->callback)
-		(*w->callback) (WD179X_DRQ_SET);
-	w->status |= STA_2_DRQ | STA_2_BUSY;
+	wd179x_set_data_request();
+	w->status |= STA_2_BUSY;
 	w->busy_count = 0;
-#endif
 }
 
 /* currently a empty function - to be completed! */
 void	wd179x_exit(void)
 {
+	WD179X *w = &wd;
+
+	if (w->timer!=NULL)
+	{
+		timer_remove(w->timer);
+		w->timer = NULL;
+	}
 }
 
 #if 0
@@ -363,10 +371,9 @@ static void wd179x_read_id(WD179X * w)
 		w->buffer[4] = crc & 255;
 		w->buffer[5] = crc / 256;
 
-		w->status_drq = STA_2_DRQ;
-		if (w->callback)
-			(*w->callback) (WD179X_DRQ_SET);
-		w->status = STA_2_DRQ | STA_2_BUSY;
+		wd179x_set_data_request();
+
+		w->status |= STA_2_BUSY;
 		w->busy_count = 50;
 	}
 	else
@@ -442,10 +449,9 @@ static void wd179x_read_sector(WD179X *w)
 		/* read data */
 		floppy_drive_read_sector_data(drv, hd, w->sector_data_id, (char *)w->buffer, w->sector_length);
 
-		w->status_drq = STA_2_DRQ;
-		if (w->callback)
-			(*w->callback) (WD179X_DRQ_SET);
-		w->status = STA_2_DRQ | STA_2_BUSY;
+		wd179x_set_data_request();
+
+		w->status |= STA_2_BUSY;
 		w->busy_count = 0;
 	}
 }
@@ -455,10 +461,8 @@ static void wd179x_complete_command(WD179X *w)
 {
 	/* clear busy bit */
 	w->status &= ~STA_2_BUSY;
-	/* no more setting of data request bit */
-	w->status_drq = 0;
-	if (w->callback)
-		(*w->callback) (WD179X_DRQ_CLR);
+
+	wd179x_clear_data_request();
 
 	/* generate an IRQ */
 	if (w->callback)
@@ -518,6 +522,68 @@ static void wd179x_verify_seek(WD179X *w)
 
 	logerror("failed seek verify!");
 }
+
+
+/* clear a data request */
+static void wd179x_clear_data_request(void)
+{
+	WD179X *w = &wd;
+
+	w->status_drq = 0;
+	if (w->callback)
+		(*w->callback) (WD179X_DRQ_CLR);
+	w->status &= ~STA_2_DRQ;
+}
+
+/* set data request */
+static void wd179x_set_data_request(void)
+{
+	WD179X *w = &wd;
+
+	if (w->status & STA_2_DRQ)
+	{
+		w->status |= STA_2_LOST_DAT;
+		return;
+	}
+
+	/* set drq */
+	w->status_drq = STA_2_DRQ;
+	if (w->callback)
+		(*w->callback) (WD179X_DRQ_SET);
+	w->status |= STA_2_DRQ;
+}
+
+/* callback for data transfers */
+static void	wd179x_data_timer_callback(int code)
+{
+	WD179X *w = &wd;
+
+	/* ok, trigger data request now */
+	wd179x_set_data_request();
+
+	/* stop it, but don't allow it to be free'd */
+	timer_reset(w->timer, TIME_NEVER); 
+}
+
+/* setup a timed data request - data request will be triggered in a few usecs time */
+static void wd179x_timed_data_request(void)
+{
+	int usecs;
+	WD179X *w = &wd;
+
+	usecs = floppy_drive_get_datarate_in_us(w->density);
+
+	/* remove old timer if it exists */
+	if (w->timer!=NULL)
+	{
+		timer_remove(w->timer);
+		w->timer = NULL;
+	}
+
+	/* set new timer */
+	w->timer = timer_set(TIME_IN_USEC(usecs), 0, wd179x_data_timer_callback);
+}
+
 
 /* read the FDC status register. This clears IRQ line too */
 READ_HANDLER ( wd179x_status_r )
@@ -579,9 +645,15 @@ READ_HANDLER ( wd179x_data_r )
 
 	if (w->data_count > 0)
 	{
-		w->status &= ~STA_2_DRQ;
+		/* clear data request */
+		wd179x_clear_data_request();
+
+		/* any bytes remaining? */
 		if (--w->data_count <= 0)
 		{
+			/* no */
+			w->data_offset = 0;
+
 			/* clear ddam type */
 			w->status &=~STA_2_REC_TYPE;
 			/* read a sector with ddam set? */
@@ -593,8 +665,13 @@ READ_HANDLER ( wd179x_data_r )
 
 			wd179x_complete_command(w);
 		}
-		w->data = w->buffer[w->data_offset++];
-
+		else
+		{
+			/* yes */
+			w->data = w->buffer[w->data_offset++];
+			/* issue a timed data request */
+			wd179x_timed_data_request();		
+		}
 	}
 #if VERBOSE
 	else
@@ -624,10 +701,10 @@ WRITE_HANDLER ( wd179x_command_w )
 #endif
 		w->data_count = 0;
 		w->data_offset = 0;
-		w->status &= ~(STA_2_DRQ | STA_2_BUSY);
-		w->status_drq = 0;
-		if (w->callback)
-			(*w->callback) (WD179X_DRQ_CLR);
+		w->status &= ~(STA_2_BUSY);
+		
+		wd179x_clear_data_request();
+
 		w->status_ipl = STA_1_IPL;
 /*		w->status_ipl = 0; */
 		if (w->callback)
@@ -649,6 +726,8 @@ WRITE_HANDLER ( wd179x_command_w )
 			w->read_cmd = data;
 			w->command = data & ~FDC_MASK_TYPE_II;
 			w->command_type = TYPE_II;
+			w->status &= ~STA_2_LOST_DAT;
+			wd179x_clear_data_request();
 
 			if (!floppy_drive_get_flag_state(drv, FLOPPY_DRIVE_READY))
             {
@@ -670,6 +749,8 @@ WRITE_HANDLER ( wd179x_command_w )
 			w->write_cmd = data;
 			w->command = data & ~FDC_MASK_TYPE_II;
 			w->command_type = TYPE_II;
+			w->status &= ~STA_2_LOST_DAT;
+			wd179x_clear_data_request();
 
 			if (!floppy_drive_get_flag_state(drv, FLOPPY_DRIVE_READY))
             {
@@ -693,10 +774,10 @@ WRITE_HANDLER ( wd179x_command_w )
                         /* request data */
                         w->data_offset = 0;
                         w->data_count = w->sector_length;
-                        w->status_drq = STA_2_DRQ;
-                        if (w->callback)
-                            (*w->callback) (WD179X_DRQ_SET);
-                        w->status = STA_2_DRQ | STA_2_BUSY;
+                       
+						wd179x_set_data_request();
+
+                        w->status |= STA_2_BUSY;
                         w->busy_count = 0;
                     }
     
@@ -713,6 +794,8 @@ WRITE_HANDLER ( wd179x_command_w )
 #endif
 			w->command = data & ~FDC_MASK_TYPE_III;
 			w->command_type = TYPE_III;
+			w->status &= ~STA_2_LOST_DAT;
+			wd179x_clear_data_request();
 #if 0
 			w->status = seek(w, w->track, w->head, w->sector);
 			if (w->status == 0)
@@ -727,6 +810,8 @@ WRITE_HANDLER ( wd179x_command_w )
 			logerror("wd179x_command_w $%02X WRITE_TRK\n", data);
 #endif
 			w->command_type = TYPE_III;
+			w->status &= ~STA_2_LOST_DAT;
+			wd179x_clear_data_request();
 
 			if (!floppy_drive_get_flag_state(drv, FLOPPY_DRIVE_READY))
             {
@@ -748,10 +833,9 @@ WRITE_HANDLER ( wd179x_command_w )
                     w->command = data & ~FDC_MASK_TYPE_III;
                     w->data_offset = 0;
                     w->data_count = (w->density) ? TRKSIZE_DD : TRKSIZE_SD;
-                    w->status_drq = STA_2_DRQ;
-                    if (w->callback)
-                        (*w->callback) (WD179X_DRQ_SET);
-                    w->status = STA_2_DRQ | STA_2_BUSY;
+                    wd179x_set_data_request();
+
+                    w->status |= STA_2_BUSY;
                     w->busy_count = 0;
                 }
             }
@@ -764,7 +848,10 @@ WRITE_HANDLER ( wd179x_command_w )
 			logerror("wd179x_command_w $%02X READ_DAM\n", data);
 #endif
 			w->command_type = TYPE_III;
-            if (!floppy_drive_get_flag_state(drv, FLOPPY_DRIVE_READY))
+			w->status &= ~STA_2_LOST_DAT;
+  			wd179x_clear_data_request();
+
+			if (!floppy_drive_get_flag_state(drv, FLOPPY_DRIVE_READY))
             {
 				wd179x_complete_command(w);
             }
@@ -956,25 +1043,33 @@ WRITE_HANDLER ( wd179x_data_w )
 
 	if (w->data_count > 0)
 	{
+		/* clear data request */
+		wd179x_clear_data_request();
+
+		/* put byte into buffer */
 		w->buffer[w->data_offset++] = data;
+		
 		if (--w->data_count <= 0)
 		{
+			w->data_offset = 0;
+
 #if VERBOSE
 			logerror("WD179X buffered %d byte\n", w->data_offset);
 #endif
-			w->status_drq = 0;
-			if (w->callback)
-				(*w->callback) (WD179X_DRQ_CLR);
-
+	
 			if (w->command == FDC_WRITE_TRK)
 				write_track(w);
 			else
 				wd179x_write_sector(w);
 
-			w->data_offset = 0;
-			if (w->callback)
-				(*w->callback) (WD179X_IRQ_SET);
+			wd179x_complete_command(w);
 		}
+		else
+		{
+			/* yes... setup a timed data request */
+			wd179x_timed_data_request();
+		}
+
 	}
 #if VERBOSE
 	else
