@@ -16,6 +16,8 @@
 
 const TCHAR wimgtool_class[] = TEXT("wimgtoolclass");
 
+static TCHAR product_text[] = TEXT("MESS Image Tool");
+
 struct wimgtool_info
 {
 	HWND listview;
@@ -30,7 +32,7 @@ struct wimgtool_info
 
 static void nyi(HWND window)
 {
-	MessageBox(window, TEXT("Not yet implemented"), NULL, MB_OK);
+	MessageBox(window, TEXT("Not yet implemented"), product_text, MB_OK);
 }
 
 
@@ -94,7 +96,7 @@ done:
 
 static void report_error(HWND window, imgtoolerr_t err)
 {
-	MessageBox(window, imgtool_error(err), NULL, MB_OK);
+	MessageBox(window, imgtool_error(err), product_text, MB_OK);
 }
 
 
@@ -515,7 +517,7 @@ static LRESULT wimgtool_create(HWND window, CREATESTRUCT *pcs)
 
 	SetWindowLongPtr(window, GWLP_USERDATA, (LONG_PTR) info);
 
-	SetWindowText(window, TEXT("MESS Image Tool"));
+	SetWindowText(window, product_text);
 
 	// create the list view
 	info->listview = CreateWindow(WC_LISTVIEW, NULL,
@@ -549,6 +551,21 @@ static LRESULT wimgtool_create(HWND window, CREATESTRUCT *pcs)
 	ListView_SetImageList(info->listview, info->iconlist_small, LVSIL_SMALL);
 
 	return 0;
+}
+
+
+
+static void drop_files(HWND window, HDROP drop)
+{
+	UINT count, i;
+	TCHAR buffer[MAX_PATH];
+
+	count = DragQueryFile(drop, 0xFFFFFFFF, NULL, 0);
+	for (i = 0; i < count; i++)
+	{
+		DragQueryFile(drop, i, buffer, sizeof(buffer) / sizeof(buffer[0]));
+		MessageBox(window, buffer, NULL, MB_OK);
+	}
 }
 
 
@@ -602,6 +619,10 @@ static LRESULT CALLBACK wimgtool_wndproc(HWND window, UINT message, WPARAM wpara
 				MF_BYCOMMAND | (info->image ? MF_ENABLED : MF_GRAYED));
 			EnableMenuItem((HMENU) wparam, ID_IMAGE_DELETE,
 				MF_BYCOMMAND | (info->image ? MF_ENABLED : MF_GRAYED));
+			break;
+
+		case WM_DROPFILES:
+			drop_files(window, (HDROP) wparam);
 			break;
 
 		case WM_COMMAND:

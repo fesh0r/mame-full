@@ -25,7 +25,7 @@ typedef struct _imgtool_library imgtool_library;
 
 typedef enum
 {
-	ITSL_NAME,
+	ITLS_NAME,
 	ITLS_DESCRIPTION
 }
 imgtool_libsort_t;

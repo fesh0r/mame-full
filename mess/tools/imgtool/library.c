@@ -45,9 +45,60 @@ void imgtool_library_close(imgtool_library *library)
 
 
 
+static int module_compare(const struct ImageModule *m1,
+	const struct ImageModule *m2, imgtool_libsort_t sort)
+{
+	int rc = 0;
+	switch(sort)
+	{
+		case ITLS_NAME:
+			rc = strcmp(m1->name, m2->name);
+			break;
+		case ITLS_DESCRIPTION:
+			rc = stricmp(m1->name, m2->name);
+			break;
+	}
+	return rc;
+}
+
+
+
 void imgtool_library_sort(imgtool_library *library, imgtool_libsort_t sort)
 {
-	/* NYI */
+	struct ImageModule *m1;
+	struct ImageModule *m2;
+	struct ImageModule *target;
+	struct ImageModule **before;
+	struct ImageModule **after;
+
+	for (m1 = library->first; m1; m1 = m1->next)
+	{
+		target = m1;
+		for (m2 = m1->next; m2; m2 = m2->next)
+		{
+			while(module_compare(target, m2, sort) > 0)
+				target = m2;
+		}
+
+		if (target != m1)
+		{
+			/* unlink the target */
+			before = target->previous ? &target->previous->next : &library->first;
+			after = target->next ? &target->next->previous : &library->last;
+			*before = target->next;
+			*after = target->previous;
+
+			/* now place the target before m1 */
+			target->previous = m1->previous;
+			target->next = m1;
+			before = m1->previous ? &m1->previous->next : &library->first;
+			*before = target;
+			m1->previous = target;
+
+			/* since we changed the order, we have to replace ourselves */
+			m1 = target;
+		}
+	}
 }
 
 
