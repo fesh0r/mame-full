@@ -139,9 +139,10 @@ static void sym1_draw_led(struct mame_bitmap *bitmap,INT16 color, int x, int y)
 	}
 }
 
-void sym1_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( sym1 )
 {
 	int i;
+	int full_refresh = 1;
 
     if (full_refresh)
     {

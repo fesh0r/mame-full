@@ -218,9 +218,10 @@ static void aim65_draw_led(struct mame_bitmap *bitmap,INT16 color, int x, int y)
 }
 #endif
 
-void aim65_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( aim65 )
 {
 	int i, j;
+	int full_refresh = 1;
 
     if (full_refresh)
     {

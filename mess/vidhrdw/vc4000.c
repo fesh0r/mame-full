@@ -72,7 +72,7 @@ static struct {
     }    
 };
 
-int vc4000_vh_start(void)
+VIDEO_START(vc4000)
 {
     int i;
     for (i=0;i<0x20; i++) {
@@ -225,7 +225,7 @@ static char led[20][12+1]={
     "  dddddddd  "
 };
 
-void vc4000_draw_digit(struct mame_bitmap *bitmap, int x, int y, int d, int line)
+static void vc4000_draw_digit(struct mame_bitmap *bitmap, int x, int y, int d, int line)
 {
     static const int digit_to_segment[0x10]={ 
 	0x3f, 6, 0x5b, 0x4f, 0x66, 0x6d, 0x7d, 7, 0x7f, 0x6f
@@ -251,7 +251,7 @@ INLINE void vc4000_collision_plot(UINT8 *collision, UINT8 data, UINT8 color, int
     }
 }
 
-void vc4000_sprite_update(struct mame_bitmap *bitmap, UINT8 *collision, SPRITE *This)
+static void vc4000_sprite_update(struct mame_bitmap *bitmap, UINT8 *collision, SPRITE *This)
 {
 #ifdef DEBUG
     char message[40];
@@ -425,7 +425,7 @@ INLINE void vc4000_draw_grid(UINT8 *collision)
 	}
 }
 
-INTERRUPT_GEN( vc4000 )
+INTERRUPT_GEN( vc4000_video_line )
 {
     int x,y,i;
     UINT8 collision[400]={0}; // better alloca or gcc feature of non constant long automatic arrays
