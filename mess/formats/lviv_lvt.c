@@ -58,7 +58,7 @@ static INT16* lviv_output_byte(INT16 *p, UINT8 byte)
 
 /*************************************************************************************/
 
-int lviv_cassette_calculate_size_in_samples(int length, UINT8 *bytes)
+int lviv_cassette_calculate_size_in_samples(int length)
 {
 	int size;
 

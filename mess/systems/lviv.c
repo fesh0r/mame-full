@@ -8,6 +8,10 @@ Dr. Volodimir Mosorov for two Lviv machines.
 
 What's new:
 -----------
+28.02.2003      Snapshot veryfing function added.
+07.01.2003	Support for .SAV snapshots. Joystick support (there are strange
+		problems with "Doroga (1991)(-)(Ru).lvt".
+21.12.2002	Cassette support rewritten, WAVs saving and loading are working now.
 08.12.2002	Comments on emulation status updated. Changed 'lvive' to 'lvivp'.
 		ADC r instruction in 8080 core fixed (Arkanoid works now).
 		Orginal keyboard layout added.
@@ -26,12 +30,11 @@ xx.07.2002	Improved port and memory mapping (Raphael Nabet).
 
 Notes on emulation status and to do list:
 -----------------------------------------
-1. BUG: Loading saved with emulator WAVs files doesnt work.
-2. LIMITATION: Printer is not emulated. 
-3. LIMITATION: Timings are notimplemented, due to it emulated machine runs
+1. LIMITATION: Printer is not emulated. 
+2. LIMITATION: Timings are not implemented, due to it emulated machine runs
    twice fast as orginal.
-4. LIMITATION: .RSS and .SAV files are not supported.
-5. LIMITATION: Some usage notes and trivia are needed in sysinfo.dat.
+3. LIMITATION: .RSS files are not supported.
+4. LIMITATION: Some usage notes and trivia are needed in sysinfo.dat.
 
 Lviv technical information
 ==========================
@@ -71,6 +74,7 @@ Ports:
 
 	C0-C3	8255 PPI
 		Port A: extension slot output, printer data
+			bits 0-4 joystick scanner output
 		Port B: palette control, extension slot input or output
 			sound on/off
 			bit 7 sound on/off
@@ -79,7 +83,7 @@ Ports:
 			printer control, sound
 			bits 0-3 extension slot input
 			bits 4-7 extension slot output
-			bit 7: not used
+			bit 7: joystick scanner input
 			bit 6: printer control AC/busy
 			bit 5: not used
 			bit 4: tape in
@@ -198,11 +202,11 @@ Sound:
 	Bit 7 of port 0xc1 - enable/disable speaker.
 
 
-timings:
+Timings:
 --------
 
 	The CPU timing is controlled by a KR580GF24 (Sovietic copy of i8224) connected to a 18MHz(?)
-	oscillator.  CPU frequency must be 18MHz/9 = 2MHz.
+	oscillator. CPU frequency must be 18MHz/9 = 2MHz.
 
 	Memory timing uses a 8-phase clock, derived from a 20MHz(?) video clock (called VCLK0 here:
 	in the schematics, it comes from pin 6 of V8, and it is labelled "0'" in the video clock bus).
@@ -262,9 +266,9 @@ timings:
 	WR*		                                                  \_b_________////////
 			_________________________________________________________________________
 	WRM*	\\\\\\\\\\\\\\\\\\\\\\\\\\_b__________________________________///////////
-			_________________________________________________________________________
-	RDM*	\\\\\\\\\\\\\\\\\\\\\\\\\\_c __________________________________///////////
-			_________________________________________________________________________
+                        _________________________________________________________________________
+        RDM*    \\\\\\\\\\\\\\\\\\\\\\\\\\_c __________________________________///////////
+                        _________________________________________________________________________
 	RA		\\\\\\\\\\\\\\\\\\\\\\\\\\_a__________________________________/
 
 	DRAM
@@ -282,6 +286,7 @@ timings:
 #include "machine/8255ppi.h"
 #include "vidhrdw/generic.h"
 #include "includes/lviv.h"
+#include "snapquik.h"
 
 /* I/O ports */
 
@@ -406,6 +411,15 @@ INPUT_PORTS_START (lviv)
 		PORT_KEY1(0x80, IP_ACTIVE_LOW, "Down",	KEYCODE_DOWN,		CODE_NONE,	UCHAR_MAMEKEY(DOWN))
 	PORT_START /* CPU */
 		PORT_KEY1(0x01, IP_ACTIVE_HIGH, "Reset",KEYCODE_PGDN,		CODE_NONE,	UCHAR_MAMEKEY(PGDN))
+	PORT_START /* Joystick */
+		PORT_BIT(0x01,	IP_ACTIVE_HIGH,	IPT_JOYSTICK_UP)
+		PORT_BIT(0x02,	IP_ACTIVE_HIGH,	IPT_JOYSTICK_DOWN)
+		PORT_BIT(0x04,	IP_ACTIVE_HIGH,	IPT_JOYSTICK_RIGHT)
+		PORT_BIT(0x08,	IP_ACTIVE_HIGH,	IPT_JOYSTICK_LEFT)
+		PORT_BIT(0x10,	IP_ACTIVE_HIGH,	IPT_BUTTON1)
+		PORT_BIT(0x20,	IP_ACTIVE_HIGH,	IPT_UNUSED)
+		PORT_BIT(0x40,	IP_ACTIVE_HIGH,	IPT_UNUSED)
+		PORT_BIT(0x80,	IP_ACTIVE_HIGH,	IPT_UNUSED)
 INPUT_PORTS_END
 
 static struct Speaker_interface lviv_speaker_interface=
@@ -464,7 +478,8 @@ ROM_END
 
 SYSTEM_CONFIG_START(lviv)
 	CONFIG_RAM_DEFAULT(64 * 1024)
-	CONFIG_DEVICE_CASSETTE(1, "lv?\0", lviv_tape_init)
+	CONFIG_DEVICE_CASSETTE(1, "lv?\0", lviv_cassette_init)
+	CONFIG_DEVICE_SNAPSHOT( "sav\0", lviv )
 SYSTEM_CONFIG_END
 
 
