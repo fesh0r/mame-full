@@ -387,7 +387,6 @@ int messvaliditychecks(void)
 	int error = 0;
 	const struct IODevice *dev;
 	long used_devices;
-	const char *s;
 	const char *s1;
 	const char *s2;
 	extern int device_valididtychecks(void);
