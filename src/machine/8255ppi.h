@@ -3,23 +3,26 @@
 
 #define MAX_8255 4
 
-typedef struct
-{
+/* Note: handler offset == chip number */
+typedef struct {
 	int num;							 /* number of PPIs to emulate */
-	int (*portA_r)( int chip );
-	int (*portB_r)( int chip );
-	int (*portC_r)( int chip );
-	void (*portA_w)( int chip, int data );
-	void (*portB_w)( int chip, int data );
-	void (*portC_w)( int chip, int data );
+	mem_read_handler portA_r;
+	mem_read_handler portB_r;
+	mem_read_handler portC_r;
+	mem_write_handler portA_w;
+	mem_write_handler portB_w;
+	mem_write_handler portC_w;
 } ppi8255_interface;
 
 /* Init */
-void ppi8255_init( ppi8255_interface *intfce);
+void ppi8255_init( ppi8255_interface *intfce );
 
 /* Read/Write */
-int ppi8255_r ( int which, int offset );
-void ppi8255_w( int which, int offset, int data );
+data_t ppi8255_r( int which, offs_t offset );
+void ppi8255_w( int which, offs_t offset, data_t data );
+
+/* Peek at the ports */
+data_t ppi8255_peek( int which, offs_t offset );
 
 /* Helpers */
 READ_HANDLER( ppi8255_0_r );
@@ -30,4 +33,5 @@ WRITE_HANDLER( ppi8255_0_w );
 WRITE_HANDLER( ppi8255_1_w );
 WRITE_HANDLER( ppi8255_2_w );
 WRITE_HANDLER( ppi8255_3_w );
-#endif
+
+#endif	/* _8255_PPI_H */
