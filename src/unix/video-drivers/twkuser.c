@@ -3,7 +3,11 @@
 #include <fcntl.h>
 /* make ansi compilation happy */
 #define inline __inline__
+#if defined(__ARCH_freebsd)
+#include <machine/cpufunc.h>
+#else
 #include <asm/io.h>
+#endif
 #undef inline
 #include "twkuser.h"
 

@@ -28,9 +28,7 @@ Version 0.1, January 2000
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
-#ifdef __ARCH_freebsd
-#include <machine/soundcard.h>
-#elif defined (__ARCH_openbsd)
+#if defined (__ARCH_openbsd)
 #include <soundcard.h>
 #else
 #include <sys/soundcard.h>

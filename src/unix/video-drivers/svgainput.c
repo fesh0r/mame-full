@@ -16,6 +16,10 @@
 #define	SIGUNUSED	SIGUSR2
 #endif
 
+#if defined(__ARCH_freebsd)
+#define	SIGUNUSED	SIGUSR2
+#endif
+
 static int console_fd       = -1;
 static int mouse_fd         = -1;
 static int leds             =  0;

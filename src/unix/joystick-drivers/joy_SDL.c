@@ -10,7 +10,7 @@ struct rc_option joy_SDL_opts[] = {
 
 #ifdef SDL
 
-#include <SDL/SDL.h>
+#include <SDL.h>
 
 void joy_SDL_init(void);
 void joy_SDL_poll(void);
