@@ -106,7 +106,7 @@ int handle_mess_user_interface(struct mame_bitmap *bitmap)
 				{
 					for (id = 0; id < device_count(dev->type); id++)
 					{
-						mess_image *img = image_instance(dev->type, id);
+						mess_image *img = image_from_devtype_and_index(dev->type, id);
 						dev->display(img, bitmap);
 					}
 				}
@@ -133,7 +133,7 @@ int displayimageinfo(struct mame_bitmap *bitmap, int selected)
 	{
 		for( id = 0; id < device_count(type); id++ )
 		{
-			mess_image *img = image_instance(type, id);
+			mess_image *img = image_from_devtype_and_index(type, id);
 			const char *name = image_filename(img);
 			if( name )
 			{
