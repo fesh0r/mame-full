@@ -46,7 +46,7 @@ static WRITE32_HANDLER(vram_w)
 	plot_pixel(tmpbitmap,x,y,(vram[offset]>>24)&0xff);
 }
 
-static READ32_HANDLER(random_r)
+static READ32_HANDLER(random_num_r)
 {
 	return mame_rand();
 }
@@ -79,9 +79,9 @@ static ADDRESS_MAP_START( ertictac_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x01f00000, 0x01fd7fff) AM_RAM /* unknown */
 	AM_RANGE(0x01fd8000, 0x01ffffff) AM_READWRITE(vram_r, vram_w) AM_BASE (&vram)
 
-	AM_RANGE(0x03200000, 0x03200003) AM_WRITENOP AM_READ(random_r)
+	AM_RANGE(0x03200000, 0x03200003) AM_WRITENOP AM_READ(random_num_r)
 	AM_RANGE(0x03200010, 0x03200013) AM_READ(int2_r)
-	AM_RANGE(0x03200014, 0x03200017) AM_WRITENOP AM_READ(random_r)  //timer ?
+	AM_RANGE(0x03200014, 0x03200017) AM_WRITENOP AM_READ(random_num_r)  //timer ?
 	AM_RANGE(0x03200018, 0x0320001b) AM_NOP
 	AM_RANGE(0x03200024, 0x03200027) AM_READ(int_r)
 	AM_RANGE(0x03200028, 0x0320002b) AM_NOP
