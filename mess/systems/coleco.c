@@ -10,8 +10,47 @@
   Ben Bruscella
   Sean Young
 
-  TODO:
-    - Extra Controller Support
+  NEWS:
+    - Modified memory map, now it has only 1k of RAM mapped on 8k Slot
+    - Modified I/O map, now it is handled as on a real ColecoVision:
+        The I/O map is broken into 4 write and 4 read ports:
+            80-9F (W) = Set both controllers to keypad mode
+            80-9F (R) = Not Connected
+
+            A0-BF (W) = Video Chip (TMS9928A), A0=0 -> Write Register 0 , A0=1 -> Write Register 1
+            A0-BF (R) = Video Chip (TMS9928A), A0=0 -> Read Register 0 , A0=1 -> Read Register 1
+
+            C0-DF (W) = Set both controllers to joystick mode 
+            C0-DF (R) = Not Connected
+
+            E0-FF (W) = Sound Chip (SN76496)
+            E0-FF (R) = Read Controller data, A1=0 -> read controller 1, A1=1 -> read controller 2
+
+    - Modified paddle handler, now it is handled as on a real ColecoVision
+    - Added support for a Driving Controller (Expansion Module #2), enabled via configuration
+    - Added support for a Roller Controller (Trackball), enabled via configuration
+    - Added support for two Super Action Controller, enabled via configuracion
+
+    EXTRA CONTROLLERS INFO:
+
+        -Driving Controller (Expansion Module #2). It consist of a steering wheel and a gas pedal. Only one
+         can be used on a real ColecoVision. The gas pedal is not analog, internally it is just a switch.
+         On a real ColecoVision, when the Driving Controller is enabled, the controller 1 do not work because 
+         have been replaced by the Driving Controller, and controller 2 have to be used to start game, gear 
+         shift, etc.
+         Driving Controller is just a spinner on controller 1 socket similar to the one on Roller Controller
+         and Super Action Controllers so you can use Roller Controller or Super Action Controllers to play 
+         games requiring Driving Controller.
+         
+        -Roller Controller. Basically a trackball with four buttons (the two fire buttons from player 1 and
+         the two fire buttons from player 2). Only one Roller Controller can be used on a real ColecoVision.
+	 Roller Controller is connected to both controller sockets and both controllers are conected to the Roller
+	 Controller, it uses the spinner pins of both sockets to generate the X and Y signals (X from controller 1 
+	 and the Y from controller 2)
+
+        -Super Action Controllers. It is a hand controller with a keypad, four buttons (the two from
+         the player pad and two more), and a spinner. This was made primarily for two player sport games, but
+         will work for every other ColecoVision game.
 
 ***************************************************************************/
 
@@ -23,51 +62,48 @@
 #include "devices/cartslot.h"
 
 static MEMORY_READ_START( coleco_readmem )
-    { 0x0000, 0x1FFF, MRA_ROM },  /* COLECO.ROM */
-    { 0x6000, 0x63ff, MRA_RAM },
-    { 0x6400, 0x67ff, MRA_RAM },
-    { 0x6800, 0x6bff, MRA_RAM },
-    { 0x6c00, 0x6fff, MRA_RAM },
-    { 0x7000, 0x73ff, MRA_RAM },
-    { 0x7400, 0x77ff, MRA_RAM },
-    { 0x7800, 0x7bff, MRA_RAM },
-    { 0x7c00, 0x7fff, MRA_RAM },
-    { 0x8000, 0xFFFF, MRA_ROM },  /* Cartridge */
+    { 0x0000, 0x1FFF, MRA_ROM },  /* COLECO.ROM (ColecoVision OS7 Bios) */
+    { 0x6000, 0x7fff, coleco_mem_r },  /* 1Kbyte RAM mapped on 8Kbyte Slot */
+    { 0x8000, 0xFFFF, MRA_ROM },  /* Cartridge (32k max)*/
 MEMORY_END
 
 static MEMORY_WRITE_START( coleco_writemem )
-    { 0x0000, 0x1FFF, MWA_ROM }, /* COLECO.ROM */
-    { 0x6000, 0x63ff, MWA_RAM },
-    { 0x6400, 0x67ff, MWA_RAM },
-    { 0x6800, 0x6bff, MWA_RAM },
-    { 0x6c00, 0x6fff, MWA_RAM },
-    { 0x7000, 0x73ff, MWA_RAM },
-    { 0x7400, 0x77ff, MWA_RAM },
-    { 0x7800, 0x7bff, MWA_RAM },
-    { 0x7c00, 0x7fff, MWA_RAM },
-    { 0x8000, 0xFFFF, MWA_ROM }, /* Cartridge */
+    { 0x0000, 0x1FFF, MWA_ROM }, /* COLECO.ROM (ColecoVision OS7 Bios) */
+    { 0x6000, 0x7fff, coleco_mem_w }, /* 1Kbyte RAM mapped on 8Kbyte Slot */
+    { 0x8000, 0xFFFF, MWA_ROM }, /* Cartridge (32k max)*/
 MEMORY_END
 
+READ_HANDLER(coleco_mem_r)
+{
+    return memory_region(REGION_CPU1)[0x6000+(offset&0x3ff)];
+}
+
+WRITE_HANDLER(coleco_mem_w)
+{
+    memory_region(REGION_CPU1)[0x6000+(offset&0x3ff)] = data;
+}
 
 static PORT_READ_START (coleco_readport)
-    { 0xA0, 0xA0, TMS9928A_vram_r },
-    { 0xA1, 0xA1, TMS9928A_register_r },
-    { 0xBE, 0xBE, TMS9928A_vram_r },
-    { 0xBF, 0xBF, TMS9928A_register_r },
-	{ 0xE0, 0xFF, coleco_paddle_r },
+    { 0xA0, 0xBF, coleco_video_r },
+    { 0xE0, 0xFF, coleco_paddle_r },
 PORT_END
 
 static PORT_WRITE_START (coleco_writeport)
-    { 0x80, 0x80, coleco_paddle_toggle_off },
-    { 0x9F, 0x9F, coleco_paddle_toggle_off }, /* Antarctic Adventure */
-    { 0xA0, 0xA0, TMS9928A_vram_w },
-    { 0xA1, 0xA1, TMS9928A_register_w },
-    { 0xBE, 0xBE, TMS9928A_vram_w },
-    { 0xBF, 0xBF, TMS9928A_register_w },
-    { 0xC0, 0xC0, coleco_paddle_toggle_on },
-    { 0xDF, 0xDF, coleco_paddle_toggle_on }, /* Antarctic Adventure */
+    { 0x80, 0x9F, coleco_paddle_toggle_off },
+    { 0xA0, 0xBF, coleco_video_w },
+    { 0xC0, 0xDF, coleco_paddle_toggle_on },
     { 0xE0, 0xFF, SN76496_0_w },
 PORT_END
+
+READ_HANDLER(coleco_video_r)
+{  
+    return ((offset&0x01) ? TMS9928A_register_r(1) : TMS9928A_vram_r(0));
+}
+
+WRITE_HANDLER(coleco_video_w)
+{
+    (offset&0x01) ? TMS9928A_register_w(1, data) : TMS9928A_vram_w(0, data);
+}
 
 INPUT_PORTS_START( coleco )
     PORT_START  /* IN0 */
@@ -123,6 +159,24 @@ INPUT_PORTS_START( coleco )
     PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
     PORT_BIT ( 0xB0, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
+    PORT_START /* IN6 */
+    PORT_DIPNAME(0x07, 0x00, "Extra Controllers")
+    PORT_DIPSETTING(0x00, "None" )
+    PORT_DIPSETTING(0x01, "Driving Controller" )
+    PORT_DIPSETTING(0x02, "Roller Controller" )
+    PORT_DIPSETTING(0x04, "Super Action Controllers" )
+
+    PORT_BITX( 0x10, IP_ACTIVE_LOW, IPT_BUTTON3, "SAC Blue Button P1", KEYCODE_Z, IP_JOY_DEFAULT )
+    PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_BUTTON4, "SAC Purple Button P1", KEYCODE_X, IP_JOY_DEFAULT )
+    PORT_BITX( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2, "SAC Blue Button P2", KEYCODE_Q, IP_JOY_DEFAULT )
+    PORT_BITX( 0x80, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2, "SAC Purple Button P2", KEYCODE_W, IP_JOY_DEFAULT )        
+
+    PORT_START	/* IN7, to emulate Extra Controls (Driving Controller, SAC P1 slider, Roller Controller X Axis) */
+    PORT_ANALOGX( 0x0f, 0x00, IPT_TRACKBALL_X | IPF_CENTER, 20, 10, 0, 0, KEYCODE_L, KEYCODE_J, IP_JOY_NONE, IP_JOY_NONE )
+
+    PORT_START	/* IN8, to emulate Extra Controls (SAC P2 slider, Roller Controller Y Axis) */
+    PORT_ANALOGX( 0x0f, 0x00, IPT_TRACKBALL_Y | IPF_CENTER | IPF_PLAYER2, 20, 10, 0, 0, KEYCODE_I, KEYCODE_K, IP_JOY_NONE, IP_JOY_NONE )
+
 INPUT_PORTS_END
 
 static struct SN76496interface sn76496_interface =
@@ -146,6 +200,8 @@ static struct SN76496interface sn76496_interface =
 
 ***************************************************************************/
 
+extern int JoyStat[2];
+
 static INTERRUPT_GEN( coleco_interrupt )
 {
     TMS9928A_interrupt();
@@ -159,6 +215,28 @@ static void coleco_vdp_interrupt (int state)
 	if (state && !last_state) cpu_set_nmi_line(0, PULSE_LINE);
 	last_state = state;
 }
+
+void paddle_callback (int param)
+{
+    int port7 = input_port_7_r (0);
+    int port8 = input_port_8_r (0);
+
+    if (port7==0) JoyStat[0] = 0;
+    else if (port7&0x08) JoyStat[0] = -1;
+    else JoyStat[0] = 1;
+
+    if (port8==0) JoyStat[1] = 0;
+    else if (port8&0x08) JoyStat[1] = -1;
+    else JoyStat[1] = 1;
+
+/*printf("%0d\n",port7);*/
+    if (JoyStat[0] || JoyStat[1]) cpu_set_irq_line (0, 0, HOLD_LINE);
+}
+
+static MACHINE_INIT(coleco)
+{
+	timer_pulse(TIME_IN_MSEC(20), 0, paddle_callback);
+} 
 
 static const TMS9928a_interface tms9928a_interface =
 {
@@ -176,6 +254,8 @@ static MACHINE_DRIVER_START( coleco )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1)
+
+	MDRV_MACHINE_INIT( coleco )
 
     /* video hardware */
 	MDRV_TMS9928A( &tms9928a_interface )
@@ -204,15 +284,17 @@ ROM_START (colecoa)
 	   modified characters, added a pad 2 related fix */
 ROM_END
 
-//ROM_START (colecofb_rom)
-//  ROM_REGIONX(0x10000,REGION_CPU1, 0)
-//  ROM_LOAD ("colecofb.rom", 0x0000, 0x2000, CRC(640cf85b)) /* no pause after title screen */
-//ROM_END
+#ifdef COLECO_HACKS
+ROM_START (colecofb_rom)
+  ROM_REGIONX(0x10000,REGION_CPU1, 0)
+  ROM_LOAD ("colecofb.rom", 0x0000, 0x2000, CRC(640cf85b)) /* no pause after title screen */
+ROM_END
 
-//ROM_START (coleconb_rom)
-//  ROM_REGIONX(0x10000,REGION_CPU1, 0)
-//  ROM_LOAD ("coleconb.rom", 0x0000, 0x2000, CRC(66cda476)) /* no title screen */
-//ROM_END
+ROM_START (coleconb_rom)
+  ROM_REGIONX(0x10000,REGION_CPU1, 0)
+  ROM_LOAD ("coleconb.rom", 0x0000, 0x2000, CRC(66cda476)) /* no title screen */
+ROM_END
+#endif
 
 SYSTEM_CONFIG_START(coleco)
 	CONFIG_DEVICE_CARTSLOT_OPT( 1, "rom\0col\0bin\0", NULL, NULL, device_load_coleco_cart, NULL, coleco_cart_verify, NULL)
