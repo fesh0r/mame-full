@@ -800,6 +800,7 @@ COREOBJS += \
 	$(OBJ)/mess/pool.o				\
 	$(OBJ)/mess/cheatms.o			\
 	$(OBJ)/mess/opresolv.o			\
+	$(OBJ)/mess/mui_text.o			\
 	$(OBJ)/mess/formats/ioprocs.o	\
 	$(OBJ)/mess/formats/flopimg.o	\
 	$(OBJ)/mess/formats/cassimg.o	\

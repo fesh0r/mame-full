@@ -62,8 +62,9 @@ extern void win_timer_enable(int enabled);
 
 enum
 {
-	DEVOPTION_MOUNT,
-	DEVOPTION_UNMOUNT,
+	DEVOPTION_OPEN,
+	DEVOPTION_CREATE,
+	DEVOPTION_CLOSE,
 	DEVOPTION_CASSETTE_PLAYRECORD,
 	DEVOPTION_CASSETTE_STOPPAUSE,
 	DEVOPTION_CASSETTE_PLAY,
@@ -361,15 +362,15 @@ static void loadsave(int type)
 //	change_device
 //============================================================
 
-static void change_device(mess_image *img)
+static void change_device(mess_image *img, int is_save)
 {
-	OPENFILENAME ofn;
 	char filter[2048];
-	TCHAR filename[MAX_PATH];
+	char filename[MAX_PATH];
 	char *s;
 	const char *ext;
-	const char *newfilename;
 	const struct IODevice *dev = image_device(img);
+	const char *initial_dir;
+	BOOL result;
 
 	assert(dev);
 
@@ -397,68 +398,47 @@ static void change_device(mess_image *img)
 	s += sprintf(s, "*.*") + 1;
 
 	// Compressed
-	s += sprintf(s, "Compressed Images (*.zip)") + 1;
-	s += sprintf(s, "*.zip") + 1;
+	if (!is_save)
+	{
+		s += sprintf(s, "Compressed Images (*.zip)") + 1;
+		s += sprintf(s, "*.zip") + 1;
+	}
 
 	*(s++) = '\0';
 
+	// get the file
 	if (image_exists(img))
 	{
 		const char *imgname;
 		imgname = image_basename(img);
-#ifdef UNICODE
-		mbstowcs(filename, imgname, strlen(img) + 1);
-#else
 		strncpyz(filename, imgname, sizeof(filename) / sizeof(filename[0]));
-#endif
 	}
 	else
 	{
 		filename[0] = '\0';
 	}
 
-	memset(&ofn, 0, sizeof(ofn));
-	ofn.lStructSize = sizeof(ofn);
-	ofn.hwndOwner = win_video_window;
-	ofn.lpstrFilter = A2T(filter);
-	ofn.lpstrFile = filename;
-
+	// use image directory, if it is there
 	if (image_exists(img))
-		ofn.lpstrInitialDir = A2T(image_filedir(img));
-	if (!ofn.lpstrInitialDir)
-		ofn.lpstrInitialDir = A2T(get_devicedirectory(dev->type));
+		initial_dir = image_filedir(img);
+	else
+		initial_dir = get_devicedirectory(dev->type);
 
-	ofn.nMaxFile = sizeof(filename) / sizeof(filename[0]);
-	ofn.Flags = OFN_EXPLORER | OFN_NOCHANGEDIR | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY;
-
-	switch(dev->open_mode) {
-	case OSD_FOPEN_WRITE:
-	case OSD_FOPEN_RW_CREATE:
-	case OSD_FOPEN_RW_CREATE_OR_READ:
-		ofn.Flags |= OFN_FILEMUSTEXIST;
-		break;
-
-	case OSD_FOPEN_READ:
-	case OSD_FOPEN_RW:
-	case OSD_FOPEN_RW_OR_READ:
-	case OSD_FOPEN_READ_OR_WRITE:
-	default:
-		ofn.Flags |= 0;
-		break;
-	}
-
-	if (!GetOpenFileName(&ofn))
+	// display the dialog
+	result = win_file_dialog(win_video_window, is_save ? FILE_DIALOG_SAVE : FILE_DIALOG_OPEN,
+		NULL, filter, initial_dir, filename, sizeof(filename) / sizeof(filename[0]));
+	if (!result)
 		return;
-	newfilename = T2A(filename);
 
-	s = osd_dirname(newfilename);
+	/* get the filename */
+	s = osd_dirname(filename);
 	if (s)
 	{
 		set_devicedirectory(dev->type, s);
 		free(s);
 	}
 
-	image_load(img, newfilename);
+	image_load(img, filename);
 }
 
 
@@ -686,8 +666,17 @@ static void prepare_menus(void)
 				flags_for_writing |= MF_GRAYED;
 
 			sub_menu = CreateMenu();
-			append_menu(sub_menu, MF_STRING,		new_item + DEVOPTION_MOUNT,	UI_mount);
-			append_menu(sub_menu, flags_for_exists,	new_item + DEVOPTION_UNMOUNT,	UI_unmount);
+			append_menu(sub_menu, MF_STRING,		new_item + DEVOPTION_OPEN,		UI_mount);
+
+			switch(dev->open_mode) {
+			case OSD_FOPEN_WRITE:
+			case OSD_FOPEN_RW_CREATE:
+			case OSD_FOPEN_RW_CREATE_OR_READ:
+				append_menu(sub_menu, MF_STRING,	new_item + DEVOPTION_CREATE,	UI_create);
+				break;
+			}
+
+			append_menu(sub_menu, flags_for_exists,	new_item + DEVOPTION_CLOSE,		UI_unmount);
 
 #if HAS_WAVE
 			if ((dev->type == IO_CASSETTE) && !strcmp(dev->file_extensions, "wav"))
@@ -752,11 +741,15 @@ void win_toggle_menubar(void)
 static void device_command(mess_image *img, int devoption)
 {
 	switch(devoption) {
-	case DEVOPTION_MOUNT:
-		change_device(img);
+	case DEVOPTION_OPEN:
+		change_device(img, FALSE);
 		break;
 
-	case DEVOPTION_UNMOUNT:
+	case DEVOPTION_CREATE:
+		change_device(img, TRUE);
+		break;
+
+	case DEVOPTION_CLOSE:
 		image_unload(img);
 		break;
 

@@ -17,4 +17,15 @@ int win_dialog_add_standard_buttons(dialog_box *dialog);
 int win_dialog_add_image(dialog_box *dialog, const struct png_info *png);
 int win_dialog_add_separator(dialog_box *dialog);
 
+
+enum file_dialog_type
+{
+	FILE_DIALOG_OPEN,
+	FILE_DIALOG_SAVE
+};
+
+// wrapper for the standard file dialog
+BOOL win_file_dialog(HWND parent, enum file_dialog_type dlgtype, dialog_box *custom_dialog, const char *filter,
+	const char *initial_dir, char *filename, size_t filename_len);
+
 #endif /* DIALOG_H */

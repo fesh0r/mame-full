@@ -627,11 +627,15 @@ dialog_box *win_dialog_init(const char *title)
 	if (dialog_write_string(di, title))
 		goto error;
 
-	w[0] = FONT_SIZE;
-	if (dialog_write(di, w, sizeof(w[0]), 2))
-		goto error;
-	if (dialog_write_string(di, FONT_FACE))
-		goto error;
+	// set the font, if necessary
+	if (di->style & DS_SETFONT)
+	{
+		w[0] = FONT_SIZE;
+		if (dialog_write(di, w, sizeof(w[0]), 2))
+			goto error;
+		if (dialog_write_string(di, FONT_FACE))
+			goto error;
+	}
 
 	return di;
 
@@ -1140,4 +1144,97 @@ void win_dialog_runmodal(dialog_box *dialog)
 	// reenable sound
 	osd_sound_enable(1);
 }
+
+
+
+//============================================================
+//	file_dialog_hook
+//============================================================
+
+static UINT_PTR CALLBACK file_dialog_hook(HWND dlgwnd, UINT message, WPARAM wparam, LPARAM lparam)
+{
+	OPENFILENAME *ofn;
+	dialog_box *dialog;
+	UINT_PTR rc = 1;
+
+	switch(message) {
+	case WM_INITDIALOG:
+		ofn = ((OFNOTIFY *) lparam)->lpOFN;
+		dialog = (dialog_box *) ofn->lCustData;
+
+		SetWindowLongPtr(dlgwnd, WNDLONG_DIALOG, (LONG_PTR) dialog);
+		dialog_trigger(dlgwnd, TRIGGER_INITDIALOG);
+		rc = 0;
+		break;
+	}
+	return rc;
+}
+
+
+
+//============================================================
+//	win_file_dialog
+//============================================================
+
+BOOL win_file_dialog(HWND parent, enum file_dialog_type dlgtype, dialog_box *custom_dialog, const char *filter,
+	const char *initial_dir, char *filename, size_t filename_len)
+{
+	OPENFILENAME ofn;
+	BOOL result;
+#ifdef UNICODE
+	WCHAR buf[MAX_PATH];
+#endif
+
+	memset(&ofn, 0, sizeof(ofn));
+	ofn.lStructSize = sizeof(ofn);
+	ofn.hwndOwner = parent;
+	ofn.Flags = OFN_EXPLORER | OFN_NOCHANGEDIR | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY;
+
+	if (filter)
+		ofn.lpstrFilter = A2T(filter);
+	if (initial_dir)
+		ofn.lpstrInitialDir = A2T(initial_dir);
+	if (dlgtype == FILE_DIALOG_OPEN)
+		ofn.Flags |= OFN_FILEMUSTEXIST;
+
+	if (custom_dialog)
+	{
+		custom_dialog->style = WS_CHILD | WS_CLIPSIBLINGS | DS_3DLOOK | DS_CONTROL;
+		dialog_prime(custom_dialog);
+
+		ofn.Flags |= OFN_ENABLETEMPLATEHANDLE | OFN_ENABLEHOOK;
+		ofn.hInstance = custom_dialog->handle;
+		ofn.lCustData = (LPARAM) custom_dialog;
+		ofn.lpfnHook = file_dialog_hook;
+	}
+
+#ifdef UNICODE
+	mbstowcs(buf, filename, strlen(filename) + 1);
+	ofn.nMaxFile = sizeof(buf) / sizeof(buf[0]);
+#else
+	ofn.lpstrFile = filename;
+	ofn.nMaxFile = filename_len;
+#endif
+
+	switch(dlgtype) {
+	case FILE_DIALOG_OPEN:
+		result = GetOpenFileName(&ofn);
+		break;
+
+	case FILE_DIALOG_SAVE:
+		result = GetSaveFileName(&ofn);
+		break;
+
+	default:
+		assert(FALSE);
+		result = FALSE;
+		break;
+	}
+
+#ifdef UNICODE
+	strcpyz(filename, buf, filename_len);
+#endif
+	return result;
+}
+
 

@@ -1552,7 +1552,8 @@ WRITE_HANDLER ( ti99_8_w )
 					if (! tms5220_ready_r())
 					{
 						double time_to_ready = tms5220_time_to_ready();
-						int cycles_to_ready = ((int) ceil(TIME_TO_CYCLES(0, time_to_ready)) + 3) & ~3;
+						double d = ceil(TIME_TO_CYCLES(0, time_to_ready));
+						int cycles_to_ready = ((int) (d + 3)) & ~3;
 
 						logerror("time to ready: %f -> %d\n", time_to_ready, (int) cycles_to_ready);
 
