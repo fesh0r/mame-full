@@ -450,7 +450,7 @@ IMAGEMODULE(
 )
 
 /*
-	Convert a C string to a 10-character file name (padded with spaces if necessary)
+	Convert a C string to a 8-character file name (padded with spaces if necessary)
 */
 static void str_to_fname(char dst[8], const char *src)
 {
