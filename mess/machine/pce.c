@@ -52,8 +52,7 @@ int pce_load_rom(int id)
 
 int pce_id_rom (int id)
 {
-    logerror("*** pce_id_rom\n");
-    return 0;
+    return ID_OK;
 }
 
 void pce_init_machine(void)
