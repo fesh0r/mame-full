@@ -261,7 +261,6 @@ if { [lsearch [info commands] "mamelang"] == -1 } {
     }
 }
 
-
 # this function is used to allow mamelang to translate the help file.
 proc print_help {} {
     global help
