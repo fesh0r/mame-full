@@ -2823,7 +2823,7 @@ static int displayhistory (struct mame_bitmap *bitmap, int selected)
 	static char *buf = 0;
 	int maxcols,maxrows;
 	int sel;
-
+	int bufsize = 256 * 1024; // 256KB of history.dat buffer, enough for everything
 
 	sel = selected - 1;
 
@@ -2836,15 +2836,12 @@ static int displayhistory (struct mame_bitmap *bitmap, int selected)
 	if (!buf)
 	{
 		/* allocate a buffer for the text */
-		#ifndef MESS
-		buf = malloc (8192);
-		#else
-		buf = malloc (200*1024);
-		#endif
+		buf = malloc (bufsize);
+
 		if (buf)
 		{
 			/* try to load entry */
-			if (load_driver_history (Machine->gamedrv, buf, 200*1024) == 0)
+			if (load_driver_history (Machine->gamedrv, buf, bufsize) == 0)
 			{
 				scroll = 0;
 				wordwrap_text_buffer (buf, maxcols);
@@ -2892,6 +2889,17 @@ static int displayhistory (struct mame_bitmap *bitmap, int selected)
 		{
 			if (scroll == 0) scroll = 2;	/* 1 would be the same as 0, but with arrow on top */
 			else scroll++;
+		}
+
+		if (input_ui_pressed_repeat(IPT_UI_PAN_UP, 4))
+		{
+			scroll -= maxrows - 2;
+			if (scroll < 0) scroll = 0;
+		}
+
+		if (input_ui_pressed_repeat(IPT_UI_PAN_DOWN, 4))
+		{
+			scroll += maxrows - 2;
 		}
 
 		if (input_ui_pressed(IPT_UI_SELECT))

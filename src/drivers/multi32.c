@@ -683,7 +683,17 @@ static struct MultiPCM_interface mul32_multipcm_interface =
 	{ YM3012_VOL(100, MIXER_PAN_CENTER, 100, MIXER_PAN_CENTER) }
 };
 
-static MACHINE_DRIVER_START( multi32 )
+static struct MultiPCM_interface scross_multipcm_interface =
+{
+	1,		// 1 chip
+	{ Z80_CLOCK },	// clock
+	{ MULTIPCM_MODE_STADCROSS },	// banking mode
+	{ (512*1024) },	// bank size
+	{ REGION_SOUND1 },	// sample region
+	{ YM3012_VOL(100, MIXER_PAN_CENTER, 100, MIXER_PAN_CENTER) }
+};
+
+static MACHINE_DRIVER_START( base )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(V60, 20000000/10) // Reality is 20mhz but V60/V70 timings are unknown
@@ -713,7 +723,16 @@ static MACHINE_DRIVER_START( multi32 )
 
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(YM3438, mul32_ym3438_interface)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( multi32 )
+	MDRV_IMPORT_FROM(base)
 	MDRV_SOUND_ADD(MULTIPCM, mul32_multipcm_interface)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( scross )
+	MDRV_IMPORT_FROM(base)
+	MDRV_SOUND_ADD(MULTIPCM, scross_multipcm_interface)
 MACHINE_DRIVER_END
 
 static DRIVER_INIT(orunners)
@@ -1166,7 +1185,7 @@ ROM_END
 // boot, and are playable, some gfx problems
 GAMEX( 1992, orunners,     0, multi32, orunners, orunners, ROT0, "Sega", "Outrunners (US)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1994, harddunk,     0, multi32, harddunk, harddunk, ROT0, "Sega", "Hard Dunk (Japan)", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1992, scross,       0, multi32, scross,   orunners, ROT0, "Sega", "Stadium Cross", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1992, scross,       0, scross,  scross,   orunners, ROT0, "Sega", "Stadium Cross", GAME_IMPERFECT_GRAPHICS )
 
 // doesn't boot (needs v70 or something else?)
 GAMEX( 199?, titlef,       0, multi32, titlef,   titlef,   ROT0, "Sega", "Title Fight", GAME_NOT_WORKING )

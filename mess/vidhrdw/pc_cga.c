@@ -762,8 +762,13 @@ static struct {
 	UINT8 reg, write, read;
 } pc1512;
 
-extern WRITE_HANDLER ( pc1512_w )
+WRITE_HANDLER ( pc1512_w )
 {
+	/* NPW 9-Jul-2003 - This function should eventually be eliminated, and the
+	 * functionality moved into crtc6845.c, and key everything off of the
+	 * personality
+	 */
+
 	UINT8 char_height;
 
 	switch (offset) {

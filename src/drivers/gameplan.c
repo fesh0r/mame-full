@@ -4,8 +4,8 @@ GAME PLAN driver, used for games like MegaTack, Killer Comet, Kaos, Challenger
 
 driver by Chris Moore
 
-TO-DO: - Fix the input ports/dip switches of Kaos?
-       - Graphics are still somewhat scrambled sometimes (just look at
+TO-DO: - Fix the input ports of Kaos
+	   - Graphics are still somewhat scrambled sometimes (just look at
          the tests with f2/f1)
 
 ****************************************************************************/

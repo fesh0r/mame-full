@@ -158,7 +158,7 @@ static WRITE_HANDLER( wolfpack_attract_w )
 
 static WRITE_HANDLER( wolfpack_credit_w )
 {
-	set_led_status(0, data & 1);
+	set_led_status(0, !(data & 1));
 }
 
 

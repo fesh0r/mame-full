@@ -193,9 +193,12 @@ draw_spriteC355( int page, struct mame_bitmap *bitmap, const struct rectangle *c
 	case NAMCOS2_STEEL_GUNNER_2:
 	default:
 		{
-			int dh = mSpritePos[1]; dh &= 0x1ff; if( dh&0x100 ) dh |= ~0x1ff;
-			int dv = mSpritePos[0]; dv &= 0x1ff; if( dv&0x100 ) dv |= ~0x1ff;
+			int dh = mSpritePos[1];
+			int dv = mSpritePos[0];
 			const data16_t *pWinAttr = &spriteram16[0x2400/2+((palette>>8)&0xf)*4];
+
+			dh &= 0x1ff; if( dh&0x100 ) dh |= ~0x1ff;
+			dv &= 0x1ff; if( dv&0x100 ) dv |= ~0x1ff;
 			vpos&=0x7ff; if( vpos&0x400 ) vpos |= ~0x7ff;
 			hpos&=0x7ff; if( hpos&0x400 ) hpos |= ~0x7ff;
 			hpos += -0x26 - dh;

@@ -48,26 +48,27 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+extern WRITE_HANDLER( arkanoid_videoram_w );
+extern VIDEO_START( arkanoid );
+extern VIDEO_UPDATE( arkanoid );
 
+extern MACHINE_INIT( arkanoid );
 
-MACHINE_INIT( arkanoid );
+extern WRITE_HANDLER( arkanoid_d008_w );
 
-WRITE_HANDLER( arkanoid_d008_w );
-VIDEO_UPDATE( arkanoid );
+extern READ_HANDLER( arkanoid_Z80_mcu_r );
+extern WRITE_HANDLER( arkanoid_Z80_mcu_w );
 
-READ_HANDLER( arkanoid_Z80_mcu_r );
-WRITE_HANDLER( arkanoid_Z80_mcu_w );
+extern READ_HANDLER( arkanoid_68705_portA_r );
+extern WRITE_HANDLER( arkanoid_68705_portA_w );
+extern WRITE_HANDLER( arkanoid_68705_ddrA_w );
 
-READ_HANDLER( arkanoid_68705_portA_r );
-WRITE_HANDLER( arkanoid_68705_portA_w );
-WRITE_HANDLER( arkanoid_68705_ddrA_w );
+extern READ_HANDLER( arkanoid_68705_portC_r );
+extern WRITE_HANDLER( arkanoid_68705_portC_w );
+extern WRITE_HANDLER( arkanoid_68705_ddrC_w );
 
-READ_HANDLER( arkanoid_68705_portC_r );
-WRITE_HANDLER( arkanoid_68705_portC_w );
-WRITE_HANDLER( arkanoid_68705_ddrC_w );
-
-READ_HANDLER( arkanoid_68705_input_0_r );
-READ_HANDLER( arkanoid_input_2_r );
+extern READ_HANDLER( arkanoid_68705_input_0_r );
+extern READ_HANDLER( arkanoid_input_2_r );
 
 /*
 Paddle 2 MCU simulation
@@ -90,21 +91,21 @@ static int paddle2_prot;
 
 static READ_HANDLER( paddle2_prot_r )
 {
-	static unsigned char level_table_a[] =
+	static UINT8 level_table_a[] =
 	{
 		0xf3,0xf7,0xf9,0xfb,0xfd,0xff,0xf5,0xe3, /* 1- 8*/
 		0xe5,0xe7,0xe9,0xeb,0xed,0xef,0xf1,0xf7, /* 9-16*/
 		0xf9,0xfb,0xfd,0xff,0x00,0x00,0x00,0x00, /*17-24*/
 		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00  /*25-32*/
 	};
-	static unsigned char level_table_b[] =
+	static UINT8 level_table_b[] =
 	{
 		0x52,0x52,0x52,0x52,0x52,0x52,0x0e,0x0e, /* 1- 8*/
 		0x0e,0x0e,0x0e,0x0e,0x0e,0x0e,0x0e,0x0e, /* 9-16*/
 		0x0e,0x0e,0x0e,0x0e,0x00,0x00,0x00,0x00, /*17-24*/
 		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00  /*25-32*/
 	};
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	UINT8 *RAM = memory_region(REGION_CPU1);
 //	usrintf_showmessage("%04x: %02x",activecpu_get_pc(),paddle2_prot);
 
 	switch (paddle2_prot)
@@ -167,7 +168,7 @@ static MEMORY_WRITE_START( writemem )
 	{ 0xd008, 0xd008, arkanoid_d008_w },	/* gfx bank, flip screen etc. */
 	{ 0xd010, 0xd010, watchdog_reset_w },
 	{ 0xd018, 0xd018, arkanoid_Z80_mcu_w }, /* output to the 68705 */
-	{ 0xe000, 0xe7ff, videoram_w, &videoram, &videoram_size },
+	{ 0xe000, 0xe7ff, arkanoid_videoram_w, &videoram },
 	{ 0xe800, 0xe83f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xe840, 0xefff, MWA_RAM },
 MEMORY_END
@@ -191,7 +192,7 @@ static MEMORY_WRITE_START( boot_writemem )
 	{ 0xd008, 0xd008, arkanoid_d008_w },	/* gfx bank, flip screen etc. */
 	{ 0xd010, 0xd010, watchdog_reset_w },
 	{ 0xd018, 0xd018, MWA_NOP },
-	{ 0xe000, 0xe7ff, videoram_w, &videoram, &videoram_size },
+	{ 0xe000, 0xe7ff, arkanoid_videoram_w, &videoram },
 	{ 0xe800, 0xe83f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xe840, 0xefff, MWA_RAM },
 MEMORY_END
@@ -424,7 +425,7 @@ static MACHINE_DRIVER_START( arkanoid )
 	MDRV_PALETTE_LENGTH(512)
 
 	MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(arkanoid)
 	MDRV_VIDEO_UPDATE(arkanoid)
 
 	/* sound hardware */
@@ -449,7 +450,7 @@ static MACHINE_DRIVER_START( bootleg )
 	MDRV_PALETTE_LENGTH(512)
 
 	MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(arkanoid)
 	MDRV_VIDEO_UPDATE(arkanoid)
 
 	/* sound hardware */
@@ -690,7 +691,7 @@ GAME( 1986, arknoiuo, arkanoid, arkanoid, arkanoid, 0,       ROT90, "Taito Ameri
 GAME( 1986, arknoidj, arkanoid, arkanoid, arknoidj, 0,       ROT90, "Taito Corporation", "Arkanoid (Japan)" )
 GAMEX(1986, arkbl2,   arkanoid, arkanoid, arknoidj, 0,       ROT90, "bootleg", "Arkanoid (Japanese bootleg Set 2)", GAME_NOT_WORKING )
 GAMEX(1986, arkbl3,   arkanoid, bootleg,  arknoidj, paddle2, ROT90, "bootleg", "Arkanoid (Japanese bootleg Set 3)", GAME_NOT_WORKING )
-GAMEX(1986, paddle2,  arkanoid, bootleg,  arknoidj, paddle2, ROT90, "bootleg", "Paddle 2", GAME_UNEMULATED_PROTECTION )
+GAMEX(1988, paddle2,  arkanoid, bootleg,  arknoidj, paddle2, ROT90, "bootleg", "Paddle 2", GAME_UNEMULATED_PROTECTION )
 GAME( 1986, arkatayt, arkanoid, bootleg,  arkatayt, 0,       ROT90, "bootleg", "Arkanoid (Tayto bootleg, Japanese)" )
 GAMEX(1986, arkblock, arkanoid, bootleg,  arknoidj, 0,       ROT90, "bootleg", "Block (bootleg, Japanese)", GAME_NOT_WORKING )
 GAME( 1986, arkbloc2, arkanoid, bootleg,  arknoidj, 0,       ROT90, "bootleg", "Block (Game Corporation bootleg)" )

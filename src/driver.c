@@ -739,6 +739,7 @@ TESTDRIVER( timecris )
 	DRIVER( zerohour )	/* 8011 (c) Universal */
 	DRIVER( redclash )	/* (c) 1981 Tehkan */
 	DRIVER( redclask )	/* (c) Kaneko (bootleg?) */
+	DRIVER( magspot )	/* ???? (c) [1980] */
 	DRIVER( magspot2 )	/* 8013 (c) [1980] */
 	DRIVER( devzone )	/* 8022 (c) [1980] */
 	DRIVER( devzone2 )	/* 8022 (c) [1980] */
@@ -1520,6 +1521,8 @@ TESTDRIVER( ainferno )	/* C45 (c) 1990 Taito America Corporation (US) */
 	DRIVER( superchs )	/* D46 (c) 1992 Taito America Corporation (US) */
 	DRIVER( groundfx )	/* D51 (c) 1992 Taito Coporation */
 	DRIVER( undrfire )	/* D67 (c) 1993 Taito Coporation Japan (World) */
+	DRIVER( undrfiru )	/* D67 (c) 1993  Taito America Corporation (US) */
+	DRIVER( undrfirj )	/* D67 (c) 1993 Taito Coporation (Japan) */
 
 	/* Taito F2 games */
 	DRIVER( finalb )	/* B82 (c) 1988 Taito Corporation Japan (World) */
@@ -1800,6 +1803,7 @@ TESTDRIVER( pwrinst2 )	/* (c) 1994 Atlus */
 	DRIVER( hyperpcb )	/* bootleg */
 TESTDRIVER( moremorp )
 TESTDRIVER( 3in1semi )
+TESTDRIVER( 4in1boot )	/* bootleg? */
 TESTDRIVER( cookbib2 )
 TESTDRIVER( htchctch )
 
@@ -1872,7 +1876,8 @@ TESTDRIVER( defndjeu )	/* bootleg */
 	DRIVER( commando )	/*  5/1985 (c) 1985 (World) */
 	DRIVER( commandu )	/*  5/1985 (c) 1985 + Data East license (US) */
 	DRIVER( commandj )	/*  5/1985 (c) 1985 (Japan) */
-	DRIVER( spaceinv )	/* bootleg */
+	DRIVER( sinvasn )	/* Europe original? */
+	DRIVER( sinvasnb )	/* bootleg */
 	DRIVER( gng )		/*  9/1985 (c) 1985 */
 	DRIVER( gnga )		/*  9/1985 (c) 1985 */
 	DRIVER( gngt )		/*  9/1985 (c) 1985 */
@@ -2214,26 +2219,59 @@ TESTDRIVER( ts2j )		/*  Battle Arena Toshinden 2 (JAPAN 951124) */
 						/*  7/1996 Star Gladiator */
 TESTDRIVER( sfex )		/*  Street Fighter EX (ASIA 961219) */
 TESTDRIVER( sfexj )		/*  Street Fighter EX (JAPAN 961130) */
+TESTDRIVER( glpracr )		/*  Gallop Racer (JAPAN Ver 9.01.12) */
 TESTDRIVER( sfexp )		/*  Street Fighter EX Plus (USA 970311) */
 TESTDRIVER( sfexpj )	/*  Street Fighter EX Plus (JAPAN 970311) */
 TESTDRIVER( rvschool )	/*  Rival Schools (ASIA 971117) */
 TESTDRIVER( jgakuen )	/*  Justice Gakuen (JAPAN 971117) */
+TESTDRIVER( tgmj )		/*  Tetris The Grand Master (JAPAN 980710) */
 
 	/* Capcom ZN2 */
 TESTDRIVER( sfex2 )		/*  Street Fighter EX 2 (JAPAN 980312) */
-TESTDRIVER( tgmj )		/*  Tetris The Grand Master (JAPAN 980710) */
+TESTDRIVER( sg2j )		/*  Star Gladiator 2 (JAPAN 980316) */
 TESTDRIVER( kikaioh )	/*  Kikaioh (JAPAN 980914) */
 TESTDRIVER( sfex2p )	/*  Street Fighter EX 2 Plus (JAPAN 990611) */
 TESTDRIVER( shiryu2 )	/*  Strider Hiryu 2 (JAPAN 991213) */
-						/*  Star Gladiator 2 */
 						/*  Rival Schools 2 */
+
+	/* Tecmo ZN1 */
+TESTDRIVER( glpracr2 )	/*  Gallop Racer 2 (JAPAN) */
+TESTDRIVER( glprac2l )	/*  Gallop Racer 2 Link HW (JAPAN) */
+TESTDRIVER( doapp )		/*  Dead Or Alive ++ (JAPAN) */
+TESTDRIVER( tondemo )	/*  Tondemo Crisis (JAPAN) */
+TESTDRIVER( brvblade )	/*  Brave Blade */
 
 	/* Video System ZN1 */
 TESTDRIVER( sncwgltd )	/*  Sonic Wings Limited (JAPAN) */
 
-	/* Tecmo ZN1 */
-TESTDRIVER( glpracr2 )	/*  Gallop Racer 2 (JAPAN) */
-TESTDRIVER( doapp )		/*  Dead Or Alive ++ (JAPAN) */
+	/* Taito FX1a */
+TESTDRIVER( psyforce )	/*  Psychic Force (JAPAN) */
+TESTDRIVER( sfchamp )	/*  Super Football Champ (JAPAN) */
+TESTDRIVER( mgcldate )	/*  Magical Date (JAPAN) */
+TESTDRIVER( mgcldtea )	/*  Magical Date (JAPAN) */
+
+	/* Taito FX1b */
+TESTDRIVER( raystorm )	/*  Ray Storm (JAPAN) */
+TESTDRIVER( ftimpcta )	/*  Fighter's Impact Ace (JAPAN) */
+TESTDRIVER( gdarius )	/*  G-Darius (JAPAN) */
+TESTDRIVER( gdarius2 )	/*  G-Darius Ver.2 (JAPAN) */
+TESTDRIVER( beastrzb )	/*  Beastorizer (bootleg)*/
+
+	/* Namco System 11 */
+TESTDRIVER( tekken )
+TESTDRIVER( tekkena )
+TESTDRIVER( tekkenb )
+TESTDRIVER( tekken2 )
+TESTDRIVER( tekken2a )
+TESTDRIVER( tekken2b )
+TESTDRIVER( xevi3dg )
+TESTDRIVER( souledge )
+TESTDRIVER( souledga )
+TESTDRIVER( dunkmnia )
+TESTDRIVER( danceyes )
+TESTDRIVER( primglex )
+	DRIVER( starswep )
+TESTDRIVER( myangel3 )
 
 	/* Mitchell games */
 	DRIVER( mgakuen )	/* (c) 1988 Yuga */
@@ -3430,6 +3468,7 @@ TESTDRIVER( rungun2 )	/* GX505 */
 	DRIVER( atarifb )	/* 033xxx			1978/10 [6502] */
 	DRIVER( atarifb1 )	/* 033xxx			1978/10 [6502] */
 	DRIVER( orbit )		/* 033689-033702	1978/11 [6800] */
+	DRIVER( boxer )		/* ?????? prototype 1978    [6502] */
 	DRIVER( wolfpack )	/* ?????? prototype         [6502] */
 	DRIVER( videopin )	/* 034253-034267	1979/02 [6502] */
 	DRIVER( atarifb4 )	/* 034754			1979/04 [6502] */
@@ -3614,6 +3653,7 @@ TESTDRIVER( tmekprot )	/* 136100			(c) 1994 */
 	DRIVER( area51 )	/* 136105			(c) 1995 */
 	DRIVER( area51mx )	/* 136105			(c) 1995 */
 	DRIVER( maxforce )	/*     ??			(c) 1996 */
+	DRIVER( maxf_102 )	/*     ??			(c) 1996 */
 	DRIVER( vcircle )	/*     ??			(c) 1996 */
 
 	/* SNK / Rock-ola games */
@@ -4301,7 +4341,8 @@ TESTDRIVER( bloodwar )
 	/* Kaneko "Super Nova System" games */
 	DRIVER( galpani4 )	/* (c) 1996 Kaneko (Japan) */
 	DRIVER( galpanis )	/* (c) 1997 Kaneko (Japan) */
-	DRIVER( sengekis )	/* (c) 1997 Kaneko / Warashi (Japan) */
+	DRIVER( sengekis )	/* (c) 1997 Kaneko / Warashi (Asia) */
+	DRIVER( sengekij )	/* (c) 1997 Kaneko / Warashi (Japan) */
 	DRIVER( vblokbrk )	/* (c) 1997 Kaneko / Mediaworks (Asia) */
 	DRIVER( sarukani )	/* (c) 1997 Kaneko / Mediaworks (Japan) */
 	DRIVER( cyvern )	/* (c) 1998 Kaneko (Japan) */
@@ -4683,6 +4724,7 @@ TESTDRIVER( kov2plus )	/* (c) 2001 */
 
 	/* Sanritsu games */
 	DRIVER( mermaid )	/* (c) 1982 Rock-ola */	/* made by Sanritsu */
+TESTDRIVER( rougien )	/* (c) 1982 Sanritsu */
 	DRIVER( drmicro )	/* (c) 1983 Sanritsu */
 	DRIVER( appoooh )	/* (c) 1984 Sega */	/* made by Sanritsu */
 	DRIVER( bankp )		/* (c) 1984 Sega */	/* made by Sanritsu */
@@ -4941,6 +4983,7 @@ TESTDRIVER( portrait )	/* (c) 1983 Olympia */
 	DRIVER( ssideki3 )	/* 0081 (c) 1995 SNK */
 	DRIVER( doubledr )	/* 0082 (c) 1995 Technos */
 	DRIVER( pbobblen )	/* 0083 (c) 1994 Taito */
+	DRIVER( pbobblna )	/* 0083 (c) 1994 Taito */
 	DRIVER( kof95 )		/* 0084 (c) 1995 SNK */
 	DRIVER( kof95a )	/* 0084 (c) 1995 SNK */
 	/* 0085 Shinsetsu Samurai Spirits Bushidoretsuden / Samurai Shodown RPG (CD only) */
@@ -5016,6 +5059,7 @@ TESTDRIVER( portrait )	/* (c) 1983 Olympia */
 	DRIVER( ctomaday )	/* 0249 (c) 1999 Visco */
 	DRIVER( mslugx )	/* 0250 (c) 1999 SNK */
 	DRIVER( kof99 )		/* 0251 (c) 1999 SNK */
+	DRIVER( kof99a )	/* 0251 (c) 1999 SNK */
 	DRIVER( kof99e )	/* 0251 (c) 1999 SNK */
 	DRIVER( kof99n )	/* 0251 (c) 1999 SNK */
 	DRIVER( kof99p )	/* 0251 (c) 1999 SNK */

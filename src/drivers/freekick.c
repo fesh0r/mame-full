@@ -11,7 +11,6 @@ Notes:
   CPU reads the sound program through an 8255 PPI and plays sounds directly.
 
 TODO:
-- Perfect Billiard dip switches
 - Gigas cocktail mode / flipscreen
 
 ****************************************************************************

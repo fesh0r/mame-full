@@ -39,19 +39,19 @@ Notes:
   if hardware is more powerful or the extra sprites were just not needed
   in the earlier games.
 
-  Raiga also has alpha blending, maybe the other games too, its used for
-  the pink goo on level 3, however alpha blending doesn't work well with
-  pdrawgfx so the priorities on some levels of raiga are broken, also the
-  alpha level is selectable and the gfx should fade out on the 3rd boss, this
-  appears to be related to the extra 'unused palette ram'  the hardware
-  probably also has some kind of real shadow sprite effect, the first boss
-  appears to fade between a shadow sprite and normal sprite on the videos
-  we have.
-
+- The hardware supports blending sprites and background.
+  There are 3 copies of the palette;
+  - one for pixels that aren't blended
+  - one for pixels that are behind the object that will be blended
+  - one for the object that will be blended
+  Blending is performed by switching to the appropriate palettes for the
+  pixels behind the blended object and the object itself, and then adding
+  the RGB values.
 
 todo:
 
 - make sure all of the protection accesses in raiga are handled correctly.
+- work out how lower priority sprites are affected by blended sprites.
 
 ***************************************************************************/
 /***************************************************************************
@@ -114,9 +114,12 @@ MG-Y.VO
 -----------------------------------------------
 
 Notes:
-      68k clock: 9.216MHz (18.432 / 2)
-      Z80 clock: 4.000MHz
-      IOP8 manufactured by Ricoh. Full part number: RICOH EPLIOP8BP (PAL or PIC?)
+	68k clock:		9.216 MHz (18.432 / 2)
+	Z80 clock:		4.000 MHz
+	YM2203 clock:		4.000 MHz
+	MSM6295 clock:	1.000 MHz (samplerate 7575Hz, i.e. / 132)
+
+	IOP8 manufactured by Ricoh. Full part number: RICOH EPLIOP8BP (PAL or PIC?)
 
 ***************************************************************************/
 
@@ -129,7 +132,10 @@ Notes:
 extern data16_t *gaiden_videoram,*gaiden_videoram2,*gaiden_videoram3;
 extern int gaiden_sprite_sizey;
 
+extern int raiga_alpha;
+
 VIDEO_START( gaiden );
+VIDEO_START( raiga );
 
 VIDEO_UPDATE( gaiden );
 VIDEO_UPDATE( raiga );
@@ -330,7 +336,7 @@ static WRITE16_HANDLER( raiga_protection_w )
 				if (raiga_jumppoints[jumpcode] == -1)
 				{
 					logerror("unknown jumpcode %02x\n",jumpcode);
-					usrintf_showmessage("unknown jumpcode %02x contact MAMEDEV with details",jumpcode);
+					usrintf_showmessage("unknown jumpcode %02x",jumpcode);
 					jumpcode = 0;
 				}
 				prot = 0x20;
@@ -377,9 +383,8 @@ static MEMORY_WRITE16_START( writemem )
 	{ 0x070000, 0x070fff, gaiden_videoram_w, &gaiden_videoram },
 	{ 0x072000, 0x073fff, gaiden_videoram2_w, &gaiden_videoram2 },
 	{ 0x074000, 0x075fff, gaiden_videoram3_w, &gaiden_videoram3 },
-	{ 0x076000, 0x077fff, MWA16_RAM, &spriteram16 },
-	{ 0x078000, 0x0787ff, paletteram16_xxxxBBBBGGGGRRRR_word_w, &paletteram16 },
-	{ 0x078800, 0x079fff, MWA16_NOP },   /* extra portion of palette RAM, not really used */
+	{ 0x076000, 0x077fff, MWA16_RAM, &spriteram16, &spriteram_size },
+	{ 0x078000, 0x079fff, paletteram16_xxxxBBBBGGGGRRRR_word_w, &paletteram16 },
 	{ 0x07a104, 0x07a105, gaiden_txscrolly_w },
 	{ 0x07a10c, 0x07a10d, gaiden_txscrollx_w },
 	{ 0x07a204, 0x07a205, gaiden_fgscrolly_w },
@@ -720,13 +725,13 @@ INPUT_PORTS_START( raiga )
 	PORT_DIPSETTING(      0x000d, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(      0x0005, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(      0x0009, DEF_STR( 1C_7C ) )
-	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x8000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x8000, 0x0000, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unused ) )
 	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x3000, 0x3000, DEF_STR( Difficulty ) )
+	PORT_DIPNAME( 0x3000, 0x1000, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(      0x3000, "Easy" )
 	PORT_DIPSETTING(      0x1000, "Normal" )
 	PORT_DIPSETTING(      0x2000, "Hard" )
@@ -783,10 +788,11 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &tilelayout,        256, 16 },	/* tiles 8x8 */
-	{ REGION_GFX2, 0, &tile2layout,       768, 16 },	/* tiles 16x16 */
-	{ REGION_GFX3, 0, &tile2layout,       512, 16 },	/* tiles 16x16 */
-	{ REGION_GFX4, 0, &spritelayout,        0, 16 },	/* sprites 8x8 */
+	{ REGION_GFX1, 0, &tilelayout,        256, 4096 - 256 },	/* tiles 8x8  */
+	{ REGION_GFX2, 0, &tile2layout,       768, 4096 - 768 },	/* tiles 16x16 */
+	{ REGION_GFX3, 0, &tile2layout,       512, 4096 - 512 },	/* tiles 16x16 */
+	{ REGION_GFX4, 0, &spritelayout,        0, 4096 -   0 },	/* sprites 8x8 */
+
 	{ -1 } /* end of array */
 };
 
@@ -814,7 +820,7 @@ static struct YM2203interface ym2203_interface =
 static struct OKIM6295interface okim6295_interface =
 {
 	1,                  /* 1 chip */
-	{ 7576 },			/* 7576Hz frequency */
+	{ 7575 },			/* 7575Hz frequency */
 	{ REGION_SOUND1 },	/* memory region */
 	{ 20 }
 };
@@ -841,7 +847,7 @@ static MACHINE_DRIVER_START( shadoww )
 	MDRV_SCREEN_SIZE(32*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(1024)
+	MDRV_PALETTE_LENGTH(4096)
 
 	MDRV_VIDEO_START(gaiden)
 	MDRV_VIDEO_UPDATE(gaiden)
@@ -853,7 +859,10 @@ MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( raiga )
 	MDRV_IMPORT_FROM(shadoww)
+
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT)
+
+	MDRV_VIDEO_START(raiga)
 	MDRV_VIDEO_UPDATE(raiga)
 MACHINE_DRIVER_END
 
@@ -1132,12 +1141,14 @@ ROM_END
 
 static DRIVER_INIT( shadoww )
 {
-	gaiden_sprite_sizey = 0;	// sprite size Y = sprite size X
+	/* sprite size Y = sprite size X */
+	gaiden_sprite_sizey = 0;
 }
 
 static DRIVER_INIT( wildfang )
 {
-	gaiden_sprite_sizey = 0;	// sprite size Y = sprite size X
+	/* sprite size Y = sprite size X */
+	gaiden_sprite_sizey = 0;
 
 	install_mem_read16_handler (0, 0x07a006, 0x07a007, wildfang_protection_r);
 	install_mem_write16_handler(0, 0x07a804, 0x07a805, wildfang_protection_w);
@@ -1145,7 +1156,8 @@ static DRIVER_INIT( wildfang )
 
 static DRIVER_INIT( raiga )
 {
-	gaiden_sprite_sizey = 2;	// sprite size Y *independent* from sprite size X
+	/* sprite size Y independent from sprite size X */
+	gaiden_sprite_sizey = 2;
 
 	install_mem_read16_handler (0, 0x07a006, 0x07a007, raiga_protection_r);
 	install_mem_write16_handler(0, 0x07a804, 0x07a805, raiga_protection_w);
@@ -1159,5 +1171,5 @@ GAME( 1988, gaiden,   shadoww,  shadoww, shadoww,  shadoww,  ROT0, "Tecmo", "Nin
 GAME( 1989, ryukendn, shadoww,  shadoww, shadoww,  shadoww,  ROT0, "Tecmo", "Ninja Ryukenden (Japan)" )
 GAME( 1989, wildfang, 0,        shadoww, wildfang, wildfang, ROT0, "Tecmo", "Wild Fang / Tecmo Knight" )
 GAME( 1989, tknight,  wildfang, shadoww, tknight,  wildfang, ROT0, "Tecmo", "Tecmo Knight" )
-GAMEX(1991, stratof,  0,        raiga, raiga,    raiga,    ROT0, "Tecmo", "Raiga - Strato Fighter (US)", GAME_IMPERFECT_GRAPHICS )
-GAMEX(1991, raiga,    stratof,  raiga, raiga,    raiga,    ROT0, "Tecmo", "Raiga - Strato Fighter (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1991, stratof,  0,        raiga,	 raiga,    raiga,    ROT0, "Tecmo", "Raiga - Strato Fighter (US)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1991, raiga,    stratof,  raiga,	 raiga,    raiga,    ROT0, "Tecmo", "Raiga - Strato Fighter (Japan)", GAME_IMPERFECT_GRAPHICS )
