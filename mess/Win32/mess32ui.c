@@ -18,15 +18,15 @@ static int requested_device_type(char *tchar);
 static void MessSetupCrc(int game_index);
 
 typedef struct {
-	int type;
-	const char *ext;
+    int type;
+    const char *ext;
 } mess_image_type;
 
 typedef struct tagImageData {
-	struct tagImageData *next;
-	const char *name;
-	char *fullname;
-	int type;
+    struct tagImageData *next;
+    const char *name;
+    char *fullname;
+    int type;
 } ImageData;
 
 static ImageData *mess_images;
@@ -62,7 +62,7 @@ static BOOL CreateMessIcons(void);
 
 #define MAME32HELP "mess32.hlp"
 
-#define IsValidListControl(hwnd)	(((hwnd) == hwndList) || ((hwnd) == hwndSoftware))
+#define IsValidListControl(hwnd)    (((hwnd) == hwndList) || ((hwnd) == hwndSoftware))
 
 #include "win32ui.c"
 
@@ -70,44 +70,44 @@ static BOOL CreateMessIcons(void);
 static int requested_device_type(char *tchar)
 {
 
-	logerror("Requested device is %s\n", tchar);
+    logerror("Requested device is %s\n", tchar);
 
-	if      (!stricmp(tchar, "-cartridge")  || !stricmp(tchar, "-cart"))
-			return(IO_CARTSLOT);
-	else if (!stricmp(tchar, "-floppydisk") || !stricmp(tchar, "-flop"))
-			return(IO_FLOPPY);
-	else if (!stricmp(tchar, "-harddisk")   || !stricmp(tchar, "-hard"))
-			return(IO_HARDDISK);
-	else if (!stricmp(tchar, "-cassette")   || !stricmp(tchar, "-cass"))
-			return(IO_CASSETTE);
-	else if (!stricmp(tchar, "-printer")    || !stricmp(tchar, "-prin"))
-			return(IO_PRINTER);
-	else if (!stricmp(tchar, "-serial")     || !stricmp(tchar, "-serl"))
-			return(IO_SERIAL);
-	else if (!stricmp(tchar, "-snapshot")   || !stricmp(tchar, "-snap"))
-			return(IO_SNAPSHOT);
-	else if (!stricmp(tchar, "-quickload")  || !stricmp(tchar, "-quik"))
-			return(IO_QUICKLOAD);
-	else if (!stricmp(tchar, "-alias"))
-			return(IO_ALIAS);
-	/* all other switches set type to -1 */
-	else
-	{
+    if      (!stricmp(tchar, "-cartridge")  || !stricmp(tchar, "-cart"))
+            return(IO_CARTSLOT);
+    else if (!stricmp(tchar, "-floppydisk") || !stricmp(tchar, "-flop"))
+            return(IO_FLOPPY);
+    else if (!stricmp(tchar, "-harddisk")   || !stricmp(tchar, "-hard"))
+            return(IO_HARDDISK);
+    else if (!stricmp(tchar, "-cassette")   || !stricmp(tchar, "-cass"))
+            return(IO_CASSETTE);
+    else if (!stricmp(tchar, "-printer")    || !stricmp(tchar, "-prin"))
+            return(IO_PRINTER);
+    else if (!stricmp(tchar, "-serial")     || !stricmp(tchar, "-serl"))
+            return(IO_SERIAL);
+    else if (!stricmp(tchar, "-snapshot")   || !stricmp(tchar, "-snap"))
+            return(IO_SNAPSHOT);
+    else if (!stricmp(tchar, "-quickload")  || !stricmp(tchar, "-quik"))
+            return(IO_QUICKLOAD);
+    else if (!stricmp(tchar, "-alias"))
+            return(IO_ALIAS);
+    /* all other switches set type to -1 */
+    else
+    {
         logerror("Requested Device not supported!!\n");
         return -1;
-	}
+    }
 }
 
 static void MessSetupCrc(int game_index)
 {
-	const char *crcdir = "crc";
+    const char *crcdir = "crc";
 
-	/* Build the CRC database filename */
-	sprintf(crcfilename, "%s/%s.crc", crcdir, drivers[game_index]->name);
-	if (drivers[game_index]->clone_of->name)
-		sprintf (pcrcfilename, "%s/%s.crc", crcdir, drivers[game_index]->clone_of->name);
-	else
-		pcrcfilename[0] = 0;
+    /* Build the CRC database filename */
+    sprintf(crcfilename, "%s/%s.crc", crcdir, drivers[game_index]->name);
+    if (drivers[game_index]->clone_of->name)
+        sprintf (pcrcfilename, "%s/%s.crc", crcdir, drivers[game_index]->clone_of->name);
+    else
+        pcrcfilename[0] = 0;
 }
 
 /* ************************************************************************ */
@@ -117,126 +117,126 @@ static void MessSetupCrc(int game_index)
 static void SetupImageTypes(mess_image_type *types, int count, BOOL bZip, int type)
 {
     const struct IODevice *dev;
-	int num_extensions = 0;
-	int i;
+    int num_extensions = 0;
+    int i;
 
-	count--;
+    count--;
     dev = drivers[GetSelectedPickItem()]->dev;
 
-	if (bZip) {
-		types[num_extensions].type = 0;
-		types[num_extensions].ext = "zip";
-		num_extensions++;
-	}
+    if (bZip) {
+        types[num_extensions].type = 0;
+        types[num_extensions].ext = "zip";
+        num_extensions++;
+    }
 
-	for (i = 0; dev[i].type != IO_END; i++) {
-		const char *ext = dev[i].file_extensions;
-		while(*ext) {
-			if ((type == IO_END) || (type == dev[i].type)) {
-				if (num_extensions < count) {
-					types[num_extensions].type = dev[i].type;
-					types[num_extensions].ext = ext;
-					num_extensions++;
-				}
-			}
-			ext += strlen(ext) + 1;
-		}
-	}
-	types[num_extensions].type = 0;
-	types[num_extensions].ext = NULL;
+    for (i = 0; dev[i].type != IO_END; i++) {
+        const char *ext = dev[i].file_extensions;
+        while(*ext) {
+            if ((type == IO_END) || (type == dev[i].type)) {
+                if (num_extensions < count) {
+                    types[num_extensions].type = dev[i].type;
+                    types[num_extensions].ext = ext;
+                    num_extensions++;
+                }
+            }
+            ext += strlen(ext) + 1;
+        }
+    }
+    types[num_extensions].type = 0;
+    types[num_extensions].ext = NULL;
 }
 
 static int MessDiscoverImageType(const char *filename, mess_image_type *imagetypes, BOOL bReadZip)
 {
-	int type, i;
-	char *lpExt;
-	ZIP *pZip = NULL;
-	
-	lpExt = strrchr(filename, '.');
-	type = IO_COUNT;
+    int type, i;
+    char *lpExt;
+    ZIP *pZip = NULL;
+    
+    lpExt = strrchr(filename, '.');
+    type = IO_COUNT;
 
-	if (lpExt) {
-		/* Are we a ZIP file? */
-		if (!stricmp(lpExt, ".ZIP")) {
-			if (bReadZip) {
-				pZip = openzip(filename);
-				if (pZip) {
-					struct zipent *pZipEnt = readzip(pZip);
-					if (pZipEnt) {
-						lpExt = strrchr(pZipEnt->name, '.');
-					}
-				}
-			}
-			else {
-				/* IO_ALIAS represents uncalculated zips */
-				type = IO_ALIAS;
-			}
-		}
+    if (lpExt) {
+        /* Are we a ZIP file? */
+        if (!stricmp(lpExt, ".ZIP")) {
+            if (bReadZip) {
+                pZip = openzip(filename);
+                if (pZip) {
+                    struct zipent *pZipEnt = readzip(pZip);
+                    if (pZipEnt) {
+                        lpExt = strrchr(pZipEnt->name, '.');
+                    }
+                }
+            }
+            else {
+                /* IO_ALIAS represents uncalculated zips */
+                type = IO_ALIAS;
+            }
+        }
 
-		if (lpExt) {
-			lpExt++;
-			for (i = 0; imagetypes[i].ext; i++) {
-				if (!stricmp(lpExt, imagetypes[i].ext)) {
-					type = imagetypes[i].type;
-					break;
-				}
-			}
-		}
+        if (lpExt) {
+            lpExt++;
+            for (i = 0; imagetypes[i].ext; i++) {
+                if (!stricmp(lpExt, imagetypes[i].ext)) {
+                    type = imagetypes[i].type;
+                    break;
+                }
+            }
+        }
 
-		if (pZip)
-			closezip(pZip);
-	}
-	return type;
+        if (pZip)
+            closezip(pZip);
+    }
+    return type;
 }
 
 static void MessRemoveImage(int imagenum)
 {
-	int i, j;
-	
-	for (i = 0, j = 0; i < options.image_count; i++) {
-		if ((imagenum >= 0) && (imagenum != mess_image_nums[i])) {
-			if (i != j) {
-				options.image_files[j] = options.image_files[i];
-				mess_image_nums[j] = mess_image_nums[i];
-			}
-			j++;
-		}
-		else {
-			free((char *) options.image_files[i].name);
-		}
-	}
-	options.image_count = j;
+    int i, j;
+    
+    for (i = 0, j = 0; i < options.image_count; i++) {
+        if ((imagenum >= 0) && (imagenum != mess_image_nums[i])) {
+            if (i != j) {
+                options.image_files[j] = options.image_files[i];
+                mess_image_nums[j] = mess_image_nums[i];
+            }
+            j++;
+        }
+        else {
+            free((char *) options.image_files[i].name);
+        }
+    }
+    options.image_count = j;
 }
 
 static void MessAddImage(int imagenum)
 {
-	char *filename;
-	mess_image_type imagetypes[64];
+    char *filename;
+    mess_image_type imagetypes[64];
 
-	if (!mess_images_index || (imagenum >= mess_images_count))
-		return;
-	filename = strdup(mess_images_index[imagenum]->fullname);
-	if (!filename)
-		return;
+    if (!mess_images_index || (imagenum >= mess_images_count))
+        return;
+    filename = strdup(mess_images_index[imagenum]->fullname);
+    if (!filename)
+        return;
 
-	MessRemoveImage(imagenum);
+    MessRemoveImage(imagenum);
 
-	SetupImageTypes(imagetypes, sizeof(imagetypes) / sizeof(imagetypes[0]), TRUE, IO_END);
+    SetupImageTypes(imagetypes, sizeof(imagetypes) / sizeof(imagetypes[0]), TRUE, IO_END);
 
-	options.image_files[options.image_count].type = MessDiscoverImageType(filename, imagetypes, TRUE);
-	options.image_files[options.image_count].name = filename;
-	mess_image_nums[options.image_count++] = imagenum;
+    options.image_files[options.image_count].type = MessDiscoverImageType(filename, imagetypes, TRUE);
+    options.image_files[options.image_count].name = filename;
+    mess_image_nums[options.image_count++] = imagenum;
 }
 
 
 static BOOL MessIsImageSelected(int imagenum)
 {
-	int i;
-	for (i = 0; i < options.image_count; i++) {
-		if (imagenum == mess_image_nums[i])
-			return TRUE;
-	}
-	return FALSE;
+    int i;
+    for (i = 0; i < options.image_count; i++) {
+        if (imagenum == mess_image_nums[i])
+            return TRUE;
+    }
+    return FALSE;
 }
 
 /* ************************************************************************ */
@@ -260,7 +260,7 @@ static void ResetMessColumnDisplay(BOOL firstime)
     int         order[MESS_COLUMN_MAX];
     int         shown[MESS_COLUMN_MAX];
 
-	GetMessColumnWidths(widths);
+    GetMessColumnWidths(widths);
     GetMessColumnOrder(order);
     GetMessColumnShown(shown);
 
@@ -321,131 +321,131 @@ static void ResetMessColumnDisplay(BOOL firstime)
     else
         ListView_SetTextColor(hwndSoftware, GetListFontColor());
 
-	// Set the default software
-	MessRetrievePickerDefaults();
+    // Set the default software
+    MessRetrievePickerDefaults();
 }
 
 static void InitMessPicker()
 {
-	int order[MESS_COLUMN_MAX];
-	int shown[MESS_COLUMN_MAX];
-	int i;
+    int order[MESS_COLUMN_MAX];
+    int shown[MESS_COLUMN_MAX];
+    int i;
 
-	Header_Initialize(hwndSoftware);
+    Header_Initialize(hwndSoftware);
 
-	// Disabled column customize with old Control
-	if (oldControl)
-	{
-		for (i = 0; i < MESS_COLUMN_MAX ; i++)
-		{
-			order[i] = i;
-			shown[i] = TRUE;
-		}
-		SetMessColumnOrder(order);
-		SetMessColumnShown(shown);
-	}
+    // Disabled column customize with old Control
+    if (oldControl)
+    {
+        for (i = 0; i < MESS_COLUMN_MAX ; i++)
+        {
+            order[i] = i;
+            shown[i] = TRUE;
+        }
+        SetMessColumnOrder(order);
+        SetMessColumnShown(shown);
+    }
 
-	/* Create IconsList for ListView Control */
-	ListView_SetImageList (hwndSoftware, hSmall, LVSIL_SMALL);
-	ListView_SetImageList (hwndSoftware, hLarge, LVSIL_NORMAL);
+    /* Create IconsList for ListView Control */
+    ListView_SetImageList (hwndSoftware, hSmall, LVSIL_SMALL);
+    ListView_SetImageList (hwndSoftware, hLarge, LVSIL_NORMAL);
 
-	GetMessColumnOrder(messRealColumn);
+    GetMessColumnOrder(messRealColumn);
 
-	ResetMessColumnDisplay(TRUE);
+    ResetMessColumnDisplay(TRUE);
 
-	/* Allow selection to change the default saved game */
-	bListReady = TRUE;
+    /* Allow selection to change the default saved game */
+    bListReady = TRUE;
 }
 
 static BOOL CreateMessIcons(void)
 {
-	int i;
+    int i;
 
-	if (!mess_icon_index) {
-		mess_icon_index = malloc(sizeof(int) * game_count * IO_COUNT);
-		if (!mess_icon_index)
-			return FALSE;
-	}
+    if (!mess_icon_index) {
+        mess_icon_index = malloc(sizeof(int) * game_count * IO_COUNT);
+        if (!mess_icon_index)
+            return FALSE;
+    }
 
-	for (i = 0; i < (game_count * IO_COUNT); i++)
-		mess_icon_index[i] = 0;
+    for (i = 0; i < (game_count * IO_COUNT); i++)
+        mess_icon_index[i] = 0;
 
-	return TRUE;
+    return TRUE;
 }
 
 static int GetMessIcon(int nGame, int nSoftwareType)
 {
-	int index;
-	int nIconPos = 0;
-	HICON hIcon;
-	const struct GameDriver *drv;
-	char buffer[32];
+    int index;
+    int nIconPos = 0;
+    HICON hIcon;
+    const struct GameDriver *drv;
+    char buffer[32];
 
-	static const char *iconnames[IO_COUNT] = {
-		NULL,	/* IO_END */
-		"cart",	/* IO_CARTSLOT */
-		"flop",	/* IO_FLOPPY */
-		"hard",	/* IO_HARDDISK */
-		"cass",	/* IO_CASSETTE */
-		"prin",	/* IO_PRINTER */
-		"serl",	/* IO_SERIAL */
-		"snap",	/* IO_SNAPSHOT */
-		"quik",	/* IO_QUICKLOAD */
-		NULL,	/* IO_ALIAS */
-	};
+    static const char *iconnames[IO_COUNT] = {
+        NULL,   /* IO_END */
+        "cart", /* IO_CARTSLOT */
+        "flop", /* IO_FLOPPY */
+        "hard", /* IO_HARDDISK */
+        "cass", /* IO_CASSETTE */
+        "prin", /* IO_PRINTER */
+        "serl", /* IO_SERIAL */
+        "snap", /* IO_SNAPSHOT */
+        "quik", /* IO_QUICKLOAD */
+        NULL,   /* IO_ALIAS */
+    };
 
-	if ((nSoftwareType < IO_COUNT) && iconnames[nSoftwareType]) {
-		index = (nGame * IO_COUNT) + nSoftwareType;
+    if ((nSoftwareType < IO_COUNT) && iconnames[nSoftwareType]) {
+        index = (nGame * IO_COUNT) + nSoftwareType;
 
-		nIconPos = mess_icon_index[index];
-		if (!nIconPos) {
-			for (drv = drivers[nGame]; drv; drv = drv->clone_of) {
-				sprintf(buffer, "%s/%s", drv->name, iconnames[nSoftwareType]);
-				hIcon = LoadIconFromFile(buffer);
-				if (hIcon)
-					break;
-			}
+        nIconPos = mess_icon_index[index];
+        if (!nIconPos) {
+            for (drv = drivers[nGame]; drv; drv = drv->clone_of) {
+                sprintf(buffer, "%s/%s", drv->name, iconnames[nSoftwareType]);
+                hIcon = LoadIconFromFile(buffer);
+                if (hIcon)
+                    break;
+            }
 
-			if (hIcon) {
-				nIconPos = ImageList_AddIcon(hSmall, hIcon);
-				ImageList_AddIcon(hLarge, hIcon);
-				if (nIconPos != -1)
-					mess_icon_index[index] = nIconPos;
-			}
-		}
-	}
-	return nIconPos;
+            if (hIcon) {
+                nIconPos = ImageList_AddIcon(hSmall, hIcon);
+                ImageList_AddIcon(hLarge, hIcon);
+                if (nIconPos != -1)
+                    mess_icon_index[index] = nIconPos;
+            }
+        }
+    }
+    return nIconPos;
 }
 
 
 static int WhichMessIcon(int nItem)
 {
-	static const int nMessImageIcons[] = {
-		1, /* IO_END */
-		1, /* IO_CARTSLOT */
-		4, /* IO_FLOPPY */
-		9, /* IO_HARDDISK */
-		5, /* IO_CASSETTE */
-		8, /* IO_PRINTER */
-		6, /* IO_SERIAL */
-		7, /* IO_SNAPSHOT */
-		7, /* IO_QUICKLOAD */
-		2, /* IO_ALIAS (actually, unknowns) */
-		3  /* IO_COUNT (actually, bad files) */
-	};
+    static const int nMessImageIcons[] = {
+        1, /* IO_END */
+        1, /* IO_CARTSLOT */
+        4, /* IO_FLOPPY */
+        9, /* IO_HARDDISK */
+        5, /* IO_CASSETTE */
+        8, /* IO_PRINTER */
+        6, /* IO_SERIAL */
+        7, /* IO_SNAPSHOT */
+        7, /* IO_QUICKLOAD */
+        2, /* IO_ALIAS (actually, unknowns) */
+        3  /* IO_COUNT (actually, bad files) */
+    };
 
-	int nType;
-	int nIcon;
+    int nType;
+    int nIcon;
 
-	nType = mess_images_index[nItem]->type;
-	
-	nIcon = GetMessIcon(nTheCurrentGame, nType);
-	if (!nIcon) {
-		if (nType > (sizeof(nMessImageIcons) / sizeof(nMessImageIcons[0])))
-			nType = IO_END;
-		nIcon = nMessImageIcons[nType];
-	}
-	return nIcon;
+    nType = mess_images_index[nItem]->type;
+    
+    nIcon = GetMessIcon(nTheCurrentGame, nType);
+    if (!nIcon) {
+        if (nType > (sizeof(nMessImageIcons) / sizeof(nMessImageIcons[0])))
+            nType = IO_END;
+        nIcon = nMessImageIcons[nType];
+    }
+    return nIcon;
 }
 
 static BOOL MessPickerNotify(NMHDR *nm)
@@ -453,29 +453,29 @@ static BOOL MessPickerNotify(NMHDR *nm)
     NM_LISTVIEW *pnmv;
     static int nLastState = -1;
     static int nLastItem  = -1;
-	int i;
+    int i;
 
     switch (nm->code)
     {
-	case NM_RCLICK:
-	case NM_CLICK:
-		/* don't allow selection of blank spaces in the listview */
-		if (!PickerHitTest(hwndSoftware))
-		{
-			/* we have no current game selected */
-			return TRUE;
-		}
-		break;
+    case NM_RCLICK:
+    case NM_CLICK:
+        /* don't allow selection of blank spaces in the listview */
+        if (!PickerHitTest(hwndSoftware))
+        {
+            /* we have no current game selected */
+            return TRUE;
+        }
+        break;
 
     case NM_DBLCLK:
-		/* Check here to make sure an item was selected */
-		if (!PickerHitTest(hwndSoftware))
-		{
-			return TRUE;
-		}
-		else
-			MamePlayGame();
-		return TRUE;
+        /* Check here to make sure an item was selected */
+        if (!PickerHitTest(hwndSoftware))
+        {
+            return TRUE;
+        }
+        else
+            MamePlayGame();
+        return TRUE;
 
     case LVN_GETDISPINFO:
         {
@@ -492,7 +492,7 @@ static BOOL MessPickerNotify(NMHDR *nm)
 
             if (pnmv->item.mask & LVIF_TEXT)
             {
-				pnmv->item.pszText = (char *) mess_images_index[pnmv->item.lParam]->name;
+                pnmv->item.pszText = (char *) mess_images_index[pnmv->item.lParam]->name;
             }
         }
         return TRUE;
@@ -506,17 +506,17 @@ static BOOL MessPickerNotify(NMHDR *nm)
             if (pnmv->lParam != -1) {
                 nLastItem = pnmv->lParam;
 
-				if ((GetKeyState(VK_SHIFT) & 0xff00) == 0) {
-					/* We are about to clear all images.  We have to go through
-					 * and tell the other items to update */
-					for (i = 0; i < options.image_count; i++) {
-						int imagenum = mess_image_nums[i];
-						mess_image_nums[i] = -1;
-						ListView_Update(hwndSoftware, imagenum);
-					}
-					MessRemoveImage(-1);
-				}
-			}
+                if ((GetKeyState(VK_SHIFT) & 0xff00) == 0) {
+                    /* We are about to clear all images.  We have to go through
+                     * and tell the other items to update */
+                    for (i = 0; i < options.image_count; i++) {
+                        int imagenum = mess_image_nums[i];
+                        mess_image_nums[i] = -1;
+                        ListView_Update(hwndSoftware, imagenum);
+                    }
+                    MessRemoveImage(-1);
+                }
+            }
             /* leaving item */
             /* printf("leaving %s\n",drivers[pnmv->lParam]->name); */
         }
@@ -524,9 +524,9 @@ static BOOL MessPickerNotify(NMHDR *nm)
         if (!(pnmv->uOldState & LVIS_SELECTED) 
             && (pnmv->uNewState & LVIS_SELECTED))
         {
-			/* entering item */
-			MessAddImage(pnmv->lParam);
-		}
+            /* entering item */
+            MessAddImage(pnmv->lParam);
+        }
         return TRUE;
     }
     return FALSE;
@@ -534,269 +534,271 @@ static BOOL MessPickerNotify(NMHDR *nm)
 
 int DECL_SPEC CmpImageDataPtr(const void *elem1, const void *elem2)
 {
-	const ImageData *img1 = *((const ImageData **) elem1);
-	const ImageData *img2 = *((const ImageData **) elem2);
+    const ImageData *img1 = *((const ImageData **) elem1);
+    const ImageData *img2 = *((const ImageData **) elem2);
 
-	return stricmp(img1->name, img2->name);
+    return stricmp(img1->name, img2->name);
 }
 
 static BOOL AppendNewImage(const char *fullname, BOOL bReadZip, ImageData ***listend, mess_image_type *imagetypes)
 {
-	int type;
-	char *separator_pos;
-	ImageData *newimg;
+    int type;
+    char *separator_pos;
+    ImageData *newimg;
 
-	type = MessDiscoverImageType(fullname, imagetypes, bReadZip);
-	if (type == IO_COUNT)
-		return FALSE; /* Unknown type of software */
+    type = MessDiscoverImageType(fullname, imagetypes, bReadZip);
+    if (type == IO_COUNT)
+        return FALSE; /* Unknown type of software */
 
-	newimg = malloc(sizeof(ImageData));
-	if (!newimg)
-		return FALSE;
+    newimg = malloc(sizeof(ImageData));
+    if (!newimg)
+        return FALSE;
 
-	newimg->fullname = strdup(fullname);
-	if (!newimg) {
-		free(newimg);
-		return FALSE;
-	}
+    newimg->fullname = strdup(fullname);
+    if (!newimg->fullname) {
+        free(newimg);
+        return FALSE;
+    }
 
-	separator_pos = strrchr(newimg->fullname, '\\');
+    separator_pos = strrchr(newimg->fullname, '\\');
 
-	newimg->name = separator_pos ? (separator_pos+1) : newimg->fullname;
-	newimg->next = NULL;
-	newimg->type = type;
-	**listend = newimg;
-	*listend = &newimg->next;
-	return TRUE;
+    newimg->name = separator_pos ? (separator_pos+1) : newimg->fullname;
+    newimg->next = NULL;
+    newimg->type = type;
+    **listend = newimg;
+    *listend = &newimg->next;
+    return TRUE;
 }
 
 static void AddImagesFromDirectory(const char *dir, BOOL bRecurse, char *buffer, size_t buffersz, ImageData ***listend)
 {
-	void *d;
-	int is_dir;
-	size_t pathlen;
-	mess_image_type imagetypes[64];
+    void *d;
+    int is_dir;
+    size_t pathlen;
+    mess_image_type imagetypes[64];
 
-	SetupImageTypes(imagetypes, sizeof(imagetypes) / sizeof(imagetypes[0]), FALSE, IO_END);
+    SetupImageTypes(imagetypes, sizeof(imagetypes) / sizeof(imagetypes[0]), FALSE, IO_END);
 
-	d = osd_dir_open(dir, "*.*");	
-	if (d) {
-		osd_change_directory(dir);
+    d = osd_dir_open(dir, "*.*");   
+    if (d) {
+        osd_change_directory(dir);
 
-		strncpyz(buffer, osd_get_cwd(), buffersz);
-		pathlen = strlen(buffer);
+        strncpyz(buffer, osd_get_cwd(), buffersz);
+        pathlen = strlen(buffer);
 
-		while(osd_dir_get_entry(d, buffer + pathlen, buffersz - pathlen, &is_dir)) {
-			if (!is_dir) {
-				/* Not a directory */
-				if (AppendNewImage(buffer, FALSE, listend, imagetypes))
-					mess_images_count++;
-			}
-			else if (bRecurse && strcmp(buffer + pathlen, ".") && strcmp(buffer + pathlen, "..")) {
-				AddImagesFromDirectory(buffer + pathlen, bRecurse, buffer, buffersz, listend);
-				osd_change_directory("..");
+        while(osd_dir_get_entry(d, buffer + pathlen, buffersz - pathlen, &is_dir)) {
+            if (!is_dir) {
+                /* Not a directory */
+                if (AppendNewImage(buffer, FALSE, listend, imagetypes))
+                    mess_images_count++;
+            }
+            else if (bRecurse && strcmp(buffer + pathlen, ".") && strcmp(buffer + pathlen, "..")) {
+                AddImagesFromDirectory(buffer + pathlen, bRecurse, buffer, buffersz, listend);
+                osd_change_directory("..");
 
-				strncpyz(buffer, osd_get_cwd(), buffersz);
-				pathlen = strlen(buffer);
-			}
-		}
-		osd_dir_close(d);
-	}
+                strncpyz(buffer, osd_get_cwd(), buffersz);
+                pathlen = strlen(buffer);
+            }
+        }
+        osd_dir_close(d);
+    }
 }
 
 static void MessInsertPickerItem(int i)
 {
-	LV_ITEM lvi;
+    LV_ITEM lvi;
 
-	lvi.mask = LVIF_TEXT | LVIF_IMAGE | LVIF_PARAM; 
-	lvi.stateMask = 0;
-	lvi.iItem    = i;
-	lvi.iSubItem = 0; 
-	lvi.lParam   = i;
-	// Do not set listview to LVS_SORTASCENDING or LVS_SORTDESCENDING
-	lvi.pszText  = LPSTR_TEXTCALLBACK;
-	lvi.iImage   = I_IMAGECALLBACK;
-	ListView_InsertItem(hwndSoftware,&lvi);
+    lvi.mask = LVIF_TEXT | LVIF_IMAGE | LVIF_PARAM; 
+    lvi.stateMask = 0;
+    lvi.iItem    = i;
+    lvi.iSubItem = 0; 
+    lvi.lParam   = i;
+    // Do not set listview to LVS_SORTASCENDING or LVS_SORTDESCENDING
+    lvi.pszText  = LPSTR_TEXTCALLBACK;
+    lvi.iImage   = I_IMAGECALLBACK;
+    ListView_InsertItem(hwndSoftware,&lvi);
 }
 
 static void FillSoftwareList(int nGame)
 {
-	int i;
-	ImageData *imgd;
-	ImageData **pimgd;
-	const char *extrapaths;
-	char *olddir;
-	char *s;
-	char buffer[2000];
+    int i;
+    ImageData *imgd;
+    ImageData **pimgd;
+    const char *extrapaths;
+    char *olddir;
+    char *s;
+    char buffer[2000];
 
-	/* This fixes any changes the file manager may have introduced */
-	resetdir();
+    /* This fixes any changes the file manager may have introduced */
+    resetdir();
 
-	nTheCurrentGame = nGame;
+    nTheCurrentGame = nGame;
 
-	/* Remove any currently selected images */
-	MessRemoveImage(-1);
+    /* Remove any currently selected images */
+    MessRemoveImage(-1);
 
-	/* Free the list */
-	if (mess_images_index)
-		free(mess_images_index);
-	imgd = mess_images;
-	while(imgd) {
-		ImageData *next = imgd->next;
-		if (imgd->name)
-			free(imgd->fullname);
-		free(imgd);
-		imgd = next;
-	}
-	mess_images = NULL;
+    /* Free the list */
+    if (mess_images_index)
+        free(mess_images_index);
+    imgd = mess_images;
+    while(imgd) {
+        ImageData *next = imgd->next;
+        if (imgd->name)
+            free(imgd->name);
+        if (imgd->fullname)
+            free(imgd->fullname);
+        free(imgd);
+        imgd = next;
+    }
+    mess_images = NULL;
 
-	/* Now build the linked list */
-	mess_images_count = 0;
-	pimgd = &mess_images;
-	olddir = strdup(osd_get_cwd());
-	if (olddir) {
-		/* Global paths */
-		for (i = 0; i < GetMessSoftwarePathCount(); i++) {
-			const char *dir = GetMessSoftwarePath(i);
-			const struct GameDriver *drv = drivers[nGame];
+    /* Now build the linked list */
+    mess_images_count = 0;
+    pimgd = &mess_images;
+    olddir = strdup(osd_get_cwd());
+    if (olddir) {
+        /* Global paths */
+        for (i = 0; i < GetMessSoftwarePathCount(); i++) {
+            const char *dir = GetMessSoftwarePath(i);
+            const struct GameDriver *drv = drivers[nGame];
 
-			while(drv) {
-				osd_change_directory(dir);
-				AddImagesFromDirectory(drv->name, TRUE, buffer, sizeof(buffer), &pimgd);
-				osd_change_directory(olddir);
-				drv = drv->clone_of;
-			}
-		}
+            while(drv) {
+                osd_change_directory(dir);
+                AddImagesFromDirectory(drv->name, TRUE, buffer, sizeof(buffer), &pimgd);
+                osd_change_directory(olddir);
+                drv = drv->clone_of;
+            }
+        }
 
-		/* Game-specific paths */
-		extrapaths = GetGameOptions(nGame)->extra_software_paths;
-		while(extrapaths && *extrapaths) {
-			s = strchr(extrapaths, ';');
-			if (s)
-				*s = '\0';
+        /* Game-specific paths */
+        extrapaths = GetGameOptions(nGame)->extra_software_paths;
+        while(extrapaths && *extrapaths) {
+            s = strchr(extrapaths, ';');
+            if (s)
+                *s = '\0';
 
-			AddImagesFromDirectory(extrapaths, TRUE, buffer, sizeof(buffer), &pimgd);
+            AddImagesFromDirectory(extrapaths, TRUE, buffer, sizeof(buffer), &pimgd);
 
-			if (s) {
-				*s = ';';
-				extrapaths = s + 1;
-			}
-			else {
-				extrapaths = NULL;
-			}
-		}
+            if (s) {
+                *s = ';';
+                extrapaths = s + 1;
+            }
+            else {
+                extrapaths = NULL;
+            }
+        }
 
-		free(olddir);
-	}
+        free(olddir);
+    }
 
-	if (mess_images_count) {
-		mess_images_index = (ImageData **) malloc(sizeof(ImageData *) * mess_images_count);
-		if (mess_images_index) {
-			imgd = mess_images;
-			for (i = 0; i < mess_images_count; i++) {
-				mess_images_index[i] = imgd;
-				imgd = imgd->next;
-			}
-		}
-		else {
-			mess_images_count = 0;
-		}
-	}
-	else {
-		mess_images_index = NULL;
-	}
+    if (mess_images_count) {
+        mess_images_index = (ImageData **) malloc(sizeof(ImageData *) * mess_images_count);
+        if (mess_images_index) {
+            imgd = mess_images;
+            for (i = 0; i < mess_images_count; i++) {
+                mess_images_index[i] = imgd;
+                imgd = imgd->next;
+            }
+        }
+        else {
+            mess_images_count = 0;
+        }
+    }
+    else {
+        mess_images_index = NULL;
+    }
 
-	ListView_DeleteAllItems(hwndSoftware);
-	ListView_SetItemCount(hwndSoftware, mess_images_count);
+    ListView_DeleteAllItems(hwndSoftware);
+    ListView_SetItemCount(hwndSoftware, mess_images_count);
 
-	for (i = 0; i < mess_images_count; i++) {
-		MessInsertPickerItem(i);
-	}
-	mess_idle_work = TRUE;
-	nIdleImageNum = 0;
-	qsort(mess_images_index, mess_images_count, sizeof(ImageData *), CmpImageDataPtr);
+    for (i = 0; i < mess_images_count; i++) {
+        MessInsertPickerItem(i);
+    }
+    mess_idle_work = TRUE;
+    nIdleImageNum = 0;
+    qsort(mess_images_index, mess_images_count, sizeof(ImageData *), CmpImageDataPtr);
 }
 
 static void MessUpdateSoftwareList(void)
 {
-	FillSoftwareList(nTheCurrentGame);
+    FillSoftwareList(nTheCurrentGame);
 }
 
 static int MessLookupByFilename(const char *filename)
 {
-	int i;
+    int i;
 
-	for (i = 0; i < mess_images_count; i++) {
-		if (!strcmp(filename, mess_images_index[i]->fullname))
-			return i;
-	}
-	return -1;
+    for (i = 0; i < mess_images_count; i++) {
+        if (!strcmp(filename, mess_images_index[i]->fullname))
+            return i;
+    }
+    return -1;
 }
 
 static void MessSetPickerDefaults(void)
 {
-	int i;
-	size_t nDefaultSize = 0;
-	char *default_software = NULL;
-	char *s;
+    int i;
+    size_t nDefaultSize = 0;
+    char *default_software = NULL;
+    char *s;
 
-	for (i = 0; i < options.image_count; i++)
-		nDefaultSize += strlen(options.image_files[i].name) + 1;
-	
-	if (nDefaultSize) {
-		default_software = malloc(nDefaultSize);
-		if (default_software) {
-			s = NULL;
-			for (i = 0; i < options.image_count; i++) {
-				if (s)
-					*(s++) = '|';
-				else
-					s = default_software;
-				strcpy(s, options.image_files[i].name);
-				s += strlen(s);
-			}
-		}
-	}
+    for (i = 0; i < options.image_count; i++)
+        nDefaultSize += strlen(options.image_files[i].name) + 1;
+    
+    if (nDefaultSize) {
+        default_software = malloc(nDefaultSize);
+        if (default_software) {
+            s = NULL;
+            for (i = 0; i < options.image_count; i++) {
+                if (s)
+                    *(s++) = '|';
+                else
+                    s = default_software;
+                strcpy(s, options.image_files[i].name);
+                s += strlen(s);
+            }
+        }
+    }
 
-	SetDefaultSoftware(default_software);
+    SetDefaultSoftware(default_software);
 
-	if (default_software)
-		free(default_software);
+    if (default_software)
+        free(default_software);
 }
 
 static void MessRetrievePickerDefaults(void)
 {
-	char *default_software = strdup(GetDefaultSoftware());
-	char *this_software;
-	char *s;
-	int i;
+    char *default_software = strdup(GetDefaultSoftware());
+    char *this_software;
+    char *s;
+    int i;
 
-	if (!default_software)
-		return;
+    if (!default_software)
+        return;
 
-	this_software = default_software;
-	while(this_software && *this_software) {
-		s = strchr(this_software, '|');
-		if (s)
-			*(s++) = '\0';
-		else
-			s = NULL;
+    this_software = default_software;
+    while(this_software && *this_software) {
+        s = strchr(this_software, '|');
+        if (s)
+            *(s++) = '\0';
+        else
+            s = NULL;
 
-		i = MessLookupByFilename(this_software);
-		if (i >= 0) {
-			if (this_software == default_software) {
-				ListView_SetItemState(hwndSoftware, i, LVIS_FOCUSED | LVIS_SELECTED, LVIS_FOCUSED | LVIS_SELECTED);
-				ListView_EnsureVisible(hwndSoftware, i, FALSE);
-			}
-			else {
-				ListView_SetItemState(hwndSoftware, i, LVIS_SELECTED, LVIS_SELECTED);
-			}
-		}
+        i = MessLookupByFilename(this_software);
+        if (i >= 0) {
+            if (this_software == default_software) {
+                ListView_SetItemState(hwndSoftware, i, LVIS_FOCUSED | LVIS_SELECTED, LVIS_FOCUSED | LVIS_SELECTED);
+                ListView_EnsureVisible(hwndSoftware, i, FALSE);
+            }
+            else {
+                ListView_SetItemState(hwndSoftware, i, LVIS_SELECTED, LVIS_SELECTED);
+            }
+        }
 
-		this_software = s;
-	}
+        this_software = s;
+    }
 
-	free(default_software);
+    free(default_software);
 }
 
 static void DrawMessItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
@@ -869,12 +871,12 @@ static void DrawMessItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
     strcpy(szBuff, lvi.pszText);
 
 
-	bSelected = mess_images_count
-		&& ((bFocus) || (GetWindowLong(hwndSoftware, GWL_STYLE) & LVS_SHOWSELALWAYS))
-		&& MessIsImageSelected(nItem);
+    bSelected = mess_images_count
+        && ((bFocus) || (GetWindowLong(hwndSoftware, GWL_STYLE) & LVS_SHOWSELALWAYS))
+        && MessIsImageSelected(nItem);
 
 //    bSelected = mess_images_count && (((lvi.state & LVIS_DROPHILITED) || ( (lvi.state & LVIS_SELECTED)
-//		&& ((bFocus) || (GetWindowLong(hwndSoftware, GWL_STYLE) & LVS_SHOWSELALWAYS)))));
+//      && ((bFocus) || (GetWindowLong(hwndSoftware, GWL_STYLE) & LVS_SHOWSELALWAYS)))));
 
     ListView_GetItemRect(hwndSoftware, nItem, &rcAllLabels, LVIR_BOUNDS);
 
@@ -965,8 +967,8 @@ static void DrawMessItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
         DeleteObject(hBrush);
     }
 
-	if (mess_images_count == 0)
-		return;
+    if (mess_images_count == 0)
+        return;
 
     if(lvi.state & LVIS_CUT)
     {
@@ -1081,98 +1083,98 @@ static void DrawMessItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 
 static void OnMessIdle()
 {
-	static mess_image_type imagetypes[64];
-	ImageData *pImageData;
-	int i;
+    static mess_image_type imagetypes[64];
+    ImageData *pImageData;
+    int i;
 
-	if (nIdleImageNum == 0)
-		SetupImageTypes(imagetypes, sizeof(imagetypes) / sizeof(imagetypes[0]), TRUE, IO_END);
+    if (nIdleImageNum == 0)
+        SetupImageTypes(imagetypes, sizeof(imagetypes) / sizeof(imagetypes[0]), TRUE, IO_END);
 
-	for (i = 0; (i < 10) && (nIdleImageNum < mess_images_count); i++) {
-		pImageData = mess_images_index[nIdleImageNum];
+    for (i = 0; (i < 10) && (nIdleImageNum < mess_images_count); i++) {
+        pImageData = mess_images_index[nIdleImageNum];
 
-		if (pImageData->type == IO_ALIAS) {
-			pImageData->type = MessDiscoverImageType(pImageData->fullname, imagetypes, TRUE);
-			ListView_RedrawItems(hwndSoftware,nIdleImageNum,nIdleImageNum);
-		}
-		nIdleImageNum++;
-	}
+        if (pImageData->type == IO_ALIAS) {
+            pImageData->type = MessDiscoverImageType(pImageData->fullname, imagetypes, TRUE);
+            ListView_RedrawItems(hwndSoftware,nIdleImageNum,nIdleImageNum);
+        }
+        nIdleImageNum++;
+    }
 
-	if (nIdleImageNum >= mess_images_count) {
-		mess_idle_work = FALSE;
-		nIdleImageNum = 0;
-	}
+    if (nIdleImageNum >= mess_images_count) {
+        mess_idle_work = FALSE;
+        nIdleImageNum = 0;
+    }
 }
 
 static BOOL CommonFileImageDialog(char *last_directory, common_file_dialog_proc cfd, char *filename, mess_image_type *imagetypes)
 {
     BOOL success;
     OPENFILENAME of;
-	char szFilter[2048];
-	LPSTR s;
-	int i;
+    char szFilter[2048];
+    LPSTR s;
+    int i;
 
-	static char *typenames[] = {
-		"Compressed images",	/* IO_END */
-		"Cartridge images",		/* IO_CARTSLOT */
-		"Floppy disk images",	/* IO_FLOPPY */
-		"Hard disk images",		/* IO_HARDDISK */
-		"Cassette images",		/* IO_CASSETTE */
-		"Printer output",		/* IO_PRINTER */
-		"Serial output",		/* IO_SERIAL */
-		"Snapshots",			/* IO_SNAPSHOT */
-		"Quickloads",			/* IO_QUICKLOAD */
-		NULL					/* IO_ALIAS */
-	};
+    static char *typenames[] = {
+        "Compressed images",    /* IO_END */
+        "Cartridge images",     /* IO_CARTSLOT */
+        "Floppy disk images",   /* IO_FLOPPY */
+        "Hard disk images",     /* IO_HARDDISK */
+        "Cassette images",      /* IO_CASSETTE */
+        "Printer output",       /* IO_PRINTER */
+        "Serial output",        /* IO_SERIAL */
+        "Snapshots",            /* IO_SNAPSHOT */
+        "Quickloads",           /* IO_QUICKLOAD */
+        NULL                    /* IO_ALIAS */
+    };
 
-	s = szFilter;
-	*filename = 0;
+    s = szFilter;
+    *filename = 0;
 
-	// Common image types
-	strcpy(s, "Common image types");
-	s += strlen(s) + 1;
-	for (i = 0; imagetypes[i].ext; i++) {
-		*(s++) = '*';
-		*(s++) = '.';
-		strcpy(s, imagetypes[i].ext);
-		s += strlen(s);
-		*(s++) = ';';
-	}
-	*(s++) = '\0';
+    // Common image types
+    strcpy(s, "Common image types");
+    s += strlen(s) + 1;
+    for (i = 0; imagetypes[i].ext; i++) {
+        *(s++) = '*';
+        *(s++) = '.';
+        strcpy(s, imagetypes[i].ext);
+        s += strlen(s);
+        *(s++) = ';';
+    }
+    *(s++) = '\0';
 
-	// All files
-	strcpy(s, "All files (*.*)");
-	s += strlen(s) + 1;
-	strcpy(s, "*.*");
-	s += strlen(s) + 1;
+    // All files
+    strcpy(s, "All files (*.*)");
+    s += strlen(s) + 1;
+    strcpy(s, "*.*");
+    s += strlen(s) + 1;
  
-	// The others
-	for (i = 0; imagetypes[i].ext; i++) {
-		assert(imagetypes[i].type < (sizeof(typenames) / sizeof(typenames[0])));
-		assert(typenames[imagetypes[i].type]);
+    // The others
+    for (i = 0; imagetypes[i].ext; i++) {
+        assert(imagetypes[i].type < (sizeof(typenames) / sizeof(typenames[0])));
+        assert(typenames[imagetypes[i].type]);
 
-		strcpy(s, typenames[imagetypes[i].type]);
-		//strcpy(s, imagetypes[i].ext);
-		s += strlen(s);
-		strcpy(s, " (*.");
-		//strcpy(s, " files (*.");
-		s += strlen(s);
-		strcpy(s, imagetypes[i].ext);
-		s += strlen(s);
-		*(s++) = ')';
-		*(s++) = '\0';
-		*(s++) = '*';
-		*(s++) = '.';
-		strcpy(s, imagetypes[i].ext);
-		s += strlen(s);
-		*(s++) = '\0';
-	}
-	*(s++) = '\0';
+        strcpy(s, typenames[imagetypes[i].type]);
+        //strcpy(s, imagetypes[i].ext);
+        s += strlen(s);
+        strcpy(s, " (*.");
+        //strcpy(s, " files (*.");
+        s += strlen(s);
+        strcpy(s, imagetypes[i].ext);
+        s += strlen(s);
+        *(s++) = ')';
+        *(s++) = '\0';
+        *(s++) = '*';
+        *(s++) = '.';
+        strcpy(s, imagetypes[i].ext);
+        s += strlen(s);
+        *(s++) = '\0';
+    }
+    *(s++) = '\0';
 
     of.lStructSize = sizeof(of);
     of.hwndOwner = hMain;
     of.hInstance = NULL;
-	of.lpstrFilter = szFilter;
+    of.lpstrFilter = szFilter;
     of.lpstrCustomFilter = NULL;
     of.nMaxCustFilter = 0;
     of.nFilterIndex = 1;
@@ -1208,54 +1210,54 @@ static void MessSetupDevice(common_file_dialog_proc cfd, int iDevice)
     int          nOldPick = GetSelectedPickItem();
 
     HMENU           hMenu = GetMenu(hMain);
-	mess_image_type imagetypes[64];
-	ImageData       **pLastImageNext;
-	ImageData       **pOldLastImageNext;
-	ImageData		**pNewIndex;
-	int i;
+    mess_image_type imagetypes[64];
+    ImageData       **pLastImageNext;
+    ImageData       **pOldLastImageNext;
+    ImageData       **pNewIndex;
+    int i;
 
-	SetupImageTypes(imagetypes, sizeof(imagetypes) / sizeof(imagetypes[0]), TRUE, iDevice);
+    SetupImageTypes(imagetypes, sizeof(imagetypes) / sizeof(imagetypes[0]), TRUE, iDevice);
 
     if (!CommonFileImageDialog(last_directory, cfd, filename, imagetypes))
-		return;
+        return;
 
-	pLastImageNext = &mess_images;
-	while(*pLastImageNext)
-		pLastImageNext = &(*pLastImageNext)->next;
-	pOldLastImageNext = pLastImageNext;
+    pLastImageNext = &mess_images;
+    while(*pLastImageNext)
+        pLastImageNext = &(*pLastImageNext)->next;
+    pOldLastImageNext = pLastImageNext;
 
-	if (!AppendNewImage(filename, TRUE, &pLastImageNext, imagetypes))
-		goto unknownsoftware;
+    if (!AppendNewImage(filename, TRUE, &pLastImageNext, imagetypes))
+        goto unknownsoftware;
 
-	pNewIndex = (ImageData **) realloc(mess_images_index, (mess_images_count+1) * sizeof(ImageData *));
-	if (!pNewIndex)
-		goto outofmemory;
-	i = mess_images_count++;
-	pNewIndex[i] = (*pOldLastImageNext);
-	mess_images_index = pNewIndex;
+    pNewIndex = (ImageData **) realloc(mess_images_index, (mess_images_count+1) * sizeof(ImageData *));
+    if (!pNewIndex)
+        goto outofmemory;
+    i = mess_images_count++;
+    pNewIndex[i] = (*pOldLastImageNext);
+    mess_images_index = pNewIndex;
 
-	MessInsertPickerItem(i);
-	ListView_SetItemState(hwndSoftware, i, LVIS_FOCUSED | LVIS_SELECTED, LVIS_FOCUSED | LVIS_SELECTED);
-	ListView_EnsureVisible(hwndSoftware, i, FALSE);
+    MessInsertPickerItem(i);
+    ListView_SetItemState(hwndSoftware, i, LVIS_FOCUSED | LVIS_SELECTED, LVIS_FOCUSED | LVIS_SELECTED);
+    ListView_EnsureVisible(hwndSoftware, i, FALSE);
 
-	return;
+    return;
 
 unknownsoftware:
-	MessageBoxA(NULL, "Unknown type of software", MAME32NAME, MB_OK);
-	return;
+    MessageBoxA(NULL, "Unknown type of software", MAME32NAME, MB_OK);
+    return;
 
 outofmemory:
-	MessageBoxA(NULL, "Out of memory", MAME32NAME, MB_OK);
-	return;
+    MessageBoxA(NULL, "Out of memory", MAME32NAME, MB_OK);
+    return;
 }
 
 static void MessOpenOtherSoftware(int iDevice)
 {
-	MessSetupDevice(GetOpenFileName, iDevice);
+    MessSetupDevice(GetOpenFileName, iDevice);
 }
 
 static void MessCreateDevice(int iDevice)
 {
-	MessSetupDevice(GetSaveFileName, iDevice);
+    MessSetupDevice(GetSaveFileName, iDevice);
 }
 
