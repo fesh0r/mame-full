@@ -88,4 +88,7 @@ void msm8251_receive_clock(void);
 
 
 void msm8251_connect_to_serial_device(mess_image *image);
+
+void msm8251_connect(struct serial_connection *other_connection);
+
 #endif

@@ -594,3 +594,9 @@ void msm8251_connect_to_serial_device(mess_image *image)
 {
 	serial_device_connect(image, &uart.connection);
 }
+
+void msm8251_connect(struct serial_connection *other_connection)
+{
+	serial_connection_link(&uart.connection, other_connection);
+}
+
