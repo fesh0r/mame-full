@@ -47,6 +47,10 @@
 	of the screen is exactly centered within the 262 line total.  I can
 	research that for you if you want an exact number for scanlines before the
 	screen starts and the scanline that the v-interrupt triggers..etc.
+
+Dragon Alpha code added 21-Nov-2004, 
+			Phill Harvey-Smith (afra@aurigae.demon.co.uk)
+
 ***************************************************************************/
 
 #include <math.h>
@@ -111,6 +115,17 @@ static void dragon64_sam_set_maptype(int val);
 static void coco3_sam_set_maptype(int val);
 static void coco_setcartline(int data);
 static void coco3_setcartline(int data);
+
+/* Dragon Alpha */
+
+static UINT8 pia2_pa;
+static UINT8 pia2_pb;
+
+static WRITE8_HANDLER ( dgnalpha_pia2_pa_w );
+static WRITE8_HANDLER ( dgnalpha_pia2_pb_w );
+static UINT8 *dgnalphabank;	/* Dragon Alpha rom bank in use */
+
+/* End Dragon Alpha */
 
 /* These sets of defines control logging.  When MAME_DEBUG is off, all logging
  * is off.  There is a different set of defines for when MAME_DEBUG is on so I
@@ -279,6 +294,32 @@ static struct pia6821_interface dragon64_pia_intf[] =
 		/*outputs: A/B,CA/B2	   */ d_pia1_pa_w, dragon64_pia1_pb_w, d_pia1_ca2_w, d_pia1_cb2_w,
 		/*irqs	 : A/B			   */ d_pia1_firq_a, d_pia1_firq_b
 	}
+};
+
+static struct pia6821_interface dgnalpha_pia_intf[] =
+{
+	/* PIA 0 and 1 as Dragon 64 */
+	/* PIA 0 */
+	{
+		/*inputs : A/B,CA/B1,CA/B2 */ d_pia0_pa_r, 0, 0, 0, 0, 0,
+		/*outputs: A/B,CA/B2	   */ d_pia0_pa_w, d_pia0_pb_w, d_pia0_ca2_w, d_pia0_cb2_w,
+		/*irqs	 : A/B			   */ d_pia0_irq_a, d_pia0_irq_b
+	},
+
+	/* PIA 1 */
+	{
+		/*inputs : A/B,CA/B1,CA/B2 */ d_pia1_pa_r, d_pia1_pb_r_coco, 0, 0, 0, 0,
+		/*outputs: A/B,CA/B2	   */ d_pia1_pa_w, d_pia1_pb_w, d_pia1_ca2_w, d_pia1_cb2_w,
+		/*irqs	 : A/B			   */ d_pia1_firq_a, d_pia1_firq_b
+	},
+
+	/* PIA 2 */
+	{
+		/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
+		/*outputs: A/B,CA/B2	   */ dgnalpha_pia2_pa_w,dgnalpha_pia2_pb_w, 0,0,
+		/*irqs	 : A/B	   		   */ /*d_pia2_firq_a, d_pia2_firq_b*/ 0,0
+	}
+
 };
 
 static struct sam6883_interface coco_sam_intf =
@@ -1231,6 +1272,54 @@ static WRITE8_HANDLER( dragon64_pia1_pb_w )
 	dragon64_sethipage(DRAGON64_PIAMAP, data & 0x04);
 }
 
+
+/***************************************************************************
+  PIA2 ($FF24-$FF28) on Daragon Alpha/Professional
+
+	PIA2 PA0		bcdir to AY-8912
+	PIA2 PA1		bc0	to AY-8912
+	PIA2 PA2		Rom switch, 0=basic rom, 1=boot rom.
+	PIA2 PA3-PA7	Unknown/unused ?
+	PIA2 PB0-PB7	connected to D0..7 of the AY8912.
+	CB1				DRQ from WD2797 disk controler.
+***************************************************************************/
+  
+static void dgnalpha_page_rom(int romswitch);
+
+static WRITE8_HANDLER( dgnalpha_pia2_pa_w )
+{
+	pia2_pa = data;
+
+	/* If bit 2 of the pia ddr is 1 then this pin is an output so use it */
+	/* to control the paging of the boot and basic roms */
+	/* Otherwise it set as an input, with an internal pull-up so it should */
+	/* always be high (enabling boot rom) */
+	if(pia_get_ddr_a(2) & 0x04)
+	{
+		dgnalpha_page_rom(data & 0x04);	/* bit 2 controls boot or basic rom */
+	}
+}
+
+static WRITE8_HANDLER( dgnalpha_pia2_pb_w )
+{
+	pia2_pb = data;
+}
+
+static void dgnalpha_page_rom(int	romswitch)
+{
+	UINT8 *bank;
+	
+	if(romswitch) 
+		bank = coco_rom;			/* This is the boot rom */
+	else
+		bank = coco_rom + 0x8000;	/* This is the basic rom */
+	
+	dgnalphabank = bank;			/* Record which rom we are using so that the irq routine */
+									/* uses the vectors from the correct rom ! */
+	
+	cpu_setbank(2,bank);
+}
+
 static WRITE8_HANDLER( coco3_pia1_pb_w )
 {
 	d_pia1_pb_w(0, data);
@@ -1289,6 +1378,11 @@ static  READ8_HANDLER ( d_pia1_pb_r_coco2 )
  READ8_HANDLER(dragon_mapped_irq_r)
 {
 	return coco_rom[0x3ff0 + offset];
+}
+
+READ8_HANDLER(dragon_alpha_mapped_irq_r)
+{
+	return dgnalphabank[0x3ff0 + offset];
 }
 
  READ8_HANDLER(coco3_mapped_irq_r)
@@ -2127,6 +2221,9 @@ static void generic_init_machine(struct pia6821_interface *piaintf, struct sam68
 
 	coco_rom = memory_region(REGION_CPU1);
 
+	/* Setup Dragon Alpha default bank */
+	dgnalphabank = coco_rom;
+
 	cart_line = CARTLINE_CLEAR;
 	pia0_irq_a = CLEAR_LINE;
 	pia0_irq_b = CLEAR_LINE;
@@ -2139,6 +2236,7 @@ static void generic_init_machine(struct pia6821_interface *piaintf, struct sam68
 
 	pia_config(0, PIA_STANDARD_ORDERING | PIA_8BIT, &piaintf[0]);
 	pia_config(1, PIA_STANDARD_ORDERING | PIA_8BIT, &piaintf[1]);
+	pia_config(2, PIA_STANDARD_ORDERING | PIA_8BIT, &piaintf[2]); /* Dragon Alpha 3rd pia */
 	pia_reset();
 
 	sam_config(samintf);
@@ -2165,6 +2263,15 @@ MACHINE_INIT( dragon64 )
 	cpu_setbank(1, &mess_ram[0]);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x7fff, 0, 0, coco_ram_w);
 	generic_init_machine(dragon64_pia_intf, &dragon64_sam_intf, &cartridge_fdc_dragon, &coco_cartcallbacks, d_recalc_interrupts);
+	acia_6551_init();
+	dragon64_sethipage(DRAGON64_ALL, 0);
+}
+
+MACHINE_INIT( dgnalpha )
+{
+	cpu_setbank(1, &mess_ram[0]);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x7fff, 0, 0, coco_ram_w);
+	generic_init_machine(dgnalpha_pia_intf, &dragon64_sam_intf, &cartridge_fdc_dragon, &coco_cartcallbacks, d_recalc_interrupts);
 	acia_6551_init();
 	dragon64_sethipage(DRAGON64_ALL, 0);
 }

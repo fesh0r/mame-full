@@ -93,6 +93,65 @@ static ADDRESS_MAP_START( d64_map, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 
+/* 
+	The Dragon Alpha was a prototype in development when Dragon Data went bust, it is basically an
+ 	enhanced Dragon 64, with built in modem, disk system, and graphical boot rom.
+
+	It has the following extra hardware :-
+	A third 6821 PIA mapped between FF24 and FF27
+		An AY-8912, connected to the PIA.
+		
+	Port A of the PIA is connected as follows :-
+	
+		b0	BDIR of AY8912
+		b1	BC1 of AY8912
+		b2 	Rom select, High= boot rom, low=BASIC rom
+		b3..7 not used.
+		
+	Port B
+		b0..7 connected to D0..7 of the AY8912.
+		
+	CB1 DRQ of WD2797.
+
+	/irqa
+	/irqb	both connected to 6809 FIRQ.
+		
+	
+	The analog outputs of the AY-8912 are connected to the standard sound multiplexer.
+	The AY8912 output port is used as follows :-
+	
+		b0..b3	/DS0../DS3 for the drive interface (through an inverter first).
+		b4		/motor for the drive interface (through an inverter first).
+		b5..b7	not used as far as I can tell.
+	
+	A 6850 for the modem.
+	
+	A WD2797, used as an internal disk interface, this is however connected in a slightly strange
+	way that I am yet to completely determine.
+	19/10/2004, WD2797 is mapped between FF2C and FF2F, however the order of the registers is
+	reversed so the command Register is at the highest address instead of the lowest. The Data 
+	request pin is connected to CB1(pin 18) of PIA2, to cause an firq, the INTRQ, is connected via
+	an inverter to the 6809's NMI.
+	
+	All these are as yet un-emulated.
+*/
+
+
+static ADDRESS_MAP_START( dgnalpha_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff)	AM_READWRITE(MRA8_BANK1,			MWA8_BANK1)
+	AM_RANGE(0x8000, 0xbfff)	AM_READWRITE(MRA8_BANK2,			MWA8_BANK2)
+	AM_RANGE(0xc000, 0xfeff)	AM_READWRITE(MRA8_BANK3,			MWA8_BANK3)
+	AM_RANGE(0xff00, 0xff03)	AM_READWRITE(pia_0_r,				pia_0_w)	
+	AM_RANGE(0xff04, 0xff07)	AM_READWRITE(acia_6551_r,			acia_6551_w)	
+	AM_RANGE(0xff20, 0xff23)	AM_READWRITE(coco_pia_1_r,			pia_1_w)
+	AM_RANGE(0xff24, 0xff27)	AM_READWRITE(pia_2_r,			pia_2_w) 	/* Third PIA on Dragon Alpha */
+	AM_RANGE(0xff40, 0xff8f)	AM_READWRITE(coco_cartridge_r,		coco_cartridge_w)
+	AM_RANGE(0xff90, 0xffbf)	AM_READWRITE(MRA8_NOP,				MWA8_NOP)
+	AM_RANGE(0xffc0, 0xffdf)	AM_READWRITE(MRA8_NOP,				sam_w)
+	AM_RANGE(0xffe0, 0xffef)	AM_READWRITE(MRA8_NOP,				MWA8_NOP)
+	AM_RANGE(0xfff0, 0xffff)	AM_READWRITE(dragon_alpha_mapped_irq_r,	MWA8_NOP)
+ADDRESS_MAP_END
+
 
 /* Dragon keyboard
 
@@ -467,6 +526,25 @@ static MACHINE_DRIVER_START( dragon64 )
 	MDRV_SOUND_ADD(WAVE, d_wave_interface)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( dgnalpha )
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", M6809E, COCO_CPU_SPEED_HZ)        /* 0,894886 Mhz */
+	MDRV_CPU_PROGRAM_MAP(dgnalpha_map, 0)
+	MDRV_CPU_VBLANK_INT(m6847_vh_interrupt, M6847_INTERRUPTS_PER_FRAME)
+	MDRV_FRAMES_PER_SECOND(COCO_FRAMES_PER_SECOND)
+	MDRV_VBLANK_DURATION(0)
+
+	MDRV_MACHINE_INIT( dgnalpha )
+	MDRV_MACHINE_STOP( coco )
+
+	/* video hardware */
+	MDRV_M6847_PAL( dragon )
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(DAC, d_dac_interface)
+	MDRV_SOUND_ADD(WAVE, d_wave_interface)
+MACHINE_DRIVER_END
+
 static MACHINE_DRIVER_START( coco )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M6809E, COCO_CPU_SPEED_HZ)        /* 0,894886 Mhz */
@@ -573,6 +651,13 @@ ROM_START(dragon64)
 	ROM_REGION(0xC000,REGION_CPU1,0)
 	ROM_LOAD(           "d64_1.rom",    0x0000,  0x4000, CRC(60a4634c) SHA1(f119506eaa3b4b70b9aa0dd83761e8cbe043d042))
 	ROM_LOAD(           "d64_2.rom",    0x8000,  0x4000, CRC(17893a42) SHA1(e3c8986bb1d44269c4587b04f1ca27a70b0aaa2e))
+	ROM_LOAD_OPTIONAL(  "ddos10.rom",   0x4000,  0x2000, CRC(b44536f6) SHA1(a8918c71d319237c1e3155bb38620acb114a80bc))
+ROM_END
+
+ROM_START(dgnalpha)
+	ROM_REGION(0xC000,REGION_CPU1,0)
+	ROM_LOAD(           "alpha_bt.rom",    0x2000,  0x2000, CRC(c3dab585) SHA1(4a5851aa66eb426e9bb0bba196f1e02d48156068))
+	ROM_LOAD(           "alpha_ba.rom",    0x8000,  0x4000, CRC(84f68bf9) SHA1(1983b4fb398e3dd9668d424c666c5a0b3f1e2b69))
 	ROM_LOAD_OPTIONAL(  "ddos10.rom",   0x4000,  0x2000, CRC(b44536f6) SHA1(a8918c71d319237c1e3155bb38620acb114a80bc))
 ROM_END
 
@@ -807,6 +892,11 @@ SYSTEM_CONFIG_START(dragon64)
 	CONFIG_RAM_DEFAULT	(64 * 1024)
 SYSTEM_CONFIG_END
 
+SYSTEM_CONFIG_START(dgnalpha)
+	CONFIG_IMPORT_FROM	( generic_coco12 )
+	CONFIG_RAM_DEFAULT	(64 * 1024)
+SYSTEM_CONFIG_END
+
 /*     YEAR		NAME		PARENT	COMPAT	MACHINE    INPUT		INIT     CONFIG	COMPANY					FULLNAME */
 COMP(  1980,	coco,		0,		0,		coco,		coco,		coco,	coco,		"Tandy Radio Shack",	"Color Computer" )
 COMP(  1981,	cocoe,		coco,	0,		coco,		coco,		coco,	coco,		"Tandy Radio Shack",	"Color Computer (Extended BASIC 1.0)" )
@@ -817,4 +907,5 @@ COMP(  1986,	coco3p,		coco, 	0,		coco3,		coco3,		coco,	coco3,		"Tandy Radio Shac
 COMPX( 19??,	coco3h,		coco,	0,		coco3h,		coco3,		coco,	coco3,		"Tandy Radio Shack",	"Color Computer 3 (NTSC; HD6309)", GAME_COMPUTER_MODIFIED)
 COMP(  1982,	dragon32,	coco,	0,		dragon32,	dragon32,	coco,	dragon32,	"Dragon Data Ltd",    "Dragon 32" )
 COMP(  1983,	dragon64,	coco,	0,		dragon64,	dragon32,	coco,	dragon64,	"Dragon Data Ltd",    "Dragon 64" )
+COMP(  1984,	dgnalpha,	coco,	0,		dgnalpha,	dragon32,	coco,	dgnalpha,	"Dragon Data Ltd",    "Dragon Alpha Prototype" )
 COMP(  1984,	cp400,		coco, 	0,		coco,		coco,		coco,	coco,		"Prologica",          "CP400" )

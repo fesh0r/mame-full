@@ -560,8 +560,9 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 			*/
 	DRIVER( coco3 ) 	/* Color Computer 3 (NTSC)							*/
 	DRIVER( coco3p ) 	/* Color Computer 3 (PAL)							*/
 	DRIVER( coco3h )	/* Hacked Color Computer 3 (6309)					*/
-	DRIVER( dragon32 )	/* Dragon32 										*/
-	DRIVER( dragon64 )	/* Dragon64 										*/
+	DRIVER( dragon32 )	/* Dragon 32 										*/
+	DRIVER( dragon64 )	/* Dragon 64 										*/
+	DRIVER( dgnalpha )	/* Dragon Alpha 									*/
 	DRIVER( cp400 ) 	/* Prologica CP400									*/
 	DRIVER( mc10 )		/* MC-10											*/
 
