@@ -160,7 +160,7 @@ bits:		1-9			10-17		18-21		22-30		31-32
 field:		X address	D			Function	Y address	D (part 2)
 
 	Meaning of fields :
-	drum # : MSBs for the address of the X operand.  I don't know whether this feature
+	D (i.e. drum #) : MSBs for the address of the X operand.  I don't know whether this feature
 		was actually implemented, since it is said in Booth&Booth that the APE(X)C does
 		not use this feature (it had only one drum of 16 tracks at the time, hence the 9
 		address bits).
@@ -220,7 +220,7 @@ field:		X address	D			Function	Y address	D (part 2)
 	(i.e. 32 bit) boundaries.  However, it is possible to store only the n first bits or
 	n last bits of a word, leaving other bits in memory unaffected.
 
-	The LSBits are transferred first, since it allows to perform bit-per-bit add and
+	The LSBits are transferred first, since this enables to perform bit-per-bit add and
 	substract.  Otherwise, the CPU would need an additionnal register to store the second
 	operand, and it would be probably slower, since the operation could only
 	take place after all the data has been transfered.
@@ -229,7 +229,7 @@ field:		X address	D			Function	Y address	D (part 2)
 	* word clock : a pulse on each word boundary (3750rpm*32 -> 2kHz)
 	* bit clock : a pulse when a bit is present on the bus (word clock * 32 -> 64kHz)
 
-	CPU operation is synchronous with these clocks, too.  For instance, AU does bit-per-bit
+	CPU operation is synchronous with these clocks, too.  For instance, the AU does bit-per-bit
 	addition and substraction with a memory operand, synchronously with bit clock,
 	starting and stopping on word clock boundaries.  Similar thing with a Fetch operation.
 
@@ -493,9 +493,10 @@ INLINE int load_ml(int address, int vector)
 	* I do not know whether we should fetch instructions at the beginning or the end of the
 	instruction cycle.  Either solution is roughly equivalent to the other, but changes
 	the control panel operation (and I know virtually nothing on the control panel).
-	Currently, I fetch after the executing the instruction, so that the one may enter
-	an instruction into the control register with the control panel, then execute it.
-	This solution make timing simulation much simpler, too.
+	Currently, I fetch each instruction right after executing the previous instruction, so that
+	the user may enter an instruction into the control register with the control panel, then
+	execute it.
+	This solution makes timing simulation much simpler, too.
 */
 static void execute(void)
 {
