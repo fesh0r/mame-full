@@ -28,6 +28,7 @@ VPATH=src $(wildcard src/cpu/*)
 AR = @ar
 CC = @gcc
 LD = @gcc
+RM = @rm
 #ASM = @nasm
 ASM = @nasmw
 ASMFLAGS = -f coff
@@ -57,7 +58,7 @@ OBJ = $(NAME).obj
 
 EMULATOR = $(NAME)$(EXE)
 
-DEFS = -DX86_ASM -DLSB_FIRST -DINLINE="static __inline__" -Dasm=__asm__
+DEFS = -DDEVELOPING -DX86_ASM -DLSB_FIRST -DINLINE="static __inline__" -Dasm=__asm__
 
 ifdef SYMBOLS
 CFLAGS = -Isrc -Imess -Isrc/msdos -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000 \
@@ -182,6 +183,7 @@ $(OBJ)/cpu/m68000/68kem.o:  $(OBJ)/cpu/m68000/68kem.asm
 
 $(OBJ)/%.a:
 	@echo Archiving $@...
+	$(RM) -f $@
 	$(AR) cr $@ $^
 
 makedir:
@@ -241,7 +243,7 @@ endif
 
 clean:
 	@echo Deleting object tree $(OBJ)...
-	deltree /Y $(OBJ)
+	$(RM) -fr $(OBJ)
 	@echo Deleting $(EMULATOR)...
-	@del $(EMULATOR)
+	$(RM) -f $(EMULATOR)
 
