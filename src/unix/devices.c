@@ -998,7 +998,7 @@ static void init_keycodes(void)
 	add_keylist_entry("TAB", KEY_TAB, KEYCODE_TAB);
 	add_keylist_entry("[", KEY_OPENBRACE, KEYCODE_OPENBRACE);
 	add_keylist_entry("]", KEY_CLOSEBRACE, KEYCODE_CLOSEBRACE);
-	add_keylist_entry("ENTE ", KEY_ENTER, KEYCODE_ENTER);
+	add_keylist_entry("ENTER", KEY_ENTER, KEYCODE_ENTER);
 	add_keylist_entry(";", KEY_COLON, KEYCODE_COLON);
 	add_keylist_entry(":", KEY_QUOTE, KEYCODE_QUOTE);
 	add_keylist_entry("\\", KEY_BACKSLASH, KEYCODE_BACKSLASH);
