@@ -423,6 +423,7 @@ done:
 
 struct new_dialog_info
 {
+	HWND parent;
 	const struct ImageModule *module;
 	int control_count;
 	int margin;
@@ -436,7 +437,6 @@ static void adjust_dialog_height(HWND dlgwnd)
 	struct new_dialog_info *info;
 	HWND more_button;
 	HWND control;
-	HWND main_window;
 	RECT r1, r2, r3;
 	int control_id;
 	LONG_PTR l;
@@ -444,7 +444,6 @@ static void adjust_dialog_height(HWND dlgwnd)
 	l = GetWindowLongPtr(dlgwnd, GWLP_USERDATA);
 	info = (struct new_dialog_info *) l;
 	more_button = GetDlgItem(dlgwnd, IDC_MORE);
-	main_window = GetParent(dlgwnd);
 
 	if (!info->expanded || (info->control_count == 0))
 		control_id = IDC_MORE;
@@ -455,11 +454,11 @@ static void adjust_dialog_height(HWND dlgwnd)
 
 	GetWindowRect(control, &r1);
 	GetWindowRect(dlgwnd, &r2);
-	GetWindowRect(main_window, &r3);
+	GetWindowRect(info->parent, &r3);
 
 	SetWindowPos(dlgwnd, NULL, 0, 0, r2.right - r2.left,
 		r1.bottom + info->margin - r2.top, SWP_NOMOVE | SWP_NOZORDER);
-	SetWindowPos(main_window, NULL, 0, 0, r3.right - r3.left,
+	SetWindowPos(info->parent, NULL, 0, 0, r3.right - r3.left,
 		r1.bottom + info->margin - r3.top, SWP_NOMOVE | SWP_NOZORDER);
 
 	SetWindowText(more_button, info->expanded ? TEXT("Less <<") : TEXT("More >>"));
@@ -467,32 +466,114 @@ static void adjust_dialog_height(HWND dlgwnd)
 
 
 
-static UINT_PTR CALLBACK new_dialog_hook(HWND dlgwnd, UINT message,
-	WPARAM wparam, LPARAM lparam)
+static UINT_PTR new_dialog_typechange(HWND dlgwnd, int filter_index)
 {
 	int label_width = 100;
 	int control_height = 20;
-	UINT_PTR rc = 0;
-	NMHDR *notify;
-	OPENFILENAME *ofn;
-	int i, y, height;
 	struct new_dialog_info *info;
+	int i, x, y, height;
 	const struct OptionGuide *guide;
+	LONG_PTR l;
 	HWND more_button;
 	HWND control;
-	HWND main_window;
+	LRESULT lres;
+	DWORD style;
 	RECT r1, r2;
-	HFONT font;
 	char buf[256];
 	LPCTSTR class_name;
-	DWORD style;
-	LONG_PTR l;
-	LRESULT lres;
+	HFONT font;
 
 	l = GetWindowLongPtr(dlgwnd, GWLP_USERDATA);
 	info = (struct new_dialog_info *) l;
 	more_button = GetDlgItem(dlgwnd, IDC_MORE);
-	main_window = GetParent(dlgwnd);
+
+	info->module = imgtool_library_index(library, filter_index - 1);
+
+	// clean out existing control windows
+	for (i = 0; i < info->control_count; i++)
+	{
+		control = GetDlgItem(dlgwnd, CONTROL_START + i);
+		if (control)
+			DestroyWindow(control);
+	}
+	info->control_count = 0;
+
+	guide = info->module->createimage_optguide;
+	if (guide)
+	{
+		lres = SendMessage(more_button, WM_GETFONT, 0, 0);
+		font = (HFONT) lres;
+		GetWindowRect(more_button, &r1);
+		GetWindowRect(dlgwnd, &r2);
+		y = r1.bottom + info->margin - r2.top;
+
+		for (i = 0; guide[i].option_type != OPTIONTYPE_END; i++)
+		{
+			snprintf(buf, sizeof(buf) / sizeof(buf[0]), "%s:", guide[i].display_name);
+			control = CreateWindow("STATIC", U2T(buf), WS_CHILD | WS_VISIBLE,
+				r1.left - r2.left, y, label_width, control_height, dlgwnd, NULL, NULL, NULL);
+			SetWindowLong(control, GWL_ID, CONTROL_START + info->control_count++);
+			SendMessage(control, WM_SETFONT, (WPARAM) font, 0);
+
+			switch(guide[i].option_type)
+			{
+				case OPTIONTYPE_STRING:
+					class_name = TEXT("Edit");
+					style = WS_CHILD | WS_VISIBLE;
+					height = control_height;
+					break;
+
+				case OPTIONTYPE_INT:
+				case OPTIONTYPE_ENUM_BEGIN:
+					class_name = TEXT("ComboBox");
+					style = WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_TABSTOP | CBS_DROPDOWNLIST;
+					height = control_height * 8;
+					break;
+
+				default:
+					class_name = NULL;
+					style = 0;
+					height = 0;
+					break;
+			}
+			if (class_name)
+			{
+				x = r1.left - r2.left + label_width;
+				control = CreateWindow(class_name, NULL, style, x, y,
+					r2.right - r2.left - x - (r1.left - r2.left), height, dlgwnd, NULL, NULL, NULL);
+				SetWindowLong(control, GWL_ID, CONTROL_START + info->control_count++);
+				SendMessage(control, WM_SETFONT, (WPARAM) font, 0);
+				win_prepare_option_control(control, &guide[i], 
+					info->module->createimage_optspec);
+			}
+
+			y += control_height;
+		}
+	}
+	adjust_dialog_height(dlgwnd);
+	return 0;
+}
+
+
+
+static UINT_PTR CALLBACK new_dialog_hook(HWND dlgwnd, UINT message,
+	WPARAM wparam, LPARAM lparam)
+{
+	int i;
+	UINT_PTR rc = 0;
+	const OFNOTIFY *notify;
+	struct new_dialog_info *info;
+	const struct ImageModule *module;
+	HWND control;
+	RECT r1, r2;
+	LONG_PTR l;
+	option_resolution *resolution;
+	HWND more_button;
+
+	l = GetWindowLongPtr(dlgwnd, GWLP_USERDATA);
+	info = (struct new_dialog_info *) l;
+
+	more_button = GetDlgItem(dlgwnd, IDC_MORE);
 
 	switch(message)
 	{
@@ -503,10 +584,16 @@ static UINT_PTR CALLBACK new_dialog_hook(HWND dlgwnd, UINT message,
 			memset(info, 0, sizeof(*info));
 			SetWindowLongPtr(dlgwnd, GWLP_USERDATA, (LONG_PTR) info);
 
+			info->parent = GetParent(dlgwnd);
+
 			// compute lower margin
 			GetWindowRect(more_button, &r1);
 			GetWindowRect(dlgwnd, &r2);
 			info->margin = r2.bottom - r1.bottom;
+
+			// change dlgwnd height
+			GetWindowRect(info->parent, &r1);
+			SetWindowPos(dlgwnd, NULL, 0, 0, r1.right - r1.left, r2.bottom - r2.top, SWP_NOMOVE | SWP_NOZORDER);
 			break;
 
 		case WM_DESTROY:
@@ -523,73 +610,35 @@ static UINT_PTR CALLBACK new_dialog_hook(HWND dlgwnd, UINT message,
 			break;
 
 		case WM_NOTIFY:
-			notify = (LPNMHDR) lparam;
-			switch(notify->code)
+			notify = (const OFNOTIFY *) lparam;
+			switch(notify->hdr.code)
 			{
-				case CDN_SELCHANGE:
-					ofn = ((OFNOTIFY *) notify)->lpOFN;
-					info->module = imgtool_library_index(library, ofn->nFilterIndex - 1);
+				case CDN_INITDONE:
+					rc = new_dialog_typechange(dlgwnd, notify->lpOFN->nFilterIndex);
+					break;
 
-					// clean out existing control windows
-					for (i = 0; i < info->control_count; i++)
+				case CDN_FILEOK:
+					module = info->module;
+					resolution = NULL;
+
+					if (module->createimage_optguide && module->createimage_optspec)
 					{
-						control = GetDlgItem(dlgwnd, CONTROL_START + i);
-						if (control)
-							DestroyWindow(control);
-					}
-					info->control_count = 0;
+						resolution = option_resolution_create(module->createimage_optguide, module->createimage_optspec);
 
-					guide = info->module->createimage_optguide;
-					if (guide)
-					{
-						lres = SendMessage(more_button, WM_GETFONT, 0, 0);
-						font = (HFONT) lres;
-						GetWindowRect(more_button, &r1);
-						GetWindowRect(dlgwnd, &r2);
-						y = r1.bottom + info->margin - r2.top;
-
-						for (i = 0; guide[i].option_type != OPTIONTYPE_END; i++)
+						for (i = 1; i < info->control_count; i += 2)
 						{
-							snprintf(buf, sizeof(buf) / sizeof(buf[0]), "%s:", guide[i].display_name);
-							control = CreateWindow("STATIC", U2T(buf), WS_CHILD | WS_VISIBLE,
-								r1.left - r2.left, y, label_width, control_height, dlgwnd, NULL, NULL, NULL);
-							SetWindowLong(control, GWL_ID, CONTROL_START + info->control_count++);
-							SendMessage(control, WM_SETFONT, (WPARAM) font, 0);
-
-							switch(guide[i].option_type)
-							{
-								case OPTIONTYPE_STRING:
-									class_name = TEXT("Edit");
-									style = WS_CHILD | WS_VISIBLE;
-									height = control_height;
-									break;
-
-								case OPTIONTYPE_INT:
-								case OPTIONTYPE_ENUM_BEGIN:
-									class_name = TEXT("ComboBox");
-									style = WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_TABSTOP | CBS_DROPDOWNLIST;
-									height = control_height * 8;
-									break;
-
-								default:
-									class_name = NULL;
-									style = 0;
-									height = 0;
-									break;
-							}
-							if (class_name)
-							{
-								control = CreateWindow(class_name, NULL, style, r1.left - r2.left
-									+ label_width, y, 100, height, dlgwnd, NULL, NULL, NULL);
-								SendMessage(control, WM_SETFONT, (WPARAM) font, 0);
-								win_prepare_option_control(control, &guide[i], 
-									info->module->createimage_optspec);
-							}
-
-							y += control_height;
+							control = GetDlgItem(dlgwnd, CONTROL_START + i);
+							if (control)
+								win_add_resolution_parameter(control, resolution);
 						}
+
+						option_resolution_finish(resolution);
 					}
-					adjust_dialog_height(dlgwnd);
+					*((option_resolution **) notify->lpOFN->lCustData) = resolution;
+					break;
+
+				case CDN_TYPECHANGE:
+					rc = new_dialog_typechange(dlgwnd, notify->lpOFN->nFilterIndex);
 					break;
 			}
 			break;
@@ -607,6 +656,7 @@ static void menu_new(HWND window)
 	OPENFILENAME ofn;
 	const struct ImageModule *module;
 	const char *filename;
+	option_resolution *resolution = NULL;
 
 	pool_init(&pool);
 
@@ -617,6 +667,7 @@ static void menu_new(HWND window)
 	ofn.hInstance = GetModuleHandle(NULL);
 	ofn.lpTemplateName = MAKEINTRESOURCE(IDD_FILETEMPLATE);
 	ofn.lpfnHook = new_dialog_hook;
+	ofn.lCustData = (LPARAM) &resolution;
 	if (!GetSaveFileName(&ofn))
 		goto done;
 
@@ -624,7 +675,7 @@ static void menu_new(HWND window)
 
 	module = imgtool_library_index(library, ofn.nFilterIndex - 1);
 	
-	err = img_create(module, filename, NULL);
+	err = img_create(module, filename, resolution);
 	if (err)
 		goto done;
 
@@ -635,6 +686,8 @@ static void menu_new(HWND window)
 done:
 	if (err)
 		report_error(window, err);
+	if (resolution)
+		option_resolution_close(resolution);
 	pool_exit(&pool);
 }
 

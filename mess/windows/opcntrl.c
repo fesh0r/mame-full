@@ -12,8 +12,12 @@
 #include <commctrl.h>
 #include <stdio.h>
 #include <tchar.h>
-#include "opcntrl.h"
 
+#include "opcntrl.h"
+#include "strconv.h"
+
+
+static const TCHAR guide_prop[] = TEXT("opcntrl_prop");
 
 static BOOL prepare_combobox(HWND control, const struct OptionGuide *guide,
 	const char *optspec)
@@ -87,6 +91,30 @@ BOOL win_prepare_option_control(HWND control, const struct OptionGuide *guide,
 
 	if (!_tcsicmp(class_name, TEXT("ComboBox")))
 		rc = prepare_combobox(control, guide, optspec);
+
+	if (rc)
+		SetProp(control, guide_prop, (HANDLE) guide);
 	return rc;
 }
 
+
+
+optreserr_t win_add_resolution_parameter(HWND control, option_resolution *resolution)
+{
+	const struct OptionGuide *guide;
+	TCHAR buf[256];
+	optreserr_t err;
+
+	if (!GetWindowText(control, buf, sizeof(buf) / sizeof(buf[0])))
+		return OPTIONRESOLTUION_ERROR_INTERNAL;
+
+	guide = (const struct OptionGuide *) GetProp(control, guide_prop);
+	if (!guide)
+		return OPTIONRESOLTUION_ERROR_INTERNAL;
+
+	err = option_resolution_add_param(resolution, guide->identifier, U2T(buf));
+	if (err)
+		return err;
+
+	return OPTIONRESOLUTION_ERROR_SUCCESS;
+}
