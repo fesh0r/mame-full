@@ -44,15 +44,14 @@ void list_mess_info(const char *gamename, const char *arg, int listclones)
 				begin_resource_tracking();
 				devices = devices_allocate(drivers[i]);
 
-				fprintf(stdout_file, "%-13s", drivers[i]->name);
-
 				if (!devices)
 				{
 					/* if IODevice not used, print UNKNOWN */
-					fprintf(stdout_file, "%-12s\n", "UNKNOWN");
+					fprintf(stdout_file, "%-13s%-12s\n", drivers[i]->name, "UNKNOWN");
 				}
 				else
 				{
+					int print_device = 0;
 					/* else cycle through Devices */
 					for (j = 0; devices[j].type < IO_COUNT; j++)
 					{
@@ -60,18 +59,24 @@ void list_mess_info(const char *gamename, const char *arg, int listclones)
 						name = device_typename(devices[j].type);
 						shortname = device_brieftypename(devices[j].type);
 
-						if (j == 0)
-							fprintf(stdout_file, "%-12s(%s)   ", name, shortname);
-						else
-							fprintf(stdout_file, "%-13s%-12s(%s)   ", "    ", name, shortname);
-
-						while (src && *src)
+						if (name && shortname)
 						{
-							fprintf(stdout_file, ".%-5s", src);
-							src += strlen(src) + 1;
+							if (!print_device)
+							{
+								print_device = 1;
+								fprintf(stdout_file, "%-13s%-12s(%s)   ", drivers[i]->name, name, shortname);
+							}
+							else
+								fprintf(stdout_file, "%-13s%-12s(%s)   ", "    ", name, shortname);
+	
+							while (src && *src)
+							{
+								fprintf(stdout_file, ".%-5s", src);
+								src += strlen(src) + 1;
+							}
+							fprintf(stdout_file, "\n");
 						}
 					}
-					fprintf(stdout_file, "\n");
 				}
 				end_resource_tracking();
 			}
