@@ -55,4 +55,4 @@ void bbcbp_setvideoshadow(int vdusel);
 WRITE_HANDLER ( BBC_6845_w );
 READ_HANDLER ( BBC_6845_r );
 
-unsigned char vidmem[0x10000];
+extern unsigned char vidmem[0x10000];
