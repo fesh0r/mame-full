@@ -114,6 +114,18 @@ void snes_shutdown_machine(void)
 	timer_remove(spc700Timer);
 #endif
 
+	tmpFile = fopen("SNES_ROM.DMP", "w");
+	for (a=0;a<0x8000;a++)
+	{
+		if ((a&15)==0)
+			fprintf(tmpFile,"%04X : ",a);
+		if ((a&15)==15)
+			fprintf(tmpFile,"%02X\n",SNES_ROM[a+0x8000]);
+		else
+			fprintf(tmpFile,"%02X,",SNES_ROM[a+0x8000]);
+	}
+	fclose(tmpFile);
+
 	tmpFile = fopen("SNESORAM.DMP", "w");
 	for (a=0;a<0x400;a++)
 	{
@@ -185,6 +197,7 @@ int snes_load_rom (int id)
 	char tempPath[256]="NVRAM\\";
     FILE *romfile,*sramFile;
 	int numBanks,a;
+
 	if(!rom_name)
 	{
 		printf("SNES requires cartridge!\n");
@@ -193,7 +206,7 @@ int snes_load_rom (int id)
 
 	if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
 	{
-		return 1;
+		return INIT_FAILED;
 	}
 
     /* Allocate memory and set up memory regions */
@@ -204,25 +217,33 @@ int snes_load_rom (int id)
 		return 1;
 	}
 */
+	logerror("SNES_ROM %08x\n",SNES_ROM);
+
 	SNES_ROM = memory_region(REGION_CPU1);
 
-	osd_fseek (romfile,0,SEEK_END);
-	numBanks=(((osd_ftell(romfile)-512) + 65535)/ 65536);
+	logerror("SNES_ROM %08x\n",SNES_ROM);
+
+//	osd_fseek (romfile,0,SEEK_END);
+//	numBanks=(((osd_ftell(romfile)-512) + 65535)/ 65536);
 
 	/* Position past the header */
-	osd_fseek (romfile, 512, SEEK_SET);
+//	osd_fseek (romfile, 512, SEEK_SET);
 
 	/* Read in the PRG_Rom chunks */
 
+	numBanks=8;							// Need to look at another way of doing this since the above method seems to cause a few problems!!
+
 	numBanks*=2;
 
-	if (numBanks>32)
+	if (numBanks>16)
 	{
-		printf("Unable to load roms with more than 32 pages of 32k at present sorry!\nLoaded as much as I can!\n");
-		numBanks=32;
+		printf("Unable to load roms with more than 16 pages of 32k at present sorry!\nLoaded as much as I can!\n");
+		numBanks=16;
 //		osd_fclose(romfile);
 //		return 1;
 	}
+
+	osd_fread(romfile,&SNES_ROM[0x8000],512);			// skip over header
 
 	for (a=0;a<numBanks;a++)
 	{
@@ -286,8 +307,7 @@ int snes_id_rom (int id)
 		retval=1;
 	osd_fread (romfile, magic, 4);
 	osd_fclose (romfile);
-	/* return retval; */
-	return 1;
+	return retval; 
 }
 
 

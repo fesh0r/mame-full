@@ -802,7 +802,7 @@ static struct MemoryReadAddress snes_readmem[] = {
 	{ 0x0F0000,0x0F1FFF,MRA_WRAM},
 	{ 0x0F2000,0x0F7FFF,snes_io_r},
 	{ 0x0F8000,0x0FFFFF,MRA_ROM},
-	{ 0x100000,0x101FFF,MRA_WRAM},
+/*	{ 0x100000,0x101FFF,MRA_WRAM},
 	{ 0x102000,0x107FFF,snes_io_r},
 	{ 0x108000,0x10FFFF,MRA_ROM},
 	{ 0x110000,0x111FFF,MRA_WRAM},
@@ -849,7 +849,7 @@ static struct MemoryReadAddress snes_readmem[] = {
 	{ 0x1E8000,0x1EFFFF,MRA_ROM},
 	{ 0x1F0000,0x1F1FFF,MRA_WRAM},
 	{ 0x1F2000,0x1F7FFF,snes_io_r},
-	{ 0x1F8000,0x1FFFFF,MRA_ROM},
+	{ 0x1F8000,0x1FFFFF,MRA_ROM},*/
 	{ 0x700000,0x74FFFF,MRA_SRAM},
 	{ 0x7E0000,0x7FFFFF,MRA_WRAM},
 	{ -1 }  /* end of table */
@@ -904,7 +904,7 @@ static struct MemoryWriteAddress snes_writemem[] = {
 	{ 0x0F0000,0x0F1FFF,MWA_WRAM},
 	{ 0x0F2000,0x0F7FFF,snes_io_w},
 	{ 0x0F8000,0x0FFFFF,MWA_NOP},
-	{ 0x100000,0x101FFF,MWA_WRAM},
+/*	{ 0x100000,0x101FFF,MWA_WRAM},
 	{ 0x102000,0x107FFF,snes_io_w},
 	{ 0x108000,0x10FFFF,MWA_NOP},
 	{ 0x110000,0x111FFF,MWA_WRAM},
@@ -951,7 +951,7 @@ static struct MemoryWriteAddress snes_writemem[] = {
 	{ 0x1E8000,0x1EFFFF,MWA_NOP},
 	{ 0x1F0000,0x1F1FFF,MWA_WRAM},
 	{ 0x1F2000,0x1F7FFF,snes_io_w},
-	{ 0x1F8000,0x1FFFFF,MWA_NOP},
+	{ 0x1F8000,0x1FFFFF,MWA_NOP},*/
 	{ 0x700000,0x74FFFF,MWA_SRAM},
 	{ 0x7E0000,0x7FFFFF,MWA_WRAM},
 	{ -1 }  /* end of table */
@@ -1040,7 +1040,7 @@ static struct MachineDriver machine_driver_snes =
 ***************************************************************************/
 
 ROM_START(snes)
-	ROM_REGION(0x800000,REGION_CPU1)			// SNES RAM/ROM
+	ROM_REGION(0x408000,REGION_CPU1)			// SNES RAM/ROM
 #ifdef EMULATE_SPC700
 	ROM_REGION(0x10000,REGION_CPU2)				// SPC RAM/ROM
 	ROM_LOAD ("spc700.rom", 0xFFC0, 0x0040, 0x38000B6B)
