@@ -667,7 +667,6 @@ int imgwave_read(IMAGE *img, UINT8 *buf, int bufsize);
 	void int_construct_imgmod_##name_(struct ImageModule *imgmod, int *fileopt);\
 	void construct_imgmod_##name_(struct ImageModule *imgmod)					\
 	{																			\
-		const char *name = #name_;												\
 		int fileopt = 0;														\
 		memset(imgmod, 0, sizeof(*imgmod));										\
 		imgmod->name = #name_;													\

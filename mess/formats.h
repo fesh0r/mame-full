@@ -40,7 +40,7 @@ struct InternalBdFormatDriver
 	UINT8 sectors_options[2];
 	UINT16 bytes_per_sector;
 	int header_size;
-	char filler_byte;
+	UINT8 filler_byte;
 	int (*header_decode)(const void *header, UINT8 *tracks, UINT8 *heads, UINT8 *sectors, UINT16 *bytes_per_sector, int *offset);
 	int (*header_encode)(void *buffer, UINT8 tracks, UINT8 heads, UINT8 sectors, UINT16 bytes_per_sector);
 	int flags;

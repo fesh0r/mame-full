@@ -30,6 +30,9 @@ System Driver Changes:
 - [COCO3] Adjusted composite colors slightly with help from SockMaster (Bug
   #227) [John Kowalski, Nate Woods]
   
+- [COLECO] The Coleco driver now recognizes the *.col extension for Coleco
+  cartridges. [Nate Woods]
+  
 - [SPECPL3E] Updated BIOS to the 1.11 version romset
   (http://www.z88forever.org.uk/zxplus3e/) [Stefano Priore]
 

@@ -230,6 +230,7 @@ static int msx_dsk_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **
 	else
 	{
 		assert(0);
+		return IMGTOOLERR_UNEXPECTED;
 	}
 	
 	if (!correct) return IMGTOOLERR_MODULENOTFOUND;
