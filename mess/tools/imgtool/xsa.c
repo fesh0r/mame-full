@@ -8,13 +8,6 @@
 #include "imgtool.h"
 #include "utils.h"
 
-#ifdef LSB_FIRST
-#define intelLong(x) (x)
-#else
-#define intelLong(x) (((x << 24) | (((unsigned long) x) >> 24) | \
-                       (( x & 0x0000ff00) << 8) | (( x & 0x00ff0000) >> 8)))
-#endif
-
 
 typedef struct {
 	IMAGE			base;
@@ -78,7 +71,7 @@ static int xsa_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outi
 		return IMGTOOLERR_MODULENOTFOUND;
 	
 	if (4 != stream_read (f, &size, 4) ) return IMGTOOLERR_READERROR;
-	size = intelLong (size);
+	size = LITTLE_ENDIANIZE_INT32 (size);
 	if (4 != stream_read (f, header, 4) ) return IMGTOOLERR_READERROR;
 	
 	/* get name from XSA header, can't be longer than 8.3 really */
@@ -114,7 +107,7 @@ static int xsa_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outi
 	*outimg = (IMAGE*)image;
 
 	memset(image, 0, sizeof(XSA_IMAGE));
-	image->base.module = &imgmod_xsa;
+	image->base.module = mod;
 	image->file_handle = f;
 	image->size = size;
 	image->file_name = file_name;
@@ -138,7 +131,7 @@ static int xsa_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
 	iter=*(XSA_ITERATOR**)outenum = (XSA_ITERATOR*) malloc(sizeof(XSA_ITERATOR));
 	if (!iter) return IMGTOOLERR_OUTOFMEMORY;
 
-	iter->base.module = &imgmod_xsa;
+	iter->base.module = img->module;
 
 	iter->image=image;
 	iter->index = 0;

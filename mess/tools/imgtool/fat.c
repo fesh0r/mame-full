@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <assert.h>
 #include "osdepend.h"
 #include "imgtool.h"
 
@@ -420,8 +421,8 @@ static int fat_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, c
 static int fat_image_deletefile(IMAGE *img, const char *fname);
 static int fat_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options_);
 
-static int fat_read_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, char **buffer, int *size);
-static int fat_write_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, char *buffer, int size);
+static int fat_read_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, void *buffer, int length);
+static int fat_write_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, const void *buffer, int length);
 
 #if 0
 static struct OptionTemplate fat_createopts[] =
@@ -524,7 +525,7 @@ static int fat_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outi
 	if (!image) return IMGTOOLERR_OUTOFMEMORY;
 
 	memset(image, 0, sizeof(fat_image));
-	image->base.module = &imgmod_msdos;
+	image->base.module = mod;
 	image->size=stream_size(f);
 	image->file_handle=f;
 
@@ -587,7 +588,7 @@ static int fathd_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **ou
 	if (!image) return IMGTOOLERR_OUTOFMEMORY;
 
 	memset(image, 0, sizeof(fat_image));
-	image->base.module = &imgmod_msdoshd;
+	image->base.module = mod;
 	image->size=stream_size(f);
 	image->file_handle=f;
 
@@ -683,7 +684,7 @@ static int fat_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
 	iter=*(fat_iterator**)outenum = (fat_iterator *) malloc(sizeof(fat_iterator));
 	if (!iter) return IMGTOOLERR_OUTOFMEMORY;
 
-	iter->base.module = &imgmod_msdos;
+	iter->base.module = img->module;
 
 	iter->image=image;
 	iter->level=0;
@@ -906,35 +907,18 @@ static int fat_image_deletefile(IMAGE *img, const char *fname)
 	return 0;
 }
 
-static int fat_read_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector,
-						   char **buffer, int *size)
+static int fat_read_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, void *buffer, int length)
 {
-	fat_image *image=(fat_image*)img;
-	int pos;
-
-	if (*size<image->sector_size) *buffer=realloc(*buffer,image->sector_size);
-	if (!*buffer) return IMGTOOLERR_OUTOFMEMORY;
-
-	pos=fat_calc_pos(image, head, track, sector);
-
-	memcpy(*buffer, image->data+pos, image->sector_size);
-	*size=image->sector_size;
-
-	return 0;
+	/* not yet implemented */
+	assert(0);
+	return IMGTOOLERR_UNEXPECTED;
 }
 
-static int fat_write_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector,
-							char *buffer, int size)
+static int fat_write_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, const void *buffer, int length)
 {
-	fat_image *image=(fat_image*)img;
-	int pos;
-
-	if (size!=image->sector_size) ; /* problem */
-
-	pos=fat_calc_pos(image, head, track, sector);
-	memcpy(image->data+pos, buffer, size);
-
-	return 0;
+	/* not yet implemented */
+	assert(0);
+	return IMGTOOLERR_UNEXPECTED;
 }
 
 typedef struct {

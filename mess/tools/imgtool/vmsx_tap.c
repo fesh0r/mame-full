@@ -105,13 +105,6 @@ IMAGEMODULE(
 
 static const UINT8 CasHeader[8] = { 0x1F,0xA6,0xDE,0xBA,0xCC,0x13,0x7D,0x74 };
 
-#ifdef LSB_FIRST
-#define intelLong(x) (x)
-#else
-#define intelLong(x) (((x << 24) | (((unsigned long) x) >> 24) | \
-                       (( x & 0x0000ff00) << 8) | (( x & 0x00ff0000) >> 8)))
-#endif
-
 
 static int vmsx_tap_read_image (TAP_IMAGE *image)
 	{
@@ -125,7 +118,7 @@ static int vmsx_tap_read_image (TAP_IMAGE *image)
     while ( (pos + 8) < size)
 		{
 		offset = *((UINT32*)(pmem + pos + 4));
-		offset = intelLong (offset);
+		offset = LITTLE_ENDIANIZE_INT32 (offset);
 		if (strncmp ((char*)pmem + pos, "INFO", 4) )
 			{
 			/* not this chunk, skip */
@@ -178,7 +171,7 @@ static int vmsx_tap_image_read_data (TAP_IMAGE *image, char *chunk, unsigned cha
     while ( (pos + 8) < size)
 		{
 		offset = *((UINT32*)(pmem + pos + 4));
-		offset = intelLong (offset);
+		offset = LITTLE_ENDIANIZE_INT32 (offset);
 		if (memcmp (pmem + pos, "LIST", 4) )
 			{
 			if (offset & 1) offset++;
@@ -209,7 +202,7 @@ static int vmsx_tap_image_read_data (TAP_IMAGE *image, char *chunk, unsigned cha
 	while ( (pos + 8) < size)
 		{
 		offset = *((UINT32*)(pmem + pos + 4));
-		offset = intelLong (offset);
+		offset = LITTLE_ENDIANIZE_INT32 (offset);
 		if (memcmp (pmem + pos, chunk, 4) )
 			{
 			if (offset & 1) offset++;
@@ -226,7 +219,7 @@ static int vmsx_tap_image_read_data (TAP_IMAGE *image, char *chunk, unsigned cha
 			{
 			tapblock = *((UINT32*)(pmem + pos + tappos));
 			tappos += 4;
-			tapblock = intelLong (tapblock);
+			tapblock = LITTLE_ENDIANIZE_INT32 (tapblock);
 			if (tapblock == 0xffffffff) break;
 			memcpy (p + caspos, CasHeader, 8); 
 			caspos += 8;
@@ -246,7 +239,7 @@ static int vmsx_tap_image_read_data (TAP_IMAGE *image, char *chunk, unsigned cha
 	}
 
 static int vmsx_tap_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
-	{
+{
 	TAP_IMAGE *image;
 	int rc;
 
@@ -256,59 +249,60 @@ static int vmsx_tap_image_init(const struct ImageModule *mod, STREAM *f, IMAGE *
 	*outimg = (IMAGE*)image;
 
 	memset(image, 0, sizeof(TAP_IMAGE));
-	image->base.module = &imgmod_vmsx_tap;
+	image->base.module = mod;
 	image->size=stream_size(f);
 	image->file_handle=f;
 
 	image->data = (UINT8*) malloc(image->size);
 	if (!image->data)
-		{
+	{
 		free(image);
 		*outimg=NULL;
 		return IMGTOOLERR_OUTOFMEMORY;
-		}
+	}
 
 	if (stream_read(f, image->data, image->size)!=image->size) 
-		{
+	{
 		free(image);
 		*outimg=NULL;
 		return IMGTOOLERR_READERROR;
-		}
+	}
 
 	if ( (rc=vmsx_tap_read_image(image)) ) 	
-		{
+	{
 		if (image->entries) free(image->entries);
 		free(image);
 		*outimg=NULL;
 		return rc;
-		}
-
-	return 0;
 	}
 
+	return 0;
+}
+
 static void vmsx_tap_image_exit(IMAGE *img)
-	{
+{
 	TAP_IMAGE *image=(TAP_IMAGE*)img;
 	stream_close(image->file_handle);
 	free(image->entries);
 	free(image->data);
 	free(image);
-	}
+}
 
 static int vmsx_tap_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
-	{
+{
 	TAP_IMAGE *image=(TAP_IMAGE*)img;
 	TAP_ITERATOR *iter;
 
 	iter=*(TAP_ITERATOR**)outenum = (TAP_ITERATOR*) malloc(sizeof(TAP_ITERATOR));
-	if (!iter) return IMGTOOLERR_OUTOFMEMORY;
+	if (!iter)
+		return IMGTOOLERR_OUTOFMEMORY;
 
-	iter->base.module = &imgmod_vmsx_tap;
+	iter->base.module = img->module;
 
 	iter->image=image;
 	iter->index = 0;
 	return 0;
-	}
+}
 
 static int vmsx_tap_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 	{

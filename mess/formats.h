@@ -1,0 +1,139 @@
+/***************************************************************************
+
+	formats.h
+
+	Application independent (i.e. - both MESS/imgtool) interfaces for
+	representing image formats
+
+***************************************************************************/
+
+#ifndef FORMATS_H
+#define FORMATS_H
+
+#include <assert.h>
+#include <stdlib.h>
+#include "osd_cpu.h"
+
+/***************************************************************************
+
+	The format driver itself
+
+***************************************************************************/
+
+enum
+{
+	/* If this flag is enabled, then images that have the wrong amount of tracks
+	 * will be assumed to have simply been truncated.  Otherwise, image files
+	 * without enough tracks will be rejected as invalid
+	 */
+	BDFD_ROUNDUP_TRACKS	= 1
+};
+
+struct InternalBdFormatDriver
+{
+	const char *extension;
+	UINT8 tracks_base;
+	UINT8 tracks_options[8];
+	UINT8 heads_base;
+	UINT8 heads_options[8];
+	UINT8 sectors_base;
+	UINT8 sectors_options[2];
+	UINT16 bytes_per_sector;
+	int header_size;
+	char filler_byte;
+	int (*header_decode)(const void *header, UINT8 *tracks, UINT8 *heads, UINT8 *sectors, UINT16 *bytes_per_sector, int *offset);
+	int (*header_encode)(void *buffer, UINT8 tracks, UINT8 heads, UINT8 sectors, UINT16 bytes_per_sector);
+	int flags;
+};
+
+/***************************************************************************
+
+	Macros for building block device format drivers
+
+***************************************************************************/
+
+typedef void (*formatdriver_ctor)(struct InternalBdFormatDriver *drv);
+
+/* no need to directly call this */
+#ifdef MAME_DEBUG
+void validate_construct_formatdriver(struct InternalBdFormatDriver *drv, int tracks_optnum, int heads_optnum, int sectors_optnum);
+#else
+#define validate_construct_formatdriver(drv, tracks_optnum, heads_optnum, sectors_optnum)
+#endif
+
+#define BLOCKDEVICE_FORMATDRIVER_START( format_name )												\
+	void construct_formatdriver_##format_name(struct InternalBdFormatDriver *drv)					\
+	{																								\
+		int tracks_optnum = 0, heads_optnum = 0, sectors_optnum = 0;								\
+		memset(drv, 0, sizeof(*drv));																\
+
+#define BLOCKDEVICE_FORMATDRIVER_END																\
+		if (heads_optnum == 0)	drv->heads_options[heads_optnum++] = 1;								\
+		validate_construct_formatdriver(drv, tracks_optnum, heads_optnum, sectors_optnum);			\
+	}																								\
+
+#define BLOCKDEVICE_FORMATDRIVER_EXTERN( format_name )												\
+	extern void construct_formatdriver_##format_name(struct InternalBdFormatDriver *drv)
+
+#define	BDFD_EXTENSION(ext)							drv->extension = ext;
+#define BDFD_TRACKS_BASE(tracks_base_)				drv->tracks_base = tracks_base_;
+#define BDFD_TRACKS_OPTION(tracks_option)			drv->tracks_options[tracks_optnum++] = tracks_option;
+#define BDFD_HEADS_BASE(heads_base_)				drv->heads_base = heads_base_;
+#define BDFD_HEADS_OPTION(heads_option)				drv->heads_options[heads_optnum++] = heads_option;
+#define BDFD_SECTORS_BASE(sectors_base_)			drv->sectors_base = sectors_base_;
+#define BDFD_SECTORS_OPTION(sectors_option)			drv->sectors_options[sectors_optnum++] = sectors_option;
+#define BDFD_BYTES_PER_SECTOR(bytes_per_sector_)	drv->bytes_per_sector = bytes_per_sector_;
+#define BDFD_FLAGS(flags_)							drv->flags = flags_;
+#define BDFD_HEADER_SIZE(header_size_)				drv->header_size = header_size_;
+#define BDFD_HEADER_ENCODE(header_encode_)			drv->header_encode = header_encode_;
+#define BDFD_HEADER_DECODE(header_decode_)			drv->header_decode = header_decode_;
+#define BDFD_FILLER_BYTE(filler_byte_)				drv->filler_byte = filler_byte_;
+
+/***************************************************************************
+
+	Macros for building block device format choices
+
+***************************************************************************/
+
+#define BLOCKDEVICE_FORMATCHOICES_START( choices_name )			\
+	formatdriver_ctor formatchoices_##choices_name[] = {
+
+
+#define BLOCKDEVICE_FORMATCHOICES_END							\
+		NULL };
+
+#define BLOCKDEVICE_FORMATCHOICES_EXTERN( choices_name )		\
+	extern formatdriver_ctor formatchoices_##choices_name[]
+
+#define BDFC_CHOICE( format_name)	construct_formatdriver_##format_name,
+
+/**************************************************************************/
+
+struct bdf_procs
+{
+	void (*closeproc)(void *file);
+	void (*seekproc)(void *file, int offset, int whence);
+	int (*readproc)(void *file, void *buffer, int length);
+	void (*writeproc)(void *file, const void *buffer, int length);
+	int (*filesizeproc)(void *file);
+	int (*isreadonlyproc)(void *file);
+};
+
+enum
+{
+	BLOCKDEVICE_ERROR_SUCCESS,
+	BLOCKDEVICE_ERROR_OUTOFMEMORY,
+	BLOCKDEVICE_ERROR_CANTDECODEFORMAT
+};
+
+int bdf_create(const struct bdf_procs *procs, formatdriver_ctor format,
+	void *file, const char *extension, UINT8 tracks, UINT8 heads, UINT8 sectors, void **outbdf);
+int bdf_open(const struct bdf_procs *procs, const formatdriver_ctor *formats,
+	void *file, const char *extension, void **outbdf);
+void bdf_close(void *bdf);
+int bdf_read_sector(void *bdf, UINT8 track, UINT8 head, UINT8 sector, int offset, void *buffer, int length);
+int bdf_write_sector(void *bdf, UINT8 track, UINT8 head, UINT8 sector, int offset, const void *buffer, int length);
+void bdf_get_geometry(void *bdf, UINT8 *tracks, UINT8 *heads, UINT8 *sectors);
+int bdf_is_readonly(void *bdf);
+
+#endif /* FORMATS_H */

@@ -89,7 +89,7 @@ static int svi_cas_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **
 	*outimg = (IMAGE*)image;
 
 	memset(image, 0, sizeof(CAS_IMAGE));
-	image->base.module = &imgmod_svi_cas;
+	image->base.module = mod;
 	image->size=stream_size(f);
 	image->file_handle=f;
 
@@ -162,7 +162,7 @@ static int svi_cas_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
 	iter=*(CAS_ITERATOR**)outenum = (CAS_ITERATOR*) malloc(sizeof(CAS_ITERATOR));
 	if (!iter) return IMGTOOLERR_OUTOFMEMORY;
 
-	iter->base.module = &imgmod_svi_cas;
+	iter->base.module = img->module;
 
 	iter->image=image;
 	iter->index = 0;

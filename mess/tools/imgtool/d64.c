@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <assert.h>
 #include "osdepend.h"
 #include "imgtool.h"
 #include "d64.h"
@@ -513,8 +514,8 @@ static void d81_image_info(IMAGE *img, char *string, const int len);
 static size_t d81_image_freespace(IMAGE *img);
 static int d81_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options_);
 
-static int d64_read_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, char **buffer, int *size);
-static int d64_write_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, char *buffer, int size);
+static int d64_read_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, void *buffer, int length);
+static int d64_write_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, const void *buffer, int length);
 
 static struct OptionTemplate d64_createopts[] =
 {
@@ -633,7 +634,7 @@ static int d64_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outi
 	if (!image) return IMGTOOLERR_OUTOFMEMORY;
 
 	memset(image, 0, sizeof(d64_image));
-	image->base.module = &imgmod_d64;
+	image->base.module = mod;
 	image->size=stream_size(f);
 	image->file_handle=f;
 	image->get_offset=d64_tracksector2offset;
@@ -675,7 +676,7 @@ static int x64_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outi
 	if (!image) return IMGTOOLERR_OUTOFMEMORY;
 
 	memset(image, 0, sizeof(d64_image));
-	image->base.module = &imgmod_x64;
+	image->base.module = mod;
 	image->size=stream_size(f);
 	image->file_handle=f;
 	image->get_offset=d64_tracksector2offset;
@@ -716,7 +717,7 @@ static int d71_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outi
 	if (!image) return IMGTOOLERR_OUTOFMEMORY;
 
 	memset(image, 0, sizeof(d64_image));
-	image->base.module = &imgmod_d71;
+	image->base.module = mod;
 	image->size=stream_size(f);
 	image->file_handle=f;
 	image->get_offset=d71_tracksector2offset;
@@ -747,7 +748,7 @@ static int d81_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outi
 	if (!image) return IMGTOOLERR_OUTOFMEMORY;
 
 	memset(image, 0, sizeof(d64_image));
-	image->base.module = &imgmod_d81;
+	image->base.module = mod;
 	image->size=stream_size(f);
 	image->get_offset=d81_tracksector2offset;
 	image->alloc_sector=d81_alloc_sector;
@@ -830,7 +831,7 @@ static int d64_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
 	iter=*(d64_iterator**)outenum = (d64_iterator *) malloc(sizeof(d64_iterator));
 	if (!iter) return IMGTOOLERR_OUTOFMEMORY;
 
-	iter->base.module =image->base.module;
+	iter->base.module = img->module;
 
 	iter->image=image;
 	pos = image->get_offset (image->directory.track, image->directory.sector);
@@ -1054,36 +1055,18 @@ static int d64_image_deletefile(IMAGE *img, const char *fname)
 	return 0;
 }
 
-static int d64_read_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, 
-						   char **buffer, int *size)
+static int d64_read_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, void *buffer, int length)
 {
-	d64_image *image=(d64_image*)img;
-	int pos;
-
-	if (*size<0x100) *buffer=realloc(*buffer,0x100);
-	if (!*buffer) return IMGTOOLERR_OUTOFMEMORY;
-
-	pos=image->get_offset(track, sector);
-
-	memcpy(*buffer, image->data+pos, 0x100);
-	*size=0x100;
-	
-	return 0;
+	/* not yet implemented */
+	assert(0);
+	return IMGTOOLERR_UNEXPECTED;
 }
 
-static int d64_write_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, 
-							char *buffer, int size)
+static int d64_write_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, const void *buffer, int length)
 {
-	d64_image *image=(d64_image*)img;
-	int pos;
-
-	if (size!=0x100) ; //problem
-
-	pos=image->get_offset(track, sector);
-	memcpy(image->data+pos, buffer, size);
-	image->modified=1;
-	
-	return 0;
+	/* not yet implemented */
+	assert(0);
+	return IMGTOOLERR_UNEXPECTED;
 }
 
 static int d64_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options_)

@@ -62,6 +62,10 @@ Source Changes:
   rasterbits/rastertrack code; converted m6847, CoCo 3, and Mac video hardware
   to use videomap. [Nate Woods]
 
+- Added a new disk format handling system that allows disk formats to be
+  generically specified in such a way usable by both MESS itself, and imgtool
+  [Nate Woods]
+
 - Fixed a bug in the wave code that could cause a crash if a cassette image is
   unloaded. [Nate Woods]
   

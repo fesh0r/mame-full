@@ -774,14 +774,17 @@ tools/imgtool$(EXE):	     \
 	  $(OBJ)/unzip.o	               \
 	  $(OBJ)/mess/config.o	               \
 	  $(OBJ)/mess/utils.o	               \
+	  $(OBJ)/mess/formats.o                \
+	  $(OBJ)/mess/formats/coco_dsk.o       \
 	  $(OBJ)/mess/formats/fmsx_cas.o       \
 	  $(OBJ)/mess/formats/svi_cas.o        \
 	  $(OBJ)/mess/formats/cococas.o        \
+	  $(OBJ)/mess/formats/ti85_ser.o       \
 	  $(OBJ)/mess/tools/imgtool/stubs.o    \
 	  $(OBJ)/mess/tools/imgtool/main.o     \
 	  $(OBJ)/mess/tools/imgtool/imgtool.o  \
 	  $(OBJ)/mess/tools/imgtool/imgwave.o  \
-	  $(OBJ)/mess/tools/imgtool/imgflop.o  \
+	  $(OBJ)/mess/tools/imgtool/imgtfmts.o \
 	  $(OBJ)/mess/tools/imgtool/imgtest.o  \
 	  $(OBJ)/mess/tools/imgtool/filter.o   \
 	  $(OBJ)/mess/tools/imgtool/filteoln.o \
@@ -802,7 +805,6 @@ tools/imgtool$(EXE):	     \
 	  $(OBJ)/mess/tools/imgtool/fat.o      \
 	  $(OBJ)/mess/tools/imgtool/rom16.o    \
 	  $(OBJ)/mess/tools/imgtool/nccard.o   \
-	  $(OBJ)/mess/formats/ti85_ser.o       \
 	  $(OBJ)/mess/tools/imgtool/ti85.o     \
 	  $(OBJ)/mess/tools/imgtool/ti99.o     \
 	  $(OBJ)/mess/snprintf.o

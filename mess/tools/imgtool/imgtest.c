@@ -164,7 +164,8 @@ static int internal_test(const struct ImageModule *module)
 
 	/* Create the buffer */
 	testbuf = create_buffer(calculate_filesize(NUM_FILES-1));
-	if (!testbuf) {
+	if (!testbuf)
+	{
 		err = IMGTOOLERR_OUTOFMEMORY;
 		goto done;
 	}
@@ -173,14 +174,18 @@ static int internal_test(const struct ImageModule *module)
 	memset(nopts, 0, sizeof(nopts));
 	s = buf;
 	createopts = module->createoptions_template;
-	for (i = 0; createopts[i].name; i++) {
-		assert(i < (sizeof(nopts) / sizeof(nopts[0]))-1);
-		assert(createopts[i].flags == IMGOPTION_FLAG_TYPE_INTEGER);
+	if (createopts)
+	{
+		for (i = 0; createopts[i].name; i++)
+		{
+			assert(i < (sizeof(nopts) / sizeof(nopts[0]))-1);
+			assert(createopts[i].flags == IMGOPTION_FLAG_TYPE_INTEGER);
 
-		sprintf(s, "%i", createopts[i].min);
-		nopts[i].name = createopts[i].name;
-		nopts[i].value = s;
-		s += strlen(s) + 1;
+			sprintf(s, "%i", createopts[i].min);
+			nopts[i].name = createopts[i].name;
+			nopts[i].value = s;
+			s += strlen(s) + 1;
+		}
 	}
 	err = img_create(module, testimage, nopts);
 	if (err)
@@ -192,7 +197,8 @@ static int internal_test(const struct ImageModule *module)
 		return err;
 
 	/* Add files */
-	for (i = 0; i < NUM_FILES; i++) {
+	for (i = 0; i < NUM_FILES; i++)
+	{
 		/* Must be n files */
 		err = assert_file_count(module, testimage, i);
 		if (err)
@@ -217,7 +223,8 @@ static int internal_test(const struct ImageModule *module)
 	}
 
 	/* Delete files */
-	for (i = NUM_FILES-1; i >= 0; i--) {
+	for (i = NUM_FILES-1; i >= 0; i--)
+	{
 		/* Must be n+1 files */
 		err = assert_file_count(module, testimage, i+1);
 		if (err)
@@ -275,12 +282,14 @@ int imgtool_test_byname(const char *modulename)
 {
 	const struct ImageModule *module;
 
-	if (modulename) {
+	if (modulename)
+	{
 		module = findimagemodule(modulename);
 		if (!module)
 			return IMGTOOLERR_MODULENOTFOUND | IMGTOOLERR_SRC_MODULE;
 	}
-	else {
+	else
+	{
 		module = NULL;
 	}
 	return imgtool_test(module);

@@ -178,7 +178,7 @@ static int cmd_dir(struct command *c, int argc, char *argv[])
 	IMAGE *img;
 	IMAGEENUM *imgenum;
 	imgtool_dirent ent;
-	char buf[128];
+	char buf[512];
 	char attrbuf[50];
 
 	/* attempt to open image */
@@ -202,14 +202,14 @@ static int cmd_dir(struct command *c, int argc, char *argv[])
 	total_size = 0;
 
 	fprintf(stdout, "Contents of %s:\n", argv[1]);
-	if (img->module->info) {
-		char string[500];
-		img->module->info(img, string, sizeof(string));
-		fprintf(stdout,"%s\n",string);
-	}
+
+	img_info(img, buf, sizeof(buf));
+	if (buf[0])
+		fprintf(stdout, "%s\n", buf);
 	fprintf(stdout, "------------------------  ------ ---------------\n");
 
-	while (((err = img_nextenum(imgenum, &ent)) == 0) && !ent.eof) {
+	while (((err = img_nextenum(imgenum, &ent)) == 0) && !ent.eof)
+	{
 		fprintf(stdout, "%-20s\t%8d %15s\n", ent.fname, ent.filesize, ent.attr);
 		total_count++;
 		total_size += ent.filesize;
@@ -511,14 +511,14 @@ error:
 
 static int cmd_listformats(struct command *c, int argc, char *argv[])
 {
-	const struct ImageModule **mod;
+	const struct ImageModule *mod;
 	size_t modcount;
 
 	fprintf(stdout, "Image formats supported by imgtool:\n\n");
 
 	mod = getmodules(&modcount);
 	while(modcount--) {
-		fprintf(stdout, "  %-10s%s\n", (*mod)->name, (*mod)->humanname);
+		fprintf(stdout, "  %-10s%s\n", mod->name, mod->humanname);
 		mod++;
 	}
 
@@ -634,14 +634,20 @@ error:
 static int cmd_test(struct command *c, int argc, char *argv[])
 {
 	int err;
+	const char *module_name;
 
-	fprintf(stdout, "Running test suite for module '%s':\n\n", argv[0]);
+	module_name = (argc > 0) ? argv[0] : NULL;
 
-	err = imgtool_test_byname(argv[0]);
+	if (module_name)
+		fprintf(stdout, "Running test suite for module '%s':\n\n", module_name);
+	else
+		fprintf(stdout, "Running test suite for all modules\n\n", module_name);
+
+	err = imgtool_test_byname(module_name);
 	if (err)
 		goto error;
 
-	fprintf(stdout, "...Test succeeded %s!\n", argv[0]);
+	fprintf(stdout, "...Test succeeded!\n");
 	return 0;
 
 error:
@@ -654,7 +660,7 @@ error:
 
 static struct command cmds[] = {
 #ifdef MAME_DEBUG
-	{ "test", "<format>", cmd_test, 1, 1, 1 },
+	{ "test", "<format>", cmd_test, 0, 1, 0 },
 #endif
 	{ "create", "<format> <imagename>", cmd_create, 2, 8, 0},
 	{ "dir", "<format> <imagename>...", cmd_dir, 2, 2, 1 },

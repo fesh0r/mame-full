@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include "osdepend.h"
 #include "mess.h"
+#include "formats.h"
 
 #if !defined(MAX)
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -145,14 +146,6 @@ STREAM *stream_open_filter(STREAM *s, FILTER *f);
 
 /* ----------------------------------------------------------------------- */
 
-typedef struct {
-	const struct ImageModule *module;
-} IMAGE;
-
-typedef struct {
-	const struct ImageModule *module;
-} IMAGEENUM;
-
 #define EOLN_CR		"\x0d"
 #define EOLN_LF		"\x0a"
 #define EOLN_CRLF	"\x0d\x0a"
@@ -180,16 +173,24 @@ struct NamedOption {
 	const char *value;
 };
 
-typedef union {
+typedef union
+{
 	int i;			/* integer or char */
 	const char *s;	/* string */
 } ResolvedOption;
 
-enum {
+enum
+{
 	IMGMODULE_FLAG_FILENAMES_PREFERUCASE	= 0x0001	/* this means that all filenames are normally upper case */
 };
 
-struct ImageModule {
+extern void copy_option_template(struct OptionTemplate *dest, int destlen, const struct OptionTemplate *source);
+
+struct tagIMAGE;
+struct tagIMAGEENUM;
+
+struct ImageModule
+{
 	const char *name;
 	const char *humanname;
 	const char *fileextension;
@@ -198,90 +199,93 @@ struct ImageModule {
 	const char *eoln;
 	int flags;
 
-	int (*init)(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
-	void (*exit)(IMAGE *img);
-	void (*info)(IMAGE *img, char *string, const int len);
-	int (*beginenum)(IMAGE *img, IMAGEENUM **outenum);
-	int (*nextenum)(IMAGEENUM *enumeration, imgtool_dirent *ent);
-	void (*closeenum)(IMAGEENUM *enumeration);
-	size_t (*freespace)(IMAGE *img);
-	int (*readfile)(IMAGE *img, const char *fname, STREAM *destf);
-	int (*writefile)(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *writeoptions);
-	int (*deletefile)(IMAGE *img, const char *fname);
+	int (*init)(const struct ImageModule *mod, STREAM *f, struct tagIMAGE **outimg);
+	void (*exit)(struct tagIMAGE *img);
+	void (*info)(struct tagIMAGE *img, char *string, const int len);
+	int (*beginenum)(struct tagIMAGE *img, struct tagIMAGEENUM **outenum);
+	int (*nextenum)(struct tagIMAGEENUM *enumeration, imgtool_dirent *ent);
+	void (*closeenum)(struct tagIMAGEENUM *enumeration);
+	size_t (*freespace)(struct tagIMAGE *img);
+	int (*readfile)(struct tagIMAGE *img, const char *fname, STREAM *destf);
+	int (*writefile)(struct tagIMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *writeoptions);
+	int (*deletefile)(struct tagIMAGE *img, const char *fname);
 	int (*create)(const struct ImageModule *mod, STREAM *f, const ResolvedOption *createoptions);
+	int (*read_sector)(struct tagIMAGE *img, UINT8 track, UINT8 head, UINT8 sector, int offset, void *buffer, int size);
+	int (*write_sector)(struct tagIMAGE *img, UINT8 track, UINT8 head, UINT8 sector, int offset, const void *buffer, int size);
 
-	/* size must be set with the size of the buffer,
-	   if the buffer is too small it will be relocated with realloc */
-	int (*read_sector)(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, char **buffer, int *size);
-	int (*write_sector)(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, char *buffer, int size);
-
-	const struct OptionTemplate *fileoptions_template;
-	const struct OptionTemplate *createoptions_template;
+	struct OptionTemplate fileoptions_template[8];
+	struct OptionTemplate createoptions_template[8];
 
 	void *extra;
 };
 
+typedef void (*ImageModule_ctor)(struct ImageModule *imgmod);
+
+typedef struct tagIMAGE {
+	const struct ImageModule *module;
+} IMAGE;
+
+typedef struct tagIMAGEENUM {
+	const struct ImageModule *module;
+} IMAGEENUM;
+
 /* ----------------------------------------------------------------------- */
 
+#define IMAGEMODULE_EXTERN(name)	extern void construct_imgmod_##name(struct ImageModule *imgmod)
+#define IMAGEMODULE_DECL(name)		(construct_imgmod_##name)
+
 /* Use IMAGEMODULE for (potentially) full featured images */
-#define IMAGEMODULE(name,humanname,ext,crcfile,crcsysname,eoln,flags,\
-		init,exit,info,beginenum,nextenum,closeenum,freespace,readfile,writefile, \
-		deletefile,create,read_sector,write_sector,fileoptions_template,createoptions_template)	\
-struct ImageModule imgmod_##name = \
-{								\
-	#name,						\
-	(humanname),				\
-	(ext),						\
-	(crcfile),					\
-	(crcsysname),				\
-	(eoln),						\
-	(flags),					\
-	(init),						\
-	(exit),						\
-	(info),						\
-	(beginenum),				\
-	(nextenum),					\
-	(closeenum),				\
-	(freespace),				\
-	(readfile),					\
-	(writefile),				\
-	(deletefile),				\
-	(create),					\
-	(read_sector),				\
-	(write_sector),				\
-	(fileoptions_template),		\
-	(createoptions_template),	\
-	NULL			\
-};
+#define IMAGEMODULE(name_,humanname_,ext_,crcfile_,crcsysname_,eoln_,flags_,\
+		init_,exit_,info_,beginenum_,nextenum_,closeenum_,freespace_,readfile_,writefile_, \
+		deletefile_,create_,read_sector_,write_sector_,fileoptions_template_,createoptions_template_)	\
+																		\
+	void construct_imgmod_##name_(struct ImageModule *imgmod)			\
+	{																	\
+		memset(imgmod, 0, sizeof(*imgmod));								\
+		imgmod->name = #name_;											\
+		imgmod->humanname = (humanname_);								\
+		imgmod->fileextension = (ext_);									\
+		imgmod->crcfile = (crcfile_);									\
+		imgmod->crcsysname = (crcsysname_);								\
+		imgmod->eoln = (eoln_);											\
+		imgmod->flags = (flags_);										\
+		imgmod->init = (init_);											\
+		imgmod->exit = (exit_);											\
+		imgmod->info = (info_);											\
+		imgmod->beginenum = (beginenum_);								\
+		imgmod->nextenum = (nextenum_);									\
+		imgmod->closeenum = (closeenum_);								\
+		imgmod->freespace = (freespace_);								\
+		imgmod->readfile = (readfile_);									\
+		imgmod->writefile = (writefile_);								\
+		imgmod->deletefile = (deletefile_);								\
+		imgmod->create = (create_);										\
+		imgmod->read_sector = (read_sector_);							\
+		imgmod->write_sector = (write_sector_);							\
+		if (fileoptions_template_)										\
+			copy_option_template(										\
+				imgmod->fileoptions_template,							\
+				sizeof(imgmod->fileoptions_template) / sizeof(imgmod->fileoptions_template[0]),	\
+				(fileoptions_template_));								\
+		if (createoptions_template_)									\
+			copy_option_template(										\
+				imgmod->createoptions_template,							\
+				sizeof(imgmod->createoptions_template) / sizeof(imgmod->createoptions_template[0]),	\
+				(createoptions_template_));								\
+	}
 
 /* Use CARTMODULE for cartriges (where the only relevant option is CRC checking */
-#define CARTMODULE(name,humanname,ext)	\
-struct ImageModule imgmod_##name = \
-{					\
-	#name,			\
-	(humanname),	\
-	(ext),			\
-	(#name ".crc"),	\
-	#name,			\
-	NULL,			\
-	0,				\
-	NULL,			\
-	NULL,			\
-	NULL,			\
-	NULL,			\
-	NULL,			\
-	NULL,			\
-	NULL,			\
-	NULL,			\
-	NULL,			\
-	NULL,			\
-	NULL,			\
-	NULL,			\
-	NULL,			\
-	NULL,			\
-	NULL,			\
-	NULL			\
-};
+#define CARTMODULE(name_,humanname_,ext_)	\
+																		\
+	void construct_imgmod_##name_(struct ImageModule *imgmod)			\
+	{																	\
+		memset(imgmod, 0, sizeof(*imgmod));								\
+		imgmod->name = #name_;											\
+		imgmod->humanname = (humanname_);								\
+		imgmod->fileextension = (ext_);									\
+		imgmod->crcfile = (#name_ ".crc");								\
+		imgmod->crcsysname = (#name_);									\
+	}
 
 /* ---------------------------------------------------------------------------
  * Image calls
@@ -298,19 +302,6 @@ struct ImageModule imgmod_##name = \
  * ---------------------------------------------------------------------------
  */
 
-/* findimagemodule
- *
- * Description:
- *		Looks up the ImageModule with a certain name
- *
- * Parameters:
- *		name:				The name of the module
- *
- * Returns:
- *		The module with that name.  Returns NULL if the name is unknown
- */
-const struct ImageModule *findimagemodule(const char *name);
-
 /* getmodules
  *
  * Description:
@@ -320,9 +311,22 @@ const struct ImageModule *findimagemodule(const char *name);
  *		len:				Place to receive the length of the list
  *
  * Returns:
- *		An array of pointers to the modules
+ *		An array of module ctors pointers
  */
-const struct ImageModule **getmodules(size_t *len);
+const struct ImageModule *getmodules(size_t *len);
+
+/* findimagemodule
+ *
+ * Description:
+ *		Looks up the ImageModule with a certain name
+ *
+ * Parameters:
+ *		name:				The name of the module
+ *
+ * Returns:
+ *		An image module; or NULL if not found
+ */
+const struct ImageModule *findimagemodule(const char *name);
 
 /* imageerror
  *
@@ -609,46 +613,37 @@ struct WaveExtra
 
 };
 
-#define WAVEMODULE(name,humanname,ext,eoln,flags,zeropulse,onepulse,threshpulse,waveflags,blockheader,blockheadersize,\
+#define WAVEMODULE(name_,humanname_,ext_,eoln_,flags_,zeropulse,onepulse,threshpulse,waveflags,blockheader,blockheadersize,\
 		initalt,nextfile,readfilechunk)	\
-static struct WaveExtra waveextra_##name = \
-{						\
-	(initalt),			\
-	(nextfile),			\
-	(readfilechunk),	\
-	(zeropulse),		\
-	(onepulse),			\
-	(threshpulse),		\
-	(waveflags),		\
-	(blockheader),		\
-	(blockheadersize),	\
-}; \
-struct ImageModule imgmod_##name = \
-{						\
-	#name,				\
-	(humanname),		\
-	(ext),				\
-	NULL,				\
-	NULL,				\
-	(eoln),				\
-	(flags),			\
-	imgwave_init,		\
-	imgwave_exit,		\
-	NULL,				\
-	imgwave_beginenum,	\
-	imgwave_nextenum,	\
-	imgwave_closeenum,	\
-	NULL,				\
-	imgwave_readfile,	\
-	NULL,				\
-	NULL,				\
-	NULL,				\
-	NULL,				\
-	NULL,				\
-	NULL,				\
-	NULL,				\
-	(void *) &waveextra_##name \
-};
+	static struct WaveExtra waveextra_##name =							\
+	{																	\
+		(initalt),														\
+		(nextfile),														\
+		(readfilechunk),												\
+		(zeropulse),													\
+		(onepulse),														\
+		(threshpulse),													\
+		(waveflags),													\
+		(blockheader),													\
+		(blockheadersize),												\
+	};																	\
+																		\
+	void construct_imgmod_##name_(struct ImageModule *imgmod)			\
+	{																	\
+		memset(imgmod, 0, sizeof(*imgmod));								\
+		imgmod->name = #name_;											\
+		imgmod->humanname = (humanname_);								\
+		imgmod->fileextension = (ext_);									\
+		imgmod->eoln = (eoln_);											\
+		imgmod->flags = (flags_);										\
+		imgmod->init = imgwave_init;									\
+		imgmod->exit = imgwave_exit;									\
+		imgmod->beginenum = imgwave_beginenum;							\
+		imgmod->nextenum = imgwave_nextenum;							\
+		imgmod->closeenum = imgwave_closeenum;							\
+		imgmod->readfile = imgwave_readfile;							\
+		imgmod->extra = (void *) &waveextra_##name;						\
+	}
 
 /* These are called internally */
 int imgwave_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
@@ -664,135 +659,75 @@ int imgwave_forward(IMAGE *img);
 int imgwave_read(IMAGE *img, UINT8 *buf, int bufsize);
 
 /* ---------------------------------------------------------------------------
- * Floppy calls
+ * Bridge into BDF code
  * ---------------------------------------------------------------------------
  */
 
-struct FloppyFormat
-{
-	int (*init)(const struct ImageModule *mod, const struct FloppyFormat *flopformat, STREAM *f, IMAGE **outimg);
-	void (*exit)(IMAGE *img);
-	int (*create)(const struct ImageModule *mod, const struct FloppyFormat *flopformat, STREAM *f, UINT8 sides, UINT8 tracks, UINT8 filler);
-	int (*readdata)(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, int length, UINT8 *buf);
-	int (*writedata)(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, int length, const UINT8 *buf);
-	void (*get_geometry)(IMAGE *img, UINT8 *sides, UINT8 *tracks, UINT8 *sectors);
-	int (*isreadonly)(IMAGE *img);
-	void *extra;
-};
+#define FLOPPYMODULE_BEGIN(name_)												\
+	void int_construct_imgmod_##name_(struct ImageModule *imgmod, int *fileopt);\
+	void construct_imgmod_##name_(struct ImageModule *imgmod)					\
+	{																			\
+		const char *name = #name_;												\
+		int fileopt = 0;														\
+		memset(imgmod, 0, sizeof(*imgmod));										\
+		imgmod->name = #name_;													\
+		imgmod->init = imgtool_bdf_open;										\
+		imgmod->exit = imgtool_bdf_close;										\
+		imgmod->create = imgtool_bdf_create;									\
+		imgmod->read_sector = imgtool_bdf_read_sector;							\
+		imgmod->write_sector = imgtool_bdf_write_sector;						\
+		int_construct_imgmod_##name_(imgmod, &fileopt);							\
+	}																			\
+	void int_construct_imgmod_##name_(struct ImageModule *imgmod, int *fileopt)	\
+	{																			\
 
-#define FLOPPYFORMAT(name, init,exit,create,readdata,writedata) \
-static const struct FloppyFormat imgfloppyfmt_##name = \
-{\
-	(init), \
-	(exit), \
-	(create), \
-	(readdata), \
-	(writedata), \
-	NULL \
-};
+#define FLOPPYMODULE_END														\
+	}
 
-struct BasicDskExtra
-{
-	int (*resolvegeometry)(STREAM *f, UINT8 *tracks, UINT8 *sides, UINT8 *sec_per_track, UINT16 *sector_length, UINT8 *first_sector_id, int *offset);
-	int (*createheader)(STREAM *f, UINT8 sides, UINT8 tracks, UINT8 sec_per_track, UINT16 sector_length, UINT8 first_sector_id);
-	UINT8 sec_per_track;
-	UINT8 first_sector_id;
-	UINT16 sector_length;
-};
+#define FMOD_HUMANNAME(humanname_)		imgmod->humanname = (humanname_);
+#define FMOD_CRCFILE(crcfile_)			imgmod->crcfile = (crcfile_);
+#define FMOD_CRCSYSFILE(crcsysname_)	imgmod->crcsysname = (crcsysname_);
+#define FMOD_EOLN(eoln_)				imgmod->eoln = (eoln_);
+#define FMOD_FLAGS(flags_)				imgmod->flags = (flags_);
+#define FMOD_INFO(info_)				imgmod->info = (info_);
+#define FMOD_FREESPACE(freespace_)		imgmod->freespace = (freespace_);
+#define FMOD_READFILE(readfile_)		imgmod->readfile = (readfile_);
+#define FMOD_WRITEFILE(writefile_)		imgmod->writefile = (writefile_);
+#define FMOD_DELETEFILE(deletefile_)	imgmod->deletefile = (deletefile_);
 
-#define BASICDSKFORMAT(name, resolvegeometry,createheader,sec_per_track,sector_length,first_sector_id) \
-static const struct BasicDskExtra imgfloppyfmt_basicdsk_##name = \
-{\
-	(resolvegeometry),\
-	(createheader),\
-	(sec_per_track),\
-	(first_sector_id),\
-	(sector_length)\
-};\
-static const struct FloppyFormat imgfloppyfmt_##name = \
-{\
-	imgfloppy_basicdsk_init, \
-	imgfloppy_basicdsk_exit, \
-	imgfloppy_basicdsk_create, \
-	imgfloppy_basicdsk_readdata, \
-	imgfloppy_basicdsk_writedata, \
-	imgfloppy_basicdsk_get_geometry, \
-	imgfloppy_basicdsk_isreadonly, \
-	(void *) &imgfloppyfmt_basicdsk_##name \
-};
+#define FMOD_ENUMERATE(beginenum_, nextenum_, closeenum_)										\
+		imgmod->beginenum = (beginenum_);														\
+		imgmod->nextenum = (nextenum_);															\
+		imgmod->closeenum = (closeenum_);
 
-struct FloppyExtra
-{
-	const struct FloppyFormat *flopformat;
-	UINT8 filler;
-};
+#define FMOD_FILEOPTION(name_, description_, flags_, min_, max_, defaultvalue_)					\
+		imgmod->fileoptions_template[*fileopt].name = (name_);									\
+		imgmod->fileoptions_template[*fileopt].description = (description_);					\
+		imgmod->fileoptions_template[*fileopt].flags = (flags_);								\
+		imgmod->fileoptions_template[*fileopt].min = (min_);									\
+		imgmod->fileoptions_template[*fileopt].max = (max_);									\
+		imgmod->fileoptions_template[*fileopt].defaultvalue = (defaultvalue_);					\
+		(*fileopt)++;																			\
 
-#define FLOPPYMODULE(name,humanname,ext,crcfile,crcsysname,eoln,flags,\
-		info,beginenum,nextenum,closeenum,freespace,readfile,writefile, \
-		deletefile,fileoptions_template, \
-		floppyformat,maxsides,mintracks,maxtracks,deftracks,filler) \
-\
-static const struct OptionTemplate imgfloppy_##name##_copts[] = \
-{\
-	{ "tracks",	NULL, IMGOPTION_FLAG_TYPE_INTEGER,	mintracks,	maxtracks,	NULL},	\
-	{ "sides",	NULL, IMGOPTION_FLAG_TYPE_INTEGER,	1,			maxsides,	NULL},	\
-	{ NULL, NULL, 0, 0, 0, 0 } \
-};\
-static const struct FloppyExtra imgfloppy_##name##_extra = \
-{\
-	&imgfloppyfmt_##floppyformat, \
-	filler \
-};\
-struct ImageModule imgmod_##name = \
-{								\
-	#name,						\
-	(humanname),				\
-	(ext),						\
-	(crcfile),					\
-	(crcsysname),				\
-	(eoln),						\
-	(flags),					\
-	imgfloppy_init,				\
-	imgfloppy_exit,				\
-	(info),						\
-	(beginenum),				\
-	(nextenum),					\
-	(closeenum),				\
-	(freespace),				\
-	(readfile),					\
-	(writefile),				\
-	(deletefile),				\
-	imgfloppy_create,			\
-	imgfloppy_readsector,		\
-	imgfloppy_writesector,		\
-	(fileoptions_template),		\
-	imgfloppy_##name##_copts,	\
-	(void *) &imgfloppy_##name##_extra	\
-};
+#define FMOD_FORMAT(format_name)																\
+		imgmod->extra = (void *) construct_formatdriver_##format_name;							\
+		memset(imgmod->createoptions_template, 0, sizeof(imgmod->createoptions_template));		\
+		imgtool_bdf_getcreateoptions(imgmod->createoptions_template,							\
+			sizeof(imgmod->createoptions_template) / sizeof(imgmod->createoptions_template[0]),	\
+			construct_formatdriver_##format_name);												\
 
-/* These are called internally */
-int imgfloppy_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
-void imgfloppy_exit(IMAGE *img);
-int imgfloppy_readsector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, char **buffer, int *size);
-int imgfloppy_writesector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, char *buffer, int size);
-int imgfloppy_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *createoptions);
-int imgfloppy_basicdsk_init(const struct ImageModule *mod, const struct FloppyFormat *flopformat, STREAM *f, IMAGE **outimg);
-void imgfloppy_basicdsk_exit(IMAGE *img);
-int imgfloppy_basicdsk_create(const struct ImageModule *mod, const struct FloppyFormat *flopformat, STREAM *f, UINT8 sides, UINT8 tracks, UINT8 filler);
-int imgfloppy_basicdsk_readdata(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, int length, UINT8 *buf);
-int imgfloppy_basicdsk_writedata(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, int length, const UINT8 *buf);
-void imgfloppy_basicdsk_get_geometry(IMAGE *img, UINT8 *sides, UINT8 *tracks, UINT8 *sectors);
-int imgfloppy_basicdsk_isreadonly(IMAGE *img);
+#define FMOD_IMPORT_FROM(name_)																	\
+		int_construct_imgmod_##name_(imgmod, fileopt);											\
 
-#define IMGFLOP_CREATEOPTION_TRACKS			0
-#define IMGFLOP_CREATEOPTION_SIDES			1
-
-/* These are callable from floppy modules */
-int imgfloppy_read(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, int length, UINT8 *buf);
-int imgfloppy_write(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, int length, const UINT8 *buf);
-int imgfloppy_transfer_from(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, int length, STREAM *destf);
-int imgfloppy_transfer_to(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, int length, STREAM *destf);
-void imgfloppy_get_geometry(IMAGE *img, UINT8 *sides, UINT8 *tracks, UINT8 *sectors);
-int imgfloppy_isreadonly(IMAGE *img);
+int imgtool_bdf_open(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
+void imgtool_bdf_close(IMAGE *img);
+int imgtool_bdf_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *createoptions);
+void imgtool_bdf_get_geometry(IMAGE *img, UINT8 *tracks, UINT8 *heads, UINT8 *sectors);
+int imgtool_bdf_is_readonly(IMAGE *img);
+int imgtool_bdf_read_sector(IMAGE *img, UINT8 track, UINT8 head, UINT8 sector, int offset, void *buffer, int size);
+int imgtool_bdf_write_sector(IMAGE *img, UINT8 track, UINT8 head, UINT8 sector, int offset, const void *buffer, int size);
+int imgtool_bdf_read_sector_to_stream(IMAGE *img, UINT8 track, UINT8 head, UINT8 sector, int offset, int length, STREAM *s);
+int imgtool_bdf_write_sector_from_stream(IMAGE *img, UINT8 track, UINT8 head, UINT8 sector, int offset, int length, STREAM *s);
+void imgtool_bdf_getcreateoptions(struct OptionTemplate *opts, size_t max_opts, formatdriver_ctor format);
 
 #endif /* IMGTOOL_H */

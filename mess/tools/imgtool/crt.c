@@ -435,7 +435,7 @@ static int crt_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outi
 	if (!image) return IMGTOOLERR_OUTOFMEMORY;
 
 	memset(image, 0, sizeof(crt_image));
-	image->base.module = &imgmod_c64crt;
+	image->base.module = mod;
 	image->size=stream_size(f);
 	image->file_handle=f;
 
@@ -482,7 +482,7 @@ static int crt_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
 	iter=*(crt_iterator**)outenum = (crt_iterator *) malloc(sizeof(crt_iterator));
 	if (!iter) return IMGTOOLERR_OUTOFMEMORY;
 
-	iter->base.module = &imgmod_c64crt;
+	iter->base.module = img->module;
 
 	iter->image=image;
 	iter->pos = GET_ULONG( HEADER(image)->length );

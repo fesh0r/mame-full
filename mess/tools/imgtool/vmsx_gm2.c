@@ -68,7 +68,7 @@ IMAGEMODULE(
 )
 
 static int vmsx_gm2_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
-	{
+{
 	GM2_IMAGE *image;
 
 	image = (GM2_IMAGE*)malloc (sizeof (GM2_IMAGE) );
@@ -77,27 +77,27 @@ static int vmsx_gm2_image_init(const struct ImageModule *mod, STREAM *f, IMAGE *
 	*outimg = (IMAGE*)image;
 
 	memset(image, 0, sizeof(GM2_IMAGE));
-	image->base.module = &imgmod_vmsx_gm2;
+	image->base.module = mod;
 	image->size=stream_size(f);
 	image->file_handle=f;
 
     if (image->size != 0x4000)
-		{
+	{
 		free (image);
 		return IMGTOOLERR_READERROR;
-		}
+	}
 
 	image->data = (unsigned char *) malloc(image->size);
 	if ( (!image->data)
 		 ||(stream_read(f, image->data, image->size)!=image->size) )
-		{
+	{
 		free(image);
 		*outimg=NULL;
 		return IMGTOOLERR_OUTOFMEMORY;
-		}
+	}
 
 	return 0;
-	}
+}
 
 static void vmsx_gm2_image_exit(IMAGE *img)
 	{
@@ -115,7 +115,7 @@ static int vmsx_gm2_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
 	iter=*(TAP_ITERATOR**)outenum = (TAP_ITERATOR*) malloc(sizeof(TAP_ITERATOR));
 	if (!iter) return IMGTOOLERR_OUTOFMEMORY;
 
-	iter->base.module = &imgmod_vmsx_gm2;
+	iter->base.module = img->module;
 
 	iter->image=image;
 	iter->index = 0;

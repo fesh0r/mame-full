@@ -431,7 +431,7 @@ static int nc_card_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **
 	}
 
 	nc_card->file_handle = f;
-	nc_card->base.module = &imgmod_nccard;
+	nc_card->base.module = mod;
 
 	/* allocate a big chunk of memory for memcard data - max size will be 1mb! */
 	if (!memcard_init(&nc_card->memcard, stream_size(f)))
@@ -749,7 +749,7 @@ static int nc_card_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
 	if (!card_enum)
 		return IMGTOOLERR_OUTOFMEMORY;
 
-	card_enum->base.module = &imgmod_nccard;
+	card_enum->base.module = img->module;
 	card_enum->img = (struct nc_card_image *) img;
 	/* directory always starts on block 2 */
 	card_enum->current_block = 2;

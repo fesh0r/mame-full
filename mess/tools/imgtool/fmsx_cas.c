@@ -13,19 +13,6 @@
 	mess/formats/fmsx_cas.[ch] files, for the actual conversion.
 */
 
-#ifdef LSB_FIRST
-#define intelLong(x) (x)
-#else
-#define intelLong(x) ((((x) << 24) | (((unsigned long) (x)) >> 24) | \
-               (((x) & 0x0000ff00) << 8) | (((x) & 0x00ff0000) >> 8)))
-#endif
-
-#ifdef LSB_FIRST
-#define intelWord(x) (x)
-#else
-#define intelWord(x) ( ((x) << 8) | (((x) >> 8) & 0xff) )
-#endif
-
 typedef struct {
 	IMAGE			base;
 	char			*file_name;
@@ -88,7 +75,7 @@ static int fmsx_cas_image_init(const struct ImageModule *mod, STREAM *f, IMAGE *
 	*outimg = (IMAGE*)image;
 
 	memset(image, 0, sizeof(CAS_IMAGE));
-	image->base.module = &imgmod_fmsx_cas;
+	image->base.module = mod;
 	image->size=stream_size(f);
 	image->file_handle=f;
 
@@ -99,13 +86,12 @@ static int fmsx_cas_image_init(const struct ImageModule *mod, STREAM *f, IMAGE *
 		}
 
 	image->data = (unsigned char *) malloc(image->size);
-	if ( (!image->data)
-		 ||(stream_read(f, image->data, image->size)!=image->size) )
-		{
+	if (!image->data || (stream_read(f, image->data, image->size)!=image->size) )
+	{
 		free(image);
 		*outimg=NULL;
 		return IMGTOOLERR_OUTOFMEMORY;
-		}
+	}
 
   	if ( (image->count = fmsx_cas_to_wav_size (image->data, image->size) ) < 0)
 		{
@@ -152,40 +138,40 @@ static void fmsx_cas_image_exit(IMAGE *img)
 	}
 
 static int fmsx_cas_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
-	{
+{
 	CAS_IMAGE *image=(CAS_IMAGE*)img;
 	CAS_ITERATOR *iter;
 
 	iter=*(CAS_ITERATOR**)outenum = (CAS_ITERATOR*) malloc(sizeof(CAS_ITERATOR));
 	if (!iter) return IMGTOOLERR_OUTOFMEMORY;
 
-	iter->base.module = &imgmod_fmsx_cas;
+	iter->base.module = img->module;
 
 	iter->image=image;
 	iter->index = 0;
 	return 0;
-	}
+}
 
 static int fmsx_cas_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
-	{
+{
 	CAS_ITERATOR *iter=(CAS_ITERATOR*)enumeration;
 
 	ent->eof=iter->index;
 	if (!ent->eof)
-		{
+	{
 		strcpy (ent->fname, iter->image->file_name);
 		ent->corrupt=0;
 		ent->filesize = iter->image->count * 2 + 0x2c;
 		iter->index++;
-		}
+	}
 
 	return 0;
-	}
+}
 
 static void fmsx_cas_image_closeenum(IMAGEENUM *enumeration)
-	{
+{
 	free(enumeration);
-	}
+}
 
 static int fmsx_cas_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 	{
@@ -218,7 +204,7 @@ static int fmsx_cas_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 		return IMGTOOLERR_WRITEERROR;
     	}
 
-	temp32 = intelLong(image->count * 2 + 0x24);
+	temp32 = LITTLE_ENDIANIZE_INT32(image->count * 2 + 0x24);
 	offset += stream_write(destf, &temp32, 4);
     if( offset < 8 )
     	{
@@ -243,7 +229,7 @@ static int fmsx_cas_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 		}
 
 	/* format: PCM */
-	temp16 = intelWord (1);
+	temp16 = LITTLE_ENDIANIZE_INT16 (1);
 	offset += stream_write(destf, &temp16, 2);
 	if( offset < 22 )
     	{
@@ -252,7 +238,7 @@ static int fmsx_cas_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 		}
 
 	/* channels: 1 (mono) */
-	temp16 = intelWord (1);
+	temp16 = LITTLE_ENDIANIZE_INT16 (1);
 	offset += stream_write(destf, &temp16, 2);
 	if( offset < 24 )
     	{
@@ -261,7 +247,7 @@ static int fmsx_cas_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 		}
 
 	/* sample rate */
-	temp32 = intelLong(22050);
+	temp32 = LITTLE_ENDIANIZE_INT32(22050);
 	offset += stream_write(destf, &temp32, 4);
 	if( offset < 24 )
     	{
@@ -270,7 +256,7 @@ static int fmsx_cas_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 		}
 
 	/* byte rate */
-	temp32 = intelLong(22050 * 2);
+	temp32 = LITTLE_ENDIANIZE_INT32(22050 * 2);
 	offset += stream_write(destf, &temp32, 4);
 	if( offset < 28 )
     	{
@@ -279,7 +265,7 @@ static int fmsx_cas_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 		}
 
 	/* block align (size of one `sample') */
-	temp16 = intelLong (2);
+	temp16 = LITTLE_ENDIANIZE_INT32 (2);
 	offset += stream_write(destf, &temp16, 2);
 	if( offset < 30 )
     	{
@@ -288,7 +274,7 @@ static int fmsx_cas_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 		}
 
 	/* block align */
-	temp16 = intelLong (16);
+	temp16 = LITTLE_ENDIANIZE_INT32 (16);
 	offset += stream_write(destf, &temp16, 2);
 	if( offset < 32 )
     	{
@@ -305,7 +291,7 @@ static int fmsx_cas_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 		}
 
 	/* data size */
-	temp32 = intelLong(image->count * 2);
+	temp32 = LITTLE_ENDIANIZE_INT32(image->count * 2);
 	offset += stream_write(destf, &temp32, 4);
 	if( offset < 40 )
     	{

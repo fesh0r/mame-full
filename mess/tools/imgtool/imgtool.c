@@ -32,148 +32,187 @@ CARTMODULE(vc20,     "Vc20 Cartridge",					NULL)
 CARTMODULE(vectrex,  "Vectrex Cartridge",				"bin")
 CARTMODULE(vic20,    "Commodore Vic-20 Cartridge",		"a0")
 
-extern struct ImageModule imgmod_rsdos;	/* CoCo RS-DOS disks */
-extern struct ImageModule imgmod_cococas;	/* CoCo cassettes */
-extern struct ImageModule imgmod_msdos;	/* FAT/MSDOS diskett images */
-extern struct ImageModule imgmod_msdoshd;	/* FAT/MSDOS harddisk images */
-extern struct ImageModule imgmod_lynx;	/* c64 archiv */
-extern struct ImageModule imgmod_t64;	/* c64 archiv */
-extern struct ImageModule imgmod_d64;	/* commodore sx64/vc1541/2031/1551 disketts */
-extern struct ImageModule imgmod_x64;	/* commodore vc1541 disketts */
-extern struct ImageModule imgmod_d71;	/* commodore 128d/1571 disketts */
-extern struct ImageModule imgmod_d81;	/* commodore 65/1565/1581 disketts */
-extern struct ImageModule imgmod_c64crt;	/* c64 cartridge */
-extern struct ImageModule imgmod_vmsx_tap;	/* vMSX .tap archiv */
-extern struct ImageModule imgmod_vmsx_gm2;	/* vMSX gmaster2.ram file */
-extern struct ImageModule imgmod_fmsx_cas;	/* fMSX style .cas file */
-/* extern struct ImageModule imgmod_svi_cas; */	/* SVI .cas file */
-extern struct ImageModule imgmod_xsa;	/* XelaSoft Archive */
-extern struct ImageModule imgmod_msx_img;	/* bogus MSX images */
-extern struct ImageModule imgmod_msx_ddi;	/* bogus MSX images */
-extern struct ImageModule imgmod_msx_msx;	/* bogus MSX images */
-extern struct ImageModule imgmod_msx_mul;	/* bogus MSX images */
-extern struct ImageModule imgmod_rom16;
-extern struct ImageModule imgmod_nccard;	/* NC100/NC150/NC200 PCMCIA Card ram image */
-extern struct ImageModule imgmod_ti85p;		/* TI-85 program file */
-extern struct ImageModule imgmod_ti85s;		/* TI-85 string file */
-extern struct ImageModule imgmod_ti85i;		/* TI-85 picture file */
-extern struct ImageModule imgmod_ti85n;		/* TI-85 real number file */
-extern struct ImageModule imgmod_ti85c;		/* TI-85 complex number file */
-extern struct ImageModule imgmod_ti85l;		/* TI-85 list file */
-extern struct ImageModule imgmod_ti85k;		/* TI-85 constant file */
-extern struct ImageModule imgmod_ti85m;		/* TI-85 matrix file */
-extern struct ImageModule imgmod_ti85v;		/* TI-85 vector file */
-extern struct ImageModule imgmod_ti85d;		/* TI-85 graphics database file */
-extern struct ImageModule imgmod_ti85e;		/* TI-85 equation file */
-extern struct ImageModule imgmod_ti85r;		/* TI-85 range settings file */
-extern struct ImageModule imgmod_ti85g;		/* TI-85 grouped file */
-extern struct ImageModule imgmod_ti85;		/* TI-85 file */
-extern struct ImageModule imgmod_ti85b;		/* TI-85 memory backup file */
-extern struct ImageModule imgmod_ti86p;		/* TI-86 program file */
-extern struct ImageModule imgmod_ti86s;		/* TI-86 string file */
-extern struct ImageModule imgmod_ti86i;		/* TI-86 picture file */
-extern struct ImageModule imgmod_ti86n;		/* TI-86 real number file */
-extern struct ImageModule imgmod_ti86c;		/* TI-86 complex number file */
-extern struct ImageModule imgmod_ti86l;		/* TI-86 list file */
-extern struct ImageModule imgmod_ti86k;		/* TI-86 constant file */
-extern struct ImageModule imgmod_ti86m;		/* TI-86 matrix file */
-extern struct ImageModule imgmod_ti86v;		/* TI-86 vector file */
-extern struct ImageModule imgmod_ti86d;		/* TI-86 graphics database file */
-extern struct ImageModule imgmod_ti86e;		/* TI-86 equation file */
-extern struct ImageModule imgmod_ti86r;		/* TI-86 range settings file */
-extern struct ImageModule imgmod_ti86g;		/* TI-86 grouped file */
-extern struct ImageModule imgmod_ti86;		/* TI-86 file */
-extern struct ImageModule imgmod_ti99;		/* TI99 floppy */
+IMAGEMODULE_EXTERN(coco_rsdos_jv1);		/* CoCo RS-DOS disks */
+IMAGEMODULE_EXTERN(coco_rsdos_vdk);		/* CoCo RS-DOS disks */
+IMAGEMODULE_EXTERN(cococas);			/* CoCo cassettes */
+IMAGEMODULE_EXTERN(msdos);				/* FAT/MSDOS diskett images */
+IMAGEMODULE_EXTERN(msdoshd);			/* FAT/MSDOS harddisk images */
+IMAGEMODULE_EXTERN(lynx);				/* c64 archive */
+IMAGEMODULE_EXTERN(t64);				/* c64 archive */
+IMAGEMODULE_EXTERN(d64);				/* commodore sx64/vc1541/2031/1551 diskettes */
+IMAGEMODULE_EXTERN(x64);				/* commodore vc1541 diskettes */
+IMAGEMODULE_EXTERN(d71);				/* commodore 128d/1571 diskettes */
+IMAGEMODULE_EXTERN(d81);				/* commodore 65/1565/1581 diskettes */
+IMAGEMODULE_EXTERN(c64crt);				/* c64 cartridge */
+IMAGEMODULE_EXTERN(vmsx_tap);			/* vMSX .tap archiv */
+IMAGEMODULE_EXTERN(vmsx_gm2);			/* vMSX gmaster2.ram file */
+IMAGEMODULE_EXTERN(fmsx_cas);			/* fMSX style .cas file */
+/* IMAGEMODULE_EXTERN(svi_cas);		 */	/* SVI .cas file */
+IMAGEMODULE_EXTERN(xsa);				/* XelaSoft Archive */
+IMAGEMODULE_EXTERN(msx_img);			/* bogus MSX images */
+IMAGEMODULE_EXTERN(msx_ddi);			/* bogus MSX images */
+IMAGEMODULE_EXTERN(msx_msx);			/* bogus MSX images */
+IMAGEMODULE_EXTERN(msx_mul);			/* bogus MSX images */
+IMAGEMODULE_EXTERN(rom16);
+IMAGEMODULE_EXTERN(nccard);				/* NC100/NC150/NC200 PCMCIA Card ram image */
+IMAGEMODULE_EXTERN(ti85p);				/* TI-85 program file */
+IMAGEMODULE_EXTERN(ti85s);				/* TI-85 string file */
+IMAGEMODULE_EXTERN(ti85i);				/* TI-85 picture file */
+IMAGEMODULE_EXTERN(ti85n);		/* TI-85 real number file */
+IMAGEMODULE_EXTERN(ti85c);		/* TI-85 complex number file */
+IMAGEMODULE_EXTERN(ti85l);		/* TI-85 list file */
+IMAGEMODULE_EXTERN(ti85k);		/* TI-85 constant file */
+IMAGEMODULE_EXTERN(ti85m);		/* TI-85 matrix file */
+IMAGEMODULE_EXTERN(ti85v);		/* TI-85 vector file */
+IMAGEMODULE_EXTERN(ti85d);		/* TI-85 graphics database file */
+IMAGEMODULE_EXTERN(ti85e);		/* TI-85 equation file */
+IMAGEMODULE_EXTERN(ti85r);		/* TI-85 range settings file */
+IMAGEMODULE_EXTERN(ti85g);		/* TI-85 grouped file */
+IMAGEMODULE_EXTERN(ti85);		/* TI-85 file */
+IMAGEMODULE_EXTERN(ti85b);		/* TI-85 memory backup file */
+IMAGEMODULE_EXTERN(ti86p);		/* TI-86 program file */
+IMAGEMODULE_EXTERN(ti86s);		/* TI-86 string file */
+IMAGEMODULE_EXTERN(ti86i);		/* TI-86 picture file */
+IMAGEMODULE_EXTERN(ti86n);		/* TI-86 real number file */
+IMAGEMODULE_EXTERN(ti86c);		/* TI-86 complex number file */
+IMAGEMODULE_EXTERN(ti86l);		/* TI-86 list file */
+IMAGEMODULE_EXTERN(ti86k);		/* TI-86 constant file */
+IMAGEMODULE_EXTERN(ti86m);		/* TI-86 matrix file */
+IMAGEMODULE_EXTERN(ti86v);		/* TI-86 vector file */
+IMAGEMODULE_EXTERN(ti86d);		/* TI-86 graphics database file */
+IMAGEMODULE_EXTERN(ti86e);		/* TI-86 equation file */
+IMAGEMODULE_EXTERN(ti86r);		/* TI-86 range settings file */
+IMAGEMODULE_EXTERN(ti86g);		/* TI-86 grouped file */
+IMAGEMODULE_EXTERN(ti86);		/* TI-86 file */
+IMAGEMODULE_EXTERN(ti99);		/* TI99 floppy */
 
-static const struct ImageModule *images[] = {
-	&imgmod_rsdos,
-	&imgmod_cococas,
-	&imgmod_msdos,
-	&imgmod_msdoshd,
-	&imgmod_nes,
-	&imgmod_a5200,
-	&imgmod_a7800,
-	&imgmod_advision,
-	&imgmod_astrocde,
-	&imgmod_c16,
-	&imgmod_c64crt,
-	&imgmod_t64,
-	&imgmod_lynx,
-	&imgmod_d64,
-	&imgmod_x64,
-	&imgmod_d71,
-	&imgmod_d81,
-	&imgmod_coleco,
-	&imgmod_gameboy,
-	&imgmod_gamegear,
-	&imgmod_genesis,
-	&imgmod_max,
-	&imgmod_msx,
-	&imgmod_pdp1,
-	&imgmod_plus4,
-	&imgmod_sms,
-	&imgmod_ti99_4a,
-	&imgmod_vc20,
-	&imgmod_vectrex,
-	&imgmod_vic20,
-	&imgmod_vmsx_tap,
-	&imgmod_vmsx_gm2,
-	&imgmod_fmsx_cas,
-	&imgmod_msx_img,
-	&imgmod_msx_ddi,
-	&imgmod_msx_msx,
-	&imgmod_msx_mul,
-	&imgmod_xsa,
-/*	&imgmod_svi_cas,  -- doesn't work yet! */
-	&imgmod_rom16,
-	&imgmod_nccard,
-	&imgmod_ti85p,
-	&imgmod_ti85s,
-	&imgmod_ti85i,
-	&imgmod_ti85n,
-	&imgmod_ti85c,
-	&imgmod_ti85l,
-	&imgmod_ti85k,
-	&imgmod_ti85m,
-	&imgmod_ti85v,
-	&imgmod_ti85d,
-	&imgmod_ti85e,
-	&imgmod_ti85r,
-	&imgmod_ti85g,
-	&imgmod_ti85,
-	&imgmod_ti85b,
-	&imgmod_ti86p,
-	&imgmod_ti86s,
-	&imgmod_ti86i,
-	&imgmod_ti86n,
-	&imgmod_ti86c,
-	&imgmod_ti86l,
-	&imgmod_ti86k,
-	&imgmod_ti86m,
-	&imgmod_ti86v,
-	&imgmod_ti86d,
-	&imgmod_ti86e,
-	&imgmod_ti86r,
-	&imgmod_ti86g,
-	&imgmod_ti86,
-	&imgmod_ti99
+static const ImageModule_ctor module_ctors[] =
+{
+	IMAGEMODULE_DECL(coco_rsdos_jv1),
+	IMAGEMODULE_DECL(coco_rsdos_vdk),
+	IMAGEMODULE_DECL(cococas),
+	IMAGEMODULE_DECL(msdos),
+	IMAGEMODULE_DECL(msdoshd),
+	IMAGEMODULE_DECL(nes),
+	IMAGEMODULE_DECL(a5200),
+	IMAGEMODULE_DECL(a7800),
+	IMAGEMODULE_DECL(advision),
+	IMAGEMODULE_DECL(astrocde),
+	IMAGEMODULE_DECL(c16),
+	IMAGEMODULE_DECL(c64crt),
+	IMAGEMODULE_DECL(t64),
+	IMAGEMODULE_DECL(lynx),
+	IMAGEMODULE_DECL(d64),
+	IMAGEMODULE_DECL(x64),
+	IMAGEMODULE_DECL(d71),
+	IMAGEMODULE_DECL(d81),
+	IMAGEMODULE_DECL(coleco),
+	IMAGEMODULE_DECL(gameboy),
+	IMAGEMODULE_DECL(gamegear),
+	IMAGEMODULE_DECL(genesis),
+	IMAGEMODULE_DECL(max),
+	IMAGEMODULE_DECL(msx),
+	IMAGEMODULE_DECL(pdp1),
+	IMAGEMODULE_DECL(plus4),
+	IMAGEMODULE_DECL(sms),
+	IMAGEMODULE_DECL(ti99_4a),
+	IMAGEMODULE_DECL(vc20),
+	IMAGEMODULE_DECL(vectrex),
+	IMAGEMODULE_DECL(vic20),
+	IMAGEMODULE_DECL(vmsx_tap),
+	IMAGEMODULE_DECL(vmsx_gm2),
+	IMAGEMODULE_DECL(fmsx_cas),
+	IMAGEMODULE_DECL(msx_img),
+	IMAGEMODULE_DECL(msx_ddi),
+	IMAGEMODULE_DECL(msx_msx),
+	IMAGEMODULE_DECL(msx_mul),
+	IMAGEMODULE_DECL(xsa),
+/*	IMAGEMODULE_DECL(svi_cas),  -- doesn't work yet! */
+	IMAGEMODULE_DECL(rom16),
+	IMAGEMODULE_DECL(nccard),
+	IMAGEMODULE_DECL(ti85p),
+	IMAGEMODULE_DECL(ti85s),
+	IMAGEMODULE_DECL(ti85i),
+	IMAGEMODULE_DECL(ti85n),
+	IMAGEMODULE_DECL(ti85c),
+	IMAGEMODULE_DECL(ti85l),
+	IMAGEMODULE_DECL(ti85k),
+	IMAGEMODULE_DECL(ti85m),
+	IMAGEMODULE_DECL(ti85v),
+	IMAGEMODULE_DECL(ti85d),
+	IMAGEMODULE_DECL(ti85e),
+	IMAGEMODULE_DECL(ti85r),
+	IMAGEMODULE_DECL(ti85g),
+	IMAGEMODULE_DECL(ti85),
+	IMAGEMODULE_DECL(ti85b),
+	IMAGEMODULE_DECL(ti86p),
+	IMAGEMODULE_DECL(ti86s),
+	IMAGEMODULE_DECL(ti86i),
+	IMAGEMODULE_DECL(ti86n),
+	IMAGEMODULE_DECL(ti86c),
+	IMAGEMODULE_DECL(ti86l),
+	IMAGEMODULE_DECL(ti86k),
+	IMAGEMODULE_DECL(ti86m),
+	IMAGEMODULE_DECL(ti86v),
+	IMAGEMODULE_DECL(ti86d),
+	IMAGEMODULE_DECL(ti86e),
+	IMAGEMODULE_DECL(ti86r),
+	IMAGEMODULE_DECL(ti86g),
+	IMAGEMODULE_DECL(ti86),
+	IMAGEMODULE_DECL(ti99)
 };
 
 /* ----------------------------------------------------------------------- */
 
-const struct ImageModule *findimagemodule(const char *name)
+void copy_option_template(struct OptionTemplate *dest, int destlen, const struct OptionTemplate *source)
 {
-	size_t i;
-	for (i = 0; i < (sizeof(images) / sizeof(images[0])); i++)
-		if (!stricmp(name, images[i]->name))
-			return images[i];
+	int i = 0;
+	while(source[i].name)
+	{
+		dest[i] = source[i];
+		i++;
+	}
+	assert(i+1 < destlen);
+}
+
+const struct ImageModule *getmodules(size_t *len)
+{
+	static struct ImageModule *modules = NULL;
+	size_t module_count;
+	int i;
+
+	module_count = sizeof(module_ctors) / sizeof(module_ctors[0]);
+	if (!modules)
+	{
+		modules = (struct ImageModule *) malloc(sizeof(struct ImageModule) * module_count);
+		if (!modules)
+			goto outofmemory;
+
+		for (i = 0; i < module_count; i++)
+			module_ctors[i](&modules[i]);
+	}
+
+	*len = module_count;
+	return modules;
+
+outofmemory:
+	*len = 0;
 	return NULL;
 }
 
-const struct ImageModule **getmodules(size_t *len)
+const struct ImageModule *findimagemodule(const char *name)
 {
-	*len = sizeof(images) / sizeof(images[0]);
-	return images;
+	const struct ImageModule *modules;
+	size_t module_count;
+	int i;
+	
+	modules = getmodules(&module_count);
+	for (i = 0; i < module_count; i++)
+	{
+		if (!stricmp(name, modules[i].name))
+			return &modules[i];
+	}
+	return NULL;
 }
 
 static const char *msgs[] = {
@@ -263,6 +302,18 @@ void img_close(IMAGE *img)
 {
 	if (img->module->exit)
 		img->module->exit(img);
+}
+
+int img_info(IMAGE *img, char *string, const int len)
+{
+	if (len > 0)
+	{
+		if (img->module->info)
+			img->module->info(img, string, len);
+		else
+			string[0] = '\0';
+	}
+	return 0;
 }
 
 int img_beginenum(IMAGE *img, IMAGEENUM **outenum)
@@ -517,7 +568,8 @@ int img_writefile_resolved(IMAGE *img, const char *fname, STREAM *sourcef, const
 	}
 
 	/* Does this image module prefer upper case file names? */
-	if (img->module->flags & IMGMODULE_FLAG_FILENAMES_PREFERUCASE) {
+	if (img->module->flags & IMGMODULE_FLAG_FILENAMES_PREFERUCASE)
+	{
 		/*buf = strdup(fname);*/
 		buf = malloc(strlen(fname)+1);
 		if (buf)
@@ -554,14 +606,6 @@ int img_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const struct N
 {
 	int err;
 	ResolvedOption ropts[MAX_OPTIONS];
-	char *buf = NULL;
-	char *s;
-	STREAM *newstream = NULL;
-
-	if (!img->module->writefile) {
-		err = IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
-		goto done;
-	}
 
 	err = resolve_options(img->module->fileoptions_template, nopts, ropts, sizeof(ropts) / sizeof(ropts[0]));
 	if (err) {
@@ -569,37 +613,9 @@ int img_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const struct N
 		goto done;
 	}
 
-	/* Does this image module prefer upper case file names? */
-	if (img->module->flags & IMGMODULE_FLAG_FILENAMES_PREFERUCASE) {
-		/*buf = strdup(fname);*/
-		buf = malloc(strlen(fname)+1);
-		if (buf)
-			strcpy(buf, fname);
-		if (!buf) {
-			err = IMGTOOLERR_OUTOFMEMORY;
-			goto done;
-		}
-		for (s = buf; *s; s++)
-			*s = toupper(*s);
-		fname = buf;
-	}
-
-	/* Custom filter? */
-	err = process_filter(&sourcef, &newstream, img->module, filter, PURPOSE_WRITE);
-	if (err)
-		goto done;
-
-	err = img->module->writefile(img, fname, sourcef, ropts);
-	if (err) {
-		err = markerrorsource(err);
-		goto done;
-	}
+	err = img_writefile_resolved(img, fname, sourcef, ropts, filter);
 
 done:
-	if (buf)
-		free(buf);
-	if (newstream)
-		stream_close(newstream);
 	return err;
 }
 
@@ -707,9 +723,7 @@ int img_create(const struct ImageModule *module, const char *fname, const struct
 	if (err)
 		return err | IMGTOOLERR_SRC_PARAM_CREATE;
 
-	img_create_resolved(module, fname, ropts);
-
-	return 0;
+	return img_create_resolved(module, fname, ropts);
 }
 
 int img_create_byname(const char *modulename, const char *fname, const struct NamedOption *nopts)
@@ -821,7 +835,8 @@ int img_getinfo_byname(const char *modulename, const char *fname, imageinfo *inf
 {
 	const struct ImageModule *module;
 
-	if (modulename) {
+	if (modulename)
+	{
 		module = findimagemodule(modulename);
 		if (!module)
 			return IMGTOOLERR_MODULENOTFOUND | IMGTOOLERR_SRC_MODULE;
@@ -893,7 +908,8 @@ int img_goodname_byname(const char *modulename, const char *fname, const char *b
 	const struct ImageModule *module;
 
 	module = findimagemodule(modulename);
-	if (!module) {
+	if (!module)
+	{
 		*result = NULL;
 		return IMGTOOLERR_MODULENOTFOUND | IMGTOOLERR_SRC_MODULE;
 	}

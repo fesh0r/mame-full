@@ -194,7 +194,7 @@ static int ti85_file_init(const struct ImageModule *mod, STREAM *f, IMAGE **outi
 	file=*(ti85_file**)outimg=(ti85_file *) malloc(sizeof(ti85_file));
 	if (!file) return IMGTOOLERR_OUTOFMEMORY;
 
-	file->base.module = &imgmod_ti85p;
+	file->base.module = mod;
 	file->size=stream_size(f);
 	file->file_handle=f;
 
@@ -278,7 +278,7 @@ static int ti85_file_beginenum(IMAGE *img, IMAGEENUM **outenum)
 	iter=*(ti85_iterator**)outenum = (ti85_iterator *) malloc(sizeof(ti85_iterator));
 	if (!iter) return IMGTOOLERR_OUTOFMEMORY;
 
-	iter->base.module = &imgmod_ti85p;
+	iter->base.module = img->module;
 
 	iter->image=file;
 	iter->index = 0;
@@ -449,7 +449,7 @@ static int ti85b_file_init(const struct ImageModule *mod, STREAM *f, IMAGE **out
 	file=*(ti85b_file**)outimg=(ti85b_file *) malloc(sizeof(ti85b_file));
 	if (!file) return IMGTOOLERR_OUTOFMEMORY;
 
-	file->base.module = &imgmod_ti85b;
+	file->base.module = mod;
 	file->size=stream_size(f);
 	file->file_handle=f;
 
@@ -516,7 +516,7 @@ static int ti85b_file_beginenum(IMAGE *img, IMAGEENUM **outenum)
 	iter=*(ti85b_iterator**)outenum = (ti85b_iterator *) malloc(sizeof(ti85b_iterator));
 	if (!iter) return IMGTOOLERR_OUTOFMEMORY;
 
-	iter->base.module = &imgmod_ti85b;
+	iter->base.module = img->module;
 
 	iter->image=file;
 	iter->index = 0;

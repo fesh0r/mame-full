@@ -39,6 +39,7 @@
  * sided 3.5" disks (720kB), simply appended to one another.
  */
 
+#include <assert.h>
 #include "osdepend.h"
 #include "imgtool.h"
 #include "utils.h"
@@ -58,11 +59,7 @@ typedef struct
 	int			index;
 	} DSK_ITERATOR;
 
-static int msx_img_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
-static int msx_ddi_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
-static int msx_msx_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
-static int msx_multi_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
-static int msx_dsk_image_init(STREAM *f, IMAGE **outimg, int format);
+static int msx_dsk_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
 static void msx_dsk_image_exit(IMAGE *img);
 static int msx_dsk_image_beginenum(IMAGE *img, IMAGEENUM **outenum);
 static int msx_dsk_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
@@ -77,7 +74,7 @@ IMAGEMODULE(
 	NULL,								/* crc system name */
 	NULL,								/* eoln */
 	0,									/* flags */
-	msx_img_image_init,					/* init function */
+	msx_dsk_image_init,					/* init function */
 	msx_dsk_image_exit,					/* exit function */
 	NULL,								/* info function */
 	msx_dsk_image_beginenum,			/* begin enumeration */
@@ -102,7 +99,7 @@ IMAGEMODULE(
 	NULL,								/* crc system name */
 	NULL,								/* eoln */
 	0,									/* flags */
-	msx_ddi_image_init,					/* init function */
+	msx_dsk_image_init,					/* init function */
 	msx_dsk_image_exit,					/* exit function */
 	NULL,								/* info function */
 	msx_dsk_image_beginenum,			/* begin enumeration */
@@ -127,7 +124,7 @@ IMAGEMODULE(
 	NULL,								/* crc system name */
 	NULL,								/* eoln */
 	0,									/* flags */
-	msx_msx_image_init,					/* init function */
+	msx_dsk_image_init,					/* init function */
 	msx_dsk_image_exit,					/* exit function */
 	NULL,								/* info function */
 	msx_dsk_image_beginenum,			/* begin enumeration */
@@ -152,7 +149,7 @@ IMAGEMODULE(
 	NULL,								/* crc system name */
 	NULL,								/* eoln */
 	0,									/* flags */
-	msx_multi_image_init,				/* init function */
+	msx_dsk_image_init,					/* init function */
 	msx_dsk_image_exit,					/* exit function */
 	NULL,								/* info function */
 	msx_dsk_image_beginenum,			/* begin enumeration */
@@ -174,25 +171,10 @@ IMAGEMODULE(
 #define 	FORMAT_MSX		(2)
 #define 	FORMAT_MULTI	(3)
 
-static struct ImageModule *modules[4] = 
-	{ &imgmod_msx_img, &imgmod_msx_ddi, &imgmod_msx_msx, &imgmod_msx_mul };
-
-static int msx_img_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg) 
-	{ return msx_dsk_image_init (f, outimg, FORMAT_IMG); }
-
-static int msx_ddi_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg) 
-	{ return msx_dsk_image_init (f, outimg, FORMAT_DDI); }
-
-static int msx_msx_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg) 
-	{ return msx_dsk_image_init (f, outimg, FORMAT_MSX); }
-
-static int msx_multi_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg) 
-	{ return msx_dsk_image_init (f, outimg, FORMAT_MULTI); }
-
-static int msx_dsk_image_init(STREAM *f, IMAGE **outimg, int format)
-	{
+static int msx_dsk_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
+{
 	DSK_IMAGE *image;
-	int size, disks, correct;
+	int size, disks, correct, format;
     UINT8 header;
 
 	size = stream_size (f);
@@ -203,43 +185,52 @@ static int msx_dsk_image_init(STREAM *f, IMAGE **outimg, int format)
 
 	correct = 0;
 
-	switch (format)
-		{
-		case FORMAT_IMG:
-			if (1 != stream_read (f, &header, 1) ) 
-				return IMGTOOLERR_READERROR;
+	if (!strcmp(mod->name, "msx_img"))
+	{
+		format = FORMAT_IMG;
+		if (1 != stream_read (f, &header, 1) ) 
+			return IMGTOOLERR_READERROR;
 
-			if ( (size == (720*1024+1) ) && (header == 2) )
-				{
-				correct = 1;
-				size--;
-				}
-			if ( (size == (360*1024+1) ) && (header == 1) )
-				{
-				correct = 1;
-				size--;
-				}
-			break;
-		case FORMAT_MSX:
-			if (size == (720*1024) )
-				correct = 1;
-			break;
-		case FORMAT_DDI:
-			if (size == (720*1024+0x1200) )
-				{
-				size -= 0x1200;
-				correct = 1;
-				}
-			break;
-		case FORMAT_MULTI:
-			if ( (size > 720*1024) && !(size % (720*1024) ) )
-				{
-				disks = size / (720*1024);
-				correct = 1;
-				size = 720*1024;
-				}
-			break;
-		}
+		if ( (size == (720*1024+1) ) && (header == 2) )
+			{
+			correct = 1;
+			size--;
+			}
+		if ( (size == (360*1024+1) ) && (header == 1) )
+			{
+			correct = 1;
+			size--;
+			}
+	}
+	else if (!strcmp(mod->name, "msx_msx"))
+	{
+		format = FORMAT_MSX;
+		if (size == (720*1024) )
+			correct = 1;
+	}
+	else if (!strcmp(mod->name, "msx_ddi"))
+	{
+		format = FORMAT_DDI;
+		if (size == (720*1024+0x1200) )
+			{
+			size -= 0x1200;
+			correct = 1;
+			}
+	}
+	else if (!strcmp(mod->name, "msx_mul"))
+	{
+		format = FORMAT_MULTI;
+		if ( (size > 720*1024) && !(size % (720*1024) ) )
+			{
+			disks = size / (720*1024);
+			correct = 1;
+			size = 720*1024;
+			}
+	}
+	else
+	{
+		assert(0);
+	}
 	
 	if (!correct) return IMGTOOLERR_MODULENOTFOUND;
 
@@ -249,7 +240,7 @@ static int msx_dsk_image_init(STREAM *f, IMAGE **outimg, int format)
 	*outimg = (IMAGE*)image;
 
 	memset(image, 0, sizeof(DSK_IMAGE));
-	image->base.module = modules[format];
+	image->base.module = mod;
 	image->file_handle = f;
 	image->size = size;
 	image->format = format;

@@ -151,7 +151,7 @@ static int lynx_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **out
 	if (!image) return IMGTOOLERR_OUTOFMEMORY;
 
 	memset(image, 0, sizeof(lynx_image));
-	image->base.module = &imgmod_lynx;
+	image->base.module = mod;
 	image->size=stream_size(f);
 	image->file_handle=f;
 
@@ -205,7 +205,7 @@ static int lynx_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
 	iter=*(lynx_iterator**)outenum = (lynx_iterator *) malloc(sizeof(lynx_iterator));
 	if (!iter) return IMGTOOLERR_OUTOFMEMORY;
 
-	iter->base.module = &imgmod_lynx;
+	iter->base.module = img->module;
 
 	iter->image=image;
 	iter->index = 0;

@@ -62,7 +62,7 @@ static int rom16_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **ou
 	if (!image) return IMGTOOLERR_OUTOFMEMORY;
 
 	memset(image, 0, sizeof(rom16_image));
-	image->base.module = &imgmod_rom16;
+	image->base.module = mod;
 	image->size=stream_size(f);
 	image->file_handle=f;
 
@@ -111,7 +111,7 @@ static int rom16_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
 	iter=*(rom16_iterator**)outenum = (rom16_iterator *) malloc(sizeof(rom16_iterator));
 	if (!iter) return IMGTOOLERR_OUTOFMEMORY;
 
-	iter->base.module = &imgmod_rom16;
+	iter->base.module = img->module;
 
 	iter->image=image;
 	iter->index = 0;

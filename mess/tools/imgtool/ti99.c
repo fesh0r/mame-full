@@ -10,6 +10,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <assert.h>
 #include "osdepend.h"
 #include "imgtool.h"
 
@@ -143,8 +144,8 @@ static int ti99_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, 
 static int ti99_image_deletefile(IMAGE *img, const char *fname);
 static int ti99_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options_);
 
-static int ti99_read_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, char **buffer, int *size);
-static int ti99_write_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, char *buffer, int size);
+static int ti99_read_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, void *buffer, int length);
+static int ti99_write_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, const void *buffer, int length);
 
 static struct OptionTemplate ti99_createopts[] =
 {
@@ -676,11 +677,11 @@ static int ti99_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
 	ti99_iterator *iter;
 
 	iter = malloc(sizeof(ti99_iterator));
-	* (ti99_iterator **) outenum = iter;
+	*((ti99_iterator **) outenum) = iter;
 	if (iter == NULL)
 		return IMGTOOLERR_OUTOFMEMORY;
 
-	iter->base.module = image->base.module;
+	iter->base.module = img->module;
 	iter->image = image;
 	iter->index = 0;
 
@@ -1121,51 +1122,19 @@ static int ti99_image_create(const struct ImageModule *mod, STREAM *f, const Res
 /*
 	Read one sector from a ti99_image.
 */
-static int ti99_read_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, 
-								char **buffer, int *size)
+static int ti99_read_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, void *buffer, int length)
 {
-	ti99_image *image = (ti99_image*) img;
-	int secnum;
-
-	if ((head >= image->sec0.sides) || (track >= image->sec0.tracksperside)
-			|| (sector >= image->sec0.secspertrack))
-		return IMGTOOLERR_PARAMTOOLARGE;
-
-	secnum = (head*image->sec0.tracksperside + track) * image->sec0.secspertrack + sector;
-
-	if ((*size < 0x100) || (*buffer == NULL))
-		*buffer = realloc(*buffer, 0x100);
-	if (*buffer == NULL)
-		return IMGTOOLERR_OUTOFMEMORY;
-
-	if (read_sector(image->file_handle, secnum, *buffer))
-		return IMGTOOLERR_READERROR;
-
-	*size = 0x100;
-
-	return 0;
+	/* not yet implemented */
+	assert(0);
+	return IMGTOOLERR_UNEXPECTED;
 }
 
 /*
 	Write one sector to a ti99_image.
 */
-static int ti99_write_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, 
-								char *buffer, int size)
+static int ti99_write_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, const void *buffer, int length)
 {
-	ti99_image *image = (ti99_image*) img;
-	int secnum;
-
-	if ((head >= image->sec0.sides) || (track >= image->sec0.tracksperside)
-			|| (sector >= image->sec0.secspertrack))
-		return IMGTOOLERR_PARAMTOOLARGE;
-
-	secnum = (head*image->sec0.tracksperside + track) * image->sec0.secspertrack + sector;
-
-	if (size != 0x100)
-		return IMGTOOLERR_PARAMCORRUPT;
-
-	if (write_sector(image->file_handle, secnum, buffer))
-		return IMGTOOLERR_WRITEERROR;
-
-	return 0;
+	/* not yet implemented */
+	assert(0);
+	return IMGTOOLERR_UNEXPECTED;
 }
