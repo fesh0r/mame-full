@@ -260,7 +260,7 @@ static BOOL SoftwareDirectories_ComponentProc(enum component_msg msg, HWND hWnd,
 		ListView_InsertColumn(hList, 0, &LVCol);
 
 #ifdef MAME_DEBUG
-		dprintf("CMSG_OPTIONSTOPROP: o->extra_software_paths='%s'\n", o->extra_software_paths);
+		dprintf("CMSG_OPTIONSTOPROP: o->extra_software_paths='%s'\n", o->extra_software_paths ? o->extra_software_paths : "<null>");
 #endif
 
 		lpList = o->extra_software_paths;

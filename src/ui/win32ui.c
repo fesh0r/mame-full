@@ -4797,6 +4797,17 @@ static void EnablePlayOptions(int nIndex, options_type *o)
 		o->use_joystick = FALSE;
 }
 
+static int FindIconIndex(int nIconResource)
+{
+	int i;
+	for(i = 0; g_iconData[i].icon_name; i++)
+	{
+		if (g_iconData[i].resource == nIconResource)
+			return i;
+	}
+	return -1;
+}
+
 static int GetIconForDriver(int nItem)
 {
 	int iconRoms;
@@ -4811,11 +4822,11 @@ static int GetIconForDriver(int nItem)
 
 	// Show Red-X if the ROMs are present and flagged as NOT WORKING
 	if (iconRoms == 1 && DriverIsBroken(nItem))
-		iconRoms = 4;
+		iconRoms = FindIconIndex(IDI_WIN_REDX);
 
 	// show clone icon if we have roms and game is working
 	if (iconRoms == 1 && DriverIsClone(nItem))
-		iconRoms = 3;
+		iconRoms = FindIconIndex(IDI_WIN_CLONE);
 
 	// if we have the roms, then look for a custom per-game icon to override
 	if (iconRoms == 1 || iconRoms == 3)

@@ -132,6 +132,8 @@ static void AssertValidDevice(int d)
 
 static const struct deviceentry *lookupdevice(int d)
 {
+	assert(d >= 0);
+	assert(d < IO_COUNT);
 	AssertValidDevice(d);
 	return &s_devices[d];
 }
@@ -625,12 +627,13 @@ static int SoftwareListClass_WhichIcon(struct SmartListView *pListView, int nIte
 		switch(nType) {
 		case IO_UNKNOWN:
 			/* Unknowns */
-			nIcon = 2;
+			nIcon = FindIconIndex(IDI_WIN_UNKNOWN);
 			break;
 
 		case IO_BAD:
+		case IO_ZIP:
 			/* Bad files */
-			nIcon = 3;
+			nIcon = FindIconIndex(IDI_WIN_REDX);
 			break;
 
 		default:
