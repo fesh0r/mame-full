@@ -98,7 +98,8 @@ int tapecontrol(struct osd_bitmap *bitmap, int selected)
 		switch (sel)
 		{
 		case 0:
-			id = --id % device_count(IO_CASSETTE);
+			id--;
+			if (id < 0) id = device_count(IO_CASSETTE)-1;
 			break;
 		}
 		/* tell updatescreen() to clean after us (in case the window changes size) */
@@ -110,7 +111,8 @@ int tapecontrol(struct osd_bitmap *bitmap, int selected)
 		switch (sel)
 		{
 		case 0:
-			id = ++id % device_count(IO_CASSETTE);
+			id++;
+			if (id > device_count(IO_CASSETTE)-1) id = 0;
 			break;
 		}
 		/* tell updatescreen() to clean after us (in case the window changes size) */
