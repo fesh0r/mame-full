@@ -755,5 +755,5 @@ COMPC(  1986, coco3,     coco, 	coco3,	   coco3,    0,		  coco3,   "Tandy Radio 
 COMPC(  1986, coco3p,    coco, 	coco3,	   coco3,    0,		  coco3,   "Tandy Radio Shack",  "Color Computer 3 (PAL)" )
 COMPCX( 19??, coco3h,	 coco,	coco3h,    coco3,	 0, 	  coco3,   "Tandy Radio Shack",  "Color Computer 3 (NTSC; HD6309)", GAME_COMPUTER_MODIFIED|GAME_ALIAS)
 COMPC(  1982, dragon32,  coco, 	dragon32,  dragon32, 0,		  dragon32,"Dragon Data Ltd",    "Dragon 32" )
-COMPC(  198?, dragon64,  coco, 	dragon64,  dragon32, 0,		  dragon64,"Dragon Data Ltd",    "Dragon 64" )
+COMPC(  1983, dragon64,  coco, 	dragon64,  dragon32, 0,		  dragon64,"Dragon Data Ltd",    "Dragon 64" )
 COMPC(  1984, cp400,     coco, 	coco,      coco,     0,		  coco,    "Prologica",          "CP400" )
