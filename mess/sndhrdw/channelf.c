@@ -15,9 +15,34 @@ void channelf_sound_w(int mode)
 	sound_mode = mode;
 }
 
+static int rate;
+static int period_2V;
+static int period_4V;
+static int period_8V;
+static int period_32V;
+static int half_2V;
+static int half_4V;
+static int half_8V;
+static int half_32V;
+
 static int channelf_sh_start(void)
 {
 	channel = stream_init("Digital out", 50, Machine->sample_rate, 0, channelf_sh_update);
+	rate = Machine->sample_rate;
+
+	// 2V = 1000Hz ~= 3579535/224/16
+	// Note 2V on the schematic is not the 2V scanline counter -
+	//      it is the 2V vertical pixel counter
+	//      1 pixel = 4 scanlines high
+
+	period_2V = rate/1000;
+	period_4V = rate/500;
+	period_8V = rate/250;
+	period_32V = rate/62.5;
+	half_2V = period_2V/2;
+	half_4V = period_4V/2;
+	half_8V = period_8V/2;
+	half_32V = period_32V/2;
     return 0;
 }
 
@@ -36,15 +61,7 @@ void channelf_sh_update(int param, INT16 *buffer, int length)
 {
 	static INT16 max = 0x7fff;
     static int incr = 0;
-	int rate = Machine->sample_rate / 2;
-	int period_2V = rate/960;
-	int period_4V = rate/480;
-	int period_8V = rate/240;
-	int period_32V = rate/60;
-	int half_2V = period_2V/2;
-	int half_4V = period_4V/2;
-	int half_8V = period_8V/2;
-	int half_32V = period_32V/2;
+
 	INT16 *sample = buffer;
 
 	switch( sound_mode )
@@ -54,7 +71,7 @@ void channelf_sh_update(int param, INT16 *buffer, int length)
 			*sample++ = 0;
 			incr++;
 		break;
-	case 1: /* high tone (2V) */
+	case 1: /* high tone (2V) - 1000Hz */
 		while( length-- > 0 )
 		{
 			if ((incr%period_2V) < half_2V)
@@ -63,7 +80,7 @@ void channelf_sh_update(int param, INT16 *buffer, int length)
 				*sample++ = max;
 			incr++;
 		}
-	case 2: /* medium tone (4V) */
+	case 2: /* medium tone (4V) - 500Hz */
 		while( length-- > 0 )
 		{
 			if ((incr%period_4V) < half_4V)
@@ -76,7 +93,7 @@ void channelf_sh_update(int param, INT16 *buffer, int length)
 	case 3: /* low (wierd) tone (32V & 8V) */
 		while( length-- > 0 )
 		{
-			if (((incr%period_32V) < half_32V) && ((incr%period_8V) < half_8V))
+			if (((incr%period_32V) >= half_32V) && ((incr%period_8V) >= half_8V))
 				*sample++ = max;
 			else
 				*sample++ = 0x0;
