@@ -53,6 +53,9 @@ In Memory Of Haruki Ikeda
 #include "devices/cartslot.h"
 #include "inputx.h"
 
+int genesis_region;
+int genesis_is_ntsc;
+
 /* code taken directly from GoodGEN by Cowering */
 static int genesis_isfunkySMD(unsigned char *buf,unsigned int len)
 {
@@ -403,13 +406,6 @@ INPUT_PORTS_START( genesis )
 	PORT_BIT_NAME( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2   | IPF_PLAYER2, "P2 Button B" )
 	PORT_BIT_NAME( 0x10, IP_ACTIVE_LOW, IPT_BUTTON3   | IPF_PLAYER2, "P2 Button C" )
 	PORT_BIT_NAME( 0x20, IP_ACTIVE_LOW, IPT_START     | IPF_PLAYER2, "P2 Start" )
-
-	PORT_START	/* IN2 - internal switches, and fake 'Auto' */
-	PORT_CONFNAME( 0x03, 0x00, "Country")
-	PORT_CONFSETTING(    0x00, "Auto" )
-	PORT_CONFSETTING(    0x01, "USA" )
-	PORT_CONFSETTING(    0x02, "Japan" )
-	PORT_CONFSETTING(    0x03, "Europe" )
 INPUT_PORTS_END
 
 
@@ -433,8 +429,9 @@ static struct SN76496interface sn76489_intf =
 	{ 50, 50 }							/* Volume */
 };
 
-static MACHINE_DRIVER_START( genesis )
-	MDRV_CPU_ADD(M68000, 7670000)
+static MACHINE_DRIVER_START( gen_ntsc )
+
+	MDRV_CPU_ADD_TAG("main", M68000, 7670000)
 	MDRV_CPU_PROGRAM_MAP(genesis_68000_readmem,genesis_68000_writemem)
 	MDRV_CPU_VBLANK_INT(genesis_interrupt,262) // use timers instead?
 
@@ -466,7 +463,34 @@ static MACHINE_DRIVER_START( genesis )
 
 MACHINE_DRIVER_END
 
-ROM_START(genesis)
+static MACHINE_DRIVER_START( gen_pal )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(gen_ntsc)
+//	MDRV_CPU_MODIFY("main")
+//	MDRV_CPU_VBLANK_INT(genesis_interrupt,xxx) // use timers instead? more per frame?
+
+	MDRV_FRAMES_PER_SECOND(50)
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 0*8, 30*8-1)
+MACHINE_DRIVER_END
+
+/* we don't use the bios rom (its not needed and only provides security on early models) */
+
+ROM_START(gen_usa)
+	ROM_REGION(0x415000, REGION_CPU1, 0)
+	ROM_REGION(0x405000, REGION_USER1, 0)
+	ROM_REGION( 0x10000, REGION_CPU2, 0)
+ROM_END
+
+ROM_START(gen_eur)
+	ROM_REGION(0x415000, REGION_CPU1, 0)
+	ROM_REGION(0x405000, REGION_USER1, 0)
+	ROM_REGION( 0x10000, REGION_CPU2, 0)
+ROM_END
+
+ROM_START(gen_jpn)
 	ROM_REGION(0x415000, REGION_CPU1, 0)
 	ROM_REGION(0x405000, REGION_USER1, 0)
 	ROM_REGION( 0x10000, REGION_CPU2, 0)
@@ -476,6 +500,37 @@ SYSTEM_CONFIG_START(genesis)
 	CONFIG_DEVICE_CARTSLOT_REQ( 1, "smd\0bin\0md\0", NULL, NULL, device_load_genesis_cart, NULL, NULL, NULL /*genesis_partialhash*/)
 SYSTEM_CONFIG_END
 
+DRIVER_INIT(gen_usa)
+{
+	genesis_is_ntsc = 1;   // vdp status flag ...
+	genesis_region = 0x80; // read via io
+
+/*
+    D7 : Console is 1= Export (USA, Europe, etc.) 0= Domestic (Japan)
+    D6 : Video type is 1= PAL, 0= NTSC
+*/
+	init_genesis();
+}
+
+
+DRIVER_INIT(gen_eur)
+{
+	genesis_is_ntsc = 0;   // vdp status flag ...
+	genesis_region = 0xc0; // read via io
+
+	init_genesis();
+}
+
+
+DRIVER_INIT(gen_jpn)
+{
+	genesis_is_ntsc = 1;   // vdp status flag ...
+	genesis_region = 0x00; // read via io
+
+	init_genesis();
+}
+
+
 /***************************************************************************
 
   Game driver(s)
@@ -483,5 +538,6 @@ SYSTEM_CONFIG_END
 ***************************************************************************/
 
 /*	  YEAR	NAME	  PARENT	COMPAT	MACHINE   INPUT 	INIT		CONFIG		COMPANY	FULLNAME */
-CONS( 1988, genesis,  0,		0,		genesis,  genesis,	genesis,	genesis,	"Sega",   "Megadrive / Genesis" )
-
+CONS( 1988, gen_usa,  0,		0,		gen_ntsc,  genesis,	gen_usa,	genesis,	"Sega",   "Genesis (USA, NTSC)" )
+CONS( 1988, gen_eur,  gen_usa,	0,		gen_pal,   genesis,	gen_eur,	genesis,	"Sega",   "Megadrive (Europe, PAL)" )
+CONS( 1988, gen_jpn,  gen_usa,	0,		gen_ntsc,  genesis,	gen_jpn,	genesis,	"Sega",   "Megadrive (Japan, NTSC)" )

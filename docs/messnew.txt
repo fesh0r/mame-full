@@ -29,8 +29,9 @@ Imgtool Changes:
 
 Source Changes:
 ----------------
-(none)
-
+- [GENESIS] Split Genesis driver into gen_usa, gen_eur and gen_jpn drivers
+  for different countries.  Also fixed a bug that caused sound to be gone in
+  certain games.  [Anonymous]
 
 
 

@@ -140,7 +140,9 @@ const struct GameDriver *test_drivers[] =
 	DRIVER( smsehs24 )	/* Sega Master System								*/
 	DRIVER( smsuh34 )	/* Sega Master System								*/
 	DRIVER( smseh34 )	/* Sega Master System								*/
-	DRIVER( genesis )	/* Sega Genesis/MegaDrive							*/
+	DRIVER( gen_usa )	/* Sega Genesis/MegaDrive USA							*/
+	DRIVER( gen_eur )	/* Sega Genesis/MegaDrive Europe						*/
+	DRIVER( gen_jpn )	/* Sega Genesis/MegaDrive Japan						*/
 TESTDRIVER( saturn )	/* Sega Saturn										*/
 
 	/* BALLY */

@@ -22,8 +22,9 @@ io bug? controls don't work in decap attack
 
 #include "driver.h"
 #include "machine/random.h"
+#include "includes/genesis.h"
 
-int oldscreenmode;
+static int oldscreenmode;
 
 typedef struct
 {
@@ -1229,7 +1230,7 @@ static data8_t genesis_io_ram[0x20];
 void genesis_init_io (void)
 {
 
-	genesis_io_ram[0x00] = 0x80; // region / pal / segacd etc. important!
+	genesis_io_ram[0x00] = (genesis_region & 0xc0)| (0x00 & 0x3f); // region / pal / segacd etc. important!
 	genesis_io_ram[0x01] = 0x7f;
 	genesis_io_ram[0x02] = 0x7f;
 	genesis_io_ram[0x03] = 0x7f;
@@ -1524,7 +1525,7 @@ data16_t genesis_vdp_control_read ( genvdp *current_vdp )
 	if (current_vdp->sline>=224) retvalue |= 0x0080;
 
 	if (cpu_gethorzbeampos() > 0xc0) retvalue |= 0x0004; // ??
-
+	if (!genesis_is_ntsc) retvalue |= 0x0001;
 
 
 
@@ -2191,6 +2192,7 @@ void genesis_init_frame(void)
 	}
 }
 
+/* this (and the hv counter stuff) appear to be wrong .. various glitches .. rasters not working right in many games */
 INTERRUPT_GEN( genesis_interrupt )
 {
 //	printf("interrupt %d\n",cpu_getiloops());
@@ -2220,6 +2222,8 @@ INTERRUPT_GEN( genesis_interrupt )
 	{
 	//	if (!irqlevel)
 			irqlevel = 6;
+
+		cpu_set_irq_line(1,0, HOLD_LINE); // z80 interrupt, always?
 	}
 
 
