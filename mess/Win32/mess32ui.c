@@ -8,6 +8,7 @@
 
 #include "mame32.h"
 #include "mess/mess.h"
+#include "config.h"
 
 /* from src/mess/win32.c */
 char *strncatz(char *dest, const char *source, size_t len);
@@ -57,6 +58,9 @@ static BOOL mess_idle_work;
 static UINT nIdleImageNum;
 static int nTheCurrentGame;
 static int *mess_icon_index;
+
+static void *mess_crc_file;
+static char mess_crc_category[16];
 
 static void OnMessIdle(HWND hwndPicker);
 
@@ -186,12 +190,17 @@ static void SetupImageTypes(mess_image_type *types, int count, BOOL bZip, int ty
     types[num_extensions].ext = NULL;
 }
 
-static int MessDiscoverImageType(const char *filename, mess_image_type *imagetypes, BOOL bReadZip)
+static int MessDiscoverImageType(const char *filename, mess_image_type *imagetypes, BOOL bReadZip, UINT32 *crc32)
 {
     int type, i;
     char *lpExt;
     ZIP *pZip = NULL;
+	UINT32 dummy;
+
+	if (!crc32)
+		crc32 = &dummy;
     
+	*crc32 = 0;
     lpExt = strrchr(filename, '.');
     type = IO_COUNT;
 
@@ -204,6 +213,7 @@ static int MessDiscoverImageType(const char *filename, mess_image_type *imagetyp
                     struct zipent *pZipEnt = readzip(pZip);
                     if (pZipEnt) {
                         lpExt = strrchr(pZipEnt->name, '.');
+						*crc32 = pZipEnt->crc32;
                     }
                 }
             }
@@ -264,7 +274,7 @@ static BOOL MessSetImage(int imagenum, int entry)
 
 	if (options.image_files[entry].name)
 		free((void *) options.image_files[entry].name);
-    options.image_files[entry].type = MessDiscoverImageType(filename, imagetypes, TRUE);
+    options.image_files[entry].type = MessDiscoverImageType(filename, imagetypes, TRUE, NULL);
     options.image_files[entry].name = filename;
 
     mess_image_nums[entry] = imagenum;
@@ -303,11 +313,13 @@ static BOOL MessIsImageSelected(int imagenum)
 /* ************************************************************************ */
 
 /* List view Column text */
-static char *mess_column_names[MESS_COLUMN_MAX] = {
+static char *mess_column_names[] = {
     "Software",
+	"Goodname",
     "Manufacturer",
     "Year",
-    "Playable"
+    "Playable",
+	"CRC"
 };
 
 static void MessInsertPickerItem(HWND hWnd, int i)
@@ -333,6 +345,8 @@ static void ResetMessColumnDisplay(BOOL firstime, HWND hWnd)
     int         widths[MESS_COLUMN_MAX];
     int         order[MESS_COLUMN_MAX];
     int         shown[MESS_COLUMN_MAX];
+
+	assert((sizeof(mess_column_names) / sizeof(mess_column_names[0])) == MESS_COLUMN_MAX);
 
     GetMessColumnWidths(widths);
     GetMessColumnOrder(order);
@@ -660,19 +674,12 @@ static void ImageData_Free(ImageData *img)
 	free((void *) img);
 }
 
-static void ImageData_Realize(ImageData *img, BOOL bActive, mess_image_type *imagetypes)
-{
-	if (img->type == IO_ALIAS) {
-		img->type = MessDiscoverImageType(img->fullname, imagetypes, bActive);
-	}
-}
-
 static BOOL ImageData_IsBad(ImageData *img)
 {
 	return img->type == IO_COUNT;
 }
 
-static BOOL ImageData_SetCrcLine(ImageData *img, int crc, const char *crcline)
+static BOOL ImageData_SetCrcLine(ImageData *img, UINT32 crc, const char *crcline)
 {
 	char *newcrcline;
 
@@ -689,6 +696,23 @@ static BOOL ImageData_SetCrcLine(ImageData *img, int crc, const char *crcline)
 	img->year = strtok(NULL, "|");
 	img->playable = strtok(NULL, "|");
 	img->extrainfo = strtok(NULL, "|");
+	return TRUE;
+}
+
+static void ImageData_Realize(ImageData *img, BOOL bActive, mess_image_type *imagetypes)
+{
+	UINT32 crc32;
+	char crcstr[9];
+	char line[1024];
+
+	if (img->type == IO_ALIAS) {
+		img->type = MessDiscoverImageType(img->fullname, imagetypes, bActive, &crc32);
+		if (mess_crc_file && crc32) {
+			sprintf(crcstr, "%08x", crc32);
+			config_load_string(mess_crc_file, mess_crc_category, 0, crcstr, line, sizeof(line));
+			ImageData_SetCrcLine(img, crc32, line);
+		}
+	}
 }
 
 static BOOL AppendNewImage(const char *fullname, BOOL bReadZip, ImageData ***listend, mess_image_type *imagetypes)
@@ -746,6 +770,14 @@ static void AddImagesFromDirectory(const char *dir, BOOL bRecurse, char *buffer,
     }
 }
 
+static void *OpenCrcFile(const struct GameDriver *drv, char *outname)
+{
+	char buffer[32];
+	strcpy(outname, drv->name);
+	_snprintf(buffer, sizeof(buffer) / sizeof(buffer[0]), "crc\\%s.crc", drv->name);
+	return config_open(buffer);
+}
+
 static void FillSoftwareList(int nGame)
 {
     int i;
@@ -755,6 +787,13 @@ static void FillSoftwareList(int nGame)
     char *olddir;
     char *s;
     char buffer[2000];
+
+	/* Update the CRC file */
+	if (mess_crc_file)
+		config_close(mess_crc_file);
+	mess_crc_file = OpenCrcFile(drivers[nGame], mess_crc_category);
+	if (!mess_crc_file)
+		mess_crc_file = OpenCrcFile(drivers[nGame]->clone_of, mess_crc_category);
 
     /* This fixes any changes the file manager may have introduced */
     resetdir();
@@ -1228,7 +1267,7 @@ static void OnMessIdle(HWND hwndPicker)
         pImageData = mess_images_index[nIdleImageNum];
 
         if (pImageData->type == IO_ALIAS) {
-            pImageData->type = MessDiscoverImageType(pImageData->fullname, imagetypes, TRUE);
+			ImageData_Realize(pImageData, TRUE, imagetypes);
             ListView_RedrawItems(hwndPicker,nIdleImageNum,nIdleImageNum);
         }
         nIdleImageNum++;
