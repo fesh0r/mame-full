@@ -18,37 +18,38 @@
    light back / grid colors
    black, blue, green, light green, red, violet, orange, light grey */
 
-UINT8 odyssey2_colors[]={
-  /* Background,Grid Dim */
-  0x00,0x00,0x00,
-  0x00,0x00,0xFF,   /* Blue */
-  0x00,0x80,0x00,   /* DK Green */
-  0xff,0x9b,0x60,
-  0xCC,0x00,0x00,   /* Red */
-  0xa9,0x80,0xff,
-  0x82,0xfd,0xdb,
-  0xFF,0xFF,0xFF,
+UINT8 odyssey2_colors[] =
+{
+	/* Background,Grid Dim */
+	0x00,0x00,0x00,
+	0x00,0x00,0xFF,   /* Blue */
+	0x00,0x80,0x00,   /* DK Green */
+	0xff,0x9b,0x60,
+	0xCC,0x00,0x00,   /* Red */
+	0xa9,0x80,0xff,
+	0x82,0xfd,0xdb,
+	0xFF,0xFF,0xFF,
 
-  /* Background,Grid Bright */
+	/* Background,Grid Bright */
 
-  0x80,0x80,0x80,
-  0x50,0xAE,0xFF,   /* Blue */
-  0x00,0xFF,0x00,   /* Dk Green */
-  0x82,0xfb,0xdb,   /* Lt Grey */
-  0xEC,0x02,0x60,   /* Red */
-  0xa9,0x80,0xff,   /* Violet */
-  0xff,0x9b,0x60,   /* Orange */
-  0xFF,0xFF,0xFF,
+	0x80,0x80,0x80,
+	0x50,0xAE,0xFF,   /* Blue */
+	0x00,0xFF,0x00,   /* Dk Green */
+	0x82,0xfb,0xdb,   /* Lt Grey */
+	0xEC,0x02,0x60,   /* Red */
+	0xa9,0x80,0xff,   /* Violet */
+	0xff,0x9b,0x60,   /* Orange */
+	0xFF,0xFF,0xFF,
 
-  /* Character,Sprite colors */
-  0x71,0x71,0x71,   /* Dark Grey */
-  0xFF,0x80,0x80,   /* Red */
-  0x00,0xC0,0x00,   /* Green */
-  0xff,0x9b,0x60,   /* Orange */
-  0x50,0xAE,0xFF,   /* Blue */
-  0xa9,0x80,0xff,   /* Violet */
-  0x82,0xfb,0xdb,   /* Lt Grey */
-  0xff,0xff,0xff    /* White */
+	/* Character,Sprite colors */
+	0x71,0x71,0x71,   /* Dark Grey */
+	0xFF,0x80,0x80,   /* Red */
+	0x00,0xC0,0x00,   /* Green */
+	0xff,0x9b,0x60,   /* Orange */
+	0x50,0xAE,0xFF,   /* Blue */
+	0xa9,0x80,0xff,   /* Violet */
+	0x82,0xfb,0xdb,   /* Lt Grey */
+	0xff,0xff,0xff    /* White */
 };
 
 UINT8 o2_shape[0x40][8]={
@@ -219,7 +220,6 @@ extern WRITE8_HANDLER ( odyssey2_video_w )
 
 extern  READ8_HANDLER ( odyssey2_t1_r )
 {
-//    static bool t=FALSE;
     static int t=FALSE;
     t=!t;
     return t;
@@ -227,15 +227,15 @@ extern  READ8_HANDLER ( odyssey2_t1_r )
 
 INTERRUPT_GEN( odyssey2_line )
 {
-    line_time=timer_get_time();
-    line=(line+1)%262;
+    line_time = timer_get_time();
+    line = (line + 1) % 262;
 
     switch (line) {
     case 252:
-		cpunum_set_input_line(0, 1, ASSERT_LINE); //vsync??
+		cpunum_set_input_line(0, 0, ASSERT_LINE); /* vsync?? */
 		break;
     case 253:
-		cpunum_set_input_line(0, 1, CLEAR_LINE); //vsync??
+		cpunum_set_input_line(0, 0, CLEAR_LINE); /* vsync?? */
 		break;
     }
 }
@@ -243,24 +243,26 @@ INTERRUPT_GEN( odyssey2_line )
 INLINE void odyssey2_draw_box(UINT8 bg[][320], int x, int y, int width, int height, UINT8 color)
 {
     int x1,y1;
-    for (y1=0; y1<height; y1++) {
-	for (x1=0; x1<width; x1++) {
-	    bg[y+y1][x+x1]|=color;
-	}
+    for (y1 = 0; y1 < height; y1++)
+	{
+		for (x1 = 0; x1 < width; x1++)
+			bg[y+y1][x+x1] |= color;
     }
 }
 
 INLINE void odyssey2_draw(UINT8 bg[][320], UINT8 code, int x, int y, int scale_x, int scale_y, UINT8 color)
 {
     int m,x1,y1;
-    for (m=0x80; m>0; m>>=1, x+=scale_x) {
-	if (code&m) {
-	    for (y1=0; y1<scale_y; y1++) {
-		for (x1=0; x1<scale_x; x1++) {
-		    bg[y+y1][x+x1]|=color;
+    for (m=0x80; m>0; m>>=1, x+=scale_x)
+	{
+		if (code & m)
+		{
+			for (y1=0; y1<scale_y; y1++)
+			{
+				for (x1 = 0; x1 < scale_x; x1++)
+					bg[y+y1][x+x1] |= color;
+			}
 		}
-	    }
-	}
     }
 }
 
@@ -268,14 +270,16 @@ INLINE void odyssey2_draw(UINT8 bg[][320], UINT8 code, int x, int y, int scale_x
 INLINE void odyssey2_draw_sprite(UINT8 bg[][320], UINT8 code, int x, int y, int scale_x, int scale_y, UINT8 color)
 {
     int m,x1,y1;
-    for (m=1; m<=0x80; m<<=1, x+=scale_x) {
-	if (code&m) {
-	    for (y1=0; y1<scale_y; y1++) {
-		for (x1=0; x1<scale_x; x1++) {
-		    bg[y+y1][x+x1]|=color;
+    for (m=1; m<=0x80; m<<=1, x+=scale_x)
+	{
+		if (code & m)
+		{
+			for (y1=0; y1<scale_y; y1++)
+			{
+				for (x1 = 0; x1 < scale_x; x1++)
+					bg[y+y1][x+x1] |= color;
+			}
 		}
-	    }
-	}
     }
 }
 

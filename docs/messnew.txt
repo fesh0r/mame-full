@@ -8,7 +8,8 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
-- [A5200] Fixed a crash on start regression introduced in 0.82 [Nate Woods]
+- [A5200] Fixed a crash on start regression introduced in MESS 0.82 [Nate
+  Woods]
 
 - [AMSTRAD] Refined video display and Z80 timings; the Yao demos work
   better now.  Also changed default joystick input definitions.  [Yoann
@@ -23,7 +24,10 @@ System Driver Changes:
 
 - [IBMAT] Fixed a regression that prevented AT 286 drivers from loading [Nate
   Woods]
-  
+
+- [ODYSSEY2] Cleaned up driver and fixed regression introduced in MESS 0.79
+  (bug #564) [Nate Woods]
+
 - [PC1512] Video fixes [Andrew Jenner]
 
 - [TELMAC] Improved the accuracy of the cpu emulation and added some tmc2000t
@@ -52,6 +56,9 @@ Source Changes:
 ----------------
 - The core is based on MAME 0.84.  This incorporates all features of the
   update to this core.  [MAME team]
+
+- [Windows] Specified the image base for messlib.dll, so MESS should startup
+  slightly faster.  [Nate Woods]
 
 
 
