@@ -4249,7 +4249,11 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 		if (!oldControl)
 		{
 			//folder = GetSelectedFolder();
+#ifdef MESS
+			folder = GetFolderByName(7, (char*)GetDriverFilename(Picker_GetSelectedItem(hwndList)) );
+#else
 			folder = GetFolderByName(FOLDER_SOURCE-1, (char*)GetDriverFilename(Picker_GetSelectedItem(hwndList)) );
+#endif
 			InitPropertyPage(hInst, hwnd, Picker_GetSelectedItem(hwndList), GetSelectedPickItemIcon(), folder->m_nFolderId, SRC_GAME);
 			SaveGameOptions(Picker_GetSelectedItem(hwndList));
 #ifdef MESS
