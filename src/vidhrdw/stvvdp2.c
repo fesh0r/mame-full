@@ -2273,8 +2273,8 @@ static void stv_vdp2_draw_basic_tilemap(struct mame_bitmap *bitmap, const struct
 
 	if ( stv2_current_tilemap.incx == 0 || stv2_current_tilemap.incy == 0 ) return;
 
-	scalex = (INT32)((INT64)0x100000000LL / (INT64)stv2_current_tilemap.incx);
-	scaley = (INT32)((INT64)0x100000000LL / (INT64)stv2_current_tilemap.incy);
+	scalex = (INT32)((INT64)S64(0x100000000) / (INT64)stv2_current_tilemap.incx);
+	scaley = (INT32)((INT64)S64(0x100000000) / (INT64)stv2_current_tilemap.incy);
 	tilesizex = scalex * 8;
 	tilesizey = scaley * 8;
 	drawypos = drawxpos = 0;

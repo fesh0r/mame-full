@@ -348,6 +348,30 @@ WRITE32_HANDLER ( stv_vdp1_vram_w )
 	vdp1[offset*4+3] = (data & 0x000000ff) >> 0;
 }
 
+
+WRITE32_HANDLER ( stv_vdp1_framebuffer0_w )
+{
+	usrintf_showmessage ("STV VDP1 Framebuffer 0 WRITE offset %08x data %08x",offset, data);
+}
+
+READ32_HANDLER ( stv_vdp1_framebuffer0_r )
+{
+	usrintf_showmessage ("STV VDP1 Framebuffer 0 READ offset %08x",offset);
+	return 0xffff;
+}
+
+WRITE32_HANDLER ( stv_vdp1_framebuffer1_w )
+{
+	usrintf_showmessage ("STV VDP1 Framebuffer 1 WRITE offset %08x data %08x",offset, data);
+}
+
+READ32_HANDLER ( stv_vdp1_framebuffer1_r )
+{
+	usrintf_showmessage ("STV VDP1 Framebuffer 1 READ offset %08x",offset);
+	return 0xffff;
+}
+
+
 /*
 
 there is a command every 0x20 bytes
@@ -528,6 +552,12 @@ INLINE void drawpixel(UINT16 *dest, int patterndata, int offsetcnt)
 			}
 	}
 
+	// preliminary end code disable support
+	if ( ((stv2_current_sprite.CMDPMOD & 0x80) == 0) &&
+		 ((pix & transmask) == transmask) )
+	{
+		return;
+	}
 
 	if (mode != 5) // mode 0-4 are 'normal'
 	{

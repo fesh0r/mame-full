@@ -298,7 +298,6 @@ static void I386OP(bt_rm16_r16)(void)		// Opcode 0x0f a3
 		else
 			I.CF = 0;
 
-		STORE_RM16(modrm, dst);
 		CYCLES(3);
 	} else {
 		UINT32 ea = GetEA(modrm);
@@ -310,7 +309,6 @@ static void I386OP(bt_rm16_r16)(void)		// Opcode 0x0f a3
 		else
 			I.CF = 0;
 
-		WRITE16(ea, dst);
 		CYCLES(12);
 	}
 }
@@ -2388,7 +2386,6 @@ static void I386OP(group0FBA_16)(void)		// Opcode 0x0f ba
 				else
 					I.CF = 0;
 
-				STORE_RM16(modrm, dst);
 				CYCLES(3);
 			} else {
 				UINT32 ea = GetEA(modrm);
@@ -2400,7 +2397,6 @@ static void I386OP(group0FBA_16)(void)		// Opcode 0x0f ba
 				else
 					I.CF = 0;
 
-				WRITE16(ea, dst);
 				CYCLES(6);
 			}
 			break;
