@@ -3,6 +3,7 @@ Xmame history:
 Last Modified by Lawrence Gold (gold@aros.net)
 
 Release 0.61.1 (in progress)
+	- Almost everything from MAME 0.61 and MESS 0.61.
 	- The mouse cursor is now hidden in OpenGL fullscreen mode.  (Craig 
 	  Servin)
 	- Applied a patch for FreeBSD to unix/video-drivers/svgainput.c.  
@@ -10,7 +11,7 @@ Release 0.61.1 (in progress)
 	- Applied the NetMAME 0.5 patch, which adds a new option, -parallelsync,
 	  which should allow games to work without lag at network latencies of 
 	  up to 16 milliseconds.  (Steve Freeland)
-	- Applied the ps2linux patch.  (Joan Sarah Touzet)
+	- Added support for Linux on the Playstation 2.  (Joan Sarah Touzet)
 	- Fixed a problem in the ALSA 0.9 driver with setting the sample rate 
 	  on SB128 soundcards.  (Stephen Anthony)
 	- Fixed a bug in unix/devices.h that prevented compilation on non-X11 
@@ -23,6 +24,29 @@ Release 0.61.1 (in progress)
 	  Fewell)
 	- Modified unix/fronthlp.c so that it flushes its output more often to 
 	  aid frontends.  (Shadow Walker)
+	- Changed unix/video-drivers/xfx.c to be more frontend-friendly.  
+	  (Benoit Dumont)
+	- Added support for the SDL joystick driver.  (Yang Hyun)
+	- You can now specify a config subdirectory name using -cfgname/-cn.  
+	  This is useful for creating an alternate configuration.  (Benoit 
+	  Dumont)
+	- Added a "waveout" DSP plugin which redirects sound to a file using 
+	  Microsoft's PCM WAVE format.  The file name can be specified with the 
+	  "-audiodevice" switch and defaults to "xmameout.wav".  (Donald King)
+	- Added support for showing average frames per second when quitting.  
+	  Also added support for the -frames_to_run/-ftr switch.
+	- Added Xv hardware scaling support!  To enable, uncomment the line 
+	  reading "X11_XV = 1" in the makefile and use the -xvext/-xv switches 
+	  (and possibly the -yuv switches).  (Alastair Robinson)
+	- An X11 build can now grab the keyboard to bypass window managers.  
+	  Use -grabkeyboard/-gkb to activate and/or the ALT + PGUP keypress to
+	  toggle it on/off.  (Gerd Sussner)
+	- The code for finding the best X11 visual now checks in descending 
+	  order of bit depth.  This is to work around a bug/feature in the 
+	  latest NVidia drivers.  (Gerd Sussner)
+	- Fixed a problem in the DGA2 driver that could lead to scrambled 
+	  colors with an i830MG video card in 24bpp mode.  (Eric Brunet, 
+	  Shyouzou Sugitani)
 
 Release 0.561.1 (xmess)
 	- Everything from MESS 0.561.
@@ -564,6 +588,7 @@ Release 0.37b4.1
 	- Added support for mess snapshots (-snapshot) thanks to:
 	  "Wojciech Walaszkowski" <walaszkowskiw@prokom.pl>
 	- Added -hiscorefile parameter to specify the location of highscore.dat
+	- Added -hiscorefile switch to specify the location of highscore.dat
 	  Thanks to: TKMAME <tkmame@retrogames.com>
 	- Added a blurb to readme.unix about needing hiscore.dat to get
 	  highscores to work.
@@ -574,7 +599,7 @@ Release 0.37b4.1
 	- Added tools target to the makefile, to build the platform indepent
 	  tools.
 	- Added gamelist target to the makefile to generate gamelist.<target>
-	- Added SYSDEP_DSP_O_NONBLOCK parameter to the sysdep_dsp_create flags,
+	- Added SYSDEP_DSP_O_NONBLOCK switch to the sysdep_dsp_create flags,
 	  currently only implemented for esound and OSS. And not guaranteed to
 	  actually work.
 	- Made sound_stream.c check the return value of sysdep_dsp_write,
