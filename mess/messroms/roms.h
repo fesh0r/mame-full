@@ -531,6 +531,8 @@ static struct {
 	{ 0xd37a1d5f , 0x10000, "Tandy 1000 HX bios f0000" },
 	{ 0x83727c42 , 0x8000, "IBM XT bios even f0000" },
 	{ 0x2a629953 , 0x8000, "IBM XT bios odd f0000" },
+	{ 0x71b84616 , 0x2000, "Amstrad PC20 bios even fc000 (v2)" },
+	{ 0x41302eb8 , 0x2000, "Amstrad PC20 bios odd fc000 (v2)" },
 	{ 0x668fcc94 , 0x2000, "40044 Amstrad PC1512 bios even fc000 (v1)" },
 	{ 0xf72f1582 , 0x2000, "40043 Amstrad PC1512 bios odd fc000 (v1)" },
 	{ 0xd2d1f1ae,  0x8000, "40100 Amstrad PC1640 ega bios c0000" },
