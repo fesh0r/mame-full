@@ -404,6 +404,100 @@ INPUT_PORTS_START (vic20)
 	DIPS_BOTH
 INPUT_PORTS_END
 
+// some different labels to vic20
+INPUT_PORTS_START (vic1001)
+	DIPS_JOY
+	PORT_START							   /* in 16 lightpen X */
+	PORT_ANALOGX (0xff, 0, IPT_PADDLE | IPF_PLAYER3,
+				  30, 2, 0, (VIC6560_MAME_XSIZE - 1),
+				  KEYCODE_LEFT, KEYCODE_RIGHT,
+				  JOYCODE_1_LEFT, JOYCODE_1_RIGHT)
+	PORT_START							   /* in 17 lightpen Y */
+	PORT_ANALOGX (0xff, 0, IPT_PADDLE | IPF_PLAYER4,
+				  30, 2, 0, (VIC6560_MAME_YSIZE - 1),
+				  KEYCODE_UP, KEYCODE_DOWN, JOYCODE_1_UP, JOYCODE_1_DOWN)
+	PORT_START 
+	DIPS_HELPER( 0x8000, "Arrow-Left",        KEYCODE_TILDE)
+	DIPS_HELPER( 0x4000, "1 !   BLK",         KEYCODE_1)
+	DIPS_HELPER( 0x2000, "2 \"   WHT",        KEYCODE_2)
+	DIPS_HELPER( 0x1000, "3 #   RED",         KEYCODE_3)
+	DIPS_HELPER( 0x0800, "4 $   CYN",         KEYCODE_4)
+	DIPS_HELPER( 0x0400, "5 %   PUR",         KEYCODE_5)
+	DIPS_HELPER( 0x0200, "6 &   GRN",         KEYCODE_6)
+	DIPS_HELPER( 0x0100, "7 '   BLU",         KEYCODE_7)
+	DIPS_HELPER( 0x0080, "8 (   YEL",         KEYCODE_8)
+	DIPS_HELPER( 0x0040, "9 )",		KEYCODE_9)
+	DIPS_HELPER( 0x0020, "0",		KEYCODE_0)
+	DIPS_HELPER( 0x0010, "+",                 KEYCODE_PLUS_PAD)
+	DIPS_HELPER( 0x0008, "-",                 KEYCODE_MINUS_PAD)
+	DIPS_HELPER( 0x0004, "Yen",		KEYCODE_MINUS)
+	DIPS_HELPER( 0x0002, "HOME CLR",          KEYCODE_EQUALS)
+	DIPS_HELPER( 0x0001, "DEL INST",          KEYCODE_BACKSPACE)
+	PORT_START 
+	DIPS_HELPER( 0x8000, "CTRL",              KEYCODE_RCONTROL)
+	DIPS_HELPER( 0x4000, "Q",                 KEYCODE_Q)
+	DIPS_HELPER( 0x2000, "W",                 KEYCODE_W)
+	DIPS_HELPER( 0x1000, "E",                 KEYCODE_E)
+	DIPS_HELPER( 0x0800, "R",                 KEYCODE_R)
+	DIPS_HELPER( 0x0400, "T",                 KEYCODE_T)
+	DIPS_HELPER( 0x0200, "Y",                 KEYCODE_Y)
+	DIPS_HELPER( 0x0100, "U",                 KEYCODE_U)
+	DIPS_HELPER( 0x0080, "I",                 KEYCODE_I)
+	DIPS_HELPER( 0x0040, "O",                 KEYCODE_O)
+	DIPS_HELPER( 0x0020, "P",                 KEYCODE_P)
+	DIPS_HELPER( 0x0010, "At",                KEYCODE_OPENBRACE)
+	DIPS_HELPER( 0x0008, "*",                 KEYCODE_ASTERISK)
+	DIPS_HELPER( 0x0004, "Arrow-Up Pi",       KEYCODE_CLOSEBRACE)
+	DIPS_HELPER( 0x0002, "RESTORE",               KEYCODE_PRTSCR)
+	PORT_START 
+	DIPS_HELPER( 0x8000, "STOP RUN",          KEYCODE_TAB)
+	PORT_BITX( 0x4000, IP_ACTIVE_HIGH, IPF_TOGGLE, 
+		   "SHIFT-LOCK (switch)", KEYCODE_CAPSLOCK, IP_JOY_NONE )
+	DIPS_HELPER( 0x2000, "A",                 KEYCODE_A)
+	DIPS_HELPER( 0x1000, "S",                 KEYCODE_S)
+	DIPS_HELPER( 0x0800, "D",                 KEYCODE_D)
+	DIPS_HELPER( 0x0400, "F",                 KEYCODE_F)
+	DIPS_HELPER( 0x0200, "G",                 KEYCODE_G)
+	DIPS_HELPER( 0x0100, "H",                 KEYCODE_H)
+	DIPS_HELPER( 0x0080, "J",                 KEYCODE_J)
+	DIPS_HELPER( 0x0040, "K",                 KEYCODE_K)
+	DIPS_HELPER( 0x0020, "L",                 KEYCODE_L)
+	DIPS_HELPER( 0x0010, ": [",               KEYCODE_COLON)
+	DIPS_HELPER( 0x0008, "; ]",               KEYCODE_QUOTE)
+	DIPS_HELPER( 0x0004, "=",                 KEYCODE_BACKSLASH)
+	DIPS_HELPER( 0x0002, "RETURN",            KEYCODE_ENTER)
+	PORT_START 
+	DIPS_HELPER( 0x8000, "CBM",               KEYCODE_RALT)
+	DIPS_HELPER( 0x4000, "Left-Shift",        KEYCODE_LSHIFT)
+	DIPS_HELPER( 0x2000, "Z",                 KEYCODE_Z)
+	DIPS_HELPER( 0x1000, "X",                 KEYCODE_X)
+	DIPS_HELPER( 0x0800, "C",                 KEYCODE_C)
+	DIPS_HELPER( 0x0400, "V",                 KEYCODE_V)
+	DIPS_HELPER( 0x0200, "B",                 KEYCODE_B)
+	DIPS_HELPER( 0x0100, "N",                 KEYCODE_N)
+	DIPS_HELPER( 0x0080, "M",                 KEYCODE_M)
+	DIPS_HELPER( 0x0040, ", <",               KEYCODE_COMMA)
+	DIPS_HELPER( 0x0020, ". >",               KEYCODE_STOP)
+	DIPS_HELPER( 0x0010, "/ ?",               KEYCODE_SLASH)
+	DIPS_HELPER( 0x0008, "Right-Shift",       KEYCODE_RSHIFT)
+	DIPS_HELPER( 0x0004, "CRSR-DOWN UP",      KEYCODE_2_PAD)
+	DIPS_HELPER( 0x0002, "CRSR-RIGHT LEFT",   KEYCODE_6_PAD)
+	PORT_START
+	DIPS_HELPER( 0x8000, "Space",             KEYCODE_SPACE)
+	DIPS_HELPER( 0x4000, "f1 f2",             KEYCODE_F1)
+	DIPS_HELPER( 0x2000, "f3 f4",             KEYCODE_F2)
+	DIPS_HELPER( 0x1000, "f5 f6",             KEYCODE_F3)
+	DIPS_HELPER( 0x0800, "f7 f8",             KEYCODE_F4)
+	DIPS_HELPER( 0x0400, "Special CRSR Up",       KEYCODE_8_PAD)
+	DIPS_HELPER( 0x0200, "Special CRSR Left",     KEYCODE_4_PAD)
+	DIPS_HELPER( 0x08, "Quickload",       KEYCODE_F8)
+	DIPS_HELPER( 0x04, "Tape Drive Play",       KEYCODE_F5)
+	DIPS_HELPER( 0x02, "Tape Drive Record",     KEYCODE_F6)
+	DIPS_HELPER( 0x01, "Tape Drive Stop",       KEYCODE_F7)
+	DIPS_BOTH
+INPUT_PORTS_END
+
+
 INPUT_PORTS_START (vic20i)
 	DIPS_JOY
 	PORT_START							   /* in 16 lightpen X */
@@ -486,6 +580,101 @@ INPUT_PORTS_START (vc20)
 	DIPS_INPUT
 	DIPS_BOTH
 INPUT_PORTS_END
+
+// some different labels to vc20
+INPUT_PORTS_START (vic20swe)
+	DIPS_JOY
+	PORT_START							   /* in 16 lightpen X */
+	PORT_ANALOGX (0xff, 0, IPT_PADDLE | IPF_PLAYER3,
+				  30, 2, 0, (VIC6561_MAME_XSIZE - 1),
+				  KEYCODE_LEFT, KEYCODE_RIGHT,
+				  JOYCODE_1_LEFT, JOYCODE_1_RIGHT)
+	PORT_START							   /* in 17 lightpen Y */
+	PORT_ANALOGX (0x1ff, 0, IPT_PADDLE | IPF_PLAYER4,
+				  30, 2, 0, (VIC6561_MAME_YSIZE - 1),
+				  KEYCODE_UP, KEYCODE_DOWN,
+				  JOYCODE_1_UP, JOYCODE_1_DOWN)
+	PORT_START 
+	DIPS_HELPER( 0x8000, "Arrow-Left",        KEYCODE_TILDE)
+	DIPS_HELPER( 0x4000, "1 !   BLK",         KEYCODE_1)
+	DIPS_HELPER( 0x2000, "2 \"   WHT",        KEYCODE_2)
+	DIPS_HELPER( 0x1000, "3 #   RED",         KEYCODE_3)
+	DIPS_HELPER( 0x0800, "4 $   CYN",         KEYCODE_4)
+	DIPS_HELPER( 0x0400, "5 %   PUR",         KEYCODE_5)
+	DIPS_HELPER( 0x0200, "6 &   GRN",         KEYCODE_6)
+	DIPS_HELPER( 0x0100, "7 '   BLU",         KEYCODE_7)
+	DIPS_HELPER( 0x0080, "8 (   YEL",         KEYCODE_8)
+	DIPS_HELPER( 0x0040, "9 )   RVS-ON",      KEYCODE_9)
+	DIPS_HELPER( 0x0020, "0     RVS-OFF",     KEYCODE_0)
+	DIPS_HELPER( 0x0010, "-",                 KEYCODE_PLUS_PAD)
+	DIPS_HELPER( 0x0008, "=",                 KEYCODE_MINUS_PAD)
+	DIPS_HELPER( 0x0004, ":     *",             KEYCODE_MINUS)
+	DIPS_HELPER( 0x0002, "HOME CLR",          KEYCODE_EQUALS)
+	DIPS_HELPER( 0x0001, "DEL INST",          KEYCODE_BACKSPACE)
+	PORT_START 
+	DIPS_HELPER( 0x8000, "CTRL",              KEYCODE_RCONTROL)
+	DIPS_HELPER( 0x4000, "Q",                 KEYCODE_Q)
+	DIPS_HELPER( 0x2000, "W",                 KEYCODE_W)
+	DIPS_HELPER( 0x1000, "E",                 KEYCODE_E)
+	DIPS_HELPER( 0x0800, "R",                 KEYCODE_R)
+	DIPS_HELPER( 0x0400, "T",                 KEYCODE_T)
+	DIPS_HELPER( 0x0200, "Y",                 KEYCODE_Y)
+	DIPS_HELPER( 0x0100, "U",                 KEYCODE_U)
+	DIPS_HELPER( 0x0080, "I",                 KEYCODE_I)
+	DIPS_HELPER( 0x0040, "O",                 KEYCODE_O)
+	DIPS_HELPER( 0x0020, "P",                 KEYCODE_P)
+	DIPS_HELPER( 0x0010, "Overcircle-A",                KEYCODE_OPENBRACE)
+	DIPS_HELPER( 0x0008, "At",                 KEYCODE_ASTERISK)
+	DIPS_HELPER( 0x0004, "Arrow-Up Pi",       KEYCODE_CLOSEBRACE)
+	DIPS_HELPER( 0x0002, "RESTORE",               KEYCODE_PRTSCR)
+	PORT_START 
+	DIPS_HELPER( 0x8000, "STOP RUN",          KEYCODE_TAB)
+	PORT_BITX( 0x4000, IP_ACTIVE_HIGH, IPF_TOGGLE, 
+		   "SHIFT-LOCK (switch)", KEYCODE_CAPSLOCK, IP_JOY_NONE )
+	DIPS_HELPER( 0x2000, "A",                 KEYCODE_A)
+	DIPS_HELPER( 0x1000, "S",                 KEYCODE_S)
+	DIPS_HELPER( 0x0800, "D",                 KEYCODE_D)
+	DIPS_HELPER( 0x0400, "F",                 KEYCODE_F)
+	DIPS_HELPER( 0x0200, "G",                 KEYCODE_G)
+	DIPS_HELPER( 0x0100, "H",                 KEYCODE_H)
+	DIPS_HELPER( 0x0080, "J",                 KEYCODE_J)
+	DIPS_HELPER( 0x0040, "K",                 KEYCODE_K)
+	DIPS_HELPER( 0x0020, "L",                 KEYCODE_L)
+	DIPS_HELPER( 0x0010, "Diaresis-O",               KEYCODE_COLON)
+	DIPS_HELPER( 0x0008, "Diaresis-A",               KEYCODE_QUOTE)
+	DIPS_HELPER( 0x0004, ";        +",                 KEYCODE_BACKSLASH)
+	DIPS_HELPER( 0x0002, "RETURN",            KEYCODE_ENTER)
+	PORT_START 
+	DIPS_HELPER( 0x8000, "CBM",               KEYCODE_RALT)
+	DIPS_HELPER( 0x4000, "Left-Shift",        KEYCODE_LSHIFT)
+	DIPS_HELPER( 0x2000, "Z",                 KEYCODE_Z)
+	DIPS_HELPER( 0x1000, "X",                 KEYCODE_X)
+	DIPS_HELPER( 0x0800, "C",                 KEYCODE_C)
+	DIPS_HELPER( 0x0400, "V",                 KEYCODE_V)
+	DIPS_HELPER( 0x0200, "B",                 KEYCODE_B)
+	DIPS_HELPER( 0x0100, "N",                 KEYCODE_N)
+	DIPS_HELPER( 0x0080, "M",                 KEYCODE_M)
+	DIPS_HELPER( 0x0040, ", <",               KEYCODE_COMMA)
+	DIPS_HELPER( 0x0020, ". >",               KEYCODE_STOP)
+	DIPS_HELPER( 0x0010, "/ ?",               KEYCODE_SLASH)
+	DIPS_HELPER( 0x0008, "Right-Shift",       KEYCODE_RSHIFT)
+	DIPS_HELPER( 0x0004, "CRSR-DOWN UP",      KEYCODE_2_PAD)
+	DIPS_HELPER( 0x0002, "CRSR-RIGHT LEFT",   KEYCODE_6_PAD)
+	PORT_START 
+	DIPS_HELPER( 0x8000, "Space",             KEYCODE_SPACE)
+	DIPS_HELPER( 0x4000, "f1 f2",             KEYCODE_F1)
+	DIPS_HELPER( 0x2000, "f3 f4",             KEYCODE_F2)
+	DIPS_HELPER( 0x1000, "f5 f6",             KEYCODE_F3)
+	DIPS_HELPER( 0x0800, "f7 f8",             KEYCODE_F4)
+	DIPS_HELPER( 0x0400, "Special CRSR Up",       KEYCODE_8_PAD)
+	DIPS_HELPER( 0x0200, "Special CRSR Left",     KEYCODE_4_PAD)
+	DIPS_HELPER( 0x08, "Quickload",       KEYCODE_F8)
+	DIPS_HELPER( 0x04, "Tape Drive Play",       KEYCODE_F5)
+	DIPS_HELPER( 0x02, "Tape Drive Record",     KEYCODE_F6)
+	DIPS_HELPER( 0x01, "Tape Drive Stop",       KEYCODE_F7)
+	DIPS_BOTH
+INPUT_PORTS_END
+
 
 /* Initialise the vc20 palette */
 static void vc20_init_palette (unsigned char *sys_palette,
@@ -885,9 +1074,9 @@ static const struct IODevice io_vc20i[] =
 
 COMPX ( 1981,	vic20,		0,		vic20,	vic20,		vic20,	"Commodore Business Machines Co.",  "VIC20 (NTSC)", GAME_IMPERFECT_SOUND)
 COMPX ( 1981,	vic20i, 	vic20,	vic20i, vic20i, 	vic20i, "Commodore Business Machines Co.",  "VIC20 (NTSC), IEEE488 Interface (SYS45065)",   GAME_IMPERFECT_SOUND)
-COMPX ( 1981,	vic1001,	vic20,	vic20,	vic20,		vic20,	"Commodore Business Machines Co.",  "VIC1001 (NTSC)", GAME_IMPERFECT_SOUND)
+COMPX ( 1981,	vic1001,	vic20,	vic20,	vic1001,		vic20,	"Commodore Business Machines Co.",  "VIC1001 (NTSC)", GAME_IMPERFECT_SOUND)
 COMPX ( 1981,	vc20,		vic20,	vc20,	vc20,		vc20,	"Commodore Business Machines Co.",  "VIC20/VC20(German) PAL",       GAME_IMPERFECT_SOUND)
-COMPX ( 1981,	vic20swe,	vic20,	vc20,	vc20,		vc20,	"Commodore Business Machines Co.",  "VIC20 PAL, Swedish Expansion Kit", GAME_IMPERFECT_SOUND)
+COMPX ( 1981,	vic20swe,	vic20,	vc20,	vic20swe,		vc20,	"Commodore Business Machines Co.",  "VIC20 PAL, Swedish Expansion Kit", GAME_IMPERFECT_SOUND)
 // please leave the following as testdriver only
 COMPX ( 1981,	vic20v, 	vic20,	vic20v, vic20,		vic20,	"Commodore Business Machines Co.",  "VIC20 (NTSC), VC1540", GAME_IMPERFECT_SOUND)
 COMPX ( 1981,	vc20v,		vic20,	vc20v,	vic20,		vc20,	"Commodore Business Machines Co.",  "VC20 (PAL), VC1541", GAME_IMPERFECT_SOUND)
