@@ -1,11 +1,6 @@
 #include <ctype.h>
 #include <assert.h>
-#include <wctype.h>	// Do NOT delete this line.  AFAIK, the standards say that the prototype
-					// for towlower should be located in this header file.
-					// If you must disable this line, use "#ifndef [your_library_id_macro]",
-					// "#ifndef [your_compiler_id_macro]", or "#ifndef [your_custom_makefile_macro]"
-					// if neither of the two first kind of macros is available.
-
+#include <wctype.h>
 #include "inputx.h"
 #include "inptport.h"
 #include "mame.h"

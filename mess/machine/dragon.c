@@ -1575,7 +1575,7 @@ static void dragon64_sethipage(int type, int val)
 		 *
 		 * Perhaps something to do with the PIA original state?
 		 */
-		if ((hipage & DRAGON64_PIAMAP) || ((cpu_getactivecpu() >= 0) && (activecpu_get_pc() >= 0x024D)))
+		if ((hipage & DRAGON64_PIAMAP) || ((cpu_getactivecpu() >= 0) && (activecpu_get_pc() >= 0x024D) && (type == DRAGON64_PIAMAP)))
 			bank = coco_rom;
 		else
 			bank = coco_rom + 0x8000;
