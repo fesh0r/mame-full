@@ -990,8 +990,8 @@ void pdp1_get_info(UINT32 state, union cpuinfo *info)
 	case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
 	case CPUINFO_INT_MIN_INSTRUCTION_BYTES:			info->i = 4;							break;
 	case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 4;							break;
-	case CPUINFO_INT_MIN_CYCLES:					info->i = 1;	/* IIRC */				break;
-	case CPUINFO_INT_MAX_CYCLES:					info->i = 0x7fffffffffffffff;	/* no upper limit */	break;
+	case CPUINFO_INT_MIN_CYCLES:					info->i = 5;	/* 5us cycle time */	break;
+	case CPUINFO_INT_MAX_CYCLES:					info->i = 31;	/* we emulate individual 5us cycle, but MUL/DIV have longer timings */	break;
 
 	case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 32;					break;
 	case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 18;	/*16+2 ignored bits to make double word address*/	break;
