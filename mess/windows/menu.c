@@ -1298,6 +1298,13 @@ static int invoke_command(UINT command)
 		ui_show_fps_set(!ui_show_fps_get());
 		break;
 
+	case ID_OPTIONS_USEMOUSE:
+		{
+			extern int win_use_mouse;
+			win_use_mouse = !win_use_mouse;
+		}
+		break;
+
 #if HAS_TOGGLEMENUBAR
 	case ID_OPTIONS_TOGGLEMENUBAR:
 		win_toggle_menubar();

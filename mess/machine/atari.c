@@ -73,10 +73,6 @@ static void a800_setbank(int n)
 			read_addr = &mem[0x10000];
 			write_addr = NULL;
 			break;
-		case 2:
-			read_addr = &mem[0x12000];
-			write_addr = NULL;
-			break;
 		default:
 			if( atari <= ATARI_400 )
 			{
@@ -86,15 +82,15 @@ static void a800_setbank(int n)
 			}
 			else
 			{
-				read_addr = &mem[0x0a000];
-				write_addr = &mem[0x0a000];
+				read_addr = &mem[0x08000];
+				write_addr = &mem[0x08000];
 			}
 			break;
 	}
 
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa000, 0xbfff, 0,
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0,
 		read_addr ? MRA8_BANK1 : MRA8_NOP);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa000, 0xbfff, 0,
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0,
 		write_addr ? MWA8_BANK1 : MWA8_NOP);
 	if (read_addr)
 		cpu_setbank(1, read_addr);
@@ -146,8 +142,6 @@ DEVICE_LOAD( a800_cart )
 		a800_cart_is_16k = size > 0x2000;
 		logerror("%s loaded left cartridge '%s' size %s\n", Machine->gamedrv->name, image_filename(image) , (a800_cart_is_16k) ? "16K":"8K");
 	}
-	if (a800_cart_loaded)
-		a800_setbank(1);
 	return INIT_PASS;
 }
 
