@@ -56,12 +56,13 @@
 #include "cpu/m6809/m6809.h"
 #include "machine/6821pia.h"
 #include "includes/rstrtrck.h"
-#include "vidhrdw/m6847.h"
 #include "includes/dragon.h"
+#include "includes/cococart.h"
+#include "includes/6883sam.h"
+#include "includes/6551.h"
+#include "vidhrdw/m6847.h"
 #include "formats/cocopak.h"
 #include "formats/cococas.h"
-#include "includes/6883sam.h"
-#include "includes/cococart.h"
 #include "cassette.h"
 
 static UINT8 *coco_rom;
@@ -1990,6 +1991,12 @@ void dragon32_init_machine(void)
 	generic_init_machine(dragon_pia_intf, &coco_sam_intf, &cartridge_fdc_dragon, &coco_cartcallbacks);
 }
 
+void dragon64_init_machine(void)
+{
+	dragon32_init_machine();
+	acia_6551_init();
+}
+
 void coco_init_machine(void)
 {
 	cpu_setbank(1, &mess_ram[0]);
@@ -2029,11 +2036,17 @@ void coco3_init_machine(void)
 	timer_pulse(TIME_IN_HZ(50), 0, coco3_poll_keyboard);
 }
 
-void dragon_stop_machine(void)
+void coco_stop_machine(void)
 {
 	if (coco_cart_interface && coco_cart_interface->term)
 		coco_cart_interface->term();
 	sam_reset();
+}
+
+void dragon64_stop_machine(void)
+{
+	coco_stop_machine();
+	acia_6551_stop();
 }
 
 /***************************************************************************

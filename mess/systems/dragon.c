@@ -18,8 +18,9 @@
 #include "includes/6883sam.h"
 #include "includes/rstrtrck.h"
 #include "includes/dragon.h"
-#include "formats/dmkdsk.h"
 #include "includes/basicdsk.h"
+#include "includes/6551.h"
+#include "formats/dmkdsk.h"
 #include "printer.h"
 
 static MEMORY_READ_START( coco_readmem )
@@ -62,6 +63,41 @@ static MEMORY_READ_START( coco3_readmem )
 	{ 0xffb0, 0xffbf, paletteram_r },
 	{ 0xffc0, 0xffef, MRA_NOP },
 	{ 0xfff0, 0xffff, coco3_mapped_irq_r },
+MEMORY_END
+
+static MEMORY_READ_START( d64_readmem )
+	{ 0x0000, 0x7fff, MRA_BANK1 },
+	{ 0x8000, 0xfeff, MRA_BANK2 },
+	{ 0xff00, 0xff03, pia_0_r },
+	{ 0xff04, 0xff07, acia_6551_r },
+	{ 0xff08, 0xff0b, pia_0_r },
+	{ 0xff0c, 0xff0f, acia_6551_r },
+	{ 0xff10, 0xff13, pia_0_r },
+	{ 0xff14, 0xff17, acia_6551_r },
+	{ 0xff18, 0xff1b, pia_0_r },
+	{ 0xff1c, 0xff1f, acia_6551_r },
+	{ 0xff20, 0xff3f, coco_pia_1_r },
+	{ 0xff40, 0xff8f, coco_cartridge_r },
+	{ 0xff90, 0xffef, MRA_NOP },
+	{ 0xfff0, 0xffff, dragon_mapped_irq_r },
+MEMORY_END
+
+static MEMORY_WRITE_START( d64_writemem )
+	{ 0x0000, 0x7fff, MWA_BANK1 },
+	{ 0x8000, 0xfeff, MWA_BANK2 },
+	{ 0xff00, 0xff03, pia_0_w },
+	{ 0xff04, 0xff07, acia_6551_w },
+	{ 0xff08, 0xff0b, pia_0_w },
+	{ 0xff0c, 0xff0f, acia_6551_w },
+	{ 0xff10, 0xff13, pia_0_w },
+	{ 0xff14, 0xff17, acia_6551_w },
+	{ 0xff18, 0xff1b, pia_0_w },
+	{ 0xff1c, 0xff1f, acia_6551_w },
+	{ 0xff20, 0xff3f, pia_1_w },
+	{ 0xff40, 0xff8f, coco_cartridge_w },
+	{ 0xff90, 0xffbf, MWA_NOP },
+	{ 0xffc0, 0xffdf, sam_w },
+	{ 0xffe0, 0xffff, MWA_NOP},
 MEMORY_END
 
 /* Note that the CoCo 3 doesn't use the SAM VDG mode registers
@@ -456,7 +492,54 @@ static struct MachineDriver machine_driver_dragon32 =
 	COCO_FRAMES_PER_SECOND, 0,		 /* frames per second, vblank duration */
 	0,
 	dragon32_init_machine,
-	dragon_stop_machine,
+	coco_stop_machine,
+
+	/* video hardware */
+	320,					/* screen width */
+	240,					/* screen height (pixels doubled) */
+	{ 0, 319, 0, 239 },		/* visible_area */
+	0,						/* graphics decode info */
+	M6847_TOTAL_COLORS,
+	0,
+	m6847_vh_init_palette,						/* initialise palette */
+
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+	0,
+	dragon_vh_start,
+	m6847_vh_stop,
+	m6847_vh_update,
+
+	/* sound hardware */
+	0, 0, 0, 0,
+	{
+		{
+			SOUND_DAC,
+			&d_dac_interface
+		},
+        {
+			SOUND_WAVE,
+            &d_wave_interface
+        }
+	}
+};
+
+static struct MachineDriver machine_driver_dragon64 =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M6809,
+			COCO_CPU_SPEED_HZ,
+			d64_readmem,d64_writemem,
+			0, 0,
+			m6847_vh_interrupt, M6847_INTERRUPTS_PER_FRAME,
+			0, 0,
+		},
+	},
+	COCO_FRAMES_PER_SECOND, 0,		 /* frames per second, vblank duration */
+	0,
+	dragon64_init_machine,
+	dragon64_stop_machine,
 
 	/* video hardware */
 	320,					/* screen width */
@@ -503,7 +586,7 @@ static struct MachineDriver machine_driver_coco =
 	COCO_FRAMES_PER_SECOND, 0,		 /* frames per second, vblank duration */
 	0,
 	coco_init_machine,
-	dragon_stop_machine,
+	coco_stop_machine,
 
 	/* video hardware */
 	320,					/* screen width */
@@ -550,7 +633,7 @@ static struct MachineDriver machine_driver_coco2 =
 	COCO_FRAMES_PER_SECOND, 0,		 /* frames per second, vblank duration */
 	0,
 	coco2_init_machine,
-	dragon_stop_machine,
+	coco_stop_machine,
 
 	/* video hardware */
 	320,					/* screen width */
@@ -597,7 +680,7 @@ static struct MachineDriver machine_driver_coco2b =
 	COCO_FRAMES_PER_SECOND, 0,		 /* frames per second, vblank duration */
 	0,
 	coco2_init_machine,
-	dragon_stop_machine,
+	coco_stop_machine,
 
 	/* video hardware */
 	320,					/* screen width */
@@ -644,7 +727,7 @@ static struct MachineDriver machine_driver_coco3 =
 	COCO_FRAMES_PER_SECOND, 0,		 /* frames per second, vblank duration */
 	0,
 	coco3_init_machine,
-	dragon_stop_machine,
+	coco_stop_machine,
 
 	/* video hardware */
 	640,							/* screen width */
@@ -691,7 +774,7 @@ static struct MachineDriver machine_driver_coco3h =
 	COCO_FRAMES_PER_SECOND, 0,		 /* frames per second, vblank duration */
 	0,
 	coco3_init_machine,
-	dragon_stop_machine,
+	coco_stop_machine,
 
 	/* video hardware */
 	640,							/* screen width */
@@ -735,9 +818,10 @@ ROM_START(dragon32)
 ROM_END
 
 ROM_START(dragon64)
-	ROM_REGION(0x8000,REGION_CPU1,0)
-	ROM_LOAD(           "d64.rom",      0x0000,  0x4000, 0x84f68bf9)
+	ROM_REGION(0xC000,REGION_CPU1,0)
+	ROM_LOAD(           "d64_1.rom",    0x0000,  0x4000, 0x84f68bf9)
 //	ROM_LOAD_OPTIONAL(  "ddos10.bin",   0x4000,  0x2000, 0xb44536f6)
+	ROM_LOAD(           "d64_2.rom",    0x8000,  0x4000, 0x17893a42)
 ROM_END
 
 ROM_START(coco)
@@ -866,5 +950,5 @@ COMPC(  1986, coco3,     coco, 	coco3,	   coco3,    0,		  coco3,   "Tandy Radio 
 COMPC(  1986, coco3p,    coco, 	coco3,	   coco3,    0,		  coco3,   "Tandy Radio Shack",  "Color Computer 3 (PAL)" )
 COMPCX( 19??, coco3h,	 coco,	coco3h,    coco3,	 0, 	  coco3,   "Tandy Radio Shack",  "Color Computer 3 (NTSC; HD6309)", GAME_COMPUTER_MODIFIED|GAME_ALIAS)
 COMPC(  1982, dragon32,  coco, 	dragon32,  dragon32, 0,		  dragon32,"Dragon Data Ltd",    "Dragon 32" )
-COMPC(  198?, dragon64,  coco, 	dragon32,  dragon32, 0,		  dragon64,"Dragon Data Ltd",    "Dragon 64" )
+COMPC(  198?, dragon64,  coco, 	dragon64,  dragon32, 0,		  dragon64,"Dragon Data Ltd",    "Dragon 64" )
 COMPC(  1984, cp400,     coco, 	coco,      coco,     0,		  coco,    "Prologica",          "CP400" )
