@@ -1,8 +1,6 @@
 #include "driver.h"
 #include "includes/flopdrv.h"
 
-/* used to tell updatescreen() to clear the bitmap */
-extern int need_to_clear_bitmap;
 
 /* toggle a bit in the status */
 void	disk_control_toggle_bit(int id, unsigned long bit_mask)
@@ -52,7 +50,7 @@ int diskcontrol(struct osd_bitmap *bitmap, int selected)
 
 		/** display connected status **/
 		menu_item[total] = "Device Connected Status";
-        
+
 		/* is drive connected? - some drives can be connected and disconnected.
 			e.g. an external 3.5" drive connected to an Amstrad CPC. */
 		item = "disconnected";
@@ -63,11 +61,11 @@ int diskcontrol(struct osd_bitmap *bitmap, int selected)
 		menu_subitem[total] = item;
 		flag[total] = 0;
 		total++;
-        
+
 		/** display write protect status **/
 		/* is disc write protected? */
 		menu_item[total] = "Write Protect Status";
-         
+
 		/* this is the status if drive is not active, or it is active but there is not a disc in the drive */
 		item = "---";
 
@@ -88,7 +86,7 @@ int diskcontrol(struct osd_bitmap *bitmap, int selected)
 				}
 			}
 		}
-        
+
 		menu_subitem[total] = item;
 		flag[total] = 0;
 		total++;
@@ -181,7 +179,7 @@ int diskcontrol(struct osd_bitmap *bitmap, int selected)
 				break;
 			}
 			/* tell updatescreen() to clean after us (in case the window changes size) */
-			need_to_clear_bitmap = 1;
+			schedule_full_refresh();
 		}
 
 		if (input_ui_pressed(IPT_UI_RIGHT))
@@ -210,7 +208,7 @@ int diskcontrol(struct osd_bitmap *bitmap, int selected)
 				break;
 			}
 		/* tell updatescreen() to clean after us (in case the window changes size) */
-		need_to_clear_bitmap = 1;
+		schedule_full_refresh();
 		}
     }
 
@@ -245,7 +243,7 @@ int diskcontrol(struct osd_bitmap *bitmap, int selected)
 				break;
             }
             /* tell updatescreen() to clean after us (in case the window changes size) */
-            need_to_clear_bitmap = 1;
+            schedule_full_refresh();
         }
     }
 
@@ -258,7 +256,7 @@ int diskcontrol(struct osd_bitmap *bitmap, int selected)
     if (sel == -1 || sel == -2)
     {
         /* tell updatescreen() to clean after us */
-        need_to_clear_bitmap = 1;
+        schedule_full_refresh();
     }
 
     return sel + 1;
