@@ -12,6 +12,10 @@
 #include "devices.h"
 #include "keyboard.h"
 
+#ifdef __FreeBSD__ 
+#define	SIGUNUSED	SIGUSR2
+#endif
+
 static int console_fd       = -1;
 static int mouse_fd         = -1;
 static int leds             =  0;
