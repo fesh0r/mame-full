@@ -64,6 +64,7 @@
  ***************************************************************************/
 
 static FILE* g_pErrorLog;
+BOOL g_bOsDebug;
 
 /***************************************************************************
     External OSD function definitions  
@@ -774,6 +775,12 @@ void CLIB_DECL logerror(const char *text, ...)
 
     if (g_pErrorLog)
         vfprintf(g_pErrorLog, text, arg);
+
+	if (g_bOsDebug) {
+		char szBuffer[512];
+		_vsnprintf(szBuffer, sizeof(szBuffer) / sizeof(szBuffer[0]), text, arg);
+		OutputDebugString(szBuffer);
+	}
 
     va_end(arg);
 }

@@ -4313,6 +4313,13 @@ static BOOL ParseCommandLine(char *command_line)
             continue;
         }
 
+        if (stricmp(argv[i], "-oslog") == 0)
+        {
+            extern BOOL g_bOsDebug;
+            g_bOsDebug = TRUE;
+            continue;
+        }
+
 #ifdef MAME_NET
         if (stricmp(argv[i], "-net") == 0)
         {
