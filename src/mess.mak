@@ -702,6 +702,7 @@ COREOBJS += \
 		$(OBJ)/mess/vidhrdw/m6845.o    \
 		$(OBJ)/mess/vidhrdw/tms9928a.o \
 		$(OBJ)/mess/machine/28f008sa.o \
+        $(OBJ)/mess/machine/am29f080.o \
 		$(OBJ)/mess/machine/rriot.o    \
 		$(OBJ)/mess/machine/riot6532.o \
 		$(OBJ)/mess/machine/pit8253.o  \
