@@ -304,6 +304,49 @@ static PORT_WRITE_START( t1t_writeport )
 	{ 0x03f8, 0x03ff, pc_COM1_w },
 PORT_END
 
+static PORT_READ_START( pc200_readport )
+	{ 0x0000, 0x000f, dma8237_0_r },
+	{ 0x0020, 0x0021, pic8259_0_r },
+	{ 0x0040, 0x0043, pit8253_0_r },
+	{ 0x0060, 0x0065, pc1640_port60_r },
+{ 0x0078, 0x0078, pc1640_mouse_x_r }, //?
+{ 0x007a, 0x007a, pc1640_mouse_y_r }, //?
+	{ 0x0080, 0x0087, pc_page_r },
+	{ 0x0200, 0x0207, pc_JOY_r },
+	{ 0x0278, 0x027b, pc_parallelport2_r },
+	{ 0x02e8, 0x02ef, pc_COM4_r },
+	{ 0x02f8, 0x02ff, pc_COM2_r },
+    { 0x0320, 0x0323, pc_HDC1_r },
+	{ 0x0324, 0x0327, pc_HDC2_r },
+	{ 0x0378, 0x037b, pc1640_port378_r },
+	{ 0x03bc, 0x03be, pc_parallelport0_r },
+	{ 0x03e8, 0x03ef, pc_COM3_r },
+	{ 0x03f0, 0x03f7, pc_fdc_r },
+	{ 0x03f8, 0x03ff, pc_COM1_r },
+PORT_END
+
+
+static PORT_WRITE_START( pc200_writeport )
+	{ 0x0000, 0x000f, dma8237_0_w },
+	{ 0x0020, 0x0021, pic8259_0_w },
+	{ 0x0040, 0x0043, pit8253_0_w },
+	{ 0x0060, 0x0065, pc1640_port60_w },
+{ 0x0078, 0x0078, pc1640_mouse_x_w }, //?
+{ 0x007a, 0x007a, pc1640_mouse_y_w }, //?
+	{ 0x0080, 0x0087, pc_page_w },
+	{ 0x0200, 0x0207, pc_JOY_w },
+	{ 0x0278, 0x027b, pc_parallelport2_w },
+	{ 0x02e8, 0x02ef, pc_COM4_w },
+	{ 0x02f8, 0x02ff, pc_COM2_w },
+    { 0x0320, 0x0323, pc_HDC1_w },
+	{ 0x0324, 0x0327, pc_HDC2_w },
+	{ 0x0378, 0x037b, pc_parallelport1_w },
+	{ 0x03bc, 0x03bd, pc_parallelport0_w },
+	{ 0x03e8, 0x03ef, pc_COM3_w },
+	{ 0x03f0, 0x03f7, pc_fdc_w },
+	{ 0x03f8, 0x03ff, pc_COM1_w },
+PORT_END
+
 static MEMORY_READ_START( pc1640_readmem )
 	{ 0x00000, 0x7ffff, MRA_RAM },
 	{ 0x80000, 0x9ffff, MRA_RAM },
@@ -333,7 +376,7 @@ static PORT_READ_START( pc1640_readport )
 	{ 0x0078, 0x0078, pc1640_mouse_x_r },
 	{ 0x007a, 0x007a, pc1640_mouse_y_r },
 	{ 0x0080, 0x0087, pc_page_r },
-	{ 0x0200, 0x0207, pc_JOY_r },
+{ 0x0200, 0x0207, pc_JOY_r }, //?
 	{ 0x0278, 0x027b, pc_parallelport2_r },
 	{ 0x02e8, 0x02ef, pc_COM4_r },
 	{ 0x02f8, 0x02ff, pc_COM2_r },
@@ -356,7 +399,7 @@ static PORT_WRITE_START( pc1640_writeport )
 	{ 0x0078, 0x0078, pc1640_mouse_x_w },
 	{ 0x007a, 0x007a, pc1640_mouse_y_w },
 	{ 0x0080, 0x0087, pc_page_w },
-	{ 0x0200, 0x0207, pc_JOY_w },
+{ 0x0200, 0x0207, pc_JOY_w }, //?
 	{ 0x0278, 0x027b, pc_parallelport2_w },
 	{ 0x02e8, 0x02ef, pc_COM4_w },
 	{ 0x02f8, 0x02ff, pc_COM2_w },
@@ -1922,7 +1965,7 @@ static struct MachineDriver machine_driver_pc200 =
             CPU_I86,
 			8000000,
 			pc1640_readmem,pc1640_writemem,
-			pc1640_readport,pc1640_writeport,
+			pc200_readport,pc200_writeport,
 			pc_aga_frame_interrupt,4,
 			0,0,
 			&i86_address_mask
@@ -1955,8 +1998,7 @@ static struct MachineDriver machine_driver_pc200 =
 	0,0,0,0,
 	{
 		{ SOUND_CUSTOM, &pc_sound_interface },
-	},
-	mc146818_nvram_handler
+	}
 };
 
 static struct MachineDriver machine_driver_pc1512 =

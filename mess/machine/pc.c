@@ -781,7 +781,6 @@ void init_pc200(void)
 	dma8237_reset(dma8237);
 	pc_aga_set_mode(AGA_COLOR);
 	at_keyboard_set_type(AT_KEYBOARD_TYPE_PC); //?
-	mc146818_init(MC146818_IGNORE_CENTURY); //?
 }
 
 void init_pc1512(void)
