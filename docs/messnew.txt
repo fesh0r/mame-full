@@ -2,7 +2,8 @@
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
-(none)
+[MSX] Daewoo IQ-1000 / DPC-200 - Korean (Jirou Kaneda)
+[MSX2] Daewoo IQ-2000 / CPC-300 - Korean (Jirou Kaneda)
 
 
 

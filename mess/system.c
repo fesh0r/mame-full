@@ -598,14 +598,13 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 			*/
 
 	/* ASCII & MICROSOFT */
 	DRIVER( msx )		/* 1983 MSX 										*/
-	DRIVER( msxj )		/* 1983 MSX Jap 									*/
-	DRIVER( cf2000 )	/* 1983 MSX Jap 									*/
-	DRIVER( cf1200 )	/* 1984 MSX Jap 									*/
-	DRIVER( cf2700 )	/* 1984 MSX Jap 									*/
-	DRIVER( cf3000 )	/* 1984 MSX Jap 									*/
-	DRIVER( fs4000 )	/* 1985 MSX Jap 									*/
-	DRIVER( fs1300 )	/* 1985 MSX Jap 									*/
-	DRIVER( msxkr ) 	/* 1983 MSX Korean									*/
+	DRIVER( cf2000 )	/* 1983 MSX Japan 									*/
+	DRIVER( cf1200 )	/* 1984 MSX Japan 									*/
+	DRIVER( cf2700 )	/* 1984 MSX Japan 									*/
+	DRIVER( cf3000 )	/* 1984 MSX Japan 									*/
+	DRIVER( fs4000 )	/* 1985 MSX Japan 									*/
+	DRIVER( fs1300 )	/* 1985 MSX Japan 									*/
+	DRIVER( dpc200 ) 	/* 1984 MSX Korea									*/
 	DRIVER( hb75p ) 	/* 1983 MSX UK										*/
 	DRIVER( hotbit11 )	/* 198? ???											*/
 	DRIVER( hotbit12 )	/* 198? ???											*/
@@ -615,9 +614,9 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 			*/
 	DRIVER( hbf700p )	/* 1985 MSX2 Sony									*/
 	DRIVER( nms8245 )	/* 1985 MSX2										*/
 	DRIVER( nms8255 )	/* 1985 MSX2										*/
-	DRIVER( msx2j ) 	/* 1985 MSX2 Jap									*/
-	DRIVER( fsa1 )  	/* 1986 MSX2 Jap 									*/
-	DRIVER( fsa1mk2 )  	/* 1987 MSX2 Jap 									*/
+	DRIVER( fsa1 )  	/* 1986 MSX2 Japan 									*/
+	DRIVER( fsa1mk2 )  	/* 1987 MSX2 Japan 									*/
+	DRIVER( cpc300 )  	/* 1986 MSX2 Korea 									*/
 
 
 	/* NASCOM MICROCOMPUTERS */
