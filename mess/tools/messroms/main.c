@@ -22,6 +22,8 @@
 
 #define ARRAY_LENGTH(a) (sizeof(a)/sizeof(a[0]))
 
+enum { GOOD_SIZED_ROMS, ALL_ROMS };
+
 void CLIB_DECL logerror(const char *text,...)
 {
     va_list arg;
@@ -90,11 +92,11 @@ void print_computer(int crc_32)
 unsigned char *wbuf;
 char unk = 0;
 
-int romident(char *rom, unsigned int crc_32, int size)
+int romident(char *rom, unsigned int crc_32, int size, int mode)
 {
    int i, f = 0;
 
-   if (size%32) return -1;
+   if (size%32 && mode!=ALL_ROMS) return -1;
 
    printf("%-12s [%08x] ", rom, crc_32);
    for (i=0;i!=ARRAY_LENGTH(roms);i++) {
@@ -137,7 +139,7 @@ int ident_crc(unsigned int crc_32)
 }
 
 
-int ident_file(char *path, char *fn, int size)
+int ident_file(char *path, char *fn, int size, int mode)
 {
    unsigned int crc;
    FILE *f;
@@ -166,11 +168,11 @@ int ident_file(char *path, char *fn, int size)
    crc = crc32(0L, wbuf, size);
    fclose(f);
    free(wbuf);
-   romident(fn, crc, size);
+   romident(fn, crc, size, mode);
    return 0;
 }
 
-int ident_zip(char *fn)
+int ident_zip(char *fn, int mode)
 {
    ZIP* zip;
    struct zipent* zipf;
@@ -180,13 +182,13 @@ int ident_zip(char *fn)
       return 1;
    }
    while ((zipf = readzip(zip))) {
-      romident(zipf->name, zipf->crc32, zipf->uncompressed_size);
+      romident(zipf->name, zipf->crc32, zipf->uncompressed_size, mode);
    }
    closezip(zip);
    return 0;
 }
 
-int ident_dir(char *fn)
+int ident_dir(char *fn, int mode)
 {
    struct dirent* d;
    DIR* dd = opendir(fn);
@@ -198,14 +200,14 @@ int ident_dir(char *fn)
       sprintf(path,"%s/%s",fn,d->d_name);
       if (stat(path,&st)!=0) return 1;
       if (!S_ISDIR(st.st_mode)) {
-         if (ident_file(fn, d->d_name, st.st_size)) return 1;
+         if (ident_file(fn, d->d_name, st.st_size, mode)) return 1;
       }
       d = readdir(dd);
    }
    return 0;
 }
 
-void ident(char *fn)
+void ident(char *fn, int mode)
 {
 	int l;
 	struct stat st;
@@ -216,16 +218,16 @@ void ident(char *fn)
 	if (!S_ISDIR(st.st_mode)) {
 		l = strlen(fn);
 		if (l>4 && (strcmp(&fn[l-4], ".zip")==0 || strcmp(&fn[l-4], ".ZIP")==0)) {
-			ident_zip(fn);
+			ident_zip(fn, mode);
 		} else {
             char dir[512];
             char file[512];
             get_dirname(fn,dir);
 			get_filename(fn,file);
-            ident_file(dir, file, -1);
+            ident_file(dir, file, -1, mode);
 		}
 	} else {
-		ident_dir(fn);
+		ident_dir(fn, mode);
 	}
 }
 
@@ -236,6 +238,7 @@ int main(int argc, char **argv)
 #endif
 {
 	int nf;
+	int mode = GOOD_SIZED_ROMS;
 
 	printf("MESSROMS alpha0.1\n");
 
@@ -244,20 +247,29 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	for (nf=1;nf<argc;nf++) {
-		if (argv[nf][0] == '-') {
-			switch(argv[nf][1]) {
-            case '-':
-				ident_crc(hex2int(&argv[nf][2]));
-				break;
+	for (nf=1;nf<argc;nf++)
+	{
+		if (argv[nf][0] == '-')
+		{
+			switch(argv[nf][1])
+			{
+            			case '-':
+					ident_crc(hex2int(&argv[nf][2]));
+					break;
+				case 'a':
+					mode = ALL_ROMS;
+					break;
 			}
-		} else {
+		} 
+		else
+		{
 			struct stat st;
-			if (stat(argv[nf],&st)!=0) {
+			if (stat(argv[nf],&st)!=0)
+			{
 				printf("Error, '%s' doesn't exist !\n", argv[1]);
 				return 1;
 			}
-			ident(argv[nf]);
+			ident(argv[nf], mode);
 		}
 	}
 
