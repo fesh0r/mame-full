@@ -4,7 +4,7 @@
 #include "includes/serial.h"
 
 /* uncomment to enable verbose comments */
-#define VERBOSE
+//#define VERBOSE
 
 #ifdef VERBOSE
 #define LOG(x)	logerror("MSM8251: "x)
@@ -86,9 +86,9 @@ static void	msm8251_receive_bit(int bit)
 {
 
 	int previous_bit;
-
+#ifdef VERBOSE
 	logerror("msm8251 receive bit: %1x\n",bit);
-
+#endif
 	previous_bit = uart.receive_char & 1;
 
 	/* shift previous bit 7 out */
@@ -109,7 +109,6 @@ static void	msm8251_receive_bit(int bit)
 			/* yes */
 			if (bit==0)
 			{
-				logerror("seen start bit\n");
 				/* seen start bit! */
 				/* not waiting for start bit now! */
 				uart.receive_flags &=~MSM8251_TRANSFER_RECEIVE_WAITING_FOR_START_BIT;
@@ -133,8 +132,6 @@ static void	msm8251_receive_bit(int bit)
 			uart.receive_flags &=~MSM8251_TRANSFER_RECEIVE_SYNCHRONISED;
 			uart.receive_flags |= MSM8251_TRANSFER_RECEIVE_WAITING_FOR_START_BIT;
 
-			logerror("msm8251 receive char\n");
-
 			data_shift = 0;
 
 			/* if parity check is enabled there should be a parity bit in the data stream */
@@ -157,8 +154,6 @@ static void	msm8251_receive_bit(int bit)
 			/* parity enable? */
 			if (uart.mode_byte & (1<<4))
 			{
-				logerror("checking parity\n");
-
 				if (msm8251_parity_table[data]!=(uart.receive_char & 0x01))
 				{
 					uart.status |= MSM8251_STATUS_PARITY_ERROR;
@@ -184,8 +179,6 @@ static int	msm8251_transmit_bit(void)
 	/* update transmitted bit count */
 	uart.bit_count_transmitted++;
 
-	logerror("msm8251 transmit bit: %1x\n",bit);
-
 	return bit;
 }
 
@@ -204,8 +197,6 @@ static void uart_timer_callback(int dummy)
 		if (uart.data == uart.sync_bytes[uart.sync_byte_offset])
 		{
 			/* sync byte matches */
-
-			logerror("msm8251 sync byte matches!\n");
 			/* update for next sync byte? */
 			uart.sync_byte_offset++;
 
@@ -251,7 +242,9 @@ static void msm8251_update_tx_empty(void)
 /* set baud rate */
 void	msm8251_set_baud_rate(unsigned long rate)
 {
+#ifdef VERBOSE
 	logerror("msm8251 set baud rate %d\n", rate);
+#endif
 	if (rate!=uart.baud_rate)
 	{
 		if (uart.timer!=NULL)
@@ -280,7 +273,6 @@ void	msm8251_reset(void)
 /* write command */
 WRITE_HANDLER(msm8251_control_w)
 {
-	logerror("msm8251 w: %02x\n",data);
 
 	if (uart.flags & MSM8251_EXPECTING_MODE)
 	{
@@ -340,7 +332,7 @@ WRITE_HANDLER(msm8251_control_w)
 
 #ifdef VERBOSE
                 logerror("Character length: %d\n", (((data>>2) & 0x03)+5));
-				
+
 				if (data & (1<<4))
 				{
 					logerror("enable parity checking\n");
