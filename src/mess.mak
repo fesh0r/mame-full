@@ -784,20 +784,20 @@ else
 OUTOPT = -o $@
 endif
 
-dat2html$(EXE): $(OBJ)/mess/tools/dat2html/dat2html.o $(OBJ)/mess/utils.o
+tools/dat2html$(EXE): $(OBJ)/mess/tools/dat2html/dat2html.o $(OBJ)/mess/utils.o
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ $(LIBS) $(OUTOPT)
 
-mkhdimg$(EXE):	$(OBJ)/mess/tools/mkhdimg/mkhdimg.o
+tools/mkhdimg$(EXE):	$(OBJ)/mess/tools/mkhdimg/mkhdimg.o
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ $(LIBS) $(OUTOPT)
 
-messroms$(EXE): $(OBJ)/mess/tools/messroms/main.o $(OBJ)/unzip.o
+tools/messroms$(EXE): $(OBJ)/mess/tools/messroms/main.o $(OBJ)/unzip.o
 	@echo Linking $@...
 #	$(LD) $(LDFLAGS) $^ $(LIBS) $(IMGTOOL_LIBS) -o $@
 	$(LD) $(LDFLAGS) $^ $(LIBS) $(IMGTOOL_LIBS) $(OUTOPT)
 
-imgtool$(EXE):	     \
+tools/imgtool$(EXE):	     \
 	  $(IMGTOOL_OBJS)                      \
 	  $(OBJ)/mess/tools/imgtool/stubs.o    \
 	  $(OBJ)/mess/config.o	               \
@@ -837,8 +837,8 @@ ifeq ($(OS),msdos)
 TEXTS = mess.txt
 mess.txt: $(EMULATOR)
 	@echo Generating $@...
-	@$(EMULATOR) -listtext > docs/mess.txt
-	@$(EMULATOR) -listdevices >> docs/mess.txt
+	@$(EMULATOR) -listtext > mess.txt
+	@$(EMULATOR) -listdevices >> mess.txt
 endif
 
 mess/makedep/makedep$(EXE): $(wildcard mess/makedep/*.c) $(wildcard mess/makedep/*.h)
