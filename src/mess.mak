@@ -579,7 +579,6 @@ COREOBJS += \
 		$(OBJ)/mess/filemngr.o         \
 		$(OBJ)/mess/tapectrl.o         \
 		$(OBJ)/mess/utils.o \
-		$(OBJ)/mess/machine/6522via.o \
 		$(OBJ)/mess/machine/rriot.o	 \
 		$(OBJ)/mess/machine/riot.o	 \
 		$(OBJ)/mess/machine/pit8253.o  \
