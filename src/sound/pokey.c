@@ -1,6 +1,6 @@
 /*****************************************************************************
  *
- *	POKEY chip emulator 4.0
+ *	POKEY chip emulator 4.2
  *	Copyright (c) 2000 by The MAME Team
  *
  *	Based on original info found in Ron Fries' Pokey emulator,
@@ -12,7 +12,15 @@
  *  things means it is distributed as is, no warranties whatsoever.
  *	For more details read the readme.txt that comes with MAME.
  *
- *	New in version 4.0:
+ *	4.2:
+ *	- half volume for channels which are inaudible (this should be
+ *	  close to the real thing).
+ *	4.1:
+ *	- default gain increased to closely match the old code.
+ *	- random numbers repeat rate depends on POLY9 flag too!
+ *	- verified sound output with many, many Atari 800 games,
+ *	  including the SUPPRESS_INAUDIBLE optimizations.
+ *	4.0:
  *	- rewritten from scratch.
  *	- 16bit stream interface.
  *	- serout ready/complete delayed interrupts.
@@ -37,6 +45,17 @@
 #endif
 
 #define SUPPRESS_INAUDIBLE	1
+
+/* Four channels with a range of 0..32767 and volume 0..15 */
+//#define POKEY_DEFAULT_GAIN (32767/15/4)
+
+/*
+ * But we raise the gain and risk clipping, the old Pokey did
+ * this too. It defined POKEY_DEFAULT_GAIN 6 and this was
+ * 6 * 15 * 4 = 360, 360/256 = 1.40625
+ * I use 15/11 = 1.3636, so this is a little lower.
+ */
+#define POKEY_DEFAULT_GAIN (32767/11/4)
 
 #define VERBOSE         0
 #define VERBOSE_SOUND	0
@@ -135,12 +154,12 @@
 #define DIV_15		114 	 /* divisor for 1.78979 MHz clock to 15.6999 kHz */
 
 struct POKEYregisters {
-	UINT32 counter[4];		/* channel counter */
-	UINT32 divisor[4];		/* channel counter modulo value (divisor) */
+	INT32 counter[4];		/* channel counter */
+	INT32 divisor[4];		/* channel divisor (modulo value) */
 	UINT32 volume[4];		/* channel volume - derived */
-	UINT8 output[4];		/* channel output signal active */
-	UINT8 audible[4];		/* channel plays audible tone/effect */
-	UINT32 samplerate_24_8; /* sample rate 24.8 */
+	UINT8 output[4];		/* channel output signal (1 active, 0 inactive) */
+	UINT8 audible[4];		/* channel plays an audible tone/effect */
+	UINT32 samplerate_24_8; /* sample rate in 24.8 format */
 	UINT32 samplepos_fract; /* sample position fractional part */
 	UINT32 samplepos_whole; /* sample position whole part */
 	UINT32 polyadjust;		/* polynome adjustment */
@@ -148,7 +167,8 @@ struct POKEYregisters {
     UINT32 p5;              /* poly5 index */
     UINT32 p9;              /* poly9 index */
     UINT32 p17;             /* poly17 index */
-    UINT32 r17;             /* rand17 offset adjusted on sound updates */
+	UINT32 r9;				/* rand9 index */
+    UINT32 r17;             /* rand17 index */
 	UINT32 clockmult;		/* clock multiplier */
     int channel;            /* streams channel */
 	void *timer[3]; 		/* timers for channel 1,2 and 4 events */
@@ -174,95 +194,142 @@ struct POKEYregisters {
 	UINT8 SKCTL;			/* SKCTL  (W/D20F) */
 };
 
-static const struct POKEYinterface *intf;
-static struct POKEYregisters p[MAXPOKEYS];
+static struct POKEYinterface intf;
+static struct POKEYregisters pokey[MAXPOKEYS];
 
 static UINT8 poly4[0x0f];
 static UINT8 poly5[0x1f];
-static UINT8 poly9[0x001ff];
+static UINT8 *poly9;
 static UINT8 *poly17;
 
-#define P4(chip)  poly4[p[chip].p4]
-#define P5(chip)  poly5[p[chip].p5]
-#define P9(chip)  poly9[p[chip].p9]
-#define P17(chip) poly17[p[chip].p17]
+#define P4(chip)  poly4[pokey[chip].p4]
+#define P5(chip)  poly5[pokey[chip].p5]
+#define P9(chip)  poly9[pokey[chip].p9]
+#define P17(chip) poly17[pokey[chip].p17]
 
 /* 128K random values derived from the 17bit polynome */
+static UINT8 *rand9;
 static UINT8 *rand17;
 
 #define SAMPLE	-1
 
 #define ADJUST_EVENT(chip)												\
-	p[chip].counter[CHAN1] -= event;									\
-	p[chip].counter[CHAN2] -= event;									\
-	p[chip].counter[CHAN3] -= event;									\
-	p[chip].counter[CHAN4] -= event;									\
-	p[chip].samplepos_whole -= event;									\
-	p[chip].polyadjust += event
+	pokey[chip].counter[CHAN1] -= event;								\
+	pokey[chip].counter[CHAN2] -= event;								\
+	pokey[chip].counter[CHAN3] -= event;								\
+	pokey[chip].counter[CHAN4] -= event;								\
+	pokey[chip].samplepos_whole -= event;								\
+	pokey[chip].polyadjust += event
+
+#if SUPPRESS_INAUDIBLE
 
 #define PROCESS_CHANNEL(chip,ch)                                        \
 	int toggle = 0; 													\
 	ADJUST_EVENT(chip); 												\
 	/* reset the channel counter */ 									\
-	p[chip].counter[ch] += p[chip].divisor[ch]; 						\
-	p[chip].p4 = (p[chip].p4 + p[chip].polyadjust) % 0x0000f;			\
-	p[chip].p5 = (p[chip].p5 + p[chip].polyadjust) % 0x0001f;			\
-	p[chip].p9 = (p[chip].p9 + p[chip].polyadjust) % 0x001ff;			\
-	p[chip].p17 = (p[chip].p17 + p[chip].polyadjust) % 0x1ffff; 		\
-	p[chip].r17 = (p[chip].r17 + p[chip].polyadjust) % 0x1ffff; 		\
-	p[chip].polyadjust = 0; 											\
-	if( (p[chip].AUDC[ch] & NOTPOLY5) || P5(chip) ) 					\
+	if( pokey[chip].audible[ch] )										\
+		pokey[chip].counter[ch] = pokey[chip].divisor[ch];				\
+	else																\
+		pokey[chip].counter[ch] = 0x7fffffff;							\
+	pokey[chip].p4 = (pokey[chip].p4+pokey[chip].polyadjust)%0x0000f;	\
+	pokey[chip].p5 = (pokey[chip].p5+pokey[chip].polyadjust)%0x0001f;	\
+	pokey[chip].p9 = (pokey[chip].p9+pokey[chip].polyadjust)%0x001ff;	\
+	pokey[chip].p17 = (pokey[chip].p17+pokey[chip].polyadjust)%0x1ffff; \
+	pokey[chip].polyadjust = 0; 										\
+	if( (pokey[chip].AUDC[ch] & NOTPOLY5) || P5(chip) ) 				\
 	{																	\
-		if( p[chip].AUDC[ch] & PURE )									\
+		if( pokey[chip].AUDC[ch] & PURE )								\
 			toggle = 1; 												\
 		else															\
-		if( p[chip].AUDC[ch] & POLY4 )									\
-			toggle = p[chip].output[ch] == !P4(chip);					\
+		if( pokey[chip].AUDC[ch] & POLY4 )								\
+			toggle = pokey[chip].output[ch] == !P4(chip);				\
 		else															\
-		if( p[chip].AUDCTL & POLY9 )									\
-			toggle = p[chip].output[ch] == !P9(chip);					\
+		if( pokey[chip].AUDCTL & POLY9 )								\
+			toggle = pokey[chip].output[ch] == !P9(chip);				\
 		else															\
-			toggle = p[chip].output[ch] == !P17(chip);					\
+			toggle = pokey[chip].output[ch] == !P17(chip);				\
 	}																	\
 	if( toggle )														\
 	{																	\
-		if( p[chip].audible[ch] )										\
+		if( pokey[chip].audible[ch] )									\
 		{																\
-			if( p[chip].output[ch] )									\
-				sum -= p[chip].volume[ch];								\
+			if( pokey[chip].output[ch] )								\
+				sum -= pokey[chip].volume[ch];							\
 			else														\
-				sum += p[chip].volume[ch];								\
+				sum += pokey[chip].volume[ch];							\
 		}																\
-		p[chip].output[ch] ^= 1;										\
+		pokey[chip].output[ch] ^= 1;									\
 	}																	\
 	/* is this a filtering channel (3/4) and is the filter active? */	\
-    if( p[chip].AUDCTL & ((CH1_FILTER|CH2_FILTER) & (0x10 >> ch)) )     \
+	if( pokey[chip].AUDCTL & ((CH1_FILTER|CH2_FILTER) & (0x10 >> ch)) ) \
     {                                                                   \
-        if( p[chip].output[ch-2] )                                      \
+		if( pokey[chip].output[ch-2] )									\
         {                                                               \
-            p[chip].output[ch-2] = 0;                                   \
-            if( p[chip].audible[ch-2] )                                 \
-                sum -= p[chip].volume[ch-2];                            \
+			pokey[chip].output[ch-2] = 0;								\
+			if( pokey[chip].audible[ch] )								\
+				sum -= pokey[chip].volume[ch-2];						\
         }                                                               \
     }                                                                   \
 
+#else
+
+#define PROCESS_CHANNEL(chip,ch)                                        \
+	int toggle = 0; 													\
+	ADJUST_EVENT(chip); 												\
+	/* reset the channel counter */ 									\
+	pokey[chip].counter[ch] = p[chip].divisor[ch];						\
+	pokey[chip].p4 = (pokey[chip].p4+pokey[chip].polyadjust)%0x0000f;	\
+	pokey[chip].p5 = (pokey[chip].p5+pokey[chip].polyadjust)%0x0001f;	\
+	pokey[chip].p9 = (pokey[chip].p9+pokey[chip].polyadjust)%0x001ff;	\
+	pokey[chip].p17 = (pokey[chip].p17+pokey[chip].polyadjust)%0x1ffff; \
+	pokey[chip].polyadjust = 0; 										\
+	if( (pokey[chip].AUDC[ch] & NOTPOLY5) || P5(chip) ) 				\
+	{																	\
+		if( pokey[chip].AUDC[ch] & PURE )								\
+			toggle = 1; 												\
+		else															\
+		if( pokey[chip].AUDC[ch] & POLY4 )								\
+			toggle = pokey[chip].output[ch] == !P4(chip);				\
+		else															\
+		if( pokey[chip].AUDCTL & POLY9 )								\
+			toggle = pokey[chip].output[ch] == !P9(chip);				\
+		else															\
+			toggle = pokey[chip].output[ch] == !P17(chip);				\
+	}																	\
+	if( toggle )														\
+	{																	\
+		if( pokey[chip].output[ch] )									\
+			sum -= pokey[chip].volume[ch];								\
+		else															\
+			sum += pokey[chip].volume[ch];								\
+		pokey[chip].output[ch] ^= 1;									\
+	}																	\
+	/* is this a filtering channel (3/4) and is the filter active? */	\
+	if( pokey[chip].AUDCTL & ((CH1_FILTER|CH2_FILTER) & (0x10 >> ch)) ) \
+    {                                                                   \
+		if( pokey[chip].output[ch-2] )									\
+        {                                                               \
+			pokey[chip].output[ch-2] = 0;								\
+			sum -= pokey[chip].volume[ch-2];							\
+        }                                                               \
+    }                                                                   \
+
+#endif
 
 #define PROCESS_SAMPLE(chip)                                            \
     ADJUST_EVENT(chip);                                                 \
     /* adjust the sample position */                                    \
-	p[chip].samplepos_fract += p[chip].samplerate_24_8; 				\
-	if( p[chip].samplepos_fract & 0xffffff00 )							\
+	pokey[chip].samplepos_fract += pokey[chip].samplerate_24_8; 		\
+	if( pokey[chip].samplepos_fract & 0xffffff00 )						\
 	{																	\
-		p[chip].samplepos_whole += p[chip].samplepos_fract >> 8;		\
-		p[chip].samplepos_fract &= 0x000000ff;							\
+		pokey[chip].samplepos_whole += pokey[chip].samplepos_fract>>8;	\
+		pokey[chip].samplepos_fract &= 0x000000ff;						\
 	}																	\
 	/* store sum of output signals into the buffer */					\
-	*buffer++ = (sum > 32767) ? 0x7fff : sum;							\
+	*buffer++ = (sum > 65535) ? 0x7fff : sum - 0x8000;					\
 	length--
 
 #if HEAVY_MACRO_USAGE
-
-#if SUPPRESS_INAUDIBLE
 
 /*
  * This version of PROCESS_POKEY repeats the search for the minimum
@@ -270,269 +337,130 @@ static UINT8 *rand17;
  * PROCESS_CHANNEL macros can be called with fixed values and expand
  * to much more efficient code
  */
-#define PROCESS_POKEY(chip)                                             \
-	UINT32 sum = 0; 													\
-	if( p[chip].output[CHAN1] || !p[chip].audible[CHAN1] )				\
-		sum += p[chip].volume[CHAN1];									\
-	if( p[chip].output[CHAN2] || !p[chip].audible[CHAN2] )				\
-		sum += p[chip].volume[CHAN2];									\
-	if( p[chip].output[CHAN3] || !p[chip].audible[CHAN3] )				\
-		sum += p[chip].volume[CHAN3];									\
-	if( p[chip].output[CHAN4] || !p[chip].audible[CHAN4] )				\
-		sum += p[chip].volume[CHAN4];									\
-    while( length > 0 )                                                 \
-	{																	\
-		if( p[chip].audible[CHAN1] &&									\
-			p[chip].counter[CHAN1] <= p[chip].samplepos_whole ) 		\
-		{																\
-			if( p[chip].audible[CHAN2] &&								\
-				p[chip].counter[CHAN2] <= p[chip].counter[CHAN1] )		\
-			{															\
-				if( p[chip].audible[CHAN3] &&							\
-					p[chip].counter[CHAN3] <= p[chip].counter[CHAN2] )	\
-				{														\
-					if( p[chip].audible[CHAN4] &&						\
-						p[chip].counter[CHAN4] <= p[chip].counter[CHAN3] ) \
-					{													\
-						UINT32 event = p[chip].counter[CHAN4];			\
-                        PROCESS_CHANNEL(chip,CHAN4);                    \
-					}													\
-					else												\
-					{													\
-						UINT32 event = p[chip].counter[CHAN3];			\
-                        PROCESS_CHANNEL(chip,CHAN3);                    \
-					}													\
-				}														\
-				else													\
-				if( p[chip].audible[CHAN4] &&							\
-					p[chip].counter[CHAN4] <= p[chip].counter[CHAN2] )	\
-				{														\
-					UINT32 event = p[chip].counter[CHAN4];				\
-                    PROCESS_CHANNEL(chip,CHAN4);                        \
-				}														\
-                else                                                    \
-				{														\
-					UINT32 event = p[chip].counter[CHAN2];				\
-                    PROCESS_CHANNEL(chip,CHAN2);                        \
-				}														\
-            }                                                           \
-			else														\
-			if( p[chip].audible[CHAN3] &&								\
-				p[chip].counter[CHAN3] <= p[chip].counter[CHAN1] )		\
-			{															\
-				if( p[chip].audible[CHAN4] &&							\
-					p[chip].counter[CHAN4] <= p[chip].counter[CHAN3] )	\
-				{														\
-					UINT32 event = p[chip].counter[CHAN4];				\
-                    PROCESS_CHANNEL(chip,CHAN4);                        \
-				}														\
-                else                                                    \
-				{														\
-					UINT32 event = p[chip].counter[CHAN3];				\
-                    PROCESS_CHANNEL(chip,CHAN3);                        \
-				}														\
-            }                                                           \
-			else														\
-			if( p[chip].audible[CHAN4] &&								\
-				p[chip].counter[CHAN4] <= p[chip].counter[CHAN1] )		\
-			{															\
-				UINT32 event = p[chip].counter[CHAN4];					\
-                PROCESS_CHANNEL(chip,CHAN4);                            \
-			}															\
-            else                                                        \
-			{															\
-				UINT32 event = p[chip].counter[CHAN1];					\
-                PROCESS_CHANNEL(chip,CHAN1);                            \
-			}															\
-		}																\
-		else															\
-		if( p[chip].audible[CHAN2] &&									\
-			p[chip].counter[CHAN2] <= p[chip].samplepos_whole ) 		\
-		{																\
-			if( p[chip].audible[CHAN3] &&								\
-				p[chip].counter[CHAN3] <= p[chip].counter[CHAN2] )		\
-			{															\
-				if( p[chip].audible[CHAN4] &&							\
-					p[chip].counter[CHAN4] <= p[chip].counter[CHAN3] )	\
-				{														\
-					UINT32 event = p[chip].counter[CHAN4];				\
-                    PROCESS_CHANNEL(chip,CHAN4);                        \
-				}														\
-				else													\
-				{														\
-					UINT32 event = p[chip].counter[CHAN3];				\
-                    PROCESS_CHANNEL(chip,CHAN3);                        \
-				}														\
-			}															\
-			else														\
-			if( p[chip].audible[CHAN4] &&								\
-				p[chip].counter[CHAN4] <= p[chip].counter[CHAN2] )		\
-			{															\
-				UINT32 event = p[chip].counter[CHAN4];					\
-                PROCESS_CHANNEL(chip,CHAN4);                            \
-			}															\
-			else														\
-			{															\
-				UINT32 event = p[chip].counter[CHAN2];					\
-                PROCESS_CHANNEL(chip,CHAN2);                            \
-			}															\
-		}																\
-		else															\
-		if( p[chip].audible[CHAN3] &&									\
-			p[chip].counter[CHAN3] <= p[chip].samplepos_whole ) 		\
-        {                                                               \
-			if( p[chip].audible[CHAN4] &&								\
-				p[chip].counter[CHAN4] <= p[chip].counter[CHAN3] )		\
-			{															\
-				UINT32 event = p[chip].counter[CHAN4];					\
-                PROCESS_CHANNEL(chip,CHAN4);                            \
-			}															\
-			else														\
-			{															\
-				UINT32 event = p[chip].counter[CHAN3];					\
-                PROCESS_CHANNEL(chip,CHAN3);                            \
-			}															\
-		}																\
-		else															\
-		if( p[chip].audible[CHAN4] &&									\
-			p[chip].counter[CHAN4] <= p[chip].samplepos_whole ) 		\
-		{																\
-			UINT32 event = p[chip].counter[CHAN4];						\
-            PROCESS_CHANNEL(chip,CHAN4);                                \
-        }                                                               \
-		else															\
-		{																\
-			UINT32 event = p[chip].samplepos_whole; 					\
-			PROCESS_SAMPLE(chip);										\
-		}																\
-	}																	\
-	timer_reset(p[chip].rtimer, TIME_NEVER)
 
-#else
 #define PROCESS_POKEY(chip) 											\
 	UINT32 sum = 0; 													\
-	if( p[chip].output[CHAN1] || !p[chip].audible[CHAN1] )				\
-		sum += p[chip].volume[CHAN1];									\
-	if( p[chip].output[CHAN2] || !p[chip].audible[CHAN2] )				\
-		sum += p[chip].volume[CHAN2];									\
-	if( p[chip].output[CHAN3] || !p[chip].audible[CHAN3] )				\
-		sum += p[chip].volume[CHAN3];									\
-	if( p[chip].output[CHAN4] || !p[chip].audible[CHAN4] )				\
-		sum += p[chip].volume[CHAN4];									\
+	if( pokey[chip].output[CHAN1] ) 									\
+		sum += pokey[chip].volume[CHAN1];								\
+	if( pokey[chip].output[CHAN2] ) 									\
+		sum += pokey[chip].volume[CHAN2];								\
+	if( pokey[chip].output[CHAN3] ) 									\
+		sum += pokey[chip].volume[CHAN3];								\
+	if( pokey[chip].output[CHAN4] ) 									\
+		sum += pokey[chip].volume[CHAN4];								\
     while( length > 0 )                                                 \
 	{																	\
-		if( p[chip].counter[CHAN1] <= p[chip].samplepos_whole ) 		\
+		if( pokey[chip].counter[CHAN1] < pokey[chip].samplepos_whole )	\
 		{																\
-			if( p[chip].counter[CHAN2] <= p[chip].counter[CHAN1] )		\
+			if( pokey[chip].counter[CHAN2] <  pokey[chip].counter[CHAN1] ) \
 			{															\
-				if( p[chip].counter[CHAN3] <= p[chip].counter[CHAN2] )	\
+				if( pokey[chip].counter[CHAN3] <  pokey[chip].counter[CHAN2] ) \
 				{														\
-					if( p[chip].counter[CHAN4] <= p[chip].counter[CHAN3] ) \
+					if( pokey[chip].counter[CHAN4] < pokey[chip].counter[CHAN3] ) \
 					{													\
-						UINT32 event = p[chip].counter[CHAN4];			\
+						UINT32 event = pokey[chip].counter[CHAN4];		\
                         PROCESS_CHANNEL(chip,CHAN4);                    \
 					}													\
 					else												\
 					{													\
-						UINT32 event = p[chip].counter[CHAN3];			\
+						UINT32 event = pokey[chip].counter[CHAN3];		\
                         PROCESS_CHANNEL(chip,CHAN3);                    \
 					}													\
 				}														\
 				else													\
-				if( p[chip].counter[CHAN4] <= p[chip].counter[CHAN2] )	\
+				if( pokey[chip].counter[CHAN4] < pokey[chip].counter[CHAN2] )  \
 				{														\
-					UINT32 event = p[chip].counter[CHAN4];				\
+					UINT32 event = pokey[chip].counter[CHAN4];			\
                     PROCESS_CHANNEL(chip,CHAN4);                        \
 				}														\
                 else                                                    \
 				{														\
-					UINT32 event = p[chip].counter[CHAN2];				\
+					UINT32 event = pokey[chip].counter[CHAN2];			\
                     PROCESS_CHANNEL(chip,CHAN2);                        \
 				}														\
             }                                                           \
 			else														\
-			if( p[chip].counter[CHAN3] <= p[chip].counter[CHAN1] )		\
+			if( pokey[chip].counter[CHAN3] < pokey[chip].counter[CHAN1] ) \
 			{															\
-				if( p[chip].counter[CHAN4] <= p[chip].counter[CHAN3] )	\
+				if( pokey[chip].counter[CHAN4] < pokey[chip].counter[CHAN3] ) \
 				{														\
-					UINT32 event = p[chip].counter[CHAN4];				\
+					UINT32 event = pokey[chip].counter[CHAN4];			\
                     PROCESS_CHANNEL(chip,CHAN4);                        \
 				}														\
                 else                                                    \
 				{														\
-					UINT32 event = p[chip].counter[CHAN3];				\
+					UINT32 event = pokey[chip].counter[CHAN3];			\
                     PROCESS_CHANNEL(chip,CHAN3);                        \
 				}														\
             }                                                           \
 			else														\
-			if( p[chip].counter[CHAN4] <= p[chip].counter[CHAN1] )		\
+			if( pokey[chip].counter[CHAN4] < pokey[chip].counter[CHAN1] ) \
 			{															\
-				UINT32 event = p[chip].counter[CHAN4];					\
+				UINT32 event = pokey[chip].counter[CHAN4];				\
                 PROCESS_CHANNEL(chip,CHAN4);                            \
 			}															\
             else                                                        \
 			{															\
-				UINT32 event = p[chip].counter[CHAN1];					\
+				UINT32 event = pokey[chip].counter[CHAN1];				\
                 PROCESS_CHANNEL(chip,CHAN1);                            \
 			}															\
 		}																\
 		else															\
-		if( p[chip].counter[CHAN2] <= p[chip].samplepos_whole ) 		\
+		if( pokey[chip].counter[CHAN2] < pokey[chip].samplepos_whole )	\
 		{																\
-			if( p[chip].counter[CHAN3] <= p[chip].counter[CHAN2] )		\
+			if( pokey[chip].counter[CHAN3] < pokey[chip].counter[CHAN2] ) \
 			{															\
-				if( p[chip].counter[CHAN4] <= p[chip].counter[CHAN3] )	\
+				if( pokey[chip].counter[CHAN4] < pokey[chip].counter[CHAN3] ) \
 				{														\
-					UINT32 event = p[chip].counter[CHAN4];				\
+					UINT32 event = pokey[chip].counter[CHAN4];			\
                     PROCESS_CHANNEL(chip,CHAN4);                        \
 				}														\
 				else													\
 				{														\
-					UINT32 event = p[chip].counter[CHAN3];				\
+					UINT32 event = pokey[chip].counter[CHAN3];			\
                     PROCESS_CHANNEL(chip,CHAN3);                        \
 				}														\
 			}															\
 			else														\
-			if( p[chip].counter[CHAN4] <= p[chip].counter[CHAN2] )		\
+			if( pokey[chip].counter[CHAN4] < pokey[chip].counter[CHAN2] ) \
 			{															\
-				UINT32 event = p[chip].counter[CHAN4];					\
+				UINT32 event = pokey[chip].counter[CHAN4];				\
                 PROCESS_CHANNEL(chip,CHAN4);                            \
 			}															\
 			else														\
 			{															\
-				UINT32 event = p[chip].counter[CHAN2];					\
+				UINT32 event = pokey[chip].counter[CHAN2];				\
                 PROCESS_CHANNEL(chip,CHAN2);                            \
 			}															\
 		}																\
 		else															\
-		if( p[chip].counter[CHAN3] <= p[chip].samplepos_whole ) 		\
+		if( pokey[chip].counter[CHAN3] < pokey[chip].samplepos_whole )	\
         {                                                               \
-			if( p[chip].counter[CHAN4] <= p[chip].counter[CHAN3] )		\
+			if( pokey[chip].counter[CHAN4] < pokey[chip].counter[CHAN3] ) \
 			{															\
-				UINT32 event = p[chip].counter[CHAN4];					\
+				UINT32 event = pokey[chip].counter[CHAN4];				\
                 PROCESS_CHANNEL(chip,CHAN4);                            \
 			}															\
 			else														\
 			{															\
-				UINT32 event = p[chip].counter[CHAN3];					\
+				UINT32 event = pokey[chip].counter[CHAN3];				\
                 PROCESS_CHANNEL(chip,CHAN3);                            \
 			}															\
 		}																\
 		else															\
-		if( p[chip].counter[CHAN4] <= p[chip].samplepos_whole ) 		\
+		if( pokey[chip].counter[CHAN4] < pokey[chip].samplepos_whole )	\
 		{																\
-			UINT32 event = p[chip].counter[CHAN4];						\
+			UINT32 event = pokey[chip].counter[CHAN4];					\
             PROCESS_CHANNEL(chip,CHAN4);                                \
         }                                                               \
 		else															\
 		{																\
-			UINT32 event = p[chip].samplepos_whole; 					\
+			UINT32 event = pokey[chip].samplepos_whole; 				\
 			PROCESS_SAMPLE(chip);										\
 		}																\
 	}																	\
-	timer_reset(p[chip].rtimer, TIME_NEVER)
+	timer_reset(pokey[chip].rtimer, TIME_NEVER)
 
-#endif
 void pokey0_update(int param, INT16 *buffer, int length) { PROCESS_POKEY(0); }
 void pokey1_update(int param, INT16 *buffer, int length) { PROCESS_POKEY(1); }
 void pokey2_update(int param, INT16 *buffer, int length) { PROCESS_POKEY(2); }
@@ -541,44 +469,43 @@ void (*update[MAXPOKEYS])(int,INT16*,int) =
 	{ pokey0_update,pokey1_update,pokey2_update,pokey3_update };
 
 #else   /* no HEAVY_MACRO_USAGE */
-
-#if SUPPRESS_INAUDIBLE
 /*
  * And this version of PROCESS_POKEY uses event and channel variables
  * so that the PROCESS_CHANNEL macro needs to index memory at runtime.
  */
+
 #define PROCESS_POKEY(chip)                                             \
 	UINT32 sum = 0; 													\
-	if( p[chip].output[CHAN1] || !p[chip].audible[CHAN1] )				\
-		sum += p[chip].volume[CHAN1];									\
-	if( p[chip].output[CHAN2] || !p[chip].audible[CHAN2] )				\
-		sum += p[chip].volume[CHAN2];									\
-	if( p[chip].output[CHAN3] || !p[chip].audible[CHAN3] )				\
-		sum += p[chip].volume[CHAN3];									\
-	if( p[chip].output[CHAN4] || !p[chip].audible[CHAN4] )				\
-		sum += p[chip].volume[CHAN4];									\
+	if( pokey[chip].output[CHAN1] ) 									\
+		sum += pokey[chip].volume[CHAN1];								\
+	if( pokey[chip].output[CHAN2] ) 									\
+		sum += pokey[chip].volume[CHAN2];								\
+	if( pokey[chip].output[CHAN3] ) 									\
+		sum += pokey[chip].volume[CHAN3];								\
+	if( pokey[chip].output[CHAN4] ) 									\
+        sum += pokey[chip].volume[CHAN4];                               \
     while( length > 0 )                                                 \
 	{																	\
-		UINT32 event = p[chip].samplepos_whole; 						\
+		UINT32 event = pokey[chip].samplepos_whole; 					\
 		UINT32 channel = SAMPLE;										\
-		if( p[chip].audible[CHAN1] && p[chip].counter[CHAN1] <= event ) \
+		if( pokey[chip].counter[CHAN1] < event )						\
         {                                                               \
-			event = p[chip].counter[CHAN1]; 							\
+			event = pokey[chip].counter[CHAN1]; 						\
 			channel = CHAN1;											\
 		}																\
-		if( p[chip].audible[CHAN2] && p[chip].counter[CHAN2] <= event ) \
+		if( pokey[chip].counter[CHAN2] < event )						\
         {                                                               \
-			event = p[chip].counter[CHAN2]; 							\
+			event = pokey[chip].counter[CHAN2]; 						\
 			channel = CHAN2;											\
         }                                                               \
-		if( p[chip].audible[CHAN3] && p[chip].counter[CHAN3] <= event ) \
+		if( pokey[chip].counter[CHAN3] < event )						\
         {                                                               \
-			event = p[chip].counter[CHAN3]; 							\
+			event = pokey[chip].counter[CHAN3]; 						\
 			channel = CHAN3;											\
         }                                                               \
-		if( p[chip].audible[CHAN4] && p[chip].counter[CHAN4] <= event ) \
+		if( pokey[chip].counter[CHAN4] < event )						\
         {                                                               \
-			event = p[chip].counter[CHAN4]; 							\
+			event = pokey[chip].counter[CHAN4]; 						\
 			channel = CHAN4;											\
         }                                                               \
         if( channel == SAMPLE )                                         \
@@ -590,59 +517,7 @@ void (*update[MAXPOKEYS])(int,INT16*,int) =
 			PROCESS_CHANNEL(chip,channel);								\
 		}																\
 	}																	\
-	timer_reset(p[chip].rtimer, TIME_NEVER)
-
-#else
-/*
- * And this version of PROCESS_POKEY uses event and channel variables
- * so that the PROCESS_CHANNEL macro needs to index memory at runtime.
- */
-#define PROCESS_POKEY(chip)                                             \
-	UINT32 sum = 0; 													\
-	if( p[chip].output[CHAN1] || !p[chip].audible[CHAN1] )				\
-		sum += p[chip].volume[CHAN1];									\
-	if( p[chip].output[CHAN2] || !p[chip].audible[CHAN2] )				\
-		sum += p[chip].volume[CHAN2];									\
-	if( p[chip].output[CHAN3] || !p[chip].audible[CHAN3] )				\
-		sum += p[chip].volume[CHAN3];									\
-	if( p[chip].output[CHAN4] || !p[chip].audible[CHAN4] )				\
-		sum += p[chip].volume[CHAN4];									\
-    while( length > 0 )                                                 \
-	{																	\
-		UINT32 event = p[chip].samplepos_whole; 						\
-		UINT32 channel = SAMPLE;										\
-        if( p[chip].counter[CHAN1] <= event )                           \
-        {                                                               \
-			event = p[chip].counter[CHAN1]; 							\
-			channel = CHAN1;											\
-		}																\
-		if( p[chip].counter[CHAN2] <= event )							\
-        {                                                               \
-			event = p[chip].counter[CHAN2]; 							\
-			channel = CHAN2;											\
-        }                                                               \
-		if( p[chip].counter[CHAN3] <= event )							\
-        {                                                               \
-			event = p[chip].counter[CHAN3]; 							\
-			channel = CHAN3;											\
-        }                                                               \
-		if( p[chip].counter[CHAN4] <= event )							\
-        {                                                               \
-			event = p[chip].counter[CHAN4]; 							\
-			channel = CHAN4;											\
-        }                                                               \
-        if( channel == SAMPLE )                                         \
-		{																\
-            PROCESS_SAMPLE(chip);                                       \
-        }                                                               \
-		else															\
-		{																\
-			PROCESS_CHANNEL(chip,channel);								\
-		}																\
-	}																	\
-	timer_reset(p[chip].rtimer, TIME_NEVER)
-
-#endif
+	timer_reset(pokey[chip].rtimer, TIME_NEVER)
 
 void pokey_update(int param, INT16 *buffer, int length) { PROCESS_POKEY(param); }
 void (*update[MAXPOKEYS])(int,INT16*,int) =
@@ -654,36 +529,38 @@ void pokey_sh_update(void)
 {
 	int chip;
 
-	for( chip = 0; chip < intf->num; chip++ )
-		stream_update(p[chip].channel, 0);
+	for( chip = 0; chip < intf.num; chip++ )
+		stream_update(pokey[chip].channel, 0);
 }
 
 static void poly_init(UINT8 *poly, int size, int left, int right, int add)
 {
-	int i, x = 0;
+	int mask = (1 << size) - 1;
+    int i, x = 0;
 
 	LOG_POLY((errorlog,"poly %d\n", size));
-    for( i = 0; i < size; i++ )
+	for( i = 0; i < mask; i++ )
 	{
 		*poly++ = x & 1;
-		LOG_POLY((errorlog,"%05x: %d\n", x&size, x&1));
+		LOG_POLY((errorlog,"%05x: %d\n", x, x&1));
         /* calculate next bit */
-		x = ((x << left) + (x >> right) + add) & size;
+		x = ((x << left) + (x >> right) + add) & mask;
 	}
 }
 
 static void rand_init(UINT8 *rng, int size, int left, int right, int add)
 {
-	int i, x = 0;
-	UINT8 bits = 0;
+    int mask = (1 << size) - 1;
+    int i, x = 0;
 
-	for( i = 0; i < size; i++ )
+	LOG_RAND((errorlog,"rand %d\n", size));
+    for( i = 0; i < mask; i++ )
 	{
-		bits = (bits << 1) | (x & 1);
-		*rng++ = bits;
-		LOG_RAND((errorlog, "%05x: %02x\n", x, bits));
+		*rng = x >> (size - 8);   /* use the upper 8 bits */
+		LOG_RAND((errorlog, "%05x: %02x\n", x, *rng));
+        rng++;
         /* calculate next bit */
-		x = ((x << left) + (x >> right) + add) & size;
+		x = ((x << left) + (x >> right) + add) & mask;
 	}
 }
 
@@ -691,56 +568,62 @@ int pokey_sh_start(const struct MachineSound *msound)
 {
 	int chip;
 
-	intf = msound->sound_interface;
+	memcpy(&intf, msound->sound_interface, sizeof(struct POKEYinterface));
 
-	poly17 = malloc(0x1ffff+1);
-	if( !poly17 )
-		return 1;
-
+	poly9 = malloc(0x1ff+1);
+	rand9 = malloc(0x1ff+1);
+    poly17 = malloc(0x1ffff+1);
     rand17 = malloc(0x1ffff+1);
-	if( !rand17 )
+	if( !poly9 || !rand9 || !poly17 || !rand17 )
+	{
+		pokey_sh_stop();	/* free any allocated memory again */
 		return 1;
+	}
 
 	/* initialize the poly counters */
-	poly_init(poly4,  0x0000f, 3, 1, 0x00004);
-	poly_init(poly5,  0x0001f, 3, 2, 0x00008);
-	poly_init(poly9,  0x001ff, 2, 7, 0x00080);
-	poly_init(poly17, 0x1ffff, 7,10, 0x18000);
-	rand_init(rand17, 0x1ffff, 7,10, 0x18000);
+	poly_init(poly4,   4, 3, 1, 0x00004);
+	poly_init(poly5,   5, 3, 2, 0x00008);
+	poly_init(poly9,   9, 2, 7, 0x00080);
+	poly_init(poly17, 17, 7,10, 0x18000);
 
-	for( chip = 0; chip < intf->num; chip++ )
+	/* initialize the random arrays */
+	rand_init(rand9,   9, 2, 7, 0x00080);
+	rand_init(rand17, 17, 7,10, 0x18000);
+
+	for( chip = 0; chip < intf.num; chip++ )
 	{
+		struct POKEYregisters *p = &pokey[chip];
         char name[40];
 
-		memset(&p[chip], 0, sizeof(struct POKEYregisters));
+		memset(p, 0, sizeof(struct POKEYregisters));
 
-		p[chip].samplerate_24_8 = (Machine->sample_rate) ? (intf->baseclock << 8) / Machine->sample_rate : 1;
-		p[chip].divisor[CHAN1] = 4;
-		p[chip].divisor[CHAN2] = 4;
-		p[chip].divisor[CHAN3] = 4;
-		p[chip].divisor[CHAN4] = 4;
-		p[chip].clockmult = DIV_64;
-		p[chip].KBCODE = 0x09;		  /* Atari 800 'no key' */
-		p[chip].SKCTL = SK_RESET;	  /* let the RNG run after reset */
-		p[chip].rtimer = timer_set(TIME_NEVER, chip, NULL);
+		p->samplerate_24_8 = (Machine->sample_rate) ? (intf.baseclock << 8) / Machine->sample_rate : 1;
+		p->divisor[CHAN1] = 4;
+		p->divisor[CHAN2] = 4;
+		p->divisor[CHAN3] = 4;
+		p->divisor[CHAN4] = 4;
+		p->clockmult = DIV_64;
+		p->KBCODE = 0x09;		 /* Atari 800 'no key' */
+		p->SKCTL = SK_RESET;	 /* let the RNG run after reset */
+		p->rtimer = timer_set(TIME_NEVER, chip, NULL);
 
-		p[chip].pot_r[0] = intf->pot0_r[chip];
-		p[chip].pot_r[1] = intf->pot1_r[chip];
-		p[chip].pot_r[2] = intf->pot2_r[chip];
-		p[chip].pot_r[3] = intf->pot3_r[chip];
-		p[chip].pot_r[4] = intf->pot4_r[chip];
-		p[chip].pot_r[5] = intf->pot5_r[chip];
-		p[chip].pot_r[6] = intf->pot6_r[chip];
-		p[chip].pot_r[7] = intf->pot7_r[chip];
-		p[chip].allpot_r = intf->allpot_r[chip];
-		p[chip].serin_r = intf->serin_r[chip];
-		p[chip].serout_w = intf->serout_w[chip];
-		p[chip].interrupt_cb = intf->interrupt_cb[chip];
+		p->pot_r[0] = intf.pot0_r[chip];
+		p->pot_r[1] = intf.pot1_r[chip];
+		p->pot_r[2] = intf.pot2_r[chip];
+		p->pot_r[3] = intf.pot3_r[chip];
+		p->pot_r[4] = intf.pot4_r[chip];
+		p->pot_r[5] = intf.pot5_r[chip];
+		p->pot_r[6] = intf.pot6_r[chip];
+		p->pot_r[7] = intf.pot7_r[chip];
+		p->allpot_r = intf.allpot_r[chip];
+		p->serin_r = intf.serin_r[chip];
+		p->serout_w = intf.serout_w[chip];
+		p->interrupt_cb = intf.interrupt_cb[chip];
 
 		sprintf(name, "Pokey #%d", chip);
-		p[chip].channel = stream_init(name, intf->mixing_level[chip], Machine->sample_rate, chip, update[chip]);
+		p->channel = stream_init(name, intf.mixing_level[chip], Machine->sample_rate, chip, update[chip]);
 
-		if( p[chip].channel == -1 )
+		if( p->channel == -1 )
 		{
 			perror("failed to initialize sound channel");
             return 1;
@@ -752,31 +635,34 @@ int pokey_sh_start(const struct MachineSound *msound)
 
 void pokey_sh_stop (void)
 {
-	if( rand17 )
-		free(rand17);
+	if( rand17 ) free(rand17);
 	rand17 = NULL;
-	if( poly17 )
-		free(poly17);
+	if( poly17 ) free(poly17);
 	poly17 = NULL;
+	if( rand9 )  free(rand9);
+	rand9 = NULL;
+	if( poly9 )  free(poly9);
+	poly9 = NULL;
 }
 
 static void pokey_timer_expire(int param)
 {
 	int chip = param >> 3;
 	int timers = param & 7;
+	struct POKEYregisters *p = &pokey[chip];
 
-	LOG_TIMER((errorlog, "POKEY #%d timer %d with IRQEN $%02x\n", chip, param, p[chip].IRQEN));
+	LOG_TIMER((errorlog, "POKEY #%d timer %d with IRQEN $%02x\n", chip, param, p->IRQEN));
 
     /* check if some of the requested timer interrupts are enabled */
-	timers &= p[chip].IRQEN;
+	timers &= p->IRQEN;
 
     if( timers )
     {
 		/* set the enabled timer irq status bits */
-		p[chip].IRQST |= timers;
+		p->IRQST |= timers;
         /* call back an application supplied function to handle the interrupt */
-		if( p[chip].interrupt_cb )
-			(*p[chip].interrupt_cb)(timers);
+		if( p->interrupt_cb )
+			(*p->interrupt_cb)(timers);
     }
 }
 
@@ -834,33 +720,36 @@ static char *audctl2str(int val)
 
 static void pokey_serin_ready(int chip)
 {
-	if( p[chip].IRQEN & IRQ_SERIN )
+	struct POKEYregisters *p = &pokey[chip];
+    if( p->IRQEN & IRQ_SERIN )
 	{
 		/* set the enabled timer irq status bits */
-		p[chip].IRQST |= IRQ_SERIN;
+		p->IRQST |= IRQ_SERIN;
 		/* call back an application supplied function to handle the interrupt */
-		if( p[chip].interrupt_cb )
-			(*p[chip].interrupt_cb)(IRQ_SERIN);
+		if( p->interrupt_cb )
+			(*p->interrupt_cb)(IRQ_SERIN);
 	}
 }
 
 static void pokey_serout_ready(int chip)
 {
-	if( p[chip].IRQEN & IRQ_SEROR )
+	struct POKEYregisters *p = &pokey[chip];
+    if( p->IRQEN & IRQ_SEROR )
 	{
-		p[chip].IRQST |= IRQ_SEROR;
-		if( p[chip].interrupt_cb )
-			(*p[chip].interrupt_cb)(IRQ_SEROR);
+		p->IRQST |= IRQ_SEROR;
+		if( p->interrupt_cb )
+			(*p->interrupt_cb)(IRQ_SEROR);
 	}
 }
 
 static void pokey_serout_complete(int chip)
 {
-	if( p[chip].IRQEN & IRQ_SEROC )
+	struct POKEYregisters *p = &pokey[chip];
+    if( p->IRQEN & IRQ_SEROC )
 	{
-		p[chip].IRQST |= IRQ_SEROC;
-		if( p[chip].interrupt_cb )
-			(*p[chip].interrupt_cb)(IRQ_SEROC);
+		p->IRQST |= IRQ_SEROC;
+		if( p->interrupt_cb )
+			(*p->interrupt_cb)(IRQ_SEROC);
 	}
 }
 
@@ -868,9 +757,10 @@ void pokey_pot_trigger(int param)
 {
 	int chip = param >> 3;
     int pot = param & 7;
+	struct POKEYregisters *p = &pokey[chip];
 
-	p[chip].ptimer[pot] = NULL;
-	p[chip].ALLPOT &= ~(1 << pot);	 /* set the enabled timer irq status bits */
+	p->ptimer[pot] = NULL;
+	p->ALLPOT &= ~(1 << pot);	/* set the enabled timer irq status bits */
 }
 
 /* A/D conversion time:
@@ -880,14 +770,15 @@ void pokey_pot_trigger(int param)
  * In quick mode (SK_PADDLE set) the conversion is done very fast
  * (within one scaline?) but the result is not as accurate.
  */
-#define AD_TIME (double)(((p[chip].SKCTL & SK_PADDLE) ? 0.25 : 64.0) * FREQ_17_EXACT / intf->baseclock)
+#define AD_TIME (double)(((p->SKCTL & SK_PADDLE) ? 0.25 : 64.0) * FREQ_17_EXACT / intf.baseclock)
 
 int pokey_register_r(int chip, int offs)
 {
-	int data = 0, pot;
+	struct POKEYregisters *p = &pokey[chip];
+    int data = 0, pot;
 
 #ifdef MAME_DEBUG
-    if( chip >= intf->num )
+	if( chip >= intf.num )
 	{
 		if( errorlog ) fprintf(errorlog, "POKEY #%d is >= number of Pokeys!\n", chip);
 		return data;
@@ -899,21 +790,21 @@ int pokey_register_r(int chip, int offs)
 	case POT0_C: case POT1_C: case POT2_C: case POT3_C:
 	case POT4_C: case POT5_C: case POT6_C: case POT7_C:
 		pot = offs & 7;
-		if( p[chip].pot_r[pot] )
+		if( p->pot_r[pot] )
 		{
 			/*
 			 * If the conversion is not yet finished (ptimer running),
 			 * get the current value by the linear interpolation of
 			 * the final value using the elapsed time.
 			 */
-			if( p[chip].ALLPOT & (1 << pot) )
+			if( p->ALLPOT & (1 << pot) )
 			{
-				data = (UINT8)(timer_timeelapsed(p[chip].ptimer[pot]) / AD_TIME);
+				data = (UINT8)(timer_timeelapsed(p->ptimer[pot]) / AD_TIME);
 				LOG((errorlog,"POKEY #%d read POT%d (interpolated) $%02x\n", chip, pot, data));
             }
 			else
 			{
-				data = p[chip].POTx[pot];
+				data = p->POTx[pot];
 				LOG((errorlog,"POKEY #%d read POT%d (final value)  $%02x\n", chip, pot, data));
 			}
 		}
@@ -923,20 +814,20 @@ int pokey_register_r(int chip, int offs)
 		break;
 
     case ALLPOT_C:
-		if( p[chip].allpot_r )
+		if( p->allpot_r )
 		{
-			data = (*p[chip].allpot_r)(offs);
+			data = (*p->allpot_r)(offs);
 			LOG((errorlog,"POKEY #%d ALLPOT callback $%02x\n", chip, data));
 		}
 		else
 		{
-			data = p[chip].ALLPOT;
+			data = p->ALLPOT;
 			LOG((errorlog,"POKEY #%d ALLPOT internal $%02x\n", chip, data));
 		}
 		break;
 
 	case KBCODE_C:
-		data = p[chip].KBCODE;
+		data = p->KBCODE;
 		break;
 
 	case RANDOM_C:
@@ -948,38 +839,47 @@ int pokey_register_r(int chip, int offs)
 		 * the time gone since the last read into account and read the
 		 * new value from an appropriate offset in the rand17 table.
 		 ****************************************************************/
-		if( p[chip].SKCTL & SK_RESET )
+		if( p->SKCTL & SK_RESET )
 		{
-			UINT32 adjust = (UINT32)(timer_timeelapsed(p[chip].rtimer) * intf->baseclock);
-			p[chip].r17 = (p[chip].r17 + adjust) % 0x1ffff;
-			p[chip].RANDOM = rand17[p[chip].r17];
-			LOG_RAND((errorlog, "POKEY #%d adjust %u rand17[$%05x]: $%02x\n", chip, adjust, p[chip].r17, p[chip].RANDOM));
-			timer_reset(p[chip].rtimer, TIME_NEVER);
+			UINT32 adjust = (UINT32)(timer_timeelapsed(p->rtimer) * intf.baseclock);
+			p->r9 = (p->r9 + adjust) % 0x001ff;
+			p->r17 = (p->r17 + adjust) % 0x1ffff;
+			if( p->AUDCTL & POLY9 )
+			{
+				p->RANDOM = rand9[p->r9];
+				LOG_RAND((errorlog, "POKEY #%d adjust %u rand9[$%05x]: $%02x\n", chip, adjust, p->r9, p->RANDOM));
+			}
+            else
+			{
+				p->RANDOM = rand17[p->r17];
+				LOG_RAND((errorlog, "POKEY #%d adjust %u rand17[$%05x]: $%02x\n", chip, adjust, p->r17, p->RANDOM));
+			}
 		}
 		else
 		{
-			LOG_RAND((errorlog, "POKEY #%d rand17 freezed (SKCTL): $%02x\n", chip, p[chip].RANDOM));
+			LOG_RAND((errorlog, "POKEY #%d rand17 freezed (SKCTL): $%02x\n", chip, p->RANDOM));
 		}
-		data = p[chip].RANDOM;
+		timer_reset(p->rtimer, TIME_NEVER);
+		data = p->RANDOM;
 		break;
 
 	case SERIN_C:
-		if( p[chip].serin_r )
-			p[chip].SERIN = (*p[chip].serin_r)(offs);
-		data = p[chip].SERIN;
+		if( p->serin_r )
+			p->SERIN = (*p->serin_r)(offs);
+		data = p->SERIN;
 		LOG((errorlog, "POKEY #%d SERIN  $%02x\n", chip, data));
 		break;
 
 	case IRQST_C:
 		/* IRQST is an active low input port; we keep it active high */
 		/* internally to ease the (un-)masking of bits */
-		data = p[chip].IRQST ^ 0xff;
+		data = p->IRQST ^ 0xff;
 		LOG((errorlog, "POKEY #%d IRQST  $%02x\n", chip, data));
 		break;
 
 	case SKSTAT_C:
 		/* SKSTAT is also an active low input port */
-		data = p[chip].SKSTAT ^ 0xff;
+		data = p->SKSTAT ^ 0xff;
 		LOG((errorlog, "POKEY #%d SKSTAT $%02x\n", chip, data));
 		break;
 
@@ -1022,203 +922,215 @@ int quad_pokey_r (int offset)
 
 void pokey_register_w(int chip, int offs, int data)
 {
+	struct POKEYregisters *p = &pokey[chip];
     int ch_mask = 0, pot, new_val;
 
 #ifdef MAME_DEBUG
-    if( chip >= intf->num )
+	if( chip >= intf.num )
 	{
 		if( errorlog ) fprintf(errorlog, "POKEY #%d is >= number of Pokeys!\n", chip);
 		return;
 	}
 #endif
-	stream_update(p[chip].channel, 0);
+	stream_update(p->channel, 0);
 
     /* determine which address was changed */
 	switch (offs & 15)
     {
     case AUDF1_C:
-		if( data == p[chip].AUDF[CHAN1] )
+		if( data == p->AUDF[CHAN1] )
             return;
 		LOG_SOUND((errorlog, "POKEY #%d AUDF1  $%02x\n", chip, data));
-		p[chip].AUDF[CHAN1] = data;
+		p->AUDF[CHAN1] = data;
         ch_mask = 1 << CHAN1;
-		if( p[chip].AUDCTL & CH12_JOINED )		 /* if ch 1&2 tied together */
+		if( p->AUDCTL & CH12_JOINED )		/* if ch 1&2 tied together */
             ch_mask |= 1 << CHAN2;    /* then also change on ch2 */
         break;
 
     case AUDC1_C:
-		if( data == p[chip].AUDC[CHAN1] )
+		if( data == p->AUDC[CHAN1] )
             return;
 		LOG_SOUND((errorlog, "POKEY #%d AUDC1  $%02x (%s)\n", chip, data, audc2str(data)));
-		p[chip].AUDC[CHAN1] = data;
-		p[chip].volume[CHAN1] = (data & VOLUME_MASK) * intf->gain;
+		p->AUDC[CHAN1] = data;
         ch_mask = 1 << CHAN1;
         break;
 
     case AUDF2_C:
-		if( data == p[chip].AUDF[CHAN2] )
+		if( data == p->AUDF[CHAN2] )
             return;
 		LOG_SOUND((errorlog, "POKEY #%d AUDF2  $%02x\n", chip, data));
-		p[chip].AUDF[CHAN2] = data;
+		p->AUDF[CHAN2] = data;
         ch_mask = 1 << CHAN2;
         break;
 
     case AUDC2_C:
-		if( data == p[chip].AUDC[CHAN2] )
+		if( data == p->AUDC[CHAN2] )
             return;
 		LOG_SOUND((errorlog, "POKEY #%d AUDC2  $%02x (%s)\n", chip, data, audc2str(data)));
-		p[chip].AUDC[CHAN2] = data;
-		p[chip].volume[CHAN2] = (data & VOLUME_MASK) * intf->gain;
+		p->AUDC[CHAN2] = data;
         ch_mask = 1 << CHAN2;
         break;
 
     case AUDF3_C:
-		if( data == p[chip].AUDF[CHAN3] )
+		if( data == p->AUDF[CHAN3] )
             return;
 		LOG_SOUND((errorlog, "POKEY #%d AUDF3  $%02x\n", chip, data));
-		p[chip].AUDF[CHAN3] = data;
+		p->AUDF[CHAN3] = data;
         ch_mask = 1 << CHAN3;
 
-		if( p[chip].AUDCTL & CH34_JOINED )	 /* if ch 3&4 tied together */
+		if( p->AUDCTL & CH34_JOINED )	/* if ch 3&4 tied together */
             ch_mask |= 1 << CHAN4;  /* then also change on ch4 */
         break;
 
     case AUDC3_C:
-		if( data == p[chip].AUDC[CHAN3] )
+		if( data == p->AUDC[CHAN3] )
             return;
 		LOG_SOUND((errorlog, "POKEY #%d AUDC3  $%02x (%s)\n", chip, data, audc2str(data)));
-		p[chip].AUDC[CHAN3] = data;
-		p[chip].volume[CHAN3] = (data & VOLUME_MASK) * intf->gain;
+		p->AUDC[CHAN3] = data;
         ch_mask = 1 << CHAN3;
         break;
 
     case AUDF4_C:
-		if( data == p[chip].AUDF[CHAN4] )
+		if( data == p->AUDF[CHAN4] )
             return;
 		LOG_SOUND((errorlog, "POKEY #%d AUDF4  $%02x\n", chip, data));
-		p[chip].AUDF[CHAN4] = data;
+		p->AUDF[CHAN4] = data;
         ch_mask = 1 << CHAN4;
         break;
 
     case AUDC4_C:
-		if( data == p[chip].AUDC[CHAN4] )
+		if( data == p->AUDC[CHAN4] )
             return;
 		LOG_SOUND((errorlog, "POKEY #%d AUDC4  $%02x (%s)\n", chip, data, audc2str(data)));
-		p[chip].AUDC[CHAN4] = data;
-		p[chip].volume[CHAN4] = (data & VOLUME_MASK) * intf->gain;
+		p->AUDC[CHAN4] = data;
         ch_mask = 1 << CHAN4;
         break;
 
     case AUDCTL_C:
-		if( data == p[chip].AUDCTL )
+		if( data == p->AUDCTL )
             return;
 		LOG_SOUND((errorlog, "POKEY #%d AUDCTL $%02x (%s)\n", chip, data, audctl2str(data)));
-		p[chip].AUDCTL = data;
+		p->AUDCTL = data;
         ch_mask = 15;       /* all channels */
         /* determine the base multiplier for the 'div by n' calculations */
-		p[chip].clockmult = (p[chip].AUDCTL & CLK_15KHZ) ? DIV_15 : DIV_64;
+		p->clockmult = (p->AUDCTL & CLK_15KHZ) ? DIV_15 : DIV_64;
         break;
 
     case STIMER_C:
         /* first remove any existing timers */
 		LOG_TIMER((errorlog, "POKEY #%d STIMER $%02x\n", chip, data));
-		if( p[chip].timer[TIMER1] )
-			timer_remove(p[chip].timer[TIMER1]);
-		if( p[chip].timer[TIMER2] )
-			timer_remove(p[chip].timer[TIMER2]);
-		if( p[chip].timer[TIMER4] )
-			timer_remove(p[chip].timer[TIMER4]);
-		p[chip].timer[TIMER1] = NULL;
-		p[chip].timer[TIMER2] = NULL;
-		p[chip].timer[TIMER4] = NULL;
+		if( p->timer[TIMER1] )
+			timer_remove(p->timer[TIMER1]);
+		if( p->timer[TIMER2] )
+			timer_remove(p->timer[TIMER2]);
+		if( p->timer[TIMER4] )
+			timer_remove(p->timer[TIMER4]);
+		p->timer[TIMER1] = NULL;
+		p->timer[TIMER2] = NULL;
+		p->timer[TIMER4] = NULL;
 
         /* reset all counters to zero (side effect) */
-		p[chip].polyadjust = 0;
-		p[chip].counter[CHAN1] = 0;
-		p[chip].counter[CHAN2] = 0;
-		p[chip].counter[CHAN3] = 0;
-		p[chip].counter[CHAN4] = 0;
+		p->polyadjust = 0;
+		p->counter[CHAN1] = 0;
+		p->counter[CHAN2] = 0;
+		p->counter[CHAN3] = 0;
+		p->counter[CHAN4] = 0;
 
         /* joined chan#1 and chan#2 ? */
-		if( p[chip].AUDCTL & CH12_JOINED )
+		if( p->AUDCTL & CH12_JOINED )
         {
-			LOG_TIMER((errorlog, "POKEY #%d timer1+2 after %d clocks\n", chip, p[chip].divisor[CHAN2]));
-			/* set timer #1 _and_ #2 event after timer_div clocks of joined CHAN1+CHAN2 */
-			p[chip].timer[TIMER2] =
-				timer_pulse(1.0 * p[chip].divisor[CHAN2] / intf->baseclock,
-					(chip<<3)|IRQ_TIMR2|IRQ_TIMR1, pokey_timer_expire);
+			if( p->divisor[CHAN2] > 4 )
+			{
+				LOG_TIMER((errorlog, "POKEY #%d timer1+2 after %d clocks\n", chip, p->divisor[CHAN2]));
+				/* set timer #1 _and_ #2 event after timer_div clocks of joined CHAN1+CHAN2 */
+				p->timer[TIMER2] =
+					timer_pulse(1.0 * p->divisor[CHAN2] / intf.baseclock,
+						(chip<<3)|IRQ_TIMR2|IRQ_TIMR1, pokey_timer_expire);
+			}
         }
         else
         {
-			LOG_TIMER((errorlog, "POKEY #%d timer1 after %d clocks\n", chip, p[chip].divisor[CHAN1]));
-			/* set timer #1 event after timer_div clocks of CHAN1 */
-			p[chip].timer[TIMER1] =
-				timer_pulse(1.0 * p[chip].divisor[CHAN1] / intf->baseclock,
-					(chip<<3)|IRQ_TIMR1, pokey_timer_expire);
+			if( p->divisor[CHAN1] > 4 )
+			{
+				LOG_TIMER((errorlog, "POKEY #%d timer1 after %d clocks\n", chip, p->divisor[CHAN1]));
+				/* set timer #1 event after timer_div clocks of CHAN1 */
+				p->timer[TIMER1] =
+					timer_pulse(1.0 * p->divisor[CHAN1] / intf.baseclock,
+						(chip<<3)|IRQ_TIMR1, pokey_timer_expire);
+			}
 
-			LOG_TIMER((errorlog, "POKEY #%d timer2 after %d clocks\n", chip, p[chip].divisor[CHAN2]));
-			/* set timer #2 event after timer_div clocks of CHAN2 */
-			p[chip].timer[TIMER2] =
-				timer_pulse(1.0 * p[chip].divisor[CHAN2] / intf->baseclock,
-					(chip<<3)|IRQ_TIMR2, pokey_timer_expire);
+			if( p->divisor[CHAN2] > 4 )
+			{
+				LOG_TIMER((errorlog, "POKEY #%d timer2 after %d clocks\n", chip, p->divisor[CHAN2]));
+				/* set timer #2 event after timer_div clocks of CHAN2 */
+				p->timer[TIMER2] =
+					timer_pulse(1.0 * p->divisor[CHAN2] / intf.baseclock,
+						(chip<<3)|IRQ_TIMR2, pokey_timer_expire);
+			}
         }
 
 		/* Note: p[chip] does not have a timer #3 */
 
-		if( p[chip].AUDCTL & CH34_JOINED )
+		if( p->AUDCTL & CH34_JOINED )
         {
             /* not sure about this: if audc4 == 0000xxxx don't start timer 4 ? */
-			if( p[chip].AUDC[CHAN4] & 0xf0 )
+			if( p->AUDC[CHAN4] & 0xf0 )
             {
-				LOG_TIMER((errorlog, "POKEY #%d timer4 after %d clocks\n", chip, p[chip].divisor[CHAN4]));
-				/* set timer #4 event after timer_div clocks of CHAN4 */
-				p[chip].timer[TIMER4] =
-					timer_pulse(1.0 * p[chip].divisor[CHAN4] / intf->baseclock,
-						(chip<<3)|IRQ_TIMR4, pokey_timer_expire);
+				if( p->divisor[CHAN4] > 4 )
+				{
+					LOG_TIMER((errorlog, "POKEY #%d timer4 after %d clocks\n", chip, p->divisor[CHAN4]));
+					/* set timer #4 event after timer_div clocks of CHAN4 */
+					p->timer[TIMER4] =
+						timer_pulse(1.0 * p->divisor[CHAN4] / intf.baseclock,
+							(chip<<3)|IRQ_TIMR4, pokey_timer_expire);
+				}
             }
         }
         else
         {
-			LOG_TIMER((errorlog, "POKEY #%d timer4 after %d clocks\n", chip, p[chip].divisor[CHAN4]));
-			/* set timer #4 event after timer_div clocks of CHAN4 */
-			p[chip].timer[TIMER4] =
-				timer_pulse(1.0 * p[chip].divisor[CHAN4] / intf->baseclock,
-					(chip<<3)|IRQ_TIMR4, pokey_timer_expire);
+			if( p->divisor[CHAN4] > 4 )
+			{
+				LOG_TIMER((errorlog, "POKEY #%d timer4 after %d clocks\n", chip, p->divisor[CHAN4]));
+				/* set timer #4 event after timer_div clocks of CHAN4 */
+				p->timer[TIMER4] =
+					timer_pulse(1.0 * p->divisor[CHAN4] / intf.baseclock,
+						(chip<<3)|IRQ_TIMR4, pokey_timer_expire);
+			}
         }
-		if( p[chip].timer[TIMER1] )
-			timer_enable(p[chip].timer[TIMER1], p[chip].IRQEN & IRQ_TIMR1);
-		if( p[chip].timer[TIMER2] )
-			timer_enable(p[chip].timer[TIMER2], p[chip].IRQEN & IRQ_TIMR2);
-		if( p[chip].timer[TIMER4] )
-			timer_enable(p[chip].timer[TIMER4], p[chip].IRQEN & IRQ_TIMR4);
+		if( p->timer[TIMER1] )
+			timer_enable(p->timer[TIMER1], p->IRQEN & IRQ_TIMR1);
+		if( p->timer[TIMER2] )
+			timer_enable(p->timer[TIMER2], p->IRQEN & IRQ_TIMR2);
+		if( p->timer[TIMER4] )
+			timer_enable(p->timer[TIMER4], p->IRQEN & IRQ_TIMR4);
         break;
 
     case SKREST_C:
         /* reset SKSTAT */
 		LOG((errorlog, "POKEY #%d SKREST $%02x\n", chip, data));
-		p[chip].SKSTAT &= ~(SK_FRAME|SK_OVERRUN|SK_KBERR);
+		p->SKSTAT &= ~(SK_FRAME|SK_OVERRUN|SK_KBERR);
         break;
 
     case POTGO_C:
 		LOG((errorlog, "POKEY #%d POTGO  $%02x\n", chip, data));
         for( pot = 0; pot < 8; pot++ )
         {
-			if( p[chip].ptimer[pot] )
+			if( p->ptimer[pot] )
             {
-				timer_remove(p[chip].ptimer[pot]);
-				p[chip].ptimer[pot] = NULL;
-				p[chip].POTx[pot] = 0xff;
+				timer_remove(p->ptimer[pot]);
+				p->ptimer[pot] = NULL;
+				p->POTx[pot] = 0xff;
             }
-			if( p[chip].pot_r[pot] )
+			if( p->pot_r[pot] )
             {
-				int r = (*p[chip].pot_r[pot])(offs);
+				int r = (*p->pot_r[pot])(offs);
 				LOG((errorlog, "POKEY #%d POT0 value $%02x\n", chip, r));
                 if( r != -1 )
                 {
                     /* final value */
-					p[chip].POTx[pot] = r;
-					p[chip].ptimer[pot] = timer_set(TIME_IN_USEC((r+1) * AD_TIME), (chip<<3)|pot, pokey_pot_trigger);
-					p[chip].ALLPOT |= 1 << pot;
+					p->POTx[pot] = r;
+					p->ptimer[pot] = timer_set(TIME_IN_USEC((r+1) * AD_TIME), (chip<<3)|pot, pokey_pot_trigger);
+					p->ALLPOT |= 1 << pot;
                 }
             }
         }
@@ -1226,9 +1138,9 @@ void pokey_register_w(int chip, int offs, int data)
 
     case SEROUT_C:
 		LOG((errorlog, "POKEY #%d SEROUT $%02x\n", chip, data));
-		if (p[chip].serout_w)
-			(*p[chip].serout_w)(offs, data);
-		p[chip].SKSTAT |= SK_SEROUT;
+		if (p->serout_w)
+			(*p->serout_w)(offs, data);
+		p->SKSTAT |= SK_SEROUT;
         /*
          * These are arbitrary values, tested with some custom boot
          * loaders from Ballblazer and Escape from Fractalus
@@ -1243,31 +1155,31 @@ void pokey_register_w(int chip, int offs, int data)
 		LOG((errorlog, "POKEY #%d IRQEN  $%02x\n", chip, data));
 
         /* acknowledge one or more IRQST bits ? */
-		if( p[chip].IRQST & ~data )
+		if( p->IRQST & ~data )
         {
             /* reset IRQST bits that are masked now */
-			p[chip].IRQST &= data;
+			p->IRQST &= data;
         }
         else
         {
 			/* enable/disable timers now to avoid unneeded
                breaking of the CPU cores for masked timers */
-			if( p[chip].timer[TIMER1] && ((p[chip].IRQEN^data) & IRQ_TIMR1) )
-				timer_enable(p[chip].timer[TIMER1], data & IRQ_TIMR1);
-			if( p[chip].timer[TIMER2] && ((p[chip].IRQEN^data) & IRQ_TIMR2) )
-				timer_enable(p[chip].timer[TIMER2], data & IRQ_TIMR2);
-			if( p[chip].timer[TIMER4] && ((p[chip].IRQEN^data) & IRQ_TIMR4) )
-				timer_enable(p[chip].timer[TIMER4], data & IRQ_TIMR4);
+			if( p->timer[TIMER1] && ((p->IRQEN^data) & IRQ_TIMR1) )
+				timer_enable(p->timer[TIMER1], data & IRQ_TIMR1);
+			if( p->timer[TIMER2] && ((p->IRQEN^data) & IRQ_TIMR2) )
+				timer_enable(p->timer[TIMER2], data & IRQ_TIMR2);
+			if( p->timer[TIMER4] && ((p->IRQEN^data) & IRQ_TIMR4) )
+				timer_enable(p->timer[TIMER4], data & IRQ_TIMR4);
         }
 		/* store irq enable */
-		p[chip].IRQEN = data;
+		p->IRQEN = data;
         break;
 
     case SKCTL_C:
-		if( data == p[chip].SKCTL )
+		if( data == p->SKCTL )
             return;
 		LOG((errorlog, "POKEY #%d SKCTL  $%02x\n", chip, data));
-		p[chip].SKCTL = data;
+		p->SKCTL = data;
         if( !(data & SK_RESET) )
         {
             pokey_register_w(chip, IRQEN_C,  0);
@@ -1289,100 +1201,132 @@ void pokey_register_w(int chip, int offs, int data)
     if( ch_mask & (1 << CHAN1) )
     {
         /* process channel 1 frequency */
-		if( p[chip].AUDCTL & CH1_HICLK )
-			new_val = p[chip].AUDF[CHAN1] + DIVADD_HICLK;
+		if( p->AUDCTL & CH1_HICLK )
+			new_val = p->AUDF[CHAN1] + DIVADD_HICLK;
         else
-			new_val = (p[chip].AUDF[CHAN1] + DIVADD_LOCLK) * p[chip].clockmult;
+			new_val = (p->AUDF[CHAN1] + DIVADD_LOCLK) * p->clockmult;
 
 		LOG_SOUND((errorlog, "POKEY #%d chan1 %d\n", chip, new_val));
 
-		p[chip].divisor[CHAN1] = new_val;
-		if( new_val < p[chip].counter[CHAN1] )
-			p[chip].counter[CHAN1] = new_val;
-		if( p[chip].interrupt_cb && p[chip].timer[TIMER1] )
-			timer_reset(p[chip].timer[TIMER1], 1.0 * new_val / intf->baseclock);
-		p[chip].audible[CHAN1] = !(
-			(p[chip].AUDC[CHAN1] & VOLUME_ONLY) ||
-			!(p[chip].AUDC[CHAN1] & VOLUME_MASK) ||
-			((p[chip].AUDC[CHAN1] & PURE) && new_val < (p[chip].samplerate_24_8 >> 8)));
+		p->volume[CHAN1] = (p->AUDC[CHAN1] & VOLUME_MASK) * POKEY_DEFAULT_GAIN;
+        p->divisor[CHAN1] = new_val;
+		if( new_val < p->counter[CHAN1] )
+			p->counter[CHAN1] = new_val;
+		if( p->interrupt_cb && p->timer[TIMER1] )
+			timer_reset(p->timer[TIMER1], 1.0 * new_val / intf.baseclock);
+		p->audible[CHAN1] = !(
+			(p->AUDC[CHAN1] & VOLUME_ONLY) ||
+			(p->AUDC[CHAN1] & VOLUME_MASK) == 0 ||
+			((p->AUDC[CHAN1] & PURE) && new_val < (p->samplerate_24_8 >> 8)));
+		if( !p->audible[CHAN1] )
+		{
+			p->output[CHAN1] = 1;
+			p->counter[CHAN1] = 0x7fffffff;
+			/* 50% duty cycle should result in half volume */
+            p->volume[CHAN1] >>= 1;
+        }
     }
 
     if( ch_mask & (1 << CHAN2) )
     {
         /* process channel 2 frequency */
-		if( p[chip].AUDCTL & CH12_JOINED )
+		if( p->AUDCTL & CH12_JOINED )
         {
-			if( p[chip].AUDCTL & CH1_HICLK )
-				new_val = p[chip].AUDF[CHAN2] * 256 + p[chip].AUDF[CHAN1] + DIVADD_HICLK_JOINED;
+			if( p->AUDCTL & CH1_HICLK )
+				new_val = p->AUDF[CHAN2] * 256 + p->AUDF[CHAN1] + DIVADD_HICLK_JOINED;
             else
-				new_val = (p[chip].AUDF[CHAN2] * 256 + p[chip].AUDF[CHAN1] + DIVADD_LOCLK) * p[chip].clockmult;
+				new_val = (p->AUDF[CHAN2] * 256 + p->AUDF[CHAN1] + DIVADD_LOCLK) * p->clockmult;
 			LOG_SOUND((errorlog, "POKEY #%d chan1+2 %d\n", chip, new_val));
         }
         else
 		{
-			new_val = (p[chip].AUDF[CHAN2] + DIVADD_LOCLK) * p[chip].clockmult;
+			new_val = (p->AUDF[CHAN2] + DIVADD_LOCLK) * p->clockmult;
 			LOG_SOUND((errorlog, "POKEY #%d chan2 %d\n", chip, new_val));
 		}
 
-		p[chip].divisor[CHAN2] = new_val;
-		if( new_val < p[chip].counter[CHAN2] )
-			p[chip].counter[CHAN2] = new_val;
-        if( p[chip].interrupt_cb && p[chip].timer[TIMER2] )
-			timer_reset(p[chip].timer[TIMER2], 1.0 * new_val / intf->baseclock);
-		p[chip].audible[CHAN2] = !(
-			(p[chip].AUDC[CHAN2] & VOLUME_ONLY) ||
-			!(p[chip].AUDC[CHAN2] & VOLUME_MASK) ||
-			((p[chip].AUDC[CHAN2] & PURE) && new_val < (p[chip].samplerate_24_8 >> 8)));
+		p->volume[CHAN2] = (p->AUDC[CHAN2] & VOLUME_MASK) * POKEY_DEFAULT_GAIN;
+		p->divisor[CHAN2] = new_val;
+		if( new_val < p->counter[CHAN2] )
+			p->counter[CHAN2] = new_val;
+		if( p->interrupt_cb && p->timer[TIMER2] )
+			timer_reset(p->timer[TIMER2], 1.0 * new_val / intf.baseclock);
+		p->audible[CHAN2] = !(
+			(p->AUDC[CHAN2] & VOLUME_ONLY) ||
+			(p->AUDC[CHAN2] & VOLUME_MASK) == 0 ||
+			((p->AUDC[CHAN2] & PURE) && new_val < (p->samplerate_24_8 >> 8)));
+		if( !p->audible[CHAN2] )
+		{
+			p->output[CHAN2] = 1;
+			p->counter[CHAN2] = 0x7fffffff;
+			/* 50% duty cycle should result in half volume */
+			p->volume[CHAN2] >>= 1;
+        }
     }
 
     if( ch_mask & (1 << CHAN3) )
     {
         /* process channel 3 frequency */
-		if( p[chip].AUDCTL & CH3_HICLK )
-			new_val = p[chip].AUDF[CHAN3] + DIVADD_HICLK;
+		if( p->AUDCTL & CH3_HICLK )
+			new_val = p->AUDF[CHAN3] + DIVADD_HICLK;
         else
-			new_val= (p[chip].AUDF[CHAN3] + DIVADD_LOCLK) * p[chip].clockmult;
+			new_val = (p->AUDF[CHAN3] + DIVADD_LOCLK) * p->clockmult;
 
 		LOG_SOUND((errorlog, "POKEY #%d chan3 %d\n", chip, new_val));
 
-		p[chip].divisor[CHAN3] = new_val;
-		if( new_val < p[chip].counter[CHAN3] )
-			p[chip].counter[CHAN3] = new_val;
-        /* channel 3 has no timer associated */
-		p[chip].audible[CHAN3] = !(
-			(p[chip].AUDC[CHAN3] & VOLUME_ONLY) ||
-			!(p[chip].AUDC[CHAN3] & VOLUME_MASK) ||
-			((p[chip].AUDC[CHAN3] & PURE) && new_val < (p[chip].samplerate_24_8 >> 8))) ||
-			(p[chip].AUDCTL & CH1_FILTER);
+		p->volume[CHAN3] = (p->AUDC[CHAN3] & VOLUME_MASK) * POKEY_DEFAULT_GAIN;
+		p->divisor[CHAN3] = new_val;
+		if( new_val < p->counter[CHAN3] )
+			p->counter[CHAN3] = new_val;
+		/* channel 3 does not have a timer associated */
+		p->audible[CHAN3] = !(
+			(p->AUDC[CHAN3] & VOLUME_ONLY) ||
+			(p->AUDC[CHAN3] & VOLUME_MASK) == 0 ||
+			((p->AUDC[CHAN3] & PURE) && new_val < (p->samplerate_24_8 >> 8))) ||
+			(p->AUDCTL & CH1_FILTER);
+		if( !p->audible[CHAN3] )
+		{
+			p->output[CHAN3] = 1;
+			p->counter[CHAN3] = 0x7fffffff;
+			/* 50% duty cycle should result in half volume */
+			p->volume[CHAN3] >>= 1;
+        }
     }
 
     if( ch_mask & (1 << CHAN4) )
     {
         /* process channel 4 frequency */
-		if( p[chip].AUDCTL & CH34_JOINED )
+		if( p->AUDCTL & CH34_JOINED )
         {
-			if( p[chip].AUDCTL & CH3_HICLK )
-				new_val = p[chip].AUDF[CHAN4] * 256 + p[chip].AUDF[CHAN3] + DIVADD_HICLK_JOINED;
+			if( p->AUDCTL & CH3_HICLK )
+				new_val = p->AUDF[CHAN4] * 256 + p->AUDF[CHAN3] + DIVADD_HICLK_JOINED;
             else
-				new_val = (p[chip].AUDF[CHAN4] * 256 + p[chip].AUDF[CHAN3] + DIVADD_LOCLK) * p[chip].clockmult;
+				new_val = (p->AUDF[CHAN4] * 256 + p->AUDF[CHAN3] + DIVADD_LOCLK) * p->clockmult;
 			LOG_SOUND((errorlog, "POKEY #%d chan3+4 %d\n", chip, new_val));
         }
         else
 		{
-			new_val = (p[chip].AUDF[CHAN4] + DIVADD_LOCLK) * p[chip].clockmult;
+			new_val = (p->AUDF[CHAN4] + DIVADD_LOCLK) * p->clockmult;
 			LOG_SOUND((errorlog, "POKEY #%d chan4 %d\n", chip, new_val));
 		}
 
-		p[chip].divisor[CHAN4] = new_val;
-		if( new_val < p[chip].counter[CHAN4] )
-			p[chip].counter[CHAN4] = new_val;
-        if( p[chip].interrupt_cb && p[chip].timer[TIMER4] )
-			timer_reset(p[chip].timer[TIMER4], 1.0 * new_val / intf->baseclock);
-		p[chip].audible[CHAN4] = !(
-			(p[chip].AUDC[CHAN4] & VOLUME_ONLY) ||
-			!(p[chip].AUDC[CHAN4] & VOLUME_MASK) ||
-			((p[chip].AUDC[CHAN4] & PURE) && new_val < (p[chip].samplerate_24_8 >> 8))) ||
-			(p[chip].AUDCTL & CH2_FILTER);
+		p->volume[CHAN4] = (p->AUDC[CHAN4] & VOLUME_MASK) * POKEY_DEFAULT_GAIN;
+		p->divisor[CHAN4] = new_val;
+		if( new_val < p->counter[CHAN4] )
+			p->counter[CHAN4] = new_val;
+		if( p->interrupt_cb && p->timer[TIMER4] )
+			timer_reset(p->timer[TIMER4], 1.0 * new_val / intf.baseclock);
+		p->audible[CHAN4] = !(
+			(p->AUDC[CHAN4] & VOLUME_ONLY) ||
+			(p->AUDC[CHAN4] & VOLUME_MASK) == 0 ||
+			((p->AUDC[CHAN4] & PURE) && new_val < (p->samplerate_24_8 >> 8))) ||
+			(p->AUDCTL & CH2_FILTER);
+		if( !p->audible[CHAN4] )
+		{
+			p->output[CHAN4] = 1;
+			p->counter[CHAN4] = 0x7fffffff;
+			/* 50% duty cycle should result in half volume */
+			p->volume[CHAN4] >>= 1;
+        }
     }
 }
 
@@ -1417,37 +1361,38 @@ void quad_pokey_w (int offset,int data)
 
 void pokey1_serin_ready(int after)
 {
-    timer_set(1.0 * after / intf->baseclock, 0, pokey_serin_ready);
+	timer_set(1.0 * after / intf.baseclock, 0, pokey_serin_ready);
 }
 
 void pokey2_serin_ready(int after)
 {
-    timer_set(1.0 * after / intf->baseclock, 1, pokey_serin_ready);
+	timer_set(1.0 * after / intf.baseclock, 1, pokey_serin_ready);
 }
 
 void pokey3_serin_ready(int after)
 {
-    timer_set(1.0 * after / intf->baseclock, 2, pokey_serin_ready);
+	timer_set(1.0 * after / intf.baseclock, 2, pokey_serin_ready);
 }
 
 void pokey4_serin_ready(int after)
 {
-    timer_set(1.0 * after / intf->baseclock, 3, pokey_serin_ready);
+	timer_set(1.0 * after / intf.baseclock, 3, pokey_serin_ready);
 }
 
 void pokey_break_w(int chip, int shift)
 {
+	struct POKEYregisters *p = &pokey[chip];
     if( shift )                     /* shift code ? */
-		p[chip].SKSTAT |= SK_SHIFT;
+		p->SKSTAT |= SK_SHIFT;
 	else
-		p[chip].SKSTAT &= ~SK_SHIFT;
+		p->SKSTAT &= ~SK_SHIFT;
 	/* check if the break IRQ is enabled */
-	if( p[chip].IRQEN & IRQ_BREAK )
+	if( p->IRQEN & IRQ_BREAK )
 	{
 		/* set break IRQ status and call back the interrupt handler */
-		p[chip].IRQST |= IRQ_BREAK;
-		if( p[chip].interrupt_cb )
-			(*p[chip].interrupt_cb)(IRQ_BREAK);
+		p->IRQST |= IRQ_BREAK;
+		if( p->interrupt_cb )
+			(*p->interrupt_cb)(IRQ_BREAK);
     }
 }
 
@@ -1473,30 +1418,31 @@ void pokey4_break_w(int shift)
 
 void pokey_kbcode_w(int chip, int kbcode, int make)
 {
+	struct POKEYregisters *p = &pokey[chip];
     /* make code ? */
 	if( make )
 	{
-		p[chip].KBCODE = kbcode;
-		p[chip].SKSTAT |= SK_KEYBD;
+		p->KBCODE = kbcode;
+		p->SKSTAT |= SK_KEYBD;
 		if( kbcode & 0x40 ) 		/* shift code ? */
-			p[chip].SKSTAT |= SK_SHIFT;
+			p->SKSTAT |= SK_SHIFT;
 		else
-			p[chip].SKSTAT &= ~SK_SHIFT;
+			p->SKSTAT &= ~SK_SHIFT;
 
-		if( p[chip].IRQEN & IRQ_KEYBD )
+		if( p->IRQEN & IRQ_KEYBD )
 		{
 			/* last interrupt not acknowledged ? */
-			if( p[chip].IRQST & IRQ_KEYBD )
-				p[chip].SKSTAT |= SK_KBERR;
-			p[chip].IRQST |= IRQ_KEYBD;
-			if( p[chip].interrupt_cb )
-				(*p[chip].interrupt_cb)(IRQ_KEYBD);
+			if( p->IRQST & IRQ_KEYBD )
+				p->SKSTAT |= SK_KBERR;
+			p->IRQST |= IRQ_KEYBD;
+			if( p->interrupt_cb )
+				(*p->interrupt_cb)(IRQ_KEYBD);
 		}
 	}
 	else
 	{
-		p[chip].KBCODE = kbcode;
-		p[chip].SKSTAT &= ~SK_KEYBD;
+		p->KBCODE = kbcode;
+		p->SKSTAT &= ~SK_KEYBD;
     }
 }
 

@@ -24,17 +24,27 @@
  *****************************************************************************/
 /* 4. February 2000 PeT fixed relative word operand */
 /* 4. February 2000 PeT jsr (absolut) jsr (absolut,x) inw dew */
+/* 17.February 2000 PeT phw */
 
 /* 
   chapter3.txt lines about 5400
   descripe some rom entries
 
 * neg is now simple 2er komplement negation with set of N and Z
-* asw is arithmetic (signed) shift right
+
+* asw is arithmetic (signed) shift left
+* row is rotate left
 
 * inw has zeropage address operand! (not absolute) (c65 dos at 0xba1a)
-  I asume the same with row, asw (dew had it already)
-  phw ?
+
+* row, asw has absolute adressing
+
+* phw push low order byte, push high order byte!
+
+* cle/see
+  maybe extended stack flag (real 16 bit stack pointer inc/dec)
+  usage of high order byte?
+  tys txs not interruptable ??
 
 * map
   jmp/jsr bank lda # ldy #0 ldx #$e0 or bank&0xf ldy #$f0 or bank&0xf
@@ -559,7 +569,7 @@ const char *m65ce02_info(void *context, int regnum)
 		case CPU_INFO_REG+M65CE02_Z: sprintf(buffer[which], "Z:%02X", r->z); break;
 		case CPU_INFO_REG+M65CE02_B: sprintf(buffer[which], "B:%02X", r->zp.b.h); break;
 		case CPU_INFO_REG+M65CE02_EA: sprintf(buffer[which], "EA:%04X", r->ea.w.l); break;
-		case CPU_INFO_REG+M65CE02_ZP: sprintf(buffer[which], "ZP:%03X", r->zp.w.l); break;
+		case CPU_INFO_REG+M65CE02_ZP: sprintf(buffer[which], "ZP:%04X", r->zp.w.l); break;
 		case CPU_INFO_REG+M65CE02_NMI_STATE: sprintf(buffer[which], "NMI:%X", r->nmi_state); break;
 		case CPU_INFO_REG+M65CE02_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->irq_state); break;
         case CPU_INFO_FLAGS:

@@ -1,6 +1,6 @@
 /*****************************************************************************
  *
- *	POKEY chip emulator 4.0
+ *	POKEY chip emulator 4.2
  *	Copyright (c) 2000 by The MAME Team
  *
  *	Based on original info found in Ron Fries' Pokey emulator,
@@ -65,15 +65,6 @@
 
 #define MAXPOKEYS	4	/* max number of emulated chips */
 
-/* Obsolete: clipping is always done
- * These are here for backwards compatibility only.
- */
-#define NO_CLIP     0
-#define USE_CLIP	1
-#define USE_CLIP_FREQ	2
-
-/* four channels with a range of 0..32767 and volume 0..15 */
-#define POKEY_DEFAULT_GAIN (32767/15/4)
 
 #ifdef __cplusplus
 extern "C" {
@@ -91,8 +82,6 @@ struct POKEYinterface {
     int num;    /* total number of pokeys in the machine */
     int baseclock;
     int mixing_level[MAXPOKEYS];
-    int gain;
-	int obsolete;
     int (*pot0_r[MAXPOKEYS])(int offset);
     int (*pot1_r[MAXPOKEYS])(int offset);
     int (*pot2_r[MAXPOKEYS])(int offset);

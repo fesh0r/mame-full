@@ -45,14 +45,8 @@ struct MachineCPU
 enum
 {
 	CPU_DUMMY,
-#if (HAS_GENSYNC)
-	CPU_GENSYNC,
-#endif
 #if (HAS_Z80)
 	CPU_Z80,
-#endif
-#if (HAS_Z80_VM)
-	CPU_Z80_VM,
 #endif
 #if (HAS_Z80GB)
 	CPU_Z80GB,
@@ -152,6 +146,9 @@ enum
 #endif
 #if (HAS_M68010)
 	CPU_M68010,
+#endif
+#if (HAS_M68EC020)
+	CPU_M68EC020,
 #endif
 #if (HAS_M68020)
 	CPU_M68020,

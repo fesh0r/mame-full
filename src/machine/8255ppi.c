@@ -65,7 +65,7 @@ int ppi8255_r( int which, int offset ) {
 
 	chip = &chips[which];
 
-   
+
 	switch( offset )
         {
 		case 0: /* Port A read */
@@ -235,7 +235,7 @@ void ppi8255_w( int which, int offset, int data ) {
 			else
 				chip->io[2] &= 0xf0;
 
-                        /* KT: 25-Dec-99 - 8255 resets latches when mode set */ 
+                        /* KT: 25-Dec-99 - 8255 resets latches when mode set */
                         chip->latch[0] = chip->latch[1] = chip->latch[2] = 0;
 
                         PPI8255_PORT_A_WRITE();

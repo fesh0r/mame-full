@@ -116,7 +116,7 @@ void m6502_reset(void *param)
     PCL = RDMEM(M6502_RST_VEC);
     PCH = RDMEM(M6502_RST_VEC+1);
 
-	m6502.sp.d = 0x0100 | (m6502.sp.b.l);	/* stack pointer (always 100 - 1FF) */
+	m6502.sp.d = 0x01ff;	/* stack pointer starts at page 1 offset FF */
 	m6502.p = F_T|F_I|F_Z;	/* set T, I and Z flags */
 	m6502.pending_irq = 0;	/* nonzero if an IRQ is pending */
 	m6502.after_cli = 0;	/* pending IRQ and last insn cleared I */

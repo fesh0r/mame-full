@@ -38,8 +38,6 @@
  *	BSR Branch to subroutine
  ***************************************************************/
 #define BSR 													\
-if (errorlog) \
- fprintf(errorlog,"m65sc02 at pc:%.4x not sure bsr\n",m6502.pc.w.l-1);\
 	EAL = RDOPARG();											\
 	PUSH(PCH);													\
 	PUSH(PCL);													\

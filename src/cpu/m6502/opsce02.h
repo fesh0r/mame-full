@@ -91,7 +91,8 @@
 #define RD_ZPG_WORD	EA_ZPG; RDMEM_WORD(EAD, tmp)
 #define WR_ZPG_WORD EA_ZPG; WRMEM_WORD(EAD, tmp)
 
-#define PUSH_WORD(pair) PUSH(pair.b.h);PUSH(pair.b.l)
+/* the order in which the args are pushed is correct! */
+#define PUSH_WORD(pair) PUSH(pair.b.l);PUSH(pair.b.h)
 
 /***************************************************************
  *	BRA  branch relative
@@ -178,26 +179,26 @@ A= (A^0xff)+1;\
 
 /* 65ce02 ********************************************************
  *	ASW arithmetic (signed) shift right word
- *	[15] -> [15]..[6][5][4][3][2][1][0] -> C
+ *	[c] <- [15]..[6][5][4][3][2][1][0]
  ***************************************************************/
 /* not sure about how 16 bit memory modifying is executed */
 /* or arithmetic shift left word!?*/
 #define ASW 													\
-	P = (P & ~F_C) | (tmp.b.l & F_C);								\
-	tmp.w.l = (short)tmp.w.l >> 1;										\
+	tmp.w.l = tmp.w.l << 1;										\
+	P = (P & ~F_C) | (tmp.b.h2 & F_C);								\
 	SET_NZ_WORD(tmp);\
 if (errorlog) \
  fprintf(errorlog,"m65ce02 at pc:%.4x not sure asw %.2x\n",m65ce02.pc.w.l-2, ZPL);
 
 /* 65ce02 ********************************************************
  *	ROW arithmetic (signed) shift right word
- *	[15] -> [15]..[6][5][4][3][2][1][0] -> C
+ *	[c] <- [15]..[6][5][4][3][2][1][0] <- C
  ***************************************************************/
 /* not sure about how 16 bit memory modifying is executed */
 #define ROW 													\
-	tmp.w.h = (P & F_C);										\
-	P = (P & ~F_C) | (tmp.b.l & F_C);								\
-	tmp.w.l =(tmp.d >> 1);										\
+	tmp.d =(tmp.d << 1);										\
+	tmp.w.l |= (P & F_C);										\
+	P = (P & ~F_C) | (tmp.w.l & F_C);								\
 	SET_NZ_WORD(tmp); \
 if (errorlog) \
  fprintf(errorlog,"m65ce02 at pc:%.4x not sure row %.2x\n",m65ce02.pc.w.l-2,ZPL);
