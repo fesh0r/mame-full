@@ -11,7 +11,7 @@
 ***************************************************************************/
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "machine/gb.h"
+#include "includes/gb.h"
 
 static UINT8 bg_zbuf[160];
 
@@ -61,7 +61,7 @@ INLINE void gb_update_sprites (void)
 
 			switch (oam[3] & 0xA0)
 			{
-			case 0xA0:
+			case 0xA0:				   /* priority is set (behind bgnd & wnd, flip x) */
 				for (bit = 0; bit < 8; bit++, xindex++)
 				{
 					register int colour = ((data & 0x0100) ? 2 : 0) | ((data & 0x0001) ? 1 : 0);
@@ -126,6 +126,8 @@ void gb_refresh_scanline (void)
 
 	/* layer info layer[0]=background, layer[1]=window */
 	struct layer_struct layer[2];
+
+	profiler_mark(PROFILER_VIDEO);
 
 	/* if background or screen disabled clear line */
 	if ((LCDCONT & 0x81) != 0x81)
@@ -228,6 +230,8 @@ void gb_refresh_scanline (void)
 
 	if (LCDCONT & 0x02)
 		gb_update_sprites();
+
+	profiler_mark(PROFILER_END);
 }
 
 /* --- Super Gameboy Specific --- */
@@ -285,7 +289,7 @@ INLINE void sgb_update_sprites (void)
 
 			switch (oam[3] & 0xA0)
 			{
-			case 0xA0:
+			case 0xA0:				   /* priority is set (behind bgnd & wnd, flip x) */
 				for (bit = 0; bit < 8; bit++, xindex++)
 				{
 					register int colour = ((data & 0x0100) ? 2 : 0) | ((data & 0x0001) ? 1 : 0);
@@ -335,6 +339,8 @@ void sgb_refresh_scanline (void)
 
 	/* layer info layer[0]=background, layer[1]=window */
 	struct layer_struct layer[2];
+
+	profiler_mark(PROFILER_VIDEO);
 
 	/* Handle SGB mask */
 	switch( sgb_window_mask )
@@ -476,6 +482,8 @@ void sgb_refresh_scanline (void)
 
 	if (LCDCONT & 0x02)
 		sgb_update_sprites();
+
+	profiler_mark(PROFILER_END);
 }
 
 void sgb_refresh_border(void)
@@ -607,7 +615,7 @@ INLINE void gbc_update_sprites (void)
 
 			switch (oam[3] & 0xA0)
 			{
-			case 0xA0:
+			case 0xA0:				   /* priority is set (behind bgnd & wnd, flip x) */
 				for (bit = 0; bit < 8; bit++, xindex++)
 				{
 					register int colour = ((data & 0x0100) ? 2 : 0) | ((data & 0x0001) ? 1 : 0);
@@ -661,6 +669,8 @@ void gbc_refresh_scanline (void)
 
 	/* layer info layer[0]=background, layer[1]=window */
 	struct layer_struct layer[2];
+
+	profiler_mark(PROFILER_VIDEO);
 
 	/* if background or screen disabled clear line */
 	if ((LCDCONT & 0x81) != 0x81)
@@ -790,4 +800,6 @@ void gbc_refresh_scanline (void)
 
 	if (LCDCONT & 0x02)
 		gbc_update_sprites();
+
+	profiler_mark(PROFILER_END);
 }
