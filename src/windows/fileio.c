@@ -469,18 +469,23 @@ int osd_get_path_info(int pathtype, int pathindex, const char *filename)
 
 osd_file *osd_fopen(int pathtype, int pathindex, const char *filename, const char *mode)
 {
-	DWORD disposition = 0, access = 0, sharemode = 0;
+	DWORD disposition = 0, access = 0, sharemode = 0, flags = 0;
 	TCHAR fullpath[1024];
 	LONG upperPos = 0;
 	osd_file *file;
 	int i;
+	const TCHAR *s;
+	TCHAR temp_dir[1024];
+	TCHAR temp_file[MAX_PATH];
+
+	temp_file[0] = '\0';
 
 	/* find an empty file handle */
 	for (i = 0; i < MAX_OPEN_FILES; i++)
 		if (openfile[i].handle == NULL || openfile[i].handle == INVALID_HANDLE_VALUE)
 			break;
 	if (i == MAX_OPEN_FILES)
-		return NULL;
+		goto error;
 
 	/* zap the file record */
 	file = &openfile[i];
@@ -497,29 +502,53 @@ osd_file *osd_fopen(int pathtype, int pathindex, const char *filename, const cha
 	/* compose the full path */
 	compose_path(fullpath, pathtype, pathindex, filename);
 
+	/* if 'g' is specified, we 'ghost' our changes; in other words any changes
+	 * made to the file last only as long as the file is open.  Under the hood
+	 * this is implemented by using a temporary file */
+	if (strchr(mode, 'g'))
+	{
+		GetTempPath(sizeof(temp_dir) / sizeof(temp_dir[0]), temp_dir);
+		GetTempFileName(temp_dir, TEXT("tmp"), 0, temp_file);
+
+		if (!CopyFile(fullpath, temp_file, FALSE))
+			goto error;
+
+		s = temp_file;
+		flags |= FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE; 
+	}
+	else
+	{
+		s = fullpath;
+	}
+
 	/* attempt to open the file */
-	file->handle = CreateFile(fullpath, access, sharemode, NULL, disposition, 0, NULL);
+	file->handle = CreateFile(s, access, sharemode, NULL, disposition, 0, NULL);
 	if (file->handle == INVALID_HANDLE_VALUE)
 	{
 		DWORD error = GetLastError();
 
 		/* if it's read-only, or if the path exists, then that's final */
 		if (!(access & GENERIC_WRITE) || error != ERROR_PATH_NOT_FOUND)
-			return NULL;
+			goto error;
 
 		/* create the path and try again */
 		create_path(fullpath, 1);
-		file->handle = CreateFile(fullpath, access, sharemode, NULL, disposition, 0, NULL);
+		file->handle = CreateFile(fullpath, access, sharemode, NULL, disposition, flags, NULL);
 
 		/* if that doesn't work, we give up */
 		if (file->handle == INVALID_HANDLE_VALUE)
-			return NULL;
+			goto error;
 	}
 
 	/* get the file size */
 	file->end = GetFileSize(file->handle, &upperPos);
 	file->end |= (UINT64)upperPos << 32;
 	return file;
+
+error:
+	if (temp_file[0])
+		DeleteFile(temp_file);
+	return NULL;
 }
 
 

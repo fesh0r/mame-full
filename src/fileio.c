@@ -40,18 +40,19 @@
 #define ZIPPED_FILE				2
 #define UNLOADED_ZIPPED_FILE	3
 
-#define FILEFLAG_OPENREAD		0x01
-#define FILEFLAG_OPENWRITE		0x02
-#define FILEFLAG_HASH			0x04
-#define FILEFLAG_REVERSE_SEARCH	0x08
-#define FILEFLAG_VERIFY_ONLY	0x10
-#define FILEFLAG_NOZIP			0x20
+#define FILEFLAG_OPENREAD		0x0001
+#define FILEFLAG_OPENWRITE		0x0002
+#define FILEFLAG_HASH			0x0100
+#define FILEFLAG_REVERSE_SEARCH	0x0200
+#define FILEFLAG_VERIFY_ONLY	0x0400
+#define FILEFLAG_NOZIP			0x0800
+#define FILEFLAG_MUST_EXIST		0x1000
 
 #ifdef MESS
-#define FILEFLAG_ALLOW_ABSOLUTE	0x40
-#define FILEFLAG_ZIP_PATHS		0x80
-#define FILEFLAG_CREATE_GAMEDIR	0x100
-#define FILEFLAG_MUST_EXIST		0x200
+#define FILEFLAG_ALLOW_ABSOLUTE	0x2000
+#define FILEFLAG_ZIP_PATHS		0x4000
+#define FILEFLAG_CREATE_GAMEDIR	0x8000
+#define FILEFLAG_GHOST			0x0004
 #endif
 
 #ifdef MAME_DEBUG
@@ -76,6 +77,15 @@ struct _mame_file
 	char hash[HASH_BUF_SIZE];
 };
 
+
+
+/***************************************************************************
+	GLOBALS
+***************************************************************************/
+
+#ifdef MESS
+int mess_ghost_images;
+#endif
 
 
 /***************************************************************************
@@ -153,7 +163,10 @@ mame_file *mame_fopen(const char *gamename, const char *filename, int filetype, 
 				case OSD_FOPEN_RW_CREATE:
 					flags |= FILEFLAG_OPENREAD | FILEFLAG_OPENWRITE;
 					break;
-				} 
+				}
+				if (mess_ghost_images)
+					flags |= FILEFLAG_GHOST;
+
 				return generic_fopen(filetype, gamename, filename, 0, flags);
 			}
 #endif
@@ -857,7 +870,7 @@ static const char *get_extension_for_filetype(int filetype)
 
 static mame_file *generic_fopen(int pathtype, const char *gamename, const char *filename, const char* hash, UINT32 flags)
 {
-	static const char *access_modes[] = { "rb", "rb", "wb", "r+b" };
+	static const char *access_modes[] = { "rb", "rb", "wb", "r+b", "rb", "rb", "wbg", "r+bg" };
 	const char *extension = get_extension_for_filetype(pathtype);
 	int pathcount = osd_get_path_count(pathtype);
 	int pathindex, pathstart, pathstop, pathinc;
@@ -872,7 +885,7 @@ static mame_file *generic_fopen(int pathtype, const char *gamename, const char *
 			return NULL;
 		pathcount = 1;
 	}
-#endif
+#endif /* MESS */
 
 	LOG(("generic_fopen(%d, %s, %s, %s, %X)\n", pathc, gamename, filename, extension, flags));
 
@@ -936,19 +949,12 @@ static mame_file *generic_fopen(int pathtype, const char *gamename, const char *
 				}
 			}
 
-#ifdef MESS
-			else if ((flags & FILEFLAG_MUST_EXIST) && (osd_get_path_info(pathtype, pathindex, name) == PATH_NOT_FOUND))
-			{
-				/* if FILEFLAG_MUST_EXIST is set and the file isn't there, don't open it */
-			}
-#endif
-
 			/* otherwise, just open it straight */
 			else
 			{
 				file.type = PLAIN_FILE;
-				file.file = osd_fopen(pathtype, pathindex, name, access_modes[flags & 3]);
-				if (file.file == NULL && (flags & 3) == 3)
+				file.file = osd_fopen(pathtype, pathindex, name, access_modes[flags & 7]);
+				if (file.file == NULL && (flags & (3 | FILEFLAG_MUST_EXIST)) == 3)
 					file.file = osd_fopen(pathtype, pathindex, name, "w+b");
 				if (file.file != NULL)
 					break;

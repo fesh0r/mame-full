@@ -164,6 +164,9 @@ int main(int argc, char *argv[])
 	int result = -1;
 	clock_t begin_time;
 	double elapsed_time;
+	extern int mess_ghost_images;
+
+	mess_ghost_images = 1;
 
 	/* expand wildcards so '*' can be used; this is not UNIX */
 	win_expand_wildcards(&argc, &argv);
