@@ -86,7 +86,6 @@ static struct osd_bitmap *tmpbitmap8;
 static struct osd_bitmap *tmpbitmap9;
 
 
-unsigned char *taitof2_ram;
 unsigned char f2_4layer_priority;
 unsigned char *f2_sprite_extension;
 size_t f2_spriteext_size;
@@ -96,6 +95,17 @@ unsigned char *f2_4layerregs;
 
 unsigned char *f2_4layerram;
 static unsigned char *char_dirty;	/* 256 text chars */
+
+
+struct tempsprite
+{
+	int code,color;
+	int flipx,flipy;
+	int x,y;
+	int zoomx,zoomy;
+	int primask;
+};
+struct tempsprite *spritelist;
 
 
 /****************************************************
@@ -226,7 +236,8 @@ int taitof2_core_vh_start (void)
 {
 	spriteram_delayed = malloc(spriteram_size);
 	spriteram_buffered = malloc(spriteram_size);
-	if (!spriteram_delayed || !spriteram_buffered)
+	spritelist = malloc(0x400 * sizeof(*spritelist));
+	if (!spriteram_delayed || !spriteram_buffered || !spritelist)
 		return 1;
 
 	if (TC0100SCN_vh_start(has_two_TC0100SCN() ? 2 : 1,TC0100SCN_GFX_NUM,f2_hide_pixels))
@@ -547,6 +558,8 @@ void taitof2_vh_stop (void)
 	spriteram_delayed = 0;
 	free(spriteram_buffered);
 	spriteram_buffered = 0;
+	free(spritelist);
+	spritelist = 0;
 
 	TC0100SCN_vh_stop();
 
@@ -591,18 +604,6 @@ READ_HANDLER( taitof2_spriteram_r )
 WRITE_HANDLER( taitof2_spriteram_w )
 {
 	COMBINE_WORD_MEM(&spriteram[offset],data);
-}
-
-READ_HANDLER( taitof2_sprite_extension_r )   // for debugging purposes, not used by games
-{
-	if (offset < 0x1000)
-	{
-		return READ_WORD(&f2_sprite_extension[offset]);
-	}
-	else
-	{
-		return 0x0;
-	}
 }
 
 WRITE_HANDLER( taitof2_sprite_extension_w )
@@ -730,19 +731,6 @@ WRITE_HANDLER( koshien_spritebank_w )
 	spritebank[7] = spritebank[6] + 0x400;
 }
 
-#define CONVERT_SPRITE_CODE												\
-{																		\
-	int bank;															\
-																		\
-	bank = (code & 0x1800) >> 11;										\
-	switch (bank)														\
-	{																	\
-		case 0: code = spritebank[2] * 0x800 + (code & 0x7ff); break;	\
-		case 1: code = spritebank[3] * 0x800 + (code & 0x7ff); break;	\
-		case 2: code = spritebank[4] * 0x400 + (code & 0x7ff); break;	\
-		case 3: code = spritebank[6] * 0x800 + (code & 0x7ff); break;	\
-	}																	\
-}																		\
 
 
 /*******************************************
@@ -768,7 +756,7 @@ void taitof2_update_palette(void)
 			tile = READ_WORD (&f2_textram[i]) & 0xff;
 			color = (READ_WORD (&f2_textram[i]) & 0x3f00) >> 8;
 
-			palette_map[color] |= Machine->gfx[2]->pen_usage[i];
+			palette_map[color] |= Machine->gfx[2]->pen_usage[tile];
 		}
 
 		/* 4 layers */
@@ -971,16 +959,7 @@ static void draw_sprites(struct osd_bitmap *bitmap,int *primasks)
 
 	/* pdrawgfx() needs us to draw sprites front to back, so we have to build a list
 	   while processing sprite ram and then draw them all a tthe end */
-	struct sprite
-	{
-		int code,color;
-		int flipx,flipy;
-		int x,y;
-		int zoomx,zoomy;
-		int primask;
-	};
-	struct sprite spritelist[0x400];
-	struct sprite *sprite_ptr = spritelist;
+	struct tempsprite *sprite_ptr = spritelist;
 
 
 	/* must remember enable status from last frame because driftout fails to
@@ -1043,11 +1022,9 @@ static void draw_sprites(struct osd_bitmap *bitmap,int *primasks)
 		{
 			scroll1x = spriteram_buffered[(offs+4)/2] & 0xfff;
 			if (scroll1x >= 0x800) scroll1x -= 0x1000;   /* signed value */
-			scroll1x += master_scrollx;
 
 			scroll1y = spriteram_buffered[(offs+6)/2] & 0xfff;
 			if (scroll1y >= 0x800) scroll1y -= 0x1000;   /* signed value */
-			scroll1y += master_scrolly;
 		}
 
 		if (sprites_disabled)
@@ -1106,8 +1083,8 @@ static void draw_sprites(struct osd_bitmap *bitmap,int *primasks)
 			}
 			else   /* all scrolls applied */
 			{
-				scrollx = scroll1x - f2_x_offset - 0x60;
-				scrolly = scroll1y;
+				scrollx = scroll1x + master_scrollx - f2_x_offset - 0x60;
+				scrolly = scroll1y + master_scrolly;
 			}
 			x &= 0xfff;
 			y = spriteram_buffered[(offs+6)/2] & 0xfff;
@@ -1171,17 +1148,12 @@ static void draw_sprites(struct osd_bitmap *bitmap,int *primasks)
 
 		if (f2_spriteext == 0)
 		{
-			code = spriteram_buffered[(offs)/2] & 0x1fff;
-#if 1
-			{
-				int bank;
+			int bank;
 
-				bank = (code & 0x1c00) >> 10;
-				code = spritebank[bank] + (code & 0x3ff);
-			}
-#else
-			CONVERT_SPRITE_CODE;
-#endif
+			code = spriteram_buffered[(offs)/2] & 0x1fff;
+
+			bank = (code & 0x1c00) >> 10;
+			code = spritebank[bank] + (code & 0x3ff);
 		}
 
 		if (f2_spriteext == 1)   /* Yuyugogo */
