@@ -12,11 +12,13 @@
 #include "keyboard.h"
 #include "devices.h"
 #include "sysdep/fifo.h"
+#include "usrintrf.h"
  
 #if defined svgalib || defined svgafx
 #include <vgakeyboard.h>
 #define sysdep_update_keyboard keyboard_update
 #endif
+
 
 /* we use standard pc scancodes these have a one-on-one mapping for
    svgalib, for other targets we need a lookup table anyway */
@@ -326,7 +328,9 @@ int osd_readkey_unicode(int flush)
       return 0;
 }
 
+extern int ui_active;
+
 int osd_keyboard_disabled()
 {
-	return 0;
+	return (0 || ui_active);
 }

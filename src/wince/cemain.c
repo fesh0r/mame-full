@@ -4,8 +4,11 @@
 #include "resource.h"
 #include "driver.h"
 #include "mamece.h"
+#include "usrintrf.h"
 #include "../windowsui/SmartListView.h"
 #include "../windowsui/SoftwareList.h"
+
+extern int ui_active;
 
 struct status_of_data
 {
@@ -720,7 +723,7 @@ void osd_parallelize(void (*task)(void *param, int task_num, int
 
 int osd_keyboard_disabled(void)
 {
-	return 0;
+	return (0 || ui_active);
 }
 
 

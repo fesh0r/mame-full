@@ -125,6 +125,12 @@ Source Changes:
 
 - Added a new osd_parallelize() call, for basic SMP acceleration.  [Nate Woods]
 
+- Emulated keyboard is fully disabled when MESS' internal user interface is
+  active. As a bonus I've removed the code that pauses emulation when UI is on.
+  Other inputs are active: this means that you can play games when UI is
+  active, but your BASIC programs won't be clobbered when you are typing them
+  and suddenly decide to change a dip-switch ;) (bug #250) [Stefano Priore]
+
 - Renamed osd_dir.h to osd_mess.h, to further reflect that it is more than just
   directory calls.  [Nate Woods]
 

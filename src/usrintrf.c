@@ -50,6 +50,7 @@ extern int neogeo_memcard_create(int);
 
 
 UINT8 ui_dirty;
+int ui_active;
 
 static int setup_selected;
 static int osd_selected;
@@ -3613,11 +3614,10 @@ int handle_user_interface(struct mame_bitmap *bitmap)
 	static int show_profiler;
 
 #ifdef MESS
-	static int mess_pause_for_ui = 0;
 	if (Machine->gamedrv->flags & GAME_COMPUTER)
 	{
-		static int ui_active = 0, ui_toggle_key = 0;
-		static int ui_display_count = 30;
+		static int ui_toggle_key = 0;
+		static int ui_display_count = 90;
 
 		if( input_ui_pressed(IPT_UI_TOGGLE_UI) )
 		{
@@ -3625,7 +3625,7 @@ int handle_user_interface(struct mame_bitmap *bitmap)
 			{
 				ui_toggle_key = 1;
 				ui_active = !ui_active;
-				ui_display_count = 30;
+				ui_display_count = 90;
 				schedule_full_refresh();
 			}
 		}
@@ -3762,16 +3762,8 @@ int handle_user_interface(struct mame_bitmap *bitmap)
 	if (input_ui_pressed(IPT_UI_LOAD_STATE))
 		do_loadsave(bitmap, LOADSAVE_LOAD);
 
-#ifndef MESS
 	if (single_step || input_ui_pressed(IPT_UI_PAUSE)) /* pause the game */
 	{
-#else
-	if (setup_selected)
-		mess_pause_for_ui = 1;
-
-	if (single_step || input_ui_pressed(IPT_UI_PAUSE) || mess_pause_for_ui) /* pause the game */
-	{
-#endif
 /*		osd_selected = 0;	   disable on screen display, since we are going   */
 							/* to change parameters affected by it */
 
@@ -3845,13 +3837,6 @@ int handle_user_interface(struct mame_bitmap *bitmap)
 			update_video_and_audio();
 			reset_partial_updates();
 
-#ifdef MESS
-			if (!setup_selected && mess_pause_for_ui)
-			{
-				mess_pause_for_ui = 0;
-				break;
-			}
-#endif
 		}
 
 		if (code_pressed(KEYCODE_LSHIFT) || code_pressed(KEYCODE_RSHIFT))
