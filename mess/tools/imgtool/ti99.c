@@ -1493,11 +1493,11 @@ static struct OptionTemplate ti99_createopts[] =
 enum
 {
 	ti99_createopts_volname = 0,
-	ti99_createopts_density = 1,
-	ti99_createopts_sides = 2,
-	ti99_createopts_tracks = 3,
-	ti99_createopts_sectors = 4,
-	ti99_createopts_protection = 5
+	ti99_createopts_sides = 1,
+	ti99_createopts_tracks = 2,
+	ti99_createopts_sectors = 3,
+	ti99_createopts_protection = 4,
+	ti99_createopts_density = 5
 };
 
 IMAGEMODULE(
@@ -2150,11 +2150,11 @@ static int ti99_image_create(const struct ImageModule *mod, STREAM *f, const Res
 
 	/* read options */
 	volname = in_options[ti99_createopts_volname].s;
-	density = in_options[ti99_createopts_density].i;
 	lvl1_ref.geometry.sides = in_options[ti99_createopts_sides].i;
 	lvl1_ref.geometry.tracksperside = in_options[ti99_createopts_tracks].i;
 	lvl1_ref.geometry.secspertrack = in_options[ti99_createopts_sectors].i;
 	protected = in_options[ti99_createopts_protection].i;
+	density = in_options[ti99_createopts_density].i;
 
 	totphysrecs = lvl1_ref.geometry.secspertrack * lvl1_ref.geometry.tracksperside * lvl1_ref.geometry.sides;
 	physrecsperAU = (totphysrecs + 1599) / 1600;
