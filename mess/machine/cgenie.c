@@ -38,25 +38,25 @@ static int port_ff = 0xff;
 
 /********************************************************
    abbreviations used:
-   GPL  Granules Per Lump
-   GAT  Granule Allocation Table
+   GPL	Granules Per Lump
+   GAT	Granule Allocation Table
    GATL GAT Length
    GATM GAT Mask
    DDGA Disk Directory Granule Allocation
 *********************************************************/
 typedef struct
 {
-    UINT8 DDSL;      /* Disk Directory Start Lump (lump number of GAT) */
+	UINT8 DDSL; 	 /* Disk Directory Start Lump (lump number of GAT) */
 	UINT8 GATL; 	 /* # of bytes used in the Granule Allocation Table sector */
 	UINT8 STEPRATE;  /* step rate and somet SD/DD flag ... */
-    UINT8 TRK;       /* number of tracks */
+	UINT8 TRK;		 /* number of tracks */
 	UINT8 SPT;		 /* sectors per track (both heads counted!) */
 	UINT8 GATM; 	 /* number of used bits per byte in the GAT sector (GAT mask) */
-    UINT8 P7;        /* ???? always zero */
-    UINT8 FLAGS;     /* ???? some flags (SS/DS bit 6) */
+	UINT8 P7;		 /* ???? always zero */
+	UINT8 FLAGS;	 /* ???? some flags (SS/DS bit 6) */
 	UINT8 GPL;		 /* Sectors per granule (always 5 for the Colour Genie) */
-    UINT8 DDGA;      /* Disk Directory Granule allocation (number of driectory granules) */
-}   PDRIVE;
+	UINT8 DDGA; 	 /* Disk Directory Granule allocation (number of driectory granules) */
+}	PDRIVE;
 
 static PDRIVE pd_list[12] = {
 	{0x14, 0x28, 0x07, 0x28, 0x0A, 0x02, 0x00, 0x00, 0x05, 0x02}, /* CMD"<0=A" 40 tracks, SS, SD */
@@ -73,8 +73,8 @@ static PDRIVE pd_list[12] = {
 	{0x30, 0x60, 0x53, 0x50, 0x24, 0x06, 0x00, 0x43, 0x05, 0x06}, /* CMD"<0=L" 80 tracks, DS, DD */
 };
 
-#define IRQ_TIMER       0x80
-#define IRQ_FDC         0x40
+#define IRQ_TIMER		0x80
+#define IRQ_FDC 		0x40
 static UINT8 irq_status = 0;
 
 static UINT8 motor_drive = 0;
@@ -122,7 +122,7 @@ static OPBASE_HANDLER (opbaseoverride)
 	UINT8 *RAM = memory_region(REGION_CPU1);
 	/* check if the BASIC prompt is visible on the screen */
 	if( cgenie_load_cas && RAM[0x4400+3*40] == 0x3e )
-    {
+	{
 		cgenie_load_cas = 0;
 		if( cass_specified && strlen(device_filename(IO_CASSETTE,0)) )
 		{
@@ -139,9 +139,9 @@ static OPBASE_HANDLER (opbaseoverride)
 			if( !cmd )
 				  cmd = image_fopen(IO_SNAPSHOT, 0, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
 			if( !cmd )
-            {
+			{
 				logerror("failed to open '%s'\n", device_filename(IO_CASSETTE,0));
-            }
+			}
 			else
 			{
 				size = osd_fread(cmd, buff, 65536);
@@ -220,8 +220,8 @@ static OPBASE_HANDLER (opbaseoverride)
 			}
 			free(buff);
 		}
-        cpu_setOPbaseoverride(0,NULL);
-    }
+		cpu_setOPbaseoverride(0,NULL);
+	}
 	return address;
 }
 
@@ -235,9 +235,9 @@ void init_cgenie(void)
 	 */
 	timer_set_overclock(0, 0.80);
 
-    /* Initialize some patterns to be displayed in graphics mode */
-    for( i = 0; i < 256; i++ )
-        memset(gfx + i * 8, i, 8);
+	/* Initialize some patterns to be displayed in graphics mode */
+	for( i = 0; i < 256; i++ )
+		memset(gfx + i * 8, i, 8);
 }
 
 static void cgenie_fdc_callback(int);
@@ -262,7 +262,7 @@ void cgenie_init_machine(void)
 	/* wipe out color RAM */
 	memset(&ROM[0x0f000], 0x00, 0x0400);
 
-    /* wipe out font RAM */
+	/* wipe out font RAM */
 	memset(&ROM[0x0f400], 0xff, 0x0400);
 
 	wd179x_init(cgenie_fdc_callback);
@@ -273,7 +273,7 @@ void cgenie_init_machine(void)
 	}
 	else
 	{
-                logerror("cgenie floppy discs disabled\n");
+				logerror("cgenie floppy discs disabled\n");
 	}
 
 	/* copy DOS ROM, if enabled or wipe out that memory area */
@@ -282,56 +282,56 @@ void cgenie_init_machine(void)
 
 		if ( readinputport(0) & 0x080 )
 		{
-            install_mem_read_handler(0, 0xc000, 0xdfff, MRA_ROM);
-            install_mem_write_handler(0, 0xc000, 0xdfff, MWA_ROM);
-            logerror("cgenie DOS enabled\n");
+			install_mem_read_handler(0, 0xc000, 0xdfff, MRA_ROM);
+			install_mem_write_handler(0, 0xc000, 0xdfff, MWA_ROM);
+			logerror("cgenie DOS enabled\n");
 			memcpy(&ROM[0x0c000],&ROM[0x10000], 0x2000);
 		}
 		else
 		{
-            install_mem_read_handler(0, 0xc000, 0xdfff, MRA_NOP);
-            install_mem_write_handler(0, 0xc000, 0xdfff, MWA_NOP);
-            logerror("cgenie DOS disabled (no floppy image given)\n");
-        }
+			install_mem_read_handler(0, 0xc000, 0xdfff, MRA_NOP);
+			install_mem_write_handler(0, 0xc000, 0xdfff, MWA_NOP);
+			logerror("cgenie DOS disabled (no floppy image given)\n");
+		}
 	}
 	else
 	{
 		install_mem_read_handler(0, 0xc000, 0xdfff, MRA_NOP);
-        install_mem_write_handler(0, 0xc000, 0xdfff, MWA_NOP);
-        logerror("cgenie DOS disabled\n");
+		install_mem_write_handler(0, 0xc000, 0xdfff, MWA_NOP);
+		logerror("cgenie DOS disabled\n");
 		memset(&memory_region(REGION_CPU1)[0x0c000], 0x00, 0x2000);
 	}
 
 	/* copy EXT ROM, if enabled or wipe out that memory area */
 	if( readinputport(0) & 0x20 )
 	{
-        install_mem_read_handler(0, 0xe000, 0xefff, MRA_ROM);
-        install_mem_write_handler(0, 0xe000, 0xefff, MWA_ROM);
-        logerror("cgenie EXT enabled\n");
+		install_mem_read_handler(0, 0xe000, 0xefff, MRA_ROM);
+		install_mem_write_handler(0, 0xe000, 0xefff, MWA_ROM);
+		logerror("cgenie EXT enabled\n");
 		memcpy(&memory_region(REGION_CPU1)[0x0e000],
 			   &memory_region(REGION_CPU1)[0x12000], 0x1000);
 	}
 	else
 	{
-        install_mem_read_handler(0, 0xe000, 0xefff, MRA_NOP);
-        install_mem_write_handler(0, 0xe000, 0xefff, MWA_NOP);
-        logerror("cgenie EXT disabled\n");
+		install_mem_read_handler(0, 0xe000, 0xefff, MRA_NOP);
+		install_mem_write_handler(0, 0xe000, 0xefff, MWA_NOP);
+		logerror("cgenie EXT disabled\n");
 		memset(&memory_region(REGION_CPU1)[0x0e000], 0x00, 0x1000);
 	}
 
-    /* check for 32K RAM */
+	/* check for 32K RAM */
 	if( readinputport(0) & 0x04 )
-    {
-        install_mem_read_handler(0, 0x8000, 0xbfff, MRA_RAM);
-        install_mem_write_handler(0, 0x8000, 0xbfff, MWA_RAM);
-    }
-    else
-    {
-        install_mem_read_handler(0, 0x8000, 0xbfff, MRA_NOP);
-        install_mem_write_handler(0, 0x8000, 0xbfff, MWA_NOP);
-    }
+	{
+		install_mem_read_handler(0, 0x8000, 0xbfff, MRA_RAM);
+		install_mem_write_handler(0, 0x8000, 0xbfff, MWA_RAM);
+	}
+	else
+	{
+		install_mem_read_handler(0, 0x8000, 0xbfff, MRA_NOP);
+		install_mem_write_handler(0, 0x8000, 0xbfff, MWA_NOP);
+	}
 
-    cgenie_load_cas = 1;
+	cgenie_load_cas = 1;
 	cpu_setOPbaseoverride(0, opbaseoverride);
 }
 
@@ -347,122 +347,122 @@ int cgenie_cassette_init(int id)
 	return 0;
 }
 
-/* basic-dsk is a disk image format which has the tracks and sectors
-stored in order, no information is stored which details the number of tracks,
-number of sides, number of sectors etc, so we need to set that up here */
-int cgenie_floppy_init(int id)
-{
-	if (basicdsk_floppy_init(id)==INIT_OK)
-	{
-		void *file;
-
-		/* open file and determine image geometry */
-		file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_R, OSD_FOPEN_READ);
-
-		if (file)
-		{
-
-
 #if 0
-	if( file == REAL_FDD )
-	{
-		PDRIVE *pd = (PDRIVE *)memory_region(REGION_CPU1) + 0x5a71 + drive * sizeof(PDRIVE);
-		/* changed pdrive parameters for drive ? */
-		if( memcmp(&pdrive[drive], pd, sizeof(PDRIVE)) )
-		{
-			/* copy them and set new geometry */
-			memcpy(&pdrive[drive], pd, sizeof(PDRIVE));
-			tracks[drive] = pd->TRK;
-			heads[drive] = (pd->SPT > 18) ? 2 : 1;
-			s_p_t[drive] = pd->SPT / heads[drive];
-			dir_sector[drive] = pd->DDSL * pd->GATM * pd->GPL + pd->SPT;
-			dir_length[drive] = pd->DDGA * pd->GPL;
-			wd179x_set_geometry(drive, tracks[drive], heads[drive], s_p_t[drive], 256, dir_sector[drive], dir_length[drive], 0);
-        }
-		return;
-	}
+			if( file == REAL_FDD )
+			{
+				PDRIVE *pd = (PDRIVE *)memory_region(REGION_CPU1) + 0x5a71 + drive * sizeof(PDRIVE);
+				/* changed pdrive parameters for drive ? */
+				if( memcmp(&pdrive[drive], pd, sizeof(PDRIVE)) )
+				{
+					/* copy them and set new geometry */
+					memcpy(&pdrive[drive], pd, sizeof(PDRIVE));
+					tracks[drive] = pd->TRK;
+					heads[drive] = (pd->SPT > 18) ? 2 : 1;
+					spt[drive] = pd->SPT / heads[drive];
+					dir_sector[drive] = pd->DDSL * pd->GATM * pd->GPL + pd->SPT;
+					dir_length[drive] = pd->DDGA * pd->GPL;
+					wd179x_set_geometry(drive, tracks[drive], heads[drive], spt[drive], 256, dir_sector[drive], dir_length[drive], 0);
+				}
+				return;
+			}
 #endif
 
-			int i, j, dir_offset;
-			UINT8 buff[16];
-			UINT8 tracks = 0;
-			UINT8 heads = 0;
-			UINT8 s_p_t = 0;
-			short dir_sector = 0;
-			short dir_length = 0;
-			/* determine geometry from disk contents */
-			for( i = 0; i < 12; i++ )
+/* basic-dsk is a disk image format which has the tracks and sectors
+ * stored in order, no information is stored which details the number
+ * of tracks, number of sides, number of sectors etc, so we need to
+ * set that up here
+ */
+int cgenie_floppy_init(int id)
+{
+		void *file;
+
+	if (basicdsk_floppy_init(id) != INIT_OK)
+		return INIT_FAILED;
+
+	/* open file and determine image geometry */
+	file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+
+	if (file)
+	{
+		int i, j, dir_offset;
+		UINT8 buff[16];
+		UINT8 tracks = 0;
+		UINT8 heads = 0;
+		UINT8 spt = 0;
+		short dir_sector = 0;
+		short dir_length = 0;
+		/* determine geometry from disk contents */
+		for( i = 0; i < 12; i++ )
+		{
+			osd_fseek(file, pd_list[i].SPT * 256, SEEK_SET);
+			osd_fread(file, buff, 16);
+			/* find an entry with matching DDSL */
+			if (buff[0] != 0x00 || buff[1] != 0xfe || buff[2] != pd_list[i].DDSL)
+				continue;
+			logerror("cgenie: checking format #%d\n", i);
+
+			dir_sector = pd_list[i].DDSL * pd_list[i].GATM * pd_list[i].GPL + pd_list[i].SPT;
+			dir_length = pd_list[i].DDGA * pd_list[i].GPL;
+
+			/* scan directory for DIR/SYS or NCW1983/JHL files */
+			/* look into sector 2 and 3 first entry relative to DDSL */
+			for( j = 16; j < 32; j += 8 )
 			{
-				osd_fseek(file, pd_list[i].SPT * 256, SEEK_SET);
-				osd_fread(file, buff, 16);
-				/* find an entry with matching DDSL */
-				if (buff[0] != 0x00 || buff[1] != 0xfe || buff[2] != pd_list[i].DDSL)
-					continue;
-				logerror("cgenie: checking format #%d\n", i);
-
-				dir_sector = pd_list[i].DDSL * pd_list[i].GATM * pd_list[i].GPL + pd_list[i].SPT;
-				dir_length = pd_list[i].DDGA * pd_list[i].GPL;
-				
-				/* scan directory for DIR/SYS or NCW1983/JHL files */
-				/* look into sector 2 and 3 first entry relative to DDSL */
-				for( j = 16; j < 32; j += 8 )
+				dir_offset = dir_sector * 256 + j * 32;
+				if( osd_fseek(file, dir_offset, SEEK_SET) < 0 )
+					break;
+				if( osd_fread(file, buff, 16) != 16 )
+					break;
+				if( !strncmp((char*)buff + 5, "DIR     SYS", 11) ||
+					!strncmp((char*)buff + 5, "NCW1983 JHL", 11) )
 				{
-					dir_offset = dir_sector * 256 + j * 32;
-					if( osd_fseek(file, dir_offset, SEEK_SET) < 0 )
-						break;
-					if( osd_fread(file, buff, 16) != 16 )
-						break;
-					if( !strncmp((char*)buff + 5, "DIR     SYS", 11) ||
-						!strncmp((char*)buff + 5, "NCW1983 JHL", 11) )
-					{
-						tracks = pd_list[i].TRK;
-						heads = (pd_list[i].SPT > 18) ? 2 : 1;
-						s_p_t = pd_list[i].SPT / heads;
-						dir_sector = pd_list[i].DDSL * pd_list[i].GATM * pd_list[i].GPL + pd_list[i].SPT;
-						dir_length = pd_list[i].DDGA * pd_list[i].GPL;
-						memcpy(memory_region(REGION_CPU1) + 0x5A71 + id * sizeof(PDRIVE), &pd_list[i], sizeof(PDRIVE));
-						break;
-					}
+					tracks = pd_list[i].TRK;
+					heads = (pd_list[i].SPT > 18) ? 2 : 1;
+					spt = pd_list[i].SPT / heads;
+					dir_sector = pd_list[i].DDSL * pd_list[i].GATM * pd_list[i].GPL + pd_list[i].SPT;
+					dir_length = pd_list[i].DDGA * pd_list[i].GPL;
+					memcpy(memory_region(REGION_CPU1) + 0x5A71 + id * sizeof(PDRIVE), &pd_list[i], sizeof(PDRIVE));
+					break;
 				}
-
-				/* set geometry so disk image can be read */
-				basicdsk_set_geometry(id, tracks, heads, s_p_t, 256, 0);
-
-				logerror("cgenie: directory sectors %d - %d (%d sectors)\n", dir_sector, dir_sector + dir_length - 1, dir_length);
-                /* mark directory sectors with deleted data address mark */
-				/* assumption dir_sector is a sector offset */
-				for (j = 0; j < dir_length; j++)
-				{
-					UINT8 track;
-					UINT8 side;
-					UINT8 sector_id;
-					UINT16 track_offset;
-					UINT16 sector_offset;
-
-					/* calc sector offset */
-					sector_offset = dir_sector + j;
-
-					/* get track offset */
-					track_offset = sector_offset/s_p_t;
-
-					/* calc track */
-					track = track_offset/heads;
-
-					/* calc side */
-					side = track_offset % heads;
-
-					/* calc sector id - first sector id is 0! */
-					sector_id = sector_offset % s_p_t;
-					
-					/* set deleted data address mark for sector specified */
-					basicdsk_set_ddam(id, track, side, sector_id, 1);
-				}
-
 			}
 
-			osd_fclose(file);
+			logerror("cgenie: geometry %d tracks, %d heads, %d sec/track\n", tracks, heads, spt);
+			/* set geometry so disk image can be read */
+			basicdsk_set_geometry(id, tracks, heads, spt, 256, 0);
+
+			logerror("cgenie: directory sectors %d - %d (%d sectors)\n", dir_sector, dir_sector + dir_length - 1, dir_length);
+			/* mark directory sectors with deleted data address mark */
+			/* assumption dir_sector is a sector offset */
+			for (j = 0; j < dir_length; j++)
+			{
+				UINT8 track;
+				UINT8 side;
+				UINT8 sector_id;
+				UINT16 track_offset;
+				UINT16 sector_offset;
+
+				/* calc sector offset */
+				sector_offset = dir_sector + j;
+
+				/* get track offset */
+				track_offset = sector_offset / spt;
+
+				/* calc track */
+				track = track_offset / heads;
+
+				/* calc side */
+				side = track_offset % heads;
+
+				/* calc sector id - first sector id is 0! */
+				sector_id = sector_offset % spt;
+
+				/* set deleted data address mark for sector specified */
+				basicdsk_set_ddam(id, track, side, sector_id, 1);
+			}
+
 		}
 
+		osd_fclose(file);
 		return INIT_OK;
 	}
 
@@ -504,7 +504,7 @@ int cgenie_rom_id(int id)
 
 /*************************************
  *
- *              Tape emulation.
+ *				Tape emulation.
  *
  *************************************/
 
@@ -515,7 +515,7 @@ int cgenie_rom_id(int id)
  *******************************************************************/
 static void tape_put_byte(UINT8 value)
 {
-    if( tape_count < 9 )
+	if( tape_count < 9 )
 	{
 		tape_name[0] = '\0';
 		tape_buffer[tape_count++] = value;
@@ -533,7 +533,7 @@ static void tape_put_byte(UINT8 value)
 			osd_fopen(Machine->gamedrv->name, tape_name, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_WRITE);
 			if( tape_put_file )
 				osd_fwrite(tape_put_file, tape_buffer, 9);
-        }
+		}
 	}
 	else
 	{
@@ -619,24 +619,24 @@ static void tape_put_bit(void)
 			tape_bits = (tape_bits << 1) | 1;
 			switch( in_sync )
 			{
-				case 0:		   /* look for sync AA */
+				case 0: 	   /* look for sync AA */
 					if( (tape_bits & 0xffff) == 0xcccc )
 					{
 						cgenie_frame_time = 30;
 						sprintf(cgenie_frame_message, "Tape sync1 written");
-                        in_sync = 1;
+						in_sync = 1;
 					}
 					break;
-				case 1:		   /* look for sync 66 */
+				case 1: 	   /* look for sync 66 */
 					if( (tape_bits & 0xffff) == 0x3c3c )
 					{
 						in_sync = 2;
 						cgenie_frame_time = 30;
 						sprintf(cgenie_frame_message, "Tape sync2 written");
-                        put_bit_count = 16;
+						put_bit_count = 16;
 					}
 					break;
-				case 2:		   /* count 1 bit */
+				case 2: 	   /* count 1 bit */
 					put_bit_count += 1;
 			}
 		}
@@ -646,24 +646,24 @@ static void tape_put_bit(void)
 			tape_bits <<= 2;
 			switch (in_sync)
 			{
-				case 0:		   /* look for sync AA */
+				case 0: 	   /* look for sync AA */
 					if( (tape_bits & 0xffff) == 0xcccc )
 					{
 						cgenie_frame_time = 30;
 						sprintf(cgenie_frame_message, "Tape sync1 written");
-                        in_sync = 1;
+						in_sync = 1;
 					}
 					break;
-				case 1:		   /* look for sync 66 */
+				case 1: 	   /* look for sync 66 */
 					if( (tape_bits & 0xffff) == 0x3c3c )
 					{
 						cgenie_frame_time = 30;
 						sprintf(cgenie_frame_message, "Tape sync2 written");
-                        in_sync = 2;
+						in_sync = 2;
 						put_bit_count = 16;
 					}
 					break;
-				case 2:		   /* count 2 bits */
+				case 2: 	   /* count 2 bits */
 					put_bit_count += 2;
 			}
 		}
@@ -715,13 +715,13 @@ static void tape_get_byte(void)
 		{
 			cgenie_frame_time = 30;
 			sprintf(cgenie_frame_message, "Tape load sync1");
-            value = 0xaa;
+			value = 0xaa;
 		}
 		else
 		{
 			cgenie_frame_time = 30;
 			sprintf(cgenie_frame_message, "Tape load '%s' $%04X bytes", tape_name, tape_count);
-            osd_fread(tape_get_file, &value, 1);
+			osd_fread(tape_get_file, &value, 1);
 		}
 		tape_bits |= 0xaaaa;
 		if( value & 0x80 )
@@ -766,7 +766,7 @@ static void tape_get_open(void)
 		if (tape_name[0] != ' ')
 		{
 			logerror("tape_get_open '%s'\n", tape_name);
-			tape_get_file = osd_fopen(Machine->gamedrv->name, tape_name, OSD_FILETYPE_IMAGE_R, OSD_FOPEN_READ);
+			tape_get_file = osd_fopen(Machine->gamedrv->name, tape_name, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
 		}
 		if( tape_get_file )
 		{
@@ -803,11 +803,11 @@ static void tape_get_bit(void)
 	{
 		if( tape_get_file )
 		{
-            osd_fclose(tape_get_file);
+			osd_fclose(tape_get_file);
 			tape_get_file = NULL;
 			cgenie_frame_time = 30;
-            sprintf(cgenie_frame_message, "Tape file closed");
-        }
+			sprintf(cgenie_frame_message, "Tape file closed");
+		}
 		get_bit_count = tape_bits = tape_time = 0;
 	}
 	else
@@ -839,20 +839,20 @@ static void tape_get_bit(void)
 
 /*************************************
  *
- *              Port handlers.
+ *				Port handlers.
  *
  *************************************/
 
 /* used bits on port FF */
-#define FF_CAS  0x01		   /* tape output signal */
+#define FF_CAS	0x01		   /* tape output signal */
 #define FF_BGD0 0x04		   /* background color enable */
 #define FF_CHR1 0x08		   /* charset 0xc0 - 0xff 1:fixed 0:defined */
 #define FF_CHR0 0x10		   /* charset 0x80 - 0xbf 1:fixed 0:defined */
-#define FF_CHR  (FF_CHR0 | FF_CHR1)
-#define FF_FGR  0x20		   /* 1: "hi" resolution graphics, 0: text mode */
+#define FF_CHR	(FF_CHR0 | FF_CHR1)
+#define FF_FGR	0x20		   /* 1: "hi" resolution graphics, 0: text mode */
 #define FF_BGD1 0x40		   /* background color select 1 */
 #define FF_BGD2 0x80		   /* background color select 2 */
-#define FF_BGD  (FF_BGD0 | FF_BGD1 | FF_BGD2)
+#define FF_BGD	(FF_BGD0 | FF_BGD1 | FF_BGD2)
 
 void cgenie_port_ff_w(int offset, int data)
 {
@@ -957,9 +957,9 @@ int cgenie_port_xx_r(int offset)
 }
 
 /*************************************
- *                                   *
- *      Memory handlers              *
- *                                   *
+ *									 *
+ *		Memory handlers 			 *
+ *									 *
  *************************************/
 
 static UINT8 psg_a_out = 0x00;
@@ -1030,23 +1030,23 @@ int cgenie_track_r(int offset)
 	/* If the floppy isn't emulated, return 0xff */
 	if( (readinputport(0) & 0x80) == 0 )
 		return 0xff;
-    return wd179x_track_r(offset);
+	return wd179x_track_r(offset);
 }
 
 int cgenie_sector_r(int offset)
 {
 	/* If the floppy isn't emulated, return 0xff */
 	if( (readinputport(0) & 0x80) == 0 )
-        return 0xff;
-    return wd179x_sector_r(offset);
+		return 0xff;
+	return wd179x_sector_r(offset);
 }
 
 int cgenie_data_r(int offset)
 {
 	/* If the floppy isn't emulated, return 0xff */
 	if( (readinputport(0) & 0x80) == 0 )
-        return 0xff;
-    return wd179x_data_r(offset);
+		return 0xff;
+	return wd179x_data_r(offset);
 }
 
 void cgenie_command_w(int offset, int data)
@@ -1054,31 +1054,31 @@ void cgenie_command_w(int offset, int data)
 	/* If the floppy isn't emulated, return immediately */
 	if( (readinputport(0) & 0x80) == 0 )
 		return;
-    wd179x_command_w(offset, data);
+	wd179x_command_w(offset, data);
 }
 
 void cgenie_track_w(int offset, int data)
 {
 	/* If the floppy isn't emulated, ignore the write */
 	if( (readinputport(0) & 0x80) == 0 )
-        return;
-    wd179x_track_w(offset, data);
+		return;
+	wd179x_track_w(offset, data);
 }
 
 void cgenie_sector_w(int offset, int data)
 {
 	/* If the floppy isn't emulated, ignore the write */
 	if( (readinputport(0) & 0x80) == 0 )
-        return;
-    wd179x_sector_w(offset, data);
+		return;
+	wd179x_sector_w(offset, data);
 }
 
 void cgenie_data_w(int offset, int data)
 {
 	/* If the floppy isn't emulated, ignore the write */
 	if( (readinputport(0) & 0x80) == 0 )
-        return;
-    wd179x_data_w(offset, data);
+		return;
+	wd179x_data_w(offset, data);
 }
 
 int cgenie_irq_status_r(int offset)
@@ -1147,7 +1147,7 @@ void cgenie_motor_w(int offset, int data)
 		return;
 
 	/* mask head select bit */
-        head = (data >> 4) & 1;
+		head = (data >> 4) & 1;
 
 	/* currently selected drive */
 	motor_drive = drive;
@@ -1157,7 +1157,7 @@ void cgenie_motor_w(int offset, int data)
 }
 
 /*************************************
- *      Keyboard                     *
+ *		Keyboard					 *
  *************************************/
 int cgenie_keyboard_r(int offset)
 {
@@ -1199,7 +1199,7 @@ void cgenie_videoram_w(int offset, int data)
 {
 	/* write to video RAM */
 	if( data == videoram[offset] )
-		return;				   /* no change */
+		return; 			   /* no change */
 	videoram[offset] = data;
 	dirtybuffer[offset] = 1;
 }
@@ -1239,7 +1239,7 @@ void cgenie_fontram_w(int offset, int data)
 	int code;
 
 	if( data == cgenie_fontram[offset] )
-		return;				   /* no change */
+		return; 			   /* no change */
 
 	/* store data */
 	cgenie_fontram[offset] = data;
@@ -1271,11 +1271,11 @@ int cgenie_frame_interrupt(void)
 	if( cgenie_tv_mode != (readinputport(0) & 0x10) )
 	{
 		cgenie_tv_mode = input_port_0_r(0) & 0x10;
-        memset(dirtybuffer, 1, videoram_size);
+		memset(dirtybuffer, 1, videoram_size);
 		/* force setting of background color */
 		port_ff ^= FF_BGD0;
 		cgenie_port_ff_w(0, port_ff ^ FF_BGD0);
-    }
+	}
 
 	return 0;
 }
@@ -1284,3 +1284,4 @@ void cgenie_nmi_generate(int param)
 {
 	cpu_set_nmi_line(0, PULSE_LINE);
 }
+
