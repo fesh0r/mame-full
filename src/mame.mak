@@ -218,8 +218,7 @@ DRVLIBS = \
 	$(OBJ)/nihonsys.a $(OBJ)/alba.a $(OBJ)/homedata.a $(OBJ)/artmagic.a \
 	$(OBJ)/taiyo.a $(OBJ)/edevices.a $(OBJ)/other.a $(OBJ)/excelent.a $(OBJ)/nix.a \
 	$(OBJ)/arcadia.a $(OBJ)/othertrv.a $(OBJ)/other68k.a $(OBJ)/otherz80.a \
-	$(OBJ)/hyprston.a $(OBJ)/other.a \
-	$(OBJ)/neogeo.a \
+	$(OBJ)/hyprston.a $(OBJ)/neogeo.a \
 
 $(OBJ)/pacman.a: \
 	$(OBJ)/drivers/pacman.o $(OBJ)/machine/mspacman.o \
