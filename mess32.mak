@@ -309,6 +309,7 @@ COREOBJS = \
           $(OBJ)/mess/machine/wd179x.o   \
           $(OBJ)/mess/machine/basicdsk.o \
           $(OBJ)/mess/diskctrl.o         \
+		  $(OBJ)/mess/utils.o			\
 	 $(OBJ)/mess/machine/6522via.o	\
 	 $(OBJ)/mess/machine/nec765.o	\
 	 $(OBJ)/mess/machine/dsk.o	\
@@ -578,6 +579,7 @@ IMGTOOL_OBJS= \
           $(OBJ)/mess/tools/stubs.o   \
           $(OBJ)/mess/config.o        \
           $(OBJ)/unzip.o              \
+		  $(OBJ)/mess/utils.o		\
           $(OBJ)/mess/tools/main.o    \
           $(OBJ)/mess/tools/imgtool.o \
 		  $(OBJ)/mess/tools/imgwave.o \

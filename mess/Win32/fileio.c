@@ -25,7 +25,6 @@
 
 /* from mess/Win32/dirio.c */
 extern const char *resolve_path(const char *path, char *buf, size_t buflen);
-extern char *strncpyz(char *dest, const char *source, size_t len);
 
 static int MessImageFopenZip(const char *filename, mame_file *mf, int write)
 {

@@ -562,6 +562,7 @@ COREOBJS +=        \
           $(OBJ)/mess/machine/pit8253.o  \
           $(OBJ)/mess/machine/basicdsk.o \
           $(OBJ)/mess/diskctrl.o         \
+		  $(OBJ)/mess/utils.o
 
 
 ifndef MESS_EXCLUDE_CBM
@@ -596,6 +597,7 @@ imgtool$(EXE):	     \
 	  $(OBJ)/mess/tools/stubs.o   \
 	  $(OBJ)/mess/config.o	      \
 	  $(OBJ)/unzip.o	      \
+	  $(OBJ)/mess/utils.o	\
 	  $(OBJ)/mess/tools/main.o    \
 	  $(OBJ)/mess/tools/imgtool.o \
 	  $(OBJ)/mess/tools/imgwave.o \

@@ -69,18 +69,6 @@ IMAGEMODULE(
 	NULL
 )
 
-void rtrim(char *buf)
-{
-	size_t buflen;
-	char *s;
-
-	buflen = strlen(buf);
-	if (buflen) {
-		for (s = &buf[buflen-1]; (*s == ' '); s--)
-			*s = '\0';
-	}
-}
-
 static int get_rsdos_dirent(STREAM *f, int index_loc, rsdos_dirent *ent)
 {
 	if (stream_seek(f, OFFSET(17, 3) + (index_loc * 32), SEEK_SET))
