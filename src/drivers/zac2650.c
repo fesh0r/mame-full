@@ -3,7 +3,6 @@
  *
  * Zaccaria - The Invaders
  * Zaccaria - Super Invader Attack
- * Cinematronics - Embargo
  *
  * Mame@btinternet.com
  */
@@ -161,9 +160,6 @@ INPUT_PORTS_START( sinvader )
 
 INPUT_PORTS_END
 
-INPUT_PORTS_START( embargo )
-/* TODO */
-INPUT_PORTS_END
 
 static PALETTE_INIT( zac2650 )
 {
@@ -279,62 +275,6 @@ ROM_START( tinv2650 )
 	ROM_LOAD( "06_inv.bin", 0x0000, 0x0400, CRC(7bfed23e) SHA1(f754f0a4d6c8f9812bf333c30fa433b63d49a750) )
 ROM_END
 
-/*
- * Embargo
- *
- */
-
-static MEMORY_READ_START( emb_readmem )
-	{ 0x0000, 0x0fff, MRA_ROM },
-    { 0x1e00, 0x3dff, MRA_RAM },
-MEMORY_END
-
-static MEMORY_WRITE_START( emb_writemem )
-	{ 0x0000, 0x0fff, MWA_ROM },
-	{ 0x1e00, 0x1fff, MWA_RAM },
-	{ 0x2000, 0x3dff, c8080bw_videoram_w, &videoram, &videoram_size },
-MEMORY_END
-
-static PORT_READ_START( emb_readport )
-PORT_END
-
-static MACHINE_DRIVER_START( embargo )
-
-	/* basic machine hardware */
-	MDRV_CPU_ADD(S2650, 625000)
-	MDRV_CPU_MEMORY(emb_readmem,emb_writemem)
-	MDRV_CPU_PORTS(emb_readport,0)
-
-	MDRV_FRAMES_PER_SECOND(55)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-
-	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-2, 0*8, 32*8-1)
-	MDRV_PALETTE_LENGTH(2)
-	MDRV_COLORTABLE_LENGTH(4)
-
-	MDRV_PALETTE_INIT(zac2650)
-	MDRV_VIDEO_START(generic_bitmapped)
-	MDRV_VIDEO_UPDATE(8080bw)
-
-	/* sound hardware */
-MACHINE_DRIVER_END
-
-ROM_START( embargo )
-	ROM_REGION( 0x8000, REGION_CPU1, 0 )
-	ROM_LOAD( "emb1", 0x0000, 0x0200, CRC(00dcbc24) )
-	ROM_LOAD( "emb2", 0x0200, 0x0200, CRC(e7069b11) )
-	ROM_LOAD( "emb3", 0x0400, 0x0200, CRC(1af7a966) )
-	ROM_LOAD( "emb4", 0x0600, 0x0200, CRC(d9c75da0) )
-	ROM_LOAD( "emb5", 0x0800, 0x0200, CRC(15960b58) )
-	ROM_LOAD( "emb6", 0x0a00, 0x0200, CRC(7ba23058) )
-	ROM_LOAD( "emb7", 0x0c00, 0x0200, CRC(6d46a593) )
-	ROM_LOAD( "emb8", 0x0e00, 0x0200, CRC(f0b00634) )
-ROM_END
-
-
 
 static DRIVER_INIT( tinvader )
 {
@@ -344,4 +284,3 @@ static DRIVER_INIT( tinvader )
 
 GAMEX( 1978, sia2650,  0,       tinvader, sinvader, 0,        ROT270, "Zaccaria/Zelco", "Super Invader Attack", GAME_NO_SOUND )
 GAMEX( 1978, tinv2650, sia2650, tinvader, tinvader, tinvader, ROT270, "Zaccaria/Zelco", "The Invaders", GAME_NO_SOUND )
-GAMEX( 1977, embargo,  0,       embargo,  embargo,  8080bw,   ROT0,   "Cinematronics",  "Embargo", GAME_NO_SOUND )

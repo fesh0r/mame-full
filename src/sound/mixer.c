@@ -925,7 +925,7 @@ int mixer_allocate_channels(int channels, const int *default_mixing_levels)
 		if (!is_config_invalid)
 		{
 			/* if the defaults match, set the mixing level from the config */
-			if (channel->default_mixing_level == channel->config_default_mixing_level)
+			if (channel->default_mixing_level == channel->config_default_mixing_level && channel->config_mixing_level <= 100)
 				channel->mixing_level = channel->config_mixing_level;
 
 			/* otherwise, invalidate all channels that have been created so far */

@@ -461,6 +461,7 @@ $(OBJ)/dataeast.a: \
 	$(OBJ)/vidhrdw/firetrap.o $(OBJ)/drivers/firetrap.o \
 	$(OBJ)/vidhrdw/brkthru.o $(OBJ)/drivers/brkthru.o \
 	$(OBJ)/vidhrdw/metlclsh.o $(OBJ)/drivers/metlclsh.o \
+	$(OBJ)/drivers/compgolf.o \
 	$(OBJ)/vidhrdw/shootout.o $(OBJ)/drivers/shootout.o \
 	$(OBJ)/vidhrdw/sidepckt.o $(OBJ)/drivers/sidepckt.o \
 	$(OBJ)/vidhrdw/exprraid.o $(OBJ)/drivers/exprraid.o \
@@ -576,6 +577,7 @@ $(OBJ)/konami.a: \
 	$(OBJ)/vidhrdw/rungun.o $(OBJ)/drivers/rungun.o \
 	$(OBJ)/vidhrdw/dbz2.o $(OBJ)/drivers/dbz2.o \
 	$(OBJ)/machine/konamigx.o $(OBJ)/vidhrdw/konamigx.o $(OBJ)/drivers/konamigx.o \
+	$(OBJ)/vidhrdw/djmain.o $(OBJ)/drivers/djmain.o \
 	$(OBJ)/vidhrdw/plygonet.o $(OBJ)/drivers/plygonet.o \
 	$(OBJ)/drivers/mogura.o \
 
@@ -751,6 +753,7 @@ $(OBJ)/tms.a: \
 
 $(OBJ)/cinemar.a: \
 	$(OBJ)/vidhrdw/jack.o $(OBJ)/drivers/jack.o \
+	$(OBJ)/drivers/embargo.o \
 
 $(OBJ)/cinemav.a: \
 	$(OBJ)/sndhrdw/cinemat.o $(OBJ)/drivers/cinemat.o \
@@ -992,6 +995,7 @@ $(OBJ)/nihonsys.a: \
 $(OBJ)/alba.a: \
 	$(OBJ)/drivers/rmhaihai.o \
 	$(OBJ)/drivers/hanaroku.o \
+	$(OBJ)/drivers/yumefuda.o \
 
 $(OBJ)/homedata.a: \
 	$(OBJ)/vidhrdw/homedata.o $(OBJ)/drivers/homedata.o \

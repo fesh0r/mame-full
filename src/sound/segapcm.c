@@ -44,7 +44,7 @@ static void SEGAPCM_update(int num, INT16 **buffer, int length)
 						flags |= 1;
 					break;
 				}
-				v = rom[(addr>>16) & 0x7fff] - 0x80;
+				v = rom[addr>>16] - 0x80;
 				buffer[0][i] += (v*voll);
 				buffer[1][i] += (v*volr);
 				addr += step;

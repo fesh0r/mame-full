@@ -73,10 +73,13 @@ Preliminary Memory map:
 
 #include "driver.h"
 #include "machine/eeprom.h"
+#include "cpu/sh2/sh2.h"
 
 extern data32_t* stv_vdp2_regs;
 extern data32_t* stv_vdp2_vram;
 extern data32_t* stv_vdp2_cram;
+
+#define USE_SLAVE 1
 
 /**************************************************************************************/
 /*to be added into a stv Header file,remember to remove all the static...*/
@@ -86,6 +89,7 @@ static data8_t *smpc_ram;
 
 static data32_t* stv_workram_l;
 static data32_t* stv_workram_h;
+static data32_t* stv_backupram;
 data32_t* stv_scu;
 static data32_t* ioga;
 static data16_t* scsp_regs;
@@ -367,7 +371,9 @@ static void stv_SMPC_w8 (int offset, UINT8 data)
 			case 0x02:
 				logerror ("SMPC: Slave ON\n");
 				smpc_ram[0x5f]=0x02;
-	//			cpu_set_halt_line(1,CLEAR_LINE);
+				#if USE_SLAVE
+				cpu_set_halt_line(1,CLEAR_LINE);
+				#endif
 				break;
 			case 0x03:
 				logerror ("SMPC: Slave OFF\n");
@@ -1129,7 +1135,7 @@ static void dma_indirect_lv1()
 		//guess,but I believe it's right.
 		scu_src_1 &=0x07ffffff;
 		scu_dst_1 &=0x07ffffff;
-		scu_size_1 &=0x1fff;
+		scu_size_1 &=0xffff;
 
 		for (; scu_size_1 > 0; scu_size_1-=scu_dst_add_1)
 		{
@@ -1178,7 +1184,7 @@ static void dma_indirect_lv2()
 		//guess,but I believe it's right.
 		scu_src_2 &=0x07ffffff;
 		scu_dst_2 &=0x07ffffff;
-		scu_size_2 &=0x1fff;
+		scu_size_2 &=0xffff;
 
 		for (; scu_size_2 > 0; scu_size_2-=scu_dst_add_2)
 		{
@@ -1415,6 +1421,17 @@ static void dma_scsp()
 static WRITE32_HANDLER( minit_w )
 {
 	logerror("MINIT write at %08x = %08x\n",activecpu_get_pc(),data);
+	// causes data to be written to internal st-2 register + interrupt?
+	// frt input capture (level 1, addr 0x64) (not sure about the 64/164 bits ..might be reversed)
+	sh2_set_frt_input(1, PULSE_LINE);
+}
+
+static WRITE32_HANDLER( sinit_w )
+{
+	logerror("SINIT write at %08x = %08x\n",activecpu_get_pc(),data);
+	// causes data to be written to internal st-2 register + interrupt?
+	// frt input capture (level 1, addr 0x164) (not sure about the 64/164 bits ..might be reversed)
+	sh2_set_frt_input(0, PULSE_LINE);
 }
 
 extern WRITE32_HANDLER ( stv_vdp2_vram_w );
@@ -1444,14 +1461,14 @@ static READ32_HANDLER( stv_workram_h_mirror_r )
 static MEMORY_READ32_START( stv_master_readmem )
 	{ 0x00000000, 0x0007ffff, MRA32_ROM },   // bios
 	{ 0x00100000, 0x0010007f, stv_SMPC_r32 },/*SMPC*/
-	{ 0x00180000, 0x0018ffff, MRA32_RAM },	 /*Back up RAM*/
+	{ 0x00180000, 0x0018ffff, MRA32_BANK5 },	 /*Back up RAM*/
 
-	{ 0x00200000, 0x002fffff, MRA32_RAM },
+	{ 0x00200000, 0x002fffff, MRA32_BANK4 },
 	{ 0x00400000, 0x0040001f, stv_io_r32 },
 
 	{ 0x02000000, 0x04ffffff, MRA32_BANK1 }, // cartridge
 //	{ 0x02200000, 0x04ffffff, read_cart }, // cartridge
-	{ 0x05000000, 0x058fffff, MRA32_RAM },
+//	{ 0x05000000, 0x058fffff, MRA32_RAM },
 
 	/* Sound */
 	{ 0x05a00000, 0x05afffff, stv_sh2_soundram_r },
@@ -1486,7 +1503,7 @@ static MEMORY_READ32_START( stv_master_readmem )
 //	{ 0x05f80000, 0x05fbffff, stv_vdp2_regs_r32 }, /* REGS */
 	{ 0x05fe0000, 0x05fe00cf, stv_scu_r32 },
 
-	{ 0x06000000, 0x060fffff, MRA32_RAM },
+	{ 0x06000000, 0x060fffff, MRA32_BANK3 },
 	{ 0x06100000, 0x07ffffff, stv_workram_h_mirror_r }, // hanagumi reads the char select 1p icon and timer gfx from here ..
 MEMORY_END
 
@@ -1494,13 +1511,13 @@ static MEMORY_WRITE32_START( stv_master_writemem )
 	{ 0x00000000, 0x0007ffff, MWA32_ROM },
 	{ 0x00100000, 0x0010007f, stv_SMPC_w32 },
 
-	{ 0x00180000, 0x0018ffff, MWA32_RAM },
+	{ 0x00180000, 0x0018ffff, MWA32_BANK5 }, // backup ram
 
-	{ 0x00200000, 0x002fffff, MWA32_RAM, &stv_workram_l },
+	{ 0x00200000, 0x002fffff, MWA32_BANK4 }, // workram low
 	{ 0x00400000, 0x0040001f, stv_io_w32 ,&ioga },
 	{ 0x01000000, 0x01000003, minit_w },
 	{ 0x02000000, 0x04ffffff, MWA32_ROM },
-	{ 0x05000000, 0x058fffff, MWA32_RAM },
+//	{ 0x05000000, 0x058fffff, MWA32_RAM },
 
 	/* Sound */
 	{ 0x05a00000, 0x05afffff, stv_sh2_soundram_w },
@@ -1516,18 +1533,51 @@ static MEMORY_WRITE32_START( stv_master_writemem )
 
 	{ 0x05fe0000, 0x05fe00cf, stv_scu_w32 },
 
-	{ 0x06000000, 0x060fffff, MWA32_RAM, &stv_workram_h },
+	{ 0x06000000, 0x060fffff, MWA32_BANK3 },
 //	{ 0x06100000, 0x07ffffff, MWA32_NOP },
 MEMORY_END
 
+/* slave cpu shares all devices with master */
+
 static MEMORY_READ32_START( stv_slave_readmem )
 	{ 0x00000000, 0x0007ffff, MRA32_ROM },   // bios
+	{ 0x00100000, 0x0010007f, stv_SMPC_r32 },/*SMPC*/
+	{ 0x00180000, 0x0018ffff, MRA32_BANK5 },	 /*Back up RAM*/
+	{ 0x00200000, 0x002fffff, MRA32_BANK4 },
+	{ 0x00400000, 0x0040001f, stv_io_r32 },
 	{ 0x02000000, 0x04ffffff, MRA32_BANK1 }, // cartridge
+//	{ 0x05000000, 0x058fffff, MRA32_RAM },
+	{ 0x05a00000, 0x05afffff, stv_sh2_soundram_r },
+	{ 0x05b00000, 0x05b00fff, stv_scsp_regs_r32 },
+	{ 0x05c00000, 0x05cbffff, stv_vdp1_vram_r },
+	{ 0x05d00000, 0x05d0001f, stv_vdp1_regs_r },
+	{ 0x05e00000, 0x05efffff, stv_vdp2_vram_r },
+	{ 0x05f00000, 0x05f7ffff, stv_vdp2_cram_r },
+	{ 0x05f80000, 0x05fbffff, stv_vdp2_regs_r },
+	{ 0x05fe0000, 0x05fe00cf, stv_scu_r32 },
+	{ 0x06000000, 0x060fffff, MRA32_BANK3 },
+	{ 0x06100000, 0x07ffffff, stv_workram_h_mirror_r }, // hanagumi reads the char select 1p icon and timer gfx from here ..
 MEMORY_END
 
 static MEMORY_WRITE32_START( stv_slave_writemem )
 	{ 0x00000000, 0x0007ffff, MWA32_ROM },
+	{ 0x00100000, 0x0010007f, stv_SMPC_w32 },
+	{ 0x00180000, 0x0018ffff, MWA32_BANK5 },
+	{ 0x00200000, 0x002fffff, MWA32_BANK4 },
+	{ 0x00400000, 0x0040001f, stv_io_w32 ,&ioga },
+//	{ 0x01000000, 0x01000003, minit_w },
+	{ 0x01800000, 0x01800003, sinit_w },
 	{ 0x02000000, 0x04ffffff, MWA32_ROM },
+//	{ 0x05000000, 0x058fffff, MWA32_RAM },
+	{ 0x05a00000, 0x05afffff, stv_sh2_soundram_w },
+	{ 0x05b00000, 0x05b00fff, stv_scsp_regs_w32 },
+	{ 0x05c00000, 0x05cbffff, stv_vdp1_vram_w },
+	{ 0x05d00000, 0x05d0001f, stv_vdp1_regs_w },
+	{ 0x05e00000, 0x05efffff, stv_vdp2_vram_w },
+	{ 0x05f00000, 0x05f7ffff, stv_vdp2_cram_w },
+	{ 0x05f80000, 0x05fbffff, stv_vdp2_regs_w },
+	{ 0x05fe0000, 0x05fe00cf, stv_scu_w32 },
+	{ 0x06000000, 0x060fffff, MWA32_BANK3 },
 MEMORY_END
 
 static MEMORY_READ16_START( sound_readmem )
@@ -1715,10 +1765,29 @@ DRIVER_INIT ( stv )
 	stv_scu = auto_malloc (0x100);
 	scsp_regs = auto_malloc (0x1000);
 
+	stv_workram_h = auto_malloc (0x100000);
+	stv_workram_l = auto_malloc (0x100000);
+	stv_workram_l = auto_malloc (0x100000);
+	stv_backupram = auto_malloc (0x10000);
+
+	cpu_setbank(3,&stv_workram_h[0x000000]);
+	cpu_setbank(4,&stv_workram_l[0x000000]);
+	cpu_setbank(5,&stv_backupram[0x000000]);
+
+
 /* idle skip bios? .. not 100% sure this is safe .. we'll see */
 	install_mem_read32_handler(0, 0x60335d0, 0x60335d3, stv_speedup_r );
 	install_mem_read32_handler(0, 0x60335bc, 0x60335bf, stv_speedup2_r );
 }
+
+static READ32_HANDLER( shienryu_slave_speedup_r )
+{
+ if (activecpu_get_pc()==0x06004410)
+  cpu_spinuntil_time(TIME_IN_USEC(20)); // is this safe... we can't skip till vbl because its not a vbl wait loop
+
+ return stv_workram_h[0x0ae8e4/4];
+}
+
 
 static READ32_HANDLER( shienryu_speedup_r )
 {
@@ -1730,6 +1799,7 @@ static READ32_HANDLER( shienryu_speedup_r )
 DRIVER_INIT(shienryu)
 {
 	install_mem_read32_handler(0, 0x60ae8e0, 0x60ae8e3, shienryu_speedup_r ); // after you enable sound cpu
+	install_mem_read32_handler(1, 0x60ae8e4, 0x60ae8e7, shienryu_slave_speedup_r ); // after you enable sound cpu
 
 	init_stv();
 }
@@ -1763,6 +1833,13 @@ static READ32_HANDLER( hanagumi_speedup_r )
 	return stv_workram_h[0x94188/4];
 }
 
+static READ32_HANDLER( hanagumi_slave_off )
+{
+	/* just turn the slave off, i don't think the game needs it */
+	cpu_set_halt_line(1,ASSERT_LINE);
+
+	return stv_workram_h[0x015438/4];
+}
 
 DRIVER_INIT(hanagumi)
 {
@@ -1784,6 +1861,7 @@ DRIVER_INIT(hanagumi)
    (loops for 288688 instructions)
 */
    	install_mem_read32_handler(0, 0x6094188, 0x609418b, hanagumi_speedup_r );
+   	install_mem_read32_handler(1, 0x6015438, 0x601543b, hanagumi_slave_off );
 
   	init_stv();
 }
@@ -1877,17 +1955,22 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
+struct sh2_config sh2_conf_master = { 0 };
+struct sh2_config sh2_conf_slave  = { 1 };
+
 static MACHINE_DRIVER_START( stv )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(SH2, 28000000) // 28MHz
 	MDRV_CPU_MEMORY(stv_master_readmem,stv_master_writemem)
 	MDRV_CPU_VBLANK_INT(stv_interrupt,264)/*264 lines,224 display lines*/
+	MDRV_CPU_CONFIG(sh2_conf_master)
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(SH2, 28000000) // 28MHz
 	MDRV_CPU_MEMORY(stv_slave_readmem,stv_slave_writemem)
-	/* how do the interrupts work..from other cpu? */
+	MDRV_CPU_CONFIG(sh2_conf_slave)
+
 
 	MDRV_CPU_ADD(M68000, 12000000)
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
@@ -1900,8 +1983,8 @@ static MACHINE_DRIVER_START( stv )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK | VIDEO_RGB_DIRECT )
 	MDRV_SCREEN_SIZE(32*16, 32*16)
-//	MDRV_VISIBLE_AREA(0*8, 32*16-1, 0*8, 32*16-1)
-	MDRV_VISIBLE_AREA(0*8, 320-1, 0*8, 224-1)
+	MDRV_VISIBLE_AREA(0*8, 32*16-1, 0*8, 32*16-1)
+//	MDRV_VISIBLE_AREA(0*8, 320-1, 0*8, 224-1)
 	MDRV_PALETTE_LENGTH(2048)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 

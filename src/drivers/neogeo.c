@@ -624,6 +624,24 @@ static READ16_HANDLER( controller4_16_r )
 	return (readinputport(6) & ~(readinputport(5) & 0x40));
 }
 
+static READ16_HANDLER( popbounc1_16_r )
+{
+	data16_t res;
+
+	res = (readinputport(ts?0:7) << 8) + readinputport(3);
+
+	return res;
+}
+
+static READ16_HANDLER( popbounc2_16_r )
+{
+	data16_t res;
+
+	res = (readinputport(ts?1:8) << 8);
+
+	return res;
+}
+
 static WRITE16_HANDLER( neo_bankswitch_w )
 {
 	int bankaddress;
@@ -1250,6 +1268,100 @@ INPUT_PORTS_START( irrmaze )
 	PORT_ANALOG( 0xff, 0x7f, IPT_TRACKBALL_Y | IPF_REVERSE, 10, 20, 0, 0 )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( popbounc )
+	PORT_START		/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
+	PORT_BIT( 0x90, IP_ACTIVE_LOW, IPT_BUTTON1 ) // note it needs it from 0x80 when using paddle
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 )
+
+	PORT_START		/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
+	PORT_BIT( 0x90, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 ) // note it needs it from 0x80 when using paddle
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+
+	PORT_START		/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )   /* Player 1 Start */
+	PORT_BITX(0x02, IP_ACTIVE_LOW, 0, "Next Game",KEYCODE_7, IP_JOY_NONE )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 )   /* Player 2 Start */
+	PORT_BITX(0x08, IP_ACTIVE_LOW, 0, "Previous Game",KEYCODE_8, IP_JOY_NONE )
+	PORT_BIT( 0x30, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* memory card inserted */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* memory card write protection */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START		/* IN3 */
+	PORT_DIPNAME( 0x01, 0x01, "Test Switch" )
+	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "Coin Chutes?" )
+	PORT_DIPSETTING(	0x00, "1?" )
+	PORT_DIPSETTING(	0x02, "2?" )
+	PORT_DIPNAME( 0x04, 0x04, "Autofire (in some games)" )
+	PORT_DIPSETTING(	0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x38, 0x38, "COMM Setting" )
+	PORT_DIPSETTING(	0x38, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x30, "1" )
+	PORT_DIPSETTING(	0x20, "2" )
+	PORT_DIPSETTING(	0x10, "3" )
+	PORT_DIPSETTING(	0x00, "4" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Freeze" )
+	PORT_DIPSETTING(	0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+
+	PORT_START		/* IN4 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN ) // having this ACTIVE_HIGH causes you to start with 2 credits using USA bios roms
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN ) // having this ACTIVE_HIGH causes you to start with 2 credits using USA bios roms
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SPECIAL )  /* handled by fake IN5 */
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	/* Fake  IN 5 */
+	PORT_START
+#if 0
+	PORT_DIPNAME( 0x03, 0x02,"Territory" )
+	PORT_DIPSETTING(	0x00,"Japan" )
+	PORT_DIPSETTING(	0x01,"USA" )
+	PORT_DIPSETTING(	0x02,"Europe" )
+//	PORT_DIPNAME( 0x04, 0x04,"Machine Mode" )
+//	PORT_DIPSETTING(	0x00,"Home" )
+//	PORT_DIPSETTING(	0x04,"Arcade" )
+	PORT_DIPNAME( 0x60, 0x60,"Game Slots" )		// Stored at 0x47 of NVRAM
+	PORT_DIPSETTING(	0x60,"2" )
+//	PORT_DIPSETTING(	0x40,"2" )
+	PORT_DIPSETTING(	0x20,"4" )
+	PORT_DIPSETTING(	0x00,"6" )
+#endif
+
+	PORT_START		/* Test switch */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SPECIAL )  /* handled by fake IN5 */
+	PORT_BITX( 0x80, IP_ACTIVE_LOW, 0, "Test Switch", KEYCODE_F2, IP_JOY_NONE )
+
+	PORT_START		/* IN0 multiplexed */
+	PORT_ANALOG( 0xff, 0x7f, IPT_TRACKBALL_X, 10, 20, 0, 0 )
+
+	PORT_START		/* IN1 multiplexed */
+	PORT_ANALOG( 0xff, 0x7f, IPT_TRACKBALL_X | IPF_PLAYER2 , 10, 20, 0, 0 )
+INPUT_PORTS_END
 
 /******************************************************************************/
 
@@ -5824,6 +5936,14 @@ DRIVER_INIT( mjneogeo )
 	init_neogeo();
 }
 
+DRIVER_INIT( popbounc )
+{
+	install_mem_read16_handler (0, 0x300000, 0x300001, popbounc1_16_r);
+	install_mem_read16_handler (0, 0x340000, 0x340001, popbounc2_16_r);
+
+	init_neogeo();
+}
+
 /******************************************************************************/
 
 static UINT32 cpu1_second_bankaddress;
@@ -6072,7 +6192,7 @@ GAMEB( 1994, fightfev, neogeo,   neogeo, neogeo, neogeo,  neogeo,   ROT0, "Vicco
 GAMEB( 1994, pspikes2, neogeo,   neogeo, ras320, neogeo,  neogeo,   ROT0, "Video System Co.", "Power Spikes II" )
 GAMEB( 1994, sonicwi2, neogeo,   neogeo, neo320, neogeo,  neogeo,   ROT0, "Video System Co.", "Aero Fighters 2 / Sonic Wings 2" )
 GAMEB( 1995, sonicwi3, neogeo,   neogeo, neo320, neogeo,  neogeo,   ROT0, "Video System Co.", "Aero Fighters 3 / Sonic Wings 3" )
-GAMEB( 1997, popbounc, neogeo,   neogeo, neogeo, neogeo,  neogeo,   ROT0, "Video System Co.", "Pop 'n Bounce / Gapporin" )
+GAMEB( 1997, popbounc, neogeo,   neogeo, neogeo, popbounc,popbounc, ROT0, "Video System Co.", "Pop 'n Bounce / Gapporin" )
 
 /* Visco */
 GAMEB( 1992, androdun, neogeo,   neogeo, neogeo, neogeo,  neogeo,   ROT0, "Visco", "Andro Dunos" )

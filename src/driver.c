@@ -149,6 +149,12 @@ const struct GameDriver *test_drivers[] =
 	DRIVER( jrpacman )	/* (c) 1983 Midway */
 	DRIVER( jumpshot )	/* (c) 1985 Bally Midway */
 	DRIVER( shootbul )	/* (c) 1985 Bally Midway */
+	DRIVER( bigbucks )	/* (c) 1986 Dynasoft Inc. */
+
+	/* S2650 Pacman Kits */
+	DRIVER( drivfrcp )	/* (c) 1984 Shinkai Inc. (Magic Eletronics Inc. licence) */
+	DRIVER( 8bpm )		/* (c) 1985 Seatongrove Ltd (Magic Eletronics USA licence) */
+	DRIVER( porky )		/* (c) 1985 Shinkai Inc. (Magic Eletronics Inc. licence) */
 
 	/* Epos games */
 	DRIVER( megadon )	/* (c) 1982 */
@@ -2996,6 +3002,7 @@ TESTDRIVER( prosport )	/* (c) 1983 */
 	DRIVER( karatedo )	/* (c) 1984 Data East Corporation (Japan) */
 	DRIVER( kchampvs )	/* (c) 1984 Data East USA (US) */
 	DRIVER( karatevs )	/* (c) 1984 Data East Corporation (Japan) */
+TESTDRIVER( compgolf )	/* (c) 1985 Data East Corporation (Japan) */
 	DRIVER( firetrap )	/* (c) 1986 Data East USA (US) */
 	DRIVER( firetpbl )	/* bootleg */
 	DRIVER( metlclsh )	/* (c) 1985 Data East */
@@ -3520,6 +3527,13 @@ TESTDRIVER( rungun2 )	/* GX505 */
 TESTDRIVER( slamdnk2 )	/* GX505 */
 TESTDRIVER( rushhero )	/* GX605 */
 
+	/* DJ Main */
+	DRIVER( bmcompmx )
+	DRIVER( hmcompmx )
+	DRIVER( bmcompm2 )
+	DRIVER( hmcompm2 )
+	DRIVER( bmcorerm )
+
 	/* Exidy games */
 	DRIVER( carpolo )	/* (c) 1977 */
 	DRIVER( sidetrac )	/* (c) 1979 */
@@ -3972,7 +3986,6 @@ TESTDRIVER( toratora )	/* (c) 1980 Game Plan */
 	/* Zaccaria games */
 	DRIVER( sia2650 )
 	DRIVER( tinv2650 )
-TESTDRIVER( embargo )
 	DRIVER( monymony )	/* (c) 1983 */
 	DRIVER( jackrabt )	/* (c) 1984 */
 	DRIVER( jackrab2 )	/* (c) 1984 */
@@ -4107,6 +4120,7 @@ TESTDRIVER( kakumei2 )
 	DRIVER( wargods )	/* (c) 1996 Midway */
 
 	/* Cinematronics raster games */
+	DRIVER( embargo )
 	DRIVER( tripool )	/* (c) 1981 Noma (Casino Tech license) */
 	DRIVER( tripoola )	/* (c) 1981 Noma (Costal Games license) */
 	DRIVER( jack )		/* (c) 1982 Cinematronics */
@@ -4492,6 +4506,7 @@ TESTDRIVER( bloodwar )
 	DRIVER( gutsn )		/* (c) 2000 Kaneko / Kouyousha (Japan) */
 	DRIVER( puzzloop )	/* (c) 1998 Mitchell (Europe) */
 	DRIVER( puzloopj )	/* (c) 1998 Mitchell (Japan) */
+	DRIVER( puzloopu )	/* (c) 1998 Mitchell (USA) */
 	DRIVER( jjparads )	/* (c) 1996 Electro Design Co. (Japan) */
 	DRIVER( jjparad2 )	/* (c) 1997 Electro Design Co. (Japan) */
 	DRIVER( ryouran )	/* (c) 1998 Electro Design Co. (Japan) */
@@ -4897,6 +4912,7 @@ TESTDRIVER( countrnb )
 	DRIVER( rmhaisei )	/* (c) 1986 Visco */
 	DRIVER( themj )		/* (c) 1987 Visco */
 	DRIVER( hanaroku )	/* (c) 1988 Alba */
+TESTDRIVER( yumefuda )	/* (c) 198? Alba */
 
 	/* Home Data games */
 	DRIVER( hourouki ) 	/* (c) 1987 Home Data */
