@@ -1128,8 +1128,19 @@ struct snd_interface sndintf[] =
 		SCSP_sh_stop,
 		0,
 		0
-},
-
+	},
+#endif
+#if (HAS_PSXSPU)
+	{
+		SOUND_PSXSPU,
+		"PSX SPU",
+		0,
+		0,
+		PSX_sh_start,
+		PSX_sh_stop,
+		0,
+		0
+	},
 #endif
 #if (HAS_YMF271)
 	{

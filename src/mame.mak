@@ -153,6 +153,7 @@ SOUNDS+=C6280@
 SOUNDS+=SP0250@
 SOUNDS+=SCSP@
 SOUNDS+=YMF271@
+SOUNDS+=PSXSPU@
 
 
 DRVLIBS = \
@@ -247,6 +248,7 @@ $(OBJ)/namco.a: \
 	$(OBJ)/vidhrdw/namconb1.o $(OBJ)/drivers/namconb1.o \
 	$(OBJ)/machine/namcond1.o $(OBJ)/vidhrdw/ygv608.o $(OBJ)/drivers/namcond1.o \
 	$(OBJ)/vidhrdw/psx.o $(OBJ)/machine/psx.o \
+	$(OBJ)/drivers/namcos10.o \
 	$(OBJ)/drivers/namcos11.o \
 	$(OBJ)/drivers/namcos12.o \
 	$(OBJ)/vidhrdw/namcos3d.o \
@@ -363,7 +365,7 @@ $(OBJ)/taito.a: \
 	$(OBJ)/vidhrdw/exzisus.o $(OBJ)/drivers/exzisus.o \
 	$(OBJ)/drivers/taito_x.o $(OBJ)/machine/cchip.o \
 	$(OBJ)/vidhrdw/minivadr.o $(OBJ)/drivers/minivadr.o \
-	$(OBJ)/drivers/ashnojoe.o \
+	$(OBJ)/drivers/ashnojoe.o $(OBJ)/vidhrdw/ashnojoe.o \
 	$(OBJ)/machine/volfied.o $(OBJ)/vidhrdw/volfied.o $(OBJ)/drivers/volfied.o \
 	$(OBJ)/machine/bonzeadv.o $(OBJ)/vidhrdw/asuka.o $(OBJ)/drivers/asuka.o \
 	$(OBJ)/vidhrdw/wgp.o $(OBJ)/drivers/wgp.o \
@@ -600,6 +602,7 @@ $(OBJ)/konami.a: \
 	$(OBJ)/vidhrdw/djmain.o $(OBJ)/drivers/djmain.o \
 	$(OBJ)/vidhrdw/plygonet.o $(OBJ)/drivers/plygonet.o \
 	$(OBJ)/drivers/mogura.o \
+	$(OBJ)/machine/am53cf96.o $(OBJ)/drivers/konamigq.o \
 
 $(OBJ)/exidy.a: \
 	$(OBJ)/machine/carpolo.o $(OBJ)/vidhrdw/carpolo.o $(OBJ)/drivers/carpolo.o \
@@ -1089,6 +1092,9 @@ $(OBJ)/other.a: \
 	$(OBJ)/vidhrdw/ladyfrog.o $(OBJ)/drivers/ladyfrog.o \
 	$(OBJ)/drivers/rabbit.o \
 	$(OBJ)/drivers/malzak.o $(OBJ)/vidhrdw/malzak.o \
+	$(OBJ)/drivers/supertnk.o \
+	$(OBJ)/drivers/crospang.o \
+	$(OBJ)/drivers/funybubl.o \
 
 
 COREOBJS += $(OBJ)/driver.o $(OBJ)/cheat.o

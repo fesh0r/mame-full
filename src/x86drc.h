@@ -938,6 +938,9 @@ do { OP1(0xdd); MODRM_MABS(3, addr); } while (0)
 **	BRANCH EMITTERS
 **#################################################################################################*/
 
+#define _setcc_r8(cond, dreg) \
+do { OP1(0x0f); OP1(0x90 + cond); MODRM_REG(0, dreg); } while (0)
+
 #define _setcc_m8abs(cond, addr) \
 do { OP1(0x0f); OP1(0x90 + cond); MODRM_MABS(0, addr); } while (0)
 

@@ -1799,7 +1799,6 @@ static int validitychecks(void)
 				}
 				if (ROMENTRY_ISFILE(romp))
 				{
-					int pre,post;
 					const char *hash;
 
 					last_name = c = ROM_GETNAME(romp);
@@ -1811,25 +1810,6 @@ static int validitychecks(void)
 							error = 1;
 						}
 						c++;
-					}
-
-					c = ROM_GETNAME(romp);
-					pre = 0;
-					post = 0;
-					while (*c && *c != '.')
-					{
-						pre++;
-						c++;
-					}
-					while (*c)
-					{
-						post++;
-						c++;
-					}
-					if (pre > 8 || post > 4)
-					{
-						printf("%s: %s has >8.3 ROM name %s\n",drivers[i]->source_file,drivers[i]->name,ROM_GETNAME(romp));
-						error = 1;
 					}
 
 					hash = ROM_GETHASHDATA(romp);

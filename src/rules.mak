@@ -1542,6 +1542,14 @@ else
 SOUNDDEFS += -DHAS_SCSP=0
 endif
 
+SOUND=$(strip $(findstring PSXSPU@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_PSXSPU=1
+SOUNDOBJS += $(OBJ)/sound/psx.o
+else
+SOUNDDEFS += -DHAS_PSXSPU=0
+endif
+
 SOUND=$(strip $(findstring YMF271@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_YMF271=1

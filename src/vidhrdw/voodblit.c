@@ -51,6 +51,45 @@ void RENDERFUNC(void)
 	int starty, stopy;
 	float fptemp;
 
+#if (0)
+	if (FBZMODE_BITS(4,1) || FBZMODE_BITS(10,1))
+	{
+		static const char *funcs[] = { "never", "lt", "eq", "le", "gt", "ne", "ge", "always" };
+		if (!FBZMODE_BITS(20,1))
+		{
+			if (!FBZMODE_BITS(3,1))
+				logerror("Depth Z: %c%c %s %08X,%08X,%08X -> %04X,%04X,%04X", FBZMODE_BITS(4,1) ? 'T' : ' ', FBZMODE_BITS(10,1) ? 'W' : ' ', funcs[FBZMODE_BITS(5,3)],
+					tri_startz,
+					tri_startz + (INT32)((tri_vb.y - tri_va.y) * (float)tri_dzdy) + (INT32)((tri_vb.x - tri_va.x) * (float)tri_dzdx),
+					tri_startz + (INT32)((tri_vc.y - tri_va.y) * (float)tri_dzdy) + (INT32)((tri_vc.x - tri_va.x) * (float)tri_dzdx),
+					(UINT16)(tri_startz >> 12),
+					(UINT16)(tri_startz + (INT32)((tri_vb.y - tri_va.y) * (float)tri_dzdy) + (INT32)((tri_vb.x - tri_va.x) * (float)tri_dzdx)) >> 12,
+					(UINT16)(tri_startz + (INT32)((tri_vc.y - tri_va.y) * (float)tri_dzdy) + (INT32)((tri_vc.x - tri_va.x) * (float)tri_dzdx)) >> 12);
+			else if (!FBZMODE_BITS(21,1))
+				logerror("Depth Wf: %c%c %s %f,%f,%f -> %04X,%04X,%04X", FBZMODE_BITS(4,1) ? 'T' : ' ', FBZMODE_BITS(10,1) ? 'W' : ' ', funcs[FBZMODE_BITS(5,3)],
+					tri_startw,
+					tri_startw + (INT32)((tri_vb.y - tri_va.y) * tri_dwdy) + (INT32)((tri_vb.x - tri_va.x) * tri_dwdx),
+					tri_startw + (INT32)((tri_vc.y - tri_va.y) * tri_dwdy) + (INT32)((tri_vc.x - tri_va.x) * tri_dwdx),
+					float_to_depth(tri_startw),
+					float_to_depth(tri_startw + (INT32)((tri_vb.y - tri_va.y) * tri_dwdy) + (INT32)((tri_vb.x - tri_va.x) * tri_dwdx)),
+					float_to_depth(tri_startw + (INT32)((tri_vc.y - tri_va.y) * tri_dwdy) + (INT32)((tri_vc.x - tri_va.x) * tri_dwdx)));
+			else
+				logerror("Depth Wz: %c%c %s %08X,%08X,%08X -> %04X,%04X,%04X", FBZMODE_BITS(4,1) ? 'T' : ' ', FBZMODE_BITS(10,1) ? 'W' : ' ', funcs[FBZMODE_BITS(5,3)],
+					tri_startz,
+					tri_startz + (INT32)((tri_vb.y - tri_va.y) * (float)tri_dzdy) + (INT32)((tri_vb.x - tri_va.x) * (float)tri_dzdx),
+					tri_startz + (INT32)((tri_vc.y - tri_va.y) * (float)tri_dzdy) + (INT32)((tri_vc.x - tri_va.x) * (float)tri_dzdx),
+					float_to_depth((float)(tri_startz) * (1.0 / 4096.0)),
+					float_to_depth((float)(tri_startz + (INT32)((tri_vb.y - tri_va.y) * tri_dzdy) + (INT32)((tri_vb.x - tri_va.x) * tri_dzdx)) * (1.0 / 4096.0)),
+					float_to_depth((float)(tri_startz + (INT32)((tri_vc.y - tri_va.y) * tri_dzdy) + (INT32)((tri_vc.x - tri_va.x) * tri_dzdx)) * (1.0 / 4096.0)));
+			
+			if (FBZMODE_BITS(16,1))
+				logerror(" + %04X\n", (UINT16)voodoo_regs[zaColor]);
+		}
+		else
+			logerror("Depth const: %04X\n", (UINT16)voodoo_regs[zaColor]);
+	}
+#endif
+
 #if (TRACK_LOD)
 	int lodbin[9];
 	if (loglod)
@@ -79,18 +118,6 @@ void RENDERFUNC(void)
 	if ((voodoo_regs[tLOD] >> 24) & 1)
 		printf("tmultibaseaddr\n");
 	
-	/* wacky verticies are just tossed */
-	if (tri_va.x < -1000. || tri_va.x > 2000. ||
-		tri_va.y < -1000. || tri_va.y > 2000. ||
-		tri_vb.x < -1000. || tri_vb.x > 2000. ||
-		tri_vb.y < -1000. || tri_vb.y > 2000. ||
-		tri_vc.x < -1000. || tri_vc.x > 2000. ||
-		tri_vc.y < -1000. || tri_vc.y > 2000.)
-	{
-		logerror("Tossed triangle: (%f,%f)-(%f,%f)-(%f,%f)\n", tri_va.x, tri_va.y, tri_vb.x, tri_vb.y, tri_vc.x, tri_vc.y);
-		return;
-	}
-
 	/* sort the verticies */
 	vmin = &tri_va;
 	vmid = &tri_vb;
@@ -214,7 +241,7 @@ void RENDERFUNC(void)
 			ADD_TO_PIXEL_COUNT(stopx - startx);
 			for (x = startx; x < stopx; x++)
 			{
-				INT32 r = 0, g = 0, b = 0, a = 0, depthval = 0;
+				INT32 r = 0, g = 0, b = 0, a = 0, depthval;
 				UINT32 texel = 0, c_local = 0;
 				
 				/* rotate stipple pattern */
@@ -240,24 +267,43 @@ void RENDERFUNC(void)
 					}
 				}
 
+				/* compute depth value (W or Z) for this pixel */
+				if (!FBZMODE_BITS(3,1))
+				{
+					depthval = curz >> 12;
+					if (depthval >= 0xffff)
+						depthval = 0xffff;
+					else if (depthval < 0)
+						depthval = 0;
+				}
+				else if (!FBZMODE_BITS(21,1))
+					depthval = float_to_depth(curw);
+				else
+					depthval = float_to_depth((float)curz * (1.0 / 4096.0));
+					
 				/* handle depth buffer testing */
 				if (FBZMODE_BITS(4,1))
 				{
-					/* compute bias */
-					INT32 depthbias = 0;
-					if (FBZMODE_BITS(16,1))
-						depthbias = (INT16)voodoo_regs[zaColor];
+					INT32 depthsource;
 				
-					/* compute depth for this pixel */
+					/* the source depth is either the iterated W/Z+bias or a constant value */
 					if (!FBZMODE_BITS(20,1))
 					{
-						if (!FBZMODE_BITS(3,1))
-							depthval = curz >> 12;
-						else
-							depthval = float_to_depth(1.0f / curw);
+						depthsource = depthval;
+
+						/* add the bias */
+						if (FBZMODE_BITS(16,1))
+						{
+							depthsource += (INT16)voodoo_regs[zaColor];
+						
+							if (depthsource >= 0xffff)
+								depthsource = 0xffff;
+							else if (depthsource < 0)
+								depthsource = 0;
+						}
 					}
 					else
-						depthval = voodoo_regs[zaColor] & 0xffff;
+						depthsource = voodoo_regs[zaColor] & 0xffff;
 
 					/* test against the depth buffer */
 					switch (FBZMODE_BITS(5,3))
@@ -265,27 +311,27 @@ void RENDERFUNC(void)
 						case 0:
 							goto skipdrawdepth;
 						case 1:
-							if ((depthval + depthbias) >= depth[x])
+							if (depthsource >= depth[x])
 								goto skipdrawdepth;
 							break;
 						case 2:
-							if ((depthval + depthbias) != depth[x])
+							if (depthsource != depth[x])
 								goto skipdrawdepth;
 							break;
 						case 3:
-							if ((depthval + depthbias) > depth[x])
+							if (depthsource > depth[x])
 								goto skipdrawdepth;
 							break;
 						case 4:
-							if ((depthval + depthbias) <= depth[x])
+							if (depthsource <= depth[x])
 								goto skipdrawdepth;
 							break;
 						case 5:
-							if ((depthval + depthbias) == depth[x])
+							if (depthsource == depth[x])
 								goto skipdrawdepth;
 							break;
-						case 6:
-							if ((depthval + depthbias) < depth[x])
+						case 6: 
+							if (depthsource < depth[x])
 								goto skipdrawdepth;
 							break;
 						case 7:
@@ -1272,7 +1318,7 @@ void RENDERFUNC(void)
 							fogalpha = (cura >> 16) & 0xff;
 						else
 						{
-							INT32 wval = (FBZMODE_BITS(20,1) && FBZMODE_BITS(3,1)) ? depthval : float_to_depth(1.0f / curw);
+							INT32 wval = float_to_depth(curw);
 							fogalpha = fog_blend[wval >> 10];
 							fogalpha += (fog_delta[wval >> 10] * ((wval >> 2) & 0xff)) >> 10;
 						}

@@ -97,6 +97,9 @@ struct dcs_state
 	UINT16	output_data;
 	UINT16	output_control;
 	UINT32	output_control_cycles;
+	
+	UINT8	last_output_full;
+	UINT8	last_input_empty;
 
 	void	(*output_full_cb)(int);
 	void	(*input_empty_cb)(int);
@@ -374,12 +377,12 @@ static void dcs_reset(void)
 	cpu_set_irq_line(dcs_cpunum, ADSP2105_IRQ2, CLEAR_LINE);
 
 	/* initialize the comm bits */
-	if (IS_INPUT_FULL() && dcs.input_empty_cb)
-		(*dcs.input_empty_cb)(1);
 	SET_INPUT_EMPTY();
-	if (IS_OUTPUT_FULL() && dcs.output_full_cb)
-		(*dcs.output_full_cb)(0);
 	SET_OUTPUT_EMPTY();
+	if (!dcs.last_input_empty && dcs.input_empty_cb)
+		(*dcs.input_empty_cb)(dcs.last_input_empty = 1);
+	if (dcs.last_output_full && dcs.output_full_cb)
+		(*dcs.output_full_cb)(dcs.last_output_full = 0);
 
 	/* boot */
 	dcs.control_regs[SYSCONTROL_REG] = 0;
@@ -704,8 +707,8 @@ void dcs_data_w(int data)
 	cpu_boost_interleave(TIME_IN_USEC(0.5), TIME_IN_USEC(5));
 	cpu_set_irq_line(dcs_cpunum, ADSP2105_IRQ2, ASSERT_LINE);
 
-	if (IS_INPUT_EMPTY() && dcs.input_empty_cb)
-		(*dcs.input_empty_cb)(0);
+	if (dcs.last_input_empty && dcs.input_empty_cb)
+		(*dcs.input_empty_cb)(dcs.last_input_empty = 0);
 	SET_INPUT_FULL();
 	dcs.input_data = data;
 }
@@ -713,8 +716,8 @@ void dcs_data_w(int data)
 
 static WRITE16_HANDLER( input_latch_ack_w )
 {
-	if (IS_INPUT_FULL() && dcs.input_empty_cb)
-		(*dcs.input_empty_cb)(1);
+	if (!dcs.last_input_empty && dcs.input_empty_cb)
+		(*dcs.input_empty_cb)(dcs.last_input_empty = 1);
 	SET_INPUT_EMPTY();
 	cpu_set_irq_line(dcs_cpunum, ADSP2105_IRQ2, CLEAR_LINE);
 }
@@ -737,8 +740,8 @@ static READ16_HANDLER( input_latch_r )
 
 static void latch_delayed_w(int data)
 {
-	if (IS_OUTPUT_EMPTY() && dcs.output_full_cb)
-		(*dcs.output_full_cb)(1);
+	if (!dcs.last_output_full && dcs.output_full_cb)
+		(*dcs.output_full_cb)(dcs.last_output_full = 1);
 	SET_OUTPUT_FULL();
 	dcs.output_data = data;
 }
@@ -747,7 +750,7 @@ static void latch_delayed_w(int data)
 static WRITE16_HANDLER( output_latch_w )
 {
 	if (LOG_DCS_IO)
-		logerror("%08X:output_latch_w(%04X)\n", activecpu_get_pc(), data);
+		logerror("%08X:output_latch_w(%04X) (empty=%d)\n", activecpu_get_pc(), data, IS_OUTPUT_EMPTY());
 	timer_set(TIME_NOW, data, latch_delayed_w);
 }
 
@@ -767,8 +770,8 @@ void dcs_ack_w(void)
 int dcs_data_r(void)
 {
 	/* data is actually only 8 bit (read from d8-d15) */
-	if (IS_OUTPUT_FULL() && dcs.output_full_cb)
-		(*dcs.output_full_cb)(0);
+	if (dcs.last_output_full && dcs.output_full_cb)
+		(*dcs.output_full_cb)(dcs.last_output_full = 0);
 	if (dcs.auto_ack)
 		delayed_ack_w(0);
 

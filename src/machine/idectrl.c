@@ -833,8 +833,10 @@ static void read_sector_done(int which)
 	/* if we succeeded, advance to the next sector and set the nice bits */
 	if (count == 1)
 	{
-		/* advance the pointers */
-		next_sector(ide);
+		/* advance the pointers, unless this is the last sector */
+		/* Gauntlet: Dark Legacy checks to make sure we stop on the last sector */
+		if (ide->sector_count != 1)
+			next_sector(ide);
 
 		/* clear the error value */
 		ide->error = IDE_ERROR_NONE;
@@ -1017,8 +1019,10 @@ static void write_sector_done(int which)
 	/* if we succeeded, advance to the next sector and set the nice bits */
 	if (count == 1)
 	{
-		/* advance the pointers */
-		next_sector(ide);
+		/* advance the pointers, unless this is the last sector */
+		/* Gauntlet: Dark Legacy checks to make sure we stop on the last sector */
+		if (ide->sector_count != 1)
+			next_sector(ide);
 
 		/* clear the error value */
 		ide->error = IDE_ERROR_NONE;

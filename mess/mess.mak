@@ -439,32 +439,34 @@ $(OBJ)/fairch.a: \
 	$(OBJ)/mess/systems/channelf.o 
 
 $(OBJ)/ti99.a:	   \
-	$(OBJ)/mess/machine/tms9901.o  \
-	$(OBJ)/mess/machine/tms9902.o \
-	$(OBJ)/mess/sndhrdw/spchroms.o \
-	$(OBJ)/mess/machine/ti99_4x.o  \
-	$(OBJ)/mess/systems/ti99_4x.o  \
-	$(OBJ)/mess/machine/990_hd.o	 \
-	$(OBJ)/mess/machine/990_tap.o	 \
-	$(OBJ)/mess/vidhrdw/911_vdt.o  \
-	$(OBJ)/mess/systems/ti990_10.o \
-	$(OBJ)/mess/machine/ti990.o \
-	$(OBJ)/mess/machine/mm58274c.o \
-	$(OBJ)/mess/machine/994x_ser.o \
-	$(OBJ)/mess/systems/ti99_4p.o  \
-	$(OBJ)/mess/machine/at29040.o  \
-	$(OBJ)/mess/machine/99_dsk.o   \
-	$(OBJ)/mess/machine/99_ide.o   \
-	$(OBJ)/mess/machine/99_peb.o   \
-	$(OBJ)/mess/machine/99_hsgpl.o \
-	$(OBJ)/mess/machine/smc92x4.o  \
-	$(OBJ)/mess/machine/rtc65271.o \
-	$(OBJ)/mess/systems/geneve.o   \
-	$(OBJ)/mess/machine/geneve.o   \
-	$(OBJ)/mess/systems/tm990189.o \
+	$(OBJ)/mess/machine/tms9901.o	\
+	$(OBJ)/mess/machine/tms9902.o	\
+	$(OBJ)/mess/machine/ti99_4x.o	\
+	$(OBJ)/mess/machine/990_hd.o	\
+	$(OBJ)/mess/machine/990_tap.o	\
+	$(OBJ)/mess/machine/ti990.o		\
+	$(OBJ)/mess/machine/mm58274c.o	\
+	$(OBJ)/mess/machine/994x_ser.o	\
+	$(OBJ)/mess/machine/at29040.o	\
+	$(OBJ)/mess/machine/99_dsk.o	\
+	$(OBJ)/mess/machine/99_ide.o	\
+	$(OBJ)/mess/machine/99_peb.o	\
+	$(OBJ)/mess/machine/99_hsgpl.o	\
+	$(OBJ)/mess/machine/smc92x4.o	\
+	$(OBJ)/mess/machine/rtc65271.o	\
+	$(OBJ)/mess/machine/geneve.o	\
+	$(OBJ)/mess/machine/990_dk.o	\
+	$(OBJ)/mess/sndhrdw/spchroms.o	\
+	$(OBJ)/mess/systems/ti990_4.o	\
+	$(OBJ)/mess/systems/ti990_10.o	\
+	$(OBJ)/mess/systems/ti99_4x.o	\
+	$(OBJ)/mess/systems/ti99_4p.o	\
+	$(OBJ)/mess/systems/geneve.o	\
+	$(OBJ)/mess/systems/tm990189.o	\
 	$(OBJ)/mess/systems/ti99_8.o	\
-#	$(OBJ)/mess/systems/ti99_2.o	 \
-#	$(OBJ)/mess/systems/ti990_4.o  \
+	$(OBJ)/mess/vidhrdw/911_vdt.o	\
+	$(OBJ)/mess/vidhrdw/733_asr.o	\
+#	$(OBJ)/mess/systems/ti99_2.o	\
 
 $(OBJ)/tutor.a:   \
 	$(OBJ)/mess/systems/tutor.o
