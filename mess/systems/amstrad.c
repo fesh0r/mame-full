@@ -2480,9 +2480,12 @@ static MEMORY_READ_START (readmem_amstrad)
 	{0x0a000, 0x0bfff, MRA_BANK6},
 	{0x0c000, 0x0dfff, MRA_BANK7},
 	{0x0e000, 0x0ffff, MRA_BANK8},
+#if 0
+	    // this traps with the new memory system
 	{0x010000, 0x013fff, MRA_ROM},	   /* OS */
 	{0x014000, 0x017fff, MRA_ROM},	   /* BASIC */
 	{0x018000, 0x01bfff, MRA_ROM},	   /* AMSDOS */
+#endif
 MEMORY_END
 
 static MEMORY_WRITE_START (writemem_amstrad)
