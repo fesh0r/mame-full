@@ -1462,8 +1462,9 @@ static struct {
 	{ 0xe6ea96dc ,0x1000, "ZRT80" },
 	{ 0x4dbdc60f ,0x800, "ZRT80 char" },
 
-	{ 0xf171c282 ,0x4000, "PK-01 Lviv" },
-	{ 0x44a347d9 ,0x4000, "PK-01 Lviv rev. 2" },
+	{ 0x44a347d9 ,0x4000, "PK-01 Lviv" },
+	{ 0x551622f5 ,0x4000, "PK-01 Lviv (alternate)" },
+	{ 0xf171c282 ,0x4000, "PK-01 Lviv (early)" },
 
 /* Palm OS PDA *****************************************************************/
 	/* some of this roms may be modified */
