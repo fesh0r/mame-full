@@ -303,4 +303,4 @@ SYSTEM_CONFIG_START(kaypro)
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      CONFIG    COMPANY   FULLNAME */
-COMP( 1984, kaypro,   0,        kaypro,   kaypro,   kaypro,   kaypro,   "Non Linear Systems",  "Kaypro 2x" )
+COMP( 1982, kaypro,   0,        kaypro,   kaypro,   kaypro,   kaypro,   "Non Linear Systems",  "Kaypro 2x" )
