@@ -178,6 +178,9 @@ enum
 #if (HAS_TMS34020)
 	CPU_TMS34020,
 #endif
+#if (HAS_TI990_10)
+	CPU_TI990_10,
+#endif
 #if (HAS_TMS9900)
 	CPU_TMS9900,
 #endif
@@ -196,11 +199,8 @@ enum
 #if (HAS_TMS9995)
 	CPU_TMS9995,
 #endif
-#if (HAS_TMS99105A)
-	CPU_TMS99105A,
-#endif
-#if (HAS_TMS99110A)
-	CPU_TMS99110A,
+#if (HAS_TMS99000)
+	CPU_TMS99000,
 #endif
 #if (HAS_Z8000)
 	CPU_Z8000,

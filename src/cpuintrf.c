@@ -505,6 +505,9 @@ const struct cpu_interface cpuintrf[] =
 #if (HAS_TMS34020)
 	CPU0(TMS34020, tms34020, 2,  0,1.00,0,             16,29lew,  3,29,LE,2,10	),
 #endif
+#if (HAS_TI990_10)
+	/*CPU4*/CPU0(TI990_10, ti990_10, 1,  0,1.00,-1,			   16,/*21*/24bew,  0,/*21*/24,BE,2, 6	),
+#endif
 #if (HAS_TMS9900)
 	CPU0(TMS9900,  tms9900,  1,  0,1.00,-1,			   16,16bew,  0,16,BE,2, 6	),
 #endif
@@ -521,13 +524,10 @@ const struct cpu_interface cpuintrf[] =
 	CPU0(TMS9989,  tms9989,  1,  0,1.00,-1,			    8, 16,	  0,16,BE,1, 6	),
 #endif
 #if (HAS_TMS9995)
-	CPU0(TMS9995,  tms9995,  1,  0,1.00,-1,			    8, 16,	  0,16,BE,1, 6	),
+	/*CPU4*/CPU0(TMS9995,  tms9995,  1,  0,1.00,-1,			    8, 16,	  0,16,BE,1, 6	),
 #endif
-#if (HAS_TMS99105A)
-	CPU0(TMS99105A,tms99105a,1,  0,1.00,-1,			   16,16bew,  0,16,BE,2, 6	),
-#endif
-#if (HAS_TMS99110A)
-	CPU0(TMS99110A,tms99110a,1,  0,1.00,-1,			   16,16bew,  0,16,BE,2, 6	),
+#if (HAS_TMS99000)
+	CPU0(TMS99000,tms99000,1,  0,1.00,-1,			   16,16bew,  0,16,BE,2, 6	),
 #endif
 #if (HAS_Z8000)
 	CPU0(Z8000,    z8000,	 2,  0,1.00,0,        	   16,16bew,  0,16,BE,2, 6	),
