@@ -769,7 +769,6 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int openf
 							found = 1;
 						}
 					}
-					continue;
 				}
 
 				/* at this point, we have a path that does not correspond to a real file; move
