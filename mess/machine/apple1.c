@@ -16,6 +16,10 @@
 #include "inptport.h"
 #include "includes/apple1.h"
 
+
+/*****************************************************************************
+**	Structures
+*****************************************************************************/
 struct pia6821_interface apple1_pia0 =
 {
 	apple1_pia0_kbdin,				   /* returns key input */
@@ -51,8 +55,13 @@ static UINT8 apple1_kbd_conv[] =
 	0x5f, ' ', 0x1b
 };
 
+
 static int apple1_kbd_data;
 
+
+/*****************************************************************************
+**	apple1_init_machine
+*****************************************************************************/
 void apple1_init_machine(void)
 {
 	logerror("apple1_init\r\n");
@@ -70,16 +79,102 @@ void apple1_init_machine(void)
 	pia_config(0, PIA_8BIT | PIA_AUTOSENSE, &apple1_pia0);
 }
 
+
+/*****************************************************************************
+**	apple1_stop_machine
+*****************************************************************************/
 void apple1_stop_machine(void)
 {
 }
 
+
+/*****************************************************************************
+**	apple1_verify_header
+*****************************************************************************/
+static int apple1_verify_header (UINT8 *data)
+{
+	/* Verify the format for the snapshot */
+	if ((data[0] == 'L') &&
+		(data[1] == 'O') &&
+		(data[2] == 'A') &&
+		(data[3] == 'D') &&
+		(data[4] == ':') &&
+		(data[7] == 'D') &&
+		(data[8] == 'A') &&
+		(data[9] == 'T') &&
+		(data[10]== 'A') &&
+		(data[11]== ':'))
+	{
+		return(IMAGE_VERIFY_PASS);
+	}
+	else
+	{
+		return(IMAGE_VERIFY_FAIL);
+	}
+}
+
+
+/*****************************************************************************
+**	apple1_load_snap
+**	Format of the binary SnapShot Image is:
+**	[ LOAD:xxyyDATA:zzzzzzzzzzzzz....]
+**	Where xxyy is the hex value to load the Data zzzzzzz to
+**
+*****************************************************************************/
+int apple1_load_snap (int id)
+{
+	void *snapfile = NULL;
+	UINT8 *memptr;
+	UINT8 snapdata[0x1000];
+	UINT16 starting_offset = 0x0000;
+
+	/* A snapshot isn't mandatory for the apple1 */
+	if (!device_filename(IO_SNAPSHOT,id) || !strlen(device_filename(IO_SNAPSHOT,id) ))
+	{
+		logerror("Apple1 - warning: no snapshot specified - OK\n");
+		return INIT_PASS;
+	}
+
+	/* Load the specified Snapshot */
+	if (!(snapfile = image_fopen (IO_SNAPSHOT, id, OSD_FILETYPE_IMAGE, 0)))
+	{
+		logerror("Apple1 - Unable to locate snapshot: %s\n",device_filename(IO_SNAPSHOT,id) );
+		return INIT_FAIL;
+	}
+
+	/* Read the snapshot data into a temporary array */
+	osd_fread (snapfile, snapdata, 0x1000);
+	osd_fclose (snapfile);
+
+	/* Verify the snapshot header */
+	if (apple1_verify_header(snapdata) == IMAGE_VERIFY_FAIL)
+	{
+		logerror("Apple1 - Snapshot Header is in incorrect format - needs to be LOAD:xxyyDATA:\n");
+		return(INIT_FAIL);
+	}
+
+	/* Extract the starting offset to load the snapshot to! */
+	starting_offset = (snapdata[5] << 8) | (snapdata[6]);
+	logerror("Apple1 - LoadAddress is 0x%04x\n", starting_offset);
+
+	/* Point to the region where the snapshot will be loaded to */
+	memptr = memory_region(REGION_CPU1) + starting_offset;
+
+	/* Copy the Actual Data into Memory Space */
+	memcpy(memptr, &snapdata[12], 0x1000);
+
+	return INIT_PASS;
+}
+
+
+/*****************************************************************************
+**	apple1_interrupt
+*****************************************************************************/
 int apple1_interrupt(void)
 {
 	int loop;
 
-/* Check for keypresses */
-
+	/* Check for keypresses */
 	apple1_kbd_data = 0;
 	if (readinputport(3) & 0x0020)	/* Reset */
 	{
@@ -115,25 +210,26 @@ int apple1_interrupt(void)
 	return ignore_interrupt();
 }
 
-/* || */
 
+/*****************************************************************************
+**	READ/WRITE HANDLERS
+*****************************************************************************/
 READ_HANDLER( apple1_pia0_kbdin )
 {
 	return (apple1_kbd_data | 0x80);
 }
-
 READ_HANDLER( apple1_pia0_dsprdy )
 {
-	return (0x00);					   /* Screen always ready */
+	return (0x00);		/* Screen always ready */
 }
-
 READ_HANDLER( apple1_pia0_kbdrdy )
 {
-	if (apple1_kbd_data) return (1);	/* Key available */
-
+	if (apple1_kbd_data)
+	{
+		return (1);		/* Key available */
+	}
 	return (0x00);
 }
-
 WRITE_HANDLER( apple1_pia0_dspout )
 {
 	apple1_vh_dsp_w(data);

@@ -214,9 +214,33 @@ ROM_START(apple1)
 	ROM_LOAD("apple1.vid", 0x0000, 0x0400, 0xa3f2d66f)
 ROM_END
 
-static	const	struct	IODevice io_apple1[] = {
-	{ IO_END }
+static const struct	IODevice io_apple1[] =
+{
+	{
+		IO_SNAPSHOT,		/* type 					*/
+		1,					/* count 					*/
+		"snp\0",			/* file extensions 			*/
+		IO_RESET_ALL,		/* reset if file changed	*/
+		0,					/* id 						*/
+		apple1_load_snap,	/* load 					*/
+		NULL,				/* exit 					*/
+		NULL,				/* info 					*/
+		NULL,				/* open 					*/
+		NULL,				/* close 					*/
+		NULL,				/* status 					*/
+		NULL,				/* seek 					*/
+		NULL,				/* tell 					*/
+		NULL,				/* input 					*/
+		NULL,				/* output 					*/
+		NULL,				/* input_chunk 				*/
+		NULL				/* output_chunk 			*/
+	},
+	{
+		IO_END
+	}
 };
+
+
 
 /*    YEAR	NAME	PARENT	MACHINE	INPUT	INIT	COMPANY				FULLNAME */
 COMP( 1976,	apple1,	0,		apple1,	apple1,	0,		"Apple Computer",	"Apple I" )
