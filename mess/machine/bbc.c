@@ -545,6 +545,7 @@ void init_machine_bbcb(void)
 void stop_machine_bbcb(void)
 {
 	wd179x_stop_drive();
+    i8271_stop();
 }
 
 /* load floppy */
