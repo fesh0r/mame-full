@@ -1766,6 +1766,8 @@ ROM_END
 ROM_START( t1000hx )
     ROM_REGION(0x100000,REGION_CPU1, 0)
     ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
+    // partlist says it has 1 128kbyte rom
+    ROM_LOAD("t1000hx.e0", 0xe0000, 0x10000, 0x61dbf242)
     ROM_LOAD("tandy1t.rom", 0xf0000, 0x10000, 0xd37a1d5f)
 //	ROM_REGION(0x01100,REGION_GFX1, 0)
 	ROM_REGION(0x02000,REGION_GFX1, 0)
