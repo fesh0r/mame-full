@@ -1299,6 +1299,8 @@ void TMS99XX_RESET(void *p)
 {
 #if (TMS99XX_MODEL == TI990_10_ID)
 	ti990_10reset_param *param = (ti990_10reset_param *) p;
+#elif (TMS99XX_MODEL == TMS9900_ID)
+	tms9900reset_param *param = (tms9900reset_param *) p;
 #elif (TMS99XX_MODEL == TMS9995_ID)
 	tms9995reset_param *param = (tms9995reset_param *) p;
 #endif
@@ -1311,6 +1313,11 @@ void TMS99XX_RESET(void *p)
 
 		I.error_interrupt_callback = param ? param->error_interrupt_callback : NULL;
 	#endif
+
+	#if (TMS99XX_MODEL == TMS9900_ID)
+		I.idle_callback = param ? param->idle_callback : NULL;
+	#endif
+
 
 	contextswitchX(0x0000);
 

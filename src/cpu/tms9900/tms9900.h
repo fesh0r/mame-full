@@ -64,7 +64,7 @@ extern const char *ti990_10_info(void *context, int regnum);
 extern unsigned ti990_10_dasm(char *buffer, unsigned pc);
 
 /*
-  structure with the parameters ti990_10_reset wants.
+	structure with the parameters ti990_10_reset wants.
 */
 typedef struct ti990_10reset_param
 {
@@ -104,6 +104,14 @@ extern void tms9900_set_irq_line(int irqline, int state);
 extern void tms9900_set_irq_callback(int (*callback)(int irqline));
 extern const char *tms9900_info(void *context, int regnum);
 extern unsigned tms9900_dasm(char *buffer, unsigned pc);
+
+/*
+	structure with optional parameters for tms9900_reset.
+*/
+typedef struct tms9900reset_param
+{
+	void (*idle_callback)(int state);
+} tms9900reset_param;
 
 #endif
 
