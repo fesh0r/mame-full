@@ -20,16 +20,11 @@ struct InputCode
 	const struct InputPort *ipt[NUM_SIMUL_KEYS];
 };
 
-enum
-{
-	STATUS_KEYDOWN = 1	
-};
-
 struct KeyBuffer
 {
 	int begin_pos;
 	int end_pos;
-	int status;
+	unsigned int status_keydown : 1;
 	unicode_char_t buffer[4096];
 };
 
@@ -334,24 +329,23 @@ static const struct CharInfo *find_charinfo(unicode_char_t target_char)
 
 ***************************************************************************/
 
-#if LOG_INPUTX
 static const char *charstr(unicode_char_t ch)
 {
 	static char buf[3];
 
-	switch(ch) {
-	case '\0':	strcpy(buf, "\\0");		break;
-	case '\r':	strcpy(buf, "\\r");		break;
-	case '\n':	strcpy(buf, "\\n");		break;
-	case '\t':	strcpy(buf, "\\t");		break;
-	default:
-		buf[0] = (char) ch;
-		buf[1] = '\0';
-		break;
+	switch(ch)
+	{
+		case '\0':	strcpy(buf, "\\0");		break;
+		case '\r':	strcpy(buf, "\\r");		break;
+		case '\n':	strcpy(buf, "\\n");		break;
+		case '\t':	strcpy(buf, "\\t");		break;
+		default:
+			buf[0] = (char) ch;
+			buf[1] = '\0';
+			break;
 	}
 	return buf;
 }
-#endif /* LOG_INPUTX */
 
 
 
@@ -391,10 +385,9 @@ static int scan_keys(const struct InputPort *input_ports, struct InputCode *code
 					memcpy((void *) codes[code].ipt, shift_ports, sizeof(shift_ports[0]) * keys);
 					codes[code].port[keys] = port;
 					codes[code].ipt[keys] = ipt_key;
-#if LOG_INPUTX
-					if (gamedrv == Machine->gamedrv)
+
+					if (LOG_INPUTX)
 						logerror("inputx: code=%i (%s) port=%i ipt->name='%s'\n", (int) code, charstr(code), port, ipt->name);
-#endif
 				}
 			}
 			break;
@@ -704,7 +697,7 @@ static void internal_post_key(unicode_char_t ch)
 	if (keybuf->begin_pos == keybuf->end_pos)
 	{
 		mame_timer_adjust(inputx_timer, choose_delay(ch), 0, time_zero);
-		keybuf->status &= ~STATUS_KEYDOWN;
+		keybuf->status_keydown = 0;
 	}
 
 	keybuf->buffer[keybuf->end_pos++] = ch;
@@ -745,9 +738,9 @@ void inputx_postn_rate(const unicode_char_t *text, size_t text_len, mame_time ra
 					ch = '\r';
 				else
 					last_cr = (ch == '\r');
-#if LOG_INPUTX
-				logerror("inputx_postn(): code=%i (%s) port=%i ipt->name='%s'\n", (int) ch, charstr(ch), codes[ch].port[0], codes[ch].ipt[0] ? codes[ch].ipt[0]->name : "<null>");
-#endif
+
+				if (LOG_INPUTX)
+					logerror("inputx_postn(): code=%i (%s) port=%i ipt->name='%s'\n", (int) ch, charstr(ch), codes[ch].port[0], codes[ch].ipt[0] ? codes[ch].ipt[0]->name : "<null>");
 
 				if (can_post_key_directly(ch))
 				{
@@ -799,15 +792,15 @@ static void inputx_timerproc(int dummy)
 	else
 	{
 		/* the driver does not have a queue_chars handler */
-		if (keybuf->status & STATUS_KEYDOWN)
+		if (keybuf->status_keydown)
 		{
-			keybuf->status &= ~STATUS_KEYDOWN;
+			keybuf->status_keydown = FALSE;
 			keybuf->begin_pos++;
 			keybuf->begin_pos %= sizeof(keybuf->buffer) / sizeof(keybuf->buffer[0]);
 		}
 		else
 		{
-			keybuf->status |= STATUS_KEYDOWN;
+			keybuf->status_keydown = TRUE;
 		}
 	}
 
@@ -835,7 +828,7 @@ void inputx_update(UINT32 *ports)
 		keybuf = get_buffer();
 
 		/* is the key down right now? */
-		if ((keybuf->status & STATUS_KEYDOWN) && (keybuf->begin_pos != keybuf->end_pos))
+		if (keybuf->status_keydown && (keybuf->begin_pos != keybuf->end_pos))
 		{
 			/* identify the character that is down right now, and its component codes */
 			ch = keybuf->buffer[keybuf->begin_pos];
