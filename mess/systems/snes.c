@@ -7,9 +7,7 @@
   Anthony Kruize
   Based on the original MESS driver by Lee Hammerton (aka Savoury Snax)
 
-  Driver is very preliminary right now.  Some games run, only a few are
-  actually playable.  Video emulation is very basic at the moment, enough to
-  get by with on most games though.
+  Driver is preliminary right now.
   Sound emulation currently consists of the SPC700 and that's about it. Without
   the DSP being emulated, there's no sound even if the code is being executed.
   I need to figure out how to get the 65816 and the SPC700 to stay in sync.
@@ -20,14 +18,12 @@
   Todo (in no particular order):
     - Emulate extra chips - superfx, dsp2, sa-1 etc.
     - Add sound emulation. Currently the SPC700 is emulated, but that's it.
-    - Add transparency(fixed colour), windows etc to the video emulation.
-    - Add fullgraphic,mosaic etc.
-    - Add support for Mode 7. (In Progress)
-    - Figure out how games determine if they are running on a PAL or NTSC
-      system.
-    - Handle interleaved and maybe even multi-part roms???
+    - Add windows, horizontal mosaic etc to the video emulation.
+    - Add support for fullgraphic mode.
+    - Fix support for Mode 7. (In Progress)
+    - Handle interleaved roms (maybe even multi-part roms, but how?)
     - Add support for running at 3.58Mhz at the appropriate time.
-    - I'm sure there's lots more.
+    - I'm sure there's lots more ...
 
 ***************************************************************************/
 #include "driver.h"
@@ -39,7 +35,7 @@ static MEMORY_READ_START( snes_readmem )
 	{ 0x300000, 0x3fffff, snes_r_bank2 },	/* I/O and ROM (repeats for each bank) */
 	{ 0x400000, 0x5fffff, snes_r_bank3 },	/* ROM (and reserved in Mode 20) */
 	{ 0x600000, 0x6fffff, MRA_NOP },		/* Reserved */
-	{ 0x700000, 0x77ffff, MRA_RAM },		/* 256KB Mode 20 save ram */
+	{ 0x700000, 0x77ffff, snes_r_sram },	/* 256KB Mode 20 save ram + reserved from 0x8000 - 0xffff */
 	{ 0x780000, 0x7dffff, MRA_NOP },		/* Reserved */
 	{ 0x7e0000, 0x7fffff, MRA_RAM },		/* 8KB Low RAM, 24KB High RAM, 96KB Expanded RAM */
 	{ 0x800000, 0xffffff, snes_r_bank4 },	/* Mirror and ROM */
@@ -50,7 +46,7 @@ static MEMORY_WRITE_START( snes_writemem )
 	{ 0x300000, 0x3fffff, snes_w_bank2 },	/* I/O and ROM (repeats for each bank) */
 	{ 0x400000, 0x5fffff, MWA_ROM },		/* ROM (and reserved in Mode 20) */
 	{ 0x600000, 0x6fffff, MWA_NOP },		/* Reserved */
-	{ 0x700000, 0x77ffff, MWA_RAM },		/* 256KB Mode 20 save ram */
+	{ 0x700000, 0x77ffff, MWA_RAM },		/* 256KB Mode 20 save ram + reserved from 0x8000 - 0xffff */
 	{ 0x780000, 0x7dffff, MWA_NOP },		/* Reserved */
 	{ 0x7e0000, 0x7fffff, MWA_RAM },		/* 8KB Low RAM, 24KB High RAM, 96KB Expanded RAM */
 	{ 0x800000, 0xffffff, snes_w_bank4 },	/* Mirror and ROM */
@@ -73,7 +69,6 @@ static MEMORY_WRITE_START( spc_writemem )
 MEMORY_END
 
 INPUT_PORTS_START( snes )
-
 	PORT_START  /* IN 0 : Joypad 1 - L */
 	PORT_BIT_NAME( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON3   | IPF_PLAYER1, "P1 Button A" )
 	PORT_BIT_NAME( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON4   | IPF_PLAYER1, "P1 Button X" )
@@ -224,7 +219,10 @@ MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( snespal )
 	MDRV_IMPORT_FROM(snes)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_VBLANK_INT(snes_scanline_interrupt, 312)
 	MDRV_FRAMES_PER_SECOND(50)
+	MDRV_MACHINE_INIT( snespal )
 MACHINE_DRIVER_END
 
 SYSTEM_CONFIG_START(snes)
@@ -257,4 +255,4 @@ ROM_END
 
 /*     YEAR  NAME     PARENT  MACHINE  INPUT  INIT  CONFIG  COMPANY     FULLNAME                                      FLAGS */
 CONSX( 1989, snes,    0,      snes,    snes,  0,    snes,   "Nintendo", "Super Nintendo Entertainment System (NTSC)", GAME_NOT_WORKING )
-CONSX( 1989, snespal, snes,   snespal, snes,  0,    snes,   "Nintendo", "Super Nintendo Entertainment System (PAL)",  GAME_NOT_WORKING )
+CONSX( 1991, snespal, snes,   snespal, snes,  0,    snes,   "Nintendo", "Super Nintendo Entertainment System (PAL)",  GAME_NOT_WORKING )
