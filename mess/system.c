@@ -93,7 +93,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( a7800 ) 	/* Atari 7800									  */
 /*	DRIVER( jaguar )*/	/* Atari Jaguar 								  */
 /*	DRIVER( lynx )*/	/* Atari Lynx Handheld							  */
-TESTDRIVER( atarist )
+//!!TESTDRIVER( atarist )
 	/* BALLY */
 	DRIVER( astrocde )	/* Bally Astrocade								  */
 
@@ -126,7 +126,7 @@ TESTDRIVER( atarist )
 	DRIVER( gamegear )	/* Sega Game Gear Handheld						  */
 	DRIVER( sms )		/* Sega Sega Master System						  */
 //!!	DRIVER( genesis )	/* Sega Genesis/MegaDrive						  */
-TESTDRIVER( saturn )	/* Sega Saturn									  */
+//!!TESTDRIVER( saturn )	/* Sega Saturn									  */
 
 	/* GCE */
 	DRIVER( vectrex )	/* General Consumer Electric Vectrex - 1982-1984  */
