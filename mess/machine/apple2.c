@@ -723,7 +723,7 @@ MACHINE_INIT( apple2 )
 		|| !strcmp(Machine->gamedrv->name, "apple2cp");
 	apple2_setvar(need_intcxrom ? VAR_INTCXROM : 0, ~0);
 
-	AY3600_init(a2_config->keyboard_type);
+	AY3600_init();
 
 	a2_speaker_state = 0;
 
@@ -1582,16 +1582,6 @@ DRIVER_INIT( apple2 )
 	struct apple2_config a2_cfg;
 	
 	memset(&a2_cfg, 0, sizeof(a2_cfg));
-
-	/* determine keyboard type */
-	if (!strcmp(Machine->gamedrv->name, "apple2"))
-		a2_cfg.keyboard_type = AP2_KEYBOARD_2;
-	else if (!strcmp(Machine->gamedrv->name, "apple2p"))
-		a2_cfg.keyboard_type = AP2_KEYBOARD_2P;
-	else if (!strcmp(Machine->gamedrv->name, "apple2ep"))
-		a2_cfg.keyboard_type = AP2_KEYBOARD_2GS;
-	else
-		a2_cfg.keyboard_type = AP2_KEYBOARD_2E;
 
 	/* specify slots */
 	if (!strcmp(Machine->gamedrv->name, "apple2c0") ||

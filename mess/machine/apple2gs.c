@@ -1656,7 +1656,6 @@ DRIVER_INIT( apple2gs )
 	struct apple2_config cfg;
 	
 	memset(&cfg, 0, sizeof(cfg));
-	cfg.keyboard_type = AP2_KEYBOARD_2GS;
 	cfg.slots[0] = &apple2_slot_langcard;
 	cfg.slots[4] = &apple2_slot_mockingboard;
 	cfg.slots[6] = &apple2_slot_iwm;
