@@ -21,6 +21,7 @@ Needed:
 4. Artworks.
 
 New:
+05/10/2002 TI-85 serial link works again.
 17/09/2002 TI-85 snapshots loading fixed. Few code cleanups.
 	   TI-86 SNAPSHOT LOADING DOESNT WORK.
 	   TI-85, TI-86 SERIAL LINK DOESNT WORK.
@@ -505,56 +506,8 @@ ROM_START (ti86grom)
 ROM_END
 
 #define io_ti81	io_NULL
-
-static const struct IODevice io_ti85[] = {
-    {
-	IO_SERIAL,		/* type */
-	1,			/* count */
-	"85p\085s\085i\085n\085c\085l\085k\085m\085v\085d\085e\085r\085g\085b\0",
-				/* file extensions */
-	IO_RESET_NONE,		/* reset if file changed */
-	OSD_FOPEN_READ,		/* open mode */
-	0,			/* id */
-	ti85_serial_init,	/* init */
-	ti85_serial_exit,		/* exit */
-	NULL,                   /* info */
-	NULL,                   /* open */
-	NULL,                   /* close */
-	NULL,                   /* status */
-	NULL,                   /* seek */
-	NULL,                   /* tell */
-	NULL,                   /* input */
-	NULL,                   /* output */
-	NULL,                   /* input chunk */
-	NULL,                   /* output chunk */
-    },		
-    { IO_END }
-};
-
-static const struct IODevice io_ti86[] = {
-    {
-	IO_SERIAL,		/* type */
-	1,			/* count */
-	"86p\086s\086i\086n\086c\086l\086k\086m\086v\086d\086e\086r\086g\0",
-				/* file extensions */
-	IO_RESET_NONE,		/* reset if file changed */
-	OSD_FOPEN_READ,		/* open mode */
-	0,			/* id */
-	ti85_serial_init,	/* init */
-	ti85_serial_exit,		/* exit */
-	NULL,                   /* info */
-	NULL,                   /* open */
-	NULL,                   /* close */
-	NULL,                   /* status */
-	NULL,                   /* seek */
-	NULL,                   /* tell */
-	NULL,                   /* input */
-	NULL,                   /* output */
-	NULL,                   /* input chunk */
-	NULL,                   /* output chunk */
-    },		
-    { IO_END }
-};
+#define io_ti85	io_NULL
+#define io_ti86	io_NULL
 
 #define	io_ti85v40	io_ti85
 #define	io_ti85v50	io_ti85
@@ -573,11 +526,19 @@ SYSTEM_CONFIG_START(ti81)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(ti85)
-	CONFIG_DEVICE_SNAPSHOT	( "sav\0", ti8x_snapshot_load, NULL )
+	CONFIG_DEVICE ( IO_SERIAL, 1,
+			"85p\085s\085i\085n\085c\085l\085k\085m\085v\085d\085e\085r\085g\085b\0",
+			IO_RESET_NONE, OSD_FOPEN_READ, ti85_serial_init, ti85_serial_exit,
+			NULL, NULL, NULL, NULL,	NULL, NULL, NULL, NULL,	NULL )
+	CONFIG_DEVICE_SNAPSHOT ( "sav\0", ti8x_snapshot_load, NULL )
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(ti86)
-	CONFIG_DEVICE_SNAPSHOT	( "sav\0", ti8x_snapshot_load, NULL )
+	CONFIG_DEVICE ( IO_SERIAL, 1,
+			"86p\086s\086i\086n\086c\086l\086k\086m\086v\086d\086e\086r\086g\0",
+			IO_RESET_NONE, OSD_FOPEN_READ, ti85_serial_init, ti85_serial_exit,
+			NULL, NULL, NULL, NULL,	NULL, NULL, NULL, NULL,	NULL )
+	CONFIG_DEVICE_SNAPSHOT ( "sav\0", ti8x_snapshot_load, NULL )
 SYSTEM_CONFIG_END
                             
 /*    YEAR  NAME		PARENT	MACHINE INPUT	INIT	CONFIG	COMPANY        FULLNAME */

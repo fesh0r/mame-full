@@ -679,7 +679,6 @@ int ti8x_snapshot_load (int id, void *file, int open_mode)
 
 		if (!(ti8x_snapshot_data = image_malloc(IO_SNAPSHOT, id, snapshot_size)))
 		{
-			logerror ("Unable to load snapshot file\n");
 			osd_fclose(file);
 			return INIT_FAIL;
 		}
@@ -688,9 +687,6 @@ int ti8x_snapshot_load (int id, void *file, int open_mode)
 		osd_fclose(file);
 
 		ti8x_snapshot_loaded = 1;
-
-		logerror("Snapshot file loaded\n");
-
 	}
 	return INIT_PASS;
 }
@@ -702,7 +698,7 @@ int ti8x_snapshot_load (int id, void *file, int open_mode)
 int ti85_serial_init (int id, void *file, int open_mode)
 {
 	UINT8* file_data;
-	unsigned long file_size;
+	UINT16 file_size;
 
 	if (ti85_serial_status != TI85_SEND_STOP) return INIT_FAIL;
 
@@ -715,9 +711,7 @@ int ti85_serial_init (int id, void *file, int open_mode)
 
 		if (file_size != 0)
 		{
-			file_data = (UINT8*) malloc(file_size);
-
-			if (file_data != NULL)
+			if ((file_data = (UINT8*) auto_malloc(file_size)))
 			{
 				osd_fread(file, file_data, file_size);
 				osd_fclose(file);
@@ -725,18 +719,17 @@ int ti85_serial_init (int id, void *file, int open_mode)
 				if(!ti85_convert_file_data_to_serial_stream(file_data, file_size, &ti85_serial_stream, (char*)Machine->gamedrv->name))
 				{
 					ti85_free_serial_stream (&ti85_serial_stream);
-					free (file_data);
 					return INIT_FAIL;
 				}
-				
-				free (file_data);
-
+				                                      
 				ti85_serial_status = TI85_SEND_HEADER;
 			}
 		}
 		else 
+		{
+			osd_fclose(file);
 			return INIT_FAIL;
-		osd_fclose(file);
+		}
 	}
 	return INIT_PASS;
 }
