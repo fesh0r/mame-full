@@ -820,7 +820,7 @@ static void v9938_sprite_mode1 (int line, UINT8 *col)
 static void v9938_sprite_mode2 (int line, UINT8 *col)
 	{
 	int attrtbl, patterntbl, patternptr, colourtbl;
-	int x, i, y, p, height, c, p2, n, pattern, colourmask;
+	int x, i, y, p, height, c, p2, n, pattern, colourmask, first_cc_seen;
 
 	memset (col, 0, 256);
 
@@ -837,7 +837,7 @@ static void v9938_sprite_mode2 (int line, UINT8 *col)
 	/* magnified sprites (zoomed) */
 	if (vdp.contReg[1] & 1) height *= 2;
 
-	p2 = p = 0;
+	p2 = p = first_cc_seen = 0;
 	while (1)
 		{
 		y = v9938_vram_read (attrtbl);
@@ -860,17 +860,27 @@ static void v9938_sprite_mode2 (int line, UINT8 *col)
 				if (vdp.sprite_limit) break;
 				}
 
+			n = line - y; if (vdp.contReg[1] & 1) n /= 2;
+			/* get colour */
+			c = v9938_vram_read (colourtbl + (((p&colourmask)*16) + n));
+
+			/* don't draw all sprite with CC set before any sprites 
+               with CC = 0 are seen on this line */
+			if (c & 0x40)
+				{
+				if (!first_cc_seen)
+					goto skip_first_cc_set;
+				}
+			else
+				first_cc_seen = 1;
+
 			/* get pattern */
 			pattern = v9938_vram_read (attrtbl + 2);
 			if (vdp.contReg[1] & 2)
 				pattern &= 0xfc;
-			n = line - y; if (vdp.contReg[1] & 1) n /= 2;
 			patternptr = patterntbl + pattern * 8 + n;
 			pattern = (v9938_vram_read (patternptr) << 8) |
 				v9938_vram_read (patternptr + 16);
-
-			/* get colour */
-			c = v9938_vram_read (colourtbl + (((p&colourmask)*16) + n));
 
 			/* get x */
 			x = v9938_vram_read (attrtbl + 1);
@@ -883,22 +893,39 @@ static void v9938_sprite_mode2 (int line, UINT8 *col)
 					{
 					if ( (x >= 0) && (x < 256) )
 						{
-						if ( (pattern & 0x8000) && 
-							( (c & 0x40) ? 
-								/* CC = 1 */ (col[x] & 0x30) == 0x20 : 
-								/* CC = 0 */ (col[x] & 0xa0) != 0xa0) )
+						if ( (pattern & 0x8000) && !(col[x] & 0x10) )
 							{
-							col[x] |= c & 15;
-							if ( (c & 15) || (vdp.contReg[8] & 0x20) ) col[x] |= 0x40;
+							if ( (c & 15) || (vdp.contReg[8] & 0x20) ) 
+								{
+								if ( !(c & 0x40) )
+									{
+									if (col[x] & 0x20) col[x] |= 0x10;
+									else 
+										col[x] |= 0x20 | (c & 15);
+									}
+								else
+									col[x] |= c & 15;
+
+								col[x] |= 0x80;
+								}
+							}
+						else
+							{
+							if ( !(c & 0x40) && (col[x] & 0x20) )
+								col[x] |= 0x10;
 							}
 
-						if ( !(c & 0x40) )
+						if ( !(c & 0x60) && (pattern & 0x8000) )
 							{
-							if ( (col[x] & 0xa0) == 0xa0)
-								col[x] |= 0x10;
-							col[x] |= 0x20;
+							if (col[x] & 0x40)
+								{
+								/* sprite collision! */
+								if (p2 < 8)
+									vdp.statReg[0] |= 0x20;
+								}
+							else
+								col[x] |= 0x40;
 							}
-						if (col[x] & 0x40) col[x] |= 0x80;
 
 						x++;
 						}
@@ -907,6 +934,7 @@ static void v9938_sprite_mode2 (int line, UINT8 *col)
 				pattern <<= 1;
 				}
 
+skip_first_cc_set:
 			p2++;
 			}
 

@@ -650,7 +650,7 @@ V9938_SPRITE_FUNC (default_draw_sprite)
 
 	for (i=0;i<256;i++)
 		{
-		if ( (col[i] & 0xc0) && ( (col[i] & 0x0f) || (vdp.contReg[8] & 0x20) ) )
+		if (col[i] & 0x80) 
 			{
 			*ln++ = Machine->pens[pal_ind16[col[i]&0x0f]];
 #if (V9938_WIDTH > 512)
@@ -676,7 +676,7 @@ V9938_SPRITE_FUNC (graphic5_draw_sprite)
 
 	for (i=0;i<256;i++)
 		{
-		if ( (col[i] & 0xc0) && ( (col[i] & 0x0f) || (vdp.contReg[8] & 0x20) ) )
+		if (col[i] & 0x80) 
 			{
 			*ln++ = Machine->pens[pal_ind16[(col[i]>>2)&0x03]];
 #if (V9938_WIDTH > 512)
@@ -708,7 +708,7 @@ V9938_SPRITE_FUNC (graphic7_draw_sprite)
 
 	for (i=0;i<256;i++)
 		{
-		if ( (col[i] & 0xc0) && ( (col[i] & 0x0f) || (vdp.contReg[8] & 0x20) ) )
+		if (col[i] & 0x80) 
 			{
 			*ln++ = Machine->pens[g7_ind16[col[i]&0x0f]];
 #if (V9938_WIDTH > 512)
