@@ -1226,7 +1226,7 @@ static MACHINE_DRIVER_START( pc200 )
 	MDRV_COLORTABLE_LENGTH((sizeof(cga_colortable)+sizeof(mda_colortable) )/sizeof(cga_colortable[0]))
 	MDRV_PALETTE_INIT(pc_aga)
 
-	MDRV_VIDEO_START(pc_aga)
+	MDRV_VIDEO_START(pc200)	/* PC200 needs its own video init */
 	MDRV_VIDEO_UPDATE(pc_video)
 
     /* sound hardware */

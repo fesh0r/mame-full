@@ -24,6 +24,8 @@ System Driver Changes:
 
 - [COCO] Added support for The Rat graphics mouse.  (bug #639)  [Tim Lindner]
 
+- [PC200] Fixed driver to successfully boot.  [John Elliott]
+
 
 
 User Interface Changes:

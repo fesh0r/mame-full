@@ -226,6 +226,28 @@ VIDEO_START( pc_aga )
 	return 0;
 }
 
+
+VIDEO_START( pc200 )
+{
+	int buswidth;
+
+	if (video_start_pc_aga())
+		return 1;
+
+	buswidth = cputype_databus_width(Machine->drv->cpu[0].cpu_type, ADDRESS_SPACE_PROGRAM);
+	switch(buswidth) {
+	case 8:
+		memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x3d0, 0x3df, 0, 0, pc200_cga_r );
+		memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x3d0, 0x3df, 0, 0, pc200_cga_w );
+		break;
+
+	default:
+		osd_die("CGA:  Bus width %d not supported\n", buswidth);
+		break;
+	}
+	return 0;
+}
+
 /***************************************************************************
   Choose the appropriate video mode
 ***************************************************************************/

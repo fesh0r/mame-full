@@ -32,6 +32,7 @@ typedef enum AGA_MODE { AGA_OFF, AGA_COLOR, AGA_MONO } AGA_MODE;
 void pc_aga_set_mode(AGA_MODE mode);
 
 extern VIDEO_START( pc_aga );
+extern VIDEO_START( pc200 );
 extern VIDEO_UPDATE( pc_aga );
 
 extern void pc_aga_timer(void);

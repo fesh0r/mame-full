@@ -117,14 +117,14 @@ DRIVER_INIT( pc200 )
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb0000, 0xbffff, 0, 0, pc200_videoram_w );
 	videoram_size=0x10000;
 	videoram=memory_region(REGION_CPU1)+0xb0000;
-
+/* This is all done in video_start_pc200()
 	// 0x3dd, 0x3d8, 0x3d4, 0x3de are also in mda mode present!?
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x3d0, 0x3df, 0, 0, pc200_cga_r );
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x3d0, 0x3df, 0, 0, pc200_cga_w );
 
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x3b0, 0x3bf, 0, 0, pc_MDA_r );
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x3b0, 0x3bf, 0, 0, pc_MDA_w );
-
+*/
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x278, 0x27b, 0, 0, pc200_port378_r );
 
 	init_pc_common(PCCOMMON_KEYBOARD_PC | PCCOMMON_DMA8237_PC | PCCOMMON_TIMER_8253);
