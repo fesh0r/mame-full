@@ -9,7 +9,7 @@
  * it
  * ----------------------------------------------------------------------- */
 
-#if defined(WIN32) || defined(UNIX)
+#if defined(WIN32) || defined(UNIX) || defined(macintosh)
 #include "osdutils.h"
 #else
 #include "msdos/osdutils.h"
