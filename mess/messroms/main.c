@@ -41,13 +41,13 @@ void get_dirname(char *s, char *d)
    } else {
 	   *(d++)='.';
    }
-   *d = 0;	   
+   *d = 0;
 }
 
 void get_filename(char *s, char *d)
 {
    char* slash = strrchr(s,'/');
-   if (slash) 
+   if (slash)
       ++slash;
    else
       slash = s;
@@ -87,11 +87,11 @@ void print_computer(int crc_32)
 }
 
 
-char *wbuf;
+unsigned char *wbuf;
 char unk = 0;
 
 int romident(char *rom, unsigned int crc_32, int size)
-{   
+{
    int i, f = 0;
 
    if (size%32) return -1;
@@ -115,7 +115,7 @@ int romident(char *rom, unsigned int crc_32, int size)
 }
 
 int ident_crc(unsigned int crc_32)
-{   
+{
    int i, f = 0;
 
    printf("Checking crc 0x%08x ... ", crc_32);
@@ -152,7 +152,7 @@ int ident_file(char *path, char *fn, int size)
 //      printf("fpath = %s\n", fpath);
       size = st.st_size;
    }
-   wbuf = (char *)malloc(size);
+   wbuf = (unsigned char *)malloc(size);
    if (!wbuf) {
       printf("Error, not enough memory to '%s' the file into memory !\n", fn);
       return 1;
@@ -197,7 +197,7 @@ int ident_dir(char *fn)
       char path[512];
       sprintf(path,"%s/%s",fn,d->d_name);
       if (stat(path,&st)!=0) return 1;
-      if (!S_ISDIR(st.st_mode)) {		 
+      if (!S_ISDIR(st.st_mode)) {
          if (ident_file(fn, d->d_name, st.st_size)) return 1;
       }
       d = readdir(dd);
@@ -208,7 +208,7 @@ int ident_dir(char *fn)
 void ident(char *fn)
 {
 	int l;
-	struct stat st;	
+	struct stat st;
 	if (stat(fn,&st)!=0) {
 		fprintf(stderr,"error in stat file %s\n", fn);
 		return;
@@ -221,7 +221,7 @@ void ident(char *fn)
             char dir[512];
             char file[512];
             get_dirname(fn,dir);
-			get_filename(fn,file);	 
+			get_filename(fn,file);
             ident_file(dir, file, -1);
 		}
 	} else {
@@ -232,14 +232,14 @@ void ident(char *fn)
 int main(int argc, char **argv)
 {
 	int nf;
-	
+
 	printf("MESSROMS alpha0.1\n");
-	
+
 	if (argc<2) {
 		printf("Error, specify atleast one file name !\n");
 		return 1;
 	}
-	
+
 	for (nf=1;nf<argc;nf++) {
 		if (argv[nf][0] == '-') {
 			switch(argv[nf][1]) {
@@ -256,6 +256,6 @@ int main(int argc, char **argv)
 			ident(argv[nf]);
 		}
 	}
-	
+
 	return 0;
 }
