@@ -76,14 +76,21 @@ static size_t rom_size;
 
 
 
+static int jaguar_irq_callback(int level)
+{
+	return (level == 6) ? 0x40 : -1;
+}
+
 /*************************************
  *
  *	Machine init
  *
  *************************************/
 
-static MACHINE_INIT( cojag )
+static MACHINE_INIT( jaguar )
 {
+	cpu_set_irq_callback(0, jaguar_irq_callback);
+
 	memset(jaguar_shared_ram, 0, 0x400000);
 	memcpy(jaguar_shared_ram, rom_base, 0x10);
 
@@ -493,7 +500,7 @@ MACHINE_DRIVER_START( jaguar )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(cojag)
+	MDRV_MACHINE_INIT(jaguar)
 	MDRV_NVRAM_HANDLER(generic_1fill)
 
 	/* video hardware */
@@ -553,7 +560,7 @@ static DRIVER_INIT( jaguar )
 
 static DEVICE_LOAD( jaguar_cart )
 {
-	return cartslot_load_generic(file, REGION_CPU1, 0x800000, 1, 0x60000, 0);
+	return cartslot_load_generic(file, REGION_CPU1, 0x800000, 1, 0x600000, 0);
 }
 
 SYSTEM_CONFIG_START(jaguar)
