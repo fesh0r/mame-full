@@ -866,9 +866,8 @@ MSX_LAYOUT_INIT (hb75p)
 MSX_LAYOUT_END
 
 ROM_START (hb501p)
-	ROM_REGION (0x10000, REGION_CPU1, 0)
+	ROM_REGION (0x8000, REGION_CPU1, 0)
 	ROM_LOAD ("501pbios.rom", 0x0000, 0x8000, CRC(0f488dd8))
-	ROM_FILL (0x8000, 0x8000, 0)
 ROM_END
 
 MSX_LAYOUT_INIT (hb501p)
@@ -1122,8 +1121,8 @@ MSX_LAYOUT_END
 
 ROM_START (msx2)
 	ROM_REGION (0x20000, REGION_CPU1,0)
-	ROM_LOAD ("msx20.rom", 0x0000, 0x8000, CRC(f05ed518))
-	ROM_LOAD ("msx20ext.rom", 0x8000, 0x4000, CRC(95db2959))
+	ROM_LOAD ("msx2.rom", 0x0000, 0x8000, CRC(f05ed518))
+	ROM_LOAD ("msx2ext.rom", 0x8000, 0x4000, CRC(95db2959))
 	ROM_LOAD_OPTIONAL ("disk.rom", 0xc000, 0x4000, CRC(b7c58fad))
 	ROM_LOAD_OPTIONAL ("fmpac.rom", 0x10000, 0x10000, CRC(0e84505d))
 ROM_END
@@ -1135,6 +1134,7 @@ MSX_LAYOUT_INIT (msx2)
 	MSX_LAYOUT_SLOT (3, 0, 0, 1, ROM, 0x4000, 0x8000)
 	MSX_LAYOUT_SLOT (3, 0, 1, 2, DISK_ROM, 0x4000, 0xc000) 
 	MSX_LAYOUT_SLOT (3, 3, 0, 4, RAM_MM, 0x20000, 0x0000)	/* 128KB Mapper RAM */
+	MSX_LAYOUT_RAMIO_SET_BITS (0xf8)
 MSX_LAYOUT_END
 
 ROM_START (nms8220)
@@ -1290,7 +1290,7 @@ MSX_LAYOUT_INIT (fs5500)
 MSX_LAYOUT_END
 
 ROM_START (fs4500)
-	ROM_REGION (0xa0000, REGION_CPU1,0)
+	ROM_REGION (0x94000, REGION_CPU1,0)
 	ROM_LOAD ("4500bios.rom", 0x0000, 0x8000, CRC(9b3e7b97))
 	ROM_LOAD ("4500ext.rom", 0x8000, 0x4000, CRC(4a48779c))
 	ROM_FILL (0xc000, 0x14000, 0)
@@ -1322,7 +1322,7 @@ MSX_LAYOUT_INIT (fs4500)
 MSX_LAYOUT_END
 
 ROM_START (fs4700)
-	ROM_REGION (0xa0000, REGION_CPU1,0)
+	ROM_REGION (0x94000, REGION_CPU1,0)
 	ROM_LOAD ("4700bios.rom", 0x0000, 0x8000, CRC(9b3e7b97))
 	ROM_LOAD ("4700ext.rom", 0x8000, 0x4000, CRC(4a48779c))
 	ROM_LOAD ("4700disk.rom", 0xc000, 0x4000, CRC(1e7d6512))
@@ -1383,7 +1383,7 @@ MSX_LAYOUT_INIT (fs5000)
 MSX_LAYOUT_END
 
 ROM_START (fs4600)
-	ROM_REGION (0x180000, REGION_CPU1,0)
+	ROM_REGION (0x170000, REGION_CPU1,0)
 	ROM_LOAD ("4600bios.rom", 0x0000, 0x8000, CRC(9b3e7b97))
 	ROM_LOAD ("4600ext.rom", 0x8000, 0x4000, CRC(43e7a7fc))
 	ROM_LOAD ("4600disk.rom", 0xc000, 0x4000, CRC(ae4e65b7))
@@ -1857,6 +1857,259 @@ MSX_LAYOUT_INIT (hbg900p)
 	MSX_LAYOUT_RAMIO_SET_BITS (0x80)
 MSX_LAYOUT_END
 
+ROM_START (msx2p)
+	ROM_REGION (0x48000, REGION_CPU1,0)
+	ROM_LOAD ("msx2p.rom", 0x0000, 0x8000, CRC(00870134))
+	ROM_LOAD ("msx2pext.rom", 0x8000, 0x4000, CRC(b8ba44d3))
+	ROM_LOAD_OPTIONAL ("disk.rom", 0xc000, 0x4000, CRC(b7c58fad))
+	ROM_LOAD_OPTIONAL ("fmpac.rom", 0x10000, 0x10000, CRC(0e84505d))
+	ROM_LOAD ("msx2pkdr.rom", 0x20000, 0x8000, CRC(a068cba9))
+	ROM_LOAD ("msx2pkfn.rom", 0x28000, 0x20000, CRC(b244f6cf))
+ROM_END
+
+MSX_LAYOUT_INIT (msx2p)
+	MSX_LAYOUT_SLOT (0, 0, 0, 2, ROM, 0x8000, 0x0000)
+	MSX_LAYOUT_SLOT (1, 0, 0, 4, CARTRIDGE1, 0x0000, 0x0000)
+	MSX_LAYOUT_SLOT (2, 0, 0, 4, CARTRIDGE2, 0x0000, 0x0000)
+	MSX_LAYOUT_SLOT (3, 0, 0, 4, RAM_MM, 0x20000, 0x0000)   /* 128KB Mapper RAM */
+	MSX_LAYOUT_SLOT (3, 1, 0, 1, ROM, 0x4000, 0x8000)
+	MSX_LAYOUT_SLOT (3, 1, 1, 2, ROM, 0x8000, 0x20000)
+	MSX_LAYOUT_SLOT (3, 2, 1, 2, DISK_ROM, 0x4000, 0xc000) 
+	MSX_LAYOUT_KANJI (0x28000)
+	MSX_LAYOUT_RAMIO_SET_BITS (0x80)
+MSX_LAYOUT_END
+
+ROM_START (fsa1fx)
+	ROM_REGION (0x50000, REGION_CPU1,0)
+	ROM_LOAD ("a1fxbios.rom", 0x0000, 0x8000, CRC(19771608))
+	ROM_LOAD ("a1fxext.rom", 0x8000, 0x4000, CRC(b8ba44d3))
+	ROM_LOAD ("a1fxdisk.rom", 0xc000, 0x4000, CRC(905daa1b))
+	ROM_FILL (0x10000, 0x10000, 0)
+	ROM_LOAD ("a1fxkdr.rom", 0x20000, 0x8000, CRC(a068cba9))
+	ROM_LOAD ("a1fxcock.rom", 0x28000, 0x8000, CRC(f662e6eb))
+	ROM_LOAD ("a1fxkfn.rom", 0x30000, 0x20000, CRC(b244f6cf))
+ROM_END
+
+MSX_LAYOUT_INIT (fsa1fx)
+	MSX_LAYOUT_SLOT (0, 0, 0, 2, ROM, 0x8000, 0x0000)
+	MSX_LAYOUT_SLOT (1, 0, 0, 4, CARTRIDGE1, 0x0000, 0x0000)
+	MSX_LAYOUT_SLOT (2, 0, 0, 4, CARTRIDGE2, 0x0000, 0x0000)
+	MSX_LAYOUT_SLOT (3, 0, 0, 4, RAM_MM, 0x10000, 0x0000)   /* 64KB Mapper RAM */
+	MSX_LAYOUT_SLOT (3, 1, 0, 1, ROM, 0x4000, 0x8000)
+	MSX_LAYOUT_SLOT (3, 1, 1, 2, ROM, 0x8000, 0x20000)
+/*	MSX_LAYOUT_SLOT (3, 2, 1, 2, DISK_ROM, 0x4000, 0xc000) */ /* FDC Emulation of TC8566AF must be emulated */
+	MSX_LAYOUT_SLOT (3, 3, 1, 2, ROM, 0x8000, 0x28000)
+	MSX_LAYOUT_KANJI (0x30000)
+	MSX_LAYOUT_RAMIO_SET_BITS (0x80)
+MSX_LAYOUT_END
+
+ROM_START (fsa1wx)
+	ROM_REGION (0x270000, REGION_CPU1,0)
+	ROM_LOAD ("a1wxbios.rom", 0x0000, 0x8000, CRC(19771608))
+	ROM_LOAD ("a1wxext.rom", 0x8000, 0x4000, CRC(b8ba44d3))
+	ROM_LOAD ("a1wxdisk.rom", 0xc000, 0x4000, CRC(905daa1b))
+	ROM_FILL (0x10000, 0x10000, 0)
+	ROM_LOAD ("a1wxkdr.rom", 0x20000, 0x8000, CRC(a068cba9))
+	ROM_LOAD ("a1wxmus.rom", 0x28000, 0x4000, CRC(5c32eb29))
+	ROM_FILL (0x2c000, 0x4000, 0)
+	ROM_LOAD ("a1wxkfn.rom", 0x30000, 0x40000, CRC(1f6406fb))
+	ROM_LOAD ("a1wxfirm.rom", 0x70000, 0x200000, CRC(283f3250))
+ROM_END
+
+MSX_LAYOUT_INIT (fsa1wx)
+	MSX_LAYOUT_SLOT (0, 0, 0, 2, ROM, 0x8000, 0x0000)
+	MSX_LAYOUT_SLOT (0, 2, 1, 1, ROM, 0x4000, 0x28000)
+	MSX_LAYOUT_SLOT (1, 0, 0, 4, CARTRIDGE1, 0x0000, 0x0000)
+	MSX_LAYOUT_SLOT (2, 0, 0, 4, CARTRIDGE2, 0x0000, 0x0000)
+	MSX_LAYOUT_SLOT (3, 0, 0, 4, RAM_MM, 0x10000, 0x0000)   /* 64KB Mapper RAM */
+	MSX_LAYOUT_SLOT (3, 1, 0, 1, ROM, 0x4000, 0x8000)
+	MSX_LAYOUT_SLOT (3, 1, 1, 2, ROM, 0x8000, 0x20000)
+/*	MSX_LAYOUT_SLOT (3, 2, 1, 2, DISK_ROM, 0x4000, 0xc000) */ /* FDC Emulation of TC8566AF must be emulated */
+/*	MSX_LAYOUT_SLOT (3, 3, 1, 4, PANASONIC08, 0x200000, 0x70000) */ /* Panasonic 08KB Mapper must be emulated */
+	MSX_LAYOUT_KANJI (0x30000)
+	MSX_LAYOUT_RAMIO_SET_BITS (0x80)
+MSX_LAYOUT_END
+
+ROM_START (fsa1wxa)
+	ROM_REGION (0x270000, REGION_CPU1,0)
+	ROM_LOAD ("a1wxbios.rom", 0x0000, 0x8000, CRC(19771608))
+	ROM_LOAD ("a1wxext.rom", 0x8000, 0x4000, CRC(b8ba44d3))
+	ROM_LOAD ("a1wxdisk.rom", 0xc000, 0x4000, CRC(905daa1b))
+	ROM_FILL (0x10000, 0x10000, 0)
+	ROM_LOAD ("a1wxkdr.rom", 0x20000, 0x8000, CRC(a068cba9))
+	ROM_LOAD ("a1wxmus.rom", 0x28000, 0x4000, CRC(5c32eb29))
+	ROM_FILL (0x2c000, 0x4000, 0)
+	ROM_LOAD ("a1wxkfn.rom", 0x30000, 0x40000, CRC(1f6406fb))
+	ROM_LOAD ("a1wxfira.rom", 0x70000, 0x200000, CRC(58440a8e))
+ROM_END
+
+MSX_LAYOUT_INIT (fsa1wxa)
+	MSX_LAYOUT_SLOT (0, 0, 0, 2, ROM, 0x8000, 0x0000)
+	MSX_LAYOUT_SLOT (0, 2, 1, 1, ROM, 0x4000, 0x28000)
+	MSX_LAYOUT_SLOT (1, 0, 0, 4, CARTRIDGE1, 0x0000, 0x0000)
+	MSX_LAYOUT_SLOT (2, 0, 0, 4, CARTRIDGE2, 0x0000, 0x0000)
+	MSX_LAYOUT_SLOT (3, 0, 0, 4, RAM_MM, 0x10000, 0x0000)   /* 64KB Mapper RAM */
+	MSX_LAYOUT_SLOT (3, 1, 0, 1, ROM, 0x4000, 0x8000)
+	MSX_LAYOUT_SLOT (3, 1, 1, 2, ROM, 0x8000, 0x20000)
+/*	MSX_LAYOUT_SLOT (3, 2, 1, 2, DISK_ROM, 0x4000, 0xc000) */ /* FDC Emulation of TC8566AF must be emulated */
+/*	MSX_LAYOUT_SLOT (3, 3, 1, 4, PANASONIC08, 0x200000, 0x70000) */ /* Panasonic 08KB Mapper must be emulated */
+	MSX_LAYOUT_KANJI (0x30000)
+	MSX_LAYOUT_RAMIO_SET_BITS (0x80)
+MSX_LAYOUT_END
+
+ROM_START (fsa1wsx)
+	ROM_REGION (0x270000, REGION_CPU1,0)
+	ROM_LOAD ("a1wsbios.rom", 0x0000, 0x8000, CRC(358ec547))
+	ROM_LOAD ("a1wsext.rom", 0x8000, 0x4000, CRC(b8ba44d3))
+	ROM_LOAD ("a1wsdisk.rom", 0xc000, 0x4000, CRC(17fa392b))
+	ROM_FILL (0x10000, 0x10000, 0)
+	ROM_LOAD ("a1wskdr.rom", 0x20000, 0x8000, CRC(b4fc574d))
+	ROM_LOAD ("a1wsmus.rom", 0x28000, 0x4000, CRC(5c32eb29))
+	ROM_FILL (0x2c000, 0x4000, 0)
+	ROM_LOAD ("a1wskfn.rom", 0x30000, 0x40000, CRC(1f6406fb))
+	ROM_LOAD ("a1wsfirm.rom", 0x70000, 0x200000, CRC(e363595d))
+ROM_END
+
+MSX_LAYOUT_INIT (fsa1wsx)
+	MSX_LAYOUT_SLOT (0, 0, 0, 2, ROM, 0x8000, 0x0000)
+	MSX_LAYOUT_SLOT (0, 2, 1, 1, ROM, 0x4000, 0x28000)
+	MSX_LAYOUT_SLOT (1, 0, 0, 4, CARTRIDGE1, 0x0000, 0x0000)
+	MSX_LAYOUT_SLOT (2, 0, 0, 4, CARTRIDGE2, 0x0000, 0x0000)
+	MSX_LAYOUT_SLOT (3, 0, 0, 4, RAM_MM, 0x10000, 0x0000)   /* 64KB Mapper RAM */
+	MSX_LAYOUT_SLOT (3, 1, 0, 1, ROM, 0x4000, 0x8000)
+	MSX_LAYOUT_SLOT (3, 1, 1, 2, ROM, 0x8000, 0x20000)
+/*	MSX_LAYOUT_SLOT (3, 2, 1, 2, DISK_ROM, 0x4000, 0xc000) */ /* FDC Emulation of TC8566AF must be emulated */
+/*	MSX_LAYOUT_SLOT (3, 3, 1, 4, PANASONIC08, 0x200000, 0x70000) */ /* Panasonic 08KB Mapper must be emulated */
+	MSX_LAYOUT_KANJI (0x30000)
+	MSX_LAYOUT_RAMIO_SET_BITS (0x80)
+MSX_LAYOUT_END
+
+ROM_START (hbf1xdj)
+	ROM_REGION (0x170000, REGION_CPU1,0)
+	ROM_LOAD ("f1xjbios.rom", 0x0000, 0x8000, CRC(00870134))
+	ROM_LOAD ("f1xjext.rom", 0x8000, 0x4000, CRC(b8ba44d3))
+	ROM_LOAD ("f1xjdisk.rom", 0xc000, 0x4000, CRC(a21f5266))
+	ROM_FILL (0x10000, 0x10000, 0)
+	ROM_LOAD ("f1xjkdr.rom", 0x20000, 0x8000, CRC(a068cba9))
+	ROM_LOAD ("f1xjmus.rom", 0x28000, 0x4000, CRC(5c32eb29))
+	ROM_FILL (0x2c000, 0x4000, 0)
+	ROM_LOAD ("f1xjkfn.rom", 0x30000, 0x40000, CRC(7016dfd0))
+	ROM_LOAD ("f1xjfirm.rom", 0x70000, 0x100000, CRC(77be583f))
+ROM_END
+
+MSX_LAYOUT_INIT (hbf1xdj)
+	MSX_LAYOUT_SLOT (0, 0, 0, 2, ROM, 0x8000, 0x0000)
+/*	MSX_LAYOUT_SLOT (0, 3, 1, 4, SONY08, 0x100000, 0x70000) */ /* Sony 08KB MSX-JE Mapper must be emulated */
+	MSX_LAYOUT_SLOT (1, 0, 0, 4, CARTRIDGE1, 0x0000, 0x0000)
+	MSX_LAYOUT_SLOT (2, 0, 0, 4, CARTRIDGE2, 0x0000, 0x0000)
+	MSX_LAYOUT_SLOT (3, 0, 0, 4, RAM_MM, 0x10000, 0x0000)   /* 64KB Mapper RAM */
+	MSX_LAYOUT_SLOT (3, 1, 0, 1, ROM, 0x4000, 0x8000)
+	MSX_LAYOUT_SLOT (3, 1, 1, 2, ROM, 0x8000, 0x20000)
+	MSX_LAYOUT_SLOT (3, 2, 1, 2, DISK_ROM, 0x4000, 0xc000) 
+	MSX_LAYOUT_SLOT (3, 3, 1, 1, ROM, 0x4000, 0x28000)
+	MSX_LAYOUT_KANJI (0x30000)
+	MSX_LAYOUT_RAMIO_SET_BITS (0x80)
+MSX_LAYOUT_END
+
+ROM_START (hbf1xv)
+	ROM_REGION (0x170000, REGION_CPU1,0)
+	ROM_LOAD ("f1xvbios.rom", 0x0000, 0x8000, CRC(2c7ed27b))
+	ROM_LOAD ("f1xvext.rom", 0x8000, 0x4000, CRC(b8ba44d3))
+	ROM_LOAD ("f1xvdisk.rom", 0xc000, 0x4000, CRC(04e4e533))
+	ROM_FILL (0x10000, 0x10000, 0)
+	ROM_LOAD ("f1xvkdr.rom", 0x20000, 0x8000, CRC(b4fc574d))
+	ROM_LOAD ("f1xvmus.rom", 0x28000, 0x4000, CRC(5c32eb29))
+	ROM_FILL (0x2c000, 0x4000, 0)
+	ROM_LOAD ("f1xvkfn.rom", 0x30000, 0x40000, CRC(7016dfd0))
+	ROM_LOAD ("f1xvfirm.rom", 0x70000, 0x100000, CRC(77be583f))
+ROM_END
+
+MSX_LAYOUT_INIT (hbf1xv)
+	MSX_LAYOUT_SLOT (0, 0, 0, 2, ROM, 0x8000, 0x0000)
+/*	MSX_LAYOUT_SLOT (0, 3, 1, 4, SONY08, 0x100000, 0x70000) */ /* Sony 08KB MSX-JE Mapper must be emulated */
+	MSX_LAYOUT_SLOT (1, 0, 0, 4, CARTRIDGE1, 0x0000, 0x0000)
+	MSX_LAYOUT_SLOT (2, 0, 0, 4, CARTRIDGE2, 0x0000, 0x0000)
+	MSX_LAYOUT_SLOT (3, 0, 0, 4, RAM_MM, 0x10000, 0x0000)   /* 64KB Mapper RAM */
+	MSX_LAYOUT_SLOT (3, 1, 0, 1, ROM, 0x4000, 0x8000)
+	MSX_LAYOUT_SLOT (3, 1, 1, 2, ROM, 0x8000, 0x20000)
+	MSX_LAYOUT_SLOT (3, 2, 1, 2, DISK_ROM, 0x4000, 0xc000) 
+	MSX_LAYOUT_SLOT (3, 3, 1, 1, ROM, 0x4000, 0x28000)
+	MSX_LAYOUT_KANJI (0x30000)
+	MSX_LAYOUT_RAMIO_SET_BITS (0x80)
+MSX_LAYOUT_END
+
+ROM_START (phc70fd)
+	ROM_REGION (0x50000, REGION_CPU1,0)
+	ROM_LOAD ("70fdbios.rom", 0x0000, 0x8000, CRC(19771608))
+	ROM_LOAD ("70fdext.rom", 0x8000, 0x4000, CRC(b8ba44d3))
+	ROM_LOAD ("70fddisk.rom", 0xc000, 0x4000, CRC(db7f1125))
+	ROM_FILL (0x10000, 0x10000, 0)
+	ROM_LOAD ("70fdkdr.rom", 0x20000, 0x8000, CRC(a068cba9))
+	ROM_LOAD ("70fdmus.rom", 0x28000, 0x4000, CRC(5c32eb29))
+	ROM_LOAD ("70fdbas.rom", 0x2c000, 0x4000, CRC(da7be246))
+	ROM_LOAD ("70fdkfn.rom", 0x30000, 0x20000, CRC(c9651b32))
+ROM_END
+
+MSX_LAYOUT_INIT (phc70fd)
+	MSX_LAYOUT_SLOT (0, 0, 0, 2, ROM, 0x8000, 0x0000)
+	MSX_LAYOUT_SLOT (1, 0, 0, 4, CARTRIDGE1, 0x0000, 0x0000)
+	MSX_LAYOUT_SLOT (2, 0, 0, 4, CARTRIDGE2, 0x0000, 0x0000)
+	MSX_LAYOUT_SLOT (3, 0, 0, 4, RAM_MM, 0x10000, 0x0000)   /* 64KB Mapper RAM */
+	MSX_LAYOUT_SLOT (3, 1, 0, 1, ROM, 0x4000, 0x8000)
+	MSX_LAYOUT_SLOT (3, 1, 1, 2, ROM, 0x8000, 0x20000)
+/*	MSX_LAYOUT_SLOT (3, 2, 1, 2, DISK_ROM, 0x4000, 0xc000) */ /* FDC Emulation of TC8566AF must be emulated */
+	MSX_LAYOUT_SLOT (3, 3, 1, 1, ROM, 0x4000, 0x28000)
+	MSX_LAYOUT_SLOT (3, 3, 2, 1, ROM, 0x4000, 0x2c000)
+	MSX_LAYOUT_KANJI (0x30000)
+	MSX_LAYOUT_RAMIO_SET_BITS (0x80)
+MSX_LAYOUT_END
+
+ROM_START (phc70fd2)
+	ROM_REGION (0x70000, REGION_CPU1,0)
+	ROM_LOAD ("70f2bios.rom", 0x0000, 0x8000, CRC(19771608))
+	ROM_LOAD ("70f2ext.rom", 0x8000, 0x4000, CRC(b8ba44d3))
+	ROM_LOAD ("70f2disk.rom", 0xc000, 0x4000, CRC(db7f1125))
+	ROM_FILL (0x10000, 0x10000, 0)
+	ROM_LOAD ("70f2kdr.rom", 0x20000, 0x8000, CRC(a068cba9))
+	ROM_LOAD ("70f2mus.rom", 0x28000, 0x4000, CRC(5c32eb29))
+	ROM_LOAD ("70f2bas.rom", 0x2c000, 0x4000, CRC(da7be246))
+	ROM_LOAD ("70f2kfn.rom", 0x30000, 0x40000, CRC(9a850db9))
+ROM_END
+
+MSX_LAYOUT_INIT (phc70fd2)
+	MSX_LAYOUT_SLOT (0, 0, 0, 2, ROM, 0x8000, 0x0000)
+	MSX_LAYOUT_SLOT (1, 0, 0, 4, CARTRIDGE1, 0x0000, 0x0000)
+	MSX_LAYOUT_SLOT (2, 0, 0, 4, CARTRIDGE2, 0x0000, 0x0000)
+	MSX_LAYOUT_SLOT (3, 0, 0, 4, RAM_MM, 0x10000, 0x0000)   /* 64KB Mapper RAM */
+	MSX_LAYOUT_SLOT (3, 1, 0, 1, ROM, 0x4000, 0x8000)
+	MSX_LAYOUT_SLOT (3, 1, 1, 2, ROM, 0x8000, 0x20000)
+/*	MSX_LAYOUT_SLOT (3, 2, 1, 2, DISK_ROM, 0x4000, 0xc000) */ /* FDC Emulation of TC8566AF must be emulated */
+	MSX_LAYOUT_SLOT (3, 3, 1, 1, ROM, 0x4000, 0x28000)
+	MSX_LAYOUT_SLOT (3, 3, 2, 1, ROM, 0x4000, 0x2c000)
+	MSX_LAYOUT_KANJI (0x30000)
+	MSX_LAYOUT_RAMIO_SET_BITS (0x80)
+MSX_LAYOUT_END
+
+ROM_START (phc35j)
+	ROM_REGION (0x48000, REGION_CPU1,0)
+	ROM_LOAD ("35jbios.rom", 0x0000, 0x8000, CRC(358ec547))
+	ROM_LOAD ("35jext.rom", 0x8000, 0x4000, CRC(b8ba44d3))
+	ROM_FILL (0xc000, 0x14000, 0)
+	ROM_LOAD ("35jkdr.rom", 0x20000, 0x8000, CRC(b4fc574d))
+	ROM_LOAD ("35jkfn.rom", 0x28000, 0x20000, CRC(c9651b32))
+ROM_END
+
+MSX_LAYOUT_INIT (phc35j)
+	MSX_LAYOUT_SLOT (0, 0, 0, 2, ROM, 0x8000, 0x0000)
+	MSX_LAYOUT_SLOT (1, 0, 0, 4, CARTRIDGE1, 0x0000, 0x0000)
+	MSX_LAYOUT_SLOT (2, 0, 0, 4, CARTRIDGE2, 0x0000, 0x0000)
+	MSX_LAYOUT_SLOT (3, 0, 0, 4, RAM_MM, 0x10000, 0x0000)   /* 64KB Mapper RAM */
+	MSX_LAYOUT_SLOT (3, 1, 0, 1, ROM, 0x4000, 0x8000)
+	MSX_LAYOUT_SLOT (3, 1, 1, 2, ROM, 0x8000, 0x20000)
+	MSX_LAYOUT_KANJI (0x28000)
+	MSX_LAYOUT_RAMIO_SET_BITS (0x80)
+MSX_LAYOUT_END
+
 SYSTEM_CONFIG_START(msx)
 	CONFIG_DEVICE_FLOPPY_BASICDSK(2, "dsk\0", device_load_msx_floppy)
 	CONFIG_DEVICE_CARTSLOT_OPT(MSX_MAX_CARTS, "mx1\0rom\0", NULL, NULL, device_load_msx_cart, device_unload_msx_cart, NULL, NULL)
@@ -1922,6 +2175,15 @@ MSX_DRIVER_LIST
 	MSX_DRIVER (cpc300)
 	MSX_DRIVER (cpc400)
 	MSX_DRIVER (cpc400s)
+	MSX_DRIVER (msx2p)
+	MSX_DRIVER (fsa1fx)
+	MSX_DRIVER (fsa1wx)
+	MSX_DRIVER (fsa1wxa)
+	MSX_DRIVER (fsa1wsx)
+ 	MSX_DRIVER (hbf1xdj)
+	MSX_DRIVER (hbf1xv)
+	MSX_DRIVER (phc70fd2)
+	MSX_DRIVER (phc35j)
 MSX_DRIVER_END
 
 /*	  YEAR	NAME	  PARENT	COMPAT	MACHINE  INPUT	   INIT   CONFIG  COMPANY			   FULLNAME */
@@ -1947,39 +2209,49 @@ COMP( 1985, hotbit12, msx,		0,		msx,	 hotbit,   msx,		msx,	"Sharp / Epcom",	 "HB
 COMP( 1983, expert10, msx,		0,		msx,	 expert10, msx,		msx,	"Gradiente", "Expert (Brazil)" )
 COMP( 1984, expert11, msx,		0,		msx,	 expert11, msx,		msx,	"Gradiente", "Expert Plus (Brazil)" )
 COMPX(1985, expertdp, msx,		0,		msx,	 expert11, msx,		msx,	"Gradiente", "Expert DDPlus (Brazil)", GAME_NOT_WORKING )
-COMPX(1985, msx2,	  0,		msx,	msx2,	 msx2,	   msx2,	msx,	"ASCII & Microsoft", "MSX 2", 0)
-COMPX(1986, nms8220,  msx2,		0,		msx2,	 msx2,	   msx2,	msx,	"Philips", "NMS-8220 / 1st released version", 0)
-COMPX(1986, nms8220a, msx2,		0,		msx2,	 msx2,	   msx2,	msx,	"Philips", "NMS-8220 / 2nd released version", 0)
-COMPX(1986, vg8235,   msx2,		0,		msx2,	 msx2,	   msx2,	msx,	"Philips", "VG-8235", 0)
-COMPX(1986, nms8245,  msx2,		0,		msx2,	 msx2,	   msx2,	msx,	"Philips", "NMS-8245", 0)
-COMPX(1986, nms8250,  msx2,		0,		msx2,	 msx2,	   msx2,	msx,	"Philips", "NMS-8250", 0)
-COMPX(1986, nms8255,  msx2,		0,		msx2,	 msx2,	   msx2,	msx,	"Philips", "NMS-8255", 0)
-COMPX(1986, nms8280,  msx2,		0,		msx2,	 msx2,	   msx2,	msx,	"Philips", "NMS-8280", 0)
-COMPX(1985, hbf9p,    msx2,		0,		msx2,	 msx2,	   msx2,	msx,	"Sony", "HB-F9P", 0 )
-COMPX(1985, hbf500p,  msx2,		0,		msx2,	 msx2,	   msx2,	msx,	"Sony", "HB-F500P", 0 )
-COMPX(1985, hbf700d,  msx2,		0,		msx2,	 msx2,	   msx2,	msx,	"Sony", "HB-F700D (Germany)", 0 )
-COMPX(1985, hbf700p,  msx2,		0,		msx2,	 msx2,	   msx2,	msx,	"Sony", "HB-F700P", 0 )
-COMPX(1985, hbf700s,  msx2,		0,		msx2,	 msx2,	   msx2,	msx,	"Sony", "HB-F700S (Spain)", 0 )
+COMP (1985, msx2,	  0,		msx,	msx2,	 msx2,	   msx2,	msx,	"ASCII & Microsoft", "MSX2")
+COMP (1986, nms8220,  msx2,		0,		msx2,	 msx2,	   msx2,	msx,	"Philips", "NMS-8220 / 1st released version")
+COMP (1986, nms8220a, msx2,		0,		msx2,	 msx2,	   msx2,	msx,	"Philips", "NMS-8220 / 2nd released version")
+COMP (1986, vg8235,   msx2,		0,		msx2,	 msx2,	   msx2,	msx,	"Philips", "VG-8235")
+COMP (1986, nms8245,  msx2,		0,		msx2,	 msx2,	   msx2,	msx,	"Philips", "NMS-8245")
+COMP (1986, nms8250,  msx2,		0,		msx2,	 msx2,	   msx2,	msx,	"Philips", "NMS-8250")
+COMP (1986, nms8255,  msx2,		0,		msx2,	 msx2,	   msx2,	msx,	"Philips", "NMS-8255")
+COMP (1986, nms8280,  msx2,		0,		msx2,	 msx2,	   msx2,	msx,	"Philips", "NMS-8280")
+COMP (1985, hbf9p,    msx2,		0,		msx2,	 msx2,	   msx2,	msx,	"Sony", "HB-F9P" )
+COMP (1985, hbf500p,  msx2,		0,		msx2,	 msx2,	   msx2,	msx,	"Sony", "HB-F500P")
+COMP (1985, hbf700d,  msx2,		0,		msx2,	 msx2,	   msx2,	msx,	"Sony", "HB-F700D (Germany)" )
+COMP (1985, hbf700p,  msx2,		0,		msx2,	 msx2,	   msx2,	msx,	"Sony", "HB-F700P" )
+COMP (1985, hbf700s,  msx2,		0,		msx2,	 msx2,	   msx2,	msx,	"Sony", "HB-F700S (Spain)")
 COMPX(1986, hbg900p,  msx2,		0,		msx2,	 msx2,	   msx2,	msx,	"Sony", "HB-G900P", GAME_NOT_WORKING )
 COMPX(1985, fs5500,   msx2,		0,      msx2,    msx2jp,   msx2,    msx,    "National / Matsushita", "FS-5500F1/F2 (Japan)", GAME_NOT_WORKING )
 COMPX(1986, fs4500,   msx2,		0,      msx2,    msx2jp,   msx2,    msx,    "National / Matsushita", "FS-4500 (Japan)", GAME_NOT_WORKING )
 COMPX(1986, fs4700,   msx2,		0,      msx2,    msx2jp,   msx2,    msx,    "National / Matsushita", "FS-4700 (Japan)", GAME_NOT_WORKING )
 COMPX(1986, fs5000,   msx2,		0,      msx2,    msx2jp,   msx2,    msx,    "National / Matsushita", "FS-5000F2 (Japan)", GAME_NOT_WORKING )
 COMPX(1986, fs4600,   msx2,		0,      msx2,    msx2jp,   msx2,    msx,    "National / Matsushita", "FS-4600 (Japan)", GAME_NOT_WORKING )
-COMPX(1986, fsa1,     msx2,     0,      msx2,    msx2jp,   msx2,    msx,    "Panasonic / Matsushita", "FS-A1 / 1st released version (Japan)", 0)
-COMPX(1986, fsa1a,    msx2,     0,      msx2,    msx2jp,   msx2,    msx,    "Panasonic / Matsushita", "FS-A1 / 2nd released version (Japan)", 0)
-COMPX(1987, fsa1mk2,  msx2,     0,      msx2,    msx2jp,   msx2,    msx,    "Panasonic / Matsushita", "FS-A1MK2 (Japan)", 0)
+COMP (1986, fsa1,     msx2,     0,      msx2,    msx2jp,   msx2,    msx,    "Panasonic / Matsushita", "FS-A1 / 1st released version (Japan)")
+COMP (1986, fsa1a,    msx2,     0,      msx2,    msx2jp,   msx2,    msx,    "Panasonic / Matsushita", "FS-A1 / 2nd released version (Japan)")
+COMP (1987, fsa1mk2,  msx2,     0,      msx2,    msx2jp,   msx2,    msx,    "Panasonic / Matsushita", "FS-A1MK2 (Japan)")
 COMPX(1987, fsa1f,    msx2,     0,      msx2,    msx2jp,   msx2,    msx,    "Panasonic / Matsushita", "FS-A1F (Japan)", GAME_NOT_WORKING )
 COMPX(1987, fsa1fm,   msx2,     0,      msx2,    msx2jp,   msx2,    msx,    "Panasonic / Matsushita", "FS-A1FM (Japan)", GAME_NOT_WORKING )
-COMPX(1986, hbf500,   msx2,     0,      msx2,    msx2jp,   msx2,    msx,    "Sony", "HB-F500 (Japan)", 0)
-COMPX(1986, hbf900,   msx2,     0,      msx2,    msx2jp,   msx2,    msx,    "Sony", "HB-F900 / 1st released version (Japan)", 0)
-COMPX(1986, hbf900a,  msx2,     0,      msx2,    msx2jp,   msx2,    msx,    "Sony", "HB-F900 / 2nd released version (Japan)", 0)
+COMP (1986, hbf500,   msx2,     0,      msx2,    msx2jp,   msx2,    msx,    "Sony", "HB-F500 (Japan)")
+COMP (1986, hbf900,   msx2,     0,      msx2,    msx2jp,   msx2,    msx,    "Sony", "HB-F900 / 1st released version (Japan)")
+COMP (1986, hbf900a,  msx2,     0,      msx2,    msx2jp,   msx2,    msx,    "Sony", "HB-F900 / 2nd released version (Japan)")
 COMPX(1986, hbf1,     msx2,     0,      msx2,    msx2jp,   msx2,    msx,    "Sony", "HB-F1 (Japan)", GAME_NOT_WORKING )
 COMPX(1987, hbf12,    msx2,     0,      msx2,    msx2jp,   msx2,    msx,    "Sony", "HB-F1II (Japan)", GAME_NOT_WORKING )
-COMPX(1987, hbf1xd,   msx2,     0,      msx2,    msx2jp,   msx2,    msx,    "Sony", "HB-F1XD (Japan)", 0)
-COMPX(1988, hbf1xdm2, msx2,     0,      msx2,    msx2jp,   msx2,    msx,    "Sony", "HB-F1XDMK2 (Japan)", 0)
-COMPX(1988, phc23,    msx2,     0,      msx2,    msx2jp,   msx2,    msx,    "Sanyo", "Wavy23 PHC-23 (Japan)", 0)
-COMPX(1986, cpc300,	  msx2,		0,		msx2,	 msx2kr,   msx2,	msx,	"Daewoo", "IQ-2000 CPC-300 (Korea)", 0)
+COMP (1987, hbf1xd,   msx2,     0,      msx2,    msx2jp,   msx2,    msx,    "Sony", "HB-F1XD (Japan)")
+COMP (1988, hbf1xdm2, msx2,     0,      msx2,    msx2jp,   msx2,    msx,    "Sony", "HB-F1XDMK2 (Japan)")
+COMP (1988, phc23,    msx2,     0,      msx2,    msx2jp,   msx2,    msx,    "Sanyo", "WAVY PHC-23 (Japan)")
+COMP (1986, cpc300,	  msx2,		0,		msx2,	 msx2kr,   msx2,	msx,	"Daewoo", "IQ-2000 CPC-300 (Korea)")
 COMPX(1986, cpc400,	  msx2,		0,		msx2,	 msx2kr,   msx2,	msx,	"Daewoo", "X-II CPC-400 (Korea)", GAME_NOT_WORKING )
 COMPX(1986, cpc400s,  msx2,		0,		msx2,	 msx2kr,   msx2,	msx,	"Daewoo", "X-II CPC-400S (Korea)", GAME_NOT_WORKING )
+COMP (1988, msx2p,	  0,		msx,	msx2,	 msx2jp,   msx2,	msx,	"ASCII & Microsoft", "MSX2+")
+COMPX(1988, fsa1fx,   msx2p,    0,      msx2,    msx2jp,   msx2,    msx,    "Panasonic / Matsushita", "FS-A1FX (Japan)", GAME_NOT_WORKING )
+COMPX(1988, fsa1wx,   msx2p,    0,      msx2,    msx2jp,   msx2,    msx,    "Panasonic / Matsushita", "FS-A1WX / 1st released version (Japan)", GAME_NOT_WORKING )
+COMPX(1988, fsa1wxa,  msx2p,    0,      msx2,    msx2jp,   msx2,    msx,    "Panasonic / Matsushita", "FS-A1WX / 2nd released version (Japan)", GAME_NOT_WORKING )
+COMPX(1989, fsa1wsx,  msx2p,    0,      msx2,    msx2jp,   msx2,    msx,    "Panasonic / Matsushita", "FS-A1WSX (Japan)", GAME_NOT_WORKING )
+COMPX(1988, hbf1xdj,  msx2p,    0,      msx2,    msx2jp,   msx2,    msx,    "Sony", "HB-F1XDJ (Japan)", GAME_NOT_WORKING )
+COMPX(1989, hbf1xv,   msx2p,    0,      msx2,    msx2jp,   msx2,    msx,    "Sony", "HB-F1XV (Japan)", GAME_NOT_WORKING )
+COMPX(1988, phc70fd,  msx2p,    0,      msx2,    msx2jp,   msx2,    msx,    "Sanyo", "WAVY PHC-70FD (Japan)", GAME_NOT_WORKING )
+COMPX(1988, phc70fd2, msx2p,    0,      msx2,    msx2jp,   msx2,    msx,    "Sanyo", "WAVY PHC-70FD2 (Japan)", GAME_NOT_WORKING )
+COMP (1989, phc35j,   msx2p,    0,      msx2,    msx2jp,   msx2,    msx,    "Sanyo", "WAVY PHC-35J (Japan)")
 

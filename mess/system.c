@@ -655,6 +655,16 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 			*/
 	DRIVER( cpc300 )  	/* 1986 MSX2 Korea 									*/
 	DRIVER( cpc400 )  	/* 1986 MSX2 Korea 									*/
 	DRIVER( cpc400s )  	/* 1986 MSX2 Korea 									*/
+	DRIVER( msx2p )		/* 1988 MSX2+ Japan									*/
+	DRIVER( fsa1fx )  	/* 1988 MSX2+ Japan 								*/
+	DRIVER( fsa1wx )  	/* 1988 MSX2+ Japan 								*/
+	DRIVER( fsa1wxa )  	/* 1988 MSX2+ Japan 								*/
+	DRIVER( fsa1wsx )  	/* 1989 MSX2+ Japan 								*/
+	DRIVER( hbf1xdj )  	/* 1988 MSX2+ Japan 								*/
+	DRIVER( hbf1xv )  	/* 1989 MSX2+ Japan 								*/
+	DRIVER( phc70fd )  	/* 1988 MSX2+ Japan 								*/
+	DRIVER( phc70fd2 ) 	/* 1988 MSX2+ Japan 								*/
+	DRIVER( phc35j )  	/* 1989 MSX2+ Japan 								*/
 
 
 	/* NASCOM MICROCOMPUTERS */

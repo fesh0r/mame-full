@@ -2,7 +2,15 @@
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
-(none)
+- MSX2+ and variants [Jirou Kaneda]
+	- FS-A1FX
+	- FS-A1WSX
+	- FS-A1WX (two versions)
+	- HB-F1XDJ
+	- HB-F1XV
+	- WAVY PHC-35J
+	- WAVY PHC-70FD
+	- WAVY PHC-70FD2
 
 
 
