@@ -457,6 +457,21 @@ a ST_MASK */
 	#endif
 #endif
 
+
+/* error interrupt register bits */
+
+#if (TMS99XX_MODEL == TI990_10_ID)
+
+/* This bit is set in user (i.e. non-supervisor) mode */
+#define EIR_MAPERR	0x0800	/* memory MAPping ERRor */
+#define EIR_MER		0x1000	/* Memory parity ERRor */
+#define EIR_ILLOP	0x2000	/* ILLegal OPcode */
+#define EIR_PRIVOP	0x4000	/* PRiviledged OPeration */
+#define EIR_TIMEOUT	0x8000	/* TILINE TIMEOUT */
+
+#endif
+
+
 /* Offsets for registers. */
 #define R0   0
 #define R1   2
@@ -529,10 +544,15 @@ typedef struct
 	int cur_map;			/* equivalent to ST_MF status bit */
 	int cur_src_map;		/* set to 2 by LDS */
 	int cur_dst_map;		/* set to 2 by LDD */
+
+	int reset_maperr;		/* reset mapper error flag line (reset flags in 945417-9701 p. 3-90) */
+
+	UINT32 mapper_address_latch;	/* used to load the map file and for diagnostic purpose */
 #endif
 
 #if (TMS99XX_MODEL == TI990_10_ID)
 	UINT16 error_interrupt_register;	/* one flag for each interrupt condition */
+	void (*error_interrupt_callback)(int state);
 #endif
 
 #if (TMS99XX_MODEL == TMS9985_ID) || (TMS99XX_MODEL == TMS9995_ID)
@@ -636,189 +656,169 @@ WRITE_HANDLER(tms9995_internal2_w)
 
 	/* on-board ROMs are not emulated (we use a hack) */
 
+	static int write_inhibit;
+
 	#define readword(addr) readwordX((addr), I.cur_map)
 	static int readwordX(int addr, int map_file)
 	{
-		if (! I.mapping_on)
-		{
-			if (addr < 0xf800)
-				return cpu_readmem24bew_word(addr);
-			else if (addr < 0xfc00)
+		if ((map_file == 0) && (addr >= 0xf800))
+		{	/* intercept TPCS and CPU ROM */
+			if (addr < 0xfc00)
+				/* TPCS */
 				return cpu_readmem24bew_word(0x1f0000+addr);
 			else
+				/* CPU ROM */
 				return cpu_readmem24bew_word(0x1f0000+addr);	/* hack... */
+		}
+		else if (! I.mapping_on)
+		{
+			return cpu_readmem24bew_word(addr);
 		}
 		else
 		{
 			int map_index;
 
-			if ((map_file == 0) && (addr >= 0xf800))
-			{	/* intercept TPCS */
-				if (addr < 0xfc00)
-					return cpu_readmem24bew_word(0x1f0000+addr);
-				else
-					return cpu_readmem24bew_word(0x1f0000+addr);	/* hack... */
-			}
+			if (addr <= I.map_files[map_file].limit[0])
+				map_index = 0;
+			else if (addr <= I.map_files[map_file].limit[1])
+				map_index = 1;
+			else if (addr <= I.map_files[map_file].limit[2])
+				map_index = 2;
 			else
-			{
-				if (addr <= I.map_files[map_file].limit[0])
-					map_index = 0;
-				else if (addr <= I.map_files[map_file].limit[1])
-					map_index = 1;
-				else if (addr <= I.map_files[map_file].limit[2])
-					map_index = 2;
-				else
+			{	/* mapping error */
+				if ((! I.reset_maperr) && ! (I.error_interrupt_register & EIR_MAPERR))
 				{
-					/* TODO: generate map error */
-					return 0;
+					I.error_interrupt_register |= EIR_MAPERR;
+					write_inhibit = 1;
 				}
-				return cpu_readmem24bew_word(I.map_files[map_file].bias[map_index]+addr);
+				return cpu_readmem24bew_word(addr);
 			}
+			return cpu_readmem24bew_word(I.map_files[map_file].bias[map_index]+addr);
 		}
 	}
 
 	#define writeword(addr, data) writewordX((addr), (data), I.cur_map)
 	static void writewordX(int addr, int data, int map_file)
 	{
-		if (! I.mapping_on)
-		{
-			if (addr < 0xf800)
-				cpu_writemem24bew_word(addr, data);
-			else if (addr < 0xfc00)
+		if ((map_file == 0) && (addr >= 0xf800))
+		{	/* intercept TPCS and CPU ROM */
+			if (addr < 0xfc00)
+				/* TPCS */
 				cpu_writemem24bew_word(0x1f0000+addr, data);
 			else
+				/* CPU ROM */
 				cpu_writemem24bew_word(0x1f0000+addr, data);	/* hack... */
+		}
+		else if (! I.mapping_on)
+		{
+			cpu_writemem24bew_word(addr, data);
 		}
 		else
 		{
 			int map_index;
 
-			if ((map_file == 0) && (addr >= 0xf800))
-			{	/* intercept TPCS */
-				if (addr < 0xfc00)
-					cpu_writemem24bew_word(0x1f0000+addr, data);
-				else
-					cpu_writemem24bew_word(0x1f0000+addr, data);	/* hack... */
-			}
+			if (addr <= I.map_files[map_file].limit[0])
+				map_index = 0;
+			else if (addr <= I.map_files[map_file].limit[1])
+				map_index = 1;
+			else if (addr <= I.map_files[map_file].limit[2])
+				map_index = 2;
 			else
-			{
-				if (addr <= I.map_files[map_file].limit[0])
-					map_index = 0;
-				else if (addr <= I.map_files[map_file].limit[1])
-					map_index = 1;
-				else if (addr <= I.map_files[map_file].limit[2])
-					map_index = 2;
-				else
+			{	/* mapping error */
+				if ((! I.reset_maperr) && ! (I.error_interrupt_register & EIR_MAPERR))
 				{
-					/* TODO: generate map error */
-					return;
+					I.error_interrupt_register |= EIR_MAPERR;
+					write_inhibit = 1;
 				}
-				cpu_writemem24bew_word(I.map_files[map_file].bias[map_index]+addr, data);
+				if (write_inhibit)
+					(void)cpu_readmem24bew_word(addr);
+				else
+					cpu_writemem24bew_word(addr, data);
+				return;
 			}
+			cpu_writemem24bew_word(I.map_files[map_file].bias[map_index]+addr, data);
 		}
 	}
-
-#if 0
-	static int readbyte(int addr)
-	{
-		if (addr < 0xf800)
-			return cpu_readmem24bew(addr);
-		else if (addr < 0xfc00)
-			return cpu_readmem24bew(0x1f0000+addr);
-		else
-			return cpu_readmem24bew(0x1f0000+addr);	/* hack... */
-	}
-
-	static void writebyte (int addr, int data)
-	{
-		if (addr < 0xf800)
-			cpu_writemem24bew(addr, data);
-		else if (addr < 0xfc00)
-			cpu_writemem24bew(0x1f0000+addr, data);
-		else
-			cpu_writemem24bew(0x1f0000+addr, data);	/* hack... */
-	}
-#endif
 
 	#define readbyte(addr) readbyteX((addr), I.cur_map)
 	static int readbyteX(int addr, int map_file)
 	{
-		if (! I.mapping_on)
-		{
-			if (addr < 0xf800)
-				return cpu_readmem24bew(addr);
-			else if (addr < 0xfc00)
+		if ((map_file == 0) && (addr >= 0xf800))
+		{	/* intercept TPCS and CPU ROM */
+			if (addr < 0xfc00)
+				/* TPCS */
 				return cpu_readmem24bew(0x1f0000+addr);
 			else
+				/* CPU ROM */
 				return cpu_readmem24bew(0x1f0000+addr);	/* hack... */
+		}
+		else if (! I.mapping_on)
+		{
+			return cpu_readmem24bew(addr);
 		}
 		else
 		{
 			int map_index;
 
-			if ((map_file == 0) && (addr >= 0xf800))
-			{	/* intercept TPCS */
-				if (addr < 0xfc00)
-					return cpu_readmem24bew(0x1f0000+addr);
-				else
-					return cpu_readmem24bew(0x1f0000+addr);	/* hack... */
-			}
+			if (addr <= I.map_files[map_file].limit[0])
+				map_index = 0;
+			else if (addr <= I.map_files[map_file].limit[1])
+				map_index = 1;
+			else if (addr <= I.map_files[map_file].limit[2])
+				map_index = 2;
 			else
-			{
-				if (addr <= I.map_files[map_file].limit[0])
-					map_index = 0;
-				else if (addr <= I.map_files[map_file].limit[1])
-					map_index = 1;
-				else if (addr <= I.map_files[map_file].limit[2])
-					map_index = 2;
-				else
+			{	/* mapping error */
+				if ((! I.reset_maperr) && ! (I.error_interrupt_register & EIR_MAPERR))
 				{
-					/* TODO: generate map error */
-					return 0;
+					I.error_interrupt_register |= EIR_MAPERR;
+					write_inhibit = 1;
 				}
-				return cpu_readmem24bew(I.map_files[map_file].bias[map_index]+addr);
+				return cpu_readmem24bew(addr);
 			}
+			return cpu_readmem24bew(I.map_files[map_file].bias[map_index]+addr);
 		}
 	}
 
 	#define writebyte(addr, data) writebyteX((addr), (data), I.cur_map)
 	static void writebyteX(int addr, int data, int map_file)
 	{
-		if (! I.mapping_on)
-		{
-			if (addr < 0xf800)
-				cpu_writemem24bew(addr, data);
-			else if (addr < 0xfc00)
+		if ((map_file == 0) && (addr >= 0xf800))
+		{	/* intercept TPCS and CPU ROM */
+			if (addr < 0xfc00)
+				/* TPCS */
 				cpu_writemem24bew(0x1f0000+addr, data);
 			else
+				/* CPU ROM */
 				cpu_writemem24bew(0x1f0000+addr, data);	/* hack... */
+		}
+		else if (! I.mapping_on)
+		{
+			cpu_writemem24bew(addr, data);
 		}
 		else
 		{
 			int map_index;
 
-			if ((map_file == 0) && (addr >= 0xf800))
-			{	/* intercept TPCS */
-				if (addr < 0xfc00)
-					cpu_writemem24bew(0x1f0000+addr, data);
-				else
-					cpu_writemem24bew(0x1f0000+addr, data);	/* hack... */
-			}
+			if (addr <= I.map_files[map_file].limit[0])
+				map_index = 0;
+			else if (addr <= I.map_files[map_file].limit[1])
+				map_index = 1;
+			else if (addr <= I.map_files[map_file].limit[2])
+				map_index = 2;
 			else
-			{
-				if (addr <= I.map_files[map_file].limit[0])
-					map_index = 0;
-				else if (addr <= I.map_files[map_file].limit[1])
-					map_index = 1;
-				else if (addr <= I.map_files[map_file].limit[2])
-					map_index = 2;
-				else
+			{	/* mapping error */
+				if ((! I.reset_maperr) && ! (I.error_interrupt_register & EIR_MAPERR))
 				{
-					/* TODO: generate map error */
-					return;
+					I.error_interrupt_register |= EIR_MAPERR;
+					write_inhibit = 1;
 				}
-				cpu_writemem24bew(I.map_files[map_file].bias[map_index]+addr, data);
+				if (write_inhibit)
+					(void)cpu_readmem24bew(addr);
+				else
+					cpu_writemem24bew(addr, data);
+				return;
 			}
+			cpu_writemem24bew(I.map_files[map_file].bias[map_index]+addr, data);
 		}
 	}
 
@@ -1142,7 +1142,9 @@ WRITE_HANDLER(tms9995_internal2_w)
 			break;
 		case 4:
 			/* reset flags */
-			/* ... */
+			I.reset_maperr = data;
+			if (data)
+				I.error_interrupt_register &= ~ EIR_MAPERR;
 			break;
 		case 5:
 		case 6:
@@ -1152,6 +1154,28 @@ WRITE_HANDLER(tms9995_internal2_w)
 			break;
 		}
 	}
+
+	INLINE void handle_error_interrupt(void)
+	{
+		if (I.error_interrupt_callback)
+			(*I.error_interrupt_callback)(I.error_interrupt_register ? 1 : 0);
+	}
+
+	READ16_HANDLER(ti990_10_eir_cru_r)
+	{
+		return (offset == 1) ? (I.error_interrupt_register & 0xff) : 0;
+	}
+
+	WRITE16_HANDLER(ti990_10_eir_cru_w)
+	{
+		if (offset < 4)	/* does not work for EIR_MAPERR */
+		{
+			I.error_interrupt_register &= ~ (1 << offset);
+
+			handle_error_interrupt();
+		}
+	}
+
 
 #endif
 
@@ -1208,6 +1232,8 @@ void TMS99XX_RESET(void *p)
 		I.rset_callback = param ? param->rset_callback : NULL;
 		I.lrex_callback = param ? param->lrex_callback : NULL;
 		I.ckon_ckof_callback = param ? param->ckon_ckof_callback : NULL;
+
+		I.error_interrupt_callback = param ? param->error_interrupt_callback : NULL;
 	#endif
 
 	contextswitchX(0x0000);
@@ -1232,6 +1258,8 @@ void TMS99XX_RESET(void *p)
 		I.cur_map = 0;			/* equivalent to ST_MF status bit */
 		I.cur_src_map = 0;		/* set to 2 by LDS */
 		I.cur_dst_map = 0;		/* set to 2 by LDD */
+
+		I.reset_maperr = 0;
 	#endif
 
 	if (I.IDLE)
@@ -1456,6 +1484,9 @@ int TMS99XX_EXECUTE(int cycles)
 				}
 				else
 					I.cur_dst_map = I.cur_map;
+				#if (TMS99XX_MODEL == TI990_10_ID)
+					write_inhibit = 0;
+				#endif
 			#endif
 
 			#if (HAS_OVERFLOW_INTERRUPT)
@@ -2549,18 +2580,56 @@ static int readCRU(int CRUAddr, int Number)
 
 #if HAS_MAPPING
 /* load a map file from memory */
-static void load_map_file(int map_file, UINT16 addr)
+static void load_map_file(UINT16 src_addr, int src_map_file, int dst_file)
 {
 	int i;
 
+
+	/* load mapped address into the memory address register */
+	if ((src_map_file == 0) && (src_addr >= 0xf800))
+	{	/* intercept TPCS and CPU ROM */
+		if (src_addr < 0xfc00)
+			/* TPCS */
+			I.mapper_address_latch = 0x1f0000+src_addr;
+		else
+			/* CPU ROM */
+			I.mapper_address_latch = 0x1f0000+src_addr;	/* hack... */
+	}
+	else if (! I.mapping_on)
+	{
+		I.mapper_address_latch = src_addr;
+	}
+	else
+	{
+		int map_index;
+
+		if (src_addr <= I.map_files[src_map_file].limit[0])
+			map_index = 0;
+		else if (src_addr <= I.map_files[src_map_file].limit[1])
+			map_index = 1;
+		else if (src_addr <= I.map_files[src_map_file].limit[2])
+			map_index = 2;
+		else
+		{
+			if ((! I.reset_maperr) && ! (I.error_interrupt_register & EIR_MAPERR))
+			{
+				I.error_interrupt_register |= EIR_MAPERR;
+				write_inhibit = 1;
+			}
+			I.mapper_address_latch = src_addr;
+		}
+		I.mapper_address_latch = I.map_files[src_map_file].bias[map_index]+src_addr;
+	}
+
+
 	for (i=0; i<3; i++)
 	{
-		I.map_files[map_file].L[i] = readword(addr) & 0xfff0;
-		I.map_files[map_file].limit[i] = (I.map_files[map_file].L[i] ^ 0xfff0) | 0x000f;
-		addr = (addr+2) & 0xffff;
-		I.map_files[map_file].B[i] = readword(addr);
-		I.map_files[map_file].bias[i] = ((unsigned int) I.map_files[map_file].B[i]) << 5;
-		addr = (addr+2) & 0xffff;
+		I.map_files[dst_file].L[i] = cpu_readmem24bew_word(I.mapper_address_latch) & 0xfff0;
+		I.map_files[dst_file].limit[i] = (I.map_files[dst_file].L[i] ^ 0xfff0) | 0x000f;
+		I.mapper_address_latch = (I.mapper_address_latch+2) & 0x1fffff;
+		I.map_files[dst_file].B[i] = cpu_readmem24bew_word(I.mapper_address_latch);
+		I.map_files[dst_file].bias[i] = ((unsigned int) I.map_files[dst_file].B[i]) << 5;
+		I.mapper_address_latch = (I.mapper_address_latch+2) & 0x1fffff;
 	}
 }
 #endif
@@ -2719,8 +2788,13 @@ static UINT16 decipheraddrbyte(UINT16 opcode)
 
 #if (TMS99XX_MODEL == TI990_10_ID)
 	/* TI990/10 generates an error interrupt */
-	#define HANDLE_ILLEGAL
-	#warning "todo..."
+	/* timings are unknown */
+	#define HANDLE_ILLEGAL													\
+	{																		\
+		I.error_interrupt_register |= EIR_ILLOP;							\
+		if (I.error_interrupt_callback)										\
+			(*I.error_interrupt_callback)(1);								\
+	}
 #elif TMS99XX_MODEL <= TMS9989_ID
 	/* TMS9900/TMS9980 merely ignore the instruction */
 	#define HANDLE_ILLEGAL TMS99XX_ICOUNT -= 6
@@ -2739,8 +2813,19 @@ static UINT16 decipheraddrbyte(UINT16 opcode)
 #endif
 
 #if HAS_PRIVILEGE
-	#define HANDLE_PRIVILEGE_VIOLATION
-	#warning "todo!!!"
+	#if (TMS99XX_MODEL == TI990_10_ID)
+		/* TI990/10 generates an error interrupt */
+		/* timings are unknown */
+		#define HANDLE_PRIVILEGE_VIOLATION									\
+		{																	\
+			I.error_interrupt_register |= EIR_PRIVOP;						\
+			if (I.error_interrupt_callback)									\
+				(*I.error_interrupt_callback)(1);							\
+		}
+	#else
+		#define HANDLE_PRIVILEGE_VIOLATION
+		#warning "don't know"
+	#endif
 #endif
 
 /*==========================================================================
@@ -2930,7 +3015,7 @@ static void h0100(UINT16 opcode)
 	case 1:   /* BIND */
 		/* BIND -- Branch INDirect */
 		I.PC = readwordX(src, src_map);
-		CYCLES(Mooof!, Mooof!, 3 /*don't know*/);
+		CYCLES(Mooof!, Mooof!, 4 /*don't know*/);
 		break;
 #endif
 
@@ -3034,7 +3119,7 @@ static void h0200(UINT16 opcode)
 			/* read address pointer */
 			addr = readword(addr);
 
-			load_map_file((opcode & 0x10) ? 1 : 0, addr);
+			load_map_file(addr, I.cur_map, (opcode & 0x10) ? 1 : 0);
 
 			CYCLES(3, Mooof!, Mooof!);
 			return;
@@ -3236,7 +3321,9 @@ static void h0200(UINT16 opcode)
 			/*I.MID_flag = 0;*/		/* not sure about this */
 		#endif
 		#if (TMS99XX_MODEL == TI990_10_ID)
-			I.error_interrupt_register = 0;		/* not sure about this */
+			I.error_interrupt_register = 0;
+			I.mapping_on = 0;
+			//I.cur_map = 0;
 		#endif
 
 		#if EXTERNAL_INSTRUCTION_DECODING
@@ -3535,8 +3622,7 @@ static void h0400(UINT16 opcode)
 	mapper chip to be associated with tms99000. */
 	/* These opcode allow access to another page without the need of switching a page someplace. */
 	/* Note that, if I read the 990/10 schematics correctly, two consecutive LDS or LDD would
-	cause some trouble.  TODO: emulate LDD (or LDS) preceded by a LDS. */
-	#warning "Todo..."
+	cause some trouble.  */
 	case 14:  /* LDS */
 		/* LDS --- Long Distance Source */
 
@@ -3548,7 +3634,7 @@ static void h0400(UINT16 opcode)
 			}
 		#endif
 
-		load_map_file(2, addr);
+		load_map_file(addr, src_map, 2);
 		lds_flag = 1;
 		I.disable_interrupt_recognition = 1;
 		break;
@@ -3562,7 +3648,7 @@ static void h0400(UINT16 opcode)
 			}
 		#endif
 
-		load_map_file(2, addr);
+		load_map_file(addr, src_map, 2);
 		ldd_flag = 1;
 		I.disable_interrupt_recognition = 1;
 		break;
@@ -4026,7 +4112,7 @@ static void h1000(UINT16 opcode)
 		/* CRU Bit = 1 */
 		#if HAS_PRIVILEGE
 			if (writeCRU((READREG(R12) >> 1) + offset, 1, 1) == CRU_PRIVILEGE_VIOLATION)
-				HANDLE_PRIVILEGE_VIOLATION;
+				HANDLE_PRIVILEGE_VIOLATION
 		#else
 			writeCRU((READREG(R12) >> 1) + offset, 1, 1);
 		#endif
@@ -4039,7 +4125,7 @@ static void h1000(UINT16 opcode)
 		/* CRU Bit = 0 */
 		#if HAS_PRIVILEGE
 			if (writeCRU((READREG(R12) >> 1) + offset, 1, 0) == CRU_PRIVILEGE_VIOLATION)
-				HANDLE_PRIVILEGE_VIOLATION;
+				HANDLE_PRIVILEGE_VIOLATION
 		#else
 			writeCRU((READREG(R12) >> 1) + offset, 1, 0);
 		#endif
@@ -4056,7 +4142,7 @@ static void h1000(UINT16 opcode)
 
 				value = readCRU((READREG(R12)>> 1) + offset, 1);
 				if (value == CRU_PRIVILEGE_VIOLATION)
-					HANDLE_PRIVILEGE_VIOLATION;
+					HANDLE_PRIVILEGE_VIOLATION
 				else
 					setst_e(value & 1, 1);
 			}
@@ -4321,7 +4407,7 @@ static void ldcr_stcr(UINT16 opcode)
 
 		#if HAS_PRIVILEGE
 			if (writeCRU((READREG(R12) >> 1), cnt, value) == CRU_PRIVILEGE_VIOLATION)
-				HANDLE_PRIVILEGE_VIOLATION;
+				HANDLE_PRIVILEGE_VIOLATION
 		#else
 			writeCRU((READREG(R12) >> 1), cnt, value);
 		#endif
@@ -4342,7 +4428,7 @@ static void ldcr_stcr(UINT16 opcode)
 				#if HAS_PRIVILEGE
 					value = readCRU((READREG(R12) >> 1), cnt);
 					if (value == CRU_PRIVILEGE_VIOLATION)
-						HANDLE_PRIVILEGE_VIOLATION;
+						HANDLE_PRIVILEGE_VIOLATION
 					else
 					{
 						setst_byte_laep(value);
@@ -4381,7 +4467,7 @@ static void ldcr_stcr(UINT16 opcode)
 			#if HAS_PRIVILEGE
 				value = readCRU((READREG(R12) >> 1), cnt);
 				if (value == CRU_PRIVILEGE_VIOLATION)
-					HANDLE_PRIVILEGE_VIOLATION;
+					HANDLE_PRIVILEGE_VIOLATION
 				else
 				{
 					setst_lae(value);
