@@ -44,13 +44,24 @@
            - find out what the unused key bits are for
            - complete serial (xmodem protocol!)
 		   - overlay would be nice!
+		   - finish NC200 disc drive emulation
+		   - finish pcmcia card emulation
+		   - add NC150 driver - ROM needed!!! 
 
+		Interrupt system of NC100:
 
+		The current interrupts that are latched can be cleared using IRQ status.
+		However, interrupts such as the RXRDY and TXRDY continue to trigger until
+		the UART register has been read. This will stop data being lost???
 
 		Self Test:
 
-		- not got it to trigger yet:
-		- FUNCTION+SYMBOL must be pressed together.
+		- requires memory save and real time clock save to be working!
+		(i.e. for MESS nc100 driver, nc100.nv can be created)
+		- turn off nc (use NMI button)
+		- reset+FUNCTION+SYMBOL must be pressed together.
+
+		Note: NC200 Self test does not test disc hardware :(
 
 		Kevin Thacker [MESS driver]
 
@@ -71,6 +82,7 @@
 #include "includes/serial.h"
 /* uncomment for verbose debugging information */
 //#define VERBOSE
+
 
 #include "includes/centroni.h"
 #include "printer.h"
@@ -229,6 +241,7 @@ static void dummy_timer_callback(int dummy)
 	}
 
     previous_on_off_button_state = on_off_button_state;
+
 }
 
 
@@ -525,11 +538,89 @@ static CENTRONICS_CONFIG nc200_cent_config[1]={
 	},
 };
 
+static void *file;
+
+/* restore a block of memory from the nvram file */
+static void nc_common_restore_memory_from_stream(void)
+{
+	if (!file)
+		return;
+
+    if (nc_memory!=NULL)
+    {
+		unsigned long stored_size;
+		unsigned long restore_size;
+		
+#ifdef VERBOSE
+		logerror("restoring nc memory\n");
+#endif
+		/* get size of memory data stored */
+		osd_fread(file, &stored_size, sizeof(unsigned long));
+
+		if (stored_size>nc_memory_size)
+		{
+			restore_size = nc_memory_size;
+		}
+		else
+		{
+			restore_size = stored_size;
+		}
+		/* read as much as will fit into memory */
+		osd_fread(file, nc_memory, restore_size);
+		/* seek over remaining data */    
+		osd_fseek(file, SEEK_CUR,stored_size - restore_size);
+	}
+}
+
+/* store a block of memory to the nvram file */
+static void nc_common_store_memory_to_stream(void)
+{
+	if (!file)
+		return;
+
+    if (nc_memory!=NULL)
+    {
+#ifdef VERBOSE
+		logerror("storing nc memory\n");
+#endif
+		/* write size of memory data */
+		osd_fwrite(file, &nc_memory_size, sizeof(unsigned long));
+
+		/* write data block */
+		osd_fwrite(file, nc_memory, nc_memory_size);
+    }
+}
+
+static void nc_common_open_stream_for_reading(void)
+{
+	char filename[13];
+
+	sprintf(filename,"%s.nv", Machine->gamedrv->name);
+
+	file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_MEMCARD, OSD_FOPEN_READ);
+}
+
+static void nc_common_open_stream_for_writing(void)
+{
+    char filename[13];
+
+    sprintf(filename,"%s.nv", Machine->gamedrv->name);
+
+    file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_MEMCARD, OSD_FOPEN_WRITE);
+}
+
+
+static void	nc_common_close_stream(void)
+{
+	if (file)
+	{
+		osd_fclose(file);
+	}
+}
+
+
 void nc_common_init_machine(void)
 {
-
-        void *file;
-
         nc_display_memory_start = 0;
 
         nc_memory_config[0] = 0;
@@ -568,28 +659,9 @@ void nc_common_init_machine(void)
         /* 256k of rom */
         nc_membank_rom_mask = 0x0f;
 
-        if (nc_memory!=NULL)
-        {
-                char filename[13];
-
-                sprintf(filename,"%s.nv", Machine->gamedrv->name);
-
-                /* restore nc memory from file */
-                file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_MEMCARD, OSD_FOPEN_READ);
-
-                if (file!=NULL)
-                {
-#ifdef VERBOSE
-					logerror("restoring nc memory\n");
-#endif
-					osd_fread(file, nc_memory, nc_memory_size);
-                   osd_fclose(file);
-                }
-        }
 
 		nc_uart_control = 0x0ff;
 }
-
 
 void nc100_init_machine(void)
 {
@@ -612,7 +684,12 @@ void nc100_init_machine(void)
 	/* assumption: select is tied low */
 	centronics_write_handshake(0, CENTRONICS_SELECT | CENTRONICS_NO_RESET, CENTRONICS_SELECT| CENTRONICS_NO_RESET);
 
+	nc_common_open_stream_for_reading();
+	tc8521_load_stream(file);
 
+	nc_common_restore_memory_from_stream();
+
+	nc_common_close_stream();
 }
 
 #if 0
@@ -674,53 +751,48 @@ void nc200_init_machine(void)
 		/* assumption: select is tied low */
 		centronics_write_handshake(0, CENTRONICS_SELECT | CENTRONICS_NO_RESET, CENTRONICS_SELECT| CENTRONICS_NO_RESET);
 
+		nc_common_open_stream_for_reading();
+		if (file)
+		{
+			mc146818_load_stream(file);
+		}
+		nc_common_restore_memory_from_stream();
+		nc_common_close_stream();
 
 }
 
 void nc_common_shutdown_machine(void)
 {
+	logerror("shutdown machine");
 
-		msm8251_stop();
+	msm8251_stop();
 
-        if (nc_memory!=NULL)
-        {
-                /* write nc memory to file */
-                void *file;
-                char filename[13];
+    if (nc_memory!=NULL)
+    {
+        free(nc_memory);
+        nc_memory = NULL;
+    }
 
-                sprintf(filename,"%s.nv", Machine->gamedrv->name);
+    if (nc_keyboard_timer!=NULL)
+    {
+            timer_remove(nc_keyboard_timer);
+            nc_keyboard_timer = NULL;
+    }
 
-                file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_MEMCARD, OSD_FOPEN_WRITE);
-
-                if (file!=NULL)
-                {
-#ifdef VERBOSE
-					logerror("writing nc memory!\n");
-#endif
-					osd_fwrite(file, nc_memory, nc_memory_size);
-                   osd_fclose(file);
-                }
-
-                free(nc_memory);
-                nc_memory = NULL;
-        }
-
-
-        if (nc_keyboard_timer!=NULL)
-        {
-                timer_remove(nc_keyboard_timer);
-                nc_keyboard_timer = NULL;
-        }
-
-        if (dummy_timer!=NULL)
-        {
-                timer_remove(dummy_timer);
-                dummy_timer = NULL;
-        }
+    if (dummy_timer!=NULL)
+    {
+            timer_remove(dummy_timer);
+            dummy_timer = NULL;
+    }
 }
 
 void	nc100_shutdown_machine(void)
 {
+	nc_common_open_stream_for_writing();
+	tc8521_save_stream(file);
+	nc_common_store_memory_to_stream();
+	nc_common_close_stream();
+
 	nc_common_shutdown_machine();
     tc8521_stop();
 }
@@ -728,6 +800,14 @@ void	nc100_shutdown_machine(void)
 
 void	nc200_shutdown_machine(void)
 {
+	nc_common_open_stream_for_writing();
+	if (file)
+	{
+		mc146818_save_stream(file);
+	}
+	nc_common_store_memory_to_stream();
+	nc_common_close_stream();
+
 	nc_common_shutdown_machine();
 	mc146818_close();
 }
@@ -1098,7 +1178,7 @@ INPUT_PORTS_START(nc100)
         PORT_BITX(0x002, IP_ACTIVE_HIGH, IPT_KEYBOARD, "SYMBOL", KEYCODE_HOME, IP_JOY_NONE) 
         PORT_BITX(0x004, IP_ACTIVE_HIGH, IPT_KEYBOARD, "1 !", KEYCODE_1, IP_JOY_NONE)
         PORT_BITX(0x008, IP_ACTIVE_HIGH, IPT_KEYBOARD, "TAB", KEYCODE_TAB, IP_JOY_NONE)
-        PORT_BIT (0x010, 0x00, IPT_UNUSED)
+	    PORT_BIT (0x010, 0x00, IPT_UNUSED)
         PORT_BIT (0x020, 0x00, IPT_UNUSED)
         PORT_BIT (0x040, 0x00, IPT_UNUSED)
         PORT_BIT (0x080, 0x00, IPT_UNUSED)
