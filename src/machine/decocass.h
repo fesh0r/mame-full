@@ -2,7 +2,7 @@
 #define TAPE_UI_DISPLAY 0
 
 #if MAME_DEBUG
-#define LOGLEVEL  3
+#define LOGLEVEL  0
 #define LOG(n,x)  if (LOGLEVEL >= n) logerror x
 #else
 #define LOG(n,x)

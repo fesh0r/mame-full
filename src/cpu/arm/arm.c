@@ -2933,5 +2933,3 @@ unsigned arm_dasm(char *buffer, unsigned pc)
 	return 4;
 #endif
 }
-
-void arm_init (void) {  }

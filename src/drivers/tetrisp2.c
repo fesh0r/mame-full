@@ -550,8 +550,8 @@ ROM_START( tetrisp2 )
 	   register in the sprite's hardware on this board! */
 
 	ROM_REGION( 0x800000, REGION_GFX2, ROMREGION_DISPOSE )	/* 16x16x8 (Background) */
-	ROM_LOAD( "96019-06.13", 0x000000, 0x400000, 0x00000000 )
-	ROM_LOAD( "96019-04.6",  0x400000, 0x400000, 0x00000000 )
+	ROM_LOAD( "96019-06.13", 0x000000, 0x400000, 0x16f7093c )
+	ROM_LOAD( "96019-04.6",  0x400000, 0x100000, 0xb849dec9 )
 	/* No good dump known. The other set's roms seem to work just fine */
 
 	ROM_REGION( 0x080000, REGION_GFX3, ROMREGION_DISPOSE )	/* 8x8x8 (Foreground) */
@@ -599,7 +599,7 @@ ROM_START( teplus2j )
 
 	ROM_REGION( 0x800000, REGION_GFX2, ROMREGION_DISPOSE )	/* 16x16x8 (Background) */
 	ROM_LOAD( "96019-06.13", 0x000000, 0x400000, 0x16f7093c )
-	ROM_LOAD( "96019-04.6",  0x400000, 0x400000, 0xb849dec9 )
+	ROM_LOAD( "96019-04.6",  0x400000, 0x100000, 0xb849dec9 )
 
 	ROM_REGION( 0x080000, REGION_GFX3, ROMREGION_DISPOSE )	/* 8x8x8 (Foreground) */
 	ROM_LOAD( "tetp2-10.bin", 0x000000, 0x080000, 0x34dd1bad )	// 11111xxxxxxxxxxxxxx = 0xFF

@@ -906,7 +906,6 @@ TESTDRIVER( greenber )
 	DRIVER( olibochu )	/* M47 (c) 1981 + "GDI presents" */
 	DRIVER( mpatrol )	/* M52 (c) 1982 */
 	DRIVER( mpatrolw )	/* M52 (c) 1982 + Williams license */
-	DRIVER( mranger )	/* bootleg */
 	DRIVER( troangel )	/* (c) 1983 */
 	DRIVER( yard )		/* (c) 1983 */
 	DRIVER( vsyard )	/* (c) 1983/1984 */
@@ -1235,7 +1234,7 @@ TESTDRIVER( pwheelsj )	/* C78 */
 	/* enhanced Z-System hardware games */
 	DRIVER( gunbustr )	/* D27 (c) 1992 Taito Corporation (Japan) */
 	DRIVER( superchs )	/* D46 (c) 1992 Taito America Corporation (US) */
-	DRIVER( undrfire )	/* D67 (c) 1993 Taito Coporation Japan (World) */
+TESTDRIVER( undrfire )	/* D67 (c) 1993 Taito Coporation Japan (World) */
 
 	/* Taito F2 games */
 	DRIVER( finalb )	/* B82 (c) 1988 Taito Corporation Japan (World) */
@@ -1711,6 +1710,7 @@ TESTDRIVER( uecology ) 	/* 03/12/1993 Ultimate Ecology (Japan) */
 	DRIVER( ssf2xj )	/* 23/02/1994 (c) 1994 (Japan) */
 	DRIVER( avsp )		/* 20/05/1994 (c) 1994 (US) */
 	DRIVER( avspa )		/* 20/05/1994 (c) 1994 (Asia) */
+						/*    06/1994? Galum Pa! (not listed on Capcom's site) */
 	DRIVER( dstlk )		/* 18/08/1994 (c) 1994 (US) */
 	DRIVER( vampj )		/* 05/07/1994 (c) 1994 (Japan) */
 	DRIVER( vampja )	/* 05/07/1994 (c) 1994 (Japan) */
@@ -1735,9 +1735,9 @@ TESTDRIVER( cybotsj )	/* 20/04/1995 Cyberbots: Full Metal Madness (Japan) */
 	DRIVER( msh )		/* 24/10/1995 (c) 1995 (US) */
 	DRIVER( mshj )		/* 24/10/1995 (c) 1995 (Japan) */
 	DRIVER( mshh )		/* 17/11/1995 (c) 1996 (Hispanic) */
-TESTDRIVER( 19xx )		/* 07/12/1995 19XX: The Battle Against Destiny (US) */
-TESTDRIVER( 19xxj )		/* 07/12/1995 19XX: The War Against Destiny (Japan) */
-TESTDRIVER( 19xxh )		/* 18/12/1995 19XX: The War Against Destiny (Hispanic) */
+	DRIVER( 19xx )		/* 07/12/1995 (c) 1996 (US) */
+	DRIVER( 19xxj )		/* 07/12/1995 (c) 1996 (Japan) */
+	DRIVER( 19xxh )		/* 18/12/1995 (c) 1996 (Hispanic) */
 TESTDRIVER( ddsom )		/* 09/02/1996 Dungeons & Dragons 2: Shadow over Mystara (US) */
 TESTDRIVER( ddsomj )	/* 06/02/1996 Dungeons & Dragons 2: Shadow over Mystara (Japan) */
 	DRIVER( sfa2 )		/* 06/03/1996 (c) 1996 (US) */
@@ -1768,7 +1768,6 @@ TESTDRIVER( mvsch )		/* 23/01/1998 Marvel Super Heroes vs. Capcom: Clash of Supe
 TESTDRIVER( sfa3 )		/* 29/06/1998 Street Fighter Alpha 3 (US) */
 TESTDRIVER( sfz3 )		/* 27/07/1998 Street Fighter Zero 3 (US) */
 						/*    02/1999 Giga Wing */
-						/* Gulum Pa! */
 						/*    01/2000 Great Mahou Daisakusen */
 						/*    04/2000 Mars Matrix */
 						/* 1944 */
@@ -2555,12 +2554,6 @@ TESTDRIVER( sotsugyo )	/* (c) 1995 Mitchell (Atlus license) */
 	DRIVER( parodius )	/* GX955 (c) 1990 (Japan) */
 	DRIVER( rollerg )	/* GX999 (c) 1991 (US) */
 	DRIVER( rollergj )	/* GX999 (c) 1991 (Japan) */
-	DRIVER( xexex )		/* GX067 (c) 1991 (World) */
-	DRIVER( xexexj )	/* GX067 (c) 1991 (Japan) */
-	DRIVER( asterix )	/* GX068 (c) 1992 (World) */
-	DRIVER( astrxeac )	/* GX068 (c) 1992 (World) */
-	DRIVER( gijoe )		/* GX069 (c) 1991 (World) */
-	DRIVER( gijoeu )	/* GX069 (c) 1991 (US) */
 	DRIVER( simpsons )	/* GX072 (c) 1991 */
 	DRIVER( simpsn2p )	/* GX072 (c) 1991 */
 	DRIVER( simps2pj )	/* GX072 (c) 1991 (Japan) */
@@ -2607,10 +2600,6 @@ TESTDRIVER( sotsugyo )	/* (c) 1995 Mitchell (Atlus license) */
 	DRIVER( hpuncher )	/* GX870 (c) 1988 (Japan) */
 	DRIVER( miaj )		/* GX808 (c) 1989 (Japan) */
 
-	/* Konami Gradius III board */
-	DRIVER( gradius3 )	/* GX945 (c) 1989 (Japan) */
-	DRIVER( grdius3a )	/* GX945 (c) 1989 (Asia) */
-
 	/* (some) Konami 68000 games */
 	DRIVER( mia )		/* GX808 (c) 1989 */
 	DRIVER( mia2 )		/* GX808 (c) 1989 */
@@ -2642,7 +2631,19 @@ TESTDRIVER( glfgretj )	/* GX061 (c) 1991 (Japan) */
 	DRIVER( xmen )		/* GX065 (c) 1992 (US) */
 	DRIVER( xmen6p )	/* GX065 (c) 1992 */
 	DRIVER( xmen2pj )	/* GX065 (c) 1992 (Japan) */
+	DRIVER( xexex )		/* GX067 (c) 1991 (World) */
+	DRIVER( xexexj )	/* GX067 (c) 1991 (Japan) */
+	DRIVER( asterix )	/* GX068 (c) 1992 (World) */
+	DRIVER( astrxeac )	/* GX068 (c) 1992 (World) */
+	DRIVER( astrxeaa )	/* GX068 (c) 1992 (World) */
+	DRIVER( gijoe )		/* GX069 (c) 1991 (World) */
+	DRIVER( gijoeu )	/* GX069 (c) 1991 (US) */
 	DRIVER( thndrx2 )	/* GX073 (c) 1991 (Japan) */
+
+	/* Konami dual 68000 games */
+	DRIVER( overdriv )	/* GX789 (c) 1990 */
+	DRIVER( gradius3 )	/* GX945 (c) 1989 (Japan) */
+	DRIVER( grdius3a )	/* GX945 (c) 1989 (Asia) */
 
 /*
 Konami System GX game list
@@ -2917,6 +2918,7 @@ TESTDRIVER( hdrivaip )	/* (proto) */
 	DRIVER( marvins )	/* A2003      (c) 1983 */
 	DRIVER( madcrash )	/* A2005      (c) 1984 */
 	DRIVER( vangrd2 )	/*            (c) 1984 */
+	DRIVER( sgladiat )	/* A3006      (c) 1984 */
 	DRIVER( hal21 )		/*            (c) 1985 */
 	DRIVER( hal21j )	/*            (c) 1985 (Japan) */
 	DRIVER( aso )		/*            (c) 1985 */
@@ -3243,6 +3245,7 @@ TESTDRIVER( hachamf )	/* (c) 1991 NMK */
 	DRIVER( cruisin )	/* (c) 1985 Jaleco/Kitkorp */
 	DRIVER( pinbo )		/* (c) 1984 Jaleco */
 	DRIVER( pinbos )	/* (c) 1985 Strike */
+	DRIVER( momoko )	/* (c) 1986 Jaleco */
 	DRIVER( argus )		/* (c) 1986 Jaleco */
 	DRIVER( valtric )	/* (c) 1986 Jaleco */
 	DRIVER( butasan )	/* (c) 1987 Jaleco */

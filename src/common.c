@@ -1287,11 +1287,12 @@ static int process_rom_entries(struct rom_load_data *romdata, const struct RomMo
 					else
 						modified_romp._length = (modified_romp._length & ~ROM_INHERITEDFLAGS) | lastflags;
 
-					/* attempt to read using the modified entry */
+					explength += UNCOMPACT_LENGTH(modified_romp._length);
+
+                    /* attempt to read using the modified entry */
 					readresult = read_rom_data(romdata, &modified_romp);
 					if (readresult == -1)
 						goto fatalerror;
-					explength += readresult;
 				}
 				while (ROMENTRY_ISCONTINUE(romp));
 
@@ -1307,6 +1308,7 @@ static int process_rom_entries(struct rom_load_data *romdata, const struct RomMo
 				if (romdata->file)
 					osd_fseek(romdata->file, 0, SEEK_SET);
 				baserom = NULL;
+				explength = 0;
 			}
 			while (ROMENTRY_ISRELOAD(romp));
 

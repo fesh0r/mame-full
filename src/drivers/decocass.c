@@ -483,7 +483,7 @@ ROM_START( ctsttape )
 	ROM_LOAD( "testtape.pro", 0x0000, 0x0020, 0xe09ae5de )
 
 	ROM_REGION( 0x10000, REGION_USER2, 0 )	  /* (max) 64k for cassette image */
-	ROM_LOAD( "testtape.cas", 0x0000, 0x8000, 0x4f9d8efb )
+	ROM_LOAD( "testtape.cas", 0x0000, 0x2000, 0x4f9d8efb )
 ROM_END
 
 ROM_START( clocknch )

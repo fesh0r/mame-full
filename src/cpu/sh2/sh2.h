@@ -57,7 +57,6 @@ enum {
 };
 extern int sh2_icount;				  /* cycle count */
 
-extern void sh2_init (void);
 extern void sh2_reset (void *param);		  /* Reset registers to the initial values */
 extern void sh2_exit  (void);				  /* Shut down CPU core */
 extern int	sh2_execute(int cycles);		  /* Execute cycles - returns number of cycles actually run */

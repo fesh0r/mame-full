@@ -61,9 +61,73 @@ data16_t *metro_scroll;
 data16_t *metro_tiletable;
 data16_t *metro_vram_0, *metro_vram_1, *metro_vram_2;
 data16_t *metro_window;
-data16_t *metro_k053936_ram;
 
-static int gfx_8bpp,support_8bpp;
+static int support_8bpp;
+static int has_zoom;
+
+
+data16_t *metro_K053936_ram,*metro_K053936_ctrl;
+static struct tilemap *metro_K053936_tilemap;
+
+static void metro_K053936_get_tile_info(int tile_index)
+{
+	int code = metro_K053936_ram[tile_index];
+
+	SET_TILE_INFO(2,code & 0x7fff,0x1e);
+}
+
+
+WRITE16_HANDLER( metro_K053936_w )
+{
+	data16_t oldword = metro_K053936_ram[offset];
+	COMBINE_DATA(&metro_K053936_ram[offset]);
+	if (oldword != metro_K053936_ram[offset])
+		tilemap_mark_tile_dirty(metro_K053936_tilemap,offset);
+}
+
+void K053936_zoom_draw(struct osd_bitmap *bitmap)
+{
+	UINT32 startx,starty;
+	int incxx,incxy,incyx,incyy;
+	struct osd_bitmap *srcbitmap = tilemap_get_pixmap(metro_K053936_tilemap);
+
+	startx = 256 * (INT16)(metro_K053936_ctrl[0x00]);
+	incxx  =       (INT16)(metro_K053936_ctrl[0x03]);
+	incyx  =       (INT16)(metro_K053936_ctrl[0x02]);
+	starty = 256 * (INT16)(metro_K053936_ctrl[0x01]);
+	incxy  =       (INT16)(metro_K053936_ctrl[0x05]);
+	incyy  =       (INT16)(metro_K053936_ctrl[0x04]);
+
+	startx += 21 * incyx;
+	starty += 21 * incyy;
+
+	startx += 69 * incxx;
+	starty += 69 * incxy;
+
+	copyrozbitmap(bitmap,srcbitmap,startx << 5,starty << 5,
+			incxx << 5,incxy << 5,incyx << 5,incyy << 5,0,
+			&Machine->visible_area,TRANSPARENCY_NONE,0,0);
+#if 0
+	usrintf_showmessage("%04x%04x%04x%04x %04x%04x%04x%04x\n%04x%04x%04x%04x %04x%04x%04x%04x",
+			metro_K053936_ctrl[0x00],
+			metro_K053936_ctrl[0x01],
+			metro_K053936_ctrl[0x02],
+			metro_K053936_ctrl[0x03],
+			metro_K053936_ctrl[0x04],
+			metro_K053936_ctrl[0x05],
+			metro_K053936_ctrl[0x06],
+			metro_K053936_ctrl[0x07],
+			metro_K053936_ctrl[0x08],
+			metro_K053936_ctrl[0x09],
+			metro_K053936_ctrl[0x0a],
+			metro_K053936_ctrl[0x0b],
+			metro_K053936_ctrl[0x0c],
+			metro_K053936_ctrl[0x0d],
+			metro_K053936_ctrl[0x0e],
+			metro_K053936_ctrl[0x0f]);
+#endif
+}
+
 
 
 /***************************************************************************
@@ -199,7 +263,13 @@ static void get_tile_info_##_n_##_8bit( int tile_index ) \
 	if (code & 0x8000) /* Special: draw a tile of a single color (e.g. not from the gfx ROMs) */ \
 		SET_TILE_INFO( 1, code & 0x000f, (((code & 0x0ff0) >> 4) ^ 0x0f) + 0x100) \
 	else if ((tile & 0x00f00000)==0x00f00000) \
-		SET_TILE_INFO( gfx_8bpp, (tile & 0xfffff)/2 + (code & 0xf), ((tile & 0x0f000000) >> 24) + 0x10 ) \
+	{ \
+		int _code = (tile & 0xfffff) + 2*(code & 0xf); \
+		tile_info.tile_number = _code; \
+		tile_info.pen_data = memory_region(REGION_GFX1) + _code*32; \
+		tile_info.pal_data = &Machine->remapped_colortable[256 * (((tile & 0x0f000000) >> 24) + 0x10)]; \
+		tile_info.pen_usage = NULL; \
+	} \
 	else \
 		SET_TILE_INFO( 0, (tile & 0xfffff) + (code & 0xf), (((tile & 0x0ff00000) >> 20) ^ 0x0f) + 0x100 ) \
 } \
@@ -283,7 +353,7 @@ static struct GfxLayout sprite_layout =
 int metro_vh_start_14100(void)
 {
 	support_8bpp = 0;
-	gfx_8bpp = -1;
+	has_zoom = 0;
 
 	tilemap_0 = tilemap_create(	get_tile_info_0, tilemap_scan_rows,
 								TILEMAP_TRANSPARENT, 8,8, WIN_NX,WIN_NY );
@@ -325,31 +395,12 @@ void metro_vh_stop(void)
 			freegfx(sprite[i].gfx);
 		free(sprite);
 	}
-
-	if (gfx_8bpp != -1)
-	{
-		free(Machine->gfx[gfx_8bpp]);
-		Machine->gfx[gfx_8bpp] = NULL;
-		gfx_8bpp = -1;
-	}
 }
 
 int metro_vh_start_14220(void)
 {
-	struct GfxElement *gfx;
-
-
-	/* find first empty slot to decode gfx */
-	for (gfx_8bpp = 0; gfx_8bpp < MAX_GFX_ELEMENTS; gfx_8bpp++)
-		if (Machine->gfx[gfx_8bpp] == 0)
-			break;
-	if (gfx_8bpp == MAX_GFX_ELEMENTS)
-	{
-		gfx_8bpp = -1;
-		return 1;
-	}
-
 	support_8bpp = 1;
+	has_zoom = 0;
 
 	tilemap_0 = tilemap_create(	get_tile_info_0_8bit, tilemap_scan_rows,
 								TILEMAP_TRANSPARENT, 8,8, WIN_NX,WIN_NY );
@@ -362,14 +413,8 @@ int metro_vh_start_14220(void)
 
 	sprite = (sprite_t *) malloc(sizeof(sprite_t) * 0x10000);
 
-	gfx = malloc(sizeof(struct GfxElement));
-
-	if (!gfx || !tilemap_0 || !tilemap_1 || !tilemap_2 || !sprite)
-	{
-		free(gfx);
-		gfx_8bpp = -1;
+	if (!tilemap_0 || !tilemap_1 || !tilemap_2 || !sprite)
 		return 1;
-	}
 
 	tilemap_set_scroll_rows(tilemap_0,1);
 	tilemap_set_scroll_cols(tilemap_0,1);
@@ -389,18 +434,25 @@ int metro_vh_start_14220(void)
 
 	memset(sprite, 0, sizeof(sprite_t) * 0x10000);
 
-	memset(gfx,0,sizeof(struct GfxElement));
-	Machine->gfx[gfx_8bpp] = gfx;
-	gfx->width = 8;
-	gfx->height = 8;
-	gfx->line_modulo = 8;
-	gfx->char_modulo = 64;
-	gfx->gfxdata = memory_region(REGION_GFX1);
-	gfx->total_elements = memory_region_length(REGION_GFX1)/64;
-	gfx->color_granularity = 256;
-	gfx->pen_usage = NULL;
-	gfx->colortable = Machine->remapped_colortable;
-	gfx->total_colors = 0x20;
+	return 0;
+}
+
+int  blzntrnd_vh_start(void)
+{
+	if (metro_vh_start_14220())
+		return 1;
+
+	has_zoom = 1;
+
+	metro_K053936_tilemap = tilemap_create(metro_K053936_get_tile_info, tilemap_scan_rows,
+								TILEMAP_OPAQUE, 8,8, 256, 512 );
+
+	if (!metro_K053936_tilemap)
+		return 1;
+
+	tilemap_set_scrolldx(tilemap_0, 8, -8);
+	tilemap_set_scrolldx(tilemap_1, 8, -8);
+	tilemap_set_scrolldx(tilemap_2, 8, -8);
 
 	return 0;
 }
@@ -534,14 +586,17 @@ void metro_draw_sprites(struct osd_bitmap *bitmap, int pri)
 			struct GfxElement gfx;
 			gfx.width = sprite_layout.width;
 			gfx.height = sprite_layout.height;
-			gfx.line_modulo = sprite_layout.width;
-			gfx.char_modulo = 0;	/* doesn't matter */
-			gfx.gfxdata = gfxdata;
 			gfx.total_elements = 1;
 			gfx.color_granularity = 256;
-			gfx.pen_usage = NULL;
 			gfx.colortable = Machine->remapped_colortable;
 			gfx.total_colors = 0x20;
+			gfx.pen_usage = NULL;
+			gfx.gfxdata = gfxdata;
+			gfx.line_modulo = sprite_layout.width;
+			gfx.char_modulo = 0;	/* doesn't matter */
+			gfx.flags = 0;
+			if (Machine->orientation & ORIENTATION_SWAP_XY)
+				gfx.flags |= GFX_SWAPXY;
 
 			drawgfxzoom(	bitmap,&gfx,
 							0,
@@ -553,6 +608,27 @@ void metro_draw_sprites(struct osd_bitmap *bitmap, int pri)
 		}
 		else
 		{
+#if 0
+//crashes on balcube title screen, because
+//drawgfxzoom doesn't support packed gfx yet.
+			/* prepare GfxElement on the fly */
+			struct GfxElement gfx;
+			gfx.width = sprite_layout.width;
+			gfx.height = sprite_layout.height;
+			gfx.total_elements = 1;
+			gfx.color_granularity = 16;
+			gfx.colortable = Machine->remapped_colortable;
+			gfx.total_colors = 0x200;
+			gfx.pen_usage = NULL;
+			gfx.gfxdata = gfxdata;
+			gfx.line_modulo = sprite_layout.width/2;
+			gfx.char_modulo = 0;	/* doesn't matter */
+			gfx.flags = GFX_PACKED;
+			if (Machine->orientation & ORIENTATION_SWAP_XY)
+				gfx.flags |= GFX_SWAPXY;
+
+			drawgfxzoom(	bitmap,&gfx,
+#else
 			/* Decode the sprite's graphics when needed */
 			if ( (sprite[code].gfx == 0) || ((sprite[code].word ^ attr) & 0x3f0f) )
 			{
@@ -570,6 +646,7 @@ void metro_draw_sprites(struct osd_bitmap *bitmap, int pri)
 			}
 
 			drawgfxzoom(	bitmap,sprite[code].gfx,
+#endif
 							0,
 							(color ^ 0x0f) + color_start,
 							flipx, flipy,
@@ -764,33 +841,6 @@ void metro_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
 
 
-#if 0
-{
-	int x,y;
-	static int scrx,scry;
-
-	if (keyboard_pressed(KEYCODE_LEFT)) scrx--;
-	if (keyboard_pressed(KEYCODE_RIGHT)) scrx++;
-	if (keyboard_pressed(KEYCODE_UP)) scry--;
-	if (keyboard_pressed(KEYCODE_DOWN)) scry++;
-	usrintf_showmessage("%d %xd",scrx,scry);
-
-	for (y = 0;y < 256;y++)
-	{
-		for (x = 0;x < 256;x++)
-		{
-			drawgfx(bitmap,Machine->gfx[2],
-					metro_k053936_ram[256*y+x],
-					0x1e,
-					0,0,
-					8*x+scrx,8*y+scry,
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
-		}
-	}
-}
-#endif
-
-
 	/*	Screen Control Register:
 
 		f--- ---- ---- ----		?
@@ -853,6 +903,8 @@ if (keyboard_pressed(KEYCODE_Z))
 	metro_mark_sprites_colors();
 
 	palette_recalc();
+
+	if (has_zoom) K053936_zoom_draw(bitmap);
 
 	if (layers_ctrl & 1)	drawlayer(bitmap,(metro_videoregs[0x10/2] & 0x30)>>4);
 	if (layers_ctrl & 2)	drawlayer(bitmap,(metro_videoregs[0x10/2] & 0x0c)>>2);

@@ -51,7 +51,6 @@ typedef struct {
 
 extern int sc61860_icount;				/* cycle count */
 
-extern void sc61860_init (void);
 extern void sc61860_reset(void *param);
 extern void sc61860_exit(void);
 extern int sc61860_execute(int cycles);

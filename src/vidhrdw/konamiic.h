@@ -127,7 +127,7 @@ READ16_HANDLER( K053244_lsb_r );
 WRITE16_HANDLER( K053244_lsb_w );
 READ16_HANDLER( K053244_word_r );
 WRITE16_HANDLER( K053244_word_w );
-void K053244_bankselect(int bank);	/* used by TMNT2 for ROM testing */
+void K053244_bankselect(int bank);	/* used by TMNT2 and Asterix for ROM testing */
 void K053245_sprites_draw(struct osd_bitmap *bitmap);
 void K053245_mark_sprites_colors(void);
 
@@ -226,3 +226,4 @@ void K054157_tilemap_draw_alpha(struct osd_bitmap *bitmap, int num, int flags, i
 void K054157_mark_plane_dirty(int num);
 int K054157_is_IRQ_enabled(void);
 int K054157_get_lookup(int bits);
+void K054157_set_tile_bank(int bank);	/* Asterix */

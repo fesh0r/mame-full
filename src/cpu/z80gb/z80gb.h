@@ -13,8 +13,6 @@ enum {
 
 #define Z80GB_IGNORE_INT  -1    /* Ignore interrupt */
 
-extern void z80gb_init (void);
-
 /*** Reset Z80 registers: *********************************/
 /*** This function can be used to reset the register    ***/
 /*** file before starting execution with Z80(). It sets ***/

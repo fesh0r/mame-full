@@ -474,10 +474,12 @@ static void init_xexex(void)
 	konami_rom_deinterleave_4(REGION_GFX2);
 
 	/* Invulnerability */
+#if 0
 	if(1 && !strcmp(Machine->gamedrv->name, "xexex")) {
 		*(data16_t *)(memory_region(REGION_CPU1) + 0x648d4) = 0x4a79;
 		*(data16_t *)(memory_region(REGION_CPU1) + 0x00008) = 0x5500;
 	}
+#endif
 
 	state_save_register_UINT16("main", 0, "control2", &cur_control2, 1);
 	state_save_register_func_postload(parse_control2);

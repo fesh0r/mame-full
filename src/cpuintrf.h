@@ -264,7 +264,10 @@ enum
 #if (HAS_APEXC)
 	CPU_APEXC,
 #endif
-	CPU_COUNT
+#if (HAS_UPD7810)
+	CPU_UPD7810,
+#endif
+    CPU_COUNT
 };
 
 /* set this if the CPU is used as a slave for audio. It will not be emulated if */

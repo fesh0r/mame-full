@@ -14,7 +14,6 @@
 int tape_dir;
 int tape_speed;
 double tape_time0;
-UINT32 tape_time0_UINT32;	/* the state save/load code cannot handle doubles */
 void *tape_timer;
 
 static int firsttime = 1;
@@ -1437,11 +1436,6 @@ WRITE_HANDLER( decocass_e5xx_w )
  *	init machine functions (select dongle and determine tape image size)
  *
  ***************************************************************************/
-static void decocass_state_save_presave(void)
-{
-	tape_time0_UINT32 = (UINT32)(tape_time0 * 1000000 + 0.5);
-}
-
 static void decocass_state_save_postload(void)
 {
 	int A;
@@ -1452,8 +1446,9 @@ static void decocass_state_save_postload(void)
 
 	for (A = 0;A < 0x10000; A++)
 		decocass_w(A, mem[A]);
-
-	tape_time0 = (double)tape_time0_UINT32 / 1000000.0;
+	/* restart the timer if the tape was playing */
+	if (0 != tape_dir)
+		tape_timer = timer_set(TIME_NEVER, 0, NULL);
 }
 
 void decocass_init_common(void)
@@ -1519,13 +1514,11 @@ void decocass_init_common(void)
 	decocass_sound_ack = 0;
 	decocass_sound_timer = NULL;
 
-#if 1
 	/* state saving code */
-	state_save_register_func_presave(decocass_state_save_presave);
 	state_save_register_func_postload(decocass_state_save_postload);
 	state_save_register_int 	("decocass", 0, "tape_dir", &tape_dir);
 	state_save_register_int 	("decocass", 0, "tape_speed", &tape_speed);
-	state_save_register_UINT32	("decocass", 0, "tape_time0", &tape_time0_UINT32, 1);
+	state_save_register_double	("decocass", 0, "tape_time0", &tape_time0, 1);
 	state_save_register_int 	("decocass", 0, "firsttime", &firsttime);
 	state_save_register_int 	("decocass", 0, "tape_present", &tape_present);
 	state_save_register_int 	("decocass", 0, "tape_blocks", &tape_blocks);
@@ -1551,7 +1544,6 @@ void decocass_init_common(void)
 	state_save_register_int 	("decocass", 0, "type4_latch", &type4_latch);
 	state_save_register_int 	("decocass", 0, "type5_latch", &type5_latch);
 	state_save_register_UINT8	("decocass", 0, "decocass_sound_ack", &decocass_sound_ack, 1);
-#endif
 }
 
 void decocass_init_machine(void)

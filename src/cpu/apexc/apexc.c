@@ -8,25 +8,15 @@
 	structure using X-ray diffraction.
 
 	It was one of the APEC series of computer, which were simple electronic computers
-	built in the early 1950s for various British Universities.  Known members of this series
-	are :
-	* APE(X)C : Birkbeck College, London (before 1953 (1951 ?))
-	* APE(N)C : Board of Mathematical Machines, Oslo
-	* APE(H)C : British Tabulating Machine Company
-	* APE(R)C : British Rayon Research Association
-	* UCC : University College, London (circa january 1956)
-	* MAC (Magnetic Automatic Calculator) : "built by Wharf Engineering Laboratories"
-	(february 1955), which used some germanium diodes
-	* The HEC (built by the British Tabulating Machine Company), a commercial machine sold
-	in two models at least (HEC 2M and HEC 4) (before 1955)
+	built in the early 1950s for various British Universities.  The HEC (built by
+	the British Tabulating Machine Company) and another machine named MAC were based
+	on the APEXC.
 
 	References :
 	* Andrew D. Booth & Kathleen H. V. Booth : Automatic Digital Calculators, 2nd edition
 	(Buttersworth Scientific Publications, 1956)  (referred to as 'Booth&Booth')
 	* Kathleen H. V. Booth : Programming for an Automatic Digital Calculator
 	(Buttersworth Scientific Publications, 1958)  (referred to as 'Booth')
-	* Digital Engineering Newsletter vol 7 nb 1 p 60 and vol 8 nb 1 p 60-61 provided some
-	dates
 */
 
 /*
@@ -35,8 +25,7 @@
 	* CPU has one accumulator (A) and one register (R), plus a Control Register (this is
 	  what we would call an "instruction register" nowadays).  No Program Counter, each
 	  instruction contains the address of the next instruction (!).
-	* memory is composed of 256 (maximal value only found on the UCC - APE(X)C only has
-	  32 tracks) circular magnetic tracks of 32 words : only 32 tracks can
+	* memory is composed of 256 circular magnetic tracks of 32 words : only 32 tracks can
 	  be accessed at a time (the 16 first ones, plus 16 others chosen by the programmer),
 	  and the rotation rate is 3750rpm (62.5 rotations per second).
 	* two I/O units : tape reader and tape puncher.  A teletyper was designed to read
@@ -48,7 +37,7 @@
 	* 1 kIPS, although memory access times make this figure fairly theorical (drum rotation
 	  time : 16ms, which would allow about 60IPS when no optimization is made)
 	* there is no indirect addressing whatever, although dynamic modification of opcodes (!)
-	  allows to simulate it...
+	  allow to simulate it...
 	* a control panel allows operation and debugging of the machine.  (See /systems/apexc.c)
 
 	Conventions :
@@ -63,7 +52,7 @@
 */
 
 /*
-	Machine code (reference : Booth) :
+	Machine code:
 
 	Format of a machine instruction :
 bits:		1-5			6-10		11-15		16-20		21-25		26-31		32
@@ -144,71 +133,6 @@ field:		X address	X address	Y address	Y address	Function	C6			Vector
 		 v         v
 
 	  are the vector counterparts of A(x)(y) and +(x)(y).
-
-
-
-
-	Note that the code has been presented so far as it was in 1957.  It appears that
-	it was somewhat different in 1953 (Booth&Booth) :
-
-	Format of a machine instruction :
-	Format for r, l, A :
-bits:		1-9			10-15		16-17	18-21		22-30		31-32
-field:		X address	C6			spare	Function	Y address	spare
-	Format for other instructions :
-bits:		1-9			10-17		18-21		22-30		31-32
-field:		X address	D			Function	Y address	D (part 2)
-
-	Meaning of fields :
-	drum # : MSBs for the address of the X operand.  I don't know whether this feature
-		was actually implemented, since it is said in Booth&Booth that the APE(X)C does
-		not use this feature (it had only one drum of 16 tracks at the time, hence the 9
-		address bits).
-
-	Function code :
-	#	Mnemonic	C6		Description
-
-	1	A   (x)(y)	32+n(?)	record first bits of A in (x).  The remaining bits of x
-		 1-n				are unaffected.
-
-	2	+c(x)(y)			A <- (x)
-
-	3	-c(x)(y)			A <- -(x)
-
-	4	+(x)(y)				A <- A+(x)
-
-	5	-(x)(y)				A <- A-(x)
-
-	6	T(x)(y)				R <- (x)
-
-	7	X (x)(y)			Multiply the contents of (x) by the number in R,
-							sending the 32 MSBs to A and 31 LSBs to R
-
-	8	r (y)		64-n(?)	Shift right : the 64 bits of A and R are shifted right n times.
-		 n					The sign bit of A is duplicated.
-
-	9	l (y)		n(?)	Shift left : the 64 bits of A and R are rotated left n times.
-		 n
-
-	10	R   (x)(y)	32+n	record R into (x).
-		 1-n				"the contents of R are filled with 0s or 1s
-							according as the original contents were positive or negative".
-
-	11	B<(x)>=(y)			Branch.  If A<0, next instruction is read from @x, whereas
-							if A>=0, next instruction is read from @y
-
-	12	Print(y)			Punch.  Contents of A are printed.
-
-	13	C(d+x)				branch ("switch Control") to instruction located in position
-							(D:X)
-
-	14	Stop
-
-	You will notice the absence of input instruction.  It seems that program and data were
-	meant to be entered with a teletyper or a card reader located on the control panel.
-
-	I don't know whether this computer really was in operation with this code.  Handle
-	these info with caution.
 */
 
 /*
@@ -325,6 +249,13 @@ field:		X address	D			Function	Y address	D (part 2)
 #include "mamedbg.h"
 
 #include "apexc.h"
+
+#ifndef FALSE
+#define FALSE	0
+#endif
+#ifndef TRUE
+#define TRUE	1
+#endif
 
 typedef struct
 {
@@ -458,12 +389,12 @@ static void word_write(int address, UINT32 data, UINT32 mask)
 
 static int papertape_read(void)
 {
-	return cpu_readport16bedw_dword(0) & 0x1f;
+	return cpu_readport16bedw(0) & 0x1f;
 }
 
 static void papertape_punch(int data)
 {
-	cpu_writeport16bedw_dword(0, data);
+	cpu_writeport16bedw(0, data);
 }
 
 /*
@@ -510,7 +441,7 @@ static void execute(void)
 	static const char has_operand_table[32] =	/* table for has_operand - one entry for each function code */
 	{
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-		1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0,
+		1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 
 	};
 	int delay1;	/* pre-operand-access delay */
 	int delay2;	/* post-operation delay */
@@ -559,14 +490,14 @@ static void execute(void)
 			/* I do not know whether the CPU does an OR or whatever, but since docs say that
 			the 5 bits must be cleared initially, an OR kind of makes sense */
 			apexc.r |= papertape_read() << 27;
-			DELAY(32);	/* no idea whether this should be counted as an absolute delay
+			DELAY(32);	/* no idea whether this should be counted as an absolute delay 
 						or as a value in delay2 */
 			break;
 
 		case 4:
 			/* P */
 			papertape_punch((apexc.r >> 27) & 0x1f);
-			DELAY(32);	/* no idea whether this should be counted as an absolute delay
+			DELAY(32);	/* no idea whether this should be counted as an absolute delay 
 						or as a value in delay2 */
 			break;
 
@@ -829,7 +760,7 @@ void apexc_set_pc(unsigned val)
 			apexc.working_store = ((val >> 9) & 0xf);
 		}
 	}
-
+	
 }
 
 /* no SP */
@@ -944,7 +875,7 @@ const char *apexc_info(void *context, int regnum)
 	case CPU_INFO_REG + APEXC_A:
 		sprintf(buffer[which], "A :%08X", r->a);
 		break;
-	case CPU_INFO_REG + APEXC_R:
+	case CPU_INFO_REG + APEXC_R: 
 		sprintf(buffer[which], "R :%08X", r->r);
 		break;
 	case CPU_INFO_REG + APEXC_ML:
@@ -1006,4 +937,3 @@ int apexc_execute(int cycles)
 	return cycles - apexc_ICount;
 }
 
-void apexc_init (void) {  }

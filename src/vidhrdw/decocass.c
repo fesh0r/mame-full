@@ -716,8 +716,12 @@ void decocass_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	scrollx = 256 - back_h_shift;
 	if (0 == (mode_set & 0x02))
 		scrollx += 256;
+
+#if 0
+/* this is wrong */
 	if (0 != back_h_shift && 0 == ((mode_set ^ (mode_set >> 1)) & 1))
 		scrollx += 256;
+#endif
 
 	if (0 == (mode_set & 0x04))
 		scrolly_r += 256;
@@ -752,8 +756,8 @@ void decocass_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			tilemap_draw(bitmap, bg_tilemap_r, 0, 0);
 		}
 	}
+	tilemap_draw(bitmap, fg_tilemap, 0, 0);
 	draw_sprites(bitmap, (color_center_bot >> 1) & 1, 0, 0, decocass_fgvideoram, 0x20);
 	draw_missiles(bitmap, 1, 0, decocass_colorram, 0x20);
-	tilemap_draw(bitmap, fg_tilemap, 0, 0);
 }
 

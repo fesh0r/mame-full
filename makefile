@@ -13,7 +13,7 @@ TARGET = mame
 # SYMBOLS = 1
 
 # uncomment next line to use Assembler 68000 engine
-# X86_ASM_68000 = 1
+X86_ASM_68000 = 1
 
 # uncomment next line to use Assembler 68020 engine
 # X86_ASM_68020 = 1
@@ -218,3 +218,8 @@ clean:
 	@echo Deleting $(EMULATOR)...
 	$(RM) $(EMULATOR)
 
+clean68k:
+	@echo Deleting 68k files...
+	$(RM) -r $(OBJ)/cpuintrf.o
+	$(RM) -r $(OBJ)/drivers/cps2.o
+	$(RM) -r $(OBJ)/cpu/m68000

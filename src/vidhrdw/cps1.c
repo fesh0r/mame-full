@@ -578,10 +578,10 @@ static struct osd_bitmap *cps1_scroll2_bitmap;
 CPS1 VIDEO RENDERER
 
 */
-static UINT32 *cps1_gfx;		 /* Converted GFX memory */
-static int *cps1_char_pen_usage;	/* pen usage array */
-static int *cps1_tile16_pen_usage;      /* pen usage array */
-static int *cps1_tile32_pen_usage;      /* pen usage array */
+static UINT8 *cps1_gfx;		 /* Converted GFX memory */
+static UINT32 *cps1_char_pen_usage;	/* pen usage array */
+static UINT32 *cps1_tile16_pen_usage;      /* pen usage array */
+static UINT32 *cps1_tile32_pen_usage;      /* pen usage array */
 static int cps1_max_char;	       /* Maximum number of 8x8 chars */
 static int cps1_max_tile16;	     /* Maximum number of 16x16 tiles */
 static int cps1_max_tile32;	     /* Maximum number of 32x32 tiles */
@@ -604,7 +604,7 @@ static int cps2_last_sprite_offset;     /* Offset of the last sprite */
 #define CPS2_OBJ_BASE	0x00	/* Base address of objects? Usually 0x7080, 0x7000 in avsp */
 #define CPS2_OBJ_UK1	0x02	/* Unknown (nearly always 0x807d) */
 #define CPS2_OBJ_PRI	0x04	/* Layers priorities */
-#define CPS2_OBJ_UK2	0x06	/* Unknown (usually 0x0000, 0x1101 in ssf2) */
+#define CPS2_OBJ_UK2	0x06	/* Unknown (usually 0x0000, 0x1101 in ssf2, 0x0001 in 19XX) */
 #define CPS2_OBJ_XOFFS	0x08	/* X offset (usually 0x0040) */
 #define CPS2_OBJ_UK4	0x0a	/* Unknown (always 0x0010)  */
 
@@ -620,48 +620,89 @@ static void cps1_gfx_decode(void)
 {
 	int size=memory_region_length(REGION_GFX1);
 	int i,j,gfxsize;
-	UINT8 masks[] = {
-			0xff, 0x00, 0x00, 0x00,
-			0x00, 0xff, 0x00, 0x00,
-			0x00, 0x00, 0xff, 0x00,
-			0x00, 0x00, 0x00, 0xff,
-		};
-	UINT32 mask1,mask2,mask4,mask8;
+	static struct GfxElement gfx[3];
 
-	/* compensate for machine endianness */
-	mask1 = *((UINT32 *)&masks[0]);
-	mask2 = *((UINT32 *)&masks[4]);
-	mask4 = *((UINT32 *)&masks[8]);
-	mask8 = *((UINT32 *)&masks[12]);
 
-	cps1_gfx = (UINT32 *)memory_region(REGION_GFX1);
+	cps1_gfx = memory_region(REGION_GFX1);
 
 	gfxsize=size/4;
 
 	for (i = 0;i < gfxsize;i++)
 	{
-		UINT32 src = cps1_gfx[i];
+		UINT32 src = cps1_gfx[4*i] + (cps1_gfx[4*i+1]<<8) + (cps1_gfx[4*i+2]<<16) + (cps1_gfx[4*i+3]<<24);
 		UINT32 dwval = 0;
 		int penusage = 0;
 
 		for (j = 0;j < 8;j++)
 		{
 			int n = 0;
-			UINT32 mask = (0x01010101 << j) & src;
+			UINT32 mask = (0x80808080 >> j) & src;
 
-			if (mask & mask1) n |= 1;
-			if (mask & mask2) n |= 2;
-			if (mask & mask4) n |= 4;
-			if (mask & mask8) n |= 8;
+			if (mask & 0x000000ff) n |= 1;
+			if (mask & 0x0000ff00) n |= 2;
+			if (mask & 0x00ff0000) n |= 4;
+			if (mask & 0xff000000) n |= 8;
 
 			dwval |= n << (j * 4);
 			penusage |= 1 << n;
 		}
-		cps1_gfx[i] = dwval;
+		cps1_gfx[4*i  ] = dwval>>0;
+		cps1_gfx[4*i+1] = dwval>>8;
+		cps1_gfx[4*i+2] = dwval>>16;
+		cps1_gfx[4*i+3] = dwval>>24;
 		cps1_char_pen_usage[i/16]    |= penusage;
 		cps1_tile16_pen_usage[i/32]  |= penusage;
 		cps1_tile32_pen_usage[i/128] |= penusage;
 	}
+
+
+	gfx[0].width = 8;
+	gfx[0].height = 8;
+	gfx[0].total_elements = memory_region_length(REGION_GFX1)/64;
+	gfx[0].color_granularity = 16;
+	gfx[0].colortable = Machine->remapped_colortable;
+	gfx[0].total_colors = 0x100;
+	gfx[0].pen_usage = cps1_char_pen_usage;
+	/* 8x8 tiles are taken from the RIGHT side of the 16x16 tile
+	   (fixes cawing which uses character 0x0002 as space, typo instead of 0x20?) */
+	gfx[0].gfxdata = memory_region(REGION_GFX1) + 4;
+	gfx[0].line_modulo = 8;
+	gfx[0].char_modulo = 64;
+	gfx[0].flags = GFX_PACKED;
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
+		gfx[0].flags |= GFX_SWAPXY;
+
+	gfx[1].width = 16;
+	gfx[1].height = 16;
+	gfx[1].total_elements = memory_region_length(REGION_GFX1)/128;
+	gfx[1].color_granularity = 16;
+	gfx[1].colortable = Machine->remapped_colortable;
+	gfx[1].total_colors = 0x100;
+	gfx[1].pen_usage = cps1_tile16_pen_usage;
+	gfx[1].gfxdata = memory_region(REGION_GFX1);
+	gfx[1].line_modulo = 8;
+	gfx[1].char_modulo = 128;
+	gfx[1].flags = GFX_PACKED;
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
+		gfx[1].flags |= GFX_SWAPXY;
+
+	gfx[2].width = 32;
+	gfx[2].height = 32;
+	gfx[2].total_elements = memory_region_length(REGION_GFX1)/512;
+	gfx[2].color_granularity = 16;
+	gfx[2].colortable = Machine->remapped_colortable;
+	gfx[2].total_colors = 0x100;
+	gfx[2].pen_usage = cps1_tile32_pen_usage;
+	gfx[2].gfxdata = memory_region(REGION_GFX1);
+	gfx[2].line_modulo = 16;
+	gfx[2].char_modulo = 512;
+	gfx[2].flags = GFX_PACKED;
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
+		gfx[2].flags |= GFX_SWAPXY;
+
+	Machine->gfx[0] = &gfx[0];
+	Machine->gfx[1] = &gfx[1];
+	Machine->gfx[2] = &gfx[2];
 }
 
 static void unshuffle(UINT64 *buf,int len)
@@ -746,6 +787,10 @@ int cps1_gfx_start(void)
 
 void cps1_gfx_stop(void)
 {
+	Machine->gfx[0] = NULL;
+	Machine->gfx[1] = NULL;
+	Machine->gfx[2] = NULL;
+
 	cps1_gfx = NULL;
 	free(cps1_char_pen_usage);
 	cps1_char_pen_usage = NULL;
@@ -768,7 +813,7 @@ void cps1_draw_gfx(
 	int flipx,int flipy,
 	int sx,int sy,
 	int tpens,
-	int *pusage,
+	UINT32 *pusage,
 	const int size,
 	const int max,
 	const int delta,
@@ -804,7 +849,7 @@ void cps1_draw_gfx16(
 	int flipx,int flipy,
 	int sx,int sy,
 	int tpens,
-	int *pusage,
+	UINT32 *pusage,
 	const int size,
 	const int max,
 	const int delta,
@@ -832,55 +877,6 @@ void cps1_draw_gfx16(
 	#undef IF_NOT_TRANSPARENT
 }
 
-void cps1_draw_gfx_pri(
-	struct osd_bitmap *dest,int palette_bank,
-	int code,
-	int color,
-	int flipx,int flipy,
-	int sx,int sy,
-	int tpens,
-	int *pusage,
-	const int size,
-	const int max,
-	const int delta,
-	const int srcdelta,
-	struct osd_bitmap *pribm)
-{
-	#define DATATYPE unsigned char
-	#define IF_NOT_TRANSPARENT(n,x,y) if ((tpens & (0x01 << n)) && pribm->line[y][x] == 0)
-	#define PALDATA(n) paldata[n]
-	#define SELF_INCLUDE
-	#include "cps1.c"
-	#undef SELF_INCLUDE
-	#undef DATATYPE
-	#undef IF_NOT_TRANSPARENT
-	#undef PALDATA
-}
-
-void cps1_draw_gfx16_pri(
-	struct osd_bitmap *dest,int palette_bank,
-	int code,
-	int color,
-	int flipx,int flipy,
-	int sx,int sy,
-	int tpens,
-	int *pusage,
-	const int size,
-	const int max,
-	const int delta,
-	const int srcdelta,
-	struct osd_bitmap *pribm)
-{
-	#define DATATYPE unsigned short
-	#define IF_NOT_TRANSPARENT(n,x,y) if ((tpens & (0x01 << n)) && pribm->line[y][x] == 0)
-	#define PALDATA(n) paldata[n]
-	#define SELF_INCLUDE
-	#include "cps1.c"
-	#undef SELF_INCLUDE
-	#undef DATATYPE
-	#undef IF_NOT_TRANSPARENT
-	#undef PALDATA
-}
 
 /*
 
@@ -897,7 +893,7 @@ void cps1_draw_gfx_opaque(
 	int flipx,int flipy,
 	int sx,int sy,
 	int tpens,
-	int *pusage,
+	UINT32 *pusage,
 	const int size,
 	const int max,
 	const int delta,
@@ -921,7 +917,7 @@ void cps1_draw_gfx_opaque16(
 	int flipx,int flipy,
 	int sx,int sy,
 	int tpens,
-	int *pusage,
+	UINT32 *pusage,
 	const int size,
 	const int max,
 	const int delta,
@@ -980,27 +976,6 @@ INLINE void cps1_draw_tile16(struct osd_bitmap *dest,
 			palette_bank,
 			code,color,flipx,flipy,sx,sy,
 			tpens,cps1_tile16_pen_usage,16, cps1_max_tile16, 16*2,0);
-	}
-}
-
-INLINE void cps1_draw_tile16_pri(struct osd_bitmap *dest,
-	int palette_bank,
-	int code, int color,
-	int flipx, int flipy,int sx, int sy, int tpens)
-{
-	if (dest->depth==16)
-	{
-		cps1_draw_gfx16_pri(dest,
-			palette_bank,
-			code,color,flipx,flipy,sx,sy,
-			tpens,cps1_tile16_pen_usage,16, cps1_max_tile16, 16*2,0, priority_bitmap);
-	}
-	else
-	{
-		cps1_draw_gfx_pri(dest,
-			palette_bank,
-			code,color,flipx,flipy,sx,sy,
-			tpens,cps1_tile16_pen_usage,16, cps1_max_tile16, 16*2,0, priority_bitmap);
 	}
 }
 
@@ -1376,7 +1351,6 @@ int cps_vh_start(void)
 	cps1_get_video_base();   /* Calculate base pointers */
 	cps1_get_video_base();   /* Calculate old base pointers */
 
-
 	for (i=0; i<4; i++)
 	{
 		cps1_transparency_scroll[i]=0x0000;
@@ -1439,12 +1413,11 @@ void cps1_build_palette(void)
 		{
 		   int red, green, blue, bright;
 
-		   bright= (palette>>12);
-		   if (bright) bright += 2;
+		   bright = 0x10 + (palette>>12);
 
-		   red   = ((palette>>8)&0x0f) * bright;
-		   green = ((palette>>4)&0x0f) * bright;
-		   blue  = (palette&0x0f) * bright;
+		   red   = ((palette>>8)&0x0f) * bright * 0x11 / 0x1f;
+		   green = ((palette>>4)&0x0f) * bright * 0x11 / 0x1f;
+		   blue  = ((palette>>0)&0x0f) * bright * 0x11 / 0x1f;
 
 		   palette_change_color (offset, red, green, blue);
 		   cps1_old_palette[offset] = palette;
@@ -1758,10 +1731,9 @@ void cps_palette_sprites(unsigned short *base, data16_t *objram, int last)
 void cps1_render_sprites(struct osd_bitmap *bitmap)
 {
 	int i;
-	data16_t *base=cps1_buffered_obj+cps1_last_sprite_offset;
+	data16_t *base=cps1_buffered_obj;
 	for (i=cps1_last_sprite_offset; i>=0; i-=4)
 	{
-		const int mask=0x7fff;
 		int x=*(base+0);
 		int y=*(base+1);
 		int code  =*(base+2);
@@ -1805,11 +1777,12 @@ void cps1_render_sprites(struct osd_bitmap *bitmap)
 							sx = (x+nxs*16) & 0x1ff;
 							sy = (y+nys*16) & 0x1ff;
 
-							cps1_draw_tile16_pri(bitmap,0,
-								code+(nx-1)-nxs+0x10*(ny-1-nys),
-								col&0x1f,
-								1,1,
-								sx,sy,mask);
+							pdrawgfx(bitmap,Machine->gfx[1],
+									code+(nx-1)-nxs+0x10*(ny-1-nys),
+									(col&0x1f) + palette_basecolor[0],
+									1,1,
+									sx,sy,
+									&Machine->visible_area,TRANSPARENCY_PEN,15,0x02);
 						}
 					}
 				}
@@ -1822,11 +1795,12 @@ void cps1_render_sprites(struct osd_bitmap *bitmap)
 							sx = (x+nxs*16) & 0x1ff;
 							sy = (y+nys*16) & 0x1ff;
 
-							cps1_draw_tile16_pri(bitmap,0,
-								code+nxs+0x10*(ny-1-nys),
-								col&0x1f,
-								0,1,
-								sx,sy,mask );
+							pdrawgfx(bitmap,Machine->gfx[1],
+									code+nxs+0x10*(ny-1-nys),
+									(col&0x1f) + palette_basecolor[0],
+									0,1,
+									sx,sy,
+									&Machine->visible_area,TRANSPARENCY_PEN,15,0x02);
 						}
 					}
 				}
@@ -1842,12 +1816,12 @@ void cps1_render_sprites(struct osd_bitmap *bitmap)
 							sx = (x+nxs*16) & 0x1ff;
 							sy = (y+nys*16) & 0x1ff;
 
-							cps1_draw_tile16_pri(bitmap,0,
-								code+(nx-1)-nxs+0x10*nys,
-								col&0x1f,
-								1,0,
-								sx,sy,mask
-								);
+							pdrawgfx(bitmap,Machine->gfx[1],
+									code+(nx-1)-nxs+0x10*nys,
+									(col&0x1f) + palette_basecolor[0],
+									1,0,
+									sx,sy,
+									&Machine->visible_area,TRANSPARENCY_PEN,15,0x02);
 						}
 					}
 				}
@@ -1860,11 +1834,12 @@ void cps1_render_sprites(struct osd_bitmap *bitmap)
 							sx = (x+nxs*16) & 0x1ff;
 							sy = (y+nys*16) & 0x1ff;
 
-							cps1_draw_tile16_pri(bitmap,0,
-								code+nxs+0x10*nys,
-								col&0x1f,
-								0,0,
-								sx,sy, mask);
+							pdrawgfx(bitmap,Machine->gfx[1],
+									code+nxs+0x10*nys,
+									(col&0x1f) + palette_basecolor[0],
+									0,0,
+									sx,sy,
+									&Machine->visible_area,TRANSPARENCY_PEN,15,0x02);
 						}
 					}
 				}
@@ -1873,13 +1848,14 @@ void cps1_render_sprites(struct osd_bitmap *bitmap)
 		else
 		{
 			/* Simple case... 1 sprite */
-			cps1_draw_tile16_pri(bitmap,0,
-				   code,
-				   col&0x1f,
-				   colour&0x20,colour&0x40,
-				   x & 0x1ff,y & 0x1ff,mask);
+			pdrawgfx(bitmap,Machine->gfx[1],
+					code,
+					(col&0x1f) + palette_basecolor[0],
+					colour&0x20,colour&0x40,
+					x & 0x1ff,y & 0x1ff,
+					&Machine->visible_area,TRANSPARENCY_PEN,15,0x02);
 		}
-		base -= 4;
+		base += 4;
 	}
 }
 
@@ -1900,7 +1876,6 @@ void cps2_render_sprites(struct osd_bitmap *bitmap,int minpri,int maxpri)
 
 	for (i=0; i<=cps2_last_sprite_offset; i+=4)
 	{
-		const int mask=0x7fff;
 		int x=*(base+0);
 		int y=*(base+1);
 		int priority=(x>>13)&0x07;
@@ -1934,11 +1909,12 @@ void cps2_render_sprites(struct osd_bitmap *bitmap,int minpri,int maxpri)
 								sx = (x+nxs*16+xoffs) & 0x3ff;
 								sy = (y+nys*16) & 0x3ff;
 
-								cps1_draw_tile16(bitmap,0,
-									code+(nx-1)-nxs+0x10*(ny-1-nys),
-									col&0x1f,
-									1,1,
-									sx,sy,mask);
+								drawgfx(bitmap,Machine->gfx[1],
+										code+(nx-1)-nxs+0x10*(ny-1-nys),
+										(col&0x1f) + palette_basecolor[0],
+										1,1,
+										sx,sy,
+										&Machine->visible_area,TRANSPARENCY_PEN,15);
 							}
 						}
 					}
@@ -1951,11 +1927,12 @@ void cps2_render_sprites(struct osd_bitmap *bitmap,int minpri,int maxpri)
 								sx = (x+nxs*16+xoffs) & 0x3ff;
 								sy = (y+nys*16) & 0x3ff;
 
-								cps1_draw_tile16(bitmap,0,
-									code+nxs+0x10*(ny-1-nys),
-									col&0x1f,
-									0,1,
-									sx,sy,mask );
+								drawgfx(bitmap,Machine->gfx[1],
+										code+nxs+0x10*(ny-1-nys),
+										(col&0x1f) + palette_basecolor[0],
+										0,1,
+										sx,sy,
+										&Machine->visible_area,TRANSPARENCY_PEN,15);
 							}
 						}
 					}
@@ -1971,12 +1948,12 @@ void cps2_render_sprites(struct osd_bitmap *bitmap,int minpri,int maxpri)
 								sx = (x+nxs*16+xoffs) & 0x3ff;
 								sy = (y+nys*16) & 0x3ff;
 
-								cps1_draw_tile16(bitmap,0,
-									code+(nx-1)-nxs+0x10*nys,
-									col&0x1f,
-									1,0,
-									sx,sy,mask
-									);
+								drawgfx(bitmap,Machine->gfx[1],
+										code+(nx-1)-nxs+0x10*nys,
+										(col&0x1f) + palette_basecolor[0],
+										1,0,
+										sx,sy,
+										&Machine->visible_area,TRANSPARENCY_PEN,15);
 							}
 						}
 					}
@@ -1989,11 +1966,12 @@ void cps2_render_sprites(struct osd_bitmap *bitmap,int minpri,int maxpri)
 								sx = (x+nxs*16+xoffs) & 0x3ff;
 								sy = (y+nys*16) & 0x3ff;
 
-								cps1_draw_tile16(bitmap,0,
-									code+nxs+0x10*nys,
-									col&0x1f,
-									0,0,
-									sx,sy, mask);
+								drawgfx(bitmap,Machine->gfx[1],
+										code+nxs+0x10*nys,
+										(col&0x1f) + palette_basecolor[0],
+										0,0,
+										sx,sy,
+										&Machine->visible_area,TRANSPARENCY_PEN,15);
 							}
 						}
 					}
@@ -2002,11 +1980,12 @@ void cps2_render_sprites(struct osd_bitmap *bitmap,int minpri,int maxpri)
 			else
 			{
 				/* Simple case... 1 sprite */
-				cps1_draw_tile16(bitmap,0,
-					   code,
-					   col&0x1f,
-					   colour&0x20,colour&0x40,
-					   (x+xoffs) & 0x3ff,y & 0x3ff,mask);
+				drawgfx(bitmap,Machine->gfx[1],
+						code,
+						(col&0x1f) + palette_basecolor[0],
+						colour&0x20,colour&0x40,
+						(x+xoffs) & 0x3ff,y & 0x3ff,
+						&Machine->visible_area,TRANSPARENCY_PEN,15);
 			}
 		}
 		base += 4;
@@ -2595,7 +2574,7 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 #ifdef MAME_DEBUG
 if (	(cps2_port(CPS2_OBJ_BASE) != 0x7080 && cps2_port(CPS2_OBJ_BASE) != 0x7000) ||
 		cps2_port(CPS2_OBJ_UK1) != 0x807d ||
-		(cps2_port(CPS2_OBJ_UK2) != 0x0000 && cps2_port(CPS2_OBJ_UK2) != 0x1101) ||
+		(cps2_port(CPS2_OBJ_UK2) != 0x0000 && cps2_port(CPS2_OBJ_UK2) != 0x1101 && cps2_port(CPS2_OBJ_UK2) != 0x0001) ||
 		cps2_port(CPS2_OBJ_UK4) != 0x0010)
 	usrintf_showmessage("base %04x uk1 %04x uk2 %04x uk4 %04x",
 			cps2_port(CPS2_OBJ_BASE),
@@ -2658,7 +2637,7 @@ void cps1_eof_callback(void)
 {
 	int i, j;
 	UINT32 dwval;
-	UINT32 *src;
+	UINT8 *src;
 	const UINT32 *paldata;
 	UINT32 n;
 	DATATYPE *bm;
@@ -2671,7 +2650,7 @@ void cps1_eof_callback(void)
 
 	/* 8x8 tiles (srcdelta == 1) are taken from the RIGHT side of the 16x16 tile
 	   (fixes cawing which uses character 0x0002 as space, typo instead of 0x20?) */
-	src = cps1_gfx+code*delta + srcdelta;
+	src = cps1_gfx+4*(code*delta + srcdelta);
 
 	if (Machine->orientation & ORIENTATION_SWAP_XY)
 	{
@@ -2719,38 +2698,38 @@ void cps1_eof_callback(void)
 			int ny=sy;
 			for (j=0; j<size/8; j++)
 			{
-				dwval=*src;
-				n=(dwval>>28)&0x0f;
+				dwval=src[0]+(src[1]<<8)+(src[2]<<16)+(src[3]<<24);
+				n=(dwval>>0)&0x0f;
 				bm = (DATATYPE *)dest->line[ny]+sx;
 				IF_NOT_TRANSPARENT(n,sx,ny) bm[0]=PALDATA(n);
-				n=(dwval>>24)&0x0f;
-				bm = (DATATYPE *)(((unsigned char *)bm) + bmdelta);
-				IF_NOT_TRANSPARENT(n,sx,ny+dir) bm[0]=PALDATA(n);
-				n=(dwval>>20)&0x0f;
-				bm = (DATATYPE *)(((unsigned char *)bm) + bmdelta);
-				IF_NOT_TRANSPARENT(n,sx,ny+2*dir) bm[0]=PALDATA(n);
-				n=(dwval>>16)&0x0f;
-				bm = (DATATYPE *)(((unsigned char *)bm) + bmdelta);
-				IF_NOT_TRANSPARENT(n,sx,ny+3*dir) bm[0]=PALDATA(n);
-				n=(dwval>>12)&0x0f;
-				bm = (DATATYPE *)(((unsigned char *)bm) + bmdelta);
-				IF_NOT_TRANSPARENT(n,sx,ny+4*dir) bm[0]=PALDATA(n);
-				n=(dwval>>8)&0x0f;
-				bm = (DATATYPE *)(((unsigned char *)bm) + bmdelta);
-				IF_NOT_TRANSPARENT(n,sx,ny+5*dir) bm[0]=PALDATA(n);
 				n=(dwval>>4)&0x0f;
 				bm = (DATATYPE *)(((unsigned char *)bm) + bmdelta);
+				IF_NOT_TRANSPARENT(n,sx,ny+dir) bm[0]=PALDATA(n);
+				n=(dwval>>8)&0x0f;
+				bm = (DATATYPE *)(((unsigned char *)bm) + bmdelta);
+				IF_NOT_TRANSPARENT(n,sx,ny+2*dir) bm[0]=PALDATA(n);
+				n=(dwval>>12)&0x0f;
+				bm = (DATATYPE *)(((unsigned char *)bm) + bmdelta);
+				IF_NOT_TRANSPARENT(n,sx,ny+3*dir) bm[0]=PALDATA(n);
+				n=(dwval>>16)&0x0f;
+				bm = (DATATYPE *)(((unsigned char *)bm) + bmdelta);
+				IF_NOT_TRANSPARENT(n,sx,ny+4*dir) bm[0]=PALDATA(n);
+				n=(dwval>>20)&0x0f;
+				bm = (DATATYPE *)(((unsigned char *)bm) + bmdelta);
+				IF_NOT_TRANSPARENT(n,sx,ny+5*dir) bm[0]=PALDATA(n);
+				n=(dwval>>24)&0x0f;
+				bm = (DATATYPE *)(((unsigned char *)bm) + bmdelta);
 				IF_NOT_TRANSPARENT(n,sx,ny+6*dir) bm[0]=PALDATA(n);
-				n=dwval&0x0f;
+				n=(dwval>>28)&0x0f;
 				bm = (DATATYPE *)(((unsigned char *)bm) + bmdelta);
 				IF_NOT_TRANSPARENT(n,sx,ny+7*dir) bm[0]=PALDATA(n);
 				if (flipy) ny-=8;
 				else ny+=8;
-				src++;
+				src+=4;
 			}
 			if (flipx) sx--;
 			else sx++;
-			src+=srcdelta;
+			src+=4*srcdelta;
 		}
 	}
 	else
@@ -2768,28 +2747,28 @@ void cps1_eof_callback(void)
 				bm=(DATATYPE *)dest->line[y]+sx;
 				for (j=0; j<size/8; j++)
 				{
-					dwval=*src;
-					n=(dwval>>28)&0x0f;
+					dwval=src[0]+(src[1]<<8)+(src[2]<<16)+(src[3]<<24);
+					n=(dwval>>0)&0x0f;
 					IF_NOT_TRANSPARENT(n,x-1,y) bm[-1]=PALDATA(n);
-					n=(dwval>>24)&0x0f;
-					IF_NOT_TRANSPARENT(n,x-2,y) bm[-2]=PALDATA(n);
-					n=(dwval>>20)&0x0f;
-					IF_NOT_TRANSPARENT(n,x-3,y) bm[-3]=PALDATA(n);
-					n=(dwval>>16)&0x0f;
-					IF_NOT_TRANSPARENT(n,x-4,y) bm[-4]=PALDATA(n);
-					n=(dwval>>12)&0x0f;
-					IF_NOT_TRANSPARENT(n,x-5,y) bm[-5]=PALDATA(n);
-					n=(dwval>>8)&0x0f;
-					IF_NOT_TRANSPARENT(n,x-6,y) bm[-6]=PALDATA(n);
 					n=(dwval>>4)&0x0f;
+					IF_NOT_TRANSPARENT(n,x-2,y) bm[-2]=PALDATA(n);
+					n=(dwval>>8)&0x0f;
+					IF_NOT_TRANSPARENT(n,x-3,y) bm[-3]=PALDATA(n);
+					n=(dwval>>12)&0x0f;
+					IF_NOT_TRANSPARENT(n,x-4,y) bm[-4]=PALDATA(n);
+					n=(dwval>>16)&0x0f;
+					IF_NOT_TRANSPARENT(n,x-5,y) bm[-5]=PALDATA(n);
+					n=(dwval>>20)&0x0f;
+					IF_NOT_TRANSPARENT(n,x-6,y) bm[-6]=PALDATA(n);
+					n=(dwval>>24)&0x0f;
 					IF_NOT_TRANSPARENT(n,x-7,y) bm[-7]=PALDATA(n);
-					n=dwval&0x0f;
+					n=(dwval>>28)&0x0f;
 					IF_NOT_TRANSPARENT(n,x-8,y) bm[-8]=PALDATA(n);
 					bm-=8;
 					x-=8;
-					src++;
+					src+=4;
 				}
-				src+=srcdelta;
+				src+=4*srcdelta;
 			}
 		}
 		else
@@ -2803,28 +2782,28 @@ void cps1_eof_callback(void)
 				bm=(DATATYPE *)dest->line[y]+sx;
 				for (j=0; j<size/8; j++)
 				{
-					dwval=*src;
-					n=(dwval>>28)&0x0f;
+					dwval=src[0]+(src[1]<<8)+(src[2]<<16)+(src[3]<<24);
+					n=(dwval>>0)&0x0f;
 					IF_NOT_TRANSPARENT(n,x+0,y) bm[0]=PALDATA(n);
-					n=(dwval>>24)&0x0f;
-					IF_NOT_TRANSPARENT(n,x+1,y) bm[1]=PALDATA(n);
-					n=(dwval>>20)&0x0f;
-					IF_NOT_TRANSPARENT(n,x+2,y) bm[2]=PALDATA(n);
-					n=(dwval>>16)&0x0f;
-					IF_NOT_TRANSPARENT(n,x+3,y) bm[3]=PALDATA(n);
-					n=(dwval>>12)&0x0f;
-					IF_NOT_TRANSPARENT(n,x+4,y) bm[4]=PALDATA(n);
-					n=(dwval>>8)&0x0f;
-					IF_NOT_TRANSPARENT(n,x+5,y) bm[5]=PALDATA(n);
 					n=(dwval>>4)&0x0f;
+					IF_NOT_TRANSPARENT(n,x+1,y) bm[1]=PALDATA(n);
+					n=(dwval>>8)&0x0f;
+					IF_NOT_TRANSPARENT(n,x+2,y) bm[2]=PALDATA(n);
+					n=(dwval>>12)&0x0f;
+					IF_NOT_TRANSPARENT(n,x+3,y) bm[3]=PALDATA(n);
+					n=(dwval>>16)&0x0f;
+					IF_NOT_TRANSPARENT(n,x+4,y) bm[4]=PALDATA(n);
+					n=(dwval>>20)&0x0f;
+					IF_NOT_TRANSPARENT(n,x+5,y) bm[5]=PALDATA(n);
+					n=(dwval>>24)&0x0f;
 					IF_NOT_TRANSPARENT(n,x+6,y) bm[6]=PALDATA(n);
-					n=dwval&0x0f;
+					n=(dwval>>28)&0x0f;
 					IF_NOT_TRANSPARENT(n,x+7,y) bm[7]=PALDATA(n);
 					bm+=8;
 					x+=8;
-					src++;
+					src+=4;
 				}
-				src+=srcdelta;
+				src+=4*srcdelta;
 			}
 		}
 	}

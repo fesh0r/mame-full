@@ -375,7 +375,6 @@ void m6509_set_irq_callback(int (*callback)(int))
 	m6509.irq_callback = callback;
 }
 
-#if (0)
 void m6509_state_save(void *file)
 {
 	int cpu = cpu_getactivecpu();
@@ -413,7 +412,6 @@ void m6509_state_load(void *file)
 	state_load_UINT8(file,"m6509",cpu,"IRQ_STATE",&m6509.irq_state,1);
 	state_load_UINT8(file,"m6509",cpu,"SO_STATE",&m6509.so_state,1);
 }
-#endif
 
 /****************************************************************************
  * Return a formatted string for a register

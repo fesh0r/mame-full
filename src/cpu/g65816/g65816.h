@@ -70,8 +70,6 @@ extern int g65816_ICount;				/* cycle count */
 /* CPU Peek and Poke API */
 /* --------------------- */
 
-void g65816_init (void);
-
 /* Get the current CPU context */
 unsigned g65816_get_context(void *dst);
 

@@ -38,11 +38,8 @@ Not dumped yet:
 
 To Do:
 
--	Priorities (pdrawgfxzoom)
+-	Priorities (pdrawgfxzoom). Priorities are particularly bad in blzntrnd.
 -	Sprite palette marking doesn't know about 8bpp.
--	Layer placement in blzntrnd
--	Incorrect background flames in blzntrnd attract mode: 8x4 tiles?
--	Konami 053936 support for blzntrnd background
 -	1 pixel granularity in the window's placement (8 pixels now, see daitorid)
 -	Sound (as soon as the NEC78C10 gets emulated)
 -	Coin lockout
@@ -55,13 +52,14 @@ To Do:
 	supported.
 
 Notes:
-- To enter service mode in Lady Killer, toggle the dip swotch and reset keeping
+- To enter service mode in Lady Killer, toggle the dip switch and reset keeping
   start 2 pressed.
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "cpu/upd7810/upd7810.h"
 
 /* Variables defined in vidhrdw: */
 
@@ -71,7 +69,9 @@ extern data16_t *metro_scroll;
 extern data16_t *metro_tiletable;
 extern data16_t *metro_vram_0, *metro_vram_1, *metro_vram_2;
 extern data16_t *metro_window;
-extern data16_t *metro_k053936_ram;
+extern data16_t *metro_K053936_ram,*metro_K053936_ctrl;
+WRITE16_HANDLER( metro_K053936_w );
+
 
 /* Functions defined in vidhrdw: */
 
@@ -87,6 +87,7 @@ WRITE16_HANDLER( metro_vram_2_w );
 
 int  metro_vh_start_14100(void);
 int  metro_vh_start_14220(void);
+int  blzntrnd_vh_start(void);
 void metro_vh_stop(void);
 
 void metro_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -149,7 +150,7 @@ WRITE16_HANDLER( metro_irq_cause_w )
 		if (data & 0x04)	blitter_irq  = 0;
 		if (data & 0x08)	unknown2_irq = 0;	// KARATOUR
 		if (data & 0x10)	unknown3_irq = 0;
-		if (data & 0x20)	unknown4_irq = 0;	// KARATOUR
+		if (data & 0x20)	unknown4_irq = 0;	// KARATOUR, BLZNTRND
 	}
 
 	update_irq_state();
@@ -207,11 +208,29 @@ int karatour_interrupt(void)
 
 ***************************************************************************/
 
+static int metro_io_callback(int ioline, int state)
+{
+	data8_t data;
+
+    switch ( ioline )
+	{
+	case UPD7810_RXD:	/* read the RxD line */
+		data = soundlatch_r(0);
+		state = data & 1;
+		soundlatch_w(0, data >> 1);
+		break;
+	default:
+		logerror("upd7810 ioline %d not handled\n", ioline);
+    }
+	return state;
+}
+
 WRITE16_HANDLER( metro_soundlatch_w )
 {
 	if ( ACCESSING_LSB && (Machine->sample_rate != 0) )
 	{
-//		soundlatch_w(0,data & 0xff);
+		soundlatch_w(0,data & 0xff);
+		cpu_set_nmi_line( 1, PULSE_LINE );
 	}
 }
 
@@ -229,18 +248,118 @@ WRITE16_HANDLER( metro_soundstatus_w )
 
 READ16_HANDLER( metro_soundstatus_r )
 {
-//	return metro_soundstatus & 1;
-	return rand() & 1;
+	return metro_soundstatus & 1;
 }
 
 
 READ16_HANDLER( dharma_soundstatus_r )
 {
-//	return readinputport(0) | (metro_soundstatus ? 0x80 : 0);
-	return readinputport(0) | (0);
+	return readinputport(0) | (metro_soundstatus ? 0x80 : 0);
 }
 
+static WRITE_HANDLER( daitorid_sound_rombank_w )
+{
+	unsigned char *RAM = memory_region(REGION_CPU2);
+	int bank = (data >> 4) & 0x07;
 
+	if ( data & ~0x70 ) 	logerror("CPU #1 - PC %04X: unknown bank bits: %02X\n",cpu_get_pc(),data);
+
+	if (bank < 2)	RAM = &RAM[0x4000 * bank];
+	else			RAM = &RAM[0x4000 * (bank-2) + 0x10000];
+
+	cpu_setbank(1, RAM);
+}
+
+static data8_t chip_select;
+
+static READ_HANDLER( daitorid_sound_chip_data_r )
+{
+	/* fake status to get the 7810 out of the tight loop waiting for a chip */
+    static data8_t toggle_bit7;
+    switch( chip_select )
+	{
+	case 0xb7: return YM2151_status_port_0_r(0);
+	case 0xe7: return OKIM6295_status_0_r(0);
+	default:
+		logerror("CPU #1 PC %04X : reading from unknown chip: %02X\n",cpu_get_pc(),chip_select);
+		toggle_bit7 ^= 0x80;
+        return toggle_bit7;
+	}
+}
+
+static WRITE_HANDLER( daitorid_sound_chip_data_w )
+{
+	soundlatch2_w(0,data);	// for debugging, the latch is internal
+}
+
+static READ_HANDLER( daitorid_sound_chip_select_r )
+{
+	return chip_select;
+}
+
+static WRITE_HANDLER( daitorid_sound_chip_select_w )
+{
+	chip_select = data;
+
+	if ((chip_select & 0xf0) == 0xf0)	return;
+
+	switch( chip_select )
+	{
+	case 0x7f: metro_soundstatus = 0; break;
+	case 0xb9: YM2151_register_port_0_w(0,soundlatch2_r(0)); break;
+	case 0xbb: YM2151_data_port_0_w(0,soundlatch2_r(0)); break;
+	case 0xeb: OKIM6295_data_0_w(0,soundlatch2_r(0)); break;
+	default:
+		logerror("CPU #1 PC %04X : writing to unknown chip: %02X\n",cpu_get_pc(),chip_select);
+	}
+}
+
+static MEMORY_READ_START( upd7810_readmem )
+    { 0x0000, 0x3fff, MRA_ROM               },  /* External ROM */
+    { 0x4000, 0x7fff, MRA_BANK1             },  /* External ROM (Banked) */
+    { 0x8000, 0x87ff, MRA_RAM               },  /* External RAM */
+    { 0xff00, 0xffff, MRA_RAM               },  /* Internal RAM */
+MEMORY_END
+
+static MEMORY_WRITE_START( upd7810_writemem )
+    { 0x0000, 0x3fff, MWA_ROM               },  /* External ROM */
+    { 0x4000, 0x7fff, MWA_ROM               },  /* External ROM (Banked) */
+    { 0x8000, 0x87ff, MWA_RAM               },  /* External RAM */
+    { 0xff00, 0xffff, MWA_RAM               },  /* Internal RAM */
+MEMORY_END
+
+static PORT_READ_START( upd7810_readport )
+	{ UPD7810_PORTA, UPD7810_PORTA, daitorid_sound_chip_data_r		},
+	{ UPD7810_PORTB, UPD7810_PORTB, daitorid_sound_chip_select_r	},
+PORT_END
+
+static PORT_WRITE_START( upd7810_writeport )
+	{ UPD7810_PORTA, UPD7810_PORTA, daitorid_sound_chip_data_w		},
+	{ UPD7810_PORTB, UPD7810_PORTB, daitorid_sound_chip_select_w	},
+	{ UPD7810_PORTC, UPD7810_PORTC, daitorid_sound_rombank_w		},
+PORT_END
+
+static void metro_sound_irq_handler(int state)
+{
+	cpu_set_irq_line(1, UPD7810_INTF2, HOLD_LINE);
+}
+
+static struct YM2151interface daitorid_ym2151_interface =
+{
+	1,
+	2000000,			/* ? */
+	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },
+	{ metro_sound_irq_handler },	/* irq handler */
+	{ 0 }							/* port_write */
+};
+
+static struct OKIM6295interface daitorid_okim6295_interface =
+{
+	1,
+	{ 8000 },	/* ? */
+	{ REGION_SOUND1 },
+	{ 50 }
+};
 
 /***************************************************************************
 
@@ -1098,9 +1217,9 @@ static MEMORY_WRITE16_START( blzntrnd_writemem )
 	{ 0x2788ac, 0x2788ad, MWA16_RAM, &metro_screenctrl	},	// Screen Control
 	{ 0x279700, 0x279713, MWA16_RAM, &metro_videoregs	},	// Video Registers
 	{ 0x260000, 0x26ffff, MWA16_NOP						},	// ??????
-	{ 0x400000, 0x43ffff, MWA16_RAM, &metro_k053936_ram	},	// 053936
-	{ 0x500000, 0x500fff, MWA16_RAM						},	// ??????
-	{ 0x600000, 0x60001f, MWA16_RAM						},	// 053936 control? does NOT affect scroll/zoom
+	{ 0x400000, 0x43ffff, metro_K053936_w, &metro_K053936_ram	},	// 053936
+	{ 0x500000, 0x500fff, MWA16_RAM						},	// 053936 3D rotation control?
+	{ 0x600000, 0x60001f, MWA16_RAM, &metro_K053936_ctrl},	// 053936 control
 MEMORY_END
 
 
@@ -1982,7 +2101,7 @@ static struct GfxDecodeInfo gfxdecodeinfo_8bit[] =
 {
 	{ REGION_GFX1, 0, &layout_8x8x4, 0x0, 0x200 }, // [0] 4 Bit Tiles
 	{ REGION_GFX2, 0, &layout_8x8x4, 0x0, 0x200 }, // [1] Fake Tiles
-//	{ REGION_GFX1, 0, &layout_8x8x8, 0x0,  0x20 }, // [2] 8 Bit Tiles (decoded in-place by vh_start)
+//	{ REGION_GFX1, 0, &layout_8x8x8, 0x0,  0x20 }, // [2] 8 Bit Tiles (handled directly from ROM data, no decoding)
 	{ -1 }
 };
 
@@ -1991,7 +2110,7 @@ static struct GfxDecodeInfo gfxdecodeinfo_blzntrnd[] =
 	{ REGION_GFX1, 0, &layout_8x8x4, 0x0, 0x200 }, // [0] 4 Bit Tiles
 	{ REGION_GFX2, 0, &layout_8x8x4, 0x0, 0x200 }, // [1] Fake Tiles
 	{ REGION_GFX3, 0, &layout_8x8x8, 0x0,  0x20 }, // [3] 053936 Tiles
-//	{ REGION_GFX1, 0, &layout_8x8x8, 0x0,  0x20 }, // [2] 8 Bit Tiles (decoded in-place by vh_start)
+//	{ REGION_GFX1, 0, &layout_8x8x8, 0x0,  0x20 }, // [2] 8 Bit Tiles (handled directly from ROM data, no decoding)
 	{ -1 }
 };
 
@@ -2046,8 +2165,14 @@ static const struct MachineDriver machine_driver_daitorid =
 			daitorid_readmem, daitorid_writemem,0,0,
 			metro_interrupt, 10	/* ? */
 		},
-
-		/* Sound CPU is unemulated */
+		{
+			CPU_UPD7810,
+			12000000,
+			upd7810_readmem, upd7810_writemem, upd7810_readport, upd7810_writeport,
+			ignore_interrupt, 0,
+			0, 0,
+			(void *)metro_io_callback
+        },
 	},
 	60,DEFAULT_60HZ_VBLANK_DURATION,
 	1,
@@ -2067,7 +2192,8 @@ static const struct MachineDriver machine_driver_daitorid =
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		{ 0 },	// M6295, YM2151
+        {   SOUND_YM2151,   &daitorid_ym2151_interface      },
+		{	SOUND_OKIM6295, &daitorid_okim6295_interface	}
 	},
 };
 
@@ -2359,7 +2485,8 @@ static const struct MachineDriver machine_driver_blzntrnd =
 			CPU_M68000,
 			16000000,
 			blzntrnd_readmem, blzntrnd_writemem,0,0,
-			metro_interrupt, 10	/* ? */
+//			metro_interrupt, 10	/* ? */
+			karatour_interrupt, 10	/* ? */
 		},
 #if 0
 		{
@@ -2375,13 +2502,13 @@ static const struct MachineDriver machine_driver_blzntrnd =
 	0,
 
 	/* video hardware */
-	320, 224, { 0, 320-1, 0, 224-1 },
+	320, 224, { 8, 320-8-1, 0, 224-1 },
 	gfxdecodeinfo_blzntrnd,
 	0x2000, 0x2000,
 	0,
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
-	metro_vh_start_14220,
+	blzntrnd_vh_start,
 	metro_vh_stop,
 	metro_vh_screenrefresh,
 
@@ -2404,11 +2531,7 @@ static const struct MachineDriver machine_driver_blzntrnd =
 
 static void init_metro(void)
 {
-	const int region	=	REGION_GFX1;
-
-	const size_t len	=	memory_region_length(region);
-	data8_t *src		=	memory_region(region);
-	data8_t *end		=	memory_region(region) + len;
+	int i;
 
 	/*
 	  Tiles can be either 4-bit or 8-bit, and both depths can be used at the same
@@ -2416,11 +2539,12 @@ static void init_metro(void)
 	  tilemap.c handle that, we invert gfx data so the transparent pen becomes 0
 	  for both tile depths.
 	*/
-	while(src < end)
-	{
-		*src ^= 0xff;
-		src++;
-	}
+	for (i = 0;i < memory_region_length(REGION_GFX1);i++)
+		memory_region(REGION_GFX1)[i] ^= 0xff;
+
+	if (memory_region(REGION_GFX3))	/* blzntrnd */
+		for (i = 0;i < memory_region_length(REGION_GFX3);i++)
+			memory_region(REGION_GFX3)[i] ^= 0xff;
 
 	vblank_irq   = 0;
 	blitter_irq  = 0;

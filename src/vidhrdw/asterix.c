@@ -6,7 +6,6 @@
 static int sprite_colorbase;
 static int layer_colorbase[4], layerpri[3];
 static data16_t spritebank;
-static int tilebase = 0x0000;
 static int tilebanks[4];
 static int spritebanks[4];
 
@@ -23,19 +22,6 @@ WRITE16_HANDLER( asterix_spritebank_w )
 {
 	COMBINE_DATA(&spritebank);
 	reset_spritebank();
-}
-
-void asterix_tilebankswitch_w(int sw)
-{
-	int old_bank = tilebase;
-	tilebase = sw ? 0x4000 : 0;
-	if (tilebase != old_bank)
-	{
-		K054157_mark_plane_dirty(0);
-		K054157_mark_plane_dirty(1);
-		K054157_mark_plane_dirty(2);
-		K054157_mark_plane_dirty(3);
-	}
 }
 
 static void asterix_sprite_callback(int *code, int *color, int *priority_mask)
@@ -100,10 +86,10 @@ void asterix_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	int layer[3];
 	int new_base;
 
-	tilebanks[0] = (K054157_get_lookup(0) << 10) | tilebase;
-	tilebanks[1] = (K054157_get_lookup(1) << 10) | tilebase;
-	tilebanks[2] = (K054157_get_lookup(2) << 10) | tilebase;
-	tilebanks[3] = (K054157_get_lookup(3) << 10) | tilebase;
+	tilebanks[0] = (K054157_get_lookup(0) << 10);
+	tilebanks[1] = (K054157_get_lookup(1) << 10);
+	tilebanks[2] = (K054157_get_lookup(2) << 10);
+	tilebanks[3] = (K054157_get_lookup(3) << 10);
 
 	new_base = K053251_get_palette_index(K053251_CI0);
 	if(layer_colorbase[0] != new_base) {

@@ -76,6 +76,7 @@ CPUS+=ASAP@
 #CPUS+=LH5801@
 #CPUS+=SATURN@
 #CPUS+=APEXC@
+CPUS+=UPD7810@
 
 # uncomment the following lines to include a sound core
 SOUNDS+=CUSTOM@
@@ -485,13 +486,14 @@ $(OBJ)/konami.a: \
 	$(OBJ)/vidhrdw/gijoe.o $(OBJ)/drivers/gijoe.o \
 	$(OBJ)/machine/simpsons.o $(OBJ)/vidhrdw/simpsons.o $(OBJ)/drivers/simpsons.o \
 	$(OBJ)/vidhrdw/vendetta.o $(OBJ)/drivers/vendetta.o \
-	$(OBJ)/vidhrdw/twin16.o $(OBJ)/drivers/twin16.o \
-	$(OBJ)/vidhrdw/gradius3.o $(OBJ)/drivers/gradius3.o \
-	$(OBJ)/vidhrdw/tmnt.o $(OBJ)/drivers/tmnt.o \
-	$(OBJ)/vidhrdw/xmen.o $(OBJ)/drivers/xmen.o \
 	$(OBJ)/vidhrdw/wecleman.o $(OBJ)/drivers/wecleman.o \
 	$(OBJ)/vidhrdw/chqflag.o $(OBJ)/drivers/chqflag.o \
 	$(OBJ)/vidhrdw/ultraman.o $(OBJ)/drivers/ultraman.o \
+	$(OBJ)/vidhrdw/twin16.o $(OBJ)/drivers/twin16.o \
+	$(OBJ)/vidhrdw/tmnt.o $(OBJ)/drivers/tmnt.o \
+	$(OBJ)/vidhrdw/xmen.o $(OBJ)/drivers/xmen.o \
+	$(OBJ)/vidhrdw/overdriv.o $(OBJ)/drivers/overdriv.o \
+	$(OBJ)/vidhrdw/gradius3.o $(OBJ)/drivers/gradius3.o \
 
 $(OBJ)/exidy.a: \
 	$(OBJ)/vidhrdw/exidy.o $(OBJ)/sndhrdw/exidy.o $(OBJ)/drivers/exidy.o \
@@ -574,6 +576,7 @@ $(OBJ)/snk.a: \
 	$(OBJ)/vidhrdw/marvins.o $(OBJ)/drivers/marvins.o \
 	$(OBJ)/drivers/hal21.o \
 	$(OBJ)/vidhrdw/snk.o $(OBJ)/drivers/snk.o \
+	$(OBJ)/drivers/sgladiat.o \
 	$(OBJ)/vidhrdw/snk68.o $(OBJ)/drivers/snk68.o \
 	$(OBJ)/vidhrdw/prehisle.o $(OBJ)/drivers/prehisle.o \
 
@@ -661,6 +664,7 @@ $(OBJ)/jaleco.a: \
 	$(OBJ)/vidhrdw/aeroboto.o $(OBJ)/drivers/aeroboto.o \
 	$(OBJ)/vidhrdw/citycon.o $(OBJ)/drivers/citycon.o \
 	$(OBJ)/vidhrdw/pinbo.o $(OBJ)/drivers/pinbo.o \
+	$(OBJ)/vidhrdw/momoko.o $(OBJ)/drivers/momoko.o \
 	$(OBJ)/vidhrdw/argus.o $(OBJ)/drivers/argus.o \
 	$(OBJ)/vidhrdw/psychic5.o $(OBJ)/drivers/psychic5.o \
 	$(OBJ)/vidhrdw/ginganin.o $(OBJ)/drivers/ginganin.o \

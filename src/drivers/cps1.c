@@ -3389,79 +3389,6 @@ INPUT_PORTS_START( megaman )
 INPUT_PORTS_END
 
 
-/********************************************************************
-
-			Graphics Layout
-
-  These are not really needed, and are used for documentation only.
-
-********************************************************************/
-
-#define DECODE_GFX 0
-
-static struct GfxLayout tilelayout8 =
-{
-	8,8,
-#if DECODE_GFX
-	RGN_FRAC(1,1),
-#else
-	0,
-#endif
-	4,
-	{ 24+32, 16+32, 8+32, 0+32 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*64, 1*64, 2*64, 3*64, 4*64, 5*64, 6*64, 7*64 },
-	8*64
-};
-
-static struct GfxLayout tilelayout16 =
-{
-	16,16,
-#if DECODE_GFX
-	RGN_FRAC(1,1),
-#else
-	0,
-#endif
-	4,
-	{ 24, 16, 8, 0 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7,
-		32+0, 32+1, 32+2, 32+3, 32+4, 32+5, 32+6, 32+7 },
-	{ 0*64, 1*64, 2*64, 3*64, 4*64, 5*64, 6*64, 7*64,
-			8*64, 9*64, 10*64, 11*64, 12*64, 13*64, 14*64, 15*64 },
-	16*64
-};
-
-static struct GfxLayout tilelayout32 =
-{
-	32,32,
-#if DECODE_GFX
-	RGN_FRAC(1,1),
-#else
-	0,
-#endif
-	4,
-	{ 24, 16, 8, 0 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7,
-		32+0, 32+1, 32+2, 32+3, 32+4, 32+5, 32+6, 32+7,
-		2*32+0, 2*32+1, 2*32+2, 2*32+3, 2*32+4, 2*32+5, 2*32+6, 2*32+7,
-		3*32+0, 3*32+1, 3*32+2, 3*32+3, 3*32+4, 3*32+5, 3*32+6, 3*32+7 },
-	{ 0*128, 1*128, 2*128, 3*128, 4*128, 5*128, 6*128, 7*128,
-			8*128, 9*128, 10*128, 11*128, 12*128, 13*128, 14*128, 15*128,
-			16*128, 17*128, 18*128, 19*128, 20*128, 21*128, 22*128, 23*128,
-			24*128, 25*128, 26*128, 27*128, 28*128, 29*128, 30*128, 31*128 },
-	32*128
-};
-
-struct GfxDecodeInfo cps1_gfxdecodeinfo[] =
-{
-	{ REGION_GFX1, 0, &tilelayout16, 0x000, 32*8 },	/* sprites */
-	{ REGION_GFX1, 0, &tilelayout8,  0x000, 32*8 },	/* tiles 8x8 */
-	{ REGION_GFX1, 0, &tilelayout16, 0x000, 32*8 },	/* tiles 16x16 */
-	{ REGION_GFX1, 0, &tilelayout32, 0x000, 32*8 },	/* tiles 32x32 */
-	{ -1 } /* end of array */
-};
-
-
 
 static void cps1_irq_handler_mus(int irq)
 {
@@ -3528,7 +3455,7 @@ static const struct MachineDriver machine_driver_##DRVNAME =				\
 	/* video hardware */													\
 	0x30*8+32*2, 0x1c*8+32*3, { 32, 32+0x30*8-1, 32+16, 32+16+0x1c*8-1 },	\
 																			\
-	cps1_gfxdecodeinfo,														\
+	0,																		\
 	4096, 4096,																\
 	0,																		\
 																			\
@@ -3570,7 +3497,7 @@ static const struct MachineDriver machine_driver_qsound =
 	/* video hardware */
 	0x30*8+32*2, 0x1c*8+32*3, { 32, 32+0x30*8-1, 32+16, 32+16+0x1c*8-1 },
 
-	cps1_gfxdecodeinfo,
+	0,
 	4096, 4096,
 	0,
 

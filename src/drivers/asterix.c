@@ -14,7 +14,6 @@ int asterix_vh_start(void);
 void asterix_vh_stop(void);
 void asterix_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 WRITE16_HANDLER( asterix_spritebank_w );
-void asterix_tilebankswitch_w(int sw);
 
 static unsigned char cur_control2;
 static int init_eeprom_count;
@@ -72,10 +71,7 @@ static READ16_HANDLER( control1_r )
 	return res;
 }
 
-static READ16_HANDLER( sx_r )
-{
-	return 0x7f;
-}
+
 
 static READ16_HANDLER( control2_r )
 {
@@ -84,7 +80,8 @@ static READ16_HANDLER( control2_r )
 
 static WRITE16_HANDLER( control2_w )
 {
-	if(ACCESSING_LSB) {
+	if (ACCESSING_LSB)
+	{
 		cur_control2 = data;
 		/* bit 0 is data */
 		/* bit 1 is cs (active low) */
@@ -95,7 +92,7 @@ static WRITE16_HANDLER( control2_w )
 		EEPROM_set_clock_line((data & 0x04) ? ASSERT_LINE : CLEAR_LINE);
 
 		/* bit 5 is select tile bank */
-		asterix_tilebankswitch_w(cur_control2 & 0x20);
+		K054157_set_tile_bank((data & 0x20) >> 5);
 	}
 }
 
@@ -105,6 +102,22 @@ static int asterix_interrupt(void)
 		return 5;       /* ??? All irqs have the same vector, and the
                            mask used is 0 or 7 */
 	return ignore_interrupt();
+}
+
+static READ16_HANDLER( asterix_sound_r )
+{
+	return K053260_0_r(2 + offset);
+}
+
+static void nmi_callback(int param)
+{
+	cpu_set_nmi_line(1,ASSERT_LINE);
+}
+
+static WRITE_HANDLER( sound_arm_nmi_w )
+{
+	cpu_set_nmi_line(1,CLEAR_LINE);
+	timer_set(TIME_IN_USEC(5),0,nmi_callback);
 }
 
 static WRITE16_HANDLER( sound_irq_w )
@@ -157,6 +170,8 @@ static WRITE16_HANDLER( protection_w )
 	}
 }
 
+
+
 static MEMORY_READ16_START( readmem )
 	{ 0x000000, 0x0fffff, MRA16_ROM },
 	{ 0x100000, 0x107fff, MRA16_RAM },			// Main RAM.
@@ -166,8 +181,7 @@ static MEMORY_READ16_START( readmem )
 	{ 0x300000, 0x30001f, K053244_lsb_r },
 	{ 0x380000, 0x380001, input_port_0_word_r },
 	{ 0x380002, 0x380003, control1_r },
-		//	{ 0x380200, 0x380203, K053260_lsb_r },
-	{ 0x380200, 0x380203, sx_r },
+	{ 0x380200, 0x380203, asterix_sound_r },	// 053260
 	{ 0x380600, 0x380601, MRA16_NOP },			// Watchdog
 	{ 0x400000, 0x400fff, K054157_ram_half_word_r },	// Graphic planes
 	{ 0x420000, 0x421fff, K054157_rom_word_r },		// Passthrough to tile roms
@@ -181,7 +195,7 @@ static MEMORY_WRITE16_START( writemem )
 	{ 0x280000, 0x280fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
 	{ 0x300000, 0x30001f, K053244_lsb_w },
 	{ 0x380100, 0x380101, control2_w },
-	{ 0x380200, 0x380203, K053260_lsb_w },
+	{ 0x380200, 0x380203, K053260_0_lsb_w },
 	{ 0x380300, 0x380301, sound_irq_w },
 	{ 0x380400, 0x380401, asterix_spritebank_w },
 	{ 0x380500, 0x38051f, K053251_lsb_w },
@@ -196,16 +210,19 @@ static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0xefff, MRA_ROM },
 	{ 0xf000, 0xf7ff, MRA_RAM },
 	{ 0xf801, 0xf801, YM2151_status_port_0_r },
-	{ 0xfa00, 0xfa2f, K053260_r },
+	{ 0xfa00, 0xfa2f, K053260_0_r },
 MEMORY_END
 
 static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0xefff, MWA_ROM },
 	{ 0xf000, 0xf7ff, MWA_RAM },
 	{ 0xf801, 0xf801, YM2151_data_port_0_w },
-	{ 0xfa00, 0xfa2f, K053260_w },
+	{ 0xfa00, 0xfa2f, K053260_0_w },
+	{ 0xfc00, 0xfc00, sound_arm_nmi_w },
 	{ 0xfe00, 0xfe00, YM2151_register_port_0_w },
 MEMORY_END
+
+
 
 INPUT_PORTS_START( asterix )
 	PORT_START
@@ -248,10 +265,11 @@ static struct YM2151interface ym2151_interface =
 
 static struct K053260_interface k053260_interface =
 {
-	3579545,
-	REGION_SOUND1, /* memory region */
-	{ MIXER(70,MIXER_PAN_LEFT), MIXER(70,MIXER_PAN_RIGHT) },
-	0
+	1,
+	{ 3579545 },
+	{ REGION_SOUND1 }, /* memory region */
+	{ { MIXER(70,MIXER_PAN_LEFT), MIXER(70,MIXER_PAN_RIGHT) } },
+	{ 0 }
 };
 
 static struct MachineDriver machine_driver_asterix =
@@ -318,8 +336,8 @@ ROM_START( asterix )
 	ROM_LOAD( "aster12k.bin", 0x080000, 0x080000, 0x7eb07a81 )
 
 	ROM_REGION( 0x400000, REGION_GFX2, 0 )
-	ROM_LOAD( "aster3k.bin", 0x200000, 0x200000, 0x32efdbc4 )
 	ROM_LOAD( "aster7k.bin", 0x000000, 0x200000, 0xc41278fe )
+	ROM_LOAD( "aster3k.bin", 0x200000, 0x200000, 0x32efdbc4 )
 
 	ROM_REGION( 0x200000, REGION_SOUND1, 0 )
 	ROM_LOAD( "aster1e.bin", 0x000000, 0x200000, 0x6df9ec0e )
@@ -340,8 +358,30 @@ ROM_START( astrxeac )
 	ROM_LOAD( "aster12k.bin", 0x080000, 0x080000, 0x7eb07a81 )
 
 	ROM_REGION( 0x400000, REGION_GFX2, 0 )
-	ROM_LOAD( "aster3k.bin", 0x200000, 0x200000, 0x32efdbc4 )
 	ROM_LOAD( "aster7k.bin", 0x000000, 0x200000, 0xc41278fe )
+	ROM_LOAD( "aster3k.bin", 0x200000, 0x200000, 0x32efdbc4 )
+
+	ROM_REGION( 0x200000, REGION_SOUND1, 0 )
+	ROM_LOAD( "aster1e.bin", 0x000000, 0x200000, 0x6df9ec0e )
+ROM_END
+
+ROM_START( astrxeaa )
+	ROM_REGION( 0x0c0000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "068eaa01.8c", 0x000000,  0x20000, 0x85b41d8e )
+	ROM_LOAD16_BYTE( "068eaa02.8d", 0x000001,  0x20000, 0x8e886305 )
+	ROM_LOAD16_BYTE( "aster7c.bin", 0x080000,  0x20000, 0x8223ebdc )
+	ROM_LOAD16_BYTE( "aster7d.bin", 0x080001,  0x20000, 0x9f351828 )
+
+	ROM_REGION( 0x010000, REGION_CPU2, 0 )
+	ROM_LOAD( "aster5f.bin", 0x000000, 0x010000,  0xd3d0d77b  )
+
+	ROM_REGION( 0x100000, REGION_GFX1, 0 )
+	ROM_LOAD( "aster16k.bin", 0x000000, 0x080000, 0xb9da8e9c )
+	ROM_LOAD( "aster12k.bin", 0x080000, 0x080000, 0x7eb07a81 )
+
+	ROM_REGION( 0x400000, REGION_GFX2, 0 )
+	ROM_LOAD( "aster7k.bin", 0x000000, 0x200000, 0xc41278fe )
+	ROM_LOAD( "aster3k.bin", 0x200000, 0x200000, 0x32efdbc4 )
 
 	ROM_REGION( 0x200000, REGION_SOUND1, 0 )
 	ROM_LOAD( "aster1e.bin", 0x000000, 0x200000, 0x6df9ec0e )
@@ -362,3 +402,4 @@ static void init_asterix(void)
 
 GAME( 1992, asterix,  0,       asterix, asterix, asterix, ROT0_16BIT, "Konami", "Asterix (World ver. EAD)" )
 GAME( 1992, astrxeac, asterix, asterix, asterix, asterix, ROT0_16BIT, "Konami", "Asterix (World ver. EAC)" )
+GAME( 1992, astrxeaa, asterix, asterix, asterix, asterix, ROT0_16BIT, "Konami", "Asterix (World ver. EAA)" )

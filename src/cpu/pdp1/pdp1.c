@@ -982,5 +982,3 @@ int intern_iot (int *iio, int md)
 	exit (1);
 	return 1;
 }
-
-void pdp1_init (void) { }

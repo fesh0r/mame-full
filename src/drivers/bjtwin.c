@@ -1,6 +1,6 @@
 /********************************************************************
 
-Urashima Mahjong        UPL        68000               OKIM6295
+Urashima Mahjong        UPL        68000 <unknown cpu> OKIM6295
 Task Force Harrier      UPL        68000 Z80           YM2203 2xOKIM6295
 Mustang                 UPL        68000 NMK004        YM2203 2xOKIM6295
 Mustang (bootleg)       UPL        68000 Z80           YM3812 OKIM6295
@@ -248,7 +248,7 @@ static data16_t *ram;
 
 static WRITE16_HANDLER( macross_mcu_w )
 {
-//logerror("%04x: mcu_w %02x\n",cpu_get_pc(),data);
+logerror("%04x: mcu_w %02x\n",cpu_get_pc(),data);
 }
 
 static READ16_HANDLER( macross_mcu_r )
@@ -269,10 +269,29 @@ static READ16_HANDLER( macross_mcu_r )
 	else
 	{
 		res = resp[respcount++];
-		if (respcount >= 15) respcount = 0;
+		if (respcount >= sizeof(resp)/sizeof(resp[0])) respcount = 0;
 	}
 
-//logerror("%04x: mcu_r %02x\n",cpu_get_pc(),res);
+logerror("%04x: mcu_r %02x\n",cpu_get_pc(),res);
+
+	return res;
+}
+
+static READ16_HANDLER( urashima_mcu_r )
+{
+	static int respcount = 0;
+	static int resp[] = {	0x99, 0xd8, 0x00,
+							0x2a, 0x6a, 0x00,
+							0x9c, 0xd8, 0x00,
+							0x2f, 0x6f, 0x00,
+							0x22, 0x62, 0x00,
+							0x25, 0x65, 0x00 };
+	int res;
+
+	res = resp[respcount++];
+	if (respcount >= sizeof(resp)/sizeof(resp[0])) respcount = 0;
+
+logerror("%04x: mcu_r %02x\n",cpu_get_pc(),res);
 
 	return res;
 }
@@ -346,6 +365,41 @@ static READ16_HANDLER( hachamf_protection_hack_r )
 }
 
 /***************************************************************************/
+
+static MEMORY_READ16_START( urashima_readmem )
+	{ 0x000000, 0x03ffff, MRA16_ROM },
+	{ 0x080004, 0x080005, urashima_mcu_r },
+	{ 0x09e000, 0x09e7ff, nmk_txvideoram_r },
+	{ 0x0f0000, 0x0f7fff, MRA16_RAM },
+	{ 0x0f8000, 0x0f8fff, MRA16_RAM },
+	{ 0x0f9000, 0x0fffff, MRA16_RAM },
+#if 0
+	{ 0x080000, 0x080001, input_port_0_word_r },
+	{ 0x080002, 0x080003, input_port_1_word_r },
+	{ 0x080008, 0x080009, input_port_2_word_r },
+	{ 0x08000a, 0x08000b, input_port_3_word_r },
+	{ 0x088000, 0x0887ff, MRA16_RAM },
+	{ 0x09e000, 0x0a1fff, nmk_bgvideoram_r },
+#endif
+MEMORY_END
+
+static MEMORY_WRITE16_START( urashima_writemem )
+	{ 0x000000, 0x03ffff, MWA16_ROM },
+	{ 0x080014, 0x080015, macross_mcu_w },
+	{ 0x09e000, 0x09e7ff, nmk_txvideoram_w, &nmk_txvideoram },
+	{ 0x0f0000, 0x0f7fff, MWA16_RAM },	/* Work RAM */
+	{ 0x0f8000, 0x0f8fff, MWA16_RAM, &spriteram16, &spriteram_size },
+	{ 0x0f9000, 0x0fffff, MWA16_RAM, &ram },	/* Work RAM again */
+#if 0
+	{ 0x080014, 0x080015, nmk_flipscreen_w },
+	{ 0x080016, 0x080017, MWA16_NOP },	/* IRQ enable? */
+	{ 0x080018, 0x080019, nmk_tilebank_w },
+	{ 0x088000, 0x0887ff, nmk_paletteram_w, &paletteram16 },
+	{ 0x08c000, 0x08c007, nmk_scroll_w },
+	{ 0x09e000, 0x0a1fff, nmk_bgvideoram_w, &nmk_bgvideoram },
+#endif
+MEMORY_END
+
 
 static MEMORY_READ16_START( vandyke_readmem )
 	{ 0x000000, 0x03ffff, MRA16_ROM },
@@ -1954,6 +2008,44 @@ static int nmk_interrupt(void)
 	return 2;
 }
 
+
+static const struct MachineDriver machine_driver_urashima =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M68000,
+			10000000, /* 10 MHz ? */
+			urashima_readmem,urashima_writemem,0,0,
+			ignore_interrupt,1,//m68_level4_irq,1,
+//			m68_level1_irq,112	/* ???????? */
+		}
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	1,
+	0,
+
+	/* video hardware */
+	256, 256, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	macross_gfxdecodeinfo,
+	1024, 1024,
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	nmk_eof_callback,
+	macross_vh_start,
+	nmk_vh_stop,
+	macross_vh_screenrefresh,
+
+	0,0,0,0,
+	{
+		{
+			SOUND_OKIM6295,
+			&okim6295_interface
+		}
+	}
+};
+
 static const struct MachineDriver machine_driver_vandyke =
 {
 	/* basic machine hardware */
@@ -2444,10 +2536,10 @@ ROM_START ( urashima )
 	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "um-5.22j",		0x000000, 0x020000, 0x991776a2 )	/* 8x8 tiles */
 
-	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE ) /* 16x16 Tiles */
+	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE ) /* 16x16 Tiles */
 	ROM_LOAD( "um-7.4l",	0x000000, 0x080000, 0xd2a68cfb )
 
-	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE ) /* Maybe there are no Sprites? */
+	ROM_REGION( 0x080000, REGION_GFX3, ROMREGION_DISPOSE ) /* Maybe there are no Sprites? */
 	ROM_LOAD( "um-6.2l",	0x000000, 0x080000, 0x076be5b5 )
 
 	ROM_REGION( 0x0240, REGION_PROMS, 0 )
@@ -2464,6 +2556,9 @@ ROM_START( vandyke )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )		/* 68000 code */
 	ROM_LOAD16_BYTE( "vdk-1.16",  0x00000, 0x20000, 0xc1d01c59 )
 	ROM_LOAD16_BYTE( "vdk-2.15",  0x00001, 0x20000, 0x9d741cc2 )
+
+	ROM_REGION(0x10000, REGION_CPU2, 0 ) /* 64k for sound cpu code */
+	ROM_LOAD( "vdk-4.127",    0x00000, 0x10000, 0xeba544f0)
 
 	ROM_REGION( 0x010000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "vdk-3.222",		0x000000, 0x010000, 0x5a547c1b )	/* 8x8 tiles */
@@ -3115,7 +3210,9 @@ static void init_bjtwin(void)
 //	rom[0x08f74/2] = 0x4e71);
 }
 
-GAMEX( 1989, urashima, 0,       macross,  macross,  0,        ROT0,         "UPL",							"Urashima Mahjong", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING ) /* Similar Hardware? */
+
+
+GAMEX( 1989, urashima, 0,       urashima, macross,  0,        ROT0,         "UPL",							"Urashima Mahjong", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING ) /* Similar Hardware? */
 GAMEX( 1989, tharrier, 0,       tharrier, tharrier, 0,        ROT270,       "UPL (American Sammy license)",	"Task Force Harrier", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )
 GAMEX( 1990, mustang,  0,       mustang,  mustang,  0,        ROT0,         "UPL",							"US AAF Mustang", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )
 GAMEX( 1990, mustangb, mustang, mustang,  mustang,  0,        ROT0,         "bootleg",						"US AAF Mustang (bootleg)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )

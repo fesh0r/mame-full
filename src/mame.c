@@ -1064,6 +1064,9 @@ static int bitmap_dirty;
 
 void draw_screen(void)
 {
+	if (bitmap_dirty)
+		osd_mark_dirty(Machine->uixmin,Machine->uiymin,Machine->uixmin+Machine->uiwidth-1,Machine->uiymin+Machine->uiheight-1);
+
 	(*Machine->drv->vh_update)(Machine->scrbitmap,bitmap_dirty);  /* update screen */
 
 	if (artwork_backdrop || artwork_overlay)

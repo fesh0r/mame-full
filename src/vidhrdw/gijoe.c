@@ -96,6 +96,8 @@ void gijoe_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	palette_init_used_colors();
 	K053247_mark_sprites_colors();
 
+	if(palette_used_colors)
+		palette_used_colors[0] |= PALETTE_COLOR_VISIBLE;
 	palette_recalc();
 
 	layer[0] = 1;

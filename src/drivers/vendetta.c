@@ -198,7 +198,7 @@ READ_HANDLER( vendetta_sound_r )
 {
 	/* If the sound CPU is running, read the status, otherwise
 	   just make it pass the test */
-	if (Machine->sample_rate != 0) 	return K053260_r(2 + offset);
+	if (Machine->sample_rate != 0) 	return K053260_0_r(2 + offset);
 	else
 	{
 		static int res = 0x00;
@@ -240,7 +240,7 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x5fe0, 0x5fe0, vendetta_5fe0_w },
 	{ 0x5fe2, 0x5fe2, vendetta_eeprom_w },
 	{ 0x5fe4, 0x5fe4, z80_irq_w },
-	{ 0x5fe6, 0x5fe7, K053260_w },
+	{ 0x5fe6, 0x5fe7, K053260_0_w },
 	{ 0x4000, 0x4fff, MWA_BANK3 },
 	{ 0x6000, 0x6fff, MWA_BANK2 },
 	{ 0x4000, 0x7fff, K052109_w },
@@ -251,7 +251,7 @@ static MEMORY_READ_START( readmem_sound )
 	{ 0x0000, 0xefff, MRA_ROM },
 	{ 0xf000, 0xf7ff, MRA_RAM },
 	{ 0xf801, 0xf801, YM2151_status_port_0_r },
-	{ 0xfc00, 0xfc2f, K053260_r },
+	{ 0xfc00, 0xfc2f, K053260_0_r },
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem_sound )
@@ -260,7 +260,7 @@ static MEMORY_WRITE_START( writemem_sound )
 	{ 0xf800, 0xf800, YM2151_register_port_0_w },
 	{ 0xf801, 0xf801, YM2151_data_port_0_w },
 	{ 0xfa00, 0xfa00, z80_arm_nmi_w },
-	{ 0xfc00, 0xfc2f, K053260_w },
+	{ 0xfc00, 0xfc2f, K053260_0_w },
 MEMORY_END
 
 
@@ -386,10 +386,11 @@ static struct YM2151interface ym2151_interface =
 
 static struct K053260_interface k053260_interface =
 {
-	3579545,
-	REGION_SOUND1, /* memory region */
-	{ MIXER(75,MIXER_PAN_LEFT), MIXER(75,MIXER_PAN_RIGHT) },
-	0
+	1,
+	{ 3579545 },
+	{ REGION_SOUND1 }, /* memory region */
+	{ { MIXER(75,MIXER_PAN_LEFT), MIXER(75,MIXER_PAN_RIGHT) } },
+	{ 0 }
 };
 
 static int vendetta_irq( void )

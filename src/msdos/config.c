@@ -69,7 +69,7 @@ extern const char *history_filename,*mameinfo_filename;
 void decompose_rom_sample_path (const char *rompath, const char *samplepath);
 
 #ifdef MESS
-void decompose_software_path (const char *softwarepath);
+void decompose_software_path (char *softwarepath);
 #endif
 
 extern const char *nvdir, *hidir, *cfgdir, *inpdir, *stadir, *memcarddir;
@@ -80,8 +80,8 @@ extern const char *cheatdir;
 
 #ifdef MESS
 /* path to the CRC database files */
-const char *crcdir;
-const char *softwarepath;  /* for use in fileio.c */
+char *crcdir;
+char *softwarepath;  /* for use in fileio.c */
 #define CHEAT_NAME	"CHEAT.CDB"
 #define HISTRY_NAME "SYSINFO.DAT"
 #else

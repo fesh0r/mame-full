@@ -27,7 +27,6 @@
 	    the bottom of the screen).
 	  - strhoop enables IRQ2 on every scanline during attract mode, with no
 	    noticeable effect.
-	  - pspikes2 enables IRQ2 but the handler does absolutely nothing.
 
 	- Gururin has bad tiles all over the place (used to work ..)
 
@@ -38,7 +37,7 @@
 
 	- Zooming is not perfect, sometimes things that are meant to be zoomed down
 	  to be invisible end up being a single line of pixels
-		(tophuntr how to play for example)
+		(tophuntr how to play, kuizkof map)
 
 	AUDIO ISSUES :
 
@@ -308,8 +307,7 @@ static int neogeo_interrupt(void)
 			fc++;
 		}
 
-		if ((irq2control & 0x10) &&
-				strcmp(Machine->gamedrv->name,"pspikes2"))
+		if (irq2control & 0x10)
 			usrintf_showmessage("IRQ2 enabled, need raster driver");
 
 		/* return a standard vblank interrupt */
@@ -4574,7 +4572,7 @@ GAME( 1992, quizdai2, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Qui
 GAME( 1993, 3countb,  neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "3 Count Bout / Fire Suplex" )
 GAME( 1992, aof,      neogeo,   raster, neogeo,  neogeo, ROT0_16BIT, "SNK", "Art of Fighting / Ryuuko no Ken" )
 GAME( 1993, samsho,   neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Samurai Shodown / Samurai Spirits" )
-GAME( 1994, tophuntr, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "Top Hunter - Roddy & Cathy" )
+GAME( 1994, tophuntr, neogeo,   raster, neogeo,  neogeo, ROT0_16BIT, "SNK", "Top Hunter - Roddy & Cathy" )
 GAME( 1992, fatfury2, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Fatal Fury 2 / Garou Densetsu 2 - arata-naru tatakai" )
 GAME( 1992, ssideki,  neogeo,   neogeo, neogeo,  neogeo, ROT0,       "SNK", "Super Sidekicks / Tokuten Ou" )
 GAME( 1994, kof94,    neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "SNK", "The King of Fighters '94" )
@@ -4697,7 +4695,7 @@ GAME( 1998, blazstar, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "Yumekobo",
 GAME( 1994, fightfev, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Viccom", "Fight Fever / Crystal Legacy" )
 
 /* Video System Co. */
-GAME( 1994, pspikes2, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Video System Co.", "Power Spikes II" )
+GAME( 1994, pspikes2, neogeo,   raster, neogeo,  neogeo, ROT0_16BIT, "Video System Co.", "Power Spikes II" )
 GAME( 1994, sonicwi2, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Video System Co.", "Aero Fighters 2 / Sonic Wings 2" )
 GAME( 1995, sonicwi3, neogeo,   neogeo, neogeo,  neogeo, ROT0,       "Video System Co.", "Aero Fighters 3 / Sonic Wings 3" )
 GAME( 1997, popbounc, neogeo,   neogeo, neogeo,  neogeo, ROT0_16BIT, "Video System Co.", "Pop 'n Bounce / Gapporin" )

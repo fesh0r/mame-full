@@ -15,7 +15,6 @@ enum
 
 extern int apexc_ICount;
 
-void apexc_init (void);
 void apexc_reset(void *param);
 void apexc_exit(void);
 unsigned apexc_get_context(void *dst);

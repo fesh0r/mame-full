@@ -891,6 +891,17 @@ else
 CPUDEFS += -DHAS_APEXC=0
 endif
 
+CPU=$(strip $(findstring UPD7810@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/upd7810
+CPUDEFS += -DHAS_UPD7810=1
+CPUOBJS += $(OBJ)/cpu/upd7810/upd7810.o
+DBGOBJS += $(OBJ)/cpu/upd7810/7810dasm.o
+$(OBJ)/cpu/upd7810/upd7810.o: upd7810.c 7810tbl.c 7810ops.c upd7810.h
+else
+CPUDEFS += -DHAS_UPD7810=0
+endif
+
 
 SOUND=$(strip $(findstring CUSTOM@,$(SOUNDS)))
 ifneq ($(SOUND),)

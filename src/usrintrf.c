@@ -430,7 +430,7 @@ struct GfxElement *builduifont(void)
 
 static void erase_screen(struct osd_bitmap *bitmap)
 {
-	fillbitmap(bitmap,Machine->uifont->colortable[0],NULL);
+	fillbitmap(Machine->scrbitmap,Machine->uifont->colortable[0],NULL);
 	schedule_full_refresh();
 }
 
@@ -446,7 +446,7 @@ void displaytext(struct osd_bitmap *bitmap,const struct DisplayText *dt)
 {
 	switch_ui_orientation();
 
-	osd_mark_dirty(0,0,Machine->uiwidth-1,Machine->uiheight-1);
+	osd_mark_dirty(Machine->uixmin,Machine->uiymin,Machine->uixmin+Machine->uiwidth-1,Machine->uiymin+Machine->uiheight-1);
 
 	while (dt->text)
 	{

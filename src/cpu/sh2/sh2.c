@@ -2674,5 +2674,3 @@ unsigned sh2_dasm(char *buffer, unsigned pc)
 	return 1;
 #endif
 }
-
-void sh2_init (void) {  }

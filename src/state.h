@@ -19,8 +19,11 @@ void state_save_register_UINT32(const char *module, int instance,
 								const char *name, UINT32 *val, unsigned size);
 void state_save_register_INT32 (const char *module, int instance,
 								const char *name, INT32 *val, unsigned size);
+void state_save_register_double(const char *module, int instance,
+								const char *name, double *val, unsigned size);
 void state_save_register_int   (const char *module, int instance,
 								const char *name, int *val);
+
 
 void state_save_register_func_presave(void (*func)(void));
 void state_save_register_func_postload(void (*func)(void));
@@ -39,7 +42,5 @@ void state_save_load_finish(void);
 
 /* Display function */
 void state_save_dump_registry(void);
-
-
 
 #endif

@@ -132,11 +132,11 @@
 #undef  STALLCHECK      /* Affects fetching of Opcode */
 #define SAVEPPC         /* Save Previous PC */
 #define ENCRYPTED       /* PC relative = decrypted */
-#define ASMBANK         /* Memory banking algorithm to use */
+#undef  ASMBANK         /* Memory banking algorithm to use */
 #define A7ROUTINE       /* Define to use separate routines for -(a7)/(a7)+ */
 #define ALIGNMENT 4     /* Alignment to use for branches */
 #undef  MASKCCR         /* Mask the status register to filter out unused bits */
-#undef  KEEPHIGHPC      /* Keep or Ignore bits 24-31 */
+#define KEEPHIGHPC      /* Keep or Ignore bits 24-31 */
 
 
 #include <stdio.h>

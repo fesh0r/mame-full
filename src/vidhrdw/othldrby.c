@@ -6,7 +6,7 @@
 #define SPRITERAM_START 0x1800
 #define SPRITERAM_SIZE (VIDEORAM_SIZE-SPRITERAM_START)
 
-data16_t *vram,*buffered_spriteram,*buffered_spriteram2;
+static data16_t *vram,*buf_spriteram,*buf_spriteram2;
 
 #define VREG_SIZE 18
 static data16_t vreg[VREG_SIZE];
@@ -57,9 +57,9 @@ void othldrby_vh_stop(void)
 {
 	free(vram);
 	vram = NULL;
-	free(buffered_spriteram);
-	buffered_spriteram = NULL;
-	buffered_spriteram2 = NULL;
+	free(buf_spriteram);
+	buf_spriteram = NULL;
+	buf_spriteram2 = NULL;
 }
 
 int othldrby_vh_start(void)
@@ -69,15 +69,15 @@ int othldrby_vh_start(void)
 	tilemap[2] = tilemap_create(get_tile_info2,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
 
 	vram = malloc(VIDEORAM_SIZE * sizeof(vram[0]));
-	buffered_spriteram = malloc(2*SPRITERAM_SIZE * sizeof(buffered_spriteram[0]));
+	buf_spriteram = malloc(2*SPRITERAM_SIZE * sizeof(buf_spriteram[0]));
 
-	if (!tilemap[0] || !tilemap[1] || !tilemap[2] || !vram || !buffered_spriteram)
+	if (!tilemap[0] || !tilemap[1] || !tilemap[2] || !vram || !buf_spriteram)
 	{
 		othldrby_vh_stop();
 		return 1;
 	}
 
-	buffered_spriteram2 = buffered_spriteram + SPRITERAM_SIZE;
+	buf_spriteram2 = buf_spriteram + SPRITERAM_SIZE;
 
 	tilemap_set_transparent_pen(tilemap[0],0);
 	tilemap_set_transparent_pen(tilemap[1],0);
@@ -154,17 +154,17 @@ static void draw_sprites(struct osd_bitmap *bitmap,int priority)
 		int x,y,color,code,sx,sy,flipx,flipy,sizex,sizey,pri;
 
 
-		pri = (buffered_spriteram[offs] & 0x0600) >> 9;
+		pri = (buf_spriteram[offs] & 0x0600) >> 9;
 		if (pri != priority) continue;
 
-		flipx = buffered_spriteram[offs] & 0x1000;
+		flipx = buf_spriteram[offs] & 0x1000;
 		flipy = 0;
-		color = (buffered_spriteram[offs] & 0x01fc) >> 2;
-		code = buffered_spriteram[offs+1] | ((buffered_spriteram[offs] & 0x0003) << 16);
-		sx = (buffered_spriteram[offs+2] >> 7);
-		sy = (buffered_spriteram[offs+3] >> 7);
-		sizex = (buffered_spriteram[offs+2] & 0x000f) + 1;
-		sizey = (buffered_spriteram[offs+3] & 0x000f) + 1;
+		color = (buf_spriteram[offs] & 0x01fc) >> 2;
+		code = buf_spriteram[offs+1] | ((buf_spriteram[offs] & 0x0003) << 16);
+		sx = (buf_spriteram[offs+2] >> 7);
+		sy = (buf_spriteram[offs+3] >> 7);
+		sizex = (buf_spriteram[offs+2] & 0x000f) + 1;
+		sizey = (buf_spriteram[offs+3] & 0x000f) + 1;
 
 		if (flip_screen)
 		{
@@ -235,6 +235,6 @@ void othldrby_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 void othldrby_eof_callback(void)
 {
 	/* sprites need to be felayed two frames */
-    memcpy(buffered_spriteram,buffered_spriteram2,SPRITERAM_SIZE*sizeof(buffered_spriteram[0]));
-    memcpy(buffered_spriteram2,&vram[SPRITERAM_START],SPRITERAM_SIZE*sizeof(buffered_spriteram[0]));
+    memcpy(buf_spriteram,buf_spriteram2,SPRITERAM_SIZE*sizeof(buf_spriteram[0]));
+    memcpy(buf_spriteram2,&vram[SPRITERAM_START],SPRITERAM_SIZE*sizeof(buf_spriteram[0]));
 }

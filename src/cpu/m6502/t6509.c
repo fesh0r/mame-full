@@ -350,5 +350,3 @@ static void (*insn6509[0x100])(void) = {
 };
 
 
-void m6509_init (void) { }
-

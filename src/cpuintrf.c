@@ -147,6 +147,9 @@
 #if (HAS_APEXC)
 #include "cpu/apexc/apexc.h"
 #endif
+#if (HAS_UPD7810)
+#include "cpu/upd7810/upd7810.h"
+#endif
 
 
 /* these are triggers sent to the timer system for various interrupt events */
@@ -423,6 +426,9 @@ struct cpu_interface cpuintf[] =
 #if (HAS_Z80)
 	CPU1(Z80,	   z80, 	 1,255,1.00,Z80_IGNORE_INT,    Z80_IRQ_INT,    Z80_NMI_INT,    8, 16,	  0,16,LE,1, 4	),
 #endif
+#if (HAS_SH2)
+	CPU4(SH2,	   sh2, 	16,  0,1.00,SH2_INT_NONE ,				 0, 			-1,   32,32bedw,   0,32,BE,2, 2  ),
+#endif
 #if (HAS_Z80GB)
 	CPU0(Z80GB,    z80gb,	 5,255,1.00,Z80GB_IGNORE_INT,  0,			   1,			   8, 16,	  0,16,LE,1, 4	),
 #endif
@@ -658,6 +664,10 @@ struct cpu_interface cpuintf[] =
 #if (HAS_APEXC)
 	CPU0(APEXC,    apexc,	 0,  0,1.00,0,				   -1,			   -1,			   32,18bedw, 0,18,LE,1, 1	),
 #endif
+#if (HAS_UPD7810)
+#define upd7810_ICount upd7810_icount
+	CPU0(UPD7810,  upd7810,  2,  0,1.00,UPD7810_INT_NONE,  UPD7810_INTF1,  UPD7810_INTNMI, 8, 16,	  0,16,LE,1, 4	),
+#endif
 };
 
 void cpu_init(void)
@@ -689,33 +699,14 @@ void cpu_init(void)
 	/* Set up the interface functions */
 	for (i = 0; i < MAX_CPU; i++)
 	{
-		activecpu = i;
 		cpu[i].intf = &cpuintf[CPU_TYPE(i)];
-		state_save_set_current_tag(i+1);
-		INIT(i);
 	}
 
-	state_save_set_current_tag(0);
-
-	state_save_register_UINT8("cpu", 0, "irq enable",     interrupt_enable,  totalcpu);
-	state_save_register_INT32("cpu", 0, "irq vector",     interrupt_vector,  totalcpu);
-	state_save_register_UINT8("cpu", 0, "irqline state",  irq_line_state,    totalcpu*MAX_IRQ_LINES);
-	state_save_register_INT32("cpu", 0, "irqline vector", irq_line_vector,   totalcpu*MAX_IRQ_LINES);
-	state_save_register_INT32("cpu", 0, "watchdog count", &watchdog_counter, 1);
-
-	/* reset the timer system */
-	timer_init();
-	timeslice_timer = refresh_timer = vblank_timer = NULL;
-}
-
-void cpu_run(void)
-{
-	int i;
-
-	/* determine which CPUs need a context switch */
 	for (i = 0; i < totalcpu; i++)
 	{
 		int j, size;
+
+		activecpu = i;
 
 		/* allocate a context buffer for the CPU */
 		size = GETCONTEXT(i,NULL);
@@ -737,7 +728,6 @@ logerror("CPU #%d failed to allocate context buffer (%d bytes)!\n", i, size);
 		/* Zap the context buffer */
 		memset(cpu[i].context, 0, size );
 
-
 		/* Save if there is another CPU of the same type */
 		cpu[i].save_context = 0;
 
@@ -751,7 +741,6 @@ logerror("CPU #%d failed to allocate context buffer (%d bytes)!\n", i, size);
 		{
 			cpu[i].save_context |= mame_debug;
 		}
-
 		#endif
 
 		for( j = 0; j < MAX_IRQ_LINES; j++ )
@@ -759,7 +748,29 @@ logerror("CPU #%d failed to allocate context buffer (%d bytes)!\n", i, size);
 			irq_line_state[i * MAX_IRQ_LINES + j] = CLEAR_LINE;
 			irq_line_vector[i * MAX_IRQ_LINES + j] = cpuintf[CPU_TYPE(i)].default_vector;
 		}
+
+		if (cpu[i].save_context) SETCONTEXT(i, cpu[i].context);
+		state_save_set_current_tag(i+1);
+		INIT(i);
+		if (cpu[i].save_context) GETCONTEXT(i, cpu[i].context);
 	}
+
+	state_save_set_current_tag(0);
+
+	state_save_register_UINT8("cpu", 0, "irq enable",     interrupt_enable,  totalcpu);
+	state_save_register_INT32("cpu", 0, "irq vector",     interrupt_vector,  totalcpu);
+	state_save_register_UINT8("cpu", 0, "irqline state",  irq_line_state,    totalcpu*MAX_IRQ_LINES);
+	state_save_register_INT32("cpu", 0, "irqline vector", irq_line_vector,   totalcpu*MAX_IRQ_LINES);
+	state_save_register_INT32("cpu", 0, "watchdog count", &watchdog_counter, 1);
+
+	/* reset the timer system */
+	timer_init();
+	timeslice_timer = refresh_timer = vblank_timer = NULL;
+}
+
+void cpu_run(void)
+{
+	int i;
 
 #ifdef	MAME_DEBUG
 	/* Initialize the debugger */

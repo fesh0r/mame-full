@@ -11,17 +11,18 @@
 
 /* Save state file format:
  *
- *  0.. 7  'MAMESAVE"
- *  8      Format version (this is format 1)
- *  9      Flags
- *  a..13  Game name padded with \0
+ *	0.. 7  'MAMESAVE"
+ *	8	   Format version (this is format 1)
+ *	9	   Flags
+ *	a..13  Game name padded with \0
  * 14..17  Signature
  * 18..end Save game data
  */
 
 /* Available flags */
 enum {
-	SS_NO_SOUND = 0x01
+	SS_NO_SOUND = 0x01,
+	SS_MSB_FIRST = 0x02
 };
 
 #define VERBOSE
@@ -32,7 +33,7 @@ enum {
 #define TRACE(x)
 #endif
 
-enum {MAX_INSTANCES = 10};
+enum {MAX_INSTANCES = 25};
 
 enum {
 	SS_INT8,
@@ -41,11 +42,21 @@ enum {
 	SS_UINT16,
 	SS_INT32,
 	SS_UINT32,
-	SS_INT
+	SS_INT,
+	SS_DOUBLE
 };
 
-static const char *ss_type[] = { "i8", "u8", "i16", "u16", "i32", "u32", "int" };
-static int         ss_size[] = {    1,    1,     2,     2,     4,     4,     4 };
+static const char *ss_type[] =	{ "i8", "u8", "i16", "u16", "i32", "u32", "int", "dbl" };
+static int		   ss_size[] =	{	 1,    1,	  2,	 2, 	4,	   4,	  4,	 8 };
+
+static void ss_c2(unsigned char *, unsigned);
+static void ss_c4(unsigned char *, unsigned);
+static void ss_c8(unsigned char *, unsigned);
+
+static void (*ss_conv[])(unsigned char *, unsigned) = {
+	0, 0, ss_c2, ss_c2, ss_c4, ss_c4, 0, ss_c8
+};
+
 
 typedef struct ss_entry {
 	struct ss_entry *next;
@@ -75,7 +86,7 @@ static ss_func *ss_prefunc_reg;
 static ss_func *ss_postfunc_reg;
 static int ss_current_tag;
 
-static char *ss_dump_array;
+static unsigned char *ss_dump_array;
 static void *ss_dump_file;
 static unsigned int ss_dump_size;
 
@@ -188,7 +199,7 @@ static ss_entry *ss_register_entry(const char *module, int instance, const char 
 		int pos = strcmp(e->name, name);
 		if(!pos) {
 			logerror("Duplicate save state registration entry (%s, %d, %s)\n", module, instance, name);
-			abort();
+			return NULL;
 		}
 		if(pos>0)
 			break;
@@ -201,7 +212,7 @@ static ss_entry *ss_register_entry(const char *module, int instance, const char 
 	(*ep)->data   = data;
 	(*ep)->size   = size;
 	(*ep)->offset = 0;
-	(*ep)->tag    = ss_current_tag;
+	(*ep)->tag	  = ss_current_tag;
 	return *ep;
 }
 
@@ -247,11 +258,27 @@ void state_save_register_int   (const char *module, int instance,
 	ss_register_entry(module, instance, name, SS_INT, val, 1);
 }
 
+void state_save_register_double(const char *module, int instance,
+								const char *name, double *val, unsigned size)
+{
+	ss_register_entry(module, instance, name, SS_DOUBLE, val, size);
+}
+
 
 
 static void ss_register_func(ss_func **root, void (*func)(void))
 {
 	ss_func *next = *root;
+	while (next)
+	{
+		if (next->func == func)
+		{
+			logerror("Duplicate save state function (0x%x)\n", func);
+			return;
+		}
+		next = next->next;
+	}
+	next = *root;
 	*root = malloc(sizeof(ss_func));
 	(*root)->next = next;
 	(*root)->func = func;
@@ -272,6 +299,55 @@ void state_save_set_current_tag(int tag)
 {
 	ss_current_tag = tag;
 }
+
+static void ss_c2(unsigned char *data, unsigned size)
+{
+	unsigned i;
+	for(i=0; i<size; i++) {
+		unsigned char v;
+		v = data[0];
+		data[0] = data[1];
+		data[1] = v;
+		data += 2;
+	}
+}
+
+static void ss_c4(unsigned char *data, unsigned size)
+{
+	unsigned i;
+	for(i=0; i<size; i++) {
+		unsigned char v;
+		v = data[0];
+		data[0] = data[3];
+		data[3] = v;
+		v = data[1];
+		data[1] = data[2];
+		data[2] = v;
+		data += 4;
+	}
+}
+
+static void ss_c8(unsigned char *data, unsigned size)
+{
+	unsigned i;
+	for(i=0; i<size; i++) {
+		unsigned char v;
+		v = data[0];
+		data[0] = data[7];
+		data[7] = v;
+		v = data[1];
+		data[1] = data[6];
+		data[6] = v;
+		v = data[2];
+		data[2] = data[5];
+		data[5] = v;
+		v = data[3];
+		data[3] = data[4];
+		data[4] = v;
+		data += 8;
+	}
+}
+
 
 void state_save_save_begin(void *file)
 {
@@ -336,15 +412,23 @@ void state_save_save_continue(void)
 void state_save_save_finish(void)
 {
 	UINT32 signature;
+	unsigned char flags = 0;
+
 	TRACE(logerror("Finishing save\n"));
 
 	signature = ss_get_signature();
+	if(!Machine->sample_rate)
+		flags |= SS_NO_SOUND;
+
+#ifndef LSB_FIRST
+	flags |= SS_MSB_FIRST;
+#endif
 
 	memcpy(ss_dump_array, "MAMESAVE", 8);
 	ss_dump_array[8] = 1;
-	ss_dump_array[9] = Machine->sample_rate ? 0 : SS_NO_SOUND;
+	ss_dump_array[9] = flags;
 	memset(ss_dump_array+0xa, 0, 10);
-	strcpy(ss_dump_array+0xa, Machine->gamedrv->name);
+	strcpy((char *)ss_dump_array+0xa, Machine->gamedrv->name);
 
 	ss_dump_array[0x14] = signature;
 	ss_dump_array[0x15] = signature >> 8;
@@ -429,6 +513,14 @@ void state_save_load_continue(void)
 	ss_module *m;
 	ss_func * f;
 	int count = 0;
+	int need_convert;
+
+#ifdef LSB_FIRST
+	need_convert = (ss_dump_array[9] & SS_MSB_FIRST) != 0;
+#else
+	need_convert = (ss_dump_array[9] & SS_MSB_FIRST) == 0;
+#endif
+
 	TRACE(logerror("Loading tag %d\n", ss_current_tag));
 	TRACE(logerror("  copying data\n"));
 	for(m = ss_registry; m; m=m->next) {
@@ -447,6 +539,8 @@ void state_save_load_continue(void)
 						*(int *)(e->data) = v;
 					} else {
 						memcpy(e->data, ss_dump_array + e->offset, ss_size[e->type]*e->size);
+						if (need_convert && ss_conv[e->type])
+							ss_conv[e->type](e->data, e->size);
 						TRACE(logerror("    %s.%d.%s: %x..%x\n", m->name, i, e->name, e->offset, e->offset+ss_size[e->type]*e->size-1));
 					}
 				}

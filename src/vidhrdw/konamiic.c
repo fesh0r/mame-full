@@ -5,7 +5,7 @@
 TODO:
 - Implement shadows properly. Moreover, in chqflag and ssriders they are
   highlights, not shadows.
-
+- scrollcontrol = 30 in Golfing Greats (leader board)
 
 
                       Emulated
@@ -54,7 +54,7 @@ Battlantis          GX777*1987    6309 007342        007420               007327
 Vulcan Venture /    GX785*1988 2x68000           TWIN16
   Gradius 2
 City Bomber         GX787*1987   68000           GX400                    007593 051550
-Over Drive          GX789 1990
+Over Drive          GX789*1990 2x68000               053247 053246 053251 051316(x2) (zoom/rotation) 053249 053250(x2) (road) 053252(*)
 Hyper Crash         GX790 1987
 Blades of Steel     GX797*1987    6309 007342        007420               007327 051733 (protection)
 The Main Event      GX799*1988    6309 052109 051962 051960 051937  PROM
@@ -88,7 +88,7 @@ Golfing Greats      GX061*1991   68000 052109 051962 053245 053244 053251       
 TMNT 2              GX063*1991   68000 052109 051962 053245 053244 053251        053990
 Sunset Riders       GX064*1991   68000 052109 051962 053245 053244 053251        054358
 X-Men               GX065*1992   68000 052109 051962 053247 053246 053251        054539 (sound)
-XEXEX               GX067*1991   68000 054157 054156 053247 053246 053251        054338 054539 (sound)
+XEXEX               GX067*1991   68000 054157 054156 053247 053246 053251        053250?("road") 054338 054539 (sound)
 Asterix             GX068*1992   68000 054157 054156 053245 053244 053251        054358
 G.I. Joe            GX069*1992   68000 054157 054156 053247 053246 053251        054539 (sound)
 The Simpsons        GX072*1991  053248 052109 051962 053247 053246 053251
@@ -107,7 +107,7 @@ Potrio              GX174 1992
 Lethal Enforcers    GX191+1992    6309 054157(x2) 054156 053245 053244(x2)       054000 054539 (sound) 054906
 Metamorphic Force   GX224+1993
 Martial Champion    GX234+1993   68000 054157 054156 055673 053246               053252(*) 054338 054539 055555 053990 054986 054573
-Run and Gun         GX247+1993   68000               055673 053246               053253(x2) 054539(x2) 053252(*) 053253 053936
+Run and Gun         GX247+1993   68000               055673 053246               053253(x2) 054539(x2) 053252(*) 053936 (3D)
 Polygonet CommandersGX305+1993   68020                                           056230?063936?054539?054986?
 
 
@@ -126,6 +126,7 @@ Status of the ROM tests in the emulated games:
 Chequered Flag      pass
 Ajax / Typhoon      pass
 Super Contra        pass
+Over Drive          fails 16..20 (053250)
 The Main Event      pass
 Missing in Action   pass
 Crime Fighters      pass
@@ -155,6 +156,7 @@ The Simpsons        pass
 Thunder Cross 2     pass
 Vendetta            pass
 Xexex               pass
+Asterix             pass
 GiJoe				pass
 
 
@@ -390,6 +392,7 @@ address lines), and then reading it from the 051962.
            --x----- layer B column scroll
            surpratk sets this register to 70 during the second boss. There is
            nothing obviously wrong so it's not clear what should happen.
+		   glfgreat sets it to 30 when showing the leader board
 1d00     : bits 0 & 1 might enable NMI and FIRQ, not sure
          : bit 2 = IRQ enable
 1d80     : ROM bank selector bits 0-3 = bank 0 bits 4-7 = bank 1
@@ -419,6 +422,161 @@ EXTRA ADDRESSING SPACE USED BY X-MEN:
 
 The main CPU doesn't have direct acces to the RAM used by the 052109, it has
 to through the chip.
+
+
+
+054156/054157
+-------------
+
+[Except for tilemap sizes, all numbers are in hex]
+
+These work in pair.  Similar in principle to the 052109/051962, they
+manage 4 64x32 or 64x64 tilemaps.  They also handle linescroll on each
+layer, and optional tile banking.  They use 4000 to 10000 bytes of
+RAM, organized in 1000 or 2000 bytes banks.
+
+Known configurations:
+4 1000 bytes banks, tile banking, 64x32 tilemaps:
+  - asterix
+
+4 2000 bytes banks, no tile banking, 64x32 tilemaps:
+  - gijoe
+  - bucky 'o hare
+
+8 2000 bytes banks, no tile banking, 64x32 or 64x64 tilemaps:
+  - xexex
+
+Preliminary results indicate that konami system gx seems to use a
+similar chip with 16 banks and 128x64 tilemaps.
+
+In 4 banks configurations, the banks are numbered 0, 1, 8 and 9 and
+are associated to tilemaps 0..3 in that order.
+
+In 8 banks configurations, the banks are numbered 0, 1, 8, 9, 10, 11,
+18, and 19, and are associated in pairs to the tilemaps as (11, 19)
+for layer 0, (0, 8) for 1, (10, 11) for 2 and (1, 9) for 3.
+
+Tile encoding 2 bytes/tile (banks of 1000 bytes):
+        pppx bbcc cccc cccc
+  p = color palette
+  x = flip x
+  b = tile bank (0..3)
+  c = tile code (0..3ff)
+
+
+Tile encoding 4 bytes/tile (banks of 2000 bytes):
+        ---- ---- pppp --yx  cccc cccc cccc cccc
+  p = color palette
+  x = flip x
+  y = flip y
+  b = tile bank (0..3)
+  c = tile code (0..3ff)
+
+
+Communication with these ics go through 4 memory zones:
+  1000/2000 bytes: access to the currently selected ram bank
+       2000 bytes: readonly access the the currently select tile
+                   rom bank for rom checksumming
+         40 bytes: writeonly access to the first register bank
+          8 bytes: writeonly access to the second register bank
+
+One of the register banks is probably on the 054156, and the other on
+the 054157.
+
+First register bank map (offsets in bytes, '-' means unused):
+00    ---- ---- ??yx ????
+  flip control
+
+02    ---- ---- ???? ????
+  unknown
+
+04    ---- ---- ???? ????
+  unknown (bit 1 may be bank count selection, 0 in xexex, 1 everywhere
+  else)
+
+06    ---- ---- ???? ???e
+  enable irq
+
+08    ---- ---- ???? ????
+  unknown
+
+0a    ---- ---- 3322 1100
+  linescroll control, each pair of bits indicates the mode for the
+  corresponding layer:
+    0: per-line linescroll
+    1: unused/unknown
+    2: per-8 lines linescroll
+    3: no linescroll
+
+0c    ---- ---- ???? ????
+  unknown (bit 1 may be bank size selection, 1 in asterix, 0 everywhere
+  else)
+
+0e    ---- ---- ---- ----
+
+10-17 ---- ---- ???? ???s
+  layer type control
+    s: size (0=64x32, 1=64x64)
+
+18-1f ---- ---- ???? ????
+
+20-27 yyyy yyyy yyyy yyyy
+  scroll y position for each layer
+
+28-2f xxxx xxxx xxxx xxxx
+  scroll x position for each layer
+
+30    ---- ---- ---b b--b
+  linescroll ram bank selection
+
+32    ---- ---- ---b b--b
+  cpu-accessible ram bank selection
+
+34    bbbb bbbb bbbb bbbb
+  rom bank selection for checksumming (each bank is 0x2000 bytes)
+
+36    ---- ---- ---- bbbb
+  secondary rom bank selection for checksumming when tile banking is
+  used
+
+38    3333 2222 1111 0000
+  tile banking look up table.  4 bits are looked up here for the two
+  bits in the tile data.
+
+3a    ???? ???? ???? ????
+  unknown
+
+3c    ???? ???? ???? ????
+  unknown
+
+3e    ---- ---- ---- ----
+
+
+Second register bank map:
+00    ---- ---- ???? ????
+  unknown
+
+02-07 are copies of the 02-07 registers from the first bank.
+
+
+  Linescroll:
+
+The linescroll is controlled by the register 0b, and uses the data in
+the ram bank pointed by register 31.  The data for tilemap <n> starts
+at offset 400*n in the bank for 1000 bytes ram banks, and 800*n+2 for
+2000 bytes ram banks.  The scrolling information is a vector of half
+words separated by 1 word padding for 2000 bytes banks.
+
+This is a source-oriented linescroll, i.e. the first word is
+associated to the first one of the tilemap, not matter what the
+current scrolly position is.
+
+In per-line mode, each word indicates the horizontal scroll of the
+associated line.  Global scrollx is ignored.
+
+In per-8 lines mode, each word associated to a line multiple of 8
+indicates the horizontal scroll for that line and the 7 following
+ones.  The other 7 words are ignored.  Global scrollx is ignored.
 
 
 
@@ -2741,7 +2899,7 @@ READ_HANDLER( K053244_r )
 	{
 		int addr;
 
-		addr = (K053244_rombank << 21) | ((K053244_regs[10] & 0x7) << 18)
+		addr = (K053244_rombank << 19) | ((K053244_regs[11] & 0x7) << 18)
 			| (K053244_regs[8] << 10) | (K053244_regs[9] << 2)
 			| ((offset & 3) ^ 1);
 		addr &= memory_region_length(K053245_memory_region)-1;
@@ -2811,7 +2969,7 @@ WRITE16_HANDLER( K053244_word_w )
 		K053244_w(offset*2+1, data & 0xff);
 }
 
-void K053244_bankselect(int bank)   /* used by TMNT2 for ROM testing */
+void K053244_bankselect(int bank)
 {
 	K053244_rombank = bank;
 }
@@ -3269,7 +3427,7 @@ WRITE_HANDLER( K053246_w )
 
 READ16_HANDLER( K053246_word_r )
 {
-	return K053246_r(offset + 1) | (K053246_r(offset) << 8);
+	return K053246_r(offset*2 + 1) | (K053246_r(offset*2) << 8);
 }
 
 WRITE16_HANDLER( K053246_word_w )
@@ -3448,10 +3606,17 @@ void K053247_sprites_draw(struct osd_bitmap *bitmap)
 			if (!mirrory) flipy = !flipy;
 		}
 
+#if 0	// fixes overdriv, but breaks everything else
+		ox = (K053247_dx + ox - offx) & 0xfff;
+		if (ox >= 0x800) ox -= 0x1000;
+		oy = (-(K053247_dy + oy + offy)) & 0xfff;
+		if (oy >= 0x800) oy -= 0x1000;
+#else
 		ox = (K053247_dx + ox - offx) & 0x3ff;
-		if (ox >= 768) ox -= 1024;
+		if (ox >= 0x300) ox -= 0x400;
 		oy = (-(K053247_dy + oy + offy)) & 0x3ff;
-		if (oy >= 640) oy -= 1024;
+		if (oy >= 0x280) oy -= 0x400;
+#endif
 
 		/* the coordinates given are for the *center* of the sprite */
 		ox -= (zoomx * w) >> 13;
@@ -3942,7 +4107,7 @@ READ_HANDLER( K051316_rom_2_r )
 void K051316_ctrl_w(int chip,int offset,int data)
 {
 	K051316_ctrlram[chip][offset] = data;
-if (offset >= 0x0c) logerror("%04x: write %02x to 051316 reg %x\n",cpu_get_pc(),data,offset);
+//if (offset >= 0x0c) logerror("%04x: write %02x to 051316 reg %x\n",cpu_get_pc(),data,offset);
 }
 
 WRITE_HANDLER( K051316_ctrl_0_w )
@@ -4287,9 +4452,11 @@ static data16_t K054157_regs[0x20], K054157_regsb[4];
 static void (*K054157_linescroll_updater[4])(int layer);
 
 static int K054157_cur_rombank, K054157_romnbbanks;
+static int K054157_uses_tile_banks, K054157_cur_tile_bank;
 static int K054157_cur_layer, K054157_gfxnum, K054157_memory_region;
 static int K054157_cur_offset;
-static data16_t *K054157_rambase, *K054157_cur_spbase, *K054157_cur_lbase, *K054157_cur_rambase, *K054157_rombase, *K054157_cur_rombase;
+static data16_t *K054157_rambase, *K054157_cur_spbase, *K054157_cur_lbase, *K054157_cur_rambase;
+static data8_t *K054157_rombase;
 static data16_t *K054157_rambasel[8];
 static int K054157_tilemapl[8], K054157_offsetl[8];
 
@@ -4324,12 +4491,11 @@ static void K054157_lsu_1_256(int layer)
 {
 	int y;
 	int basey = K054157_regs[0x10|layer];
-	INT16 delta = 0;//K054157_regs[0x14|layer];
 
 	data16_t *baseram = K054157_cur_spbase + layer*0x400;
 	for(y=0; y<256; y++) {
 		int offset = (((basey + y) & 0x1ff) << 1) | 1;
-		tilemap_set_scrollx(K054157_tilemap[layer], y, delta + baseram[offset]);
+		tilemap_set_scrollx(K054157_tilemap[layer], y, baseram[offset]);
 	}
 }
 
@@ -4337,12 +4503,11 @@ static void K054157_lsu_1_512(int layer)
 {
 	int y;
 	int basey = K054157_regs[0x10|layer];
-	INT16 delta = 0;//K054157_regs[0x14|layer];
 
 	data16_t *baseram = K054157_cur_spbase + layer*0x400;
 	for(y=0; y<512; y++) {
 		int offset = (((basey + y) & 0x1ff) << 1) | 1;
-		tilemap_set_scrollx(K054157_tilemap[layer], y, delta + baseram[offset]);
+		tilemap_set_scrollx(K054157_tilemap[layer], y, baseram[offset]);
 	}
 }
 
@@ -4350,12 +4515,11 @@ static void K054157_lsu_8_256(int layer)
 {
 	int y;
 	int basey = K054157_regs[0x10|layer];
-	INT16 delta = 0;//K054157_regs[0x14|layer];
 
 	data16_t *baseram = K054157_cur_spbase + layer*0x400;
 	for(y=0; y<256; y++) {
 		int offset = (((basey + y) & 0x1f8) << 1) | 1;
-		tilemap_set_scrollx(K054157_tilemap[layer], y, delta + baseram[offset]);
+		tilemap_set_scrollx(K054157_tilemap[layer], y, baseram[offset]);
 	}
 }
 
@@ -4363,12 +4527,11 @@ static void K054157_lsu_8_512(int layer)
 {
 	int y;
 	int basey = K054157_regs[0x10|layer];
-	INT16 delta = 0;//K054157_regs[0x14|layer];
 
 	data16_t *baseram = K054157_cur_spbase + layer*0x400;
 	for(y=0; y<512; y++) {
 		int offset = (((basey + y) & 0x1f8) << 1) | 1;
-		tilemap_set_scrollx(K054157_tilemap[layer], y, delta + baseram[offset]);
+		tilemap_set_scrollx(K054157_tilemap[layer], y, baseram[offset]);
 	}
 }
 
@@ -4479,10 +4642,15 @@ static void K054157_change_splayer(void)
 
 static void K054157_change_rombank(void)
 {
-	int bank = K054157_regs[0x1a];
+	int bank;
+
+	if (K054157_uses_tile_banks)	/* asterix */
+		bank = (K054157_regs[0x1a] >> 8) | (K054157_regs[0x1b] << 4) | (K054157_cur_tile_bank << 6);
+	else	/* everything else */
+		bank = K054157_regs[0x1a] | (K054157_regs[0x1b] << 16);
 
 	K054157_cur_rombank = bank % K054157_romnbbanks;
-	K054157_cur_rombase = K054157_rombase + 0x1000*K054157_cur_rombank;
+//usrintf_showmessage("%04x: %04x %04x %04x",cpu_get_pc(),K054157_regs[0x1a],K054157_regs[0x1b],K054157_cur_rombank);
 }
 
 int K054157_vh_start(int gfx_memory_region, int big, int (*scrolld)[4][2], int plane0,int plane1,int plane2,int plane3, void (*callback)(int, int *, int *))
@@ -4527,8 +4695,10 @@ int K054157_vh_start(int gfx_memory_region, int big, int (*scrolld)[4][2], int p
 	K054157_gfxnum = gfx_index;
 	K054157_callback = callback;
 
-	K054157_rombase = (data16_t *)(memory_region(gfx_memory_region));
+	K054157_rombase = memory_region(gfx_memory_region);
 	K054157_romnbbanks = memory_region_length(gfx_memory_region)/0x2000;
+	K054157_cur_rombank = 0;
+	K054157_uses_tile_banks = 0;
 
 	K054157_tilemapb[0] = tilemap_create(K054157_get_tile_info, tilemap_scan_rows,
 										 TILEMAP_TRANSPARENT, 8, 8, 64, 64);
@@ -4632,7 +4802,13 @@ READ16_HANDLER( K054157_ram_half_word_r )
 
 READ16_HANDLER( K054157_rom_word_r )
 {
-	return K054157_cur_rombase[offset];
+	int addr = 0x2000*K054157_cur_rombank + 2*offset;
+
+#if 0
+	usrintf_showmessage("%04x: addr %06x",cpu_get_pc(),addr);
+#endif
+
+	return K054157_rombase[addr+1] | (K054157_rombase[addr] << 8);
 }
 
 WRITE16_HANDLER( K054157_ram_word_w )
@@ -4641,7 +4817,7 @@ WRITE16_HANDLER( K054157_ram_word_w )
 	data16_t old = *adr;
 
 	COMBINE_DATA(adr);
-	if(data != old && K054157_cur_tilemap)
+	if(*adr != old && K054157_cur_tilemap)
 		tilemap_mark_tile_dirty(K054157_cur_tilemap, offset/2 + K054157_cur_offset);
 }
 
@@ -4651,7 +4827,7 @@ WRITE16_HANDLER( K054157_ram_half_word_w )
 	data16_t old = *adr;
 
 	COMBINE_DATA(adr);
-	if(data != old)
+	if(*adr != old)
 		tilemap_mark_tile_dirty(K054157_cur_tilemap, (offset & 0x7ff) + K054157_cur_offset);
 }
 
@@ -4734,6 +4910,29 @@ int K054157_is_IRQ_enabled(void)
 
 int K054157_get_lookup(int bits)
 {
-	return (K054157_regs[0x1c] >> (bits << 2)) & 0xf;
+	int res;
+
+	res = (K054157_regs[0x1c] >> (bits << 2)) & 0x0f;
+
+	if (K054157_uses_tile_banks)	/* Asterix */
+		res |= K054157_cur_tile_bank << 4;
+
+	return res;
 }
 
+void K054157_set_tile_bank(int bank)
+{
+	K054157_uses_tile_banks = 1;
+
+	if (K054157_cur_tile_bank != bank)
+	{
+		K054157_cur_tile_bank = bank;
+
+		K054157_mark_plane_dirty(0);
+		K054157_mark_plane_dirty(1);
+		K054157_mark_plane_dirty(2);
+		K054157_mark_plane_dirty(3);
+	}
+
+	K054157_change_rombank();
+}

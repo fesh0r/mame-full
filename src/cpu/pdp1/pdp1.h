@@ -15,7 +15,6 @@ enum {
 #endif
 
 /* PUBLIC FUNCTIONS */
-extern void pdp1_init (void);
 extern unsigned pdp1_get_pc(void);
 extern void pdp1_set_pc(UINT32 newpc);
 extern unsigned pdp1_get_sp(void);
