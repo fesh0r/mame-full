@@ -57,7 +57,7 @@ WRITE_HANDLER(comquest_write)
 
 static MEMORY_READ_START( comquest_readmem )
 //	{ 0x0000, 0x7fff, MRA_BANK1 },
-	{ 0x0000, 0x7ffff, MRA_ROM },
+	{ 0x0000, 0xffff, MRA_ROM },
 //	{ 0x8000, 0xffff, MRA_RAM }, // batterie buffered
 MEMORY_END
 
@@ -173,24 +173,33 @@ INPUT_PORTS_END
 
 static struct GfxLayout comquest_charlayout =
 {
-        32,1,
-        256,                                    /* 256 characters */
+        8,8,
+        256*8,                                    /* 256 characters */
         1,                      /* 1 bits per pixel */
         { 0 },                  /* no bitplanes; 1 bit per pixel */
         /* x offsets */
         {
-			0, 0, 0, 0,
-			1, 1, 1, 1,
-			2, 2, 2, 2,
-			3, 3, 3, 3,
-			4, 4, 4, 4,
-			5, 5, 5, 5,
-			6, 6, 6, 6,
-			7, 7, 7, 7
+			0,
+			1,
+			2,
+			3,
+			4,
+			5,
+			6,
+			7,
         },
         /* y offsets */
-        { 0 },
-        1*8
+        { 
+			0,
+			8,
+			16,
+			24,
+			32,
+			40,
+			48,
+			56,
+		},
+        8*8
 };
 
 static struct GfxDecodeInfo comquest_gfxdecodeinfo[] = {
@@ -227,12 +236,16 @@ static void comquest_machine_init(void)
 //	cpu_setbank(1,mem+0x00000);
 }
 
+UINT32 amask= 0xffff;
+
 static struct MachineDriver machine_driver_comquest =
 {
 	/* basic machine hardware */
 	{
 		{
-			CPU_I86, //?
+			CPU_M6805,
+//			CPU_HD63705, // instruction set looks like m6805/m6808
+//			CPU_M68705, // instruction set looks like m6805/m6808
 /*
   8 bit bus, integrated io, serial io?,
 
@@ -259,6 +272,8 @@ static struct MachineDriver machine_driver_comquest =
 			4000000, //?
 			comquest_readmem,comquest_writemem,0,0,
 			comquest_frame_int, 1,
+			0,0,
+			&amask
         }
 	},
 	/* frames per second, VBL duration */
@@ -295,7 +310,7 @@ ROM_START(comquest)
 	ROM_REGION(0x100000,REGION_CPU1,0)
 	ROM_LOAD("comquest.bin", 0x00000, 0x80000, 0x2bf4b1a8)
 /*
-000 +16kbyte code
+000 +16kbyte graphics data?
 040 16kbyte code
 080 8kbyte code
 0a0 8kbyte code
@@ -318,7 +333,9 @@ ROM_START(comquest)
 7c0 16kb
  */
 
-	ROM_REGION(0x100,REGION_GFX1,0)
+//	ROM_REGION(0x100,REGION_GFX1,0)
+	ROM_REGION(0x80000,REGION_GFX1,0)
+	ROM_LOAD("comquest.bin", 0x00000, 0x80000, 0x2bf4b1a8)
 ROM_END
 
 static const struct IODevice io_comquest[] = {
@@ -350,7 +367,7 @@ void init_comquest(void)
 {
 	int i;
 	UINT8 *gfx=memory_region(REGION_GFX1);
-	for (i=0; i<256; i++) gfx[i]=i;
+//	for (i=0; i<256; i++) gfx[i]=i;
 }
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      MONITOR	COMPANY   FULLNAME */
