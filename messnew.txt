@@ -2,7 +2,7 @@
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
-Dragon 64 [Nate Woods]
+- Dragon 64 [Nate Woods]
 
 System Driver Changes:
 ----------------------
@@ -81,3 +81,10 @@ Source Changes:
 
 - [MacMESS] Added configurable RAM sizes and dipswitch controls to the MESS
   tab. [tim lindner]
+
+
+Removed Systems:
+----------------
+- zx80, zx81, zx81a, zx81b, ts1000, aszmic, pc8300, pow3000, lambda  
+  [Bugs #35, #152, #159 - Unmaintained Drivers]
+  
