@@ -330,14 +330,15 @@ WRITE18_HANDLER(pdp1_write_mem)
 
 	unit 0 is reader (read-only), unit 1 is puncher (write-only)
 */
-int pdp1_tape_load(int id, mame_file *fp, int open_mode  )
+DEVICE_LOAD( pdp1_tape )
 {
+	int id = image_index(image);
 	switch (id)
 	{
 	case 0:
 		/* reader unit */
 		/* open file */
-		tape_reader.fd = image_fopen_custom(IO_PUNCHTAPE, id, FILETYPE_IMAGE, OSD_FOPEN_READ);
+		tape_reader.fd = image_fopen_custom(image, FILETYPE_IMAGE, OSD_FOPEN_READ);
 
 		/* start motor if image actually inserted */
 		tape_reader.motor_on = tape_reader.fd ? 1 : 0;
@@ -362,7 +363,7 @@ int pdp1_tape_load(int id, mame_file *fp, int open_mode  )
 
 	case 1:
 		/* punch unit */
-		tape_puncher.fd = image_fopen_custom(IO_PUNCHTAPE, id, FILETYPE_IMAGE, OSD_FOPEN_WRITE);
+		tape_puncher.fd = image_fopen_custom(image, FILETYPE_IMAGE, OSD_FOPEN_WRITE);
 		break;
 	}
 

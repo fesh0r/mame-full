@@ -222,15 +222,15 @@ DRVLIBS = \
 	$(OBJ)/teamconc.a \
 	$(OBJ)/amiga.a    \
 	$(OBJ)/svi.a      \
-#	$(OBJ)/ti99.a     \
-#	$(OBJ)/apexc.a	  \
-#	$(OBJ)/pdp1.a	  \
-#	$(OBJ)/sharp.a    \
-#	$(OBJ)/aim65.a    \
-#	$(OBJ)/avigo.a    \
-#	$(OBJ)/motorola.a \
-#	$(OBJ)/ssystem3.a \
-#	$(OBJ)/hp48.a     \
+	$(OBJ)/ti99.a     \
+	$(OBJ)/apexc.a	  \
+	$(OBJ)/pdp1.a	  \
+	$(OBJ)/sharp.a    \
+	$(OBJ)/aim65.a    \
+	$(OBJ)/avigo.a    \
+	$(OBJ)/motorola.a \
+	$(OBJ)/ssystem3.a \
+	$(OBJ)/hp48.a     \
 
 
 

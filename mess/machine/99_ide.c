@@ -83,17 +83,17 @@ static void ide_interrupt_callback(int state)
 /*
 	Load an IDE image
 */
-int ti99_ide_load(mess_image *img, mame_file *fp, int open_mode)
+DEVICE_LOAD( ti99_ide )
 {
-	return ide_hd_load(img, fp, open_mode, 0, 0, &ti99_ide_interface);
+	return ide_hd_load(image, file, open_mode, 0, 0, &ti99_ide_interface);
 }
 
 /*
 	Unload an IDE image
 */
-void ti99_ide_unload(int id)
+DEVICE_UNLOAD( ti99_ide )
 {
-	ide_hd_unload(id, 0, 0, & ti99_ide_interface);
+	ide_hd_unload(image, 0, 0, &ti99_ide_interface);
 }
 
 /*

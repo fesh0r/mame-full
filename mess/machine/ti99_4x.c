@@ -346,12 +346,12 @@ void init_ti99_4p(void)
 	has_evpc = TRUE;
 }
 
-int ti99_cassette_load(mess_image *img, mame_file *fp, int open_mode)
+DEVICE_LOAD( ti99_cassette )
 {
 	struct cassette_args args;
 	memset(&args, 0, sizeof(args));
 	args.create_smpfreq = 22050;	/* maybe 11025 Hz would be sufficient? */
-	return cassette_init(id, fp, open_mode, &args);
+	return cassette_init(image, file, open_mode, &args);
 }
 
 /*
@@ -362,15 +362,16 @@ int ti99_cassette_load(mess_image *img, mame_file *fp, int open_mode)
 
 	We don't need to support 99/4p, as it has no cartridge port.
 */
-int ti99_rom_load(int id, mame_file *cartfile, int open_mode)
+DEVICE_LOAD( ti99_cart )
 {
 	/* Trick - we identify file types according to their extension */
 	/* Note that if we do not recognize the extension, we revert to the slot location <-> type
 	scheme.  I do this because the extension concept is quite unfamiliar to mac people
 	(I am dead serious). */
 	/* Original idea by Norberto Bensa */
-	const char *name = image_filename(IO_CARTSLOT,id);
+	const char *name = image_filename(image);
 	const char *ch, *ch2;
+	int id = image_index(image);
 	slot_type_t type = (slot_type_t) id;
 
 	/* There is a circuitry in TI99/4(a) that resets the console when a
@@ -418,19 +419,19 @@ int ti99_rom_load(int id, mame_file *cartfile, int open_mode)
 		break;
 
 	case SLOT_GROM:
-		mame_fread(cartfile, memory_region(region_grom) + 0x6000, 0xA000);
+		mame_fread(file, memory_region(region_grom) + 0x6000, 0xA000);
 		break;
 
 	case SLOT_MINIMEM:
 		cartridge_minimemory = TRUE;
 	case SLOT_CROM:
-		mame_fread_msbfirst(cartfile, cartridge_pages[0], 0x2000);
+		mame_fread_msbfirst(file, cartridge_pages[0], 0x2000);
 		current_page_ptr = cartridge_pages[0];
 		break;
 
 	case SLOT_DROM:
 		cartridge_paged = TRUE;
-		mame_fread_msbfirst(cartfile, cartridge_pages[1], 0x2000);
+		mame_fread_msbfirst(file, cartridge_pages[1], 0x2000);
 		current_page_ptr = cartridge_pages[0];
 		break;
 	}
@@ -438,8 +439,10 @@ int ti99_rom_load(int id, mame_file *cartfile, int open_mode)
 	return INIT_PASS;
 }
 
-void ti99_rom_unload(int id)
+DEVICE_UNLOAD( ti99_cart )
 {
+	int id = image_index(image);
+
 	/* There is a circuitry in TI99/4(a) that resets the console when a
 	cartridge is inserted or removed.  We emulate this instead of resetting the
 	emulator (which is the default in MESS). */
@@ -1481,7 +1484,7 @@ static int ti99_R9901_3(int offset)
 		answer = 4;	/* on systems without handset, the pin is pulled up to avoid spurious interrupts */
 
 	/* we don't take CS2 into account, as CS2 is a write-only unit */
-	if (device_input(IO_CASSETTE, 0) > 0)
+	if (device_input(image_instance(IO_CASSETTE, 0)) > 0)
 		answer |= 8;
 
 	return answer;
@@ -1530,15 +1533,21 @@ static void ti99_AlphaW(int offset, int data)
 		AlphaLockLine = data;
 }
 
+static void ti99_CSx_motor(int data, int cassette_id)
+{
+	mess_image *img = image_instance(IO_CASSETTE, cassette_id);
+	if (data)
+		device_status(img, device_status(img, -1) & ~ WAVE_STATUS_MOTOR_INHIBIT);
+	else
+		device_status(img, device_status(img, -1) | WAVE_STATUS_MOTOR_INHIBIT);
+}
+
 /*
 	command CS1 tape unit motor (P6)
 */
 static void ti99_CS1_motor(int offset, int data)
 {
-	if (data)
-		device_status(IO_CASSETTE, 0, device_status(IO_CASSETTE, 0, -1) & ~ WAVE_STATUS_MOTOR_INHIBIT);
-	else
-		device_status(IO_CASSETTE, 0, device_status(IO_CASSETTE, 0, -1) | WAVE_STATUS_MOTOR_INHIBIT);
+	ti99_CSx_motor(data, 0);
 }
 
 /*
@@ -1546,10 +1555,7 @@ static void ti99_CS1_motor(int offset, int data)
 */
 static void ti99_CS2_motor(int offset, int data)
 {
-	if (data)
-		device_status(IO_CASSETTE, 1, device_status(IO_CASSETTE, 1, -1) & ~ WAVE_STATUS_MOTOR_INHIBIT);
-	else
-		device_status(IO_CASSETTE, 1, device_status(IO_CASSETTE, 1, -1) | WAVE_STATUS_MOTOR_INHIBIT);
+	ti99_CSx_motor(data, 1);
 }
 
 /*
@@ -1576,8 +1582,8 @@ static void ti99_audio_gate(int offset, int data)
 */
 static void ti99_CS_output(int offset, int data)
 {
-	device_output(IO_CASSETTE, 0, data ? 32767 : -32767);
-	device_output(IO_CASSETTE, 1, data ? 32767 : -32767);
+	device_output(image_instance(IO_CASSETTE, 0), data ? 32767 : -32767);
+	device_output(image_instance(IO_CASSETTE, 1), data ? 32767 : -32767);
 }
 
 

@@ -32,7 +32,7 @@
 
 static int use_80_track_drives;
 
-int ti99_floppy_load(mess_image *img, mame_file *fp, int open_mode)
+DEVICE_LOAD( ti99_floppy )
 {
 	typedef struct ti99_vib
 	{
@@ -58,7 +58,7 @@ int ti99_floppy_load(mess_image *img, mame_file *fp, int open_mode)
 	done = FALSE;
 
 	/* Read sector 0 to identify format */
-	if ((! mame_fseek(fp, 0, SEEK_SET)) && (mame_fread(fp, & vib, sizeof(vib)) == sizeof(vib)))
+	if ((! mame_fseek(file, 0, SEEK_SET)) && (mame_fread(file, & vib, sizeof(vib)) == sizeof(vib)))
 	{
 		/* If we have read the sector successfully, let us parse it */
 		totsecs = (vib.totsecsMSB << 8) | vib.totsecsLSB;
@@ -83,7 +83,7 @@ int ti99_floppy_load(mess_image *img, mame_file *fp, int open_mode)
 		/* check that the format makes sense */
 		if (((secspertrack * tracksperside * sides) == totsecs)
 			&& (density <= 3) && (totsecs >= 2) && (! memcmp(vib.id, "DSK", 3))
-			&& (image_length(IO_FLOPPY, id) == totsecs*256))
+			&& (image_length(image) == totsecs*256))
 		{
 			/* validate geometry */
 			done = TRUE;
@@ -94,7 +94,7 @@ int ti99_floppy_load(mess_image *img, mame_file *fp, int open_mode)
 	file lenght */
 	if (! done)
 	{
-		switch (image_length(IO_FLOPPY, id))
+		switch (image_length(image))
 		{
 		case 1*40*9*256:	/* 90kbytes: SSSD */
 		case 0:
@@ -179,9 +179,9 @@ int ti99_floppy_load(mess_image *img, mame_file *fp, int open_mode)
 		}
 	}
 
-	if (done && (basicdsk_floppy_load(id, fp, open_mode) == INIT_PASS))
+	if (done && (basicdsk_floppy_load(image, file, open_mode) == INIT_PASS))
 	{
-		basicdsk_set_geometry(id, tracksperside, sides, secspertrack, 256, 0, 0, use_80_track_drives && (density < 3));
+		basicdsk_set_geometry(image, tracksperside, sides, secspertrack, 256, 0, 0, use_80_track_drives && (density < 3));
 
 		return INIT_PASS;
 	}

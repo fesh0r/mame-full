@@ -567,7 +567,7 @@ DRIVER_INIT( mekd2 )
 	}
 }
 
-int mekd2_cart_load(int id, mame_file *file, int open_mode)
+DEVICE_LOAD( mekd2_cart )
 {
 	const char magic[] = "MEK6800D2";
 	char buff[9];

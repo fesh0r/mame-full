@@ -159,11 +159,12 @@ static hdc_t hdc;
 /*
 	Initialize hard disk unit and open a hard disk image
 */
-int ti990_hd_load(mess_image *img, mame_file *fp, int open_mode)
+DEVICE_LOAD( ti990_hd )
 {
 	hd_unit_t *d;
 	disk_image_header header;
 	int bytes_read;
+	int id = image_index(image);
 
 
 	if ((id < 0) || (id >= MAX_DISK_UNIT))
@@ -172,11 +173,8 @@ int ti990_hd_load(mess_image *img, mame_file *fp, int open_mode)
 	d = &hdc.d[id];
 	memset(d, 0, sizeof(*d));
 
-	if (fp == NULL)
-		return INIT_PASS;
-
 	/* open file */
-	d->fd = fp;
+	d->fd = file;
 	/* tell whether the image is writable */
 	d->wp = ! ((d->fd) && is_effective_mode_writable(open_mode));
 
@@ -190,7 +188,7 @@ int ti990_hd_load(mess_image *img, mame_file *fp, int open_mode)
 	bytes_read = mame_fread(d->fd, &header, sizeof(header));
 	if (bytes_read != sizeof(header))
 	{
-		ti990_hd_unload(id);
+		device_unload_ti990_hd(image);
 		return INIT_FAIL;
 	}
 
@@ -201,7 +199,7 @@ int ti990_hd_load(mess_image *img, mame_file *fp, int open_mode)
 
 	if (d->bytes_per_sector > MAX_SECTOR_SIZE)
 	{
-		ti990_hd_unload(id);
+		device_unload_ti990_hd(image);
 		return INIT_FAIL;
 	}
 
@@ -211,8 +209,9 @@ int ti990_hd_load(mess_image *img, mame_file *fp, int open_mode)
 /*
 	close a hard disk image
 */
-void ti990_hd_unload(int id)
+DEVICE_UNLOAD( ti990_hd )
 {
+	int id = image_index(image);
 	hd_unit_t *d;
 
 	if ((id < 0) || (id >= MAX_DISK_UNIT))

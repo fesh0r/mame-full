@@ -20,7 +20,7 @@ extern void init_mz700(void);
 extern MACHINE_INIT(mz700);
 extern MACHINE_STOP(mz700);
 
-extern int mz700_cassette_init(mess_image *img, mame_file *fp, int open_mode);
+DEVICE_LOAD( mz700_cassette );
 
 extern INTERRUPT_GEN(mz700_interrupt);
 

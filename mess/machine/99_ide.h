@@ -1,4 +1,4 @@
-int ti99_ide_load(mess_image *img, mame_file *fp, int open_mode);
-void ti99_ide_unload(int id);
+DEVICE_LOAD( ti99_ide );
+DEVICE_UNLOAD( ti99_ide );
 
 void ti99_ide_init(void);

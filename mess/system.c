@@ -141,10 +141,10 @@ const struct GameDriver *test_drivers[] =
 	DRIVER( smsuh34 )	/* Sega Master System								*/
 	DRIVER( smseh34 )	/* Sega Master System								*/
 	DRIVER( genesis )	/* Sega Genesis/MegaDrive							*/
-//TESTDRIVER( saturn )	/* Sega Saturn										*/
+TESTDRIVER( saturn )	/* Sega Saturn										*/
 
 	/* BALLY */
-//	DRIVER( astrocde )	/* Bally Astrocade									*/
+	DRIVER( astrocde )	/* Bally Astrocade									*/
 
 	/* RCA */
 TESTDRIVER( vip )		/* Cosmac VIP										*/
@@ -158,10 +158,10 @@ TESTDRIVER( studio2 )	/* Studio II										*/
 	DRIVER( colecoa )	/* ColecoVision (Thick Characters)					*/
 
 	/* NEC */
-//	DRIVER( pce )		/* PC/Engine - Turbo Graphics-16  NEC 1989-1993		*/
+	DRIVER( pce )		/* PC/Engine - Turbo Graphics-16  NEC 1989-1993		*/
 
 	DRIVER( arcadia )	/* Emerson Arcadia 2001								*/
-//TESTDRIVER( vcg )		/* Palladium Video-Computer-Game					*/
+TESTDRIVER( vcg )		/* Palladium Video-Computer-Game					*/
 
 	/* GCE */
 	DRIVER( vectrex )	/* General Consumer Electric Vectrex - 1982-1984	*/
@@ -200,7 +200,7 @@ TESTDRIVER( bbcb6502 )  /* 198? BBC B WD1770 with a 6502 second processor	*/
 TESTDRIVER( a310 )      /* 1988 Acorn Archimedes 310						*/
 
 	/* CAMBRIDGE COMPUTERS */
-//	DRIVER( z88 )		/*													*/
+	DRIVER( z88 )		/*													*/
 
 	/* AMSTRAD */
 	DRIVER( cpc464 )	/* Amstrad (Schneider in Germany) 1984				*/
@@ -295,7 +295,7 @@ XL/XE 16kB OS roms
 	/* COMMODORE */
 	DRIVER( kim1 )		/* Commodore (MOS) KIM-1 1975						*/
 TESTDRIVER( sym1 )		/* Synertek SYM1									*/
-//TESTDRIVER( aim65 )		/* Rockwell AIM65									*/
+TESTDRIVER( aim65 )		/* Rockwell AIM65									*/
 
 	DRIVER( pet )		/* PET2001/CBM20xx Series (Basic 1) 				*/
 	DRIVER( cbm30 ) 	/* Commodore 30xx (Basic 2) 						*/
@@ -431,42 +431,42 @@ TESTDRIVER( lambda )	/* Lambda 8300										*/
 	DRIVER( specp3es )	/* 2000 ZX Spectrum +3e (Spain)						*/
 
 	/* SHARP */
-//	DRIVER( pc1251 )	/* Pocket Computer 1251 							*/
-//TESTDRIVER( trs80pc3 )	/* Tandy TRS80 PC-3									*/
+	DRIVER( pc1251 )	/* Pocket Computer 1251 							*/
+TESTDRIVER( trs80pc3 )	/* Tandy TRS80 PC-3									*/
 
-//	DRIVER( pc1401 )	/* Pocket Computer 1401 							*/
-//	DRIVER( pc1402 )	/* Pocket Computer 1402 							*/
+	DRIVER( pc1401 )	/* Pocket Computer 1401 							*/
+	DRIVER( pc1402 )	/* Pocket Computer 1402 							*/
 
-//	DRIVER( pc1350 )	/* Pocket Computer 1350 							*/
+	DRIVER( pc1350 )	/* Pocket Computer 1350 							*/
 
-//	DRIVER( pc1403 )	/* Pocket Computer 1403 							*/
-//	DRIVER( pc1403h )	/* Pocket Computer 1403H 							*/
+	DRIVER( pc1403 )	/* Pocket Computer 1403 							*/
+	DRIVER( pc1403h )	/* Pocket Computer 1403H 							*/
 
-//	DRIVER( mz700 ) 	/* 1982 Sharp MZ700 								*/
-//	DRIVER( mz700j )	/* 1982 Sharp MZ700 Japan							*/
-//TESTDRIVER( mz800  )	/* 1982 Sharp MZ800 								*/
+	DRIVER( mz700 ) 	/* 1982 Sharp MZ700 								*/
+	DRIVER( mz700j )	/* 1982 Sharp MZ700 Japan							*/
+TESTDRIVER( mz800  )	/* 1982 Sharp MZ800 								*/
 
 	/* TEXAS INSTRUMENTS */
-//	DRIVER( ti990_10 )	/* 1975 TI 990/10									*/
+	DRIVER( ti990_10 )	/* 1975 TI 990/10									*/
 //TESTDRIVER( ti990_4 )	/* 1976 TI 990/4									*/
 //TESTDRIVER( tm990189 )	/* 1980? TM990/189									*/
 
 //TESTDRIVER( ti99_224 )	/* 1983 TI 99/2 (24kb ROMs) 						*/
 //TESTDRIVER( ti99_232 )	/* 1983 TI 99/2 (32kb ROMs) 						*/
-//	DRIVER( ti99_4 )	/* 1979 TI 99/4 									*/
-//	DRIVER( ti99_4e )	/* 1980 TI 99/4 with 50Hz video						*/
-//	DRIVER( ti99_4a )	/* 1981 TI 99/4A									*/
-//	DRIVER( ti99_4ae )	/* 1981 TI 99/4A with 50Hz video					*/
-//	DRIVER( ti99_4ev)	/* 1994 TI 99/4A with EVPC video card				*/
-//	DRIVER( geneve )	/* 1987? Myarc Geneve 9640							*/
-//TESTDRIVER( genmod )	/* 199?? Myarc Geneve 9640							*/
-//TESTDRIVER( ti99_4p )	/* 1996 SNUG 99/4P (a.k.a. SGCPU)					*/
+	DRIVER( ti99_4 )	/* 1979 TI 99/4 									*/
+	DRIVER( ti99_4e )	/* 1980 TI 99/4 with 50Hz video						*/
+	DRIVER( ti99_4a )	/* 1981 TI 99/4A									*/
+	DRIVER( ti99_4ae )	/* 1981 TI 99/4A with 50Hz video					*/
+	DRIVER( ti99_4ev)	/* 1994 TI 99/4A with EVPC video card				*/
+	DRIVER( geneve )	/* 1987? Myarc Geneve 9640							*/
+TESTDRIVER( genmod )	/* 199?? Myarc Geneve 9640							*/
+TESTDRIVER( ti99_4p )	/* 1996 SNUG 99/4P (a.k.a. SGCPU)					*/
 
-//	DRIVER( avigo )     /*												    */
+	DRIVER( avigo )     /*												    */
 
 /* TEXAS INSTRUMENTS CALCULATORS */
 /* TI-81 (Z80 2 MHz) */
-//	DRIVER( ti81 )		/* TI 81 rom ver. 1.8								*/
+	DRIVER( ti81 )		/* TI 81 rom ver. 1.8								*/
 
 /* TI-85 (Z80 6MHz) */
 	DRIVER( ti85 )  	/* TI 85 rom ver. 3.0a								*/
@@ -580,7 +580,7 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 			*/
 	DRIVER( uk101 ) 	/* 1979 UK101										*/
 
 	/* OHIO SCIENTIFIC */
-//	DRIVER( superbrd )	/* 1979 Superboard II								*/
+	DRIVER( superbrd )	/* 1979 Superboard II								*/
 
 	/* ASCII & MICROSOFT */
 	DRIVER( msx )		/* 1983 MSX 										*/
@@ -607,10 +607,10 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 			*/
 	DRIVER( coupe ) 	/* 1989 Sam Coupe									*/
 
 	/* MOTOROLA */
-//TESTDRIVER( mekd2 )     /* 1977 Motorola Evaluation Kit						*/
+TESTDRIVER( mekd2 )     /* 1977 Motorola Evaluation Kit						*/
 
 	/* DEC */
-//	DRIVER( pdp1 )      /* 1961 DEC PDP1									*/
+	DRIVER( pdp1 )      /* 1961 DEC PDP1									*/
 
 	/* MEMOTECH */
 	DRIVER( mtx512 )    /* 1983 Memotech MTX512								*/
@@ -639,8 +639,8 @@ TESTDRIVER( pmd85 )	/* PMD-85.1											*/
 TESTDRIVER( comquest )	/* Comquest Plus German								*/
 
 	/* Hewlett Packard */
-//TESTDRIVER( hp48s ) 	/* HP48 S/SX										*/
-//TESTDRIVER( hp48g ) 	/* HP48 G/GX										*/
+TESTDRIVER( hp48s ) 	/* HP48 S/SX										*/
+TESTDRIVER( hp48g ) 	/* HP48 G/GX										*/
 
 	/* SpectraVideo */
 	DRIVER( svi318 ) 	/* SVI-318											*/
@@ -648,7 +648,7 @@ TESTDRIVER( comquest )	/* Comquest Plus German								*/
 	DRIVER( svi328a ) 	/* SVI-328	(BASIC 1.11)							*/
 
 	/* Booth (this is the builder, not a company) */
-//	DRIVER( apexc )		/* 1951(?) APEXC : All-Purpose Electronic X-ray Computer */
+	DRIVER( apexc )		/* 1951(?) APEXC : All-Purpose Electronic X-ray Computer */
 
 /****************Games*******************************************************/
 	/* Computer Electronic */
@@ -656,7 +656,7 @@ TESTDRIVER( mk1 )		/* Chess Champion MK I								*/
 	/* Quelle International */
 	DRIVER( mk2 )		/* Chess Champion MK II								*/
 	/* NOVAG Industries Ltd. */
-//TESTDRIVER( ssystem3 )	/* Chess Champion Super System III / MK III			*/
+TESTDRIVER( ssystem3 )	/* Chess Champion Super System III / MK III			*/
 
 #endif /* NEOMAME */
 

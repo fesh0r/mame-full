@@ -76,7 +76,7 @@ static int apexc_cylinder_load(mess_image *img, mame_file *fp, int open_mode)
 /*
 	Save RAM to cylinder image and close it
 */
-static void apexc_cylinder_unload(int id)
+static void apexc_cylinder_unload(mess_image *img)
 {
 	if (apexc_cylinder.fd && apexc_cylinder.writable)
 	{	/* save RAM contents */
@@ -156,11 +156,12 @@ tape apexc_tapes[2];
 */
 static int apexc_tape_load(mess_image *img, mame_file *fp, int open_mode)
 {
+	int id = image_index(img);
 	tape *t = &apexc_tapes[id];
 
 	/* open file */
 	/* unit 0 is read-only, unit 1 is write-only */
-	t->fd = image_fopen_custom(IO_PUNCHTAPE, id, FILETYPE_IMAGE,
+	t->fd = image_fopen_custom(img, FILETYPE_IMAGE,
 								(id==0) ? OSD_FOPEN_READ : OSD_FOPEN_WRITE);
 
 	return INIT_PASS;

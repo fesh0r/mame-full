@@ -113,10 +113,10 @@ void init_ti99_4p(void);
 void machine_init_ti99(void);
 void machine_stop_ti99(void);
 
-int ti99_cassette_load(mess_image *img, mame_file *fp, int open_mode);
+DEVICE_LOAD( ti99_cassette );
 
-int ti99_rom_load(mess_image *img, mame_file *fp, int open_mode);
-void ti99_rom_unload(int id);
+DEVICE_LOAD( ti99_cart );
+DEVICE_UNLOAD( ti99_cart );
 
 int video_start_ti99_4(void);
 int video_start_ti99_4a(void);

@@ -80,12 +80,13 @@ static const tms9902reset_param tms9902_params =
 /*
 	Initialize pio unit and open image
 */
-int ti99_4_pio_load(mess_image *img, mame_file *fp, int open_mode)
+DEVICE_LOAD( ti99_4_pio )
 {
+	int id = image_index(image);
 	if ((id < 0) || (id >= MAX_RS232_CARDS))
 		return INIT_FAIL;
 
-	pio_fp = fp;
+	pio_fp = file;
 	/* tell whether the image is writable */
 	pio_readable = (pio_fp && !is_effective_mode_create(open_mode));
 	/* tell whether the image is writable */
@@ -101,8 +102,9 @@ int ti99_4_pio_load(mess_image *img, mame_file *fp, int open_mode)
 /*
 	close a pio image
 */
-void ti99_4_pio_unload(int id)
+DEVICE_UNLOAD( ti99_4_pio )
 {
+	int id = image_index(image);
 	if ((id < 0) || (id >= MAX_RS232_CARDS))
 		return;
 
@@ -115,14 +117,15 @@ void ti99_4_pio_unload(int id)
 /*
 	Initialize rs232 unit and open image
 */
-int ti99_4_rs232_load(mess_image *img, mame_file *fp, int open_mode)
+DEVICE_LOAD( ti99_4_rs232 )
 {
+	int id = image_index(image);
 	/*if ((id < 0) || (id >= 2*MAX_RS232_CARDS))
 		return INIT_FAIL;*/
 	if (id != 0)
 		return INIT_FAIL;
 
-	rs232_fp = fp;
+	rs232_fp = file;
 
 	if (rs232_fp)
 	{
@@ -141,8 +144,9 @@ int ti99_4_rs232_load(mess_image *img, mame_file *fp, int open_mode)
 /*
 	close a rs232 image
 */
-void ti99_4_rs232_unload(int id)
+DEVICE_UNLOAD( ti99_4_rs232 )
 {
+	int id = image_index(image);
 	/*if ((id < 0) || (id >= 2*MAX_RS232_CARDS))
 		return;*/
 	if (id != 0)

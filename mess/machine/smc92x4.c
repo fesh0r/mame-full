@@ -108,6 +108,7 @@ static hfdc_t hfdc[MAX_HFDC];
 
 static int floppy_find_sector(int which, int disk_unit, int cylinder, int head, int sector, int *sector_data_id, int *sector_len/*, int *ddam*/)
 {
+	mess_image *disk_img = image_instance(IO_FLOPPY, disk_unit);
 	UINT8 revolution_count;
 	chrn_id id;
 
@@ -115,7 +116,7 @@ static int floppy_find_sector(int which, int disk_unit, int cylinder, int head, 
 
 	while (revolution_count < 4)
 	{
-		if (floppy_drive_get_next_id(disk_unit, head, &id))
+		if (floppy_drive_get_next_id(disk_img, head, &id))
 		{
 			/* compare id values */
 			if ((id.C == cylinder) && (id.H == head) && (id.R == sector))
@@ -134,7 +135,7 @@ static int floppy_find_sector(int which, int disk_unit, int cylinder, int head, 
 		}
 
 		 /* index set? */
-		if (floppy_drive_get_flag_state(disk_unit, FLOPPY_DRIVE_INDEX))
+		if (floppy_drive_get_flag_state(disk_img, FLOPPY_DRIVE_INDEX))
 		{
 			/* update revolution count */
 			revolution_count++;
@@ -153,6 +154,7 @@ static int floppy_read_sector(int which, int disk_unit, int cylinder, int head, 
 	int sector_data_id, sector_len;
 	UINT8 buf[MAX_SECTOR_LEN];
 	int i;
+	mess_image *disk_img = image_instance(IO_FLOPPY, disk_unit);
 
 	if (! floppy_find_sector(which, disk_unit, cylinder, head, sector, & sector_data_id, & sector_len))
 	{
@@ -160,7 +162,7 @@ static int floppy_read_sector(int which, int disk_unit, int cylinder, int head, 
 		return FALSE;
 	}
 
-	floppy_drive_read_sector_data(disk_unit, head, sector_data_id, (char *) buf, sector_len);
+	floppy_drive_read_sector_data(disk_img, head, sector_data_id, (char *) buf, sector_len);
 	for (i=0; i<sector_len; i++)
 	{
 		(*hfdc[which].dma_write_callback)(which, *dma_address, buf[i]);
@@ -174,6 +176,7 @@ static int floppy_write_sector(int which, int disk_unit, int cylinder, int head,
 	int sector_data_id, sector_len;
 	UINT8 buf[MAX_SECTOR_LEN];
 	int i;
+	mess_image *disk_img = image_instance(IO_FLOPPY, disk_unit);
 
 	if (! floppy_find_sector(which, disk_unit, cylinder, head, sector, & sector_data_id, & sector_len))
 	{
@@ -186,18 +189,20 @@ static int floppy_write_sector(int which, int disk_unit, int cylinder, int head,
 		buf[i] = (*hfdc[which].dma_read_callback)(which, *dma_address);
 		*dma_address = ((*dma_address) + 1) & 0xffffff;
 	}
-	floppy_drive_write_sector_data(disk_unit, head, sector_data_id, (char *) buf, sector_len, FALSE);
+	floppy_drive_write_sector_data(disk_img, head, sector_data_id, (char *) buf, sector_len, FALSE);
 	return TRUE;
 }
 
 static void floppy_seek(int which, int disk_unit, int direction)
 {
-	floppy_drive_seek(disk_unit, direction);
+	mess_image *disk_img = image_instance(IO_FLOPPY, disk_unit);
+	floppy_drive_seek(disk_img, direction);
 }
 
 static UINT8 floppy_get_disk_status(int which, int disk_unit)
 {
-	int status = floppy_status(disk_unit, -1);
+	mess_image *disk_img = image_instance(IO_FLOPPY, disk_unit);
+	int status = floppy_status(disk_img, -1);
 	int reply;
 
 	reply = 0;
