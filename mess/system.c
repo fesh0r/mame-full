@@ -75,7 +75,7 @@ const struct GameDriver *drivers[] =
   /****************CONSOLES****************************************************/
 
       /* ATARI */
-      DRIVER( a2600 )       /* Atari 2600                                     */
+  TESTDRIVER( a2600 )       /* Atari 2600                                     */
       DRIVER( a5200 )       /* Atari 5200                                     */
       DRIVER( a7800 )       /* Atari 7800                                     */
 
@@ -246,7 +246,7 @@ const struct GameDriver *drivers[] =
 	  DRIVER( mbee )		/* Microbee 									  */
 	  DRIVER( mbee56k ) 	/* Microbee 56K (CP/M)							  */
 
-	DRIVER( trs80l1 )
+	  DRIVER( trs80l1 )
       DRIVER( trs80 )       /* TRS-80 Model I   - Radio Shack/Tandy           */
       DRIVER( trs80alt )
   TESTDRIVER( trs80m3 )     /* TRS-80 Model III - Radio Shack/Tandy           */
