@@ -368,7 +368,8 @@ void osd_set_visible_area(int min_x, int max_x, int min_y, int max_y)
     MAME32App.m_pDisplay->set_visible_area(min_x, max_x, min_y, max_y);
 }
 
-int osd_allocate_colors(unsigned int totalcolors, const unsigned char *palette, unsigned short *pens, int modifiable)
+int osd_allocate_colors(unsigned int totalcolors, const unsigned char *palette, unsigned short *pens, int modifiable,
+	const unsigned char *debug_palette,unsigned short *debug_pens)
 {
     int nResult;
 
