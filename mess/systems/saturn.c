@@ -111,8 +111,8 @@
 #define VERBOSE 0
 #endif
 
-#define DISP_MEM 1 /* define to log memory access to all non work ram areas */
-#define DISP_VDP1 1 /* define to log vdp1 command execution */
+#define DISP_MEM 0 /* define to log memory access to all non work ram areas */
+#define DISP_VDP1 0 /* define to log vdp1 command execution */
 
 #if VERBOSE
 #define LOG(x)  logerror x
@@ -712,16 +712,18 @@ READ32_HANDLER( saturn_scu_r )	  /* SCU, DMA/DSP */
   // logerror("scu_r %s - data = %08lX - PC=%08lX\n",scu_regnames[offset],scu_regs[offset],cpu_get_reg(SH2_PC));
   return scu_regs[offset] & ~mem_mask;
 }
-
-
-static int scu_irq_levels[32] =
+ 
+static int scu_irq_line[16] = /* Indicates what irq pin is to be used for each int */
 {
-    15, 14, 13, 12, 11, 10,  9,  8,
-     8,  6,  6,  5,  3,  2,  0,  0,
-     7,  7,  7,  7,  4,  4,  4,  4,
-     1,  1,  1,  1,  1,  1,  1,  1
+    0, 1, 2, 3, 4, 5, 6, 7,
+    7, 6, 6, 6, 6, 5, 5, 5
 };
 
+static int scu_irq_levels[16] =
+{
+    15, 14, 13, 12, 11, 10,  9,  8,
+     8,  6,  6,  5,  3,  2,  0,  0
+};
 
 static void scu_set_imask(void)
 {
@@ -730,9 +732,9 @@ static void scu_set_imask(void)
     for (irq = 0; irq < 16; irq++)
     {
         if ((scu_regs[0x28] & (1 <<irq)) == 0)
-            logerror(" %s HACK!%d", int_names[irq],scu_irq_levels[0]);
+            logerror(" %s,", int_names[irq]);
         else
-	  cpu_set_irq_line(0, irq /*scu_irq_levels[irq]*/, CLEAR_LINE);
+	  cpu_set_irq_line(0, scu_irq_line[irq], CLEAR_LINE);
     }
     LOG(("\n"));
 }
@@ -749,8 +751,8 @@ void scu_pulse_interrupt(int irq)
         if ((scu_regs[0x28] & (1 << irq)) == 0)
         {
             LOG((" - pulsed"));
-            cpu_irq_line_vector_w(0, irq, 0x40 + irq); /* The fact that this works is amazing */
-            cpu_set_irq_line(0, irq, HOLD_LINE);
+            cpu_irq_line_vector_w(0, scu_irq_line[irq], 0x40 + irq + (scu_irq_levels[irq] << 8)); 
+            cpu_set_irq_line(0, scu_irq_line[irq], HOLD_LINE);
         }
         else
         {
