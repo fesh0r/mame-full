@@ -27,12 +27,12 @@
 
 
 typedef unsigned char						UINT8;
-typedef unsigned short						UINT16;
-typedef unsigned int						UINT32;
-__extension__ typedef unsigned long long	UINT64;
 typedef signed char 						INT8;
+typedef unsigned short						UINT16;
 typedef signed short						INT16;
+typedef unsigned int						UINT32;
 typedef signed int							INT32;
+__extension__ typedef unsigned long long	UINT64;
 __extension__ typedef signed long long		INT64;
 
 /* Combine two 32-bit integers into a 64-bit integer */

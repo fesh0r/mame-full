@@ -12,7 +12,7 @@
 #include <zlib.h>
 
 #ifndef MESS
-enum { LIST_SHORT = 1, LIST_INFO, LIST_FULL, LIST_SAMDIR, LIST_ROMS, LIST_SAMPLES,
+enum { LIST_SHORT = 1, LIST_INFO, LIST_XML, LIST_FULL, LIST_SAMDIR, LIST_ROMS, LIST_SAMPLES,
 		LIST_LMR, LIST_DETAILS, LIST_GAMELIST,
 		LIST_GAMES, LIST_CLONES,
 		LIST_WRONGORIENTATION, LIST_WRONGFPS, LIST_CRC, LIST_SHA1, LIST_MD5, LIST_DUPCRC, 
@@ -21,7 +21,7 @@ enum { LIST_SHORT = 1, LIST_INFO, LIST_FULL, LIST_SAMDIR, LIST_ROMS, LIST_SAMPLE
 		LIST_GAMESPERSOURCEFILE };
 #else
 void list_mess_info(const char *gamename, const char *arg, int listclones);
-enum { LIST_SHORT = 1, LIST_INFO, LIST_FULL, LIST_SAMDIR, LIST_ROMS, LIST_SAMPLES,
+enum { LIST_SHORT = 1, LIST_INFO, LIST_XML, LIST_FULL, LIST_SAMDIR, LIST_ROMS, LIST_SAMPLES,
 		LIST_LMR, LIST_DETAILS, LIST_GAMELIST,
 		LIST_GAMES, LIST_CLONES,
 		LIST_WRONGORIENTATION, LIST_WRONGFPS, LIST_CRC, LIST_SHA1, LIST_MD5, LIST_DUPCRC, LIST_WRONGMERGE,
@@ -70,6 +70,7 @@ struct rc_option frontend_opts[] = {
 	{ "listsourcefile",	NULL, rc_set_int, &list, NULL, LIST_SOURCEFILE, 0, NULL, "driver sourcefile" },
 	{ "listgamespersourcefile",	NULL, rc_set_int, &list, NULL, LIST_GAMESPERSOURCEFILE, 0, NULL, "games per sourcefile" },
 	{ "listinfo", "li", rc_set_int, &list, NULL, LIST_INFO, 0, NULL, "all available info on driver" },
+	{ "listxml", "lx", rc_set_int, &list, NULL, LIST_XML, 0, NULL, "all available info on driver in XML format" },
 	{ "listclones", "lc", rc_set_int, &list, NULL, LIST_CLONES, 0, NULL, "show clones" },
 	{ "listsamdir", NULL, rc_set_int, &list, NULL, LIST_SAMDIR, 0, NULL, "shared sample directory" },
 	{ "listcrc", NULL, rc_set_int, &list, NULL, LIST_CRC, 0, NULL, "CRC-32s" },
@@ -325,7 +326,7 @@ void identify_file(const char* name)
 		hash_compute(hash, data, length, HASH_CRC);
 	else
 		hash_compute(hash, data, length, HASH_CRC|HASH_SHA1);
-	
+
 	/* Try to identify the ROM */
 	identify_rom(name, hash, length);
 
@@ -350,7 +351,7 @@ void identify_zip(const char* zipname)
 //			sprintf(buf,"%s/%s",zipname,ent->name);
 			sprintf(buf,"%-12s",ent->name);
 
-			/* Decompress the ROM from the ZIP, and compute all the needed 
+			/* Decompress the ROM from the ZIP, and compute all the needed
 			   checksums. Since MAME for now carries informations only for CRC and
 			   SHA1, we compute only these (actually, CRC is extracted from the
 			   ZIP header) */
@@ -363,7 +364,7 @@ void identify_zip(const char* zipname)
 				hash_compute(hash, data, ent->uncompressed_size, HASH_SHA1);
 				free(data);
 			}
-			
+
 			crcs[0] = (UINT8)(ent->crc32 >> 24);
 			crcs[1] = (UINT8)(ent->crc32 >> 16);
 			crcs[2] = (UINT8)(ent->crc32 >> 8);
@@ -1163,7 +1164,7 @@ int frontend_help (const char *gamename)
 												char buf[512];
 
 												first_match = 0;
-				
+
 												hash_data_print(ROM_GETHASHDATA(rom), 0, buf);
 												printf("%s\n", buf);
 												printf("    %-12s %-8s\n", ROM_GETNAME(rom),drivers[i]->name);
@@ -1215,12 +1216,12 @@ int frontend_help (const char *gamename)
 													char temp[512];
 
 													/* Print only the checksums available for both the roms */
-													unsigned int functions = 
+													unsigned int functions =
 														hash_data_used_functions(ROM_GETHASHDATA(rom)) &
 														hash_data_used_functions(ROM_GETHASHDATA(rom1));
 
 													printf("%s:\n", ROM_GETNAME(rom));
-													
+
 													hash_data_print(ROM_GETHASHDATA(rom), functions, temp);
 													printf("  %-8s: %s\n", drivers[i]->name, temp);
 
@@ -1239,13 +1240,13 @@ int frontend_help (const char *gamename)
 										{
 											for (rom1 = rom_first_file(region1); rom1; rom1 = rom_next_file(rom1))
 											{
-												if (strcmp(ROM_GETNAME(rom), ROM_GETNAME(rom1)) && 
+												if (strcmp(ROM_GETNAME(rom), ROM_GETNAME(rom1)) &&
 													hash_data_is_equal(ROM_GETHASHDATA(rom), ROM_GETHASHDATA(rom1), 0))
 												{
 													char temp[512];
 
 													/* Print only the checksums available for both the roms */
-													unsigned int functions = 
+													unsigned int functions =
 														hash_data_used_functions(ROM_GETHASHDATA(rom)) &
 														hash_data_used_functions(ROM_GETHASHDATA(rom1));
 
@@ -1610,6 +1611,10 @@ j = 0;	// count only the main cpu
 
 		case LIST_INFO: /* list all info */
 			print_mame_info( stdout, drivers );
+			return 0;
+
+		case LIST_XML: /* list all info */
+			print_mame_xml( stdout, drivers );
 			return 0;
 	}
 

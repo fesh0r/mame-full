@@ -82,6 +82,7 @@ static const char *s_language;
 static const char *s_artres;
 static const char *s_screenaspect;
 static const char *joyname;
+static const char *s_bios;
 static int config_norotate = 0;
 static int config_flipy = 0;
 static int config_flipx = 0;
@@ -978,12 +979,13 @@ struct rc_option config_opts[] =
 	{ "playback", "pb", rc_string, &playbackname, NULL, 0, 0, NULL, "playback an input file" },
 	{ "record", "rec", rc_string, &recordname, NULL, 0, 0, NULL, "record an input file" },
 	{ "log", NULL, rc_bool, &errorlog, "0", 0, 0, init_errorlog, "generate error.log" },
-	{ "maxlogsize", NULL, rc_int, &maxlogsize, "10000", 1, 2000000, NULL, "maximum error.log size (in KB)" },
+	{ "maxlogsize", NULL, rc_int, &maxlogsize, "10000", 0, 2000000, NULL, "maximum error.log size (in KB)" },
 //	{ "oslog", NULL, rc_bool, &erroroslog, "0", 0, 0, NULL, "output error log to debugger" },
 	{ "language", NULL, rc_string, &s_language, "english", 0, 0, NULL, NULL },
 	{ "skip_disclaimer", NULL, rc_bool, &options.skip_disclaimer, "0", 0, 0, NULL, "skip displaying the disclaimer screen" },
 	{ "skip_gameinfo", NULL, rc_bool, &options.skip_gameinfo, "0", 0, 0, NULL, "skip displaying the game info screen" },
 	{ "crconly", NULL, rc_bool, &options.crc_only, "0", 0, 0, NULL, "use only CRC for all integrity checks" },
+	{ "bios", NULL, rc_string, &options.bios, "default", 0, 14, NULL, "change system bios" },
 
 	/* config options */
 	{ "Configuration options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
@@ -1153,7 +1155,9 @@ static void parse_cmdline( int argc, char **argv, int game_index )
 	options.skip_disclaimer		= get_bool( "config", "skip_disclaimer", NULL, 0 );
 	options.skip_gameinfo		= get_bool( "config", "skip_gameinfo", NULL, 0 );
 	options.crc_only			= get_bool( "config", "crconly", NULL, 0 );
-	maxlogsize					= get_int( "config", "maxlogsize", NULL, -1 );
+	s_bios						= get_string( "config", "bios", NULL, "default", NULL, NULL, NULL );
+
+	maxlogsize					= get_int( "config", "maxlogsize", NULL, 0 );
 
 	/* process graphic configuration */
 	if( stricmp( vesamode, "vesa1" ) == 0 )
@@ -1473,6 +1477,9 @@ static void parse_cmdline( int argc, char **argv, int game_index )
 		logerror("%s is not a valid entry for a joystick\n", joyname);
 		joystick = JOY_TYPE_NONE;
 	}
+
+	options.bios = malloc( strlen( s_bios ) + 1 );
+	strcpy( options.bios, s_bios );
 
 	/* process misc configuration */
 	cheatfile = malloc( strlen( s_cheatfile ) + 1 );
