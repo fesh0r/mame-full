@@ -73,7 +73,8 @@ OSOBJS += \
         $(OBJ)/mess/Win32/MessOptions.o \
         $(OBJ)/mess/Win32/fdc.o \
         $(OBJ)/mess/Win32/fileio.o \
-        $(OBJ)/mess/Win32/dirio.o
+        $(OBJ)/mess/Win32/dirio.o \
+        $(OBJ)/mess/Win32/SmartListView.o
 else
 OSOBJS += \
         $(OBJ)/Win32/Win32ui.o \

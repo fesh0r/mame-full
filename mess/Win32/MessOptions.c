@@ -1,7 +1,7 @@
 #define WIN32_LEAN_AND_MEAN
 
 static int default_mess_column_width[] = { 186, 100, 68, 84, 84, 68 };
-static int default_mess_column_shown[] = {   1,   0,  0,  0,  0,  0 };
+static int default_mess_column_shown[] = {   1,   1,  1,  1,  1,  1 };
 static int default_mess_column_order[] = {   0,   1,  2,  3,  4,  5 };
 
 #include "options.c"

@@ -9,6 +9,7 @@
 #include "mame32.h"
 #include "mess/mess.h"
 #include "config.h"
+#include "SmartListView.h"
 
 /* from src/mess/win32.c */
 char *strncatz(char *dest, const char *source, size_t len);
@@ -1430,6 +1431,90 @@ static void MessCreateDevice(int iDevice)
 
 
 /* ------------------------------------------------------------------------ *
+ * Software List Class                                                      *
+ * ------------------------------------------------------------------------ */
+
+static int SoftwareListClass_WhichIcon(struct SmartListView *pListView, int nItem)
+{
+	return WhichMessIcon(nItem);
+}
+
+static LPCSTR SoftwareListClass_GetText(struct SmartListView *pListView, int nRow, int nColumn)
+{
+	ImageData *imgd;
+	LPCSTR s = NULL;
+
+	imgd = mess_images_index[nRow];
+    switch (nColumn) {
+	case MESS_COLUMN_IMAGES:
+	    s = imgd->name;
+		break;
+
+	case MESS_COLUMN_GOODNAME:
+		s = imgd->longname;
+		break;
+
+	case MESS_COLUMN_MANUFACTURER:
+		s = imgd->manufacturer;
+		break;
+
+	case MESS_COLUMN_YEAR:
+		s = imgd->year;
+		break;
+
+	case MESS_COLUMN_PLAYABLE:
+		s = imgd->playable;
+		break;
+	}
+	return s;
+}
+
+static void SoftwareListClass_GetColumnInfo(struct SmartListView *pListView, int *pShown, int *pOrder, int *pWidths)
+{
+	if (pWidths)
+		GetMessColumnWidths(pWidths);
+	if (pOrder)
+		GetMessColumnOrder(pOrder);
+	if (pShown)
+		GetMessColumnShown(pShown);
+}
+
+#if 0
+static BOOL SoftwareListClass_ItemChanged(struct SmartListView *pListView, NM_LISTVIEW *pnmv)
+{
+	int i;
+
+    if ((pnmv->uOldState & LVIS_SELECTED) 
+        && !(pnmv->uNewState & LVIS_SELECTED))
+    {
+        if (pnmv->lParam != -1) {
+            if ((GetKeyState(VK_SHIFT) & 0xff00) == 0) {
+                /* We are about to clear all images.  We have to go through
+                 * and tell the other items to update */
+                for (i = 0; i < options.image_count; i++) {
+                    int imagenum = mess_image_nums[i];
+                    mess_image_nums[i] = -1;
+                    SmartListView_Update(pListView, imagenum);
+                }
+                MessRemoveImage(-1);
+            }
+
+        }
+        /* leaving item */
+        /* printf("leaving %s\n",drivers[pnmv->lParam]->name); */
+    }
+
+    if (!(pnmv->uOldState & LVIS_SELECTED) 
+        && (pnmv->uNewState & LVIS_SELECTED))
+    {
+        /* entering item */
+        MessAddImage(pnmv->lParam);
+    }
+	return TRUE;
+}
+#endif
+
+/* ------------------------------------------------------------------------ *
  * New File Manager                                                         *
  *                                                                          *
  * This code implements a MESS32 specific file manger.  However, it isn't   *
@@ -1439,96 +1524,104 @@ static void MessCreateDevice(int iDevice)
 static const char *s_pInitialFileName;
 static BOOL s_bChosen;
 static long s_lSelectedItem;
+static struct SmartListView *s_pFileMgrListView;
 
-static void FileManagerItemChosen(void)
+static void FileMgrListClass_Run(struct SmartListView *pListView)
 {
 	s_bChosen = TRUE;
 }
 
-static BOOL FileManagerItemChangeProc(HWND hWnd, NM_LISTVIEW *pnmv)
+static BOOL FileMgrListClass_ItemChanged(struct SmartListView *pListView, NM_LISTVIEW *pNm)
 {
-    if (!(pnmv->uOldState & LVIS_SELECTED) 
-        && (pnmv->uNewState & LVIS_SELECTED))
-    {
-        /* entering item */
-        s_lSelectedItem = pnmv->lParam;
-    }
+	if (!(pNm->uOldState & LVIS_SELECTED) 
+		&& (pNm->uNewState & LVIS_SELECTED))
+	{
+		/* entering item */
+		s_lSelectedItem = pNm->lParam;
+	}
 	return TRUE;
 }
 
-static BOOL FileManagerIsItemSelected(int nItem)
+static BOOL FileMgrListClass_IsItemSelected(struct SmartListView *pListView, int nItem)
 {
 	return nItem == s_lSelectedItem;
 }
+
+static struct SmartListViewClass s_filemgrListClass = 
+{
+	FileMgrListClass_Run,
+	FileMgrListClass_ItemChanged,
+	SoftwareListClass_WhichIcon,
+	SoftwareListClass_GetText,
+	SoftwareListClass_GetColumnInfo,
+	FileMgrListClass_IsItemSelected,
+	sizeof(mess_column_names) / sizeof(mess_column_names[0]),
+	mess_column_names
+};
 
 static void EndFileManager(HWND hDlg, long lSelectedItem)
 {
 	s_lSelectedItem = lSelectedItem;
 	PostMessage(hDlg, WM_QUIT, 0, 0);
+
+	if (s_pFileMgrListView) {
+		SmartListView_Free(s_pFileMgrListView);
+		s_pFileMgrListView = NULL;
+	}
 }
 
 static INT_PTR CALLBACK FileManagerProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	BOOL bResult;
-	HWND hSoftwarePicker;
-	RECT rDlg, rPicker;
+	struct SmartListViewOptions opts;
+	int i;
 
-	hSoftwarePicker = GetDlgItem(hDlg, IDC_LIST2);
+	if (s_pFileMgrListView && SmartListView_IsEvent(s_pFileMgrListView, message, wParam, lParam)) {
+		return SmartListView_HandleEvent(s_pFileMgrListView, message, wParam, lParam);
+	}
 
 	switch(message) {
 	case WM_INITDIALOG:
+		/* Initialize */
 		CenterSubDialog(MAME32App.m_hWnd, hDlg, FALSE);
-
-		GetClientRect(hDlg, &rDlg);
-
-		rPicker.left	= rDlg.left		+ 10;
-		rPicker.top		= rDlg.top		+ 10;
-		rPicker.right	= rDlg.right	- 10;
-		rPicker.bottom	= rDlg.bottom	- 10;
-
-		SetWindowPos(hSoftwarePicker, HWND_TOP,
-			rPicker.left,
-			rPicker.top,
-			rPicker.right - rPicker.left,
-			rPicker.bottom - rPicker.top,\
-			SWP_DRAWFRAME);
 
 		s_bChosen = FALSE;
 		s_lSelectedItem = -1;
 
-		/* Initialize */
-		InitMessPicker(hSoftwarePicker, FALSE);
-		if (s_pInitialFileName && *s_pInitialFileName)
-			MessPickerSelectSoftware(hSoftwarePicker, s_pInitialFileName, TRUE);
+		assert((sizeof(mess_column_names) / sizeof(mess_column_names[0])) == MESS_COLUMN_MAX);
+
+		memset(&opts, 0, sizeof(opts));
+		opts.pClass = &s_filemgrListClass;
+		opts.hwndParent = hDlg;
+		opts.nIDDlgItem = IDC_LIST2;
+		opts.hBackground = NULL;
+		opts.hPALbg = hPALbg;
+		opts.hSmall = hSmall;
+		opts.hLarge = hLarge;
+		opts.rgbListFontColor = GetListFontColor();
+		opts.bCenterOnParent = TRUE;
+		opts.nInsetPixels = 10;
+
+		s_pFileMgrListView = SmartListView_Init(&opts);
+		if (!s_pFileMgrListView) {
+			/* PANIC */
+			EndFileManager(hDlg, -1);
+			return FALSE;
+		}
+
+		SmartListView_DeleteAllItems(s_pFileMgrListView);
+		SmartListView_SetItemCount(s_pFileMgrListView, mess_images_count);
+		for (i = 0; i < mess_images_count; i++) {
+			SmartListView_InsertItem(s_pFileMgrListView, i);
+		}
+
+		if (s_pInitialFileName && *s_pInitialFileName) {
+			i = MessLookupByFilename(s_pInitialFileName);
+			if (i >= 0)
+				SmartListView_SelectItem(s_pFileMgrListView, i, TRUE);
+		}
 
 		ShowWindow(hDlg, TRUE);
 		break;
-
-    case WM_NOTIFY:
-        /* Where is this message intended to go */
-        {
-            LPNMHDR lpNmHdr = (LPNMHDR)lParam;            
-            if (lpNmHdr->hwndFrom == hSoftwarePicker) {
-                bResult = MessPickerNotify( hSoftwarePicker, lpNmHdr, FileManagerItemChosen, FileManagerItemChangeProc );
-				if (s_bChosen) {
-					s_bChosen = FALSE;
-					EndFileManager(hDlg, s_lSelectedItem);
-				}
-				return bResult;
-			}
-        }
-        break;
-
-    case WM_DRAWITEM:
-        {
-            LPDRAWITEMSTRUCT lpDis = (LPDRAWITEMSTRUCT)lParam;
-            switch(lpDis->CtlID) {
-			case IDC_LIST2:
-                DrawMessItem((LPDRAWITEMSTRUCT)lParam, hSoftwarePicker, NULL, FileManagerIsItemSelected);
-                break;
-            }
-        }
-        break;
 
     case WM_COMMAND:
 		switch(wParam) {
