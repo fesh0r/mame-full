@@ -408,8 +408,9 @@ void wd177x_type_1_step_1( int param )
         {
             if( (wd->command_reg & 0x04) == 0x04 )	/* Test for V bit */
             {
-                wd->status_reg |= 0x10;  /* Set seek error and INTRQ */
+                wd->intrq_set_flags = 0x10; /* Set seek error in INTRQ */
                 timer_adjust(wd->timer_INTRQ, wait, (int)wd, 0);
+
                 return;
             }
         }
@@ -489,6 +490,7 @@ void wd177x_type_1_step_2( int param )
         {
             /* Sector not found, add simulated five revloutions of search time */
             wait += TIME_IN_HZ(300) * 5;
+            wd->intrq_set_flags = 0x10; /* Set seek error in INTRQ */
         }
     }
     
@@ -500,6 +502,9 @@ void wd177x_intrq( int param )
     wd177x_t *wd = (wd177x_t *)param;
 
     timer_reset(wd->timer_INTRQ, TIME_NEVER);
+    
+    wd->status_reg |= wd->intrq_set_flags;  /* Set any flags that were requested */
+    wd->intrq_set_flags = 0;
     
     if( wd->chip_type == wd177x_wd1770 || wd->chip_type == wd177x_wd1772 )
         wd->motor_on = 9; /* Spin disk for at least 9 more revolutions */

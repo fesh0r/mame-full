@@ -77,6 +77,7 @@ typedef struct wd177x {
 	UINT8	data_shift_reg;
 	UINT8	command_reg;
 	UINT8	status_reg;
+        UINT8	intrq_set_flags;
 	UINT16	crc_reg;
 	wd177x_mode_t	mode;
         int	ready;
