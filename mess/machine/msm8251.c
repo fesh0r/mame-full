@@ -84,42 +84,90 @@ static void msm8251_update_rx_ready(void)
 
 static void	msm8251_receive_bit(int bit)
 {
+
+	int previous_bit;
+
 	logerror("msm8251 receive bit: %1x\n",bit);
 
+	previous_bit = uart.receive_char & 1;
+
 	/* shift previous bit 7 out */
-	uart.receive_char = uart.data<<1;
+	uart.receive_char = uart.receive_char<<1;
 	/* shift new bit in */
-	uart.receive_char = (uart.data & 0x0fe) | bit;
+	uart.receive_char = (uart.receive_char & 0x0fe) | bit;
 	/* update bit count received */
 	uart.bit_count_received++;
 
-	if (uart.bit_count_received==uart.receive_char_length)
+
+	/* asyncrhonouse mode */
+	if (uart.receive_flags & MSM8251_TRANSFER_RECEIVE_WAITING_FOR_START_BIT)
 	{
-		UINT8 data;
-
-		uart.bit_count_received = 0;
-
-		logerror("msm8251 receive char\n");
-
-		/* mask off other bits so data byte has 0's in unused bits */
-		data = uart.receive_char & (0x0ff
-			<<
-			(8-(((uart.mode_byte>>2) & 0x03)+5)));
-
-		/* parity enable? */
-		if (uart.mode_byte & (1<<4))
+		/* the previous bit is stored in uart.receive char bit 0 */
+		/* has the bit state changed? */
+		if (((previous_bit ^ bit) & 0x01)!=0)
 		{
-			logerror("checking parity\n");
-
-			if (msm8251_parity_table[data]!=(uart.receive_char & 0x01))
+			/* yes */
+			if (bit==0)
 			{
-				uart.status |= MSM8251_STATUS_PARITY_ERROR;
+				logerror("seen start bit\n");
+				/* seen start bit! */
+				/* not waiting for start bit now! */
+				uart.receive_flags &=~MSM8251_TRANSFER_RECEIVE_WAITING_FOR_START_BIT;
+				uart.receive_flags |=MSM8251_TRANSFER_RECEIVE_SYNCHRONISED;
+				/* reset bit count received */
+				uart.bit_count_received = 0;
 			}
-		}
-		
-		/* signal character received */
-		msm8251_receive_character(uart.receive_char);		
+		}		
+	}
+	else
+	/* asynchronous */
+	if (uart.receive_flags & MSM8251_TRANSFER_RECEIVE_SYNCHRONISED)
+	{
+		/* received all bits? */
+		if (uart.bit_count_received==uart.receive_char_length)
+		{
+			unsigned long data_shift;
+			UINT8 data;
 
+			uart.bit_count_received = 0;
+			uart.receive_flags &=~MSM8251_TRANSFER_RECEIVE_SYNCHRONISED;
+			uart.receive_flags |= MSM8251_TRANSFER_RECEIVE_WAITING_FOR_START_BIT;
+
+			logerror("msm8251 receive char\n");
+
+			data_shift = 0;
+
+			/* if parity check is enabled there should be a parity bit in the data stream */
+			if (uart.mode_byte & (1<<4))
+			{
+				data_shift++;
+			}
+
+			/* currently hardwired for 1 stop bit! */
+			data_shift++;
+
+			/* strip off stop bits and parity */
+			data = uart.receive_char>>data_shift;
+
+			/* mask off other bits so data byte has 0's in unused bits */
+			data = data & (0x0ff
+				<<
+				(8-(((uart.mode_byte>>2) & 0x03)+5)));
+
+			/* parity enable? */
+			if (uart.mode_byte & (1<<4))
+			{
+				logerror("checking parity\n");
+
+				if (msm8251_parity_table[data]!=(uart.receive_char & 0x01))
+				{
+					uart.status |= MSM8251_STATUS_PARITY_ERROR;
+				}
+			}
+			
+			/* signal character received */
+			msm8251_receive_character(data);		
+		}
 	}
 }
 
@@ -348,7 +396,18 @@ WRITE_HANDLER(msm8251_control_w)
 	
 				/* data bits */
 				uart.receive_char_length = (((data>>2) & 0x03)+5);
-				uart.bit_count_received = 0;
+				
+				if (data & (1<<4))
+				{
+					/* parity */
+					uart.receive_char_length++;
+				}
+
+				/* stop bits */
+				uart.receive_char_length++;
+
+				uart.receive_flags &=~MSM8251_TRANSFER_RECEIVE_SYNCHRONISED;
+				uart.receive_flags |= MSM8251_TRANSFER_RECEIVE_WAITING_FOR_START_BIT;
 
 				/* not expecting mode byte now */
 				uart.flags &= ~MSM8251_EXPECTING_MODE;
