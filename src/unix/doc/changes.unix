@@ -2,10 +2,10 @@ Xmame history:
 
 Last Modified by Lawrence Gold (gold@aros.net)
 
-Release 0.85.1
+Release 0.86, 25 August 2004
+	- Everything from MAME 0.86 (http://x.mame.net/changes-mame.html) and
+	  MESS 0.86 (http://x.mame.net/changes-mess.html).
 	- The SVGAlib target links again.
-	- Increased the number of games supported by src/datafile.c from 5000 
-	  to 10000.  (Inigo Luja)
 	- Fixed redefinition warnings in src/sha1.[ch].  (Krister Walfridsson)
 	- Fixed buffer overruns in the effects and rotation code that caused a 
 	  segfault on exit for some games with artwork enabled.
@@ -26,7 +26,8 @@ Release 0.85.1
 	  * Modified 15bpp direct RGB support to use memcpy for a small 
 	    speedup. 
 	- Fixed OpenGL vector support, with the exception of clipping support;
-	  for an example of the problem, see mhavoc.  (Hans de Goede)
+	  for an example of the problem, see mhavoc.  Fixes Bugzilla bug 109.  
+	  (Hans de Goede)
 	- The SVGAlib targets now detect the signals used for console 
 	  switching.  (Hans de Goede)
 	- When "-norotate(-nr)" is specified, the UI is no longer rotated 
@@ -45,8 +46,6 @@ Release 0.85.1
 	  longer reallocates a rotation buffer.  (Hans de Goede)
 	- Fixed a bunch of unused variable warnings.  (Hans de Goede)
 	- XInput now works with the xgl target.
-	- Re-applied a fix for an infrequent spurious error reported by the 
-	  included zlib.  (Mark Adler, courtesy of smf)
 	- The SDL joystick driver works again.  It should also be a bit faster. 
 	- Adjusted a few tests to make sure that every combination of compiling 
 	  in XIL, MITSHM, and Xv will work and that the fallback order is Xv -> 
@@ -57,8 +56,7 @@ Release 0.85.1
 	- Added "-perfect-yv12", which uses perfect Xv YV12 scaling instead of 
 	  the widthscale == 2 && heightscale == 2 hack.  (Hans de Goede)
 	- Added support for displaying 32bpp bitmaps on a 16bpp X11 or 3Dfx 
-	  display by down-sampling.  This doesn't yet support effects.  (Hans 
-	  de Goede)
+	  display by down-sampling.  (Hans de Goede)
 	- Added rotation for Xv YV12 displays.  (Hans de Goede)
 	- Sometimes Xv Image creation succeeds, but the first XvShmPutImage to 
 	  a mapped window fails with a BadAlloc error; also, sometimes it can 
@@ -72,14 +70,35 @@ Release 0.85.1
 	    should only exit after everything has been processed.
 	  * Removed x11_window_put_image in favor of x11_window_refresh_screen 
 	    since dirty rectangles are no longer supported.
+	  * Worked around an X11 bug that caused keys to get stuck when 
+	    fullscreen DGA mode was exited.
 	- The display should no longer open twice for artwork games: The setup 
-	  code wasn't rounding the display bounds as it should have.  The 
-	  rounding is now also to sizeof(long) instead of a hard-coded 8, which 
-	  was needed for the old dirty rectangles code.
+	  code wasn't rounding the display bounds as it should have.
+	- Effects now use CORRECTED_DEST_WIDTH and *may* work with PACKEDPIXEL 
+	  modes.  (Hans de Goede)
+	- Adjusted the display bounds rounding so that the resulting rectangle 
+	  is at least as large as the original.  This prevents the cutoff on 
+	  the right side of the intro screen for, e.g., pacman with artwork.
+	- Fixed problems with aspect ratio calculation (Hans de Goede):
+	  * Fixed problems with SVGAlib, DGA, and possibly other display 
+	    targets when arbitrary Y scaling was used.
+	  * Games whose bitmap isn't 4:3, such as pacman and moo, no longer 
+	    show black borders with Xv.
+	  * Added correct aspect ratio calculation to Xv when games have double 
+	    width or double height pixels; for example, blstroid.
+	  * The Xv aspect ratio honors "-displayaspectratio".
+	  * Removed the "-widescreen" option in favor of "-displayaspectratio 
+	    1.77".
+	  * Pixel width and height doubling is now correct when 
+	    "-[auto]ro{r|l}" is used.
+	- The "-bpp" option now only supports 15 or 32.  (Hans de Goede)
+	- Fixed some ANSI/ISO warnings about the "%m" printf format identifier 
+	  and empty joystick and sound source files.
+	- Joystick buttons are no longers always registered as "button 9" in 
+	  the configuration menu.  Fixes Bugzilla bug 587.  (Thomas Klausner)
 
 Release 0.85, 12 August 2004
-	- Everything from MAME 0.85 (http://x.mame.net/changes-mame.html) and
-	  MESS 0.85 (http://x.mame.net/changes-mess.html).
+	- Everything from MAME 0.85 and MESS 0.85.
 	- Fixed a problem in makefile.unix that prevented the xgl target from 
 	  building.
 	- Those who have the commercial NVIDIA driver installed can now build 
