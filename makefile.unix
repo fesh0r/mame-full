@@ -111,22 +111,24 @@ CFLAGS =
 # this section.
 ###########################################################################
 
-# gcc on x86
+# GCC on x86
 CFLAGS = -O -Wall -Wno-unused
 
-# gcc on x86 with some optimizations
+# GCC on x86 with some optimizations
 # CFLAGS = -O2 -Wall -Wno-unused -mcpu=i686 -fomit-frame-pointer \
 #  -fstrict-aliasing -fstrength-reduce -ffast-math
 
-# gcc on Linux/PowerPC
+# GCC on Linux/PowerPC
 # CFLAGS = -O2 -Wall -Wno-unused -funroll-loops -fstrength-reduce \
 #  -fomit-frame-pointer -ffast-math -fsigned-char
 
-# gcc on OpenStep/Intel
+# GCC on OpenStep/Intel
 # CFLAGS = -O2 -Wall -Wno-unused -finline-functions -ffast-math \
 #  -fstrength-reduce -traditional-cpp
 
-# gcc on OpenStep/PPC or Mac OS X
+# GCC on OpenStep/PPC or Mac OS X.  If you get immediate errors when you 
+# build on OS X, remove the -traditional-cpp flag; it caused problems for 
+# me on OS X 10.3 with GCC 3.3.
 # CFLAGS = -O2 -Wall  -Wno-unused -funroll-loops -traditional-cpp \
 #  -fstrength-reduce -fomit-frame-pointer -ffast-math -fsigned-char
 
@@ -154,7 +156,8 @@ ifneq (,$(findstring gcc,$(CC)))
   # Uncomment for Linux on a PowerPC system.
   # CFLAGS += -fsigned-char
 
-  # Uncomment for OpenStep and Mac OS X. 
+  # Uncomment for OpenStep.  This might also apply to some versions of 
+  # Mac OS X, but it definitely breaks things in OS X 10.3 with GCC 3.3.
   # CFLAGS += -traditional-cpp
 
 
@@ -201,21 +204,25 @@ ifneq (,$(findstring gcc,$(CC)))
   # 256Mb of RAM, you may not want to use this.
   # CFLAGS += -pipe
   
+  # If you use GCC 3.x and find that it's taking many minutes to link, 
+  # enable this to speed up the link stage considerably.
+  # CFLAGS += -fno-merge-constants
+  
   # Free up the frame pointer register for other uses.  This can make 
-  # debugging impossible on some platforms, notably x86.  Also, gcc-3.0.2 
+  # debugging impossible on some platforms, notably x86.  Also, GCC 3.0.2 
   # can produce invalid code for x86 with this enabled.
   # CFLAGS += -fomit-frame-pointer
 
-  # Use with gcc-2.95.1 and above for a nice speedup.  For gcc-3.0 and
+  # Use with GCC 2.95.1 and above for a nice speedup.  For GCC 3.0 and
   # above, this is automatically turned on by -O2 and above.
   # CFLAGS += -fstrict-aliasing
 
-  # Use with egcs-1.1.x and gcc-2.95; otherwise, xmame compilation will 
+  # Use with egcs-1.1.x and GCC 2.95; otherwise, xmame compilation will 
   # break.
   # CFLAGS += -fno-strict-aliasing
  
   # Unroll loops for a possible speedup.  Beware that combining this with 
-  # -O2 in gcc-3.0.x on x86 platforms miscompiles src/sndhrdw/williams.c, 
+  # -O2 in GCC 3.0.x on x86 platforms miscompiles src/sndhrdw/williams.c, 
   # causing narc (and possibly other games) to segfault.
   # CFLAGS += -funroll-loops
 
@@ -239,7 +246,7 @@ ifneq (,$(findstring gcc,$(CC)))
   # executable that (in theory) should be optimized for a PentiumPro 
   # system, but it will still run on a 386.
 
-  # Valid x86 options that work with any version of gcc.
+  # Valid x86 options that work with any version of GCC.
   # CFLAGS += -march=i386
   # CFLAGS += -march=i486
   # CFLAGS += -march=i586
@@ -247,7 +254,7 @@ ifneq (,$(findstring gcc,$(CC)))
   # CFLAGS += -march=pentium
   # CFLAGS += -march=pentiumpro
 
-  # Valid x86 options that work only with newer versions of gcc.
+  # Valid x86 options that work only with newer versions of GCC.
   # CFLAGS += -march=pentium-mmx
   # CFLAGS += -march=pentium3
   # CFLAGS += -march=pentium4
@@ -337,7 +344,7 @@ endif
 ###########################################################################
 
 # This can very noticably increase xmame's performance, so enabling this 
-# is encouraged.  It works fine with gcc and probably with most other 
+# is encouraged.  It works fine with GCC and probably with most other 
 # compilers.
 IL	= '-DINLINE=static __inline__'
 
@@ -359,7 +366,7 @@ LD	= $(CC) -Wl,-s
 # optimization.
 # LD	= $(CC) -Wl,-s -ipo -ipo_obj
 
-# To profile with gcc and gprof.
+# To profile with GCC and gprof.
 # LD	= $(CC) -pg
 
 # No profiling (less strace output), but include debug info.
@@ -471,7 +478,7 @@ SYSCONFDIR = $(XMAMEROOT)
 MY_CPU = i386
 
 # i386, no asm -- needed for the Intel C++ compiler, which does not fully
-# understand gcc's inline assembly syntax, though you may still enable 
+# understand GCC's inline assembly syntax, though you may still enable 
 # X86_ASM_68000, etc., which are assembled by NASM.  You may also need to 
 # use this for BeOS.
 # MY_CPU = i386_noasm
