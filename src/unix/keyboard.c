@@ -134,7 +134,7 @@ struct kbd_fifo_struct;
 static struct kbd_fifo_struct *kbd_fifo = NULL;
 static char key[KEY_MAX];
 
-int use_hotrod;
+static int use_hotrod;
 
 /* private methods */
 FIFO(INLINE, kbd, struct keyboard_event)
