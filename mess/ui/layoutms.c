@@ -162,5 +162,5 @@ const char g_szMameInfoFileName[] = "messinfo.dat";
 
 static BOOL FilterAvailable(int driver_index)
 {
-	return IsAuditResultYes(GetRomAuditResults(driver_index));
+	return !DriverUsesRoms(driver_index) || IsAuditResultYes(GetRomAuditResults(driver_index));
 }

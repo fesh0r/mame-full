@@ -21,7 +21,9 @@ System Driver Changes:
 
 User Interface Changes:
 -----------------------
-(none)
+- [Windows GUI] Fixed a bug by which BIOSless systems would not be filtered
+  as available.  (bug #516) [Nate Woods]
+
 
 
 Imgtool Changes:
