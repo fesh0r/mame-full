@@ -104,8 +104,29 @@ const struct GameDriver *drivers[] =
 //  ////	DRIVER (vboy)		/* Nintendo Virtual Boy 				*/
 
 	/* SEGA */
-////	DRIVER( gamegear )	/* Sega Game Gear Handheld				*/
-////	DRIVER( sms )		/* Sega Sega Master System				*/
+	DRIVER( gamegear )   /* Sega Sega Master System        */
+	DRIVER( gamegj )   /* Sega Sega Master System        */
+	DRIVER( gamg )   /* Sega Sega Master System        */
+	DRIVER( gamgj )   /* Sega Sega Master System        */
+	DRIVER( sms )   /* Sega Sega Master System        */
+	DRIVER( smspal )   /* Sega Sega Master System        */
+	DRIVER( smsj21 )   /* Sega Sega Master System        */
+	DRIVER( smsm3 )   /* Sega Sega Master System        */
+	DRIVER( smsss )   /* Sega Sega Master System        */
+	DRIVER( smsu13 )   /* Sega Sega Master System        */
+	DRIVER( smse13 )   /* Sega Sega Master System        */
+	DRIVER( smsu13h )   /* Sega Sega Master System        */
+	DRIVER( smse13h )   /* Sega Sega Master System        */
+	DRIVER( smsuam )   /* Sega Sega Master System        */
+	DRIVER( smseam )   /* Sega Sega Master System        */
+	DRIVER( smsesh )   /* Sega Sega Master System        */
+	DRIVER( smsbsh )   /* Sega Sega Master System        */
+	DRIVER( smsuhs24 )   /* Sega Sega Master System        */
+	DRIVER( smsehs24 )   /* Sega Sega Master System        */
+	DRIVER( smsuh34 )   /* Sega Sega Master System        */
+	DRIVER( smseh34 )   /* Sega Sega Master System        */
+//	DRIVER( smsumd3d )   /* Sega Sega Master System        */
+//	DRIVER( smsemd3d )   /* Sega Sega Master System        */
 	DRIVER( genesis )	/* Sega Genesis/MegaDrive				*/
 	DRIVER( saturn )	/* Sega Saturn							*/
 

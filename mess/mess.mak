@@ -193,10 +193,10 @@ DRVLIBS = \
 	$(OBJ)/teamconc.a \
 	$(OBJ)/amiga.a    \
 	$(OBJ)/svi.a      \
+	$(OBJ)/sharp.a    \
 #	$(OBJ)/gce.a	  \
 #	$(OBJ)/aim65.a    \
 #	$(OBJ)/motorola.a \
-#	$(OBJ)/sharp.a    \
 #	$(OBJ)/ssystem3.a \
 #	$(OBJ)/sym1.a     \
 #	$(OBJ)/avigo.a    \
@@ -220,9 +220,9 @@ $(OBJ)/sega.a:	   \
 	  $(OBJ)/mess/sndhrdw/genesis.o  \
 	  $(OBJ)/mess/systems/genesis.o  \
 	  $(OBJ)/mess/systems/saturn.o	 \
-#	  $(OBJ)/mess/vidhrdw/smsvdp.o	 \
-#	  $(OBJ)/mess/machine/sms.o	 \
-#	  $(OBJ)/mess/systems/sms.o
+	  $(OBJ)/mess/vidhrdw/smsvdp.o	 \
+	  $(OBJ)/mess/machine/sms.o	 \
+	  $(OBJ)/mess/systems/sms.o
 
 $(OBJ)/atari.a:    \
 	  $(OBJ)/mess/machine/atari.o	 \
@@ -573,19 +573,19 @@ $(OBJ)/samcoupe.a: \
 	  $(OBJ)/mess/systems/coupe.o
 
 $(OBJ)/sharp.a:    \
-	  $(OBJ)/mess/systems/pocketc.o  \
-	  $(OBJ)/mess/vidhrdw/pc1401.o	 \
-	  $(OBJ)/mess/machine/pc1401.o	 \
-	  $(OBJ)/mess/vidhrdw/pc1403.o	 \
-	  $(OBJ)/mess/machine/pc1403.o	 \
-	  $(OBJ)/mess/vidhrdw/pc1350.o	 \
-	  $(OBJ)/mess/machine/pc1350.o	 \
-	  $(OBJ)/mess/vidhrdw/pc1251.o	 \
-	  $(OBJ)/mess/machine/pc1251.o	 \
 	  $(OBJ)/mess/machine/mz700.o	 \
 	  $(OBJ)/mess/vidhrdw/mz700.o	 \
 	  $(OBJ)/mess/systems/mz700.o	\
-	  $(OBJ)/mess/vidhrdw/pocketc.o  \
+#	  $(OBJ)/mess/systems/pocketc.o  \
+#	  $(OBJ)/mess/vidhrdw/pc1401.o	 \
+#	  $(OBJ)/mess/machine/pc1401.o	 \
+#	  $(OBJ)/mess/vidhrdw/pc1403.o	 \
+#	  $(OBJ)/mess/machine/pc1403.o	 \
+#	  $(OBJ)/mess/vidhrdw/pc1350.o	 \
+#	  $(OBJ)/mess/machine/pc1350.o	 \
+#	  $(OBJ)/mess/vidhrdw/pc1251.o	 \
+#	  $(OBJ)/mess/machine/pc1251.o	 \
+#	  $(OBJ)/mess/vidhrdw/pocketc.o  \
 
 $(OBJ)/hp48.a:     \
 	  $(OBJ)/mess/machine/hp48.o     \

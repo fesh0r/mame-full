@@ -4,6 +4,7 @@ New System Drivers Supported (in no particular order):
 ------------------------------------------------------
 - Super GameBoy [Anthony Kruize]
 - GameBoy Color (preliminary) [Anthony Kruize]
+- Innumerable Sega Master System Variants [Mike Luong]
 
 Regressions:
 ----------------------
