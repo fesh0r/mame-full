@@ -85,12 +85,12 @@ READ_HANDLER(gg_dummy_r);
 READ_HANDLER(gg_input_port_2_r);
 
 void setup_rom(void);
-int sms_init_cart(int id, mame_file *fp, int open_mode);
+int sms_cart_load(int id, mame_file *fp, int open_mode);
 
-extern MACHINE_INIT(sms);
-extern MACHINE_STOP(sms);
-extern INTERRUPT_GEN(sms);
-extern NVRAM_HANDLER(sms);
+MACHINE_INIT(sms);
+MACHINE_STOP(sms);
+INTERRUPT_GEN(sms);
+NVRAM_HANDLER(sms);
 
 #define IS_NTSC											(Machine->drv->frames_per_second == 60)
 #define IS_PAL											(Machine->drv->frames_per_second == 50)

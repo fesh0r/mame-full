@@ -485,7 +485,7 @@ static int sms_verify_cart(char * magic, int size) {
 	return retval;
 }
 
-int sms_init_cart(int id, mame_file *handle, int open_mode)
+int sms_cart_load(int id, mame_file *handle, int open_mode)
 {
 	int size;
 	UINT8 *USER_RAM, *RAM;
@@ -541,71 +541,38 @@ int sms_init_cart(int id, mame_file *handle, int open_mode)
 		return (INIT_FAIL);
 	}
 
-	/* Ensure filename was specified */
-	if (handle == NULL) {
-		switch (systemType) {
-			case CONSOLE_SMS_U_V13:
-			case CONSOLE_SMS_E_V13:
-			case CONSOLE_SMS_U_HACK_V13:
-			case CONSOLE_SMS_E_HACK_V13:
-			case CONSOLE_SMS_U_ALEX:
-			case CONSOLE_SMS_E_ALEX:
-			case CONSOLE_SMS_E_SONIC:
-			case CONSOLE_SMS_B_SONIC:
-			case CONSOLE_SMS_U_HOSH_V24:
-			case CONSOLE_SMS_E_HOSH_V24:
-			case CONSOLE_SMS_U_HO_V34:
-			case CONSOLE_SMS_E_HO_V34:
-			case CONSOLE_SMS_U_MD_3D:
-			case CONSOLE_SMS_E_MD_3D:
-			case CONSOLE_SMS_J_V21:
-			case CONSOLE_SMS_J_M3:
-			case CONSOLE_SMS_J_SS:
-			case CONSOLE_GG_MAJ_UE:
-			case CONSOLE_GG_MAJ_J:
-				biosPort = (IO_EXPANSION | IO_CARTRIDGE | IO_CARD);
+	/* Get file size */
+	size = mame_fsize(handle);
 
-				break;
-			case CONSOLE_SMS:
-			case CONSOLE_SMS_PAL:
-			case CONSOLE_GG_UE:
-			case CONSOLE_GG_J:
-				logerror("No code to run.\n");
-				return (INIT_FAIL);
+	/* Check for 512-byte header */
+	if ((size / 512) & 1)
+	{
+		mame_fseek(handle, 512, SEEK_SET);
+		size -= 512;
+	}
+
+	/* Get base of CPU1 memory region */
+	if (new_memory_region(REGION_USER2, size, ROM_REQUIRED)) {
+		logerror("Memory allocation failed reading roms!\n");
+		return (INIT_FAIL);
+	}
+	USER_RAM = memory_region(REGION_USER2);
+
+	/* Load ROM banks */
+	size = mame_fread(handle, &USER_RAM[0x0000], size);
+
+	/* check the image */
+	if (!IS_SMS && !IS_SMS_PAL && !IS_GG_UE && !IS_GG_J) {
+		if (sms_verify_cart((char*)&USER_RAM[0x0000], size) == IMAGE_VERIFY_FAIL) {
+			logerror("Invalid Image\n");
+			return INIT_FAIL;
 		}
-	} else {
-		/* Get file size */
-		size = mame_fsize(handle);
+	}
 
-		/* Check for 512-byte header */
-		if ((size / 512) & 1) {
-			mame_fseek(handle, 512, SEEK_SET);
-			size -= 512;
-		}
-
-		/* Get base of CPU1 memory region */
-		if (new_memory_region(REGION_USER2, size, ROM_REQUIRED)) {
-			logerror("Memory allocation failed reading roms!\n");
-			return (INIT_FAIL);
-		}
-		USER_RAM = memory_region(REGION_USER2);
-
-		/* Load ROM banks */
-		size = mame_fread(handle, &USER_RAM[0x0000], size);
-
-		/* check the image */
-		if (!IS_SMS && !IS_SMS_PAL && !IS_GG_UE && !IS_GG_J) {
-			if (sms_verify_cart((char*)&USER_RAM[0x0000], size) == IMAGE_VERIFY_FAIL) {
-				logerror("Invalid Image\n");
-				return INIT_FAIL;
-			}
-		}
-
-		biosPort = (IO_EXPANSION | IO_CARTRIDGE | IO_CARD);
-		if (IS_SMS || IS_SMS_PAL) {
-			biosPort &= ~(IO_CARTRIDGE);
-			biosPort |= IO_BIOS_ROM;
-		}
+	biosPort = (IO_EXPANSION | IO_CARTRIDGE | IO_CARD);
+	if (IS_SMS || IS_SMS_PAL) {
+		biosPort &= ~(IO_CARTRIDGE);
+		biosPort |= IO_BIOS_ROM;
 	}
 
 	/* initially zero out CPU_RAM */

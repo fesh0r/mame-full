@@ -119,29 +119,29 @@ const struct GameDriver *test_drivers[] =
 	DRIVER( snespal )	/* Nintendo Super Nintendo PAL						*/
 
 	/* SEGA */
-//	DRIVER( gamegear )	/* Sega GameGear									*/
-//	DRIVER( gamegj )	/* Sega GameGear (Japanese)							*/
-//	DRIVER( gamg )		/* Sega GameGear (European/American Majesco)		*/
-//	DRIVER( gamgj )		/* Sega GameGear (Japanese Majesco)					*/
-//	DRIVER( sms )		/* Sega Master System (NTSC)						*/
-//	DRIVER( smspal )	/* Sega Master System (PAL)							*/
-//	DRIVER( smsj21 )	/* Sega Master System (PAL Japanese SMS BIOS v2.1)	*/
-//	DRIVER( smsm3 )		/* Sega Mark III (PAL) Japanese SMS BIOS v2.1		*/
-//	DRIVER( smsss )		/* Sega Master System								*/
-//	DRIVER( smsu13 )	/* Sega Master System								*/
-//	DRIVER( smse13 )	/* Sega Master System								*/
-//	DRIVER( smsu13h )	/* Sega Master System								*/
-//	DRIVER( smse13h )	/* Sega Master System								*/
-//	DRIVER( smsuam )	/* Sega Master System								*/
-//	DRIVER( smseam )	/* Sega Master System								*/
-//	DRIVER( smsesh )	/* Sega Master System								*/
-//	DRIVER( smsbsh )	/* Sega Master System								*/
-//	DRIVER( smsuhs24 )	/* Sega Master System								*/
-//	DRIVER( smsehs24 )	/* Sega Master System								*/
-//	DRIVER( smsuh34 )	/* Sega Master System								*/
-//	DRIVER( smseh34 )	/* Sega Master System								*/
+	DRIVER( gamegear )	/* Sega GameGear									*/
+	DRIVER( gamegj )	/* Sega GameGear (Japanese)							*/
+	DRIVER( gamg )		/* Sega GameGear (European/American Majesco)		*/
+	DRIVER( gamgj )		/* Sega GameGear (Japanese Majesco)					*/
+	DRIVER( sms )		/* Sega Master System (NTSC)						*/
+	DRIVER( smspal )	/* Sega Master System (PAL)							*/
+	DRIVER( smsj21 )	/* Sega Master System (PAL Japanese SMS BIOS v2.1)	*/
+	DRIVER( smsm3 )		/* Sega Mark III (PAL) Japanese SMS BIOS v2.1		*/
+	DRIVER( smsss )		/* Sega Master System								*/
+	DRIVER( smsu13 )	/* Sega Master System								*/
+	DRIVER( smse13 )	/* Sega Master System								*/
+	DRIVER( smsu13h )	/* Sega Master System								*/
+	DRIVER( smse13h )	/* Sega Master System								*/
+	DRIVER( smsuam )	/* Sega Master System								*/
+	DRIVER( smseam )	/* Sega Master System								*/
+	DRIVER( smsesh )	/* Sega Master System								*/
+	DRIVER( smsbsh )	/* Sega Master System								*/
+	DRIVER( smsuhs24 )	/* Sega Master System								*/
+	DRIVER( smsehs24 )	/* Sega Master System								*/
+	DRIVER( smsuh34 )	/* Sega Master System								*/
+	DRIVER( smseh34 )	/* Sega Master System								*/
 	DRIVER( genesis )	/* Sega Genesis/MegaDrive							*/
-//TESTDRIVER( saturn )	/* Sega Saturn										*/
+TESTDRIVER( saturn )	/* Sega Saturn										*/
 
 	/* BALLY */
 //	DRIVER( astrocde )	/* Bally Astrocade									*/
@@ -189,16 +189,15 @@ const struct GameDriver *test_drivers[] =
 
 /****************COMPUTERS***************************************************/
     /* ACORN */
-//	DRIVER( atom )      /* 1979 Acorn Atom									*/
-//	DRIVER( atomeb )    /* 1979 Acorn Atom									*/
+	DRIVER( atom )      /* 1979 Acorn Atom									*/
+	DRIVER( atomeb )    /* 1979 Acorn Atom									*/
 	DRIVER( bbca )      /* 1981 BBC Micro Model A							*/
 	DRIVER( bbcb )      /* 1981 BBC Micro Model B							*/
 	DRIVER( bbcb1770 )  /* 1981 BBC Micro Model B with WD 1770 disc			*/
 	DRIVER( bbcbp )     /* 198? BBC Micro Model B+ 64K						*/
 	DRIVER( bbcbp128 )  /* 198? BBC Micro Model B+ 128K						*/
 TESTDRIVER( bbcb6502 )  /* 198? BBC B WD1770 with a 6502 second processor	*/
-//TESTDRIVER( electron )	/* 198? Acorn Electron								*/
-//TESTDRIVER( a310 )      /* 1988 Acorn Archimedes 310						*/
+TESTDRIVER( a310 )      /* 1988 Acorn Archimedes 310						*/
 
 	/* CAMBRIDGE COMPUTERS */
 //	DRIVER( z88 )		/*													*/
@@ -242,13 +241,13 @@ TESTDRIVER( bbcb6502 )  /* 198? BBC B WD1770 with a 6502 second processor	*/
  * Apple IIc Plus		 September			 1988
  * Apple IIgs ROM 3 	 August 			 1989
  */
-//	DRIVER( apple1 )	/* 1976 Apple 1 									*/
-//	DRIVER( apple2c )	/* 1984 Apple //c									*/
-//	DRIVER( apple2c0 )	/* 1986 Apple //c (3.5 ROM) 						*/
-//	DRIVER( apple2cp )	/* 1988 Apple //c+									*/
-//	DRIVER( apple2e )	/* 1983 Apple //e									*/
-//	DRIVER( apple2ee )	/* 1985 Apple //e Enhanced							*/
-//	DRIVER( apple2ep )	/* 1987 Apple //e Platinum							*/
+	DRIVER( apple1 )	/* 1976 Apple 1 									*/
+	DRIVER( apple2c )	/* 1984 Apple //c									*/
+	DRIVER( apple2c0 )	/* 1986 Apple //c (3.5 ROM) 						*/
+	DRIVER( apple2cp )	/* 1988 Apple //c+									*/
+	DRIVER( apple2e )	/* 1983 Apple //e									*/
+	DRIVER( apple2ee )	/* 1985 Apple //e Enhanced							*/
+	DRIVER( apple2ep )	/* 1987 Apple //e Platinum							*/
 /*
  * Lisa 				 January			 1983
  * Lisa 2 				 January			 1984

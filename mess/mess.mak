@@ -154,12 +154,15 @@ DRVLIBS = \
 	$(OBJ)/cbmshare.a \
 	$(OBJ)/coco.a     \
 	$(OBJ)/nintendo.a \
+	$(OBJ)/apple.a    \
+	$(OBJ)/ti99.a     \
+	$(OBJ)/apexc.a	  \
+	$(OBJ)/pdp1.a	  \
+	$(OBJ)/sega.a     \
+	$(OBJ)/acorn.a    \
 #	$(OBJ)/at.a       \
 #	$(OBJ)/pc.a       \
 #	$(OBJ)/pcshare.a  \
-#	$(OBJ)/apexc.a	  \
-#	$(OBJ)/apple.a    \
-#	$(OBJ)/ti99.a     \
 #	$(OBJ)/atari.a    \
 #	$(OBJ)/advision.a \
 #	$(OBJ)/mbee.a	  \
@@ -167,11 +170,9 @@ DRVLIBS = \
 #	$(OBJ)/jupiter.a  \
 #	$(OBJ)/trs80.a	  \
 #	$(OBJ)/arcadia.a  \
-#	$(OBJ)/acorn.a    \
 #	$(OBJ)/tangerin.a \
 #	$(OBJ)/kaypro.a   \
 #	$(OBJ)/cgenie.a   \
-#	$(OBJ)/sega.a     \
 #	$(OBJ)/aquarius.a \
 #	$(OBJ)/kim1.a     \
 #	$(OBJ)/p2000.a	  \
@@ -216,7 +217,6 @@ DRVLIBS = \
 #	$(OBJ)/hp48.a     \
 #	$(OBJ)/cpschngr.a \
 #	$(OBJ)/gce.a	  \
-#	$(OBJ)/pdp1.a	  \
 
 
 
@@ -412,7 +412,6 @@ $(OBJ)/ti99.a:	   \
 	  $(OBJ)/mess/sndhrdw/spchroms.o \
 	  $(OBJ)/mess/machine/ti99_4x.o  \
 	  $(OBJ)/mess/systems/ti99_4x.o  \
-	  $(OBJ)/mess/systems/ti99_4p.o  \
 	  $(OBJ)/mess/machine/990_hd.o	 \
 	  $(OBJ)/mess/machine/990_tap.o	 \
 	  $(OBJ)/mess/vidhrdw/911_vdt.o  \
@@ -420,6 +419,7 @@ $(OBJ)/ti99.a:	   \
 	  $(OBJ)/mess/machine/ti990.o \
 	  $(OBJ)/mess/machine/mm58274c.o \
 	  $(OBJ)/mess/machine/994x_ser.o \
+#	  $(OBJ)/mess/systems/ti99_4p.o  \
 #	  $(OBJ)/mess/systems/ti99_2.o	 \
 #	  $(OBJ)/mess/systems/ti990_4.o  \
 

@@ -81,15 +81,12 @@ void apple2_slot6_init(void)
 	read_state    = 1;
 }
 
-int apple2_floppy_init(int id, mame_file *f, int open_mode)
+int apple2_floppy_load(int id, mame_file *f, int open_mode)
 {
 	int t, s;
 	int pos;
 	int volume;
 	int i;
-
-	if (f == NULL)
-		return INIT_PASS;
 
     a2_drives[id].data = image_malloc(IO_FLOPPY, id, NIBBLE_SIZE*16*TOTAL_TRACKS);
 	if (!a2_drives[id].data)
@@ -193,18 +190,6 @@ int apple2_floppy_init(int id, mame_file *f, int open_mode)
 			a2_drives[id].data[pos+27+343] = translate6[xorvalue & 0x3F];
 		}
 	}
-
-#if 0
-	{
-		FILE *dump;
-
-		dump = fopen ("a2_disk.dmp", "w");
-
-		fwrite (a2_drives[id].data, 1, NIBBLE_SIZE*16*35, dump);
-		fclose (dump);
-	}
-#endif
-
 	return INIT_PASS;
 }
 
