@@ -741,7 +741,7 @@ int c16_rom_id (int id)
 int c16_rom_init (int id)
 {
 	rom_specified[id] = device_filename(IO_CARTSLOT,id) != NULL;
-	return !rom_specified[id] || !c16_rom_id(id);
+	return rom_specified[id] && !c16_rom_id(id) ? INIT_FAIL: INIT_PASS;
 }
 
 
@@ -774,7 +774,7 @@ int c16_rom_load (int id)
 
 			osd_fread_lsbfirst (fp, &in, 2);
 			logerror("rom prg %.4x\n", in);
-			addr = in;
+			addr = in+0x20000;
 			size -= 2;
 		}
 	}
