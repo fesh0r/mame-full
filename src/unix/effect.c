@@ -219,29 +219,36 @@ void effect_scale2x_16_16
 		const void *src0, const void *src1, const void *src2,
 		unsigned count, const void *lookup)
 {
+	UINT16 *u16dst0 = (UINT16 *)dst0;
+	UINT16 *u16dst1 = (UINT16 *)dst1;
+	UINT16 *u16src0 = (UINT16 *)src0;
+	UINT16 *u16src1 = (UINT16 *)src1;
+	UINT16 *u16src2 = (UINT16 *)src2;
+	UINT32 *u32lookup = (UINT32 *)lookup;
+
 	while (count) {
 
-		if (((UINT16*)src1)[-1] == ((UINT16*)src0)[0] && ((UINT16*)src2)[0] != ((UINT16*)src0)[0] && ((UINT16*)src1)[1] != ((UINT16*)src0)[0])
-			*((UINT16*)dst0) = ((UINT32 *)lookup)[((UINT16*)src0)[0]];
-		else	*((UINT16*)dst0) = ((UINT32 *)lookup)[((UINT16*)src1)[0]];
+		if (u16src1[-1] == u16src0[0] && u16src2[0] != u16src0[0] && u16src1[1] != u16src0[0])
+			*u16dst0 = u32lookup[u16src0[0]];
+		else	*u16dst0 = u32lookup[u16src1[0]];
 
-		if (((UINT16*)src1)[1] == ((UINT16*)src0)[0] && ((UINT16*)src2)[0] != ((UINT16*)src0)[0] && ((UINT16*)src1)[-1] != ((UINT16*)src0)[0])
-			*((UINT16*)dst0+1) = ((UINT32 *)lookup)[((UINT16*)src0)[0]];
-		else	*((UINT16*)dst0+1) = ((UINT32 *)lookup)[((UINT16*)src1)[0]];
+		if (u16src1[1] == u16src0[0] && u16src2[0] != u16src0[0] && u16src1[-1] != u16src0[0])
+			*(u16dst0+1) = u32lookup[u16src0[0]];
+		else	*(u16dst0+1) = u32lookup[u16src1[0]];
 
-		if (((UINT16*)src1)[-1] == ((UINT16*)src2)[0] && ((UINT16*)src0)[0] != ((UINT16*)src2)[0] && ((UINT16*)src1)[1] != ((UINT16*)src2)[0])
-			*((UINT16*)dst1) = ((UINT32 *)lookup)[((UINT16*)src2)[0]];
-		else	*((UINT16*)dst1) = ((UINT32 *)lookup)[((UINT16*)src1)[0]];
+		if (u16src1[-1] == u16src2[0] && u16src0[0] != u16src2[0] && u16src1[1] != u16src2[0])
+			*u16dst1 = u32lookup[u16src2[0]];
+		else	*u16dst1 = u32lookup[u16src1[0]];
 
-		if (((UINT16*)src1)[1] == ((UINT16*)src2)[0] && ((UINT16*)src0)[0] != ((UINT16*)src2)[0] && ((UINT16*)src1)[-1] != ((UINT16*)src2)[0])
-			*((UINT16*)dst1+1) = ((UINT32 *)lookup)[((UINT16*)src2)[0]];
-		else	*((UINT16*)dst1+1) = ((UINT32 *)lookup)[((UINT16*)src1)[0]];
+		if (u16src1[1] == u16src2[0] && u16src0[0] != u16src2[0] && u16src1[-1] != u16src2[0])
+			*(u16dst1+1) = u32lookup[u16src2[0]];
+		else	*(u16dst1+1) = u32lookup[u16src1[0]];
 
-		++((UINT16*)src0);
-		++((UINT16*)src1);
-		++((UINT16*)src2);
-		(UINT16*)dst0 += 2;
-		(UINT16*)dst1 += 2;
+		++u16src0;
+		++u16src1;
+		++u16src2;
+		u16dst0 += 2;
+		u16dst1 += 2;
 		--count;
 	}
 }
@@ -251,29 +258,35 @@ void effect_scale2x_16_16_direct
 		const void *src0, const void *src1, const void *src2,
 		unsigned count)
 {
+	UINT16 *u16dst0 = (UINT16 *)dst0;
+	UINT16 *u16dst1 = (UINT16 *)dst1;
+	UINT16 *u16src0 = (UINT16 *)src0;
+	UINT16 *u16src1 = (UINT16 *)src1;
+	UINT16 *u16src2 = (UINT16 *)src2;
+
 	while (count) {
 
-		if (((UINT16*)src1)[-1] == ((UINT16*)src0)[0] && ((UINT16*)src2)[0] != ((UINT16*)src0)[0] && ((UINT16*)src1)[1] != ((UINT16*)src0)[0])
-			*((UINT16*)dst0) = ((UINT16*)src0)[0];
-		else	*((UINT16*)dst0) = ((UINT16*)src1)[0];
+		if (u16src1[-1] == u16src0[0] && u16src2[0] != u16src0[0] && u16src1[1] != u16src0[0])
+			*u16dst0 = u16src0[0];
+		else	*u16dst0 = u16src1[0];
 
-		if (((UINT16*)src1)[1] == ((UINT16*)src0)[0] && ((UINT16*)src2)[0] != ((UINT16*)src0)[0] && ((UINT16*)src1)[-1] != ((UINT16*)src0)[0])
-			*((UINT16*)dst0+1) = ((UINT16*)src0)[0];
-		else	*((UINT16*)dst0+1) = ((UINT16*)src1)[0];
+		if (u16src1[1] == u16src0[0] && u16src2[0] != u16src0[0] && u16src1[-1] != u16src0[0])
+			*(u16dst0+1) = u16src0[0];
+		else	*(u16dst0+1) = u16src1[0];
 
-		if (((UINT16*)src1)[-1] == ((UINT16*)src2)[0] && ((UINT16*)src0)[0] != ((UINT16*)src2)[0] && ((UINT16*)src1)[1] != ((UINT16*)src2)[0])
-			*((UINT16*)dst1) = ((UINT16*)src2)[0];
-		else	*((UINT16*)dst1) = ((UINT16*)src1)[0];
+		if (u16src1[-1] == u16src2[0] && u16src0[0] != u16src2[0] && u16src1[1] != u16src2[0])
+			*u16dst1 = u16src2[0];
+		else	*u16dst1 = u16src1[0];
 
-		if (((UINT16*)src1)[1] == ((UINT16*)src2)[0] && ((UINT16*)src0)[0] != ((UINT16*)src2)[0] && ((UINT16*)src1)[-1] != ((UINT16*)src2)[0])
-			*((UINT16*)dst1+1) = ((UINT16*)src2)[0];
-		else	*((UINT16*)dst1+1) = ((UINT16*)src1)[0];
+		if (u16src1[1] == u16src2[0] && u16src0[0] != u16src2[0] && u16src1[-1] != u16src2[0])
+			*(u16dst1+1) = u16src2[0];
+		else	*(u16dst1+1) = u16src1[0];
 
-		++((UINT16*)src0);
-		++((UINT16*)src1);
-		++((UINT16*)src2);
-		(UINT16*)dst0 += 2;
-		(UINT16*)dst1 += 2;
+		++u16src0;
+		++u16src1;
+		++u16src2;
+		u16dst0 += 2;
+		u16dst1 += 2;
 		--count;
 	}
 }
@@ -284,29 +297,36 @@ void effect_scale2x_16_24
 		const void *src0, const void *src1, const void *src2,
 		unsigned count, const void *lookup)
 {
+	UINT32 *u32dst0 = (UINT32 *)dst0;
+	UINT32 *u32dst1 = (UINT32 *)dst1;
+	UINT16 *u16src0 = (UINT16 *)src0;
+	UINT16 *u16src1 = (UINT16 *)src1;
+	UINT16 *u16src2 = (UINT16 *)src2;
+	UINT32 *u32lookup = (UINT32 *)lookup;
+
 	while (count) {
 
-		if (((UINT16*)src1)[-1] == ((UINT16*)src0)[0] && ((UINT16*)src2)[0] != ((UINT16*)src0)[0] && ((UINT16*)src1)[1] != ((UINT16*)src0)[0])
-			*((UINT32*)dst0) = ((UINT32 *)lookup)[((UINT16*)src0)[0]];
-		else	*((UINT32*)dst0) = ((UINT32 *)lookup)[((UINT16*)src1)[0]];
+		if (u16src1[-1] == u16src0[0] && u16src2[0] != u16src0[0] && u16src1[1] != u16src0[0])
+			*(u32dst0) = u32lookup[u16src0[0]];
+		else	*(u32dst0) = u32lookup[u16src1[0]];
 
-		if (((UINT16*)src1)[1] == ((UINT16*)src0)[0] && ((UINT16*)src2)[0] != ((UINT16*)src0)[0] && ((UINT16*)src1)[-1] != ((UINT16*)src0)[0])
-			*((UINT32*)dst0+1) = ((UINT32 *)lookup)[((UINT16*)src0)[0]];
-		else	*((UINT32*)dst0+1) = ((UINT32 *)lookup)[((UINT16*)src1)[0]];
+		if (u16src1[1] == u16src0[0] && u16src2[0] != u16src0[0] && u16src1[-1] != u16src0[0])
+			*(u32dst0+1) = u32lookup[u16src0[0]];
+		else	*(u32dst0+1) = u32lookup[u16src1[0]];
 
-		if (((UINT16*)src1)[-1] == ((UINT16*)src2)[0] && ((UINT16*)src0)[0] != ((UINT16*)src2)[0] && ((UINT16*)src1)[1] != ((UINT16*)src2)[0])
-			*((UINT32*)dst1) = ((UINT32 *)lookup)[((UINT16*)src2)[0]];
-		else	*((UINT32*)dst1) = ((UINT32 *)lookup)[((UINT16*)src1)[0]];
+		if (u16src1[-1] == u16src2[0] && u16src0[0] != u16src2[0] && u16src1[1] != u16src2[0])
+			*(u32dst1) = u32lookup[u16src2[0]];
+		else	*(u32dst1) = u32lookup[u16src1[0]];
 
-		if (((UINT16*)src1)[1] == ((UINT16*)src2)[0] && ((UINT16*)src0)[0] != ((UINT16*)src2)[0] && ((UINT16*)src1)[-1] != ((UINT16*)src2)[0])
-			*((UINT32*)dst1+1) = ((UINT32 *)lookup)[((UINT16*)src2)[0]];
-		else	*((UINT32*)dst1+1) = ((UINT32 *)lookup)[((UINT16*)src1)[0]];
+		if (u16src1[1] == u16src2[0] && u16src0[0] != u16src2[0] && u16src1[-1] != u16src2[0])
+			*(u32dst1+1) = u32lookup[u16src2[0]];
+		else	*(u32dst1+1) = u32lookup[u16src1[0]];
 
-		++((UINT16*)src0);
-		++((UINT16*)src1);
-		++((UINT16*)src2);
-		(UINT32*)dst0 += 2;
-		(UINT32*)dst1 += 2;
+		++u16src0;
+		++u16src1;
+		++u16src2;
+		u32dst0 += 2;
+		u32dst1 += 2;
 		--count;
 	}
 }
@@ -316,29 +336,36 @@ void effect_scale2x_16_32
 		const void *src0, const void *src1, const void *src2,
 		unsigned count, const void *lookup)
 {
+	UINT32 *u32dst0 = (UINT32 *)dst0;
+	UINT32 *u32dst1 = (UINT32 *)dst1;
+	UINT16 *u16src0 = (UINT16 *)src0;
+	UINT16 *u16src1 = (UINT16 *)src1;
+	UINT16 *u16src2 = (UINT16 *)src2;
+	UINT32 *u32lookup = (UINT32 *)lookup;
+
 	while (count) {
 
-		if (((UINT16*)src1)[-1] == ((UINT16*)src0)[0] && ((UINT16*)src2)[0] != ((UINT16*)src0)[0] && ((UINT16*)src1)[1] != ((UINT16*)src0)[0])
-			*((UINT32*)dst0) = ((UINT32 *)lookup)[((UINT16*)src0)[0]];
-		else	*((UINT32*)dst0) = ((UINT32 *)lookup)[((UINT16*)src1)[0]];
+		if (u16src1[-1] == u16src0[0] && u16src2[0] != u16src0[0] && u16src1[1] != u16src0[0])
+			*(u32dst0) = u32lookup[u16src0[0]];
+		else	*(u32dst0) = u32lookup[u16src1[0]];
 
-		if (((UINT16*)src1)[1] == ((UINT16*)src0)[0] && ((UINT16*)src2)[0] != ((UINT16*)src0)[0] && ((UINT16*)src1)[-1] != ((UINT16*)src0)[0])
-			*((UINT32*)dst0+1) = ((UINT32 *)lookup)[((UINT16*)src0)[0]];
-		else	*((UINT32*)dst0+1) = ((UINT32 *)lookup)[((UINT16*)src1)[0]];
+		if (u16src1[1] == u16src0[0] && u16src2[0] != u16src0[0] && u16src1[-1] != u16src0[0])
+			*(u32dst0+1) = u32lookup[u16src0[0]];
+		else	*(u32dst0+1) = u32lookup[u16src1[0]];
 
-		if (((UINT16*)src1)[-1] == ((UINT16*)src2)[0] && ((UINT16*)src0)[0] != ((UINT16*)src2)[0] && ((UINT16*)src1)[1] != ((UINT16*)src2)[0])
-			*((UINT32*)dst1) = ((UINT32 *)lookup)[((UINT16*)src2)[0]];
-		else	*((UINT32*)dst1) = ((UINT32 *)lookup)[((UINT16*)src1)[0]];
+		if (u16src1[-1] == u16src2[0] && u16src0[0] != u16src2[0] && u16src1[1] != u16src2[0])
+			*(u32dst1) = u32lookup[u16src2[0]];
+		else	*(u32dst1) = u32lookup[u16src1[0]];
 
-		if (((UINT16*)src1)[1] == ((UINT16*)src2)[0] && ((UINT16*)src0)[0] != ((UINT16*)src2)[0] && ((UINT16*)src1)[-1] != ((UINT16*)src2)[0])
-			*((UINT32*)dst1+1) = ((UINT32 *)lookup)[((UINT16*)src2)[0]];
-		else	*((UINT32*)dst1+1) = ((UINT32 *)lookup)[((UINT16*)src1)[0]];
+		if (u16src1[1] == u16src2[0] && u16src0[0] != u16src2[0] && u16src1[-1] != u16src2[0])
+			*(u32dst1+1) = u32lookup[u16src2[0]];
+		else	*(u32dst1+1) = u32lookup[u16src1[0]];
 
-		++((UINT16*)src0);
-		++((UINT16*)src1);
-		++((UINT16*)src2);
-		(UINT32*)dst0 += 2;
-		(UINT32*)dst1 += 2;
+		++u16src0;
+		++u16src1;
+		++u16src2;
+		u32dst0 += 2;
+		u32dst1 += 2;
 		--count;
 	}
 }
@@ -348,29 +375,35 @@ void effect_scale2x_32_32_direct
 		const void *src0, const void *src1, const void *src2,
 		unsigned count)
 {
+	UINT32 *u32dst0 = (UINT32 *)dst0;
+	UINT32 *u32dst1 = (UINT32 *)dst1;
+	UINT32 *u32src0 = (UINT32 *)src0;
+	UINT32 *u32src1 = (UINT32 *)src1;
+	UINT32 *u32src2 = (UINT32 *)src2;
+
 	while (count) {
 
-		if (((UINT32*)src1)[-1] == ((UINT32*)src0)[0] && ((UINT32*)src2)[0] != ((UINT32*)src0)[0] && ((UINT32*)src1)[1] != ((UINT32*)src0)[0])
-			*((UINT32*)dst0) = ((UINT32*)src0)[0];
-		else	*((UINT32*)dst0) = ((UINT32*)src1)[0];
+		if (u32src1[-1] == u32src0[0] && u32src2[0] != u32src0[0] && u32src1[1] != u32src0[0])
+			*u32dst0 = u32src0[0];
+		else	*u32dst0 = u32src1[0];
 
-		if (((UINT32*)src1)[1] == ((UINT32*)src0)[0] && ((UINT32*)src2)[0] != ((UINT32*)src0)[0] && ((UINT32*)src1)[-1] != ((UINT32*)src0)[0])
-			*((UINT32*)dst0+1) = ((UINT32*)src0)[0];
-		else	*((UINT32*)dst0+1) = ((UINT32*)src1)[0];
+		if (u32src1[1] == u32src0[0] && u32src2[0] != u32src0[0] && u32src1[-1] != u32src0[0])
+			*(u32dst0+1) = u32src0[0];
+		else	*(u32dst0+1) = u32src1[0];
 
-		if (((UINT32*)src1)[-1] == ((UINT32*)src2)[0] && ((UINT32*)src0)[0] != ((UINT32*)src2)[0] && ((UINT32*)src1)[1] != ((UINT32*)src2)[0])
-			*((UINT32*)dst1) = ((UINT32*)src2)[0];
-		else	*((UINT32*)dst1) = ((UINT32*)src1)[0];
+		if (u32src1[-1] == u32src2[0] && u32src0[0] != u32src2[0] && u32src1[1] != u32src2[0])
+			*u32dst1 = u32src2[0];
+		else	*u32dst1 = u32src1[0];
 
-		if (((UINT32*)src1)[1] == ((UINT32*)src2)[0] && ((UINT32*)src0)[0] != ((UINT32*)src2)[0] && ((UINT32*)src1)[-1] != ((UINT32*)src2)[0])
-			*((UINT32*)dst1+1) = ((UINT32*)src2)[0];
-		else	*((UINT32*)dst1+1) = ((UINT32*)src1)[0];
+		if (u32src1[1] == u32src2[0] && u32src0[0] != u32src2[0] && u32src1[-1] != u32src2[0])
+			*(u32dst1+1) = u32src2[0];
+		else	*(u32dst1+1) = u32src1[0];
 
-		++((UINT32*)src0);
-		++((UINT32*)src1);
-		++((UINT32*)src2);
-		(UINT32*)dst0 += 2;
-		(UINT32*)dst1 += 2;
+		++u32src0;
+		++u32src1;
+		++u32src2;
+		u32dst0 += 2;
+		u32dst1 += 2;
 		--count;
 	}
 }
@@ -382,75 +415,98 @@ void effect_scale2x_32_32_direct
 
 void effect_scan2_16_16 (void *dst0, void *dst1, const void *src, unsigned count, const void *lookup)
 {
+	UINT16 *u16dst0 = (UINT16 *)dst0;
+	UINT16 *u16dst1 = (UINT16 *)dst0;
+	UINT16 *u16src = (UINT16 *)src;
+	UINT32 *u32lookup = (UINT32 *)lookup;
+
 	while (count) {
 
-		*((UINT16*)dst0) = *((UINT16*)dst0+1) = ((UINT32 *)lookup)[*((UINT16*)src)];
+		*u16dst0 = *(u16dst0+1) = u32lookup[*u16src];
 			 
-		*((UINT16*)dst1) = *((UINT16*)dst1+1) = SHADE16_HALF( ((UINT32 *)lookup)[*((UINT16*)src)] ) + SHADE16_FOURTH( ((UINT32 *)lookup)[*((UINT16*)src)] );
+		*u16dst1 = *(u16dst1+1) = SHADE16_HALF( u32lookup[*u16src] ) + SHADE16_FOURTH( u32lookup[*u16src] );
 
-		++((UINT16*)src);
-		(UINT16*)dst0 += 2;
-		(UINT16*)dst1 += 2;
+		++u16src;
+		u16dst0 += 2;
+		u16dst1 += 2;
 		--count;
 	}
 }
 
 void effect_scan2_16_16_direct (void *dst0, void *dst1, const void *src, unsigned count)
 {
+	UINT16 *u16dst0 = (UINT16 *)dst0;
+	UINT16 *u16dst1 = (UINT16 *)dst1;
+	UINT16 *u16src = (UINT16 *)src;
+
 	while (count) {
 
-		*((UINT16*)dst0) = *((UINT16*)dst0+1) = *((UINT16*)src);
+		*u16dst0 = *(u16dst0+1) = *u16src;
 			 
-		*((UINT16*)dst1) = *((UINT16*)dst1+1) = SHADE16_HALF( *((UINT16*)src) ) + SHADE16_FOURTH( *((UINT16*)src) );
+		*u16dst1 = *(u16dst1+1) = SHADE16_HALF( *u16src ) + SHADE16_FOURTH( *u16src );
 
-		++((UINT16*)src);
-		(UINT16*)dst0 += 2;
-		(UINT16*)dst1 += 2;
+		++u16src;
+		u16dst0 += 2;
+		u16dst1 += 2;
 		--count;
 	}
 }
 
 void effect_scan2_16_24 (void *dst0, void *dst1, const void *src, unsigned count, const void *lookup)
 {
+	UINT32 *u32dst0 = (UINT32 *)dst0;
+	UINT32 *u32dst1 = (UINT32 *)dst1;
+	UINT16 *u16src = (UINT16 *)src;
+	UINT32 *u32lookup = (UINT32 *)lookup;
+
 	while (count) {
 
-		*((UINT32*)dst0) = *((UINT32*)dst0+1) = ((UINT32 *)lookup)[*((UINT16*)src)];
+		*u32dst0 = *(u32dst0+1) = u32lookup[*u16src];
 			 
-		*((UINT32*)dst1) = *((UINT32*)dst1+1) = SHADE32_HALF( ((UINT32 *)lookup)[*((UINT16*)src)] ) + SHADE32_FOURTH( ((UINT32 *)lookup)[*((UINT16*)src)] );
+		*u32dst1 = *(u32dst1+1) = SHADE32_HALF( u32lookup[*u16src] ) + SHADE32_FOURTH( u32lookup[*u16src] );
 
-		++((UINT16*)src);
-		(UINT32*)dst0 += 2;
-		(UINT32*)dst1 += 2;
+		++u16src;
+		u32dst0 += 2;
+		u32dst1 += 2;
 		--count;
 	}
 }
 
 void effect_scan2_16_32 (void *dst0, void *dst1, const void *src, unsigned count, const void *lookup)
 {
+	UINT32 *u32dst0 = (UINT32 *)dst0;
+	UINT32 *u32dst1 = (UINT32 *)dst1;
+	UINT16 *u16src = (UINT16 *)src;
+	UINT32 *u32lookup = (UINT32 *)lookup;
+
 	while (count) {
 
-		*((UINT32*)dst0) = *((UINT32*)dst0+1) = ((UINT32 *)lookup)[*((UINT16*)src)];
+		*u32dst0 = *(u32dst0+1) = u32lookup[*u16src];
 			 
-		*((UINT32*)dst1) = *((UINT32*)dst1+1) = SHADE32_HALF( ((UINT32 *)lookup)[*((UINT16*)src)] ) + SHADE32_FOURTH( ((UINT32 *)lookup)[*((UINT16*)src)] );
+		*u32dst1 = *(u32dst1+1) = SHADE32_HALF( u32lookup[*u16src] ) + SHADE32_FOURTH( u32lookup[*u16src] );
 
-		++((UINT16*)src);
-		(UINT32*)dst0 += 2;
-		(UINT32*)dst1 += 2;
+		++u16src;
+		u32dst0 += 2;
+		u32dst1 += 2;
 		--count;
 	}
 }
 
 void effect_scan2_32_32_direct (void *dst0, void *dst1, const void *src, unsigned count)
 {
+	UINT32 *u32dst0 = (UINT32 *)dst0;
+	UINT32 *u32dst1 = (UINT32 *)dst1;
+	UINT32 *u32src = (UINT32 *)src;
+
 	while (count) {
 
-		*((UINT32*)dst0) = *((UINT32*)dst0+1) = *((UINT32*)src);
+		*u32dst0 = *(u32dst0+1) = *u32src;
 			 
-		*((UINT32*)dst1) = *((UINT32*)dst1+1) = SHADE32_HALF( *((UINT32*)src) ) +  SHADE32_FOURTH( *((UINT32*)src) );
+		*u32dst1 = *(u32dst1+1) = SHADE32_HALF( *u32src ) +  SHADE32_FOURTH( *u32src );
 
-		++((UINT32*)src);
-		(UINT32*)dst0 += 2;
-		(UINT32*)dst1 += 2;
+		++u32src;
+		u32dst0 += 2;
+		u32dst1 += 2;
 		--count;
 	}
 }
@@ -462,75 +518,98 @@ void effect_scan2_32_32_direct (void *dst0, void *dst1, const void *src, unsigne
 
 void effect_rgbstripe_16_16 (void *dst0, void *dst1, const void *src, unsigned count, const void *lookup)
 {
+	UINT16 *u16dst0 = (UINT16 *)dst0;
+	UINT16 *u16dst1 = (UINT16 *)dst1;
+	UINT16 *u16src = (UINT16 *)src;
+	UINT32 *u32lookup = (UINT32 *)lookup;
+
 	while (count) {
 
-		*((UINT16*)dst0+0) = *((UINT16*)dst1+0) = RMASK16_SEMI(((UINT32 *)lookup)[*((UINT16*)src)]);
-		*((UINT16*)dst0+1) = *((UINT16*)dst1+1) = GMASK16_SEMI(((UINT32 *)lookup)[*((UINT16*)src)]);
-		*((UINT16*)dst0+2) = *((UINT16*)dst1+2) = BMASK16_SEMI(((UINT32 *)lookup)[*((UINT16*)src)]);
+		*(u16dst0+0) = *(u16dst1+0) = RMASK16_SEMI(u32lookup[*u16src]);
+		*(u16dst0+1) = *(u16dst1+1) = GMASK16_SEMI(u32lookup[*u16src]);
+		*(u16dst0+2) = *(u16dst1+2) = BMASK16_SEMI(u32lookup[*u16src]);
 
-		++((UINT16*)src);
-		(UINT16*)dst0 += 3;
-		(UINT16*)dst1 += 3;
+		++u16src;
+		u16dst0 += 3;
+		u16dst1 += 3;
 		--count;
 	}
 }
 
 void effect_rgbstripe_16_16_direct(void *dst0, void *dst1, const void *src, unsigned count)
 {
+	UINT16 *u16dst0 = (UINT16 *)dst0;
+	UINT16 *u16dst1 = (UINT16 *)dst1;
+	UINT16 *u16src = (UINT16 *)src;
+
 	while (count) {
 
-		*((UINT16*)dst0+0) = *((UINT16*)dst1+0) = RMASK16_SEMI(*((UINT16*)src));
-		*((UINT16*)dst0+1) = *((UINT16*)dst1+1) = GMASK16_SEMI(*((UINT16*)src));
-		*((UINT16*)dst0+2) = *((UINT16*)dst1+2) = BMASK16_SEMI(*((UINT16*)src));
+		*(u16dst0+0) = *(u16dst1+0) = RMASK16_SEMI(*u16src);
+		*(u16dst0+1) = *(u16dst1+1) = GMASK16_SEMI(*u16src);
+		*(u16dst0+2) = *(u16dst1+2) = BMASK16_SEMI(*u16src);
 
-		++((UINT16*)src);
-		(UINT16*)dst0 += 3;
-		(UINT16*)dst1 += 3;
+		++u16src;
+		u16dst0 += 3;
+		u16dst1 += 3;
 		--count;
 	}
 }
 
 void effect_rgbstripe_16_24 (void *dst0, void *dst1, const void *src, unsigned count, const void *lookup)
 {
+	UINT32 *u32dst0 = (UINT32 *)dst0;
+	UINT32 *u32dst1 = (UINT32 *)dst1;
+	UINT16 *u16src = (UINT16 *)src;
+	UINT32 *u32lookup = (UINT32 *)lookup;
+
 	while (count) {
 
-		*((UINT32*)dst0+0) = *((UINT32*)dst1+0) = RMASK32_SEMI(((UINT32 *)lookup)[*((UINT16*)src)]);
-		*((UINT32*)dst0+1) = *((UINT32*)dst1+1) = GMASK32_SEMI(((UINT32 *)lookup)[*((UINT16*)src)]);
-		*((UINT32*)dst0+2) = *((UINT32*)dst1+2) = BMASK32_SEMI(((UINT32 *)lookup)[*((UINT16*)src)]);
+		*(u32dst0+0) = *(u32dst1+0) = RMASK32_SEMI(u32lookup[*u16src]);
+		*(u32dst0+1) = *(u32dst1+1) = GMASK32_SEMI(u32lookup[*u16src]);
+		*(u32dst0+2) = *(u32dst1+2) = BMASK32_SEMI(u32lookup[*u16src]);
 
-		++((UINT16*)src);
-		(UINT32*)dst0 += 3;
-		(UINT32*)dst1 += 3;
+		++u16src;
+		u32dst0 += 3;
+		u32dst1 += 3;
 		--count;
 	}
 }
 
 void effect_rgbstripe_16_32 (void *dst0, void *dst1, const void *src, unsigned count, const void *lookup)
 {
+	UINT32 *u32dst0 = (UINT32 *)dst0;
+	UINT32 *u32dst1 = (UINT32 *)dst1;
+	UINT16 *u16src = (UINT16 *)src;
+	UINT32 *u32lookup = (UINT32 *)lookup;
+
 	while (count) {
 
-		*((UINT32*)dst0+0) = *((UINT32*)dst1+0) = RMASK32_SEMI(((UINT32 *)lookup)[*((UINT16*)src)]);
-		*((UINT32*)dst0+1) = *((UINT32*)dst1+1) = GMASK32_SEMI(((UINT32 *)lookup)[*((UINT16*)src)]);
-		*((UINT32*)dst0+2) = *((UINT32*)dst1+2) = BMASK32_SEMI(((UINT32 *)lookup)[*((UINT16*)src)]);
+		*(u32dst0+0) = *(u32dst1+0) = RMASK32_SEMI(u32lookup[*u16src]);
+		*(u32dst0+1) = *(u32dst1+1) = GMASK32_SEMI(u32lookup[*u16src]);
+		*(u32dst0+2) = *(u32dst1+2) = BMASK32_SEMI(u32lookup[*u16src]);
 
-		++((UINT16*)src);
-		(UINT32*)dst0 += 3;
-		(UINT32*)dst1 += 3;
+		++u16src;
+		u32dst0 += 3;
+		u32dst1 += 3;
 		--count;
 	}
 }
 
 void effect_rgbstripe_32_32_direct(void *dst0, void *dst1, const void *src, unsigned count)
 {
+	UINT32 *u32dst0 = (UINT32 *)dst0;
+	UINT32 *u32dst1 = (UINT32 *)dst1;
+	UINT32 *u32src = (UINT32 *)src;
+
 	while (count) {
 
-		*((UINT32*)dst0+0) = *((UINT32*)dst1+0) = RMASK32_SEMI(*((UINT32*)src));
-		*((UINT32*)dst0+1) = *((UINT32*)dst1+1) = GMASK32_SEMI(*((UINT32*)src));
-		*((UINT32*)dst0+2) = *((UINT32*)dst1+2) = BMASK32_SEMI(*((UINT32*)src));
+		*(u32dst0+0) = *(u32dst1+0) = RMASK32_SEMI(*u32src);
+		*(u32dst0+1) = *(u32dst1+1) = GMASK32_SEMI(*u32src);
+		*(u32dst0+2) = *(u32dst1+2) = BMASK32_SEMI(*u32src);
 
-		++((UINT32*)src);
-		(UINT32*)dst0 += 3;
-		(UINT32*)dst1 += 3;
+		++u32src;
+		u32dst0 += 3;
+		u32dst1 += 3;
 		--count;
 	}
 }
@@ -542,80 +621,108 @@ void effect_rgbstripe_32_32_direct(void *dst0, void *dst1, const void *src, unsi
 
 void effect_rgbscan_16_16 (void *dst0, void *dst1, void *dst2, const void *src, unsigned count, const void *lookup)
 {
+	UINT16 *u16dst0 = (UINT16 *)dst0;
+	UINT16 *u16dst1 = (UINT16 *)dst1;
+	UINT16 *u16dst2 = (UINT16 *)dst2;
+	UINT16 *u16src = (UINT16 *)src;
+	UINT32 *u32lookup = (UINT32 *)lookup;
+
 	while (count) {
 
-		*((UINT16*)dst0+0) = *((UINT16*)dst0+1) = RMASK16_SEMI(((UINT32 *)lookup)[*((UINT16*)src)]);
-		*((UINT16*)dst1+0) = *((UINT16*)dst1+1) = GMASK16_SEMI(((UINT32 *)lookup)[*((UINT16*)src)]);
-		*((UINT16*)dst2+0) = *((UINT16*)dst2+1) = BMASK16_SEMI(((UINT32 *)lookup)[*((UINT16*)src)]);
+		*(u16dst0+0) = *(u16dst0+1) = RMASK16_SEMI(u32lookup[*u16src]);
+		*(u16dst1+0) = *(u16dst1+1) = GMASK16_SEMI(u32lookup[*u16src]);
+		*(u16dst2+0) = *(u16dst2+1) = BMASK16_SEMI(u32lookup[*u16src]);
 
-		++((UINT16*)src);
-		(UINT16*)dst0 += 2;
-		(UINT16*)dst1 += 2;
-		(UINT16*)dst2 += 2;
+		++u16src;
+		u16dst0 += 2;
+		u16dst1 += 2;
+		u16dst2 += 2;
 		--count;
 	}
 }
 
 void effect_rgbscan_16_16_direct(void *dst0, void *dst1, void *dst2, const void *src, unsigned count)
 {
+	UINT16 *u16dst0 = (UINT16 *)dst0;
+	UINT16 *u16dst1 = (UINT16 *)dst1;
+	UINT16 *u16dst2 = (UINT16 *)dst2;
+	UINT16 *u16src = (UINT16 *)src;
+
 	while (count) {
 
-		*((UINT16*)dst0+0) = *((UINT16*)dst0+1) = RMASK16_SEMI(*((UINT16*)src));
-		*((UINT16*)dst1+0) = *((UINT16*)dst1+1) = GMASK16_SEMI(*((UINT16*)src));
-		*((UINT16*)dst2+0) = *((UINT16*)dst2+1) = BMASK16_SEMI(*((UINT16*)src));
+		*(u16dst0+0) = *(u16dst0+1) = RMASK16_SEMI(*u16src);
+		*(u16dst1+0) = *(u16dst1+1) = GMASK16_SEMI(*u16src);
+		*(u16dst2+0) = *(u16dst2+1) = BMASK16_SEMI(*u16src);
 
-		++((UINT16*)src);
-		(UINT16*)dst0 += 2;
-		(UINT16*)dst1 += 2;
-		(UINT16*)dst2 += 2;
+		++u16src;
+		u16dst0 += 2;
+		u16dst1 += 2;
+		u16dst2 += 2;
 		--count;
 	}
 }
 
 void effect_rgbscan_16_24 (void *dst0, void *dst1, void *dst2, const void *src, unsigned count, const void *lookup)
 {
+	UINT32 *u32dst0 = (UINT32 *)dst0;
+	UINT32 *u32dst1 = (UINT32 *)dst1;
+	UINT32 *u32dst2 = (UINT32 *)dst2;
+	UINT16 *u16src = (UINT16 *)src;
+	UINT32 *u32lookup = (UINT32 *)lookup;
+
 	while (count) {
 
-		*((UINT32*)dst0+0) = *((UINT32*)dst0+1) = RMASK32_SEMI(((UINT32 *)lookup)[*((UINT16*)src)]);
-		*((UINT32*)dst1+0) = *((UINT32*)dst1+1) = GMASK32_SEMI(((UINT32 *)lookup)[*((UINT16*)src)]);
-		*((UINT32*)dst2+0) = *((UINT32*)dst2+1) = BMASK32_SEMI(((UINT32 *)lookup)[*((UINT16*)src)]);
+		*(u32dst0+0) = *(u32dst0+1) = RMASK32_SEMI(u32lookup[*u16src]);
+		*(u32dst1+0) = *(u32dst1+1) = GMASK32_SEMI(u32lookup[*u16src]);
+		*(u32dst2+0) = *(u32dst2+1) = BMASK32_SEMI(u32lookup[*u16src]);
 
-		++((UINT16*)src);
-		(UINT32*)dst0 += 2;
-		(UINT32*)dst1 += 2;
-		(UINT32*)dst2 += 2;
+		++u16src;
+		u32dst0 += 2;
+		u32dst1 += 2;
+		u32dst2 += 2;
 		--count;
 	}
 }
 
 void effect_rgbscan_16_32 (void *dst0, void *dst1, void *dst2, const void *src, unsigned count, const void *lookup)
 {
+	UINT32 *u32dst0 = (UINT32 *)dst0;
+	UINT32 *u32dst1 = (UINT32 *)dst1;
+	UINT32 *u32dst2 = (UINT32 *)dst2;
+	UINT16 *u16src = (UINT16 *)src;
+	UINT32 *u32lookup = (UINT32 *)lookup;
+
 	while (count) {
 
-		*((UINT32*)dst0+0) = *((UINT32*)dst0+1) = RMASK32_SEMI(((UINT32 *)lookup)[*((UINT16*)src)]);
-		*((UINT32*)dst1+0) = *((UINT32*)dst1+1) = GMASK32_SEMI(((UINT32 *)lookup)[*((UINT16*)src)]);
-		*((UINT32*)dst2+0) = *((UINT32*)dst2+1) = BMASK32_SEMI(((UINT32 *)lookup)[*((UINT16*)src)]);
+		*(u32dst0+0) = *(u32dst0+1) = RMASK32_SEMI(u32lookup[*u16src]);
+		*(u32dst1+0) = *(u32dst1+1) = GMASK32_SEMI(u32lookup[*u16src]);
+		*(u32dst2+0) = *(u32dst2+1) = BMASK32_SEMI(u32lookup[*u16src]);
 
-		++((UINT16*)src);
-		(UINT32*)dst0 += 2;
-		(UINT32*)dst1 += 2;
-		(UINT32*)dst2 += 2;
+		++u16src;
+		u32dst0 += 2;
+		u32dst1 += 2;
+		u32dst2 += 2;
 		--count;
 	}
 }
 
 void effect_rgbscan_32_32_direct(void *dst0, void *dst1, void *dst2, const void *src, unsigned count)
 {
+	UINT32 *u32dst0 = (UINT32 *)dst0;
+	UINT32 *u32dst1 = (UINT32 *)dst1;
+	UINT32 *u32dst2 = (UINT32 *)dst2;
+	UINT32 *u32src = (UINT32 *)src;
+
 	while (count) {
 
-		*((UINT32*)dst0+0) = *((UINT32*)dst0+1) = RMASK32_SEMI(*((UINT32*)src));
-		*((UINT32*)dst1+0) = *((UINT32*)dst1+1) = GMASK32_SEMI(*((UINT32*)src));
-		*((UINT32*)dst2+0) = *((UINT32*)dst2+1) = BMASK32_SEMI(*((UINT32*)src));
+		*(u32dst0+0) = *(u32dst0+1) = RMASK32_SEMI(*u32src);
+		*(u32dst1+0) = *(u32dst1+1) = GMASK32_SEMI(*u32src);
+		*(u32dst2+0) = *(u32dst2+1) = BMASK32_SEMI(*u32src);
 
-		++((UINT32*)src);
-		(UINT32*)dst0 += 2;
-		(UINT32*)dst1 += 2;
-		(UINT32*)dst2 += 2;
+		++u32src;
+		u32dst0 += 2;
+		u32dst1 += 2;
+		u32dst2 += 2;
 		--count;
 	}
 }
@@ -634,135 +741,163 @@ void effect_rgbscan_32_32_direct(void *dst0, void *dst1, void *dst2, const void 
 
 void effect_scan3_16_16 (void *dst0, void *dst1, void *dst2, const void *src, unsigned count, const void *lookup)
 {
+	UINT16 *u16dst0 = (UINT16 *)dst0;
+	UINT16 *u16dst1 = (UINT16 *)dst1;
+	UINT16 *u16dst2 = (UINT16 *)dst2;
+	UINT16 *u16src = (UINT16 *)src;
+	UINT32 *u32lookup = (UINT32 *)lookup;
+
 	while (count) {
 
-		*((UINT16*)dst0+1) = *((UINT16*)dst0+0) =
-			SHADE16_HALF(((UINT32 *)lookup)[*((UINT16*)src)]) + SHADE16_FOURTH(((UINT32 *)lookup)[*((UINT16*)src)]);
-		*((UINT16*)dst0+2) =
-			SHADE16_HALF( MEAN16( ((UINT32 *)lookup)[*((UINT16*)src)], ((UINT32 *)lookup)[*((UINT16*)src+1)] ) )
+		*(u16dst0+1) = *(u16dst0+0) =
+			SHADE16_HALF(u32lookup[*u16src]) + SHADE16_FOURTH(u32lookup[*u16src]);
+		*(u16dst0+2) =
+			SHADE16_HALF( MEAN16( u32lookup[*u16src], u32lookup[*u16src+1] ) )
 			+
-			SHADE16_FOURTH( MEAN16( ((UINT32 *)lookup)[*((UINT16*)src)], ((UINT32 *)lookup)[*((UINT16*)src+1)] ) );
+			SHADE16_FOURTH( MEAN16( u32lookup[*u16src], u32lookup[*u16src+1] ) );
 
-		*((UINT16*)dst1+0) = *((UINT16*)dst1+1) = ((UINT32 *)lookup)[*((UINT16*)src)];
-		*((UINT16*)dst1+2) = MEAN16( ((UINT32 *)lookup)[*((UINT16*)src)], ((UINT32 *)lookup)[*((UINT16*)src+1)] );
+		*(u16dst1+0) = *(u16dst1+1) = u32lookup[*u16src];
+		*(u16dst1+2) = MEAN16( u32lookup[*u16src], u32lookup[*u16src+1] );
 
-		*((UINT16*)dst2+0) = *((UINT16*)dst2+1) =
-			SHADE16_HALF(((UINT32 *)lookup)[*((UINT16*)src)]);
-		*((UINT16*)dst2+2) =
-			SHADE16_HALF( MEAN16( ((UINT32 *)lookup)[*((UINT16*)src)], ((UINT32 *)lookup)[*((UINT16*)src+1)] ) );
+		*(u16dst2+0) = *(u16dst2+1) =
+			SHADE16_HALF(u32lookup[*u16src]);
+		*(u16dst2+2) =
+			SHADE16_HALF( MEAN16( u32lookup[*u16src], u32lookup[*u16src+1] ) );
 
-		++((UINT16*)src);
-		(UINT16*)dst0 += 3;
-		(UINT16*)dst1 += 3;
-		(UINT16*)dst2 += 3;
+		++u16src;
+		u16dst0 += 3;
+		u16dst1 += 3;
+		u16dst2 += 3;
 		--count;
 	}
 }
 
 void effect_scan3_16_16_direct(void *dst0, void *dst1, void *dst2, const void *src, unsigned count)
 {
+	UINT16 *u16dst0 = (UINT16 *)dst0;
+	UINT16 *u16dst1 = (UINT16 *)dst1;
+	UINT16 *u16dst2 = (UINT16 *)dst2;
+	UINT16 *u16src = (UINT16 *)src;
+
 	while (count) {
 
-		*((UINT16*)dst0+1) = *((UINT16*)dst0+0) =
-			SHADE16_HALF(*((UINT16*)src)) + SHADE16_FOURTH(*((UINT16*)src));
-		*((UINT16*)dst0+2) =
-			SHADE16_HALF( MEAN16( *((UINT16*)src), *((UINT16*)src+1) ) )
+		*(u16dst0+1) = *(u16dst0+0) =
+			SHADE16_HALF(*u16src) + SHADE16_FOURTH(*u16src);
+		*(u16dst0+2) =
+			SHADE16_HALF( MEAN16( *u16src, *u16src+1 ) )
 			+
-			SHADE16_FOURTH( MEAN16( *((UINT16*)src), *((UINT16*)src+1) ) );
+			SHADE16_FOURTH( MEAN16( *u16src, *u16src+1 ) );
 
-		*((UINT16*)dst1+0) = *((UINT16*)dst1+1) = *((UINT16*)src);
-		*((UINT16*)dst1+2) = MEAN16( *((UINT16*)src), *((UINT16*)src+1) );
+		*(u16dst1+0) = *(u16dst1+1) = *u16src;
+		*(u16dst1+2) = MEAN16( *u16src, *u16src+1 );
 
-		*((UINT16*)dst2+0) = *((UINT16*)dst2+1) =
-			SHADE16_HALF(*((UINT16*)src));
-		*((UINT16*)dst2+2) =
-			SHADE16_HALF( MEAN16( *((UINT16*)src), *((UINT16*)src+1) ) );
+		*(u16dst2+0) = *(u16dst2+1) =
+			SHADE16_HALF(*u16src);
+		*(u16dst2+2) =
+			SHADE16_HALF( MEAN16( *u16src, *u16src+1 ) );
 
-		++((UINT16*)src);
-		(UINT16*)dst0 += 3;
-		(UINT16*)dst1 += 3;
-		(UINT16*)dst2 += 3;
+		++u16src;
+		u16dst0 += 3;
+		u16dst1 += 3;
+		u16dst2 += 3;
 		--count;
 	}
 }
 
 void effect_scan3_16_24 (void *dst0, void *dst1, void *dst2, const void *src, unsigned count, const void *lookup)
 {
+	UINT32 *u32dst0 = (UINT32 *)dst0;
+	UINT32 *u32dst1 = (UINT32 *)dst1;
+	UINT32 *u32dst2 = (UINT32 *)dst2;
+	UINT16 *u16src = (UINT16 *)src;
+	UINT32 *u32lookup = (UINT32 *)lookup;
+
 	while (count) {
 
-		*((UINT32*)dst0+1) = *((UINT32*)dst0+0) =
-			SHADE32_HALF(((UINT32 *)lookup)[*((UINT16*)src)]) + SHADE32_FOURTH(((UINT32 *)lookup)[*((UINT16*)src)]);
-		*((UINT32*)dst0+2) =
-			SHADE32_HALF( MEAN32( ((UINT32 *)lookup)[*((UINT16*)src)], ((UINT32 *)lookup)[*((UINT16*)src+1)] ) )
+		*(u32dst0+1) = *(u32dst0+0) =
+			SHADE32_HALF(u32lookup[*u16src]) + SHADE32_FOURTH(u32lookup[*u16src]);
+		*(u32dst0+2) =
+			SHADE32_HALF( MEAN32( u32lookup[*u16src], u32lookup[*u16src+1] ) )
 			+
-			SHADE32_FOURTH( MEAN32( ((UINT32 *)lookup)[*((UINT16*)src)], ((UINT32 *)lookup)[*((UINT16*)src+1)] ) );
+			SHADE32_FOURTH( MEAN32( u32lookup[*u16src], u32lookup[*u16src+1] ) );
 
-		*((UINT32*)dst1+0) = *((UINT32*)dst1+1) = ((UINT32 *)lookup)[*((UINT16*)src)];
-		*((UINT32*)dst1+2) = MEAN32( ((UINT32 *)lookup)[*((UINT16*)src)], ((UINT32 *)lookup)[*((UINT16*)src+1)] );
+		*(u32dst1+0) = *(u32dst1+1) = u32lookup[*u16src];
+		*(u32dst1+2) = MEAN32( u32lookup[*u16src], u32lookup[*u16src+1] );
 
-		*((UINT32*)dst2+0) = *((UINT32*)dst2+1) =
-			SHADE32_HALF(((UINT32 *)lookup)[*((UINT16*)src)]);
-		*((UINT32*)dst2+2) =
-			SHADE32_HALF( MEAN32( ((UINT32 *)lookup)[*((UINT16*)src)], ((UINT32 *)lookup)[*((UINT16*)src+1)] ) );
+		*(u32dst2+0) = *(u32dst2+1) =
+			SHADE32_HALF(u32lookup[*u16src]);
+		*(u32dst2+2) =
+			SHADE32_HALF( MEAN32( u32lookup[*u16src], u32lookup[*u16src+1] ) );
 
-		++((UINT16*)src);
-		(UINT32*)dst0 += 3;
-		(UINT32*)dst1 += 3;
-		(UINT32*)dst2 += 3;
+		++u16src;
+		u32dst0 += 3;
+		u32dst1 += 3;
+		u32dst2 += 3;
 		--count;
 	}
 }
 
 void effect_scan3_16_32 (void *dst0, void *dst1, void *dst2, const void *src, unsigned count, const void *lookup)
 {
+	UINT32 *u32dst0 = (UINT32 *)dst0;
+	UINT32 *u32dst1 = (UINT32 *)dst1;
+	UINT32 *u32dst2 = (UINT32 *)dst2;
+	UINT16 *u16src = (UINT16 *)src;
+	UINT32 *u32lookup = (UINT32 *)lookup;
+
 	while (count) {
 
-		*((UINT32*)dst0+1) = *((UINT32*)dst0+0) =
-			SHADE32_HALF(((UINT32 *)lookup)[*((UINT16*)src)]) + SHADE32_FOURTH(((UINT32 *)lookup)[*((UINT16*)src)]);
-		*((UINT32*)dst0+2) =
-			SHADE32_HALF( MEAN32( ((UINT32 *)lookup)[*((UINT16*)src)], ((UINT32 *)lookup)[*((UINT16*)src+1)] ) )
+		*(u32dst0+1) = *(u32dst0+0) =
+			SHADE32_HALF(u32lookup[*u16src]) + SHADE32_FOURTH(u32lookup[*u16src]);
+		*(u32dst0+2) =
+			SHADE32_HALF( MEAN32( u32lookup[*u16src], u32lookup[*u16src+1] ) )
 			+
-			SHADE32_FOURTH( MEAN32( ((UINT32 *)lookup)[*((UINT16*)src)], ((UINT32 *)lookup)[*((UINT16*)src+1)] ) );
+			SHADE32_FOURTH( MEAN32( u32lookup[*u16src], u32lookup[*u16src+1] ) );
 
-		*((UINT32*)dst1+0) = *((UINT32*)dst1+1) = ((UINT32 *)lookup)[*((UINT16*)src)];
-		*((UINT32*)dst1+2) = MEAN32( ((UINT32 *)lookup)[*((UINT16*)src)], ((UINT32 *)lookup)[*((UINT16*)src+1)] );
+		*(u32dst1+0) = *(u32dst1+1) = u32lookup[*u16src];
+		*(u32dst1+2) = MEAN32( u32lookup[*u16src], u32lookup[*u16src+1] );
 
-		*((UINT32*)dst2+0) = *((UINT32*)dst2+1) =
-			SHADE32_HALF(((UINT32 *)lookup)[*((UINT16*)src)]);
-		*((UINT32*)dst2+2) =
-			SHADE32_HALF( MEAN32( ((UINT32 *)lookup)[*((UINT16*)src)], ((UINT32 *)lookup)[*((UINT16*)src+1)] ) );
+		*(u32dst2+0) = *(u32dst2+1) =
+			SHADE32_HALF(u32lookup[*u16src]);
+		*(u32dst2+2) =
+			SHADE32_HALF( MEAN32( u32lookup[*u16src], u32lookup[*u16src+1] ) );
 
-		++((UINT16*)src);
-		(UINT32*)dst0 += 3;
-		(UINT32*)dst1 += 3;
-		(UINT32*)dst2 += 3;
+		++u16src;
+		u32dst0 += 3;
+		u32dst1 += 3;
+		u32dst2 += 3;
 		--count;
 	}
 }
 
 void effect_scan3_32_32_direct(void *dst0, void *dst1, void *dst2, const void *src, unsigned count)
 {
+	UINT32 *u32dst0 = (UINT32 *)dst0;
+	UINT32 *u32dst1 = (UINT32 *)dst1;
+	UINT32 *u32dst2 = (UINT32 *)dst2;
+	UINT32 *u32src = (UINT32 *)src;
+
 	while (count) {
 
-		*((UINT32*)dst0+1) = *((UINT32*)dst0+0) =
-			SHADE32_HALF(*((UINT32*)src)) + SHADE32_FOURTH(*((UINT32*)src));
-		*((UINT32*)dst0+2) =
-			SHADE32_HALF( MEAN32( *((UINT32*)src), *((UINT32*)src+1) ) )
+		*(u32dst0+1) = *(u32dst0+0) =
+			SHADE32_HALF(*u32src) + SHADE32_FOURTH(*u32src);
+		*(u32dst0+2) =
+			SHADE32_HALF( MEAN32( *u32src, *(u32src+1) ) )
 			+
-			SHADE32_FOURTH( MEAN32( *((UINT32*)src), *((UINT32*)src+1) ) );
+			SHADE32_FOURTH( MEAN32( *u32src, *(u32src+1) ) );
 
-		*((UINT32*)dst1+0) = *((UINT32*)dst1+1) = *((UINT32*)src);
-		*((UINT32*)dst1+2) = MEAN32( *((UINT32*)src), *((UINT32*)src+1) );
+		*(u32dst1+0) = *(u32dst1+1) = *u32src;
+		*(u32dst1+2) = MEAN32( *u32src, *(u32src+1) );
 
-		*((UINT32*)dst2+0) = *((UINT32*)dst2+1) =
-			SHADE32_HALF(*((UINT32*)src));
-		*((UINT32*)dst2+2) =
-			SHADE32_HALF( MEAN32( *((UINT32*)src), *((UINT32*)src+1) ) );
+		*(u32dst2+0) = *(u32dst2+1) =
+			SHADE32_HALF(*u32src);
+		*(u32dst2+2) =
+			SHADE32_HALF( MEAN32( *u32src, *(u32src+1) ) );
 
-		++((UINT32*)src);
-		(UINT32*)dst0 += 3;
-		(UINT32*)dst1 += 3;
-		(UINT32*)dst2 += 3;
+		++u32src;
+		u32dst0 += 3;
+		u32dst1 += 3;
+		u32dst2 += 3;
 		--count;
 	}
 }
