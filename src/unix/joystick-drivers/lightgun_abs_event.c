@@ -39,8 +39,6 @@
 
 #include "lightgun_abs_event.h"
 
-#define MAX_LIGHTGUNS	4
-
 enum { LG_X_AXIS, LG_Y_AXIS, LG_MAX_AXIS };
 
 #define test_bit(bit, array)	(array[bit/8] & (1<<(bit%8)))
@@ -63,7 +61,7 @@ struct lg_dev {
 	int fd;
 };
 
-static struct lg_dev lg_devices[MAX_LIGHTGUNS];
+static struct lg_dev lg_devices[GUN_MAX];
 
 /* Options */
 struct rc_option lightgun_abs_event_opts[] = {
@@ -90,7 +88,7 @@ void lightgun_event_abs_init(void)
 {
 	int i;
 
-	for (i = 0; i < MAX_LIGHTGUNS; i++) {
+	for (i = 0; i < GUN_MAX; i++) {
 		char name[256] = "Unknown";
 		uint8_t abs_bitmask[ABS_MAX/8 + 1];
 		struct input_absinfo abs_features;
@@ -161,9 +159,9 @@ static int trigger[4] = { 0,0,0,0 };
 void lightgun_event_abs_poll(void)
 {
 	int i, fds, rd;
-	struct pollfd pfd[MAX_LIGHTGUNS];
+	struct pollfd pfd[GUN_MAX];
 
-	for (i = fds = 0; i < MAX_LIGHTGUNS; i++) {
+	for (i = fds = 0; i < GUN_MAX; i++) {
 		if (!lg_devices[i].device)
 			continue;
 
@@ -179,7 +177,7 @@ void lightgun_event_abs_poll(void)
 
 	rd = poll(pfd, fds, 0);
 
-	for (i = 0; i < MAX_LIGHTGUNS; i++) {
+	for (i = 0; i < GUN_MAX; i++) {
 		int p, t;
 		size_t rd;
 		struct input_event events[16];
@@ -232,19 +230,25 @@ void lightgun_event_abs_poll(void)
 	return;
 }
 
-int lightgun_event_abs_read(int player, int *deltax, int *deltay)
+int lightgun_event_abs_read(int joynum, int joyindex, int *delta)
 {
-	if (player > MAX_LIGHTGUNS || !lg_devices[player].device)
+	if (joynum > GUN_MAX || !lg_devices[joynum].device)
 		return 0;
 
 	/* Map absolute values into -128 -> 128 range */
-	*deltax = (((lg_devices[player].last[LG_X_AXIS] -
-		     lg_devices[player].min[LG_X_AXIS]) * 256) /
-		   (lg_devices[player].range[LG_X_AXIS] - 1)) - 128;
-	*deltay = (((lg_devices[player].last[LG_Y_AXIS] -
-		     lg_devices[player].min[LG_Y_AXIS]) * 256) /
-		   (lg_devices[player].range[LG_Y_AXIS] - 1)) - 128;
-        joy_data[player].buttons[0] = trigger[player];
+	if (joyindex == 0)
+	{
+		*delta = (((lg_devices[joynum].last[LG_X_AXIS] -
+						lg_devices[joynum].min[LG_X_AXIS]) * 256) /
+				(lg_devices[joynum].range[LG_X_AXIS] - 1)) - 128;
+	}
+	else
+	{
+		*delta = (((lg_devices[joynum].last[LG_Y_AXIS] -
+						lg_devices[joynum].min[LG_Y_AXIS]) * 256) /
+				(lg_devices[joynum].range[LG_Y_AXIS] - 1)) - 128;
+	}
+        joy_data[joynum].buttons[0] = trigger[joynum];
 
 	return 1;
 }

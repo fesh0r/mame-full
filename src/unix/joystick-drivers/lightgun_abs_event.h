@@ -23,7 +23,7 @@
 
 extern struct rc_option lightgun_abs_event_opts[];
 
-int lightgun_event_abs_read(int player, int *deltax, int *deltay);
+int lightgun_event_abs_read(int joynum, int joyindex, int *delta);
 void lightgun_event_abs_init(void);
 void lightgun_event_abs_poll(void);
 

@@ -150,13 +150,15 @@
 
 #ifndef USE_XINPUT_DEVICES
 /* only one mouse for now */
-#	define MOUSE_MAX 1
+#	define MOUSE_MAX	1
 #else
 /* now we have 4 */
-#	define MOUSE_MAX 4
+#	define MOUSE_MAX	4
 #endif
-#define MOUSE_BUTTONS 8
-#define MOUSE_AXES 8
+#define MOUSE_BUTTONS		8
+#define MOUSE_AXES		8
+
+#define GUN_MAX			4
 
 /* now axis entries in the mouse_list, these are get through another way,
    like the analog joy-values */

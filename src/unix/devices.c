@@ -69,20 +69,8 @@ static cycles_t			last_poll;
 static float			a2d_deadzone;
 static int			use_joystick;
 static int			use_lightgun;
-static int			use_lightgun_dual;
-static int			use_lightgun_reload;
 static int			steadykey;
-static int			analogstick = 0;
 static int			ugcicoin;
-static const char*		ctrlrtype;
-static const char*		ctrlrname;
-static const char*		trackball_ini;
-static const char*		paddle_ini;
-static const char*		dial_ini;
-static const char*		ad_stick_ini;
-static const char*		pedal_ini;
-static const char*		lightgun_ini;
-static int			dummy[10];
 
 /* additional key data */
 static INT8			key[KEY_CODES];
@@ -127,7 +115,6 @@ struct rc_option input_opts[] =
 	{ "steadykey", "steady", rc_bool, &steadykey, "0", 0, 0, NULL, "Enable steadykey support" },
 	{ "a2d_deadzone", "a2d", rc_float, &a2d_deadzone, "0.3", 0.0, 1.0, NULL, "Minimal analog value for digital input" },
 	{ "rapidfire", "rapidf", rc_bool, &rapidfire_enable, "0", 0, 0, NULL, "Enable rapid-fire support for joysticks" },
-	{ "ctrlr", NULL, rc_string, &ctrlrtype, 0, 0, 0, NULL, "Preconfigure for specified controller" },
 	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
 };
 
@@ -924,7 +911,7 @@ void xmame_keyboard_clear(void)
 
 static void init_joycodes(void)
 {
-	int mouse, stick, axis, button;
+	int mouse, gun, stick, axis, button;
 	char tempname[JOY_NAME_LEN + 1];
 
 	/* map mice first */
@@ -933,9 +920,9 @@ static void init_joycodes(void)
 		for (mouse = 0; mouse < MOUSE_MAX; mouse++)
 		{
 			/* add analog axes (fix me -- should enumerate these) */
-			sprintf(tempname, "Mouse %d X", mouse + 1);
+			snprintf(tempname, JOY_NAME_LEN, "Mouse %d X", mouse + 1);
 			add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_MOUSEAXIS, 0), CODE_OTHER_ANALOG_RELATIVE);
-			sprintf(tempname, "Mouse %d Y", mouse + 1);
+			snprintf(tempname, JOY_NAME_LEN, "Mouse %d Y", mouse + 1);
 			add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_MOUSEAXIS, 1), CODE_OTHER_ANALOG_RELATIVE);
 
 			/* add mouse buttons */
@@ -945,6 +932,16 @@ static void init_joycodes(void)
 				add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_MOUSEBUTTON, button), CODE_OTHER_DIGITAL);
 			}
 		}
+	}
+
+	/* map lightguns second */
+	for (gun = 0; gun < GUN_MAX; gun++)
+	{
+		/* add lightgun axes (fix me -- should enumerate these) */
+		snprintf(tempname, JOY_NAME_LEN, "Lightgun %d X", gun + 1);
+		add_joylist_entry(tempname, JOYCODE(gun, CODETYPE_GUNAXIS, 0), CODE_OTHER_ANALOG_ABSOLUTE);
+		snprintf(tempname, JOY_NAME_LEN, "Lightgun %d Y", gun + 1);
+		add_joylist_entry(tempname, JOYCODE(gun, CODETYPE_GUNAXIS, 1), CODE_OTHER_ANALOG_ABSOLUTE);
 	}
 
 	/* now map joysticks */
@@ -1042,29 +1039,6 @@ static INT32 get_joycode_value(os_code_t joycode)
 	switch (codetype)
 	{
 		case CODETYPE_MOUSEBUTTON:
-			/* ActLabs lightgun - remap button 2 (shot off-screen) as button 1 */
-			/*if (use_lightgun_dual && joyindex<4) {
-				if (use_lightgun_reload && joynum==0) {
-					if (joyindex==0 && lightgun_dual_player_state[1])
-						return 1;
-					if (joyindex==1 && lightgun_dual_player_state[1])
-						return 0;
-					if (joyindex==2 && lightgun_dual_player_state[3])
-						return 1;
-					if (joyindex==2 && lightgun_dual_player_state[3])
-						return 0;
-				}
-				return lightgun_dual_player_state[joyindex];
-			}
-						
-			if (use_lightgun) {
-				if (use_lightgun_reload && joynum==0) {
-					if (joyindex==0 && (mouse_state[0].rgbButtons[1]&0x80))
-						return 1;
-					if (joyindex==1 && (mouse_state[0].rgbButtons[1]&0x80))
-						return 0;
-				}
-			}*/
 			return mouse_data[joynum].buttons[joyindex];
 
 		case CODETYPE_BUTTON:
@@ -1117,6 +1091,19 @@ static INT32 get_joycode_value(os_code_t joycode)
 #endif
 			/* return the latest mouse info */
 			return delta * 512;
+		}
+
+		/* analog gun axis */
+		case CODETYPE_GUNAXIS:
+		{
+			int delta = 0;
+
+			/* return the latest gun info */
+#ifdef USE_LIGHTGUN_ABS_EVENT
+			if (lightgun_event_abs_read(joynum, joyindex, &delta))
+				return delta;
+#endif
+			return 0;
 		}
 	}
 
