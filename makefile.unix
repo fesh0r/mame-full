@@ -98,6 +98,12 @@ CC	= gcc
 # additional optimizations.
 # CC = sun-forte
 
+# Compiler for host compilations in cross-compiling environments (used 
+# in src/unix/unix.mak for m68k).
+# HOST_CC=$(CC)
+HOST_CC = gcc
+
+
 ###########################################################################
 # Reset CFLAGS
 ###########################################################################
