@@ -520,7 +520,7 @@ typedef struct
 	int load_state; /* nonzero if the LOAD* line is active (low) */
 #endif
 
-#if (TMS99XX_MODEL == TI990_10_ID) || ((TMS99XX_MODEL == TMS9900_ID) || (TMS99XX_MODEL == TMS9980_ID))
+#if (TMS99XX_MODEL == TI990_10_ID) || (TMS99XX_MODEL == TMS9900_ID) || (TMS99XX_MODEL == TMS9980_ID)
 	/* On tms9900, we cache the state of INTREQ* and IC0-IC3 here */
 	/* On tms9980/9981, we translate the state of IC0-IC2 to the equivalent state for a tms9900,
 	and store the result here */
