@@ -200,7 +200,7 @@ DEVICE_LOAD( ti99_floppy )
 	return INIT_FAIL;
 }
 
-static void ti99_floppy_reset_geometries()
+static void ti99_floppy_reset_geometries(void)
 {
 	int id;
 	mess_image *image;

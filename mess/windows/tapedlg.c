@@ -66,7 +66,7 @@ static void CALLBACK tapedialog_timerproc(HWND dialog, UINT msg, UINT_PTR ideven
 	dlg = get_tapedialog(dialog);
 	id = dlg - tape_dialogs;
 
-	img = image_instance(IO_CASSETTE, id);
+	img = image_from_devtype_and_index(IO_CASSETTE, id);
 
 	tapecontrol_gettime(tapestatus, sizeof(tapestatus) / sizeof(tapestatus[0]),
 		img, &curpos, &endpos);

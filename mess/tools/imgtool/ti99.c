@@ -408,9 +408,9 @@ static int parse_pc99_image(STREAM *file_handle, int fm_format, int pass, ti99_v
 		/*if (crc)
 			printf("aargh!");*/
 		if ((seclen != 256) || (crc1 != 0xf7) || (crc2 != 0xf7)
-				|| (pass == 1) && ((cylinder >= geometry->tracksperside)
+				|| ((pass == 1) && ((cylinder >= geometry->tracksperside)
 									|| (head >= geometry->sides)
-									|| (sector >= geometry->secspertrack)))
+									|| (sector >= geometry->secspertrack))))
 		{
 			stream_seek(file_handle, save_pos, SEEK_SET);
 			bytes_read = stream_read(file_handle, &c, 1);
@@ -654,7 +654,7 @@ static int open_image_lvl1(STREAM *file_handle, ti99_img_format img_format, ti99
 */
 INLINE int sector_address_to_image_offset(const ti99_lvl1_ref *lvl1_ref, const ti99_sector_address *address)
 {
-	int offset;
+	int offset = 0;
 
 	switch (lvl1_ref->img_format)
 	{

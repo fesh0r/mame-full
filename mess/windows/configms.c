@@ -134,7 +134,8 @@ void osd_begin_final_unloading(void)
 	{
 		for (count = device_count(devtype); count > 0; count--)
 		{
-			if (image_exists(image_instance(devtype, count-1)))
+			img = image_from_devtype_and_index(devtype, count-1);
+			if (image_exists(img))
 				break;
 		}
 
@@ -143,7 +144,7 @@ void osd_begin_final_unloading(void)
 			blocksize = 0;
 			for (id = 0; id < count; id++)
 			{
-				img = image_instance(devtype, id);
+				img = image_from_devtype_and_index(devtype, id);
 
 				if (image_exists(img))
 					blocksize += strlen(image_filename(img));
@@ -157,7 +158,7 @@ void osd_begin_final_unloading(void)
 
 			for (id = 0; id < count; id++)
 			{
-				img = image_instance(devtype, id);
+				img = image_from_devtype_and_index(devtype, id);
 
 				if (image_exists(img))
 					strcat(s, image_filename(img));

@@ -147,7 +147,7 @@ DEVICE_LOAD( ti99_4_rs232 )
 */
 DEVICE_UNLOAD( ti99_4_rs232 )
 {
-	int id = image_index_in_device(image);
+	/*int id = image_index_in_device(image);*/
 
 	/*if ((id < 0) || (id >= 2*MAX_RS232_CARDS))
 		return;*/

@@ -614,7 +614,7 @@ static void prepare_menus(void)
 	{
 		for (i = 0; i < dev->count; i++)
 		{
-			img = image_instance(dev->type, i);
+			img = image_from_device_and_index(dev, i);
 
 			new_item = ID_DEVICE_0 + (image_absolute_index(img) * DEVOPTION_MAX);
 			flags_for_exists = MF_STRING;
@@ -717,7 +717,7 @@ static void device_command(mess_image *img, int devoption)
 		break;
 
 	default:
-		switch(image_type(img)) {
+		switch(image_devtype(img)) {
 #if HAS_WAVE
 		case IO_CASSETTE:
 		{
