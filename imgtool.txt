@@ -93,6 +93,15 @@ not fault-tolerant
 dir/get/getall implemented, converts to .cas 
 
 
+Virtual MSX Game Master 2 SRAM file
+-----------------------------------
+Very simple, not overly useful but some might want it. Virtual MSX stored the
+SRAM of Konami's Game Master 2 in "gmaster2.ram". To convert this to something
+useful with MESS and other MSX emulators, go:
+
+imgtool extract vmsx_gm2 gmaster2.mem
+
+
 fs Filesystem Direct Access
 ---------------------------
 internal usage in future MESS
