@@ -1160,6 +1160,7 @@ $(OBJ)/other.a: \
 	$(OBJ)/drivers/pbchmp95.o \
 	$(OBJ)/drivers/bmcbowl.o \
 	$(OBJ)/drivers/trvgns.o \
+	$(OBJ)/drivers/merit.o \
 
 
 COREOBJS += $(OBJ)/driver.o $(OBJ)/cheat.o

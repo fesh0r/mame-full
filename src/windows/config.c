@@ -438,19 +438,11 @@ int cli_frontend_init (int argc, char **argv)
 	sprintf (buffer, "%s.ini", cmd_name);
 
 	/* parse mame.ini/mess.ini even if called with another name */
-#ifdef MESS
-	if (strcmp(cmd_name, "mess") != 0)
+	if (my_stricmp(cmd_name, APPNAME) != 0)
 	{
-		if (parse_config ("mess.ini", NULL))
+		if (parse_config (APPNAME".ini", NULL))
 			exit(1);
 	}
-#else
-	if (strcmp(cmd_name, "mame") != 0)
-	{
-		if (parse_config ("mame.ini", NULL))
-			exit(1);
-	}
-#endif
 
 	/* parse cmd_name.ini */
 	if (parse_config (buffer, NULL))
@@ -490,7 +482,7 @@ int cli_frontend_init (int argc, char **argv)
 	/* handle playback */
 	if (playbackname != NULL)
 	{
-        options.playback = mame_fopen(playbackname,0,FILETYPE_INPUTLOG,0);
+		options.playback = mame_fopen(playbackname,0,FILETYPE_INPUTLOG,0);
 		if (!options.playback)
 		{
 			fprintf(stderr, "failed to open %s for playback\n", playbackname);

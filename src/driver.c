@@ -3395,6 +3395,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	/* MBY ?? */
 	DRIVER( backfire )	/* MBZ (c) 1995 */
 	/* MCA ?? */
+	DRIVER( prtytime )	/* (c) 1995 Mitchell */
 	DRIVER( gangonta )	/* MCB (c) 1995 Mitchell */
 	DRIVER( chainrec )	/* MCC (c) 1994 */
 	/* MCD ?? */
@@ -3773,6 +3774,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 
 	/* GX Type 4 */
 	DRIVER( vsnetscr )	/* GX627 */
+	DRIVER( vsnetscj )	/* GX627 */
 	DRIVER( rungun2 )	/* GX505 */
 	DRIVER( slamdnk2 )	/* GX505 */
 	DRIVER( rushhero )	/* GX605 */
@@ -4354,6 +4356,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( btlfield )  /* Alpha-68K96II 'BT' (c) 1987 */
 	DRIVER( skysoldr )	/* Alpha-68K96II 'SS' (c) 1988 SNK (Romstar with dip switch) */
 	DRIVER( goldmedl )	/* Alpha-68K96II 'GM' (c) 1988 SNK */
+	DRIVER( goldmeda )	/* Alpha-68K96II 'GM' (c) 1988 SNK */
 	DRIVER( goldmedb )	/* Alpha-68K96II bootleg */
 	DRIVER( skyadvnt )	/* Alpha-68K96V  'SA' (c) 1989 Alpha Denshi Co. */
 	DRIVER( skyadvnu )	/* Alpha-68K96V  'SA' (c) 1989 SNK of America licensed from Alpha */
@@ -5712,6 +5715,10 @@ Other Sun games
 	DRIVER( pbchmp95 )	/* (c) 1995 Veltmeijer Automaten */
 	DRIVER( bmcbowl )	/* (c) 1994 BMC */
 	DRIVER( trvgns )	/* ? */
+	DRIVER( phrcraze )	/* (c) 1986 Merit */
+	DRIVER( tictac )	/* (c) 198? Merit */
+	DRIVER( trvwhiz )	/* (c) 198? Merit */
+	DRIVER( trvwhzii )	/* (c) 198? Merit */
 
 	/* Neo Geo games */
 	/* the four digits number is the game ID stored at address 0x0108 of the program ROM */

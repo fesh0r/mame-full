@@ -674,6 +674,19 @@ static LRESULT dialog_get_combo_value(dialog_box *dialog, HWND dialog_item, UINT
 
 
 //============================================================
+//	dialog_get_adjuster_value
+//============================================================
+
+static LRESULT dialog_get_adjuster_value(dialog_box *dialog, HWND dialog_item, UINT message, WPARAM wparam, LPARAM lparam)
+{
+	TCHAR buf[32];
+	GetWindowText(dialog_item, buf, sizeof(buf) / sizeof(buf[0]));
+	return _ttoi(buf);
+}
+
+
+
+//============================================================
 //	dialog_get_slider_value
 //============================================================
 
@@ -808,7 +821,7 @@ int win_dialog_add_active_combobox(dialog_box *dialog, const char *item_label, i
 	y += DIM_BOX_VERTSKEW;
 
 	x += dialog->layout->label_width + DIM_HORIZONTAL_SPACING;
-	if (dialog_write_item(dialog, WS_CHILD | WS_VISIBLE | CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP,
+	if (dialog_write_item(dialog, WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_TABSTOP | CBS_DROPDOWNLIST,
 			x, y, dialog->layout->combo_width, DIM_COMBO_ROW_HEIGHT * 8, "", DLGITEM_COMBOBOX, NULL))
 		goto error;
 	dialog->combo_string_count = 0;
@@ -981,7 +994,7 @@ int win_dialog_add_adjuster(dialog_box *dialog, const char *item_label, int defa
 
 	y += DIM_BOX_VERTSKEW;
 
-	if (dialog_write_item(dialog, WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_NUMBER,
+	if (dialog_write_item(dialog, WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_BORDER | ES_NUMBER,
 			x, y, dialog->layout->combo_width - DIM_ADJUSTER_SCR_WIDTH, DIM_ADJUSTER_HEIGHT, NULL, DLGITEM_EDIT, NULL))
 		goto error;
 	x += dialog->layout->combo_width - DIM_ADJUSTER_SCR_WIDTH;
@@ -1004,6 +1017,10 @@ int win_dialog_add_adjuster(dialog_box *dialog, const char *item_label, int defa
 	if (dialog_add_trigger(dialog, dialog->item_count, TRIGGER_INITDIALOG, 0, adjuster_sb_setup,
 			0, MAKELONG(min_value, max_value), NULL, NULL))
 		return 1;
+
+	// add the trigger invoked when the apply button is pressed
+	if (dialog_add_trigger(dialog, dialog->item_count, TRIGGER_APPLY, 0, dialog_get_adjuster_value, 0, 0, storeval, storeval_param))
+		goto error;
 
 	y += DIM_COMBO_ROW_HEIGHT + DIM_VERTICAL_SPACING * 2;
 

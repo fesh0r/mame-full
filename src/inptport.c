@@ -810,7 +810,9 @@ int load_input_port_settings(void)
 	memcpy(inputport_list_backup, inputport_list_defaults, sizeof(inputport_list_backup));
 	osd_customize_inputport_list(inputport_list_backup);
 	
-	/* load the controller-specific info */
+	/* load the controller-specific info -- note that even though we are still modifying */
+	/* the inputport_list_backup, token_to_port_type relies on inputport_list being valid */
+	memcpy(inputport_list, inputport_list_backup, sizeof(inputport_list));
 	if (options.controller != NULL)
 	{
 		loaded = config_load_controller(options.controller, inputport_list_backup);
