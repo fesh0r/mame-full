@@ -13,6 +13,7 @@
 ******************************************************************************/
 
 #include "driver.h"
+//#define MESS_DEBUG
 
 
 #ifndef DRIVER_RECURSIVE
@@ -592,6 +593,7 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
 	DRIVER( expert10 )	/* 198? ???									      */
 	DRIVER( expert11 )	/* 198? ???									      */
 	DRIVER( msx2 ) 		/* 1985 MSX2									  */
+	DRIVER( msx2a )		/* 1985 MSX2									  */
 	DRIVER( msx2j ) 	/* 1983 MSX2 Jap								  */
 
 	/* NASCOM MICROCOMPUTERS */

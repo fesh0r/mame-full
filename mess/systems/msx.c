@@ -849,14 +849,20 @@ ROM_END
 
 ROM_START (msx2)
     ROM_REGION (0x10000, REGION_CPU1,0)
-    ROM_LOAD ("msx2.rom", 0x0000, 0x8000, 0x6cdaf3a5)
-    ROM_LOAD ("msx2ext.rom", 0x8000, 0x4000, 0x66237ecf)
+    ROM_LOAD ("msx20.rom", 0x0000, 0x8000, 0xf05ed518)
+    ROM_LOAD ("msx20ext.rom", 0x8000, 0x4000, 0x95db2959)
+ROM_END
+
+ROM_START (msx2a)
+    ROM_REGION (0x10000, REGION_CPU1,0)
+    ROM_LOAD ("msx21.rom", 0x0000, 0x8000, 0x6cdaf3a5)
+    ROM_LOAD ("msx21ext.rom", 0x8000, 0x4000, 0x66237ecf)
 ROM_END
 
 ROM_START (msx2j)
     ROM_REGION (0x10000, REGION_CPU1,0)
-    ROM_LOAD ("msx2j.rom", 0x0000, 0x8000, 0x9b3e7b97)
-    ROM_LOAD ("msx2extj.rom", 0x8000, 0x4000, 0x43e7a7fc)
+    ROM_LOAD ("msx20j.rom", 0x0000, 0x8000, 0x9b3e7b97)
+    ROM_LOAD ("msx20xtj.rom", 0x8000, 0x4000, 0x43e7a7fc)
 ROM_END
 /*
 ROM_START (msxkra)
@@ -914,23 +920,39 @@ static const struct IODevice io_msx[] = {
 #define io_msxkr io_msx
 /* #define io_msxkra io_msx */
 #define io_msxuk io_msx
-#define io_msx2 io_msx
+#define io_msx2  io_msx
+#define io_msx2a io_msx
 #define io_msx2j io_msx
 #define io_hotbit11 io_msx
 #define io_hotbit12 io_msx
 #define io_expert10 io_msx
 #define io_expert11 io_msx
 
-/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
-COMP( 1983, msx, 0, msx_pal, msx, msx, "ASCII & Microsoft", "MSX1" )
-COMP( 1983, msxj, msx, msx, msxj, msx, "ASCII & Microsoft", "MSX1 (Japan)" )
-COMP( 1983, msxkr, msx, msx, msxkr, msx, "ASCII & Microsoft", "MSX1 (Korean)" )
-/* COMP( 1983, msxkra, msx, msx, msxkr, msx, "ASCII & Microsoft", "MSX1 (Korean ALT)" ) */
-COMP( 1983, msxuk, msx, msx_pal, msxuk, msx, "ASCII & Microsoft", "MSX1 (UK)" )
-COMP( 1985, hotbit11, msx, msx, hotbit, msx, "Sharp/Epcom", "Hotbit 1.1" )
-COMP( 1985, hotbit12, msx, msx, hotbit, msx, "Sharp/Epcom", "Hotbit 1.2" )
-COMP( 1985, expert10, msx, msx, expert10, msx, "Gradiente", "Expert 1.0" )
-COMP( 1985, expert11, msx, msx, expert11, msx, "Gradiente", "Expert 1.1" )
-COMPX( 1985, msx2, msx, msx2, msx, msx, "ASCII & Microsoft", "MSX2 (Int)", GAME_NOT_WORKING )
-COMPX( 1985, msx2j, msx, msx2, msxj, msx, "ASCII & Microsoft", "MSX2 (Japan)", GAME_NOT_WORKING )
+/*    YEAR  NAME      PARENT  MACHINE  INPUT     INIT   COMPANY              FULLNAME */
+COMP( 1983, msx,      0,      msx_pal, msx,      msx,   "ASCII & Microsoft", "MSX 1" )
+COMP( 1983, msxj,     msx,    msx,     msxj,     msx,   "ASCII & Microsoft", "MSX 1 (Japan)" )
+COMP( 1983, msxkr,    msx,    msx,     msxkr,    msx,   "ASCII & Microsoft", "MSX 1 (Korea)" )
+/* COMP( 1983, msxkra, msx, msx, msxkr, msx, "ASCII & Microsoft", "MSX 1 (Korea ALT)" ) */
+COMP( 1983, msxuk,    msx,    msx_pal, msxuk,    msx,   "ASCII & Microsoft", "MSX 1 (UK)" )
+COMP( 1985, hotbit11, msx,    msx,     hotbit,   msx,   "Sharp / Epcom",     "HB-8000 Hotbit 1.1" )
+COMP( 1985, hotbit12, msx,    msx,     hotbit,   msx,   "Sharp / Epcom",     "HB-8000 Hotbit 1.2" )
+COMP( 1985, expert10, msx,    msx,     expert10, msx,   "Gradiente",         "XP-800 Expert 1.0" )
+COMP( 1985, expert11, msx,    msx,     expert11, msx,   "Gradiente",         "XP-800 Expert 1.1" )
+COMPX( 1985, msx2,    msx,    msx2,    msx,      msx,   "ASCII & Microsoft", "MSX 2", GAME_NOT_WORKING )
+COMPX( 1985, msx2a,   msx,    msx2,    msx,      msx,   "ASCII & Microsoft", "MSX 2 (BASIC 2.1)", GAME_NOT_WORKING )
+COMPX( 1985, msx2j,  msx,    msx2,     msxj,     msx,   "ASCII & Microsoft", "MSX 2 (Japan)", GAME_NOT_WORKING )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
