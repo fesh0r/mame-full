@@ -8,12 +8,11 @@
 /*
  todo:
 
- - mode2 sprites
+ - sprite collision / 5th/8th sprite
  - graphic 5 -- check sprites and transparency
  - vdp engine -- make run at correct speed
  - vr/hr/fh flags: double-check all of that
  - make vdp engine work in exp. ram
- - interlaced mode
 */
 
 #include "driver.h"
@@ -822,7 +821,7 @@ static void v9938_sprite_mode1 (int line, UINT8 *col)
 static void v9938_sprite_mode2 (int line, UINT8 *col)
 	{
 	int attrtbl, patterntbl, patternptr, colourtbl;
-	int x, i, y, p, height, c, p2, n, pattern, colourmask;
+	int x, i, y, p, height, c, p2, n, pattern, colourmask, first_non_p;
 
 	memset (col, 0, 256);
 
@@ -839,7 +838,7 @@ static void v9938_sprite_mode2 (int line, UINT8 *col)
 	/* magnified sprites (zoomed) */
 	if (vdp.contReg[1] & 1) height *= 2;
 
-	p2 = p = 0;
+	p2 = p = first_non_p = 0;
 	while (1)
 		{
 		y = v9938_vram_read (attrtbl);
@@ -878,51 +877,32 @@ static void v9938_sprite_mode2 (int line, UINT8 *col)
 			x = v9938_vram_read (attrtbl + 1);
 			if (c & 0x80) x -= 32;
 
-			/* draw left part */
 			n = (vdp.contReg[1] & 2) ? 16 : 8;
 			while (n--)
 				{
-				if (pattern & 0x8000)
+				for (i=0;i<=(vdp.contReg[1] & 1);i++)
 					{
-					for (i=0;i<=(vdp.contReg[1] & 1);i++)
-						{
-						if ( (x >= 0) && (x < 256) )
-							{
-							/* the bits in col[x] are:
-								7 = non-transparent colour drawn (1)
-								6 = priority enable (1)
-								5 = colission (1)
-								4 = unused, 3 - 0 = colour */
-							if (col[x] & 0x20)
-								{
-								/* we have a collision! */
-								if (p2 < 8)
-									vdp.statReg[0] |= 0x20;
-								}
-
-							if ( !(col[x] & 0x80) )
-								{
-								col[x] |= c & 15;
-								if (c & 0x40)
-									col[x] |= 0x80;
-								else
-									col[x] |= 0x40;
-								}
-							}
-						x++;
-						}
-					}
-				else
-					{
-/*
 					if ( (x >= 0) && (x < 256) )
 						{
-						if ( (c & 0x40) && ( (col[x] & 0xc0) == 0x40) )
-							col[x] |= 0x80;
-						}
-*/
+						if ( (pattern & 0x8000) && 
+							( (c & 0x40) ? 
+								/* CC = 1 */ (col[x] & 0x30) == 0x20 : 
+								/* CC = 0 */ (col[x] & 0xa0) != 0xa0) )
+							{
+							col[x] |= c & 15;
+							if ( (c & 15) || (vdp.contReg[8] & 0x20) ) col[x] |= 0x40;
+							}
 
-					if (vdp.contReg[1] & 1) x += 2; else x++;
+						if ( !(c & 0x40) )
+							{
+							if ( (col[x] & 0xa0) == 0xa0)
+								col[x] |= 0x10;
+							col[x] |= 0x20;
+							}
+						if (col[x] & 0x40) col[x] |= 0x80;
+
+						x++;
+						}
 					}
 
 				pattern <<= 1;
