@@ -770,8 +770,10 @@ static void spectrum_plus3_port_1ffd_w(int offset, int data)
         /* D3 - Disk motor on/off */
         /* D4 - parallel port strobe */
 
-		/* HJB: is this what it should do? drive id offset and mask for on/off? */
-        floppy_drive_set_motor_state(offset, data & (1<<3));
+        floppy_drive_set_motor_state(0, data & (1<<3));
+        floppy_drive_set_motor_state(1, data & (1<<3));
+        floppy_drive_set_ready_state(0, 1, 1);
+        floppy_drive_set_ready_state(1, 1, 1);
 
         spectrum_plus3_port_1ffd_data = data;
 
