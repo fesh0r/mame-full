@@ -275,9 +275,6 @@
 #define IDC_D3D_SCANLINES               1193
 #define IDC_D3D_SCANLINES_ENABLE        1194
 #define IDC_D3D_SCANLINES_DISP          1195
-#define IDC_D3D_SATURATION_ENABLE       1196
-#define IDC_D3D_SATURATION              1197
-#define IDC_D3D_SATURATION_DISP         1198
 #define IDC_D3D_FEEDBACK_ENABLE         1199
 #define IDC_D3D_FEEDBACK                1200
 #define IDC_D3D_FEEDBACK_DISP           1201
@@ -285,6 +282,9 @@
 #define IDC_ZOOMDIST                    1203
 #define IDC_BIOS                        1204
 #define IDC_HIDE_MOUSE                  1205
+#define IDC_AUDIT_DETAILS_PROP          1206
+#define ID_CONTEXT_SHOW_FOLDER_START    39000
+#define ID_CONTEXT_SHOW_FOLDER_END      39200
 #define ID_FILE_EXIT                    40001
 #define ID_ABOUT                        40003
 #define ID_FILE_PLAY                    40004
@@ -338,15 +338,17 @@
 #define ID_VIEW_TAB_CABINET             40064
 #define ID_VIEW_TAB_MARQUEE             40065
 #define ID_VIEW_TAB_TITLE               40066
-#define ID_VIEW_TAB_HISTORY             40067
-#define ID_OPTIONS_BG                   40068
-#define ID_TOGGLE_TAB_SCREENSHOT        40069
-#define ID_TOGGLE_TAB_FLYER             40070
-#define ID_TOGGLE_TAB_CABINET           40071
-#define ID_TOGGLE_TAB_MARQUEE           40072
-#define ID_TOGGLE_TAB_TITLE             40073
-#define ID_TOGGLE_TAB_HISTORY           40074
-#define ID_VIEW_FULLSCREEN              40075
+#define ID_VIEW_TAB_CONTROL_PANEL       40067
+#define ID_VIEW_TAB_HISTORY             40068
+#define ID_OPTIONS_BG                   40070
+#define ID_TOGGLE_TAB_SCREENSHOT        40071
+#define ID_TOGGLE_TAB_FLYER             40072
+#define ID_TOGGLE_TAB_CABINET           40073
+#define ID_TOGGLE_TAB_MARQUEE           40074
+#define ID_TOGGLE_TAB_TITLE             40075
+#define ID_TOGGLE_TAB_CONTROL_PANEL     40076
+#define ID_TOGGLE_TAB_HISTORY           40077
+#define ID_VIEW_FULLSCREEN              40079
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -356,7 +358,7 @@
 #define _APS_NO_MFC                     1
 #define _APS_3D_CONTROLS                     1
 #define _APS_NEXT_RESOURCE_VALUE        185
-#define _APS_NEXT_COMMAND_VALUE         40076
+#define _APS_NEXT_COMMAND_VALUE         40080
 #define _APS_NEXT_CONTROL_VALUE         1209
 #define _APS_NEXT_SYMED_VALUE           101
 #endif

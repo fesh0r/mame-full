@@ -33,6 +33,7 @@
 #include <commctrl.h>
 
 #include "splitters.h"
+#include "bitmask.h"
 #include "options.h"
 #include "resource.h"
 #include "win32ui.h"

@@ -94,7 +94,7 @@ static TREEICON treeIconNames[] =
 /* this has an entry for every folder eventually in the UI, including subfolders */
 static TREEFOLDER **treeFolders = 0;
 static UINT         numFolders  = 0;        /* Number of folder in the folder array */
-static UINT         next_folder_id = FOLDER_END;
+static UINT         next_folder_id = MAX_FOLDERS;
 static UINT         folderArrayLength = 0;  /* Size of the folder array */
 static LPTREEFOLDER lpCurrentFolder = 0;    /* Currently selected folder */
 static UINT         nCurrentFolder = 0;     /* Current folder ID */
@@ -128,8 +128,6 @@ static LPTREEFOLDER NewFolder(const char *lpTitle,
                               UINT nFolderId, int nParent, UINT nIconId,
                               DWORD dwFlags);
 static void         DeleteFolder(LPTREEFOLDER lpFolder);
-static void AddTreeFolders(int start_index,int end_index);
-static void SelectDefaultFolder(void);
 
 static LRESULT CALLBACK TreeWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
@@ -767,6 +765,156 @@ void CreateAllChildFolders(void)
 	}
 }
 
+// adds these folders to the treeview
+void ResetTreeViewFolders(void)
+{
+	HWND hTreeView = GetTreeView();
+	int i;
+	TVITEM tvi;
+	TVINSERTSTRUCT	tvs;
+
+	HTREEITEM shti; // for current child branches
+
+	// currently "cached" parent
+	HTREEITEM hti_parent = NULL;
+	int index_parent = -1;			
+
+	TreeView_DeleteAllItems(hTreeView);
+
+	//dprintf("Adding folders to tree ui indices %i to %i",start_index,end_index);
+
+	tvs.hInsertAfter = TVI_SORT;
+
+	for (i=0;i<numFolders;i++)
+	{
+		LPTREEFOLDER lpFolder = treeFolders[i];
+
+		if (lpFolder->m_nParent == -1)
+		{
+			if (lpFolder->m_nFolderId < MAX_FOLDERS)
+			{
+				// it's a built in folder, let's see if we should show it
+				if (GetShowFolder(lpFolder->m_nFolderId) == FALSE)
+				{
+					continue;
+				}
+			}
+
+			tvi.mask	= TVIF_TEXT | TVIF_PARAM | TVIF_IMAGE | TVIF_SELECTEDIMAGE;
+			tvs.hParent = TVI_ROOT;
+			tvi.pszText = lpFolder->m_lpTitle;
+			tvi.lParam	= (LPARAM)lpFolder;
+			tvi.iImage	= GetTreeViewIconIndex(lpFolder->m_nIconId);
+			tvi.iSelectedImage = 0;
+
+#if defined(__GNUC__) /* bug in commctrl.h */
+			tvs.item = tvi;
+#else
+			tvs.DUMMYUNIONNAME.item = tvi;
+#endif
+
+			// Add root branch
+			hti_parent = TreeView_InsertItem(hTreeView, &tvs);
+
+			continue;
+		}
+
+		// not a top level branch, so look for parent
+		if (treeFolders[i]->m_nParent != index_parent)
+		{
+			
+			hti_parent = TreeView_GetRoot(hTreeView);
+			while (1)
+			{
+				if (hti_parent == NULL)
+				{
+					// couldn't find parent folder, so it's a built-in but
+					// not shown folder
+					break;
+				}
+
+				tvi.hItem = hti_parent;
+				tvi.mask = TVIF_PARAM;
+				TreeView_GetItem(hTreeView,&tvi);
+				if (((LPTREEFOLDER)tvi.lParam) == treeFolders[treeFolders[i]->m_nParent])
+					break;
+
+				hti_parent = TreeView_GetNextSibling(hTreeView,hti_parent);
+			}
+
+			// if parent is not shown, then don't show the child either obviously!
+			if (hti_parent == NULL)
+				continue;
+
+			index_parent = treeFolders[i]->m_nParent;
+		}
+
+		tvi.mask	= TVIF_TEXT | TVIF_PARAM | TVIF_IMAGE | TVIF_SELECTEDIMAGE;
+		tvs.hParent = hti_parent;
+		tvi.iImage	= GetTreeViewIconIndex(treeFolders[i]->m_nIconId);
+		tvi.iSelectedImage = 0;
+		tvi.pszText = treeFolders[i]->m_lpTitle;
+		tvi.lParam	= (LPARAM)treeFolders[i];
+		
+#if defined(__GNUC__) /* bug in commctrl.h */
+		tvs.item = tvi;
+#else
+		tvs.DUMMYUNIONNAME.item = tvi;
+#endif
+		// Add it to this tree branch
+		shti = TreeView_InsertItem(hTreeView, &tvs);
+
+	}
+}
+
+void SelectTreeViewFolder(int folder_id)
+{
+	HWND hTreeView = GetTreeView();
+	HTREEITEM hti;
+	TVITEM tvi;
+
+	hti = TreeView_GetRoot(hTreeView);
+
+	while (hti != NULL)
+	{
+		HTREEITEM hti_next;
+
+		tvi.hItem = hti;
+		tvi.mask = TVIF_PARAM;
+		TreeView_GetItem(hTreeView,&tvi);
+
+		if (((LPTREEFOLDER)tvi.lParam)->m_nFolderId == folder_id)
+		{
+			TreeView_SelectItem(hTreeView,tvi.hItem);
+			SetCurrentFolder((LPTREEFOLDER)tvi.lParam);
+			return;
+		}
+		
+		hti_next = TreeView_GetChild(hTreeView,hti);
+		if (hti_next == NULL)
+		{
+			hti_next = TreeView_GetNextSibling(hTreeView,hti);
+			if (hti_next == NULL)
+			{
+				hti_next = TreeView_GetParent(hTreeView,hti);
+				if (hti_next != NULL)
+					hti_next = TreeView_GetNextSibling(hTreeView,hti_next);
+			}
+		}
+		hti = hti_next;
+	}
+
+	// could not find folder to select
+	// make sure we select something
+	tvi.hItem = TreeView_GetRoot(hTreeView);
+	tvi.mask = TVIF_PARAM;
+	TreeView_GetItem(hTreeView,&tvi);
+
+	TreeView_SelectItem(hTreeView,tvi.hItem);
+	SetCurrentFolder((LPTREEFOLDER)tvi.lParam);
+
+}
+
 /* Add a folder to the list.  Does not allocate */
 static BOOL AddFolder(LPTREEFOLDER lpFolder)
 {
@@ -841,137 +989,6 @@ static void DeleteFolder(LPTREEFOLDER lpFolder)
 		free(lpFolder);
 		lpFolder = 0;
 	}
-}
-
-// adds these folders to the treeview
-static void AddTreeFolders(int start_index,int end_index)
-{
-	HWND hTreeView = GetTreeView();
-	int i;
-	TVITEM tvi;
-	TVINSERTSTRUCT	tvs;
-
-	HTREEITEM shti; // for current child branches
-
-	// currently "cached" parent
-	HTREEITEM hti_parent = NULL;
-	int index_parent = -1;			
-
-	//dprintf("Adding folders to tree ui indices %i to %i",start_index,end_index);
-
-	tvs.hInsertAfter = TVI_SORT;
-
-	for (i=start_index;i<end_index;i++)
-	{
-		LPTREEFOLDER lpFolder = treeFolders[i];
-
-		if (lpFolder->m_nParent == -1)
-		{
-			tvi.mask	= TVIF_TEXT | TVIF_PARAM | TVIF_IMAGE | TVIF_SELECTEDIMAGE;
-			tvs.hParent = TVI_ROOT;
-			tvi.pszText = lpFolder->m_lpTitle;
-			tvi.lParam	= (LPARAM)lpFolder;
-			tvi.iImage	= GetTreeViewIconIndex(lpFolder->m_nIconId);
-			tvi.iSelectedImage = 0;
-
-#if defined(__GNUC__) /* bug in commctrl.h */
-			tvs.item = tvi;
-#else
-			tvs.DUMMYUNIONNAME.item = tvi;
-#endif
-
-			// Add root branch
-			hti_parent = TreeView_InsertItem(hTreeView, &tvs);
-
-			continue;
-		}
-
-		// not a top level branch, so look for parent
-		if (treeFolders[i]->m_nParent != index_parent)
-		{
-			hti_parent = TreeView_GetRoot(hTreeView);
-			while (1)
-			{
-				if (hti_parent == NULL)
-				{
-					dprintf("looking for parent index %i, failed",treeFolders[i]->m_nParent);
-					break;
-				}
-				tvi.hItem = hti_parent;
-				tvi.mask = TVIF_PARAM;
-				TreeView_GetItem(hTreeView,&tvi);
-				if (((LPTREEFOLDER)tvi.lParam) == treeFolders[treeFolders[i]->m_nParent])
-					break;
-
-				hti_parent = TreeView_GetNextSibling(hTreeView,hti_parent);
-			}
-
-			index_parent = treeFolders[i]->m_nParent;
-		}
-
-		tvi.mask	= TVIF_TEXT | TVIF_PARAM | TVIF_IMAGE | TVIF_SELECTEDIMAGE;
-		tvs.hParent = hti_parent;
-		tvi.iImage	= GetTreeViewIconIndex(treeFolders[i]->m_nIconId);
-		tvi.iSelectedImage = 0;
-		tvi.pszText = treeFolders[i]->m_lpTitle;
-		tvi.lParam	= (LPARAM)treeFolders[i];
-		
-#if defined(__GNUC__) /* bug in commctrl.h */
-		tvs.item = tvi;
-#else
-		tvs.DUMMYUNIONNAME.item = tvi;
-#endif
-		// Add it to this tree branch
-		shti = TreeView_InsertItem(hTreeView, &tvs);
-
-	}
-}
-
-static void SelectDefaultFolder(void)
-{
-	HWND hTreeView = GetTreeView();
-	HTREEITEM hti;
-	TVITEM tvi;
-
-	hti = TreeView_GetRoot(hTreeView);
-
-	while (hti != NULL)
-	{
-		HTREEITEM hti_next;
-
-		tvi.hItem = hti;
-		tvi.mask = TVIF_PARAM;
-		TreeView_GetItem(hTreeView,&tvi);
-
-		if (((LPTREEFOLDER)tvi.lParam)->m_nFolderId == GetSavedFolderID())
-		{
-			TreeView_SelectItem(hTreeView,tvi.hItem);
-			SetCurrentFolder((LPTREEFOLDER)tvi.lParam);
-			return;
-		}
-		
-		hti_next = TreeView_GetChild(hTreeView,hti);
-		if (hti_next == NULL)
-		{
-			hti_next = TreeView_GetNextSibling(hTreeView,hti);
-			if (hti_next == NULL)
-			{
-				hti_next = TreeView_GetParent(hTreeView,hti);
-				if (hti_next != NULL)
-					hti_next = TreeView_GetNextSibling(hTreeView,hti_next);
-			}
-		}
-		hti = hti_next;
-	}
-
-	// could not find saved folder
-	// make sure we select something
-	tvi.hItem = TreeView_GetRoot(hTreeView);
-	tvi.mask = TVIF_PARAM;
-	TreeView_GetItem(hTreeView,&tvi);
-
-	TreeView_SelectItem(hTreeView,tvi.hItem);
-	SetCurrentFolder((LPTREEFOLDER)tvi.lParam);
 }
 
 /* Make a reasonable name out of the one found in the driver array */
@@ -1114,11 +1131,11 @@ BOOL InitFolders(void)
 
 	CreateTreeIcons();
 
-	AddTreeFolders(0,numFolders);
-
 	ResetWhichGamesInFolders();
 
-	SelectDefaultFolder();
+	ResetTreeViewFolders();
+
+	SelectTreeViewFolder(GetSavedFolderID());
 
 	return TRUE;
 }
@@ -1754,7 +1771,7 @@ BOOL TryAddExtraFolderAndChildren(int parent_index)
 
     current_id = lpFolder->m_nFolderId;
     
-    id = lpFolder->m_nFolderId - FOLDER_END;
+    id = lpFolder->m_nFolderId - MAX_FOLDERS;
 
     /* "folder\title.ini" */
 

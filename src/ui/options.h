@@ -75,19 +75,6 @@ enum
 	RO_ENCODE    // encode/decode string - calls decode/encode functions
 };
 
-/* List of artwork types to display in the screen shot area */
-enum
-{
-	PICT_SCREENSHOT = 0,
-	PICT_FLYER,
-	PICT_CABINET,
-	PICT_MARQUEE,
-	PICT_TITLES,
-	PICT_HISTORY,
-
-	MAX_PICT_TYPES
-};
-
 /* Default input */
 enum 
 {
@@ -134,11 +121,11 @@ enum
 typedef struct
 {
 	char ini_name[40]; // ini name
-	int  m_iType;                                 /* reg key type     */
-	void *m_vpData;                               /* reg key data     */
-	void (*encode)(void *data, char *str);        /* encode function  */
-	void (*decode)(const char *str, void *data);  /* decode function  */
-	BOOL m_bOnlyOnGame;
+	int  m_iType;                                 // key type
+	void *m_vpData;                               // key data
+	void (*encode)(void *data, char *str);        // encode function
+	void (*decode)(const char *str, void *data);  // decode function
+	BOOL m_bOnlyOnGame;                           // use this option only on games
 } REG_OPTION;
 
 typedef struct
@@ -265,18 +252,19 @@ typedef struct
 #endif
 } game_variables_type;
 
-// show_tab_flags
-// these must match up with the tab_texts strings in options.c
+// List of artwork types to display in the screen shot area
 enum
 {
-	SHOW_TAB_SNAPSHOT = 0x01,
-	SHOW_TAB_FLYER = 0x02,
-	SHOW_TAB_CABINET = 0x04,
-	SHOW_TAB_MARQUEE = 0x08,
-	SHOW_TAB_TITLE = 0x10,
-	SHOW_TAB_HISTORY = 0x20,
+	// these must match array of strings image_tabs_long_name in options.c
+	TAB_SCREENSHOT = 0,
+	TAB_FLYER,
+	TAB_CABINET,
+	TAB_MARQUEE,
+	TAB_TITLE,
+	TAB_CONTROL_PANEL,
+	TAB_HISTORY,
 
-	NUM_SHOW_TABS = 6
+	MAX_TAB_TYPES
 };
 
 typedef struct
@@ -284,12 +272,13 @@ typedef struct
     INT      folder_id;
     BOOL     view;
     BOOL     show_folderlist;
+	LPBITS show_folder_flags;
     BOOL     show_toolbar;
     BOOL     show_statusbar;
     BOOL     show_screenshot;
     BOOL     show_tabctrl;
 	int show_tab_flags;
-    int      show_pict_type;
+    int current_tab;
     BOOL     game_check;        /* Startup GameCheck */
     BOOL     use_joygui;
     BOOL     broadcast;
@@ -316,6 +305,7 @@ typedef struct
     BOOL high_priority;
 
     // Joystick control of ui
+	// array of 4 is joystick index, stick or button, etc.
     int      ui_joy_up[4];
     int      ui_joy_down[4];
     int      ui_joy_left[4];
@@ -340,6 +330,7 @@ typedef struct
     char*    cabinetdir;
     char*    marqueedir;
     char*    titlesdir;
+    char *cpaneldir;
 
     char*    romdirs;
     char*    sampledirs;
@@ -384,7 +375,8 @@ void ResetGUI(void);
 void ResetGameDefaults(void);
 void ResetAllGameOptions(void);
 
-const char * GetTabName(int tab_index);
+const char * GetImageTabLongName(int tab_index);
+const char * GetImageTabShortName(int tab_index);
 
 const char * GetD3DEffectLongName(int d3d_effect);
 const char * GetD3DEffectShortName(int d3d_effect);
@@ -433,6 +425,10 @@ BOOL GetShowScreenShot(void);
 void SetShowFolderList(BOOL val);
 BOOL GetShowFolderList(void);
 
+BOOL GetShowFolder(int folder);
+void SetShowFolder(int folder,BOOL show);
+
+
 void SetShowStatusBar(BOOL val);
 BOOL GetShowStatusBar(void);
 
@@ -442,8 +438,8 @@ BOOL GetShowToolBar(void);
 void SetShowTabCtrl(BOOL val);
 BOOL GetShowTabCtrl(void);
 
-void SetShowPictType(int val);
-int  GetShowPictType(void);
+void SetCurrentTab(int val);
+int  GetCurrentTab(void);
 
 void SetDefaultGame(const char *name);
 const char *GetDefaultGame(void);
@@ -477,8 +473,9 @@ COLORREF GetListFontColor(void);
 void SetListCloneColor(COLORREF uColor);
 COLORREF GetListCloneColor(void);
 
-int GetShowTabFlags(void);
-void SetShowTabFlags(int new_flags);
+int GetShowTab(int tab);
+void SetShowTab(int tab,BOOL show);
+BOOL AllowedToSetShowTab(int tab,BOOL show);
 
 void SetSortColumn(int column);
 int  GetSortColumn(void);
@@ -533,6 +530,9 @@ void SetMarqueeDir(const char* path);
 
 const char* GetTitlesDir(void);
 void SetTitlesDir(const char* path);
+
+const char * GetControlPanelDir(void);
+void SetControlPanelDir(const char *path);
 
 const char* GetDiffDir(void);
 void SetDiffDir(const char* path);

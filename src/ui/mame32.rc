@@ -200,6 +200,12 @@ BEGIN
     BEGIN
         MENUITEM "&Rename",                     ID_CONTEXT_RENAME_CUSTOM
         MENUITEM "&Custom Filters...",          ID_CONTEXT_FILTERS
+        MENUITEM SEPARATOR
+        POPUP "&Show Folders"
+        BEGIN
+            MENUITEM "overridden by code",          ID_CONTEXT_SHOW_FOLDER_START
+
+        END
     END
 END
 
@@ -216,6 +222,8 @@ BEGIN
             MENUITEM "&Cabinet",                 ID_TOGGLE_TAB_CABINET
             MENUITEM "&Marquee",                 ID_TOGGLE_TAB_MARQUEE
             MENUITEM "&Title",                   ID_TOGGLE_TAB_TITLE
+            MENUITEM "Control &Panel",              ID_TOGGLE_TAB_CONTROL_PANEL
+
             MENUITEM "&History",                    ID_TOGGLE_TAB_HISTORY
         END
         MENUITEM SEPARATOR
@@ -224,6 +232,7 @@ BEGIN
         MENUITEM "&Cabinet",                     ID_VIEW_TAB_CABINET
         MENUITEM "&Marquee",                     ID_VIEW_TAB_MARQUEE
         MENUITEM "&Title",                       ID_VIEW_TAB_TITLE
+        MENUITEM "Control &Panel",              ID_VIEW_TAB_CONTROL_PANEL
         MENUITEM "&History",                    ID_VIEW_TAB_HISTORY
     END
 END
@@ -467,8 +476,9 @@ BEGIN
     LTEXT           "0",IDC_SAMPLES_INCORRECT,228,45,20,8
     LTEXT           "0",IDC_SAMPLES_TOTAL,228,58,20,8
     GROUPBOX        "Details",IDC_STATIC,7,75,273,94
-    EDITTEXT        IDC_AUDIT_DETAILS,12,84,263,79,ES_MULTILINE |
-                    ES_AUTOVSCROLL | ES_READONLY | WS_VSCROLL
+    CONTROL         "",IDC_AUDIT_DETAILS,"RICHEDIT",ES_MULTILINE | 
+                    ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_READONLY | 
+                    WS_VSCROLL | WS_HSCROLL,12,84,263,79
 END
 
 IDD_DIRECTORIES DIALOG DISCARDABLE  0, 0, 231, 105
@@ -559,7 +569,7 @@ BEGIN
     LTEXT           "Sample check:",IDC_STATIC,19,58,50,8
     LTEXT           "Checking...",IDC_PROP_SAMPLES,74,58,139,8
     GROUPBOX        "Details",IDC_STATIC,12,77,196,121
-    EDITTEXT        IDC_AUDIT_DETAILS,20,89,180,102,ES_MULTILINE |
+    EDITTEXT        IDC_AUDIT_DETAILS_PROP,20,89,180,102,ES_MULTILINE | 
                     ES_AUTOVSCROLL | ES_READONLY | WS_VSCROLL | WS_HSCROLL |
                     NOT WS_TABSTOP
 END
@@ -567,7 +577,7 @@ END
 IDD_PROP_DISPLAY DIALOGEX 0, 0, 220, 205
 STYLE WS_CHILD | WS_CAPTION
 CAPTION "Display"
-FONT 8, "MS Sans Serif"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
     ICON            IDI_DISPLAY,IDC_STATIC,20,10,20,20
     LTEXT           "Title\nDirectory\nExtra",IDC_PROP_TITLE,52,9,161,25,
@@ -637,39 +647,33 @@ BEGIN
     CONTROL         "Texture Management",IDC_D3D_TEXTURE_MANAGEMENT,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,15,60,83,10,0,
                     HIDC_D3D_TEXTURE_MANAGEMENT
-    CONTROL         "Prescale",IDC_D3D_PRESCALE,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,15,75,43,10,0,HIDC_D3D_PRESCALE
     CONTROL         "Rotate effects",IDC_D3D_ROTATE_EFFECTS,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,15,90,61,10,0,
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,75,61,10,0,
                     HIDC_D3D_ROTATE_EFFECTS
-    LTEXT           "Filter:",IDC_STATIC,105,60,18,10,SS_CENTERIMAGE
+    LTEXT           "Filter",IDC_STATIC,100,60,18,10,SS_CENTERIMAGE
     COMBOBOX        IDC_D3D_FILTER,130,60,80,95,CBS_DROPDOWNLIST | 
                     WS_VSCROLL | WS_TABSTOP,0,HIDC_D3D_FILTER
-    LTEXT           "Effect:",IDC_STATIC,105,80,22,10,SS_CENTERIMAGE
-    COMBOBOX        IDC_D3D_EFFECT,130,79,80,90,CBS_DROPDOWNLIST | 
+    LTEXT           "Effect",IDC_STATIC,100,80,22,10,SS_CENTERIMAGE
+    COMBOBOX        IDC_D3D_EFFECT,130,80,80,90,CBS_DROPDOWNLIST | 
                     WS_VSCROLL | WS_TABSTOP,0,HIDC_D3D_EFFECT
-    GROUPBOX        "Effect Overrides",IDC_STATIC,75,115,135,55
+    LTEXT           "Prescale",IDC_STATIC,100,100,28,10,SS_CENTERIMAGE
+    COMBOBOX        IDC_D3D_PRESCALE,130,100,80,70,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP,0,HIDC_D3D_PRESCALE
+    GROUPBOX        "Effect Overrides",IDC_STATIC,75,130,135,40
     CONTROL         "Scanlines",IDC_D3D_SCANLINES_ENABLE,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,80,125,45,10,0,
+                    BS_AUTOCHECKBOX | WS_TABSTOP,80,140,45,10,0,
                     HIDC_D3D_SCANLINES_ENABLE
     CONTROL         "Slider1",IDC_D3D_SCANLINES,"msctls_trackbar32",TBS_BOTH | 
-                    TBS_NOTICKS | WS_TABSTOP,125,125,60,10,0,
+                    TBS_NOTICKS | WS_TABSTOP,125,140,60,10,0,
                     HIDC_D3D_SCANLINES
-    LTEXT           "100",IDC_D3D_SCANLINES_DISP,190,125,15,8
+    LTEXT           "100",IDC_D3D_SCANLINES_DISP,190,140,15,8
     CONTROL         "Feedback",IDC_D3D_FEEDBACK_ENABLE,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,80,140,45,10,0,
+                    BS_AUTOCHECKBOX | WS_TABSTOP,80,155,45,10,0,
                     HIDC_D3D_FEEDBACK_ENABLE
     CONTROL         "Slider3",IDC_D3D_FEEDBACK,"msctls_trackbar32",TBS_BOTH | 
-                    TBS_NOTICKS | WS_TABSTOP,125,140,60,10,0,
+                    TBS_NOTICKS | WS_TABSTOP,125,155,60,10,0,
                     HIDC_D3D_FEEDBACK
-    LTEXT           "100",IDC_D3D_FEEDBACK_DISP,190,140,15,8
-    CONTROL         "Saturation",IDC_D3D_SATURATION_ENABLE,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,80,155,48,10,0,
-                    HIDC_D3D_SATURATION_ENABLE
-    CONTROL         "Slider2",IDC_D3D_SATURATION,"msctls_trackbar32",
-                    TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,125,155,60,10,0,
-                    HIDC_D3D_SATURATION
-    LTEXT           "100",IDC_D3D_SATURATION_DISP,190,155,13,8
+    LTEXT           "100",IDC_D3D_FEEDBACK_DISP,190,155,15,8
     PUSHBUTTON      "Reset",IDC_PROP_RESET,7,184,97,14,0,0,0x80b80447
     PUSHBUTTON      "Restore Default Settings",IDC_USE_DEFAULT,114,184,99,14,
                     0,0,0x80b80401
@@ -1065,7 +1069,7 @@ IDD_INTERFACE_OPTIONS DIALOGEX 0, 0, 202, 170
 STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_CONTEXTHELP
 CAPTION "Interface Options"
-FONT 8, "MS Sans Serif"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
 #ifdef MESS
     GROUPBOX        "Application Start",IDC_STATIC,5,5,200,85

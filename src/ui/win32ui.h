@@ -14,6 +14,7 @@
 #define WIN32UI_H
 
 #include <driver.h>
+#include "bitmask.h"
 #include "options.h"
 #include "ScreenShot.h"
 
@@ -67,5 +68,7 @@ int GetIndexFromSortedIndex(int sorted_index);
 int Mame32Main(HINSTANCE    hInstance,
                    LPSTR        lpCmdLine,
                    int          nCmdShow);
+
+BOOL MouseHasBeenMoved(void);
 
 #endif

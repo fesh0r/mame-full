@@ -306,22 +306,9 @@ BOOL DriverIsHarddisk(int driver_index)
 
 BOOL DriverHasOptionalBIOS(int driver_index)
 {
-	const struct RomModule *region, *rom;
-
 	const struct GameDriver *gamedrv = drivers[driver_index];
 
-	for (region = rom_first_region(gamedrv); region; region = rom_next_region(region))
-		if (ROMREGION_ISROMDATA(region))
-		{
-			for (rom=rom_first_file(region);rom;rom=rom_next_file(rom))
-			{
-				//dprintf("%s %i %i",ROM_GETNAME(rom),ROM_GETFLAGS(rom),ROM_GETBIOSFLAGS(rom));
-				if (ROM_GETBIOSFLAGS(rom) != 0)
-					return TRUE;
-			}
-		}
-
-	return FALSE;	
+	return gamedrv->bios != NULL;
 }
 
 BOOL DriverIsStereo(int driver_index)

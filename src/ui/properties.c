@@ -37,6 +37,7 @@
 #include <info.h>
 #include "audit.h"
 #include "audit32.h"
+#include "bitmask.h"
 #include "options.h"
 #include "file.h"
 #include "resource.h"
@@ -98,7 +99,6 @@ static void VolumeSelectionChange(HWND hwnd);
 static void AudioLatencySelectionChange(HWND hwnd);
 static void D3DScanlinesSelectionChange(HWND hwnd);
 static void D3DFeedbackSelectionChange(HWND hwnd);
-static void D3DSaturationSelectionChange(HWND hwnd);
 static void ZoomSelectionChange(HWND hwnd);
 static void UpdateDisplayModeUI(HWND hwnd, DWORD dwDepth, DWORD dwRefresh);
 static void InitializeDisplayModeUI(HWND hwnd);
@@ -257,8 +257,6 @@ static DWORD dwHelpIDs[] =
 	IDC_D3D_SCANLINES,      HIDC_D3D_SCANLINES,
 	IDC_D3D_FEEDBACK_ENABLE, HIDC_D3D_FEEDBACK,
 	IDC_D3D_FEEDBACK,       HIDC_D3D_FEEDBACK,
-	IDC_D3D_SATURATION_ENABLE, HIDC_D3D_SATURATION,
-	IDC_D3D_SATURATION,     HIDC_D3D_SATURATION,
 	IDC_ZOOM,               HIDC_ZOOM,
 	IDC_BIOS,               HIDC_BIOS,
 	IDC_CLEAN_STRETCH,      HIDC_CLEAN_STRETCH,
@@ -287,19 +285,6 @@ static struct ComboBoxEffect
 };
 
 #define NUMEFFECTS (sizeof(g_ComboBoxEffect) / sizeof(g_ComboBoxEffect[0]))
-
-static const char *bios_names[] =
-{
-	"Europe, 1 slot",
-	"Europe, 4 slot",
-	"US, 2 slot",
-	"US, 6 slot",
-	"Asia S3, Ver 6",
-	"Japan, Ver 6 VS",
-	"Japan, older",
-};
-
-#define NUMBIOSES (sizeof(bios_names) / sizeof(bios_names[0]))
 
 /***************************************************************
  * Public functions
@@ -788,6 +773,7 @@ INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 			case IDC_ROTATE:
 			case IDC_SAMPLERATE:
 			case IDC_ARTRES:
+			case IDC_CLEAN_STRETCH :
 				if (wNotifyCode == CBN_SELCHANGE)
 				{
 					changed = TRUE;
@@ -828,12 +814,14 @@ INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 				break;
 
 			case IDC_D3D_FILTER :
-				if (wNotifyCode == LBN_SELCHANGE)
+			case IDC_D3D_EFFECT :
+			case IDC_D3D_PRESCALE :
+				if (wNotifyCode == CBN_SELCHANGE)
 					changed = TRUE;
 				break;
 
-			case IDC_D3D_EFFECT :
-				if (wNotifyCode == LBN_SELCHANGE)
+			case IDC_BIOS :
+				if (wNotifyCode == CBN_SELCHANGE)
 					changed = TRUE;
 				break;
 
@@ -1358,7 +1346,6 @@ static void OptionsToProp(HWND hWnd, options_type* o)
 	// d3d
 	D3DScanlinesSelectionChange(hWnd);
 	D3DFeedbackSelectionChange(hWnd);
-	D3DSaturationSelectionChange(hWnd);
 
 	g_bInternalSet = FALSE;
 
@@ -1438,7 +1425,6 @@ static void SetPropEnabledControls(HWND hWnd)
 	EnableWindow(GetDlgItem(hWnd,IDC_D3D_ROTATE_EFFECTS),d3d);
 	EnableWindow(GetDlgItem(hWnd,IDC_D3D_SCANLINES_ENABLE),d3d);
 	EnableWindow(GetDlgItem(hWnd,IDC_D3D_FEEDBACK_ENABLE),d3d);
-	EnableWindow(GetDlgItem(hWnd,IDC_D3D_SATURATION_ENABLE),d3d);
 
 	hCtrl = GetDlgItem(hWnd,IDC_D3D_SCANLINES_ENABLE);
 	if (hCtrl)
@@ -1456,16 +1442,6 @@ static void SetPropEnabledControls(HWND hWnd)
 		EnableWindow(GetDlgItem(hWnd,IDC_D3D_FEEDBACK_DISP),enable);
 	}
 	
-	hCtrl = GetDlgItem(hWnd,IDC_D3D_SATURATION_ENABLE);
-	if (hCtrl)
-	{
-		BOOL enable = d3d && Button_GetCheck(hCtrl);
-		EnableWindow(GetDlgItem(hWnd,IDC_D3D_SATURATION),enable);
-		EnableWindow(GetDlgItem(hWnd,IDC_D3D_SATURATION_DISP),enable);
-	}
-	
-
-
 	/* Artwork options */
 	hCtrl = GetDlgItem(hWnd, IDC_ARTWORK);
 		
@@ -1744,8 +1720,6 @@ static void BuildDataMap(void)
 	DataMapAdd(IDC_D3D_SCANLINES, DM_INT,  CT_SLIDER,   &pGameOpts->d3d_scanlines, DM_INT, &pGameOpts->d3d_scanlines, 0, 0, 0);
 	DataMapAdd(IDC_D3D_FEEDBACK_ENABLE,DM_BOOL, CT_BUTTON, &pGameOpts->d3d_feedback_enable, DM_BOOL, &pGameOpts->d3d_feedback_enable, 0, 0, 0);
 	DataMapAdd(IDC_D3D_FEEDBACK,  DM_INT,  CT_SLIDER,   &pGameOpts->d3d_feedback,  DM_INT, &pGameOpts->d3d_feedback, 0, 0, 0);
-	DataMapAdd(IDC_D3D_SATURATION_ENABLE,DM_BOOL, CT_BUTTON, &pGameOpts->d3d_saturation_enable, DM_BOOL, &pGameOpts->d3d_saturation_enable, 0, 0, 0);
-	DataMapAdd(IDC_D3D_SATURATION, DM_INT,  CT_SLIDER,   &pGameOpts->d3d_saturation, DM_INT, &pGameOpts->d3d_saturation, 0, 0, 0);
 
 	/* input */
 	DataMapAdd(IDC_DEFAULT_INPUT, DM_INT,  CT_COMBOBOX, &g_nInputIndex,            DM_STRING, &pGameOpts->ctrlr, 0, 0, AssignInput);
@@ -2030,9 +2004,6 @@ static void InitializeMisc(HWND hDlg)
 	SendMessage(GetDlgItem(hDlg, IDC_D3D_FEEDBACK), TBM_SETRANGE,
 				(WPARAM)FALSE,
 				(LPARAM)MAKELONG(0, 100)); // [0, 100]
-	SendMessage(GetDlgItem(hDlg, IDC_D3D_SATURATION), TBM_SETRANGE,
-				(WPARAM)FALSE,
-				(LPARAM)MAKELONG(0, 100)); // [0, 100]
 	SendMessage(GetDlgItem(hDlg, IDC_ZOOM), TBM_SETRANGE,
 				(WPARAM)FALSE,
 				(LPARAM)MAKELONG(1, 8)); // [1, 8]
@@ -2102,11 +2073,6 @@ static void OptOnHScroll(HWND hwnd, HWND hwndCtl, UINT code, int pos)
 	if (hwndCtl == GetDlgItem(hwnd, IDC_D3D_FEEDBACK))
 	{
 		D3DFeedbackSelectionChange(hwnd);
-	}
-	else
-	if (hwndCtl == GetDlgItem(hwnd, IDC_D3D_SATURATION))
-	{
-		D3DSaturationSelectionChange(hwnd);
 	}
 	else
 	if (hwndCtl == GetDlgItem(hwnd, IDC_ZOOM))
@@ -2357,20 +2323,6 @@ static void D3DFeedbackSelectionChange(HWND hwnd)
 	/* Set the static display to the new value */
 	snprintf(buffer,sizeof(buffer),"%i",value);
 	Static_SetText(GetDlgItem(hwnd,IDC_D3D_FEEDBACK_DISP),buffer);
-
-}
-
-static void D3DSaturationSelectionChange(HWND hwnd)
-{
-	char buffer[100];
-	int value;
-
-	// Get the current value of the control
-	value = SendMessage(GetDlgItem(hwnd,IDC_D3D_SATURATION), TBM_GETPOS, 0, 0);
-
-	/* Set the static display to the new value */
-	snprintf(buffer,sizeof(buffer),"%i",value);
-	Static_SetText(GetDlgItem(hwnd,IDC_D3D_SATURATION_DISP),buffer);
 
 }
 
@@ -2714,17 +2666,36 @@ static void InitializeBIOSUI(HWND hwnd)
 
 	if (hCtrl)
 	{
-		int i;
-		
-		if (g_nGame == -1 || DriverHasOptionalBIOS(g_nGame))
+		const struct GameDriver *gamedrv = drivers[g_nGame];
+		const struct SystemBios *thisbios;
+
+		if (g_nGame == -1)
 		{
-			for (i=0;i<NUMBIOSES;i++)
-				ComboBox_AddString(hCtrl,bios_names[i]);
+			ComboBox_AddString(hCtrl,"0");
+			ComboBox_AddString(hCtrl,"1");
+			ComboBox_AddString(hCtrl,"2");
+			ComboBox_AddString(hCtrl,"3");
+			ComboBox_AddString(hCtrl,"4");
+			ComboBox_AddString(hCtrl,"5");
+			ComboBox_AddString(hCtrl,"6");
+
+			return;
 		}
-		else
+
+		if (DriverHasOptionalBIOS(g_nGame) == FALSE)
 		{
 			ComboBox_AddString(hCtrl,"None");
+			return;
 		}
+
+		thisbios = gamedrv->bios;
+
+		while (!BIOSENTRY_ISEND(thisbios))
+		{
+			ComboBox_AddString(hCtrl,thisbios->_description);
+			thisbios++;
+		}
+
 	}
 }
 

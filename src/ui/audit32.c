@@ -23,7 +23,7 @@
 #include <windowsx.h>
 #include <commctrl.h>
 #include <stdio.h>
-
+#include <richedit.h>
 #include "resource.h"
 
 #include <driver.h>
@@ -69,6 +69,7 @@ static BOOL bCancel = FALSE;
 
 void AuditDialog(HWND hParent)
 {
+	HMODULE hModule = NULL;
 	rom_index         = 0;
 	roms_correct      = 0;
 	roms_incorrect    = 0;
@@ -76,7 +77,20 @@ void AuditDialog(HWND hParent)
 	samples_correct   = 0;
 	samples_incorrect = 0;
 
-	DialogBox(GetModuleHandle(NULL),MAKEINTRESOURCE(IDD_AUDIT),hParent,AuditWindowProc);
+	//RS use Riched32.dll
+	hModule = LoadLibrary("Riched32.dll");
+	if( hModule )
+	{
+		DialogBox(GetModuleHandle(NULL),MAKEINTRESOURCE(IDD_AUDIT),hParent,AuditWindowProc);
+		FreeLibrary( hModule );
+		hModule = NULL;
+	}
+	else
+	{
+	    MessageBox(GetMainWindow(),"Unable to Load Riched32.dll","Error",
+				   MB_OK | MB_ICONERROR);
+	}
+	
 }
 
 void InitGameAudit(int gameIndex)
@@ -130,17 +144,21 @@ static INT_PTR CALLBACK AuditWindowProc(HWND hDlg, UINT Msg, WPARAM wParam, LPAR
 	static HANDLE hThread;
 	static DWORD dwThreadID;
 	DWORD dwExitCode;
+	HWND hEdit;
 
 	switch (Msg)
 	{
 	case WM_INITDIALOG:
 		hAudit = hDlg;
+		//RS 20030613 Set Bkg of RichEdit Ctrl
+		hEdit = GetDlgItem(hAudit, IDC_AUDIT_DETAILS);
+		if (hEdit != NULL)
+			SendMessage( hEdit, EM_SETBKGNDCOLOR, FALSE, GetSysColor(COLOR_BTNFACE) );
 		SendDlgItemMessage(hDlg, IDC_ROMS_PROGRESS,    PBM_SETRANGE, 0, MAKELPARAM(0, GetNumGames()));
 		SendDlgItemMessage(hDlg, IDC_SAMPLES_PROGRESS, PBM_SETRANGE, 0, MAKELPARAM(0, GetNumGames()));
 		bPaused = FALSE;
 		bCancel = FALSE;
 		rom_index = 0;
-
 		hThread = CreateThread(NULL, 0, AuditThreadProc, hDlg, 0, &dwThreadID);
 		return 1;
 
@@ -329,9 +347,20 @@ static void CLIB_DECL DetailsPrintf(const char *fmt, ...)
 	va_list marker;
 	char	buffer[2000];
 	char * s;
-	
+	long l;
+
+	//RS 20030613 Different Ids for Property Page and Dialog
+	// so see which one's currently instantiated
 	hEdit = GetDlgItem(hAudit, IDC_AUDIT_DETAILS);
+	if (hEdit ==  NULL)
+		hEdit = GetDlgItem(hAudit, IDC_AUDIT_DETAILS_PROP);
 	
+	if (hEdit == NULL)
+	{
+		dprintf("audit detailsprintf() can't find any audit control");
+		return;
+	}
+
 	va_start(marker, fmt);
 	
 	vsprintf(buffer, fmt, marker);
@@ -339,9 +368,13 @@ static void CLIB_DECL DetailsPrintf(const char *fmt, ...)
 	va_end(marker);
 
 	s = ConvertToWindowsNewlines(buffer);
+	//RS this works for both, Edit COntrol and RichEditControl
+	l = Edit_GetTextLength(hEdit);
+	SendMessage( hEdit, EM_REPLACESEL, FALSE, (WPARAM)s );
 
-	Edit_SetSel(hEdit, Edit_GetTextLength(hEdit), Edit_GetTextLength(hEdit));
-	Edit_ReplaceSel(hEdit, s);
+	// used to be
+	//Edit_SetSel(hEdit, Edit_GetTextLength(hEdit), Edit_GetTextLength(hEdit));
+	//Edit_ReplaceSel(hEdit, s);
 }
 
 static const char * StatusString(int iStatus)
