@@ -54,6 +54,7 @@ static int video_verify_bpp(struct rc_option *option, const char *arg,
 static int video_verify_vectorres(struct rc_option *option, const char *arg,
    int priority);
 static void osd_free_colors(void);
+static void update_visible_area(struct mame_display *display);
 
 struct rc_option video_opts[] = {
    /* name, shortname, type, dest, deflt, min, max, func, help */
@@ -236,8 +237,11 @@ static int video_verify_vectorres(struct rc_option *option, const char *arg,
 }
 
 int osd_create_display(int width, int height, int depth,
-   int fps, int attributes, int orientation)
+   float fps, int attributes, int orientation, UINT32 *rgb_components)
 {
+   int r, g, b;
+   struct mame_display dummy_display;
+
    bitmap_depth = (depth != 15) ? depth : 16;
 
    rgb_direct = (depth == 15) || (depth == 32);
@@ -286,13 +290,57 @@ int osd_create_display(int width, int height, int depth,
    if (sysdep_create_display(bitmap_depth) != OSD_OK)
       return -1;
    
-   /* a lott of display_targets need to have the display initialised before
+   /* a lot of display_targets need to have the display initialised before
       initialising any input devices */
-   if (osd_input_initpost()!=OSD_OK) return -1;
+   if (osd_input_initpost() != OSD_OK) return -1;
    
    if (use_dirty) fprintf(stderr_file,"Using dirty_buffer strategy\n");
-   if (bitmap_depth==16) fprintf(stderr_file,"Using 16bpp video mode\n");
-   
+   if (bitmap_depth == 16) fprintf(stderr_file,"Using 16bpp video mode\n");
+
+   if (!(normal_palette = sysdep_palette_create(bitmap_depth, 65536)))
+   {
+      return 1;
+   }
+
+   /* alloc the total number of colors that can be used by the palette */
+   if (sysdep_display_alloc_palette(video_colors_used))
+   {
+      osd_free_colors();
+      return 1;
+   }
+
+   sysdep_palette_set_gamma(normal_palette, gamma_correction);
+   sysdep_palette_set_brightness(normal_palette, 
+      brightness * brightness_paused_adjust);
+
+   /* initialize the palette to a fixed 5-5-5 mapping */
+   for (r = 0; r < 32; r++)
+      for (g = 0; g < 32; g++)
+         for (b = 0; b < 32; b++)
+         {
+            int idx = (r << 10) | (g << 5) | b;
+            sysdep_palette_set_pen(normal_palette, idx, r, g, b);
+         }
+
+   current_palette = normal_palette;
+
+   /* fill in the resulting RGB components */
+   if (rgb_components)
+   {
+      if (bitmap_depth == 32)
+      {
+         rgb_components[0] = (0xff << 16) | (0x00 << 8) | 0x00;
+         rgb_components[1] = (0x00 << 16) | (0xff << 8) | 0x00;
+         rgb_components[2] = (0x00 << 16) | (0x00 << 8) | 0xff;
+      }
+      else
+      {
+         rgb_components[0] = 0x7c00;
+         rgb_components[1] = 0x03e0;
+         rgb_components[2] = 0x001f;
+      }
+   }
+
    return 0;
 }   
 
@@ -375,6 +423,86 @@ static void osd_change_display_settings(struct my_rectangle *new_visual,
       sysdep_palette_mark_dirty(current_palette);
 }
 
+static void update_visible_area(struct mame_display *display)
+{
+   normal_visual.min_x = display->game_visible_area.min_x;
+   normal_visual.max_x = display->game_visible_area.max_x;
+   normal_visual.min_y = display->game_visible_area.min_y;
+   normal_visual.max_y = display->game_visible_area.max_y;
+
+   /* round to 8, since the new dirty code works with 8x8 blocks,
+      and we need to round to sizeof(long) for the long copies anyway */
+   if (normal_visual.min_x & 7)
+   {
+      if((normal_visual.min_x - (normal_visual.min_x & ~7)) < 4)
+         normal_visual.min_x &= ~7;
+       else
+         normal_visual.min_x = (normal_visual.min_x + 7) & ~7;
+   }
+   if ((normal_visual.max_x + 1) & 7)
+   {
+      if(((normal_visual.max_x + 1) - ((normal_visual.max_x + 1) & ~7)) > 4)
+         normal_visual.max_x = ((normal_visual.max_x + 1 + 7) & ~7) - 1;
+       else
+         normal_visual.max_x = ((normal_visual.max_x + 1) & ~7) - 1;
+   }
+   
+   /* rounding of the y-coordinates is only nescesarry when we are doing dirty */
+   if (use_dirty)
+   {
+      if (normal_visual.min_y & 7)
+      {
+         if((normal_visual.min_y - (normal_visual.min_y & ~7)) < 4)
+            normal_visual.min_y &= ~7;
+          else
+            normal_visual.min_y = (normal_visual.min_y + 7) & ~7;
+      }
+      if ((normal_visual.max_y + 1) & 7)
+      {
+         if(((normal_visual.max_y + 1) - ((normal_visual.max_y + 1) & ~7)) > 4)
+            normal_visual.max_y = ((normal_visual.max_y + 1 + 7) & ~7) - 1;
+          else
+            normal_visual.max_y = ((normal_visual.max_y + 1) & ~7) - 1;
+      }
+   }
+   
+   if(!debugger_has_focus)
+      osd_change_display_settings(&normal_visual, normal_palette,
+         normal_widthscale, normal_heightscale, normal_use_aspect_ratio);
+   
+   set_ui_visarea (normal_visual.min_x, normal_visual.min_y, normal_visual.max_x, normal_visual.max_y);
+}
+
+static void update_palette(struct mame_display *display)
+{
+	int i, j;
+
+	// loop over dirty colors in batches of 32
+	for (i = 0; i < display->game_palette_entries; i += 32)
+	{
+//		UINT32 dirtyflags = palette_lookups_invalid ? ~0 : display->game_palette_dirty[i / 32];
+		UINT32 dirtyflags = display->game_palette_dirty[i / 32];
+		if (dirtyflags)
+		{
+			display->game_palette_dirty[i / 32] = 0;
+			
+			// loop over all 32 bits and update dirty entries
+			for (j = 0; j < 32; j++, dirtyflags >>= 1)
+				if (dirtyflags & 1)
+				{
+					// extract the RGB values
+					rgb_t rgbvalue = display->game_palette[i + j];
+					int r = RGB_RED(rgbvalue);
+					int g = RGB_GREEN(rgbvalue);
+					int b = RGB_BLUE(rgbvalue);
+
+					sysdep_palette_set_pen(current_palette, 
+						i + j, r, g, b);
+				}
+		}
+	}
+}
+
 void osd_set_visible_area(int min_x,int max_x,int min_y,int max_y)
 {
    normal_visual.min_x = min_x;
@@ -391,12 +519,12 @@ void osd_set_visible_area(int min_x,int max_x,int min_y,int max_y)
        else
          normal_visual.min_x = (normal_visual.min_x + 7) & ~7;
    }
-   if ((normal_visual.max_x+1) & 7)
+   if ((normal_visual.max_x + 1) & 7)
    {
-      if(((normal_visual.max_x+1) - ((normal_visual.max_x+1) & ~7)) > 4)
-         normal_visual.max_x = ((normal_visual.max_x+1 + 7) & ~7) - 1;
+      if(((normal_visual.max_x + 1) - ((normal_visual.max_x + 1) & ~7)) > 4)
+         normal_visual.max_x = ((normal_visual.max_x + 1 + 7) & ~7) - 1;
        else
-         normal_visual.max_x = ((normal_visual.max_x+1) & ~7) - 1;
+         normal_visual.max_x = ((normal_visual.max_x + 1) & ~7) - 1;
    }
    
    /* rounding of the y-coordinates is only nescesarry when we are doing dirty */
@@ -409,12 +537,12 @@ void osd_set_visible_area(int min_x,int max_x,int min_y,int max_y)
           else
             normal_visual.min_y = (normal_visual.min_y + 7) & ~7;
       }
-      if ((normal_visual.max_y+1) & 7)
+      if ((normal_visual.max_y + 1) & 7)
       {
-         if(((normal_visual.max_y+1) - ((normal_visual.max_y+1) & ~7)) > 4)
-            normal_visual.max_y = ((normal_visual.max_y+1 + 7) & ~7) - 1;
+         if(((normal_visual.max_y + 1) - ((normal_visual.max_y + 1) & ~7)) > 4)
+            normal_visual.max_y = ((normal_visual.max_y + 1 + 7) & ~7) - 1;
           else
-            normal_visual.max_y = ((normal_visual.max_y+1) & ~7) - 1;
+            normal_visual.max_y = ((normal_visual.max_y + 1) & ~7) - 1;
       }
    }
    
@@ -423,210 +551,6 @@ void osd_set_visible_area(int min_x,int max_x,int min_y,int max_y)
          normal_widthscale, normal_heightscale, normal_use_aspect_ratio);
    
    set_ui_visarea (normal_visual.min_x, normal_visual.min_y, normal_visual.max_x, normal_visual.max_y);
-}
-
-int osd_allocate_colors(unsigned int totalcolors, const unsigned char *palette,
-   unsigned int *rgb_components, const unsigned char *debugger_palette,
-   unsigned int *debug_pens)
-{
-   int i = 0;
-   int r, g, b;
-   int normal_colors;
-   UINT8 rr,gg,bb;
-   rr=gg=bb=0;
-   /* if we have debug pens, map them 1:1 */
-   if (debug_pens)
-   {
-      for (i = 0; i < DEBUGGER_TOTAL_COLORS; i++)
-      {
-         debug_pens[i] = i;
-      }
-   }
-
-   fprintf(stderr_file, "Game uses %d colors\n", totalcolors);
-
-   if (rgb_direct)
-   {
-      if (bitmap_depth == 16)
-      {
-         normal_colors = 32768;
-
-         /* create the normal palette */
-         if (!(normal_palette = sysdep_palette_create(bitmap_depth,
-                                                      normal_colors)))
-         {
-            return 1;
-         }
-      }
-      else
-      {
-         normal_colors = 2;
-
-         /* create the normal palette */
-         if (!(normal_palette = sysdep_palette_create(bitmap_depth, 0)))
-         {
-            return 1;
-         }
-      }
-   }
-   else
-   {
-      normal_colors = totalcolors + 2;
-
-      /* create the normal palette */
-      if (!(normal_palette = sysdep_palette_create(bitmap_depth, 
-                                                   normal_colors)))
-      {
-         return 1;
-      }
-   }
-
-   video_colors_used = normal_colors;
-
-   /* create the debug palette */
-   if (debug_pens)
-   {
-      if (!(debug_palette = sysdep_palette_create(16, DEBUGGER_TOTAL_COLORS)))
-      {
-         osd_free_colors();
-         return 1;
-      }
-
-      if (DEBUGGER_TOTAL_COLORS > video_colors_used)
-      {
-         video_colors_used = DEBUGGER_TOTAL_COLORS;
-      }
-   }
-
-   /* now alloc the total number of colors used by both palettes */
-   if (sysdep_display_alloc_palette(video_colors_used))
-   {
-      osd_free_colors();
-      return 1;
-   }
-   
-   sysdep_palette_set_gamma(normal_palette, gamma_correction);
-   sysdep_palette_set_brightness(normal_palette, 
-      brightness * brightness_paused_adjust);
-
-   if (debug_palette)
-   {
-      sysdep_palette_set_gamma(debug_palette, gamma_correction);
-      sysdep_palette_set_brightness(debug_palette, 
-         brightness * brightness_paused_adjust);
-
-      for (i = 0; i < DEBUGGER_TOTAL_COLORS; i++)
-      {
-         sysdep_palette_set_pen(debug_palette, i, debugger_palette[i * 3],
-            debugger_palette[i * 3 + 1], debugger_palette[i * 3 + 2]);
-      }
-   }
-   
-   /* init the palette */
-   if (rgb_direct) 
-   {
-      if (bitmap_depth == 16)
-      {
-         i = 0;
-
-         for (r = 0;r < 32;r++)
-         {
-            for (g = 0;g < 32;g++)
-            {
-               for (b = 0;b < 32;b++)
-               {
-                  sysdep_palette_set_pen(normal_palette, i,
-                     (r << 3) | (r >> 2),
-                     (g << 3) | (g >> 2),
-                     (b << 3) | (b >> 2));
-                  i++;
-               }
-            }
-         }
-
-         rgb_components[0] = 0x7c00;
-         rgb_components[1] = 0x03e0;
-         rgb_components[2] = 0x001f;
-
-         Machine->uifont->colortable[0] = 0x0000;
-         Machine->uifont->colortable[1] = 0x7fff;
-         Machine->uifont->colortable[2] = 0x7fff;
-         Machine->uifont->colortable[3] = 0x0000;
-      }
-      else
-      {
-         for (i = 0; i < totalcolors; i++)
-         {
-            r = palette[3 * i + 0];
-            g = palette[3 * i + 1];
-            b = palette[3 * i + 2];
-            *rgb_components++ = (r << 16) | (g << 8) | b; 
-         }
-
-         Machine->uifont->colortable[0] = 0;
-         Machine->uifont->colortable[1] = 0xffffff;
-         Machine->uifont->colortable[2] = 0xffffff;
-         Machine->uifont->colortable[3] = 0;
-      }
-   }
-   else
-   {
-      /* normal palette */
-
-      /* initialize the palette to black */
-      for (i = 0; i < normal_colors; i++)
-      {
-         sysdep_palette_set_pen(normal_palette, i, 0, 0, 0);
-      }
-
-      /* mark the palette dirty to start */
-      sysdep_palette_mark_dirty(normal_palette);
-
-      /* reserve color totalcolors + 1 for the user interface text */
-      if (totalcolors < 65535)
-      {
-         sysdep_palette_set_pen(normal_palette, totalcolors + 1, 0xFF, 0xFF, 0xFF);
-         Machine->uifont->colortable[0] = totalcolors;
-         Machine->uifont->colortable[1] = totalcolors + 1;
-         Machine->uifont->colortable[2] = totalcolors + 1;
-         Machine->uifont->colortable[3] = totalcolors;
-      }
-      else
-      {
-         Machine->uifont->colortable[0] = 0;
-         Machine->uifont->colortable[1] = 65535;
-         Machine->uifont->colortable[2] = 65535;
-         Machine->uifont->colortable[3] = 0;
-      }
-
-      for (i = 0; i < totalcolors; i++)
-      {
-         sysdep_palette_set_pen(normal_palette, i, palette[i * 3], 
-            palette[i * 3 + 1], palette[i * 3 + 2]);
-      }
-#if (defined svgafx) || (defined xfx) 
-      color_values = malloc(video_colors_used * sizeof(UINT16));
-#endif
-
-      for (i = 0; i < totalcolors; i++) {
-	 palette_get_color(i, (UINT8*)&rr, (UINT8*)&gg, (UINT8*)&bb);
-
-#if (defined svgafx) || (defined xfx) 
-         color_values[i] = (((rr >> 3) << 10) | ((gg >> 3) << 5) | (bb >> 3));
-#endif
-      }
-
-#if (defined svgafx) || (defined xfx) 
-	color_values[totalcolors] = 0x0000;
-	color_values[totalcolors+1] = 0x7FFF;
-#endif
-
-   }
-   
-   /* set the current_palette to the normal_palette */
-   current_palette = normal_palette;
-   
-   return 0;
 }
 
 static void osd_free_colors(void)
@@ -648,15 +572,6 @@ void osd_get_pen(int pen,unsigned char *red, unsigned char *green, unsigned char
     sysdep_palette_get_pen(normal_palette, pen, red, green, blue);
 }
 
-void osd_modify_pen(int pen, unsigned char red,unsigned char green,unsigned char blue) 
-{
-#if (defined svgafx) || (defined xfx) 
-   color_values[pen] = (((red >> 3) << 10) | ((green >> 3) << 5) | (blue >> 3));
-#endif
-
-   sysdep_palette_set_pen(normal_palette, pen, red, green, blue);
-}
-
 static int skip_next_frame = 0;
 
 typedef int (*skip_next_frame_func)(int show_fps_counter, struct mame_bitmap *bitmap);
@@ -669,6 +584,11 @@ static skip_next_frame_func skip_next_frame_functions[FRAMESKIP_DRIVER_COUNT] =
 int osd_skip_this_frame(void)
 {   
    return skip_next_frame;
+}
+
+int osd_get_frameskip(void)
+{
+	return autoframeskip ? -(frameskip + 1) : frameskip;
 }
 
 void osd_debugger_focus(int new_debugger_focus)
@@ -688,17 +608,16 @@ void osd_debugger_focus(int new_debugger_focus)
 }
 
 /* Update the display. */
-void osd_update_video_and_audio(struct mame_bitmap *normal_bitmap,
-   struct mame_bitmap *debug_bitmap, int leds_status)
+void osd_update_video_and_audio(struct mame_display *display)
 {
-   static int showfps=0, showfpstemp=0; 
+   static int showfps = 0, showfpstemp = 0; 
    int skip_this_frame;
-   struct mame_bitmap *current_bitmap = normal_bitmap;
+   struct mame_bitmap *current_bitmap = display->game_bitmap;
    
    
 /* save the active bitmap for use in osd_clearbitmap, I know this
       sucks blame the core ! */
-   scrbitmap = normal_bitmap;
+   scrbitmap = display->game_bitmap;
    
    if (input_ui_pressed(IPT_UI_FRAMESKIP_INC))
    {
@@ -775,12 +694,12 @@ void osd_update_video_and_audio(struct mame_bitmap *normal_bitmap,
          frameskipper = 1;
    }
    
-   if (debug_bitmap)
+   if (display->debug_bitmap)
    {
       if (input_ui_pressed(IPT_UI_TOGGLE_DEBUG))
          osd_debugger_focus(!debugger_has_focus);
       if (debugger_has_focus)
-         current_bitmap = debug_bitmap;
+         current_bitmap = display->debug_bitmap;
    }
    /* this should not happen I guess, but better safe than sorry */
    else if (debugger_has_focus)
@@ -838,10 +757,22 @@ void osd_update_video_and_audio(struct mame_bitmap *normal_bitmap,
    skip_this_frame = skip_next_frame;
    skip_next_frame =
       (*skip_next_frame_functions[frameskipper])(showfps || showfpstemp,
-        normal_bitmap);
+        display->game_bitmap);
    
    if (sound_stream && sound_enabled)
       sound_stream_update(sound_stream);
+
+   /* if the visible area has changed, update it */
+   if (display->changed_flags & GAME_VISIBLE_AREA_CHANGED)
+      update_visible_area(display);
+
+   /* if the debugger focus changed, update it */
+   /*if (display->changed_flags & DEBUG_FOCUS_CHANGED)
+      win_set_debugger_focus(display->debug_focus); */
+
+   /* if the game palette has changed, update it */
+   if (display->changed_flags & GAME_PALETTE_CHANGED)
+      update_palette(display);
 
    if (skip_this_frame == 0)
    {
@@ -850,8 +781,18 @@ void osd_update_video_and_audio(struct mame_bitmap *normal_bitmap,
       sysdep_update_display(current_bitmap);
       profiler_mark(PROFILER_END);
    }
+
+   /* update the debugger */
+   /*if (display->changed_flags & DEBUG_BITMAP_CHANGED)
+   {
+      win_update_debug_window(display->debug_bitmap, display->debug_palette);
+      debugger_was_visible = 1;
+   }*/
+
+   /* if the LEDs have changed, update them */
+   if (display->changed_flags & LED_STATE_CHANGED)
+      sysdep_set_leds(display->led_state);
    
-   sysdep_set_leds(leds_status);
    osd_poll_joysticks();
 }
 
@@ -883,9 +824,10 @@ int osd_get_brightness(void)
 }
 
 #ifndef xgl
-void osd_save_snapshot(struct mame_bitmap *bitmap)
+void osd_save_snapshot(struct mame_bitmap *bitmap, 
+		const struct rectangle *bounds)
 {
-   save_screen_snapshot(bitmap);
+   save_screen_snapshot(bitmap, bounds);
 }
 #endif
 
