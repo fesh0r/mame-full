@@ -812,6 +812,11 @@ void osd_update_video_and_audio(struct mame_display *display)
 	struct rectangle updatebounds = display->game_bitmap_update;
 	cycles_t cps = osd_cycles_per_second();
 
+#ifdef MESS
+	if (!throttle && (display->changed_flags & GAME_OPTIONAL_FRAMESKIP))
+		display->changed_flags &= ~GAME_VISIBLE_AREA_CHANGED;
+#endif
+
 	// if this is the first time through, initialize the previous time value
 	if (warming_up)
 	{

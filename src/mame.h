@@ -240,7 +240,9 @@ struct GameOptions
 #define DEBUG_PALETTE_CHANGED		0x00000020
 #define DEBUG_FOCUS_CHANGED			0x00000040
 #define LED_STATE_CHANGED			0x00000080
-
+#ifdef MESS
+#define GAME_OPTIONAL_FRAMESKIP     0x00000100
+#endif
 
 /* the main mame_display structure, containing the current state of the */
 /* video display */

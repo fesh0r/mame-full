@@ -1181,14 +1181,14 @@ void update_video_and_audio(void)
 	debug_trace_delay = 0;
 #endif
 
-#ifdef MESS
-	if (skip_this_frame == 1)
-		skipped_it = 1;
-	skip_this_frame = -1;
-#endif
-
 	/* fill in our portion of the display */
 	current_display.changed_flags = 0;
+
+#ifdef MESS
+	if (skip_this_frame == 1)
+		current_display.changed_flags |= GAME_OPTIONAL_FRAMESKIP;
+	skip_this_frame = -1;
+#endif
 	
 	/* set the main game bitmap */
 	current_display.game_bitmap = Machine->scrbitmap;
