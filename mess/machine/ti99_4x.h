@@ -34,6 +34,14 @@ enum
 	region_cpu1_len_4p = 0x110700	/* total len */
 };
 
+enum
+{
+	offset_rom0_8 = 0x0000,			/*  system ROM (32kbytes???) */
+
+	offset_sram_8 = 0x8000,			/* scratch RAM (2kbytes) */
+	offset_xram_8 = 0x8800,			/* extended RAM (64kbytes, expandable to almost 16MBytes) */
+	region_cpu1_len_8 = 0x18800		/* total len */
+};
 
 /* offsets for region_dsr */
 enum
@@ -73,7 +81,9 @@ typedef enum
 	xRAM_kind_foundation_512k,	/* 512kb foundation */
 	xRAM_kind_myarc_128k,		/* 128kb myarc clone (no ROM) */
 	xRAM_kind_myarc_512k,		/* 512kb myarc clone (no ROM) */
-	xRAM_kind_99_4p_1Mb			/* ti99/4p super AMS clone */
+
+	xRAM_kind_99_4p_1Mb,		/* ti99/4p super AMS clone */
+	xRAM_kind_99_8				/* ti99/8 memory mapper */
 } xRAM_kind_t;
 
 /* enum for fdc config */
@@ -91,13 +101,17 @@ typedef enum
 enum
 {
 	input_port_config = 0,
-	input_port_keyboard,
-	input_port_mouse_buttons = input_port_keyboard+3,	/* optional mouse */
-		input_port_mouse_buttons_shift = 13,			/* hack: we share this port with the wired joysticks */
-	input_port_mousex = input_port_keyboard+4,			/* optional mouse */
+	input_port_mousex,			/* optional mouse */
 	input_port_mousey,									/* optional mouse */
-	input_port_caps_lock = input_port_mousey+1,			/* /4a only */
-	input_port_IR_joysticks = input_port_mousey+1,		/* /4 only */
+	input_port_keyboard,
+
+	input_port_mouse_buttons = input_port_keyboard+3,	/* /4x only: optional mouse */
+	input_port_mouse_buttons_8 = input_port_keyboard+16,/* /8 only: optional mouse */
+		input_port_mouse_buttons_shift = 13,			/* hack: we share this port with the wired joysticks */
+
+	input_port_caps_lock = input_port_keyboard+4,		/* /4a only */
+
+	input_port_IR_joysticks = input_port_keyboard+4,	/* /4 only */
 	input_port_IR_keypads = input_port_IR_joysticks+8	/* /4 only */
 };
 
@@ -129,6 +143,7 @@ enum
 void init_ti99_4(void);
 void init_ti99_4a(void);
 void init_ti99_4ev(void);
+void init_ti99_8(void);
 void init_ti99_4p(void);
 
 void machine_init_ti99(void);
@@ -172,3 +187,6 @@ READ16_HANDLER ( ti99_4p_rw_rgpl );
 WRITE16_HANDLER ( ti99_4p_ww_wgpl );
 
 extern void tms9901_set_int2(int state);
+
+READ_HANDLER ( ti99_8_r );
+WRITE_HANDLER ( ti99_8_w );

@@ -68,6 +68,12 @@ WRITE_HANDLER ( geneve_peb_CRU_w );
 READ_HANDLER ( geneve_peb_r );
 WRITE_HANDLER ( geneve_peb_w );
 
+READ_HANDLER ( ti99_8_peb_CRU_r );
+WRITE_HANDLER ( ti99_8_peb_CRU_w );
+#define ti99_8_peb_r geneve_peb_r
+#define ti99_8_peb_w geneve_peb_w
+
+
 READ16_HANDLER ( ti99_4p_peb_CRU_r );
 WRITE16_HANDLER ( ti99_4p_peb_CRU_w );
 READ16_HANDLER ( ti99_4p_peb_r );

@@ -165,6 +165,7 @@ PORT_END
 /* TI99/4a: 48-key keyboard, plus two optional joysticks (2 shift keys) */
 INPUT_PORTS_START(ti99_4a)
 
+	/* 1 port for config */
 	PORT_START	/* config */
 		PORT_BITX( config_xRAM_mask << config_xRAM_bit, xRAM_kind_TI << config_xRAM_bit, IPT_DIPSWITCH_NAME, "RAM extension", KEYCODE_NONE, IP_JOY_NONE )
 			PORT_DIPSETTING( xRAM_kind_none << config_xRAM_bit,				"none" )
@@ -195,6 +196,16 @@ INPUT_PORTS_START(ti99_4a)
 			PORT_DIPSETTING( 0x0000, DEF_STR( Off ) )
 			PORT_DIPSETTING( 1 << config_mecmouse_bit, DEF_STR( On ) )
 
+
+	/* 2 ports for mouse */
+	PORT_START /* Mouse - X AXIS */
+		PORT_ANALOGX( 0xff, 0x00, IPT_TRACKBALL_X | IPF_PLAYER1, 100, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
+
+	PORT_START /* Mouse - Y AXIS */
+		PORT_ANALOGX( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_PLAYER1, 100, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
+
+
+	/* 4 ports for keyboard and joystick + mouse buttons */
 	PORT_START	/* col 0 */
 		PORT_BITX(0x0088, IP_ACTIVE_LOW, IPT_UNUSED, DEF_STR( Unused ), IP_KEY_NONE, IP_JOY_NONE)
 		/* The original control key is located on the left, but we accept the
@@ -277,14 +288,6 @@ INPUT_PORTS_START(ti99_4a)
 		PORT_BIT(0x4000, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER1)
 
 
-	/* 2 ports for mouse */
-	PORT_START /* Mouse - X AXIS */
-		PORT_ANALOGX( 0xff, 0x00, IPT_TRACKBALL_X | IPF_PLAYER1, 100, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
-
-	PORT_START /* Mouse - Y AXIS */
-		PORT_ANALOGX( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_PLAYER1, 100, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
-
-
 	PORT_START	/* one more port for Alpha line */
 		PORT_BITX(0x0010, IP_ACTIVE_HIGH, IPT_KEYBOARD | IPF_TOGGLE, "Alpha Lock", KEYCODE_CAPSLOCK, IP_JOY_NONE)
 
@@ -297,6 +300,7 @@ INPUT_PORTS_END
 /* TI99/4: 41-key keyboard, plus two optional joysticks  (2 space keys) */
 INPUT_PORTS_START(ti99_4)
 
+	/* 1 port for config */
 	PORT_START	/* config */
 		PORT_BITX( config_xRAM_mask << config_xRAM_bit, xRAM_kind_TI << config_xRAM_bit, IPT_DIPSWITCH_NAME, "RAM extension", KEYCODE_NONE, IP_JOY_NONE )
 			PORT_DIPSETTING( xRAM_kind_none << config_xRAM_bit,				"none" )
@@ -330,6 +334,16 @@ INPUT_PORTS_START(ti99_4)
 			PORT_DIPSETTING( 0x0000, DEF_STR( Off ) )
 			PORT_DIPSETTING( 1 << config_mecmouse_bit, DEF_STR( On ) )
 
+
+	/* 2 ports for mouse */
+	PORT_START /* Mouse - X AXIS */
+		PORT_ANALOGX( 0xff, 0x00, IPT_TRACKBALL_X | IPF_PLAYER1, 100, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
+
+	PORT_START /* Mouse - Y AXIS */
+		PORT_ANALOGX( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_PLAYER1, 100, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
+
+
+	/* 4 ports for keyboard and joystick + mouse buttons */
 	PORT_START	/* col 0 */
 		PORT_KEY2(0x0080, IP_ACTIVE_LOW, "1 !", KEYCODE_1, IP_JOY_NONE,			'1',	'!')
 		PORT_KEY1(0x0040, IP_ACTIVE_LOW, "Q QUIT", KEYCODE_Q, IP_JOY_NONE,		'Q')
@@ -401,14 +415,6 @@ INPUT_PORTS_START(ti99_4)
 		/* mouse buttons (sorry, but I had to recycle unused input bytes) */
 		PORT_BIT(0x2000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1)
 		PORT_BIT(0x4000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2)
-
-
-	/* 2 ports for mouse */
-	PORT_START /* Mouse - X AXIS */
-	PORT_ANALOGX( 0xff, 0x00, IPT_TRACKBALL_X | IPF_PLAYER1, 100, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
-
-	PORT_START /* Mouse - Y AXIS */
-	PORT_ANALOGX( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_PLAYER1, 100, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
 
 
 	/* 13 pseudo-ports for IR remote handsets */
@@ -620,6 +626,7 @@ static MACHINE_DRIVER_START(ti99_4_60hz)
 	/* video hardware */
 	MDRV_TMS9928A( &tms9918_interface )
 
+	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(0)
 	MDRV_SOUND_ADD(SN76496, tms9919interface)
 	MDRV_SOUND_ADD(TMS5220, tms5220interface)
@@ -650,6 +657,7 @@ static MACHINE_DRIVER_START(ti99_4_50hz)
 	/* video hardware */
 	MDRV_TMS9928A( &tms9929_interface )
 
+	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(0)
 	MDRV_SOUND_ADD(SN76496, tms9919interface)
 	MDRV_SOUND_ADD(TMS5220, tms5220interface)
@@ -680,6 +688,7 @@ static MACHINE_DRIVER_START(ti99_4a_60hz)
 	/* video hardware */
 	MDRV_TMS9928A( &tms9918a_interface )
 
+	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(0)
 	MDRV_SOUND_ADD(SN76496, tms9919interface)
 	MDRV_SOUND_ADD(TMS5220, tms5220interface)
@@ -710,6 +719,7 @@ static MACHINE_DRIVER_START(ti99_4a_50hz)
 	/* video hardware */
 	MDRV_TMS9928A( &tms9929a_interface )
 
+	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(0)
 	MDRV_SOUND_ADD(SN76496, tms9919interface)
 	MDRV_SOUND_ADD(TMS5220, tms5220interface)
@@ -752,6 +762,7 @@ static MACHINE_DRIVER_START(ti99_4ev_60hz)
 	/*MDRV_VIDEO_EOF(name)*/
 	MDRV_VIDEO_UPDATE(v9938)
 
+	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(0)
 	MDRV_SOUND_ADD(SN76496, tms9919interface)
 	MDRV_SOUND_ADD(TMS5220, tms5220interface)

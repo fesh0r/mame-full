@@ -53,6 +53,14 @@
 	* 0x1E00-0x1EFE unassigned
 	* 0x1F00-0x1FFE P-code card (part of a complete development system)
 
+	The ti-99/8 implements 16 extra ports:
+	* 0x2000-0x26ff and 0x2800-0x2fff: reserved for future expansion?
+	* 0x2700-0x27ff: internal DSR
+
+	The snug sgcpu implements 12 extra ports:
+	* 0x0400-0x0eff: free
+	* 0x0f00-0x0fff: internal DSR
+
 	Known mappings for 3rd party cards:
 	* Horizon RAMdisk: any ports from 0 to 7 (port 0 is most common).
 	* Myarc 128k/512k (RAM and DSR ROM): port 0 (0x1000-0x11FE)
@@ -98,8 +106,8 @@
 
 static int has_16bit_peb;
 
-/* handlers for each of 16 slots */
-static ti99_peb_card_handlers_t expansion_ports[16];
+/* handlers for each of 16 slots + 16 extra slots for 99/8 */
+static ti99_peb_card_handlers_t expansion_ports[16+16];
 
 /* expansion port for the 99/4p system, which supports dynamical 16-bit accesses */
 /* (TI did not design this!) */
@@ -209,7 +217,7 @@ void ti99_peb_set_card_handlers(int cru_base, const ti99_peb_card_handlers_t *ha
 	{
 		port = (cru_base - 0x1000) >> 8;
 
-		if ((port>=0) && (port<16))
+		if ((port>=0) && (port</*16*/32))
 		{
 			expansion_ports[port] = *handler;
 		}
@@ -451,6 +459,55 @@ READ_HANDLER ( geneve_peb_r )
 	}
 
 	return reply;
+}
+
+/*
+	Read CRU in range >1000->2ffe (>0800->17ff)
+*/
+READ_HANDLER ( ti99_8_peb_CRU_r )
+{
+	int port;
+	cru_read_handler handler;
+	int reply;
+
+	port = (offset & 0x01f0) >> 4;
+	handler = expansion_ports[port].cru_read;
+
+	reply = (handler) ? (*handler)(offset & 0xf) : 0;
+
+	return reply;
+}
+
+/*
+	Write CRU in range >1000->2ffe (>0800->17ff)
+*/
+WRITE_HANDLER ( ti99_8_peb_CRU_w )
+{
+	int port;
+	cru_write_handler handler;
+
+	port = (offset & 0x0f80) >> 7;
+	handler = expansion_ports[port].cru_write;
+
+	if (handler)
+		(*handler)(offset & 0x7f, data);
+
+	/* expansion card enable? */
+	if ((offset & 0x7f) == 0)
+	{
+		if (data & 1)
+		{
+			/* enable */
+			active_card = port;
+		}
+		else
+		{
+			if (port == active_card)	/* geez... who cares? */
+			{
+				active_card = -1;			/* no port selected */
+			}
+		}
+	}
 }
 
 /*
