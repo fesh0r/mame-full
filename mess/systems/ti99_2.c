@@ -77,36 +77,6 @@ Also, ti99/2 does not support external instructions better than ti99/4(a).  This
 would just have taken three extra tracks on the main board and a OR gate in an ASIC.
 */
 
-/*
-  TI99/8 preliminary infos (all I know :-( ) :
-
-  name : Texas Instruments Computer TI99/8 (no "Home")
-
-References :
-* machine room <http://...>
-* TI99/8 user manual
-
-general :
-* a few dozen units built in 1983, never released
-* same CPU as TI99/2
-* 220kb of ROM, including monitor, GPL interpreter (personnal guess), TI-extended basic II,
-  and a P-code interpreter with a few utilities.  The user could change the CPU speed to
-  improve compatibility with TI99/4x modules.
-* 64kb 8-bit RAM, 16kb vdp RAM, possibly 256 bytes 16-bit RAM
-* tms9928anc vdp : quite like tms9928a, but two additionnal "split-screen" modes
-* I/O
-  - 54-key keyboard, plus 2 optional joysticks
-  - sound and speech (both ti99/4-like)
-  - Hex-Bus
-  - Cassette
-* cartridge port on the top
-* 50-pin(?) expansion port on the back (so, it was not even the same as TI99/2 ????)
-
-memory map :
-* 0x8000-unknown address (0x801f?) : custom RAM mapper chip.  4kb page size,
-  total address space 16Mb(?).
-*/
-
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/tms9901.h"
