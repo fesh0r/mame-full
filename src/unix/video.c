@@ -528,12 +528,14 @@ int osd_create_display(const struct osd_create_params *params,
 	}
 
 	/* setup debugger related stuff */
-	debug_params.width   = options.debug_width;
-	debug_params.height  = options.debug_height;
-	debug_bounds.min_x    = 0;
-	debug_bounds.max_x    = options.debug_width - 1;
-	debug_bounds.min_y    = 0;
-	debug_bounds.max_y    = options.debug_height - 1;
+	debug_params.width      = options.debug_width;
+	debug_params.height     = options.debug_height;
+	debug_params.max_width  = options.debug_width;
+	debug_params.max_height = options.debug_height;
+	debug_bounds.min_x      = 0;
+	debug_bounds.max_x      = options.debug_width - 1;
+	debug_bounds.min_y      = 0;
+	debug_bounds.max_y      = options.debug_height - 1;
 
 	return 0;
 }
