@@ -182,6 +182,7 @@ DRVLIBS += \
 		$(OBJ)/trs80.a    \
 		$(OBJ)/cgenie.a   \
 		$(OBJ)/pdp1.a     \
+		$(OBJ)/apexc.a	  \
 		$(OBJ)/p2000.a    \
 		$(OBJ)/ep128.a    \
 		$(OBJ)/ascii.a    \
@@ -197,8 +198,8 @@ DRVLIBS += \
 		$(OBJ)/galaxy.a \
 		$(OBJ)/teamconc.a \
 		$(OBJ)/motorola.a \
-        $(OBJ)/exidy.a \
-        $(OBJ)/svi.a
+		$(OBJ)/exidy.a \
+		$(OBJ)/svi.a
 
 # not working yet, cpu core not submitted yet
 #		$(OBJ)/hp48.a \
@@ -415,6 +416,9 @@ $(OBJ)/pdp1.a:	   \
 	  $(OBJ)/mess/vidhrdw/pdp1.o	 \
 	  $(OBJ)/mess/machine/pdp1.o	 \
 	  $(OBJ)/mess/systems/pdp1.o
+
+$(OBJ)/apexc.a:     \
+	  $(OBJ)/mess/systems/apexc.o
 
 $(OBJ)/kaypro.a:   \
 	  $(OBJ)/mess/machine/cpm_bios.o \
