@@ -375,19 +375,19 @@ void	mfm_disk_floppy_exit(int id)
 }
 
 /* cache info about track */
-static void mfm_disk_cache_data(int drive, int Track, int Side)
+static void mfm_disk_cache_data(int drive, int track, int side)
 {
 	struct mfm_disk_info *mfm_disk = &mfm_disks[drive];
 
-	if ((Track!=mfm_disk->CachedTrack) || (Side!=mfm_disk->CachedSide))
+	if ((track!=mfm_disk->CachedTrack) || (side!=mfm_disk->CachedSide))
 	{
-		unsigned char *pTrackPtr = mfm_disk_get_track_ptr(drive, Track,Side);
+		unsigned char *pTrackPtr = mfm_disk_get_track_ptr(drive, track, side);
 		unsigned long TrackSize = mfm_disk_get_track_size(drive);
 
 		mfm_info_cache_sector_info(drive, pTrackPtr, TrackSize);
 
-		mfm_disk->CachedTrack = Track;
-		mfm_disk->CachedSide = Side;
+		mfm_disk->CachedTrack = track;
+		mfm_disk->CachedSide = side;
 	}
 }
 
