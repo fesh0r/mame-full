@@ -288,8 +288,9 @@ void set_devicedirectory(int dev, const char *dir)
 	dev_dirs[dev] = strdup(dir);
 }
 
-#ifdef MAME_DEBUG
-int messopts_valididty_checks(void)
+
+
+int win_mess_validitychecks(void)
 {
 	int i;
 	int id_fromshortname;
@@ -326,7 +327,7 @@ int messopts_valididty_checks(void)
 				error = 1;
 			}
 
-			if ((((const char **) mess_opts[i].dest) - dev_opts) != id_fromlongname)
+			if ((((char **) mess_opts[i].dest) - dev_opts) != id_fromlongname)
 			{
 				printf("option -%s is pointed at the wrong dev_opt\n", mess_opts[i].name);
 				error = 1;
@@ -389,5 +390,3 @@ int messopts_valididty_checks(void)
 
 	return error;
 }
-
-#endif /* MAME_DEBUG */

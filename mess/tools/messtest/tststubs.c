@@ -168,6 +168,11 @@ void osd_image_load_status_changed(mess_image *img, int is_final_unload)
 {
 }
 
+int win_mess_validitychecks(void)
+{
+	return 0;
+}
+
 //============================================================
 //	osd_alloc_executable
 //============================================================

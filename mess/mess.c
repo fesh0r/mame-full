@@ -440,7 +440,6 @@ void write32_with_write8_handler(write8_handler handler, offs_t offset, data32_t
 
 ***************************************************************************/
 
-#ifdef MAME_DEBUG
 int messvaliditychecks(void)
 {
 	int i, j;
@@ -584,6 +583,13 @@ int messvaliditychecks(void)
 		error = 1;
 	if (device_valididtychecks())
 		error = 1;
+#ifdef WIN32
+	{
+		extern int win_mess_validitychecks(void);
+		if (win_mess_validitychecks())
+			error = 1;
+	}
+#endif /* WIN32 */
 	return error;
 }
 
@@ -655,5 +661,3 @@ void messtestdriver(const struct GameDriver *gamedrv, const char *(*getfodderima
 	/* restore old options */
 	memcpy(&options, &saved_options, sizeof(options));
 }
-
-#endif /* MAME_DEBUG */

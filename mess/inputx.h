@@ -113,9 +113,7 @@ void inputx_init(void);
 void inputx_update(UINT32 *ports);
 void inputx_handle_mess_extensions(struct InputPort *ipt);
 
-#ifdef MAME_DEBUG
 int inputx_validitycheck(const struct GameDriver *gamedrv);
-#endif
 
 /* these can be called from FEs */
 int inputx_can_post(void);

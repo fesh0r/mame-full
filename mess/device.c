@@ -296,7 +296,8 @@ const char *device_file_extension(int type, int extnum)
 	return NULL;
 }
 
-#ifdef MAME_DEBUG
+
+
 int device_valididtychecks(void)
 {
 	int error = 0;
@@ -335,5 +336,4 @@ int device_valididtychecks(void)
 	}
 	return error;
 }
-#endif
 

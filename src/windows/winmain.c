@@ -192,14 +192,6 @@ int main(int argc, char **argv)
 	// set up exception handling
 	pass_thru_filter = SetUnhandledExceptionFilter(exception_filter);
 
-#if defined(MESS) && defined(MAME_DEBUG)
-	{
-		extern int messopts_valididty_checks(void);
-		if (messopts_valididty_checks())
-			return -1;
-	}
-#endif
-
 	// parse config and cmdline options
 	game_index = cli_frontend_init(argc, argv);
 

@@ -337,7 +337,6 @@ done:
 
 ***************************************************************************/
 
-#ifdef MAME_DEBUG
 int inputx_validitycheck(const struct GameDriver *gamedrv)
 {
 	char buf[CODE_BUFFER_SIZE];
@@ -408,7 +407,6 @@ int inputx_validitycheck(const struct GameDriver *gamedrv)
 	}
 	return error;
 }
-#endif /* MAME_DEBUG */
 
 
 

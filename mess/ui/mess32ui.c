@@ -246,11 +246,12 @@ static BOOL CreateMessIcons(void)
 {
     int i;
 
+	// create the icon index, if we havn't already
     if (!mess_icon_index)
 	{
-        mess_icon_index = auto_malloc(sizeof(int) * game_count * IO_COUNT);
-        if (!mess_icon_index)
-            return FALSE;
+		mess_icon_index = auto_malloc(game_count * IO_COUNT * sizeof(*mess_icon_index));
+		if (!mess_icon_index)
+			return FALSE;
     }
 
     for (i = 0; i < (game_count * IO_COUNT); i++)
@@ -279,11 +280,11 @@ static int GetMessIcon(int nGame, int nSoftwareType)
         the_index = (nGame * IO_COUNT) + nSoftwareType;
 
         nIconPos = mess_icon_index[the_index];
-        if (!nIconPos)
+        if (nIconPos >= 0)
 		{
             for (drv = drivers[nGame]; drv; drv = drv->clone_of)
 			{
-                sprintf(buffer, "%s/%s", drv->name, iconname);
+                _snprintf(buffer, sizeof(buffer) / sizeof(buffer[0]), "%s/%s", drv->name, iconname);
                 hIcon = LoadIconFromFile(buffer);
                 if (hIcon)
                     break;
