@@ -19,8 +19,8 @@ Priority:  Todo:                                                  Done:
   2        Transform Playboys Z80gb.c to big case method            *
   2        Clean up Z80gb.c                                         *
   2        Fix / optimise halt instruction                          *
-  2        Do correct lcd stat timing
-  2        Generate lcd stat interrupts
+  2        Do correct lcd stat timing                               In Progress
+  2        Generate lcd stat interrupts                             *
   2        Replace Marat's code in machine/gb.c by Playboy code
   1        Check, and fix if needed flags bug which troubles ffa
   1        Save/restore battery backed ram                          *
@@ -57,9 +57,9 @@ static MEMORY_WRITE_START (writemem)
 	{ 0x0000, 0x1fff, MWA_ROM },			/* plain rom */
 	{ 0x2000, 0x3fff, gb_rom_bank_select },	/* rom bank select */
 	{ 0x4000, 0x5fff, gb_ram_bank_select },	/* ram bank select */
-	{ 0x6000, 0x7fff, MWA_ROM },			/* plain rom */
+	{ 0x6000, 0x7fff, gb_mem_mode_select },	/* ram/rom mode select */
 	{ 0x8000, 0x9fff, MWA_RAM },			/* plain ram */
-	{ 0xa000, 0xbfff, MWA_BANK2 },			/* 16k switch RAM bank (on cartridge) */
+	{ 0xa000, 0xbfff, MWA_BANK2 },			/* 8k switched RAM bank (on cartridge) */
 	{ 0xc000, 0xfeff, MWA_RAM, &videoram, &videoram_size },	/* video & sprite ram */
 	{ 0xff00, 0xffff, gb_w_io },			/* gb io */
 /*	{ 0xff00, 0xff7f, gb_w_io },*/			/* gb io */
