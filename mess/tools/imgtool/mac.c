@@ -856,11 +856,17 @@ typedef struct mac_l1_imgref
 	floppy_image_open()
 
 	Open a macintosh disk image
+
+	f (I): imgtool reference of file to open
+	image (O): level-1 image reference
+
+	Return imgtool error code
 */
-static int floppy_image_open(mac_l1_imgref *image)
+static int floppy_image_open(STREAM *f, mac_l1_imgref *image)
 {
 	diskcopy_header_t header;
 
+	image->f = f;
 
 	image->format = bare;	/* default */
 
@@ -906,9 +912,22 @@ static int floppy_image_open(mac_l1_imgref *image)
 	return 0;
 }
 
+/*
+	image_read_block()
 
+	Read one 512-byte block of data from a macintosh disk image
+
+	image (I/O): level-1 image reference
+	block (I): address of block to read
+	dest (O): buffer where block data should be stored
+
+	Return imgtool error code
+*/
 static int image_read_block(mac_l1_imgref *image, UINT32 block, void *dest)
 {
+	if (block > image->num_blocks)
+		return IMGTOOLERR_UNEXPECTED;
+
 	if (stream_seek(image->f, (image->format == apple_diskcopy) ? block*512 + 84 : block*512, SEEK_SET))
 		return IMGTOOLERR_READERROR;
 
@@ -938,8 +957,22 @@ static int image_read_block(mac_l1_imgref *image, UINT32 block, void *dest)
 	return 0;
 }
 
+/*
+	image_write_block()
+
+	Read one 512-byte block of data from a macintosh disk image
+
+	image (I/O): level-1 image reference
+	block (I): address of block to write
+	dest (I): buffer with the block data
+
+	Return imgtool error code
+*/
 static int image_write_block(mac_l1_imgref *image, UINT32 block, const void *src)
 {
+	if (block > image->num_blocks)
+		return IMGTOOLERR_UNEXPECTED;
+
 	if (stream_seek(image->f, (image->format == apple_diskcopy) ? block*512 + 84 : block*512, SEEK_SET))
 		return IMGTOOLERR_WRITEERROR;
 
@@ -1115,7 +1148,7 @@ struct mac_l2_imgref
 };
 
 /*
-	Master Directory Block
+	MFS Master Directory Block
 */
 typedef struct mfs_mdb
 {
@@ -1155,7 +1188,7 @@ typedef struct mfs_mdb
 } mfs_mdb;
 
 /*
-	Master Directory Block
+	HFS Master Directory Block
 */
 typedef struct hfs_mdb
 {
@@ -1247,23 +1280,29 @@ static int mfs_file_get_nth_block_address(mac_fileref *fileref, UINT32 block_num
 static int hfs_file_get_nth_block_address(mac_fileref *fileref, UINT32 block_num, UINT32 *block_address);
 static int mfs_resolve_fpath(mac_l2_imgref *l2_img, const char *fpath, mac_str255 fname, mac_cat_info *cat_info);
 static int hfs_resolve_fpath(mac_l2_imgref *l2_img, const char *fpath, UINT32 *parID, mac_str255 fname, mac_cat_info *cat_info);
-static int mfs_file_open(mac_l2_imgref *l2_img, const mac_str255 fname, mac_fileref *fileref, mac_forkID fork);
-static int hfs_file_open(mac_l2_imgref *l2_img, UINT32 parID, const mac_str255 fname, mac_fileref *fileref, mac_forkID fork);
+static int mfs_file_open(mac_l2_imgref *l2_img, const mac_str255 fname, mac_forkID fork, mac_fileref *fileref);
+static int hfs_file_open(mac_l2_imgref *l2_img, UINT32 parID, const mac_str255 fname, mac_forkID fork, mac_fileref *fileref);
 
 /*
 	mac_image_open
 
 	Open a macintosh image.  Image must already be open on level 1.
+
+	l2_img (I/O): level-2 image reference
+
+	Return imgtool error code
 */
 static int mac_image_open(mac_l2_imgref *l2_img)
 {
 	img_open_buf buf;
 	int errorcode;
 
+	/* read MDB */
 	errorcode = image_read_block(&l2_img->l1_img, 2, &buf.raw);
 	if (errorcode)
 		return errorcode;
 
+	/* guess format from value in sigWord */
 	switch ((buf.raw[0] << 8) | buf.raw[1])
 	{
 	case 0xd2d7:
@@ -1273,11 +1312,25 @@ static int mac_image_open(mac_l2_imgref *l2_img)
 	case 0x4244:
 		l2_img->format = L2I_HFS;
 		return hfs_image_open(l2_img, &buf);
+
+	case 0x484b:
+		/* HFS+ is not supported */
+		/* Note that we should normally not see this with HFS+ volumes, because
+		HFS+ volumes are usually embedded in a HFS volume... */
+		return IMGTOOLERR_UNIMPLEMENTED;
 	}
 
+	/* default case: sigWord has no legal value */
 	return IMGTOOLERR_CORRUPTIMAGE;
 }
 
+/*
+	mac_image_close
+
+	Close a macintosh image.
+
+	l2_img (I/O): level-2 image reference
+*/
 static void mac_image_close(mac_l2_imgref *l2_img)
 {
 	switch (l2_img->format)
@@ -1291,6 +1344,26 @@ static void mac_image_close(mac_l2_imgref *l2_img)
 	}
 }
 
+/*
+	mac_resolve_fpath
+
+	Resolve a file path, and translate it to a parID + fname pair that enables
+	to do an efficient file search on a HFS volume (and an inefficient one on
+	MFS, but it is not an issue as MFS volumes typically have a few dozens
+	files, vs. possibly thousands with HFS volumes).
+
+	l2_img (I/O): level-2 image reference
+	fpath (I): file path (C string)
+	parID (O): set to the CNID of the parent directory if the volume is in HFS
+		format (reserved for MFS volumes)
+	fname (O): set to the actual name of the file, with capitalization matching
+		the one on the volume rather than the one in the fpath parameter (Mac
+		string)
+	cat_info (O): catalog info for this file extracted from the catalog file
+		(may be NULL)
+
+	Return imgtool error code
+*/
 static int mac_resolve_fpath(mac_l2_imgref *l2_img, const char *fpath, UINT32 *parID, mac_str255 fname, mac_cat_info *cat_info)
 {
 	switch (l2_img->format)
@@ -1309,17 +1382,26 @@ static int mac_resolve_fpath(mac_l2_imgref *l2_img, const char *fpath, UINT32 *p
 /*
 	mac_file_open
 
-	Open a file
+	Open a file located on a macintosh image
+
+	l2_img (I/O): level-2 image reference
+	parID (I): CNID of the parent directory if the volume is in HFS format
+		(reserved for MFS volumes)
+	fname (I): name of the file (Mac string)
+	mac_forkID (I): tells which fork should be opened
+	fileref (O): mac open file reference
+
+	Return imgtool error code
 */
-static int mac_file_open(mac_l2_imgref *l2_img, UINT32 parID, const mac_str255 fname, mac_fileref *fileref, mac_forkID fork)
+static int mac_file_open(mac_l2_imgref *l2_img, UINT32 parID, const mac_str255 fname, mac_forkID fork, mac_fileref *fileref)
 {
 	switch (l2_img->format)
 	{
 	case L2I_MFS:
-		return mfs_file_open(l2_img, fname, fileref, fork);
+		return mfs_file_open(l2_img, fname, fork, fileref);
 
 	case L2I_HFS:
-		return hfs_file_open(l2_img, parID, fname, fileref, fork);
+		return hfs_file_open(l2_img, parID, fname, fork, fileref);
 	}
 
 	return IMGTOOLERR_UNEXPECTED;
@@ -1327,6 +1409,14 @@ static int mac_file_open(mac_l2_imgref *l2_img, UINT32 parID, const mac_str255 f
 
 /*
 	mac_file_read
+
+	Read data from an open mac file, starting at current position in file
+
+	l2_img (I/O): level-2 image reference
+	len (I): number of bytes to read
+	dest (O): destination buffer
+
+	Return imgtool error code
 */
 static int mac_file_read(mac_fileref *fileref, UINT32 len, void *dest)
 {
@@ -1459,7 +1549,7 @@ typedef struct mfs_FOBJ
 	UINT16BE unknown4;		/* $18: ??? */
 	UINT32BE createDate;	/* $1A: date and time of creation */
 	UINT32BE modifyDate;	/* $1E: date and time of last modification */
-	UINT16BE unknown5;		/* $22: put-away folder?????? */
+	UINT16BE unknown5;		/* $22: put-away folder ID?????? */
 	UINT8 unknown6[8];		/* $24: ??? */
 	mac_rect bounds;		/* $2C: window bounds */
 	mac_point scroll;		/* $34: current scroll offset??? */
@@ -1499,7 +1589,14 @@ typedef struct mfs_dirref
 /*
 	mfs_image_open
 
-	Open a MFS image.  Image must already be open on level 1.
+	Open a MFS image.  Image must already be open on level 1.  Should not be
+	called directly: call mac_image_open() instead.
+
+	l2_img (I/O): level-2 image reference (l1_img and format fields must be
+		initialized)
+	img_open_buf (I): buffer with the MDB block
+
+	Return imgtool error code
 */
 static int mfs_image_open(mac_l2_imgref *l2_img, img_open_buf *buf)
 {
@@ -1716,7 +1813,7 @@ static int mfs_resolve_fpath(mac_l2_imgref *l2_img, const char *fpath, mac_str25
 
 	Open a file data fork
 */
-static int mfs_file_open_internal(mac_l2_imgref *l2_img, const mfs_dir_entry *dir_entry, mac_fileref *fileref, mac_forkID fork)
+static int mfs_file_open_internal(mac_l2_imgref *l2_img, const mfs_dir_entry *dir_entry, mac_forkID fork, mac_fileref *fileref)
 {
 	assert(l2_img->format == L2I_MFS);
 
@@ -1744,7 +1841,7 @@ static int mfs_file_open_internal(mac_l2_imgref *l2_img, const mfs_dir_entry *di
 	return 0;
 }
 
-static int mfs_file_open(mac_l2_imgref *l2_img, const mac_str255 fname, mac_fileref *fileref, mac_forkID fork)
+static int mfs_file_open(mac_l2_imgref *l2_img, const mac_str255 fname, mac_forkID fork, mac_fileref *fileref)
 {
 	mfs_dirref dirref;
 	mfs_dir_entry *dir_entry;
@@ -1759,7 +1856,7 @@ static int mfs_file_open(mac_l2_imgref *l2_img, const mac_str255 fname, mac_file
 		return errorcode;
 
 	/* open it */
-	return mfs_file_open_internal(l2_img, dir_entry, fileref, fork);
+	return mfs_file_open_internal(l2_img, dir_entry, fork, fileref);
 }
 
 /*
@@ -1825,9 +1922,9 @@ static int mfs_file_get_nth_block_address(mac_fileref *fileref, UINT32 block_num
 /*
 	mfs_hashString
 
-	Hash string to het the resource ID of comment (FCMT ressource type).
+	Hash string to get the resource ID of comment (FCMT ressource type).
 
-	Ripped from Apple TB06 (converted from 68k ASM to C)
+	Ripped from Apple technote TB06 (converted from 68k ASM to C)
 */
 static int mfs_hashString(mac_str255 string)
 {
@@ -1967,7 +2064,7 @@ enum
 /*
 	Catalog file record flags
 
-	This is not unlike the MFS catalog flag field, but the "thread exists" flag
+	This is similar to the MFS catalog flag field, but the "thread exists" flag
 	(0x02) is specific to HFS/HFS+, whereas the "Record in use" flag (0x80) is
 	only used by MFS.
 */
@@ -2030,7 +2127,7 @@ static int hfs_open_cat_file(mac_l2_imgref *l2_img, const hfs_mdb *mdb, mac_file
 	fileref->l2_img = l2_img;
 
 	fileref->u.hfs.forkType = 0x00;
-	//&fileref->u.hfs.fileID, 4;
+	fileref->u.hfs.fileID = 4;
 
 	fileref->eof = fileref->pLen = get_UINT32BE(mdb->ctFlSize);
 	memcpy(fileref->u.hfs.extents, mdb->ctExtRec, sizeof(hfs_extent_3));
@@ -2361,7 +2458,7 @@ static int hfs_resolve_fpath(mac_l2_imgref *l2_img, const char *fpath, UINT32 *p
 	return 0;
 }
 
-static int hfs_file_open_internal(mac_l2_imgref *l2_img, const hfs_catFileData *file_rec, mac_fileref *fileref, mac_forkID fork)
+static int hfs_file_open_internal(mac_l2_imgref *l2_img, const hfs_catFileData *file_rec, mac_forkID fork, mac_fileref *fileref)
 {
 	assert(l2_img->format == L2I_HFS);
 
@@ -2393,7 +2490,7 @@ static int hfs_file_open_internal(mac_l2_imgref *l2_img, const hfs_catFileData *
 	return 0;
 }
 
-static int hfs_file_open(mac_l2_imgref *l2_img, UINT32 parID, const mac_str255 fname, mac_fileref *fileref, mac_forkID fork)
+static int hfs_file_open(mac_l2_imgref *l2_img, UINT32 parID, const mac_str255 fname, mac_forkID fork, mac_fileref *fileref)
 {
 	hfs_catKey *catrec_key;
 	hfs_catData *catrec_data;
@@ -2412,7 +2509,7 @@ static int hfs_file_open(mac_l2_imgref *l2_img, UINT32 parID, const mac_str255 f
 		return IMGTOOLERR_BADFILENAME;
 
 	/* open it */
-	return hfs_file_open_internal(l2_img, &catrec_data->file, fileref, fork);
+	return hfs_file_open_internal(l2_img, &catrec_data->file, fork, fileref);
 }
 
 /*
@@ -2601,6 +2698,8 @@ enum
 	btha_variableIndexKeysMask	= 0x00000004	/* keys in index nodes are variable length */
 };
 
+static int BT_check(mac_BTref *BTref);
+
 /*
 	BT_open
 
@@ -2652,6 +2751,13 @@ static int BT_open(mac_BTref *BTref, int (*key_compare_func)(const void *key1, c
 	BTref->node_buf = malloc(BTref->nodeSize);
 	if (!BTref->node_buf)
 		return IMGTOOLERR_OUTOFMEMORY;
+
+#if 1
+	/* optional: check integrity of B-tree */
+	errorcode = BT_check(BTref);
+	if (errorcode)
+		return errorcode;
+#endif
 
 	return 0;
 }
@@ -2756,7 +2862,7 @@ static int BT_node_get_keyed_record(mac_BTref *BTref, void *node_buf, unsigned r
 }
 
 /*
-
+	extract data from a keyed record
 */
 static int BT_get_keyed_record_data(mac_BTref *BTref, void *rec_ptr, int rec_len, void **data_ptr, int *data_len)
 {
@@ -2788,23 +2894,35 @@ static int BT_get_keyed_record_data(mac_BTref *BTref, void *rec_ptr, int rec_len
 /*
 	BT_check
 
-	Check integrity of a B-tree index or leaf node
+	Check integrity of a complete B-tree
 */
 static int BT_check(mac_BTref *BTref)
 {
 	UINT16 node_numRecords;
-	void *rec_ptr;
 	BTHeaderRecord *header_rec;
-	int rec_len;
-	int errorcode;
 	UINT8 *bitmap;
 	struct
 	{
 		void *buf;
 		UINT32 node_num;
+		UINT32 cur_rec;
+		UINT32 num_recs;
 	} *data_nodes;
 	int i;
-	/*UINT32 cur_node;*/
+	UINT32 cur_node, prev_node;
+	void *rec1, *rec2;
+	int rec1_len, rec2_len;
+	void *rec1_data;
+	int rec1_data_len;
+	UINT32 totalNodes, lastLeafNode;
+	UINT32 freeNodes;
+	int compare_result;
+	UINT32 map_count, map_len;
+	UINT32 run_len;
+	UINT32 run_bit_len;
+	UINT32 actualFreeNodes;
+	int errorcode;
+
 
 	/* read header node */
 	errorcode = BT_read_node(BTref, 0, btnk_headerNode, 0, BTref->node_buf);
@@ -2817,17 +2935,24 @@ static int BT_check(mac_BTref *BTref)
 		return IMGTOOLERR_CORRUPTIMAGE;
 
 	/* get header record */
-	errorcode = BT_node_get_record(BTref, BTref->node_buf, 0, &rec_ptr, &rec_len);
+	errorcode = BT_node_get_record(BTref, BTref->node_buf, 0, &rec1, &rec1_len);
 	if (errorcode)
 		return errorcode;
-	header_rec = (BTHeaderRecord *)rec_ptr;
+	header_rec = (BTHeaderRecord *)rec1;
 
 	/* check lenght of header record */
-	if (rec_len < sizeof(BTHeaderRecord))
+	if (rec1_len < sizeof(BTHeaderRecord))
 		return IMGTOOLERR_CORRUPTIMAGE;
 
+	totalNodes = get_UINT32BE(header_rec->totalNodes);
+	if (totalNodes == 0)
+		/* at least one header node */
+		return IMGTOOLERR_CORRUPTIMAGE;
+	lastLeafNode = get_UINT32BE(header_rec->lastLeafNode);
+	freeNodes = get_UINT32BE(header_rec->freeNodes);
+
 	/* check file lenght */
-	if ((BTref->nodeSize * get_UINT32BE(header_rec->totalNodes)) != BTref->fileref.pLen)
+	if ((BTref->nodeSize * totalNodes) != BTref->fileref.pLen)
 		return IMGTOOLERR_CORRUPTIMAGE;
 
 	/* initialize for the function postlog ("bail:" tag) */
@@ -2836,69 +2961,376 @@ static int BT_check(mac_BTref *BTref)
 	data_nodes = NULL;
 
 	/* alloc buffer for reconstructed bitmap */
-	bitmap = malloc((get_UINT32BE(header_rec->totalNodes) + 7) / 8);
+	map_len = (totalNodes + 7) / 8;
+	bitmap = malloc(map_len);
 	if (! bitmap)
 		return IMGTOOLERR_OUTOFMEMORY;
+	memset(bitmap, 0, map_len);
 
-	/* alloc array of buffers catalog data nodes */
-	data_nodes = malloc(sizeof(data_nodes[0]) * BTref->treeDepth);
-	if (! data_nodes)
+	/* check map node chain */
+	cur_node = 0;	/* node 0 is the header node... */
+	bitmap[0] |= 0x80;
+	/* check back linking */
+	if (get_UINT32BE(((BTNodeHeader *) BTref->node_buf)->bLink))
 	{
-		errorcode = IMGTOOLERR_OUTOFMEMORY;
+		errorcode = IMGTOOLERR_CORRUPTIMAGE;
 		goto bail;
 	}
-	for (i=0; i<BTref->treeDepth; i++)
-		data_nodes[i].buf = NULL;	/* required for function postlog to work should next loop fail */
-	for (i=0; i<BTref->treeDepth; i++)
+	/* get pointer to next node */
+	cur_node = get_UINT32BE(((BTNodeHeader *) BTref->node_buf)->fLink);
+	while (cur_node != 0)
 	{
-		data_nodes[i].buf = malloc(BTref->nodeSize);
-		if (!data_nodes[i].buf)
+		/* save node address */
+		prev_node = cur_node;
+		/* check that node has not been used for another purpose */
+		/* this check is unecessary because the current consistency checks that
+		forward and back linking match and that node height is correct detect
+		these errors as well */
+		/*if (bitmap[cur_node >> 3] & (0x80 >> (cur_node & 7)))
+		{
+			errorcode = IMGTOOLERR_CORRUPTIMAGE;
+			goto bail;
+		}*/
+		/* add node in bitmap */
+		bitmap[cur_node >> 3] |= (0x80 >> (cur_node & 7));
+		/* read map node */
+		errorcode = BT_read_node(BTref, cur_node, btnk_mapNode, 0, BTref->node_buf);
+		if (errorcode)
+			goto bail;
+		/* check back linking */
+		if (get_UINT32BE(((BTNodeHeader *) BTref->node_buf)->bLink) != prev_node)
+		{
+			errorcode = IMGTOOLERR_CORRUPTIMAGE;
+			goto bail;
+		}
+		/* get pointer to next node */
+		cur_node = get_UINT32BE(((BTNodeHeader *) BTref->node_buf)->fLink);
+	}
+
+	/* check B-tree data nodes (i.e. index and leaf nodes) */
+	if (BTref->treeDepth == 0)
+	{
+		/* B-tree is empty */
+		if (BTref->rootNode || BTref->firstLeafNode || lastLeafNode)
 		{
 			errorcode = IMGTOOLERR_OUTOFMEMORY;
 			goto bail;
 		}
 	}
-
-#if 0
-	/* read first data nodes */
-	cur_node = BTref->rootNode;
-	for (i=BTref->treeDepth-1; i>=0; i--)
+	else
 	{
-		errorcode = BT_read_node(BTref, cur_node, i ? btnk_indexNode : btnk_leafNode, i+1, data_nodes[i].buf);
-		if (errorcode)
-			goto bail;
-		/* check that it is the first node at this level */
-		if (get_UINT32BE(((BTNodeHeader *) data_nodes[i].buf)->bLink))
+		/* alloc array of buffers for catalog data nodes */
+		data_nodes = malloc(sizeof(data_nodes[0]) * BTref->treeDepth);
+		if (! data_nodes)
 		{
-			errorcode = IMGTOOLERR_CORRUPTIMAGE;
+			errorcode = IMGTOOLERR_OUTOFMEMORY;
 			goto bail;
 		}
-		if (i != 0)
+		for (i=0; i<BTref->treeDepth; i++)
+			data_nodes[i].buf = NULL;	/* required for function postlog to work should next loop fail */
+		for (i=0; i<BTref->treeDepth; i++)
 		{
-			if (get_UINT16BE(((BTNodeHeader *) data_nodes[i].buf)->numRecords) == 0)
+			data_nodes[i].buf = malloc(BTref->nodeSize);
+			if (!data_nodes[i].buf)
+			{
+				errorcode = IMGTOOLERR_OUTOFMEMORY;
+				goto bail;
+			}
+		}
+
+		/* read first data nodes */
+		cur_node = BTref->rootNode;
+		for (i=BTref->treeDepth-1; i>=0; i--)
+		{
+			/* check node index */
+			if (cur_node >= totalNodes)
 			{
 				errorcode = IMGTOOLERR_CORRUPTIMAGE;
 				goto bail;
 			}
-			
-			/*cur_node = (get_UINT32BE(((BTNodeHeader *) data_nodes[i].buf)->bLink));*/
+			/* check that node has not been used for another purpose */
+			/* this check is unecessary because the current consistency checks
+			that forward and back linking match and that node height is correct
+			detect these errors as well */
+			/*if (bitmap[cur_node >> 3] & (0x80 >> (cur_node & 7)))
+			{
+				errorcode = IMGTOOLERR_CORRUPTIMAGE;
+				goto bail;
+			}*/
+			/* add node in bitmap */
+			bitmap[cur_node >> 3] |= (0x80 >> (cur_node & 7));
+			/* read node */
+			errorcode = BT_read_node(BTref, cur_node, i ? btnk_indexNode : btnk_leafNode, i+1, data_nodes[i].buf);
+			if (errorcode)
+				goto bail;
+			/* check that it is the first node at this level */
+			if (get_UINT32BE(((BTNodeHeader *) data_nodes[i].buf)->bLink))
+			{
+				errorcode = IMGTOOLERR_CORRUPTIMAGE;
+				goto bail;
+			}
+			/* fill other fields */
+			data_nodes[i].node_num = cur_node;
+			data_nodes[i].cur_rec = 0;
+			data_nodes[i].num_recs = get_UINT16BE(((BTNodeHeader *) data_nodes[i].buf)->numRecords);
+			/* check that there is at least one record */
+			if (data_nodes[i].num_recs == 0)
+			{
+				errorcode = IMGTOOLERR_CORRUPTIMAGE;
+				goto bail;
+			}
+
+			/* iterate to next level if applicable */
+			if (i != 0)
+			{
+				/* extract first record */
+				errorcode = BT_node_get_keyed_record(BTref, data_nodes[i].buf, 0, &rec1, &rec1_len);
+				if (errorcode)
+					goto bail;
+
+				/* extract record data ptr */
+				errorcode = BT_get_keyed_record_data(BTref, rec1, rec1_len, &rec1_data, &rec1_data_len);
+				if (errorcode)
+					goto bail;
+				if (rec1_data_len < sizeof(UINT32BE))
+				{
+					errorcode = IMGTOOLERR_CORRUPTIMAGE;
+					goto bail;
+				}
+
+				/* iterate to next level */
+				cur_node = get_UINT32BE(* (UINT32BE *)rec1_data);
+			}
+		}
+
+		/* check that a) the root node has no successor, and b) that we have really
+		read the first leaf node */
+		if (get_UINT32BE(((BTNodeHeader *) data_nodes[BTref->treeDepth-1].buf)->fLink)
+				|| (cur_node != BTref->firstLeafNode))
+		{
+			errorcode = IMGTOOLERR_CORRUPTIMAGE;
+			goto bail;
+		}
+
+		/* check that keys are ordered correctly */
+		while (1)
+		{
+			/* iterate through parent nodes */
+			i = 0;
+			while ((i<BTref->treeDepth) && ((data_nodes[i].cur_rec == 0) || (data_nodes[i].cur_rec == data_nodes[i].num_recs)))
+			{
+				/* read next node if necessary */
+				if (data_nodes[i].cur_rec == data_nodes[i].num_recs)
+				{
+					/* get link to next node */
+					cur_node = get_UINT32BE(((BTNodeHeader *) data_nodes[i].buf)->fLink);
+					if (cur_node == 0)
+					{
+						if (i == 0)
+							/* normal End of List */
+							goto end_of_list;
+						else
+						{
+							/* error */
+							errorcode = IMGTOOLERR_CORRUPTIMAGE;
+							goto bail;
+						}
+					}
+					/* add node in bitmap */
+					bitmap[cur_node >> 3] |= (0x80 >> (cur_node & 7));
+					/* read node */
+					errorcode = BT_read_node(BTref, cur_node, i ? btnk_indexNode : btnk_leafNode, i+1, data_nodes[i].buf);
+					if (errorcode)
+						goto bail;
+					/* check that backward linking match forward linking */
+					if (get_UINT32BE(((BTNodeHeader *) data_nodes[i].buf)->bLink) != data_nodes[i].node_num)
+					{
+						errorcode = IMGTOOLERR_CORRUPTIMAGE;
+						goto bail;
+					}
+					/* fill other fields */
+					data_nodes[i].node_num = cur_node;
+					data_nodes[i].cur_rec = 0;
+					data_nodes[i].num_recs = get_UINT16BE(((BTNodeHeader *) data_nodes[i].buf)->numRecords);
+					/* check that there is at least one record */
+					if (data_nodes[i].num_recs == 0)
+					{
+						errorcode = IMGTOOLERR_CORRUPTIMAGE;
+						goto bail;
+					}
+					/* next test is not necessary because we have checked that
+					the root node has no successor */
+					/*if (i < BTref->treeDepth-1)
+					{*/
+						data_nodes[i+1].cur_rec++;
+					/*}
+					else
+					{
+						errorcode = IMGTOOLERR_CORRUPTIMAGE;
+						goto bail;
+					}*/
+				}
+				i++;
+			}
+
+			if (i<BTref->treeDepth)
+			{
+				/* extract current record */
+				errorcode = BT_node_get_keyed_record(BTref, data_nodes[i].buf, data_nodes[i].cur_rec, &rec1, &rec1_len);
+				if (errorcode)
+					goto bail;
+
+				/* extract previous record */
+				errorcode = BT_node_get_keyed_record(BTref, data_nodes[i].buf, data_nodes[i].cur_rec-1, &rec2, &rec2_len);
+				if (errorcode)
+					goto bail;
+
+				compare_result = (*BTref->key_compare_func)(rec1, rec2);
+				if (compare_result <= 0)
+				{
+					errorcode = IMGTOOLERR_CORRUPTIMAGE;
+					goto bail;
+				}
+
+				i--;
+			}
+			else
+			{
+				i--;
+				if (i>0)
+				{	/* extract first record of root if it is an index node */
+					errorcode = BT_node_get_keyed_record(BTref, data_nodes[i].buf, data_nodes[i].cur_rec, &rec1, &rec1_len);
+					if (errorcode)
+						goto bail;
+				}
+				i--;
+			}
+
+			while (i>=0)
+			{
+				/* extract first record of current level */
+				errorcode = BT_node_get_keyed_record(BTref, data_nodes[i].buf, data_nodes[i].cur_rec, &rec2, &rec2_len);
+				if (errorcode)
+					goto bail;
+
+				/* compare key with key of current record of upper level */
+				compare_result = (*BTref->key_compare_func)(rec1, rec2);
+				if (compare_result != 0)
+				{
+					errorcode = IMGTOOLERR_CORRUPTIMAGE;
+					goto bail;
+				}
+
+				/* extract record data ptr */
+				errorcode = BT_get_keyed_record_data(BTref, rec1, rec1_len, &rec1_data, &rec1_data_len);
+				if (errorcode)
+					goto bail;
+				if (rec1_data_len < sizeof(UINT32BE))
+				{
+					errorcode = IMGTOOLERR_CORRUPTIMAGE;
+					goto bail;
+				}
+				cur_node = get_UINT32BE(* (UINT32BE *)rec1_data);
+
+				/* compare node index with data of current record of upper
+				level */
+				if (cur_node != data_nodes[i].node_num)
+				{
+					errorcode = IMGTOOLERR_CORRUPTIMAGE;
+					goto bail;
+				}
+
+				/* iterate to next level */
+				rec1 = rec2;
+				rec1_len = rec2_len;
+				i--;
+			}
+
+			/* next leaf record */
+			data_nodes[0].cur_rec++;
+		}
+
+end_of_list:
+		/* check that we are at the end of list for each index level */
+		for (i=1; i<BTref->treeDepth; i++)
+		{
+			if ((data_nodes[i].cur_rec != (data_nodes[i].num_recs-1))
+					|| get_UINT32BE(((BTNodeHeader *) data_nodes[i].buf)->fLink))
+			{
+				errorcode = IMGTOOLERR_CORRUPTIMAGE;
+				goto bail;
+			}
+		}
+		/* check that the last leaf node is what it is expected to be */
+		if (data_nodes[0].node_num != lastLeafNode)
+		{
+			errorcode = IMGTOOLERR_CORRUPTIMAGE;
+			goto bail;
 		}
 	}
 
-	/* check that a) the root node has no successor, and b) that we have really
-	read the first leaf node */
-	if (get_UINT32BE(((BTNodeHeader *) BTref->node_buf)->bLink))
+	/* re-read header node */
+	errorcode = BT_read_node(BTref, 0, btnk_headerNode, 0, BTref->node_buf);
+	if (errorcode)
+		goto bail;
 
+	/* get header bitmap record */
+	errorcode = BT_node_get_record(BTref, BTref->node_buf, 2, &rec1, &rec1_len);
+	if (errorcode)
+		goto bail;
 
-	/* ... */
+	/* check bitmap, iterating map nodes */
+	map_count = 0;
+	actualFreeNodes = 0;
+	while (map_count < map_len)
+	{
+		/* compute compare len */
+		run_len = rec1_len;
+		if (run_len > (map_len-map_count))
+			run_len = map_len-map_count;
+		/* check that all used nodes are marked as such in the B-tree bitmap */
+		for (i=0; i<run_len; i++)
+			if (bitmap[map_count+i] & ~((UINT8 *)rec1)[i])
+			{
+				errorcode = IMGTOOLERR_CORRUPTIMAGE;
+				goto bail;
+			}
+		/* count free nodes */
+		run_bit_len = rec1_len*8;
+		if (run_bit_len > (totalNodes-map_count*8))
+			run_bit_len = totalNodes-map_count*8;
+		for (i=0; i<run_bit_len; i++)
+			if (! (((UINT8 *)rec1)[i>>3] & (0x80 >> (i & 7))))
+				actualFreeNodes++;
+		map_count += run_len;
+		/* read next map node if required */
+		if (map_count < map_len)
+		{
+			/* get pointer to next node */
+			cur_node = get_UINT32BE(((BTNodeHeader *) BTref->node_buf)->fLink);
+			if (cur_node == 0)
+			{
+				errorcode = IMGTOOLERR_CORRUPTIMAGE;
+				goto bail;
+			}
+			/* read map node */
+			errorcode = BT_read_node(BTref, cur_node, btnk_mapNode, 0, BTref->node_buf);
+			if (errorcode)
+				goto bail;
+			/* get map record */
+			errorcode = BT_node_get_record(BTref, BTref->node_buf, 0, &rec1, &rec1_len);
+			if (errorcode)
+				goto bail;
+			header_rec = (BTHeaderRecord *)rec1;
+		}
+	}
 
-	/*if (get_UINT32(header_rec->freeNodes) > get_UINT32(header_rec->totalNodes))
-		return IMGTOOLERR_CORRUPTIMAGE;*/
-
-	/*while ()*/
-#endif
+	/* check free node count */
+	if (freeNodes != actualFreeNodes)
+		return IMGTOOLERR_CORRUPTIMAGE;
 
 bail:
+	/* free buffers */
 	if (data_nodes)
 	{
 		for (i=0; i<BTref->treeDepth; i++)
@@ -3478,6 +3910,39 @@ static int resfile_get_resdata(mac_resfileref *resfileref, const rsrc_ref_entry 
 #pragma mark -
 #pragma mark DESKTOP FILE IMPLEMENTATION
 #endif
+/*
+	All macintosh volume have a desktop database.
+
+	The desktop database includes file comments, copy of BNDL and FREF
+	resources that describes supported file types for each application on the
+	volume, copies of icons for each file type registered by each application
+	on the volume, etc.  With MFS volumes, this file also contains the list of
+	folders.
+
+
+	There have been two implementations of the desktop database:
+
+	* The original desktop file.  The database is stored in the resource fork
+		of a (usually invisible) file called "Desktop" (case may change
+		according to the system version), located at the root of the volume.
+		The desktop file is used by System 6 and earlier for all volumes
+		(unless Appleshare 2 is installed and the volume is shared IIRC), and
+		by System 7 and later for volumes smaller than 2MBytes (to keep floppy
+		disks fully compatible with earlier versions of system).  This file is
+		incompletely documented by Apple technote TB06.
+
+	* The desktop database.  The database is stored in the resource fork is
+		stored in the data fork of two (usually invisible) files called
+		"Desktop DF" and "Desktop DF".  The desktop database is used for
+		volumes shared by Appleshare 2, and for most volumes under System 7 and
+		later. The format of these file is not documented AFAIK.
+
+
+	The reasons for the introduction of the desktop database were:
+	* the macintosh ressource manager cannot share ressource files, which was
+		a problem for Appleshare
+	* the macintosh ressource manager is pretty limited ()
+*/
 
 /*
 	get_comment
@@ -3500,7 +3965,7 @@ static int get_comment(mac_l2_imgref *l2_img, UINT16 id, mac_str255 comment)
 	int errorcode;
 
 	/* open rsrc fork of file Desktop in root directory */
-	errorcode = mac_file_open(l2_img, 2, desktop_fname, &resfileref.fileref, rsrc_fork);
+	errorcode = mac_file_open(l2_img, 2, desktop_fname, rsrc_fork, &resfileref.fileref);
 	if (errorcode)
 		return errorcode;
 
@@ -3611,9 +4076,8 @@ static int mac_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outi
 
 	memset(image, 0, sizeof(mac_l2_imgref));
 	image->base.module = mod;
-	image->l1_img.f = f;
 
-	errorcode = floppy_image_open(&image->l1_img);
+	errorcode = floppy_image_open(f, &image->l1_img);
 	if (errorcode)
 		return errorcode;
 
@@ -4048,7 +4512,7 @@ static int mac_image_readfile(IMAGE *img, const char *fpath, STREAM *destf)
 	}
 
 	/* open file DF */
-	errorcode = mac_file_open(image, parID, fname, &fileref, data_fork);
+	errorcode = mac_file_open(image, parID, fname, data_fork, &fileref);
 	if (errorcode)
 		return errorcode;
 
@@ -4075,7 +4539,7 @@ static int mac_image_readfile(IMAGE *img, const char *fpath, STREAM *destf)
 	}
 
 	/* open file RF */
-	errorcode = mac_file_open(image, parID, fname, &fileref, rsrc_fork);
+	errorcode = mac_file_open(image, parID, fname, rsrc_fork, &fileref);
 	if (errorcode)
 		return errorcode;
 
