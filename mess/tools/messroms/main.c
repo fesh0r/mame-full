@@ -229,7 +229,11 @@ void ident(char *fn)
 	}
 }
 
+#if defined(_MSC_VER)
 int DECL_SPEC main(int argc, char **argv)
+#else
+int main(int argc, char **argv)
+#endif
 {
 	int nf;
 
