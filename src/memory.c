@@ -115,6 +115,7 @@ struct memport_data
 struct cpu_data
 {
 	void *				rambase;			/* RAM base pointer */
+	size_t				ramlength;			/* RAM length pointer */
 	opbase_handler 		opbase;				/* opcode base handler */
 
 	void *				op_ram;				/* dynamic RAM base pointer */
@@ -1081,6 +1082,8 @@ static int init_cpudata(void)
 
 		/* set the RAM/ROM base */
 		cpudata[cpunum].rambase = cpudata[cpunum].op_ram = cpudata[cpunum].op_rom = memory_region(REGION_CPU1 + cpunum);
+		cpudata[cpunum].op_mem_max = cpudata[cpunum].ramlength = memory_region_length(REGION_CPU1 + cpunum);
+		cpudata[cpunum].op_mem_min = 0;
 		cpudata[cpunum].opcode_entry = STATIC_ROM;
 		cpudata[cpunum].opbase = NULL;
 		encrypted_opcode_start[cpunum] = 0;
@@ -2336,7 +2339,9 @@ void name(offs_t pc)																	\
 	OP_ROM = base - table[entry].offset + (OP_ROM - OP_RAM);							\
 	OP_RAM = base - table[entry].offset;												\
 	OP_MEM_MIN = table[entry].offset;													\
-	OP_MEM_MAX = table[entry].top;														\
+	OP_MEM_MAX = (entry >= STATIC_RAM && entry <= STATIC_RAMROM)						\
+		? cpudata[cpu_getactivecpu()].ramlength - 1										\
+		: table[entry].top;																\
 }
 
 

@@ -912,12 +912,12 @@ data32_t	cpu_readop_arg32_safe(offs_t offset);
 
 /* ----- opcode and opcode argument reading ----- */
 #if 0
-INLINE data8_t  cpu_readop(offs_t A)		{ return address_is_unsafe(A) ? cpu_readop_unsafe(A)		: cpu_readop_safe(A); }
-INLINE data16_t cpu_readop16(offs_t A)		{ return address_is_unsafe(A) ? cpu_readop16_unsafe(A)		: cpu_readop16_safe(A); }
-INLINE data32_t cpu_readop32(offs_t A)		{ return address_is_unsafe(A) ? cpu_readop32_unsafe(A)		: cpu_readop32_safe(A); }
-INLINE data8_t  cpu_readop_arg(offs_t A)	{ return address_is_unsafe(A) ? cpu_readop_arg_unsafe(A)	: cpu_readop_arg_safe(A); }
-INLINE data16_t cpu_readop_arg16(offs_t A)	{ return address_is_unsafe(A) ? cpu_readop_arg16_unsafe(A)	: cpu_readop_arg16_safe(A); }
-INLINE data32_t cpu_readop_arg32(offs_t A)	{ return address_is_unsafe(A) ? cpu_readop_arg32_unsafe(A)	: cpu_readop_arg32_safe(A); }
+INLINE data8_t  cpu_readop(offs_t A)		{ return address_is_unsafe(A) ? cpu_readop_safe(A)			: cpu_readop_unsafe(A); }
+INLINE data16_t cpu_readop16(offs_t A)		{ return address_is_unsafe(A) ? cpu_readop16_safe(A)		: cpu_readop16_unsafe(A); }
+INLINE data32_t cpu_readop32(offs_t A)		{ return address_is_unsafe(A) ? cpu_readop32_safe(A)		: cpu_readop32_unsafe(A); }
+INLINE data8_t  cpu_readop_arg(offs_t A)	{ return address_is_unsafe(A) ? cpu_readop_arg_safe(A)		: cpu_readop_arg_unsafe(A); }
+INLINE data16_t cpu_readop_arg16(offs_t A)	{ return address_is_unsafe(A) ? cpu_readop_arg16_safe(A)	: cpu_readop_arg16_unsafe(A); }
+INLINE data32_t cpu_readop_arg32(offs_t A)	{ return address_is_unsafe(A) ? cpu_readop_arg32_safe(A)	: cpu_readop_arg32_unsafe(A); }
 #else
 void activecpu_set_op_base(unsigned val);
 INLINE data8_t  cpu_readop(offs_t A)		{ if (address_is_unsafe(A)) { activecpu_set_op_base(A); } return cpu_readop_unsafe(A); }
