@@ -23,6 +23,7 @@
  * - get rid of #ifdef MESS's by providing appropriate hooks
  */
 
+#include <windows.h>
 #include <stdarg.h>
 #include <ctype.h>
 #include <time.h>
@@ -46,6 +47,7 @@ static int config_handle_arg(char *arg);
 
 static FILE *logfile;
 static int errorlog;
+static int erroroslog;
 static int showconfig;
 static int showusage;
 static int readconfig;
@@ -194,6 +196,7 @@ static struct rc_option opts[] = {
 	{ "record", "rec", rc_string, &recordname, NULL, 0, 0, NULL, "record an input file" },
 #endif
 	{ "log", NULL, rc_bool, &errorlog, "0", 0, 0, init_errorlog, "generate error.log" },
+	{ "oslog", NULL, rc_bool, &erroroslog, "0", 0, 0, NULL, "output error log to debugger" },
 
 	/* config options */
 	{ "Configuration options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
@@ -636,6 +639,16 @@ void CLIB_DECL logerror(const char *text,...)
 
 	if (errorlog && logfile)
 		vfprintf(logfile, text, arg);
+
+	/* NPW 5-Nov-2001 - support for logging to OutputDebugString() */
+	if (erroroslog)
+	{
+		extern int vsnprintf(char *s, size_t maxlen, const char *fmt, va_list arg);
+		char buffer[256];
+		vsnprintf(buffer, sizeof(buffer) / sizeof(buffer[0]), text, arg);
+		OutputDebugString(buffer);
+	}
+
 	va_end(arg);
 }
 
