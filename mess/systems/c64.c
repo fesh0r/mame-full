@@ -650,6 +650,15 @@ ROM_START (sx64)
 	VC1541_ROM (REGION_CPU2)
 ROM_END
 
+ROM_START (dx64)
+	ROM_REGION (0x19400, REGION_CPU1, 0)
+    ROM_LOAD ("901226.01", 0x10000, 0x2000, 0xf833d117)
+    ROM_LOAD( "dx64kern.bin",     0x12000, 0x2000, 0x58065128 )
+    // vc1541 roms were not included in submission
+    VC1541_ROM (REGION_CPU2)
+//    VC1541_ROM (REGION_CPU3)
+ROM_END
+
 ROM_START (vip64)
 	ROM_REGION (0x19400, REGION_CPU1, 0)
 	ROM_LOAD ("901226.01", 0x10000, 0x2000, 0xf833d117)
@@ -1085,6 +1094,7 @@ static const struct IODevice io_c64gs[] =
 #define io_max io_ultimax
 #define io_cbm4064 io_c64
 #define io_vip64 io_sx64
+#define io_dx64 io_sx64
 
 #define rom_max rom_ultimax
 #define rom_cbm4064 rom_pet64
@@ -1100,6 +1110,8 @@ CONS(1987, c64gs,		c64,	c64gs,			c64gs,	c64gs,	"Commodore Business Machines Co."
 /* or better don't include them in system.c */
 COMPX(1983, sx64,		c64,	sx64,			sx64,	sx64,	"Commodore Business Machines Co.", "SX64 (PAL)",                      GAME_NOT_WORKING)
 COMPX(1983, vip64,		c64,	sx64,			vip64,	sx64,	"Commodore Business Machines Co.", "VIP64 (SX64 PAL), Swedish Expansion Kit", GAME_NOT_WORKING)
+// sx64 with second disk drive
+COMPX(198?, dx64,		c64,	sx64,			sx64,	sx64,	"Commodore Business Machines Co.", "DX64 (Prototype, PAL)",                      GAME_NOT_WORKING)
 /*c64 II (cbm named it still c64) */
 /*c64c (bios in 1 chip) */
 /*c64g late 8500/8580 based c64, sold at aldi/germany */
@@ -1118,6 +1130,7 @@ extern void c64_runtime_loader_init(void)
 		if ( strcmp(drivers[i]->name,"c64gs")==0) drivers[i]=&driver_c64gs;
 		if ( strcmp(drivers[i]->name,"sx64")==0) drivers[i]=&driver_sx64;
 		if ( strcmp(drivers[i]->name,"vip64")==0) drivers[i]=&driver_vip64;
+		if ( strcmp(drivers[i]->name,"dx64")==0) drivers[i]=&driver_sx64;
 	}
 }
 #endif
