@@ -5,10 +5,9 @@
   Preliminary driver by smf
 
   todo:
-	fix psxe20,psxe22,psxe30,psxe41 crashes
+    add memcard support
     tidy up cd controller
     work out why bios schph1000 doesn't get past the first screen
-    add memcard support
     add cd image support
 
 ***************************************************************************/
