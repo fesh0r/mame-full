@@ -7178,7 +7178,7 @@ ROM_START( rockmanj )
 ROM_END
 
 
-
+#ifndef MESS
 static DRIVER_INIT( wof )
 {
 	wof_decode();
@@ -7226,7 +7226,7 @@ static DRIVER_INIT( pang3 )
 
 	init_cps1();
 }
-
+#endif
 
 
 GAME( 1988, forgottn, 0,        forgottn, forgottn, cps1,     ROT0,   "Capcom", "Forgotten Worlds (US)" )
