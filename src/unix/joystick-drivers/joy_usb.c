@@ -354,7 +354,8 @@ static int joy_read(int fd, int i)
 
   if (priv_joy_data[i].hat_item != NULL)
     {
-      d = hid_get_data(p, priv_joy_data[i].hat_item);
+      d = hid_get_data(p, priv_joy_data[i].hat_item)
+	- priv_joy_data[i].hat_item->logical_minimum;
       j = priv_joy_data[i].hat_axis;
       if (d < 0 || d >= 8)
         {
@@ -363,7 +364,6 @@ static int joy_read(int fd, int i)
 	}
       else
         {
-	  printf("hat: %d (%2d,%2d)\n", d, hat_x[d], hat_y[d]);
 	  joy_data[i].axis[j].val = hat_x[d];
 	  joy_data[i].axis[j+1].val = hat_y[d];
 	}
