@@ -59,10 +59,10 @@ static int scan_keyboard(void);
 static void inquiry_timeout_func(int unused);
 static void keyboard_receive(int val);
 static void keyboard_send_reply(void);
-static int mac_via_in_a(int offset);
-static int mac_via_in_b(int offset);
-static void mac_via_out_a(int offset, int val);
-static void mac_via_out_b(int offset, int val);
+static READ_HANDLER(mac_via_in_a);
+static READ_HANDLER(mac_via_in_b);
+static WRITE_HANDLER(mac_via_out_a);
+static WRITE_HANDLER(mac_via_out_b);
 static void mac_via_irq(int state);
 
 static struct via6522_interface mac_via6522_intf =
@@ -1577,12 +1577,12 @@ void mac_floppy_exit(int id)
  *
  */
 
-static int mac_via_in_a(int offset)
+static READ_HANDLER(mac_via_in_a)
 {
 	return 0x80;
 }
 
-static int mac_via_in_b(int offset)
+static READ_HANDLER(mac_via_in_b)
 {
 	int val = 0;
 
@@ -1602,26 +1602,26 @@ static int mac_via_in_b(int offset)
 	return val;
 }
 
-static void mac_via_out_a(int offset, int val)
+static WRITE_HANDLER(mac_via_out_a)
 {
-	set_scc_waitrequest((val & 0x80) >> 7);
-	set_screen_buffer((val & 0x40) >> 6);
-	iwm_set_sel_line((val & 0x20) >> 5);
-	if (((val & 0x10) >> 4) ^ mac_overlay)
-		set_memory_overlay((val & 0x10) >> 4);
-	mac_set_buffer((val >> 3) & 0x01);
-	mac_set_volume(val & 0x07);
+	set_scc_waitrequest((data & 0x80) >> 7);
+	set_screen_buffer((data & 0x40) >> 6);
+	iwm_set_sel_line((data & 0x20) >> 5);
+	if (((data & 0x10) >> 4) ^ mac_overlay)
+		set_memory_overlay((data & 0x10) >> 4);
+	mac_set_buffer((data >> 3) & 0x01);
+	mac_set_volume(data & 0x07);
 }
 
-static void mac_via_out_b(int offset, int val)
+static WRITE_HANDLER(mac_via_out_b)
 {
 	int new_rtc_rTCClk;
 
-	mac_enable_sound((val & 0x80) == 0);
-	rtc_write_rTCEnb(val & 0x04);
-	new_rtc_rTCClk = (val >> 1) & 0x01;
+	mac_enable_sound((data & 0x80) == 0);
+	rtc_write_rTCEnb(data & 0x04);
+	new_rtc_rTCClk = (data >> 1) & 0x01;
 	if ((! new_rtc_rTCClk) && (rtc_rTCClk))
-		rtc_shift_data(val & 0x01);
+		rtc_shift_data(data & 0x01);
 	rtc_rTCClk = new_rtc_rTCClk;
 }
 

@@ -118,13 +118,13 @@ static UINT16 *old_display;		/* points to a copy of the screen, so that we can s
 	a hard disk
 */
 
-static int COPS_via_in_b(int offset);
-static void COPS_via_out_a(int offset, int val);
-static void COPS_via_out_b(int offset, int val);
-static void COPS_via_out_ca2(int offset, int val);
-static void COPS_via_out_cb2(int offset, int val);
+static READ_HANDLER(COPS_via_in_b);
+static WRITE_HANDLER(COPS_via_out_a);
+static WRITE_HANDLER(COPS_via_out_b);
+static WRITE_HANDLER(COPS_via_out_ca2);
+static WRITE_HANDLER(COPS_via_out_cb2);
 static void COPS_via_irq_func(int val);
-static int parallel_via_in_b(int offset);
+static READ_HANDLER(parallel_via_in_b);
 
 static int KBIR;	/* COPS VIA interrupt pending */
 
@@ -682,14 +682,14 @@ static void init_COPS(void)
 	CA1 (I) : COPS sending valid data
 	CA2 (O) : VIA -> COPS handshake
 */
-static void COPS_via_out_a(int offset, int val)
+static WRITE_HANDLER(COPS_via_out_a)
 {
-	COPS_command = val;
+	COPS_command = data;
 }
 
-static void COPS_via_out_ca2(int offset, int val)
+static WRITE_HANDLER(COPS_via_out_ca2)
 {
-	hold_COPS_data = val;
+	hold_COPS_data = data;
 
 	/*logerror("COPS CA2 line state : %d\n", val);*/
 
@@ -711,7 +711,7 @@ static void COPS_via_out_ca2(int offset, int val)
 	CB1 : not used
 	CB2 (O) : sound output
 */
-static int COPS_via_in_b(int offset)
+static READ_HANDLER(COPS_via_in_b)
 {
 	int val = 0;
 
@@ -724,9 +724,9 @@ static int COPS_via_in_b(int offset)
 	return val;
 }
 
-static void COPS_via_out_b(int offset, int val)
+static WRITE_HANDLER(COPS_via_out_b)
 {
-	if (val & 0x01)
+	if (data & 0x01)
 		COPS_reset_line = FALSE;
 	else if (! COPS_reset_line)
 	{
@@ -735,9 +735,9 @@ static void COPS_via_out_b(int offset, int val)
 	}
 }
 
-static void COPS_via_out_cb2(int offset, int val)
+static WRITE_HANDLER(COPS_via_out_cb2)
 {
-	speaker_level_w(0, val);
+	speaker_level_w(0, data);
 }
 
 static void COPS_via_irq_func(int val)
@@ -769,7 +769,7 @@ static void COPS_via_irq_func(int val)
 	CB1 : not used
 	CB2 (I) : current parity latch value
 */
-static int parallel_via_in_b(int offset)
+static READ_HANDLER(parallel_via_in_b)
 {
 	int val = 0;
 
