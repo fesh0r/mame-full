@@ -8,7 +8,8 @@
 #include <fcntl.h>
 #include <string.h>
 
-#include "mess/utils.h"
+//#include "mess/utils.h"
+#include "utils.h"
 
 #ifdef WIN32
 
