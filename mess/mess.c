@@ -122,8 +122,7 @@ void *image_fopen(int type, int id, int filetype, int read_or_write)
 	struct image_info *img = &images[type][id];
 	const char *sysname;
 	void *file;
-	int extnum;
-	int original_len;
+
 
 	if( type >= IO_COUNT )
 	{
@@ -140,12 +139,6 @@ void *image_fopen(int type, int id, int filetype, int read_or_write)
 	if( img->name == NULL )
 		return NULL;
 
-	/* try the supported extensions */
-	extnum = 0;
-
-	/* remember original file name */
-	original_len = strlen(img->name);
-
 	{
 		extern struct GameDriver driver_0;
 
@@ -157,8 +150,9 @@ void *image_fopen(int type, int id, int filetype, int read_or_write)
 		{
 			if( Machine->gamedrv->clone_of &&
 				Machine->gamedrv->clone_of != &driver_0 )
-			{	/* R Nabet : Shouldn't this be moved to osd code ??? Mac osd code does such a retry
-				whenever it makes sense, and I think this is the correct way. */
+			{	/* R Nabet: Shouldn't this be moved to osd code? Mac osd code
+				performs such a retry whenever it makes sense, and I think
+				this is the correct way. */
 				sysname = Machine->gamedrv->clone_of->name;
 				logerror("image_fopen: now trying %s for system %s\n", img->name, sysname);
 				file = osd_fopen(sysname, img->name, filetype, read_or_write);
