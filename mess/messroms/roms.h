@@ -41,7 +41,6 @@ static struct {
 	{ 0x75904783 , 0x100, "LISA2 vid" },
 
 	{ 0xb2102e8e , 0x20000, "MAC512KE" },
-	{ 0xb2102e8e , 0x20000, "MAC+" },
 
 	/* acorn */
 	{ 0xc604db3d , 0x1000, "ATOM kernel" },
@@ -62,12 +61,34 @@ static struct {
 	{ 0x707b0c6c , 0x80000, "ARCHIMEDES 310 bios 38000" },
 
 	/* atari */
-	{ 0x4248d3e3 , 0x800, "ATARI5200 bios" },
 	{ 0x649913e5 , 0x1000, "ATARI7800 bios" },
-	{ 0x6a5d766e , 0x800, "A400 floating point?" },
-	{ 0xcb4db9af , 0x2000, "A400 bios?" },
-	{ 0x7d684184 , 0x2000, "A800XL basic?" },
-	{ 0x1f9cd270 , 0x4000, "A800XL bios?" },
+
+	{ 0x6a5d766e , 0x800, "CO12399B? A800 floating point d800" },
+	{ 0x8e547f56 , 0x1000, "CO15199? A800 PAL A e000" },
+	{ 0xbe55b413 , 0x1000, "CO15299? A800 PAL A f000" },
+	{ 0xd818f3e8 , 0x1000, "CO12499B? A800 NTSC B e000" },
+	{ 0xc1690a9b , 0x1000, "CO14599B? A800 NTSC B f000" },
+	{ 0x6ea08467 , 0x1000, "?? A800 PAL B? (few differences to NTSC B) e000" },
+	{ 0x7509ffc4 , 0x1000, "?? A800 PAL B? (few differences to NTSC B) f000" },
+	{ 0xcb4db9af , 0x2000, "MERGED! A800 0x6ea08467+0x7509ffc4" },
+	{ 0x3e28a1fe , 0x2800, "MERGED! A800 0x6a5d766e+0x6ea08467+0x7509ffc4" },
+	{ 0x72b3fed4 , 0x2800, "MERGED! A800 PAL A co12399b+CO15199+CO15299?" },
+	{ 0x0e86d61d , 0x2800, "MERGED! A800 NTSC B co12399b+CO12499B+CO14599B?" },
+
+	{ 0x0391386b , 0x2000, "co60616a A800XL rev 10 part 1" },
+	{ 0xb502f1e7 , 0x2000, "co60617a A800XL rev 10 part 2" },
+	{ 0xc5c11546 , 0x4000, "MERGED! CO60616A, CO60617a A800XL REV10" },
+	{ 0x643bcc98 , 0x4000, "CO62024 A800XL REV01" },
+	{ 0x1f9cd270 , 0x4000, "CO61598B A800XL REV02" },
+	{ 0x29f133f7 , 0x4000, "C300717 A800XL REV03" },
+	{ 0x1eaf4002 , 0x4000, "PART OF C101687 A800XL REV04" },
+	{ 0x89d5661d , 0x1000, "co12402 A800XL Basic REV A part 1" },
+	{ 0x4b4e6762 , 0x1000, "co12502 A800XL Basic REV A part 2" },
+	{ 0x4bec4de2 , 0x2000, "MERGED! A800XL co12402+co12502" },
+	{ 0xf0202fb3 , 0x2000, "CO60302A A800XL BASIC REV B" },
+	{ 0x7d684184 , 0x2000, "CO24947A A800XL BASIC REV C" },
+
+	{ 0x4248d3e3 , 0x800, "ATARI5200 bios" },
 
 	// amstrad
 	{ 0x40852f25, 0x8000, "CPC464" },
@@ -350,6 +371,8 @@ static struct {
 	{ 0x38f85b4a , 0x2000, "? CBM1526 printer rev07c?" },
 	{ 0xf8a9f45c , 0x10000, "? CBM1230 printer pdl2 german" },
 
+	{ 0xecc43f0f , 0x1000, "Wiesemann Interface (CBM Serial bus to Centronics Printer)" },
+
 	{ 0xf6290043 , 0x80000, "AMIGA kickstart 1.3" },
 
 	// ibm pc and compatibles
@@ -441,10 +464,16 @@ static struct {
 	{ 0x7c20e2c9 , 0x8000, "ZX128 plus3e" },
 	{ 0x4a700c7e , 0x8000, "ZX128 plus3e" },
 
-	{ 0x54368805 , 0x2000, "COCO ???" },
-	{ 0xa82a6254 , 0x2000, "COCO ???" },
+	{ 0x54368805 , 0x2000, "COCO basic" },
+	{ 0xa82a6254 , 0x2000, "COCO extbasic" },
+	{ 0x2ea0fb7f , 0x4000, "MERGED! 0xa82a6254+0x54368805" },
 	{ 0x0b9c5415 , 0x2000, "COCO disk" },
+	{ 0x7eaa44e3 , 0x2000, "COCO disk (2bytes different to 0x0b9c5415" },
+	{ 0x5fb295a7 , 0x6000, "MERGED! 0xa82a6254+0x54368805+0x7eaa44e3" },
 	{ 0xb4c88d6c , 0x8000, "COCO3" },
+	{ 0x31aec822 , 0x7e00, "INCOMPLETE COCO3 saved from running machine 0xb4c88d6c without end" },
+	{ 0xdfce21e5 , 0x7f00, "INCOMPLETE COCO3 saved from running machine" },
+	{ 0x7d48ba8e , 0x2000, "??? COCO3 disk?" },
 	{ 0xe3879310 , 0x4000, "DRAGON32" },
 	{ 0x878396a5 , 0x4000, "CP400 basic" },
 	{ 0xe9ad60a0 , 0x2000, "CP400 disk" },
@@ -488,18 +517,27 @@ static struct {
 	{ 0xdfe34b08 , 0x2000, "KC85_4 basic" },
 	{ 0x57d9ab02 , 0x1000, "KC85_4 os c000" },
 	{ 0xd64cd50b , 0x2000, "KC85_4 os e000" },
+	{ 0x37cc2080 , 0x2000, "KC85_4 disk" },
+	{ 0xee273933 , 0x2000, "KC85_4 tape" },
+	{ 0xfe2932e3 , 0x2000, "KC85_3? basic" },
+	{ 0xbd30cd2d , 0x2000, "KC85_3? bios" },
+	{ 0x4a6c9a47 , 0x2000, "KC85_3 disk" },
+	{ 0x639e4864 , 0x2000, "KC85_3 tape" },
 
-	{ 0x70d06dff , 0x1000, "TRS80 Level1" },
-	{ 0x83dbbbe2 , 0x1000, "TRS80" },
-	{ 0x05818718 , 0x1000, "TRS80" },
-	{ 0x306e5d66 , 0x1000, "TRS80" },
+	{ 0x70d06dff , 0x1000, "TRS80 Level1 0000" },
+	{ 0x83dbbbe2 , 0x1000, "TRS80 0000" },
+	{ 0x05818718 , 0x1000, "TRS80 1000" },
+	{ 0x306e5d66 , 0x1000, "TRS80 2000" },
+	{ 0xd6fd9041 , 0x3000, "MERGED! 0x83dbbbe2+0x05818718+0x306e5d66" },
 	{ 0x0033f2b9 , 0x400, "TRS80 char" },
-	{ 0xbe46faf5 , 0x1000, "TRS80 alternate" },
-	{ 0x6c791c2d , 0x1000, "TRS80 alternate" },
-	{ 0x55b3ad13 , 0x1000, "TRS80 alternate" },
-	{ 0x8f5214de , 0x1000, "SYS80" },
-	{ 0x46e88fbf , 0x1000, "SYS80" },
-	{ 0x306e5d66 , 0x1000, "SYS80" },
+	{ 0xbe46faf5 , 0x1000, "TRS80 alternate 0000" },
+	{ 0x6c791c2d , 0x1000, "TRS80 alternate 1000" },
+	{ 0x55b3ad13 , 0x1000, "TRS80 alternate 2000" },
+	{ 0xa8e60d9a , 0x3000, "MERGED! 0xbe46faf5+0x6c791c2d+0x55b3ad13" },
+	{ 0x8f5214de , 0x1000, "SYS80 0000" },
+	{ 0x46e88fbf , 0x1000, "SYS80 1000" },
+	{ 0x2bfef8f7 , 0x3000, "MERGED! 0x8f5214de+0x46e88fbf+0x306e5d66" },
+	{ 0xbddbf843 , 0x3800, "MERGED! trs80 model 3" },
 
 	{ 0x7896a696 , 0x2000, "MBEE" },
 	{ 0xb21d9679 , 0x2000, "MBEE" },
@@ -517,6 +555,7 @@ static struct {
 
 	{ 0xdc8438a5 , 0x1000, "JUPITER " },
 	{ 0x4009f636 , 0x1000, "JUPITER" },
+	{ 0xe5b1f5f6 , 0x2000, "MERGED! JUPITER 0xdc8438a5+0x4009f636" },
 
 	{ 0x4c6c6b7b , 0x1000, "MZ700" },
 	{ 0x42b9e8fb , 0x1000, "MZ700 font" },
@@ -588,7 +627,9 @@ static struct {
 
 	{ 0x2bf4b1a8 , 0x80000, "Epoxy DIL32 Comquest Plus German (dumped as 278001, gave 2 identical halfes" },
 
+	/* centronics based devices */
 	{ 0x62ba054e, 0x10000, "Printer Star LC10 nx1p 2.1" },
+	{ 0x191384a6, 0x10000, "Printer Star LC10 Color nx1p 1.6 c l" },
 
 #if 0
 	{ 0x , 0x000, "" },
