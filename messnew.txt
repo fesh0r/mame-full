@@ -150,8 +150,8 @@ Source:
 
 - Many fixes to the SC61860 CPU. [PeT]
 
-- Added a static memory interface, interrupt functionality and runtime loader support to the F8 CPU core. [PeT] also added basic video/keyboard/interrupt functionality
-     and support for the F8 CPU changes to the Chess Champion MK1 emulation (the mk1 driver was also changed from TESTDRIVER to DRIVER status.)
+- Added a static memory interface, interrupt functionality and runtime loader support to the F8 CPU core. [PeT]
+
 -------------------------------------------------------------------------------  
 0.37b14
 
