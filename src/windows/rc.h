@@ -72,6 +72,10 @@ int rc_read(struct rc_struct *rc, FILE *f, const char *description,
    int priority, int continue_on_errors);
 int rc_write(struct rc_struct *rc, FILE *f, const char *description);
 
+#ifdef MESS
+int osd_rc_write(struct rc_struct *rc, mame_file *f, const char *description);
+#endif
+
 /* commandline handling */
 int rc_parse_commandline(struct rc_struct *rc, int argc, char *argv[],
    int priority, int(*arg_callback)(char *arg));

@@ -4,7 +4,9 @@
 #include "rc.h"
 
 extern struct rc_option mess_opts[];
-void build_crc_database_filename(int game_index); 
+extern int win_write_config;
+
+int write_config (const char* filename, const struct GameDriver *gamedrv);
 
 #endif /* CONFIGMS_H */
 

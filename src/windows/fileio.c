@@ -741,20 +741,3 @@ void set_pathlist(int file_type, const char *new_rawpath)
 
 }
 #endif
-
-#ifdef MESS
-//============================================================
-//	build_crc_database_filename
-//============================================================
-
-void build_crc_database_filename(int game_index)
-{
-	/* Build the CRC database filename */
-	/*sprintf(crcfilename, "%s/%s.crc", crcdir, drivers[game_index]->name);
-	if (drivers[game_index]->clone_of->name)
-		sprintf (pcrcfilename, "%s/%s.crc", crcdir, drivers[game_index]->clone_of->name);
-	else
-		pcrcfilename[0] = 0;
-	*/
-}
-#endif

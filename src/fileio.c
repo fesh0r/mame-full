@@ -116,7 +116,9 @@ mame_file *mame_fopen(const char *gamename, const char *filename, int filetype, 
 		case FILETYPE_ARTWORK:
 		case FILETYPE_HISTORY:
 		case FILETYPE_LANGUAGE:
+#ifndef MESS
 		case FILETYPE_INI:
+#endif
 			if (openforwrite)
 			{
 				logerror("mame_fopen: type %02x write not supported\n", filetype);
@@ -243,7 +245,11 @@ mame_file *mame_fopen(const char *gamename, const char *filename, int filetype, 
 
 		/* game specific ini files */
 		case FILETYPE_INI:
+#ifdef MESS
+			return generic_fopen(filetype, NULL, gamename, 0, openforwrite ? FILEFLAG_OPENWRITE : FILEFLAG_OPENREAD);
+#else
 			return generic_fopen(filetype, NULL, gamename, 0, FILEFLAG_OPENREAD);
+#endif
 
 #ifdef MESS
 		/* CRC files */
@@ -1131,3 +1137,45 @@ static int checksum_file(int pathtype, int pathindex, const char *file, UINT8 **
 	osd_fclose(f);
 	return 0;
 }
+
+
+
+#ifdef MESS
+/***************************************************************************
+	mame_fputs
+***************************************************************************/
+
+int mame_fputs(mame_file *f, const char *s)
+{
+	return mame_fwrite(f, s, strlen(s));
+}
+
+
+
+/***************************************************************************
+	mame_vfprintf
+***************************************************************************/
+
+int mame_vfprintf(mame_file *f, const char *fmt, va_list va)
+{
+	char buf[512];
+	vsnprintf(buf, sizeof(buf), fmt, va);
+	return mame_fputs(f, buf);
+}
+
+
+
+/***************************************************************************
+	mame_fprintf
+***************************************************************************/
+
+int CLIB_DECL mame_fprintf(mame_file *f, const char *fmt, ...)
+{
+	int rc;
+	va_list va;
+	va_start(va, fmt);
+	rc = mame_vfprintf(f, fmt, va);
+	va_end(va);
+	return rc;
+}
+#endif /* MESS */
