@@ -72,7 +72,7 @@ static READ_HANDLER ( mra_bank3) { return mra_bank(2,offset); }
 static READ_HANDLER ( mra_bank4) { return mra_bank(3,offset); }
 
 /* read banked memory (handle memory mapped i/o) */
-static UINT32 (*mra_bank_soft[4])(UINT32) =
+static data8_t (*mra_bank_soft[4])(UINT32) =
 {
     mra_bank1,  /* mapped in 0000-3fff */
     mra_bank2,  /* mapped in 4000-7fff */
@@ -81,7 +81,7 @@ static UINT32 (*mra_bank_soft[4])(UINT32) =
 };
 
 /* write banked memory (handle memory mapped i/o and videoram) */
-static void (*mwa_bank_soft[4])(UINT32,UINT32) =
+static void (*mwa_bank_soft[4])(offs_t,data8_t) =
 {
     mwa_bank1,  /* mapped in 0000-3fff */
     mwa_bank2,  /* mapped in 4000-7fff */
@@ -90,7 +90,7 @@ static void (*mwa_bank_soft[4])(UINT32,UINT32) =
 };
 
 /* read banked memory (plain ROM/RAM) */
-static UINT32 (*mra_bank_hard[4])(UINT32) =
+static data8_t (*mra_bank_hard[4])(UINT32) =
 {
     MRA_BANK1,  /* mapped in 0000-3fff */
     MRA_BANK2,  /* mapped in 4000-7fff */
@@ -99,7 +99,7 @@ static UINT32 (*mra_bank_hard[4])(UINT32) =
 };
 
 /* write banked memory (plain ROM/RAM) */
-static void (*mwa_bank_hard[4])(UINT32,UINT32) =
+static void (*mwa_bank_hard[4])(offs_t,data8_t) =
 {
     MWA_BANK1,  /* mapped in 0000-3fff */
     MWA_BANK2,  /* mapped in 4000-7fff */
