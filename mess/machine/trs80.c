@@ -122,7 +122,7 @@ static void cas_copy_callback(int param)
 			LOG(("cas_copy_callback block ($%02X) %d at $%04X\n", data, block_len, block_ofs));
 			while( block_len && cas_size )
 			{
-				cpu_writemem16(block_ofs, cas_buff[offs]);
+				program_write_byte_16be(block_ofs, cas_buff[offs]);
 				offs++;
 				block_ofs++;
 				block_len--;
@@ -204,7 +204,7 @@ extern QUICKLOAD_LOAD( trs80_cmd )
 			LOG(("trs80_cmd_load block ($%02X) %d at $%04X\n", data, block_len, block_ofs));
 			while( block_len && quickload_size )
 			{
-				cpu_writemem16(block_ofs, cmd_buff[offs]);
+				program_write_byte_16be(block_ofs, cmd_buff[offs]);
 				offs++;
 				block_ofs++;
 				block_len--;

@@ -28,102 +28,104 @@ NMI
 #define FW	TRS80_FONT_W
 #define FH	TRS80_FONT_H
 
-MEMORY_READ_START( readmem_level1 )
-	{ 0x0000, 0x0fff, MRA_ROM },
-	{ 0x3800, 0x38ff, trs80_keyboard_r },
-	{ 0x3c00, 0x3fff, MRA_RAM },
-	{ 0x4000, 0x7fff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_level1, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff)	AM_READ(MRA8_ROM)
+	AM_RANGE(0x3800, 0x38ff)	AM_READ(trs80_keyboard_r)
+	AM_RANGE(0x3c00, 0x3fff)	AM_READ(MRA8_RAM)
+	AM_RANGE(0x4000, 0x7fff)	AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-MEMORY_WRITE_START( writemem_level1 )
-	{ 0x0000, 0x0fff, MWA_ROM },
-	{ 0x3c00, 0x3fff, trs80_videoram_w, &videoram, &videoram_size },
-	{ 0x4000, 0x7fff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_level1, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff)	AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x3c00, 0x3fff)	AM_WRITE(trs80_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x4000, 0x7fff)	AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
-PORT_READ_START( readport_level1 )
-	{ 0xfe, 0xfe, trs80_port_xx_r },
-	{ 0xff, 0xff, trs80_port_ff_r },
-PORT_END
+static ADDRESS_MAP_START( readport_level1, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0xfe, 0xfe)	AM_READ(trs80_port_xx_r)
+	AM_RANGE(0xff, 0xff)	AM_READ(trs80_port_ff_r)
+ADDRESS_MAP_END
 
-PORT_WRITE_START( writeport_level1 )
-	{ 0xff, 0xff, trs80_port_ff_w },
-PORT_END
+static ADDRESS_MAP_START( writeport_level1, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0xff, 0xff)	AM_WRITE(trs80_port_ff_w)
+ADDRESS_MAP_END
 
-MEMORY_READ_START( readmem_model1 )
-	{ 0x0000, 0x2fff, MRA_ROM },
-	{ 0x3000, 0x37df, MRA_NOP },
-	{ 0x37e0, 0x37e3, trs80_irq_status_r },
-	{ 0x30e4, 0x37e7, MRA_NOP },
-	{ 0x37e8, 0x37eb, trs80_printer_r },
-	{ 0x37ec, 0x37ec, wd179x_status_r },
-	{ 0x37ed, 0x37ed, wd179x_track_r },
-	{ 0x37ee, 0x37ee, wd179x_sector_r },
-	{ 0x37ef, 0x37ef, wd179x_data_r },
-	{ 0x37f0, 0x37ff, MRA_NOP },
-	{ 0x3800, 0x38ff, trs80_keyboard_r },
-	{ 0x3900, 0x3bff, MRA_NOP },
-	{ 0x3c00, 0x3fff, MRA_RAM },
-	{ 0x4000, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_model1, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x2fff)	AM_READ(MRA8_ROM)
+	AM_RANGE(0x3000, 0x37df)	AM_READ(MRA8_NOP)
+	AM_RANGE(0x37e0, 0x37e3)	AM_READ(trs80_irq_status_r)
+	AM_RANGE(0x30e4, 0x37e7)	AM_READ(MRA8_NOP)
+	AM_RANGE(0x37e8, 0x37eb)	AM_READ(trs80_printer_r)
+	AM_RANGE(0x37ec, 0x37ec)	AM_READ(wd179x_status_r)
+	AM_RANGE(0x37ed, 0x37ed)	AM_READ(wd179x_track_r)
+	AM_RANGE(0x37ee, 0x37ee)	AM_READ(wd179x_sector_r)
+	AM_RANGE(0x37ef, 0x37ef)	AM_READ(wd179x_data_r)
+	AM_RANGE(0x37f0, 0x37ff)	AM_READ(MRA8_NOP)
+	AM_RANGE(0x3800, 0x38ff)	AM_READ(trs80_keyboard_r)
+	AM_RANGE(0x3900, 0x3bff)	AM_READ(MRA8_NOP)
+	AM_RANGE(0x3c00, 0x3fff)	AM_READ(MRA8_RAM)
+	AM_RANGE(0x4000, 0xffff)	AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-MEMORY_WRITE_START( writemem_model1 )
-	{ 0x0000, 0x2fff, MWA_ROM },
-	{ 0x3000, 0x37df, MWA_NOP },
-	{ 0x37e0, 0x37e3, trs80_motor_w },
-	{ 0x37e4, 0x37e7, MWA_NOP },
-	{ 0x37e8, 0x37eb, trs80_printer_w },
-	{ 0x37ec, 0x37ec, wd179x_command_w },
-	{ 0x37ed, 0x37ed, wd179x_track_w },
-	{ 0x37ee, 0x37ee, wd179x_sector_w },
-	{ 0x37ef, 0x37ef, wd179x_data_w },
-	{ 0x37f0, 0x37ff, MWA_NOP },
-	{ 0x3800, 0x3bff, MWA_NOP },
-	{ 0x3c00, 0x3fff, trs80_videoram_w, &videoram, &videoram_size },
-	{ 0x4000, 0xffff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( writemem_model1, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x2fff)	AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x3000, 0x37df)	AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x37e0, 0x37e3)	AM_WRITE(trs80_motor_w)
+	AM_RANGE(0x37e4, 0x37e7)	AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x37e8, 0x37eb)	AM_WRITE(trs80_printer_w)
+	AM_RANGE(0x37ec, 0x37ec)	AM_WRITE(wd179x_command_w)
+	AM_RANGE(0x37ed, 0x37ed)	AM_WRITE(wd179x_track_w)
+	AM_RANGE(0x37ee, 0x37ee)	AM_WRITE(wd179x_sector_w)
+	AM_RANGE(0x37ef, 0x37ef)	AM_WRITE(wd179x_data_w)
+	AM_RANGE(0x37f0, 0x37ff)	AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x3800, 0x3bff)	AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x3c00, 0x3fff)	AM_WRITE(trs80_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x4000, 0xffff)	AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
-PORT_READ_START( readport_model1 )
-	{ 0xfe, 0xfe, trs80_port_xx_r },
-	{ 0xff, 0xff, trs80_port_ff_r },
-PORT_END
 
-PORT_WRITE_START( writeport_model1 )
-	{ 0xff, 0xff, trs80_port_ff_w },
-PORT_END
+static ADDRESS_MAP_START( readport_model1, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0xfe, 0xfe)	AM_READ(trs80_port_xx_r)
+	AM_RANGE(0xff, 0xff)	AM_READ(trs80_port_ff_r)
+ADDRESS_MAP_END
 
-MEMORY_READ_START( readmem_model3 )
-	{ 0x0000, 0x37ff, MRA_ROM },
-	{ 0x3800, 0x38ff, trs80_keyboard_r },
-	{ 0x3c00, 0x3fff, MRA_RAM },
-	{ 0x4000, 0xffff, MRA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( writeport_model1, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0xff, 0xff)	AM_WRITE(trs80_port_ff_w)
+ADDRESS_MAP_END
 
-MEMORY_WRITE_START( writemem_model3 )
-	{ 0x0000, 0x37ff, MWA_ROM },
-	{ 0x3800, 0x38ff, MWA_NOP },
-	{ 0x3c00, 0x3fff, trs80_videoram_w, &videoram, &videoram_size },
-	{ 0x4000, 0xffff, MWA_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( readmem_model3, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x37ff)	AM_READ(MRA8_ROM)
+	AM_RANGE(0x3800, 0x38ff)	AM_READ(trs80_keyboard_r)
+	AM_RANGE(0x3c00, 0x3fff)	AM_READ(MRA8_RAM)
+	AM_RANGE(0x4000, 0xffff)	AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-PORT_READ_START( readport_model3 )
-	{ 0xe0, 0xe3, trs80_irq_status_r },
-	{ 0xf0, 0xf0, wd179x_status_r },
-	{ 0xf1, 0xf1, wd179x_track_r },
-	{ 0xf2, 0xf2, wd179x_sector_r },
-	{ 0xf3, 0xf3, wd179x_data_r },
-	{ 0xff, 0xff, trs80_port_ff_r },
-PORT_END
+static ADDRESS_MAP_START( writemem_model3, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x37ff)	AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x3800, 0x38ff)	AM_WRITE(MWA8_NOP)
+	AM_RANGE(0x3c00, 0x3fff)	AM_WRITE(trs80_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x4000, 0xffff)	AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
 
-PORT_WRITE_START( writeport_model3 )
-	{ 0xe0, 0xe3, trs80_irq_mask_w },
-	{ 0xe4, 0xe4, trs80_motor_w },
-	{ 0xf0, 0xf0, wd179x_command_w },
-	{ 0xf1, 0xf1, wd179x_track_w },
-	{ 0xf2, 0xf2, wd179x_sector_w },
-	{ 0xf3, 0xf3, wd179x_data_w },
-	{ 0xff, 0xff, trs80_port_ff_w },
-PORT_END
+static ADDRESS_MAP_START( readport_model3, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0xe0, 0xe3)	AM_READ(trs80_irq_status_r)
+	AM_RANGE(0xf0, 0xf0)	AM_READ(wd179x_status_r)
+	AM_RANGE(0xf1, 0xf1)	AM_READ(wd179x_track_r)
+	AM_RANGE(0xf2, 0xf2)	AM_READ(wd179x_sector_r)
+	AM_RANGE(0xf3, 0xf3)	AM_READ(wd179x_data_r)
+	AM_RANGE(0xff, 0xff)	AM_READ(trs80_port_ff_r)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( writeport_model3, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0xe0, 0xe3)	AM_WRITE(trs80_irq_mask_w)
+	AM_RANGE(0xe4, 0xe4)	AM_WRITE(trs80_motor_w)
+	AM_RANGE(0xf0, 0xf0)	AM_WRITE(wd179x_command_w)
+	AM_RANGE(0xf1, 0xf1)	AM_WRITE(wd179x_track_w)
+	AM_RANGE(0xf2, 0xf2)	AM_WRITE(wd179x_sector_w)
+	AM_RANGE(0xf3, 0xf3)	AM_WRITE(wd179x_data_w)
+	AM_RANGE(0xff, 0xff)	AM_WRITE(trs80_port_ff_w)
+ADDRESS_MAP_END
+
 
 /**************************************************************************
    w/o SHIFT							 with SHIFT
@@ -283,7 +285,8 @@ static struct GfxDecodeInfo trs80_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &trs80_charlayout_normal_width, 0, 4 },
 	{ REGION_GFX1, 0, &trs80_charlayout_double_width, 0, 4 },
-MEMORY_END	 /* end of array */
+	{ -1 } /* end of array */
+};
 
 static unsigned char trs80_palette[] =
 {
@@ -293,7 +296,7 @@ static unsigned char trs80_palette[] =
 
 static unsigned short trs80_colortable[] =
 {
-	0,1 	/* green on black */
+	0,1 	/* white on black */
 };
 
 
@@ -319,8 +322,8 @@ static struct Speaker_interface speaker_interface =
 static MACHINE_DRIVER_START( level1 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80, 1796000)        /* 1.796 Mhz */
-	MDRV_CPU_MEMORY(readmem_level1,writemem_level1)
-	MDRV_CPU_PORTS(readport_level1,writeport_level1)
+	MDRV_CPU_PROGRAM_MAP(readmem_level1,writemem_level1)
+	MDRV_CPU_IO_MAP(readport_level1,writeport_level1)
 	MDRV_CPU_VBLANK_INT(trs80_frame_interrupt, 1)
 	MDRV_CPU_PERIODIC_INT(trs80_timer_interrupt, 40)
 	MDRV_FRAMES_PER_SECOND(60)
@@ -350,16 +353,16 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( model1 )
 	MDRV_IMPORT_FROM( level1 )
 	MDRV_CPU_MODIFY( "main" )
-	MDRV_CPU_MEMORY( readmem_model1, writemem_model1 )
-	MDRV_CPU_PORTS( readport_model1,writeport_model1 )
+	MDRV_CPU_PROGRAM_MAP( readmem_model1, writemem_model1 )
+	MDRV_CPU_IO_MAP( readport_model1,writeport_model1 )
 MACHINE_DRIVER_END
 
 
 static MACHINE_DRIVER_START( model3 )
 	MDRV_IMPORT_FROM( level1 )
 	MDRV_CPU_MODIFY( "main" )
-	MDRV_CPU_MEMORY( readmem_model3, writemem_model3 )
-	MDRV_CPU_PORTS( readport_model3,writeport_model3 )
+	MDRV_CPU_PROGRAM_MAP( readmem_model3, writemem_model3 )
+	MDRV_CPU_IO_MAP( readport_model3,writeport_model3 )
 	MDRV_CPU_VBLANK_INT(trs80_frame_interrupt, 2)
 MACHINE_DRIVER_END
 
@@ -425,21 +428,24 @@ ROM_END
 
 ROM_START(trs80m3)
 	ROM_REGION(0x10000, REGION_CPU1,0)
-	ROM_LOAD("trs80m3.rom", 0x0000, 0x3800, NO_DUMP)
+	ROM_LOAD("trs80m3.rom", 0x0000, 0x3800, CRC(bddbf843))
 
 	ROM_REGION(0x00c00, REGION_GFX1,0)
 	ROM_LOAD("trs80m1.chr", 0x0800, 0x0400, CRC(0033f2b9))
 ROM_END
+
 
 SYSTEM_CONFIG_START(trs80)
 	CONFIG_DEVICE_QUICKLOAD_DELAY(		"cmd\0", trs80_cmd,	0.5)
 	CONFIG_DEVICE_LEGACY(IO_CASSETTE,1,	"cas\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_READ, NULL, NULL, device_load_trs80_cas, device_unload_trs80_cas, NULL)
 SYSTEM_CONFIG_END
 
+
 SYSTEM_CONFIG_START(trs8012)
 	CONFIG_IMPORT_FROM(trs80)
 	CONFIG_DEVICE_FLOPPY_BASICDSK	(4,	"dsk\0",	device_load_trs80_floppy)
 SYSTEM_CONFIG_END
+
 
 /*	   YEAR  NAME	   PARENT	 COMPAT	MACHINE   INPUT	 INIT	   CONFIG	COMPANY	 FULLNAME */
 COMP ( 1977, trs80,    0,		 0,		level1,   trs80,	 trs80,    trs80,	"Tandy Radio Shack",  "TRS-80 Model I (Level I Basic)" )
@@ -447,5 +453,5 @@ COMP ( 1978, trs80l2,  trs80,	 0,		model1,   trs80,	 trs80,    trs8012,	"Tandy R
 COMP ( 1978, trs80l2a, trs80,	 0,		model1,   trs80,	 trs80,    trs8012,	"Tandy Radio Shack",  "TRS-80 Model I (R/S L2 Basic)" )
 COMP ( 1980, sys80,    trs80,	 0,		model1,   trs80,	 trs80,    trs8012,	"EACA Computers Ltd.","System-80" )
 COMPX( 1981, lnw80,    trs80,	 0,		model1,   trs80,	 trs80,    trs8012,	"LNW Research","LNW-80", GAME_NOT_WORKING )
-COMPX( 19??, trs80m3,  trs80,	 0,		model3,   trs80,	 trs80,    trs8012,	"Tandy Radio Shack",  "TRS-80 Model III", GAME_NOT_WORKING )
+COMPX( 1980, trs80m3,  trs80,	 0,		model3,   trs80,	 trs80,    trs8012,	"Tandy Radio Shack",  "TRS-80 Model III", GAME_NOT_WORKING )
 
