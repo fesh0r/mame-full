@@ -200,10 +200,10 @@ INPUT_PORTS_START( pass )
 	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x1800, 0x0000, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x0000, "Easy" )			// Time = 99
-	PORT_DIPSETTING(      0x1800, "Normal" )			// Time = 88
-	PORT_DIPSETTING(      0x0800, "Hard" )			// Time = 77
-	PORT_DIPSETTING(      0x1000, "Hardest" )			// Time = 66
+	PORT_DIPSETTING(      0x0000, DEF_STR( Easy ) )			// Time = 99
+	PORT_DIPSETTING(      0x1800, DEF_STR( Normal ) )			// Time = 88
+	PORT_DIPSETTING(      0x0800, DEF_STR( Hard ) )			// Time = 77
+	PORT_DIPSETTING(      0x1000, DEF_STR( Hardest ) )			// Time = 66
 	PORT_DIPNAME( 0xe000, 0xe000, DEF_STR( Coinage ) )
 //	PORT_DIPSETTING(      0x0000, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(      0x8000, DEF_STR( 4C_1C ) )

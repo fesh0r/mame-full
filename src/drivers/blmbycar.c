@@ -160,15 +160,15 @@ INPUT_PORTS_START( blmbycar )
 
 	PORT_START	// IN0 - $700000.w
 	PORT_DIPNAME( 0x0003, 0x0003, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x0002, "Easy"    )
-	PORT_DIPSETTING(      0x0003, "Normal"  )
-	PORT_DIPSETTING(      0x0001, "Hard"    )
-	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Easy )    )
+	PORT_DIPSETTING(      0x0003, DEF_STR( Normal )  )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Hard )    )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x0004, 0x0004, "Joysticks" )
 	PORT_DIPSETTING(      0x0000, "1" )
 	PORT_DIPSETTING(      0x0004, "2" )
-	PORT_DIPNAME( 0x0018, 0x0018, "Controls" )
-	PORT_DIPSETTING(      0x0018, "Joystick" )
+	PORT_DIPNAME( 0x0018, 0x0018, DEF_STR( Controls ) )
+	PORT_DIPSETTING(      0x0018, DEF_STR( Joystick ) )
 //	PORT_DIPSETTING(      0x0010, "Pot Wheel" )	// Preliminary
 //	PORT_DIPSETTING(      0x0008, "Opt Wheel" )	// Preliminary
 //	PORT_DIPSETTING(      0x0000, DEF_STR( Unused ) )	// Time goes to 0 rally fast!

@@ -860,8 +860,8 @@ INPUT_PORTS_START( nemesis )
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, "Version" )
-	PORT_DIPSETTING(    0x02, "Normal" )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Version ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x00, "Vs" )
 	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -888,10 +888,10 @@ INPUT_PORTS_START( nemesis )
 	PORT_DIPSETTING(    0x08, "50k" )
 	PORT_DIPSETTING(    0x00, "100k" )
 	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x60, "Easy" )
-	PORT_DIPSETTING(    0x40, "Medium" )
-	PORT_DIPSETTING(    0x20, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x60, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Medium ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -933,8 +933,8 @@ INPUT_PORTS_START( nemesuk )
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, "Version" )
-	PORT_DIPSETTING(    0x02, "Normal" )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Version ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x00, "Vs" )
 	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -961,10 +961,10 @@ INPUT_PORTS_START( nemesuk )
 	PORT_DIPSETTING(    0x08, "20k" )
 	PORT_DIPSETTING(    0x00, "30k" )
 	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x60, "Easy" )
-	PORT_DIPSETTING(    0x40, "Medium" )
-	PORT_DIPSETTING(    0x20, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x60, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Medium ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1021,10 +1021,10 @@ INPUT_PORTS_START( konamigt )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x30, "Easy" )
-	PORT_DIPSETTING(    0x20, "Medium" )
-	PORT_DIPSETTING(    0x10, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x30, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Medium ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1092,10 +1092,10 @@ INPUT_PORTS_START( rf2 )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x30, "Easy" )
-	PORT_DIPSETTING(    0x20, "Medium" )
-	PORT_DIPSETTING(    0x10, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x30, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Medium ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1149,8 +1149,8 @@ INPUT_PORTS_START( gwarrior )
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, "Version" )
-	PORT_DIPSETTING(    0x02, "Normal" )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Version ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x00, "Vs" )
 	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -1177,10 +1177,10 @@ INPUT_PORTS_START( gwarrior )
 	PORT_DIPSETTING(    0x08, "50k 150k 300k 600k" )
 	PORT_DIPSETTING(    0x00, "100k 200k 400k 800k" )
 	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x60, "Easy" )
-	PORT_DIPSETTING(    0x40, "Medium" )
-	PORT_DIPSETTING(    0x20, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x60, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Medium ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1223,8 +1223,8 @@ INPUT_PORTS_START( twinbee )
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, "Version" )
-	PORT_DIPSETTING(    0x02, "Normal" )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Version ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x00, "Vs" )
 	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -1251,10 +1251,10 @@ INPUT_PORTS_START( twinbee )
 	PORT_DIPSETTING(    0x08, "40k 140k" )
 	PORT_DIPSETTING(    0x00, "50k 160k" )
 	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x60, "Easy" )
-	PORT_DIPSETTING(    0x40, "Medium" )
-	PORT_DIPSETTING(    0x20, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x60, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Medium ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1296,8 +1296,8 @@ INPUT_PORTS_START( gradius )
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, "Version" )
-	PORT_DIPSETTING(    0x02, "Normal" )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Version ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x00, "Vs" )
 	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -1324,10 +1324,10 @@ INPUT_PORTS_START( gradius )
 	PORT_DIPSETTING(    0x08, "20k only" )
 	PORT_DIPSETTING(    0x00, "30k only" )
 	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x60, "Easy" )
-	PORT_DIPSETTING(    0x40, "Medium" )
-	PORT_DIPSETTING(    0x20, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x60, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Medium ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1418,10 +1418,10 @@ INPUT_PORTS_START( salamand )
 	PORT_DIPSETTING(    0x08, "5" )
 	PORT_DIPSETTING(    0x00, "9" )
 	PORT_DIPNAME( 0x60, 0x40, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x60, "Easy" )
-	PORT_DIPSETTING(    0x40, "Medium" )
-	PORT_DIPSETTING(    0x20, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x60, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Medium ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1517,10 +1517,10 @@ INPUT_PORTS_START( lifefrcj )
 	PORT_DIPSETTING(    0x08, "70k only" )
 	PORT_DIPSETTING(    0x00, "100k only" )
 	PORT_DIPNAME( 0x60, 0x40, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x60, "Easy" )
-	PORT_DIPSETTING(    0x40, "Medium" )
-	PORT_DIPSETTING(    0x20, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x60, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Medium ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1614,8 +1614,8 @@ INPUT_PORTS_START( blkpnthr )
 	PORT_DIPSETTING(    0x08, "30k 70k" )
 	PORT_DIPSETTING(    0x00, "80k 150k" )
 	PORT_DIPNAME( 0x60, 0x40, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x60, "Easy" )
-	PORT_DIPSETTING(    0x40, "Normal" )
+	PORT_DIPSETTING(    0x60, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x20, "Difficult" )
 	PORT_DIPSETTING(    0x00, "Very Difficult" )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
@@ -1634,8 +1634,8 @@ INPUT_PORTS_START( citybomb )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, "Upright Control" )
-	PORT_DIPSETTING(    0x40, "Single" )
-	PORT_DIPSETTING(    0x00, "Dual" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Single ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Dual ) )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
 	PORT_START	/* IN1 */
@@ -1648,7 +1648,7 @@ INPUT_PORTS_START( citybomb )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
 	PORT_DIPNAME( 0x80, 0x80, "Device Type" )
 	PORT_DIPSETTING(    0x00, "Handle" )
-	PORT_DIPSETTING(    0x80, "Joystick" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Joystick ) )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
@@ -1702,12 +1702,12 @@ INPUT_PORTS_START( citybomb )
 	PORT_DIPSETTING(    0x04, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x18, 0x10, "Qualify" )
 	PORT_DIPSETTING(    0x18, "Long" )
-	PORT_DIPSETTING(    0x10, "Normal" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x08, "Short" )
 	PORT_DIPSETTING(    0x00, "Very Short" )
 	PORT_DIPNAME( 0x60, 0x40, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x60, "Easy" )
-	PORT_DIPSETTING(    0x40, "Normal" )
+	PORT_DIPSETTING(    0x60, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x20, "Difficult" )
 	PORT_DIPSETTING(    0x00, "Very Difficult" )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
@@ -1791,8 +1791,8 @@ INPUT_PORTS_START( nyanpani )
 	PORT_DIPSETTING(    0x01, "5" )
 	PORT_DIPSETTING(    0x00, "7" )
 	PORT_DIPNAME( 0x60, 0x40, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x60, "Easy" )
-	PORT_DIPSETTING(    0x40, "Normal" )
+	PORT_DIPSETTING(    0x60, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x20, "Difficult" )
 	PORT_DIPSETTING(    0x00, "Very Difficult" )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
@@ -1943,7 +1943,7 @@ static struct AY8910interface ay8910_interface =
 {
 	2,      		/* 2 chips */
 	14318180/8,     /* 1.78975 MHz */
-	{ 35, 30 },
+	{ 85, 80 },		/* adjusted */
 	{ nemesis_portA_r, 0 },
 	{ 0, 0 },
 	{ 0, k005289_control_A_w },
@@ -1953,9 +1953,29 @@ static struct AY8910interface ay8910_interface =
 static struct k005289_interface k005289_interface =
 {
 	3579545/2,		/* clock speed */
-	20,				/* playback volume */
+	60,			/* playback volume adjusted */
 	REGION_SOUND1	/* prom memory region */
 };
+
+/* Adjusted chips */
+static struct AY8910interface gx400_ay8910_interface =
+{
+	2,      		/* 2 chips */
+	14318180/8,     /* 1.78975 MHz */
+	{ 95, 60 },		/* adjusted */
+	{ nemesis_portA_r, 0 },
+	{ 0, 0 },
+	{ 0, k005289_control_A_w },
+	{ 0, k005289_control_B_w }
+};
+
+static struct k005289_interface gx400_k005289_interface =
+{
+	3579545/2,		/* clock speed */
+	80,				/* playback volume */
+	REGION_SOUND1	/* prom memory region */
+};
+/* end */
 
 static void sound_irq(int state)
 {
@@ -1979,11 +1999,29 @@ static struct YM3812interface ym3812_interface =
 	{ sound_irq },
 };
 
+/* adjusted chip */
+static struct YM3812interface nyanpani_ym3812_interface =
+{
+	1,
+	3579545,
+	{ 100 },	/* volume */
+	{ sound_irq },
+};
+/* end */
+
 static struct k051649_interface k051649_interface =
 {
 	3579545/2,	/* Clock */
 	45,			/* Volume */
 };
+
+/* adjusted chip */
+static struct k051649_interface nyanpani_k051649_interface =
+{
+	3579545/2,	/* Clock */
+	40,			/* Volume */
+};
+/* end */
 
 static struct VLM5030interface vlm5030_interface =
 {
@@ -1996,9 +2034,9 @@ static struct VLM5030interface vlm5030_interface =
 static struct VLM5030interface gx400_vlm5030_interface =
 {
     3579545,       /* master clock  */
-    40,            /* volume        */
-    0,             /* memory region (RAM based) */
-    0x0800         /* memory length (not sure if correct) */
+    70,            /* volume adjusted */
+    REGION_SOUND1, /* memory region  */
+    0              /* memory length */
 };
 
 static void volume_callback(int v)
@@ -2015,6 +2053,17 @@ static struct K007232_interface k007232_interface =
 	{ K007232_VOL(10,MIXER_PAN_CENTER,10,MIXER_PAN_CENTER) },	/* volume */
 	{ volume_callback }	/* external port callback */
 };
+
+/* adjusted chip */
+static struct K007232_interface nyanpani_k007232_interface =
+{
+	1,		/* number of chips */
+	3579545,	/* clock */
+	{ REGION_SOUND2 },	/* memory regions */
+	{ K007232_VOL(20,MIXER_PAN_CENTER,20,MIXER_PAN_CENTER) },	/* volume */
+	{ volume_callback }	/* external port callback */
+};
+/* end */
 
 /******************************************************************************/
 
@@ -2048,7 +2097,7 @@ static MACHINE_DRIVER_START( nemesis )
 	/* sound hardware */
 	MDRV_SOUND_ADD(AY8910, ay8910_interface)
 	MDRV_SOUND_ADD(K005289, k005289_interface)
-	MDRV_SOUND_ADD(VLM5030, gx400_vlm5030_interface)
+	MDRV_SOUND_ADD(VLM5030, vlm5030_interface)	/* adjusted */
 MACHINE_DRIVER_END
 
 
@@ -2179,9 +2228,9 @@ static MACHINE_DRIVER_START( citybomb )
 
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(K007232, k007232_interface)
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
-	MDRV_SOUND_ADD(K051649, k051649_interface)
+	MDRV_SOUND_ADD(K007232, nyanpani_k007232_interface)		/* adjusted */
+	MDRV_SOUND_ADD(YM3812, nyanpani_ym3812_interface)		/* adjusted */
+	MDRV_SOUND_ADD(K051649, nyanpani_k051649_interface)		/* adjusted */
 MACHINE_DRIVER_END
 
 
@@ -2246,8 +2295,8 @@ static MACHINE_DRIVER_START( gx400 )
 	MDRV_VIDEO_UPDATE(nemesis)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(K005289, k005289_interface)
+	MDRV_SOUND_ADD(AY8910, gx400_ay8910_interface)		/* adjusted */
+	MDRV_SOUND_ADD(K005289, gx400_k005289_interface)	/* adjusted */
 	MDRV_SOUND_ADD(VLM5030, gx400_vlm5030_interface)
 MACHINE_DRIVER_END
 

@@ -2,15 +2,7 @@
    See the file COPYING for copying permission.
 */
 
-#ifdef COMPILED_FROM_DSP
-#include "winconfig.h"
-#elif defined(MACOS_CLASSIC)
-#include "macconfig.h"
-#else
-#ifdef HAVE_EXPAT_CONFIG_H
-#include <expat_config.h>
-#endif
-#endif /* ndef COMPILED_FROM_DSP */
+#include "intconfig.h"
 
 #include "internal.h"
 #include "xmlrole.h"

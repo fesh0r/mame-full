@@ -322,12 +322,12 @@ INPUT_PORTS_START( silkroad )
 	PORT_DIPNAME( 0x00e0, 0x0000, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(      0x0060, "Easiest" )				// "1"
 	PORT_DIPSETTING(      0x0040, "Easier" )				// "2"
-	PORT_DIPSETTING(      0x0020, "Easy" )				// "3"
-	PORT_DIPSETTING(      0x0000, "Normal" )				// "4"
-	PORT_DIPSETTING(      0x00e0, "Medium" )				// "5"
-	PORT_DIPSETTING(      0x00c0, "Hard" )				// "6"
-	PORT_DIPSETTING(      0x00a0, "Harder" )				// "7"
-	PORT_DIPSETTING(      0x0080, "Hardest" )				// "8"
+	PORT_DIPSETTING(      0x0020, DEF_STR( Easy ) )				// "3"
+	PORT_DIPSETTING(      0x0000, DEF_STR( Normal ) )				// "4"
+	PORT_DIPSETTING(      0x00e0, DEF_STR( Medium ) )				// "5"
+	PORT_DIPSETTING(      0x00c0, DEF_STR( Hard ) )				// "6"
+	PORT_DIPSETTING(      0x00a0, DEF_STR( Harder ) )				// "7"
+	PORT_DIPSETTING(      0x0080, DEF_STR( Hardest ) )				// "8"
 	PORT_DIPNAME( 0x0100, 0x0100, "Unused DIP B-0" )
 	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
@@ -341,7 +341,7 @@ INPUT_PORTS_START( silkroad )
 	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x1000, 0x1000, "Chute Type" )			// "Coin Box"
-	PORT_DIPSETTING(      0x1000, "Single" )				// "1"
+	PORT_DIPSETTING(      0x1000, DEF_STR( Single ) )				// "1"
 	PORT_DIPSETTING(      0x0000, "Multi" )			// "2"
 	PORT_DIPNAME( 0xe000, 0xe000, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING( 0x0000, DEF_STR(5C_1C))

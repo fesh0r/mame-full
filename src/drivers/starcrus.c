@@ -90,7 +90,7 @@ INPUT_PORTS_START( starcrus )
         PORT_BIT (0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 		PORT_START
-        PORT_DIPNAME ( 0x03, 0x02, "Game Time" )
+        PORT_DIPNAME ( 0x03, 0x02, DEF_STR( Game_Time ) )
         PORT_DIPSETTING ( 0x03, "60 secs" )
         PORT_DIPSETTING ( 0x02, "90 secs" )
         PORT_DIPSETTING ( 0x01, "120 secs" )

@@ -302,7 +302,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	4000000,	/* 4 MHz? (hand tuned) */
-	{ YM3012_VOL(20,MIXER_PAN_LEFT,20,MIXER_PAN_RIGHT) },
+	{ YM3012_VOL(80,MIXER_PAN_LEFT,80,MIXER_PAN_RIGHT) },		/* music volume */
 	{ 0 }
 };
 
@@ -330,7 +330,7 @@ static MACHINE_DRIVER_START( xmen )
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(xmen_interrupt,2)
 
-	MDRV_CPU_ADD(Z80,2*3579545)
+	MDRV_CPU_ADD(Z80,8000000)	/* verified with M1, guessed but accurate */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ????? */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 

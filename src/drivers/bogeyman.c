@@ -133,7 +133,7 @@ INPUT_PORTS_START( bogeyman )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Cocktail ) )
 	PORT_SERVICE( 0x40, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x80, 0x80, "Allow Continue" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Yes ) )
 
@@ -145,10 +145,10 @@ INPUT_PORTS_START( bogeyman )
 	PORT_DIPSETTING(    0x02, "50000" )
 	PORT_DIPSETTING(    0x00, "none" )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x0c, "Easy" )			// Normal
-	PORT_DIPSETTING(    0x08, "Medium" )			//   |
-	PORT_DIPSETTING(    0x04, "Hard" )			//   |
-	PORT_DIPSETTING(    0x00, "Hardest" )			//  HARD
+	PORT_DIPSETTING(    0x0c, DEF_STR( Easy ) )			// Normal
+	PORT_DIPSETTING(    0x08, DEF_STR( Medium ) )			//   |
+	PORT_DIPSETTING(    0x04, DEF_STR( Hard ) )			//   |
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )			//  HARD
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )

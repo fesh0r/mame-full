@@ -856,7 +856,7 @@ INPUT_PORTS_START( reikaids )
 	PORT_BIT(  0x80, IP_ACTIVE_LOW,	IPT_UNKNOWN  )
 
 	PORT_START	// DSW1
-	PORT_DIPNAME( 0x01, 0x01, "Allow Continue" )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
 	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Bonus_Life ) )
@@ -881,10 +881,10 @@ INPUT_PORTS_START( reikaids )
 
 	PORT_START	// DSW2
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x03, "Easy" )
-	PORT_DIPSETTING(    0x02, "Normal" )
-	PORT_DIPSETTING(    0x01, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x03, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -937,7 +937,7 @@ INPUT_PORTS_START( battlcry )
 	PORT_BIT(  0x80, IP_ACTIVE_LOW,	IPT_UNKNOWN  )
 
 	PORT_START	// DSW1
-	PORT_DIPNAME( 0x01, 0x01, "Allow Continue" )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
 

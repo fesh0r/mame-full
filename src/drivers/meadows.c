@@ -530,7 +530,7 @@ INPUT_PORTS_START( minferno )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
 
 	PORT_START		/* IN4 dip switch */
-	PORT_DIPNAME( 0x03, 0x00, "Game Time" )
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Game_Time ) )
 	PORT_DIPSETTING(    0x00, "60s" )
 	PORT_DIPSETTING(    0x01, "90s" )
 	PORT_DIPSETTING(    0x02, "120s" )

@@ -220,6 +220,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( drivfrcb )	/* bootleg */
 	DRIVER( bongo )		/* Jetsoft */
 	DRIVER( hunchbkg )	/* Century */
+	DRIVER( harem )		/* I.G.R. */
 
 	/* Has some similarities with Moon Cresta but Board is very different */
 	DRIVER( rockclim )	/* (c)1981 Taito */
@@ -1931,6 +1932,7 @@ V-V                           TP-027
 	DRIVER( 99lstwar )	/* (c) 1985 Proma */
 	DRIVER( 99lstwra )	/* (c) 1985 Proma */
 	DRIVER( flashgal )	/* (c) 1985 Sega */
+	DRIVER( flashgla )	/* (c) 1985 Sega */
 	DRIVER( srdmissn )	/* (c) 1986 Taito Corporation */
 	DRIVER( fx )		/* bootleg */
 	DRIVER( legend )	/* no copyright notice [1986 Sega/Coreland?] */
@@ -2441,6 +2443,7 @@ V-V                           TP-027
 	DRIVER( souledga )	/* Soul Edge (SO3/VER.A) */
 	DRIVER( souledgb )	/* Soul Edge (SO1/VER.A) */
 	DRIVER( dunkmnia )	/* Dunk Mania (DM1/VER.C) */
+	DRIVER( dunkmnic )	/* Dunk Mania (DM1/VER.C) */
 	DRIVER( xevi3dg )	/* Xevious 3D/G (XV31/VER.A) */
 	DRIVER( primglex )	/* Prime Goal EX (PG1/VER.A) */
 	DRIVER( danceyes )	/* Dancing Eyes (DC1/VER.A) */
@@ -2812,8 +2815,10 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( aburner2 )  /* (c) 1987 */
 	DRIVER( alexkida )	/* (c) 1986 */
 	DRIVER( aliensyn )	/* (c) 1987 */
-	DRIVER( altbeas2 )	/* (c) 1988 */
 	DRIVER( altbeast )	/* (c) 1988 */
+	DRIVER( altbeas2 )	/* (c) 1988 */
+	DRIVER( altb8571 )	/* (c) 1988 */
+	DRIVER( jyuo8571 )	/* (c) 1988 */
 	DRIVER( astormbl )	/* bootleg */
 	DRIVER( atomicp )	/* (c) 1990 Philko */
 	DRIVER( aurail )	/* (c) 1990 Sega / Westone */
@@ -2909,6 +2914,7 @@ Sep.1994 Quiz Ghost Hunter
 	DRIVER( brival )	/* (c) 1992 (Japan) */
 	DRIVER( radm )
 	DRIVER( radr )		/* (c) 1991 */
+	DRIVER( radru )		/* (c) 1991 */
 	DRIVER( f1en )
 	DRIVER( alien3 )	/* (c) 1993 */
 	DRIVER( sonic )		/* (c) 1992 (Japan) */
@@ -3012,7 +3018,8 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 */
 
 	/* System C games */
-	DRIVER( bloxeedc )	/* (c) 1989 Sega / Elorg*/
+	DRIVER( bloxeedc )	/* (c) 1989 Sega / Elorg */
+	DRIVER( bloxeedu )	/* (c) 1989 Sega / Elorg */
 	DRIVER( columns )	/* (c) 1990 Sega */
 	DRIVER( columnsj )	/* (c) 1990 Sega */
 	DRIVER( columns2 )	/* (c) 1990 Sega */
@@ -3780,6 +3787,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( bmcorerm )	/* GXA05 (c) 1999 (Japan) */
 	DRIVER( bmdct )		/* GX995 (c) 2000 (Japan) */
 	DRIVER( hmcompm2 )	/* GX988 (c) 2000 (Japan) */
+	DRIVER( bm6thmix )	/* GxA21 (c) 2001 (Japan) */
 
 	/* Exidy games */
 	DRIVER( carpolo )	/* (c) 1977 */
@@ -3920,7 +3928,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( centipd2 )	/* 136001			(c) 1980 */
 	DRIVER( centtime )	/* 136001			(c) 1980 */
 	DRIVER( centipdb )	/* (bootleg) */
-	DRIVER( centipb2 )	/* (bootleg) */
+	DRIVER( caterplr )	/* (bootleg) */
 	DRIVER( millpac )	/* Valadon */
 	DRIVER( magworm )	/* (bootleg) */
 	DRIVER( milliped )	/* 136013			(c) 1982 */
@@ -4521,6 +4529,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( smashtv5 )	/* (c) 1990 Williams */
 	DRIVER( smashtv4 )	/* (c) 1990 Williams */
 	DRIVER( hiimpact )	/* (c) 1990 Williams */
+	DRIVER( hiimpac3 )	/* (c) 1990 Williams */
 	DRIVER( shimpact )	/* (c) 1991 Midway */
 	DRIVER( shimpacp )	/* (c) 1991 Midway */
 	DRIVER( strkforc )	/* (c) 1991 Midway */
@@ -4991,6 +5000,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( djboy )		/* ?? */
 	DRIVER( galpanic )	/* (c) 1990 Kaneko */
 	DRIVER( galpanib )	/* (c) 1990 Kaneko */
+	DRIVER( galpania )	/* (c) 1990 Kaneko */
 	DRIVER( galpani2 )	/* (c) 1993 Kaneko */
 	DRIVER( gpan2qiz )	/* (c) 1993 Kaneko */
 	DRIVER( jchan )		/* (c) 199? Kaneko */
@@ -5013,6 +5023,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( gtmre )		/* (c) 1994 Kaneko */
 	DRIVER( gtmrusa )	/* (c) 1994 Kaneko (US) */
 	DRIVER( gtmr2 )		/* (c) 1995 Kaneko */
+	DRIVER( gtmr2a )	/* (c) 1995 Kaneko */
 
 	/* Kaneko "Super Nova System" games */
 	DRIVER( galpani4 )	/* (c) 1996 Kaneko (Japan) */
@@ -5280,6 +5291,7 @@ Other Sun games
 	DRIVER( dharma )	/* (c) 1994 */
 	DRIVER( lastfort )	/* (c) */
 	DRIVER( lastfero )	/* (c) */
+	DRIVER( lastforg )	/* (c) */
 	DRIVER( toride2g )	/* (c) 1994 */
 	DRIVER( daitorid )	/* (c) */
 	DRIVER( dokyusei )	/* (c) 1995 Make Software / Elf / Media Trading */
@@ -5409,9 +5421,14 @@ Other Sun games
 	DRIVER( iqblock )	/* (c) 1993 */
 	DRIVER( grndtour )	/* (c) 1993 */
 	DRIVER( cabaret )
-	DRIVER( chindrag )
-	DRIVER( grtwall )
+	DRIVER( chindrag )	/* (c) 1994 */
+	DRIVER( chugokur )	/* (c) 1994 */
+	DRIVER( grtwall )	/* (c) 1994 */
+	DRIVER( lhb )
+	DRIVER( xymg )
 	DRIVER( lordgun )	/* (c) 1994 */
+	DRIVER( vbowl )
+	DRIVER( chmplst2 )	/* (c) 1996 */
 
 	/* IGS PGM System Games */
 	DRIVER( orlegend )	/* (c) 1997 */
@@ -5432,6 +5449,7 @@ Other Sun games
 	DRIVER( photoy2k )	/* (c) 1999 */
 	DRIVER( raf102j )	/* (c) 1999 */
 	DRIVER( killbld )	/* (c) 1998 */
+	DRIVER( puzlstar )	/* (c) 1999 */
 
 	/* RamTek games */
 	DRIVER( hitme )		/* [1976 Ramtek] */
@@ -5774,7 +5792,7 @@ Other Sun games
 	DRIVER( gururin )	/* 0067 (c) 1994 Face */
 	DRIVER( pspikes2 )	/* 0068 (c) 1994 Video System Co. */
 	DRIVER( fatfury3 )	/* 0069 (c) 1995 SNK */
-	/* 0070 Zupapa - released in 2001 */
+	DRIVER( zupapa )	/* 0070 Zupapa - released in 2001, 1994 prototype probably exists */
 	/* 0071 Bang Bang Busters (prototype) 1994 Visco */
 	/* 0072 Last Odyssey Pinball Fantasia (prototype) 1995 Monolith */
 	DRIVER( panicbom )	/* 0073 (c) 1994 Eighting / Hudson */
@@ -5884,6 +5902,7 @@ Other Sun games
 	/* 0258 SNK vs. Capcom? (prototype) */
 	DRIVER( bangbead )	/* 0259 (c) 2000 Visco */
 	DRIVER( nitd )		/* 0260 (c) 2000 Eleven / Gavaking */
+	DRIVER( sengoku3 )	/* 0261 (c) 2001 SNK */
 
 	/* Hyper NeoGeo 64 uses a 3 digit rom code? */
 

@@ -513,7 +513,7 @@ INPUT_PORTS_START( lazercmd )
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START					   /* IN2 dip switch */
-	PORT_DIPNAME( 0x03, 0x03, "Game Time" )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Game_Time ) )
 	PORT_DIPSETTING(	0x00, "60 seconds" )
 	PORT_DIPSETTING(	0x01, "90 seconds" )
 	PORT_DIPSETTING(	0x02, "120 seconds" )

@@ -309,7 +309,7 @@ INPUT_PORTS_START( tempest )
 
 	PORT_START	/* IN1/DSW0 */
 	/* This is the Tempest spinner input. It only uses 4 bits. */
-	PORT_BIT( 0x0f, 0x00, IPT_DIAL ) PORT_MINMAX(0,0) PORT_SENSITIVITY(25) PORT_KEYDELTA(20)
+	PORT_BIT( 0x0f, 0x00, IPT_DIAL ) PORT_SENSITIVITY(100) PORT_KEYDELTA(20)
 	/* The next one is reponsible for cocktail mode.
 	 * According to the documentation, this is not a switch, although
 	 * it may have been planned to put it on the Math Box PCB, D/E2 )
@@ -323,10 +323,10 @@ INPUT_PORTS_START( tempest )
 
 	PORT_START	/* IN2 */
 	PORT_DIPNAME(  0x03, 0x03, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(     0x02, "Easy" )
+	PORT_DIPSETTING(     0x02, DEF_STR( Easy ) )
 	PORT_DIPSETTING(     0x03, "Medium1" )
 	PORT_DIPSETTING(     0x00, "Medium2" )
-	PORT_DIPSETTING(     0x01, "Hard" )
+	PORT_DIPSETTING(     0x01, DEF_STR( Hard ) )
 	PORT_DIPNAME(  0x04, 0x04, "Rating" )
 	PORT_DIPSETTING(     0x04, "1, 3, 5, 7, 9" )
 	PORT_DIPSETTING(     0x00, "tied to high score" )
@@ -364,11 +364,11 @@ INPUT_PORTS_START( tempest )
 	PORT_DIPNAME( 0x01, 0x00, "Minimum" )
 	PORT_DIPSETTING(    0x00, "1 Credit" )
 	PORT_DIPSETTING(    0x01, "2 Credit" )
-	PORT_DIPNAME( 0x06, 0x00, "Language" )
-	PORT_DIPSETTING(    0x00, "English" )
-	PORT_DIPSETTING(    0x02, "French" )
-	PORT_DIPSETTING(    0x04, "German" )
-	PORT_DIPSETTING(    0x06, "Spanish" )
+	PORT_DIPNAME( 0x06, 0x00, DEF_STR( Language ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( English ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( French ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( German ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( Spanish ) )
 	PORT_DIPNAME( 0x38, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x08, "10000" )
 	PORT_DIPSETTING(    0x00, "20000" )

@@ -299,10 +299,10 @@ ADDRESS_MAP_END
 
 #define TAITO_DIFFICULTY_8 \
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) ) \
-	PORT_DIPSETTING(    0x02, "Easy" ) \
-	PORT_DIPSETTING(    0x03, "Medium" ) \
-	PORT_DIPSETTING(    0x01, "Hard" ) \
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Easy ) ) \
+	PORT_DIPSETTING(    0x03, DEF_STR( Medium ) ) \
+	PORT_DIPSETTING(    0x01, DEF_STR( Hard ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 
 #define WARRIORB_SYSTEM_INPUT \
 	PORT_START \
@@ -342,7 +342,7 @@ INPUT_PORTS_START( darius2d )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, "Autofire" )
-	PORT_DIPSETTING(    0x02, "Normal" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x00, "Fast" )
 	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
@@ -365,7 +365,7 @@ INPUT_PORTS_START( darius2d )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )  // in manual
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, "Allow Continue" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Yes ) )
 
@@ -385,7 +385,7 @@ INPUT_PORTS_START( warriorb )
 	PORT_START /* DSW A */
 	PORT_DIPNAME( 0x03, 0x03, "Vitality Recovery" ) //after finishing a level
 	PORT_DIPSETTING(    0x02, "Less" )
-	PORT_DIPSETTING(    0x03, "Normal" )
+	PORT_DIPSETTING(    0x03, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x01, "More" )
 	PORT_DIPSETTING(    0x00, "Most" )
 	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
@@ -403,12 +403,12 @@ INPUT_PORTS_START( warriorb )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x10, "Player Starting Strength" )
-	PORT_DIPSETTING(    0x10, "Normal" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x00, "Full" )
 	PORT_DIPNAME( 0x20, 0x20, "Magician appears" )
 	PORT_DIPSETTING(    0x20, "When you get a Crystal" )
 	PORT_DIPSETTING(    0x00, "Always" )
-	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x80, 0x80, "Rounds" )

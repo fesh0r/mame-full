@@ -1110,10 +1110,10 @@ INPUT_PORTS_START( majs101b )
 	PORT_DIPSETTING(    0x02, "2" )
 	PORT_DIPSETTING(    0x03, "3" )
 	PORT_DIPNAME( 0x0c, 0x00, "Difficulty ?" )		// check code at 0x4b5c and 0x6d72
-	PORT_DIPSETTING(    0x00, "Easy" )				// 0x05 - 0x03, 0x02, 0x02, 0x01
-	PORT_DIPSETTING(    0x04, "Normal" )			// 0x0a - 0x05, 0x02, 0x02, 0x01
-	PORT_DIPSETTING(    0x08, "Hard" )				// 0x0f - 0x06, 0x03, 0x02, 0x01
-	PORT_DIPSETTING(    0x0c, "Hardest" )			// 0x14 - 0x0a, 0x06, 0x02, 0x01
+	PORT_DIPSETTING(    0x00, DEF_STR( Easy ) )				// 0x05 - 0x03, 0x02, 0x02, 0x01
+	PORT_DIPSETTING(    0x04, DEF_STR( Normal ) )			// 0x0a - 0x05, 0x02, 0x02, 0x01
+	PORT_DIPSETTING(    0x08, DEF_STR( Hard ) )				// 0x0f - 0x06, 0x03, 0x02, 0x01
+	PORT_DIPSETTING(    0x0c, DEF_STR( Hardest ) )			// 0x14 - 0x0a, 0x06, 0x02, 0x01
 	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Unknown ) )		// check code at 0x228e
 	PORT_DIPSETTING(    0x00, "0x00" )
 	PORT_DIPSETTING(    0x10, "0x10" )
@@ -1162,7 +1162,7 @@ static MACHINE_DRIVER_START( royalmah )
 	MDRV_PALETTE_LENGTH(32)
 
 	MDRV_PALETTE_INIT(royalmah)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(generic_bitmapped)
 	MDRV_VIDEO_UPDATE(royalmah)
 
 	/* sound hardware */
@@ -1190,7 +1190,7 @@ static MACHINE_DRIVER_START( dondenmj )
 	MDRV_PALETTE_LENGTH(32)
 
 	MDRV_PALETTE_INIT(royalmah)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(generic_bitmapped)
 	MDRV_VIDEO_UPDATE(royalmah)
 
 	/* sound hardware */

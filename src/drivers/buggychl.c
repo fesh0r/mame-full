@@ -261,10 +261,10 @@ INPUT_PORTS_START( buggychl )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x18, "Easy" )			// 1300 units of fuel
-	PORT_DIPSETTING(    0x10, "Normal" )		// 1200 units of fuel
-	PORT_DIPSETTING(    0x08, "Hard" )			// 1100 units of fuel
-	PORT_DIPSETTING(    0x00, "Hardest" )		// 1000 units of fuel
+	PORT_DIPSETTING(    0x18, DEF_STR( Easy ) )			// 1300 units of fuel
+	PORT_DIPSETTING(    0x10, DEF_STR( Normal ) )		// 1200 units of fuel
+	PORT_DIPSETTING(    0x08, DEF_STR( Hard ) )			// 1100 units of fuel
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )		// 1000 units of fuel
 	PORT_SERVICE( 0x20, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
@@ -313,7 +313,7 @@ INPUT_PORTS_START( buggychl )
 	PORT_DIPSETTING(    0x01, DEF_STR( Yes ) )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT(    0x04, 0x04, IPT_DIPSWITCH_NAME ) PORT_NAME("Fuel loss") PORT_CHEAT
-	PORT_DIPSETTING(    0x04, "Normal" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x00, "Crash only" )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_DIPNAME( 0x10, 0x10, "Coinage Display" )
@@ -340,7 +340,7 @@ INPUT_PORTS_START( buggychl )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START /* IN4 - wheel */
-	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_MINMAX(0,0) PORT_SENSITIVITY(30) PORT_KEYDELTA(15) PORT_REVERSE
+	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_SENSITIVITY(30) PORT_KEYDELTA(15) PORT_REVERSE
 
 	PORT_START /* IN5 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )

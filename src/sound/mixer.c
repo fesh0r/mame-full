@@ -692,6 +692,7 @@ int mixer_sh_start(void)
 {
 	struct mixer_channel_data *channel;
 	int i;
+	int r;
 
 	/* reset all channels to their defaults */
 	memset(&mixer_channel, 0, sizeof(mixer_channel));
@@ -715,7 +716,11 @@ int mixer_sh_start(void)
 	memset(left_accum, 0, sizeof(left_accum));
 	memset(right_accum, 0, sizeof(right_accum));
 
-	samples_this_frame = osd_start_audio_stream(is_stereo);
+	r = osd_start_audio_stream(is_stereo);
+	if (r < 0)
+		return -1;
+
+	samples_this_frame = r;
 
 	mixer_sound_enabled = 1;
 
@@ -1076,39 +1081,6 @@ void mixer_save_config(struct mixer_config *config)
 		config->default_levels[i] = mixer_channel[i].default_mixing_level;
 		config->mixing_levels[i] = mixer_channel[i].mixing_level;
 	}
-}
-
-
-/***************************************************************************
-	mixer_read_config
-***************************************************************************/
-
-void mixer_read_config(mame_file *f)
-{
-	struct mixer_config config;
-
-	if (mame_fread(f, config.default_levels, MIXER_MAX_CHANNELS) < MIXER_MAX_CHANNELS ||
-	    mame_fread(f, config.mixing_levels, MIXER_MAX_CHANNELS) < MIXER_MAX_CHANNELS)
-	{
-		memset(config.default_levels, 0xff, sizeof(config.default_levels));
-		memset(config.mixing_levels, 0xff, sizeof(config.mixing_levels));
-	}
-
-	mixer_load_config(&config);
-}
-
-
-/***************************************************************************
-	mixer_write_config
-***************************************************************************/
-
-void mixer_write_config(mame_file *f)
-{
-	struct mixer_config config;
-
-	mixer_save_config(&config);
-	mame_fwrite(f, config.default_levels, MIXER_MAX_CHANNELS);
-	mame_fwrite(f, config.mixing_levels, MIXER_MAX_CHANNELS);
 }
 
 

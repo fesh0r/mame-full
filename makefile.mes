@@ -42,6 +42,12 @@ X86_MIPS3_DRC = 1
 # uncomment next line to use cygwin compiler
 # COMPILESYSTEM_CYGWIN	= 1
 
+# uncomment next line to build expat as part of MAME build
+BUILD_EXPAT = 1
+
+# uncomment next line to build zlib as part of MAME build
+BUILD_ZLIB = 1
+
 
 # set this the operating system you're building for
 # MAMEOS = msdos
@@ -120,7 +126,7 @@ OBJ = obj/$(NAME)
 EMULATORCLI = $(NAME)$(EXE)
 EMULATOR    = $(EMULATORCLI)
 
-DEFS = -DX86_ASM -DLSB_FIRST -DINLINE="static __inline__" -Dasm=__asm__
+DEFS = -DX86_ASM -DLSB_FIRST -DINLINE="static __inline__" -Dasm=__asm__ -DCRLF=3
 
 ifeq ($(MAMEOS),windows)
 
@@ -141,15 +147,25 @@ CFLAGS_BASE = -std=gnu99 -Dalloca=__builtin_alloca -Imess -Isrc/includes -Imess/
 	-Isrc -Isrc/$(MAMEOS) -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000 -Isrc/xml2info
 
 ifdef SYMBOLS
-CFLAGS_BASE += -O0 -g
-CFLAGS_WARNINGS = -Wall -Werror -Wno-unused
+CFLAGS += -O0 -Werror -Wall -Wno-unused -g
 else
-CFLAGS_BASE += -DNDEBUG $(ARCH) -O3 -fomit-frame-pointer -fstrict-aliasing
-CFLAGS_WARNINGS = -Werror -Wall -Wno-sign-compare -Wunused \
+CFLAGS += -DNDEBUG \
+	$(ARCH) -O3 -fomit-frame-pointer -fstrict-aliasing \
+	-Werror -Wall -Wno-sign-compare -Wunused \
 	-Wpointer-arith -Wbad-function-cast -Wcast-align \
-	-Wshadow -Wstrict-prototypes -Wundef \
+	-Wstrict-prototypes -Wundef \
 	-Wformat-security -Wwrite-strings \
-	-Wdisabled-optimization
+	-Wdisabled-optimization \
+#	-Wredundant-decls
+#	-Wfloat-equal
+#	-Wunreachable-code -Wpadded
+#	-W had to remove because of the "missing initializer" warning
+#	-Wlarger-than-262144  \
+#	-Wcast-qual \
+#	-Wwrite-strings \
+#	-Wconversion \
+#	-Wmissing-prototypes \
+#	-Wmissing-declarations
 endif
 
 CFLAGS = $(CFLAGS_BASE) $(CFLAGS_WARNINGS)
@@ -195,6 +211,23 @@ PLATFORM_TOOL_OBJS =				\
 	$(OBJ)/windows/fileio.o
 else
 PLATFORM_TOOL_OBJS = $(OBJ)/$(MAMEOS)/fileio.o
+endif
+
+
+ifdef BUILD_EXPAT
+OBJDIRS += $(OBJ)/expat
+EXPAT = $(OBJ)/libexpat.a
+else
+LIBS += -lexpat
+EXPAT =
+endif
+
+ifdef BUILD_ZLIB
+OBJDIRS += $(OBJ)/zlib
+ZLIB = $(OBJ)/libz.a
+else
+LIBS += -lz
+ZLIB =
 endif
 
 all:	maketree $(EMULATORCLI) $(EMULATORGUI) $(MESSTEST) $(MESSDOCS) chdman.exe imgtool.exe
@@ -261,9 +294,9 @@ chdman$(EXE): $(OBJ)/chdman.o $(OBJ)/chd.o $(OBJ)/chdcd.o $(OBJ)/md5.o $(OBJ)/sh
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ -lz -o $@
 
-xml2info$(EXE): src/xml2info/xml2info.c
-	@echo Compiling $@...
-	$(CC) -O1 -o $@ $^
+xml2info$(EXE): $(OBJ)/xml2info.o $(OBJ)/libexpat.a
+	@echo Linking $@...
+	$(CC) -O1 -o xml2info$(EXE) $^ -Xlinker $(OBJ)/libexpat.a
 
 dat2html$(EXE): $(DAT2HTML_OBJS)
 	@echo Compiling $@...
@@ -291,7 +324,15 @@ messtest$(EXE):	$(OBJS) $(COREOBJS) $(DRVLIBS) $(MESSTEST_OBJS) \
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $(CONSOLE_PROGRAM) $^ -Wl,--allow-multiple-definition -lz -lwinmm -o $@
 
+# secondary libraries
+$(OBJ)/libexpat.a: $(OBJ)/expat/xmlparse.o $(OBJ)/expat/xmlrole.o $(OBJ)/expat/xmltok.o
+	$(AR) cr $@ $^
 
+$(OBJ)/libz.a: $(OBJ)/zlib/adler32.o $(OBJ)/zlib/compress.o $(OBJ)/zlib/crc32.o $(OBJ)/zlib/deflate.o \
+				$(OBJ)/zlib/example.o $(OBJ)/zlib/gzio.o $(OBJ)/zlib/inffast.o $(OBJ)/zlib/inflate.o \
+				$(OBJ)/zlib/infback.o $(OBJ)/zlib/inftrees.o $(OBJ)/zlib/minigzip.o $(OBJ)/zlib/trees.o \
+				$(OBJ)/zlib/uncompr.o $(OBJ)/zlib/zutil.o
+	$(AR) cr $@ $^
 
 #############################################################################
 
@@ -313,13 +354,6 @@ endif
 $(OBJ)/xml2info/%.o: src/xml2info/%.c
 	@echo Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGS_BASE) -c $< -o $@
-ifdef DISASSEMBLY
-	$(DASM) $(CDEFS) $(CFLAGS_BASE) $< -o $(@:%.o=%.S)
-endif
-
-$(OBJ)/mess/expat/%.o: mess/expat/%.c
-	@echo Compiling $<...
-	$(CC) $(CDEFS) $(CFLAGS_BASE) -c $< -DHAVE_MEMMOVE -o $@
 ifdef DISASSEMBLY
 	$(DASM) $(CDEFS) $(CFLAGS_BASE) $< -o $(@:%.o=%.S)
 endif

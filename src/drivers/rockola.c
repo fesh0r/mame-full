@@ -467,7 +467,7 @@ INPUT_PORTS_START( fantasy )
 	PORT_DIPSETTING(    0x10, "4" )
 	PORT_DIPSETTING(    0x20, "5" )
 /*	PORT_DIPSETTING(    0x30, "3" ) */
-	PORT_DIPNAME( 0x80, 0x00, "Allow Continue" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 

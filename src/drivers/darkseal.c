@@ -206,16 +206,16 @@ INPUT_PORTS_START( darkseal )
 	PORT_DIPSETTING(    0x03, "3" )
 	PORT_DIPSETTING(    0x02, "4" )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x08, "Easy" )
-	PORT_DIPSETTING(    0x0c, "Normal" )
-	PORT_DIPSETTING(    0x04, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x30, 0x30, "Energy" )
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPSETTING(    0x10, "2.5" )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x20, "4" )
-	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
@@ -278,14 +278,14 @@ static struct OKIM6295interface okim6295_interface =
 	2,              /* 2 chips */
 	{ 32220000/32/132, 32220000/16/132 },/* Frequency */
 	{ REGION_SOUND1, REGION_SOUND2 },
-	{ 75, 60 } /* Note!  Keep chip 1 (voices) louder than chip 2 */
+	{ 100, 60 } /* Note!  Keep chip 1 (voices) louder than chip 2 */
 };
 
 static struct YM2203interface ym2203_interface =
 {
 	1,
 	32220000/8, /* Accurate, audio section crystal is 32.220 MHz */
-	{ YM2203_VOL(60,60) },
+	{ YM2203_VOL(45,45) },	/* adjusted */
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -301,7 +301,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,
 	32220000/9, /* Accurate, audio section crystal is 32.220 MHz */
-	{ YM3012_VOL(45,MIXER_PAN_LEFT,45,MIXER_PAN_RIGHT) },
+	{ YM3012_VOL(55,MIXER_PAN_LEFT,55,MIXER_PAN_RIGHT) },	/* adjusted */
 	{ sound_irq }
 };
 

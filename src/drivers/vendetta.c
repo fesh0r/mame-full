@@ -243,7 +243,7 @@ static WRITE8_HANDLER( z80_arm_nmi_w )
 {
 	cpunum_set_input_line(1, INPUT_LINE_NMI, CLEAR_LINE );
 
-	timer_set( TIME_IN_USEC( 50 ), 0, z80_nmi_callback );
+	timer_set( TIME_IN_USEC( 25 ), 0, z80_nmi_callback );
 }
 
 static WRITE8_HANDLER( z80_irq_w )
@@ -538,15 +538,15 @@ INPUT_PORTS_END
 static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
-	3579545,	/* 3.579545 MHz */
-	{ YM3012_VOL(35,MIXER_PAN_LEFT,35,MIXER_PAN_RIGHT) },
+	4000000,	/* adjusted to be in sync with Z80 CPU */
+	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },	/* music volume */
 	{ 0 }
 };
 
 static struct K053260_interface k053260_interface =
 {
 	1,
-	{ 3579545 },
+	{ 4000000 },	/* adjusted to be in sync with Z80 CPU */
 	{ REGION_SOUND1 }, /* memory region */
 	{ { MIXER(75,MIXER_PAN_LEFT), MIXER(75,MIXER_PAN_RIGHT) } },
 	{ 0 }
@@ -561,11 +561,11 @@ static INTERRUPT_GEN( vendetta_irq )
 static MACHINE_DRIVER_START( vendetta )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD_TAG("main", KONAMI, 6000000)		/* ? */
+	MDRV_CPU_ADD_TAG("main", KONAMI, 3000000)	/* seems correct, was 6MHz an overclock? */
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(vendetta_irq,1)
 
-	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_ADD(Z80, 4000000)	/* verified with M1, guessed but accurate */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
                             /* interrupts are triggered by the main CPU */

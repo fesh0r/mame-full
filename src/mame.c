@@ -627,6 +627,9 @@ static void shutdown_machine(void)
 
 	/* reset the saved states */
 	state_save_reset();
+
+	/* reset coin counters */
+	coin_counter_reset();
 }
 
 
@@ -2067,8 +2070,8 @@ static int validitychecks(void)
 
 					for (j = 0;j < STR_TOTAL;j++)
 					{
-						if (inp->name == ipdn_defaultstrings[j]) break;
-						else if (!my_stricmp(inp->name,ipdn_defaultstrings[j]))
+						if (inp->name == inptport_default_strings[j]) break;
+						else if (!my_stricmp(inp->name,inptport_default_strings[j]))
 						{
 							printf("%s: %s must use DEF_STR( %s )\n",drivers[i]->source_file,drivers[i]->name,inp->name);
 							error = 1;
@@ -2090,9 +2093,9 @@ static int validitychecks(void)
 						}
 					}
 					
-					if (inp->type > IPT_ANALOG_START && inp->type < IPT_ANALOG_END)
+					if (port_type_is_analog(inp->type))
 					{
-						if (inp->u.analog.sensitivity == 0)
+						if (inp->analog.sensitivity == 0)
 						{
 							printf("%s: %s has an analog port with zero sensitivity\n",drivers[i]->source_file,drivers[i]->name);
 							error = 1;

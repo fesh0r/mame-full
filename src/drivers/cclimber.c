@@ -1265,7 +1265,7 @@ INPUT_PORTS_START( swimmer )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
-	PORT_BIT( 0,       0x03, IPT_DIPSWITCH_SETTING ) PORT_NAME("Infinite") PORT_CHEAT
+	PORT_BIT( 0,       0x03, IPT_DIPSWITCH_SETTING ) PORT_NAME(DEF_STR( Infinite )) PORT_CHEAT
 	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "10000" )
 	PORT_DIPSETTING(    0x04, "20000" )
@@ -1293,10 +1293,10 @@ INPUT_PORTS_START( swimmer )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x00, "Easy" )		// labeled this way for similarities with 'swimmerb'
-	PORT_DIPSETTING(    0x40, "Hard" )		// labeled this way for similarities with 'swimmerb'
-	PORT_DIPSETTING(    0x80, "Harder" )
-	PORT_DIPSETTING(    0xc0, "Hardest" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Easy ) )		// labeled this way for similarities with 'swimmerb'
+	PORT_DIPSETTING(    0x40, DEF_STR( Hard ) )		// labeled this way for similarities with 'swimmerb'
+	PORT_DIPSETTING(    0x80, DEF_STR( Harder ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( Hardest ) )
 
 	PORT_START      /* IN4 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
@@ -1327,7 +1327,7 @@ INPUT_PORTS_START( swimmerb )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
-	PORT_BIT( 0,       0x03, IPT_DIPSWITCH_SETTING ) PORT_NAME("Infinite") PORT_CHEAT
+	PORT_BIT( 0,       0x03, IPT_DIPSWITCH_SETTING ) PORT_NAME(DEF_STR( Infinite )) PORT_CHEAT
 	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "10000" )
 	PORT_DIPSETTING(    0x04, "20000" )
@@ -1355,8 +1355,8 @@ INPUT_PORTS_START( swimmerb )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x00, "Easy" )
-	PORT_DIPSETTING(    0x40, "Hard" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Hard ) )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START      /* IN4 */
@@ -1387,7 +1387,7 @@ INPUT_PORTS_START( guzzler )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
-	PORT_BIT( 0,       0x03, IPT_DIPSWITCH_SETTING ) PORT_NAME("Infinite") PORT_CHEAT
+	PORT_BIT( 0,       0x03, IPT_DIPSWITCH_SETTING ) PORT_NAME(DEF_STR( Infinite )) PORT_CHEAT
 	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x04, "20K, every 50K" )
 	PORT_DIPSETTING(    0x00, "30K, every 100K" )
@@ -1413,10 +1413,10 @@ INPUT_PORTS_START( guzzler )
 	PORT_DIPSETTING(    0x20, "3 Letters" )
 	PORT_DIPSETTING(    0x00, "10 Letters" )
 	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x00, "Easy" )
-	PORT_DIPSETTING(    0x40, "Medium" )
-	PORT_DIPSETTING(    0x80, "Hard" )
-	PORT_DIPSETTING(    0xc0, "Hardest" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Medium ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( Hardest ) )
 
 	PORT_START      /* coin */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 ) PORT_IMPULSE(2)

@@ -171,8 +171,8 @@ INPUT_PORTS_START( raiders5 )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x80, "Normal" )
-	PORT_DIPSETTING(    0x00, "Hard" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hard ) )
 
 	PORT_START	/* DSW2*/
 	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coinage ) )
@@ -188,7 +188,7 @@ INPUT_PORTS_START( raiders5 )
 	PORT_DIPNAME( 0x08, 0x08, "High Score Names" )
 	PORT_DIPSETTING(    0x00, "3 Letters" )
 	PORT_DIPSETTING(    0x08, "8 Letters" )
-	PORT_DIPNAME( 0x10, 0x10, "Allow Continue" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x20, 0x20, "Unknown 2-6" )
@@ -276,7 +276,7 @@ static MACHINE_DRIVER_START( raiders5 )
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(768)
 
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(generic_bitmapped)
 	MDRV_VIDEO_UPDATE(raiders5)
 
 	/* sound hardware */

@@ -154,8 +154,8 @@ INPUT_PORTS_START( strnskil )
 
 	PORT_START  /* dsw2 */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x00, "Normal" )
-	PORT_DIPSETTING(    0x01, "Hard" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Hard ) )
 	PORT_DIPNAME( 0x02, 0x00, "Unknown 2-2" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( On ) )

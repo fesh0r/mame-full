@@ -32,11 +32,16 @@ BSCMAKE = @-bscmake.exe
 # uncomment next line to use DRC MIPS3 engine
 X86_MIPS3_DRC = 1
 
+
+# uncomment next line to build expat as part of MAME build
+BUILD_EXPAT = 1
+
+# uncomment next line to build zlib as part of MAME build
+BUILD_ZLIB = 1
+
+
 # set this the operating system you're building for
 MAMEOS = windows
-
-# if MAME_NET is defined, network support will be compiled in
-# MAME_NET = -DMAME_NET
 
 # uncomment next line to generate help files
 # HELP = 1
@@ -124,10 +129,9 @@ DEFS = \
 	-DHAS_CPUS \
 	-DHAS_SOUND \
 	-DLSB_FIRST=1 \
-	-DZLIB_DLL \
 	-DXML_STATIC \
 	$(MAME_VERSION) \
-	$(MAME_NET) \
+	-DCRLF=3
 
 ifndef DEBUG
 DEFS += -DNDEBUG
@@ -150,6 +154,7 @@ endif
 
 INCLUDES += \
 	-Isrc \
+	-Isrc/zlib \
 	-Isrc/includes \
 	-Isrc/windows \
 	-Isrc/ui \
@@ -221,6 +226,22 @@ ifdef GX_PATH
 LDFLAGS += -LIBPATH:$(subst \,\\,$(GX_PATH))\\$(WCEPLAT)
 endif
 
+ifdef BUILD_EXPAT
+OBJDIRS += $(OBJ)/expat
+EXPAT = $(OBJ)/libexpat.a
+else
+LIBS += expat.lib
+EXPAT =
+endif
+
+ifdef BUILD_ZLIB
+OBJDIRS += $(OBJ)/zlib
+ZLIB = $(OBJ)/libz.a
+else
+LIBS += -lz
+ZLIB =
+endif
+
 LDFLAGS += -machine:x86 -nologo
 
 ifdef DEBUG
@@ -247,7 +268,9 @@ OBJDIRS = \
 	$(OBJ)/xml2info	\
 	$(OBJ)/windows	\
 	$(OBJ)/wince	\
-	$(OBJ)/ui
+	$(OBJ)/ui		\
+	$(OBJ)/expat	\
+	$(OBJ)/zlib
 
 ifdef MESS
 # MESS object directories
@@ -352,7 +375,7 @@ chdman$(EXE): $(OBJ)/chdman.o $(OBJ)/chd.o $(OBJ)/chdcd.o $(OBJ)/md5.o $(OBJ)/sh
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ zlib.lib -out:$@
 
-xml2info$(EXE): src/xml2info/xml2info.c
+xml2info$(EXE): src/xml2info/xml2info.c $(OBJ)/libexpat.a
 	@echo Compiling $@...
 	$(CC) -O1 -out:$@ $^
 
@@ -384,7 +407,15 @@ messtest$(EXE):	$(OBJS) $(COREOBJS) $(DRVLIBS) $(MESSTEST_OBJS) \
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $(CONSOLE_PROGRAM) $^ zlib.lib winmm.lib user32.lib -out:$@
 
+# secondary libraries
+$(OBJ)/libexpat.a: $(OBJ)/expat/xmlparse.o $(OBJ)/expat/xmlrole.o $(OBJ)/expat/xmltok.o
+	$(AR) -nologo -out:$@ $^
 
+$(OBJ)/libz.a: $(OBJ)/zlib/adler32.o $(OBJ)/zlib/compress.o $(OBJ)/zlib/crc32.o $(OBJ)/zlib/deflate.o \
+				$(OBJ)/zlib/example.o $(OBJ)/zlib/gzio.o $(OBJ)/zlib/inffast.o $(OBJ)/zlib/inflate.o \
+				$(OBJ)/zlib/infback.o $(OBJ)/zlib/inftrees.o $(OBJ)/zlib/minigzip.o $(OBJ)/zlib/trees.o \
+				$(OBJ)/zlib/uncompr.o $(OBJ)/zlib/zutil.o
+	$(AR) -nologo -out:$@ $^
 
 #############################################################################
 

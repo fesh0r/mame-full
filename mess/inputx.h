@@ -50,7 +50,7 @@ enum
 	{ if ((code2) != CODE_NONE)	PORT_CODE(code2); }					\
 	
 #define PORT_CHAR(ch)												\
-	port->u.keyboard.chars[key++] = (ch);							\
+	port->keyboard.chars[key++] = (ch);							\
 
 #define PORT_KEY0(mask,default,name,key1,key2)						\
 	PORT_BIT(mask, default, IPT_KEYBOARD)							\
@@ -110,7 +110,7 @@ enum
 
 /* these are called by the core; they should not be called from FEs */
 void inputx_init(void);
-void inputx_update(unsigned short *ports);
+void inputx_update(UINT32 *ports);
 void inputx_handle_mess_extensions(struct InputPort *ipt);
 
 #ifdef MAME_DEBUG

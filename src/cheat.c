@@ -1483,7 +1483,7 @@ static int UIPressedRepeatThrottle(int code, int baseSpeed)
 
 	const int	kDelayRampTimer = 10;
 
-	if(seq_pressed(input_port_type_seq(code,0)))
+	if(input_port_type_pressed(code,0))
 	{
 		if(lastCode != code)
 		{
@@ -3746,10 +3746,10 @@ static int EditCheatMenu(struct mame_bitmap * bitmap, CheatEntry * entry, int se
 			case kType_ActivationKey:
 				entry->activationKey--;
 
-				if(entry->activationKey < __code_key_first)
-					entry->activationKey = __code_joy_last;
-				if(entry->activationKey > __code_joy_last)
-					entry->activationKey = __code_key_first;
+				if(entry->activationKey < 0)
+					entry->activationKey = __code_max - 1;
+				if(entry->activationKey >= __code_max)
+					entry->activationKey = 0;
 
 				entry->flags |= kCheatFlag_HasActivationKey;
 				break;
@@ -4020,10 +4020,10 @@ static int EditCheatMenu(struct mame_bitmap * bitmap, CheatEntry * entry, int se
 			case kType_ActivationKey:
 				entry->activationKey++;
 
-				if(entry->activationKey < __code_key_first)
-					entry->activationKey = __code_joy_last;
-				if(entry->activationKey > __code_joy_last)
-					entry->activationKey = __code_key_first;
+				if(entry->activationKey < 0)
+					entry->activationKey = __code_max - 1;
+				if(entry->activationKey >= __code_max)
+					entry->activationKey = 0;
 
 				entry->flags |= kCheatFlag_HasActivationKey;
 				break;

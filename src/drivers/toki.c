@@ -206,18 +206,18 @@ INPUT_PORTS_START( toki )
 	PORT_DIPSETTING(      0x0200, "2" )
 	PORT_DIPSETTING(      0x0300, "3" )
 	PORT_DIPSETTING(      0x0100, "5" )
-	PORT_BIT( 0,         0x0000, IPT_DIPSWITCH_SETTING ) PORT_NAME("Infinite") PORT_CHEAT
+	PORT_BIT( 0,         0x0000, IPT_DIPSWITCH_SETTING ) PORT_NAME(DEF_STR( Infinite )) PORT_CHEAT
 	PORT_DIPNAME( 0x0c00, 0x0c00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(      0x0800, "50000 150000" )
 	PORT_DIPSETTING(      0x0000, "70000 140000 210000" )
 	PORT_DIPSETTING(      0x0c00, "70000" )
 	PORT_DIPSETTING(      0x0400, "100000 200000" )
 	PORT_DIPNAME( 0x3000, 0x3000, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x2000, "Easy" )
-	PORT_DIPSETTING(      0x3000, "Medium" )
-	PORT_DIPSETTING(      0x1000, "Hard" )
-	PORT_DIPSETTING(      0x0000, "Hardest" )
-	PORT_DIPNAME( 0x4000, 0x4000, "Allow Continue" )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Easy ) )
+	PORT_DIPSETTING(      0x3000, DEF_STR( Medium ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( Hard ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
 	PORT_DIPSETTING(      0x4000, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Demo_Sounds ) )
@@ -289,18 +289,18 @@ INPUT_PORTS_START( tokib )
 	PORT_DIPSETTING(      0x0200, "2" )
 	PORT_DIPSETTING(      0x0300, "3" )
 	PORT_DIPSETTING(      0x0100, "5" )
-	PORT_BIT( 0,         0x0000, IPT_DIPSWITCH_SETTING ) PORT_NAME("Infinite") PORT_CHEAT
+	PORT_BIT( 0,         0x0000, IPT_DIPSWITCH_SETTING ) PORT_NAME(DEF_STR( Infinite )) PORT_CHEAT
 	PORT_DIPNAME( 0x0c00, 0x0c00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(      0x0800, "50000 150000" )
 	PORT_DIPSETTING(      0x0000, "70000 140000 210000" )
 	PORT_DIPSETTING(      0x0c00, "70000" )
 	PORT_DIPSETTING(      0x0400, "100000 200000" )
 	PORT_DIPNAME( 0x3000, 0x3000, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x2000, "Easy" )
-	PORT_DIPSETTING(      0x3000, "Medium" )
-	PORT_DIPSETTING(      0x1000, "Hard" )
-	PORT_DIPSETTING(      0x0000, "Hardest" )
-	PORT_DIPNAME( 0x4000, 0x4000, "Allow Continue" )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Easy ) )
+	PORT_DIPSETTING(      0x3000, DEF_STR( Medium ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( Hard ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
 	PORT_DIPSETTING(      0x4000, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Demo_Sounds ) )
@@ -443,7 +443,7 @@ SEIBU_SOUND_SYSTEM_YM3812_HARDWARE(14318180/4,8000,REGION_SOUND1);
 static struct YM3812interface ym3812_tokib_interface =
 {
 	1,			/* 1 chip (no more supported) */
-	3600000,	/* 3.600000 MHz ? (partially supported) */
+	3579545,	/* adjusted, more accurate */
 	{ 100 }		/* (not supported) */
 };
 
@@ -453,7 +453,7 @@ static struct MSM5205interface msm5205_interface =
 	384000, 			/* 384KHz			  */
 	{ toki_adpcm_int },/* interrupt function */
 	{ MSM5205_S96_4B },	/* 4KHz 			  */
-	{ 50 }
+	{ 60 }	/* adjusted sound fx volume */
 };
 
 
@@ -493,7 +493,7 @@ static MACHINE_DRIVER_START( tokib )
 	MDRV_CPU_PROGRAM_MAP(tokib_readmem,tokib_writemem)
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)/* VBL (could be level1, same vector) */
 
-	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_ADD(Z80, 3579545)	/* correct, accurate */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz (?) */
 	MDRV_CPU_PROGRAM_MAP(tokib_sound_readmem,tokib_sound_writemem)
 

@@ -332,17 +332,17 @@ ADDRESS_MAP_END
 
 #define TAITO_DIFFICULTY_8 \
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) ) \
-	PORT_DIPSETTING(    0x02, "Easy" ) \
-	PORT_DIPSETTING(    0x03, "Medium" ) \
-	PORT_DIPSETTING(    0x01, "Hard" ) \
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Easy ) ) \
+	PORT_DIPSETTING(    0x03, DEF_STR( Medium ) ) \
+	PORT_DIPSETTING(    0x01, DEF_STR( Hard ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 
 INPUT_PORTS_START( othunder )
 	PORT_START /* DSW A */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, "Allow Continue" )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
 	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
@@ -366,9 +366,9 @@ INPUT_PORTS_START( othunder )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, "Language" )
-	PORT_DIPSETTING(    0x80, "Japanese" )
-	PORT_DIPSETTING(    0x00, "English" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Language ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Japanese ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( English ) )
 
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -414,7 +414,7 @@ INPUT_PORTS_START( othundu )
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, "Allow Continue" )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
 	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
@@ -438,9 +438,9 @@ INPUT_PORTS_START( othundu )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, "Language" )
-	PORT_DIPSETTING(    0x80, "Japanese" )
-	PORT_DIPSETTING(    0x00, "English" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Language ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Japanese ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( English ) )
 
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )

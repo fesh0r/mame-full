@@ -356,9 +356,9 @@ INPUT_PORTS_START( trackfld )
 	PORT_DIPSETTING(    0x10, "Don't Erase" )
 	PORT_DIPSETTING(    0x00, "Erase on Reset" )
 	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x60, "Easy" )
-	PORT_DIPSETTING(    0x40, "Normal" )
-	PORT_DIPSETTING(    0x20, "Hard" )
+	PORT_DIPSETTING(    0x60, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Hard ) )
 	PORT_DIPSETTING(    0x00, "Difficult" )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
@@ -387,17 +387,17 @@ INPUT_PORTS_START( mastkin )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* DSW0 */
-	PORT_DIPNAME( 0x01, 0x00, "Allow Continue" )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, "Timer Speed" )
-	PORT_DIPSETTING(    0x02, "Normal" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x00, "Fast" )
 	PORT_DIPNAME( 0x0c, 0x04, DEF_STR( Difficulty ) )	// "Damage"
-	PORT_DIPSETTING(    0x0c, "Easy" )				//   0x03
-	PORT_DIPSETTING(    0x04, "Normal" )			//   0x07
-	PORT_DIPSETTING(    0x08, "Hard" )				//   0x0b
-	PORT_DIPSETTING(    0x00, "Very Hard" )			//   0x0f
+	PORT_DIPSETTING(    0x0c, DEF_STR( Easy ) )				//   0x03
+	PORT_DIPSETTING(    0x04, DEF_STR( Normal ) )			//   0x07
+	PORT_DIPSETTING(    0x08, DEF_STR( Hard ) )				//   0x0b
+	PORT_DIPSETTING(    0x00, DEF_STR( Very_Hard ) )			//   0x0f
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x10, "4" )
 	PORT_DIPSETTING(    0x00, "5" )

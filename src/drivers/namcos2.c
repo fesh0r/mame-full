@@ -981,7 +981,7 @@ ADDRESS_MAP_END
 	PORT_BIT( 0x0f, IP_ACTIVE_LOW, IPT_UNUSED ) \
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN2 ) \
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 ) \
-	PORT_BIT(0x40, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("Service Button") PORT_CODE(KEYCODE_NONE) \
+	PORT_BIT(0x40, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("Service Button") PORT_CODE(CODE_NONE) \
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE1 )
 
 #define NAMCOS2_MCU_ANALOG_PORT_DEFAULT \
@@ -1016,7 +1016,7 @@ ADDRESS_MAP_END
 #define NAMCOS2_MCU_DIPSW_DEFAULT \
 	PORT_START		/* 63B05Z0 - $2000 DIP SW */ \
 	PORT_DIPNAME( 0x01, 0x01, "Video Display") \
-	PORT_DIPSETTING(	0x01, "Normal" ) \
+	PORT_DIPSETTING(	0x01, DEF_STR( Normal ) ) \
 	PORT_DIPSETTING(	0x00, "Frozen" ) \
 	PORT_DIPNAME( 0x02, 0x02, "$2000-1") \
 	PORT_DIPSETTING(	0x02, "H" ) \
@@ -1282,7 +1282,7 @@ INPUT_PORTS_START( fourtrax )
 	PORT_DIPSETTING(	0x00, "L" )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT(0x40, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("Service Button") PORT_CODE(KEYCODE_NONE)
+	PORT_BIT(0x40, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("Service Button") PORT_CODE(CODE_NONE)
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE1 )
 
 	PORT_START		/* 63B05Z0 - 8 CHANNEL ANALOG - CHANNEL 0 2 */
@@ -1406,7 +1406,7 @@ INPUT_PORTS_START( suzuka )
 
 	PORT_START		/* 63B05Z0 - $2000 DIP SW */ \
 	PORT_DIPNAME( 0x01, 0x01, "Video Display") \
-	PORT_DIPSETTING(	0x01, "Normal" ) \
+	PORT_DIPSETTING(	0x01, DEF_STR( Normal ) ) \
 	PORT_DIPSETTING(	0x00, "Frozen" ) \
 	PORT_DIPNAME( 0x02, 0x02, "$2000-1") \
 	PORT_DIPSETTING(	0x02, "H" ) \
@@ -1552,11 +1552,11 @@ INPUT_PORTS_START( metlhawk )
 	PORT_START		/* 63B05Z0 - 8 CHANNEL ANALOG - CHANNEL 4 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_START		/* Joystick Y */
-	PORT_BIT( 0xff, 0x80, IPT_AD_STICK_Y ) PORT_MINMAX(0x20,0xe0) PORT_SENSITIVITY(100) PORT_KEYDELTA(16) PORT_CENTER
+	PORT_BIT( 0xff, 0x80, IPT_AD_STICK_Y ) PORT_MINMAX(0x20,0xe0) PORT_SENSITIVITY(100) PORT_KEYDELTA(16)
 	PORT_START		/* Joystick X */
-	PORT_BIT( 0xff, 0x80, IPT_AD_STICK_X ) PORT_MINMAX(0x20,0xe0) PORT_SENSITIVITY(100) PORT_KEYDELTA(16) PORT_CENTER
+	PORT_BIT( 0xff, 0x80, IPT_AD_STICK_X ) PORT_MINMAX(0x20,0xe0) PORT_SENSITIVITY(100) PORT_KEYDELTA(16)
 	PORT_START		/* Lever */
-	PORT_BIT( 0xff, 0x80, IPT_AD_STICK_Y ) PORT_MINMAX(0x20,0xe0) PORT_SENSITIVITY(100) PORT_KEYDELTA(16) PORT_CENTER PORT_REVERSE PORT_PLAYER(2)
+	PORT_BIT( 0xff, 0x80, IPT_AD_STICK_Y ) PORT_MINMAX(0x20,0xe0) PORT_SENSITIVITY(100) PORT_KEYDELTA(16) PORT_REVERSE PORT_PLAYER(2)
 
 	PORT_START		/* 63B05Z0 - PORT H */
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -1714,7 +1714,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	3579580,	/* 3.58 MHz ? */
-	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },
+	{ YM3012_VOL(80,MIXER_PAN_LEFT,80,MIXER_PAN_RIGHT) },	/* adjusted */
 	{ NULL }	/* YM2151 IRQ line is NOT connected on the PCB */
 };
 
@@ -1724,10 +1724,18 @@ static struct C140interface C140_interface =
 	C140_TYPE_SYSTEM2,
 	8000000/374,
 	REGION_SOUND1,
-	50
+	75		/* adjusted */
 };
 
-
+/* adjusted chip */
+static struct C140interface C140_2_interface =
+{
+	C140_TYPE_SYSTEM2,
+	8000000/374,
+	REGION_SOUND1,
+	100		/* adjusted */
+};
+/* end */
 
 /******************************************
 
@@ -1794,9 +1802,16 @@ static MACHINE_DRIVER_START( default )
 	MDRV_VIDEO_UPDATE(namcos2_default)
 
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(C140, C140_interface)
+	MDRV_SOUND_ADD_TAG("C140", C140, C140_interface)	/* adjusted */
 	MDRV_SOUND_ADD(YM2151, ym2151_interface)
 MACHINE_DRIVER_END
+
+/* adjusted machine driver start */
+static MACHINE_DRIVER_START( default2 )
+	MDRV_IMPORT_FROM(default)
+	MDRV_SOUND_REPLACE("C140", C140, C140_2_interface)	/* adjusted */
+MACHINE_DRIVER_END
+/* end */
 
 static MACHINE_DRIVER_START( gollygho )
 	MDRV_CPU_ADD(M68000, 12288000)
@@ -1992,7 +2007,7 @@ static MACHINE_DRIVER_START( metlhawk )
 	MDRV_VIDEO_UPDATE(metlhawk)
 
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(C140, C140_interface)
+	MDRV_SOUND_ADD(C140, C140_2_interface)	/* adjusted */
 	MDRV_SOUND_ADD(YM2151, ym2151_interface)
 MACHINE_DRIVER_END
 
@@ -4456,17 +4471,17 @@ GAMEX(1987, finalapd, finallap, finallap, finallap, finallap, ROT0,   "Namco", "
 GAMEX(1987, finalapc, finallap, finallap, finallap, finallap, ROT0,   "Namco", "Final Lap (Rev C)", GAME_IMPERFECT_GRAPHICS )
 GAMEX(1987, finlapjc, finallap, finallap, finallap, finallap, ROT0,   "Namco", "Final Lap (Japan - Rev C)", GAME_IMPERFECT_GRAPHICS )
 GAMEX(1987, finlapjb, finallap, finallap, finallap, finallap, ROT0,   "Namco", "Final Lap (Japan - Rev B)", GAME_IMPERFECT_GRAPHICS )
-GAME( 1988, assault,  0,        default,  assault,  assault , ROT90,  "Namco", "Assault" )
-GAME( 1988, assaultj, assault,  default,  assault,  assaultj, ROT90,  "Namco", "Assault (Japan)" )
-GAME( 1988, assaultp, assault,  default,  assault,  assaultp, ROT90,  "Namco", "Assault Plus (Japan)" )
+GAME( 1988, assault,  0,        default2,  assault,  assault , ROT90,  "Namco", "Assault" )		/* adjusted */
+GAME( 1988, assaultj, assault,  default2,  assault,  assaultj, ROT90,  "Namco", "Assault (Japan)" )		/* adjusted */
+GAME( 1988, assaultp, assault,  default2,  assault,  assaultp, ROT90,  "Namco", "Assault Plus (Japan)" )	/* adjusted */
 GAME( 1988, metlhawk, 0,        metlhawk, metlhawk, metlhawk, ROT90,  "Namco", "Metal Hawk (Japan)")
 GAME( 1988, ordyne,   0,        default,  default,  ordyne,   ROT180, "Namco", "Ordyne (Japan)" )
 GAME( 1988, mirninja, 0,        default,  default,  mirninja, ROT0,   "Namco", "Mirai Ninja (Japan)" )
-GAME( 1988, phelios,  0,        default,  default,  phelios , ROT90,  "Namco", "Phelios (Japan)" )
-GAME( 1989, dirtfoxj, 0,        default,  dirtfox,  dirtfoxj, ROT90,  "Namco", "Dirt Fox (Japan)" )
+GAME( 1988, phelios,  0,        default2,  default,  phelios , ROT90,  "Namco", "Phelios (Japan)" )		/* adjusted */
+GAME( 1989, dirtfoxj, 0,        default2,  dirtfox,  dirtfoxj, ROT90,  "Namco", "Dirt Fox (Japan)" )	/* adjusted */
 GAMEX(1989, fourtrax, 0,        finallap, fourtrax, fourtrax, ROT0,   "Namco", "Four Trax", GAME_IMPERFECT_GRAPHICS )
 GAME( 1989, valkyrie, 0,        default,  default,  valkyrie, ROT90,  "Namco", "Valkyrie No Densetsu (Japan)" )
-GAME( 1989, finehour, 0,        default,  default,  finehour, ROT0,   "Namco", "Finest Hour (Japan)" )
+GAME( 1989, finehour, 0,        default2,  default,  finehour, ROT0,   "Namco", "Finest Hour (Japan)" )		/* adjusted */
 GAME( 1989, burnforc, 0,        default,  default,  burnforc, ROT0,   "Namco", "Burning Force (Japan)" )
 GAME( 1989, marvland, 0,        default,  default,  marvland, ROT0,   "Namco", "Marvel Land (US)" )
 GAME( 1989, marvlanj, marvland, default,  default,  marvlanj, ROT0,   "Namco", "Marvel Land (Japan)" )

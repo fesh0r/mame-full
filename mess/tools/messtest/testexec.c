@@ -272,6 +272,7 @@ static void command_rawinput(void)
 	}
 	else if (current_time > wait_target)
 	{
+#if 0
 		do
 		{
 			/* process the next command */
@@ -297,6 +298,7 @@ static void command_rawinput(void)
 			wait_target = current_time + rate;
 		else
 			state = STATE_READY;
+#endif
 	}
 }
 

@@ -168,8 +168,8 @@ INPUT_PORTS_START( appoooh )
 	PORT_DIPSETTING(    0x40, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x00, "Easy" )
-	PORT_DIPSETTING(    0x80, "Hard" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Hard ) )
 INPUT_PORTS_END
 
 

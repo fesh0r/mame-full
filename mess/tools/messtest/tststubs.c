@@ -67,19 +67,18 @@ void osd_sound_enable(int enable)
 {
 }
 
-const struct KeyboardInfo *osd_get_key_list(void)
+const struct OSCodeInfo *osd_get_code_list(void)
 {
-	static const struct KeyboardInfo ki[1];
-	return ki;
+	static const struct OSCodeInfo ci[1];
+	return ci;
 }
 
-const struct JoystickInfo *osd_get_joy_list(void)
+INT32 osd_get_code_value(os_code_t oscode)
 {
-	static const struct JoystickInfo ji[1];
-	return ji;
+	return 0;
 }
 
-int osd_is_joy_pressed(int joycode)
+int osd_is_code_pressed(int code)
 {
 	return 0;
 }
@@ -129,11 +128,7 @@ void osd_trak_read(int player, int *deltax, int *deltay)
 {
 }
 
-void osd_analogjoy_read(int player,int analog_axis[MAX_ANALOG_AXES], InputCode analogjoy_input[MAX_ANALOG_AXES])
-{
-}
-
-void osd_customize_inputport_defaults(struct ipd *defaults)
+void osd_customize_inputport_list(struct InputPortDefinition *defaults)
 {
 }
 

@@ -99,7 +99,7 @@ INPUT_PORTS_START( mermaid )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "20000" )
 	PORT_DIPSETTING(    0x04, "30000" )
-	PORT_DIPNAME( 0x08, 0x08, "Allow Continue" )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Lives ) )
@@ -237,7 +237,7 @@ static MACHINE_DRIVER_START( mermaid )
 	MDRV_COLORTABLE_LENGTH(4*16+2*2)
 
 	MDRV_PALETTE_INIT(mermaid)
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(generic_bitmapped)
 	MDRV_VIDEO_UPDATE(mermaid)
 
 	/* sound hardware */

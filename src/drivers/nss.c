@@ -172,8 +172,8 @@ INPUT_PORTS_START( snes )
 
 	PORT_START	/* IN 12 : dip-switches */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x00, "Normal" )
-	PORT_DIPSETTING(    0x03, "Hard"  )
+	PORT_DIPSETTING(    0x00, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( Hard )  )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x0c, "2" )
 	PORT_DIPSETTING(    0x08, "3" )

@@ -104,7 +104,7 @@ INPUT_PORTS_START( battlex )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( 2C_3C ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
-	PORT_DIPNAME( 0x04, 0x04, "Allow Continue" )			// Not on 1st stage
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Allow_Continue ) )			// Not on 1st stage
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )

@@ -946,10 +946,10 @@ INPUT_PORTS_START( quester )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START      /* IN4 - fake input port for player 1 paddle */
-	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_MINMAX(0,0) PORT_SENSITIVITY(30) PORT_KEYDELTA(15)
+	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_SENSITIVITY(30) PORT_KEYDELTA(15)
 
 	PORT_START      /* IN5 - fake input port for player 2 paddle */
-	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_MINMAX(0,0) PORT_SENSITIVITY(30) PORT_KEYDELTA(15) PORT_PLAYER(2)
+	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_SENSITIVITY(30) PORT_KEYDELTA(15) PORT_PLAYER(2)
 INPUT_PORTS_END
 
 /* Face Off input port definition - 4 player controls */
@@ -1132,7 +1132,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,          /* 1 chip */
 	3579580,    /* 3.58 MHz */
-	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },
+	{ YM3012_VOL(80,MIXER_PAN_LEFT,80,MIXER_PAN_RIGHT) },	/* adjusted */
 	{ namcos1_sound_interrupt },
 	{ 0 }
 };
@@ -1141,7 +1141,7 @@ static struct namco_interface namco_interface =
 {
 	24000/2,    /* sample rate (approximate value) */
 	8,          /* number of voices */
-	50,         /* playback volume */
+	80,         /* playback volume */	/* adjusted */
 	-1,         /* memory region */
 	1           /* stereo */
 };

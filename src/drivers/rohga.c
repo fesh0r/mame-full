@@ -255,10 +255,10 @@ INPUT_PORTS_START( rohga )
 	PORT_DIPSETTING(      0x0300, "3" )
 	PORT_DIPSETTING(      0x0200, "4" )
 	PORT_DIPNAME( 0x0c00, 0x0c00, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x0800, "Easy" )
-	PORT_DIPSETTING(      0x0c00, "Normal" )
-	PORT_DIPSETTING(      0x0400, "Hard" )
-	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Easy ) )
+	PORT_DIPSETTING(      0x0c00, DEF_STR( Normal ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( Hard ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
@@ -355,14 +355,14 @@ INPUT_PORTS_START( wizdfire )
 	PORT_DIPSETTING(      0x0300, "4" )
 	PORT_DIPSETTING(      0x0200, "5" )
 	PORT_DIPNAME( 0x0c00, 0x0c00, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x0800, "Easy" )
-	PORT_DIPSETTING(      0x0c00, "Normal" )
-	PORT_DIPSETTING(      0x0400, "Hard" )
-	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Easy ) )
+	PORT_DIPSETTING(      0x0c00, DEF_STR( Normal ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( Hard ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x3000, 0x3000, "Magic Guage Speed" )
 	PORT_DIPSETTING(      0x0000, "Very Slow" )
 	PORT_DIPSETTING(      0x1000, "Slow" )
-	PORT_DIPSETTING(      0x3000, "Normal" )
+	PORT_DIPSETTING(      0x3000, DEF_STR( Normal ) )
 	PORT_DIPSETTING(      0x2000, "Fast" )
 	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unused ) )
 	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
@@ -563,7 +563,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,
 	32220000/9, /* Accurate, audio section crystal is 32.220 MHz */
-	{ YM3012_VOL(40,MIXER_PAN_LEFT,40,MIXER_PAN_RIGHT) },
+	{ YM3012_VOL(80,MIXER_PAN_LEFT,80,MIXER_PAN_RIGHT) },	/* adjusted */
 	{ sound_irq },
 	{ sound_bankswitch_w }
 };
@@ -573,7 +573,7 @@ static struct OKIM6295interface okim6295_interface =
 	2,              /* 2 chips */
 	{ 32220000/32/132, 32220000/16/132 },/* Frequency */
 	{ REGION_SOUND1, REGION_SOUND2 },
-	{ 95, 40 } /* Note!  Keep chip 1 (voices) louder than chip 2 */
+	{ 100, 40 } /* Note!  Keep chip 1 (voices) louder than chip 2 */
 };
 
 /**********************************************************************************/

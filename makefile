@@ -29,6 +29,12 @@ X86_MIPS3_DRC = 1
 # uncomment next line to use cygwin compiler
 # COMPILESYSTEM_CYGWIN	= 1
 
+# uncomment next line to build expat as part of MAME build
+BUILD_EXPAT = 1
+
+# uncomment next line to build zlib as part of MAME build
+BUILD_ZLIB = 1
+
 
 # set this the operating system you're building for
 # MAMEOS = msdos
@@ -93,7 +99,7 @@ OBJ = obj/$(NAME)
 
 EMULATOR = $(NAME)$(EXE)
 
-DEFS = -DX86_ASM -DLSB_FIRST -DINLINE="static __inline__" -Dasm=__asm__
+DEFS = -DX86_ASM -DLSB_FIRST -DINLINE="static __inline__" -Dasm=__asm__ -DCRLF=3
 
 CFLAGS = -std=gnu99 -Isrc -Isrc/includes -Isrc/$(MAMEOS) -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
 
@@ -104,7 +110,7 @@ CFLAGS += -DNDEBUG \
 	$(ARCH) -O3 -fomit-frame-pointer -fstrict-aliasing \
 	-Werror -Wall -Wno-sign-compare -Wunused \
 	-Wpointer-arith -Wbad-function-cast -Wcast-align \
-	-Wshadow -Wstrict-prototypes -Wundef \
+	-Wstrict-prototypes -Wundef \
 	-Wformat-security -Wwrite-strings \
 	-Wdisabled-optimization \
 #	-Wredundant-decls
@@ -138,9 +144,6 @@ else
 MAPFLAGS =
 endif
 
-# platform .mak files will want to add to this
-LIBS = -lz
-
 OBJDIRS = obj $(OBJ) $(OBJ)/cpu $(OBJ)/sound $(OBJ)/$(MAMEOS) \
 	$(OBJ)/drivers $(OBJ)/machine $(OBJ)/vidhrdw $(OBJ)/sndhrdw
 ifdef MESS
@@ -150,6 +153,25 @@ endif
 
 ifeq ($(TARGET),mmsnd)
 OBJDIRS	+= $(OBJ)/mmsnd $(OBJ)/mmsnd/machine $(OBJ)/mmsnd/drivers $(OBJ)/mmsnd/sndhrdw
+endif
+
+# start with an empty set of libs
+LIBS = 
+
+ifdef BUILD_EXPAT
+OBJDIRS += $(OBJ)/expat
+EXPAT = $(OBJ)/libexpat.a
+else
+LIBS += -lexpat
+EXPAT =
+endif
+
+ifdef BUILD_EXPAT
+OBJDIRS += $(OBJ)/zlib
+ZLIB = $(OBJ)/libz.a
+else
+LIBS += -lz
+ZLIB =
 endif
 
 all:	maketree $(EMULATOR) extra
@@ -178,11 +200,11 @@ extra:	$(TOOLS) $(TEXTS)
 CDEFS = $(DEFS) $(COREDEFS) $(CPUDEFS) $(SOUNDDEFS) $(ASMDEFS) $(DBGDEFS)
 
 # primary target
-$(EMULATOR): $(OBJS) $(COREOBJS) $(OSOBJS) $(DRVLIBS)
+$(EMULATOR): $(OBJS) $(COREOBJS) $(OSOBJS) $(DRVLIBS) $(EXPAT) $(ZLIB)
 # always recompile the version string
 	$(CC) $(CDEFS) $(CFLAGSPEDANTIC) -c src/version.c -o $(OBJ)/version.o
 	@echo Linking $@...
-	$(LD) $(LDFLAGS) $(OBJS) $(COREOBJS) $(OSOBJS) $(LIBS) $(DRVLIBS) -o $@ $(MAPFLAGS)
+	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@ $(MAPFLAGS)
 
 romcmp$(EXE): $(OBJ)/romcmp.o $(OBJ)/unzip.o
 	@echo Linking $@...
@@ -192,9 +214,19 @@ chdman$(EXE): $(OBJ)/chdman.o $(OBJ)/chd.o $(OBJ)/chdcd.o $(OBJ)/md5.o $(OBJ)/sh
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ -lz -o $@
 
-xml2info$(EXE): src/xml2info/xml2info.c
-	@echo Compiling $@...
-	$(CC) -O1 -o xml2info$(EXE) $<
+xml2info$(EXE): $(OBJ)/xml2info.o $(OBJ)/libexpat.a
+	@echo Linking $@...
+	$(CC) -O1 -o xml2info$(EXE) $^ -Xlinker $(OBJ)/libexpat.a
+
+# secondary libraries
+$(OBJ)/libexpat.a: $(OBJ)/expat/xmlparse.o $(OBJ)/expat/xmlrole.o $(OBJ)/expat/xmltok.o
+	$(AR) cr $@ $^
+
+$(OBJ)/libz.a: $(OBJ)/zlib/adler32.o $(OBJ)/zlib/compress.o $(OBJ)/zlib/crc32.o $(OBJ)/zlib/deflate.o \
+				$(OBJ)/zlib/example.o $(OBJ)/zlib/gzio.o $(OBJ)/zlib/inffast.o $(OBJ)/zlib/inflate.o \
+				$(OBJ)/zlib/infback.o $(OBJ)/zlib/inftrees.o $(OBJ)/zlib/minigzip.o $(OBJ)/zlib/trees.o \
+				$(OBJ)/zlib/uncompr.o $(OBJ)/zlib/zutil.o
+	$(AR) cr $@ $^
 
 ifdef PERL
 $(OBJ)/cpuintrf.o: src/cpuintrf.c rules.mak
@@ -253,9 +285,6 @@ $(OBJ)/%.a:
 	$(RM) $@
 	$(AR) cr $@ $^
 
-makedir:
-	@echo make makedir is no longer necessary, just type make
-
 $(sort $(OBJDIRS)):
 	$(MD) $@
 
@@ -277,5 +306,3 @@ check: $(EMULATOR) xml2info$(EXE)
 	./$(EMULATOR) -listxml > $(NAME).xml
 	./xml2info < $(NAME).xml > $(NAME).lst
 	./xmllint --valid --noout $(NAME).xml
-
-

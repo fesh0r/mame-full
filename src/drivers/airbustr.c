@@ -625,10 +625,10 @@ INPUT_PORTS_START( airbustr )
 
 	PORT_START_TAG("IN4")	// DSW-2
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x02, "Easy" )
-	PORT_DIPSETTING(    0x03, "Normal" )
-	PORT_DIPSETTING(    0x01, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -705,10 +705,10 @@ INPUT_PORTS_START( airbustj )
 
 	PORT_START_TAG("IN4")	// DSW-2
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x02, "Easy" )
-	PORT_DIPSETTING(    0x03, "Normal" )
-	PORT_DIPSETTING(    0x01, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -769,8 +769,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct YM2203interface ym2203_interface =
 {
 	1,
-	3000000,					/* ?? */
-	{ YM2203_VOL(0xff,0xff) },	/* gain,volume */
+	3000000,				/* ?? */
+	{ YM2203_VOL(50,25) },			/* gain,volume - adjusted */
 	{ input_port_3_r },			/* DSW-1 connected to port A */
 	{ input_port_4_r },			/* DSW-2 connected to port B */
 	{ 0 },
@@ -783,7 +783,7 @@ static struct OKIM6295interface okim6295_interface =
 	1,
 	{ 12000000/4/165 }, /* 3MHz -> 6295 (mode A) */
 	{ REGION_SOUND1 },
-	{ 50 }
+	{ 80 }	/* adjusted */
 };
 
 

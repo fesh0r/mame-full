@@ -324,10 +324,10 @@ ADDRESS_MAP_END
 #define TWINCOBR_DSW_B		/* not KTIGER */			\
 	PORT_START		/* DSW B */							\
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty ) )	\
-	PORT_DIPSETTING(	0x01, "Easy" )					\
-	PORT_DIPSETTING(	0x00, "Normal" )				\
-	PORT_DIPSETTING(	0x02, "Hard" )					\
-	PORT_DIPSETTING(	0x03, "Hardest" )				\
+	PORT_DIPSETTING(	0x01, DEF_STR( Easy ) )					\
+	PORT_DIPSETTING(	0x00, DEF_STR( Normal ) )				\
+	PORT_DIPSETTING(	0x02, DEF_STR( Hard ) )					\
+	PORT_DIPSETTING(	0x03, DEF_STR( Hardest ) )				\
 	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )	\
 	PORT_DIPSETTING(	0x00, "50K, then every 150K" )	\
 	PORT_DIPSETTING(	0x04, "70K, then every 200K" )	\
@@ -359,10 +359,10 @@ ADDRESS_MAP_END
 #define FSHARK_DSW_B									\
 	PORT_START		/* DSW B */							\
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty ) )	\
-	PORT_DIPSETTING(	0x01, "Easy" )					\
-	PORT_DIPSETTING(	0x00, "Normal" )				\
-	PORT_DIPSETTING(	0x02, "Hard" )					\
-	PORT_DIPSETTING(	0x03, "Hardest" )				\
+	PORT_DIPSETTING(	0x01, DEF_STR( Easy ) )					\
+	PORT_DIPSETTING(	0x00, DEF_STR( Normal ) )				\
+	PORT_DIPSETTING(	0x02, DEF_STR( Hard ) )					\
+	PORT_DIPSETTING(	0x03, DEF_STR( Hardest ) )				\
 	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )	\
 	PORT_DIPSETTING(	0x00, "50K, then every 150K" )	\
 	PORT_DIPSETTING(	0x04, "70K, then every 200K" )	\
@@ -376,7 +376,7 @@ ADDRESS_MAP_END
 	PORT_DIPNAME( 0x40, 0x00, "Show DIP SW Settings" )	\
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )			\
 	PORT_DIPSETTING(	0x40, DEF_STR( Yes ) )			\
-	PORT_DIPNAME( 0x80, 0x80, "Allow Continue" )		\
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Allow_Continue ) )		\
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )			\
 	PORT_DIPSETTING(	0x80, DEF_STR( Yes ) )
 
@@ -457,10 +457,10 @@ INPUT_PORTS_START( ktiger )
 
 	PORT_START		/* DSW B */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(	0x01, "Easy" )
-	PORT_DIPSETTING(	0x00, "Normal" )
-	PORT_DIPSETTING(	0x02, "Hard" )
-	PORT_DIPSETTING(	0x03, "Hardest" )
+	PORT_DIPSETTING(	0x01, DEF_STR( Easy ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Normal ) )
+	PORT_DIPSETTING(	0x02, DEF_STR( Hard ) )
+	PORT_DIPSETTING(	0x03, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(	0x00, "70K, then every 200K" )
 	PORT_DIPSETTING(	0x04, "50K, then every 150K" )
@@ -474,7 +474,7 @@ INPUT_PORTS_START( ktiger )
 	PORT_DIPNAME( 0x40, 0x00, "Show DIP SW Settings" )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x40, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x80, 0x80, "Allow Continue" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x80, DEF_STR( Yes ) )
 

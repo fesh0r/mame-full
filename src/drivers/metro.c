@@ -22,6 +22,7 @@ Other        :  Memory Blitter
 Year + Game						PCB			Video Chip	Issues / Notes
 ---------------------------------------------------------------------------
 92	Last Fortress - Toride		VG420		14100
+92	Last Fortress - Toride (Ger)VG460-(A)	14100
 92	Pang Poms					VG420		14100
 92	Sky Alert					VG420		14100
 92	The Karate Tournament		VG460-B		14100
@@ -1431,6 +1432,52 @@ static ADDRESS_MAP_START( lastfort_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xc00002, 0xc00003) AM_WRITE(metro_coin_lockout_1word_w	)	// Coin Lockout
 ADDRESS_MAP_END
 
+/* the German version is halfway between lastfort and ladykill (karatour) memory maps */
+
+/* todo: clean up input reads etc. */
+static ADDRESS_MAP_START( lastforg_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM				)	// ROM
+	AM_RANGE(0x400000, 0x400001) AM_READ(metro_soundstatus_r	)	// From Sound CPU
+	AM_RANGE(0x400002, 0x400003) AM_READ(input_port_0_word_r	)	// Inputs
+	AM_RANGE(0x400004, 0x400005) AM_READ(input_port_1_word_r	)	//
+	AM_RANGE(0x400006, 0x400007) AM_READ(input_port_2_word_r	)	//
+	AM_RANGE(0x40000a, 0x40000b) AM_READ(input_port_3_word_r	)	//
+	AM_RANGE(0x40000c, 0x40000d) AM_READ(input_port_4_word_r	)	//
+	AM_RANGE(0x880000, 0x89ffff) AM_READ(MRA16_RAM				)	// Layer 0
+	AM_RANGE(0x8a0000, 0x8bffff) AM_READ(MRA16_RAM				)	// Layer 1
+	AM_RANGE(0x8c0000, 0x8dffff) AM_READ(MRA16_RAM				)	// Layer 2
+	AM_RANGE(0x8e0000, 0x8effff) AM_READ(metro_bankedrom_r		)	// Banked ROM
+	AM_RANGE(0x8f0000, 0x8f3fff) AM_READ(MRA16_RAM				)	// Palette
+	AM_RANGE(0x8f4000, 0x8f4fff) AM_READ(MRA16_RAM				)	// Sprites
+	AM_RANGE(0x8f8000, 0x8f87ff) AM_READ(MRA16_RAM				)	// Tiles Set
+	AM_RANGE(0x8f88a2, 0x8f88a3) AM_READ(metro_irq_cause_r		)	// IRQ Cause
+	AM_RANGE(0xc00000, 0xc0ffff) AM_READ(MRA16_RAM				)	// RAM
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( lastforg_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM						)	// ROM
+	AM_RANGE(0x400000, 0x400001) AM_WRITE(metro_soundstatus_w			)	// To Sound CPU
+	AM_RANGE(0x400002, 0x400003) AM_WRITE(metro_coin_lockout_1word_w	)	// Coin Lockout
+	AM_RANGE(0x880000, 0x89ffff) AM_WRITE(metro_vram_0_w) AM_BASE(&metro_vram_0	)	// Layer 0
+	AM_RANGE(0x8a0000, 0x8bffff) AM_WRITE(metro_vram_1_w) AM_BASE(&metro_vram_1	)	// Layer 1
+	AM_RANGE(0x8c0000, 0x8dffff) AM_WRITE(metro_vram_2_w) AM_BASE(&metro_vram_2	)	// Layer 2
+	AM_RANGE(0x8f0000, 0x8f3fff) AM_WRITE(metro_paletteram_w) AM_BASE(&paletteram16	)	// Palette
+	AM_RANGE(0x8f4000, 0x8f4fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size				)	// Sprites
+	AM_RANGE(0x8f8000, 0x8f87ff) AM_WRITE(MWA16_RAM) AM_BASE(&metro_tiletable) AM_SIZE(&metro_tiletable_size	)	// Tiles Set
+	AM_RANGE(0x8f8800, 0x8f8813) AM_WRITE(MWA16_RAM) AM_BASE(&metro_videoregs	)	// Video Registers
+	AM_RANGE(0x8f8840, 0x8f884d) AM_WRITE(metro_blitter_w) AM_BASE(&metro_blitter_regs	)	// Tiles Blitter
+	AM_RANGE(0x8f8860, 0x8f886b) AM_WRITE(metro_window_w) AM_BASE(&metro_window	)	// Tilemap Window
+	AM_RANGE(0x8f8870, 0x8f887b) AM_WRITE(MWA16_RAM) AM_BASE(&metro_scroll		)	// Scroll
+	AM_RANGE(0x8f8880, 0x8f8881) AM_WRITE(MWA16_NOP						)	// ? increasing
+	AM_RANGE(0x8f8890, 0x8f8891) AM_WRITE(MWA16_NOP						)	// ? increasing
+	AM_RANGE(0x8f88a2, 0x8f88a3) AM_WRITE(metro_irq_cause_w				)	// IRQ Acknowledge
+	AM_RANGE(0x8f88a4, 0x8f88a5) AM_WRITE(MWA16_RAM) AM_BASE(&metro_irq_enable	)	// IRQ Enable
+	AM_RANGE(0x8f88a8, 0x8f88a9) AM_WRITE(metro_soundlatch_w			)	// To Sound CPU
+	AM_RANGE(0x8f88aa, 0x8f88ab) AM_WRITE(MWA16_RAM) AM_BASE(&metro_rombank		)	// Rom Bank
+	AM_RANGE(0x8f88ac, 0x8f88ad) AM_WRITE(MWA16_RAM) AM_BASE(&metro_screenctrl	)	// Screen Control
+	AM_RANGE(0xc00000, 0xc0ffff) AM_WRITE(MWA16_RAM						)	// RAM
+ADDRESS_MAP_END
+
 
 /***************************************************************************
 								Mahjong Gakuensai
@@ -2238,7 +2285,7 @@ INPUT_PORTS_START( balcube )
 	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Lives ) )
 	PORT_DIPSETTING(      0x0800, "2" )
 	PORT_DIPSETTING(      0x0000, "3" )
-	PORT_DIPNAME( 0x1000, 0x1000, "Allow Continue" )
+	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
 	PORT_DIPSETTING(      0x1000, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
@@ -2272,16 +2319,16 @@ INPUT_PORTS_START( bangball )
 	COINAGE_DSW
 
 	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x0200, "Easy"    )
-	PORT_DIPSETTING(      0x0300, "Normal"  )
-	PORT_DIPSETTING(      0x0100, "Hard"    )
-	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Easy )    )
+	PORT_DIPSETTING(      0x0300, DEF_STR( Normal )  )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Hard )    )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x0c00, 0x0c00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(      0x0800, "2" )
 	PORT_DIPSETTING(      0x0400, "3" )
 	PORT_DIPSETTING(      0x0c00, "4" )
 	PORT_DIPSETTING(      0x0000, "5" )
-	PORT_DIPNAME( 0x1000, 0x1000, "Allow Continue" )
+	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
 	PORT_DIPSETTING(      0x1000, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Demo_Sounds ) )
@@ -2308,10 +2355,10 @@ INPUT_PORTS_START( blzntrnd )
 	PORT_DIPNAME( 0x0007, 0x0004, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(      0x0007, "Beginner" )
 	PORT_DIPSETTING(      0x0006, "Easiest" )
-	PORT_DIPSETTING(      0x0005, "Easy" )
-	PORT_DIPSETTING(      0x0004, "Normal" )
-	PORT_DIPSETTING(      0x0003, "Hard" )
-	PORT_DIPSETTING(      0x0002, "Hardest" )
+	PORT_DIPSETTING(      0x0005, DEF_STR( Easy ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Normal ) )
+	PORT_DIPSETTING(      0x0003, DEF_STR( Hard ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Hardest ) )
 	PORT_DIPSETTING(      0x0001, "Expert" )
 	PORT_DIPSETTING(      0x0000, "Master" )
 	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Flip_Screen ) )
@@ -2320,7 +2367,7 @@ INPUT_PORTS_START( blzntrnd )
 	PORT_DIPNAME( 0x0010, 0x0000, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0020, 0x0000, "Allow Continue" )
+	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(      0x0020, DEF_STR( No ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x00c0, 0x0000, "Control Panel" )
@@ -2422,7 +2469,7 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( gstrik2 )
 	PORT_START
-	PORT_DIPNAME( 0x0003, 0x0003, "Player Vs Com" )	
+	PORT_DIPNAME( 0x0003, 0x0003, "Player Vs Com" )
 	PORT_DIPSETTING(      0x0003, "1:00" )
 	PORT_DIPSETTING(      0x0002, "1:30" )
 	PORT_DIPSETTING(      0x0001, "2:00" )
@@ -2444,14 +2491,14 @@ INPUT_PORTS_START( gstrik2 )
 	PORT_DIPSETTING(      0x0080, "Sudden Death" )
 	PORT_DIPSETTING(      0x0000, "Full" )
 	PORT_DIPNAME( 0x0700, 0x0400, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x0700, "Very Easy" )
+	PORT_DIPSETTING(      0x0700, DEF_STR( Very_Easy) )
 	PORT_DIPSETTING(      0x0600, "Easier" )
-	PORT_DIPSETTING(      0x0500, "Easy" )
-	PORT_DIPSETTING(      0x0400, "Normal" )
-	PORT_DIPSETTING(      0x0300, "Medium" )
-	PORT_DIPSETTING(      0x0200, "Hard" )
-	PORT_DIPSETTING(      0x0100, "Hardest" )
-	PORT_DIPSETTING(      0x0000, "Very Hard" )
+	PORT_DIPSETTING(      0x0500, DEF_STR( Easy ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( Normal ) )
+	PORT_DIPSETTING(      0x0300, DEF_STR( Medium ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Hard ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Hardest ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Very_Hard ) )
 	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0800, DEF_STR( On ) )
@@ -2467,7 +2514,7 @@ INPUT_PORTS_START( gstrik2 )
 	PORT_BIT(0x8000, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2)
 
 	PORT_START
-	PORT_DIPNAME( 0x001f, 0x001f, DEF_STR( Coin_A ) )	
+	PORT_DIPNAME( 0x001f, 0x001f, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(      0x001c, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(      0x001d, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(      0x0018, DEF_STR( 4C_2C ) )
@@ -2500,7 +2547,7 @@ INPUT_PORTS_START( gstrik2 )
 	PORT_DIPSETTING(      0x000b, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(      0x0007, DEF_STR( 1C_7C ) )
 	PORT_DIPSETTING(      0x0003, DEF_STR( 1C_8C ) )
-	PORT_DIPNAME( 0x00e0, 0x0000, DEF_STR( Coin_B ) )	
+	PORT_DIPNAME( 0x00e0, 0x0000, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(      0x00c0, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(      0x00a0, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(      0x0080, DEF_STR( 1C_3C ) )
@@ -2577,10 +2624,10 @@ INPUT_PORTS_START( daitorid )
 	COINAGE_DSW
 
 	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Difficulty ) )		// Timer speed
-	PORT_DIPSETTING(      0x0200, "Easy" )				//   Slow
-	PORT_DIPSETTING(      0x0300, "Normal" )				//   Normal
-	PORT_DIPSETTING(      0x0100, "Hard" )				//   Fast
-	PORT_DIPSETTING(      0x0000, "Hardest" )				//   Fastest
+	PORT_DIPSETTING(      0x0200, DEF_STR( Easy ) )				//   Slow
+	PORT_DIPSETTING(      0x0300, DEF_STR( Normal ) )				//   Normal
+	PORT_DIPSETTING(      0x0100, DEF_STR( Hard ) )				//   Fast
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )				//   Fastest
 	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unused ) )
 	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
@@ -2590,7 +2637,7 @@ INPUT_PORTS_START( daitorid )
 	PORT_DIPNAME( 0x1000, 0x0000, "Retry Level On Continue" )
 	PORT_DIPSETTING(      0x0000, "Ask Player" )
 	PORT_DIPSETTING(      0x1000, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x2000, 0x2000, "Allow Continue" )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
 	PORT_DIPSETTING(      0x2000, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Demo_Sounds ) )
@@ -2633,14 +2680,14 @@ INPUT_PORTS_START( dharma )
 //	PORT_DIPSETTING(      0x0200, "Table 2" )				//   Table offset : 0x00e718
 	PORT_DIPSETTING(      0x0300, "Table 2" )				//   Table offset : 0x00e770
 	PORT_DIPNAME( 0x0c00, 0x0c00, DEF_STR( Difficulty ) )		// Timer (crab) speed
-	PORT_DIPSETTING(      0x0800, "Easy" )				//   Slow
-	PORT_DIPSETTING(      0x0c00, "Normal" )				//   Normal
-	PORT_DIPSETTING(      0x0400, "Hard" )				//   Fast
-	PORT_DIPSETTING(      0x0000, "Hardest" )				//   Fastest
+	PORT_DIPSETTING(      0x0800, DEF_STR( Easy ) )				//   Slow
+	PORT_DIPSETTING(      0x0c00, DEF_STR( Normal ) )				//   Normal
+	PORT_DIPSETTING(      0x0400, DEF_STR( Hard ) )				//   Fast
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )				//   Fastest
 	PORT_DIPNAME( 0x1000, 0x1000, "2 Players Game" )
 	PORT_DIPSETTING(      0x1000, "2 Credits" )
 	PORT_DIPSETTING(      0x0000, "1 Credit" )
-	PORT_DIPNAME( 0x2000, 0x2000, "Allow Continue" )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
 	PORT_DIPSETTING(      0x2000, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Demo_Sounds ) )
@@ -2683,7 +2730,7 @@ INPUT_PORTS_START( karatour )
 	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Free_Play ) )
 	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0040, 0x0040, "Allow Continue" )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
 	PORT_DIPSETTING(      0x0040, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x0080, 0x0000, DEF_STR( Demo_Sounds ) )
@@ -2737,15 +2784,15 @@ INPUT_PORTS_START( ladykill )
 	PORT_DIPSETTING(      0x0003, "3" )
 	PORT_DIPSETTING(      0x0002, "4" )
 	PORT_DIPNAME( 0x000c, 0x000c, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x0008, "Easy" )
-	PORT_DIPSETTING(      0x000c, "Normal" )
-	PORT_DIPSETTING(      0x0004, "Hard" )
-	PORT_DIPSETTING(      0x0000, "Very Hard" )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Easy ) )
+	PORT_DIPSETTING(      0x000c, DEF_STR( Normal ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Hard ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Very_Hard ) )
 	PORT_DIPNAME( 0x0010, 0x0000, "Nudity" )
 	PORT_DIPSETTING(      0x0010, "Partial" )
 	PORT_DIPSETTING(      0x0000, "Full" )
 	PORT_SERVICE( 0x0020, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x0040, 0x0040, "Allow Continue" )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
 	PORT_DIPSETTING(      0x0040, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x0080, 0x0000, DEF_STR( Demo_Sounds ) )
@@ -2797,15 +2844,15 @@ INPUT_PORTS_START( moegonta )
 	PORT_DIPSETTING(      0x0003, "3" )
 	PORT_DIPSETTING(      0x0002, "4" )
 	PORT_DIPNAME( 0x000c, 0x000c, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x0008, "Easy" )
-	PORT_DIPSETTING(      0x000c, "Normal" )
-	PORT_DIPSETTING(      0x0004, "Hard" )
-	PORT_DIPSETTING(      0x0000, "Very Hard" )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Easy ) )
+	PORT_DIPSETTING(      0x000c, DEF_STR( Normal ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Hard ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Very_Hard ) )
 	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unused ) )
 	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_SERVICE( 0x0020, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x0040, 0x0040, "Allow Continue" )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
 	PORT_DIPSETTING(      0x0040, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x0080, 0x0000, DEF_STR( Demo_Sounds ) )
@@ -2867,9 +2914,9 @@ INPUT_PORTS_START( lastfort )
 	PORT_START	// IN4 - $c0000c
 	PORT_DIPNAME( 0x0003, 0x0003, DEF_STR( Difficulty ) )		// Timer speed
 	PORT_DIPSETTING(      0x0000, "Easiest" )				//   Slowest
-	PORT_DIPSETTING(      0x0001, "Easy" )				//   Slow
-	PORT_DIPSETTING(      0x0003, "Normal" )				//   Normal
-	PORT_DIPSETTING(      0x0002, "Hard" )				//   Fast
+	PORT_DIPSETTING(      0x0001, DEF_STR( Easy ) )				//   Slow
+	PORT_DIPSETTING(      0x0003, DEF_STR( Normal ) )				//   Normal
+	PORT_DIPSETTING(      0x0002, DEF_STR( Hard ) )				//   Fast
 	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unused ) )
 	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
@@ -2879,7 +2926,7 @@ INPUT_PORTS_START( lastfort )
 	PORT_DIPNAME( 0x0010, 0x0010, "2 Players Game" )
 	PORT_DIPSETTING(      0x0010, "2 Credits" )
 	PORT_DIPSETTING(      0x0000, "1 Credit" )
-	PORT_DIPNAME( 0x0020, 0x0020, "Allow Continue" )
+	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
 	PORT_DIPSETTING(      0x0020, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Demo_Sounds ) )
@@ -2915,9 +2962,9 @@ INPUT_PORTS_START( lastfero )
 	PORT_START	// IN4 - $c0000c
 	PORT_DIPNAME( 0x0003, 0x0003, DEF_STR( Difficulty ) )		// Timer speed
 	PORT_DIPSETTING(      0x0000, "Easiest" )				//   Slowest
-	PORT_DIPSETTING(      0x0001, "Easy" )				//   Slow
-	PORT_DIPSETTING(      0x0003, "Normal" )				//   Normal
-	PORT_DIPSETTING(      0x0002, "Hard" )				//   Fast
+	PORT_DIPSETTING(      0x0001, DEF_STR( Easy ) )				//   Slow
+	PORT_DIPSETTING(      0x0003, DEF_STR( Normal ) )				//   Normal
+	PORT_DIPSETTING(      0x0002, DEF_STR( Hard ) )				//   Fast
 	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unused ) )
 	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
@@ -2927,7 +2974,7 @@ INPUT_PORTS_START( lastfero )
 	PORT_DIPNAME( 0x0010, 0x0010, "2 Players Game" )
 	PORT_DIPSETTING(      0x0010, "2 Credits" )
 	PORT_DIPSETTING(      0x0000, "1 Credit" )
-	PORT_DIPNAME( 0x0020, 0x0020, "Allow Continue" )
+	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
 	PORT_DIPSETTING(      0x0020, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Demo_Sounds ) )
@@ -3007,10 +3054,10 @@ INPUT_PORTS_START( dokyusei )
 
 	PORT_START // IN6 - $478884.w
 	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x0300, "Easy" )
-	PORT_DIPSETTING(      0x0200, "Normal" )
-	PORT_DIPSETTING(      0x0100, "Hard" )
-	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPSETTING(      0x0300, DEF_STR( Easy ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Normal ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Hard ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x1c00, 0x1c00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(      0x0400, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(      0x0800, DEF_STR( 3C_1C ) )
@@ -3180,11 +3227,11 @@ INPUT_PORTS_START( mouja )
 	PORT_DIPSETTING(      0x00c0, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(      0x0080, DEF_STR( 1C_2C ) )
 	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x0200, "Easy" )
-	PORT_DIPSETTING(      0x0300, "Normal" )
-	PORT_DIPSETTING(      0x0100, "Hard" )
-	PORT_DIPSETTING(      0x0000, "Hardest" )
-	PORT_DIPNAME( 0x0400, 0x0400, "Allow Continue" )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Easy ) )
+	PORT_DIPSETTING(      0x0300, DEF_STR( Normal ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Hard ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )
+	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
 	PORT_DIPSETTING(      0x0400, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x0800, 0x0000, "Winning Rounds (Player VS Computer)" )
@@ -3229,7 +3276,7 @@ INPUT_PORTS_START( pangpoms )
 	PORT_DIPNAME( 0x0003, 0x0003, "Time Speed" )
 	PORT_DIPSETTING(      0x0000, "Slowest" )	// 60 (1 game sec. lasts x/60 real sec.)
 	PORT_DIPSETTING(      0x0001, "Slow"    )	// 90
-	PORT_DIPSETTING(      0x0003, "Normal"  )	// 120
+	PORT_DIPSETTING(      0x0003, DEF_STR( Normal )  )	// 120
 	PORT_DIPSETTING(      0x0002, "Fast"    )	// 150
 	PORT_DIPNAME( 0x000c, 0x000c, DEF_STR( Lives ) )
 	PORT_DIPSETTING(      0x0008, "1" )
@@ -3241,7 +3288,7 @@ INPUT_PORTS_START( pangpoms )
 	PORT_DIPSETTING(      0x0030, "400k" )
 	PORT_DIPSETTING(      0x0010, "800k" )
 	PORT_DIPSETTING(      0x0000, "None" )
-	PORT_DIPNAME( 0x0040, 0x0040, "Allow Continue" )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
 	PORT_DIPSETTING(      0x0040, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Demo_Sounds ) )
@@ -3269,10 +3316,10 @@ INPUT_PORTS_START( poitto )
 	COINAGE_DSW
 
 	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x0000, "Easy" )
-	PORT_DIPSETTING(      0x0300, "Normal" )
-	PORT_DIPSETTING(      0x0200, "Hard" )
-	PORT_DIPSETTING(      0x0100, "Hardest" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Easy ) )
+	PORT_DIPSETTING(      0x0300, DEF_STR( Normal ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Hard ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unused ) )
 	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
@@ -3282,7 +3329,7 @@ INPUT_PORTS_START( poitto )
 	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unused ) )
 	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x2000, 0x2000, "Allow Continue" )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
 	PORT_DIPSETTING(      0x2000, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Demo_Sounds ) )
@@ -3313,10 +3360,10 @@ INPUT_PORTS_START( puzzli )
 	COINAGE_DSW
 
 	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x0200, "Easy" )
-	PORT_DIPSETTING(      0x0300, "Normal" )
-//	PORT_DIPSETTING(      0x0100, "Normal" )			// Duplicated setting
-	PORT_DIPSETTING(      0x0000, "Hard" )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Easy ) )
+	PORT_DIPSETTING(      0x0300, DEF_STR( Normal ) )
+//	PORT_DIPSETTING(      0x0100, DEF_STR( Normal ) )			// Duplicated setting
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hard ) )
 	PORT_DIPNAME( 0x0400, 0x0400, "Join In" )
 	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
 	PORT_DIPSETTING(      0x0400, DEF_STR( Yes ) )
@@ -3326,7 +3373,7 @@ INPUT_PORTS_START( puzzli )
 	PORT_DIPNAME( 0x1000, 0x1000, "Winning Rounds (Player VS Player)" )
 	PORT_DIPSETTING(      0x0000, "1/1" )
 	PORT_DIPSETTING(      0x1000, "2/3" )
-	PORT_DIPNAME( 0x2000, 0x2000, "Allow Continue" )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
 	PORT_DIPSETTING(      0x2000, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Demo_Sounds ) )
@@ -3379,17 +3426,17 @@ INPUT_PORTS_START( 3kokushi )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0080, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Difficulty ) )		// Timer speed
-	PORT_DIPSETTING(      0x0200, "Easy" )				//   Slow
-	PORT_DIPSETTING(      0x0300, "Normal" )				//   Normal
-	PORT_DIPSETTING(      0x0100, "Hard" )				//   Fast
-	PORT_DIPSETTING(      0x0000, "Hardest" )				//   Fastest
+	PORT_DIPSETTING(      0x0200, DEF_STR( Easy ) )				//   Slow
+	PORT_DIPSETTING(      0x0300, DEF_STR( Normal ) )				//   Normal
+	PORT_DIPSETTING(      0x0100, DEF_STR( Hard ) )				//   Fast
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )				//   Fastest
 	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unused ) )
 	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unused ) )
 	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x1000, 0x1000, "Allow Continue" )
+	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
 	PORT_DIPSETTING(      0x1000, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Free_Play ) )
@@ -3420,9 +3467,9 @@ INPUT_PORTS_START( pururun )
 
 	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Difficulty ) )		// Distance to goal
 	PORT_DIPSETTING(      0x0200, "Easiest" )
-	PORT_DIPSETTING(      0x0100, "Easy" )
-	PORT_DIPSETTING(      0x0300, "Normal" )
-	PORT_DIPSETTING(      0x0000, "Hard" )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Easy ) )
+	PORT_DIPSETTING(      0x0300, DEF_STR( Normal ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hard ) )
 	PORT_DIPNAME( 0x0400, 0x0400, "Join In" )
 	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
 	PORT_DIPSETTING(      0x0400, DEF_STR( Yes ) )
@@ -3432,7 +3479,7 @@ INPUT_PORTS_START( pururun )
 	PORT_DIPNAME( 0x1000, 0x1000, "Bombs" )
 	PORT_DIPSETTING(      0x1000, "1" )
 	PORT_DIPSETTING(      0x0000, "2" )
-	PORT_DIPNAME( 0x2000, 0x2000, "Allow Continue" )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
 	PORT_DIPSETTING(      0x2000, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Demo_Sounds ) )
@@ -3481,10 +3528,10 @@ INPUT_PORTS_START( skyalert )
 
 	PORT_START	// IN4 - $40000c
 	PORT_DIPNAME( 0x0003, 0x0003, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x0002, "Easy" )
-	PORT_DIPSETTING(      0x0003, "Normal" )
-	PORT_DIPSETTING(      0x0001, "Hard" )
-	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Easy ) )
+	PORT_DIPSETTING(      0x0003, DEF_STR( Normal ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Hard ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x000c, 0x000c, DEF_STR( Lives ) )
 	PORT_DIPSETTING(      0x0008, "1" )
 	PORT_DIPSETTING(      0x0004, "2" )
@@ -3495,7 +3542,7 @@ INPUT_PORTS_START( skyalert )
 	PORT_DIPSETTING(      0x0020, "200K, every 400K" )
 	PORT_DIPSETTING(      0x0010, "200K" )
 	PORT_DIPSETTING(      0x0000, "None" )
-	PORT_DIPNAME( 0x0040, 0x0040, "Allow Continue" )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
 	PORT_DIPSETTING(      0x0040, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Demo_Sounds ) )
@@ -3527,10 +3574,10 @@ INPUT_PORTS_START( toride2g )
 	COINAGE_DSW
 
 	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x0200, "Easy" )
-	PORT_DIPSETTING(      0x0300, "Normal" )
-	PORT_DIPSETTING(      0x0100, "Hard" )
-	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Easy ) )
+	PORT_DIPSETTING(      0x0300, DEF_STR( Normal ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Hard ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x0400, 0x0400, "Levels" )				// See notes
 	PORT_DIPSETTING(      0x0400, "Table 1" )
 	PORT_DIPSETTING(      0x0000, "Table 2" )
@@ -3540,7 +3587,7 @@ INPUT_PORTS_START( toride2g )
 	PORT_DIPNAME( 0x1000, 0x1000, "2 Players Game" )
 	PORT_DIPSETTING(      0x1000, "2 Credits" )
 	PORT_DIPSETTING(      0x0000, "1 Credit" )
-	PORT_DIPNAME( 0x2000, 0x2000, "Allow Continue" )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
 	PORT_DIPSETTING(      0x2000, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Demo_Sounds ) )
@@ -3923,6 +3970,39 @@ static MACHINE_DRIVER_START( lastfort )
 	MDRV_SOUND_ADD(YM2413, ym2413_interface)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( lastforg )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000)
+	MDRV_CPU_PROGRAM_MAP(lastforg_readmem,lastforg_writemem)
+	MDRV_CPU_VBLANK_INT(karatour_interrupt,10)	/* ? */
+
+	MDRV_CPU_ADD(UPD7810, 12000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_CONFIG(metro_cpu_config)
+	MDRV_CPU_PROGRAM_MAP(metro_snd_readmem,metro_snd_writemem)
+	MDRV_CPU_IO_MAP(metro_snd_readport,metro_snd_writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(metro)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(360, 224)
+	MDRV_VISIBLE_AREA(0, 360-1, 0, 224-1)
+	MDRV_GFXDECODE(gfxdecodeinfo_14100)
+	MDRV_PALETTE_LENGTH(8192)
+
+	MDRV_VIDEO_START(metro_14100)
+	MDRV_VIDEO_UPDATE(metro)
+
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SOUND_ADD(YM2413, ym2413_interface)
+MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( dokyusei )
 
@@ -4941,6 +5021,26 @@ ROM_START( lastfort )
 	ROM_LOAD( "tr_jb11", 0x000000, 0x020000, CRC(83786a09) SHA1(910cf0ccf4493f2a80062149f6364dbb6a1c2a5d) )
 ROM_END
 
+/* German version on PCB VG460-(A) */
+
+ROM_START( lastforg )
+	ROM_REGION( 0x080000, REGION_CPU1, 0 )		/* 68000 Code */
+	ROM_LOAD16_BYTE( "trma02.bin",    0x000000, 0x020000, CRC(e6f40918) SHA1(c8c9369103530b2214c779c8a643ba9349b3eac5) )
+	ROM_LOAD16_BYTE( "trma03.bin",    0x000001, 0x020000, CRC(b00fb126) SHA1(7dd4b7a2d1c5401fde2275ef76fac1ccc586a0bd) )
+
+	ROM_REGION( 0x02c000, REGION_CPU2, 0 )		/* NEC78C10 Code */
+	ROM_LOAD( "trma01.bin",    0x000000, 0x004000,  CRC(8a8f5fef) SHA1(530b4966ec058cd80a2fc5f9e961239ce59d0b89) )	// 11xxxxxxxxxxxxxxx = 0xFF
+	ROM_CONTINUE(         0x010000, 0x01c000 )
+
+	ROM_REGION( 0x200000, REGION_GFX1, 0 )	/* Gfx + Data (Addressable by CPU & Blitter) */
+	ROMX_LOAD( "trma04.bin", 0x000000, 0x080000, CRC(5feafc6f) SHA1(eb50905eb0d25eb342e08d591907f79b5eadff43) , ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "trma07.bin", 0x000002, 0x080000, CRC(7519d569) SHA1(c88932a19a48d45a19b777113a4719b18f42a297) , ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "trma05.bin", 0x000004, 0x080000, CRC(5d917ba5) SHA1(34fc72924fa2877c1038d7f61b22f7667af01e9f) , ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "trma06.bin", 0x000006, 0x080000, CRC(d366c04e) SHA1(e0a67688043cb45916860d32ff1076d9257e6ad9) , ROM_GROUPWORD | ROM_SKIP(6))
+
+	ROM_REGION( 0x020000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_LOAD( "trma08.bin",   0x000000, 0x020000, CRC(83786a09) SHA1(910cf0ccf4493f2a80062149f6364dbb6a1c2a5d) )
+ROM_END
 
 /***************************************************************************
 
@@ -5492,6 +5592,7 @@ GAME ( 1993, poitto,   0,        poitto,   poitto,   metro,    ROT0,   "Metro / 
 GAME ( 1994, dharma,   0,        dharma,   dharma,   metro,    ROT0,   "Metro",                      "Dharma Doujou"                       )
 GAME ( 1994, lastfort, 0,        lastfort, lastfort, metro,    ROT0,   "Metro",                      "Last Fortress - Toride"              )
 GAME ( 1994, lastfero, lastfort, lastfort, lastfero, metro,    ROT0,   "Metro",                      "Last Fortress - Toride (Erotic)"     )
+GAME ( 1994, lastforg, lastfort, lastforg, ladykill, metro,    ROT0,   "Metro",                      "Last Fortress - Toride (German)"     )
 GAMEX( 1994, toride2g, 0,        toride2g, toride2g, metro,    ROT0,   "Metro",                      "Toride II Adauchi Gaiden",        GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1995, daitorid, 0,        daitorid, daitorid, daitorid, ROT0,   "Metro",                      "Daitoride",                       GAME_IMPERFECT_GRAPHICS )
 GAME ( 1995, dokyusei, 0,        dokyusei, dokyusei, gakusai,  ROT0,   "Make Software / Elf / Media Trading", "Mahjong Doukyuusei"         )

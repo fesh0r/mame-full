@@ -260,10 +260,10 @@ INPUT_PORTS_START( tutankhm )
 	PORT_DIPSETTING(    0x08, "30000" )
 	PORT_DIPSETTING(    0x00, "40000" )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x30, "Easy" )
-	PORT_DIPSETTING(    0x10, "Normal" )
-	PORT_DIPSETTING(    0x20, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x30, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x40, 0x40, "Flash Bomb" )
 	PORT_DIPSETTING(    0x40, "1 per Life" )
 	PORT_DIPSETTING(    0x00, "1 per Game" )
@@ -361,7 +361,7 @@ static MACHINE_DRIVER_START( tutankhm )
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)	/* not sure about the visible area */
 	MDRV_PALETTE_LENGTH(16)
 
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(generic_bitmapped)
 	MDRV_VIDEO_UPDATE(tutankhm)
 
 	/* sound hardware */

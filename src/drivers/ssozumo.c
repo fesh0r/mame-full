@@ -132,8 +132,8 @@ INPUT_PORTS_START( ssozumo )
 
 	PORT_START      /* DSW2 */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x01, "Normal" )
-	PORT_DIPSETTING(    0x00, "Hard" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hard ) )
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -173,9 +173,9 @@ INPUT_PORTS_START( ssozumo )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x40, 0x00, "Controls" )
-	PORT_DIPSETTING(    0x00, "Single" )
-	PORT_DIPSETTING(    0x40, "Dual" )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Controls ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Single ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Dual ) )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
 INPUT_PORTS_END
 

@@ -119,8 +119,8 @@ INPUT_PORTS_START( mouser )
     PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
     PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
     PORT_DIPNAME( 0x20, 0x00, DEF_STR( Difficulty ) )		/* guess ! - check code at 0x29a1 */
-    PORT_DIPSETTING(    0x00, "Normal" )
-    PORT_DIPSETTING(    0x20, "Hard" )
+    PORT_DIPSETTING(    0x00, DEF_STR( Normal ) )
+    PORT_DIPSETTING(    0x20, DEF_STR( Hard ) )
     PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
     PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 

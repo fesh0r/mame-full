@@ -32,11 +32,7 @@ endif
 RESFILE=$(OBJ)/mess/windows/mess.res
 
 # uncomment this line to enable guard pages on all memory allocations
-ifdef DEBUG
-ifdef MSVC
 #OSOBJS += $(OBJ)/windows/winalloc.o
-endif
-endif
 
 # video blitting functions
 $(OBJ)/windows/asmblit.o: src/windows/asmblit.asm

@@ -89,6 +89,7 @@ enum
 
 	/* input stuff */
 	UI_keyjoyspeed,
+	UI_centerspeed,
 	UI_reverse,
 	UI_sensitivity,
 

@@ -134,8 +134,8 @@ INPUT_PORTS_START( astrof )
 	PORT_DIPSETTING(    0x30, "None" )
 
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x00, "Easy" )
-	PORT_DIPSETTING(    0x40, "Hard" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Hard ) )
 
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
 
@@ -185,8 +185,8 @@ INPUT_PORTS_START( tomahawk )
 	PORT_DIPSETTING(    0x30, "None" )
 
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Difficulty ) )  /* Only on Tomahawk 777 */
-	PORT_DIPSETTING(    0x00, "Easy" )
-	PORT_DIPSETTING(    0x40, "Hard" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Hard ) )
 
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
 

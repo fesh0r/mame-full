@@ -216,7 +216,7 @@ INPUT_PORTS_START( taotaido )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
 #if TAOTAIDO_SHOW_ALL_INPUTS
-	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("Test") PORT_CODE(KEYCODE_F1)
+	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME(DEF_STR( Test )) PORT_CODE(KEYCODE_F1)
 #else
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE )	// "Test" in "test mode"
 #endif
@@ -261,10 +261,10 @@ INPUT_PORTS_START( taotaido )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x10, "Easy" )
-	PORT_DIPSETTING(    0x18, "Normal" )
-	PORT_DIPSETTING(    0x08, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 	PORT_SERVICE( 0x20, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
@@ -302,15 +302,15 @@ INPUT_PORTS_START( taotaido )
 	PORT_START	/* Jumpers (0xffff8f.b) */
 	PORT_DIPNAME( 0x0f, 0x08, "Country" )
 	PORT_DIPSETTING(    0x00, "US" )				// also (c) Mc O'River Inc
-	PORT_DIPSETTING(    0x01, "Japan" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Japan ) )
 	PORT_DIPSETTING(    0x02, "Hong-Kong/Taiwan" )
-//	PORT_DIPSETTING(    0x03, "Japan" )
+//	PORT_DIPSETTING(    0x03, DEF_STR( Japan ) )
 	PORT_DIPSETTING(    0x04, "Korea" )
-//	PORT_DIPSETTING(    0x05, "Japan" )
-//	PORT_DIPSETTING(    0x06, "Japan" )
-//	PORT_DIPSETTING(    0x07, "Japan" )
-	PORT_DIPSETTING(    0x08, "World" )
-	/* 0x09 to 0x0f : "Japan" */
+//	PORT_DIPSETTING(    0x05, DEF_STR( Japan ) )
+//	PORT_DIPSETTING(    0x06, DEF_STR( Japan ) )
+//	PORT_DIPSETTING(    0x07, DEF_STR( Japan ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( World ) )
+	/* 0x09 to 0x0f : DEF_STR( Japan ) */
 
 #if TAOTAIDO_SHOW_ALL_INPUTS
 	/* These inputs are only to fit the test mode - leftover from another game ? */

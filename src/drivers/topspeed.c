@@ -488,10 +488,10 @@ ADDRESS_MAP_END
 
 #define TAITO_DIFFICULTY_8 \
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) ) \
-	PORT_DIPSETTING(    0x02, "Easy" ) \
-	PORT_DIPSETTING(    0x03, "Medium" ) \
-	PORT_DIPSETTING(    0x01, "Hard" ) \
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Easy ) ) \
+	PORT_DIPSETTING(    0x03, DEF_STR( Medium ) ) \
+	PORT_DIPSETTING(    0x01, DEF_STR( Hard ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 
 INPUT_PORTS_START( topspeed )
 	PORT_START /* DSW A */
@@ -518,7 +518,7 @@ INPUT_PORTS_START( topspeed )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x10, "4" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
@@ -591,7 +591,7 @@ INPUT_PORTS_START( topspedu )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x10, "4" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
@@ -664,7 +664,7 @@ INPUT_PORTS_START( fullthrl )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x10, "4" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )

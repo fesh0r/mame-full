@@ -2196,10 +2196,10 @@ INPUT_PORTS_START( columns ) /* Columns Input Ports */
     /* The first level increase (from 0 to 1) is allways after destroying
        35 jewels. Then, the leve gets 1 level more every : */
     PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
-    PORT_DIPSETTING(    0x00, "Easy" )     // 50 jewels
-    PORT_DIPSETTING(    0x10, "Medium" )   // 40 jewels
-    PORT_DIPSETTING(    0x30, "Hard" )     // 35 jewels
-    PORT_DIPSETTING(    0x20, "Hardest" )  // 25 jewels
+    PORT_DIPSETTING(    0x00, DEF_STR( Easy ) )     // 50 jewels
+    PORT_DIPSETTING(    0x10, DEF_STR( Medium ) )   // 40 jewels
+    PORT_DIPSETTING(    0x30, DEF_STR( Hard ) )     // 35 jewels
+    PORT_DIPSETTING(    0x20, DEF_STR( Hardest ) )  // 25 jewels
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -2246,10 +2246,10 @@ INPUT_PORTS_START( columns2 ) /* Columns 2 Input Ports */
 	PORT_DIPSETTING(    0x04, "3" )
 	PORT_DIPSETTING(    0x00, "4" )
 	PORT_DIPNAME( 0x30, 0x30, "Flash Mode Difficulty" )
-	PORT_DIPSETTING(    0x20, "Easy" )
-    PORT_DIPSETTING(    0x30, "Medium" )
-	PORT_DIPSETTING(    0x10, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Easy ) )
+    PORT_DIPSETTING(    0x30, DEF_STR( Medium ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
     PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
     PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
     PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -2301,10 +2301,10 @@ INPUT_PORTS_START( borench ) /* Borench Input Ports */
 	PORT_DIPSETTING(    0x20, "4" )
 	PORT_DIPSETTING(    0x10, "5" )
 	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x80, "Easy" )
-    PORT_DIPSETTING(    0xc0, "Medium" )
-	PORT_DIPSETTING(    0x40, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Easy ) )
+    PORT_DIPSETTING(    0xc0, DEF_STR( Medium ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 INPUT_PORTS_END
 
 
@@ -2350,10 +2350,10 @@ INPUT_PORTS_START( tfrceac ) /* ThunderForce AC Input Ports */
     PORT_DIPSETTING(    0x20, "40k, 150k, 300k" )
     PORT_DIPSETTING(    0x00, "None" )
 	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x80, "Easy" )
-    PORT_DIPSETTING(    0xc0, "Medium" )
-	PORT_DIPSETTING(    0x40, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Easy ) )
+    PORT_DIPSETTING(    0xc0, DEF_STR( Medium ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 INPUT_PORTS_END
 
 
@@ -2388,10 +2388,10 @@ INPUT_PORTS_START( ribbit ) /* Ribbit! Input Ports */
 	PORT_DIPSETTING(    0x04, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
-    PORT_DIPSETTING(    0x20, "Easy" )
-    PORT_DIPSETTING(    0x30, "Normal" )
-    PORT_DIPSETTING(    0x10, "Hard" )
-    PORT_DIPSETTING(    0x00, "Hardest" )
+    PORT_DIPSETTING(    0x20, DEF_STR( Easy ) )
+    PORT_DIPSETTING(    0x30, DEF_STR( Normal ) )
+    PORT_DIPSETTING(    0x10, DEF_STR( Hard ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
@@ -2436,10 +2436,10 @@ INPUT_PORTS_START( puyopuyo ) /* PuyoPuyo Input Ports */
 	PORT_DIPSETTING(    0x04, "1" )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPNAME( 0x18, 0x18, "1P Mode Difficulty" )
-	PORT_DIPSETTING(    0x10, "Easy" )
-    PORT_DIPSETTING(    0x18, "Medium" )
-	PORT_DIPSETTING(    0x08, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Easy ) )
+    PORT_DIPSETTING(    0x18, DEF_STR( Medium ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
     PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
     PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
     PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -2481,10 +2481,10 @@ INPUT_PORTS_START( stkclmns ) /* Stack Columns Input Ports */
     PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
     PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x02, "Easy" )
-    PORT_DIPSETTING(    0x03, "Medium" )
-	PORT_DIPSETTING(    0x01, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Easy ) )
+    PORT_DIPSETTING(    0x03, DEF_STR( Medium ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
     PORT_DIPNAME( 0x04, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -2547,10 +2547,10 @@ INPUT_PORTS_START( potopoto ) /* PotoPoto Input Ports */
 	PORT_DIPSETTING(    0x10, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x40, "Easy" )
-    PORT_DIPSETTING(    0x60, "Medium" )
-	PORT_DIPSETTING(    0x20, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Easy ) )
+    PORT_DIPSETTING(    0x60, DEF_STR( Medium ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x80, 0x80, "Moving Seat" )
 	PORT_DIPSETTING(    0x80, "No Use" )
 	PORT_DIPSETTING(    0x00, "In Use" )
@@ -2583,11 +2583,11 @@ INPUT_PORTS_START( zunkyou ) /* ZunkYou Input Ports */
 
 	PORT_START		 /* Game Options */
 	PORT_DIPNAME( 0x01, 0x01, "Game Difficulty 1" )
-    PORT_DIPSETTING(    0x01, "Medium" )
-	PORT_DIPSETTING(    0x00, "Hard" )
+    PORT_DIPSETTING(    0x01, DEF_STR( Medium ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hard ) )
 	PORT_DIPNAME( 0x02, 0x02, "Game Difficulty 2" )
-    PORT_DIPSETTING(    0x02, "Medium" )
-	PORT_DIPSETTING(    0x00, "Hard" )
+    PORT_DIPSETTING(    0x02, DEF_STR( Medium ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hard ) )
     PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x08, "1" )
 	PORT_DIPSETTING(    0x04, "2" )
@@ -2637,10 +2637,10 @@ INPUT_PORTS_START( ichidant ) /*  Ichidant-R and Tant-R Input Ports */
     PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
     PORT_DIPNAME( 0x06, 0x06, DEF_STR( Difficulty ) )
-    PORT_DIPSETTING(    0x04, "Easy" )
-    PORT_DIPSETTING(    0x06, "Medium" )
-    PORT_DIPSETTING(    0x02, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+    PORT_DIPSETTING(    0x04, DEF_STR( Easy ) )
+    PORT_DIPSETTING(    0x06, DEF_STR( Medium ) )
+    PORT_DIPSETTING(    0x02, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
     PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
     PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
     PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -2746,10 +2746,10 @@ INPUT_PORTS_START( puyopuy2 ) /*  Puyo Puyo 2 Input Ports */
     PORT_DIPSETTING(    0x04, "1:Right  2:Left" )
     PORT_DIPSETTING(    0x00, "1:Left  2:Right")
     PORT_DIPNAME( 0x18, 0x18, DEF_STR( Difficulty ) )
-    PORT_DIPSETTING(    0x10, "Easy" )
-    PORT_DIPSETTING(    0x18, "Medium" )
-    PORT_DIPSETTING(    0x08, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+    PORT_DIPSETTING(    0x10, DEF_STR( Easy ) )
+    PORT_DIPSETTING(    0x18, DEF_STR( Medium ) )
+    PORT_DIPSETTING(    0x08, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
     PORT_DIPNAME( 0x60, 0x60, "VS Mode Match/1 Play" )
     PORT_DIPSETTING(    0x60, "1" )
     PORT_DIPSETTING(    0x40, "2" )
@@ -2803,10 +2803,10 @@ INPUT_PORTS_START( puckpkmn ) /* Puckman Pockimon Input Ports */
 	PORT_DIPSETTING(    0x08, "7" )
 	PORT_DIPSETTING(    0x00, "8" )
 	PORT_DIPNAME( 0xc0, 0x80, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0xc0, "Easy"    )
-	PORT_DIPSETTING(    0x80, "Normal"  )
-	PORT_DIPSETTING(    0x40, "Hard"    )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0xc0, DEF_STR( Easy )    )
+	PORT_DIPSETTING(    0x80, DEF_STR( Normal )  )
+	PORT_DIPSETTING(    0x40, DEF_STR( Hard )    )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 
 	PORT_START	/* DSW 1 ($700019.b) */
 	PORT_SERVICE( 0x01, IP_ACTIVE_LOW )
@@ -3016,10 +3016,10 @@ INPUT_PORTS_START( megatech ) /* Genesis Input Ports */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT) PORT_PLAYER(2)
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2) PORT_PLAYER(2)
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON3) PORT_PLAYER(2)
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN  ) PORT_NAME("port DD bit 4") PORT_CODE(KEYCODE_NONE)
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN  ) PORT_NAME("port DD bit 5") PORT_CODE(KEYCODE_NONE)
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN  ) PORT_NAME("port DD bit 6") PORT_CODE(KEYCODE_NONE)
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN  ) PORT_NAME("port DD bit 7") PORT_CODE(KEYCODE_NONE)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN  ) PORT_NAME("port DD bit 4") PORT_CODE(CODE_NONE)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN  ) PORT_NAME("port DD bit 5") PORT_CODE(CODE_NONE)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN  ) PORT_NAME("port DD bit 6") PORT_CODE(CODE_NONE)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN  ) PORT_NAME("port DD bit 7") PORT_CODE(CODE_NONE)
 
 	PORT_START	 // up, down, left, right, button 2,3, 2P up, down.
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
@@ -3096,10 +3096,10 @@ INPUT_PORTS_START( megatech ) /* Genesis Input Ports */
 	PORT_START	 // BIOS input ports extra
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1) PORT_PLAYER(2)
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1)
-//	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN  ) PORT_NAME("port DD bit 4") PORT_CODE(KEYCODE_NONE)
-//	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN  ) PORT_NAME("port DD bit 5") PORT_CODE(KEYCODE_NONE)
-//	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN  ) PORT_NAME("port DD bit 6") PORT_CODE(KEYCODE_NONE)
-//	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN  ) PORT_NAME("port DD bit 7") PORT_CODE(KEYCODE_NONE)
+//	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN  ) PORT_NAME("port DD bit 4") PORT_CODE(CODE_NONE)
+//	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN  ) PORT_NAME("port DD bit 5") PORT_CODE(CODE_NONE)
+//	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN  ) PORT_NAME("port DD bit 6") PORT_CODE(CODE_NONE)
+//	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN  ) PORT_NAME("port DD bit 7") PORT_CODE(CODE_NONE)
 
 INPUT_PORTS_END
 
@@ -3112,7 +3112,7 @@ INPUT_PORTS_END
     PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN ) PORT_NAME("0x6400 bit 4") PORT_CODE(KEYCODE_T) \
     PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN ) PORT_NAME("0x6400 bit 5") PORT_CODE(KEYCODE_Y) \
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN ) PORT_NAME("0x6400 bit 6") PORT_CODE(KEYCODE_U) \
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("Test") PORT_CODE(KEYCODE_F2)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME(DEF_STR( Test )) PORT_CODE(KEYCODE_F2)
 
 #define MEGAPLAY_COIN \
 	PORT_START \
@@ -3189,10 +3189,10 @@ INPUT_PORTS_START ( mp_sonic )
     PORT_DIPSETTING( 0x03, "1" )
 
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Difficulty ) )
-    PORT_DIPSETTING( 0x00, "Hardest" )
-    PORT_DIPSETTING( 0x04, "Hard" )
-    PORT_DIPSETTING( 0x08, "Easy" )
-    PORT_DIPSETTING( 0x0c, "Normal" )
+    PORT_DIPSETTING( 0x00, DEF_STR( Hardest ) )
+    PORT_DIPSETTING( 0x04, DEF_STR( Hard ) )
+    PORT_DIPSETTING( 0x08, DEF_STR( Easy ) )
+    PORT_DIPSETTING( 0x0c, DEF_STR( Normal ) )
     // Who knows...
 //	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN ) PORT_NAME("0x6201 bit 4") PORT_CODE(KEYCODE_G)
 //  PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN ) PORT_NAME("0x6201 bit 5") PORT_CODE(KEYCODE_H)
@@ -3211,8 +3211,8 @@ INPUT_PORTS_START ( mp_gaxe2 )
 	PORT_START
 	// DSW C  (per game settings)
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Difficulty ) )
-    PORT_DIPSETTING( 0x01, "Normal" )
-    PORT_DIPSETTING( 0x00, "Hard" )
+    PORT_DIPSETTING( 0x01, DEF_STR( Normal ) )
+    PORT_DIPSETTING( 0x00, DEF_STR( Hard ) )
 
 	PORT_DIPNAME( 0x02, 0x00, "Life" )
     PORT_DIPSETTING( 0x02, "1" )
@@ -3244,7 +3244,7 @@ INPUT_PORTS_START ( mp_twc )
 	PORT_START
 	// DSW C  (per game settings)
 	PORT_DIPNAME( 0x01, 0x01, "Time" )
-    PORT_DIPSETTING( 0x01, "Normal" )
+    PORT_DIPSETTING( 0x01, DEF_STR( Normal ) )
     PORT_DIPSETTING( 0x00, "Short" )
 
 	PORT_DIPNAME( 0x0e, 0x08, "Level" )
@@ -3585,6 +3585,13 @@ ROM_START( bloxeedc ) /* Bloxeed (C System Version)  (c)1989 Sega / Elorg */
 	ROM_LOAD16_BYTE( "epr12992.33", 0x040001, 0x020000, CRC(19b0084c) SHA1(b3ba0f3d8d39a19aa66edb24885ea21192e22704) )
 ROM_END
 
+ROM_START( bloxeedu ) /* Bloxeed USA (C System Version)  (c)1989 Sega / Elorg */
+	ROM_REGION( 0x200000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "epr12997a.32", 0x000000, 0x020000, CRC(23655bc9) SHA1(32fc1f75a43aa49dc656d40d34ec10f3f0a2bdb3) )
+	ROM_LOAD16_BYTE( "epr12996a.31", 0x000001, 0x020000, CRC(83c83f0c) SHA1(ca8e2ad7cceabd8de7a91b91cb92eafb6dd3171f) )
+	ROM_LOAD16_BYTE( "epr12993.34", 0x040000, 0x020000, CRC(487bc8fc) SHA1(3fb205bf56f35443e993e08b39c1a08c13ca5e3b) )
+	ROM_LOAD16_BYTE( "epr12992.33", 0x040001, 0x020000, CRC(19b0084c) SHA1(b3ba0f3d8d39a19aa66edb24885ea21192e22704) )
+ROM_END
 
 ROM_START( columns ) /* Columns (US) (c)1990 Sega */
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )
@@ -4748,6 +4755,7 @@ DRIVER_INIT( puckpkmn )
 
 /* System C Games */
 GAME ( 1989, bloxeedc, bloxeed,  segac,    bloxeedc, bloxeedc, ROT0, "Sega / Elorg",           "Bloxeed (C System)" )
+GAME ( 1989, bloxeedu, bloxeed,  segac,    bloxeedc, bloxeedc, ROT0, "Sega / Elorg",           "Bloxeed (US, C System)" )
 GAME ( 1990, columns,  0,        segac,    columns,  columns,  ROT0, "Sega",                   "Columns (US)" )
 GAME ( 1990, columnsj, columns,  segac,    columns,  columns,  ROT0, "Sega",                   "Columns (Japan)" )
 GAME ( 1990, columns2, 0,        segac,    columns2, columns2, ROT0, "Sega",                   "Columns II: The Voyage Through Time (Japan)" )

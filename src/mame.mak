@@ -98,6 +98,7 @@ CPUS+=E132XS@
 CPUS+=I386@
 CPUS+=I960@
 CPUS+=H83002@ 
+CPUS+=V810@ 
 
 # uncomment the following lines to include a sound core
 SOUNDS+=CUSTOM@
@@ -1030,6 +1031,8 @@ $(OBJ)/igs.a: \
 	$(OBJ)/drivers/lordgun.o \
 	$(OBJ)/vidhrdw/pgm.o $(OBJ)/drivers/pgm.o \
 	$(OBJ)/machine/pgmprot.o $(OBJ)/machine/pgmcrypt.o \
+	$(OBJ)/drivers/vbowl.o \
+	$(OBJ)/drivers/chmplst2.o \
 
 $(OBJ)/ramtek.a: \
 	$(OBJ)/drivers/hitme.o \

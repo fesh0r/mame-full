@@ -382,7 +382,7 @@ static MACHINE_DRIVER_START( junofrst )
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)	/* not sure about the visible area */
 	MDRV_PALETTE_LENGTH(16)
 
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(generic_bitmapped)
 	MDRV_VIDEO_UPDATE(tutankhm)
 
 	/* sound hardware */

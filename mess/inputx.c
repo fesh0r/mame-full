@@ -16,7 +16,7 @@
 
 struct InputCode
 {
-	UINT16 port[NUM_SIMUL_KEYS];
+	UINT32 port[NUM_SIMUL_KEYS];
 	const struct InputPort *ipt[NUM_SIMUL_KEYS];
 };
 
@@ -248,7 +248,7 @@ static int scan_keys(const struct InputPort *input_ports, struct InputCode *code
 		case IPT_KEYBOARD:
 			ipt_key = ipt;
 
-			code = ipt->u.keyboard.chars[shift];
+			code = ipt->keyboard.chars[shift];
 			if (code)
 			{
 				/* mark that we have found some natural keyboard codes */
@@ -684,7 +684,7 @@ static void inputx_timerproc(int dummy)
 
 
 
-void inputx_update(unsigned short *ports)
+void inputx_update(UINT32 *ports)
 {
 	const struct KeyBuffer *keybuf;
 	const struct InputCode *code;
@@ -734,10 +734,10 @@ void inputx_handle_mess_extensions(struct InputPort *ipt)
 	/* is this a keyboard port with the default name? */
 	if (ipt->type == IPT_KEYBOARD && (ipt->name == IP_NAME_DEFAULT))
 	{
-		for (i = 0; ipt->u.keyboard.chars[i] && (i < sizeof(ipt->u.keyboard.chars)
-			/ sizeof(ipt->u.keyboard.chars[0])); i++)
+		for (i = 0; ipt->keyboard.chars[i] && (i < sizeof(ipt->keyboard.chars)
+			/ sizeof(ipt->keyboard.chars[0])); i++)
 		{
-			ch = ipt->u.keyboard.chars[i];
+			ch = ipt->keyboard.chars[i];
 			pos += sprintf(&buf[pos], "%s ", inputx_key_name(ch));
 		}
 

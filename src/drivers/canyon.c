@@ -171,11 +171,11 @@ ADDRESS_MAP_END
 
 INPUT_PORTS_START( canyon )
 	PORT_START      /* DSW */
-	PORT_DIPNAME( 0x03, 0x00, "Language" )
-	PORT_DIPSETTING(    0x00, "English" )
-	PORT_DIPSETTING(    0x01, "Spanish" )
-	PORT_DIPSETTING(    0x02, "French" )
-	PORT_DIPSETTING(    0x03, "German" )
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Language ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( English ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Spanish ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( French ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( German ) )
 	PORT_DIPNAME( 0x30, 0x00, "Misses Per Play" )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x10, "4" )

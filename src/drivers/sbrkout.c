@@ -166,11 +166,11 @@ ADDRESS_MAP_END
 
 INPUT_PORTS_START( sbrkout )
 	PORT_START		/* DSW - fake port, gets mapped to Super Breakout ports */
-	PORT_DIPNAME( 0x03, 0x00, "Language" )
-	PORT_DIPSETTING(	0x00, "English" )
-	PORT_DIPSETTING(	0x01, "German" )
-	PORT_DIPSETTING(	0x02, "French" )
-	PORT_DIPSETTING(	0x03, "Spanish" )
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Language ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( English ) )
+	PORT_DIPSETTING(	0x01, DEF_STR( German ) )
+	PORT_DIPSETTING(	0x02, DEF_STR( French ) )
+	PORT_DIPSETTING(	0x03, DEF_STR( Spanish ) )
 	PORT_DIPNAME( 0x0C, 0x08, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(	0x0C, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(	0x08, DEF_STR( 1C_1C ) )

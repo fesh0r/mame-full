@@ -198,11 +198,11 @@ INPUT_PORTS_START( xyonix )
 
 	PORT_START
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x03, "Easy" )
-	PORT_DIPSETTING(    0x02, "Normal" )
-	PORT_DIPSETTING(    0x01, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )			// "Very Hard"
-	PORT_DIPNAME( 0x04, 0x00, "Allow Continue" )
+	PORT_DIPSETTING(    0x03, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )			// DEF_STR( Very_Hard )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 	PORT_SERVICE( 0x08, IP_ACTIVE_LOW )

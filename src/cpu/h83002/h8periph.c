@@ -248,27 +248,27 @@ void h8_itu_write8(UINT8 reg, UINT8 val)
 	switch(reg)
 	{
 	case 0x60:
-		h8.h8TSTR = val;
-		if (h8.h8TSTR & 1)
+		if ((val & 1) && !(h8.h8TSTR & 1))
 		{
 			h8_itu_refresh_timer(0);
 		}
-		if (h8.h8TSTR & 2)
+		if ((val & 2) && !(h8.h8TSTR & 2))
 		{
 			h8_itu_refresh_timer(1);
 		}
-		if (h8.h8TSTR & 4)
+		if ((val & 4) && !(h8.h8TSTR & 4))
 		{
 			h8_itu_refresh_timer(2);
 		}
-		if (h8.h8TSTR & 8)
+		if ((val & 8) && !(h8.h8TSTR & 8))
 		{
 			h8_itu_refresh_timer(3);
 		}
-		if (h8.h8TSTR & 0x10)
+		if ((val & 0x10) && !(h8.h8TSTR & 0x10))
 		{
 			h8_itu_refresh_timer(4);
 		}
+		h8.h8TSTR = val;
 		break;
 	case 0x68:
 		h8.h8TCNT0 = (val<<8) | (h8.h8TCNT0 & 0xff);
@@ -373,16 +373,16 @@ UINT8 h8_register_read8(UINT32 address)
 		{
 		case 0xb4: // serial port A status
 			val = h8.per_regs[reg];
-			val |= 0xc4;		// transmit finished, recieve ready, no errors 
+			val |= 0xc4;		// transmit finished, receive ready, no errors 
 			break;
-		case 0xb5: // serial port A receieve
+		case 0xb5: // serial port A receive
 			val = io_read_byte(H8_SERIAL_A);
 			break;
 		case 0xbc: // serial port B status
 			val = h8.per_regs[reg];
-			val |= 0xc4;		// transmit finished, recieve ready, no errors
+			val |= 0xc4;		// transmit finished, receive ready, no errors
 			break;
-		case 0xbd: // serial port B receieve
+		case 0xbd: // serial port B receive
 			val = io_read_byte(H8_SERIAL_B);
 			break;
 		case 0xe0:

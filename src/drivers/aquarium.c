@@ -195,10 +195,10 @@ ADDRESS_MAP_END
 INPUT_PORTS_START( aquarium )
 	PORT_START	/* DSW */
 	PORT_DIPNAME( 0x0003, 0x0003, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x0002, "Easy" )
-	PORT_DIPSETTING(      0x0003, "Normal" )
-	PORT_DIPSETTING(      0x0001, "Hard" )
-	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Easy ) )
+	PORT_DIPSETTING(      0x0003, DEF_STR( Normal ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Hard ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x000c, 0x000c, "Winning Rounds (Player VS CPU)" )
 	PORT_DIPSETTING(      0x000c, "1/1" )
 	PORT_DIPSETTING(      0x0008, "2/3" )
@@ -271,9 +271,9 @@ INPUT_PORTS_START( aquarium )
 
 #if AQUARIUS_HACK
 	PORT_START	/* FAKE DSW to support language */
-	PORT_DIPNAME( 0xffff, 0x0001, "Language" )
-	PORT_DIPSETTING(      0x0000, "Japanese" )
-	PORT_DIPSETTING(      0x0001, "English" )		// This is a guess of what should be the value
+	PORT_DIPNAME( 0xffff, 0x0001, DEF_STR( Language ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Japanese ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( English ) )		// This is a guess of what should be the value
 #endif
 INPUT_PORTS_END
 

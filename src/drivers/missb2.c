@@ -266,9 +266,9 @@ ADDRESS_MAP_END
 
 INPUT_PORTS_START( missb2 )
 	PORT_START      /* DSW0 */
-	PORT_DIPNAME( 0x01, 0x00, "Language" )
-	PORT_DIPSETTING(    0x00, "English" )
-	PORT_DIPSETTING(    0x01, "Japanese" )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Language ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( English ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Japanese ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -289,10 +289,10 @@ INPUT_PORTS_START( missb2 )
 
 	PORT_START      /* DSW1 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x02, "Easy" )
-	PORT_DIPSETTING(    0x03, "Medium" )
-	PORT_DIPSETTING(    0x01, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( Medium ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x08, "20000 80000" )
 	PORT_DIPSETTING(    0x0c, "30000 100000" )
@@ -304,10 +304,10 @@ INPUT_PORTS_START( missb2 )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x20, "5" )
 	PORT_DIPNAME( 0xc0, 0x00, "Monster Speed" )
-	PORT_DIPSETTING(    0x00, "Normal" )
-	PORT_DIPSETTING(    0x40, "Medium" )
-	PORT_DIPSETTING(    0x80, "High" )
-	PORT_DIPSETTING(    0xc0, "Very High" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Medium ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( High ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( Very_High ) )
 
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_2WAY

@@ -251,7 +251,7 @@ INPUT_PORTS_START( pushman )
 	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0004, 0x0004, "Level Select" )
+	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Level_Select ) )
 	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unknown ) )
@@ -334,8 +334,8 @@ INPUT_PORTS_START( bballs )
 	PORT_DIPSETTING(      0x0005, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(      0x0004, DEF_STR( 1C_4C ) )
 	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x0008, "Easy" )			// less bubbles before cycling
-	PORT_DIPSETTING(      0x0000, "Hard" )			// more bubbles before cycling
+	PORT_DIPSETTING(      0x0008, DEF_STR( Easy ) )			// less bubbles before cycling
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hard ) )			// more bubbles before cycling
 	PORT_DIPNAME( 0x0010, 0x0000, "Music (In-game)" )
 	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )

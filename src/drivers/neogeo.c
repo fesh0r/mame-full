@@ -1042,9 +1042,9 @@ INPUT_PORTS_START( neogeo )
 	PORT_START
 #if 0
 	PORT_DIPNAME( 0x03, 0x02,"Territory" )
-	PORT_DIPSETTING(	0x00,"Japan" )
-	PORT_DIPSETTING(	0x01,"USA" )
-	PORT_DIPSETTING(	0x02,"Europe" )
+	PORT_DIPSETTING(	0x00,DEF_STR( Japan ) )
+	PORT_DIPSETTING(	0x01,DEF_STR( USA ) )
+	PORT_DIPSETTING(	0x02,DEF_STR( Europe ) )
 //	PORT_DIPNAME( 0x04, 0x04,"Machine Mode" )
 //	PORT_DIPSETTING(	0x00,"Home" )
 //	PORT_DIPSETTING(	0x04,"Arcade" )
@@ -1133,9 +1133,9 @@ INPUT_PORTS_START( mjneogeo )
 	PORT_START
 #if 0
 	PORT_DIPNAME( 0x03, 0x02,"Territory" )
-	PORT_DIPSETTING(	0x00,"Japan" )
-	PORT_DIPSETTING(	0x01,"USA" )
-	PORT_DIPSETTING(	0x02,"Europe" )
+	PORT_DIPSETTING(	0x00,DEF_STR( Japan ) )
+	PORT_DIPSETTING(	0x01,DEF_STR( USA ) )
+	PORT_DIPSETTING(	0x02,DEF_STR( Europe ) )
 //	PORT_DIPNAME( 0x04, 0x04,"Machine Mode" )
 //	PORT_DIPSETTING(	0x00,"Home" )
 //	PORT_DIPSETTING(	0x04,"Arcade" )
@@ -1190,7 +1190,7 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( irrmaze )
 	PORT_START		/* IN0 multiplexed */
-	PORT_BIT( 0xff, 0x7f, IPT_TRACKBALL_X ) PORT_MINMAX(0,0) PORT_SENSITIVITY(10) PORT_KEYDELTA(20) PORT_REVERSE
+	PORT_BIT( 0xff, 0x7f, IPT_TRACKBALL_X ) PORT_SENSITIVITY(10) PORT_KEYDELTA(20) PORT_REVERSE
 
 	PORT_START		/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -1248,9 +1248,9 @@ INPUT_PORTS_START( irrmaze )
 	PORT_START
 #if 0
 	PORT_DIPNAME( 0x03, 0x02,"Territory" )
-	PORT_DIPSETTING(	0x00,"Japan" )
-	PORT_DIPSETTING(	0x01,"USA" )
-	PORT_DIPSETTING(	0x02,"Europe" )
+	PORT_DIPSETTING(	0x00,DEF_STR( Japan ) )
+	PORT_DIPSETTING(	0x01,DEF_STR( USA ) )
+	PORT_DIPSETTING(	0x02,DEF_STR( Europe ) )
 //	PORT_DIPNAME( 0x04, 0x04,"Machine Mode" )
 //	PORT_DIPSETTING(	0x00,"Home" )
 //	PORT_DIPSETTING(	0x04,"Arcade" )
@@ -1267,7 +1267,7 @@ INPUT_PORTS_START( irrmaze )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, 0 ) PORT_NAME("Test Switch") PORT_CODE(KEYCODE_F2)
 
 	PORT_START		/* IN0 multiplexed */
-	PORT_BIT( 0xff, 0x7f, IPT_TRACKBALL_Y ) PORT_MINMAX(0,0) PORT_SENSITIVITY(10) PORT_KEYDELTA(20) PORT_REVERSE
+	PORT_BIT( 0xff, 0x7f, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(10) PORT_KEYDELTA(20) PORT_REVERSE
 INPUT_PORTS_END
 
 INPUT_PORTS_START( popbounc )
@@ -1335,9 +1335,9 @@ INPUT_PORTS_START( popbounc )
 	PORT_START
 #if 0
 	PORT_DIPNAME( 0x03, 0x02,"Territory" )
-	PORT_DIPSETTING(	0x00,"Japan" )
-	PORT_DIPSETTING(	0x01,"USA" )
-	PORT_DIPSETTING(	0x02,"Europe" )
+	PORT_DIPSETTING(	0x00,DEF_STR( Japan ) )
+	PORT_DIPSETTING(	0x01,DEF_STR( USA ) )
+	PORT_DIPSETTING(	0x02,DEF_STR( Europe ) )
 //	PORT_DIPNAME( 0x04, 0x04,"Machine Mode" )
 //	PORT_DIPSETTING(	0x00,"Home" )
 //	PORT_DIPSETTING(	0x04,"Arcade" )
@@ -1359,10 +1359,10 @@ INPUT_PORTS_START( popbounc )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, 0 ) PORT_NAME("Test Switch") PORT_CODE(KEYCODE_F2)
 
 	PORT_START		/* IN0 multiplexed */
-	PORT_BIT( 0xff, 0x7f, IPT_DIAL ) PORT_MINMAX(0,0) PORT_SENSITIVITY(10) PORT_KEYDELTA(20)
+	PORT_BIT( 0xff, 0x7f, IPT_DIAL ) PORT_SENSITIVITY(10) PORT_KEYDELTA(20)
 
 	PORT_START		/* IN1 multiplexed */
-	PORT_BIT( 0xff, 0x7f, IPT_DIAL  ) PORT_MINMAX(0,0) PORT_SENSITIVITY(10) PORT_KEYDELTA(20) PORT_PLAYER(2)
+	PORT_BIT( 0xff, 0x7f, IPT_DIAL  ) PORT_SENSITIVITY(10) PORT_KEYDELTA(20) PORT_PLAYER(2)
 INPUT_PORTS_END
 
 /******************************************************************************/
@@ -5765,6 +5765,58 @@ ROM_START( nitd ) /* Original Version - Encrypted GFX */
 	ROM_LOAD16_BYTE( "260-c2.bin", 0x0000001, 0x800000, CRC(d2b04b0d) SHA1(ce4322e6cfacb627fe997efe81018861e21d3c27) )
 ROM_END
 
+ROM_START( zupapa ) /* Original Version - Encrypted GFX */
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "070-p1.bin", 0x000000, 0x100000, CRC(5a96203e) SHA1(49cddec9ca6cc51e5ecf8a34e447a23e1f8a15a1) )
+
+	/* The Encrypted Boards do _not_ have an s1 rom, data for it comes from the Cx ROMs */
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )
+	ROM_FILL(                 0x000000, 0x20000, 0 )
+	ROM_REGION( 0x20000, REGION_GFX2, 0 )
+	ROM_LOAD( "sfix.sfx",  0x000000, 0x20000, CRC(354029fc) SHA1(4ae4bf23b4c2acff875775d4cbff5583893ce2a1) )
+
+	NEO_BIOS_SOUND_128K( "070-m1.bin", CRC(5a3b3191) SHA1(fa9a9930e18c64e598841fb344c4471d3d2c1964) )
+
+	ROM_REGION( 0x0200000, REGION_SOUND1, ROMREGION_SOUNDONLY )
+	ROM_LOAD( "070-v1.bin", 0x000000, 0x200000, CRC(d3a7e1ff) SHA1(4a4a227e10f4af58168f6c26011ea1d414253f92) )
+
+	NO_DELTAT_REGION
+
+	ROM_REGION( 0x1000000, REGION_GFX3, 0 )
+	/* Encrypted */
+	ROM_LOAD16_BYTE( "070-c1.bin", 0x0000000, 0x800000, CRC(f8ad02d8) SHA1(9be54532332a8e963ec35ff1e518947bb11ebade) )
+	ROM_LOAD16_BYTE( "070-c2.bin", 0x0000001, 0x800000, CRC(70156dde) SHA1(06286bf043d50199b47df9a76ca91f39cb28cb90) )
+ROM_END
+
+ROM_START( sengoku3 ) /* Original Version - Encrypted GFX */
+	ROM_REGION( 0x200000, REGION_CPU1, 0 )
+//	ROM_LOAD16_WORD_SWAP( "261-p1.bin", 0x100000, 0x100000, CRC(5b557201) SHA1(d01421d1dc80fe7d2a46b9f79c0f344b3c81c1e7) ) this one is almost certainly bad
+	ROM_LOAD16_WORD_SWAP( "261-p1.bin", 0x100000, 0x100000, CRC(e0d4bc0a) SHA1(8df366097f224771ca6d1aa5c1691cd46776cd12) )
+	ROM_CONTINUE(                       0x000000, 0x100000 )
+
+	/* The Encrypted Boards do _not_ have an s1 rom, data for it comes from the Cx ROMs */
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )
+	ROM_FILL(                 0x000000, 0x20000, 0 )
+	ROM_REGION( 0x20000, REGION_GFX2, 0 )
+	ROM_LOAD( "sfix.sfx",  0x000000, 0x20000, CRC(354029fc) SHA1(4ae4bf23b4c2acff875775d4cbff5583893ce2a1) )
+
+	NEO_BIOS_SOUND_128K( "261-m1.bin", CRC(36ed9cdd) SHA1(78a7d755e9e9f52255ac6228d9d402fd6a02c126) )
+
+	ROM_REGION( 0x0e00000, REGION_SOUND1, ROMREGION_SOUNDONLY )
+	ROM_LOAD( "261-v1.bin", 0x000000, 0x400000, CRC(64c30081) SHA1(f9ebd20cf59b72e864b7274c1bdb6d99ecaf4595) )
+	ROM_LOAD( "261-v2.bin", 0x400000, 0x400000, CRC(392a9c47) SHA1(7ab90a54089236ca6c3ef1af8e566a8025d38159) )
+	ROM_LOAD( "261-v3.bin", 0x800000, 0x400000, CRC(c1a7ebe3) SHA1(1d7bb481451f5ee0457e954bb5210300182c3c9c) )
+	ROM_LOAD( "261-v4.bin", 0xc00000, 0x200000, CRC(9000d085) SHA1(11157b355ab4eb6627e9f322ed875332d3d77349) )
+
+	NO_DELTAT_REGION
+
+	ROM_REGION( 0x2000000, REGION_GFX3, 0 )
+	ROM_LOAD16_BYTE( "261-c1.bin", 0x0000000, 0x800000, CRC(ded84d9c) SHA1(d960523b813d4fae06d716298d4e431a5c77a0c5) )
+	ROM_LOAD16_BYTE( "261-c2.bin", 0x0000001, 0x800000, CRC(b8eb4348) SHA1(619d24312549932959481fa58f43f11c048e1ca5) )
+	ROM_LOAD16_BYTE( "261-c3.bin", 0x1000000, 0x800000, CRC(84e2034a) SHA1(38ec4ae4b86933a25c9a03799b8cade4b1346401) )
+	ROM_LOAD16_BYTE( "261-c4.bin", 0x1000001, 0x800000, CRC(0b45ae53) SHA1(a19fb21408ab633aee8bbf38bf43b5e26766b355) )
+ROM_END
+
 /******************************************************************************/
 
 /* dummy entry for the dummy bios driver */
@@ -6033,6 +6085,20 @@ DRIVER_INIT( nitd )
 	init_neogeo();
 }
 
+DRIVER_INIT( zupapa )
+{
+	neogeo_fix_bank_type = 1;
+	kof99_neogeo_gfx_decrypt(0xbd);
+	init_neogeo();
+}
+
+DRIVER_INIT( sengoku3 )
+{
+	neogeo_fix_bank_type = 1;
+	kof99_neogeo_gfx_decrypt(0xfe);
+	init_neogeo();
+}
+
 static void kof98P1decode(void)
 {
 	UINT8 *src = memory_region(REGION_CPU1);
@@ -6285,6 +6351,8 @@ GAMEB( 2000, mslug3,   neogeo,   neogeo, raster, neogeo,  mslug3,   ROT0, "SNK",
 GAMEB( 2000, mslug3n,  mslug3,   neogeo, raster, neogeo,  mslug3n,  ROT0, "SNK", "Metal Slug 3 (not encrypted)" ) /* Encrypted GFX */
 GAMEB( 2000, kof2000,  neogeo,   neogeo, neogeo, neogeo,  kof2000,  ROT0, "SNK", "The King of Fighters 2000" ) /* Encrypted Code & GFX */
 GAMEB( 2000, kof2000n, kof2000,  neogeo, neogeo, neogeo,  kof2000n, ROT0, "SNK", "The King of Fighters 2000 (not encrypted)" ) /* Encrypted GFX */
+GAMEB( 2001, zupapa,   neogeo,   neogeo, neogeo, neogeo,  zupapa,   ROT0, "SNK", "Zupapa!" )	/* Encrypted GFX */
+GAMEB( 2001, sengoku3, neogeo,   neogeo, neo320, neogeo,  sengoku3, ROT0, "SNK", "Sengoku 3" )	/* Encrypted GFX */
 
 /* Alpha Denshi Co. / ADK (changed name in 1993) */
 GAMEB( 1990, maglord,  neogeo,   neogeo, neo320, neogeo,  neogeo,   ROT0, "Alpha Denshi Co.", "Magician Lord (set 1)" )

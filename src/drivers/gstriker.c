@@ -414,8 +414,8 @@ INPUT_PORTS_START( gstriker )
 
 	PORT_START
 	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x0001, "Normal" )
-	PORT_DIPSETTING(      0x0000, "Hard" )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Normal ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hard ) )
 	PORT_DIPNAME( 0x0006, 0x0006, "Player(s) VS CPU Time" )		// "Tournament  Time"
 	PORT_DIPSETTING(      0x0006, "1:30" )
 	PORT_DIPSETTING(      0x0004, "2:00" )

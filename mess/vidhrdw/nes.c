@@ -96,9 +96,6 @@ VIDEO_UPDATE( nes )
 	{
 		if (readinputport(PORT_FLIPKEY) & 0x01)
 		{
-			while (readinputport(PORT_FLIPKEY) & 0x01)
-				update_input_ports();
-
 			nes_fds.current_side++;
 			if (nes_fds.current_side > nes_fds.sides)
 				nes_fds.current_side = 0;

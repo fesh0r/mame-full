@@ -31,9 +31,6 @@
 
 /* Variables for stat menu */
 extern char build_version[];
-extern unsigned int dispensed_tickets;
-extern unsigned int coins[COIN_COUNTERS];
-extern unsigned int coinlockedout[COIN_COUNTERS];
 
 /* MARTINEZ.F 990207 Memory Card */
 #ifndef MESS
@@ -1710,18 +1707,21 @@ static int setcategories(struct mame_bitmap *bitmap, int selected)
 /* it's used byt setdefkeysettings, setdefjoysettings, setkeysettings, setjoysettings */
 static int record_first_insert = 1;
 
-static char menu_subitem_buffer[500][96];
+#define MAX_PORT_ENTRIES		1000
+
+static char menu_item_buffer[MAX_PORT_ENTRIES][96];
+static char menu_subitem_buffer[MAX_PORT_ENTRIES][96];
 
 static int setdefcodesettings(struct mame_bitmap *bitmap,int selected)
 {
-	const char *menu_item[500];
-	const char *menu_subitem[500];
-	InputSeq *entry[500];
-	char flag[500];
+	const char *menu_item[MAX_PORT_ENTRIES];
+	const char *menu_subitem[MAX_PORT_ENTRIES];
+	input_seq_t *entry[MAX_PORT_ENTRIES];
+	UINT8 analog[MAX_PORT_ENTRIES];
+	char flag[MAX_PORT_ENTRIES];
 	int i,sel;
-	struct ipd *in;
+	struct InputPortDefinition *in;
 	int total;
-	extern struct ipd inputport_defaults[];
 
 	sel = selected - 1;
 
@@ -1729,22 +1729,38 @@ static int setdefcodesettings(struct mame_bitmap *bitmap,int selected)
 	if (Machine->input_ports == 0)
 		return 0;
 
-	in = inputport_defaults;
+	in = get_input_port_list();
 
 	total = 0;
+	
 	while (in->type != IPT_END)
 	{
-		if (in->name != 0  && in->type != IPT_UNKNOWN && in->type != IPT_OSD_RESERVED)
+		if (in->name != 0 && in->type != IPT_UNKNOWN && in->type != IPT_DIPSWITCH_NAME && in->name[0] != 0)
 		{
-			int seq_count = (in->type > IPT_ANALOG_START && in->type < IPT_ANALOG_END) ? 2 : 1;
-			int j;
-			for (j = 0; j < seq_count; j++)
+			analog[total] = port_type_is_analog(in->type);
+			if (!analog[total])
 			{
-				entry[total] = &in->seq[j];
+				entry[total] = &in->defaultseq;
 				menu_item[total] = in->name;
-				if (j == 1 && in->type >= IPT_PEDAL && in->type <= IPT_PEDAL2)
-					menu_item[total] = "Auto Release <Y/N>";
+				total++;
+			}
+			else
+			{
+				entry[total] = &in->defaultseq;
+				sprintf(menu_item_buffer[total], "%s Analog", in->name);
+				menu_item[total] = menu_item_buffer[total];
+				total++;
 
+				analog[total] = 0;
+				entry[total] = &in->defaultdecseq;
+				sprintf(menu_item_buffer[total], "%s Dec", in->name);
+				menu_item[total] = menu_item_buffer[total];
+				total++;
+
+				analog[total] = 0;
+				entry[total] = &in->defaultincseq;
+				sprintf(menu_item_buffer[total], "%s Inc", in->name);
+				menu_item[total] = menu_item_buffer[total];
 				total++;
 			}
 		}
@@ -1794,8 +1810,6 @@ static int setdefcodesettings(struct mame_bitmap *bitmap,int selected)
 			record_first_insert = ret != 0;
 		}
 
-		init_analog_seq();
-
 		return sel + 1;
 	}
 
@@ -1819,7 +1833,7 @@ static int setdefcodesettings(struct mame_bitmap *bitmap,int selected)
 		if (sel == total - 1) sel = -1;
 		else
 		{
-			seq_read_async_start();
+			seq_read_async_start(analog[sel]);
 
 			sel |= 1 << SEL_BITS;	/* we'll ask for a key */
 
@@ -1849,10 +1863,11 @@ static int setdefcodesettings(struct mame_bitmap *bitmap,int selected)
 
 static int setcodesettings(struct mame_bitmap *bitmap,int selected)
 {
-	const char *menu_item[500];
-	const char *menu_subitem[500];
-	InputSeq *seq[500];
-	char flag[500];
+	const char *menu_item[MAX_PORT_ENTRIES];
+	const char *menu_subitem[MAX_PORT_ENTRIES];
+	input_seq_t *seq[MAX_PORT_ENTRIES];
+	UINT8 flag[MAX_PORT_ENTRIES];
+	UINT8 analog[MAX_PORT_ENTRIES];
 	int i,sel;
 	struct InputPort *in;
 	int total;
@@ -1869,35 +1884,63 @@ static int setcodesettings(struct mame_bitmap *bitmap,int selected)
 	total = 0;
 	while (in->type != IPT_END)
 	{
-		for (i = 0; i < input_port_seq_count(in); i++)
-		{
-			if (input_port_name(in) != 0 && seq_get_1(&in->seq[i]) != CODE_NONE
-				&& (in->type != IPT_UNKNOWN)
+		if (input_port_name(in) != NULL && 
+			seq_get_1(&in->seq) != CODE_NONE &&
 #ifdef MESS
-				&& ((in->category == 0) || input_category_active(in->category))
+			(in->category == 0 || input_category_active(in->category)) &&
 #endif /* MESS */
-				&& in->type != IPT_OSD_RESERVED)
+			in->type != IPT_UNKNOWN &&
+			in->type != IPT_DIPSWITCH_NAME &&
+			in->type != IPT_CATEGORY_NAME)
+		{
+			analog[total] = port_type_is_analog(in->type);
+			if (!analog[total])
 			{
-				seq[total] = &in->seq[i];
+				seq[total] = &in->seq;
 				menu_item[total] = input_port_name(in);
-				if (i == 1 && in->type >= IPT_PEDAL && in->type <= IPT_PEDAL2)
-					menu_item[total] = "Auto Release <Y/N>";
-
-				seq_name(input_port_seq(in, i), menu_subitem_buffer[total], sizeof(menu_subitem_buffer[0]));
+				seq_name(input_port_seq(in, SEQ_TYPE_STANDARD), menu_subitem_buffer[total], sizeof(menu_subitem_buffer[0]));
 				menu_subitem[total] = menu_subitem_buffer[total];
+				total++;
+			}
+			else
+			{
+				seq[total] = &in->seq;
+				sprintf(menu_item_buffer[total], "%s Analog", input_port_name(in));
+				menu_item[total] = menu_item_buffer[total];
+				seq_name(input_port_seq(in, SEQ_TYPE_STANDARD), menu_subitem_buffer[total], sizeof(menu_subitem_buffer[0]));
+				menu_subitem[total] = menu_subitem_buffer[total];
+				total++;
 
-				/* If the key isn't the default, flag it */
-				if (seq_get_1(seq[total]) != CODE_DEFAULT)
-					flag[total] = 1;
-				else
-					flag[total] = 0;
+				analog[total] = 0;
+				seq[total] = &in->analog.decseq;
+				sprintf(menu_item_buffer[total], "%s Dec", input_port_name(in));
+				menu_item[total] = menu_item_buffer[total];
+				seq_name(input_port_seq(in, SEQ_TYPE_DECREMENT), menu_subitem_buffer[total], sizeof(menu_subitem_buffer[0]));
+				menu_subitem[total] = menu_subitem_buffer[total];
+				total++;
 
+				analog[total] = 0;
+				seq[total] = &in->analog.incseq;
+				sprintf(menu_item_buffer[total], "%s Inc", input_port_name(in));
+				menu_item[total] = menu_item_buffer[total];
+				seq_name(input_port_seq(in, SEQ_TYPE_INCREMENT), menu_subitem_buffer[total], sizeof(menu_subitem_buffer[0]));
+				menu_subitem[total] = menu_subitem_buffer[total];
 				total++;
 			}
 		}
 
 		in++;
 	}
+
+	for (i = 0; i < total; i++)
+	{
+		/* If the key isn't the default, flag it */
+		if (seq_get_1(seq[i]) != CODE_DEFAULT)
+			flag[i] = 1;
+		else
+			flag[i] = 0;
+	}
+
 
 	if (total == 0) return 0;
 
@@ -1911,7 +1954,7 @@ static int setcodesettings(struct mame_bitmap *bitmap,int selected)
 		int ret;
 
 		menu_subitem[sel & SEL_MASK] = "    ";
-		ui_displaymenu(bitmap,menu_item,menu_subitem,flag,sel & SEL_MASK,3);
+		ui_displaymenu(bitmap,menu_item,menu_subitem, (char *) flag,sel & SEL_MASK,3);
 
 		ret = seq_read_async(seq[sel & SEL_MASK],record_first_insert);
 
@@ -1931,13 +1974,11 @@ static int setcodesettings(struct mame_bitmap *bitmap,int selected)
 			record_first_insert = ret != 0;
 		}
 
-		init_analog_seq();
-
 		return sel + 1;
 	}
 
 
-	ui_displaymenu(bitmap,menu_item,menu_subitem,flag,sel,0);
+	ui_displaymenu(bitmap,menu_item,menu_subitem, (char *) flag,sel,0);
 
 	if (input_ui_pressed_repeat(IPT_UI_DOWN,8))
 	{
@@ -1956,7 +1997,7 @@ static int setcodesettings(struct mame_bitmap *bitmap,int selected)
 		if (sel == total - 1) sel = -1;
 		else
 		{
-			seq_read_async_start();
+			seq_read_async_start(analog[sel]);
 
 			sel |= 1 << SEL_BITS;	/* we'll ask for a key */
 
@@ -2066,7 +2107,7 @@ static int settraksettings(struct mame_bitmap *bitmap,int selected)
 	total = 0;
 	while (in->type != IPT_END)
 	{
-		if (in->type > IPT_ANALOG_START && in->type < IPT_ANALOG_END)
+		if (port_type_is_analog(in->type))
 		{
 			entry[total] = in;
 			total++;
@@ -2076,9 +2117,9 @@ static int settraksettings(struct mame_bitmap *bitmap,int selected)
 
 	if (total == 0) return 0;
 
-	/* Each analog control has 3 entries - key & joy delta, reverse, sensitivity */
+	/* Each analog control has 4 entries - key & joy delta, center delta, reverse, sensitivity */
 
-#define ENTRIES 3
+#define ENTRIES 4
 
 	total2 = total * ENTRIES;
 
@@ -2093,13 +2134,14 @@ static int settraksettings(struct mame_bitmap *bitmap,int selected)
 		{
 			char label[30][40];
 			char setting[30][40];
-			int sensitivity,delta;
+			int sensitivity,delta,centerdelta;
 			int reverse;
 
 			strcpy (label[i], input_port_name(entry[i/ENTRIES]));
-			sensitivity = entry[i/ENTRIES]->u.analog.sensitivity;
-			delta = entry[i/ENTRIES]->u.analog.delta;
-			reverse = entry[i/ENTRIES]->u.analog.reverse;
+			sensitivity = entry[i/ENTRIES]->analog.sensitivity;
+			delta = entry[i/ENTRIES]->analog.delta;
+			centerdelta = entry[i/ENTRIES]->analog.centerdelta;
+			reverse = entry[i/ENTRIES]->analog.reverse;
 
 			strcat (label[i], " ");
 			switch (i%ENTRIES)
@@ -2110,6 +2152,11 @@ static int settraksettings(struct mame_bitmap *bitmap,int selected)
 					if (i == sel) arrowize = 3;
 					break;
 				case 1:
+					strcat (label[i], ui_getstring (UI_centerspeed));
+					sprintf(setting[i],"%d",centerdelta);
+					if (i == sel) arrowize = 3;
+					break;
+				case 2:
 					strcat (label[i], ui_getstring (UI_reverse));
 					if (reverse)
 						strcpy(setting[i],ui_getstring (UI_on));
@@ -2117,7 +2164,7 @@ static int settraksettings(struct mame_bitmap *bitmap,int selected)
 						strcpy(setting[i],ui_getstring (UI_off));
 					if (i == sel) arrowize = 3;
 					break;
-				case 2:
+				case 3:
 					strcat (label[i], ui_getstring (UI_sensitivity));
 					sprintf(setting[i],"%3d%%",sensitivity);
 					if (i == sel) arrowize = 3;
@@ -2147,25 +2194,34 @@ static int settraksettings(struct mame_bitmap *bitmap,int selected)
 			if ((sel % ENTRIES) == 0)
 			{
 				/* keyboard/joystick delta */
-				int val = entry[sel/ENTRIES]->u.analog.delta;
+				int val = entry[sel/ENTRIES]->analog.delta;
 
 				val --;
 				if (val < 1) val = 1;
-				entry[sel/ENTRIES]->u.analog.delta = val;
+				entry[sel/ENTRIES]->analog.delta = val;
 			}
 			else if ((sel % ENTRIES) == 1)
 			{
-				/* reverse */
-				entry[sel/ENTRIES]->u.analog.reverse ^= 1;
+				/* center delta */
+				int val = entry[sel/ENTRIES]->analog.centerdelta;
+
+				val --;
+				if (val < 0) val = 0;
+				entry[sel/ENTRIES]->analog.centerdelta = val;
 			}
 			else if ((sel % ENTRIES) == 2)
 			{
+				/* reverse */
+				entry[sel/ENTRIES]->analog.reverse ^= 1;
+			}
+			else if ((sel % ENTRIES) == 3)
+			{
 				/* sensitivity */
-				int val = entry[sel/ENTRIES]->u.analog.sensitivity;
+				int val = entry[sel/ENTRIES]->analog.sensitivity;
 
 				val --;
 				if (val < 1) val = 1;
-				entry[sel/ENTRIES]->u.analog.sensitivity = val;
+				entry[sel/ENTRIES]->analog.sensitivity = val;
 			}
 		}
 	}
@@ -2177,25 +2233,34 @@ static int settraksettings(struct mame_bitmap *bitmap,int selected)
 			if ((sel % ENTRIES) == 0)
 			{
 				/* keyboard/joystick delta */
-				int val = entry[sel/ENTRIES]->u.analog.delta;
+				int val = entry[sel/ENTRIES]->analog.delta;
 
 				val ++;
 				if (val > 255) val = 255;
-				entry[sel/ENTRIES]->u.analog.delta = val;
+				entry[sel/ENTRIES]->analog.delta = val;
 			}
 			else if ((sel % ENTRIES) == 1)
 			{
-				/* reverse */
-				entry[sel/ENTRIES]->u.analog.reverse ^= 1;
-			}
-			else if ((sel % ENTRIES) == 2)
-			{
-				/* sensitivity */
-				int val = entry[sel/ENTRIES]->u.analog.sensitivity;
+				/* center delta */
+				int val = entry[sel/ENTRIES]->analog.centerdelta;
 
 				val ++;
 				if (val > 255) val = 255;
-				entry[sel/ENTRIES]->u.analog.sensitivity = val;
+				entry[sel/ENTRIES]->analog.centerdelta = val;
+			}
+			else if ((sel % ENTRIES) == 2)
+			{
+				/* reverse */
+				entry[sel/ENTRIES]->analog.reverse ^= 1;
+			}
+			else if ((sel % ENTRIES) == 3)
+			{
+				/* sensitivity */
+				int val = entry[sel/ENTRIES]->analog.sensitivity;
+
+				val ++;
+				if (val > 255) val = 255;
+				entry[sel/ENTRIES]->analog.sensitivity = val;
 			}
 		}
 	}
@@ -2244,11 +2309,11 @@ static int mame_stats(struct mame_bitmap *bitmap,int selected)
 		strcat(buf, ui_getstring (UI_coin));
 		sprintf(temp, " %c: ", i+'A');
 		strcat(buf, temp);
-		if (!coins[i])
+		if (!coin_count[i])
 			strcat (buf, ui_getstring (UI_NA));
 		else
 		{
-			sprintf (temp, "%d", coins[i]);
+			sprintf (temp, "%d", coin_count[i]);
 			strcat (buf, temp);
 		}
 		if (coinlockedout[i])
@@ -3116,7 +3181,7 @@ static int has_analog(void)
 	num = 0;
 	for (in = Machine->input_ports; in->type != IPT_END; in++)
  	{
-		if (in->type > IPT_ANALOG_START && in->type < IPT_ANALOG_END && input_port_active(in))
+		if (port_type_is_analog(in->type) && input_port_active(in))
 			num++;
 	}
 	return num > 0;
@@ -3845,7 +3910,7 @@ void do_loadsave(struct mame_bitmap *bitmap, int request_loadsave)
 
 	do
 	{
-		InputCode code;
+		input_code_t code;
 
 		if (request_loadsave == LOADSAVE_SAVE)
 			displaymessage(bitmap, "Select position to save to");

@@ -46,6 +46,7 @@ X101: M53.693 KDS 745 (near CXD8654Q)
 #include "cpu/mips/psx.h"
 #include "cpu/h83002/h83002.h"
 #include "includes/psx.h"
+#include "machine/at28c16.h"
 #include <time.h>
 
 #define VERBOSE_LEVEL ( 0 )
@@ -206,7 +207,7 @@ static ADDRESS_MAP_START( namcos12_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x1f010000, 0x1f010003) AM_WRITENOP    /* ?? */
 	AM_RANGE(0x1f018000, 0x1f018003) AM_WRITENOP    /* ?? */
 	AM_RANGE(0x1f080000, 0x1f083fff) AM_READWRITE(sharedram_r, sharedram_w) AM_BASE(&namcos12_sharedram) /* shared ram?? */
-	AM_RANGE(0x1f140000, 0x1f141fff) AM_RAM AM_BASE((data32_t **)&generic_nvram) AM_SIZE(&generic_nvram_size) /* flash */
+	AM_RANGE(0x1f140000, 0x1f140fff) AM_READWRITE( at28c16_0_32_lsb_r, at28c16_0_32_lsb_w ) /* eeprom */
 	AM_RANGE(0x1f1bff08, 0x1f1bff0f) AM_WRITENOP    /* ?? */
 	AM_RANGE(0x1f700000, 0x1f70ffff) AM_WRITE(dmaoffset_w)  /* dma */
 	AM_RANGE(0x1f800000, 0x1f8003ff) AM_RAM /* scratchpad */
@@ -463,7 +464,7 @@ static MACHINE_DRIVER_START( coh700 )
 	MDRV_VBLANK_DURATION( 0 )
 
 	MDRV_MACHINE_INIT( namcos12 )
-	MDRV_NVRAM_HANDLER( generic_0fill )
+	MDRV_NVRAM_HANDLER( at28c16_0 )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )

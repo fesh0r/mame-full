@@ -318,10 +318,10 @@ INPUT_PORTS_START( crshrace )
 	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x00c0, 0x00c0, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x0080, "Easy" )
-	PORT_DIPSETTING(      0x00c0, "Normal" )
-	PORT_DIPSETTING(      0x0040, "Hard" )
-	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Easy ) )
+	PORT_DIPSETTING(      0x00c0, DEF_STR( Normal ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Hard ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )
 
 	PORT_START
 	/* DSW3 : 0xfe1c85 = !(0xfff00b) */
@@ -377,9 +377,9 @@ INPUT_PORTS_START( crshrace )
 
 	PORT_START
 	PORT_DIPNAME( 0x0f00, 0x0100, "Country" )
-	PORT_DIPSETTING(      0x0100, "World" )
+	PORT_DIPSETTING(      0x0100, DEF_STR( World ) )
 	PORT_DIPSETTING(      0x0800, "USA & Canada" )
-	PORT_DIPSETTING(      0x0000, "Japan" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Japan ) )
 	PORT_DIPSETTING(      0x0200, "Korea" )
 	PORT_DIPSETTING(      0x0400, "Hong Kong & Taiwan" )
 /*
@@ -449,10 +449,10 @@ INPUT_PORTS_START( crshrac2 )
 	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x00c0, 0x00c0, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x0080, "Easy" )
-	PORT_DIPSETTING(      0x00c0, "Normal" )
-	PORT_DIPSETTING(      0x0040, "Hard" )
-	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Easy ) )
+	PORT_DIPSETTING(      0x00c0, DEF_STR( Normal ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Hard ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )
 	/* DSW1 : 0xfe1c83 = !(0xfff004) */
 	PORT_DIPNAME( 0x0100, 0x0100, "Coin Slot" )
 	PORT_DIPSETTING(      0x0100, "Same" )
@@ -533,9 +533,9 @@ INPUT_PORTS_START( crshrac2 )
 
 	PORT_START
 	PORT_DIPNAME( 0x0f00, 0x0100, "Country" )
-	PORT_DIPSETTING(      0x0100, "World" )
+	PORT_DIPSETTING(      0x0100, DEF_STR( World ) )
 	PORT_DIPSETTING(      0x0800, "USA & Canada" )
-	PORT_DIPSETTING(      0x0000, "Japan" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Japan ) )
 	PORT_DIPSETTING(      0x0200, "Korea" )
 	PORT_DIPSETTING(      0x0400, "Hong Kong & Taiwan" )
 /*

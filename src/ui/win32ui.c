@@ -70,6 +70,7 @@
 #include "options.h"
 #include "dialogs.h"
 #include "state.h"
+#include "windows/input.h"
 
 #include "DirectDraw.h"
 #include "DirectInput.h"
@@ -504,8 +505,9 @@ static BOOL bListReady     = FALSE;
 /* use a joystick subsystem in the gui? */
 static struct OSDJoystick* g_pJoyGUI = NULL;
 
+#define __code_key_last KEYCODE_MENU
 /* store current keyboard state (in internal codes) here */
-static InputCode keyboard_state[ __code_key_last ]; /* __code_key_last #defines the number of internal key_codes */
+static input_code_t keyboard_state[ __code_key_last ]; /* __code_key_last #defines the number of internal key_codes */
 
 /* table copied from windows/inputs.c */
 // table entry indices
@@ -514,125 +516,12 @@ static InputCode keyboard_state[ __code_key_last ]; /* __code_key_last #defines 
 #define VIRTUAL_KEY		2
 #define ASCII_KEY		3
 
-// master translation table
-static int key_trans_table[][4] =
-{
-	// MAME key				dinput key			virtual key		ascii
-	{ KEYCODE_ESC, 			DIK_ESCAPE,			VK_ESCAPE,	 	27 },
-	{ KEYCODE_1, 			DIK_1,				'1',			'1' },
-	{ KEYCODE_2, 			DIK_2,				'2',			'2' },
-	{ KEYCODE_3, 			DIK_3,				'3',			'3' },
-	{ KEYCODE_4, 			DIK_4,				'4',			'4' },
-	{ KEYCODE_5, 			DIK_5,				'5',			'5' },
-	{ KEYCODE_6, 			DIK_6,				'6',			'6' },
-	{ KEYCODE_7, 			DIK_7,				'7',			'7' },
-	{ KEYCODE_8, 			DIK_8,				'8',			'8' },
-	{ KEYCODE_9, 			DIK_9,				'9',			'9' },
-	{ KEYCODE_0, 			DIK_0,				'0',			'0' },
-	{ KEYCODE_MINUS, 		DIK_MINUS, 			0xbd,			'-' },
-	{ KEYCODE_EQUALS, 		DIK_EQUALS,		 	0xbb,			'=' },
-	{ KEYCODE_BACKSPACE,	DIK_BACK, 			VK_BACK, 		8 },
-	{ KEYCODE_TAB, 			DIK_TAB, 			VK_TAB, 		9 },
-	{ KEYCODE_Q, 			DIK_Q,				'Q',			'Q' },
-	{ KEYCODE_W, 			DIK_W,				'W',			'W' },
-	{ KEYCODE_E, 			DIK_E,				'E',			'E' },
-	{ KEYCODE_R, 			DIK_R,				'R',			'R' },
-	{ KEYCODE_T, 			DIK_T,				'T',			'T' },
-	{ KEYCODE_Y, 			DIK_Y,				'Y',			'Y' },
-	{ KEYCODE_U, 			DIK_U,				'U',			'U' },
-	{ KEYCODE_I, 			DIK_I,				'I',			'I' },
-	{ KEYCODE_O, 			DIK_O,				'O',			'O' },
-	{ KEYCODE_P, 			DIK_P,				'P',			'P' },
-	{ KEYCODE_OPENBRACE,	DIK_LBRACKET, 		0xdb,			'[' },
-	{ KEYCODE_CLOSEBRACE,	DIK_RBRACKET, 		0xdd,			']' },
-	{ KEYCODE_ENTER, 		DIK_RETURN, 		VK_RETURN, 		13 },
-	{ KEYCODE_LCONTROL, 	DIK_LCONTROL, 		VK_CONTROL, 	0 },
-	{ KEYCODE_A, 			DIK_A,				'A',			'A' },
-	{ KEYCODE_S, 			DIK_S,				'S',			'S' },
-	{ KEYCODE_D, 			DIK_D,				'D',			'D' },
-	{ KEYCODE_F, 			DIK_F,				'F',			'F' },
-	{ KEYCODE_G, 			DIK_G,				'G',			'G' },
-	{ KEYCODE_H, 			DIK_H,				'H',			'H' },
-	{ KEYCODE_J, 			DIK_J,				'J',			'J' },
-	{ KEYCODE_K, 			DIK_K,				'K',			'K' },
-	{ KEYCODE_L, 			DIK_L,				'L',			'L' },
-	{ KEYCODE_COLON, 		DIK_SEMICOLON,		0xba,			';' },
-	{ KEYCODE_QUOTE, 		DIK_APOSTROPHE,		0xde,			'\'' },
-	{ KEYCODE_TILDE, 		DIK_GRAVE, 			0xc0,			'`' },
-	{ KEYCODE_LSHIFT, 		DIK_LSHIFT, 		VK_SHIFT, 		0 },
-	{ KEYCODE_BACKSLASH,	DIK_BACKSLASH, 		0xdc,			'\\' },
-	{ KEYCODE_Z, 			DIK_Z,				'Z',			'Z' },
-	{ KEYCODE_X, 			DIK_X,				'X',			'X' },
-	{ KEYCODE_C, 			DIK_C,				'C',			'C' },
-	{ KEYCODE_V, 			DIK_V,				'V',			'V' },
-	{ KEYCODE_B, 			DIK_B,				'B',			'B' },
-	{ KEYCODE_N, 			DIK_N,				'N',			'N' },
-	{ KEYCODE_M, 			DIK_M,				'M',			'M' },
-	{ KEYCODE_COMMA, 		DIK_COMMA,			0xbc,			',' },
-	{ KEYCODE_STOP, 		DIK_PERIOD, 		0xbe,			'.' },
-	{ KEYCODE_SLASH, 		DIK_SLASH, 			0xbf,			'/' },
-	{ KEYCODE_RSHIFT, 		DIK_RSHIFT, 		VK_SHIFT, 		0 },
-	{ KEYCODE_ASTERISK, 	DIK_MULTIPLY, 		VK_MULTIPLY,	'*' },
-	{ KEYCODE_LALT, 		DIK_LMENU, 			VK_MENU, 		0 },
-	{ KEYCODE_SPACE, 		DIK_SPACE, 			VK_SPACE,		' ' },
-	{ KEYCODE_CAPSLOCK, 	DIK_CAPITAL, 		VK_CAPITAL, 	0 },
-	{ KEYCODE_F1, 			DIK_F1,				VK_F1, 			0 },
-	{ KEYCODE_F2, 			DIK_F2,				VK_F2, 			0 },
-	{ KEYCODE_F3, 			DIK_F3,				VK_F3, 			0 },
-	{ KEYCODE_F4, 			DIK_F4,				VK_F4, 			0 },
-	{ KEYCODE_F5, 			DIK_F5,				VK_F5, 			0 },
-	{ KEYCODE_F6, 			DIK_F6,				VK_F6, 			0 },
-	{ KEYCODE_F7, 			DIK_F7,				VK_F7, 			0 },
-	{ KEYCODE_F8, 			DIK_F8,				VK_F8, 			0 },
-	{ KEYCODE_F9, 			DIK_F9,				VK_F9, 			0 },
-	{ KEYCODE_F10, 			DIK_F10,			VK_F10, 		0 },
-	{ KEYCODE_NUMLOCK, 		DIK_NUMLOCK,		VK_NUMLOCK, 	0 },
-	{ KEYCODE_SCRLOCK, 		DIK_SCROLL,			VK_SCROLL, 		0 },
-	{ KEYCODE_7_PAD, 		DIK_NUMPAD7,		VK_NUMPAD7, 	0 },
-	{ KEYCODE_8_PAD, 		DIK_NUMPAD8,		VK_NUMPAD8, 	0 },
-	{ KEYCODE_9_PAD, 		DIK_NUMPAD9,		VK_NUMPAD9, 	0 },
-	{ KEYCODE_MINUS_PAD,	DIK_SUBTRACT,		VK_SUBTRACT, 	0 },
-	{ KEYCODE_4_PAD, 		DIK_NUMPAD4,		VK_NUMPAD4, 	0 },
-	{ KEYCODE_5_PAD, 		DIK_NUMPAD5,		VK_NUMPAD5, 	0 },
-	{ KEYCODE_6_PAD, 		DIK_NUMPAD6,		VK_NUMPAD6, 	0 },
-	{ KEYCODE_PLUS_PAD, 	DIK_ADD,			VK_ADD, 		0 },
-	{ KEYCODE_1_PAD, 		DIK_NUMPAD1,		VK_NUMPAD1, 	0 },
-	{ KEYCODE_2_PAD, 		DIK_NUMPAD2,		VK_NUMPAD2, 	0 },
-	{ KEYCODE_3_PAD, 		DIK_NUMPAD3,		VK_NUMPAD3, 	0 },
-	{ KEYCODE_0_PAD, 		DIK_NUMPAD0,		VK_NUMPAD0, 	0 },
-	{ KEYCODE_DEL_PAD, 		DIK_DECIMAL,		VK_DECIMAL, 	0 },
-	{ KEYCODE_F11, 			DIK_F11,			VK_F11, 		0 },
-	{ KEYCODE_F12, 			DIK_F12,			VK_F12, 		0 },
-	{ KEYCODE_OTHER, 		DIK_F13,			VK_F13, 		0 },
-	{ KEYCODE_OTHER, 		DIK_F14,			VK_F14, 		0 },
-	{ KEYCODE_OTHER, 		DIK_F15,			VK_F15, 		0 },
-	{ KEYCODE_ENTER_PAD,	DIK_NUMPADENTER,	VK_RETURN, 		0 },
-	{ KEYCODE_RCONTROL, 	DIK_RCONTROL,		VK_CONTROL, 	0 },
-	{ KEYCODE_SLASH_PAD,	DIK_DIVIDE,			VK_DIVIDE, 		0 },
-	{ KEYCODE_PRTSCR, 		DIK_SYSRQ, 			0, 				0 },
-	{ KEYCODE_RALT, 		DIK_RMENU,			VK_MENU, 		0 },
-	{ KEYCODE_HOME, 		DIK_HOME,			VK_HOME, 		0 },
-	{ KEYCODE_UP, 			DIK_UP,				VK_UP, 			0 },
-	{ KEYCODE_PGUP, 		DIK_PRIOR,			VK_PRIOR, 		0 },
-	{ KEYCODE_LEFT, 		DIK_LEFT,			VK_LEFT, 		0 },
-	{ KEYCODE_RIGHT, 		DIK_RIGHT,			VK_RIGHT, 		0 },
-	{ KEYCODE_END, 			DIK_END,			VK_END, 		0 },
-	{ KEYCODE_DOWN, 		DIK_DOWN,			VK_DOWN, 		0 },
-	{ KEYCODE_PGDN, 		DIK_NEXT,			VK_NEXT, 		0 },
-	{ KEYCODE_INSERT, 		DIK_INSERT,			VK_INSERT, 		0 },
-	{ KEYCODE_DEL, 			DIK_DELETE,			VK_DELETE, 		0 },
-	{ KEYCODE_LWIN, 		DIK_LWIN,			VK_LWIN, 		0 },
-	{ KEYCODE_RWIN, 		DIK_RWIN,			VK_RWIN, 		0 },
-	{ KEYCODE_MENU, 		DIK_APPS,			VK_APPS, 		0 }
-};
-
-
 typedef struct
 {
 	char		name[40];	    // functionality name (optional)
-	InputSeq	is;				// the input sequence (the keys pressed)
+	input_seq_t	is;				// the input sequence (the keys pressed)
 	UINT		func_id;        // the identifier
-	InputSeq* (*getiniptr)(void);// pointer to function to get the value from .ini file
+	input_seq_t* (*getiniptr)(void);// pointer to function to get the value from .ini file
 } GUISequence;
 
 static GUISequence GUISequenceControl[]=
@@ -2100,8 +1989,8 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 
 	for (i = 0; i < NUM_GUI_SEQUENCES; i++)
 	{
-		InputSeq *is1;
-		InputSeq *is2;
+		input_seq_t *is1;
+		input_seq_t *is2;
 		is1 = &(GUISequenceControl[i].is);
 		is2 = GUISequenceControl[i].getiniptr();
 		seq_copy(is1, is2);
@@ -3476,7 +3365,7 @@ char* ConvertAmpersandString(const char *s)
 	return buf;
 }
 
-static int GUI_seq_pressed(InputSeq* code)
+static int GUI_seq_pressed(input_seq_t* code)
 {
 	int j;
 	int res = 1;
@@ -3485,7 +3374,7 @@ static int GUI_seq_pressed(InputSeq* code)
 
 	for(j=0;j<SEQ_MAX;++j)
 	{
-		switch ((*code)[j])
+		switch (code->code[j])
 		{
 			case CODE_NONE :
 				return res && count;
@@ -3501,7 +3390,7 @@ static int GUI_seq_pressed(InputSeq* code)
 			default:
 				if (res)
 				{
-					int pressed = keyboard_state[(*code)[j]];
+					int pressed = keyboard_state[code->code[j]];
 					if ((pressed != 0) == invert)
 						res = 0;
 				}
@@ -3518,7 +3407,7 @@ static void check_for_GUI_action(void)
 
 	for (i = 0; i < NUM_GUI_SEQUENCES; i++)
 	{
-		InputSeq *is = &(GUISequenceControl[i].is);
+		input_seq_t *is = &(GUISequenceControl[i].is);
 
 		if (GUI_seq_pressed(is))
 		{
@@ -3553,7 +3442,7 @@ static void KeyboardStateClear(void)
 static void KeyboardKeyDown(int syskey, int vk_code, int special)
 {
 	int i, found = 0;
-	InputCode icode = 0;
+	input_code_t icode = 0;
 	int special_code = (special >> 24) & 1;
 	int scancode = (special>>16) & 0xff;
 
@@ -3601,9 +3490,9 @@ static void KeyboardKeyDown(int syskey, int vk_code, int special)
 	{
 		for (i = 0; i < __code_key_last; i++)
 		{
-			if ( vk_code == key_trans_table[i][VIRTUAL_KEY])
+			if ( vk_code == win_key_trans_table[i][VIRTUAL_KEY])
 			{
-				icode = key_trans_table[i][MAME_KEY];
+				icode = win_key_trans_table[i][MAME_KEY];
 				found = 1;
 				break;
 			}
@@ -3623,7 +3512,7 @@ static void KeyboardKeyDown(int syskey, int vk_code, int special)
 static void KeyboardKeyUp(int syskey, int vk_code, int special)
 {
 	int i, found = 0;
-	InputCode icode = 0;
+	input_code_t icode = 0;
 	int special_code = (special >> 24) & 1;
 	int scancode = (special>>16) & 0xff;
 
@@ -3671,9 +3560,9 @@ static void KeyboardKeyUp(int syskey, int vk_code, int special)
 	{
 		for (i = 0; i < __code_key_last; i++)
 		{
-			if (vk_code == key_trans_table[i][VIRTUAL_KEY])
+			if (vk_code == win_key_trans_table[i][VIRTUAL_KEY])
 			{
-				icode = key_trans_table[i][MAME_KEY];
+				icode = win_key_trans_table[i][MAME_KEY];
 				found = 1;
 				break;
 			}

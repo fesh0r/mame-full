@@ -575,6 +575,7 @@ static struct
 	{ "souledga", keycus_c409_r, 32 },
 	{ "souledgb", keycus_c409_r, 32 },
 	{ "dunkmnia", keycus_c410_r, 32 },
+	{ "dunkmnic", keycus_c410_r, 32 },
 	{ "xevi3dg",  keycus_c430_r, 32 },
 	{ "primglex", keycus_c411_r, 32 },
 	{ "danceyes", keycus_c431_r, 32 },
@@ -588,7 +589,6 @@ static DRIVER_INIT( namcos11 )
 	int n_game;
 
 	psx_driver_init();
-	at28c16_init();
 
 	n_game = 0;
 	while( namcos11_config_table[ n_game ].s_name != NULL )
@@ -964,6 +964,30 @@ ROM_END
 
 ROM_START( dunkmnia )
 	ROM_REGION32_LE( 0x0400000, REGION_USER1, 0 ) /* main prg */
+	ROM_LOAD16_BYTE( "dm2verc.2l",   0x0000000, 0x100000, CRC(f6a6c46e) SHA1(5552c3a8fb0ef18e6f0bca8d81ec68b904824a66) )
+	ROM_LOAD16_BYTE( "dm2verc.2j",   0x0000001, 0x100000, CRC(1df539ce) SHA1(89ac436c685cf26899168c73fdaccee778fd7d2d) )
+	ROM_LOAD16_BYTE( "dm2verc.2k",   0x0200000, 0x100000, CRC(c8d72f78) SHA1(30341301f0d1cdcb14f3e0672ec1165c0583fbc8) )
+	ROM_LOAD16_BYTE( "dm2verc.2f",   0x0200001, 0x100000, CRC(d379dfa9) SHA1(142cb70b5ea060c961c5bc60a624643b5ec390df) )
+
+	ROM_REGION32_LE( 0x1000000, REGION_USER2, 0 ) /* main data */
+	ROM_LOAD16_BYTE( "dm1rm0l.5",    0x0000000, 0x200000, CRC(4bb5d71d) SHA1(7d61211c7a6d1f6593604390fe99206a6a8cc7b3) )
+	ROM_CONTINUE( 0x0000000, 0x200000 ) /* first & second half identical */
+	ROM_LOAD16_BYTE( "dm1rm0u.6",    0x0000001, 0x200000, CRC(c16b47c5) SHA1(0fb2c5bc4674b3366762127c6333fb3a837b4de2) )
+	ROM_CONTINUE( 0x0000001, 0x200000 ) /* first & second half identical */
+	ROM_LOAD16_BYTE( "dm1rm1l.3",    0x0400000, 0x200000, CRC(20dd3294) SHA1(b2fd5075b6281ac7bfc2681fc282f9ebaa089af5) )
+	ROM_CONTINUE( 0x0400000, 0x200000 ) /* first & second half identical */
+	ROM_LOAD16_BYTE( "dm1rm1u.8",    0x0400001, 0x200000, CRC(01e905d3) SHA1(430b2ae0c67265b6acc8aa4dd50f6144929993f8) )
+	ROM_CONTINUE( 0x0400001, 0x200000 ) /* first & second half identical */
+
+	ROM_REGION( 0x0040000, REGION_CPU2, 0 ) /* sound prg */
+	ROM_LOAD( "dm1sprg.6d",   0x0000000, 0x040000, CRC(de1cbc78) SHA1(855ebece1841f50ae324d7d6b8b18ab6f657d28e) )
+
+	ROM_REGION( 0x0400000, REGION_SOUND1, 0 ) /* samples */
+	ROM_LOAD( "dm1wave.8k",   0x0000000, 0x400000, CRC(4891d53e) SHA1(a1fee060e94d3219174b5974517f4fd3be32aaa5) )
+ROM_END
+
+ROM_START( dunkmnic )
+	ROM_REGION32_LE( 0x0400000, REGION_USER1, 0 ) /* main prg */
 	ROM_LOAD16_BYTE( "dm1verc.2l",   0x0000000, 0x100000, CRC(6c81654a) SHA1(00e84cc41b3dd49a8f0d3a364ea4a5d2662c45ff) )
 	ROM_LOAD16_BYTE( "dm1verc.2j",   0x0000001, 0x100000, CRC(10329b7e) SHA1(d214764e90c7d79abea01580e79092e34a58b695) )
 	ROM_LOAD16_BYTE( "dm1verc.2k",   0x0200000, 0x100000, CRC(c8d72f78) SHA1(30341301f0d1cdcb14f3e0672ec1165c0583fbc8) )
@@ -1281,9 +1305,11 @@ GAMEX( 1995, tekken2b,  tekken2,  coh100, tekken,   namcos11, ROT0, "Namco", "Te
 GAMEX( 1996, souledge,  0,        coh110, souledge, namcos11, ROT0, "Namco", "Soul Edge Ver. II (SO4/VER.C)", GAME_NOT_WORKING | GAME_NO_SOUND )
 GAMEX( 1995, souledga,  souledge, coh110, souledge, namcos11, ROT0, "Namco", "Soul Edge (SO3/VER.A)", GAME_NOT_WORKING | GAME_NO_SOUND )
 GAMEX( 1995, souledgb,  souledge, coh110, souledge, namcos11, ROT0, "Namco", "Soul Edge (SO1/VER.A)", GAME_NOT_WORKING | GAME_NO_SOUND )
-GAMEX( 1995, dunkmnia,  0,        coh110, namcos11, namcos11, ROT0, "Namco", "Dunk Mania (DM1/VER.C)", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAMEX( 1995, dunkmnia,  0,        coh110, namcos11, namcos11, ROT0, "Namco", "Dunk Mania (DM2/VER.C)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
+GAMEX( 1995, dunkmnic,  dunkmnia, coh110, namcos11, namcos11, ROT0, "Namco", "Dunk Mania (DM1/VER.C)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 GAMEX( 1995, xevi3dg,   0,        coh110, namcos11, namcos11, ROT0, "Namco", "Xevious 3D/G (XV31/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 GAMEX( 1996, primglex,  0,        coh110, tekken,   namcos11, ROT0, "Namco", "Prime Goal EX (PG1/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 GAMEX( 1996, danceyes,  0,        coh110, namcos11, namcos11, ROT0, "Namco", "Dancing Eyes (DC1/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 GAMEX( 1997, starswep,  0,        coh110, namcos11, namcos11, ROT0, "Axela/Namco", "Star Sweep (STP1/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 GAMEX( 1998, myangel3,  0,        coh110, myangel3, namcos11, ROT0, "Namco", "Kosodate Quiz My Angel 3 (KQT1/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
+

@@ -255,7 +255,7 @@ INPUT_PORTS_START( popper )
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Demo_Sounds ) )	//SW2:1
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x00, "Allow Continue" )		//SW2:2 (stored in 0xd987, never read)
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Allow_Continue ) )		//SW2:2 (stored in 0xd987, never read)
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Free_Play ) )	//SW2:3

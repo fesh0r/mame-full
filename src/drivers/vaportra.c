@@ -207,16 +207,16 @@ INPUT_PORTS_START( vaportra )
 	PORT_DIPSETTING(    0x02, "4" )
 	PORT_DIPSETTING(    0x01, "5" )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x08, "Easy" )
-	PORT_DIPSETTING(    0x0c, "Normal" )
-	PORT_DIPSETTING(    0x04, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x20, "150k, 300k and 600k" )
 	PORT_DIPSETTING(    0x30, "200k and 600k" )
 	PORT_DIPSETTING(    0x10, "300k only" )
 	PORT_DIPSETTING(    0x00, "None" )
-	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
   	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
@@ -316,7 +316,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,
 	32220000/9, /* Accurate, audio section crystal is 32.220 MHz */
-	{ YM3012_VOL(45,MIXER_PAN_LEFT,45,MIXER_PAN_RIGHT) },
+	{ YM3012_VOL(60,MIXER_PAN_LEFT,60,MIXER_PAN_RIGHT) },	/* adjusted */
 	{ sound_irq }
 };
 

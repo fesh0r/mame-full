@@ -192,10 +192,10 @@ INPUT_PORTS_START( oneshot )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Difficulty ) )	// 0x082506.l
-	PORT_DIPSETTING(    0x10, "Easy" )				// 0
-	PORT_DIPSETTING(    0x00, "Normal" )			// 1
-	PORT_DIPSETTING(    0x20, "Hard" )				// 2
-	PORT_DIPSETTING(    0x30, "Hardest" )			// 3
+	PORT_DIPSETTING(    0x10, DEF_STR( Easy ) )				// 0
+	PORT_DIPSETTING(    0x00, DEF_STR( Normal ) )			// 1
+	PORT_DIPSETTING(    0x20, DEF_STR( Hard ) )				// 2
+	PORT_DIPSETTING(    0x30, DEF_STR( Hardest ) )			// 3
 	PORT_DIPNAME( 0x40, 0x00, "Round Select" )		// 0x082f16.l - only after 1st stage
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )		// "On"  in the "test mode"
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )			// "Off" in the "test mode"
@@ -273,10 +273,10 @@ INPUT_PORTS_START( maddonna )
 
 	PORT_START /* DSW B */
 	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x00, "Easy" )				// 2 Monsters at start, but "dumber"??
-	PORT_DIPSETTING(    0x01, "Normal" )			// 2 Monsters at start
-	PORT_DIPSETTING(    0x02, "Hard" )				// 3 Monsters at start
-	PORT_DIPSETTING(    0x03, "Hardest" )			// 4 Monsters at start
+	PORT_DIPSETTING(    0x00, DEF_STR( Easy ) )				// 2 Monsters at start, but "dumber"??
+	PORT_DIPSETTING(    0x01, DEF_STR( Normal ) )			// 2 Monsters at start
+	PORT_DIPSETTING(    0x02, DEF_STR( Hard ) )				// 3 Monsters at start
+	PORT_DIPSETTING(    0x03, DEF_STR( Hardest ) )			// 4 Monsters at start
 	PORT_DIPNAME( 0x0c, 0x08, "Time Per Round" )
 	PORT_DIPSETTING(    0x08, "80 Seconds" )
 	PORT_DIPSETTING(    0x04, "90 Seconds" )

@@ -818,8 +818,8 @@ int win_dialog_add_combobox_item(dialog_box *dialog, const char *item_label, int
 struct seqselect_stuff
 {
 	WNDPROC oldwndproc;
-	InputSeq *code;
-	InputSeq newcode;
+	input_seq_t *code;
+	input_seq_t newcode;
 	UINT_PTR timer;
 	WORD pos;
 };
@@ -831,7 +831,7 @@ static INT_PTR CALLBACK seqselect_wndproc(HWND editwnd, UINT msg, WPARAM wparam,
 	int dlgitem;
 	HWND dlgwnd;
 	HWND dlgitemwnd;
-	InputCode code;
+	input_code_t code;
 	LONG_PTR lp;
 
 	lp = GetWindowLongPtr(editwnd, GWLP_USERDATA);
@@ -923,7 +923,7 @@ static LRESULT seqselect_setup(dialog_box *dialog, HWND editwnd, UINT message, W
 	struct seqselect_stuff *stuff = (struct seqselect_stuff *) lparam;
 	LONG_PTR lp;
 
-	memcpy(stuff->newcode, *(stuff->code), sizeof(stuff->newcode));
+	memcpy(&stuff->newcode, stuff->code, sizeof(stuff->newcode));
 	seq_name(stuff->code, buf, sizeof(buf) / sizeof(buf[0]));
 	SetWindowText(editwnd, A2T(buf));
 	lp = SetWindowLongPtr(editwnd, GWLP_WNDPROC, (LONG_PTR) seqselect_wndproc);
@@ -943,7 +943,7 @@ static LRESULT seqselect_apply(dialog_box *dialog, HWND editwnd, UINT message, W
 
 	lp = GetWindowLongPtr(editwnd, GWLP_USERDATA);
 	stuff = (struct seqselect_stuff *) lp;
-	memcpy(*(stuff->code), stuff->newcode, sizeof(*(stuff->code)));
+	memcpy(stuff->code, &stuff->newcode, sizeof(*(stuff->code)));
 	return 0;
 }
 
@@ -955,7 +955,7 @@ static int dialog_add_single_seqselect(struct _dialog_box *di, short x, short y,
 	short cx, short cy, struct InputPort *port, int seq)
 {
 	struct seqselect_stuff *stuff;
-	InputSeq *code;
+	input_seq_t *code;
 
 	code = input_port_seq(port, seq);
 
@@ -990,10 +990,20 @@ int win_dialog_add_portselect(dialog_box *dialog, struct InputPort *port, const 
 	short width;
 	const char *port_name;
 	int seq;
-	int seq_count;
+	int seq_count = 0;
+	int seq_types[2];
 
 	port_name = input_port_name(port);
-	seq_count = input_port_seq_count(port);
+	
+	if (port_type_is_analog(port->type))
+	{
+		seq_types[seq_count++] = SEQ_TYPE_DECREMENT;
+		seq_types[seq_count++] = SEQ_TYPE_INCREMENT;
+	}
+	else
+	{
+		seq_types[seq_count++] = SEQ_TYPE_STANDARD;
+	}
 
 	for (seq = 0; seq < seq_count; seq++)
 	{
@@ -1007,7 +1017,7 @@ int win_dialog_add_portselect(dialog_box *dialog, struct InputPort *port, const 
 				return 1;
 			x += dialog->layout->label_width + DIM_HORIZONTAL_SPACING;
 
-			if (dialog_add_single_seqselect(di, x, y, DIM_EDIT_WIDTH, DIM_NORMAL_ROW_HEIGHT, port, seq))
+			if (dialog_add_single_seqselect(di, x, y, DIM_EDIT_WIDTH, DIM_NORMAL_ROW_HEIGHT, port, seq_types[seq]))
 				return 1;
 			y += DIM_VERTICAL_SPACING + DIM_NORMAL_ROW_HEIGHT;
 			x += DIM_EDIT_WIDTH + DIM_HORIZONTAL_SPACING;

@@ -492,10 +492,10 @@ ADDRESS_MAP_END
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )\
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )\
 	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Difficulty ) )\
-	PORT_DIPSETTING(    0x04, "Easy" )\
-	PORT_DIPSETTING(    0x06, "Medium" )\
-	PORT_DIPSETTING(    0x02, "Hard" )\
-	PORT_DIPSETTING(    0x00, "Hardest" )\
+	PORT_DIPSETTING(    0x04, DEF_STR( Easy ) )\
+	PORT_DIPSETTING(    0x06, DEF_STR( Medium ) )\
+	PORT_DIPSETTING(    0x02, DEF_STR( Hard ) )\
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )\
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Free_Play ) )\
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )\
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )\

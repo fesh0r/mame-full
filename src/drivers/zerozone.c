@@ -144,7 +144,7 @@ INPUT_PORTS_START( zerozone )
 	PORT_DIPSETTING(    0x08, "In Game Default" )		// 130, 162 or 255 "lines"
 	PORT_DIPSETTING(    0x00, "Always Hard" )			// 255 "lines"
 	PORT_DIPNAME( 0x10, 0x10, "Speed" )
-	PORT_DIPSETTING(    0x10, "Normal" )			// Drop every 20 frames
+	PORT_DIPSETTING(    0x10, DEF_STR( Normal ) )			// Drop every 20 frames
 	PORT_DIPSETTING(    0x00, "Fast" )				// Drop every 18 frames
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )

@@ -492,9 +492,9 @@ INPUT_PORTS_START( konamigq )
 
 	/* IN 4 */
 	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, "Stereo")
-	PORT_DIPSETTING(    0x01, "Stereo")
-	PORT_DIPSETTING(    0x00, "Mono")
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Stereo ))
+	PORT_DIPSETTING(    0x01, DEF_STR( Stereo ))
+	PORT_DIPSETTING(    0x00, DEF_STR( Mono ))
 	PORT_DIPNAME( 0x02, 0x00, "Stage Set" )
 	PORT_DIPSETTING(    0x02, "Endless" )
 	PORT_DIPSETTING(    0x00, "6st End" )

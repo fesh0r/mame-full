@@ -206,10 +206,10 @@ INPUT_PORTS_START( ddayc )
 	PORT_DIPSETTING(    0x08, "8000" )
 	PORT_DIPSETTING(    0x0c, "10000" )
 	PORT_DIPNAME( 0x30, 0x10, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x30, "Easy" )   // Easy   - No Bombs, No Troop Carriers
-	PORT_DIPSETTING(    0x20, "Normal" ) // Normal - No Bombs, Troop Carriers
-	PORT_DIPSETTING(    0x10, "Hard" )   // Hard   - Bombs, Troop Carriers
-//PORT_DIPSETTING(    0x00, "Hard" ) // Same as 0x10
+	PORT_DIPSETTING(    0x30, DEF_STR( Easy ) )   // Easy   - No Bombs, No Troop Carriers
+	PORT_DIPSETTING(    0x20, DEF_STR( Normal ) ) // Normal - No Bombs, Troop Carriers
+	PORT_DIPSETTING(    0x10, DEF_STR( Hard ) )   // Hard   - Bombs, Troop Carriers
+//PORT_DIPSETTING(    0x00, DEF_STR( Hard ) ) // Same as 0x10
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) ) // Doesn't seem to be used
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )

@@ -369,6 +369,7 @@ static UINT8 ymf271_read_ext_memory(int chipnum, UINT32 address)
 		if( address < 0x800000)
 			return YMF271[chipnum].rom[address];
 	}
+	return 0xff;
 }
 
 static void ymf271_write_ext_memory(int chipnum, UINT32 address, UINT8 data)

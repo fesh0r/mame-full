@@ -215,6 +215,8 @@ int artwork_get_inputscreen_customizations(struct png_info *png, int cust_type,
 				if (!enabled || sscanf(buffer, "%64s (%d,%d)-(%d,%d)", ipt_name, &x1, &y1, &x2, &y2) != 5)
 					continue;
 
+#if 0
+				/* temporarily disabled */
 				for (pik = input_keywords; pik->name[0]; pik++)
 				{
 					pik_name = pik->name;
@@ -237,6 +239,7 @@ int artwork_get_inputscreen_customizations(struct png_info *png, int cust_type,
 						break;
 					}
 				}
+#endif
 			}
 			mame_fclose(file);
 		}

@@ -270,10 +270,10 @@ INPUT_PORTS_START( sshangha )
 
 	PORT_START	/* Dip switch bank 2 (0xfec04b.b, inverted bits order) */
 	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x40, "Easy" )
-	PORT_DIPSETTING(    0xc0, "Normal" )
-	PORT_DIPSETTING(    0x80, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 #if SSHANGHA_HACK
 	PORT_DIPNAME( 0x20, 0x20, "Debug Mode" )
 #else

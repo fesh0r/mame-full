@@ -794,10 +794,10 @@ INPUT_PORTS_START( dkong3 )
 	PORT_DIPSETTING(    0x20, "50000" )
 	PORT_DIPSETTING(    0x30, "None" )
 	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x00, "Easy" )
-	PORT_DIPSETTING(    0x40, "Medium" )
-	PORT_DIPSETTING(    0x80, "Hard" )
-	PORT_DIPSETTING(    0xc0, "Hardest" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Medium ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( Hardest ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( dkong3b )
@@ -1374,7 +1374,7 @@ static struct GfxLayout charlayout =
 static struct GfxLayout spritelayout =
 {
 	16,16,	/* 16*16 sprites */
-	RGN_FRAC(1,2),	/* 128 sprites */
+	RGN_FRAC(1,4),	/* 128 sprites */
 	2,	/* 2 bits per pixel */
 	{ RGN_FRAC(1,2), RGN_FRAC(0,2) },	/* the two bitplanes are separated */
 	{ 0, 1, 2, 3, 4, 5, 6, 7,	/* the two halves of the sprite are separated */

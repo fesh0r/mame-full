@@ -244,8 +244,8 @@ INPUT_PORTS_START( naughtyb )
 	PORT_DIPSETTING(	0x20, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(	0x30, DEF_STR( 1C_3C ) )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(	0x00, "Easy" )
-	PORT_DIPSETTING(	0x40, "Hard" )
+	PORT_DIPSETTING(	0x00, DEF_STR( Easy ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( Hard ) )
 	/* This is a bit of a mystery. Bit 0x80 is read as the vblank, but
 	   it apparently also controls cocktail/table mode. */
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )

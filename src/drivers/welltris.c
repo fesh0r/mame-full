@@ -157,7 +157,7 @@ In a 4 players game, each player can move his pieces on ONE following wall :
   P4  West  wall
 
 When 1 credit is inserted, a timer appears to wait for players to enter the game, and
-it's IMPOSSIBLE to start a "normal" 1 player game (with the 4 walls) ...
+it's IMPOSSIBLE to start a DEF_STR( Normal ) 1 player game (with the 4 walls) ...
 
 To select a player, press one of his 2 buttons ...
 
@@ -556,10 +556,10 @@ INPUT_PORTS_START( welltris )
 
 	PORT_START
 	PORT_DIPNAME( 0x0003, 0x0003, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x0002, "Easy" )
-	PORT_DIPSETTING(      0x0003, "Normal" )
-	PORT_DIPSETTING(      0x0001, "Hard" )
-	PORT_DIPSETTING(      0x0000, "Hardest" )			// "Super" in test mode
+	PORT_DIPSETTING(      0x0002, DEF_STR( Easy ) )
+	PORT_DIPSETTING(      0x0003, DEF_STR( Normal ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Hard ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )			// "Super" in test mode
 	PORT_DIPNAME( 0x0004, 0x0000, "Coin Mode" )
 	PORT_DIPSETTING(      0x0004, "Mono Player" )
 	PORT_DIPSETTING(      0x0000, "Many Player" )

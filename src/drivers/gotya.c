@@ -101,8 +101,8 @@ INPUT_PORTS_START( gotya )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x00, "Easy" )
-	PORT_DIPSETTING(    0x10, "Hard" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Hard ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "None" )
 	PORT_DIPSETTING(    0x20, "15000" )
@@ -110,7 +110,7 @@ INPUT_PORTS_START( gotya )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x40, "5" )
 	PORT_DIPNAME( 0x80, 0x80, "Game Type" )	/* Manual Says:  Before main switch on: Test Pattern */
-	PORT_DIPSETTING(    0x80, "Normal" )	/*                After main switch on: Endless game */
+	PORT_DIPSETTING(    0x80, DEF_STR( Normal ) )	/*                After main switch on: Endless game */
 	PORT_DIPSETTING(    0x00, "Endless" )
 
 INPUT_PORTS_END

@@ -1762,10 +1762,10 @@ ADDRESS_MAP_END
 
 #define TAITO_DIFFICULTY_8 \
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) ) \
-	PORT_DIPSETTING(    0x02, "Easy" ) \
-	PORT_DIPSETTING(    0x03, "Medium" ) \
-	PORT_DIPSETTING(    0x01, "Hard" ) \
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Easy ) ) \
+	PORT_DIPSETTING(    0x03, DEF_STR( Medium ) ) \
+	PORT_DIPSETTING(    0x01, DEF_STR( Hard ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 
 #define TAITO_F2_PLAYERS_INPUT( player ) \
 	PORT_START \
@@ -2074,8 +2074,8 @@ INPUT_PORTS_START( megab )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x20, "4" )
 	PORT_DIPNAME( 0x40, 0x40, "Upright Controls" ) /* ie single or two players at once */
-	PORT_DIPSETTING(    0x00, "Single" )
-	PORT_DIPSETTING(    0x40, "Dual" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Single ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Dual ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -2125,8 +2125,8 @@ INPUT_PORTS_START( megabj )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x20, "4" )
 	PORT_DIPNAME( 0x40, 0x40, "Upright Controls" ) /* ie single or two players at once */
-	PORT_DIPSETTING(    0x00, "Single" )
-	PORT_DIPSETTING(    0x40, "Dual" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Single ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Dual ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -2176,12 +2176,12 @@ INPUT_PORTS_START( thundfox )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x10, "4" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "Upright Controls" ) /* ie single or two players at once */
-	PORT_DIPSETTING(    0x00, "Single" )
-	PORT_DIPSETTING(    0x80, "Dual" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Single ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Dual ) )
 
 	/* IN0 */
 	TAITO_F2_PLAYERS_INPUT( 1 )
@@ -2228,12 +2228,12 @@ INPUT_PORTS_START( thndfoxu )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x10, "4" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "Upright Controls" ) /* ie single or two players at once */
-	PORT_DIPSETTING(    0x00, "Single" )
-	PORT_DIPSETTING(    0x80, "Dual" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Single ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Dual ) )
 
 	/* IN0 */
 	TAITO_F2_PLAYERS_INPUT( 1 )
@@ -2280,12 +2280,12 @@ INPUT_PORTS_START( thndfoxj )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x10, "4" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "Upright Controls" ) /* ie single or two players at once */
-	PORT_DIPSETTING(    0x00, "Single" )
-	PORT_DIPSETTING(    0x80, "Dual" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Single ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Dual ) )
 
 	/* IN0 */
 	TAITO_F2_PLAYERS_INPUT( 1 )
@@ -2331,12 +2331,12 @@ INPUT_PORTS_START( cameltry )
 	PORT_DIPSETTING(    0x10, "+25" )
 	PORT_DIPSETTING(    0x30, "+30" )
 	PORT_DIPSETTING(    0x20, "+40" )
-	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x00, "Upright Controls" ) /* ie single or two players at once */
-	PORT_DIPSETTING(    0x80, "Single" )
-	PORT_DIPSETTING(    0x00, "Dual" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Single ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Dual ) )
 
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -2366,10 +2366,10 @@ INPUT_PORTS_START( cameltry )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START  /* Paddle A */
-	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_MINMAX(0,0) PORT_SENSITIVITY(100) PORT_KEYDELTA(20) PORT_PLAYER(1)
+	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_SENSITIVITY(100) PORT_KEYDELTA(20) PORT_PLAYER(1)
 
 	PORT_START  /* Paddle B */
-	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_MINMAX(0,0) PORT_SENSITIVITY(100) PORT_KEYDELTA(20) PORT_PLAYER(2)
+	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_SENSITIVITY(100) PORT_KEYDELTA(20) PORT_PLAYER(2)
 INPUT_PORTS_END
 
 INPUT_PORTS_START( cameltrj )
@@ -2398,12 +2398,12 @@ INPUT_PORTS_START( cameltrj )
 	PORT_DIPSETTING(    0x10, "+25" )
 	PORT_DIPSETTING(    0x30, "+30" )
 	PORT_DIPSETTING(    0x20, "+40" )
-	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x00, "Upright Controls" ) /* ie single or two players at once */
-	PORT_DIPSETTING(    0x80, "Single" )
-	PORT_DIPSETTING(    0x00, "Dual" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Single ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Dual ) )
 
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -2433,10 +2433,10 @@ INPUT_PORTS_START( cameltrj )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START  /* Paddle A */
-	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_MINMAX(0,0) PORT_SENSITIVITY(100) PORT_KEYDELTA(20) PORT_PLAYER(1)
+	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_SENSITIVITY(100) PORT_KEYDELTA(20) PORT_PLAYER(1)
 
 	PORT_START  /* Paddle B */
-	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_MINMAX(0,0) PORT_SENSITIVITY(100) PORT_KEYDELTA(20) PORT_PLAYER(2)
+	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_SENSITIVITY(100) PORT_KEYDELTA(20) PORT_PLAYER(2)
 INPUT_PORTS_END
 
 INPUT_PORTS_START( qtorimon )
@@ -2527,12 +2527,12 @@ INPUT_PORTS_START( liquidk )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x00, "4" )
 	PORT_DIPSETTING(    0x10, "5" )
-	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x00, "Upright Controls" ) /* ie single or two players at once */
-	PORT_DIPSETTING(    0x80, "Single" )
-	PORT_DIPSETTING(    0x00, "Dual" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Single ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Dual ) )
 
 	/* IN0 */
 	TAITO_F2_PLAYERS_INPUT( 1 )
@@ -2578,12 +2578,12 @@ INPUT_PORTS_START( liquidku )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x00, "4" )
 	PORT_DIPSETTING(    0x10, "5" )
-	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x00, "Upright Controls" ) /* ie single or two players at once */
-	PORT_DIPSETTING(    0x80, "Single" )
-	PORT_DIPSETTING(    0x00, "Dual" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Single ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Dual ) )
 
 	/* IN0 */
 	TAITO_F2_PLAYERS_INPUT( 1 )
@@ -2629,12 +2629,12 @@ INPUT_PORTS_START( mizubaku )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x00, "4" )
 	PORT_DIPSETTING(    0x10, "5" )
-	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x00, "Upright Controls" ) /* ie single or two players at once */
-	PORT_DIPSETTING(    0x80, "Single" )
-	PORT_DIPSETTING(    0x00, "Dual" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Single ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Dual ) )
 
 	/* IN0 */
 	TAITO_F2_PLAYERS_INPUT( 1 )
@@ -2683,7 +2683,7 @@ INPUT_PORTS_START( ssi )
 	PORT_DIPSETTING(    0x80, "Alternate, Single")
 	PORT_DIPSETTING(    0x00, "Alternate, Dual")
 	PORT_DIPSETTING(    0x20, "Not Allowed")
-	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 
@@ -2734,7 +2734,7 @@ INPUT_PORTS_START( majest12 )
 	PORT_DIPSETTING(    0x80, "Alternate, Single Controls")
 	PORT_DIPSETTING(    0x00, "Alternate, Dual Controls")
 	PORT_DIPSETTING(    0x20, "Not Allowed")
-	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 
@@ -3026,8 +3026,8 @@ INPUT_PORTS_START( pulirula )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "Upright Controls" ) /* ie single or two players at once */
-	PORT_DIPSETTING(    0x00, "Single" )
-	PORT_DIPSETTING(    0x80, "Dual" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Single ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Dual ) )
 
 	/* IN0 */
 	TAITO_F2_PLAYERS_INPUT( 1 )
@@ -3077,8 +3077,8 @@ INPUT_PORTS_START( pulirulj )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "Upright Controls" ) /* ie single or two players at once */
-	PORT_DIPSETTING(    0x00, "Single" )
-	PORT_DIPSETTING(    0x80, "Dual" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Single ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Dual ) )
 
 	/* IN0 */
 	TAITO_F2_PLAYERS_INPUT( 1 )
@@ -3260,7 +3260,7 @@ INPUT_PORTS_START( footchmp )
 
 	PORT_START /* DSW B */
 	TAITO_DIFFICULTY_8
-	PORT_DIPNAME( 0x0c, 0x0c, "Game Time" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Game_Time ) )
 	PORT_DIPSETTING(    0x00, "1.5 Minutes" )
 	PORT_DIPSETTING(    0x0c, " 2  Minutes" )
 	PORT_DIPSETTING(    0x04, "2.5 Minutes" )
@@ -3270,11 +3270,11 @@ INPUT_PORTS_START( footchmp )
 	PORT_DIPSETTING(    0x20, "4 Players / 4 Coin Slots" )	// Push Player button A to start
 	PORT_DIPSETTING(    0x10, "4 Players / 2 cabinets combined" )
 	PORT_DIPSETTING(    0x00, "4 Players / 2 Coin Slots" )
-	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x00, "Game Version" )	// Not used for Hat Trick Hero / Euro Champ '92
-	PORT_DIPSETTING(    0x00, "Normal" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x80, "European" )
 
 	/* IN3 */
@@ -3333,11 +3333,11 @@ INPUT_PORTS_START( hthero )
 
 	PORT_START /* DSW B */
 	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x40, "Easy" )
-	PORT_DIPSETTING(    0xc0, "Medium" )
-	PORT_DIPSETTING(    0x80, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x30, 0x30, "Game Time" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( Medium ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Game_Time ) )
 	PORT_DIPSETTING(    0x00, "1.5 Minutes" )
 	PORT_DIPSETTING(    0x30, " 2  Minutes" )
 	PORT_DIPSETTING(    0x20, "2.5 Minutes" )
@@ -3347,7 +3347,7 @@ INPUT_PORTS_START( hthero )
 	PORT_DIPSETTING(    0x04, "4 Players / 4 Coin Slots" )	// Push Player button A to start
 	PORT_DIPSETTING(    0x08, "4 Players / 2 cabinets combined" )
 	PORT_DIPSETTING(    0x00, "4 Players / 2 Coin Slots" )
-	PORT_DIPNAME( 0x02, 0x02, "Allow Continue" )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )
@@ -3411,7 +3411,7 @@ INPUT_PORTS_START( ninjak )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x10, "4" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "Game Type" )
@@ -3475,7 +3475,7 @@ INPUT_PORTS_START( ninjakj )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x10, "4" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "Game Type" )
@@ -3510,9 +3510,9 @@ INPUT_PORTS_START( driftout )
 	PORT_START /* DSW B */
 	TAITO_DIFFICULTY_8
 	PORT_DIPNAME( 0x0c, 0x0c, "Control" )   /* correct acc. to service mode */
-	PORT_DIPSETTING(    0x0c, "Joystick" )
+	PORT_DIPSETTING(    0x0c, DEF_STR( Joystick ) )
 	PORT_DIPSETTING(    0x08, "Paddle" )
-	PORT_DIPSETTING(    0x04, "Joystick" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Joystick ) )
 	PORT_DIPSETTING(    0x00, "Steering wheel" )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
@@ -3543,10 +3543,10 @@ INPUT_PORTS_START( driftout )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START  /* Paddle A */
-	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_MINMAX(0,0) PORT_SENSITIVITY(50) PORT_KEYDELTA(10) PORT_PLAYER(1)
+	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_SENSITIVITY(50) PORT_KEYDELTA(10) PORT_PLAYER(1)
 
 	PORT_START  /* Paddle B */
-	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_MINMAX(0,0) PORT_SENSITIVITY(50) PORT_KEYDELTA(10) PORT_PLAYER(2)
+	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_SENSITIVITY(50) PORT_KEYDELTA(10) PORT_PLAYER(2)
 INPUT_PORTS_END
 
 INPUT_PORTS_START( gunfront )
@@ -3575,12 +3575,12 @@ INPUT_PORTS_START( gunfront )
 	PORT_DIPSETTING(    0x10, "2" )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "Upright Controls" ) /* ie single or two players at once */
-	PORT_DIPSETTING(    0x00, "Single" )
-	PORT_DIPSETTING(    0x80, "Dual" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Single ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Dual ) )
 
 	/* IN0 */
 	TAITO_F2_PLAYERS_INPUT( 1 )
@@ -3626,12 +3626,12 @@ INPUT_PORTS_START( gunfronj )
 	PORT_DIPSETTING(    0x10, "2" )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "Upright Controls" ) /* ie single or two players at once */
-	PORT_DIPSETTING(    0x00, "Single" )
-	PORT_DIPSETTING(    0x80, "Dual" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Single ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Dual ) )
 
 	/* IN0 */
 	TAITO_F2_PLAYERS_INPUT( 1 )
@@ -3677,12 +3677,12 @@ INPUT_PORTS_START( metalb )
 	PORT_DIPSETTING(    0x10, "2" )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x20, "5" )
-	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "Upright Controls" ) /* ie single or two players at once */
-	PORT_DIPSETTING(    0x00, "Single" )
-	PORT_DIPSETTING(    0x80, "Dual" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Single ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Dual ) )
 
 	/* IN0 */
 	TAITO_F2_PLAYERS_INPUT( 1 )
@@ -3728,12 +3728,12 @@ INPUT_PORTS_START( metalbj )
 	PORT_DIPSETTING(    0x10, "2" )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x20, "5" )
-	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "Upright Controls" ) /* ie single or two players at once */
-	PORT_DIPSETTING(    0x00, "Single" )
-	PORT_DIPSETTING(    0x80, "Dual" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Single ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Dual ) )
 
 	/* IN0 */
 	TAITO_F2_PLAYERS_INPUT( 1 )
@@ -3794,7 +3794,7 @@ INPUT_PORTS_START( deadconx )
 	PORT_DIPSETTING(    0x00, DEF_STR( On) )
 	PORT_DIPNAME( 0x18, 0x18, "Damage" )
 	PORT_DIPSETTING(    0x10, "Small" )		/* Hero can take 12 gun shots */
-	PORT_DIPSETTING(    0x18, "Normal" )	/* Hero can take 10 gun shots */
+	PORT_DIPSETTING(    0x18, DEF_STR( Normal ) )	/* Hero can take 10 gun shots */
 	PORT_DIPSETTING(    0x08, "Big" )		/* Hero can take 8 gun shots */
 	PORT_DIPSETTING(    0x00, "Biggest" )	/* Hero can take 5 gun shots */
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
@@ -3864,16 +3864,16 @@ INPUT_PORTS_START( deadconj )
 
 	PORT_START /* DSW B */
 	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x40, "Easy" )
-	PORT_DIPSETTING(    0xc0, "Medium" )
-	PORT_DIPSETTING(    0x80, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( Medium ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On) )
 	PORT_DIPNAME( 0x18, 0x18, "Damage" )
 	PORT_DIPSETTING(    0x08, "Small" )		/* Hero can take 12 gun shots */
-	PORT_DIPSETTING(    0x18, "Normal" )	/* Hero can take 10 gun shots */
+	PORT_DIPSETTING(    0x18, DEF_STR( Normal ) )	/* Hero can take 10 gun shots */
 	PORT_DIPSETTING(    0x10, "Big" )		/* Hero can take 8 gun shots */
 	PORT_DIPSETTING(    0x00, "Biggest" )	/* Hero can take 5 gun shots */
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
@@ -3915,21 +3915,21 @@ INPUT_PORTS_START( dinorex )
 	TAITO_DIFFICULTY_8
 	PORT_DIPNAME( 0x0c, 0x0c, "Damage" )
 	PORT_DIPSETTING(    0x08, "Small" )
-	PORT_DIPSETTING(    0x0c, "Normal" )
+	PORT_DIPSETTING(    0x0c, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x04, "Big" )
 	PORT_DIPSETTING(    0x00, "Biggest" )
 	PORT_DIPNAME( 0x10, 0x10, "Timer Speed" )	 // Appears to make little difference
-	PORT_DIPSETTING(    0x10, "Normal" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x00, "Fast" )
 	PORT_DIPNAME( 0x20, 0x20, "Match Type" )
 	PORT_DIPSETTING(    0x20, "Best of 3" )
-	PORT_DIPSETTING(    0x00, "Single" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Single ) )
 	PORT_DIPNAME( 0x40, 0x40, "2 Player Mode" )	// actually this seems to be unknown
 	PORT_DIPSETTING(    0x40, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x80, 0x80, "Upright Controls" )	/* ie single or two players at once */
-	PORT_DIPSETTING(    0x00, "Single" )
-	PORT_DIPSETTING(    0x80, "Dual" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Single ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Dual ) )
 
 	/* IN0 */
 	TAITO_F2_PLAYERS_INPUT( 1 )
@@ -3967,21 +3967,21 @@ INPUT_PORTS_START( dinorexj )
 	TAITO_DIFFICULTY_8
 	PORT_DIPNAME( 0x0c, 0x0c, "Damage" )
 	PORT_DIPSETTING(    0x08, "Small" )
-	PORT_DIPSETTING(    0x0c, "Normal" )
+	PORT_DIPSETTING(    0x0c, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x04, "Big" )
 	PORT_DIPSETTING(    0x00, "Biggest" )
 	PORT_DIPNAME( 0x10, 0x10, "Timer Speed" )	 // Appears to make little difference
-	PORT_DIPSETTING(    0x10, "Normal" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x00, "Fast" )
 	PORT_DIPNAME( 0x20, 0x20, "Match Type" )
 	PORT_DIPSETTING(    0x20, "Best of 3" )
-	PORT_DIPSETTING(    0x00, "Single" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Single ) )
 	PORT_DIPNAME( 0x40, 0x40, "2 Player Mode" )	// actually this seems to be unknown
 	PORT_DIPSETTING(    0x40, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x80, 0x80, "Upright Controls" )	/* ie single or two players at once */
-	PORT_DIPSETTING(    0x00, "Single" )
-	PORT_DIPSETTING(    0x80, "Dual" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Single ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Dual ) )
 
 	/* IN0 */
 	TAITO_F2_PLAYERS_INPUT( 1 )
@@ -4081,12 +4081,12 @@ INPUT_PORTS_START( koshien )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x10, "4" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "Upright Controls" ) /* ie single or two players at once */
-	PORT_DIPSETTING(    0x00, "Single" )
-	PORT_DIPSETTING(    0x80, "Dual" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Single ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Dual ) )
 
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
@@ -4169,12 +4169,12 @@ INPUT_PORTS_START( quizhq )
 	PORT_DIPSETTING(    0x30, "2" )
 	PORT_DIPSETTING(    0x10, "3" )
 	PORT_DIPSETTING(    0x00, "4" )
-	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "Upright Controls" ) /* ie single or two players at once */
-	PORT_DIPSETTING(    0x00, "Single" )
-	PORT_DIPSETTING(    0x80, "Dual" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Single ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Dual ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( qjinsei )
@@ -4334,7 +4334,7 @@ INPUT_PORTS_START( qcrayon2 )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "Game Control" )
-	PORT_DIPSETTING(    0x80, "Joystick" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Joystick ) )
 	PORT_DIPSETTING(    0x00, "4 Buttons" )
 
 	PORT_START      /* IN0 */
@@ -4393,7 +4393,7 @@ INPUT_PORTS_START( yuyugogo )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )

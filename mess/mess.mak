@@ -815,12 +815,11 @@ $(OBJ)/telmac.a:					\
 	$(OBJ)/mess/systems/telmac.o	\
 	$(OBJ)/mess/vidhrdw/cdp186x.o	\
 
-
-
-EXPATOBJS =							\
-	$(OBJ)/mess/expat/xmlrole.o		\
-	$(OBJ)/mess/expat/xmltok.o		\
-	$(OBJ)/mess/expat/xmlparse.o	\
+ifdef BUILD_EXPAT
+EXPATOBJS = $(OBJ)/libexpat.a
+else
+EXPATOBJS = -lexpat
+endif
 
 
 
@@ -903,10 +902,10 @@ DAT2HTML_OBJS =								\
 	$(OBJ)/mess/utils.o
 
 MESSDOCS_OBJS =								\
-	$(EXPATOBJS)							\
 	$(OBJ)/mess/tools/messdocs/messdocs.o	\
 	$(OBJ)/mess/utils.o						\
 	$(OBJ)/mess/pool.o						\
+	$(EXPATOBJS)							\
 
 MESSTEST_OBJS =								\
 	$(EXPATOBJS)							\

@@ -503,12 +503,12 @@ INPUT_PORTS_START( mgakuen )
 	PORT_START	/* DSW2 */
 	PORT_DIPNAME( 0x03, 0x03, "Player 1 Skill" )
 	PORT_DIPSETTING(    0x03, "Weak" )
-	PORT_DIPSETTING(    0x02, "Normal" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x01, "Strong" )
 	PORT_DIPSETTING(    0x00, "Very Strong" )
 	PORT_DIPNAME( 0x0c, 0x0c, "Player 1 Skill" )
 	PORT_DIPSETTING(    0x0c, "Weak" )
-	PORT_DIPSETTING(    0x08, "Normal" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x04, "Strong" )
 	PORT_DIPSETTING(    0x00, "Very Strong" )
 	PORT_DIPNAME( 0x10, 0x00, "Music" )
@@ -883,10 +883,10 @@ INPUT_PORTS_START( block )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
 
 	PORT_START      /* DIAL1 */
-	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_MINMAX(0,0) PORT_SENSITIVITY(50) PORT_KEYDELTA(20)
+	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_SENSITIVITY(50) PORT_KEYDELTA(20)
 
 	PORT_START      /* DIAL2 */
-	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_MINMAX(0,0) PORT_SENSITIVITY(50) PORT_KEYDELTA(20) PORT_PLAYER(2)
+	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_SENSITIVITY(50) PORT_KEYDELTA(20) PORT_PLAYER(2)
 INPUT_PORTS_END
 
 INPUT_PORTS_START( blockj )
@@ -992,14 +992,14 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct YM2413interface ym2413_interface =
 {
 	1,	/* 1 chip */
-	3579545,	/* ??? */
+	4000000,	/* fixed */
 	{ YM2413_VOL(100,MIXER_PAN_CENTER,100,MIXER_PAN_CENTER) },	/* Volume */
 };
 
 static struct OKIM6295interface okim6295_interface =
 {
 	1,			/* 1 chip */
-	{ 8000 },	/* 8000Hz ??? */
+	{ 7500 },	/* fixed */
 	{ REGION_SOUND1 },		/* memory region 2 */
 	{ 50 }
 };

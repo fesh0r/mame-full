@@ -152,7 +152,7 @@ WRITE16_HANDLER( shadfrce_flip_screen )
 	            --------x-------	DIP1-1
 	            ---------x------	DIP1-2    ("Coin(s) for Credit(s)")
 	            ----------x-----	DIP1-3    ("Coin(s) for Credit(s)")
-	            -----------x----	DIP1-4    ("Continue Price")
+	            -----------x----	DIP1-4    (DEF_STR( Continue_Price ))
 	            ------------x---	DIP1-5    ("Free Play")
 	            -------------x--	DIP1-6    ("Flip Screen")
 	            --------------x-	unused
@@ -360,7 +360,7 @@ INPUT_PORTS_START( shadfrce )
 	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x06, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 1C_2C ) )
-	PORT_DIPNAME( 0x08, 0x08, "Continue Price" )			// What does that mean ?
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Continue_Price ) )			// What does that mean ?
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Free_Play ) )
@@ -376,10 +376,10 @@ INPUT_PORTS_START( shadfrce )
 
 	PORT_START	/* Fake IN7 (DIP2) */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x01, "Easy" )
-	PORT_DIPSETTING(    0x03, "Normal" )
-	PORT_DIPSETTING(    0x02, "Hard" )					// "Advanced"
-	PORT_DIPSETTING(    0x00, "Hardest" )				// "Expert"
+	PORT_DIPSETTING(    0x01, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Hard ) )					// "Advanced"
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )				// "Expert"
 	PORT_DIPNAME( 0x0c, 0x0c, "Stage Clear Energy Regain" )
 	PORT_DIPSETTING(    0x04, "50%" )
 	PORT_DIPSETTING(    0x0c, "25%" )
@@ -418,10 +418,10 @@ INPUT_PORTS_START( shadfrce )
 	PORT_START	/* IN1 - $1d0022.w */
 	SHADFRCE_PLAYER_INPUT( 2, IPT_START2 )
 	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x0100, "Easy" )
-	PORT_DIPSETTING(      0x0300, "Normal" )
-	PORT_DIPSETTING(      0x0200, "Hard" )				// "Advanced"
-	PORT_DIPSETTING(      0x0000, "Hardest" )				// "Expert"
+	PORT_DIPSETTING(      0x0100, DEF_STR( Easy ) )
+	PORT_DIPSETTING(      0x0300, DEF_STR( Normal ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Hard ) )				// "Advanced"
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )				// "Expert"
 	PORT_DIPNAME( 0x0c00, 0x0c00, "Stage Clear Energy Regain" )
 	PORT_DIPSETTING(      0x0400, "50%" )
 	PORT_DIPSETTING(      0x0c00, "25%" )
@@ -453,7 +453,7 @@ INPUT_PORTS_START( shadfrce )
 	PORT_DIPSETTING(      0x0200, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(      0x0600, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(      0x0400, DEF_STR( 1C_2C ) )
-	PORT_DIPNAME( 0x0800, 0x0800, "Continue Price" )		// What does that mean ?
+	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Continue_Price ) )		// What does that mean ?
 	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Free_Play ) )
@@ -548,7 +548,7 @@ static struct YM2151interface ym2151_interface =
 static struct OKIM6295interface okim6295_interface =
 {
 	1,				/* 1 chip */
-	{ 8500 },		/* frequency (Hz) */
+	{ 12000 },			/* fixed */
 	{ REGION_SOUND1 },	/* memory region */
 	{ 50 }
 };

@@ -167,8 +167,8 @@ INPUT_PORTS_START( crimfght )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x60, 0x40, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x60, "Easy" )
-	PORT_DIPSETTING(    0x40, "Normal" )
+	PORT_DIPSETTING(    0x60, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x20, "Difficult" )
 	PORT_DIPSETTING(    0x00, "Very difficult" )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
@@ -292,8 +292,8 @@ INPUT_PORTS_START( crimfgtj )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x60, 0x40, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x60, "Easy" )
-	PORT_DIPSETTING(    0x40, "Normal" )
+	PORT_DIPSETTING(    0x60, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x20, "Difficult" )
 	PORT_DIPSETTING(    0x00, "Very difficult" )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
@@ -361,8 +361,8 @@ INPUT_PORTS_END
 static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
-	3579545,	/* 3.579545 MHz */
-	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },
+	4000000,	/* adjusted to be in sync with Z80 CPU */
+	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },	/* music volume */
 	{ 0 },
 	{ crimfght_snd_bankswitch_w }
 };
@@ -391,7 +391,7 @@ static MACHINE_DRIVER_START( crimfght )
 	MDRV_CPU_PROGRAM_MAP(crimfght_readmem,crimfght_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_ADD(Z80, 4000000)	/* compared with a real PCB, guessed but accurate */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_PROGRAM_MAP(crimfght_readmem_sound,crimfght_writemem_sound)
 

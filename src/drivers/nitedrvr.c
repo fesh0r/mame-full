@@ -151,7 +151,7 @@ INPUT_PORTS_START( nitedrvr )
 
 	PORT_START		/* fake port, gets mapped to Night Driver ports */
 	PORT_DIPNAME( 0x10, 0x00, "Track Set" )
-	PORT_DIPSETTING(	0x00, "Normal" )
+	PORT_DIPSETTING(	0x00, DEF_STR( Normal ) )
 	PORT_DIPSETTING(	0x10, "Reverse" )
 	PORT_DIPNAME( 0x20, 0x20, "Bonus Time" )
 	PORT_DIPSETTING(	0x00, DEF_STR ( No ) )
@@ -168,7 +168,7 @@ INPUT_PORTS_START( nitedrvr )
 	PORT_START		/* fake port, gets mapped to Night Driver ports */
 	PORT_BIT (0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* Spare */
 	PORT_DIPNAME( 0x20, 0x00, "Difficult Bonus" )
-	PORT_DIPSETTING(	0x00, "Normal" )
+	PORT_DIPSETTING(	0x00, DEF_STR( Normal ) )
 	PORT_DIPSETTING(	0x20, "Difficult" )
 	PORT_BIT (0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT (0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -184,7 +184,7 @@ INPUT_PORTS_START( nitedrvr )
 	PORT_BIT (0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* Alternating signal? */
 
 	PORT_START		/* fake port used for steering */
-	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_MINMAX(0,0) PORT_SENSITIVITY(100) PORT_KEYDELTA(10)
+	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_SENSITIVITY(100) PORT_KEYDELTA(10)
 
 	PORT_START
 	PORT_ADJUSTER( 60, "Motor RPM" )

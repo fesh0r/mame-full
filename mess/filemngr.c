@@ -105,7 +105,7 @@ static char valid_filename_char[256] =
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0		/* f0-ff */
 };
 
-static char code_to_ascii(InputCode code)
+static char code_to_ascii(input_code_t code)
 {
 	int i;
 
@@ -129,7 +129,7 @@ static char code_to_ascii(InputCode code)
 
 static char *update_entered_string(void)
 {
-	InputCode code;
+	input_code_t code;
 	int ascii_char;
 
 	/* get key */

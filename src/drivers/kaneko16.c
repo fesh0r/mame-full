@@ -413,6 +413,7 @@ const struct GameDriver driver_gtmr;
 const struct GameDriver driver_gtmre;
 const struct GameDriver driver_gtmrusa;
 const struct GameDriver driver_gtmr2;
+const struct GameDriver driver_gtmr2a;
 
 /*
 
@@ -479,7 +480,9 @@ void gtmr_mcu_run(void)
 			}
 			else if ( (Machine->gamedrv == &driver_gtmre)  ||
 					  (Machine->gamedrv == &driver_gtmrusa) ||
-					  (Machine->gamedrv == &driver_gtmr2) )
+					  (Machine->gamedrv == &driver_gtmr2) ||
+					  (Machine->gamedrv == &driver_gtmr2a) )
+
 			{
 				/* MCU writes the string "USMM0713-TB1994 " to shared ram */
 				mcu_ram[mcu_offset+0] = 0x5553;
@@ -1841,10 +1844,10 @@ INPUT_PORTS_START( berlwall )
 
 	PORT_START	// IN5 - DSW 2 - $200019.b <- $80001f.b
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x02, "Easy"    )
-	PORT_DIPSETTING(    0x03, "Normal"  )
-	PORT_DIPSETTING(    0x01, "Hard"    )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Easy )    )
+	PORT_DIPSETTING(    0x03, DEF_STR( Normal )  )
+	PORT_DIPSETTING(    0x01, DEF_STR( Hard )    )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )	// 1p lives at 202982.b
 	PORT_DIPSETTING(    0x00, "1" )
 	PORT_DIPSETTING(    0x0c, "2" )
@@ -1937,10 +1940,10 @@ INPUT_PORTS_START( berlwalt )
 
 	PORT_START	// IN5 - DSW 2 - $80001f.b
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x02, "Easy"    )
-	PORT_DIPSETTING(    0x03, "Normal"  )
-	PORT_DIPSETTING(    0x01, "Hard"    )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Easy )    )
+	PORT_DIPSETTING(    0x03, DEF_STR( Normal )  )
+	PORT_DIPSETTING(    0x01, DEF_STR( Hard )    )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "7" )
 	PORT_DIPSETTING(    0x04, "5" )
@@ -1965,10 +1968,10 @@ INPUT_PORTS_END
 INPUT_PORTS_START( blazeon )
 	PORT_START	// IN0 - Player 1 + DSW - c00000.w
 	PORT_DIPNAME( 0x0003, 0x0003, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x0002, "Easy"    )
-	PORT_DIPSETTING(      0x0003, "Normal"  )
-	PORT_DIPSETTING(      0x0001, "Hard"    )
-	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Easy )    )
+	PORT_DIPSETTING(      0x0003, DEF_STR( Normal )  )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Hard )    )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x000c, 0x000c, DEF_STR( Lives ) )
 	PORT_DIPSETTING(      0x0000, "2" )
 	PORT_DIPSETTING(      0x000c, "3" )
@@ -2119,7 +2122,7 @@ INPUT_PORTS_START( bloodwar )
 	PORT_DIPNAME( 0x4000, 0x4000, "Join During Game" )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x4000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x8000, 0x8000, "Allow Continue" )
+	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 INPUT_PORTS_END
@@ -2189,7 +2192,7 @@ INPUT_PORTS_START( bonkadv )
 	PORT_DIPNAME( 0x4000, 0x0000, "Join During Game" )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x4000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x8000, 0x8000, "Allow Continue" )
+	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 INPUT_PORTS_END
@@ -2249,7 +2252,7 @@ INPUT_PORTS_START( gtmr )
 	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Cabinet )  )
 	PORT_DIPSETTING(      0x0400, DEF_STR( Upright )  )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x1800, 0x1800, "Controls"    )
+	PORT_DIPNAME( 0x1800, 0x1800, DEF_STR( Controls )    )
 	PORT_DIPSETTING(      0x1800, "1 Joystick"  )
 	PORT_DIPSETTING(      0x0800, "2 Joysticks" )
 	PORT_DIPSETTING(      0x1000, "Wheel (360)" )
@@ -2264,7 +2267,7 @@ INPUT_PORTS_START( gtmr )
 	PORT_DIPSETTING(      0x0000, "None"        )
 
 	PORT_START	// IN5 - Wheel - 100015.b <- ffffe.b
-	PORT_BIT ( 0x00ff, 0x0080, IPT_AD_STICK_X ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(30) PORT_KEYDELTA(1) PORT_CENTER
+	PORT_BIT ( 0x00ff, 0x0080, IPT_PADDLE ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(30) PORT_KEYDELTA(1)
 INPUT_PORTS_END
 
 
@@ -2325,8 +2328,8 @@ INPUT_PORTS_START( gtmr2 )
 	PORT_DIPSETTING(      0x0100, "Machine 4 (0x0100)" )
 	PORT_DIPSETTING(      0x0000, "Machine 4 (0x0000)" )
 	*/
-	PORT_DIPNAME( 0x1800, 0x1800, "Controls" )
-	PORT_DIPSETTING(      0x1800, "Joystick" )
+	PORT_DIPNAME( 0x1800, 0x1800, DEF_STR( Controls ) )
+	PORT_DIPSETTING(      0x1800, DEF_STR( Joystick ) )
 	PORT_DIPSETTING(      0x0800, "Wheel (360)" )			// Not working correctly in race
 	PORT_DIPSETTING(      0x1000, "Wheel (270D)" )			// Not working correctly !
 	PORT_DIPSETTING(      0x0000, "Wheel (270A)" )			// Not working correctly in race
@@ -2339,13 +2342,13 @@ INPUT_PORTS_START( gtmr2 )
 	PORT_SERVICE( 0x8000, IP_ACTIVE_LOW )
 
 	PORT_START	// IN5 - Wheel (270A) - 100019.b <- fffff.b
-	PORT_BIT ( 0x00ff, 0x0080, IPT_AD_STICK_X ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(30) PORT_KEYDELTA(1) PORT_CENTER
+	PORT_BIT ( 0x00ff, 0x0080, IPT_PADDLE ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(30) PORT_KEYDELTA(1)
 
 	PORT_START	// IN6 - Wheel (270D) - 100019.b <- ffffe.b
-	PORT_BIT ( 0x00ff, 0x0080, IPT_AD_STICK_X ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(30) PORT_KEYDELTA(1)
+	PORT_BIT ( 0x00ff, 0x0080, IPT_PADDLE ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(30) PORT_KEYDELTA(1)
 
 	PORT_START	// IN7 - Wheel (360) - 100019.b <- ffffe.b
-	PORT_BIT( 0x00ff, 0x0080, IPT_DIAL ) PORT_MINMAX(0,0) PORT_SENSITIVITY(30) PORT_KEYDELTA(1) PORT_CODE_DEC(KEYCODE_LEFT) PORT_CODE_INC(KEYCODE_RIGHT)
+	PORT_BIT( 0x00ff, 0x0080, IPT_DIAL ) PORT_SENSITIVITY(30) PORT_KEYDELTA(1) PORT_CODE_DEC(KEYCODE_LEFT) PORT_CODE_INC(KEYCODE_RIGHT)
 
 	PORT_START	// Fake IN1 - To be pressed during boot sequence - Code at 0x000c9e
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_BUTTON5 ) PORT_NAME("IN 1-0") PORT_CODE(KEYCODE_H)	// "sound test"
@@ -2501,10 +2504,10 @@ INPUT_PORTS_START( sandscrp )
 	PORT_DIPSETTING(    0x0c, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x30, "Easy"    )
-	PORT_DIPSETTING(    0x20, "Normal"  )
-	PORT_DIPSETTING(    0x10, "Hard"    )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x30, DEF_STR( Easy )    )
+	PORT_DIPSETTING(    0x20, DEF_STR( Normal )  )
+	PORT_DIPSETTING(    0x10, DEF_STR( Hard )    )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x80, "100K, 300K" )
 	PORT_DIPSETTING(    0xc0, "200K, 500K" )
@@ -2532,7 +2535,7 @@ INPUT_PORTS_START( sandscrp )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, "Allow Continue" )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Demo_Sounds ) )
@@ -3768,6 +3771,40 @@ ROMs   :  (filename is ROM Label, extension is PCB 'u' location)
 
 ROM_START( gtmr2 )
  	ROM_REGION( 0x100000, REGION_CPU1, 0 )			/* 68000 Code */
+	ROM_LOAD16_BYTE( "m2p0x1a.u8",  0x000000, 0x080000, CRC(c29039fb) SHA1(a16e8863608353c2931e9d45359fbcec8f11ef9d) )
+	ROM_LOAD16_BYTE( "m2p1x1a.u7",  0x000001, 0x080000, CRC(8ef392c4) SHA1(06bd720d931911e32264183dd215ab70ad6d2961) )
+
+ 	ROM_REGION( 0x020000, REGION_CPU2, 0 )			/* MCU Code? */
+	ROM_LOAD( "m2d0x0.u31",        0x000000, 0x020000, CRC(2e1a06ff) SHA1(475a7555653eefac84307492a385895b839cab0d) )
+
+	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
+	ROM_LOAD( "m2-200-0.u49",      0x000000, 0x400000, CRC(93aafc53) SHA1(1d28b6e3bd61ce9c938fc5303aeabcdefa549852) )
+	ROM_LOAD( "m2-201-0.u50",      0x400000, 0x200000, CRC(39b60a83) SHA1(aa7b37c7c92bbcf685f4fec84cc6d8a77d26433c) )
+	ROM_LOAD( "m2-202-0.u51",      0x600000, 0x200000, CRC(fd06b339) SHA1(5de0af7d23147f6eb403700eabd66794198f3641) )
+	ROM_LOAD16_BYTE( "m2s0x1a.u32", 0x700000, 0x080000, CRC(a485eec6) SHA1(f8aff62daed95a63544106472a9ef34902feaaa2) )
+	ROM_LOAD16_BYTE( "m2s1x1a.u33", 0x700001, 0x080000, CRC(c5b71bb2) SHA1(874e2a2e19cd8f916afa6fcf54169a8db035fe64) )
+
+	ROM_REGION( 0x440000, REGION_GFX2, ROMREGION_DISPOSE )	/* Tiles (scrambled) */
+	ROM_LOAD( "m2-300-0.u89",      0x000000, 0x200000, CRC(4dc42fbb) SHA1(f14c287bc60f561eb9a57db4e3390aae9a81c392) )
+	ROM_LOAD( "m2-301-0.u90",      0x200000, 0x200000, CRC(f4e894f2) SHA1(1f983a1d93845fe298afba60d4dacdd1a10cab7f) )
+	ROM_LOAD16_BYTE( "m2b0x0.u93", 0x400000, 0x020000, CRC(e023d51b) SHA1(3c9f591f3ca2ee8e1100b83ae8eb593e11e6eac7) )
+	ROM_LOAD16_BYTE( "m2b1x0.u94", 0x400001, 0x020000, CRC(03c48bdb) SHA1(f5ba45d026530d46f760cf06d02a1ffcca89aa3c) )
+
+	ROM_REGION( 0x440000, REGION_GFX3, ROMREGION_DISPOSE )	/* Tiles (scrambled) */
+	ROM_LOAD( "m2-300-0.u89",      0x000000, 0x200000, CRC(4dc42fbb) SHA1(f14c287bc60f561eb9a57db4e3390aae9a81c392) )
+	ROM_LOAD( "m2-301-0.u90",      0x200000, 0x200000, CRC(f4e894f2) SHA1(1f983a1d93845fe298afba60d4dacdd1a10cab7f) )
+	ROM_LOAD16_BYTE( "m2b0x0.u93", 0x400000, 0x020000, CRC(e023d51b) SHA1(3c9f591f3ca2ee8e1100b83ae8eb593e11e6eac7) )
+	ROM_LOAD16_BYTE( "m2b1x0.u94", 0x400001, 0x020000, CRC(03c48bdb) SHA1(f5ba45d026530d46f760cf06d02a1ffcca89aa3c) )
+
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* Samples */
+	ROM_LOAD( "m2-100-0.u48",      0x000000, 0x100000, CRC(5250fa45) SHA1(b1ad4660906997faea0aa89866de01a0e9f2b61d) )
+
+	ROM_REGION( 0x080000, REGION_SOUND2, 0 )	/* Samples */
+	ROM_LOAD( "m2w1x0.u47",        0x040000, 0x040000, CRC(1b0513c5) SHA1(8c9ddef19297e1b39d900297005203b7ff28667e) )
+ROM_END
+
+ROM_START( gtmr2a )
+ 	ROM_REGION( 0x100000, REGION_CPU1, 0 )			/* 68000 Code */
 	ROM_LOAD16_BYTE( "m2p0x1.u8",  0x000000, 0x080000, CRC(525f6618) SHA1(da8008cc7768b4e8c0091aa3ea21752d0ca33691) )
 	ROM_LOAD16_BYTE( "m2p1x1.u7",  0x000001, 0x080000, CRC(914683e5) SHA1(dbb2140f7de86073647abc6e73ba739ea201dd30) )
 
@@ -3799,7 +3836,6 @@ ROM_START( gtmr2 )
 	ROM_REGION( 0x080000, REGION_SOUND2, 0 )	/* Samples */
 	ROM_LOAD( "m2w1x0.u47",        0x040000, 0x040000, CRC(1b0513c5) SHA1(8c9ddef19297e1b39d900297005203b7ff28667e) )
 ROM_END
-
 
 /***************************************************************************
 
@@ -4378,7 +4414,8 @@ GAME( 1992, sandscrp, 0,        sandscrp, sandscrp, 0,        ROT90, "Face",   "
 GAME( 1994, gtmr,     0,        gtmr,     gtmr,     kaneko16, ROT0,  "Kaneko", "Great 1000 Miles Rally" )
 GAME( 1994, gtmre,    gtmr,     gtmr,     gtmr,     kaneko16, ROT0,  "Kaneko", "Great 1000 Miles Rally (Evolution Model)" )
 GAME( 1994, gtmrusa,  gtmr,     gtmr,     gtmr,     kaneko16, ROT0,  "Kaneko", "Great 1000 Miles Rally (USA)" )
-GAME( 1995, gtmr2,    0,        gtmr2,    gtmr2,    kaneko16, ROT0,  "Kaneko", "Mille Miglia 2: Great 1000 Miles Rally" )
+GAME( 1995, gtmr2,    0,        gtmr2,    gtmr2,    kaneko16, ROT0,  "Kaneko", "Mille Miglia 2: Great 1000 Miles Rally (95/05/24)" )
+GAME( 1995, gtmr2a,   gtmr2,    gtmr2,    gtmr2,    kaneko16, ROT0,  "Kaneko", "Mille Miglia 2: Great 1000 Miles Rally (95/04/04)" )
 
 /* Non-working games (mainly due to protection) */
 

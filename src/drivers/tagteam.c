@@ -156,8 +156,8 @@ INPUT_PORTS_START( bigprowr )
 
 	PORT_START      /* DSW2 */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x01, "Normal" )
-	PORT_DIPSETTING(    0x00, "Hard" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hard ) )
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -226,8 +226,8 @@ INPUT_PORTS_START( tagteam )
 
 	PORT_START      /* DSW2 */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x01, "Normal" )
-	PORT_DIPSETTING(    0x00, "Hard" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hard ) )
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )

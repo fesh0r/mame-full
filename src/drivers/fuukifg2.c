@@ -204,14 +204,14 @@ INPUT_PORTS_START( gogomile )
 	PORT_DIPSETTING(      0x0002, DEF_STR( On ) )
 	PORT_DIPNAME( 0x000c, 0x000c, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(      0x0000, "Easy?"    )	// 0
-	PORT_DIPSETTING(      0x000c, "Normal"   )	// 1
+	PORT_DIPSETTING(      0x000c, DEF_STR( Normal )   )	// 1
 	PORT_DIPSETTING(      0x0008, "Hard?"    )	// 2
 	PORT_DIPSETTING(      0x0004, "Hardest?" )	// 3
 	PORT_DIPNAME( 0x0030, 0x0020, "Country" )	// Default Country: USA
 	PORT_DIPSETTING(      0x0010, "China" )
-	PORT_DIPSETTING(      0x0030, "Japan"  )
+	PORT_DIPSETTING(      0x0030, DEF_STR( Japan )  )
 	PORT_DIPSETTING(      0x0000, "Korea" )
-	PORT_DIPSETTING(      0x0020, "USA"    )
+	PORT_DIPSETTING(      0x0020, DEF_STR( USA )    )
 	PORT_DIPNAME( 0x00c0, 0x00c0, DEF_STR( Lives ) )
 	PORT_DIPSETTING(      0x0000, "2" )
 	PORT_DIPSETTING(      0x00c0, "3" )
@@ -288,14 +288,14 @@ INPUT_PORTS_START( gogomilj )
 	PORT_DIPSETTING(      0x0002, DEF_STR( On ) )
 	PORT_DIPNAME( 0x000c, 0x000c, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(      0x0000, "Easy?"    )	// 0
-	PORT_DIPSETTING(      0x000c, "Normal"   )	// 1
+	PORT_DIPSETTING(      0x000c, DEF_STR( Normal )   )	// 1
 	PORT_DIPSETTING(      0x0008, "Hard?"    )	// 2
 	PORT_DIPSETTING(      0x0004, "Hardest?" )	// 3
 	PORT_DIPNAME( 0x0030, 0x0030, "Country" )	// Default Country: Japan
 	PORT_DIPSETTING(      0x0010, "China" )
-	PORT_DIPSETTING(      0x0030, "Japan"  )
+	PORT_DIPSETTING(      0x0030, DEF_STR( Japan )  )
 	PORT_DIPSETTING(      0x0000, "Korea" )
-	PORT_DIPSETTING(      0x0020, "USA"    )
+	PORT_DIPSETTING(      0x0020, DEF_STR( USA )    )
 	PORT_DIPNAME( 0x00c0, 0x00c0, DEF_STR( Lives ) )
 	PORT_DIPSETTING(      0x0000, "2" )
 	PORT_DIPSETTING(      0x00c0, "3" )
@@ -371,13 +371,13 @@ INPUT_PORTS_START( pbancho )
 	PORT_DIPSETTING(      0x0002, DEF_STR( On ) )
 	PORT_DIPNAME( 0x001c, 0x001c, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(      0x0008, "Easiest" )	// 1
-	PORT_DIPSETTING(      0x0010, "Easy"    )	// 2
-	PORT_DIPSETTING(      0x001c, "Normal"  )	// 3
-	PORT_DIPSETTING(      0x0018, "Hard"    )	// 4
-	PORT_DIPSETTING(      0x0004, "Hardest" )	// 5
-//	PORT_DIPSETTING(      0x0000, "Normal"  )	// 3
-//	PORT_DIPSETTING(      0x000c, "Normal"  )	// 3
-//	PORT_DIPSETTING(      0x0014, "Normal"  )	// 3
+	PORT_DIPSETTING(      0x0010, DEF_STR( Easy )    )	// 2
+	PORT_DIPSETTING(      0x001c, DEF_STR( Normal )  )	// 3
+	PORT_DIPSETTING(      0x0018, DEF_STR( Hard )    )	// 4
+	PORT_DIPSETTING(      0x0004, DEF_STR( Hardest ) )	// 5
+//	PORT_DIPSETTING(      0x0000, DEF_STR( Normal )  )	// 3
+//	PORT_DIPSETTING(      0x000c, DEF_STR( Normal )  )	// 3
+//	PORT_DIPSETTING(      0x0014, DEF_STR( Normal )  )	// 3
 	PORT_DIPNAME( 0x0060, 0x0060, "Lives (Vs Mode)" )
 	PORT_DIPSETTING(      0x0000, "1" )	// 1 1
 	PORT_DIPSETTING(      0x0060, "2" )	// 2 3

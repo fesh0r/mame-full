@@ -361,10 +361,10 @@ ADDRESS_MAP_END
 
 #define TAITO_DIFFICULTY_8 \
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) ) \
-	PORT_DIPSETTING(    0x02, "Easy" ) \
-	PORT_DIPSETTING(    0x03, "Medium" ) \
-	PORT_DIPSETTING(    0x01, "Hard" ) \
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Easy ) ) \
+	PORT_DIPSETTING(    0x03, DEF_STR( Medium ) ) \
+	PORT_DIPSETTING(    0x01, DEF_STR( Hard ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 
 #define ASUKA_PLAYERS_INPUT( player ) \
 	PORT_START \
@@ -446,7 +446,7 @@ INPUT_PORTS_START( bonzeadv )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x10, "4" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x40, 0x00, "Allow Continue" )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
@@ -509,7 +509,7 @@ INPUT_PORTS_START( jigkmgri ) /* coinage DIPs differ from bonzeadv */
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x10, "4" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x40, 0x00, "Allow Continue" )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
@@ -579,7 +579,7 @@ INPUT_PORTS_START( asuka )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0xc0, 0x40, "Allow Continue" )
+	PORT_DIPNAME( 0xc0, 0x40, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0xc0, "Up to Level 2" )
 	PORT_DIPSETTING(    0x80, "Up to Level 3" )

@@ -1971,61 +1971,7 @@ static void coco3_sam_set_maptype(int val)
 	coco3_mmu_update(4, 8);
 }
 
-/***************************************************************************
-  Joystick autocenter
-***************************************************************************/
 
-struct autocenter_info
-{
-	int dipport;
-	int dipmask;
-	int old_value;
-};
-
-static void autocenter_timer_proc(int data)
-{
-	struct InputPort *in;
-	struct autocenter_info *info;
-	int portval;
-
-	info = (struct autocenter_info *) data;
-	portval = readinputport(info->dipport) & info->dipmask;
-
-	if (info->old_value != portval)
-	{
-		/* Now go through all inputs, and set or reset u.analog.center on all
-		 * joysticks
-		 */
-		for (in = Machine->input_ports; in->type != IPT_END; in++)
-		{
-			if (((in->type) > IPT_ANALOG_START)
-					&& ((in->type) < IPT_ANALOG_END))
-			{
-				/* We found a joystick */
-				if (portval)
-					in->u.analog.center = 1;
-				else
-					in->u.analog.center = 0;
-			}
-		}
-		info->old_value = portval;
-	}
-}
-
-static void autocenter_init(int dipport, int dipmask)
-{
-	struct autocenter_info *info;
-
-	info = (struct autocenter_info *) auto_malloc(sizeof(struct autocenter_info));
-	if (!info)
-		return;	/* ACK */
-
-	info->dipport = dipport;
-	info->dipmask = dipmask;
-	info->old_value = -1;
-
-	timer_pulse(TIME_IN_HZ(60), (int) info, autocenter_timer_proc);
-}
 
 /***************************************************************************
   Cartridge Expansion Slot
@@ -2205,7 +2151,6 @@ static void generic_init_machine(struct pia6821_interface *piaintf, struct sam68
 	    cartslottype = (count_bank() > 0) ? &cartridge_banks : &cartridge_standard;
 
 	coco_cartrige_init(cart_inserted ? cartslottype : cartinterface, cartcallback);
-	autocenter_init(12, 0x04);
 }
 
 MACHINE_INIT( dragon32 )

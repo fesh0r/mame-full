@@ -702,8 +702,8 @@ INPUT_PORTS_START( commsega )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Difficulty ) )		// Check code at 0x1fc5
-	PORT_DIPSETTING(    0x40, "Easy" )					// 16 flying enemies to kill
-	PORT_DIPSETTING(    0x00, "Hard" )					// 24 flying enemies to kill
+	PORT_DIPSETTING(    0x40, DEF_STR( Easy ) )					// 16 flying enemies to kill
+	PORT_DIPSETTING(    0x00, DEF_STR( Hard ) )					// 24 flying enemies to kill
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )

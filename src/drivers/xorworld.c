@@ -132,10 +132,10 @@ INPUT_PORTS_START( xorworld )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )	
 	//PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SPECIAL )	// used for accessing the NVRAM
 	PORT_DIPNAME( 0x60, 0x40, DEF_STR( Difficulty ) )	
-	PORT_DIPSETTING(    0x40, "Easy" )
-	PORT_DIPSETTING(    0x60, "Normal" )
-	PORT_DIPSETTING(    0x20, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
 	PORT_START	// IN0

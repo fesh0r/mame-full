@@ -813,6 +813,38 @@ static ADDRESS_MAP_START( hunchbkg_io, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(S2650_SENSE_PORT, S2650_SENSE_PORT) AM_READ(input_port_3_r)
 ADDRESS_MAP_END
 
+static ADDRESS_MAP_START( harem_cpu1, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_ROM
+	AM_RANGE(0x2000, 0x27ff) AM_RAM
+	AM_RANGE(0x4000, 0x47ff) AM_RAM
+	AM_RANGE(0x4800, 0x4fff) AM_READWRITE(galaxian_videoram_r, galaxian_videoram_w) AM_BASE(&galaxian_videoram)
+	AM_RANGE(0x5000, 0x5000) AM_WRITENOP
+	AM_RANGE(0x5800, 0x5800) AM_READWRITE(MRA8_NOP, interrupt_enable_w)
+	AM_RANGE(0x5801, 0x5807) AM_WRITENOP
+	AM_RANGE(0x6101, 0x6101) AM_READ(input_port_0_r)
+	AM_RANGE(0x6102, 0x6102) AM_READ(input_port_1_r)
+	AM_RANGE(0x6103, 0x6103) AM_WRITENOP
+	AM_RANGE(0x6200, 0x6203) AM_WRITENOP AM_BASE(&galaxian_attributesram)
+	AM_RANGE(0x8000, 0x9fff) AM_ROM
+	AM_RANGE(0xffe6, 0xffff) AM_RAM AM_BASE(&galaxian_spriteram) AM_SIZE(&galaxian_spriteram_size)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( harem_cpu2, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x2fff) AM_ROM
+	AM_RANGE(0x8000, 0x83ff) AM_RAM
+	AM_RANGE(0xa000, 0xa000) AM_WRITENOP
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( harem_cpu2_io, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x04, 0x04) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x08, 0x08) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x10, 0x10) AM_WRITE(AY8910_control_port_1_w)
+	AM_RANGE(0x20, 0x20) AM_WRITE(AY8910_write_port_1_w)
+	AM_RANGE(0x40, 0x40) AM_WRITE(AY8910_control_port_2_w)
+	AM_RANGE(0x80, 0x80) AM_WRITE(AY8910_write_port_2_w)
+	AM_RANGE(0x80, 0x80) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
+
 
 INPUT_PORTS_START( galaxian )
 	PORT_START      /* IN0 */
@@ -932,8 +964,8 @@ INPUT_PORTS_START( swarm )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x04, "4" )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Difficulty ) )	/* aliens "flying" simultaneously */
-	PORT_DIPSETTING(    0x00, "Easy" )				/* less aliens */
-	PORT_DIPSETTING(    0x08, "Hard" )				/* more aliens */
+	PORT_DIPSETTING(    0x00, DEF_STR( Easy ) )				/* less aliens */
+	PORT_DIPSETTING(    0x08, DEF_STR( Hard ) )				/* more aliens */
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
@@ -1057,8 +1089,8 @@ INPUT_PORTS_START( zerotime )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x04, "5" )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Difficulty ) )	/* player's bullet speed */
-	PORT_DIPSETTING(    0x00, "Easy" )				/* gap of 6 pixels */
-	PORT_DIPSETTING(    0x08, "Hard" )				/* gap of 8 pixels */
+	PORT_DIPSETTING(    0x00, DEF_STR( Easy ) )				/* gap of 6 pixels */
+	PORT_DIPSETTING(    0x08, DEF_STR( Hard ) )				/* gap of 8 pixels */
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
@@ -1095,8 +1127,8 @@ INPUT_PORTS_START( pisces )
 	PORT_DIPSETTING(    0x02, "A 2C/1C  B 1C/3C" )
 	PORT_DIPSETTING(    0x00, "A 1C/1C  B 1C/6C" )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x00, "Easy" )
-	PORT_DIPSETTING(    0x04, "Hard" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Hard ) )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
@@ -1137,8 +1169,8 @@ INPUT_PORTS_START( piscesb )
 	PORT_DIPSETTING(    0x02, "A 2C/1C  B 1C/2C 2C/5C" )
 	PORT_DIPSETTING(    0x00, "A 1C/1C  B 1C/5C" )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x00, "Easy" )
-	PORT_DIPSETTING(    0x04, "Hard" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Hard ) )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
@@ -1503,8 +1535,8 @@ INPUT_PORTS_START( pacmanbl )
 	PORT_DIPSETTING(    0x00, "15000" )
 	PORT_DIPSETTING(    0x01, "20000" )
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x00, "Easy" )
-	PORT_DIPSETTING(    0x02, "Hard" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Hard ) )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x04, "5" )
@@ -1659,7 +1691,7 @@ INPUT_PORTS_START( jumpbug )
 	PORT_DIPSETTING(    0x01, "3" )
 	PORT_DIPSETTING(    0x02, "4" )
 	PORT_DIPSETTING(    0x03, "5" )
-	PORT_BIT( 0,       0x00, IPT_DIPSWITCH_SETTING ) PORT_NAME("Infinite") PORT_CHEAT
+	PORT_BIT( 0,       0x00, IPT_DIPSWITCH_SETTING ) PORT_NAME(DEF_STR( Infinite )) PORT_CHEAT
 	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x04, "A 2C/1C  B 2C/1C" )
 	PORT_DIPSETTING(    0x08, "A 2C/1C  B 1C/3C" )
@@ -1754,10 +1786,10 @@ INPUT_PORTS_START( azurian )
 
 	PORT_START      /* fake port to handle routine at 0x05b3 that stores value at 0x40f4 */
 	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x03, "Easy" )
-	PORT_DIPSETTING(    0x01, "Normal" )
-	PORT_DIPSETTING(    0x02, "Hard" )
-	PORT_DIPSETTING(    0x00, "Very hard" )
+	PORT_DIPSETTING(    0x03, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Very_Hard ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( orbitron )
@@ -1949,9 +1981,9 @@ INPUT_PORTS_START( dingo )
 	PORT_START	/* DSW */
 	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x00, "Easiest" )
-	PORT_DIPSETTING(    0x01, "Easy" )
-	PORT_DIPSETTING(    0x02, "Hard" )
-	PORT_DIPSETTING(    0x03, "Hardest" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( Hardest ) )
  	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x04, "4" )
@@ -1985,9 +2017,9 @@ INPUT_PORTS_START( mooncrst )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "30000" )
 	PORT_DIPSETTING(    0x40, "50000" )
-	PORT_DIPNAME( 0x80, 0x80, "Language" )
-	PORT_DIPSETTING(    0x80, "English" )
-	PORT_DIPSETTING(    0x00, "Japanese" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Language ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( English ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Japanese ) )
 
 	PORT_START	/* DSW */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coin_A ) )
@@ -2026,9 +2058,9 @@ INPUT_PORTS_START( mooncrsg )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "30000" )
 	PORT_DIPSETTING(    0x40, "50000" )
-//	PORT_DIPNAME( 0x80, 0x80, "Language" )			Always "English" due to code at 0x2f77
-//	PORT_DIPSETTING(    0x80, "English" )
-//	PORT_DIPSETTING(    0x00, "English" )
+//	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Language ) )			Always DEF_STR( English ) due to code at 0x2f77
+//	PORT_DIPSETTING(    0x80, DEF_STR( English ) )
+//	PORT_DIPSETTING(    0x00, DEF_STR( English ) )
 
 	PORT_START	/* DSW */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coin_A ) )
@@ -2067,9 +2099,9 @@ INPUT_PORTS_START( smooncrs )
 //	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Bonus_Life ) )	Always "50000" due to code at 0x2f68
 //	PORT_DIPSETTING(    0x00, "30000" )
 //	PORT_DIPSETTING(    0x40, "50000" )
-//	PORT_DIPNAME( 0x80, 0x80, "Language" )			Always "English" due to code at 0x2f53
-//	PORT_DIPSETTING(    0x80, "English" )
-//	PORT_DIPSETTING(    0x00, "Japanese" )
+//	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Language ) )			Always DEF_STR( English ) due to code at 0x2f53
+//	PORT_DIPSETTING(    0x80, DEF_STR( English ) )
+//	PORT_DIPSETTING(    0x00, DEF_STR( Japanese ) )
 
 	PORT_START	/* DSW */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coin_A ) )
@@ -2108,9 +2140,9 @@ INPUT_PORTS_START( mooncrsa )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "30000" )
 	PORT_DIPSETTING(    0x40, "50000" )
-	PORT_DIPNAME( 0x80, 0x80, "Language" )
-	PORT_DIPSETTING(    0x80, "English" )
-	PORT_DIPSETTING(    0x00, "Japanese" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Language ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( English ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Japanese ) )
 
 	PORT_START	/* DSW */
 //	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coin_A ) )		Not used due to code at 0x01c0
@@ -2149,9 +2181,9 @@ INPUT_PORTS_START( fantazia )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "30000" )
 	PORT_DIPSETTING(    0x40, "50000" )
-//	PORT_DIPNAME( 0x80, 0x80, "Language" )			Always "English" due to code at 0x2f53
-//	PORT_DIPSETTING(    0x80, "English" )
-//	PORT_DIPSETTING(    0x00, "Japanese" )
+//	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Language ) )			Always DEF_STR( English ) due to code at 0x2f53
+//	PORT_DIPSETTING(    0x80, DEF_STR( English ) )
+//	PORT_DIPSETTING(    0x00, DEF_STR( Japanese ) )
 
 	PORT_START	/* DSW */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coin_B ) )
@@ -2191,9 +2223,9 @@ INPUT_PORTS_START( eagle )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "30000" )
 	PORT_DIPSETTING(    0x40, "50000" )
-	PORT_DIPNAME( 0x80, 0x80, "Language" )
-	PORT_DIPSETTING(    0x80, "English" )
-	PORT_DIPSETTING(    0x00, "Japanese" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Language ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( English ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Japanese ) )
 
 	PORT_START	/* DSW */
 //	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coin_A ) )		Not used due to code at 0x01c0
@@ -2232,9 +2264,9 @@ INPUT_PORTS_START( eagle2 )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "30000" )
 	PORT_DIPSETTING(    0x40, "50000" )
-	PORT_DIPNAME( 0x80, 0x80, "Language" )
-	PORT_DIPSETTING(    0x80, "English" )
-	PORT_DIPSETTING(    0x00, "Japanese" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Language ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( English ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Japanese ) )
 
 	PORT_START	/* DSW */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ) )
@@ -2287,9 +2319,9 @@ INPUT_PORTS_START( mooncrgx )
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
-//	PORT_DIPNAME( 0x04, 0x04, "Language" )			Always "English" due to code removed at 0x2f4b
-//	PORT_DIPSETTING(    0x04, "English" )
-//	PORT_DIPSETTING(    0x00, "Japanese" )
+//	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Language ) )			Always DEF_STR( English ) due to code removed at 0x2f4b
+//	PORT_DIPSETTING(    0x04, DEF_STR( English ) )
+//	PORT_DIPSETTING(    0x00, DEF_STR( Japanese ) )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
@@ -2327,7 +2359,7 @@ INPUT_PORTS_START( skybase )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
-	PORT_BIT( 0,       0x03, IPT_DIPSWITCH_SETTING ) PORT_NAME("Infinite") PORT_CHEAT
+	PORT_BIT( 0,       0x03, IPT_DIPSWITCH_SETTING ) PORT_NAME(DEF_STR( Infinite )) PORT_CHEAT
 	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "10000" )
 	PORT_DIPSETTING(    0x04, "15000" )
@@ -2397,10 +2429,10 @@ INPUT_PORTS_START( moonqsr )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(2)
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x00, "Easy" )
-	PORT_DIPSETTING(    0x40, "Medium" )
-	PORT_DIPSETTING(    0x80, "Hard" )
-	PORT_DIPSETTING(    0xc0, "Hardest" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Medium ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( Hardest ) )
 
 	PORT_START      /* DSW1 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coin_A ) )
@@ -2573,10 +2605,10 @@ INPUT_PORTS_START( scorpnmc )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_8WAY PORT_COCKTAIL
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_COCKTAIL
 	PORT_DIPNAME( 0xc0, 0x40, DEF_STR( Difficulty ) )	// Check code at 0x0118
-	PORT_DIPSETTING(	0x00, "Easy" )
-	PORT_DIPSETTING(	0x40, "Normal" )
-	PORT_DIPSETTING(	0x80, "Hard" )
-	PORT_DIPSETTING(	0xc0, "Hardest" )
+	PORT_DIPSETTING(	0x00, DEF_STR( Easy ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( Normal ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( Hard ) )
+	PORT_DIPSETTING(	0xc0, DEF_STR( Hardest ) )
 
 	PORT_START      /* DSW0? - 0xb001 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -2805,13 +2837,13 @@ INPUT_PORTS_START( bagmanmc )
 	PORT_DIPSETTING(	0x00, "A 2C/1C  B 1C/1C" )
 	PORT_DIPSETTING(	0x04, "A 1C/1C  B 1C/2C" )
 	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(	0x18, "Easy" )
-	PORT_DIPSETTING(	0x10, "Medium" )
-	PORT_DIPSETTING(	0x08, "Hard" )
-	PORT_DIPSETTING(	0x00, "Hardest" )
-	PORT_DIPNAME( 0x20, 0x20, "Language" )
-	PORT_DIPSETTING(	0x20, "English" )
-	PORT_DIPSETTING(	0x00, "French" )
+	PORT_DIPSETTING(	0x18, DEF_STR( Easy ) )
+	PORT_DIPSETTING(	0x10, DEF_STR( Medium ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( Hard ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Hardest ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Language ) )
+	PORT_DIPSETTING(	0x20, DEF_STR( English ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( French ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(	0x40, "30000" )
 	PORT_DIPSETTING(	0x00, "40000" )
@@ -3060,9 +3092,9 @@ INPUT_PORTS_START( ladybugg )
 	PORT_START /* DSW */
 	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x00, "Easiest" )
-	PORT_DIPSETTING(    0x01, "Easy" )
-	PORT_DIPSETTING(    0x02, "Hard" )
-	PORT_DIPSETTING(    0x03, "Hardest" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x04, "4" )
@@ -3333,6 +3365,60 @@ INPUT_PORTS_START( hunchbkg )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( harem )
+	PORT_START
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x02, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( On ) )
+	
+	PORT_START
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x02, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( On ) )
+INPUT_PORTS_END
+
 static struct GfxLayout galaxian_charlayout =
 {
 	8,8,
@@ -3499,6 +3585,16 @@ static struct AY8910interface bongo_ay8910_interface =
 	1789750,	/* 1.78975 MHz? */
 	{ 50 },
 	{ input_port_3_r },
+	{ 0 },
+	{ 0 },
+	{ 0 }
+};
+
+static struct AY8910interface harem_ay8910_interface = {
+	3,            /* number of chips */
+	2000000,      /* 2 MHz? */
+	{ 33,33,33 }, /* volume */
+	{ 0 },
 	{ 0 },
 	{ 0 },
 	{ 0 }
@@ -3994,6 +4090,27 @@ static MACHINE_DRIVER_START( hunchbkg )
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(CUSTOM, galaxian_custom_interface)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( harem )
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(galaxian_base)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PROGRAM_MAP(harem_cpu1,0)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_CPU_ADD(Z80, 1620000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_PROGRAM_MAP(harem_cpu2,0)
+	MDRV_CPU_IO_MAP(harem_cpu2_io,0)
+
+	MDRV_MACHINE_INIT(NULL)
+
+	MDRV_PALETTE_INIT(rockclim)
+	MDRV_PALETTE_LENGTH(32)
+
+	MDRV_VIDEO_START(galaxian_plain)
+	MDRV_SOUND_ADD(AY8910, harem_ay8910_interface)
 MACHINE_DRIVER_END
 
 /***************************************************************************
@@ -5582,6 +5699,28 @@ ROM_START( hunchbkg )
 	ROM_LOAD( "gal_hb_cp",    0x0000, 0x0020, CRC(cbff6762) SHA1(4515a6e12a0a5c485a55291feee17a571120a549) )
 ROM_END
 
+ROM_START( harem )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) 
+	ROM_LOAD( "p0_ic85.bin",  0x0000, 0x2000, CRC(4521b753) SHA1(9033f9c3be8fec1e5ff251e9f60faaf3848a1a1e) )
+	/* probably encrypted not bad dumped */
+	ROM_LOAD( "p1_ic87.bin",  0x8000, 0x2000, BAD_DUMP CRC(3cc5d1e8) SHA1(827e2d20de2a00ec016ead249ed3afdccd0c856c) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
+	ROM_LOAD( "s1_ic12.bin",  0x0000, 0x2000, CRC(b54799dd) SHA1(b6aeb010257cba48a52afd33b4f8031c7d99550c) )
+	ROM_LOAD( "s2_ic13.bin",  0x2000, 0x1000, CRC(2d5573a4) SHA1(1fdcd99d89e078509634742b2116a35bb199fe4b) )
+
+	ROM_REGION( 0x2000, REGION_SOUND1, 0 )
+	ROM_LOAD( "a1_ic25.bin",  0x0000, 0x2000, CRC(279f923a) SHA1(166b1b625997766f0de7cc18af52c42268022fcb) )
+
+	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "m0_ic36.bin",  0x0000, 0x2000, CRC(64b3c6d6) SHA1(e71092585f7ffdae85b2a4c9add1bc71e5a608a8) )
+	ROM_LOAD( "m1_ic37.bin",  0x2000, 0x2000, CRC(cb0324fb) SHA1(61612f683810339d5d5f31daa4c475d0338d446f) )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "harem.clr",    0x0000, 0x0020, CRC(c9a2bf73) SHA1(dad65ebf43a5df147e334afd552e67f5fcd26df7) )
+ROM_END
+
+
 GAME( 1979, galaxian, 0,        galaxian, galaxian, 0,        ROT90,  "Namco", "Galaxian (Namco set 1)" )
 GAME( 1979, galaxiaj, galaxian, galaxian, superg,   0,        ROT90,  "Namco", "Galaxian (Namco set 2)" )
 GAME( 1979, galmidw,  galaxian, galaxian, galaxian, 0,        ROT90,  "[Namco] (Midway license)", "Galaxian (Midway)" )
@@ -5659,3 +5798,4 @@ GAME( 1984, drivfrcg, drivfrcp, drivfrcg, drivfrcg, 0,		  ROT90,  "Shinkai Inc. 
 GAME( 1985, drivfrcb, drivfrcp, drivfrcg, drivfrcg, 0,		  ROT90,  "bootleg", "Driving Force (Galaxian conversion bootleg)" )
 GAME( 1983, bongo,    0,		bongo,    bongo,	0,		  ROT90,  "Jetsoft", "Bongo" )
 GAME( 1983, hunchbkg, hunchbak,	hunchbkg, hunchbkg, 0,		  ROT90,  "Century Electronics", "Hunchback (Galaxian hardware)" )
+GAMEX(1983, harem,    0,        harem,    harem,    0,        ROT90,  "I.G.R.", "Harem", GAME_NO_SOUND | GAME_NOT_WORKING )

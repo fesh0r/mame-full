@@ -138,11 +138,11 @@ INPUT_PORTS_START( berzerk )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
 	PORT_BIT( 0x3c, IP_ACTIVE_LOW,  IPT_UNUSED )
-	PORT_DIPNAME( 0xc0, 0x00, "Language" )
-	PORT_DIPSETTING(    0x00, "English" )
-	PORT_DIPSETTING(    0x40, "German" )
-	PORT_DIPSETTING(    0x80, "French" )
-	PORT_DIPSETTING(    0xc0, "Spanish" )
+	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Language ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( English ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( German ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( French ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( Spanish ) )
 
 	PORT_START      /* IN5 */
 	PORT_BIT(    0x03, 0x00, IPT_DIPSWITCH_NAME ) PORT_NAME("Color Test") PORT_CODE(KEYCODE_F5) PORT_TOGGLE
@@ -223,11 +223,11 @@ INPUT_PORTS_START( frenzy )
 	PORT_DIPSETTING(    0x0f, "15000" )
 	PORT_DIPSETTING(    0x00, "None" )
 	PORT_BIT( 0x30, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_DIPNAME( 0xc0, 0x00, "Language" )
-	PORT_DIPSETTING(    0x00, "English" )
-	PORT_DIPSETTING(    0x40, "German" )
-	PORT_DIPSETTING(    0x80, "French" )
-	PORT_DIPSETTING(    0xc0, "Spanish" )
+	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Language ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( English ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( German ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( French ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( Spanish ) )
 
 	PORT_START      /* IN5 */
 	PORT_BIT( 0x03, IP_ACTIVE_HIGH, IPT_UNUSED )  /* Bit 0 does some more hardware tests */

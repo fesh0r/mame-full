@@ -661,10 +661,10 @@ INPUT_PORTS_START( ddragon )
 
 	PORT_START      /* DSW1 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x01, "Easy" )
-	PORT_DIPSETTING(    0x03, "Medium" )
-	PORT_DIPSETTING(    0x02, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( Medium ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
@@ -680,7 +680,7 @@ INPUT_PORTS_START( ddragon )
 	PORT_DIPSETTING(    0xc0, "2" )
 	PORT_DIPSETTING(    0x80, "3" )
 	PORT_DIPSETTING(    0x40, "4" )
-	PORT_BIT( 0,       0x00, IPT_DIPSWITCH_SETTING ) PORT_NAME("Infinite") PORT_CHEAT
+	PORT_BIT( 0,       0x00, IPT_DIPSWITCH_SETTING ) PORT_NAME(DEF_STR( Infinite )) PORT_CHEAT
 
 	COMMON_PORT4
 INPUT_PORTS_END
@@ -692,16 +692,16 @@ INPUT_PORTS_START( ddragon2 )
 
 	PORT_START      /* DSW1 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x01, "Easy" )
-	PORT_DIPSETTING(    0x03, "Medium" )
-	PORT_DIPSETTING(    0x02, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( Medium ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x08, "Hurricane Kick" )
-	PORT_DIPSETTING(    0x00, "Easy" )
-	PORT_DIPSETTING(    0x08, "Normal" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Normal ) )
 	PORT_DIPNAME( 0x30, 0x30, "Timer" )
 	PORT_DIPSETTING(    0x00, "60" )
 	PORT_DIPSETTING(    0x10, "65" )
@@ -734,10 +734,10 @@ INPUT_PORTS_START( ddungeon )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0xf0, 0x90, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0xf0, "Easy" )
-	PORT_DIPSETTING(    0x90, "Medium" )
-	PORT_DIPSETTING(    0x70, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0xf0, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x90, DEF_STR( Medium ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 
 	COMMON_PORT4
 INPUT_PORTS_END
@@ -799,10 +799,10 @@ INPUT_PORTS_START( toffy )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_DIPNAME( 0xc0, 0x80, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0xc0, "Easy" )
-	PORT_DIPSETTING(    0x80, "Normal" )
-	PORT_DIPSETTING(    0x40, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0xc0, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 
 	COMMON_PORT4
 INPUT_PORTS_END
@@ -867,7 +867,7 @@ static struct MSM5205interface msm5205_interface =
 	384000,				/* 384KHz             */
 	{ dd_adpcm_int, dd_adpcm_int },/* interrupt function */
 	{ MSM5205_S48_4B, MSM5205_S48_4B },	/* 8kHz */
-	{ 40, 40 }				/* volume */
+	{ 50, 50 }				/* adjusted sound fx volume */
 };
 
 static struct OKIM6295interface okim6295_interface =
@@ -875,7 +875,7 @@ static struct OKIM6295interface okim6295_interface =
 	1,              /* 1 chip */
 	{ 8000 },           /* frequency (Hz) */
 	{ REGION_SOUND1 },  /* memory region */
-	{ 15 }
+	{ 20 }	/* adjusted sound fx volume */
 };
 
 static INTERRUPT_GEN( ddragon_interrupt )

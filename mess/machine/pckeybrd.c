@@ -483,9 +483,6 @@ void at_keyboard_polling(void)
 
 	if (keyboard.on)
 	{
-		/* scan input ports */
-		update_input_ports();
-
 		/* add codes for keys that are set */
 		for( i = 0x01; i < 0x80; i++  )
 		{

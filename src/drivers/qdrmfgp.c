@@ -488,10 +488,10 @@ INPUT_PORTS_START( qdrmfgp )
 	PORT_DIPSETTING(      0x2000, "Once Every 4Cycles" )
 	PORT_DIPSETTING(      0x0000, "Completely Off" )
 	PORT_DIPNAME( 0xc000, 0x4000, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0xc000, "Easy" )
-	PORT_DIPSETTING(      0x4000, "Medium" )
-	PORT_DIPSETTING(      0x8000, "Hard" )
-	PORT_DIPSETTING(      0x0000, "Very Hard" )
+	PORT_DIPSETTING(      0xc000, DEF_STR( Easy ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Medium ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Hard ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Very_Hard ) )
 
 	PORT_START
 	PORT_BIT( 0x0003, IP_ACTIVE_LOW, IPT_SPECIAL )		/* battery power sensor */
@@ -568,10 +568,10 @@ INPUT_PORTS_START( qdrmfgp2 )
 	PORT_DIPSETTING(      0x2000, "Once Every 4Cycles" )
 	PORT_DIPSETTING(      0x0000, "Completely Off" )
 	PORT_DIPNAME( 0xc000, 0x4000, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0xc000, "Easy" )
-	PORT_DIPSETTING(      0x4000, "Medium" )
-	PORT_DIPSETTING(      0x8000, "Hard" )
-	PORT_DIPSETTING(      0x0000, "Very Hard" )
+	PORT_DIPSETTING(      0xc000, DEF_STR( Easy ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Medium ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Hard ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Very_Hard ) )
 
 	PORT_START
 	PORT_BIT( 0x0003, IP_ACTIVE_LOW, IPT_SPECIAL )		/* battery power sensor */

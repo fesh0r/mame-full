@@ -119,7 +119,8 @@ static const char *mame_default_text[] =
 	"Memory Card",
 
 	/* input */
-	"Key/Joy Speed",
+	"Digital Speed",
+	"Autocenter Speed",
 	"Reverse",
 	"Sensitivity",
 

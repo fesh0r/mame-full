@@ -164,10 +164,10 @@ INPUT_PORTS_START( eggventr )
 	PORT_DIPSETTING(      0x0200, "5" )
 	PORT_DIPSETTING(      0x0300, "6" )
 	PORT_DIPNAME( 0x0c00, 0x0800, DEF_STR( Difficulty ) ) // According to info from The Gameroom
-	PORT_DIPSETTING(      0x0c00, "Very Easy" )
-	PORT_DIPSETTING(      0x0400, "Easy" )
-	PORT_DIPSETTING(      0x0800, "Medium" )
-	PORT_DIPSETTING(      0x0000, "Hard" )
+	PORT_DIPSETTING(      0x0c00, DEF_STR( Very_Easy) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( Easy ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Medium ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hard ) )
 	PORT_DIPNAME( 0x1000, 0x1000, "Slot Machine" ) // Verified Correct - Unused for the Deluxe version?? Yes, the slot machine
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) ) // is present in the code as a 'bonus stage' (when the egg reaches Vegas?), 
 	PORT_DIPSETTING(      0x1000, DEF_STR( On ) ) // but not actually called (EC). 
@@ -218,10 +218,10 @@ INPUT_PORTS_START( eggvntdx )
 	PORT_DIPSETTING(      0x0200, "5" )
 	PORT_DIPSETTING(      0x0300, "6" )
 	PORT_DIPNAME( 0x0c00, 0x0800, DEF_STR( Difficulty ) ) // According to info from The Gameroom
-	PORT_DIPSETTING(      0x0c00, "Very Easy" )
-	PORT_DIPSETTING(      0x0400, "Easy" )
-	PORT_DIPSETTING(      0x0800, "Medium" )
-	PORT_DIPSETTING(      0x0000, "Hard" )
+	PORT_DIPSETTING(      0x0c00, DEF_STR( Very_Easy) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( Easy ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Medium ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hard ) )
 	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0xe000, IP_ACTIVE_LOW, IPT_UNUSED )
 

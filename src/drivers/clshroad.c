@@ -133,10 +133,10 @@ INPUT_PORTS_START( clshroad )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Difficulty ) )	// Damage when falling
-	PORT_DIPSETTING(    0x18, "Normal"  )	// 8
-	PORT_DIPSETTING(    0x10, "Hard"    )	// A
-	PORT_DIPSETTING(    0x08, "Harder"  )	// C
-	PORT_DIPSETTING(    0x00, "Hardest" )	// E
+	PORT_DIPSETTING(    0x18, DEF_STR( Normal )  )	// 8
+	PORT_DIPSETTING(    0x10, DEF_STR( Hard )    )	// A
+	PORT_DIPSETTING(    0x08, DEF_STR( Harder )  )	// C
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )	// E
 	PORT_BIT(    0x20, 0x20, IPT_DIPSWITCH_NAME ) PORT_NAME("Invulnerability") PORT_CHEAT
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )

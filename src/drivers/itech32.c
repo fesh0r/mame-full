@@ -964,7 +964,7 @@ INPUT_PORTS_START( hardyard )
 	PORT_DIPSETTING(      0x0010, "+" )
 	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Cabinet ))
 	PORT_DIPSETTING(      0x0000, DEF_STR( Upright ))
-	PORT_DIPNAME( 0x0040, 0x0000, "Players" )
+	PORT_DIPNAME( 0x0040, 0x0000, DEF_STR( Players ) )
 	PORT_DIPSETTING(      0x0000, "4" )
 	PORT_DIPSETTING(      0x0040, "2" )
 	PORT_DIPNAME( 0x0080, 0x0000, DEF_STR( Service_Mode ) )
@@ -2303,7 +2303,7 @@ static DRIVER_INIT( shufshot )
 
 
 static DRIVER_INIT( wcbowln )	/* PIC 16C54 labeled as ITBWL-3 */
-				/* The security PROM is NOT interchangable between the Deluxe and "normal" versions. */
+				/* The security PROM is NOT interchangable between the Deluxe and DEF_STR( Normal ) versions. */
 {
 	init_program_rom();
 	itech32_vram_height = 1024;

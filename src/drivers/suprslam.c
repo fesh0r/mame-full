@@ -252,10 +252,10 @@ INPUT_PORTS_START( suprslam )
 
 	PORT_START	/* DSW */
 	PORT_DIPNAME( 0x0003, 0x0003, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x0002, "Easy" )
-	PORT_DIPSETTING(      0x0003, "Normal" )
-	PORT_DIPSETTING(      0x0001, "Hard" )
-	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Easy ) )
+	PORT_DIPSETTING(      0x0003, DEF_STR( Normal ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Hard ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x000c, 0x000c, "Play Time" )
 	PORT_DIPSETTING(      0x0008, "2:00" )
 	PORT_DIPSETTING(      0x000c, "3:00" )
@@ -269,8 +269,8 @@ INPUT_PORTS_START( suprslam )
 	PORT_DIPSETTING(      0x0020, DEF_STR( On ) )
 	PORT_SERVICE( 0x0040, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x0080, 0x0000, "Country" )
-	PORT_DIPSETTING(      0x0080, "Japan" )
-	PORT_DIPSETTING(      0x0000, "World" )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Japan ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( World ) )
 INPUT_PORTS_END
 
 /*** GFX DECODE **************************************************************/

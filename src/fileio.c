@@ -1216,9 +1216,35 @@ static int checksum_file(int pathtype, int pathindex, const char *file, UINT8 **
 	mame_fputs
 ***************************************************************************/
 
+#if !defined(CRLF) || (CRLF < 1) || (CRLF > 3)
+#error CRLF undefined: must be 1 (CR), 2 (LF) or 3 (CR/LF)
+#endif
+
 int mame_fputs(mame_file *f, const char *s)
 {
-	return mame_fwrite(f, s, strlen(s));
+	char convbuf[1024];
+	char *pconvbuf;
+
+	for (pconvbuf = convbuf; *s; s++)
+	{
+		if (*s == '\n')
+		{
+			if (CRLF == 1)		/* CR only */
+				*pconvbuf++ = 13;
+			else if (CRLF == 2)	/* LF only */
+				*pconvbuf++ = 10;
+			else if (CRLF == 3)	/* CR+LF */
+			{
+				*pconvbuf++ = 13;
+				*pconvbuf++ = 10;
+			}
+		}
+		else
+			*pconvbuf++ = *s;
+	}
+	*pconvbuf++ = 0;
+
+	return mame_fwrite(f, convbuf, strlen(convbuf));
 }
 
 
@@ -1229,7 +1255,7 @@ int mame_fputs(mame_file *f, const char *s)
 
 int mame_vfprintf(mame_file *f, const char *fmt, va_list va)
 {
-	char buf[512];
+	char buf[1024];
 	vsnprintf(buf, sizeof(buf), fmt, va);
 	return mame_fputs(f, buf);
 }

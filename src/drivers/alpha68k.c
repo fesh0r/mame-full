@@ -56,7 +56,7 @@ Stephh's additional notes (based on the games M68000 code and some tests) :
 
  3)  'paddlema'
 
-  - "Game Time" Dip Switch is the time for match type A. Here is what you
+  - DEF_STR( Game_Time ) Dip Switch is the time for match type A. Here is what you
     have to add for games B to E :
 
       Match Type       B        C        D        E
@@ -89,7 +89,7 @@ Stephh's additional notes (based on the games M68000 code and some tests) :
     is writable :
 
       * bit 4 (when "Unused" Dip Switch is set to "On") determines invulnerability
-      * bit 6 (when "Difficulty" Dip Switch is set to "Hard" or "Hardest")
+      * bit 6 (when "Difficulty" Dip Switch is set to DEF_STR( Hard ) or DEF_STR( Hardest ))
         determines if some coordonates are displayed.
 
  8)  'gangwarb'
@@ -1032,8 +1032,8 @@ INPUT_PORTS_START( kyros )
 	PORT_DIPSETTING(    0x20, "5" )
 	PORT_DIPSETTING(    0x30, "6" )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x00, "Easy" )
-	PORT_DIPSETTING(    0x40, "Hard" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Hard ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
@@ -1063,10 +1063,10 @@ INPUT_PORTS_START( jongbou )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x00, "Easy" )
-	PORT_DIPSETTING(    0x20, "Normal" )
-	PORT_DIPSETTING(    0x10, "Hard" )
-	PORT_DIPSETTING(    0x30, "Very Hard" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( Very_Hard ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
@@ -1077,7 +1077,7 @@ INPUT_PORTS_START( jongbou )
 	ALPHA68K_MCU
 
 	PORT_START_TAG("IN3")
-	PORT_BIT( 0xff, 0, IPT_DIAL ) PORT_MINMAX(0,0) PORT_SENSITIVITY(15) PORT_KEYDELTA(20)
+	PORT_BIT( 0xff, 0, IPT_DIAL ) PORT_SENSITIVITY(15) PORT_KEYDELTA(20)
 INPUT_PORTS_END
 
 INPUT_PORTS_START( paddlema )
@@ -1118,7 +1118,7 @@ INPUT_PORTS_START( paddlema )
 	PORT_DIPSETTING(    0x04, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPNAME( 0x30, 0x30, "Game Time" )				// See notes
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Game_Time ) )				// See notes
 	PORT_DIPSETTING(    0x00, "1:00" )
 	PORT_DIPSETTING(    0x20, "1:10" )
 	PORT_DIPSETTING(    0x10, "1:20" )
@@ -1145,10 +1145,10 @@ INPUT_PORTS_START( paddlema )
 	PORT_DIPSETTING(    0x00, "Demo Sounds On" )
 	PORT_DIPSETTING(    0x10, "Win Match Against CPU (Cheat)")
 	PORT_DIPSETTING(    0x30, "Freeze" )
-	PORT_DIPNAME( 0x40, 0x00, "Language" )
-	PORT_DIPSETTING(    0x00, "English" )
-	PORT_DIPSETTING(    0x40, "Japanese" )
-	PORT_DIPNAME( 0x80, 0x00, "Allow Continue" )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Language ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( English ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Japanese ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 INPUT_PORTS_END
@@ -1171,13 +1171,13 @@ INPUT_PORTS_START( timesold )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x00, "Easy" )
-	PORT_DIPSETTING(    0x18, "Normal" )
-//	PORT_DIPSETTING(    0x08, "Normal" )
-	PORT_DIPSETTING(    0x10, "Hard" )					// "Difficult"
-	PORT_DIPNAME( 0x20, 0x00, "Language" )
-	PORT_DIPSETTING(    0x00, "English" )
-	PORT_DIPSETTING(    0x20, "Japanese" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( Normal ) )
+//	PORT_DIPSETTING(    0x08, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Hard ) )					// "Difficult"
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Language ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( English ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Japanese ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )			// See notes
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1198,10 +1198,10 @@ INPUT_PORTS_START( timesold )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START_TAG("IN5")  /* player 1 12-way rotary control - converted in controls_r() */
-	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_MINMAX(0,0) PORT_SENSITIVITY(25) PORT_KEYDELTA(8) PORT_CODE_DEC(KEYCODE_Z) PORT_CODE_INC(KEYCODE_X) PORT_REVERSE
+	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_SENSITIVITY(25) PORT_KEYDELTA(8) PORT_CODE_DEC(KEYCODE_Z) PORT_CODE_INC(KEYCODE_X) PORT_REVERSE
 
 	PORT_START_TAG("IN6")  /* player 2 12-way rotary control - converted in controls_r() */
-	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_MINMAX(0,0) PORT_SENSITIVITY(25) PORT_KEYDELTA(8) PORT_CODE_DEC(KEYCODE_N) PORT_CODE_INC(KEYCODE_M) PORT_REVERSE PORT_PLAYER(2)
+	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_SENSITIVITY(25) PORT_KEYDELTA(8) PORT_CODE_DEC(KEYCODE_N) PORT_CODE_INC(KEYCODE_M) PORT_REVERSE PORT_PLAYER(2)
 INPUT_PORTS_END
 
 /* Same as 'timesold' but different default settings for the "Language" Dip Switch */
@@ -1223,13 +1223,13 @@ INPUT_PORTS_START( btlfield )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x00, "Easy" )
-	PORT_DIPSETTING(    0x18, "Normal" )
-//	PORT_DIPSETTING(    0x08, "Normal" )
-	PORT_DIPSETTING(    0x10, "Hard" )					// "Difficult"
-	PORT_DIPNAME( 0x20, 0x20, "Language" )
-	PORT_DIPSETTING(    0x00, "English" )
-	PORT_DIPSETTING(    0x20, "Japanese" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( Normal ) )
+//	PORT_DIPSETTING(    0x08, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Hard ) )					// "Difficult"
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Language ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( English ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Japanese ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )			// See notes
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1250,10 +1250,10 @@ INPUT_PORTS_START( btlfield )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START_TAG("IN5")  /* player 1 12-way rotary control - converted in controls_r() */
-	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_MINMAX(0,0) PORT_SENSITIVITY(25) PORT_KEYDELTA(8) PORT_CODE_DEC(KEYCODE_Z) PORT_CODE_INC(KEYCODE_X) PORT_REVERSE
+	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_SENSITIVITY(25) PORT_KEYDELTA(8) PORT_CODE_DEC(KEYCODE_Z) PORT_CODE_INC(KEYCODE_X) PORT_REVERSE
 
 	PORT_START_TAG("IN6")  /* player 2 12-way rotary control - converted in controls_r() */
-	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_MINMAX(0,0) PORT_SENSITIVITY(25) PORT_KEYDELTA(8) PORT_CODE_DEC(KEYCODE_N) PORT_CODE_INC(KEYCODE_M) PORT_REVERSE PORT_PLAYER(2)
+	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_SENSITIVITY(25) PORT_KEYDELTA(8) PORT_CODE_DEC(KEYCODE_N) PORT_CODE_INC(KEYCODE_M) PORT_REVERSE PORT_PLAYER(2)
 INPUT_PORTS_END
 
 INPUT_PORTS_START( skysoldr )
@@ -1274,13 +1274,13 @@ INPUT_PORTS_START( skysoldr )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x08, "Easy" )					// "1"
-	PORT_DIPSETTING(    0x10, "Normal" )				// "2"
-	PORT_DIPSETTING(    0x18, "Hard" )					// "3"
-	PORT_DIPSETTING(    0x00, "Hardest" )				// "4"
-	PORT_DIPNAME( 0x20, 0x00, "Language" )
-	PORT_DIPSETTING(    0x00, "English" )
-	PORT_DIPSETTING(    0x20, "Japanese" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Easy ) )					// "1"
+	PORT_DIPSETTING(    0x10, DEF_STR( Normal ) )				// "2"
+	PORT_DIPSETTING(    0x18, DEF_STR( Hard ) )					// "3"
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )				// "4"
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Language ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( English ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Japanese ) )
 	PORT_DIPNAME( 0x40, 0x40, "Manufacturer" )			// See notes
 	PORT_DIPSETTING(    0x40, "SNK" )
 	PORT_DIPSETTING(    0x00, "Romstar" )
@@ -1354,10 +1354,10 @@ INPUT_PORTS_START( goldmedl )
 
 	PORT_START_TAG("IN4") /* A 6 way dip switch */
 	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x03, "Easy" )
-	PORT_DIPSETTING(    0x02, "Normal" )
-	PORT_DIPSETTING(    0x01, "Hard" )
-	PORT_DIPSETTING(    0x00, "Very Hard" )
+	PORT_DIPSETTING(    0x03, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Very_Hard ) )
 	ALPHA68K_COINAGE_BITS_2TO4
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
@@ -1394,10 +1394,10 @@ INPUT_PORTS_START( skyadvnt )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Difficulty ) )	// See notes
-	PORT_DIPSETTING(    0x40, "Easy" )
-	PORT_DIPSETTING(    0x60, "Normal" )
-	PORT_DIPSETTING(    0x20, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
@@ -1440,10 +1440,10 @@ INPUT_PORTS_START( skyadvnu )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Difficulty ) )	// See notes
-	PORT_DIPSETTING(    0x40, "Easy" )
-	PORT_DIPSETTING(    0x60, "Normal" )
-	PORT_DIPSETTING(    0x20, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
@@ -1452,7 +1452,7 @@ INPUT_PORTS_START( skyadvnu )
 	PORT_DIPNAME( 0x01, 0x00, "Price to Continue" )
 	PORT_DIPSETTING(    0x01, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x00, "Same as Start" )
-	PORT_DIPNAME( 0x02, 0x02, "Allow Continue" )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coinage ) )
@@ -1489,13 +1489,13 @@ INPUT_PORTS_START( gangwars )
 	PORT_DIPSETTING(    0x04, "4" )
 	PORT_DIPSETTING(    0x00, "5" )
 	PORT_DIPNAME( 0x10, 0x00, "Timer Speed" )		// Check code at 0x01923a
-	PORT_DIPSETTING(    0x00, "Normal" )		// 1 second = 0x01ff
+	PORT_DIPSETTING(    0x00, DEF_STR( Normal ) )		// 1 second = 0x01ff
 	PORT_DIPSETTING(    0x10, "Fast" )			// 1 second = 0x013f
 	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x40, "Easy" )
-	PORT_DIPSETTING(    0x60, "Normal" )
-	PORT_DIPSETTING(    0x20, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
@@ -1504,7 +1504,7 @@ INPUT_PORTS_START( gangwars )
 	PORT_DIPNAME( 0x01, 0x00, "Price to Continue" )
 	PORT_DIPSETTING(    0x01, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x00, "Same as Start" )
-	PORT_DIPNAME( 0x02, 0x02, "Allow Continue" )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coinage ) )
@@ -1543,13 +1543,13 @@ INPUT_PORTS_START( gangwarb )
 	PORT_DIPSETTING(    0x08, "3" )
 	PORT_DIPSETTING(    0x00, "4" )
 	PORT_DIPNAME( 0x10, 0x00, "Timer Speed" )		// Check code at 0x01923a
-	PORT_DIPSETTING(    0x00, "Normal" )		// 1 second = 0x01ff
+	PORT_DIPSETTING(    0x00, DEF_STR( Normal ) )		// 1 second = 0x01ff
 	PORT_DIPSETTING(    0x10, "Fast" )			// 1 second = 0x013f
 	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x40, "Easy" )
-	PORT_DIPSETTING(    0x60, "Normal" )
-	PORT_DIPSETTING(    0x20, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
@@ -1608,7 +1608,7 @@ INPUT_PORTS_START( sbasebal )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )	// Check code at 0x0089e6
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0xc0, 0x80, "Game Time" )
+	PORT_DIPNAME( 0xc0, 0x80, DEF_STR( Game_Time ) )
 #if SBASEBAL_HACK
 	PORT_DIPSETTING(    0x00, "4:30" )
 	PORT_DIPSETTING(    0x80, "4:00" )
@@ -1623,10 +1623,10 @@ INPUT_PORTS_START( sbasebal )
 
 	PORT_START_TAG("IN4") /* A 6 way dip switch */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )	// Check code at 0x009d3a
-	PORT_DIPSETTING(    0x02, "Easy" )
-	PORT_DIPSETTING(    0x03, "Normal" )
-	PORT_DIPSETTING(    0x01, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 #if SBASEBAL_HACK
 	ALPHA68K_COINAGE_BITS_2TO4
 #else
@@ -1688,10 +1688,10 @@ INPUT_PORTS_START( tnexspce )
 
 	PORT_START_TAG("IN4")
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x02, "Easy" )
-	PORT_DIPSETTING(    0x03, "Normal" )
-	PORT_DIPSETTING(    0x01, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x0c, 0x0c, "Game Mode" )
 	PORT_DIPSETTING(    0x08, "Demo Sounds Off" )
 	PORT_DIPSETTING(    0x0c, "Demo Sounds On" )
@@ -1702,7 +1702,7 @@ INPUT_PORTS_START( tnexspce )
 	PORT_DIPSETTING(    0x20, "150000 300000" )
 	PORT_DIPSETTING(    0x10, "300000 500000" )
 	PORT_DIPSETTING(    0x00, "None" )
-	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
