@@ -153,20 +153,26 @@ WRITE_HANDLER(coco_ram_w)
  * CoCo 3 Stuff
  * -------------------------------------------------- */
 
+static void coco3_calc_vidbase(int ff9d_mask, int ff9e_mask)
+{
+	coco3_vidbase = (
+		((coco3_gimevhreg[3] & 0x03)		* 0x80000) +
+		((coco3_gimevhreg[5] & ff9d_mask)	* 0x800) +
+		((coco3_gimevhreg[6] & ff9e_mask)	* 8)
+		) % mess_ram_size;
+}
+
 static void coco3_frame_callback(struct videomap_framecallback_info *info)
 {
 	int border_top, rows;
 
-	coco3_vidbase = (
-		((coco3_gimevhreg[3] & 0x03) * 0x80000) +
-		(coco3_gimevhreg[5] * 0x800) +
-		(coco3_gimevhreg[6] * 8)
-		) % mess_ram_size;
 	rows = coco3_calculate_rows(&border_top, NULL);
 
 	if (coco3_hires)
 	{
 		/* hires CoCo 3 specific video modes */
+		coco3_calc_vidbase(0xff, 0xff);
+
 		info->video_base = coco3_vidbase;
 		info->bordertop_scanlines = border_top;
 		info->visible_scanlines = rows;
@@ -198,10 +204,8 @@ static void coco3_frame_callback(struct videomap_framecallback_info *info)
 	{
 		/* legacy CoCo 1/2 video modes */
 
-		/* the low 16 bits of the GIME video start is ignored; CoCoTracker
-		 * demonstrates this problem
-		 */
-		coco3_vidbase &= ~0xffff;
+		/* some FF9D/E bits are dropped in lo-res mode (Source: John Kowalski) */
+		coco3_calc_vidbase(0xe0, 0x3f);
 
 		/* call back door into m6847 emulation */
 		internal_m6847_frame_callback(info, coco3_vidbase, border_top, rows);
