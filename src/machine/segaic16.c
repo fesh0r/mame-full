@@ -428,44 +428,60 @@ static void update_divide(int which)
 	
 	/* check for divide by 0 first */
 	if (divisor == 0)
+	{
 		divide[which].regs[6] |= 0x4000;
+		quotient = (dividend < 0) ? 0x80000000 : 0x7fffffff;
+		remainder = dividend - (quotient * divisor);
+	}
 	
 	/* otherwise, do the divide */
 	else
 	{
 		quotient = dividend / divisor;
 		remainder = dividend - (quotient * divisor);
-		
-		/* if mode 0, store quotient/remainder */
-		if (divide[which].mode == 0)
+	}
+	
+	/* if mode 0, store quotient/remainder */
+	if (divide[which].mode == 0)
+	{
+		if (LOG_DIVIDE) logerror("-- mode 0: %08X / %08X = %08X, R=%08X\n", dividend, divisor, quotient, remainder);
+
+		/* clamp to 16-bit signed */
+		if (quotient < -32768)
 		{
-			/* clamp to 16-bit signed */
-			if (quotient < -32768)
-			{
-				quotient = -32768;
-				divide[which].regs[6] |= 0x8000;
-			}
-			else if (quotient > 32767)
-			{
-				quotient = 32767;
-				divide[which].regs[6] |= 0x8000;
-			}
-			divide[which].regs[4] = quotient;
-			divide[which].regs[5] = remainder;
+			quotient = -32768;
+			divide[which].regs[6] |= 0x8000;
 		}
-		
-		/* if mode 1, store 32-bit quotient */
-		else
+		else if (quotient > 32767)
 		{
-			divide[which].regs[4] = quotient >> 16;
-			divide[which].regs[5] = quotient & 0xffff;
+			quotient = 32767;
+			divide[which].regs[6] |= 0x8000;
 		}
+		divide[which].regs[4] = quotient;
+		divide[which].regs[5] = remainder;
+	}
+	
+	/* if mode 1, store 32-bit quotient */
+	else
+	{
+		if (LOG_DIVIDE) logerror("-- mode 1: %08X / %08X = %08X\n", dividend, divisor, quotient);
+
+		if (divisor != 0)
+		{
+			if (dividend > 0)
+				quotient = (dividend + divisor/2) / divisor;
+			else
+				quotient = (dividend - divisor/2) / divisor;
+		} 
+
+		divide[which].regs[4] = quotient >> 16;
+		divide[which].regs[5] = quotient & 0xffff;
 	}
 }
 
 static data16_t divide_r(int which, offs_t offset, data16_t mem_mask)
 {
-	if (LOG_DIVIDE) logerror("%06X:divide%d_r(%X) = %04X\n", activecpu_get_pc(), which, offset, divide[which].regs[offset & 3]);
+	if (LOG_DIVIDE) logerror("%06X:divide%d_r(%X) = %04X\n", activecpu_get_pc(), which, offset, divide[which].regs[offset & 7]);
 	offset &= 7;
 	switch (offset)
 	{

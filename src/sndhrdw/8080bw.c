@@ -56,11 +56,15 @@ static WRITE8_HANDLER( seawolf_sh_port5_w );
 
 static WRITE8_HANDLER( schaser_sh_port3_w );
 static WRITE8_HANDLER( schaser_sh_port5_w );
-static void schaser_sh_start(void);
 
 static WRITE8_HANDLER( polaris_sh_port2_w );
 static WRITE8_HANDLER( polaris_sh_port4_w );
 static WRITE8_HANDLER( polaris_sh_port6_w );
+
+
+static double schaser_effect_555_time_remain;
+static int schaser_effect_555_is_low;
+static int explosion;
 
 
 struct SN76477interface invaders_sn76477_interface =
@@ -913,6 +917,8 @@ MACHINE_INIT( desertgu )
 /*                                                     */
 /* Taito "Space Chaser" 							   */
 /*                                                     */
+/* The SN76477 still needs to be routed to the         */
+/* discrete system for filtering.                      */
 /*******************************************************/
 
 /*
@@ -929,6 +935,9 @@ MACHINE_INIT( desertgu )
  *
  *  for 4V, it's double at 2294.12Hz
  */
+#define SCHASER_HSYNC	18352.94
+#define SCHASER_4V		SCHASER_HSYNC /2 /4
+#define SCHASER_8V		SCHASER_HSYNC /2 /8
 
 struct SN76477interface schaser_sn76477_interface =
 {
@@ -946,41 +955,95 @@ struct SN76477interface schaser_sn76477_interface =
 	5.0			,		/* 19  pitch_voltage	 */
 	RES_K(120)	,		/* 20  slf_res			 */
 	CAP_U(1.0)	,		/* 21  slf_cap			 */
-	0			,		/* 23  oneshot_cap (variable) */
+	CAP_U(0.1)	,		/* 23  oneshot_cap		 */
 	RES_K(220)   		/* 24  oneshot_res		 */
 };
 
-struct Samplesinterface schaser_custom_interface =
+/* Nodes - Inputs */
+#define SCHASER_DOT_EN		NODE_01
+#define SCHASER_DOT_SEL		NODE_02
+#define SCHASER_EXP_STREAM	NODE_03
+#define SCHASER_MUSIC_BIT	NODE_04
+#define SCHASER_SND_EN		NODE_05
+/* Nodes - Adjusters */
+#define SCHASER_VR1			NODE_07
+#define SCHASER_VR2			NODE_08
+#define SCHASER_VR3			NODE_09
+/* Nodes - Sounds */
+#define SCHASER_DOT_SND		NODE_10
+#define SCHASER_EXP_SND		NODE_11
+#define SCHASER_MUSIC_SND	NODE_12
+
+DISCRETE_SOUND_START(schaser_discrete_interface)
+	/************************************************/
+	/* Input register mapping for schaser           */
+	/************************************************/
+	DISCRETE_INPUT_LOGIC  (SCHASER_DOT_EN)
+	DISCRETE_INPUT_LOGIC  (SCHASER_DOT_SEL)
+//	Change the constant to the stream input when working.
+	DISCRETE_CONSTANT(SCHASER_EXP_STREAM, 0)
+//	DISCRETE_INPUTX_STREAM(SCHASER_EXP_STREAM,   5.0/36764,              0)
+	DISCRETE_INPUTX_LOGIC (SCHASER_MUSIC_BIT,    DEFAULT_TTL_V_LOGIC_1,  0,      0.0)
+	DISCRETE_INPUT_LOGIC  (SCHASER_SND_EN)
+
+	/************************************************/
+	/* Volume adjusters.                            */
+	/* We will set them to adjust the realitive     */
+	/* gains.                                       */
+	/************************************************/
+	DISCRETE_ADJUSTMENT(SCHASER_VR1, 1, 0, RES_K(50)/(RES_K(50) + RES_K(470)), DISC_LINADJ, 4)
+	DISCRETE_ADJUSTMENT(SCHASER_VR2, 1, 0, RES_K(50)/(RES_K(50) + 560 + RES_K(6.8) + RES_K(2)), DISC_LINADJ, 5)
+	DISCRETE_ADJUSTMENT(SCHASER_VR3, 1, 0, RES_K(50)/(RES_K(50) + 560 + RES_K(6.8) + RES_K(10)), DISC_LINADJ, 6)
+
+	/************************************************/
+	/* Dot selection just selects between 4V and 8V */
+	/************************************************/
+	DISCRETE_SQUAREWFIX(NODE_20, 1, SCHASER_4V, DEFAULT_TTL_V_LOGIC_1, 50, 0, 0)
+	DISCRETE_SQUAREWFIX(NODE_21, 1, SCHASER_8V, DEFAULT_TTL_V_LOGIC_1, 50, 0, 0)
+	DISCRETE_SWITCH(NODE_22, SCHASER_DOT_EN, SCHASER_DOT_SEL, NODE_20, NODE_21)
+	DISCRETE_RCFILTER(NODE_23, 1, NODE_22, 560, CAP_U(.1))
+	DISCRETE_RCFILTER(NODE_24, 1, NODE_23, RES_K(6.8) + 560, CAP_U(.1))
+	DISCRETE_MULTIPLY(SCHASER_DOT_SND, 1, NODE_24, SCHASER_VR3)
+
+	/************************************************/
+	/* Explosion/Effect filtering                   */
+	/************************************************/
+	DISCRETE_RCFILTER(NODE_30, 1, SCHASER_EXP_STREAM, 560, CAP_U(.1))
+	DISCRETE_RCFILTER(NODE_31, 1, NODE_30, RES_K(6.8) + 560, CAP_U(.1))
+	DISCRETE_CRFILTER(NODE_32, 1, NODE_31, RES_K(6.8) + 560 + RES_K(2) + RES_K(50), CAP_U(1))
+	DISCRETE_MULTIPLY(SCHASER_EXP_SND, 1, NODE_32, SCHASER_VR2)
+
+	/************************************************/
+	/* Music is just a 1 bit DAC                    */
+	/************************************************/
+	DISCRETE_CRFILTER(NODE_40, 1, SCHASER_MUSIC_BIT, RES_K(470) + RES_K(50), CAP_U(.01))
+	DISCRETE_MULTIPLY(SCHASER_MUSIC_SND, 1, NODE_40, SCHASER_VR1)
+
+	/************************************************/
+	/* Final mix with gain                          */
+	/************************************************/
+	DISCRETE_ADDER3(NODE_90, SCHASER_SND_EN, SCHASER_DOT_SND, SCHASER_EXP_SND, SCHASER_MUSIC_SND)
+	DISCRETE_GAIN(NODE_91, NODE_90, 60000)
+
+	DISCRETE_OUTPUT(NODE_91, 100)
+DISCRETE_SOUND_END
+
+static double schaser_effect_rc[8] =
 {
-	1,
-	NULL,
-	schaser_sh_start
+	0,
+	(RES_K(87) + RES_K(20)) * CAP_U(1),
+	(RES_K(39) + RES_K(20)) * CAP_U(1),
+	(1.0/ (1.0/RES_K(87) + 1.0/RES_K(39)) + RES_K(20)) * CAP_U(1),
+	(RES_K(15) + RES_K(20)) * CAP_U(1),
+	(1.0/ (1.0/RES_K(87) + 1.0/RES_K(15)) + RES_K(20)) * CAP_U(1),
+	(1.0/ (1.0/RES_K(87) + 1.0/RES_K(39)) + RES_K(20)) * CAP_U(1),
+	(1.0/ (1.0/RES_K(87) + 1.0/RES_K(39) + 1.0/RES_K(15)) + RES_K(20)) * CAP_U(1)
 };
-
-static INT16 backgroundwave[32] =
-{
-    0x7fff, 0x7fff, 0x7fff, 0x7fff, 0x7fff, 0x7fff, 0x7fff, 0x7fff,
-    0x7fff, 0x7fff, 0x7fff, 0x7fff, 0x7fff, 0x7fff, 0x7fff, 0x7fff,
-   -0x8000,-0x8000,-0x8000,-0x8000,-0x8000,-0x8000,-0x8000,-0x8000,
-   -0x8000,-0x8000,-0x8000,-0x8000,-0x8000,-0x8000,-0x8000,-0x8000,
-};
-
-MACHINE_INIT( schaser )
-{
-	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x03, 0x03, 0, 0, schaser_sh_port3_w);
-	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x05, 0x05, 0, 0, schaser_sh_port5_w);
-	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x06, 0x06, 0, 0, watchdog_reset_w);
-
-	SN76477_mixer_a_w(0, 0);
-	SN76477_mixer_c_w(0, 0);
-
-	SN76477_envelope_1_w(0, 1);
-	SN76477_envelope_2_w(0, 0);
-}
 
 static WRITE8_HANDLER( schaser_sh_port3_w )
 {
-	int explosion;
+	static int last_effect = 0;
+	int effect;
 
 	/* bit 0 - Dot Sound Enable (SX0)
 	   bit 1 - Dot Sound Pitch (SX1)
@@ -989,28 +1052,53 @@ static WRITE8_HANDLER( schaser_sh_port3_w )
 	   bit 4 - Effect Sound C (SX4)
 	   bit 5 - Explosion (SX5) */
 
+	discrete_sound_w(SCHASER_DOT_EN, data & 0x01);
+	discrete_sound_w(SCHASER_DOT_SEL, data & 0x02);
+
+	/* The effect is a variable rate 555 timer.  A diode/resistor array is used to
+	 * select the frequency.  Because of the diode voltage drop, we can not use the
+	 * standard 555 time formulas.  Also, when effect=0, the charge resistor
+	 * is disconnected.  This causes the charge on the cap to slowly bleed off, but
+	 * but the bleed time is so long, that we can just cheat and put the time on hold
+	 * when effect = 0.	*/
+	effect = (data >> 2) & 0x07;
+	if (last_effect != effect)
 	{
-		int freq;
-
-		sample_set_volume(0, (data & 0x01) ? 1.0 : 0.0);
-
-		freq = 19968000 / 2 / 2 / (256+16) / ((data & 0x02) ? 8 : 4) / 2;
-		sample_set_freq(0, freq);
+		if (effect)
+		{
+			if (schaser_effect_555_time_remain != 0)
+			{
+				/* timer re-enabled, use up remaining 555 high time */
+				timer_adjust(schaser_effect_555_timer, schaser_effect_555_time_remain, effect, 0);
+			}
+			else if (!schaser_effect_555_is_low)
+			{
+				/* set 555 high time */
+				timer_adjust(schaser_effect_555_timer, 0.8873 * schaser_effect_rc[effect], effect, 0);
+			}
+		}
+		else
+		{
+			/* disable effect - stops at end of low cycle */
+			if (!schaser_effect_555_is_low)
+			{
+				schaser_effect_555_time_remain = timer_timeleft(schaser_effect_555_timer);
+				timer_adjust(schaser_effect_555_timer, TIME_NEVER, 0, 0);
+			}
+		}
+		last_effect = effect;
 	}
 
 	explosion = (data >> 5) & 0x01;
 	if (explosion)
 	{
-		SN76477_set_amplitude_res(0, RES_K(200));
-		SN76477_set_oneshot_cap(0, CAP_U(0.1));		/* ???? */
+		SN76477_set_amplitude_res(0, 1.0 / (1.0/RES_K(200) + 1.0/RES_K(68)));
 	}
 	else
 	{
-		/* 68k and 200k resistors in parallel */
-		SN76477_set_amplitude_res(0, RES_K(1.0/((1.0/200.0)+(1.0/68.0))));
-		SN76477_set_oneshot_cap(0, CAP_U(0.1));		/* ???? */
+		SN76477_set_amplitude_res(0, RES_K(200));
 	}
-	SN76477_enable_w(0, !explosion);
+	SN76477_enable_w(0, !(schaser_effect_555_is_low || explosion));
 	SN76477_mixer_b_w(0, explosion);
 }
 
@@ -1023,8 +1111,9 @@ static WRITE8_HANDLER( schaser_sh_port5_w )
 	   bit 4 - Field Control B (SX10)
 	   bit 5 - Flip Screen */
 
-	DAC_data_w(0, data & 0x01 ? 0xff : 0x00);
+	discrete_sound_w(SCHASER_MUSIC_BIT, data & 0x01);
 
+	discrete_sound_w(SCHASER_SND_EN, data & 0x02);
 	sound_global_enable(data & 0x02);
 
 	coin_lockout_global_w(data & 0x04);
@@ -1032,10 +1121,44 @@ static WRITE8_HANDLER( schaser_sh_port5_w )
 	c8080bw_flip_screen_w(data & 0x20);
 }
 
-static void schaser_sh_start(void)
+void schaser_effect_555_cb(int effect)
 {
-	sample_set_volume(0,0);
-	sample_start_raw(0,backgroundwave,sizeof(backgroundwave)/2,1000,1);
+	double	new_time;
+	/* Toggle 555 output */
+	schaser_effect_555_is_low = !schaser_effect_555_is_low;
+	schaser_effect_555_time_remain = 0;
+
+	if (schaser_effect_555_is_low)
+		new_time = 0.6931 * RES_K(20) * CAP_U(1);
+	else
+	{
+		if (effect)
+			new_time = 0.8873 * schaser_effect_rc[effect];
+		else
+			new_time = TIME_NEVER;
+	}
+	timer_adjust(schaser_effect_555_timer, new_time, effect, 0);
+	SN76477_enable_w(0, !(schaser_effect_555_is_low || explosion));
+}
+
+MACHINE_INIT( schaser )
+{
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x03, 0x03, 0, 0, schaser_sh_port3_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x05, 0x05, 0, 0, schaser_sh_port5_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x06, 0x06, 0, 0, watchdog_reset_w);
+
+	SN76477_mixer_a_w(0, 0);
+	SN76477_mixer_c_w(0, 0);
+
+	SN76477_envelope_1_w(0, 1);
+	SN76477_envelope_2_w(0, 0);
+	SN76477_vco_w(0, 1);
+
+	schaser_effect_555_is_low = 0;
+	timer_adjust(schaser_effect_555_timer, TIME_NEVER, 0, 0);
+	schaser_sh_port3_w(0, 0);
+	schaser_sh_port5_w(0, 0);
+	schaser_effect_555_time_remain = 0;
 }
 
 

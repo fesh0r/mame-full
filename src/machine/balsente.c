@@ -1181,32 +1181,22 @@ READ8_HANDLER( grudge_steering_r )
  *
  *************************************/
 
-READ16_HANDLER( shrike_shared_68k_r )
-{
-	return shrike_shared[offset] & 0xff;
-}
-
-
-WRITE16_HANDLER( shrike_shared_68k_w )
-{
-	COMBINE_DATA(&shrike_shared[offset]);
-}
-
-
 READ8_HANDLER( shrike_shared_6809_r )
 {
-	if (offset == 0)
-		return 0;
-	if (offset == 9)
-		return 0xaa;
-logerror("6809 read %02x = %02x\n", offset, shrike_shared[offset] & 0xff);
-	return shrike_shared[offset] & 0xff;
+  data16_t mem_mask = offset & 1 ? 0xff : 0xff00;
+
+  switch( offset )
+  {
+    case 6: // return OK for 68k status register until motors hooked up
+      return 0;
+    default:
+      return ( shrike_shared[offset >> 1] & mem_mask ) >> ( ~mem_mask & 8 );
+  }
 }
 
 
 WRITE8_HANDLER( shrike_shared_6809_w )
 {
-if (offset != 0x0a || data != 0x55)
-logerror("6809 wrote %02x = %02x\n", offset, data);
-	shrike_shared[offset] = (shrike_shared[offset] & ~0xff) | data;
+  data16_t mem_mask = offset & 1 ? 0xff : 0xff00;
+  shrike_shared[offset >> 1] = ( shrike_shared[offset >> 1] & ~mem_mask ) | ( data << ( ~mem_mask & 0x8 ) );
 }

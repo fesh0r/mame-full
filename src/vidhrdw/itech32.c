@@ -373,6 +373,20 @@ WRITE16_HANDLER( bloodstm_paletteram_w )
 }
 
 
+WRITE32_HANDLER( drivedge_paletteram_w )
+{
+	int r, g, b;
+
+	COMBINE_DATA(&paletteram32[offset]);
+
+	r = paletteram32[offset] & 0xff;
+	g = (paletteram32[offset] >> 8) & 0xff;
+	b = (paletteram32[offset] >> 16) & 0xff;
+
+	palette_set_color(offset, r, g, b);
+}
+
+
 WRITE32_HANDLER( itech020_paletteram_w )
 {
 	int r, g, b;

@@ -17,26 +17,15 @@ to generate both 8x8 and 16x16 tiles for different tilemaps.
 
 
 TODO:
-Big Twins:
-- The pixel bitmap might be larger than what I handle, or the vertical scroll
-  register has an additional meaning. The usual scroll value is 0x7f0, the game
-  is setting it to 0x5f0 while updating the bitmap, so this should either scroll
-  the changing region out of view, or disable it. During gameplay, the image
-  that scrolls down might have to be different since the scroll register is in
-  the range 0x600-0x6ff.
-  As it is handled now, it is certainly wrong because after game over the
-  bitmap is left on screen.
-
 World Beach Volley:
-- sprite/tile priority issue during attract mode (plane should go behind palm)
 - The histogram functions don't seem to work.
 - Sound is controlled by a pic16c57 whose ROM is missing for this game.
 
 Excelsior:
-- priorities
-- finish inputs / dipswitches
-- Sound is controlled by a PIC whose ROM is missing for this game.
-
+- bitmap position is wrong in some places
+- sprite/tile priority issue during high scores (text should go behind rocks)
+  and on title screen (stars should probably be behind title)
+- Sound is controlled by a pic16c57 whose ROM is missing for this game.
 
 ***************************************************************************/
 
@@ -56,6 +45,7 @@ static data8_t playmark_oki_command;
 extern data16_t *bigtwin_bgvideoram;
 extern size_t bigtwin_bgvideoram_size;
 extern data16_t *wbeachvl_videoram1,*wbeachvl_videoram2,*wbeachvl_videoram3;
+extern data16_t *wbeachvl_rowscroll;
 
 VIDEO_START( bigtwin );
 VIDEO_START( wbeachvl );
@@ -67,6 +57,7 @@ WRITE16_HANDLER( bigtwin_paletteram_w );
 WRITE16_HANDLER( bigtwin_bgvideoram_w );
 WRITE16_HANDLER( bigtwin_scroll_w );
 WRITE16_HANDLER( wbeachvl_scroll_w );
+WRITE16_HANDLER( excelsr_scroll_w );
 VIDEO_UPDATE( bigtwin );
 VIDEO_UPDATE( wbeachvl );
 VIDEO_UPDATE( excelsr );
@@ -228,15 +219,15 @@ static READ8_HANDLER( PIC16C5X_T0_clk_r )
 /***************************** 68000 Memory Maps ****************************/
 
 static ADDRESS_MAP_START( bigtwin_main_map, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x0fffff) AM_RAM
+	AM_RANGE(0x000000, 0x0fffff) AM_ROM
 	AM_RANGE(0x304000, 0x304001) AM_NOP				/* watchdog? irq ack? */
 	AM_RANGE(0x440000, 0x4403ff) AM_RAM AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
-	AM_RANGE(0x500000, 0x5007ff) AM_WRITE(wbeachvl_fgvideoram_w) AM_BASE(&wbeachvl_videoram2)
-	AM_RANGE(0x500800, 0x501fff) AM_WRITE(MWA16_NOP)	/* unused RAM? */
+	AM_RANGE(0x500000, 0x500fff) AM_WRITE(wbeachvl_fgvideoram_w) AM_BASE(&wbeachvl_videoram2)
+	AM_RANGE(0x501000, 0x501fff) AM_WRITE(MWA16_NOP)	/* unused RAM? */
 	AM_RANGE(0x502000, 0x503fff) AM_WRITE(wbeachvl_txvideoram_w) AM_BASE(&wbeachvl_videoram1)
 	AM_RANGE(0x504000, 0x50ffff) AM_WRITE(MWA16_NOP)	/* unused RAM? */
 	AM_RANGE(0x510000, 0x51000b) AM_WRITE(bigtwin_scroll_w)
-	AM_RANGE(0x51000c, 0x51000d) AM_WRITE(MWA16_NOP)	/* always 3? */
+	AM_RANGE(0x51000c, 0x51000d) AM_WRITENOP	/* always 3? */
 	AM_RANGE(0x600000, 0x67ffff) AM_WRITE(bigtwin_bgvideoram_w) AM_BASE(&bigtwin_bgvideoram) AM_SIZE(&bigtwin_bgvideoram_size)
 	AM_RANGE(0x700010, 0x700011) AM_READ(input_port_0_word_r)
 	AM_RANGE(0x700012, 0x700013) AM_READ(input_port_1_word_r)
@@ -250,15 +241,15 @@ static ADDRESS_MAP_START( bigtwin_main_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xff0000, 0xffffff) AM_RAM
 ADDRESS_MAP_END
 
-
 static ADDRESS_MAP_START( wbeachvl_main_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x07ffff) AM_ROM
 	AM_RANGE(0x440000, 0x440fff) AM_RAM AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
 	AM_RANGE(0x500000, 0x501fff) AM_READWRITE(MRA16_RAM, wbeachvl_bgvideoram_w) AM_BASE(&wbeachvl_videoram3)
 	AM_RANGE(0x504000, 0x505fff) AM_READWRITE(MRA16_RAM, wbeachvl_fgvideoram_w) AM_BASE(&wbeachvl_videoram2)
 	AM_RANGE(0x508000, 0x509fff) AM_READWRITE(MRA16_RAM, wbeachvl_txvideoram_w) AM_BASE(&wbeachvl_videoram1)
+	AM_RANGE(0x50f000, 0x50ffff) AM_RAM AM_BASE(&wbeachvl_rowscroll)
 	AM_RANGE(0x510000, 0x51000b) AM_WRITE(wbeachvl_scroll_w)
-	AM_RANGE(0x51000c, 0x51000d) AM_WRITE(MWA16_NOP)	/* always 3? */
+	AM_RANGE(0x51000c, 0x51000d) AM_WRITENOP	/* 2 and 3 */
 //	AM_RANGE(0x700000, 0x700001) ?? written on startup
 	AM_RANGE(0x710010, 0x710011) AM_READ(wbeachvl_port0_r)
 	AM_RANGE(0x710012, 0x710013) AM_READ(input_port_1_word_r)
@@ -272,15 +263,14 @@ static ADDRESS_MAP_START( wbeachvl_main_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xff0000, 0xffffff) AM_RAM
 ADDRESS_MAP_END
 
-
 static ADDRESS_MAP_START( excelsr_main_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x2fffff) AM_ROM
 	AM_RANGE(0x304000, 0x304001) AM_WRITENOP				/* watchdog? irq ack? */
 	AM_RANGE(0x440000, 0x440cff) AM_RAM AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
 	AM_RANGE(0x500000, 0x500fff) AM_RAM AM_WRITE(wbeachvl_fgvideoram_w) AM_BASE(&wbeachvl_videoram2)
 	AM_RANGE(0x501000, 0x501fff) AM_RAM AM_WRITE(wbeachvl_txvideoram_w) AM_BASE(&wbeachvl_videoram1)
-	AM_RANGE(0x510000, 0x51000b) AM_WRITE(bigtwin_scroll_w)
-	AM_RANGE(0x51000c, 0x51000d) AM_WRITE(MWA16_NOP)	/* always 3? */
+	AM_RANGE(0x510000, 0x51000b) AM_WRITE(excelsr_scroll_w)
+	AM_RANGE(0x51000c, 0x51000d) AM_WRITENOP	/* 2 and 3 */
 	AM_RANGE(0x600000, 0x67ffff) AM_RAM AM_WRITE(bigtwin_bgvideoram_w) AM_BASE(&bigtwin_bgvideoram) AM_SIZE(&bigtwin_bgvideoram_size)
 	AM_RANGE(0x700010, 0x700011) AM_READ(input_port_0_word_r)
 	AM_RANGE(0x700012, 0x700013) AM_READ(input_port_1_word_r)
@@ -359,9 +349,9 @@ INPUT_PORTS_START( bigtwin )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Allow_Continue ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -413,12 +403,12 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( wbeachvl )
 	PORT_START_TAG("IN0")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN4 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_SERVICE_NO_TOGGLE(0x20, IP_ACTIVE_LOW)
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN4 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_SERVICE1 )
+	PORT_SERVICE(0x20, IP_ACTIVE_LOW)
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* ?? see code at 746a. sound status? */
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* EEPROM data */
 
@@ -495,27 +485,24 @@ INPUT_PORTS_START( excelsr )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
 	PORT_START_TAG("DSW1")
-	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Language ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( English ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Italian ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x00, "Censor Pictures" )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "1" )
+	PORT_DIPSETTING(    0x02, "2" )
+	PORT_DIPSETTING(    0x03, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPNAME( 0x0c, 0x00, "Censor Pictures" )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+//	PORT_DIPSETTING(    0x04, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x08, "50%" )
+	PORT_DIPSETTING(    0x0c, "100%" )
+	PORT_DIPNAME( 0x30, 0x20, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Medium ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hard ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Allow_Continue ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -560,9 +547,7 @@ INPUT_PORTS_START( excelsr )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
 
@@ -837,6 +822,9 @@ ROM_START( excelsr )
 	ROM_LOAD16_BYTE( "18.u304", 0x100000, 0x80000, CRC(fe517e0e) SHA1(fa074c3848046b59f1026f9ce1f264b49560668d) )
 	ROM_LOAD16_BYTE( "20.u305", 0x200001, 0x80000, CRC(8692afe9) SHA1(b4411bad64a9a6efd8eb13dcf7c5eebfb5681f3d) )
 	ROM_LOAD16_BYTE( "17.u306", 0x200000, 0x80000, CRC(978f9a6b) SHA1(9514b97f071fd20740218a58af877765beffedad) )
+
+	ROM_REGION( 0x1000, REGION_CPU2, 0 )	/* sound (missing) */
+	ROM_LOAD( "pic16c57",     0x0000, 0x1000, NO_DUMP )
 
 	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "26.u311",      0x000000, 0x80000, CRC(c171c059) SHA1(7bc45ef1d588f5f55a461adb91bca382155c1059) )

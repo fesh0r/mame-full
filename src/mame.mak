@@ -691,7 +691,7 @@ $(OBJ)/exidy.a: \
 	$(OBJ)/machine/carpolo.o $(OBJ)/vidhrdw/carpolo.o $(OBJ)/drivers/carpolo.o \
 	$(OBJ)/vidhrdw/exidy.o $(OBJ)/sndhrdw/exidy.o $(OBJ)/drivers/exidy.o \
 	$(OBJ)/sndhrdw/targ.o \
-	$(OBJ)/vidhrdw/circus.o $(OBJ)/drivers/circus.o \
+	$(OBJ)/vidhrdw/circus.o $(OBJ)/drivers/circus.o $(OBJ)/sndhrdw/circus.o \
 	$(OBJ)/vidhrdw/starfire.o $(OBJ)/drivers/starfire.o \
 	$(OBJ)/vidhrdw/victory.o $(OBJ)/drivers/victory.o \
 	$(OBJ)/sndhrdw/exidy440.o $(OBJ)/vidhrdw/exidy440.o $(OBJ)/drivers/exidy440.o \
@@ -867,7 +867,7 @@ $(OBJ)/upl.a: \
 	$(OBJ)/vidhrdw/omegaf.o $(OBJ)/drivers/omegaf.o \
 
 $(OBJ)/nmk.a: \
-	$(OBJ)/vidhrdw/nmk16.o $(OBJ)/drivers/nmk16.o \
+	$(OBJ)/machine/nmk004.o $(OBJ)/vidhrdw/nmk16.o $(OBJ)/drivers/nmk16.o \
 	$(OBJ)/drivers/acommand.o \
 	$(OBJ)/drivers/jalmah.o \
 	$(OBJ)/drivers/quizpani.o $(OBJ)/vidhrdw/quizpani.o \
@@ -1233,7 +1233,7 @@ $(OBJ)/other.a: \
 	$(OBJ)/machine/stactics.o $(OBJ)/vidhrdw/stactics.o $(OBJ)/drivers/stactics.o \
 	$(OBJ)/vidhrdw/mole.o $(OBJ)/drivers/mole.o \
 	$(OBJ)/vidhrdw/mosaic.o $(OBJ)/drivers/mosaic.o \
-	$(OBJ)/drivers/spdbuggy.o \
+	$(OBJ)/machine/tx1.o $(OBJ)/vidhrdw/tx1.o $(OBJ)/drivers/tx1.o \
 	$(OBJ)/vidhrdw/policetr.o $(OBJ)/drivers/policetr.o \
 	$(OBJ)/drivers/ace.o \
 	$(OBJ)/drivers/tugboat.o \

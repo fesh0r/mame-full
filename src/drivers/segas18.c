@@ -5,7 +5,6 @@
 ****************************************************************************
 
 	Known bugs:
-		* lghost title screen not displaying
 		* lghost sprites seem to be slightly out of sync
 		* vdp gfx on 2nd attract level of lghost are corrupt at top of stairs
 		  after attract mode loops

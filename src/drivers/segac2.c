@@ -3659,7 +3659,31 @@ ROM_START( tantrbl ) /* Tant-R (Puzzle & Action) (Bootleg)  (c)1992 Sega */
 ROM_END
 
 
-ROM_START( puyopuyo	) /* Puyo Puyo  (c)1992 Sega / Compile */
+ROM_START( puyo ) /* Puyo Puyo  (c)1992 Sega / Compile */
+	ROM_REGION( 0x200000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "epr-15198.32", 0x000000, 0x020000, CRC(9610d80c) SHA1(1ffad09d3369c1942d4db611c41bae47d08c7564) )
+	ROM_LOAD16_BYTE( "epr-15197.31", 0x000001, 0x020000, CRC(7b1f3229) SHA1(13d0905291e748973d7d17eb404a286ffb94de03) )
+	/* 0x040000 - 0x100000 Empty */
+	ROM_LOAD16_BYTE( "epr-15200.34", 0x100000, 0x020000, CRC(0a0692e5) SHA1(d4ecc5b1791a91e3b33a5d4d0dd305f1623483d9) )
+	ROM_LOAD16_BYTE( "epr-15199.33", 0x100001, 0x020000, CRC(353109b8) SHA1(92440987add3124b758e7eaa77a3a6f54ca61bb8) )
+
+	ROM_REGION( 0x020000, REGION_SOUND1, 0 )
+	ROM_LOAD( "epr-15196.4", 0x000000, 0x020000, CRC(79112b3b) SHA1(fc3a202e1e2ff39950d4af689b7fcca86c301805) )
+ROM_END
+
+ROM_START( puyobl ) /* Puyo Puyo  (c)1992 Sega / Compile  Bootleg */
+	ROM_REGION( 0x200000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "puyopuyb.4bo", 0x000000, 0x020000, CRC(89ea4d33) SHA1(bef9d011524e71c072d309f6da3c2ebc38878e0e) )
+	ROM_LOAD16_BYTE( "puyopuyb.3bo", 0x000001, 0x020000, CRC(c002e545) SHA1(7a59ac764d60e9955830d9617b0bd122b44e7b2f) )
+	/* 0x040000 - 0x100000 Empty */
+	ROM_LOAD16_BYTE( "puyopuyb.6bo", 0x100000, 0x020000, CRC(0a0692e5) SHA1(d4ecc5b1791a91e3b33a5d4d0dd305f1623483d9) )
+	ROM_LOAD16_BYTE( "puyopuyb.5bo", 0x100001, 0x020000, CRC(353109b8) SHA1(92440987add3124b758e7eaa77a3a6f54ca61bb8) )
+
+	ROM_REGION( 0x020000, REGION_SOUND1, 0 )
+	ROM_LOAD( "puyopuyb.abo", 0x000000, 0x020000, CRC(79112b3b) SHA1(fc3a202e1e2ff39950d4af689b7fcca86c301805) )
+ROM_END
+
+ROM_START( puyoj ) /* Puyo Puyo  (c)1992 Sega / Compile */
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "epr15036", 0x000000, 0x020000, CRC(5310ca1b) SHA1(dcfe2bf7476b640dfb790e8716e75b483d535e48) )
 	ROM_LOAD16_BYTE( "epr15035", 0x000001, 0x020000, CRC(bc62e400) SHA1(12bb6031574838a28889f6edb31dbb689265287c) )
@@ -3672,7 +3696,7 @@ ROM_START( puyopuyo	) /* Puyo Puyo  (c)1992 Sega / Compile */
 ROM_END
 
 
-ROM_START( puyopuya	) /* Puyo Puyo (Rev A)  (c)1992 Sega / Compile */
+ROM_START( puyoja	) /* Puyo Puyo (Rev A)  (c)1992 Sega / Compile */
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "ep15036a.32", 0x000000, 0x020000, CRC(61b35257) SHA1(e09a7e992999befc88fc7928a478d1e2d14d7b08) )
 	ROM_LOAD16_BYTE( "ep15035a.31", 0x000001, 0x020000, CRC(dfebb6d9) SHA1(6f685729ef4660c2eba409c5236c6d2f313eef5b) )
@@ -3685,17 +3709,7 @@ ROM_START( puyopuya	) /* Puyo Puyo (Rev A)  (c)1992 Sega / Compile */
 ROM_END
 
 
-ROM_START( puyopuyb ) /* Puyo Puyo  (c)1992 Sega / Compile  Bootleg */
-	ROM_REGION( 0x200000, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "puyopuyb.4bo", 0x000000, 0x020000, CRC(89ea4d33) SHA1(bef9d011524e71c072d309f6da3c2ebc38878e0e) )
-	ROM_LOAD16_BYTE( "puyopuyb.3bo", 0x000001, 0x020000, CRC(c002e545) SHA1(7a59ac764d60e9955830d9617b0bd122b44e7b2f) )
-	/* 0x040000 - 0x100000 Empty */
-	ROM_LOAD16_BYTE( "puyopuyb.6bo", 0x100000, 0x020000, CRC(0a0692e5) SHA1(d4ecc5b1791a91e3b33a5d4d0dd305f1623483d9) )
-	ROM_LOAD16_BYTE( "puyopuyb.5bo", 0x100001, 0x020000, CRC(353109b8) SHA1(92440987add3124b758e7eaa77a3a6f54ca61bb8) )
 
-	ROM_REGION( 0x020000, REGION_SOUND1, 0 )
-	ROM_LOAD( "puyopuyb.abo", 0x000000, 0x020000, CRC(79112b3b) SHA1(fc3a202e1e2ff39950d4af689b7fcca86c301805) )
-ROM_END
 
 
 ROM_START( ichidant ) /* Ichident-R (Puzzle & Action 2)  (c)1994 Sega */
@@ -4736,9 +4750,11 @@ GAME ( 1991, ribbit,   0,        segac2,   ribbit,   ribbit,   ROT0, "Sega",    
 GAME ( 1992, tantr,    0,        segac2,   ichidant, tantr,    ROT0, "Sega",                   "Tant-R (Puzzle & Action) (Japan)" )
 GAME ( 1992, tantrbl,  tantr,    segac2,   ichidant, segac2,   ROT0, "bootleg",                "Tant-R (Puzzle & Action) (Japan) (bootleg set 1)" )
 GAME ( 1994, tantrbl2, tantr,    segac,    ichidant, tantr,    ROT0, "bootleg",                "Tant-R (Puzzle & Action) (Japan) (bootleg set 2)" )
-GAME ( 1992, puyopuyo, 0,        segac2,   puyopuyo, puyopuyo, ROT0, "Sega / Compile",         "Puyo Puyo (Japan)" )
-GAME ( 1992, puyopuya, puyopuyo, segac2,   puyopuyo, puyopuyo, ROT0, "Sega / Compile",         "Puyo Puyo (Japan) (Rev A)" )
-GAME ( 1992, puyopuyb, puyopuyo, segac2,   puyopuyo, puyopuyo, ROT0, "bootleg",                "Puyo Puyo (English) (bootleg)" )
+
+GAME ( 1992, puyo,     0,        segac2,   puyopuyo, puyopuyo, ROT0, "Sega / Compile",         "Puyo Puyo (World)" )
+GAME ( 1992, puyobl,   puyo,     segac2,   puyopuyo, puyopuyo, ROT0, "bootleg",                "Puyo Puyo (World, bootleg)" )
+GAME ( 1992, puyoj,    puyo,     segac2,   puyopuyo, puyopuyo, ROT0, "Sega / Compile",         "Puyo Puyo (Japan)" )
+GAME ( 1992, puyoja,   puyo,     segac2,   puyopuyo, puyopuyo, ROT0, "Sega / Compile",         "Puyo Puyo (Japan, Rev A)" )
 GAME ( 1994, ichidant, 0,        segac2,   ichidant, ichidant, ROT0, "Sega",                   "Ichidant-R (Puzzle & Action 2) (Japan)" )
 GAME ( 1994, ichidnte, ichidant, segac2,   ichidant, ichidnte, ROT0, "Sega",                   "Ichidant-R (Puzzle & Action 2) (English)" )
 GAME ( 1994, ichidntb, ichidant, segac,    ichidant, segac2,   ROT0, "bootleg",                "Ichidant-R (Puzzle & Action 2) (Japan) (bootleg)" )

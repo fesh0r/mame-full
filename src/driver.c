@@ -1457,6 +1457,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( josvolly )	/* ??? (c) 1983 Taito Corporation */
 	DRIVER( gsword )	/* ??? (c) 1984 Taito Corporation */
 	DRIVER( pitnrun )	/* ??? (c) 1984 Taito Corporation */
+	DRIVER( pitnruna )	/* ??? (c) 1984 Taito Corporation */
 	DRIVER( lkage )		/* A54 (c) 1984 Taito Corporation */
 	DRIVER( lkageb )	/* bootleg */
 	DRIVER( lkageb2 )	/* bootleg */
@@ -1509,6 +1510,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( tokio )		/* A71 1986 */
 	DRIVER( tokiob )	/* bootleg */
 	DRIVER( bublbobl )	/* A78 (c) 1986 Taito Corporation */
+	DRIVER( bublbob1 )	/* A78 (c) 1986 Taito Corporation */
 	DRIVER( bublbobr )	/* A78 (c) 1986 Taito America Corporation + Romstar license */
 	DRIVER( bubbobr1 )	/* A78 (c) 1986 Taito America Corporation + Romstar license */
 	DRIVER( boblbobl )	/* bootleg */
@@ -2054,6 +2056,7 @@ V-V                           TP-027
 	DRIVER( zero )		/* bootleg */
 	DRIVER( defcmnd )	/* bootleg */
 	DRIVER( defence )	/* bootleg */
+	DRIVER( startrkd )	/* bootleg */
 	DRIVER( mayday )
 	DRIVER( maydaya )
 	DRIVER( maydayb )
@@ -2614,6 +2617,7 @@ V-V                           TP-027
 	DRIVER( mgakuen2 )	/* (c) 1989 Face */
 	DRIVER( pkladies )	/* (c) 1989 Mitchell */
 	DRIVER( pkladiel )	/* (c) 1989 Leprechaun */
+	DRIVER( pkladila )	/* (c) 1989 Leprechaun */
 	DRIVER( dokaben )	/*  3/1989 (c) 1989 Capcom (Japan) */
 	/*  8/1989 Dokaben 2 (baseball) */
 	DRIVER( pang )		/* (c) 1989 Mitchell (World) */
@@ -3375,9 +3379,10 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( tantr )		/* (c) 1992 Sega */
 	DRIVER( tantrbl )	/* bootleg */
 	DRIVER( tantrbl2 )	/* bootleg */
-	DRIVER( puyopuyo )	/* (c) 1992 Sega / Compile */
-	DRIVER( puyopuya )	/* (c) 1992 Sega / Compile */
-	DRIVER( puyopuyb )	/* bootleg */
+	DRIVER( puyo )		/* (c) 1992 Sega / Compile */
+	DRIVER( puyoj )		/* (c) 1992 Sega / Compile */
+	DRIVER( puyoja )	/* (c) 1992 Sega / Compile */
+	DRIVER( puyobl )	/* bootleg */
 	DRIVER( ichidant )	/* (c) 1994 Sega */
 	DRIVER( ichidnte )	/* (c) 1994 Sega */
 	DRIVER( ichidntb )	/* bootleg */
@@ -4653,6 +4658,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( chameleo )	/* (c) 1983 Jaleco */
 	DRIVER( wwjgtin )	/* (c) 1984 Jaleco / Casio */
 	DRIVER( pinbo )		/* (c) 1984 Jaleco */
+	DRIVER( pinboa )	/* (c) 1984 Jaleco */
 	DRIVER( pinbos )	/* (c) 1985 Strike */
 	DRIVER( joyfulr )	/* A2001      (c) 1983 */
 	DRIVER( mnchmobl )	/* A2001      (c) 1983 + Centuri license */
@@ -5593,7 +5599,8 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( hopprobo )	/* (c) 1983 Sega */
 	DRIVER( wanted )	/* (c) 1984 Sigma Ent. Inc. */
 	DRIVER( funkybee )	/* (c) 1982 Orca */
-	DRIVER( skylancr )	/* (c) 1983 Orca + Esco Trading Co license */
+	DRIVER( skylancr )	/* (c) 1983 Orca */
+	DRIVER( skylance )	/* (c) 1983 Orca + Esco Trading Co license */
 	DRIVER( zodiack )	/* (c) 1983 Orca + Esco Trading Co license */
 	DRIVER( dogfight )	/* (c) 1983 Thunderbolt */
 	DRIVER( moguchan )	/* (c) 1982 Orca + Eastern Commerce Inc. license (doesn't appear on screen) */
@@ -6318,7 +6325,9 @@ Other Sun games
 	DRIVER( mosaic )	/* (c) 1990 Space */
 	DRIVER( mosaica )	/* (c) 1990 Space + Fuuki license */
 	DRIVER( gfire2 )	/* (c) 1992 Topis Corp */
-	DRIVER( spdbuggy )
+	DRIVER( tx1 )
+	DRIVER( buggyboy )
+	DRIVER( buggyb1 )
 	DRIVER( sprcros2 )	/* (c) 1986 GM Shoji */
 	DRIVER( sprcrs2a )	/* (c) 1986 GM Shoji */
 	DRIVER( gcpinbal )	/* (c) 1994 Excellent System */

@@ -382,7 +382,7 @@ const struct discrete_schmitt_osc_desc superbug_screech_osc =
 const struct discrete_mixer_desc superbug_mixer =
 {
 	DISC_MIXER_IS_RESISTOR,
-	{RES_K(15), RES_K(10.5456), RES_K(33), RES_K(47)}, // R54, R55, R72||(R70+R71), R53, R56 + R37||R35||R36||R34, R58 + R73||R74, R52
+	{RES_K(15), RES_K(10.5456), RES_K(33), RES_K(4.7)}, // R54, R55, R72||(R70+R71), R53, R56 + R37||R35||R36||R34, R58 + R73||R74, R52
 	{0},			// No variable resistor nodes
 	{0},			// No caps
 	0,				// No rI

@@ -54,8 +54,6 @@ WRITE8_HANDLER( spiker_expand_w );
 READ8_HANDLER( spiker_expand_r );
 READ8_HANDLER( grudge_steering_r );
 
-READ16_HANDLER( shrike_shared_68k_r );
-WRITE16_HANDLER( shrike_shared_68k_w );
 READ8_HANDLER( shrike_shared_6809_r );
 WRITE8_HANDLER( shrike_shared_6809_w );
 
