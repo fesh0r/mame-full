@@ -431,6 +431,7 @@ $(OBJ)/apple2.a:   \
 $(OBJ)/mac.a: \
 	  $(OBJ)/mess/sndhrdw/mac.o	 \
 	  $(OBJ)/mess/machine/iwm.o	 \
+	  $(OBJ)/mess/machine/sonydriv.o \
 	  $(OBJ)/mess/vidhrdw/mac.o	 \
 	  $(OBJ)/mess/machine/mac.o	 \
 	  $(OBJ)/mess/systems/mac.o
@@ -454,7 +455,7 @@ $(OBJ)/ti99.a:	   \
 		$(OBJ)/mess/systems/ti99_4x.o  \
 		$(OBJ)/mess/systems/ti99_2.o	 \
 		$(OBJ)/mess/systems/ti990_4.o  \
-
+		$(OBJ)/mess/sndhrdw/spchroms.o
 
 $(OBJ)/bally.a:    \
 	  $(OBJ)/sound/astrocde.o	 \
@@ -588,7 +589,8 @@ $(OBJ)/mtx.a:	   \
 	  $(OBJ)/mess/systems/mtx.o
 
 $(OBJ)/lisa.a:	   \
-	  $(OBJ)/mess/machine/iwm_lisa.o \
+	  $(OBJ)/mess/machine/iwm.o \
+	  $(OBJ)/mess/machine/sonydriv.o \
 	  $(OBJ)/mess/machine/lisa.o	 \
 	  $(OBJ)/mess/systems/lisa.o
 
