@@ -110,8 +110,8 @@ int PSX_sh_start( const struct MachineSound *msound )
 	int n_effect;
 	int n_channel;
 
-	m_p_n_ram = memory_region( REGION_CPU1 );
-	m_n_ramsize = memory_region_length( REGION_CPU1 ) - 1;
+	m_p_n_ram = (UINT8 *)g_p_n_psxram;
+	m_n_ramsize = g_n_psxramsize;
 
 	m_n_mainvolumeleft = 0;
 	m_n_mainvolumeright = 0;
