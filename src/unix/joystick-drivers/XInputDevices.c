@@ -176,7 +176,7 @@ void
 XInputPollDevices(int player, int *deltax, int *deltay)
 {
 	int i=player;
-	if (player < MOUSE && XIdevices[player].deviceName) {
+	if (player < MOUSE) {
 		*deltax=mouse_data[player].deltas[0];
 		*deltay=mouse_data[player].deltas[1];
 		mouse_data[player].deltas[0] = 0;
