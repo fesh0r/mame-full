@@ -105,7 +105,9 @@ static UINT8 snes_dbg_vidhrdw(UINT16 curline);
 
 /* Forward declarations */
 static void snes_update_line_2( UINT8 screen, UINT8 layer, UINT16 curline );
+static void snes_update_line_2_hi( UINT8 screen, UINT8 layer, UINT16 curline );
 static void snes_update_line_4( UINT8 screen, UINT8 layer, UINT16 curline );
+static void snes_update_line_4_hi( UINT8 screen, UINT8 layer, UINT16 curline );
 static void snes_update_line_8( UINT8 screen, UINT8 layer, UINT16 curline );
 static void snes_update_line_mode7( UINT8 screen, UINT8 layer, UINT16 curline );
 
@@ -123,13 +125,14 @@ static const UINT16 table_obj_offset[8][8] =
 	{ (96*32),  (96*32)+32,  (96*32)+64,  (96*32)+96,  (96*32)+128,  (96*32)+160,  (96*32)+192,  (96*32)+224 },
 	{ (112*32), (112*32)+32, (112*32)+64, (112*32)+96, (112*32)+128, (112*32)+160, (112*32)+192, (112*32)+224 }
 };
-static const UINT16 table_hscroll[4][4] = { {0,0,0,0}, {0,0x800,0,0x800}, {0,0,0,0}, {0,0x800,0,0x800} };
-static const UINT16 table_vscroll[4][4] = { {0,0,0,0}, {0,0,0,0}, {0,0x800,0,0x800}, {0,0x1000,0,0x1000} };
+/* Scroll tables                             32x32      64x32              32x64              64x64 */
+static const UINT16 table_hscroll[4][4] = { {0,0,0,0}, {0,0x800,0,0x800}, {0,0,0,0},         {0,0x800,0,0x800}   };
+static const UINT16 table_vscroll[4][4] = { {0,0,0,0}, {0,0,0,0},         {0,0x800,0,0x800}, {0,0x1000,0,0x1000} };
 
 struct SCANLINE
 {
-	UINT16 buffer[SNES_SCR_WIDTH + 16];
-	UINT8  zbuf[SNES_SCR_WIDTH + 16];
+	UINT16 buffer[(SNES_SCR_WIDTH * 2) + 16];
+	UINT8  zbuf[(SNES_SCR_WIDTH * 2) + 16];
 };
 struct SNES_MODE_CONFIG
 {
@@ -143,12 +146,12 @@ static struct SNES_MODE_CONFIG snes_modedefs[8] =
 {
 /*0*/	{ {snes_update_line_2, snes_update_line_2, snes_update_line_2, snes_update_line_2}, 4 },
 /*1*/	{ {snes_update_line_4, snes_update_line_4, snes_update_line_2, NULL}, 3 },
-/*2*/	{ {snes_update_line_4, snes_update_line_4, NULL, NULL}, 2 },	/* Supports offset per tile */
-/*3*/	{ {snes_update_line_8, snes_update_line_4, NULL, NULL}, 2 },	/* Supports direct colour */
-/*4*/	{ {snes_update_line_8, snes_update_line_2, NULL, NULL}, 2 },	/* Supports offset per tile and direct colour */
-/*5*/	{ {snes_update_line_4, snes_update_line_2, NULL, NULL}, 2 },	/* Supports hires */
-/*6*/	{ {snes_update_line_4, NULL, NULL, NULL}, 1 },					/* Supports offset per tile and hires */
-/*7*/	{ {snes_update_line_mode7, NULL, NULL, NULL}, 1 }				/* Supports direct colour */
+/*2*/	{ {snes_update_line_4, snes_update_line_4, NULL, NULL}, 2 },		/* Supports offset per tile */
+/*3*/	{ {snes_update_line_8, snes_update_line_4, NULL, NULL}, 2 },		/* Supports direct colour */
+/*4*/	{ {snes_update_line_8, snes_update_line_2, NULL, NULL}, 2 },		/* Supports offset per tile and direct colour */
+/*5*/	{ {snes_update_line_4_hi, snes_update_line_2_hi, NULL, NULL}, 2 },	/* Supports hires */
+/*6*/	{ {snes_update_line_4_hi, NULL, NULL, NULL}, 1 },					/* Supports offset per tile and hires */
+/*7*/	{ {snes_update_line_mode7, NULL, NULL, NULL}, 1 }					/* Supports direct colour */
 };
 
 VIDEO_UPDATE( snes )
@@ -295,6 +298,25 @@ INLINE void snes_draw_tile_2( UINT8 screen, UINT8 layer, UINT16 tileaddr, INT16 
 }
 
 /*****************************************
+ * snes_draw_tile_2x2()
+ *
+ * Draw 2 tiles with 2 bit planes(4 colors)
+ *****************************************/
+INLINE void snes_draw_tile_2x2( UINT8 screen, UINT8 layer, UINT16 tileaddr, INT16 x, UINT8 priority, UINT8 flip, UINT16 pal )
+{
+	if( flip )
+	{
+		snes_draw_tile_2( screen, layer, tileaddr + 16, x, priority, flip, pal );
+		snes_draw_tile_2( screen, layer, tileaddr, x + 8, priority, flip, pal );
+	}
+	else
+	{
+		snes_draw_tile_2( screen, layer, tileaddr, x, priority, flip, pal );
+		snes_draw_tile_2( screen, layer, tileaddr + 16, x + 8, priority, flip, pal );
+	}
+}
+
+/*****************************************
  * snes_draw_tile_4()
  *
  * Draw tiles with 4 bit planes(16 colors)
@@ -350,6 +372,25 @@ INLINE void snes_draw_tile_4( UINT8 screen, UINT8 layer, UINT16 tileaddr, INT16 
 				scanlines[screen].zbuf[ii] = priority;
 			}
 		}
+	}
+}
+
+/*****************************************
+ * snes_draw_tile_4x2()
+ *
+ * Draw 2 tiles with 4 bit planes(16 colors)
+ *****************************************/
+INLINE void snes_draw_tile_4x2( UINT8 screen, UINT8 layer, UINT16 tileaddr, INT16 x, UINT8 priority, UINT8 flip, UINT16 pal )
+{
+	if( flip )
+	{
+		snes_draw_tile_4( screen, layer, tileaddr + 32, x, priority, flip, pal );
+		snes_draw_tile_4( screen, layer, tileaddr, x + 8, priority, flip, pal );
+	}
+	else
+	{
+		snes_draw_tile_4( screen, layer, tileaddr, x, priority, flip, pal );
+		snes_draw_tile_4( screen, layer, tileaddr + 32, x + 8, priority, flip, pal );
 	}
 }
 
@@ -421,6 +462,25 @@ INLINE void snes_draw_tile_8( UINT8 screen, UINT8 layer, UINT16 tileaddr, INT16 
 }
 
 /*****************************************
+ * snes_draw_tile_8x2()
+ *
+ * Draw 2 tiles with 8 bit planes(256 colors)
+ *****************************************/
+INLINE void snes_draw_tile_8x2( UINT8 screen, UINT8 layer, UINT16 tileaddr, INT16 x, UINT8 priority, UINT8 flip )
+{
+	if( flip )
+	{
+		snes_draw_tile_8( screen, layer, tileaddr + 64, x, priority, flip );
+		snes_draw_tile_8( screen, layer, tileaddr, x + 8, priority, flip );
+	}
+	else
+	{
+		snes_draw_tile_8( screen, layer, tileaddr, x, priority, flip );
+		snes_draw_tile_8( screen, layer, tileaddr + 64, x + 8, priority, flip );
+	}
+}
+
+/*****************************************
  * snes_draw_tile_object()
  *
  * Draw tiles with 4 bit planes(16 colors)
@@ -474,8 +534,75 @@ INLINE void snes_draw_tile_object( UINT8 screen, UINT16 tileaddr, INT16 x, UINT8
 				c = Machine->remapped_colortable[pal + colour];
 				if( blend && screen == MAINSCREEN )	/* Only blend main screens */
 					snes_draw_blend( ii, &c, snes_ppu.layer[4].blend, (snes_ram[CGWSEL] & 0x30) >> 4 );
+
 				scanlines[screen].buffer[ii] = c;
 				scanlines[screen].zbuf[ii] = priority;
+			}
+		}
+	}
+}
+
+/*****************************************
+ * snes_draw_tile_object_w()
+ *
+ * Draw tiles with 4 bit planes(16 colors)
+ * The same as snes_draw_tile_4() except
+ * that it takes a blend parameter.
+ * Wide version.
+ *****************************************/
+INLINE void snes_draw_tile_object_w( UINT8 screen, UINT16 tileaddr, INT16 x, UINT8 priority, UINT8 flip, UINT16 pal, UINT8 blend )
+{
+	UINT8 mask, plane[4];
+	UINT16 c;
+	INT16 ii;
+
+	plane[0] = snes_vram[tileaddr];
+	plane[1] = snes_vram[tileaddr + 1];
+	plane[2] = snes_vram[tileaddr + 16];
+	plane[3] = snes_vram[tileaddr + 17];
+
+	if( flip )
+		mask = 0x1;
+	else
+		mask = 0x80;
+
+	x <<= 1;
+	for( ii = x; ii < (x + 16); ii += 2 )
+	{
+		register UINT8 colour;
+		if( flip )
+		{
+			colour = (plane[0] & mask ? 1 : 0) | (plane[1] & mask ? 2 : 0) |
+					 (plane[2] & mask ? 4 : 0) | (plane[3] & mask ? 8 : 0);
+			mask <<= 1;
+		}
+		else
+		{
+			colour = (plane[0] & mask ? 1 : 0) | (plane[1] & mask ? 2 : 0) |
+					 (plane[2] & mask ? 4 : 0) | (plane[3] & mask ? 8 : 0);
+			mask >>= 1;
+		}
+
+#ifdef SNES_DBG_VIDHRDW
+		if( !debug_options.windows_disabled )
+#endif /* SNES_DBG_VIDHRDW */
+		/* Clip to windows */
+		if( (screen == MAINSCREEN && (snes_ram[TMW] & 0x10)) || (screen == SUBSCREEN && (snes_ram[TSW] & 0x10)))
+			colour &= snes_ppu.clipmasks[4][ii];
+
+		/* Only draw if we have a colour (0 == transparent) */
+		if( colour )
+		{
+			if( ii >= 0 )
+			{
+				c = Machine->remapped_colortable[pal + colour];
+				if( blend && screen == MAINSCREEN )	/* Only blend main screens */
+					snes_draw_blend( ii, &c, snes_ppu.layer[4].blend, (snes_ram[CGWSEL] & 0x30) >> 4 );
+
+				scanlines[screen].buffer[ii] = c;
+				scanlines[screen].zbuf[ii] = priority;
+				scanlines[screen].buffer[ii + 1] = c;
+				scanlines[screen].zbuf[ii + 1] = priority;
 			}
 		}
 	}
@@ -514,10 +641,10 @@ static void snes_update_line_2( UINT8 screen, UINT8 layer, UINT16 curline )
 	/* Find the size of the tiles (8x8 or 16x16) */
 	tile_size = snes_ppu.layer[layer].tile_size;
 	/* Find scroll info */
-	vscroll = (snes_ppu.bgd_offset.vertical[layer] & 0x3ff) >> (3 + tile_size);
-	vshift = snes_ppu.bgd_offset.vertical[layer] & ((8 << tile_size) - 1);
-	hscroll = (snes_ppu.bgd_offset.horizontal[layer] & 0x3ff) >> (3 + tile_size);
-	hshift = snes_ppu.bgd_offset.horizontal[layer] & ((8 << tile_size) - 1);
+	vscroll = snes_ppu.layer[layer].offset.tile_vert;
+	vshift = snes_ppu.layer[layer].offset.shift_vert;
+	hscroll = snes_ppu.layer[layer].offset.tile_horz;
+	hshift = snes_ppu.layer[layer].offset.shift_horz;
 
 	/* Find vertical scroll amount */
 	vtilescroll = vscroll + (curline >> (3 + tile_size));
@@ -581,7 +708,7 @@ static void snes_update_line_2( UINT8 screen, UINT8 layer, UINT16 curline )
 				}
 				else
 				{
-					tile += 16;
+					tile += 32;
 				}
 			}
 			tile_line = -tile_line + 7;
@@ -590,7 +717,138 @@ static void snes_update_line_2( UINT8 screen, UINT8 layer, UINT16 curline )
 		{
 			if( line > 7 )
 			{
-				tile += 16;
+				tile += 32;
+				tile_line -= 8;
+			}
+		}
+		tile_line <<= 1;
+
+		/* Special case for bg3 */
+		if( layer == 2 && bg3_pty && (snes_vram[tilemap + ii + 1] & 0x20) )
+			priority = table_obj_pty[3] + 1;		/* We want to have the highest priority here */
+
+		if( tile_size )
+		{
+			snes_draw_tile_2x2( screen, layer, snes_ppu.layer[layer].data + (tile << 4) + tile_line, ((ii >> 1) * (8 << tile_size)) - hshift, priority, hflip, pal );
+		}
+		else
+		{
+			snes_draw_tile_2( screen, layer, snes_ppu.layer[layer].data + (tile << 4) + tile_line, ((ii >> 1) * (8 << tile_size)) - hshift, priority, hflip, pal );
+		}
+	}
+}
+
+/*********************************************
+ * snes_update_line_2_hi()
+ *
+ * Update an entire line of 2 bit plane tiles.
+ * This is the hires version.
+ *********************************************/
+static void snes_update_line_2_hi( UINT8 screen, UINT8 layer, UINT16 curline )
+{
+	UINT32 tilemap, tile;
+	UINT16 ii, vflip, hflip, pal;
+	INT8 line, tile_line;
+	UINT8 priority;
+	/* scrolling */
+	UINT32 basevmap;
+	UINT16 vscroll, hscroll, vtilescroll;
+	UINT8 vshift, hshift, tile_size;
+	UINT8 bg3_pty = 0;
+
+#ifdef SNES_DBG_VIDHRDW
+	if( debug_options.bg_disabled[layer] )
+		return;
+#endif /* SNES_DBG_VIDHRDW */
+
+	/* set special priority bit */
+	if( snes_ppu.mode == 1 && snes_ram[BGMODE] & 0x8 )
+		bg3_pty = 1;
+
+	/* Handle Mosaic effects */
+	if( snes_ram[MOSAIC] & (1 << layer) )
+		curline -= (curline % ((snes_ram[MOSAIC] >> 4) + 1));
+
+	/* Find the size of the tiles (8x8 or 16x16) */
+	tile_size = snes_ppu.layer[layer].tile_size;
+	/* Find scroll info */
+	vscroll = snes_ppu.layer[layer].offset.tile_vert;
+	vshift = snes_ppu.layer[layer].offset.shift_vert;
+	hscroll = snes_ppu.layer[layer].offset.tile_horz;
+	hshift = snes_ppu.layer[layer].offset.shift_horz;
+
+	/* Find vertical scroll amount */
+	vtilescroll = vscroll + (curline >> (3 + tile_size));
+	/* figure out which line to draw */
+	line = (curline % (8 << tile_size)) + vshift;
+	if( line > ((8 << tile_size) - 1) )	/* scrolled into the next tile */
+	{
+		vtilescroll++;	/* pretend we scrolled by 1 tile line */
+		line -= (8 << tile_size);
+	}
+	if( vtilescroll >= 128 )
+		vtilescroll -= 128;
+
+	/* Jump to base map address */
+	tilemap = snes_ppu.layer[layer].map;
+	/* Offset vertically */
+	tilemap += table_vscroll[snes_ppu.layer[layer].map_size][vtilescroll >> 5];
+	/* Scroll vertically */
+	tilemap += (vtilescroll & 0x1f) << 6;
+	/* Remember this position */
+	basevmap = tilemap;
+	/* Offset horizontally */
+	tilemap += table_hscroll[snes_ppu.layer[layer].map_size][hscroll >> 5];
+	/* Scroll horizontally */
+	tilemap += (hscroll & 0x1f) << 1;
+
+	for( ii = 0; ii < (66 >> tile_size); ii += 2 )
+	{
+		/* FIXME: A quick hack to stop memory overwrite.... */
+		if( tilemap >= SNES_VRAM_SIZE )
+			continue;
+
+		/* Have we scrolled into the next map? */
+		if( hscroll && ((ii >> 1) >= 32 - (hscroll & 0x1f)) )
+		{
+			tilemap = basevmap + table_hscroll[snes_ppu.layer[layer].map_size][(hscroll >> 5) + 1];
+			tilemap -= ii;
+			hscroll = 0;	/* Make sure we don't do this again */
+		}
+		vflip = (snes_vram[tilemap + ii + 1] & 0x80);
+		hflip = snes_vram[tilemap + ii + 1] & 0x40;
+		priority = table_bgd_pty[snes_ppu.mode > 1][layer][(snes_vram[tilemap + ii + 1] & 0x20) >> 5];
+		pal = (snes_vram[tilemap + ii + 1] & 0x1c);		/* 8 palettes of 4 colours */
+		tile = (snes_vram[tilemap + ii + 1] & 0x3) << 8;
+		tile |= snes_vram[tilemap + ii];
+
+		/* Mode 0 palettes are layer specific */
+		if( snes_ppu.mode == 0 )
+		{
+			pal += (layer << 5);
+		}
+
+		tile_line = line;
+		if( vflip )
+		{
+			if( tile_size )
+			{
+				if( line > 7 )
+				{
+					tile_line -= 8;
+				}
+				else
+				{
+					tile += 32;
+				}
+			}
+			tile_line = -tile_line + 7;
+		}
+		else
+		{
+			if( line > 7 )
+			{
+				tile += 32;
 				tile_line -= 8;
 			}
 		}
@@ -604,18 +862,18 @@ static void snes_update_line_2( UINT8 screen, UINT8 layer, UINT16 curline )
 		{
 			if( hflip )
 			{
-				snes_draw_tile_2( screen, layer, snes_ppu.layer[layer].data + (tile << 4) + tile_line, ((ii >> 1) * (8 << tile_size)) - hshift + 8, priority, hflip, pal );
-				snes_draw_tile_2( screen, layer, snes_ppu.layer[layer].data + ((tile + 1) << 4) + tile_line, ((ii >> 1) * (8 << tile_size)) - hshift, priority, hflip, pal );
+				snes_draw_tile_2x2( screen, layer, snes_ppu.layer[layer].data + (tile << 4) + tile_line, ((ii >> 1) * (8 << (tile_size + 1))) - (hshift << 1) + 16, priority, hflip, pal );
+				snes_draw_tile_2x2( screen, layer, snes_ppu.layer[layer].data + ((tile + 2) << 4) + tile_line, ((ii >> 1) * (8 << (tile_size + 1))) - (hshift << 1), priority, hflip, pal );
 			}
 			else
 			{
-				snes_draw_tile_2( screen, layer, snes_ppu.layer[layer].data + (tile << 4) + tile_line, ((ii >> 1) * (8 << tile_size)) - hshift, priority, hflip, pal );
-				snes_draw_tile_2( screen, layer, snes_ppu.layer[layer].data + ((tile + 1) << 4) + tile_line, ((ii >> 1) * (8 << tile_size)) - hshift + 8, priority, hflip, pal );
+				snes_draw_tile_2x2( screen, layer, snes_ppu.layer[layer].data + (tile << 4) + tile_line, ((ii >> 1) * (8 << (tile_size + 1))) - (hshift << 1), priority, hflip, pal );
+				snes_draw_tile_2x2( screen, layer, snes_ppu.layer[layer].data + ((tile + 2) << 4) + tile_line, ((ii >> 1) * (8 << (tile_size + 1))) - (hshift << 1) + 16, priority, hflip, pal );
 			}
 		}
 		else
 		{
-			snes_draw_tile_2( screen, layer, snes_ppu.layer[layer].data + (tile << 4) + tile_line, ((ii >> 1) * (8 << tile_size)) - hshift, priority, hflip, pal );
+			snes_draw_tile_2x2( screen, layer, snes_ppu.layer[layer].data + (tile << 4) + tile_line, ((ii >> 1) * (8 << (tile_size + 1))) - (hshift << 1), priority, hflip, pal );
 		}
 	}
 }
@@ -648,10 +906,127 @@ static void snes_update_line_4( UINT8 screen, UINT8 layer, UINT16 curline )
 	/* Find the size of the tiles (8x8 or 16x16) */
 	tile_size = snes_ppu.layer[layer].tile_size;
 	/* Find scroll info */
-	vscroll = (snes_ppu.bgd_offset.vertical[layer] & 0x3ff) >> (3 + tile_size);
-	vshift = snes_ppu.bgd_offset.vertical[layer] & ((8 << tile_size) - 1);
-	hscroll = (snes_ppu.bgd_offset.horizontal[layer] & 0x3ff) >> (3 + tile_size);
-	hshift = snes_ppu.bgd_offset.horizontal[layer] & ((8 << tile_size) - 1);
+	vscroll = snes_ppu.layer[layer].offset.tile_vert;
+	vshift = snes_ppu.layer[layer].offset.shift_vert;
+	hscroll = snes_ppu.layer[layer].offset.tile_horz;
+	hshift = snes_ppu.layer[layer].offset.shift_horz;
+
+	/* Jump to base map address */
+	tilemap = snes_ppu.layer[layer].map;
+
+	/* Find vertical scroll amount */
+	vtilescroll = vscroll + (curline >> (3 + tile_size));
+	/* figure out which line to draw */
+	line = (curline % (8 << tile_size)) + vshift;
+	if( line > ((8 << tile_size) - 1) )	/* scrolled into the next tile */
+	{
+		vtilescroll++;	/* pretend we scrolled by 1 tile line */
+		line -= (8 << tile_size);
+	}
+	if( vtilescroll >= 128 )
+		vtilescroll -= 128;
+
+	/* Offset vertically */
+	tilemap += table_vscroll[snes_ppu.layer[layer].map_size][vtilescroll >> 5];
+	/* Scroll vertically */
+	tilemap += (vtilescroll & 0x1f) << 6;
+	/* Remember this position */
+	basevmap = tilemap;
+	/* Offset horizontally */
+	tilemap += table_hscroll[snes_ppu.layer[layer].map_size][hscroll >> 5];
+	/* Scroll horizontally */
+	tilemap += (hscroll & 0x1f) << 1;
+
+	for( ii = 0; ii < (66 >> tile_size); ii += 2 )
+	{
+		/* FIXME: A quick hack to stop memory overwrite.... */
+		if( tilemap >= SNES_VRAM_SIZE )
+			continue;
+
+		/* Have we scrolled into the next map? */
+		if( hscroll && ((ii >> 1) >= 32 - (hscroll & 0x1f)) )
+		{
+			tilemap = basevmap + table_hscroll[snes_ppu.layer[layer].map_size][(hscroll >> 5) + 1];
+			tilemap -= ii;
+			hscroll = 0;	/* Make sure we don't do this again */
+		}
+		vflip = snes_vram[tilemap + ii + 1] & 0x80;
+		hflip = snes_vram[tilemap + ii + 1] & 0x40;
+		priority = table_bgd_pty[snes_ppu.mode > 1][layer][(snes_vram[tilemap + ii + 1] & 0x20) >> 5];		/* is this even right??? */
+		pal = (snes_vram[tilemap + ii + 1] & 0x1c) << 2;	/* 8 palettes of 16 colours */
+		tile = (snes_vram[tilemap + ii + 1] & 0x3) << 8;
+		tile |= snes_vram[tilemap + ii];
+
+		tile_line = line;
+		if( vflip )
+		{
+			if( tile_size )
+			{
+				if( line > 7 )
+				{
+					tile_line -= 8;
+				}
+				else
+				{
+					tile += 16;
+				}
+			}
+			tile_line = -tile_line + 7;
+		}
+		else
+		{
+			if( line > 7 )
+			{
+				tile += 16;
+				tile_line -= 8;
+			}
+		}
+		tile_line <<= 1;
+
+		if( tile_size )
+		{
+			snes_draw_tile_4x2( screen, layer, snes_ppu.layer[layer].data + (tile << 5) + tile_line, ((ii >> 1) * (8 << tile_size)) - hshift, priority, hflip, pal );
+		}
+		else
+		{
+			snes_draw_tile_4( screen, layer, snes_ppu.layer[layer].data + (tile << 5) + tile_line, ((ii >> 1) * (8 << tile_size)) - hshift, priority, hflip, pal );
+		}
+	}
+}
+
+/*********************************************
+ * snes_update_line_4_hi()
+ *
+ * Update an entire line of 4 bit plane tiles.
+ * This is the hires version
+ *********************************************/
+static void snes_update_line_4_hi( UINT8 screen, UINT8 layer, UINT16 curline )
+{
+	UINT32 tilemap, tile;
+	UINT16 ii, vflip, hflip, pal;
+	INT8 line, tile_line;
+	UINT8 priority;
+	/* scrolling */
+	UINT32 basevmap;
+	UINT16 vscroll, hscroll, vtilescroll;
+	UINT8 vshift, hshift, tile_size;
+
+#ifdef SNES_DBG_VIDHRDW
+	if( debug_options.bg_disabled[layer] )
+		return;
+#endif /* SNES_DBG_VIDHRDW */
+
+	/* Handle Mosaic effects */
+	if( snes_ram[MOSAIC] & (1 << layer) )
+		curline -= (curline % ((snes_ram[MOSAIC] >> 4) + 1));
+
+	/* Find the size of the tiles (8x8 or 16x16) */
+	tile_size = snes_ppu.layer[layer].tile_size;
+	/* Find scroll info */
+	vscroll = snes_ppu.layer[layer].offset.tile_vert;
+	vshift = snes_ppu.layer[layer].offset.shift_vert;
+	hscroll = snes_ppu.layer[layer].offset.tile_horz;
+	hshift = snes_ppu.layer[layer].offset.shift_horz;
 
 	/* Find vertical scroll amount */
 	vtilescroll = vscroll + (curline >> (3 + tile_size));
@@ -724,22 +1099,23 @@ static void snes_update_line_4( UINT8 screen, UINT8 layer, UINT16 curline )
 		}
 		tile_line <<= 1;
 
+		/* Does hi-res support the tile-size option? */
 		if( tile_size )
 		{
 			if( hflip )
 			{
-				snes_draw_tile_4( screen, layer, snes_ppu.layer[layer].data + (tile << 5) + tile_line, ((ii >> 1) * (8 << tile_size)) - hshift + 8, priority, hflip, pal );
-				snes_draw_tile_4( screen, layer, snes_ppu.layer[layer].data + ((tile + 1) << 5) + tile_line, ((ii >> 1) * (8 << tile_size)) - hshift, priority, hflip, pal );
+				snes_draw_tile_4x2( screen, layer, snes_ppu.layer[layer].data + (tile << 5) + tile_line, ((ii >> 1) * (8 << (tile_size + 1))) - (hshift << 1) + 16, priority, hflip, pal );
+				snes_draw_tile_4x2( screen, layer, snes_ppu.layer[layer].data + ((tile + 2) << 5) + tile_line, ((ii >> 1) * (8 << (tile_size + 1))) - (hshift << 1), priority, hflip, pal );
 			}
 			else
 			{
-				snes_draw_tile_4( screen, layer, snes_ppu.layer[layer].data + (tile << 5) + tile_line, ((ii >> 1) * (8 << tile_size)) - hshift, priority, hflip, pal );
-				snes_draw_tile_4( screen, layer, snes_ppu.layer[layer].data + ((tile + 1) << 5) + tile_line, ((ii >> 1) * (8 << tile_size)) - hshift + 8, priority, hflip, pal );
+				snes_draw_tile_4x2( screen, layer, snes_ppu.layer[layer].data + (tile << 5) + tile_line, ((ii >> 1) * (8 << (tile_size + 1))) - (hshift << 1), priority, hflip, pal );
+				snes_draw_tile_4x2( screen, layer, snes_ppu.layer[layer].data + ((tile + 2) << 5) + tile_line, ((ii >> 1) * (8 << (tile_size + 1))) - (hshift << 1) + 16, priority, hflip, pal );
 			}
 		}
 		else
 		{
-			snes_draw_tile_4( screen, layer, snes_ppu.layer[layer].data + (tile << 5) + tile_line, ((ii >> 1) * (8 << tile_size)) - hshift, priority, hflip, pal );
+			snes_draw_tile_4x2( screen, layer, snes_ppu.layer[layer].data + (tile << 5) + tile_line, ((ii >> 1) * (8 << (tile_size + 1))) - (hshift << 1), priority, hflip, pal );
 		}
 	}
 }
@@ -772,10 +1148,10 @@ static void snes_update_line_8( UINT8 screen, UINT8 layer, UINT16 curline )
 	/* Find the size of the tiles (8x8 or 16x16) */
 	tile_size = snes_ppu.layer[layer].tile_size;
 	/* Find scroll info */
-	vscroll = (snes_ppu.bgd_offset.vertical[layer] & 0x3ff) >> (3 + tile_size);
-	vshift = snes_ppu.bgd_offset.vertical[layer] & ((8 << tile_size) - 1);
-	hscroll = (snes_ppu.bgd_offset.horizontal[layer] & 0x3ff) >> (3 + tile_size);
-	hshift = snes_ppu.bgd_offset.horizontal[layer] & ((8 << tile_size) - 1);
+	vscroll = snes_ppu.layer[layer].offset.tile_vert;
+	vshift = snes_ppu.layer[layer].offset.shift_vert;
+	hscroll = snes_ppu.layer[layer].offset.tile_horz;
+	hshift = snes_ppu.layer[layer].offset.shift_horz;
 
 	/* Find vertical scroll amount */
 	vtilescroll = vscroll + (curline >> (3 + tile_size));
@@ -850,16 +1226,7 @@ static void snes_update_line_8( UINT8 screen, UINT8 layer, UINT16 curline )
 
 		if( tile_size )
 		{
-			if( hflip )
-			{
-				snes_draw_tile_8( screen, layer, snes_ppu.layer[layer].data + (tile << 6) + tile_line, ((ii >> 1) * (8 << tile_size)) - hshift + 8, priority, hflip );
-				snes_draw_tile_8( screen, layer, snes_ppu.layer[layer].data + ((tile + 1) << 6) + tile_line, ((ii >> 1) * (8 << tile_size)) - hshift, priority, hflip );
-			}
-			else
-			{
-				snes_draw_tile_8( screen, layer, snes_ppu.layer[layer].data + (tile << 6) + tile_line, ((ii >> 1) * (8 << tile_size)) - hshift, priority, hflip );
-				snes_draw_tile_8( screen, layer, snes_ppu.layer[layer].data + ((tile + 1) << 6) + tile_line, ((ii >> 1) * (8 << tile_size)) - hshift + 8, priority, hflip );
-			}
+			snes_draw_tile_8x2( screen, layer, snes_ppu.layer[layer].data + (tile << 6) + tile_line, ((ii >> 1) * (8 << tile_size)) - hshift, priority, hflip );
 		}
 		else
 		{
@@ -892,8 +1259,8 @@ static void snes_update_line_mode7( UINT8 screen, UINT8 layer, UINT16 curline )
 	md = snes_ppu.mode7.matrix_d;
 	xc = snes_ppu.mode7.origin_x;
 	yc = snes_ppu.mode7.origin_y;
-	hs = snes_ppu.bgd_offset.horizontal[0];
-	vs = snes_ppu.bgd_offset.vertical[0];
+	hs = snes_ppu.layer[0].offset.horizontal;
+	vs = snes_ppu.layer[0].offset.vertical;
 
 	/* Sign extend */
 	xc <<= 3;
@@ -997,7 +1364,7 @@ static void snes_update_line_mode7( UINT8 screen, UINT8 layer, UINT16 curline )
 static void snes_update_objects( UINT8 screen, UINT16 curline )
 {
 	INT8 xs, ys;
-	UINT8 line;
+	UINT8 line, widemode = 0;
 	UINT16 oam_extra, extra;
 	INT16 oam;
 	UINT8 range_over = 0, time_over = 0;
@@ -1011,6 +1378,9 @@ static void snes_update_objects( UINT8 screen, UINT16 curline )
 	if( debug_options.bg_disabled[4] )
 		return;
 #endif /* SNES_DBG_VIDHRDW */
+
+	if( snes_ppu.mode == 5 || snes_ppu.mode == 6 )
+		widemode = 1;
 
 	oam = 0x1ff;
 	oam_extra = oam + 0x20;
@@ -1063,7 +1433,12 @@ static void snes_update_objects( UINT8 screen, UINT16 curline )
 				for( xs = (snes_ppu.oam.size[size] - 1); xs >= 0; xs-- )
 				{
 					if( (x + (count << 3) < SNES_SCR_WIDTH + 8) )
-						snes_draw_tile_object( screen, snes_ppu.layer[4].data + name_sel + tile + table_obj_offset[ys][xs] + line, x + (count++ << 3), priority, hflip, pal, blend );
+					{
+						if( widemode )
+							snes_draw_tile_object_w( screen, snes_ppu.layer[4].data + name_sel + tile + table_obj_offset[ys][xs] + line, x + (count++ << 3), priority, hflip, pal, blend );
+						else
+							snes_draw_tile_object( screen, snes_ppu.layer[4].data + name_sel + tile + table_obj_offset[ys][xs] + line, x + (count++ << 3), priority, hflip, pal, blend );
+					}
 					time_over++;	/* Increase time_over. Should we stop drawing if exceeded 34 tiles? */
 				}
 			}
@@ -1072,7 +1447,12 @@ static void snes_update_objects( UINT8 screen, UINT16 curline )
 				for( xs = 0; xs < snes_ppu.oam.size[size]; xs++ )
 				{
 					if( (x + (xs << 3) < SNES_SCR_WIDTH + 8) )
-						snes_draw_tile_object( screen, snes_ppu.layer[4].data + name_sel + tile + table_obj_offset[ys][xs] + line, x + (xs << 3), priority, hflip, pal, blend );
+					{
+						if( widemode )
+							snes_draw_tile_object_w( screen, snes_ppu.layer[4].data + name_sel + tile + table_obj_offset[ys][xs] + line, x + (xs << 3), priority, hflip, pal, blend );
+						else
+							snes_draw_tile_object( screen, snes_ppu.layer[4].data + name_sel + tile + table_obj_offset[ys][xs] + line, x + (xs << 3), priority, hflip, pal, blend );
+					}
 					time_over++;	/* Increase time_over. Should we stop drawing if exceeded 34 tiles? */
 				}
 			}
@@ -1341,8 +1721,8 @@ static void snes_update_windowmasks(void)
 			snes_ppu.clipmasks[4][ii] = w2 ? 0x00 : 0xff;
 
 		/* update colour window */
-		/* FIXME: Why is the colour window stuff different to the other  *
-		 * windows? Have I overlooked something or done something wrong? */
+		/* FIXME: Why is the colour window different to the other windows? *
+		 * Have I overlooked something or done something wrong? */
 		snes_ppu.clipmasks[5][ii] = 0xff;
 		w1 = w2 = -1;
 		if( snes_ram[WOBJSEL] & 0x20 )
@@ -1425,6 +1805,24 @@ static void snes_update_palette(void)
 }
 
 /*********************************************
+ * snes_update_offsets()
+ *
+ * Update the offsets with the latest changes.
+ *********************************************/
+static void snes_update_offsets(void)
+{
+	int ii;
+	for( ii = 0; ii < 4; ii++ )
+	{
+		snes_ppu.layer[ii].offset.tile_horz = (snes_ppu.layer[ii].offset.horizontal & 0x3ff) >> (3 + snes_ppu.layer[ii].tile_size);
+		snes_ppu.layer[ii].offset.shift_horz = snes_ppu.layer[ii].offset.horizontal & ((8 << snes_ppu.layer[ii].tile_size) - 1);
+		snes_ppu.layer[ii].offset.tile_vert = (snes_ppu.layer[ii].offset.vertical & 0x3ff) >> (3 + snes_ppu.layer[ii].tile_size);
+		snes_ppu.layer[ii].offset.shift_vert = snes_ppu.layer[ii].offset.vertical & ((8 << snes_ppu.layer[ii].tile_size) - 1);
+	}
+	snes_ppu.update_offsets = 0;
+}
+
+/*********************************************
  * snes_refresh_scanline()
  *
  * Redraw the current line.
@@ -1450,13 +1848,16 @@ void snes_refresh_scanline( UINT16 curline )
 		/* Update the palette if necessary */
 		if( snes_ppu.update_palette )
 			snes_update_palette();
+		/* Update the offsets if necessary */
+		if( snes_ppu.update_offsets )
+			snes_update_offsets();
 
 		/* Clear zbuffers */
-		memset( scanlines[MAINSCREEN].zbuf, 0, SNES_SCR_WIDTH );
-		memset( scanlines[SUBSCREEN].zbuf, 0, SNES_SCR_WIDTH );
+		memset( scanlines[MAINSCREEN].zbuf, 0, SNES_SCR_WIDTH * 2 );
+		memset( scanlines[SUBSCREEN].zbuf, 0, SNES_SCR_WIDTH * 2 );
 
 		/* Clear subscreen and draw back colour */
-		for( ii = 0; ii < SNES_SCR_WIDTH; ii++ )
+		for( ii = 0; ii < SNES_SCR_WIDTH * 2; ii++ )
 		{
 			/* Not sure if this is correct behaviour, but a few games seem to
 			 * require it. (SMW, Zelda etc) */
@@ -1473,16 +1874,16 @@ void snes_refresh_scanline( UINT16 curline )
 			if( snes_ram[TS] & (0x1 << ii) )
 				snes_modedefs[snes_ppu.mode].drawLayer[ii]( SUBSCREEN, ii, curline );
 		}
-				/* Draw the back plane */
+		/* Draw the back plane */
 #ifdef SNES_DBG_VIDHRDW
 		if( !debug_options.bg_disabled[5] )
 #endif /* SNES_DBG_VIDHRDW */
 		if( snes_ram[CGADSUB] & 0x20 )
-				{
+		{
 			for( ii = 0; ii < SNES_SCR_WIDTH; ii++ )
 			{
 				snes_draw_blend( ii, &scanlines[MAINSCREEN].buffer[ii], (snes_ram[CGADSUB] & 0x80)?SNES_BLEND_SUB:SNES_BLEND_ADD, (snes_ram[CGWSEL] & 0x30) >> 4 );
-				}
+			}
 		}
 		/* Draw mainscreen */
 		if( snes_ram[TM] & 0x10 )
@@ -1502,12 +1903,12 @@ void snes_refresh_scanline( UINT16 curline )
 
 		/* Toggle drawing of subscreen or mainscreen */
 		if( debug_options.draw_subscreen )
-			memcpy( (UINT16 *)bitmap->base + bitmap->rowpixels * curline, scanlines[SUBSCREEN].buffer, SNES_SCR_WIDTH * sizeof(UINT16) );
+			memcpy( (UINT16 *)bitmap->base + bitmap->rowpixels * curline, scanlines[SUBSCREEN].buffer, (SNES_SCR_WIDTH * 2) * sizeof(UINT16) );
 		else
 #endif /* SNES_DBG_VIDHRDW */
 
 		/* Phew! Draw the line to screen */
-		memcpy( (UINT16 *)bitmap->base + bitmap->rowpixels * curline, scanlines[MAINSCREEN].buffer, SNES_SCR_WIDTH * sizeof(UINT16) );
+		memcpy( (UINT16 *)bitmap->base + bitmap->rowpixels * curline, scanlines[MAINSCREEN].buffer, (SNES_SCR_WIDTH * 2) * sizeof(UINT16) );
 	}
 
 	profiler_mark(PROFILER_END);
@@ -1572,7 +1973,7 @@ static void snes_dbg_draw_all_tiles( struct mame_bitmap *bitmap, UINT32 tileaddr
 		{
 			/* Clear buffers */
 			memset( scanlines[MAINSCREEN].buffer, 0, SNES_SCR_WIDTH * 2 );
-			memset( scanlines[MAINSCREEN].zbuf, 0, SNES_SCR_WIDTH );
+			memset( scanlines[MAINSCREEN].zbuf, 0, SNES_SCR_WIDTH * 2 );
 			for( ii = 0; ii < 32; ii++ )
 			{
 				switch( bpl )
@@ -1589,7 +1990,7 @@ static void snes_dbg_draw_all_tiles( struct mame_bitmap *bitmap, UINT32 tileaddr
 				}
 				addr += (bpl * 16);
 			}
-			draw_scanline16( bitmap, 0, jj * 8 + kk, SNES_SCR_WIDTH, scanlines[MAINSCREEN].buffer, Machine->pens, 200 );
+			draw_scanline16( bitmap, 0, jj * 8 + kk, SNES_SCR_WIDTH * 2, scanlines[MAINSCREEN].buffer, Machine->pens, 200 );
 			addr -= (32 * (bpl * 16)) - 2;
 		}
 	}
@@ -1601,6 +2002,8 @@ static void snes_dbg_draw_all_tiles( struct mame_bitmap *bitmap, UINT32 tileaddr
 static UINT8 snes_dbg_vidhrdw( UINT16 curline )
 {
 	UINT16 ii;
+
+#define SNES_DBG_HORZ_POS 545
 
 	/* Check if the user has enabled or disabled stuff */
 	if( curline == 0 )
@@ -1635,8 +2038,8 @@ static UINT8 snes_dbg_vidhrdw( UINT16 curline )
 		}
 		/* Display some debug info on the screen */
 		sprintf( t, "%s%s", debug_options.windows_disabled?" ":"W", debug_options.transparency_disabled?" ":"T" );
-		ui_text( Machine->scrbitmap, t, 300, y++ * 9 );
-		sprintf( t, "%s1 %s%s%s%s%s%c%s%s%d%s  %4X %4X",
+		ui_text( Machine->scrbitmap, t, SNES_DBG_HORZ_POS, y++ * 9 );
+		sprintf( t, "%s1 %s%s%s%s%s%c%s%s%d%s %d %4X %4X",
 				debug_options.bg_disabled[0]?" ":"*",
 				(snes_ram[TM] & 0x1)?"M":" ",
 				(snes_ram[TS] & 0x1)?"S":" ",
@@ -1648,10 +2051,11 @@ static UINT8 snes_dbg_vidhrdw( UINT16 curline )
 				(snes_ram[W12SEL] & 0x8)?((snes_ram[W12SEL] & 0x4)?"o":"i"):" ",
 				snes_ppu.layer[0].tile_size + 1,
 				(snes_ram[MOSAIC] & 0x1)?"m":" ",
+				snes_ram[BG1SC] & 0x3,
 				(snes_ram[BG1SC] & 0xfc) << 9,
 				snes_ppu.layer[0].data );
-		ui_text( Machine->scrbitmap, t, 300, y++ * 9 );
-		sprintf( t, "%s2 %s%s%s%s%s%c%s%s%d%s  %4X %4X",
+		ui_text( Machine->scrbitmap, t, SNES_DBG_HORZ_POS, y++ * 9 );
+		sprintf( t, "%s2 %s%s%s%s%s%c%s%s%d%s %d %4X %4X",
 				debug_options.bg_disabled[1]?" ":"*",
 				(snes_ram[TM] & 0x2)?"M":" ",
 				(snes_ram[TS] & 0x2)?"S":" ",
@@ -1663,10 +2067,11 @@ static UINT8 snes_dbg_vidhrdw( UINT16 curline )
 				(snes_ram[W12SEL] & 0x80)?((snes_ram[W12SEL] & 0x40)?"o":"i"):" ",
 				snes_ppu.layer[1].tile_size + 1,
 				(snes_ram[MOSAIC] & 0x2)?"m":" ",
+				snes_ram[BG2SC] & 0x3,
 				(snes_ram[BG2SC] & 0xfc) << 9,
 				snes_ppu.layer[1].data );
-		ui_text( Machine->scrbitmap, t, 300, y++ * 9 );
-		sprintf( t, "%s3 %s%s%s%s%s%c%s%s%d%s%s %4X %4X",
+		ui_text( Machine->scrbitmap, t, SNES_DBG_HORZ_POS, y++ * 9 );
+		sprintf( t, "%s3 %s%s%s%s%s%c%s%s%d%s%s%d %4X %4X",
 				debug_options.bg_disabled[2]?" ":"*",
 				(snes_ram[TM] & 0x4)?"M":" ",
 				(snes_ram[TS] & 0x4)?"S":" ",
@@ -1679,10 +2084,11 @@ static UINT8 snes_dbg_vidhrdw( UINT16 curline )
 				snes_ppu.layer[2].tile_size + 1,
 				(snes_ram[MOSAIC] & 0x4)?"m":" ",
 				(snes_ram[BGMODE] & 0x8)?"P":" ",
+				snes_ram[BG3SC] & 0x3,
 				(snes_ram[BG3SC] & 0xfc) << 9,
 				snes_ppu.layer[2].data );
-		ui_text( Machine->scrbitmap, t, 300, y++ * 9 );
-		sprintf( t, "%s4 %s%s%s%s%s%c%s%s%d%s  %4X %4X",
+		ui_text( Machine->scrbitmap, t, SNES_DBG_HORZ_POS, y++ * 9 );
+		sprintf( t, "%s4 %s%s%s%s%s%c%s%s%d%s %d %4X %4X",
 				debug_options.bg_disabled[3]?" ":"*",
 				(snes_ram[TM] & 0x8)?"M":" ",
 				(snes_ram[TS] & 0x8)?"S":" ",
@@ -1694,9 +2100,10 @@ static UINT8 snes_dbg_vidhrdw( UINT16 curline )
 				(snes_ram[W34SEL] & 0x80)?((snes_ram[W34SEL] & 0x40)?"o":"i"):" ",
 				snes_ppu.layer[3].tile_size + 1,
 				(snes_ram[MOSAIC] & 0x8)?"m":" ",
+				snes_ram[BG4SC] & 0x3,
 				(snes_ram[BG4SC] & 0xfc) << 9,
 				snes_ppu.layer[3].data );
-		ui_text( Machine->scrbitmap, t, 300, y++ * 9 );
+		ui_text( Machine->scrbitmap, t, SNES_DBG_HORZ_POS, y++ * 9 );
 		sprintf( t, "%sO %s%s%s%s%s%c%s%s%d%d       %4X",
 				debug_options.bg_disabled[4]?" ":"*",
 				(snes_ram[TM] & 0x10)?"M":" ",
@@ -1709,28 +2116,28 @@ static UINT8 snes_dbg_vidhrdw( UINT16 curline )
 				(snes_ram[WOBJSEL] & 0x8)?((snes_ram[WOBJSEL] & 0x4)?"o":"i"):" ",
 				snes_ppu.oam.size[0], snes_ppu.oam.size[1],
 				snes_ppu.layer[4].data );
-		ui_text( Machine->scrbitmap, t, 300, y++ * 9 );
+		ui_text( Machine->scrbitmap, t, SNES_DBG_HORZ_POS, y++ * 9 );
 		sprintf( t, "%sB   %s  %c%s%s",
 				debug_options.bg_disabled[5]?" ":"*",
 				(snes_ram[CGADSUB] & 0x20)?"B":" ",
 				WINLOGIC[(snes_ram[WOBJLOG] & 0xc)>>2],
 				(snes_ram[WOBJSEL] & 0x20)?((snes_ram[WOBJSEL] & 0x10)?"o":"i"):" ",
 				(snes_ram[WOBJSEL] & 0x80)?((snes_ram[WOBJSEL] & 0x40)?"o":"i"):" " );
-		ui_text( Machine->scrbitmap, t, 300, y++ * 9 );
+		ui_text( Machine->scrbitmap, t, SNES_DBG_HORZ_POS, y++ * 9 );
 		sprintf( t, "1) %3d %3d   2) %3d %3d", (snes_ppu.bgd_offset.horizontal[0] & 0x3ff) >> 3, (snes_ppu.bgd_offset.vertical[0] & 0x3ff) >> 3, (snes_ppu.bgd_offset.horizontal[1] & 0x3ff) >> 3, (snes_ppu.bgd_offset.vertical[1] & 0x3ff) >> 3 );
-		ui_text( Machine->scrbitmap, t, 300, y++ * 9 );
+		ui_text( Machine->scrbitmap, t, SNES_DBG_HORZ_POS, y++ * 9 );
 		sprintf( t, "3) %3d %3d   4) %3d %3d", (snes_ppu.bgd_offset.horizontal[2] & 0x3ff) >> 3, (snes_ppu.bgd_offset.vertical[2] & 0x3ff) >> 3, (snes_ppu.bgd_offset.horizontal[3] & 0x3ff) >> 3, (snes_ppu.bgd_offset.vertical[3] & 0x3ff) >> 3 );
-		ui_text( Machine->scrbitmap, t, 300, y++ * 9 );
+		ui_text( Machine->scrbitmap, t, SNES_DBG_HORZ_POS, y++ * 9 );
 		sprintf( t, "Flags: %s%s%s %s %2d", (snes_ram[CGWSEL] & 0x2)?"S":"F", (snes_ram[CGADSUB] & 0x80)?"-":"+", (snes_ram[CGADSUB] & 0x40)?" 50%":"100%",(snes_ram[CGWSEL] & 0x1)?"D":"P", (snes_ram[MOSAIC] & 0xf0) >> 4 );
-		ui_text( Machine->scrbitmap, t, 300, y++ * 9 );
+		ui_text( Machine->scrbitmap, t, SNES_DBG_HORZ_POS, y++ * 9 );
 		sprintf( t, "SetINI: %s %s %s %s %s %s", (snes_ram[SETINI] & 0x1)?" I":"NI", (snes_ram[SETINI] & 0x2)?"P":"R", (snes_ram[SETINI] & 0x4)?"240":"225",(snes_ram[SETINI] & 0x8)?"512":"256",(snes_ram[SETINI] & 0x40)?"E":"N",(snes_ram[SETINI] & 0x80)?"ES":"NS" );
-		ui_text( Machine->scrbitmap, t, 300, y++ * 9 );
+		ui_text( Machine->scrbitmap, t, SNES_DBG_HORZ_POS, y++ * 9 );
 		sprintf( t, "Mode7: A %5d B %5d", snes_ppu.mode7.matrix_a, snes_ppu.mode7.matrix_b );
-		ui_text( Machine->scrbitmap, t, 300, y++ * 9 );
+		ui_text( Machine->scrbitmap, t, SNES_DBG_HORZ_POS, y++ * 9 );
 		sprintf( t, " %s%s%s   C %5d D %5d", (snes_ram[M7SEL] & 0xc0)?((snes_ram[M7SEL] & 0x40)?"0":"C"):"R", (snes_ram[M7SEL] & 0x1)?"H":" ", (snes_ram[M7SEL] & 0x2)?"V":" ", snes_ppu.mode7.matrix_c, snes_ppu.mode7.matrix_d );
-		ui_text( Machine->scrbitmap, t, 300, y++ * 9 );
+		ui_text( Machine->scrbitmap, t, SNES_DBG_HORZ_POS, y++ * 9 );
 		sprintf( t, "       X %5d Y %5d", snes_ppu.mode7.origin_x, snes_ppu.mode7.origin_y );
-		ui_text( Machine->scrbitmap, t, 300, y++ * 9 );
+		ui_text( Machine->scrbitmap, t, SNES_DBG_HORZ_POS, y++ * 9 );
 	}
 	/* Just for testing, draw as many tiles as possible */
 	{
@@ -1788,15 +2195,15 @@ static UINT8 snes_dbg_vidhrdw( UINT16 curline )
 	}
 
 	/* Draw some useful information about the back/fixed colours and current bg mode etc. */
-	plot_pixel( Machine->scrbitmap, 274, curline, Machine->pens[dbg_mode_colours[(snes_ram[CGWSEL] & 0xc0) >> 6]] );
-	plot_pixel( Machine->scrbitmap, 276, curline, Machine->pens[dbg_mode_colours[(snes_ram[CGWSEL] & 0x30) >> 4]] );
-	plot_pixel( Machine->scrbitmap, 278, curline, Machine->pens[dbg_mode_colours[snes_ram[BGMODE] & 0x7]] );
-	plot_pixel( Machine->scrbitmap, 288, curline, Machine->pens[32767] );
-	plot_pixel( Machine->scrbitmap, 298, curline, Machine->pens[32767] );
+	plot_pixel( Machine->scrbitmap, SNES_DBG_HORZ_POS - 26, curline, Machine->pens[dbg_mode_colours[(snes_ram[CGWSEL] & 0xc0) >> 6]] );
+	plot_pixel( Machine->scrbitmap, SNES_DBG_HORZ_POS - 24, curline, Machine->pens[dbg_mode_colours[(snes_ram[CGWSEL] & 0x30) >> 4]] );
+	plot_pixel( Machine->scrbitmap, SNES_DBG_HORZ_POS - 22, curline, Machine->pens[dbg_mode_colours[snes_ram[BGMODE] & 0x7]] );
+	plot_pixel( Machine->scrbitmap, SNES_DBG_HORZ_POS - 12, curline, Machine->pens[32767] );
+	plot_pixel( Machine->scrbitmap, SNES_DBG_HORZ_POS - 2, curline, Machine->pens[32767] );
 	for( ii = 0; ii < 5; ii++ )
 	{
-		plot_pixel( Machine->scrbitmap, 281 + ii, curline, Machine->remapped_colortable[0] );
-		plot_pixel( Machine->scrbitmap, 291 + ii, curline, Machine->remapped_colortable[FIXED_COLOUR] );
+		plot_pixel( Machine->scrbitmap, SNES_DBG_HORZ_POS - 19 + ii, curline, Machine->remapped_colortable[0] );
+		plot_pixel( Machine->scrbitmap, SNES_DBG_HORZ_POS - 9 + ii, curline, Machine->remapped_colortable[FIXED_COLOUR] );
 	}
 	/* Draw window positions */
 	scanlines[MAINSCREEN].buffer[snes_ram[WH0]] = Machine->pens[dbg_mode_colours[0]];

@@ -21,6 +21,9 @@ System Driver Changes:
 - [DRAGON] Fixed disk controller when used with double sided disks.  (bug
   #492)  [Nate Woods]
 
+- [SNES] Added HiRes support(fixes Secret of Mana name select screen). Fixed
+  old NES joypad support. [Anthony Kruize]
+
 - [SVI318] Fixed a crash on startup.  [Nate Woods]
 
 - [UK101] Minor enhancements, switched to MESS managed RAM.  [Nate Woods]
