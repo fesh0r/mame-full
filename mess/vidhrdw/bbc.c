@@ -317,21 +317,46 @@ static char *tt_lookup=teletext_characters;
 static char *tt_graphics=teletext_graphics;
 static int tt_colour=White;
 static int tt_bgcolour=Black;
-
+static int tt_start_line=0;
+static int tt_double_height=0;
+static int tt_double_height_set=0;
+static int tt_double_height_offset=0;
 static int tt_linecount=0;
 
-void teletext_Vsync(void)
+void teletext_DEW(void)
 {
-	tt_linecount=0;
+	tt_linecount=9;
+	tt_double_height_set=0;
+	tt_double_height_offset=0;
 }
 
-void teletext_Hsync(void)
+void teletext_LOSE(void)
 {
 	tt_lookup=teletext_characters;
 	tt_colour=Machine->pens[0];
 	tt_bgcolour=Black;
 	tt_graphics=teletext_graphics;
 	tt_linecount=(tt_linecount+1)%10;
+	tt_start_line=0;
+	tt_double_height=0;
+
+
+	/* this double hight stuff works but has got a bit messy I will have another go and clean it up soon */
+	if (tt_linecount==0)
+	{
+		if (tt_double_height_set==1)
+		{
+			if (tt_double_height_offset)
+			{
+				tt_double_height_offset=0;
+			} else {
+				tt_double_height_offset=10;
+			}
+		} else {
+			tt_double_height_offset=0;
+		}
+		tt_double_height_set=0;
+	}
 }
 
 void BBC_draw_teletext_enabled(void)
@@ -384,8 +409,15 @@ void BBC_draw_teletext_enabled(void)
 		// 0x09		Steady
 		// 0x0a		End Box
 		// 0x0b     Start Box
-		// 0x0c		Normal Height
-		// 0x0d		Double Height
+		case 0x0c:	// Normal Height
+			tt_double_height=0;
+			tt_start_line=0;
+			break;
+		case 0x0d:	// Double Height
+			tt_double_height=1;
+			tt_double_height_set=1;
+			tt_start_line=tt_double_height_offset;
+			break;
 		// 0x0e		S0
 		// 0x0f		S1
 		// 0x10		DLE
@@ -447,7 +479,7 @@ void BBC_draw_teletext_enabled(void)
 	}
 
 	if (i<0x20) {i=0x20;}
-	i=(i-0x20)*60+(6*tt_linecount);
+	i=(i-0x20)*60+(6*((tt_linecount+tt_start_line)>>tt_double_height));
 	for(sc1=0;sc1<6;sc1++)
 	{
 		pixel_temp=tt_lookup[i++]?tt_colour:tt_bgcolour;
@@ -480,6 +512,7 @@ void BBC_Set_VideoULA_DE(void)
 	{
 		if (BBC_DE)
 		{
+			teletext_LOSE();
 			draw_function=*BBC_draw_teletext_enabled;
 		} else {
 			draw_function=*BBC_draw_screen_disabled;
@@ -520,7 +553,6 @@ void BBC_Set_HSync(int offset, int data)
 		BBC_display=(BBC_bitmap->line[y_screen_pos])+x_screen_pos;
 
 
-		teletext_Hsync();
 	}
 }
 
@@ -533,7 +565,7 @@ void BBC_Set_VSync(int offset, int data)
 		y_screen_pos=y_screen_offset;
 		BBC_display=(BBC_bitmap->line[y_screen_pos])+x_screen_pos;
 
-		teletext_Vsync();
+		teletext_DEW();
 	};
 }
 
@@ -542,6 +574,7 @@ void BBC_Set_DE(int offset, int data)
 {
 	BBC_DE=data;
 	BBC_Set_VideoULA_DE();
+
 }
 
 // called when the 6845 changes the Cursor Enabled
