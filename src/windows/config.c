@@ -51,7 +51,7 @@ extern struct rc_option frontend_opts[];
 static const char *rompath;
 #ifdef MESS
 	static const char *swpath;
-	static const char *temp;
+	static const char *mess_opts;
 #endif
 
 static const char *samplepath;
@@ -248,19 +248,18 @@ static struct rc_option opts[] = {
 	{ "log", NULL, rc_bool, &errorlog, "0", 0, 0, NULL, "generate error.log" },
 #ifdef MESS
 	{ "MESS specific options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
-	{ "cartridge", "cart", rc_string, &temp, NULL, 0, 0, NULL, "Attatch a cartridge device" },
-	{ "floppydisk", "flop", rc_string, &temp, NULL, 0, 0, NULL, "Attatch a floppy disk device" },
-	{ "harddisk", "hard", rc_string, &temp, NULL, 0, 0, NULL, "Attatch a hard disk device" },
-	{ "cylinder", "cyln", rc_string, &temp, NULL, 0, 0, NULL, "Attatch a cylinder device" },
-	{ "cassette", "cass", rc_string, &temp, NULL, 0, 0, NULL, "Attatch a cassette device" },
-	{ "punchcard", "pcrd", rc_string, &temp, NULL, 0, 0, NULL, "Attatch a punch card device" },
-	{ "punchtape", "ptap", rc_string, &temp, NULL, 0, 0, NULL, "Attatch a punch tape device" },
-	{ "printer", "prin", rc_string, &temp, NULL, 0, 0, NULL, "Attatch a printer device" },
-	{ "serial", "serl", rc_string, &temp, NULL, 0, 0, NULL, "Attatch a serial device" },
-	{ "parallel", "parl", rc_string, &temp, NULL, 0, 0, NULL, "Attatch a parallel device" },
-	{ "snapshot", "dump", rc_string, &temp, NULL, 0, 0, NULL, "Attatch a snapshot device" },
-	{ "quickload", "quik", rc_string, &temp, NULL, 0, 0, NULL, "Attatch a quickload device" },
-	{ "alias", NULL, rc_string, &temp, NULL, 0, 0, NULL, "Attatch an alias device" },
+	{ "cartridge", "cart", rc_string, &mess_opts, NULL, 0, 0, NULL, "Attach software to cartridge device" },
+	{ "floppydisk","flop", rc_string, &mess_opts, NULL, 0, 0, NULL, "Attatch a floppy disk device" },
+	{ "harddisk",  "hard", rc_string, &mess_opts, NULL, 0, 0, NULL, "Attatch a hard disk device" },
+	{ "cylinder",  "cyln", rc_string, &mess_opts, NULL, 0, 0, NULL, "Attatch a cylinder device" },
+	{ "cassette",  "cass", rc_string, &mess_opts, NULL, 0, 0, NULL, "Attatch a cassette device" },
+	{ "punchcard", "pcrd", rc_string, &mess_opts, NULL, 0, 0, NULL, "Attatch a punch card device" },
+	{ "punchtape", "ptap", rc_string, &mess_opts, NULL, 0, 0, NULL, "Attatch a punch tape device" },
+	{ "printer",   "prin", rc_string, &mess_opts, NULL, 0, 0, NULL, "Attatch a printer device" },
+	{ "serial",    "serl", rc_string, &mess_opts, NULL, 0, 0, NULL, "Attatch a serial device" },
+	{ "parallel",  "parl", rc_string, &mess_opts, NULL, 0, 0, NULL, "Attatch a parallel device" },
+	{ "snapshot",  "dump", rc_string, &mess_opts, NULL, 0, 0, NULL, "Attatch a snapshot device" },
+	{ "quickload", "quik", rc_string, &mess_opts, NULL, 0, 0, NULL, "Attatch a quickload device" },
 #endif
 	/* config options */
 	{ "Configuration options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },

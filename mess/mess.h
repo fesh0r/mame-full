@@ -2,11 +2,10 @@
 #define MESS_H
 
 #include "osdepend.h"
+/* Damn I hate doing this, but.... */
+#include "device.h"
 
 #define ARRAY_LENGTH(x) (sizeof(x)/sizeof(x[0]))
-
-// must be defined in the root makefile
-//#define MESS_DEBUG
 
 #if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
 	#include <stdbool.h>
@@ -174,6 +173,20 @@ int osd_fdc_get_status(int unit);
  #define MAX_KEYS	128 /* for MESS but already done in INPUT.C*/
 #endif
 
+
+
+
+
+
+
+
+enum {
+	IO_RESET_NONE,	/* changing the device file doesn't reset anything 								*/
+	IO_RESET_CPU,	/* only reset the CPU 															*/
+	IO_RESET_ALL	/* restart the driver including audio/video 									*/
+};
+
+
 /******************************************************************************
  * This is a start at the proposed peripheral structure.
  * It will be filled with live starting with the next release (I hope).
@@ -197,34 +210,6 @@ int osd_fdc_get_status(int unit);
  *	input_chunk 		input chunk of data (eg. sector or track)
  *	output_chunk		output chunk of data (eg. sector or track)
  ******************************************************************************/
-
-enum {
-	IO_END = 0,	/* dummy type to end IODevice enumerations */
-	IO_CARTSLOT,	/* cartidge port, as found on most console and on some computers */
-	IO_FLOPPY,		/* floppy disk unit */
-	IO_HARDDISK,	/* hard disk unit */
-	IO_CYLINDER,	/* magnetically-coated cylinder */
-	IO_CASSETTE,	/* cassette recorder (common on home computers a while ago) */
-	IO_PUNCHCARD,	/* card puncher/reader */
-	IO_PUNCHTAPE,	/* tape puncher/reader (similar to a card puncher/reader, except that it uses
-					reels instead of cards) */
-	IO_PRINTER,		/* printer device */
-	IO_SERIAL,		/* some serial port */
-	IO_PARALLEL,    /* generic parallel port - some machines connect the printer to a custom port, even
-	                if a parallel port is available */
-	IO_SNAPSHOT,	/* complete 'snapshot' of the state of the computer */
-	IO_QUICKLOAD,	/* some image which allow to load program/data into memory, without matching
-					any actual device */
-	IO_ALIAS,  /* dummy type for alias names from mess.cfg */
-	IO_COUNT
-};
-
-enum {
-	IO_RESET_NONE,		/* changing the device file doesn't reset anything */
-	IO_RESET_CPU,		/* only reset the CPU */
-	IO_RESET_ALL		/* restart the driver including audio/video */
-};
-
 struct IODevice {
 	int type;
 	int count;
@@ -247,6 +232,7 @@ struct IODevice {
 
 };
 
+
 /* these are called from mame.c run_game() */
 
 extern int get_filenames(void);
@@ -255,22 +241,21 @@ extern void exit_devices(void);
 
 /* access mess.c internal fields for a device type (instance id) */
 
-extern int device_count(int type);
-extern const char *device_typename(int type);
-extern const char *briefdevice_typename(int type);
-extern const char *device_typename_id(int type, int id);
-extern const char *device_filename(int type, int id);
+extern int          device_count(int type);
+extern const char  *device_typename(int type);
+extern const char  *device_brieftypename(int type);
+extern const char  *device_typename_id(int type, int id);
+extern const char  *device_filename(int type, int id);
 extern unsigned int device_length(int type, int id);
 extern unsigned int device_crc(int type, int id);
-extern void device_set_crc(int type, int id, UINT32 new_crc);
-extern const char *device_longname(int type, int id);
-extern const char *device_manufacturer(int type, int id);
-extern const char *device_year(int type, int id);
-extern const char *device_playable(int type, int id);
-extern const char *device_extrainfo(int type, int id);
-
-extern const char *device_file_extension(int type, int extnum);
-extern int device_filename_change(int type, int id, const char *name);
+extern void         device_set_crc(int type, int id, UINT32 new_crc);
+extern const char  *device_longname(int type, int id);
+extern const char  *device_manufacturer(int type, int id);
+extern const char  *device_year(int type, int id);
+extern const char  *device_playable(int type, int id);
+extern const char  *device_extrainfo(int type, int id);
+extern const char  *device_file_extension(int type, int extnum);
+extern int          device_filename_change(int type, int id, const char *name);
 
 /* access functions from the struct IODevice arrays of a driver */
 
@@ -375,8 +360,6 @@ const struct GameDriver driver_##NAME = 	\
 	ROT0|GAME_COMPUTER|(FLAGS)	 			\
 };
 
-//duplicate declaration!
-//extern const struct GameDriver *drivers[];
 
 #ifdef __cplusplus
 }

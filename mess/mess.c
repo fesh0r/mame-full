@@ -9,6 +9,7 @@ This file is a set of function calls and defs required for MESS.
 #include "includes/flopdrv.h"
 
 extern struct GameOptions options;
+extern const struct Devices devices[];
 
 /* CRC database file for this driver, supplied by the OS specific code */
 extern const char *crcfile;
@@ -31,39 +32,7 @@ struct image_info {
 
 static struct image_info *images[IO_COUNT] = {NULL,};
 static int count[IO_COUNT] = {0,};
-static const char *typename[IO_COUNT] = {
-	"NONE",
-	"Cartridge ",
-	"Floppydisk",
-	"Harddisk  ",
-	"Cylinder  ",
-	"Cassette  ",
-	"Punchcard ",
-	"Punchtape ",
-	"Printer   ",
-	"Serial    ",
-	"Parallel  ",
-	"Snapshot  ",
-	"Quickload "
-};
 
-static const char *brieftypename[IO_COUNT] = {
-	"NONE",
-	"Cart",
-	"Flop",
-	"Hard",
-	"Cyln",
-	"Cass",
-	"Pcrd",
-	"Ptap",
-	"Prin",
-	"Serl",
-	"Parl",
-	"Dump",
-	"Quik"
-};
-
-static char *mess_alpha = "";
 
 static char* dupe(const char *src)
 {
@@ -352,21 +321,14 @@ static void floppy_device_common_exit(int id)
 const char *device_typename(int type)
 {
 	if (type < IO_COUNT)
-		return typename[type];
-	return "UNKNOWN";
-}
-
-const char *briefdevice_typename(int type)
-{
-	if (type < IO_COUNT)
-		return brieftypename[type];
+		return devices[type].name;
 	return "UNKNOWN";
 }
 
 const char *device_brieftypename(int type)
 {
 	if (type < IO_COUNT)
-		return brieftypename[type];
+		return devices[type].shortname;
 	return "UNKNOWN";
 }
 
@@ -379,7 +341,7 @@ const char *device_typename_id(int type, int id)
 	{
 		which = ++which % 40;
 		/* for the average user counting starts at #1 ;-) */
-		sprintf(typename_id[which], "%s #%d", typename[type], id+1);
+		sprintf(typename_id[which], "%s #%d", devices[type].name, id+1);
 		return typename_id[which];
 	}
 	return "UNKNOWN";
@@ -576,7 +538,7 @@ int get_filenames(void)
 				if( !images[type][count[type]].name )
 					return 1;
 			}
-			logerror("%s #%d: %s\n", typename[type], count[type]+1, images[type][count[type]].name);
+			logerror("%s #%d: %s\n", devices[type].name, count[type]+1, images[type][count[type]].name);
 			count[type]++;
 		}
 		else
@@ -1052,7 +1014,7 @@ void showmessinfo(void)
 		"Multiple Emulation Super System - Copyright (C) 1997-2001 by the MESS Team\n"
 		"M.E.S.S. is based on the ever excellent M.A.M.E. Source code\n"
 		"Copyright (C) 1997-2001 by Nicola Salmoria and the MAME Team\n\n",
-		build_version, mess_alpha);
+		build_version);
 	showmessdisclaimer();
 	mess_printf(
 		"Usage:  MESS <system> <device> <software> <options>\n\n"

@@ -13,6 +13,7 @@ needs it ;-)
 #include <unistd.h>
 
 extern struct GameOptions options;
+extern const struct Devices devices[];
 
 /* fronthlp functions */
 extern int strwildcmp(const char *sp1, const char *sp2);
@@ -100,186 +101,53 @@ int system_supports_device(int game_index, int type)
 }
 
 
-#ifdef ALIAS
-/* Function to handle aliases in the MESS.CFG file */
-char *get_alias(const char *driver_name, char *alias)
-{
-        char *alias_copy;
-		// the string will be worked on, so duplicate it.
-        alias_copy =strdup(get_config_string((char*)driver_name,alias,NULL));
-        return alias_copy;
-
-}
-
-
-/*
- * Parse the alias command line
- */
-void parse_alias(char *src, int *argc, char **argv)
-{
-    int argnum = 0;
-	char *arg;
-
-	while (*src)
-	{
-        while( *src && isspace(*src) )
-            src++;
-
-        arg = src;
-
-        if(*src =='"')
-		{
-			if(*src++==NULL)
-				break;
-			else
-				arg=src;
-
-			while(*src)
-            {
-				if (*src=='"')
-					*src='\0';
-				if (*src++ == NULL)
-					break;
-			}
-		}
-
-		else
-		{
-			while(*src)
-            {
-				if (*src==' ')
-					*src='\0';
-				if (*src++ == NULL)
-					break;
-			}
-		}
-		argv[argnum++]=arg;
-	}
-	*argc=argnum;
-
-}
-#endif
-
 int requested_device_type(char *tchar)
 {
+	int i;
 
-	logerror("Requested device is %s\n", tchar);
-
-	if      (!stricmp(tchar, "-cartridge")  || !stricmp(tchar, "-cart"))
-			return(IO_CARTSLOT);
-	else if (!stricmp(tchar, "-floppydisk") || !stricmp(tchar, "-flop"))
-			return(IO_FLOPPY);
-	else if (!stricmp(tchar, "-harddisk")   || !stricmp(tchar, "-hard"))
-			return(IO_HARDDISK);
-	else if (!stricmp(tchar, "-cylinder")   || !stricmp(tchar, "-cyln"))
-			return(IO_CYLINDER);
-	else if (!stricmp(tchar, "-cassette")   || !stricmp(tchar, "-cass"))
-			return(IO_CASSETTE);
-	else if (!stricmp(tchar, "-punchcard")  || !stricmp(tchar, "-pcrd"))
-			return(IO_PUNCHCARD);
-	else if (!stricmp(tchar, "-punchtape")  || !stricmp(tchar, "-ptap"))
-			return(IO_PUNCHTAPE);
-	else if (!stricmp(tchar, "-printer")    || !stricmp(tchar, "-prin"))
-			return(IO_PRINTER);
-	else if (!stricmp(tchar, "-serial")     || !stricmp(tchar, "-serl"))
-			return(IO_SERIAL);
-	else if (!stricmp(tchar, "-parallel")   || !stricmp(tchar, "-parl"))
-			return(IO_PARALLEL);
-	else if (!stricmp(tchar, "-snapshot")   || !stricmp(tchar, "-dump"))
-			return(IO_SNAPSHOT);
-	else if (!stricmp(tchar, "-quickload")  || !stricmp(tchar, "-quik"))
-			return(IO_QUICKLOAD);
-	else if (!stricmp(tchar, "-alias"))
-			return(IO_ALIAS);
-	/* all other switches set type to -1 */
-	else
+	for (i=0; i < IO_COUNT; i++)
 	{
-        logerror("Requested Device not supported!!\n");
-        return -1;
+		if (!stricmp(tchar, devices[i].name)  || !stricmp(tchar, devices[i].shortname))
+			return devices[i].id;
 	}
+
+	/* If we get to here, log the error */
+	logerror("Command Line Option [-%s] not a device - ignoring\n", tchar);
+    return -1;
 }
+
 
 int load_image(int argc, char **argv, int j, int game_index)
 {
-	//const char *driver = drivers[game_index]->name;
-	int i;//, k;
+	int i;
 	int res = 0;
 	int type = IO_END;
 
 	/*
 	 * Take all following commandline arguments without "-" as
-	 * image names or as an alias name, which is replaced by a list
-	 * of images.
+	 * image names which is replaced by a list of images.
 	 */
 	for (i = j + 1; i < argc; i++)
 	{
-		/* skip options and their additional arguments */
-		/* this should really look up the structure values for easy maintenance */
+		/* skip options and their additional arguments 								*/
+		/* We assume that if the string has a leading '-' there is more to follow 	*/
 		if (argv[i][0] == '-')
 		{
-			type = requested_device_type(argv[i]);
+			type = requested_device_type(&argv[i][1]);
 
-			if (type!=IO_ALIAS)
+			if (type>IO_END && !system_supports_device(game_index, type))
 			{
-
-				if (type>IO_END && !system_supports_device(game_index, type))
-				{
-					logerror("Specified Device (%s) not supported by this system\n", argv[i]);
-					type = -1; /* strip device if systems doesnt support it */
-				}
+				/* strip device since this system doesnt support it 				*/
+				logerror("Specified Device (%s) not supported by this system\n", argv[i]);
+				type = -1;
 			}
-
 		}
 
 		else if (type != -1) /* only enter when valid option, otherwise get next */
 		{
-#ifdef ALIAS
-			if (type == IO_ALIAS)
-			{
-				/* check if this is an alias for a set of images */
-				char *alias = get_alias(driver, argv[i]);
-
-				if (alias && strlen(alias))
-				{
-					int alias_argc;
-					char *alias_argv[32];  /* more than 32 arguments per alias?? */
-
-    				logerror("Using alias %s (%s) for driver %s\n", argv[i], alias, driver);
-					parse_alias(alias, &alias_argc, alias_argv);
-					type = IO_END;
-
-					for(k=0;k<alias_argc;k++)
-					{
-						if (alias_argv[k][0] == '-')
-						{
-							type = requested_device_type(alias_argv[k]);
-							if (type>IO_END && !system_supports_device(game_index, type))
-							{
-								logerror("Specified Device (%s) not supported by this system\n", argv[i]);
-								type = -1; /* strip device if systems doesnt support it */
-							}
-						}
-						else if (type!=-1 ) /* only when valid option */
-						{
-							if(type!=IO_END)
-							{
-                                res = detect_image_type(game_index, type, alias_argv[k]);
-                                type = IO_END; /* image detected, reset type */
-							}
-						}
-
-					}
-
-
-				}
-
-			}
-
-#endif
 			/* use normal command line argument! */
 			if (type != IO_END)
 			{
-				logerror("Loading image - No alias used\n");
 				res = detect_image_type(game_index, type, argv[i]);
 				type = IO_END; /* image detected, reset type */
 			}
@@ -336,9 +204,9 @@ void list_mess_info(char *gamename, char *arg, int listclones)
 					const char *src = dev->file_extensions;
 
 					if (devcount == 1)
-						printf("%-12s(%s)   ", device_typename(dev->type), briefdevice_typename(dev->type));
+						printf("%-12s(%s)   ", device_typename(dev->type), device_brieftypename(dev->type));
 					else
-						printf("%-13s%-12s(%s)   ", "    ", device_typename(dev->type), briefdevice_typename(dev->type));
+						printf("%-13s%-12s(%s)   ", "    ", device_typename(dev->type), device_brieftypename(dev->type));
 
 					devcount++;
 
