@@ -102,11 +102,9 @@ unsigned DasmF8(char *buffer, unsigned pc)
 		sprintf(buffer, "SL   4");
 		break;
 	case 0x16: /* 0001 0110 */
-		sym = set_ea_info( 0, cpu_get_reg(F8_DC0), EA_UINT8, EA_MEM_RD );
         sprintf(buffer, "LM") ;
 		break;
 	case 0x17: /* 0001 0111 */
-		sym = set_ea_info( 0, cpu_get_reg(F8_DC0), EA_UINT8, EA_MEM_WR );
         sprintf(buffer, "ST");
 		break;
 	case 0x18: /* 0001 1000 */
@@ -198,7 +196,11 @@ unsigned DasmF8(char *buffer, unsigned pc)
 		sprintf(buffer, "DCI  %s",sym);
         break;
 	case 0x2b: /* 0010 1011 */
+		sprintf(buffer, "NOP");
+		break;
 	case 0x2c: /* 0010 1100 */
+		sprintf(buffer, "XDC");
+		break;
 	case 0x2d: /* 0010 1101 */
 	case 0x2e: /* 0010 1110 */
 	case 0x2f: /* 0010 1111 */
@@ -357,34 +359,28 @@ unsigned DasmF8(char *buffer, unsigned pc)
         break;
 
     case 0x88: /* 1000 1000 */
-		sym = set_ea_info( 0, f8_get_reg(F8_IS), EA_UINT8, EA_MEM_RD );
-		sprintf(buffer, "AM   %s", sym);
-        break;
+		sprintf(buffer, "AM");
+		break;
 
     case 0x89: /* 1000 1001 */
-		sym = set_ea_info( 0, f8_get_reg(F8_IS), EA_UINT8, EA_MEM_RD );
-		sprintf(buffer, "AMD  %s", sym);
+		sprintf(buffer, "AMD");
         break;
 
     case 0x8a: /* 1000 1010 */
-		sym = set_ea_info( 0, f8_get_reg(F8_IS), EA_UINT8, EA_MEM_RD );
-		sprintf(buffer, "NM   %s", sym);
-        break;
+		sprintf(buffer, "NM");
+		break;
 
     case 0x8b: /* 1000 1011 */
-		sym = set_ea_info( 0, f8_get_reg(F8_IS), EA_UINT8, EA_MEM_RD );
-		sprintf(buffer, "OM   %s", sym);
-        break;
+		sprintf(buffer, "OM");
+		break;
 
     case 0x8c: /* 1000 1100 */
-		sym = set_ea_info( 0, f8_get_reg(F8_IS), EA_UINT8, EA_MEM_RD );
-		sprintf(buffer, "XM   %s", sym);
-        break;
+		sprintf(buffer, "XM");
+		break;
 
     case 0x8d: /* 1000 1101 */
-		sym = set_ea_info( 0, f8_get_reg(F8_IS), EA_UINT8, EA_MEM_RD );
-		sprintf(buffer, "CM   %s", sym);
-        break;
+		sprintf(buffer, "CM");
+		break;
 
     case 0x8e: /* 1000 1110 */
 		sprintf(buffer, "ADC");
@@ -455,6 +451,8 @@ unsigned DasmF8(char *buffer, unsigned pc)
 
     case 0xb2: /* 1011 0010 */
 	case 0xb3: /* 1011 0011 */
+		sprintf(buffer, "???  $%02X\n", op);
+        break;
 
     case 0xb4: /* 1011 0100 */
 	case 0xb5: /* 1011 0101 */
