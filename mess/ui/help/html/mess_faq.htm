@@ -11,366 +11,346 @@
 <font size="-1" face="verdana, arial, helvetica, sans-serif">
 
 <b>About this FAQ</b><br>
-&nbsp;&bull;&nbsp;<a href="#q00">MESS FAQ?</a><br>
+&nbsp;&bull;&nbsp;<a href="#a01">MESS FAQ?</a><br>
 
-<b>General</b><br>
-&nbsp;&bull;&nbsp;<a href="#q01">What is MESS? </a><br>
-&nbsp;&bull;&nbsp;<a href="#qA1">What is the purpose of MESS? </a><br>
-&nbsp;&bull;&nbsp;<a href="#qA2">What is an emulator and a simulator? </a><br>
-&nbsp;&bull;&nbsp;<a href="#q03">What makes MESS different from other emulators?/Why yet another emulator? </a><br>
-&nbsp;&bull;&nbsp;<a href="#q04">Isn't MESS the same as MAME? </a><br>
-&nbsp;&bull;&nbsp;<a href="#q13">Why don't MESS and MAME merge?</a><br>
-&nbsp;&bull;&nbsp;<a href="#q14">Why doesn't MESS split into two versions, one for consoles and one for computers?</a><br>
+<br><b>General</b><br>
+&nbsp;&bull;&nbsp;<a href="#g01">What is MESS? </a><br>
+&nbsp;&bull;&nbsp;<a href="#g02">What is the purpose of MESS? </a><br>
+&nbsp;&bull;&nbsp;<a href="#g03">What is an emulator and a simulator? </a><br>
+&nbsp;&bull;&nbsp;<a href="#g04">What makes MESS different from other emulators?</a><br>
+&nbsp;&bull;&nbsp;<a href="#g05">Is MESS really free?</a><br>
+&nbsp;&bull;&nbsp;<a href="#g06">Isn't MESS the same as MAME? </a><br>
+&nbsp;&bull;&nbsp;<a href="#g07">Why don't MESS and MAME merge?</a><br>
+&nbsp;&bull;&nbsp;<a href="#g08">Why doesn't MESS split into two versions, one for consoles and one for computers?</a><br>
 
-<b>Starting Up</b><br>
-&nbsp;&bull;&nbsp;<a href="#q02">What do I need to run MESS? </a><br>
-&nbsp;&bull;&nbsp;<a href="#q05">What's a BIOS?/What's a ROM?/What's a disk image?</a><br>
-&nbsp;&bull;&nbsp;<a href="#q06">Where do I get BIOSes/ROMs?/How do I use my old software with MESS?</a><br>
-&nbsp;&bull;&nbsp;<a href="#q07">Okay, I got some BIOSes and images, now where do I put them?</a><br>
-&nbsp;&bull;&nbsp;<a href="#q08">How do I run the MESS application?</a><br>
-&nbsp;&bull;&nbsp;<a href="#q09">I did everything just like you said, but it still doesn't work!</a><br>
-&nbsp;&bull;&nbsp;<a href="#q10">It works, but it's way too slow!</a><br>
+<br><b>Starting Up</b><br>
+&nbsp;&bull;&nbsp;<a href="#s01">What do I need to run MESS? </a><br>
+&nbsp;&bull;&nbsp;<a href="#s02">What's a BIOS?/What's a ROM?/What's a disk image?</a><br>
+&nbsp;&bull;&nbsp;<a href="#s03">Where do I get BIOSes/ROMs?/How do I use my old software with MESS?</a><br>
+&nbsp;&bull;&nbsp;<a href="#s04">Okay, I got some BIOSes and images, now where do I put them?</a><br>
+&nbsp;&bull;&nbsp;<a href="#s05">How do I run the MESS application?</a><br>
+&nbsp;&bull;&nbsp;<a href="#s06">I did everything just like you said, but it still doesn't work!</a><br>
+&nbsp;&bull;&nbsp;<a href="#s07">It works, but it's way too slow!</a><br>
 
-<b>How Do I...</b><br>
-&nbsp;&bull;&nbsp;<a href="#q11">How do I set up the screenshots/snapshots folder for MESS?</a><br>
-&nbsp;&bull;&nbsp;<a href="#q12">How do get screenshots?</a><br>
+<br><b>How Do I...</b><br>
+&nbsp;&bull;&nbsp;<a href="#h01">How do I set up the screenshots/snapshots folder for MESS?</a><br>
+&nbsp;&bull;&nbsp;<a href="#h02">How do get screenshots?</a><br>
 
-&nbsp;&bull;&nbsp;<a href="#q15">I fail to understand your emphasis on "pure" hardware emulation; what does that mean?  Does this mean that you will or will not implement feature XXXXX?</a><br>
-
-<b>Trouble Shooting</b><br>
-&nbsp;&bull;&nbsp;<a href="#q16">Why don't you support a feature that allows the user to remap their keyboard to the emulated system's, eliminating the need to adjust to the system's keyboard layout? </a><br>
-&nbsp;&bull;&nbsp;<a href="#q17">Your file manager is an abomination in the eyes of God/Allah/Jehovah/Budda/Zoroaster/anyone with an ounce of sense!</a><br>
-&nbsp;&bull;&nbsp;<a href="#q18">My English is not good. I don't understand!</a><br>
+<br><b>Trouble Shooting</b><br>
+&nbsp;&bull;&nbsp;<a href="#t01">Why don't you support a feature that allows the user to remap their keyboard to the emulated system's, eliminating the need to adjust to the system's keyboard layout? </a><br>
+&nbsp;&bull;&nbsp;<a href="#t02">Your file manager is an abomination in the eyes of God/Allah/Jehovah/Budda/Zoroaster/anyone with an ounce of sense!</a><br>
+&nbsp;&bull;&nbsp;<a href="#t03">My English is not good. I don't understand!</a><br>
 </font>
 
 
-<p class="topic" ID="q00">MESS FAQ?</p>
-		<p>
-			This FAQ was written to support MESS. If you have any changes, suggestions or additions please 
-			contact the MESS team.  Changes will be made as time is available. If you have a question that is 
-			not answered in this FAQ, try the searching the MESS message boards. There is a wealth of 
-			information there already.
+<p class="topic" ID="a01">MESS FAQ?</p>
+	<p>
+		This FAQ was written to support MESS. If you have any changes, suggestions or additions please 
+		contact the MESS team.  Changes will be made as time is available. If you have a question that is 
+		not answered in this FAQ, try the searching the MESS message boards. There is a wealth of 
+		information there already.
 
-		</p>
+	</p>
 
-<p class="topic" ID="q01">What is MESS?</p>
+<p class="topic" ID="g01">What is MESS?</p>
 		
-		<p>
-			MESS is an acronym that stands for Multiple Emulator Super System. MESS will more 
-			or less faithfully reproduce computer and console systems on a PC. MESS can currently 
-			emulate over 250 systems from the last 5 decades.
-		</p>
-		<p>
-			MESS emulates the hardware of the systems and sometimes utilizes rom images to load programs
-			 and games. Therefore, these systems are NOT simulations, but the actual emulations of the hardware.
-		</p>
+	<p>
+		MESS is an acronym that stands for Multiple Emulator Super System. MESS will more 
+		or less faithfully reproduce computer and console systems on a PC. MESS can currently 
+		emulate over 250 systems from the last 5 decades.
+	</p>
+	<p>
+		MESS emulates the hardware of the systems and sometimes utilizes ROM images to load programs
+		 and games. Therefore, these systems are NOT simulations, but the actual emulations of the hardware.
+	</p>
 
-<p class="topic" ID="qA1">What is the purpose of MESS?</p>
-		<p>
-			The primary purpose of MESS is to preserve decades of computer and console history. As technology 
-			continues to rush forward, MESS prevents these important "vintage" systems from being lost and forgotten.
-			MESS is based on MAME. Additional information about MESS or MAME can be found at <a 						href="http://www.mess.org/">www.mess.org</a> or <a href="http://www.mame.net/">www.mame.net</a>.
-		</p>
+<p class="topic" ID="g02">What is the purpose of MESS?</p>
+	<p>
+		The primary purpose of MESS is to preserve decades of computer and console history. As technology 
+		continues to rush forward, MESS prevents these important "vintage" systems from being lost and forgotten.
+		MESS is based on MAME. Additional information about MESS or MAME can be found at <a 								href="http://www.mess.org/">www.mess.org</a> or <a href="http://www.mame.net/">www.mame.net</a>.
+	</p>
 
-<p class="topic" ID="qA2">What is an emulator and a simulator?</p>
-		<p>
-			An <b>emulator</b> attempt to recreate the original functions of the hardware they are trying to emulate.
-			Software run on a emulator should perform exatly as if it were being run on the original hardware.
-		</p>
+<p class="topic" ID="g03">What is an emulator and a simulator?</p>
+	<p>
+		An <i>emulator</i> attempt to recreate the original functions of the hardware they are trying to emulate.
+		run on a emulator should perform exatly as if it were being run on the original hardware.
+	</p>
 
-		<p>
-			A <b>simulator</b> attempts to recreate the original functions of the software, essentialy imitating the game or 			software. The end results may be very similar between emulation and simlation but they are very different in how 
-			they are implemented.
-		</p>
-		<p>
-			MESS and MAME are both emulators. They try to emulate the arcade, computer, and console
-			 system. This may include bugs or flaws that were on the original system.
-		</p>
+	<p>
+		A <i>simulator</i> attempts to recreate the original functions of the software, essentially imitating the game or 				software. The end results may be very similar between emulation and simulation but they are very different in how 
+		they are implemented.
+	</p>
+	<p>
+		MESS and MAME are both emulators. They try to emulate the arcade, computer, and console
+		 system. This may include bugs or flaws that were on the original system.
+	</p>
 
+<p class="topic" ID="g04">What makes <a href="http://www.mess.org/">MESS</a> different from other emulators?</p>
+	<p>
+	<ul>
+		<li>MESS emulates many types of systems (console, computer, handheld, calculator etc...), not just one like some 				other emulators.
+		<li>MESS is free.
+		<li>MESS is open source so anyone who knows C programming language can help improve the project.
+		<li>The architecture of MESS makes it easy to add lesser known systems.
+	</ul>
 
-<p class="topic" ID="q03">What makes <a href="http://www.mess.org/">MESS</a> different from 
-			other emulators?/Why yet another emulator?</p>
-		<p>
-			The main difference is that it supports many different kinds of computers and 
-			consoles, not just one like most emulators. <a href="http://www.mess.org/">MESS</a>
-			is also open source, which means it's free and anyone who knows the C 
-			programming language can help with the project. Also, <a href="http://www.mess.org/">
-				MESS</a>' architecture makes it easy to add lesser known systems that no 
-			one would care enough about to emulate and preserve otherwise. The main 
-			difference, however, is the goals of the project. Most standalone emulators 
-			have the goal of letting you play games for whatever system on your PC. Because 
-			their main goal is playability, they often include speed hacks and fudge things 
-			so that most games run fast but a few games won't work. <a href="http://www.mess.org/">
-				MESS</a>' philosophy is to behave <u>exactly</u> like the original 
-			hardware, even if it's incredibly slow, so that <u>all</u> software for the 
-			original machine will work. This tends to make MESS a fair bit slower than other
-			 emulators, but this is not always true.
-		</p>
+ 		The primary objective of MESS is to accurately emulate multiple systems. Most stand alone 
+		emulators/simulators often focus on letting you play games on your PC. They often include speed hacks 
+		or fudge things to make them <i>look</i> right. The philosophy of MESS is to behave <u>exactly</u> like
+		the original hardware, even if it's slower, so that <u>all</u> software for the original machine will 
+		work as it would on the original hardware. This tends to make MESS a bit slower than other 
+		emulators, but this is not always true.
+	</p>
 
-<p class="topic" ID="q04">Isn't <a href="http://www.mess.org/">MESS</a> the same as <a href="http://www.mame.net/"> MAME</a>?</p>
+<p class="topic" ID="g05">Is MESS really free?</p>
 
-		<p>
-			No. <a href="http://www.mess.org/">MESS</a> is based on <a href="http://www.mame.net/">
-				MAME</a>, and uses the same underlying engine, but its goals are different. 
-			To put it simply, <a href="http://www.mame.net/">MAME</a> is for arcade 
-			machines, and <a href="http://www.mess.org/">MESS</a> is for home computers and 
-			video game consoles.
-		</p>
-<p class="topic" ID="q13">Why don't <a href="http://www.mess.org/">MESS</a> and <a href="http://www.mame.net/">
+	<p>
+		Yes, MESS is really free. The source code is freely available, too. It is illegal to sell MESS or its source. 			
+	</p>
+
+<p class="topic" ID="g06">Isn't <a href="http://www.mess.org/">MESS</a> the same as <a href="http://www.mame.net/"> MAME</a>?</p>
+
+	<p>
+		No. <a href="http://www.mess.org/">MESS</a> is based on <a href="http://www.mame.net/">
+		MAME</a>, and uses the same underlying engine, but its goals are different. 
+		To put it simply, <a href="http://www.mame.net/">MAME</a> is for arcade 
+		machines, and <a href="http://www.mess.org/">MESS</a> is for home computers and 
+		video game consoles.
+	</p>
+
+<p class="topic" ID="g07">Why don't <a href="http://www.mess.org/">MESS</a> and <a href="http://www.mame.net/">
 				MAME</a> merge?</p>
-		<p>
-			Although the people involved in developing new versions of both programs are 
-			enthusiasts working out of love for the systems involved, the systems are 
-			essentially different. Arcade games, which <a href="http://www.mame.net/">MAME</a>
-			specializes in, are usually unique, in that the hardware for any particular 
-			game was a one-time solution arrived at in order to get the game to market. 
-			Some game companies, such as SNK, Nintendo and others, did develop systems that 
-			could be changed over to play other games relatively easily, but this wasn't 
-			the rule in the arcades. To emulate an arcade game, the programmer develops a 
-			driver file which mimics hardware surrounding the arcade game's CPU or CPUs. 
-			Both MAME and MESS contain the same cores to emulate the same CPUs. The focus of MESS
-			is accurate emulation of the hardware of computer and gaming consoles, 
-			hardware which doesn't change depending on which game or program is being run. 
-			Fundamentally, MAME and MESS are being created by and are targeted for slightly different 
-			segments of the emulation community: gamers and vintage computer enthusiasts. 
-			Those two communities do often times overlap, and a merger of the two programs 
-			is theoretically possible at some point in the future.
-		</p>
+	<p>
+		Although the people involved in developing new versions of both programs are 
+		enthusiasts working out of love for the systems involved, the systems are 
+		essentially different. Arcade games, which <a href="http://www.mame.net/">MAME</a>
+		specializes in, are usually unique, in that the hardware for any particular 
+		game was a one-time solution arrived at in order to get the game to market. 
+		Some game companies, such as SNK, Nintendo and others, did develop systems that 
+		could be changed over to play other games relatively easily, but this wasn't 
+		the rule in the arcades. To emulate an arcade game, the programmer develops a 
+		driver file which mimics hardware surrounding the arcade game's CPU or CPUs. 
+		Both MAME and MESS contain the same cores to emulate the same CPUs. The focus of MESS
+		is accurate emulation of the hardware of computer and gaming consoles, 
+		hardware which doesn't change depending on which game or program is being run. 
+		Fundamentally, MAME and MESS are being created by and are targeted for slightly different 
+		segments of the emulation community: gamers and vintage computer enthusiasts. 
+		Those two communities do often times overlap, and a merger of the two programs 
+		is theoretically possible at some point in the future.
+	</p>
 
-<p class="topic" ID="q14">Why doesn't <a href="http://www.mess.org/">MESS</a> split into two 
+<p class="topic" ID="g08">Why doesn't <a href="http://www.mess.org/">MESS</a> split into two 
 			versions, one for consoles and one for computers?</p>
-		<p>
-			Why isn't there a program called MASS to mimic mainframes? So far it hasn't 
-			seemed necessary to split <A href="http://www.mess.org/">MESS</A>&nbsp;into two 
-			programs. The core program inherited on a regular basis from new updates of <A href="http://www.mame.net/">
-				MAME</A>&nbsp;can accommodate a large number of systems. If you think of 
-			each arcade game in&nbsp;<A href="http://www.mame.net/">MAME</A> as a separate 
-			computer or console, the latest version has over 3,000 different machines 
-			available, compared to <A href="http://www.mess.org/">MESS</A>' hundreds of 
-			systems listed under its All Systems menu. The border dividing gaming consoles 
-			from computers tends to blur the further back you go in time. Is Nippon 
-			Electric Company's PC Engine a game or a computer? Coleco originally marketed 
-			its Adam computer as an add-on to the Colecovision gaming system. Nintendo also 
-			had big plans to turn its NES and later SNES into full-fledged computers 
-			delivering information and services to users over an early version of the 
-			internet. The APF Imagination Machine was also built around a game console 
-			core. Atari's line of computers grew out from its original gaming console, and 
-			were probably used more for gaming in their day than any serious computing 
-			projects. The simple answer is there's still a lot of room for&nbsp;<A href="http://www.mess.org/">MESS</A>
-			to include new gaming consoles and computers. The complicated answer is that 
-			it's hard to tell the difference.
-		</p>
+	<p>
+		Why isn't there a program called MASS to mimic mainframes? So far it hasn't 
+		seemed necessary to split <A href="http://www.mess.org/">MESS</A>&nbsp;into two 
+		programs. The core program inherited on a regular basis from new updates of <A href="http://www.mame.net/">
+		MAME</A>&nbsp;can accommodate a large number of systems. If you think of 
+		each arcade game in&nbsp;<A href="http://www.mame.net/">MAME</A> as a separate 
+		computer or console, the latest version has over 3,000 different machines 
+		available, compared to <A href="http://www.mess.org/">MESS</A>' hundreds of 
+		systems listed under its All Systems menu. The border dividing gaming consoles 
+		from computers tends to blur the further back you go in time. Is Nippon 
+		Electric Company's PC Engine a game system or a computer? Coleco originally marketed 
+		its Adam computer as an add-on to the Colecovision gaming system. Nintendo also 
+		had big plans to turn its NES and later SNES into full-fledged computers 
+		delivering information and services to users over an early version of the 
+		internet. The APF Imagination Machine was also built around a game console 
+		core. Atari's line of computers grew out from its original gaming console, and 
+		were probably used more for gaming in their day than any serious computing 
+		projects. The simple answer is there's still a lot of room for&nbsp;<A href="http://www.mess.org/">MESS</A>
+		to include new gaming consoles and computers. The complicated answer is that 
+		it's hard to tell the difference.
+	</p>
 
-<p class="topic" ID="q02">What do I need to run MESS?</p>
+<p class="topic" ID="s01">What do I need to run MESS?</p>
 		
-		<p>
-			In general a PC with a decent processor should run most of the systems at a decent speed. 
-			There are an enormous variety of systems emulated and each system has its own requirements. 
-			The best thing to do is try the system you are interested in. But remember accuracy is the primary 
-			goal not speed.
-		</p>
+	<p>
+		In general a PC with a decent processor should run most of the systems at a decent speed. 
+		There are an enormous variety of systems emulated and each system has its own requirements. 
+		The best thing to do is try the system you are interested in. But remember accuracy is the primary 
+		goal not speed.
+	</p>
 
 
-<p class="topic" ID="q05">What's a BIOS?/What's a ROM?/What's a disk image?</p>
+<p class="topic" ID="s02">What's a BIOS?/What's a ROM?/What's a disk image?</p>
 
-		<p>
-			First, it is important to note that in the emulation world, the term ROM is 
-			used to refer to two different things:
-		</p>
-		<ol>
-			<li>
-			The ROM chips within a computer system, that usually contain some form of BASIC 
-			or the like
-			<li>
-				The ROM chips within a game cartridge for a console system</li>
-		</ol>
-		<p>
-			For the sake of clarity, the official MESS terminology for #1 is "BIOS", after 
-			what they are typically called in Intel PC systems, and the term "ROM" is 
-			avoided.&nbsp; The term "cartridge image" is used to refer to #2, where "image" 
-			is a generic term that applies to downloaded images of removable media, whether 
-			they be a cartridge, a floppy drive, or a hard disk.
-		</p>
+	<p>
+		First, it is important to note that in the emulation world, the term ROM is 
+		used to refer to two different things:
+	</p>
+	<ol>
+		<li> The ROM chips within a computer system, that usually contain some form of BASIC or the like
+		<li> The ROM chips within a game cartridge for a console system</li>
+	</ol>
+	<p>
+		For the sake of clarity, the official MESS terminology for #1 is "BIOS", after 
+		what they are typically called in Intel PC systems, and the term "ROM" is 
+		avoided.&nbsp; The term "cartridge image" is used to refer to #2, where "image" 
+		is a generic term that applies to downloaded images of removable media, whether 
+		they be a cartridge, a floppy drive, or a hard disk.
+	</p>
 
-<p class="topic" ID="q06">Where do I get BIOSes/ROMs?/How do I use my old software with <a href="http://www.mess.org/">
+<p class="topic" ID="s03">Where do I get BIOSes/ROMs?/How do I use my old software with <a href="http://www.mess.org/">
 				MESS</a>?</p>
-		<p>
-			In most cases, old software is physically incompatible with modern computers. 
-			No matter how hard you push, an Atari cartridge just plain won't fit in your 
-			computer's floppy drive. Folding up old 5 1/4" diskettes so they fit in a 3 
-			1/2" drive will only break your disks. Obviously there's a problem here - how 
-			do I get that software into my PC so an emulator can use it?
-		</p>
-		<p>
-			It's possible to build special cartridge reading devices for console systems 
-			and hook up old computers to new ones to transfer floppy disks. These media get 
-			transferred into files on the new computer.
-		</p>
-		<p>
-			Now, originally emulation was just for hobbyists who had all this special 
-			equipment, but some of them put these BIOSes and images up on the Internet for 
-			people to download, on the honor system that people would only download the 
-			BIOSes and images that they owned the original software for. Unfortunately, a 
-			lot of people came along who just wanted to download free games and didn't care 
-			about preservation, and gave the emulation community a bad name among software 
-			companies. There are many BIOSes/images sites on the Internet, using a search 
-			engine should turn up the ones you want. But remember: downloading pirated 
-			BIOSes/images that you don't own is illegal. Some people say that the 
-			copyrights have expired or that you can download it if you delete it after 24 
-			hours, but they are wrong. It's up to you whether you want to ignore the law, 
-			as most of the games are not and will not ever be sold again.
-		</p>
-		<p>
-			Most systems require BIOSes. MESS is very picky about its BIOSes -- they must
-			be exactly the ones it is expecting, otherwise it may not work.
-		</p>
-<p class="topic" ID="q07">Okay, I got some BIOSes and images, now where do I put them?</p>
-		<p>
-			BIOSes should go, still zipped, in the BIOS subfolder of wherever you put <a 			href="http://www.mess.org/"> MESS</a>. Game images should go into the 
-			SOFTWARE\[system name] folder.They can still be zipped, but only one image per zip file.
-		</p>
+	<p>
+		In most cases, old software is physically incompatible with modern computers. 
+		No matter how hard you push, an Atari cartridge just plain won't fit in your 
+		computer's floppy drive. Folding up old 5 1/4" diskettes so they fit in a 3 
+		1/2" drive will only break your disks. Obviously there's a problem here - how 
+		do I get that software into my PC so an emulator can use it?
+	</p>
+	<p>
+		It's possible to build special cartridge reading devices for console systems 
+		and hook up old computers to new ones to transfer floppy disks. These media get 
+		transferred into files on the new computer.
+	</p>
+	<p>
+		Now, originally emulation was just for hobbyists who had all this special 
+		equipment, but some of them put these BIOSes and images up on the Internet for 
+		people to download, on the honor system that people would only download the 
+		BIOSes and images that they owned the original software for. Unfortunately, a 
+		lot of people came along who just wanted to download free games and didn't care 
+		about preservation, and gave the emulation community a bad name among software 
+		companies. There are many BIOSes/images sites on the Internet, using a search 
+		engine should turn up the ones you want. But remember: downloading pirated 
+		BIOSes/images that you don't own is illegal. Some people say that the 
+		copyrights have expired or that you can download it if you delete it after 24 
+		hours, but they are wrong. It's up to you whether you want to ignore the law, 
+		as most of the games are not and will not ever be sold again.
+	</p>
+	<p>
+		Most systems require BIOSes. MESS is very picky about its BIOSes -- they must
+		be exactly the ones it is expecting, otherwise it may not work.
+	</p>
 
-<p class="topic" ID="q08">How do I run the MESS application?</p>
-		<p>
-			For DOS, type "mess [system] [device] [game] [options]", where [system] is the
-		 	system driver name, [device] is the type of ROM, [game] is the filename of the 
-			ROM, and options are command line options. Valid [device] names (eg -cart and 
-			-flop) can be found by using "mess -listdevices" and valid options are listed 
-			in the mess.txt and msdos.txt files.
-		</p>
-		<p>
-			Example: mess nes -cart zelda.nes -nosound (This will run the Zelda game on the
-			 Nintendo system without sound. See mess.txt for more examples.
-		</p>	
-		<p>	
-			For UNIX/Linux, do the same thing except the name of the program is xmess. 
+<p class="topic" ID="s04">Okay, I got some BIOSes and images, now where do I put them?</p>
+	<p>
+		BIOSes should go, still zipped, in the BIOS subfolder of wherever you put <a 										href="http://www.mess.org/"> MESS</a>. Game images should go into the 
+		SOFTWARE\[system name] folder. They can still be zipped, but only one image per zip file.
+	</p>
 
-		</p>
-		<p>
-			For Macintosh or Windows OS, run the MacMESS or messgui.exe application and click
-			 on the system or software you want to run.
-		</p>
+<p class="topic" ID="s05">How do I start the MESS application?</p>
+	<p>
+		For DOS, type "mess [system] [device] [game] [options]", where [system] is the
+	 	system driver name, [device] is the type of ROM, [game] is the filename of the 
+		ROM, and options are command line options. Valid [device] names (eg -cart and 
+		-flop) can be found by using "mess -listdevices" and valid options are listed 
+		in the mess.txt and msdos.txt files.
+	</p>
+	<p>
+		Example: mess nes -cart zelda.nes -nosound (This will run the Zelda game on the
+		 Nintendo system without sound. See mess.txt for more examples.
+	</p>	
+	<p>	
+		For UNIX/Linux, do the same thing except the name of the program is xmess. 
+	</p>
+	<p>
+		For Macintosh or Windows OS, run the MacMESS or messgui.exe application and click
+		 on the system or software you want to run.
+	</p>
 
-<p class="topic" ID="q09">I did everything just like you said, but it still doesn't work!</p>
-		<p>
-			There is a message board you can go to for help at <a href="http://www.mess.org/">http://www.mess.org</a>. 
-			But first, make sure you read this FAQ and the rest of the documentation. The 
-			answers can often be found there. Also check out the <a href="http://www.mame.net/">
-				MAME</a> FAQ at <a href="http://www.mame.net/">http://www.mame.net</a> --it's 
-			a very good resource for things common to <a href="http://www.mame.net/">MAME</a>
-			and <a href="http://www.mess.org/">MESS</a>, such as sound and graphics setup. 
-			Also search through the message board to see if somebody already had the same 
-			problem. And at least put some effort into fixing it yourself. People on 
-			message boards can get very annoyed with people who ask questions that have 
-			already been answered elsewhere, especially in readme.txt and mess.txt.
-		</p>
+<p class="topic" ID="s06">I did everything just like you said, but it still doesn't work!</p>
+	<p>
+		There is a message board you can go to for help at <a href="http://www.mess.org/">http://www.mess.org</a>. 
+		But first, make sure you read this FAQ and the rest of the documentation. The 
+		answers can often be found there. Also check out the <a href="http://www.mame.net/">
+		MAME</a> FAQ at <a href="http://www.mame.net/">http://www.mame.net</a> --it's 
+		a very good resource for things common to <a href="http://www.mame.net/">MAME</a>
+		and <a href="http://www.mess.org/">MESS</a>, such as sound and graphics setup. 
+		Also search through the message board to see if somebody already had the same 
+		problem. And at least put some effort into fixing it yourself. People on 
+		message boards can get very annoyed with people who ask questions that have 
+		already been answered elsewhere, especially in readme.txt and mess.txt.
+	</p>
 
-<p class="topic" ID="q10">It works, but it's way too slow!</p>
-		<p>
-			Because of <a href="http://www.mess.org/">MESS</a>' goal of compatibility over 
-			speed, this is often the case. You might think that your computer should be 
-			able to emulate such old machines at full speed, but keep in mind that <a href="http://www.mess.org/">
-				MESS</a> is not performing any shortcuts in the emulation. Many other 
-			emulators perform shortcuts that sacrifice compatibility in favor of 
-			performance, which is a valid tradeoff given a different set of design goals. 
-			With <a href="http://www.mess.org/">MESS</a>, your CPU is doing the jobs of the 
-			CPU(s), graphics chip(s), sound chip(s), as well as any other special hardware 
-			present in the original machine, so it can be bogged down fairly easily, 
-			especially by the relatively unoptimized <a href="http://www.mess.org/">MESS</a>
-			core. <a href="http://www.mess.org/">MESS</a> is written almost entirely in C, 
-			not assembly, for compatibility reasons. Additionally, there is a level of 
-			overhead required to get the level of modularity that it takes to have the 
-			myriad components in the emulation be usable across a broad set of drivers. 
-			There are some tweaks you can do to speed up the performance a bit (see the <a href="http://www.mame.net/">
-				MAME</a> FAQ), but if you need a big boost, there's not much you can do 
-			except buy a faster computer, wait for an update (not likely), or use another 
-			emulator.
-		</p>
+<p class="topic" ID="s07">It works, but it's way too slow!</p>
+	<p>
+		Because of <a href="http://www.mess.org/">MESS</a>' goal of compatibility over 
+		speed, this is often the case. You might think that your computer should be 
+		able to emulate such old machines at full speed, but keep in mind that <a href="http://www.mess.org/">
+		MESS</a> is not performing any shortcuts in the emulation. Many other 
+		emulators perform shortcuts that sacrifice compatibility in favor of 
+		performance, which is a valid tradeoff given a different set of design goals. 
+		With <a href="http://www.mess.org/">MESS</a>, your CPU is doing the jobs of the 
+		CPU(s), graphics chip(s), sound chip(s), as well as any other special hardware 
+		present in the original machine, so it can be bogged down fairly easily, 
+		especially by the relatively unoptimized <a href="http://www.mess.org/">MESS</a>
+		core. <a href="http://www.mess.org/">MESS</a> is written almost entirely in C, 
+		not assembly, for compatibility reasons. Additionally, there is a level of 
+		overhead required to get the level of modularity that it takes to have the 
+		myriad components in the emulation be usable across a broad set of drivers. 
+		There are some tweaks you can do to speed up the performance a bit (see the <a href="http://www.mame.net/">
+		MAME</a> FAQ), but if you need a big boost, there's not much you can do 
+		except buy a faster computer, wait for an update (not likely), or use another 
+		emulator.
+	</p>
 
-<p class="topic" ID="q11">How do I set up the screenshots/snapshots folder for MESS?</p>
-		<p>	
-
+<p class="topic" ID="h01">How do I set up the screenshots/snapshots folder for MESS?</p>
+	<p>	
 		The snapshot (aka screenshot) folder is the place to store images to be displayed in the GUI. It 
 		can display in-game/software images and system images, or anything else as long as it is 
 		named correctly.
-		</p>
-		<p>
+	</p>
+	<p>
 		The snapshot folder can be configured in the Directories… window under the Options menu in the
 		GUI. The default screen folder is snap. Store system images with the system name. Store
 		 software/game snapshots in a folder under the system they belong to. 
-		</p>
-		<p>
+	</p>
+	<p>
 		For example: <br>
 		mess/snap/a2600.png &lt;&lt;&lt; This is a picture of an Atari system. The name needs to match the driver.<br>
 		mess/snap/a2600/junglehunt.png &lt;&lt;&lt; This is an in-game screenshot of the game Jungle Hunt.
 		The name needs to match game name.
-		</p>
+	</p>
 
-<p class="topic" ID="q12">How do get screenshots?</p>
-		<p>
-
+<p class="topic" ID="h02">How do get screenshots?</p>
+	<p>
 		You can take your own screen shots by selecting the ‘Save Screenshot’ option in the file menu 
 		while in emulation. This will save an image in the png format with the name of the driver (if one 
 		does not exist already). If an image already exists an a sequential number will be added to the 
 		name (for example coco.png, coco0000.png, coco0001.png etc...).
-		</p>
-		<p>
+	</p>
+	<p>
 		You can also find many images on various emulation or download images from the internet at 
 		various sites. Try your favorite search engine.
-		</p>
+	</p>
 
+<p class="topic" ID="t01">Why don't you support a feature that allows the user to remap their keyboard to 
+		the emulated system's, eliminating the need to adjust to the system's keyboard layout?</p>
 
-<p class="topic" ID="q15">I fail to understand your emphasis on "pure" hardware emulation; 
-			what does that mean?&nbsp; Does this mean that you will or will not implement 
-			feature XXXXX?</p>
-		<p>Obviously, this depends on what XXXXX is.&nbsp; Both <A href="http://www.mame.net/">MAME</A>&nbsp;and
-			<A href="http://www.mess.org/">MESS</A>&nbsp;go by an idea that the emulation 
-			should be "pure".&nbsp; Pure can be taken in any number of ways; in one sense, 
-			a truly pure emulation would be a gate level simulator that tried to track the 
-			state of every gate in the system.&nbsp; We don't go for that because that 
-			would be impractical.&nbsp; When we say "pure", we mean that we emulate all 
-			CPU(s) instruction by instruction and clock cycle by clock cycle and try to 
-			make the hardware look "authentic" from the perspective of the CPU(s).&nbsp; As 
-			long as that condition is satisfied, we are generally willing to implement 
-			anything.&nbsp; Features like anything external to the emulation itself, such 
-			as image file formats and UI fall in that category.&nbsp; This approach 
-			contrasts with the High Level Emulation (HLE) approach taken by <a href="http://www.uni-mainz.de/~bauec002/B2Main.html">
-				Basilisk II</a> and <a href="http://www.emuunlim.com/UltraHLE/">UltraHLE</a>, 
-			where BIOS and/or OS routines are patched and the actual hardware is bypassed 
-			for either speed or convenience reasons.
-		</p>
+	<p>
+		We are working on this feature; the paste feature in <A href="http://www.mess.org/">MESS</A>
+		&nbsp;0.62 laid the foundation for this feature. Sit tight
+	</p>
 
-<p class="topic" ID="q16">Why don't you support a feature that allows the user to remap 
-			their keyboard to the emulated system's, eliminating the need to adjust to the 
-			system's keyboard layout?</p>
-		<p>We are working on this feature; the paste feature in <A href="http://www.mess.org/">MESS</A>
-			&nbsp;0.62 laid the foundation for this feature. Sit tight
-		</p>
-
-<p class="topic" ID="q17">Your file manager is an abomination in the eyes of 
+<p class="topic" ID="t02">Your file manager is an abomination in the eyes of 
 			God/Allah/Jehovah/Budda/Zoroaster/anyone with an ounce of sense!</p>
-		<p>
-			We hear your cries. We hate the thing too. For the moment we are stuck with it, 
-			but we are trying to phase it out.
-		</p>
+	<p>
+		We hear your cries. We hate the thing too. For the moment we are stuck with it, 
+		but we are trying to phase it out.
+	</p>
 
-<p class="topic" ID="q18">My English is not good. I don't understand!</p>
-		<p>
-			If you ask for help on the message board, post it in both English and your 
-			native language. Many people there speak more than one language and may be able 
-			to help you in your native language. Also, visit <a href="http://babelfish.altavista.com">
-				http://babelfish.altavista.com</a>. They have a translation program that 
-			can translate between English and most European languages as well as a number 
-			of other languages. Also look at the MAME FAQ at <a href="http://www.mame.net">http://www.mame.net</a>. 
-			It is in many different languages, including Greek, Serbian, Romanian, 
-			Norwegian, Danish, Hebrew, Czech, Dutch, French, Italian, Korean, Japanese, 
-			Chinese, German, Portuguese, Spanish and Finnish.
-		</p>
-<p>
+<p class="topic" ID="t03">My English is not good. I don't understand!</p>
+	<p>
+		If you ask for help on the message board, post it in both English and your 
+		native language. Many people there speak more than one language and may be able 
+		to help you in your native language. Also, visit <a href="http://babelfish.altavista.com">
+		http://babelfish.altavista.com</a>. They have a translation program that 
+		can translate between English and most European languages as well as a number 
+		of other languages. Also look at the MAME FAQ at <a href="http://www.mame.net">http://www.mame.net</a>. 
+		It is in many different languages, including Greek, Serbian, Romanian, 
+		Norwegian, Danish, Hebrew, Czech, Dutch, French, Italian, Korean, Japanese, 
+		Chinese, German, Portuguese, Spanish and Finnish.
+	</p>
+
 <p class="topic" ID="END">MESS FAQ Contributors:</p>
-<p>
-Justin (original FAQ text), That70sguy
-</p>
+	<p>
+		Justin (original FAQ text), That70sguy
+	</p>
 
-	</body>
+
+</body>
+
 </html>
