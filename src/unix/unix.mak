@@ -63,7 +63,7 @@ INST.svgalib    = doinstallsuid
 INST.xgl        = doinstallsuid copycab
 INST.xfx        = doinstallsuid
 INST.svgafx     = doinstallsuid
-INST.SDL	= doinstallsuid
+INST.SDL	= doinstall
 
 # handle X11 display method additonal settings
 ifdef X11_MITSHM
@@ -255,32 +255,44 @@ $(OBJ)/%.a:
 
 # special cases for the 68000 core
 #
-# this generates the C source files for the 68000 emulator
-$(OBJ)/cpu/m68000/m68kmake $(OBJ)/cpu/m68000/m68kops.h: src/cpu/m68000/m68kmake.c src/cpu/m68000/m68k_in.c
-	$(CC_COMMENT) @echo 'Compiling src/cpu/m68000/m68kmake.c ...'
-	$(CC_COMPILE) $(CC) $(MY_CFLAGS) -o $(OBJ)/cpu/m68000/m68kmake src/cpu/m68000/m68kmake.c
-	$(CC_COMMENT) @echo 'Compiling src/cpu/m68000/m68k_in.c ...'
+# compile generated C files for the 68000 emulator
+$(M68000_GENERATED_OBJS): $(OBJ)/cpu/m68000/m68kmake
+	$(CC_COMMENT) @echo Compiling $(subst .o,.c,$@)...
+	$(CC_COMPILE) $(CC) $(MY_CFLAGS) -c $*.c -o $@
+
+# additional rule, because m68kcpu.c includes the generated m68kops.h :-/
+$(OBJ)/cpu/m68000/m68kcpu.o: $(OBJ)/cpu/m68000/m68kmake
+
+# generate C source files for the 68000 emulator
+$(OBJ)/cpu/m68000/m68kmake: src/cpu/m68000/m68kmake.c
+	$(CC_COMMENT) @echo M68K make $<...
+	$(CC_COMPILE) $(CC) $(MY_CFLAGS) -o $(OBJ)/cpu/m68000/m68kmake $<
+	$(CC_COMMENT) @echo Generating M68K source files...
 	$(CC_COMPILE) $(OBJ)/cpu/m68000/m68kmake $(OBJ)/cpu/m68000 src/cpu/m68000/m68k_in.c
 
-# to compile generated C-files
-$(M68000_GENERATED_OBJS): $(OBJ)/cpu/m68000/m68kmake
-	$(CC_COMMENT) @echo 'Compiling $*.c ...'
-	$(CC_COMPILE) $(CC) $(MY_CFLAGS) -o $@ -c $*.c
+# generate asm source files for the 68000/68020 emulators
+$(OBJ)/cpu/m68000/68000.asm:  src/cpu/m68000/make68k.c
+	$(CC_COMMENT) @echo Compiling $<...
+	$(CC_COMPILE) $(CC) $(MY_CFLAGS) -O0 -o $(OBJ)/cpu/m68000/make68k $<
+	$(CC_COMMENT) @echo Generating $@...
+	$(CC_COMPILE) $(OBJ)/cpu/m68000/make68k $@ $(OBJ)/cpu/m68000/68000tab.asm 00
 
-# src/cpu/m68000/m68kcpu.c needs a generated .h file
-$(OBJ)/cpu/m68000/m68kcpu.o: $(OBJ)/cpu/m68000/m68kops.h
+$(OBJ)/cpu/m68000/68020.asm:  src/cpu/m68000/make68k.c
+	$(CC_COMMENT) @echo Compiling $<...
+	$(CC_COMPILE) $(CC) $(MY_CFLAGS) -O0 -o $(OBJ)/cpu/m68000/make68k $<
+	$(CC_COMMENT) @echo Generating $@...
+	$(CC_COMPILE) $(OBJ)/cpu/m68000/make68k $@ $(OBJ)/cpu/m68000/68020tab.asm 20
 
-# The m68000 asm core
-$(OBJ)/cpu/m68000/68kem.asm: src/cpu/m68000/make68k.c
-	$(CC_COMMENT) @echo 'Compiling $< ...'
-	$(CC_COMPILE) $(CC) $(MY_CFLAGS) -o $(OBJ)/cpu/m68000/make68k $<
-	$(CC_COMPILE) $(OBJ)/cpu/m68000/make68k $@ $(OBJ)/cpu/m68000/comptab.asm
-
-$(OBJ)/cpu/m68000/68kem.o: $(OBJ)/cpu/m68000/68kem.asm
-	$(CC_COMMENT) @echo 'Assembling $< ...'
+# generated asm files for the 68000 emulator
+$(OBJ)/cpu/m68000/68000.o:  $(OBJ)/cpu/m68000/68000.asm
+	$(CC_COMMENT) @echo Assembling $<...
 	$(CC_COMPILE) $(ASM_STRIP) $<
-	$(CC_COMPILE) nasm $(NASM_FMT) -o $@ $<
+	$(CC_COMPILE) nasm $(NASM_FMT) -o $@ $(subst -D,-d,$(ASMDEFS)) $<
 
+$(OBJ)/cpu/m68000/68020.o:  $(OBJ)/cpu/m68000/68020.asm
+	$(CC_COMMENT) @echo Assembling $<...
+	$(CC_COMPILE) $(ASM_STRIP) $<
+	$(CC_COMPILE) nasm $(NASM_FMT) -o $@ $(subst -D,-d,$(ASMDEFS)) $<
 
 #some tricks, since vector.o these days is display-method dependent:
 $(OBJ)/unix.$(DISPLAY_METHOD)/vector.o: src/vidhrdw/vector.c
