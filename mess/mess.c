@@ -70,7 +70,7 @@ static char* dupe(const char *src)
 static char* stripspace(const char *src)
 {
 	static char buff[512];
-    if( src )
+	if( src )
 	{
 		char *dst;
 		while( *src && isspace(*src) )
@@ -80,7 +80,7 @@ static char* stripspace(const char *src)
 		while( dst >= buff && isspace(*--dst) )
 			*dst = '\0';
 		return buff;
-    }
+	}
 	return NULL;
 }
 
@@ -126,58 +126,58 @@ void *image_fopen(int type, int id, int filetype, int read_or_write)
 {
 	struct image_info *img = &images[type][id];
 	const char *sysname;
-    void *file;
+	void *file;
 	int extnum;
 
-    if( type >= IO_COUNT )
+	if( type >= IO_COUNT )
 	{
 		logerror("image_fopen: type out of range (%d)\n", type);
-        return NULL;
+		return NULL;
 	}
 
-    if( id >= count[type] )
+	if( id >= count[type] )
 	{
 		logerror("image_fopen: id out of range (%d)\n", id);
 		return NULL;
-    }
+	}
 
-    if( img->name == NULL )
-        return NULL;
+	if( img->name == NULL )
+		return NULL;
 
 	/* try the supported extensions */
-    extnum = 0;
-    for( ;; )
+	extnum = 0;
+	for( ;; )
 	{
 		const char *ext;
 		char *p;
 		int l;
 
-        sysname = Machine->gamedrv->name;
+		sysname = Machine->gamedrv->name;
 		logerror("image_fopen: trying %s for system %s\n", img->name, sysname);
 		file = osd_fopen(sysname, img->name, filetype, read_or_write);
 		/* file found, break out */
 		if( file )
-            break;
+			break;
 		if( Machine->gamedrv->clone_of &&
 			Machine->gamedrv->clone_of != &driver_0 )
 		{
-            sysname = Machine->gamedrv->clone_of->name;
+			sysname = Machine->gamedrv->clone_of->name;
 			logerror("image_fopen: now trying %s for system %s\n", img->name, sysname);
-            file = osd_fopen(sysname, img->name, filetype, read_or_write);
+			file = osd_fopen(sysname, img->name, filetype, read_or_write);
 		}
 		if( file )
-            break;
+			break;
 
 		ext = device_file_extension(type,extnum);
 		extnum++;
 
-        /* no (more) extensions, break out */
+		/* no (more) extensions, break out */
 		if( !ext )
 			break;
 
 		l = strlen(img->name);
-        p = strrchr(img->name, '.');
-        /* does the current name already have an extension? */
+		p = strrchr(img->name, '.');
+		/* does the current name already have an extension? */
 		if( p )
 		{
 			++p; /* skip the dot */
@@ -188,27 +188,27 @@ void *image_fopen(int type, int id, int filetype, int read_or_write)
 				if( !img->name )
 				{
 					logerror("image_fopen: realloc failed.. damn it!\n");
-                    return NULL;
+					return NULL;
 				}
 			}
 			strcpy(p, ext);
-        }
+		}
 		else
 		{
 			img->name = realloc(img->name, l + 1 + strlen(ext) + 1);
 			if( !img->name )
 			{
 				logerror("image_fopen: realloc failed.. damn it!\n");
-                return NULL;
+				return NULL;
 			}
 			sprintf(img->name + l, ".%s", ext);
 		}
-    }
+	}
 
-    if( file )
-    {
-        void *config;
-	const struct IODevice *pc_dev = Machine->gamedrv->dev;
+	if( file )
+	{
+		void *config;
+		const struct IODevice *pc_dev = Machine->gamedrv->dev;
 
 		logerror("image_fopen: found image %s for system %s\n", img->name, sysname);
 		img->length = osd_fsize(file);
@@ -217,20 +217,24 @@ void *image_fopen(int type, int id, int filetype, int read_or_write)
 		while( pc_dev && pc_dev->count && !img->crc)
 		{
 			logerror("partialcrc() -> %08lx\n",pc_dev->partialcrc);
-			if( type == pc_dev->type && pc_dev->partialcrc)
+			if( type == pc_dev->type && pc_dev->partialcrc )
 			{
-				unsigned char *pc_buf;
-				logerror("Calling partialcrc()\n");
-				pc_buf = (unsigned char *)malloc(img->length);
-				if (pc_buf) {
+				unsigned char *pc_buf = (unsigned char *)malloc(img->length);
+				if( pc_buf )
+				{
 					osd_fseek(file,0,SEEK_SET);
 					osd_fread(file,pc_buf,img->length);
 					osd_fseek(file,0,SEEK_SET);
+					logerror("Calling partialcrc()\n");
 					img->crc = (*pc_dev->partialcrc)(pc_buf,img->length);
 					free(pc_buf);
 				}
+				else
+				{
+					logerror("failed to malloc(%d)\n", img->length);
+				}
 			}
-		pc_dev++;
+			pc_dev++;
 		}
 
 		if (!img->crc) img->crc = osd_fcrc(file);
@@ -239,25 +243,25 @@ void *image_fopen(int type, int id, int filetype, int read_or_write)
 			logerror("image_fopen: calling osd_fchecksum() for %d bytes\n", img->length);
 			osd_fchecksum(sysname, img->name, &img->length, &img->crc);
 			logerror("image_fopen: CRC is %08x\n", img->crc);
-        }
+		}
 		free_image_info(img);
 
 		if (read_crc_config (crcfile, img, sysname) && Machine->gamedrv->clone_of->name)
 			read_crc_config (pcrcfile, img, Machine->gamedrv->clone_of->name);
 
 		config = config_open(crcfile);
-    }
+	}
 
-    return file;
+	return file;
 }
 
 
 static int read_crc_config (const char *file, struct image_info *img, const char* sysname)
 {
 	int retval;
-    void *config = config_open (file);
+	void *config = config_open (file);
 
-    retval = 1;
+	retval = 1;
 	if( config )
 	{
 		char line[1024];
@@ -312,7 +316,7 @@ const char *device_typename_id(int type, int id)
 	static int which = 0;
 	if (type < IO_COUNT)
 	{
-        which = ++which % 40;
+		which = ++which % 40;
 		/* for the average user counting starts at #1 ;-) */
 		sprintf(typename_id[which], "%s #%d", typename[type], id+1);
 		return typename_id[which];
@@ -351,7 +355,7 @@ const char *device_file_extension(int type, int extnum)
 {
 	const struct IODevice *dev = Machine->gamedrv->dev;
 	const char *ext;
-    if (type >= IO_COUNT)
+	if (type >= IO_COUNT)
 		return NULL;
 	while( dev->count )
 	{
@@ -366,7 +370,7 @@ const char *device_file_extension(int type, int extnum)
 		}
 		dev++;
 	}
-    return NULL;
+	return NULL;
 }
 
 /*
@@ -375,11 +379,11 @@ const char *device_file_extension(int type, int extnum)
  */
 unsigned int device_crc(int type, int id)
 {
-    if (type >= IO_COUNT)
-        return 0;
-    if (id < count[type])
-        return images[type][id].crc;
-    return 0;
+	if (type >= IO_COUNT)
+		return 0;
+	if (id < count[type])
+		return images[type][id].crc;
+	return 0;
 }
 
 /*
@@ -388,16 +392,16 @@ unsigned int device_crc(int type, int id)
  */
 void device_set_crc(int type, int id, UINT32 new_crc)
 {
-    if (type >= IO_COUNT)
+	if (type >= IO_COUNT)
 	{
 		logerror("device_set_crc: type out of bounds (%d)\n", type);
 		return;
 	}
-    if (id < count[type])
+	if (id < count[type])
 	{
 		images[type][id].crc = new_crc;
 		logerror("device_set_crc: new_crc %08x\n", new_crc);
-    }
+	}
 	else
 		logerror("device_set_crc: id out of bounds (%d)\n", id);
 }
@@ -408,11 +412,11 @@ void device_set_crc(int type, int id, UINT32 new_crc)
  */
 unsigned int device_length(int type, int id)
 {
-    if (type >= IO_COUNT)
-        return 0;
-    if (id < count[type])
-        return images[type][id].length;
-    return 0;
+	if (type >= IO_COUNT)
+		return 0;
+	if (id < count[type])
+		return images[type][id].length;
+	return 0;
 }
 
 /*
@@ -575,7 +579,7 @@ int init_devices(const void *game)
 				result = (*dev->id)(id);
 				logerror("%s id returns %d\n", device_typename_id(dev->type,id), result);
 
-                if( result != ID_OK && filename )
+				if( result != ID_OK && filename )
 				{
 					mess_printf("%s id failed (%s)\n", device_typename_id(dev->type,id), filename);
 					return 1;
@@ -590,7 +594,7 @@ int init_devices(const void *game)
 		/* if this device supports initialize (it should!) */
 		if( dev->init )
 		{
-            /* all instances */
+			/* all instances */
 			for( id = 0; id < dev->count; id++ )
 			{
 				const char *filename = device_filename(dev->type,id);
@@ -601,7 +605,7 @@ int init_devices(const void *game)
 				result = (*dev->init)(id);
 				logerror("%s init returns %d\n", device_typename_id(dev->type,id), result);
 
-                if( result != INIT_OK && filename )
+				if( result != INIT_OK && filename )
 				{
 					mess_printf("%s init failed (%s)\n", device_typename_id(dev->type,id), filename);
 					return 1;
@@ -665,8 +669,8 @@ void exit_devices(void)
  */
 int device_filename_change(int type, int id, const char *name)
 {
-    const struct IODevice *dev = Machine->gamedrv->dev;
-    struct image_info *img = &images[type][id];
+	const struct IODevice *dev = Machine->gamedrv->dev;
+	struct image_info *img = &images[type][id];
 
 	if( type >= IO_COUNT )
 		return 1;
@@ -693,7 +697,7 @@ int device_filename_change(int type, int id, const char *name)
 		img->length = 0;
 		img->crc = 0;
 		free_image_info(img);
-        if( name )
+		if( name )
 		{
 			img->name = dupe(name);
 			if( !img->name )
@@ -831,17 +835,17 @@ void device_output_chunk(int type, int id, void *src, int chunks)
 
 int displayimageinfo(struct osd_bitmap *bitmap, int selected)
 {
-    char buf[2048], *dst = buf;
-    int type, id, sel = selected - 1;
+	char buf[2048], *dst = buf;
+	int type, id, sel = selected - 1;
 
-    dst += sprintf(dst,"%s\n\n",Machine->gamedrv->description);
+	dst += sprintf(dst,"%s\n\n",Machine->gamedrv->description);
 
-    for (type = 0; type < IO_COUNT; type++)
-    {
-        for( id = 0; id < device_count(type); id++ )
-        {
-            const char *name = device_filename(type,id);
-            if( name )
+	for (type = 0; type < IO_COUNT; type++)
+	{
+		for( id = 0; id < device_count(type); id++ )
+		{
+			const char *name = device_filename(type,id);
+			if( name )
 			{
 				const char *info;
 				dst += sprintf(dst,"%s: %s\n", device_typename_id(type,id), device_filename(type,id));
@@ -856,58 +860,58 @@ int displayimageinfo(struct osd_bitmap *bitmap, int selected)
 					if( info )
 						dst += sprintf(dst,", %s", info);
 					dst += sprintf(dst,"\n");
-                }
+				}
 				info = device_playable(type,id);
 				if( info )
 					dst += sprintf(dst,"%s\n", info);
 				info = device_extrainfo(type,id);
 				if( info )
 					dst += sprintf(dst,"%s\n", info);
-            }
-            else
-			{
-                dst += sprintf(dst,"%s: ---\n", device_typename_id(type,id));
 			}
-        }
-    }
+			else
+			{
+				dst += sprintf(dst,"%s: ---\n", device_typename_id(type,id));
+			}
+		}
+	}
 
-    if (sel == -1)
-    {
-        /* startup info, print MAME version and ask for any key */
+	if (sel == -1)
+	{
+		/* startup info, print MAME version and ask for any key */
 
-        strcat(buf,"\n\tPress any key to Begin");
-        ui_drawbox(bitmap,0,0,Machine->uiwidth,Machine->uiheight);
-        ui_displaymessagewindow(bitmap, buf);
+		strcat(buf,"\n\tPress any key to Begin");
+		ui_drawbox(bitmap,0,0,Machine->uiwidth,Machine->uiheight);
+		ui_displaymessagewindow(bitmap, buf);
 
-        sel = 0;
-        if (code_read_async() != KEYCODE_NONE ||
-                code_read_async() != JOYCODE_NONE)
-            sel = -1;
-    }
-    else
-    {
+		sel = 0;
+		if (code_read_async() != KEYCODE_NONE ||
+			code_read_async() != JOYCODE_NONE)
+			sel = -1;
+	}
+	else
+	{
 		/* menu system, use the normal menu keys */
-        strcat(buf,"\n\t\x1a Return to Main Menu \x1b");
+		strcat(buf,"\n\t\x1a Return to Main Menu \x1b");
 
-        ui_displaymessagewindow(bitmap,buf);
+		ui_displaymessagewindow(bitmap,buf);
 
-        if (input_ui_pressed(IPT_UI_SELECT))
-            sel = -1;
+		if (input_ui_pressed(IPT_UI_SELECT))
+			sel = -1;
 
-        if (input_ui_pressed(IPT_UI_CANCEL))
-            sel = -1;
+		if (input_ui_pressed(IPT_UI_CANCEL))
+			sel = -1;
 
-        if (input_ui_pressed(IPT_UI_CONFIGURE))
-            sel = -2;
-    }
+		if (input_ui_pressed(IPT_UI_CONFIGURE))
+			sel = -2;
+	}
 
-    if (sel == -1 || sel == -2)
-    {
-        /* tell updatescreen() to clean after us */
-        need_to_clear_bitmap = 1;
-    }
+	if (sel == -1 || sel == -2)
+	{
+		/* tell updatescreen() to clean after us */
+		need_to_clear_bitmap = 1;
+	}
 
-    return sel + 1;
+	return sel + 1;
 }
 
 
@@ -942,9 +946,4 @@ void showmessinfo(void)
 		"See mess.txt for help, readme.txt for options.\n");
 
 }
-
-
-
-
-
 
