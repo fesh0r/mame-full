@@ -76,6 +76,9 @@ typedef struct tms9901_t
 
 	int supported_int_mask;	/* mask:  bit #n is set if pin #n is supported as an interrupt pin,
 							  i.e. the driver sends a notification whenever the pin state changes */
+							/* setting these bits is not required, but it saves you the trouble of
+							  saving the state of interrupt pins and feeding it to the port read
+							  handlers again */
 	int int_state;			/* state of the int1-int15 lines */
 	int timer_int_pending;	/* timer int pending (overrides int3 pin if timer enabled) */
 	int enabled_ints;		/* interrupt enable mask */
@@ -271,7 +274,8 @@ static void tms9901_field_interrupts(int which)
 
 
 /*
-	callback function which is called when the state of INTn* change
+	function which should be called by the driver when the state of an INTn*
+	pin changes (only required if the pin is set up as an interrupt pin)
 
 	state == 0: INTn* is inactive (high)
 	state != 0: INTn* is active (low)
@@ -280,8 +284,9 @@ static void tms9901_field_interrupts(int which)
 */
 void tms9901_set_single_int(int which, int pin_number, int state)
 {
+	/* remember new state of INTn* pin state */
 	if (state)
-		tms9901[which].int_state |= 1 << pin_number;		/* raise INTn* pin state mirror */
+		tms9901[which].int_state |= 1 << pin_number;
 	else
 		tms9901[which].int_state &= ~ (1 << pin_number);
 
