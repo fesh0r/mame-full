@@ -747,7 +747,7 @@ WRITE_HANDLER( snes_w_io )
 		case WH3:		/* Window 2 right position */
 		case WBGLOG:	/* Window mask logic for BG's */
 		case WOBJLOG:	/* Window mask logic for objects */
-			if( data != snes_ram[offset] );
+			if( data != snes_ram[offset] )
 				snes_ppu.update_windows = 1;
 			break;
 		case TM:		/* Main screen designation */
