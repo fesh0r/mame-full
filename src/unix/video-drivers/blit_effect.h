@@ -29,9 +29,9 @@
 #ifdef PACK_BITS
 #  define MEMCPY(d, s, n) \
    {\
-     unsigned int *src =  (unsigned int *)s; \
-     unsigned int *end = ((unsigned int *)s) + n; \
-     DEST_PIXEL *dst = (DEST_PIXEL *)d; \
+     unsigned int *src = (unsigned int *)(s); \
+     unsigned int *end = src + (n); \
+     DEST_PIXEL *dst = (DEST_PIXEL *)(d); \
      for(;src<end;dst+=3,src+=4) \
      { \
         *(dst  ) = ((*(src  ))    ) | ((*(src+1))<<24); \

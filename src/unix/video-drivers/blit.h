@@ -145,15 +145,22 @@ for (;line_src < line_end; \
 
 #ifdef CONVERT_PIXEL
 #  ifdef INDIRECT
-#  define GETPIXEL(src) CONVERT_PIXEL(INDIRECT[src])
+#    define GETPIXEL(src) CONVERT_PIXEL(INDIRECT[src])
 #  else
-#  define GETPIXEL(src) CONVERT_PIXEL((src))
+#    define GETPIXEL(src) CONVERT_PIXEL((src))
 #  endif
 #else
 #  ifdef INDIRECT
-#  define GETPIXEL(src) INDIRECT[src]
+#    define GETPIXEL(src) INDIRECT[src]
 #  else
-#  define GETPIXEL(src) (src)
+#    ifndef PACK_BITS
+#      define GETPIXEL(src) (src)
+#    else
+/*     when we're using direct blitting the bitmap might have cruft in the msb
+       of the sparse 32 bpp pixels (artwork), so in this case we need to mask
+       out the msb */
+#      define GETPIXEL(src) ((src)&0x00FFFFFF)
+#    endif
 #  endif
 #endif
 
