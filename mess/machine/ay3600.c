@@ -243,7 +243,6 @@ static const unsigned char ay3600_key_remap_2e[2][9*8][4] =
 };
 
 static unsigned int *ay3600_keys;
-static ay3600_keyboard_type_t keyboard_type;
 
 static UINT8 keycode;
 static UINT8 keycode_unmodified;
@@ -262,13 +261,39 @@ static UINT8 keystilldown;
 
 
 /***************************************************************************
+  Helper Functions
+***************************************************************************/
+
+INLINE int a2_has_keypad() {
+	return port_tag_to_index("keypad_1") != -1;
+}
+
+INLINE int a2_has_reset_dip() {
+	return port_tag_to_index("reset_dip") != -1;
+}
+
+INLINE int a2_has_repeat() {
+	return port_tag_to_index("keyb_repeat") != -1;
+}
+
+INLINE int a2_has_capslock() {
+	return !a2_has_repeat(); /* BUG: Doesn't work with Ace */
+}
+
+INLINE int a2_no_ctrl_reset() {
+	return ((a2_has_repeat() && !a2_has_reset_dip()) ||
+			(a2_has_reset_dip() && !readinputportbytag("reset_dip")));
+}
+
+
+
+/***************************************************************************
   AY3600_init
 ***************************************************************************/
 
-int AY3600_init(ay3600_keyboard_type_t type)
+int AY3600_init()
 {
 	/* Init the key remapping table */
- 	keyboard_type = type;
 	ay3600_keys = auto_malloc(AY3600_KEYS_LENGTH * sizeof(*ay3600_keys));
 	if (!ay3600_keys)
 		return 1;
@@ -285,31 +310,6 @@ int AY3600_init(ay3600_keyboard_type_t type)
 	keycode = 0;
 	keystilldown = 0;
 	return 0;
-}
-
-
-
-/***************************************************************************
-  has_rept_key
-***************************************************************************/
-
-static int has_rept_key(void)
-{
-	int result = FALSE;
-
-	switch(keyboard_type)
-	{
-		case AP2_KEYBOARD_2:
-		case AP2_KEYBOARD_2P:
-			result = FALSE;
-			break;
-
-		case AP2_KEYBOARD_2E:
-		case AP2_KEYBOARD_2GS:
-			result = TRUE;
-			break;
-	}
-	return result;
 }
 
 
@@ -336,8 +336,8 @@ static void AY3600_poll(int dummy)
 	/* check for these special cases because they affect the emulated key codes */
 
 	/* only repeat keys on a 2/2+ if special REPT key is pressed */
-	if (has_rept_key())
-		time_until_repeat = pressed_specialkey(SPECIALKEY_REPT) ? 0 : ~0;
+	if (a2_has_repeat())
+		time_until_repeat = readinputportbytag("keyb_repeat") & 0x01 ? 0 : ~0;
 			
 	/* check caps lock and set LED here */
 	if (pressed_specialkey(SPECIALKEY_CAPSLOCK))
@@ -363,9 +363,7 @@ static void AY3600_poll(int dummy)
 
 	/* reset key check */
 	if (pressed_specialkey(SPECIALKEY_RESET) &&
-		(keyboard_type == AP2_KEYBOARD_2 ||
-		(keyboard_type == AP2_KEYBOARD_2P && !readinputportbytag("reset_dip")) ||
-		switchkey & A2_KEY_CONTROL)) {
+		(a2_no_ctrl_reset() || switchkey & A2_KEY_CONTROL)) {
 			if (!reset_flag) {
 				reset_flag = 1;
 				/* using PULSE_LINE does not allow us to press and hold key */
@@ -380,25 +378,19 @@ static void AY3600_poll(int dummy)
 	}
 
 	/* run through real keys and see what's being pressed */
-	num_ports = keyboard_type == AP2_KEYBOARD_2GS ? 9 : 7;
+	num_ports = a2_has_keypad() ? 9 : 7;
 
 	for (port = 0; port < num_ports; port++)
 	{
 		data = readinputport(AY3600_KEYS_BASEPORT + port);
 		for (bit = 0; bit < 8; bit++)
 		{
-			switch (keyboard_type) {
-			case AP2_KEYBOARD_2:
-			case AP2_KEYBOARD_2P:
-				curkey = ay3600_key_remap_2[port*8+bit][switchkey];
-				curkey_unmodified = ay3600_key_remap_2[port*8+bit][0];
-				break;
-			case AP2_KEYBOARD_2GS:
-			case AP2_KEYBOARD_2E:
-			default:
+			if (a2_has_capslock()) {
 				curkey = ay3600_key_remap_2e[caps_lock][port*8+bit][switchkey];
 				curkey_unmodified = ay3600_key_remap_2e[caps_lock][port*8+bit][0];
-				break;
+			} else {
+				curkey = ay3600_key_remap_2[port*8+bit][switchkey];
+				curkey_unmodified = ay3600_key_remap_2[port*8+bit][0];
 			}
 			if (data & (1 << bit))
 			{

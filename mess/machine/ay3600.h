@@ -11,16 +11,8 @@
 
 #include "inputx.h"
 
-typedef enum
-{
-	AP2_KEYBOARD_2,
-	AP2_KEYBOARD_2P,
-	AP2_KEYBOARD_2E,
-	AP2_KEYBOARD_2GS
-} ay3600_keyboard_type_t;
-
 /* machine/ay3600.c */
-int AY3600_init(ay3600_keyboard_type_t keyboard_type);
+int AY3600_init();
 int AY3600_anykey_clearstrobe_r(void);
 int AY3600_keydata_strobe_r(void);
 
