@@ -44,51 +44,48 @@
  * Bally Astrocade
  ****************************************************************************/
 
-MEMORY_READ_START( astrocade_readmem )
-	{ 0x0000, 0x3fff, MRA8_ROM },
-	{ 0x4000, 0x4fff, MRA8_RAM },
-MEMORY_END
+ADDRESS_MAP_START( astrocade_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x4fff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
 
-MEMORY_WRITE_START( astrocade_writemem )
-	{ 0x0000, 0x0fff, astrocade_magicram_w },
-	{ 0x1000, 0x3fff, MWA8_ROM },  /* Star Fortress writes in here?? */
-	{ 0x4000, 0x4fff, astrocade_videoram_w, &astrocade_videoram, &videoram_size },	/* ASG */
-MEMORY_END
+ADDRESS_MAP_START( astrocade_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE(astrocade_magicram_w)
+	AM_RANGE(0x1000, 0x3fff) AM_WRITE(MWA8_ROM) /* Star Fortress writes in here?? */
+	AM_RANGE(0x4000, 0x4fff) AM_WRITE(astrocade_videoram_w) AM_BASE(&astrocade_videoram) AM_SIZE(&videoram_size) /* ASG */
+ADDRESS_MAP_END
 
-PORT_READ_START( astrocade_readport )
-	{ 0x08, 0x08, astrocade_intercept_r },
-	{ 0x0e, 0x0e, astrocade_video_retrace_r },
-	/*{ 0x0f, 0x0f, astrocade_horiz_r }, */
-	{ 0x10, 0x10, input_port_0_r },
-	{ 0x11, 0x11, input_port_1_r },
-  	{ 0x12, 0x12, input_port_2_r },
-	{ 0x13, 0x13, input_port_3_r },
-	{ 0x14, 0x14, input_port_4_r },
-	{ 0x15, 0x15, input_port_5_r },
-  	{ 0x16, 0x16, input_port_6_r },
-	{ 0x17, 0x17, input_port_7_r },
+ADDRESS_MAP_START( astrocade_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x08, 0x08) AM_READ(astrocade_intercept_r)
+	AM_RANGE(0x0e, 0x0e) AM_READ(astrocade_video_retrace_r)
+	/*AM_RANGE(0x0f, 0x0f) AM_READ(astrocade_horiz_r)*/
+	AM_RANGE(0x10, 0x10) AM_READ(input_port_0_r)
+	AM_RANGE(0x11, 0x11) AM_READ(input_port_1_r)
+	AM_RANGE(0x12, 0x12) AM_READ(input_port_2_r)
+	AM_RANGE(0x13, 0x13) AM_READ(input_port_3_r)
+	AM_RANGE(0x14, 0x14) AM_READ(input_port_4_r)
+	AM_RANGE(0x15, 0x15) AM_READ(input_port_5_r)
+	AM_RANGE(0x16, 0x16) AM_READ(input_port_6_r)
+	AM_RANGE(0x17, 0x17) AM_READ(input_port_7_r)
+	AM_RANGE(0x1c, 0x1c) AM_READ(input_port_8_r)
+	AM_RANGE(0x1d, 0x1d) AM_READ(input_port_9_r)
+	AM_RANGE(0x1e, 0x1e) AM_READ(input_port_10_r)
+	AM_RANGE(0x1f, 0x1f) AM_READ(input_port_11_r)
+ADDRESS_MAP_END
 
-	{ 0x1c, 0x1c, input_port_8_r },
-	{ 0x1d, 0x1d, input_port_9_r },
-	{ 0x1e, 0x1e, input_port_10_r },
-	{ 0x1f, 0x1f, input_port_11_r },
-
-PORT_END
-
-PORT_WRITE_START( astrocade_writeport )
-	{ 0x00, 0x07, astrocade_colour_register_w },
-	{ 0x08, 0x08, astrocade_mode_w },
-	{ 0x09, 0x09, astrocade_colour_split_w },
-	{ 0x0a, 0x0a, astrocade_vertical_blank_w },
-	{ 0x0b, 0x0b, astrocade_colour_block_w },
-	{ 0x0c, 0x0c, astrocade_magic_control_w },
-	{ 0x0d, 0x0d, interrupt_vector_w },
-	{ 0x0e, 0x0e, astrocade_interrupt_enable_w },
-	{ 0x0f, 0x0f, astrocade_interrupt_w },
-	{ 0x10, 0x18, astrocade_sound1_w }, /* Sound Stuff */
-	{ 0x19, 0x19, astrocade_magic_expand_color_w },
-
-PORT_END
+ADDRESS_MAP_START( astrocade_writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x07) AM_WRITE(astrocade_colour_register_w)
+	AM_RANGE(0x08, 0x08) AM_WRITE(astrocade_mode_w)
+	AM_RANGE(0x09, 0x09) AM_WRITE(astrocade_colour_split_w)
+	AM_RANGE(0x0a, 0x0a) AM_WRITE(astrocade_vertical_blank_w)
+	AM_RANGE(0x0b, 0x0b) AM_WRITE(astrocade_colour_block_w)
+	AM_RANGE(0x0c, 0x0c) AM_WRITE(astrocade_magic_control_w)
+	AM_RANGE(0x0d, 0x0d) AM_WRITE(interrupt_vector_w)
+	AM_RANGE(0x0e, 0x0e) AM_WRITE(astrocade_interrupt_enable_w)
+	AM_RANGE(0x0f, 0x0f) AM_WRITE(astrocade_interrupt_w)
+	AM_RANGE(0x10, 0x18) AM_WRITE(astrocade_sound1_w) /* Sound Stuff */
+	AM_RANGE(0x19, 0x19) AM_WRITE(astrocade_magic_expand_color_w)
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( astrocde )
 	PORT_START /* IN0 */	/* Player 1 Handle */
@@ -184,8 +181,8 @@ static struct astrocade_interface astrocade_1chip_interface =
 static MACHINE_DRIVER_START( astrocde )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 1789000)        /* 1.789 Mhz */
-	MDRV_CPU_MEMORY(astrocade_readmem,astrocade_writemem)
-	MDRV_CPU_PORTS(astrocade_readport,astrocade_writeport)
+	MDRV_CPU_PROGRAM_MAP(astrocade_readmem,astrocade_writemem)
+	MDRV_CPU_IO_MAP(astrocade_readport,astrocade_writeport)
 	MDRV_CPU_VBLANK_INT(astrocade_interrupt,256)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
