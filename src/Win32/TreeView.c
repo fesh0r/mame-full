@@ -1289,7 +1289,8 @@ FILTER_ITEM filterList[F_NUM_FILTERS] = {
 #ifdef MESS
     {F_COMPUTER,     IDC_FILTER_COMPUTER},
     {F_CONSOLE,      IDC_FILTER_CONSOLE},
-#else
+#endif
+#ifndef NEOFREE
     {F_NEOGEO,       IDC_FILTER_NEOGEO},
 #endif
     {F_CLONES,       IDC_FILTER_CLONES},
