@@ -35,7 +35,7 @@
 #include <signal.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
-#include <SDL/SDL.h>
+#include <SDL.h>
 #include "xmame.h"
 #include "devices.h"
 #include "keyboard.h"
@@ -53,7 +53,6 @@ static SDL_Surface* Surface;
 static SDL_Surface* Offscreen_surface;
 static int hardware=1;
 static int mode_number=-1;
-static int list_modes=0;
 static int start_fullscreen=0;
 SDL_Color *Colors=NULL;
 static int cursor_state; /* previous mouse cursor state */
@@ -71,6 +70,8 @@ update_func_t update_function;
 
 static int sdl_mapkey(struct rc_option *option, const char *arg, int priority);
 
+static int list_sdl_modes(struct rc_option *option, const char *arg, int priority);
+
 struct rc_option display_opts[] = {
     /* name, shortname, type, dest, deflt, min, max, func, help */
    { "SDL Related",  NULL,    rc_seperator,  NULL,
@@ -79,8 +80,8 @@ struct rc_option display_opts[] = {
    { "fullscreen",   NULL,    rc_bool,       &start_fullscreen,
       "0",           0,       0,             NULL,
       "Start fullscreen" },
-   { "listmodes",    NULL,    rc_bool,       &list_modes,
-      "0",           0,       0,             NULL,
+   { "listmodes",    NULL,    rc_use_function_no_arg,       NULL,
+      NULL,           0,       0,             list_sdl_modes,
       "List all posible fullscreen modes" },
    { "modenumber",   NULL,    rc_int,        &mode_number,
       "-1",          0,       0,             NULL,
@@ -93,7 +94,6 @@ struct rc_option display_opts[] = {
       NULL }
 };
 
-void list_sdl_modes(void);
 void sdl_update_8_to_8bpp(struct mame_bitmap *bitmap);
 void sdl_update_8_to_16bpp(struct mame_bitmap *bitmap);
 void sdl_update_8_to_24bpp(struct mame_bitmap *bitmap);
@@ -132,11 +132,6 @@ int sysdep_create_display(int depth)
    HermesFormat* H_dst_format;
 #endif /* DIRECT_HERMES */
    int vid_mode_flag; /* Flag to set the video mode */
-
-   if(list_modes){
-      list_sdl_modes();
-      exit (OSD_OK);
-   }
 
    video_info = SDL_GetVideoInfo();
 
@@ -876,7 +871,7 @@ int sysdep_display_16bpp_capable(void)
    return ( video_info->vfmt->BitsPerPixel >=16);
 }
 
-void list_sdl_modes(void)
+int list_sdl_modes(struct rc_option *option, const char *arg, int priority)
 {
    SDL_Rect** vid_modes;
    int vid_modes_i;
@@ -886,7 +881,7 @@ void list_sdl_modes(void)
 
    if ( (! vid_modes) || ((long)vid_modes == -1)) {
       printf("This option only works in a full-screen mode (eg: linux's framebuffer)\n");
-      return;
+      return - 1;
    }
 
    printf("Modes available:\n");
@@ -900,4 +895,6 @@ void list_sdl_modes(void)
    
       vid_modes_i++;
    }
+
+   return -1;
 }
