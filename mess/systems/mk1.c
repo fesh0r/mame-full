@@ -202,7 +202,9 @@ static void mk1_interrupt(UINT16 addr, bool level)
 
 void init_mk1(void)
 {
-    F3853_CONFIG config={ machine_driver_mk1.cpu[0].cpu_clock, mk1_interrupt };
+    F3853_CONFIG config;
+    config.frequency=machine_driver_mk1.cpu[0].cpu_clock;
+    config.interrupt_request=mk1_interrupt;
 
     f3853_init(&config);
 }
