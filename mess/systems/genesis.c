@@ -72,7 +72,7 @@ void genesis_init_machine (void);
 int genesis_interrupt (void);
 void genesis_ram_w (int offset,int data);
 int genesis_ram_r (int offset);
-
+UINT32 genesis_partialcrc(const unsigned char *,unsigned int);
 
 void genesis_background_w(int offset,int data);
 void genesis_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
@@ -399,7 +399,8 @@ static const struct IODevice io_genesis[] = {
         NULL,               /* input */
 		NULL,				/* output */
 		NULL,				/* input_chunk */
-		NULL				/* output_chunk */
+		NULL,				/* output_chunk */
+		genesis_partialcrc /* get 'true' crc even if .smd format */
     },
 	{ IO_END }
 };
