@@ -35,7 +35,7 @@ static int debugger_has_focus = 0;
 static struct my_rectangle normal_visual;
 static struct my_rectangle debug_visual;
 
-#ifdef svgafx
+#if (defined svgafx) || (defined xfx) 
 UINT16 *color_values;
 #endif
 
@@ -362,7 +362,7 @@ static void osd_change_display_settings(struct my_rectangle *new_visual,
          visual.max_x, visual.max_y);
       
       /* to stop keys from getting stuck */
-      keyboard_clear();
+      xmame_keyboard_clear();
          
       /* for debugging only */
       fprintf(stderr_file, "viswidth = %d, visheight = %d,"
@@ -604,19 +604,19 @@ int osd_allocate_colors(unsigned int totalcolors, const unsigned char *palette,
          sysdep_palette_set_pen(normal_palette, i, palette[i * 3], 
             palette[i * 3 + 1], palette[i * 3 + 2]);
       }
-#ifdef svgafx
+#if (defined svgafx) || (defined xfx) 
       color_values = malloc(video_colors_used * sizeof(UINT16));
 #endif
 
       for (i = 0; i < totalcolors; i++) {
 	 palette_get_color(i, (UINT8*)&rr, (UINT8*)&gg, (UINT8*)&bb);
 
-#ifdef svgafx
+#if (defined svgafx) || (defined xfx) 
          color_values[i] = (((rr >> 3) << 10) | ((gg >> 3) << 5) | (bb >> 3));
 #endif
       }
 
-#ifdef svgafx
+#if (defined svgafx) || (defined xfx) 
 	color_values[totalcolors] = 0x0000;
 	color_values[totalcolors+1] = 0x7FFF;
 #endif
@@ -650,7 +650,7 @@ void osd_get_pen(int pen,unsigned char *red, unsigned char *green, unsigned char
 
 void osd_modify_pen(int pen, unsigned char red,unsigned char green,unsigned char blue) 
 {
-#ifdef svgafx
+#if (defined svgafx) || (defined xfx) 
    color_values[pen] = (((red >> 3) << 10) | ((green >> 3) << 5) | (blue >> 3));
 #endif
 
