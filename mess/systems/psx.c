@@ -17,8 +17,7 @@
 #include "devices/snapquik.h"
 #include "includes/psx.h"
 
-/* this seems to have disappeared */
-static void mips_stop( void ) {}
+extern void mips_stop( void );
 
 struct
 {
@@ -56,11 +55,11 @@ static OPBASE_HANDLER( psx_setopbase )
 		UINT32 n_left;
 		UINT32 n_address;
 
-		logerror( "psxexe_load: pc  %08x\n", m_psxexe_header.pc0 );
-		logerror( "psxexe_load: org %08x\n", m_psxexe_header.t_addr );
-		logerror( "psxexe_load: len %08x\n", m_psxexe_header.t_size );
-		logerror( "psxexe_load: sp  %08x\n", m_psxexe_header.s_addr );
-		logerror( "psxexe_load: len %08x\n", m_psxexe_header.s_size );
+		logerror( "psx_exe_load: pc  %08x\n", m_psxexe_header.pc0 );
+		logerror( "psx_exe_load: org %08x\n", m_psxexe_header.t_addr );
+		logerror( "psx_exe_load: len %08x\n", m_psxexe_header.t_size );
+		logerror( "psx_exe_load: sp  %08x\n", m_psxexe_header.s_addr );
+		logerror( "psx_exe_load: len %08x\n", m_psxexe_header.s_size );
 
 		p_ram = (UINT8 *)g_p_n_psxram;
 		n_ram = g_n_psxramsize;
@@ -107,16 +106,16 @@ static void psxexe_conv32( UINT32 *p_uint32 )
 		( p_uint8[ 3 ] << 24 );
 }
 
-static QUICKLOAD_LOAD( psxexe_load )
+static QUICKLOAD_LOAD( psx_exe_load )
 {
 	if( mame_fread( fp, &m_psxexe_header, sizeof( m_psxexe_header ) ) != sizeof( m_psxexe_header ) )
 	{
-		logerror( "psxexe_load: invalid exe\n" );
+		logerror( "psx_exe_load: invalid exe\n" );
 		return INIT_FAIL;
 	}
 	if( memcmp( m_psxexe_header.id, "PS-X EXE", 8 ) != 0 )
 	{
-		logerror( "psxexe_load: invalid header id\n" );
+		logerror( "psx_exe_load: invalid header id\n" );
 		return INIT_FAIL;
 	}
 
@@ -141,7 +140,7 @@ static QUICKLOAD_LOAD( psxexe_load )
 	m_p_psxexe = malloc( m_psxexe_header.t_size );
 	if( m_p_psxexe == NULL )
 	{
-		logerror( "psxexe_load: out of memory\n" );
+		logerror( "psx_exe_load: out of memory\n" );
 		return INIT_FAIL;
 	}
 	mame_fread( fp, m_p_psxexe, m_psxexe_header.t_size );
@@ -156,11 +155,12 @@ static QUICKLOAD_LOAD( psxexe_load )
 #define PAD_STATE_UNLISTEN ( 4 )
 
 #define PAD_TYPE_STANDARD ( 4 )
-#define PAD_READ_STANDARD ( 2 )
+#define PAD_BYTES_STANDARD ( 2 )
 
 #define PAD_CMD_START ( 0x01 )
-#define PAD_CMD_READ ( 0x42 )
-#define PAD_DATA_READ ( 0x5a )
+#define PAD_CMD_READ  ( 0x42 ) /* B */
+
+#define PAD_DATA_OK   ( 0x5a ) /* Z */
 #define PAD_DATA_IDLE ( 0xff )
 
 static struct
@@ -169,16 +169,21 @@ static struct
 	int n_shiftout;
 	int n_bits;
 	int n_state;
-	int n_read;
+	int n_byte;
 	int b_lastclock;
+	int b_ack;
 } m_pad[ 2 ];
 
-static void psx_pad_ack( int b_ack )
+static void psx_pad_ack( int n_port )
 {
-	psx_sio_input( 0, PSX_SIO_IN_DSR, b_ack * PSX_SIO_IN_DSR );
-	if( !b_ack )
+	if( m_pad[ n_port ].n_state != PAD_STATE_IDLE )
 	{
-		timer_set( TIME_IN_USEC( 2 ), 1, psx_pad_ack );
+		psx_sio_input( 0, PSX_SIO_IN_DSR, m_pad[ n_port ].b_ack * PSX_SIO_IN_DSR );
+		if( !m_pad[ n_port ].b_ack )
+		{
+			m_pad[ n_port ].b_ack = 1;
+			timer_set( TIME_IN_USEC( 2 ), n_port, psx_pad_ack );
+		}
 	}
 }
 
@@ -244,7 +249,7 @@ static void psx_pad( int n_port, int n_data )
 			if( m_pad[ n_port ].n_shiftin == PAD_CMD_START )
 			{
 				m_pad[ n_port ].n_state = PAD_STATE_ACTIVE;
-				m_pad[ n_port ].n_shiftout = ( PAD_TYPE_STANDARD << 4 ) | ( PAD_READ_STANDARD >> 1 );
+				m_pad[ n_port ].n_shiftout = ( PAD_TYPE_STANDARD << 4 ) | ( PAD_BYTES_STANDARD >> 1 );
 				b_ack = 1;
 			}
 			else
@@ -259,8 +264,8 @@ static void psx_pad( int n_port, int n_data )
 			if( m_pad[ n_port ].n_shiftin == PAD_CMD_READ )
 			{
 				m_pad[ n_port ].n_state = PAD_STATE_READ;
-				m_pad[ n_port ].n_shiftout = PAD_DATA_READ;
-				m_pad[ n_port ].n_read = 0;
+				m_pad[ n_port ].n_shiftout = PAD_DATA_OK;
+				m_pad[ n_port ].n_byte = 0;
 				b_ack = 1;
 			}
 			else
@@ -273,15 +278,15 @@ static void psx_pad( int n_port, int n_data )
 	case PAD_STATE_READ:
 		if( b_ready )
 		{
-			if( m_pad[ n_port ].n_read < PAD_READ_STANDARD )
+			if( m_pad[ n_port ].n_byte < PAD_BYTES_STANDARD )
 			{
-				m_pad[ n_port ].n_shiftout = readinputport( m_pad[ n_port ].n_read + ( n_port * PAD_READ_STANDARD ) );
-				m_pad[ n_port ].n_read++;
+				m_pad[ n_port ].n_shiftout = readinputport( m_pad[ n_port ].n_byte + ( n_port * PAD_BYTES_STANDARD ) );
+				m_pad[ n_port ].n_byte++;
 				b_ack = 1;
 			}
 			else
 			{
-				m_pad[ n_port ].n_state = PAD_STATE_ACTIVE;
+				m_pad[ n_port ].n_state = PAD_STATE_LISTEN;
 			}
 		}
 		break;
@@ -289,7 +294,8 @@ static void psx_pad( int n_port, int n_data )
 
 	if( b_ack )
 	{
-		timer_set( TIME_IN_USEC( 10 ), 0, psx_pad_ack );
+		m_pad[ n_port ].b_ack = 0;
+		timer_set( TIME_IN_USEC( 10 ), n_port, psx_pad_ack );
 	}
 }
 
@@ -662,7 +668,7 @@ WRITE32_HANDLER( psx_cd_w )
 		if ((data == 0x07) && (cd_reset == 1))
 		{
 			cd_reset = 2;
-//			psxirq_clear(0x0004);
+/*			psxirq_clear(0x0004); */
 		}
 		else
 		{
@@ -761,7 +767,7 @@ static struct PSXSPUinterface psxspu_interface =
 	100,
 };
 
-static MACHINE_DRIVER_START( psx )
+static MACHINE_DRIVER_START( psxntsc )
 	/* basic machine hardware */
 	MDRV_CPU_ADD( PSXCPU, 33868800 / 2 ) /* 33MHz ?? */
 	MDRV_CPU_PROGRAM_MAP( psx_map, 0 )
@@ -774,13 +780,35 @@ static MACHINE_DRIVER_START( psx )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
-#if defined( MAME_DEBUG )
-	MDRV_SCREEN_SIZE( 1024, 1024 )
-	MDRV_VISIBLE_AREA( 0, 1023, 0, 1023 )
-#else
-	MDRV_SCREEN_SIZE( 640, 480 )
+	MDRV_SCREEN_SIZE( 1024, 512 )
 	MDRV_VISIBLE_AREA( 0, 639, 0, 479 )
-#endif
+	MDRV_PALETTE_LENGTH( 65536 )
+
+	MDRV_PALETTE_INIT( psx )
+	MDRV_VIDEO_START( psx_type2 )
+	MDRV_VIDEO_UPDATE( psx )
+	MDRV_VIDEO_STOP( psx )
+
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES( SOUND_SUPPORTS_STEREO )
+	MDRV_SOUND_ADD( PSXSPU, psxspu_interface )
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( psxpal )
+	/* basic machine hardware */
+	MDRV_CPU_ADD( PSXCPU, 33868800 / 2 ) /* 33MHz ?? */
+	MDRV_CPU_PROGRAM_MAP( psx_map, 0 )
+	MDRV_CPU_VBLANK_INT( psx_vblank, 1 )
+
+	MDRV_FRAMES_PER_SECOND( 50 )
+	MDRV_VBLANK_DURATION( 0 )
+
+	MDRV_MACHINE_INIT( psx )
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
+	MDRV_SCREEN_SIZE( 1024, 512 )
+	MDRV_VISIBLE_AREA( 0, 639, 0, 511 )
 	MDRV_PALETTE_LENGTH( 65536 )
 
 	MDRV_PALETTE_INIT( psx )
@@ -805,7 +833,7 @@ ROM_END
 
 ROM_START( psxj22 )
 	ROM_REGION32_LE( 0x080000, REGION_USER1, 0 )
-//	ROM_LOAD( "scph5000.bin",  0x0000000, 0x080000, BAD_DUMP CRC(8c93a399) SHA1(e340db2696274dda5fdc25e434a914db71e8b02b) )
+/*	ROM_LOAD( "scph5000.bin",  0x0000000, 0x080000, BAD_DUMP CRC(8c93a399) SHA1(e340db2696274dda5fdc25e434a914db71e8b02b) ) */
 	ROM_LOAD( "scph5000.bin",  0x0000000, 0x080000, CRC(24fc7e17) SHA1(ffa7f9a7fb19d773a0c3985a541c8e5623d2c30d) )
 ROM_END
 
@@ -831,7 +859,7 @@ ROM_END
 
 ROM_START( psxe30 )
 	ROM_REGION32_LE( 0x080000, REGION_USER1, 0 )
-//	ROM_LOAD( "scph5502.bin",  0x0000000, 0x080000, BAD_DUMP CRC(4d9e7c86) SHA1(f8de9325fc36fcfa4b29124d291c9251094f2e54) )
+/*	ROM_LOAD( "scph5502.bin",  0x0000000, 0x080000, BAD_DUMP CRC(4d9e7c86) SHA1(f8de9325fc36fcfa4b29124d291c9251094f2e54) ) */
 	ROM_LOAD( "scph5552.bin",  0x0000000, 0x080000, CRC(d786f0b9) SHA1(f6bc2d1f5eb6593de7d089c425ac681d6fffd3f0) )
 ROM_END
 
@@ -856,7 +884,7 @@ ROM_START( psxa45 )
 ROM_END
 
 SYSTEM_CONFIG_START( psx )
-	CONFIG_DEVICE_QUICKLOAD( "exe\0psx\0", psxexe_load )
+	CONFIG_DEVICE_QUICKLOAD( "exe\0psx\0", psx_exe_load )
 SYSTEM_CONFIG_END
 
 /*
@@ -877,20 +905,20 @@ missing:
 
 /*     YEAR  NAME    PARENT  COMPAT  MACHINE  INPUT  INIT  CONFIG  COMPANY   FULLNAME */
 /* PU-7/PU-8 */
-CONSX( 1994, psx,    0,      0,      psx,     psx,   psx,  psx,    "Sony",   "Sony PSX (scph1000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-CONSX( 1995, psxe20, psx,    0,      psx,     psx,   psx,  psx,    "Sony",   "Sony PSX (scph1002 E v2.0 05/10/95)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-CONSX( 1995, psxa22, psx,    0,      psx,     psx,   psx,  psx,    "Sony",   "Sony PSX (scph1001/dtlh3000 A v2.2 12/04/95)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-CONSX( 1995, psxe22, psx,    0,      psx,     psx,   psx,  psx,    "Sony",   "Sony PSX (scph1002/dtlh3002 E v2.2 12/04/95)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+CONSX( 1994, psx,    0,      0,      psxntsc, psx,   psx,  psx,    "Sony",   "Sony PSX (scph1000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+CONSX( 1995, psxe20, psx,    0,      psxpal,  psx,   psx,  psx,    "Sony",   "Sony PSX (scph1002 E v2.0 05/10/95)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+CONSX( 1995, psxa22, psx,    0,      psxntsc, psx,   psx,  psx,    "Sony",   "Sony PSX (scph1001/dtlh3000 A v2.2 12/04/95)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+CONSX( 1995, psxe22, psx,    0,      psxpal,  psx,   psx,  psx,    "Sony",   "Sony PSX (scph1002/dtlh3002 E v2.2 12/04/95)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 /* PU-18 */
-CONSX( 1995, psxj22, psx,    0,      psx,     psx,   psx,  psx,    "Sony",   "Sony PSX (scph5000 J v2.2 12/04/95)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-CONSX( 1996, psxj30, psx,    0,      psx,     psx,   psx,  psx,    "Sony",   "Sony PSX (scph5500 J v3.0 09/09/96)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-CONSX( 1997, psxe30, psx,    0,      psx,     psx,   psx,  psx,    "Sony",   "Sony PSX (scph5502/scph5552 E v3.0 01/06/97)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+CONSX( 1995, psxj22, psx,    0,      psxntsc, psx,   psx,  psx,    "Sony",   "Sony PSX (scph5000 J v2.2 12/04/95)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+CONSX( 1996, psxj30, psx,    0,      psxntsc, psx,   psx,  psx,    "Sony",   "Sony PSX (scph5500 J v3.0 09/09/96)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+CONSX( 1997, psxe30, psx,    0,      psxpal,  psx,   psx,  psx,    "Sony",   "Sony PSX (scph5502/scph5552 E v3.0 01/06/97)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 /* PU-20 */
-CONSX( 1996, psxa30, psx,    0,      psx,     psx,   psx,  psx,    "Sony",   "Sony PSX (scph7003 A v3.0 11/18/96)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-CONSX( 1997, psxj40, psx,    0,      psx,     psx,   psx,  psx,    "Sony",   "Sony PSX (scph7000 J v4.0 08/18/97)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-CONSX( 1997, psxa41, psx,    0,      psx,     psx,   psx,  psx,    "Sony",   "Sony PSX (scph7001 A v4.1 12/16/97)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+CONSX( 1996, psxa30, psx,    0,      psxpal,  psx,   psx,  psx,    "Sony",   "Sony PSX (scph7003 A v3.0 11/18/96)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+CONSX( 1997, psxj40, psx,    0,      psxntsc, psx,   psx,  psx,    "Sony",   "Sony PSX (scph7000 J v4.0 08/18/97)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+CONSX( 1997, psxa41, psx,    0,      psxntsc, psx,   psx,  psx,    "Sony",   "Sony PSX (scph7001 A v4.1 12/16/97)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 /* PU-22 */
-CONSX( 1997, psxe41, psx,    0,      psx,     psx,   psx,  psx,    "Sony",   "Sony PSX (scph7502 E v4.1 12/16/97)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+CONSX( 1997, psxe41, psx,    0,      psxpal,  psx,   psx,  psx,    "Sony",   "Sony PSX (scph7502 E v4.1 12/16/97)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 /* PU-23 */
 /* PM-41 */
-CONSX( 2000, psxa45, psx,    0,      psx,     psx,   psx,  psx,    "Sony",   "Sony PS one (scph101 A v4.5 05/25/00)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+CONSX( 2000, psxa45, psx,    0,      psxntsc, psx,   psx,  psx,    "Sony",   "Sony PS one (scph101 A v4.5 05/25/00)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
