@@ -253,8 +253,9 @@ void galpani3_mcu_run(void)
 		{
 			switch(mcu_subcmd)
 			{
+				int i;
 				case 0x00: /* $1a9c - provides code @ $40f000, length probably 0x1000 max (contains many code snippets, many 'jsr $40fxxx') */
-					for (int i=0;i<0x1000/2;i++)
+					for (i=0;i<0x1000/2;i++)
 						mcu_ram[mcu_offset+i] = 0x4e75; // fill 'code page' with RTS
 					//mcu_ram[mcu_offset+0x0098/2] = 0x4e91; // wrong assumption: jsr (A1) :/
 					break;
