@@ -299,34 +299,14 @@ ROM_START( macxl )
 
 ROM_END
 
-/* Lisa should eventually support floppies, hard disks, etc. */
-static const struct IODevice io_lisa2[] = {
-	{
-		IO_FLOPPY,			/* type */
-		1,					/* count */
-		"img\0image\0",		/* file extensions */
-		IO_RESET_NONE,		/* reset if file changed */
-		OSD_FOPEN_RW_OR_READ,/* open mode */
-        NULL,               /* id */
-		lisa_floppy_init,	/* init */
-		lisa_floppy_exit,	/* exit */
-		NULL,				/* info */
-		NULL,				/* open */
-		NULL,				/* close */
-		NULL,				/* status */
-		NULL,				/* seek */
-		NULL,				/* input */
-		NULL,				/* output */
-		NULL,				/* input_chunk */
-		NULL				/* output_chunk */
-	},
-	{ IO_END }
-};
-
-#define io_lisa210 io_lisa2 /* actually, there is an additionnal 10 meg HD, but it is not implemented... */
-#define io_macxl io_lisa210
-
 SYSTEM_CONFIG_START(lisa)
+	/* Lisa should eventually support floppies, hard disks, etc. */
+	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 1, "img\0image\0", IO_RESET_NONE, OSD_FOPEN_RW_OR_READ, lisa_floppy_init, lisa_floppy_exit, NULL)
+SYSTEM_CONFIG_END
+
+SYSTEM_CONFIG_START(lisa210)
+	CONFIG_IMPORT_FROM(lisa)
+	/* actually, there is an additionnal 10 meg HD, but it is not implemented... */
 SYSTEM_CONFIG_END
 
 /*
@@ -335,6 +315,6 @@ SYSTEM_CONFIG_END
 */
 /*	   YEAR  NAME	   PARENT	 MACHINE   INPUT	 INIT	   CONFIG	COMPANY	 FULLNAME */
 COMPX( 1984, lisa2,    0,        lisa,     lisa,	 lisa2,    lisa,	"Apple Computer",  "Lisa2", GAME_NOT_WORKING )
-COMPX( 1984, lisa210,  lisa2,    lisa210,  lisa,	 lisa210,  lisa,	"Apple Computer",  "Lisa2/10", GAME_NOT_WORKING )
-COMPX( 1985, macxl,    lisa2,    macxl,    lisa,	 mac_xl,   lisa,	"Apple Computer",  "Macintosh XL", /*GAME_NOT_WORKING*/0 )
+COMPX( 1984, lisa210,  lisa2,    lisa210,  lisa,	 lisa210,  lisa210,	"Apple Computer",  "Lisa2/10", GAME_NOT_WORKING )
+COMPX( 1985, macxl,    lisa2,    macxl,    lisa,	 mac_xl,   lisa210,	"Apple Computer",  "Macintosh XL", /*GAME_NOT_WORKING*/0 )
 

@@ -178,8 +178,6 @@ static MACHINE_DRIVER_START( galaxy )
 	MDRV_VIDEO_UPDATE( galaxy )
 MACHINE_DRIVER_END
 
-#define io_galaxy	io_NULL
-
 ROM_START (galaxy)
 	ROM_REGION (0x10000, REGION_CPU1,0)
 	ROM_LOAD ("galrom1.bin", 0x0000, 0x1000, 0x365f3e24)

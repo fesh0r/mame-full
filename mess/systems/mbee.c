@@ -366,11 +366,6 @@ ROM_END
 
 ***************************************************************************/
 
-#define io_mbee		io_NULL
-#define io_mbeepc	io_NULL
-#define io_mbeepc85	io_NULL
-#define io_mbee56	io_NULL
-
 SYSTEM_CONFIG_START(mbee)
 	CONFIG_DEVICE_CASSETTE			(1, "",			mbee_cassette_init)
 	CONFIG_DEVICE_CARTSLOT			(1, "rom\0",	mbee_rom_load, NULL, NULL)

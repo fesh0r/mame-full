@@ -303,9 +303,6 @@ ROM_START (atomeb)
 	ROM_LOAD ("atomicw.rom",0x018000,0x1000,0xa3fd737d)
 ROM_END
 
-#define io_atom		io_NULL
-#define io_atomeb	io_NULL
-
 SYSTEM_CONFIG_START(atom)
 	CONFIG_DEVICE_CASSETTE			(1, "",			atom_cassette_init)
 	CONFIG_DEVICE_FLOPPY_BASICDSK	(2, "ssd\0",	atom_floppy_init)

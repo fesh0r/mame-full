@@ -873,57 +873,32 @@ static MACHINE_DRIVER_START( sx64 )
 #endif
 MACHINE_DRIVER_END
 
-
-static const struct IODevice io_c64[] =
-{
-	IODEVICE_CBM_QUICK,
-	IODEVICE_VC20TAPE,
-	IODEVICE_CBM_DRIVE,
-	{IO_END}
-};
-
-static const struct IODevice io_sx64[] =
-{
-	IODEVICE_CBM_QUICK,
-	IODEVICE_VC1541,
-	{IO_END}
-};
-
-static const struct IODevice io_ultimax[] =
-{
-	IODEVICE_CBM_QUICK,
-	IODEVICE_VC20TAPE,
-	{IO_END}
-};
-
 #define init_c64 c64_driver_init
 #define init_c64pal c64pal_driver_init
 #define init_ultimax ultimax_driver_init
 #define init_sx64 sx64_driver_init
 #define init_c64gs c64gs_driver_init
 
-#define io_c64gs	io_NULL
-
-#define io_c64pal io_c64
-#define io_vic64s io_c64
-#define io_max io_ultimax
-#define io_cbm4064 io_c64
-#define io_vip64 io_sx64
-#define io_dx64 io_sx64
-
 #define rom_max rom_ultimax
 #define rom_cbm4064 rom_pet64
 
 SYSTEM_CONFIG_START(c64)
 	CONFIG_DEVICE_CBM_CARTSLOT("crt\080\0")
+	CONFIG_DEVICE_FLOPPY_CBM
+	CONFIG_DEVICE_CBMQUICK
+	CONFIG_DEVICE_VC20TAPE
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(sx64)
 	CONFIG_DEVICE_CBM_CARTSLOT("crt\080\0")
+	CONFIG_DEVICE_CBMQUICK
+	CONFIG_DEVICE_VC1541
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(ultimax)
 	CONFIG_DEVICE_CBM_CARTSLOT("crt\0e0\0f0\0")
+	CONFIG_DEVICE_CBMQUICK
+	CONFIG_DEVICE_VC20TAPE
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(c64gs)

@@ -410,8 +410,6 @@ static int svision_load_rom(int id, void *cartfile, int open_mode)
 	return 0;
 }
 
-#define io_svision	io_NULL
-
 SYSTEM_CONFIG_START(svision)
 	CONFIG_DEVICE_CARTSLOT(1, "bin\0", svision_load_rom, NULL, NULL)
 SYSTEM_CONFIG_END

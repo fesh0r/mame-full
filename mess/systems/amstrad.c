@@ -2778,49 +2778,9 @@ ROM_START(cpc464p)
 	ROM_REGION(0, REGION_CPU1,0)
 ROM_END
 
-#define AMSTRAD_IO_DISK \
-	{ \
-		IO_FLOPPY,					/* type */ \
-		2,							/* count */ \
-		"dsk\0",                    /* file extensions */ \
-		IO_RESET_NONE,				/* reset if file changed */ \
-		OSD_FOPEN_NONE,				/* open mode */ \
-		0, \
-		amstrad_floppy_init,		/* init */ \
-		dsk_floppy_exit,			/* exit */ \
-		NULL,						/* info */ \
-		NULL,						/* open */ \
-		NULL,						/* close */ \
-		floppy_status,              /* status */ \
-		NULL,                       /* seek */ \
-		NULL,						/* tell */ \
-		NULL,						/* input */ \
-		NULL,						/* output */ \
-		NULL,						/* input_chunk */ \
-		NULL						/* output_chunk */ \
-	}
-
-static const struct IODevice io_cpc6128[] =
-{
-	AMSTRAD_IO_DISK,
-	{IO_END}
-};
-
-#define io_kccomp io_cpc6128
-#define io_cpc464 io_cpc6128
-#define io_cpc664 io_cpc6128
-
-static const struct IODevice io_cpcplus[] =
-{
-	AMSTRAD_IO_DISK,
-	{ IO_END }
-};
-
-#define io_cpc6128p io_cpcplus
-#define io_cpc464p io_cpcplus
-
 SYSTEM_CONFIG_START(cpc6128)
 	CONFIG_RAM_DEFAULT(128 * 1024)
+	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 2, "dsk\0", IO_RESET_NONE, OSD_FOPEN_NONE, amstrad_floppy_init, dsk_floppy_exit, floppy_status)
 	CONFIG_DEVICE_CASSETTE(1, "", amstrad_cassette_init)
 	CONFIG_DEVICE_PRINTER(1)
 SYSTEM_CONFIG_END

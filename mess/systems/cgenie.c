@@ -455,33 +455,10 @@ ROM_START (cgenie)
 
 ROM_END
 
-static const struct IODevice io_cgenie[] = {
-	{
-		IO_CASSETTE,			/* type */
-		1,						/* count */
-		"cas\0",                /* file extensions */
-		IO_RESET_NONE,			/* reset if file changed */
-		OSD_FOPEN_NONE,			/* open mode */
-		NULL,					/* id */
-		cgenie_cassette_init,	/* init */
-		NULL,					/* exit */
-		NULL,					/* info */
-		NULL,					/* open */
-		NULL,					/* close */
-		NULL,					/* status */
-		NULL,					/* seek */
-		NULL,					/* tell */
-		NULL,					/* input */
-		NULL,					/* output */
-		NULL,					/* input_chunk */
-		NULL					/* output_chunk */
-	},
-	{ IO_END }
-};
-
 SYSTEM_CONFIG_START(cgenie)
 	CONFIG_DEVICE_CARTSLOT			(1, "rom\0", cgenie_rom_load, NULL, NULL)
 	CONFIG_DEVICE_FLOPPY_BASICDSK	(4,	"dsk\0", cgenie_floppy_init)
+	CONFIG_DEVICE_LEGACY			(IO_CASSETTE, 1, "cas\0", IO_RESET_NONE, OSD_FOPEN_NONE, cgenie_cassette_init, NULL, NULL)
 #if 0	/* not yet working */
 	CONFIG_DEVICE_QUICKLOAD			(	"cmd\0", cgenie_snapshot_init, NULL)
 #endif

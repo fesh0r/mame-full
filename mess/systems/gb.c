@@ -259,10 +259,6 @@ static MACHINE_DRIVER_START( gbcolor )
 	MDRV_PALETTE_INIT(gbc)
 MACHINE_DRIVER_END
 
-#define io_gameboy	io_NULL
-#define io_supergb	io_NULL
-#define io_gbcolor	io_NULL
-
 SYSTEM_CONFIG_START(gameboy)
 	CONFIG_DEVICE_CARTSLOT( 1, "gb\0gmb\0cgb\0gbc\0sgb\0", gb_load_rom, NULL, NULL)
 SYSTEM_CONFIG_END

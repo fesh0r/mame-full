@@ -4,27 +4,8 @@
 /* put this into your gamedriver */
 extern struct DACinterface vc20tape_sound_interface;
 
-#define IODEVICE_VC20TAPE \
-{\
-   IO_CASSETTE,        /* type */\
-   1,                  /* count */\
-   "wav\0",    /* TAP, LNX and T64(maybe) later file extensions */\
-   IO_RESET_NONE,      /* reset if file changed */\
-	OSD_FOPEN_NONE,		/* open mode */\
-   NULL,               /* id */\
-   vc20_tape_attach_image,	/* init */\
-   vc20_tape_detach_image,	/* exit */\
-   NULL,               /* info */\
-   NULL,               /* open */\
-   NULL,               /* close */\
-   NULL,               /* status */\
-   NULL,               /* seek */\
-   NULL,			   /* tell */\
-   NULL,               /* input */\
-   NULL,               /* output */\
-   NULL,               /* input_chunk */\
-   NULL                /* output_chunk */\
-}
+#define CONFIG_DEVICE_VC20TAPE	\
+	CONFIG_DEVICE_LEGACY(IO_CASSETTE, 1, "wav\0", IO_RESET_NONE, OSD_FOPEN_NONE, vc20_tape_attach_image, vc20_tape_detach_image, NULL)
 
 /* the function which should be called by change on readline */
 extern void vc20_tape_open (void (*read_callback) (UINT32, UINT8));

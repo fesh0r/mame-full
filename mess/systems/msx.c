@@ -835,19 +835,6 @@ ROM_START (msxkra)
 ROM_END
 */
 
-#define	io_msx		io_NULL
-#define io_msxj		io_NULL
-#define io_msxkr	io_NULL
-#define io_msxkra	io_NULL
-#define io_msxuk	io_NULL
-#define io_msx2		io_NULL
-#define io_msx2a	io_NULL
-#define io_msx2j	io_NULL
-#define io_hotbit11	io_NULL
-#define io_hotbit12	io_NULL
-#define io_expert10	io_NULL
-#define io_expert11	io_NULL
-
 SYSTEM_CONFIG_START(msx)
 	CONFIG_DEVICE_CASSETTE(1, "cas\0", msx_cassette_init)
 	CONFIG_DEVICE_PRINTER(1)

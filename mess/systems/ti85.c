@@ -505,26 +505,6 @@ ROM_START (ti86grom)
 	ROM_LOAD ("ti86grom.bin", 0x10000, 0x40000, 0xd2c67280)
 ROM_END
 
-#define io_ti81	io_NULL
-#define io_ti85	io_NULL
-#define io_ti86	io_NULL
-
-#define	io_ti85v40	io_ti85
-#define	io_ti85v50	io_ti85
-#define	io_ti85v60	io_ti85
-#define	io_ti85v80	io_ti85
-#define	io_ti85v90	io_ti85
-#define	io_ti85v100	io_ti85
-
-#define io_ti86v13	io_ti86
-#define io_ti86v14	io_ti86
-#define io_ti86v15	io_ti86
-#define io_ti86v16	io_ti86
-#define io_ti86grom	io_ti86
-
-SYSTEM_CONFIG_START(ti81)
-SYSTEM_CONFIG_END
-
 SYSTEM_CONFIG_START(ti85)
 	CONFIG_DEVICE ( IO_SERIAL, 1,
 			"85p\085s\085i\085n\085c\085l\085k\085m\085v\085d\085e\085r\085g\085b\0",
@@ -542,7 +522,7 @@ SYSTEM_CONFIG_START(ti86)
 SYSTEM_CONFIG_END
                             
 /*    YEAR  NAME		PARENT	MACHINE INPUT	INIT	CONFIG	COMPANY        FULLNAME */
-COMP( 1990, ti81,          0,   ti81,	ti81,	0,		ti81,	"Texas Instruments", "TI-81 Ver. 1.8" )
+COMP( 1990, ti81,          0,   ti81,	ti81,	0,		NULL,	"Texas Instruments", "TI-81 Ver. 1.8" )
 
 COMP( 1992, ti85,          0,   ti85,	ti85,	0,		ti85,	"Texas Instruments", "TI-85 ver. 3.0a" )
 COMP( 1992, ti85v40,    ti85,   ti85,	ti85,	0,		ti85,	"Texas Instruments", "TI-85 ver. 4.0" )

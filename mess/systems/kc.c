@@ -452,10 +452,6 @@ ROM_START(kc85_3)
 	ROM_LOAD("caos__e0.853", 0x12000, 0x2000, 0x52bc2199)
 ROM_END
 
-#define io_kc85_3	io_NULL
-#define io_kc85_4	io_NULL
-#define io_kc85_4d	io_NULL
-
 SYSTEM_CONFIG_START(kc85)
 	CONFIG_DEVICE_CASSETTE			(1, "",			kc_cassette_device_init)
 	CONFIG_DEVICE_QUICKLOAD			(	"kcc\0",	kc_quickload_load, NULL)

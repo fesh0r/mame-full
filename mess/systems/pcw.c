@@ -1234,38 +1234,8 @@ static int pcw_floppy_init(int id, void *fp, int open_mode)
 	return dsk_floppy_load(id, fp, open_mode);
 }
 
-static const struct IODevice io_pcw[] =
-{
-	{
-		IO_FLOPPY,			/* type */
-		2,					/* count */
-		"dsk\0",            /* file extensions */
-		IO_RESET_NONE,		/* reset if file changed */
-		OSD_FOPEN_NONE,		/* open mode */
-		0,
-		pcw_floppy_init,	/* init */
-		dsk_floppy_exit,	/* exit */
-		NULL,				/* info */
-		NULL,				/* open */
-		NULL,				/* close */
-		floppy_status,		/* status */
-		NULL,				/* seek */
-		NULL,				/* tell */
-		NULL,				/* input */
-		NULL,				/* output */
-		NULL,				/* input_chunk */
-		NULL				/* output_chunk */
-	},
-	{IO_END}
-};
-
-#define io_pcw8256 io_pcw
-#define io_pcw8512 io_pcw
-#define io_pcw9256 io_pcw
-#define io_pcw9512 io_pcw
-#define io_pcw10 io_pcw
-
 SYSTEM_CONFIG_START(pcw)
+	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 2, "dsk\0", IO_RESET_NONE, OSD_FOPEN_NONE, pcw_floppy_init, dsk_floppy_exit, floppy_status)
 SYSTEM_CONFIG_END
 
 /* these are all variants on the pcw design */

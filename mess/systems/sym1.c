@@ -126,33 +126,11 @@ ROM_START(sym1)
 	ROM_RELOAD(0xf000, 0x1000)
 ROM_END
 
-static const struct IODevice io_sym1[] = {
-#if 0
-    {
-		IO_CASSETTE,		/* type */
-        1,                  /* count */
-		"kim\0",            /* file extensions */
-        NULL,               /* private */
-		0,
-		kim1_cassette_init, /* init */
-		kim1_cassette_exit, /* exit */
-        NULL,               /* info */
-        NULL,               /* open */
-        NULL,               /* close */
-        NULL,               /* status */
-        NULL,               /* seek */
-		NULL,				/* tell */
-        NULL,               /* input */
-        NULL,               /* output */
-        NULL,               /* input_chunk */
-        NULL                /* output_chunk */
-    },
-#endif
-    { IO_END }
-};
-
 SYSTEM_CONFIG_START(sym1)
 	CONFIG_DEVICE_CBM_CARTSLOT("60\00080\0c0\0")
+#if 0
+	CONFIG_DEVICE_LEGACY(IO_CASSETTE, 1, "kim\0", IO_RESET_NONE, OSD_FOPEN_NONE, kim1_cassette_init, kim1_cassette_exit, NULL)
+#endif
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT	CONFIG	COMPANY   FULLNAME */

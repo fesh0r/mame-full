@@ -679,12 +679,6 @@ ROM_END
  * in the side port.  None of these are emulated.
  */
 
-#define io_ti99_4	io_NULL
-#define io_ti99_4e	io_NULL
-#define io_ti99_4a	io_NULL
-#define io_ti99_4ae	io_NULL
-#define io_ti99_4ev	io_NULL
-
 #define rom_ti99_4e rom_ti99_4
 #define rom_ti99_4ae rom_ti99_4a
 

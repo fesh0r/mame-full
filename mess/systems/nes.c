@@ -374,36 +374,13 @@ static MACHINE_DRIVER_START( nespal)
 	MDRV_SOUND_ADD(NES, nespal_interface)
 MACHINE_DRIVER_END
 
-static const struct IODevice io_famicom[] = {
-    {
-        IO_FLOPPY,          /* type */
-        1,                  /* count */
-        "dsk\0fds\0",       /* file extensions */
-        IO_RESET_NONE,      /* reset if file changed */
-		OSD_FOPEN_READ,		/* open mode */
-        NULL,               /* id */
-        nes_load_disk,      /* init */
-        nes_exit_disk,      /* exit */
-        NULL,               /* info */
-        NULL,               /* open */
-        NULL,               /* close */
-        NULL,               /* status */
-        NULL,               /* seek */
-        NULL,               /* tell */
-        NULL,               /* input */
-        NULL,               /* output */
-        NULL,               /* input_chunk */
-        NULL,                /* output_chunk */
-        nes_partialcrc      /* correct CRC */
-    },
-    { IO_END }
-};
-
-#define io_nes		io_NULL
-#define	io_nespal	io_NULL
-
 SYSTEM_CONFIG_START(nes)
 	CONFIG_DEVICE_CARTSLOT(1, "nes\0", nes_init_cart, NULL, nes_partialcrc)
+SYSTEM_CONFIG_END
+
+SYSTEM_CONFIG_START(famicom)
+	CONFIG_IMPORT_FROM(nes)
+	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 1, "dsk\0fds\0", IO_RESET_NONE, OSD_FOPEN_READ, nes_load_disk, nes_exit_disk, NULL)
 SYSTEM_CONFIG_END
 
 /***************************************************************************
@@ -412,8 +389,8 @@ SYSTEM_CONFIG_END
 
 ***************************************************************************/
 
-/*     YEAR  NAME      PARENT    MACHINE   INPUT     INIT      CONFIG,	COMPANY   FULLNAME */
-CONS( 1983, famicom,   0,        nes,      famicom,  nes,      nes,		"Nintendo", "Famicom" )
+/*     YEAR  NAME      PARENT    MACHINE   INPUT     INIT      CONFIG	COMPANY   FULLNAME */
+CONS( 1983, famicom,   0,        nes,      famicom,  nes,      famicom,	"Nintendo", "Famicom" )
 CONS( 1985, nes,       0,        nes,      nes,      nes,      nes,		"Nintendo", "Nintendo Entertainment System (NTSC)" )
 CONS( 1987, nespal,    nes,      nespal,   nes,      nespal,   nes,		"Nintendo", "Nintendo Entertainment System (PAL)" )
 

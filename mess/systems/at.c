@@ -685,60 +685,12 @@ ROM_START( at486 )
 ROM_END
 #endif
 
-static const struct IODevice io_ibmat[] = {
-	{
-		IO_FLOPPY,			/* type */
-		2,					/* count */
-		"dsk\0",            /* file extensions */
-		IO_RESET_NONE,		/* reset if file changed */
-		OSD_FOPEN_RW_CREATE_OR_READ,/* open mode */
-        NULL,               /* id */
-		pc_floppy_init, 	/* init */
-		pc_floppy_exit, 	/* exit */
-        NULL,               /* info */
-        NULL,               /* open */
-        NULL,               /* close */
-        floppy_status,               /* status */
-        NULL,               /* seek */
-		NULL,				/* tell */
-        NULL,               /* input */
-        NULL,               /* output */
-        NULL,               /* input_chunk */
-        NULL                /* output_chunk */
-    },
-	// for now this is ok
-	{
-		IO_HARDDISK,		/* type */
-		4,					/* count */
-		"img\0",            /* file extensions */
-		IO_RESET_CPU,		/* reset if file changed */
-		OSD_FOPEN_RW,		/* open mode */
-        NULL,               /* id */
-		pc_harddisk_init,	/* init */
-		pc_harddisk_exit,	/* exit */
-        NULL,               /* info */
-        NULL,               /* open */
-        NULL,               /* close */
-        NULL,               /* status */
-        NULL,               /* seek */
-		NULL,				/* tell */
-        NULL,               /* input */
-        NULL,               /* output */
-        NULL,               /* input_chunk */
-        NULL                /* output_chunk */
-    },
-    { IO_END }
-};
-
-#define io_i8530286 io_ibmat
-#define io_at io_ibmat
-#define io_atvga io_ibmat
-#define io_neat io_ibmat
-#define io_at386 io_ibmat
-#define io_at486 io_ibmat
-
 SYSTEM_CONFIG_START(ibmat)
 	CONFIG_DEVICE_PRINTER(3)
+	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 2, "dsk\0", IO_RESET_NONE, OSD_FOPEN_RW_CREATE_OR_READ,
+		pc_floppy_init, pc_floppy_exit, floppy_status)
+	CONFIG_DEVICE_LEGACY(IO_HARDDISK, 4, "img\0", IO_RESET_CPU, OSD_FOPEN_RW,
+		pc_harddisk_init, pc_harddisk_exit, NULL)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

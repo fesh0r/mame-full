@@ -319,8 +319,6 @@ ROM_START(ti99_4p)
 	ROM_LOAD("spchrom.bin", 0x0000, 0x8000, 0x58b155f7) /* system speech ROM */
 ROM_END
 
-#define	io_ti99_4p	io_NULL
-
 SYSTEM_CONFIG_START(ti99_4p)
 	CONFIG_DEVICE_CASSETTE			(2,	"",			ti99_cassette_init)
 	CONFIG_DEVICE_FLOPPY_BASICDSK	(3,	"dsk\0",	ti99_floppy_init)

@@ -154,28 +154,4 @@ extern int coco3_mmu_translatelogicaladdr(int logicaladdr);
 #define IO_BITBANGER IO_PRINTER
 #define IO_VHD IO_HARDDISK
 
-#define IO_VHD_PORT								\
-{														\
-	IO_VHD,						/* type */				\
-	1,							/* count */				\
-	"vhd\0",					/* file extensions */	\
-	IO_RESET_NONE,				/* reset depth */		\
-	OSD_FOPEN_RW_CREATE,		/* open mode */			\
-	NULL,						/* id */				\
-	coco_vhd_init,				/* init */				\
-	coco_vhd_exit,				/* exit */				\
-	NULL,						/* info */				\
-	NULL,						/* open */				\
-	NULL,						/* close */				\
-	NULL,						/* status */			\
-	NULL,						/* seek */				\
-	NULL,						/* tell */				\
-	NULL,						/* input */				\
-	NULL,						/* output */			\
-	NULL,						/* input chunk */		\
-	NULL						/* output chunk */		\
-}
-
-
-
 #endif /* DRAGON_H */

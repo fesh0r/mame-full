@@ -305,60 +305,13 @@ static void init_ti990_10(void)
 	vdt911_init();
 }
 
-static const struct IODevice io_ti990_10[] =
-{
-	/* hard disk */
-	{
-		IO_HARDDISK,			/* type */
-		4,						/* count */
-		"hd\0",					/* file extensions */
-		IO_RESET_NONE,			/* reset if file changed */
-		OSD_FOPEN_RW_OR_READ,	/* open mode */
-		0,
-		ti990_hd_init,			/* init */
-		ti990_hd_exit,			/* exit */
-		NULL,					/* info */
-		NULL,					/* open */
-		NULL,					/* close */
-		NULL,					/* status */
-		NULL,					/* seek */
-		NULL,					/* tell */
-		NULL,					/* input */
-		NULL,					/* output */
-		NULL,					/* input_chunk */
-		NULL					/* output_chunk */
-	},
-	/* tape reader */
-	{
-		IO_CASSETTE,			/* type */
-		4,						/* count */
-		"tap\0",				/* file extensions */
-		IO_RESET_NONE,			/* reset if file changed */
-		OSD_FOPEN_RW_OR_READ,	/* open mode */
-		0,
-		ti990_tape_init,		/* init */
-		ti990_tape_exit,		/* exit */
-		NULL,					/* info */
-		NULL,					/* open */
-		NULL,					/* close */
-		NULL,					/* status */
-		NULL,					/* seek */
-		NULL,					/* tell */
-		NULL,					/* input */
-		NULL,					/* output */
-		NULL,					/* input_chunk */
-		NULL					/* output_chunk */
-	},
-	{ IO_END }
-};
-
 INPUT_PORTS_START(ti990_10)
-
 	VDT911_KEY_PORTS
-
 INPUT_PORTS_END
 
 SYSTEM_CONFIG_START(ti990_10)
+	CONFIG_DEVICE_LEGACY(IO_HARDDISK, 4, "hd\0", IO_RESET_NONE, OSD_FOPEN_RW_OR_READ, ti990_hd_init, ti990_hd_exit, NULL)
+	CONFIG_DEVICE_LEGACY(IO_CASSETTE, 4, "tap\0", IO_RESET_NONE, OSD_FOPEN_RW_OR_READ, ti990_tape_init, ti990_tape_exit, NULL)
 SYSTEM_CONFIG_END
 
 /*	  YEAR	NAME		PARENT	MACHINE		INPUT		INIT		CONFIG		COMPANY					FULLNAME */

@@ -75,131 +75,24 @@ int cbmb_quick_open (int id, int mode, void *arg);
 int cbm500_quick_open (int id, int mode, void *arg);
 int cbm_c65_quick_open (int id, int mode, void *arg);
 
-#define IODEVICE_CBM_PET1_QUICK \
-{\
-   IO_QUICKLOAD,	   /* type */\
-   1,				   /* count */\
-   "p00\0prg\0",       /*file extensions */\
-   IO_RESET_CPU,	   /* reset if file changed */\
-	OSD_FOPEN_READ,		/* open mode */\
-   NULL,               /* id */\
-   cbm_quick_init,     /* init */\
-   NULL,			  /* exit */\
-   NULL,               /* info */\
-   cbm_pet1_quick_open,     /* open */\
-   NULL,               /* close */\
-   NULL,               /* status */\
-   NULL,               /* seek */\
-   NULL,               /* input */\
-   NULL,               /* output */\
-   NULL,               /* input_chunk */\
-   NULL                /* output_chunk */\
-}
 
-#define IODEVICE_CBM_PET_QUICK \
-{\
-   IO_QUICKLOAD,          /* type */\
-   1,                                      /* count */\
-   "p00\0prg\0",            /*file extensions */\
-   IO_RESET_CPU,	   /* reset if file changed */\
-	OSD_FOPEN_READ,		/* open mode */\
-   NULL,               /* id */\
-   cbm_quick_init,     /* init */\
-   NULL,				/* exit */\
-   NULL,               /* info */\
-   cbm_pet_quick_open,     /* open */\
-   NULL,               /* close */\
-   NULL,               /* status */\
-   NULL,               /* seek */\
-   NULL,               /* input */\
-   NULL,               /* output */\
-   NULL,               /* input_chunk */\
-   NULL                /* output_chunk */\
-}
+#define CONFIG_DEVICE_CBMPETQUICK \
+	CONFIG_DEVICE_LEGACYX(IO_QUICKLOAD, 1, "p00\0prg\0", IO_RESET_CPU, OSD_FOPEN_READ, cbm_quick_init, NULL, cbm_pet_quick_open, NULL)
 
-#define IODEVICE_CBM_QUICK \
-{\
-   IO_QUICKLOAD,          /* type */\
-   1,                                      /* count */\
-   "p00\0prg\0",            /*file extensions */\
-   IO_RESET_CPU,	   /* reset if file changed */\
-	OSD_FOPEN_READ,		/* open mode */\
-   NULL,               /* id */\
-   cbm_quick_init,     /* init */\
-   NULL,				/* exit */\
-   NULL,               /* info */\
-   cbm_quick_open,     /* open */\
-   NULL,               /* close */\
-   NULL,               /* status */\
-   NULL,               /* seek */\
-   NULL,               /* input */\
-   NULL,               /* output */\
-   NULL,               /* input_chunk */\
-   NULL                /* output_chunk */\
-}
+#define CONFIG_DEVICE_CBMPET1QUICK \
+	CONFIG_DEVICE_LEGACYX(IO_QUICKLOAD, 1, "p00\0prg\0", IO_RESET_CPU, OSD_FOPEN_READ, cbm_quick_init, NULL, cbm_pet1_quick_open, NULL)
 
-#define IODEVICE_CBMB_QUICK \
-{\
-   IO_QUICKLOAD,          /* type */\
-   1,                                      /* count */\
-   "p00\0prg\0",            /*file extensions */\
-   IO_RESET_CPU,	   /* reset if file changed */\
-	OSD_FOPEN_READ,		/* open mode */\
-   NULL,               /* id */\
-   cbm_quick_init,     /* init */\
-   NULL,				 /* exit */\
-   NULL,               /* info */\
-   cbmb_quick_open,     /* open */\
-   NULL,               /* close */\
-   NULL,               /* status */\
-   NULL,               /* seek */\
-   NULL,               /* input */\
-   NULL,               /* output */\
-   NULL,               /* input_chunk */\
-   NULL                /* output_chunk */\
-}
+#define CONFIG_DEVICE_CBMQUICK	\
+	CONFIG_DEVICE_LEGACYX(IO_QUICKLOAD, 1, "p00\0prg\0", IO_RESET_CPU, OSD_FOPEN_READ, cbm_quick_init, NULL, cbm_quick_open, NULL)
 
-#define IODEVICE_CBM500_QUICK \
-{\
-   IO_QUICKLOAD,          /* type */\
-   1,                                      /* count */\
-   "p00\0prg\0",            /*file extensions */\
-   IO_RESET_CPU,	   /* reset if file changed */\
-	OSD_FOPEN_READ,		/* open mode */\
-   NULL,               /* id */\
-   cbm_quick_init,     /* init */\
-   NULL,				/* exit */\
-   NULL,               /* info */\
-   cbm500_quick_open,     /* open */\
-   NULL,               /* close */\
-   NULL,               /* status */\
-   NULL,               /* seek */\
-   NULL,               /* input */\
-   NULL,               /* output */\
-   NULL,               /* input_chunk */\
-   NULL                /* output_chunk */\
-}
+#define CONFIG_DEVICE_CBMBQUICK	\
+	CONFIG_DEVICE_LEGACYX(IO_QUICKLOAD, 1, "p00\0prg\0", IO_RESET_CPU, OSD_FOPEN_READ, cbm_quick_init, NULL, cbmb_quick_open, NULL)
 
-#define IODEVICE_CBM_C65_QUICK \
-{\
-   IO_QUICKLOAD,          /* type */\
-   1,                                      /* count */\
-   "p00\0prg\0",            /*file extensions */\
-   IO_RESET_CPU,	   /* reset if file changed */\
-	OSD_FOPEN_READ,		/* open mode */\
-   NULL,               /* id */\
-   cbm_quick_init,     /* init */\
-   NULL,				 /* exit */\
-   NULL,               /* info */\
-   cbm_c65_quick_open,     /* open */\
-   NULL,               /* close */\
-   NULL,               /* status */\
-   NULL,               /* seek */\
-   NULL,               /* input */\
-   NULL,               /* output */\
-   NULL,               /* input_chunk */\
-   NULL                /* output_chunk */\
-}
+#define CONFIG_DEVICE_CBM500QUICK	\
+	CONFIG_DEVICE_LEGACYX(IO_QUICKLOAD, 1, "p00\0prg\0", IO_RESET_CPU, OSD_FOPEN_READ, cbm_quick_init, NULL, cbm500_quick_open, NULL)
+
+#define CONFIG_DEVICE_C65QUICK \
+	CONFIG_DEVICE_LEGACYX(IO_QUICKLOAD, 1, "p00\0prg\0", IO_RESET_CPU, OSD_FOPEN_READ, cbm_quick_init, NULL, cbm_c65_quick_open, NULL)
 
 /* use to functions to parse, load the rom images into memory
    and then use the cbm_rom var */

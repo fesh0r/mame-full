@@ -246,12 +246,6 @@ ROM_START(hp48g)
 	ROM_REGION(0x100,REGION_GFX1,0)
 ROM_END
 
-#define io_hp48s	io_NULL
-#define io_hp48g	io_NULL
-
-SYSTEM_CONFIG_START(hp48)
-SYSTEM_CONFIG_END
-
 /*   YEAR	NAME	PARENT	MACHINE	INPUT	INIT	CONFIG	MONITOR	COMPANY   FULLNAME */
-COMP(1989,	hp48s,	0,		hp48s,	hp48s,	hp48s,	hp48,	"Hewlett Packard",  "HP48S/SX")
-COMP(1993,	hp48g,	0,		hp48g,	hp48s,	hp48g,	hp48,	"Hewlett Packard",  "HP48G/GX")
+COMP(1989,	hp48s,	0,		hp48s,	hp48s,	hp48s,	NULL,	"Hewlett Packard",  "HP48S/SX")
+COMP(1993,	hp48g,	0,		hp48g,	hp48s,	hp48g,	NULL,	"Hewlett Packard",  "HP48G/GX")

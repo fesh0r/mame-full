@@ -213,9 +213,6 @@ ROM_END
 //  ROM_LOAD ("coleconb.rom", 0x0000, 0x2000, 0x66cda476) /* no title screen */
 //ROM_END
 
-#define io_coleco	io_NULL
-#define io_colecoa	io_NULL
-
 SYSTEM_CONFIG_START(coleco)
 	CONFIG_DEVICE_CARTSLOT( 1, "rom\0col\0", coleco_init_cart, NULL, NULL)
 SYSTEM_CONFIG_END

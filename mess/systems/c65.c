@@ -432,25 +432,13 @@ static MACHINE_DRIVER_START( c65pal )
 	MDRV_SOUND_REPLACE("custom", CUSTOM, pal_sound_interface)
 MACHINE_DRIVER_END
 
-
-static const struct IODevice io_c65[] =
-{
-	IODEVICE_CBM_C65_QUICK,
-	IODEVICE_CBM_DRIVE,
-	{IO_END}
-};
-
 #define init_c65 c65_driver_init
 #define init_c65_alpha1 c65_driver_init
 #define init_c65pal c65pal_driver_init
 
-#define io_c65ger io_c65
-#define io_c65e io_c65
-#define io_c65d io_c65
-#define io_c65c io_c65
-#define io_c65a io_c65
-
 SYSTEM_CONFIG_START(c65)
+	CONFIG_DEVICE_FLOPPY_CBM
+	CONFIG_DEVICE_C65QUICK
 SYSTEM_CONFIG_END
 
 /*		YEAR	NAME	PARENT	MACHINE INPUT	INIT		CONFIG  COMPANY 							FULLNAME */

@@ -268,57 +268,8 @@ ROM_START(superbrd)
 	ROM_LOAD("chgsuper.rom", 0x0000, 0x0800, BADCRC(0x136b5018))
 ROM_END
 
-static	const	struct	IODevice	io_uk101[] =
-{
-	{
-		IO_CASSETTE,			/* type */
-		1,						/* count */
-		"bas\0",				/* file extn */
-		IO_RESET_NONE,			/* reset if file changed */
-		OSD_FOPEN_READ,			/* open mode */
-        NULL,                   /* id */
-		uk101_init_cassette,	/* init */
-		uk101_exit_cassette,	/* exit */
-		NULL,					/* info */
-		NULL,					/* open */
-		NULL,					/* close */
-		NULL,					/* status */
-		NULL,					/* seek */
-		NULL,					/* tell */
-		NULL,					/* input */
-		NULL,					/* output */
-		NULL,					/* input_chunk */
-		NULL					/* output_chunk */
-	},
-	{ IO_END }
-};
-
-static	const	struct	IODevice io_superbrd[] =
-{
-	{
-		IO_CASSETTE,			/* type */
-		1,						/* count */
-		"bas\0",				/* file extn */
-		IO_RESET_NONE,			/* reset if file changed */
-		OSD_FOPEN_READ,			/* open mode */
-        NULL,                   /* id */
-		uk101_init_cassette,	/* init */
-		uk101_exit_cassette,	/* exit */
-		NULL,					/* info */
-		NULL,					/* open */
-		NULL,					/* close */
-		NULL,					/* status */
-		NULL,					/* seek */
-		NULL,					/* tell */
-		NULL,					/* input */
-		NULL,					/* output */
-		NULL,					/* input_chunk */
-		NULL					/* output_chunk */
-	},
-	{ IO_END }
-};
-
 SYSTEM_CONFIG_START(uk101)
+	CONFIG_DEVICE_LEGACY(IO_CASSETTE, 1, "bas\0", IO_RESET_NONE, OSD_FOPEN_READ, uk101_init_cassette, uk101_exit_cassette, NULL)
 SYSTEM_CONFIG_END
 
 /*    YEAR	NAME		PARENT	MACHINE		INPUT	INIT	CONFIG  COMPANY				FULLNAME */

@@ -111,63 +111,15 @@ ROM_START( amiga )
     ROM_LOAD ( "kick13.rom",  0x180000, 0x80000, 0xf6290043)
 ROM_END
 
-static const struct IODevice io_amiga[] = {
-    {
-        IO_FLOPPY,          /* type */
-        4,                  /* count */
-        "adf\0",            /* file extensions */
-        IO_RESET_NONE,      /* reset if file changed */
-		OSD_FOPEN_READ,		/* open mode */
-        NULL,               /* id */
-        amiga_fdc_init,     /* init */
-        NULL,               /* exit */
-        NULL,               /* info */
-        NULL,               /* open */
-        NULL,               /* close */
-        NULL,               /* status */
-        NULL,               /* seek */
-        NULL,               /* tell */
-        NULL,               /* input */
-        NULL,               /* output */
-        NULL,               /* input_chunk */
-        NULL                /* output_chunk */
-    },
-    { IO_END }
-};
-SYSTEM_CONFIG_START(amiga)
-SYSTEM_CONFIG_END
-
-/*     YEAR  NAME      PARENT    MACHINE   INPUT     INIT	CONFIG	COMPANY	FULLNAME */
-COMPX( 1984, amiga,    0,        ntsc,     amiga,    0,		amiga,	"Commodore Business Machines Co.",  "Amiga 500 (NTSC)", GAME_NOT_WORKING )
-
 ROM_START( cdtv )
     ROM_REGION(0x200000,REGION_CPU1,ROMREGION_16BIT) /* for ram, etc */
     ROM_LOAD ( "cdtv13.rom",  0x180000, 0x80000, 0x42BAA124)
 ROM_END
 
-static const struct IODevice io_cdtv[] = {
-    {
-        IO_FLOPPY,          /* type */
-        4,                  /* count */
-        "adf\0",            /* file extensions */
-        IO_RESET_NONE,      /* reset if file changed */
-		OSD_FOPEN_READ,		/* open mode */
-        NULL,               /* id */
-        amiga_fdc_init,     /* init */
-        NULL,               /* exit */
-        NULL,               /* info */
-        NULL,               /* open */
-        NULL,               /* close */
-        NULL,               /* status */
-        NULL,               /* seek */
-        NULL,               /* tell */
-        NULL,               /* input */
-        NULL,               /* output */
-        NULL,               /* input_chunk */
-        NULL                /* output_chunk */
-    },
-    { IO_END }
-};
+SYSTEM_CONFIG_START(amiga)
+	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 4, "adf\0", IO_RESET_NONE, OSD_FOPEN_READ, amiga_fdc_init, NULL, NULL)
+SYSTEM_CONFIG_END
 
 /*     YEAR  NAME      PARENT    MACHINE   INPUT     INIT	CONFIG	COMPANY	FULLNAME */
+COMPX( 1984, amiga,    0,        ntsc,     amiga,    0,		amiga,	"Commodore Business Machines Co.",  "Amiga 500 (NTSC)", GAME_NOT_WORKING )
 COMPX( 1990, cdtv,     0,        ntsc,     amiga,    0,		amiga,	"Commodore Business Machines Co.",  "Amiga CDTV (NTSC)", GAME_NOT_WORKING )

@@ -457,39 +457,13 @@ ROM_START(intvkbd)
 
 ROM_END
 
-#define io_intv		io_NULL
-#define io_intvsrs	io_NULL
-
-static const struct IODevice io_intvkbd[] = {
-	{
-		IO_CASSETTE,		/* type */	/* Actually a tape drive! */
-		1,					/* count */
-		"tap\0",       		/* file extensions */
-		IO_RESET_CPU,		/* reset if file changed */
-		0,
-		NULL,				/* init */
-		NULL,				/* exit */
-		NULL,				/* info */
-		NULL,               /* open */
-		NULL,               /* close */
-		NULL,               /* status */
-		NULL,               /* seek */
-		NULL,				/* tell */
-        NULL,               /* input */
-		NULL,               /* output */
-		NULL,               /* input_chunk */
-		NULL,				/* output_chunk */
-		NULL				/* correct CRC */
-    },
-    { IO_END }
-};
-
 SYSTEM_CONFIG_START(intv)
 	CONFIG_DEVICE_CARTSLOT( 1, "rom\0", intv_load_rom, NULL, NULL)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(intvkbd)
 	CONFIG_DEVICE_CARTSLOT( 2, "rom\0bin\0", intvkbd_load_rom, NULL, NULL)
+	CONFIG_DEVICE_LEGACY(IO_CASSETTE, 1, "tap\0", IO_RESET_CPU, 0, NULL, NULL, NULL)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

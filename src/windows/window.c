@@ -52,7 +52,7 @@ extern UINT8 win_trying_to_quit;
 #ifndef MESS
 #define WINDOW_HAS_MENU			FALSE
 #else
-#define WINDOW_HAS_MENU			FALSE
+#define WINDOW_HAS_MENU			TRUE
 #endif
 
 // debugger window styles

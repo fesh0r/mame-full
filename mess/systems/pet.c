@@ -963,45 +963,11 @@ static MACHINE_DRIVER_START( superpet )
 	MDRV_GFXDECODE( superpet_gfxdecodeinfo )
 MACHINE_DRIVER_END
 
-
-static const struct IODevice io_pet[] =
-{
-	IODEVICE_CBM_PET1_QUICK,
-	IODEVICE_CBM_DRIVE,
-	{IO_END}
-};
-
-static const struct IODevice io_pet2[] =
-{
-	IODEVICE_CBM_PET_QUICK,
-	IODEVICE_CBM_DRIVE,
-	{IO_END}
-};
-
-static const struct IODevice io_pet4[] =
-{
-	IODEVICE_CBM_PET_QUICK,
-	IODEVICE_CBM_DRIVE,
-	{IO_END}
-};
-
 #define init_pet1 pet_basic1_driver_init
 #define init_pet pet_driver_init
 #define init_pet40 pet40_driver_init
 #define init_cbm80 cbm80_driver_init
 #define init_superpet superpet_driver_init
-
-#define io_cbm30 io_pet2
-#define io_cbm30b io_pet2
-#define io_cbm40 io_pet4
-#define io_cbm40pal io_pet4
-#define io_cbm40b io_pet4
-#define io_cbm80 io_pet4
-#define io_cbm80pal io_pet4
-#define io_cbm80ger io_pet4
-#define io_cbm80swe io_pet4
-#define io_superpet io_pet4
-#define io_mmf9000 io_pet4
 
 #define rom_cbm30 rom_pet2
 #define rom_cbm30 rom_pet2
@@ -1014,14 +980,20 @@ static const struct IODevice io_pet4[] =
 
 SYSTEM_CONFIG_START(pet)
 	CONFIG_DEVICE_CBM_CARTSLOT("crt\0a0\0b0\0")
+	CONFIG_DEVICE_FLOPPY_CBM
+	CONFIG_DEVICE_CBMPET1QUICK
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(pet2)
 	CONFIG_DEVICE_CBM_CARTSLOT("crt\0a0\0b0\0")
+	CONFIG_DEVICE_FLOPPY_CBM
+	CONFIG_DEVICE_CBMPETQUICK
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(pet4)
 	CONFIG_DEVICE_CBM_CARTSLOT("crt\0a0\0")
+	CONFIG_DEVICE_FLOPPY_CBM
+	CONFIG_DEVICE_CBMPETQUICK
 SYSTEM_CONFIG_END
 
 /*	   YEAR 	NAME		PARENT	MACHINE 	INPUT	 INIT	  CONFIG	COMPANY							  FULLNAME */

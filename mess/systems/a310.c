@@ -269,13 +269,8 @@ ROM_START(a310)
 	ROM_REGION(0x00800,REGION_GFX1,0)
 ROM_END
 
-#define io_a310		io_NULL
-
-SYSTEM_CONFIG_START(a310)
-SYSTEM_CONFIG_END
-
 /*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	  CONFIG  COMPANY    FULLNAME */
-COMP( 1988, a310,	  0,		a310,	  a310, 	NULL,	  a310,	  "Acorn",   "Archimedes 310" )
+COMP( 1988, a310,	  0,		a310,	  a310, 	NULL,	  NULL,	  "Acorn",   "Archimedes 310" )
 
 
 

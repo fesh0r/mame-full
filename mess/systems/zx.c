@@ -595,68 +595,12 @@ ROM_START(lambda)
         ROM_LOAD("8300_fnt.bin",0x0000, 0x0200, 0x6bd0408c)
 ROM_END                                                                                                                                       
 
-static const struct IODevice io_zx80[] =
-{
-	{
-		IO_CASSETTE,		/* type */
-		1,					/* count */
-		"80\0o\0",          /* file extensions */
-		IO_RESET_CPU,		/* reset if file changed */
-		OSD_FOPEN_READ,		/* open mode */
-        NULL,               /* id */
-		zx_cassette_init,	/* init */
-		zx_cassette_exit,	/* exit */
-		NULL,				/* info */
-		NULL,				/* open */
-		NULL,				/* close */
-		NULL,				/* status */
-		NULL,				/* seek */
-		NULL,				/* tell */
-		NULL,				/* input */
-		NULL,				/* output */
-		NULL,				/* input_chunk */
-		NULL				/* output_chunk */
-	},
-	{IO_END}
-};
-
-static const struct IODevice io_zx81[] =
-{
-	{
-		IO_CASSETTE,		/* type */
-		1,					/* count */
-		"81\0p\0",          /* file extensions */
-		IO_RESET_CPU,		/* reset if file changed */
-		OSD_FOPEN_READ,		/* open mode */
-        NULL,               /* id */
-		zx_cassette_init,	/* init */
-		zx_cassette_exit,	/* exit */
-		NULL,				/* info */
-		NULL,				/* open */
-		NULL,				/* close */
-		NULL,				/* status */
-		NULL,				/* seek */
-		NULL,				/* tell */
-		NULL,				/* input */
-		NULL,				/* output */
-		NULL,				/* input_chunk */
-		NULL				/* output_chunk */
-	},
-	{IO_END}
-};
-
-#define io_aszmic	io_zx80
-#define io_zx81a	io_zx81
-#define io_zx81b	io_zx81
-#define io_ts1000	io_zx81
-#define io_pc8300	io_zx81
-#define io_pow3000	io_zx81
-#define io_lambda	io_zx81
-
 SYSTEM_CONFIG_START(zx80)
+	CONFIG_DEVICE_LEGACY(IO_CASSETTE, 1, "80\0o\0", IO_RESET_CPU, OSD_FOPEN_READ, zx_cassette_init, zx_cassette_exit, NULL)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(zx81)
+	CONFIG_DEVICE_LEGACY(IO_CASSETTE, 1, "81\0p\0", IO_RESET_CPU, OSD_FOPEN_READ, zx_cassette_init, zx_cassette_exit, NULL)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

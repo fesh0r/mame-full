@@ -226,8 +226,6 @@ ROM_START(channelf)
 		/* bit pattern is stored here */
 ROM_END
 
-#define io_channelf	io_NULL
-
 SYSTEM_CONFIG_START(channelf)
 	CONFIG_DEVICE_CARTSLOT( 1, "bin\0", channelf_load_rom, NULL, NULL)
 SYSTEM_CONFIG_END

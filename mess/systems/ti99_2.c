@@ -544,10 +544,6 @@ ROM_START(ti99_232)
 	ROM_CONTINUE(0x10000,0x2000)
 ROM_END
 
-#define io_ti99_2	io_NULL
-#define io_ti99_224 io_NULL
-#define io_ti99_232 io_NULL
-
 SYSTEM_CONFIG_START(ti99_2)
 	/* one expansion/cartridge port on the back */
 	/* one cassette unit port */

@@ -40,70 +40,17 @@ typedef struct {
 int c1551_config(int id, int mode, C1551_CONFIG*config);
 #define c1551_reset vc1541_reset
 
-#define IODEVICE_VC1541 \
-{\
-   IO_FLOPPY,          /* type */\
-   1,                                      /* count */\
-   "d64\0",            /* G64 later *//*file extensions */\
-   IO_RESET_CPU,       /* reset if file changed */\
-	OSD_FOPEN_READ,		/* open mode */\
-   NULL,               /* id */\
-   vc1541_init,        /* init */\
-   vc1541_exit,        /* exit */\
-   NULL,               /* info */\
-   (int(*)(int,int,void*))vc1541_config,      /* open */\
-   NULL,               /* close */\
-   NULL,               /* status */\
-   NULL,               /* seek */\
-   NULL,               /* input */\
-   NULL,               /* output */\
-   NULL,               /* input_chunk */\
-   NULL                /* output_chunk */\
-}
+#define CONFIG_DEVICE_VC1541	\
+	CONFIG_DEVICE_LEGACYX(IO_FLOPPY, 1, "d64\0", IO_RESET_CPU, OSD_FOPEN_READ, vc1541_init, vc1541_exit,	\
+		((int(*)(int,int,void*))vc1541_config), NULL)
 
-#define IODEVICE_C2031 IODEVICE_VC1541
+#define CONFIG_DEVICE_C2031	CONFIG_DEVICE_VC1541
 
-#define IODEVICE_C1551 \
-{\
-   IO_FLOPPY,          /* type */\
-   1,                                      /* count */\
-   "d64\0",            /* G64 later *//*file extensions */\
-   IO_RESET_CPU,       /* reset if file changed */\
-	OSD_FOPEN_READ,		/* open mode */\
-   NULL,               /* id */\
-   vc1541_init,        /* init */\
-   vc1541_exit,        /* exit */\
-   NULL,               /* info */\
-   (int(*)(int,int,void*))c1551_config,      /* open */\
-   NULL,               /* close */\
-   NULL,               /* status */\
-   NULL,               /* seek */\
-   NULL,               /* input */\
-   NULL,               /* output */\
-   NULL,               /* input_chunk */\
-   NULL                /* output_chunk */\
-}
+#define CONFIG_DEVICE_C1551		\
+	CONFIG_DEVICE_LEGACYX(IO_FLOPPY, 1, "d64\0", IO_RESET_CPU, OSD_FOPEN_READ, vc1541_init, vc1541_exit,	\
+		((int(*)(int,int,void*))c1551_config), NULL)
 
-#define IODEVICE_C1571 \
-{\
-   IO_FLOPPY,          /* type */\
-   1,                                      /* count */\
-   "d64\0",            /* G64 later *//*file extensions */\
-   IO_RESET_CPU,       /* reset if file changed */\
-	OSD_FOPEN_READ,		/* open mode */\
-   NULL,               /* id */\
-   vc1541_init,        /* init */\
-   vc1541_exit,        /* exit */\
-   NULL,               /* info */\
-   (int(*)(int,int,void*))vc1541_config,      /* open */\
-   NULL,               /* close */\
-   NULL,               /* status */\
-   NULL,               /* seek */\
-   NULL,               /* input */\
-   NULL,               /* output */\
-   NULL,               /* input_chunk */\
-   NULL                /* output_chunk */\
-}
+#define CONFIG_DEVICE_C1571	CONFIG_DEVICE_VC1541
 
 extern MACHINE_DRIVER_EXTERN( cpu_vc1540 );
 extern MACHINE_DRIVER_EXTERN( cpu_vc1541 );

@@ -776,28 +776,6 @@ ROM_END
 
 #define rom_gamgj rom_gamg
 
-#define io_sms		io_NULL
-#define io_smspal	io_NULL
-#define io_smsj21	io_NULL
-#define io_smsm3	io_NULL
-#define io_smsss	io_NULL
-#define io_smsu13	io_NULL
-#define io_smse13	io_NULL
-#define io_smsu13h	io_NULL
-#define io_smse13h	io_NULL
-#define io_smsuam	io_NULL
-#define io_smseam	io_NULL
-#define io_smsesh	io_NULL
-#define io_smsbsh	io_NULL
-#define io_smsuhs24	io_NULL
-#define io_smsehs24	io_NULL
-#define io_smsuh34	io_NULL
-#define io_smseh34	io_NULL
-#define io_gamegear	io_NULL
-#define io_gamegj	io_NULL
-#define io_gamg		io_NULL
-#define io_gamgj	io_NULL
-
 SYSTEM_CONFIG_START(sms)
 	CONFIG_DEVICE_CARTSLOT(1, "sms\0", sms_init_cart, NULL, NULL)
 SYSTEM_CONFIG_END

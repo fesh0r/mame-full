@@ -952,71 +952,24 @@ ROM_START(a5200)
 	ROM_LOAD("5200.rom", 0xf800, 0x0800, 0x4248d3e3)
 ROM_END
 
-static const struct IODevice io_a400[] =
-{
-	{
-		IO_FLOPPY,			/* type */
-		4,					/* count */
-		"atr\0dsk\0xfd\0",  /* file extensions */
-		IO_RESET_NONE,		/* reset if file changed */
-		OSD_FOPEN_RW_CREATE_OR_READ,	/* open mode */
-        NULL,               /* id */
-		a800_floppy_init,	/* init */
-		a800_floppy_exit,	/* exit */
-		NULL,				/* info */
-		NULL,				/* open */
-		NULL,				/* close */
-		NULL,				/* status */
-		NULL,				/* seek */
-		NULL,				/* tell */
-        NULL,               /* input */
-		NULL,				/* output */
-		NULL,				/* input_chunk */
-		NULL				/* output_chunk */
-    },
-    { IO_END }
-};
-#define io_a400pal	io_a400
-
-static const struct IODevice io_a800[] = {
-	{
-		IO_FLOPPY,			/* type */
-		4,					/* count */
-		"atr\0dsk\0xfd\0",  /* file extensions */
-		IO_RESET_NONE,		/* reset if file changed */
-		OSD_FOPEN_RW_CREATE_OR_READ,	/* open mode */
-        NULL,               /* id */
-		a800_floppy_init,	/* init */
-		a800_floppy_exit,	/* exit */
-		NULL,				/* info */
-		NULL,				/* open */
-		NULL,				/* close */
-		NULL,				/* status */
-		NULL,				/* seek */
-		NULL,				/* tell */
-        NULL,               /* input */
-		NULL,				/* output */
-		NULL,				/* input_chunk */
-		NULL				/* output_chunk */
-    },
-    { IO_END }
-};
-#define io_a800pal	io_a800
-#define io_a800xl	io_a800
+SYSTEM_CONFIG_START(atari)
+	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 4, "atr\0dsk\0xfd\0", IO_RESET_NONE, OSD_FOPEN_RW_CREATE_OR_READ,
+		a800_floppy_init, a800_floppy_exit, NULL)
+SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(a400)
+	CONFIG_IMPORT_FROM(atari)
 	CONFIG_DEVICE_CARTSLOT(1, "rom\0bin\0", a800_rom_init, a800_rom_exit, NULL)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(a800)
+	CONFIG_IMPORT_FROM(atari)
 	CONFIG_DEVICE_CARTSLOT(2, "rom\0bin\0", a800_rom_init, a800_rom_exit, NULL)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(a5200)
 	CONFIG_DEVICE_CARTSLOT(1, "rom\0bin\0", a5200_rom_init, a5200_rom_exit, NULL)
 SYSTEM_CONFIG_END
-
-#define io_a5200	io_NULL
 
 /***************************************************************************
 

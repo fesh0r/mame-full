@@ -293,9 +293,6 @@ static int studio2_load_rom(int id, void *cartfile, int open_mode)
 	return 0;
 }
 
-#define io_studio2	io_NULL
-#define io_vip	io_NULL
-
 SYSTEM_CONFIG_START(studio2)
 	/* maybe quickloader */
 	/* tape */

@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.13 2002/09/13 16:13:31 rnabet Exp $
+  $Id: pc8801.c,v 1.14 2002/10/19 19:55:37 npwoods Exp $
 
 ***************************************************************************/
 
@@ -12,31 +12,6 @@
 #include "machine/8255ppi.h"
 #include "includes/d88.h"
 #include "includes/basicdsk.h"
-
-static const struct IODevice io_pc88srl[] = {
-  {
-    IO_FLOPPY,              /* type */
-    2,                      /* count */
-    "d88\0",                /* file extensions */
-    IO_RESET_NONE,          /* reset if file changed */
-	OSD_FOPEN_RW_CREATE_OR_READ,/* open mode */
-    0,
-    d88image_floppy_init,   /* init */
-    d88image_floppy_exit,   /* exit */
-    NULL,                   /* info */
-    NULL,                   /* open */
-    NULL,                   /* close */
-    floppy_status,          /* status */
-    NULL,                   /* seek */
-    NULL,                   /* tell */
-    NULL,                   /* input */
-    NULL,                   /* output */
-    NULL,                   /* input_chunk */
-    NULL                    /* output_chunk */
-  },
-  { IO_END }
-};
-#define io_pc88srh io_pc88srl
 
 static struct GfxLayout char_layout_40L_h =
 {
@@ -664,8 +639,8 @@ static MACHINE_DRIVER_START( pc88srh )
 	MDRV_VISIBLE_AREA(0, 640-1, 0, 400-1)
 MACHINE_DRIVER_END
 
-
 SYSTEM_CONFIG_START(pc88)
+	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 2, "d88\0", IO_RESET_NONE, OSD_FOPEN_RW_CREATE_OR_READ, d88image_floppy_init, d88image_floppy_exit, floppy_status)
 SYSTEM_CONFIG_END
 
 

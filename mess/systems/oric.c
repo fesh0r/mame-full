@@ -534,71 +534,26 @@ ROM_START(prav8dda)
     ROM_LOAD_OPTIONAL ("8ddoshi.rom",0x014100, 0x0200, 0x66309641)
 ROM_END
 
-static const struct IODevice io_oric1[] =
-{
-	{
-		IO_FLOPPY,				/* type */
-		4,						/* count */
-		"dsk\0",                /* file extensions */
-		IO_RESET_NONE,			/* reset if file changed */
-		OSD_FOPEN_RW_CREATE_OR_READ,/* open mode */
-		0,
-		oric_floppy_init,		/* init */
-		oric_floppy_exit,		/* exit */
-		NULL,					/* info */
-		NULL,					/* open */
-		NULL,					/* close */
-		floppy_status,			/* status */
-		NULL,					/* seek */
-		NULL,					/* tell */
-		NULL,					/* input */
-		NULL,					/* output */
-		NULL,					/* input_chunk */
-		NULL					/* output_chunk */
-	},
-	{ IO_END }
-};
-
-static const struct IODevice io_prav8[] =
-{
-	{
-		IO_FLOPPY,				/* type */
-		1,						/* count */
-		"dsk\0",                /* file extensions */
-		IO_RESET_NONE,			/* reset if file changed */
-		OSD_FOPEN_READ,			/* open mode */
-		NULL, 					/* id */
-		apple2_floppy_init,		/* init */
-		apple2_floppy_exit,		/* exit */
-		NULL,					/* info */
-		NULL,					/* open */
-		NULL,					/* close */
-		NULL,					/* status */
-		NULL,					/* seek */
-		NULL,					/* tell */
-		NULL,					/* input */
-		NULL,					/* output */
-		NULL,					/* input_chunk */
-		NULL					/* output_chunk */
-	},
-	{ IO_END }
-};
-
-#define io_prav8d io_prav8
-#define io_prav8dd io_prav8
-#define io_prav8dda io_prav8
-#define io_orica io_oric1
-#define io_telstrat io_oric1
-
-SYSTEM_CONFIG_START(oric)
+SYSTEM_CONFIG_START(oric_common)
 	CONFIG_DEVICE_CASSETTE(1, "tap\0", oric_cassette_init)
 	CONFIG_DEVICE_PRINTER(1)
 SYSTEM_CONFIG_END
 
+SYSTEM_CONFIG_START(oric1)
+	CONFIG_IMPORT_FROM(oric_common)
+	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 4, "dsk\0", IO_RESET_NONE, OSD_FOPEN_RW_CREATE_OR_READ, oric_floppy_init, oric_floppy_exit, floppy_status)
+SYSTEM_CONFIG_END
+
+SYSTEM_CONFIG_START(prav8)
+	CONFIG_IMPORT_FROM(oric_common)
+	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 1, "dsk\0", IO_RESET_NONE, OSD_FOPEN_READ, apple2_floppy_init, apple2_floppy_exit, NULL)
+SYSTEM_CONFIG_END
+
+
 /*    YEAR   NAME       PARENT  MACHINE     INPUT       INIT    CONFIG    COMPANY         FULLNAME */
-COMP( 1983,  oric1,     0,      oric,       oric,	    0,	    oric,     "Tangerine",    "Oric 1" )
-COMP( 1984,  orica,     oric1,	oric,	    orica,	    0,	    oric,     "Tangerine",    "Oric Atmos" )
-COMP( 1985,  prav8d,    oric1,  oric,       prav8d,     0,      oric,     "Pravetz",      "Pravetz 8D")
-COMPX( 1989, prav8dd,   oric1,  oric,       prav8d,     0,      oric,     "Pravetz",      "Pravetz 8D (Disk ROM)", GAME_COMPUTER_MODIFIED)
-COMPX( 1992, prav8dda,  oric1,  oric,       prav8d,     0,      oric,     "Pravetz",      "Pravetz 8D (Disk ROM, RadoSoft)", GAME_COMPUTER_MODIFIED)
-COMPX( 1986, telstrat,  oric1,  telstrat,   telstrat,   0,      oric,     "Tangerine",    "Oric Telestrat", GAME_NOT_WORKING )
+COMP( 1983,  oric1,     0,      oric,       oric,	    0,	    oric1,    "Tangerine",    "Oric 1" )
+COMP( 1984,  orica,     oric1,	oric,	    orica,	    0,	    oric1,    "Tangerine",    "Oric Atmos" )
+COMP( 1985,  prav8d,    oric1,  oric,       prav8d,     0,      prav8,    "Pravetz",      "Pravetz 8D")
+COMPX( 1989, prav8dd,   oric1,  oric,       prav8d,     0,      prav8,    "Pravetz",      "Pravetz 8D (Disk ROM)", GAME_COMPUTER_MODIFIED)
+COMPX( 1992, prav8dda,  oric1,  oric,       prav8d,     0,      prav8,    "Pravetz",      "Pravetz 8D (Disk ROM, RadoSoft)", GAME_COMPUTER_MODIFIED)
+COMPX( 1986, telstrat,  oric1,  telstrat,   telstrat,   0,      oric1,    "Tangerine",    "Oric Telestrat", GAME_NOT_WORKING )

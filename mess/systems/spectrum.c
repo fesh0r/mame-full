@@ -2446,152 +2446,24 @@ ROM_START(pentagon)
 		ROM_REGION(0x020000, REGION_CPU1, 0)
 ROM_END
 
-#define IODEVICE_SPEC_QUICK \
-{\
-   IO_QUICKLOAD,	   /* type */\
-   1,				   /* count */\
-   "scr\0",            /* file extensions */\
-   IO_RESET_CPU,	   /* reset if file changed */\
-	OSD_FOPEN_READ,		/* open mode */\
-   NULL,			   /* id */\
-   spec_quick_init,    /* init */\
-   spec_quick_exit,    /* exit */\
-   NULL,			   /* info */\
-   spec_quick_open,    /* open */\
-   NULL,			   /* close */\
-   NULL,			   /* status */\
-   NULL,			   /* seek */\
-   NULL,			   /* input */\
-   NULL,			   /* output */\
-   NULL,			   /* input_chunk */\
-   NULL 			   /* output_chunk */\
-}
-
-static const struct IODevice io_spectrum[] = {
-	{
-		IO_SNAPSHOT,		/* type */
-		1,					/* count */
-		"sna\0z80\0sp\0",	/* file extensions */
-		IO_RESET_CPU,		/* reset if file changed */
-		OSD_FOPEN_READ,		/* open mode */
-		0,
-		spectrum_snap_load,	/* init */
-		spectrum_snap_exit,	/* exit */
-		NULL,				/* info */
-		NULL,				/* open */
-		NULL,				/* close */
-		NULL,				/* status */
-		NULL,				/* seek */
-		NULL,				/* input */
-		NULL,				/* output */
-		NULL,				/* input_chunk */
-		NULL				/* output_chunk */
-	},
-		IODEVICE_SPEC_QUICK,
-		IO_CASSETTE_WAVE(1,"wav\0tap\0blk\0", NULL,spectrum_cassette_init, spectrum_cassette_exit),
-	{ IO_END }
-};
-
-static const struct IODevice io_specpls3[] = {
-	{
-		IO_SNAPSHOT,		/* type */
-		1,					/* count */
-		"sna\0z80\0sp\0",	/* file extensions */
-		IO_RESET_CPU,		/* reset if file changed */
-		OSD_FOPEN_READ,		/* open mode */
-		0,
-		spectrum_snap_load,	/* init */
-		spectrum_snap_exit,	/* exit */
-		NULL,				/* info */
-		NULL,				/* open */
-		NULL,				/* close */
-		NULL,				/* status */
-		NULL,				/* seek */
-		NULL,				/* input */
-		NULL,				/* output */
-		NULL,				/* input_chunk */
-		NULL				/* output_chunk */
-	},
-		IODEVICE_SPEC_QUICK,
-		IO_CASSETTE_WAVE(1,"wav\0tap\0blk\0", NULL,spectrum_cassette_init, spectrum_cassette_exit),
-	{
-		IO_FLOPPY,			/* type */
-		2,					/* count */
-		"dsk\0",            /* file extensions */
-		IO_RESET_NONE,		/* reset if file changed */
-		OSD_FOPEN_NONE,		/* open mode */
-		0,
-		dsk_floppy_load,	/* init */
-		dsk_floppy_exit,	/* exit */
-		NULL,				/* info */
-		NULL,				/* open */
-		NULL,				/* close */
-		floppy_status,		/* status */
-		NULL,				/* seek */
-		NULL,				/* input */
-		NULL,				/* output */
-		NULL,				/* input_chunk */
-		NULL,				/* output chunk */
-	},
-	{ IO_END }
-};
-
-static const struct IODevice io_ts2068[] = {
-	{
-		IO_SNAPSHOT,		/* type */
-		1,					/* count */
-		"sna\0z80\0sp\0",       /* file extensions */
-		IO_RESET_CPU,		/* reset if file changed */
-		OSD_FOPEN_READ,		/* open mode */
-		0,
-		spectrum_snap_load,	/* init */
-		spectrum_snap_exit,	/* exit */
-		NULL,				/* info */
-		NULL,				/* open */
-		NULL,				/* close */
-		NULL,				/* status */
-		NULL,				/* seek */
-		NULL,				/* input */
-		NULL,				/* output */
-		NULL,				/* input_chunk */
-		NULL				/* output_chunk */
-	},
-		IODEVICE_SPEC_QUICK,
-		IO_CASSETTE_WAVE(1,"wav\0tap\0blk\0", NULL,spectrum_cassette_init, spectrum_cassette_exit),
-		{ IO_END }
-};
-
-#define io_spec128	io_spectrum
-#define io_spec128s	io_spectrum
-#define io_specpls2	io_spectrum
-#define io_specbusy	io_spectrum
-#define io_specpsch	io_spectrum
-#define io_specgrot	io_spectrum
-#define io_specimc	io_spectrum
-#define io_speclec	io_spectrum
-#define io_specpls4	io_spectrum
-#define io_inves	io_spectrum
-#define io_tk90x	io_spectrum
-#define io_tk95 	io_spectrum
-#define io_tc2048	io_spectrum
-#define io_uk2086	io_ts2068
-#define io_specpl2a	io_specpls3
-#define io_specp2fr	io_spectrum
-#define io_specp2sp	io_spectrum
-#define io_specp3sp	io_specpls3
-#define io_specpl3e	io_specpls3
-#define io_specp3es	io_specpls3
-#define io_scorpion	io_specpls3
-#define io_pentagon	io_specpls3
+SYSTEM_CONFIG_START(spectrum_common)
+	CONFIG_DEVICE_CASSETTEX(1, "wav\0tap\0blk\0", spectrum_cassette_init, spectrum_cassette_exit)
+	CONFIG_DEVICE_LEGACYX(IO_QUICKLOAD, 1, "scr\0", IO_RESET_CPU, OSD_FOPEN_READ, spec_quick_init, spec_quick_exit, spec_quick_open, NULL)
+	CONFIG_DEVICE_SNAPSHOT("sna\0z80\0sp\0", spectrum_snap_load, spectrum_snap_exit)
+SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(spectrum)
+	CONFIG_IMPORT_FROM(spectrum_common)
 	CONFIG_DEVICE_CARTSLOT(1, "rom\0", spectrum_cart_load, NULL, NULL)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(specpls3)
+	CONFIG_IMPORT_FROM(spectrum_common)
+	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 2, "dsk\0", IO_RESET_NONE, OSD_FOPEN_NONE, dsk_floppy_load, dsk_floppy_exit, floppy_status)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(ts2068)
+	CONFIG_IMPORT_FROM(spectrum_common)
 	CONFIG_DEVICE_CARTSLOT(1, "dck\0", timex_cart_load, timex_cart_exit, NULL)
 SYSTEM_CONFIG_END
 

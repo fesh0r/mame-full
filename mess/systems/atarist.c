@@ -2347,30 +2347,10 @@ void atarist_floppy_exit(int id)
 
 /***************************************************************************/
 
-static const struct IODevice io_atarist[] =
-{
-	{
-		IO_FLOPPY,					/* type */
-		1,							/* count */
-		"st\0msa\0",				/* file extensions */
-		NULL,						/* private */
-		NULL,						/* id */
-		atarist_floppy_init,		/* init */
-		atarist_floppy_exit,		/* exit */
-		NULL,						/* info */
-		NULL,						/* open */
-		NULL,						/* close */
-		floppy_status,						/* status */
-        NULL,                       /* seek */
-		NULL,						/* tell */
-        NULL,                       /* input */
-		NULL,						/* output */
-		NULL,						/* input_chunk */
-		NULL						/* output_chunk */
-	},
-	{IO_END}
-};
-
+SYSTEM_CONFIG_START(atarist)
+	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 1, "st\0msa\0", IO_RESET_NONE, OSD_FOPEN_RW_CREATE_OR_READ,
+		atarist_floppy_init, atarist_floppy_exit, floppy_status)
+SYSTEM_CONFIG_END
 
 /*
 References:
@@ -2396,4 +2376,5 @@ http://home.wanadoo.nl/jarod/museum/megaste.htm
 /* 1987 : Mega STf - Seperate keyboard, blitter, 1/2/4 Meg ram options */
 /* 1989 : Mega STe - Seperate keyboard, 16MHz 68000 (switchable to 8MHz), memory cache, VME bus, TOS 2.05 & 2.06 */
 
-COMP(1985, atarist,0, atarist, atarist,0, "atarist", "atarist" )
+/*     YEAR  NAME      PARENT    MACHINE   INPUT     INIT	CONFIG   COMPANY    FULLNAME */
+COMP ( 1985, atarist,  0,        atarist,  atarist,  0,     atarist, "atarist", "atarist" )

@@ -107,6 +107,16 @@ struct SystemConfigurationParamBlock
 	CONFIG_DEVICE(IO_QUICKLOAD, 1, (file_extensions), IO_RESET_CPU, OSD_FOPEN_READ,			\
 		(init), (exit),	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)				\
 
+#define CONFIG_DEVICE_LEGACY(type, count, file_extensions, reset_depth, open_mode,			\
+		init, exit, status)																	\
+	CONFIG_DEVICE((type), (count), (file_extensions), (reset_depth), (open_mode),			\
+		(init), (exit), NULL, NULL, NULL, (status), NULL, NULL, NULL, NULL, NULL)			\
+
+#define CONFIG_DEVICE_LEGACYX(type, count, file_extensions, reset_depth, open_mode,			\
+		init, exit, open, status)															\
+	CONFIG_DEVICE((type), (count), (file_extensions), (reset_depth), (open_mode),			\
+		(init), (exit), NULL, (open), NULL, (status), NULL, NULL, NULL, NULL, NULL)			\
+
 /******************************************************************************
  * MESS' version of the GAME() and GAMEX() macros of MAME
  * CONS and CONSX are for consoles
@@ -127,7 +137,6 @@ const struct GameDriver driver_##NAME = 	\
 	input_ports_##INPUT,					\
 	init_##INIT,							\
 	rom_##NAME,								\
-	io_##NAME, 								\
 	construct_sysconfig_##CONFIG,			\
 	ROT0									\
 };
@@ -147,7 +156,6 @@ const struct GameDriver driver_##NAME = 	\
 	input_ports_##INPUT,					\
 	init_##INIT,							\
 	rom_##NAME,								\
-	io_##NAME, 								\
 	construct_sysconfig_##CONFIG,			\
 	ROT0|(FLAGS)							\
 };
@@ -167,7 +175,6 @@ const struct GameDriver driver_##NAME = 	\
 	input_ports_##INPUT,					\
 	init_##INIT,							\
 	rom_##NAME,								\
-	io_##NAME, 								\
 	construct_sysconfig_##CONFIG,			\
 	ROT0|GAME_COMPUTER 						\
 };
@@ -187,14 +194,11 @@ const struct GameDriver driver_##NAME = 	\
 	input_ports_##INPUT,					\
 	init_##INIT,							\
 	rom_##NAME,								\
-	io_##NAME, 								\
 	construct_sysconfig_##CONFIG,			\
 	ROT0|GAME_COMPUTER|(FLAGS)	 			\
 };
 
 #define construct_sysconfig_NULL	(NULL)
-
-extern const struct IODevice io_NULL[];
 
 #endif /* MESSDRV_H */
 

@@ -416,61 +416,10 @@ ROM_END
 
 ***************************************************************************/
 
-static const struct IODevice io_laser[] = {
-    {
-        IO_SNAPSHOT,            /* type */
-        1,                      /* count */
-        "vz\0",                 /* file extensions */
-        IO_RESET_CPU,           /* reset if file changed */
-		OSD_FOPEN_READ,			/* open mode */
-        0,
-        vtech1_snapshot_init,   /* init */
-        vtech1_snapshot_exit,   /* exit */
-        NULL,                   /* info */
-        NULL,                   /* open */
-        NULL,                   /* close */
-        NULL,                   /* status */
-        NULL,                   /* seek */
-        NULL,                   /* tell */
-        NULL,                   /* input */
-        NULL,                   /* output */
-        NULL,                   /* input_chunk */
-        NULL                    /* output_chunk */
-    },
-    {
-        IO_FLOPPY,              /* type */
-        2,                      /* count */
-        "dsk\0",                /* file extensions */
-        IO_RESET_NONE,          /* reset if file changed */
-		OSD_FOPEN_RW_CREATE_OR_READ,/* open mode */
-        0,
-        vtech1_floppy_init,     /* init */
-        vtech1_floppy_exit,     /* exit */
-        NULL,                   /* info */
-        NULL,                   /* open */
-        NULL,                   /* close */
-        NULL,                   /* status */
-        NULL,                   /* seek */
-        NULL,                   /* tell */
-        NULL,                   /* input */
-        NULL,                   /* output */
-        NULL,                   /* input_chunk */
-        NULL                    /* output_chunk */
-    },
-    { IO_END }
-};
-
-#define io_laser110 io_laser
-#define io_laser210 io_laser
-#define io_laser200 io_laser
-#define io_vz200    io_laser
-#define io_fellow   io_laser
-#define io_tx8000   io_laser
-#define io_laser310 io_laser
-#define io_vz300    io_laser
-
 SYSTEM_CONFIG_START(vtech1)
 	CONFIG_DEVICE_CASSETTE(1, "cas\0", vtech1_cassette_init)
+	CONFIG_DEVICE_SNAPSHOT(   "vz\0", vtech1_snapshot_init, vtech1_snapshot_exit)
+	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 2, "dsk\0", IO_RESET_NONE, OSD_FOPEN_RW_CREATE_OR_READ, vtech1_floppy_init, vtech1_floppy_exit, NULL)
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT    CONFIG,	COMPANY   FULLNAME */

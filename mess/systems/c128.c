@@ -1375,46 +1375,25 @@ static MACHINE_DRIVER_START( c128pal )
 	MDRV_SOUND_REPLACE("custom", CUSTOM, pal_sound_interface)
 MACHINE_DRIVER_END
 
-static const struct IODevice io_c128[] =
-{
-	IODEVICE_CBM_QUICK,
-#if 0
-	IODEVICE_ROM_SOCKET,
-	IODEVICE_VC20TAPE, // needs 2 megahertz in c128 mode!
-#endif
-	IODEVICE_CBM_DRIVE,
-	{IO_END}
-};
-
-static const struct IODevice io_c128d[] =
-{
-	IODEVICE_CBM_QUICK,
-#if 0
-	IODEVICE_ROM_SOCKET,
-	IODEVICE_VC20TAPE,
-#endif
-	IODEVICE_C1571,
-	{IO_END}
-};
-
 #define init_c128 c128_driver_init
 #define init_c128pal c128pal_driver_init
-#define io_c128ger io_c128
-#define io_c128fra io_c128
-#define io_c128ita io_c128
-#define io_c128swe io_c128
-#define io_c128nor io_c128
-//#define io_c128dita io_c128d
-#define io_c128dita io_c128
 
 SYSTEM_CONFIG_START(c128)
 	CONFIG_DEVICE_CBM_CARTSLOT("crt\080\0")
+	CONFIG_DEVICE_FLOPPY_CBM
+	CONFIG_DEVICE_CBMQUICK
+#if 0
+	CONFIG_DEVICE_VC20TAPE	/* needs 2 megahertz in c128 mode! */
+#endif
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(c128d)
 #if 0
-	CONFIG_DEVICE_CBM_CARTSLOT()
+	CONFIG_DEVICE_CBM_CARTSLOT
+	CONFIG_DEVICE_VC20TAPE
 #endif
+	CONFIG_DEVICE_CBMQUICK
+	CONFIG_DEVICE_C1571
 SYSTEM_CONFIG_END
 
 /*	  YEAR	NAME		PARENT	MACHINE 	INPUT		INIT		CONFIG  COMPANY   FULLNAME */

@@ -274,8 +274,6 @@ ROM_START (kaypro)
     ROM_LOAD ("cpm62k.sys",   0x0000, 0x1600, 0xd10cd036)
 ROM_END
 
-#define io_kaypro	io_NULL
-
 SYSTEM_CONFIG_START(kaypro)
 	CONFIG_DEVICE_FLOPPY_BASICDSK	(4,	"dsk\0",	kaypro_floppy_init)
 SYSTEM_CONFIG_END

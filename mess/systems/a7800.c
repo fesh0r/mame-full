@@ -375,9 +375,6 @@ ROM_START (a7800p)
     ROM_LOAD ("7800pal.rom", 0xc000, 0x4000, 0xd5b61170 )
 ROM_END
 
-#define io_a7800		io_NULL
-#define io_a7800p		io_NULL
-
 SYSTEM_CONFIG_START(a7800)
 	CONFIG_DEVICE_CARTSLOT( 1, "a78\0", a7800_init_cart, NULL, a7800_partialcrc)
 SYSTEM_CONFIG_END

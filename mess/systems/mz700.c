@@ -512,10 +512,6 @@ ROM_START(mz800)
 		ROM_LOAD("mz700fon.int",0x00000, 0x1000, 0x42b9e8fb)
 ROM_END
 
-#define io_mz700	io_NULL
-#define io_mz700j	io_NULL
-#define io_mz800	io_NULL
-
 SYSTEM_CONFIG_START(mz700)
 	CONFIG_DEVICE_CASSETTE(1, "m12\0", mz700_cassette_init)
 SYSTEM_CONFIG_END

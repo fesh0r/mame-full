@@ -160,8 +160,6 @@ ROM_START(mc10)
 	ROM_LOAD("mc10.rom", 0xE000, 0x2000, 0x11fda97e)
 ROM_END
 
-#define io_mc10		io_NULL
-
 SYSTEM_CONFIG_START(mc10)
 	CONFIG_DEVICE_CASSETTE(1, "cas\0", coco_cassette_init)
 SYSTEM_CONFIG_END

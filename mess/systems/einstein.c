@@ -1753,36 +1753,10 @@ ROM_START(einstei2)
 	ROM_LOAD("charrom.rom",0x012000, 0x0800, 0x0)
 ROM_END
 
-static const struct IODevice io_einstein[] =
-{
-	{ 
-		IO_FLOPPY,					/* type */ 
-		4,							/* count */ 
-		"dsk\0",                    /* file extensions */ 
-		IO_RESET_NONE,				/* reset if file changed */ 
-		OSD_FOPEN_NONE,				/* open mode */
-		0,
-		einstein_floppy_init,		/* init */ 
-		dsk_floppy_exit,			/* exit */ 
-		NULL,						/* info */ 
-		NULL,						/* open */ 
-		NULL,						/* close */ 
-		floppy_status,              /* status */ 
-		NULL,                       /* seek */ 
-		NULL,						/* tell */ 
-		NULL,						/* input */ 
-		NULL,						/* output */ 
-		NULL,						/* input_chunk */ 
-		NULL						/* output_chunk */ 
-	},
-	{IO_END}
-};
-
-#define io_einstei2 io_einstein
-
 SYSTEM_CONFIG_START(einstein)
 	CONFIG_RAM_DEFAULT(65536)
 	CONFIG_DEVICE_PRINTER(1)
+	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 4, "dsk\0", IO_RESET_NONE, OSD_FOPEN_NONE, einstein_floppy_init, dsk_floppy_exit, floppy_status)
 SYSTEM_CONFIG_END
 
 /*     YEAR  NAME       PARENT  MACHINE    INPUT     INIT  CONFIG,   COMPANY   FULLNAME */

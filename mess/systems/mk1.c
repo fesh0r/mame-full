@@ -208,11 +208,6 @@ static DRIVER_INIT( mk1 )
     f3853_init(&config);
 }
 
-#define io_mk1	io_NULL
-
-SYSTEM_CONFIG_START(mk1)
-SYSTEM_CONFIG_END
-
 /***************************************************************************
 
   Game driver(s)
@@ -221,5 +216,5 @@ SYSTEM_CONFIG_END
 
 // seams to be developed by mostek (MK)
 /*     YEAR   NAME  PARENT  MACHINE INPUT   INIT	CONFIG	COMPANY                 FULLNAME */
-CONSX( 1979,  mk1,  0, 		mk1,	mk1,	mk1,	mk1,	"Computer Electronic",  "Chess Champion MK I", GAME_NOT_WORKING)
+CONSX( 1979,  mk1,  0, 		mk1,	mk1,	mk1,	NULL,	"Computer Electronic",  "Chess Champion MK I", GAME_NOT_WORKING)
 

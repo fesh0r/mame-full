@@ -65,8 +65,13 @@ extern void cassette_exit(int id);
 }
 
 #define CONFIG_DEVICE_CASSETTE(count,fileext,init)											\
-	CONFIG_DEVICE(IO_CASSETTE, (count), "wav\0" fileext, IO_RESET_NONE, /*OSD_FOPEN_DUMMY*/OSD_FOPEN_READ_OR_WRITE,	\
+	CONFIG_DEVICE(IO_CASSETTE, (count), "wav\0" fileext, IO_RESET_NONE, OSD_FOPEN_READ_OR_WRITE,	\
 		(init), cassette_exit,	wave_info, wave_open, wave_close, wave_status, wave_seek,	\
+		wave_tell, wave_input, wave_output, NULL)											\
+
+#define CONFIG_DEVICE_CASSETTEX(count,fileext,init,exit)											\
+	CONFIG_DEVICE(IO_CASSETTE, (count), "wav\0" fileext, IO_RESET_NONE, OSD_FOPEN_READ_OR_WRITE,	\
+		(init), (exit),	wave_info, wave_open, wave_close, wave_status, wave_seek,					\
 		wave_tell, wave_input, wave_output, NULL)											\
 
 /*****************************************************************************

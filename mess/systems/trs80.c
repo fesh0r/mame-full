@@ -431,63 +431,9 @@ ROM_START(trs80m3)
 	ROM_LOAD("trs80m1.chr", 0x0800, 0x0400, 0x0033f2b9)
 ROM_END
 
-
-static const struct IODevice io_trs80[] = {
-	{
-		IO_CASSETTE,			/* type */
-		1,						/* count */
-		"cas\0",                /* file extensions */
-		IO_RESET_NONE,			/* reset if file changed */
-		OSD_FOPEN_READ,			/* open mode */
-		0,
-		trs80_cas_init, 		/* init */
-		trs80_cas_exit, 		/* exit */
-		NULL,					/* info */
-		NULL,					/* open */
-		NULL,					/* close */
-		NULL,					/* status */
-		NULL,					/* seek */
-		NULL,					/* tell */
-		NULL,					/* input */
-		NULL,					/* output */
-		NULL,					/* input_chunk */
-		NULL					/* output_chunk */
-	},
-	{ IO_END }
-};
-
-
-static const struct IODevice io_trs80l2[] = {
-	{
-		IO_CASSETTE,			/* type */
-		1,						/* count */
-		"cas\0",                /* file extensions */
-		IO_RESET_NONE,			/* reset if file changed */
-		OSD_FOPEN_READ,			/* open mode */
-		0,
-		trs80_cas_init, 		/* init */
-		trs80_cas_exit, 		/* exit */
-		NULL,					/* info */
-		NULL,					/* open */
-		NULL,					/* close */
-		NULL,					/* status */
-		NULL,					/* seek */
-		NULL,					/* tell */
-		NULL,					/* input */
-		NULL,					/* output */
-		NULL,					/* input_chunk */
-		NULL					/* output_chunk */
-	},
-	{ IO_END }
-};
-
-#define io_trs80l2a io_trs80l2
-#define io_sys80	io_trs80l2
-#define io_lnw80	io_trs80l2
-#define io_trs80m3	io_trs80l2
-
 SYSTEM_CONFIG_START(trs80)
 	CONFIG_DEVICE_QUICKLOAD			(	"cmd\0", trs80_cmd_init, trs80_cmd_exit)
+	CONFIG_DEVICE_LEGACY(IO_CASSETTE,1,	"cas\0", IO_RESET_NONE, OSD_FOPEN_READ, trs80_cas_init, trs80_cas_exit, NULL)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(trs8012)

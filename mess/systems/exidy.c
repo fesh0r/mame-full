@@ -817,8 +817,6 @@ ROM_START(exidy)
 	ROM_LOAD_OPTIONAL("exsb1-4.dat", 0x0d800, 0x0800, 0xa370cb19)	
 ROM_END
 
-#define io_exidy	io_NULL
-
 SYSTEM_CONFIG_START(exidy)
 	CONFIG_DEVICE_PRINTER			(1)
 	CONFIG_DEVICE_FLOPPY_BASICDSK	(4,	"dsk\0",	exidy_floppy_init)

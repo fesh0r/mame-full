@@ -204,8 +204,6 @@ ROM_START(mekd2)
 		/* space filled with key icons by mekd2_init_driver */
 ROM_END
 
-#define io_mekd2	io_NULL
-
 SYSTEM_CONFIG_START(mekd2)
 	CONFIG_DEVICE_CARTSLOT(1, "d2\0", mekd2_rom_load, NULL, NULL)
 SYSTEM_CONFIG_END

@@ -290,13 +290,7 @@ ROM_START(p2000m)
 	ROM_LOAD("p2000.chr", 0x0140, 0x08c0, BADCRC(0x78c17e3e))
 ROM_END
 
-#define io_p2000t	io_NULL
-#define io_p2000m	io_NULL
-
-SYSTEM_CONFIG_START(p2000)
-SYSTEM_CONFIG_END
-
 /*		YEAR	NAME		PARENT	MACHINE		INPUT		INIT	CONFIG  COMPANY		FULLNAME */
-COMP (	1980,	p2000t,		0,		p2000t,		p2000t,		0,		p2000,	"Philips",	"Philips P2000T" )
-COMPX(	1980,	p2000m,		p2000t,	p2000m,		p2000t,		0,		p2000,	"Philips",	"Philips P2000M", GAME_ALIAS )
+COMP (	1980,	p2000t,		0,		p2000t,		p2000t,		0,		NULL,	"Philips",	"Philips P2000T" )
+COMPX(	1980,	p2000m,		p2000t,	p2000m,		p2000t,		0,		NULL,	"Philips",	"Philips P2000M", GAME_ALIAS )
 

@@ -1786,91 +1786,21 @@ ROM_START(nc200)
         ROM_LOAD("nc200.rom", 0x010000, 0x080000, 0x0bb8180e7)
 ROM_END
 
-
-static const struct IODevice io_nc100[] =
-{
-	{
-			IO_SERIAL,           /* type */
-			1,                     /* count */
-			"txt\0",               /* file extensions */
-			IO_RESET_NONE,			/* reset if file changed */
-			OSD_FOPEN_READ,			/* open mode */
-			NULL,					/* id */
-			nc_serial_init,			/* load */
-			serial_device_exit,		/* exit */
-			NULL,                   /* info */
-			NULL,                   /* open */
-			NULL,                   /* close */
-			NULL,                   /* status */
-			NULL,                   /* seek */
-			NULL,                   /* tell */
-			NULL,                   /* input */
-			NULL,                   /* output */
-			NULL,                   /* input chunk */
-			NULL,                   /* output chunk */
-	},
-	{IO_END}
-};
-
-static const struct IODevice io_nc200[] =
-{
-	{
-			IO_FLOPPY,
-			1,
-			"dsk\0",
-			IO_RESET_NONE,
-			OSD_FOPEN_RW_CREATE_OR_READ,/* open mode */
-			NULL,
-			pc_floppy_init,
-			pc_floppy_exit,
-			NULL,                   /* info */
-			NULL,                   /* open */
-			NULL,                   /* close */
-			floppy_status,                   /* status */
-			NULL,                   /* seek */
-			NULL,                   /* tell */
-			NULL,                   /* input */
-			NULL,                   /* output */
-			NULL,                   /* input chunk */
-			NULL,                   /* output chunk */
-	},
-	{
-			IO_SERIAL,           /* type */
-			1,                     /* count */
-			"txt\0",               /* file extensions */
-			IO_RESET_NONE,			/* reset if file changed */
-			OSD_FOPEN_READ,			/* open mode */
-			NULL,					/* id */
-			nc_serial_init,			/* load */
-			serial_device_exit,		/* exit */
-			NULL,                   /* info */
-			NULL,                   /* open */
-			NULL,                   /* close */
-			NULL,                   /* status */
-			NULL,                   /* seek */
-			NULL,                   /* tell */
-			NULL,                   /* input */
-			NULL,                   /* output */
-			NULL,                   /* input chunk */
-			NULL,                   /* output chunk */
-	},
-	{IO_END}
-};
-
-
-#define io_nc100a io_nc100
-
-SYSTEM_CONFIG_START(nc100)
-	CONFIG_RAM_DEFAULT(64 * 1024)
+SYSTEM_CONFIG_START(nc_common)
 	CONFIG_DEVICE_PRINTER(1)
 	CONFIG_DEVICE_CARTSLOT(1, "crd\0card\0", nc_pcmcia_card_load, nc_pcmcia_card_exit, NULL)
+	CONFIG_DEVICE_LEGACY(IO_SERIAL, 1, "txt\0", IO_RESET_NONE, OSD_FOPEN_READ, nc_serial_init, serial_device_exit, NULL)
 SYSTEM_CONFIG_END
 
+SYSTEM_CONFIG_START(nc100)
+	CONFIG_IMPORT_FROM(nc_common)
+	CONFIG_RAM_DEFAULT(64 * 1024)
+SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(nc200)
+	CONFIG_IMPORT_FROM(nc_common)
 	CONFIG_RAM_DEFAULT(128 * 1024)
-	CONFIG_DEVICE_PRINTER(1)
-	CONFIG_DEVICE_CARTSLOT(1, "crd\0card\0", nc_pcmcia_card_load, nc_pcmcia_card_exit, NULL)
+	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 1, "dsk\0", IO_RESET_NONE, OSD_FOPEN_RW_CREATE_OR_READ, pc_floppy_init, pc_floppy_exit, floppy_status)
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME       PARENT  MACHINE    INPUT     INIT     CONFIG,  COMPANY               FULLNAME */

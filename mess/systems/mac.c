@@ -341,54 +341,9 @@ ROM_START( macplus )
 	ROM_LOAD16_WORD( "macplus.rom",  0x400000, 0x20000, 0xb2102e8e)
 ROM_END
 
-static const struct IODevice io_mac512ke[] = {
-	{
-		IO_FLOPPY,			/* type */
-		2,					/* count */
-		"dsk\0img\0",       /* file extensions */
-		IO_RESET_NONE,		/* reset if file changed */
-		OSD_FOPEN_RW_OR_READ,/* open mode */
-		NULL,				/* id */
-		mac_floppy_init,	/* init */
-		mac_floppy_exit,	/* exit */
-		NULL,				/* info */
-		NULL,				/* open */
-		NULL,				/* close */
-		NULL,				/* status */
-		NULL,				/* seek */
-		NULL,				/* input */
-		NULL,				/* output */
-		NULL,				/* input_chunk */
-		NULL				/* output_chunk */
-	},
-	{ IO_END }
-};
-
-/* MacPlus should eventually support hard disks, possibly CD-ROMs, etc. */
-static const struct IODevice io_macplus[] = {
-	{
-		IO_FLOPPY,			/* type */
-		2,					/* count */
-		"dsk\0img\0",       /* file extensions */
-		IO_RESET_NONE,		/* reset if file changed */
-		OSD_FOPEN_RW_OR_READ,/* open mode */
-		NULL,				/* id */
-		mac_floppy_init,	/* init */
-		mac_floppy_exit,	/* exit */
-		NULL,				/* info */
-		NULL,				/* open */
-		NULL,				/* close */
-		NULL,				/* status */
-		NULL,				/* seek */
-		NULL,				/* input */
-		NULL,				/* output */
-		NULL,				/* input_chunk */
-		NULL				/* output_chunk */
-	},
-	{ IO_END }
-};
-
 SYSTEM_CONFIG_START(macplus)
+	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 2, "dsk\0img\0", IO_RESET_NONE, OSD_FOPEN_RW_OR_READ, mac_floppy_init, mac_floppy_exit, NULL)
+	/* MacPlus should eventually support hard disks, possibly CD-ROMs, etc. */
 SYSTEM_CONFIG_END
 
 /*	   YEAR		NAME	  PARENT	MACHINE   INPUT		INIT		CONFIG		COMPANY				FULLNAME */
@@ -472,8 +427,6 @@ ROM_START( mac2 )
 	ROM_REGION(0x00900000,REGION_CPU1,0) /* for ram, etc */
 	ROM_LOAD_WIDE( "256k.rom",  0x800000, 0x40000, 0x00000000)
 ROM_END
-
-#define io_mac2	io_NULL
 
 COMPX( 1987, mac2,	   0,		 mac2,	   mac2,	 0/*mac2*/,  "Apple Computer",    "Macintosh II",  GAME_NOT_WORKING )
 

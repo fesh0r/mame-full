@@ -443,10 +443,6 @@ static MACHINE_DRIVER_START( lviv )
 	MDRV_SOUND_ADD(WAVE, lviv_wave_interface)
 MACHINE_DRIVER_END
 
-#define io_lviv		io_NULL
-#define io_lviva	io_NULL
-#define io_lvive	io_NULL
-
 ROM_START(lviv)
 	ROM_REGION(0x14000,REGION_CPU1,0)
 	ROM_LOAD("lviv.bin", 0x10000, 0x4000, 0x44a347d9)

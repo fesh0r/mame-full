@@ -1556,34 +1556,10 @@ ROM_START(pcw16)
 	ROM_LOAD("pcw045.sys",0x10000, 524288, 0xc642f498)
 ROM_END
 
-static const struct IODevice io_pcw16[] =
-{
-	{
-		IO_FLOPPY,			/* type */
-		2,					/* count */
-		"dsk\0",            /* file extensions */
-		IO_RESET_NONE,		/* reset if file changed */
-		OSD_FOPEN_RW_CREATE_OR_READ,/* open mode */
-        NULL,               /* id */
-		pc_floppy_init, 	/* init */
-		pc_floppy_exit, 	/* exit */
-        NULL,               /* info */
-        NULL,               /* open */
-        NULL,               /* close */
-        floppy_status,               /* status */
-        NULL,               /* seek */
-		NULL,				/* tell */
-        NULL,               /* input */
-        NULL,               /* output */
-        NULL,               /* input_chunk */
-        NULL                /* output_chunk */
-    },
-	{IO_END}
-};
-
 SYSTEM_CONFIG_START(pcw16)
 	CONFIG_RAM_DEFAULT(2048 * 1024)
-	//CONFIG_DEVICE_PRINTER(1)
+	/*CONFIG_DEVICE_PRINTER(1)*/
+	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 2, "dsk\0", IO_RESET_NONE, OSD_FOPEN_RW_CREATE_OR_READ, pc_floppy_init, pc_floppy_exit, floppy_status)
 SYSTEM_CONFIG_END
 
 /*     YEAR  NAME     PARENT    MACHINE    INPUT     INIT   CONFIG,  COMPANY          FULLNAME */

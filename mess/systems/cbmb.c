@@ -947,50 +947,28 @@ static MACHINE_DRIVER_START( cbm500 )
 	MDRV_SOUND_ADD_TAG("custom", CUSTOM, sid_sound_interface)
 MACHINE_DRIVER_END
 
-
-static const struct IODevice io_cbmb[] =
-{
-	IODEVICE_CBMB_QUICK,
-	/* monitor OR tape routine in kernal */
-#ifdef PET_TEST_CODE
-	IODEVICE_CBM_DRIVE,
-#endif
-	{IO_END}
-};
-
-static const struct IODevice io_cbm500[] =
-{
-	IODEVICE_CBM500_QUICK,
-#ifdef PET_TEST_CODE
-	IODEVICE_CBM_DRIVE,
-#endif
-	/* monitor OR tape routine in kernal */
-	{IO_END}
-};
-
 #define init_cbm500 cbm500_driver_init
 #define init_cbm600 cbm600_driver_init
 #define init_cbm600hu cbm600hu_driver_init
 #define init_cbm600pal cbm600pal_driver_init
 #define init_cbm700 cbm700_driver_init
 
-#define io_cbm710 io_cbmb
-#define io_cbm720 io_cbmb
-#define io_cbm720se io_cbmb
-#define io_cbm610 io_cbmb
-#define io_cbm620 io_cbmb
-#define io_cbm620hu io_cbmb
-
-#if 0
-#define rom_cbm730 rom_cbmb256hp
-#endif
-
 SYSTEM_CONFIG_START(cbmb)
 	CONFIG_DEVICE_CBM_CARTSLOT("crt\00010\00020\00040\00060\0")
+	CONFIG_DEVICE_CBMBQUICK
+#ifdef PET_TEST_CODE
+	/* monitor OR tape routine in kernel */
+	CONFIG_DEVICE_FLOPPY_CBM
+#endif
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(cbm500)
 	CONFIG_DEVICE_CBM_CARTSLOT("crt\00010\00020\00040\00060\0")
+	CONFIG_DEVICE_CBM500QUICK
+#ifdef PET_TEST_CODE
+	/* monitor OR tape routine in kernel */
+	CONFIG_DEVICE_FLOPPY_CBM
+#endif
 SYSTEM_CONFIG_END
 
 /*     YEAR		NAME	  PARENT	MACHINE		INPUT		INIT		CONFIG  COMPANY								FULLNAME */

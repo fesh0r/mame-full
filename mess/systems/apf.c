@@ -783,9 +783,6 @@ SYSTEM_CONFIG_START( apfimag )
 	CONFIG_DEVICE_FLOPPY_BASICDSK	(2, "apd\0", apfimag_floppy_init)
 SYSTEM_CONFIG_END
 
-#define io_apfimag	io_NULL
-#define io_apfm1000	io_NULL
-
 /***************************************************************************
 
   Game driver(s)

@@ -371,10 +371,6 @@ ROM_START (svi328a)
     ROM_LOAD ("svi111.rom", 0x0000, 0x8000, 0xbc433df6)
 ROM_END
 
-#define	io_svi318	io_NULL
-#define io_svi328	io_NULL
-#define io_svi328a	io_NULL
-
 SYSTEM_CONFIG_START(svi318)
 	CONFIG_DEVICE_PRINTER			(1)
 	CONFIG_DEVICE_CASSETTE			(1,	"cas\0",	svi318_cassette_init)

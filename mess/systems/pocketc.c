@@ -757,12 +757,6 @@ ROM_END
 
 #define rom_pc1403h rom_pc1403
 
-#define io_pc1401	io_NULL
-#define io_pc1402	io_NULL
-#define io_pc1350	io_NULL
-#define io_pc1251	io_NULL
-#define io_trs80pc3	io_NULL
-
 // disk drive support
 #define io_pc1403 io_pc1401
 #define io_pc1403h io_pc1403

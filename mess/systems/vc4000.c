@@ -243,8 +243,6 @@ static int vc4000_load_rom(int id, void *cartfile, int open_mode)
 	return 0;
 }
 
-#define io_vc4000	io_NULL
-
 SYSTEM_CONFIG_START(vc4000)
 	CONFIG_DEVICE_CARTSLOT(1, "bin\0", vc4000_load_rom, NULL, NULL)
 SYSTEM_CONFIG_END

@@ -116,8 +116,6 @@ static MACHINE_DRIVER_START( vectrex )
 	MDRV_SOUND_ADD(DAC, dac_interface)
 MACHINE_DRIVER_END
 
-#define io_vectrex io_NULL
-
 SYSTEM_CONFIG_START(vectrex)
 	CONFIG_DEVICE_CARTSLOT(1, "bin\0gam\0", vectrex_init_cart, NULL, NULL)
 SYSTEM_CONFIG_END
@@ -190,8 +188,6 @@ static MACHINE_DRIVER_START( raaspec )
 
 	MDRV_VIDEO_START( raaspec )
 MACHINE_DRIVER_END
-
-#define io_raaspec	io_NULL
 
 ROM_START(raaspec)
 	ROM_REGION(0x10000,REGION_CPU1, 0)

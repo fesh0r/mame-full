@@ -161,11 +161,6 @@ ROM_START(mk2)
 #endif
 ROM_END
 
-#define io_mk2	io_NULL
-
-SYSTEM_CONFIG_START(mk2)
-SYSTEM_CONFIG_END
-
 /***************************************************************************
 
   Game driver(s)
@@ -260,5 +255,6 @@ static void init_mk2(void)
 	rriot_init(0,&riot);
 }
 
-CONS( 1979,	mk2,	0, 		mk2,	mk2,	mk2,	mk2,	  "Quelle International",  "Chess Champion MK II")
+/*    YEAR  NAME    PARENT  MACHINE INPUT   INIT    CONFIG    COMPANY   FULLNAME */
+CONS( 1979,	mk2,	0, 		mk2,	mk2,	mk2,	NULL,	  "Quelle International",  "Chess Champion MK II")
 // second design sold (same computer/program?)

@@ -678,22 +678,6 @@ ROM_END
 
 #define rom_coco3h	rom_coco3
 
-static const struct IODevice io_coco3[] = {
-//	IO_FLOPPY_COCO,
-	IO_VHD_PORT,
-    { IO_END }
-};
-
-#define io_coco		io_NULL
-#define io_cocoe	io_NULL
-#define io_coco2	io_NULL
-#define io_coco2b	io_NULL
-#define io_cp400	io_NULL
-#define io_dragon32	io_NULL
-#define io_dragon64	io_NULL
-#define io_coco3p	io_coco3
-#define io_coco3h	io_coco3
-
 /***************************************************************************
   Bitbanger port
 ***************************************************************************/
@@ -778,6 +762,7 @@ SYSTEM_CONFIG_START(coco3)
 	CONFIG_IMPORT_FROM		( generic_coco )
 	CONFIG_DEVICE_CARTSLOT	( 1, "rom\0", coco3_rom_load, NULL, NULL )
 	CONFIG_DEVICE_SNAPSHOT	(    "pak\0", coco3_pak_load, NULL )
+	CONFIG_DEVICE_LEGACY	(IO_VHD, 1, "vhd\0", IO_RESET_NONE, OSD_FOPEN_RW_CREATE, coco_vhd_init, coco_vhd_exit, NULL)
 	CONFIG_RAM				(128 * 1024)
 	CONFIG_RAM_DEFAULT		(512 * 1024)
 	CONFIG_RAM				(2048 * 1024)

@@ -863,9 +863,6 @@ ROM_START(srdm5fd5)
 	ROM_LOAD("sordfd5.rom",0x0000, 0x04000, 0x01)
 ROM_END
 
-#define io_sordm5	io_NULL
-#define	io_srdm5fd5	io_NULL
-
 SYSTEM_CONFIG_START(sordm5)
 	CONFIG_RAM_DEFAULT(64 * 1024)
 	CONFIG_DEVICE_PRINTER			(1)

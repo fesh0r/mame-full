@@ -293,8 +293,6 @@ ROM_START(microtan)
         /* initialized in init_microtan */
 ROM_END
 
-#define io_microtan	io_NULL
-
 SYSTEM_CONFIG_START(microtan)
 	CONFIG_DEVICE_CASSETTE(1, "tap\0", microtan_cassette_init)
 	CONFIG_DEVICE_SNAPSHOT(   "m65\0", microtan_snapshot_init, microtan_snapshot_exit)

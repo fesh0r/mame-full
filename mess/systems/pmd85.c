@@ -219,11 +219,6 @@ static MACHINE_DRIVER_START( pmd85 )
 	MDRV_VIDEO_UPDATE( pmd85 )
 MACHINE_DRIVER_END
 
-/* NPW 20-Sep-2002 - changed this because the io_* arrays are deprecated, and I am
- * using io_NULL to mark places where the change is complete
- */
-#define io_pmd85	io_NULL
-
 ROM_START(pmd85)
 	ROM_REGION(0x14000,REGION_CPU1,0)
 	ROM_LOAD("pmd85-1.bin", 0x10000, 0x1000, 0x9bc5e6ec)

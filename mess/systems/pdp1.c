@@ -432,52 +432,6 @@ static MACHINE_DRIVER_START(pdp1)
 
 MACHINE_DRIVER_END
 
-static const struct IODevice io_pdp1[] =
-{
-	{	/* one perforated tape reader, and one puncher */
-		IO_PUNCHTAPE,			/* type */
-		2,						/* count */
-		"tap\0rim\0",			/* file extensions */
-		IO_RESET_NONE,			/* reset if file changed */
-		OSD_FOPEN_NONE,			/* open mode */
-		NULL,					/* id */
-		pdp1_tape_init,			/* init */
-		pdp1_tape_exit,			/* exit */
-		NULL,					/* info */
-		NULL,					/* open */
-		NULL,					/* close */
-		NULL,					/* status */
-		NULL,					/* seek */
-		NULL,					/* tell */
-		NULL,					/* input */
-		NULL,					/* output */
-		NULL,					/* input_chunk */
-		NULL					/* output_chunk */
-	},
-	{	/* typewriter out */
-		IO_PRINTER,					/* type */
-		1,							/* count */
-		"typ\0",					/* file extensions */
-		IO_RESET_NONE,				/* reset depth */
-		OSD_FOPEN_WRITE,			/* open mode */
-		NULL,						/* id */
-		pdp1_typewriter_init,		/* init */
-		pdp1_typewriter_exit,		/* exit */
-		NULL,						/* info */
-		NULL,						/* open */
-		NULL,						/* close */
-		NULL,						/* status */
-		NULL,						/* seek */
-		NULL,						/* tell */
-		NULL,						/* input */
-		NULL,						/* output */
-		NULL,						/* input chunk */
-		NULL						/* output chunk */
-	},
-	{ IO_END }
-};
-
-
 /*
 	pdp1 can address up to 65336 18 bit words when extended (4096 otherwise).
 */
@@ -499,6 +453,8 @@ SYSTEM_CONFIG_START(pdp1)
 	/*CONFIG_RAM_DEFAULT(4 * 1024)
 	CONFIG_RAM(32 * 1024)
 	CONFIG_RAM(64 * 1024)*/
+	CONFIG_DEVICE_LEGACY(IO_PUNCHTAPE, 2, "tap\0rim\0", IO_RESET_NONE, OSD_FOPEN_NONE, pdp1_tape_init, pdp1_tape_exit, NULL)
+	CONFIG_DEVICE_LEGACY(IO_PRINTER, 1, "typ\0", IO_RESET_NONE, OSD_FOPEN_WRITE, pdp1_typewriter_init, pdp1_typewriter_exit, NULL)
 SYSTEM_CONFIG_END
 
 

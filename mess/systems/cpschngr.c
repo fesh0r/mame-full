@@ -541,12 +541,6 @@ ROM_START( sfzch )
 	ROM_LOAD( "sfz19",         0x20000, 0x20000, 0x3b5886d5 )
 ROM_END
 
-
-#define io_sfzch		io_NULL
-
-SYSTEM_CONFIG_START(sfzch)
-SYSTEM_CONFIG_END
-
 /***************************************************************************
 
   Game driver(s)
@@ -554,5 +548,5 @@ SYSTEM_CONFIG_END
 ***************************************************************************/
 
 /*	  YEAR	NAME	  PARENT	MACHINE   INPUT		INIT	CONFIG	COMPANY		FULLNAME */
-CONS( 1995, sfzch,    0,        sfzch,	  sfzch,    0,		sfzch,	"Capcom", "CPS Changer (Street Fighter ZERO)" )
+CONS( 1995, sfzch,    0,        sfzch,	  sfzch,    0,		NULL,	"Capcom", "CPS Changer (Street Fighter ZERO)" )
 

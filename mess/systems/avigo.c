@@ -1033,11 +1033,6 @@ ROM_START(avigo)
         ROM_LOAD("avigo.rom", 0x010000, 0x0150000, 0x160ee4a6)
 ROM_END
 
-#define io_avigo		io_NULL
-
-SYSTEM_CONFIG_START(avigo)
-SYSTEM_CONFIG_END
-
 /*	  YEAR	NAME	PARENT	MACHINE	INPUT	INIT	CONFIG	COMPANY   FULLNAME */
-COMPX(1997,	avigo,	0,		avigo,	avigo,	0,		avigo,	"Texas Instruments", "TI Avigo 100 PDA",GAME_NOT_WORKING)
+COMPX(1997,	avigo,	0,		avigo,	avigo,	0,		NULL,	"Texas Instruments", "TI Avigo 100 PDA",GAME_NOT_WORKING)
 

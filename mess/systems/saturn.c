@@ -1917,11 +1917,6 @@ ROM_START(saturn)
      ROM_REGION(0x00080000, REGION_CPU3,0)
 ROM_END
 
-#define io_saturn	io_NULL
-
-SYSTEM_CONFIG_START(saturn)
-SYSTEM_CONFIG_END
-
 /***************************************************************************
 
   Game driver(s)
@@ -1929,5 +1924,5 @@ SYSTEM_CONFIG_END
 ***************************************************************************/
 
 /*    YEAR  NAME	PARENT	MACHINE	INPUT	INIT	CONFIG	COMPANY	FULLNAME */
-CONSX(1994, saturn,	0,		saturn,	saturn,	saturn,	saturn,	"Sega",	"Saturn", GAME_NOT_WORKING)
+CONSX(1994, saturn,	0,		saturn,	saturn,	saturn,	NULL,	"Sega",	"Saturn", GAME_NOT_WORKING)
 

@@ -833,54 +833,31 @@ static MACHINE_DRIVER_START( vc20v )
 #endif
 MACHINE_DRIVER_END
 
-static const struct IODevice io_vc20[] =
-{
-	IODEVICE_CBM_QUICK,
-	IODEVICE_VC20TAPE,
-	IODEVICE_CBM_DRIVE,
-	{IO_END}
-};
-
-static const struct IODevice io_vc20v[] =
-{
-	IODEVICE_CBM_QUICK,
-	IODEVICE_VC20TAPE,
-	IODEVICE_VC1541,
-	{IO_END}
-};
-
-#ifdef PET_TEST_CODE
-static const struct IODevice io_vc20i[] =
-{
-	IODEVICE_CBM_QUICK,
-	IODEVICE_VC20TAPE,
-	IODEVICE_C2031,
-	{IO_END}
-};
-#endif
-
 #define init_vc20		vc20_driver_init
 #define init_vic20		vic20_driver_init
-#define init_vic1001		vic20_driver_init
+#define init_vic1001	vic20_driver_init
 #define init_vic20i 	vic20ieee_driver_init
-#define io_vic20		io_vc20
-#define io_vic1001		io_vc20
-#define io_vic20swe 	io_vc20
-#define io_vic20v		io_vc20v
-/*#define io_vic20i 	io_vc20i */
-#define io_vic20i		io_vc20
 
 SYSTEM_CONFIG_START(vc20)
 	CONFIG_DEVICE_CARTSLOT(2, "a0\00020\00040\00060\0rom\0bin\0", vc20_rom_load, NULL, NULL)
+	CONFIG_DEVICE_FLOPPY_CBM
+	CONFIG_DEVICE_CBMQUICK
+	CONFIG_DEVICE_VC20TAPE
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(vc20v)
 	CONFIG_DEVICE_CARTSLOT(2, "a0\00020\00040\00060\0rom\0bin\0", vc20_rom_load, NULL, NULL)
+	CONFIG_DEVICE_CBMQUICK
+	CONFIG_DEVICE_VC20TAPE
+	CONFIG_DEVICE_VC1541
 SYSTEM_CONFIG_END
 
 #ifdef PET_TEST_CODE
 SYSTEM_CONFIG_START(vc20i)
 	CONFIG_DEVICE_CARTSLOT(2, "a0\00020\00040\00060\0rom\0bin\0", vc20_rom_load, NULL, NULL)
+	CONFIG_DEVICE_CBMQUICK
+	CONFIG_DEVICE_VC20TAPE
+	CONFIG_DEVICE_C2031
 SYSTEM_CONFIG_END
 #endif
 

@@ -227,9 +227,6 @@ static MACHINE_DRIVER_START( snespal )
 	MDRV_FRAMES_PER_SECOND(50)
 MACHINE_DRIVER_END
 
-#define io_snes		io_NULL
-#define io_snespal	io_NULL
-
 SYSTEM_CONFIG_START(snes)
 	CONFIG_DEVICE_CARTSLOT(1, "smc\0sfc\0fig\0", snes_load_rom, NULL, NULL)
 SYSTEM_CONFIG_END

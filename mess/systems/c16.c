@@ -848,36 +848,6 @@ static MACHINE_DRIVER_START( c364 )
 	MDRV_CPU_MEMORY(c364_readmem, c364_writemem)
 MACHINE_DRIVER_END
 
-static const struct IODevice io_c16[] =
-{
-	IODEVICE_CBM_QUICK,
-	IODEVICE_VC20TAPE,
-	IODEVICE_CBM_DRIVE,
-	{IO_END}
-};
-
-static const struct IODevice io_c16c[] =
-{
-	IODEVICE_CBM_QUICK,
-	IODEVICE_VC20TAPE,
-	IODEVICE_C1551,
-	{IO_END}
-};
-
-static const struct IODevice io_c16v[] =
-{
-	IODEVICE_CBM_QUICK,
-	IODEVICE_VC20TAPE,
-	IODEVICE_VC1541,
-	{IO_END}
-};
-
-#define io_c16hun		io_c16
-#define io_plus4		io_c16
-#define io_plus4c		io_c16c
-#define io_plus4v		io_c16v
-#define io_c364 		io_c16
-
 #define init_c16		c16_driver_init
 #define init_c16hun 	c16_driver_init
 #define init_c16c		c16_driver_init
@@ -889,14 +859,23 @@ static const struct IODevice io_c16v[] =
 
 SYSTEM_CONFIG_START(c16)
 	CONFIG_DEVICE_CARTSLOT(2, "bin\0rom\0", c16_rom_init, c16_rom_exit, NULL)
+	CONFIG_DEVICE_FLOPPY_CBM
+	CONFIG_DEVICE_CBMQUICK
+	CONFIG_DEVICE_VC20TAPE
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(c16c)
 	CONFIG_DEVICE_CARTSLOT(2, "bin\0rom\0", c16_rom_init, c16_rom_exit, NULL)
+	CONFIG_DEVICE_CBMQUICK
+	CONFIG_DEVICE_VC20TAPE
+	CONFIG_DEVICE_C1551
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(c16v)
 	CONFIG_DEVICE_CARTSLOT(2, "bin\0rom\0", c16_rom_init, c16_rom_exit, NULL)
+	CONFIG_DEVICE_CBMQUICK
+	CONFIG_DEVICE_VC20TAPE
+	CONFIG_DEVICE_VC1541
 SYSTEM_CONFIG_END
 
 /*		YEAR	NAME	PARENT	MACHINE INPUT	INIT	CONFIG   COMPANY 								FULLNAME */

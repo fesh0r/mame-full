@@ -13,14 +13,6 @@
 
 #include "c64.h"
 
-#ifdef RUNTIME_LOADER
-# ifdef __cplusplus
-	extern "C" void c128_runtime_loader_init(void);
-# else
-	extern void c128_runtime_loader_init(void);
-# endif
-#endif
-
 #define C128_MAIN_MEMORY		(input_port_8_r(0)&0x300)
 #define RAM128KB (0)
 #define RAM256KB (0x100)

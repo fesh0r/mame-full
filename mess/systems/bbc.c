@@ -1150,13 +1150,6 @@ static MACHINE_DRIVER_START( bbcb6502 )
 	MDRV_CPU_MEMORY(readmem_bbc6502,writemem_bbc6502)
 MACHINE_DRIVER_END
 
-#define io_bbca		io_NULL
-#define	io_bbcb		io_NULL
-#define io_bbcb1770	io_NULL
-#define	io_bbcbp	io_NULL
-#define io_bbcbp128	io_NULL
-#define io_bbcb6502	io_NULL
-
 SYSTEM_CONFIG_START(bbc)
 	CONFIG_DEVICE_CARTSLOT			(4, "rom\0",			bbcb_load_rom, NULL, NULL)
 	CONFIG_DEVICE_FLOPPY_BASICDSK	(2, "ssd\0bbc\0img\0",	bbc_floppy_init)

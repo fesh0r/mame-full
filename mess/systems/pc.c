@@ -1680,69 +1680,10 @@ ROM_START( pc1640 )
     ROM_LOAD16_BYTE("40044.v3", 0xfc000, 0x2000, 0xf1c074f3)
 ROM_END
 
-static const struct IODevice io_ibmpc[] = {
-	{
-		IO_FLOPPY,			/* type */
-		2,					/* count */
-		"dsk\0",            /* file extensions */
-		IO_RESET_NONE,		/* reset if file changed */
-		OSD_FOPEN_RW_CREATE_OR_READ,/* open mode */
-        NULL,               /* id */
-		pc_floppy_init, 	/* init */
-		pc_floppy_exit, 	/* exit */
-        NULL,               /* info */
-        NULL,               /* open */
-        NULL,               /* close */
-        floppy_status,               /* status */
-        NULL,               /* seek */
-		NULL,				/* tell */
-        NULL,               /* input */
-        NULL,               /* output */
-        NULL,               /* input_chunk */
-        NULL                /* output_chunk */
-    },
-	{
-		IO_HARDDISK,		/* type */
-		4,					/* count */
-		"img\0",            /* file extensions */
-		IO_RESET_CPU,		/* reset if file changed */
-		OSD_FOPEN_RW,		/* open mode */
-        NULL,               /* id */
-		pc_harddisk_init,	/* init */
-		pc_harddisk_exit,	/* exit */
-        NULL,               /* info */
-        NULL,               /* open */
-        NULL,               /* close */
-        NULL,               /* status */
-        NULL,               /* seek */
-		NULL,				/* tell */
-        NULL,               /* input */
-        NULL,               /* output */
-        NULL,               /* input_chunk */
-        NULL                /* output_chunk */
-    },
-    { IO_END }
-};
-
-#define io_ibmpca io_ibmpc
-#define io_pcmda io_ibmpc
-#define io_pc io_ibmpc
-#define io_bondwell io_ibmpc
-#define io_europc io_ibmpc
-
-#define io_ibmpcjr io_ibmpc
-#define io_t1000hx io_ibmpc
-
-#define io_ibmxt io_ibmpc
-#define io_pc200 io_ibmpc
-#define io_pc20 io_ibmpc
-#define io_pc1512 io_ibmpc
-#define io_pc1640 io_ibmpc
-
-#define io_xtvga io_ibmpc
-
 SYSTEM_CONFIG_START(ibmpc)
 	CONFIG_DEVICE_PRINTER(3)
+	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 2, "dsk\0", IO_RESET_NONE, OSD_FOPEN_RW_CREATE_OR_READ, pc_floppy_init, pc_floppy_exit, floppy_status)
+	CONFIG_DEVICE_LEGACY(IO_HARDDISK, 4, "img\0", IO_RESET_CPU, OSD_FOPEN_RW, pc_harddisk_init, pc_harddisk_exit, NULL)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

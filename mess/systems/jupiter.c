@@ -233,32 +233,9 @@ ROM_START (jupiter)
 	ROM_LOAD ("jupiter.hi", 0x1000, 0x1000, 0x4009f636)
 ROM_END
 
-static const struct IODevice io_jupiter[] = {
-    {
-		IO_CASSETTE,		/* type */
-		1,					/* count */
-		"tap\0",            /* file extensions */
-		IO_RESET_CPU,		/* reset if file changed */
-		OSD_FOPEN_READ,		/* open mode */
-        NULL,               /* id */
-		jupiter_load_tap,	/* init */
-		jupiter_exit_tap,	/* exit */
-        NULL,               /* info */
-        NULL,               /* open */
-        NULL,               /* close */
-        NULL,               /* status */
-        NULL,               /* seek */
-		NULL,				/* tell */
-        NULL,               /* input */
-        NULL,               /* output */
-        NULL,               /* input_chunk */
-        NULL                /* output_chunk */
-    },
-    { IO_END }
-};
-
 SYSTEM_CONFIG_START(jupiter)
 	CONFIG_DEVICE_CARTSLOT(1, "ace\0", jupiter_load_ace, NULL, NULL)
+	CONFIG_DEVICE_LEGACY(IO_CASSETTE, 1, "tap\0", IO_RESET_CPU, OSD_FOPEN_READ, jupiter_load_tap, jupiter_exit_tap, NULL)
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      CONFIG	COMPANY   FULLNAME */

@@ -211,8 +211,6 @@ ROM_START( astrocde )
     ROM_LOAD( "astro.bin",  0x0000, 0x2000, 0xebc77f3a )
 ROM_END
 
-#define io_astrocde	io_NULL
-
 SYSTEM_CONFIG_START(astrocde)
 	CONFIG_DEVICE_CARTSLOT( 1, "bin\0", astrocade_load_rom, NULL, NULL)
 SYSTEM_CONFIG_END

@@ -196,8 +196,6 @@ static DRIVER_INIT( odyssey2 )
 		gfx[i]=i;
 }
 
-#define io_odyssey2	io_NULL
-
 SYSTEM_CONFIG_START(odyssey2)
 	CONFIG_DEVICE_CARTSLOT(1, "bin\0", odyssey2_load_rom, NULL, NULL)
 SYSTEM_CONFIG_END

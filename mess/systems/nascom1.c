@@ -311,70 +311,25 @@ ROM_START(nascom2a)
 	ROM_LOAD("nasgra.chr", 0x0800, 0x0800, 0x2bc09d32)
 ROM_END
 
-static	const	struct	IODevice	io_nascom1[] =
-{
-	{
-		IO_CASSETTE,			/* type */
-		1,						/* count */
-		"nas\0bin\0",			/* file extn */
-		IO_RESET_NONE,			/* reset if file changed */
-		OSD_FOPEN_READ,			/* open mode */
-        NULL,                   /* id */
-		nascom1_init_cassette,	/* init */
-		nascom1_exit_cassette,	/* exit */
-		NULL,					/* info */
-		NULL,					/* open */
-		NULL,					/* close */
-		NULL,					/* status */
-		NULL,					/* seek */
-		NULL,					/* tell */
-		NULL,					/* input */
-		NULL,					/* output */
-		NULL,					/* input_chunk */
-		NULL					/* output_chunk */
-	},
-	{ IO_END }
-};
-
-static	const	struct	IODevice	io_nascom2[] =
-{
-	{
-		IO_CASSETTE,			/* type */
-		1,						/* count */
-		"cas\0nas\0bin\0",		/* file extn */
-		IO_RESET_NONE,			/* reset if file changed */
-		OSD_FOPEN_READ,			/* open mode */
-        NULL,                   /* id */
-		nascom1_init_cassette,	/* init */
-		nascom1_exit_cassette,	/* exit */
-		NULL,					/* info */
-		NULL,					/* open */
-		NULL,					/* close */
-		NULL,					/* status */
-		NULL,					/* seek */
-		NULL,					/* tell */
-		NULL,					/* input */
-		NULL,					/* output */
-		NULL,					/* input_chunk */
-		NULL					/* output_chunk */
-	},
-	{ IO_END }
-};
-
-#define io_nascom1a io_nascom1
-#define io_nascom1b io_nascom1
-#define io_nascom2a io_nascom2
-
 SYSTEM_CONFIG_START(nascom)
 #ifdef CART
 	CONFIG_DEVICE_CARTSLOT(1, "nas\0bin\0", nascom1_init_cartridge, NULL, NULL)
 #endif
 SYSTEM_CONFIG_END
 
+SYSTEM_CONFIG_START(nascom1)
+	CONFIG_IMPORT_FROM(nascom)
+	CONFIG_DEVICE_LEGACY(IO_CASSETTE, 1, "nas\0bin\0", IO_RESET_NONE, OSD_FOPEN_READ, nascom1_init_cassette, nascom1_exit_cassette, NULL)
+SYSTEM_CONFIG_END
+
+SYSTEM_CONFIG_START(nascom2)
+	CONFIG_IMPORT_FROM(nascom)
+	CONFIG_DEVICE_LEGACY(IO_CASSETTE, 1, "cas\0nas\0bin\0", IO_RESET_NONE, OSD_FOPEN_READ, nascom1_init_cassette, nascom1_exit_cassette, NULL)
+SYSTEM_CONFIG_END
 
 /*	  YEAR	NAME		PARENT		MACHINE		INPUT		INIT	CONFIG		COMPANY		FULLNAME */
-COMP( 1978,	nascom1,	0,			nascom1,	nascom1,	0,		nascom,		"Nascom Microcomputers",	"Nascom 1 (NasBug T1)" )
-COMP( 1978,	nascom1a,	nascom1,	nascom1,	nascom1,	0,		nascom,		"Nascom Microcomputers",	"Nascom 1 (NasBug T2)" )
-COMP( 1978,	nascom1b,	nascom1,	nascom1,	nascom1,	0,		nascom,		"Nascom Microcomputers",	"Nascom 1 (NasBug T4)" )
-COMP( 1979,	nascom2,	nascom1,	nascom2,	nascom1,	0,		nascom,		"Nascom Microcomputers",	"Nascom 2 (NasSys 1)" )
-COMP( 1979,	nascom2a,	nascom1,	nascom2,	nascom1,	0,		nascom,		"Nascom Microcomputers",	"Nascom 2 (NasSys 3)" )
+COMP( 1978,	nascom1,	0,			nascom1,	nascom1,	0,		nascom1,	"Nascom Microcomputers",	"Nascom 1 (NasBug T1)" )
+COMP( 1978,	nascom1a,	nascom1,	nascom1,	nascom1,	0,		nascom1,	"Nascom Microcomputers",	"Nascom 1 (NasBug T2)" )
+COMP( 1978,	nascom1b,	nascom1,	nascom1,	nascom1,	0,		nascom1,	"Nascom Microcomputers",	"Nascom 1 (NasBug T4)" )
+COMP( 1979,	nascom2,	nascom1,	nascom2,	nascom1,	0,		nascom2,	"Nascom Microcomputers",	"Nascom 2 (NasSys 1)" )
+COMP( 1979,	nascom2a,	nascom1,	nascom2,	nascom1,	0,		nascom2,	"Nascom Microcomputers",	"Nascom 2 (NasSys 3)" )

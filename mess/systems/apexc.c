@@ -842,51 +842,6 @@ static MACHINE_DRIVER_START(apexc)
 
 MACHINE_DRIVER_END
 
-static const struct IODevice io_apexc[] =
-{
-	{
-		IO_CYLINDER,			/* type */
-		1,						/* count */
-		"apc\0",				/* file extensions */
-		IO_RESET_CPU,			/* reset if file changed */
-		OSD_FOPEN_RW_OR_READ,		/* open mode */
-		NULL,					/* id */
-		apexc_cylinder_init,	/* init */
-		apexc_cylinder_exit,	/* exit */
-		NULL,					/* info */
-		NULL,					/* open */
-		NULL,					/* close */
-		NULL,					/* status */
-		NULL,					/* seek */
-		NULL,					/* tell */
-		NULL,					/* input */
-		NULL,					/* output */
-		NULL,					/* input_chunk */
-		NULL					/* output_chunk */
-	},
-	{
-		IO_PUNCHTAPE,			/* type */
-		2,						/* count */
-		"tap\0",				/* file extensions */
-		IO_RESET_NONE,			/* reset if file changed */
-		OSD_FOPEN_NONE,			/* open mode */
-		NULL,					/* id */
-		apexc_tape_init,		/* init */
-		apexc_tape_exit,		/* exit */
-		NULL,					/* info */
-		NULL,					/* open */
-		NULL,					/* close */
-		NULL,					/* status */
-		NULL,					/* seek */
-		NULL,					/* tell */
-		NULL,					/* input */
-		NULL,					/* output */
-		NULL,					/* input_chunk */
-		NULL					/* output_chunk */
-	},
-	{ IO_END }
-};
-
 ROM_START(apexc)
 	/*CPU memory space*/
 	ROM_REGION32_BE(0x10000, REGION_CPU1, 0)
@@ -897,6 +852,8 @@ ROM_START(apexc)
 ROM_END
 
 SYSTEM_CONFIG_START(apexc)
+	CONFIG_DEVICE_LEGACY(IO_CYLINDER, 1, "apc\0", IO_RESET_CPU, OSD_FOPEN_RW_OR_READ, apexc_cylinder_init, apexc_cylinder_exit, NULL)
+	CONFIG_DEVICE_LEGACY(IO_PUNCHTAPE, 2, "tap\0", IO_RESET_NONE, OSD_FOPEN_NONE, apexc_tape_init, apexc_tape_exit, NULL)
 SYSTEM_CONFIG_END
 
 /*		   YEAR		NAME		PARENT			MACHINE		INPUT	INIT	CONFIG	COMPANY		FULLNAME */

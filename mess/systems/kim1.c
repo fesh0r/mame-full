@@ -226,33 +226,8 @@ ROM_START(kim1)
 		/* space filled with key icons by kim1_init_driver */
 ROM_END
 
-
-
-static const struct IODevice io_kim1[] = {
-    {
-		IO_CASSETTE,		/* type */
-        1,                  /* count */
-		"kim\0",            /* file extensions */
-		IO_RESET_CPU,		/* reset if file changed */
-		OSD_FOPEN_READ,		/* open mode */
-        0,
-		kim1_cassette_init, /* init */
-		kim1_cassette_exit, /* exit */
-        NULL,               /* info */
-        NULL,               /* open */
-        NULL,               /* close */
-        NULL,               /* status */
-        NULL,               /* seek */
-		NULL,				/* tell */
-        NULL,               /* input */
-        NULL,               /* output */
-        NULL,               /* input_chunk */
-        NULL                /* output_chunk */
-    },
-    { IO_END }
-};
-
 SYSTEM_CONFIG_START(kim1)
+	CONFIG_DEVICE_LEGACY(IO_CASSETTE, 1, "kim\0", IO_RESET_CPU, OSD_FOPEN_READ, kim1_cassette_init, kim1_cassette_exit, NULL)
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      CONFIG  COMPANY   FULLNAME */

@@ -191,11 +191,7 @@ static const struct IODevice *get_sysconfig_device(const struct GameDriver *game
 const struct IODevice *device_first(const struct GameDriver *gamedrv)
 {
 	assert(gamedrv);
-
-	if ((gamedrv->dev_) && (gamedrv->dev_->type != IO_END))
-		return gamedrv->dev_;
-	else
-		return get_sysconfig_device(gamedrv, 0);
+	return get_sysconfig_device(gamedrv, 0);
 }
 
 const struct IODevice *device_next(const struct GameDriver *gamedrv, const struct IODevice *dev)
@@ -206,28 +202,14 @@ const struct IODevice *device_next(const struct GameDriver *gamedrv, const struc
 	assert(gamedrv);
 	assert(dev);
 
-	/* is dev in the legacy IODevice array? */
-	dev2 = gamedrv->dev_;
-	while((dev2->type != IO_END) && (dev2 != dev))
-		dev2++;
-
+	i = 0;
+	do
+	{
+		dev2 = get_sysconfig_device(gamedrv, i++);
+	}
+	while(dev2 && (dev2 != dev));
 	if (dev2 == dev)
-	{
-		dev2++;
-		if (dev2->type == IO_END)
-			dev2 = get_sysconfig_device(gamedrv, 0);
-	}
-	else
-	{
-		i = 0;
-		do
-		{
-			dev2 = get_sysconfig_device(gamedrv, i++);
-		}
-		while(dev2 && (dev2 != dev));
-		if (dev2 == dev)
-			dev2 = get_sysconfig_device(gamedrv, i);
-	}
+		dev2 = get_sysconfig_device(gamedrv, i);
 	return dev2;
 }
 

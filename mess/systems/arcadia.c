@@ -322,9 +322,6 @@ static int arcadia_init_cart(int id, void *cartfile, int open_mode)
 	return INIT_PASS;
 }
 
-#define io_arcadia	io_NULL
-#define io_vcg		io_NULL
-
 SYSTEM_CONFIG_START(arcadia)
 	CONFIG_DEVICE_CARTSLOT( 1, "bin\0", arcadia_init_cart, NULL, NULL)
 SYSTEM_CONFIG_END

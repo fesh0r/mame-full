@@ -246,12 +246,8 @@ static void init_ti990_4(void)
 	vdt911_init();
 }
 
-#define io_ti990_4	io_NULL
-
 INPUT_PORTS_START(ti990_4)
-
 	VDT911_KEY_PORTS
-
 INPUT_PORTS_END
 
 SYSTEM_CONFIG_START(ti990_4)

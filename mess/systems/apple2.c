@@ -429,38 +429,8 @@ ROM_START(apple2cp)
     ROM_LOAD("a2c.vid", 0x0000, 0x1000, 0x2651014d)
 ROM_END
 
-static const struct IODevice io_apple2[] =
-{
-    {
-        IO_FLOPPY,          /* type */
-        2,                  /* count */
-        "dsk\0",            /* file extensions */
-        IO_RESET_NONE,      /* reset if file changed */
-		OSD_FOPEN_READ,		/* open mode */
-        NULL,               /* id */
-        apple2_floppy_init, /* init */
-        apple2_floppy_exit, /* exit */
-        NULL,               /* info */
-        NULL,               /* open */
-        NULL,               /* close */
-        NULL,               /* status */
-        NULL,               /* seek */
-        NULL,               /* input */
-        NULL,               /* output */
-        NULL,               /* input_chunk */
-        NULL                /* output_chunk */
-    },
-    { IO_END }
-};
-
-#define io_apple2c  io_apple2
-#define io_apple2c0 io_apple2
-#define io_apple2cp io_apple2
-#define io_apple2e  io_apple2
-#define io_apple2ee io_apple2
-#define io_apple2ep io_apple2
-
 SYSTEM_CONFIG_START(apple2)
+	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 2, "dsk\0", IO_RESET_NONE, OSD_FOPEN_READ, apple2_floppy_init, apple2_floppy_exit, NULL)
 SYSTEM_CONFIG_END
 
 /*     YEAR  NAME      PARENT    MACHINE   INPUT     INIT      CONFIG	COMPANY            FULLNAME */
