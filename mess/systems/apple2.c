@@ -799,22 +799,22 @@ ROM_START(apple2c0)
 	ROM_LOAD("a2c.256", 0x0000, 0x8000, CRC(c8b979b3) SHA1(10767e96cc17bad0970afda3a4146564e6272ba1))
 ROM_END
 
-ROM_START(lzr1284)
+ROM_START(laser128)
 	ROM_REGION(0x2000,REGION_GFX1,0)
 	ROM_LOAD ( "a2e.chr", 0x0000, 0x1000,CRC(b081df66) SHA1(7060de104046736529c1e8a687a0dd7b84f8c51b))
 	ROM_LOAD ( "a2eealt.chr", 0x1000, 0x1000,CRC(2651014d) SHA1(b2b5d87f52693817fc747df087a4aa1ddcdb1f10))
 
 	ROM_REGION(0x8700,REGION_CPU1,0)
-	ROM_LOAD("lzr1284.256", 0x0000, 0x8000, CRC(39E59ED3) SHA1(CBD2F45C923725BFD57F8548E65CC80B13BC18DA))
+	ROM_LOAD("laser128.256", 0x0000, 0x8000, CRC(39E59ED3) SHA1(CBD2F45C923725BFD57F8548E65CC80B13BC18DA))
 ROM_END
 
-ROM_START(lzr128ex)
+ROM_START(las128ex)
 	ROM_REGION(0x2000,REGION_GFX1,0)
 	ROM_LOAD ( "a2e.chr", 0x0000, 0x1000,CRC(b081df66) SHA1(7060de104046736529c1e8a687a0dd7b84f8c51b))
 	ROM_LOAD ( "a2eealt.chr", 0x1000, 0x1000,CRC(2651014d) SHA1(b2b5d87f52693817fc747df087a4aa1ddcdb1f10))
 
 	ROM_REGION(0x8700,REGION_CPU1,0)
-	ROM_LOAD("lzr128ex.256", 0x0000, 0x8000, CRC(B67C8BA1) SHA1(8BD5F82A501B1CF9D988C7207DA81E514CA254B0))
+	ROM_LOAD("las128ex.256", 0x0000, 0x8000, CRC(B67C8BA1) SHA1(8BD5F82A501B1CF9D988C7207DA81E514CA254B0))
 ROM_END
 
 
@@ -885,7 +885,7 @@ COMP ( 1983, apple2e,  0,        apple2,	apple2e,  apple2e,  apple2,   apple2e,	
 COMP ( 1985, apple2ee, apple2e,  0,			apple2ee, apple2e,  apple2,   apple2e,	"Apple Computer", "Apple //e (enhanced)" )
 COMP ( 1987, apple2ep, apple2e,  0,			apple2ee, apple2ep, apple2,   apple2e,	"Apple Computer", "Apple //e (Platinum)" )
 COMP ( 1984, apple2c,  0,        apple2,	apple2c,  apple2e,  apple2,   apple2e,	"Apple Computer", "Apple //c" )
-COMP ( 1987, lzr1284,  apple2c,  0,	apple2c,  apple2e,  apple2,   apple2e,	"Video Technology", "Laser 128 Rev4")
-COMP ( 1987, lzr128ex,  apple2c,  0,	apple2c,  apple2e,  apple2,   apple2e,	"Video Technology", "Laser 128ex Rev4a")
+COMP ( 1987, laser128,  apple2c,  0,	apple2c,  apple2e,  apple2,   apple2e,	"Video Technology", "Laser 128 (rev 4)")
+COMP ( 1987, las128ex,  apple2c,  0,	apple2c,  apple2e,  apple2,   apple2e,	"Video Technology", "Laser 128ex (rev 4a)")
 COMPX( 1985, apple2c0, apple2c,  0,			apple2c,  apple2e,  apple2,   apple2e,	"Apple Computer", "Apple //c (UniDisk 3.5)",	GAME_NOT_WORKING )
 COMPX( 1988, apple2cp, apple2c,  0,			apple2c,  apple2e,  apple2,   apple2e,	"Apple Computer", "Apple //c Plus",				GAME_NOT_WORKING )

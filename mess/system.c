@@ -265,8 +265,8 @@ TESTDRIVER( nc200 )		/* 19?? NC200										*/
 	DRIVER( apple2g1 )	/* 1987 Apple IIgs ROM01							*/
 	DRIVER( apple2gs )	/* 1989 Apple IIgs ROM03							*/
 	DRIVER( ace100 )    /* 1982 Apple ][ clone								*/
-	DRIVER( lzr1284 )   /* 1987 Apple ][ clone								*/
-	DRIVER( lzr128ex )  /* 1987 Apple ][ clone								*/
+	DRIVER( laser128 )   /* 1987 Apple ][ clone								*/
+	DRIVER( las128ex )  /* 1987 Apple ][ clone								*/
 /*
  * Lisa 				 January			 1983
  * Lisa 2 				 January			 1984
