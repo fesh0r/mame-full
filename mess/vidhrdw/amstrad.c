@@ -598,7 +598,7 @@ void amstrad_Set_VSync(int offset, int data)
 
 			   if ((y_screen_pos>=0) && (y_screen_pos<=AMSTRAD_SCREEN_HEIGHT))
 			   {
-					amstrad_display=(amstrad_bitmap->line[y_screen_pos])+x_screen_pos;
+					amstrad_display=(uint16 *)((unsigned long)(amstrad_bitmap->line[y_screen_pos])+(unsigned long)(x_screen_pos<<1));
 				}
 	//		}
 	//		else
@@ -710,7 +710,7 @@ void amstrad_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	crtc6845_set_state(0, &amstrad_vidhrdw_6845_state);
 
 	previous_time = 0;
-        num_cycles_remaining = cpu_getcurrentcycles()>>2;	//get19968; //cpu_getfperiod();
+        num_cycles_remaining = cycles_currently_ran()>>2;	//get19968; //cpu_getfperiod();
 
 	amstrad_bitmap=bitmap;
 	amstrad_display = amstrad_bitmap->line[0];
@@ -791,7 +791,7 @@ void amstrad_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
     /* Assume all other routines have processed their data from the list */
     EventList_Reset();
-    EventList_SetOffsetStartTime ( cpu_getcurrentcycles() );
+    EventList_SetOffsetStartTime ( cycles_currently_ran() );
 
 	crtc6845_get_state(0, &amstrad_vidhrdw_6845_state);
 	amstrad_rendering = 0;

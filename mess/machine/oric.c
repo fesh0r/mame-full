@@ -811,7 +811,7 @@ static WRITE_HANDLER(oric_jasmin_w)
 	{
 		/* microdisc floppy disc interface */
 		case 0x04:
-			logerror("cycles: %d\n",cpu_getcurrentcycles());
+			logerror("cycles: %d\n",cycles_currently_ran());
 			wd179x_command_w(0,data);
 			break;
 		case 0x05:

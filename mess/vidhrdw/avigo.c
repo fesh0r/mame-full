@@ -130,9 +130,9 @@ int avigo_vh_start(void)
     /* allocate video memory */
     avigo_video_memory = malloc(((AVIGO_SCREEN_WIDTH>>3)*AVIGO_SCREEN_HEIGHT));
 
-	if (avigo_backdrop)
+/*	if (avigo_backdrop)
 		backdrop_refresh(avigo_backdrop);
-
+*/
 	stylus_pointer = decodegfx(pointermask, &pointerlayout);
 	stylus_pointer->colortable = stylus_color_table;
 	stylus_pointer->total_colors = 3;
@@ -148,9 +148,9 @@ void    avigo_vh_stop(void)
             avigo_video_memory = NULL;
     }
 
-	if (avigo_backdrop)
+/*	if (avigo_backdrop)
 		artwork_free(&avigo_backdrop);
-
+*/
 	freegfx(stylus_pointer);
 }
 
@@ -171,12 +171,14 @@ static unsigned char avigo_palette[AVIGO_NUM_COLOURS * 3] =
 /* Initialise the palette */
 void avigo_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom)
 {
-	char *backdrop_name;
-    int used = 2;
+/*	char *backdrop_name;
+    int used = 2; */
     memcpy(sys_palette, avigo_palette, sizeof (avigo_palette));
     memcpy(sys_colortable, avigo_colour_table, sizeof (avigo_colour_table));
 
+
 	/* load backdrop */
+#if 0
 	backdrop_name = malloc(strlen(Machine->gamedrv->name)+4+1);
 
     if (backdrop_name!=NULL)
@@ -204,7 +206,7 @@ void avigo_init_palette(unsigned char *sys_palette, unsigned short *sys_colortab
         free(backdrop_name);
 		backdrop_name = NULL;
 	}
-
+#endif
 }
 unsigned int avigo_ad_x;
 unsigned int avigo_ad_y;
@@ -275,11 +277,11 @@ void avigo_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	{
 		int xb,yb,zb,ab,bb;
 		char	avigo_text[256];
-		xb =cpu_readmem16(0x0c1cf) & 0x0ff;
-		yb = cpu_readmem16(0x0c1d0) & 0x0ff;
-		zb =cpu_readmem16(0x0c1d1) & 0x0ff;
-		ab = cpu_readmem16(0x0c1d2) & 0x0ff;
-		bb =cpu_readmem16(0x0c1d3) & 0x0ff;
+		xb =cpunum_read_byte(0,0x0c1cf) & 0x0ff;
+		yb = cpunum_read_byte(0,0x0c1d0) & 0x0ff;
+		zb =cpunum_read_byte(0,0x0c1d1) & 0x0ff;
+		ab = cpunum_read_byte(0,0x0c1d2) & 0x0ff;
+		bb =cpunum_read_byte(0,0x0c1d3) & 0x0ff;
 
 
 		sprintf(avigo_text,"Xb: %02x Yb: %02x zb: %02x ab:%02x bb:%02x",xb, yb,zb,ab,bb);

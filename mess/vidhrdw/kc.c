@@ -109,7 +109,7 @@ enum
 /* set new blink state - record blink state in event list */
 void	kc85_video_set_blink_state(int data)
 {
-	EventList_AddItemOffset(KC85_VIDEO_EVENT_SET_BLINK_STATE, ((data & 0x01)<<7), cpu_getcurrentcycles());
+	EventList_AddItemOffset(KC85_VIDEO_EVENT_SET_BLINK_STATE, ((data & 0x01)<<7), cycles_currently_ran());
 }
 
 
@@ -544,7 +544,7 @@ static void kc85_common_process_frame(struct osd_bitmap *bitmap, void (*pixel_gr
 	/* process remainder */
 	kc85_common_vh_process_lines(&video_update, cycles_remaining_in_frame);
 	EventList_Reset();
-	EventList_SetOffsetStartTime ( cpu_getcurrentcycles() );
+	EventList_SetOffsetStartTime ( cycles_currently_ran() );
 }
 
 

@@ -883,7 +883,7 @@ void pcw_init_machine(void)
 	memory_set_bankhandler_w(12, 0, MWA_BANK12);
 
 
-	cpu_0_irq_line_vector_w(0, 0x0ff);
+	cpu_irq_line_vector_w(0, 0,0x0ff);
 
     nec765_init(&pcw_nec765_interface,NEC765A);
 

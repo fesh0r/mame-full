@@ -79,7 +79,7 @@ static void amstrad_update_video(void)
 	int time_delta;
 
 	/* current cycles */
-	current_time = cpu_getcurrentcycles() + amstrad_cycles_at_frame_end;
+	current_time = cycles_currently_ran() + amstrad_cycles_at_frame_end;
 	/* time between last write and this write */
 	time_delta = current_time - amstrad_cycles_last_write + time_delta_fraction;
 	/* The timing used to be spot on, but now it can give odd cycles, hopefully
@@ -106,7 +106,7 @@ static void amstrad_eof_callback(void)
 #ifndef AMSTRAD_VIDEO_EVENT_LIST
 	amstrad_update_video();
 	// update cycle count
-	amstrad_cycles_at_frame_end += cpu_getcurrentcycles();
+	amstrad_cycles_at_frame_end += cycles_currently_ran();
 #endif
 }
 
@@ -440,7 +440,7 @@ void AmstradCPC_GA_Write(int Data)
 			{
 
 #ifdef AMSTRAD_VIDEO_EVENT_LIST
-			   EventList_AddItemOffset((EVENT_LIST_CODE_GA_COLOUR<<6) | PenIndex, AmstradCPC_PenColours[PenIndex], cpu_getcurrentcycles());
+			   EventList_AddItemOffset((EVENT_LIST_CODE_GA_COLOUR<<6) | PenIndex, AmstradCPC_PenColours[PenIndex], cycles_currently_ran());
 #else
 			   amstrad_update_video();
 			   amstrad_vh_update_colour(PenIndex, AmstradCPC_PenColours[PenIndex]);
@@ -469,7 +469,7 @@ void AmstradCPC_GA_Write(int Data)
 			if (((Data^Previous_GA_RomConfiguration) & 0x03)!=0)
 			{
 #ifdef AMSTRAD_VIDEO_EVENT_LIST
-			EventList_AddItemOffset((EVENT_LIST_CODE_GA_MODE<<6) , Data & 0x03, cpu_getcurrentcycles());
+			EventList_AddItemOffset((EVENT_LIST_CODE_GA_MODE<<6) , Data & 0x03, cycles_currently_ran());
 #else
 				amstrad_update_video();
 				amstrad_vh_update_mode(Data & 0x03);
@@ -621,7 +621,7 @@ WRITE_HANDLER ( AmstradCPC_WritePortHandler )
 		case 0:
 			{
 #ifdef AMSTRAD_VIDEO_EVENT_LIST
-				EventList_AddItemOffset((EVENT_LIST_CODE_CRTC_INDEX_WRITE<<6), data, cpu_getcurrentcycles());
+				EventList_AddItemOffset((EVENT_LIST_CODE_CRTC_INDEX_WRITE<<6), data, cycles_currently_ran());
 #endif
 
 				///* register select */
@@ -637,7 +637,7 @@ WRITE_HANDLER ( AmstradCPC_WritePortHandler )
 								int cur_time;
 
 								/* current time */
-								current_time = cpu_getcurrentcycles();
+								current_time = cycles_currently_ran();
 								cur_time = current_time;
 
 								if (previous_crtc_write_time>current_time)
@@ -655,7 +655,7 @@ WRITE_HANDLER ( AmstradCPC_WritePortHandler )
 				/* crtc register write */
 				{
 
-					EventList_AddItemOffset((EVENT_LIST_CODE_CRTC_WRITE<<6), data, cpu_getcurrentcycles());
+					EventList_AddItemOffset((EVENT_LIST_CODE_CRTC_WRITE<<6), data, cycles_currently_ran());
 				}
 #endif
 								/* recalc time */
@@ -2288,7 +2288,7 @@ void amstrad_common_init(void)
 	amstrad_cycles_last_write = 0;
 	time_delta_fraction = 0;
 
-	cpu_0_irq_line_vector_w(0, 0x0ff);
+	cpu_irq_line_vector_w(0, 0,0x0ff);
 
 	nec765_init(&amstrad_nec765_interface,NEC765A/*?*/);
 
@@ -2306,21 +2306,21 @@ void amstrad_common_init(void)
 	so that they are all multiple of 4 T states long. All opcode
 	timings are a multiple of 1us in length. */
 
-	previous_op_table = cpu_get_cycle_table(Z80_TABLE_op);
-	previous_cb_table = cpu_get_cycle_table(Z80_TABLE_cb);
-	previous_ed_table = cpu_get_cycle_table(Z80_TABLE_ed);
-	previous_xy_table = cpu_get_cycle_table(Z80_TABLE_xy);
-	previous_xycb_table = cpu_get_cycle_table(Z80_TABLE_xycb);
-	previous_ex_table = cpu_get_cycle_table(Z80_TABLE_ex);
+	previous_op_table = cpunum_get_cycle_table(0,Z80_TABLE_op);
+	previous_cb_table = cpunum_get_cycle_table(0,Z80_TABLE_cb);
+	previous_ed_table = cpunum_get_cycle_table(0,Z80_TABLE_ed);
+	previous_xy_table = cpunum_get_cycle_table(0,Z80_TABLE_xy);
+	previous_xycb_table = cpunum_get_cycle_table(0,Z80_TABLE_xycb);
+	previous_ex_table = cpunum_get_cycle_table(0,Z80_TABLE_ex);
 
 	/* Using the cool code Juergen has provided, I will override
 	the timing tables with the values for the amstrad */
-	cpu_set_cycle_tbl(Z80_TABLE_op, amstrad_cycle_table_op);
-	cpu_set_cycle_tbl(Z80_TABLE_cb, amstrad_cycle_table_cb);
-	cpu_set_cycle_tbl(Z80_TABLE_ed, amstrad_cycle_table_ed);
-	cpu_set_cycle_tbl(Z80_TABLE_xy, amstrad_cycle_table_xy);
-	cpu_set_cycle_tbl(Z80_TABLE_xycb, amstrad_cycle_table_xycb);
-	cpu_set_cycle_tbl(Z80_TABLE_ex, amstrad_cycle_table_ex);
+	cpunum_set_cycle_tbl(0,Z80_TABLE_op, amstrad_cycle_table_op);
+	cpunum_set_cycle_tbl(0,Z80_TABLE_cb, amstrad_cycle_table_cb);
+	cpunum_set_cycle_tbl(0,Z80_TABLE_ed, amstrad_cycle_table_ed);
+	cpunum_set_cycle_tbl(0,Z80_TABLE_xy, amstrad_cycle_table_xy);
+	cpunum_set_cycle_tbl(0,Z80_TABLE_xycb, amstrad_cycle_table_xycb);
+	cpunum_set_cycle_tbl(0,Z80_TABLE_ex, amstrad_cycle_table_ex);
 }
 
 void amstrad_shutdown_machine(void)
@@ -2340,12 +2340,12 @@ void amstrad_shutdown_machine(void)
 	}
 
 	/* restore previous tables */
-	cpu_set_cycle_tbl(Z80_TABLE_op, previous_op_table);
-	cpu_set_cycle_tbl(Z80_TABLE_cb, previous_cb_table);
-	cpu_set_cycle_tbl(Z80_TABLE_ed, previous_ed_table);
-	cpu_set_cycle_tbl(Z80_TABLE_xy, previous_xy_table);
-	cpu_set_cycle_tbl(Z80_TABLE_xycb, previous_xycb_table);
-	cpu_set_cycle_tbl(Z80_TABLE_ex, previous_ex_table);
+	cpunum_set_cycle_tbl(0,Z80_TABLE_op, previous_op_table);
+	cpunum_set_cycle_tbl(0,Z80_TABLE_cb, previous_cb_table);
+	cpunum_set_cycle_tbl(0,Z80_TABLE_ed, previous_ed_table);
+	cpunum_set_cycle_tbl(0,Z80_TABLE_xy, previous_xy_table);
+	cpunum_set_cycle_tbl(0,Z80_TABLE_xycb, previous_xycb_table);
+	cpunum_set_cycle_tbl(0,Z80_TABLE_ex, previous_ex_table);
 
 	cpu_set_irq_callback(0, NULL);
 

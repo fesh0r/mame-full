@@ -1869,7 +1869,7 @@ static OPBASE_HANDLER( kc85_opbaseoverride )
 {
 	memory_set_opbase_handler(0,0);
 
-	cpu_set_pc(0x0f000);
+	cpunum_set_pc(0,0x0f000);
 //	cpu_set_reg(Z80_PC, 0x0f000);
 
 	return (cpu_get_pc() & 0x0ffff);

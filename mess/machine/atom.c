@@ -350,7 +350,7 @@ int atom_init_atm (int id)
 
 
 			/* set new pc address */
-			cpu_set_pc(exec);
+			cpunum_set_pc(0,exec);
 
 			/* free the data */
 			free(quickload_data);
