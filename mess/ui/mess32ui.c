@@ -93,6 +93,7 @@ static char s_szSelectedItem[256];
 
 struct deviceentry
 {
+	int dev_type;
 	const char *icon_name;
 	const char *dlgname;
 };
@@ -112,18 +113,19 @@ struct deviceentry
 /* TODO - We need to make icons for Cylinders, Punch Cards, and Punch Tape! */
 static struct deviceentry s_devices[] =
 {
-	{ "roms",		"Cartridge images" },	/* IO_CARTSLOT */
-	{ "floppy",		"Floppy disk images" },	/* IO_FLOPPY */
-	{ "hard",		"Hard disk images" },	/* IO_HARDDISK */
-	{ NULL,			"Cylinders" },			/* IO_CYLINDER */
-	{ NULL,			"Cassette images" },	/* IO_CASSETTE */
-	{ NULL,			"Punchcard images" },	/* IO_PUNCHCARD */
-	{ NULL,			"Punchtape images" },	/* IO_PUNCHTAPE */
-	{ NULL,			"Printer Output" },		/* IO_PRINTER */
-	{ NULL,			"Serial Output" },		/* IO_SERIAL */
-	{ NULL,			"Parallel Output" },	/* IO_PARALLEL */
-	{ "snapshot",	"Snapshots" },			/* IO_SNAPSHOT */
-	{ "snapshot",	"Quickloads" }			/* IO_QUICKLOAD */
+	{ IO_CARTSLOT,	"roms",		"Cartridge images" },	/* IO_CARTSLOT */
+	{ IO_FLOPPY,	"floppy",	"Floppy disk images" },	/* IO_FLOPPY */
+	{ IO_HARDDISK,	"hard",		"Hard disk images" },	/* IO_HARDDISK */
+	{ IO_CYLINDER,	NULL,		"Cylinders" },			/* IO_CYLINDER */
+	{ IO_CASSETTE,	NULL,		"Cassette images" },	/* IO_CASSETTE */
+	{ IO_PUNCHCARD,	NULL,		"Punchcard images" },	/* IO_PUNCHCARD */
+	{ IO_PUNCHTAPE,	NULL,		"Punchtape images" },	/* IO_PUNCHTAPE */
+	{ IO_PRINTER,	NULL,		"Printer Output" },		/* IO_PRINTER */
+	{ IO_SERIAL,	NULL,		"Serial Output" },		/* IO_SERIAL */
+	{ IO_PARALLEL,	NULL,		"Parallel Output" },	/* IO_PARALLEL */
+	{ IO_SNAPSHOT,	"snapshot",	"Snapshots" },			/* IO_SNAPSHOT */
+	{ IO_QUICKLOAD,	"snapshot",	"Quickloads" },			/* IO_QUICKLOAD */
+	{ IO_MEMCARD,	NULL,		"Memory cards" }		/* IO_MEMCARD */
 };
 
 static void AssertValidDevice(int d)

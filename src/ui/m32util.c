@@ -380,58 +380,75 @@ BOOL DriverUsesSamples(int driver_index)
 
 BOOL DriverUsesTrackball(int driver_index)
 {
-	const struct InputPort *input_ports;
-	BOOL result = FALSE;
+	 const struct InputPort *input_ports;
+	 BOOL retval = FALSE;
 
-	begin_resource_tracking();
+	 if (drivers[driver_index]->construct_ipt == NULL)
+		  return FALSE;
+			
+	 begin_resource_tracking();
+	 input_ports = input_port_allocate(drivers[driver_index]->construct_ipt);
 
-	input_ports = input_port_allocate(drivers[driver_index]->construct_ipt);
-	while(input_ports->type != IPT_END)
-	{
+	 while (1)
+    {
         UINT32 type;
 
         type = input_ports->type;
+
+        if (type == IPT_END)
+            break;
+
+        type &= ~IPF_MASK;
         
         if (type == IPT_DIAL || type == IPT_PADDLE || 
 			type == IPT_TRACKBALL_X || type == IPT_TRACKBALL_Y ||
             type == IPT_AD_STICK_X || type == IPT_AD_STICK_Y)
-        {
-            result = TRUE;
-			break;
-        }
+		  {
+				retval = TRUE;
+				break;
+		  }
         
         input_ports++;
     }
 
-	end_resource_tracking();
-    return result;
+	 end_resource_tracking();
+
+    return retval;
 }
 
 BOOL DriverUsesLightGun(int driver_index)
 {
-	const struct InputPort *input_ports;
-	BOOL result = FALSE;
+	 const struct InputPort *input_ports;
+	 BOOL retval = FALSE;
+	 if (drivers[driver_index]->construct_ipt == NULL)
+		  return FALSE;
 
-	begin_resource_tracking();
+	 begin_resource_tracking();
+	 input_ports = input_port_allocate(drivers[driver_index]->construct_ipt);
 
-	input_ports = input_port_allocate(drivers[driver_index]->construct_ipt);
-	while(input_ports->type != IPT_END)
-	{
+	 while (1)
+    {
         UINT32 type;
 
         type = input_ports->type;
-        
-		if (type == IPT_LIGHTGUN_X || type == IPT_LIGHTGUN_Y)
-        {
-            result = TRUE;
+
+        if (type == IPT_END)
 			break;
-        }
+
+		  type &= ~IPF_MASK;
+        
+		  if (type == IPT_LIGHTGUN_X || type == IPT_LIGHTGUN_Y)
+		  {
+				retval = TRUE;
+				break;
+		  }
         
         input_ports++;
     }
 
-	end_resource_tracking();
-    return result;
+	 end_resource_tracking();
+
+    return retval;
 }
 
 

@@ -3533,6 +3533,11 @@ void SaveDefaultOptions(void)
 	snprintf(buffer,sizeof(buffer),"%s\\%s",GetIniDir(),DEFAULT_OPTIONS_INI_FILENAME);
 
 	fptr = fopen(buffer,"wt");
+	if( fptr == NULL && GetLastError() == ERROR_PATH_NOT_FOUND )
+	{
+		CreateDirectory( GetIniDir(), NULL);
+		fptr = fopen(buffer,"wt");
+	}
 	if (fptr != NULL)
 	{
 		fprintf(fptr,"### " DEFAULT_OPTIONS_INI_FILENAME " ###\n\n");

@@ -285,8 +285,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,83,0,0
- PRODUCTVERSION 0,83,0,0
+ FILEVERSION 0,84,0,0
+ PRODUCTVERSION 0,84,0,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -312,7 +312,7 @@ BEGIN
             VALUE "CompanyName", "MAME Team\0"
             VALUE "FileDescription", "Multiple Arcade Machine Emulator for Win32\0"
 #endif
-            VALUE "FileVersion", "0, 81, 0, 0\0"
+            VALUE "FileVersion", "0, 84, 0, 0\0"
             VALUE "InternalName", "MAME32\0"
             VALUE "LegalCopyright", "Copyright 1997-2004 Nicola Salmoria and the MAME team\0"
             VALUE "LegalTrademarks", "\0"
@@ -323,7 +323,7 @@ BEGIN
             VALUE "OriginalFilename", "MAME32.exe\0"
             VALUE "ProductName", "MAME32\0"
 #endif
-            VALUE "ProductVersion", "0, 81, 0, 0\0"
+            VALUE "ProductVersion", "0, 84, 0, 0\0"
         END
     END
     BLOCK "VarFileInfo"
@@ -544,27 +544,27 @@ BEGIN
     LTEXT           "Title\nDirectory\nExtra",IDC_PROP_TITLE,52,9,161,25,
                     SS_NOPREFIX
     CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,20,38,178,1
-    LTEXT           "Manufactured:",IDC_STATIC,20,45,47,8
+    LTEXT           "Manufactured:",IDC_STATIC,18,45,47,8
     LTEXT           "Static",IDC_PROP_MANUFACTURED,75,45,139,9,SS_NOPREFIX
-    LTEXT           "Status:",IDC_STATIC,20,55,47,8
+    LTEXT           "Status:",IDC_STATIC,18,55,47,8
     LTEXT           "Static",IDC_PROP_STATUS,75,55,139,30
-    CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,15,85,172,1
-    LTEXT           "CPU:",IDC_STATIC,22,90,47,8
-    LTEXT           "Static\nStatic\nStatic\nStatic\nStatic",IDC_PROP_CPU,72,
+    CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,18,85,178,1
+    LTEXT           "CPU:",IDC_STATIC,18,90,47,8
+    LTEXT           "Static\nStatic\nStatic\nStatic\nStatic",IDC_PROP_CPU,75,
                     90,139,40
-    CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,20,130,173,1
-    LTEXT           "Sound:",IDC_STATIC,20,135,47,8
+    CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,18,130,178,1
+    LTEXT           "Sound:",IDC_STATIC,18,135,47,8
     LTEXT           "Static\nStatic\nStatic\nStatic\nStatic",IDC_PROP_SOUND,
-                    74,135,139,45
-    CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,18,181,174,1
+                    75,135,139,45
+    CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,18,181,178,1
     LTEXT           "Screen:",IDC_STATIC,18,188,47,8
-    LTEXT           "Static",IDC_PROP_SCREEN,74,188,139,8
+    LTEXT           "Static",IDC_PROP_SCREEN,75,188,139,8
     LTEXT           "Colors:",IDC_STATIC,18,198,47,8
-    LTEXT           "Static",IDC_PROP_COLORS,74,198,139,8
+    LTEXT           "Static",IDC_PROP_COLORS,75,198,139,8
     LTEXT           "Clone of:",IDC_PROP_CLONEOF_TEXT,18,218,50,8
-    LTEXT           "Static",IDC_PROP_CLONEOF,74,218,130,8
+    LTEXT           "Static",IDC_PROP_CLONEOF,75,218,130,8
     LTEXT           "Source:",IDC_STATIC,18,208,47,8
-    LTEXT           "Static",IDC_PROP_SOURCE,74,208,139,8
+    LTEXT           "Static",IDC_PROP_SOURCE,75,208,139,8
 END
 
 IDD_PROP_AUDIT DIALOG DISCARDABLE  0, 0, 220, 205
@@ -1402,6 +1402,12 @@ BEGIN
         TOPMARGIN, 7
         BOTTOMMARGIN, 46
     END
+
+    IDD_INTERFACE_OPTIONS, DIALOG
+    BEGIN
+        BOTTOMMARGIN, 201
+    END
+
 
     IDD_LANGUAGE, DIALOG
     BEGIN

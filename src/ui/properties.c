@@ -689,12 +689,12 @@ static char *GameInfoScreen(UINT nIndex)
 	else
 	{
 		if (drivers[nIndex]->flags & ORIENTATION_SWAP_XY)
-			sprintf(buf,"%d x %d (vert) %5.2f Hz",
+			sprintf(buf,"%d x %d (V) %f Hz",
 					drv.default_visible_area.max_y - drv.default_visible_area.min_y + 1,
 					drv.default_visible_area.max_x - drv.default_visible_area.min_x + 1,
 					drv.frames_per_second);
 		else
-			sprintf(buf,"%d x %d (horz) %5.2f Hz",
+			sprintf(buf,"%d x %d (H) %f Hz",
 					drv.default_visible_area.max_x - drv.default_visible_area.min_x + 1,
 					drv.default_visible_area.max_y - drv.default_visible_area.min_y + 1,
 					drv.frames_per_second);
@@ -737,43 +737,43 @@ const char *GameInfoStatus(int driver_index, BOOL bRomStatus)
 				{
 					if (*buffer != '\0')
 						strcat(buffer, "\r\n");
-					strcat(buffer, "Unemulated Protection");
+					strcat(buffer, "Game protection isn't fully emulated");
 				}
 				if (drivers[driver_index]->flags & GAME_WRONG_COLORS)
 				{
 					if (*buffer != '\0')
 						strcat(buffer, "\r\n");
-					strcat(buffer, "Colors are totally wrong");
+					strcat(buffer, "Colors are completely wrong");
 				}
 				if (drivers[driver_index]->flags & GAME_IMPERFECT_COLORS)
 				{
 					if (*buffer != '\0')
 						strcat(buffer, "\r\n");
-					strcat(buffer, "Imperfect Colors");
+					strcat(buffer, "Colors aren't 100% accurate");
 				}
 				if (drivers[driver_index]->flags & GAME_IMPERFECT_GRAPHICS)
 				{
 					if (*buffer != '\0')
 						strcat(buffer, "\r\n");
-					strcat(buffer, "Imperfect Graphics");
+					strcat(buffer, "Video emulation isn't 100% accurate");
 				}
 				if (drivers[driver_index]->flags & GAME_NO_SOUND)
 				{
 					if (*buffer != '\0')
 						strcat(buffer, "\r\n");
-					strcat(buffer, "Sound is missing");
+					strcat(buffer, "Game lacks sound");
 				}
 				if (drivers[driver_index]->flags & GAME_IMPERFECT_SOUND)
 				{
 					if (*buffer != '\0')
 						strcat(buffer, "\r\n");
-					strcat(buffer, "Imperfect Sound");
+					strcat(buffer, "Sound emulation isn't 100% accurate");
 				}
 				if (drivers[driver_index]->flags & GAME_NO_COCKTAIL)
 				{
 					if (*buffer != '\0')
 						strcat(buffer, "\r\n");
-					strcat(buffer, "Screen flip support is missing");
+					strcat(buffer, "Screen flipping is not supported");
 				}
  			}
 			else
@@ -784,43 +784,43 @@ const char *GameInfoStatus(int driver_index, BOOL bRomStatus)
 				{
 					if (*buffer != '\0')
 						strcat(buffer, "\r\n");
-					strcat(buffer, "Unemulated Protection");
+					strcat(buffer, "Game protection isn't fully emulated");
 				}
 				if (drivers[driver_index]->flags & GAME_WRONG_COLORS)
 				{
 					if (*buffer != '\0')
 						strcat(buffer, "\r\n");
-					strcat(buffer, "Colors are totally wrong");
+					strcat(buffer, "Colors are completely wrong");
 				}
 				if (drivers[driver_index]->flags & GAME_IMPERFECT_COLORS)
 				{
 					if (*buffer != '\0')
 						strcat(buffer, "\r\n");
-					strcat(buffer, "Imperfect Colors");
+					strcat(buffer, "Colors aren't 100% accurate");
 				}
 				if (drivers[driver_index]->flags & GAME_IMPERFECT_GRAPHICS)
 				{
 					if (*buffer != '\0')
 						strcat(buffer, "\r\n");
-					strcat(buffer, "Imperfect Graphics");
+					strcat(buffer, "Video emulation isn't 100% accurate");
 				}
 				if (drivers[driver_index]->flags & GAME_NO_SOUND)
 				{
 					if (*buffer != '\0')
 						strcat(buffer, "\r\n");
-					strcat(buffer, "Sound is missing");
+					strcat(buffer, "Game lacks sound");
 				}
 				if (drivers[driver_index]->flags & GAME_IMPERFECT_SOUND)
 				{
 					if (*buffer != '\0')
 						strcat(buffer, "\r\n");
-					strcat(buffer, "Imperfect Sound");
+					strcat(buffer, "Sound emulation isn't 100% accurate");
 				}
 				if (drivers[driver_index]->flags & GAME_NO_COCKTAIL)
 				{
 					if (*buffer != '\0')
 						strcat(buffer, "\r\n");
-					strcat(buffer, "Screen flip support is missing");
+					strcat(buffer, "Screen flipping is not supported");
 				}
 			}
 		}
@@ -849,43 +849,43 @@ const char *GameInfoStatus(int driver_index, BOOL bRomStatus)
 		{
 			if (*buffer != '\0')
 				strcat(buffer, "\r\n");
-			strcat(buffer, "Unemulated Protection");
+			strcat(buffer, "Game protection isn't fully emulated");
 		}
 		if (drivers[driver_index]->flags & GAME_WRONG_COLORS)
 		{
 		if (*buffer != '\0')
 				strcat(buffer, "\r\n");
-			strcat(buffer, "Colors are totally wrong");
+			strcat(buffer, "Colors are completely wrong");
 		}
 		if (drivers[driver_index]->flags & GAME_IMPERFECT_COLORS)
 		{
 			if (*buffer != '\0')
 				strcat(buffer, "\r\n");
-			strcat(buffer, "Imperfect Colors");
+			strcat(buffer, "Colors aren't 100% accurate");
 		}
 		if (drivers[driver_index]->flags & GAME_IMPERFECT_GRAPHICS)
 		{
 			if (*buffer != '\0')
 				strcat(buffer, "\r\n");
-			strcat(buffer, "Imperfect Graphics");
+			strcat(buffer, "Video emulation isn't 100% accurate");
 		}
 		if (drivers[driver_index]->flags & GAME_NO_SOUND)
 		{
 			if (*buffer != '\0')
 				strcat(buffer, "\r\n");
-			strcat(buffer, "Sound is missing");
+			strcat(buffer, "Game lacks sound");
 		}
 		if (drivers[driver_index]->flags & GAME_IMPERFECT_SOUND)
 		{
 			if (*buffer != '\0')
 				strcat(buffer, "\r\n");
-			strcat(buffer, "Imperfect Sound");
+			strcat(buffer, "Sound emulation isn't 100% accurate");
 		}
 		if (drivers[driver_index]->flags & GAME_NO_COCKTAIL)
 		{
 			if (*buffer != '\0')
 				strcat(buffer, "\r\n");
-			strcat(buffer, "Screen flip support is missing");
+			strcat(buffer, "Screen flipping is not supported");
 		}
 	}
 	return buffer;

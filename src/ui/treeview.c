@@ -509,7 +509,10 @@ static const char* ParseManufacturer(const char *s, int *pParsedChars )
 			break;
         }
 		if( s[0] == ' ' && s[1] == '?' )
+		{
+			(*pParsedChars) += 2;
 			s+=2;
+		}
 
         /* skip over opening braces*/
 
