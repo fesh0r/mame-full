@@ -4120,7 +4120,7 @@ The "Hardware multiply" and "Hardware divide" switches enable or disable
 the automatic multiply/divide extension. When they are enabled, two pdp-1
 machine instructions (namely MUS and DIS) are replaced with two other,
 incompatible, instructions (MUL and DIV, repectively). Therefore, programs
-which uses the former variant of these instructions require automatic
+which use the former variant of these instructions require automatic
 multiply/divide to be disabled, whereas programs which use the latter require
 it to be enabled. In practice, Spacewar! requires automatic multiply and
 divide to be DISABLED (i.e. both switches OFF), whereas LISP requires
@@ -4708,14 +4708,15 @@ $end
 
 $info=ti990_10
 $bio
-Texas Instruments Model TI-990/10 Minicomputer System
+Texas Instruments Model 990/10 Minicomputer System
 
 
 Known Issues:
 
-No complete DX10 or DNOS image is available at the time of writing.
-
 The controller panel is not emulated yet.
+
+The computer seems to lock when running various installation scripts, and
+rebuilding the system.
 
 
 Usage:
@@ -4724,12 +4725,11 @@ This driver emulates a TI990/10 CPU with mapping option, 1Mbyte of RAM,
 a generic disk controller at TILINE base >1ff800, a generic tape controller
 at TILINE base >1ff880, and a 911 VDT at CRU base >0100.
 
-This is enough to build DX10 or DNOS. I have been using a build tape image
-as tape unit #1 and a blank disk image as disk unit #1 (with the SCOSTA flag
+This is enough to build DX10 or DNOS. I have been able to build a working DX10
+3.7 or 3.6 system from the revelant build and backup tapes. (Tape loaded as
+tape unit #1 and a blank disk image as disk unit #1 (with the SCOSTA flag
 at offset >A4 set to >0002, so that the build tape does not try to format the
-disk). The build tape boots, and I am able to build a bootable disk image.
-The problems start at step 3 (restore after reboot), as it seems I do not
-have an image of the backup tape that goes with the build tape.
+disk)). I have even managed to instal the fun and games tape, and play pacman.
 
 
 History and Trivia:
@@ -4737,7 +4737,9 @@ History and Trivia:
 Texas Instruments has been building minicomputers since the late 1960s through
 the 1980s.
 
-In 1974, TI started to build the prototype of the TI990 series, the TI990/9.
+Around the summer of 1973, they started to design the TI990 as a successor to
+the 960 and 980 computers they were building at the time. In 1974, TI started
+to build the prototype of the TI990 series, the TI990/9.
 
 In 1975, they released the first commercial system, the TI990/10. It was
 a minicomputer built with TTL logic. Although it was a 16-bit CPU,
@@ -4852,7 +4854,7 @@ Usage:
 
 This TI99/4a driver offers a high level of compatibility. It currently
 supports V9t9-format cartridge images, sampled tapes in wave format
-(CS1 unit only), and up to 3 SSSD disk images. Speech synthesis is emulated,
+(CS1 and CS2), and up to 3 SSSD disk images. Speech synthesis is emulated,
 although speech ROM emulation is still in the works. TI, Super AMS and
 Foundation memory expansion cards are supported.
 
@@ -4929,7 +4931,7 @@ $end
 
 #Known Issues:
 
-#This TI99/2 driver is preliminary and could not be tested.  (It may work,
+#This TI99/2 driver is preliminary and could not be tested. (It may work,
 #it may not work.) It is commented out in the source code distribution.
 
 
@@ -4943,9 +4945,9 @@ $end
 #It featured a TMS9995 microprocessor (with on-line timer and 256-byte RAM),
 #4kb of RAM, 24kb (or 32kb) of ROM, a B&W character-based display.  There
 #was no sound generator.  It was mostly incompatible with TI99/4(a), but
-#used the same Basic syntax and file format.
+#it used the same Basic syntax and file format.
 
-#The computer was obviously unattractive.  On the other hand, it would have
+#The computer was obviously unattractive. On the other hand, it would have
 #been cheap, fairly fast for its time, and easy to program in both BASIC and
 #assembly.
 
