@@ -563,7 +563,7 @@ void basicdsk_write_sector_data_from_buffer(int drive, int side, int index1, cha
 {
 	basicdsk *w = &basicdsk_drives[drive];
 
-	if (basicdsk_seek(w, w->track, side, index1))
+	if (basicdsk_seek(w, w->track, side, index1)&&w->mode)
 	{
 		osd_fwrite(w->image_file, ptr, length);
 	}
