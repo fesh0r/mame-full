@@ -283,7 +283,7 @@ static UINT8 *mapper_alphanumeric(UINT8 *mem, int param, int *fg, int *bg, int *
 {
 	UINT8 b;
 	UINT8 *character;
-	int bgc, fgc;
+	int bgc = 0, fgc = 0;
 
 	b = *mem;
 
@@ -379,11 +379,11 @@ void internal_m6847_vh_screenrefresh(struct rasterbits_source *rs,
 	const int *metapalette, UINT8 *vrambase,
 	int skew_up, int border_color, int wf, artifactproc artifact)
 {
-	static int rowheights[] = {
+/*	static int rowheights[] = {
 		12,		12,		12,		12,		12,		12,		12,		12,
 		3,		3,		3,		2,		2,		1,		1,		1
 	};
-
+*/
 	rs->videoram = vrambase;
 	rs->size = the_state.initparams.ramsize;
 	rs->position = the_state.videooffset;
@@ -497,7 +497,7 @@ int m6847_get_bordercolor(void)
 	return bordercolor;
 }
 
-static m6847_bordercolor(void)
+static int m6847_bordercolor(void)
 {
 	int pen = 0;
 

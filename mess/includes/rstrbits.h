@@ -23,7 +23,7 @@ enum {
 	/* text flags */
 	RASTERBITS_FLAG_BLINKNOW		= 0x04, /* this frame represents a transition frame (blinking <==> non-blinking) */
 	RASTERBITS_FLAG_BLINKING		= 0x08,	/* we are currently blinking (i.e. - blinking out) */
-	RASTERBITS_FLAG_TEXTMODULO		= 0x10, /* bits from the font are displayed modulo the line, as opposed to from the beginning */
+	RASTERBITS_FLAG_TEXTMODULO		= 0x10  /* bits from the font are displayed modulo the line, as opposed to from the beginning */
 };
 
 enum {
