@@ -20,52 +20,52 @@ The memory map is the same for many games, but the I/O ports change. The
 following ones are for Carnival, and apply to many other games as well.
 
 read:
-00        IN0
-          bit 0 = connector
-          bit 1 = connector
-          bit 2 = dsw
-          bit 3 = dsw
-          bit 4 = connector
-          bit 5 = connector
-          bit 6 = seems unused
-          bit 7 = seems unused
+00		  IN0
+		  bit 0 = connector
+		  bit 1 = connector
+		  bit 2 = dsw
+		  bit 3 = dsw
+		  bit 4 = connector
+		  bit 5 = connector
+		  bit 6 = seems unused
+		  bit 7 = seems unused
 
-01        IN1
-          bit 0 = connector
-          bit 1 = connector
-          bit 2 = dsw
-          bit 3 = vblank
-          bit 4 = connector
-          bit 5 = connector
-          bit 6 = seems unused
-          bit 7 = seems unused
+01		  IN1
+		  bit 0 = connector
+		  bit 1 = connector
+		  bit 2 = dsw
+		  bit 3 = vblank
+		  bit 4 = connector
+		  bit 5 = connector
+		  bit 6 = seems unused
+		  bit 7 = seems unused
 
-02        IN2
-          bit 0 = connector
-          bit 1 = connector
-          bit 2 = dsw
-          bit 3 = timer? is this used?
-          bit 4 = connector
-          bit 5 = connector
-          bit 6 = seems unused
-          bit 7 = seems unused
+02		  IN2
+		  bit 0 = connector
+		  bit 1 = connector
+		  bit 2 = dsw
+		  bit 3 = timer? is this used?
+		  bit 4 = connector
+		  bit 5 = connector
+		  bit 6 = seems unused
+		  bit 7 = seems unused
 
-03        IN3
-          bit 0 = connector
-          bit 1 = connector
-          bit 2 = dsw
-          bit 3 = COIN (must reset the CPU to make the game acknowledge it)
-          bit 4 = connector
-          bit 5 = connector
-          bit 6 = seems unused
-          bit 7 = seems unused
+03		  IN3
+		  bit 0 = connector
+		  bit 1 = connector
+		  bit 2 = dsw
+		  bit 3 = COIN (must reset the CPU to make the game acknowledge it)
+		  bit 4 = connector
+		  bit 5 = connector
+		  bit 6 = seems unused
+		  bit 7 = seems unused
 
 write:
 	(ports 1 and 2: see definitions in sound driver)
 
-08        ?
+08		  ?
 
-40        palette bank
+40		  palette bank
 
 ***************************************************************************/
 
@@ -75,7 +75,7 @@ write:
 
 
 
-#define	PSG_CLOCK_CARNIVAL	( 3579545 / 3 )	/* Hz */
+#define PSG_CLOCK_CARNIVAL	( 3579545 / 3 ) /* Hz */
 
 
 static unsigned char *vicdual_ram;
@@ -104,7 +104,7 @@ extern const char *invinco_sample_names[];
 WRITE_HANDLER( invinco_sh_port2_w );
 
 /* Pulsar sound handlers */
-extern const char *pulsar_sample_names[];
+/* extern const char *pulsar_sample_names[]; */
 WRITE_HANDLER( pulsar_sh_port1_w );
 WRITE_HANDLER( pulsar_sh_port2_w );
 
@@ -172,7 +172,7 @@ static struct MemoryReadAddress vicdual_readmem[] =
 	{ 0xf000, 0xf3ff, videoram_r },
 	{ 0xf400, 0xf7ff, vicdual_ram_r },
 	{ 0xf800, 0xffff, vicdual_characterram_r },
-	{ -1 }  /* end of table */
+	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress vicdual_writemem[] =
@@ -202,7 +202,7 @@ static struct MemoryWriteAddress vicdual_writemem[] =
 	{ 0xf000, 0xf3ff, videoram_w },
 	{ 0xf400, 0xf7ff, vicdual_ram_w },
 	{ 0xf800, 0xffff, vicdual_characterram_w },
-	{ -1 }  /* end of table */
+	{ -1 }	/* end of table */
 };
 
 
@@ -214,7 +214,7 @@ static struct MemoryReadAddress safari_readmem[] =
 	{ 0xe000, 0xe3ff, videoram_r },
 	{ 0xe400, 0xe7ff, vicdual_ram_r },
 	{ 0xe800, 0xefff, vicdual_characterram_r },
-	{ -1 }  /* end of table */
+	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress safari_writemem[] =
@@ -224,7 +224,7 @@ static struct MemoryWriteAddress safari_writemem[] =
 	{ 0xe000, 0xe3ff, videoram_w, &videoram, &videoram_size },
 	{ 0xe400, 0xe7ff, vicdual_ram_w, &vicdual_ram },
 	{ 0xe800, 0xefff, vicdual_characterram_w, &vicdual_characterram },
-	{ -1 }  /* end of table */
+	{ -1 }	/* end of table */
 };
 
 
@@ -232,7 +232,7 @@ static struct IOReadPort readport_2ports[] =
 {
 	{ 0x01, 0x01, input_port_0_r },
 	{ 0x08, 0x08, input_port_1_r },
-	{ -1 }  /* end of table */
+	{ -1 }	/* end of table */
 };
 
 static struct IOReadPort readport_3ports[] =
@@ -240,7 +240,7 @@ static struct IOReadPort readport_3ports[] =
 	{ 0x01, 0x01, input_port_0_r },
 	{ 0x04, 0x04, input_port_1_r },
 	{ 0x08, 0x08, input_port_2_r },
-	{ -1 }  /* end of table */
+	{ -1 }	/* end of table */
 };
 
 static struct IOReadPort readport_4ports[] =
@@ -249,21 +249,21 @@ static struct IOReadPort readport_4ports[] =
 	{ 0x01, 0x01, input_port_1_r },
 	{ 0x02, 0x02, input_port_2_r },
 	{ 0x03, 0x03, input_port_3_r },
-	{ -1 }  /* end of table */
+	{ -1 }	/* end of table */
 };
 
 static struct IOReadPort readport_safari[] =
 {
 	{ 0x03, 0x03, input_port_0_r },
 	{ 0x08, 0x08, input_port_1_r },
-	{ -1 }  /* end of table */
+	{ -1 }	/* end of table */
 };
 
 
 static struct IOWritePort writeport[] =
 {
 	{ 0x40, 0x40, vicdual_palette_bank_w },
-	{ -1 }  /* end of table */
+	{ -1 }	/* end of table */
 };
 
 
@@ -302,10 +302,10 @@ INPUT_PORTS_START( depthch )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY )
 	PORT_DIPNAME (0x30, 0x30, DEF_STR( Coinage ) )
-	PORT_DIPSETTING (   0x00, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING (   0x10, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING (   0x20, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING (   0x30, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING (	0x00, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING (	0x10, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING (	0x20, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING (	0x30, DEF_STR( 1C_1C ) )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* probably unused */
 
 	PORT_START	/* IN1 */
@@ -316,7 +316,7 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( safari )
 	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP	  | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
@@ -329,10 +329,10 @@ INPUT_PORTS_START( safari )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_VBLANK )
 	PORT_BIT( 0x0e, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* probably unused */
 	PORT_DIPNAME (0x30, 0x30, DEF_STR( Coinage ) )
-	PORT_DIPSETTING (   0x00, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING (   0x10, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING (   0x20, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING (   0x30, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING (	0x00, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING (	0x10, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING (	0x20, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING (	0x30, DEF_STR( 1C_1C ) )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* probably unused */
 	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1 | IPF_RESETCPU, 30 )
 INPUT_PORTS_END
@@ -343,17 +343,17 @@ INPUT_PORTS_START( frogs )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x10, "Allow Free Game" )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Yes ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x10, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x20, 0x20, "Time" )
-	PORT_DIPSETTING(    0x00, "60" )
-	PORT_DIPSETTING(    0x20, "90" )
+	PORT_DIPSETTING(	0x00, "60" )
+	PORT_DIPSETTING(	0x20, "90" )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( 1C_1C ) )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
 
 	PORT_START	/* IN1 */
@@ -375,25 +375,25 @@ INPUT_PORTS_START( sspaceat )
 
 	PORT_START	/* IN1 */
 	PORT_DIPNAME( 0x01, 0x00, "Bonus Life After 1st Stage" )
-	PORT_DIPSETTING(    0x01, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPSETTING(	0x01, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x0e, 0x0e, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x0e, "3" )
-	PORT_DIPSETTING(    0x0c, "4" )
-	PORT_DIPSETTING(    0x0a, "5" )
-	PORT_DIPSETTING(    0x06, "6" )
+	PORT_DIPSETTING(	0x0e, "3" )
+	PORT_DIPSETTING(	0x0c, "4" )
+	PORT_DIPSETTING(	0x0a, "5" )
+	PORT_DIPSETTING(	0x06, "6" )
 /* the following are duplicates
-	PORT_DIPSETTING(    0x00, "4" )
-	PORT_DIPSETTING(    0x04, "4" )
-	PORT_DIPSETTING(    0x08, "4" )
-	PORT_DIPSETTING(    0x02, "5" ) */
+	PORT_DIPSETTING(	0x00, "4" )
+	PORT_DIPSETTING(	0x04, "4" )
+	PORT_DIPSETTING(	0x08, "4" )
+	PORT_DIPSETTING(	0x02, "5" ) */
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x00, "10000" )
-	PORT_DIPSETTING(    0x10, "15000" )
+	PORT_DIPSETTING(	0x00, "10000" )
+	PORT_DIPSETTING(	0x10, "15000" )
 	PORT_BIT( 0x60, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* probably unused */
 	PORT_DIPNAME( 0x80, 0x00, "Credits Display" )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_VBLANK )
@@ -404,18 +404,18 @@ INPUT_PORTS_END
 INPUT_PORTS_START( headon )
 	PORT_START	/* IN0 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x00, "3" )
-	PORT_DIPSETTING(    0x01, "4" )
-	PORT_DIPSETTING(    0x02, "5" )
-	PORT_DIPSETTING(    0x03, "6" )
+	PORT_DIPSETTING(	0x00, "3" )
+	PORT_DIPSETTING(	0x01, "4" )
+	PORT_DIPSETTING(	0x02, "5" )
+	PORT_DIPSETTING(	0x03, "6" )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP	  | IPF_4WAY )
 
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_VBLANK )
@@ -432,22 +432,22 @@ INPUT_PORTS_START( headon2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP	  | IPF_4WAY )
 
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x07, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x18, "4" )
-	PORT_DIPSETTING(    0x10, "5" )
-	PORT_DIPSETTING(    0x00, "6" )
-/*	PORT_DIPSETTING(    0x08, "5" )*/
+	PORT_DIPSETTING(	0x18, "4" )
+	PORT_DIPSETTING(	0x10, "5" )
+	PORT_DIPSETTING(	0x00, "6" )
+/*	PORT_DIPSETTING(	0x08, "5" )*/
 	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* probably unused */
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_VBLANK )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x02, DEF_STR( On ) )
 	PORT_BIT( 0x7c, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* probably unused */
 	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1 | IPF_RESETCPU, 30 )
 INPUT_PORTS_END
@@ -457,21 +457,21 @@ INPUT_PORTS_START( invho2 )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_DIPNAME( 0x04, 0x04, "Head On Lives (1/2)" )
-	PORT_DIPSETTING(    0x04, "+0" )
-	PORT_DIPSETTING(    0x00, "+1" )
+	PORT_DIPSETTING(	0x04, "+0" )
+	PORT_DIPSETTING(	0x00, "+1" )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP	  | IPF_4WAY )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_DIPNAME( 0x04, 0x00, "Head On Lives (2/2)" )
-	PORT_DIPSETTING(    0x04, "+0" )
-	PORT_DIPSETTING(    0x00, "+1" )
+	PORT_DIPSETTING(	0x04, "+0" )
+	PORT_DIPSETTING(	0x00, "+1" )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_VBLANK )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
@@ -481,12 +481,12 @@ INPUT_PORTS_START( invho2 )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_DIPNAME( 0x04, 0x00, "Invinco Lives" )
-	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPSETTING(    0x04, "6" )
+	PORT_DIPSETTING(	0x00, "5" )
+	PORT_DIPSETTING(	0x04, "6" )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* timer - unused */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )	/* probably unused */
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED ) /* probably unused */
 
 	PORT_START	/* IN3 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
@@ -495,8 +495,8 @@ INPUT_PORTS_START( invho2 )
 	/* bit of the Invinco Lives setting, but the game reads bit 3 instead */
 	/* of bit 2. */
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BIT_IMPULSE( 0x08, IP_ACTIVE_LOW, IPT_COIN1 | IPF_RESETCPU, 30 )
 	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_TOGGLE, "Game Select", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
@@ -508,21 +508,21 @@ INPUT_PORTS_START( samurai )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* probably unused */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* probably unused */
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x04, "3" )
-	PORT_DIPSETTING(    0x00, "4" )
-	PORT_BITX(    0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Infinite Lives", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x04, "3" )
+	PORT_DIPSETTING(	0x00, "4" )
+	PORT_BITX(	  0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Infinite Lives", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(	0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP	  | IPF_4WAY )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* probably unused */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* protection, see samurai_input_r() */
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) ) /* unknown, but used */
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_VBLANK ) /* seems to be on port 2 instead */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
@@ -532,10 +532,10 @@ INPUT_PORTS_START( samurai )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* probably unused */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* protection, see samurai_input_r() */
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_VBLANK ) /* either vblank, or a timer. In the */
-                                            /* Carnival schematics, it's a timer. */
+											/* Carnival schematics, it's a timer. */
 //	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* timer */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -545,8 +545,8 @@ INPUT_PORTS_START( samurai )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* probably unused */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* protection, see samurai_input_r() */
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BIT_IMPULSE( 0x08, IP_ACTIVE_LOW, IPT_COIN1 | IPF_RESETCPU, 30 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* probably unused */
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
@@ -566,23 +566,23 @@ INPUT_PORTS_START( invinco )
 
 	PORT_START	/* IN1 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x00, "3" )
-	PORT_DIPSETTING(    0x01, "4" )
-	PORT_DIPSETTING(    0x02, "5" )
-	PORT_DIPSETTING(    0x03, "6" )
+	PORT_DIPSETTING(	0x00, "3" )
+	PORT_DIPSETTING(	0x01, "4" )
+	PORT_DIPSETTING(	0x02, "5" )
+	PORT_DIPSETTING(	0x03, "6" )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BIT( 0x60, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_VBLANK )
@@ -595,11 +595,11 @@ INPUT_PORTS_START( invds )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_DIPNAME( 0x04, 0x00, "Invinco Lives (1/2)" )
-	PORT_DIPSETTING(    0x00, "+0" )
-	PORT_DIPSETTING(    0x04, "+1" )
+	PORT_DIPSETTING(	0x00, "+0" )
+	PORT_DIPSETTING(	0x04, "+1" )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -608,8 +608,8 @@ INPUT_PORTS_START( invds )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_DIPNAME( 0x04, 0x00, "Invinco Lives (2/2)" )
-	PORT_DIPSETTING(    0x00, "+0" )
-	PORT_DIPSETTING(    0x04, "+2" )
+	PORT_DIPSETTING(	0x00, "+0" )
+	PORT_DIPSETTING(	0x04, "+2" )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_VBLANK )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
@@ -619,8 +619,8 @@ INPUT_PORTS_START( invds )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_DIPNAME( 0x04, 0x00, "Deep Scan Lives (1/2)" )
-	PORT_DIPSETTING(    0x00, "+0" )
-	PORT_DIPSETTING(    0x04, "+1" )
+	PORT_DIPSETTING(	0x00, "+0" )
+	PORT_DIPSETTING(	0x04, "+1" )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* timer - unused */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -631,8 +631,8 @@ INPUT_PORTS_START( invds )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	/* +1 and +2 gives 2 lives instead of 6 */
 	PORT_DIPNAME( 0x04, 0x00, "Deep Scan Lives (2/2)" )
-	PORT_DIPSETTING(    0x04, "+0" )
-	PORT_DIPSETTING(    0x00, "+2" )
+	PORT_DIPSETTING(	0x04, "+0" )
+	PORT_DIPSETTING(	0x00, "+2" )
 	PORT_BIT_IMPULSE( 0x08, IP_ACTIVE_LOW, IPT_COIN1 | IPF_RESETCPU, 30 )
 	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_TOGGLE, "Game Select", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
@@ -644,21 +644,21 @@ INPUT_PORTS_START( tranqgun )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP	  | IPF_4WAY )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_VBLANK )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
@@ -668,8 +668,8 @@ INPUT_PORTS_START( tranqgun )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* timer */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -679,8 +679,8 @@ INPUT_PORTS_START( tranqgun )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BIT_IMPULSE( 0x08, IP_ACTIVE_LOW, IPT_COIN1 | IPF_RESETCPU, 30 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
@@ -692,11 +692,11 @@ INPUT_PORTS_START( spacetrk )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x04, "3" )
-	PORT_DIPSETTING(    0x00, "4" )
+	PORT_DIPSETTING(	0x04, "3" )
+	PORT_DIPSETTING(	0x00, "4" )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -705,19 +705,19 @@ INPUT_PORTS_START( spacetrk )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) ) /* unknown, but used */
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_VBLANK )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP	  | IPF_8WAY )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* must be high for bonus life to work */
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( On ) )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* timer - unused */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -727,8 +727,8 @@ INPUT_PORTS_START( spacetrk )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* must be high for bonus life to work */
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BIT_IMPULSE( 0x08, IP_ACTIVE_LOW, IPT_COIN1 | IPF_RESETCPU, 30 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
@@ -740,32 +740,32 @@ INPUT_PORTS_START( sptrekct )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x04, "3" )
-	PORT_DIPSETTING(    0x00, "4" )
+	PORT_DIPSETTING(	0x04, "3" )
+	PORT_DIPSETTING(	0x00, "4" )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP	  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) ) /* unknown, but used */
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_VBLANK )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP	  | IPF_8WAY )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* must be high for bonus life to work */
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( On ) )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* timer - unused */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -775,8 +775,8 @@ INPUT_PORTS_START( sptrekct )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* must be high for bonus life to work */
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BIT_IMPULSE( 0x08, IP_ACTIVE_LOW, IPT_COIN1 | IPF_RESETCPU, 30 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
@@ -788,14 +788,14 @@ INPUT_PORTS_START( carnival )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* probably unused */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* probably unused */
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* probably unused */
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
@@ -803,8 +803,8 @@ INPUT_PORTS_START( carnival )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* probably unused */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* probably unused */
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_VBLANK )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
@@ -814,8 +814,8 @@ INPUT_PORTS_START( carnival )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* timer - unused */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -825,8 +825,8 @@ INPUT_PORTS_START( carnival )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BIT_IMPULSE( 0x08, IP_ACTIVE_LOW, IPT_COIN1 | IPF_RESETCPU, 30 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
@@ -838,23 +838,23 @@ INPUT_PORTS_START( carnvckt )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT    | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT	 | IPF_2WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_VBLANK )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
@@ -864,8 +864,8 @@ INPUT_PORTS_START( carnvckt )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* timer - unused */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -875,8 +875,8 @@ INPUT_PORTS_START( carnvckt )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BIT_IMPULSE( 0x08, IP_ACTIVE_LOW, IPT_COIN1 | IPF_RESETCPU, 30 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
@@ -892,27 +892,27 @@ INPUT_PORTS_START( digger )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP	  | IPF_4WAY )
 
 	PORT_START	/* IN1 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x03, "3" )
-	PORT_DIPSETTING(    0x02, "4" )
-	PORT_DIPSETTING(    0x01, "5" )
-	PORT_DIPSETTING(    0x00, "6" )
+	PORT_DIPSETTING(	0x03, "3" )
+	PORT_DIPSETTING(	0x02, "4" )
+	PORT_DIPSETTING(	0x01, "5" )
+	PORT_DIPSETTING(	0x00, "6" )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BIT( 0x60, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_VBLANK )
@@ -925,21 +925,21 @@ INPUT_PORTS_START( pulsar )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_DIPNAME( 0x04, 0x04, "Lives (1/2)" )
-	PORT_DIPSETTING(    0x04, "+0" )
-	PORT_DIPSETTING(    0x00, "+2" )
+	PORT_DIPSETTING(	0x04, "+0" )
+	PORT_DIPSETTING(	0x00, "+2" )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP	  | IPF_4WAY )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_DIPNAME( 0x04, 0x04, "Lives (2/2)" )
-	PORT_DIPSETTING(    0x04, "+0" )
-	PORT_DIPSETTING(    0x00, "+1" )
+	PORT_DIPSETTING(	0x04, "+0" )
+	PORT_DIPSETTING(	0x00, "+1" )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_VBLANK )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
@@ -949,8 +949,8 @@ INPUT_PORTS_START( pulsar )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* probably unused */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* probably unused */
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* timer - unused */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -960,8 +960,8 @@ INPUT_PORTS_START( pulsar )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* probably unused */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* probably unused */
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BIT_IMPULSE( 0x08, IP_ACTIVE_LOW, IPT_COIN1 | IPF_RESETCPU, 30 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
@@ -973,11 +973,11 @@ INPUT_PORTS_START( heiankyo )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) ) /* bonus life? */
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x00, "2 Players Mode" )
-	PORT_DIPSETTING(    0x08, "Alternating" )
-	PORT_DIPSETTING(    0x00, "Simultaneous" )
+	PORT_DIPSETTING(	0x08, "Alternating" )
+	PORT_DIPSETTING(	0x00, "Simultaneous" )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -986,8 +986,8 @@ INPUT_PORTS_START( heiankyo )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) ) /* bonus life? */
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_VBLANK )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -997,19 +997,19 @@ INPUT_PORTS_START( heiankyo )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) ) /* bonus life? */
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* timer - unused */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )	/* probably unused */
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED ) /* probably unused */
 
 	PORT_START	/* IN3 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x00, "3" )
-	PORT_DIPSETTING(    0x04, "5" )
+	PORT_DIPSETTING(	0x00, "3" )
+	PORT_DIPSETTING(	0x04, "5" )
 	PORT_BIT_IMPULSE( 0x08, IP_ACTIVE_LOW, IPT_COIN1 | IPF_RESETCPU, 30 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
@@ -1024,9 +1024,9 @@ static struct GfxLayout charlayout =
 	256,	/* 256 characters */
 	1,	/* 1 bit per pixel */
 	{ 0 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },	/* pretty straightforward layout */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 }, /* pretty straightforward layout */
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8	/* every char takes 8 consecutive bytes */
+	8*8 /* every char takes 8 consecutive bytes */
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
@@ -1039,21 +1039,30 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct Samplesinterface samples_interface =
 {
-	12,	/* 12 channels */
-	50,	/* volume */
+	12, /* 12 channels */
+	50, /* volume */
 	0	/* samplenames filled in later by the _init function */
 };
 
+extern int pulsar_sh_start(const struct MachineSound *msound);
+extern void pulsar_sh_stop(void);
+extern void pulsar_sh_update(void);
+static struct CustomSound_interface custom_interface =
+{
+	pulsar_sh_start,
+	pulsar_sh_stop,
+	pulsar_sh_update
+};
 
 #define MACHINEDRIVER(NAME, MEM, PORT)				\
-static struct MachineDriver machine_driver_##NAME =	\
+static struct MachineDriver machine_driver_##NAME = \
 {													\
 	/* basic machine hardware */					\
 	{												\
 		{											\
 			CPU_Z80,								\
-			15468480/8,								\
-			MEM##_readmem,MEM##_writemem,readport_##PORT,writeport,	\
+			15468480/8, 							\
+			MEM##_readmem,MEM##_writemem,readport_##PORT,writeport, \
 			ignore_interrupt,1						\
 		}											\
 	},												\
@@ -1064,10 +1073,10 @@ static struct MachineDriver machine_driver_##NAME =	\
 	/* video hardware */							\
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },		\
 	gfxdecodeinfo,									\
-	64, 64,											\
+	64, 64, 										\
 	vicdual_vh_convert_color_prom,					\
 													\
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,			\
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY, 		\
 	0,												\
 	generic_vh_start,								\
 	generic_vh_stop,								\
@@ -1079,6 +1088,10 @@ static struct MachineDriver machine_driver_##NAME =	\
 		{											\
 			SOUND_SAMPLES,							\
 			&samples_interface						\
+		},											\
+		{											\
+			SOUND_CUSTOM,							\
+			&custom_interface						\
 		}											\
 	}												\
 };
@@ -1086,7 +1099,7 @@ static struct MachineDriver machine_driver_##NAME =	\
 MACHINEDRIVER( 2ports, vicdual, 2ports )
 MACHINEDRIVER( 3ports, vicdual, 3ports )
 MACHINEDRIVER( 4ports, vicdual, 4ports )
-MACHINEDRIVER( safari, safari,  safari )
+MACHINEDRIVER( safari, safari,	safari )
 
 
 static struct AY8910interface carnival_ay8910_interface =
@@ -1167,8 +1180,8 @@ ROM_START( depthch )
 	ROM_LOAD( "55a",          0x1400, 0x0400, 0x9fc2eb41 )
 
 	ROM_REGION( 0x0040, REGION_USER1 )	/* misc PROMs, but no color so don't use REGION_PROMS! */
-	ROM_LOAD( "316-0043.u87", 0x0000, 0x0020, 0xe60a7960 )	/* control PROM */
-	ROM_LOAD( "316-0042.u88", 0x0020, 0x0020, 0xa1506b9d )	/* sequence PROM */
+	ROM_LOAD( "316-0043.u87", 0x0000, 0x0020, 0xe60a7960 )  /* control PROM */
+	ROM_LOAD( "316-0042.u88", 0x0020, 0x0020, 0xa1506b9d )  /* sequence PROM */
 ROM_END
 
 ROM_START( safari )
@@ -1185,8 +1198,8 @@ ROM_START( safari )
 	ROM_LOAD( "3160057.u39",  0x2400, 0x0400, 0x298e8c41 )
 
 	ROM_REGION( 0x0040, REGION_USER1 )	/* misc PROMs, but no color so don't use REGION_PROMS! */
-	ROM_LOAD( "316-0043.u87", 0x0000, 0x0020, 0xe60a7960 )	/* control PROM */
-	ROM_LOAD( "316-0042.u88", 0x0020, 0x0020, 0xa1506b9d )	/* sequence PROM */
+	ROM_LOAD( "316-0043.u87", 0x0000, 0x0020, 0xe60a7960 )  /* control PROM */
+	ROM_LOAD( "316-0042.u88", 0x0020, 0x0020, 0xa1506b9d )  /* sequence PROM */
 
 ROM_END
 
@@ -1334,8 +1347,8 @@ ROM_START( samurai )
 	ROM_LOAD( "pr55.clr",     0x0000, 0x0020, 0x975f5fb0 )
 
 	ROM_REGION( 0x0040, REGION_USER1 )	/* misc PROMs */
-	ROM_LOAD( "316-0043.u87", 0x0000, 0x0020, 0xe60a7960 )	/* control PROM */
-	ROM_LOAD( "316-0042.u88", 0x0020, 0x0020, 0xa1506b9d )	/* sequence PROM */
+	ROM_LOAD( "316-0043.u87", 0x0000, 0x0020, 0xe60a7960 )  /* control PROM */
+	ROM_LOAD( "316-0042.u88", 0x0020, 0x0020, 0xa1506b9d )  /* sequence PROM */
 ROM_END
 
 ROM_START( invinco )
@@ -1377,7 +1390,7 @@ ROM_START( invds )
 	ROM_LOAD( "316-246",      0x0000, 0x0020, 0xfe4406cb )
 
 	ROM_REGION( 0x0020, REGION_USER1 )	/* misc PROM */
-	ROM_LOAD( "316-0206.u14", 0x0000, 0x0020, 0x9617d796 )	/* control PROM */
+	ROM_LOAD( "316-0206.u14", 0x0000, 0x0020, 0x9617d796 )  /* control PROM */
 ROM_END
 
 ROM_START( tranqgun )
@@ -1403,8 +1416,8 @@ ROM_START( tranqgun )
 	ROM_LOAD( "u49.bin",      0x0000, 0x0020, 0x6481445b )
 
 	ROM_REGION( 0x0040, REGION_USER1 )	/* misc PROMs */
-	ROM_LOAD( "316-0043.u87", 0x0000, 0x0020, 0xe60a7960 )	/* control PROM */
-	ROM_LOAD( "316-0042.u88", 0x0020, 0x0020, 0xa1506b9d )	/* sequence PROM */
+	ROM_LOAD( "316-0043.u87", 0x0000, 0x0020, 0xe60a7960 )  /* control PROM */
+	ROM_LOAD( "316-0042.u88", 0x0020, 0x0020, 0xa1506b9d )  /* sequence PROM */
 ROM_END
 
 ROM_START( spacetrk )
@@ -1430,8 +1443,8 @@ ROM_START( spacetrk )
 	ROM_LOAD( "u49.bin",      0x0000, 0x0020, 0xaabae4cd )
 
 	ROM_REGION( 0x0040, REGION_USER1 )	/* misc PROMs */
-	ROM_LOAD( "316-0043.u87", 0x0000, 0x0020, 0xe60a7960 )	/* control PROM */
-	ROM_LOAD( "316-0042.u88", 0x0020, 0x0020, 0xa1506b9d )	/* sequence PROM */
+	ROM_LOAD( "316-0043.u87", 0x0000, 0x0020, 0xe60a7960 )  /* control PROM */
+	ROM_LOAD( "316-0042.u88", 0x0020, 0x0020, 0xa1506b9d )  /* sequence PROM */
 ROM_END
 
 ROM_START( sptrekct )
@@ -1457,8 +1470,8 @@ ROM_START( sptrekct )
 	ROM_LOAD( "u49.bin",      0x0000, 0x0020, 0xaabae4cd )
 
 	ROM_REGION( 0x0040, REGION_USER1 )	/* misc PROMs */
-	ROM_LOAD( "316-0043.u87", 0x0000, 0x0020, 0xe60a7960 )	/* control PROM */
-	ROM_LOAD( "316-0042.u88", 0x0020, 0x0020, 0xa1506b9d )	/* sequence PROM */
+	ROM_LOAD( "316-0043.u87", 0x0000, 0x0020, 0xe60a7960 )  /* control PROM */
+	ROM_LOAD( "316-0042.u88", 0x0020, 0x0020, 0xa1506b9d )  /* sequence PROM */
 ROM_END
 
 ROM_START( carnival )
@@ -1528,7 +1541,7 @@ ROM_START( digger )
 	ROM_LOAD( "316-507",      0x0000, 0x0020, 0xfdb22e8f )
 
 	ROM_REGION( 0x0020, REGION_USER1 )	/* misc PROM */
-	ROM_LOAD( "316-0206.u14", 0x0000, 0x0020, 0x9617d796 )	/* control PROM */
+	ROM_LOAD( "316-0206.u14", 0x0000, 0x0020, 0x9617d796 )  /* control PROM */
 ROM_END
 
 ROM_START( pulsar )
@@ -1554,7 +1567,7 @@ ROM_START( pulsar )
 	ROM_LOAD( "316-0789.u49", 0x0000, 0x0020, 0x7fc1861f )
 
 	ROM_REGION( 0x0020, REGION_USER1 )	/* misc PROM */
-	ROM_LOAD( "316-0206.u14", 0x0000, 0x0020, 0x9617d796 )	/* control PROM */
+	ROM_LOAD( "316-0206.u14", 0x0000, 0x0020, 0x9617d796 )  /* control PROM */
 ROM_END
 
 ROM_START( heiankyo )
@@ -1579,8 +1592,8 @@ ROM_START( heiankyo )
 	ROM_LOAD( "316-138.u49",  0x0000, 0x0020, 0x67104ea9 )
 
 	ROM_REGION( 0x0040, REGION_USER1 )	/* misc PROMs */
-	ROM_LOAD( "316-0043.u87", 0x0000, 0x0020, 0xe60a7960 )	/* control PROM */
-	ROM_LOAD( "316-0042.u88", 0x0020, 0x0020, 0xa1506b9d )	/* sequence PROM */
+	ROM_LOAD( "316-0043.u87", 0x0000, 0x0020, 0xe60a7960 )  /* control PROM */
+	ROM_LOAD( "316-0042.u88", 0x0020, 0x0020, 0xa1506b9d )  /* sequence PROM */
 ROM_END
 
 
@@ -1673,30 +1686,31 @@ static void init_pulsar(void)
 	install_port_write_handler(0, 0x01, 0x01, pulsar_sh_port1_w);
 	install_port_write_handler(0, 0x02, 0x02, pulsar_sh_port2_w);
 
-	samples_interface.samplenames = pulsar_sample_names;
+/*	samples_interface.samplenames = pulsar_sample_names; */
 
 	vicdual_decode();
 }
 
 
-GAME( 1977, depthch,  0,        2ports,   depthch,  depthch,   ROT0,   "Gremlin", "Depthcharge" )
-GAMEX(1977, safari,   0,        safari,   safari,   nosamples, ROT0,   "Gremlin", "Safari", GAME_NO_SOUND )
-GAMEX(1978, frogs,    0,        2ports,   frogs,    nosamples, ROT0,   "Gremlin", "Frogs", GAME_NO_SOUND )
-GAMEX(1979, sspaceat, 0,        3ports,   sspaceat, nosamples, ROT270, "Sega", "Space Attack (upright)", GAME_NO_SOUND )
+GAME( 1977, depthch,  0,		2ports,   depthch,	depthch,   ROT0,   "Gremlin", "Depthcharge" )
+GAMEX(1977, safari,   0,		safari,   safari,	nosamples, ROT0,   "Gremlin", "Safari", GAME_NO_SOUND )
+GAMEX(1978, frogs,	  0,		2ports,   frogs,	nosamples, ROT0,   "Gremlin", "Frogs", GAME_NO_SOUND )
+GAMEX(1979, sspaceat, 0,		3ports,   sspaceat, nosamples, ROT270, "Sega", "Space Attack (upright)", GAME_NO_SOUND )
 GAMEX(1979, sspacat2, sspaceat, 3ports,   sspaceat, nosamples, ROT270, "Sega", "Space Attack (upright, older)", GAME_NO_SOUND )
 GAMEX(1979, sspacatc, sspaceat, 3ports,   sspaceat, nosamples, ROT270, "Sega", "Space Attack (cocktail)", GAME_NO_SOUND )
-GAMEX(1979, headon,   0,        2ports,   headon,   nosamples, ROT0,   "Gremlin", "Head On (2 players)", GAME_NO_SOUND )
-GAMEX(1979, headonb,  headon,   2ports,   headon,   nosamples, ROT0,   "Gremlin", "Head On (1 player)", GAME_NO_SOUND )
-GAMEX(1979, headon2,  0,        3ports,   headon2,  nosamples, ROT0,   "Sega", "Head On 2", GAME_NO_SOUND )
-GAME( 1979, invho2,   0,        4ports,   invho2,   invho2,    ROT270, "Sega", "Invinco / Head On 2" )
-GAMEX(1980, samurai,  0,        4ports,   samurai,  samurai,   ROT270, "Sega", "Samurai (Sega)", GAME_NO_SOUND )
-GAME( 1979, invinco,  0,        3ports,   invinco,  invinco,   ROT270, "Sega", "Invinco" )
-GAME( 1979, invds,    0,        4ports,   invds,    invds,     ROT270, "Sega", "Invinco / Deep Scan" )
-GAMEX(1980, tranqgun, 0,        4ports,   tranqgun, nosamples, ROT270, "Sega", "Tranquilizer Gun", GAME_NO_SOUND )
-GAMEX(1980, spacetrk, 0,        4ports,   spacetrk, nosamples, ROT270, "Sega", "Space Trek (upright)", GAME_NO_SOUND )
+GAMEX(1979, headon,   0,		2ports,   headon,	nosamples, ROT0,   "Gremlin", "Head On (2 players)", GAME_NO_SOUND )
+GAMEX(1979, headonb,  headon,	2ports,   headon,	nosamples, ROT0,   "Gremlin", "Head On (1 player)", GAME_NO_SOUND )
+GAMEX(1979, headon2,  0,		3ports,   headon2,	nosamples, ROT0,   "Sega", "Head On 2", GAME_NO_SOUND )
+GAME( 1979, invho2,   0,		4ports,   invho2,	invho2,    ROT270, "Sega", "Invinco / Head On 2" )
+GAMEX(1980, samurai,  0,		4ports,   samurai,	samurai,   ROT270, "Sega", "Samurai (Sega)", GAME_NO_SOUND )
+GAME( 1979, invinco,  0,		3ports,   invinco,	invinco,   ROT270, "Sega", "Invinco" )
+GAME( 1979, invds,	  0,		4ports,   invds,	invds,	   ROT270, "Sega", "Invinco / Deep Scan" )
+GAMEX(1980, tranqgun, 0,		4ports,   tranqgun, nosamples, ROT270, "Sega", "Tranquilizer Gun", GAME_NO_SOUND )
+GAMEX(1980, spacetrk, 0,		4ports,   spacetrk, nosamples, ROT270, "Sega", "Space Trek (upright)", GAME_NO_SOUND )
 GAMEX(1980, sptrekct, spacetrk, 4ports,   sptrekct, nosamples, ROT270, "Sega", "Space Trek (cocktail)", GAME_NO_SOUND )
-GAME( 1980, carnival, 0,        carnival, carnival, carnival,  ROT270, "Sega", "Carnival (upright)" )
+GAME( 1980, carnival, 0,		carnival, carnival, carnival,  ROT270, "Sega", "Carnival (upright)" )
 GAME( 1980, carnvckt, carnival, carnival, carnvckt, carnival,  ROT270, "Sega", "Carnival (cocktail)" )
-GAMEX(1980, digger,   0,        3ports,   digger,   nosamples, ROT270, "Sega", "Digger", GAME_NO_SOUND )
-GAME( 1981, pulsar,   0,        4ports,   pulsar,   pulsar,    ROT270, "Sega", "Pulsar" )
-GAMEX(1979, heiankyo, 0,        4ports,   heiankyo, nosamples, ROT270, "Denki Onkyo", "Heiankyo Alien", GAME_NO_SOUND )
+GAMEX(1980, digger,   0,		3ports,   digger,	nosamples, ROT270, "Sega", "Digger", GAME_NO_SOUND )
+GAME( 1981, pulsar,   0,		4ports,   pulsar,	pulsar,    ROT270, "Sega", "Pulsar" )
+GAMEX(1979, heiankyo, 0,		4ports,   heiankyo, nosamples, ROT270, "Denki Onkyo", "Heiankyo Alien", GAME_NO_SOUND )
+
