@@ -59,7 +59,7 @@ extern int soundcard, usestereo,attenuation;
 extern int use_mouse, joystick, use_hotrod;
 
 /* from cheat.c */
-extern char *cheatfile;
+extern char cheatfile[];
 
 /* from datafile.c */
 extern char *history_filename,*mameinfo_filename;
@@ -431,7 +431,9 @@ void parse_cmdline (int argc, char **argv, int game_index)
 	options.mame_debug = get_bool ("config", "debug", NULL, 0);
 
 	#ifndef MESS
-	cheatfile  = get_string ("config", "cheatfile", "cf", "CHEAT.DAT");
+	tmpstr = get_string ("config", "cheatfile", "cf", "CHEAT.DAT");
+	if (tmpstr)
+		strcpy(cheatfile, tmpstr);
 	#else
 	tmpstr  = get_string ("config", "cheatfile", "cf", "CHEAT.CDB");
 	/* I assume that CHEAT.DAT (in old MESS.CFG files) and CHEAT.CDB are default filenames */
