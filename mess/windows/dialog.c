@@ -14,6 +14,7 @@
 #include "utils.h"
 #include "strconv.h"
 #include "mscommon.h"
+#include "pool.h"
 
 #ifdef UNDER_CE
 #include "invokegx.h"

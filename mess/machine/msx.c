@@ -88,8 +88,6 @@ static int msx_probe_type (UINT8* pmem, int size)
         }
     }
 
-#define MAX(x, y) ((x) < (y) ? (y) : (x) )
-
     if (MAX (kon4, kon5) > MAX (asc8, asc16) )
         return (kon5 > kon4) ? 2 : 3;
     else

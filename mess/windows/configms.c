@@ -16,6 +16,7 @@
 #include "device.h"
 #include "configms.h"
 #include "mscommon.h"
+#include "pool.h"
 
 //============================================================
 //	IMPORTS
