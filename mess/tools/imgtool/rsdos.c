@@ -1,3 +1,11 @@
+/****************************************************************************
+
+	rsdos.c
+
+	CoCo RS-DOS disk images
+
+****************************************************************************/
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -315,7 +323,7 @@ static imgtoolerr_t rsdos_diskimage_beginenum(imgtool_image *img, const char *pa
 	rsenum->index = 0;
 	rsenum->eof = 0;
 	*outenum = &rsenum->base;
-	return 0;
+	return IMGTOOLERR_SUCCESS;
 }
 
 

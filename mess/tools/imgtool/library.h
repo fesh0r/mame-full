@@ -89,6 +89,10 @@ imgtool_library *imgtool_library_create(void);
 /* closes an imgtool library */
 void imgtool_library_close(imgtool_library *library);
 
+/* seeks out and removes a module from an imgtool library */
+const struct ImageModule *imgtool_library_unlink(imgtool_library *library,
+	const char *module);
+
 /* sorts an imgtool library */
 void imgtool_library_sort(imgtool_library *library, imgtool_libsort_t sort);
 

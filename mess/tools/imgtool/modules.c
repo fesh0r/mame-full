@@ -22,6 +22,11 @@ imgtoolerr_t imgtool_create_cannonical_library(imgtool_library **library)
 	size_t i;
 	imgtool_library *lib;
 
+	static const char *irrelevant_modules[] =
+	{
+		"coco_os9_rsdos"
+	};
+
 	lib = imgtool_library_create();
 	if (!lib)
 	{
@@ -34,6 +39,13 @@ imgtoolerr_t imgtool_create_cannonical_library(imgtool_library **library)
 		err = modules[i](lib);
 		if (err)
 			goto error;
+	}
+
+	/* remove irrelevant modules */
+	for (i = 0; i < sizeof(irrelevant_modules)
+			/ sizeof(irrelevant_modules[0]); i++)
+	{
+		imgtool_library_unlink(lib, irrelevant_modules[i]);
 	}
 
 	*library = lib;
@@ -53,6 +65,7 @@ MODULE(concept)
 MODULE(mac)
 MODULE(mess_hd)
 MODULE(rsdos)
+/*MODULE(os9)*/
 MODULE(ti99)
 MODULE(ti990)
 

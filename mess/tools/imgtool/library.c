@@ -45,6 +45,31 @@ void imgtool_library_close(imgtool_library *library)
 
 
 
+const struct ImageModule *imgtool_library_unlink(imgtool_library *library,
+	const char *module)
+{
+	struct ImageModule *m;
+	struct ImageModule **previous;
+	struct ImageModule **next;
+
+	for (m = library->first; m; m = m->next)
+	{
+		if (!stricmp(m->name, module))
+		{
+			previous = m->previous ? &m->previous->next : &library->first;
+			next = m->next ? &m->next->previous : &library->last;
+			*previous = m->next;
+			*next = m->previous;
+			m->previous = NULL;
+			m->next = NULL;
+			return m;
+		}
+	}
+	return NULL;
+}
+
+
+
 static int module_compare(const struct ImageModule *m1,
 	const struct ImageModule *m2, imgtool_libsort_t sort)
 {

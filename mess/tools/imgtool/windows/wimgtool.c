@@ -27,10 +27,13 @@ struct wimgtool_info
 	HWND statusbar;
 	imgtool_image *image;
 	char *filename;
+	int open_mode;
 
 	HIMAGELIST iconlist_normal;
 	HIMAGELIST iconlist_small;
 	mess_pile iconlist_extensions;
+	HICON readonly_icon;
+	HICON directory_icon;
 
 	HIMAGELIST dragimage;
 	POINT dragpt;
@@ -293,6 +296,13 @@ static imgtoolerr_t full_refresh_image(HWND window)
 	SetWindowText(window, U2T(window_text));
 	for (i = 0; i < sizeof(statusbar_text) / sizeof(statusbar_text[0]); i++)
 		SendMessage(info->statusbar, SB_SETTEXT, i, (LPARAM) U2T(statusbar_text[i]));
+
+	// set the icon
+	if (info->image && (info->open_mode == OSD_FOPEN_READ))
+		SendMessage(info->statusbar, SB_SETICON, 0, (LPARAM) info->readonly_icon);
+	else
+		SendMessage(info->statusbar, SB_SETICON, 0, (LPARAM) 0);
+
 	DragAcceptFiles(window, info->filename != NULL);
 
 	// create the listview columns
@@ -440,14 +450,24 @@ imgtoolerr_t wimgtool_open_image(HWND window, const struct ImageModule *module,
 	imgtoolerr_t err;
 	imgtool_image *image;
 	struct wimgtool_info *info;
+	struct imgtool_module_features features;
 
 	info = get_wimgtool_info(window);
 
+	/* if the module is not specified, auto detect the format */
 	if (!module)
 	{
 		err = img_identify(library, filename, &module, 1);
 		if (err)
 			goto done;
+	}
+
+	/* check to see if this module actually supports writing */
+	if (read_or_write != OSD_FOPEN_READ)
+	{
+		features = img_get_module_features(module);
+		if (!features.supports_writing && !features.supports_deleting)
+			read_or_write = OSD_FOPEN_READ;
 	}
 
 	info->filename = strdup(filename);
@@ -464,6 +484,7 @@ imgtoolerr_t wimgtool_open_image(HWND window, const struct ImageModule *module,
 	if (info->image)
 		img_close(info->image);
 	info->image = image;
+	info->open_mode = read_or_write;
 
 	// refresh the window
 	full_refresh_image(window);
@@ -726,6 +747,10 @@ static LRESULT wimgtool_create(HWND window, CREATESTRUCT *pcs)
 	ListView_SetImageList(info->listview, info->iconlist_normal, LVSIL_NORMAL);
 	ListView_SetImageList(info->listview, info->iconlist_small, LVSIL_SMALL);
 
+	// get icons
+	info->readonly_icon = LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_READONLY), IMAGE_ICON, 16, 16, 0);
+	info->directory_icon = LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_DIRECTORY), IMAGE_ICON, 16, 16, 0);
+
 	full_refresh_image(window);
 	return 0;
 }
@@ -799,6 +824,8 @@ static LRESULT CALLBACK wimgtool_wndproc(HWND window, UINT message, WPARAM wpara
 	LRESULT lres;
 	HWND target_window;
 	DWORD style;
+	HMENU menu;
+	struct imgtool_module_features features;
 
 	info = get_wimgtool_info(window);
 
@@ -834,12 +861,18 @@ static LRESULT CALLBACK wimgtool_wndproc(HWND window, UINT message, WPARAM wpara
 			break;
 
 		case WM_INITMENU:
-			EnableMenuItem((HMENU) wparam, ID_IMAGE_INSERT,
-				MF_BYCOMMAND | (info->image ? MF_ENABLED : MF_GRAYED));
-			EnableMenuItem((HMENU) wparam, ID_IMAGE_EXTRACT,
-				MF_BYCOMMAND | (info->image ? MF_ENABLED : MF_GRAYED));
-			EnableMenuItem((HMENU) wparam, ID_IMAGE_DELETE,
-				MF_BYCOMMAND | (info->image ? MF_ENABLED : MF_GRAYED));
+			menu = (HMENU) wparam;
+			if (info->image)
+				features = img_get_module_features(img_module(info->image));
+			else
+				memset(&features, 0, sizeof(features));
+
+			EnableMenuItem(menu, ID_IMAGE_INSERT,
+				MF_BYCOMMAND | (features.supports_writing ? MF_ENABLED : MF_GRAYED));
+			EnableMenuItem(menu, ID_IMAGE_EXTRACT,
+				MF_BYCOMMAND | (features.supports_reading ? MF_ENABLED : MF_GRAYED));
+			EnableMenuItem(menu, ID_IMAGE_DELETE,
+				MF_BYCOMMAND | (features.supports_deleting ? MF_ENABLED : MF_GRAYED));
 			break;
 
 		case WM_DROPFILES:
