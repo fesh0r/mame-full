@@ -110,7 +110,7 @@ CORE_OBJDIRS = $(OBJ) \
 	$(OBJ)/mess/machine $(OBJ)/mess/vidhrdw $(OBJ)/mess/sndhrdw \
 	$(OBJ)/mess/sound $(OBJ)/mess/tools $(OBJ)/mess/tools/dat2html \
 	$(OBJ)/mess/tools/mkhdimg $(OBJ)/mess/tools/messroms \
-	$(OBJ)/mess/tools/imgtool
+	$(OBJ)/mess/tools/imgtool $(OBJ)/mess/tools/mkimage
 
 IMGTOOL_OBJS =  $(OBJ)/unix.$(DISPLAY_METHOD)/dirio.o
 IMGTOOL_LIBS = -lz

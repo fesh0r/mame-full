@@ -776,7 +776,8 @@ COREOBJS += \
 TOOLS +=  tools/dat2html$(EXE) \
 	  tools/mkhdimg$(EXE)  \
 	  tools/imgtool$(EXE)  \
-	  tools/messroms$(EXE) 
+	  tools/messroms$(EXE) \
+	  tools/mkimage$(EXE)
 
 
 ifeq ($(OS),win32)
@@ -790,6 +791,10 @@ tools/dat2html$(EXE): $(OBJ)/mess/tools/dat2html/dat2html.o $(OBJ)/mess/utils.o
 	$(LD) $(LDFLAGS) $^ $(LIBS) $(OUTOPT)
 
 tools/mkhdimg$(EXE):	$(OBJ)/mess/tools/mkhdimg/mkhdimg.o
+	@echo Linking $@...
+	$(LD) $(LDFLAGS) $^ $(LIBS) $(OUTOPT)
+
+tools/mkimage$(EXE):	$(OBJ)/mess/tools/mkimage/mkimage.o $(OBJ)/mess/utils.o
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ $(LIBS) $(OUTOPT)
 
