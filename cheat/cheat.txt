@@ -1,0 +1,110 @@
+;MESS CHEAT FILE
+;
+;Note:
+;This is a rough draft to MESS cheat system. These don't work they are from a MAME cheat file.
+;Just wanted to capture them so as not to get lost or forgotten about.
+;
+;TODO:
+;actually test cheat codes/cheat system
+;contact cheat creating experts for any cheat files they may have. (http://cheat.retrogames.com)
+;gamegenie, gameshark codes?
+;common file header, with version, status, general information.
+;A separate Cheatinfo.txt - file that contains general information just like the top of the mame's cheat.dat
+;
+;Questions:
+;Each system require own cheat file or one common file? Seems like one per system be best.
+;Re-name this file cheat.dat or cpschnger.dat depending.
+
+
+;From mame cheat.dat
+; [ Street Fighter ZERO (Japan CPS Changer) ]
+sfzch:0:FFAE09:63:000:Infinite Time
+sfzch:0:FF81CD:01:000:All characters selectable:Dont enable on character scrn
+sfzch:0:FFAE49:01:000:Quick Dramatic Battle
+sfzch:0:FF84A2:00:500:Quick Dramatic Battle (2/3)
+sfzch:0:FF88A2:01:500:Quick Dramatic Battle (3/3)
+sfzch:0:FF8441:90:000:Infinite Energy PL1
+sfzch:0:FF8441:00:000:Energy always set to 0 PL1
+sfzch:0:FF8441:00:001:Energy set to 0 Now! PL1
+sfzch:0:FF84C6:01:000:End round to win match PL1
+sfzch:0:FF84C6:00:000:Rounds won always = 0 PL1
+sfzch:0:FF84C6:00:001:Rounds won = 0 Now! PL1
+sfzch:0:FF842F:00:000:Air special/super moves PL1:Glitches when knocked down
+sfzch:0:FF84BF:90:000:Infinite Power PL1
+sfzch:0:FF84BF:00:001:Drain All Power Now! PL1
+sfzch:0:FF8537:00:000:Never Faint PL1
+sfzch:0:FF853A:00:000:Faint on every hit PL1
+sfzch:0:000000:00:999:[   Free player selection   ]
+sfzch:0:000000:00:999:[  Use on level VS screen   ]
+sfzch:0:FF84A2:00:001:Play with Ryu PL1
+sfzch:0:FF84A2:01:001:Play with Ken PL1
+sfzch:0:FF84A2:02:001:Play with Gouki PL1
+sfzch:0:FF84A2:03:001:Play with Nash PL1
+sfzch:0:FF84A2:04:001:Play with Chun Li PL1
+sfzch:0:FF84A2:05:001:Play with Adon PL1
+sfzch:0:FF84A2:06:001:Play with Sodom PL1
+sfzch:0:FF84A2:07:001:Play with Guy PL1
+sfzch:0:FF84A2:08:001:Play with Birdie PL1
+sfzch:0:FF84A2:09:001:Play with Rose PL1
+sfzch:0:FF84A2:0A:001:Play with Vega PL1
+sfzch:0:FF84A2:0B:001:Play with Sagat PL1
+sfzch:0:FF84A2:0C:001:Play with Dan PL1
+sfzch:0:FF85F2:01:000:Infinite Taunts for Ken or Ryu PL1
+sfzch:0:FF85C1:01:000:Infinite Taunts for Chun Li PL1
+sfzch:0:FF85F0:01:000:Infinite Taunts for Charlie PL1
+sfzch:0:FF85C4:01:000:Infinite Taunts for Guy PL1
+sfzch:0:FF85F8:00:000:Infinite Taunts for Birdie PL1
+sfzch:0:FF85FF:01:000:Infinite Taunts for Sodom PL1
+sfzch:0:FF85F8:01:000:Infinite Taunts for Adon PL1
+sfzch:0:FF85E8:01:000:Infinite Taunts for Rose PL1
+sfzch:0:FF85C0:01:000:Infinite Taunts for Sagat PL1
+sfzch:0:FF85F1:01:000:Infinite Taunts for Akuma PL1
+sfzch:0:FF85FB:01:000:Infinite Taunts for Bison PL1
+sfzch:0:FF8841:90:000:Infinite Energy PL2
+sfzch:0:FF8841:00:000:Energy always set to 0 PL2
+sfzch:0:FF8841:00:001:Energy set to 0 Now! PL2
+sfzch:0:FF88C6:01:000:End round to win match PL2
+sfzch:0:FF88C6:00:000:Rounds won always = 0 PL2
+sfzch:0:FF88C6:00:001:Rounds won = 0 Now! PL2
+sfzch:0:FF882F:00:000:Air special/super moves PL2:Glitches when knocked down
+sfzch:0:FF88BF:90:000:Infinite Power PL2
+sfzch:0:FF88BF:00:001:Drain All Power Now! PL2
+sfzch:0:FF8937:00:000:Never Faint PL2
+sfzch:0:FF893A:00:000:Faint on every hit PL2
+sfzch:0:000000:00:999:[   Free player selection   ]
+sfzch:0:000000:00:999:[  Use on level VS screen   ]
+sfzch:0:FF88A2:00:001:Play with Ryu PL2
+sfzch:0:FF88A2:01:001:Play with Ken PL2
+sfzch:0:FF88A2:02:001:Play with Gouki PL2
+sfzch:0:FF88A2:03:001:Play with Nash PL2
+sfzch:0:FF88A2:04:001:Play with Chun Li PL2
+sfzch:0:FF88A2:05:001:Play with Adon PL2
+sfzch:0:FF88A2:06:001:Play with Sodom PL2
+sfzch:0:FF88A2:07:001:Play with Guy PL2
+sfzch:0:FF88A2:08:001:Play with Birdie PL2
+sfzch:0:FF88A2:09:001:Play with Rose PL2
+sfzch:0:FF88A2:0A:001:Play with Vega PL2
+sfzch:0:FF88A2:0B:001:Play with Sagat PL2
+sfzch:0:FF88A2:0C:001:Play with Dan PL2
+sfzch:0:FF89F2:01:000:Infinite Taunts for Ken or Ryu PL2
+sfzch:0:FF89C1:01:000:Infinite Taunts for Chun Li PL2
+sfzch:0:FF89F0:01:000:Infinite Taunts for Charlie PL2
+sfzch:0:FF89C4:01:000:Infinite Taunts for Guy PL2
+sfzch:0:FF89F8:00:000:Infinite Taunts for Birdie PL2
+sfzch:0:FF89FF:01:000:Infinite Taunts for Sodom PL2
+sfzch:0:FF89F8:01:000:Infinite Taunts for Adon PL2
+sfzch:0:FF89E8:01:000:Infinite Taunts for Rose PL2
+sfzch:0:FF89C0:01:000:Infinite Taunts for Sagat PL2
+sfzch:0:FF89F1:01:000:Infinite Taunts for Akuma PL2
+sfzch:0:FF89FB:01:000:Infinite Taunts for Bison PL2
+sfzch:0:000000:00:999:[These are the codes to set ]
+sfzch:0:000000:00:999:[the machine region - the   ]
+sfzch:0:000000:00:999:[effectiveness may vary!    ]
+sfzch:0:000000:00:999:[You have to enable these on]
+sfzch:0:000000:00:999:[the ROM check screen!!     ]
+sfzch:0:FF8191:00:000:Region Switch = Japan
+sfzch:0:FF8191:02:000:Region Switch = USA
+sfzch:0:FF8191:04:000:Region Switch = Hispanic
+sfzch:0:FF8191:06:000:Region Switch = Asia
+sfzch:0:FF8191:08:000:Region Switch = Euro
+sfzch:0:FF8191:0A:000:Region Switch = Brazil
