@@ -279,6 +279,27 @@ int osd_is_absolute_path(const char *path)
 	return result;
 }
 
+
+/*============================================================ */
+/*	osd_getcurdir */
+/*============================================================ */
+
+void osd_getcurdir(char *buffer, size_t buffer_len)
+{
+	getwd(buffer);
+}
+
+
+/*============================================================ */
+/*	osd_setcurdir */
+/*============================================================ */
+
+void osd_setcurdir(const char *dir)
+{
+	chdir(dir);
+}
+
+
 #endif
 
 /* 

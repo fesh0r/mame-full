@@ -1,6 +1,8 @@
 #include <stdlib.h>
-#include <windows.h>
 #include "mame.h"
+#ifdef WIN32
+#include <windows.h>
+#endif
 
 int osd_init(void)
 {
@@ -177,7 +179,11 @@ void osd_image_load_status_changed(mess_image *img, int is_final_unload)
 
 void *osd_alloc_executable(size_t size)
 {
+#ifdef WIN32
 	return VirtualAlloc(NULL, size, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+#else
+	return malloc(size);
+#endif
 }
 
 
@@ -188,7 +194,11 @@ void *osd_alloc_executable(size_t size)
 
 void osd_free_executable(void *ptr)
 {
+#ifdef WIN32
 	VirtualFree(ptr, 0, MEM_RELEASE);
+#else
+	free(ptr);
+#endif
 }
 
 

@@ -131,7 +131,7 @@ OBJDIRS += $(OBJ)/mess $(OBJ)/mess/expat $(OBJ)/mess/cpu \
 	   $(OBJ)/mess/vidhrdw $(OBJ)/mess/sndhrdw $(OBJ)/mess/formats \
 	   $(OBJ)/mess/tools $(OBJ)/mess/tools/dat2html \
 	   $(OBJ)/mess/tools/mkhdimg $(OBJ)/mess/tools/messroms \
-	   $(OBJ)/mess/tools/imgtool $(OBJ)/mess/tools/messdocs \
+	   $(OBJ)/mess/tools/imgtool $(OBJ)/mess/tools/messdocs $(OBJ)/mess/tools/messtest \
 	   $(OBJ)/mess/tools/mkimage $(OBJ)/mess/sound
 endif
 
@@ -364,13 +364,23 @@ dat2html: $(DAT2HTML_OBJS)
 	$(CC_COMMENT) @echo Compiling $@...
 	$(CC_COMPILE) $(LD) $(LDFLAGS) $^ -o $@
 
-messdocs:
+messdocs: 
 
 imgtool: $(IMGTOOL_OBJS) $(PLATFORM_IMGTOOL_OBJS)
 	$(CC_COMMENT) @echo Compiling $@...
 	$(CC_COMPILE) $(LD) $(LDFLAGS) $^ -lz -o $@
 
-messtest:
+messtest: $(EXPAT_OBJS)  $(ZLIB) $(OBJS) $(VECTOR)	\
+		$(OBJ)/mess/tools/messtest/messtest.o \
+		$(OBJ)/mess/tools/messtest/testexec.o \
+		$(OBJ)/mess/tools/messtest/tststubs.o \
+		$(OBJ)/mess/tools/messtest/tstutils.o \
+		$(OBJDIR)/dirio.o \
+		$(OBJDIR)/fileio.o \
+		$(OBJDIR)/ticker.o \
+		$(OBJDIR)/parallel.o
+	$(CC_COMMENT) @echo Linking $@...
+	$(CC_COMPILE) $(LD) $(LDFLAGS) $(MY_LIBS) $^ -o $@
 
 $(OSDEPEND):
 	$(CC_COMMENT) @echo 'Compiling in the unix directory...'
