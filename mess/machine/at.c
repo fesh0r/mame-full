@@ -117,11 +117,8 @@ void at_cga_frame_interrupt (void)
 
 	pc_cga_timer();
 
-    if( !onscrd_active() && !setup_active() )
-	{
-		at_keyboard_polling();
-		at_8042_time();
-	}
+	at_keyboard_polling();
+	at_8042_time();
 }
 
 void at_vga_frame_interrupt (void)
@@ -138,8 +135,6 @@ void at_vga_frame_interrupt (void)
 
 //	vga_timer();
 
-    if( !onscrd_active() && !setup_active() ) {
-		at_keyboard_polling();
-		at_8042_time();
-	}
+	at_keyboard_polling();
+	at_8042_time();
 }

@@ -48,7 +48,7 @@
 #include "includes/pcshare.h"
 #include "includes/pc.h"
 
-#include "devices/pc_hdc.h"
+#include "machine/pc_hdc.h"
 #include "devices/printer.h"
 #include "devices/mflopimg.h"
 #include "formats/pc_dsk.h"

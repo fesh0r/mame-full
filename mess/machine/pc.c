@@ -31,7 +31,7 @@
 #include "includes/pclpt.h"
 #include "includes/centroni.h"
 
-#include "devices/pc_hdc.h"
+#include "machine/pc_hdc.h"
 #include "includes/nec765.h"
 #include "includes/amstr_pc.h"
 #include "includes/europc.h"
@@ -234,9 +234,6 @@ static void pc_generic_frame_interrupt(int has_turbo, void (*pc_timer)(void))
 
 	if (pc_timer)
 		pc_timer();
-
-    if( !onscrd_active() && !setup_active() )
-		pc_keyboard();
 }
 
 void pc_mda_frame_interrupt (void)

@@ -20,7 +20,7 @@
 #include "includes/pc_video.h"
 #include "includes/pc.h"
 
-#include "devices/pc_hdc.h"
+#include "machine/pc_hdc.h"
 #include "includes/pc_ide.h"
 #include "includes/pc_fdc_h.h"
 #include "includes/pckeybrd.h"
