@@ -2947,24 +2947,36 @@ slimmed down Game Boy pocket version was released in 1996.
 Features:
 
 CPU: 8-bit (Similar to the Z80 processor) at 4.194304MHz
+
 Main RAM: 8k Byte internal
+
 Video RAM: 8k Byte internal
 
 Video Display: Reflective LCD 160 x 144 dots (20 x 18 Tiles)
+
 Video Colors: 4 shades of gray
+
 Screen Size: 2.6"
+
 Max # of sprites: 40
+
 Max # sprites/line: 10
+
 Max sprite size: 8x16
+
 Min sprite size: 8x8
+
 Sound: 4 channels each of which can be mapped either to the left or to the right or to
 both speakers
 
 Communications: Serial port. Up to 4 Game boys can be connected together using this port.
+
 Baud rate and protocol: (?)
 
 Power: 6 VDC, 0.7 Watts (3 VDC 0.7W for Game Boy Pocket)
+
 4 AA Batteries ~ 35 hours 
+
 Rechargeable battery (NAKI) ~ 12 hours
 
 
@@ -3048,7 +3060,7 @@ cartridges, although 32Mbit ROM / 64K RAM carts are the largest currently manufa
 Serial port speed: 512 Kbps
 
 Power:  ~13 hours on 2 AA batteries or AC adapter.
-  
+
 
 MESS Emulation State:
 
@@ -6896,7 +6908,7 @@ $end
 
 #---------------------------------------------------------------------------------------------#
 
-$info=subergb
+$info=supergb
 $bio
 Nintendo Super Game Boy (1994)
 
