@@ -43,10 +43,10 @@ static unsigned char *BBC_Video_RAM;
 static unsigned char *vidmem_RAM;
 
 // this is the screen memory location of the next pixels to be drawn
-static unsigned char *BBC_display;
+static UINT16 *BBC_display;
 
-static unsigned char *BBC_display_left;
-static unsigned char *BBC_display_right;
+static UINT16 *BBC_display_left;
+static UINT16 *BBC_display_right;
 
 // this is a more global variable to store the bitmap variable passed in in the bbc_vh_screenrefresh function
 static struct mame_bitmap *BBC_bitmap;
@@ -508,17 +508,16 @@ static void BBC_ula_drawpixel(int col,int number_of_pixels)
 {
 	int pixel_count;
 	int pixel_temp;
-	if ((BBC_display>=BBC_display_left) && ((BBC_display+(number_of_pixels<<1))<BBC_display_right))
+	if ((BBC_display>=BBC_display_left) && ((BBC_display+number_of_pixels)<BBC_display_right))
 	{
 
 		pixel_temp=Machine->pens[col^cursor_state];
 		for(pixel_count=0;pixel_count<number_of_pixels;pixel_count++)
 		{
-			(BBC_display++)[0]=pixel_temp;
-			BBC_display++;
+			*(BBC_display++) = pixel_temp;
 		}
 	} else {
-		BBC_display+=number_of_pixels<<1;
+		BBC_display += number_of_pixels;
 	}
 }
 
@@ -551,15 +550,15 @@ void BBC_draw_hi_res(void)
 				i=(i<<1)|1;
 			}
 		} else {
-			BBC_display+=emulation_pixels_per_byte<<1;
+			BBC_display += emulation_pixels_per_byte;
 		}
 	} else {
 		if (video_refresh)
 		{
 			// if the display is not enable, just draw a blank area.
-			BBC_ula_drawpixel(0,emulation_pixels_per_byte);
+			BBC_ula_drawpixel(0, emulation_pixels_per_byte);
 		} else {
-			BBC_display+=emulation_pixels_per_byte<<1;
+			BBC_display += emulation_pixels_per_byte;
 		}
 	}
 }
@@ -608,15 +607,15 @@ static void BBC_Set_HSync(int offset, int data)
 
 		if ((y_screen_pos>=0) && (y_screen_pos<300))
 		{
-			BBC_display_left=BBC_bitmap->line[y_screen_pos];
-			BBC_display_right=BBC_display_left+1600;
+			BBC_display_left = BBC_bitmap->line[y_screen_pos];
+			BBC_display_right = BBC_display_left + 800;
 
 		} else {
-			BBC_display_left=BBC_bitmap->line[0];
-			BBC_display_right=BBC_display_left;
+			BBC_display_left = BBC_bitmap->line[0];
+			BBC_display_right = BBC_display_left;
 		}
 
-		BBC_display=BBC_display_left+(x_screen_offset<<1);
+		BBC_display = BBC_display_left + x_screen_offset;
 
 	}
 	BBC_HSync=data;
@@ -632,15 +631,15 @@ static void BBC_Set_VSync(int offset, int data)
 
 		if ((y_screen_pos>=0) && (y_screen_pos<300))
 		{
-			BBC_display_left=BBC_bitmap->line[y_screen_pos];
-			BBC_display_right=BBC_display_left+1600;
+			BBC_display_left = BBC_bitmap->line[y_screen_pos];
+			BBC_display_right = BBC_display_left + 800;
 
 		} else {
-			BBC_display_left=BBC_bitmap->line[0];
-			BBC_display_right=BBC_display_left;
+			BBC_display_left = BBC_bitmap->line[0];
+			BBC_display_right = BBC_display_left;
 		}
 
-		BBC_display=BBC_display_left+(x_screen_offset<<1);
+		BBC_display = BBC_display_left + x_screen_offset;
 
 		teletext_DEW();
 	}
