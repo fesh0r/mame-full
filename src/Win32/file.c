@@ -35,6 +35,8 @@
 
 #define MAX_FILES 500
 
+#define LOG_FILES	0
+
 #ifdef MESS
 int MessImageFopen(const char *filename, mame_file *mf, int write, int (*checksum_file)(const char* file, unsigned char **p, unsigned int *size, unsigned int *crc));
 #endif
@@ -318,6 +320,11 @@ static void *File_fopen(const char *gamename,const char *filename,int filetype,i
         return NULL;
 
     mf->access_type = ACCESS_FILE;
+
+#if LOG_FILES
+	logerror("File_fopen: gamename='%s' filename='%s' filetype=%i write=%i index=%i\n",
+		gamename, filename, filetype, write, i);
+#endif
 
     switch (filetype)
     {

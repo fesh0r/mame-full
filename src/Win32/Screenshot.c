@@ -526,8 +526,10 @@ static LPVOID ImageIdent(LPCSTR filename, int *filetype, BOOL flyer)
         return FALSE;
     
     /* Read file header */
-    if (osd_fread(mfile, buf, 16) != 16)
+    if (osd_fread(mfile, buf, 16) != 16) {
+		osd_fclose(mfile);
         return 0;
+	}
 
     osd_fseek(mfile, 0L, SEEK_SET);
 
