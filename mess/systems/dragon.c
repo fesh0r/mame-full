@@ -82,7 +82,7 @@ static struct MemoryReadAddress coco3_readmem[] =
 	{ 0xff98, 0xff9f, coco3_gimevh_r },
 	{ 0xffa0, 0xffaf, coco3_mmu_r },
 	{ 0xffb0, 0xffbf, paletteram_r },
-	{ 0xfff0, 0xffff, dragon_mapped_irq_r },
+	{ 0xfff0, 0xffff, coco3_mapped_irq_r },
 	{ -1 }	/* end of table */
 };
 
@@ -663,13 +663,15 @@ ROM_END
 
 ROM_START(coco)
      ROM_REGION(0x18000,REGION_CPU1)
-     ROM_LOAD("coco.rom",  0x10000, 0x6000, 0x2a848551)
+     ROM_LOAD(			"bas12.rom",	0x10000, 0x2000, 0x54368805)
+     ROM_LOAD_OPTIONAL(	"extbas11.rom",	0x12000, 0x2000, 0xa82a6254)
+     ROM_LOAD_OPTIONAL(	"disk11.rom",	0x14000, 0x2000, 0x0b9c5415)
 ROM_END
 
 ROM_START(coco3)
      ROM_REGION(0x90000,REGION_CPU1)
-	 ROM_LOAD("coco3.rom", 0x80000, 0x7e00, BADCRC(0x31aec822))
-     ROM_LOAD("disk.rom",  0x8C000, 0x2000, 0x0b9c5415)
+	 ROM_LOAD(			"coco3.rom",	0x80000, 0x8000, 0xb4c88d6c)
+     ROM_LOAD_OPTIONAL(	"disk11.rom",	0x8C000, 0x2000, 0x0b9c5415)
 ROM_END
 
 ROM_START(cp400)

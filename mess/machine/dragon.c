@@ -730,6 +730,14 @@ READ_HANDLER(dragon_mapped_irq_r)
 	return coco_rom[0x3ff0 + offset];
 }
 
+READ_HANDLER(coco3_mapped_irq_r)
+{
+	/* NPW 28-Aug-2000 - I discovered this when we moved over to the new ROMset
+	 * and Tim confirmed this
+	 */
+	return coco_rom[0x7ff0 + offset];
+}
+
 WRITE_HANDLER(dragon_sam_speedctrl)
 {
 	/* The infamous speed up poke.
