@@ -263,7 +263,10 @@ void pdp1_vh_update (struct osd_bitmap *bitmap, int full_refresh)
 		bitmap_width=bitmap->width;
 		bitmap_height=bitmap->height;
 	}
-	clear_points(bitmap);
+	if (full_refresh)
+		fillbitmap(bitmap, Machine->pens[0], /*&Machine->visible_area*/NULL);
+	else
+		clear_points(bitmap);
 	set_points(bitmap);
 	clear_point_list();
 	cpu_set_reg(PDP1_S1,sense&0x80);
