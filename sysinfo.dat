@@ -3141,6 +3141,7 @@ Links:
 
 http://genesis8.free.fr/
 http://www.ncus.org.uk/
+$end
 #---------------------------------------------------------------------------------------------#
 
 $info=nes
@@ -3198,7 +3199,6 @@ $end
 $info=telstrat
 $bio
 Oric Telestrat
---------------
 
 This system is a update to the Atmos.
 
@@ -3214,7 +3214,6 @@ $end
 $info=prav8d
 $bio
 Pravetz 8D
-----------
 
 The emulation is the same as the Oric Atmos. (I don't know if there are any hardware
 differences compared to an original Oric Atmos, if there are please tell me and I will
@@ -3222,7 +3221,6 @@ implement them).
 
 
 Disk:
------
 
 The disk drive interface has a boot-rom which loads the DOS from the disc
 in the drive. 
@@ -3300,19 +3298,17 @@ Now type CALL #<number> to execute the program.
 
 
 History and Trivia:
--------------------
 
 The Pravetz 8D is a Bulgarian clone of the Oric Atmos.
 It was produced between 1986 and 1989.
 
 Thankyou to:
-------------
 
 George Dramcheff for the Pravetz information,
 Fabrice Frances for the Oric information,
 
 $end
-
+#---------------------------------------------------------------------------------------------#
 $info=orica
 $bio
 Oric Atmos
@@ -3355,7 +3351,6 @@ $end
 $info=apfimag
 $bio
 APF Imagination Machine
------------------------
 
 The APF Imagination has the same hardware as the APF-M1000, but it is a computer.
 It has a keyboard and built in cassette player.
@@ -3423,7 +3418,6 @@ $end
 $info=apfm1000
 $bio
 APF M-1000
-----------
 
 The APF M-1000 is a console. It has a built in game. The emulation is not exact and the
 built in game does not work.
@@ -4950,7 +4944,7 @@ $end
 
 #---------------------------------------------------------------------------------------------#
 
-$info=sordm5
+$info=aim65
 $bio
 Rockwell AIM-65
 ---------------
