@@ -163,8 +163,7 @@ when problems start with -log and look into error.log file
 #include "includes/vc20tape.h"
 #include "includes/vic6560.h"
 
-static struct MemoryReadAddress vc20_readmem[] =
-{
+static MEMORY_READ_START( vc20_readmem )
 	{0x0000, 0x03ff, MRA_RAM},
 #if 0
 	{0x0400, 0x0fff, MRA_RAM},		   /* ram, rom or nothing; I think read 0xff! */
@@ -187,11 +186,9 @@ static struct MemoryReadAddress vc20_readmem[] =
 	{0xa000, 0xbfff, MRA_RAM},		   /* or nothing */
 #endif
 	{0xc000, 0xffff, MRA_ROM},
-	MEMORY_TABLE_END
-};
+MEMORY_END
 
-static struct MemoryWriteAddress vc20_writemem[] =
-{
+static MEMORY_WRITE_START( vc20_writemem )
 	{0x0000, 0x03ff, MWA_RAM, &vc20_memory},
 	{0x1000, 0x1fff, MWA_RAM},
 	{0x8000, 0x8fff, MWA_ROM},
@@ -203,11 +200,9 @@ static struct MemoryWriteAddress vc20_writemem[] =
 	{0x9400, 0x97ff, vc20_write_9400, &vc20_memory_9400},
 	{0x9800, 0x9fff, MWA_NOP},
 	{0xc000, 0xffff, MWA_NOP},		   /* MWA_ROM }, but logfile */
-	MEMORY_TABLE_END
-};
+MEMORY_END
 
-static struct MemoryReadAddress vc20i_readmem[] =
-{
+static MEMORY_READ_START( vc20i_readmem )
 	{0x0000, 0x03ff, MRA_RAM},
 #if 0
 	{0x0400, 0x0fff, MRA_RAM},		   /* ram, rom or nothing; I think read 0xff! */
@@ -228,11 +223,9 @@ static struct MemoryReadAddress vc20i_readmem[] =
 	{0x9810, 0x981f, via_5_r},
 	{0xa000, 0xbfff, MRA_ROM},
 	{0xc000, 0xffff, MRA_ROM},
-	MEMORY_TABLE_END
-};
+MEMORY_END
 
-static struct MemoryWriteAddress vc20i_writemem[] =
-{
+static MEMORY_WRITE_START( vc20i_writemem )
 	{0x0000, 0x03ff, MWA_RAM, &vc20_memory},
 	{0x1000, 0x1fff, MWA_RAM},
 	{0x8000, 0x8fff, MWA_ROM},
@@ -245,8 +238,7 @@ static struct MemoryWriteAddress vc20i_writemem[] =
 	{0x9810, 0x981f, via_5_w},
 	{0xa000, 0xbfff, MWA_ROM},
 	{0xc000, 0xffff, MWA_NOP},		   /* MWA_ROM }, but logfile */
-	MEMORY_TABLE_END
-};
+MEMORY_END
 
 #define DIPS_HELPER(bit, name, keycode) \
    PORT_BITX(bit, IP_ACTIVE_LOW, IPT_KEYBOARD, name, keycode, IP_JOY_NONE)
@@ -896,7 +888,7 @@ static const struct IODevice io_vc20i[] =
 
 COMPX ( 1981,	vic20,		0,		vic20,	vic20,		vic20,	"Commodore Business Machines Co.",  "VIC20 (NTSC)", GAME_IMPERFECT_SOUND)
 COMPX ( 1981,	vic20i, 	vic20,	vic20i, vic20i, 	vic20i, "Commodore Business Machines Co.",  "VIC20 (NTSC), IEEE488 Interface (SYS45065)",   GAME_IMPERFECT_SOUND)
-COMPX ( 1981,	vc20,		vic20,	vc20,	vc20,		vc20,	"Commodore Business Machines Co.",  "VC20 (PAL)",       GAME_IMPERFECT_SOUND)
+COMPX ( 1981,	vc20,		vic20,	vc20,	vc20,		vc20,	"Commodore Business Machines Co.",  "VIC20/VC20(German) PAL",       GAME_IMPERFECT_SOUND)
 COMPX ( 1981,	vic20swe,	vic20,	vc20,	vc20,		vc20,	"Commodore Business Machines Co.",  "VIC20 PAL, Swedish Expansion Kit", GAME_IMPERFECT_SOUND)
 // please leave the following as testdriver only
 COMPX ( 1981,	vic20v, 	vic20,	vic20v, vic20,		vic20,	"Commodore Business Machines Co.",  "VIC20 (NTSC), VC1540", GAME_IMPERFECT_SOUND)

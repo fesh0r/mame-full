@@ -76,8 +76,7 @@
 #define LOG(x)	/* x */
 #endif
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START ( readmem )
 	{ 0x0000, 0x03ff, MRA_RAM },
 	{ 0x1700, 0x173f, m6530_003_r },
 	{ 0x1740, 0x177f, m6530_002_r },
@@ -86,11 +85,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x1800, 0x1bff, MRA_ROM },
 	{ 0x1c00, 0x1fff, MRA_ROM },
 	{ 0x2000, 0xffff, kim1_mirror_r },
-    {-1}
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x03ff, MWA_RAM },
 	{ 0x1700, 0x173f, m6530_003_w },
 	{ 0x1740, 0x177f, m6530_002_w },
@@ -99,8 +96,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x1800, 0x1bff, MWA_ROM },
 	{ 0x1c00, 0x1fff, MWA_ROM },
 	{ 0x2000, 0xffff, kim1_mirror_w },
-    {-1}
-};
+MEMORY_END
 
 INPUT_PORTS_START( kim1 )
 	PORT_START			/* IN0 keys row 0 */

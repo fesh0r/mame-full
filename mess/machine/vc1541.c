@@ -98,9 +98,12 @@ FF00-FFFF       Jump table, vectors
  */
 
 #include <assert.h>
+#include <stdio.h>
+#include "snprintf.h"
+
 #include "driver.h"
 #include "cpu/m6502/m6502.h"
-#include "6522via.h"
+#include "machine/6522via.h"
 
 #define VERBOSE_DBG 1
 #include "includes/cbm.h"
@@ -314,45 +317,37 @@ static void vc1541_sector_to_gcr(int track, int sector)
 	gcr_double_2_gcr(0, 0, 0, 0, vc1541->head.data+i);i+=5;
 }
 
-struct MemoryReadAddress vc1541_readmem[] =
-{
+MEMORY_READ_START( vc1541_readmem )
 	{0x0000, 0x07ff, MRA_RAM},
 	{0x1800, 0x180f, via_2_r},		   /* 0 and 1 used in vc20 */
 	{0x1810, 0x189f, MRA_NOP}, /* for debugger */
 	{0x1c00, 0x1c0f, via_3_r},
 	{0x1c10, 0x1c9f, MRA_NOP}, /* for debugger */
 	{0xc000, 0xffff, MRA_ROM},
-	MEMORY_TABLE_END
-};
+MEMORY_END
 
-struct MemoryWriteAddress vc1541_writemem[] =
-{
+MEMORY_WRITE_START( vc1541_writemem )
 	{0x0000, 0x07ff, MWA_RAM},
 	{0x1800, 0x180f, via_2_w},
 	{0x1c00, 0x1c0f, via_3_w},
 	{0xc000, 0xffff, MWA_ROM},
-	MEMORY_TABLE_END
-};
+MEMORY_END
 
-struct MemoryReadAddress dolphin_readmem[] =
-{
+MEMORY_READ_START( dolphin_readmem )
 	{0x0000, 0x07ff, MRA_RAM},
 	{0x1800, 0x180f, via_2_r},		   /* 0 and 1 used in vc20 */
 	{0x1c00, 0x1c0f, via_3_r},
 	{0x8000, 0x9fff, MRA_RAM},
 	{0xa000, 0xffff, MRA_ROM},
-	MEMORY_TABLE_END
-};
+MEMORY_END
 
-struct MemoryWriteAddress dolphin_writemem[] =
-{
+MEMORY_WRITE_START( dolphin_writemem )
 	{0x0000, 0x07ff, MWA_RAM},
 	{0x1800, 0x180f, via_2_w},
 	{0x1c00, 0x1c0f, via_3_w},
 	{0x8000, 0x9fff, MWA_RAM},
 	{0xa000, 0xffff, MWA_ROM},
-	MEMORY_TABLE_END
-};
+MEMORY_END
 
 #if 0
 INPUT_PORTS_START (vc1541)
@@ -425,7 +420,7 @@ static void vc1541_via0_irq (int level)
 					  M6502_INT_IRQ, vc1541->via1irq || vc1541->via0irq);
 }
 
-static int vc1541_via0_read_portb (int offset)
+static READ_HANDLER( vc1541_via0_read_portb )
 {
 	static int old=-1;
 	int value = 0x7a;
@@ -479,7 +474,7 @@ static void vc1541_acka(void)
 	}
 }
 
-static void vc1541_via0_write_portb (int offset, int data)
+static WRITE_HANDLER( vc1541_via0_write_portb )
 {
 	DBG_LOG(2, "vc1541 serial write",("%s %s %s\n",
 									 data&0x10?"ATN":"atn",
@@ -538,21 +533,21 @@ static void vc1541_via1_irq (int level)
 					  M6502_INT_IRQ, vc1541->via1irq || vc1541->via0irq);
 }
 
-static int vc1541_via1_read_porta (int offset)
+static READ_HANDLER( vc1541_via1_read_porta )
 {
 	int data=vc1541->head.data[vc1541->d64.pos];
 	DBG_LOG(2, "vc1541 drive",("port a read %.2x\n", data));
 	return data;
 }
 
-static void vc1541_via1_write_porta (int offset, int data)
+static WRITE_HANDLER( vc1541_via1_write_porta )
 {
 	DBG_LOG(1, "vc1541 drive",("port a write %.2x\n", data));
 }
 
-static int vc1541_via1_read_portb (int offset)
+static READ_HANDLER( vc1541_via1_read_portb )
 {
-	int value = 0xff;
+	UINT8 value = 0xff;
 
 #if 0
 	if (WRITEPROTECTED)
@@ -565,7 +560,7 @@ static int vc1541_via1_read_portb (int offset)
 	return value;
 }
 
-static void vc1541_via1_write_portb (int offset, int data)
+static WRITE_HANDLER( vc1541_via1_write_portb )
 {
 	static int old=0;
 	if (data!=old) {
@@ -996,23 +991,19 @@ int c1551_config (int id, int mode, C1551_CONFIG *config)
 	return 0;
 }
 
-struct MemoryReadAddress c1551_readmem[] =
-{
+MEMORY_READ_START( c1551_readmem )
     {0x0000, 0x0001, c1551_port_r},
 	{0x0002, 0x07ff, MRA_RAM},
     {0x4000, 0x4007, tpi6525_0_port_r},
 	{0xc000, 0xffff, MRA_ROM},
-	MEMORY_TABLE_END
-};
+MEMORY_END
 
-struct MemoryWriteAddress c1551_writemem[] =
-{
+MEMORY_WRITE_START( c1551_writemem )
     {0x0000, 0x0001, c1551_port_w},
 	{0x0002, 0x07ff, MWA_RAM},
     {0x4000, 0x4007, tpi6525_0_port_w},
 	{0xc000, 0xffff, MWA_ROM},
-	MEMORY_TABLE_END
-};
+MEMORY_END
 
 void c1551x_write_data (TPI6525 *This, int data)
 {

@@ -107,7 +107,7 @@ void kim1_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 
     if (full_refresh)
     {
-        osd_mark_dirty (0, 0, bitmap->width, bitmap->height, 0);
+        osd_mark_dirty (0, 0, bitmap->width, bitmap->height);
         memset (videoram, 0x0f, videoram_size);
     }
     if (kim1_backdrop)

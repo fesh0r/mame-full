@@ -98,12 +98,12 @@ static uart8250_interface com_interface[4]=
 	}
 };
 
-/* static READ_HANDLER( pc_ppi_porta_r ); */
-/* static READ_HANDLER( pc_ppi_portb_r ); */
-static READ_HANDLER( pc_ppi_portc_r );
-static WRITE_HANDLER( pc_ppi_porta_w );
-/* static WRITE_HANDLER( pc_ppi_portb_w ); */
-static WRITE_HANDLER( pc_ppi_portc_w );
+/* static int pc_ppi_porta_r(int chip ); */
+/* static int pc_ppi_portb_r(int chip ); */
+static int pc_ppi_portc_r(int chip);
+static void pc_ppi_porta_w(int chip, int data );
+/* static void pc_ppi_portb_w( int chip, int data ); */
+static void pc_ppi_portc_w(int chip, int data );
 
 
 /* PC-XT has a 8255 which is connected to keyboard and other
@@ -386,7 +386,7 @@ WRITE_HANDLER(pc_COM4_w)
  *
  *************************************************************************/
 
-READ_HANDLER( pc_ppi_porta_r )
+int pc_ppi_porta_r(int chip )
 {
 	int data;
 
@@ -396,7 +396,7 @@ READ_HANDLER( pc_ppi_porta_r )
     return data;
 }
 
-READ_HANDLER( pc_ppi_portb_r )
+int pc_ppi_portb_r(int chip )
 {
 	int data;
 
@@ -409,7 +409,7 @@ READ_HANDLER( pc_ppi_portb_r )
 /* tandy1000hx
    bit 4 input eeprom data in
    bit 3 output turbo mode */
-READ_HANDLER( pc_ppi_portc_r )
+int pc_ppi_portc_r( int chip )
 {
 	int data=0xff;
 
@@ -432,14 +432,14 @@ READ_HANDLER( pc_ppi_portc_r )
 	return data;
 }
 
-WRITE_HANDLER( pc_ppi_porta_w )
+void pc_ppi_porta_w(int chip, int data )
 {
 	/* KB controller port A */
 	PIO_LOG(1,"PIO_A_w",("$%02x\n", data));
 	pc_port[0x60] = data;
 }
 
-WRITE_HANDLER( pc_ppi_portb_w )
+void pc_ppi_portb_w(int chip, int data )
 {
 	/* KB controller port B */
 	PIO_LOG(1,"PIO_B_w",("$%02x\n", data));
@@ -453,7 +453,7 @@ WRITE_HANDLER( pc_ppi_portb_w )
 	}
 }
 
-WRITE_HANDLER( pc_ppi_portc_w )
+void pc_ppi_portc_w(int chip, int data )
 {
 	/* KB controller port C */
 	PIO_LOG(1,"PIO_C_w",("$%02x\n", data));
@@ -601,7 +601,7 @@ void pc_keyboard(void)
 
 	at_keyboard_polling();
 
-	if( !pic8259_0_irq_pending(1) )
+	if( pic8259_0_irq_pending(1) )
 	{
 		if ( (data=at_keyboard_read())!=-1) {
 			pc_port[0x60] = data;

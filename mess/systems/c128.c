@@ -319,8 +319,7 @@ U102 23256 (read compatible 27256?) 32kB 1571 system rom
  * 0x0000-0xedff ram (dram bank 1?)
  * 0xe000-0xffff ram as bank 0
  */
-static struct MemoryReadAddress c128_z80_readmem[] =
-{
+static MEMORY_READ_START( c128_z80_readmem )
 #if 1
 	{0x0000, 0x0fff, MRA_BANK10},
 	{0x1000, 0xbfff, MRA_BANK11},
@@ -339,11 +338,9 @@ static struct MemoryReadAddress c128_z80_readmem[] =
 	{0xff00, 0xff04, c128_mmu8722_ff00_r},
 	{0xff05, 0xffff, MRA_BANK9},
 #endif
-	MEMORY_TABLE_END
-};
+MEMORY_END
 
-static struct MemoryWriteAddress c128_z80_writemem[] =
-{
+static MEMORY_WRITE_START( c128_z80_writemem )
 #if 1
 	{0x0000, 0x0fff, c128_write_0000, &c64_memory},
 	{0x1000, 0xbfff, c128_write_1000 },
@@ -375,11 +372,9 @@ static struct MemoryWriteAddress c128_z80_writemem[] =
 	{0x122000, 0x1227ff, MWA_RAM, &c64_colorram},
 	{0x122800, 0x1327ff, MWA_RAM, &c128_vdcram},
 	/* 2 kbyte by 8 bits, only 1 kbyte by 4 bits used) */
-	MEMORY_TABLE_END
-};
+MEMORY_END
 
-static struct IOReadPort c128_z80_readio[] =
-{
+static PORT_READ_START( c128_z80_readio )
 	{0x1000, 0x13ff, c64_colorram_read},
 	{0xd000, 0xd3ff, vic2_port_r},
 	{0xd400, 0xd4ff, sid6581_0_port_r},
@@ -388,11 +383,9 @@ static struct IOReadPort c128_z80_readio[] =
 	{0xdc00, 0xdcff, cia6526_0_port_r},
 	{0xdd00, 0xddff, cia6526_1_port_r},
 	/*{ 0xdf00, 0xdfff, dma_port_r }, */
-	MEMORY_TABLE_END
-};
+PORT_END
 
-static struct IOWritePort c128_z80_writeio[] =
-{
+static PORT_WRITE_START( c128_z80_writeio )
 	{0x1000, 0x13ff, c64_colorram_write},
 	{0xd000, 0xd3ff, vic2_port_w},
 	{0xd400, 0xd4ff, sid6581_0_port_w},
@@ -401,11 +394,9 @@ static struct IOWritePort c128_z80_writeio[] =
 	{0xdc00, 0xdcff, cia6526_0_port_w},
 	{0xdd00, 0xddff, cia6526_1_port_w},
 	/*{ 0xdf00, 0xdfff, dma_port_w }, */
-	MEMORY_TABLE_END
-};
+PORT_END
 
-static struct MemoryReadAddress c128_readmem[] =
-{
+static MEMORY_READ_START( c128_readmem )
 	{0x0000, 0x0001, c64_m6510_port_r},
 	{0x0002, 0x00ff, MRA_BANK1},
 	{0x0100, 0x01ff, MRA_BANK2},
@@ -423,11 +414,9 @@ static struct MemoryReadAddress c128_readmem[] =
 	{0xe000, 0xfeff, MRA_BANK14},
 	{0xff00, 0xff04, MRA_BANK15},	   /* mmu c128 modus */
 	{0xff05, 0xffff, MRA_BANK16},
-	MEMORY_TABLE_END
-};
+MEMORY_END
 
-static struct MemoryWriteAddress c128_writemem[] =
-{
+static MEMORY_WRITE_START( c128_writemem )
 	{0x0000, 0x0001, c64_m6510_port_w},
 	{0x0002, 0x00ff, MWA_BANK1},
 	{0x0100, 0x01ff, MWA_BANK2},
@@ -443,8 +432,7 @@ static struct MemoryWriteAddress c128_writemem[] =
 	{0xe000, 0xfeff, c128_write_e000},
 	{0xff00, 0xff04, c128_write_ff00},
 	{0xff05, 0xffff, c128_write_ff05},
-	MEMORY_TABLE_END
-};
+MEMORY_END
 
 #define DIPS_HELPER(bit, name, keycode) \
     PORT_BITX(bit, IP_ACTIVE_HIGH, IPT_KEYBOARD, name, keycode, CODE_NONE)

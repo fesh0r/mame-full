@@ -170,10 +170,10 @@ static struct pia6821_interface pet_pia0={
     pet_pia1_cb2_write,
 };
 
-static void pet_address_line_11(int offset, int level)
+static WRITE_HANDLER( pet_address_line_11 )
 {
-	DBG_LOG (1, "address line", ("%d\n", level));
-	crtc6845_address_line_11(level);
+	DBG_LOG (1, "address line", ("%d\n", data));
+	crtc6845_address_line_11(data);
 }
 
 /* userport, cassettes, rest ieee488
@@ -193,7 +193,7 @@ static void pet_address_line_11(int offset, int level)
    cb1 cassettes
    cb2 user port
  */
-static int pet_via_port_b_r(int offset)
+static READ_HANDLER( pet_via_port_b_r )
 {
 	UINT8 data=0;
 	if (cbm_ieee_ndac_r()) data|=1;
@@ -202,7 +202,7 @@ static int pet_via_port_b_r(int offset)
 	return data;
 }
 
-static void pet_via_port_b_w(int offset, int data)
+static WRITE_HANDLER( pet_via_port_b_w )
 {
 	cbm_ieee_nrfd_w(0, data&2);
 	cbm_ieee_atn_w(0, data&4);
@@ -412,8 +412,8 @@ static void pet_common_driver_init (void)
 
 	pet_clock=timer_pulse(0.01, 0, pet_frame_interrupt);
 	via_config(0,&pet_via);
-	pia_config(0,PIA_8BIT,&pet_pia0);
-	pia_config(1,PIA_8BIT,&pet_pia1);
+	pia_config(0,PIA_STANDARD_ORDERING,&pet_pia0);
+	pia_config(1,PIA_STANDARD_ORDERING,&pet_pia1);
 
 	cbm_drive_open ();
 

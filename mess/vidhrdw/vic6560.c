@@ -595,7 +595,7 @@ int vic656x_raster_interrupt (void)
 
 			if (DOCLIP (&r, &Machine->visible_area))
 			{
-				osd_mark_dirty (r.min_x, r.min_y, r.max_x, r.max_y, 0);
+				osd_mark_dirty (r.min_x, r.min_y, r.max_x, r.max_y);
 #ifndef GFX
 				vic6560_draw_pointer (vic6560_bitmap, &r,
 									  r.min_x - (LIGHTPEN_X_VALUE + VIC656X_MAME_XPOS - 1),

@@ -17,7 +17,7 @@
 
 DMA8237 dma8237[2]= { {0} };
 
-static void dma8237_w(DMA8237 *this, offs_t offset, data_t data)
+static void dma8237_w(DMA8237 *this, offs_t offset, data8_t data)
 {
 	offset&=0xf;
 	switch( offset )
@@ -162,7 +162,7 @@ static int dma8237_r(DMA8237 *this, offs_t offset)
 
 /* in an at SN74LS612N, full 16 register memory mapper,
    so 0x80-0x8f read and writeable */
-static void dma8237_page_w(DMA8237 *this, offs_t offset, data_t data)
+static void dma8237_page_w(DMA8237 *this, offs_t offset, data8_t data)
 {
 	offset&=7;
 	this->pagereg.data[offset]=data;

@@ -34,7 +34,7 @@ void pc1401_outb(int data)
 
 void pc1401_outc(int data)
 {
-
+//	logerror("%g outc %.2x\n",timer_get_time(), data);
 }
 
 int pc1401_ina(void)
@@ -310,7 +310,7 @@ void pc1401_machine_init(void)
 	if (RAM10K) {
 		install_mem_write_handler (0, 0x2000, 0x3fff, MWA_RAM);
 	} else if (RAM4K) {
-		install_mem_write_handler (0, 0x2000, 0x27ff, MWA_NOP);
+		install_mem_write_handler (0, 0x2000, 0x37ff, MWA_NOP);
 		install_mem_write_handler (0, 0x3800, 0x3fff, MWA_RAM);
 	} else {
 		install_mem_write_handler (0, 0x2000, 0x3fff, MWA_NOP);

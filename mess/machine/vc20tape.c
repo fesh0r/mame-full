@@ -6,6 +6,8 @@
 
 ***************************************************************************/
 #include <ctype.h>
+#include <stdio.h>
+#include "snprintf.h"
 
 #include "driver.h"
 #include "unzip.h"
@@ -32,7 +34,7 @@ static struct
 
 	int data;
 	int motor;
-	void (*read_callback) (UINT32, UINT32);
+	void (*read_callback) (UINT32, UINT8);
 
 #define TAPE_WAV 1
 #define TAPE_PRG 2
@@ -1100,7 +1102,7 @@ static void vc20_zip_timer (int data)
 	vc20_prg_state ();
 }
 
-void vc20_tape_open (void (*read_callback) (UINT32, UINT32))
+void vc20_tape_open (void (*read_callback) (UINT32, UINT8))
 {
 	tape.read_callback = read_callback;
 #ifndef NEW_GAMEDRIVER

@@ -97,7 +97,7 @@ void pocketc_draw_special(struct osd_bitmap *bitmap,
 			switch(fig[i][j]) {
 			case '1':
 				bitmap->line[y][x+j]=color;
-				osd_mark_dirty(x+j,y,x+j,y,0);
+				osd_mark_dirty(x+j,y,x+j,y);
 				break;
 			case 'e': return;
 			}

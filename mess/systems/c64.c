@@ -200,8 +200,7 @@ when problems start with -log and look into error.log file
 
 #include "includes/c64.h"
 
-static struct MemoryReadAddress ultimax_readmem[] =
-{
+static MEMORY_READ_START( ultimax_readmem )
 	{0x0000, 0x0001, c64_m6510_port_r},
 	{0x0002, 0x0fff, MRA_RAM},
 	{0x8000, 0x9fff, MRA_ROM},
@@ -210,11 +209,9 @@ static struct MemoryReadAddress ultimax_readmem[] =
 	{0xd800, 0xdbff, MRA_RAM},		   /* colorram  */
 	{0xdc00, 0xdcff, cia6526_0_port_r},
 	{0xe000, 0xffff, MRA_ROM},		   /* ram or kernel rom */
-	MEMORY_TABLE_END
-};
+MEMORY_END
 
-static struct MemoryWriteAddress ultimax_writemem[] =
-{
+static MEMORY_WRITE_START( ultimax_writemem )
 	{0x0000, 0x0001, c64_m6510_port_w, &c64_memory},
 	{0x0002, 0x0fff, MWA_RAM},
 	{0x8000, 0x9fff, MWA_ROM, &c64_roml},
@@ -223,11 +220,9 @@ static struct MemoryWriteAddress ultimax_writemem[] =
 	{0xd800, 0xdbff, c64_colorram_write, &c64_colorram},
 	{0xdc00, 0xdcff, cia6526_0_port_w},
 	{0xe000, 0xffff, MWA_ROM, &c64_romh},
-	MEMORY_TABLE_END
-};
+MEMORY_END
 
-static struct MemoryReadAddress c64_readmem[] =
-{
+static MEMORY_READ_START( c64_readmem )
 	{0x0000, 0x0001, c64_m6510_port_r},
 	{0x0002, 0x7fff, MRA_RAM},
 	{0x8000, 0x9fff, MRA_BANK1},	   /* ram or external roml */
@@ -251,11 +246,9 @@ static struct MemoryReadAddress c64_readmem[] =
 	{0x12000, 0x13fff, MRA_ROM},	   /* kernal at 0xe000 */
 	{0x14000, 0x14fff, MRA_ROM},	   /* charrom at 0xd000 */
 	{0x15000, 0x153ff, MRA_RAM},	   /* colorram at 0xd800 */
-	MEMORY_TABLE_END
-};
+MEMORY_END
 
-static struct MemoryWriteAddress c64_writemem[] =
-{
+static MEMORY_WRITE_START( c64_writemem )
 	{0x0000, 0x0001, c64_m6510_port_w, &c64_memory},
 	{0x0002, 0x7fff, MWA_RAM},
 	{0x8000, 0x9fff, MWA_BANK2},
@@ -279,8 +272,7 @@ static struct MemoryWriteAddress c64_writemem[] =
 	{0x15000, 0x153ff, MWA_RAM, &c64_colorram},		/* colorram at 0xd800 */
 	{0x15400, 0x173ff, MWA_ROM, &c64_roml},	/* basic at 0xa000 */
 	{0x17400, 0x193ff, MWA_ROM, &c64_romh},	/* kernal at 0xe000 */
-	MEMORY_TABLE_END
-};
+MEMORY_END
 
 #define DIPS_HELPER(bit, name, keycode) \
    PORT_BITX(bit, IP_ACTIVE_HIGH, IPT_KEYBOARD, name, keycode, IP_JOY_NONE)

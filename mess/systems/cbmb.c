@@ -172,8 +172,7 @@ when problems start with -log and look into error.log file
 
 #include "includes/cbmb.h"
 
-static struct MemoryReadAddress cbmb_readmem[] =
-{
+static MEMORY_READ_START( cbmb_readmem )
 	{0x00000, 0x00000, m6509_read_00000 },
 	{0x00001, 0x00001, m6509_read_00001 },
 	{0x00002, 0x0ffff, MRA_RAM},
@@ -241,11 +240,9 @@ static struct MemoryReadAddress cbmb_readmem[] =
 	{0xfde00, 0xfdeff, tpi6525_0_port_r},
 	{0xfdf00, 0xfdfff, tpi6525_1_port_r},
 	{0xfe000, 0xfffff, MRA_ROM },
-	MEMORY_TABLE_END
-};
+MEMORY_END
 
-static struct MemoryWriteAddress cbmb_writemem[] =
-{
+static MEMORY_WRITE_START( cbmb_writemem )
 	{0x00000, 0x00000, m6509_write_00000, &cbmb_memory },
 	{0x00001, 0x00001, m6509_write_00001 },
 	{0x00002, 0x0ffff, MWA_NOP },
@@ -310,11 +307,9 @@ static struct MemoryWriteAddress cbmb_writemem[] =
 	{0xfdf00, 0xfdfff, tpi6525_1_port_w},
 	{0xfe000, 0xfffff, MWA_ROM, &cbmb_kernal },
 	{0x100000, 0x101fff, MWA_ROM, &cbmb_chargen },
-	MEMORY_TABLE_END
-};
+MEMORY_END
 
-static struct MemoryReadAddress cbm500_readmem[] =
-{
+static MEMORY_READ_START( cbm500_readmem )
 	{0x00000, 0x00000, m6509_read_00000 },
 	{0x00001, 0x00001, m6509_read_00001 },
 	{0x00002, 0x0ffff, MRA_RAM},
@@ -383,11 +378,9 @@ static struct MemoryReadAddress cbm500_readmem[] =
 	{0xfde00, 0xfdeff, tpi6525_0_port_r},
 	{0xfdf00, 0xfdfff, tpi6525_1_port_r},
 	{0xfe000, 0xfffff, MRA_ROM },
-	MEMORY_TABLE_END
-};
+MEMORY_END
 
-static struct MemoryWriteAddress cbm500_writemem[] =
-{
+static MEMORY_WRITE_START( cbm500_writemem )
 	{0x00000, 0x00000, m6509_write_00000, &cbmb_memory },
 	{0x00001, 0x00001, m6509_write_00001 },
 	{0x00002, 0x0ffff, MWA_RAM },
@@ -453,8 +446,7 @@ static struct MemoryWriteAddress cbm500_writemem[] =
 	{0xfdf00, 0xfdfff, tpi6525_1_port_w},
 	{0xfe000, 0xfffff, MWA_ROM, &cbmb_kernal },
 	{0x100000, 0x100fff, MWA_ROM, &cbmb_chargen },
-	MEMORY_TABLE_END
-};
+MEMORY_END
 
 #define DIPS_HELPER(bit, name, keycode) \
    PORT_BITX(bit, IP_ACTIVE_HIGH, IPT_KEYBOARD, name, keycode, IP_JOY_NONE)

@@ -64,10 +64,9 @@
 
   jumperable? normally 0x220
 */
-#define GAMEBLASTER
+//#define GAMEBLASTER
 
-static struct MemoryReadAddress mda_readmem[] =
-{
+static MEMORY_READ_START( mda_readmem )
 	{ 0x00000, 0x7ffff, MRA_RAM },
 	{ 0x80000, 0x9ffff, MRA_RAM },
 	{ 0xa0000, 0xaffff, MRA_NOP },
@@ -76,11 +75,9 @@ static struct MemoryReadAddress mda_readmem[] =
 	{ 0xc8000, 0xcffff, MRA_ROM },
 	{ 0xd0000, 0xeffff, MRA_NOP },
 	{ 0xf0000, 0xfffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress mda_writemem[] =
-{
+static MEMORY_WRITE_START( mda_writemem )
 	{ 0x00000, 0x7ffff, MWA_RAM },
 	{ 0x80000, 0x9ffff, MWA_RAM },
 	{ 0xa0000, 0xaffff, MWA_NOP },
@@ -89,11 +86,9 @@ static struct MemoryWriteAddress mda_writemem[] =
 	{ 0xc8000, 0xcffff, MWA_ROM },
 	{ 0xd0000, 0xeffff, MWA_NOP },
 	{ 0xf0000, 0xfffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort mda_readport[] =
-{
+static PORT_READ_START( mda_readport )
 	{ 0x0000, 0x000f, dma8237_0_r },
 	{ 0x0020, 0x0021, pic8259_0_r },
 	{ 0x0040, 0x0043, pit8253_0_r },
@@ -115,11 +110,9 @@ static struct IOReadPort mda_readport[] =
     { 0x0320, 0x0323, pc_HDC1_r },
 	{ 0x0324, 0x0327, pc_HDC2_r },
 	{ 0x03b0, 0x03bf, pc_MDA_r },
-    { -1 }
-};
+PORT_END
 
-static struct IOWritePort mda_writeport[] =
-{
+static PORT_WRITE_START( mda_writeport )
 	{ 0x0000, 0x000f, dma8237_0_w },
 	{ 0x0020, 0x0021, pic8259_0_w },
 	{ 0x0040, 0x0043, pit8253_0_w },
@@ -148,11 +141,9 @@ static struct IOWritePort mda_writeport[] =
 	{ 0x0320, 0x0323, pc_HDC1_w },
 	{ 0x0324, 0x0327, pc_HDC2_w },
 	{ 0x03b0, 0x03bf, pc_MDA_w },
-    { -1 }
-};
+PORT_END
 
-static struct MemoryReadAddress cga_readmem[] =
-{
+static MEMORY_READ_START( cga_readmem )
 	{ 0x00000, 0x7ffff, MRA_RAM },
 	{ 0x80000, 0x9ffff, MRA_RAM },
 	{ 0xa0000, 0xaffff, MRA_NOP },
@@ -162,11 +153,9 @@ static struct MemoryReadAddress cga_readmem[] =
     { 0xc8000, 0xcffff, MRA_ROM },
     { 0xd0000, 0xeffff, MRA_NOP },
 	{ 0xf0000, 0xfffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress cga_writemem[] =
-{
+static MEMORY_WRITE_START( cga_writemem )
 	{ 0x00000, 0x7ffff, MWA_RAM },
 	{ 0x80000, 0x9ffff, MWA_RAM },
 	{ 0xa0000, 0xaffff, MWA_NOP },
@@ -176,11 +165,9 @@ static struct MemoryWriteAddress cga_writemem[] =
 	{ 0xc8000, 0xcffff, MWA_ROM },
     { 0xd0000, 0xeffff, MWA_NOP },
 	{ 0xf0000, 0xfffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort cga_readport[] =
-{
+static PORT_READ_START( cga_readport )
 	{ 0x0000, 0x000f, dma8237_0_r },
 	{ 0x0020, 0x0021, pic8259_0_r },
 	{ 0x0040, 0x0043, pit8253_0_r },
@@ -202,11 +189,9 @@ static struct IOReadPort cga_readport[] =
     { 0x0320, 0x0323, pc_HDC1_r },
 	{ 0x0324, 0x0327, pc_HDC2_r },
 	{ 0x03d0, 0x03df, pc_CGA_r },
-    { -1 }
-};
+PORT_END
 
-static struct IOWritePort cga_writeport[] =
-{
+static PORT_WRITE_START( cga_writeport )
 	{ 0x0000, 0x000f, dma8237_0_w },
 	{ 0x0020, 0x0021, pic8259_0_w },
 	{ 0x0040, 0x0043, pit8253_0_w },
@@ -235,11 +220,9 @@ static struct IOWritePort cga_writeport[] =
     { 0x0320, 0x0323, pc_HDC1_w },
 	{ 0x0324, 0x0327, pc_HDC2_w },
 	{ 0x03d0, 0x03df, pc_CGA_w },
-    { -1 }
-};
+PORT_END
 
-static struct MemoryReadAddress t1t_readmem[] =
-{
+static MEMORY_READ_START(t1t_readmem)
 	{ 0x00000, 0x7ffff, MRA_RAM },
 	{ 0x80000, 0x9ffff, MRA_RAM },
 	{ 0xa0000, 0xaffff, MRA_RAM },
@@ -250,11 +233,9 @@ static struct MemoryReadAddress t1t_readmem[] =
 	{ 0xca000, 0xcffff, MRA_NOP },
 	{ 0xd0000, 0xeffff, MRA_NOP },
 	{ 0xf0000, 0xfffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
-static struct MemoryWriteAddress t1t_writemem[] =
-{
+static MEMORY_WRITE_START( t1t_writemem )
 	{ 0x00000, 0x7ffff, MWA_RAM },
 	{ 0x80000, 0x9ffff, MWA_RAM },
 	{ 0xa0000, 0xaffff, MWA_RAM },
@@ -265,11 +246,9 @@ static struct MemoryWriteAddress t1t_writemem[] =
 	{ 0xca000, 0xcffff, MWA_NOP },
 	{ 0xd0000, 0xeffff, MWA_NOP },
 	{ 0xf0000, 0xfffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort t1t_readport[] =
-{
+static PORT_READ_START( t1t_readport )
 	{ 0x0000, 0x000f, dma8237_0_r },
 	{ 0x0020, 0x0021, pic8259_0_r },
 	{ 0x0040, 0x0043, pit8253_0_r },
@@ -285,11 +264,9 @@ static struct IOReadPort t1t_readport[] =
 	{ 0x0320, 0x0323, pc_HDC1_r },
 	{ 0x0324, 0x0327, pc_HDC2_r },
 	{ 0x03d0, 0x03df, pc_T1T_r },
-    { -1 }
-};
+PORT_END
 
-static struct IOWritePort t1t_writeport[] =
-{
+static PORT_WRITE_START( t1t_writeport )
 	{ 0x0000, 0x000f, dma8237_0_w },
 	{ 0x0020, 0x0021, pic8259_0_w },
 	{ 0x0040, 0x0043, pit8253_0_w },
@@ -306,11 +283,9 @@ static struct IOWritePort t1t_writeport[] =
     { 0x0320, 0x0323, pc_HDC1_w },
 	{ 0x0324, 0x0327, pc_HDC2_w },
 	{ 0x03d0, 0x03df, pc_T1T_w },
-    { -1 }
-};
+PORT_END
 
-static struct MemoryReadAddress pc1512_readmem[] =
-{
+static MEMORY_READ_START( pc1512_readmem )
 	{ 0x00000, 0x7ffff, MRA_RAM },
 	{ 0x80000, 0x9ffff, MRA_RAM },
 	{ 0xa0000, 0xaffff, MRA_NOP },
@@ -320,11 +295,9 @@ static struct MemoryReadAddress pc1512_readmem[] =
     { 0xc8000, 0xcffff, MRA_ROM },
     { 0xd0000, 0xeffff, MRA_NOP },
 	{ 0xf0000, 0xfffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress pc1512_writemem[] =
-{
+static MEMORY_WRITE_START( pc1512_writemem )
 	{ 0x00000, 0x7ffff, MWA_RAM },
 	{ 0x80000, 0x9ffff, MWA_RAM },
 	{ 0xa0000, 0xaffff, MWA_NOP },
@@ -335,11 +308,9 @@ static struct MemoryWriteAddress pc1512_writemem[] =
 	{ 0xc8000, 0xcffff, MWA_ROM },
     { 0xd0000, 0xeffff, MWA_NOP },
 	{ 0xf0000, 0xfffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort pc1512_readport[] =
-{
+static PORT_READ_START( pc1512_readport )
 	{ 0x0000, 0x000f, dma8237_0_r },
 	{ 0x0020, 0x0021, pic8259_0_r },
 	{ 0x0040, 0x0043, pit8253_0_r },
@@ -361,11 +332,9 @@ static struct IOReadPort pc1512_readport[] =
     { 0x0320, 0x0323, pc_HDC1_r },
 	{ 0x0324, 0x0327, pc_HDC2_r },
 	{ 0x03d0, 0x03df, pc1512_r },
-    { -1 }
-};
+PORT_END
 
-static struct IOWritePort pc1512_writeport[] =
-{
+static PORT_WRITE_START( pc1512_writeport )
 	{ 0x0000, 0x000f, dma8237_0_w },
 	{ 0x0020, 0x0021, pic8259_0_w },
 	{ 0x0040, 0x0043, pit8253_0_w },
@@ -387,10 +356,9 @@ static struct IOWritePort pc1512_writeport[] =
     { 0x0320, 0x0323, pc_HDC1_w },
 	{ 0x0324, 0x0327, pc_HDC2_w },
 	{ 0x03d0, 0x03df, pc1512_w },
-    { -1 }
-};
-static struct IOReadPort pc1640_readport[] =
-{
+PORT_END
+
+static PORT_READ_START( pc1640_readport )
 	{ 0x0020, 0x0021, pic8259_0_r },
 	{ 0x0040, 0x0043, pit8253_0_r },
 	{ 0x03b0, 0x03bf, vga_port_03b0_r },
@@ -418,11 +386,9 @@ static struct IOReadPort pc1640_readport[] =
 	{ 0x03f0, 0x03f7, pc_fdc_r },
     { 0x0320, 0x0323, pc_HDC1_r },
 	{ 0x0324, 0x0327, pc_HDC2_r },
-    { -1 }
-};
+PORT_END
 
-static struct IOWritePort pc1640_writeport[] =
-{
+static PORT_WRITE_START( pc1640_writeport )
 	{ 0x0020, 0x0021, pic8259_0_w },
 	{ 0x0040, 0x0043, pit8253_0_w },
 	{ 0x03b0, 0x03bf, vga_port_03b0_w },
@@ -447,12 +413,10 @@ static struct IOWritePort pc1640_writeport[] =
 	{ 0x03f0, 0x03f7, pc_fdc_w },
     { 0x0320, 0x0323, pc_HDC1_w },
 	{ 0x0324, 0x0327, pc_HDC2_w },
-    { -1 }
-};
+PORT_END
 
 
-static struct MemoryReadAddress vga_readmem[] =
-{
+static MEMORY_READ_START( vga_readmem )
 	{ 0x00000, 0x7ffff, MRA_RAM },
 	{ 0x80000, 0x9ffff, MRA_RAM },
 	{ 0xa0000, 0xaffff, MRA_BANK1 },
@@ -462,11 +426,9 @@ static struct MemoryReadAddress vga_readmem[] =
 	{ 0xc8000, 0xcffff, MRA_ROM },
 	{ 0xd0000, 0xeffff, MRA_NOP },
 	{ 0xf0000, 0xfffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress vga_writemem[] =
-{
+static MEMORY_WRITE_START( vga_writemem )
 	{ 0x00000, 0x7ffff, MWA_RAM },
 	{ 0x80000, 0x9ffff, MWA_RAM },
 	{ 0xa0000, 0xaffff, MWA_BANK1 },
@@ -476,11 +438,9 @@ static struct MemoryWriteAddress vga_writemem[] =
 	{ 0xc8000, 0xcffff, MWA_ROM },
 	{ 0xd0000, 0xeffff, MWA_NOP },
 	{ 0xf0000, 0xfffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort vga_readport[] =
-{
+static PORT_READ_START( vga_readport )
 	{ 0x0020, 0x0021, pic8259_0_r },
 	{ 0x0040, 0x0043, pit8253_0_r },
 	{ 0x03b0, 0x03bf, vga_port_03b0_r },
@@ -505,11 +465,9 @@ static struct IOReadPort vga_readport[] =
 	{ 0x03f0, 0x03f7, pc_fdc_r },
     { 0x0320, 0x0323, pc_HDC1_r },
 	{ 0x0324, 0x0327, pc_HDC2_r },
-    { -1 }
-};
+PORT_END
 
-static struct IOWritePort vga_writeport[] =
-{
+static PORT_WRITE_START( vga_writeport )
 	{ 0x0020, 0x0021, pic8259_0_w },
 	{ 0x0040, 0x0043, pit8253_0_w },
 	{ 0x03b0, 0x03bf, vga_port_03b0_w },
@@ -541,11 +499,9 @@ static struct IOWritePort vga_writeport[] =
 	{ 0x03f0, 0x03f7, pc_fdc_w },
     { 0x0320, 0x0323, pc_HDC1_w },
 	{ 0x0324, 0x0327, pc_HDC2_w },
-    { -1 }
-};
+PORT_END
 
-static struct MemoryReadAddress atvga_readmem[] =
-{
+static MEMORY_READ_START( atvga_readmem )
 	{ 0x000000, 0x07ffff, MRA_RAM },
 	{ 0x080000, 0x09ffff, MRA_RAM },
 	{ 0x0a0000, 0x0affff, MRA_BANK1 },
@@ -557,11 +513,9 @@ static struct MemoryReadAddress atvga_readmem[] =
 	{ 0x0f0000, 0x0fffff, MRA_ROM },
 	{ 0x100000, 0x1fffff, MRA_RAM },
 	{ 0x200000, 0xffffff, MRA_NOP },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress atvga_writemem[] =
-{
+static MEMORY_WRITE_START( atvga_writemem )
 	{ 0x000000, 0x03ffff, MWA_RAM },
 	{ 0x040000, 0x09ffff, MWA_RAM },
 	{ 0x0a0000, 0x0affff, MWA_BANK1 },
@@ -573,11 +527,9 @@ static struct MemoryWriteAddress atvga_writemem[] =
 	{ 0x0f0000, 0x0fffff, MWA_ROM },
 	{ 0x100000, 0x1fffff, MWA_RAM },
 	{ 0x200000, 0xffffff, MWA_NOP },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort atvga_readport[] =
-{
+static PORT_READ_START( atvga_readport )
 	{ 0x0000, 0x001f, dma8237_0_r },
 	{ 0x0020, 0x003f, pic8259_0_r },
 	{ 0x0040, 0x005f, pit8253_0_r },
@@ -607,11 +559,9 @@ static struct IOReadPort atvga_readport[] =
 	{ 0x03b0, 0x03bf, vga_port_03b0_r },
 	{ 0x03c0, 0x03cf, vga_port_03c0_r },
 	{ 0x03d0, 0x03df, vga_port_03d0_r },
-    { -1 }
-};
+PORT_END
 
-static struct IOWritePort atvga_writeport[] =
-{
+static PORT_WRITE_START( atvga_writeport )
 	{ 0x0000, 0x001f, dma8237_0_w },
 	{ 0x0020, 0x003f, pic8259_0_w },
 	{ 0x0040, 0x005f, pit8253_0_w },
@@ -648,12 +598,10 @@ static struct IOWritePort atvga_writeport[] =
 	{ 0x03b0, 0x03bf, vga_port_03b0_w },
 	{ 0x03c0, 0x03cf, vga_port_03c0_w },
 	{ 0x03d0, 0x03df, vga_port_03d0_w },
-    { -1 }
-};
+PORT_END
 
 
-static struct MemoryReadAddress atcga_readmem[] =
-{
+static MEMORY_READ_START( atcga_readmem )
 	{ 0x000000, 0x07ffff, MRA_RAM },
 	{ 0x080000, 0x09ffff, MRA_RAM },
 	{ 0x0a0000, 0x0affff, MRA_NOP },
@@ -665,11 +613,9 @@ static struct MemoryReadAddress atcga_readmem[] =
 	{ 0x0f0000, 0x0fffff, MRA_ROM },
 	{ 0x100000, 0x1fffff, MRA_RAM },
 	{ 0x200000, 0xffffff, MRA_NOP },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress atcga_writemem[] =
-{
+static MEMORY_WRITE_START( atcga_writemem )
 	{ 0x000000, 0x03ffff, MWA_RAM },
 	{ 0x040000, 0x09ffff, MWA_RAM },
 	{ 0x0a0000, 0x0affff, MWA_NOP },
@@ -681,11 +627,9 @@ static struct MemoryWriteAddress atcga_writemem[] =
 	{ 0x0f0000, 0x0fffff, MWA_ROM },
 	{ 0x100000, 0x1fffff, MWA_RAM },
 	{ 0x200000, 0xffffff, MWA_NOP },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort atcga_readport[] =
-{
+static PORT_READ_START( atcga_readport )
 	{ 0x0000, 0x001f, dma8237_0_r },
 	{ 0x0020, 0x003f, pic8259_0_r },
 	{ 0x0040, 0x005f, pit8253_0_r },
@@ -713,11 +657,9 @@ static struct IOReadPort atcga_readport[] =
 	{ 0x0324, 0x0327, pc_HDC2_r },
 	{ 0x03d0, 0x03df, pc_CGA_r },
 	{ 0x01f0, 0x01f7, at_mfm_0_r },
-    { -1 }
-};
+PORT_END
 
-static struct IOWritePort atcga_writeport[] =
-{
+static PORT_WRITE_START( atcga_writeport )
 	{ 0x0000, 0x001f, dma8237_0_w },
 	{ 0x0020, 0x003f, pic8259_0_w },
 	{ 0x0040, 0x005f, pit8253_0_w },
@@ -752,8 +694,7 @@ static struct IOWritePort atcga_writeport[] =
 	{ 0x0324, 0x0327, pc_HDC2_w },
 	{ 0x03d0, 0x03df, pc_CGA_w },
 	{ 0x01f0, 0x01f7, at_mfm_0_w },
-    { -1 }
-};
+PORT_END
 
 static unsigned char palette[] = {
 /*  normal colors */

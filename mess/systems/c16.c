@@ -197,8 +197,7 @@ when problems start with -log and look into error.log file
  * at 0xfc00 till 0xfcff is ram or rom kernal readable
  */
 
-static struct MemoryReadAddress c16_readmem[] =
-{
+static MEMORY_READ_START( c16_readmem )
 	{0x0000, 0x0001, c16_m7501_port_r},
 	{0x0002, 0x3fff, MRA_RAM},
 	{0x4000, 0x7fff, MRA_BANK1},	   /* only ram memory configuration */
@@ -215,11 +214,9 @@ static struct MemoryReadAddress c16_readmem[] =
 	{0xff00, 0xff1f, ted7360_port_r},
 	{0xff20, 0xffff, MRA_BANK8},
 /*	{ 0x10000, 0x3ffff, MRA_ROM }, */
-	MEMORY_TABLE_END
-};
+MEMORY_END
 
-static struct MemoryWriteAddress c16_writemem[] =
-{
+static MEMORY_WRITE_START( c16_writemem )
 	{0x0000, 0x0001, c16_m7501_port_w, &c16_memory},
 	{0x0002, 0x3fff, MWA_RAM},
 #ifndef NEW_BANKHANDLER
@@ -251,11 +248,9 @@ static struct MemoryWriteAddress c16_writemem[] =
 	{0xff40, 0xffff, c16_write_ff40},  /*configure in c16_common_init */
 	{0x10000, 0x3ffff, MWA_ROM},
 #endif
-	MEMORY_TABLE_END
-};
+MEMORY_END
 
-static struct MemoryReadAddress plus4_readmem[] =
-{
+static MEMORY_READ_START( plus4_readmem )
 	{0x0000, 0x0001, c16_m7501_port_r},
 	{0x0002, 0x7fff, MRA_RAM},
 	{0x8000, 0xbfff, MRA_BANK2},
@@ -272,11 +267,9 @@ static struct MemoryReadAddress plus4_readmem[] =
 	{0xff00, 0xff1f, ted7360_port_r},
 	{0xff20, 0xffff, MRA_BANK8},
 /*	{ 0x10000, 0x3ffff, MRA_ROM }, */
-	MEMORY_TABLE_END
-};
+MEMORY_END
 
-static struct MemoryWriteAddress plus4_writemem[] =
-{
+static MEMORY_WRITE_START( plus4_writemem )
 	{0x0000, 0x0001, c16_m7501_port_w, &c16_memory},
 	{0x0002, 0xfcff, MWA_RAM},
 	{0xfd00, 0xfd0f, c16_6551_port_w},
@@ -296,11 +289,9 @@ static struct MemoryWriteAddress plus4_writemem[] =
 	{0xff3f, 0xff3f, plus4_switch_to_ram},
 	{0xff40, 0xffff, MWA_RAM},
 	{0x10000, 0x3ffff, MWA_ROM},
-	MEMORY_TABLE_END
-};
+MEMORY_END
 
-static struct MemoryReadAddress c364_readmem[] =
-{
+static MEMORY_READ_START( c364_readmem )
 	{0x0000, 0x0001, c16_m7501_port_r},
 	{0x0002, 0x7fff, MRA_RAM},
 	{0x8000, 0xbfff, MRA_BANK2},
@@ -318,11 +309,9 @@ static struct MemoryReadAddress c364_readmem[] =
 	{0xff00, 0xff1f, ted7360_port_r},
 	{0xff20, 0xffff, MRA_BANK8},
 /*	{ 0x10000, 0x3ffff, MRA_ROM }, */
-	MEMORY_TABLE_END
-};
+MEMORY_END
 
-static struct MemoryWriteAddress c364_writemem[] =
-{
+static MEMORY_WRITE_START( c364_writemem )
 	{0x0000, 0x0001, c16_m7501_port_w, &c16_memory},
 	{0x0002, 0xfcff, MWA_RAM},
 	{0xfd00, 0xfd0f, c16_6551_port_w},
@@ -343,8 +332,7 @@ static struct MemoryWriteAddress c364_writemem[] =
 	{0xff3f, 0xff3f, plus4_switch_to_ram},
 	{0xff40, 0xffff, MWA_RAM},
 	{0x10000, 0x3ffff, MWA_ROM},
-	MEMORY_TABLE_END
-};
+MEMORY_END
 
 #define DIPS_HELPER(bit, name, keycode) \
    PORT_BITX(bit, IP_ACTIVE_HIGH, IPT_KEYBOARD, name, keycode, IP_JOY_NONE)

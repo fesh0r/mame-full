@@ -338,7 +338,7 @@ static void praster_raster_gfxtext (PRASTER *This)
 				}
 				osd_mark_dirty (sx, sy,
 								sx+This->text.charsize.x-1,
-								sy+This->text.charsize.y-1, 0);
+								sy+This->text.charsize.y-1);
 				This->text.dirtybuffer[j]=0;
 			}
 		}

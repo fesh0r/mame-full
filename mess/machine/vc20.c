@@ -59,26 +59,26 @@ static void vc20_via0_irq (int level)
 	cpu_set_nmi_line (0, level);
 }
 
-static int vc20_via0_read_ca1 (int offset)
+static READ_HANDLER( vc20_via0_read_ca1 )
 {
 	return (KEYBOARD_EXTRA & KEY_RESTORE) ? 0 : 1;
 }
 
-static int vc20_via0_read_ca2 (int offset)
+static READ_HANDLER( vc20_via0_read_ca2 )
 {
 	DBG_LOG (1, "tape", ("motor read %d\n", via0_ca2));
 	return via0_ca2;
 }
 
-static void vc20_via0_write_ca2 (int offset, int data)
+static WRITE_HANDLER( vc20_via0_write_ca2 )
 {
 	via0_ca2 = data ? 1 : 0;
 	vc20_tape_motor (via0_ca2);
 }
 
-static int vc20_via0_read_porta (int offset)
+static READ_HANDLER( vc20_via0_read_porta )
 {
-	int value = 0xff;
+	UINT8 value = 0xff;
 
 	if (JOYSTICK)
 		value &= readinputport (0) | JOY_VIA0_IGNORE;
@@ -96,7 +96,7 @@ static int vc20_via0_read_porta (int offset)
 	return value;
 }
 
-static void vc20_via0_write_porta (int offset, int data)
+static WRITE_HANDLER( vc20_via0_write_porta )
 {
 	cbm_serial_atn_write (serial_atn = !(data & 0x80));
 	DBG_LOG (1, "serial out", ("atn %s\n", serial_atn ? "high" : "low"));
@@ -118,7 +118,7 @@ static void vc20_via1_irq (int level)
 	cpu_set_irq_line (0, M6502_INT_IRQ, level);
 }
 
-static int vc20_via1_read_porta (int offset)
+static READ_HANDLER( vc20_via1_read_porta )
 {
 	int value = 0xff;
 
@@ -149,19 +149,19 @@ static int vc20_via1_read_porta (int offset)
 	return value;
 }
 
-static int vc20_via1_read_ca1 (int offset)
+static READ_HANDLER( vc20_via1_read_ca1 )
 {
 	return vc20_tape_read ();
 }
 
-static void vc20_via1_write_ca2 (int offset, int data)
+static WRITE_HANDLER( vc20_via1_write_ca2 )
 {
 	cbm_serial_clock_write (serial_clock = !data);
 }
 
-static int vc20_via1_read_portb (int offset)
+static READ_HANDLER( vc20_via1_read_portb )
 {
-	int value = 0xff;
+	UINT8 value = 0xff;
 
 	if (JOYSTICK)
 		value &= readinputport (0) | JOY_VIA1_IGNORE;
@@ -171,20 +171,20 @@ static int vc20_via1_read_portb (int offset)
 	return value;
 }
 
-static void vc20_via1_write_portb (int offset, int data)
+static WRITE_HANDLER( vc20_via1_write_portb )
 {
 /*  if( errorlog ) fprintf(errorlog, "via1_write_portb: $%02X\n", data); */
 	vc20_tape_write (data & 8 ? 1 : 0);
 	via1_portb = data;
 }
 
-static int vc20_via1_read_cb1 (int offset)
+static READ_HANDLER( vc20_via1_read_cb1 )
 {
 	DBG_LOG (1, "serial in", ("request read\n"));
 	return cbm_serial_request_read ();
 }
 
-static void vc20_via1_write_cb2 (int offset, int data)
+static WRITE_HANDLER( vc20_via1_write_cb2 )
 {
 	cbm_serial_data_write (serial_data = !data);
 }
@@ -200,9 +200,9 @@ static void vc20_via1_write_cb2 (int offset, int data)
   6 ndac in
   7 atn in
  */
-static int vc20_via4_read_portb(int offset)
+static READ_HANDLER( vc20_via4_read_portb )
 {
-	int data=0;
+	UINT8 data=0;
 	if (cbm_ieee_eoi_r()) data|=8;
 	if (cbm_ieee_dav_r()) data|=0x10;
 	if (cbm_ieee_nrfd_r()) data|=0x20;
@@ -211,7 +211,7 @@ static int vc20_via4_read_portb(int offset)
 	return data;
 }
 
-static void vc20_via4_write_portb(int offset, int data )
+static WRITE_HANDLER( vc20_via4_write_portb )
 {
 	cbm_ieee_dav_w(0,data&1);
 	cbm_ieee_nrfd_w(0,data&2);
@@ -225,27 +225,27 @@ static void vc20_via4_write_portb(int offset, int data )
    cb2 eoi out
    ca2 atn out
 */
-static void vc20_via5_write_porta(int offset, int data)
+static WRITE_HANDLER( vc20_via5_write_porta )
 {
 	cbm_ieee_data_w(0,data);
 }
 
-static int vc20_via5_read_portb(int offset)
+static READ_HANDLER( vc20_via5_read_portb )
 {
 	return cbm_ieee_data_r();
 }
 
-static void vc20_via5_write_ca2(int offset,int level)
+static WRITE_HANDLER( vc20_via5_write_ca2 )
 {
-	cbm_ieee_atn_w(0,level);
+	cbm_ieee_atn_w(0,data);
 }
 
-static int vc20_via5_read_cb1( int offset)
+static READ_HANDLER( vc20_via5_read_cb1 )
 {
 	return cbm_ieee_srq_r();
 }
 
-static void vc20_via5_write_cb2( int offset, int data )
+static WRITE_HANDLER( vc20_via5_write_cb2 )
 {
 	cbm_ieee_eoi_w(0,data);
 }
