@@ -656,7 +656,6 @@ $(OBJ)/dooyong.a: \
 	$(OBJ)/vidhrdw/dooyong.o $(OBJ)/drivers/dooyong.o \
 
 $(OBJ)/nmk.a: \
-	$(OBJ)/vidhrdw/macross.o $(OBJ)/drivers/macross.o \
 	$(OBJ)/vidhrdw/bjtwin.o $(OBJ)/drivers/bjtwin.o \
 
 $(OBJ)/comad.a: \
