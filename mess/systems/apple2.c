@@ -215,7 +215,10 @@ static ADDRESS_MAP_START( apple2_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xc0f0, 0xc0ff) AM_READWRITE(apple2_c0xx_slot7_r,	apple2_c0xx_slot7_w)
 	AM_RANGE(0xc100, 0xc2ff) AM_READWRITE(MRA8_A2BANK_C100,		MWA8_A2BANK_C100)
 	AM_RANGE(0xc300, 0xc3ff) AM_READWRITE(MRA8_A2BANK_C300,		MWA8_A2BANK_C300)
-	AM_RANGE(0xc400, 0xc7ff) AM_READWRITE(MRA8_A2BANK_C400,		MWA8_A2BANK_C400)
+	AM_RANGE(0xc400, 0xc4ff) AM_READWRITE(MRA8_A2BANK_C400,		MWA8_A2BANK_C400)
+	AM_RANGE(0xc500, 0xc5ff) AM_READWRITE(MRA8_A2BANK_C500,		MWA8_A2BANK_C500)
+	AM_RANGE(0xc600, 0xc6ff) AM_READWRITE(MRA8_A2BANK_C600,		MWA8_A2BANK_C600)
+	AM_RANGE(0xc700, 0xc7ff) AM_READWRITE(MRA8_A2BANK_C700,		MWA8_A2BANK_C700)
 	AM_RANGE(0xc800, 0xcfff) AM_READWRITE(MRA8_A2BANK_C800,		MWA8_A2BANK_C800)
 	AM_RANGE(0xd000, 0xdfff) AM_READWRITE(MRA8_A2BANK_D000,		MWA8_A2BANK_D000)
 	AM_RANGE(0xe000, 0xffff) AM_READWRITE(MRA8_A2BANK_E000,		MWA8_A2BANK_E000)
@@ -350,7 +353,6 @@ static unsigned char apple2_palette[] =
 	0xFF, 0xFF, 0xFF	/* White */
 };
 
-#if 0
 static unsigned char apple2gs_palette[] =
 {
 	0x00, 0x00, 0x00,	/* Black */
@@ -370,7 +372,6 @@ static unsigned char apple2gs_palette[] =
 	0x40, 0xF0, 0x90,	/* Aquamarine */
 	0xF0, 0xF0, 0xF0	/* White */
 };
-#endif
 
 static struct GfxLayout apple2_text_layout =
 {
@@ -471,7 +472,14 @@ static const unsigned short apple2_colortable[] =
 static PALETTE_INIT( apple2 )
 {
 	palette_set_colors(0, apple2_palette, sizeof(apple2_palette) / 3);
-    memcpy(colortable,apple2_colortable,sizeof(apple2_colortable));
+	memcpy(colortable, apple2_colortable, sizeof(apple2_colortable));
+}
+
+/* Initialise the palette */
+static PALETTE_INIT( apple2gs )
+{
+	palette_set_colors(0, apple2gs_palette, sizeof(apple2gs_palette) / 3);
+	memcpy(colortable, apple2_colortable, sizeof(apple2_colortable));
 }
 
 static const char *apple2_floppy_getname(const struct IODevice *dev, int id, char *buf, size_t bufsize)

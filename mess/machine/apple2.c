@@ -33,6 +33,7 @@
 
 /* softswitch */
 UINT32 a2;
+static UINT8 forceslotrom;
 
 /* before the softswitch is changed, these are applied */
 static UINT32 a2_mask;
@@ -79,10 +80,10 @@ static UINT8 *apple2_slotrom(int slot)
 	/* slots are one-counted */
 	slot--;
 
-	assert(slot >= 0);
-	assert(slot < slot_count);
-
-	slotrom = &rom[slot_rom_pos + (slot * slot_rom_size)];
+	if ((slot >= 0) && (slot < slot_count))
+		slotrom = &rom[slot_rom_pos + (slot * slot_rom_size)];
+	else
+		slotrom = dummy_memory;
 	return slotrom;
 }
 
@@ -256,8 +257,11 @@ void apple2_setvar(UINT32 val, UINT32 mask)
 
 	if (mask & (VAR_INTCXROM|VAR_ROMSWITCH))
 	{
-		cpu_setbank(A2BANK_C100, (a2 & VAR_INTCXROM) ? &apple_rom[0x100] : apple2_slotrom(1));
-		cpu_setbank(A2BANK_C400, (a2 & VAR_INTCXROM) ? &apple_rom[0x400] : apple2_slotrom(4));
+		cpu_setbank(A2BANK_C100, ((a2 & VAR_INTCXROM) || (forceslotrom & (1 << 1))) ? &apple_rom[0x100] : apple2_slotrom(1));
+		cpu_setbank(A2BANK_C400, ((a2 & VAR_INTCXROM) || (forceslotrom & (1 << 4))) ? &apple_rom[0x400] : apple2_slotrom(4));
+		cpu_setbank(A2BANK_C500, ((a2 & VAR_INTCXROM) || (forceslotrom & (1 << 5))) ? &apple_rom[0x500] : apple2_slotrom(5));
+		cpu_setbank(A2BANK_C600, ((a2 & VAR_INTCXROM) || (forceslotrom & (1 << 6))) ? &apple_rom[0x600] : apple2_slotrom(6));
+		cpu_setbank(A2BANK_C700, ((a2 & VAR_INTCXROM) || (forceslotrom & (1 << 7))) ? &apple_rom[0x700] : apple2_slotrom(7));
 	}
 
 	if (mask & (VAR_INTCXROM|VAR_SLOTC3ROM|VAR_ROMSWITCH))
@@ -270,6 +274,18 @@ static void apple2_updatevar(void)
 {
 	apple2_setvar(a2, ~0);
 }
+
+void apple2_setforceslotrom(UINT8 val)
+{
+	forceslotrom = (val & 0xFE);
+	apple2_setvar(a2 & (VAR_INTCXROM|VAR_SLOTC3ROM|VAR_ROMSWITCH), VAR_INTCXROM|VAR_SLOTC3ROM|VAR_ROMSWITCH);
+}
+
+UINT8 apple2_getforceslotrom(void)
+{
+	return forceslotrom;
+}
+
 
 /***************************************************************************
   apple2_getfloatingbusvalue
@@ -446,6 +462,7 @@ MACHINE_INIT( apple2 )
 	 * --------------------------------------------- */
 	a2_mask = ~0;
 	a2_set = 0;
+	forceslotrom = 0x00;
 
 	/* disable VAR_ROMSWITCH if the ROM is only 16k */
 	if (memory_region_length(REGION_CPU1) < 0x8000)
@@ -455,7 +472,9 @@ MACHINE_INIT( apple2 )
 	if (!apple2_hasslots())
 	{
 		a2_mask &= ~VAR_SLOTC3ROM;
-		a2_set |= VAR_INTCXROM;
+
+		if (memory_region_length(REGION_CPU1) < 0x8000)
+			a2_set |= VAR_INTCXROM;
 	}
 
 	if (mess_ram_size <= 64*1024)
@@ -487,6 +506,7 @@ MACHINE_INIT( apple2 )
 	joystick_x2_time = joystick_y2_time = 0;
 
 	/* seek middle sector */
+#if 0
 	for (i = 0; i < device_count(IO_FLOPPY); i++)
 	{
 		image = image_from_devtype_and_index(IO_FLOPPY, i);
@@ -496,6 +516,7 @@ MACHINE_INIT( apple2 )
 			floppy_drive_seek(image, +35/2);
 		}
 	}
+#endif
 }
 
 /***************************************************************************
