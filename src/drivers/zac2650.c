@@ -31,7 +31,7 @@ READ_HANDLER( tinvader_port_0_r );
 #define PURPLE			MAKE_ARGB(0x04,0xff,0x20,0xff)
 
 OVERLAY_START( tinv2650_overlay )
-	OVERLAY_RECT(   0,   0, 256, 256, WHITE )
+	OVERLAY_RECT(   0,   0, 240, 256, WHITE )
 	OVERLAY_RECT(  16,   0,  72, 256, GREEN )
 	OVERLAY_RECT(   0,  48,  16, 134, GREEN )
 	OVERLAY_RECT( 192,   0, 209, 256, PURPLE )
@@ -166,6 +166,10 @@ static PALETTE_INIT( zac2650 )
 {
 	palette_set_color(0,0x00,0x00,0x00); /* BLACK */
 	palette_set_color(1,0xff,0xff,0xff); /* WHITE */
+	colortable[0] = 0;
+	colortable[1] = 1;
+	colortable[2] = 0;
+	colortable[3] = 0;
 }
 
 static struct GfxLayout tinvader_character =
@@ -207,9 +211,9 @@ static struct GfxLayout s2636_character16 =
 
 static struct GfxDecodeInfo tinvader_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &tinvader_character,  0, 8 },
-  	{ REGION_CPU1, 0x1F00, &s2636_character8, 0, 8 },	/* dynamic */
-  	{ REGION_CPU1, 0x1F00, &s2636_character16, 0, 8 },	/* dynamic */
+	{ REGION_GFX1, 0, &tinvader_character,  0, 2 },
+  	{ REGION_CPU1, 0x1F00, &s2636_character8, 0, 2 },	/* dynamic */
+  	{ REGION_CPU1, 0x1F00, &s2636_character16, 0, 2 },	/* dynamic */
 	{ -1 } /* end of array */
 };
 
@@ -229,6 +233,7 @@ static MACHINE_DRIVER_START( tinvader )
 	MDRV_VISIBLE_AREA(0, 239, 0, 255)
 	MDRV_GFXDECODE(tinvader_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(2)
+	MDRV_COLORTABLE_LENGTH(4)
 
 	MDRV_PALETTE_INIT(zac2650)
 	MDRV_VIDEO_START(tinvader)
@@ -303,7 +308,7 @@ static MACHINE_DRIVER_START( embargo )
 	MDRV_PALETTE_LENGTH(2)
 
 	MDRV_PALETTE_INIT(zac2650)
-	MDRV_VIDEO_START(8080bw)
+	MDRV_VIDEO_START(generic_bitmapped)
 	MDRV_VIDEO_UPDATE(8080bw)
 
 	/* sound hardware */

@@ -34,7 +34,22 @@ void osd_exit(void);
 /* sadly, the include order requires that at least this forward declaration is here */
 struct mame_bitmap;
 struct mame_display;
+struct performance_info;
 struct rectangle;
+
+
+/* these are the parameters passed into osd_create_display */
+struct osd_create_params
+{
+	int width, height;			/* width and height */
+	int aspect_x, aspect_y;		/* aspect ratio X:Y */
+	int depth;					/* depth, either 16(palette), 15(RGB) or 32(RGB) */
+	int colors;					/* colors in the palette (including UI) */
+	float fps;					/* frame rate */
+	int video_attributes;		/* video flags from driver */
+	int orientation;			/* orientation requested by the user */
+};
+
 
 
 /* kludge for now until we remove the explicit calls from the various games */
@@ -45,6 +60,8 @@ struct rectangle;
   Create a display screen, or window, of the given dimensions (or larger). It is
   acceptable to create a smaller display if necessary, in that case the user must
   have a way to move the visibility window around.
+  
+  The params contains all the information the 
   Attributes are the ones defined in driver.h, they can be used to perform
   optimizations, e.g. dirty rectangle handling if the game supports it, or faster
   blitting routines with fixed palette if the game doesn't change the palette at
@@ -63,7 +80,7 @@ struct rectangle;
 
   Returns 0 on success.
 */
-int osd_create_display(int width, int height, int depth, float fps, int attributes, int orientation, UINT32 *rgb_components);
+int osd_create_display(const struct osd_create_params *params, UINT32 *rgb_components);
 void osd_close_display(void);
 
 
@@ -78,6 +95,7 @@ void osd_close_display(void);
   already know exactly whether the next frame will be skipped or not.
 */
 int osd_skip_this_frame(void);
+
 
 /*
   Update video and audio. game_bitmap contains the game display, while
@@ -94,6 +112,7 @@ int osd_skip_this_frame(void);
 */
 void osd_update_video_and_audio(struct mame_display *display);
 
+
 /*
   Save a screen shot of the game display. It is suggested to use the core
   function save_screen_snapshot() or save_screen_snapshot_as(), so the format
@@ -105,9 +124,12 @@ void osd_update_video_and_audio(struct mame_display *display);
 void osd_save_snapshot(struct mame_bitmap *bitmap, const struct rectangle *bounds);
 
 /*
-  Return the current frameskip value, or -(frameskip+1) if using auto frameskipping.
+  Returns a pointer to the text to display when the FPS display is toggled.
+  This normally includes information about the frameskip, FPS, and percentage
+  of full game speed.
 */
-int osd_get_frameskip(void);
+const char *osd_get_fps_text(const struct performance_info *performance);
+
 
 
 /******************************************************************************
@@ -153,6 +175,7 @@ int osd_get_mastervolume(void);
 void osd_sound_enable(int enable);
 
 
+
 /******************************************************************************
 
   Keyboard
@@ -180,6 +203,7 @@ int osd_is_key_pressed(int keycode);
   having prior UI and game keys leak into the text entry.
 */
 int osd_readkey_unicode(int flush);
+
 
 
 /******************************************************************************
@@ -237,6 +261,7 @@ void osd_analogjoy_read(int player,int *analog_x, int *analog_y);
 void osd_customize_inputport_defaults(struct ipd *defaults);
 
 
+
 /******************************************************************************
 
   File I/O
@@ -273,6 +298,7 @@ enum
 	OSD_FILETYPE_CHEAT,
 	OSD_FILETYPE_LANGUAGE,
 	OSD_FILETYPE_CTRLR,
+	OSD_FILETYPE_INI,
 	OSD_FILETYPE_end /* dummy last entry */
 };
 
@@ -302,19 +328,35 @@ void osd_fclose(void *file);
 int osd_fchecksum(const char *gamename, const char *filename, unsigned int *length, unsigned int *sum);
 int osd_fsize(void *file);
 unsigned int osd_fcrc(void *file);
-/* LBO 040400 - start */
 int osd_fgetc(void *file);
 int osd_ungetc(int c, void *file);
 char *osd_fgets(char *s, int n, void *file);
 int osd_feof(void *file);
 int osd_ftell(void *file);
-/* LBO 040400 - end */
 /* strip directory part from a filename, does _not_ malloc */
 char *osd_basename(char *filename);
 /* get directory part of a filename in malloced buffer */
 char *osd_dirname(char *filename);
 /* strip extension from a filename, copy to malloced buffer */
 char *osd_strip_extension(char *filename);
+
+
+
+/******************************************************************************
+
+	Timing
+
+******************************************************************************/
+
+typedef INT64 cycles_t;
+
+/* return the current number of cycles, or some other high-resolution timer */
+cycles_t osd_cycles(void);
+
+/* return the number of cycles per second */
+cycles_t osd_cycles_per_second(void);
+
+
 
 /******************************************************************************
 

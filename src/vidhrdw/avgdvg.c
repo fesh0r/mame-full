@@ -1044,15 +1044,6 @@ PALETTE_INIT( avg_white )
 }
 
 
-/* Monochrome Aqua vector colors for Red Baron */
-PALETTE_INIT( avg_aqua )
-{
-	int i;
-	for (i = 0; i < 32; i++)
-		colorram[i] = MAKE_RGB(0x44, 0xff, 0xff);
-}
-
-
 /* Basic 8 rgb vector colors for Tempest, Gravitar, Major Havoc etc. */
 PALETTE_INIT( avg_multi )
 {

@@ -394,6 +394,26 @@ int palette_init(void)
 
 
 /*-------------------------------------------------
+	palette_get_total_colors_with_ui - returns
+	the total number of palette entries including
+	UI
+-------------------------------------------------*/
+
+int palette_get_total_colors_with_ui(void)
+{
+	int result = Machine->drv->total_colors;
+	if (Machine->drv->video_attributes & VIDEO_HAS_SHADOWS)
+		result += Machine->drv->total_colors;
+	if (Machine->drv->video_attributes & VIDEO_HAS_HIGHLIGHTS)
+		result += Machine->drv->total_colors;
+	if (result < 65534)
+		result += 2;
+	return result;
+}
+
+
+
+/*-------------------------------------------------
 	palette_update_display - update the display
 	state with our latest info
 -------------------------------------------------*/
@@ -665,12 +685,12 @@ void palette_set_highlight_factor(double factor)
 	gamma factor
 -------------------------------------------------*/
 
-void palette_set_global_gamma(double gamma)
+void palette_set_global_gamma(double new_gamma)
 {
 	/* if the gamma changed, recompute */
-	if (global_gamma != gamma)
+	if (global_gamma != new_gamma)
 	{
-		global_gamma = gamma;
+		global_gamma = new_gamma;
 		recompute_adjusted_palette(1);
 	}
 }
@@ -1233,6 +1253,29 @@ WRITE16_HANDLER( paletteram16_xGGGGGRRRRRBBBBB_word_w )
 {
 	COMBINE_DATA(&paletteram16[offset]);
 	changecolor_xGGGGGRRRRRBBBBB(offset,paletteram16[offset]);
+}
+
+
+INLINE void changecolor_xGGGGGBBBBBRRRRR(pen_t color,int data)
+{
+	int r,g,b;
+
+
+	r = (data >>  0) & 0x1f;
+	g = (data >> 10) & 0x1f;
+	b = (data >>  5) & 0x1f;
+
+	r = (r << 3) | (r >> 2);
+	g = (g << 3) | (g >> 2);
+	b = (b << 3) | (b >> 2);
+
+	palette_set_color(color,r,g,b);
+}
+
+WRITE16_HANDLER( paletteram16_xGGGGGBBBBBRRRRR_word_w )
+{
+	COMBINE_DATA(&paletteram16[offset]);
+	changecolor_xGGGGGBBBBBRRRRR(offset,paletteram16[offset]);
 }
 
 

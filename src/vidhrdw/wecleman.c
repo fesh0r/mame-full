@@ -1847,7 +1847,7 @@ static void browser(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 VIDEO_UPDATE( wecleman )
 {
         int i, layers_ctrl = -1;
-
+		UINT8 r, g, b;
 
         WECLEMAN_LAMPS
 
@@ -1883,8 +1883,8 @@ VIDEO_UPDATE( wecleman )
 }
 
 //AT: required to fix ranking screen
-//        i = Machine->palette[0x24];
-//        palette_set_color(0x27, RGB_RED(i), RGB_GREEN(i), RGB_BLUE(i));
+		palette_get_color(0x24, &r, &g, &b);
+        palette_set_color(0x27, r, g, b);
 //ZT
 
         get_sprite_info();

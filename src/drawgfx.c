@@ -22,6 +22,7 @@ typedef void (*plot_box_proc)(struct mame_bitmap *bitmap,int x,int y,int width,i
 
 
 UINT8 gfx_drawmode_table[256];
+UINT8 gfx_alpharange_table[256];
 
 static UINT8 is_raw[TRANSPARENCY_MODES];
 
@@ -714,6 +715,7 @@ int pdrawgfx_shadow_lowpri = 0;
 /* 16-bit version */
 #define DATA_TYPE UINT16
 #define DEPTH 16
+#define alpha_blend_r alpha_blend_r16
 #define alpha_blend alpha_blend16
 
 #define DECLARE(function,args,body)
@@ -861,11 +863,13 @@ int pdrawgfx_shadow_lowpri = 0;
 
 #undef DEPTH
 #undef DATA_TYPE
+#undef alpha_blend_r
 #undef alpha_blend
 
 /* 32-bit version */
 #define DATA_TYPE UINT32
 #define DEPTH 32
+#define alpha_blend_r alpha_blend_r32
 #define alpha_blend alpha_blend32
 
 #define DECLARE(function,args,body)
@@ -1013,6 +1017,7 @@ int pdrawgfx_shadow_lowpri = 0;
 
 #undef DEPTH
 #undef DATA_TYPE
+#undef alpha_blend_r
 #undef alpha_blend
 
 
@@ -1059,7 +1064,7 @@ INLINE void common_drawgfx(struct mame_bitmap *dest,const struct GfxElement *gfx
 	if (!is_raw[transparency])
 		color %= gfx->total_colors;
 
-	if (!alpha_active && (transparency == TRANSPARENCY_ALPHAONE || transparency == TRANSPARENCY_ALPHA))
+	if (!alpha_active && (transparency == TRANSPARENCY_ALPHAONE || transparency == TRANSPARENCY_ALPHA || transparency == TRANSPARENCY_ALPHARANGE))
 	{
 		if (transparency == TRANSPARENCY_ALPHAONE && (cpu_getcurrentframe() & 1))
 		{
@@ -1738,18 +1743,18 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 		return;
 	}
 
-
 	if (transparency != TRANSPARENCY_PEN && transparency != TRANSPARENCY_PEN_RAW
 			&& transparency != TRANSPARENCY_PENS && transparency != TRANSPARENCY_COLOR
 			&& transparency != TRANSPARENCY_PEN_TABLE && transparency != TRANSPARENCY_PEN_TABLE_RAW
 			&& transparency != TRANSPARENCY_BLEND_RAW && transparency != TRANSPARENCY_ALPHAONE
-			&& transparency != TRANSPARENCY_ALPHA && transparency != TRANSPARENCY_NONE)
+			&& transparency != TRANSPARENCY_ALPHA && transparency != TRANSPARENCY_ALPHARANGE
+			&& transparency != TRANSPARENCY_NONE)
 	{
 		usrintf_showmessage("drawgfxzoom unsupported trans %02x",transparency);
 		return;
 	}
 
-	if (!alpha_active && (transparency == TRANSPARENCY_ALPHAONE || transparency == TRANSPARENCY_ALPHA))
+	if (!alpha_active && (transparency == TRANSPARENCY_ALPHAONE || transparency == TRANSPARENCY_ALPHA || transparency == TRANSPARENCY_ALPHARANGE))
 	{
 		transparency = TRANSPARENCY_PEN;
 		transparent_color &= 0xff;
@@ -3144,6 +3149,65 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 							}
 						}
 					}
+
+					/* pjp 31/5/02 */
+					/* case 7: TRANSPARENCY_ALPHARANGE */
+					if (transparency == TRANSPARENCY_ALPHARANGE)
+					{
+						if (pri_buffer)
+						{
+							for( y=sy; y<ey; y++ )
+							{
+								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT16 *dest = (UINT16 *)dest_bmp->line[y];
+								UINT8 *pri = pri_buffer->line[y];
+
+								int x, x_index = x_index_base;
+								for( x=sx; x<ex; x++ )
+								{
+									int c = source[x_index>>16];
+									if( c != transparent_color )
+									{
+										if (((1 << pri[x]) & pri_mask) == 0)
+										{
+											if( gfx_alpharange_table[c] == 0xff )
+												dest[x] = pal[c];
+											else
+												dest[x] = alpha_blend_r16(dest[x], pal[c], gfx_alpharange_table[c]);
+										}
+										pri[x] = 31;
+									}
+									x_index += dx;
+								}
+
+								y_index += dy;
+							}
+						}
+						else
+						{
+							for( y=sy; y<ey; y++ )
+							{
+								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT16 *dest = (UINT16 *)dest_bmp->line[y];
+
+								int x, x_index = x_index_base;
+								for( x=sx; x<ex; x++ )
+								{
+									int c = source[x_index>>16];
+									if( c != transparent_color )
+									{
+										if( gfx_alpharange_table[c] == 0xff )
+											dest[x] = pal[c];
+										else
+											dest[x] = alpha_blend_r16(dest[x], pal[c], gfx_alpharange_table[c]);
+									}
+									x_index += dx;
+								}
+
+								y_index += dy;
+							}
+						}
+					}
 				}
 			}
 		}
@@ -3743,6 +3807,65 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 								{
 									int c = source[x_index>>16];
 									if( c != transparent_color ) dest[x] = alpha_blend32(dest[x], pal[c]);
+									x_index += dx;
+								}
+
+								y_index += dy;
+							}
+						}
+					}
+
+					/* pjp 31/5/02 */
+					/* case 7: TRANSPARENCY_ALPHARANGE */
+					if (transparency == TRANSPARENCY_ALPHARANGE)
+					{
+						if (pri_buffer)
+						{
+							for( y=sy; y<ey; y++ )
+							{
+								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
+								UINT8 *pri = pri_buffer->line[y];
+
+								int x, x_index = x_index_base;
+								for( x=sx; x<ex; x++ )
+								{
+									int c = source[x_index>>16];
+									if( c != transparent_color )
+									{
+										if (((1 << pri[x]) & pri_mask) == 0)
+										{
+											if( gfx_alpharange_table[c] == 0xff )
+												dest[x] = pal[c];
+											else
+												dest[x] = alpha_blend_r32(dest[x], pal[c], gfx_alpharange_table[c]);
+										}
+										pri[x] = 31;
+									}
+									x_index += dx;
+								}
+
+								y_index += dy;
+							}
+						}
+						else
+						{
+							for( y=sy; y<ey; y++ )
+							{
+								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
+
+								int x, x_index = x_index_base;
+								for( x=sx; x<ex; x++ )
+								{
+									int c = source[x_index>>16];
+									if( c != transparent_color )
+									{
+										if( gfx_alpharange_table[c] == 0xff )
+											dest[x] = pal[c];
+										else
+											dest[x] = alpha_blend_r32(dest[x], pal[c], gfx_alpharange_table[c]);
+									}
 									x_index += dx;
 								}
 
@@ -5077,12 +5200,77 @@ DECLARE_SWAP_RAW_PRI(blockmove_8toN_alpha,(COMMON_ARGS,
 	}
 })
 
+/* pjp 02/06/02 */
+DECLARE_SWAP_RAW_PRI(blockmove_8toN_alpharange,(COMMON_ARGS,
+		COLOR_ARG,int transpen),
+{
+	ADJUST_8
+
+	if (flipx)
+	{
+		DATA_TYPE *end;
+
+		while (dstheight)
+		{
+			end = dstdata - dstwidth*HMODULO;
+			while (dstdata > end) /* Note that I'm missing the optimisations present in the other alpha functions */
+			{
+				int col;
+
+				col = *(srcdata++);
+				if (col != transpen)
+				{
+					if (gfx_alpharange_table[col] == 0xff)
+						SETPIXELCOLOR(0,LOOKUP(col))
+					else
+						SETPIXELCOLOR(0,alpha_blend_r(*dstdata,LOOKUP(col),gfx_alpharange_table[col]))
+				}
+				INCREMENT_DST(-HMODULO);
+			}
+
+			srcdata += srcmodulo;
+			INCREMENT_DST(ydir*VMODULO + dstwidth*HMODULO);
+			dstheight--;
+		}
+	}
+	else
+	{
+		DATA_TYPE *end;
+
+		while (dstheight)
+		{
+			end = dstdata + dstwidth*HMODULO;
+			while (dstdata < end)
+			{
+				int col;
+
+				col = *(srcdata++);
+				if (col != transpen)
+				{
+					if (gfx_alpharange_table[col] == 0xff)
+						SETPIXELCOLOR(0,LOOKUP(col))
+					else
+						SETPIXELCOLOR(0,alpha_blend_r(*dstdata,LOOKUP(col),gfx_alpharange_table[col]))
+				}
+				INCREMENT_DST(HMODULO);
+			}
+
+			srcdata += srcmodulo;
+			INCREMENT_DST(ydir*VMODULO - dstwidth*HMODULO);
+			dstheight--;
+		}
+	}
+})
+
 #else
 
 DECLARE_SWAP_RAW_PRI(blockmove_8toN_alphaone,(COMMON_ARGS,
 		COLOR_ARG,int transpen, int alphapen),{})
 
 DECLARE_SWAP_RAW_PRI(blockmove_8toN_alpha,(COMMON_ARGS,
+		COLOR_ARG,int transpen),{})
+
+DECLARE_SWAP_RAW_PRI(blockmove_8toN_alpharange,(COMMON_ARGS,
 		COLOR_ARG,int transpen),{})
 
 #endif
@@ -5565,6 +5753,13 @@ DECLARE(drawgfx_core,(
 					BLOCKMOVEPRI(8toN_alpha,(sd,sw,sh,sm,ls,ts,flipx,flipy,dd,dw,dh,dm,paldata,pribuf,pri_mask,transparent_color));
 				else
 					BLOCKMOVELU(8toN_alpha,(sd,sw,sh,sm,ls,ts,flipx,flipy,dd,dw,dh,dm,paldata,transparent_color));
+				break;
+
+			case TRANSPARENCY_ALPHARANGE:
+				if (pribuf)
+					BLOCKMOVEPRI(8toN_alpharange,(sd,sw,sh,sm,ls,ts,flipx,flipy,dd,dw,dh,dm,paldata,pribuf,pri_mask,transparent_color));
+				else
+					BLOCKMOVELU(8toN_alpharange,(sd,sw,sh,sm,ls,ts,flipx,flipy,dd,dw,dh,dm,paldata,transparent_color));
 				break;
 
 			default:

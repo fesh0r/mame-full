@@ -117,7 +117,6 @@
 #include "vidhrdw/vector.h"
 #include "palette.h"
 #include "harddisk.h"
-#include "ticker.h"
 
 
 
@@ -161,14 +160,13 @@ static UINT8 visible_area_changed;
 /* video updating */
 static UINT8 full_refresh_pending;
 static int last_partial_scanline;
-int partial_update_count;
 
 /* speed computation */
-static TICKER last_fps_time;
+static cycles_t last_fps_time;
 static int frames_since_last_fps;
-static int vups;
+static int rendered_frames_since_last_fps;
 static int vfcount;
-double game_speed_percent;
+static struct performance_info performance;
 
 /* misc other statics */
 static int settingsloaded;
@@ -215,6 +213,7 @@ static int validitychecks(void);
 static void recompute_fps(int skipped_it);
 static int vh_open(void);
 static void vh_close(void);
+static void compute_aspect_ratio(int attributes, int *aspect_x, int *aspect_y);
 static void compute_game_orientation(void);
 static int init_game_options(void);
 static int decode_graphics(const struct GfxDecodeInfo *gfxdecodeinfo);
@@ -499,14 +498,20 @@ static int run_machine(void)
 
 void run_machine_core(void)
 {
+	/* disable artwork for the start */
+	artwork_enable(0);
+	
 	/* if we didn't find a settings file, show the disclaimer */
-	if (settingsloaded || showcopyright(Machine->scrbitmap) == 0)
+	if (settingsloaded || showcopyright(artwork_get_ui_bitmap()) == 0)
 	{
 		/* show info about incorrect behaviour (wrong colors etc.) */
-		if (showgamewarnings(Machine->scrbitmap) == 0)
+		if (showgamewarnings(artwork_get_ui_bitmap()) == 0)
 		{
 			init_user_interface();
 
+			/* enable artwork now */
+			artwork_enable(1);
+	
 			/* disable cheat if no roms */
 			if (!gamedrv->rom)
 				options.cheat = 0;
@@ -626,9 +631,9 @@ void expand_machine_driver(void (*constructor)(struct InternalMachineDriver *), 
 
 static int vh_open(void)
 {
+	struct osd_create_params params;
 	int bmwidth = Machine->drv->screen_width;
 	int bmheight = Machine->drv->screen_height;
-	int rotwidth, rotheight;
 
 	/* first allocate the necessary palette structures */
 	if (palette_start())
@@ -644,18 +649,33 @@ static int vh_open(void)
 	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
 		scale_vectorgames(options.vector_width, options.vector_height, &bmwidth, &bmheight);
 
-	/* if we're swapped in X/Y, do it now */	
-	rotwidth = bmwidth;
-	rotheight = bmheight;
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
+	/* compute the visible area for raster games */
+	if (!(Machine->drv->video_attributes & VIDEO_TYPE_VECTOR))
 	{
-		int temp = rotwidth; rotwidth = rotheight; rotheight = temp;
+		params.width = Machine->drv->default_visible_area.max_x - Machine->drv->default_visible_area.min_x + 1;
+		params.height = Machine->drv->default_visible_area.max_y - Machine->drv->default_visible_area.min_y + 1;
+	}
+	else
+	{
+		params.width = bmwidth;
+		params.height = bmheight;
 	}
 	
+	/* fill in the rest of the display parameters */
+	compute_aspect_ratio(Machine->drv->video_attributes, &params.aspect_x, &params.aspect_y);
+	params.depth = Machine->color_depth;
+	params.colors = palette_get_total_colors_with_ui();
+	params.fps = Machine->drv->frames_per_second;
+	params.video_attributes = Machine->drv->video_attributes & ~VIDEO_ASPECT_RATIO_MASK;
+	params.orientation = Machine->orientation;
+
 	/* initialize the display through the artwork (and eventually the OSD) layer */
-	if (artwork_create_display(rotwidth, rotheight, Machine->color_depth, Machine->drv->frames_per_second,
-			Machine->drv->video_attributes, Machine->orientation, direct_rgb_components))
+	if (artwork_create_display(&params, direct_rgb_components))
 		goto cant_create_display;
+
+	/* the create display process may update the vector width/height, so recompute */
+	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
+		scale_vectorgames(options.vector_width, options.vector_height, &bmwidth, &bmheight);
 
 	/* now allocate the screen bitmap */
 	Machine->scrbitmap = auto_bitmap_alloc_depth(bmwidth, bmheight, Machine->color_depth);
@@ -690,7 +710,7 @@ static int vh_open(void)
 		int depth = options.debug_depth ? options.debug_depth : Machine->color_depth;
 
 		/* first allocate the debugger bitmap */
-		switch_ui_orientation(NULL);
+		switch_debugger_orientation(NULL);
 		Machine->debug_bitmap = auto_bitmap_alloc_depth(options.debug_width, options.debug_height, depth);
 		switch_true_orientation(NULL);
 		if (!Machine->debug_bitmap)
@@ -710,12 +730,17 @@ static int vh_open(void)
 	/* force the first update to be full */
 	set_vh_global_attribute(NULL, 0);
 
+	/* reset performance data */
+	last_fps_time = osd_cycles();
+	rendered_frames_since_last_fps = frames_since_last_fps = 0;
+	performance.game_speed_percent = 100;
+	performance.frames_per_second = Machine->drv->frames_per_second;
+	performance.vector_updates_last_second = 0;
+
 	/* reset video statics and get out of here */
 	pdrawgfx_shadow_lowpri = 0;
 	leds_status = 0;
-	last_fps_time = ticker();
-	frames_since_last_fps = 0;
-	game_speed_percent = 100;
+
 	return 0;
 
 cant_init_palette:
@@ -771,6 +796,30 @@ static void vh_close(void)
 
 
 /*-------------------------------------------------
+	compute_aspect_ratio - determine the aspect
+	ratio encoded in the video attributes
+-------------------------------------------------*/
+
+static void compute_aspect_ratio(int attributes, int *aspect_x, int *aspect_y)
+{
+	/* if it's explicitly specified, use it */
+	if (attributes & VIDEO_ASPECT_RATIO_MASK)
+	{
+		*aspect_x = VIDEO_ASPECT_RATIO_NUM(attributes);
+		*aspect_y = VIDEO_ASPECT_RATIO_DEN(attributes);
+	}
+
+	/* otherwise, attempt to deduce the result */
+	else if (!(attributes & VIDEO_DUAL_MONITOR))
+	{
+		*aspect_x = 4;
+		*aspect_y = (attributes & VIDEO_DUAL_MONITOR) ? 6 : 3;
+	}
+}
+
+
+
+/*-------------------------------------------------
 	compute_game_orientation - compute the
 	effective game orientation
 -------------------------------------------------*/
@@ -779,7 +828,7 @@ static void compute_game_orientation(void)
 {
 	/* first start with the game's built in orientation */
 	Machine->orientation = gamedrv->flags & ORIENTATION_MASK;
-	Machine->ui_orientation = ROT0;
+	Machine->ui_orientation = options.ui_orientation;
 
 	/* override if no rotation requested */
 	if (options.norotate)
@@ -1155,10 +1204,6 @@ void set_visible_area(int min_x, int max_x, int min_y, int max_y)
 		Machine->absolute_visible_area = Machine->visible_area;
 		orient_rect(&Machine->absolute_visible_area, NULL);
 	}
-	
-	/* also reset the UI's visible area here */
-	set_ui_visarea(Machine->absolute_visible_area.min_x, Machine->absolute_visible_area.min_y, 
-				Machine->absolute_visible_area.max_x, Machine->absolute_visible_area.max_y);
 }
 
 
@@ -1183,7 +1228,7 @@ void schedule_full_refresh(void)
 void reset_partial_updates(void)
 {
 	last_partial_scanline = 0;
-	partial_update_count = 0;
+	performance.partial_updates_this_frame = 0;
 }
 
 
@@ -1224,7 +1269,7 @@ void force_partial_update(int scanline)
 	{
 		profiler_mark(PROFILER_VIDEO);
 		(*Machine->drv->video_update)(Machine->scrbitmap, &clip);
-		partial_update_count++;
+		performance.partial_updates_this_frame++;
 		profiler_mark(PROFILER_END);
 	}
 
@@ -1260,15 +1305,14 @@ void update_video_and_audio(void)
 	debug_trace_delay = 0;
 #endif
 
-	/* first make sure the FPS counter is displayed */
-	ui_display_fps(Machine->scrbitmap, game_speed_percent, vups);
-
 	/* fill in our portion of the display */
 	current_display.changed_flags = 0;
 	
 	/* set the main game bitmap */
 	current_display.game_bitmap = Machine->scrbitmap;
-	current_display.changed_flags |= GAME_BITMAP_CHANGED;
+	current_display.game_bitmap_update = Machine->absolute_visible_area;
+	if (!skipped_it)
+		current_display.changed_flags |= GAME_BITMAP_CHANGED;
 	
 	/* set the visible area */
 	current_display.game_visible_area = Machine->absolute_visible_area;
@@ -1277,7 +1321,7 @@ void update_video_and_audio(void)
 	
 	/* set the vector dirty list */
 	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
-		if (!full_refresh_pending && !ui_dirty)
+		if (!full_refresh_pending && !ui_dirty && !skipped_it)
 		{
 			current_display.vector_dirty_pixels = vector_dirty_list;
 			current_display.changed_flags |= VECTOR_PIXELS_CHANGED;
@@ -1327,18 +1371,27 @@ void update_video_and_audio(void)
 
 static void recompute_fps(int skipped_it)
 {
-	/* increment the frame counter */
+	/* increment the frame counters */
 	frames_since_last_fps++;
+	if (!skipped_it)
+		rendered_frames_since_last_fps++;
 	
 	/* if we didn't skip this frame, we may be able to compute a new FPS */
 	if (!skipped_it && frames_since_last_fps >= FRAMES_PER_FPS_UPDATE)
 	{
-		TICKER curr = ticker();
-		double seconds_elapsed = (double)(curr - last_fps_time) * (1.0 / (double)TICKS_PER_SEC);
+		cycles_t cps = osd_cycles_per_second();
+		cycles_t curr = osd_cycles();
+		double seconds_elapsed = (double)(curr - last_fps_time) * (1.0 / (double)cps);
 		double frames_per_sec = (double)frames_since_last_fps / seconds_elapsed;
-		game_speed_percent = 100.0 * frames_per_sec / Machine->drv->frames_per_second;
+		
+		/* compute the performance data */
+		performance.game_speed_percent = 100.0 * frames_per_sec / Machine->drv->frames_per_second;
+		performance.frames_per_second = (double)rendered_frames_since_last_fps / seconds_elapsed;
+
+		/* reset the info */
 		last_fps_time = curr;
 		frames_since_last_fps = 0;
+		rendered_frames_since_last_fps = 0;
 	}
 	
 	/* for vector games, compute the vector update count once/second */
@@ -1349,7 +1402,7 @@ static void recompute_fps(int skipped_it)
 		extern int vector_updates;
 
 		vfcount -= (int)Machine->drv->frames_per_second;
-		vups = vector_updates;
+		performance.vector_updates_last_second = vector_updates;
 		vector_updates = 0;
 	}
 }
@@ -1378,7 +1431,7 @@ int updatescreen(void)
 	/* the user interface must be called between vh_update() and osd_update_video_and_audio(), */
 	/* to allow it to overlay things on the game display. We must call it even */
 	/* if the frame is skipped, to keep a consistent timing. */
-	if (handle_user_interface(Machine->scrbitmap))
+	if (handle_user_interface(artwork_get_ui_bitmap()))
 		/* quit if the user asked to */
 		return 1;
 
@@ -1437,6 +1490,18 @@ void set_led_status(int num, int on)
 		leds_status |=	(1 << num);
 	else
 		leds_status &= ~(1 << num);
+}
+
+
+
+/*-------------------------------------------------
+	mame_get_performance_info - return performance
+	info
+-------------------------------------------------*/
+
+const struct performance_info *mame_get_performance_info(void)
+{
+	return &performance;
 }
 
 

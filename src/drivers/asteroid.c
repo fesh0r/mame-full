@@ -634,9 +634,6 @@ static MACHINE_DRIVER_START( astdelux )
 
 	MDRV_NVRAM_HANDLER(atari_vg)
 
-	/* video hardware */
-	MDRV_PALETTE_INIT(avg_aqua)
-
 	/* sound hardware */
 	MDRV_SOUND_REPLACE("disc", DISCRETE, astdelux_sound_interface)
 	MDRV_SOUND_ADD(POKEY, pokey_interface)
@@ -778,6 +775,16 @@ static DRIVER_INIT( asteroib )
 }
 
 
+static DRIVER_INIT( astdelux )
+{
+	OVERLAY_START( astdelux_overlay )
+		OVERLAY_RECT( 0.0, 0.0, 1.0, 1.0, MAKE_ARGB(0x04,0x88,0xff,0xff) )
+	OVERLAY_END
+	
+	artwork_set_overlay(astdelux_overlay);
+}
+
+
 
 /*************************************
  *
@@ -788,8 +795,8 @@ static DRIVER_INIT( asteroib )
 GAME( 1979, asteroid, 0,		asteroid, asteroid, 0,        ROT0, "Atari", "Asteroids (rev 2)" )
 GAME( 1979, asteroi1, asteroid, asteroid, asteroid, 0,        ROT0, "Atari", "Asteroids (rev 1)" )
 GAME( 1979, asteroib, asteroid, asteroid, asteroib, asteroib, ROT0, "bootleg", "Asteroids (bootleg on Lunar Lander hardware)" )
-GAME( 1980, astdelux, 0,		astdelux, astdelux, 0,        ROT0, "Atari", "Asteroids Deluxe (rev 2)" )
-GAME( 1980, astdelu1, astdelux, astdelux, astdelux, 0,        ROT0, "Atari", "Asteroids Deluxe (rev 1)" )
+GAME( 1980, astdelux, 0,		astdelux, astdelux, astdelux, ROT0, "Atari", "Asteroids Deluxe (rev 2)" )
+GAME( 1980, astdelu1, astdelux, astdelux, astdelux, astdelux, ROT0, "Atari", "Asteroids Deluxe (rev 1)" )
 GAME( 1979, llander,  0,		llander,  llander,	0,        ROT0, "Atari", "Lunar Lander (rev 2)" )
 GAME( 1979, llander1, llander,	llander,  llander1, 0,        ROT0, "Atari", "Lunar Lander (rev 1)" )
 

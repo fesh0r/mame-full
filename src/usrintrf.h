@@ -41,13 +41,13 @@ void set_ui_visarea (int xmin, int ymin, int xmax, int ymax);
 void init_user_interface(void);
 int handle_user_interface(struct mame_bitmap *bitmap);
 
-void ui_display_fps(struct mame_bitmap *bitmap, double percent, int vector_updates);
 void ui_show_fps_temp(double seconds);
 
 int onscrd_active(void);
 int setup_active(void);
 
 void switch_ui_orientation(struct mame_bitmap *bitmap);
+void switch_debugger_orientation(struct mame_bitmap *bitmap);
 void switch_true_orientation(struct mame_bitmap *bitmap);
 
 void CLIB_DECL usrintf_showmessage(const char *text,...);

@@ -129,6 +129,7 @@ extern data32_t *paletteram32;
 
 int palette_start(void);
 int palette_init(void);
+int palette_get_total_colors_with_ui(void);
 
 void palette_update_display(struct mame_display *display);
 
@@ -139,7 +140,7 @@ void palette_set_brightness(pen_t pen, double bright);
 void palette_set_shadow_factor(double factor);
 void palette_set_highlight_factor(double factor);
 
-void palette_set_global_gamma(double gamma);
+void palette_set_global_gamma(double new_gamma);
 double palette_get_global_gamma(void);
 
 void palette_set_global_brightness(double brightness);
@@ -200,6 +201,7 @@ WRITE16_HANDLER( paletteram16_xBBBBBGGGGGRRRRR_word_w );
 WRITE_HANDLER( paletteram_xRRRRRGGGGGBBBBB_w );
 WRITE16_HANDLER( paletteram16_xRRRRRGGGGGBBBBB_word_w );
 WRITE16_HANDLER( paletteram16_xGGGGGRRRRRBBBBB_word_w );
+WRITE16_HANDLER( paletteram16_xGGGGGBBBBBRRRRR_word_w );
 WRITE_HANDLER( paletteram_RRRRRGGGGGBBBBBx_w );
 WRITE16_HANDLER( paletteram16_RRRRRGGGGGBBBBBx_word_w );
 WRITE16_HANDLER( paletteram16_IIIIRRRRGGGGBBBB_word_w );

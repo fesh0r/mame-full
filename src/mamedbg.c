@@ -519,11 +519,12 @@ rgb_t debugger_palette[] = {
 
 #include "dbgfonts/m0813fnt.c"
 
+
 struct GfxElement *build_debugger_font(void)
 {
 	struct GfxElement *font;
 
-	switch_ui_orientation(NULL);
+	switch_debugger_orientation(NULL);
 
 	font = decodegfx(fontdata,&fontlayout);
 
@@ -542,7 +543,7 @@ static void toggle_cursor(struct mame_bitmap *bitmap, struct GfxElement *font)
 {
 	int sx, sy, x, y;
 
-	switch_ui_orientation(bitmap);
+	switch_debugger_orientation(bitmap);
 	sx = cursor_x * font->width;
 	sy = cursor_y * font->height;
 	for (y = 0; y < font->height; y++)
@@ -573,7 +574,7 @@ void dbg_put_screen_char(int ch, int attr, int x, int y)
 	struct mame_bitmap *bitmap = Machine->debug_bitmap;
 	struct GfxElement *font = Machine->debugger_font;
 
-	switch_ui_orientation(bitmap);
+	switch_debugger_orientation(bitmap);
 	drawgfx(bitmap, font,
 		ch, attr, 0, 0, x*font->width, y*font->height,
 		0, TRANSPARENCY_NONE, 0);

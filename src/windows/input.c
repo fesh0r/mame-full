@@ -17,7 +17,6 @@
 #include "driver.h"
 #include "window.h"
 #include "rc.h"
-#include "ticker.h"
 
 
 
@@ -74,13 +73,15 @@ static int					dinput_version;
 
 // global states
 static int					input_paused;
-static TICKER				last_poll;
+static cycles_t				last_poll;
 
 // Controller override options
 //static int					hotrod;
 //static int					hotrodse;
+static float				a2d_deadzone;
 static int					use_mouse;
 static int					use_joystick;
+static int					use_keyboard_leds;
 static int					steadykey;
 static const char*			ctrlrtype;
 static const char*			ctrlrname;
@@ -94,6 +95,7 @@ static const char*			pedal_ini;
 static struct ipd 			*ipddef_ptr = NULL;
 
 static int					num_osd_ik = 0;
+static int					size_osd_ik = 0;
 
 // keyboard states
 static int					keyboard_count;
@@ -138,6 +140,8 @@ struct rc_option input_opts[] =
 	{ "mouse", NULL, rc_bool, &use_mouse, "0", 0, 0, NULL, "enable mouse input" },
 	{ "joystick", "joy", rc_bool, &use_joystick, "0", 0, 0, NULL, "enable joystick input" },
 	{ "steadykey", "steady", rc_bool, &steadykey, "0", 0, 0, NULL, "enable steadykey support" },
+	{ "keyboard_leds", "leds", rc_bool, &use_keyboard_leds, "1", 0, 0, NULL, "enable keyboard LED emulation" },
+	{ "a2d_deadzone", "a2d", rc_float, &a2d_deadzone, "0.3", 0.0, 1.0, NULL, "minimal analog value for digital input" },
 	{ "ctrlr", NULL, rc_string, &ctrlrtype, 0, 0, 0, NULL, "preconfigure for specified controller" },
 	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
 };
@@ -704,7 +708,7 @@ void win_poll_input(void)
 	int i, j;
 
 	// remember when this happened
-	last_poll = ticker();
+	last_poll = osd_cycles();
 
 	// periodically process events, in case they're not coming through
 	win_process_events_periodic();
@@ -866,7 +870,7 @@ int osd_is_key_pressed(int keycode)
 	int dik = DICODE(keycode);
 
 	// make sure we've polled recently
-	if (ticker() > last_poll + TICKS_PER_SEC/4)
+	if (osd_cycles() > last_poll + osd_cycles_per_second()/4)
 		win_poll_input();
 
 	// special case: if we're trying to quit, fake up/down/up/down
@@ -965,13 +969,25 @@ static void init_keylist(void)
 				keycount++;
 
 				// make sure we have enough room for the new entry and the terminator (2 more)
-				temp = realloc (osd_input_keywords, (num_osd_ik+2)*sizeof (struct ik));
-				if (temp)
+				if ((num_osd_ik + 2) > size_osd_ik)
+				{
+					// attempt to allocate 16 more
+					temp = realloc (osd_input_keywords, (size_osd_ik + 16)*sizeof (struct ik));
+
+					// if the realloc was successful
+					if (temp)
+					{
+						// point to the new buffer and increase the size indicator
+						osd_input_keywords =  temp;
+						size_osd_ik += 16;
+					}
+				}
+
+				// if we have enough room for the new entry and the terminator
+				if ((num_osd_ik + 2) <= size_osd_ik)
 				{
 					const char *src;
 					char *dst;
-
-					osd_input_keywords =  temp;
 
 					osd_input_keywords[num_osd_ik].name = malloc (strlen(instance.tszName) + 4 + 1);
 
@@ -990,6 +1006,7 @@ static void init_keylist(void)
 							*dst++ = *src;
 						src++;
 					}
+					*dst = 0;
 
 					osd_input_keywords[num_osd_ik].type = IKT_OSD_KEY;
 					osd_input_keywords[num_osd_ik].val = code;
@@ -1038,13 +1055,25 @@ static void add_joylist_entry(const char *name, int code, int *joycount)
 		*joycount += 1;
 
 		// make sure we have enough room for the new entry and the terminator (2 more)
- 		temp = realloc (osd_input_keywords, (num_osd_ik+2)*sizeof (struct ik));
- 		if (temp)
- 		{
+		if ((num_osd_ik + 2) > size_osd_ik)
+		{
+			// attempt to allocate 16 more
+			temp = realloc (osd_input_keywords, (size_osd_ik + 16)*sizeof (struct ik));
+
+			// if the realloc was successful
+			if (temp)
+			{
+				// point to the new buffer and increase the size indicator
+				osd_input_keywords =  temp;
+				size_osd_ik += 16;
+			}
+		}
+
+		// if we have enough room for the new entry and the terminator
+		if ((num_osd_ik + 2) <= size_osd_ik)
+		{
 			const char *src;
 			char *dst;
-
-			osd_input_keywords = temp;
 
 			osd_input_keywords[num_osd_ik].name = malloc (strlen(name) + 1);
 
@@ -1060,6 +1089,7 @@ static void add_joylist_entry(const char *name, int code, int *joycount)
 					*dst++ = *src;
 				src++;
 			}
+			*dst = 0;
 
 			osd_input_keywords[num_osd_ik].type = IKT_OSD_JOY;
 			osd_input_keywords[num_osd_ik].val = code;
@@ -1228,11 +1258,13 @@ int osd_is_joy_pressed(int joycode)
 			LONG bottom = joystick_range[joynum][joyindex].lMin;
 			LONG middle = (top + bottom) / 2;
 
-			// watch for movement 1/4 of the way along either axis
+			// watch for movement greater "a2d_deadzone" along either axis
+			// FIXME in the two-axis joystick case, we need to find out
+			// the angle. Anything else is unprecise.
 			if (joytype == JOYTYPE_AXIS_POS)
-				return (val > middle + (top - middle) / 4);
+				return (val > middle + ((top - middle) * a2d_deadzone));
 			else
-				return (val < middle - (middle - bottom) / 4);
+				return (val < middle - ((middle - bottom) * a2d_deadzone));
 		}
 
 		// anywhere from 0-45 (315) deg to 0+45 (45) deg
@@ -1689,3 +1721,97 @@ void osd_customize_inputport_defaults(struct ipd *defaults)
 			use_joystick ? joystick_count : 0);
 	}
 }
+
+
+//============================================================
+//	osd_get_leds
+//============================================================
+
+int osd_get_leds(void)
+{
+	BYTE key_states[256];
+	int result = 0;
+
+	if (!use_keyboard_leds)
+		return 0;
+
+	// get the current state
+	GetKeyboardState(&key_states[0]);
+
+	// set the numl0ck bit
+	result |= (key_states[VK_NUMLOCK] & 1);
+	result |= (key_states[VK_CAPITAL] & 1) << 1;
+	result |= (key_states[VK_SCROLL] & 1) << 2;
+	return result;
+}
+
+
+
+//============================================================
+//	osd_set_leds
+//============================================================
+
+void osd_set_leds(int state)
+{
+	static OSVERSIONINFO osinfo = { sizeof(OSVERSIONINFO) };
+	static int version_ready = 0;
+	BYTE key_states[256];
+	int oldstate, newstate;
+
+	if (!use_keyboard_leds)
+		return;
+
+	// if we don't yet have a version number, get it
+	if (!version_ready)
+	{
+		version_ready = 1;
+		GetVersionEx(&osinfo);
+	}
+
+	// thanks to Lee Taylor for the original version of this code
+
+	// get the current state
+	GetKeyboardState(&key_states[0]);
+
+	// see if the numlock key matches the state
+	oldstate = key_states[VK_NUMLOCK] & 1;
+	newstate = state & 1;
+
+	// if not, simulate a key up/down
+	if (oldstate != newstate && osinfo.dwPlatformId != VER_PLATFORM_WIN32_WINDOWS)
+	{
+		keybd_event(VK_NUMLOCK, 0x45, KEYEVENTF_EXTENDEDKEY | 0, 0);
+		keybd_event(VK_NUMLOCK, 0x45, KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP, 0);
+	}
+	key_states[VK_NUMLOCK] = (key_states[VK_NUMLOCK] & ~1) | newstate;
+
+	// see if the caps lock key matches the state
+	oldstate = key_states[VK_CAPITAL] & 1;
+	newstate = (state >> 1) & 1;
+
+	// if not, simulate a key up/down
+	if (oldstate != newstate && osinfo.dwPlatformId != VER_PLATFORM_WIN32_WINDOWS)
+	{
+		keybd_event(VK_CAPITAL, 0x3a, 0, 0);
+		keybd_event(VK_CAPITAL, 0x3a, KEYEVENTF_KEYUP, 0);
+	}
+	key_states[VK_CAPITAL] = (key_states[VK_CAPITAL] & ~1) | newstate;
+
+	// see if the scroll lock key matches the state
+	oldstate = key_states[VK_SCROLL] & 1;
+	newstate = (state >> 2) & 1;
+
+	// if not, simulate a key up/down
+	if (oldstate != newstate && osinfo.dwPlatformId != VER_PLATFORM_WIN32_WINDOWS)
+	{
+		keybd_event(VK_SCROLL, 0x46, 0, 0);
+		keybd_event(VK_SCROLL, 0x46, KEYEVENTF_KEYUP, 0);
+	}
+	key_states[VK_SCROLL] = (key_states[VK_SCROLL] & ~1) | newstate;
+
+	// if we're on Win9x, use SetKeyboardState
+	if (osinfo.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS)
+		SetKeyboardState(&key_states[0]);
+}
+
+

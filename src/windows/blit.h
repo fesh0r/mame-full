@@ -61,6 +61,10 @@ struct win_blit_params
 	int			srcheight;
 
 	void *		vecdirty;
+	
+	int			flipx;
+	int			flipy;
+	int			swapxy;
 };
 
 

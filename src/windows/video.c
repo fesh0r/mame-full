@@ -20,7 +20,6 @@
 #include "driver.h"
 #include "mamedbg.h"
 #include "vidhrdw/vector.h"
-#include "ticker.h"
 #include "blit.h"
 #include "video.h"
 #include "window.h"
@@ -63,6 +62,11 @@ UINT8 palette_lookups_invalid;
 UINT32 palette_16bit_lookup[65536];
 UINT32 palette_32bit_lookup[65536];
 
+// rotation
+UINT8 blit_flipx;
+UINT8 blit_flipy;
+UINT8 blit_swapxy;
+
 
 
 //============================================================
@@ -70,10 +74,11 @@ UINT32 palette_32bit_lookup[65536];
 //============================================================
 
 // core video input parameters
+static int video_width;
+static int video_height;
 static int video_depth;
 static double video_fps;
 static int video_attributes;
-static int video_orientation;
 
 // derived from video attributes
 static int vector_game;
@@ -91,13 +96,13 @@ static int vis_height;
 static int warming_up;
 
 // timing measurements for throttling
-static TICKER last_skipcount0_time;
-static TICKER this_frame_base;
+static cycles_t last_skipcount0_time;
+static cycles_t this_frame_base;
 static int allow_sleep;
 
 // average FPS calculation
-static TICKER start_time;
-static TICKER end_time;
+static cycles_t start_time;
+static cycles_t end_time;
 static int frames_displayed;
 static int frames_to_display;
 
@@ -269,21 +274,91 @@ static int decode_aspect(struct rc_option *option, const char *arg, int priority
 
 
 //============================================================
+//	win_orient_rect
+//============================================================
+
+void win_orient_rect(struct rectangle *rect)
+{
+	int temp;
+
+	// apply X/Y swap first
+	if (blit_swapxy)
+	{
+		temp = rect->min_x; rect->min_x = rect->min_y; rect->min_y = temp;
+		temp = rect->max_x; rect->max_x = rect->max_y; rect->max_y = temp;
+	}
+	
+	// apply X flip
+	if (blit_flipx)
+	{
+		temp = video_width - rect->min_x - 1;
+		rect->min_x = video_width - rect->max_x - 1;
+		rect->max_x = temp;
+	}
+	
+	// apply Y flip
+	if (blit_flipy)
+	{
+		temp = video_height - rect->min_y - 1;
+		rect->min_y = video_height - rect->max_y - 1;
+		rect->max_y = temp;
+	}
+}
+
+
+
+//============================================================
+//	win_disorient_rect
+//============================================================
+
+void win_disorient_rect(struct rectangle *rect)
+{
+	int temp;
+
+	// unapply Y flip
+	if (blit_flipy)
+	{
+		temp = video_height - rect->min_y - 1;
+		rect->min_y = video_height - rect->max_y - 1;
+		rect->max_y = temp;
+	}
+
+	// unapply X flip
+	if (blit_flipx)
+	{
+		temp = video_width - rect->min_x - 1;
+		rect->min_x = video_width - rect->max_x - 1;
+		rect->max_x = temp;
+	}
+	
+	// unapply X/Y swap last
+	if (blit_swapxy)
+	{
+		temp = rect->min_x; rect->min_x = rect->min_y; rect->min_y = temp;
+		temp = rect->max_x; rect->max_x = rect->max_y; rect->max_y = temp;
+	}
+}
+
+
+
+//============================================================
 //	osd_create_display
 //============================================================
 
-int osd_create_display(int width, int height, int depth, float fps, int attributes, int orientation, UINT32 *rgb_components)
+int osd_create_display(const struct osd_create_params *params, UINT32 *rgb_components)
 {
 	struct mame_display dummy_display;
+	double aspect_ratio;
 	int r, g, b;
 	
-	logerror("width %d, height %d depth %d\n",width,height,depth);
+	logerror("width %d, height %d depth %d\n", params->width, params->height, params->depth);
 
 	// copy the parameters into globals for later use
-	video_depth			= (depth != 15) ? depth : 16;
-	video_fps			= fps;
-	video_attributes	= attributes;
-	video_orientation	= orientation;
+	video_width			= blit_swapxy ? params->height : params->width;
+	video_height		= blit_swapxy ? params->width : params->height;
+	video_depth			= (params->depth != 15) ? params->depth : 16;
+	video_fps			= params->fps;
+	video_attributes	= params->video_attributes;
 
 	// clamp the frameskip value to within range
 	if (frameskip < 0)
@@ -292,11 +367,15 @@ int osd_create_display(int width, int height, int depth, float fps, int attribut
 		frameskip = FRAMESKIP_LEVELS - 1;
 
 	// extract useful parameters from the attributes
-	vector_game			= ((attributes & VIDEO_TYPE_VECTOR) != 0);
-	rgb_direct			= (depth == 15) || (depth == 32);
-
+	vector_game			= ((params->video_attributes & VIDEO_TYPE_VECTOR) != 0);
+	rgb_direct			= ((params->video_attributes & VIDEO_RGB_DIRECT) != 0);
+	
 	// create the window
-	if (win_create_window(width, height, video_depth, attributes, orientation))
+	if (!blit_swapxy)
+		aspect_ratio = (double)params->aspect_x / (double)params->aspect_y;
+	else
+		aspect_ratio = (double)params->aspect_y / (double)params->aspect_x;
+	if (win_create_window(video_width, video_height, video_depth, video_attributes, aspect_ratio))
 		return 1;
 	
 	// initialize the palette to a fixed 5-5-5 mapping
@@ -351,7 +430,10 @@ void osd_close_display(void)
 
 	// print a final result to the stdout
 	if (frames_displayed != 0)
-		printf("Average FPS: %f (%d frames)\n", (double)TICKS_PER_SEC / (end_time - start_time) * frames_displayed, frames_displayed);
+	{
+		cycles_t cps = osd_cycles_per_second();
+		printf("Average FPS: %f (%d frames)\n", (double)cps / (end_time - start_time) * frames_displayed, frames_displayed);
+	}
 }
 
 
@@ -369,12 +451,33 @@ int osd_skip_this_frame(void)
 
 
 //============================================================
-//	osd_get_frameskip
+//	osd_get_fps_text
 //============================================================
 
-int osd_get_frameskip(void)
+const char *osd_get_fps_text(const struct performance_info *performance)
 {
-	return autoframeskip ? -(frameskip + 1) : frameskip;
+	static char buffer[1024];
+	char *dest = buffer;
+	
+	// display the FPS, frameskip, percent, fps and target fps
+	dest += sprintf(dest, "%s%2d%4d%%%4d/%d fps", 
+			autoframeskip ? "auto" : "fskp", frameskip, 
+			(int)(performance->game_speed_percent + 0.5), 
+			(int)(performance->frames_per_second + 0.5),
+			(int)(Machine->drv->frames_per_second + 0.5));
+
+	/* for vector games, add the number of vector updates */
+	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
+	{
+		dest += sprintf(dest, "\n %d vector updates", performance->vector_updates_last_second);
+	}
+	else if (performance->partial_updates_this_frame > 1)
+	{
+		dest += sprintf(dest, "\n %d partial updates", performance->partial_updates_this_frame);
+	}
+	
+	/* return a pointer to the static buffer */
+	return buffer;
 }
 
 
@@ -461,7 +564,7 @@ static void check_inputs(void)
 static void throttle_speed(void)
 {
 	static double ticks_per_sleep_msec = 0;
-	TICKER target, curr;
+	cycles_t target, curr, cps;
 
 	// if we're only syncing to the refresh, bail now
 	if (win_sync_refresh)
@@ -471,15 +574,16 @@ static void throttle_speed(void)
 	profiler_mark(PROFILER_IDLE);
 
 	// get the current time and the target time
-	curr = ticker();
-	target = this_frame_base + (int)((double)frameskip_counter * (double)TICKS_PER_SEC / video_fps);
+	curr = osd_cycles();
+	cps = osd_cycles_per_second();
+	target = this_frame_base + (int)((double)frameskip_counter * (double)cps / video_fps);
 
 	// sync
 	if (curr - target < 0)
 	{
 		// initialize the ticks per sleep
 		if (ticks_per_sleep_msec == 0)
-			ticks_per_sleep_msec = (double)(TICKS_PER_SEC / 1000);
+			ticks_per_sleep_msec = (double)(cps / 1000);
 
 		// loop until we reach the target time
 		while (curr - target < 0)
@@ -487,15 +591,15 @@ static void throttle_speed(void)
 			// if we have enough time to sleep, do it
 			// ...but not if we're autoframeskipping and we're behind
 			if (allow_sleep && (!autoframeskip || frameskip == 0) &&
-				(target - curr) > (TICKER)(ticks_per_sleep_msec * 1.1))
+				(target - curr) > (cycles_t)(ticks_per_sleep_msec * 1.1))
 			{
 				// keep track of how long we actually slept
 				Sleep(1);
-				ticks_per_sleep_msec = (ticks_per_sleep_msec * 0.90) + ((double)(ticker() - curr) * 0.10);
+				ticks_per_sleep_msec = (ticks_per_sleep_msec * 0.90) + ((double)(osd_cycles() - curr) * 0.10);
 			}
 
 			// update the current time
-			curr = ticker();
+			curr = osd_cycles();
 		}
 	}
 
@@ -551,11 +655,20 @@ static void update_palette(struct mame_display *display)
 
 static void update_visible_area(struct mame_display *display)
 {
+	struct rectangle adjusted = display->game_visible_area;
+
+	// tell the UI where it can draw
+	set_ui_visarea(display->game_visible_area.min_x, display->game_visible_area.min_y,
+			display->game_visible_area.max_x, display->game_visible_area.max_y);
+
+	// adjust for orientation
+	win_orient_rect(&adjusted);
+
 	// copy the new parameters
-	vis_min_x = display->game_visible_area.min_x;
-	vis_max_x = display->game_visible_area.max_x;
-	vis_min_y = display->game_visible_area.min_y;
-	vis_max_y = display->game_visible_area.max_y;
+	vis_min_x = adjusted.min_x;
+	vis_max_x = adjusted.max_x;
+	vis_min_y = adjusted.min_y;
+	vis_max_y = adjusted.max_y;
 
 	// track these changes
 	logerror("set visible area %d-%d %d-%d\n",vis_min_x,vis_max_x,vis_min_y,vis_max_y);
@@ -563,9 +676,6 @@ static void update_visible_area(struct mame_display *display)
 	// compute the visible width and height
 	vis_width  = vis_max_x - vis_min_x + 1;
 	vis_height = vis_max_y - vis_min_y + 1;
-
-	// tell the UI where it can draw
-	set_ui_visarea(vis_min_x, vis_min_y, vis_min_x + vis_width - 1, vis_min_y + vis_height - 1);
 
 	// now adjust the window for the aspect ratio
 	if (vis_width > 1 && vis_height > 1)
@@ -584,8 +694,10 @@ void update_autoframeskip(void)
 	// visible this cycle or if we haven't run yet
 	if (!game_was_paused && !debugger_was_visible && cpu_getcurrentframe() > 2 * FRAMESKIP_LEVELS)
 	{
+		const struct performance_info *performance = mame_get_performance_info();
+	
 		// if we're too fast, attempt to increase the frameskip
-		if (game_speed_percent >= 99.5)
+		if (performance->game_speed_percent >= 99.5)
 		{
 			frameskipadjust++;
 
@@ -601,8 +713,8 @@ void update_autoframeskip(void)
 		else
 		{
 			// if below 80% speed, be more aggressive
-			if (game_speed_percent < 80)
-				frameskipadjust -= (90 - game_speed_percent) / 5;
+			if (performance->game_speed_percent < 80)
+				frameskipadjust -= (90 - performance->game_speed_percent) / 5;
 
 			// if we're close, only force it up to frameskip 8
 			else if (frameskip < 8)
@@ -629,16 +741,16 @@ void update_autoframeskip(void)
 //	render_frame
 //============================================================
 
-static void render_frame(struct mame_bitmap *bitmap, void *vector_dirty_pixels)
+static void render_frame(struct mame_bitmap *bitmap, const struct rectangle *bounds, void *vector_dirty_pixels)
 {
-	TICKER curr;
+	cycles_t curr;
 
 	// if we're throttling, synchronize
 	if (throttle)
 		throttle_speed();
 
 	// at the end, we need the current time
-	curr = ticker();
+	curr = osd_cycles();
 
 	// update stats for the FPS average calculation
 	if (start_time == 0)
@@ -661,7 +773,7 @@ static void render_frame(struct mame_bitmap *bitmap, void *vector_dirty_pixels)
 
 	// update the bitmap we're drawing
 	profiler_mark(PROFILER_BLIT);
-	win_update_video_window(bitmap, vector_dirty_pixels);
+	win_update_video_window(bitmap, bounds, vector_dirty_pixels);
 	profiler_mark(PROFILER_END);
 
 	// if we're throttling and autoframeskip is on, adjust
@@ -677,16 +789,19 @@ static void render_frame(struct mame_bitmap *bitmap, void *vector_dirty_pixels)
 
 void osd_update_video_and_audio(struct mame_display *display)
 {
+	struct rectangle updatebounds = display->game_bitmap_update;
+	cycles_t cps = osd_cycles_per_second();
+
 	// if this is the first time through, initialize the previous time value
 	if (warming_up)
 	{
-		last_skipcount0_time = ticker() - (int)((double)FRAMESKIP_LEVELS * (double)TICKS_PER_SEC / video_fps);
+		last_skipcount0_time = osd_cycles() - (int)((double)FRAMESKIP_LEVELS * (double)cps / video_fps);
 		warming_up = 0;
 	}
 
 	// if this is the first frame in a sequence, adjust the base time for this frame
 	if (frameskip_counter == 0)
-		this_frame_base = last_skipcount0_time + (int)((double)FRAMESKIP_LEVELS * (double)TICKS_PER_SEC / video_fps);
+		this_frame_base = last_skipcount0_time + (int)((double)FRAMESKIP_LEVELS * (double)cps / video_fps);
 	
 	// if the visible area has changed, update it
 	if (display->changed_flags & GAME_VISIBLE_AREA_CHANGED)
@@ -701,12 +816,14 @@ void osd_update_video_and_audio(struct mame_display *display)
 		update_palette(display);
 
 	// if we're not skipping this frame, draw it
-	if (!osd_skip_this_frame() && (display->changed_flags & GAME_BITMAP_CHANGED))
+	if (display->changed_flags & GAME_BITMAP_CHANGED)
 	{
+		win_orient_rect(&updatebounds);
+	
 		if (display->changed_flags & VECTOR_PIXELS_CHANGED)
-			render_frame(display->game_bitmap, display->vector_dirty_pixels);
+			render_frame(display->game_bitmap, &updatebounds, display->vector_dirty_pixels);
 		else
-			render_frame(display->game_bitmap, NULL);
+			render_frame(display->game_bitmap, &updatebounds, NULL);
 	}
 
 	// update the debugger
@@ -739,7 +856,85 @@ void osd_update_video_and_audio(struct mame_display *display)
 
 void osd_save_snapshot(struct mame_bitmap *bitmap, const struct rectangle *bounds)
 {
-	save_screen_snapshot(bitmap, bounds);
+	struct rectangle newbounds;
+	struct mame_bitmap *copy;
+	int x, y, w, h, t;
+
+	// if we can send it in raw, do it
+	if (!blit_swapxy && !blit_flipx && !blit_flipy)
+	{
+		save_screen_snapshot(bitmap, bounds);
+		return;
+	}
+
+	// allocate a copy
+	w = blit_swapxy ? bitmap->height : bitmap->width;
+	h = blit_swapxy ? bitmap->width : bitmap->height;
+	copy = bitmap_alloc_depth(w, h, bitmap->depth);
+	if (!copy)
+		return;
+	
+	// populate the copy
+	for (y = bounds->min_y; y <= bounds->max_y; y++)
+		for (x = bounds->min_x; x <= bounds->max_x; x++)
+		{
+			int tx = x, ty = y;
+			
+			// apply the rotation/flipping
+			if (blit_swapxy)
+			{
+				t = tx; tx = ty; ty = t;
+			}
+			if (blit_flipx)
+				tx = copy->width - tx - 1;
+			if (blit_flipy)
+				ty = copy->height - ty - 1;
+			
+			// read the old pixel and copy to the new location
+			switch (copy->depth)
+			{
+				case 15:
+				case 16:
+					*((UINT16 *)copy->base + ty * copy->rowpixels + tx) =
+							*((UINT16 *)bitmap->base + y * bitmap->rowpixels + x);
+					break;
+				
+				case 32:
+					*((UINT32 *)copy->base + ty * copy->rowpixels + tx) =
+							*((UINT32 *)bitmap->base + y * bitmap->rowpixels + x);
+					break;
+			}
+		}
+	
+	// compute the oriented bounds
+	newbounds = *bounds;
+
+	// apply X/Y swap first
+	if (blit_swapxy)
+	{
+		t = newbounds.min_x; newbounds.min_x = newbounds.min_y; newbounds.min_y = t;
+		t = newbounds.max_x; newbounds.max_x = newbounds.max_y; newbounds.max_y = t;
+	}
+	
+	// apply X flip
+	if (blit_flipx)
+	{
+		t = copy->width - newbounds.min_x - 1;
+		newbounds.min_x = copy->width - newbounds.max_x - 1;
+		newbounds.max_x = t;
+	}
+	
+	// apply Y flip
+	if (blit_flipy)
+	{
+		t = copy->height - newbounds.min_y - 1;
+		newbounds.min_y = copy->height - newbounds.max_y - 1;
+		newbounds.max_y = t;
+	}
+	
+	// now save the copy and nuke it when done
+	save_screen_snapshot(copy, &newbounds);
+	bitmap_free(copy);
 }
 
 

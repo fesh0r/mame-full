@@ -19,7 +19,6 @@
 
 // MAME headers
 #include "driver.h"
-#include "ticker.h"
 #include "window.h"
 #include "winddraw.h"
 #include "video.h"
@@ -58,6 +57,9 @@ extern UINT8 win_trying_to_quit;
 
 // menu items
 #define MENU_FULLSCREEN			1000
+
+// minimum window dimension
+#define MIN_WINDOW_DIM			200
 
 
 
@@ -131,13 +133,11 @@ static double aspect_ratio;
 static int visible_area_set;
 
 // event handling
-static TICKER last_event_check;
+static cycles_t last_event_check;
 
 // derived attributes
-static int swap_xy;
-static int dual_monitor;
-static int vector_game;
 static int pixel_aspect_ratio;
+static int vector_game;
 
 // cached bounding rects
 static RECT non_fullscreen_bounds;
@@ -145,6 +145,7 @@ static RECT non_maximized_bounds;
 
 // debugger
 static int debug_focus;
+static int in_background;
 
 // effects table
 static struct win_effect_data effect_table[] =
@@ -171,9 +172,9 @@ static struct win_effect_data effect_table[] =
 
 static void update_system_menu(void);
 static LRESULT CALLBACK video_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam);
-static void draw_video_contents(HDC dc, struct mame_bitmap *bitmap, void *vector_dirty_pixels, int update);
+static void draw_video_contents(HDC dc, struct mame_bitmap *bitmap, const struct rectangle *bounds, void *vector_dirty_pixels, int update);
 
-static void dib_draw_window(HDC dc, struct mame_bitmap *bitmap, void *vector_dirty_pixels, int update);
+static void dib_draw_window(HDC dc, struct mame_bitmap *bitmap, const struct rectangle *bounds, void *vector_dirty_pixels, int update);
 
 static int create_debug_window(void);
 static void draw_debug_contents(HDC dc, struct mame_bitmap *bitmap, const rgb_t *palette);
@@ -345,22 +346,31 @@ INLINE void erase_outer_rect(RECT *outer, RECT *inner, HDC dc)
 
 INLINE void get_work_area(RECT *maximum)
 {
+	int tempwidth = blit_swapxy ? win_gfx_height : win_gfx_width;
+	int tempheight = blit_swapxy ? win_gfx_width : win_gfx_height;
+
 	if (SystemParametersInfo(SPI_GETWORKAREA, 0, maximum, 0))
 	{
 		// clamp to the width specified
-		if (win_gfx_width && (maximum->right - maximum->left) > (win_gfx_width + wnd_extra_width()))
+		if (tempwidth && (maximum->right - maximum->left) > (tempwidth + wnd_extra_width()))
 		{
-			int diff = (maximum->right - maximum->left) - (win_gfx_width + wnd_extra_width());
-			maximum->left += diff / 2;
-			maximum->right -= diff - (diff / 2);
+			int diff = (maximum->right - maximum->left) - (tempwidth + wnd_extra_width());
+			if (diff > 0)
+			{
+				maximum->left += diff / 2;
+				maximum->right -= diff - (diff / 2);
+			}
 		}
 
 		// clamp to the height specified
-		if (win_gfx_height && (maximum->bottom - maximum->top) > (win_gfx_height + wnd_extra_height()))
+		if (tempheight && (maximum->bottom - maximum->top) > (tempheight + wnd_extra_height()))
 		{
-			int diff = (maximum->bottom - maximum->top) - (win_gfx_height + wnd_extra_height());
-			maximum->top += diff / 2;
-			maximum->bottom -= diff - (diff / 2);
+			int diff = (maximum->bottom - maximum->top) - (tempheight + wnd_extra_height());
+			if (diff > 0)
+			{
+				maximum->top += diff / 2;
+				maximum->bottom -= diff - (diff / 2);
+			}
 		}
 	}
 }
@@ -414,7 +424,6 @@ int win_init_window(void)
 	}
 
 	// make the window title
-	// make the window title
 #ifndef MESS
 	sprintf(title, "MAME: %s [%s]", Machine->gamedrv->description, Machine->gamedrv->name);
 #else
@@ -444,19 +453,15 @@ int win_init_window(void)
 //	win_create_window
 //============================================================
 
-int win_create_window(int width, int height, int depth, int attributes, int orientation)
+int win_create_window(int width, int height, int depth, int attributes, double aspect)
 {
 	int i, result;
 
 	// clear the initial state
 	visible_area_set = 0;
 
-	// extract useful parameters from the orientation
-	swap_xy				= ((orientation & ORIENTATION_SWAP_XY) != 0);
-
 	// extract useful parameters from the attributes
 	pixel_aspect_ratio	= (attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK);
-	dual_monitor		= ((attributes & VIDEO_DUAL_MONITOR) != 0);
 	vector_game			= ((attributes & VIDEO_TYPE_VECTOR) != 0);
 
 	// handle failure if we couldn't create the video window
@@ -474,7 +479,7 @@ int win_create_window(int width, int height, int depth, int attributes, int orie
 			SWP_NOZORDER);
 
 	// make sure we paint the window once here
-	win_update_video_window(NULL, NULL);
+	win_update_video_window(NULL, NULL, NULL);
 
 	// fill in the bitmap info header
 	video_dib_info->bmiHeader.biSize			= sizeof(video_dib_info->bmiHeader);
@@ -509,22 +514,7 @@ int win_create_window(int width, int height, int depth, int attributes, int orie
 	// determine the aspect ratio: hardware stretch case
 	if (win_hw_stretch && win_use_ddraw)
 	{
-		// if it's explicitly specified, use it
-		if (attributes & VIDEO_ASPECT_RATIO_MASK)
-		{
-			double num = (double)VIDEO_ASPECT_RATIO_NUM((UINT32)attributes);
-			double den = (double)VIDEO_ASPECT_RATIO_DEN((UINT32)attributes);
-			aspect_ratio = swap_xy ? den / num : num / den;
-		}
-
-		// otherwise, attempt to deduce the result
-		else
-		{
-			if (!dual_monitor)
-				aspect_ratio = swap_xy ? (3.0 / 4.0) : (4.0 / 3.0);
-			else
-				aspect_ratio = swap_xy ? (6.0 / 4.0) : (4.0 / 6.0);
-		}
+		aspect_ratio = aspect;
 	}
 
 	// determine the aspect ratio: software stretch case
@@ -595,13 +585,13 @@ static void update_system_menu(void)
 //	win_update_video_window
 //============================================================
 
-void win_update_video_window(struct mame_bitmap *bitmap, void *vector_dirty_pixels)
+void win_update_video_window(struct mame_bitmap *bitmap, const struct rectangle *bounds, void *vector_dirty_pixels)
 {
 	// get the client DC and draw to it
 	if (win_video_window)
 	{
 		HDC dc = GetDC(win_video_window);
-		draw_video_contents(dc, bitmap, vector_dirty_pixels, 0);
+		draw_video_contents(dc, bitmap, bounds, vector_dirty_pixels, 0);
 		ReleaseDC(win_video_window, dc);
 	}
 }
@@ -612,7 +602,7 @@ void win_update_video_window(struct mame_bitmap *bitmap, void *vector_dirty_pixe
 //	draw_video_contents
 //============================================================
 
-static void draw_video_contents(HDC dc, struct mame_bitmap *bitmap, void *vector_dirty_pixels, int update)
+static void draw_video_contents(HDC dc, struct mame_bitmap *bitmap, const struct rectangle *bounds, void *vector_dirty_pixels, int update)
 {
 	static struct mame_bitmap *last;
 
@@ -647,11 +637,11 @@ static void draw_video_contents(HDC dc, struct mame_bitmap *bitmap, void *vector
 	}
 
 	// if we have a blit surface, use that
-	if (win_use_ddraw && win_ddraw_draw(bitmap, vector_dirty_pixels, update))
+	if (win_use_ddraw && win_ddraw_draw(bitmap, bounds, vector_dirty_pixels, update))
 		return;
 
 	// draw to the window with a DIB
-	dib_draw_window(dc, bitmap, vector_dirty_pixels, update);
+	dib_draw_window(dc, bitmap, bounds, vector_dirty_pixels, update);
 }
 
 
@@ -670,7 +660,7 @@ static LRESULT CALLBACK video_window_proc(HWND wnd, UINT message, WPARAM wparam,
 		{
 			PAINTSTRUCT pstruct;
 			HDC hdc = BeginPaint(wnd, &pstruct);
-			draw_video_contents(hdc, NULL, NULL, 1);
+			draw_video_contents(hdc, NULL, NULL, NULL, 1);
 			EndPaint(wnd, &pstruct);
 			break;
 		}
@@ -679,8 +669,8 @@ static LRESULT CALLBACK video_window_proc(HWND wnd, UINT message, WPARAM wparam,
 		case WM_GETMINMAXINFO:
 		{
 			MINMAXINFO *minmax = (MINMAXINFO *)lparam;
-			minmax->ptMinTrackSize.x = win_visible_width + 2 + wnd_extra_width();
-			minmax->ptMinTrackSize.y = win_visible_height + 2 + wnd_extra_height();
+			minmax->ptMinTrackSize.x = MIN_WINDOW_DIM;
+			minmax->ptMinTrackSize.y = MIN_WINDOW_DIM;
 			break;
 		}
 
@@ -729,6 +719,11 @@ static LRESULT CALLBACK video_window_proc(HWND wnd, UINT message, WPARAM wparam,
 			win_video_window = 0;
 			break;
 
+		// track whether we are in the foreground
+		case WM_ACTIVATEAPP:
+			in_background = !wparam;
+			break;
+
 		// everything else: defaults
 		default:
 			return DefWindowProc(wnd, message, wparam, lparam);
@@ -748,26 +743,27 @@ void win_constrain_to_aspect_ratio(RECT *rect, int adjustment)
 	double adjusted_ratio = aspect_ratio;
 	int extrawidth = wnd_extra_width();
 	int extraheight = wnd_extra_height();
-	int newwidth, newheight, adjwidth, adjheight;
+	int reqwidth, reqheight;
+	int adjwidth, adjheight;
 	RECT minrect, maxrect, temp;
+	RECT rectcopy = *rect;
 
 	// adjust if hardware stretching
 	if (win_use_ddraw && win_hw_stretch)
 		adjusted_ratio *= win_aspect_ratio_adjust;
 
 	// determine the minimum rect
-	minrect = *rect;
-	minrect.right = minrect.left + (win_visible_width + 2) + extrawidth;
-	minrect.bottom = minrect.top + (int)((double)(win_visible_width + 2) / adjusted_ratio) + extraheight;
-	temp = *rect;
-	temp.right = temp.left + (int)((double)(win_visible_height + 2) * adjusted_ratio) + extrawidth;
-	temp.bottom = temp.top + (win_visible_height + 2) + extraheight;
-	if (temp.right > minrect.right || temp.bottom > minrect.bottom)
-		minrect = temp;
-
-	// expand the initial rect past the minimum
-	temp = *rect;
-	UnionRect(rect, &temp, &minrect);
+	minrect = rectcopy;
+	if (win_visible_width < win_visible_height)
+	{
+		minrect.right = minrect.left + MIN_WINDOW_DIM + extrawidth;
+		minrect.bottom = minrect.top + (int)((double)MIN_WINDOW_DIM / adjusted_ratio) + extraheight;
+	}
+	else
+	{
+		minrect.right = minrect.left + (int)((double)MIN_WINDOW_DIM * adjusted_ratio) + extrawidth;
+		minrect.bottom = minrect.top + MIN_WINDOW_DIM + extraheight;
+	}
 
 	// determine the maximum rect
 	if (win_window_mode)
@@ -775,119 +771,97 @@ void win_constrain_to_aspect_ratio(RECT *rect, int adjustment)
 	else
 		get_screen_bounds(&maxrect);
 
+	// expand the initial rect past the minimum
+	temp = rectcopy;
+	UnionRect(&rectcopy, &temp, &minrect);
+
 	// clamp the initial rect to its maxrect box
-	temp = *rect;
-	IntersectRect(rect, &temp, &maxrect);
+	temp = rectcopy;
+	IntersectRect(&rectcopy, &temp, &maxrect);
 
 	// if we're not forcing the aspect ratio, just return the intersection
 	if (!win_keep_aspect)
 		return;
 
-	// compute the new requested width/height
-	newwidth = rect->right - rect->left - extrawidth;
-	newheight = rect->bottom - rect->top - extraheight;
+	// compute the maximum requested width/height
+	switch (adjustment)
+	{
+		case WMSZ_LEFT:
+		case WMSZ_RIGHT:
+			reqwidth = rectcopy.right - rectcopy.left - extrawidth;
+			reqheight = (int)((double)reqwidth / adjusted_ratio);
+			break;
 
-	// compute the adjusted width/height
-	adjwidth = (int)((double)newheight * adjusted_ratio);
-	adjheight = (int)((double)newwidth / adjusted_ratio);
+		case WMSZ_TOP:
+		case WMSZ_BOTTOM:
+			reqheight = rectcopy.bottom - rectcopy.top - extraheight;
+			reqwidth = (int)((double)reqheight * adjusted_ratio);
+			break;
 
-	// if we're going to be too small, expand outward
-	if (adjwidth < minrect.right - minrect.left - extrawidth)
-	{
-		adjwidth = minrect.right - minrect.left - extrawidth;
-		newheight = (int)((double)adjwidth / adjusted_ratio);
-	}
-	if (adjheight < minrect.bottom - minrect.top - extraheight)
-	{
-		adjheight = minrect.bottom - minrect.top - extraheight;
-		newwidth = (int)((double)adjheight * adjusted_ratio);
+		default:
+			reqwidth = rectcopy.right - rectcopy.left - extrawidth;
+			reqheight = (int)((double)reqwidth / adjusted_ratio);
+			if (reqheight < (rectcopy.bottom - rectcopy.top - extraheight))
+			{
+				reqheight = rectcopy.bottom - rectcopy.top - extraheight;
+				reqwidth = (int)((double)reqheight * adjusted_ratio);
+			}
+			break;
 	}
 
-	// if we're going to be too big, expand inward
-	if (adjwidth > maxrect.right - maxrect.left - extrawidth)
+	// scale up if too small
+	if (reqwidth + extrawidth < minrect.right - minrect.left)
 	{
-		adjwidth = maxrect.right - maxrect.left - extrawidth;
-		newheight = (int)((double)adjwidth / adjusted_ratio);
+		reqwidth = minrect.right - minrect.left - extrawidth;
+		reqheight = (int)((double)reqwidth / adjusted_ratio);
 	}
-	if (adjheight > maxrect.bottom - maxrect.top - extraheight)
+	if (reqheight + extraheight < minrect.bottom - minrect.top)
 	{
-		adjheight = maxrect.bottom - maxrect.top - extraheight;
-		newwidth = (int)((double)adjheight * adjusted_ratio);
+		reqheight = minrect.bottom - minrect.top - extraheight;
+		reqwidth = (int)((double)reqheight * adjusted_ratio);
 	}
+
+	// scale down if too big
+	if (reqwidth + extrawidth > maxrect.right - maxrect.left)
+	{
+		reqwidth = maxrect.right - maxrect.left - extrawidth;
+		reqheight = (int)((double)reqwidth / adjusted_ratio);
+	}
+	if (reqheight + extraheight > maxrect.bottom - maxrect.top)
+	{
+		reqheight = maxrect.bottom - maxrect.top - extraheight;
+		reqwidth = (int)((double)reqheight * adjusted_ratio);
+	}
+
+	// compute the adjustments we need to make
+	adjwidth = (reqwidth + extrawidth) - (rect->right - rect->left);
+	adjheight = (reqheight + extraheight) - (rect->bottom - rect->top);
 
 	// based on which corner we're adjusting, constrain in different ways
 	switch (adjustment)
 	{
 		case WMSZ_BOTTOM:
-			rect->right = rect->left + adjwidth + extrawidth;
-			rect->bottom = rect->top + newheight + extraheight;
+		case WMSZ_BOTTOMRIGHT:
+		case WMSZ_RIGHT:
+			rect->right += adjwidth;
+			rect->bottom += adjheight;
 			break;
 
 		case WMSZ_BOTTOMLEFT:
-			if (newwidth * adjheight > adjwidth * newheight)
-			{
-				rect->bottom = rect->top + adjheight + extraheight;
-				rect->left = rect->right - newwidth - extrawidth;
-			}
-			else
-			{
-				rect->left = rect->right - adjwidth - extrawidth;
-				rect->bottom = rect->top + newheight + extraheight;
-			}
-			break;
-
-		case WMSZ_BOTTOMRIGHT:
-			if (newwidth * adjheight > adjwidth * newheight)
-			{
-				rect->bottom = rect->top + adjheight + extraheight;
-				rect->right = rect->left + newwidth + extrawidth;
-			}
-			else
-			{
-				rect->right = rect->left + adjwidth + extrawidth;
-				rect->bottom = rect->top + newheight + extraheight;
-			}
+			rect->left -= adjwidth;
+			rect->bottom += adjheight;
 			break;
 
 		case WMSZ_LEFT:
-			rect->top = rect->bottom - adjheight - extraheight;
-			rect->left = rect->right - newwidth - extrawidth;
-			break;
-
-		case WMSZ_RIGHT:
-			rect->bottom = rect->top + adjheight + extraheight;
-			rect->right = rect->left + newwidth + extrawidth;
-			break;
-
-		case WMSZ_TOP:
-			rect->left = rect->right - adjwidth - extrawidth;
-			rect->top = rect->bottom - newheight - extraheight;
-			break;
-
 		case WMSZ_TOPLEFT:
-			if (newwidth * adjheight > adjwidth * newheight)
-			{
-				rect->top = rect->bottom - adjheight - extraheight;
-				rect->left = rect->right - newwidth - extrawidth;
-			}
-			else
-			{
-				rect->left = rect->right - adjwidth - extrawidth;
-				rect->top = rect->bottom - newheight - extraheight;
-			}
+		case WMSZ_TOP:
+			rect->left -= adjwidth;
+			rect->top -= adjheight;
 			break;
 
 		case WMSZ_TOPRIGHT:
-			if (newwidth * adjheight > adjwidth * newheight)
-			{
-				rect->top = rect->bottom - adjheight - extraheight;
-				rect->right = rect->left + newwidth + extrawidth;
-			}
-			else
-			{
-				rect->right = rect->left + adjwidth + extrawidth;
-				rect->top = rect->bottom - newheight - extraheight;
-			}
+			rect->right += adjwidth;
+			rect->top -= adjheight;
 			break;
 	}
 }
@@ -960,7 +934,7 @@ void win_adjust_window_for_visible(int min_x, int max_x, int min_y, int max_y)
 		// show the result
 		ShowWindow(win_video_window, SW_SHOW);
 		SetForegroundWindow(win_video_window);
-		win_update_video_window(NULL, NULL);
+		win_update_video_window(NULL, NULL, NULL);
 
 		// update the cursor state
 		win_update_cursor_state();
@@ -1155,8 +1129,8 @@ void win_adjust_window(void)
 
 void win_process_events_periodic(void)
 {
-	TICKER curr = ticker();
-	if (curr - last_event_check < TICKS_PER_SEC / 8)
+	cycles_t curr = osd_cycles();
+	if (curr - last_event_check < osd_cycles_per_second() / 8)
 		return;
 	win_process_events();
 }
@@ -1172,7 +1146,7 @@ int win_process_events(void)
 	MSG message;
 
 	// remember the last time we did this
-	last_event_check = ticker();
+	last_event_check = osd_cycles();
 
 	// loop over all messages in the queue
 	while (PeekMessage(&message, NULL, 0, 0, PM_REMOVE))
@@ -1220,93 +1194,6 @@ void win_wait_for_vsync(void)
 
 
 //============================================================
-//	osd_get_leds
-//============================================================
-
-int osd_get_leds(void)
-{
-	BYTE key_states[256];
-	int result = 0;
-
-	// get the current state
-	GetKeyboardState(&key_states[0]);
-
-	// set the numl0ck bit
-	result |= (key_states[VK_NUMLOCK] & 1);
-	result |= (key_states[VK_CAPITAL] & 1) << 1;
-	result |= (key_states[VK_SCROLL] & 1) << 2;
-	return result;
-}
-
-
-
-//============================================================
-//	osd_set_leds
-//============================================================
-
-void osd_set_leds(int state)
-{
-	static OSVERSIONINFO osinfo = { sizeof(OSVERSIONINFO) };
-	static int version_ready = 0;
-	BYTE key_states[256];
-	int oldstate, newstate;
-
-	// if we don't yet have a version number, get it
-	if (!version_ready)
-	{
-		version_ready = 1;
-		GetVersionEx(&osinfo);
-	}
-
-	// thanks to Lee Taylor for the original version of this code
-
-	// get the current state
-	GetKeyboardState(&key_states[0]);
-
-	// see if the numlock key matches the state
-	oldstate = key_states[VK_NUMLOCK] & 1;
-	newstate = state & 1;
-
-	// if not, simulate a key up/down
-	if (oldstate != newstate && osinfo.dwPlatformId != VER_PLATFORM_WIN32_WINDOWS)
-	{
-		keybd_event(VK_NUMLOCK, 0x45, KEYEVENTF_EXTENDEDKEY | 0, 0);
-		keybd_event(VK_NUMLOCK, 0x45, KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP, 0);
-	}
-	key_states[VK_NUMLOCK] = (key_states[VK_NUMLOCK] & ~1) | newstate;
-
-	// see if the caps lock key matches the state
-	oldstate = key_states[VK_CAPITAL] & 1;
-	newstate = (state >> 1) & 1;
-
-	// if not, simulate a key up/down
-	if (oldstate != newstate && osinfo.dwPlatformId != VER_PLATFORM_WIN32_WINDOWS)
-	{
-		keybd_event(VK_CAPITAL, 0x3a, 0, 0);
-		keybd_event(VK_CAPITAL, 0x3a, KEYEVENTF_KEYUP, 0);
-	}
-	key_states[VK_CAPITAL] = (key_states[VK_CAPITAL] & ~1) | newstate;
-
-	// see if the scroll lock key matches the state
-	oldstate = key_states[VK_SCROLL] & 1;
-	newstate = (state >> 2) & 1;
-
-	// if not, simulate a key up/down
-	if (oldstate != newstate && osinfo.dwPlatformId != VER_PLATFORM_WIN32_WINDOWS)
-	{
-		keybd_event(VK_SCROLL, 0x46, 0, 0);
-		keybd_event(VK_SCROLL, 0x46, KEYEVENTF_KEYUP, 0);
-	}
-	key_states[VK_SCROLL] = (key_states[VK_SCROLL] & ~1) | newstate;
-
-	// if we're on Win9x, use SetKeyboardState
-	if (osinfo.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS)
-		SetKeyboardState(&key_states[0]);
-}
-
-
-
-//============================================================
 //	win_prepare_palette
 //============================================================
 
@@ -1326,7 +1213,7 @@ UINT32 *win_prepare_palette(struct win_blit_params *params)
 //	dib_draw_window
 //============================================================
 
-static void dib_draw_window(HDC dc, struct mame_bitmap *bitmap, void *vector_dirty_pixels, int update)
+static void dib_draw_window(HDC dc, struct mame_bitmap *bitmap, const struct rectangle *bounds, void *vector_dirty_pixels, int update)
 {
 	int depth = (bitmap->depth == 15) ? 16 : bitmap->depth;
 	struct win_blit_params params;
@@ -1359,6 +1246,21 @@ static void dib_draw_window(HDC dc, struct mame_bitmap *bitmap, void *vector_dir
 	params.srcheight	= win_visible_height;
 
 	params.vecdirty		= vector_dirty_pixels;
+
+	params.flipx		= blit_flipx;
+	params.flipy		= blit_flipy;
+	params.swapxy		= blit_swapxy;
+
+	// adjust for more optimal bounds
+	if (bounds && !update && !vector_dirty_pixels)
+	{
+		params.dstxoffs += (bounds->min_x - win_visible_rect.left) * xmult;
+		params.dstyoffs += (bounds->min_y - win_visible_rect.top) * ymult;
+		params.srcxoffs += bounds->min_x - win_visible_rect.left;
+		params.srcyoffs += bounds->min_y - win_visible_rect.top;
+		params.srcwidth = bounds->max_x - bounds->min_x + 1;
+		params.srcheight = bounds->max_y - bounds->min_y + 1;
+	}
 
 	win_perform_blit(&params, update);
 

@@ -5,13 +5,10 @@
 	Second generation artwork implementation.
 
 	Still to do:
-		- command line controls
-		- cropping
 		- tinting
-		- optimize OSD blit by giving blit area
+		- mechanism to disable built-in artwork
 		
 	Longer term:
-		- make UI into dynamic overlay
 		- struct mame_layer
 		  {
 		  	struct mame_bitmap *bitmap;
@@ -339,6 +336,10 @@ enum
 	LAYER_FLYER
 };
 
+/* UI transparency hack */
+#define UI_TRANSPARENT_COLOR16	0xfffe
+#define UI_TRANSPARENT_COLOR32	0xfffffffe
+
 /* assemble ARGB components in the platform's preferred format */
 #define ASSEMBLE_ARGB(a,r,g,b)	(((a) << ashift) | ((r) << rshift) | ((g) << gshift) | ((b) << bshift))
 
@@ -397,16 +398,20 @@ static UINT32 transparent_color;
 static struct artwork_piece *artwork_list;
 static int num_underlays, num_overlays, num_bezels;
 static int num_pieces;
-static int last_ui_dirty;
 
 static struct mame_bitmap *underlay, *overlay, *overlay_yrgb, *bezel, *final;
 static struct rectangle underlay_invalid, overlay_invalid, bezel_invalid;
 static struct rectangle gamerect, screenrect;
 static int gamescale;
 
+static struct mame_bitmap *uioverlay;
+static UINT32 *uioverlayhint;
+static struct rectangle uibounds, last_uibounds;
+
 static UINT32 *palette_lookup;
 
 static int original_attributes;
+static UINT8 global_artwork_enable;
 
 static const struct overlay_piece *overlay_list;
 
@@ -420,8 +425,6 @@ static const struct overlay_piece *overlay_list;
 
 static int artwork_prep(void);
 static int artwork_load(const struct GameDriver *gamename, int width, int height);
-static double compute_aspect_ratio(int attributes);
-static UINT32 reconstruct_aspect_ratio(double aspect);
 static int compute_rgb_components(int depth, UINT32 rgb_components[3], UINT32 rgb32_components[3]);
 static int load_bitmap(const char *gamename, struct artwork_piece *piece);
 static int load_alpha_bitmap(const char *gamename, struct artwork_piece *piece, const struct png_info *original);
@@ -436,6 +439,7 @@ static void render_game_bitmap(struct mame_bitmap *bitmap, const rgb_t *palette,
 static void render_game_bitmap_underlay(struct mame_bitmap *bitmap, const rgb_t *palette, struct mame_display *display);
 static void render_game_bitmap_overlay(struct mame_bitmap *bitmap, const rgb_t *palette, struct mame_display *display);
 static void render_game_bitmap_underlay_overlay(struct mame_bitmap *bitmap, const rgb_t *palette, struct mame_display *display);
+static void render_ui_overlay(struct mame_bitmap *bitmap, UINT32 *dirty, const rgb_t *palette, struct mame_display *display);
 static void erase_rect(struct mame_bitmap *bitmap, const struct rectangle *bounds, UINT32 color);
 static void alpha_blend_intersecting_rect(struct mame_bitmap *dstbitmap, const struct rectangle *dstbounds, struct mame_bitmap *srcbitmap, const struct rectangle *srcbounds, const UINT32 *hintlist);
 static void add_intersecting_rect(struct mame_bitmap *dstbitmap, const struct rectangle *dstbounds, struct mame_bitmap *srcbitmap, const struct rectangle *srcbounds);
@@ -457,7 +461,7 @@ INLINE void union_rect(struct rectangle *dst, const struct rectangle *src)
 {
 	if (dst->max_x == 0)
 		*dst = *src;
-	else
+	else if (src->max_x != 0)
 	{
 		dst->min_x = (src->min_x < dst->min_x) ? src->min_x : dst->min_x;
 		dst->max_x = (src->max_x > dst->max_x) ? src->max_x : dst->max_x;
@@ -564,11 +568,7 @@ INLINE UINT32 blend_over(UINT32 game, UINT32 pre, UINT32 yrgb)
 	if ((game & nonalpha_mask) == 0)
 		return pre;
 	
-	/* case 2: no overlay pixel; just return the game pixel */
-	else if (pre == transparent_color)
-		return game;
-	
-	/* case 3: apply the effect */
+	/* case 2: apply the effect */
 	else
 	{
 		UINT8 bright = RGB_GREEN(game);
@@ -595,38 +595,29 @@ INLINE UINT32 blend_over(UINT32 game, UINT32 pre, UINT32 yrgb)
 	to osd_create_display
 -------------------------------------------------*/
 
-int artwork_create_display(int width, int height, int depth, float fps, int attributes, int orientation, UINT32 *rgb_components)
+int artwork_create_display(struct osd_create_params *params, UINT32 *rgb_components)
 {
-	int swap_xy = ((orientation & ORIENTATION_SWAP_XY) != 0);
-	int new_height, new_width;
+	int original_width = params->width;
+	int original_height = params->height;
+	int original_depth = params->depth;
 	double min_x, min_y, max_x, max_y;
-	double new_aspect;
 	UINT32 rgb32_components[3];
 	struct artwork_piece *piece;
-	int raw_width, raw_height;
 	
-	/* compute raw width/height */
-	if (attributes & VIDEO_TYPE_VECTOR)
-	{
-		raw_width = swap_xy ? height : width;
-		raw_height = swap_xy ? width : height;
-	}
-	else
-	{
-		raw_width = Machine->drv->default_visible_area.max_x - Machine->drv->default_visible_area.min_x + 1;
-		raw_height = Machine->drv->default_visible_area.max_y - Machine->drv->default_visible_area.min_y + 1;
-	}
+	/* reset UI */
+	uioverlay = NULL;
+	uioverlayhint = NULL;
 	
 	/* first load the artwork; if none, quit now */
 	artwork_list = NULL;
-	if (!artwork_load(Machine->gamedrv, raw_width, raw_height))
+	if (!artwork_load(Machine->gamedrv, original_width, original_height))
 		return 1;
 	if (!artwork_list)
-		return osd_create_display(width, height, depth, fps, attributes, orientation, rgb_components);
+		return osd_create_display(params, rgb_components);
 	
 	/* determine the game bitmap scale factor */
 	gamescale = options.artwork_res;
-	if (gamescale < 1)
+	if (gamescale < 1 || (params->video_attributes & VIDEO_TYPE_VECTOR))
 		gamescale = 1;
 	else if (gamescale > 2)
 		gamescale = 2;
@@ -634,69 +625,99 @@ int artwork_create_display(int width, int height, int depth, float fps, int attr
 	/* compute the extent of all the artwork */
 	min_x = min_y = 0.0;
 	max_x = max_y = 1.0;
-	for (piece = artwork_list; piece; piece = piece->next)
+	if (!options.artwork_crop)
+		for (piece = artwork_list; piece; piece = piece->next)
+		{
+			/* compute the outermost bounds */
+			if (piece->left < min_x) min_x = piece->left;
+			if (piece->right > max_x) max_x = piece->right;
+			if (piece->top < min_y) min_y = piece->top;
+			if (piece->bottom > max_y) max_y = piece->bottom;
+		}
+	
+	/* now compute the altered width/height and the new aspect ratio */
+	params->width = (int)((max_x - min_x) * (double)(original_width * gamescale) + 0.5);
+	params->height = (int)((max_y - min_y) * (double)(original_height * gamescale) + 0.5);
+	params->aspect_x = (int)((double)params->aspect_x * 100. * (max_x - min_x));
+	params->aspect_y = (int)((double)params->aspect_y * 100. * (max_y - min_y));
+	
+	/* vector games need to fit inside the original bounds, so scale back down */
+	if (params->video_attributes & VIDEO_TYPE_VECTOR)
 	{
-		/* compute the outermost bounds */
-		if (piece->left < min_x) min_x = piece->left;
-		if (piece->right > max_x) max_x = piece->right;
-		if (piece->top < min_y) min_y = piece->top;
-		if (piece->bottom > max_y) max_y = piece->bottom;
+		/* shrink the width/height if over */
+		if (params->width > original_width)
+		{
+			params->width = original_width;
+			params->height = original_width * params->aspect_y / params->aspect_x;
+		}
+		if (params->height > original_height)
+		{
+			params->height = original_height;
+			params->width = original_height * params->aspect_x / params->aspect_y;
+		}
+		
+		/* compute the new raw width/height and update the vector info */
+		original_width = (int)((double)params->width / (max_x - min_x));
+		original_height = (int)((double)params->height / (max_y - min_y));
+		options.vector_width = original_width;
+		options.vector_height = original_height;
 	}
 	
-	/* now compute the altered width/height */
-	new_width = (int)((max_x - min_x) * (double)(raw_width * gamescale) + 0.5);
-	new_height = (int)((max_y - min_y) * (double)(raw_height * gamescale) + 0.5);
-	new_aspect = compute_aspect_ratio(attributes) * ((max_x - min_x) / (max_y - min_y));
+	/* adjust the parameters */
+	original_attributes = params->video_attributes;
+	params->video_attributes |= VIDEO_RGB_DIRECT | VIDEO_NEEDS_6BITS_PER_GUN;
+	params->depth = 32;
 	
-	/* adjust the attributes */
-	original_attributes = attributes;
-	attributes &= ~VIDEO_ASPECT_RATIO_MASK;
-	attributes |= VIDEO_RGB_DIRECT | VIDEO_NEEDS_6BITS_PER_GUN;
-	attributes |= reconstruct_aspect_ratio(new_aspect);
+	/* allocate memory for the bitmaps */
+	underlay = auto_bitmap_alloc_depth(params->width, params->height, 32);
+	overlay = auto_bitmap_alloc_depth(params->width, params->height, 32);
+	overlay_yrgb = auto_bitmap_alloc_depth(params->width, params->height, 32);
+	bezel = auto_bitmap_alloc_depth(params->width, params->height, 32);
+	final = auto_bitmap_alloc_depth(params->width, params->height, 32);
+	if (!final || !overlay || !overlay_yrgb || !underlay || !bezel)
+		return 1;
+	
+	/* allocate the UI overlay */
+	uioverlay = auto_bitmap_alloc_depth(params->width, params->height, Machine->color_depth);
+	if (uioverlay)
+		uioverlayhint = auto_malloc(uioverlay->height * MAX_HINTS_PER_SCANLINE * sizeof(uioverlayhint[0]));
+	if (!uioverlay || !uioverlayhint)
+		return 1;
+	fillbitmap(uioverlay, (Machine->color_depth == 32) ? UI_TRANSPARENT_COLOR32 : UI_TRANSPARENT_COLOR16, NULL);
+	memset(uioverlayhint, 0, uioverlay->height * MAX_HINTS_PER_SCANLINE * sizeof(uioverlayhint[0]));
+	
+	/* compute the screen rect */
+	screenrect.min_x = screenrect.min_y = 0;
+	screenrect.max_x = params->width - 1;
+	screenrect.max_y = params->height - 1;
+	orient_rect(&screenrect, final);
+	
+	/* compute the game rect */
+	gamerect.min_x = (int)(-min_x * (double)(original_width * gamescale) + 0.5);
+	gamerect.min_y = (int)(-min_y * (double)(original_height * gamescale) + 0.5);
+	gamerect.max_x = gamerect.min_x + original_width * gamescale - 1;
+	gamerect.max_y = gamerect.min_y + original_height * gamescale - 1;
+	orient_rect(&gamerect, final);
 	
 	/* now try to create the display */
-	if (osd_create_display(swap_xy ? new_height : new_width, swap_xy ? new_width : new_height, 32,
-			fps, attributes, orientation, rgb32_components))
+	if (osd_create_display(params, rgb32_components))
 		return 1;
 	
 	/* fill in our own RGB components */
-	if (compute_rgb_components(depth, rgb_components, rgb32_components))
+	if (compute_rgb_components(original_depth, rgb_components, rgb32_components))
 	{
 		osd_close_display();
 		return 1;
 	}
 
-	/* allocate memory for the bitmaps */
-	underlay = auto_bitmap_alloc_depth(new_width, new_height, 32);
-	overlay = auto_bitmap_alloc_depth(new_width, new_height, 32);
-	overlay_yrgb = auto_bitmap_alloc_depth(new_width, new_height, 32);
-	bezel = auto_bitmap_alloc_depth(new_width, new_height, 32);
-	final = auto_bitmap_alloc_depth(new_width, new_height, 32);
-	if (!final || !overlay || !overlay_yrgb || !underlay || !bezel)
-		return 1;
-	
-	/* first compute the screen rect */
-	screenrect.min_x = screenrect.min_y = 0;
-	screenrect.max_x = new_width - 1;
-	screenrect.max_y = new_height - 1;
-	orient_rect(&screenrect, final);
-	
-	/* then compute the game rect */
-	gamerect.min_x = (int)(-min_x * (double)(raw_width * gamescale) + 0.5);
-	gamerect.min_y = (int)(-min_y * (double)(raw_height * gamescale) + 0.5);
-	gamerect.max_x = gamerect.min_x + raw_width * gamescale - 1;
-	gamerect.max_y = gamerect.min_y + raw_height * gamescale - 1;
-	orient_rect(&gamerect, final);
-	
 	/* now compute all the artwork pieces' coordinates */
 	for (piece = artwork_list; piece; piece = piece->next)
 	{
-		piece->bounds.min_x = (int)((piece->left - min_x) * (double)(raw_width * gamescale) + 0.5);
-		piece->bounds.min_y = (int)((piece->top - min_y) * (double)(raw_height * gamescale) + 0.5);
-		piece->bounds.max_x = (int)((piece->right - min_x) * (double)(raw_width * gamescale) + 0.5) - 1;
-		piece->bounds.max_y = (int)((piece->bottom - min_y) * (double)(raw_height * gamescale) + 0.5) - 1;
+		piece->bounds.min_x = (int)((piece->left - min_x) * (double)(original_width * gamescale) + 0.5);
+		piece->bounds.min_y = (int)((piece->top - min_y) * (double)(original_height * gamescale) + 0.5);
+		piece->bounds.max_x = (int)((piece->right - min_x) * (double)(original_width * gamescale) + 0.5) - 1;
+		piece->bounds.max_y = (int)((piece->bottom - min_y) * (double)(original_height * gamescale) + 0.5) - 1;
 		orient_rect(&piece->bounds, final);
-		sect_rect(&piece->bounds, &screenrect);
 	}
 
 	/* now do the final prep on the artwork */
@@ -712,9 +733,10 @@ int artwork_create_display(int width, int height, int depth, float fps, int attr
 
 void artwork_update_video_and_audio(struct mame_display *display)
 {
-	int eff_num_overlays = ui_dirty ? 0 : num_overlays;
-	int artwork_changed;
-	
+	static struct rectangle ui_changed_bounds;
+	static int ui_changed;
+	int artwork_changed = 0, ui_visible = 0;
+
 	/* do nothing if no artwork */
 	if (!artwork_list)
 	{
@@ -724,54 +746,99 @@ void artwork_update_video_and_audio(struct mame_display *display)
 
 	profiler_mark(PROFILER_ARTWORK);
 	
-	/* if the UI disappeared, refresh everything */
-	if (last_ui_dirty && !ui_dirty)
-	{
-		union_rect(&underlay_invalid, &gamerect);
-		union_rect(&overlay_invalid, &gamerect);
-		union_rect(&bezel_invalid, &gamerect);
-	}
-	last_ui_dirty = ui_dirty;
-	
 	/* update the palette */
 	if (display->changed_flags & GAME_PALETTE_CHANGED)
 		update_palette_lookup(display);
-	
-	/* update the underlay and overlay */
-	artwork_changed = update_layers();
 
-	/* render to the final bitmap */
-	if (num_underlays && eff_num_overlays)
-		render_game_bitmap_underlay_overlay(display->game_bitmap, palette_lookup, display);
-	else if (num_underlays)
-		render_game_bitmap_underlay(display->game_bitmap, palette_lookup, display);
-	else if (eff_num_overlays)
-		render_game_bitmap_overlay(display->game_bitmap, palette_lookup, display);
-	else
-		render_game_bitmap(display->game_bitmap, palette_lookup, display);
-	
-	/* apply the bezel */
-	if (num_bezels && !ui_dirty)
+	/* process the artwork and UI only if we're not frameskipping */
+	if (display->changed_flags & GAME_BITMAP_CHANGED)
 	{
-		struct artwork_piece *piece;
-		for (piece = artwork_list; piece; piece = piece->next)
-			if (piece->layer >= LAYER_BEZEL && piece->intersects_game)
-				alpha_blend_intersecting_rect(final, &gamerect, piece->prebitmap, &piece->bounds, piece->scanlinehint);
-	}
+		/* see if there's any UI to display this frame */
+		ui_visible = (uibounds.max_x != 0);
+		
+		/* if the UI bounds changed, refresh everything */
+		if (last_uibounds.min_x != uibounds.min_x || last_uibounds.min_y != uibounds.min_y ||
+			last_uibounds.max_x != uibounds.max_x || last_uibounds.max_y != uibounds.max_y)
+		{
+			/* compute the union of the two rects */
+			ui_changed_bounds = last_uibounds;
+			union_rect(&ui_changed_bounds, &uibounds);
+			last_uibounds = uibounds;
 
-	/* if artwork changed, we can't use dirty pixels */
-	if (artwork_changed)
-	{
-		display->changed_flags &= ~VECTOR_PIXELS_CHANGED;
-		display->vector_dirty_pixels = NULL;
-	}
+			/* track changes for a few frames */			
+			ui_changed = 3;
+		}
+		
+		/* if we have changed pending, mark the artwork dirty */
+		if (ui_changed)
+		{
+			union_rect(&underlay_invalid, &ui_changed_bounds);
+			union_rect(&overlay_invalid, &ui_changed_bounds);
+			union_rect(&bezel_invalid, &ui_changed_bounds);
+			ui_changed--;
+		}
+		
+		/* artwork disabled case */
+		if (!global_artwork_enable)
+		{
+			fillbitmap(final, MAKE_ARGB(0,0,0,0), NULL);
+			union_rect(&underlay_invalid, &screenrect);
+			union_rect(&overlay_invalid, &screenrect);
+			union_rect(&bezel_invalid, &screenrect);
+			render_game_bitmap(display->game_bitmap, palette_lookup, display);
+		}
+		
+		/* artwork enabled */
+		else
+		{
+			/* update the underlay and overlay */
+			artwork_changed = update_layers();
 
+			/* render to the final bitmap */
+			if (num_underlays && num_overlays)
+				render_game_bitmap_underlay_overlay(display->game_bitmap, palette_lookup, display);
+			else if (num_underlays)
+				render_game_bitmap_underlay(display->game_bitmap, palette_lookup, display);
+			else if (num_overlays)
+				render_game_bitmap_overlay(display->game_bitmap, palette_lookup, display);
+			else
+				render_game_bitmap(display->game_bitmap, palette_lookup, display);
+			
+			/* apply the bezel */
+			if (num_bezels)
+			{
+				struct artwork_piece *piece;
+				for (piece = artwork_list; piece; piece = piece->next)
+					if (piece->layer >= LAYER_BEZEL && piece->intersects_game)
+						alpha_blend_intersecting_rect(final, &gamerect, piece->prebitmap, &piece->bounds, piece->scanlinehint);
+			}
+		}
+
+		/* add UI */
+		if (ui_visible)
+			render_ui_overlay(uioverlay, uioverlayhint, palette_lookup, display);
+
+		/* if artwork changed, or there's UI, we can't use dirty pixels */
+		if (artwork_changed || ui_changed || ui_visible)
+		{
+			display->changed_flags &= ~VECTOR_PIXELS_CHANGED;
+			display->vector_dirty_pixels = NULL;
+		}
+	}
 	profiler_mark(PROFILER_END);
 	
+	/* blit the union of the game/screen rect and the UI bounds */
+	display->game_bitmap_update = (artwork_changed || ui_changed) ? screenrect : gamerect;
+	union_rect(&display->game_bitmap_update, &uibounds);
+
 	/* force the visible area constant */
 	display->game_visible_area = screenrect;
 	display->game_bitmap = final;
 	osd_update_video_and_audio(display);
+
+	/* reset the UI bounds (but only if we rendered the UI) */
+	if (display->changed_flags & GAME_BITMAP_CHANGED)
+		uibounds.max_x = 0;
 }
 
 
@@ -790,7 +857,7 @@ void artwork_save_snapshot(struct mame_bitmap *bitmap)
 	direct_rgb_components[1] = 0xff << gshift;
 	direct_rgb_components[2] = 0xff << bshift;
 
-	if (bitmap == Machine->scrbitmap && artwork_list)
+	if ((bitmap == Machine->scrbitmap || bitmap == uioverlay) && artwork_list)
 	{
 		struct rectangle temprect = screenrect;
 		disorient_rect(&temprect, final);
@@ -800,6 +867,127 @@ void artwork_save_snapshot(struct mame_bitmap *bitmap)
 		osd_save_snapshot(bitmap, &Machine->visible_area);
 
 	memcpy(direct_rgb_components, saved_rgb_components, sizeof(saved_rgb_components));
+}
+
+
+
+/*-------------------------------------------------
+	artwork_get_ui_bitmap - get the UI bitmap
+-------------------------------------------------*/
+
+struct mame_bitmap *artwork_get_ui_bitmap(void)
+{
+	return uioverlay ? uioverlay : Machine->scrbitmap;
+}
+
+
+
+/*-------------------------------------------------
+	artwork_mark_ui_dirty - mark a portion of the
+	UI bitmap dirty
+-------------------------------------------------*/
+
+void artwork_mark_ui_dirty(int minx, int miny, int maxx, int maxy)
+{
+	/* add to the UI overlay hint if it exists */
+	if (uioverlayhint)
+	{
+		struct rectangle rect;
+		int y, temp;
+
+		/* adjust for the UI orientation */
+		if (Machine->ui_orientation & ORIENTATION_SWAP_XY)
+		{
+			temp = minx; minx = miny; miny = temp;
+			temp = maxx; maxx = maxy; maxy = temp;
+		}
+		if (Machine->ui_orientation & ORIENTATION_FLIP_X)
+		{
+			temp = uioverlay->width - minx - 1;
+			minx = uioverlay->width - maxx - 1;
+			maxx = temp;
+		}
+		if (Machine->ui_orientation & ORIENTATION_FLIP_Y)
+		{
+			temp = uioverlay->height - miny - 1;
+			miny = uioverlay->height - maxy - 1;
+			maxy = temp;
+		}
+
+		/* clip to visible */
+		if (minx < 0)
+			minx = 0;
+		if (maxx >= uioverlay->width)
+			maxx = uioverlay->width - 1;
+		if (miny < 0)
+			miny = 0;
+		if (maxy >= uioverlay->height)
+			maxy = uioverlay->height - 1;
+		
+		/* update the global rect */
+		rect.min_x = minx;
+		rect.max_x = maxx;
+		rect.min_y = miny;
+		rect.max_y = maxy;
+		union_rect(&uibounds, &rect);
+
+		/* add hints for each scanline */
+		if (minx <= maxx)
+			for (y = miny; y <= maxy; y++)
+				add_range_to_hint(uioverlayhint, y, minx, maxx);
+	}
+}
+
+
+
+/*-------------------------------------------------
+	artwork_get_screensize - get the rotated
+	screensize
+-------------------------------------------------*/
+
+void artwork_get_screensize(int *width, int *height)
+{
+	/* non-swapped case */
+	if (!(Machine->orientation & ORIENTATION_SWAP_XY))
+	{
+		if (artwork_list)
+		{
+			*width = screenrect.max_x - screenrect.min_x + 1;
+			*height = screenrect.max_y - screenrect.min_y + 1;
+		}
+		else
+		{
+			*width = Machine->drv->screen_width;
+			*height = Machine->drv->screen_height;
+		}
+	}
+
+	/* swapped case */
+	else
+	{
+		if (artwork_list)
+		{
+			*height = screenrect.max_x - screenrect.min_x + 1;
+			*width = screenrect.max_y - screenrect.min_y + 1;
+		}
+		else
+		{
+			*height = Machine->drv->screen_width;
+			*width = Machine->drv->screen_height;
+		}
+	}
+}
+
+
+
+/*-------------------------------------------------
+	artwork_enable - globally enable/disable
+	artwork
+-------------------------------------------------*/
+
+void artwork_enable(int enable)
+{
+	global_artwork_enable = enable;
 }
 
 
@@ -869,28 +1057,31 @@ static int update_layers(void)
 	/* update the underlays */
 	if (underlay_invalid.max_x != 0)
 	{
+		sect_rect(&underlay_invalid, &screenrect);
 		erase_rect(underlay, &underlay_invalid, 0);
 		for (piece = artwork_list; piece; piece = piece->next)
-			if (piece->layer == LAYER_BACKDROP && piece->visible)
+			if (piece->layer == LAYER_BACKDROP && piece->visible && piece->prebitmap)
 				alpha_blend_intersecting_rect(underlay, &underlay_invalid, piece->prebitmap, &piece->bounds, piece->scanlinehint);
 	}
 	
 	/* update the overlays */
 	if (overlay_invalid.max_x != 0)
 	{
+		sect_rect(&overlay_invalid, &screenrect);
 		erase_rect(overlay, &overlay_invalid, transparent_color);
-		erase_rect(overlay_yrgb, &overlay_invalid, 0);
+		erase_rect(overlay_yrgb, &overlay_invalid, ASSEMBLE_ARGB(0,0xff,0xff,0xff));
 		for (piece = artwork_list; piece; piece = piece->next)
-			if (piece->layer == LAYER_OVERLAY && piece->visible)
+			if (piece->layer == LAYER_OVERLAY && piece->visible && piece->prebitmap)
 				cmy_blend_intersecting_rect(overlay, overlay_yrgb, &overlay_invalid, piece->prebitmap, piece->yrgbbitmap, &piece->bounds, piece->blendflags);
 	}
 	
 	/* update the bezels */
 	if (bezel_invalid.max_x != 0)
 	{
+		sect_rect(&bezel_invalid, &screenrect);
 		erase_rect(bezel, &bezel_invalid, transparent_color);
 		for (piece = artwork_list; piece; piece = piece->next)
-			if (piece->layer >= LAYER_BEZEL && piece->visible)
+			if (piece->layer >= LAYER_BEZEL && piece->visible && piece->prebitmap)
 				alpha_blend_intersecting_rect(bezel, &bezel_invalid, piece->prebitmap, &piece->bounds, piece->scanlinehint);
 	}
 	
@@ -1006,7 +1197,11 @@ static void alpha_blend_intersecting_rect(struct mame_bitmap *dstbitmap, const s
 					int r = ((pix >> rshift) & 0xff) + ((alpha * ((dpix >> rshift) & 0xff)) >> 8);
 					int g = ((pix >> gshift) & 0xff) + ((alpha * ((dpix >> gshift) & 0xff)) >> 8);
 					int b = ((pix >> bshift) & 0xff) + ((alpha * ((dpix >> bshift) & 0xff)) >> 8);
-					dest[x] = ASSEMBLE_ARGB(0,r,g,b);
+					
+					/* add the alpha values in inverted space (looks weird but is correct) */
+					int a = alpha + ((dpix >> ashift) & 0xff) - 0xff;
+					if (a < 0) a = 0;
+					dest[x] = ASSEMBLE_ARGB(a,r,g,b);
 				}
 			}
 		}
@@ -1734,6 +1929,81 @@ static void render_game_bitmap_underlay_overlay(struct mame_bitmap *bitmap, cons
 
 
 
+/*-------------------------------------------------
+	render_ui_overlay - render the UI overlay
+-------------------------------------------------*/
+
+static void render_ui_overlay(struct mame_bitmap *bitmap, UINT32 *dirty, const rgb_t *palette, struct mame_display *display)
+{
+	int srcrowpixels = bitmap->rowpixels;
+	int dstrowpixels = final->rowpixels;
+	void *srcbase, *dstbase;
+	int width, height;
+	int x, y, h;
+	
+	/* compute common parameters */
+	width = bitmap->width;
+	height = bitmap->height;
+	srcbase = bitmap->base;
+	dstbase = final->base;
+
+	/* 16/15bpp case */
+	if (bitmap->depth != 32)
+	{
+		for (y = 0; y < height; y++)
+		{
+			UINT16 *src = (UINT16 *)srcbase + y * srcrowpixels;
+			UINT32 *dst = (UINT32 *)dstbase + y * dstrowpixels;
+			UINT32 *hint = &dirty[y * MAX_HINTS_PER_SCANLINE];
+			for (h = 0; h < MAX_HINTS_PER_SCANLINE && hint[h] != 0; h++)
+			{
+				int start = hint[h] >> 16;
+				int stop = hint[h] & 0xffff;
+				hint[h] = 0;
+
+				for (x = start; x <= stop; x++)
+				{
+					int pix = src[x];
+					if (pix != UI_TRANSPARENT_COLOR16)
+					{
+						dst[x] = palette[pix];
+						src[x] = UI_TRANSPARENT_COLOR16;
+					}
+				}
+			}
+		}
+	}
+		
+	/* 32bpp case */
+	else
+	{
+		for (y = 0; y < height; y++)
+		{
+			UINT32 *src = (UINT32 *)srcbase + y * srcrowpixels;
+			UINT32 *dst = (UINT32 *)dstbase + y * dstrowpixels;
+			UINT32 *hint = &dirty[y * MAX_HINTS_PER_SCANLINE];
+			for (h = 0; h < MAX_HINTS_PER_SCANLINE && hint[h] != 0; h++)
+			{
+				int start = hint[h] >> 16;
+				int stop = hint[h] & 0xffff;
+				hint[h] = 0;
+
+				for (x = start; x <= stop; x++)
+				{
+					int pix = src[x];
+					if (pix != UI_TRANSPARENT_COLOR32)
+					{
+						dst[x] = pix;
+						src[x] = UI_TRANSPARENT_COLOR32;
+					}
+				}
+			}
+		}
+	}
+}
+
+
+
 #if 0
 #pragma mark -
 #pragma mark BITMAP LOADING/MANIPULATING
@@ -1770,10 +2040,13 @@ static int artwork_load(const struct GameDriver *driver, int width, int height)
 	/* attempt to open the .ART file; if none, that's okay */
 	while (driver)
 	{
-		sprintf(filename, "%s.art", driver->name);
-		artfile = osd_fopen(driver->name, filename, OSD_FILETYPE_ARTWORK, 0);
-		if (artfile)
-			break;
+		if (driver->name)
+		{
+			sprintf(filename, "%s.art", driver->name);
+			artfile = osd_fopen(driver->name, filename, OSD_FILETYPE_ARTWORK, 0);
+			if (artfile)
+				break;
+		}
 		driver = driver->clone_of;
 	}
 	if (!artfile && !list)
@@ -2068,7 +2341,7 @@ static int artwork_prep(void)
 	underlay_invalid = screenrect;
 	overlay_invalid = screenrect;
 	bezel_invalid = screenrect;
-	
+
 	/* loop through all the pieces, generating the scaled bitmaps */
 	for (piece = artwork_list; piece; piece = piece->next)
 	{
@@ -2085,7 +2358,6 @@ static int artwork_prep(void)
 			piece->bounds.max_y > gamerect.min_y && piece->bounds.min_y < gamerect.max_y)
 			piece->intersects_game = 1;
 	}
-
 	return 0;
 }
 
@@ -2101,6 +2373,10 @@ static int scale_bitmap(struct artwork_piece *piece, int newwidth, int newheight
 	UINT32 sx, sxfrac, sxstep, sy, syfrac, systep;
 	UINT32 global_brightness, global_alpha;
 	int x, y;
+	
+	/* skip if no bitmap */
+	if (!piece->rawbitmap)
+		return 1;
 
 	/* allocate two new bitmaps */
 	piece->prebitmap = auto_bitmap_alloc_depth(newwidth, newheight, -32);
@@ -2261,16 +2537,20 @@ static int scale_bitmap(struct artwork_piece *piece, int newwidth, int newheight
 static void trim_bitmap(struct artwork_piece *piece)
 {
 	UINT32 *hintbase = piece->scanlinehint;
-	int height = piece->prebitmap->height;
-	int width = piece->prebitmap->width;
 	int top, bottom, left, right;
-	int x, y;
+	int x, y, height, width;
 	
+	/* skip if no bitmap */
+	if (!piece->rawbitmap)
+		return;
+
 	/* don't trim overlay bitmaps */
 	if (piece->layer == LAYER_OVERLAY)
 		return;
-	
+
 	/* scan from the top down, looking for empty rows */
+	height = piece->prebitmap->height;
+	width = piece->prebitmap->width;
 	for (top = 0; top < height; top++)
 		if (hintbase[top * MAX_HINTS_PER_SCANLINE] != 0)
 			break;
@@ -2416,16 +2696,32 @@ static void sort_pieces(void)
 	struct artwork_piece *piece;
 	int i = 0;
 	
-	/* don't need to sort if less than 2 items */
-	if (num_pieces < 2)
-		return;
-	
-	/* copy the list into the array */
+	/* copy the list into the array, filtering as we go */
 	for (piece = artwork_list; piece; piece = piece->next)
-		array[i++] = piece;
+	{
+		switch (piece->layer)
+		{
+			case LAYER_BACKDROP:
+				if (options.use_artwork & ARTWORK_USE_BACKDROPS)
+					array[i++] = piece;
+				break;
+
+			case LAYER_OVERLAY:
+				if (options.use_artwork & ARTWORK_USE_OVERLAYS)
+					array[i++] = piece;
+				break;
+
+			default:
+				if (options.use_artwork & ARTWORK_USE_BEZELS)
+					array[i++] = piece;
+				break;
+		}
+	}
+	num_pieces = i;
 	
 	/* now sort it */
-	qsort(array, num_pieces, sizeof(array[0]), artwork_sort_compare);
+	if (num_pieces > 1)
+		qsort(array, num_pieces, sizeof(array[0]), artwork_sort_compare);
 	
 	/* now reassemble the list */
 	artwork_list = piece = array[0];
@@ -2824,65 +3120,6 @@ static int parse_art_file(void *file)
 #endif
 
 /*-------------------------------------------------
-	compute_aspect_ratio - determine the aspect
-	ratio encoded in the video attributes
--------------------------------------------------*/
-
-static double compute_aspect_ratio(int attributes)
-{
-	// if it's explicitly specified, use it
-	if (attributes & VIDEO_ASPECT_RATIO_MASK)
-	{
-		double num = (double)VIDEO_ASPECT_RATIO_NUM(attributes);
-		double den = (double)VIDEO_ASPECT_RATIO_DEN(attributes);
-		return num / den;
-	}
-
-	// otherwise, attempt to deduce the result
-	else
-	{
-		if (!(attributes & VIDEO_DUAL_MONITOR))
-			return 4.0 / 3.0;
-		else
-			return 4.0 / 6.0;
-	}
-}
-
-
-
-/*-------------------------------------------------
-	reconstruct_aspect_ratio - encode a new aspect
-	ratio into attributes
--------------------------------------------------*/
-
-static UINT32 reconstruct_aspect_ratio(double aspect)
-{
-	int den, best_den = -1;
-	double best_diff = 1.0;
-
-	/* compute the best fit for the new aspect ratio */
-	for (den = 1; den < 256; den++)
-	{
-		int num = (int)(aspect * (double)den + 0.5);
-		if (num < 256)
-		{
-			double eff_aspect = (double)num / (double)den;
-			double diff = fabs(eff_aspect - aspect);
-			if (diff < best_diff)
-			{
-				best_diff = diff;
-				best_den = den;
-			}
-		}
-	}
-	
-	/* reassemble into an aspect ratio */
-	return VIDEO_ASPECT_RATIO((int)(aspect * (double)best_den + 0.5), best_den);
-}
-	
-
-
-/*-------------------------------------------------
 	compute_rgb_components - compute the RGB
 	components
 -------------------------------------------------*/
@@ -2976,7 +3213,7 @@ static void add_range_to_hint(UINT32 *hintbase, int scanline, int startx, int en
 			break;
 		
 		/* do we intersect? */
-		if (startx < hintend && endx > hintstart)
+		if (startx <= hintend && endx >= hintstart)
 		{
 			closestindex = i;
 			goto intersect;

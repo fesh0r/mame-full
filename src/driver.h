@@ -302,7 +302,7 @@ struct InternalMachineDriver
 	UINT32 total_colors;
 	UINT32 color_table_len;
 
-	void (*init_palette)(unsigned short *colortable,const unsigned char *color_prom);
+	void (*init_palette)(UINT16 *colortable,const UINT8 *color_prom);
 	int (*video_start)(void);
 	void (*video_stop)(void);
 	void (*video_eof)(void);

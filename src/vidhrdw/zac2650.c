@@ -133,8 +133,6 @@ int SpriteCollision(int first,int second)
 
 VIDEO_START( tinvader )
 {
-// 	overlay_create(tinv2650_overlay, 1, 8);
-
 	video_start_generic();
 
 	if ((spritebitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
@@ -206,7 +204,6 @@ VIDEO_UPDATE( tinvader )
             }
 
             /* Sprite->Background collision detection */
-
 			drawgfx(bitmap,Machine->gfx[expand],
 				    spriteno,
 					1,
@@ -244,7 +241,6 @@ VIDEO_UPDATE( tinvader )
     }
 
     /* Sprite->Sprite collision detection */
-
     CollisionSprite = 0;
 //  if(SpriteCollision(0,1)) CollisionSprite |= 0x20;	/* Not Used */
     if(SpriteCollision(0,2)) CollisionSprite |= 0x10;

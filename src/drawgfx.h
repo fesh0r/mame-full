@@ -121,9 +121,13 @@ enum
 	TRANSPARENCY_BLEND_RAW,		/* blend two bitmaps, shifting the source and ORing to the dest with no remapping */
 	TRANSPARENCY_ALPHAONE,		/* single pen transparency, single pen alpha */
 	TRANSPARENCY_ALPHA,			/* single pen transparency, other pens alpha */
+	TRANSPARENCY_ALPHARANGE,	/* single pen transparency, multiple pens alpha depending on array, see psikyosh.c */
 
 	TRANSPARENCY_MODES			/* total number of modes; must be last */
 };
+
+/* drawing mode case TRANSPARENCY_ALPHARANGE */
+extern UINT8 gfx_alpharange_table[256];
 
 /* drawing mode case TRANSPARENCY_PEN_TABLE */
 extern UINT8 gfx_drawmode_table[256];
@@ -204,6 +208,22 @@ INLINE UINT32 alpha_blend32( UINT32 d, UINT32 s )
 		+ (alphad[d & 0xff] | (alphad[(d>>8) & 0xff] << 8) | (alphad[(d>>16) & 0xff] << 16));
 }
 
+INLINE UINT32 alpha_blend_r16( UINT32 d, UINT32 s, UINT8 level )
+{
+	const UINT8 *alphas = alpha_cache.alpha[level];
+	const UINT8 *alphad = alpha_cache.alpha[255 - level];
+	return (alphas[s & 0x1f] | (alphas[(s>>5) & 0x1f] << 5) | (alphas[(s>>10) & 0x1f] << 10))
+		+ (alphad[d & 0x1f] | (alphad[(d>>5) & 0x1f] << 5) | (alphad[(d>>10) & 0x1f] << 10));
+}
+
+
+INLINE UINT32 alpha_blend_r32( UINT32 d, UINT32 s, UINT8 level )
+{
+	const UINT8 *alphas = alpha_cache.alpha[level];
+	const UINT8 *alphad = alpha_cache.alpha[255 - level];
+	return (alphas[s & 0xff] | (alphas[(s>>8) & 0xff] << 8) | (alphas[(s>>16) & 0xff] << 16))
+		+ (alphad[d & 0xff] | (alphad[(d>>8) & 0xff] << 8) | (alphad[(d>>16) & 0xff] << 16));
+}
 
 /*
   Copy a bitmap applying rotation, zooming, and arbitrary distortion.

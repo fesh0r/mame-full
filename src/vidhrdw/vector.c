@@ -206,6 +206,7 @@ VIDEO_START( vector )
 	antialias = options.antialias;
 	translucency = options.translucency;
 	vector_set_flicker(options.vector_flicker);
+	vector_set_intensity(options.vector_intensity);
 	beam = options.beam;
 
 

@@ -146,6 +146,13 @@ struct RunningMachine
 
 ***************************************************************************/
 
+#define ARTWORK_USE_ALL			(~0)
+#define ARTWORK_USE_NONE		(0)
+#define ARTWORK_USE_BACKDROPS	0x01
+#define ARTWORK_USE_OVERLAYS	0x02
+#define ARTWORK_USE_BEZELS		0x04
+
+
 #ifdef MESS
 #define MAX_IMAGES	32
 /*
@@ -185,14 +192,18 @@ struct GameOptions
 	int		rol;			/* 1 to rotate the game 90 degrees to the left (counterclockwise) */
 	int		flipx;			/* 1 to mirror video in the X direction */
 	int		flipy;			/* 1 to mirror video in the Y direction */
+	int		ui_orientation;	/* orientation of the UI relative to the video */
 
 	int		beam;			/* vector beam width */
 	float	vector_flicker;	/* vector beam flicker effect control */
+	float	vector_intensity;/* vector beam intensity */
 	int		translucency;	/* 1 to enable translucency on vectors */
 	int 	antialias;		/* 1 to enable antialiasing on vectors */
 
-	int		use_artwork;	/* 1 to enable external .png artwork files */
+	int		use_artwork;	/* bitfield indicating which artwork pieces to use */
 	int		artwork_res;	/* 1 for 1x game scaling, 2 for 2x */
+	int		artwork_crop;	/* 1 to crop artwork to the game screen */
+
 	char	savegame;		/* character representing a savegame to load */
 
 	int		debug_width;	/* requested width of debugger bitmap */
@@ -237,10 +248,11 @@ struct mame_display
 
     /* game bitmap and display information */
     struct mame_bitmap *	game_bitmap;			/* points to game's bitmap */
+    struct rectangle		game_bitmap_update;		/* bounds that need to be updated */
     const rgb_t *			game_palette;			/* points to game's adjusted palette */
     UINT32					game_palette_entries;	/* number of palette entries in game's palette */
     UINT32 *				game_palette_dirty;		/* points to game's dirty palette bitfield */
-    struct rectangle 		game_visible_area;		/* points to game's visible area */
+    struct rectangle 		game_visible_area;		/* the game's visible area */
     void *					vector_dirty_pixels;	/* points to X,Y pairs of dirty vector pixels */
 
     /* debugger bitmap and display information */
@@ -257,14 +269,28 @@ struct mame_display
 
 /***************************************************************************
 
+	Performance data
+
+***************************************************************************/
+
+struct performance_info
+{
+	double					game_speed_percent;		/* % of full speed */
+	double					frames_per_second;		/* actual rendered fps */
+	int						vector_updates_last_second; /* # of vector updates last second */
+	int						partial_updates_this_frame; /* # of partial updates last frame */
+};
+
+
+
+/***************************************************************************
+
 	Globals referencing the current machine and the global options
 
 ***************************************************************************/
 
 extern struct GameOptions options;
 extern struct RunningMachine *Machine;
-extern int partial_update_count;
-extern double game_speed_percent;
 
 
 
@@ -325,6 +351,10 @@ int mame_highscore_enabled(void);
 
 /* set the state of a given LED */
 void set_led_status(int num,int on);
+
+/* return current performance data */
+const struct performance_info *mame_get_performance_info(void);
+
 
 #ifdef MESS
 #include "mess.h"

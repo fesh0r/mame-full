@@ -22,7 +22,7 @@
 #include "state.h"
 
 #define SWAP(X,Y) { UINT32 temp=X; X=Y; Y=temp; }
-#define MAX_TILESIZE 32
+#define MAX_TILESIZE 64
 
 #define TILE_FLAG_DIRTY	(0x80)
 
