@@ -76,7 +76,10 @@ void atom_init_machine(void)
 	i8271_init(&atom_8271_interface);
 }
 
-void atom_stop_machine(void) { }
+void atom_stop_machine(void) 
+{ 
+	i8271_stop();
+}
 
 /* start 2900. exec C2B2.
    start xxxx. exec C2B2.
