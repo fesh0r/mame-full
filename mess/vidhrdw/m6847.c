@@ -18,8 +18,13 @@
 /* The "Back doors" are declared here */
 #include "includes/dragon.h"
 
+#ifdef MAME_DEBUG
+#define LOG_FS	1
+#define LOG_HS	0
+#else /* !MAME_DEBUG */
 #define LOG_FS	0
 #define LOG_HS	0
+#endif /* MAME_DEBUG */
 
 struct m6847_state {
 	struct m6847_init_params initparams;
@@ -341,9 +346,9 @@ int m6847_vh_start(const struct m6847_init_params *params)
  *		...	
  *   
  * FS:	Total Period 262*227.5 clock cycles
- *		@ CLK(0) + DFS_R			- rising edge (low to high)
- *      @ CLK(230) + DFS_F			- falling edge (high to low) (230.5 for the M6847Y)
- *		@ CLK(262*227.5) + DFS_R	- rising edge (low to high) (262.5 for the M6847Y)
+ *		@ CLK(0) + DFS_F			- falling edge (high to low)
+ *      @ CLK(32*227.5) + DFS_R		- rising edge (low to high)
+ *		@ CLK(262*227.5) + DFS_F	- falling edge (high to low) (262.5 for the M6847Y)
  *
  * Source: Motorola M6847 Manual
  * -------------------------------------------------- */
@@ -443,38 +448,34 @@ int internal_m6847_vblank(int hsyncs, double trailingedgerow)
 {
 	timer_set(CLK * 0                       + DHS_F,	hsyncs-1,	hs_fall);
 	timer_set(CLK * 16.5                    + DHS_R,	hsyncs-1,	hs_rise);
-	timer_set(CLK * 0                       + DFS_R,	0,			fs_rise);
-	timer_set(CLK * 227.5 * trailingedgerow + DFS_F,	0,			fs_fall);
+	timer_set(CLK * 0                       + DFS_F,	0,			fs_fall);
+	timer_set(CLK * 227.5 * trailingedgerow + DFS_R,	0,			fs_rise);
 
 	return ignore_interrupt();
 }
 
 int m6847_vblank(void)
 {
-	double adjustment;
 	int hsyncs;
 
 	switch(the_state.initparams.version) {
 	case M6847_VERSION_ORIGINAL:
-		adjustment = 0.0;
 		hsyncs = 262;
 		break;
 
 	case M6847_VERSION_M6847T1:
 	case M6847_VERSION_M6847Y:
-		adjustment = 0.5;
 		hsyncs = 263;
 		break;
 
 	default:
 		/* Not allowed */
-		adjustment = 0.0;
 		hsyncs = 0;
 		assert(0);
 		break;
 	}
 
-	return internal_m6847_vblank(hsyncs, 230.0 + adjustment);
+	return internal_m6847_vblank(hsyncs, 32.0);
 }
 
 /* --------------------------------------------------

@@ -13,12 +13,10 @@ struct rastertrack_info {
 };
 
 void rastertrack_init(const struct rastertrack_info *ri);
-int rastertrack_hblank(void);
-void rastertrack_vblank(void);
+void rastertrack_newline(void);
+void rastertrack_newscreen(int toplines, int contentlines);
 void rastertrack_refresh(struct osd_bitmap *bitmap, int full_refresh);
 void rastertrack_touchvideomode(void);
 int rastertrack_scanline(void);
-void rastertrack_sync(void);
-int rastertrack_indrawingarea(void);
 
 #endif /* RSTRTRCK_H */

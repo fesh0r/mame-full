@@ -52,9 +52,17 @@ static int coco3_vidbase;
 
 #define MAX_HIRES_VRAM	57600
 
+#ifdef MAME_DEBUG
+#define LOG_BORDER	0
 #define LOG_PALETTE	0
 #define LOG_GIME	0
 #define LOG_VIDEO	0
+#else /* !MAME_DEBUG */
+#define LOG_BORDER	0
+#define LOG_PALETTE	0
+#define LOG_GIME	0
+#define LOG_VIDEO	0
+#endif /* MAME_DEBUG */
 
 #define COLORSLOT_BORDER 16
 
@@ -411,11 +419,8 @@ int coco3_vblank(void)
 		coco3_vidbase = newvidbase;
 	}
 
-	rastertrack_vblank();
-
 	rows = coco3_calculate_rows(&top, NULL);
-
-	return internal_m6847_vblank(263, ((double) (top + rows - 15)));
+	return internal_m6847_vblank(263, (double) top);
 }
 
 WRITE_HANDLER(coco3_palette_w)
@@ -427,28 +432,6 @@ WRITE_HANDLER(coco3_palette_w)
 	logerror("CoCo3 Palette: %i <== $%02x\n", offset, data);
 #endif
 }
-
-#if 0
-static void coco3_artifact(UINT16 *artifactcolors, UINT16 p0, UINT16 p1)
-{
-	int c1, c2, r1, r2, g1, g2, b1, b2;
-	static int oldc1, oldc2;
-
-	artifactcolors[0] = p0;
-	artifactcolors[3] = p1;
-
-	c1 = paletteram[p0];
-	c2 = paletteram[p1];
-
-	/* Have the colors actually changed? */
-	if ((oldc1 != c1) || (oldc2 != c2)) {
-		coco3_compute_color(c1, &r1, &g1, &b1);
-		coco3_compute_color(c2, &r2, &g2, &b2);
-		palette_change_color(17, r2, (g1+g2)/2, b1);
-		palette_change_color(18, r1, (g1+g2)/2, b2);
-	}
-}
-#endif
 
 int coco3_calculate_rows(int *bordertop, int *borderbottom)
 {
@@ -470,25 +453,26 @@ int coco3_calculate_rows(int *bordertop, int *borderbottom)
 	 * settings most likely has a different set of values.  Here is a summary
 	 * of what I know from different sources:
 	 *
-	 * SockMaster:       43/192/28, 41/199/23, 132/0/131, 26/225/12
-	 * m6847 reference:  38/192/32
-	 *
 	 * In the January 1987 issue of Rainbow Magazine, there is a program called
 	 * COLOR3 that uses midframe palette rotation to show all 64 colors on the
-	 * screen at once.  The firxt box is at line 40, but it waits for 70 HSYNC
+	 * screen at once.  The first box is at line 40, but it waits for 70 HSYNC
 	 * transitions before changing
+	 *
+	 * SockMaster:       43/192/28, 41/199/23, 132/0/131, 26/225/12
+	 * m6847 reference:  38/192/32
+	 * COLOR3            30/192/40
 	 */
 
 	switch((coco3_gimevhreg[1] & 0x60) >> 5) {
 	case 0:
 		rows = 192;
-		t = 43;
-		b = 28;
+		t = 37;
+		b = 34;
 		break;
 	case 1:
 		rows = 199;
-		t = 41;
-		b = 23;
+		t = 33;
+		b = 31;
 		break;
 	case 2:
 		rows = 0;	/* NYI - This is "zero/infinite" lines, according to Sock Master */
@@ -900,6 +884,18 @@ WRITE_HANDLER(coco3_gimevh_w)
 	/* Features marked with '!' are not yet implemented */
 
 	xorval = coco3_gimevhreg[offset] ^ data;
+	if (!xorval)
+		return;
+
+	switch(offset) {
+	case 0:
+	case 1:
+	case 4:
+	case 7:
+		rastertrack_touchvideomode();
+		break;
+	};
+
 	coco3_gimevhreg[offset] = data;
 
 	switch(offset) {
@@ -914,7 +910,6 @@ WRITE_HANDLER(coco3_gimevh_w)
 		 */
 		if (xorval & 0xB7) {
 			coco3_borderred = -1;	/* force border to redraw */
-			rastertrack_touchvideomode();
 #if LOG_GIME
 			logerror("CoCo3 GIME: $ff98 forcing refresh\n");
 #endif
@@ -931,10 +926,8 @@ WRITE_HANDLER(coco3_gimevh_w)
 		 *		  Bits 2-4 HRES Horizontal Resolution
 		 *		  Bits 0-1 CRES Color Resolution
 		 */
-		if (xorval) {
-			coco3_borderred = -1;	/* force border to redraw */
-			rastertrack_touchvideomode();
-		}
+		coco3_borderred = -1;	/* force border to redraw */
+		rastertrack_touchvideomode();
 		break;
 
 	case 2:
@@ -942,6 +935,9 @@ WRITE_HANDLER(coco3_gimevh_w)
 		 *		  Bits 6,7 Unused
 		 *		  Bits 0-5 BRDR Border color
 		 */
+#if LOG_BORDER
+		logerror("CoCo3 GIME: Writing $%02x into border; scanline=%i\n", data, rastertrack_scanline());
+#endif
 		break;
 
 	case 4:
@@ -949,8 +945,7 @@ WRITE_HANDLER(coco3_gimevh_w)
 		 *		  Bits 4-7 Reserved
 		 *		! Bits 0-3 VSC Vertical Scroll bits
 		 */
-		if (xorval)
-			rastertrack_touchvideomode();
+		rastertrack_touchvideomode();
 		break;
 
 	case 5:
@@ -977,8 +972,7 @@ WRITE_HANDLER(coco3_gimevh_w)
 		 *
 		 *  Unline $FF9D-E, this value can be modified mid frame
 		 */
-		if (xorval)
-			rastertrack_touchvideomode();
+		rastertrack_touchvideomode();
 		break;
 	}
 }

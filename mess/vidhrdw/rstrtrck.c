@@ -1,161 +1,249 @@
 #include "includes/rstrtrck.h"
 #include "mame.h"
 #include <stdlib.h>
+#include <assert.h>
 
 // --------------------------------------------------------------------------------------------
 
+#ifdef MAME_DEBUG
 #define LOG_RASTERTRACK 0
+#else
+#define LOG_RASTERTRACK 0
+#endif
 
-struct rasterbits_queueent {
-	struct rasterbits_queueent *next;
+struct rastertrack_queueent {
+	struct rastertrack_queueent *next;
 	struct rasterbits_source rs;
 	struct rasterbits_videomode rvm;
 	struct rasterbits_frame rf;
-	struct rasterbits_clip rc;
+	int end;
 };
 
-struct rasterbits_queuehdr {
-	struct rasterbits_queueent *head;
-	struct rasterbits_queueent *tail;
+struct rastertrack_queuehdr {
+	struct rastertrack_queueent *head;
+	struct rastertrack_queueent *tail;
 };
 
-static int visible_top(const struct rastertrack_info *ri)
+static struct rastertrack_queueent *createentry(rastertrack_getvideoinfoproc proc, int full_refresh)
 {
-	return (ri->total_scanlines - ri->visible_scanlines) / 2;
+	struct rastertrack_queueent *newentry;
+
+	newentry = malloc(sizeof(struct rastertrack_queueent));
+	if (!newentry)
+		return NULL; /* PANIC */
+
+	memset(newentry, '\0', sizeof(struct rastertrack_queueent));
+	proc(full_refresh, &newentry->rs, &newentry->rvm, &newentry->rf);
+	return newentry;
 }
 
-static int visible_bottom(const struct rastertrack_info *ri)
+static int equalentry(const struct rastertrack_queueent *e1, const struct rastertrack_queueent *e2)
 {
-	return visible_top(ri) + ri->visible_scanlines;
+	return !memcmp(&e1->rs, &e2->rs, sizeof(e1->rs))
+		&& !memcmp(&e1->rvm, &e2->rvm, sizeof(e1->rvm))
+		&& !memcmp(&e1->rf, &e2->rf, sizeof(e1->rf));
 }
 
-static void rastertrack_queuevideomode(struct rasterbits_queuehdr *hdr, const struct rastertrack_info *ri,
-	int begin, int full_refresh)
+/* The queue is simply a linked list that fully accomodates all physical
+ * scanlines on the screen
+ *
+ * "Demarcating" the queue means "for all scanlines from A to B; these
+ * characteristics are associated with it
+ */
+static void demarcate(struct rastertrack_queuehdr *queue, int begin, int end, struct rastertrack_queueent *newentry)
 {
-	struct rasterbits_queueent *e;
+	struct rastertrack_queueent **e;
+	struct rastertrack_queueent *dupentry;
+	struct rastertrack_queueent *afterthis;
+	struct rastertrack_queueent *ent;
 
-	if (begin >= visible_bottom(ri))
-		return;	/* We can't be seen */
+#if LOG_RASTERTRACK
+	logerror("demarcate(): Demarcating [%i..%i] with entry 0x%08x\n", begin, end, newentry);
+#endif
 
-	if ((begin <= visible_top(ri)) && hdr->tail) {
-		e = hdr->tail;
+	if (begin > end) {
+		free(newentry);
+		return;
 	}
-	else {
-		e = malloc(sizeof(struct rasterbits_queueent));
-		if (!e)
-			return; /* PANIC */
-		e->rc.yend = visible_bottom(ri) - 1;
-		e->next = NULL;
-		if (hdr->tail) {
-			hdr->tail->next = e;
-			hdr->tail->rc.yend = begin - 1;
+
+	newentry->end = end;
+
+	/* First we need to find the entry which we are after */ 
+	e = &queue->head;
+	afterthis = NULL;
+	while(*e && ((*e)->end < begin)) {
+		afterthis = *e;
+		e = &(*e)->next;
+	}
+
+	/* Now afterthis points to the last unmodified entry that we go after.  Now
+	 * there are two possibilities:
+	 *
+	 * 1.  afterthis->end+1 == begin; in this case, afterthis->next should be newentry
+	 * 2.  afterthis->end+1 < begin; in this case, afterthis->next->next should be newentry
+	 * 3.  afterthis->next is NULL; we are appending to the end
+	 * 4.  afterthis is NULL; we are prepending to the beginning
+	 *
+	 */
+	if (afterthis) {
+		assert(afterthis->end+1 <= begin);
+
+		if (afterthis->next) {
+			newentry->next = afterthis->next;
+			if (afterthis->end+1 < begin) {
+				dupentry = malloc(sizeof(struct rastertrack_queueent));
+				if (!dupentry) {
+					free(newentry);
+					return; /* PANIC */
+				}
+				memcpy(dupentry, afterthis->next, sizeof(struct rastertrack_queueent));
+				dupentry->next = newentry;
+				afterthis->next = dupentry;
+				dupentry->end = begin - 1;
+			}
+			else {
+				afterthis->next = newentry;
+			}
 		}
 		else {
-			hdr->head = e;
+			/* we are appending to the end of the list */
+			assert(queue->tail == afterthis);
+			afterthis->next = newentry;
 		}
-		hdr->tail = e;
+	}
+	else {
+		/* afterthis is NULL; we are at the head */
+		newentry->next = queue->head;
+		queue->head = newentry;
 	}
 
-	ri->videoproc(full_refresh, &e->rs, &e->rvm, &e->rf);
-	e->rc.ybegin = begin;
-}
-
-static void rastertrack_render(struct rasterbits_queuehdr *hdr, struct osd_bitmap *bitmap)
-{
-	struct rasterbits_queueent *e;
-	struct rasterbits_queueent *next;
-
-	e = hdr->head;
-	while(e) {
-		#if LOG_RASTERTRACK
-		logerror("rastertrack_render(): Rendering [%i...%i] position=0x%x\n", e->rc.ybegin, e->rc.yend, e->rs.position);
-		#endif
-
-		raster_bits(bitmap, &e->rs, &e->rvm, &e->rf, &e->rc);
-		next = e->next;
-		free(e);
-		e = next;
+	/* Now that our entry is in, we need to remove extraneous entries */
+	while(newentry->next && (newentry->end >= newentry->next->end)) {
+		ent = newentry->next;
+		newentry->next = ent->next;
+		free(ent);
 	}
 
-	hdr->head = NULL;
-	hdr->tail = NULL;
-}
+	/* We also need to combine equivalent entries */
+	while(newentry->next && equalentry(newentry, newentry->next)) {
+		ent = newentry->next;
+		newentry->next = ent->next;
+		newentry->end = ent->end;
+		free(ent);
+	}
 
-static void rastertrack_clearqueue(struct rasterbits_queuehdr *hdr)
-{
-	struct rasterbits_queueent *e;
-	struct rasterbits_queueent *next;
+	if (!newentry->next)
+		queue->tail = newentry;
 
-	if (hdr->head) {
-		e = hdr->head;
-		while(e) {
-			next = e->next;
-			free(e);
-			e = next;
+#if LOG_RASTERTRACK
+	/* This code verifies the integrity of the queue */
+	ent = queue->head;
+	while(ent) {
+		if (ent->next) {
+			assert(ent->end < ent->next->end);
 		}
-		hdr->head = NULL;
-		hdr->tail = NULL;
+		else {
+			assert(queue->tail == ent);
+		}
+		ent = ent->next;
 	}
+#endif
 }
-
-/* -------------------------------------------------------------------------------------------- */
 
 static const struct rastertrack_info *the_ri;
-static int continue_full_refresh;
+static struct rastertrack_queuehdr queue;
+static struct rastertrack_queueent *current_state;
+static int current_base;
 static int current_scanline;
-static int videomodedirty;
-static int queue_num;
-static struct rasterbits_queuehdr queues[2];
-static int do_sync;
-
-static void rastertrack_reset(void)
-{
-	current_scanline = 0;
-	videomodedirty = 0;
-	rastertrack_queuevideomode(&queues[queue_num], the_ri, current_scanline, continue_full_refresh);
-}
+static int screen_adjustment;
+static int videomode_dirty;
+static int last_full_refresh;
 
 void rastertrack_init(const struct rastertrack_info *ri)
 {
 	the_ri = ri;
-	memset(&queues, '\0', sizeof(queues));
-	continue_full_refresh = 1;
-	queue_num = 0;
-	do_sync = 0;
-	rastertrack_reset();
+	memset(&queue, '\0', sizeof(queue));
+	current_state = NULL;
+	videomode_dirty = 0;
+
+	/* Start with a full refresh */
+	last_full_refresh = 1;
+	current_base = 0;
+	current_scanline = the_ri->total_scanlines;
+
+	rastertrack_newscreen(28, 192);
 }
 
-int rastertrack_hblank(void)
+void rastertrack_newscreen(int toplines, int contentlines)
 {
-	if (do_sync) {
-		if (current_scanline > 0)
-			current_scanline = the_ri->total_scanlines - 1;
-		do_sync = 0;
+	if (!current_state) {
+		current_state = createentry(the_ri->videoproc, last_full_refresh);
+	}
+	if (current_state) {
+		demarcate(&queue, current_base, current_scanline, current_state);
+		current_state = NULL;
 	}
 
-	if (videomodedirty) {
-		rastertrack_queuevideomode(&queues[queue_num], the_ri, current_scanline, 1);
-		videomodedirty = 0;
-		schedule_full_refresh();
-	}
-	current_scanline++;
-	return current_scanline;
+	screen_adjustment = (the_ri->visible_scanlines - contentlines) / 2 - toplines;
+
+#if LOG_RASTERTRACK
+	logerror("rastertrack_newscreen(): In new screen; current_scanline was %i; screen_adjustment=%i\n", current_scanline, screen_adjustment);
+#endif
+
+	current_base = 0;
+	current_scanline = 0;
 }
 
-void rastertrack_vblank(void)
+void rastertrack_newline(void)
 {
-	queue_num = 1 - queue_num;
-	rastertrack_reset();
+	if (videomode_dirty) {
+		if (current_state) {
+			demarcate(&queue, current_base, current_scanline, current_state);
+		}
+		else {
+#if LOG_RASTERTRACK
+			logerror("rastertrack_newline(): Would have demarcated [%i..%i]... but no current_state!\n", current_base, current_scanline);
+#endif
+		}
+
+		current_base = ++current_scanline;
+		current_state = NULL;
+		videomode_dirty = 0;
+	}
+	else {
+		current_scanline++;
+	}
 }
 
 void rastertrack_refresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	if (videomodedirty)
-		full_refresh = 1;
+	int begin;
+	struct rastertrack_queueent *ent;
+	struct rasterbits_clip rc;
 
-	rastertrack_render(&queues[1 - queue_num], bitmap);
-	continue_full_refresh = full_refresh;
+	if (full_refresh)
+		last_full_refresh = 2;
+	else if (last_full_refresh > 0)
+		last_full_refresh--;
+
+	ent = queue.head;
+	begin = 0;
+
+	while(ent) {
+		rc.ybegin = (ent == queue.head) ? 0 : begin + screen_adjustment;
+		rc.yend = ent->end + screen_adjustment;
+
+#if LOG_RASTERTRACK
+		logerror("rastertrack_refresh(): Calling with clip [%i..%i] rvm->offset=%i\n", rc.ybegin, rc.yend, ent->rvm.offset);
+#endif
+
+		raster_bits(bitmap, &ent->rs, &ent->rvm, &ent->rf, &rc);
+		begin = ent->end + 1;
+
+		ent = ent->next;
+	}
 }
+
 
 void rastertrack_touchvideomode(void)
 {
@@ -163,22 +251,14 @@ void rastertrack_touchvideomode(void)
 	logerror("rastertrack_touchvideomode(): Touching video mode at scanline #%i\n", current_scanline);
 	#endif
 
-	videomodedirty = 1;
+	videomode_dirty = 1;
+
+	if (!current_state)
+		current_state = createentry(the_ri->videoproc, 1);
 }
 
 int rastertrack_scanline(void)
 {
 	return current_scanline;
-}
-
-void rastertrack_sync(void)
-{
-	if (current_scanline > 0)
-		do_sync = 1;
-}
-
-int rastertrack_indrawingarea(void)
-{
-	return (current_scanline >= visible_top(the_ri)) && (current_scanline < visible_bottom(the_ri));
 }
 

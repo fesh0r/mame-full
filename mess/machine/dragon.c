@@ -107,6 +107,20 @@ static void coco3_pia1_firq_a(int state);
 static void coco3_pia1_firq_b(int state);
 static void coco_cartridge_enablesound(int enable);
 
+#ifdef MAME_DEBUG
+#define LOG_PAK			1	/* Logging on PAK trailers; sparse */
+#define LOG_INT_MASKING	1	/* Logging on changing GIME interrupt masks; sparse */
+#define LOG_WAVE		0
+#define LOG_INT_TMR		0
+#define LOG_INT_COCO3	0
+#define LOG_GIME		0
+#define LOG_MMU			0
+#define LOG_VBORD		0
+#define LOG_OS9         0
+#define LOG_FLOPPY		0
+#define LOG_TIMER       0
+#define LOG_DEC_TIMER	0
+#else /* !MAME_DEBUG */
 #define LOG_PAK			0
 #define LOG_WAVE		0
 #define LOG_INT_MASKING	0
@@ -119,6 +133,7 @@ static void coco_cartridge_enablesound(int enable);
 #define LOG_FLOPPY		0
 #define LOG_TIMER       0
 #define LOG_DEC_TIMER	0
+#endif /* MAME_DEBUG */
 
 #define COCO_CPU_SPEED	(TIME_IN_HZ(894886))
 
@@ -580,7 +595,7 @@ static void coco3_raise_interrupt(int mask, int state)
 			coco3_recalc_irq();
 
 #if LOG_INT_COCO3
-			logerror("CoCo3 Interrupt: Raising IRQ\n");
+			logerror("CoCo3 Interrupt: Raising IRQ; scanline=%i\n", rastertrack_scanline());
 #endif
 		}
 		if ((coco3_gimereg[0] & 0x10) && (coco3_gimereg[3] & mask)) {
@@ -588,7 +603,7 @@ static void coco3_raise_interrupt(int mask, int state)
 			coco3_recalc_firq();
 
 #if LOG_INT_COCO3
-			logerror("CoCo3 Interrupt: Raising FIRQ\n");
+			logerror("CoCo3 Interrupt: Raising FIRQ; scanline=%i\n", rastertrack_scanline());
 #endif
 		}
 	}
@@ -607,7 +622,7 @@ WRITE_HANDLER( coco_m6847_fs_w )
 WRITE_HANDLER( coco3_m6847_hs_w )
 {
 	if (data == 0)
-		rastertrack_hblank();
+		rastertrack_newline();
 	else
 		coco3_timer_hblank();
 	pia_0_ca1_w(0, data);
@@ -616,8 +631,17 @@ WRITE_HANDLER( coco3_m6847_hs_w )
 
 WRITE_HANDLER( coco3_m6847_fs_w )
 {
+#if LOG_VBORD
+	logerror("coco3_m6847_fs_w(): data=%i scanline=%i\n", data, rastertrack_scanline());
+#endif
 	pia_0_cb1_w(0, data);
 	coco3_raise_interrupt(COCO3_INT_VBORD, !data);
+
+	if (data) {
+		int top, rows;
+		rows = coco3_calculate_rows(&top, NULL);
+		rastertrack_newscreen(top, rows);
+	}
 }
 
 /***************************************************************************
@@ -1416,7 +1440,7 @@ void coco3_mmu_readlogicalmemory(UINT8 *buffer, int logicaladdr, int len)
 		logicaladdr += difference;
 	}
 }
-#endif
+#endif /* 0 */
 
 static void coco3_mmu_update(int lowblock, int hiblock)
 {

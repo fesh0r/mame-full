@@ -18,6 +18,9 @@ System Driver Changes:
   Lock to delete back a char. Now you can press backspace).
   [Kev Thacker]
 
+- [COCO 3] More work on improving video timing for mid frame video register
+  modification. [Nate Woods]
+
 Other Changes:
 --------------
 
