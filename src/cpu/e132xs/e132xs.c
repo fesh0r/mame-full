@@ -582,9 +582,19 @@ static void (*hyperstone_op[0x100])(void) = {
 };
 
 // 4Kb IRAM (On-Chip Memory)
+#if 1
+
+static ADDRESS_MAP_START( e116_4k_iram_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0xc0000000, 0xc0000fff) AM_RAM
+ADDRESS_MAP_END
+
+#else
+
 static ADDRESS_MAP_START( e116_4k_iram_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xc0000000, 0xdfffffff) AM_RAM AM_MASK(0xfff)
 ADDRESS_MAP_END
+
+#endif
 
 static ADDRESS_MAP_START( e132_4k_iram_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0xc0000000, 0xdfffffff) AM_RAM AM_MASK(0xfff)

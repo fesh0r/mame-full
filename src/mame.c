@@ -426,6 +426,9 @@ static int init_machine(void)
 		goto cant_init_memory;
 	}
 
+	/* clear out the memcard interface */
+	init_memcard();
+
 	/* call the game driver's init function */
 	if (gamedrv->driver_init)
 		(*gamedrv->driver_init)();

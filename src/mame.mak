@@ -118,6 +118,7 @@ CPUS+=H83002@
 CPUS+=V810@
 CPUS+=M37710@
 CPUS+=PPC403@
+CPUS+=PPC603@
 
 # uncomment the following lines to include a sound core
 SOUNDS+=CUSTOM@
@@ -519,6 +520,7 @@ $(OBJ)/sega.a: \
 	$(OBJ)/drivers/system32.o $(OBJ)/drivers/multi32.o $(OBJ)/vidhrdw/system32.o \
 	$(OBJ)/drivers/model1.o $(OBJ)/machine/model1.o $(OBJ)/vidhrdw/model1.o \
 	$(OBJ)/drivers/model2.o \
+	$(OBJ)/vidhrdw/model3.o $(OBJ)/machine/model3.o $(OBJ)/drivers/model3.o \
 	$(OBJ)/vidhrdw/segac2.o $(OBJ)/drivers/segac2.o \
 	$(OBJ)/drivers/coolridr.o \
 	$(OBJ)/drivers/stv.o $(OBJ)/drivers/stvhacks.o $(OBJ)/machine/stvcd.o \

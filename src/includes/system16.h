@@ -8,6 +8,8 @@ VIDEO_UPDATE( system16a );
 
 void system16a_set_draw_enable(int enable);
 void system16a_set_screen_flip(int flip);
+void system16a_set_rowscroll(int enable);
+void system16a_set_colscroll(int enable);
 
 WRITE16_HANDLER( system16a_textram_w );
 

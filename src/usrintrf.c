@@ -33,28 +33,18 @@
 extern char build_version[];
 
 /* MARTINEZ.F 990207 Memory Card */
-#ifndef MESS
-#ifndef TINY_COMPILE
-int 		memcard_menu(struct mame_bitmap *bitmap, int);
-extern int	mcd_action;
-extern int	mcd_number;
-extern int	memcard_status;
-extern int	memcard_number;
-extern int	memcard_manager;
-extern struct GameDriver driver_neogeo;
-#endif
-#endif
+
+struct MEMCARDinterface memcard_intf;
+int	mcd_action;
+int	mcd_number;
+int	memcard_status;
+int	memcard_number;
+int	memcard_manager;
 
 #if defined(__sgi) && !defined(MESS)
 static int game_paused = 0; /* not zero if the game is paused */
 #endif
-
-extern int neogeo_memcard_load(int);
-extern void neogeo_memcard_save(void);
-extern void neogeo_memcard_eject(void);
-extern int neogeo_memcard_create(int);
 /* MARTINEZ.F 990207 Memory Card End */
-
 
 
 /***************************************************************************
@@ -3018,9 +3008,6 @@ static int displayhistory (struct mame_bitmap *bitmap, int selected)
 
 }
 
-
-#ifndef MESS
-#ifndef TINY_COMPILE
 int memcard_menu(struct mame_bitmap *bitmap, int selection)
 {
 	int sel;
@@ -3035,9 +3022,6 @@ int memcard_menu(struct mame_bitmap *bitmap, int selection)
 	menuitem[menutotal++] = buf;
 	menuitem[menutotal++] = ui_getstring (UI_ejectcard);
 	menuitem[menutotal++] = ui_getstring (UI_createcard);
-#ifdef MESS
-	menuitem[menutotal++] = ui_getstring (UI_resetcard);
-#endif
 	menuitem[menutotal++] = ui_getstring (UI_returntomain);
 	menuitem[menutotal] = 0;
 
@@ -3095,8 +3079,8 @@ int memcard_menu(struct mame_bitmap *bitmap, int selection)
 			switch(sel)
 			{
 			case 0:
-				neogeo_memcard_eject();
-				if (neogeo_memcard_load(mcd_number))
+				memcard_intf.eject();
+				if (memcard_intf.load(mcd_number))
 				{
 					memcard_status=1;
 					memcard_number=mcd_number;
@@ -3106,11 +3090,11 @@ int memcard_menu(struct mame_bitmap *bitmap, int selection)
 					mcd_action = 1;
 				break;
 			case 1:
-				neogeo_memcard_eject();
+				memcard_intf.eject();
 				mcd_action = 3;
 				break;
 			case 2:
-				if (neogeo_memcard_create(mcd_number))
+				if (memcard_intf.create(mcd_number))
 					mcd_action = 4;
 				else
 					mcd_action = 5;
@@ -3148,8 +3132,6 @@ int memcard_menu(struct mame_bitmap *bitmap, int selection)
 
 	return sel + 1;
 }
-#endif
-#endif
 
 
 #ifndef MESS
@@ -3286,16 +3268,13 @@ static void setup_menu_init(void)
 		append_menu(UI_cheat, UI_CHEAT);
 	}
 
-#ifndef MESS
-#ifndef TINY_COMPILE
-	if (Machine->gamedrv->clone_of == &driver_neogeo ||
-			(Machine->gamedrv->clone_of &&
-				Machine->gamedrv->clone_of->clone_of == &driver_neogeo))
+	if (	memcard_intf.create != NULL &&
+		memcard_intf.load != NULL &&
+		memcard_intf.save != NULL &&
+		memcard_intf.eject != NULL)
 	{
 		append_menu(UI_memorycard, UI_MEMCARD);
 	}
-#endif
-#endif
 
 	append_menu(UI_resetgame, UI_RESET);
 	append_menu(UI_returntogame, UI_EXIT);
@@ -3365,13 +3344,9 @@ static int setup_menu(struct mame_bitmap *bitmap, int selected)
 			case UI_CHEAT:
 				res = cheat_menu(bitmap, sel >> SEL_BITS);
 				break;
-#ifndef MESS
-#ifndef TINY_COMPILE
 			case UI_MEMCARD:
 				res = memcard_menu(bitmap, sel >> SEL_BITS);
 				break;
-#endif
-#endif
 		}
 
 		if (res == -1)

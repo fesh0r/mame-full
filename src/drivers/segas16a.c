@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Sega System 16A hardware
+	Sega pre-System 16 & System 16A hardware
 
 ****************************************************************************
 
@@ -9,8 +9,130 @@
 		* Major League controls not hooked up
 		* Screen flip only sort of works
 		* Need to revisit/clean up 7751 sound banking
+		* shinobia sprites get left on the screen
 
-***************************************************************************/
+***************************************************************************
+
+System16A Hardware Overview
+---------------------------
+
+The games on this system include... (there may be more??)
+Action Fighter (C) Sega 1985
+Alex Kidd      (C) Sega 1986
+Fantasy Zone   (C) Sega 1986
+SDI            (C) Sega 1987
+Shinobi        (C) Sega 1987
+Tetris         (C) Sega 1988
+
+PCB Layout
+----------
+
+Top PCB
+
+171-5306 (number under PCB, no numbers on top)
+         |----------|     |-----------|     |-----------|
+  |------|----------|-----|-----------|-----|-----------|------|
+|-|      16MHz    25.1478MHz                                   |
+| |                                  315-5149                  |
+|-|    YM3012 YM2151  ROM.IC24 ROM.IC41                        |
+  | VOL                                                        |
+  |                   ROM.IC25 ROM.IC42  MB3771                |
+|-|         D8255                           315-5155           |
+|                     ROM.IC26 ROM.IC43     315-5155  ROM.IC93 |
+|S                                                             |
+|E          Z80A      TC5565   TC5565       315-5155  ROM.IC94 |
+|G                315-5141                  315-5155           |
+|A         ROM.IC12                                   ROM.IC95 |
+|5                                          315-5155           |
+|6          2016                            315-5155           |
+|                                                     2016     |
+|-|                                       8751                 |
+  |        DSW2        |-------------|                2016     |
+|-|                    |    68000    | 315-5244                |
+|                      |-------------|       315-5142          |
+|          DSW1                                                |
+|                        10MHz                                 |
+|--------------------------------------------------------------|
+Notes:
+      68000    - running at 10.000MHz. Is replaced with a Hitachi FD1094 in some games.
+      Z80      - running at 4.000MHz [16/4]
+      YM2151   - running at 4.000MHz [16/4]
+      2016     - Fujitsu MB8128 2K x8 SRAM (DIP24)
+      TC5565   - Toshiba TC5565 8K x8 SRAM (DIP28)
+      8751     - Intel 8751 Microcontroller. It appears to be not used, and instead, games use a small plug-in board
+                 containing only one 74HC04 TTL IC. The daughterboard has Sega part number '837-0068' & '171-5468' stamped onto it.
+      315-5141 - Signetics CK2605 stamped '315-5141' (DIP20)
+      315-5149 - 82S153 Field Programmable Logic Array, sticker '315-5149'(DIP20)
+      315-5244 - 82S153 Field Programmable Logic Array, sticker '315-5244'(DIP20)
+      315-5142 - Signetics CK2605 stamped '315-5142' (DIP20)
+      315-5155 - Custom Sega IC (DIP20)
+
+                         Sound     |---------------------- Main Program --------------------|  |---------- Tiles ---------|
+                         Program
+Game           CPU       IC12      IC24      IC25      IC26      IC41      IC42      IC43      IC93      IC94      IC95
+---------------------------------------------------------------------------------------------------------------------------
+Action Fighter 317-0018  EPR10284  EPR10353  EPR10351  EPR10349  EPR10352  EPR10350  EPR10348  EPR10283  EPR10282  EPR10281
+Alex Kid       317-0021  EPR10434  -         EPR10428  EPR10427  -         EPR10429  EPR10430  EPR10433  EPR10432  EPR10431
+Alex Kid (Alt) 317-0021  EPR10434  -         EPR10446  EPR10445  -         EPR10448  EPR10447  EPR10433  EPR10432  EPR10431
+Fantasy Zone   68000     EPR7535   EPR7384   EPR7383   EPR7382   EPR7387   EPR7386   EPR7385   EPR7390   EPR7389   EPR7388
+SDI            317-0027  EPR10759  EPR10752  EPR10969  EPR10968  EPR10755  EPR10971  EPR10970  EPR10758  EPR10757  EPR10756
+Shinobi        317-0050  EPR11267  -         EPR11261  EPR11260  -         EPR11262  EPR11263  EPR11266  EPR11265  EPR11264
+Tetris         317-0093  EPR12205  -         -         EPR12200  -         -         EPR12201  EPR12204  EPR12203  EPR12202
+
+
+Bottom PCB
+
+171-5307 (number under PCB, no numbers on top)
+         |----------|     |-----------|     |-----------|
+|--------|----------|-----|-----------|-----|-----------|------|
+|                                           315-5144           |-|
+|                                                              | |
+|                                                              |-|
+|        2148 2148 2148                                        |
+|                              ROM.IC24    ROM.IC11            |
+|        2148 2148 2148  ROM.IC30   ROM.IC18                   |
+|                                                   D7751      |
+|                                                        6MHz  |
+|                              ROM.IC23    ROM.IC10     D8243C |
+|            315-5049    ROM.IC29   ROM.IC17                   |
+|                                                              |
+|                  315-5106    315-5108                        |
+|                        315-5107     2018  2018               |
+|                                                              |
+|            315-5049                                          |
+|                                              ROM.IC5 ROM.IC2 |
+|TC5565 TC5565                  315-5011                       |
+|                                                              |
+|               2016  315-5143       315-5012  ROM.IC4 ROM.IC1 |
+|TC5565 TC5565  2016                                           |
+|--------------------------------------------------------------|
+Notes:
+      D7751    - NEC uPD7751C Microcontroller, running at 6.000MHz. This is a clone of an 8048 MCU
+      D8243C   - NEC D8243C (DIP24)
+      2016     - Fujitsu MB8128 2K x8 SRAM (DIP24)
+      2018     - Sony CXD5813 2K x8 SRAM
+      TC5565   - Toshiba TC5565 8K x8 SRAM (DIP28)
+      2148     - Fujitsu MBM2148 1K x4 SRAM (DIP18)
+      315-5144 - Signetics CK2605 stamped '315-5144' (DIP20)
+      315-5143 - Signetics CK2605 stamped '315-5143' (DIP20)
+      315-5106 - PAL16R6 stamped '315-5106' (DIP20)
+      315-5107 - PAL16R6 stamped '315-5107' (DIP20)
+      315-5108 - PAL16R6 stamped '315-5108' (DIP20)
+      315-5011 - Custom Sega IC (DIP40)
+      315-5012 - Custom Sega IC (DIP48)
+      315-5049 - Custom Sega IC (SDIP64)
+
+               |---------- 7751 Sound Data ---------|  |--------------------------------- Sprites ----------------------------------|
+
+Game           IC1       IC2       IC4       IC5       IC10      IC11      IC17      IC18      IC23      IC24      IC29      IC30
+-------------------------------------------------------------------------------------------------------------------------------------
+Action Fighter -         -         -         -         EPR10285  EPR10289  EPR10286  EPR10290  EPR10287  EPR10291  EPR10288  EPR10292
+Alex Kid       EPR10435  EPR10436  -         -         EPR10437  EPR10441  EPR10438  EPR10442  EPR10439  EPR10443  EPR10440  EPR10444
+Fantasy Zone   -         -         -         -         EPR7392   EPR7396   EPR7393   EPR7397   EPR7394   EPR7398   -         -
+SDI            -         -         -         -         EPR10760  EPR10763  EPR10761  EPR10764  EPR10762  EPR10765  -         -
+Shinobi        EPR11268  -         -         -         EPR11290  EPR11294  EPR11291  EPR11295  EPR11292  EPR11296  EPR11293  EPR11297
+Tetris         -         -         -         -         EPR12169  EPR12170  -         -         -         -         -         -
+*/
 
 #include "driver.h"
 #include "system16.h"
@@ -79,8 +201,6 @@ static ppi8255_interface single_ppi_intf =
 
 static void system16a_generic_init(void)
 {
-//	int rgnum, soundnum;
-
 	/* call the generic init */
 	machine_init_sys16_onetime();
 
@@ -230,6 +350,8 @@ static WRITE8_HANDLER( sound_control_w )
 	      0= Sound is disabled
 	      1= sound is enabled
 	*/
+	system16a_set_colscroll(~data & 0x04);
+	system16a_set_rowscroll(~data & 0x02);
 }
 
 
@@ -950,9 +1072,13 @@ static INPUT_PORTS_START( wb3 )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Bonus_Life ) )		//??
 	PORT_DIPSETTING(    0x10, "5000/10000/18000/30000" )
 	PORT_DIPSETTING(    0x00, "5000/15000/30000" )
-	PORT_DIPNAME( 0x40, 0x40, "Allow Round Select" )
-	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )			// no collision though
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hard ) )
+	PORT_DIPNAME( 0x40, 0x40, "Test Mode" )
+	PORT_DIPSETTING(    0x40, DEF_STR( No ) )	/* Normal game */
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )	/* Levels are selectable / Player is Invincible */
+	/* Swtches 1 & 8 are listed as "Always off" */
 INPUT_PORTS_END
 
 
@@ -1019,7 +1145,7 @@ static MACHINE_DRIVER_START( system16a )
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 	MDRV_CPU_PROGRAM_MAP(system16a_map,0)
 
-	MDRV_CPU_ADD_TAG("sound", Z80, 5000000)
+	MDRV_CPU_ADD_TAG("sound", Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_PROGRAM_MAP(sound_map,0)
 	MDRV_CPU_IO_MAP(sound_portmap,0)
@@ -1309,7 +1435,6 @@ ROM_START( bodyslam )
 	ROM_LOAD( "epr10031.c3", 0x10000, 0x8000, CRC(ea3c4472) SHA1(ad8eac2d3d14fd6aba713f4d624861c17aabf757) )
 	ROM_LOAD( "epr10032.c4", 0x18000, 0x8000, CRC(0aabebce) SHA1(fab12df8f4eab270be491c6c025d832c338e1e83) )
 ROM_END
-
 
 /**************************************************************************************************************************
 	Dump Matsumoto, pre-System 16
@@ -1682,6 +1807,9 @@ ROM_START( shinobia )
 	ROM_LOAD16_BYTE( "epr11263.43", 0x020000, 0x10000, CRC(a2a620bd) SHA1(f8b135ce14d6c5eac5e40ddfd5ad2f1e6f2bc7a6) )
 	ROM_LOAD16_BYTE( "epr11261.25", 0x020001, 0x10000, CRC(a3ceda52) SHA1(97a1c52a162fb1d43b3f8f16613b70ce582a8d26) )
 
+	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
+	ROM_LOAD( "317-0050.key", 0x0000, 0x2000, CRC(82c39ced) SHA1(5490237ff7f20f9ebfa3e46eedd5afd4f1c28548) )
+
 	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
 	ROM_LOAD( "epr11264.95", 0x00000, 0x10000, CRC(46627e7d) SHA1(66bb5b22a2100e7b9df303007a837bc2d52cf7ba) )
 	ROM_LOAD( "epr11265.94", 0x10000, 0x10000, CRC(87d0f321) SHA1(885b38eaff2dcaeab4eeaa20cc8a2885d520abd6) )
@@ -1715,18 +1843,22 @@ ROM_START( shinobia )
 	ROM_LOAD( "epr11268.1", 0x0000, 0x8000, CRC(6d7966da) SHA1(90f55a99f784c21d7c135e630f4e8b1d4d043d66) )
 ROM_END
 
-/*
 
-Sukeban Jansi Ryuko (JPN Ver.)
-(c)1988 White Board
+/**************************************************************************************************************************
+ **************************************************************************************************************************
+ **************************************************************************************************************************
+	Sukeban Jansi Ryuko, Sega System 16A
+	CPU: FD1094 (317-5021)
 
-Sega System 16A/16B
+	 (JPN Ver.)
+	(c)1988 White Board
 
-IC61:	839-0068 (16A)
-IC69:	315-5150 (16A)
+	Sega System 16A/16B
 
-CPU:	317-5021 (16A/16B)
+	IC61:	839-0068 (16A)
+	IC69:	315-5150 (16A)
 
+	CPU:	317-5021 (16A/16B)
 */
 
 ROM_START( sjryukoa )
@@ -1825,54 +1957,56 @@ ROM_START( tetris )
 	ROM_LOAD( "epr12205.rom", 0x0000, 0x8000, CRC(6695dc99) SHA1(08123aa24c302bc9243329384bd9c2545a4d50c3) )
 ROM_END
 
-/*
-TIME SCANNER	SEGA 1987
 
-BOARD: SYSTEM 16A
+/**************************************************************************************************************************
+ **************************************************************************************************************************
+ **************************************************************************************************************************
+	Time Scanner, Sega System 16A
+	CPU: FD1089a (317-????)
 
-GAME NUMBER: TOP 837-5941-01, BOTTOM 837-5942-01
-CPU: FD1089B 6J2 317-0024
+	GAME NUMBER: TOP 837-5941-01, BOTTOM 837-5942-01
+	CPU: FD1089B 6J2 317-0024
 
-BOARD: SYSTEM 16B
+	BOARD: SYSTEM 16B
 
-GAME NUMBER: ???-????-??
-CPU: MC68000
+	GAME NUMBER: ???-????-??
+	CPU: MC68000
 
-IC POSITIONS	EPROMS		EPROMS
-S16A	S16B	NUMBERS		FUNCTIONS
+	IC POSITIONS	EPROMS		EPROMS
+	S16A	S16B	NUMBERS		FUNCTIONS
 
-26	-	EPR10537A	PROGRAM 317-0024
-25	-	EPR10538	"
-24	-	EPR10539	"
-43	-	EPR10540A	"
-42	-	EPR10541	"
-41	-	EPR10542	"
+	26	-	EPR10537A	PROGRAM 317-0024
+	25	-	EPR10538	"
+	24	-	EPR10539	"
+	43	-	EPR10540A	"
+	42	-	EPR10541	"
+	41	-	EPR10542	"
 
-95	B9	EPR10543	SCREEN
-94	B10	EPR10544	"
-93	B11	EPR10545	"
+	95	B9	EPR10543	SCREEN
+	94	B10	EPR10544	"
+	93	B11	EPR10545	"
 
-12	-	EPR10546	SOUND PROGRAM
-1	-	EPR10547	SPEECH
+	12	-	EPR10546	SOUND PROGRAM
+	1	-	EPR10547	SPEECH
 
-10	B1	EPR10548	OBJECT
-17	B2	EPR10549	"
-23	B3	EPR10550	"
-29	B4	EPR10551	"
-11	B5	EPR10552	"
-18	B6	EPR10553	"
-24	B7	EPR10554	"
-30	B8	EPR10555	"
+	10	B1	EPR10548	OBJECT
+	17	B2	EPR10549	"
+	23	B3	EPR10550	"
+	29	B4	EPR10551	"
+	11	B5	EPR10552	"
+	18	B6	EPR10553	"
+	24	B7	EPR10554	"
+	30	B8	EPR10555	"
 
--	A7	EPR10562	SOUND PROGRAM
--	A8	EPR10563	SPEECH
+	-	A7	EPR10562	SOUND PROGRAM
+	-	A8	EPR10563	SPEECH
 
--	A1	EPR10850	PROGRAM MC68000
--	A2	EPR10851	"
--	A3	EPR10852	"
--	A4	EPR10853	"
--	A5	EPR10854	"
--	A6	EPR10855	"
+	-	A1	EPR10850	PROGRAM MC68000
+	-	A2	EPR10851	"
+	-	A3	EPR10852	"
+	-	A4	EPR10853	"
+	-	A5	EPR10854	"
+	-	A6	EPR10855	"
 */
 
 ROM_START( timescna )
@@ -2014,8 +2148,8 @@ GAME( 1986, alexkida, alexkidd, system16a_7751, alexkidd, generic_16a, ROT0,   "
 GAME( 1986, fantzone, 0,        system16a,      fantzone, generic_16a, ROT0,   "Sega",           "Fantasy Zone (Japan New Ver., unprotected)" )
 GAME( 1986, fantzono, fantzone, system16a,      fantzone, generic_16a, ROT0,   "Sega",           "Fantasy Zone (Old Ver., unprotected)" )
 GAMEX(1987, sdioj,    sdi,      system16a,      sdi,      generic_16a, ROT0,   "Sega",           "SDI - Strategic Defense Initiative (Japan, System 16A, FD1094 317-0027)", GAME_NOT_WORKING )
-GAMEX(1987, shinobia, shinobi,  system16a_7751, shinobi,  generic_16a, ROT0,   "Sega",           "Shinobi (set 2, System 16A, FD1094 317-0050)", GAME_NOT_WORKING )
+GAMEX(1987, shinobia, shinobi,  system16a_7751, shinobi,  generic_16a, ROT0,   "Sega",           "Shinobi (set 2, System 16A, FD1094 317-0050)", GAME_IMPERFECT_GRAPHICS )
 GAMEX(1987, sjryukoa, sjryuko,  system16a_7751, shinobi,  generic_16a, ROT0,   "White Board",    "Sukeban Jansi Ryuko (System 16A, FD1094 317-5021)", GAME_NOT_WORKING )
 GAME( 1988, tetris,   0,        system16a,      tetris,   generic_16a, ROT0,   "Sega",           "Tetris (Japan, System 16A, FD1094 317-0093)" )
-GAMEX(1987, timescna, timescn,  system16a_7751, shinobi,  generic_16a, ROT270, "Sega",           "Time Scanner (System 16A, FD1094 317-0024)", GAME_NOT_WORKING )
+GAMEX(1987, timescna, timescn,  system16a_7751, shinobi,  generic_16a, ROT270, "Sega",           "Time Scanner (System 16A, FD1089a 317-0024)", GAME_NOT_WORKING )
 GAME( 1988, wb3a,     wb3b,     system16a,      wb3,      generic_16a, ROT0,   "Sega / Westone", "Wonder Boy III - Monster Lair (System 16A, FD1094 317-0084)" )

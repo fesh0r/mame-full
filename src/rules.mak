@@ -1431,6 +1431,17 @@ else
 CPUDEFS += -DHAS_PPC403=0
 endif
 
+CPU=$(strip $(findstring PPC603@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/powerpc
+CPUDEFS += -DHAS_PPC603=1
+CPUOBJS += $(OBJ)/cpu/powerpc/ppc.o
+DBGOBJS += $(OBJ)/cpu/powerpc/ppc_dasm.o
+$(OBJ)/cpu/powerpc/ppc.o: ppc.c ppc.h ppc_ops.c ppc_ops.h ppc403.c
+else
+CPUDEFS += -DHAS_PPC603=0
+endif
+
 SOUND=$(strip $(findstring CDDA@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_CDDA=1

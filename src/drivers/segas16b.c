@@ -22,7 +22,8 @@
 	Flash Point      171-5704    a5:12590b,a8:12591b,fd1094:317-0127a
 	Golden Axe       171-5797    a1:12388,a2:12389,fd1094:317-0110
 	Heavyweight C.   171-5521    a5:11238,a7:11239
-	Ryu Kyu          171-5521    a5:13347,a7:13348,fd1094:317-5023
+	Passing shot     171-5358    a1:11870,a4:11871,fd1094:317-0080
+    Ryu Kyu          171-5521    a5:13347,a7:13348,fd1094:317-5023
 	Shinobi          171-5358    a1:11298,a2:11281,a4:11299,a5:11283
 	Sonic Boom       171-5358
 	Tetris           171-5521    a5:12192,a7:12193,fd1094:317-0092
@@ -407,13 +408,13 @@ CPU  - 317-0053  |--------------------------------------------------------------
 
 -----------------|--------------------------------------------------------------------------------------------------|
 Passing Shot     |A1       A2       A3       A4       A5       A6       A7       A8       A9       A10      A11     |
-CPU  -           |--------------------------------------------------------------------------------------------------|
+CPU  - 317-0080  |--------------------------------------------------------------------------------------------------|
 8751 -           |EPR11870 -        -        EPR11871 -        -        EPR11857 EPR11858 EPR11859 EPR11860 EPR11861|
                  |--------------------------------------------------------------------------------------------------|
                  |                                                                                                  |
-                 |B1       B2       B3       B4       B5       B6       B7       B8       B9       B10      B11     |
-                 |--------------------------------------------------------------------------------------------------|
-                 |OPR11862 OPR11863 OPR11864 -        OPR11865 OPR11866 OPR11867 -        OPR11854 EPR11855 EPR11856|
+J1 O O  J2 O-O   |B1       B2       B3       B4       B5       B6       B7       B8       B9       B10      B11     |
+J3 512 J4 256    |--------------------------------------------------------------------------------------------------|
+J5 512 J6 512    |OPR11862 OPR11863 OPR11864 -        OPR11865 OPR11866 OPR11867 -        OPR11854 EPR11855 EPR11856|
 -----------------|--------------------------------------------------------------------------------------------------|
 
 -----------------|--------------------------------------------------------------------------------------------------|
@@ -954,9 +955,9 @@ static struct region_info rom_171_5358_info[] =
 	{ 0x35/2, 0x10000, 0x01000, 0xfef000,      ~0, MRA16_BANK11,          system16b_textram_w,   &segaic16_textram,"text RAM" },
 	{ 0x31/2, 0x00000, 0x00800, 0xfff800,      ~0, MRA16_BANK12,          MWA16_BANK12,          &segaic16_spriteram,"object RAM" },
 	{ 0x2d/2, 0x00000, 0x04000, 0xffc000,      ~0, MRA16_BANK13,          MWA16_BANK13,          &sys16_workingram,"work RAM" },
-	{ 0x29/2, 0x00000, 0x20000, 0xfe0000, 0x40000, MRA16_BANK14,          NULL,                  NULL,             "ROM 2" },
-	{ 0x25/2, 0x00000, 0x20000, 0xfe0000, 0x20000, MRA16_BANK15,          NULL,                  NULL,             "ROM 1" },
-	{ 0x21/2, 0x00000, 0x20000, 0xfe0000, 0x00000, MRA16_BANK16,          NULL,                  NULL,             "ROM 0" },
+	{ 0x29/2, 0x00000, 0x20000, 0xfe0000, 0x40000, MRA16_BANK14,          MWA16_ROM,             NULL,             "ROM 2" },
+	{ 0x25/2, 0x00000, 0x20000, 0xfe0000, 0x20000, MRA16_BANK15,          MWA16_ROM,             NULL,             "ROM 1" },
+	{ 0x21/2, 0x00000, 0x20000, 0xfe0000, 0x00000, MRA16_BANK16,          MWA16_ROM,             NULL,             "ROM 0" },
 	{ 0 }
 };
 
@@ -969,8 +970,8 @@ static struct region_info rom_171_5704_info[] =
 	{ 0x31/2, 0x00000, 0x00800, 0xfff800,      ~0, MRA16_BANK12,          MWA16_BANK12,          &segaic16_spriteram,"object RAM" },
 	{ 0x2d/2, 0x00000, 0x04000, 0xffc000,      ~0, MRA16_BANK13,          MWA16_BANK13,          &sys16_workingram,"work RAM" },
 	{ 0x29/2, 0x00000, 0x10000, 0xff0000,      ~0, NULL,                  rom_5704_bank_w,       NULL,             "tile bank" },
-	{ 0x25/2, 0x00000, 0x80000, 0xfc0000, 0x80000, MRA16_BANK15,          NULL,                  NULL,             "ROM 1" },
-	{ 0x21/2, 0x00000, 0x80000, 0xfc0000, 0x00000, MRA16_BANK16,          NULL,                  NULL,             "ROM 0" },
+	{ 0x25/2, 0x00000, 0x80000, 0xfc0000, 0x80000, MRA16_BANK15,          MWA16_ROM,             NULL,             "ROM 1" },
+	{ 0x21/2, 0x00000, 0x80000, 0xfc0000, 0x00000, MRA16_BANK16,          MWA16_ROM,             NULL,             "ROM 0" },
 	{ 0 }
 };
 
@@ -984,7 +985,7 @@ static struct region_info rom_171_5797_info[] =
 	{ 0x2d/2, 0x00000, 0x04000, 0xffc000,      ~0, MRA16_BANK13,          MWA16_BANK13,          &sys16_workingram,"work RAM" },
 	{ 0x29/2, 0x00000, 0x10000, 0xff0000,      ~0, unknown_rgn2_r,        unknown_rgn2_w,        NULL,             "???" },
 	{ 0x25/2, 0x00000, 0x04000, 0xffc000,      ~0, rom_5797_bank_math_r,  rom_5797_bank_math_w,  NULL,             "tile bank/math" },
-	{ 0x21/2, 0x00000, 0x80000, 0xf80000, 0x00000, MRA16_BANK16,          NULL,                  NULL,             "ROM 0" },
+	{ 0x21/2, 0x00000, 0x80000, 0xf80000, 0x00000, MRA16_BANK16,          MWA16_ROM,             NULL,             "ROM 0" },
 	{ 0 }
 };
 
@@ -1198,7 +1199,7 @@ static void update_memory_mapping(void)
 				memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, region_start, region_end, 0, region_mirror, write);
 
 			/* set the bank pointer */
-			if (banknum && (read || write))
+			if (banknum && read)
 			{
 				if (rgn->base)
 					cpu_setbank(banknum, *rgn->base);
@@ -1837,14 +1838,17 @@ static INPUT_PORTS_START( aurail )
 	PORT_DIPSETTING(    0x08, "4" )
 	PORT_DIPSETTING(    0x04, "5" )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Normal ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x10, "80K/200K/500K/1 Mil" )
+	PORT_DIPSETTING(    0x00, "100K/300K/700K/1 Mil" )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Hard ) )
 	PORT_DIPNAME( 0x40, 0x40, "Controller select" )
 	PORT_DIPSETTING(    0x40, "1 Player side" )
 	PORT_DIPSETTING(    0x00, "2 Players side" )
+	PORT_DIPNAME( 0x80, 0x80, "Special Function Mode" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 
@@ -1895,27 +1899,26 @@ static INPUT_PORTS_START( atomicp )
 	PORT_DIPSETTING(    0x00, "5" )
 
 	PORT_START_TAG("DSW1")
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Level_Select ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, "Instructions" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, "Continuation" )
-	PORT_DIPSETTING(    0x20, "Continue" )
-	PORT_DIPSETTING(    0x00, "No Continue" )
-	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Level_Select ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Allow_Continue ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x40, 0x00, "Game Mode" )
+	PORT_DIPSETTING(    0x40, "Normal Tetris" )
+	PORT_DIPSETTING(    0x00, "Atomic Point" )
 	PORT_SERVICE( 0x80, IP_ACTIVE_HIGH )
 
 	PORT_START_TAG("DUMMY1")
@@ -1928,21 +1931,27 @@ static INPUT_PORTS_START( bayroute )
 	PORT_INCLUDE( system16b_generic )
 
 	PORT_MODIFY("DSW")
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Allow_Continue ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x04, "1" )
 	PORT_DIPSETTING(    0x0c, "3" )
 	PORT_DIPSETTING(    0x08, "5" )
 	PORT_DIPSETTING(    0x00, "Unlimited (Cheat)")
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x30, "10000" )
-	PORT_DIPSETTING(    0x20, "15000" )
-	PORT_DIPSETTING(    0x10, "20000" )
+	PORT_DIPSETTING(    0x30, "100000" )
+	PORT_DIPSETTING(    0x20, "150000" )
+	PORT_DIPSETTING(    0x10, "200000" )
 	PORT_DIPSETTING(    0x00, DEF_STR( None ) )
-	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0xc0, "A" )
-	PORT_DIPSETTING(    0x80, "B" )
-	PORT_DIPSETTING(    0x40, "C" )
-	PORT_DIPSETTING(    0x00, "D" )
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 INPUT_PORTS_END
 
 
@@ -1988,6 +1997,7 @@ static INPUT_PORTS_START( ddux )
 	PORT_DIPSETTING(    0x60, "200000" )
 	PORT_DIPSETTING(    0x20, "300000" )
 	PORT_DIPSETTING(    0x00, "400000" )
+	/* Switch #8 is listed as "NOT USED" and "Always OFF" */
 INPUT_PORTS_END
 
 
@@ -2001,7 +2011,7 @@ static INPUT_PORTS_START( eswat )
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, "Display Flip" )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x08, "Time" )
@@ -2045,6 +2055,10 @@ static INPUT_PORTS_START( fpoint )
 	PORT_DIPNAME( 0x40, 0x40, "Clear round allowed" ) /* Use button 3 */
 	PORT_DIPSETTING(    0x00, "1" )
 	PORT_DIPSETTING(    0x40, "2" )
+	PORT_DIPNAME( 0x80, 0x80, "2 Cell Move" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+	/* Switches 1, 3, 4 & 7 are listed as "Always off" */
 INPUT_PORTS_END
 
 
@@ -2075,18 +2089,15 @@ static INPUT_PORTS_START( hwchamp )
 	PORT_INCLUDE( system16b_generic )
 
 	PORT_MODIFY("DSW")
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )	// Not Used
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x00, "Start Level Select" )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, "Continue Mode" )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Allow_Continue ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Easy ) )
 	PORT_DIPSETTING(    0x30, DEF_STR( Normal ) )
@@ -2110,6 +2121,41 @@ static INPUT_PORTS_START( hwchamp )
 	PORT_BIT( 0x20, 0, IPT_BUTTON6 ) PORT_NAME("Left Sway")   PORT_CODE(KEYCODE_X)
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
+
+
+static INPUT_PORTS_START( passsht )
+	PORT_INCLUDE( system16b_generic )
+
+	PORT_MODIFY("P1")
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 )
+
+	PORT_MODIFY("P2")
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(2)
+
+	PORT_MODIFY("DSW")
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0e, 0x00, "Initial Point" )
+	PORT_DIPSETTING(    0x06, "2000" )
+	PORT_DIPSETTING(    0x0a, "3000" )
+	PORT_DIPSETTING(    0x0c, "4000" )
+	PORT_DIPSETTING(    0x0e, "5000" )
+	PORT_DIPSETTING(    0x08, "6000" )
+	PORT_DIPSETTING(    0x04, "7000" )
+	PORT_DIPSETTING(    0x02, "8000" )
+	PORT_DIPSETTING(    0x00, "9000" )
+	PORT_DIPNAME( 0x30, 0x30, "Point Table" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 INPUT_PORTS_END
 
 
@@ -2160,9 +2206,6 @@ static INPUT_PORTS_START( sdi )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT )  PORT_8WAY PORT_PLAYER(2)
 
 	PORT_MODIFY("DSW")
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -2278,7 +2321,7 @@ static INPUT_PORTS_START( timescn )
 	PORT_INCLUDE( system16b_generic )
 
 	PORT_START_TAG("DSW2")
-	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )		//??
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x1e, 0x14, "Bonus" )
@@ -2301,25 +2344,30 @@ static INPUT_PORTS_START( timescn )
 	PORT_DIPNAME( 0x20, 0x20, "Match" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "Pin Rebound" )
+	PORT_DIPSETTING(    0x40, "Well" )
+	PORT_DIPSETTING(    0x00, "A Little" )
+	/*
+		Pin Rebound = The Setting of "Well" or "A Little" signifies the
+		rebound strength and the resulting difficulty or ease in which the 
+		ball goes out of play.
+	*/
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x80, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
 
 	PORT_START_TAG("DSW3")
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )		//??
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, "1" )
-	PORT_DIPSETTING(    0x0c, "2" )
-	PORT_DIPSETTING(    0x08, "3" )
-	PORT_DIPSETTING(    0x00, DEF_STR( None ) )
+	PORT_DIPNAME( 0x02, 0x02, "Out Lane Pin" )
+	PORT_DIPSETTING(    0x02, "Near" )
+	PORT_DIPSETTING(    0x00, "Far" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Special" )
+	PORT_DIPSETTING(    0x08, "7 Credits" )
+	PORT_DIPSETTING(    0x0c, "3 Credits" )
+	PORT_DIPSETTING(    0x04, "1 Credit" )
+	PORT_DIPSETTING(    0x00, "2000000 Points" )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Yes ) )
@@ -2400,9 +2448,13 @@ static INPUT_PORTS_START( wb3b )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Bonus_Life ) )		//??
 	PORT_DIPSETTING(    0x10, "5000/10000/18000/30000" )
 	PORT_DIPSETTING(    0x00, "5000/15000/30000" )
-	PORT_DIPNAME( 0x40, 0x40, "Allow Round Select" )
-	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )			// no collision though
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hard ) )
+	PORT_DIPNAME( 0x40, 0x40, "Test Mode" )
+	PORT_DIPSETTING(    0x40, DEF_STR( No ) )	/* Normal game */
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )	/* Levels are selectable / Player is Invincible */
+	/* Switches 1 & 8 are listed as "Always off" */
 INPUT_PORTS_END
 
 
@@ -2418,9 +2470,9 @@ static INPUT_PORTS_START( wrestwar )
 	PORT_DIPSETTING(    0x0c, "110" )
 	PORT_DIPSETTING(    0x08, "120" )
 	PORT_DIPSETTING(    0x04, "130" )
-	PORT_DIPNAME( 0x20, 0x20, "Continuation" )
-	PORT_DIPSETTING(    0x20, "Continue" )
-	PORT_DIPSETTING(    0x00, "No Continue" )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Allow_Continue ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Easy ) )
 	PORT_DIPSETTING(    0xc0, DEF_STR( Normal ) )
@@ -3125,6 +3177,9 @@ ROM_START( bayrouta )
 	ROM_LOAD16_BYTE( "epr12458.a8", 0x080000, 0x20000, CRC(e7c7476a) SHA1(7b724d76bdc1978ddf78489edfda14533905a360) )
 	ROM_LOAD16_BYTE( "epr12456.a6", 0x080001, 0x20000, CRC(25dc2eaf) SHA1(dda300840b9a90bcce7be16ff1904a7a0456c396) )
 
+	ROM_REGION( 0x2000, REGION_USER1, 0 ) /* decryption key */
+	ROM_LOAD( "317-0116.key", 0x0000, 0x2000, CRC(8778ee49) SHA1(870923d8380199edfe91bbc407631d72c864de68) )
+
 	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
 	ROM_LOAD( "opr12462.a14", 0x00000, 0x10000, CRC(a19943b5) SHA1(95cd95223ea76677227b807a7c4eff120e690d37) )
 	ROM_LOAD( "opr12463.a15", 0x10000, 0x10000, CRC(62f8200d) SHA1(a5a0035249f339396b33f8a908d393777e8951c4) )
@@ -3142,6 +3197,15 @@ ROM_START( bayrouta )
 	ROM_LOAD( "mpr12461.a12", 0x30000, 0x20000, CRC(b03b8b46) SHA1(b0283ac377d464f3d9374a992192ec6c515a3c2f) )
 ROM_END
 
+/* placeholder for the key */
+ROM_START( bayroutb )
+	ROM_REGION( 0xc0000, REGION_CPU1, 0 ) /* 68000 code */
+	ROM_REGION( 0x2000, REGION_USER1, 0 ) /* decryption key */
+	ROM_LOAD( "317-0115.key", 0x0000, 0x2000, CRC(75a55614) SHA1(2cc33a0442e64c94e85f933008f79a1e3a71f1ae) )
+	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
+	ROM_REGION16_BE( 0x80000, REGION_GFX2, 0 ) /* sprites */
+	ROM_REGION( 0x50000, REGION_CPU2, 0 ) /* sound CPU */
+ROM_END
 
 /**************************************************************************************************************************
  **************************************************************************************************************************
@@ -3844,13 +3908,23 @@ ROM_END
  **************************************************************************************************************************
  **************************************************************************************************************************
 	Passing Shot, Sega System 16B
-	CPU: FD1094 (317-????)
-	ROM Board: 171-5358
+	CPU: FD1094 No. 317-0080
+	ROM Board No. 171-5358
+	
+	J1 - -
+	J2 ---
+	J3 512
+	J4 256
+	J5 512
+	J6 512
 */
 ROM_START( passsht )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 ) /* 68000 code */
 	ROM_LOAD16_BYTE( "epr11871.a4", 0x000000, 0x10000, CRC(0f9ccea5) SHA1(515a2721a35332df0303f4b9616122194b5c7170) )
 	ROM_LOAD16_BYTE( "epr11870.a1", 0x000001, 0x10000, CRC(df43ebcf) SHA1(3ca11a25819e1e8d5162f7b36cccc928d8efe150) )
+
+	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
+	ROM_LOAD( "317-0080.key", 0x0000, 0x2000,  CRC(222d016f) SHA1(e426e5ea231e5b2ec1f40b0b2599269c14fef21a) )
 
 	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
 	ROM_LOAD( "opr11854.b9",  0x00000, 0x10000, CRC(d31c0b6c) SHA1(610d04988da70c30300cc5614817eda9d2204f39) )
@@ -3921,28 +3995,32 @@ ROM_END
  **************************************************************************************************************************
  **************************************************************************************************************************
 	Ryukyu, Sega System 16B
-	CPU: FD1094 (317-5023)
-	ROM Board: 171-5704?
+	CPU: FD1094 8J2 (317-5023)
+	ROM Board: 171-5521
 */
+
 ROM_START( ryukyu )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* 68000 code */
-	ROM_LOAD16_BYTE( "13347", 0x00000, 0x10000, CRC(398031fa) SHA1(5c118c85b7af1a83726b95bbeb85cb5020254f57) )
-	ROM_LOAD16_BYTE( "13348", 0x00001, 0x10000, CRC(5f0e0c86) SHA1(f8f5912a190d0755cc5158e2e43cceb825f95b4f) )
+	ROM_LOAD16_BYTE( "epr13347.a5", 0x00001, 0x10000, CRC(398031fa) SHA1(5c118c85b7af1a83726b95bbeb85cb5020254f57) )
+	ROM_LOAD16_BYTE( "epr13348.a7", 0x00000, 0x10000, CRC(5f0e0c86) SHA1(f8f5912a190d0755cc5158e2e43cceb825f95b4f) )
+
+	ROM_REGION( 0x2000, REGION_USER1, 0 ) /* decryption key */
+	ROM_LOAD( "317-5023.key", 0x0000, 0x2000,  CRC(43704331) SHA1(e827547fa2e80fe641687cb41bb33cb9c5783f56) )
 
 	ROM_REGION( 0x60000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
-	ROM_LOAD( "13351", 0x00000, 0x20000, CRC(a68a4e6d) SHA1(ee3e317c7184b41af5dd383d41f7be3eebff0d04) )
-	ROM_LOAD( "13352", 0x20000, 0x20000, CRC(5e5531e4) SHA1(e8e16b35f7985e6cdd77353ca5235db518914744) )
-	ROM_LOAD( "13353", 0x40000, 0x20000, CRC(6d23dfd8) SHA1(21266340290b9854cee0b62fc107cc2981519a80) )
+	ROM_LOAD( "opr13351.a14", 0x00000, 0x20000, CRC(a68a4e6d) SHA1(ee3e317c7184b41af5dd383d41f7be3eebff0d04) )
+	ROM_LOAD( "opr13352.a15", 0x20000, 0x20000, CRC(5e5531e4) SHA1(e8e16b35f7985e6cdd77353ca5235db518914744) )
+	ROM_LOAD( "opr13353.a16", 0x40000, 0x20000, CRC(6d23dfd8) SHA1(21266340290b9854cee0b62fc107cc2981519a80) )
 
 	ROM_REGION16_BE( 0x80000, REGION_GFX2, 0 ) /* sprites */
-	ROM_LOAD16_BYTE( "13354", 0x00001, 0x20000, CRC(f07aad99) SHA1(71759525a5b7fe76d112cec93984f0f89cadbc00) )
-	ROM_LOAD16_BYTE( "13355", 0x00000, 0x20000, CRC(67890019) SHA1(165c6a32f305273396ec0e9499e00329caadc484) )
-	ROM_LOAD16_BYTE( "13356", 0x40001, 0x20000, CRC(5498290b) SHA1(b3115b636d8cb6ecac22d5264b7961e3b807cf04) )
-	ROM_LOAD16_BYTE( "13357", 0x40000, 0x20000, CRC(f9e7cf03) SHA1(2258111499c79443faf84fb0495007016282bb3c) )
+	ROM_LOAD16_BYTE( "opr13354.b1", 0x00001, 0x20000, CRC(f07aad99) SHA1(71759525a5b7fe76d112cec93984f0f89cadbc00) )
+	ROM_LOAD16_BYTE( "opr13356.b5", 0x00000, 0x20000, CRC(5498290b) SHA1(b3115b636d8cb6ecac22d5264b7961e3b807cf04) )
+	ROM_LOAD16_BYTE( "opr13355.b2", 0x40001, 0x20000, CRC(67890019) SHA1(165c6a32f305273396ec0e9499e00329caadc484) )
+	ROM_LOAD16_BYTE( "opr13357.b6", 0x40000, 0x20000, CRC(f9e7cf03) SHA1(2258111499c79443faf84fb0495007016282bb3c) )
 
 	ROM_REGION( 0x30000, REGION_CPU2, 0 ) /* sound CPU */
-	ROM_LOAD( "13349", 0x00000, 0x08000, CRC(b83183f8) SHA1(9d6127f51c04a16bb2637dc9992b843b94613c2b) )
-	ROM_LOAD( "13350", 0x10000, 0x20000, CRC(3c59a658) SHA1(2cef13ee9e666bb850fe6c6e6954d7b75df665a9) )
+	ROM_LOAD( "epr13349.a10", 0x00000, 0x08000, CRC(b83183f8) SHA1(9d6127f51c04a16bb2637dc9992b843b94613c2b) )
+	ROM_LOAD( "opr13350.a11", 0x10000, 0x20000, CRC(3c59a658) SHA1(2cef13ee9e666bb850fe6c6e6954d7b75df665a9) )
 ROM_END
 
 
@@ -4106,20 +4184,20 @@ ROM_START( sonicbom )
 ROM_END
 
 
-/*
+/**************************************************************************************************************************
+ **************************************************************************************************************************
+ **************************************************************************************************************************
+	Sukeban Jansi Ryuko (JPN Ver.)
+	CPU: 317-5021 (16A/16B)
+	ROM Board: 171-???
 
-Sukeban Jansi Ryuko (JPN Ver.)
-(c)1988 White Board
+	(c)1988 White Board
 
-Sega System 16A/16B
+	Sega System 16A/16B
 
-IC61:	839-0068 (16A)
-IC69:	315-5150 (16A)
-
-CPU:	317-5021 (16A/16B)
-
+	IC61:	839-0068 (16A)
+	IC69:	315-5150 (16A)
 */
-
 ROM_START( sjryuko )
 	ROM_REGION( 0x040000, REGION_CPU1, 0 ) /* 68000 code */
 	ROM_LOAD16_BYTE( "epr12256.a4",  0x000000, 0x08000, CRC(5987ee1b) SHA1(70a4e8603491d60a687c10980db02e60f4239779) )
@@ -4751,7 +4829,8 @@ GAME( 1990, aurail,   0,        system16b_7759, aurail,   generic_5704,  ROT0,  
 GAME( 1990, auraila,  aurail,   system16b_7759, aurail,   auraila,       ROT0,   "Sega / Westone", "Aurail (set 2, FD1089? 317-unknown)" )
 GAMEX(1990, atomicp,  0,        atomicp,        atomicp,  atomicp,       ROT0,   "Philko",         "Atomic Point (Korea)", GAME_NO_SOUND ) // korean clone board..
 GAME( 1989, bayroute, 0,        system16b_7759, bayroute, generic_5358,  ROT0,   "Sunsoft / Sega", "Bay Route (set 1, unprotected)" )
-GAMEX(1989, bayrouta, bayroute, system16b_7759, bayroute, generic_5704,  ROT0,   "Sunsoft / Sega", "Bay Route (set 2, FD1094 317-0116)", GAME_NOT_WORKING )
+GAME( 1989, bayrouta, bayroute, system16b_7759, bayroute, generic_5704,  ROT0,   "Sunsoft / Sega", "Bay Route (set 2, FD1094 317-0116)" )
+GAMEX(1989, bayroutb, bayroute, system16b_7759, bayroute, generic_5704,  ROT0,   "Sunsoft / Sega", "Bay Route (set 3, FD1094 317-0115)", GAME_NOT_WORKING ) // not fully dumped
 GAMEX(198?, bullet,   0,        system16b_7759, generic,  generic_5358,  ROT0,   "Sega",           "Bullet (FD1094 317-0041)", GAME_NOT_WORKING )
 /* Charon */
 GAME( 1991, cotton,   0,        system16b_7759, cotton,   generic_5704,  ROT0,   "Sega / Success", "Cotton (FD1094 317-0181a)" )
@@ -4769,9 +4848,9 @@ GAMEX(1989, goldnaxc, goldnaxe, system16b_7759, goldnaxe, generic_5797,  ROT0,  
 GAME( 1987, hwchamp,  0,        system16b_7759, hwchamp,  hwchamp,       ROT0,   "Sega",           "Heavyweight Champ" )
 GAME( 1989, mvp,      0,        system16b_7759, generic,  generic_5797,  ROT0,   "Sega",           "MVP (US, FD1094 317-0143)" )
 GAME( 1989, mvpj,     mvp,      system16b_7759, generic,  generic_5704,  ROT0,   "Sega",           "MVP (Japan, FD1094 317-0142)" )
-GAMEX(1988, passsht,  0,        system16b_7759, generic,  generic_5358,  ROT270, "Sega",           "Passing Shot (2 Players, FD1094 317-unknown)", GAME_NOT_WORKING )
+GAME( 1988, passsht,  0,        system16b_7759, passsht,  generic_5358,  ROT270, "Sega",           "Passing Shot (2 Players, FD1094 317-0080)" )
 GAME( 1991, riotcity, 0,        system16b_7759, riotcity, generic_5704,  ROT0,   "Sega / Westone", "Riot City (Japan)" )
-GAMEX(19??, ryukyu  , 0,        system16b_7759, generic,  generic_5704,  ROT0,   "Sega",           "Ryukyu", GAME_NOT_WORKING )
+GAME( 1990, ryukyu,   0,        system16b_7759, generic,  generic_5704,  ROT0,   "Success / Sega", "RyuKyu (Japan, FD1094 317-5023)" )
 GAME( 1987, sdi,      0,        system16b,      sdi,      sdi,           ROT0,   "Sega",           "SDI - Strategic Defense Initiative (System 16B, unprotected)" )
 GAME( 1987, shinobi,  0,        system16b_7759, shinobi,  generic_5358,  ROT0,   "Sega",           "Shinobi (set 1, System 16B, unprotected)" )
 GAME( 1987, shinobib, shinobi,  system16b_7759, shinobi,  generic_5358,  ROT0,   "Sega",           "Shinobi (set 3, System 16B, FD1094 317-0049)" )

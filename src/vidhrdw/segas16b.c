@@ -52,8 +52,6 @@ static void get_text_info_timscanr(int tile_index);
 
 static int video_start_common(void (*tilecb)(int), void (*textcb)(int))
 {
-//	int pagenum;
-
 	/* create the tilemap for the text layer */
 	textmap = tilemap_create(textcb, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8,8, 64,28);
 	if (!textmap)
@@ -195,15 +193,23 @@ static void get_text_info_timscanr(int tile_index)
 
 void system16b_set_draw_enable(int enable)
 {
-	force_partial_update(cpu_getscanline());
-	draw_enable = enable;
+	enable = (enable != 0);
+	if (draw_enable != enable)
+	{
+		force_partial_update(cpu_getscanline());
+		draw_enable = enable;
+	}
 }
 
 
 void system16b_set_screen_flip(int flip)
 {
-	force_partial_update(cpu_getscanline());
-	screen_flip = flip;
+	flip = (flip != 0);
+	if (screen_flip != flip)
+	{
+		force_partial_update(cpu_getscanline());
+		screen_flip = flip;
+	}
 }
 
 
@@ -218,8 +224,6 @@ void system16b_configure_sprite_banks(int use_default)
 
 void system16b_set_tile_bank(int which, int bank)
 {
-//	int i;
-
 	if (bank != tile_bank[which])
 	{
 		force_partial_update(cpu_getscanline());
@@ -256,7 +260,7 @@ WRITE16_HANDLER( system16b_textram_w )
  *
  *************************************/
 
-static void draw_layer(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int which, int flags, int priority)
+static void system16b_draw_layer(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int which, int flags, int priority)
 {
 	UINT16 xscroll, yscroll, pages;
 	int x, y;
@@ -281,7 +285,7 @@ static void draw_layer(struct mame_bitmap *bitmap, const struct rectangle *clipr
 			rowcolclip.max_y = (y + 7 > cliprect->max_y) ? cliprect->max_y : y + 7;
 
 			/* loop over column chunks */
-			for (x = cliprect->min_x & ~15; x <= cliprect->max_x; x += 16)
+			for (x = ((cliprect->min_x + 8) & ~15) - 8; x <= cliprect->max_x; x += 16)
 			{
 				UINT16 effxscroll, effyscroll;
 				UINT16 effpages = pages;
@@ -292,7 +296,7 @@ static void draw_layer(struct mame_bitmap *bitmap, const struct rectangle *clipr
 
 				/* get the effective scroll values */
 				effxscroll = segaic16_textram[0xf80/2 + 0x40/2 * which + y/8];
-				effyscroll = segaic16_textram[0xf06/2 + 0x40/2 * which + x/16];
+				effyscroll = segaic16_textram[0xf16/2 + 0x40/2 * which + (x+8)/16];
 
 				/* are we using an alternate? */
 				if (effxscroll & 0x8000)
@@ -314,7 +318,7 @@ static void draw_layer(struct mame_bitmap *bitmap, const struct rectangle *clipr
 		if (PRINT_UNUSUAL_MODES) printf("Column scroll\n");
 
 		/* loop over column chunks */
-		for (x = cliprect->min_x & ~15; x <= cliprect->max_x; x += 16)
+		for (x = ((cliprect->min_x + 8) & ~15) - 8; x <= cliprect->max_x; x += 16)
 		{
 			struct rectangle colclip = *cliprect;
 			UINT16 effxscroll, effyscroll;
@@ -324,7 +328,7 @@ static void draw_layer(struct mame_bitmap *bitmap, const struct rectangle *clipr
 			colclip.max_x = (x + 15 > cliprect->max_x) ? cliprect->max_x : x + 15;
 
 			/* get the effective scroll values */
-			effyscroll = segaic16_textram[0xf06/2 + 0x40/2 * which + x/16];
+			effyscroll = segaic16_textram[0xf16/2 + 0x40/2 * which + (x+8)/16];
 
 			/* draw the chunk */
 			effxscroll = (-320 - xscroll) & 0x3ff;
@@ -392,21 +396,24 @@ static void draw_layer(struct mame_bitmap *bitmap, const struct rectangle *clipr
 */
 
 #define draw_pixel() 														\
-	/* only draw if onscreen, not 0 or 15, and high enough priority */		\
-	if (x >= cliprect->min_x && pix != 0 && pix != 15 && sprpri > pri[x])	\
+	/* only draw if onscreen, not 0 or 15 */								\
+	if (x >= cliprect->min_x && pix != 0 && pix != 15)						\
 	{																		\
-		/* shadow/hilight mode? */											\
-		if (color == 1024 + (0x3f << 4))									\
-			dest[x] += (paletteram16[dest[x]] & 0x8000) ? 4096 : 2048;		\
+		/* are we high enough priority to be visible? */					\
+		if (sprpri > pri[x])												\
+		{																	\
+			/* shadow/hilight mode? */										\
+			if (color == 1024 + (0x3f << 4))								\
+				dest[x] += (paletteram16[dest[x]] & 0x8000) ? 4096 : 2048;	\
 																			\
-		/* regular draw */													\
-		else																\
-			dest[x] = pix | color;											\
+			/* regular draw */												\
+			else															\
+				dest[x] = pix | color;										\
+		}																	\
 																			\
 		/* always mark priority so no one else draws here */				\
 		pri[x] = 0xff;														\
 	}																		\
-
 
 static void draw_one_sprite(struct mame_bitmap *bitmap, const struct rectangle *cliprect, UINT16 *data)
 {
@@ -554,16 +561,16 @@ VIDEO_UPDATE( system16b )
 	fillbitmap(priority_bitmap, 0, cliprect);
 
 	/* draw background opaquely first, not setting any priorities */
-	draw_layer(bitmap, cliprect, 1, 0 | TILEMAP_IGNORE_TRANSPARENCY, 0x00);
-	draw_layer(bitmap, cliprect, 1, 1 | TILEMAP_IGNORE_TRANSPARENCY, 0x00);
+	system16b_draw_layer(bitmap, cliprect, 1, 0 | TILEMAP_IGNORE_TRANSPARENCY, 0x00);
+	system16b_draw_layer(bitmap, cliprect, 1, 1 | TILEMAP_IGNORE_TRANSPARENCY, 0x00);
 
 	/* draw background again, just to set the priorities on non-transparent pixels */
-	draw_layer(NULL, cliprect, 1, 0, 0x01);
-	draw_layer(NULL, cliprect, 1, 1, 0x02);
+	system16b_draw_layer(NULL, cliprect, 1, 0, 0x01);
+	system16b_draw_layer(NULL, cliprect, 1, 1, 0x02);
 
 	/* draw foreground */
-	draw_layer(bitmap, cliprect, 0, 0, 0x02);
-	draw_layer(bitmap, cliprect, 0, 1, 0x04);
+	system16b_draw_layer(bitmap, cliprect, 0, 0, 0x02);
+	system16b_draw_layer(bitmap, cliprect, 0, 1, 0x04);
 
 	/* text layer */
 	tilemap_draw(bitmap, cliprect, textmap, 0, 0x04);

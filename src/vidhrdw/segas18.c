@@ -10,6 +10,7 @@
 
 
 #define PRINT_UNUSUAL_MODES		(0)
+#define DEBUG_VDP				(0)
 
 
 /*************************************
@@ -54,7 +55,6 @@ static void get_text_info(int tile_index);
 
 VIDEO_START( system18 )
 {
-//	int pagenum;
 	int i;
 
 	/* create the tilemap for the text layer */
@@ -156,7 +156,8 @@ static void get_text_info(int tile_index)
 
 void system18_set_draw_enable(int enable)
 {
-	if (enable != draw_enable)
+	enable = (enable != 0);
+	if (draw_enable != enable)
 	{
 		force_partial_update(cpu_getscanline());
 		draw_enable = enable;
@@ -166,7 +167,8 @@ void system18_set_draw_enable(int enable)
 
 void system18_set_screen_flip(int flip)
 {
-	if (flip != screen_flip)
+	flip = (flip != 0);
+	if (screen_flip != flip)
 	{
 		force_partial_update(cpu_getscanline());
 		screen_flip = flip;
@@ -176,8 +178,6 @@ void system18_set_screen_flip(int flip)
 
 void system18_set_tile_bank(int which, int bank)
 {
-//	int i;
-
 	if (bank != tile_bank[which])
 	{
 		force_partial_update(cpu_getscanline());
@@ -191,6 +191,7 @@ void system18_set_tile_bank(int which, int bank)
 
 void system18_set_grayscale(int enable)
 {
+	enable = (enable != 0);
 	if (enable != grayscale_enable)
 	{
 		force_partial_update(cpu_getscanline());
@@ -202,11 +203,14 @@ void system18_set_grayscale(int enable)
 
 void system18_set_vdp_enable(int enable)
 {
+	enable = (enable != 0);
 	if (enable != vdp_enable)
 	{
 		force_partial_update(cpu_getscanline());
 		vdp_enable = enable;
-//		printf("VDP enable = %02X\n", enable);
+#if DEBUG_VDP
+		printf("VDP enable = %02X\n", enable);
+#endif
 	}
 }
 
@@ -217,7 +221,9 @@ void system18_set_vdp_mixing(int mixing)
 	{
 		force_partial_update(cpu_getscanline());
 		vdp_mixing = mixing;
-//		printf("VDP mixing = %02X\n", mixing);
+#if DEBUG_VDP
+		printf("VDP mixing = %02X\n", mixing);
+#endif
 	}
 }
 
@@ -283,7 +289,7 @@ static void draw_layer(struct mame_bitmap *bitmap, const struct rectangle *clipr
 			rowcolclip.max_y = (y + 7 > cliprect->max_y) ? cliprect->max_y : y + 7;
 
 			/* loop over column chunks */
-			for (x = cliprect->min_x & ~15; x <= cliprect->max_x; x += 16)
+			for (x = ((cliprect->min_x + 9) & ~15) - 9; x <= cliprect->max_x; x += 16)
 			{
 				UINT16 effxscroll, effyscroll;
 				UINT16 effpages = pages;
@@ -294,7 +300,7 @@ static void draw_layer(struct mame_bitmap *bitmap, const struct rectangle *clipr
 
 				/* get the effective scroll values */
 				effxscroll = segaic16_textram[0xf80/2 + 0x40/2 * which + y/8];
-				effyscroll = segaic16_textram[0xf06/2 + 0x40/2 * which + x/16];
+				effyscroll = segaic16_textram[0xf16/2 + 0x40/2 * which + (x+9)/16];
 
 				/* are we using an alternate? */
 				if (effxscroll & 0x8000)
@@ -316,7 +322,7 @@ static void draw_layer(struct mame_bitmap *bitmap, const struct rectangle *clipr
 		if (PRINT_UNUSUAL_MODES) printf("Column scroll\n");
 
 		/* loop over column chunks */
-		for (x = cliprect->min_x & ~15; x <= cliprect->max_x; x += 16)
+		for (x = ((cliprect->min_x + 9) & ~15) - 9; x <= cliprect->max_x; x += 16)
 		{
 			struct rectangle colclip = *cliprect;
 			UINT16 effxscroll, effyscroll;
@@ -326,7 +332,7 @@ static void draw_layer(struct mame_bitmap *bitmap, const struct rectangle *clipr
 			colclip.max_x = (x + 15 > cliprect->max_x) ? cliprect->max_x : x + 15;
 
 			/* get the effective scroll values */
-			effyscroll = segaic16_textram[0xf06/2 + 0x40/2 * which + x/16];
+			effyscroll = segaic16_textram[0xf16/2 + 0x40/2 * which + (x+9)/16];
 
 			/* draw the chunk */
 			effxscroll = (-320 - xscroll) & 0x3ff;
@@ -394,21 +400,24 @@ static void draw_layer(struct mame_bitmap *bitmap, const struct rectangle *clipr
 */
 
 #define draw_pixel() 														\
-	/* only draw if onscreen, not 0 or 15, and high enough priority */		\
-	if (x >= cliprect->min_x && pix != 0 && pix != 15 && sprpri > pri[x])	\
+	/* only draw if onscreen, not 0 or 15 */								\
+	if (x >= cliprect->min_x && pix != 0 && pix != 15)						\
 	{																		\
-		/* shadow/hilight mode? */											\
-		if (color == 1024 + (0x3f << 4))									\
-			dest[x] += (paletteram16[dest[x]] & 0x8000) ? 4096 : 2048;		\
+		/* are we high enough priority to be visible? */					\
+		if (sprpri > pri[x])												\
+		{																	\
+			/* shadow/hilight mode? */										\
+			if (color == 1024 + (0x3f << 4))								\
+				dest[x] += (paletteram16[dest[x]] & 0x8000) ? 4096 : 2048;	\
 																			\
-		/* regular draw */													\
-		else																\
-			dest[x] = pix | color;											\
+			/* regular draw */												\
+			else															\
+				dest[x] = pix | color;										\
+		}																	\
 																			\
 		/* always mark priority so no one else draws here */				\
 		pri[x] = 0xff;														\
 	}																		\
-
 
 static void draw_one_sprite(struct mame_bitmap *bitmap, const struct rectangle *cliprect, UINT16 *data)
 {
@@ -433,7 +442,7 @@ static void draw_one_sprite(struct mame_bitmap *bitmap, const struct rectangle *
 	/* if hidden, or top greater than/equal to bottom, or invalid bank, punt */
 	if (hide || (top >= bottom) || bank == 255)
 		return;
-
+	
 	/* clamp to within the memory region size */
 	numbanks = memory_region_length(REGION_GFX2) / 0x20000;
 	if (numbanks)
@@ -551,7 +560,7 @@ static void draw_vdp(struct mame_bitmap *bitmap, const struct rectangle *cliprec
 	{
 		UINT16 *src = (UINT16 *)tempbitmap->line[y];
 		UINT16 *dst = (UINT16 *)bitmap->line[y];
-//		UINT8 *pri = (UINT8 *)priority_bitmap->line[y];
+		UINT8 *pri = (UINT8 *)priority_bitmap->line[y];
 
 		for (x = cliprect->min_x; x <= cliprect->max_x; x++)
 		{
@@ -559,8 +568,7 @@ static void draw_vdp(struct mame_bitmap *bitmap, const struct rectangle *cliprec
 			if (pix != 0xffff)
 			{
 				dst[x] = pix;
-/* if I enable this, the van goes behind the blobs at the start of Alien Storm */
-//				pri[x] |= priority;
+				pri[x] |= priority;
 			}
 		}
 	}
@@ -576,6 +584,74 @@ static void draw_vdp(struct mame_bitmap *bitmap, const struct rectangle *cliprec
 
 VIDEO_UPDATE( system18 )
 {
+	int vdppri = 0x00;
+	int vdplayer = 0;
+	
+	switch (vdp_mixing)
+	{
+		case 0x00:
+			/* astorm: layer = 0, pri = 0x00 or 0x01 */
+			/* lghost: layer = 0, pri = 0x00 or 0x01 */
+			vdplayer = 0;
+			vdppri = 0x01;
+			break;
+			
+		case 0x01:
+			/* ddcrew: layer = 0, pri = 0x00 or 0x01 or 0x02 or 0x04 */
+			vdplayer = 0;
+			vdppri = 0x04;
+			break;
+			
+		case 0x02:
+			/* never seen */
+			break;
+			
+		case 0x03:
+			/* ddcrew: layer = 1, pri = 0x00 or 0x01 or 0x02 */
+			vdplayer = 1;
+			vdppri = 0x02;
+			break;
+			
+		case 0x04:
+			/* astorm: layer = 2 or 3, pri = 0x00 or 0x01 or 0x02 */
+			/* mwalk: layer = 2 or 3, pri = 0x00 or 0x01 or 0x02 */
+			vdplayer = 2;
+			vdppri = 0x02;
+			break;
+			
+		case 0x05:
+			/* ddcrew: layer = 2, pri = 0x04 */
+			/* wwally: layer = 2, pri = 0x04 */
+			vdplayer = 2;
+			vdppri = 0x04;
+			break;
+			
+		case 0x06:
+			/* never seen */
+			break;
+			
+		case 0x07:
+			/* cltchitr: layer = 1 or 2 or 3, pri = 0x02 or 0x04 or 0x08 */
+			vdplayer = 3;
+			vdppri = 0x02;
+			break;
+	}
+
+#if DEBUG_VDP
+	if (code_pressed(KEYCODE_Q)) vdplayer = 0;
+	if (code_pressed(KEYCODE_W)) vdplayer = 1;
+	if (code_pressed(KEYCODE_E)) vdplayer = 2;
+	if (code_pressed(KEYCODE_R)) vdplayer = 3;
+	if (code_pressed(KEYCODE_T)) vdplayer = 4;
+	if (code_pressed(KEYCODE_Y)) vdplayer = 5;
+	if (code_pressed(KEYCODE_U)) vdplayer = 6;
+	if (code_pressed(KEYCODE_A)) vdppri = 0x00;
+	if (code_pressed(KEYCODE_S)) vdppri = 0x01;
+	if (code_pressed(KEYCODE_D)) vdppri = 0x02;
+	if (code_pressed(KEYCODE_F)) vdppri = 0x04;
+	if (code_pressed(KEYCODE_G)) vdppri = 0x08;
+#endif
+	
 	/* if no drawing is happening, fill with black and get out */
 	if (!draw_enable)
 	{
@@ -593,33 +669,37 @@ VIDEO_UPDATE( system18 )
 	/* draw background opaquely first, not setting any priorities */
 	draw_layer(bitmap, cliprect, 1, 0 | TILEMAP_IGNORE_TRANSPARENCY, 0x00);
 	draw_layer(bitmap, cliprect, 1, 1 | TILEMAP_IGNORE_TRANSPARENCY, 0x00);
-	if (vdp_enable && vdp_mixing == 0x00) draw_vdp(bitmap, cliprect, 0x01);
+	if (vdp_enable && vdplayer == 0) draw_vdp(bitmap, cliprect, vdppri);
 
 	/* draw background again to draw non-transparent pixels over the VDP and set the priority */
 	draw_layer(bitmap, cliprect, 1, 0, 0x01);
-	if (vdp_enable && vdp_mixing == 0x01) draw_vdp(bitmap, cliprect, 0x01);
 	draw_layer(bitmap, cliprect, 1, 1, 0x02);
-	if (vdp_enable && vdp_mixing == 0x02) draw_vdp(bitmap, cliprect, 0x02);
+	if (vdp_enable && vdplayer == 1) draw_vdp(bitmap, cliprect, vdppri);
 
 	/* draw foreground */
 	draw_layer(bitmap, cliprect, 0, 0, 0x02);
-	if (vdp_enable && vdp_mixing == 0x03) draw_vdp(bitmap, cliprect, 0x02);
 	draw_layer(bitmap, cliprect, 0, 1, 0x04);
-	if (vdp_enable && vdp_mixing == 0x04) draw_vdp(bitmap, cliprect, 0x04);
+	if (vdp_enable && vdplayer == 2) draw_vdp(bitmap, cliprect, vdppri);
 
 	/* text layer */
 	tilemap_draw(bitmap, cliprect, textmap, 0, 0x04);
-	if (vdp_enable && vdp_mixing == 0x05) draw_vdp(bitmap, cliprect, 0x04);
 	tilemap_draw(bitmap, cliprect, textmap, 1, 0x08);
-	if (vdp_enable && vdp_mixing == 0x06) draw_vdp(bitmap, cliprect, 0x08);
+	if (vdp_enable && vdplayer == 3) draw_vdp(bitmap, cliprect, vdppri);
 
 	/* draw the sprites */
 	draw_sprites(bitmap, cliprect);
-	if (vdp_enable && vdp_mixing == 0x07) draw_vdp(bitmap, cliprect, 0x08);
 
-if (vdp_enable && code_pressed(KEYCODE_V))
-{
-	fillbitmap(bitmap, get_black_pen(), cliprect);
-	update_system18_vdp(bitmap, cliprect);
-}
+#if DEBUG_VDP
+	if (vdp_enable && code_pressed(KEYCODE_V))
+	{
+		fillbitmap(bitmap, get_black_pen(), cliprect);
+		update_system18_vdp(bitmap, cliprect);
+	}
+	if (vdp_enable && code_pressed(KEYCODE_B))
+	{
+		FILE *f = fopen("vdp.bin", "w");
+		fwrite(tempbitmap->line[0], 1, ((UINT8 *)tempbitmap->line[1] - (UINT8 *)tempbitmap->line[0]) * tempbitmap->height, f);
+		fclose(f);
+	}
+#endif
 }

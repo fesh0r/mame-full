@@ -2547,6 +2547,7 @@ V-V                           TP-027
 	DRIVER( cryptklr )	/* Crypt Killer (GQ420 UAA) */
 
 	/* Konami GV */
+	DRIVER( kdeadeye )	/* GV... */
 	DRIVER( pbball96 )	/* GV017, Japan 1.03 */
 	DRIVER( hyperath )	/* GV021, Japan 1.00 */
 	DRIVER( susume )	/* GV027, Japan 1.20 */
@@ -2884,6 +2885,7 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( auraila )	/* (c) 1990 Sega / Westone (protected) */
 	DRIVER( bayroute )	/* (c) 1989 Sunsoft / Sega */
 	DRIVER( bayrouta )	/* (c) 1989 (protected) */
+	DRIVER( bayroutb )	/* (c) 1989 */
 	DRIVER( bayrtbl1 )	/* (c) 1989 (protected) (bootleg) */
 	DRIVER( bayrtbl2 )	/* (c) 1989 (protected) (bootleg) */
 	DRIVER( bodyslam )	/* (c) 1986 */
@@ -2961,6 +2963,7 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( lghost )	/* (protected) */
 	DRIVER( lghosta )   /* (protected) */
 	DRIVER( wwally )	/* (protected) */
+	DRIVER( wwallyb )	/* (protected) */
 
 	/* Outrun Hardware */
 	DRIVER( outrun )	/* (c) 1986 (bootleg)*/
@@ -2989,6 +2992,7 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( smgpb )
 	DRIVER( smgpc )
 	DRIVER( smgpd )
+	DRIVER( smgpe )
 
 	/* Y-Board */
 	DRIVER( gforce2 )
@@ -3033,6 +3037,7 @@ Sep.1994 Quiz Ghost Hunter
 	DRIVER( sgmast )
 	DRIVER( sgmastc )
 	DRIVER( sspirtfc )
+	DRIVER( sspirtf )
 	DRIVER( qsww )
 	DRIVER( gground )
 	DRIVER( crkdown )
@@ -3182,12 +3187,38 @@ Sep.1994 Quiz Ghost Hunter
 	DRIVER( topskatr )	/* 1997 */
 	DRIVER( bel )		/* 1998 */
 
+	/* Sega Model 3 Games */
+
+	/* Step 1.0 */
+	DRIVER( vf3 )
+	DRIVER( vf3tb )
+
+	/* Step 1.5 */
+	DRIVER( scud )
+	DRIVER( lostwsga )
+	DRIVER( vs215 )
+	DRIVER( vs29815 )
+
+	/* Step 2.0 */
+	DRIVER( vs2 )
+	DRIVER( harley )
+	DRIVER( srally2 )
+	DRIVER( von2 )
+	DRIVER( vs298 )
+	DRIVER( vs2v991 )
+
+	/* Step 2.1 */
+	DRIVER( swtrilgy )
+
+
 	/* Deniam games */
 	/* they run on Sega System 16 video hardware */
 	DRIVER( logicpro )	/* (c) 1996 Deniam */
 	DRIVER( croquis )	/* (c) 1996 Deniam (Germany) */
 	DRIVER( karianx )	/* (c) 1996 Deniam */
 	DRIVER( logicpr2 )	/* (c) 1997 Deniam (Japan) */
+
+
 /*
 Deniam is a Korean company (http://deniam.co.kr).
 

@@ -10,12 +10,15 @@
 
 WRITE8_HANDLER( frogs_sh_port2_w );
 
-#ifndef FROGS_USE_SAMPLES
+#if FROGS_USE_SAMPLES
 
-extern struct discrete_sound_block frogs_discrete_interface[];
+mame_timer *croak_timer;
+void croak_callback(int param);
+
+extern struct Samplesinterface frogs_samples_interface;
 
 #else
 
-extern struct Samplesinterface frogs_samples_interface;
+extern struct discrete_sound_block frogs_discrete_interface[];
 
 #endif

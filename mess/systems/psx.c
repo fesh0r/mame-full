@@ -765,6 +765,10 @@ INPUT_PORTS_END
 static struct PSXSPUinterface psxspu_interface =
 {
 	100,
+	&g_p_n_psxram,
+	psx_irq_set,
+	psx_dma_install_read_handler,
+	psx_dma_install_write_handler
 };
 
 static MACHINE_DRIVER_START( psxntsc )
