@@ -243,9 +243,6 @@ enum
 #if (HAS_SC61860)
 	CPU_SC61860,
 #endif
-#if (HAS_ARM)
-	CPU_ARM,
-#endif
 #if (HAS_SPC700)
 	CPU_SPC700,
 #endif
@@ -265,6 +262,9 @@ enum
 #ifdef MESS
 #if (HAS_APEXC)
 	CPU_APEXC,
+#endif
+#if (HAS_ARM)
+	CPU_ARM,
 #endif
 #if (HAS_G65816)
 	CPU_G65816,

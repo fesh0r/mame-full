@@ -13,6 +13,19 @@ CPUDEFS += -DHAS_APEXC=0
 endif
 
 
+CPU=$(strip $(findstring ARM@,$(CPUS)))
+ifneq ($(CPU),)
+ARMD = mess/cpu/arm
+OBJDIRS += $(OBJ)/$(ARMD)
+CPUDEFS += -DHAS_ARM=1
+CPUOBJS += $(OBJ)/$(ARMD)/arm.o
+DBGOBJS += $(OBJ)/$(ARMD)/dasm.o
+$(OBJ)/$(ARMD)/arm.o: $(ARMD)/arm.h
+else
+CPUDEFS += -DHAS_ARM=0
+endif
+
+
 CPU=$(strip $(findstring G65816@,$(CPUS)))
 ifneq ($(CPU),)
 G6D = mess/cpu/g65816
