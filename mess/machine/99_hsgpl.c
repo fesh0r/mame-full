@@ -130,7 +130,7 @@ enum
 	feeprom_grom0 = 0,
 	feeprom_grom1 = 1,
 	feeprom_rom6  = 2,
-	feeprom_dsr   = 2
+	feeprom_dsr   = 3
 };
 
 
@@ -274,7 +274,7 @@ int ti99_hsgpl_save_memcard(void)
 }
 
 /*
-	Reset ide card, set up handlers
+	Reset hsgpl card, set up handlers
 */
 void ti99_hsgpl_init(void)
 {
@@ -565,7 +565,7 @@ READ16_HANDLER ( ti99_hsgpl_rom6_r )
 		if (hsgpl.cru_reg & cr_ramena)
 		{
 			reply = hsgpl.RAM6_ptr[1 + 2*offset + 0x2000*hsgpl.cur_bank + 0x8000*port];
-			reply = (reply << 8) | hsgpl.RAM6_ptr[2*offset + 0x2000*hsgpl.cur_bank + 0x8000*port];
+			reply |= hsgpl.RAM6_ptr[2*offset + 0x2000*hsgpl.cur_bank + 0x8000*port] << 8;
 			break;
 		}
 	case 2:
@@ -583,13 +583,13 @@ READ16_HANDLER ( ti99_hsgpl_rom6_r )
 	case 14:
 	case 15:
 		reply = at29c040a_r(feeprom_rom6, 1 + 2*offset + 0x2000*hsgpl.cur_bank + 0x8000*port);
-		reply = (reply << 8) | at29c040a_r(feeprom_rom6, 2*offset + 0x2000*hsgpl.cur_bank + 0x8000*port);
+		reply |= at29c040a_r(feeprom_rom6, 2*offset + 0x2000*hsgpl.cur_bank + 0x8000*port) << 8;
 		break;
 
 	case 32:
 	case 33:
 		reply = hsgpl.RAM6_ptr[1 + 2*offset + 0x2000*hsgpl.cur_bank + 0x8000*(port-32)];
-		reply = (reply << 8) | hsgpl.RAM6_ptr[2*offset + 0x2000*hsgpl.cur_bank + 0x8000*(port-32)];
+		reply |= hsgpl.RAM6_ptr[2*offset + 0x2000*hsgpl.cur_bank + 0x8000*(port-32)] << 8;
 		break;
 
 	default:
@@ -608,7 +608,7 @@ WRITE16_HANDLER ( ti99_hsgpl_rom6_w )
 {
 	int port = hsgpl.cur_port;
 
-	if (! hsgpl.cru_reg & cr_bnkinh)
+	if (! (hsgpl.cru_reg & cr_bnkinh))
 	{
 		hsgpl.cur_bank = offset & 3;
 		return;		/* right??? */
@@ -616,7 +616,7 @@ WRITE16_HANDLER ( ti99_hsgpl_rom6_w )
 
 	if ((hsgpl.cru_reg & cr_mbxena) && (offset == 0x07ff) && ACCESSING_MSB16)
 	{	/* MBX: mapper at 0x6ffe */
-		hsgpl.cur_bank = data & 0x3;
+		hsgpl.cur_bank = (data >> 8) & 0x3;
 		return;
 	}
 
@@ -632,9 +632,9 @@ WRITE16_HANDLER ( ti99_hsgpl_rom6_w )
 			if (hsgpl.cru_reg & cr_ramena)
 			{
 				if (ACCESSING_LSB16)
-					hsgpl.RAM6_ptr[1 + 2*offset + 0x2000*hsgpl.cur_bank + 0x8000*port] = data >> 8;
+					hsgpl.RAM6_ptr[1 + 2*offset + 0x2000*hsgpl.cur_bank + 0x8000*port] = data;
 				if (ACCESSING_MSB16)
-					hsgpl.RAM6_ptr[2*offset + 0x2000*hsgpl.cur_bank + 0x8000*port] = data;
+					hsgpl.RAM6_ptr[2*offset + 0x2000*hsgpl.cur_bank + 0x8000*port] = data >> 8;
 				break;
 			}
 		case 2:
@@ -653,16 +653,16 @@ WRITE16_HANDLER ( ti99_hsgpl_rom6_w )
 		case 15:
 			/* feeprom is normally written to using GPL ports, and I don't know
 			writing through >6000 page is enabled */
-			/*at29c040a_w(feeprom_rom6, 1 + 2*offset + 0x2000*hsgpl.cur_bank + 0x8000*port, data >> 8);
-			at29c040a_w(feeprom_rom6, 2*offset + 0x2000*hsgpl.cur_bank + 0x8000*port, data);*/
+			/*at29c040a_w(feeprom_rom6, 1 + 2*offset + 0x2000*hsgpl.cur_bank + 0x8000*port, data);
+			at29c040a_w(feeprom_rom6, 2*offset + 0x2000*hsgpl.cur_bank + 0x8000*port, data >> 8);*/
 			break;
 
 		case 32:
 		case 33:
 			if (ACCESSING_LSB16)
-				hsgpl.RAM6_ptr[1 + 2*offset + 0x2000*hsgpl.cur_bank + 0x8000*(port-32)] = data >> 8;
+				hsgpl.RAM6_ptr[1 + 2*offset + 0x2000*hsgpl.cur_bank + 0x8000*(port-32)] = data;
 			if (ACCESSING_MSB16)
-				hsgpl.RAM6_ptr[2*offset + 0x2000*hsgpl.cur_bank + 0x8000*(port-32)] = data;
+				hsgpl.RAM6_ptr[2*offset + 0x2000*hsgpl.cur_bank + 0x8000*(port-32)] = data >> 8;
 			break;
 
 		default:
