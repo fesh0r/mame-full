@@ -811,6 +811,7 @@ void CreateCPUFolders(int parent_index)
 	LPTREEFOLDER lpFolder = treeFolders[parent_index];
 	LPTREEFOLDER map[CPU_COUNT];
 
+	ZeroMemory(map, sizeof(map));
 	cpuintrf_init();
 
 	// no games in top level folder

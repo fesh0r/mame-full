@@ -217,7 +217,6 @@ sprites invisible at the end of a round in rabbit, why?
 
 static void rabbit_drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
-	/* end of list missing? (or clear every frame like now?) .. global sprite zoom needs adding (render to bitmap then zoom it?) */
 	int xpos,ypos,tileno,xflip,yflip, colr;
 	const struct GfxElement *gfx = Machine->gfx[1];
 	int todraw = (rabbit_spriteregs[5]&0x0fff0000)>>16; // how many sprites to draw (start/end reg..) what is the other half?
@@ -833,26 +832,19 @@ static ADDRESS_MAP_START( tmmjprd_writemem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0xf00000, 0xffffff) AM_WRITE(MWA32_RAM)
 ADDRESS_MAP_END
 
+/* bit 1 is unlabeled in input test, with Hazes old eeprom random# hookup this would be stuck on
+with hazes attempt at proper eeprom hookup this would freeze the game during startup if left on.
+with Arbee's working eeprom hookup this is stuck off */
 INPUT_PORTS_START( rabbit )
 	PORT_START	/* 16bit */
-	PORT_DIPNAME( 0x0001, 0x0001, "0" )
-	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_UNKNOWN ) // unlabeled in test mode eeprom related?
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_UNKNOWN ) // unlabeled in input test
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_SERVICE( 0x0020, IP_ACTIVE_LOW )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1)
 	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(1)

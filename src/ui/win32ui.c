@@ -215,6 +215,7 @@ typedef struct tagLVBKIMAGEW
 
 #define JOYGUI_TIMER 1
 #define SCREENSHOT_TIMER 2
+#define GAMEWND_TIMER 3
 
 /* Max size of a sub-menu */
 #define DBU_MIN_WIDTH  292
@@ -361,11 +362,18 @@ BOOL MouseHasBeenMoved(void);
 void SwitchFullScreenMode(void);
 
 // Game Window Communication Functions
+#if MULTISESSION
+BOOL SendMessageToEmulationWindow(UINT Msg, WPARAM wParam, LPARAM lParam);
+BOOL SendIconToEmulationWindow(int nGameIndex);
+HWND GetGameWindow(void);
+#else
 void SendMessageToProcess(LPPROCESS_INFORMATION lpProcessInformation,
 						  UINT Msg, WPARAM wParam, LPARAM lParam);
-static BOOL CALLBACK EnumWindowCallBack(HWND hwnd, LPARAM lParam);
 void SendIconToProcess(LPPROCESS_INFORMATION lpProcessInformation, int nGameIndex);
 HWND GetGameWindow(LPPROCESS_INFORMATION lpProcessInformation);
+#endif
+
+static BOOL CALLBACK EnumWindowCallBack(HWND hwnd, LPARAM lParam);
 /***************************************************************************
     External variables
  ***************************************************************************/
@@ -1045,9 +1053,12 @@ static int RunMAME(int nGameIndex)
 	ShowWindow(hMain, SW_HIDE);
 
 	time(&start);
+	SetTimer(hMain, GAMEWND_TIMER, 1000/*1s*/, NULL);
 	exit_code = main_(argc, (char **)argv);
 	time(&end);
-
+	/*This is to make sure this timer is killed, if the Game Window was not found
+	Should not happen, but you never know... */
+	KillTimer(hMain,GAMEWND_TIMER);
 	elapsedtime = end - start;
 	if (exit_code == 0)
 	{
@@ -2236,6 +2247,11 @@ static void Win32UI_exit()
 static long WINAPI MameWindowProc(HWND hWnd, UINT message, UINT wParam, LONG lParam)
 {
 	MINMAXINFO	*mminfo;
+	int nGame;
+	HWND hGameWnd;
+	long lGameWndStyle;
+
+
 	int 		i;
 	TCHAR szClass[128];
 
@@ -2312,6 +2328,22 @@ static long WINAPI MameWindowProc(HWND hWnd, UINT message, UINT wParam, LONG lPa
 			TabView_CalculateNextTab(hTabCtrl);
 			UpdateScreenShot();
 			TabView_UpdateSelection(hTabCtrl);
+			break;
+		case GAMEWND_TIMER:
+			nGame = Picker_GetSelectedItem(hwndList);
+			if( ! GetGameCaption() )
+			{
+				hGameWnd = GetGameWindow();
+				if( hGameWnd )
+				{
+					lGameWndStyle = GetWindowLong(hGameWnd, GWL_STYLE);
+					lGameWndStyle = lGameWndStyle & (WS_BORDER ^ 0xffffffff);
+					SetWindowLong(hGameWnd, GWL_STYLE, lGameWndStyle);
+					SetWindowPos(hGameWnd,0,0,0,0,0,SWP_DRAWFRAME | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER);
+				}
+			}
+			if( SendIconToEmulationWindow(nGame)== TRUE);
+				KillTimer(hMain, GAMEWND_TIMER);
 			break;
 		default:
 			break;
@@ -6426,12 +6458,12 @@ int UpdateLoadProgress(const char* name, const struct rom_load_data *romdata)
 
 	// if abort with a warning, gotta exit abruptly
 	if (name == NULL && g_bAbortLoading && romdata->errors == 0)
-		exit(1);
+		return 1;
 
 	// if abort along the way, tell 'em
 	if (g_bAbortLoading && name != NULL)
 	{
-		exit(1);
+		return 1;
 	}
 
 	return 0;
@@ -6890,6 +6922,98 @@ BOOL MouseHasBeenMoved(void)
 	return (p.x != mouse_x || p.y != mouse_y);       
 }
 
+/*
+	The following two functions enable us to send Messages to the Game Window
+*/
+#if MULTISESSION
+
+BOOL SendIconToEmulationWindow(int nGameIndex)
+{
+	HICON hIcon; 
+	hIcon = LoadIconFromFile(drivers[nGameIndex]->name); 
+	if( hIcon == NULL ) 
+	{ 
+		//Check if clone, if so try parent icon first 
+		if( DriverIsClone(nGameIndex) ) 
+		{ 
+			hIcon = LoadIconFromFile(drivers[nGameIndex]->clone_of->name); 
+			if( hIcon == NULL) 
+			{ 
+				hIcon = LoadIcon(hInst, MAKEINTRESOURCE(IDI_MAME32_ICON)); 
+			} 
+		} 
+		else 
+		{ 
+			hIcon = LoadIcon(hInst, MAKEINTRESOURCE(IDI_MAME32_ICON)); 
+		} 
+	} 
+	if( SendMessageToEmulationWindow( WM_SETICON, ICON_SMALL, (LPARAM)hIcon ) == FALSE)
+		return FALSE;
+	if( SendMessageToEmulationWindow( WM_SETICON, ICON_BIG, (LPARAM)hIcon ) == FALSE)
+		return FALSE;
+	return TRUE;
+}
+
+BOOL SendMessageToEmulationWindow(UINT Msg, WPARAM wParam, LPARAM lParam)
+{
+	FINDWINDOWHANDLE fwhs;
+	fwhs.ProcessInfo = NULL;
+	fwhs.hwndFound  = NULL;
+
+	EnumWindows(EnumWindowCallBack, (LPARAM)&fwhs);
+	if( fwhs.hwndFound )
+	{
+		SendMessage(fwhs.hwndFound, Msg, wParam, lParam);
+		//Fix for loosing Focus, we reset the Focus on our own Main window
+		SendMessage(fwhs.hwndFound, WM_KILLFOCUS,(WPARAM) hMain, (LPARAM) NULL);
+		return TRUE;
+	}
+	return FALSE;
+}
+
+
+static BOOL CALLBACK EnumWindowCallBack(HWND hwnd, LPARAM lParam) 
+{ 
+	FINDWINDOWHANDLE * pfwhs = (FINDWINDOWHANDLE * )lParam; 
+	DWORD ProcessId, ProcessIdGUI; 
+	char buffer[MAX_PATH]; 
+
+	GetWindowThreadProcessId(hwnd, &ProcessId);
+	GetWindowThreadProcessId(hMain, &ProcessIdGUI);
+
+	// cmk--I'm not sure I believe this note is necessary
+	// note: In order to make sure we have the MainFrame, verify that the title 
+	// has Zero-Length. Under Windows 98, sometimes the Client Window ( which doesn't 
+	// have a title ) is enumerated before the MainFrame 
+
+	GetWindowText(hwnd, buffer, sizeof(buffer));
+	if (ProcessId  == ProcessIdGUI &&
+		 strncmp(buffer,MAMENAME,strlen(MAMENAME)) == 0 &&
+		 hwnd != hMain) 
+	{ 
+		pfwhs->hwndFound = hwnd; 
+		return FALSE; 
+	} 
+	else 
+	{ 
+		// Keep enumerating 
+		return TRUE; 
+	} 
+}
+
+HWND GetGameWindow(void)
+{
+	FINDWINDOWHANDLE fwhs;
+	fwhs.ProcessInfo = NULL;
+	fwhs.hwndFound  = NULL;
+
+	EnumWindows(EnumWindowCallBack, (LPARAM)&fwhs);
+	return fwhs.hwndFound;
+}
+
+
+#else
+
 void SendIconToProcess(LPPROCESS_INFORMATION pi, int nGameIndex)
 {
 	HICON hIcon;
@@ -6914,9 +7038,6 @@ void SendIconToProcess(LPPROCESS_INFORMATION pi, int nGameIndex)
 	SendMessageToProcess( pi, WM_SETICON, ICON_SMALL, (LPARAM)hIcon );
 	SendMessageToProcess( pi, WM_SETICON, ICON_BIG, (LPARAM)hIcon );
 }
-/*
-	The following two functions enable us to send Messages to the Game Window
-*/
 
 void SendMessageToProcess(LPPROCESS_INFORMATION lpProcessInformation, 
                                       UINT Msg, WPARAM wParam, LPARAM lParam)
@@ -6968,4 +7089,7 @@ HWND GetGameWindow(LPPROCESS_INFORMATION lpProcessInformation)
 	EnumWindows(EnumWindowCallBack, (LPARAM)&fwhs);
 	return fwhs.hwndFound;
 }
+
+#endif
+
 /* End of source file */

@@ -36,7 +36,7 @@ Imgtool Changes:
 
 Source Changes:
 ----------------
-- The core is based on MAME 0.86u4.  This incorporates all features of the
+- The core is based on MAME 0.86u5.  This incorporates all features of the
   update to this core.  [MAME team]
 
 - Major changes to the IODevice structure; made major changes to how they are

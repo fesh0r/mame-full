@@ -1006,6 +1006,7 @@ $(OBJ)/yunsung.a: \
 	$(OBJ)/vidhrdw/paradise.o $(OBJ)/drivers/paradise.o \
 	$(OBJ)/vidhrdw/yunsung8.o $(OBJ)/drivers/yunsung8.o \
 	$(OBJ)/vidhrdw/yunsun16.o $(OBJ)/drivers/yunsun16.o \
+	$(OBJ)/drivers/nmg5.o \
 
 $(OBJ)/zilec.a: \
 	$(OBJ)/vidhrdw/blueprnt.o $(OBJ)/drivers/blueprnt.o \

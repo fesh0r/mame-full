@@ -253,6 +253,8 @@ static const struct F3config f3_config_table[] =
 	{ PBOBBLE4,  0,      0,          0,         1,          1/**/},
 	{ POPNPOP,   1,      0,        -23,         0,          1/**/},
 	{ LANDMAKR,  1,      0,        -23,         0,          1/**/},
+	{ RECALH,    1,      1,        -23,         0,          1/**/}, // not verified
+	{ COMMANDW,  1,      0,        -23,         0,          1/**/}, // not verified
 	{0}
 };
 
@@ -2964,7 +2966,7 @@ static void get_sprite_info(const data32_t *spriteram32_ptr)
 /* These games either don't set the XY control bits properly (68020 bug?), or
 	have some different mode from the others */
 #ifdef DARIUSG_KLUDGE
-		if (f3_game==DARIUSG || f3_game==GEKIRIDO || f3_game==CLEOPATR)
+		if (f3_game==DARIUSG || f3_game==GEKIRIDO || f3_game==CLEOPATR || f3_game==RECALH)
 			multi=spritecont&0xf0;
 #endif
 
@@ -2975,7 +2977,7 @@ static void get_sprite_info(const data32_t *spriteram32_ptr)
 			else color=(spriteram32_ptr[offs+2]>>16)&0xff;
 
 #ifdef DARIUSG_KLUDGE
-			if (f3_game==DARIUSG || f3_game==GEKIRIDO || f3_game==CLEOPATR) {
+			if (f3_game==DARIUSG || f3_game==GEKIRIDO || f3_game==CLEOPATR || f3_game==RECALH) {
 				/* Adjust X Position */
 				if ((spritecont & 0x40) == 0) {
 					if (spritecont & 0x4) {

@@ -113,6 +113,8 @@ static void FolderFlagsDecodeString(const char *str,void *data);
 static void TabFlagsEncodeString(void *data,char *str);
 static void TabFlagsDecodeString(const char *str,void *data);
 
+static const char * GetDefaultOptionsFilename(void);
+
 #ifdef _MSC_VER
 #define snprintf _snprintf
 #endif
@@ -3112,7 +3114,7 @@ static void LoadOptionsAndSettings(void)
 		fclose(fptr);
 	}
 
-	snprintf(buffer,sizeof(buffer),"%s\\%s",GetIniDir(),DEFAULT_OPTIONS_INI_FILENAME);
+	snprintf(buffer,sizeof(buffer),"%s\\%s",GetIniDir(),GetDefaultOptionsFilename());
 	gOpts = global;
 	if (LoadOptions(buffer,&global,TRUE))
 	{
@@ -3676,7 +3678,7 @@ void SaveDefaultOptions(void)
 	FILE *fptr;
 	char buffer[512];
 
-	snprintf(buffer,sizeof(buffer),"%s\\%s",GetIniDir(),DEFAULT_OPTIONS_INI_FILENAME);
+	snprintf(buffer,sizeof(buffer),"%s\\%s",GetIniDir(),GetDefaultOptionsFilename());
 
 	fptr = fopen(buffer,"wt");
 	if( fptr == NULL && GetLastError() == ERROR_PATH_NOT_FOUND )
@@ -3686,7 +3688,8 @@ void SaveDefaultOptions(void)
 	}
 	if (fptr != NULL)
 	{
-		fprintf(fptr,"### " DEFAULT_OPTIONS_INI_FILENAME " ###\n\n");
+		char s[_MAX_PATH];
+		snprintf(s,sizeof(s),"### %s ###\n\n",GetDefaultOptionsFilename());
 		
 		if (save_gui_settings)
 		{
@@ -3869,6 +3872,35 @@ char* GetVersionString(void)
 	return build_version;
 }
 
+static const char * GetDefaultOptionsFilename()
+{
+	static char pModule[_MAX_PATH];
+	char *ptr;
+
+	GetModuleFileName(GetModuleHandle(NULL), pModule, _MAX_PATH);
+
+	// take out the path if there is one
+	ptr = strrchr(pModule,'\\');
+	if (ptr != NULL)
+	{
+		// move length of string, minus the backslash but plus the terminating 0
+		memmove(pModule,ptr+1,strlen(ptr));
+	}
+
+	// take out the extension
+	ptr = strrchr(pModule,'.');
+	if (ptr != NULL)
+	{
+		*ptr = 0;
+	}
+
+	// add .ini
+	strcat(pModule,".ini");
+
+	//dprintf("got [%s] for ini name\n",pModule);
+
+	return pModule;
+}
 
 
 /***************************************************************************
