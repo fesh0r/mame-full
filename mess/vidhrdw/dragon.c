@@ -428,6 +428,7 @@ WRITE_HANDLER(coco3_palette_w)
 #endif
 }
 
+#if 0
 static void coco3_artifact(UINT16 *artifactcolors, UINT16 p0, UINT16 p1)
 {
 	int c1, c2, r1, r2, g1, g2, b1, b2;
@@ -447,6 +448,7 @@ static void coco3_artifact(UINT16 *artifactcolors, UINT16 p0, UINT16 p1)
 		palette_change_color(18, r1, (g1+g2)/2, b2);
 	}
 }
+#endif
 
 int coco3_calculate_rows(int *bordertop, int *borderbottom)
 {
