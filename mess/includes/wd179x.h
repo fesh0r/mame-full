@@ -87,7 +87,7 @@ extern "C" {
 typedef struct {
 	void   (* callback)(int event);   /* callback for IRQ status */
 	DENSITY   density;				/* FM/MFM, single / double density */
-
+	int type;
 	UINT8	track_reg;				/* value of track register */
 	UINT8	data;					/* value of data register */
 	UINT8	command;				/* last command written */
@@ -120,7 +120,7 @@ typedef struct {
 	int		data_direction;
 }	WD179X;
 
-extern void wd179x_init(void (*callback)(int));
+extern void wd179x_init(int,void (*callback)(int));
 
 extern void wd179x_exit(void);
 
@@ -145,6 +145,10 @@ extern READ_HANDLER ( wd179x_status_r );
 extern READ_HANDLER ( wd179x_track_r );
 extern READ_HANDLER ( wd179x_sector_r );
 extern READ_HANDLER ( wd179x_data_r );
+
+#define WD_TYPE_177X	0
+#define WD_TYPE_179X	1
+
 
 #ifdef __cplusplus
 }

@@ -1988,7 +1988,7 @@ static void atarist_init_machine(void)
 	WRITE_WORD(&RAM2[6],READ_WORD(&RAM[6]));
 
 	mfp_init();
-	wd179x_init(atarist_fdc_callback);
+	wd179x_init(WD_TYPE_177X,atarist_fdc_callback);
 	ikbd_reset();
 	atarist_current_drive=-1;
 }

@@ -61,7 +61,7 @@ enum {
 
 static void coco_fdc_init(const struct cartridge_callback *callbacks)
 {
-    wd179x_init(coco_fdc_callback);
+    wd179x_init(WD_TYPE_179X,coco_fdc_callback);
 	dskreg = -1;
 	ff4b_count = 0x100;
 	nmienable = 1;
@@ -70,7 +70,7 @@ static void coco_fdc_init(const struct cartridge_callback *callbacks)
 
 static void dragon_fdc_init(const struct cartridge_callback *callbacks)
 {
-    wd179x_init(dragon_fdc_callback);
+    wd179x_init(WD_TYPE_179X,dragon_fdc_callback);
 	dskreg = -1;
 	ff4b_count = 0x100;
 	nmienable = 1;

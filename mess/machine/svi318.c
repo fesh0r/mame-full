@@ -402,7 +402,7 @@ void init_svi318 (void)
 
 #ifdef SVI_DISK
 	/* floppy */
-	wd179x_init (svi_fdc_callback);
+	wd179x_init (WD_TYPE_179X,svi_fdc_callback);
 #endif
 	}
 

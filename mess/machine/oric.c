@@ -1298,7 +1298,7 @@ void oric_init_machine (void)
 	}
 
 
-	wd179x_init(oric_wd179x_callback);
+	wd179x_init(WD_TYPE_179X,oric_wd179x_callback);
 
 	apple2_slot6_init();
 
@@ -1773,7 +1773,7 @@ void telestrat_init_machine(void)
 	via_config(1, &telestrat_via2_interface);
 	via_set_clock(1,1000000);
 
-	wd179x_init(oric_wd179x_callback);
+	wd179x_init(WD_TYPE_179X,oric_wd179x_callback);
 }
 
 void	telestrat_shutdown_machine(void)

@@ -143,7 +143,7 @@ void coupe_init_machine_common(void)
 
     coupe_update_memory();
 
-    wd179x_init(NULL);
+    wd179x_init(WD_TYPE_177X,NULL);
 }
 
 void coupe_init_machine_256(void)

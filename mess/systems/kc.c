@@ -327,7 +327,7 @@ static struct MachineDriver machine_driver_kc85_4d =
 			0, 0,	/* every scanline */
             kc85_daisy_chain
 	    },
-/*		KC_DISC_INTERFACE_CPU */
+		KC_DISC_INTERFACE_CPU 
 	},
 	50,								   /* frames per second */
 	DEFAULT_60HZ_VBLANK_DURATION,	   /* vblank duration */

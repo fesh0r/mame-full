@@ -1415,7 +1415,7 @@ void	 betadisk_init(void)
 {
 	betadisk_active = 0;
 	betadisk_status = 0x03f;
-	wd179x_init(&betadisk_wd179x_callback);
+	wd179x_init(WD_TYPE_179X,&betadisk_wd179x_callback);
 }
 
 void	betadisk_exit(void)

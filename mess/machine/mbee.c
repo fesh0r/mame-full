@@ -35,7 +35,7 @@ static void pio_interrupt(int state)
 void mbee_init_machine(void)
 {
 	z80pio_init(&pio_intf);
-    wd179x_init(mbee_fdc_callback);
+    wd179x_init(WD_TYPE_179X,mbee_fdc_callback);
 }
 
 void mbee_shutdown_machine(void)

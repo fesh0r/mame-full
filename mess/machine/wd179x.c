@@ -19,7 +19,7 @@
 #include "includes/wd179x.h"
 #include "includes/flopdrv.h"
 
-#define VERBOSE 1
+#define VERBOSE 0
 
 /* structure describing a double density track */
 #define TRKSIZE_DD		6144
@@ -70,6 +70,7 @@ static void wd179x_clear_data_request(void);
 static void wd179x_set_data_request(void);
 static void wd179x_timed_data_request(void);
 static void wd179x_set_irq(WD179X *);
+static void *busy_timer = NULL;
 
 /* one wd controlling multiple drives */
 static WD179X wd;
@@ -107,13 +108,35 @@ void wd179x_set_density(DENSITY density)
 }
 
 
+static void	wd179x_busy_callback(int dummy)
+{
+	WD179X *w = (WD179X *)dummy;
+
+	wd179x_set_irq(w);			
+	timer_reset(busy_timer, TIME_NEVER);
+}
+
+static void wd179x_set_busy(WD179X *w, double milliseconds)
+{
+	if (busy_timer)
+	{
+		timer_remove(busy_timer);
+	}
+	w->status |= STA_1_BUSY;
+	busy_timer = timer_set(TIME_IN_MSEC(milliseconds), (int)w, wd179x_busy_callback);
+}
+
+
+
 /* BUSY COUNT DOESN'T WORK PROPERLY! */
 
 static void wd179x_restore(WD179X *w)
 {
 		UINT8 step_counter = 255;
 		
+#if 0
 		w->status |= STA_1_BUSY;
+#endif
 
 		/* setup step direction */
 		w->direction = -1;
@@ -134,12 +157,15 @@ static void wd179x_restore(WD179X *w)
 
 		/* update track reg */
 		w->track_reg = 0;
-
+#if 0
 		/* simulate seek time busy signal */
 		w->busy_count = 0;	//w->busy_count * ((w->data & FDC_STEP_RATE) + 1);
 	
 		/* when command completes set irq */
 		wd179x_set_irq(w);
+#endif
+		wd179x_set_busy(w,0.1);
+
 }
 
 void	wd179x_reset(void)
@@ -148,14 +174,15 @@ void	wd179x_reset(void)
 }
 
 
-void wd179x_init(void (*callback)(int))
+void wd179x_init(int type,void (*callback)(int))
 {
 	memset(&wd, 0, sizeof(WD179X));
 	wd.status = STA_1_TRACK0;
-
+	wd.type = type;
 	wd.callback = callback;
 //	wd.status_ipl = STA_1_IPL;
 	wd.density = DEN_MFM_LO;
+	busy_timer = NULL;
 
 	wd179x_reset();
 
@@ -348,6 +375,12 @@ static void read_track(WD179X * w)
 void	wd179x_exit(void)
 {
 	WD179X *w = &wd;
+
+	if (busy_timer!=NULL)
+	{
+		timer_remove(busy_timer);
+		busy_timer = NULL;
+	}
 
 	if (w->timer!=NULL)
 	{
@@ -712,11 +745,18 @@ READ_HANDLER ( wd179x_status_r )
 
 	//	floppy_drive_set_ready_state(drv, 1,1);
 		w->status &= ~STA_1_NOT_READY;
-		if (!floppy_drive_get_flag_state(drv, FLOPPY_DRIVE_READY))
-			w->status |= STA_1_NOT_READY;
-
+		
+		if (w->type == WD_TYPE_179X)
+		{
+			if (!floppy_drive_get_flag_state(drv, FLOPPY_DRIVE_READY))
+				w->status |= STA_1_NOT_READY;
+		}
+		else
+		{
+			if (floppy_drive_get_flag_state(drv, FLOPPY_DRIVE_READY))
+				w->status |= STA_1_NOT_READY;
+		}
 	}
-	
 	
 	/* eventually set data request bit */
 //	w->status |= w->status_drq;
@@ -769,7 +809,7 @@ READ_HANDLER ( wd179x_data_r )
 		logerror("wd179x_data_r: $%02X (data_count %d)\n", w->data, w->data_count);
 #endif
 		/* any bytes remaining? */
-		if (--w->data_count < 0)
+		if (--w->data_count < 1)
 		{
 			/* no */
 			w->data_offset = 0;
@@ -1052,8 +1092,11 @@ WRITE_HANDLER ( wd179x_command_w )
 
 		/* simulate seek time busy signal */
 		w->busy_count = 0;	//w->busy_count * ((data & FDC_STEP_RATE) + 1);
-
+#if 0
 		wd179x_set_irq(w);
+#endif
+		wd179x_set_busy(w,0.1);
+
 	}
 
 	if ((data & ~(FDC_STEP_UPDATE | FDC_MASK_TYPE_I)) == FDC_STEP)
@@ -1071,7 +1114,12 @@ WRITE_HANDLER ( wd179x_command_w )
 		if (data & FDC_STEP_UPDATE)
 			w->track_reg += w->direction;
 
+#if 0
 		wd179x_set_irq(w);
+#endif
+		wd179x_set_busy(w,0.1);
+
+
 	}
 
 	if ((data & ~(FDC_STEP_UPDATE | FDC_MASK_TYPE_I)) == FDC_STEP_IN)
@@ -1088,8 +1136,11 @@ WRITE_HANDLER ( wd179x_command_w )
 
 		if (data & FDC_STEP_UPDATE)
 			w->track_reg += w->direction;
-
+#if 0
 		wd179x_set_irq(w);
+#endif
+		wd179x_set_busy(w,0.1);
+
 	}
 
 	if ((data & ~(FDC_STEP_UPDATE | FDC_MASK_TYPE_I)) == FDC_STEP_OUT)
@@ -1108,7 +1159,10 @@ WRITE_HANDLER ( wd179x_command_w )
 		if (data & FDC_STEP_UPDATE)
 			w->track_reg += w->direction;
 
+#if 0
 		wd179x_set_irq(w);
+#endif
+		wd179x_set_busy(w,0.1);
 	}
 
 //	if (w->busy_count==0)
@@ -1166,7 +1220,7 @@ WRITE_HANDLER ( wd179x_data_w )
 	
 		w->buffer[w->data_offset++] = data;
 		
-		if (--w->data_count <= 0)
+		if (--w->data_count < 1)
 		{
 			w->data_offset = 0;
 

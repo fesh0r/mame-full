@@ -265,7 +265,7 @@ void cgenie_init_machine(void)
 	/* wipe out font RAM */
 	memset(&ROM[0x0f400], 0xff, 0x0400);
 
-	wd179x_init(cgenie_fdc_callback);
+	wd179x_init(WD_TYPE_179X,cgenie_fdc_callback);
 
 	if( readinputport(0) & 0x80 )
 	{

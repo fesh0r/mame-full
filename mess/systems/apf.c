@@ -372,7 +372,7 @@ void apf_imagination_stop_machine(void)
 {
 	apf_common_exit();
 
-	wd179x_init(NULL);
+	wd179x_init(WD_TYPE_179X,NULL);
 }
 
 void apf_m1000_init_machine(void)

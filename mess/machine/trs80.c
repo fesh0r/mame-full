@@ -352,7 +352,7 @@ static void trs80_fdc_callback(int);
 
 void trs80_init_machine(void)
 {
-	wd179x_init(trs80_fdc_callback);
+	wd179x_init(WD_TYPE_179X,trs80_fdc_callback);
 
 	if (cas_size)
 	{

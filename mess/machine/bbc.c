@@ -916,7 +916,7 @@ void init_machine_bbcb1770(void)
 	uPD7002_config(&BBC_uPD7002);
 
 	previous_wd179x_int_state=1;
-    wd179x_init(bbc_wd179x_callback);
+    wd179x_init(WD_TYPE_177X,bbc_wd179x_callback);
     wd179x_reset();
 }
 
@@ -951,7 +951,7 @@ void init_machine_bbcbp(void)
 	uPD7002_config(&BBC_uPD7002);
 
 	previous_wd179x_int_state=1;
-    wd179x_init(bbc_wd179x_callback);
+    wd179x_init(WD_TYPE_177X,bbc_wd179x_callback);
     wd179x_reset();
 }
 

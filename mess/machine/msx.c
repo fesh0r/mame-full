@@ -570,7 +570,7 @@ void init_msx (void)
     {
     int i,n;
 
-	wd179x_init (msx_wd179x_int);
+	wd179x_init (WD_TYPE_179X,msx_wd179x_int);
 	wd179x_set_density (DEN_FM_HI);
 	msx1.dsk_stat = 0x7f;
 

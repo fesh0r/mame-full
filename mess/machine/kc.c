@@ -204,9 +204,12 @@ WRITE_HANDLER(kc85_disc_interface_ram_w)
 {
 	int addr;
 
+
 	/* bits 1,0 of i/o address define 256 byte block to access.
 	bits 15-8 define the byte offset in the 256 byte block selected */
 	addr = ((offset & 0x03)<<8) | ((offset>>8) & 0x0ff);
+
+	logerror("interface ram w: %04x %02x\n",addr,data);
 
 	cpu_writemem16(addr|0x0f000,data);
 }
@@ -215,7 +218,10 @@ READ_HANDLER(kc85_disc_interface_ram_r)
 {
 	int addr;
 
+
 	addr = ((offset & 0x03)<<8) | ((offset>>8) & 0x0ff);
+
+	logerror("interface ram r: %04x\n",addr);
 
 	return cpu_readmem16(addr|0x0f000);
 }
@@ -223,7 +229,7 @@ READ_HANDLER(kc85_disc_interface_ram_r)
 /* 4-bit latch used to reset disc interface etc */
 WRITE_HANDLER(kc85_disc_interface_latch_w)
 {
-
+	logerror("kc85 disc interface latch w\n");
 
 }
 
@@ -272,7 +278,7 @@ void	kc_disc_interface_init(void)
 	nec765_init(&kc_fdc_interface,NEC765A);
 
 	/* reset ctc */
-	/*z80ctc_reset(1); */
+	z80ctc_reset(1); 
 
 	/* hold cpu at reset */
 	cpu_set_reset_line(1,ASSERT_LINE);

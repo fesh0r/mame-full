@@ -283,7 +283,7 @@ void sord_m5_init_machine(void)
 	
 	video_timer = timer_pulse(TIME_IN_MSEC(16.7), 0, video_timer_callback);
 
-	wd179x_init(NULL);
+	wd179x_init(WD_TYPE_179X,NULL);
 	TMS9928A_reset ();
 	z80ctc_reset(0);
 

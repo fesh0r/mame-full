@@ -245,7 +245,7 @@ void Enterprise_Initialise()
 
 	cpu_irq_line_vector_w(0,0,0x0ff);
 
-	wd179x_init(enterp_wd177x_callback);
+	wd179x_init(WD_TYPE_177X,enterp_wd177x_callback);
 
 	floppy_drive_set_geometry(0, FLOPPY_DRIVE_DS_80);
 }
@@ -558,6 +558,17 @@ INPUT_PORTS_START( ep128 )
 
 INPUT_PORTS_END
 
+int	enterprise_dsk_floppy_init(int id)
+{
+	 if (device_filename(IO_FLOPPY,id)==NULL)
+		 return INIT_PASS;
+
+
+	 return dsk_floppy_load(id);
+ }
+
+
+
 static struct CustomSound_interface dave_custom_sound=
 {
 	Dave_sh_start,
@@ -633,6 +644,7 @@ ROM_END
 #define io_ep128a io_ep128
 
 static const struct IODevice io_ep128[] = {
+#if 0
 	{
 		IO_FLOPPY,				/* type */
 		4,						/* count */
@@ -652,14 +664,14 @@ static const struct IODevice io_ep128[] = {
 		NULL,					/* input_chunk */
 		NULL					/* output_chunk */
 	},
-#if 0
+#endif
 	{
 		IO_FLOPPY,					/* type */
 		4,							/* count */
 		"dsk\0",                    /* file extensions */
 		IO_RESET_NONE,				/* reset if file changed */
 		0,
-		dsk_floppy_load,			/* init */
+		enterprise_dsk_floppy_init,			/* init */
 		dsk_floppy_exit,			/* exit */
 		NULL,						/* info */
 		NULL,						/* open */
@@ -672,8 +684,7 @@ static const struct IODevice io_ep128[] = {
 		NULL,						/* input_chunk */
 		NULL						/* output_chunk */
 	},
-#endif
-		{ IO_END }
+	{ IO_END }
 };
 
 /***************************************************************************
