@@ -1148,7 +1148,9 @@ static int ti99_R9901_0(int offset)
 
 	signification:
 	 bit 0-2: keyboard status bits 5 to 7
-	 bit 3-7: weird, not emulated
+	 bit 3: weird, not emulated
+	 bit 4: IR handset interrupt (not emulated)
+	 bit 5-7: weird, not emulated
 */
 static int ti99_R9901_1(int offset)
 {
@@ -1166,13 +1168,19 @@ static int ti99_R9901_1(int offset)
 
 /*
 	Read pins P8-P15 of TI99's 9901.
+
+	 bit 26: IR handset interrupt (not emulated)
+	 bit 27: tape input
 */
 static int ti99_R9901_3(int offset)
 {
-	/*only important bit: bit 27: tape input */
+	int answer = 4;	/* pull on IR handset interrupt to avoid spurious interrupts */
 
 	/* we don't take CS2 into account, as CS2 is a write-only unit */
-	return device_input(IO_CASSETTE, 0) > 0 ? 8 : 0;
+	if (device_input(IO_CASSETTE, 0) > 0)
+		answer |= 8;
+
+	return answer;
 }
 
 
