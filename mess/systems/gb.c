@@ -21,8 +21,8 @@ Priority:  Todo:                                                  Done:
   2        Fix / optimise halt instruction                          *
   2        Do correct lcd stat timing                               In Progress
   2        Generate lcd stat interrupts                             *
-  2        Replace Marat's code in machine/gb.c by Playboy code
-  1        Check, and fix if needed flags bug which troubles ffa
+  2        Replace Marat's code in machine/gb.c by Playboy code     ?
+  1        Check, and fix if needed flags bug which troubles ffa    ?
   1        Save/restore battery backed ram                          *
   1        Add sound                                                In Progress
   0        Add supergb support
@@ -41,27 +41,27 @@ Priority:  Todo:                                                  Done:
 #include "includes/gb.h"
 
 static MEMORY_READ_START (readmem)
-	{ 0x0000, 0x3fff, MRA_ROM },			/* 16k fixed ROM BANK #0*/
+	{ 0x0000, 0x3fff, MRA_ROM },			/* 16k fixed ROM bank */
 	{ 0x4000, 0x7fff, MRA_BANK1 },			/* 16k switched ROM bank */
-	{ 0x8000, 0x9fff, MRA_RAM },			/* 8k video ram */
+	{ 0x8000, 0x9fff, MRA_RAM },			/* 8k video RAM */
 	{ 0xa000, 0xbfff, MRA_BANK2 },			/* 8k switched RAM bank (on cartridge) */
-	{ 0xc000, 0xfe9f, MRA_RAM },			/* internal ram + echo + sprite Ram & IO */
-	{ 0xfea0, 0xfeff, MRA_NOP },			/* Unusable */
+	{ 0xc000, 0xfe9f, MRA_RAM },			/* 8k low RAM, echo RAM, OAM RAM */
+	{ 0xfea0, 0xfeff, MRA_NOP },			/* unusable */
 	{ 0xff00, 0xff7f, gb_r_io },			/* gb io */
-	{ 0xff80, 0xffff, MRA_RAM },			/* plain ram (high) */
+	{ 0xff80, 0xffff, MRA_RAM },			/* 127 bytes high RAM, interrupt enable io */
 MEMORY_END
 
 static MEMORY_WRITE_START (writemem)
-	{ 0x0000, 0x1fff, MWA_ROM },			/* plain rom (should really be RAM enable */
+	{ 0x0000, 0x1fff, MWA_ROM },			/* 8k ROM (should really be RAM enable) */
 	{ 0x2000, 0x3fff, gb_rom_bank_select },	/* ROM bank select */
 	{ 0x4000, 0x5fff, gb_ram_bank_select },	/* RAM bank select */
 	{ 0x6000, 0x7fff, gb_mem_mode_select },	/* RAM/ROM mode select */
-	{ 0x8000, 0x9fff, MWA_RAM },			/* plain ram */
+	{ 0x8000, 0x9fff, MWA_RAM },			/* 8k video RAM */
 	{ 0xa000, 0xbfff, MWA_BANK2 },			/* 8k switched RAM bank (on cartridge) */
-	{ 0xc000, 0xfe9f, MWA_RAM, &videoram, &videoram_size },	/* video & sprite ram */
+	{ 0xc000, 0xfe9f, MWA_RAM },			/* 8k low RAM, echo RAM, OAM RAM */
 	{ 0xfea0, 0xfeff, MWA_NOP },			/* unusable */
 	{ 0xff00, 0xff7f, gb_w_io },			/* gb io */
-	{ 0xff80, 0xfffe, MWA_RAM },			/* plain ram (high) */
+	{ 0xff80, 0xfffe, MWA_RAM },			/* 127 bytes high RAM */
 	{ 0xffff, 0xffff, gb_w_ie },			/* gb io (interrupt enable) */
 MEMORY_END
 
@@ -116,11 +116,8 @@ static PALETTE_INIT( gb )
 	memcpy(colortable,gb_colortable,sizeof(gb_colortable));
 }
 
-static struct CustomSound_interface gameboy_sound_interface = {
-	gameboy_sh_start,
-	0,
-	0
-};
+static struct CustomSound_interface gameboy_sound_interface =
+{ gameboy_sh_start, 0, 0 };
 
 static MACHINE_DRIVER_START( gameboy )
 	/* basic machine hardware */
@@ -151,7 +148,8 @@ static MACHINE_DRIVER_START( gameboy )
 MACHINE_DRIVER_END
 
 
-static const struct IODevice io_gameboy[] = {
+static const struct IODevice io_gameboy[] =
+{
 	{
 		IO_CARTSLOT,		/* type */
 		1,					/* count */
@@ -180,8 +178,10 @@ static const struct IODevice io_gameboy[] = {
 
 ***************************************************************************/
 
-#define rom_gameboy NULL
+ROM_START( gameboy )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+ROM_END
 
-/*     YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY     FULLNAME */
-CONSX( 1990, gameboy,  0,        gameboy,  gameboy,  0,        "Nintendo", "GameBoy", GAME_IMPERFECT_SOUND )
+/*     YEAR  NAME     PARENT  MACHINE  INPUT    INIT  COMPANY     FULLNAME   FLAGS*/
+CONSX( 1990, gameboy, 0,      gameboy, gameboy, 0,    "Nintendo", "GameBoy", GAME_IMPERFECT_SOUND )
 
