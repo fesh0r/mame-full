@@ -103,7 +103,7 @@ static void CalcPoint(GrVertex *vert,int x,int y)
 
   if(y)
   {
-    vert->y=vscrntly+vscrnheight-(firsttexdestheight+(y-1)*texdestheight);
+    vert->y=vscrntly+(int)vscrnheight-(firsttexdestheight+(y-1)*texdestheight);
     if(vert->y<vscrntly) vert->y=vscrntly;
   }
   else
@@ -181,6 +181,8 @@ int xfx_resize_display(void)
   /* the original (unoriented) width & height */
   int orig_width; 
   int orig_height;
+  
+  printf("orient: %x\n", sysdep_display_params.orientation);
   
   if (sysdep_display_params.orientation & SYSDEP_DISPLAY_SWAPXY)
   {
@@ -320,6 +322,12 @@ int xfx_resize_display(void)
 
           firsttexdestwidth =texdestwidth *firsttexdestwidthfac;
           firsttexdestheight=texdestheight*firsttexdestheightfac;
+          
+/*        fprintf(stderr, "FXDEBUG (resize): texture at %dx%d, coverage %fx%f, "
+            "dest: %dx%d\n  coords: %fx%f, %fx%f, %fx%f, %fx%f\n",
+            j, i, (double)tsq->xcov, (double)tsq->ycov, x, y,
+            tsq->vtxA.x, tsq->vtxA.y, tsq->vtxB.x, tsq->vtxB.y,
+            tsq->vtxC.x, tsq->vtxC.y, tsq->vtxD.x, tsq->vtxD.y); */
 
           CalcPoint(&(tsq->vtxA), x  , y  );
           CalcPoint(&(tsq->vtxB), x+1, y  );
@@ -327,6 +335,9 @@ int xfx_resize_display(void)
           CalcPoint(&(tsq->vtxD), x  , y+1);
         }
   }
+/*fprintf(stderr, "FXDEBUG (resize): textdestsize: %dx%d, "
+    "firsttextdestsize: %dx%d\n", texdestwidth, texdestheight,
+    firsttexdestwidth, firsttexdestheight); */
 
   if(sysdep_display_params.vec_dest_bounds)
   {

@@ -311,14 +311,14 @@ int osd_create_display(const struct osd_create_params *params,
 {
 	int orientation;
 
-	video_fps            = params->fps;
-	normal_params.width  = params->width;
-	normal_params.height = params->height;
-	normal_params.depth  = params->depth;
-	normal_params.title  = title;
-	normal_params.max_width  = params->width;
-	normal_params.max_height = params->height;
-	normal_params.aspect_ratio     = (double)params->aspect_x / (double)params->aspect_y;
+	video_fps                      = params->fps;
+	normal_params.width            = params->width;
+	normal_params.height           = params->height;
+	normal_params.depth            = params->depth;
+	normal_params.title            = title;
+	normal_params.max_width        = params->width;
+	normal_params.max_height       = params->height;
+	normal_params.aspect_ratio     = (double)params->aspect_x/params->aspect_y;
 	normal_params.keyboard_handler = xmame_keyboard_register_event;
 	normal_params.vec_src_bounds   = NULL;
 	normal_params.vec_dest_bounds  = NULL;

@@ -15,9 +15,7 @@
 #include <math.h>
 #include "fxcompat.h"
 #include "sysdep/sysdep_display_priv.h"
-
-/* defined in svgafx.c or x11.c */
-extern int window_height;
+#include "fxgen.h"
 
 /* from fxgen.c */
 extern int vscrntlx;
@@ -58,7 +56,7 @@ static void PointConvert(int x,int y,float *sx,float *sy)
     dy = 1.0 - dy;
     
   *sx=vecvscrntlx + dx*vecvscrnwidth;
-  *sy=window_height - (vecvscrntly + dy*vecvscrnheight);
+  *sy=fxheight - (vecvscrntly + dy*vecvscrnheight);
 }
 
 /*
@@ -101,8 +99,8 @@ int fxvec_renderer(point *pt, int num_points)
                                    GR_COMBINE_OTHER_NONE,
                                    FXFALSE);
 
-    grClipWindow(vecvscrntlx, window_height - (vecvscrntly + vecvscrnheight),
-      vecvscrntlx + vecvscrnwidth, window_height - vecvscrntly);
+    grClipWindow(vecvscrntlx, fxheight - (vecvscrntly + vecvscrnheight),
+      vecvscrntlx + vecvscrnwidth, fxheight - vecvscrntly);
       
     grEnableAA();
 
@@ -148,7 +146,7 @@ int fxvec_renderer(point *pt, int num_points)
 	}
         v1 = v2;
       }
-      pt++;
+      pt++; 
       num_points--;
     }
     grDisableAA();
