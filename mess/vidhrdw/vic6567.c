@@ -1250,7 +1250,7 @@ static void vic2_drawlines (int first, int last)
 	if (osd_skip_this_frame ())
 		return;
 
-	
+
 	/* top part of display not rastered */
 	first -= VIC2_YPOS - YPOS;
 	last -= VIC2_YPOS - YPOS;
@@ -1290,7 +1290,7 @@ static void vic2_drawlines (int first, int last)
 
 	line=first;
 	if (line<end) {
-		plot_box(vic2.bitmap, 0, line, vic2.bitmap->width, end-line, 
+		plot_box(vic2.bitmap, 0, line, vic2.bitmap->width, end-line,
 				 Machine->pens[FRAMECOLOR]);
 		line=end;
 	}
@@ -1422,9 +1422,9 @@ static void vic2_drawlines (int first, int last)
 				memset (vic2.sprites[i].paintedline, 0, sizeof (vic2.sprites[i].paintedline));
 			}
 		}
-		plot_box(vic2.bitmap, 0, yoff+ybegin, xbegin, yend-ybegin+1, 
+		plot_box(vic2.bitmap, 0, yoff+ybegin, xbegin, yend-ybegin+1,
 				 Machine->pens[FRAMECOLOR]);
-		plot_box(vic2.bitmap, xend, yoff+ybegin, vic2.bitmap->width - xend, yend-ybegin+1, 
+		plot_box(vic2.bitmap, xend, yoff+ybegin, vic2.bitmap->width - xend, yend-ybegin+1,
 				 Machine->pens[FRAMECOLOR]);
 	}
 	if (last < vic2.bitmap->height)
@@ -1432,7 +1432,7 @@ static void vic2_drawlines (int first, int last)
 	else
 		end = vic2.bitmap->height;
 	if (line<end) {
-		plot_box(vic2.bitmap, 0, line, vic2.bitmap->width, end-line, 
+		plot_box(vic2.bitmap, 0, line, vic2.bitmap->width, end-line,
 				 Machine->pens[FRAMECOLOR]);
 		line=end;
 	}
@@ -1468,7 +1468,7 @@ int vic2_raster_irq (void)
 			vic2_drawlines (vic2.lastline, vic2.rasterline);
 		vic2_set_interrupt (1);
 	}
-	return 0;
+	return ignore_interrupt();
 }
 
 void vic2_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
@@ -1481,7 +1481,7 @@ void vic2_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 	    sprintf(text,"%d x:%d y:%d",i,
 		    SPRITE_X_POS(i), SPRITE_Y_POS(i) );
 
-	    ui_text(bitmap,text,0,y); 
+	    ui_text(bitmap,text,0,y);
 	    y+=8;
 	}
     }
