@@ -131,19 +131,19 @@ static struct KeyboardInfo keylist[] =
 {
 
 #if defined(CASSIOPEIA_E10x)
-	{ "Button 1",	VK_CASSIOPEIA_B1,		KEYCODE_1
-	{ "Button 2",	VK_CASSIOPEIA_B2,		KEYCODE_2
-	{ "Button 3",	VK_CASSIOPEIA_B3		KEYCODE_SPACE
-	{ "Slider",		VK_CASSIOPEIA_SLIDER,
-	{ "Escape",		VK_CASSIOPEIA_ESC,
-	{ "Record",		VK_CASSIOPEIA_REC,
-#elif defined(CASSIOPEIA_E115)
-	{ "Button 1",	VK_CASIO_E115_B1,
-	{ "Button 2",	VK_CASIO_E115_B2,
-	{ "Button 3",	VK_CASIO_E115_B3,
-	{ "Slider",		VK_CASIO_E115_SLIDER,
-	{ "Escape",		VK_CASIO_E115_ESC,
-	{ "Record",		VK_CASIO_E115_REC,
+	{ "Button 1",	VK_CASSIOPEIA_B1,			JOYCODE_1_BUTTON1 },
+	{ "Button 2",	VK_CASSIOPEIA_B2,			JOYCODE_1_BUTTON2 },
+	{ "Button 3",	VK_CASSIOPEIA_B3,			JOYCODE_1_BUTTON3 },
+	{ "Slider",		VK_CASSIOPEIA_SLIDER,			JOYCODE_1_BUTTON4 },
+	{ "Escape",		VK_CASSIOPEIA_ESC,			JOYCODE_1_BUTTON5 },
+	{ "Record",		VK_CASSIOPEIA_REC,			JOYCODE_1_BUTTON6 },
+#elif defined(CASSIOPEIA_E115) || defined(MIPS)
+	{ "Button 1",	VK_CASIO_E115_B1,			JOYCODE_1_BUTTON1 },
+	{ "Button 2",	VK_CASIO_E115_B2,			JOYCODE_1_BUTTON2 },
+	{ "Button 3",	VK_CASIO_E115_B3,			JOYCODE_1_BUTTON3 },
+	{ "Slider",		VK_CASIO_E115_SLIDER,			JOYCODE_1_BUTTON4 },
+	{ "Escape",		VK_CASIO_E115_ESC,			JOYCODE_1_BUTTON5 },
+	{ "Record",		VK_CASIO_E115_REC,			JOYCODE_1_BUTTON6 },
 #elif defined(ARM)
 	{ "Button 1",	VK_IPAQ_B1,				JOYCODE_1_BUTTON1 },
 	{ "Button 2",	VK_IPAQ_B2,				JOYCODE_1_BUTTON2 },
@@ -151,13 +151,13 @@ static struct KeyboardInfo keylist[] =
 	{ "Button 4",	VK_IPAQ_B4,				JOYCODE_1_BUTTON4 },
 	{ "Action",		VK_IPAQ_ACTION,			JOYCODE_1_BUTTON5 },
 	{ "Record",		VK_IPAQ_REC,			JOYCODE_1_BUTTON6 },
-#elif defined(SH3)
-	{ "Button 1",	VK_HP_B1,
-	{ "Button 2",	VK_HP_B2,
-	{ "Button 3",	VK_HP_B3,
-	{ "Button 4",	VK_HP_B4,
-	{ "Action",		VK_HP_ACTION,
-	{ "Record",		VK_IPAQ_REC,
+#elif defined(SHx)
+	{ "Button 1",	VK_HP_B1,				JOYCODE_1_BUTTON1 },
+	{ "Button 2",	VK_HP_B2,				JOYCODE_1_BUTTON2 },
+	{ "Button 3",	VK_HP_B3,				JOYCODE_1_BUTTON3 },
+	{ "Button 4",	VK_HP_B4,				JOYCODE_1_BUTTON4 },
+	{ "Action",		VK_HP_ACTION,				JOYCODE_1_BUTTON5 },
+	{ "Record",		VK_IPAQ_REC,				JOYCODE_1_BUTTON6 },
 #elif defined(X86)
     { "A",          'A',                KEYCODE_A },
     { "B",          'B',                KEYCODE_B },

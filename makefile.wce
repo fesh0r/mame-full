@@ -50,7 +50,14 @@ OS = wince
 # Windows CE platform (x86em | arm | mips | sh3)
 ifeq "$(TARGETCPU)" "ARM"
 WCEPLAT = arm
-else
+endif
+ifeq "$(TARGETCPU)" "SH3"
+WCEPLAT = sh3
+endif
+ifeq "$(TARGETCPU)" "R4100"
+WCEPLAT = mips
+endif
+ifndef WCEPLAT
 WCEPLAT = x86em
 endif
 
@@ -150,7 +157,7 @@ ifeq "$(WCEPLAT)" "arm"
 DEFS += -DARM -D_ARM_
 endif
 ifeq "$(WCEPLAT)" "sh3"
-DEFS += -DSH3 -D_SH3_
+DEFS += -DSHx -D_SHx_
 endif
 ifeq "$(WCEPLAT)" "mips"
 DEFS += -DMIPS -D_MIPS_
