@@ -6,7 +6,7 @@
 
 	preliminary version by smf.
 
-	bad sound and spu irq's are probably wrong
+	very bad sound
 
 ***************************************************************************/
 
@@ -73,6 +73,7 @@ static data16_t m_p_n_blockbuffer[ MAX_CHANNEL * SAMPLES_PER_BLOCK ];
 // todo: decide on this..
 static int m_p_n_s1[ MAX_CHANNEL ];
 static int m_p_n_s2[ MAX_CHANNEL ];
+static data32_t m_n_loop[ MAX_CHANNEL ];
 
 #define SPU_REG( a ) ( ( a - 0xc00 ) / 4 )
 #define SPU_CHANNEL_REG( a ) ( a / 4 )
@@ -119,6 +120,12 @@ static void PSXSPU_update(int num, INT16 **buffer, int length)
 		voll = m_p_n_volumeleft[ n_channel ] & 0x3fff;
 		volr = m_p_n_volumeright[ n_channel ] & 0x3fff;
 
+		if( ( m_n_modulationmode & ( 1 << ( ( n_channel + 1 ) % MAX_CHANNEL ) ) ) != 0 )
+		{
+			voll = 0;
+			volr = 0;
+		}
+
 		for( n_sample = 0; n_sample < length; n_sample++ )
 		{
 			if( m_p_n_blockoffset[ n_channel ] >= ( SAMPLES_PER_BLOCK << PITCH_SHIFT ) )
@@ -131,7 +138,6 @@ static void PSXSPU_update(int num, INT16 **buffer, int length)
 					( m_n_irqaddress * 4 ) >= m_p_n_blockaddress[ n_channel ] &&
 					( m_n_irqaddress * 4 ) <= m_p_n_blockaddress[ n_channel ] + 7 )
 				{
-					usrintf_showmessage_secs( 1, "spu interrupt" );
 					psx_irq_set( 0x0200 );
 				}
 
@@ -139,6 +145,10 @@ static void PSXSPU_update(int num, INT16 **buffer, int length)
 				n_shift =   ( m_p_n_spuram[ m_p_n_blockaddress[ n_channel ] ] >> 0 ) & 0x0f;
 				n_predict = ( m_p_n_spuram[ m_p_n_blockaddress[ n_channel ] ] >> 4 ) & 0x0f;
 				n_flags =   ( m_p_n_spuram[ m_p_n_blockaddress[ n_channel ] ] >> 8 ) & 0xff;
+				if( ( n_flags & 4 ) != 0 )
+				{
+					m_n_loop[ n_channel ] = m_p_n_blockaddress[ n_channel ];
+				}
 				m_p_n_blockaddress[ n_channel ]++;
 				m_p_n_blockaddress[ n_channel ] %= ( SPU_RAM_SIZE / 2 );
 
@@ -167,7 +177,14 @@ static void PSXSPU_update(int num, INT16 **buffer, int length)
 				}
 				if( ( n_flags & 1 ) != 0 )
 				{
-					m_p_n_blockstatus[ n_channel ] = 0;
+					if( n_flags != 3 )
+					{
+						m_p_n_blockstatus[ n_channel ] = 0;
+					}
+					else
+					{
+						m_p_n_blockaddress[ n_channel ] = m_n_loop[ n_channel ];
+					}
 				}
 				m_p_n_blockoffset[ n_channel ] %= ( SAMPLES_PER_BLOCK << PITCH_SHIFT );
 			}
