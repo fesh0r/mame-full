@@ -443,3 +443,6 @@ unsigned cdp1802_dasm(char *buffer, unsigned pc)
 	return 1;
 }
 #endif
+
+extern void cdp1802_init(void){ }
+

@@ -546,3 +546,5 @@ unsigned m4510_dasm(char *buffer, unsigned pc)
 
 
 
+void m4510_init (void) { }
+

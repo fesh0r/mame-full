@@ -454,3 +454,5 @@ unsigned z80gb_dasm( char *buffer, unsigned pc )
 }
 
 
+void z80gb_init (void){ }
+

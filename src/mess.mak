@@ -259,8 +259,8 @@ DRVLIBS += \
 	$(OBJ)/kim1.a     \
 	$(OBJ)/sym1.a     \
 	$(OBJ)/aim65.a    \
-	$(OBJ)/cbmshare.a \
 	$(OBJ)/cbm.a      \
+	$(OBJ)/cbmshare.a \
 #    $(OBJ)/amiga.a \
 
 else
@@ -376,7 +376,7 @@ $(OBJ)/cbm.a: \
 	  $(OBJ)/mess/systems/vc20.o	 \
 	  $(OBJ)/mess/vidhrdw/ted7360.o  \
 	  $(OBJ)/mess/sndhrdw/ted7360.o  \
-	  $(OBJ)/mess/sndhrdw/t6721.o \
+	  $(OBJ)/mess/sndhrdw/t6721.o    \
 	  $(OBJ)/mess/machine/c16.o	 \
 	  $(OBJ)/mess/systems/c16.o	 \
 	  $(OBJ)/mess/systems/cbmb.o	 \
