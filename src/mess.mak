@@ -22,7 +22,7 @@ CPUS+=CDP1802@
 CPUS+=M6502@
 CPUS+=M65C02@
 #CPUS+=M65SC02@
-#CPUS+=M65CE02@
+CPUS+=M65CE02@
 CPUS+=M6509@
 CPUS+=M6510@
 CPUS+=M6510T@
@@ -87,8 +87,8 @@ SOUNDS+=DAC@
 SOUNDS+=AY8910@
 #SOUNDS+=YM2203@
 # enable only one of the following two
-#SOUNDS+=YM2151@
-SOUNDS+=YM2151_ALT@
+SOUNDS+=YM2151@
+#SOUNDS+=YM2151_ALT@
 SOUNDS+=YM2608@
 SOUNDS+=YM2610@
 #SOUNDS+=YM2610B@
@@ -638,13 +638,13 @@ endif
 mess/makedep/makedep$(EXE): $(wildcard mess/makedep/*.c) $(wildcard mess/makedep/*.h)
 	make -Cmess/makedep
 
-src/$(TARGET).dep depend: mess/makedep/makedep$(EXE) src/$(TARGET).mak src/rules.mak src/core.mak
-	mess/makedep/makedep$(EXE) -f - -p$(TARGET).obj/ -q -- $(INCLUDE_PATH) -- src/*.c \
+src/$(NAME).dep depend: mess/makedep/makedep$(EXE) src/$(TARGET).mak src/rules.mak src/core.mak
+	mess/makedep/makedep$(EXE) -f - -p$(NAME).obj/ -q -- $(INCLUDE_PATH) -- src/*.c \
 	src/cpu/*/*.c src/sound/*.c mess/systems/*.c mess/machine/*.c mess/vidhrdw/*.c mess/sndhrdw/*.c \
-	mess/tools/*.c mess/formats/*.c >src/$(TARGET).dep
+	mess/tools/*.c mess/formats/*.c >src/$(NAME).dep
 
 ## uncomment the following line to include dependencies
-ifeq (src/$TARGET.dep,$(wildcard src/$TARGET.dep))
-include src/$(TARGET).dep
+ifeq (src/$(NAME).dep,$(wildcard src/$(NAME).dep))
+include src/$(NAME).dep
 endif
 
