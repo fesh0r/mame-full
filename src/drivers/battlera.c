@@ -59,11 +59,11 @@ static WRITE8_HANDLER( control_data_w )
 static READ8_HANDLER( control_data_r )
 {
 	switch (control_port_select) {
-		case 0xfe: return readinputport(0); /* Player 1 */
-		case 0xfd: return readinputport(1); /* Player 2 */
-		case 0xfb: return readinputport(2); /* Coins */
-		case 0xf7: return readinputport(4); /* Dip 2 */
-		case 0xef: return readinputport(3); /* Dip 1 */
+		case 0xfe: return readinputportbytag("IN0"); /* Player 1 */
+		case 0xfd: return readinputportbytag("IN1"); /* Player 2 */
+		case 0xfb: return readinputportbytag("IN2"); /* Coins */
+		case 0xf7: return readinputportbytag("DSW2"); /* Dip 2 */
+		case 0xef: return readinputportbytag("DSW1"); /* Dip 1 */
 	}
 
     return 0xff;
@@ -149,7 +149,7 @@ ADDRESS_MAP_END
 /******************************************************************************/
 
 INPUT_PORTS_START( battlera )
-	PORT_START  /* Player 1 controls */
+	PORT_START_TAG("IN0")  /* Player 1 controls */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1)
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(1)
@@ -159,7 +159,7 @@ INPUT_PORTS_START( battlera )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
-	PORT_START  /* Player 2 controls */
+	PORT_START_TAG("IN1")  /* Player 2 controls */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
@@ -169,13 +169,13 @@ INPUT_PORTS_START( battlera )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
-	PORT_START	/* Coins */
+	PORT_START_TAG("IN2")	/* Coins */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
 	PORT_BIT( 0xf8, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START	/* Dip switch bank 1 */
+	PORT_START_TAG("DSW1")
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
@@ -199,12 +199,12 @@ INPUT_PORTS_START( battlera )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START	/* Dip switch bank 2 */
+	PORT_START_TAG("DSW2")
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x01, "1" )
 	PORT_DIPSETTING(    0x02, "2" )
 	PORT_DIPSETTING(    0x03, "3" )
-	PORT_BIT( 0,       0x00, IPT_DIPSWITCH_SETTING ) PORT_NAME("Infinite") PORT_CHEAT
+	PORT_DIPSETTING(    0x00, "Infinite (Cheat)")
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x08, "Easy" )
 	PORT_DIPSETTING(    0x0c, "Normal" )

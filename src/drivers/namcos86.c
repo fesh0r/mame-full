@@ -232,15 +232,15 @@ static READ8_HANDLER( dsw0_r )
 {
 	int rhi, rlo;
 
-	rhi  = ( readinputport( 2 ) & 0x01 ) << 4;
-	rhi |= ( readinputport( 2 ) & 0x04 ) << 3;
-	rhi |= ( readinputport( 2 ) & 0x10 ) << 2;
-	rhi |= ( readinputport( 2 ) & 0x40 ) << 1;
+	rhi  = ( readinputportbytag("DSWA") & 0x01 ) << 4;
+	rhi |= ( readinputportbytag("DSWA") & 0x04 ) << 3;
+	rhi |= ( readinputportbytag("DSWA") & 0x10 ) << 2;
+	rhi |= ( readinputportbytag("DSWA") & 0x40 ) << 1;
 
-	rlo  = ( readinputport( 3 ) & 0x01 );
-	rlo |= ( readinputport( 3 ) & 0x04 ) >> 1;
-	rlo |= ( readinputport( 3 ) & 0x10 ) >> 2;
-	rlo |= ( readinputport( 3 ) & 0x40 ) >> 3;
+	rlo  = ( readinputportbytag("DSWB") & 0x01 );
+	rlo |= ( readinputportbytag("DSWB") & 0x04 ) >> 1;
+	rlo |= ( readinputportbytag("DSWB") & 0x10 ) >> 2;
+	rlo |= ( readinputportbytag("DSWB") & 0x40 ) >> 3;
 
 	return rhi | rlo;
 }
@@ -249,15 +249,15 @@ static READ8_HANDLER( dsw1_r )
 {
 	int rhi, rlo;
 
-	rhi  = ( readinputport( 2 ) & 0x02 ) << 3;
-	rhi |= ( readinputport( 2 ) & 0x08 ) << 2;
-	rhi |= ( readinputport( 2 ) & 0x20 ) << 1;
-	rhi |= ( readinputport( 2 ) & 0x80 );
+	rhi  = ( readinputportbytag("DSWA") & 0x02 ) << 3;
+	rhi |= ( readinputportbytag("DSWA") & 0x08 ) << 2;
+	rhi |= ( readinputportbytag("DSWA") & 0x20 ) << 1;
+	rhi |= ( readinputportbytag("DSWA") & 0x80 );
 
-	rlo  = ( readinputport( 3 ) & 0x02 ) >> 1;
-	rlo |= ( readinputport( 3 ) & 0x08 ) >> 2;
-	rlo |= ( readinputport( 3 ) & 0x20 ) >> 3;
-	rlo |= ( readinputport( 3 ) & 0x80 ) >> 4;
+	rlo  = ( readinputportbytag("DSWB") & 0x02 ) >> 1;
+	rlo |= ( readinputportbytag("DSWB") & 0x08 ) >> 2;
+	rlo |= ( readinputportbytag("DSWB") & 0x20 ) >> 3;
+	rlo |= ( readinputportbytag("DSWB") & 0x80 ) >> 4;
 
 	return rhi | rlo;
 }
@@ -458,7 +458,7 @@ ADDRESS_MAP_END
 /*******************************************************************/
 
 INPUT_PORTS_START( hopmappy )
-	PORT_START
+	PORT_START_TAG("IN0")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* button 3 player 2 */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* button 2 player 1 */
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY
@@ -468,7 +468,7 @@ INPUT_PORTS_START( hopmappy )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE )	/* service switch from the edge connector */
 
-	PORT_START
+	PORT_START_TAG("IN1")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* button 3 player 1 */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* button 2 player 2 */
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY
@@ -478,7 +478,7 @@ INPUT_PORTS_START( hopmappy )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START      /* DSWA */
+	PORT_START_TAG("DSWA")
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
@@ -499,7 +499,7 @@ INPUT_PORTS_START( hopmappy )
 	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
 
-	PORT_START      /* DSWB */
+	PORT_START_TAG("DSWB")
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x80, "Easy" )
 	PORT_DIPSETTING(    0x00, "Hard" )
@@ -509,7 +509,7 @@ INPUT_PORTS_START( hopmappy )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BIT(    0x10, 0x10, IPT_DIPSWITCH_NAME ) PORT_NAME("Level Select") PORT_CHEAT
+	PORT_DIPNAME( 0x10, 0x10, "Level Select (Cheat)")
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
@@ -525,7 +525,7 @@ INPUT_PORTS_START( hopmappy )
 	PORT_DIPSETTING(    0x01, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 
-	PORT_START
+	PORT_START_TAG("IN4")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SPECIAL )	/* OUT:coin lockout */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SPECIAL )	/* OUT:coin counter 1 */
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SPECIAL )	/* OUT:coin counter 2 */
@@ -537,7 +537,7 @@ INPUT_PORTS_START( hopmappy )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( skykiddx )
-	PORT_START
+	PORT_START_TAG("IN0")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* button 3 player 2 */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY
@@ -547,7 +547,7 @@ INPUT_PORTS_START( skykiddx )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE )	/* service switch from the edge connector */
 
-	PORT_START
+	PORT_START_TAG("IN1")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* button 3 player 1 */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_COCKTAIL
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY
@@ -557,7 +557,7 @@ INPUT_PORTS_START( skykiddx )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START      /* DSWA */
+	PORT_START_TAG("DSWA")
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
@@ -567,7 +567,7 @@ INPUT_PORTS_START( skykiddx )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
-	PORT_BIT(    0x08, 0x08, IPT_DIPSWITCH_NAME ) PORT_NAME("Level Select") PORT_CHEAT
+	PORT_DIPNAME( 0x08, 0x08, "Level Select (Cheat)" )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x04, "Freeze" )
@@ -579,7 +579,7 @@ INPUT_PORTS_START( skykiddx )
 	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
 
-	PORT_START      /* DSWB */
+	PORT_START_TAG("DSWB")
 	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x80, "1" )
 	PORT_DIPSETTING(    0x40, "2" )
@@ -604,7 +604,7 @@ INPUT_PORTS_START( skykiddx )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START
+	PORT_START_TAG("IN4")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SPECIAL )	/* OUT:coin lockout */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SPECIAL )	/* OUT:coin counter 1 */
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SPECIAL )	/* OUT:coin counter 2 */
@@ -616,7 +616,7 @@ INPUT_PORTS_START( skykiddx )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( roishtar )
-	PORT_START
+	PORT_START_TAG("IN0")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* button 3 player 2 */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN ) PORT_8WAY
@@ -626,7 +626,7 @@ INPUT_PORTS_START( roishtar )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE )	/* service switch from the edge connector */
 
-	PORT_START
+	PORT_START_TAG("IN1")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* button 3 player 1 */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP ) PORT_8WAY
@@ -636,7 +636,7 @@ INPUT_PORTS_START( roishtar )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START      /* DSWA */
+	PORT_START_TAG("DSWA")
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
@@ -660,7 +660,7 @@ INPUT_PORTS_START( roishtar )
 	PORT_DIPSETTING(    0x04, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( 1C_6C ) )
 
-	PORT_START      /* DSWB */
+	PORT_START_TAG("DSWB")
 	PORT_DIPNAME( 0x80, 0x80, "Freeze" )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -686,7 +686,7 @@ INPUT_PORTS_START( roishtar )
 	PORT_DIPSETTING(    0x04, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( 1C_6C ) )
 
-	PORT_START
+	PORT_START_TAG("IN4")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SPECIAL )	/* OUT:coin lockout */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SPECIAL )	/* OUT:coin counter 1 */
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SPECIAL )	/* OUT:coin counter 2 */
@@ -698,7 +698,7 @@ INPUT_PORTS_START( roishtar )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( genpeitd )
-	PORT_START
+	PORT_START_TAG("IN0")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* button 3 player 2 */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY
@@ -708,7 +708,7 @@ INPUT_PORTS_START( genpeitd )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE )	/* service switch from the edge connector */
 
-	PORT_START
+	PORT_START_TAG("IN1")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* button 3 player 1 */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY
@@ -718,7 +718,7 @@ INPUT_PORTS_START( genpeitd )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START      /* DSWA */
+	PORT_START_TAG("DSWA")
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
@@ -740,7 +740,7 @@ INPUT_PORTS_START( genpeitd )
 	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
 
-	PORT_START      /* DSWB */
+	PORT_START_TAG("DSWB")
 	PORT_DIPNAME( 0xc0, 0xc0, "Candle" )
 	PORT_DIPSETTING(    0x80, "40" )
 	PORT_DIPSETTING(    0xc0, "50" )
@@ -764,7 +764,7 @@ INPUT_PORTS_START( genpeitd )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
 
-	PORT_START
+	PORT_START_TAG("IN4")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SPECIAL )	/* OUT:coin lockout */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SPECIAL )	/* OUT:coin counter 1 */
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SPECIAL )	/* OUT:coin counter 2 */
@@ -776,7 +776,7 @@ INPUT_PORTS_START( genpeitd )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( rthunder )
-	PORT_START
+	PORT_START_TAG("IN0")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* button 3 player 2 */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_4WAY
@@ -786,7 +786,7 @@ INPUT_PORTS_START( rthunder )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE )	/* service switch from the edge connector */
 
-	PORT_START
+	PORT_START_TAG("IN1")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* button 3 player 1 */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_4WAY
@@ -796,7 +796,7 @@ INPUT_PORTS_START( rthunder )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START      /* DSWA */
+	PORT_START_TAG("DSWA")
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
@@ -818,7 +818,7 @@ INPUT_PORTS_START( rthunder )
 	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
 
-	PORT_START      /* DSWB */
+	PORT_START_TAG("DSWB")
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x80, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
@@ -831,7 +831,7 @@ INPUT_PORTS_START( rthunder )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x10, "Normal" )
 	PORT_DIPSETTING(    0x00, "Easy" )
-	PORT_DIPNAME( 0x08, 0x00, "Level Select" )
+	PORT_DIPNAME( 0x08, 0x00, "Level Select (Cheat)" )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Cabinet ) )
@@ -843,7 +843,7 @@ INPUT_PORTS_START( rthunder )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "6" )
 
-	PORT_START
+	PORT_START_TAG("IN4")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SPECIAL )	/* OUT:coin lockout */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SPECIAL )	/* OUT:coin counter 1 */
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SPECIAL )	/* OUT:coin counter 2 */
@@ -855,7 +855,7 @@ INPUT_PORTS_START( rthunder )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( rthundro )
-	PORT_START
+	PORT_START_TAG("IN0")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* button 3 player 2 */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_4WAY
@@ -865,7 +865,7 @@ INPUT_PORTS_START( rthundro )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE )	/* service switch from the edge connector */
 
-	PORT_START
+	PORT_START_TAG("IN1")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* button 3 player 1 */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_4WAY
@@ -875,7 +875,7 @@ INPUT_PORTS_START( rthundro )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START      /* DSWA */
+	PORT_START_TAG("DSWA")
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
@@ -897,7 +897,7 @@ INPUT_PORTS_START( rthundro )
 	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
 
-	PORT_START      /* DSWB */
+	PORT_START_TAG("DSWB")
 	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x80, "1" )
 	PORT_DIPSETTING(    0x40, "2" )
@@ -909,7 +909,7 @@ INPUT_PORTS_START( rthundro )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BIT(    0x08, 0x08, IPT_DIPSWITCH_NAME ) PORT_NAME("Level Select") PORT_CHEAT
+	PORT_DIPNAME( 0x08, 0x08, "Level Select (Cheat)" )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
@@ -922,7 +922,7 @@ INPUT_PORTS_START( rthundro )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
 
-	PORT_START
+	PORT_START_TAG("IN4")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SPECIAL )	/* OUT:coin lockout */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SPECIAL )	/* OUT:coin counter 1 */
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SPECIAL )	/* OUT:coin counter 2 */
@@ -934,7 +934,7 @@ INPUT_PORTS_START( rthundro )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( wndrmomo )
-	PORT_START
+	PORT_START_TAG("IN0")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* button 3 player 2 */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_4WAY
@@ -944,7 +944,7 @@ INPUT_PORTS_START( wndrmomo )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE )	/* service switch from the edge connector */
 
-	PORT_START
+	PORT_START_TAG("IN1")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* button 3 player 1 */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_4WAY
@@ -954,7 +954,7 @@ INPUT_PORTS_START( wndrmomo )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START      /* DSWA */
+	PORT_START_TAG("DSWA")
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
@@ -976,7 +976,7 @@ INPUT_PORTS_START( wndrmomo )
 	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
 
-	PORT_START      /* DSWB */
+	PORT_START_TAG("DSWB")
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1001,7 +1001,7 @@ INPUT_PORTS_START( wndrmomo )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START
+	PORT_START_TAG("IN4")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SPECIAL )	/* OUT:coin lockout */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SPECIAL )	/* OUT:coin counter 1 */
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SPECIAL )	/* OUT:coin counter 2 */

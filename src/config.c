@@ -433,7 +433,7 @@ int config_read_default_ports(config_file *cfg, struct ipd *input_ports_default)
 	{
 		if (readint(cfg->file, &type) != 0)
 			break;
-		player = EXTRACT_PLAYER(type);
+		player = EXTRACT_PLAYER(type) + 1;
 		type = EXTRACT_TYPE(type);
 		seqnum = 0;
 		if (type >= __ipt_max)

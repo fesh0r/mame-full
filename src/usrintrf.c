@@ -3644,6 +3644,37 @@ static void onscrd_overclock(struct mame_bitmap *bitmap,int increment,int arg)
 	displayosd(bitmap,buf,oc/2,100/2);
 }
 
+static void onscrd_refresh(struct mame_bitmap *bitmap,int increment,int arg)
+{
+	float delta = Machine->refresh_rate - Machine->drv->frames_per_second;
+	char buf[30];
+
+	increment *= 1000;
+	if (code_pressed(KEYCODE_LSHIFT) || code_pressed(KEYCODE_RSHIFT))
+		increment /= 10;
+	if (code_pressed(KEYCODE_LCONTROL) || code_pressed(KEYCODE_RCONTROL))
+		increment /= 100;
+	if (code_pressed(KEYCODE_LALT) || code_pressed(KEYCODE_LALT))
+		increment /= 1000;
+	if (increment)
+	{
+		float newrate;
+		delta += 0.001 * increment;
+		if (delta > 10)
+			delta = 10;
+		if (delta < -10)
+			delta = -10;
+			
+		newrate = Machine->drv->frames_per_second;
+		if (delta != 0)
+			newrate = (floor(newrate * 1000) / 1000) + delta;
+		set_refresh_rate(newrate);
+	}
+
+	sprintf(buf,"%s %.3f", ui_getstring (UI_refresh_rate), Machine->refresh_rate);
+	displayosd(bitmap,buf,(10 + delta) * 5,100/2);
+}
+
 #define MAX_OSD_ITEMS 30
 static void (*onscrd_fnc[MAX_OSD_ITEMS])(struct mame_bitmap *bitmap,int increment,int arg);
 static int onscrd_arg[MAX_OSD_ITEMS];
@@ -3689,6 +3720,9 @@ static void onscrd_init(void)
 			onscrd_arg[item] = ch;
 			item++;
 		}
+		onscrd_fnc[item] = onscrd_refresh;
+		onscrd_arg[item] = ch;
+		item++;
 	}
 
 	onscrd_fnc[item] = onscrd_brightness;

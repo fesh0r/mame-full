@@ -201,6 +201,9 @@ static const char *mame_default_text[] =
 	"All values saved",
 	"One match found - added to list",
 
+	/* refresh rate */
+	"Refresh rate",
+
 	NULL
 };
 

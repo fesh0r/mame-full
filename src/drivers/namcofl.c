@@ -135,6 +135,16 @@ static READ32_HANDLER( fl_unk1_r )
 	return 0xffffffff;
 }
 
+static READ32_HANDLER( fl_network_r )
+{
+	return 0xffffffff;
+}
+
+static READ32_HANDLER( namcofl_sysreg_r )
+{
+	return 0;
+}
+
 static WRITE32_HANDLER( namcofl_sysreg_w )
 {
 	if ((offset == 2) && !(mem_mask & 0xff))  // address space configuration
@@ -160,15 +170,15 @@ static ADDRESS_MAP_START( sysfl_mem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x30100000, 0x30100003) AM_WRITENOP	/* watchdog? */
 	AM_RANGE(0x30280000, 0x3028ffff) AM_RAM	AM_BASE(&namcofl_mcuram) /* shared RAM with C75 MCU */
 	AM_RANGE(0x30300000, 0x30303fff) AM_RAM /* COMRAM */
-	AM_RANGE(0x30380000, 0x303800ff) AM_RAM
+	AM_RANGE(0x30380000, 0x303800ff) AM_READ( fl_network_r )	/* network registers */
 	AM_RANGE(0x30400000, 0x3040ffff) AM_RAM AM_BASE(&paletteram32)
 	AM_RANGE(0x30800000, 0x3080ffff) AM_READWRITE(MRA32_RAM, namcofl_videoram_w) AM_BASE(&videoram32)
 	AM_RANGE(0x30a00000, 0x30a0003f) AM_RAM AM_BASE(&namcofl_scrollram32)
-	AM_RANGE(0x30c00000, 0x30c1ffff) AM_READWRITE(namco_rozvideoram32_r, namco_rozvideoram32_w)
-	AM_RANGE(0x30d00000, 0x30d0001f) AM_READWRITE(namco_rozcontrol32_r, namco_rozcontrol32_w)
-	AM_RANGE(0x30e00000, 0x30e1ffff) AM_READWRITE(namco_obj32_r, namco_obj32_w)
+	AM_RANGE(0x30c00000, 0x30c1ffff) AM_READWRITE(namco_rozvideoram32_le_r, namco_rozvideoram32_le_w)
+	AM_RANGE(0x30d00000, 0x30d0001f) AM_READWRITE(namco_rozcontrol32_le_r, namco_rozcontrol32_le_w)
+	AM_RANGE(0x30e00000, 0x30e1ffff) AM_READWRITE(namco_obj32_le_r, namco_obj32_le_w)
 	AM_RANGE(0x30f00000, 0x30f0000f) AM_RAM /* NebulaM2 code says this is int enable at 0000, int request at 0004, but doesn't do much about it */
-	AM_RANGE(0x40000000, 0x4000005f) AM_RAM AM_WRITE( namcofl_sysreg_w )
+	AM_RANGE(0x40000000, 0x4000005f) AM_READWRITE( namcofl_sysreg_r, namcofl_sysreg_w )
 	AM_RANGE(0xfffffffc, 0xffffffff) AM_READ( fl_unk1_r )
 ADDRESS_MAP_END
 
@@ -297,11 +307,11 @@ static MACHINE_DRIVER_START( sysfl )
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK | VIDEO_RGB_DIRECT)
 // correct size
-//	MDRV_SCREEN_SIZE(NAMCONB1_COLS*8, NAMCONB1_ROWS*8) /* 288x224 pixels */
-//	MDRV_VISIBLE_AREA(0*8, NAMCONB1_COLS*8-1, 0*8, NAMCONB1_ROWS*8-1)
+	MDRV_SCREEN_SIZE(NAMCONB1_COLS*8, NAMCONB1_ROWS*8) /* 288x224 pixels */
+	MDRV_VISIBLE_AREA(0*8, NAMCONB1_COLS*8-1, 0*8, NAMCONB1_ROWS*8-1)
 // for debugger
-	MDRV_SCREEN_SIZE(96*8, 64*8)
-	MDRV_VISIBLE_AREA(0, 96*8-1, 0, 64*8-1)
+//	MDRV_SCREEN_SIZE(96*8, 64*8)
+//	MDRV_VISIBLE_AREA(0, 96*8-1, 0, 64*8-1)
 	MDRV_PALETTE_LENGTH(8192)
 
 	MDRV_GFXDECODE(gfxdecodeinfo2)
@@ -387,7 +397,7 @@ ROM_START( finalapr )
 	ROM_LOAD("flr1voi.23s",   0x000000, 0x200000, CRC(ff6077cd) SHA1(73c289125ddeae3e43153e4c570549ca04501262) )
 ROM_END
 
-static DRIVER_INIT( namcofl )
+static void namcofl_common_init(void)
 {
 	namcofl_workram = auto_malloc(0x100000);
 
@@ -395,5 +405,17 @@ static DRIVER_INIT( namcofl )
 	cpu_setbank( 2, namcofl_workram );
 }
 
-GAMEX( 1995, speedrcr,         0, sysfl, sysfl, namcofl, ROT0, "Namco", "Speed Racer", GAME_NOT_WORKING | GAME_NO_SOUND )
-GAMEX( 1995, finalapr,         0, sysfl, sysfl, namcofl, ROT0, "Namco", "Final Lap R", GAME_NOT_WORKING | GAME_NO_SOUND )
+static DRIVER_INIT(speedrcr)
+{
+	namcofl_common_init();
+	namcos2_gametype = NAMCOFL_SPEED_RACER;
+}
+
+static DRIVER_INIT(finalapr)
+{
+	namcofl_common_init();
+	namcos2_gametype = NAMCOFL_FINAL_LAP_R;
+}
+
+GAMEX( 1995, speedrcr,         0, sysfl, sysfl, speedrcr, ROT0, "Namco", "Speed Racer", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
+GAMEX( 1995, finalapr,         0, sysfl, sysfl, finalapr, ROT0, "Namco", "Final Lap R", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )

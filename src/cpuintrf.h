@@ -135,6 +135,7 @@ enum
 	CPU_E132XS,
 	CPU_I386,
 	CPU_I960,
+	CPU_H83002,
 
 #ifdef MESS
 	CPU_APEXC,

@@ -2333,6 +2333,34 @@ ROM_START( hardhedb )
 	ROM_LOAD( "p14", 0x0000, 0x8000, CRC(41314ac1) SHA1(1ac9213b0ac4ce9fe6256e93875672e128a5d069) )
 ROM_END
 
+ROM_START( pop_hh )
+	ROM_REGION( 0x48000, REGION_CPU1, 0 ) /* Main Z80 Code */
+	ROM_LOAD( "1_27512.l6", 0x00000, 0x10000, CRC(bb4aa9ac) SHA1(da6310a1034cf610139d74fc30dd13e5fbd1d8dd) ) // twice the size of other sets?
+	ROM_LOAD( "2_27256.k6", 0x10000, 0x8000,  CRC(8fcc1248) SHA1(5da0b7dc63f7bc00e81e9e5bac02ee6b0076ffaa) )
+	ROM_LOAD( "p3",  0x18000, 0x8000, CRC(3d24755e) SHA1(519a179594956f7c3ddfaca362c42b453c928e25) ) // 3_27256.j6
+	ROM_LOAD( "p4",  0x20000, 0x8000, CRC(0241ac79) SHA1(b3c3b98fb29836cbc9fd35ac49e02bfefd3b0c79) ) // 4_27256.i6
+	ROM_LOAD( "p7",  0x28000, 0x8000, CRC(beba8313) SHA1(20aa4e07ec560a89d07ec73cc93311ceaed899a3) ) // 7_27256.l8
+	ROM_LOAD( "8_27256.k8",  0x30000, 0x8000, CRC(87a8b4b4) SHA1(83d30cf184c5dccdf2666c0ef9e078541d6a146e) )
+	ROM_LOAD( "p9",  0x38000, 0x8000, CRC(2ad430c4) SHA1(286a5b1042e077c3ae741d01311d4c91f8f87054) ) // 9_27256.j8
+	ROM_LOAD( "10_27256.i8", 0x40000, 0x8000, CRC(84fc6574) SHA1(ab33e6c656f25e65bb08d0a2689693df83cab43d) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* Sound Z80 Code */
+	ROM_LOAD( "p13", 0x0000, 0x8000, CRC(493c0b41) SHA1(994a334253e905c39ec912765e8b0f4b1be900bc) ) // 13_27256.i10
+
+	ROM_REGION( 0x40000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )	/* Sprites */
+	ROM_LOAD( "p5",  0x00000, 0x8000, CRC(e9aa6fba) SHA1(f286727541f08b136a7d45e13975652bdc8fd663) ) // 5_27256.d6
+	ROM_RELOAD(      0x08000, 0x8000             )
+	ROM_LOAD( "p6",  0x10000, 0x8000, CRC(15d5f5dd) SHA1(4441344701fcdb2be55bdd76a8a5fd59f5de813c) ) // 6_27256.a6
+	ROM_RELOAD(      0x18000, 0x8000             )
+	ROM_LOAD( "11_27256.d8", 0x20000, 0x8000, CRC(3751b99d) SHA1(dc4082e481a79f0389e59b4b38698df8f7b94053) )
+	ROM_RELOAD(      0x28000, 0x8000             )
+	ROM_LOAD( "p12", 0x30000, 0x8000, CRC(9582e6db) SHA1(a2b34d740e07bd35a3184365e7f3ab7476075d70) ) // 12_27256.a8
+	ROM_RELOAD(      0x38000, 0x8000             )
+
+	ROM_REGION( 0x8000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_LOAD( "p14", 0x0000, 0x8000, CRC(41314ac1) SHA1(1ac9213b0ac4ce9fe6256e93875672e128a5d069) ) // 14_27256.m11
+ROM_END
+
 
 /***************************************************************************
 
@@ -2763,6 +2791,7 @@ ROM_END
 GAMEX( 1988, rranger,  0,        rranger,  rranger,  0,        ROT0,  "SunA (Sharp Image license)", "Rough Ranger (v2.0)", GAME_IMPERFECT_SOUND )
 GAMEX( 1988, hardhead, 0,        hardhead, hardhead, hardhead, ROT0,  "SunA",                       "Hard Head",           GAME_IMPERFECT_SOUND )
 GAMEX( 1988, hardhedb, hardhead, hardhead, hardhead, hardhedb, ROT0,  "bootleg",                    "Hard Head (bootleg)", GAME_IMPERFECT_SOUND )
+GAMEX( 1988, pop_hh,   hardhead, hardhead, hardhead, hardhedb, ROT0,  "bootleg",                    "Popper (Hard Head bootleg)", GAME_IMPERFECT_SOUND )
 GAME ( 1991, hardhea2, 0,        hardhea2, hardhea2, hardhea2, ROT0,  "SunA",                       "Hard Head 2 (v2.0)"                        )
 
 /* Non Working Games */

@@ -197,6 +197,7 @@ static void             EnableSelection(int nGame);
 static int              GetSelectedPick(void);
 static HICON			GetSelectedPickItemIcon(void);
 static void             SetRandomPickItem(void);
+static void				PickColor(COLORREF *cDefault);
 
 static LPTREEFOLDER     GetSelectedFolder(void);
 static HICON			GetSelectedFolderIcon(void);
@@ -3885,22 +3886,12 @@ UINT_PTR CALLBACK CFHookProc(
 						if( iIndex == SendDlgItemMessage(hdlg, cmb4, CB_GETCOUNT, 0, 0)-1)
 						{
 							//Custom color selected
-							CHOOSECOLOR cc;
-							COLORREF choice_colors[16];
-
-							for (i=0;i<16;i++)
-								choice_colors[i] = RGB(0,0,0);
-
-							cc.lStructSize = sizeof(CHOOSECOLOR);
-							cc.hwndOwner   = hMain;
-							cc.rgbResult   = GetListFontColor();
-							cc.lpCustColors = choice_colors;
-							cc.Flags       = CC_ANYCOLOR | CC_RGBINIT | CC_SOLIDCOLOR;
-							if (!ChooseColor(&cc))
-								break;
+ 							COLORREF cList;
+ 							cList = GetListFontColor();
+ 							PickColor(&cList);
 							SendDlgItemMessage(hdlg, cmb4, CB_DELETESTRING, iIndex, 0);
 							SendDlgItemMessage(hdlg, cmb4, CB_ADDSTRING, 0, (LPARAM)"Custom");
-							SendDlgItemMessage(hdlg, cmb4, CB_SETITEMDATA,(WPARAM)iIndex,(LPARAM)cc.rgbResult );
+							SendDlgItemMessage(hdlg, cmb4, CB_SETITEMDATA,(WPARAM)iIndex,(LPARAM)cList);
 							SendDlgItemMessage(hdlg, cmb4, CB_SETCURSEL,(WPARAM)iIndex,0 );
 							return TRUE;
 						}

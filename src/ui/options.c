@@ -86,6 +86,9 @@ static void  JoyInfoDecodeString(const char *str, void* data);
 
 static void  ColumnDecodeWidths(const char *ptr, void* data);
 
+static void  CusColorEncodeString(void* data, char* str);
+static void  CusColorDecodeString(const char* str, void* data);
+
 static void  SplitterEncodeString(void* data, char* str);
 static void  SplitterDecodeString(const char* str, void* data);
 
@@ -183,6 +186,7 @@ static REG_OPTION regSettings[] =
 
 	{ "text_color",                 RO_COLOR,   &settings.list_font_color,           "-1",                          FALSE },
 	{ "clone_color",                RO_COLOR,   &settings.list_clone_color,          "-1",                          FALSE },
+	{ "custom_color",               RO_ENCODE,  settings.custom_color,               "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0", FALSE, CusColorEncodeString, CusColorDecodeString},
 	/* ListMode needs to be before ColumnWidths settings */
 	{ "list_mode",                  RO_ENCODE,  &settings.view,                      "5",                           FALSE, ListEncodeString,     ListDecodeString},
 #ifdef MESS
@@ -2388,6 +2392,50 @@ void SetRunFullScreen(BOOL fullScreen)
 /***************************************************************************
     Internal functions
  ***************************************************************************/
+
+static void CusColorEncodeString(void* data, char* str)
+{
+	int* value = (int*)data;
+	int  i;
+	char tmpStr[256];
+
+	sprintf(tmpStr, "%d", value[0]);
+	
+	strcpy(str, tmpStr);
+
+	for (i = 1; i < 16; i++)
+	{
+		sprintf(tmpStr, ",%d", value[i]);
+		strcat(str, tmpStr);
+	}
+}
+
+static void CusColorDecodeString(const char* str, void* data)
+{
+	int* value = (int*)data;
+	int  i;
+	char *s, *p;
+	char tmpStr[256];
+
+	if (str == NULL)
+		return;
+
+	strcpy(tmpStr, str);
+	p = tmpStr;
+	
+	for (i = 0; p && i < 16; i++)
+	{
+		s = p;
+		
+		if ((p = strchr(s,',')) != NULL && *p == ',')
+		{
+			*p = '\0';
+			p++;
+		}
+		value[i] = atoi(s);
+	}
+}
+
 
 static void ColumnEncodeStringWithCount(void* data, char *str, int count)
 {

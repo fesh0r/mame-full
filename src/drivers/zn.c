@@ -137,6 +137,7 @@ static struct
 	{ "doapp",    mg01, mg05 }, /* OK */
 	{ "tondemo",  mg01, mg09 }, /* OK */
 	{ "brvblade", mg01, mg11 }, /* OK */
+	{ "mfjump",   mg01, mg14 }, /* OK */
 	{ "sfchamp",  tt01, tt02 }, /* stuck in test mode */
 	{ "sfchampj", tt01, tt02 }, /* stuck in test mode */
 	{ "psyforce", tt01, tt03 }, /* OK */
@@ -3597,6 +3598,15 @@ ROM_START( tondemo )
 	ROM_LOAD( "tca-4.221",           0x1800000, 0x400000, CRC(c9e23f25) SHA1(145d4e7f0cb67d2552559ce90305a56802a253f9) )
 ROM_END
 
+ROM_START( mfjump )
+	TPS_BIOS
+
+	ROM_REGION32_LE( 0x0800000, REGION_USER2, 0 )
+	ROM_LOAD16_BYTE( "mfj-o.119",   0x0000001, 0x100000, CRC(0d724dc5) SHA1(2ba388fe6254c0cf3847fd173a414ee5ca31f4f4) )
+	ROM_LOAD16_BYTE( "mfj-e.120",   0x0000000, 0x100000, CRC(86292bca) SHA1(b6a25ab828da3d5c8f6d945336513485708f3f5b) )
+	ROM_LOAD( "mfj.216",            0x0400000, 0x400000, CRC(0d518dba) SHA1(100cd4d0a1e678e660336027f067a9a1f5cbad3e) )
+ROM_END
+
 /* video system */
 
 #define KN_BIOS \
@@ -4113,6 +4123,7 @@ GAMEX( 1998, doapp,    tps,      coh1002m, zn, coh1002m, ROT0, "Tecmo", "Dead Or
 GAMEX( 1998, cbaj,     tps,      coh1002msnd, zn, coh1002m, ROT0, "Tecmo", "Cool Boarders Arcade Jam", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1998, shngmtkb, tps,      coh1002m, zn, coh1002m, ROT0, "Sunsoft / Activision", "Shanghai Matekibuyuu", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1999, tondemo,  tps,      coh1002m, zn, coh1002m, ROT0, "Tecmo", "Tondemo Crisis (JAPAN)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 2001, mfjump,   tps,      coh1002m, zn, coh1002m, ROT0, "Tecmo", "Monster Jump Farm (JAPAN)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 
 /* Video System */
 

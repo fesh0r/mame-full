@@ -164,7 +164,7 @@ mame_file *mame_fopen(const char *gamename, const char *filename, int filetype, 
 				case OSD_FOPEN_RW_CREATE:
 					flags |= FILEFLAG_OPENREAD | FILEFLAG_OPENWRITE;
 					break;
-				}
+				} 
 				if (mess_ghost_images)
 					flags |= FILEFLAG_GHOST;
 
@@ -571,7 +571,7 @@ int mame_fgetc(mame_file *file)
 int mame_ungetc(int c, mame_file *file)
 {
 	file->back_char = c;
-
+  
 	return c;
 }
 
@@ -1086,9 +1086,8 @@ static mame_file *generic_fopen(int pathtype, const char *gamename, const char *
 					{
 						char crcn[9];
 
-						hash_data_extract_printable_checksum(hash, HASH_CRC, crcn);
-
-						err = load_zipped_file(pathtype, pathindex, name, crcn, &file.data, &ziplength);
+						if (hash_data_extract_printable_checksum(hash, HASH_CRC, crcn) != 0)
+							err = load_zipped_file(pathtype, pathindex, name, crcn, &file.data, &ziplength);
 					}
 
 					if (err == 0)

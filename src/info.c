@@ -672,10 +672,26 @@ static void print_game_driver(FILE* out, const struct GameDriver* game)
 	expand_machine_driver(game->drv, &driver);
 
 	fprintf(out, "\t\t<driver");
-	if (game->flags & GAME_NOT_WORKING)
+
+	/* The status entry is an hint for frontend authors */
+	/* to select working and not working games without */
+	/* the need to know all the other status entries. */
+	/* Games marked as status=good are perfectly emulated, games */
+	/* marked as status=imperfect are emulated with only */
+	/* some minor issues, games marked as status=preliminary */
+	/* don't work or have major emulation problems. */
+
+	if (game->flags & (GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_WRONG_COLORS))
 		fprintf(out, " status=\"preliminary\"");
+	else if (game->flags & (GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS))
+		fprintf(out, " status=\"imperfect\"");
 	else
 		fprintf(out, " status=\"good\"");
+
+	if (game->flags & GAME_NOT_WORKING)
+		fprintf(out, " emulation=\"preliminary\"");
+	else
+		fprintf(out, " emulation=\"good\"");
 
 	if (game->flags & GAME_WRONG_COLORS)
 		fprintf(out, " color=\"preliminary\"");
@@ -692,7 +708,7 @@ static void print_game_driver(FILE* out, const struct GameDriver* game)
 		fprintf(out, " sound=\"good\"");
 
 	if (game->flags & GAME_IMPERFECT_GRAPHICS)
-		fprintf(out, " graphic=\"preliminary\"");
+		fprintf(out, " graphic=\"imperfect\"");
 	else
 		fprintf(out, " graphic=\"good\"");
 
@@ -784,6 +800,11 @@ static void print_game_info(FILE* out, const struct GameDriver* game)
 /* Print the resource info */
 static void print_resource_info(FILE* out, const struct GameDriver* game)
 {
+	/* The runnable entry is an hint for frontend authors */
+	/* to easily know which game can be started. */
+	/* Games marked as runnable=yes can be started putting */
+	/* the game name as argument in the program command line, */
+	/* games marked as runnable=no cannot be started. */
 	fprintf(out, "\t<" XML_TOP " runnable=\"no\"");
 
 	fprintf(out, " name=\"%s\"", normalize_string(game->name) );
@@ -934,12 +955,13 @@ void print_mame_xml(FILE* out, const struct GameDriver* games[])
 		"\t\t\t\t<!ATTLIST dipvalue name CDATA #REQUIRED>\n"
 		"\t\t\t\t<!ATTLIST dipvalue default (yes|no) \"no\">\n"
 		"\t\t<!ELEMENT driver EMPTY>\n"
-		"\t\t\t<!ATTLIST driver status (good|preliminary|test) #REQUIRED>\n"
+		"\t\t\t<!ATTLIST driver status (good|imperfect|preliminary) #REQUIRED>\n"
+		"\t\t\t<!ATTLIST driver emulation (good|imperfect|preliminary) #REQUIRED>\n"
 		"\t\t\t<!ATTLIST driver color (good|imperfect|preliminary) #REQUIRED>\n"
 		"\t\t\t<!ATTLIST driver sound (good|imperfect|preliminary) #REQUIRED>\n"
-		"\t\t\t<!ATTLIST driver graphic (good|imperfect) #REQUIRED>\n"
-		"\t\t\t<!ATTLIST driver cocktail (preliminary) #IMPLIED>\n"
-		"\t\t\t<!ATTLIST driver protection (preliminary) #IMPLIED>\n"
+		"\t\t\t<!ATTLIST driver graphic (good|imperfect|preliminary) #REQUIRED>\n"
+		"\t\t\t<!ATTLIST driver cocktail (good|imperfect|preliminary) #IMPLIED>\n"
+		"\t\t\t<!ATTLIST driver protection (good|imperfect|preliminary) #IMPLIED>\n"
 		"\t\t\t<!ATTLIST driver palettesize CDATA #REQUIRED>\n"
 #ifdef MESS
 		"\t\t<!ELEMENT device (extension*)>\n"

@@ -74,9 +74,9 @@ static READ8_HANDLER( cheat1_r )
 	static int cheat = 0;
 	static int bits[] = { 0xee, 0xff, 0xbb, 0xaa };
 
-	res = readinputport(1);
+	res = readinputportbytag("IN1");
 
-	if ((readinputport(0) & 0x08) == 0)
+	if ((readinputportbytag("IN0") & 0x08) == 0)
 	{
 		res |= 0x55;
 		res &= bits[cheat];
@@ -92,9 +92,9 @@ static READ8_HANDLER( cheat2_r )
 	static int cheat = 0;
 	static int bits[] = { 0xee, 0xff, 0xbb, 0xaa };
 
-	res = readinputport(2);
+	res = readinputportbytag("IN2");
 
-	if ((readinputport(0) & 0x08) == 0)
+	if ((readinputportbytag("IN0") & 0x08) == 0)
 	{
 		res |= 0x55;
 		res &= bits[cheat];
@@ -171,13 +171,13 @@ ADDRESS_MAP_END
 ***************************************************************************/
 
 INPUT_PORTS_START( 88games )
-	PORT_START
+	PORT_START_TAG("IN0")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
 //	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	/* Fake button to press buttons 1 and 3 impossibly fast. Handle via cheat?_r */
-	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_NAME("Run Like Hell Cheat") PORT_CHEAT PORT_PLAYER(1)
+	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_NAME("Run Like Hell Cheat") PORT_PLAYER(1)
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -189,7 +189,7 @@ INPUT_PORTS_START( 88games )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START
+	PORT_START_TAG("IN1")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
@@ -199,7 +199,7 @@ INPUT_PORTS_START( 88games )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
-	PORT_START
+	PORT_START_TAG("IN2")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(3)
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(3)
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(3)
@@ -209,7 +209,7 @@ INPUT_PORTS_START( 88games )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(4)
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START4 )
 
-	PORT_START
+	PORT_START_TAG("DSW1")
 	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(    0x05, DEF_STR( 3C_1C ) )
@@ -245,7 +245,7 @@ INPUT_PORTS_START( 88games )
 	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
 //	PORT_DIPSETTING(    0x00, "Disabled" )
 
-	PORT_START
+	PORT_START_TAG("DSW2")
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )

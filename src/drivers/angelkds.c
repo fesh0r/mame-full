@@ -316,7 +316,7 @@ I haven't found how to exit the tests. The only way seems to reset the game.
 
 
 INPUT_PORTS_START( angelkds )
-	PORT_START		/* inport $40 */
+	PORT_START_TAG("I40")		/* inport $40 */
 	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(	0x70, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(	0x80, DEF_STR( 3C_1C ) )
@@ -353,7 +353,7 @@ INPUT_PORTS_START( angelkds )
 	PORT_DIPSETTING(	0x0a, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( Free_Play ) )
 
-	PORT_START		/* inport $41 */
+	PORT_START_TAG("I41")		/* inport $41 */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(	0x01, DEF_STR( Cocktail ) )
@@ -369,14 +369,14 @@ INPUT_PORTS_START( angelkds )
 	PORT_DIPSETTING(	0x30, "3" )
 	PORT_DIPSETTING(	0x20, "4" )
 	PORT_DIPSETTING(	0x10, "5" )
-	PORT_BIT( 0,       0x00, IPT_DIPSWITCH_SETTING ) PORT_NAME("99") PORT_CHEAT
+	PORT_DIPSETTING(    0x00, "99 (Cheat)")
 	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Unknown ) )	// Stored at 0xc023
 	PORT_DIPSETTING(	0xc0, "4" )
 	PORT_DIPSETTING(	0x40, "5" )
 	PORT_DIPSETTING(	0x80, "6" )
 	PORT_DIPSETTING(	0x00, "7" )
 
-	PORT_START		/* inport $42 */
+	PORT_START_TAG("I42")		/* inport $42 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -386,7 +386,7 @@ INPUT_PORTS_START( angelkds )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) PORT_8WAY PORT_COCKTAIL
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START		/* inport $80 */
+	PORT_START_TAG("I80")		/* inport $80 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
@@ -396,22 +396,22 @@ INPUT_PORTS_START( angelkds )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
-	PORT_START		/* inport $81 */
+	PORT_START_TAG("I81")		/* inport $81 */
 	ANGELDSK_PLAYERS_INPUT( 1 )
 
-	PORT_START		/* inport $82 */
+	PORT_START_TAG("I82")		/* inport $82 */
 	ANGELDSK_PLAYERS_INPUT( 2 )
 
 #if FAKEINPUTS
 
 	/* Fake inputs to allow to play the game with 1 joystick instead of 2 */
-	PORT_START
+	PORT_START_TAG("FAKE1")
 	PORT_DIPNAME( 0x01, 0x00, "FAKE (for debug) Joysticks (Player 1)" )
 	PORT_DIPSETTING(	0x01, "1" )
 	PORT_DIPSETTING(	0x00, "2" )
 	ANGELDSK_FAKE_PLAYERS_INPUT( 1 )
 
-	PORT_START
+	PORT_START_TAG("FAKE2")
 	PORT_DIPNAME( 0x01, 0x00, "FAKE (for debug) Joysticks (Player 2)" )
 	PORT_DIPSETTING(	0x01, "1" )
 	PORT_DIPSETTING(	0x00, "2" )

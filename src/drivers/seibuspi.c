@@ -40,6 +40,7 @@
 #include "vidhrdw/generic.h"
 #include "machine/ds2404.h"
 #include "machine/eeprom.h"
+#include "machine/intelfsh.h"
 
 void seibuspi_text_decrypt(unsigned char *rom);
 void seibuspi_bg_decrypt(unsigned char *rom);
@@ -148,11 +149,13 @@ WRITE32_HANDLER( z80_fifo_w )
 
 WRITE32_HANDLER( z80_enable_w )
 {
-	z80_fifo_pos = 0;
-	if( data & 0x1 ) {
-		cpunum_set_input_line(1, INPUT_LINE_RESET, CLEAR_LINE );
-	} else {
-		cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE );
+	if( !(mem_mask & 0x000000ff) ) {
+		if( data & 0x1 ) {
+			z80_fifo_pos = 0;
+			cpunum_set_input_line(1, INPUT_LINE_RESET, CLEAR_LINE );
+		} else {
+			cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE );
+		}
 	}
 }
 
@@ -232,7 +235,13 @@ static WRITE8_HANDLER( z80_bank_w )
 
 static READ8_HANDLER( z80_unk_r )
 {
-	return 0xff;
+	return readinputport(3);
+}
+
+static READ32_HANDLER( soundrom_r )
+{
+	UINT8 *sound = memory_region(REGION_SOUND1);
+	return sound[offset];
 }
 
 /********************************************************************/
@@ -253,6 +262,7 @@ static ADDRESS_MAP_START( spi_readmem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00000800, 0x0003efff) AM_READ(MRA32_RAM)
 	AM_RANGE(0x0003f000, 0x0003ffff) AM_READ(MRA32_RAM)	 	/* Stack */
 	AM_RANGE(0x00200000, 0x003fffff) AM_ROM AM_SHARE(2)
+	AM_RANGE(0x00a00000, 0x013fffff) AM_READ(soundrom_r)
 	AM_RANGE(0xffe00000, 0xffffffff) AM_ROM AM_REGION(REGION_USER1, 0) AM_SHARE(2)		/* ROM location in real-mode */
 ADDRESS_MAP_END
 
@@ -295,6 +305,22 @@ static ADDRESS_MAP_START( spisound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x6000, 0x600f) AM_WRITE(YMF271_0_w)
 ADDRESS_MAP_END
 
+static READ8_HANDLER( flashrom_read )
+{
+	logerror("Flash Read: %08X\n", offset);
+	if( offset < 0x200000 ) {
+		return intelflash_read_byte(0, offset);
+	} else {
+		return 0;
+	}
+}
+
+static WRITE8_HANDLER( flashrom_write )
+{
+	logerror("Flash Write: %08X, %02X\n", offset, data);
+	intelflash_write_byte(0, offset, data);
+}
+
 static void irqhandler(int state)
 {
 	if (state)
@@ -312,6 +338,8 @@ static struct YMF271interface ymf271_interface =
 	1,
 	{ REGION_SOUND1, },
 	{ YM3012_VOL(100, MIXER_PAN_LEFT, 100, MIXER_PAN_RIGHT), },
+	{ flashrom_read },
+	{ flashrom_write },
 	{ irqhandler },
 };
 
@@ -343,6 +371,7 @@ static ADDRESS_MAP_START( seibu386_readmem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0xffe00000, 0xffffffff) AM_ROM AM_REGION(REGION_USER1, 0) AM_SHARE(2)		/* ROM location in real-mode */
 ADDRESS_MAP_END
 
+
 static ADDRESS_MAP_START( seibu386_writemem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00000000, 0x00000417) AM_WRITE(MWA32_RAM)
 	AM_RANGE(0x00000418, 0x0000041b) AM_WRITE(spi_layer_bank_w)
@@ -353,11 +382,11 @@ static ADDRESS_MAP_START( seibu386_writemem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00000800, 0x00036fff) AM_WRITE(MWA32_RAM) AM_BASE(&spimainram)
 	AM_RANGE(0x00037000, 0x00037fff) AM_WRITE(MWA32_RAM) AM_BASE(&spriteram32) AM_SIZE(&spriteram_size)	/* Sprites */
 	AM_RANGE(0x00038000, 0x000387ff) AM_WRITE(spi_back_layer_w) AM_BASE(&back_ram)	/* Background layer */
-	AM_RANGE(0x00038800, 0x00038fff) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0x00038800, 0x00038fff) AM_WRITE(MWA32_RAM) AM_BASE(&back_rowscroll_ram)
 	AM_RANGE(0x00039000, 0x000397ff) AM_WRITE(spi_fore_layer_w) AM_BASE(&fore_ram)	/* Foreground layer */
-	AM_RANGE(0x00039800, 0x00039fff) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0x00039800, 0x00039fff) AM_WRITE(MWA32_RAM) AM_BASE(&mid_rowscroll_ram)
 	AM_RANGE(0x0003a000, 0x0003a7ff) AM_WRITE(spi_mid_layer_w) AM_BASE(&mid_ram)	/* Middle layer */
-	AM_RANGE(0x0003a800, 0x0003afff) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0x0003a800, 0x0003afff) AM_WRITE(MWA32_RAM) AM_BASE(&fore_rowscroll_ram)
 	AM_RANGE(0x0003b000, 0x0003bfff) AM_WRITE(spi_textlayer_w) AM_BASE(&videoram32)	/* Text layer */
 	AM_RANGE(0x0003c000, 0x0003efff) AM_WRITE(spi_paletteram32_xBBBBBGGGGGRRRRR_w) AM_BASE(&paletteram32)
 	AM_RANGE(0x0003f000, 0x0003ffff) AM_WRITE(MWA32_RAM)			/* Stack */
@@ -402,6 +431,12 @@ INPUT_PORTS_START( spi_2button )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2) /* Test Button */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START		/* JP1 */
+	PORT_DIPNAME( 0x03, 0x03, "JP1" )
+	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( spi_3button )
@@ -430,6 +465,12 @@ INPUT_PORTS_START( spi_3button )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2) /* Test Button */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START		/* JP1 */
+	PORT_DIPNAME( 0x03, 0x03, "JP1" )
+	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
 /* E-Jan Highschool has a keyboard with the following keys
@@ -485,6 +526,12 @@ INPUT_PORTS_START( spi_ejanhs )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2) /* Test Button */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0xf3, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START		/* JP1 */
+	PORT_DIPNAME( 0x03, 0x03, "JP1" )
+	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
 /********************************************************************/
@@ -677,7 +724,7 @@ static INTERRUPT_GEN( spi_interrupt )
 
 static MACHINE_INIT( spi )
 {
-//	UINT8* rom = memory_region(REGION_USER1);
+	UINT8* rom = memory_region(REGION_USER1);
 	UINT8* ram = memory_region(REGION_CPU1);
 
 	cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE );
@@ -710,8 +757,17 @@ static MACHINE_INIT( spi )
 
 	cpu_setbank(4, memory_region(REGION_CPU2));
 
-	// Set region code to 0x10 (USA)
-//	rom[0x1ffffc] = 0x10;
+	/* If the first value doesn't match, the game shows a checksum error */
+	/* If any of the other values are wrong, the game goes to update mode */
+	intelflash_write_byte(0, 0, 0xff);
+	intelflash_write_byte(0, 0, 0x10);
+	intelflash_write_byte(0, 0, rom[0x1ffffc]);	/* country code */
+	intelflash_write_byte(0, 0, 0x10);
+	intelflash_write_byte(0, 1, rom[0x1ffffd]);	/* unknown */
+	intelflash_write_byte(0, 0, 0x10);
+	intelflash_write_byte(0, 2, rom[0x1ffffe]);	/* unknown */
+	intelflash_write_byte(0, 0, 0x10);
+	intelflash_write_byte(0, 3, rom[0x1fffff]);	/* game code (same between regions) */
 }
 
 static MACHINE_DRIVER_START( spi )
@@ -730,6 +786,7 @@ static MACHINE_DRIVER_START( spi )
 	MDRV_INTERLEAVE(200)
 
 	MDRV_MACHINE_INIT(spi)
+	MDRV_NVRAM_HANDLER(intelflash_0)
 
  	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT)
@@ -748,6 +805,19 @@ MACHINE_DRIVER_END
 
 static MACHINE_INIT( sxx2f )
 {
+	UINT8* ram = memory_region(REGION_CPU1);
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00038000, 0x000387ff, 0, 0, spi_back_layer_w);
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00039000, 0x000397ff, 0, 0, spi_fore_layer_w);
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0003a000, 0x0003a7ff, 0, 0, spi_mid_layer_w);
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0003b000, 0x0003bfff, 0, 0, spi_textlayer_w);
+	back_ram = (UINT32*)&ram[0x38000];
+	back_rowscroll_ram = (UINT32*)&ram[0x38800];
+	fore_ram = (UINT32*)&ram[0x39000];
+	fore_rowscroll_ram = (UINT32*)&ram[0x39800];
+	mid_ram = (UINT32*)&ram[0x3a000];
+	mid_rowscroll_ram = (UINT32*)&ram[0x3a800];
+	videoram32 = (UINT32*)&ram[0x3b000];
+
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00000688, 0x0000068b, 0, 0, eeprom_r);
 	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000068c, 0x0000068f, 0, 0, eeprom_w);
 }
@@ -811,9 +881,6 @@ static DRIVER_INIT( spi )
 
 static DRIVER_INIT( raidnfgt )
 {
-	UINT8* rom = memory_region(REGION_USER1);
-	/* sound hack */
-	rom[0x6d847] = 0x00;
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00298d0, 0x00298d3, 0, 0, raidnfgt_speedup_r );
 
 	init_spi();
@@ -823,9 +890,6 @@ static DRIVER_INIT( raidnfgt )
 
 static DRIVER_INIT( senkyu )
 {
-	UINT8* rom = memory_region(REGION_USER1);
-	/* sound hack */
-	rom[0x13c813] = 0x00;
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0018cb4, 0x0018cb7, 0, 0, senkyu_speedup_r );
 
 	init_spi();
@@ -835,9 +899,6 @@ static DRIVER_INIT( senkyu )
 
 static DRIVER_INIT( batlball )
 {
-	UINT8* rom = memory_region(REGION_USER1);
-	/* sound hack */
-	rom[0x13c8bf] = 0x00;
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0018db4, 0x0018db7, 0, 0, batlball_speedup_r );
 
 	init_spi();
@@ -847,9 +908,6 @@ static DRIVER_INIT( batlball )
 
 static DRIVER_INIT( ejanhs )
 {
-	UINT8* rom = memory_region(REGION_USER1);
-	/* sound hack */
-	rom[0x12f167] = 0x00;
 //	idle skip doesn't work properly?
 //	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x002d224, 0x002d227, 0, 0, ejanhs_speedup_r );
 
@@ -860,9 +918,6 @@ static DRIVER_INIT( ejanhs )
 
 static DRIVER_INIT( viperp1 )
 {
-	UINT8* rom = memory_region(REGION_USER1);
-	/* sound hack */
-	rom[0x6442f] = 0x00;
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x001e2e0, 0x001e2e3, 0, 0, viperp1_speedup_r );
 
 	init_spi();
@@ -872,9 +927,6 @@ static DRIVER_INIT( viperp1 )
 
 static DRIVER_INIT( viperp1o )
 {
-	UINT8* rom = memory_region(REGION_USER1);
-	/* sound hack */
-	rom[0x60a73] = 0x00;
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x001d49c, 0x001d49f, 0, 0, viperp1o_speedup_r );
 
 	init_spi();
@@ -1213,10 +1265,9 @@ ROM_START(rf2_eur)
 	/* Not dumped ? */
 
 	ROM_REGION(0x40000, REGION_CPU2, 0)		/* 256k for the Z80 */
-//	ROM_LOAD("zprg.bin", 0x000000, 0x20000, CRC(91238498) ) // not in this set? single board version only
 
 	ROM_REGION(0x280000, REGION_SOUND1, 0)	/* YMF271 sound data */
-	ROM_LOAD("rf2_8_sound1.bin", 0x000000, 0x80000, CRC(b7bd3703) SHA1(6427a7e6de10d6743d6e64b984a1d1c647f5643a) ) // different?
+	ROM_LOAD("rf2_8_sound1.bin", 0x200000, 0x80000, CRC(b7bd3703) SHA1(6427a7e6de10d6743d6e64b984a1d1c647f5643a) ) // different?
 
 ROM_END
 

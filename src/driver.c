@@ -1065,6 +1065,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( 8ball1 )
 	DRIVER( logger )	/* (c) 1982 Century */
 	DRIVER( dazzler )	/* (c) 1982 Century */
+	DRIVER( diggerc )	/* (c) 1982 Century */
 	DRIVER( wallst )	/* (c) 1982 Century */
 	DRIVER( radarzon )	/* (c) 1982 Century */
 	DRIVER( radarzn1 )	/* (c) 1982 Century */
@@ -2024,6 +2025,7 @@ V-V                           TP-027
 	DRIVER( turtship )	/* (c) 1988 Philco (NOT A CAPCOM GAME but runs on modified Sidearms hardware) */
 	DRIVER( dyger )		/* (c) 1989 Philco (NOT A CAPCOM GAME but runs on modified Sidearms hardware) */
 	DRIVER( dygera )	/* (c) 1989 Philco (NOT A CAPCOM GAME but runs on modified Sidearms hardware) */
+	DRIVER( twinfalc )	/* (c) 1989 Philko (Poara Enterprises license) (NOT A CAPCOM GAME but runs on modified Sidearms hardware) */
 	DRIVER( whizz )		/* (c) 1989 Philco (NOT A CAPCOM GAME but runs on modified Sidearms hardware) */
 	DRIVER( avengers )	/*  2/1987 (c) 1987 (US) */
 	DRIVER( avenger2 )	/*  2/1987 (c) 1987 (US) */
@@ -2237,7 +2239,8 @@ V-V                           TP-027
 	DRIVER( vhuntj )	/* 02/03/1995 (c) 1995 (Japan) */
 	DRIVER( vhuntjr1 )	/* 07/03/1995 (c) 1995 (Japan) */
 	DRIVER( vhuntjr2 )	/* 02/03/1995 (c) 1995 (Japan) */
-	DRIVER( cybots )	/* 24/04/1995 (c) 1995 (US) */
+	DRIVER( cybots )	/* 24/04/1995 (c) 1995 (Euro) */
+	DRIVER( cybotsu )	/* 24/04/1995 (c) 1995 (US) */
 	DRIVER( cybotsj )	/* 20/04/1995 (c) 1995 (Japan) */
 	DRIVER( sfa )		/* 27/07/1995 (c) 1995 (Euro) */
 	DRIVER( sfar1 )		/* 18/07/1995 (c) 1995 (Euro) */
@@ -2390,6 +2393,7 @@ V-V                           TP-027
 	DRIVER( cbaj )		/* Cool Boaders Arcade Jam */
 	DRIVER( shngmtkb )  /* Shanghai Matekibuyuu */
 	DRIVER( tondemo )	/* Tondemo Crisis (JAPAN) */
+	DRIVER( mfjump )	/* Monster Farm Jump (JAPAN) */
 
 	/* Atlus ZN1 */
 	DRIVER( hvnsgate )
@@ -4567,6 +4571,10 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( crusnw13 )	/* (c) 1996 Midway */
 	DRIVER( offroadc )	/* (c) 1997 Midway */
 	DRIVER( wargods )	/* (c) 1996 Midway */
+	DRIVER( mk4 )		/* (c) 1997 Midway */
+	DRIVER( invasn )	/* (c) 1999 Midway */
+	DRIVER( crusnexo )	/* (c) 1999 Midway */
+	DRIVER( thegrid )	/* (c) 2001 Midway */
 
 	/* Midway / Atari  Voodoo based Hardware (Seattle, Flagstaff) */
 	DRIVER ( wg3dh )	/* (c) 1996 Atari Games */
@@ -4893,6 +4901,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( gunbird2 )	/* (c) 1998 */
 	DRIVER( s1945iii )	/* (c) 1999 */
 	DRIVER( dragnblz )	/* (c) 2000 */
+	DRIVER( gnbarich )	/* (c) 2001 */
 	DRIVER( hotgmck )	/* (c) 1997 */
 	DRIVER( hgkairak )	/* (c) 1998 */
 	DRIVER( hotgmck3 )	/* (c) 1999 */
@@ -5107,6 +5116,8 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( mslider )	/* (c) 1997 Visco / Datt Japan */
 	DRIVER( ryorioh )	/* (c) 1998 Visco */
 	DRIVER( vasara )	/* (c) 2000 Visco */
+	DRIVER( vasara2 )	/* (c) 2001 Visco */
+	DRIVER( vasara2a )	/* (c) 2001 Visco */
 
 	DRIVER( ultrax )	/* (c) 1995 Banpresto */
 	DRIVER( jsk )		/* (c) 1997 Visco */
@@ -5184,6 +5195,7 @@ Other Sun games
 	DRIVER( sparkman )
 	DRIVER( hardhead )	/* (c) 1988 SunA */
 	DRIVER( hardhedb )	/* bootleg */
+	DRIVER( pop_hh )	/* bootleg */
 	DRIVER( starfigh )	/* (c) 1990 SunA */
 	DRIVER( hardhea2 )
 	DRIVER( brickzn )
@@ -5638,6 +5650,7 @@ Other Sun games
 	DRIVER( rotaryf )
 	DRIVER( sbugger )	/* (c) 1981 Game-A-Tron */
 	DRIVER( portrait )	/* (c) 1983 Olympia */
+	DRIVER( portrata )	/* (c) 1983 Olympia */
 	DRIVER( enigma2 )	/* (c) 1981 Game Plan (Zilec Electronics license) */
 	DRIVER( enigma2a )	/* (c) 1984 Zilec Electronics (bootleg?) */
 	DRIVER( ltcasino )	/* (c) 1982 Digital Controls Inc */
@@ -5673,6 +5686,7 @@ Other Sun games
 	DRIVER( 1945kiii )	/* (c) 2000 Oriental */
 	DRIVER( pbchmp95 )	/* (c) 1995 Veltmeijer Automaten */
 	DRIVER( bmcbowl )	/* (c) 1994 BMC */
+	DRIVER( trvgns )	/* ? */
 
 	/* Neo Geo games */
 	/* the four digits number is the game ID stored at address 0x0108 of the program ROM */

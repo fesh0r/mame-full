@@ -184,6 +184,9 @@ void adsp2181_get_info(UINT32 state, union cpuinfo *info);
 #if (HAS_I960)
 #include "cpu/i960/i960.h"
 #endif
+#if (HAS_H83002)
+#include "cpu/h83002/h83002.h"
+#endif
 
 #ifdef MESS
 
@@ -641,6 +644,9 @@ const struct
 #endif
 #if (HAS_I960)
 	{ CPU_I960, i960_get_info },
+#endif
+#if (HAS_H83002)
+	{ CPU_H83002, h8_3002_get_info },
 #endif
 
 #ifdef MESS

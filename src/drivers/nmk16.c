@@ -158,6 +158,7 @@ WRITE16_HANDLER( nmk_tilebank_w );
 WRITE16_HANDLER( bioship_scroll_w );
 WRITE16_HANDLER( bioship_bank_w );
 WRITE16_HANDLER( mustang_scroll_w );
+WRITE16_HANDLER( bioshipbg_scroll_w );
 WRITE16_HANDLER( vandyke_scroll_w );
 
 VIDEO_START( macross );
@@ -626,8 +627,7 @@ static ADDRESS_MAP_START( mustang_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x080014, 0x080015) AM_WRITE(nmk_flipscreen_w)
 	AM_RANGE(0x080016, 0x080017) AM_WRITE(MWA16_NOP)	// frame number?
 	AM_RANGE(0x088000, 0x0887ff) AM_WRITE(paletteram16_RRRRGGGGBBBBRGBx_word_w) AM_BASE(&paletteram16)
-	AM_RANGE(0x08c000, 0x08c007) AM_WRITE(mustang_scroll_w)
-//AM_RANGE(0x08c000, 0x08c001) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0x08c000, 0x08c001) AM_WRITE(mustang_scroll_w)
 	AM_RANGE(0x090000, 0x093fff) AM_WRITE(nmk_bgvideoram_w) AM_BASE(&nmk_bgvideoram)
 	AM_RANGE(0x09c000, 0x09c7ff) AM_WRITE(nmk_txvideoram_w) AM_BASE(&nmk_txvideoram)
 	AM_RANGE(0x0f0000, 0x0f7fff) AM_WRITE(MWA16_RAM)	/* Work RAM */
@@ -641,8 +641,7 @@ static ADDRESS_MAP_START( mustangb_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x080016, 0x080017) AM_WRITE(MWA16_NOP)	// frame number?
 	AM_RANGE(0x08001e, 0x08001f) AM_WRITE(seibu_main_mustb_w)
 	AM_RANGE(0x088000, 0x0887ff) AM_WRITE(paletteram16_RRRRGGGGBBBBRGBx_word_w) AM_BASE(&paletteram16)
-	AM_RANGE(0x08c000, 0x08c007) AM_WRITE(mustang_scroll_w)
-//AM_RANGE(0x08c000, 0x08c001) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0x08c000, 0x08c001) AM_WRITE(mustang_scroll_w)
 	AM_RANGE(0x090000, 0x093fff) AM_WRITE(nmk_bgvideoram_w) AM_BASE(&nmk_bgvideoram)
 	AM_RANGE(0x09c000, 0x09c7ff) AM_WRITE(nmk_txvideoram_w) AM_BASE(&nmk_txvideoram)
 	AM_RANGE(0x0f0000, 0x0f7fff) AM_WRITE(MWA16_RAM)	/* Work RAM */
@@ -719,7 +718,7 @@ static ADDRESS_MAP_START( bioship_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 //	AM_RANGE(0x080014, 0x080015) AM_WRITE(nmk_flipscreen_w)
 	AM_RANGE(0x084000, 0x084001) AM_WRITE(bioship_bank_w)
 	AM_RANGE(0x088000, 0x0887ff) AM_WRITE(paletteram16_RRRRGGGGBBBBRGBx_word_w) AM_BASE(&paletteram16)
-	AM_RANGE(0x08c000, 0x08c007) AM_WRITE(mustang_scroll_w)
+	AM_RANGE(0x08c000, 0x08c007) AM_WRITE(bioshipbg_scroll_w)
 	AM_RANGE(0x08c010, 0x08c017) AM_WRITE(bioship_scroll_w)
 	AM_RANGE(0x090000, 0x093fff) AM_WRITE(nmk_bgvideoram_w) AM_BASE(&nmk_bgvideoram)
 	AM_RANGE(0x09c000, 0x09c7ff) AM_WRITE(nmk_txvideoram_w) AM_BASE(&nmk_txvideoram)

@@ -16,16 +16,15 @@
 
 		* California Speed             [Seattle + Widget, Atari, 150MHz, 8MB RAM, 1xTMU]
 		* Vapor TRX                    [Seattle + Widget, Atari, 192MHz, 8MB RAM, 1xTMU]
+		* Hyperdrive                   [Seattle + Widget, Midway, 200MHz, 8MB RAM, 1xTMU]
 
-		* San Francisco Rush           [Flagstaff, Atari, 200MHz, 2xTMU]
-		* San Francisco Rush: The Rock [Flagstaff, Atari, 200MHz, 8MB RAM, 2xTMU]
-
-	Still missing hard disks for:
-		* Hyperdrive                   [Seattle, Midway, 200MHz, 8MB RAM, 1xTMU]
+		* San Francisco Rush           [Flagstaff, Atari, 192MHz, 2xTMU]
+		* San Francisco Rush: The Rock [Flagstaff, Atari, 192MHz, 8MB RAM, 2xTMU]
 
 	Known bugs:
 		* Blitz: hangs if POST is enabled due to TMU 1 attempted accesses
 		* Carnevil: lets you set the flash brightness; need to emulate that
+		* Hyperdrive: long delay after you select a track; may be a timer issue
 
 ***************************************************************************
 
@@ -159,8 +158,8 @@
  *
  *************************************/
 
-#define SYSTEM_CLOCK		50000000
-#define TIMER_CLOCK			(TIME_IN_HZ(SYSTEM_CLOCK))
+#define SYSTEM_CLOCK			50000000
+#define TIMER_CLOCK				(TIME_IN_HZ(SYSTEM_CLOCK))
 
 /* various board configurations */
 #define PHOENIX_CONFIG			(0)
@@ -169,14 +168,14 @@
 #define FLAGSTAFF_CONFIG		(3)
 
 /* static interrupts */
-#define GALILEO_IRQ_NUM		(0)
-#define IOASIC_IRQ_NUM		(1)
-#define IDE_IRQ_NUM			(2)
+#define GALILEO_IRQ_NUM			(0)
+#define IOASIC_IRQ_NUM			(1)
+#define IDE_IRQ_NUM				(2)
 
 /* configurable interrupts */
-#define ETHERNET_IRQ_SHIFT	(1)
-#define WIDGET_IRQ_SHIFT	(1)
-#define VBLANK_IRQ_SHIFT	(7)
+#define ETHERNET_IRQ_SHIFT		(1)
+#define WIDGET_IRQ_SHIFT		(1)
+#define VBLANK_IRQ_SHIFT		(7)
 
 
 
@@ -186,7 +185,7 @@
  *
  *************************************/
 
-#define DMA_SECS_PER_BYTE	(TIME_IN_HZ(50000000))
+#define DMA_SECS_PER_BYTE	(TIME_IN_HZ(SYSTEM_CLOCK))
 
 /* Galileo registers - 0x000-0x3ff */
 #define GREG_CPU_CONFIG		(0x000/4)
@@ -584,9 +583,15 @@ static WRITE32_HANDLER( interrupt_config_w )
 
 static WRITE32_HANDLER( seattle_interrupt_enable_w )
 {
+	data32_t old = *interrupt_enable;
 	COMBINE_DATA(interrupt_enable);
-	update_vblank_irq();
-	ethernet_interrupt(ethernet_irq_state);
+	if (old != *interrupt_enable)
+	{
+		if (vblank_latch)
+			update_vblank_irq();
+		if (ethernet_irq_state)
+			ethernet_interrupt(ethernet_irq_state);
+	}
 }
 
 
@@ -1516,7 +1521,7 @@ static READ32_HANDLER( generic_speedup2_r )
 static ADDRESS_MAP_START( seattle_map, ADDRESS_SPACE_PROGRAM, 32 )
 	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
 	AM_RANGE(0x00000000, 0x007fffff) AM_MIRROR(0xa0000000) AM_RAM AM_BASE(&rambase)	// wg3dh only has 4MB; sfrush, blitz99 8MB
-	AM_RANGE(0x88000000, 0x883fffff) AM_MIRROR(0x20000000) AM_READWRITE(voodoo_regs_r, voodoo_regs_w) AM_BASE(&voodoo_regs)
+	AM_RANGE(0x88000000, 0x883fffff) AM_MIRROR(0x20000000) AM_READWRITE(voodoo_regs_r, voodoo_regs_w)
 	AM_RANGE(0x88400000, 0x887fffff) AM_MIRROR(0x20000000) AM_READWRITE(voodoo_framebuf_r, voodoo_framebuf_w)
 	AM_RANGE(0x88800000, 0x88ffffff) AM_MIRROR(0x20000000) AM_WRITE(voodoo_textureram_w)
 	AM_RANGE(0xaa000000, 0xaa0003ff) AM_READWRITE(ide_controller32_0_r, ide_controller32_0_w)
@@ -2622,6 +2627,132 @@ INPUT_PORTS_START( carnevil )
 INPUT_PORTS_END
 
 
+INPUT_PORTS_START( hyprdriv )
+	PORT_START	    /* DIPs */
+	PORT_DIPNAME( 0x0001, 0x0000, "Coinage Source" )
+	PORT_DIPSETTING(      0x0001, "Dipswitch" )
+	PORT_DIPSETTING(      0x0000, "CMOS" )
+	PORT_DIPNAME( 0x003e, 0x0034, DEF_STR( Coinage ))
+	PORT_DIPSETTING(      0x003e, "USA 10" )
+	PORT_DIPSETTING(      0x003c, "USA 11" )
+	PORT_DIPSETTING(      0x003a, "USA 12" )
+	PORT_DIPSETTING(      0x0038, "USA 13" )
+	PORT_DIPSETTING(      0x0036, "USA 9" )
+	PORT_DIPSETTING(      0x0034, "USA 1" )
+	PORT_DIPSETTING(      0x0032, "USA 2" )
+	PORT_DIPSETTING(      0x0030, "USA ECA" )
+	PORT_DIPSETTING(      0x002e, "France 1" )
+	PORT_DIPSETTING(      0x002c, "France 2" )
+	PORT_DIPSETTING(      0x002a, "France 3" )
+	PORT_DIPSETTING(      0x0028, "France 4" )
+	PORT_DIPSETTING(      0x0026, "France 5" )
+	PORT_DIPSETTING(      0x0024, "France 6" )
+	PORT_DIPSETTING(      0x0022, "France 7" )
+	PORT_DIPSETTING(      0x0020, "France ECA" )
+	PORT_DIPSETTING(      0x001e, "German 1" )
+	PORT_DIPSETTING(      0x001c, "German 2" )
+	PORT_DIPSETTING(      0x001a, "German 3" )
+	PORT_DIPSETTING(      0x0018, "German 4" )
+	PORT_DIPSETTING(      0x0016, "German 5" )
+	PORT_DIPSETTING(      0x0014, "German 5" )
+	PORT_DIPSETTING(      0x0012, "German 5" )
+	PORT_DIPSETTING(      0x0010, "German ECA" )
+	PORT_DIPSETTING(      0x000e, "U.K. 1 ECA" )
+	PORT_DIPSETTING(      0x000c, "U.K. 2 ECA" )
+	PORT_DIPSETTING(      0x000a, "U.K. 3 ECA" )
+	PORT_DIPSETTING(      0x0008, "U.K. 4" )
+	PORT_DIPSETTING(      0x0006, "U.K. 5" )
+	PORT_DIPSETTING(      0x0004, "U.K. 6 ECA" )
+	PORT_DIPSETTING(      0x0002, "U.K. 7 ECA" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Free_Play ))
+	PORT_DIPNAME( 0x0040, 0x0000, DEF_STR( Unknown ))
+	PORT_DIPSETTING(      0x0040, "0" )
+	PORT_DIPSETTING(      0x0000, "1" )
+	PORT_DIPNAME( 0x0080, 0x0080, "Power Up Test Loop" )
+	PORT_DIPSETTING(      0x0080, DEF_STR( No ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( Yes ))
+	PORT_DIPNAME( 0x0100, 0x0000, DEF_STR( Unknown ))
+	PORT_DIPSETTING(      0x0100, "0" )
+	PORT_DIPSETTING(      0x0000, "1" )
+	PORT_DIPNAME( 0x0600, 0x0200, "Resolution" )
+	PORT_DIPSETTING(      0x0600, "0" )
+	PORT_DIPSETTING(      0x0200, "Medium" )
+	PORT_DIPSETTING(      0x0400, "Low" )
+	PORT_DIPSETTING(      0x0000, "3" )
+	PORT_DIPNAME( 0x1800, 0x0000, "Graphics Speed" )
+	PORT_DIPSETTING(      0x0000, "45 MHz" )
+	PORT_DIPSETTING(      0x0800, "47 MHz" )
+	PORT_DIPSETTING(      0x1000, "49 MHz" )
+	PORT_DIPSETTING(      0x1800, "51 MHz" )
+	PORT_DIPNAME( 0x2000, 0x2000, "Brake" )
+	PORT_DIPSETTING(      0x2000, "Enabled" )
+	PORT_DIPSETTING(      0x0000, "Disabled" )
+	PORT_DIPNAME( 0x4000, 0x0000, "Power On Self Test" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( No ))
+	PORT_DIPSETTING(      0x4000, DEF_STR( Yes ))
+	PORT_DIPNAME( 0x8000, 0x8000, "Test Switch" )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_TILT ) /* Slam Switch */
+	PORT_BIT(0x0010, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2) /* Test switch */
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_COIN4 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_START3 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_START4 )
+	PORT_BIT(0x0800, IP_ACTIVE_LOW, 0 ) PORT_NAME("Volume Down") PORT_CODE(KEYCODE_MINUS)
+	PORT_BIT(0x1000, IP_ACTIVE_LOW, 0 ) PORT_NAME("Volume Up") PORT_CODE(KEYCODE_EQUALS)
+	PORT_BIT( 0x6000, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_SPECIAL )	/* Bill */
+
+	PORT_START
+	PORT_BIT( 0x0003, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT ) PORT_2WAY PORT_PLAYER(1)
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT ) PORT_2WAY PORT_PLAYER(1)
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(1)
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
+	PORT_BIT( 0xff80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START
+	PORT_BIT( 0xffff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START
+	PORT_BIT( 0x00ff, 0x80, IPT_AD_STICK_X ) PORT_MINMAX(0x10,0xf0) PORT_SENSITIVITY(25) PORT_KEYDELTA(25)
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START
+	PORT_BIT( 0xff, 0x00, IPT_PEDAL ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(25) PORT_KEYDELTA(20) PORT_PLAYER(1)
+
+	PORT_START
+	PORT_BIT( 0xff, 0x00, IPT_PEDAL ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(25) PORT_KEYDELTA(100) PORT_PLAYER(2)
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_AD_STICK_Y ) PORT_MINMAX(0x10,0xf0) PORT_SENSITIVITY(25) PORT_KEYDELTA(25)
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_SPECIAL )
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_SPECIAL )
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_SPECIAL )
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_SPECIAL )
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_SPECIAL )
+INPUT_PORTS_END
+
+
 
 /*************************************
  *
@@ -2706,8 +2837,8 @@ MACHINE_DRIVER_END
  *************************************/
 
 ROM_START( wg3dh )
-	ROM_REGION( 0x408000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version L1.1 */
-	ROM_LOAD( "soundl11.u95", 0x000000, 0x8000, CRC(c589458c) SHA1(0cf970a35910a74cdcf3bd8119bfc0c693e19b00) )
+	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version L1.1 */
+	ROM_LOAD16_BYTE( "soundl11.u95", 0x000000, 0x8000, CRC(c589458c) SHA1(0cf970a35910a74cdcf3bd8119bfc0c693e19b00) )
 
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )	/* Boot Code Version L1.2 */
 	ROM_LOAD( "wg3dh_12.u32", 0x000000, 0x80000, CRC(15e4cea2) SHA1(72c0db7dc53ce645ba27a5311b5ce803ad39f131) )
@@ -2718,8 +2849,8 @@ ROM_END
 
 
 ROM_START( mace )
-	ROM_REGION( 0x408000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version L1.1 */
-	ROM_LOAD( "soundl11.u95", 0x000000, 0x8000, CRC(c589458c) SHA1(0cf970a35910a74cdcf3bd8119bfc0c693e19b00) )
+	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version L1.1 */
+	ROM_LOAD16_BYTE( "soundl11.u95", 0x000000, 0x8000, CRC(c589458c) SHA1(0cf970a35910a74cdcf3bd8119bfc0c693e19b00) )
 
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD( "maceboot.u32", 0x000000, 0x80000, CRC(effe3ebc) SHA1(7af3ca3580d6276ffa7ab8b4c57274e15ee6bcbb) )
@@ -2766,8 +2897,8 @@ ROM_END
 
 
 ROM_START( calspeed )
-	ROM_REGION( 0x408000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
-	ROM_LOAD( "sound102.u95", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
+	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
+	ROM_LOAD16_BYTE( "sound102.u95", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
 
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD( "caspd1_2.u32", 0x000000, 0x80000, CRC(0a235e4e) SHA1(b352f10fad786260b58bd344b5002b6ea7aaf76d) )
@@ -2778,8 +2909,8 @@ ROM_END
 
 
 ROM_START( vaportrx )
-	ROM_REGION( 0x408000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
-	ROM_LOAD( "vaportrx.snd", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
+	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
+	ROM_LOAD16_BYTE( "vaportrx.snd", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
 
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD( "vtrxboot.bin", 0x000000, 0x80000, CRC(ee487a6c) SHA1(fb9efda85047cf615f24f7276a9af9fd542f3354) )
@@ -2790,8 +2921,8 @@ ROM_END
 
 
 ROM_START( vaportrp )
-	ROM_REGION( 0x408000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
-	ROM_LOAD( "vaportrx.snd", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
+	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
+	ROM_LOAD16_BYTE( "vaportrx.snd", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
 
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD( "vtrxboot.bin", 0x000000, 0x80000, CRC(ee487a6c) SHA1(fb9efda85047cf615f24f7276a9af9fd542f3354) )
@@ -2802,8 +2933,8 @@ ROM_END
 
 
 ROM_START( biofreak )
-	ROM_REGION( 0x408000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
-	ROM_LOAD( "sound102.u95", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
+	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
+	ROM_LOAD16_BYTE( "sound102.u95", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
 
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD( "biofreak.u32", 0x000000, 0x80000, CRC(cefa00bb) SHA1(7e171610ede1e8a448fb8d175f9cb9e7d549de28) )
@@ -2814,8 +2945,8 @@ ROM_END
 
 
 ROM_START( blitz )
-	ROM_REGION( 0x408000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
-	ROM_LOAD( "sound102.u95", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
+	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
+	ROM_LOAD16_BYTE( "sound102.u95", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
 
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )	/* Boot Code Version 1.2 */
 	ROM_LOAD( "blitz1_2.u32", 0x000000, 0x80000, CRC(38dbecf5) SHA1(7dd5a5b3baf83a7f8f877ff4cd3f5e8b5201b36f) )
@@ -2826,8 +2957,8 @@ ROM_END
 
 
 ROM_START( blitz99 )
-	ROM_REGION( 0x408000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
-	ROM_LOAD( "sound102.u95", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
+	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
+	ROM_LOAD16_BYTE( "sound102.u95", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
 
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD( "blitz99.u32", 0x000000, 0x80000, CRC(777119b2) SHA1(40d255181c2f3a787919c339e83593fd506779a5) )
@@ -2838,8 +2969,8 @@ ROM_END
 
 
 ROM_START( blitz2k )
-	ROM_REGION( 0x408000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
-	ROM_LOAD( "sound102.u95", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
+	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
+	ROM_LOAD16_BYTE( "sound102.u95", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
 
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )	/* Boot Code Version 1.4 */
 	ROM_LOAD( "bltz2k14.u32", 0x000000, 0x80000, CRC(ac4f0051) SHA1(b8125c17370db7bfd9b783230b4ef3d5b22a2025) )
@@ -2850,8 +2981,8 @@ ROM_END
 
 
 ROM_START( carnevil )
-	ROM_REGION( 0x408000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
-	ROM_LOAD( "sound102.u95", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
+	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
+	ROM_LOAD16_BYTE( "sound102.u95", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
 
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD( "boot.u32", 0x000000, 0x80000, CRC(82c07f2e) SHA1(fa51c58022ce251c53bad12fc6ffadb35adb8162) )
@@ -2862,14 +2993,14 @@ ROM_END
 
 
 ROM_START( hyprdriv )
-	ROM_REGION( 0x408000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
-	ROM_LOAD( "seattle.snd", 0x000000, 0x8000, NO_DUMP CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
+	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
+	ROM_LOAD16_BYTE( "seattle.snd", 0x000000, 0x8000, BAD_DUMP CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
 
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD( "hyprdrve.u32", 0x000000, 0x80000, CRC(3e18cb80) SHA1(b18cc4253090ee1d65d72a7ec0c426ed08c4f238) )
 
 	DISK_REGION( REGION_DISKS )
-	DISK_IMAGE( "hyprdriv", 0, NO_DUMP )
+	DISK_IMAGE( "hyprdriv", 0, MD5(480c43735b0b83eb10c0223283d4226c) SHA1(2e42fecbb8722c736cccdca7ed3b21fbc75e345a) )
 ROM_END
 
 
@@ -2980,7 +3111,7 @@ static DRIVER_INIT( calspeed )
 
 static DRIVER_INIT( vaportrx )
 {
-	dcs2_init(0);
+	dcs2_init(0x39c2);
 	init_common(MIDWAY_IOASIC_VAPORTRX, 324/* 334? unknown */, 100, SEATTLE_WIDGET_CONFIG);
 
 	/* speedups */
@@ -3051,8 +3182,8 @@ static DRIVER_INIT( carnevil )
 
 static DRIVER_INIT( hyprdriv )
 {
-	dcs2_init(0);
-	init_common(MIDWAY_IOASIC_STANDARD, 469/* unknown */, 80, SEATTLE_CONFIG);
+	dcs2_init(0x0af7);
+	init_common(MIDWAY_IOASIC_HYPRDRIV, 469/* unknown */, 80, SEATTLE_WIDGET_CONFIG);
 
 	/* speedups */
 }
@@ -3078,6 +3209,6 @@ GAME ( 1998, vaportrp, vaportrx, seattle200, vaportrx, vaportrx, ROT0, "Atari Ga
 GAME ( 1997, biofreak, 0,        seattle150, biofreak, biofreak, ROT0, "Midway Games", "BioFreaks (prototype)" )
 GAME ( 1997, blitz,    0,        seattle150, blitz,    blitz,    ROT0, "Midway Games", "NFL Blitz" )
 GAME ( 1998, blitz99,  0,        seattle150, blitz99,  blitz99,  ROT0, "Midway Games", "NFL Blitz '99" )
-GAME ( 1999, blitz2k,  0,        seattle150, blitz99,  blitz2k,  ROT0, "Midway Games", "NFL Blitz 2000" )
+GAME ( 1999, blitz2k,  0,        seattle150, blitz99,  blitz2k,  ROT0, "Midway Games", "NFL Blitz 2000 Gold Edition" )
 GAME ( 1998, carnevil, 0,        carnevil,   carnevil, carnevil, ROT0, "Midway Games", "CarnEvil" )
-GAMEX( 1998, hyprdriv, 0,        seattle200, carnevil, hyprdriv, ROT0, "Midway Games", "Hyperdrive", GAME_NOT_WORKING )
+GAME ( 1998, hyprdriv, 0,        seattle200, hyprdriv, hyprdriv, ROT0, "Midway Games", "Hyperdrive" )

@@ -169,6 +169,9 @@ enum
 	UI_search_select_value,
 	UI_search_all_values_saved,
 	UI_search_one_match_found_added,
+	
+	/* refresh rate */
+	UI_refresh_rate,
 
 	UI_last_mame_entry
 };

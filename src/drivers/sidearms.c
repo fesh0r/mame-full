@@ -1050,6 +1050,38 @@ ROM_START( dygera )
 	ROM_LOAD( "dyger.016",    0x0000, 0x8000, CRC(0792e8f2) SHA1(3716839502679ecc973571d824065b40771d5bfa) )
 ROM_END
 
+ROM_START( twinfalc )	/* Shows "Notice  This game is for use in Korea only..." The real PCB displays the same :-) */
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )     /* 64k for code + banked ROMs images */
+	ROM_LOAD( "t15.bin",    0x00000, 0x08000, CRC(e1f20144) SHA1(911781232fc1a7d6e36abb1c45e68a4398d8deac) )
+	ROM_LOAD( "t14.bin",    0x10000, 0x10000, CRC(c499ff83) SHA1(d99bb8cb04485638c5f05584cffdd2fbbe061af7) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the audio CPU */
+	ROM_LOAD( "whizz.t1",     0x0000, 0x8000, CRC(b84bc980) SHA1(d2d302a96a9e3197f27144e525a901cfb9da09e4) )
+
+	ROM_REGION( 0x8000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "whizz.t6",     0x04000, 0x04000, CRC(8e4ca776) SHA1(412a47f030e3b491e23e5696ef88d065f9de0220) )	/* characters */
+	ROM_CONTINUE(             0x00000, 0x04000 )	/* is the first half used? */
+
+	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "whizz.t10",    0x00000, 0x10000, CRC(b678ef5b) SHA1(cdddd2a033291585e25839e864e898ef36f4d287) )
+	ROM_LOAD( "whizz.t9",     0x10000, 0x10000, CRC(d7345fb9) SHA1(9da907c2bcacc750426a2989bae3c3e5fcc3e3ab) )
+	ROM_RELOAD( 0x30000, 0x10000)
+	ROM_LOAD( "whizz.t8",     0x20000, 0x10000, CRC(41428dac) SHA1(16ae6c178b91e5cd859deb13176b7333f05c378a) )
+	ROM_LOAD( "whizz.t13",    0x40000, 0x10000, CRC(0eba10bd) SHA1(e2504a5576c6af6c5bdb0263e1d3cb9ccabde3f8) )
+	ROM_LOAD( "whizz.t12",    0x50000, 0x10000, CRC(c65050ce) SHA1(f90616aa4e1f80d8d7fccf5748f564cb7bc2d83a) )
+	ROM_RELOAD( 0x70000, 0x10000)
+	ROM_LOAD( "whizz.t11",    0x60000, 0x10000, CRC(51a2c65d) SHA1(a89f46d581d2907b7813454925ce690af007997d) )
+
+	ROM_REGION( 0x40000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "whizz.t2",    0x00000, 0x10000, CRC(9c106835) SHA1(7e032e65e78c380b5f03a4febd6dcd3f0bdb642b) )	/* sprites */
+	ROM_LOAD( "whizz.t3",    0x10000, 0x10000, CRC(9b421ccf) SHA1(0365d48437da0f90c1c146da0605139a3da0b03b) )
+	ROM_LOAD( "whizz.t4",    0x20000, 0x10000, CRC(3a1db986) SHA1(5435e891eebe5b95a5a97ee8743a8a10282e4d19) )
+	ROM_LOAD( "whizz.t5",    0x30000, 0x10000, CRC(9bd22190) SHA1(7a571becde02ea4b64db4138f00408f312bf54c0) )
+
+	ROM_REGION( 0x08000, REGION_GFX4, 0 )	/* background tilemaps */
+	ROM_LOAD( "whizz.t7",    0x0000, 0x8000, CRC(a8b5f750) SHA1(94eb7af3cb8bee87ce3d31260e3bde062ebbc8f0) )
+ROM_END
+
 ROM_START( whizz )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 )     /* 64k for code + banked ROMs images */
 	ROM_LOAD( "whizz.t15",    0x00000, 0x08000, CRC(73161302) SHA1(de815bba66c376cea775139f4285de0b1a589d88) )
@@ -1093,5 +1125,7 @@ GAMEX(1986, sidearjp, sidearms, sidearms, sidearms, sidearms, ROT0,   "Capcom", 
 GAME( 1988, turtship, 0,        turtship, turtship, turtship, ROT0,   "Philko", "Turtle Ship" )
 GAME( 1989, dyger,    0,        turtship, dyger,    dyger,    ROT270, "Philko", "Dyger (Korea set 1)" )
 GAME( 1989, dygera,   dyger,    turtship, dyger,    dyger,    ROT270, "Philko", "Dyger (Korea set 2)" )
-GAME( 1989, whizz,    0,        whizz, 	  whizz,    whizz,	  ROT0,   "Philko", "Whizz" )
+GAME( 1989, twinfalc, 0,        whizz, 	  whizz,    whizz,	  ROT0,   "Philko (Poara Enterprises license)", "Twin Falcons" )
+GAME( 1989, whizz,    twinfalc, whizz, 	  whizz,    whizz,	  ROT0,   "Philko", "Whizz" )
+
 

@@ -62,11 +62,11 @@ static WRITE8_HANDLER( triothep_control_select_w )
 static READ8_HANDLER( triothep_control_r )
 {
 	switch (trio_control_select) {
-		case 0: return readinputport(0); /* Player 1 */
-		case 1: return readinputport(1); /* Player 2 */
-		case 2: return readinputport(3); /* Dip 1 */
-		case 3: return readinputport(4); /* Dip 2 */
-		case 4: return readinputport(2); /* VBL */
+		case 0: return readinputportbytag("IN0"); /* Player 1 */
+		case 1: return readinputportbytag("IN1"); /* Player 2 */
+		case 2: return readinputportbytag("DSW1"); /* Dip 1 */
+		case 3: return readinputportbytag("DSW2"); /* Dip 2 */
+		case 4: return readinputportbytag("IN2"); /* VBL */
 	}
 
 	return 0xff;
@@ -154,7 +154,7 @@ ADDRESS_MAP_END
 /******************************************************************************/
 
 INPUT_PORTS_START( actfancr )
-	PORT_START	/* Player 1 controls */
+	PORT_START_TAG("IN0")	/* Player 1 controls */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY
@@ -164,7 +164,7 @@ INPUT_PORTS_START( actfancr )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
-	PORT_START	/* Player 2 controls */
+	PORT_START_TAG("IN1")	/* Player 2 controls */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_COCKTAIL
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_COCKTAIL
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_COCKTAIL
@@ -174,7 +174,7 @@ INPUT_PORTS_START( actfancr )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
-	PORT_START	/* start buttons */
+	PORT_START_TAG("IN2")	/* start buttons */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
@@ -184,7 +184,7 @@ INPUT_PORTS_START( actfancr )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
 
-	PORT_START	/* Dip switch bank 1 */
+	PORT_START_TAG("DSW1")
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
@@ -208,12 +208,12 @@ INPUT_PORTS_START( actfancr )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
 
-	PORT_START	/* Dip switch bank 2 */
+	PORT_START_TAG("DSW2")
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x03, "3" )
 	PORT_DIPSETTING(    0x02, "4" )
 	PORT_DIPSETTING(    0x01, "5" )
-	PORT_BIT(0,  0x00, IPT_DIPSWITCH_SETTING ) PORT_NAME("100") PORT_CHEAT
+	PORT_DIPSETTING(	0x00, "100 (Cheat)")
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x04, "Easy" )
 	PORT_DIPSETTING(    0x0c, "Normal" )
@@ -234,7 +234,7 @@ INPUT_PORTS_START( actfancr )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( triothep )
-	PORT_START	/* Player 1 controls */
+	PORT_START_TAG("IN0")	/* Player 1 controls */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY
@@ -244,7 +244,7 @@ INPUT_PORTS_START( triothep )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
-	PORT_START	/* Player 2 controls */
+	PORT_START_TAG("IN1")	/* Player 2 controls */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_COCKTAIL
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_COCKTAIL
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_COCKTAIL
@@ -254,7 +254,7 @@ INPUT_PORTS_START( triothep )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_COCKTAIL
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
-	PORT_START	/* start buttons */
+	PORT_START_TAG("IN2")	/* start buttons */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
@@ -264,7 +264,7 @@ INPUT_PORTS_START( triothep )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
 
-	PORT_START	/* Dip switch bank 1 */
+	PORT_START_TAG("DSW1")	/* Dip switch bank 1 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
@@ -288,7 +288,7 @@ INPUT_PORTS_START( triothep )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
 
-	PORT_START	/* Dip switch bank 2 */
+	PORT_START_TAG("DSW2")
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "8" )
 	PORT_DIPSETTING(    0x01, "10" )

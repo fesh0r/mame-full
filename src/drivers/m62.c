@@ -2460,36 +2460,36 @@ ROM_START( horizon )
 ROM_END
 
 
-static void init_m62(void)
+static DRIVER_INIT( m62 )
 {
 	state_save_register_int("main", 0, "bankaddress", &bankaddress);
 	state_save_register_func_postload(set_m64_bank);
 }
 
-static void init_spelunk2(void)
+static DRIVER_INIT( spelunk2 )
 {
 	state_save_register_int("main", 0, "bankaddress", &bankaddress);
 	state_save_register_int("main", 0, "bankaddress2", &bankaddress2);
 	state_save_register_func_postload(set_m64_bank2);
 }
 
-GAME( 1984, kungfum,  0,        kungfum,  kungfum,  m62,      ROT0,   "Irem", "Kung-Fu Master" )
-GAME( 1984, kungfud,  kungfum,  kungfum,  kungfum,  m62,      ROT0,   "Irem (Data East license)", "Kung-Fu Master (Data East)" )
-GAME( 1984, spartanx, kungfum,  kungfum,  kungfum,  m62,      ROT0,   "Irem", "Spartan X (Japan)" )
-GAME( 1984, kungfub,  kungfum,  kungfum,  kungfum,  m62,      ROT0,   "bootleg", "Kung-Fu Master (bootleg set 1)" )
-GAME( 1984, kungfub2, kungfum,  kungfum,  kungfum,  m62,      ROT0,   "bootleg", "Kung-Fu Master (bootleg set 2)" )
+GAME( 1984, kungfum,  0,        kungfum,  kungfum,  0,        ROT0,   "Irem", "Kung-Fu Master" )
+GAME( 1984, kungfud,  kungfum,  kungfum,  kungfum,  0,        ROT0,   "Irem (Data East license)", "Kung-Fu Master (Data East)" )
+GAME( 1984, spartanx, kungfum,  kungfum,  kungfum,  0,        ROT0,   "Irem", "Spartan X (Japan)" )
+GAME( 1984, kungfub,  kungfum,  kungfum,  kungfum,  0,        ROT0,   "bootleg", "Kung-Fu Master (bootleg set 1)" )
+GAME( 1984, kungfub2, kungfum,  kungfum,  kungfum,  0,        ROT0,   "bootleg", "Kung-Fu Master (bootleg set 2)" )
 GAME( 1984, battroad, 0,        battroad, battroad, m62,      ROT90,  "Irem", "The Battle-Road" )
-GAME( 1984, ldrun,    0,        ldrun,    ldrun,    m62,      ROT0,   "Irem (licensed from Broderbund)", "Lode Runner (set 1)" )
-GAME( 1984, ldruna,   ldrun,    ldrun,    ldrun,    m62,      ROT0,   "Irem (licensed from Broderbund)", "Lode Runner (set 2)" )
+GAME( 1984, ldrun,    0,        ldrun,    ldrun,    0,        ROT0,   "Irem (licensed from Broderbund)", "Lode Runner (set 1)" )
+GAME( 1984, ldruna,   ldrun,    ldrun,    ldrun,    0,        ROT0,   "Irem (licensed from Broderbund)", "Lode Runner (set 2)" )
 GAME( 1984, ldrun2,   0,        ldrun2,   ldrun2,   m62,      ROT0,   "Irem (licensed from Broderbund)", "Lode Runner II - The Bungeling Strikes Back" )	/* Japanese version is called Bangeringu Teikoku No Gyakushuu */
-GAME( 1985, ldrun3,   0,        ldrun3,   ldrun3,   m62,      ROT0,   "Irem (licensed from Broderbund)", "Lode Runner III - The Golden Labyrinth" )
-GAME( 1985, ldrun3jp, ldrun3,   ldrun3,   ldrun3,   m62,      ROT0,   "Irem (licensed from Broderbund)", "Lode Runner III - Majin No Fukkatsu" )
+GAME( 1985, ldrun3,   0,        ldrun3,   ldrun3,   0,        ROT0,   "Irem (licensed from Broderbund)", "Lode Runner III - The Golden Labyrinth" )
+GAME( 1985, ldrun3jp, ldrun3,   ldrun3,   ldrun3,   0,        ROT0,   "Irem (licensed from Broderbund)", "Lode Runner III - Majin No Fukkatsu" )
 GAME( 1986, ldrun4,   0,        ldrun4,   ldrun4,   m62,      ROT0,   "Irem (licensed from Broderbund)", "Lode Runner IV - Teikoku Karano Dasshutsu" )
-GAME( 1985, lotlot,   0,        lotlot,   lotlot,   m62,      ROT0,   "Irem (licensed from Tokuma Shoten)", "Lot Lot" )
+GAME( 1985, lotlot,   0,        lotlot,   lotlot,   0,        ROT0,   "Irem (licensed from Tokuma Shoten)", "Lot Lot" )
 GAMEX(1986, kidniki,  0,        kidniki,  kidniki,  m62,      ROT0,   "Irem (Data East USA license)", "Kid Niki - Radical Ninja (US)", GAME_IMPERFECT_SOUND )
 GAMEX(1986, yanchamr, kidniki,  kidniki,  kidniki,  m62,      ROT0,   "Irem", "Kaiketsu Yanchamaru (Japan)", GAME_IMPERFECT_SOUND )
 GAME( 1985, spelunkr, 0,        spelunkr, spelunkr, m62,      ROT0,   "Irem (licensed from Broderbund)", "Spelunker" )
 GAME( 1985, spelnkrj, spelunkr, spelunkr, spelunkr, m62,      ROT0,   "Irem (licensed from Broderbund)", "Spelunker (Japan)" )
 GAME( 1986, spelunk2, 0,        spelunk2, spelunk2, spelunk2, ROT0,   "Irem (licensed from Broderbund)", "Spelunker II" )
 GAME( 1986, youjyudn, 0,        youjyudn, youjyudn, m62,      ROT270, "Irem", "Youjyuden (Japan)" )
-GAMEX(1985, horizon,  0,        horizon,  horizon,  m62,      ROT0,   "Irem", "Horizon", GAME_IMPERFECT_SOUND )
+GAMEX(1985, horizon,  0,        horizon,  horizon,  0,        ROT0,   "Irem", "Horizon", GAME_IMPERFECT_SOUND )

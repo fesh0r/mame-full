@@ -97,6 +97,7 @@ CPUS+=SPC700@
 CPUS+=E132XS@
 CPUS+=I386@
 CPUS+=I960@
+CPUS+=H83002@ 
 
 # uncomment the following lines to include a sound core
 SOUNDS+=CUSTOM@
@@ -171,6 +172,7 @@ SOUNDS+=PSXSPU@
 SOUNDS+=CDDA@
 SOUNDS+=ICS2115@
 SOUNDS+=ST0016@
+SOUNDS+=C352@
 
 DRVLIBS = \
 	$(OBJ)/pacman.a $(OBJ)/epos.a $(OBJ)/nichibut.a \
@@ -322,6 +324,7 @@ $(OBJ)/midway.a: \
 	$(OBJ)/machine/midwunit.o $(OBJ)/drivers/midwunit.o \
 	$(OBJ)/vidhrdw/midvunit.o $(OBJ)/drivers/midvunit.o \
 	$(OBJ)/machine/midtunit.o $(OBJ)/vidhrdw/midtunit.o $(OBJ)/drivers/midtunit.o \
+	$(OBJ)/drivers/midzeus.o \
 
 $(OBJ)/irem.a: \
 	$(OBJ)/vidhrdw/skychut.o $(OBJ)/drivers/skychut.o \
@@ -1153,6 +1156,7 @@ $(OBJ)/other.a: \
 	$(OBJ)/drivers/1945kiii.o \
 	$(OBJ)/drivers/pbchmp95.o \
 	$(OBJ)/drivers/bmcbowl.o \
+	$(OBJ)/drivers/trvgns.o \
 
 
 COREOBJS += $(OBJ)/driver.o $(OBJ)/cheat.o
