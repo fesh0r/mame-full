@@ -89,7 +89,7 @@ static void draw_sprites(struct osd_bitmap *bitmap,int priority)
 		{42,43,46,47,58,59,62,63}
 	};
 
-	for (offs = 0;offs < spriteram_size;offs += 16)
+	for (offs = spriteram_size-16;offs >= 0;offs -= 16)
 	{
 		int sx,sy,code,color,size,attr,flipx,flipy;
 		int col,row;
