@@ -82,7 +82,7 @@ EXTERN unsigned char **dirty_blocks;
 EXTERN int		sound_enabled;
 EXTERN int	 	widthscale;        /* X scale */
 EXTERN int	 	heightscale;       /* Y scale */
-EXTERN int		yarbsize;          /* arbitrary height */
+extern int		yarbsize;          /* arbitrary height */
 EXTERN int		video_colors_used; /* max colors used by any palette */
 EXTERN int		video_fps;
 EXTERN char		*home_dir;
