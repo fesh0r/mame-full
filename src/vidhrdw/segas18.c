@@ -78,7 +78,7 @@ VIDEO_START( system18 )
 	tilemap_set_scrollx(textmap, 0, 0);
 
 	/* create the tilemaps for the bg/fg layers */
-	if (!segaic16_init_virtual_tilemaps(16, get_tile_info))
+	if (!segaic16_init_virtual_tilemaps(16, 0, get_tile_info))
 		return 1;
 
 	/* create the VDP */
@@ -422,7 +422,10 @@ static void draw_layer(struct mame_bitmap *bitmap, const struct rectangle *clipr
 		{																	\
 			/* shadow/hilight mode? */										\
 			if (color == 1024 + (0x3f << 4))								\
-				dest[x] += (paletteram16[dest[x]] & 0x8000) ? 4096 : 2048;	\
+			{																\
+				if (dest[x] < 0x400)	/* don't affect VDP */				\
+					dest[x] += (paletteram16[dest[x]] & 0x8000) ? 4096 : 2048;\
+			}																\
 																			\
 			/* regular draw */												\
 			else															\

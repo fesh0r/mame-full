@@ -106,6 +106,7 @@ Quick review of the system16 hardware:
 data16_t *segaic16_tileram;
 data16_t *segaic16_textram;
 data16_t *segaic16_spriteram;
+data16_t *segaic16_roadram;
 
 struct tilemap *segaic16_tilemaps[16];
 UINT8 segaic16_tilemap_page;
@@ -224,7 +225,7 @@ WRITE16_HANDLER( segaic16_paletteram_w )
  *
  *************************************/
 
-int segaic16_init_virtual_tilemaps(int numpages, void (*tile_cb)(int))
+int segaic16_init_virtual_tilemaps(int numpages, int palette_offset, void (*tile_cb)(int))
 {
 	int pagenum;
 
@@ -237,6 +238,7 @@ int segaic16_init_virtual_tilemaps(int numpages, void (*tile_cb)(int))
 			return 0;
 
 		/* configure the tilemap */
+		tilemap_set_palette_offset(segaic16_tilemaps[pagenum], palette_offset);
 		tilemap_set_transparent_pen(segaic16_tilemaps[pagenum], 0);
 	}
 	return 1;

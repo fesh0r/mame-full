@@ -10,7 +10,7 @@
 		* timescn DIPs have not really been verified
 		* atomicp garbage
 		* screen flip not implemented
-
+	
 	To do for each game:
 		* verify memory test
 		* verify inputs
@@ -41,6 +41,7 @@
 	Wonderboy III    171-5704    a5:12258,a7:12259,i8751:317-0098
 	Wonderboy III    171-5358	317-0085
 	Wrestle War      171-5704    a5-a8:12371,12144,12372,12146,i8751:317-0103
+	Wrestle War	     171-5704    a5-a8:12143,12411,12145,12146,fd1094:317-0090
 
 	The 171-5521 board is identical to 171-5704 with the jumper difference I mentioned.
 
@@ -1042,7 +1043,7 @@ static MACHINE_INIT( system16b )
 {
 	fd1094_machine_init();
 	system16b_reset_video();
-
+	
 	/* if we have a fake i8751 handler, disable the actual 8751 */
 	if (i8751_vblank_hook != NULL)
 		cpunum_suspend(2, SUSPEND_REASON_DISABLE, 1);
@@ -1131,7 +1132,7 @@ static void memory_control_w(offs_t offset, data8_t data)
 				memory_control[0x01] = result;
 			}
 			break;
-
+		
 		case 0x07:	case 0x08:	case 0x09:
 			/* writes here latch a 68000 address for writing */
 			break;
@@ -1509,7 +1510,7 @@ static void altbeast_common_i8751_sim(offs_t soundoffs, offs_t inputoffs)
 
 	/* signal a VBLANK to the main CPU */
 	cpunum_set_input_line(0, 4, HOLD_LINE);
-
+	
 	/* process any new sound data */
 	temp = workram[soundoffs];
 	if ((temp & 0xff00) != 0x0000)
@@ -1544,7 +1545,7 @@ static void goldnaxe_i8751_init(void)
 		{ 0x02,0x00, 0x02,0x08, 0x00,0x1f, 0x00,0xff, 0x00,0x20, 0x01,0x10, 0x00,0x14, 0x00,0xc4 };
 	static const UINT8 memory_control_5797[0x10] =
 		{ 0x02,0x00, 0x00,0x1f, 0x00,0x1e, 0x00,0xff, 0x00,0x20, 0x01,0x10, 0x00,0x14, 0x00,0xc4 };
-
+	
 	switch (rom_board)
 	{
 		case ROM_BOARD_171_5704:
@@ -1563,7 +1564,7 @@ static void goldnaxe_i8751_sim(void)
 
 	/* signal a VBLANK to the main CPU */
 	cpunum_set_input_line(0, 4, HOLD_LINE);
-
+	
 	/* they periodically clear the data at 2cd8,2cda,2cdc,2cde and expect the MCU to fill it in */
 	if (workram[0x2cd8/2] == 0 && workram[0x2cda/2] == 0 && workram[0x2cdc/2] == 0 && workram[0x2cde/2] == 0)
 	{
@@ -1572,7 +1573,7 @@ static void goldnaxe_i8751_sim(void)
 		workram[0x2cdc/2] = 0x26ae;
 		workram[0x2cde/2] = 0x37bf;
 	}
-
+	
 	/* process any new sound data */
 	temp = workram[0x2cfc/2];
 	if ((temp & 0xff00) != 0x0000)
@@ -1593,7 +1594,7 @@ static void tturf_i8751_sim(void)
 
 	/* signal a VBLANK to the main CPU */
 	cpunum_set_input_line(0, 4, HOLD_LINE);
-
+	
 	/* process any new sound data */
 	temp = workram[0x01d0/2];
 	if ((temp & 0xff00) != 0x0000)
@@ -1615,7 +1616,7 @@ static void wb3b_i8751_sim(void)
 
 	/* signal a VBLANK to the main CPU */
 	cpunum_set_input_line(0, 4, HOLD_LINE);
-
+	
 	/* process any new sound data */
 	temp = workram[0x0008/2];
 	if ((temp & 0x00ff) != 0x0000)
@@ -1632,7 +1633,7 @@ static void wrestwar_i8751_sim(void)
 
 	/* signal a VBLANK to the main CPU */
 	cpunum_set_input_line(0, 4, HOLD_LINE);
-
+	
 	/* process any new sound data */
 	temp = workram[0x208e/2];
 	if ((temp & 0xff00) != 0x0000)
@@ -3587,14 +3588,12 @@ ROM_START( cotton )
 ROM_END
 
 /**************************************************************************************************************************
- **************************************************************************************************************************
- **************************************************************************************************************************
 	Cotton, Sega System 16B
 	CPU: FD1094 (317-0180T) // T could be wrong, it was handwritten
 	ROM Board: 171-5704
-*/
 
-/* just a placeholder for key */
+	just a placeholder for key
+*/
 ROM_START( cottona )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* 68000 code */
 	ROM_REGION( 0x2000, REGION_USER1, 0 ) /* decryption key */
@@ -3603,7 +3602,6 @@ ROM_START( cottona )
 	ROM_REGION16_BE( 0x200000, REGION_GFX2, 0 ) /* sprites */
 	ROM_REGION( 0x30000, REGION_CPU2, 0 ) /* sound CPU */
 ROM_END
-
 
 /**************************************************************************************************************************
 	Cotton (Japan), Sega System 16B
@@ -4543,6 +4541,37 @@ ROM_START( shinobib )
 	ROM_LOAD( "shinobi.a9", 0x18000, 0x8000, CRC(e5a4cf30) SHA1(d1982da7a550c11ab2253f5d64ac6ab847da0a04) )
 ROM_END
 
+/**************************************************************************************************************************
+	Shinobi, Sega System 16B
+	CPU: 68000
+	ROM Board: 171-5521
+*/
+ROM_START( shinobic )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 code */
+	ROM_LOAD16_BYTE( "epr11360.a7", 0x00000, 0x20000, CRC(b1f67ab9) SHA1(83eddd1ef3fbe58f1f8e8d57229fabf1907fc371) )
+	ROM_LOAD16_BYTE( "epr11359.a6", 0x00001, 0x20000, CRC(0f0306e1) SHA1(eebe7c88e5f665d1d0920fb9b545e20b05be9b52) )
+
+	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
+	ROM_LOAD( "shinobi.b9",  0x00000, 0x10000, CRC(5f62e163) SHA1(03f008745a1af84142ada647acf3601049f43ad5) )
+	ROM_LOAD( "shinobi.b10", 0x10000, 0x10000, CRC(75f8fbc9) SHA1(29072edcd583af60ec66b4c8bb82b179a3751edf) )
+	ROM_LOAD( "shinobi.b11", 0x20000, 0x10000, CRC(06508bb9) SHA1(57c9036123ec8e35d0275ab6eaff25a16aa203d4) )
+
+	ROM_REGION16_BE( 0x80000, REGION_GFX2, 0 ) /* sprites */
+	ROM_LOAD16_BYTE( "epr11290.10", 0x00001, 0x10000, CRC(611f413a) SHA1(180f83216e2dfbfd77b0fb3be83c3042954d12df) )
+	ROM_LOAD16_BYTE( "epr11294.11", 0x00000, 0x10000, CRC(5eb00fc1) SHA1(97e02eee74f61fabcad2a9e24f1868cafaac1d51) )
+	ROM_LOAD16_BYTE( "epr11291.17", 0x20001, 0x10000, CRC(3c0797c0) SHA1(df18c7987281bd9379026c6cf7f96f6ae49fd7f9) )
+	ROM_LOAD16_BYTE( "epr11295.18", 0x20000, 0x10000, CRC(25307ef8) SHA1(91ffbe436f80d583524ee113a8b7c0cf5d8ab286) )
+	ROM_LOAD16_BYTE( "epr11292.23", 0x40001, 0x10000, CRC(c29ac34e) SHA1(b5e9b8c3233a7d6797f91531a0d9123febcf1660) )
+	ROM_LOAD16_BYTE( "epr11296.24", 0x40000, 0x10000, CRC(04a437f8) SHA1(ea5fed64443236e3404fab243761e60e2e48c84c) )
+	ROM_LOAD16_BYTE( "epr11293.29", 0x60001, 0x10000, CRC(41f41063) SHA1(5cc461e9738dddf9eea06831fce3702d94674163) )
+	ROM_LOAD16_BYTE( "epr11297.30", 0x60000, 0x10000, CRC(b6e1fd72) SHA1(eb86e4bf880bd1a1d9bcab3f2f2e917bcaa06172) )
+
+	ROM_REGION( 0x20000, REGION_CPU2, 0 ) /* sound CPU */
+	ROM_LOAD( "eprxxxxx.a10", 0x00000, 0x8000, CRC(1f47ebcb) SHA1(32837f3f1dd5ff309d1d955c1a738c444b248d3d) )
+	ROM_LOAD( "shinobi.a8",   0x10000, 0x8000, CRC(c8df8460) SHA1(0aeb41a493df155edb5f600f53ec43b798927dff) )
+	ROM_LOAD( "shinobi.a9",   0x18000, 0x8000, CRC(e5a4cf30) SHA1(d1982da7a550c11ab2253f5d64ac6ab847da0a04) )
+ROM_END
+
 
 /**************************************************************************************************************************
  **************************************************************************************************************************
@@ -5078,16 +5107,19 @@ ROM_END
 
 /**************************************************************************************************************************
 	Wrestle War, Sega System 16B
-	CPU: FD1094 (317-????)
+	CPU: FD1094 (317-0090)
 	ROM Board: 171-5704
 */
 ROM_START( wrestwra )
 	ROM_REGION( 0xc0000, REGION_CPU1, 0 ) /* 68000 code */
-	ROM_LOAD16_BYTE( "epr12145.bin", 0x00000, 0x20000, CRC(2af51e2e) SHA1(b9299f17a7b945a8c96a52288e6da8e20651e4e5) )
-	ROM_LOAD16_BYTE( "epr12143.bin", 0x00001, 0x20000, CRC(4131e345) SHA1(9f66e50cf76ad77b60f2bef97153d9fe6fc12339) )
+	ROM_LOAD16_BYTE( "epr12145.a7", 0x00000, 0x20000, CRC(2af51e2e) SHA1(b9299f17a7b945a8c96a52288e6da8e20651e4e5) )
+	ROM_LOAD16_BYTE( "epr12143.a5", 0x00001, 0x20000, CRC(4131e345) SHA1(9f66e50cf76ad77b60f2bef97153d9fe6fc12339) )
 	/* empty 0x40000 - 0x80000 */
 	ROM_LOAD16_BYTE( "epr12146.a8", 0x80000, 0x20000, CRC(b77ba665) SHA1(b6a01ca857b5127ebb763f18cd4123185a7765a6) )
 	ROM_LOAD16_BYTE( "epr12144.a6", 0x80001, 0x20000, CRC(ddf075cb) SHA1(5d887f0d5786fa62757c593d937bba6f150c1b12) )
+
+	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
+	ROM_LOAD( "317-0090.key", 0x0000, 0x2000, CRC(b7c24c4a) SHA1(8daaa03ea49c51b5462872948b0e06606c87f6b5) )
 
 	ROM_REGION( 0x60000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
 	ROM_LOAD( "mpr12150.a14", 0x00000, 0x20000, CRC(6a821ab9) SHA1(e69f7e534835d4c820746ffc3ad76c3b7bb9b02e) )
@@ -5343,7 +5375,7 @@ GAME( 1988, altbeas2, altbeast, system16b,      altbeast, altbeast_mc8123,ROT0, 
 GAME( 1988, altb8751, altbeast, system16b_8751, altbeast, altb8751,      ROT0,   "Sega",           "Altered Beast (8751 317-0076)" )
 GAME( 1988, jyuo8751, altbeast, system16b_8751, altbeast, jyuo8751,      ROT0,   "Sega",           "Jyuohki (Japan, 8751 317-0077)" )
 GAMEX(1988, jyuohki,  altbeast, system16b,      altbeast, generic_5521,  ROT0,   "Sega",           "Jyuohki (Japan, FD1094 317-0065)", GAME_NOT_WORKING )
-GAME (1988, jyuohki2, altbeast, system16b,      altbeast, generic_5521,  ROT0,   "Sega",           "Jyuohki (Japan, FD1094 317-0068)" )
+GAME( 1988, jyuohki2, altbeast, system16b,      altbeast, generic_5521,  ROT0,   "Sega",           "Jyuohki (Japan, FD1094 317-0068)" )
 GAME( 1990, aurail,   0,        system16b,      aurail,   generic_5704,  ROT0,   "Sega / Westone", "Aurail (set 1, US, unprotected)" )
 GAME( 1990, auraila,  aurail,   system16b,      aurail,   auraila,       ROT0,   "Sega / Westone", "Aurail (set 2, FD1089B 317-0168)" )
 GAME( 1990, atomicp,  0,        atomicp,        atomicp,  atomicp,       ROT0,   "Philko",         "Atomic Point (Korea)" ) // korean clone board..
@@ -5377,6 +5409,7 @@ GAME( 1990, ryukyu,   0,        system16b,      ryukyu,   generic_5704,  ROT0,  
 GAME( 1987, sdi,      0,        system16b,      sdi,      sdi,           ROT0,   "Sega",           "SDI - Strategic Defense Initiative (System 16B, unprotected)" )
 GAME( 1987, shinobi,  0,        system16b,      shinobi,  generic_5358,  ROT0,   "Sega",           "Shinobi (set 1, System 16B, unprotected)" )
 GAME( 1987, shinobib, shinobi,  system16b,      shinobi,  generic_5358,  ROT0,   "Sega",           "Shinobi (set 3, System 16B, FD1094 317-0049)" )
+GAME( 1987, shinobic, shinobi,  system16b,      shinobi,  generic_5521,  ROT0,   "Sega",           "Shinobi (set 4, System 16B, unprotected)" )
 GAME( 1987, sonicbom, 0,        system16b,      sonicbom, generic_5358,  ROT270, "Sega",           "Sonic Boom (FD1094 317-0053)" )
 GAMEX(198?, sjryuko,  0,        system16b,      sonicbom, generic_5358,  ROT0,   "White Board",    "Sukeban Jansi Ryuko (System 16B, FD1089 317-5021)",GAME_NOT_WORKING )
 GAMEX(19??, suprleag, 0,        system16b,      generic,  generic_5358,  ROT0,   "Sega",           "Super League (FD1094 317-0045?)", GAME_NOT_WORKING )
@@ -5390,6 +5423,6 @@ GAME( 1988, wb3b,     0,        system16b_8751, wb3b,     wb3b,          ROT0,  
 GAME( 1988, wb3ba,    wb3b,     system16b,      wb3b,     generic_5704,  ROT0,   "Sega / Westone", "Wonder Boy III - Monster Lair (World, System 16B, FD1094 317-0089)" )
 GAME( 1988, wb3bb,    wb3b,     system16b,      wb3b,     generic_5358,  ROT0,   "Sega / Westone", "Wonder Boy III - Monster Lair (Japan, System 16B, FD1094 317-0085)" )
 GAME( 1989, wrestwar, 0,        system16b_8751, wrestwar, wrestwar_8751, ROT270, "Sega",           "Wrestle War (8751, 317-0103)" )
-GAMEX(1989, wrestwra, wrestwar, system16b,      wrestwar, generic_5704,  ROT270, "Sega",           "Wrestle War (FD1094, 317-unknown)",GAME_NOT_WORKING )
+GAME( 1989, wrestwra, wrestwar, system16b,      wrestwar, generic_5704,  ROT270, "Sega",           "Wrestle War (Japan, FD1094, 317-0090)" )
 GAME( 1989, wrestwrb, wrestwar, system16b,      wrestwar, generic_5704,  ROT270, "Sega",           "Wrestle War (FD1094, 317-0102)" )
 

@@ -3947,10 +3947,10 @@ ROM_START( mt_wcsoc ) /* World Cup Soccer */
 	ROM_LOAD( "epr12664.20", 0x000000, 0x8000, CRC(f71e9526) SHA1(1c7887541d02c41426992d17f8e3db9e03975953) )
 ROM_END
 
-ROM_START( mt_gng ) /* Ghouls and Ghosts (bad dump?) */
+ROM_START( mt_gng ) /* Ghouls and Ghosts */
 	ROM_REGION( 0x400000, REGION_CPU1, 0 )
-	ROM_LOAD16_WORD_SWAP( "mp12605.ic1", 0x000000, 0x080000, BAD_DUMP CRC(0c6d6f25) SHA1(96c9c0e41036a23fc8e75e18ee2dad87654f200f) )
-	ROM_LOAD16_WORD_SWAP( "mpr12605.14", 0x080000, 0x020000, BAD_DUMP CRC(1066c6ab) SHA1(c30e4442732bdb38c96d780542f8550a94d127b0) )
+	ROM_LOAD16_WORD_SWAP( "mp12605.ic1", 0x000000, 0x020000, CRC(1066C6AB) SHA1(C30E4442732BDB38C96D780542F8550A94D127B0) )
+	ROM_LOAD16_WORD_SWAP( "mpr12606.ic2", 0x020000, 0x080000, CRC(D0BE7777) SHA1(A44B2A3D427F6973B5C1A3DCD8D1776366ACB9F7) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* z80 */
 
@@ -4326,6 +4326,17 @@ ROM_START( mt_tgolf ) /* Arnold Palmer Tournament Golf */
 	ROM_LOAD( "epr12664.20", 0x000000, 0x8000, CRC(f71e9526) SHA1(1c7887541d02c41426992d17f8e3db9e03975953) )
 ROM_END
 
+ROM_START( mt_astrm ) /* Alien Storm. */
+	ROM_REGION( 0x400000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "mp13941.ic1", 0x000000, 0x080000, CRC(D71B3EE6) SHA1(05F272DAD243D132D517C303388248DC4C0482ED) )
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* z80 */
+
+	ROM_REGION( 0x8000, REGION_USER1, 0 ) /* Game Instructions */
+	ROM_LOAD( "1236847.ic2", 0x000000, 0x08000, CRC(31FB683D) SHA1(E356DA020BBF817B97FB10C27F75CF5931EDF4FC) )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* Bios */
+	ROM_LOAD( "epr12664.20", 0x000000, 0x8000, CRC(f71e9526) SHA1(1c7887541d02c41426992d17f8e3db9e03975953) )
+ROM_END
 
 /* MegaPlay Games - Modified Genesis games */
 
@@ -4857,7 +4868,7 @@ GAMEX( 1996, pclubjv5, pclubj,   segac2, pclub,    pclub,    ROT0, "Atlus",     
 /* 44 */ // unknown
 /* 45 */ // unknown
 /* 46 */ // unknown
-/* 47 */ // unknown
+/* 47 */ GAMEX( 1990, mt_astrm, megatech, megatech, megatech, segac2, ROT0, "Sega",                  "Alien Storm (Mega-Tech", GAME_NOT_WORKING )
 /* 48 */ // unknown
 /* 49 */ GAMEX( 1991, mt_bbros, megatech, megatech, megatech, segac2, ROT0, "Sega",                  "Bonanza Bros. (Mega-Tech)", GAME_NOT_WORKING )
 /* 50 */ // unknown

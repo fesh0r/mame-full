@@ -56,7 +56,7 @@ VIDEO_START( system16a )
 	tilemap_set_scrollx(textmap, 0, 0);
 
 	/* create the tilemaps for the bg/fg layers */
-	if (!segaic16_init_virtual_tilemaps(8, get_tile_info))
+	if (!segaic16_init_virtual_tilemaps(8, 0, get_tile_info))
 		return 1;
 
 	/* initialize globals */

@@ -485,7 +485,7 @@ static void bodyslam_i8751_sim(void)
 
 	/* signal a VBLANK to the main CPU */
 	cpunum_set_input_line(0, 4, HOLD_LINE);
-
+	
 	/* out of time? set the flag */
 	if (tick == 0 && sec == 0 && min == 0)
 		flag = 1;
@@ -525,7 +525,7 @@ static void quartet_i8751_sim(void)
 {
 	/* signal a VBLANK to the main CPU */
 	cpunum_set_input_line(0, 4, HOLD_LINE);
-
+	
 	/* X scroll values */
 	system16a_textram_w(0xff8/2, workram[0x0d14/2], 0);
 	system16a_textram_w(0xffa/2, workram[0x0d18/2], 0);
@@ -1920,8 +1920,6 @@ ROM_START( shinobia )
 ROM_END
 
 /**************************************************************************************************************************
- **************************************************************************************************************************
- **************************************************************************************************************************
 	Shinobi, Sega System 16A
 	CPU: 68000 (unprotected)
  */
@@ -1964,6 +1962,7 @@ ROM_START( shinobaa )
 	ROM_REGION( 0x08000, REGION_SOUND1, 0 ) /* 7751 sound data */
 	ROM_LOAD( "epr11268.1", 0x0000, 0x8000, CRC(6d7966da) SHA1(90f55a99f784c21d7c135e630f4e8b1d4d043d66) )
 ROM_END
+
 
 /**************************************************************************************************************************
  **************************************************************************************************************************
@@ -2078,6 +2077,10 @@ ROM_START( tetris )
 	ROM_LOAD( "epr12205.rom", 0x0000, 0x8000, CRC(6695dc99) SHA1(08123aa24c302bc9243329384bd9c2545a4d50c3) )
 ROM_END
 
+/**************************************************************************************************************************
+	Tetris, Sega System 16A
+	CPU: FD1094 (317-0093a)
+*/
 ROM_START( tetrisaa )
 	ROM_REGION( 0x040000, REGION_CPU1, ROMREGION_ERASEFF ) /* 68000 code */
 	ROM_LOAD16_BYTE( "epr12201a.43", 0x000000, 0x8000, CRC(9250e5cf) SHA1(e848a8279ce35f516754eec33b3b443d2e819eaa) )

@@ -2231,47 +2231,6 @@ static void I386OP(aam)(void)				// Opcode 0xd4
 	CYCLES(17);
 }
 
-static void I386OP(load_far_pointer)(int s)
-{
-	UINT8 modrm = FETCH();
-
-	if( modrm >= 0xc0 ) {
-		osd_die("NYI");
-	} else {
-		UINT32 ea = GetEA(modrm);
-		STORE_REG16(modrm, READ16(ea + 0));
-		I.sreg[s].selector = READ16(ea + 2);
-		i386_load_segment_descriptor( s );
-	}
-
-	CYCLES(1);	// TODO: Figure out exact cycle count
-}
-
-static void I386OP(lds)(void)				// Opcode 0xc5
-{
-	I386OP(load_far_pointer)(DS);
-}
-
-static void I386OP(lss)(void)				// Opcode 0x0f 0xb2
-{
-	I386OP(load_far_pointer)(SS);
-}
-
-static void I386OP(les)(void)				// Opcode 0xc4
-{
-	I386OP(load_far_pointer)(ES);
-}
-
-static void I386OP(lfs)(void)				// Opcode 0x0f 0xb4
-{
-	I386OP(load_far_pointer)(FS);
-}
-
-static void I386OP(lgs)(void)				// Opcode 0x0f 0xb5
-{
-	I386OP(load_far_pointer)(GS);
-}
-
 static void I386OP(lock)(void)				// Opcode 0xf0
 {
 	CYCLES(1);		// TODO: Determine correct cycle count

@@ -1233,7 +1233,7 @@ READ8_HANDLER( decocass_type4_r )
 			UINT8 *prom = memory_region(REGION_USER1);
 
 			data = prom[type4_ctrs];
-			LOG(3,("%9.7f 6502-PC: %04x decocass_type5_r(%02x): $%02x '%c' <- PROM[%04x]\n", timer_get_time(), activecpu_get_previouspc(), offset, data, (data >= 32) ? data : '.', type4_ctrs));
+			LOG(3,("%9.7f 6502-PC: %04x decocass_type4_r(%02x): $%02x '%c' <- PROM[%04x]\n", timer_get_time(), activecpu_get_previouspc(), offset, data, (data >= 32) ? data : '.', type4_ctrs));
 			type4_ctrs = (type4_ctrs+1) & 0x7fff;
 		}
 		else
@@ -1358,6 +1358,48 @@ WRITE8_HANDLER( decocass_type5_w )
 	}
 	LOG(3,("%9.7f 6502-PC: %04x decocass_e5xx_w(%02x): $%02x -> %s\n", timer_get_time(), activecpu_get_previouspc(), offset, data, offset & 1 ? "8041-CMND" : "8041-DATA"));
 	cpunum_set_reg(2, offset & 1 ? I8X41_CMND : I8X41_DATA, data);
+}
+
+/***************************************************************************
+ *
+ *	NO DONGLE
+ *	- Flying Ball
+ *	A NOP dongle returning the data read from cassette as is.
+ *
+ ***************************************************************************/
+
+READ8_HANDLER( decocass_nodong_r )
+{
+	data8_t data;
+
+	if (1 == (offset & 1))
+	{
+		if (0 == (offset & E5XX_MASK))
+		{
+			data = cpunum_get_reg(2, I8X41_STAT);
+			LOG(4,("%9.7f 6502-PC: %04x decocass_nodong_r(%02x): $%02x <- 8041 STATUS\n", timer_get_time(), activecpu_get_previouspc(), offset, data));
+		}
+		else
+		{
+			data = 0xff;	/* open data bus? */
+			LOG(4,("%9.7f 6502-PC: %04x decocass_nodong_r(%02x): $%02x <- open bus\n", timer_get_time(), activecpu_get_previouspc(), offset, data));
+		}
+	}
+	else
+	{
+		if (0 == (offset & E5XX_MASK))
+		{
+			data = cpunum_get_reg(2, I8X41_DATA);
+			LOG(3,("%9.7f 6502-PC: %04x decocass_nodong_r(%02x): $%02x '%c' <- open bus (D0 replaced with latch)\n", timer_get_time(), activecpu_get_previouspc(), offset, data, (data >= 32) ? data : '.'));
+		}
+		else
+		{
+			data = 0xff;	/* open data bus? */
+			LOG(4,("%9.7f 6502-PC: %04x decocass_nodong_r(%02x): $%02x <- open bus\n", timer_get_time(), activecpu_get_previouspc(), offset, data));
+		}
+	}
+
+	return data;
 }
 
 /***************************************************************************
@@ -1768,6 +1810,13 @@ MACHINE_INIT( cbdash )
 	LOG(0,("dongle type #5 (NOP)\n"));
 	decocass_dongle_r = decocass_type5_r;
 	decocass_dongle_w = decocass_type5_w;
+}
+
+MACHINE_INIT( cflyball )
+{
+	decocass_init_common();
+	LOG(0,("no dongle\n"));
+	decocass_dongle_r = decocass_nodong_r;
 }
 
 /***************************************************************************

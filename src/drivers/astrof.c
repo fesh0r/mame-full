@@ -5,6 +5,13 @@
 
     Lee Taylor 28/11/1997
 
+*** Astro Battle added by HIGHWAYMAN with help from Reip.
+
+2 sets, 1 may be a bad set, or they may simply be different - dont know yet.
+protection involves the eprom datalines being routed through an 8bit x 256byte prom.
+this game is not currently playable due to the NMI causing a reset.
+it *may* have a more complex palette, it needs to be investigated when i get more time.
+
 
 	Astro Fighter Sets:
 
@@ -61,7 +68,6 @@ static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x4000, 0x5fff) AM_READ(MRA8_RAM)
 	AM_RANGE(0xa000, 0xa000) AM_READ(input_port_0_r)
 	AM_RANGE(0xa001, 0xa001) AM_READ(input_port_1_r)	/* IN1 */
-	AM_RANGE(0xa003, 0xa003) AM_READ(tomahawk_protection_r)   // Only on Tomahawk
 	AM_RANGE(0xd000, 0xffff) AM_READ(MRA8_ROM)
 ADDRESS_MAP_END
 
@@ -245,7 +251,6 @@ static MACHINE_DRIVER_START( tomahawk )
 MACHINE_DRIVER_END
 
 
-
 /***************************************************************************
 
   Game driver(s)
@@ -335,10 +340,74 @@ ROM_START( tomahaw5 )
 	ROM_LOAD( "t777.clr",     0x0000, 0x0020, CRC(d6a528fd) SHA1(5fc08252a2d7c5405f601efbfb7d84bec328d733) )
 ROM_END
 
+ROM_START( abattle )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "10405-b.bin",  0xd000, 0x0400, CRC(9ba57987) SHA1(becf89b7d474f86839f13f9be5502c91491e8584) )
+	ROM_LOAD( "10405-a.bin",  0xd400, 0x0400, CRC(3fbbeeba) SHA1(1c9f519a0797f90524adf187b0761f150db0828d) )
+	ROM_LOAD( "10405-9.bin",  0xd800, 0x0400, CRC(354cf432) SHA1(138956ea8064eba0dcd8b2f175d4981b689a2077) )
+	ROM_LOAD( "10405-8.bin",  0xdc00, 0x0400, CRC(4cee0c8b) SHA1(98bfdda9d2d368db16d6e9090536b09d8337c0e5) )
+	ROM_LOAD( "10405-4.bin",  0xe000, 0x0400, CRC(9cb477f3) SHA1(6866264aa8d0479cee237a00e4a919e3981144a5) )
+	ROM_LOAD( "10405-6.bin",  0xe400, 0x0400, CRC(272de8f1) SHA1(e917b3b8bb96fedacd6d5cb3d1c30977818f2e85) )
+	ROM_LOAD( "10405-5.bin",  0xe800, 0x0400, CRC(ff25acaa) SHA1(5cb360c556c9b36039ae05702e6900b82fe5676b) )
+	ROM_LOAD( "10405-3.bin",  0xec00, 0x0400, CRC(6edf202d) SHA1(a4cab2f10a99e0a4b1c571168e17cbee1d18cf06) )
+	ROM_LOAD( "10405-7.bin",  0xf000, 0x0400, CRC(02a35ad9) SHA1(d54afff13f8d5a6544dda49c766a147fa0172cfa) )
+	ROM_LOAD( "10405-1.bin",  0xf400, 0x0400, CRC(c68f6657) SHA1(a38c24670fcbbf7844ca15f918efcb467bae7bef) )
+	ROM_LOAD( "10405-2.bin",  0xf800, 0x0400, CRC(b206deda) SHA1(9ab52920c06ed6beb38bc7f97ffd00e8ad46c17d) )
+	ROM_LOAD( "10405-0.bin",  0xfc00, 0x0400, CRC(c836a152) SHA1(418b64d50bb2f849b1e7177c7bf2fdd0cc99e079) )
+
+	ROM_REGION( 0x0100, REGION_PROMS, 0 )
+	ROM_LOAD( "8f-clr.bin",   0x0000, 0x0100, CRC(3bf3ccb0) SHA1(d61d19d38045f42a9adecf295e479fee239bed48) )
+
+	ROM_REGION( 0x0100, REGION_USER1, 0 )	/* decryption table */
+	ROM_LOAD( "2h-prot.bin",  0x0000, 0x0100, CRC(a6bdd18c) SHA1(438bfc543730afdb531204585f17a68ddc03ded0) )
+ROM_END
+
+ROM_START( abattle2 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "10405-b.bin",  0xd000, 0x0400, CRC(9ba57987) SHA1(becf89b7d474f86839f13f9be5502c91491e8584) )
+	ROM_LOAD( "10405-a.bin",  0xd400, 0x0400, CRC(3fbbeeba) SHA1(1c9f519a0797f90524adf187b0761f150db0828d) )
+	ROM_LOAD( "10405-9.bin",  0xd800, 0x0400, CRC(354cf432) SHA1(138956ea8064eba0dcd8b2f175d4981b689a2077) )
+	ROM_LOAD( "10405-8.bin",  0xdc00, 0x0400, CRC(4cee0c8b) SHA1(98bfdda9d2d368db16d6e9090536b09d8337c0e5) )
+	ROM_LOAD( "sidam-4.bin",  0xe000, 0x0400, CRC(f6998053) SHA1(f1a868e68db1ca89c54ee179aa4c922ec49b686b) )
+	ROM_LOAD( "10405-6.bin",  0xe400, 0x0400, CRC(272de8f1) SHA1(e917b3b8bb96fedacd6d5cb3d1c30977818f2e85) )
+	ROM_LOAD( "sidam-5.bin",  0xe800, 0x0400, CRC(6ddd78ff) SHA1(2fdf3fd145446f174293818aa81463097227361e) )
+	ROM_LOAD( "10405-3.bin",  0xec00, 0x0400, CRC(6edf202d) SHA1(a4cab2f10a99e0a4b1c571168e17cbee1d18cf06) )
+	ROM_LOAD( "10405-7.bin",  0xf000, 0x0400, CRC(02a35ad9) SHA1(d54afff13f8d5a6544dda49c766a147fa0172cfa) )
+	ROM_LOAD( "10405-1.bin",  0xf400, 0x0400, CRC(c68f6657) SHA1(a38c24670fcbbf7844ca15f918efcb467bae7bef) )
+	ROM_LOAD( "10405-2.bin",  0xf800, 0x0400, CRC(b206deda) SHA1(9ab52920c06ed6beb38bc7f97ffd00e8ad46c17d) )
+	ROM_LOAD( "10405-0.bin",  0xfc00, 0x0400, CRC(c836a152) SHA1(418b64d50bb2f849b1e7177c7bf2fdd0cc99e079) )
+
+	ROM_REGION( 0x0100, REGION_PROMS, 0 )
+	ROM_LOAD( "8f-clr.bin",   0x0000, 0x0100, CRC(3bf3ccb0) SHA1(d61d19d38045f42a9adecf295e479fee239bed48) )
+
+	ROM_REGION( 0x0100, REGION_USER1, 0 )	/* decryption table */
+	ROM_LOAD( "2h-prot.bin",  0x0000, 0x0100, CRC(a6bdd18c) SHA1(438bfc543730afdb531204585f17a68ddc03ded0) )
+ROM_END
+
+static DRIVER_INIT( tomahawk )
+{
+	/* set up protection handler, this cannot co-exist with Astro Battle */
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa003, 0xa003, 0, 0, tomahawk_protection_r);
+}
+
+static DRIVER_INIT( abattle )
+{
+	/* use the protection prom to decrypt the roms */
+	data8_t *rom = memory_region(REGION_CPU1);
+	data8_t *prom = memory_region(REGION_USER1);
+	int i;
+
+	for(i = 0xd000; i < 0x10000; i++)
+	{
+		rom[i] = prom[rom[i]];
+	}
+}
 
 
-GAME( 1979, astrof,   0,        astrof,   astrof,   0, ROT90, "Data East", "Astro Fighter (set 1)" )
-GAME( 1979, astrof2,  astrof,   astrof,   astrof,   0, ROT90, "Data East", "Astro Fighter (set 2)" )
-GAME( 1979, astrof3,  astrof,   astrof,   astrof,   0, ROT90, "Data East", "Astro Fighter (set 3)" )
-GAMEX(1980, tomahawk, 0,        tomahawk, tomahawk, 0, ROT90, "Data East", "Tomahawk 777 (Revision 1)", GAME_NO_SOUND )
-GAMEX(1980, tomahaw5, tomahawk, tomahawk, tomahawk, 0, ROT90, "Data East", "Tomahawk 777 (Revision 5)", GAME_NO_SOUND )
+GAME( 1979, astrof,   0,        astrof,   astrof,   0,		 ROT90, "Data East", "Astro Fighter (set 1)" )
+GAME( 1979, astrof2,  astrof,   astrof,   astrof,   0,		 ROT90, "Data East", "Astro Fighter (set 2)" )
+GAME( 1979, astrof3,  astrof,   astrof,   astrof,   0,		 ROT90, "Data East", "Astro Fighter (set 3)" )
+GAME( 1979, abattle,  astrof,	  astrof,   astrof,   abattle,	 ROT90, "Sidam",	   "Astro Battle (set 1)" )
+GAME( 1979, abattle2, astrof,	  astrof,   astrof,   abattle,	 ROT90, "Sidam",	   "Astro Battle (set 2)" )
+GAMEX(1980, tomahawk, 0,        tomahawk, tomahawk, tomahawk,	 ROT90, "Data East", "Tomahawk 777 (Revision 1)", GAME_NO_SOUND )
+GAMEX(1980, tomahaw5, tomahawk, tomahawk, tomahawk, tomahawk,	 ROT90, "Data East", "Tomahawk 777 (Revision 5)", GAME_NO_SOUND )

@@ -217,7 +217,7 @@ DRVLIBS = \
 	$(OBJ)/usgames.a $(OBJ)/sanritsu.a $(OBJ)/rare.a \
 	$(OBJ)/nihonsys.a $(OBJ)/alba.a $(OBJ)/homedata.a $(OBJ)/artmagic.a \
 	$(OBJ)/taiyo.a $(OBJ)/edevices.a $(OBJ)/other.a $(OBJ)/excelent.a $(OBJ)/nix.a \
-	$(OBJ)/othertrv.a $(OBJ)/other68k.a $(OBJ)/otherz80.a \
+	$(OBJ)/arcadia.a $(OBJ)/othertrv.a $(OBJ)/other68k.a $(OBJ)/otherz80.a \
 	$(OBJ)/hyprston.a $(OBJ)/other.a \
 	$(OBJ)/neogeo.a \
 
@@ -513,12 +513,15 @@ $(OBJ)/sega.a: \
 	$(OBJ)/vidhrdw/segas18.o $(OBJ)/drivers/segas18.o \
 	$(OBJ)/machine/fd1094.o $(OBJ)/machine/s16fd.o \
 	$(OBJ)/machine/mc8123.o \
-	$(OBJ)/drivers/system16.o $(OBJ)/drivers/segas16b.o $(OBJ)/drivers/aburner.o $(OBJ)/drivers/outrun.o \
+	$(OBJ)/drivers/system16.o $(OBJ)/drivers/segas16b.o \
+	$(OBJ)/drivers/segaxbd.o $(OBJ)/vidhrdw/segaxbd.o \
+	$(OBJ)/drivers/outrun.o \
 	$(OBJ)/drivers/sharrier.o $(OBJ)/drivers/system18.o \
 	$(OBJ)/drivers/yboard.o $(OBJ)/vidhrdw/yboard.o $(OBJ)/machine/s16math.o \
 	$(OBJ)/drivers/system24.o $(OBJ)/machine/system24.o $(OBJ)/vidhrdw/system24.o \
 	$(OBJ)/machine/s24fd.o $(OBJ)/vidhrdw/segaic24.o \
-	$(OBJ)/drivers/system32.o $(OBJ)/drivers/multi32.o $(OBJ)/vidhrdw/system32.o \
+	$(OBJ)/drivers/segas32.o $(OBJ)/machine/segas32.o $(OBJ)/drivers/multi32.o \
+	$(OBJ)/vidhrdw/system32.o \
 	$(OBJ)/drivers/model1.o $(OBJ)/machine/model1.o $(OBJ)/vidhrdw/model1.o \
 	$(OBJ)/drivers/model2.o \
 	$(OBJ)/vidhrdw/model3.o $(OBJ)/machine/model3.o $(OBJ)/drivers/model3.o \
@@ -988,6 +991,7 @@ $(OBJ)/seta.a: \
 	$(OBJ)/vidhrdw/ssv.o $(OBJ)/drivers/ssv.o \
 	$(OBJ)/vidhrdw/st0016.o $(OBJ)/drivers/st0016.o \
 	$(OBJ)/drivers/macs.o \
+	$(OBJ)/drivers/srmp6.o \
 
 $(OBJ)/atlus.a: \
 	$(OBJ)/vidhrdw/powerins.o $(OBJ)/drivers/powerins.o \
@@ -1155,6 +1159,9 @@ $(OBJ)/excelent.a: \
 $(OBJ)/nix.a: \
 	$(OBJ)/vidhrdw/pirates.o $(OBJ)/drivers/pirates.o \
 	$(OBJ)/vidhrdw/fitfight.o $(OBJ)/drivers/fitfight.o \
+
+$(OBJ)/arcadia.a: \
+	$(OBJ)/vidhrdw/arcadia.o $(OBJ)/machine/arcadia.o $(OBJ)/drivers/arcadia.o \
 
 $(OBJ)/othertrv.a: \
 	$(OBJ)/drivers/findout.o \

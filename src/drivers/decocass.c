@@ -688,6 +688,15 @@ static MACHINE_DRIVER_START( cscrtry )
 	MDRV_MACHINE_INIT(cscrtry)
 MACHINE_DRIVER_END
 
+
+static MACHINE_DRIVER_START( cflyball )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(decocass)
+	MDRV_MACHINE_INIT(cflyball)
+MACHINE_DRIVER_END
+
+
 #define ROM_LOAD_BIOS(bios,name,offset,length,hash) \
 		ROMX_LOAD(name, offset, length, hash, ROM_BIOS(bios+1)) /* Note '+1' */
 
@@ -1093,7 +1102,7 @@ ROM_END
 ROM_START( cflyball )
 	DECOCASS_COMMON_ROMS
 
-	/* no dumped dongle data */
+	/* no dongle data */
 
 	ROM_REGION( 0x10000, REGION_USER2, 0 )	  /* (max) 64k for cassette image */
 	ROM_LOAD( "cflyball.cas",   0x0000, 0x10000, CRC(cb40d043) SHA1(57698bac7e0d552167efa99d08116bf19a3b29c9) )
@@ -1161,9 +1170,9 @@ GAMEB ( 1984, cppicf,   decocass, decocass, cppicf,   decocass, decocass, ROT270
 GAMEB ( 1984, cppicf2,  cppicf,   decocass, cppicf,   decocass, decocass, ROT270, "DECO", "Peter Pepper's Ice Cream Factory (Cassette, set 2)" )
 GAMEB ( 1984, cscrtry,  decocass, decocass, cscrtry,  decocass, decocass, ROT270, "DECO", "Scrum Try (Cassette, set 1)" )
 GAMEB ( 1984, cscrtry2, cscrtry,  decocass, cscrtry,  decocass, decocass, ROT270, "DECO", "Scrum Try (Cassette, set 2)" )
+GAMEB ( 1985, cflyball, decocass, decocass, cflyball, decocass, decocass, ROT270, "DECO", "Flying Ball? (Cassette)" )
 GAMEB ( 1985, cbdash,   decocass, decocass, cbdash,   decocass, decocass, ROT270, "DECO", "Boulder Dash (Cassette)" )
 
 /* The following may be missing dongle data if they're not Type 1 */
 GAMEBX( 1985, chwy,     decocass, decocass, decocass,   decocass, decocass, ROT270, "DECO", "Highway Chase? (Cassette)", GAME_NOT_WORKING )
-GAMEBX( 1985, cflyball, decocass, decocass, decocass,   decocass, decocass, ROT270, "DECO", "Flying Ball? (Cassette)", GAME_NOT_WORKING )
 GAMEBX( 1985, czeroize, decocass, decocass, decocass,   decocass, decocass, ROT270, "DECO", "Zeroize? (Cassette)", GAME_NOT_WORKING )

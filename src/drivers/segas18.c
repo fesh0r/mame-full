@@ -291,7 +291,7 @@ static void memory_control_w(offs_t offset, data8_t data)
 				memory_control[0x01] = result;
 			}
 			break;
-
+		
 		case 0x07:	case 0x08:	case 0x09:
 			/* writes here latch a 68000 address for writing */
 			break;
@@ -754,7 +754,7 @@ static WRITE16_HANDLER( lghost_custom_io_w )
 		case 0x3016/2:
 			lghost_value = readinputportbytag(lghost_select ? "GUNX3" : "GUNX2");
 			break;
-
+		
 		case 0x3020/2:
 			lghost_select = data & 1;
 			break;
@@ -1209,8 +1209,8 @@ static INPUT_PORTS_START( ddcrew )
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-/* not perfect */
-static INPUT_PORTS_START( dbrkr )
+
+static INPUT_PORTS_START( desertbr )
 	PORT_INCLUDE( system18_generic )
 
 	PORT_MODIFY("PORTC")
@@ -1224,31 +1224,31 @@ static INPUT_PORTS_START( dbrkr )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(3)
 
 	PORT_MODIFY("DSW")
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x01, 0x01, "Credits to Start" )
+	PORT_DIPSETTING(    0x01, "1" )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, "Play Mode" )
+	PORT_DIPSETTING(    0x00, "2 players" )
+	PORT_DIPSETTING(    0x08, "3 players" )
+	PORT_DIPNAME( 0x10, 0x10, "Coin Chute" )
+	PORT_DIPSETTING(    0x10, "Common" )
+	PORT_DIPSETTING(    0x00, "Individual" )
+	PORT_DIPNAME( 0x20, 0x20, "Start Button" )
+	PORT_DIPSETTING(    0x20, "Use" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Unused ) )
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x40, "Easiest" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hard ) )
 INPUT_PORTS_END
+
 
 static INPUT_PORTS_START( lghost )
 	PORT_INCLUDE( system18_generic )
@@ -1631,7 +1631,6 @@ ROM_END
 	Alien Storm (3 players US version), Sega System 18
 	CPU: FD1094 (317-0147)
 */
-
 ROM_START( astormb )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* 68000 code */
 	ROM_LOAD16_BYTE( "epr13095.a6", 0x000000, 0x40000, CRC(55d40742) SHA1(c30fcd7da1fe062b1f00275dc8ac79c3c619b719) )
@@ -1661,7 +1660,6 @@ ROM_START( astormb )
 	ROM_LOAD( "epr13077.bin", 0x110000, 0x40000, CRC(e2ec0d8d) SHA1(225b0d223b7282cba7710300a877fb4a2c6dbabb) )
 	ROM_LOAD( "epr13078.bin", 0x190000, 0x40000, CRC(15684dc5) SHA1(595051006de24f791dae937584e502ff2fa31d9c) )
 ROM_END
-
 
 /**************************************************************************************************************************
 	Alien Storm (2 players version), Sega System 18
@@ -1851,8 +1849,8 @@ ROM_START( ddcrewa )
 	ROM_REGION( 0x300000, REGION_CPU1, 0 ) /* 68000 code */
 	ROM_LOAD16_BYTE( "epr14138.a4", 0x000000, 0x40000, CRC(9a0dadf0) SHA1(b55c8cdd3158607ec8203bfebc9e7aba24d6d565) )
 	ROM_LOAD16_BYTE( "epr14140.a6", 0x000001, 0x40000, CRC(e74362f4) SHA1(a6f96d714baeb826221b712b996e99831cf25abf) )
-	ROM_LOAD16_BYTE( "14139.5a", 0x200000, 0x40000, CRC(06c31531) SHA1(d084cb72bf83578b34e959bb60a0695faf4161f8) )
-	ROM_LOAD16_BYTE( "14141.7a", 0x200001, 0x40000, CRC(080a494b) SHA1(64522dccbf6ed856ab80aa185454183df87d7ae9) )
+	ROM_LOAD16_BYTE( "14139.5a",    0x200000, 0x40000, CRC(06c31531) SHA1(d084cb72bf83578b34e959bb60a0695faf4161f8) )
+	ROM_LOAD16_BYTE( "14141.7a",    0x200001, 0x40000, CRC(080a494b) SHA1(64522dccbf6ed856ab80aa185454183df87d7ae9) )
 
 	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
 	ROM_LOAD( "317-unknown_ddcrewa.key", 0x0000, 0x2000, CRC(1dfb60be) SHA1(7bd42a2e54fca574076e5ed164ab4e0cbb645a4f) )
@@ -1888,8 +1886,8 @@ ROM_START( ddcrewb )
 	ROM_REGION( 0x300000, REGION_CPU1, 0 ) /* 68000 code */
 	ROM_LOAD16_BYTE( "epr14148.a4", 0x000000, 0x40000, CRC(df4cb0cf) SHA1(153993997e9ceb06a9d4c73794ea66d0c585a291) )
 	ROM_LOAD16_BYTE( "epr14149.a6", 0x000001, 0x40000, CRC(380ff818) SHA1(7c7dd7aa825665f1a9aaebb5af4ecf5dd109b0ca) )
-	ROM_LOAD16_BYTE( "14139.5a", 0x200000, 0x40000, CRC(06c31531) SHA1(d084cb72bf83578b34e959bb60a0695faf4161f8) )
-	ROM_LOAD16_BYTE( "14141.7a", 0x200001, 0x40000, CRC(080a494b) SHA1(64522dccbf6ed856ab80aa185454183df87d7ae9) )
+	ROM_LOAD16_BYTE( "14139.5a",    0x200000, 0x40000, CRC(06c31531) SHA1(d084cb72bf83578b34e959bb60a0695faf4161f8) )
+	ROM_LOAD16_BYTE( "14141.7a",    0x200001, 0x40000, CRC(080a494b) SHA1(64522dccbf6ed856ab80aa185454183df87d7ae9) )
 
 	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
 	/* not dumped */
@@ -1925,8 +1923,8 @@ ROM_START( ddcrewc )
 	ROM_REGION( 0x300000, REGION_CPU1, 0 ) /* 68000 code */
 	ROM_LOAD16_BYTE( "epr14160.a4", 0x000000, 0x40000, CRC(b9f897b7) SHA1(65cee6c8006f328eee648e144e11fa60b1433ff5) )
 	ROM_LOAD16_BYTE( "epr14161.a6", 0x000001, 0x40000, CRC(bb03c1f0) SHA1(9e7fbd2cda448992c6cbf4b96078b57305def097) )
-	ROM_LOAD16_BYTE( "14139.5a", 0x200000, 0x40000, CRC(06c31531) SHA1(d084cb72bf83578b34e959bb60a0695faf4161f8) )
-	ROM_LOAD16_BYTE( "14141.7a", 0x200001, 0x40000, CRC(080a494b) SHA1(64522dccbf6ed856ab80aa185454183df87d7ae9) )
+	ROM_LOAD16_BYTE( "14139.5a",    0x200000, 0x40000, CRC(06c31531) SHA1(d084cb72bf83578b34e959bb60a0695faf4161f8) )
+	ROM_LOAD16_BYTE( "14141.7a",    0x200001, 0x40000, CRC(080a494b) SHA1(64522dccbf6ed856ab80aa185454183df87d7ae9) )
 
 	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
 	/* not dumped */
@@ -1953,6 +1951,7 @@ ROM_START( ddcrewc )
 	ROM_LOAD( "14132.6c",    0x190000, 0x80000, CRC(1fae0220) SHA1(8414c74318ea915816c6b67801ac7c8c3fc905f9) )
 ROM_END
 
+
 /**************************************************************************************************************************
  **************************************************************************************************************************
  **************************************************************************************************************************
@@ -1963,8 +1962,7 @@ ROM_END
 	rom  N°834-8831-02 (171-5987a)
 	CPU Hiatchi FD1094 317-0196
 */
-
-ROM_START( dbrkr )
+ROM_START( desertbr )
 	ROM_REGION( 0x300000, REGION_CPU1, 0 ) /* 68000 code - custom CPU 317-0196 */
 	ROM_LOAD16_BYTE( "epr14802.a4", 0x000000, 0x80000, CRC(9ab93cbc) SHA1(a8d0013e17519c26c6ba7d28ec73e22ea5bde0e9) )
 	ROM_LOAD16_BYTE( "epr14902.a6", 0x000001, 0x80000, CRC(6724e7b1) SHA1(540c8bb7e848488dead81ca58f3bece45a87e611) )
@@ -1991,14 +1989,14 @@ ROM_START( dbrkr )
 
 	ROM_REGION( 0x210000, REGION_CPU2, ROMREGION_ERASEFF ) /* sound CPU */
 	/* is this ok? */
-	ROM_LOAD( "epr14787.b7",   0x010000, 0x40000, CRC(cc6feec7) SHA1(31cc243178b98681a52500a485d74ed9e1274888) )
-	ROM_RELOAD(0x50000, 0x40000)
-	ROM_LOAD( "epr14786.b6",   0x090000, 0x40000, CRC(ffdccb1f) SHA1(03b447d600af2d49cd1f11c67264e4260c8a3939) )
-	ROM_RELOAD(0xd0000, 0x40000)
-	ROM_LOAD( "epr14785.b5",   0x110000, 0x40000, CRC(29894393) SHA1(3105911d74f517d80236e7b13b604acdb901f604) )
-	ROM_RELOAD(0x150000, 0x40000)
-	ROM_LOAD( "epr14784.b4",   0x190000, 0x40000, CRC(cf8f3760) SHA1(fc9ae770b1b2f7a904b8cceb86ebda1cace837b2) )
-	ROM_RELOAD(0x1d0000, 0x40000)
+	ROM_LOAD( "epr14787.b7", 0x010000, 0x40000, CRC(cc6feec7) SHA1(31cc243178b98681a52500a485d74ed9e1274888) )
+	ROM_RELOAD(              0x050000, 0x40000 )
+	ROM_LOAD( "epr14786.b6", 0x090000, 0x40000, CRC(ffdccb1f) SHA1(03b447d600af2d49cd1f11c67264e4260c8a3939) )
+	ROM_RELOAD(              0x0d0000, 0x40000 )
+	ROM_LOAD( "epr14785.b5", 0x110000, 0x40000, CRC(29894393) SHA1(3105911d74f517d80236e7b13b604acdb901f604) )
+	ROM_RELOAD(              0x150000, 0x40000 )
+	ROM_LOAD( "epr14784.b4", 0x190000, 0x40000, CRC(cf8f3760) SHA1(fc9ae770b1b2f7a904b8cceb86ebda1cace837b2) )
+	ROM_RELOAD(              0x1d0000, 0x40000 )
 ROM_END
 
 
@@ -2331,7 +2329,6 @@ ROM_START( wwally )
 	ROM_LOAD( "mpr14722.c4",   0x190000, 0x80000, CRC(1bd081f8) SHA1(e5b0b5d8334486f813d7c430bb7fce3f69605a21) )
 ROM_END
 
-
 /**************************************************************************************************************************
 	Where's Wally?, Sega System 18
 	CPU: FD1094 317-????
@@ -2425,25 +2422,25 @@ static DRIVER_INIT( wwally )
  *
  *************************************/
 
-GAME( 1990, astorm,   0,        system18,      astorm,   generic_5874, ROT0, "Sega",    "Alien Storm (Japan, 2 Players, FD1094 317-0146)" ) // decrypted
-GAME( 1990, astorma,  astorm,   system18,      astorm,   generic_5874, ROT0, "Sega",    "Alien Storm (World, 3 Players, FD1094 317-0148)" ) // decrypted
-GAME( 1990, astormb,  astorm,   system18,      astorm,   generic_5874, ROT0, "Sega",    "Alien Storm (US, 3 Players, FD1094 317-0147)" ) // decrypted
-GAMEX(1990, astorm2p, astorm,   system18,      astorm,   generic_5874, ROT0, "Sega",    "Alien Storm (2 Players, FD1094 317-?)", GAME_NOT_WORKING ) // not decrypted
-GAME( 1990, bloxeed,  0,        system18,      bloxeed,  generic_5874, ROT0, "Sega",    "Bloxeed (Japan, FD1094 317-0139)" ) // decrypted
-GAME( 1991, cltchitr, 0,        system18,      cltchitr, generic_5987, ROT0, "Sega",    "Clutch Hitter (US, FD1094 317-0176)" ) // decrypted
-GAME( 1991, cltchtrj, cltchitr, system18,      cltchitr, generic_5987, ROT0, "Sega",    "Clutch Hitter (Japan, FD1094 317-0175)" ) // decrypted
-GAME( 1992, dbrkr,    0,        system18,      dbrkr,    generic_5987, ROT270,"Sega",   "Desert Breaker (FD1094 317-0196)" ) // decrypted
-GAME( 1991, ddcrew,   0,        system18,      ddcrew,   ddcrew,       ROT0, "Sega",    "D. D. Crew (US, 4 Player, FD1094 317-0186)" ) // decrypted
-GAME( 1991, ddcrewa,  ddcrew,   system18,      ddcrew,   ddcrew,       ROT0, "Sega",    "D. D. Crew (World, 4 Player, FD1094 317-?)" ) // decrypted
-GAMEX(1991, ddcrewb,  ddcrew,   system18,      ddcrew,   ddcrew,       ROT0, "Sega",    "D. D. Crew (World, 2 Player, FD1094 317-0184)", GAME_NOT_WORKING ) // not decrypted
-GAMEX(1991, ddcrewc,  ddcrew,   system18,      ddcrew,   ddcrew,       ROT0, "Sega",    "D. D. Crew (World, 3 Player, FD1094 317-0187)", GAME_NOT_WORKING ) // not decrypted
-GAME( 1990, lghost,   0,        lghost,        lghost,   lghost,       ROT0, "Sega",    "Laser Ghost (US, 317-0165)" ) // decrypted
-GAME( 1990, lghosta,  lghost,   lghost,        lghost,   lghost,       ROT0, "Sega",    "Laser Ghost (317-0166)" ) // decrypted
-GAME( 1990, mwalk,    0,        system18_8751, mwalk,    generic_5874, ROT0, "Sega",    "Michael Jackson's Moonwalker (World, FD1094/8751 317-0159)" ) // decrypted
-GAME( 1990, mwalka,   mwalk,    system18_8751, mwalka,   generic_5874, ROT0, "Sega",    "Michael Jackson's Moonwalker (US, FD1094/8751 317-0158)" ) // decrypted
-GAME( 1990, mwalkb,   mwalk,    system18_8751, mwalk,    generic_5874, ROT0, "Sega",    "Michael Jackson's Moonwalker (Japan, FD1094/8751 317-0157)" ) // decrypted
-GAME( 1989, shdancer, 0,        system18,      shdancer, generic_shad, ROT0, "Sega",    "Shadow Dancer (US)"  ) // not encrypted
-GAME( 1989, shdancrj, shdancer, system18,      shdancer, generic_shad, ROT0, "Sega",    "Shadow Dancer (Japan)" ) // not encrypted
-GAME( 1989, shdancrb, shdancer, system18,      shdancer, generic_shad, ROT0, "Sega",    "Shadow Dancer (Rev.B)" ) // not encrypted
-GAME( 1992, wwally,   0,        system18,      wwally,   wwally,       ROT0, "Sega",    "Where's Wally? (Japan, FD1094 317-0197a)" ) // decrypted
-GAMEX(1992, wwallyb,  wwally,   system18,      wwally,   wwally,       ROT0, "Sega",    "Where's Wally? (FD1094 317-?)", GAME_NOT_WORKING ) // not decrypted
+GAME( 1990, astorm,   0,        system18,      astorm,   generic_5874, ROT0,   "Sega",    "Alien Storm (Japan, 2 Players, FD1094 317-0146)" ) // decrypted
+GAME( 1990, astorma,  astorm,   system18,      astorm,   generic_5874, ROT0,   "Sega",    "Alien Storm (World, 3 Players, FD1094 317-0148)" ) // decrypted
+GAME( 1990, astormb,  astorm,   system18,      astorm,   generic_5874, ROT0,   "Sega",    "Alien Storm (US, 3 Players, FD1094 317-0147)" ) // decrypted
+GAMEX(1990, astorm2p, astorm,   system18,      astorm,   generic_5874, ROT0,   "Sega",    "Alien Storm (2 Players, FD1094 317-?)", GAME_NOT_WORKING ) // not decrypted
+GAME( 1990, bloxeed,  0,        system18,      bloxeed,  generic_5874, ROT0,   "Sega",    "Bloxeed (Japan, FD1094 317-0139)" ) // decrypted
+GAME( 1991, cltchitr, 0,        system18,      cltchitr, generic_5987, ROT0,   "Sega",    "Clutch Hitter (US, FD1094 317-0176)" ) // decrypted
+GAME( 1991, cltchtrj, cltchitr, system18,      cltchitr, generic_5987, ROT0,   "Sega",    "Clutch Hitter (Japan, FD1094 317-0175)" ) // decrypted
+GAME( 1992, desertbr, 0,        system18,      desertbr, generic_5987, ROT270, "Sega",    "Desert Breaker (FD1094 317-0196)" ) // decrypted
+GAME( 1991, ddcrew,   0,        system18,      ddcrew,   ddcrew,       ROT0,   "Sega",    "D. D. Crew (US, 4 Player, FD1094 317-0186)" ) // decrypted
+GAME( 1991, ddcrewa,  ddcrew,   system18,      ddcrew,   ddcrew,       ROT0,   "Sega",    "D. D. Crew (World, 4 Player, FD1094 317-?)" ) // decrypted
+GAMEX(1991, ddcrewb,  ddcrew,   system18,      ddcrew,   ddcrew,       ROT0,   "Sega",    "D. D. Crew (World, 2 Player, FD1094 317-0184)", GAME_NOT_WORKING ) // not decrypted
+GAMEX(1991, ddcrewc,  ddcrew,   system18,      ddcrew,   ddcrew,       ROT0,   "Sega",    "D. D. Crew (World, 3 Player, FD1094 317-0187)", GAME_NOT_WORKING ) // not decrypted
+GAME( 1990, lghost,   0,        lghost,        lghost,   lghost,       ROT0,   "Sega",    "Laser Ghost (US, 317-0165)" ) // decrypted
+GAME( 1990, lghosta,  lghost,   lghost,        lghost,   lghost,       ROT0,   "Sega",    "Laser Ghost (317-0166)" ) // decrypted
+GAME( 1990, mwalk,    0,        system18_8751, mwalk,    generic_5874, ROT0,   "Sega",    "Michael Jackson's Moonwalker (World, FD1094/8751 317-0159)" ) // decrypted
+GAME( 1990, mwalka,   mwalk,    system18_8751, mwalka,   generic_5874, ROT0,   "Sega",    "Michael Jackson's Moonwalker (US, FD1094/8751 317-0158)" ) // decrypted
+GAME( 1990, mwalkb,   mwalk,    system18_8751, mwalk,    generic_5874, ROT0,   "Sega",    "Michael Jackson's Moonwalker (Japan, FD1094/8751 317-0157)" ) // decrypted
+GAME( 1989, shdancer, 0,        system18,      shdancer, generic_shad, ROT0,   "Sega",    "Shadow Dancer (US)"  ) // not encrypted
+GAME( 1989, shdancrj, shdancer, system18,      shdancer, generic_shad, ROT0,   "Sega",    "Shadow Dancer (Japan)" ) // not encrypted
+GAME( 1989, shdancrb, shdancer, system18,      shdancer, generic_shad, ROT0,   "Sega",    "Shadow Dancer (Rev.B)" ) // not encrypted
+GAME( 1992, wwally,   0,        system18,      wwally,   wwally,       ROT0,   "Sega",    "Where's Wally? (Japan, FD1094 317-0197a)" ) // decrypted
+GAMEX(1992, wwallyb,  wwally,   system18,      wwally,   wwally,       ROT0,   "Sega",    "Where's Wally? (FD1094 317-?)", GAME_NOT_WORKING ) // not decrypted

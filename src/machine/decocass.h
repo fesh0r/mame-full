@@ -65,6 +65,7 @@ extern MACHINE_INIT( cnightst );
 extern MACHINE_INIT( cprosocc );
 extern MACHINE_INIT( cppicf );
 extern MACHINE_INIT( cscrtry );
+extern MACHINE_INIT( cflyball );
 extern MACHINE_INIT( cbdash );
 
 extern WRITE8_HANDLER( i8041_p1_w );

@@ -44,6 +44,23 @@ void system18_set_sprite_bank(int which, int bank);
 WRITE16_HANDLER( system18_textram_w );
 
 
+/* from vidhrdw/segaxbd.c */
+extern UINT16 *xboard_roadram;
+VIDEO_START( xboard );
+VIDEO_UPDATE( xboard );
+
+void xboard_reset_video(void);
+void xboard_set_draw_enable(int enable);
+void xboard_set_screen_flip(int flip);
+void xboard_set_tile_bank(int which, int bank);
+void xboard_set_road_priority(int priority);
+
+WRITE16_HANDLER( xboard_textram_w );
+WRITE16_HANDLER( xboard_render_start_w );
+READ16_HANDLER( xboard_road_latch_r );
+WRITE16_HANDLER( xboard_road_control_w );
+
+
 
 /******************** OLD STUFF *******************/
 

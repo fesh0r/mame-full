@@ -1545,7 +1545,15 @@ static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	3579580,	/* 3.58 MHz ? */
-	{ YM3012_VOL(80,MIXER_PAN_LEFT,80,MIXER_PAN_RIGHT) },	/* adjusted */
+	{ YM3012_VOL(80,MIXER_PAN_LEFT,80,MIXER_PAN_RIGHT) },
+	{ NULL }	/* YM2151 IRQ line is NOT connected on the PCB */
+};
+
+static struct YM2151interface ym2151_alt_interface =
+{
+	1,			/* 1 chip */
+	3579580,	/* 3.58 MHz ? */
+	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
 	{ NULL }	/* YM2151 IRQ line is NOT connected on the PCB */
 };
 
@@ -1554,17 +1562,25 @@ static struct C140interface C140_interface =
 	C140_TYPE_SYSTEM2,
 	8000000/374,
 	REGION_SOUND1,
-	75		/* adjusted */
+	75
 };
 
-/* adjusted chip */
 static struct C140interface C140_2_interface =
 {
 	C140_TYPE_SYSTEM2,
 	8000000/374,
 	REGION_SOUND1,
-	100		/* adjusted */
+	100
 };
+
+static struct C140interface C140_alt_interface =
+{
+	C140_TYPE_SYSTEM2,
+	8000000/374,
+	REGION_SOUND1,
+	45
+};
+
 /* end */
 
 /******************************************
@@ -1632,8 +1648,8 @@ static MACHINE_DRIVER_START( default )
 	MDRV_VIDEO_UPDATE(namcos2_default)
 
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD_TAG("C140", C140, C140_interface)	/* adjusted */
-	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD_TAG("C140", C140, C140_interface)
+	MDRV_SOUND_ADD_TAG("2151", YM2151, ym2151_interface)
 MACHINE_DRIVER_END
 
 /* adjusted machine driver start */
@@ -1642,6 +1658,12 @@ static MACHINE_DRIVER_START( default2 )
 	MDRV_SOUND_REPLACE("C140", C140, C140_2_interface)	/* adjusted */
 MACHINE_DRIVER_END
 /* end */
+
+static MACHINE_DRIVER_START( default3 )
+	MDRV_IMPORT_FROM(default)
+	MDRV_SOUND_REPLACE("C140", C140, C140_alt_interface)
+	MDRV_SOUND_REPLACE("2151", YM2151, ym2151_alt_interface)
+MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( gollygho )
 	MDRV_CPU_ADD(M68000, 12288000)
@@ -4542,21 +4564,21 @@ GAME( 1988, mirninja, 0,        default,  default,  mirninja, ROT0,   "Namco", "
 GAME( 1988, phelios,  0,        default2, default,  phelios , ROT90,  "Namco", "Phelios (Japan)" )		/* adjusted */
 GAME( 1989, dirtfoxj, 0,        default2, dirtfox,  dirtfoxj, ROT90,  "Namco", "Dirt Fox (Japan)" )	/* adjusted */
 GAMEX(1989, fourtrax, 0,        finallap, fourtrax, fourtrax, ROT0,   "Namco", "Four Trax", GAME_IMPERFECT_GRAPHICS )
-GAME( 1989, valkyrie, 0,        default,  default,  valkyrie, ROT90,  "Namco", "Valkyrie No Densetsu (Japan)" )
+GAME( 1989, valkyrie, 0,        default3, default,  valkyrie, ROT90,  "Namco", "Valkyrie No Densetsu (Japan)" )
 GAME( 1989, finehour, 0,        default2, default,  finehour, ROT0,   "Namco", "Finest Hour (Japan)" )		/* adjusted */
-GAME( 1989, burnforc, 0,        default,  default,  burnforc, ROT0,   "Namco", "Burning Force (Japan)" )
+GAME( 1989, burnforc, 0,        default3, default,  burnforc, ROT0,   "Namco", "Burning Force (Japan)" )
 GAME( 1989, marvland, 0,        default,  default,  marvland, ROT0,   "Namco", "Marvel Land (US)" )
 GAME( 1989, marvlanj, marvland, default,  default,  marvlanj, ROT0,   "Namco", "Marvel Land (Japan)" )
 GAME( 1990, kyukaidk, 0,        default,  default,  kyukaidk, ROT0,   "Namco", "Kyuukai Douchuuki (Japan new version)" )
 GAME( 1990, kyukaido, kyukaidk, default,  default,  kyukaidk, ROT0,   "Namco", "Kyuukai Douchuuki (Japan old version)" )
-GAME( 1990, dsaber,   0,        default,  default,  dsaber,   ROT90,  "Namco", "Dragon Saber" )
-GAME( 1990, dsaberj,  dsaber,   default,  default,  dsaberj,  ROT90,  "Namco", "Dragon Saber (Japan)" )
+GAME( 1990, dsaber,   0,        default3, default,  dsaber,   ROT90,  "Namco", "Dragon Saber" )
+GAME( 1990, dsaberj,  dsaber,   default3, default,  dsaberj,  ROT90,  "Namco", "Dragon Saber (Japan)" )
 GAMEX(1990, finalap2, 0,        finallap, finallap, finalap2, ROT0,   "Namco", "Final Lap 2", GAME_NOT_WORKING|GAME_IMPERFECT_GRAPHICS  )
 GAMEX(1990, finalp2j, finalap2, finallap, finallap, finalap2, ROT0,   "Namco", "Final Lap 2 (Japan)", GAME_NOT_WORKING|GAME_IMPERFECT_GRAPHICS  )
 GAME( 1990, gollygho, 0,        gollygho, gollygho, gollygho, ROT180, "Namco", "Golly! Ghost!" )
 /* Not dumped: Bubble Trouble (Golly Ghost II) */
-GAME( 1990, rthun2,   0,        default,  default,  rthun2,   ROT0,   "Namco", "Rolling Thunder 2" )
-GAME( 1990, rthun2j,  rthun2,   default,  default,  rthun2j,  ROT0,   "Namco", "Rolling Thunder 2 (Japan)" )
+GAME( 1990, rthun2,   0,        default3,  default,  rthun2,   ROT0,   "Namco", "Rolling Thunder 2" )
+GAME( 1990, rthun2j,  rthun2,   default3, default,  rthun2j,  ROT0,   "Namco", "Rolling Thunder 2 (Japan)" )
 GAME( 1990, sgunner,  0,        sgunner,  sgunner,  sgunner2, ROT0,   "Namco", "Steel Gunner" )
 GAME( 1990, sgunnerj, sgunner,  sgunner,  sgunner,  sgunner2, ROT0,   "Namco", "Steel Gunner (Japan)" )
 GAME( 1991, sgunner2, 0,        sgunner,  sgunner,  sgunner2, ROT0,   "Namco", "Steel Gunner 2 (US)" )

@@ -196,8 +196,8 @@ static void (*i386_opcode_table1_32[256])(void) =
 	I386OP(groupC1_32),			/* 0xc1 */
 	I386OP(ret_near32_i16),		/* 0xc2 */
 	I386OP(ret_near32),			/* 0xc3 */
-	I386OP(les),				/* 0xc4 */
-	I386OP(lds),				/* 0xc5 */
+	I386OP(les32),				/* 0xc4 */
+	I386OP(lds32),				/* 0xc5 */
 	I386OP(mov_rm8_i8),			/* 0xc6 */
 	I386OP(mov_rm32_i32),		/* 0xc7 */
 	I386OP(unimplemented),		/* 0xc8 */		/* TODO: ENTER */
@@ -440,10 +440,10 @@ static void (*i386_opcode_table2_32[256])(void) =
 	I386OP(imul_r32_rm32),		/* 0xaf */
 	I386OP(invalid),			/* 0xb0 */		/* CMPXCHG (486) */
 	I386OP(invalid),			/* 0xb1 */		/* CMPXCHG (486) */
-	I386OP(lss),				/* 0xb2 */
+	I386OP(lss32),				/* 0xb2 */
 	I386OP(btr_rm32_r32),		/* 0xb3 */
-	I386OP(lfs),				/* 0xb4 */
-	I386OP(lgs),				/* 0xb5 */
+	I386OP(lfs32),				/* 0xb4 */
+	I386OP(lgs32),				/* 0xb5 */
 	I386OP(movzx_r32_rm8),		/* 0xb6 */
 	I386OP(movzx_r32_rm16),		/* 0xb7 */
 	I386OP(invalid),			/* 0xb8 */

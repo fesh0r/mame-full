@@ -1593,9 +1593,10 @@ const struct GameDriver *drivers[] =
 	DRIVER( chukatai )	/* B44 (c) 1988 Taito Corporation Japan (World) */
 	DRIVER( chukatau )	/* B44 (c) 1988 Taito Corporation (US) */
 	DRIVER( chukataj )	/* B44 (c) 1988 Taito Corporation (Japan) */
-	DRIVER( tnzs )		/* B53?(c) 1988 Taito Corporation (Japan) (new logo) */
-	DRIVER( tnzsb )		/* bootleg but Taito Corporation Japan (World) (new logo) */
-	DRIVER( tnzs2 )		/* B53?(c) 1988 Taito Corporation Japan (World) (old logo) */
+	DRIVER( tnzs )		/* B53 (c) 1988 Taito Corporation Japan (World) (new logo) */
+	DRIVER( tnzsj )		/* B53 (c) 1988 Taito Corporation (Japan) (new logo) */
+	DRIVER( tnzso )		/* B53?(c) 1988 Taito Corporation Japan (World) (old logo)
+*/
 	DRIVER( insectx )	/* B97 (c) 1989 Taito Corporation Japan (World) */
 
 	/* Taito L-System games */
@@ -2932,6 +2933,7 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( sdi )		/* (c) 1987 */
 	DRIVER( shinobi )	/* (c) 1987 */
 	DRIVER( shinobib )	/* (c) 1987 (protected) */
+	DRIVER( shinobic )	/* (c) 1987 */
 	DRIVER( sonicbom )	/* (c) 1987 (FD1094, decrypted) */
 	DRIVER( sjryuko )	/* (c) 1988 White Board */
 	DRIVER( suprleag )  /* (protected) */
@@ -2978,7 +2980,7 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( ddcrewc )	/* (protected) */
 	DRIVER( cltchitr )	/* (c) 1991 (FD1094, decrypted) */
 	DRIVER( cltchtrj )	/* (protected) */
-	DRIVER( dbrkr )
+	DRIVER( desertbr )
 	DRIVER( mwalk )		/* (c) 1990 (protected) */
 	DRIVER( mwalka )	/* (c) 1990 (protected) */
 	DRIVER( mwalkb )	/* (c) 1990 (protected) */
@@ -3358,7 +3360,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 						/* 44 */
 						/* 45 */
 						/* 46 */
-						/* 47 */
+	DRIVER( mt_astrm )	/* 47 */
 						/* 48 */
 	DRIVER( mt_bbros )	/* 49 */
 						/* 50 */
@@ -3442,6 +3444,8 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( astrof )	/* (c) [1980?] */
 	DRIVER( astrof2 )	/* (c) [1980?] */
 	DRIVER( astrof3 )	/* (c) [1980?] */
+	DRIVER( abattle )	/* Sidam */
+	DRIVER( abattle2 )	/* Sidam */
 	DRIVER( tomahawk )	/* (c) [1980?] */
 	DRIVER( tomahaw5 )	/* (c) [1980?] */
 	DRIVER( prosoccr )	/* (c) 1983 */
@@ -5462,6 +5466,9 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( mayjinsn )
 	DRIVER( mayjisn2 )
 
+	/* Seta System S12 */
+	DRIVER( srmp6 )		/* (c) 1996 Seta (Japan) */
+
 	/* Atlus games */
 	DRIVER( powerins )	/* (c) 1993 Atlus (Japan) */
 	DRIVER( powerina )	/* (c) 1993 Atlus (Japan) */
@@ -5891,6 +5898,20 @@ Other Sun games
 	DRIVER( ppmast93 )
 	DRIVER( twins )
 	DRIVER( mwarr )
+
+	/* Arcadia System */
+	DRIVER( ar_airh )
+	DRIVER( ar_bowl )
+	DRIVER( ar_dart )
+	DRIVER( ar_fast )
+	DRIVER( ar_ldrb )
+	DRIVER( ar_ldrba )
+	DRIVER( ar_ninj )
+	DRIVER( ar_rdwr )
+	DRIVER( ar_sdwr )
+	DRIVER( ar_spot )
+	DRIVER( ar_sprg )
+	DRIVER( ar_xeon )
 
 	/* Other Games */
 	DRIVER( astinvad )	/* (c) 1980 Stern */

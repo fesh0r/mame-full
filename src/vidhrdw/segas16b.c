@@ -66,7 +66,7 @@ static int video_start_common(void (*tilecb)(int), void (*textcb)(int))
 	tilemap_set_scrollx(textmap, 0, 0);
 
 	/* create the tilemaps for the bg/fg layers */
-	if (!segaic16_init_virtual_tilemaps(16, tilecb))
+	if (!segaic16_init_virtual_tilemaps(16, 0, tilecb))
 		return 1;
 
 	/* initialize globals */
@@ -319,7 +319,7 @@ static void system16b_draw_layer(struct mame_bitmap *bitmap, const struct rectan
 			rowcolclip.max_y = (y + 7 > cliprect->max_y) ? cliprect->max_y : y + 7;
 
 			/* loop over column chunks */
-			for (x = ((cliprect->min_x + 9) & ~15) - 9; x <= cliprect->max_x; x += 16)
+			for (x = ((cliprect->min_x + 8) & ~15) - 8; x <= cliprect->max_x; x += 16)
 			{
 				UINT16 effxscroll, effyscroll, rowscroll;
 				UINT16 effpages = pages;
@@ -331,7 +331,7 @@ static void system16b_draw_layer(struct mame_bitmap *bitmap, const struct rectan
 				/* get the effective scroll values */
 				rowscroll = segaic16_textram[0xf80/2 + 0x40/2 * which + y/8];
 				effxscroll = (xscroll & 0x8000) ? rowscroll : xscroll;
-				effyscroll = segaic16_textram[0xf16/2 + 0x40/2 * which + (x+9)/16];
+				effyscroll = segaic16_textram[0xf16/2 + 0x40/2 * which + (x+8)/16];
 
 				/* are we using an alternate? */
 				if (rowscroll & 0x8000)

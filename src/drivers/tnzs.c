@@ -1,6 +1,40 @@
 /***************************************************************************
 
-The New Zealand Story driver, used for tnzs & tnzs2.
+
+Notes:
+- There are three versions of TNZS supported.
+  1) "tnzs". New hardware revision. 3 Z80 and no M-Chip (8742 MPU).
+  2) "tnzsj". Standard hardware. 2 Z80 and the M-Chip.
+  3) "tnzso". Standard hardware. Harder gameplay, old Taito logo. Maybe a prototype?
+  The three versions all have different levels!
+
+
+Hardware datails for the newer tnzs board (from pictures):
+
+  Main board
+  M6100409A N.ZEALAND STORY (written on label)
+  M6100356A (written on pcb)
+  (note: Taito logo is the old version)
+  SETA X1-001A 8740KX
+  SETA X1-002A 8712KX
+  SETA X1-004  815100
+  SETA X1-006  8136KX
+  SETA X1-007  805100
+  these custom ics are also used in many other games (see drivers/seta.c, drivers/taito_x.c)
+  Main xtal 12.0000 MHZ
+  2xZ80-B
+  YM2203C
+  sockets for U2 (Z80-B) and U35/U39/U43/U46 (LH534000) are empty and the sub board
+  connects to them.
+
+  SUB PCB
+  K9100209A N.Z.LAND STORY (written on label)
+  K9100209A (written on pcb)
+  J9100159A (written on pcb)
+  (note: Taito logo is the new version)
+  Z80-B
+
+
 
 TODO: - Find out how the hardware credit-counter works (MPU)
 	  - Verify dip switches
@@ -556,7 +590,7 @@ INPUT_PORTS_START( extrmatn )
 	PORT_DIPSETTING(    0x80, "*1.5" )
 	PORT_DIPSETTING(    0x40, "*2" )
 	PORT_DIPSETTING(    0x00, "*3" )
-	
+
 	PORT_START_TAG("IN0")
 	TNZS_PLAYER_INPUT(1)
 
@@ -767,7 +801,7 @@ INPUT_PORTS_START( drtoppel )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
-	TAITO_COINAGE_WORLD_8	
+	TAITO_COINAGE_WORLD_8
 	DRTOPP_COMMON
 INPUT_PORTS_END
 
@@ -928,7 +962,7 @@ INPUT_PORTS_START( tnzsb )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_COCKTAIL
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2)
-	
+
 	PORT_START_TAG("IN2")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_TILT )
@@ -980,10 +1014,10 @@ INPUT_PORTS_START( tnzs2 )
 
 	PORT_START_TAG("IN0")
 	TNZS_PLAYER_INPUT(1)
-	
+
 	PORT_START_TAG("IN1")
 	TNZS_PLAYER_INPUT(2)
-	
+
 	COMMON_IN2
 	COMMON_COIN1(IP_ACTIVE_LOW)
 	COMMON_COIN2(IP_ACTIVE_LOW)
@@ -1030,7 +1064,7 @@ INPUT_PORTS_START( insectx )
 	TNZS_PLAYER_INPUT(1)
 	PORT_START_TAG("IN1")
 	TNZS_PLAYER_INPUT(2)
-	
+
 	PORT_START_TAG("IN2")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_TILT )
@@ -1085,7 +1119,7 @@ INPUT_PORTS_START( kageki )
 	TNZS_PLAYER_INPUT(1)
 	PORT_START_TAG("IN1")
 	TNZS_PLAYER_INPUT(2)
-	
+
 	PORT_START_TAG("IN2")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_TILT )
@@ -1756,11 +1790,34 @@ ROM_END
 
 ROM_START( tnzs )
 	ROM_REGION( 0x30000, REGION_CPU1, 0 )	/* 64k + bankswitch areas for the first CPU */
-	ROM_LOAD( "b53_10.32", 0x00000, 0x08000, CRC(a73745c6) SHA1(73eb38e75e08312d752332f988dc655084b4a86d) )
+	ROM_LOAD( "b53-24.1",   0x00000, 0x08000, CRC(d66824c6) SHA1(fd381ac0dc52ce670c3fde320ea60a209e288a52) )
+	ROM_CONTINUE(           0x18000, 0x18000 )		/* banked at 8000-bfff */
+
+	ROM_REGION( 0x18000, REGION_CPU2, 0 )	/* 64k for the second CPU */
+	ROM_LOAD( "b53-25.3",   0x00000, 0x08000, CRC(d6ac4e71) SHA1(f3e71624a8a5e4e4c8a6aa01711ed26bdd5abf5a) )
+	ROM_CONTINUE(           0x10000, 0x08000 )		/* banked at 8000-9fff */
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for the third CPU */
+	ROM_LOAD( "b53-26.34",  0x00000, 0x10000, CRC(cfd5649c) SHA1(4f6afccd535d39b41661dc3ccd17af125bfac015) )
+
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "b53-08.8",	0x00000, 0x20000, CRC(c3519c2a) SHA1(30fe7946fbc95ab6b3ccb6944fb24bf47bf3d743) )	// b53-16
+	ROM_LOAD( "b53-07.7",	0x20000, 0x20000, CRC(2bf199e8) SHA1(4ed73e4f00ae2f5f4028a0ea5ae3cd238863a370) )	// b53-17
+	ROM_LOAD( "b53-06.6",	0x40000, 0x20000, CRC(92f35ed9) SHA1(5fdd8d6ddbb7be9887af3c8dea9ad3b58c4e86f9) )	// b53-18
+	ROM_LOAD( "b53-05.5",	0x60000, 0x20000, CRC(edbb9581) SHA1(539396a01ca0b69455f000d446759b232530b542) )	// b53-19
+	ROM_LOAD( "b53-04.4",	0x80000, 0x20000, CRC(59d2aef6) SHA1(b657b7603c3eb5f169000d38497ebb93f26f7832) )	// b53-22
+	ROM_LOAD( "b53-03.3",	0xa0000, 0x20000, CRC(74acfb9b) SHA1(90b544ed7ede7565660bdd13c94c15c54423cda9) )	// b53-23
+	ROM_LOAD( "b53-02.2",	0xc0000, 0x20000, CRC(095d0dc0) SHA1(ced2937d0594fa00ae344a4e3a3cba23772dc160) )	// b53-20
+	ROM_LOAD( "b53-01.1",	0xe0000, 0x20000, CRC(9800c54d) SHA1(761647177d621ac2cdd8b009876eed35809f3c92) )	// b53-21
+ROM_END
+
+ROM_START( tnzsj )
+	ROM_REGION( 0x30000, REGION_CPU1, 0 )	/* 64k + bankswitch areas for the first CPU */
+	ROM_LOAD( "b53-10.32", 0x00000, 0x08000, CRC(a73745c6) SHA1(73eb38e75e08312d752332f988dc655084b4a86d) )
 	ROM_CONTINUE(          0x18000, 0x18000 )		/* banked at 8000-bfff */
 
 	ROM_REGION( 0x18000, REGION_CPU2, 0 )	/* 64k for the second CPU */
-	ROM_LOAD( "b53_11.38", 0x00000, 0x08000, CRC(9784d443) SHA1(bc3647aac9974031dbe4898417fbaa99841f9548) )
+	ROM_LOAD( "b53-11.38", 0x00000, 0x08000, CRC(9784d443) SHA1(bc3647aac9974031dbe4898417fbaa99841f9548) )
 	ROM_CONTINUE(          0x10000, 0x08000 )		/* banked at 8000-9fff */
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* M-Chip (i8742 internal ROM) */
@@ -1778,31 +1835,7 @@ ROM_START( tnzs )
 	ROM_LOAD( "b53-01.1",	0xe0000, 0x20000, CRC(9800c54d) SHA1(761647177d621ac2cdd8b009876eed35809f3c92) )
 ROM_END
 
-ROM_START( tnzsb )
-	ROM_REGION( 0x30000, REGION_CPU1, 0 )	/* 64k + bankswitch areas for the first CPU */
-	ROM_LOAD( "nzsb5324.bin", 0x00000, 0x08000, CRC(d66824c6) SHA1(fd381ac0dc52ce670c3fde320ea60a209e288a52) )
-	ROM_CONTINUE(             0x18000, 0x18000 )		/* banked at 8000-bfff */
-
-	ROM_REGION( 0x18000, REGION_CPU2, 0 )	/* 64k for the second CPU */
-	ROM_LOAD( "nzsb5325.bin", 0x00000, 0x08000, CRC(d6ac4e71) SHA1(f3e71624a8a5e4e4c8a6aa01711ed26bdd5abf5a) )
-	ROM_CONTINUE(             0x10000, 0x08000 )		/* banked at 8000-9fff */
-
-	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for the third CPU */
-	ROM_LOAD( "nzsb5326.bin", 0x00000, 0x10000, CRC(cfd5649c) SHA1(4f6afccd535d39b41661dc3ccd17af125bfac015) )
-
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	/* ROMs taken from another set (the ones from this set were read incorrectly) */
-	ROM_LOAD( "b53-08.8",	0x00000, 0x20000, CRC(c3519c2a) SHA1(30fe7946fbc95ab6b3ccb6944fb24bf47bf3d743) )
-	ROM_LOAD( "b53-07.7",	0x20000, 0x20000, CRC(2bf199e8) SHA1(4ed73e4f00ae2f5f4028a0ea5ae3cd238863a370) )
-	ROM_LOAD( "b53-06.6",	0x40000, 0x20000, CRC(92f35ed9) SHA1(5fdd8d6ddbb7be9887af3c8dea9ad3b58c4e86f9) )
-	ROM_LOAD( "b53-05.5",	0x60000, 0x20000, CRC(edbb9581) SHA1(539396a01ca0b69455f000d446759b232530b542) )
-	ROM_LOAD( "b53-04.4",	0x80000, 0x20000, CRC(59d2aef6) SHA1(b657b7603c3eb5f169000d38497ebb93f26f7832) )
-	ROM_LOAD( "b53-03.3",	0xa0000, 0x20000, CRC(74acfb9b) SHA1(90b544ed7ede7565660bdd13c94c15c54423cda9) )
-	ROM_LOAD( "b53-02.2",	0xc0000, 0x20000, CRC(095d0dc0) SHA1(ced2937d0594fa00ae344a4e3a3cba23772dc160) )
-	ROM_LOAD( "b53-01.1",	0xe0000, 0x20000, CRC(9800c54d) SHA1(761647177d621ac2cdd8b009876eed35809f3c92) )
-ROM_END
-
-ROM_START( tnzs2 )
+ROM_START( tnzso )
 	ROM_REGION( 0x30000, REGION_CPU1, 0 )	/* 64k + bankswitch areas for the first CPU */
 	ROM_LOAD( "ns_c-11.rom", 0x00000, 0x08000, CRC(3c1dae7b) SHA1(0004fccc171714c80565326f8690f9662c5b75d9) )
 	ROM_CONTINUE(            0x18000, 0x18000 )		/* banked at 8000-bfff */
@@ -1854,7 +1887,7 @@ GAME( 1988, kagekij,  kageki,   kageki,   kageki,   kageki,   ROT90,  "Taito Cor
 GAME( 1988, chukatai, 0,        tnzs,     chukatai, chukatai, ROT0,   "Taito Corporation Japan", "Chuka Taisen (World)" )
 GAME( 1988, chukatau, chukatai, tnzs,     chukatau, chukatai, ROT0,   "Taito America Corporation", "Chuka Taisen (US)" )
 GAME( 1988, chukataj, chukatai, tnzs,     chukatau, chukatai, ROT0,   "Taito Corporation", "Chuka Taisen (Japan)" )
-GAME( 1988, tnzs,     0,        tnzs,     tnzs,     tnzs,     ROT0,   "Taito Corporation", "The NewZealand Story (Japan)" )
-GAME( 1988, tnzsb,    tnzs,     tnzsb,    tnzsb,    tnzsb,    ROT0,   "bootleg", "The NewZealand Story (World, bootleg)" )
-GAME( 1988, tnzs2,    tnzs,     tnzs,     tnzs2,    tnzs,     ROT0,   "Taito Corporation Japan", "The NewZealand Story 2 (World)" )
+GAME( 1988, tnzs,     0,        tnzsb,    tnzsb,    tnzsb,    ROT0,   "Taito Corporation Japan", "The NewZealand Story (World, newer)" )
+GAME( 1988, tnzsj,    tnzs,     tnzs,     tnzs,     tnzs,     ROT0,   "Taito Corporation", "The NewZealand Story (Japan)" )
+GAME( 1988, tnzso,    tnzs,     tnzs,     tnzs2,    tnzs,     ROT0,   "Taito Corporation Japan", "The NewZealand Story (World, older)" )
 GAME( 1989, insectx,  0,        insectx,  insectx,  insectx,  ROT0,   "Taito Corporation Japan", "Insector X (World)" )
