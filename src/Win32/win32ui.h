@@ -17,7 +17,7 @@
 #include "options.h"
 #include "ScreenShot.h"
 
-extern struct GameDriver driver_0;
+extern const struct GameDriver driver_0;
 
 #define DRIVER_ROOT &driver_0
 

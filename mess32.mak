@@ -5,7 +5,7 @@
 VERSION = -DVERSION=37
 
 # uncomment out the BETA_VERSION = line to build a beta version of MAME
-BETA_VERSION = -DBETA_VERSION=6
+BETA_VERSION = -DBETA_VERSION=7
 
 # uncomment this to build an release canidate version
 # RELEASE_CANDIDATE = -DRELEASE_CANDIDATE=1
