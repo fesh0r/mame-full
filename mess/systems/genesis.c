@@ -61,7 +61,8 @@ int deb = 0;
 unsigned int	z80_68000_latch			= 0;
 unsigned int	z80_latch_bitcount		= 0;
 
-unsigned char cartridge_ram[0x1000]; /* any cartridge RAM */
+#define EASPORTS_HACK
+unsigned char cartridge_ram[0x10000]; /* any cartridge RAM */
 
 
 #if LSB_FIRST
@@ -158,9 +159,18 @@ static int genesis_sharedram_r (int offset)
 }*/
 
 
-
-
-
+#ifdef EASPORTS_HACK
+READ16_HANDLER(cartridge_ram_r)
+{
+	logerror("cartridge ram read.. %x\n", offset);
+	return cartridge_ram[(offset&0xffff)>>1];
+}
+WRITE16_HANDLER(cartridge_ram_w)
+{
+	logerror("cartridge ram write.. %x to %x\n", data, offset);
+	cartridge_ram[offset] = data;
+}
+#endif
 
 static MEMORY_READ16_START(genesis_readmem)
 	{ 0x000000, 0x3fffff, MRA16_ROM },
@@ -178,9 +188,9 @@ static MEMORY_READ16_START(genesis_readmem)
 	{ 0xa00000, 0xa01fff, genesis_soundram_r },
 	{ 0xa04000, 0xa04003, YM2612_68000_r },
 
-
-
-/*	{ 0x200000, 0x200fff, cartridge_ram_r},*/
+#ifdef EASPORTS_HACK
+	{ 0x400000, 0x4fffff, cartridge_ram_r},
+#endif
 MEMORY_END
 
 
@@ -199,11 +209,14 @@ static MEMORY_WRITE16_START(genesis_writemem)
 	{ 0xa06000, 0xa06003, genesis_ramlatch_68000_w },
 	{ 0xa00000, 0xa01fff, genesis_soundram_w },
 	{ 0xa04000, 0xa04003, YM2612_68000_w },
-/*	{ 0x200000, 0x200fff, cartridge_ram_w },	*/
+#ifdef EASPORTS_HACK
+	{ 0x200000, 0x20ffff, cartridge_ram_w },
+	{ 0x000000, 0x1fffff, MWA16_ROM },
+#endif
+#ifndef EASPORT_HACK
 	{ 0x000000, 0x3fffff, MWA16_ROM },
+#endif
 MEMORY_END
-
-
 
 
 static MEMORY_READ_START(genesis_s_readmem)
@@ -295,8 +308,6 @@ static struct YM2612interface ym2612_interface =
 	{ 0x7fffffff,0x7fffffff },
 	{ 0 },
 };
-
-
 
 
 static struct MachineDriver machine_driver_genesis =

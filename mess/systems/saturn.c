@@ -11,7 +11,8 @@
 
    0x0000000 > 0x0080000		: Boot (IPL) ROM
    0x0100000 > 0x0100080		: SMPC register area
-   0x0180000 > 0x0190000		: Backup RAM
+   0x0180000 > 0x018ffff		: Backup RAM
+   0x0180001 > 0x019ffff		: Backup RAM   Shadow
    0x0200000 > 0x0300000		: 1 MB of DRAM (Lower Work RAM)
    0x1000000 > 0x1000004		: Slave SH2 communication register
    0x1800000 > 0x1800004		: Master SH2 communication register
@@ -110,8 +111,8 @@
 #define VERBOSE 0
 #endif
 
-#define DISP_MEM 0 /* define to log memory access to all non work ram areas */
-#define DISP_VDP1 0 /* define to log vdp1 command execution */
+#define DISP_MEM 1 /* define to log memory access to all non work ram areas */
+#define DISP_VDP1 1 /* define to log vdp1 command execution */
 
 #if VERBOSE
 #define LOG(x)  logerror x
@@ -122,32 +123,40 @@
 #define PAL 0       /* Set to 1 for PAL mode. Must be set to 1 for euro bios */
 
 static UINT32 *mem; /* Base memory pointer */
+static UINT16 *sound_base;
+static UINT32 *fb1_ram_base;
+static UINT32 *workl_ram_base;
+static UINT32 *vdp1_ram_base;
+static UINT32 *vdp2_ram_base;
+static UINT32 *color_ram_base;
+static UINT32 *workh_ram_base;
+static UINT32 *back_ram_base;
+static int saturn_video_dirty = 1;
 
 /*
    Define memory bases. Note these are byte locations and widths
    Divide by 4 to get location in mem array
 */
 
-#define SATURN_ROM_BASE         0x00000000
-#define SATURN_ROM_SIZE         0x00080000
-#define SATURN_WORKL_RAM_BASE   0x00080000
-#define SATURN_WORKL_RAM_SIZE   0x00100000
-#define SATURN_WORKH_RAM_BASE   0x00180000
-#define SATURN_WORKH_RAM_SIZE   0x00100000
- #define SATURN_SOUND_RAM_BASE   0x00280000
- #define SATURN_SOUND_RAM_SIZE   0x00080000
-#define SATURN_VDP1_RAM_BASE    0x00300000
-#define SATURN_VDP1_RAM_SIZE    0x00080000
-#define SATURN_VDP2_RAM_BASE    0x00380000
-#define SATURN_VDP2_RAM_SIZE    0x00080000
-#define SATURN_FB1_RAM_BASE     0x00400000
-#define SATURN_FB1_RAM_SIZE     0x00040000
-#define SATURN_FB2_RAM_BASE     0x00440000
+ #define SATURN_ROM_BASE         0x00000000
+ #define SATURN_ROM_SIZE         0x00080000
+ #define SATURN_WORKL_RAM_BASE   0x00080000
+ #define SATURN_WORKL_RAM_SIZE   0x00100000
+ #define SATURN_WORKH_RAM_BASE   0x00180000
+ #define SATURN_WORKH_RAM_SIZE   0x00100000
+
+ #define SATURN_VDP1_RAM_BASE    0x00280000
+ #define SATURN_VDP1_RAM_SIZE    0x00080000
+ #define SATURN_VDP2_RAM_BASE    0x00300000
+ #define SATURN_VDP2_RAM_SIZE    0x00080000
+ #define SATURN_FB1_RAM_BASE     0x00380000
+ #define SATURN_FB1_RAM_SIZE     0x00040000
+#define SATURN_FB2_RAM_BASE     0x003c0000
 #define SATURN_FB2_RAM_SIZE     0x00040000
-#define SATURN_COLOR_RAM_BASE   0x00480000
-#define SATURN_COLOR_RAM_SIZE   0x00001000
-#define SATURN_BACK_RAM_BASE    0x00481000
-#define SATURN_BACK_RAM_SIZE    0x00010000
+ #define SATURN_COLOR_RAM_BASE   0x00400000
+ #define SATURN_COLOR_RAM_SIZE   0x00001000
+ #define SATURN_BACK_RAM_BASE    0x00401000
+ #define SATURN_BACK_RAM_SIZE    0x00020000
 
 #define SATURN_SCR_WIDTH    704
 #define SATURN_SCR_HEIGHT   512
@@ -162,158 +171,108 @@ static UINT32 *mem; /* Base memory pointer */
 /* Read handler get offset (byte offset / 4) and mem_mask (all bits required are 0) */
 /* Write handler get data, offset and mem_mask */
 
-READ32_HANDLER( saturn_rom_r )	  /* ROM UNUSED */
-{
-  return 0xa5a5a5a5 & ~mem_mask;
-}
-
-WRITE32_HANDLER( saturn_rom_w )   /* ROM UNUSED */
-{
-}
-
-READ32_HANDLER( saturn_workl_ram_r )
-{
-  offs_t ea;
-
-  ea = (SATURN_WORKL_RAM_BASE / 4) + offset; /* Calculate effective address */
-  return mem[ea] & (~mem_mask); /* Return dword masked with NOT mem_mask */
-}
-
-WRITE32_HANDLER( saturn_workl_ram_w )
-{
-  offs_t ea;
-
-  ea = (SATURN_WORKL_RAM_BASE / 4) + offset;
-  mem[ea] = (mem[ea] & mem_mask) | data;
-}
-
+#ifdef UNNEEDED
 READ32_HANDLER( saturn_workh_ram_r )
 {
-  offs_t ea;
+  /*offs_t ea;
 
-  ea = (SATURN_WORKH_RAM_BASE / 4) + offset;
-  return mem[ea] & (~mem_mask);
+  ea = (SATURN_WORKH_RAM_BASE / 4) + offset;*/
+  return workh_ram_base[offset] & (~mem_mask);
 }
 
 WRITE32_HANDLER( saturn_workh_ram_w )
 {
-  offs_t ea;
 
-  ea = (SATURN_WORKH_RAM_BASE / 4) + offset;
-  mem[ea] = (mem[ea] & mem_mask) | data;
+  workh_ram_base[offset] = (workh_ram_base[offset] & mem_mask) | data;
 }
+#endif
 
 READ32_HANDLER( saturn_sound_ram_r )
 {
-  offs_t ea;
-  static UINT32 oldmask= 0xa5a5a5a5;
-/* #if DISP_MEM */
-  if (1 ||(oldmask != mem_mask)) {
-	  oldmask = mem_mask;
-//	  printf("soundram_r offset=%08X mem_mask=%08X PC=%08X\n",offset,mem_mask,cpu_get_reg(SH2_PC));
-  /*logerror("soundram_r offset=%08lX mem_mask=%08lX PC=%08lX\n",offset,mem_mask,cpu_get_reg(SH2_PC));*/
-	}
-/* #endif */
 
-  if(offset == 0x1c0)
-    {
-      return 0;
-    }
-/*  if(offset == 0x1e8)
-    {
-      return 0xffffffff;
-    }*/
+#if DISP_MEM
+  logerror("soundram_r offset=%08lX mem_mask=%08lX PC=%08lX\n",offset,mem_mask,cpu_get_reg(SH2_PC));
+#endif
 
-  ea = (SATURN_SOUND_RAM_BASE / 4) + offset;
-  return mem[ea] & (~mem_mask);
+  return ((sound_base[(offset<<1)] << 16) | (sound_base[(offset<<1)+1])) & (~mem_mask);
+
 }
 
 WRITE32_HANDLER( saturn_sound_ram_w )
 {
-  offs_t ea;
-static UINT32 oldmask= 0xa5a5a5a5;
-/*#if DISP_MEM*/
-  if ((oldmask != mem_mask)) {
-   oldmask = mem_mask;
-  printf("soundram_w offset=%08X data=%08X mem_mask=%08X PC=%08X\n",offset,data,mem_mask,cpu_get_reg(SH2_PC));
-}
-  /*logerror("soundram_w offset=%08lX data=%08lX mem_mask=%08lX PC=%08lX\n",offset,data,mem_mask,cpu_get_reg(SH2_PC));  */
-/*#endif*/
 
-  ea = (SATURN_SOUND_RAM_BASE / 4) + offset;
-  mem[ea] = (mem[ea] & mem_mask) | data;
+  UINT16 *sb_temp = &sound_base[(offset<<1)];
+#if DISP_MEM
+  logerror("soundram_w offset=%08lX data=%08lX mem_mask=%08lX PC=%08lX\n",offset,data,mem_mask,cpu_get_reg(SH2_PC));
+#endif
+
+  *sb_temp = (*sb_temp & (mem_mask >> 16)) | (data >> 16);
+  *sb_temp++;
+  *sb_temp = (*sb_temp & mem_mask) | data;
 }
 
 READ32_HANDLER( saturn_vdp1_ram_r )
 {
-  offs_t ea;
+  /*offs_t ea;*/
 
 #if DISP_MEM
   logerror("vdp1ram_r offset=%08lX mem_mask=%08lX\n",offset,mem_mask);
 #endif
 
-  ea = (SATURN_VDP1_RAM_BASE / 4) + offset;
-  return mem[ea] & (~mem_mask);
+  /*ea = (SATURN_VDP1_RAM_BASE / 4) + offset;*/
+  return vdp1_ram_base[offset] & (~mem_mask);
 }
 
 WRITE32_HANDLER( saturn_vdp1_ram_w )
 {
-  offs_t ea;
 
 #if DISP_MEM
   logerror("vdp1ram_w offset=%08lX data=%08lX mem_mask=%08lX\n",offset,data,mem_mask);
 #endif
 
-  ea = (SATURN_VDP1_RAM_BASE / 4) + offset;
-  mem[ea] = (mem[ea] & mem_mask) | data;
+  vdp1_ram_base[offset] = (vdp1_ram_base[offset] & mem_mask) | data;
 }
 
 READ32_HANDLER( saturn_vdp2_ram_r )
 {
-  offs_t ea;
+  /*offs_t ea;*/
 
 #if DISP_MEM
   logerror("vdp2ram_r offset=%08lX mem_mask=%08lX PC=%08lX\n",offset,mem_mask,cpu_get_reg(SH2_PC));
 #endif
 
-  ea = (SATURN_VDP2_RAM_BASE / 4) + offset;
-  return mem[ea] & (~mem_mask);
+  /*ea = (SATURN_VDP2_RAM_BASE / 4) + offset;*/
+  return vdp2_ram_base[offset] & (~mem_mask);
 }
 
 WRITE32_HANDLER( saturn_vdp2_ram_w )
 {
-  offs_t ea;
+  /* offs_t ea;*/
 
 #if DISP_MEM
   logerror("vdp2ram_w offset=%08lX data=%08lX mem_mask=%08lX PC=%08lX\n",offset,data,mem_mask,cpu_get_reg(SH2_PC));
 #endif
 
-  ea = (SATURN_VDP2_RAM_BASE / 4) + offset;
-  mem[ea] = (mem[ea] & mem_mask) | data;
+  /*ea = (SATURN_VDP2_RAM_BASE / 4) + offset;*/
+  vdp2_ram_base[offset] = (vdp2_ram_base[offset] & mem_mask) | data;
 }
 
 READ32_HANDLER( saturn_fb1_ram_r )
 {
-  offs_t ea;
+  /* offs_t ea;*/
 
 #if DISP_MEM
   logerror("fb1_r offset=%08lX mem_mask=%08lX\n",offset,mem_mask);
 #endif
 
-  ea = (SATURN_FB1_RAM_BASE / 4) + offset;
-  return mem[ea] & (~mem_mask);
+  /* ea = (SATURN_FB1_RAM_BASE / 4) + offset;*/
+  return fb1_ram_base[offset] & (~mem_mask);
 }
 
 WRITE32_HANDLER( saturn_fb1_ram_w )
 {
-  offs_t ea;
-
-#if DISP_MEM
   logerror("fb1_w offset=%08lX data=%08lX mem_mask=%08lX\n",offset,data,mem_mask);
-#endif
-
-  ea = (SATURN_FB1_RAM_BASE / 4) + offset;
-  mem[ea] = (mem[ea] & mem_mask) | data;
+  fb1_ram_base[offset] = (fb1_ram_base[offset] & mem_mask) | data;
 }
 
 /* FB2 not mapped directly */
@@ -321,9 +280,7 @@ READ32_HANDLER( saturn_fb2_ram_r )
 {
   offs_t ea;
 
-#if DISP_MEM
   logerror("fb2_r offset=%08lX mem_mask=%08lX\n",offset,mem_mask);
-#endif
 
   ea = (SATURN_FB2_RAM_BASE / 4) + offset;
   return mem[ea] & (~mem_mask);
@@ -334,9 +291,7 @@ WRITE32_HANDLER( saturn_fb2_ram_w )
 {
   offs_t ea;
 
-#if DISP_MEM
   logerror("fb2_w offset=%08lX data=%08lX mem_mask=%08lX\n",offset,data,mem_mask);
-#endif
 
   ea = (SATURN_FB2_RAM_BASE / 4) + offset;
   mem[ea] = (mem[ea] & mem_mask) | data;
@@ -346,50 +301,42 @@ WRITE32_HANDLER( saturn_fb2_ram_w )
 READ32_HANDLER( saturn_color_ram_r )
 
 {
-  offs_t ea;
-
-#if DISP_MEM
   logerror("colorram_r offset=%08lX mem_mask=%08lX PC=%08lX\n",offset,mem_mask,cpu_get_reg(SH2_PC));
-#endif
 
-  ea = (SATURN_COLOR_RAM_BASE / 4) + offset;
-  return mem[ea] & (~mem_mask);
+  return color_ram_base[offset] & (~mem_mask);
 }
 
 WRITE32_HANDLER( saturn_color_ram_w )
 {
-  offs_t ea;
+  /* offs_t ea;*/
 
 #if DISP_MEM
   logerror("colorram_w offset=%08lX data=%08lX mem_mask=%08lX PC=%08lX\n",offset,data,mem_mask,cpu_get_reg(SH2_PC));
 #endif
 
-  ea = (SATURN_COLOR_RAM_BASE / 4) + offset;
-  mem[ea] = (mem[ea] & mem_mask) | data;
+  /*ea = (SATURN_COLOR_RAM_BASE / 4) + offset;*/
+  color_ram_base[offset] = (color_ram_base[offset] & mem_mask) | data;
 }
 
 READ32_HANDLER( saturn_back_ram_r )
 {
-  offs_t ea;
 
 #if DISP_MEM
   logerror("backram_r offset=%08lX mem_mask=%08lX\n",offset,mem_mask);
 #endif
-
-  ea = (SATURN_BACK_RAM_BASE / 4) + offset;
-  return mem[ea] & (~mem_mask);
+if (offset >= 0x4000) offset -= 0x4000; /* do the shadow RAM offsets */
+  return back_ram_base[offset] & (~mem_mask);
 }
 
 WRITE32_HANDLER( saturn_back_ram_w )
 {
-  offs_t ea;
 
 #if DISP_MEM
   logerror("backram_w offset=%08lX data=%08lX mem_mask=%08lX\n",offset,data,mem_mask);
 #endif
 
-  ea = (SATURN_BACK_RAM_BASE / 4) + offset;
-  mem[ea] = (mem[ea] & mem_mask) | data;
+if (offset >= 0x4000) offset -= 0x4000; /* do the shadow RAM offsets */
+back_ram_base[offset] = (back_ram_base[offset] & mem_mask) | data;
 }
 
 /****************************************************************
@@ -471,6 +418,15 @@ void smpc_execcomm(int commcode)
 	  smpc_state.smpc_regs[OREG(15)] = 0;
 	  logerror("smpc - Int Back (0x10)\n");
 	  break;
+	case 0x2:
+	  printf /*logerror*/ ("smpc - Slave SH-2 ON (0x2)\n");
+	  break;
+	case 0x0:
+	  printf /*logerror*/ ("smpc - Master SH-2 ON (0x0)\n");
+	  break;
+	case 0x3:
+	  printf /*logerror*/ ("smpc - Slave SH-2 OFF (0x3)\n");
+	  break;
 	case 0x7 :
 	  printf /*logerror*/ ("smpc - Sound OFF (0x7)\n");
 	  cpu_set_halt_line(2, ASSERT_LINE);
@@ -478,18 +434,14 @@ void smpc_execcomm(int commcode)
 	case 0x6 :
 	  printf /*logerror*/("smpc - Sound ON (0x6)\n");
 	  cpu_set_halt_line(2, ASSERT_LINE);
-	  /* here's the largest hack you will ever see.. memcopy what the BIOS put into sound RAM
-	  into what the broken ASM core wants to see for a pointer. Won't really work, but let's
-	  us run something for now. */
-	  memcpy(memory_region(REGION_CPU3),&mem[SATURN_SOUND_RAM_BASE/4],0x80000);
 	  cpu_set_reset_line(2,PULSE_LINE);
 	  cpu_set_halt_line(2, CLEAR_LINE);
 	  break;
 	case 0xD :
 	  logerror("smpc - Reset System (0xD)\n");
+	  cpu_set_halt_line(2, ASSERT_LINE);
 	  cpu_set_reset_line(0,PULSE_LINE);
 	  cpu_set_reset_line(1,PULSE_LINE);
-	  /* cpu_set_reset_line(2,PULSE_LINE); */
 	  break;
 	}
       smpc_state.smpc_regs[OREG(31)] = commcode;
@@ -812,8 +764,7 @@ WRITE32_HANDLER( saturn_scu_w )   /* SCU, DMA/DSP */
 {
   logerror("scu_w %s - data = %08lX - PC=%08lX\n",scu_regnames[offset],data,cpu_get_reg(SH2_PC));
   scu_regs[offset] = (scu_regs[offset] & mem_mask) | data;
-  if(offset == 0x28)
-    scu_set_imask();
+  if (offset == 0x28) scu_set_imask();
 }
 
 static const char *cd_regnames[0xA] = {"X0",
@@ -1014,11 +965,10 @@ void reset_vdp1(void)
   memset(vdp1_state.vdp1_regs,0,0xC<<1);
 }
 
-void cmd0(int comm, unsigned short *fb)
+void cmd0(UINT32 comm, unsigned short *fb)
 
 {
   UINT32 *vram;
-  UINT32 temp;
   short x,y;
   UINT32 color_mode;
   UINT32 color_bank;
@@ -1026,16 +976,16 @@ void cmd0(int comm, unsigned short *fb)
   UINT32 width,height;
   int loopx,loopy;
 
-  vram = &mem[SATURN_VDP1_RAM_BASE/4];
+  vram = vdp1_ram_base;
+  comm = comm * 8;
 
-  color_mode = (vram[comm*8 + 1] >> 19) & 0x7; /* Pull out parameter infomation */
-  color_bank = (vram[comm*8 + 1] & 0xFFFF);
-  char_addr  = (vram[comm*8 + 2] >> 16) * 8;
-  width      = ((vram[comm*8 + 2] & 0xFFFF) >> 8) * 8;
-  height     = ((vram[comm*8 + 2] & 0xFFFF) & 0xFF);
-  temp       = vram[comm*8 + 3];
-  x = (short) (temp >> 16); /* Cast as short to preserve sign */
-  y = (short) (temp & 0xFFFF);
+  color_mode = (vram[comm + 1] >> 19) & 0x7; /* Pull out parameter infomation */
+  color_bank = (vram[comm + 1] & 0xFFFF);
+  char_addr  = (vram[comm + 2] >> 16) * 8;
+  width      = ((vram[comm + 2] & 0xFFFF) >> 8) * 8;
+  height     = ((vram[comm + 2] & 0xFFFF) & 0xFF);
+  x = (short) (vram[comm + 3] >> 16); /* Cast as short to preserve sign */
+  y = (short) (vram[comm + 3] & 0xFFFF);
 
   logerror("Colour Mode  = %d\n",color_mode);
   logerror("Colour Bank  = %08lX\n",color_bank);
@@ -1044,29 +994,30 @@ void cmd0(int comm, unsigned short *fb)
   logerror("X,Y = %d,%d\n",x,y);
 
   vram = vram + (char_addr / 4);
+  x = x + vdp1_state.localx;
+  y = y + vdp1_state.localy;
 
-  if(color_mode == 5)
-    {
-      for(loopy = 0;loopy < height;loopy++)
-	{
-	  for(loopx = 0;loopx < width;loopx+=2)
-	    {
-	      UINT32 colour;
+  height += y;
+  width += x;
 
-	      colour = *vram++;
-	      if(colour >> 16)
-		{
-		  plot_pixel(saturn_bitmap[video_w],loopx+vdp1_state.localx+x,
-			     loopy+vdp1_state.localy+y,Machine->pens[(colour>>16) & 0x7FFF]);
-		}
-	      if(colour & 0xFFFF)
-		{
-		  plot_pixel(saturn_bitmap[video_w],loopx+vdp1_state.localx+x+1,
-			     loopy+vdp1_state.localy+y,Machine->pens[colour&0x7FFF]);
-		}
-	    }
-	}
-    }
+  if (color_mode == 5) {
+      for(loopy = y;loopy < height;loopy++)	{
+    	  for(loopx = x;loopx < width;loopx+=2) {
+
+	        UINT32 colour;
+
+	        colour = *vram++;
+	        if(colour >> 16) {
+ 		   	  plot_pixel(saturn_bitmap[video_w],loopx,
+			     loopy,Machine->pens[(colour>>16) & 0x7FFF]);
+		    }
+	        if(colour & 0xFFFF) {
+		      plot_pixel(saturn_bitmap[video_w],loopx+1,
+			     loopy,Machine->pens[colour&0x7FFF]);
+		    }
+	     }
+	  }
+  }
 }
 
 void execute_vdp1(void)
@@ -1081,7 +1032,7 @@ void execute_vdp1(void)
 
   logerror("vdp1 execute command\n");
 
-  base = &mem[SATURN_VDP1_RAM_BASE/4];
+  base = vdp1_ram_base;
   command = 0;
 
   while(!(*base & 0x80000000))
@@ -1374,7 +1325,7 @@ void render_plane(unsigned char *buffer,int pal,int trans)
   UINT32 *memt;
 
   pal = ((pal * 0x200) / 4);
-  memt = &mem[SATURN_COLOR_RAM_BASE/4 + pal];
+  memt = &color_ram_base[pal]; /* &mem[SATURN_COLOR_RAM_BASE/4 + pal]; */
 
   if(!trans)
     {
@@ -1440,7 +1391,7 @@ void draw_nbg3(void)
 
   logerror("NBG3 Draw - PA=%08lX PB=%08lX PC=%08lX PD=%08lX\n",planea_addr,planeb_addr,planec_addr,planed_addr);
 
-  pattern = &mem[(SATURN_VDP2_RAM_BASE/4) + (planea_addr/4)];
+  pattern = &vdp2_ram_base[planea_addr/4];
 
   for(loopy = 0;loopy < 64;loopy++)
     {
@@ -1453,7 +1404,7 @@ void draw_nbg3(void)
 		if (pathi < pat_no) { pathi = pat_no; /*printf("new Pattern  Hi bound: [%d] PlaneA,C=%08x %08x Regs %x %x\n",pat_no,planea_addr,planec_addr,(UINT32)regs[0x4c>>1],(UINT32)regs[0x3c>>1]);*/}
 
 	  if (pat_no+1 < 4000) {
-		  draw_1s8(&mem[(SATURN_VDP2_RAM_BASE/4) + (pat_no*8)],&frame[loopy*4096 + loopx*8],512);
+		  draw_1s8(&vdp2_ram_base[pat_no*8],&frame[loopy*4096 + loopx*8],512);
 	   } else {
 		   printf("bye bye\n");
 	   }
@@ -1494,7 +1445,7 @@ void draw_nbg2(void)
 
   logerror("NBG2 Draw - PA=%08lX PB=%08lX PC=%08lX PD=%08lX\n",planea_addr,planeb_addr,planec_addr,planed_addr);
 
-  pattern = &mem[(SATURN_VDP2_RAM_BASE/4) + (planea_addr/4)];
+  pattern = &vdp2_ram_base[planea_addr/4];
 
   for(loopy = 0;loopy < 64;loopy++)
     {
@@ -1503,7 +1454,7 @@ void draw_nbg2(void)
 	  UINT32 pat_no;
 
 	  pat_no = *pattern++;
-	  draw_1s8(&mem[(SATURN_VDP2_RAM_BASE/4) + (pat_no*8)],&frame[loopy*4096 + loopx*8],512);
+	  draw_1s8(&vdp2_ram_base[pat_no*8],&frame[loopy*4096 + loopx*8],512);
 	}
     }
   render_plane(frame,2,1);
@@ -1603,10 +1554,10 @@ void dump_vdp2(void)
     {
       for(loop = 0;loop < 0x20000;loop++)
 	{
-	  putc((mem[loop + (SATURN_VDP1_RAM_BASE/4)] >> 24) & 0xFF,fp);
-	  putc((mem[loop + (SATURN_VDP1_RAM_BASE/4)] >> 16) & 0xFF,fp);
-	  putc((mem[loop + (SATURN_VDP1_RAM_BASE/4)] >> 8) & 0xFF,fp);
-	  putc(mem[loop + (SATURN_VDP1_RAM_BASE/4)] & 0xFF,fp);
+	  putc((vdp1_ram_base[loop] >> 24) & 0xFF,fp);
+	  putc((vdp1_ram_base[loop] >> 16) & 0xFF,fp);
+	  putc((vdp1_ram_base[loop] >> 8)  & 0xFF,fp);
+	  putc((vdp1_ram_base[loop]     )  & 0xFF,fp);
 	}
       fclose(fp);
     }
@@ -1624,11 +1575,11 @@ void draw_pal(void)
 	col = loopy * 32 + loopx;
 	if(col & 1)
 	  {
-	    col = mem[(SATURN_COLOR_RAM_BASE/4) + (col/2)] & 0x7FFF;
+	    col = color_ram_base[col/2] & 0x7FFF;
 	  }
 	else
 	  {
-	    col = (mem[(SATURN_COLOR_RAM_BASE/4) + (col/2)] >> 16) & 0x7FFF;
+	    col = (color_ram_base[col/2] >> 16) & 0x7FFF;
 	  }
 
 	logerror("pal %08lX = %08lX\n",loopy*32 + loopx,col);
@@ -1710,12 +1661,14 @@ WRITE32_HANDLER( saturn_vdp2_w )  /* VDP2 registers */
 READ16_HANDLER( dsp_68k_r )
 
 {
+	logerror("16 bit DSP READ offset %08x mask %08x\n",(UINT32)offset,(UINT32)mem_mask);
   return 0xdeed;
 }
 
 WRITE16_HANDLER( dsp_68k_w )
 
 {
+	logerror("16 bit DSP WRITE offset %08x mask %08x data %08x\n",(UINT32)offset,(UINT32)mem_mask,(UINT32)data);
 }
 
 /********************************************************
@@ -1727,17 +1680,19 @@ void saturn_init_machine(void)
   int i;
   UINT32 *mem2;
   int mem_length;
-  UINT16 *base;
 
   mem = (UINT32 *) memory_region(REGION_CPU1);
   mem2 = (UINT32 *) memory_region(REGION_CPU2);
-  cpu_set_halt_line(1, ASSERT_LINE);
-  /* cpu_set_halt_line(2, ASSERT_LINE);*/
+  fb1_ram_base = (UINT32 *) &mem[SATURN_FB1_RAM_BASE/4];
+  workl_ram_base = (UINT32 *) &mem[SATURN_WORKL_RAM_BASE/4];
+  vdp1_ram_base = (UINT32 *) &mem[SATURN_VDP1_RAM_BASE/4];
+  color_ram_base = (UINT32 *) &mem[SATURN_COLOR_RAM_BASE/4];
+  workh_ram_base = (UINT32 *) &mem[SATURN_WORKH_RAM_BASE/4];
+  vdp2_ram_base = (UINT32 *) &mem[SATURN_VDP2_RAM_BASE/4];
+  back_ram_base = (UINT32 *) &mem[SATURN_BACK_RAM_BASE/4];
 
-  for (i = 0; i < (SATURN_ROM_SIZE/4); i++)
-    {
-      mem2[i] = mem[i]; /* Copy bios rom into second cpu area */
-    }
+ /* Copy bios rom into second cpu area */
+ memcpy(mem2,mem,SATURN_ROM_SIZE);
 
   mem_length = (memory_region_length(REGION_CPU1) - SATURN_ROM_SIZE) / 4;
 
@@ -1746,21 +1701,15 @@ void saturn_init_machine(void)
       mem[i] = 0; /* Clear RAM */
     }
 
-  base = (UINT16 *) memory_region(REGION_CPU3); /* Setup reset vector for 68k stupidity */
+  sound_base = (UINT16 *) memory_region(REGION_CPU3); /*
+  Setup reset vector
+  for 68k stupidity */
 
-  *(base + 0) = 0;
-  *(base + 1) = 0x1000;
-  *(base + 2) = 6;
-  *(base + 3) = 4;
-  *(base + 0x30000+2) = 0x60fe;
-
-  base = (UINT16 *) &mem[SATURN_SOUND_RAM_BASE/4]; /* Setup loop in real sound ram */
-
-  *(base + 0) = 0;
-  *(base + 1) = 0x1000;
-  *(base + 2) = 6;
-  *(base + 3) = 4;
-  *(base + 0x30000+2) = 0x60fe;
+  *(sound_base + 0) = 0;
+  *(sound_base + 1) = 0x1000;
+  *(sound_base + 2) = 0;
+  *(sound_base + 3) = 8;
+  *(sound_base + 4) = 0x60fe;
 
   /* Install memory handlers. Must be done dynamically to avoid allocating too much ram */
 
@@ -1772,11 +1721,11 @@ void saturn_init_machine(void)
       install_mem_read32_handler (i, 0x00100000, 0x0010007f, saturn_smpc_r );
       install_mem_write32_handler(i, 0x00100000, 0x0010007f, saturn_smpc_w );
 
-      install_mem_read32_handler (i, 0x00180000, 0x0018ffff, saturn_back_ram_r );
-      install_mem_write32_handler(i, 0x00180000, 0x0018ffff, saturn_back_ram_w );
+      install_mem_read32_handler (i, 0x00180000, 0x0019ffff, saturn_back_ram_r );
+      install_mem_write32_handler(i, 0x00180000, 0x0019ffff, saturn_back_ram_w );
 
-      install_mem_read32_handler (i, 0x00200000, 0x002fffff, saturn_workl_ram_r );
-      install_mem_write32_handler(i, 0x00200000, 0x002fffff, saturn_workl_ram_w );
+      install_mem_read32_handler (i, 0x00200000, 0x002fffff, MRA32_BANK1 /*saturn_workl_ram_r*/ );
+      install_mem_write32_handler(i, 0x00200000, 0x002fffff, MWA32_BANK1 /*saturn_workl_ram_w*/ );
 
       install_mem_read32_handler (i, 0x01000000, 0x01000003, saturn_minit_r );
       install_mem_write32_handler(i, 0x01000000, 0x01000003, saturn_minit_w );
@@ -1834,15 +1783,15 @@ void saturn_init_machine(void)
   install_mem_read16_handler(2, 0x100000, 0x100ee3, dsp_68k_r);
   install_mem_write16_handler(2, 0x100000, 0x100ee3, dsp_68k_w);
 
-  cpu_setbank(1, (UINT8 *) &mem[SATURN_WORKL_RAM_BASE/4]); /* Setup banking (for???) */
-  cpu_setbank(2, (UINT8 *) &mem[SATURN_WORKH_RAM_BASE/4]);
-  cpu_setbank(3, (UINT8 *) &mem[SATURN_SOUND_RAM_BASE/4]);
-  cpu_setbank(4, (UINT8 *) &mem[SATURN_VDP1_RAM_BASE/4]);
+  cpu_setbank(1, (UINT8 *) workl_ram_base); /* Setup banking (for???) */
+  cpu_setbank(2, (UINT8 *) workh_ram_base);
+  cpu_setbank(3, (UINT8 *) sound_base);
+/*  cpu_setbank(4, (UINT8 *) &mem[SATURN_VDP1_RAM_BASE/4]);
   cpu_setbank(5, (UINT8 *) &mem[SATURN_VDP2_RAM_BASE/4]);
   cpu_setbank(6, (UINT8 *) &mem[SATURN_FB1_RAM_BASE/4]);
   cpu_setbank(7, (UINT8 *) &mem[SATURN_FB2_RAM_BASE/4]);
   cpu_setbank(8, (UINT8 *) &mem[SATURN_COLOR_RAM_BASE/4]);
-  cpu_setbank(9, (UINT8 *) &mem[SATURN_BACK_RAM_BASE/4]);
+  cpu_setbank(9, (UINT8 *) &mem[SATURN_BACK_RAM_BASE/4]);*/
 
 }
 
@@ -1962,7 +1911,7 @@ static struct MachineDriver machine_driver_saturn =
     },
     {
       CPU_M68000 | CPU_AUDIO_CPU,               /* Sound CPU */
-      12000000 ,	        /* 12 Mhz..ish (MC68000-12)*/
+      11300000,	        /* 11.3mhz (MC68000-12)*/
       readmem_68k,writemem_68k,
       0,0,                      /* zeros are ioport read/write */
       ignore_interrupt,1
@@ -1992,7 +1941,7 @@ static struct MachineDriver machine_driver_saturn =
 };
 
 ROM_START(saturn)
-     ROM_REGION(0x00491000, REGION_CPU1,0)
+     ROM_REGION(0x00421000, REGION_CPU1,0)
      /*ROM_LOAD("sega_100.bin", 0x00000000, 0x00080000, 0x2ABA43C2) */
      ROM_LOAD("sega_101.bin", 0x00000000, 0x00080000, 0x224b752c)
      /*ROM_LOAD("sega_eur.bin", 0x00000000, 0x00080000, 0x4AFCF0FA) */

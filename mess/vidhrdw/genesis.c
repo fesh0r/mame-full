@@ -617,6 +617,7 @@ WRITE16_HANDLER ( genesis_vdp_ctrl_w )
 						vdp_h_scroll_addr	= (char *)(&vdp_vram[0]+(vdp_data<<10));
 						break;
 					case 14: /* nothing */
+						logerror("$c10001c register usage @ PC=%08x\n",(UINT32)cpu_get_pc());
 						break;
 					case 15: /* autoincrement data */
 						vdp_auto_increment	= vdp_data;

@@ -619,16 +619,3 @@ WRITE16_HANDLER(genesis_ctrl_w)
 		break;
 	}
 }
-
-#if 0
-READ_HANDLER(cartridge_ram_r)
-{
-/*	logerror("cartridge ram read.. %x\n", offset); */
-	return cartridge_ram[offset];
-}
-WRITE_HANDLER(cartridge_ram_w)
-{
-/*	logerror("cartridge ram write.. %x to %x\n", data, offset); */
-	cartridge_ram[offset] = data;
-}
-#endif
