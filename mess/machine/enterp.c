@@ -13,6 +13,7 @@
 #include "includes/enterp.h"
 #include "includes/basicdsk.h"
 #include "includes/wd179x.h"
+#include "sndhrdw/dave.h"
 
 extern unsigned char *Enterprise_RAM;
 
@@ -43,6 +44,8 @@ void enterprise_shutdown_machine(void)
 		free(Enterprise_RAM);
 
 	Enterprise_RAM = NULL;
+
+	Dave_Finish();
 }
 
 int enterprise_floppy_init(int id)
