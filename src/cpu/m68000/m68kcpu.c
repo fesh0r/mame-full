@@ -717,7 +717,7 @@ void m68k_set_irq(unsigned int int_level)
 	/* A transition from < 7 to 7 always interrupts (NMI) */
 	/* Note: Level 7 can also level trigger like a normal IRQ */
 	if(old_level != 0x0700 && CPU_INT_LEVEL == 0x0700)
-		m68ki_service_interrupt(7); /* Edge triggered level 7 (NMI) */
+		m68ki_exception_interrupt(7); /* Edge triggered level 7 (NMI) */
 	else
 		m68ki_check_interrupts(); /* Level triggered (IRQ) */
 }

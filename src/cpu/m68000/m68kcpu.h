@@ -28,7 +28,10 @@
 
 #include "m68k.h"
 #include <limits.h>
+
+#if M68K_EMULATE_ADDRESS_ERROR
 #include <setjmp.h>
+#endif /* M68K_EMULATE_ADDRESS_ERROR */
 
 /* ======================================================================== */
 /* ==================== ARCHITECTURE-DEPENDANT DEFINES ==================== */
@@ -159,7 +162,7 @@
 #define STOP_LEVEL_HALT 2
 
 #ifndef NULL
-#define NULL (void *)0		/* HJB: fixed */
+#define NULL ((void*)0)
 #endif
 
 /* ======================================================================== */
@@ -221,11 +224,18 @@
 #define MASK_OUT_ABOVE_2(A)  ((A) & 3)
 #define MASK_OUT_ABOVE_8(A)  ((A) & 0xff)
 #define MASK_OUT_ABOVE_16(A) ((A) & 0xffff)
-#define MASK_OUT_ABOVE_32(A) ((A) & 0xffffffff)
 #define MASK_OUT_BELOW_2(A)  ((A) & ~3)
 #define MASK_OUT_BELOW_8(A)  ((A) & ~0xff)
 #define MASK_OUT_BELOW_16(A) ((A) & ~0xffff)
-#define MASK_OUT_BELOW_32(A) ((A) & ~0xffffffff)
+
+/* No need to mask if we are 32 bit */
+#if M68K_INT_GT_32BIT || M68K_USE_64_BIT
+	#define MASK_OUT_ABOVE_32(A) ((A) & 0xffffffff)
+	#define MASK_OUT_BELOW_32(A) ((A) & ~0xffffffff)
+#else
+	#define MASK_OUT_ABOVE_32(A) (A)
+	#define MASK_OUT_BELOW_32(A) 0
+#endif /* M68K_INT_GT_32BIT || M68K_USE_64_BIT */
 
 /* Simulate address lines of 68k family */
 #define ADDRESS_68K(A) ((A)&CPU_ADDRESS_MASK)
@@ -236,7 +246,7 @@
 #define LSR(A, C) ((A) >> (C))
 
 /* Some > 32-bit optimizations */
-#if N68K_INT_GT_32BIT
+#if M68K_INT_GT_32BIT
 	/* Shift left and right */
 	#define LSR_32(A, C) ((A) >> (C))
 	#define LSL_32(A, C) ((A) << (C))
@@ -246,7 +256,7 @@
 	 */
 	#define LSR_32(A, C) ((C) < 32 ? (A) >> (C) : 0)
 	#define LSL_32(A, C) ((C) < 32 ? (A) << (C) : 0)
-#endif /* N68K_INT_GT_32BIT */
+#endif /* M68K_INT_GT_32BIT */
 
 #if M68K_USE_64_BIT
 	#define LSL_32_64(A, C) ((A) << (C))
@@ -882,18 +892,31 @@ INLINE void m68ki_set_sr_noint(uint value);          /* set the status register 
 
 /* Exception processing */
 INLINE uint m68ki_init_exception(void);              /* Initial exception processing */
+
 INLINE void m68ki_stack_frame_3word(uint pc, uint sr); /* Stack various frame types */
+INLINE void m68ki_stack_frame_buserr(uint pc, uint sr, uint address, uint write, uint instruction, uint fc);
+
 INLINE void m68ki_stack_frame_0000(uint pc, uint sr, uint vector);
 INLINE void m68ki_stack_frame_0001(uint pc, uint sr, uint vector);
 INLINE void m68ki_stack_frame_0010(uint sr, uint vector);
+INLINE void m68ki_stack_frame_1000(uint pc, uint sr, uint vector);
+INLINE void m68ki_stack_frame_1010(uint sr, uint vector, uint pc);
+INLINE void m68ki_stack_frame_1011(uint sr, uint vector, uint pc);
 
-INLINE void m68ki_trap(uint vector);                 /* process a trap */
-INLINE void m68ki_trapN(uint vector);                /* process a trap#n exception */
-INLINE void m68ki_exception(uint vector);            /* process an exception */
-
-INLINE void m68ki_service_interrupt(uint int_level); /* service a pending interrupt */
+INLINE void m68ki_exception_trap(uint vector);
+INLINE void m68ki_exception_trapN(uint vector);
+INLINE void m68ki_exception_trace(void);
+INLINE void m68ki_exception_privilege_violation(void);
+INLINE void m68ki_exception_1010(void);
+INLINE void m68ki_exception_1111(void);
+INLINE void m68ki_exception_illegal(void);
+INLINE void m68ki_exception_format_error(void);
+INLINE void m68ki_exception_address_error(void);
+INLINE void m68ki_exception_interrupt(uint int_level);
 INLINE void m68ki_check_interrupts(void);            /* ASG: check for interrupts */
 
+/* quick disassembly (used for logging) */
+char* m68ki_disassemble_quick(unsigned int pc, unsigned int cpu_type);
 
 
 /* ======================================================================== */
@@ -1321,7 +1344,7 @@ INLINE void m68ki_set_ccr(uint value)
 	FLAG_C = BIT_0(value)  << 8;
 }
 
-/* Set the status register */
+/* Set the status register but don't check for interrupts */
 INLINE void m68ki_set_sr_noint(uint value)
 {
 	/* Mask out the "unimplemented" bits */
@@ -1335,6 +1358,7 @@ INLINE void m68ki_set_sr_noint(uint value)
 	m68ki_set_sm_flag((value >> 11) & 6);
 }
 
+/* Set the status register and check for interrupts */
 INLINE void m68ki_set_sr(uint value)
 {
 	m68ki_set_sr_noint(value);
@@ -1589,7 +1613,7 @@ INLINE void m68ki_stack_frame_1011(uint sr, uint vector, uint pc)
 /* Used for Group 2 exceptions.
  * These stack a type 2 frame on the 020.
  */
-INLINE void m68ki_trap(uint vector)
+INLINE void m68ki_exception_trap(uint vector)
 {
 	uint sr = m68ki_init_exception();
 
@@ -1603,8 +1627,8 @@ INLINE void m68ki_trap(uint vector)
 			break;
 		case CPU_TYPE_EC020:
 		case CPU_TYPE_020:
+		default:
 			m68ki_stack_frame_0010(sr, vector);
-			break;
 	}
 
 	m68ki_jump_vector(vector);
@@ -1614,14 +1638,21 @@ INLINE void m68ki_trap(uint vector)
 }
 
 /* Trap#n stacks a 0 frame but behaves like group2 otherwise */
-INLINE void m68ki_trapN(uint vector)
+INLINE void m68ki_exception_trapN(uint vector)
 {
 	uint sr = m68ki_init_exception();
 
-	if(CPU_TYPE_IS_000(CPU_TYPE))
-		m68ki_stack_frame_3word(REG_PC, sr);
-	else
-		m68ki_stack_frame_0000(REG_PC, sr, vector);
+	switch(CPU_TYPE)
+	{
+		case CPU_TYPE_000:
+			m68ki_stack_frame_3word(REG_PC, sr);
+			break;
+		case CPU_TYPE_010:
+		case CPU_TYPE_EC020:
+		case CPU_TYPE_020:
+		default:
+			m68ki_stack_frame_0000(REG_PC, sr, vector);
+	}
 
 	m68ki_jump_vector(vector);
 
@@ -1629,83 +1660,178 @@ INLINE void m68ki_trapN(uint vector)
 	USE_CYCLES(CYC_EXCEPTION[vector]);
 }
 
-/* This one is for instruction exceptions like
- * illegal instruction and privilege violation.
- */
-INLINE void m68ki_exception(uint vector)
-{
-	uint sr = m68ki_init_exception();
-
-	if(CPU_TYPE_IS_000(CPU_TYPE))
-		m68ki_stack_frame_3word(REG_PPC, sr);
-	else
-		m68ki_stack_frame_0000(REG_PPC, sr, vector);
-
-	m68ki_jump_vector(vector);
-
-	/* Use up some clock cycles and undo the instruction's cycles */
-	USE_CYCLES(CYC_EXCEPTION[vector] - CYC_INSTRUCTION[REG_IR]);
-}
-
-/* Special exception for Trace mode */
+/* Exception for trace mode */
 INLINE void m68ki_exception_trace(void)
 {
 	uint sr = m68ki_init_exception();
 
-	if(CPU_TYPE_IS_000(CPU_TYPE))
-		m68ki_stack_frame_3word(REG_PC, sr);
-	else
-		m68ki_stack_frame_0000(REG_PC, sr, EXCEPTION_TRACE);
+	switch(CPU_TYPE)
+	{
+		case CPU_TYPE_000:
+			m68ki_stack_frame_3word(REG_PC, sr);
+			break;
+		case CPU_TYPE_010:
+			m68ki_stack_frame_0000(REG_PC, sr, EXCEPTION_TRACE);
+			break;
+		case CPU_TYPE_EC020:
+		case CPU_TYPE_020:
+		default:
+			m68ki_stack_frame_0010(sr, EXCEPTION_TRACE);
+	}
 
 	m68ki_jump_vector(EXCEPTION_TRACE);
+
+	/* Trace nullifies a STOP instruction */
+	CPU_STOPPED &= ~STOP_LEVEL_STOP;
 
 	/* Use up some clock cycles */
 	USE_CYCLES(CYC_EXCEPTION[EXCEPTION_TRACE]);
 }
 
+/* Exception for privilege violation */
+INLINE void m68ki_exception_privilege_violation(void)
+{
+	uint sr = m68ki_init_exception();
+
+	switch(CPU_TYPE)
+	{
+		case CPU_TYPE_000:
+			m68ki_stack_frame_3word(REG_PC, sr);
+			break;
+		case CPU_TYPE_010:
+		case CPU_TYPE_EC020:
+		case CPU_TYPE_020:
+		default:
+			m68ki_stack_frame_0000(REG_PC, sr, EXCEPTION_PRIVILEGE_VIOLATION);
+	}
+
+	m68ki_jump_vector(EXCEPTION_PRIVILEGE_VIOLATION);
+
+	/* Use up some clock cycles and undo the instruction's cycles */
+	USE_CYCLES(CYC_EXCEPTION[EXCEPTION_PRIVILEGE_VIOLATION] - CYC_INSTRUCTION[REG_IR]);
+}
+
 /* Exception for A-Line instructions */
 INLINE void m68ki_exception_1010(void)
 {
+	uint sr;
 #if M68K_LOG_1010_1111 == OPT_ON
 	M68K_DO_LOG_EMU((M68K_LOG_FILEHANDLE "%s at %08x: called 1010 instruction %04x (%s)\n",
 					 m68ki_cpu_names[CPU_TYPE], ADDRESS_68K(REG_PPC), REG_IR,
-					 m68k_disassemble_quick(ADDRESS_68K(REG_PPC))));
+					 m68ki_disassemble_quick(ADDRESS_68K(REG_PPC))));
 #endif
 
-	m68ki_exception(EXCEPTION_1010);
+	sr = m68ki_init_exception();
+
+	switch(CPU_TYPE)
+	{
+		case CPU_TYPE_000:
+			m68ki_stack_frame_3word(REG_PC, sr);
+			break;
+		case CPU_TYPE_010:
+		case CPU_TYPE_EC020:
+		case CPU_TYPE_020:
+		default:
+			m68ki_stack_frame_0000(REG_PC, sr, EXCEPTION_1010);
+	}
+
+	m68ki_jump_vector(EXCEPTION_1010);
+
+	/* Use up some clock cycles and undo the instruction's cycles */
+	USE_CYCLES(CYC_EXCEPTION[EXCEPTION_1010] - CYC_INSTRUCTION[REG_IR]);
 }
 
 /* Exception for F-Line instructions */
 INLINE void m68ki_exception_1111(void)
 {
+	uint sr;
+
 #if M68K_LOG_1010_1111 == OPT_ON
 	M68K_DO_LOG_EMU((M68K_LOG_FILEHANDLE "%s at %08x: called 1111 instruction %04x (%s)\n",
 					 m68ki_cpu_names[CPU_TYPE], ADDRESS_68K(REG_PPC), REG_IR,
-					 m68k_disassemble_quick(ADDRESS_68K(REG_PPC))));
+					 m68ki_disassemble_quick(ADDRESS_68K(REG_PPC))));
 #endif
 
-	m68ki_exception(EXCEPTION_1111);
+	sr = m68ki_init_exception();
+
+	switch(CPU_TYPE)
+	{
+		case CPU_TYPE_000:
+			m68ki_stack_frame_3word(REG_PC, sr);
+			break;
+		case CPU_TYPE_010:
+		case CPU_TYPE_EC020:
+		case CPU_TYPE_020:
+		default:
+			m68ki_stack_frame_0000(REG_PC, sr, EXCEPTION_1111);
+	}
+
+	m68ki_jump_vector(EXCEPTION_1111);
+
+	/* Use up some clock cycles and undo the instruction's cycles */
+	USE_CYCLES(CYC_EXCEPTION[EXCEPTION_1111] - CYC_INSTRUCTION[REG_IR]);
 }
 
 /* Exception for illegal instructions */
 INLINE void m68ki_exception_illegal(void)
 {
+	uint sr;
+
 	M68K_DO_LOG((M68K_LOG_FILEHANDLE "%s at %08x: illegal instruction %04x (%s)\n",
 				 m68ki_cpu_names[CPU_TYPE], ADDRESS_68K(REG_PPC), REG_IR,
-				 m68k_disassemble_quick(ADDRESS_68K(REG_PPC))));
+				 m68ki_disassemble_quick(ADDRESS_68K(REG_PPC))));
 
-	m68ki_exception(EXCEPTION_ILLEGAL_INSTRUCTION);
+	sr = m68ki_init_exception();
+
+	switch(CPU_TYPE)
+	{
+		case CPU_TYPE_000:
+			m68ki_stack_frame_3word(REG_PC, sr);
+			break;
+		case CPU_TYPE_010:
+		case CPU_TYPE_EC020:
+		case CPU_TYPE_020:
+		default:
+			m68ki_stack_frame_0000(REG_PC, sr, EXCEPTION_ILLEGAL_INSTRUCTION);
+	}
+
+	m68ki_jump_vector(EXCEPTION_ILLEGAL_INSTRUCTION);
+
+	/* Use up some clock cycles and undo the instruction's cycles */
+	USE_CYCLES(CYC_EXCEPTION[EXCEPTION_ILLEGAL_INSTRUCTION] - CYC_INSTRUCTION[REG_IR]);
 }
 
+/* Exception for format errror in RTE */
+INLINE void m68ki_exception_format_error(void)
+{
+	uint sr = m68ki_init_exception();
 
+	switch(CPU_TYPE)
+	{
+		case CPU_TYPE_000:
+			m68ki_stack_frame_3word(REG_PC, sr);
+			break;
+		case CPU_TYPE_010:
+		case CPU_TYPE_EC020:
+		case CPU_TYPE_020:
+		default:
+			m68ki_stack_frame_0000(REG_PC, sr, EXCEPTION_FORMAT_ERROR);
+	}
+
+	m68ki_jump_vector(EXCEPTION_FORMAT_ERROR);
+
+	/* Use up some clock cycles and undo the instruction's cycles */
+	USE_CYCLES(CYC_EXCEPTION[EXCEPTION_FORMAT_ERROR] - CYC_INSTRUCTION[REG_IR]);
+}
+
+/* Exception for address error */
 INLINE void m68ki_exception_address_error(void)
 {
-	/* Not properly handled yet */
-	m68ki_exception(EXCEPTION_ADDRESS_ERROR);
+	/* Not emulated yet */
 }
 
 /* Service an interrupt request and start exception processing */
-INLINE void m68ki_service_interrupt(uint int_level)
+INLINE void m68ki_exception_interrupt(uint int_level)
 {
 	uint vector;
 	uint sr;
@@ -1766,15 +1892,15 @@ INLINE void m68ki_service_interrupt(uint int_level)
 			break;
 		case CPU_TYPE_EC020:
 		case CPU_TYPE_020:
+		default:
 			m68ki_stack_frame_0000(REG_PC, sr, vector);
 			if(FLAG_M)
 			{
 				/* Create throwaway frame */
 				m68ki_set_sm_flag(FLAG_S);	/* clear M */
-				sr = m68ki_get_sr();
+				sr |= 0x2000; /* Same as SR in master stack frame except S is forced high */
 				m68ki_stack_frame_0001(REG_PC, sr, vector);
 			}
-			break;
 	}
 
 	m68ki_jump(new_pc);
@@ -1793,7 +1919,7 @@ INLINE void m68ki_service_interrupt(uint int_level)
 INLINE void m68ki_check_interrupts(void)
 {
 	if(CPU_INT_LEVEL > FLAG_INT_MASK)
-		m68ki_service_interrupt(CPU_INT_LEVEL>>8);
+		m68ki_exception_interrupt(CPU_INT_LEVEL>>8);
 }
 
 

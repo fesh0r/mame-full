@@ -1777,7 +1777,7 @@ M68KMAKE_OP(andi_to_sr, 16, _)
 		m68ki_set_sr(m68ki_get_sr() & src);
 		return;
 	}
-	m68ki_exception(EXCEPTION_PRIVILEGE_VIOLATION);
+	m68ki_exception_privilege_violation();
 }
 
 
@@ -3386,7 +3386,7 @@ M68KMAKE_OP(chk, 16, d)
 		return;
 	}
 	FLAG_N = (src < 0)<<7;
-	m68ki_trap(EXCEPTION_CHK);
+	m68ki_exception_trap(EXCEPTION_CHK);
 }
 
 
@@ -3400,7 +3400,7 @@ M68KMAKE_OP(chk, 16, _)
 		return;
 	}
 	FLAG_N = (src < 0)<<7;
-	m68ki_trap(EXCEPTION_CHK);
+	m68ki_exception_trap(EXCEPTION_CHK);
 }
 
 
@@ -3416,7 +3416,7 @@ M68KMAKE_OP(chk, 32, d)
 			return;
 		}
 		FLAG_N = (src < 0)<<7;
-		m68ki_trap(EXCEPTION_CHK);
+		m68ki_exception_trap(EXCEPTION_CHK);
 		return;
 	}
 	m68ki_exception_illegal();
@@ -3435,7 +3435,7 @@ M68KMAKE_OP(chk, 32, _)
 			return;
 		}
 		FLAG_N = (src < 0)<<7;
-		m68ki_trap(EXCEPTION_CHK);
+		m68ki_exception_trap(EXCEPTION_CHK);
 		return;
 	}
 	m68ki_exception_illegal();
@@ -3460,14 +3460,14 @@ M68KMAKE_OP(chk2_cmp2, 8, _)
 		if(COND_CS())
 		{
 			if(BIT_B(word2))
-				m68ki_trap(EXCEPTION_CHK);
+				m68ki_exception_trap(EXCEPTION_CHK);
 			return;
 		}
 
 		FLAG_C = upper_bound - compare;
 		FLAG_Z = MASK_OUT_ABOVE_8(FLAG_C);
 		if(COND_CS() && BIT_B(word2))
-				m68ki_trap(EXCEPTION_CHK);
+				m68ki_exception_trap(EXCEPTION_CHK);
 
 		return;
 	}
@@ -3494,7 +3494,7 @@ M68KMAKE_OP(chk2_cmp2, 16, _)
 		if(COND_CS())
 		{
 			if(BIT_B(word2))
-				m68ki_trap(EXCEPTION_CHK);
+				m68ki_exception_trap(EXCEPTION_CHK);
 			return;
 		}
 
@@ -3502,7 +3502,7 @@ M68KMAKE_OP(chk2_cmp2, 16, _)
 		FLAG_Z = MASK_OUT_ABOVE_16(FLAG_C);
 		FLAG_C = CFLAG_16(FLAG_C);
 		if(COND_CS() && BIT_B(word2))
-				m68ki_trap(EXCEPTION_CHK);
+				m68ki_exception_trap(EXCEPTION_CHK);
 
 		return;
 	}
@@ -3526,7 +3526,7 @@ M68KMAKE_OP(chk2_cmp2, 32, _)
 		if(COND_CS())
 		{
 			if(BIT_B(word2))
-				m68ki_trap(EXCEPTION_CHK);
+				m68ki_exception_trap(EXCEPTION_CHK);
 			return;
 		}
 
@@ -3534,7 +3534,7 @@ M68KMAKE_OP(chk2_cmp2, 32, _)
 		FLAG_Z = MASK_OUT_ABOVE_32(FLAG_C);
 		FLAG_C = CFLAG_SUB_32(compare, upper_bound, FLAG_C);
 		if(COND_CS() && BIT_B(word2))
-				m68ki_trap(EXCEPTION_CHK);
+				m68ki_exception_trap(EXCEPTION_CHK);
 
 		return;
 	}
@@ -4202,7 +4202,7 @@ M68KMAKE_OP(divs, 16, d)
 		FLAG_V = VFLAG_SET;
 		return;
 	}
-	m68ki_trap(EXCEPTION_ZERO_DIVIDE);
+	m68ki_exception_trap(EXCEPTION_ZERO_DIVIDE);
 }
 
 
@@ -4240,7 +4240,7 @@ M68KMAKE_OP(divs, 16, _)
 		FLAG_V = VFLAG_SET;
 		return;
 	}
-	m68ki_trap(EXCEPTION_ZERO_DIVIDE);
+	m68ki_exception_trap(EXCEPTION_ZERO_DIVIDE);
 }
 
 
@@ -4266,7 +4266,7 @@ M68KMAKE_OP(divu, 16, d)
 		FLAG_V = VFLAG_SET;
 		return;
 	}
-	m68ki_trap(EXCEPTION_ZERO_DIVIDE);
+	m68ki_exception_trap(EXCEPTION_ZERO_DIVIDE);
 }
 
 
@@ -4292,7 +4292,7 @@ M68KMAKE_OP(divu, 16, _)
 		FLAG_V = VFLAG_SET;
 		return;
 	}
-	m68ki_trap(EXCEPTION_ZERO_DIVIDE);
+	m68ki_exception_trap(EXCEPTION_ZERO_DIVIDE);
 }
 
 
@@ -4361,7 +4361,7 @@ M68KMAKE_OP(divl, 32, d)
 			FLAG_C = CFLAG_CLEAR;
 			return;
 		}
-		m68ki_trap(EXCEPTION_ZERO_DIVIDE);
+		m68ki_exception_trap(EXCEPTION_ZERO_DIVIDE);
 		return;
 	}
 	m68ki_exception_illegal();
@@ -4498,7 +4498,7 @@ M68KMAKE_OP(divl, 32, d)
 			FLAG_C = CFLAG_CLEAR;
 			return;
 		}
-		m68ki_trap(EXCEPTION_ZERO_DIVIDE);
+		m68ki_exception_trap(EXCEPTION_ZERO_DIVIDE);
 		return;
 	}
 	m68ki_exception_illegal();
@@ -4572,7 +4572,7 @@ M68KMAKE_OP(divl, 32, _)
 			FLAG_C = CFLAG_CLEAR;
 			return;
 		}
-		m68ki_trap(EXCEPTION_ZERO_DIVIDE);
+		m68ki_exception_trap(EXCEPTION_ZERO_DIVIDE);
 		return;
 	}
 	m68ki_exception_illegal();
@@ -4709,7 +4709,7 @@ M68KMAKE_OP(divl, 32, _)
 			FLAG_C = CFLAG_CLEAR;
 			return;
 		}
-		m68ki_trap(EXCEPTION_ZERO_DIVIDE);
+		m68ki_exception_trap(EXCEPTION_ZERO_DIVIDE);
 		return;
 	}
 	m68ki_exception_illegal();
@@ -4886,7 +4886,7 @@ M68KMAKE_OP(eori_to_sr, 16, _)
 		m68ki_set_sr(m68ki_get_sr() ^ src);
 		return;
 	}
-	m68ki_exception(EXCEPTION_PRIVILEGE_VIOLATION);
+	m68ki_exception_privilege_violation();
 }
 
 
@@ -6414,7 +6414,7 @@ M68KMAKE_OP(move_fr_sr, 16, d)
 		DY = MASK_OUT_BELOW_16(DY) | m68ki_get_sr();
 		return;
 	}
-	m68ki_exception(EXCEPTION_PRIVILEGE_VIOLATION);
+	m68ki_exception_privilege_violation();
 }
 
 
@@ -6426,7 +6426,7 @@ M68KMAKE_OP(move_fr_sr, 16, _)
 		m68ki_write_16(ea, m68ki_get_sr());
 		return;
 	}
-	m68ki_exception(EXCEPTION_PRIVILEGE_VIOLATION);
+	m68ki_exception_privilege_violation();
 }
 
 
@@ -6437,7 +6437,7 @@ M68KMAKE_OP(move_to_sr, 16, d)
 		m68ki_set_sr(DY);
 		return;
 	}
-	m68ki_exception(EXCEPTION_PRIVILEGE_VIOLATION);
+	m68ki_exception_privilege_violation();
 }
 
 
@@ -6450,7 +6450,7 @@ M68KMAKE_OP(move_to_sr, 16, _)
 		m68ki_set_sr(new_sr);
 		return;
 	}
-	m68ki_exception(EXCEPTION_PRIVILEGE_VIOLATION);
+	m68ki_exception_privilege_violation();
 }
 
 
@@ -6461,7 +6461,7 @@ M68KMAKE_OP(move_fr_usp, 32, _)
 		AY = REG_USP;
 		return;
 	}
-	m68ki_exception(EXCEPTION_PRIVILEGE_VIOLATION);
+	m68ki_exception_privilege_violation();
 }
 
 
@@ -6473,7 +6473,7 @@ M68KMAKE_OP(move_to_usp, 32, _)
 		REG_USP = AY;
 		return;
 	}
-	m68ki_exception(EXCEPTION_PRIVILEGE_VIOLATION);
+	m68ki_exception_privilege_violation();
 }
 
 
@@ -6536,7 +6536,7 @@ M68KMAKE_OP(movec_cr, 32, _)
 				return;
 			}
 		}
-		m68ki_exception(EXCEPTION_PRIVILEGE_VIOLATION);
+		m68ki_exception_privilege_violation();
 		return;
 	}
 	m68ki_exception_illegal();
@@ -6614,7 +6614,7 @@ M68KMAKE_OP(movec_rc, 32, _)
 				return;
 			}
 		}
-		m68ki_exception(EXCEPTION_PRIVILEGE_VIOLATION);
+		m68ki_exception_privilege_violation();
 		return;
 	}
 	m68ki_exception_illegal();
@@ -6845,7 +6845,7 @@ M68KMAKE_OP(moves, 8, _)
 				USE_CYCLES(2);
 			return;
 		}
-		m68ki_exception(EXCEPTION_PRIVILEGE_VIOLATION);
+		m68ki_exception_privilege_violation();
 		return;
 	}
 	m68ki_exception_illegal();
@@ -6880,7 +6880,7 @@ M68KMAKE_OP(moves, 16, _)
 				USE_CYCLES(2);
 			return;
 		}
-		m68ki_exception(EXCEPTION_PRIVILEGE_VIOLATION);
+		m68ki_exception_privilege_violation();
 		return;
 	}
 	m68ki_exception_illegal();
@@ -6910,7 +6910,7 @@ M68KMAKE_OP(moves, 32, _)
 				USE_CYCLES(2);
 			return;
 		}
-		m68ki_exception(EXCEPTION_PRIVILEGE_VIOLATION);
+		m68ki_exception_privilege_violation();
 		return;
 	}
 	m68ki_exception_illegal();
@@ -7771,7 +7771,7 @@ M68KMAKE_OP(ori_to_sr, 16, _)
 		m68ki_set_sr(m68ki_get_sr() | src);
 		return;
 	}
-	m68ki_exception(EXCEPTION_PRIVILEGE_VIOLATION);
+	m68ki_exception_privilege_violation();
 }
 
 
@@ -7873,7 +7873,7 @@ M68KMAKE_OP(reset, 0, _)
 		USE_CYCLES(CYC_RESET);
 		return;
 	}
-	m68ki_exception(EXCEPTION_PRIVILEGE_VIOLATION);
+	m68ki_exception_privilege_violation();
 }
 
 
@@ -8642,11 +8642,10 @@ M68KMAKE_OP(rte, 32, _)
 			m68ki_set_sr(new_sr);
 			return;
 		}
-rte_loop:
-		format_word = m68ki_read_16(REG_A[7]+6) >> 12;
 
 		if(CPU_TYPE_IS_010(CPU_TYPE))
 		{
+			format_word = m68ki_read_16(REG_A[7]+6) >> 12;
 			if(format_word == 0)
 			{
 				new_sr = m68ki_pull_16();
@@ -8657,11 +8656,13 @@ rte_loop:
 				return;
 			}
 			/* Not handling bus fault (9) */
-			m68ki_exception(EXCEPTION_FORMAT_ERROR);
+			m68ki_exception_format_error();
 			return;
 		}
 
 		/* Otherwise it's 020 */
+rte_loop:
+		format_word = m68ki_read_16(REG_A[7]+6) >> 12;
 		switch(format_word)
 		{
 			case 0: /* Normal */
@@ -8677,7 +8678,6 @@ rte_loop:
 				m68ki_fake_pull_16();	/* format word */
 				m68ki_set_sr_noint(new_sr);
 				goto rte_loop;
-				/* return; */
 			case 2: /* Trap */
 				new_sr = m68ki_pull_16();
 				new_pc = m68ki_pull_32();
@@ -8688,10 +8688,10 @@ rte_loop:
 				return;
 		}
 		/* Not handling long or short bus fault */
-		m68ki_exception(EXCEPTION_FORMAT_ERROR);
+		m68ki_exception_format_error();
 		return;
 	}
-	m68ki_exception(EXCEPTION_PRIVILEGE_VIOLATION);
+	m68ki_exception_privilege_violation();
 }
 
 
@@ -8896,7 +8896,7 @@ M68KMAKE_OP(stop, 0, _)
 		m68ki_remaining_cycles = 0;
 		return;
 	}
-	m68ki_exception(EXCEPTION_PRIVILEGE_VIOLATION);
+	m68ki_exception_privilege_violation();
 }
 
 
@@ -9545,7 +9545,7 @@ M68KMAKE_OP(tas, 8, _)
 M68KMAKE_OP(trap, 0, _)
 {
 	/* Trap#n stacks exception frame type 0 */
-	m68ki_trapN(EXCEPTION_TRAP_BASE + (REG_IR & 0xf));	/* HJB 990403 */
+	m68ki_exception_trapN(EXCEPTION_TRAP_BASE + (REG_IR & 0xf));	/* HJB 990403 */
 }
 
 
@@ -9553,7 +9553,7 @@ M68KMAKE_OP(trapt, 0, _)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
-		m68ki_trap(EXCEPTION_TRAPV);	/* HJB 990403 */
+		m68ki_exception_trap(EXCEPTION_TRAPV);	/* HJB 990403 */
 		return;
 	}
 	m68ki_exception_illegal();
@@ -9564,7 +9564,7 @@ M68KMAKE_OP(trapt, 16, _)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
-		m68ki_trap(EXCEPTION_TRAPV);	/* HJB 990403 */
+		m68ki_exception_trap(EXCEPTION_TRAPV);	/* HJB 990403 */
 		return;
 	}
 	m68ki_exception_illegal();
@@ -9575,7 +9575,7 @@ M68KMAKE_OP(trapt, 32, _)
 {
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
-		m68ki_trap(EXCEPTION_TRAPV);	/* HJB 990403 */
+		m68ki_exception_trap(EXCEPTION_TRAPV);	/* HJB 990403 */
 		return;
 	}
 	m68ki_exception_illegal();
@@ -9619,7 +9619,7 @@ M68KMAKE_OP(trapcc, 0, _)
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
 		if(M68KMAKE_CC)
-			m68ki_trap(EXCEPTION_TRAPV);	/* HJB 990403 */
+			m68ki_exception_trap(EXCEPTION_TRAPV);	/* HJB 990403 */
 		return;
 	}
 	m68ki_exception_illegal();
@@ -9632,7 +9632,7 @@ M68KMAKE_OP(trapcc, 16, _)
 	{
 		if(M68KMAKE_CC)
 		{
-			m68ki_trap(EXCEPTION_TRAPV);	/* HJB 990403 */
+			m68ki_exception_trap(EXCEPTION_TRAPV);	/* HJB 990403 */
 			return;
 		}
 		REG_PC += 2;
@@ -9648,7 +9648,7 @@ M68KMAKE_OP(trapcc, 32, _)
 	{
 		if(M68KMAKE_CC)
 		{
-			m68ki_trap(EXCEPTION_TRAPV);	/* HJB 990403 */
+			m68ki_exception_trap(EXCEPTION_TRAPV);	/* HJB 990403 */
 			return;
 		}
 		REG_PC += 4;
@@ -9664,7 +9664,7 @@ M68KMAKE_OP(trapv, 0, _)
 	{
 		return;
 	}
-	m68ki_trap(EXCEPTION_TRAPV);  /* HJB 990403 */
+	m68ki_exception_trap(EXCEPTION_TRAPV);  /* HJB 990403 */
 }
 
 

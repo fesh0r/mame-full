@@ -3247,6 +3247,14 @@ unsigned int m68k_disassemble(char* str_buff, unsigned int pc, unsigned int cpu_
 	return g_cpu_pc - pc;
 }
 
+char* m68ki_disassemble_quick(unsigned int pc, unsigned int cpu_type)
+{
+	static char buff[100];
+	buff[0] = 0;
+	m68k_disassemble(buff, pc, cpu_type);
+	return buff;
+}
+
 /* Check if the instruction is a valid one */
 unsigned int m68k_is_valid_instruction(unsigned int instruction, unsigned int cpu_type)
 {
