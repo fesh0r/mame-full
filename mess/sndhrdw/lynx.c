@@ -115,6 +115,19 @@ static LYNX_AUDIO lynx_audio[4]= {
 	{ 3 } 
 };
 
+static void lynx_audio_reset_channel(LYNX_AUDIO *This)
+{
+    memset(This->reg.data, 0, (char*)(This+1)-(char*)(This->reg.data));
+}
+
+void lynx_audio_count_down(int nr)
+{
+    LYNX_AUDIO *This=lynx_audio+nr;
+    if (This->reg.n.control1&8 && (This->reg.n.control1&7)!=7) return;
+    if (nr==0) stream_update(mixer_channel,0);
+    This->count--;
+}
+
 void lynx_audio_debug(struct osd_bitmap *bitmap)
 {
     char str[40];
@@ -131,11 +144,35 @@ void lynx_audio_debug(struct osd_bitmap *bitmap)
 //    ui_text(bitmap, str, 0,0);
 }
 
+static void lynx_audio_shift(LYNX_AUDIO *channel)
+{
+    channel->shifter=((channel->shifter<<1)&0x3ff)
+	|shift_xor[channel->shifter&channel->mask];
+    
+    if (channel->reg.n.control1&0x20) {
+	if (channel->shifter&1) {
+	    channel->reg.n.output+=channel->reg.n.volume;
+	} else {
+	    channel->reg.n.output-=channel->reg.n.volume;
+	}
+    }
+    switch (channel->nr) {
+    case 0: lynx_audio_count_down(1); break;
+    case 1: lynx_audio_count_down(2); break;
+    case 2: lynx_audio_count_down(3); break;
+    case 3: lynx_timer_count_down(1); break;
+    }
+}
+
 static void lynx_audio_execute(LYNX_AUDIO *channel)
 {
     if (channel->reg.n.control1&8) { // count_enable
 	channel->ticks+=usec_per_sample;
 	if ((channel->reg.n.control1&7)==7) { // timer input
+	    if (channel->count<0) {
+		channel->count+=channel->reg.n.counter;
+		lynx_audio_shift(channel);
+	    }
 	} else {
 	    int t=1<<(channel->reg.n.control1&7);
 	    for (;;) {
@@ -144,20 +181,12 @@ static void lynx_audio_execute(LYNX_AUDIO *channel)
 		if (channel->ticks<t) break;
 		if (channel->count<0) {
 		    channel->count=channel->reg.n.counter;
-		    channel->shifter=((channel->shifter<<1)&0x3ff)
-			|shift_xor[channel->shifter&channel->mask];
-		    if (channel->reg.n.control1&0x20) {
-			if (channel->shifter&1) {
-			    channel->reg.n.output+=channel->reg.n.volume;
-			} else {
-			    channel->reg.n.output-=channel->reg.n.volume;
-			}
-		    }
+		    lynx_audio_shift(channel);
 		}
 	    }
-	    if (!(channel->reg.n.control1&0x20)) {
-		channel->reg.n.output=channel->shifter&1?0-channel->reg.n.volume:channel->reg.n.volume;
-	    }
+	}
+	if (!(channel->reg.n.control1&0x20)) {
+	    channel->reg.n.output=channel->shifter&1?0-channel->reg.n.volume:channel->reg.n.volume;
 	}
     } else {
 	channel->ticks=0;
@@ -296,7 +325,7 @@ void lynx2_update (int param, INT16 **buffer, int length)
     }
 }
 
-static void lynx_sound_init(void)
+static void lynx_audio_init(void)
 {
     int i;
     shift_mask=(int*)malloc(512*sizeof(int));
@@ -326,6 +355,14 @@ static void lynx_sound_init(void)
     }
 }
 
+void lynx_audio_reset(void)
+{
+    int i;
+    for (i=0; i<ARRAY_LENGTH(lynx_audio); i++) {
+	lynx_audio_reset_channel(lynx_audio+i);
+    }
+}
+
 /************************************/
 /* Sound handler start              */
 /************************************/
@@ -338,7 +375,7 @@ int lynx_custom_start (const struct MachineSound *driver)
 
     usec_per_sample=1000000/options.samplerate;
     
-    lynx_sound_init();
+    lynx_audio_init();
     return 0;
 }
 
@@ -353,7 +390,7 @@ int lynx2_custom_start (const struct MachineSound *driver)
 
     usec_per_sample=1000000/options.samplerate;
     
-    lynx_sound_init();
+    lynx_audio_init();
     return 0;
 }
 
