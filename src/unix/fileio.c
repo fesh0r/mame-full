@@ -513,7 +513,19 @@ void *osd_fopen(const char *gamename, const char *filename, int filetype,
 		    f->file = fopen(name,write ? "w" : "r");
 		    break;
 		case OSD_FILETYPE_NVRAM:
-		    snprintf(name, MAXPATHL, "%s/.%s/nvram/%s.nv", home_dir, NAME, gamename);
+#ifdef MESS
+		    if (filename)
+		    {
+		    	if (write)
+		    	{
+		    		sprintf(name, "%s/.%s/nvram/%s", home_dir, NAME, gamename );
+		    		rc_check_and_create_dir(name);
+		    	}
+		    	snprintf(name, MAXPATHL, "%s/.%s/nvram/%s/%s.nv", home_dir, NAME, gamename, filename );
+		    }
+		    else
+#endif /* MESS */
+		    	snprintf(name, MAXPATHL, "%s/.%s/nvram/%s.nv", home_dir, NAME, gamename);
 		    f->file = fopen(name,write ? "w" : "r");
 		    break;
 		case OSD_FILETYPE_MEMCARD:
