@@ -233,9 +233,9 @@ ARCH  = linux
 # actually used can be selected runtime with the -joytype switch.
 # X Input Extensions based joystick, this is known to not work right now ;|
 # JOY_X11 = 1
-# on iX86 based OS's, if supported, you can use standard joystick driver
+# On iX86 based OS's, if supported, you can use standard joystick driver.
 # JOY_I386 = 1
-# Linux FM-TOWNS game PAD joystick emulation support, thanks to Osamu Kurati
+# Linux FM-TOWNS game PAD joystick emulation support, thanks to Osamu Kurati.
 # JOY_PAD = 1
 # NetBSD/FreeBSD USB joystick support.
 # JOY_USB = 1
@@ -274,6 +274,8 @@ DISPLAY_METHOD = x11
 # DISPLAY_METHOD = photon2
 ### SDL library
 # DISPLAY_METHOD = SDL
+### Photon 2.x (QNX6), currently buggy but working...                
+# DISPLAY_METHOD = photon2
 
 
 ##############################################################################
@@ -311,14 +313,7 @@ X11_JOYNAME = "Joystick"
 # *** OpenGL info -- configure if you are using the xgl display option
 ##############################################################################
 # *** what are the names of your OpenGL libs?
-GLLIBS= -lGL -lGLU
-
-# *** Uncomment next line if you're using NVIDIA's hw accelerated GLX drivers
-# GLDRIVER= -DNVIDIA
-
-# *** Uncomment next line if you're using Utah-GLX
-# GLDRIVER= -DUTAH_GLX
-
+GLLIBS= -ldl
 
 ##############################################################################
 # *** Special features
