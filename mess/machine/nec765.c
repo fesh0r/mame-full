@@ -1619,9 +1619,9 @@ void	nec765_update_state(void)
              fdc.nec765_transfer_bytes_count++;
              fdc.nec765_transfer_bytes_remaining--;
 
-//#ifdef SUPER_VERBOSE
+#ifdef SUPER_VERBOSE
 			logerror("EXECUTION PHASE READ: %02x\n", fdc.nec765_data_reg);
-//#endif
+#endif
 
             if ((fdc.nec765_transfer_bytes_remaining==0) || (fdc.nec765_flags & NEC765_TC))
             {
