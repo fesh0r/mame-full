@@ -2514,7 +2514,7 @@ static READ_HANDLER(ide_mem_r);
 static WRITE_HANDLER(ide_mem_w);
 
 /* pointer to the IDE SRAM area */
-static UINT8 *ti99_ide_SRAM;
+/* static UINT8 *ti99_ide_SRAM; */
 
 static const expansion_port_t ide_handlers =
 {
