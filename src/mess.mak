@@ -507,7 +507,7 @@ $(OBJ)/bbc.a:	   \
 	  $(OBJ)/mess/systems/bbc.o
 
 $(OBJ)/cpschngr.a: \
-#	  $(OBJ)/machine/eeprom.o	 \
+	  $(OBJ)/machine/eeprom.o	 \
 	  $(OBJ)/vidhrdw/cps1.o 	 \
 	  $(OBJ)/mess/systems/cpschngr.o
 

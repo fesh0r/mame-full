@@ -22,13 +22,13 @@ merged Street Fighter Zero for MESS
 
 
 
-static READ_HANDLER ( cps1_input2_r )
+static READ16_HANDLER( cps1_input2_r )
 {
-	int buttons=readinputport(6);
+	int buttons=readinputport(5);
 	return buttons << 8 | buttons;
 }
 
-static READ_HANDLER ( cps1_input3_r )
+static READ16_HANDLER ( cps1_input3_r )
 {
     int buttons=readinputport(7);
 	return buttons << 8 | buttons;
@@ -49,7 +49,7 @@ static WRITE_HANDLER ( cps1_snd_bankswitch_w )
 if ((data & 0xfe)) logerror("%04x: write %02x to f004\n",cpu_get_pc(),data);
 }
 
-static WRITE_HANDLER ( cps1_sound_fade_w )
+static WRITE16_HANDLER ( cps1_sound_fade_w )
 {
 	cps1_sound_fade_timer=data;
 }
@@ -59,40 +59,46 @@ static READ_HANDLER ( cps1_snd_fade_timer_r )
 	return cps1_sound_fade_timer;
 }
 
-static READ_HANDLER ( cps1_input_r )
+static WRITE16_HANDLER( cps1_sound_command_w )
+{
+	if (ACCESSING_LSB)
+		soundlatch_w(0,data & 0xff);
+}
+
+static READ16_HANDLER ( cps1_input_r )
 {
 	int control=readinputport (offset/2);
 	return (control<<8) | control;
 }
 
-static READ_HANDLER ( cps1_player_input_r )
+static READ16_HANDLER ( cps1_player_input_r )
 {
 	return (readinputport(offset + 4) + (readinputport(offset+1 + 4)<<8));
 }
 
 static int dial[2];
 
-static READ_HANDLER ( forgottn_dial_0_r )
+static READ16_HANDLER ( forgottn_dial_0_r )
 {
 	return ((readinputport(6) - dial[0]) >> (4*offset)) & 0xff;
 }
 
-static READ_HANDLER ( forgottn_dial_1_r )
+static READ16_HANDLER ( forgottn_dial_1_r )
 {
 	return ((readinputport(7) - dial[1]) >> (4*offset)) & 0xff;
 }
 
-static WRITE_HANDLER ( forgottn_dial_0_reset_w )
+static WRITE16_HANDLER ( forgottn_dial_0_reset_w )
 {
 	dial[0] = readinputport(6);
 }
 
-static WRITE_HANDLER ( forgottn_dial_1_reset_w )
+static WRITE16_HANDLER ( forgottn_dial_1_reset_w )
 {
 	dial[1] = readinputport(7);
 }
 
-static WRITE_HANDLER ( cps1_coinctrl_w )
+static WRITE16_HANDLER ( cps1_coinctrl_w )
 {
 	if ((data & 0xff000000) == 0)
 	{
@@ -110,7 +116,7 @@ static WRITE_HANDLER ( cps1_coinctrl_w )
 	}
 }
 
-WRITE_HANDLER ( cpsq_coinctrl2_w )
+WRITE16_HANDLER ( cpsq_coinctrl2_w )
 {
 	if ((data & 0xff000000) == 0)
 	{
@@ -128,7 +134,7 @@ WRITE_HANDLER ( cpsq_coinctrl2_w )
     }
 }
 
-READ_HANDLER ( cps1_protection_ram_r )
+READ16_HANDLER ( cps1_protection_ram_r )
 {
 	/*
 	   Protection (slammasters):
@@ -184,25 +190,54 @@ static struct QSound_interface qsound_interface =
 	{ 100,100 }
 };
 
-static unsigned char *qsound_sharedram;
+static unsigned char *qsound_sharedram1,*qsound_sharedram2;
+
 
 int cps1_qsound_interrupt(void)
 {
+#if 0
+I have removed CPU_AUDIO_CPU from the Z(0 so this is no longer necessary
 	/* kludge to pass the sound board test with sound disabled */
 	if (Machine->sample_rate == 0)
-		qsound_sharedram[0xfff] = 0x77;
+		qsound_sharedram1[0xfff] = 0x77;
+#endif
 
 	return 2;
 }
 
-static READ_HANDLER ( qsound_sharedram_r )
+READ16_HANDLER( qsound_rom_r )
 {
-	return qsound_sharedram[offset / 2] | 0xff00;
+	unsigned char *rom = memory_region(REGION_USER1);
+
+	if (rom) return rom[offset] | 0xff00;
+	else
+	{
+		usrintf_showmessage("%06x: read sound ROM byte %04x",cpu_get_pc(),offset);
+		return 0;
+	}
 }
 
-static WRITE_HANDLER ( qsound_sharedram1_w )
+
+static READ16_HANDLER( qsound_sharedram1_r )
 {
-	qsound_sharedram[offset / 2] = data;
+	return qsound_sharedram1[offset] | 0xff00;
+}
+
+static WRITE16_HANDLER( qsound_sharedram1_w )
+{
+	if (ACCESSING_LSB)
+		qsound_sharedram1[offset] = data;
+}
+
+static READ16_HANDLER( qsound_sharedram2_r )
+{
+	return qsound_sharedram2[offset] | 0xff00;
+}
+
+static WRITE16_HANDLER( qsound_sharedram2_w )
+{
+	if (ACCESSING_LSB)
+		qsound_sharedram2[offset] = data;
 }
 
 static WRITE_HANDLER ( qsound_banksw_w )
@@ -279,67 +314,68 @@ static void pang3_nvram_handler(void *file,int read_or_write)
 	}
 }
 
-READ_HANDLER ( cps1_eeprom_port_r )
+READ16_HANDLER( cps1_eeprom_port_r )
 {
 	return EEPROM_read_bit();
 }
 
-WRITE_HANDLER ( cps1_eeprom_port_w )
+
+WRITE16_HANDLER( cps1_eeprom_port_w )
 {
-	/*
-	bit 0 = data
-	bit 6 = clock
-	bit 7 = cs
-	*/
-	EEPROM_write_bit(data & 0x01);
-	EEPROM_set_cs_line((data & 0x80) ? CLEAR_LINE : ASSERT_LINE);
-	EEPROM_set_clock_line((data & 0x40) ? ASSERT_LINE : CLEAR_LINE);
+	if (ACCESSING_LSB)
+	{
+		/*
+		bit 0 = data
+		bit 6 = clock
+		bit 7 = cs
+		*/
+		EEPROM_write_bit(data & 0x01);
+		EEPROM_set_cs_line((data & 0x80) ? CLEAR_LINE : ASSERT_LINE);
+		EEPROM_set_clock_line((data & 0x40) ? ASSERT_LINE : CLEAR_LINE);
+	}
 }
 
-
-
-static struct MemoryReadAddress cps1_readmem[] =
-{
-	{ 0x000000, 0x1fffff, MRA_ROM }, /* 68000 ROM */
-	{ 0x800000, 0x800003, cps1_player_input_r }, /* Player input ports */
-	{ 0x800010, 0x800013, cps1_player_input_r }, /* ?? */
+static MEMORY_READ16_START( cps1_readmem )
+	{ 0x000000, 0x1fffff, MRA16_ROM }, /* 68000 ROM */
+	{ 0x800000, 0x800001, input_port_4_word_r }, /* Player input ports */
+	{ 0x800010, 0x800011, input_port_4_word_r }, /* ?? */
 	{ 0x800018, 0x80001f, cps1_input_r }, /* Input ports */
-	{ 0x800020, 0x800021, MRA_NOP }, /* ? Used by Rockman ? */
+	{ 0x800020, 0x800021, MRA16_NOP }, /* ? Used by Rockman ? */
 	{ 0x800052, 0x800055, forgottn_dial_0_r }, /* forgotten worlds */
 	{ 0x80005a, 0x80005d, forgottn_dial_1_r }, /* forgotten worlds */
 	{ 0x800176, 0x800177, cps1_input2_r }, /* Extra input ports */
 	{ 0x8001fc, 0x8001fd, cps1_input2_r }, /* Input ports (SF Rev E) */
 	{ 0x800100, 0x8001ff, cps1_output_r },   /* Output ports */
-	{ 0x900000, 0x92ffff, MRA_BANK3 },	/* SF2CE executes code from here */
-	{ 0xf0e000, 0xf0efff, cps1_protection_ram_r }, /* Slammasters protection */
-	{ 0xf18000, 0xf19fff, qsound_sharedram_r },       /* Q RAM */
+	{ 0x900000, 0x92ffff, MRA16_RAM },	/* SF2CE executes code from here */
+	{ 0xf00000, 0xf0ffff, qsound_rom_r },		/* Slammasters protection */
+	{ 0xf18000, 0xf19fff, qsound_sharedram1_r },	/* Q RAM */
 	{ 0xf1c000, 0xf1c001, cps1_input2_r },   /* Player 3 controls (later games) */
 	{ 0xf1c002, 0xf1c003, cps1_input3_r },   /* Player 4 controls (later games - muscle bombers) */
 	{ 0xf1c006, 0xf1c007, cps1_eeprom_port_r },
-	{ 0xff0000, 0xffffff, MRA_BANK2 },   /* RAM */
-	{ -1 }  /* end of table */
-};
+	{ 0xf1e000, 0xf1ffff, qsound_sharedram2_r },	/* Q RAM */
+	{ 0xff0000, 0xffffff, MRA16_RAM },   /* RAM */
+MEMORY_END
 
-static struct MemoryWriteAddress cps1_writemem[] =
-{
-	{ 0x000000, 0x1fffff, MWA_ROM },      /* ROM */
+
+static MEMORY_WRITE16_START( cps1_writemem )
+	{ 0x000000, 0x1fffff, MWA16_ROM },      /* ROM */
 	{ 0x800030, 0x800031, cps1_coinctrl_w },
 	{ 0x800040, 0x800041, forgottn_dial_0_reset_w },
 	{ 0x800048, 0x800049, forgottn_dial_1_reset_w },
-	{ 0x800180, 0x800181, soundlatch_w },  /* Sound command */
+	{ 0x800180, 0x800181, cps1_sound_command_w },  /* Sound command */
 	{ 0x800188, 0x800189, cps1_sound_fade_w },
 	{ 0x800100, 0x8001ff, cps1_output_w, &cps1_output, &cps1_output_size },  /* Output ports */
-	{ 0x900000, 0x92ffff, MWA_BANK3, &cps1_gfxram, &cps1_gfxram_size },
-	{ 0xf18000, 0xf19fff, qsound_sharedram1_w },/* Q RAM */
+	{ 0x900000, 0x92ffff, MWA16_RAM, &cps1_gfxram, &cps1_gfxram_size },
+	{ 0xf18000, 0xf19fff, qsound_sharedram1_w }, /* Q RAM */
 	{ 0xf1c004, 0xf1c005, cpsq_coinctrl2_w },   /* Coin control2 (later games) */
 	{ 0xf1c006, 0xf1c007, cps1_eeprom_port_w },
-	{ 0xff0000, 0xffffff, MWA_BANK2 },        /* RAM */
-	{ -1 }  /* end of table */
-};
+	{ 0xf1e000, 0xf1ffff, qsound_sharedram2_w }, /* Q RAM */
+	{ 0xff0000, 0xffffff, MWA16_RAM },        /* RAM */
+MEMORY_END
 
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK1 },
 	{ 0xd000, 0xd7ff, MRA_RAM },
@@ -347,11 +383,10 @@ static struct MemoryReadAddress sound_readmem[] =
 	{ 0xf002, 0xf002, OKIM6295_status_0_r },
 	{ 0xf008, 0xf008, soundlatch_r },
 	{ 0xf00a, 0xf00a, cps1_snd_fade_timer_r }, /* Sound timer fade */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xd000, 0xd7ff, MWA_RAM },
 	{ 0xf000, 0xf000, YM2151_register_port_0_w },
@@ -359,30 +394,25 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0xf002, 0xf002, OKIM6295_data_0_w },
 	{ 0xf004, 0xf004, cps1_snd_bankswitch_w },
 //	{ 0xf006, 0xf006, MWA_NOP }, /* ???? Unknown ???? */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress qsound_readmem[] =
-{
+static MEMORY_READ_START( qsound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK1 },  /* banked (contains music data) */
 	{ 0xc000, 0xcfff, MRA_RAM },
 	{ 0xd007, 0xd007, qsound_status_r },
 	{ 0xf000, 0xffff, MRA_RAM },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress qsound_writemem[] =
-{
+static MEMORY_WRITE_START( qsound_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xcfff, MWA_RAM, &qsound_sharedram },
+	{ 0xc000, 0xcfff, MWA_RAM, &qsound_sharedram1 },
 	{ 0xd000, 0xd000, qsound_data_h_w },
 	{ 0xd001, 0xd001, qsound_data_l_w },
 	{ 0xd002, 0xd002, qsound_cmd_w },
 	{ 0xd003, 0xd003, qsound_banksw_w },
-	{ 0xf000, 0xffff, MWA_RAM },
-	{ -1 }  /* end of table */
-};
+	{ 0xf000, 0xffff, MWA_RAM, &qsound_sharedram2 },
+MEMORY_END
 
 
 
