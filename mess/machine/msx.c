@@ -839,10 +839,10 @@ WRITE_HANDLER (msx_dsk_w)
             {
             int       BytesPerSector, SectorsPerDisk,
                       SectorsPerFAT,ReservedSectors, I, J ;
-            UINT8 wAddress ;
+            UINT16 wAddress ;
 
 			drive = z80_get_reg (Z80_AF) / 256;
-			device_seek (IO_FLOPPY, drive, 0, 0);
+			device_seek (IO_FLOPPY, drive, 0, SEEK_SET);
 			ret = device_input_chunk (IO_FLOPPY, drive, sector, 512);
 			switch (ret & MSX_DSK_ERR_MASK)
 				{
@@ -915,6 +915,8 @@ WRITE_HANDLER (msx_dsk_w)
 		case 0x4021: /* stop drives */
 			/* NOP */
 			break;
+		default:
+			printf ("Uncaught trap: %04x\n", z80_get_pc ());
 		}
 
 	}
