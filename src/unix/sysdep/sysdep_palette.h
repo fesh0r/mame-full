@@ -105,11 +105,9 @@ int sysdep_palette_make_pen(struct sysdep_palette_struct *palette,
 
 void sysdep_palette_update(struct sysdep_palette_struct *palette);
 
-#if 0
 /* This function has to be called if the display is changed, it recreates
    the palette object with the settings from the new display */
 int sysdep_palette_change_display(struct sysdep_palette_struct **palette);
-#endif
 
 /* This function will cause all pens to be reset, this is usefull for
    pseudocolor displays, if for some reason the hw palette
