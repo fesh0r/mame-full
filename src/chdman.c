@@ -405,7 +405,7 @@ static void do_createhd(int argc, char *argv[])
 	char metadata[256];
 	int offset, err;
 
-	/* require 4, 5, or 8 args total */
+	/* require 4-5, or 8-10 args total */
 	if (argc != 4 && argc != 5 && argc != 8 && argc != 9 && argc != 10)
 		error();
 
@@ -436,6 +436,7 @@ static void do_createhd(int argc, char *argv[])
 		guess_chs(inputfile, offset, sectorsize, &cylinders, &heads, &sectors, &sectorsize);
 		hunksize = (sectorsize > 4096) ? sectorsize : ((4096 / sectorsize) * sectorsize);
 	}
+
 	totalsectors = cylinders * heads * sectors;
 
 	/* print some info */
@@ -629,14 +630,14 @@ INLINE UINT32 lcd_u32(UINT32 a, UINT32 b)
 	return a;
 }
 
-/*
+/*-------------------------------------------------
 	Copy all hunks of data from one CHD file to another.  The hunk sizes do not
 	need to match.  If the source is shorter than the destination, the source
 	data will be padded with 0s.
 
 	Example
 		[program] -copydata in.hd out.hd
-*/
+-------------------------------------------------*/
 static void do_copydata(int argc, char *argv[])
 {
 	const char *inputfile, *outputfile;
