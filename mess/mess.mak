@@ -466,6 +466,7 @@ $(OBJ)/apple.a:   \
 	$(OBJ)/mess/machine/apple2.o		\
 	$(OBJ)/mess/systems/apple2.o		\
 	$(OBJ)/mess/formats/ap2_dsk.o		\
+	$(OBJ)/mess/formats/ap_dsk35.o		\
 	$(OBJ)/mess/machine/ay3600.o		\
 	$(OBJ)/mess/machine/ap_disk2.o		\
 	$(OBJ)/mess/machine/lisa.o			\

@@ -241,8 +241,10 @@ int devices_initialload(const struct GameDriver *gamedrv, int ispreload)
 
 					if (result != INIT_PASS)
 					{
-						printf("Driver reports load for %s device failed\n", device_typename(dev->type));
-						printf("Ensure image is valid and exists and (if needed) can be created\n");
+						printf("Device %s load (%s) failed: %s\n",
+							device_typename(dev->type),
+							osd_basename((char *) images.names[dev->type][id]),
+							image_error(img));
 						return 1;
 					}
 				}

@@ -11,6 +11,9 @@ System Driver Changes:
 - [A7800] Fixed memory reads from the POKEY sound system.  (bug #258) [Ken
   Siders]
 
+- [MAC/LISA] Refactored floppy disk emulation to use MESS's floppy disk format
+  abstraction code.  [Nate Woods]
+
 
 
 User Interface Changes:

@@ -180,7 +180,7 @@ CFLAGS = -nologo -MT $(INCLUDES) -DDECL_SPEC=__cdecl \
 	-Dsnprintf=_snprintf -Dvsnprintf=_vsnprintf
 
 ifdef DEBUG
-CFLAGS += -Zi -Od
+CFLAGS += -Zi -Od -GS
 else
 CFLAGS += -Ox -G5 -Ob2
 endif
