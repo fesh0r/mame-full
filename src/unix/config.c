@@ -7,6 +7,7 @@
 #define __CONFIG_C_
 #include <time.h>
 #include "xmame.h"
+#include "fileio.h"
 #include "driver.h"
 #include "audit.h"
 #include "sysdep/sysdep_dsp.h"
@@ -118,6 +119,12 @@ static struct rc_option opts[] = {
    { "cheat",		"c",			rc_bool,	&options.cheat,
      "0",		0,			0,		NULL,
      "Enable/disable cheat subsystem" },
+   { "skip_disclaimer",	NULL,			rc_bool,	&options.skip_disclaimer,
+     "0",		0,			0,		NULL,
+     "Skip displaying the disclaimer screen" },
+   { "skip_gameinfo",	NULL,			rc_bool,	&options.skip_gameinfo,
+     "0",		0,			0,		NULL,
+     "Skip displaying the game info screen" },
 #ifdef MAME_DEBUG
    { "debug",		"d",			rc_bool,	&options.mame_debug,
      NULL,		0,			0,		NULL,
@@ -332,6 +339,11 @@ int config_init (int argc, char *argv[])
    if (rc_check_and_create_dir(buffer))
       return OSD_NOT_OK;
    snprintf(buffer, BUF_SIZE, "%s/.%s/%s", home_dir, NAME, "rc");
+   if (rc_check_and_create_dir(buffer))
+      return OSD_NOT_OK;
+   snprintf(buffer, BUF_SIZE, "%s/.%s/%s", home_dir, NAME, "hi");
+   if (rc_check_and_create_dir(buffer))
+      return OSD_NOT_OK;
    
    /* parse the commandline */
    if (rc_parse_commandline(rc, argc, argv, 2, config_handle_arg))
@@ -396,11 +408,11 @@ int config_init (int argc, char *argv[])
    if (options.playback)
    {
       /* read the playback header */
-      osd_fread(options.playback, &inp_header, sizeof(INP_HEADER));
+      mame_fread(options.playback, &inp_header, sizeof(INP_HEADER));
       if (!isalnum(inp_header.name[0]))
       {
          /* old .inp file - no header */
-         osd_fseek(options.playback, 0, SEEK_SET); 
+         mame_fseek(options.playback, 0, SEEK_SET); 
          if(!gamename)
          {
             fprintf(stderr_file, "error: old type .inp file and no game specified\n");
@@ -630,11 +642,11 @@ int config_init (int argc, char *argv[])
       inp_header.version[1] = VERSION;
       inp_header.version[2] = BETA_VERSION;
       */
-      osd_fwrite(options.record, &inp_header, sizeof(INP_HEADER));
+      mame_fwrite(options.record, &inp_header, sizeof(INP_HEADER));
    }
    
    if(language)
-      options.language_file = osd_fopen(0,language,OSD_FILETYPE_LANGUAGE,0);
+      options.language_file = mame_fopen(0,language,FILETYPE_LANGUAGE,0);
 
    return 1234;
 }
@@ -652,9 +664,12 @@ void config_exit(void)
       free(home_dir);
       
    /* close open files */
-   if (options.playback) osd_fclose (options.playback);
-   if (options.record)   osd_fclose (options.record);
-   if (options.language_file) osd_fclose (options.language_file);
+   if (options.playback)
+      mame_fclose(options.playback);
+   if (options.record)
+      mame_fclose(options.record);
+   if (options.language_file)
+      mame_fclose(options.language_file);
 }
 
 /* 
@@ -694,10 +709,10 @@ void show_usage(void)
   fprintf(stdout_file, "\n"
 #ifdef MESS
      "M.E.S.S. - Multi-Emulator Super System\n"
-     "Copyright (C) 1998-2002 by the MESS team\n"
+     "Copyright (C) 1998-2003 by the MESS team\n"
 #else
      "M.A.M.E. - Multiple Arcade Machine Emulator\n"
-     "Copyright (C) 1997-2002 by Nicola Salmoria and the MAME Team\n"
+     "Copyright (C) 1997-2003 by Nicola Salmoria and the MAME Team\n"
 #endif
      "%s port maintained by Lawrence Gold\n", NAME);
 }

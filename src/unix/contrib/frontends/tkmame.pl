@@ -1,13 +1,13 @@
 #!/usr/bin/perl -w 
 
 # set the path to your ROMS below
-my ($MAMEDIR) = "/usr/games/lib/mame/roms";
+my ($MAMEDIR) = "/usr/local/share/games/xmame/roms";
 
-# set location/name of xmamerc here (typically ~/xmame/) or (/usr/games/lib/mame/)
-my ($XMAMERC_LOC) = "/usr/games/lib/mame/xmamerc";
+# set location/name of xmamerc here (typically ~/xmame/) or (/usr/local/share/games/xmame/)
+my ($XMAMERC_LOC) = "/usr/local/share/games/xmame/xmamerc";
 
 # set name of MAME executable/bin
-my ($MAMEBIN) = "/usr/games/xmame";
+my ($MAMEBIN) = "/usr/local/games/xmame";
 
 
 my ($ROM,$ROMLIST,$col,$row,$num,$widget,$mw,$table,@ROMLIST,$SWITCH);

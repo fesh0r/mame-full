@@ -2,8 +2,21 @@ Xmame history:
 
 Last Modified by Lawrence Gold (gold@aros.net)
 
-Release 0.62.1
-	- Almost everything from MAME 0.62 and MESS 0.62.
+Release 0.63.1, in progress
+	- Almost everything from MAME 0.63.
+	- Removed support for the ALSA 0.5 plugin.  (Shyouzou Sugitani)
+	- Fixed a C89 compilation error in vidhrdw/gaelco2.c.  (Andrea 
+	  Mazzoleni)
+	- Fixed the pitch for games using a YMF278B.  (R. Belmont)
+	- The default path for data files in the example rc files, docs, and 
+	  several scripts is now FHS-compliant.  (Reported by anarxia.)
+	- Parsing the history data file is much faster.  (Chris Kirmse)
+
+Release 0.62.2, 12 January 2003
+	- Fixed a link error that affected xmame but not xmess.
+
+Release 0.62.1, 12 January 2003
+	- Almost everything from MAME 0.62 and MESS 0.62.1.
 	- The game window should no longer open twice on startup in most cases.
 	  One known exception is Pac-Man with artwork enabled.
 	- Replaced fileio.c with a slightly modified version from the Win32 
@@ -11,7 +24,6 @@ Release 0.62.1
 	  a result!
 	- Applied the Xv cleanup patch required for the VIDIX patch.  (Alastair 
 	  Robinson)
-	- The OpenGL target should work much better.  (Stephen Anthony)
 	- The number of games is no longer hard-coded to 3000 in datafile.c.  
 	  This should fix problems with history.dat and "-listinfo".  (Rene 
 	  Single)
@@ -35,6 +47,20 @@ Release 0.62.1
 	  effect.  (David Mitchell)
 	- Updated the documentation to include a section about the Xv extension.
 	  (Frank Cox)
+	- Fixed problems in memory.c that could lead to crashes and default.cfg
+	  corruption.  (smf)
+	- Fixed a bunch of ANSI/ISO warnings reported by Stefano Priore.
+	- Aspect and mode switches are now available for the Xv driver even if 
+	  DGA isn't enabled.
+	- Fixed a couple of files so that they include <alsa/asoundlib.h> 
+	  instead of the deprecated <sys/asoundlib.h>.  (Nico)
+	- Changed a net_active() call in src/mame.c to the osd_net_active().  I 
+	  must have messed up my all-in-one core patch at some point.
+	- The 'rc' and 'hi' directories are now created on startup if they're 
+	  missing.  (Gerd Sussner)
+	- Merged NetMAME 0.6rc1, which should allow games to be playable over 
+	  medium-latency connections, DSL, and cable.  It also adds configurable
+	  ports and NVRAM sync.  (Steve Freeland)
 
 Release 0.61.1, 13 November 2002
 	- Almost everything from MAME 0.61 and MESS 0.61.2.

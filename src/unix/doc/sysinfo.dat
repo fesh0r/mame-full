@@ -10,8 +10,8 @@
 # executable when using the DOS version of MESS. This file must be renamed HISTORY.DAT to
 # be used with MESS32.
 
-# Driver entries are (usually) broken into three sections, Usage, Known Issues, and 
-# History and Trivia.
+# Driver entries are usually divided into sections such as: Usage, Features, Links, Known Issues,
+# History and Trivia, and MESS Emulation State.
 
 # Usage - This section lists any helpful commands for the computer or console in question, 
 # such as disk operating system and file loading BASIC commands. This information is not 
@@ -37,7 +37,14 @@ Atari 2600 Video Computer System
 
 History and Trivia:
 
-The Atari Video Computer System (VCS) was released in 1977 at a suggested retail price of $299, which dropped quickly as sales soared; about 340,000 systems were sold the first year alone.  Joe Decuir, Steve Mayer and Ron Milner designed the VCS.  The Atari VCS was developed under the project codename "Stella".  The VCS later became known, both commonly and officially as the Atari 2600 (from the model number CX2600).  It is rumored that the number 2600 was chosen because 2600 cycles was a prominent long distance access tone, and that one of the developers had created devices that would trick pay phones into granting long distance access as a hobby.
+The Atari Video Computer System (VCS) was released in 1977 at a suggested retail price of 
+$299, which dropped quickly as sales soared; about 340,000 systems were sold the first year 
+alone.  Joe Decuir, Steve Mayer and Ron Milner designed the VCS.  The Atari VCS was 
+developed under the project codename "Stella".  The VCS later became known, both commonly
+and officially as the Atari 2600 (from the model number CX2600).  It is rumored that the number 
+2600 was chosen because 2600 cycles was a prominent long distance access tone, and that
+one of the developers had created devices that would trick pay phones into granting long
+distance access as a hobby.
 
 
 Features:
@@ -64,8 +71,9 @@ Atari Historical Society - www.atari-history.com/a2600.html
 
 MESS Emulation State:
 
-This driver is highly preliminary. It will load most 2k, 4k, and 8k Game Program images, but will only display graphics for some of them. The games themselves are not currently playable. Work is continuing on the driver however. 
-
+This driver is highly preliminary. It will load most 2k, 4k, and 8k Game Program images, but will 
+only display graphics for some of them. The games themselves are not currently playable. Work 
+is continuing on the driver however. 
 
 $end
 
@@ -641,25 +649,25 @@ Apple 1
 
 History and Trivia:
 
-Steve Wozniak, who worked for Hewlett-Packard at the time, wanted to build his own computer. 
-He couldn't afford the Intel 8080 CPU (this CPU was very popular then, as it was used in the 
-Altair 8800 & IMSAI 8080, but was pretty expensive), he would use the Motorola 6800 but it 
-was also much too expensive. Finally he decided to build his computer around the MOS 6502 
-(which was pretty compatible with the Motorola 6800). The computer was easier to use than 
-the Altair: unlike the Altair, the computer has a keyboard and can display characters on a 
-TV (the Altair uses LEDs for its display). The display was very slow, only 60 characters (!) 
+Steve Wozniak, who worked for Hewlett-Packard at the time, wanted to build his own computer.
+He couldn't afford the Intel 8080 CPU (this CPU was very popular then, as it was used in the
+Altair 8800 & IMSAI 8080, but was pretty expensive), he would use the Motorola 6800 but it
+was also much too expensive. Finally he decided to build his computer around the MOS 6502
+(which was pretty compatible with the Motorola 6800). The computer was easier to use than
+the Altair: unlike the Altair, the computer has a keyboard and can display characters on a
+TV (the Altair uses LEDs for its display). The display was very slow, only 60 characters (!)
 were displayed each second.
 
 
-Steve Jobs, who made the game "Breakout" for Atari, with a little help from "the Woz", was 
-interested in this computer. Together they created the Apple Computer Company and they tried 
-to sell the computer. Paul Terrell, the owner of a computer shop, was interested in this 
-computer, but fully assembled (the Apple 1 was sold "naked", no monitor, power supply, 
-keyboard, tape drive, etc.) and with a cassette interface, which Wozniak designed. He sold 
-it with the Basic he wrote soon after. They sold about two hundred of these units. This 
-machine was so popular that Jack Tramiel of Commodore (!) offered to buy Apple, because 
-Apple was, at the time, a major purchaser of MOS 6502 processors (Commodore owned Mos 
-Technologies). Wozniak wanted $15,000 more than Tramiel offered, needless to say, the deal 
+Steve Jobs, who made the game "Breakout" for Atari, with a little help from "the Woz", was
+interested in this computer. Together they created the Apple Computer Company and they tried
+to sell the computer. Paul Terrell, the owner of a computer shop, was interested in this
+computer, but fully assembled (the Apple 1 was sold "naked", no monitor, power supply,
+keyboard, tape drive, etc.) and with a cassette interface, which Wozniak designed. He sold
+it with the Basic he wrote soon after. They sold about two hundred of these units. This
+machine was so popular that Jack Tramiel of Commodore (!) offered to buy Apple, because
+Apple was, at the time, a major purchaser of MOS 6502 processors (Commodore owned Mos
+Technologies). Wozniak wanted $15,000 more than Tramiel offered, needless to say, the deal
 fell through. It was followed the next year by the Apple ][.
 
 
@@ -674,43 +682,77 @@ Apple //c Series
 
 Known Issues:
 
-Requires full keyboard emulation. At startup, full keyboard emulation mode is enabled by 
-default. Whilst in full keyboard emulation mode, some key associated functionality may be 
-disabled (like the ESC key for EXIT). The keyboard emulation mode is toggled using the 
+Requires full keyboard emulation. At startup, full keyboard emulation mode is enabled by
+default. Whilst in full keyboard emulation mode, some key associated functionality may be
+disabled (like the ESC key for EXIT). The keyboard emulation mode is toggled using the
 scroll_lock key.
 
 
 History and Trivia:
 
-The Apple IIc is the compact (the "c" means compact) version of the Apple IIe. It has the 
-same characteristics but lot of features which are optional on the IIe are provided on the 
-IIc (floppy disk drive, 80 columns display, color display, 128 KB RAM), but unlike the 
-Apple 2e, it has no expansion slots, so it is hard to add features to this computer. It 
-runs either with DOS 3.3 either with ProDos and has the first version of QuickDraw in ROM. 
-The Apple IIc was originally designed to be a portable version of the Apple II, but it 
-wasn't a stand alone system, it has no batteries and no LCD screen (Apple would soon 
-release the items), it could also be used with a small 9" monochrome green screen which 
-plugged into the unit. The Apple IIc was mainly used as a desktop computer. The Apple IIc 
+Apple "][", Apple "II", Apple "//" - Which is correct?
+
+"][", "II", and "//" tend to be used pretty much interchangably for any model of Apple II
+computer, although, practically speaking, there are a few usages which may provoke a
+correction.
+
+"][" is the original Apple II symbol. It appears on all early II's and II+'s as well as on the
+Disk ][ drive. It is, easily, the most attractive and distinctive II symbol; but, it is also
+associated with old Apple II's. The "//" usage is generally associated with the "c" and
+newer "e" models.
+
+The generally preferred machine designations are:
+
+Apple ][   or  Apple II for pre-][+ models
+Apple ][+  or  Apple II+
+Apple IIe  for non-enhanced IIe computers
+Apple //e  for 128k-enhanced IIe computers
+Apple //c
+Apple IIc+
+Apple IIgs or  GS  or best (if you have the fonts)  ||GS
+
+The Apple //c is the compact (the "c" means compact) version of the Apple IIe. It has the
+same characteristics but lot of features which are optional on the IIe are provided on the
+//c (floppy disk drive, 80 columns display, color display, 128 KB RAM), but unlike the
+Apple IIe, it has no expansion slots, so it is hard to add features to this computer. It
+runs either with DOS 3.3 either with ProDos and has the first version of QuickDraw in ROM.
+The Apple //c was originally designed to be a portable version of the Apple II, but it
+wasn't a stand alone system, it has no batteries and no LCD screen (Apple would soon
+release the items), it could also be used with a small 9" monochrome green screen which
+plugged into the unit. The Apple //c was mainly used as a desktop computer and
 was replaced with the Apple IIc+ in 1988.
 
 
-The Apple IIc Plus unit was a direct response to the Laser 128EX/2.  Apple retrofitted the 
-IIc design to try to compete with Video Technology's high speed Apple II clone. The 
-retrofitting is evident in the design of the motherboard.  The motherboard runs at 1Mhz, 
-unlike the Laser 128EX/2.  In order to run its programs faster, Apple used a 4Mhz 65C02 
-with 8k of high speed SRAM cache and licensed the accelerator design from Zip 
-Technologies (makers of the ZipChip accelerator for the IIe and IIc).  They built an 
+The Apple IIc+ unit was a direct response to the Laser 128EX/2.  Apple retrofitted the
+//c design to try to compete with Video Technology's high speed Apple II clone. The
+retrofitting is evident in the design of the motherboard.  The motherboard runs at 1Mhz,
+unlike the Laser 128EX/2.  In order to run its programs faster, Apple used a 4Mhz 65C02
+with 8k of high speed SRAM cache and licensed the accelerator design from Zip
+Technologies (makers of the ZipChip accelerator for the IIe and //c).  They built an
 accelerator into a 1Mhz motherboard rather than design a faster motherboard from scratch.
 
 
-The designers of the Apple IIc Plus originally wanted to make a portable IIGS. Apple's 
-management, bent on promoting the Mac, balked at the idea. At the same time, the 
-Laser 128EX/2 made a quick design cycle mandatory. The result is an updated IIc.
+The designers of the Apple IIc+ originally wanted to make a portable ||GS. Apple's
+management, bent on promoting the Mac, balked at the idea. At the same time, the
+Laser 128EX/2 made a quick design cycle mandatory. The result is an updated //c.
 
+Apple //c went under several revisions: you can discover which machine you are using issuing
+the command PRINT PEEK(64447).
 
-The Apple IIc Plus was the finest Apple 8-bit computer ever built, but lack of marketing, 
-the apparent de-evolution in technology compared to the 16-bit Apple IIGS, and the 
-aggressive sale of the Laser 128EX/2 made the IIc Plus the most short lived of the 
+If 255 is displayed, you have the first, original model. This model is known to have problems
+producing accurate baud rates for serial communications.
+
+If 0 is displayed, you can use 3.5" drives, but you don't have the memory expansion connector.
+
+If 3 is displayed, you have the memory exapnsion connector and you can plug in extra memory.
+
+If 4 is displayed, you have the latest model with memory expansion connector and extra upgrades.
+
+If 5 is displayed, you have an Apple IIc+.
+
+The Apple IIc+ was the finest Apple 8-bit computer ever built, but lack of marketing,
+the apparent de-evolution in technology compared to the 16-bit Apple ||GS, and the
+aggressive sale of the Laser 128EX/2 made the IIc+ the most short lived of the
 Apple II models.
 
 
@@ -720,26 +762,48 @@ $end
 
 $info=apple2e
 $bio
-Apple //e series
+Apple IIe series
 
 
 Known Issues:
 
-Requires full keyboard emulation. At startup, full keyboard emulation mode is enabled by 
-default. Whilst in full keyboard emulation mode, some key associated functionality may be 
-disabled (like the ESC key for EXIT). The keyboard emulation mode is toggled using the 
+Requires full keyboard emulation. At startup, full keyboard emulation mode is enabled by
+default. Whilst in full keyboard emulation mode, some key associated functionality may be
+disabled (like the ESC key for EXIT). The keyboard emulation mode is toggled using the
 scroll_lock key.
 
 
 
 History and Trivia:
 
-The Apple IIe is the successor of the Apple II+. It was a very great success and was widely 
-used in schools (and it's still used today in some places !). It works under DOS 3.3 
-(the Apple II operating system) and uses 143 KB floppy disks.
+Apple "][", Apple "II", Apple "//" - Which is correct?
+
+"][", "II", and "//" tend to be used pretty much interchangably for any model of Apple II
+computer, although, practically speaking, there are a few usages which may provoke a
+correction.
+
+"][" is the original Apple II symbol. It appears on all early II's and II+'s as well as on the
+Disk ][ drive. It is, easily, the most attractive and distinctive II symbol; but, it is also
+associated with old Apple II's. The "//" usage is generally associated with the "c" and
+newer "e" models.
+
+The generally preferred machine designations are:
+
+Apple ][   or  Apple II for pre-][+ models
+Apple ][+  or  Apple II+
+Apple IIe  for non-enhanced IIe computers
+Apple //e  for 128k-enhanced IIe computers
+Apple //c
+Apple IIc+
+Apple IIgs or  GS  or best (if you have the fonts)  ||GS
 
 
-The Apple IIe was replaced with the Apple IIe+, which had an enhanced keyboard, a 4 MHz 
+The Apple IIe (the "e" means enhanced) is the successor of the Apple ][+. It was a very
+great success and was widely used in schools (and it's still used today in some places!)
+It works under DOS 3.3 (the Apple II operating system) and uses 143 KB floppy disks.
+
+
+The Apple IIe was replaced with the Apple //e, which had an enhanced keyboard, a 4 MHz
 65C02 CPU and a 3.5" floppy disk unit.
 
 
@@ -754,7 +818,7 @@ Mattel Aquarius
 
 Usage Notes:
 
-From within the emulation, there are several BASIC command keyboard shortcuts available by 
+From within the emulation, there are several BASIC command keyboard shortcuts available by
 pressing control and another key.
 
 
@@ -958,7 +1022,7 @@ cga adapter in slot or motherboard?
 harddisk controller in slot or motherboard?
 32mb harddisk
 
-Mess Emulation State:
+MESS Emulation State:
 
 basically the same as mess ibmpc emulation
 rtc/setup ram not emulated
@@ -2249,7 +2313,7 @@ connector for external power supply
 cartridge slot
 
 
-Mess Emulation State:
+MESS Emulation State:
 
 not working (not even CPU is known)
 stopped until CPU type is recognized or info found
@@ -2683,7 +2747,7 @@ at type connector for rs232 serial port
 parallel port connector
 
 
-Mess Emulation State:
+MESS Emulation State:
 
 basically the same as mess ibmpc emulation
 special keyboard emulated
@@ -2717,7 +2781,7 @@ connector with support for rs232 and centronics
 2 3V CR2032 lithium as power supply
 1 3V CR2012 lithium as ram power supply
 
-Mess Emulation:
+MESS Emulation State:
 
 not started, need information about the hd62002 CPU
 (should be in the normal user manual!)
@@ -2750,7 +2814,7 @@ Emulator:
 Galaksija emulator by Miodrag Jevremovic
 
 
-Mess Emulation State:
+MESS Emulation State:
 
 tape not emulated
 video hardware not emulated (hack used)
@@ -2764,7 +2828,17 @@ $end
 
 $info=gameboy
 $bio
-Nintendo GameBoy
+Nintendo GameBoy (1989)
+
+
+The Game Boy was a huge success for Nintendo. It was the second portable system 
+created by Nintendo (the first being the Game & Watch series starting in 1980). The 
+original Game Boy was released in 1989 and allowed game players to play a huge library 
+of games away from home.  Games like Super Mario Land, The Legend of Zelda: Link's 
+Awakening and Tetris proved that quality games could be developed for portable use.
+
+Nintendo later released the “Play it Loud” Game Boy series in 5 colors, and the redesigned 
+slimmed down Game Boy pocket version was released in 1996.
 
 
 Known Issues:
@@ -2785,7 +2859,10 @@ $bio
 Sega Game Gear (1990)
 
 
-The Game Gear is the portable version of the Sega Master System, with slightly enhanced graphics and stereo sound, but fully compatible (i.e. you could play SMS games on the GG with the use of a special adaptor). The Game Gear was sold 11 million times world-wide (2 million in Japan, 9 million in the rest of the world). (note taken from www.eidolons-inn.de)
+The Game Gear is the portable version of the Sega Master System, with slightly enhanced 
+graphics and stereo sound, but fully compatible (i.e. you could play SMS games on the GG
+with the use of a special adaptor). The Game Gear was sold 11 million times world-wide 
+(2 million in Japan, 9 million in the rest of the world). (note taken from www.eidolons-inn.de)
 
 
 Features:
@@ -2823,7 +2900,20 @@ $bio
 Sega Megadrive/Genesis (1988)
 
 
-The Sega Genesis was released in Japan on the 29th of October 1988, and in the USA on the 1st of September 1989. At that time, no other console could compete with Sega´s powerful 16-bit system, apart from the PC-Engine / TurboGrafx-16, perhaps. But due to a lack of third-party support - especially with the arrival of the SNES, because many of the major game companies were still bound to Nintendo because of the contracts they made in the NES era - the Genesis never became as successful as Nintendo´s 16-bit console. Nevertheless, about 28.5 million consoles were sold worldwide, compared to about 48 million SNES consoles. Looking at the different regions of the world, the Genesis was most successful in the USA. It was quite strong in Europe, too (especially Great Britain is famous for being the European Sega stronghold), but did not succeed very well in Japan, Nintendo's home country. It was definitely no mistake to buy the console, as I did in early 1990, shortly after Super Shinobi had been released.  Among the approximetaly 1000 games which were produced during the genesis' lifespan (about 10 years during 1988-1998) are a lot of evergreens which deserve to be played even today. (note taken from www.eidolons-inn.de)
+The Sega Genesis was released in Japan on the 29th of October 1988, and in the USA on the 1st
+of September 1989. At that time, no other console could compete with Sega´s powerful 16-bit 
+system, apart from the PC-Engine / TurboGrafx-16, perhaps. But due to a lack of third-party 
+support - especially with the arrival of the SNES, because many of the major game companies 
+were still bound to Nintendo because of the contracts they made in the NES era - the Genesis 
+never became as successful as Nintendo´s 16-bit console. Nevertheless, about 28.5 million 
+consoles were sold worldwide, compared to about 48 million SNES consoles. Looking at the 
+different regions of the world, the Genesis was most successful in the USA. It was quite strong in 
+Europe, too (especially Great Britain is famous for being the European Sega stronghold), but did
+not succeed very well in Japan, Nintendo's home country. It was definitely no mistake to buy the
+console, as I did in early 1990, shortly after Super Shinobi had been released.  Among the 
+approximetaly 1000 games which were produced during the genesis' lifespan (about 10 years 
+during 1988-1998) are a lot of evergreens which deserve to be played even today. (note taken 
+rom www.eidolons-inn.de)
 
 
 Features:
@@ -2855,11 +2945,13 @@ Usage:
 Under the "Options" menu, accessible by hitting TAB, you will find the following option: 
 
 
-"Country" - this allows you to alter the 'flavour' of Genesis, to either European, Japanese or American. Many cartridges compare their country codes with that of the Genesis itself and may behave differently, or lock up if the two types do not match.
+"Country" - this allows you to alter the 'flavour' of Genesis, to either European, Japanese 
+or American. Many cartridges compare their country codes with that of the Genesis itself and 
+may behave differently, or lock up if the two types do not match.
 
 
-'Auto' attempts to auto-set the Genesis country code to the value the cartridge will appear to be checking for. This may not be 100% accurate, however.
-
+'Auto' attempts to auto-set the Genesis country code to the value the cartridge will appear
+ to be checking for. This may not be 100% accurate, however.
 
 Links:
 
@@ -2868,13 +2960,15 @@ EIdolons inn - www.eidolons-inn.de
 
 MESS Emulation State:
 
-Most games tend to run fairly well. Some have slight graphic glitches; incorrect colours part way down the screen or other bizarre effects. See genesis.crc for a partial list.
+Most games tend to run fairly well. Some have slight graphic glitches; incorrect colours part
+way down the screen or other bizarre effects. See genesis.crc for a partial list.
 
 
 Cartridges up to 32MBit (4MByte) are supported.
 
 
-The controller may not work well with some games. This will be resolved when more information is obtained. Similarly, 6-button joypads aren't emulated yet.
+The controller may not work well with some games. This will be resolved when more information
+is obtained. Similarly, 6-button joypads aren't emulated yet.
 
 
 Split screen effects and interlacing are not yet supported.
@@ -2886,11 +2980,17 @@ Sprite/layer priority should be perfect.
 Sound is emulated at Z80 and PSG76489 level. 
 
 
-I still consider the Genesis driver extremely preliminary. I have a lot of further work to do before I consider it anywhere near complete. My initial goal is to make it as compatible as possible. Currently there is scope within the driver to handle split screen colour changes/any VDP effect, interlacing, without rewriting. The graphics renderer emulates VDP at scanline level, and does not use tile-based methods.
+I still consider the Genesis driver extremely preliminary. I have a lot of further work to do 
+before I consider it anywhere near complete. My initial goal is to make it as compatible 
+as possible. Currently there is scope within the driver to handle split screen colour changes/any
+ VDP effect, interlacing, without rewriting. The graphics renderer emulates VDP at scanline 
+level, and does not use tile-based methods.
 
 
-Wanted: Any Sega Megadrive information specifically, some of the finer points of DMA transfer, and access of the 68K memory map by the Z80! Information is extremely sparse; typically the same three-four documents, with parts incomplete, conflicting, and corrupted. Generally, points which conflict with themselves in the documentation available on the net...
-
+Wanted: Any Sega Megadrive information specifically, some of the finer points of DMA transfer,
+ and access of the 68K memory map by the Z80! Information is extremely sparse; typically the
+ same three-four documents, with parts incomplete, conflicting, and corrupted. Generally, points
+ which conflict with themselves in the documentation available on the net...
 
 $end
 
@@ -2929,7 +3029,7 @@ Official and legal HP rom images:
 http://www.hpcalc.org/hp.php
 
 
-Mess Emulation State:
+MESS Emulation State:
 
 not working
 (g memory management not finished)
@@ -2963,7 +3063,7 @@ greyscale or color vga monitor
 optional: ethernet adapter with bnc (coax) and rj45 (twisted pair) connectors
 
 
-Mess Emulation State:
+MESS Emulation State:
 
 basically the same as ibmat emulation
 ps2 mouse not emulated now
@@ -3031,7 +3131,7 @@ Virtual PC for Linux, NT (commercial, very usable)
 Bochs
 
 
-Mess Emulation State:
+MESS Emulation State:
 
 basically the same as ibmpc emulation
 rough emulation of keyboard controller
@@ -3070,7 +3170,7 @@ Features IBMXT:
 8086 CPU (16 bit data bus)
 
 
-Mess Emulation State:
+MESS Emulation State:
 
 rough emulation of the keyboard controller
 rough emulation of the pic chip
@@ -3110,7 +3210,7 @@ unique keyboard
 integrated joystick support
 
 
-Mess Emulation State:
+MESS Emulation State:
 
 basically the same as mess ibmpc emulation
 pc junior graphics emulated
@@ -3424,7 +3524,8 @@ FAQ on Lynx - www.digiserve.com/eescape/atari/Atari.shtml
 Atari age - www.atariage.com (Excellent Site)
 
 
-Mess Emulation State:
+MESS Emulation State:
+
 several cartridges playable
 blitter imperfect
 timer system incomplete
@@ -3604,7 +3705,7 @@ Microbee
 
 Features:
 
-Mess Emulation State:
+MESS Emulation State:
 
 $end
 
@@ -3637,7 +3738,7 @@ answering with 5 prompts you with bp
 than you can play as white and enter your move (enter is d/play)
 
 
-Mess Emulation State:
+MESS Emulation State:
 
 operating instructions needed!
 not working (CPU core problem?)
@@ -3675,8 +3776,7 @@ for the computer to start as white
 Pinout and instructions for reading roms are in messroms.txt
 
 
-Mess Emulation State:
-
+MESS Emulation State:
 Random number generation is not accurate (rriot6530 emulation)
 led emulation not accurate (noticeable while computer is thinking)
 
@@ -4337,7 +4437,7 @@ The computer has a built in wordprocessor, BBC Basic, Serial Terminal,
 Calculator, Diary and more. The whole system is a personal organiser with lots
 of extras.
 
-Mess Emulation State:
+MESS Emulation State:
 
 a. ACCURACY
 
@@ -4460,10 +4560,10 @@ The computer has a built in wordprocessor, BBC Basic, Serial Terminal,
 Calculator, Diary and more. The whole system is a personal organiser with lots
 of extras.
 
-Mess Emulation State:
+MESS Emulation State:
 
 a. ACCURACY
------------
+
 
 The emulation is reasonably accurate. There are no documents about the hardware
 of the NC200. Originally Cliff Lawson published details but these have been lost
@@ -4521,7 +4621,7 @@ Notes:
 msdos utilities for quickset and ems available
 
 
-Mess Emulation State:
+MESS Emulation State:
 
 basically the same as mess ibmat emulation
 special chipset features not emulated yet
@@ -4616,7 +4716,7 @@ Emulators:
 Dan Boris o2em for DOS
 
 
-Mess Emulation:
+MESS Emulation State:
 
 based on info by Dan Boris
 
@@ -4810,7 +4910,7 @@ same connector for printer and tape drive as pc1401
 2 "build in" batteries
 
 
-Mess Emulation State:
+MESS Emulation State:
 
 look at pc1401
 
@@ -4842,8 +4942,7 @@ Emulator:
 pockemul for win32
 
 
-Mess Emulation State:
-
+MESS Emulation State:
 look at pc1401
 
 
@@ -4986,7 +5085,7 @@ connector for printer and disk drive
 no contrast adjustment
 
 
-Mess Emulation State:
+MESS Emulation State:
 
 look at pc1401
 
@@ -5016,7 +5115,7 @@ batterie slot
 connector for external power supply
 
 
-Mess Emulation State:
+MESS Emulation State:
 
 not working
 incomplete CPU core
@@ -5059,8 +5158,7 @@ Some models sold with second 5 1/4 inch disk drive
 Some models sold with harddisk controller and 20mb harddisk
 
 
-Mess Emulation State:
-
+MESS Emulation State:
 basically the same as mess ibmpc emulation
 special keyboard emulated
 special mouse emulated
@@ -5092,7 +5190,7 @@ the same as PC1512, except the integrated graphics adapter
 is EGA compatible and the monitor is an EGA one.
 
 
-Mess Emulation State:
+MESS Emulation State:
 
 basically the same as PC1512
 paradise ega emulation incomplete, will profit from generic ega/vga improvements
@@ -5134,7 +5232,7 @@ Notes:
 
 download the mouse driver at http://www.users.zetnet.co.uk/johnhayward/pc200/software.htm
 
-Mess Emulation State:
+MESS Emulation State:
 
 basically the same as mess ibmpc emulation
 character rom dump missing
@@ -5282,8 +5380,7 @@ Universo PCENGINE - upce.netfirms.com/index.html
 Turbo Station 16 - pcenginefx.com/TS/
 
 
-Mess Emulation State:
-
+MESS Emulation State:
 Preliminary...  Xevious and Raiden8x work OK.
 
 $end
@@ -5320,8 +5417,7 @@ Amstrad computer support site at: http://web.ukonline.co.uk/cliff.lawson/ (the d
 listed in the files section). Cliff works at Amstrad plc, and has worked on the many 
 projects from the Amstrad CPC to the latest e-mail phone.
 
-Mess Emulation State:
-
+MESS Emulation State:
 All major functions are working and the computer is useable, however there
 are some accuracy problems.
 
@@ -6365,7 +6461,7 @@ connection for printer
 connection for board display
 
 
-Mess Emulation State:
+MESS Emulation State:
 
 not working
 low priority for me because it uses features not implemented in via6522 emulation
@@ -6472,8 +6568,7 @@ Cartridge must be in for operation
 Pinout of cartridge is in mess/messroms/svision.txt
 
 
-Mess Emulation State:
-
+MESS Emulation State:
 very preliminary support
 preliminary sound support
 no serial port
@@ -6500,7 +6595,7 @@ connector for tty input/output
 tape interface
 
 
-Mess Emulation State:
+MESS Emulation State:
 
 display, keyboard working
 Work on it stopped. For me it is much to cryptic to operate and therefore not interesting
@@ -6553,8 +6648,7 @@ get the setup utility for msdos at tandy's web side
 to change setup
 
 
-Mess Emulation State:
-
+MESS Emulation State:
 basically the same as ibmpcjr
 special setup memory emulated
 work stopped until dump of character rom available
@@ -6652,7 +6746,7 @@ TI-Files
 http://www.ti-files.org
 
 
-Mess Emulation State:
+MESS Emulation State:
 
 driver for rom versions:  1.8
 grayscale effects emulated
@@ -6724,7 +6818,7 @@ TI-Files
 http://www.ti-files.org
 
 
-Mess Emulation State:
+MESS Emulation State:
 
 drivers for rom versions:  3.0A, 4.0, 5.0, 6.0, 8.0, 9.0, 10.0
 sound emulated (speaker connected to link port)
@@ -6807,7 +6901,7 @@ TI-Files
 http://www.ti-files.org
 
 
-Mess Emulation State:
+MESS Emulation State:
 
 drivers for rom versions: 1.3, 1.4, 1.5, 1.6
 driver for ti86grom (homebrew rom by Daniel Foesch)
@@ -7222,7 +7316,7 @@ Dumping Cartridges:
 (a little bit different to 2716)
 look into messroms for a pinout of it
 
-Mess emulation state:
+MESS Emulation State:
 
 based on info by Paul Robson, Christian Windler
 sponsored by Andreas W.
@@ -7258,7 +7352,7 @@ x1   x2   x3
 Del   0  Enter
 
 
-Mess emulation state:
+MESS Emulation State:
 
 sponsored by Ward Shrake, Stefan P.
 same as arcadia
@@ -7494,7 +7588,7 @@ tv output
 integrated speaker
 
 
-Mess Emulation State:
+MESS Emulation State:
 
 display, keyboard working
 Stopped. For me it is much too cryptic to operate and therefore not interesting.

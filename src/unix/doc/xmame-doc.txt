@@ -4,7 +4,7 @@ Juan Antonio Martinez [mailto:jantonio@dit.upm.es||jantonio@dit.upm.es] and Hans
 Herrmann (4 doc/sgml) [mailto:rene.herrmann@berlin.de||rene.herrmann@berlin.de] and Lawrence Gold (minor 
 editing) [mailto:gold@aros.net||gold@aros.net] and David Heremans (minor editing)
 
-v2.1.20, 9 December 2002
+v2.1.22, 12 January 2003
 
 Abstract
 
@@ -2688,7 +2688,7 @@ maintainer. --Lawrence Gold)
 
 * The xmame/xmess sources
 
-  [download/xmame-0.62.1.tar.bz2||xmame-0.62.1 sources]
+  [download/xmame-0.62.2.tar.bz2||xmame-0.62.2 sources]
 
 * xmame/xmess FAQ & Installation Guide:
 

@@ -2,7 +2,7 @@
 #
 # romulan.pl - Nathan Hand (nathanh@manu.com.au)
 #
-# MAME rom analyser. Needs a merged set in /usr/lib/games/xmame/roms
+# MAME rom analyser. Needs a merged set in /usr/local/share/games/xmame/roms
 # and the xmame + unzip binaries in your PATH. Romulan will detect &
 # report problems that commonly occur with merged sets, eg.
 #
@@ -38,7 +38,7 @@ use Getopt::Long;
 
 # config options, nothing fancy
 
-$zipdir = "/usr/lib/games/xmame/roms";
+$zipdir = "/usr/local/share/games/xmame/roms";
 $unzip_binary = "unzip";
 $xmame_binary = "xmame";
 $merged = 1;

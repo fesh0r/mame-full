@@ -69,16 +69,15 @@ analogstick             0
 mouse                   1
 
 ### Fileio Related ###
-biospath                /usr/games/lib/xmess/bios
-softwarepath            /usr/games/lib/xmess/software
-CRC_directory           /usr/games/lib/xmess/crc
-hiscore_directory       /usr/games/lib/xmess/hiscore
+biospath                /usr/local/share/games/xmess/bios
+softwarepath            /usr/local/share/games/xmess/software
+CRC_directory           /usr/local/share/games/xmess/crc
 snapshot_directory      .
-cheat_directory         /usr/games/lib/xmess/cheat
+cheat_directory         /usr/local/share/games/xmess/cheat
 cheatfile               cheat.cdb
-hiscore_file            /usr/games/lib/xmess/hiscore.dat
-history_file            /usr/games/lib/xmess/history.dat
-mameinfo_file           /usr/games/lib/xmess/mameinfo.dat
+hiscore_file            /usr/local/share/games/xmess/hiscore.dat
+history_file            /usr/local/share/games/xmess/history.dat
+mameinfo_file           /usr/local/share/games/xmess/mameinfo.dat
 
 ### Mess Related ###
 language                english

@@ -443,7 +443,7 @@ int frontend_list(char *gamename)
                   for(j=0;j<MAX_CPU;j++)
                   {
                      const struct MachineCPU *x_cpu = drv.cpu;
-                     if (x_cpu[j].cpu_type & CPU_AUDIO_CPU)
+                     if (x_cpu[j].cpu_flags & CPU_AUDIO_CPU)
                         fprintf(stdout_file, "[%-6s] ",cputype_name(x_cpu[j].cpu_type));
                       else
                         fprintf(stdout_file, "%-8s ",cputype_name(x_cpu[j].cpu_type));
@@ -987,8 +987,8 @@ static int frontend_list_cpu(void)
 /*              for (j = 0; j < MAX_CPU; j++) */
 j = 0;  /* count only the main cpu */
                {
-                  count[x_cpu[j].cpu_type & ~CPU_FLAGS_MASK]++;
-		  switch (cputype_databus_width(x_cpu[j].cpu_type & ~CPU_FLAGS_MASK))
+                  count[x_cpu[j].cpu_type]++;
+		  switch (cputype_databus_width(x_cpu[j].cpu_type))
                   {
                      case  8: count_buswidth[0]++; break;
                      case 16: count_buswidth[1]++; break; 

@@ -1,3 +1,35 @@
+0.62.1
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+(none)
+
+System Driver Changes:
+----------------------
+- [AQUARIUS/TRS80/MICROTAN] Now use tilemap. [Nate Woods]
+
+- [GAMEBOY] Fixed envelope generation in sound channels 1 and 2. (bug #289)
+  [Anthony Kruize]
+
+- [APPLE2] Added support for lo-res color and 80 column text. [Nate Woods]
+
+- [APPLE2] Fixed open/closed apple keys and joystick buttons. (bug #297,
+  bug #302) [Nate Woods]
+
+- [A800] Fixed a recently introduced bug in disk support. [Lawrence Gold]
+
+- [SFZCH] Fixed and re-enabled. [Anthony Kruize]
+
+- [T1000HX] Minor video optimizations. [Nate Woods]
+
+Source Changes:
+---------------
+- New generic code for emulating terminals, now in use by the Apple I and
+  Kaypro drivers. [Nate Woods]
+
+- Added the ability to specify a minimum resolution to display a system, in
+  order to better support low resolution drivers. [Nate Woods]
+
 0.62
 
 New System Drivers Supported (in no particular order):
@@ -19,6 +51,8 @@ System Driver Changes:
 
 - [APPLE2] Fixed keyboard and aspect ratio, and also added color, joystick, and
   natural keyboard support. (bug #291) [Nate Woods]
+
+- [SVI318] Enhanced disk drive support. [Tomas Karlsson]
 
 Source Changes:
 ---------------

@@ -364,10 +364,12 @@ int xf86_dga2_create_display(int bitmap_depth)
 
 	depth = xf86ctx.device->mode.bitsPerPixel;
 
+#if 0 /* DEBUG */
 	fprintf(stderr_file, "Debug: bitmap_depth =%d   mode.bitsPerPixel = %d"
 			"   mode.depth = %d\n", bitmap_depth, 
 			xf86ctx.device->mode.bitsPerPixel, 
 			xf86ctx.device->mode.depth);
+#endif
 
 	fprintf(stderr_file,"VidMode Switching To Mode: %d x %d\n",
 		xf86ctx.device->mode.viewportWidth,

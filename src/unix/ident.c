@@ -189,7 +189,7 @@ void identify_file(const char* name)
 void identify_zip(const char* zipname)
 {
 	struct zipent* ent;
-	ZIP* zip = openzip( zipname );
+	ZIP* zip = openzip( FILETYPE_RAW, 0, zipname );
 #ifdef IDENT_DEBUG
 	fprintf(stderr_file, "identify_zip(%s) called\n", zipname);
 #endif

@@ -12,9 +12,9 @@ $XMAMERC_LOC='$PATH/FILENAME of your configuration file'
 $MAMEBIN='$PATH/FILENAME of your xmame executable'
 
 Default:
-$MAMEDIR = "/usr/games/lib/mame/roms";
-$XMAMERC_LOC = "/root/xmame/xmamerc";
-$MAMEBIN = "/usr/local/bin/xmame.linux";
+$MAMEDIR = "/usr/local/share/games/xmame/roms";
+$XMAMERC_LOC = "/usr/local/share/games/xmame/xmamerc";
+$MAMEBIN = "/usr/local/games/xmame.linux";
 
 4) play games :-)
 

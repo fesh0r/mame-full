@@ -47,28 +47,20 @@ if [ -f whatsnew.txt ]; then
   mv whatsnew.txt doc/changes.mame
 fi
 
-if [ -f gamelist.txt ]; then
-  mv gamelist.txt doc/gamelist.mame
-fi
-
-if [ -f docs/mame.txt ]; then
-  mv docs/mame.txt doc/readme.mame
-fi
-
-if [ -f docs/msdos.txt ]; then
-  mv docs/msdos.txt doc
-fi
-
-if [ -f docs/windows.txt ]; then
-  mv docs/windows.txt doc
-fi
-
 if [ -f docs/ctrlr.txt ]; then
   mv docs/ctrlr.txt doc
 fi
 
 if [ -f docs/listinfo.txt ]; then
   mv docs/listinfo.txt doc
+fi
+
+if [ -f docs/mame.txt ]; then
+  mv docs/mame.txt doc/readme.mame
+fi
+
+if [ -f docs/windows.txt ]; then
+  mv docs/windows.txt doc
 fi
 
 if [ -d docs ]; then

@@ -1578,7 +1578,7 @@ drawTextureDisplay (int useCabinet, int updateTexture)
     if( useColorBlitter )
     {
 	if(bytes_per_pixel==2)
-		gl_update_16_to_16bpp (Machine->scrbitmap);
+		gl_update_16_to_16bpp(Machine->scrbitmap);
 	else if(bytes_per_pixel==4)
 		gl_update_32_to_32bpp(Machine->scrbitmap);
 	else {

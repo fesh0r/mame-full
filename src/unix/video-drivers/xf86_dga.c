@@ -25,21 +25,6 @@ static void (*p_xf86_dga_update_display)(struct mame_bitmap *);
 static int  (*p_xf86_dga_alloc_palette)(int);
 static int  (*p_xf86_dga_16bpp_capable)(void);
 
-struct rc_option xf86_dga_opts[] = {
-   /* name, shortname, type, dest, deflt, min, max, func, help */
-#if defined USE_DGA && !defined USE_XV
-   { "XFree86 DGA Related", NULL,		rc_seperator,	NULL,
-     NULL,		0,			0,		NULL,
-     NULL },
-   { NULL,		NULL,			rc_link,	mode_opts,
-     NULL,		0,			0,		NULL,
-     NULL },
-#endif
-   { NULL,		NULL,			rc_end,		NULL,
-     NULL,		0,			0,		NULL,
-     NULL }
-};
-
 #ifdef USE_DGA
 
 int xf86_dga_init(void)

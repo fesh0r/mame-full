@@ -69,13 +69,12 @@ analogstick             0
 mouse                   1
 
 ### Fileio Related ###
-rompath                 /usr/games/lib/xmame/roms
-hiscore_directory       /usr/games/lib/xmame/hiscore
+rompath                 /usr/local/share/games/xmame/roms
 snapshot_directory      .
-cheat_file              /usr/games/lib/xmame/cheat.dat
-hiscore_file            /usr/games/lib/xmame/hiscore.dat
-history_file            /usr/games/lib/xmame/history.dat
-mameinfo_file           /usr/games/lib/xmame/mameinfo.dat
+cheat_file              /usr/local/share/games/xmame/cheat.dat
+hiscore_file            /usr/local/share/games/xmame/hiscore.dat
+history_file            /usr/local/share/games/xmame/history.dat
+mameinfo_file           /usr/local/share/games/xmame/mameinfo.dat
 
 ### Mame Related ###
 defaultgame             pacman
