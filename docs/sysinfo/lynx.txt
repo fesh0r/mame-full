@@ -4,13 +4,12 @@ Atari Lynx II
 
 color handheld
 
-Lynx II is a redisign without additional functionality
-
+Lynx II is a redisign: smaller,  shorter power down timer and stereo
 
 Features
 --------
 color display of 160x102 in 16 out of 4096 colors
-4 channel sound(integrated speaker)
+4 channel sound (integrated speaker mono), plug for headphones
 Controls for 1 Player
 Cartridge port
 Serial port
@@ -28,10 +27,11 @@ Emulators
 Handy for Win32 (exzellent)
 xhandy (linux binary) (exzellent)
 
+
 Mess Emulation State
 --------------------
 several cartridges playable
-blitter incomplete
+blitter imperfect
 timer system incomplete
-no audio
-work stopped (audio, blitter seams to be a lot of work without additional info)
+audio imperfect
+no serial port emulation
