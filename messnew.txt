@@ -14,6 +14,9 @@ System Driver Changes:
 
 - [BBC B] Updated to use updated 8271 FDC code. Disk images can be used and games
   can be loaded and played. [Kev Thacker]
+  
+- [BBC B] Cleaned up the memory accessing a little. This fixed a problem with
+  the DNFS rom thinking it found an econet controller. [Gordon Jefferyes]
 
 - [SAM COUPE] Updated Sam Coupe to use WD179x code (same as WD1772). However, this
 may not work because the implementation of how this works in the Sam Coupe
