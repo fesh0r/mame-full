@@ -3,14 +3,14 @@
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
 - Multitech MPF-1 (Mooglyguy)
-- [MSX] Daewoo IQ-1000 / DPC-200 - Korean (Jirou Kaneda)
-- [MSX2] Daewoo IQ-2000 / CPC-300 - Korean (Jirou Kaneda)
+- [MSX] Daewoo IQ-1000 / DPC-200 - Korean [Jirou Kaneda]
+- [MSX2] Daewoo IQ-2000 / CPC-300 - Korean [Jirou Kaneda]
 
 
 
 System Driver Changes:
 ----------------------
-(none)
+- [PCE] Fixed bug #531 [Nate Woods]
 
 
 

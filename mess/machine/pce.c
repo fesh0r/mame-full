@@ -10,7 +10,6 @@
 
 /* system RAM */
 unsigned char *pce_user_ram;    /* scratch RAM at F8 */
-unsigned char *pce_save_ram;    /* battery backed RAM at F7 */
 
 /* joystick related data*/
 
@@ -48,6 +47,8 @@ DEVICE_LOAD(pce_cart)
 
 NVRAM_HANDLER( pce )
 {
+	void *pce_save_ram = &memory_region(REGION_CPU1)[0x1EE000];
+
 	if (read_or_write)
 	{
 		mame_fwrite(file, pce_save_ram, 0x2000);
