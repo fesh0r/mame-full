@@ -870,7 +870,7 @@ static void msx_wd179x_int (int state)
 		}
 	}
 
-READ_HANDLER (msx_disk_r)
+READ_HANDLER (msx_disk_p1_r)
 	{
 	switch (offset)
 		{
@@ -881,6 +881,24 @@ READ_HANDLER (msx_disk_r)
 		case 0x1fff: return msx1.dsk_stat;
 		default: return msx1.disk[offset];
 		}
+	}
+
+READ_HANDLER (msx_disk_p2_r)
+	{
+	if (offset >= 0x1ff8)
+		{
+		switch (offset)
+			{
+			case 0x1ff8: return wd179x_status_r (0); 
+			case 0x1ff9: return wd179x_track_r (0); 
+			case 0x1ffa: return wd179x_sector_r (0); 
+			case 0x1ffb: return wd179x_data_r (0); 
+			case 0x1fff: return msx1.dsk_stat;
+			default: return msx1.disk[offset];
+			}
+		}
+	else
+		return 0xff;
 	}
 
 WRITE_HANDLER (msx_disk_w)
@@ -904,7 +922,7 @@ WRITE_HANDLER (msx_disk_w)
 			msx1.disk[0x1ffc] = data | 0xfe;
 			break;
 		case 0x1ffd:
-			wd179x_set_drive (data & 3);
+			wd179x_set_drive (data & 1);
 			if ( (msx1.disk[0x1ffd] ^ data) & 2)
 				set_led_status (0, !(data & 2) );
 			msx1.disk[0x1ffd] = data | 0x7c;
@@ -1055,7 +1073,13 @@ static void msx_set_slot_1 (int page) {
         cpu_setbank (4 + n, msx1.cart[0].mem + msx1.cart[0].banks[1 + n] * 0x2000);
 		if (page == 1) {
 			if (msx1.cart[0].type == 15) {
-				memory_set_bankhandler_r (4, 0, msx_disk_r);
+				memory_set_bankhandler_r (4, 0, msx_disk_p1_r);
+				msx1.disk = msx1.cart[0].mem + 0x2000;
+			}
+		}
+		if (page == 2) {
+			if (msx1.cart[0].type == 15) {
+				memory_set_bankhandler_r (6, 0, msx_disk_p2_r);
 				msx1.disk = msx1.cart[0].mem + 0x2000;
 			}
 		}
@@ -1082,7 +1106,13 @@ static void msx_set_slot_2 (int page)
         cpu_setbank (4 + n, msx1.cart[1].mem + msx1.cart[1].banks[1 + n] * 0x2000);
 		if (page == 1) {
 			if (msx1.cart[1].type == 15) {
-				memory_set_bankhandler_r (4, 0, msx_disk_r);
+				memory_set_bankhandler_r (4, 0, msx_disk_p1_r);
+				msx1.disk = msx1.cart[1].mem + 0x2000;
+			}
+		}
+		if (page == 2) {
+			if (msx1.cart[1].type == 15) {
+				memory_set_bankhandler_r (6, 0, msx_disk_p2_r);
 				msx1.disk = msx1.cart[1].mem + 0x2000;
 			}
 		}
@@ -1104,6 +1134,7 @@ static void msx_set_all_mem_banks (void)
     int i;
 
 	memory_set_bankhandler_r (4, 0, MRA_BANK4);
+	memory_set_bankhandler_r (6, 0, MRA_BANK6);
 		
     for (i=0;i<4;i++)
         msx_set_slot[(ppi8255_0_r(0)>>(i*2))&3](i);
@@ -1457,8 +1488,10 @@ static void msx_cart_write (int cart, int offset, int data)
         if (!offset) DAC_data_w (0, data);
         break;
 	case 15: /* disk rom */
-		if (offset >= 0x2000)
+		if ( (offset >= 0x2000) && (offset < 0x4000) )
 			msx_disk_w (offset - 0x2000, data);
+		else if ( (offset >= 0x6000) && (offset < 0x8000) )
+			msx_disk_w (offset - 0x6000, data);
 		break;
     }
 }
