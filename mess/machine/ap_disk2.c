@@ -70,14 +70,14 @@ void apple2_slot6_init(void)
 	runbyte6[0]   = runbyte6[1]   = 0;
 	disk6byte     = 0;
 	read_state    = 1;
-
+	
 	return;
 }
 
 void apple2_slot6_stop (void)
 {
-	free (a2_drives[0].data);
-	free (a2_drives[1].data);
+	apple2_floppy_exit(0);
+	apple2_floppy_exit(1);
 }
 
 int apple2_floppy_init(int id)
@@ -215,6 +215,12 @@ int apple2_floppy_init(int id)
 
 	return INIT_OK;
 }
+
+void	apple2_floppy_exit(int id)
+{
+	free (a2_drives[id].data);
+}
+
 
 /* For now, make disks read-only!!! */
 static void WriteByte(int drive, int theByte)
