@@ -58,6 +58,8 @@ System Driver Changes:
   work properly, including Mind-Roll which is banked.  Also, properly NOP'd
   invalid memory areas, which prevented Arkanoid from running.  [Nate Woods]
 
+- [COCO] Implemented support for the Orch90 cartridge. [Tim Lindner]
+
 - [MSX2] The V9938 emulation is improved, added interlaced mode, fixed blitter 
   timings, sprites, and GRAPHIC 5 (SCREEN 6). The MSX2 now has a 128kB memory 
   mapper, so now many more games run. Numeric keypad emulation added. Fix to

@@ -375,6 +375,16 @@ static WRITE_HANDLER(cartridge_banks_io_w)
 		cartcallbacks->setbank(data);
 }
 
+static WRITE_HANDLER(cartridge_Orch90_io_w)
+{
+	if( offset == 58 )
+		DAC_data_w(0, data);
+	
+	if( offset == 59 )
+		DAC_data_w(0, data);
+		
+}
+
 const struct cartridge_slot cartridge_standard =
 {
 	cartidge_standard_init,
@@ -390,6 +400,15 @@ const struct cartridge_slot cartridge_banks =
 	NULL,
 	NULL,
 	cartridge_banks_io_w,
+	NULL
+};
+
+const struct cartridge_slot cartridge_Orch90 =
+{
+	cartidge_standard_init,
+	NULL,
+	NULL,
+	cartridge_Orch90_io_w,
 	NULL
 };
 

@@ -26,5 +26,6 @@ extern const struct cartridge_slot cartridge_fdc_coco;
 extern const struct cartridge_slot cartridge_fdc_dragon;
 extern const struct cartridge_slot cartridge_standard;
 extern const struct cartridge_slot cartridge_banks;
+extern const struct cartridge_slot cartridge_Orch90;
 
 #endif /* COCOCART_H */

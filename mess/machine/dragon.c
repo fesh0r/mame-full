@@ -151,6 +151,7 @@ static void coco3_setcartline(int data);
 
 static void coco3_timer_hblank(void);
 static int count_bank(void);
+static int is_Orch90(void);
 
 static struct pia6821_interface dragon_pia_intf[] =
 {
@@ -517,7 +518,8 @@ int coco3_rom_load(int id)
 	
 	fp = image_fopen(IO_CARTSLOT, 0, OSD_FILETYPE_IMAGE_R, 0);
 	count = count_bank();
-	osd_fclose( fp );
+	if (fp)
+		osd_fclose(fp);
 	
 	if( count == 0 )
 		/* Load roms starting at 0x8000 and mirror upwards. */
@@ -1858,6 +1860,16 @@ static int count_bank(void)
 	}
 }
 
+static int is_Orch90(void)
+{
+	unsigned int	crc;
+	/* This function, and all calls of it, are hacks for bankswitched games */
+	
+	crc = device_crc(IO_CARTSLOT, 0);
+	
+	return crc == 0x15FB39AF;
+}
+
 static void generic_setcartbank(int bank, UINT8 *cartpos)
 {
 	void *fp;
@@ -1925,7 +1937,10 @@ static void generic_init_machine(struct pia6821_interface *piaintf, struct sam68
 	}
 
 	/* HACK for bankswitching carts */
-	cartslottype = (count_bank() > 0) ? &cartridge_banks : &cartridge_standard;
+	if( is_Orch90() )
+		cartslottype = &cartridge_Orch90;
+	else
+	    cartslottype = (count_bank() > 0) ? &cartridge_banks : &cartridge_standard;
 
 	coco_cartrige_init(cart_inserted ? cartslottype : cartinterface, cartcallback);
 	autocenter_init(12, 0x04);
