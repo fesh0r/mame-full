@@ -55,12 +55,14 @@ static int coco3_vidbase;
 #define LOG_BORDER	0
 #define LOG_PALETTE	0
 #define LOG_GIME	1
-#define LOG_VIDEO	0
+#define LOG_VIDEO	1
+#define LOG_MISC	1
 #else /* !MAME_DEBUG */
 #define LOG_BORDER	0
 #define LOG_PALETTE	0
 #define LOG_GIME	0
 #define LOG_VIDEO	0
+#define LOG_MISC	0
 #endif /* MAME_DEBUG */
 
 static int coco3_palette_recalc(int force);
@@ -352,10 +354,13 @@ void coco3_vh_blink(void)
 	coco3_blinkstatus = !coco3_blinkstatus;
 }
 
-int coco3_vblank(void)
+void coco3_latchvidbase(void)
 {
 	int newvidbase;
-	int bottom, rows;
+
+#if LOG_MISC
+	logerror("coco3_latchvidbase(): scanline=%i\n", rastertrack_scanline());
+#endif
 
 	/* Latch in new values for $FF9D:$FF9E */
 	newvidbase = (((coco3_gimevhreg[5] * 0x800) + (coco3_gimevhreg[6] * 8)));
@@ -363,6 +368,15 @@ int coco3_vblank(void)
 		schedule_full_refresh();
 		coco3_vidbase = newvidbase;
 	}
+}
+
+int coco3_vblank(void)
+{
+	int bottom, rows;
+
+#if LOG_MISC
+	logerror("coco3_vblank(): scanline=%i\n", rastertrack_scanline());
+#endif
 
 	rows = coco3_calculate_rows(NULL, &bottom);
 	return internal_m6847_vblank(263, (double) bottom, rastertrack_newline);
@@ -814,7 +828,7 @@ WRITE_HANDLER(coco3_gimevh_w)
 	int xorval;
 
 #if LOG_GIME
-	logerror("CoCo3 GIME: $%04x <== $%02x pc=$%04x\n", offset + 0xff98, data, cpu_get_pc());
+	logerror("CoCo3 GIME: $%04x <== $%02x pc=$%04x scanline=%i\n", offset + 0xff98, data, cpu_get_pc(), rastertrack_scanline());
 #endif
 	/* Features marked with '!' are not yet implemented */
 

@@ -682,6 +682,12 @@ WRITE_HANDLER( coco3_m6847_fs_w )
 		int top, rows;
 		rows = coco3_calculate_rows(&top, NULL);
 		rastertrack_newscreen(top, rows);
+
+		{
+			extern void coco3_latchvidbase(void);
+			coco3_latchvidbase();
+
+		}
 	}
 }
 

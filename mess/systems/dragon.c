@@ -457,14 +457,14 @@ static struct MachineDriver machine_driver_dragon32 =
 	{
 		{
 			CPU_M6809,
-			894886,	/* 0,894886 Mhz */
+			COCO_CPU_SPEED_HZ,
 			dragon32_readmem,dragon32_writemem,
 			0, 0,
 			m6847_vblank, 1,
 			0, 0,
 		},
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,		 /* frames per second, vblank duration */
+	COCO_FRAMES_PER_SECOND, 0,		 /* frames per second, vblank duration */
 	0,
 	dragon32_init_machine,
 	dragon_stop_machine,
@@ -504,14 +504,14 @@ static struct MachineDriver machine_driver_coco =
 	{
 		{
 			CPU_M6809,
-			894886,	/* 0,894886 Mhz */
+			COCO_CPU_SPEED_HZ,
 			d64_readmem,d64_writemem,
 			0, 0,
 			m6847_vblank, 1,
 			0, 0,
 		},
 	},
-	60, 0,		 /* frames per second, vblank duration */
+	COCO_FRAMES_PER_SECOND, 0,		 /* frames per second, vblank duration */
 	0,
 	coco_init_machine,
 	dragon_stop_machine,
@@ -551,14 +551,14 @@ static struct MachineDriver machine_driver_coco2b =
 	{
 		{
 			CPU_M6809,
-			894886,	/* 0,894886 Mhz */
+			COCO_CPU_SPEED_HZ,
 			d64_readmem,d64_writemem,
 			0, 0,
 			m6847_vblank, 1,
 			0, 0,
 		},
 	},
-	60, 0,		 /* frames per second, vblank duration */
+	COCO_FRAMES_PER_SECOND, 0,		 /* frames per second, vblank duration */
 	0,
 	coco_init_machine,
 	dragon_stop_machine,
@@ -598,14 +598,14 @@ static struct MachineDriver machine_driver_coco3 =
 	{
 		{
 			CPU_M6809,
-			894886,	/* 0,894886 Mhz */
+			COCO_CPU_SPEED_HZ,
 			coco3_readmem,coco3_writemem,
 			0, 0,
 			coco3_vblank, 1,
 			0, 0,
 		},
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,		 /* frames per second, vblank duration */
+	COCO_FRAMES_PER_SECOND, 0,		 /* frames per second, vblank duration */
 	0,
 	coco3_init_machine,
 	dragon_stop_machine,
@@ -645,14 +645,14 @@ static struct MachineDriver machine_driver_coco3h =
 	{
 		{
 			CPU_HD6309,
-			894886,	/* 0,894886 Mhz */
+			COCO_CPU_SPEED_HZ,
 			coco3_readmem,coco3_writemem,
 			0, 0,
 			coco3_vblank, 1,
 			0, 0,
 		},
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,		 /* frames per second, vblank duration */
+	COCO_FRAMES_PER_SECOND, 0,		 /* frames per second, vblank duration */
 	0,
 	coco3_init_machine,
 	dragon_stop_machine,

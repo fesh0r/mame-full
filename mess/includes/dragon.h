@@ -4,7 +4,9 @@
 #include "vidhrdw/m6847.h"
 #include "includes/rstrbits.h"
 
-#define COCO_CPU_SPEED	(TIME_IN_HZ(894886))
+#define COCO_CPU_SPEED_HZ		894886	/* 0.894886 MHz */
+#define COCO_FRAMES_PER_SECOND	(COCO_CPU_SPEED_HZ / 57.0 / 262.5)
+#define COCO_CPU_SPEED			(TIME_IN_HZ(COCO_CPU_SPEED_HZ))
 #define COCO_TIMER_CMPCARRIER	(COCO_CPU_SPEED * 0.25)
 
 #define COCO_DIP_ARTIFACTING		12
@@ -42,8 +44,6 @@ extern int coco2b_vh_start(void);
 extern int coco3_vh_start(void);
 extern void coco3_vh_stop(void);
 extern void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
-//extern WRITE_HANDLER ( dragon_sam_display_offset );
-//extern WRITE_HANDLER ( dragon_sam_vdg_mode );
 extern WRITE_HANDLER ( coco_ram_w );
 extern READ_HANDLER ( coco3_gimevh_r );
 extern WRITE_HANDLER ( coco3_gimevh_w );
