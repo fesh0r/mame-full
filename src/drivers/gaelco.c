@@ -458,7 +458,8 @@ static struct MemoryReadAddress splash_readmem[] =
 	{ 0x840004, 0x840005, input_port_2_r },		/* INPUT #1 */
 	{ 0x840006, 0x840007, input_port_3_r },		/* INPUT #2 */
 	{ 0x880000, 0x8817ff, splash_vram_r },		/* Video RAM */
-	{ 0x881804, 0x881fff, MRA_BANK2 },			/* Work RAM */
+	{ 0x881800, 0x881803, MRA_BANK1 },			/* Scroll registers */
+	{ 0x881804, 0x881fff, MRA_BANK2 },          /* Work RAM */
 	{ 0x8c0000, 0x8c0fff, paletteram_word_r },	/* Palette */
 	{ 0x900000, 0x900fff, MRA_BANK3 },			/* Sprite RAM */
 	{ 0xffc000, 0xffffff, MRA_BANK4 },			/* Work RAM */
