@@ -114,7 +114,7 @@ int CLIB_DECL main(int ac, char **av)
 	fprintf(html, "<head>\n");
 	fprintf(html, "<title>Contents of %s</title>\n", dat_filename);
 	fprintf(html, "</head>\n");
-	fprintf(html, "<body>\n");
+	fprintf(html, "<body leftmargin= 20 rightmargin = 20>\n");
 	fprintf(html, "<h1>Contents of %s</h1>\n", dat_filename);
 	fprintf(html, "<hr>\n");
 	fprintf(html, "<p>\n");
@@ -157,7 +157,7 @@ int CLIB_DECL main(int ac, char **av)
                     			fprintf(html_system, "<head>\n");
 					fprintf(html_system, "<title>Info for %s</title>\n", system_name);
 			                fprintf(html_system, "</head>\n");
-                    			fprintf(html_system, "<body>\n");
+                    			fprintf(html_system, "<body leftmargin= 20 rightmargin = 20>\n");
 					fprintf(html_system, "<table width=100%%>\n");
 					fprintf(html_system, "<tr>\n");
 					fprintf(html_system, "<td width=25%%><h4><a href=\"../%s\">Back to index</a></h4></td>\n", html_filename);
@@ -209,7 +209,7 @@ int CLIB_DECL main(int ac, char **av)
 							/* first line is header 4 */
 							fprintf(html_system, "<h4>%s</h4>\n", line);
 							/* Add description to index file */
-							fprintf(html, " - Sysinfo for: <b>%s</b></br>\n", line);
+							fprintf(html, " - <b>%s</b></br>\n", line);
 						}
 						else
 						{
