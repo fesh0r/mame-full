@@ -1436,8 +1436,10 @@ void overlay_create(const struct artwork_element *ae, unsigned int start_pen, un
 int artwork_get_size_info(const char *file_name, struct artwork_size_info *a)
 {
 	void *fp;
-	struct png_info p;
-	int file_name_len;
+#if 0
+    struct png_info p;
+#endif
+    int file_name_len;
 	char file_name2[256];
 
 	/* If the user turned artwork off, bail */
