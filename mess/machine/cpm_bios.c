@@ -20,6 +20,7 @@
 #define VERBOSE_BIOS	1
 #define VERBOSE_CONIO	0
 
+#define REAL_FDD (void *)-1
 
 /* buffer for one physical sector */
 typedef struct {
