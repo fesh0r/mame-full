@@ -347,10 +347,9 @@ $(OBJ)/coco.a:   \
 	$(OBJ)/mess/machine/6883sam.o	\
 	$(OBJ)/mess/machine/cococart.o	\
 	$(OBJ)/mess/machine/ds1315.o	\
-	$(OBJ)/mess/machine/ds1315.o	\
 	$(OBJ)/mess/machine/m6242b.o	\
-	$(OBJ)/mess/machine/mc10.o		\
-	$(OBJ)/mess/systems/mc10.o		\
+	$(OBJ)/mess/machine/mc10.o	\
+	$(OBJ)/mess/systems/mc10.o	\
 	$(OBJ)/mess/machine/dragon.o	\
 	$(OBJ)/mess/vidhrdw/dragon.o	\
 	$(OBJ)/mess/systems/dragon.o	\
