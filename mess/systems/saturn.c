@@ -753,13 +753,11 @@ static int scu_irq_levels[32] =
 static void scu_set_imask(void)
 {
     int irq;
-	const char *dummy = int_names[0]; /* make compiler not complain about undefined names */
-	int dummy2 = scu_irq_levels[0]; /* make compiler not complain about undefined names */
     LOG(("saturn_scu_w    interrupt mask change:"));
     for (irq = 0; irq < 16; irq++)
     {
         if ((scu_regs[0x28] & (1 <<irq)) == 0)
-            LOG((" %s", int_names[irq]));
+            logerror(" %s HACK!%s", int_names[irq],scu_irq_levels[0]);
         else
 	  cpu_set_irq_line(0, irq /*scu_irq_levels[irq]*/, CLEAR_LINE);
     }
@@ -791,8 +789,7 @@ void scu_pulse_interrupt(int irq)
 
 WRITE32_HANDLER( saturn_scu_w )   /* SCU, DMA/DSP */
 {
-	const char *dummy = scu_regnames[0]; /* make compile shut up about not used variables */
-  /* logerror("scu_w %s - data = %08lX - PC=%08lX\n",scu_regnames[offset],data,cpu_get_reg(SH2_PC)); */
+  logerror("scu_w %s - data = %08lX - PC=%08lX\n",scu_regnames[offset],data,cpu_get_reg(SH2_PC));
   scu_regs[offset] = (scu_regs[offset] & mem_mask) | data;
   if(offset == 0x28)
     scu_set_imask();
