@@ -9,6 +9,7 @@
 #include <commdlg.h>
 #include <winuser.h>
 #include <ctype.h>
+#include <tchar.h>
 
 // MAME/MESS headers
 #include "mame.h"
@@ -762,6 +763,7 @@ static void change_device(mess_image *img, int is_save)
 	dialog_box *dialog = NULL;
 	char filter[2048];
 	char filename[MAX_PATH];
+	TCHAR buffer[512];
 	char *s;
 	const struct IODevice *dev = image_device(img);
 	const char *initial_dir;
@@ -825,7 +827,11 @@ static void change_device(mess_image *img, int is_save)
 		// error?
 		if (err)
 		{
-			MessageBox(win_video_window, image_error(img), NULL, MB_OK);
+			_sntprintf(buffer, sizeof(buffer) / sizeof(buffer[0]),
+				TEXT("Error when %s the image: %s"),
+				is_save ? TEXT("creating") : TEXT("loading"),
+				image_error(img));
+			MessageBox(win_video_window, buffer, MAMENAME, MB_OK);
 		}
 	}
 

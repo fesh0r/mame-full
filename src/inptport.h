@@ -298,10 +298,6 @@ enum { IPT_UNUSED=0, IPT_END=1,IPT_PORT,
 	{ if ((code1) != CODE_NONE)	PORT_CODE(code1); }					\
 	{ if ((code2) != CODE_NONE)	PORT_CODE(code2); }					\
 
-#define PORT_BIT_NAME(mask,default,type,name)	\
-	PORT_BIT(mask, default, type)					\
-	PORT_NAME(name)									\
-
 #define PORT_BITX(mask,default,type,name,key,joy) \
 	PORT_BIT(mask, default, type)					\
 	PORT_NAME(name)									\

@@ -369,7 +369,7 @@ const char *image_error(mess_image *img)
 	{
 		NULL,
 		"Internal error",
-		"Unsupported",
+		"Unsupported operation",
 		"Out of memory",
 		"File not found",
 		"Invalid image",
