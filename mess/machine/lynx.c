@@ -2,6 +2,8 @@
 #include "includes/lynx.h"
 #include "cpu/m6502/m6502.h"
 
+UINT16 lynx_granularity=1;
+
 typedef struct {
 	UINT8 data[0x100];
 	UINT8 high;
@@ -606,9 +608,9 @@ READ_HANDLER(suzy_read)
 		break;
 	case 0xb1: data=readinputport(1);break;
 	case 0xb2:
-		data=*(memory_region(REGION_USER1)+(suzy.high<<11)+suzy.low);
+		data=*(memory_region(REGION_USER1)+(suzy.high*lynx_granularity)+suzy.low);
 		logerror("mikey high %.2x low %.4x\n",suzy.high,suzy.low);
-		suzy.low=(suzy.low+1)&0x7ff;
+		suzy.low=(suzy.low+1)&(lynx_granularity-1);
 		break;
 	default:
 		data=suzy.data[offset];

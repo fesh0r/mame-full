@@ -163,7 +163,11 @@ static struct MachineDriver machine_driver_lynx =
     }
 };
 
-// roms could be swapped!
+/* these 2 dumps are saved from an running machine,
+   and therefor the rom byte at 0xff09 is not readable!
+   (memory configuration) 
+   these 2 dumps differ only in this byte!
+*/
 ROM_START(lynx)
 	ROM_REGION(0x10200,REGION_CPU1, 0)
 	ROM_LOAD("lynx.bin", 0x10000, 0x200, 0xe1ffecb6)
@@ -171,9 +175,16 @@ ROM_START(lynx)
 	ROM_REGION(0x100000, REGION_USER1, 0)
 ROM_END
 
+ROM_START(lynxa)
+	ROM_REGION(0x10200,REGION_CPU1, 0)
+	ROM_LOAD("lynxa.bin", 0x10000, 0x200, 0x0d973c9d)
+	ROM_REGION(0x100,REGION_GFX1, 0)
+	ROM_REGION(0x100000, REGION_USER1, 0)
+ROM_END
+
 ROM_START(lynx2)
 	ROM_REGION(0x10200,REGION_CPU1, 0)
-	ROM_LOAD("lynx2.bin", 0x10000, 0x200, 0x0d973c9d)
+	ROM_LOAD("lynx2.bin", 0x10000, 0x200, 0x0)
 	ROM_REGION(0x100,REGION_GFX1, 0)
 	ROM_REGION(0x100000, REGION_USER1, 0)
 ROM_END
@@ -188,7 +199,8 @@ static int lynx_load_rom(int id)
 {
 	FILE *cartfile;
 	UINT8 *rom = memory_region(REGION_USER1);
-	int size, i;
+	int size;
+	UINT8 header[0x40];
 /* 64 byte header
    LYNX
    intelword lower counter size
@@ -196,7 +208,6 @@ static int lynx_load_rom(int id)
    32 chars name
    22 chars manufacturer
 */
-
 
 	if (device_filename(IO_CARTSLOT, id) == NULL)
 	{
@@ -210,8 +221,16 @@ static int lynx_load_rom(int id)
 		return 1;
 	}
 	size=osd_fsize(cartfile);
+	if (osd_fread(cartfile, header, 0x40)!=0x40) {
+		logerror("%s load error\n",device_filename(IO_CARTSLOT,id));
+		osd_fclose(cartfile);
+		return 1;
+	}
 	size-=0x40;
-	osd_fseek(cartfile, 0x40, SEEK_SET);
+	lynx_granularity=header[4]|(header[5]<<8);
+	
+	logerror ("%s %dkb cartridge with %dbyte granularity from %s\n",
+			  header+10,size/1024,lynx_granularity, header+42);
 
 	if (osd_fread(cartfile, rom, size)!=size) {
 		logerror("%s load error\n",device_filename(IO_CARTSLOT,id));
@@ -219,15 +238,6 @@ static int lynx_load_rom(int id)
 		return 1;
 	}
 	osd_fclose(cartfile);
-	switch (size) {
-	case 0x40000:
-		// rom is accessed with 2 counters,
-		// the lower one has 11 bits, but some 256kbyte cartridges uses only 10 bits
-		for (i=size-0x400; i>=0; i-=0x400) {
-			memcpy(rom+i*2, rom+i, 0x400);
-		}
-		break;
-	}
 	return 0;
 }
 
@@ -322,11 +332,13 @@ void init_lynx(void)
 	lynx_quickload(0);
 }
 
+#define io_lynxa io_lynx
 #define io_lynx2 io_lynx
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      MONITOR	COMPANY   FULLNAME */
-CONS( 1989, lynx,	  0, 		lynx,  lynx, 	lynx,	  "Atari",  "Lynx")
-CONS( 1990, lynx2,	  lynx, 	lynx,  lynx, 	lynx,	  "Atari",  "Lynx II")
+CONSX( 1989, lynx,	  0, 		lynx,  lynx, 	lynx,	  "Atari",  "Lynx", GAME_NOT_WORKING)
+CONSX( 1989, lynxa,	  lynx, 	lynx,  lynx, 	lynx,	  "Atari",  "Lynx alternate rom save!", GAME_NOT_WORKING)
+CONSX( 1990, lynx2,	  lynx, 	lynx,  lynx, 	lynx,	  "Atari",  "Lynx II", GAME_NOT_WORKING)
 
 #ifdef RUNTIME_LOADER
 extern void lynx_runtime_loader_init(void)

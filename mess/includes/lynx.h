@@ -5,6 +5,7 @@ int lynx_vh_start(void);
 void lynx_vh_stop(void);
 void lynx_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
 
+extern UINT16 lynx_granularity;
 
 typedef struct {
 	UINT8 data[0x100];
