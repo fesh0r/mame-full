@@ -31,7 +31,7 @@ rom/ram selection
 
 void amstrad_setup_machine(void)
 {
-	Amstrad_Reset();
+	amstrad_reset_machine();
 }
 
 /* load CPCEMU style snapshots */
@@ -39,7 +39,6 @@ void amstrad_handle_snapshot(unsigned char *pSnapshot)
 {
 	int RegData;
 	int i;
-
 
 	/* init Z80 */
 	RegData = (pSnapshot[0x011] & 0x0ff) | ((pSnapshot[0x012] & 0x0ff)<<8);
@@ -111,14 +110,14 @@ void amstrad_handle_snapshot(unsigned char *pSnapshot)
 	/* init GA */
 	for (i=0; i<17; i++)
 	{
-		AmstradCPC_GA_Write(i);
+		amstrad_GateArray_write(i);
 
-		AmstradCPC_GA_Write(((pSnapshot[0x02f + i] & 0x01f) | 0x040));
+		amstrad_GateArray_write(((pSnapshot[0x02f + i] & 0x01f) | 0x040));
 	}
 
-	AmstradCPC_GA_Write(pSnapshot[0x02e] & 0x01f);
+	amstrad_GateArray_write(pSnapshot[0x02e] & 0x01f);
 
-	AmstradCPC_GA_Write(((pSnapshot[0x040] & 0x03f) | 0x080));
+	amstrad_GateArray_write(((pSnapshot[0x040] & 0x03f) | 0x080));
 
 	AmstradCPC_PALWrite(((pSnapshot[0x041] & 0x03f) | 0x0c0));
 
@@ -168,7 +167,7 @@ void amstrad_handle_snapshot(unsigned char *pSnapshot)
 
 		memcpy(mess_ram, &pSnapshot[0x0100], MemorySize);
 	}
-	Amstrad_RethinkMemory();
+	amstrad_rethinkMemory();
 }
 
 /* load snapshot */

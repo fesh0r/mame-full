@@ -1,20 +1,33 @@
 #include "driver.h"
+#include "inputx.h"
 #include "devices/snapquik.h"
 
 //#define AMSTRAD_VIDEO_USE_EVENT_LIST
+#ifdef AMSTRAD_VIDEO_USE_EVENT_LIST
+/* codes for eventlist */
+enum {
+	EVENT_LIST_CODE_GA_COLOUR = 0,       /* change pen colour with gate array */
+	EVENT_LIST_CODE_GA_MODE = 1,         /* change mode with gate array */
+	EVENT_LIST_CODE_CRTC_WRITE = 2,      /* change CRTC register data */
+  EVENT_LIST_CODE_CRTC_INDEX_WRITE = 3 /* change CRTC register selection */
+};
+#endif
 
 void amstrad_setup_machine(void);
+void amstrad_reset_machine(void);
 void amstrad_shutdown_machine(void);
 
 SNAPSHOT_LOAD( amstrad );
 
-void Amstrad_Reset(void);
+void amstrad_GateArray_write(int);
+void amstrad_rethinkMemory(void);
+void amstrad_setLowerRom(void);
+void amstrad_setUpperRom(void);
 
-void AmstradCPC_GA_Write(int);
-void AmstradCPC_SetUpperRom(int);
-void Amstrad_RethinkMemory(void);
 void Amstrad_Init(void);
 void amstrad_handle_snapshot(unsigned char *);
+
+void AmstradCPC_SetUpperRom(int);
 void AmstradCPC_PALWrite(int);
 
 extern int amstrad_cassette_init(mess_image *img, mame_file *fp, int open_mode);
@@ -37,42 +50,27 @@ This happens to be 1us.
 From measurement, there are 64 NOPs per line, with 312 lines per screen.
 This gives a total of 19968 NOPs per frame. */
 
+#define AMSTRAD_CHARACTERS 8
+
+/* REAL AMSTRAD SCREEN WIDTH and HEIGHT */
+#define AMSTRAD_SCREEN_WIDTH	(AMSTRAD_FPS*AMSTRAD_CHARACTERS*2)
+#define AMSTRAD_SCREEN_HEIGHT	(39*AMSTRAD_CHARACTERS)
+
 /* number of us cycles per frame (measured) */
-#define AMSTRAD_US_PER_FRAME	19968
-#define AMSTRAD_FPS 			50
-
-
-
-/* These are the measured visible screen dimensions in CRTC characters.
-50 CRTC chars in X, 35 CRTC chars in Y (8 lines per char assumed) */
-#define AMSTRAD_SCREEN_WIDTH	(50*16)
-#define AMSTRAD_SCREEN_HEIGHT	(35*8)
-#define AMSTRAD_MONITOR_SCREEN_WIDTH	(64*16)
-#define AMSTRAD_MONITOR_SCREEN_HEIGHT	(39*8)
-
-#ifdef AMSTRAD_VIDEO_USE_EVENT_LIST
-/* codes for eventlist */
-enum
-{
-	/* change pen colour with gate array */
-	EVENT_LIST_CODE_GA_COLOUR = 0,
-	/* change mode with gate array */
-	EVENT_LIST_CODE_GA_MODE = 1,
-	/* change CRTC register data */
-	EVENT_LIST_CODE_CRTC_WRITE = 2,
-	/* change CRTC register selection */
-        EVENT_LIST_CODE_CRTC_INDEX_WRITE = 3
-};
-#endif
+#define AMSTRAD_US_PER_SCANLINE   64
+#define AMSTRAD_FPS               50
+#define AMSTRAD_US_PER_FRAME	   (AMSTRAD_US_PER_SCANLINE*AMSTRAD_FPS*AMSTRAD_SCREEN_HEIGHT)
 
 extern VIDEO_START( amstrad );
 extern VIDEO_UPDATE( amstrad );
 void amstrad_update_scanline(void);
-void amstrad_vh_execute_crtc_cycles(int crtc_execute_cycles);
-void amstrad_vh_update_colour(int,int);
+void amstrad_vh_execute_crtc_cycles(int);
+void amstrad_vh_update_colour(int, int);
 void amstrad_vh_update_mode(int);
 
-extern int amstrad_vsync;
+/* The VSYNC signal of the CRTC */
+extern int amstrad_CRTC_VS;
+extern int amstrad_CRTC_CR;
 
 /* update interrupt timer */
 void amstrad_interrupt_timer_update(void);

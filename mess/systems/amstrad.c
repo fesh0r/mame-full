@@ -17,6 +17,17 @@
 
 	Kevin Thacker [MESS driver]
 
+  May-June 2004 - Yoann Courtois (aka Papagayo/ex GMC/ex PARADOX) - rewritting some code with hardware documentation from http://andercheran.aiind.upv.es/~amstrad
+  
+Some bugs left :
+----------------
+    - CRTC emulation : "display enable" is wrong (m6845.c) >(see yao demo (first, third or last part!))
+    - CRTC all type support (0,1,2,3,4) ?
+    - Gate Array and CRTC aren't synchronised. (The Gate Array can change the color every microseconds?) So the multi-rasters in one line aren't supported (see yao demo p007's part)!
+    - Z80 timming is wrong or I miss something in the GateArray interrupt timing ? >(see the menu of "the demo")?
+    - Implement full Asic for CPC+ emulation
+    - Keyboard arrows and copy send incorrect key on the screen ?! Maybe a problem with readinputport ?
+    - Maybe someting also wrong : Ecole Buissoniere demo don't work !
  ******************************************************************************/
 #include "driver.h"
 
@@ -38,269 +49,233 @@
 #include "eventlst.h"
 #endif
 
-//#define AMSTRAD_DEBUG
+#define MANUFACTURER_NAME 0x07
+#define TV_REFRESH_RATE 0x10
+#define CRTC_TYPE 0xA0
+
+extern int y_screen_pos;
+
+//int selected_crtc6845_address = 0;
 
 /* the hardware allows selection of 256 ROMs. Rom 0 is usually BASIC and Rom 7 is AMSDOS */
 /* With the CPC hardware, if a expansion ROM is not connected, BASIC rom will be selected instead */
 static unsigned char *Amstrad_ROM_Table[256];
+/* data present on input of ppi, and data written to ppi output */
+#define amstrad_ppi_PortA 0
+#define amstrad_ppi_PortB 1
+#define amstrad_ppi_PortC 2
 
+static int ppi_port_inputs[3];
+static int ppi_port_outputs[3];
 
-/*-------------------------------------------*/
-/* MULTIFACE */
+/* keyboard line 0-9 */
+static int amstrad_keyboard_line;
+
+/*------------------
+  - Ram Management -
+  ------------------*/
+/* current selected upper rom */
+static unsigned char *Amstrad_UpperRom;
+static unsigned char previous_amstrad_UpperRom_data;
+/* There are 8 different ram configurations which work on the currently selected 64k logical block. 
+   The following tables show the possible ram configurations :*/
+static int RamConfigurations[8 * 4] =
+{
+	0, 1, 2, 3, 					   /* config 0 */
+	0, 1, 2, 7, 					   /* config 1 */
+	4, 5, 6, 7, 					   /* config 2 */
+	0, 3, 2, 7, 					   /* config 3 */
+	0, 4, 2, 3, 					   /* config 4 */
+	0, 5, 2, 3, 					   /* config 5 */
+	0, 6, 2, 3, 					   /* config 6 */
+	0, 7, 2, 3					     /* config 7 */
+};
+/*-------------------
+  - Gate Array data -
+  -------------------*/
+/* Pen selection */
+static int amstrad_GateArray_PenSelected = 0;
+/* Rom configuration */
+static int amstrad_GateArray_ModeAndRomConfiguration = 0;
+/* Ram configuration */
+static int amstrad_GateArray_RamConfiguration = 0;
+/* The gate array counts CRTC HSYNC pulses. (It has a internal 6-bit counter). */
+int amstrad_CRTC_HS_Counter;
+/* 2 HSYNCS after the VSYNC Counter */
+int amstrad_CRTC_HS_After_VS_Counter;
+/* cycles at end of last frame */
+/* cycle count of last write */
+int amstrad_cycles_last_write = 0;
+/*-------------
+  - MULTIFACE -
+  -------------*/
 static void multiface_rethink_memory(void);
 static WRITE_HANDLER(multiface_io_write);
 static void multiface_init(void);
 static void multiface_stop(void);
 static int multiface_hardware_enabled(void);
 static void multiface_reset(void);
+/* ---------------------------------------
+   - 27.05.2004 - PSG function selection - 
+   ---------------------------------------
+The databus of the PSG is connected to PPI Port A.
+Data is read from/written to the PSG through this port. 
 
-/*-------------------------------------------*/
-static void amstrad_clear_top_bit_of_int_counter(void);
+The PSG function, defined by the BC1,BC2 and BDIR signals, is controlled by bit 7 and bit 6 of PPI Port C. 
 
+PSG function selection:
+-----------------------
+Function          
 
-/* cycles at end of last frame */
-static unsigned long amstrad_cycles_at_frame_end = 0;
-/* cycle count of last write */
-static unsigned long amstrad_cycles_last_write = 0;
-static unsigned long time_delta_fraction = 0;
+BDIR = PPI Port C Bit 7 and BC1 = PPI Port C Bit 6
 
-static void amstrad_update_video(void)
-{
-	int current_time;
-	int time_delta;
-
-	/* current cycles */
-	current_time = TIME_TO_CYCLES(0,cpu_getscanline()*cpu_getscanlineperiod()) + amstrad_cycles_at_frame_end;
-	/* time between last write and this write */
-	time_delta = current_time - amstrad_cycles_last_write + time_delta_fraction;
-	/* The timing used to be spot on, but now it can give odd cycles, hopefully
-	this will compensate for that! */
-	time_delta_fraction = time_delta & 0x03;
-	time_delta = time_delta>>2;
-
-	/* set new previous write */
-	amstrad_cycles_last_write = current_time;
-
-	if (time_delta!=0)
-	{
-		amstrad_vh_execute_crtc_cycles(time_delta);
-	}
-}
-
-static VIDEO_EOF( amstrad )
-{
-	if ((readinputport(11) & 0x02)!=0)
-	{
-			multiface_stop();
-	}
-#ifndef AMSTRAD_VIDEO_EVENT_LIST
-	amstrad_update_video();
-	// update cycle count
-	amstrad_cycles_at_frame_end += TIME_TO_CYCLES(0,cpu_getscanline()*cpu_getscanlineperiod());
-#endif
-}
-
-/* psg access operation:
-0 = inactive, 1 = read register data, 2 = write register data,
-3 = write register index */
-static int amstrad_psg_operation;
-
-/* data present on input of ppi, and data written to ppi output */
-static int ppi_port_inputs[3];
-static int ppi_port_outputs[3];
-
-/* keyboard line 0-9 */
-static int amstrad_keyboard_line;
-/*static int crtc_vsync_output;*/
+PPI Port C Bit | PSG Function 
+BDIR BC1       | 
+0    0         | Inactive 
+0    1         | Read from selected PSG register. When function is set, the PSG will make the register data available to PPI Port A
+1    0         | Write to selected PSG register. When set, the PSG will take the data at PPI Port A and write it into the selected PSG register
+1    1         | Select PSG register. When set, the PSG will take the data at PPI Port A and select a register
+*/
+/* PSG function selected */
+static unsigned char amstrad_Psg_FunctionSelected;
 
 static void update_psg(void)
 {
-	switch (amstrad_psg_operation)
-	{
-		/* inactive */
-	default:
-		break;
-
-		/* psg read data register */
-	case 1:
-		{
-			ppi_port_inputs[0] = AY8910_read_port_0_r(0);
-		}
-		break;
-
-		/* psg write data */
-	case 2:
-		{
-			AY8910_write_port_0_w(0, ppi_port_outputs[0]);
-		}
-		break;
-
-		/* write index register */
-	case 3:
-		{
-			AY8910_control_port_0_w(0, ppi_port_outputs[0]);
-		}
-		break;
+  switch (amstrad_Psg_FunctionSelected) {
+  	case 0: {/* Inactive */
+    } break;
+  	case 1: {/* b6 = 1 ? : Read from selected PSG register and make the register data available to PPI Port A */
+  		ppi_port_inputs[amstrad_ppi_PortA] = AY8910_read_port_0_r(0);
+  	} break;
+  	case 2: {/* b7 = 1 ? : Write to selected PSG register and write data to PPI Port A */
+  		AY8910_write_port_0_w(0, ppi_port_outputs[amstrad_ppi_PortA]);
+  	} break;
+  	case 3: {/* b6 and b7 = 1 ? : The register will now be selected and the user can read from or write to it.  The register will remain selected until another is chosen.*/
+  		AY8910_control_port_0_w(0, ppi_port_outputs[amstrad_ppi_PortA]);
+  	} break;
+  	default: {
+    } break;
 	}
 }
 
-
-
-/* ppi port a read */
+/* Read/Write 8255 PPI port A (connected to AY-3-8912 databus) */
 static READ_HANDLER ( amstrad_ppi_porta_r )
 {
 	update_psg();
+  return ppi_port_inputs[amstrad_ppi_PortA];
+}
 	
-	return ppi_port_inputs[0];
+static WRITE_HANDLER ( amstrad_ppi_porta_w )
+{
+  	ppi_port_outputs[amstrad_ppi_PortA] = data;
+    update_psg();
 }
 
+/* - Read PPI Port B - 
+   -------------------
+Bit Description
+7   Cassette read data
+6   Parallel/Printer port ready signal ("1" = not ready, "0" = Ready)
+5   /EXP signal on expansion port (note 6)  
+4   50/60hz (link on PCB. For this MESS driver I have used the dipswitch feature) (note 5) 
+3   | PCB links to define manufacturer name. For this MESS driver I have used the dipswitch feature. (note 1) (note 4) 
+2   | (note 2) 
+1   | (note 3) 
+0   VSYNC State from 6845. "1" = VSYNC active, "0" = VSYNC inactive 
 
-/* 
-Amstrad hardware:
+Note: 
 
-
-8255 PPI port A (connected to AY-3-8912 databus).
-
-8255 PPI port B input:
- Bit 7 = Cassette tape input
- bit 6 = printer busy/online
- bit 5 = /exp signal on expansion port of CPC
- bit 4 = 50/60hz (link on PCB. For this MESS driver I have used the dipswitch feature)
- bit 3,2,1 = PCB links to define manufacturer name. For this MESS driver I have used the dipswitch feature.
- Bit 0 = VSYNC from 6845 CRTC 
- 
-Manufacturer names are: Isp, Triumph, Saisho, Solavox, Awa, Schneider, Orion, Amstrad.
-On real CPC name is set using a link on the PCB.
-
-8255 PPI port C output:
- bit 7,6 = AY-3-8912 PSG operation
- bit 5 = cassette write data
- bit 4 = Cassette motor control
- bit 3-0 =	keyboard line
-
-I/O Port decoding:
-
-  Bit 15 = 0, Bit 14 = 1: Gate Array (W)
-  Bit 15 = 0, RAM management PAL
-  Bit 14 = 0: 6845 CRTC (R/W)
-  Bit 13 = 0: Select upper rom (W)
-  Bit 12 = 0: Printer (W)
-  Bit 11 = 0: 8255 PPI (R/W)
-  Bit 10 = 0: Expansion.
-
-  Bit 10 = 0, Bit 7 = 0: uPD 765A FDC
-
-Gate Array:
-
-bit 7, bit 6 = function 
-	00 = pen select/clut entry index, 
-	01 = set pen colour/clut entry colour, 
-	10 = display mode, upper/lower rom enable/disable, interrupt control
-
-
-function 00:
-	bit 4..0 = pen index/clut entry index
-
-	if bit 4 = 1, border is selected, bits 3..0 is ignored
-	if bit 4 = 0, bit 3..0 define pen index
-
-function 01:
-	bit 4..0 = hardware colour id
-
-function 10:
-	bit 4 = reset top-bit of interrupt counter
-	bit 3 = 0 = upper rom is enabled, visible in &c000-&ffff range
-	bit 2 = 0 = lower rom is enabled, visible in &0000-&3fff range
-	bit 1,0 = display mode
-
-Ram Expansion/PAL in CPC6128 (accessed at same I/O address' as Gate Array)
-
-function 11:
-	(actually part of ram expansion or PAL in CPC6128)
-	bit 3..0 define ram configuration code.
-	bit 6..4 define 64k block to use
+1 On CPC464,CPC664,CPC6128 and GX4000 this is LK3 on the PCB. On the CPC464+ and CPC6128+ this is LK103 on the PCB. On the KC compact this is "1". 
+2 On CPC464,CPC664,CPC6128 and GX4000 this is LK2 on the PCB. On the CPC464+ and CPC6128+ this is LK102 on the PCB. On the KC compact this is "0". 
+3 On CPC464,CPC664,CPC6128 and GX4000 this is LK1 on the PCB. On the CPC464+ and CPC6128+ this is LK101 on the PCB. On the KC compact this is /TEST signal from the expansion port. 
+4 On the CPC464,CPC664,CPC6128,CPC464+,CPC6128+ and GX4000 bits 3,2 and 1 define the manufacturer name. See below to see the options available. The manufacturer name is defined on the PCB and cannot be changed through software. 
+5 On the CPC464,CPC664,CPC6128,CPC464+,CPC6128+ and GX4000 bit 4 defines the Screen refresh frequency. "1" = 50Hz, "0" = 60Hz. This is defined on the PCB and cannot be changed with software. On the KC compact bit 4 is "1" 
+6 This bit is connected to /EXP signal on the expansion port. 
+  On the KC Compact this bit is used to define bit 7 of the printer data. 
+  On the CPC, it is possible to use this bit to define bit 7 of the printer data, so a 8-bit printer port is made, with a hardware modification, 
+  On the CPC this can be used by a expansion device to report it's presence. "1" = device connected, "0" = device not connected. This is not always used by all expansion devices. 
 */
-
 
 static READ_HANDLER (amstrad_ppi_portb_r)
 {
-	int data;
+	int data = 0;
+/* Set b7 with cassette tape input */
+	if (cassette_input(image_from_devtype_and_index(IO_CASSETTE, 0)) > 0.03) {
+		data |= (1<<7);
+  }
+/* Set b6 with Parallel/Printer port ready */
+	if (device_status(image_from_devtype_and_index(IO_PRINTER, 0), 0)==0 ) {
+		data |= (1<<6);
+  }
+/* Set b4-b1 50hz/60hz state and manufacturer name defined by links on PCB */
+	data |= (ppi_port_inputs[amstrad_ppi_PortB] & 0x1e);
 
-#ifndef AMSTRAD_VIDEO_EVENT_LIST
-		amstrad_update_video();
-#endif
-	data = 0x0;
-
-	/* cassette read */
-	if (cassette_input(image_from_devtype_and_index(IO_CASSETTE, 0)) > 0.03)
-		data |=0x080;
-
-	/* printer busy */
-	if (device_status(image_from_devtype_and_index(IO_PRINTER, 0), 0)==0 )
-		data |=0x040;
-
-	/* vsync state from CRTC */
-	data |= amstrad_vsync;
-
-	/* manufacturer name and 50hz/60hz state, defined by links on PCB */
-	data |= ppi_port_inputs[1] & 0x01e;
+/* 	Set b0 with VSync state from the CRTC */
+	data |= amstrad_CRTC_VS; // crtc6845_vertical_sync_r(0);
 
 	return data;
 }
 
-static WRITE_HANDLER ( amstrad_ppi_porta_w )
-{
-	ppi_port_outputs[0] = data;
+/* 26-May-2005 - PPI Port C
+   -----------------------
+Bit Description  Usage 
+7   PSG BDIR     | PSG function selection 
+6   PSG BC1      |
+5                Cassette Write data   
+4                Cassette Motor Control set bit to "1" for motor on, or "0" for motor off 
+3                | Keyboard line Select keyboard line to be scanned (0-15) 
+2                |
+1                |
+0                |*/
 
-	update_psg();
-}
-
-
-/* previous value */
+/* previous_ppi_portc_w value */
 static int previous_ppi_portc_w;
 
 static WRITE_HANDLER ( amstrad_ppi_portc_w )
 {
 	int changed_data;
 
-	previous_ppi_portc_w = ppi_port_outputs[2];
-	ppi_port_outputs[2] = data;
-
+	previous_ppi_portc_w = ppi_port_outputs[amstrad_ppi_PortC];
+/* Write the data to Port C */
 	changed_data = previous_ppi_portc_w^data;
+	
+	ppi_port_outputs[amstrad_ppi_PortC] = data;
 
-	/* cassette motor changed state */
-	if ((changed_data & (1<<4))!=0)
-	{
-		/* cassette motor control */
+/* get b7 and b6 (PSG Function Selected */
+	amstrad_Psg_FunctionSelected = ((data & 0xC0)>>6);
+
+/* Perform PSG function */
+	update_psg();
+	
+/* b5 Cassette Write data */
+	if ((changed_data & 0x20) != 0) {
+		cassette_output(image_from_devtype_and_index(IO_CASSETTE, 0),
+			((data & 0x20) ? -1.0 : +1.0));
+	}
+	
+/* b4 Cassette Motor Control */
+	if ((changed_data & 0x10) != 0) {
 		cassette_change_state(image_from_devtype_and_index(IO_CASSETTE, 0),
-			(data & 0x10) ? CASSETTE_MOTOR_ENABLED : CASSETTE_MOTOR_DISABLED,
+			((data & 0x10) ? CASSETTE_MOTOR_ENABLED : CASSETTE_MOTOR_DISABLED),
 			CASSETTE_MASK_MOTOR);
 	}
 
-	/* cassette write data changed state */
-	if ((changed_data & (1<<5))!=0)
-	{
-		cassette_output(image_from_devtype_and_index(IO_CASSETTE, 0),
-			(data & 0x20) ? -1.0 : +1.0);
-	}
-
-	/* psg operation */
-	amstrad_psg_operation = (data >> 6) & 0x03;
-	/* keyboard line */
-	amstrad_keyboard_line = (data & 0x0f);
-
-	update_psg();
+/* b3-b0 Keyboard line Select keyboard line to be scanned */
+  amstrad_keyboard_line = (data & 0x0F);
 }
 
+/* -----------------------------
+   - amstrad_ppi8255_interface -
+   -----------------------------*/
 static ppi8255_interface amstrad_ppi8255_interface =
 {
-	1,
-	{amstrad_ppi_porta_r},
-	{amstrad_ppi_portb_r},
-	{NULL},
-	{amstrad_ppi_porta_w},
-	{NULL},
-	{amstrad_ppi_portc_w}
+	1,                       /* number of PPIs to emulate */
+	{amstrad_ppi_porta_r},   /* port A read */
+	{amstrad_ppi_portb_r},   /* port B read */
+	{NULL},                  /* port C read */
+	{amstrad_ppi_porta_w},   /* port A write */
+	{NULL},                  /* port B write */
+	{amstrad_ppi_portc_w}    /* port C write */
 };
 
 /* Amstrad NEC765 interface doesn't use interrupts or DMA! */
@@ -313,313 +288,384 @@ static nec765_interface amstrad_nec765_interface =
 /* pointers to current ram configuration selected for banks */
 static unsigned char *AmstradCPC_RamBanks[4];
 
-/* current selected upper rom */
-static unsigned char *Amstrad_UpperRom;
-
-/* bit 0,1 = mode, 2 = if zero, os rom is enabled, otherwise
-disabled, 3 = if zero, upper rom is enabled, otherwise disabled */
-unsigned char AmstradCPC_GA_RomConfiguration;
-
-static short AmstradCPC_PenColours[18];
-
-static int RamConfigurations[8 * 4] =
+/*--------------------------
+  - Ram and Rom management -
+  --------------------------*/ 
+/*-----------------
+  - Set Lower Rom -
+  -----------------*/ 
+void amstrad_setLowerRom(void)
 {
-	0, 1, 2, 3, 					   /* config 0 */
-	0, 1, 2, 7, 					   /* config 1 */
-	4, 5, 6, 7, 					   /* config 2 */
-	0, 3, 2, 7, 					   /* config 3 */
-	0, 4, 2, 3, 					   /* config 4 */
-	0, 5, 2, 3, 					   /* config 5 */
-	0, 6, 2, 3, 					   /* config 6 */
-	0, 7, 2, 3						   /* config 7 */
-};
-
-/* ram configuration */
-static unsigned char AmstradCPC_GA_RamConfiguration;
-
-/* selected pen */
-static unsigned char AmstradCPC_GA_PenSelected;
-
-
-
-static unsigned char AmstradCPC_ReadKeyboard(void)
-{
-	if (amstrad_keyboard_line > 9)
-		return 0x0ff;
-
-	return readinputport(amstrad_keyboard_line);
-}
-
-
-void Amstrad_RethinkMemory(void)
-{
-	/* the following is used for banked memory read/writes and for setting up
-	 * opcode and opcode argument reads */
-	{
-		unsigned char *BankBase;
-
-		/* bank 0 - 0x0000..0x03fff */
-		if ((AmstradCPC_GA_RomConfiguration & 0x04) == 0)
-		{
+	unsigned char *BankBase;
+/* b2 : "1" Lower rom area disable or "0" Lower rom area enable */ 
+		if ((amstrad_GateArray_ModeAndRomConfiguration & (1<<2)) == 0) {
 			BankBase = &memory_region(REGION_CPU1)[0x010000];
-		}
-		else
-		{
+		} else {
 			BankBase = AmstradCPC_RamBanks[0];
 		}
-		/* set bank address for MRA_BANK1 */
+/* bank 0 - 0x0000..0x03fff */
 		cpu_setbank(1, BankBase);
 		cpu_setbank(2, BankBase+0x02000);
-
-
-		/* bank 1 - 0x04000..0x07fff */
-		cpu_setbank(3, AmstradCPC_RamBanks[1]);
-		cpu_setbank(4, AmstradCPC_RamBanks[1]+0x02000);
-
-		/* bank 2 - 0x08000..0x0bfff */
-		cpu_setbank(5, AmstradCPC_RamBanks[2]);
-		cpu_setbank(6, AmstradCPC_RamBanks[2]+0x02000);
-
-		/* bank 3 - 0x0c000..0x0ffff */
-		if ((AmstradCPC_GA_RomConfiguration & 0x08) == 0)
-		{
+}		
+/*-----------------
+  - Set Upper Rom -
+  -----------------*/ 
+void amstrad_setUpperRom(void)
+{
+	unsigned char *BankBase;
+/* b3 : "1" Upper rom area disable or "0" Upper rom area enable */
+		if ((amstrad_GateArray_ModeAndRomConfiguration & (1<<3)) == 0) {
 			BankBase = Amstrad_UpperRom;
-		}
-		else
-		{
+		} else {
 			BankBase = AmstradCPC_RamBanks[3];
 		}
 		cpu_setbank(7, BankBase);
-		cpu_setbank(8, BankBase+0x02000);
-
-		cpu_setbank(9, AmstradCPC_RamBanks[0]);
-		cpu_setbank(10, AmstradCPC_RamBanks[0]+0x02000);
-		cpu_setbank(11, AmstradCPC_RamBanks[1]);
-		cpu_setbank(12, AmstradCPC_RamBanks[1]+0x02000);
-		cpu_setbank(13, AmstradCPC_RamBanks[2]);
-		cpu_setbank(14, AmstradCPC_RamBanks[2]+0x02000);
-		cpu_setbank(15, AmstradCPC_RamBanks[3]);
-		cpu_setbank(16, AmstradCPC_RamBanks[3]+0x02000);
-
-		/* multiface hardware enabled? */
-		if (multiface_hardware_enabled())
-		{
-			multiface_rethink_memory();
-		}
-	}
-}
-
-
-
-/* simplified ram configuration - e.g. only correct for 128k machines */
-static void AmstradCPC_GA_SetRamConfiguration(void)
-{
-	int ConfigurationIndex = AmstradCPC_GA_RamConfiguration & 0x07;
-	int BankIndex;
-	unsigned char *BankAddr;
-
-	BankIndex = RamConfigurations[(ConfigurationIndex << 2)];
-	BankAddr = mess_ram + (BankIndex << 14);
-
-	AmstradCPC_RamBanks[0] = BankAddr;
-
-	BankIndex = RamConfigurations[(ConfigurationIndex << 2) + 1];
-	BankAddr = mess_ram + (BankIndex << 14);
-
-	AmstradCPC_RamBanks[1] = BankAddr;
-
-	BankIndex = RamConfigurations[(ConfigurationIndex << 2) + 2];
-	BankAddr = mess_ram + (BankIndex << 14);
-
-	AmstradCPC_RamBanks[2] = BankAddr;
-
-	BankIndex = RamConfigurations[(ConfigurationIndex << 2) + 3];
-	BankAddr = mess_ram + (BankIndex << 14);
-
-	AmstradCPC_RamBanks[3] = BankAddr;
-}
-
- 
-
-void AmstradCPC_GA_Write(int Data)
-{
-	switch ((Data & 0x0c0) >> 6)
-	{
-		case 0:
-		{
-			/* pen	selection */
-			AmstradCPC_GA_PenSelected = Data;
-		}
-		return;
-
-	case 1:
-		{
-			int PreviousColour;
-			int PenIndex;
-
-			/* colour selection */
-			if (AmstradCPC_GA_PenSelected & 0x010)
-			{
-				/* specify border colour */
-				PenIndex = 16;
-			}
-			else
-			{
-				PenIndex = AmstradCPC_GA_PenSelected & 0x0f;
-			}
-
-
-			PreviousColour = AmstradCPC_PenColours[PenIndex];
-
-			AmstradCPC_PenColours[PenIndex] = Data & 0x01f;
-
-			/* colour changed? */
-			if (PreviousColour!=AmstradCPC_PenColours[PenIndex])
-			{
-
-#ifdef AMSTRAD_VIDEO_EVENT_LIST
-			   EventList_AddItemOffset((EVENT_LIST_CODE_GA_COLOUR<<6) | PenIndex, AmstradCPC_PenColours[PenIndex], TIME_TO_CYCLES(0,cpu_getscanline()*cpu_getscanlineperiod()));
-#else
-			   amstrad_update_video();
-			   amstrad_vh_update_colour(PenIndex, AmstradCPC_PenColours[PenIndex]);
-#endif
-			}
-
-		}
-		return;
-
-	case 2:
-		{
-			int Previous_GA_RomConfiguration = AmstradCPC_GA_RomConfiguration;
-
-			AmstradCPC_GA_RomConfiguration = Data;
-
-			/* if bit is set, clear top bit of interrupt counter */
-			if ((Data & (1<<4))!=0)
-			{
-#ifndef AMSTRAD_VIDEO_EVENT_LIST
-				amstrad_update_video();
-#endif
-				amstrad_clear_top_bit_of_int_counter();
-			}
-
-			/* mode change? */
-			if (((Data^Previous_GA_RomConfiguration) & 0x03)!=0)
-			{
-#ifdef AMSTRAD_VIDEO_EVENT_LIST
-			EventList_AddItemOffset((EVENT_LIST_CODE_GA_MODE<<6) , Data & 0x03, TIME_TO_CYCLES(0,cpu_getscanline()*cpu_getscanlineperiod()));
-#else
-				amstrad_update_video();
-				amstrad_vh_update_mode(Data & 0x03);
-#endif
-			}
-		}
-		break;
-
-	case 3:
-		{
-			AmstradCPC_GA_RamConfiguration = Data;
-
-			AmstradCPC_GA_SetRamConfiguration();
-		}
-		break;
-	}
-
-
-	Amstrad_RethinkMemory();
-}
-
-void AmstradCPC_PALWrite(int data)
-{
-	if ((data & 0x0c0)==0x0c0)
-	{
-
-		AmstradCPC_GA_RamConfiguration = data;
-
-		AmstradCPC_GA_SetRamConfiguration();
-
-		Amstrad_RethinkMemory();
-	}
-}
-
+		cpu_setbank(8, BankBase+0x2000);
+}		
 void AmstradCPC_SetUpperRom(int Data)
 {
-	Amstrad_UpperRom = Amstrad_ROM_Table[Data & 0x0ff];
+	Amstrad_UpperRom = Amstrad_ROM_Table[Data & 0xFF];
+	amstrad_setUpperRom();
+}
+/*------------------
+  - Rethink Memory -
+  ------------------*/ 
+void amstrad_rethinkMemory(void)
+{
+	/* the following is used for banked memory read/writes and for setting up
+	 * opcode and opcode argument reads */
+/* bank 0 - 0x0000..0x03fff */
+    amstrad_setLowerRom();
+/* bank 1 - 0x04000..0x07fff */
+		cpu_setbank(3, AmstradCPC_RamBanks[1]);
+		cpu_setbank(4, AmstradCPC_RamBanks[1]+0x2000);
+/* bank 2 - 0x08000..0x0bfff */
+		cpu_setbank(5, AmstradCPC_RamBanks[2]);
+		cpu_setbank(6, AmstradCPC_RamBanks[2]+0x2000);
+/* bank 3 - 0x0c000..0x0ffff */
+    amstrad_setUpperRom();
+/* other banks */    
+		cpu_setbank(9, AmstradCPC_RamBanks[0]);
+		cpu_setbank(10, AmstradCPC_RamBanks[0]+0x2000);
+		cpu_setbank(11, AmstradCPC_RamBanks[1]);
+		cpu_setbank(12, AmstradCPC_RamBanks[1]+0x2000);
+		cpu_setbank(13, AmstradCPC_RamBanks[2]);
+		cpu_setbank(14, AmstradCPC_RamBanks[2]+0x2000);
+		cpu_setbank(15, AmstradCPC_RamBanks[3]);
+		cpu_setbank(16, AmstradCPC_RamBanks[3]+0x2000);
 
-	logerror("upper rom %02x\n",Data);
+/* multiface hardware enabled? */
+		if (multiface_hardware_enabled()) {
+			multiface_rethink_memory();
+		}
+}
+/* simplified ram configuration - e.g. only correct for 128k machines
 
+RAM Expansion Bits 
+                             7 6 5 4  3  2  1  0 
+CPC6128                      1 1 - -  -  s2 s1 s0 
+Dk'tronics 256K Silicon Disk 1 1 1 b1 b0 b2 -  - 
 
-	Amstrad_RethinkMemory();
+"-" - this bit is ignored. The value of this bit is not important. 
+"0" - this bit must be set to "0" 
+"1" - this bit must be set to "1" 
+"b0,b1,b2" - this bit is used to define the logical 64k block that the ram configuration uses 
+"s0,s1,s2" - this bit is used to define the ram configuration 
+
+The CPC6128 has a 64k ram expansion built-in, giving 128K of RAM in this system. 
+In the CPC464,CPC664 and KC compact if a ram expansion is not present, then writing to this port has no effect and the ram will be in the same arrangement as if configuration 0 had been selected. 
+*/
+static void AmstradCPC_GA_SetRamConfiguration(void)
+{
+	int ConfigurationIndex = amstrad_GateArray_RamConfiguration & 0x07;
+	int BankIndex,i;
+	unsigned char *BankAddr;
+/* if b5 = 0 */
+  if(((amstrad_GateArray_RamConfiguration) & (1<<5)) == 0)  {
+    for (i=0;i<4;i++) {
+    	BankIndex = RamConfigurations[(ConfigurationIndex << 2) + i];
+    	BankAddr = mess_ram + (BankIndex << 14);
+    	AmstradCPC_RamBanks[i] = BankAddr;
+    }
+  } else {/* Need to add the ram expansion configuration here ! */
+  } 
+  amstrad_rethinkMemory();
+}
+/* -------------------
+   -  the Gate Array -
+   -------------------
+The gate array is controlled by I/O. The recommended I/O port address is &7Fxx. 
+The gate array is selected when bit 15 of the I/O port address is set to "0" and bit 14 of the I/O port address is set to "1".
+The values of the other bits are ignored.
+However, to avoid conflict with other devices in the system, these bits should be set to "1". 
+
+The function to be performed is selected by writing data to the Gate-Array, bit 7 and 6 of the data define the function selected (see table below).
+It is not possible to read from the Gate-Array. 
+
+Bit 7 Bit 6 Function 
+0     0     Select pen 
+0     1     Select colour for selected pen 
+1     0     Select screen mode, rom configuration and interrupt control 
+1     1     Ram Memory Management (note 1) 
+
+Note 1 : This function is not available in the Gate-Array, but is performed by a device at the same I/O port address location. In the CPC464,CPC664 and KC compact, this function is performed in a memory-expansion (e.g. Dk'Tronics 64K Ram Expansion), if this expansion is not present then the function is not available. In the CPC6128, this function is performed by a PAL located on the main PCB, or a memory-expansion. In the 464+ and 6128+ this function is performed by the ASIC or a memory expansion. Please read the document on Ram Management for more information.*/
+
+void amstrad_GateArray_write(int dataToGateArray)
+{
+/* Get Bit 7 and 6 of the dataToGateArray = Gate Array function selected */
+	switch ((dataToGateArray & 0xc0)>>6) {
+/* Pen selection
+   -------------
+Bit Value Function        Bit Value Function
+5   x     not used        5   x     not used 
+4   1     Select border   4   0     Select pen 
+3   x     | ignored       3   x     | Pen Number 
+2   x     |               2   x 	  |
+1   x     |               1   x     |
+0   x     |               0   x     |
+*/
+  	case 0x00:	{
+/* Select Border Number, get b4 */
+       amstrad_GateArray_PenSelected = dataToGateArray & (1<<4);
+/* if b4 = 0 : Select Pen Number, get b3-b0 */
+        if (amstrad_GateArray_PenSelected == 0) {
+   		    amstrad_GateArray_PenSelected = dataToGateArray & 0x0F;
+   		  }
+    }	break;
+/* Colour selection
+   ----------------
+Even though there is provision for 32 colours, only 27 are possible.
+The remaining colours are duplicates of those already in the colour palette. 
+
+Bit Value Function 
+5   x     not used 
+4   x     | Colour number 
+3   x     |
+2   x     |
+1   x     |
+0   x     |*/
+  	case 0x01: {
+#ifdef AMSTRAD_VIDEO_EVENT_LIST
+    EventList_AddItemOffset((EVENT_LIST_CODE_GA_COLOUR<<6) | PenIndex, AmstradCPC_PenColours[PenIndex], TIME_TO_CYCLES(0,cpu_getscanline()*cpu_getscanlineperiod()));
+#else
+      amstrad_vh_update_colour(amstrad_GateArray_PenSelected, (dataToGateArray & 0x1F));
+#endif
+    } break;
+/* Select screen mode and rom configuration
+   ----------------------------------------
+Bit Value Function 
+5   x     not used 
+4   x     Interrupt generation control 
+3   1     Upper rom area disable or 0 Upper rom area enable 
+2   1     Lower rom area disable or 0 Lower rom area enable 
+1   x     | Mode selection 
+0   x     |
+   
+Screen mode selection : The settings for bits 1 and 0 and the corresponding screen mode are given in the table below. 
+-----------------------
+b1 b0 Screen mode 
+0  0  Mode 0, 160x200 resolution, 16 colours 
+0  1  Mode 1, 320x200 resolution, 4 colours 
+1  0  Mode 2, 640x200 resolution, 2 colours 
+1  1  Mode 3, 160x200 resolution, 4 colours (note 1) 
+
+This mode is not official. From the combinations possible, we can see that 4 modes can be defined, although the Amstrad only has 3. Mode 3 is similar to mode 0, because it has the same resolution, but it is limited to only 4 colours. 
+Mode changing is synchronised with HSYNC. If the mode is changed, it will take effect from the next HSYNC. 
+
+Rom configuration selection :
+-----------------------------
+Bit 2 is used to enable or disable the lower rom area. The lower rom area occupies memory addressess &0000-&3fff and is used to access the operating system rom. When the lower rom area is is enabled, reading from &0000-&3FFF will return data in the rom. When a value is written to &0000-&3FFF, it will be written to the ram underneath the rom. When it is disabled, data read from &0000-&3FFF will return the data in the ram. 
+Similarly, bit 3 controls enabling or disabling of the upper rom area. The upper rom area occupies memory addressess &C000-&FFFF and is BASIC or any expansion roms which may be plugged into a rom board/box. See the document on upper rom selection for more details. When the upper rom area enabled, reading from &c000-&ffff, will return data in the rom. When data is written to &c000-&FFFF, it will be written to the ram at the same address as the rom. When the upper rom area is disabled, and data is read from &c000-&ffff the data returned will be the data in the ram. 
+
+Bit 4 controls the interrupt generation. It can be used to delay interrupts.*/
+  	case 0x02: {
+      int Previous_GateArray_ModeAndRomConfiguration = amstrad_GateArray_ModeAndRomConfiguration;
+    	amstrad_GateArray_ModeAndRomConfiguration = dataToGateArray;
+/* If bit 4 of the "Select screen mode and rom configuration" register of the Gate-Array is set to "1" 
+ then the interrupt request is cleared and the 6-bit counter is reset to "0".  */
+  			if ((amstrad_GateArray_ModeAndRomConfiguration & (1<<4)) != 0) {
+            amstrad_CRTC_HS_Counter = 0;
+  			    cpu_set_irq_line(0,0, CLEAR_LINE);
+  			}
+/* b3b2 != 0 then change the state of upper or lower rom area and rethink memory */
+        if (((amstrad_GateArray_ModeAndRomConfiguration & 0x0C)^(Previous_GateArray_ModeAndRomConfiguration & 0x0C)) != 0) {
+          amstrad_setLowerRom();
+          amstrad_setUpperRom();
+        }
+/* b1b0 mode change? */
+  			if (((amstrad_GateArray_ModeAndRomConfiguration & 0x03)^(Previous_GateArray_ModeAndRomConfiguration & 0x03)) != 0) {
+#ifdef AMSTRAD_VIDEO_EVENT_LIST
+          EventList_AddItemOffset((EVENT_LIST_CODE_GA_MODE<<6) , amstrad_GateArray_ModeAndRomConfiguration & 0x03, TIME_TO_CYCLES(0,cpu_getscanline()*cpu_getscanlineperiod()));
+#else
+  				amstrad_vh_update_mode(amstrad_GateArray_ModeAndRomConfiguration & 0x03);
+#endif
+  			} 
+      }  break;
+/* Ram Memory Management
+	 ---------------------	
+This function is not available in the Gate-Array, but is performed by a device at the same I/O port address location.
+In the CPC464,CPC664 and KC compact, this function is performed in a memory-expansion (e.g. Dk'Tronics 64K Ram Expansion), if this expansion is not present then the function is not available.
+In the CPC6128, this function is performed by a PAL located on the main PCB, or a memory-expansion.
+In the 464+ and 6128+ this function is performed by the ASIC or a memory expansion.
+*/
+  	case 0x03: {
+  			amstrad_GateArray_RamConfiguration = dataToGateArray;
+     } break;
+  
+    default: {
+    } break;
+  }
 }
 
+/* used for loading snapshot only ! */
+void AmstradCPC_PALWrite(int data)
+{
+	if ((data & 0x0c0)==0x0c0)	{
+		amstrad_GateArray_RamConfiguration = data;
+		AmstradCPC_GA_SetRamConfiguration();
+	}
+}
 
+/* CRTC Differences
+   ----------------
+The following tables list the functions that can be accessed for each type: 
 
-/* port handler */
+Type 0
+b1 b0 Function Read/Write 
+0  0  Select internal 6845 register Write Only 
+0  1  Write to selected internal 6845 register Write Only 
+1  0  - - 
+1  1  Read from selected internal 6845 register Read only 
+
+Type 1
+b1 b0 Function Read/Write 
+0  0  Select internal 6845 register Write Only 
+0  1  Write to selected internal 6845 register Write Only 
+1  0  Read Status Register Read Only 
+1  1  Read from selected internal 6845 register Read only 
+
+Type 2
+b1 b0 Function Read/Write 
+0  0  Select internal 6845 register Write Only 
+0  1  Write to selected internal 6845 register Write Only 
+1  0  - - 
+1  1  Read from selected internal 6845 register Read only 
+
+Type 3 and 4
+b1 b0 Function Read/Write 
+0  0  Select internal 6845 register Write Only 
+0  1  Write to selected internal 6845 register Write Only 
+1  0  Read from selected internal 6845 register Read Only 
+1  1  Read from selected internal 6845 register Read only 
+*/
+
+/* I/O port allocation
+   -------------------
+
+Many thanks to Mark Rison for providing the original information. Thankyou to Richard Wilson for his discoveries concerning RAM management I/O decoding. 
+
+This document will explain the decoding of the I/O ports. The port address is not decoded fully which means a hardware device can be accessed through more than one address, in addition, using some addressess can access more than one element of the hardware at the same time. The CPC IN/OUT design differs from the norm in that port numbers are defined using 16 bits, as opposed to the traditional 8 bits. 
+
+IN r,(C)/OUT (C),r instructions: Bits b15-b8 come from the B register, bits b7-b0 come from "r" 
+IN A,(n)/OUT (n),A instructions: Bits b15-b8 come from the A register, bits b7-b0 come from "n" 
+Listed below are the internal hardware devices and the bit fields to which they respond. In the table: 
+
+"-" means this bit is ignored, 
+"0" means the bit must be set to "0" for the hardware device to respond, 
+"1" means the bit must be set to "1" for the hardware device to respond. 
+"r1" and "r0" mean a bit used to define a register 
+
+Hardware device       Read/Write Port bits 
+                                 b15 b14 b13 b12 b11 b10 b9  b8  b7  b6  b5  b4  b3  b2  b1  b0 
+Gate-Array            Write Only 0   1   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
+RAM Configuration     Write Only 0   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
+CRTC                  Read/Write -   0   -   -   -   -   r1  r0  -   -   -   -   -   -   -   - 
+ROM select            Write only -   -   0   -   -   -   -   -   -   -   -   -   -   -   -   - 
+Printer port          Write only -   -   -   0   -   -   -   -   -   -   -   -   -   -   -   - 
+8255 PPI              Read/Write -   -   -   -   0   -   r1  r0  -   -   -   -   -   -   -   - 
+Expansion Peripherals Read/Write -   -   -   -   -   0   -   -   -   -   -   -   -   -   -   - 
+
+*/
+
 static READ_HANDLER ( AmstradCPC_ReadPortHandler )
 {
-	unsigned char data = 0x0ff;
+	unsigned char data = 0xFF;
+	unsigned int r1r0 = (unsigned int)((offset & 0x0300) >> 8);
 
-	if ((offset & 0x04000) == 0)
-	{
-		/* CRTC */
-		unsigned int Index;
+/* if b14 = 0 : CRTC Read selected */
+  	if ((offset & (1<<14)) == 0) {
+    int crtc_type = (readinputport(10)&CRTC_TYPE)>>5;
+    switch(r1r0) {
+      case 0x02: {
+/* CRTC Type 1 : Read Status Register
+   CRTC Type 3 or 4 : Read from selected internal 6845 register */
+        switch(crtc_type) {
+          case 0x01: {
+            data = amstrad_CRTC_CR; /* Read Status Register */
+          } break;
+          case 0x03:
+          case 0x04: {
+            data = crtc6845_register_r(0);
+          } break;
+          default: {
+          } break;
+        }
+      } break;
+      case 0x03:{
+/* All CRTC type : Read from selected internal 6845 register Read only */
+        data = crtc6845_register_r(0);
+      } break;
+      default: {
+      } break;
+    }
+  }
+/* if b11 = 0 : 8255 PPI Read selected - bits 9 and 8 then define the PPI function access as shown below: 
 
-		Index = (offset & 0x0300) >> 8;
-
-		if (Index == 3)
-		{
-#ifndef AMSTRAD_VIDEO_EVENT_LIST
-			amstrad_update_video();
-#endif
-			/* CRTC Read register */
-			data =	crtc6845_register_r(0);
-		}
+b9 b8 | PPI Function Read/Write status 
+0  0  | Port A data  Read/Write 
+0  1  | Port B data  Read/Write 
+1  0  | Port C data  Read/Write 
+1  1  | Control      Write Only
+*/    
+	if ((offset & (1<<11)) == 0)	{
+    if (r1r0 < 0x03 ) {
+      data = ppi8255_r(0, r1r0);
+    }
 	}
+/* if b10 = 0 : Expansion Peripherals Read selected
 
-	if ((offset & 0x0800) == 0)
-	{
-		/* 8255 PPI */
+bits b7-b5 are used to select an expansion peripheral. Again, this is done by resetting the peripheral's bit:
+Bit | Device 
+b7  | FDC 
+b6  | Reserved (was it ever used?) 
+b5  | Serial port 
 
-		unsigned int Index;
+In the case of the FDC, bits b8 and b0 are used to select the specific mode of operation; all the other bits (b9,b4-b1) are ignored:
+b8 b0 Function Read/Write state 
+0 0 FDD motor control Write Only 
+0 1 not used N/A 
+1 0 Main Status register of FDC (MSR) Read Only 
+1 1 Data register of FDC Read/Write
 
-		Index = (offset & 0x0300) >> 8;
-
-		data = ppi8255_r(0, Index);
-	}
-
-	if ((offset & 0x0400) == 0)
-	{
-		if ((offset & 0x080) == 0)
-		{
-			unsigned int Index;
-
-			Index = ((offset & 0x0100) >> (8 - 1)) | (offset & 0x01);
-
-			switch (Index)
-			{
-			case 2:
-				{
-					/* read status */
-					data = nec765_status_r(0);
-				}
-				break;
-
-			case 3:
-				{
-					/* read data register */
-					data = nec765_data_r(0);
-				}
-				break;
-
-			default:
-				break;
+If b10 is reset but none of b7-b5 are reset, user expansion peripherals are selected.
+The exception is the case where none of b7-b0 are reset (i.e. port &FBFF), which causes the expansion peripherals to reset. 
+ */
+ 	if ((offset & (1<<10)) == 0)	{
+		if ((offset & (1<<10)) == 0) {
+			int b8b0 = ((offset & (1<<8)) >> (8 - 1)) | (offset & (0x01));
+			switch (b8b0) {
+  			case 0x02: {
+  					data = nec765_status_r(0);
+  			} break;
+  			case 0x03: {
+  					data = nec765_data_r(0);
+  			} break;
+  			default: {
+  			} break;
 			}
 		}
 	}
-
-
-	return data;
-
+  return data;
 }
 
 static unsigned char previous_printer_data_byte;
@@ -627,159 +673,120 @@ static unsigned char previous_printer_data_byte;
 /* Offset handler for write */
 static WRITE_HANDLER ( AmstradCPC_WritePortHandler )
 {
-	if ((offset & 0x0c000) == 0x04000)
-	{
-		/* GA */
-		AmstradCPC_GA_Write(data);
-	}
-
-	if ((offset & 0x0c000) == 0x00000)
-	{
-		/* GA */
-		AmstradCPC_PALWrite(data);
-	}
-
-	if ((offset & 0x04000) == 0)
-	{
-		/* CRTC */
-		unsigned int Index;
-
-		Index = (offset & 0x0300) >> 8;
-
-		switch (Index)
-		{
-		case 0:
-			{
+  if ((offset & (1<<15)) == 0) {
+/* if b15 = 0 and b14 = 1 : Gate-Array Write Selected*/
+    if ((offset & (1<<14)) != 0) {
+	   	amstrad_GateArray_write(data);
+    }
+/* if b15 = 0 : RAM Configuration Write Selected*/
+      AmstradCPC_GA_SetRamConfiguration();
+  }
+/*The Gate-Array and CRTC can't be selected simultaneously, which would otherwise cause potential display corruption.*/
+/* if b14 = 0 : CRTC Write Selected*/
+  if ((offset & (1<<14)) == 0) {
+		switch ((offset & 0x0300) >> 8) { // r1r0
+  		case 0x00: {/* Select internal 6845 register Write Only */
 #ifdef AMSTRAD_VIDEO_EVENT_LIST
-				EventList_AddItemOffset((EVENT_LIST_CODE_CRTC_INDEX_WRITE<<6), data, TIME_TO_CYCLES(0,cpu_getscanline()*cpu_getscanlineperiod()));
+  			EventList_AddItemOffset((EVENT_LIST_CODE_CRTC_INDEX_WRITE<<6), data, TIME_TO_CYCLES(0,cpu_getscanline()*cpu_getscanlineperiod()));
 #endif
-
-				///* register select */
-								crtc6845_address_w(0,data);
-			}
-			break;
-
-		case 1:
-			{
-#if 0
-				int current_time;
-								int time_delta;
-								int cur_time;
-
-								/* current time */
-								current_time = TIME_TO_CYCLES(0,cpu_getscanline()*cpu_getscanlineperiod());
-								cur_time = current_time;
-
-								if (previous_crtc_write_time>current_time)
-								{
-									cur_time += cpu_getfperiod();
-								}
-
-								/* time between last write and this write */
-								time_delta = (cur_time - previous_crtc_write_time)>>2;
-
-								/* set new previous write */
-								previous_crtc_write_time = current_time;
-
+        crtc6845_address_w(0,data);
+//          selected_crtc6845_address = (data & 0x1F);
+      } break;
+  		case 0x01: {/* Write to selected internal 6845 register Write Only */
 #ifdef AMSTRAD_VIDEO_EVENT_LIST
-				/* crtc register write */
-				{
-
-					EventList_AddItemOffset((EVENT_LIST_CODE_CRTC_WRITE<<6), data, TIME_TO_CYCLES(0,cpu_getscanline()*cpu_getscanlineperiod()));
-				}
+				EventList_AddItemOffset((EVENT_LIST_CODE_CRTC_WRITE<<6), data, TIME_TO_CYCLES(0,cpu_getscanline()*cpu_getscanlineperiod()));
 #endif
-								/* recalc time */
-								crtc6845_recalc(0, time_delta);
-
-#else
-								  amstrad_update_video();
-#endif
-
-							  /* write data */
-							  crtc6845_register_w(0,data);
-
-			}
-			break;
-
-		default:
-			break;
+//       	  logerror("crtc6845 register (%02d : %04x)\n", selected_crtc6845_address, (data&0x3F));
+        crtc6845_register_w(0,data);
+  		} break;
+  		default: {
+  		} break;
 		}
 	}
-
-
-	if ((offset & 0x01000)==0)
-	{
+/* ROM select before GateArrayWrite ?*/
+/* b13 = 0 : ROM select Write Selected*/
+	if ((offset & (1<<13)) == 0) {
+	  if (previous_amstrad_UpperRom_data != (data & 0xff)) {
+      AmstradCPC_SetUpperRom(data);
+    }
+      previous_amstrad_UpperRom_data = (data & 0xff);
+	}
+/* b12 = 0 : Printer port Write Selected*/
+	if ((offset & (1<<12)) == 0) {
 		/* on CPC, write to printer through LS chip */
 		/* the amstrad is crippled with a 7-bit port :( */
 		/* bit 7 of the data is the printer /strobe */
 
 		/* strobe state changed? */
-		if (((previous_printer_data_byte^data) & 0x080)!=0)
-		{
+		if (((previous_printer_data_byte^data) & (1<<7)) !=0 ) {
 			/* check for only one transition */
-			if ((data & 0x080)==0)
-			{
+			if ((data & (1<<7)) == 0)  {
 				/* output data to printer */
 				device_output(image_from_devtype_and_index(IO_PRINTER, 0), data & 0x07f);
 			}
 		}
 		previous_printer_data_byte = data;
 	}
-
-	if ((offset & 0x02000) == 0)
-	{
-		AmstradCPC_SetUpperRom(data);
-	}
-
-	if ((offset & 0x0800) == 0)
-	{
+/* if b11 = 0 : 8255 PPI Write selected - bits 9 and 8 then define the PPI function access as shown below: 
+b9 b8 | PPI Function Read/Write status 
+0  0  | Port A data  Read/Write 
+0  1  | Port B data  Read/Write 
+1  0  | Port C data  Read/Write 
+1  1  | Control      Write Only
+*/    
+	if ((offset & (1<<11)) == 0) {
 		unsigned int Index;
-
-		Index = (offset & 0x0300) >> 8;
-
+		Index = ((offset & 0x0300) >> 8);
 		ppi8255_w(0, Index, data);
 	}
+/* if b10 = 0 : Expansion Peripherals Read selected */
+	if ((offset & (1<<10)) == 0) {
+/* bits b7-b5 are used to select an expansion peripheral. This is done by resetting the peripheral's bit:
+Bit | Device 
+b7  | FDC 
+b6  | Reserved (was it ever used?) 
+b5  | Serial port 
 
-	if ((offset & 0x0400) == 0)
-	{
-		if ((offset & 0x080) == 0)
-		{
-			unsigned int Index;
+In the case of the FDC, bits b8 and b0 are used to select the specific mode of operation; 
+all the other bits (b9,b4-b1) are ignored:
+b8 b0 Function Read/Write state 
+0 0 FDD motor control Write Only 
+0 1 not used N/A 
+1 0 Main Status register of FDC (MSR) Read Only 
+1 1 Data register of FDC Read/Write 
 
-			Index = ((offset & 0x0100) >> (8 - 1)) | (offset & 0x01);
+If b10 is reset but none of b7-b5 are reset, user expansion peripherals are selected.
+The exception is the case where none of b7-b0 are reset (i.e. port &FBFF), which causes the expansion peripherals to reset. 
+*/
+    if ((offset & (1<<7)) == 0) {
+			unsigned int b8b0 = ((offset & 0x0100) >> (8 - 1)) | (offset & 0x01);
 
-			switch (Index)
-			{
-			case 0:
-				{
-					/* fdc motor on */
-					floppy_drive_set_motor_state(image_from_devtype_and_index(IO_FLOPPY, 0), data & 0x01);
-					floppy_drive_set_motor_state(image_from_devtype_and_index(IO_FLOPPY, 1), data & 0x01);
-					floppy_drive_set_ready_state(image_from_devtype_and_index(IO_FLOPPY, 0), 1,1);
-					floppy_drive_set_ready_state(image_from_devtype_and_index(IO_FLOPPY, 1), 1,1);
-				}
-				break;
-
-			case 3:
-				{
-					nec765_data_w(0,data);
-				}
-				break;
-
+			switch (b8b0) {
+			case 0x00:
+			case 0x01:
+        /* FDC Motor Control - Bit 0 defines the state of the FDD motor: 
+         * "1" the FDD motor will be active. 
+         * "0" the FDD motor will be in-active.*/
+				floppy_drive_set_motor_state(image_from_devtype_and_index(IO_FLOPPY, 0), (data & 0x01));
+				floppy_drive_set_motor_state(image_from_devtype_and_index(IO_FLOPPY, 1), (data & 0x01));
+				floppy_drive_set_ready_state(image_from_devtype_and_index(IO_FLOPPY, 0), 1,1);
+				floppy_drive_set_ready_state(image_from_devtype_and_index(IO_FLOPPY, 1), 1,1);
+		  break;
+			case 0x02:
+      case 0x03: /* Write Data register of FDC */
+				nec765_data_w(0,data);
+			break;
 			default:
-				break;
+			break;
 			}
 		}
 	}
-
 	multiface_io_write(offset,data);
 }
 
 /******************************************************************************************
 	Multiface emulation
   ****************************************************************************************/
-
-
 
 static unsigned char *multiface_ram;
 static unsigned long multiface_flags;
@@ -854,8 +861,7 @@ void multiface_reset(void)
 		/* stop button not pressed and ram/rom disabled */
 		multiface_flags &= ~(MULTIFACE_STOP_BUTTON_PRESSED |
 						MULTIFACE_RAM_ROM_ENABLED);
-		/* as on the real hardware the multiface is visible after
-		a reset! */
+		/* as on the real hardware the multiface is visible after a reset! */
 		multiface_flags |= MULTIFACE_VISIBLE;
 }
 
@@ -891,7 +897,7 @@ void	multiface_stop(void)
 		/* stop button has been pressed, furthur pressess will not issue a NMI */
 		multiface_flags |= MULTIFACE_STOP_BUTTON_PRESSED;
 
-		AmstradCPC_GA_RomConfiguration &=~0x04;
+		amstrad_GateArray_ModeAndRomConfiguration &=~0x04;
 
 		/* page rom into memory */
 		multiface_rethink_memory();
@@ -917,7 +923,7 @@ static void multiface_rethink_memory(void)
 
 	if (
 		((multiface_flags & MULTIFACE_RAM_ROM_ENABLED)!=0) &&
-		((AmstradCPC_GA_RomConfiguration & 0x04) == 0)
+		((amstrad_GateArray_ModeAndRomConfiguration & 0x04) == 0)
 		)
 	{
 
@@ -942,13 +948,13 @@ static WRITE_HANDLER(multiface_io_write)
 		if (offset==0x0fee8)
 		{
 			multiface_flags |= MULTIFACE_RAM_ROM_ENABLED;
-			Amstrad_RethinkMemory();
+			amstrad_rethinkMemory();
 		}
 
 		if (offset==0x0feea)
 		{
 			multiface_flags &= ~MULTIFACE_RAM_ROM_ENABLED;
-			Amstrad_RethinkMemory();
+			amstrad_rethinkMemory();
 		}
 	}
 
@@ -1058,1234 +1064,120 @@ static WRITE_HANDLER(multiface_io_write)
 }
 
 
-/*
+/* ---------------------------------
+   - 28-May-2004 - Interrupt system -
+   ---------------------------------
+   
+Interrupt Generation Facility of the Amstrad Gate Array
+-------------------------------------------------------
+In the CPC the Gate Array generates maskable interrupts, to do this it uses the HSYNC and VSYNC signals from the CRTC, a 6-bit internal counter and monitors the interrupt acknowledge from the Z80. 
 
-  Interrupt system:
+The 6-bit counter is incremented after each HSYNC from the CRTC. (When standard CRTC display settings are used, this is equivalent to counting scan-lines). (to be confirmed: does gate array count positive or negative edge transitions of HSYNC signal?) 
 
-  - The gate array counts CRTC HSYNC pulses.
-	(It has a internal 6-bit counter).
+When the counter equals "52", it is cleared to "0" and the Gate-Array will issue a interrupt request to the Z80, the interrupt request remains active until the Z80 acknowledges it.
+These two operations will continue even if the interrupt has not been acknowledged.
+(When standard CRTC display settings are used, this has the potential to generate a interrupt every 52 scan-lines giving 6 possible interrupts per video frame). 
 
-  - When the counter in the gate array reaches 52, a interrupt is generated.
-	The counter is reset to zero and the count starts again.
+The Z80 will acknowledge if the interrupt acknowledge is enabled. (Z80 internal flag IFF1="1"; this flag can be set with the EI instruction). (When the Z80 acknowledges a interrupt /IORQ = "0" and /M1 = "0" from the Z80.) If IFF1="0" interrupts are ignored and there is no acknowledge. 
 
-  - The interrupt is held until the Z80 acknowledges it.
+When the interrupt is acknowledged, this is sensed by the Gate-Array. The top bit (bit 5), of the counter is set to "0" and the interrupt request is cleared. This prevents the next interrupt from occuring closer than 32 HSYNCs time. 
 
-  - When the interrupt is acknowledge, and is detected by the Gate Array,
-  the top bit of this counter is reset to 0.
-  This prevents the next interrupt from occuring closer than 32 lines.
+If bit 4 of the "Select screen mode and rom configuration" register of the Gate-Array (bit 7="1" and bit 6="0") is set to "1" then the interrupt request is cleared and the 6-bit counter is reset to "0". 
 
-  - The counter is also reset, 2 HSYNCS after the VSYNC has begun.
-	This ensures it is synchronised.
-*/
+The Gate-Array senses the VSYNC signal. If two HSYNCs have been detected following the start of the VSYNC then there are two possible actions: 
 
-/* int counter */
-static int amstrad_52_divider;
-/* reset int counter 2 scans into vsync */
-static int amstrad_52_divider_vsync_reset;
+If the top bit of the 6-bit counter is set to "1" (i.e. the counter >=32), then there is no interrupt request, and the 6-bit counter is reset to "0". (If a interrupt was requested and acknowledged it would be closer than 32 HSYNCs compared to the position of the previous interrupt). 
+If the top bit of the 6-bit counter is set to "0" (i.e. the counter <32), then a interrupt request is issued, and the 6-bit counter is reset to "0". 
+In both cases the following interrupt requests are synchronised with the VSYNC. 
 
-void amstrad_interrupt_timer_trigger_reset_by_vsync(void)
-{
-	amstrad_52_divider_vsync_reset = 2;
-}
+Interrupts generated by the Gate-Array are the only source of interrupts in the CPC system unless they are generated by expansion devices. 
 
+The NMI interrupt of the Z80 is not used by the Amstrad CPC hardware but is available for expansion devices to use.
+*/	
 void amstrad_interrupt_timer_update(void)
 {
-	/* update counter */
-	amstrad_52_divider++;
+  	amstrad_CRTC_HS_Counter++;
 
-	/* vsync synchronisation active? */
-	if (amstrad_52_divider_vsync_reset!=0)
-	{
-		amstrad_52_divider_vsync_reset--;
+	if (amstrad_CRTC_HS_After_VS_Counter == 0) {
+  	if (amstrad_CRTC_HS_Counter == 52) {
+  		amstrad_CRTC_HS_Counter = 0;
+        cpu_set_irq_line(0,0, HOLD_LINE);
+  	}
+  } else {
+		amstrad_CRTC_HS_After_VS_Counter--;
 
-		if (amstrad_52_divider_vsync_reset==0)
-		{
-			/* if counter is <32 or equal to 52 trigger an int. If it isn't then
-				the previous int is closer than 32 scan-lines to this
-			position */
-			if (((amstrad_52_divider & (1<<5))==0) || (amstrad_52_divider==52))
-			{
-
-				cpu_set_irq_line(0,0, HOLD_LINE);
-			}
-
-			/* reset counter */
-			amstrad_52_divider = 0;
-			return;
+		if (amstrad_CRTC_HS_After_VS_Counter == 0) {
+    	if (amstrad_CRTC_HS_Counter > 32) {
+        cpu_set_irq_line(0,0, HOLD_LINE);
+      }	
+      else {
+      	cpu_set_irq_line(0,0, CLEAR_LINE);
+      }
+  	  amstrad_CRTC_HS_Counter = 0;
 		}
 	}
-
-	/* counter==52? */
-	if (amstrad_52_divider == 52)
-	{
-		/* reset and trigger int */
-		amstrad_52_divider = 0;
-		cpu_set_irq_line(0,0, HOLD_LINE);
-	}
 }
-
-static void	amstrad_interrupt_timer_callback(int dummy)
-{
-#ifndef AMSTRAD_VIDEO_EVENT_LIST
-	amstrad_update_video();
-#else
-	amstrad_interrupt_timer_update();
-#endif
-}
-
-static void amstrad_clear_top_bit_of_int_counter(void)
-{
-	/* clear bit 5 of counter - next int will not be closer than
-	32 lines */
-	amstrad_52_divider &=31;
-}
-
 /* called when cpu acknowledges int */
+/* reset top bit of interrupt line counter */
+/* this ensures that the next interrupt is no closer than 32 lines */
 static int 	amstrad_cpu_acknowledge_int(int cpu)
 {
-	amstrad_clear_top_bit_of_int_counter();
+  cpu_set_irq_line(0,0, CLEAR_LINE);
+	amstrad_CRTC_HS_Counter &= 0x1F;
+	return 0xFF;
+}
+/* every 64us let's the crtc do the job !*/
+static void amstrad_update_video(int dummy)
+{
+	int current_time;
+	int time_delta;
 
-	cpu_set_irq_line(0,0, CLEAR_LINE);
+	// current cycles
+	current_time = TIME_TO_CYCLES(0,cpu_getscanline()*cpu_getscanlineperiod());
+	
+	// time between last write and this write
+  time_delta = current_time - amstrad_cycles_last_write;
+  time_delta = time_delta>>2;
 
-	return 0x0ff;
+	 // set new previous write
+	amstrad_cycles_last_write = current_time;
+	 
+	 if (time_delta != 0) {
+    amstrad_vh_execute_crtc_cycles(time_delta);
+  }
 }
 
-#define US_TO_CPU_CYCLES(x) ((x)<<2)
-
-/* the following timings have been measured! */
-static UINT8 amstrad_cycle_table_op[256]=
+static VIDEO_EOF( amstrad )
 {
-	US_TO_CPU_CYCLES(1),	/* NOP */
-	US_TO_CPU_CYCLES(3),	/* LD BC,nnnn */
-	US_TO_CPU_CYCLES(2),	/* LD (BC),A */
-	US_TO_CPU_CYCLES(2),	/* INC BC */
-	US_TO_CPU_CYCLES(1),	/* INC B */
-	US_TO_CPU_CYCLES(1),	/* DEC B */
-	US_TO_CPU_CYCLES(2),	/* LD B,n */
-	US_TO_CPU_CYCLES(1),	/* RLCA */
-	US_TO_CPU_CYCLES(1),	/* EX AF,AF' */
-	US_TO_CPU_CYCLES(3),	/* ADD HL,BC */
-	US_TO_CPU_CYCLES(2),	/* LD A,(BC) */
-	US_TO_CPU_CYCLES(2),	/* DEC BC */
-	US_TO_CPU_CYCLES(1),	/* INC C */
-	US_TO_CPU_CYCLES(1),	/* DEC C */
-	US_TO_CPU_CYCLES(2),	/* LD C,n */
-	US_TO_CPU_CYCLES(1),	/* RRCA */
-		US_TO_CPU_CYCLES(3),	/*		DJNZ  4 taken, 3 not taken */
-	US_TO_CPU_CYCLES(3),	/* LD DE,nnnn */
-	US_TO_CPU_CYCLES(2),	/* LD (DE),A */
-	US_TO_CPU_CYCLES(2),	/* INC DE */
-	US_TO_CPU_CYCLES(1),	/* INC D */
-	US_TO_CPU_CYCLES(1),	/* DEC D */
-	US_TO_CPU_CYCLES(2),	/* LD D,n */
-	US_TO_CPU_CYCLES(1),	/* RLA */
-	US_TO_CPU_CYCLES(3),	/* JR */
-	US_TO_CPU_CYCLES(3),	/* ADD HL,DE */
-	US_TO_CPU_CYCLES(2),	/* LD A,(DE) */
-	US_TO_CPU_CYCLES(2),	/* DEC DE */
-	US_TO_CPU_CYCLES(1),	/* INC E */
-	US_TO_CPU_CYCLES(1),	/* DEC E */
-	US_TO_CPU_CYCLES(2),	/* LD E,n */
-	US_TO_CPU_CYCLES(1),	/* RRA */
-		US_TO_CPU_CYCLES(2),	/* JR 3 if taken, 2 if not taken */
-	US_TO_CPU_CYCLES(3),	/* LD HL,nnnn */
-	US_TO_CPU_CYCLES(5),	/* LD (nnnn),HL */
-	US_TO_CPU_CYCLES(2),	/* INC HL */
-	US_TO_CPU_CYCLES(1),	/* INC H */
-	US_TO_CPU_CYCLES(1),	/* DEC H */
-	US_TO_CPU_CYCLES(2),	/* LD H,n */
-	US_TO_CPU_CYCLES(1),	/* DAA */
-		US_TO_CPU_CYCLES(2),	/*		 JR Z,3 if taken, 2 if not taken */
-	US_TO_CPU_CYCLES(3),	/* ADD HL,HL */
-	US_TO_CPU_CYCLES(5),	/* LD HL,(nnnn) */
-	US_TO_CPU_CYCLES(2),	/* DEC HL */
-	US_TO_CPU_CYCLES(1),	/* INC H */
-	US_TO_CPU_CYCLES(1),	/* DEC H */
-	US_TO_CPU_CYCLES(2),	/* LD H,n */
-	US_TO_CPU_CYCLES(1),	/* CPL */
-		US_TO_CPU_CYCLES(2),	/* JR NZ,3 if taken, 2 if not taken */
-	US_TO_CPU_CYCLES(3),	/* LD SP,nnnn */
-	US_TO_CPU_CYCLES(4),	/* LD (nnnn), A */
-	US_TO_CPU_CYCLES(2),	/* INC SP */
-	US_TO_CPU_CYCLES(2),	/* INC (HL) */
-	US_TO_CPU_CYCLES(2),	/* DEC (HL) */
-	US_TO_CPU_CYCLES(2),	/* LD (HL),n */
-	US_TO_CPU_CYCLES(1),	/* SCF */
-		US_TO_CPU_CYCLES(2),			/* JR NC, 3 if taken, 2 if not taken */
-	US_TO_CPU_CYCLES(3),	/* ADD HL,SP */
-	US_TO_CPU_CYCLES(4),	/* LD A,(nnnn) */
-	US_TO_CPU_CYCLES(2),	/* DEC SP */
-	US_TO_CPU_CYCLES(1),	/* INC A*/
-	US_TO_CPU_CYCLES(1),	/* DEC A */
-	US_TO_CPU_CYCLES(2),	/* LD A,n */
-	US_TO_CPU_CYCLES(1),	/* CCF */
-	US_TO_CPU_CYCLES(1),	/* LD B,B */
-	US_TO_CPU_CYCLES(1),	/* LD B,C */
-	US_TO_CPU_CYCLES(1),	/* LD B,D */
-	US_TO_CPU_CYCLES(1),	/* LD B,E */
-	US_TO_CPU_CYCLES(1),	/* LD B,H */
-	US_TO_CPU_CYCLES(1),	/* LD B,L */
-	US_TO_CPU_CYCLES(2),	/* LD B,(HL) */
-	US_TO_CPU_CYCLES(1),	/* LD B,A */
-	US_TO_CPU_CYCLES(1),	/* LD C,B */
-	US_TO_CPU_CYCLES(1),	/* LD C,C */
-	US_TO_CPU_CYCLES(1),	/* LD C,D */
-	US_TO_CPU_CYCLES(1),	/* LD C,E */
-	US_TO_CPU_CYCLES(1),	/* LD C,H */
-	US_TO_CPU_CYCLES(1),	/* LD C,L */
-	US_TO_CPU_CYCLES(2),	/* LD C,(HL) */
-	US_TO_CPU_CYCLES(1),	/* LD C,A */
-	US_TO_CPU_CYCLES(1),	/* LD D,B */
-	US_TO_CPU_CYCLES(1),	/* LD D,C */
-	US_TO_CPU_CYCLES(1),	/* LD D,D */
-	US_TO_CPU_CYCLES(1),	/* LD D,E */
-	US_TO_CPU_CYCLES(1),	/* LD D,H */
-	US_TO_CPU_CYCLES(1),	/* LD D,L */
-	US_TO_CPU_CYCLES(2),	/* LD D,(HL) */
-	US_TO_CPU_CYCLES(1),	/* LD D,A */
-	US_TO_CPU_CYCLES(1),	/* LD E,B */
-	US_TO_CPU_CYCLES(1),	/* LD E,C */
-	US_TO_CPU_CYCLES(1),	/* LD E,D */
-	US_TO_CPU_CYCLES(1),	/* LD E,E */
-	US_TO_CPU_CYCLES(1),	/* LD E,H */
-	US_TO_CPU_CYCLES(1),	/* LD E,L */
-	US_TO_CPU_CYCLES(2),	/* LD E,(HL) */
-	US_TO_CPU_CYCLES(1),	/* LD E,A */
-	US_TO_CPU_CYCLES(1),	/* LD H,B */
-	US_TO_CPU_CYCLES(1),	/* LD H,C */
-	US_TO_CPU_CYCLES(1),	/* LD H,D */
-	US_TO_CPU_CYCLES(1),	/* LD H,E */
-	US_TO_CPU_CYCLES(1),	/* LD H,H */
-	US_TO_CPU_CYCLES(1),	/* LD H,L */
-	US_TO_CPU_CYCLES(2),	/* LD H,(HL) */
-	US_TO_CPU_CYCLES(1),	/* LD H,A */
-	US_TO_CPU_CYCLES(1),	/* LD L,B */
-	US_TO_CPU_CYCLES(1),	/* LD L,C */
-	US_TO_CPU_CYCLES(1),	/* LD L,D */
-	US_TO_CPU_CYCLES(1),	/* LD L,E */
-	US_TO_CPU_CYCLES(1),	/* LD L,H */
-	US_TO_CPU_CYCLES(1),	/* LD L,L */
-	US_TO_CPU_CYCLES(2),	/* LD L,(HL) */
-	US_TO_CPU_CYCLES(1),	/* LD L,A */
-	US_TO_CPU_CYCLES(2),	/* LD (HL), B */
-	US_TO_CPU_CYCLES(2),	/* LD (HL), C */
-	US_TO_CPU_CYCLES(2),	/* LD (HL), D */
-	US_TO_CPU_CYCLES(2),	/* LD (HL), E */
-	US_TO_CPU_CYCLES(2),	/* LD (HL), H */
-	US_TO_CPU_CYCLES(2),	/* LD (HL), L */
-	US_TO_CPU_CYCLES(1),	/* HALT */
-	US_TO_CPU_CYCLES(2),	/* LD (HL), A */
-	US_TO_CPU_CYCLES(1),	/* LD A,B */
-	US_TO_CPU_CYCLES(1),	/* LD A,C */
-	US_TO_CPU_CYCLES(1),	/* LD A,D */
-	US_TO_CPU_CYCLES(1),	/* LD A,E */
-	US_TO_CPU_CYCLES(1),	/* LD A,H */
-	US_TO_CPU_CYCLES(1),	/* LD A,L */
-	US_TO_CPU_CYCLES(2),	/* LD A,(HL) */
-	US_TO_CPU_CYCLES(1),	/* LD A,A */
-	US_TO_CPU_CYCLES(1),	/* ADD A,B */
-	US_TO_CPU_CYCLES(1),	/* ADD A,C */
-	US_TO_CPU_CYCLES(1),	/* ADD A,D */
-	US_TO_CPU_CYCLES(1),	/* ADD A,E */
-	US_TO_CPU_CYCLES(1),	/* ADD A,H */
-	US_TO_CPU_CYCLES(1),	/* ADD A,L */
-	US_TO_CPU_CYCLES(2),	/* ADD A,(HL) */
-	US_TO_CPU_CYCLES(1),	/* ADD A,A */
-	US_TO_CPU_CYCLES(1),	/* ADC A,B */
-	US_TO_CPU_CYCLES(1),	/* ADC A,C */
-	US_TO_CPU_CYCLES(1),	/* ADC A,D */
-	US_TO_CPU_CYCLES(1),	/* ADC A,E */
-	US_TO_CPU_CYCLES(1),	/* ADC A,H */
-	US_TO_CPU_CYCLES(1),	/* ADC A,L */
-	US_TO_CPU_CYCLES(2),	/* ADC A,(HL) */
-	US_TO_CPU_CYCLES(1),	/* ADC A,A */
-	US_TO_CPU_CYCLES(1),	/* SUB A,B */
-	US_TO_CPU_CYCLES(1),	/* SUB A,C */
-	US_TO_CPU_CYCLES(1),	/* SUB A,D */
-	US_TO_CPU_CYCLES(1),	/* SUB A,E */
-	US_TO_CPU_CYCLES(1),	/* SUB A,H */
-	US_TO_CPU_CYCLES(1),	/* SUB A,L */
-	US_TO_CPU_CYCLES(2),	/* SUB A,(HL) */
-	US_TO_CPU_CYCLES(1),	/* SUB A,A */
-	US_TO_CPU_CYCLES(1),	/* SBC A,B */
-	US_TO_CPU_CYCLES(1),	/* SBC A,C */
-	US_TO_CPU_CYCLES(1),	/* SBC A,D */
-	US_TO_CPU_CYCLES(1),	/* SBC A,E */
-	US_TO_CPU_CYCLES(1),	/* SBC A,H */
-	US_TO_CPU_CYCLES(1),	/* SBC A,L */
-	US_TO_CPU_CYCLES(2),	/* SBC A,(HL) */
-	US_TO_CPU_CYCLES(1),	/* SBC A,A */
-	US_TO_CPU_CYCLES(1),	/* AND A,B */
-	US_TO_CPU_CYCLES(1),	/* AND A,C */
-	US_TO_CPU_CYCLES(1),	/* AND A,D */
-	US_TO_CPU_CYCLES(1),	/* AND A,E */
-	US_TO_CPU_CYCLES(1),	/* AND A,H */
-	US_TO_CPU_CYCLES(1),	/* AND A,L */
-	US_TO_CPU_CYCLES(2),	/* AND A,(HL) */
-	US_TO_CPU_CYCLES(1),	/* AND A,A */
-	US_TO_CPU_CYCLES(1),	/* XOR A,B */
-	US_TO_CPU_CYCLES(1),	/* XOR A,C */
-	US_TO_CPU_CYCLES(1),	/* XOR A,D */
-	US_TO_CPU_CYCLES(1),	/* XOR A,E */
-	US_TO_CPU_CYCLES(1),	/* XOR A,H */
-	US_TO_CPU_CYCLES(1),	/* XOR A,L */
-	US_TO_CPU_CYCLES(2),	/* XOR A,(HL) */
-	US_TO_CPU_CYCLES(1),	/* XOR A,A */
-	US_TO_CPU_CYCLES(1),	/* OR A,B */
-	US_TO_CPU_CYCLES(1),	/* OR A,C */
-	US_TO_CPU_CYCLES(1),	/* OR A,D */
-	US_TO_CPU_CYCLES(1),	/* OR A,E */
-	US_TO_CPU_CYCLES(1),	/* OR A,H */
-	US_TO_CPU_CYCLES(1),	/* OR A,L */
-	US_TO_CPU_CYCLES(2),	/* OR A,(HL) */
-	US_TO_CPU_CYCLES(1),	/* OR A,A */
-	US_TO_CPU_CYCLES(1),	/* CP A,B */
-	US_TO_CPU_CYCLES(1),	/* CP A,C */
-	US_TO_CPU_CYCLES(1),	/* CP A,D */
-	US_TO_CPU_CYCLES(1),	/* CP A,E */
-	US_TO_CPU_CYCLES(1),	/* CP A,H */
-	US_TO_CPU_CYCLES(1),	/* CP A,L */
-	US_TO_CPU_CYCLES(2),	/* CP A,(HL) */
-	US_TO_CPU_CYCLES(1),	/* CP A,A */
-		US_TO_CPU_CYCLES(2),	/* RET NZ 4 taken, 2 not taken */
-	US_TO_CPU_CYCLES(3),	/* POP BC */
-	US_TO_CPU_CYCLES(3),	/* JP NZ, 3 taken, 3 not taken */
-	US_TO_CPU_CYCLES(3),	/* JP  */
-		US_TO_CPU_CYCLES(3),	/* CALL NZ 5 taken, 3 not taken */
-	US_TO_CPU_CYCLES(4),	/* PUSH BC */
-	US_TO_CPU_CYCLES(2),	/* ADD A,n */
-	US_TO_CPU_CYCLES(4),	/* RST 0 */
-		US_TO_CPU_CYCLES(2),	/* RET Z 4 taken, 2 not taken */
-	US_TO_CPU_CYCLES(3),	/* RET	*/
-	US_TO_CPU_CYCLES(3),	/* JP NZ, 3 taken, 3 not taken */
-	US_TO_CPU_CYCLES(1),	/* cb prefix */
-		US_TO_CPU_CYCLES(3),	/* CALL NZ 5 taken, 3 not taken */
-	US_TO_CPU_CYCLES(5),	/* CALL */
-	US_TO_CPU_CYCLES(2),	/* ADC A,n */
-	US_TO_CPU_CYCLES(4),	/* RST 8 */
-		US_TO_CPU_CYCLES(2),	/* RET NC 4 taken, 2 not taken */
-	US_TO_CPU_CYCLES(3),	/* POP DE */
-	US_TO_CPU_CYCLES(3),	/* JP NC, 3 taken, 3 not taken */
-	US_TO_CPU_CYCLES(3),	/* OUT (n), A */
-		US_TO_CPU_CYCLES(3),	/* CALL NC 5 taken, 3 not taken */
-	US_TO_CPU_CYCLES(4),	/* PUSH DE */
-	US_TO_CPU_CYCLES(2),	/* SUB A,n */
-	US_TO_CPU_CYCLES(4),	/* RST 10 */
-		US_TO_CPU_CYCLES(2),	/* RET C 4 taken, 2 not taken */
-	US_TO_CPU_CYCLES(1),	/* EXX */
-	US_TO_CPU_CYCLES(3),	/* JP C, 3 taken, 3 not taken */
-	US_TO_CPU_CYCLES(3),	/* IN A,(n) */
-		US_TO_CPU_CYCLES(3),	/* CALL C 5 taken, 3 not taken */
-	US_TO_CPU_CYCLES(1),	/* DD prefix */
-	US_TO_CPU_CYCLES(2),	/* SBC A,n */
-	US_TO_CPU_CYCLES(4),	/* RST 18 */
-		US_TO_CPU_CYCLES(2),	/* RET PO 4 taken, 2 not taken */
-	US_TO_CPU_CYCLES(3),	/* POP HL */
-	US_TO_CPU_CYCLES(3),	/* JP PO, 3 taken, 3 not taken */
-	US_TO_CPU_CYCLES(6),	/* EX SP, HL */
-		US_TO_CPU_CYCLES(3),	/* CALL PO 5 taken, 3 not taken */
-	US_TO_CPU_CYCLES(4),	/* PUSH HL */
-	US_TO_CPU_CYCLES(2),	/* AND A,n */
-	US_TO_CPU_CYCLES(4),	/* RST 20 */
-		US_TO_CPU_CYCLES(2),	/* RET PE 4 taken, 2 not taken */
-	US_TO_CPU_CYCLES(1),	/* JP (HL) */
-	US_TO_CPU_CYCLES(3),	/* JP PE, 3 taken, 3 not taken */
-	US_TO_CPU_CYCLES(1),	/* EX DE,HL */
-		US_TO_CPU_CYCLES(3),	/* CALL PE 5 taken, 3 not taken */
-	US_TO_CPU_CYCLES(1),	/* ED prefix */
-	US_TO_CPU_CYCLES(2),	/* XOR A,n */
-	US_TO_CPU_CYCLES(4),	/* RST 28 */
-		US_TO_CPU_CYCLES(2),	/* RET P 4 taken, 2 not taken */
-	US_TO_CPU_CYCLES(3),	/* POP AF */
-	US_TO_CPU_CYCLES(3),	/* JP P, 3 taken, 3 not taken */
-	US_TO_CPU_CYCLES(1),	/* DI */
-		US_TO_CPU_CYCLES(3),	/* CALL P 5 taken, 3 not taken */
-	US_TO_CPU_CYCLES(4),	/* PUSH AF */
-	US_TO_CPU_CYCLES(2),	/* OR A,n */
-	US_TO_CPU_CYCLES(4),	/* RST 30 */
-		US_TO_CPU_CYCLES(2),	/* RET M 4 taken, 2 not taken */
-	US_TO_CPU_CYCLES(2),	/* LD SP,HL */
-	US_TO_CPU_CYCLES(3),	/* JP M, 3 taken, 3 not taken */
-	US_TO_CPU_CYCLES(1),	/* EI */
-		US_TO_CPU_CYCLES(3),	/* CALL M 5 taken, 3 not taken */
-	US_TO_CPU_CYCLES(1),	/* FD prefix */
-	US_TO_CPU_CYCLES(2),	/* CP A,n */
-	US_TO_CPU_CYCLES(4),	/* RST 38 */
-
-};
-
-static UINT8 amstrad_cycle_table_cb[256]=
+	if ((readinputport(11) & 0x02)!=0) {
+			multiface_stop();
+	}
+}
+/* sets up for a machine reset
+All hardware is reset and the firmware is completely initialized
+Once all tables and jumpblocks have been set up,
+control is passed to the default entry in rom 0*/
+void amstrad_reset_machine(void)
 {
-		/* RLC */
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(4), US_TO_CPU_CYCLES(2),
+	/* enable lower rom (OS rom) */
+	amstrad_GateArray_write(0x089);
 
-		/* RRC */
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(4), US_TO_CPU_CYCLES(2),
+	/* set ram config 0 */
+	amstrad_GateArray_write(0x0c0);
 
-		/* RL */
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(4), US_TO_CPU_CYCLES(2),
+  // Get manufacturer name and TV refresh rate from PCB link (dipswitch for mess emulation)
+	ppi_port_inputs[amstrad_ppi_PortB] = (((readinputport(10)&MANUFACTURER_NAME)<<1) | (readinputport(10)&TV_REFRESH_RATE));
 
-		/* RR */
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(4), US_TO_CPU_CYCLES(2),
-
-		/* SLA */
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(4), US_TO_CPU_CYCLES(2),
-
-		/* SRA */
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(4), US_TO_CPU_CYCLES(2),
-
-		/* SLL */
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(4), US_TO_CPU_CYCLES(2),
-
-		/* SRL */
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(4), US_TO_CPU_CYCLES(2),
-
-		/* BIT */
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(3), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(3), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(3), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(3), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(3), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(3), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(3), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(3), US_TO_CPU_CYCLES(2),
-
-		/* RES */
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(4), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(4), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(4), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(4), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(4), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(4), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(4), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(4), US_TO_CPU_CYCLES(2),
-
-		/* SET */
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(4), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(4), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(4), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(4), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(4), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(4), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(4), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(4), US_TO_CPU_CYCLES(2),
-
-};
-
-
-static UINT8 amstrad_cycle_table_ed[256]=
-{
-		/* 0x00-0x03f */
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-
-		US_TO_CPU_CYCLES(4), /* IN B,(C) */
-		US_TO_CPU_CYCLES(4), /* OUT (C), B*/
-		US_TO_CPU_CYCLES(4), /* SBC HL,BC */
-		US_TO_CPU_CYCLES(6), /* LD (nnnn), bc */
-		US_TO_CPU_CYCLES(2), /* NEG */
-		US_TO_CPU_CYCLES(4), /* RETN */
-		US_TO_CPU_CYCLES(2), /* IM */
-		US_TO_CPU_CYCLES(3), /* LD I,A */
-
-		US_TO_CPU_CYCLES(4), /* IN C,(C) */
-		US_TO_CPU_CYCLES(4), /* OUT (C), C*/
-		US_TO_CPU_CYCLES(4), /* ADC HL,BC */
-		US_TO_CPU_CYCLES(6), /* LD bc,(nnnn) */
-		US_TO_CPU_CYCLES(2), /* NEG */
-		US_TO_CPU_CYCLES(4), /* RETI */
-		US_TO_CPU_CYCLES(2), /* IM */
-		US_TO_CPU_CYCLES(3), /* LD R,A */
-
-		US_TO_CPU_CYCLES(4), /* IN D,(C) */
-		US_TO_CPU_CYCLES(4), /* OUT (C), D*/
-		US_TO_CPU_CYCLES(4), /* SBC HL,DE*/
-		US_TO_CPU_CYCLES(6), /* LD (nnnn), DE */
-		US_TO_CPU_CYCLES(2), /* NEG */
-		US_TO_CPU_CYCLES(4), /* RETN */
-		US_TO_CPU_CYCLES(2), /* IM */
-		US_TO_CPU_CYCLES(3), /* LD A,I */
-
-		US_TO_CPU_CYCLES(4), /* IN E,(C)*/
-		US_TO_CPU_CYCLES(4), /* OUT (C), E*/
-		US_TO_CPU_CYCLES(4), /* ADC HL,DE */
-		US_TO_CPU_CYCLES(6), /* LD de, (nnnn) */
-		US_TO_CPU_CYCLES(2), /* NEG */
-		US_TO_CPU_CYCLES(4), /* RETI */
-		US_TO_CPU_CYCLES(2), /* IM */
-		US_TO_CPU_CYCLES(3), /* LD A,R */
-
-
-		US_TO_CPU_CYCLES(4), /* IN H,(C)*/
-		US_TO_CPU_CYCLES(4), /* OUT (C),H */
-		US_TO_CPU_CYCLES(4), /* SBC HL,HL */
-		US_TO_CPU_CYCLES(6), /* LD (nnnn), HL */
-		US_TO_CPU_CYCLES(2), /* NEG */
-		US_TO_CPU_CYCLES(4), /* RETN */
-		US_TO_CPU_CYCLES(2), /* IM */
-		US_TO_CPU_CYCLES(5), /* RRD */
-
-		US_TO_CPU_CYCLES(4), /* IN L,(C) */
-		US_TO_CPU_CYCLES(4), /* OUT (C),L */
-		US_TO_CPU_CYCLES(4), /* ADC HL,HL */
-		US_TO_CPU_CYCLES(6), /* LD hl, (nnnn) */
-		US_TO_CPU_CYCLES(2), /* NEG */
-		US_TO_CPU_CYCLES(4), /* RETI */
-		US_TO_CPU_CYCLES(2), /* IM */
-		US_TO_CPU_CYCLES(5), /* RLD */
-
-		US_TO_CPU_CYCLES(4), /* IN X,(C)*/
-		US_TO_CPU_CYCLES(4), /* OUT (C), 0 */
-		US_TO_CPU_CYCLES(4), /* SBC HL,SP */
-		US_TO_CPU_CYCLES(6), /* LD (nnnn), sp */
-		US_TO_CPU_CYCLES(2), /* NEG */
-		US_TO_CPU_CYCLES(4), /* RETN */
-		US_TO_CPU_CYCLES(2), /* IM */
-		US_TO_CPU_CYCLES(2), /*  */
-
-		US_TO_CPU_CYCLES(4), /* IN A,(C) */
-		US_TO_CPU_CYCLES(4), /* OUT (C), A */
-		US_TO_CPU_CYCLES(4), /* ADC HL,SP */
-		US_TO_CPU_CYCLES(6), /* LD sp.(nnnn) */
-		US_TO_CPU_CYCLES(2), /* NEG */
-		US_TO_CPU_CYCLES(4), /* RETI */
-		US_TO_CPU_CYCLES(2), /* IM */
-		US_TO_CPU_CYCLES(2), /*  */
-
-		/* 0x080-0x09f */
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-
-		US_TO_CPU_CYCLES(5), /* LDI */
-		US_TO_CPU_CYCLES(5), /* CPI */
-		US_TO_CPU_CYCLES(5), /* INI */
-		US_TO_CPU_CYCLES(5), /* OUTI */
-
-		/* 0x0a4-0x0a7 */
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-
-		US_TO_CPU_CYCLES(5), /* LDD */
-		US_TO_CPU_CYCLES(5), /* CPD */
-		US_TO_CPU_CYCLES(5), /* IND */
-		US_TO_CPU_CYCLES(5), /* OUTD */
-
-		/* 0x0ac-0x0af */
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-
-		US_TO_CPU_CYCLES(5), /* LDIR */
-		US_TO_CPU_CYCLES(5), /* CPIR */
-		US_TO_CPU_CYCLES(5), /* INIR */
-		US_TO_CPU_CYCLES(5), /* OTIR */
-
-		/* 0x0b4-0x0b7 */
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-
-		US_TO_CPU_CYCLES(5), /* LDDR */
-		US_TO_CPU_CYCLES(5), /* CPDR */
-		US_TO_CPU_CYCLES(5), /* INDR */
-		US_TO_CPU_CYCLES(5), /* OTDR */
-
-		/* 0x0c0-0x0ff */
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-		US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2), US_TO_CPU_CYCLES(2),
-
-};
-
-
-static UINT8 amstrad_cycle_table_xy[256]=
-{
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only  */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(4),	/* ADD xy,BC */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(4),	/* ADD xy,DE */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(4),	/* LD xy,nnnn */
-	US_TO_CPU_CYCLES(6),	/* LD (nnnn),xy */
-	US_TO_CPU_CYCLES(3),	/* INC xy */
-	US_TO_CPU_CYCLES(2),	/* INC hxy */
-	US_TO_CPU_CYCLES(2),	/* DEC hxy */
-	US_TO_CPU_CYCLES(3),	/* LD hxy,n */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(4),	/* ADD xy,xy */
-	US_TO_CPU_CYCLES(6),	/* LD HL,(nnnn) */
-	US_TO_CPU_CYCLES(3),	/* DEC xy */
-	US_TO_CPU_CYCLES(2),	/* INC lxy */
-	US_TO_CPU_CYCLES(2),	/* DEC lxy */
-	US_TO_CPU_CYCLES(3),	/* LD lxy,n */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(6),	/* INC (xy) */
-	US_TO_CPU_CYCLES(6),	/* DEC (xy) */
-	US_TO_CPU_CYCLES(6),	/* LD (xy),n */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(4),	/* ADD xy,SP */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(2),	/* LD B,hxy */
-	US_TO_CPU_CYCLES(2),	/* LD B,lxy */
-	US_TO_CPU_CYCLES(5),	/* LD B,(xy) */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(2),	/* LD C,hxy */
-	US_TO_CPU_CYCLES(2),	/* LD C,lxy */
-	US_TO_CPU_CYCLES(5),	/* LD C,(xy) */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(2),	/* LD D,hxy */
-	US_TO_CPU_CYCLES(2),	/* LD D,lxy */
-	US_TO_CPU_CYCLES(5),	/* LD D,(xy) */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(2),	/* LD E,hxy */
-	US_TO_CPU_CYCLES(2),	/* LD E,lxy */
-	US_TO_CPU_CYCLES(5),	/* LD E,(xy) */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(2),	/* LD hxy,B */
-	US_TO_CPU_CYCLES(2),	/* LD hxy,C */
-	US_TO_CPU_CYCLES(2),	/* LD hxy,D */
-	US_TO_CPU_CYCLES(2),	/* LD hxy,E */
-	US_TO_CPU_CYCLES(2),	/* LD hxy,hxy */
-	US_TO_CPU_CYCLES(2),	/* LD hxy,lxy */
-	US_TO_CPU_CYCLES(5),	/* LD H,(xy) */
-	US_TO_CPU_CYCLES(2),	/* LD hxy,A */
-	US_TO_CPU_CYCLES(2),	/* LD lxy,B */
-	US_TO_CPU_CYCLES(2),	/* LD lxy,C */
-	US_TO_CPU_CYCLES(2),	/* LD lxy,D */
-	US_TO_CPU_CYCLES(2),	/* LD lxy,E */
-	US_TO_CPU_CYCLES(2),	/* LD lxy,H */
-	US_TO_CPU_CYCLES(2),	/* LD lxy,L */
-	US_TO_CPU_CYCLES(5),	/* LD l,(HL) */
-	US_TO_CPU_CYCLES(2),	/* LD lxy,A */
-	US_TO_CPU_CYCLES(5),	/* LD (xy), B */
-	US_TO_CPU_CYCLES(5),	/* LD (xy), C */
-	US_TO_CPU_CYCLES(5),	/* LD (xy), D */
-	US_TO_CPU_CYCLES(5),	/* LD (xy), E */
-	US_TO_CPU_CYCLES(5),	/* LD (xy), H */
-	US_TO_CPU_CYCLES(5),	/* LD (xy), L */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(5),	/* LD (xy), A */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(2),	/* LD A,hxy */
-	US_TO_CPU_CYCLES(2),	/* LD A,lxy */
-	US_TO_CPU_CYCLES(5),	/* LD A,(xy) */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(2),	/* ADD A,hxy */
-	US_TO_CPU_CYCLES(2),	/* ADD A,lxy */
-	US_TO_CPU_CYCLES(5),	/* ADD A,(xy) */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(2),	/* ADC A,hxy */
-	US_TO_CPU_CYCLES(2),	/* ADC A,lxy */
-	US_TO_CPU_CYCLES(5),	/* ADC A,(xy) */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(2),	/* SUB A,hxy */
-	US_TO_CPU_CYCLES(2),	/* SUB A,lxy */
-	US_TO_CPU_CYCLES(5),	/* SUB A,(xy) */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(2),	/* SBC A,hxy */
-	US_TO_CPU_CYCLES(2),	/* SBC A,lxy */
-	US_TO_CPU_CYCLES(5),	/* SBC A,(xy) */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(2),	/* AND A,hxy */
-	US_TO_CPU_CYCLES(2),	/* AND A,lxy */
-	US_TO_CPU_CYCLES(5),	/* AND A,(xy) */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(2),	/* XOR A,hxy */
-	US_TO_CPU_CYCLES(2),	/* XOR A,lxy */
-	US_TO_CPU_CYCLES(5),	/* XOR A,(xy) */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(2),	/* OR A,hxy */
-	US_TO_CPU_CYCLES(2),	/* OR A,lxy */
-	US_TO_CPU_CYCLES(5),	/* OR A,(xy) */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(2),	/* CP A,hxy */
-	US_TO_CPU_CYCLES(2),	/* CP A,lxy */
-	US_TO_CPU_CYCLES(5),	/* CP A,(xy) */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(2),	/* CB prefix */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(2),	/* DD prefix */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(4),	/* POP xy */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(7),	/* EX SP, (xy) */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(5),	/* PUSH xy */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(2),	/* JP (xy) */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(2),	/* ED prefix */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(3),	/* LD SP,HL */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(2),	/* FD prefix */
-	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
-	US_TO_CPU_CYCLES(1) 	/* illegal - time for prefix only */
-};
-
-static UINT8 amstrad_cycle_table_xycb[256]=
-{
-		/* 0x00-0x03f */
-		US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
-		US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
-		US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
-		US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
-		US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
-		US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
-		US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
-		US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
-		US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
-		US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
-		US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
-		US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
-		US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
-		US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
-		US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
-		US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
-
-		/* 0x040-0x07f */
-		US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6),
-		US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6),
-		US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6),
-		US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6),
-		US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6),
-		US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6),
-		US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6),
-		US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6),
-		US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6),
-		US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6),
-		US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6),
-		US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6),
-		US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6),
-		US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6),
-		US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6),
-		US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6),
-
-		/* 0x080-0x0ff */
-		US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
-		US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
-		US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
-		US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
-		US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
-		US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
-		US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
-		US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
-		US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
-		US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
-		US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
-		US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
-		US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
-		US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
-		US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
-		US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
-		US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
-		US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
-		US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
-		US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
-		US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
-		US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
-		US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
-		US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
-		US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
-		US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
-		US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
-		US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
-		US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
-		US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
-		US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
-		US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
-};
-
-static UINT8 amstrad_cycle_table_ex[256]=
-{
-
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-	US_TO_CPU_CYCLES(4-3),	/*	DJNZ  4 taken, 3 not taken */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-	US_TO_CPU_CYCLES(3-2),	/* JR 3 if taken, 2 if not taken */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-	US_TO_CPU_CYCLES(3-2),	/*	 JR Z,3 if taken, 2 if not taken */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-	US_TO_CPU_CYCLES(3-2),	/* JR NZ,3 if taken, 2 if not taken */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-	US_TO_CPU_CYCLES(3-2),		/* JR NC, 3 if taken, 2 if not taken */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		/* a0 */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-
-		US_TO_CPU_CYCLES(5-5),	  /* LDIR */
-		US_TO_CPU_CYCLES(5-5),	  /* CPIR */
-		US_TO_CPU_CYCLES(5-5),	  /* INIR */
-		US_TO_CPU_CYCLES(5-5),	  /* OTIR */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(5-5),	  /* LDDR */
-		US_TO_CPU_CYCLES(5-5),	  /* CPDR */
-		US_TO_CPU_CYCLES(5-5),	  /* INDR */
-		US_TO_CPU_CYCLES(5-5),	  /* OTDR */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-
-	US_TO_CPU_CYCLES(4-2),	/* RET NZ 4 taken, 2 not taken */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-	US_TO_CPU_CYCLES(5-3),	/* CALL NZ 5 taken, 3 not taken */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-	US_TO_CPU_CYCLES(1),	/* RST 0 */
-	US_TO_CPU_CYCLES(4-2),	/* RET Z 4 taken, 2 not taken */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-	US_TO_CPU_CYCLES(5-3),	/* CALL NZ 5 taken, 3 not taken */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-	US_TO_CPU_CYCLES(1),	/* RST 8 */
-	US_TO_CPU_CYCLES(4-2),	/* RET NC 4 taken, 2 not taken */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-	US_TO_CPU_CYCLES(5-3),	/* CALL NC 5 taken, 3 not taken */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-	US_TO_CPU_CYCLES(1),	/* RST 10 */
-	US_TO_CPU_CYCLES(4-2),	/* RET C 4 taken, 2 not taken */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-	US_TO_CPU_CYCLES(5-3),	/* CALL C 5 taken, 3 not taken */
-		US_TO_CPU_CYCLES(1),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-	US_TO_CPU_CYCLES(1),	/* RST 18 */
-	US_TO_CPU_CYCLES(4-2),	/* RET PO 4 taken, 2 not taken */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-	US_TO_CPU_CYCLES(5-3),	/* CALL PO 5 taken, 3 not taken */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-	US_TO_CPU_CYCLES(1),	/* RST 20 */
-	US_TO_CPU_CYCLES(4-2),	/* RET PE 4 taken, 2 not taken */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-	US_TO_CPU_CYCLES(5-3),	/* CALL PE 5 taken, 3 not taken */
-	US_TO_CPU_CYCLES(0),	/* ED prefix */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(1),	/* RST 28 */
-	US_TO_CPU_CYCLES(4-2),	/* RET P 4 taken, 2 not taken */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-	US_TO_CPU_CYCLES(5-3),	/* CALL P 5 taken, 3 not taken */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(1),	/* RST 30 */
-	US_TO_CPU_CYCLES(4-2),	/* RET M 4 taken, 2 not taken */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-		US_TO_CPU_CYCLES(0),	/* not used */
-	US_TO_CPU_CYCLES(5-3),	/* CALL M 5 taken, 3 not taken */
-		US_TO_CPU_CYCLES(1),	/* FD prefix */
-		US_TO_CPU_CYCLES(0),	/* not used */
-	US_TO_CPU_CYCLES(1),	/* RST 38 */
-};
-
-static const void *previous_op_table;
-static const void *previous_cb_table;
-static const void *previous_ed_table;
-static const void *previous_xy_table;
-static const void *previous_xycb_table;
-static const void *previous_ex_table;
-
+	multiface_reset();
+}
 
 static void amstrad_common_init(void)
 {
-
-	/* set all colours to black */
-	int i;
-
-	for (i = 0; i < 17; i++)
-	{
-		AmstradCPC_PenColours[i] = 0x014;
-	}
-
-	ppi8255_init(&amstrad_ppi8255_interface);
-
-	AmstradCPC_GA_RomConfiguration = 0;
-	timer_pulse(TIME_IN_USEC(64), 0,amstrad_interrupt_timer_callback);
-
-	amstrad_52_divider = 0;
-	amstrad_52_divider_vsync_reset = 0;
+	amstrad_GateArray_ModeAndRomConfiguration = 0;
+	amstrad_CRTC_HS_Counter = 0;
+	amstrad_CRTC_HS_After_VS_Counter = 0;
+	amstrad_cycles_last_write = 0;
+	previous_amstrad_UpperRom_data = 0xff;
 
 	install_mem_read_handler(0, 0x0000, 0x1fff, MRA8_BANK1);
 	install_mem_read_handler(0, 0x2000, 0x3fff, MRA8_BANK2);
@@ -2305,63 +1197,24 @@ static void amstrad_common_init(void)
 	install_mem_write_handler(0, 0xc000, 0xdfff, MWA8_BANK15);
 	install_mem_write_handler(0, 0xe000, 0xffff, MWA8_BANK16);
 
-	amstrad_cycles_at_frame_end = 0;
-	amstrad_cycles_last_write = 0;
-	time_delta_fraction = 0;
-
 	cpu_irq_line_vector_w(0, 0,0x0ff);
 
 	nec765_init(&amstrad_nec765_interface,NEC765A/*?*/);
+	ppi8255_init(&amstrad_ppi8255_interface);
 
 	floppy_drive_set_geometry(image_from_devtype_and_index(IO_FLOPPY, 0),  FLOPPY_DRIVE_SS_40);
 	floppy_drive_set_geometry(image_from_devtype_and_index(IO_FLOPPY, 1),  FLOPPY_DRIVE_SS_40);
 
+	timer_pulse(TIME_IN_USEC(AMSTRAD_US_PER_SCANLINE), 0, amstrad_update_video);
+
 	/* Juergen is a cool dude! */
 	cpu_set_irq_callback(0, amstrad_cpu_acknowledge_int);
-
-	/* The opcode timing in the Amstrad is different to the opcode
-	timing in the core for the Z80 CPU.
-
-	The Amstrad hardware issues a HALT for each memory fetch.
-	This has the effect of stretching the timing for Z80 opcodes,
-	so that they are all multiple of 4 T states long. All opcode
-	timings are a multiple of 1us in length. */
-
-	previous_op_table = cpunum_get_info_ptr(0,CPUINFO_PTR_Z80_CYCLE_TABLE+Z80_TABLE_op);
-	previous_cb_table = cpunum_get_info_ptr(0,CPUINFO_PTR_Z80_CYCLE_TABLE+Z80_TABLE_cb);
-	previous_ed_table = cpunum_get_info_ptr(0,CPUINFO_PTR_Z80_CYCLE_TABLE+Z80_TABLE_ed);
-	previous_xy_table = cpunum_get_info_ptr(0,CPUINFO_PTR_Z80_CYCLE_TABLE+Z80_TABLE_xy);
-	previous_xycb_table = cpunum_get_info_ptr(0,CPUINFO_PTR_Z80_CYCLE_TABLE+Z80_TABLE_xycb);
-	previous_ex_table = cpunum_get_info_ptr(0,CPUINFO_PTR_Z80_CYCLE_TABLE+Z80_TABLE_ex);
-
-	/* Using the cool code Juergen has provided, I will override
-	the timing tables with the values for the amstrad */
-	cpunum_set_info_ptr(0,CPUINFO_PTR_Z80_CYCLE_TABLE+Z80_TABLE_op, amstrad_cycle_table_op);
-	cpunum_set_info_ptr(0,CPUINFO_PTR_Z80_CYCLE_TABLE+Z80_TABLE_cb, amstrad_cycle_table_cb);
-	cpunum_set_info_ptr(0,CPUINFO_PTR_Z80_CYCLE_TABLE+Z80_TABLE_ed, amstrad_cycle_table_ed);
-	cpunum_set_info_ptr(0,CPUINFO_PTR_Z80_CYCLE_TABLE+Z80_TABLE_xy, amstrad_cycle_table_xy);
-	cpunum_set_info_ptr(0,CPUINFO_PTR_Z80_CYCLE_TABLE+Z80_TABLE_xycb, amstrad_cycle_table_xycb);
-	cpunum_set_info_ptr(0,CPUINFO_PTR_Z80_CYCLE_TABLE+Z80_TABLE_ex, amstrad_cycle_table_ex);
-}
-
-static MACHINE_STOP( amstrad )
-{
-	/* restore previous tables */
-	cpunum_set_info_ptr(0,CPUINFO_PTR_Z80_CYCLE_TABLE+Z80_TABLE_op, (void *) previous_op_table);
-	cpunum_set_info_ptr(0,CPUINFO_PTR_Z80_CYCLE_TABLE+Z80_TABLE_cb, (void *) previous_cb_table);
-	cpunum_set_info_ptr(0,CPUINFO_PTR_Z80_CYCLE_TABLE+Z80_TABLE_ed, (void *) previous_ed_table);
-	cpunum_set_info_ptr(0,CPUINFO_PTR_Z80_CYCLE_TABLE+Z80_TABLE_xy, (void *) previous_xy_table);
-	cpunum_set_info_ptr(0,CPUINFO_PTR_Z80_CYCLE_TABLE+Z80_TABLE_xycb, (void *) previous_xycb_table);
-	cpunum_set_info_ptr(0,CPUINFO_PTR_Z80_CYCLE_TABLE+Z80_TABLE_ex, (void *) previous_ex_table);
-
-	cpu_set_irq_callback(0, NULL);
 
 }
 
 static MACHINE_INIT( amstrad )
 {
 	int i;
-	unsigned char machine_name_and_refresh_rate;
 
 	for (i=0; i<256; i++)
 	{
@@ -2372,11 +1225,7 @@ static MACHINE_INIT( amstrad )
 
 	amstrad_common_init();
 
-	amstrad_setup_machine();
-
-	machine_name_and_refresh_rate = readinputport(10);
-	ppi_port_inputs[1] = ((machine_name_and_refresh_rate & 0x07)<<1) | (machine_name_and_refresh_rate & 0x010);
-
+	amstrad_reset_machine();
 	multiface_init();
 }
 
@@ -2390,8 +1239,7 @@ static MACHINE_INIT( kccomp )
 	}
 
 	amstrad_common_init();
-
-	amstrad_setup_machine();
+	amstrad_reset_machine();
 
 	/* bit 1 = /TEST. When 0, KC compact will enter data transfer
 	sequence, where another system using the expansion port signals
@@ -2399,21 +1247,9 @@ static MACHINE_INIT( kccomp )
 	When the program has been transfered, it will be executed. This
 	is not supported in the driver */
 	/* bit 3,4 are tied to +5V, bit 2 is tied to 0V */
-	ppi_port_inputs[1] = (1<<4) | (1<<3) | 2;
+	ppi_port_inputs[amstrad_ppi_PortB] = (1<<4) | (1<<3) | 2;
 }
 
-
-/* sets up for a machine reset */
-void Amstrad_Reset(void)
-{
-	/* enable lower rom (OS rom) */
-	AmstradCPC_GA_Write(0x089);
-
-	/* set ram config 0 */
-	AmstradCPC_GA_Write(0x0c0);
-
-	multiface_reset();
-}
 
 /* Memory is banked in 16k blocks. However, the multiface
 pages the memory in 8k blocks! The ROM can
@@ -2444,31 +1280,35 @@ ADDRESS_MAP_END
 are not fully decoded by the CPC h/w. Doing it this way means
 I can decode it myself and a lot of  software should work */
 static ADDRESS_MAP_START(readport_amstrad, ADDRESS_SPACE_IO, 8)
-	AM_RANGE(0x0000, 0x0ffff) AM_READ(AmstradCPC_ReadPortHandler)
+	AM_RANGE(0x0000, 0xffff) AM_READ(AmstradCPC_ReadPortHandler)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START(writeport_amstrad, ADDRESS_SPACE_IO, 8)
-	AM_RANGE(0x0000, 0x0ffff) AM_WRITE(AmstradCPC_WritePortHandler)
+	AM_RANGE(0x0000, 0xffff) AM_WRITE(AmstradCPC_WritePortHandler)
 ADDRESS_MAP_END
+
+/* Additional notes for the AY-3-8912 in the CPC design
+Port A of the AY-3-8912 is connected to the keyboard.
+The data for a selected keyboard line can be read through Port A, as long as it is defined as input.
+The operating system and I believe all programs assume this port has been defined as input. (NWC has found a bug in the Multiface 2 software. The Multiface does not reprogram the input/output state of the AY-3-8912's registers, therefore if port A is programmed as output, the keyboard will be unresponsive and it will not be possible to use the Multiface functions.) 
+When port B is defined as input (bit 7 of register 7 is set to "0"), a read of this port will return &FF. 
+*/
 
 /* read PSG port A */
 static READ_HANDLER ( amstrad_psg_porta_read )
 {	
-	/* read cpc keyboard */
-	return AmstradCPC_ReadKeyboard();
+/* Read CPC Keyboard
+   If keyboard matrix line 11-14 are selected, the byte is always &ff.
+   After testing on a real CPC, it is found that these never change, they always return &FF. */
+
+	if (amstrad_keyboard_line > 9) {
+    return 0xFF;
+  } else {
+    int amstrad_read_keyboard_line = amstrad_keyboard_line;
+    amstrad_keyboard_line = 0xFF;
+    return (readinputport(amstrad_read_keyboard_line) & 0xFF);
+  }
 }
-
-
-static struct AY8910interface amstrad_ay_interface =
-{
-	1,								   /* 1 chips */
-	1000000,						   /* 1.0 MHz  */
-	{25, 25},
-	{amstrad_psg_porta_read},
-	{0},
-	{0},
-	{0}
-};
 
 #define KEYBOARD_PORTS \
 	/* keyboard row 0 */ \
@@ -2602,10 +1442,19 @@ INPUT_PORTS_START(amstrad)
 
 	KEYBOARD_PORTS
 
-	/* the following are defined as configs, but are in fact solder links on the
-	 * curcuit board. The links are open or closed when the PCB is made, and are set depending on which country
-	 * the Amstrad system was to go to */
-	PORT_START
+/* the following are defined as dipswitches, but are in fact solder links on the
+ * curcuit board. The links are open or closed when the PCB is made, and are set depending on which country
+ * the Amstrad system was to go to
+
+b3 b2 b1 Manufacturer Name (CPC and CPC+ only):
+0  0  0  Isp 
+0  0  1  Triumph 
+0  1  0  Saisho 
+0  1  1  Solavox 
+1  0  0  Awa 
+1  0  1  Schneider 
+1  1  0  Orion 
+1  1  1  Amstrad*/	PORT_START
 	PORT_CONFNAME( 0x07, 0x07, "Manufacturer Name" )
 	PORT_CONFSETTING(    0x00, "Isp" )
 	PORT_CONFSETTING(    0x01, "Triumph" )
@@ -2620,6 +1469,24 @@ INPUT_PORTS_START(amstrad)
 	PORT_CONFSETTING(    0x00, "60 Hz" )
 	PORT_CONFSETTING(    0x10, "50 Hz" )
 
+/* Part number Manufacturer Type number
+   UM6845      UMC          0 
+   HD6845S     Hitachi      0 
+   UM6845R     UMC          1 
+   MC6845      Motorola     2 
+   AMS40489    Amstrad      3
+   Pre-ASIC??? Amstrad?     4 In the "cost-down" CPC6128, the CRTC functionality is integrated into a single ASIC IC. This ASIC is often refered to as the "Pre-ASIC" because it preceeded the CPC+ ASIC
+As far as I know, the KC compact used HD6845S only. 
+*/
+	PORT_START
+	PORT_DIPNAME( CRTC_TYPE, 0x02, "CRTC Type" )
+	PORT_DIPSETTING(0x00, "Type 0 - UM6845" )
+	PORT_DIPSETTING(0x00, "Type 0 - HD6845S" )
+	PORT_DIPSETTING(0x20, "Type 1 - UM6845R" )
+	PORT_DIPSETTING(0x40, "Type 2 - MC6845" )
+	PORT_DIPSETTING(0x60, "Type 3 - AMS40489" )
+	PORT_DIPSETTING(0x80, "Type 4 - Pre-ASIC???" )
+
 	MULTIFACE_PORTS
 
 INPUT_PORTS_END
@@ -2627,6 +1494,26 @@ INPUT_PORTS_END
 INPUT_PORTS_START(kccomp)
 		KEYBOARD_PORTS
 INPUT_PORTS_END
+
+/* --------------------
+   - AY8910_interface -
+   --------------------*/
+static struct AY8910interface ay8912_interface =
+{
+	1,		                       /* total number of 8910 in the machine */
+	1000000,                     /* base clock : 1.0 MHz */
+	{ 25 },                      /* mixing_level */
+	{amstrad_psg_porta_read},    /* portA read */
+	{amstrad_psg_porta_read},    /* portB read */
+	{ NULL },                    /* portA write */
+	{ NULL }                     /* portB write */
+                               /* IRQ handler for the YM2203 ??? */
+};
+
+
+/* ------------------
+   - Wave_interface -
+   ------------------*/
 
 static struct Wave_interface wave_interface = {
 	1,		/* 1 cassette recorder */
@@ -2646,56 +1533,56 @@ speed of 3.8Mhz */
 
   There are 312 lines on a PAL screen, giving 64us per line.
 
-	There is only 50us visible per line, and 35*8 lines visible on the
-	screen.
+  There is only 50us visible per line, and 35*8 lines visible on the screen.
 
-  This is the reason why the displayed area is not the same as
-  the visible area.
+  This is the reason why the displayed area is not the same as the visible area.
  */
 
 static MACHINE_DRIVER_START( amstrad )
-	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 4000000)        /*((AMSTRAD_US_PER_FRAME*AMSTRAD_FPS)*4)*/ /* clock: See Note Above */
+	/* Machine hardware */
+	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
 	MDRV_CPU_PROGRAM_MAP(readmem_amstrad,writemem_amstrad)
 	MDRV_CPU_IO_MAP(readport_amstrad,writeport_amstrad)
-	MDRV_FRAMES_PER_SECOND(50)	/*50.08*/
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+	MDRV_FRAMES_PER_SECOND(AMSTRAD_FPS)
 	MDRV_INTERLEAVE(1)
+	MDRV_VBLANK_DURATION(19968)
 
 	MDRV_MACHINE_INIT( amstrad )
-	MDRV_MACHINE_STOP( amstrad )
 
     /* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2)
-	MDRV_SCREEN_SIZE(AMSTRAD_MONITOR_SCREEN_WIDTH, AMSTRAD_MONITOR_SCREEN_HEIGHT)
-	MDRV_VISIBLE_AREA(0, (AMSTRAD_SCREEN_WIDTH - 1), 0, (AMSTRAD_SCREEN_HEIGHT - 1))
+	MDRV_SCREEN_SIZE(800, 312) 
+	/* Amstrad Monitor Visible AREA : 768x272 */
+	MDRV_VISIBLE_AREA(0, ((AMSTRAD_SCREEN_WIDTH-32) - 1), 0, ((AMSTRAD_SCREEN_HEIGHT-40) - 1))
 	MDRV_PALETTE_LENGTH(32)
 	MDRV_COLORTABLE_LENGTH(32)
 	MDRV_PALETTE_INIT( amstrad_cpc )
 
-	MDRV_VIDEO_EOF( amstrad )
 	MDRV_VIDEO_START( amstrad )
 	MDRV_VIDEO_UPDATE( amstrad )
+	MDRV_VIDEO_EOF( amstrad )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, amstrad_ay_interface)
+	MDRV_SOUND_ADD(AY8910, ay8912_interface)
 	MDRV_SOUND_ADD(WAVE, wave_interface)
 MACHINE_DRIVER_END
 
 
 static MACHINE_DRIVER_START( kccomp )
 	MDRV_IMPORT_FROM( amstrad )
+	MDRV_FRAMES_PER_SECOND( AMSTRAD_FPS )
 	MDRV_MACHINE_INIT( kccomp )
-	MDRV_SCREEN_SIZE(AMSTRAD_SCREEN_WIDTH, AMSTRAD_SCREEN_HEIGHT)
+	MDRV_SCREEN_SIZE(800, 312)
 	MDRV_PALETTE_INIT( kccomp )
 MACHINE_DRIVER_END
 
 
 static MACHINE_DRIVER_START( cpcplus )
 	MDRV_IMPORT_FROM( amstrad )
-	MDRV_FRAMES_PER_SECOND( 50.08 )
-	MDRV_SCREEN_SIZE(AMSTRAD_SCREEN_WIDTH, AMSTRAD_SCREEN_HEIGHT)
+	MDRV_FRAMES_PER_SECOND( AMSTRAD_FPS )
+	MDRV_SCREEN_SIZE(800, 312)
 	MDRV_PALETTE_LENGTH(4096)
 	MDRV_COLORTABLE_LENGTH(4096)
 	MDRV_PALETTE_INIT( amstrad_plus )
@@ -2711,6 +1598,24 @@ MACHINE_DRIVER_END
 /* cpc6128.rom contains OS in first 16k, BASIC in second 16k */
 /* cpcados.rom contains Amstrad DOS */
 
+
+SYSTEM_CONFIG_START(cpc6128)
+	CONFIG_RAM_DEFAULT(128 * 1024)
+	CONFIG_DEVICE_LEGACY_DSK(2)
+	CONFIG_DEVICE_CASSETTE(1, NULL)
+	CONFIG_DEVICE_PRINTER(1)
+SYSTEM_CONFIG_END
+
+SYSTEM_CONFIG_START(cpcplus)
+	CONFIG_IMPORT_FROM(cpc6128)
+	CONFIG_DEVICE_CARTSLOT_REQ(1,	"cpr\0", NULL, NULL, device_load_amstrad_plus_cartridge, NULL, NULL, NULL)
+	CONFIG_DEVICE_SNAPSHOT(			"sna\0", amstrad)
+SYSTEM_CONFIG_END
+
+
+/* ---------------------------------------------
+   - Rom definition for the ROM loading system -
+   ---------------------------------------------*/
 /* I am loading the roms outside of the Z80 memory area, because they
 are banked. */
 ROM_START(cpc6128)
@@ -2722,9 +1627,19 @@ ROM_START(cpc6128)
 
 	/* optional Multiface hardware */
 		ROM_LOAD_OPTIONAL("multface.rom", 0x01c000, 0x02000, CRC(f36086de) SHA1(1431ec628d38f000715545dd2186b684c5fe5a6f))
+ROM_END
 
-	/* fake region - required by graphics decode structure */
-	/*ROM_REGION(0x0100,REGION_GFX1) */
+ROM_START(cpc6128fr)
+
+/* this defines the total memory size (128kb))- 64k ram, 16k OS, 16k BASIC, 16k DOS +16k*/
+	ROM_REGION(0x020000, REGION_CPU1,0)
+
+/* load the os to offset 0x01000 from memory base */
+	ROM_LOAD("cpc6128fr.rom", 0x10000, 0x8000, CRC(1574923b) SHA1(200d59076dfef36db061d6d7d21d80021cab1237))
+	ROM_LOAD("cpcados.rom", 0x018000, 0x4000, CRC(1fe22ecd) SHA1(39102c8e9cb55fcc0b9b62098780ed4a3cb6a4bb))
+
+	/* optional Multiface hardware */
+	ROM_LOAD_OPTIONAL("multface.rom", 0x01c000, 0x2000, CRC(f36086de) SHA1(1431ec628d38f000715545dd2186b684c5fe5a6f))
 ROM_END
 
 ROM_START(cpc464)
@@ -2733,9 +1648,6 @@ ROM_START(cpc464)
 	/* load the os to offset 0x01000 from memory base */
 	ROM_LOAD("cpc464.rom", 0x10000, 0x8000, CRC(40852f25) SHA1(56d39c463da60968d93e58b4ba0e675829412a20))
 	ROM_LOAD("cpcados.rom", 0x18000, 0x4000, CRC(1fe22ecd) SHA1(39102c8e9cb55fcc0b9b62098780ed4a3cb6a4bb))
-
-	/* fake region - required by graphics decode structure */
-	/*ROM_REGION(0x0100,REGION_GFX1) */
 ROM_END
 
 ROM_START(cpc664)
@@ -2744,9 +1656,6 @@ ROM_START(cpc664)
 	/* load the os to offset 0x01000 from memory base */
 	ROM_LOAD("cpc664.rom", 0x10000, 0x8000, CRC(9AB5A036) SHA1(073a7665527b5bd8a148747a3947dbd3328682c8))
 	ROM_LOAD("cpcados.rom", 0x18000, 0x4000, CRC(1fe22ecd) SHA1(39102c8e9cb55fcc0b9b62098780ed4a3cb6a4bb))
-
-	/* fake region - required by graphics decode structure */
-	/*ROM_REGION(0x0100,REGION_GFX1) */
 ROM_END
 
 
@@ -2773,23 +1682,11 @@ ROM_START(cpc464p)
 	ROM_REGION(0, REGION_CPU1,0)
 ROM_END
 
-SYSTEM_CONFIG_START(cpc6128)
-	CONFIG_RAM_DEFAULT(128 * 1024)
-	CONFIG_DEVICE_LEGACY_DSK(2)
-	CONFIG_DEVICE_CASSETTE(1, NULL)
-	CONFIG_DEVICE_PRINTER(1)
-SYSTEM_CONFIG_END
-
-SYSTEM_CONFIG_START(cpcplus)
-	CONFIG_IMPORT_FROM(cpc6128)
-	CONFIG_DEVICE_CARTSLOT_REQ(1,	"cpr\0", NULL, NULL, device_load_amstrad_plus_cartridge, NULL, NULL, NULL)
-	CONFIG_DEVICE_SNAPSHOT(			"sna\0", amstrad)
-SYSTEM_CONFIG_END
-
 /*      YEAR  NAME    PARENT	COMPAT  MACHINE    INPUT    INIT    CONFIG,  COMPANY               FULLNAME */
 COMP( 1984, cpc464,   0,		0,		amstrad,  amstrad,	0,		cpc6128, "Amstrad plc", "Amstrad/Schneider CPC464")
 COMP( 1985, cpc664,   cpc464,	0,		amstrad,  amstrad,	0,	    cpc6128, "Amstrad plc", "Amstrad/Schneider CPC664")
 COMP( 1985, cpc6128,  cpc464,	0,		amstrad,  amstrad,	0,	    cpc6128, "Amstrad plc", "Amstrad/Schneider CPC6128")
+COMP( 1985, cpc6128fr, cpc464,  0,    amstrad,  amstrad, 0, cpc6128, "Amstrad plc", "Amstrad/Schneider CPC6128 Azerty French Keyboard")
 COMP( 1990, cpc464p,  0,		0,		cpcplus,  amstrad,	0,	    cpcplus, "Amstrad plc", "Amstrad 464plus")
 COMP( 1990, cpc6128p, 0,		0,		cpcplus,  amstrad,	0,	    cpcplus, "Amstrad plc", "Amstrad 6128plus")
 COMP( 1989, kccomp,   cpc464,	0,		kccomp,   kccomp,	0,	    cpc6128, "VEB Mikroelektronik", "KC Compact")
