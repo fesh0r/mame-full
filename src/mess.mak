@@ -465,6 +465,7 @@ $(OBJ)/bally.a:    \
 	  $(OBJ)/mess/systems/astrocde.o
 
 $(OBJ)/pc.a:	   \
+	  $(OBJ)/mess/machine/ibmpc.o	 \
 	  $(OBJ)/mess/machine/tandy1t.o  \
 	  $(OBJ)/mess/machine/amstr_pc.o \
 	  $(OBJ)/mess/machine/europc.o   \
@@ -474,6 +475,7 @@ $(OBJ)/pc.a:	   \
 	  $(OBJ)/mess/vidhrdw/vga.o	 \
 	  $(OBJ)/mess/sndhrdw/pc.o	 \
 	  $(OBJ)/mess/vidhrdw/pc_cga.o	 \
+	  $(OBJ)/mess/vidhrdw/pc_aga.o	 \
 	  $(OBJ)/mess/vidhrdw/pc_mda.o	 \
 	  $(OBJ)/mess/vidhrdw/pc_t1t.o	 \
 	  $(OBJ)/mess/machine/pc.o	 \
