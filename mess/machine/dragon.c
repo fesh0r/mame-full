@@ -741,15 +741,6 @@ INTERRUPT_GEN( coco3_vh_interrupt )
 
 	scanline = internal_m6847_getadjustedscanline();
 
-#if 1
-	{
-		static int last_scanline = 0;
-		if (scanline < last_scanline)
-			logerror("scanline=%d\n", scanline);
-		last_scanline = scanline;
-	}
-#endif
-
 	if (scanline == 0)
 		coco3_raise_interrupt(COCO3_INT_VBORD, CLEAR_LINE);
 	else if (scanline >= border_top+body_scanlines)

@@ -13,6 +13,9 @@ System Driver Changes:
   allowing transparent disk image handling for JVC, VDK, and DMK file formats.
   [Nate Woods]
 
+- [COCO] Fixed a recent stupid bug in m6847 timing that had an effect on certain
+  timing (bug #249) [Nate Woods]
+
 - [DRAGON64] Fixed a bug that prevented the system to run (the dragon64 driver
   was using the coco memory map) [Nate Woods]
 

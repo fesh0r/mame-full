@@ -1452,7 +1452,7 @@ void internal_m6847_vh_interrupt(int scanline, int rise_scanline, int fall_scanl
 
 	/* hsync interrupt */
 	timer_adjust(the_state.hs_timer1, DHS_F, 0, 0);
-	timer_adjust(the_state.hs_timer2, DHS_R + (TIME_IN_HZ(3588545.0) * 16.5), 0, 0);
+	timer_adjust(the_state.hs_timer2, DHS_R + (TIME_IN_HZ(3588545.0) * 16.5), 1, 0);
 }
 
 INTERRUPT_GEN( m6847_vh_interrupt )
