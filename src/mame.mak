@@ -132,7 +132,7 @@ DRVLIBS = \
 	$(OBJ)/vsystem.a $(OBJ)/psikyo.a $(OBJ)/orca.a $(OBJ)/gaelco.a \
 	$(OBJ)/kaneko.a $(OBJ)/seta.a $(OBJ)/atlus.a \
 	$(OBJ)/sun.a $(OBJ)/suna.a $(OBJ)/dooyong.a $(OBJ)/nmk.a $(OBJ)/comad.a \
-	$(OBJ)/other.a $(OBJ)/neogeo.a \
+	$(OBJ)/playmark.a $(OBJ)/other.a $(OBJ)/neogeo.a \
 
 $(OBJ)/pacman.a: \
 	$(OBJ)/drivers/pacman.o \
@@ -651,6 +651,9 @@ $(OBJ)/nmk.a: \
 $(OBJ)/comad.a: \
 	$(OBJ)/vidhrdw/zerozone.o $(OBJ)/drivers/zerozone.o \
 	$(OBJ)/vidhrdw/galspnbl.o $(OBJ)/drivers/galspnbl.o \
+
+$(OBJ)/playmark.a: \
+	$(OBJ)/vidhrdw/bigtwin.o $(OBJ)/drivers/bigtwin.o \
 
 $(OBJ)/other.a: \
 	$(OBJ)/vidhrdw/spacefb.o $(OBJ)/drivers/spacefb.o \
