@@ -30,63 +30,12 @@ struct rsdos_dirent
 
 struct rsdos_direnum
 {
-	imgtool_imageenum base;
-	imgtool_image *img;
 	int index;
 	int eof;
 };
 
-static imgtoolerr_t rsdos_diskimage_beginenum(imgtool_image *img, const char *path, imgtool_imageenum **outenum);
-static imgtoolerr_t rsdos_diskimage_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent);
-static void rsdos_diskimage_closeenum(imgtool_imageenum *enumeration);
-static imgtoolerr_t rsdos_diskimage_freespace(imgtool_image *img, UINT64 *size);
-static imgtoolerr_t rsdos_diskimage_readfile(imgtool_image *img, const char *fname, imgtool_stream *destf);
-static imgtoolerr_t rsdos_diskimage_writefile(imgtool_image *img, const char *fname, imgtool_stream *sourcef, option_resolution *writeoptions);
-static imgtoolerr_t rsdos_diskimage_deletefile(imgtool_image *img, const char *fname);
-
-
-
-/*********************************************************************
-	Imgtool module declaration
-*********************************************************************/
-
 #define RSDOS_OPTIONS_FTYPE		'T'
 #define RSDOS_OPTIONS_ASCII		'M'
-
-OPTION_GUIDE_START( coco_rsdos_writefile_optionguide )
-	OPTION_ENUM_START(	RSDOS_OPTIONS_FTYPE, "ftype", "File type" )
-		OPTION_ENUM(	0,		"basic",		"Basic" )
-		OPTION_ENUM(	1,		"data",			"Data" )
-		OPTION_ENUM(	2,		"binary",		"Binary" )
-		OPTION_ENUM(	3,		"assembler",	"Assembler Source" )
-	OPTION_ENUM_END
-	OPTION_ENUM_START(	RSDOS_OPTIONS_ASCII, "ascii", "Ascii flag" )
-		OPTION_ENUM(	0,		"ascii",		"Ascii" )
-		OPTION_ENUM(	1,		"binary",		"Binary" )
-	OPTION_ENUM_END
-OPTION_GUIDE_END
-
-
-
-static imgtoolerr_t coco_rsdos_module_populate(imgtool_library *library, struct ImgtoolFloppyCallbacks *module)
-{
-	module->prefer_ucase		= 1;
-	module->eoln				= EOLN_CR;
-	module->begin_enum			= rsdos_diskimage_beginenum;
-	module->next_enum			= rsdos_diskimage_nextenum;
-	module->close_enum			= rsdos_diskimage_closeenum;
-	module->free_space			= rsdos_diskimage_freespace;
-	module->read_file			= rsdos_diskimage_readfile;
-	module->write_file			= rsdos_diskimage_writefile;
-	module->delete_file			= rsdos_diskimage_deletefile;
-	module->writefile_optguide	= coco_rsdos_writefile_optionguide;
-	module->writefile_optspec	= "T0-[2]-3;M0-[1]";
-	return IMGTOOLERR_SUCCESS;
-}
-
-
-
-FLOPPYMODULE(rsdos, "RS-DOS format", coco, coco_rsdos_module_populate)
 
 
 
@@ -310,32 +259,18 @@ static imgtoolerr_t prepare_dirent(struct rsdos_dirent *ent, const char *fname)
 
 
 
-static imgtoolerr_t rsdos_diskimage_beginenum(imgtool_image *img, const char *path, imgtool_imageenum **outenum)
-{
-	struct rsdos_direnum *rsenum;
-
-	rsenum = (struct rsdos_direnum *) malloc(sizeof(struct rsdos_direnum));
-	if (!rsenum)
-		return IMGTOOLERR_OUTOFMEMORY;
-
-	rsenum->base.module = img->module;
-	rsenum->img = img;
-	rsenum->index = 0;
-	rsenum->eof = 0;
-	*outenum = &rsenum->base;
-	return IMGTOOLERR_SUCCESS;
-}
-
-
-
 static imgtoolerr_t rsdos_diskimage_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
 {
 	floperr_t ferr;
 	imgtoolerr_t err;
 	size_t filesize;
-	struct rsdos_direnum *rsenum = (struct rsdos_direnum *) enumeration;
+	struct rsdos_direnum *rsenum;
 	struct rsdos_dirent rsent;
 	char fname[13];
+	imgtool_image *image;
+
+	image = img_enum_image(enumeration);
+	rsenum = (struct rsdos_direnum *) img_enum_extrabytes(enumeration);
 
 	/* Did we hit the end of file before? */
 	if (rsenum->eof)
@@ -343,7 +278,7 @@ static imgtoolerr_t rsdos_diskimage_nextenum(imgtool_imageenum *enumeration, img
 
 	do
 	{
-		ferr = get_rsdos_dirent(rsenum->img, rsenum->index++, &rsent);
+		ferr = get_rsdos_dirent(image, rsenum->index++, &rsent);
 		if (ferr)
 			return imgtool_floppy_error(ferr);
 	}
@@ -362,7 +297,7 @@ eof:
 	else
 	{
 		/* Not the end of file */
-		err = process_rsdos_file(&rsent, rsenum->img, NULL, &filesize);
+		err = process_rsdos_file(&rsent, image, NULL, &filesize);
 		if (err)
 			return err;
 
@@ -381,21 +316,12 @@ eof:
 
 		get_dirent_fname(fname, &rsent);
 
-		if (strlen(fname) >= ent->filename_len)
-			return IMGTOOLERR_BUFFERTOOSMALL;
-		strcpy(ent->filename, fname);
-
+		if (ent->filename_len)
+			snprintf(ent->filename, ent->filename_len, "%s", fname);
 		if (ent->attr_len)
 			snprintf(ent->attr, ent->attr_len, "%d %c", (int) rsent.ftype, (char) (rsent.asciiflag + 'B'));
 	}
-	return 0;
-}
-
-
-
-static void rsdos_diskimage_closeenum(imgtool_imageenum *enumeration)
-{
-	free(enumeration);
+	return IMGTOOLERR_SUCCESS;
 }
 
 
@@ -573,4 +499,44 @@ static imgtoolerr_t rsdos_diskimage_deletefile(imgtool_image *img, const char *f
 
 	return 0;
 }
+
+
+
+/*********************************************************************
+	Imgtool module declaration
+*********************************************************************/
+
+OPTION_GUIDE_START( coco_rsdos_writefile_optionguide )
+	OPTION_ENUM_START(	RSDOS_OPTIONS_FTYPE, "ftype", "File type" )
+		OPTION_ENUM(	0,		"basic",		"Basic" )
+		OPTION_ENUM(	1,		"data",			"Data" )
+		OPTION_ENUM(	2,		"binary",		"Binary" )
+		OPTION_ENUM(	3,		"assembler",	"Assembler Source" )
+	OPTION_ENUM_END
+	OPTION_ENUM_START(	RSDOS_OPTIONS_ASCII, "ascii", "Ascii flag" )
+		OPTION_ENUM(	0,		"ascii",		"Ascii" )
+		OPTION_ENUM(	1,		"binary",		"Binary" )
+	OPTION_ENUM_END
+OPTION_GUIDE_END
+
+
+
+static imgtoolerr_t coco_rsdos_module_populate(imgtool_library *library, struct ImgtoolFloppyCallbacks *module)
+{
+	module->prefer_ucase			= 1;
+	module->imageenum_extra_bytes	+= sizeof(struct rsdos_direnum);
+	module->eoln					= EOLN_CR;
+	module->next_enum				= rsdos_diskimage_nextenum;
+	module->free_space				= rsdos_diskimage_freespace;
+	module->read_file				= rsdos_diskimage_readfile;
+	module->write_file				= rsdos_diskimage_writefile;
+	module->delete_file				= rsdos_diskimage_deletefile;
+	module->writefile_optguide		= coco_rsdos_writefile_optionguide;
+	module->writefile_optspec		= "T0-[2]-3;M0-[1]";
+	return IMGTOOLERR_SUCCESS;
+}
+
+
+
+FLOPPYMODULE(rsdos, "RS-DOS format", coco, coco_rsdos_module_populate)
 

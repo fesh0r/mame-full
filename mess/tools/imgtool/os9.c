@@ -62,8 +62,6 @@ struct os9_fileinfo
 
 struct os9_direnum
 {
-	imgtool_imageenum base;
-	imgtool_image *img;
 	struct os9_diskinfo disk_info;
 	struct os9_fileinfo dir_info;
 	UINT32 index;
@@ -479,24 +477,20 @@ done:
 
 
 
-static imgtoolerr_t os9_diskimage_beginenum(imgtool_image *img, const char *path, imgtool_imageenum **outenum)
+static imgtoolerr_t os9_diskimage_beginenum(imgtool_imageenum *enumeration, const char *path)
 {
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
-	struct os9_direnum *os9enum = NULL;
+	struct os9_direnum *os9enum;
+	imgtool_image *image;
 
-	os9enum = (struct os9_direnum *) malloc(sizeof(struct os9_direnum));
-	if (!os9enum)
-	{
-		err = IMGTOOLERR_OUTOFMEMORY;
-		goto done;
-	}
-	memset(os9enum, '\0', sizeof(*os9enum));
+	image = img_enum_image(enumeration);
+	os9enum = (struct os9_direnum *) img_enum_extrabytes(enumeration);
 
-	err = os9_decode_disk_header(img, &os9enum->disk_info);
+	err = os9_decode_disk_header(image, &os9enum->disk_info);
 	if (err)
 		goto done;
 
-	err = os9_lookup_path(img, &os9enum->disk_info, path, NULL, &os9enum->dir_info);
+	err = os9_lookup_path(image, &os9enum->disk_info, path, NULL, &os9enum->dir_info);
 	if (err)
 		goto done;
 
@@ -507,36 +501,34 @@ static imgtoolerr_t os9_diskimage_beginenum(imgtool_image *img, const char *path
 		goto done;
 	}
 
-	os9enum->base.module = img->module;
-	os9enum->img = img;
-
 done:
-	if (err && os9enum)
-	{
-		free(os9enum);
-		os9enum = NULL;
-	}
-	*outenum = &os9enum->base;
 	return err;
 }
 
 
 
-static imgtoolerr_t os9_enum_readlsn(struct os9_direnum *os9enum, UINT32 lsn, int offset, void *buffer, size_t buffer_len)
+static imgtoolerr_t os9_enum_readlsn(imgtool_imageenum *enumeration, UINT32 lsn, int offset, void *buffer, size_t buffer_len)
 {
-	return os9_read_lsn(os9enum->img, &os9enum->disk_info, lsn, offset, buffer, buffer_len);
+	imgtool_image *image;
+	struct os9_direnum *os9enum;
+
+	image = img_enum_image(enumeration);
+	os9enum = (struct os9_direnum *) img_enum_extrabytes(enumeration);
+	return os9_read_lsn(image, &os9enum->disk_info, lsn, offset, buffer, buffer_len);
 }
 
 
 
 static imgtoolerr_t os9_diskimage_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
 {
-	struct os9_direnum *os9enum = (struct os9_direnum *) enumeration;
+	struct os9_direnum *os9enum;
 	UINT32 lsn, index;
 	imgtoolerr_t err;
 	UINT8 dir_entry[32];
 	char filename[29];
 	struct os9_fileinfo file_info;
+
+	os9enum = (struct os9_direnum *) img_enum_extrabytes(enumeration);
 
 	do
 	{
@@ -551,7 +543,7 @@ static imgtoolerr_t os9_diskimage_nextenum(imgtool_imageenum *enumeration, imgto
 		lsn = os9_lookup_lsn(&os9enum->disk_info, &os9enum->dir_info, &index);
 		os9enum->index += 32;
 
-		err = os9_enum_readlsn(os9enum, lsn, index, dir_entry, sizeof(dir_entry));
+		err = os9_enum_readlsn(enumeration, lsn, index, dir_entry, sizeof(dir_entry));
 		if (err)
 			return err;
 
@@ -561,7 +553,7 @@ static imgtoolerr_t os9_diskimage_nextenum(imgtool_imageenum *enumeration, imgto
 
 	/* read file attributes */
 	lsn = pick_integer(dir_entry, 29, 3);
-	err = os9_decode_file_header(os9enum->img, &os9enum->disk_info, lsn, &file_info);
+	err = os9_decode_file_header(img_enum_image(enumeration), &os9enum->disk_info, lsn, &file_info);
 	if (err)
 		return err;
 
@@ -586,13 +578,6 @@ static imgtoolerr_t os9_diskimage_nextenum(imgtool_imageenum *enumeration, imgto
 	ent->corrupt = (dir_entry[28] != 0);
 	ent->filesize = file_info.file_size;
 	return IMGTOOLERR_SUCCESS;
-}
-
-
-
-static void os9_diskimage_closeenum(imgtool_imageenum *enumeration)
-{
-	free(enumeration);
 }
 
 
@@ -639,12 +624,12 @@ static imgtoolerr_t os9_diskimage_readfile(imgtool_image *img, const char *filen
 static imgtoolerr_t coco_os9_module_populate(imgtool_library *library, struct ImgtoolFloppyCallbacks *module)
 {
 	module->initial_path_separator	= 1;
+	module->imageenum_extra_bytes	= sizeof(struct os9_direnum);
 	module->eoln					= EOLN_CR;
 	module->path_separator			= '/';
 	module->create					= os9_diskimage_create;
 	module->begin_enum				= os9_diskimage_beginenum;
 	module->next_enum				= os9_diskimage_nextenum;
-	module->close_enum				= os9_diskimage_closeenum;
 	module->read_file				= os9_diskimage_readfile;
 	return IMGTOOLERR_SUCCESS;
 }

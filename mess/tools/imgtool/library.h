@@ -20,8 +20,8 @@
 #include "stream.h"
 
 
-struct tagIMAGE;
-struct tagIMAGEENUM;
+typedef struct _imgtool_image imgtool_image;
+typedef struct _imgtool_imageenum imgtool_imageenum;
 typedef struct _imgtool_library imgtool_library;
 
 typedef enum
@@ -56,23 +56,26 @@ struct ImageModule
 	const char *extensions;
 	const char *eoln;
 
+	size_t image_extra_bytes;
+	size_t imageenum_extra_bytes;
+
 	char path_separator;
 	
 	/* flags */
 	unsigned int prefer_ucase : 1;
 	unsigned int initial_path_separator : 1;
 
-	imgtoolerr_t	(*open)			(const struct ImageModule *mod, imgtool_stream *f, struct tagIMAGE **outimg);
-	void			(*close)		(struct tagIMAGE *img);
-	void			(*info)			(struct tagIMAGE *img, char *string, size_t len);
-	imgtoolerr_t	(*begin_enum)	(struct tagIMAGE *img, const char *path, struct tagIMAGEENUM **outenum);
-	imgtoolerr_t	(*next_enum)	(struct tagIMAGEENUM *enumeration, imgtool_dirent *ent);
-	void			(*close_enum)	(struct tagIMAGEENUM *enumeration);
-	imgtoolerr_t	(*free_space)	(struct tagIMAGE *img, UINT64 *size);
-	imgtoolerr_t	(*read_file)	(struct tagIMAGE *img, const char *fname, imgtool_stream *destf);
-	imgtoolerr_t	(*write_file)	(struct tagIMAGE *img, const char *fname, imgtool_stream *sourcef, option_resolution *opts);
-	imgtoolerr_t	(*delete_file)	(struct tagIMAGE *img, const char *fname);
-	imgtoolerr_t	(*create)		(const struct ImageModule *mod, imgtool_stream *f, option_resolution *opts);
+	imgtoolerr_t	(*open)			(imgtool_image *image, imgtool_stream *f);
+	void			(*close)		(imgtool_image *image);
+	void			(*info)			(imgtool_image *image, char *string, size_t len);
+	imgtoolerr_t	(*begin_enum)	(imgtool_imageenum *enumeration, const char *path);
+	imgtoolerr_t	(*next_enum)	(imgtool_imageenum *enumeration, imgtool_dirent *ent);
+	void			(*close_enum)	(imgtool_imageenum *enumeration);
+	imgtoolerr_t	(*free_space)	(imgtool_image *image, UINT64 *size);
+	imgtoolerr_t	(*read_file)	(imgtool_image *image, const char *fname, imgtool_stream *destf);
+	imgtoolerr_t	(*write_file)	(imgtool_image *image, const char *fname, imgtool_stream *sourcef, option_resolution *opts);
+	imgtoolerr_t	(*delete_file)	(imgtool_image *image, const char *fname);
+	imgtoolerr_t	(*create)		(imgtool_image *image, imgtool_stream *f, option_resolution *opts);
 
 	const struct OptionGuide *createimage_optguide;
 	const char *createimage_optspec;

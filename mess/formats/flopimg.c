@@ -239,6 +239,8 @@ floperr_t floppy_create(void *fp, const struct io_procs *procs, const struct Flo
 	int heads, tracks, h, t;
 	option_resolution *alloc_resolution = NULL;
 
+	assert(format);
+
 	/* create the new image */
 	floppy = floppy_init(fp, procs, 0);
 	if (!floppy)

@@ -70,19 +70,6 @@ imgtool_stream *stream_open_filter(imgtool_stream *s, imgtool_filter *f);
 #define EOLN_LF		"\x0a"
 #define EOLN_CRLF	"\x0d\x0a"
 
-struct tagIMAGE
-{
-	const struct ImageModule *module;
-};
-
-struct tagIMAGEENUM
-{
-	const struct ImageModule *module;
-};
-
-typedef struct tagIMAGE imgtool_image;
-typedef struct tagIMAGEENUM imgtool_imageenum;
-
 /* ---------------------------------------------------------------------------
  * Image calls
  *
@@ -316,15 +303,29 @@ imgtoolerr_t img_create_byname(imgtool_library *library, const char *modulename,
 	option_resolution *opts, imgtool_image **image);
 
 /* img_module
+ * img_enum_module
  *
  * Description:
  *		Retrieves the module associated with an image
  */
-INLINE const struct ImageModule *img_module(imgtool_image *img)
-{
-	return img->module;
-}
+const struct ImageModule *img_module(imgtool_image *img);
+const struct ImageModule *img_enum_module(imgtool_imageenum *enumeration);
 
+/* img_extrabytes
+ * img_enum_extrabytes
+ *
+ * Description:
+ *		Retrieves the extra bytes associated with an image
+ */
+void *img_extrabytes(imgtool_image *img);
+void *img_enum_extrabytes(imgtool_imageenum *enumeration);
+
+/* img_enum_image
+ *
+ * Description:
+ *		Retrieves the image associated with an image enumeration
+ */
+imgtool_image *img_enum_image(imgtool_imageenum *enumeration);
 
 /* img_get_module_features
  *

@@ -19,18 +19,21 @@ struct ImgtoolFloppyCallbacks
 	const char *eoln;
 	char path_separator;
 	
+	int image_extra_bytes;
+	int imageenum_extra_bytes;
+	
 	/* flags */
 	unsigned int prefer_ucase : 1;
 	unsigned int initial_path_separator : 1;
 
-	imgtoolerr_t	(*create)		(struct tagIMAGE *img, option_resolution *opts);
-	imgtoolerr_t	(*begin_enum)	(struct tagIMAGE *img, const char *path, struct tagIMAGEENUM **outenum);
-	imgtoolerr_t	(*next_enum)	(struct tagIMAGEENUM *enumeration, imgtool_dirent *ent);
-	void			(*close_enum)	(struct tagIMAGEENUM *enumeration);
-	imgtoolerr_t	(*free_space)	(struct tagIMAGE *img, UINT64 *size);
-	imgtoolerr_t	(*read_file)	(struct tagIMAGE *img, const char *fname, imgtool_stream *destf);
-	imgtoolerr_t	(*write_file)	(struct tagIMAGE *img, const char *fname, imgtool_stream *sourcef, option_resolution *opts);
-	imgtoolerr_t	(*delete_file)	(struct tagIMAGE *img, const char *fname);
+	imgtoolerr_t	(*create)		(imgtool_image *img, option_resolution *opts);
+	imgtoolerr_t	(*begin_enum)	(imgtool_imageenum *enumeration, const char *path);
+	imgtoolerr_t	(*next_enum)	(imgtool_imageenum *enumeration, imgtool_dirent *ent);
+	void			(*close_enum)	(imgtool_imageenum *enumeration);
+	imgtoolerr_t	(*free_space)	(imgtool_image *img, UINT64 *size);
+	imgtoolerr_t	(*read_file)	(imgtool_image *img, const char *fname, imgtool_stream *destf);
+	imgtoolerr_t	(*write_file)	(imgtool_image *img, const char *fname, imgtool_stream *sourcef, option_resolution *opts);
+	imgtoolerr_t	(*delete_file)	(imgtool_image *img, const char *fname);
 
 	const struct OptionGuide *writefile_optguide;
 	const char *writefile_optspec;

@@ -236,22 +236,25 @@ void stream_close(imgtool_stream *s)
 {
 	struct stream_internal *si = (struct stream_internal *) s;
 
-	switch(si->imgtype) {
-	case IMG_FILE:
-		fclose(si->u.f);
-		break;
+	assert(s);
 
-	case IMG_MEM:
-		free(si->u.m.buf);
-		break;
+	switch(si->imgtype)
+	{
+		case IMG_FILE:
+			fclose(si->u.f);
+			break;
 
-	case IMG_FILTER:
-		filter_term(si->u.filt.f);
-		break;
+		case IMG_MEM:
+			free(si->u.m.buf);
+			break;
 
-	default:
-		assert(0);
-		break;
+		case IMG_FILTER:
+			filter_term(si->u.filt.f);
+			break;
+
+		default:
+			assert(0);
+			break;
 	}
 	free((void *) si);
 }

@@ -309,7 +309,7 @@ const struct hard_disk_info *imghd_get_header(struct hard_disk_file *disk)
 }
 
 
-static imgtoolerr_t mess_hd_image_create(const struct ImageModule *mod, imgtool_stream *f, option_resolution *createoptions);
+static imgtoolerr_t mess_hd_image_create(imgtool_image *image, imgtool_stream *f, option_resolution *createoptions);
 
 enum
 {
@@ -353,7 +353,7 @@ imgtoolerr_t mess_hd_createmodule(imgtool_library *library)
 
 
 
-static imgtoolerr_t mess_hd_image_create(const struct ImageModule *mod, imgtool_stream *f, option_resolution *createoptions)
+static imgtoolerr_t mess_hd_image_create(imgtool_image *image, imgtool_stream *f, option_resolution *createoptions)
 {
 	UINT32  version, blocksize, cylinders, heads, sectors, seclen;
 

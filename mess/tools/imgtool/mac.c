@@ -1235,8 +1235,6 @@ typedef struct hfs_l2_imgref
 */
 struct mac_l2_imgref
 {
-	imgtool_image base;
-
 	mac_l1_imgref l1_img;
 
 	UINT16 numABs;
@@ -5540,10 +5538,10 @@ static imgtoolerr_t get_comment(mac_l2_imgref *l2_img, UINT16 id, mac_str255 com
 #pragma mark IMGTOOL MODULE IMPLEMENTATION
 #endif
 
-static imgtoolerr_t mac_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg);
+static imgtoolerr_t mac_image_init(imgtool_image *image, imgtool_stream *f);
 static void mac_image_exit(imgtool_image *img);
 static void mac_image_info(imgtool_image *img, char *string, size_t len);
-static imgtoolerr_t mac_image_beginenum(imgtool_image *img, const char *path, imgtool_imageenum **outenum);
+static imgtoolerr_t mac_image_beginenum(imgtool_imageenum *enumeration, const char *path);
 static imgtoolerr_t mac_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent);
 static void mac_image_closeenum(imgtool_imageenum *enumeration);
 static imgtoolerr_t mac_image_freespace(imgtool_image *img, UINT64 *size);
@@ -5552,56 +5550,15 @@ static imgtoolerr_t mac_image_writefile(imgtool_image *img, const char *filename
 /*static imgtoolerr_t mac_image_deletefile(imgtool_image *img, const char *filename);
 static imgtoolerr_t mac_image_create(const struct ImageModule *mod, imgtool_stream *f, option_resolution *createoptions);*/
 
-imgtoolerr_t mac_createmodule(imgtool_library *library)
-{
-	imgtoolerr_t err;
-	struct ImageModule *module;
-
-	err = imgtool_library_createmodule(library, "mac", &module);
-	if (err)
-		return err;
-
-	module->description				= "Macintosh disk image (MFS & HFS)";
-	module->extensions				= "image\0img\0";
-	module->eoln					= EOLN_CR;
-
-	module->open					= mac_image_init;
-	module->close					= mac_image_exit;
-	module->info					= mac_image_info;
-	module->begin_enum				= mac_image_beginenum;
-	module->next_enum				= mac_image_nextenum;
-	module->close_enum				= mac_image_closeenum;
-	module->free_space				= mac_image_freespace;
-	module->read_file				= mac_image_readfile;
-	module->write_file				= mac_image_writefile;
-	/*module->delete_file				= mac_image_deletefile;
-	module->create					= mac_image_create;*/
-
-	/*module->createimage_optguide	= ...;
-	module->createimage_optspec		= ...;
-	module->writefile_optguide		= ...;
-	module->writefile_optspec		= ...;*/
-	/*module->extra					= NULL;*/
-
-	return IMGTOOLERR_SUCCESS;
-}
-
 /*
 	Open a file as a mfs image (common code).
 */
-static imgtoolerr_t mac_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg)
+static imgtoolerr_t mac_image_init(imgtool_image *img, imgtool_stream *f)
 {
 	mac_l2_imgref *image;
 	imgtoolerr_t errorcode;
 
-
-	image = malloc(sizeof(mac_l2_imgref));
-	* (mac_l2_imgref **) outimg = image;
-	if (image == NULL)
-		return IMGTOOLERR_OUTOFMEMORY;
-
-	memset(image, 0, sizeof(mac_l2_imgref));
-	image->base.module = mod;
+	image = (mac_l2_imgref *) img_extrabytes(img);
 
 	errorcode = floppy_image_open(f, &image->l1_img);
 	if (errorcode)
@@ -5647,7 +5604,6 @@ static void mac_image_info(imgtool_image *img, char *string, size_t len)
 */
 typedef struct mac_iterator
 {
-	imgtool_imageenum base;
 	mac_format format;
 	mac_l2_imgref *l2_img;
 	union
@@ -5666,19 +5622,13 @@ typedef struct mac_iterator
 /*
 	Open the disk catalog for enumeration 
 */
-static imgtoolerr_t mac_image_beginenum(imgtool_image *img, const char *path, imgtool_imageenum **outenum)
+static imgtoolerr_t mac_image_beginenum(imgtool_imageenum *enumeration, const char *path)
 {
-	mac_l2_imgref *image = (mac_l2_imgref *) img;
+	mac_l2_imgref *image = (mac_l2_imgref *) img_extrabytes(img_enum_image(enumeration));
 	mac_iterator *iter;
 	imgtoolerr_t errorcode;
 
-
-	iter = malloc(sizeof(mac_iterator));
-	*((mac_iterator **) outenum) = iter;
-	if (iter == NULL)
-		return IMGTOOLERR_OUTOFMEMORY;
-
-	iter->base.module = img->module;
+	iter = (mac_iterator *) img_enum_extrabytes(enumeration);
 	iter->format = image->format;
 	iter->l2_img = image;
 
@@ -5698,11 +5648,7 @@ static imgtoolerr_t mac_image_beginenum(imgtool_image *img, const char *path, im
 	}
 
 	if (errorcode)
-	{
-		free(iter);
-		*((mac_iterator **) outenum) = NULL;
 		return errorcode;
-	}
 
 	return IMGTOOLERR_SUCCESS;
 }
@@ -6304,3 +6250,40 @@ static imgtoolerr_t mac_image_writefile(imgtool_image *img, const char *fpath, i
 {
 	return IMGTOOLERR_UNIMPLEMENTED;
 }*/
+
+imgtoolerr_t mac_createmodule(imgtool_library *library)
+{
+	imgtoolerr_t err;
+	struct ImageModule *module;
+
+	err = imgtool_library_createmodule(library, "mac", &module);
+	if (err)
+		return err;
+
+	module->description				= "Macintosh disk image (MFS & HFS)";
+	module->extensions				= "image\0img\0";
+	module->eoln					= EOLN_CR;
+
+	module->image_extra_bytes		= sizeof(struct mac_l2_imgref);
+	module->imageenum_extra_bytes	= sizeof(mac_iterator);
+	module->open					= mac_image_init;
+	module->close					= mac_image_exit;
+	module->info					= mac_image_info;
+	module->begin_enum				= mac_image_beginenum;
+	module->next_enum				= mac_image_nextenum;
+	module->close_enum				= mac_image_closeenum;
+	module->free_space				= mac_image_freespace;
+	module->read_file				= mac_image_readfile;
+	module->write_file				= mac_image_writefile;
+	/*module->delete_file				= mac_image_deletefile;
+	module->create					= mac_image_create;*/
+
+	/*module->createimage_optguide	= ...;
+	module->createimage_optspec		= ...;
+	module->writefile_optguide		= ...;
+	module->writefile_optspec		= ...;*/
+	/*module->extra					= NULL;*/
+
+	return IMGTOOLERR_SUCCESS;
+}
+

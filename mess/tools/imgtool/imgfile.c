@@ -2,14 +2,14 @@
 #include "imgtool.h"
 #include "opresolv.h"
 
-struct _imgtool_imagefile
+struct _imgtool_image
 {
 	const struct ImageModule *module;
 };
 
 struct _imgtool_imageenum
 {
-	const struct ImageModule *module;
+	imgtool_image *image;
 };
 
 
@@ -40,27 +40,73 @@ static imgtoolerr_t markerrorsource(imgtoolerr_t err)
 
 
 
-imgtoolerr_t img_open(const struct ImageModule *module, const char *fname, int read_or_write, imgtool_image **outimg)
+static imgtoolerr_t internal_open(const struct ImageModule *module, const char *fname,
+	int read_or_write, option_resolution *createopts, imgtool_image **outimg)
 {
 	imgtoolerr_t err;
-	imgtool_stream *f;
+	imgtool_stream *f = NULL;
+	imgtool_image *image = NULL;
+	size_t size;
 
 	*outimg = NULL;
 
-	if (!module->open)
-		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
+	if (createopts ? !module->create : !module->open)
+	{
+		err = IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
+		goto done;
+	}
 
 	f = stream_open(fname, read_or_write);
 	if (!f)
-		return IMGTOOLERR_FILENOTFOUND | IMGTOOLERR_SRC_IMAGEFILE;
+	{
+		err = IMGTOOLERR_FILENOTFOUND | IMGTOOLERR_SRC_IMAGEFILE;
+		goto done;
+	}
+
+	size = sizeof(struct _imgtool_image) + module->image_extra_bytes;
+	image = (imgtool_image *) malloc(size);
+	if (!image)
+	{
+		err = IMGTOOLERR_OUTOFMEMORY;
+		goto done;
+	}
+	memset(image, '\0', size);
+	image->module = module;
 	
-	err = module->open(module, f, outimg);
+	if (createopts)
+		err = module->create(image, f, createopts);
+	else
+		err = module->open(image, f);
 	if (err)
 	{
-		stream_close(f);
-		return markerrorsource(err);
+		err = markerrorsource(err);
+		goto done;
 	}
-	return 0;
+
+done:
+	if (err)
+	{
+		if (f)
+			stream_close(f);
+		if (image)
+		{
+			free(image);
+			image = NULL;
+		}
+	}
+
+	if (outimg)
+		*outimg = image;
+	else if (image)
+		img_close(image);
+	return err;
+}
+
+
+
+imgtoolerr_t img_open(const struct ImageModule *module, const char *fname, int read_or_write, imgtool_image **outimg)
+{
+	return internal_open(module, fname, read_or_write, NULL, outimg);
 }
 
 
@@ -82,6 +128,7 @@ void img_close(imgtool_image *img)
 {
 	if (img->module->close)
 		img->module->close(img);
+	free(img);
 }
 
 
@@ -165,14 +212,16 @@ done:
 imgtoolerr_t img_beginenum(imgtool_image *img, const char *path, imgtool_imageenum **outenum)
 {
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
+	imgtool_imageenum *enumeration = NULL;
 	char *alloc_path = NULL;
+	size_t size;
 
 	assert(img);
 	assert(outenum);
 
 	*outenum = NULL;
 
-	if (!img->module->begin_enum)
+	if (!img->module->next_enum)
 	{
 		err = IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
 		goto done;
@@ -182,16 +231,32 @@ imgtoolerr_t img_beginenum(imgtool_image *img, const char *path, imgtool_imageen
 	if (err)
 		goto done;
 
-	err = img->module->begin_enum(img, path, outenum);
-	if (err)
-	{
-		err = markerrorsource(err);
+	size = sizeof(struct _imgtool_imageenum) + img_module(img)->imageenum_extra_bytes;
+	enumeration = (imgtool_imageenum *) malloc(size);
+	if (!enumeration)
 		goto done;
+	memset(enumeration, '\0', size);
+	enumeration->image = img;
+
+	if (img->module->begin_enum)
+	{
+		err = img->module->begin_enum(enumeration, path);
+		if (err)
+		{
+			err = markerrorsource(err);
+			goto done;
+		}
 	}
 
 done:
 	if (alloc_path)
 		free(alloc_path);
+	if (err && enumeration)
+	{
+		free(enumeration);
+		enumeration = NULL;
+	}
+	*outenum = enumeration;
 	return err;
 }
 
@@ -209,7 +274,7 @@ imgtoolerr_t img_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
 	if (ent->attr_len)
 		ent->attr[0] = '\0';
 
-	err = enumeration->module->next_enum(enumeration, ent);
+	err = img_enum_module(enumeration)->next_enum(enumeration, ent);
 	if (err)
 		return markerrorsource(err);
 
@@ -259,8 +324,11 @@ done:
 
 void img_closeenum(imgtool_imageenum *enumeration)
 {
-	if (enumeration->module->close_enum)
-		enumeration->module->close_enum(enumeration);
+	const struct ImageModule *module;
+	module = img_enum_module(enumeration);
+	if (module->close_enum)
+		module->close_enum(enumeration);
+	free(enumeration);
 }
 
 
@@ -554,25 +622,7 @@ imgtoolerr_t img_create(const struct ImageModule *module, const char *fname,
 	option_resolution *opts, imgtool_image **image)
 {
 	imgtoolerr_t err;
-	imgtool_stream *f;
 	option_resolution *alloc_resolution = NULL;
-
-	if (image)
-		*image = NULL;
-
-	if (!module->create)
-	{
-		err = IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
-		goto done;
-	}
-
-	/* The mess_hd imgtool module needs to read back the file it creates */
-	f = stream_open(fname, OSD_FOPEN_RW_CREATE);
-	if (!f)
-	{
-		err = IMGTOOLERR_FILENOTFOUND | IMGTOOLERR_SRC_NATIVEFILE;
-		goto done;
-	}
 
 	/* allocate dummy options if necessary */
 	if (!opts)
@@ -587,20 +637,9 @@ imgtoolerr_t img_create(const struct ImageModule *module, const char *fname,
 	}
 	option_resolution_finish(opts);
 
-	err = module->create(module, f, opts);
-	stream_close(f);
+	err = internal_open(module, fname, OSD_FOPEN_RW_CREATE, opts, image);
 	if (err)
-	{
-		err = markerrorsource(err);
 		goto done;
-	}
-
-	if (image)
-	{
-		err = img_open(module, fname, OSD_FOPEN_RW, image);
-		if (err)
-			goto done;
-	}
 
 done:
 	if (alloc_resolution)
@@ -677,3 +716,41 @@ static char *nextentry(char **s)
 	}
 	return result;
 }
+
+
+
+const struct ImageModule *img_module(imgtool_image *img)
+{
+	return img->module;
+}
+
+
+
+void *img_extrabytes(imgtool_image *img)
+{
+	assert(img->module->image_extra_bytes > 0);
+	return ((UINT8 *) img) + sizeof(*img);
+}
+
+
+
+const struct ImageModule *img_enum_module(imgtool_imageenum *enumeration)
+{
+	return enumeration->image->module;
+}
+
+
+
+void *img_enum_extrabytes(imgtool_imageenum *enumeration)
+{
+	assert(enumeration->image->module->imageenum_extra_bytes > 0);
+	return ((UINT8 *) enumeration) + sizeof(*enumeration);
+}
+
+
+
+imgtool_image *img_enum_image(imgtool_imageenum *enumeration)
+{
+	return enumeration->image;
+}
+

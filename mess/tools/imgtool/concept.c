@@ -110,7 +110,6 @@ typedef struct concept_dev_dir
 */
 typedef struct concept_image
 {
-	imgtool_image base;
 	imgtool_stream *file_handle;		/* imgtool file handle */
 	concept_dev_dir dev_dir;	/* cached copy of device directory */
 } concept_image;
@@ -120,16 +119,15 @@ typedef struct concept_image
 */
 typedef struct concept_iterator
 {
-	imgtool_imageenum base;
 	concept_image *image;
 	int index;							/* current index */
 } concept_iterator;
 
 
-static imgtoolerr_t concept_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg);
+static imgtoolerr_t concept_image_init(imgtool_image *img, imgtool_stream *f);
 static void concept_image_exit(imgtool_image *img);
 static void concept_image_info(imgtool_image *img, char *string, size_t len);
-static imgtoolerr_t concept_image_beginenum(imgtool_image *img, const char *path, imgtool_imageenum **outenum);
+static imgtoolerr_t concept_image_beginenum(imgtool_imageenum *enumeration, const char *path);
 static imgtoolerr_t concept_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent);
 static void concept_image_closeenum(imgtool_imageenum *enumeration);
 static imgtoolerr_t concept_image_freespace(imgtool_image *img, UINT64 *size);
@@ -261,21 +259,15 @@ static int get_catalog_entry(concept_image *image, const unsigned char *filename
 /*
 	Open a file as a concept_image.
 */
-static imgtoolerr_t concept_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg)
+static imgtoolerr_t concept_image_init(imgtool_image *img, imgtool_stream *f)
 {
 	concept_image *image;
 	int reply;
 	int i;
 	unsigned totphysrecs;
 
+	image = (concept_image *) img_extrabytes(img);
 
-	image = malloc(sizeof(concept_image));
-	* (concept_image **) outimg = image;
-	if (image == NULL)
-		return IMGTOOLERR_OUTOFMEMORY;
-
-	memset(image, 0, sizeof(concept_image));
-	image->base.module = mod;
 	image->file_handle = f;
 
 	/* read device directory */
@@ -295,12 +287,10 @@ static imgtoolerr_t concept_image_init(const struct ImageModule *mod, imgtool_st
 		|| (totphysrecs < 6) /*|| (stream_size(f) != totphysrecs*512)*/
 		|| (image->dev_dir.vol_hdr.volname[0] > 7))
 	{
-		free(image);
-		*outimg = NULL;
 		return IMGTOOLERR_CORRUPTIMAGE;
 	}
 
-	return 0;
+	return IMGTOOLERR_SUCCESS;
 }
 
 /*
@@ -333,22 +323,14 @@ static void concept_image_info(imgtool_image *img, char *string, size_t len)
 /*
 	Open the disk catalog for enumeration 
 */
-static imgtoolerr_t concept_image_beginenum(imgtool_image *img, const char *path, imgtool_imageenum **outenum)
+static imgtoolerr_t concept_image_beginenum(imgtool_imageenum *enumeration, const char *path)
 {
-	concept_image *image = (concept_image*) img;
 	concept_iterator *iter;
 
-	iter = malloc(sizeof(concept_iterator));
-	*((concept_iterator **) outenum) = iter;
-	if (iter == NULL)
-		return IMGTOOLERR_OUTOFMEMORY;
-
-	iter->base.module = img->module;
-	iter->image = image;
-
+	iter = (concept_iterator *) img_enum_extrabytes(enumeration);
+	iter->image = (concept_image *) img_extrabytes(img_enum_image(enumeration));
 	iter->index = 0;
-
-	return 0;
+	return IMGTOOLERR_SUCCESS;
 }
 
 /*
@@ -356,7 +338,7 @@ static imgtoolerr_t concept_image_beginenum(imgtool_image *img, const char *path
 */
 static imgtoolerr_t concept_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
 {
-	concept_iterator *iter = (concept_iterator*) enumeration;
+	concept_iterator *iter = (concept_iterator*) img_enum_extrabytes(enumeration);
 
 
 	ent->corrupt = 0;

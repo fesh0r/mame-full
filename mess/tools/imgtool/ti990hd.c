@@ -368,7 +368,6 @@ typedef struct ti990_phys_sec_address
 */
 typedef struct ti990_image
 {
-	imgtool_image base;
 	imgtool_stream *file_handle;		/* imgtool file handle */
 	ti990_geometry geometry;	/* geometry */
 	ti990_sc0 sec0;				/* cached copy of sector 0 */
@@ -379,7 +378,6 @@ typedef struct ti990_image
 */
 typedef struct ti990_iterator
 {
-	imgtool_imageenum base;
 	ti990_image *image;
 	int level;							/* current recursion level */
 	int nrc[MAX_DIR_LEVEL];				/* length of disk catalogs in records */
@@ -388,17 +386,17 @@ typedef struct ti990_iterator
 } ti990_iterator;
 
 
-static imgtoolerr_t ti990_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg);
+static imgtoolerr_t ti990_image_init(imgtool_image *img, imgtool_stream *f);
 static void ti990_image_exit(imgtool_image *img);
 static void ti990_image_info(imgtool_image *img, char *string, size_t len);
-static imgtoolerr_t ti990_image_beginenum(imgtool_image *img, const char *path, imgtool_imageenum **outenum);
+static imgtoolerr_t ti990_image_beginenum(imgtool_imageenum *enumeration, const char *path);
 static imgtoolerr_t ti990_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent);
 static void ti990_image_closeenum(imgtool_imageenum *enumeration);
 static imgtoolerr_t ti990_image_freespace(imgtool_image *img, UINT64 *size);
 static imgtoolerr_t ti990_image_readfile(imgtool_image *img, const char *fpath, imgtool_stream *destf);
 static imgtoolerr_t ti990_image_writefile(imgtool_image *img, const char *fpath, imgtool_stream *sourcef, option_resolution *writeoptions);
 static imgtoolerr_t ti990_image_deletefile(imgtool_image *img, const char *fpath);
-static imgtoolerr_t ti990_image_create(const struct ImageModule *mod, imgtool_stream *f, option_resolution *createoptions);
+static imgtoolerr_t ti990_image_create(imgtool_image *image, imgtool_stream *f, option_resolution *createoptions);
 
 enum
 {
@@ -1095,29 +1093,20 @@ static int qsort_catalog_compare(const void *p1, const void *p2)
 /*
 	Open a file as a ti990_image.
 */
-static imgtoolerr_t ti990_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg)
+static imgtoolerr_t ti990_image_init(imgtool_image *img, imgtool_stream *f)
 {
 	ti990_image *image;
 	disk_image_header header;
 	int reply;
 	unsigned totsecs;
 
+	image = (ti990_image *) img_extrabytes(img);
 
-	image = malloc(sizeof(ti990_image));
-	* (ti990_image **) outimg = image;
-	if (image == NULL)
-		return IMGTOOLERR_OUTOFMEMORY;
-
-	memset(image, 0, sizeof(ti990_image));
-	image->base.module = mod;
 	image->file_handle = f;
 	reply = stream_read(f, &header, sizeof(header));
 	if (reply != sizeof(header))
-	{
-		free(image);
-		*outimg=NULL;
 		return IMGTOOLERR_READERROR;
-	}
+
 	image->geometry.cylinders = get_UINT32BE(header.cylinders);
 	image->geometry.heads = get_UINT32BE(header.heads);
 	image->geometry.sectors_per_track = get_UINT32BE(header.sectors_per_track);
@@ -1133,8 +1122,6 @@ static imgtoolerr_t ti990_image_init(const struct ImageModule *mod, imgtool_stre
 		|| (totsecs < 1)
 		|| (stream_size(f) != header_len + totsecs*image->geometry.bytes_per_sector))
 	{
-		free(image);
-		*outimg = NULL;
 		return IMGTOOLERR_CORRUPTIMAGE;
 	}
 
@@ -1144,27 +1131,21 @@ static imgtoolerr_t ti990_image_init(const struct ImageModule *mod, imgtool_stre
 	}
 	if (reply)
 	{
-		free(image);
-		*outimg=NULL;
 		return IMGTOOLERR_READERROR;
 	}
 
 	if ((get_UINT16BE(image->sec0.tna)*get_UINT16BE(image->sec0.spa) > totsecs)
 		|| ((get_UINT16BE(image->sec0.spa) != 1) && (get_UINT16BE(image->sec0.spa) % 3)))
 	{
-		free(image);
-		*outimg = NULL;
 		return IMGTOOLERR_CORRUPTIMAGE;
 	}
 
 	if ((get_UINT16BE(image->sec0.vpl) != 0x86) && (get_UINT16BE(image->sec0.vpl) != 0x100))
 	{
-		free(image);
-		*outimg = NULL;
 		return IMGTOOLERR_CORRUPTIMAGE;
 	}
 
-	return 0;
+	return IMGTOOLERR_SUCCESS;
 }
 
 /*
@@ -1172,10 +1153,8 @@ static imgtoolerr_t ti990_image_init(const struct ImageModule *mod, imgtool_stre
 */
 static void ti990_image_exit(imgtool_image *img)
 {
-	ti990_image *image = (ti990_image *) img;
-
+	ti990_image *image = (ti990_image *) img_extrabytes(img);
 	stream_close(image->file_handle);
-	free(image);
 }
 
 /*
@@ -1196,19 +1175,16 @@ static void ti990_image_info(imgtool_image *img, char *string, size_t len)
 /*
 	Open the disk catalog for enumeration 
 */
-static imgtoolerr_t ti990_image_beginenum(imgtool_image *img, const char *path, imgtool_imageenum **outenum)
+static imgtoolerr_t ti990_image_beginenum(imgtool_imageenum *enumeration, const char *path)
 {
-	ti990_image *image = (ti990_image*) img;
+	ti990_image *image;
 	ti990_iterator *iter;
 	ti990_dor dor;
 	int reply;
 
-	iter = malloc(sizeof(ti990_iterator));
-	*((ti990_iterator **) outenum) = iter;
-	if (iter == NULL)
-		return IMGTOOLERR_OUTOFMEMORY;
+	iter = (ti990_iterator *) img_enum_extrabytes(enumeration);
+	image = (ti990_image *) img_extrabytes(img_enum_image(enumeration));
 
-	iter->base.module = img->module;
 	iter->image = image;
 
 	reply = read_sector_logical_len(iter->image->file_handle,
@@ -1216,17 +1192,13 @@ static imgtoolerr_t ti990_image_beginenum(imgtool_image *img, const char *path, 
 									& iter->image->geometry, &dor, sizeof(dor));
 
 	if (reply)
-	{
-		free(iter);
-		*((ti990_iterator **) outenum) = NULL;
 		return IMGTOOLERR_READERROR;
-	}
 
 	iter->level = 0;
 	iter->nrc[0] = get_UINT16BE(dor.nrc);
 	iter->index[0] = 0;
 
-	return 0;
+	return IMGTOOLERR_SUCCESS;
 }
 
 /*
@@ -1429,7 +1401,6 @@ static imgtoolerr_t ti990_image_nextenum(imgtool_imageenum *enumeration, imgtool
 */
 static void ti990_image_closeenum(imgtool_imageenum *enumeration)
 {
-	free(enumeration);
 }
 
 /*
@@ -1780,7 +1751,7 @@ static imgtoolerr_t ti990_image_deletefile(imgtool_image *img, const char *fpath
 /*
 	Create a blank ti990_image.
 */
-static imgtoolerr_t ti990_image_create(const struct ImageModule *mod, imgtool_stream *f, option_resolution *createoptions)
+static imgtoolerr_t ti990_image_create(imgtool_image *image, imgtool_stream *f, option_resolution *createoptions)
 {
 	//const char *volname;
 	ti990_geometry geometry;
@@ -1790,9 +1761,6 @@ static imgtoolerr_t ti990_image_create(const struct ImageModule *mod, imgtool_st
 	UINT8 empty_sec[MAX_SECTOR_SIZE];
 	int reply;
 	int i;
-
-
-	(void) mod;
 
 	/* read options */
 	//volname = option_resolution_lookup_string(createoptions, ti990_createopts_volname);
