@@ -11,16 +11,10 @@
 
 
 
-unsigned char *c1943_scrollx;
-unsigned char *c1943_scrolly;
-unsigned char *c1943_bgscrolly;
-static int chon,objon,sc1on,sc2on;
-static int flipscreen;
+unsigned char *c1943_fgvideoram;
 
-static struct osd_bitmap *sc2bitmap;
-static struct osd_bitmap *sc1bitmap;
-static unsigned char sc2map[9][8][2];
-static unsigned char sc1map[9][9][2];
+static int bg1_on, sprites_on;
+static struct tilemap *fg_tilemap, *bg1_tilemap, *bg2_tilemap;
 
 
 
@@ -38,6 +32,7 @@ static unsigned char sc1map[9][9][2];
   bit 0 -- 2.2kohm resistor  -- RED/GREEN/BLUE
 
 ***************************************************************************/
+
 void c1943_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
@@ -109,38 +104,97 @@ void c1943_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 }
 
 
+/***************************************************************************
+
+  Callbacks for the TileMap code
+
+***************************************************************************/
+
+static void get_fg_tile_info(int tile_index)
+{
+	int code, color;
+
+	code = c1943_fgvideoram[tile_index];
+	color = c1943_fgvideoram[tile_index + 0x400];
+	SET_TILE_INFO(0, code + ((color & 0xe0) << 3), color & 0x1f);
+}
+
+static void get_bg1_tile_info(int tile_index)
+{
+	int code, color;
+
+	code = memory_region(REGION_GFX6)[2*tile_index];
+	color = memory_region(REGION_GFX6)[2*tile_index+1];
+	SET_TILE_INFO(2, code, (color & 0x3c) >> 2);
+	tile_info.flags = TILE_FLIPYX((color & 0xc0) >> 6);
+}
+
+static void get_bg2_tile_info(int tile_index)
+{
+	int code, color;
+
+	code = memory_region(REGION_GFX5)[2*tile_index];
+	color = memory_region(REGION_GFX5)[2*tile_index+1];
+	SET_TILE_INFO(1, code + ((color & 0x01) << 8), (color & 0x3c) >> 2);
+	tile_info.flags = TILE_FLIPYX((color & 0xc0) >> 6);
+}
+
+
+/***************************************************************************
+
+  Start the video hardware emulation.
+
+***************************************************************************/
 
 int c1943_vh_start(void)
 {
-	if ((sc2bitmap = bitmap_alloc(9*32,8*32)) == 0)
+	fg_tilemap  = tilemap_create(get_fg_tile_info, tilemap_scan_rows,TILEMAP_TRANSPARENT_COLOR, 8, 8,  32,32);
+	bg1_tilemap = tilemap_create(get_bg1_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE,           32,32,2048, 8);
+	bg2_tilemap = tilemap_create(get_bg2_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT_COLOR,32,32,2048, 8);
+
+	if (!fg_tilemap || !bg1_tilemap || !bg2_tilemap)
 		return 1;
 
-	if ((sc1bitmap = bitmap_alloc(9*32,9*32)) == 0)
-	{
-		bitmap_free(sc2bitmap);
-		return 1;
-	}
-
-	if (generic_vh_start() == 1)
-	{
-		bitmap_free(sc2bitmap);
-		bitmap_free(sc1bitmap);
-		return 1;
-	}
-
-	memset (sc2map, 0xff, sizeof (sc2map));
-	memset (sc1map, 0xff, sizeof (sc1map));
+	fg_tilemap->transparent_pen = 79;
+	bg2_tilemap->transparent_pen = 0;
 
 	return 0;
 }
 
 
-void c1943_vh_stop(void)
+/***************************************************************************
+
+  Memory handlers
+
+***************************************************************************/
+
+WRITE_HANDLER( c1943_fgvideoram_w )
 {
-	bitmap_free(sc2bitmap);
-	bitmap_free(sc1bitmap);
+	c1943_fgvideoram[offset] = data;
+	tilemap_mark_tile_dirty(fg_tilemap,offset & 0x3ff);
 }
 
+
+WRITE_HANDLER( c1943_bg1_scrollx_w )
+{
+	static unsigned char scroll[2];
+
+	scroll[offset] = data;
+	tilemap_set_scrollx(bg1_tilemap,0,scroll[0] | (scroll[1] << 8));
+}
+
+WRITE_HANDLER( c1943_bg2_scrollx_w )
+{
+	static unsigned char scroll[2];
+
+	scroll[offset] = data;
+	tilemap_set_scrollx(bg2_tilemap,0,scroll[0] | (scroll[1] << 8));
+}
+
+WRITE_HANDLER( c1943_bg2_scrolly_w )
+{
+	tilemap_set_scrolly(bg2_tilemap,0,data);
+}
 
 
 WRITE_HANDLER( c1943_c804_w )
@@ -157,241 +211,83 @@ WRITE_HANDLER( c1943_c804_w )
 	bankaddress = 0x10000 + (data & 0x1c) * 0x1000;
 	cpu_setbank(1,&RAM[bankaddress]);
 
-	/* bit 5 resets the sound CPU - we ignore it */
+	/* bit 5 resets the sound CPU */
+	cpu_set_reset_line(1,(data & 0x20) ? ASSERT_LINE : CLEAR_LINE);
 
 	/* bit 6 flips screen */
-	if (flipscreen != (data & 0x40))
-	{
-		flipscreen = data & 0x40;
-//		memset(dirtybuffer,1,c1942_backgroundram_size);
-	}
+	flip_screen_w(0,data & 0x40);
 
 	/* bit 7 enables characters */
-	chon = data & 0x80;
+	tilemap_set_enable(fg_tilemap, data & 0x80);
 }
-
 
 
 WRITE_HANDLER( c1943_d806_w )
 {
-	/* bit 4 enables bg 1 */
-	sc1on = data & 0x10;
+	/* bit 4 enables bg 2 */
+	tilemap_set_enable(bg2_tilemap, data & 0x10);
 
-	/* bit 5 enables bg 2 */
-	sc2on = data & 0x20;
+	/* bit 5 enables bg 1 */
+	bg1_on = data & 0x20;
+	tilemap_set_enable(bg1_tilemap, bg1_on);
 
 	/* bit 6 enables sprites */
-	objon = data & 0x40;
+	sprites_on = data & 0x40;
 }
-
 
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
+  Display refresh
 
 ***************************************************************************/
+
+static void draw_sprites(struct osd_bitmap *bitmap, int priority)
+{
+	int offs;
+
+
+	if (!sprites_on)  return;
+
+
+	for (offs = spriteram_size - 32;offs >= 0;offs -= 32)
+	{
+		int sx, sy, color;
+
+
+		color = spriteram[offs + 1] & 0x0f;
+		if (((priority == 0) && (color == 0x0a || color == 0x0b)) || /* the priority is actually selected by */
+		    ((priority == 1) && (color != 0x0a && color != 0x0b)))	 /* bit 3 of BMPROM.07 */
+		{
+			sx = spriteram[offs + 3] - ((spriteram[offs + 1] & 0x10) << 4);
+			sy = spriteram[offs + 2];
+			if (flip_screen)
+			{
+				sx = 240 - sx;
+				sy = 240 - sy;
+			}
+
+			drawgfx(bitmap,Machine->gfx[3],
+					spriteram[offs] + ((spriteram[offs + 1] & 0xe0) << 3),
+					color,
+					flip_screen,flip_screen,
+					sx,sy,
+					&Machine->visible_area,TRANSPARENCY_PEN,0);
+		}
+	}
+}
+
 void c1943_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int offs,sx,sy;
-	int bg_scrolly, bg_scrollx;
-	unsigned char *p;
-	int top,left,xscroll,yscroll;
+	tilemap_update(ALL_TILEMAPS);
+	tilemap_render(ALL_TILEMAPS);
 
-/* TODO: support flipscreen */
-	if (sc2on)
-	{
-		p=memory_region(REGION_GFX5)+0x8000;
-		bg_scrolly = c1943_bgscrolly[0] + 256 * c1943_bgscrolly[1];
-		offs = 16 * ((bg_scrolly>>5)+8);
-
-		top = 8 - (bg_scrolly>>5) % 9;
-
-		bg_scrolly&=0x1f;
-
-		for (sy = 0;sy <9;sy++)
-		{
-			int ty = (sy + top) % 9;
-			unsigned char *map = &sc2map[ty][0][0];
-			offs &= 0x7fff; /* Enforce limits (for top of scroll) */
-
-			for (sx = 0;sx < 8;sx++)
-			{
-				int tile, attr, offset;
-				offset=offs+2*sx;
-
-				tile=p[offset];
-				attr=p[offset+1];
-
-				if (tile != map[0] || attr != map[1])
-				{
-					map[0] = tile;
-					map[1] = attr;
-					drawgfx(sc2bitmap,Machine->gfx[2],
-							tile,
-							(attr & 0x3c) >> 2,
-							attr&0x40, attr&0x80,
-							(8-ty)*32, sx*32,
-							0,
-							TRANSPARENCY_NONE,0);
-				}
-				map += 2;
-			}
-			offs-=0x10;
-		}
-
-		xscroll = (top*32-bg_scrolly);
-		yscroll = 0;
-		copyscrollbitmap(bitmap,sc2bitmap,
-			1,&xscroll,
-			1,&yscroll,
-			&Machine->visible_area,
-			TRANSPARENCY_NONE,0);
-	}
-	else fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
-
-
-	if (objon)
-	{
-		/* Draw the sprites which don't have priority over the foreground. */
-		for (offs = spriteram_size - 32;offs >= 0;offs -= 32)
-		{
-			int color;
-
-
-			color = spriteram[offs + 1] & 0x0f;
-			if (color == 0x0a || color == 0x0b)	/* the priority is actually selected by */
-												/* bit 3 of BMPROM.07 */
-			{
-				sx = spriteram[offs + 3] - ((spriteram[offs + 1] & 0x10) << 4);
-				sy = spriteram[offs + 2];
-				if (flipscreen)
-				{
-					sx = 240 - sx;
-					sy = 240 - sy;
-				}
-
-				drawgfx(bitmap,Machine->gfx[3],
-						spriteram[offs] + ((spriteram[offs + 1] & 0xe0) << 3),
-						color,
-						flipscreen,flipscreen,
-						sx,sy,
-						&Machine->visible_area,TRANSPARENCY_PEN,0);
-			}
-		}
-	}
-
-
-/* TODO: support flipscreen */
-	if (sc1on)
-	{
-		p=memory_region(REGION_GFX5);
-
-		bg_scrolly = c1943_scrolly[0] + 256 * c1943_scrolly[1];
-		bg_scrollx = c1943_scrollx[0];
-		offs = 16 * ((bg_scrolly>>5)+8)+2*(bg_scrollx>>5) ;
-		if (bg_scrollx & 0x80) offs -= 0x10;
-
-		top = 8 - (bg_scrolly>>5) % 9;
-		left = (bg_scrollx>>5) % 9;
-
-		bg_scrolly&=0x1f;
-		bg_scrollx&=0x1f;
-
-		for (sy = 0;sy <9;sy++)
-		{
-			int ty = (sy + top) % 9;
-			offs &= 0x7fff; /* Enforce limits (for top of scroll) */
-
-			for (sx = 0;sx < 9;sx++)
-			{
-				int tile, attr, offset;
-				int tx = (sx + left) % 9;
-				unsigned char *map = &sc1map[ty][tx][0];
-				offset=offs+(sx*2);
-
-				tile=p[offset];
-				attr=p[offset+1];
-
-				if (tile != map[0] || attr != map[1])
-				{
-					map[0] = tile;
-					map[1] = attr;
-					tile+=256*(attr&0x01);
-					drawgfx(sc1bitmap,Machine->gfx[1],
-							tile,
-							(attr & 0x3c) >> 2,
-							attr & 0x40,attr & 0x80,
-							(8-ty)*32, tx*32,
-							0,
-							TRANSPARENCY_NONE,0);
-				}
-			}
-			offs-=0x10;
-		}
-
-		xscroll = (top*32-bg_scrolly);
-		yscroll = -(left*32+bg_scrollx);
-		copyscrollbitmap(bitmap,sc1bitmap,
-			1,&xscroll,
-			1,&yscroll,
-			&Machine->visible_area,
-			TRANSPARENCY_COLOR,0);
-	}
-
-
-	if (objon)
-	{
-		/* Draw the sprites which have priority over the foreground. */
-		for (offs = spriteram_size - 32;offs >= 0;offs -= 32)
-		{
-			int color;
-
-
-			color = spriteram[offs + 1] & 0x0f;
-			if (color != 0x0a && color != 0x0b)	/* the priority is actually selected by */
-												/* bit 3 of BMPROM.07 */
-			{
-				sx = spriteram[offs + 3] - ((spriteram[offs + 1] & 0x10) << 4);
-				sy = spriteram[offs + 2];
-				if (flipscreen)
-				{
-					sx = 240 - sx;
-					sy = 240 - sy;
-				}
-
-				drawgfx(bitmap,Machine->gfx[3],
-						spriteram[offs] + ((spriteram[offs + 1] & 0xe0) << 3),
-						color,
-						flipscreen,flipscreen,
-						sx,sy,
-						&Machine->visible_area,TRANSPARENCY_PEN,0);
-			}
-		}
-	}
-
-
-	if (chon)
-	{
-		/* draw the frontmost playfield. They are characters, but draw them as sprites */
-		for (offs = videoram_size - 1;offs >= 0;offs--)
-		{
-			sx = offs % 32;
-			sy = offs / 32;
-			if (flipscreen)
-			{
-				sx = 31 - sx;
-				sy = 31 - sy;
-			}
-
-			drawgfx(bitmap,Machine->gfx[0],
-					videoram[offs] + ((colorram[offs] & 0xe0) << 3),
-					colorram[offs] & 0x1f,
-					flipscreen,flipscreen,
-					8*sx,8*sy,
-					&Machine->visible_area,TRANSPARENCY_COLOR,79);
-		}
-	}
+	if (bg1_on)
+		tilemap_draw(bitmap,bg1_tilemap,0);
+	else
+		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+	draw_sprites(bitmap, 0);
+	tilemap_draw(bitmap,bg2_tilemap,0);
+	draw_sprites(bitmap, 1);
+	tilemap_draw(bitmap,fg_tilemap,0);
 }
