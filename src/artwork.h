@@ -39,6 +39,7 @@ struct artwork_info
 	UINT8 *brightness;                 /* brightness of each palette entry */
 	UINT64 *rgb;
 	UINT8 *pTable;                     /* Conversion table usually used for mixing colors */
+	INT32 x_offset, y_offset;
 };
 
 
@@ -61,6 +62,7 @@ struct artwork_element
 extern struct artwork_info *artwork_backdrop;
 extern struct artwork_info *artwork_overlay;
 extern struct osd_bitmap *overlay_real_scrbitmap;
+extern struct osd_bitmap *artwork_real_scrbitmap;
 
 /*********************************************************************
   functions that apply to backdrops AND overlays
