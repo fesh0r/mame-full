@@ -108,7 +108,7 @@ static hfdc_t hfdc[MAX_HFDC];
 
 static int floppy_find_sector(int which, int disk_unit, int cylinder, int head, int sector, int *sector_data_id, int *sector_len/*, int *ddam*/)
 {
-	mess_image *disk_img = image_instance(IO_FLOPPY, disk_unit);
+	mess_image *disk_img = image_from_devtype_and_index(IO_FLOPPY, disk_unit);
 	UINT8 revolution_count;
 	chrn_id id;
 
@@ -154,7 +154,7 @@ static int floppy_read_sector(int which, int disk_unit, int cylinder, int head, 
 	int sector_data_id, sector_len;
 	UINT8 buf[MAX_SECTOR_LEN];
 	int i;
-	mess_image *disk_img = image_instance(IO_FLOPPY, disk_unit);
+	mess_image *disk_img = image_from_devtype_and_index(IO_FLOPPY, disk_unit);
 
 	if (! floppy_find_sector(which, disk_unit, cylinder, head, sector, & sector_data_id, & sector_len))
 	{
@@ -176,7 +176,7 @@ static int floppy_write_sector(int which, int disk_unit, int cylinder, int head,
 	int sector_data_id, sector_len;
 	UINT8 buf[MAX_SECTOR_LEN];
 	int i;
-	mess_image *disk_img = image_instance(IO_FLOPPY, disk_unit);
+	mess_image *disk_img = image_from_devtype_and_index(IO_FLOPPY, disk_unit);
 
 	if (! floppy_find_sector(which, disk_unit, cylinder, head, sector, & sector_data_id, & sector_len))
 	{
@@ -195,13 +195,13 @@ static int floppy_write_sector(int which, int disk_unit, int cylinder, int head,
 
 static void floppy_seek(int which, int disk_unit, int direction)
 {
-	mess_image *disk_img = image_instance(IO_FLOPPY, disk_unit);
+	mess_image *disk_img = image_from_devtype_and_index(IO_FLOPPY, disk_unit);
 	floppy_drive_seek(disk_img, direction);
 }
 
 static UINT8 floppy_get_disk_status(int which, int disk_unit)
 {
-	mess_image *disk_img = image_instance(IO_FLOPPY, disk_unit);
+	mess_image *disk_img = image_from_devtype_and_index(IO_FLOPPY, disk_unit);
 	int status = floppy_status(disk_img, -1);
 	int reply;
 
@@ -213,7 +213,7 @@ static UINT8 floppy_get_disk_status(int which, int disk_unit)
 		reply |= DS_TRK00;
 	if (status & FLOPPY_DRIVE_DISK_WRITE_PROTECTED)
 		reply |= DS_WRPROT;
-	if (status & FLOPPY_DRIVE_READY)
+	if /*(status & FLOPPY_DRIVE_READY)*/(image_exists(disk_img))
 		reply |= DS_READY;
 
 	return reply;
@@ -476,14 +476,12 @@ static void do_read_logical(int which, int mode)
 		goto cleanup;
 	}
 
-#if 0
 	if (! (get_disk_status(which, select_mode, disk_unit) & DS_READY))
 	{
 		/* unit is not ready */
 		hfdc[which].status |= ST_TC_RDIDERR;	/* right??? */
 		goto cleanup;
 	}
-#endif
 
 	if ((hfdc[which].regs[hfdc_reg_term] & TC_TWPROT)
 			&& (get_disk_status(which, select_mode, disk_unit) & DS_WRPROT))
@@ -553,14 +551,12 @@ static void do_write_logical(int which, int mode)
 		goto cleanup;
 	}
 
-#if 0
 	if (! (get_disk_status(which, select_mode, disk_unit) & DS_READY))
 	{
 		/* unit is not ready */
 		hfdc[which].status |= ST_TC_RDIDERR;	/* right??? */
 		goto cleanup;
 	}
-#endif
 
 	if ((hfdc[which].regs[hfdc_reg_term] & TC_TWPROT)
 			&& (get_disk_status(which, select_mode, disk_unit) & DS_WRPROT))
