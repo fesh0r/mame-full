@@ -9,6 +9,12 @@ System Driver Changes:
 - [SNES] Fixed background scrolling. Added 16x16 tile mode. Improved Mode 21
   SRAM support. [Anthony Kruize]
 
+- [GAMEBOY] Finally fixed sound channel 3 so it produces correct frequencies!
+  Flagged sound as being stereo. Improved input ports. [Anthony Kruize]
+
+- [SUPERGB] Fixed certain areas of the border image being left blank instead of
+  being filled in.(bug #264) [Anthony Kruize]
+
 Source Changes:
 ---------------
 - Updated all drivers device declarations to new system and removed old dev
