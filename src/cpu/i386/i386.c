@@ -331,6 +331,9 @@ void i386_reset(void *param)
 	I.sreg[CS].base		= 0xffff0000;
 	I.sreg[CS].limit	= 0xffff;
 
+	I.idtr.base = 0;
+	I.idtr.limit = 0x3ff;
+
 	I.cr[0] = 0;
 	I.eflags = 0;
 	I.eip = 0xfff0;
@@ -440,7 +443,8 @@ void i386_set_reg(int regnum, unsigned value)
 
 void i386_set_irq_line(int irqline, int state)
 {
-	i386_interrupt( irqline );
+	if ( state )
+		i386_interrupt( irqline );
 }
 
 void i386_set_irq_callback(int (*callback)(int))

@@ -2322,6 +2322,25 @@ static void I386OP(groupFF_16)(void)		// Opcode 0xff
 				CHANGE_PC(I.eip);
 			}
 			break;
+		case 3:			/* CALL FAR Rm16 */
+			{
+				UINT16 address, selector;
+				if( modrm >= 0xc0 ) {
+					osd_die("NYI");
+				} else {
+					UINT32 ea = GetEA(modrm);
+					address = READ16(ea + 0);
+					selector = READ16(ea + 2);
+					CYCLES(10 + 1);		/* TODO: Timing = 10 + m */
+				}
+				PUSH16( I.sreg[CS].selector );
+				PUSH16( I.eip );
+				I.sreg[CS].selector = selector;
+				i386_load_segment_descriptor( CS );
+				I.eip = address;
+				CHANGE_PC(I.eip);
+			}
+			break;
 		case 4:			/* JMP Rm16 */
 			{
 				UINT16 address;
@@ -2333,6 +2352,23 @@ static void I386OP(groupFF_16)(void)		// Opcode 0xff
 					address = READ16(ea);
 					CYCLES(10 + 1);		/* TODO: Timing = 10 + m */
 				}
+				I.eip = address;
+				CHANGE_PC(I.eip);
+			}
+			break;
+		case 5:			/* JMP FAR Rm16 */
+			{
+				UINT16 address, selector;
+				if( modrm >= 0xc0 ) {
+					osd_die("NYI");
+				} else {
+					UINT32 ea = GetEA(modrm);
+					address = READ16(ea + 0);
+					selector = READ16(ea + 2);
+					CYCLES(10 + 1);		/* TODO: Timing = 10 + m */
+				}
+				I.sreg[CS].selector = selector;
+				i386_load_segment_descriptor( CS );
 				I.eip = address;
 				CHANGE_PC(I.eip);
 			}
@@ -2561,3 +2597,4 @@ static void I386OP(bound_r16_m16_m16)(void)	// Opcode 0x62
 
 	CYCLES(1);	// TODO: Find out correct cycle count
 }
+

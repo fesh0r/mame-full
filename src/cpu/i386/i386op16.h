@@ -54,15 +54,15 @@ static void (*i386_opcode_table1_16[256])(void) =
 	I386OP(xor_r16_rm16),		/* 0x33 */
 	I386OP(xor_al_i8),			/* 0x34 */
 	I386OP(xor_ax_i16),			/* 0x35 */
-	I386OP(invalid),			/* 0x36 */		/* TODO: Segment override = SS */
-	I386OP(invalid),			/* 0x37 */		/* TODO: AAA */
+	I386OP(segment_SS),			/* 0x36 */
+	I386OP(aaa),				/* 0x37 */
 	I386OP(cmp_rm8_r8),			/* 0x38 */
 	I386OP(cmp_rm16_r16),		/* 0x39 */
 	I386OP(cmp_r8_rm8),			/* 0x3a */
 	I386OP(cmp_r16_rm16),		/* 0x3b */
 	I386OP(cmp_al_i8),			/* 0x3c */
 	I386OP(cmp_ax_i16),			/* 0x3d */
-	I386OP(invalid),			/* 0x3e */		/* TODO: Segment override = DS */
+	I386OP(segment_DS),			/* 0x3e */
 	I386OP(aas),				/* 0x3f */
 	I386OP(inc_ax),				/* 0x40 */
 	I386OP(inc_cx),				/* 0x41 */
@@ -100,8 +100,8 @@ static void (*i386_opcode_table1_16[256])(void) =
 	I386OP(popa),				/* 0x61 */
 	I386OP(bound_r16_m16_m16),	/* 0x62 */
 	I386OP(invalid),			/* 0x63 */		/* TODO: ARPL */
-	I386OP(invalid),			/* 0x64 */		/* TODO: Segment override = FS */
-	I386OP(invalid),			/* 0x65 */		/* TODO: Segment override = GS */
+	I386OP(segment_FS),			/* 0x64 */
+	I386OP(segment_GS),			/* 0x65 */
 	I386OP(operand_size),		/* 0x66 */
 	I386OP(address_size),		/* 0x67 */
 	I386OP(push_i16),			/* 0x68 */
@@ -206,15 +206,15 @@ static void (*i386_opcode_table1_16[256])(void) =
 	I386OP(invalid),			/* 0xcb */		/* TODO: RETF */
 	I386OP(int3),				/* 0xcc */
 	I386OP(int),				/* 0xcd */
-	I386OP(invalid),			/* 0xce */		/* TODO: INTO */
+	I386OP(into),				/* 0xce */
 	I386OP(iret16),				/* 0xcf */
 	I386OP(groupD0_8),			/* 0xd0 */
 	I386OP(groupD1_16),			/* 0xd1 */
 	I386OP(groupD2_8),			/* 0xd2 */
 	I386OP(groupD3_16),			/* 0xd3 */
-	I386OP(invalid),			/* 0xd4 */		/* TODO: AAM */
-	I386OP(invalid),			/* 0xd5 */		/* TODO: AAD */
-	I386OP(invalid),			/* 0xd6 */
+	I386OP(aam),				/* 0xd4 */
+	I386OP(aad),				/* 0xd5 */
+	I386OP(setalc),				/* 0xd6 */		/* undocumented */
 	I386OP(invalid),			/* 0xd7 */		/* TODO: XLAT */
 	I386OP(escape),				/* 0xd8 */
 	I386OP(escape),				/* 0xd9 */
@@ -244,8 +244,8 @@ static void (*i386_opcode_table1_16[256])(void) =
 	I386OP(invalid),			/* 0xf1 */		
 	I386OP(repne),				/* 0xf2 */
 	I386OP(rep),				/* 0xf3 */
-	I386OP(hlt),				/* 0xf4 */		/* TODO: HLT */
-	I386OP(invalid),			/* 0xf5 */		/* TODO: CMC */
+	I386OP(hlt),				/* 0xf4 */
+	I386OP(cmc),				/* 0xf5 */
 	I386OP(groupF6_8),			/* 0xf6 */		
 	I386OP(groupF7_16),			/* 0xf7 */
 	I386OP(clc),				/* 0xf8 */

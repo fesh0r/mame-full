@@ -2362,6 +2362,7 @@ V-V                           TP-027
 	/* PS Arcade 95 */
 	DRIVER( brvblade )	/* Brave Blade */
 	DRIVER( beastrzr )	/* Beastorizer */
+	DRIVER( beastrzb )	/* Beastorizer (bootleg?) */
 
 	/* Atari PSX */
 	DRIVER( primrag2 )	/* Primal Rage 2 */
@@ -2386,7 +2387,6 @@ V-V                           TP-027
 	DRIVER( ftimpcta )	/* Fighter's Impact Ace (JAPAN) */
 	DRIVER( gdarius )	/* G-Darius (JAPAN) */
 	DRIVER( gdarius2 )	/* G-Darius Ver.2 (JAPAN) */
-	DRIVER( beastrzb )	/* Beastorizer (bootleg)*/
 
 	/* Namco System 11 */
 	DRIVER( tekken )	/* Tekken (TE4/VER.C) */
@@ -2448,6 +2448,7 @@ V-V                           TP-027
 	DRIVER( cworld )	/* 11/1989 (QUIZ 1) (c) 1989 Capcom */
 	DRIVER( hatena )	/* 28/02/1990 (QUIZ 2) (c) 1990 Capcom (Japan) */
 	DRIVER( spang )		/* 14/09/1990 (c) 1990 Mitchell (World) */
+	DRIVER( spangj )	/* --/--/1990 (c) 1990 Mitchell (Japan) */
 	DRIVER( sbbros )	/* 01/10/1990 (c) 1990 Mitchell + Capcom (US) not listed on Capcom's site */
 	DRIVER( marukin )	/* 17/10/1990 (c) 1990 Yuga (Japan) */
 	DRIVER( qtono1 )	/* 25/12/1990 (QUIZ 3) (c) 1991 Capcom (Japan) */
@@ -2643,6 +2644,7 @@ V-V                           TP-027
 	DRIVER( pitfallu )	/* 834-5627 [1985?] reprogrammed, (c) 1984 Activision (S1) */
 	DRIVER( seganinj )	/* 834-5677 (c) 1985 (S1) */
 	DRIVER( seganinu )	/* 834-5677 (c) 1985 (S1) */
+	DRIVER( ninja )		/* 834-5677 (c) 1985 (S1) */
 	DRIVER( nprinces )	/* 834-5677 (c) 1985 (S1) */
 	DRIVER( nprincso )	/* 834-5677 (c) 1985 (S1) */
 	DRIVER( nprincsu )	/* 834-5677 (c) 1985 (S1) */
@@ -4143,6 +4145,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( primraga )	/* 136102			(c) 1994 */
 	DRIVER( area51 )	/* 136105			(c) 1995 */
 	DRIVER( area51a )	/* 136105			(c) 1995 */
+	DRIVER( a51r3k )	/*     ??			(c) 1995 */
 	DRIVER( area51mx )	/* 136105			(c) 1998 */
 	DRIVER( a51mxr3k )	/*     ??           (c) 1998 */
 	DRIVER( maxforce )	/*     ??			(c) 1996 */
@@ -4618,6 +4621,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 */
 	DRIVER( senkyu )
 	DRIVER( batlball )
+	DRIVER( batlbala )
 	DRIVER( viperp1 )
 	DRIVER( viperp1o )
 	DRIVER( ejanhs )

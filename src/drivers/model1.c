@@ -14,7 +14,7 @@ VIDEO_START(model1);
 VIDEO_UPDATE(model1);
 VIDEO_EOF(model1);
 extern UINT16 *model1_display_list0, *model1_display_list1;
-UINT16 *model1_color_xlat;
+extern UINT16 *model1_color_xlat;
 READ16_HANDLER( model1_listctl_r );
 WRITE16_HANDLER( model1_listctl_w );
 
@@ -253,7 +253,8 @@ static ADDRESS_MAP_START( model1_mem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xc00000, 0xc0003f) AM_READ(io_r)
 
 	AM_RANGE(0xc00040, 0xc00043) AM_READWRITE(network_ctl_r, network_ctl_w)
-	AM_RANGE(0xc00200, 0xc002ff) AM_RAM             // ??
+
+	AM_RANGE(0xc00200, 0xc002ff) AM_RAM AM_BASE((data16_t **)&generic_nvram) AM_SIZE(&generic_nvram_size)
 
 	AM_RANGE(0xc40000, 0xc40001) AM_WRITE(snd_latch_to_68k_w)
 	AM_RANGE(0xc40002, 0xc40003) AM_READ(snd_68k_ready_r)
@@ -709,6 +710,7 @@ static MACHINE_DRIVER_START( model1 )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	MDRV_MACHINE_INIT(model1)
+	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK | VIDEO_RGB_DIRECT)
 	MDRV_SCREEN_SIZE(62*8, 48*8)

@@ -74,6 +74,8 @@ static mame_timer *pc_keyboard_timer;
 
 static void pc_keyb_timer(int param);
 
+#define LOG_PORT80 0
+
 
 
 /* ---------------------------------------------------------------------- */
@@ -266,6 +268,11 @@ READ8_HANDLER(at_page8_r)
 WRITE8_HANDLER(at_page8_w)
 {
 	at_pages[offset % 0x10] = data;
+
+#if LOG_PORT80
+	if (offset == 0)
+		logerror("at_page8_w(): Port 80h <== 0x%02x\n", data);
+#endif /* LOG_PORT80 */
 
 	switch(offset % 8) {
 	case 1:
@@ -464,46 +471,25 @@ static void pc_COM_w(int n, int offset, int data)
 	uart8250_w(n,offset, data);
 }
 
-READ_HANDLER(pc_COM1_r)
-{
-	return pc_COM_r(0, offset);
-}
+READ8_HANDLER(pc_COM1_r)  { return pc_COM_r(0, offset); }
+READ8_HANDLER(pc_COM2_r)  { return pc_COM_r(1, offset); }
+READ8_HANDLER(pc_COM3_r)  { return pc_COM_r(2, offset); }
+READ8_HANDLER(pc_COM4_r)  { return pc_COM_r(3, offset); }
+WRITE8_HANDLER(pc_COM1_w) { uart8250_w(0, offset, data); }
+WRITE8_HANDLER(pc_COM2_w) { uart8250_w(1, offset, data); }
+WRITE8_HANDLER(pc_COM3_w) { uart8250_w(2, offset, data); }
+WRITE8_HANDLER(pc_COM4_w) { uart8250_w(3, offset, data); }
 
-READ_HANDLER(pc_COM2_r)
-{
-	return pc_COM_r(1, offset);
-}
-
-READ_HANDLER(pc_COM3_r)
-{
-	return pc_COM_r(2, offset);
-}
-
-READ_HANDLER(pc_COM4_r)
-{
-	return pc_COM_r(3, offset);
-}
+READ32_HANDLER(pc32_COM1_r)  { return read32_with_read8_handler(pc_COM1_r, offset, mem_mask); }
+READ32_HANDLER(pc32_COM2_r)  { return read32_with_read8_handler(pc_COM2_r, offset, mem_mask); }
+READ32_HANDLER(pc32_COM3_r)  { return read32_with_read8_handler(pc_COM3_r, offset, mem_mask); }
+READ32_HANDLER(pc32_COM4_r)  { return read32_with_read8_handler(pc_COM4_r, offset, mem_mask); }
+WRITE32_HANDLER(pc32_COM1_w) { write32_with_write8_handler(pc_COM1_w, offset, data, mem_mask); }
+WRITE32_HANDLER(pc32_COM2_w) { write32_with_write8_handler(pc_COM2_w, offset, data, mem_mask); }
+WRITE32_HANDLER(pc32_COM3_w) { write32_with_write8_handler(pc_COM3_w, offset, data, mem_mask); }
+WRITE32_HANDLER(pc32_COM4_w) { write32_with_write8_handler(pc_COM4_w, offset, data, mem_mask); }
 
 
-WRITE_HANDLER(pc_COM1_w)
-{
-	uart8250_w(0, offset,data);
-}
-
-WRITE_HANDLER(pc_COM2_w)
-{
-	uart8250_w(1, offset,data);
-}
-
-WRITE_HANDLER(pc_COM3_w)
-{
-	uart8250_w(2, offset,data);
-}
-
-WRITE_HANDLER(pc_COM4_w)
-{
-	uart8250_w(3, offset,data);
-}
 
 /*
    keyboard seams to permanently sent data clocked by the mainboard

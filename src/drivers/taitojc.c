@@ -359,7 +359,6 @@ data32_t *jc_unknown_ram2;
 data32_t *jc_unknown_ram3;
 data32_t *jc_unknown_ram4;
 static int taitojc_ramgfx;
-data32_t *f3_shared_ram;
 data32_t *jc_weirdram;
 
 static struct GfxLayout jc_ram_layout =

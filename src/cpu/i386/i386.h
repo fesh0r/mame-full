@@ -181,7 +181,7 @@ int parity_table[256];
 
 #define SetSF(x)			(I.SF = (x))
 #define SetZF(x)			(I.ZF = (x))
-#define SetAF(x,y,z)		(I.AF = ((x) ^ ((y) ^ (z))) & 0x10)
+#define SetAF(x,y,z)		(I.AF = (((x) ^ ((y) ^ (z))) & 0x10) ? 1 : 0)
 #define SetPF(x)			(I.PF = parity_table[(x) & 0xFF])
 
 #define SetSZPF8(x)			{I.ZF = ((UINT8)(x)==0);  I.SF = ((x)&0x80) ? 1 : 0; I.PF = parity_table[x & 0xFF]; }
@@ -394,6 +394,7 @@ INLINE UINT8 SUB8(UINT8 dst, UINT8 src)
 	UINT16 res = (UINT16)dst - (UINT16)src;
 	SetCF8(res);
 	SetOF_Sub8(res,src,dst);
+	SetAF(res,src,dst);
 	SetSZPF8(res);
 	return (UINT8)res;
 }
@@ -402,6 +403,7 @@ INLINE UINT16 SUB16(UINT16 dst, UINT16 src)
 	UINT32 res = (UINT32)dst - (UINT32)src;
 	SetCF16(res);
 	SetOF_Sub16(res,src,dst);
+	SetAF(res,src,dst);
 	SetSZPF16(res);
 	return (UINT16)res;
 }
@@ -410,6 +412,7 @@ INLINE UINT32 SUB32(UINT32 dst, UINT32 src)
 	UINT64 res = (UINT64)dst - (UINT64)src;
 	SetCF32(res);
 	SetOF_Sub32(res,src,dst);
+	SetAF(res,src,dst);
 	SetSZPF32(res);
 	return (UINT32)res;
 }
@@ -471,6 +474,7 @@ INLINE UINT8 DEC8(UINT8 dst)
 {
 	UINT16 res = (UINT16)dst - 1;
 	SetOF_Sub8(res,1,dst);
+	SetAF(res,1,dst);
 	SetSZPF8(res);
 	return (UINT8)res;
 }
@@ -478,6 +482,7 @@ INLINE UINT16 DEC16(UINT16 dst)
 {
 	UINT32 res = (UINT32)dst - 1;
 	SetOF_Sub16(res,1,dst);
+	SetAF(res,1,dst);
 	SetSZPF16(res);
 	return (UINT16)res;
 }
@@ -485,6 +490,7 @@ INLINE UINT32 DEC32(UINT32 dst)
 {
 	UINT64 res = (UINT64)dst - 1;
 	SetOF_Sub32(res,1,dst);
+	SetAF(res,1,dst);
 	SetSZPF32(res);
 	return (UINT32)res;
 }

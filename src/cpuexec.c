@@ -819,6 +819,14 @@ static void cpu_timeslice(void)
 				profiler_mark(PROFILER_CPU1 + cpunum);
 				cycles_stolen = 0;
 				ran = cpunum_execute(cpunum, cycles_running);
+
+#ifdef MAME_DEBUG
+				if (ran < cycles_stolen)
+				{
+					osd_die("Negative CPU cycle count!");
+				}
+#endif /* MAME_DEBUG */
+
 				ran -= cycles_stolen;
 				profiler_mark(PROFILER_END);
 				

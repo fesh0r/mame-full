@@ -11,12 +11,12 @@ Todo:
    ---------------------------------
   00-03 | start address  
   04-07 | loop start
-  08-0b | end address
-  0c-0f | loop end
-  10-11 | freq 
+  08-0b | loop end
+  0c-0f | end address
+  10-11 | freq (looks like 16.16 fixed point where 0x10000 = 44100, 0x08000 = 22050, 0x04000 = 11025)
   12-13 | unknown (0)
   14-15 | 2x 8bit channel volumes
-  16    | flags ?
+  16    | flags.  bit 0 = loop, bits 1 + 2 = active (0x06 written to key on one-shot sounds, 0x07 for loops)
   17-1f | unknown
   ----------------------------------
   The last reg ($ff) is probably sound enable/mode
@@ -62,7 +62,6 @@ E51-00001-A
 #include "cpu/z80/z80.h" 
 #include "cpu/mips/r3000.h"
 
-
 WRITE_HANDLER (st0016_sprite_bank_w);
 WRITE_HANDLER (st0016_palette_bank_w);
 WRITE_HANDLER (st0016_character_bank_w);
@@ -83,7 +82,6 @@ extern int st0016_game;
 void st0016_save_init(void);
 static int mux_port;
 int st0016_rom_bank;
-
 static data32_t *rom_base;
 
 static ADDRESS_MAP_START( st0016_mem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -93,7 +91,7 @@ static ADDRESS_MAP_START( st0016_mem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xd000, 0xdfff) AM_READ(st0016_sprite2_ram_r) AM_WRITE(st0016_sprite2_ram_w)
 	AM_RANGE(0xe000, 0xe7ff) AM_RAM
 	AM_RANGE(0xe800, 0xe87f) AM_RAM /* common ram */
-	AM_RANGE(0xe900, 0xe9ff) AM_RAM /* sound regs 8 x $20 bytes, see notes */
+	AM_RANGE(0xe900, 0xe9ff) AM_RAM AM_WRITE(st0016_snd_w) AM_BASE(&st0016_sound_regs) /* sound regs 8 x $20 bytes, see notes */
 	AM_RANGE(0xea00, 0xebff) AM_READ(st0016_palette_ram_r) AM_WRITE(st0016_palette_ram_w)
 	AM_RANGE(0xec00, 0xec1f) AM_READ(st0016_character_ram_r) AM_WRITE(st0016_character_ram_w)
 	AM_RANGE(0xf000, 0xffff) AM_RAM /* work ram */
@@ -263,6 +261,11 @@ INTERRUPT_GEN(st0016_int)
 			cpu_set_nmi_line( 0, PULSE_LINE );
 }
 
+static struct ST0016interface st0016_interface =
+{
+	YM3012_VOL(100, MIXER_PAN_LEFT, 100, MIXER_PAN_RIGHT),
+};
+
 static MACHINE_DRIVER_START( st0016 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main",Z80,8000000) /* 8 MHz ? */
@@ -283,6 +286,9 @@ static MACHINE_DRIVER_START( st0016 )
 
 	MDRV_VIDEO_START(st0016)
 	MDRV_VIDEO_UPDATE(st0016)
+
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(ST0016, st0016_interface)
 MACHINE_DRIVER_END
 
 /*
@@ -572,7 +578,7 @@ ROM_START( nratechu )
 	ROM_LOAD( "sx012-01",   0x10000, 0x80000,   CRC(6ca01d57) SHA1(065848f19ecf2dc1f7bbc7ddd87bca502e4b8b16) )
 	ROM_LOAD( "sx012-02",   0x110000, 0x100000, CRC(40a4e354) SHA1(8120ce8deee6805050a5b083a334c3743c09566b) )
 	ROM_COPY( REGION_CPU1,  0x10000, 0x00000, 0x08000 )
-ROM_END
+ROM_END				   
 
 ROM_START( srmp5 )
 	ROM_REGION( 0x210000, REGION_CPU1, 0 )
@@ -689,11 +695,11 @@ static DRIVER_INIT(mayjinsn)
 }
 
 
-GAMEX( 1994, renju,     0,     	  st0016,   renju,     renju,    ROT0, "Visco", "Renju Kizoku", GAME_NO_SOUND)
-GAMEX( 1996, nratechu,  0,     	  st0016,   nratechu,  nratechu, ROT0, "Seta",  "Neratte Chu",GAME_NO_SOUND)
+GAME( 1994, renju,     0,     	  st0016,   renju,     renju,    ROT0, "Visco", "Renju Kizoku")
+GAME( 1996, nratechu,  0,     	  st0016,   nratechu,  nratechu, ROT0, "Seta",  "Neratte Chu")
 /* Not working */
-GAMEX( 199x, srmp5,  	0,     	  srmp5,    srmp5,     srmp5,    ROT0, "Seta",  "Super Real Mahjong P5",GAME_NOT_WORKING|GAME_NO_SOUND)
-GAMEX( 1994, speglsht,	0,     	  speglsht, speglsht,  speglsht, ROT0, "Seta",  "Super Eagle Shot (set 1)",GAME_NOT_WORKING|GAME_NO_SOUND)
-GAMEX( 1994, speglsha,	speglsht, speglsht, speglsht,  speglsht, ROT0, "Seta",  "Super Eagle Shot (set 2)",GAME_NOT_WORKING|GAME_NO_SOUND)
-GAMEX( 1994, mayjinsn,	0, 	  st0016,   mayjinsn,  mayjinsn, ROT0, "Seta",  "Mayjinsen",GAME_NOT_WORKING|GAME_NO_SOUND)
-GAMEX( 1994, mayjisn2,	0, 	  st0016,   mayjisn2,  mayjinsn, ROT0, "Seta",  "Mayjinsen 2",GAME_NOT_WORKING|GAME_NO_SOUND)
+GAMEX( 199x, srmp5,  	0,     	  srmp5,    srmp5,     srmp5,    ROT0, "Seta",  "Super Real Mahjong P5",GAME_NOT_WORKING)
+GAMEX( 1994, speglsht,	0,     	  speglsht, speglsht,  speglsht, ROT0, "Seta",  "Super Eagle Shot (set 1)",GAME_NOT_WORKING)
+GAMEX( 1994, speglsha,	speglsht, speglsht, speglsht,  speglsht, ROT0, "Seta",  "Super Eagle Shot (set 2)",GAME_NOT_WORKING)
+GAMEX( 1994, mayjinsn,	0, 	  st0016,   mayjinsn,  mayjinsn, ROT0, "Seta",  "Mayjinsen",GAME_NOT_WORKING)
+GAMEX( 1994, mayjisn2,	0, 	  st0016,   mayjisn2,  mayjinsn, ROT0, "Seta",  "Mayjinsen 2",GAME_NOT_WORKING)

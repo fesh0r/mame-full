@@ -29,12 +29,19 @@ void pc_lpt_set_device(int nr, CENTRONICS_DEVICE *device);
 /* only those lines in mask are modified */
 void pc_lpt_handshake_in(int nr, int data, int mask);
 
-WRITE_HANDLER ( pc_parallelport0_w );
-WRITE_HANDLER ( pc_parallelport1_w );
-WRITE_HANDLER ( pc_parallelport2_w );
-READ_HANDLER ( pc_parallelport0_r );
-READ_HANDLER ( pc_parallelport1_r );
-READ_HANDLER ( pc_parallelport2_r );
+READ8_HANDLER ( pc_parallelport0_r );
+READ8_HANDLER ( pc_parallelport1_r );
+READ8_HANDLER ( pc_parallelport2_r );
+WRITE8_HANDLER( pc_parallelport0_w );
+WRITE8_HANDLER( pc_parallelport1_w );
+WRITE8_HANDLER( pc_parallelport2_w );
+
+READ32_HANDLER ( pc32_parallelport0_r );
+READ32_HANDLER ( pc32_parallelport1_r );
+READ32_HANDLER ( pc32_parallelport2_r );
+WRITE32_HANDLER( pc32_parallelport0_w );
+WRITE32_HANDLER( pc32_parallelport1_w );
+WRITE32_HANDLER( pc32_parallelport2_w );
 
 #ifdef __cplusplus
 }

@@ -165,6 +165,7 @@ SOUNDS+=YMF271@
 SOUNDS+=PSXSPU@
 SOUNDS+=CDDA@
 SOUNDS+=ICS2115@
+SOUNDS+=ST0016@
 
 DRVLIBS = \
 	$(OBJ)/pacman.a $(OBJ)/epos.a $(OBJ)/nichibut.a \
@@ -820,7 +821,7 @@ $(OBJ)/seibu.a: \
 	$(OBJ)/vidhrdw/sengokmj.o $(OBJ)/drivers/sengokmj.o \
 	$(OBJ)/vidhrdw/mustache.o $(OBJ)/drivers/mustache.o \
 	$(OBJ)/vidhrdw/seibuspi.o $(OBJ)/machine/seibuspi.o $(OBJ)/drivers/seibuspi.o \
-	$(OBJ)/machine/spisprit.o \
+	$(OBJ)/machine/ds2404.o $(OBJ)/machine/spisprit.o \
 	$(OBJ)/machine/spistab1.o $(OBJ)/machine/spistab2.o $(OBJ)/machine/spistab3.o \
 
 $(OBJ)/tad.a: \

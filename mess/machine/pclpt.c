@@ -150,10 +150,16 @@ void pc_lpt_handshake_in(int nr, int data, int mask)
 	This->status=neu;
 }
 
-WRITE_HANDLER ( pc_parallelport0_w ) { pc_LPT_w(0,offset,data); }
-WRITE_HANDLER ( pc_parallelport1_w ) { pc_LPT_w(1,offset,data); }
-WRITE_HANDLER ( pc_parallelport2_w ) { pc_LPT_w(2,offset,data); }
+READ8_HANDLER ( pc_parallelport0_r) { return pc_LPT_r(0, offset); }
+READ8_HANDLER ( pc_parallelport1_r) { return pc_LPT_r(1, offset); }
+READ8_HANDLER ( pc_parallelport2_r) { return pc_LPT_r(2, offset); }
+WRITE8_HANDLER ( pc_parallelport0_w ) { pc_LPT_w(0,offset,data); }
+WRITE8_HANDLER ( pc_parallelport1_w ) { pc_LPT_w(1,offset,data); }
+WRITE8_HANDLER ( pc_parallelport2_w ) { pc_LPT_w(2,offset,data); }
 
-READ_HANDLER ( pc_parallelport0_r) { return pc_LPT_r(0, offset); }
-READ_HANDLER ( pc_parallelport1_r) { return pc_LPT_r(1, offset); }
-READ_HANDLER ( pc_parallelport2_r) { return pc_LPT_r(2, offset); }
+READ32_HANDLER ( pc32_parallelport0_r ) { return read32_with_read8_handler(pc_parallelport0_r, offset, mem_mask); }
+READ32_HANDLER ( pc32_parallelport1_r ) { return read32_with_read8_handler(pc_parallelport1_r, offset, mem_mask); }
+READ32_HANDLER ( pc32_parallelport2_r ) { return read32_with_read8_handler(pc_parallelport2_r, offset, mem_mask); }
+WRITE32_HANDLER( pc32_parallelport0_w ) { write32_with_write8_handler(pc_parallelport0_w, offset, data, mem_mask); }
+WRITE32_HANDLER( pc32_parallelport1_w ) { write32_with_write8_handler(pc_parallelport1_w, offset, data, mem_mask); }
+WRITE32_HANDLER( pc32_parallelport2_w ) { write32_with_write8_handler(pc_parallelport2_w, offset, data, mem_mask); }

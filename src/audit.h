@@ -3,11 +3,11 @@
 #define AUDIT_H
 
 /* return values from VerifyRomSet and VerifySampleSet */
-#define CORRECT   			0
-#define NOTFOUND  			1
-#define INCORRECT 			2
-#define CLONE_NOTFOUND		3
-#define BEST_AVAILABLE		4
+#define CORRECT   		0
+#define NOTFOUND  		1
+#define INCORRECT 		2
+#define CLONE_NOTFOUND	3
+#define BEST_AVAILABLE	4
 #define MISSING_OPTIONAL	5
 
 /* rom status values for tAuditRecord.status */
@@ -23,6 +23,8 @@
 #define AUD_DISK_NOT_FOUND			0x00000200
 #define AUD_DISK_BAD_MD5			0x00000400
 #define AUD_OPTIONAL_ROM_NOT_FOUND	0x00000800
+#define AUD_DISK_NOT_AVAILABLE		0x00001000
+#define AUD_DISK_NEED_DUMP			0x00002000
 
 #define AUD_MAX_ROMS		100	/* maximum roms per driver */
 #define AUD_MAX_SAMPLES		200	/* maximum samples per driver */

@@ -279,7 +279,6 @@ READ8_HANDLER(at_8042_8_r)
 			at_8042.keyboard.received=0; //at386 self test dont likes this
 			at_8042.mouse.received=0;
 		}
-		DBG_LOG(1,"AT 8042 read",("%.2x %02x\n",offset, data) );
 		break;
 	case 1:
 		data=at_8042.speaker;
@@ -309,10 +308,14 @@ READ8_HANDLER(at_8042_8_r)
 		else data&=~0x20;
 		break;
 	case 4:
-		if (!at_8042.keyboard.received && !at_8042.mouse.received) {
+		if (!at_8042.keyboard.received && !at_8042.mouse.received)
+		{
 			int temp;
-			if ( (temp=at_keyboard_read())!=-1) at_8042_receive(temp);
+			temp = at_keyboard_read();
+			if (temp != -1)
+				at_8042_receive(temp);
 		}
+
 		if (at_8042.keyboard.received
 			||at_8042.mouse.received) data|=1;
 		if (at_8042.sending) data|=2;
@@ -331,7 +334,6 @@ READ8_HANDLER(at_8042_8_r)
 			data|=at_8042.inport<<4;
 			break;
 		}
-		//DBG_LOG(1,"AT 8042 read",("%.2x %02x\n",offset, data) );
 		break;
 	}
 //	logerror("at_8042 read %.2x %.2x\n",offset,data);
@@ -344,10 +346,8 @@ WRITE_HANDLER(at_8042_8_w)
 {
 	data8_t change;
 
-	logerror("at_8042 write %.2x %.2x\n",offset,data);
 	switch (offset) {
 	case 0:
-		DBG_LOG(1,"AT 8042 write",("%.2x %02x\n",offset, data) );
 		at_8042.last_write_to_control=0;
 		at_8042.status_read_mode=0;
 		switch (at_8042.operation_write_state) {
@@ -390,7 +390,6 @@ WRITE_HANDLER(at_8042_8_w)
 		break;
 
 	case 4:
-		DBG_LOG(1,"AT 8042 write",("%.2x %02x\n",offset, data) );
 		at_8042.last_write_to_control=0;
 		switch(data) {
 		case 0xa7: at_8042.mouse.on=false;break;
@@ -458,22 +457,12 @@ WRITE_HANDLER(at_8042_8_w)
 
 READ32_HANDLER(at_8042_32_r)
 {
-	return (((data32_t) at_8042_8_r(offset * 4 + 0)) << 0)
-		|  (((data32_t) at_8042_8_r(offset * 4 + 1)) << 8)
-		|  (((data32_t) at_8042_8_r(offset * 4 + 2)) << 16)
-		|  (((data32_t) at_8042_8_r(offset * 4 + 3)) << 24);
+	return read32_with_read8_handler(at_8042_8_r, offset, mem_mask);
 }
 
 
 
 WRITE32_HANDLER( at_8042_32_w )
 {
-	if ((mem_mask & 0x000000FF) == 0)
-		at_8042_8_w(offset * 4 + 0, data >> 0);
-	if ((mem_mask & 0x0000FF00) == 0)
-		at_8042_8_w(offset * 4 + 1, data >> 8);
-	if ((mem_mask & 0x00FF0000) == 0)
-		at_8042_8_w(offset * 4 + 2, data >> 16);
-	if ((mem_mask & 0xFF000000) == 0)
-		at_8042_8_w(offset * 4 + 3, data >> 24);
+	write32_with_write8_handler(at_8042_8_w, offset, data, mem_mask);
 }

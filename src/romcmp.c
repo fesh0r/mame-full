@@ -10,7 +10,7 @@
 #else
 #ifndef _WIN32
 #   include <dirent.h>
-#   ifdef __sgi
+#   if defined __sgi || (defined __SVR4 && defined __sun)
 #      include <errno.h>
 #   else
 #      include <sys/errno.h>

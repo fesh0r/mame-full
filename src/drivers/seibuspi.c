@@ -26,13 +26,10 @@
 
 	  Bugs:
 
-	  Raiden Fighters : First boss doesn't correctly appear, it will fly onto the screen
-	                    then leave the screen, pass the screen once at a high speed
-	                    then flicker in for the odd frame before the level ends.
-	                    Strange Pauses
-	  Senkyu / BBalls : All shapes are treated as the same colour, you can't win and
-	                    can't lose
-	                    Crashes sometimes on Coin
+	  Raiden Fighters : Game pauses for a brief second when bosses are encountered
+	  Senkyu / BBalls : ---
+	  Viper Phase 1   : ---
+	  E-Jan HS        : ---
 
 */
 
@@ -59,6 +56,7 @@ WRITE32_HANDLER( spi_layer_enable_w );
 
 extern UINT32 *back_ram, *mid_ram, *fore_ram, *scroll_ram;
 extern int bg_2layer;
+static data32_t *spimainram;
 
 /********************************************************************/
 static int z80_fifo_pos = 0;
@@ -275,7 +273,7 @@ static ADDRESS_MAP_START( spi_writemem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x000006d0, 0x000006d3) AM_WRITE(ds2404_reset_w)
 	AM_RANGE(0x000006d4, 0x000006d7) AM_WRITE(ds2404_data_w)
 	AM_RANGE(0x000006d8, 0x000006db) AM_WRITE(ds2404_clk_w)
-	AM_RANGE(0x00000800, 0x00036fff) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0x00000800, 0x00036fff) AM_WRITE(MWA32_RAM) AM_BASE(&spimainram)
 	AM_RANGE(0x00037000, 0x00037fff) AM_WRITE(MWA32_RAM) AM_BASE(&spriteram32) AM_SIZE(&spriteram_size)	/* Sprites */
 	AM_RANGE(0x00038000, 0x000387ff) AM_WRITE(spi_back_layer_w) AM_BASE(&back_ram)	/* Background layer */
 	AM_RANGE(0x00038800, 0x00038fff) AM_WRITE(MWA32_RAM)
@@ -471,28 +469,28 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( spi_ejanhs )
 	PORT_START
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
-	PORT_BIT( 0x03, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER1 )
-	PORT_BIT( 0x18, IP_ACTIVE_LOW, IPT_BUTTON6 | IPF_PLAYER1 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON8 | IPF_PLAYER1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON9 | IPF_PLAYER1 )
-	PORT_BIT( 0x05, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
-	PORT_BIT( 0x28, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
-	PORT_BIT( 0x06, IP_ACTIVE_LOW, IPT_BUTTON7 | IPF_PLAYER2 )
-	PORT_BIT( 0x30, IP_ACTIVE_LOW, IPT_BUTTON8 | IPF_PLAYER2 )
+	PORT_BITX( 0x02, IP_ACTIVE_LOW, 0, "P1 A",     KEYCODE_A,        IP_JOY_NONE )
+	PORT_BITX( 0x10, IP_ACTIVE_LOW, 0, "P1 B",     KEYCODE_B,        IP_JOY_NONE )
+	PORT_BITX( 0x03, IP_ACTIVE_LOW, 0, "P1 E",     KEYCODE_E,        IP_JOY_NONE )
+	PORT_BITX( 0x18, IP_ACTIVE_LOW, 0, "P1 F",     KEYCODE_F,        IP_JOY_NONE )
+	PORT_BITX( 0x04, IP_ACTIVE_LOW, 0, "P1 I",     KEYCODE_I,        IP_JOY_NONE )
+	PORT_BITX( 0x20, IP_ACTIVE_LOW, 0, "P1 J",     KEYCODE_J,        IP_JOY_NONE )
+	PORT_BITX( 0x05, IP_ACTIVE_LOW, 0, "P1 M",     KEYCODE_M,        IP_JOY_NONE )
+	PORT_BITX( 0x28, IP_ACTIVE_LOW, 0, "P1 N",     KEYCODE_N,        IP_JOY_NONE )
+	PORT_BITX( 0x06, IP_ACTIVE_LOW, 0, "P1 Kan",   KEYCODE_LCONTROL, IP_JOY_NONE )
+	PORT_BITX( 0x30, IP_ACTIVE_LOW, 0, "P1 Reach", KEYCODE_LSHIFT,   IP_JOY_NONE )
 	PORT_BIT( 0x07, IP_ACTIVE_LOW, IPT_START1 | IPF_PLAYER1 )
 
 	PORT_START
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )
-	PORT_BIT( 0x03, IP_ACTIVE_LOW, IPT_BUTTON6 | IPF_PLAYER1 )
-	PORT_BIT( 0x18, IP_ACTIVE_LOW, IPT_BUTTON7 | IPF_PLAYER1 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x05, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER2 )
-	PORT_BIT( 0x28, IP_ACTIVE_LOW, IPT_BUTTON6 | IPF_PLAYER2 )
-	PORT_BIT( 0x06, IP_ACTIVE_LOW, IPT_BUTTON9 | IPF_PLAYER2 )
+	PORT_BITX( 0x02, IP_ACTIVE_LOW, 0, "P1 C",     KEYCODE_C,        IP_JOY_NONE )
+	PORT_BITX( 0x10, IP_ACTIVE_LOW, 0, "P1 D",     KEYCODE_D,        IP_JOY_NONE )
+	PORT_BITX( 0x03, IP_ACTIVE_LOW, 0, "P1 G",     KEYCODE_G,        IP_JOY_NONE )
+	PORT_BITX( 0x18, IP_ACTIVE_LOW, 0, "P1 H",     KEYCODE_H,        IP_JOY_NONE )
+	PORT_BITX( 0x04, IP_ACTIVE_LOW, 0, "P1 K",     KEYCODE_K,        IP_JOY_NONE )
+	PORT_BITX( 0x20, IP_ACTIVE_LOW, 0, "P1 L",     KEYCODE_L,        IP_JOY_NONE )
+	PORT_BITX( 0x05, IP_ACTIVE_LOW, 0, "P1 Chi",   KEYCODE_SPACE,    IP_JOY_NONE )
+	PORT_BITX( 0x28, IP_ACTIVE_LOW, 0, "P1 Pon",   KEYCODE_LALT,     IP_JOY_NONE )
+	PORT_BITX( 0x06, IP_ACTIVE_LOW, 0, "P1 Ron",   KEYCODE_Z,        IP_JOY_NONE )
 
 	PORT_START
 	PORT_BITX( 0x04, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE ) /* Test Button */
@@ -690,7 +688,7 @@ static INTERRUPT_GEN( spi_interrupt )
 
 static MACHINE_INIT( spi )
 {
-	UINT8* rom = memory_region(REGION_USER1);
+//	UINT8* rom = memory_region(REGION_USER1);
 
 	cpunum_set_reset_line( 1, ASSERT_LINE );
 
@@ -704,7 +702,7 @@ static MACHINE_INIT( spi )
 	cpu_setbank(4, memory_region(REGION_CPU2));
 
 	// Set region code to 0x10 (USA)
-	rom[0x1ffffc] = 0x10;
+//	rom[0x1ffffc] = 0x10;
 }
 
 static MACHINE_DRIVER_START( spi )
@@ -896,6 +894,34 @@ ROM_START(batlball)
 	ROM_REGION(0x40000, REGION_CPU1, 0)
 	ROM_REGION(0x200000, REGION_USER1, 0)	/* i386 program */
 	ROM_LOAD32_BYTE("1.211", 0x100000, 0x40000, CRC(d4e48f89) SHA1(10e43a9ff3f6f169de6352280a8a06e7f482271a) )
+	ROM_LOAD32_BYTE("2.212", 0x100001, 0x40000, CRC(3077720b) SHA1(b65c3d02ac75eb56e0c5dc1bf6bb6a4e445a41cf) )
+	ROM_LOAD32_BYTE("3.210", 0x100002, 0x40000, CRC(520d31e1) SHA1(998ae968113ab5b2891044187d93793903c13452) )
+	ROM_LOAD32_BYTE("4.029", 0x100003, 0x40000, CRC(22419b78) SHA1(67475a654d4ad94e5dfda88cbe2f9c1b5ba6d2cc) )
+
+	ROM_REGION( 0x30000, REGION_GFX1, 0)
+	ROM_LOAD24_WORD("fb_6.413", 0x000000, 0x20000, CRC(b57115c9) SHA1(eb95f416f522032ca949bfb6348f1ff824101f2d) )
+	ROM_LOAD24_BYTE("fb_5.48",	0x000002, 0x10000, CRC(440a9ae3) SHA1(3f57e6da91f0dac2d816c873759f1e1d3259caf1) )
+
+	ROM_REGION( 0x600000, REGION_GFX2, 0)	/* background layer roms */
+	ROM_LOAD24_WORD("fb_bg-1d.415", 0x000000, 0x200000, CRC(eae7a1fc) SHA1(26d8a9f4e554848977ec1f6a8aad8751b558a8d4) )
+	ROM_LOAD24_BYTE("fb_bg-1p.410", 0x000002, 0x100000, CRC(b46e774e) SHA1(00b6c1d0b0ea37f4354acab543b270c0bf45896d) )
+
+	ROM_REGION( 0xc00000, REGION_GFX3, 0)	/* sprites */
+	ROM_LOAD("fb_obj-1.322", 0x000000, 0x400000, CRC(29f86f68) SHA1(1afe809ce00a25f8b27543e4188edc3e3e604951) )
+	ROM_LOAD("fb_obj-2.324", 0x400000, 0x400000, CRC(c9e3130b) SHA1(12b5d5363142e8efb3b7fc44289c0afffa5011c6) )
+	ROM_LOAD("fb_obj-3.323", 0x800000, 0x400000, CRC(f6c3bc49) SHA1(d0eb9c6aa3954d94e3a442a48e0fe6cc279f5513) )
+
+	ROM_REGION(0x40000, REGION_CPU2, 0)		/* 256k for the Z80 */
+
+	ROM_REGION(0x280000, REGION_SOUND1, 0) /* samples?*/
+	ROM_LOAD("fb_pcm-1.215",  0x000000, 0x100000, CRC(1d83891c) SHA1(09502437562275c14c0f3a0e62b19e91bedb4693) )
+	ROM_LOAD("fb_7.216",      0x100000, 0x080000, CRC(874d7b59) SHA1(0236753636c9a818780b23f5f506697b9f6d93c7) )
+ROM_END
+
+ROM_START(batlbala)
+	ROM_REGION(0x40000, REGION_CPU1, 0)
+	ROM_REGION(0x200000, REGION_USER1, 0)	/* i386 program */
+	ROM_LOAD32_BYTE("senkyua1.bin", 0x100000, 0x40000, CRC(ec3c4d4d) SHA1(6c57b8fbb77ce1615850842d06c054e88e240eef) )
 	ROM_LOAD32_BYTE("2.212", 0x100001, 0x40000, CRC(3077720b) SHA1(b65c3d02ac75eb56e0c5dc1bf6bb6a4e445a41cf) )
 	ROM_LOAD32_BYTE("3.210", 0x100002, 0x40000, CRC(520d31e1) SHA1(998ae968113ab5b2891044187d93793903c13452) )
 	ROM_LOAD32_BYTE("4.029", 0x100003, 0x40000, CRC(22419b78) SHA1(67475a654d4ad94e5dfda88cbe2f9c1b5ba6d2cc) )
@@ -1159,8 +1185,9 @@ ROM_END
 /*******************************************************************/
 
 /* SPI */
-GAMEX( 1995, senkyu,    0,	     spi, spi_3button, senkyu,		ROT0,	"Seibu Kaihatsu",	"Senkyu", GAME_NOT_WORKING )
-GAMEX( 1995, batlball,	senkyu,	 spi, spi_3button, batlball,	ROT0,	"Seibu Kaihatsu",	"Battle Balls", GAME_NOT_WORKING )
+GAMEX( 1995, senkyu,    0,	     spi, spi_3button, senkyu,		ROT0,	"Seibu Kaihatsu",	"Senkyu (Japan)", GAME_NOT_WORKING )
+GAMEX( 1995, batlball,	senkyu,	 spi, spi_3button, batlball,	ROT0,	"Seibu Kaihatsu",	"Battle Balls (Germany, Tuning License)", GAME_NOT_WORKING )
+GAMEX( 1995, batlbala,	senkyu,	 spi, spi_3button, batlball,	ROT0,	"Seibu Kaihatsu",	"Battle Balls (Asia, Metrotainment License)", GAME_NOT_WORKING )
 GAMEX( 1995, viperp1,	0,	     spi, spi_3button, viperp1,		ROT270,	"Seibu Kaihatsu",	"Viper Phase 1 (New Version)", GAME_NOT_WORKING )
 GAMEX( 1995, viperp1o,  viperp1, spi, spi_3button, viperp1o,	ROT270,	"Seibu Kaihatsu",	"Viper Phase 1", GAME_NOT_WORKING )
 GAMEX( 1996, ejanhs, 	0,	     spi, spi_ejanhs, ejanhs,		ROT0,	"Seibu Kaihatsu",	"E-Jan High School (JPN)", GAME_NOT_WORKING )

@@ -75,6 +75,11 @@ int filemanager(struct mame_bitmap *bitmap, int selected);
 
 UINT32 hash_data_extract_crc32(const char *d);
 
+data32_t read32_with_read8_handler(read8_handler handler, offs_t offset, data32_t mem_mask);
+void write32_with_write8_handler(write8_handler handler, offs_t offset, data32_t data, data32_t mem_mask);
+
+
+
 #if HAS_WAVE
 int tapecontrol(struct mame_bitmap *bitmap, int selected);
 void tapecontrol_gettime(char *timepos, size_t timepos_size, mess_image *img, int *curpos, int *endpos);

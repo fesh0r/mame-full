@@ -392,6 +392,35 @@ UINT32 hash_data_extract_crc32(const char *d)
 }
 
 
+data32_t read32_with_read8_handler(read8_handler handler, offs_t offset, data32_t mem_mask)
+{
+	data32_t result = 0;
+	if ((mem_mask & 0x000000FF) == 0)
+		result |= ((data32_t) handler(offset * 4 + 0)) << 0;
+	if ((mem_mask & 0x0000FF00) == 0)
+		result |= ((data32_t) handler(offset * 4 + 1)) << 8;
+	if ((mem_mask & 0x00FF0000) == 0)
+		result |= ((data32_t) handler(offset * 4 + 2)) << 16;
+	if ((mem_mask & 0xFF000000) == 0)
+		result |= ((data32_t) handler(offset * 4 + 3)) << 24;
+	return result;
+}
+
+
+
+void write32_with_write8_handler(write8_handler handler, offs_t offset, data32_t data, data32_t mem_mask)
+{
+	if ((mem_mask & 0x000000FF) == 0)
+		handler(offset * 4 + 0, data >> 0);
+	if ((mem_mask & 0x0000FF00) == 0)
+		handler(offset * 4 + 1, data >> 8);
+	if ((mem_mask & 0x00FF0000) == 0)
+		handler(offset * 4 + 2, data >> 16);
+	if ((mem_mask & 0xFF000000) == 0)
+		handler(offset * 4 + 3, data >> 24);
+}
+
+
 
 /***************************************************************************
 

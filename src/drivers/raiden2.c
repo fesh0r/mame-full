@@ -392,18 +392,25 @@ INPUT_PORTS_START( raiden2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* Dip switch A - correct OB 031500 */
-	/*
-	PORT_DIPNAME( 0x07, 0x00, DEF_STR( Coin_A ))
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ))
-	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ))
+	PORT_START	/* Dip switch A  */
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_A ))
+	PORT_DIPSETTING(    0x01, DEF_STR( 4C_1C ))
 	PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ))
-	PORT_DIPSETTING(    0x03, DEF_STR( 1C_2C ))
-	PORT_DIPSETTING(    0x04, DEF_STR( 4C_1C ))
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ))
+	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ))
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ))
 	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ))
-	PORT_DIPSETTING(    0x06, DEF_STR( 1C_4C ))
-	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
-	*/
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_4C ))
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Coin_B ))
+	PORT_DIPSETTING(    0x08, DEF_STR( 4C_1C ))
+	PORT_DIPSETTING(    0x10, DEF_STR( 3C_1C ))
+	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ))
+	PORT_DIPSETTING(    0x38, DEF_STR( 1C_1C ))
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_2C ))
+	PORT_DIPSETTING(    0x28, DEF_STR( 1C_3C ))
+	PORT_DIPSETTING(    0x18, DEF_STR( 1C_4C ))
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
 	PORT_DIPNAME( 0x40, 0x40, "Starting Coin" )
 	PORT_DIPSETTING(    0x40, "normal" )
 	PORT_DIPSETTING(    0x00, "X 2" )
@@ -411,21 +418,26 @@ INPUT_PORTS_START( raiden2 )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START	/* Dip switch B - correct OB 031500 */
-	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty ))
+	PORT_START	/* Dip switch B */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ))
 	PORT_DIPSETTING(    0x03, "Normal" )
-	PORT_DIPSETTING(    0x01, "Easy" )
-	PORT_DIPSETTING(    0x02, "Hard" )
+	PORT_DIPSETTING(    0x02, "Easy" )
+	PORT_DIPSETTING(    0x01, "Hard" )
 	PORT_DIPSETTING(    0x00, "Very Hard" )
-	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Lives ))
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ))
 	PORT_DIPSETTING(    0x00, "1" )
 	PORT_DIPSETTING(    0x04, "4" )
 	PORT_DIPSETTING(    0x08, "2" )
 	PORT_DIPSETTING(    0x0c, "3" )
-	PORT_DIPNAME( 0x40, 0x00, "Demo Sound" )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, "Test Mode" )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Bonus_Life ))
+	PORT_DIPSETTING(    0x30, "200000 500000" )
+	PORT_DIPSETTING(    0x20, "400000 1000000" )
+	PORT_DIPSETTING(    0x10, "1000000 3000000" )
+	PORT_DIPSETTING(    0x00, "No Extend" )
+	PORT_DIPNAME( 0x40, 0x40, "Demo Sound" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Test Mode" )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -433,6 +445,137 @@ INPUT_PORTS_START( raiden2 )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
 INPUT_PORTS_END
+
+INPUT_PORTS_START( raidendx )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* Dip switch A  */
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_A ))
+	PORT_DIPSETTING(    0x01, DEF_STR( 4C_1C ))
+	PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ))
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ))
+	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ))
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ))
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ))
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_4C ))
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Coin_B ))
+	PORT_DIPSETTING(    0x08, DEF_STR( 4C_1C ))
+	PORT_DIPSETTING(    0x10, DEF_STR( 3C_1C ))
+	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ))
+	PORT_DIPSETTING(    0x38, DEF_STR( 1C_1C ))
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_2C ))
+	PORT_DIPSETTING(    0x28, DEF_STR( 1C_3C ))
+	PORT_DIPSETTING(    0x18, DEF_STR( 1C_4C ))
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x40, 0x40, "Starting Coin" )
+	PORT_DIPSETTING(    0x40, "normal" )
+	PORT_DIPSETTING(    0x00, "X 2" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	/* Dip switch B  */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ))
+	PORT_DIPSETTING(    0x03, "Normal" )
+	PORT_DIPSETTING(    0x02, "Easy" )
+	PORT_DIPSETTING(    0x01, "Hard" )
+	PORT_DIPSETTING(    0x00, "Very Hard" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ))
+	PORT_DIPSETTING(    0x00, "1" )
+	PORT_DIPSETTING(    0x04, "4" )
+	PORT_DIPSETTING(    0x08, "2" )
+	PORT_DIPSETTING(    0x0c, "3" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) ) /* Manual shows "Not Used" */
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) ) /* Manual shows "Not Used" */
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "Demo Sound" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Test Mode" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	/* START BUTTONS */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( raiden2n ) /* For "Newer" (V33) versions of Raiden 2 & Raiden DX */
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* Dip switch A  */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) ) /* Manual shows "Not Used" */
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) ) /* Manual shows "Not Used" */
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) ) /* Manual shows "Not Used" */
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) ) /* Manual shows "Not Used" */
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) ) /* Manual shows "Not Used" */
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) ) /* Manual shows "Not Used" */
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "Test Mode" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+/* No Dip switch B - Manual Doesn't list a SW2 */
+
+	PORT_START	/* START BUTTONS */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+INPUT_PORTS_END
+
 
 /* GFX DECODING */
 
@@ -1477,15 +1620,15 @@ static DRIVER_INIT (r2nocpu)
 
 /* GAME DRIVERS */
 
-GAMEX( 1993, raiden2,  0,       raiden2,  raiden2, raiden2,  ROT270, "Seibu Kaihatsu", "Raiden 2 (set 1, US Fabtek)", GAME_NOT_WORKING|GAME_NO_SOUND)
-GAMEX( 1993, raiden2a, raiden2, raiden2,  raiden2, raiden2,  ROT270, "Seibu Kaihatsu", "Raiden 2 (set 2, Metrotainment)", GAME_NOT_WORKING|GAME_NO_SOUND)
-GAMEX( 1993, raiden2b, raiden2, raiden2,  raiden2, raiden2,  ROT270, "Seibu Kaihatsu", "Raiden 2 (set 3, Japan)", GAME_NOT_WORKING|GAME_NO_SOUND)
-GAMEX( 1993, raiden2c, raiden2, raiden2,  raiden2, raiden2,  ROT270, "Seibu Kaihatsu", "Raiden 2 (set 4, Japan)", GAME_NOT_WORKING|GAME_NO_SOUND)
-GAMEX( 1993, raiden2e, raiden2, raiden2,  raiden2, raiden2,  ROT270, "Seibu Kaihatsu", "Raiden 2 (easier?)", GAME_NOT_WORKING|GAME_NO_SOUND)
-GAMEX( 1993, raidndx,  0,       raiden2,  raiden2, raiden2,  ROT270, "Seibu Kaihatsu", "Raiden DX (set 1)", GAME_NOT_WORKING|GAME_NO_SOUND)
-GAMEX( 1993, raidndxa, raidndx, raiden2,  raiden2, raiden2,  ROT270, "Seibu Kaihatsu", "Raiden DX (set 2)", GAME_NOT_WORKING|GAME_NO_SOUND)
-GAMEX( 1993, raidndxb, raidndx, raiden2,  raiden2, r2nocpu,  ROT270, "Seibu Kaihatsu", "Raiden DX (set 3, Newer V33 PCB)", GAME_NOT_WORKING|GAME_NO_SOUND)
-GAMEX( 1993, raidndxj, raidndx, raiden2,  raiden2, raiden2,  ROT270, "Seibu Kaihatsu", "Raiden DX (Japan)", GAME_NOT_WORKING|GAME_NO_SOUND)
-GAMEX( 1993, zeroteam, 0,       raiden2,  raiden2, raiden2,  ROT0,   "Seibu Kaihatsu", "Zero Team", GAME_NOT_WORKING|GAME_NO_SOUND)
-GAMEX( 1993, nzerotea, zeroteam,raiden2,  raiden2, raiden2,  ROT0,   "Seibu Kaihatsu", "New Zero Team", GAME_NOT_WORKING|GAME_NO_SOUND)
+GAMEX( 1993, raiden2,  0,       raiden2,  raiden2,  raiden2,  ROT270, "Seibu Kaihatsu", "Raiden 2 (set 1, US Fabtek)", GAME_NOT_WORKING|GAME_NO_SOUND)
+GAMEX( 1993, raiden2a, raiden2, raiden2,  raiden2,  raiden2,  ROT270, "Seibu Kaihatsu", "Raiden 2 (set 2, Metrotainment)", GAME_NOT_WORKING|GAME_NO_SOUND)
+GAMEX( 1993, raiden2b, raiden2, raiden2,  raiden2,  raiden2,  ROT270, "Seibu Kaihatsu", "Raiden 2 (set 3, Japan)", GAME_NOT_WORKING|GAME_NO_SOUND)
+GAMEX( 1993, raiden2c, raiden2, raiden2,  raiden2,  raiden2,  ROT270, "Seibu Kaihatsu", "Raiden 2 (set 4, Japan)", GAME_NOT_WORKING|GAME_NO_SOUND)
+GAMEX( 1993, raiden2e, raiden2, raiden2,  raiden2,  raiden2,  ROT270, "Seibu Kaihatsu", "Raiden 2 (easier?)", GAME_NOT_WORKING|GAME_NO_SOUND)
+GAMEX( 1993, raidndx,  0,       raiden2,  raidendx, raiden2,  ROT270, "Seibu Kaihatsu", "Raiden DX (set 1)", GAME_NOT_WORKING|GAME_NO_SOUND)
+GAMEX( 1993, raidndxa, raidndx, raiden2,  raidendx, raiden2,  ROT270, "Seibu Kaihatsu", "Raiden DX (set 2)", GAME_NOT_WORKING|GAME_NO_SOUND)
+GAMEX( 1993, raidndxb, raidndx, raiden2,  raiden2n, r2nocpu,  ROT270, "Seibu Kaihatsu", "Raiden DX (set 3, Newer V33 PCB)", GAME_NOT_WORKING|GAME_NO_SOUND)
+GAMEX( 1993, raidndxj, raidndx, raiden2,  raidendx, raiden2,  ROT270, "Seibu Kaihatsu", "Raiden DX (Japan)", GAME_NOT_WORKING|GAME_NO_SOUND)
+GAMEX( 1993, zeroteam, 0,       raiden2,  raiden2,  raiden2,  ROT0,   "Seibu Kaihatsu", "Zero Team", GAME_NOT_WORKING|GAME_NO_SOUND)
+GAMEX( 1993, nzerotea, zeroteam,raiden2,  raiden2,  raiden2,  ROT0,   "Seibu Kaihatsu", "New Zero Team", GAME_NOT_WORKING|GAME_NO_SOUND)
 

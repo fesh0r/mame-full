@@ -28,14 +28,14 @@ STA-0001	STS-0001	93	Super Real Mahjong PIV					Seta
 STA-0001	STS-0001	93	Dramatic Adventure Quiz Keith & Lucy	Visco
 STA-0001	SAM-5127	93	Survival Arts							Sammy
 STA-0001B	VISCO-001B	94	Drift Out '94							Visco
-STA-0001B	GOLF ROM	94	Eagle Shot Golf (1)						Sammy
-STA-0001B	?			94	Twin Eagle II - The Rescue Mission (2)	Seta
+STA-0001B	GOLF ROM	94	Eagle Shot Golf							Sammy
+STA-0001B	?			94	Twin Eagle II - The Rescue Mission		Seta
 STA-0001B	P1-102A		95	Mahjong Hyper Reaction					Sammy
 ?			?			95	Ultra X Weapons / Ultra Keibitai 	Banpresto + Tsuburaya Prod.
 STA-0001B	VISCO-JJ1	96	Lovely Pop Mahjong Jan Jan Shimasyo		Visco
 STA-0001B	VISCO-001B	96	Storm Blade								Visco
 STA-0001B	P1-105A		96?	Meosis Magic							Sammy
-STA-0001B	?			97	Joryuu Syougi Kyoushitsu (3)			Visco
+STA-0001B	?			97	Joryuu Syougi Kyoushitsu (1)			Visco
 STA-0001B	VISCO-JJ1	97	Koi Koi Shimasyo 2						Visco
 STA-0001B	P1-112A		97	Mahjong Hyper Reaction 2				Sammy
 STA-0001B	?			97	Monster Slider							Visco / Datt
@@ -47,9 +47,7 @@ STA-0001B	SSV_SUB     00  Vasara									Visco
 STA-0001B	SSV_SUB		01  Vasara 2								Visco
 -----------------------------------------------------------------------------------
 
-(1) Needs unimplemented v60 opcodes (ldtask,sttask)
-(2) Protection controls sprites (movements) (unimplemented)
-(3) Uses an unemulated NEC V810 CPU instead of the V60.
+(1) Uses an unemulated NEC V810 CPU instead of the V60.
 
 
 Games not yet dumped:
@@ -107,6 +105,8 @@ To Do:
 #include "machine/random.h"
 
 #include "seta.h"
+
+#include <math.h>
 
 /***************************************************************************
 
@@ -274,6 +274,36 @@ NVRAM_HANDLER( ssv )
 /***************************************************************************
 
 
+								DSP
+
+
+***************************************************************************/
+
+
+static UINT16 *dsp_ram;
+
+static WRITE16_HANDLER( dsp_w )
+{
+	COMBINE_DATA(dsp_ram+offset);
+	if(offset == 0x21 && dsp_ram[0x21]) {
+		switch(dsp_ram[0x20]) {
+		case 0x0001:
+			dsp_ram[0x11] = (UINT8)(128*atan2(dsp_ram[0] - dsp_ram[1], dsp_ram[2] - dsp_ram[3])/M_PI) ^ 0x80;
+			dsp_ram[0x21] = 0;
+			break;
+		default:
+			dsp_ram[0x21] = 0;
+			logerror("SSV DSP: unknown function %x (%x)\n", dsp_ram[0x20], activecpu_get_pc());
+			break;
+		}
+	}
+}
+
+
+
+/***************************************************************************
+
+
 								Memory Maps
 
 
@@ -295,7 +325,8 @@ NVRAM_HANDLER( ssv )
 	AM_RANGE(0x21000c, 0x21000d) AM_READ(input_port_4_word_r	)	/*	Coins	*/	\
 	AM_RANGE(0x21000e, 0x21000f) AM_READ(MRA16_NOP				)	/*			*/	\
 	AM_RANGE(0x300000, 0x30007f) AM_READ(ES5506_data_0_word_r	)	/*	Sound	*/	\
-	AM_RANGE(_ROM, 0xffffff) AM_READ(MRA16_BANK1			)	/*	ROM		*/	\
+	AM_RANGE(0x482000, 0x482fff) AM_READWRITE(MRA16_RAM, dsp_w) AM_BASE(&dsp_ram)   \
+	AM_RANGE(_ROM, 0xffffff) AM_READ(MRA16_BANK1			)	/*	ROM		*/	    \
 	/*{ 0x990000, 0x99007f, fake_r	)*/
 
 #define SSV_WRITEMEM														\
@@ -324,15 +355,8 @@ static READ16_HANDLER( drifto94_rand_r )
 	return mame_rand() & 0xffff;
 }
 
-static READ16_HANDLER( drifto94_482022_r )
-{
-	return 0x009b;
-}
-
 static ADDRESS_MAP_START( drifto94_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x480000, 0x480001) AM_READ(MRA16_NOP				)	// ?
-	AM_RANGE(0x482022, 0x482023) AM_READ(drifto94_482022_r		)	// ?? protection?
-	AM_RANGE(0x482042, 0x482043) AM_READ(MRA16_NOP				)	// ?? protection?
 	AM_RANGE(0x510000, 0x510001) AM_READ(drifto94_rand_r		)	// ??
 	AM_RANGE(0x520000, 0x520001) AM_READ(drifto94_rand_r		)	// ??
 	AM_RANGE(0x580000, 0x5807ff) AM_READ(MRA16_RAM				)	// NVRAM
@@ -342,7 +366,7 @@ static ADDRESS_MAP_START( drifto94_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 //	AM_RANGE(0x210002, 0x210003) AM_WRITE(MWA16_NOP				)	// ? 1 at the start
 	AM_RANGE(0x400000, 0x47ffff) AM_WRITE(MWA16_RAM				)	// ?
 	AM_RANGE(0x480000, 0x480001) AM_WRITE(MWA16_NOP				)	// ?
-	AM_RANGE(0x482000, 0x485fff) AM_WRITE(MWA16_NOP				)	// ?
+	AM_RANGE(0x483000, 0x485fff) AM_WRITE(MWA16_NOP				)	// ?
 	AM_RANGE(0x500000, 0x500001) AM_WRITE(MWA16_NOP				)	// ??
 	AM_RANGE(0x580000, 0x5807ff) AM_WRITE(MWA16_RAM) AM_BASE(&ssv_nvram) AM_SIZE(&ssv_nvram_size	)	// NVRAM
 	SSV_WRITEMEM
@@ -653,7 +677,6 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( twineag2_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x010000, 0x03ffff) AM_READ(MRA16_RAM				)	// More RAM
 	AM_RANGE(0x210000, 0x210001) AM_READ(watchdog_reset16_r	)	// Watchdog (also value is cmp.b with mem 8)
-	AM_RANGE(0x482022, 0x482023) AM_READ(drifto94_482022_r		)	// ?? protection ??
 	SSV_READMEM( 0xe00000 )
 ADDRESS_MAP_END
 static ADDRESS_MAP_START( twineag2_writemem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -2676,8 +2699,8 @@ DRIVER_INIT( sxyreact )		{	hypreac2_init();	// different
 								ssv_sprites_offsx = +0;	ssv_sprites_offsy = +0xe8;
 								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xef;	}
 DRIVER_INIT( twineag2 )		{	init_ssv();interrupt_ultrax=1;
-								ssv_sprites_offsx = +0;	ssv_sprites_offsy = 0;
-								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = 0;	}
+								ssv_sprites_offsx = -6; ssv_sprites_offsy = -7;
+								ssv_tilemap_offsx = -10;ssv_tilemap_offsy = -8; }
 DRIVER_INIT( ultrax )		{	init_ssv();interrupt_ultrax=1;
 								ssv_sprites_offsx = -8;	ssv_sprites_offsy = 0;
 								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = 0;	}

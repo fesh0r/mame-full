@@ -287,6 +287,12 @@ static void I386OP(cli)(void)				// Opcode 0xfa
 	CYCLES(8);
 }
 
+static void I386OP(cmc)(void)				// Opcode 0xf5
+{
+	I.CF ^= 1;
+	CYCLES(2);
+}
+
 static void I386OP(cmp_rm8_r8)(void)		// Opcode 0x38
 {
 	UINT8 src, dst;
@@ -1240,6 +1246,16 @@ static void I386OP(scasb)(void)				// Opcode 0xae
 	CYCLES(8);
 }
 
+static void I386OP(setalc)(void)			// Opcode 0xd6 (undocumented)
+{
+	if( I.CF ) {
+		REG8(AL) = 0xff;
+	} else {
+		REG8(AL) = 0;
+	}
+	CYCLES(3);
+}
+
 static void I386OP(seta_rm8)(void)			// Opcode 0x0f 97
 {
 	UINT8 modrm = FETCH();
@@ -2100,6 +2116,22 @@ static void I386OP(groupFE_8)(void)			// Opcode 0xfe
 
 
 
+static void I386OP(segment_CS)(void)		// Opcode 0x2e
+{
+	I.segment_prefix = 1;
+	I.segment_override = CS;
+
+	I386OP(decode_opcode)();
+}
+
+static void I386OP(segment_DS)(void)		// Opcode 0x3e
+{
+	I.segment_prefix = 1;
+	I.segment_override = DS;
+	CYCLES(0);	// TODO: Specify cycle count
+	I386OP(decode_opcode)();
+}
+
 static void I386OP(segment_ES)(void)		// Opcode 0x26
 {
 	I.segment_prefix = 1;
@@ -2108,11 +2140,27 @@ static void I386OP(segment_ES)(void)		// Opcode 0x26
 	I386OP(decode_opcode)();
 }
 
-static void I386OP(segment_CS)(void)		// Opcode 0x2e
+static void I386OP(segment_FS)(void)		// Opcode 0x64
 {
 	I.segment_prefix = 1;
-	I.segment_override = CS;
+	I.segment_override = FS;
+	CYCLES(1);	// TODO: Specify cycle count
+	I386OP(decode_opcode)();
+}
 
+static void I386OP(segment_GS)(void)		// Opcode 0x65
+{
+	I.segment_prefix = 1;
+	I.segment_override = GS;
+	CYCLES(1);	// TODO: Specify cycle count
+	I386OP(decode_opcode)();
+}
+
+static void I386OP(segment_SS)(void)		// Opcode 0x36
+{
+	I.segment_prefix = 1;
+	I.segment_override = SS;
+	CYCLES(0);	// TODO: Specify cycle count
 	I386OP(decode_opcode)();
 }
 
@@ -2146,6 +2194,21 @@ static void I386OP(int)(void)				// Opcode 0xcd
 	i386_interrupt(interrupt);
 }
 
+static void I386OP(into)(void)				// Opcode 0xce
+{
+	if( I.OF ) {
+		i386_interrupt(4);
+		if( PROTECTED_MODE ) {
+			/* TODO: correct cycle count */
+			CYCLES(59);
+		} else {
+			CYCLES(35);
+		}
+	} else {
+		CYCLES(3);
+	}
+}
+
 static void I386OP(escape)(void)			// Opcodes 0xd8 - 0xdf
 {
 	UINT8 modrm = FETCH();
@@ -2161,22 +2224,6 @@ static void I386OP(hlt)(void)				// Opcode 0xf4
 	I.eip--;
  	CHANGE_PC(I.pc);
 	CYCLES(1);
-}
-
-static void I386OP(fs)(void)				// Opcode 0x64
-{
-	I.segment_prefix = 1;
-	I.segment_override = FS;
-	CYCLES(1);	// TODO: Specify cycle count
-	I386OP(decode_opcode)();
-}
-
-static void I386OP(gs)(void)				// Opcode 0x65
-{
-	I.segment_prefix = 1;
-	I.segment_override = GS;
-	CYCLES(1);	// TODO: Specify cycle count
-	I386OP(decode_opcode)();
 }
 
 static void I386OP(decimal_adjust)(int direction)
@@ -2211,11 +2258,26 @@ static void I386OP(das)(void)				// Opcode 0x2f
 	I386OP(decimal_adjust)(-1);
 }
 
+static void I386OP(aaa)(void)				// Opcode 0x37
+{
+	if( (REG8(AL) & 0x0f) || I.AF != 0 ) {
+		REG16(AX) = REG16(AX) + 6;
+		REG8(AH) = REG8(AH) + 1;
+		I.AF = 1;
+		I.CF = 1;
+	} else {
+		I.AF = 0;
+		I.CF = 0;
+	}
+	REG8(AL) = REG8(AL) & 0x0f;
+	CYCLES(4);
+}
+
 static void I386OP(aas)(void)				// Opcode 0x3f
 {
 	if (I.AF || ((REG8(AL) & 0xf) > 9))
     {
-		REG8(AL) -= 6;
+		REG16(AX) -= 6;
 		REG8(AH) -= 1;
 		I.AF = 1;
 		I.CF = 1;
@@ -2225,8 +2287,31 @@ static void I386OP(aas)(void)				// Opcode 0x3f
 		I.AF = 0;
 		I.CF = 0;
     }
-	REG8(AL) &= 0x0F;
-	CYCLES(1);	// TODO: Figure out exact cycle count
+	REG8(AL) &= 0x0f;
+	CYCLES(4);
+}
+
+static void I386OP(aad)(void)				// Opcode 0xd5
+{
+	UINT8 tempAL = REG8(AL);
+	UINT8 tempAH = REG8(AH);
+	UINT8 i = FETCH();
+
+	REG8(AL) = (tempAL + (tempAH * i)) & 0xff;
+	REG8(AH) = 0;
+	SetSZPF8( REG8(AL) );
+	CYCLES(19);
+}
+
+static void I386OP(aam)(void)				// Opcode 0xd4
+{
+	UINT8 tempAL = REG8(AL);
+	UINT8 i = FETCH();
+
+	REG8(AH) = tempAL / i;
+	REG8(AL) = tempAL % i;
+	SetSZPF8( REG8(AL) );
+	CYCLES(17);
 }
 
 static void I386OP(load_far_pointer)(int s)

@@ -1195,8 +1195,9 @@ static int e132xs_execute(int cycles)
 
 		if( GET_T && GET_P && !e132xs.delay_pc ) /* Not in a Delayed Branch instructions */
 		{
+			UINT32 addr;
 			SET_P(0); // here?
-			UINT32 addr = get_trap_addr(TRACE_EXCEPTION);
+			addr = get_trap_addr(TRACE_EXCEPTION);
 			execute_exception(addr);
 		}
 
