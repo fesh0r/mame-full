@@ -108,26 +108,31 @@ DRVLIBS = $(OBJ)/advision.a \
 
 ifndef MESS_EXCLUDE_AMSTRAD
 DRVLIBS += $(OBJ)/amstrad.a
+else
 COREDEFS += -DMESS_EXCLUDE_AMSTRAD
 endif
 
 ifndef MESS_EXCLUDE_CBM
 DRVLIBS += $(OBJ)/cbm.a
+else
 COREDEFS += -DMESS_EXCLUDE_CBM
 endif
 
 ifndef MESS_EXCLUDE_IBMPC
 DRVLIBS += $(OBJ)/pc.a
+else
 COREDEFS += -DMESS_EXCLUDE_IBMPC
 endif
 
 ifndef MESS_EXCLUDE_SHARP
 DRVLIBS += $(OBJ)/sharp.a
+else
 COREDEFS += -DMESS_EXCLUDE_SHARP
 endif
 
 ifndef MESS_EXCLUDE_SINCLAIR
 DRVLIBS += $(OBJ)/sinclair.a
+else
 COREDEFS += -DMESS_EXCLUDE_SINCLAIR
 endif
 
