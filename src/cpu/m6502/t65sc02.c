@@ -41,7 +41,7 @@
  *
  *****************************************************************************
  * op	 temp	  cycles			 rdmem	 opc  wrmem   ********************/
-#define m65sc02_00 m6502_00 								/* 7 BRK */
+#define m65sc02_00 m65c02_00 								/* 7 BRK */
 #define m65sc02_20 m6502_20 								/* 6 JSR ABS */
 #define m65sc02_40 m6502_40 								/* 6 RTI */
 #define m65sc02_60 m6502_60 								/* 6 RTS */
