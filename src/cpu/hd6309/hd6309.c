@@ -233,22 +233,8 @@ int hd6309_ICount=50000;
 /* these are re-defined in hd6309.h TO RAM, ROM or functions in cpuintrf.c */
 #define RM(mAddr)		HD6309_RDMEM(mAddr)
 #define WM(mAddr,Value) HD6309_WRMEM(mAddr,Value)
-//#define ROP(mAddr)		HD6309_RDOP(mAddr)
-//#define ROP_ARG(mAddr)	HD6309_RDOP_ARG(mAddr)
-
-static UINT8 ROP(offs_t mAddr)
-{
-	if ((OP_ROM + mAddr < OP_ROM_MIN) || (OP_ROM + mAddr > OP_ROM_MAX))
-		change_pc16(mAddr);
-	return HD6309_RDOP(mAddr);
-}
-
-static UINT8 ROP_ARG(offs_t mAddr)
-{
-	if ((OP_RAM + mAddr < OP_RAM_MIN) || (OP_RAM + mAddr > OP_RAM_MAX))
-		change_pc16(mAddr);
-	return HD6309_RDOP_ARG(mAddr);
-}
+#define ROP(mAddr)		HD6309_RDOP(mAddr)
+#define ROP_ARG(mAddr)	HD6309_RDOP_ARG(mAddr)
 
 /* macros to access memory */
 #define IMMBYTE(b)	b = ROP_ARG(PCD); PC++

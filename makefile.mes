@@ -1,3 +1,18 @@
+#############################################################################
+# MESS main makefile														#
+#																			#
+# MESS build commands:														#
+#																			#
+#	Command							Executable		Optimization			#
+#	------------------------------	--------------	------------			#
+#	make -f makefile.mes			mess.exe		Pentium					#
+#	make -f makefile.mes DEBUG=1	messd.exe		N/A						#
+#	make -f makefile.mes ATHLON=1	messat.exe		Athlon					#
+#	make -f makefile.mes K6=1		messk6.exe		K6						#
+#	make -f makefile.mes P4=1		messp4.exe		Pentium 4				#
+#############################################################################
+
+
 # set this to mame, mess or the destination you want to build
 # TARGET = mess
 # example for a tiny compile
@@ -45,6 +60,7 @@ AR = @ar
 CC = @gcc
 LD = @gcc
 ASM = @nasm
+DASM = @gcc -S
 ASMFLAGS = -f coff
 MD = -mkdir
 RM = @rm -f
@@ -256,28 +272,38 @@ endif
 $(OBJ)/$(MAMEOS)/%.o: src/$(MAMEOS)/%.c
 	@echo Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGS) -c $< -o $@
+ifdef DISASSEMBLY
+	$(DASM) $(CDEFS) $(CFLAGSPEDANTIC) $< -o $(@:%.o=%.S)
+endif
 
-$(OBJ)/mess/windows/%.o: mess/windows/%.c
+$(OBJ)/mess/$(MAMEOS)/%.o: mess/$(MAMEOS)/%.c
 	@echo Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGS) -c $< -o $@
+ifdef DISASSEMBLY
+	$(DASM) $(CDEFS) $(CFLAGSPEDANTIC) $< -o $(@:%.o=%.S)
+endif
 
 $(OBJ)/%.o: src/%.c
 	@echo Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGSPEDANTIC) -c $< -o $@
-
-# Small hack due to mingw compiler 
-$(OBJ)/mess/tools/messroms/%.o: mess/tools/messroms/%.c
-	@echo [$(NAME)] Compiling $<...
-	$(CC) $(CDEFS) $(CFLAGS) -c $< -o $@
+ifdef DISASSEMBLY
+	$(DASM) $(CDEFS) $(CFLAGSPEDANTIC) $< -o $(@:%.o=%.S)
+endif
 
 $(OBJ)/mess/%.o: mess/%.c
-	@echo [$(NAME)] Compiling $<...
+	@echo Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGSPEDANTIC) -c $< -o $@
+ifdef DISASSEMBLY
+	$(DASM) $(CDEFS) $(CFLAGSPEDANTIC) $< -o $(@:%.o=%.S)
+endif
 
 # compile generated C files for the 68000 emulator
 $(M68000_GENERATED_OBJS): $(OBJ)/cpu/m68000/m68kmake$(EXE)
 	@echo Compiling $(subst .o,.c,$@)...
 	$(CC) $(CDEFS) $(CFLAGSPEDANTIC) -c $*.c -o $@
+ifdef DISASSEMBLY
+	$(DASM) $(CDEFS) $(CFLAGSPEDANTIC) $< -o $(@:%.o=%.S)
+endif
 
 # additional rule, because m68kcpu.c includes the generated m68kops.h :-/
 $(OBJ)/cpu/m68000/m68kcpu.o: $(OBJ)/cpu/m68000/m68kmake$(EXE)

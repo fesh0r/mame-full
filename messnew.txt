@@ -21,6 +21,8 @@ Imgtool Changes:
 
 Source Changes:
 ---------------
+- Added some bounds checking to opcode fetches (bug #352).  [Nate Woods]
+
 - Made some debugger fixes when dealing with 8 or 16 bit numbers.  [Nate
   Woods]
   
