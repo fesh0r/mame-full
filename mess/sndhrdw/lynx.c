@@ -154,19 +154,19 @@ UINT8 lynx_audio_read(int offset)
     case 0x30: case 0x31: case 0x32: case 0x33: case 0x34: case 0x35: case 0x36: case 0x37:
     case 0x38: case 0x39: case 0x3a: case 0x3b: case 0x3c: case 0x3d: case 0x3e: case 0x3f:
 	data=lynx_audio[(offset>>3)&3].reg.data[offset&7];
-	logerror("%.6f audio channel %d read %.2x %.2x\n", timer_get_time(), (offset>>3)&3, offset&7, data);
+//	logerror("%.6f audio channel %d read %.2x %.2x\n", timer_get_time(), (offset>>3)&3, offset&7, data);
 	break;
     case 0x40: case 0x41: case 0x42: case 0x43: 
 	data=lynx_audio[offset&3].attenuation;
-	logerror("%.6f audio read %.2x %.2x\n", timer_get_time(), offset, data);
+//	logerror("%.6f audio read %.2x %.2x\n", timer_get_time(), offset, data);
 	break;
     case 0x44: 
 	data=attenuation_enable;
-	logerror("%.6f audio read %.2x %.2x\n", timer_get_time(), offset, data);
+//	logerror("%.6f audio read %.2x %.2x\n", timer_get_time(), offset, data);
 	break;
     case 0x50:
 	data=master_enable;
-	logerror("%.6f audio read %.2x %.2x\n", timer_get_time(), offset, data);
+//	logerror("%.6f audio read %.2x %.2x\n", timer_get_time(), offset, data);
 	break;
     }
     return data;
@@ -181,19 +181,19 @@ void lynx_audio_write(int offset, UINT8 data)
     case 0x30: case 0x31: case 0x32: case 0x33: case 0x34: case 0x35: case 0x36: case 0x37:
     case 0x38: case 0x39: case 0x3a: case 0x3b: case 0x3c: case 0x3d: case 0x3e: case 0x3f:
 	lynx_audio[(offset>>3)&3].reg.data[offset&7]=data;
-	logerror("%.6f audio channel %d write %.2x %.2x\n", timer_get_time(), (offset>>3)&3, offset&7, data);
+//	logerror("%.6f audio channel %d write %.2x %.2x\n", timer_get_time(), (offset>>3)&3, offset&7, data);
 	break;
     case 0x40: case 0x41: case 0x42: case 0x43: 
 	lynx_audio[offset&3].attenuation=data;
-	logerror("%.6f audio write %.2x %.2x\n", timer_get_time(), offset, data);
+//	logerror("%.6f audio write %.2x %.2x\n", timer_get_time(), offset, data);
 	break;
     case 0x44: 
 	attenuation_enable=data;
-	logerror("%.6f audio write %.2x %.2x\n", timer_get_time(), offset, data);
+//	logerror("%.6f audio write %.2x %.2x\n", timer_get_time(), offset, data);
 	break;
     case 0x50:
 	master_enable=data;
-	logerror("%.6f audio write %.2x %.2x\n", timer_get_time(), offset, data);
+//	logerror("%.6f audio write %.2x %.2x\n", timer_get_time(), offset, data);
 	break;
     }
 }
