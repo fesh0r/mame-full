@@ -385,6 +385,7 @@ INLINE UINT32 ppc_get_spr(int spr)
 		}
 	}
 #endif
+	return 0;
 }
 
 INLINE void ppc_set_msr(UINT32 value)
