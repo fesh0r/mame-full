@@ -77,12 +77,6 @@ static int video_verify_bpp(struct rc_option *option, const char *arg,
 static int video_verify_vectorres(struct rc_option *option, const char *arg,
 		int priority);
 static int decode_ftr(struct rc_option *option, const char *arg, int priority);
-
-#ifndef xgl
-static void adjust_bitmap_and_update_display(struct mame_bitmap *srcbitmap,
-		struct rectangle bounds);
-#endif
-
 static void change_debugger_focus(int new_debugger_focus);
 static void update_debug_display(struct mame_display *display);
 static void osd_free_colors(void);
@@ -330,20 +324,6 @@ static int decode_ftr(struct rc_option *option, const char *arg, int priority)
 
 void osd_video_initpre()
 {
-	/*
-	 * This may not be the best place for this, but it should 
-	 * work for the time being.
-	 */
-	effect_dbbuf = NULL;
-	rotate_dbbuf = NULL;
-	rotate_dbbuf0 = NULL;
-	rotate_dbbuf1 = NULL;
-	rotate_dbbuf2 = NULL;
-	/* these are used for the 6-tap filter */
-	rotate_dbbuf3 = NULL;
-	rotate_dbbuf4 = NULL;
-	rotate_dbbuf5 = NULL;
-
 	/* first start with the game's built-in orientation */
 	int orientation = drivers[game_index]->flags & ORIENTATION_MASK;
 	options.ui_orientation = orientation;
@@ -358,7 +338,7 @@ void osd_video_initpre()
 
 	/* override if no rotation requested */
 	if (video_norotate)
-		orientation = options.ui_orientation = ROT0;
+		orientation = ROT0;
 
 	/* rotate right */
 	if (video_ror)
@@ -439,11 +419,28 @@ void osd_video_initpre()
 		options.use_artwork &= ~ARTWORK_USE_BEZELS;
 	if (!use_artwork)
 		options.use_artwork = ARTWORK_USE_NONE;
+
+	/*
+	 * This may not be the best place for this, but it should 
+	 * work for the time being.
+	 */
+	effect_dbbuf = NULL;
+	rotate_dbbuf = NULL;
+	rotate_dbbuf0 = NULL;
+	rotate_dbbuf1 = NULL;
+	rotate_dbbuf2 = NULL;
+	/* these are used for the 6-tap filter */
+	rotate_dbbuf3 = NULL;
+	rotate_dbbuf4 = NULL;
+	rotate_dbbuf5 = NULL;
 }
 
-void orient_rect(struct rectangle *rect)
+static void orient_rect(struct rectangle *rect)
 {
 	int temp;
+	
+	if (blit_hardware_rotation)
+		return;
 
 	/* apply X/Y swap first */
 	if (blit_swapxy)
@@ -509,20 +506,17 @@ int osd_create_display(const struct osd_create_params *params,
 		}
 	}
 
-#ifndef xgl
-	if (blit_swapxy)
+	if (blit_swapxy && !blit_hardware_rotation)
 	{
 		visual_width	= video_width	= params->height;
 		visual_height	= video_height	= params->width;
 	}
 	else
 	{
-#endif
 		visual_width	= video_width	= params->width;
 		visual_height	= video_height	= params->height;
-#ifndef xgl
 	}
-#endif
+
 	video_depth = (params->depth == 15) ? 16 : params->depth;
 
 	if (!blit_swapxy)
@@ -719,8 +713,7 @@ static void update_visible_area(struct mame_display *display)
 {
 	normal_visual = display->game_visible_area;
 
-#ifndef xgl
-	if (blit_swapxy)
+	if (blit_swapxy && !blit_hardware_rotation)
 	{
 		video_width = display->game_bitmap->height;
 		video_height = display->game_bitmap->width;
@@ -732,7 +725,6 @@ static void update_visible_area(struct mame_display *display)
 	}
 
 	orient_rect(&normal_visual);
-#endif
 
 	/*
 	 * round to 8, since the new dirty code works with 8x8 blocks,
@@ -1078,13 +1070,10 @@ void osd_update_video_and_audio(struct mame_display *display)
 			end_time = curr;
 		}
 
+		orient_rect(&updatebounds);
+
 		profiler_mark(PROFILER_BLIT);
-#ifdef xgl
 		sysdep_update_display(display->game_bitmap);
-#else
-		adjust_bitmap_and_update_display(display->game_bitmap,
-				updatebounds);
-#endif
 		profiler_mark(PROFILER_END);
 	}
 
@@ -1096,14 +1085,6 @@ void osd_update_video_and_audio(struct mame_display *display)
 }
 
 #ifndef xgl
-void adjust_bitmap_and_update_display(struct mame_bitmap *srcbitmap,
-		struct rectangle bounds)
-{
-	orient_rect(&bounds);
-
-	sysdep_update_display(srcbitmap);
-}
-
 struct mame_bitmap *osd_override_snapshot(struct mame_bitmap *bitmap,
 		struct rectangle *bounds)
 {
@@ -1112,7 +1093,8 @@ struct mame_bitmap *osd_override_snapshot(struct mame_bitmap *bitmap,
 	int x, y, w, h, t;
 
 	/* if we can send it in raw, no need to override anything */
-	if (!blit_swapxy && !blit_flipx && !blit_flipy)
+	if (blit_hardware_rotation ||
+	    (!blit_swapxy && !blit_flipx && !blit_flipy))
 		return NULL;
 
 	/* allocate a copy */
