@@ -16,7 +16,7 @@ System Driver Changes:
 
 - [COCO] Fixed a recent stupid bug in m6847 timing that had an effect on
   certain timing (bug #249) [Nate Woods]
-  
+
 - [COCO3] Fixed a palette timing bug that affected mid-frame video rendering.
   (bug #253) [Nate Woods]
 
@@ -31,6 +31,8 @@ System Driver Changes:
 
 - [GBCOLOR] Implemented background priority. This fixes objects appearing over
   the background when they shouldn't be. [Anthony Kruize]
+
+- [TI99/4A] Added support for BwG clock and floppy controller [Raphael Nabet]
 
 Source Changes:
 ---------------
