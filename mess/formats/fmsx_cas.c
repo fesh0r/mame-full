@@ -14,10 +14,10 @@ int fmsx_cas_to_wav (UINT8 *casdata, int caslen, INT16 **wavdata, int *wavlen)
 
 	if (caslen < 8) return 1;
 	if (memcmp (casdata, CasHeader, sizeof (CasHeader) ) ) return 1;
-	
+
 	cas_pos = 8;
 	samples_size = ALLOCATE_BLOCK * 2;
-	samples = (UINT16*) malloc (samples_size);
+	samples = (INT16*) malloc (samples_size);
 	if (!samples)
 		{
 		logerror ("cas2wav: out of memory.\n");
@@ -32,7 +32,7 @@ int fmsx_cas_to_wav (UINT8 *casdata, int caslen, INT16 **wavdata, int *wavlen)
 		if ( (samples_pos + size) >= samples_size)
 			{
 			samples_size += size;
-			nsamples = (UINT16*) realloc (samples, samples_size * 2);
+			nsamples = (INT16*) realloc (samples, samples_size * 2);
 			if (!nsamples)
 				{
 				free (samples);
@@ -49,7 +49,7 @@ int fmsx_cas_to_wav (UINT8 *casdata, int caslen, INT16 **wavdata, int *wavlen)
 		/* write CAS_HEADER_PERIODS of header (high frequency) */
 		for (i=0;i<CAS_HEADER_PERIODS*4;i++)
 			{
-			for (n=0;n<CAS_PERIOD / 4;n++) 
+			for (n=0;n<CAS_PERIOD / 4;n++)
 				samples[samples_pos + n] = (state ? 32767 : -32767);
 
 			samples_pos += CAS_PERIOD / 4 ;
@@ -73,7 +73,7 @@ int fmsx_cas_to_wav (UINT8 *casdata, int caslen, INT16 **wavdata, int *wavlen)
 			if ( (samples_pos + size) >= samples_size)
 				{
 				samples_size += ALLOCATE_BLOCK;
-				nsamples = (UINT16*) realloc (samples, samples_size * 2);
+				nsamples = (INT16*) realloc (samples, samples_size * 2);
 				if (!nsamples)
 					{
 					free (samples);
