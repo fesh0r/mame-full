@@ -951,7 +951,7 @@ void UpdateScreenShot(void)
 
     /* List control 2 */
     MoveWindow(GetDlgItem(hParent, IDC_LIST2), 2 + nSplitterOffset[1], rect.top + 2,
-        (nSplitterOffset[2] - nSplitterOffset[1]) - 2, (rect.bottom - rect.top) - 4 , TRUE);	
+        (nWidth - nSplitterOffset[1]) - 2, (rect.bottom - rect.top) - 4 , TRUE);	
 #else
     /* List control */
     MoveWindow(hList, 2 + nTreeWidth, rect.top + 2,
@@ -2270,7 +2270,11 @@ static void UpdateStatusBar()
     while (i != -1);
 
     /* Show number of games in the current 'View' in the status bar */
+#ifdef MESS
+    sprintf(game_text, "%d systems", games_shown);
+#else
     sprintf(game_text, "%d games", games_shown);
+#endif
     SendMessage(hStatusBar, SB_SETTEXT, (WPARAM) 2, (LPARAM) game_text);
 
     i = GetSelectedPickItem();

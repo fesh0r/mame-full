@@ -122,7 +122,9 @@ static void MessTestsBegin(void);
 static void MessTestsDoneIdle(void);
 #endif /* MAME_DEBUG */
 
+/*
 #define MAME32HELP "mess32.hlp"
+*/
 
 #define IsValidListControl(hwnd)    (((hwnd) == hwndList) || ((hwnd) == (s_pSoftwareListView->hwndListView)))
 
@@ -453,8 +455,8 @@ static BOOL ImageData_SetCrcLine(ImageData *img, UINT32 crc, const char *crcline
 	img->crcline = newcrcline;
 	img->crc = crc;
 	img->longname = strtok(newcrcline, "|");
-	img->manufacturer = strtok(NULL, "|");
 	img->year = strtok(NULL, "|");
+	img->manufacturer = strtok(NULL, "|");
 	img->playable = strtok(NULL, "|");
 	img->extrainfo = strtok(NULL, "|");
 	return TRUE;
