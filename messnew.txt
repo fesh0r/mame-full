@@ -13,11 +13,21 @@ New System Drivers Supported (in no particular order):
 ------------------------------------------------------
 NEC PC8801SR [Shouhei Nishi]
 Emerson Arcadia 2001 (preliminary) [PeT]
-Amiga [re-enabled]
-
+Amiga (re-enabled)
+Odyssey^2 (preliminary) [PeT and others]
+Interton VC4000 (preliminary) [PeT]
+More Nascom1/2 official releases [JoJo]
+Sharp PC1403/1403H (preliminary) [PeT]
 
 System Driver Changes:
 ----------------------
+- [APPLE I] Support for the correct chargen ROM. Character grid has now the correct
+  dimensions [JoJo]
+
+- [AQUARIUS] Added correct palette. [JoJo]
+
+- [ATARI5200] Changed the cart loading strategy. Many more carts work now. [PeT]
+
 - [COLECO] Changed MEMORY handlers which allows more carts to work (like aqua attack 
   and tutankham).  Small fix to input handling which means Defender and Centipede now 
   work.  Accurate NMI handling added which fixes remaining carts like Buck Rogers, 
@@ -28,26 +38,29 @@ System Driver Changes:
   now applies not just to the CoCo 3, but to all systems that use the m6847 and
   derivatives.  Also, a few effects now work that never have done before,
   including the dynamite effect in Canyon Climber and some SockMaster demos.
-
-- [DRAGON/COCO1-2-3] Totally reworked ROM support; cartridge IO is now modular,
+  Totally reworked ROM support; cartridge IO is now modular,
   the CART signal is handled better, and ROMs that don't take up the full
   address space are properly mirrored.  These changes make many more cartridges
   work properly, including Mind-Roll which is banked.  Also, properly NOP'd
   invalid memory areas, which prevented Arkanoid from running.  [Nate Woods]
 
+- [MSX] DAC synthesizer fixed. [Sean Young]
+
 - [MSX2] The V9938 emulation is improved, added interlaced mode, fixed blitter 
   timings, sprites, and GRAPHIC 5 (SCREEN 6). The MSX2 now has a 128kB memory 
   mapper, so now many more games run. [Sean Young]
+  Preliminary save state support and numeric keypad emulation added. [Sean Young]
+  K051649 has been fixed (F1 Spirits now works correctly). [Sean Young]
 
-- [C128] VIC charracter rom switching and color ram banking added [PeT]
+- [C128] VIC charracter rom switching and color ram banking added. [PeT]
 
-- [C64/MAX/C128/CBM B series/C65] fixed cia6526 interrupt enabling [PeT]
+- [C64/MAX/C128/CBM B series/C65] fixed cia6526 interrupt enabling. [PeT]
 
 - [C64/MAX/C128/CBM500/C65] fixed 3 sprite collision issues,
-  fixed interrupt enabling [PeT]
+  fixed interrupt enabling. [PeT]
 
 - [C64/MAX/C128/C65] added support for alternate keyboard polling 
-  (matrix i/o reversed). added second cia6526 irq(nmi) generation.
+  (matrix i/o reversed). added second cia6526 irq(nmi) generation. [PeT]
 
 - [C64] added support for game/exrom cartridge lines in crt files
   bankswitching fixes [PeT]
@@ -56,25 +69,45 @@ System Driver Changes:
   anymore, real SRAM is indeed filled with random pattern). Power up "support" for jelly
   monsters. 
   Keyboard polling support for second/alternate matrix io selection.
-  Some "dipswitch" fixes.
+  Some "dipswitch" fixes. [PeT]
 
-- [C16] TED timer 1 reloading on underrun changed
+- [C16] TED timer 1 reloading on underrun changed. [PeT]
   ECM and Multicolor mode: cursor and character inversion disabled.
   TED sound channels simplified to generate only rectangular signals:
-  digisound working, less static, clearer sound.
+  digisound working, less static, clearer sound. Now the driver uses MOS 8580. [PeT]
 
 - [C16/C64/CBM B/C128/C65] SID cleanup, realtime modifications, digisound support
-  (fx sound good now, random number generation ok)
+  (fx sound good now, random number generation ok). [PeT]
 
-- [C16/C64] tape fixed [PeT]
+- [C16/C64] tape fixed. [PeT]
 
-- [Supervision] nmi added (crystball bonus items fixed)
-  irq changed, preliminary sound added [PeT]
+- [C65] Stereo enabled. [PeT]
+
+- [SUPERVISION] nmi added (crystball bonus items fixed)
+  irq changed, preliminary sound added & fix of the stereo allocation.
+  Stereo enabled. [PeT]
+
+- [PC1401] Memory configuration fix. Display on/off emulation. [PeT]
+
+- [SPECTRUM] Interface 2 emulation. [David Robertson]
+
+- [SATURN] Many fixes. The driver now boots up and displays splash screen, but it's
+  still non-functional. [James Forshaw]
 
 - [SNES] Added preliminary tile-mosaic effect and fixed a small matrix bug in 
   mode 7, F-zero now renders the screen the correct way [Lee Ward]
 
+- [LNW80] Added correct BIOS. The driver is still non functional. [JoJo]
 
+- [EP128] Some graphics problem fixed [Kev Thacker]
+
+- [LYNX] Preliminary sound support & fix of the stereo allocation. Stereo enabled.
+  Added enhanced blitter modes and multiplier. [PeT]
+
+- [ODYSSEY2] added collision support. [PeT]
+
+- [MK1] Added basic video/keyboard/interrupt functionality. The driver is now
+  functional. [PeT]
 
 Source:
 -------
@@ -87,8 +120,38 @@ Source:
   option. -showusage lists all available options. [Aaron Giles, Bernd Wiebelt]
                                                   [MESS specific code: Lee Ward]
 
+- Added support for the SUPPORT_ODD_WORD_SIZES macro, needed by ApexC and PDP 1.
+  [Nate Woods]
 
+- CoCo cartridge code has been moved to its own file [Nate Woods]
 
+- The switches "-cylinder", "-punchcard", "-punchtape" and "-parallel" are now
+  recognized. At the moment "-parallel" is not used by any driver, but has been
+  reserved for future expansions. [JoJo]
+
+- Added Jurgen's tool to create generic CP/M disk images to the tools/ directory
+  [JoJo]
+
+- Imgtool's dir command now displays CRC32s. [PeT]
+
+- MESS now supports the new TINY_COMPILE model. [Ben]
+
+- MESSRoms now recognizes more ROMs. [PeT]
+
+- An init function has been added to the M65CE02 CPU emulation. [PeT]
+
+- M, D and V registers support in the state saving engine and MD register's
+  behaviour fixed in the HD6309 code. [Tim Lindner]
+
+- Z80 CPU now behaves correctly after an IRQ: this fixed a bug in PC8801 emulation.
+  [Sean Young]
+
+- Added save sate support to TMS34010 CPU. [Nate Woods]
+
+- Many fixes to the SC61860 CPU. [PeT]
+
+- Added a static memory interface, interrupt functionality and runtime loader support to the F8 CPU core. [PeT] also added basic video/keyboard/interrupt functionality
+     and support for the F8 CPU changes to the Chess Champion MK1 emulation (the mk1 driver was also changed from TESTDRIVER to DRIVER status.)
 -------------------------------------------------------------------------------  
 0.37b14
 
