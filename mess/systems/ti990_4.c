@@ -20,7 +20,7 @@ TODO :
 #include "vidhrdw/generic.h"
 #include "cpu/tms9900/tms9900.h"
 
-void *timer;
+static void *timer;
 
 static void clear_load(int dummy)
 {
@@ -222,92 +222,29 @@ static struct MachineDriver machine_driver_ti990_4 =
 */
 ROM_START(ti990_4)
 	/*CPU memory space*/
-
-#if 0
-
-#if 0
-
 	ROM_REGION16_BE(0x10000, REGION_CPU1,0)
-
-	/* TI990/10 : older boot ROMs for floppy-disk */
-	ROM_LOAD16_BYTE("975383.31", 0xFC00, 0x100, 0x64fcd040)
-	ROM_LOAD16_BYTE("975383.32", 0xFC01, 0x100, 0x64277276)
-	ROM_LOAD16_BYTE("975383.29", 0xFE00, 0x100, 0xaf92e7bf)
-	ROM_LOAD16_BYTE("975383.30", 0xFE01, 0x100, 0xb7b40cdc)
-
-#elif 1
-
-	ROM_REGION16_BE(0x10000, REGION_CPU1,0)
-
-	/* TI990/10 : newer "universal" boot ROMs  */
-	ROM_LOAD16_BYTE("975383.45", 0xFC00, 0x100, 0x391943c7)
-	ROM_LOAD16_BYTE("975383.46", 0xFC01, 0x100, 0xf40f7c18)
-	ROM_LOAD16_BYTE("975383.47", 0xFE00, 0x100, 0x1ba571d8)
-	ROM_LOAD16_BYTE("975383.48", 0xFE01, 0x100, 0x8852b09e)
-
-#else
-
-	ROM_REGION16_BE(0x12000, REGION_CPU1,0)
-
-	/* TI990/12 ROMs - actually incompatible with TI990/4, but I just wanted to disassemble them. */
-	ROM_LOAD16_BYTE("ti2025-7", 0xFC00, 0x1000, 0x4824f89c)
-	ROM_LOAD16_BYTE("ti2025-8", 0xFC01, 0x1000, 0x51fef543)
-	/* the other half of this ROM is not loaded - it makes no sense as TI990/12 machine code, it may
-	be a microcode ROM, but I am not quite sure... */
-
-#endif
-
-#else
-
-	ROM_REGION16_BE(0x10000, REGION_CPU1,0)
-
-
-	ROM_REGION(0x800, REGION_USER1, ROMREGION_DISPOSE)
-	/* boot ROMs */
-	/* since there is no support for nibble-wide ROMs on a 16-bit bus, we use a trick */
 
 	/* test ROM */
-	ROM_LOAD("94519209.u39", 0x000, 0x100, 0x0a0b0c42)
-	ROM_LOAD("94519210.u55", 0x100, 0x100, 0xd078af61)
-	ROM_LOAD("94519211.u61", 0x200, 0x100, 0x6cf7d4a0)
-	ROM_LOAD("94519212.u78", 0x300, 0x100, 0xd9522458)
+	ROMX_LOAD("94519209.u39", 0xFC00, 0x100, 0x0a0b0c42, ROM_NIBBLE | ROM_SHIFT_NIBBLE_HI | ROM_SKIP(1))
+	ROMX_LOAD("94519210.u55", 0xFC00, 0x100, 0xd078af61, ROM_NIBBLE | ROM_SHIFT_NIBBLE_LO | ROM_SKIP(1))
+	ROMX_LOAD("94519211.u61", 0xFC01, 0x100, 0x6cf7d4a0, ROM_NIBBLE | ROM_SHIFT_NIBBLE_HI | ROM_SKIP(1))
+	ROMX_LOAD("94519212.u78", 0xFC01, 0x100, 0xd9522458, ROM_NIBBLE | ROM_SHIFT_NIBBLE_LO | ROM_SKIP(1))
 
 	/* LOAD ROM */
-	ROM_LOAD("94519113.u3", 0x400, 0x100, 0x8719b04e)
-	ROM_LOAD("94519114.u4", 0x500, 0x100, 0x72a040e0)
-	ROM_LOAD("94519115.u6", 0x600, 0x100, 0x9ccf8cca)
-	ROM_LOAD("94519116.u7", 0x700, 0x100, 0xfa387bf3)
+	ROMX_LOAD("94519113.u3", 0xFE00, 0x100, 0x8719b04e, ROM_NIBBLE | ROM_SHIFT_NIBBLE_HI | ROM_SKIP(1))
+	ROMX_LOAD("94519114.u4", 0xFE00, 0x100, 0x72a040e0, ROM_NIBBLE | ROM_SHIFT_NIBBLE_LO | ROM_SKIP(1))
+	ROMX_LOAD("94519115.u6", 0xFE01, 0x100, 0x9ccf8cca, ROM_NIBBLE | ROM_SHIFT_NIBBLE_HI | ROM_SKIP(1))
+	ROMX_LOAD("94519116.u7", 0xFE01, 0x100, 0xfa387bf3, ROM_NIBBLE | ROM_SHIFT_NIBBLE_LO | ROM_SKIP(1))
 
-#endif
 ROM_END
-
-static void ti990_4_load_rom(void)
-{
-#if 1
-	int i;
-	unsigned char *ROM = memory_region(REGION_CPU1);
-	unsigned char *src = memory_region(REGION_USER1);
-
-	for (i=0; i<256; i++)
-	{
-		WRITE_WORD(ROM + 0xFC00 + i*2, (((int) src[0x000+i]) << 12) | (((int) src[0x100+i]) << 8)
-		                        | (((int) src[0x200+i]) << 4) | (((int) src[0x300+i]) << 0) );
-
-		WRITE_WORD(ROM + 0xFE00 + i*2, (((int) src[0x400+i]) << 12) | (((int) src[0x500+i]) << 8)
-		                        | (((int) src[0x600+i]) << 4) | (((int) src[0x700+i]) << 0) );
-	}
-
-#endif
-}
 
 static void init_ti990_4(void)
 {
-	ti990_4_load_rom();
 }
 
 static const struct IODevice io_ti990_4[] =
 {
-	/* of course, there was I/O devices, but I am not advanced enough... */
+	/* of course, there were I/O devices, but I am not advanced enough... */
 	{ IO_END }
 };
 
