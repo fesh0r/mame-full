@@ -133,7 +133,7 @@ enum {
 
 FILTER *filter_init(FILTERMODULE filter, const struct ImageModule *imgmod, int purpose);
 void filter_term(FILTER *f);
-int filter_writetostream(FILTER *f, STREAM *s, const void *buf, int buflen);
+int filter_writetostream(FILTER *f, STREAM *s, /*const*/ void *buf, int buflen);
 int filter_readfromstream(FILTER *f, STREAM *s, void *buf, int buflen);
 int filter_readintobuffer(FILTER *f, STREAM *s);
 
