@@ -615,15 +615,14 @@ void coco3_vh_blink(void)
 
 WRITE_HANDLER(coco3_palette_w)
 {
-	videomap_invalidate_lineinfo();
-
 	data &= 0x3f;
-
 	paletteram[offset] = data;
 
 #if LOG_PALETTE
 	logerror("CoCo3 Palette: %i <== $%02x\n", offset, data);
 #endif
+
+	videomap_invalidate_lineinfo();
 }
 
 int coco3_calculate_rows(int *bordertop, int *borderbottom)
