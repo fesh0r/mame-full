@@ -835,7 +835,7 @@ void msx_memory_init (void)
 				st = (slot_state*)auto_malloc (sizeof (slot_state));
 				if (!st) {
 					logerror ("fatal error: cannot malloc %d\n", 
-								sizeof (slot_state));
+								(int)sizeof (slot_state));
 					continue;
 				}
 				memset (st, 0, sizeof (slot_state));
