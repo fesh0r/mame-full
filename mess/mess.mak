@@ -461,6 +461,7 @@ $(OBJ)/pcshare.a:	   \
 	  $(OBJ)/mess/vidhrdw/pc_mda.o	 \
 	  $(OBJ)/mess/vidhrdw/pc_cga.o	 \
 	  $(OBJ)/mess/vidhrdw/vga.o	     \
+	  $(OBJ)/mess/vidhrdw/pc_video.o \
 
 $(OBJ)/pc.a:	   \
 	  $(OBJ)/mess/vidhrdw/pc_aga.o	 \

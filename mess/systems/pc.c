@@ -32,6 +32,7 @@
 #include "includes/pc_mda.h"
 #include "includes/pc_aga.h"
 #include "includes/pc_t1t.h"
+#include "includes/pc_video.h"
 
 #include "devices/pc_hdc.h"
 #include "includes/pc_ide.h"
@@ -51,7 +52,6 @@
 #include "includes/pc.h"
 
 /* window resizing with dirtybuffering traping in xmess window */
-//#define RESIZING_WORKING
 
 #define ym3812_StdClock 3579545
 
@@ -1234,7 +1234,7 @@ static MACHINE_DRIVER_START( pcmda )
 	MDRV_PALETTE_INIT(pc_mda)
 
 	MDRV_VIDEO_START(pc_mda)
-	MDRV_VIDEO_UPDATE(pc_mda)
+	MDRV_VIDEO_UPDATE(pc_video)
 
     /* sound hardware */
 	MDRV_SOUND_ADD(CUSTOM, pc_sound_interface)
@@ -1256,16 +1256,7 @@ static MACHINE_DRIVER_START( pccga )
 
 	MDRV_MACHINE_INIT(pc_cga)
 
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(80*8, 25*8)
-	MDRV_VISIBLE_AREA(0,80*8-1, 0,25*8-1)
-	MDRV_GFXDECODE(CGA_gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(sizeof(cga_palette) / sizeof(cga_palette[0]))
-	MDRV_COLORTABLE_LENGTH(sizeof(cga_colortable) / sizeof(cga_colortable[0]))
-	MDRV_PALETTE_INIT(pc_cga)
-
-	MDRV_VIDEO_START(pc_cga)
-	MDRV_VIDEO_UPDATE(pc_cga)
+	MDRV_IMPORT_FROM( pcvideo_cga )
 
     /* sound hardware */
 	MDRV_SOUND_ADD(CUSTOM, pc_sound_interface)
@@ -1296,7 +1287,7 @@ static MACHINE_DRIVER_START( europc )
 	MDRV_PALETTE_INIT(pc_aga)
 
 	MDRV_VIDEO_START(pc_aga)
-	MDRV_VIDEO_UPDATE(pc_aga)
+	MDRV_VIDEO_UPDATE(pc_video)
 
     /* sound hardware */
 	MDRV_SOUND_ADD(CUSTOM, pc_sound_interface)
@@ -1317,17 +1308,7 @@ static MACHINE_DRIVER_START( xtcga )
 
 	MDRV_MACHINE_INIT(pc_cga)
 
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-
-	MDRV_SCREEN_SIZE(80*8, 25*8)
-	MDRV_VISIBLE_AREA(0,80*8-1, 0,25*8-1)
-	MDRV_GFXDECODE(CGA_gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(sizeof(cga_palette) / sizeof(cga_palette[0]))
-	MDRV_COLORTABLE_LENGTH(sizeof(cga_colortable) / sizeof(cga_colortable[0]))
-	MDRV_PALETTE_INIT(pc_cga)
-
-	MDRV_VIDEO_START(pc_cga)
-	MDRV_VIDEO_UPDATE(pc_cga)
+	MDRV_IMPORT_FROM( pcvideo_cga )
 
     /* sound hardware */
 	MDRV_SOUND_ADD(CUSTOM, pc_sound_interface)
@@ -1358,7 +1339,7 @@ static MACHINE_DRIVER_START( pc200 )
 	MDRV_PALETTE_INIT(pc_aga)
 
 	MDRV_VIDEO_START(pc_aga)
-	MDRV_VIDEO_UPDATE(pc_aga)
+	MDRV_VIDEO_UPDATE(pc_video)
 
     /* sound hardware */
 	MDRV_SOUND_ADD(CUSTOM, pc_sound_interface)
@@ -1374,16 +1355,7 @@ static MACHINE_DRIVER_START( pc1512 )
 
 	MDRV_MACHINE_INIT(pc_aga)
 
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(80*8, 25*8)
-	MDRV_VISIBLE_AREA(0,80*8-1, 0,25*8-1)
-	MDRV_GFXDECODE(CGA_gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(sizeof(cga_palette) / sizeof(cga_palette[0]))
-	MDRV_COLORTABLE_LENGTH(sizeof(cga_colortable) / sizeof(cga_colortable[0]))
-	MDRV_PALETTE_INIT(pc_cga)
-
-	MDRV_VIDEO_START(pc1512)
-	MDRV_VIDEO_UPDATE(pc1512)
+	MDRV_IMPORT_FROM( pcvideo_pc1512 )
 
     /* sound hardware */
 	MDRV_SOUND_ADD(CUSTOM, pc_sound_interface)

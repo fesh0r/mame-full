@@ -31,6 +31,7 @@
 
 #include "includes/crtc6845.h"
 #include "includes/pc_cga.h"
+#include "includes/pc_video.h"
 #include "mscommon.h"
 
 #define VERBOSE_CGA 0		/* CGA (Color Graphics Adapter) */
@@ -41,6 +42,30 @@
 #else
 #define CGA_LOG(n,m,a)
 #endif
+
+/***************************************************************************
+
+	Static declarations
+
+***************************************************************************/
+
+static VIDEO_START( pc_cga );
+static PALETTE_INIT( pc_cga );
+
+/***************************************************************************
+
+	MachineDriver stuff
+
+	Note - two character ROMs needed:
+
+		// cutted from some aga char rom
+		// 256 8x8 thick chars
+		// 256 8x8 thin chars
+		ROM_LOAD("cga.chr",     0x00000, 0x01000, 0x42009069)
+		// first font of above
+		ROM_LOAD("cga2.chr", 0x00000, 0x800, 0xa362ffe6)
+
+***************************************************************************/
 
 unsigned char cga_palette[16][3] = {
 /*  normal colors */
@@ -63,7 +88,8 @@ unsigned char cga_palette[16][3] = {
 	{ 0xff,0xff,0xff }
 };
 
-unsigned short cga_colortable[] = {
+unsigned short cga_colortable[] =
+{
      0, 0, 0, 1, 0, 2, 0, 3, 0, 4, 0, 5, 0, 6, 0, 7, 0, 8, 0, 9, 0,10, 0,11, 0,12, 0,13, 0,14, 0,15,
      1, 0, 1, 1, 1, 2, 1, 3, 1, 4, 1, 5, 1, 6, 1, 7, 1, 8, 1, 9, 1,10, 1,11, 1,12, 1,13, 1,14, 1,15,
      2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 2, 5, 2, 6, 2, 7, 2, 8, 2, 9, 2,10, 2,11, 2,12, 2,13, 2,14, 2,15,
@@ -131,13 +157,37 @@ struct GfxLayout CGA_gfxlayout_2bpp =
     8                       /* every code takes 1 byte */
 };
 
-struct GfxDecodeInfo CGA_gfxdecodeinfo[] =
+static struct GfxDecodeInfo CGA_gfxdecodeinfo[] =
 {
 	{ 1, 0x0000, &CGA_charlayout,			  0, 256 },   /* single width */
 	{ 1, 0x1000, &CGA_gfxlayout_1bpp,	  256*2,  16 },   /* 640x400x1 gfx */
 	{ 1, 0x1000, &CGA_gfxlayout_2bpp, 256*2+16*2,   2 },   /* 320x200x4 gfx */
     { -1 } /* end of array */
 };
+
+MACHINE_DRIVER_START( pcvideo_cga )
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(80*8, 25*8)
+	MDRV_VISIBLE_AREA(0,80*8-1, 0,25*8-1)
+	MDRV_GFXDECODE(CGA_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(sizeof(cga_palette) / sizeof(cga_palette[0]))
+	MDRV_COLORTABLE_LENGTH(sizeof(cga_colortable) / sizeof(cga_colortable[0]))
+	MDRV_PALETTE_INIT(pc_cga)
+
+	MDRV_VIDEO_START(pc_cga)
+	MDRV_VIDEO_UPDATE(pc_video)
+MACHINE_DRIVER_END
+
+MACHINE_DRIVER_START( pcvideo_pc1512 )
+	MDRV_IMPORT_FROM( pcvideo_cga )
+	MDRV_VIDEO_START( pc1512 )
+MACHINE_DRIVER_END
+
+/***************************************************************************
+
+	Methods
+
+***************************************************************************/
 
 /* Initialise the cga palette */
 PALETTE_INIT( pc_cga )
@@ -178,9 +228,7 @@ void pc_cga_init_video(struct _CRTC6845 *crtc)
 VIDEO_START( pc_cga )
 {
 	cga.crtc = crtc6845;
-	crtc6845_init(cga.crtc, &config);
-
-    return video_start_generic();
+	return pc_video_start(cga.crtc, &config, pc_cga_choosevideomode);
 }
 
 WRITE_HANDLER ( pc_cga_videoram_w )
@@ -493,16 +541,19 @@ static void cga_gfx_1bpp(struct mame_bitmap *bitmap)
 static void cga_text_inten_bw(struct mame_bitmap *bitmap)
 {
 	/* NYI */
+	cga_text_inten(bitmap);
 }
 
 static void cga_text_blink_bw(struct mame_bitmap *bitmap)
 {
 	/* NYI */
+	cga_text_blink(bitmap);
 }
 
 static void cga_gfx_2bpp_bw(struct mame_bitmap *bitmap)
 {
 	/* NYI */
+	cga_gfx_2bpp(bitmap);
 }
 
 // amstrad pc1512 video hardware
@@ -591,17 +642,13 @@ extern void pc_cga_timer(void)
 	
 
 /***************************************************************************
-  Draw the game screen in the given mame_bitmap.
-  Do NOT call osd_update_display() from this function,
-  it will be called by the main emulation engine.
+  Choose the appropriate video mode
 ***************************************************************************/
-VIDEO_UPDATE( pc_cga )
+pc_video_update_proc pc_cga_choosevideomode(int *xfactor, int *yfactor)
 {
-	static int width=0, height=0;
-	UINT8 mode;
-	int w,h;
-	void (*proc)(struct mame_bitmap *);
+	pc_video_update_proc proc = NULL;
 	void (**procarray)(struct mame_bitmap *);
+	UINT8 mode;
 
 	static void (*videoprocs_cga[])(struct mame_bitmap *) =
 	{
@@ -641,18 +688,6 @@ VIDEO_UPDATE( pc_cga )
 		pc1512_gfx_4bpp,	pc1512_gfx_4bpp,	pc1512_gfx_4bpp,	pc1512_gfx_4bpp
 	};
 
-    /* draw entire scrbitmap because of usrintrf functions
-	   called osd_clearbitmap or attr change / scanline change */
-	/*if( crtc6845_do_full_refresh(cga.crtc)||full_refresh )
-	{
-		cga.full_refresh = 0;
-		memset(dirtybuffer, 1, videoram_size);
-		fillbitmap(bitmap, Machine->pens[0], &Machine->visible_area);
-    }*/
-
-	w = crtc6845_get_char_columns(cga.crtc) * 8;
-	h = crtc6845_get_char_height(cga.crtc) * crtc6845_get_char_lines(cga.crtc);
-
 	if (cga.mode_control & 0x08)
 	{
 		mode = (cga.mode_control & 0x07) | ((cga.mode_control & 0x30) / 2);
@@ -660,25 +695,9 @@ VIDEO_UPDATE( pc_cga )
 		procarray = (cga.type == TYPE_PC1512) ? videoprocs_pc1512 : videoprocs_cga;
 		proc = procarray[mode];
 
-		proc(bitmap);
-		if (proc == cga_gfx_1bpp)
-			w *= 2;
+		*xfactor = (proc == cga_gfx_1bpp) ? 16 : 8;
 	}
-
-	if ((width != w) || (height != h)) 
-	{
-		width=w;
-		height=h;
-		if (width > Machine->visible_area.max_x)
-			width = Machine->visible_area.max_x+1;
-		if (height > Machine->visible_area.max_y)
-			height = Machine->visible_area.max_y+1;
-
-		if ((width>100) && (height>100))
-			set_visible_area(0,width-1,0, height-1);
-		else
-			logerror("video %d %d\n",width, height);
-	}
+	return proc;
 }
 
 static struct {
@@ -728,9 +747,4 @@ VIDEO_START( pc1512 )
 	pc1512.write = 0xf;
 	pc1512.read = 0;
 	return video_start_pc_cga();
-}
-
-VIDEO_UPDATE( pc1512 )
-{
-	video_update_pc_cga(bitmap, cliprect, do_skip);
 }

@@ -1,3 +1,4 @@
+#include "includes/pc_video.h"
 
 /*void pc_mda_init(void);*/
 
@@ -7,16 +8,18 @@
     ROM_LOAD("mda.chr",     0x00000, 0x01000, 0xac1686f3)
 #endif
 
-extern void pc_mda_init_video(struct _CRTC6845 *crtc);
-extern void pc_mda_europc_init(struct _CRTC6845 *crtc);
+void pc_mda_init_video(struct _CRTC6845 *crtc);
+void pc_mda_europc_init(struct _CRTC6845 *crtc);
 
-extern void pc_mda_timer(void);
-extern VIDEO_START ( pc_mda );
-extern VIDEO_UPDATE ( pc_mda );
-extern WRITE_HANDLER ( pc_mda_videoram_w );
+void pc_mda_timer(void);
 
-extern WRITE_HANDLER ( pc_MDA_w );
-extern READ_HANDLER ( pc_MDA_r );
+VIDEO_START ( pc_mda );
+pc_video_update_proc pc_mda_choosevideomode(int *xfactor, int *yfactor);
+
+WRITE_HANDLER ( pc_mda_videoram_w );
+
+WRITE_HANDLER ( pc_MDA_w );
+READ_HANDLER ( pc_MDA_r );
 
 extern unsigned char mda_palette[4][3];
 extern struct GfxLayout pc_mda_charlayout;
@@ -24,7 +27,7 @@ extern struct GfxLayout pc_mda_gfxlayout_1bpp;
 extern struct GfxDecodeInfo pc_mda_gfxdecodeinfo[];
 extern unsigned short mda_colortable[256*2+1*2];
 
-extern PALETTE_INIT( pc_mda );
+PALETTE_INIT( pc_mda );
 
 //internal use
 void pc_mda_cursor(CRTC6845_CURSOR *cursor);

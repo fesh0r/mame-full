@@ -24,17 +24,18 @@ System Driver Changes:
 
 - [COCO] PIA properly resets. [Nate Woods]
 
-- [PC] Fixed a bug in CGA rendering (bug #339). [Nate Woods]
+- [PC] Fixed bugs in CGA and MDA rendering (bugs #339 and #374). [Nate Woods]
 
 - [SNES] Improved 16x16 background tile mode. Fixed another GDMA bug. Various
   mode 7 fixes. Fixed background priorities in modes 2 to 7. Added support for
   direct select to mode 7. [Anthony Kruize]
 
-- [SUPERGB/GBCOLOR] No longer marked as clones of the GameBoy.[Anthony Kruize]
+- [SUPERGB/GBCOLOR] No longer marked as clones of the GameBoy. [Anthony
+  Kruize]
 
 - [TI99] Added support for Thierry Nouspickel's IDE card prototype. Added
-  incomplete but working support for the HFDC disk controller card and 80-track
-  drives. Added support for a fourth floppy drive with non-TI floppy
+  incomplete but working support for the HFDC disk controller card and 80-
+  track drives. Added support for a fourth floppy drive with non-TI floppy
   controllers. Fixed Super AMS memory card emulation. [Raphael Nabet]
 
 

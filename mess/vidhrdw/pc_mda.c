@@ -103,8 +103,6 @@ static struct {
 
 	UINT8 status;
 
-	int full_refresh;
-
 	int pc_blink;
 	int pc_framecnt;
 
@@ -197,9 +195,7 @@ extern void pc_mda_europc_init(struct _CRTC6845 *crtc)
 VIDEO_START( pc_mda )
 {
 	pc_mda_init_video(crtc6845);
-	crtc6845_init(mda.crtc, &config);
-
-    return video_start_generic();
+	return pc_video_start(mda.crtc, &config, pc_mda_choosevideomode);
 }
 
 WRITE_HANDLER ( pc_mda_videoram_w )
@@ -218,7 +214,7 @@ static void hercules_mode_control_w(int data)
 	MDA_LOG(1,"MDA_mode_control_w",(errorlog, "$%02x: colums %d, gfx %d, enable %d, blink %d\n",
 		data, (data&1)?80:40, (data>>1)&1, (data>>3)&1, (data>>5)&1));
 	mda.mode_control = data;
-	mda.full_refresh=1;
+	schedule_full_refresh();
 }
 
 /*	R-	CRT status register (see #P139)
@@ -243,7 +239,7 @@ static void hercules_config_w(int data)
 {
 	MDA_LOG(1,"HGC_config_w",(errorlog, "$%02x\n", data));
     mda.configuration_switch = data;
-	mda.full_refresh=1;
+	schedule_full_refresh();
 }
 
 /*************************************************************************
@@ -456,52 +452,27 @@ static void hercules_gfx(struct mame_bitmap *bitmap)
 }
 
 /***************************************************************************
-  Draw the game screen in the given mame_bitmap.
-  Do NOT call osd_update_display() from this function,
-  it will be called by the main emulation engine.
- ***************************************************************************/
-VIDEO_UPDATE( pc_mda )
+  Choose the appropriate video mode
+***************************************************************************/
+pc_video_update_proc pc_mda_choosevideomode(int *xfactor, int *yfactor)
 {
-	static int video_active = 0;
-	static int width=0, height=0;
-	int w,h;
+	pc_video_update_proc proc = NULL;
 
-    /* draw entire scrbitmap because of usrintrf functions
-	   called osd_clearbitmap or attr change / scanline change */
-	/*if( crtc6845_do_full_refresh(mda.crtc)||full_refresh||mda.full_refresh )*/
-	{
-		mda.full_refresh=0;
-		memset(dirtybuffer, 1, videoram_size);
-		fillbitmap(bitmap, Machine->pens[0], &Machine->visible_area);
-		video_active = 0;
+	switch (mda.mode_control & 0x2a) { /* text and gfx modes */
+	case 0x08:
+		proc = mda_text_inten;
+		*xfactor = 9;
+		break;
+	case 0x28:
+		proc = mda_text_blink;
+		*xfactor = 9;
+		break;
+	case 0x0a:
+	case 0x2a:
+		proc = hercules_gfx;
+		*xfactor = 16;
+		break;
     }
-
-	h=crtc6845_get_char_height(mda.crtc)*crtc6845_get_char_lines(mda.crtc);
-	w=crtc6845_get_char_columns(mda.crtc);
-
-	switch (mda.mode_control & 0x2a) /* text and gfx modes */
-	{
-		case 0x08: video_active = 10; mda_text_inten(bitmap);w*=9; break;
-		case 0x28: video_active = 10; mda_text_blink(bitmap);w*=9; break;
-		case 0x0a: video_active = 10; hercules_gfx(bitmap);w*=8; break;
-		case 0x2a: video_active = 10; hercules_gfx(bitmap);w*=8; break;
-
-        default:
-			if (video_active && --video_active == 0)
-				fillbitmap(bitmap, Machine->pens[0], &Machine->visible_area);
-    }
-
-	if ( (width!=w)||(height!=h) ) 
-	{
-		width=w;
-		height=h;
-		if (width>Machine->visible_area.max_x) width=Machine->visible_area.max_x+1;
-		if (height>Machine->visible_area.max_y) height=Machine->visible_area.max_y+1;
-		if ((width>100)&&(height>100))
-			set_visible_area(0,width-1,0, height-1);
-		else logerror("video %d %d\n",width, height);
-	}
-
-//	statetext_display(bitmap);
+	return proc;
 }
 

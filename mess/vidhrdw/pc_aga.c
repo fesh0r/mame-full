@@ -3,7 +3,11 @@
 #include "includes/pc_mda.h"
 #include "includes/crtc6845.h"
 #include "includes/amstr_pc.h"
+#include "includes/pc_video.h"
 #include "vidhrdw/generic.h"
+
+static pc_video_update_proc pc_aga_choosevideomode(int *xfactor, int *yfactor);
+
 
 struct GfxLayout europc_cga_charlayout =
 {
@@ -70,8 +74,6 @@ PALETTE_INIT( pc_aga )
 	memcpy((char*)colortable+sizeof(cga_colortable), mda_colortable, sizeof(mda_colortable));
 }
 
-
-
 static struct {
 	AGA_MODE mode;
 } aga= { AGA_OFF };
@@ -117,33 +119,29 @@ VIDEO_START( pc_aga )
 	pc_mda_europc_init(crtc6845);
 	pc_cga_init_video(crtc6845);
 
+	return pc_video_start(crtc6845, &config, pc_aga_choosevideomode);
+
 	return video_start_generic();
 }
 
-VIDEO_UPDATE( pc_aga )
+/***************************************************************************
+  Choose the appropriate video mode
+***************************************************************************/
+static pc_video_update_proc pc_aga_choosevideomode(int *xfactor, int *yfactor)
 {
+	pc_video_update_proc proc = NULL;
+
 	switch (aga.mode) {
 	case AGA_COLOR:
-		video_update_pc_cga(bitmap, cliprect, do_skip);
+		proc =  pc_cga_choosevideomode(xfactor, yfactor);
 		break;
 	case AGA_MONO:
-		video_update_pc_mda(bitmap, cliprect, do_skip);
+		proc =  pc_mda_choosevideomode(xfactor, yfactor);
 		break;
 	case AGA_OFF:
 		break;
 	}
-}
-
-static VIDEO_UPDATE( pc200 )
-{
-	switch (PC200_MODE) {
-	case PC200_MDA:
-		video_update_pc_mda(bitmap, cliprect, do_skip);
-		break;
-	default:
-		video_update_pc_cga(bitmap, cliprect, do_skip);
-		break;
-	}
+	return proc;
 }
 
 extern WRITE_HANDLER ( pc_aga_videoram_w )

@@ -15,6 +15,7 @@
 #include "includes/vga.h"
 #include "includes/pc_cga.h"
 #include "includes/pc_mda.h"
+#include "includes/pc_video.h"
 
 #include "devices/pc_hdc.h"
 #include "includes/pc_ide.h"
@@ -32,7 +33,6 @@
 #include "includes/pcshare.h"
 
 /* window resizing with dirtybuffering traping in xmess window */
-//#define RESIZING_WORKING
 
 #define ym3812_StdClock 3579545
 
@@ -429,20 +429,7 @@ static MACHINE_DRIVER_START( atcga )
 
 	MDRV_MACHINE_INIT( at )
 
-#ifdef RESIZING_WORKING
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-#else
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-#endif
-	MDRV_SCREEN_SIZE(80*8, 25*8)
-	MDRV_VISIBLE_AREA(0,80*8-1, 0,25*8-1)
-	MDRV_GFXDECODE(CGA_gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(sizeof(cga_palette) / sizeof(cga_palette[0]))
-	MDRV_COLORTABLE_LENGTH(sizeof(cga_colortable) / sizeof(cga_colortable[0]))
-	MDRV_PALETTE_INIT(pc_cga)
-
-	MDRV_VIDEO_START(pc_cga)
-	MDRV_VIDEO_UPDATE(pc_cga)
+	MDRV_IMPORT_FROM( pcvideo_cga )
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(CUSTOM, pc_sound_interface)
@@ -466,11 +453,7 @@ static MACHINE_DRIVER_START( ps2m30286 )
 
 	MDRV_MACHINE_INIT( at_vga )
 
-#ifdef RESIZING_WORKING
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-#else
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-#endif
 	MDRV_SCREEN_SIZE(720, 480)
 	MDRV_VISIBLE_AREA(0,720-1, 0,480-1)
 	MDRV_GFXDECODE(vga_gfxdecodeinfo)
@@ -503,11 +486,7 @@ static MACHINE_DRIVER_START( atvga )
 
 	MDRV_MACHINE_INIT( at_vga )
 
-#ifdef RESIZING_WORKING
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-#else
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-#endif
 	MDRV_SCREEN_SIZE(720, 480)
 	MDRV_VISIBLE_AREA(0,720-1, 0,480-1)
 	MDRV_GFXDECODE(vga_gfxdecodeinfo)
