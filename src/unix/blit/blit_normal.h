@@ -77,7 +77,7 @@ BLIT_END
 /* some left overs of the old blit code which we might need when re-implementing
    black scanlines */
 
-#if 0 // def SCANLINES
+#if 0 /* def SCANLINES */
 #define LOOP() \
 if (sysdep_display_params.orientation) { \
   if (sysdep_display_properties.mode_info[sysdep_display_params.video_mode] & \
@@ -141,7 +141,7 @@ if (sysdep_display_params.orientation) { \
 #endif /* SCANLINES? */
 
 /* Normal, speedup hack in case we just have to memcpy */
-#if 0 // #ifdef SCANLINES
+#if 0 /* #ifdef SCANLINES */
 if (sysdep_display_params.orientation) {
   if (sysdep_display_properties.mode_info[sysdep_display_params.video_mode] &
       SYSDEP_DISPLAY_DIRECT_FB)
@@ -181,7 +181,7 @@ if (sysdep_display_params.orientation) {
 }
 #endif /* SCANLINES? */
 
-#if 0 // non scanlines speedup hack */
+#if 0 /* non scanlines speedup hack */
 if (sysdep_display_params.orientation) {
   if (sysdep_display_properties.mode_info[sysdep_display_params.video_mode] &
       SYSDEP_DISPLAY_DIRECT_FB)
