@@ -2587,7 +2587,7 @@ static const struct IODevice io_pc[] = {
         NULL,               /* info */
         NULL,               /* open */
         NULL,               /* close */
-        NULL,               /* status */
+        floppy_status,               /* status */
         NULL,               /* seek */
 		NULL,				/* tell */
         NULL,               /* input */
