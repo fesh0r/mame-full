@@ -22,6 +22,12 @@
 #include "includes/apple2.h"
 #include "image.h"
 
+#ifdef MAME_DEBUG
+#define LOG(x)	logerror x
+#else
+#define LOG(x)
+#endif /* MAME_DEBUG */
+
 #define TOTAL_TRACKS		35 /* total number of tracks we support, can be 40 */
 #define NIBBLE_SIZE			374
 
@@ -111,7 +117,7 @@ int apple2_floppy_init(int id, void *f, int open_mode)
 	{
 		if (osd_fseek(f,256*16*t,SEEK_CUR)!=0)
 		{
-			logerror("Couldn't find track %d.\n", t);
+			LOG(("Couldn't find track %d.\n", t));
 			return INIT_FAIL;
 		}
 
@@ -126,13 +132,13 @@ int apple2_floppy_init(int id, void *f, int open_mode)
 			sec_pos = 256*r_skewing6[s] + t*256*16;
 			if (osd_fseek(f,sec_pos,SEEK_SET)!=0)
 			{
-				logerror("Couldn't find sector %d.\n", s);
+				LOG(("Couldn't find sector %d.\n", s));
 				return INIT_FAIL;
 			}
 
 			if (osd_fread(f,data,256)<256)
 			{
-				logerror("Couldn't read track %d sector %d (pos: %d).\n", t, s, sec_pos);
+				LOG(("Couldn't read track %d sector %d (pos: %d).\n", t, s, sec_pos));
 				return INIT_FAIL;
 			}
 
@@ -254,7 +260,7 @@ static int ReadByte(int drive)
 		a2_drives[drive].bytepos = 0;
 	}
 
-//	logerror("pos: %d (track %d sector %d)\n", a2_drives[drive].bytepos, a2_drives[drive].track / 2, a2_drives[drive].bytepos / NIBBLE_SIZE);
+//	LOG(("pos: %d (track %d sector %d)\n", a2_drives[drive].bytepos, a2_drives[drive].track / 2, a2_drives[drive].bytepos / NIBBLE_SIZE));
 	return value;
 }
 
@@ -290,7 +296,7 @@ READ_HANDLER ( apple2_c0xx_slot6_r )
 			if (phase==3)				        a2_drives[cur_drive].track--;
 			if (a2_drives[cur_drive].track<0)	a2_drives[cur_drive].track=0;
 			a2_drives[cur_drive].trackpos = (a2_drives[cur_drive].track/2) * NIBBLE_SIZE*16;
-			logerror("new track: %02x\n", a2_drives[cur_drive].track / 2);
+			LOG(("new track: %02x\n", a2_drives[cur_drive].track / 2));
 			break;
 		/* MOTOROFF */
 		case 0x08:
@@ -378,7 +384,7 @@ WRITE_HANDLER (  apple2_c0xx_slot6_w )
 			disk6byte = data;
 			break;
 		default:	/* Otherwise, do same as slot6_r ? */
-			logerror("slot6_w\n");
+			LOG(("slot6_w\n"));
 			apple2_c0xx_slot6_r(offset);
 			break;
 	}

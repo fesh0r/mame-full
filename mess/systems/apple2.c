@@ -9,6 +9,7 @@ This family of computers bank-switches everything up the wazoo.
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "includes/apple2.h"
+#include "inputx.h"
 
 static MEMORY_READ_START( readmem_apple2 )
     { 0x0000, 0x01ff, MRA_BANK4 },
@@ -84,83 +85,82 @@ INPUT_PORTS_START( apple2 )
     PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_VBLANK )
 
     PORT_START /* KEYS #1 */
-    PORT_BITX( 0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Backsp ", KEYCODE_BACKSPACE,   IP_JOY_NONE )
-    PORT_BITX( 0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Left   ", KEYCODE_LEFT,        IP_JOY_NONE )
-    PORT_BITX( 0x04, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Tab    ", KEYCODE_TAB,         IP_JOY_NONE )
-    PORT_BITX( 0x08, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Down   ", KEYCODE_DOWN,        IP_JOY_NONE )
-    PORT_BITX( 0x10, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Up     ", KEYCODE_UP,          IP_JOY_NONE )
-    PORT_BITX( 0x20, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Enter  ", KEYCODE_ENTER,       IP_JOY_NONE )
-    PORT_BITX( 0x40, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Right  ", KEYCODE_RIGHT,       IP_JOY_NONE )
-    PORT_BITX( 0x80, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Escape ", KEYCODE_ESC,         IP_JOY_NONE )
+    PORT_KEY1( 0x01, IP_ACTIVE_HIGH, "Backsp ", 		KEYCODE_BACKSPACE,   IP_JOY_NONE, 8 )
+    PORT_KEY0( 0x02, IP_ACTIVE_HIGH, "Left   ", 		KEYCODE_LEFT,        IP_JOY_NONE )
+    PORT_KEY1( 0x04, IP_ACTIVE_HIGH, "Tab    ", 		KEYCODE_TAB,         IP_JOY_NONE, 9 )
+    PORT_KEY1( 0x08, IP_ACTIVE_HIGH, "Down   ", 		KEYCODE_DOWN,        IP_JOY_NONE, 10 )
+    PORT_KEY0( 0x10, IP_ACTIVE_HIGH, "Up     ", 		KEYCODE_UP,          IP_JOY_NONE )
+    PORT_KEY1( 0x20, IP_ACTIVE_HIGH, "Enter  ", 		KEYCODE_ENTER,       IP_JOY_NONE, 13 )
+    PORT_KEY0( 0x40, IP_ACTIVE_HIGH, "Right  ", 		KEYCODE_RIGHT,       IP_JOY_NONE )
+    PORT_KEY1( 0x80, IP_ACTIVE_HIGH, "Escape ",			KEYCODE_ESC,         IP_JOY_NONE, 27 )
 
     PORT_START /* KEYS #2 */
-    PORT_BITX( 0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Space  ", KEYCODE_SPACE,       IP_JOY_NONE )
-    PORT_BITX( 0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD, "'      ", KEYCODE_QUOTE,       IP_JOY_NONE )
-    PORT_BITX( 0x04, IP_ACTIVE_HIGH, IPT_KEYBOARD, ",      ", KEYCODE_COMMA,       IP_JOY_NONE )
-    PORT_BITX( 0x08, IP_ACTIVE_HIGH, IPT_KEYBOARD, "-      ", KEYCODE_MINUS,       IP_JOY_NONE )
-    PORT_BITX( 0x10, IP_ACTIVE_HIGH, IPT_KEYBOARD, ".      ", KEYCODE_STOP,        IP_JOY_NONE )
-    PORT_BITX( 0x20, IP_ACTIVE_HIGH, IPT_KEYBOARD, "/ ?    ", KEYCODE_SLASH,       IP_JOY_NONE )
-    PORT_BITX( 0x40, IP_ACTIVE_HIGH, IPT_KEYBOARD, "0      ", KEYCODE_0,           IP_JOY_NONE )
-    PORT_BITX( 0x80, IP_ACTIVE_HIGH, IPT_KEYBOARD, "1      ", KEYCODE_1,           IP_JOY_NONE )
+    PORT_KEY1( 0x01, IP_ACTIVE_HIGH, "Space  ", 		KEYCODE_SPACE,		IP_JOY_NONE, ' ' )
+    PORT_KEY1( 0x02, IP_ACTIVE_HIGH, "'      ", 		KEYCODE_QUOTE,		IP_JOY_NONE, '\'' )
+    PORT_KEY1( 0x04, IP_ACTIVE_HIGH, ",      ", 		KEYCODE_COMMA,		IP_JOY_NONE, ',' )
+    PORT_KEY1( 0x08, IP_ACTIVE_HIGH, "-      ", 		KEYCODE_MINUS,		IP_JOY_NONE, '-' )
+    PORT_KEY1( 0x10, IP_ACTIVE_HIGH, ".      ", 		KEYCODE_STOP,		IP_JOY_NONE, '.' )
+    PORT_KEY2( 0x20, IP_ACTIVE_HIGH, "/ ?    ", 		KEYCODE_SLASH,		IP_JOY_NONE, '/', '?' )
+    PORT_KEY2( 0x40, IP_ACTIVE_HIGH, "0      ", 		KEYCODE_0,			IP_JOY_NONE, '0', ')' )
+    PORT_KEY2( 0x80, IP_ACTIVE_HIGH, "1      ", 		KEYCODE_1,			IP_JOY_NONE, '1', '!' )
 
     PORT_START /* KEYS #3 */
-    PORT_BITX( 0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD, "2      ", KEYCODE_2,           IP_JOY_NONE )
-    PORT_BITX( 0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD, "3      ", KEYCODE_3,           IP_JOY_NONE )
-    PORT_BITX( 0x04, IP_ACTIVE_HIGH, IPT_KEYBOARD, "4      ", KEYCODE_4,           IP_JOY_NONE )
-    PORT_BITX( 0x08, IP_ACTIVE_HIGH, IPT_KEYBOARD, "5      ", KEYCODE_5,           IP_JOY_NONE )
-    PORT_BITX( 0x10, IP_ACTIVE_HIGH, IPT_KEYBOARD, "6      ", KEYCODE_6,           IP_JOY_NONE )
-    PORT_BITX( 0x20, IP_ACTIVE_HIGH, IPT_KEYBOARD, "7      ", KEYCODE_7,           IP_JOY_NONE )
-    PORT_BITX( 0x40, IP_ACTIVE_HIGH, IPT_KEYBOARD, "8      ", KEYCODE_8,           IP_JOY_NONE )
-    PORT_BITX( 0x80, IP_ACTIVE_HIGH, IPT_KEYBOARD, "9      ", KEYCODE_9,           IP_JOY_NONE )
+    PORT_KEY2( 0x01, IP_ACTIVE_HIGH, "2      ", 		KEYCODE_2,			IP_JOY_NONE, '2', '\"' )
+	PORT_KEY2( 0x02, IP_ACTIVE_HIGH, "3      ", 		KEYCODE_3,			IP_JOY_NONE, '3', '#' )
+    PORT_KEY2( 0x04, IP_ACTIVE_HIGH, "4      ", 		KEYCODE_4,			IP_JOY_NONE, '4', '$' )
+    PORT_KEY2( 0x08, IP_ACTIVE_HIGH, "5      ", 		KEYCODE_5,			IP_JOY_NONE, '5', '%' )
+    PORT_KEY2( 0x10, IP_ACTIVE_HIGH, "6      ", 		KEYCODE_6,			IP_JOY_NONE, '6', '^' )
+    PORT_KEY2( 0x20, IP_ACTIVE_HIGH, "7      ", 		KEYCODE_7,			IP_JOY_NONE, '7', '&' )
+    PORT_KEY2( 0x40, IP_ACTIVE_HIGH, "8      ", 		KEYCODE_8,			IP_JOY_NONE, '8', '*' )
+    PORT_KEY2( 0x80, IP_ACTIVE_HIGH, "9      ",			KEYCODE_9,			IP_JOY_NONE, '9', '(' )
 
     PORT_START /* KEYS #4 */
-    PORT_BITX( 0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD, ":      ", KEYCODE_COLON,       IP_JOY_NONE )
-    PORT_BITX( 0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD, "=      ", KEYCODE_EQUALS,      IP_JOY_NONE )
-    PORT_BITX( 0x04, IP_ACTIVE_HIGH, IPT_KEYBOARD, "[ {    ", KEYCODE_OPENBRACE,   IP_JOY_NONE )
-    PORT_BITX( 0x08, IP_ACTIVE_HIGH, IPT_KEYBOARD, "\\ |    ", KEYCODE_BACKSLASH,   IP_JOY_NONE )
-    PORT_BITX( 0x10, IP_ACTIVE_HIGH, IPT_KEYBOARD, "] }    ", KEYCODE_CLOSEBRACE,  IP_JOY_NONE )
-    PORT_BITX( 0x20, IP_ACTIVE_HIGH, IPT_KEYBOARD, "^ ~    ", KEYCODE_TILDE,       IP_JOY_NONE )
-    PORT_BITX( 0x40, IP_ACTIVE_HIGH, IPT_KEYBOARD, "a A    ", KEYCODE_A,           IP_JOY_NONE )
-    PORT_BITX( 0x80, IP_ACTIVE_HIGH, IPT_KEYBOARD, "b B    ", KEYCODE_B,           IP_JOY_NONE )
+	PORT_KEY1( 0x01, IP_ACTIVE_HIGH, ":      ", 		KEYCODE_COLON,		IP_JOY_NONE, ':' )
+    PORT_KEY1( 0x02, IP_ACTIVE_HIGH, "=      ", 		KEYCODE_EQUALS,		IP_JOY_NONE, '=' )
+	PORT_KEY2( 0x04, IP_ACTIVE_HIGH, "[ {    ", 		KEYCODE_OPENBRACE,	IP_JOY_NONE, '[', '{' )
+    PORT_KEY2( 0x08, IP_ACTIVE_HIGH, "\\ |    ", 		KEYCODE_BACKSLASH,	IP_JOY_NONE, '\\', '|' )
+	PORT_KEY2( 0x10, IP_ACTIVE_HIGH, "] }    ",			KEYCODE_CLOSEBRACE,	IP_JOY_NONE, ']', '}' )
+    PORT_KEY2( 0x20, IP_ACTIVE_HIGH, "^ ~    ",			KEYCODE_TILDE,		IP_JOY_NONE, '^', '~' )
+    PORT_KEY2( 0x40, IP_ACTIVE_HIGH, "a A    ", 		KEYCODE_A,			IP_JOY_NONE, 'a', 'A' )
+    PORT_KEY2( 0x80, IP_ACTIVE_HIGH, "b B    ", 		KEYCODE_B,			IP_JOY_NONE, 'b', 'B' )
 
     PORT_START /* KEYS #5 */
-    PORT_BITX( 0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD, "c C    ", KEYCODE_C,           IP_JOY_NONE )
-    PORT_BITX( 0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD, "d D    ", KEYCODE_D,           IP_JOY_NONE )
-    PORT_BITX( 0x04, IP_ACTIVE_HIGH, IPT_KEYBOARD, "e E    ", KEYCODE_E,           IP_JOY_NONE )
-    PORT_BITX( 0x08, IP_ACTIVE_HIGH, IPT_KEYBOARD, "f F    ", KEYCODE_F,           IP_JOY_NONE )
-    PORT_BITX( 0x10, IP_ACTIVE_HIGH, IPT_KEYBOARD, "g G    ", KEYCODE_G,           IP_JOY_NONE )
-    PORT_BITX( 0x20, IP_ACTIVE_HIGH, IPT_KEYBOARD, "h H    ", KEYCODE_H,           IP_JOY_NONE )
-    PORT_BITX( 0x40, IP_ACTIVE_HIGH, IPT_KEYBOARD, "i I    ", KEYCODE_I,           IP_JOY_NONE )
-    PORT_BITX( 0x80, IP_ACTIVE_HIGH, IPT_KEYBOARD, "j J    ", KEYCODE_J,           IP_JOY_NONE )
+    PORT_KEY2( 0x01, IP_ACTIVE_HIGH, "c C    ", 		KEYCODE_C,			IP_JOY_NONE, 'c', 'C' )
+    PORT_KEY2( 0x02, IP_ACTIVE_HIGH, "d D    ", 		KEYCODE_D,			IP_JOY_NONE, 'd', 'D' )
+    PORT_KEY2( 0x04, IP_ACTIVE_HIGH, "e E    ",			KEYCODE_E,			IP_JOY_NONE, 'e', 'E' )
+    PORT_KEY2( 0x08, IP_ACTIVE_HIGH, "f F    ", 		KEYCODE_F,			IP_JOY_NONE, 'f', 'F' )
+    PORT_KEY2( 0x10, IP_ACTIVE_HIGH, "g G    ", 		KEYCODE_G,			IP_JOY_NONE, 'g', 'G' )
+    PORT_KEY2( 0x20, IP_ACTIVE_HIGH, "h H    ", 		KEYCODE_H,			IP_JOY_NONE, 'h', 'H' )
+    PORT_KEY2( 0x40, IP_ACTIVE_HIGH, "i I    ", 		KEYCODE_I,			IP_JOY_NONE, 'i', 'I' )
+    PORT_KEY2( 0x80, IP_ACTIVE_HIGH, "j J    ", 		KEYCODE_J,			IP_JOY_NONE, 'j', 'J' )
 
     PORT_START /* KEYS #6 */
-    PORT_BITX( 0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD, "k K    ", KEYCODE_K,           IP_JOY_NONE )
-    PORT_BITX( 0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD, "l L    ", KEYCODE_L,           IP_JOY_NONE )
-    PORT_BITX( 0x04, IP_ACTIVE_HIGH, IPT_KEYBOARD, "m M    ", KEYCODE_M,           IP_JOY_NONE )
-    PORT_BITX( 0x08, IP_ACTIVE_HIGH, IPT_KEYBOARD, "n N    ", KEYCODE_N,           IP_JOY_NONE )
-    PORT_BITX( 0x10, IP_ACTIVE_HIGH, IPT_KEYBOARD, "o O    ", KEYCODE_O,           IP_JOY_NONE )
-    PORT_BITX( 0x20, IP_ACTIVE_HIGH, IPT_KEYBOARD, "p P    ", KEYCODE_P,           IP_JOY_NONE )
-    PORT_BITX( 0x40, IP_ACTIVE_HIGH, IPT_KEYBOARD, "q Q    ", KEYCODE_Q,           IP_JOY_NONE )
-    PORT_BITX( 0x80, IP_ACTIVE_HIGH, IPT_KEYBOARD, "r R    ", KEYCODE_R,           IP_JOY_NONE )
+    PORT_KEY2( 0x01, IP_ACTIVE_HIGH, "k K    ",			KEYCODE_K,			IP_JOY_NONE, 'k', 'K' )
+    PORT_KEY2( 0x02, IP_ACTIVE_HIGH, "l L    ",			KEYCODE_L,			IP_JOY_NONE, 'l', 'L' )
+    PORT_KEY2( 0x04, IP_ACTIVE_HIGH, "m M    ", 		KEYCODE_M,			IP_JOY_NONE, 'm', 'M' )
+    PORT_KEY2( 0x08, IP_ACTIVE_HIGH, "n N    ", 		KEYCODE_N,			IP_JOY_NONE, 'n', 'N' )
+    PORT_KEY2( 0x10, IP_ACTIVE_HIGH, "o O    ", 		KEYCODE_O,			IP_JOY_NONE, 'o', 'O' )
+    PORT_KEY2( 0x20, IP_ACTIVE_HIGH, "p P    ", 		KEYCODE_P,			IP_JOY_NONE, 'p', 'P' )
+    PORT_KEY2( 0x40, IP_ACTIVE_HIGH, "q Q    ", 		KEYCODE_Q,			IP_JOY_NONE, 'q', 'Q' )
+    PORT_KEY2( 0x80, IP_ACTIVE_HIGH, "r R    ", 		KEYCODE_R,			IP_JOY_NONE, 'r', 'R' )
 
     PORT_START /* KEYS #7 */
-    PORT_BITX( 0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD, "s S    ", KEYCODE_S,           IP_JOY_NONE )
-    PORT_BITX( 0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD, "t T    ", KEYCODE_T,           IP_JOY_NONE )
-    PORT_BITX( 0x04, IP_ACTIVE_HIGH, IPT_KEYBOARD, "u U    ", KEYCODE_U,           IP_JOY_NONE )
-    PORT_BITX( 0x08, IP_ACTIVE_HIGH, IPT_KEYBOARD, "v V    ", KEYCODE_V,           IP_JOY_NONE )
-    PORT_BITX( 0x10, IP_ACTIVE_HIGH, IPT_KEYBOARD, "w W    ", KEYCODE_W,           IP_JOY_NONE )
-    PORT_BITX( 0x20, IP_ACTIVE_HIGH, IPT_KEYBOARD, "x X    ", KEYCODE_X,           IP_JOY_NONE )
-    PORT_BITX( 0x40, IP_ACTIVE_HIGH, IPT_KEYBOARD, "y Y    ", KEYCODE_Y,           IP_JOY_NONE )
-    PORT_BITX( 0x80, IP_ACTIVE_HIGH, IPT_KEYBOARD, "z Z    ", KEYCODE_Z,           IP_JOY_NONE )
+    PORT_KEY2( 0x01, IP_ACTIVE_HIGH, "s S    ", 		KEYCODE_S,			IP_JOY_NONE, 's', 'S' )
+    PORT_KEY2( 0x02, IP_ACTIVE_HIGH, "t T    ", 		KEYCODE_T,			IP_JOY_NONE, 't', 'T' )
+    PORT_KEY2( 0x04, IP_ACTIVE_HIGH, "u U    ", 		KEYCODE_U,			IP_JOY_NONE, 'u', 'U' )
+    PORT_KEY2( 0x08, IP_ACTIVE_HIGH, "v V    ", 		KEYCODE_V,			IP_JOY_NONE, 'v', 'V' )
+    PORT_KEY2( 0x10, IP_ACTIVE_HIGH, "w W    ", 		KEYCODE_W,			IP_JOY_NONE, 'w', 'W' )
+    PORT_KEY2( 0x20, IP_ACTIVE_HIGH, "x X    ", 		KEYCODE_X,			IP_JOY_NONE, 'x', 'X' )
+    PORT_KEY2( 0x40, IP_ACTIVE_HIGH, "y Y    ", 		KEYCODE_Y,			IP_JOY_NONE, 'y', 'Y' )
+    PORT_KEY2( 0x80, IP_ACTIVE_HIGH, "z Z    ",			KEYCODE_Z,			IP_JOY_NONE, 'z', 'Z' )
 
     PORT_START /* Special keys */
     PORT_BITX( 0x01, IP_ACTIVE_LOW, IPT_KEYBOARD | IPF_TOGGLE, "Caps Lock", KEYCODE_CAPSLOCK, IP_JOY_DEFAULT )
-    PORT_BITX( 0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Left Shift",            KEYCODE_LSHIFT,   IP_JOY_NONE )
-    PORT_BITX( 0x04, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Right Shift",           KEYCODE_RSHIFT,   IP_JOY_NONE )
-    PORT_BITX( 0x08, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Left Control",          KEYCODE_LCONTROL, IP_JOY_NONE )
-    PORT_BITX( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON3,  "Button 3",              IP_KEY_DEFAULT,   IP_JOY_DEFAULT )
-    PORT_BITX( 0x20, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Reset",                 KEYCODE_F3,       IP_JOY_NONE )
-
+    PORT_KEY1( 0x02, IP_ACTIVE_HIGH, "Left Shift",		KEYCODE_LSHIFT,		IP_JOY_NONE, UCHAR_SHIFT_1 )
+    PORT_KEY1( 0x04, IP_ACTIVE_HIGH, "Right Shift",		KEYCODE_RSHIFT,		IP_JOY_NONE, UCHAR_SHIFT_1 )
+    PORT_KEY1( 0x08, IP_ACTIVE_HIGH, "Left Control",	KEYCODE_LCONTROL,	IP_JOY_NONE, UCHAR_SHIFT_2 )
+    PORT_BITX( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON3,	"Button 3",	IP_KEY_DEFAULT,	IP_JOY_DEFAULT )
+    PORT_BITX( 0x20, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"Reset",	KEYCODE_F3,		IP_JOY_NONE )
 INPUT_PORTS_END
 
 static struct GfxLayout apple2_text_layout =
@@ -297,9 +297,7 @@ static unsigned short apple2_colortable[] =
 /* Initialise the palette */
 static PALETTE_INIT( apple2 )
 {
-	int i;
-	for (i = 0; i < (sizeof(apple2_palette) / 3); i++)
-		palette_set_color(i, apple2_palette[i*3+0], apple2_palette[i*3+1], apple2_palette[i*3+2]);
+	palette_set_colors(0, apple2_palette, sizeof(apple2_palette) / 3);
     memcpy(colortable,apple2_colortable,sizeof(apple2_colortable));
 }
 

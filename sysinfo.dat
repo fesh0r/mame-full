@@ -679,9 +679,6 @@ default. Whilst in full keyboard emulation mode, some key associated functionali
 disabled (like the ESC key for EXIT). The keyboard emulation mode is toggled using the 
 scroll_lock key.
 
-As of MESS .37b5, the Apple //c and clones are not working correctly; most noticeably the 
-keyboard emulation is not functional. This is being worked on.
-
 
 History and Trivia:
 
@@ -732,10 +729,6 @@ Requires full keyboard emulation. At startup, full keyboard emulation mode is en
 default. Whilst in full keyboard emulation mode, some key associated functionality may be 
 disabled (like the ESC key for EXIT). The keyboard emulation mode is toggled using the 
 scroll_lock key.
-
-
-As of MESS .37b5, the Apple //e and clones are not working correctly; most noticeably the 
-keyboard emulation is not functional. This is being worked on.
 
 
 

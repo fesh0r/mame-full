@@ -17,7 +17,8 @@ System Driver Changes:
   Mode 7 rotation and draw outside screen area. Added support for the back
   colour constant. [Anthony Kruize]
 
-- [APPLE2] Added color support. [Nate Woods]
+- [APPLE2] Fixed keyboard and added color and natural keyboard support. [Nate
+  Woods]
 
 Source Changes:
 ---------------

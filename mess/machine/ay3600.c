@@ -18,6 +18,12 @@
 #include "driver.h"
 #include "machine/ay3600.h"
 
+#ifdef MAME_DEBUG
+#define LOG(x)	logerror x
+#else
+#define LOG(x)
+#endif /* MAME_DEBUG */
+
 static unsigned char ay3600_key_remap[2][7*8][4] = {
 /* caps lock off  norm ctrl shft both */
 	{
@@ -139,10 +145,11 @@ static unsigned char ay3600_key_remap[2][7*8][4] = {
 	}
 };
 
-static unsigned int ay3600_keys[256];
+static unsigned int *ay3600_keys;
 
-static int keydata_strobe;
-static int anykey_clearstrobe;
+static UINT8 keycode;
+static UINT8 keywaiting;
+static UINT8 keystilldown;
 
 #define A2_KEY_NORMAL  0
 #define A2_KEY_CONTROL 1
@@ -150,16 +157,26 @@ static int anykey_clearstrobe;
 #define A2_KEY_BOTH    3
 #define MAGIC_KEY_REPEAT_NUMBER 40
 
+#define AY3600_KEYS_LENGTH	256
+
 /***************************************************************************
   AY3600_init
 ***************************************************************************/
-void AY3600_init(void)
+int AY3600_init(void)
 {
+	/* Init the key remapping table */
+	ay3600_keys = auto_malloc(AY3600_KEYS_LENGTH * sizeof(*ay3600_keys));
+	if (!ay3600_keys)
+		return 1;
+	memset(ay3600_keys, 0, AY3600_KEYS_LENGTH * sizeof(*ay3600_keys));
+
 	/* Set Caps Lock light to ON, since that's how we default it. */
 	set_led_status(1,1);
 
-	/* Init the key remapping table */
-	memset(ay3600_keys,0,sizeof(ay3600_keys));
+	keywaiting = 0;
+	keycode = 0;
+	keystilldown = 0;
+	return 0;
 }
 
 /***************************************************************************
@@ -204,8 +221,6 @@ void AY3600_interrupt(void)
 		switchkey |= A2_KEY_CONTROL;
 
 	/* Run through real keys and see what's being pressed */
-	anykey_clearstrobe = 0x00;
-	keydata_strobe &= 0x80;
 	for( port = 0; port < 7; port++ )
 	{
 		data = readinputport(1 + port);
@@ -235,49 +250,53 @@ void AY3600_interrupt(void)
 		}
 	}
 
-	/* If no keys have been pressed, reset the repeat time and return */
 	if( !any_key_pressed )
 	{
+		/* If no keys have been pressed, reset the repeat time and return */
 		time_until_repeat = MAGIC_KEY_REPEAT_NUMBER;
 		last_key = 0xff;
 		last_time = 65001;
-		return;
 	}
-	/* Otherwise, count down the repeat time */
 	else
 	{
+		/* Otherwise, count down the repeat time */
 		if( time_until_repeat > 0 )
 			time_until_repeat--;
-	}
 
-	/* Even if a key has been released, repeat it if it was the last key pressed */
-	/* If we should output a key, set the appropriate Apple II data lines */
-	if( time_until_repeat == 0 ||
-		time_until_repeat == MAGIC_KEY_REPEAT_NUMBER-1 )
-	{
-		anykey_clearstrobe = keydata_strobe = 0x80;
-		keydata_strobe |= last_key;
+		/* Even if a key has been released, repeat it if it was the last key pressed */
+		/* If we should output a key, set the appropriate Apple II data lines */
+		if( time_until_repeat == 0 ||
+			time_until_repeat == MAGIC_KEY_REPEAT_NUMBER-1 )
+		{
+			keywaiting = 1;
+			keycode = last_key;
+		}
 	}
+	keystilldown = (last_key == keycode);
 }
 
 /***************************************************************************
-  AY3600_keydata_strobe_r
+  AY3600_keydata_strobe_r ($C00x)
 ***************************************************************************/
 int AY3600_keydata_strobe_r(void)
 {
-	logerror("AY3600_keydata_strobe_r $%02X\n", keydata_strobe);
-	return keydata_strobe;
+	int rc;
+	rc = keycode | (keywaiting ? 0x80 : 0x00);
+	LOG(("AY3600_keydata_strobe_r(): rc=0x%02x\n", rc));
+	return rc;
 }
 
 
 /***************************************************************************
-  AY3600_anykey_clearstrobe_r
+  AY3600_anykey_clearstrobe_r ($C01x)
 ***************************************************************************/
 int AY3600_anykey_clearstrobe_r(void)
 {
-	logerror("AY3600_clearstrobe_r $%02X (keydata_strobe $%02X)\n", anykey_clearstrobe, keydata_strobe);
-	keydata_strobe &= 0x7F;
-	return anykey_clearstrobe;
+	int rc;
+	keywaiting = 0;
+	rc = keycode | (keystilldown ? 0x80 : 0x00);
+	LOG(("AY3600_anykey_clearstrobe_r(): rc=0x%02x\n", rc));
+	return rc;
 }
 
 

@@ -12,12 +12,17 @@
 ***************************************************************************/
 
 /* common.h included for the RomModule definition */
-//#include "common.h"
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m6502/m6502.h"
 #include "includes/apple2.h"
 #include "machine/ay3600.h"
+
+#ifdef MAME_DEBUG
+#define LOG(x)	logerror x
+#else
+#define LOG(x)
+#endif /* MAME_DEBUG */
 
 UINT8 *apple2_slot_rom;
 UINT8 *apple2_slot1;
@@ -262,7 +267,7 @@ WRITE_HANDLER ( apple2_c00x_w )
 		case 0x0F:		a2.ALTCHARSET = 0x80;	break;
 	}
 
-	logerror("a2 softswitch_w: %04x\n", offset + 0xc000);
+	LOG(("a2 softswitch_w: %04x\n", offset + 0xc000));
 }
 
 /***************************************************************************
@@ -270,7 +275,7 @@ WRITE_HANDLER ( apple2_c00x_w )
 ***************************************************************************/
 READ_HANDLER ( apple2_c01x_r )
 {
-//	logerror("a2 softswitch_r: %04x\n", offset + 0xc010);
+	LOG(("a2 softswitch_r: %04x\n", offset + 0xc010));
 	switch (offset)
 	{
 		case 0x00:			return AY3600_anykey_clearstrobe_r();
@@ -848,7 +853,7 @@ READ_HANDLER ( apple2_c08x_r )
 	/* If the aux switch is set, use the aux language card bank as well */
 	int aux_offset = a2.ALTZP ? 0x10000 : 0x0000;
 
-	logerror("language card bankswitch read, offset: $c08%0x\n", offset);
+	LOG(("language card bankswitch read, offset: $c08%0x\n", offset));
 
 	if ((offset & 0x01)==0x00)
 	{
@@ -901,7 +906,7 @@ READ_HANDLER ( apple2_c08x_r )
 WRITE_HANDLER ( apple2_c08x_w )
 {
 	/* same as reading */
-	logerror("write -- ");
+	LOG(("write -- "));
 	apple2_c08x_r (offset);
 }
 
@@ -1092,7 +1097,7 @@ static int mockingboard_r (int offset)
 			return flip2;
 			break;
 		default:
-//			logerror("mockingboard_r unmapped, offset: %02x, pc: %04x\n", offset, cpu_getpc());
+			LOG(("mockingboard_r unmapped, offset: %02x, pc: %04x\n", offset, activecpu_get_pc()));
 			break;
 	}
 	return 0x00;
@@ -1102,7 +1107,7 @@ static void mockingboard_w (int offset, int data)
 {
 	static int latch0, latch1;
 
-	logerror("mockingboard_w, $%02x:%02x\n", offset, data);
+	LOG(("mockingboard_w, $%02x:%02x\n", offset, data));
 
 	/* There is a 6522 in here which interfaces to the 8910s */
 	switch (offset)
