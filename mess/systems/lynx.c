@@ -321,35 +321,18 @@ UINT32 lynx_partialcrc(const unsigned char *buf,unsigned int size)
 	return (UINT32)crc;
 }
 
-#ifdef IMAGE_VERIFY
-int lynx_id_rom (int id)
+int lynx_verify_cart (char *header)
 {
-	FILE *romfile;
 
-	char header[64];
-
-	logerror("Lynx IDROM\n");
-	/* If no file was specified, don't bother */
-	if (device_filename(IO_CARTSLOT,id) == NULL ||
-		strlen(device_filename(IO_CARTSLOT,id)) == 0)
-		return ID_FAILED;
-
-	if (!(romfile = (FILE*)image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0))) {
-		logerror("returning ID_FAILED\n");
-		return ID_FAILED;
-	}
-	osd_fread(romfile,header,sizeof(header));
-	osd_fclose (romfile);
 	logerror("Trying Header Compare\n");
 
 	if (strncmp("LYNX",&header[0],4) && strncmp("BS9",&header[6],3)) {
 		logerror("Not an valid Lynx image\n");
-		return ID_FAILED;
+		return IMAGE_VERIFY_FAIL;
 	}
 	logerror("returning ID_OK\n");
-	return ID_OK;
+	return IMAGE_VERIFY_PASS;
 }
-#endif
 
 static void lynx_crc_keyword(int io_device, int id)
 {
@@ -363,7 +346,7 @@ static void lynx_crc_keyword(int io_device, int id)
 }
 
 
-static int lynx_load_rom(int id)
+static int lynx_init_cart(int id)
 {
 	FILE *cartfile;
 	UINT8 *rom = memory_region(REGION_USER1);
@@ -393,6 +376,14 @@ static int lynx_load_rom(int id)
 		osd_fclose(cartfile);
 		return 1;
 	}
+
+	/* Check the image */
+	if (lynx_verify_cart((char*)header) == IMAGE_VERIFY_FAIL)
+	{
+		osd_fclose(cartfile);
+		return INIT_FAIL;
+	}
+
 	size-=0x40;
 	lynx_granularity=header[4]|(header[5]<<8);
 
@@ -462,7 +453,7 @@ static const struct IODevice io_lynx[] = {
 		"lnx\0",                        /* file extensions */
 		IO_RESET_ALL,					/* reset if file changed */
 		0,
-		lynx_load_rom, 				/* init */
+		lynx_init_cart, 				/* init */
 		NULL,							/* exit */
 		NULL,							/* info */
 		NULL,							/* open */
