@@ -41,6 +41,7 @@ static struct {
 	{ 0x3b601fc8, 0x80000, "Sony Playstation SCPH-1000 J (94.09.22)" },
 	{ 0x37157331, 0x80000, "Sony Playstation SCPH-1001 v2.2A (95.12.04)" },
 	{ 0x24fc7e17, 0x80000, "Sony Playstation SCPH-5000 v2.2J (95.12.04)" },
+	{ 0x8c93a399, 0x80000, "Sony Playstation SCPH-5000 v2.2J (95.12.04) (alt)" },
 	{ 0xff3eeb8c, 0x80000, "Sony Playstation SCPH-5500 v3.0J (96.09.09)" },
 	{ 0x4d9e7c86, 0x80000, "Sony Playstation SCPH-5502 v3.0E (97.01.06)" },
 	{ 0xec541cd0, 0x80000, "Sony Playstation SCPH-7000 v4.0J (97.08.18)" },
@@ -48,14 +49,23 @@ static struct {
 	{ 0x8d8cb7e4, 0x80000, "Sony Playstation SCPH-7003 v3.0A (97.11.18)" },
 	{ 0x318178bf, 0x80000, "Sony Playstation SCPH-7502 v4.1E (97.12.16)" },
 
+	{ 0x39bff762, 0x80000, "Sony Playstation Bleem! v5.1" },
+
 
 /* Sega Consoles **************************************************************/
 	{ 0xf691f9c7, 0x8000, "SC3000 basic 2j" },
 	{ 0x155fd01f, 0x8000, "SC3000 basic 31" },
 
-	{ 0x5c12eae8, 0x100, "SYS32X" },
-	{ 0xdd9c46b8, 0x800, "SYS32X" },
-	{ 0xbfda1fe5, 0x400, "SYS32X" },
+	{ 0x3f888cf4, 0x800, "Sega Genesis" },                    	
+
+	{ 0x5c12eae8, 0x100, "Sega 32X (M68000)" },
+	{ 0xdd9c46b8, 0x800, "Sega 32X (master SH2)" },                    	
+	{ 0xbfda1fe5, 0x400, "Sega 32X (slave SH2)" },
+
+	{ 0x9d2da8f2, 0x20000, "Sega Mega CD 1.00J (911217)" },
+	{ 0xd344f125, 0x20000, "Sega Mega CD 2.00E (930106)" },
+
+	{ 0xc6d10268, 0x20000, "Sega CD 1.10U (921110)" },
 
 	{ 0x2aba43c2, 0x80000, "Sega Saturn 1.00 (940921)" },
 	{ 0x4afcf0fa, 0x80000, "Sega Saturn 1.00 (941115)" },
@@ -107,11 +117,14 @@ static struct {
 	{ 0x4da85a6c , 0x8000, "PC9821 f0000" },
 	{ 0x2b1e45b1 , 0x8000, "MODIFIED? PC9821 f8000" },
 
-/* apple ******************************************************************************/
+/* Apple Computers ************************************************************/
+
+/* apple I */
 	{ 0xa30b6af5 , 0x100, "APPLE1 bios" },
 	{ 0xbe70bb85 , 0x400, "APPLE1 characterset bad dump?" },
 	{ 0xa3f2d66f , 0x400, "APPLE1 characterset" },
 
+/* apple II */
 	{ 0x24d73c7b, 0x1000, "APPLE2 d000" },
 	{ 0x0d494efd, 0x1000, "APPLE2 e000" },
 	{ 0xb58f1ca1, 0x1000, "APPLE2 f000" },
@@ -140,6 +153,9 @@ static struct {
 	{ 0x2b6da315 , 0x1000, "BAD DUMP? APPLE characterset 0xc506efb9+0xc506efb9!" },
 	{ 0x0b0759cc , 0x1000, "BAD DUMP? APPLE characterset (first half 0xff)+0xc506efb9" },
 
+/* apple III */
+
+/* lisa */
 	{ 0xadfd4516 , 0x2000, "LISA2 hi" },
 	{ 0x546d6603 , 0x2000, "LISA2 lo" },
 	{ 0xbc6364f1 , 0x1000, "LISA2 6504" },
@@ -156,29 +172,35 @@ static struct {
 	{ 0x80add605, 0x2000, "lisa 68000 hi??" },
 	{ 0xedf5222f, 0x2000, "lisa 68000 lo??" },
 
+/* macintosh */
+	{ 0x7cacd18f , 0x020000, "Macintosh Plus v2 Lonely Heifers 342-0341+342-0342 (4d1eeae1)" },
+	{ 0xb2102e8e , 0x020000, "Macintosh Plus v3 Loud Harmonicas 342-0341+342-0342 (4d1f8172)" },
+	{ 0xf69697e6 , 0x010000, "Macintosh Plus v3 Loud Harmonicas 342-0341 (4d1f8172) EVEN" },
+	{ 0x49f25913 , 0x010000, "Macintosh Plus v3 Loud Harmonicas 342-0342 (4d1f8172) ODD" },
+	{ 0xce3b966f , 0x040000, "Macintosh II(HDFD), IIx, IIcx, SE/30 342-0639+342-0640+342-0641+342-0642 (97221136)" },
+	{ 0x71681726 , 0x080000, "Macintosh LC 342-0392+342-0393+342-0394+342-0395 (350eacf0)" },
+	{ 0xa92145b3 , 0x080000, "Macintosh IIci, LC-II 342-0476+342-0475+342-0474+342-0473 (35c28f5f)" },
+	{ 0x46adbf74 , 0x080000, "Macintosh IIci 342-0736+342-0735+342-0734+342-0733 (368cadfe)" },
+	{ 0x1735e7a5 , 0x100000, "Macintosh LC 630, Performa 630 (06684214)" },
+	{ 0x88ea2081 , 0x100000, "Macintosh Quadra 700, Quadra 900 (420dbff3)" },
+	{ 0xa893cb0f , 0x100000, "Macintosh Performa 450, Performa 550 (?) (ede66cbd)" },
+	{ 0xb8514689 , 0x100000, "Macintosh LC 475, Performa 475, Quadra 605 (ff7439ee)" },
+	{ 0x4e70e3c0 , 0x100000, "Macintosh Centris 650, Quadra 650 (f1acad13)" },
+	{ 0xe578f5f3 , 0x100000, "Macintosh LC-III, Performa 460 (ecbbc41c)" },
+	{ 0x59e6960f , 0x100000, "Macintosh LC 580, Performa 580 (064dc91d)" },
+	{ 0x66cf9f2f , 0x200000, "Macintosh PowerBook 520 (b6909089)" },
 
-	{ 0xb2102e8e , 0x20000, "Macintosh Plus v3 Loud Harmonicas 342-0341+342-0342 (4d1f8172)" },
+	{ 0xb86ed854 , 0x100000, "Macintosh Unknown (ecfa989b)" },
 
-	{ 0xf69697e6 , 0x10000, "? MAC + v1 even" },
-	{ 0x49f25913 , 0x10000, "? MAC + v1 odd" },
-	{ 0xe133094a , 0x21d50, "COMBINED MAC + v1 and additional data!?" },
-	{ 0x6eb97aff , 0x10000, "342-0341 MAC + v2 even" },
-	{ 0xbfdc37d1 , 0x10000, "342-0342 MAC + v2 odd" },
-	{ 0x7624ef58 , 0x20000, "COMBINED MAC 342-0341+342-0342" },
-	{ 0xf7c4b876 , 0x1ffff, "INCOMPLETE COMBINED MAC 342-0341+342-0342" },
+	{ 0x6eb97aff , 0x010000, "BAD DUMP Macintosh Plus v2 Lonely Heifers 342-0341 (4d1eeae1) EVEN" },
+	{ 0xbfdc37d1 , 0x010000, "BAD DUMP Macintosh Plus v2 Lonely Heifers 342-0342 (4d1eeae1) ODD" },
+	{ 0x7624ef58 , 0x020000, "BAD DUMP Macintosh Plus v2 Lonely Heifers 342-0341+342-0342 (4d1eeae1)" },
+	{ 0xf7c4b876 , 0x01ffff, "INCOMPLETE BAD DUMP Macintosh Plus v2 Lonely Heifers 342-0341+342-0342 (4d1eeae1)" },
+	{ 0xe133094a , 0x021d50, "OVER DUMP Macintosh Plus v3 Loud Harmonicas 342-0341+342-0342 (4d1f8172)" },
+	{ 0xa39fb2b9 , 0x400000, "BAD DUMP Power Mac (96cd923d)" },
 
-	{ 0xce3b966f , 0x40000, "MAC 256k" },
 
-	{ 0x71681726 , 0x80000, "MAC 512k 350EACF0" },
-	{ 0xa92145b3 , 0x80000, "MAC 512k 35C28F5F" },
-	{ 0x46adbf74 , 0x80000, "MAC 512k 368cadfe" },
-
-	{ 0x88ea2081 , 0x100000, "MAC 1M 420DBFF3" },
-	{ 0xa893cb0f , 0x100000, "MAC 1M EDE66CBD" },
-	{ 0xb8514689 , 0x100000, "MAC 1M FF7439EE" },
-	{ 0x4e70e3c0 , 0x100000, "MAC Quad 650" },
-
-/* acorn **********************************************************************/
+/* Acorn **********************************************************************/
 	{ 0xc604db3d , 0x1000, "ATOM kernel" },
 	{ 0x81d86af7 , 0x1000, "ATOM floating point" },
 	{ 0x43798b9b , 0x1000, "ATOM basic" },
@@ -288,7 +310,8 @@ static struct {
 	{ 0x0d973c9d, 0x200, "Atari Lynx saved (fff9 not authentic) (alt)" },
 	{ 0x7a91840c, 0x200, "Atari Lynx dummy boot image" },
 
-	{ 0xfb731aaa, 0x20000, "Atari Jaguar" },
+	{ 0xfb731aaa, 0x20000, "Atari Jaguar (boot)" },
+	{ 0x687068d5, 0x40000, "Atari Jaguar (cd)" },
 
 /* amstrad *********************************************************************/
 	{ 0x0219bb74 , 0x4000, "CPC6128 os" },
