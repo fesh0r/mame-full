@@ -668,18 +668,18 @@ TESTDRIVER( hp48g ) 	/* HP48 G/GX										*/
 	DRIVER( apexc )		/* 1951(?) APEXC: All-Purpose Electronic X-ray Computer */
 
 	/* Sony */
-//	DRIVER( psx )
-//	DRIVER( psxe20 )
-//	DRIVER( psxa22 )
-//	DRIVER( psxe22 )
-//	DRIVER( psxj22 )
-//	DRIVER( psxj30 )
-//	DRIVER( psxe30 )
-//	DRIVER( psxa30 )
-//	DRIVER( psxj40 )
-//	DRIVER( psxa41 )
-//	DRIVER( psxe41 )
-//	DRIVER( psxa45 )
+	DRIVER( psx )
+	DRIVER( psxe20 )
+	DRIVER( psxa22 )
+	DRIVER( psxe22 )
+	DRIVER( psxj22 )
+	DRIVER( psxj30 )
+	DRIVER( psxe30 )
+	DRIVER( psxa30 )
+	DRIVER( psxj40 )
+	DRIVER( psxa41 )
+	DRIVER( psxe41 )
+	DRIVER( psxa45 )
 
 	/* Corvus */
 	DRIVER(concept)		/* 1982 Corvus Concept								*/
