@@ -6,7 +6,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-//#include "machine/6522via.h"
+/*#include "machine/6522via.h"*/
 #include "machine/lisa.h"
 
 
@@ -84,6 +84,7 @@ static	struct	Speaker_interface lisa_sh_interface =
 	{ NULL }
 };
 
+/* Lisa1 and Lisa 2 machine */
 static struct MachineDriver machine_driver_lisa =
 {
 	/* basic machine hardware */
@@ -107,8 +108,8 @@ static struct MachineDriver machine_driver_lisa =
 	0,
 
 	/* video hardware */
-	720, 360, /* screen width, screen height */
-	{ 0, 720-1, 0, 360-1 },			/* visible_area */
+	720, 364, /* screen width, screen height */
+	{ 0, 720-1, 0, 364-1 },			/* visible_area */
 
 	0,					/* graphics decode info */
 	2, 2,						/* number of colors, colortable size */
@@ -132,6 +133,7 @@ static struct MachineDriver machine_driver_lisa =
 	/*lisa_nvram_handler*/
 };
 
+/* Lisa 210 machine (different fdc map) */
 static struct MachineDriver machine_driver_lisa210 =
 {
 	/* basic machine hardware */
@@ -155,8 +157,8 @@ static struct MachineDriver machine_driver_lisa210 =
 	0,
 
 	/* video hardware */
-	720, 360, /* screen width, screen height */
-	{ 0, 720-1, 0, 360-1 },			/* visible_area */
+	720, 364, /* screen width, screen height */
+	{ 0, 720-1, 0, 364-1 },			/* visible_area */
 
 	0,					/* graphics decode info */
 	2, 2,						/* number of colors, colortable size */
@@ -180,6 +182,7 @@ static struct MachineDriver machine_driver_lisa210 =
 	/*lisa_nvram_handler*/
 };
 
+/* Mac XL machine (different video resolution) */
 static struct MachineDriver machine_driver_macxl =
 {
 	/* basic machine hardware */
@@ -358,8 +361,13 @@ ROM_START( lisa210 )
 	ROM_LOAD16_BYTE( "booth.hi", 0x000000, 0x2000, 0xadfd4516)
 	ROM_LOAD16_BYTE( "booth.lo", 0x000001, 0x2000, 0x546d6603)
 
+#if 1
 	ROM_REGION(0x2000,REGION_CPU2, 0)		/* 6504 RAM and ROM */
 	ROM_LOAD( "io88.rom", 0x1000, 0x1000, 0xe343fe74)
+#else
+	ROM_REGION(0x2000,REGION_CPU2, 0)		/* 6504 RAM and ROM */
+	ROM_LOAD( "io88800k.rom", 0x1000, 0x1000, 0x8c67959a)
+#endif
 
 	ROM_REGION(0x100,REGION_GFX1, 0)		/* video ROM (includes S/N) */
 	ROM_LOAD( "vidstate.rom", 0x00, 0x100, 0x75904783)
@@ -373,8 +381,13 @@ ROM_START( macxl )
 	ROM_LOAD16_BYTE( "boot3a.hi", 0x000000, 0x2000, 0xadfd4516)
 	ROM_LOAD16_BYTE( "boot3a.lo", 0x000001, 0x2000, 0x546d6603)
 
+#if 1
 	ROM_REGION(0x2000,REGION_CPU2, 0)		/* 6504 RAM and ROM */
 	ROM_LOAD( "io88.rom", 0x1000, 0x1000, 0xe343fe74)
+#else
+	ROM_REGION(0x2000,REGION_CPU2, 0)		/* 6504 RAM and ROM */
+	ROM_LOAD( "io88800k.rom", 0x1000, 0x1000, 0x8c67959a)
+#endif
 
 	ROM_REGION(0x100,REGION_GFX1, 0)		/* video ROM (includes S/N) */
 	ROM_LOAD( "vidstate.rom", 0x00, 0x100, 0x75904783)
@@ -387,7 +400,7 @@ ROM_END
 static const struct IODevice io_lisa2[] = {
 	{
 		IO_FLOPPY,			/* type */
-		/*2*/1,					/* count */
+		1,					/* count */
 		"img\0image\0",		/* file extensions */
 		IO_RESET_NONE,		/* reset if file changed */
         NULL,               /* id */
