@@ -94,6 +94,7 @@ CPUS+=SC61860@
 CPUS+=ARM@
 CPUS+=G65816@
 #CPUS+=SPC700@
+#CPUS+=SATURN@
 
 # SOUND cores used in MESS
 SOUNDS+=CUSTOM@
@@ -160,6 +161,7 @@ DRVLIBS += \
 		$(OBJ)/rca.a	  \
 		$(OBJ)/fairch.a   \
 		$(OBJ)/magnavox.a \
+		$(OBJ)/svision.a \
 		$(OBJ)/cpschngr.a \
 		$(OBJ)/intv.a
 endif
@@ -188,6 +190,10 @@ DRVLIBS += \
 		$(OBJ)/teamconc.a \
 		$(OBJ)/motorola.a \
 		$(OBJ)/svi.a
+
+# not working yet, cpu core not submitted yet
+#		$(OBJ)/hp48.a \
+
 endif
 
 ifdef MESS_EXCLUDE_MISC_GAMES
@@ -485,6 +491,8 @@ $(OBJ)/pc.a:	   \
 	  $(OBJ)/mess/machine/pc_ide.o	 \
 	  $(OBJ)/mess/systems/pc.o
 
+#	  $(OBJ)/mess/sndhrdw/sblaster.o \
+
 $(OBJ)/p2000.a:    \
 	  $(OBJ)/mess/vidhrdw/saa5050.o  \
 	  $(OBJ)/mess/vidhrdw/p2000m.o	 \
@@ -631,6 +639,11 @@ $(OBJ)/sharp.a:    \
 	  $(OBJ)/mess/vidhrdw/mz700.o	 \
 	  $(OBJ)/mess/systems/mz700.o	 
 
+$(OBJ)/hp48.a: \
+	  $(OBJ)/mess/machine/hp48.o \
+	  $(OBJ)/mess/vidhrdw/hp48.o \
+	  $(OBJ)/mess/systems/hp48.o
+
 $(OBJ)/aquarius.a: \
 	  $(OBJ)/mess/machine/aquarius.o \
 	  $(OBJ)/mess/vidhrdw/aquarius.o \
@@ -644,6 +657,8 @@ $(OBJ)/magnavox.a: \
 $(OBJ)/teamconc.a: \
 	$(OBJ)/mess/vidhrdw/comquest.o   \
 	$(OBJ)/mess/systems/comquest.o
+
+$(OBJ)/svision.a: $(OBJ)/mess/systems/svision.o
 
 $(OBJ)/mk1.a: $(OBJ)/mess/vidhrdw/mk1.o $(OBJ)/mess/systems/mk1.o
 
@@ -726,6 +741,7 @@ OBJDIRS += $(OBJ)/mess/messroms
 
 messroms$(EXE):	$(OBJ)/mess/messroms/main.o $(OBJ)/unzip.o
 	@echo Linking $@...
+#	$(LD) $(LDFLAGS) $^ $(LIBS) $(IMGTOOL_LIBS) -o $@
 	$(LD) $(LDFLAGS) $^ $(LIBS) $(IMGTOOL_LIBS) $(OUTOPT)
 
 imgtool$(EXE):	     \
