@@ -2,299 +2,214 @@
 
   motorola cathode ray tube controller 6845
 
-  praster version
-
   copyright peter.trauner@jk.uni-linz.ac.at
 
 ***************************************************************************/
 
-#include <math.h>
 #include <stdio.h>
-#include "osd_cpu.h"
+#include "snprintf.h"
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-#define VERBOSE_DBG 1
-#include "includes/cbm.h"
-
-#include "includes/praster.h"
+#include "includes/state.h"
 #include "includes/crtc6845.h"
 
-static struct {
+#define VERBOSE 2
+
+#if VERBOSE
+#define DBG_LOG(N,M,A)      \
+    if(VERBOSE>=N){ if( M )logerror("%11.6f: %-24s",timer_get_time(),(char*)M ); logerror A; }
+#else
+#define DBG_LOG(N,M,A)
+#endif
+
+typedef struct _CRTC6845 {
+	CRTC6845_CONFIG config;
 	UINT8 reg[18];
 	UINT8 index;
-	int cursor_on; /* cursor output used */
-} crtc;
+	int lightpen_pos;
+	int changed;
+	double cursor_time;
+	int cursor_on;
+} CRTC6845;
 
-void crtc6845_init (UINT8 *memory)
+static CRTC6845 crtc6845_static;
+CRTC6845 *crtc6845=&crtc6845_static;
+
+void crtc6845_init (CRTC6845 *crtc, CRTC6845_CONFIG *config)
 {
-	memset(&crtc, 0, sizeof(crtc));
-	crtc.cursor_on=1;
-
-	praster_2_init();
-	raster2.memory.ram=memory;
-	raster2.raytube.screenpos.x=raster2.raytube.screenpos.y=0;
-	raster2.mode=PRASTER_GFXTEXT;
-
-	raster2.text.charsize.x=raster2.text.charsize.y=8;
-	raster2.text.visiblesize.x=raster2.text.visiblesize.y=8;
-	raster2.linediff=0;raster2.text.size.x=80;
-	raster2.text.size.y=25;
-	raster2.cursor.on=0;
-	raster2.cursor.pos=0;
-	raster2.cursor.blinking=1;
-	raster2.cursor.delay=16;
-	raster2.cursor.ybegin=0;raster2.cursor.yend=7;
-
-	raster2.memory.mask=raster2.memory.videoram.mask=0xffff;
+	memset(crtc, 0, sizeof(*crtc));
+	crtc->cursor_time=timer_get_time();
+	crtc->config=*config;
 }
 
-void crtc6845_pet_init (UINT8 *memory)
-{
-	UINT8 *gfx = memory_region(REGION_GFX1);
-	int i;
+static const struct { 
+	int stored, 
+		read;
+} reg_mask[]= { 
+	{ 0xff, 0 },
+	{ 0xff, 0 },
+	{ 0xff, 0 },
+	{ 0xff, 0 },
+	{ 0x7f, 0 },
+	{ 0x1f, 0 },
+	{ 0x7f, 0 },
+	{ 0x7f, 0 },
+	{  0x3f, 0 },
+	{  0x1f, 0 },
+	{  0x7f, 0 },
+	{  0x1f, 0 },
+	{  0x3f, 0x3f },
+	{  0xff, 0xff },
+	{  0x3f, 0x3f },
+	{  0xff, 0xff },
+	{  -1, 0x3f },
+	{  -1, 0xff },
+};
+#define REG(x) (crtc->reg[x]&reg_mask[x].stored)
 
-	for (i=0; i<0x400; i++) {
-		gfx[0x800+i]=gfx[0x400+i];
-		gfx[0xc00+i]=gfx[0x800+i]^0xff;
-		gfx[0x400+i]=gfx[i]^0xff;
+static int crtc6845_clocks_in_frame(CRTC6845 *crtc)
+{
+	int clocks=CRTC6845_COLUMNS*CRTC6845_LINES;
+	switch (CRTC6845_INTERLACE_MODE) {
+	case CRTC6845_INTERLACE_SIGNAL: // interlace generation of video signals only
+	case CRTC6845_INTERLACE: // interlace
+		return clocks/2;
+	default:
+		return clocks;
 	}
-
-	crtc6845_init(memory);
-	crtc.cursor_on=0;
-	raster2.text.fontsize.y=8;
-	raster2.memory.mask=raster2.memory.videoram.mask=0x7ff;
-	raster2.text.charsize.x=8;
-	raster2.text.visiblesize.x=8;
 }
 
-void crtc6845_superpet_init (UINT8 *memory)
+void crtc6845_set_clock(struct _CRTC6845 *crtc, int freq)
 {
-	UINT8 *gfx = memory_region(REGION_GFX1);
-	int i;
+	crtc->config.freq=freq;
+	crtc->changed=1;
+}
 
-	for (i=0; i<0x400; i++) {
-		gfx[0x1000+i]=gfx[0x800+i];
-		gfx[0x1800+i]=gfx[0xc00+i];
-		gfx[0x1c00+i]=gfx[0x1800+i]^0xff;
-		gfx[0x1400+i]=gfx[0x1000+i]^0xff;
-		gfx[0x800+i]=gfx[0x400+i];
-		gfx[0xc00+i]=gfx[0x800+i]^0xff;
-		gfx[0x400+i]=gfx[i]^0xff;
+int crtc6845_do_full_refresh(struct _CRTC6845 *crtc) 
+{
+	int t=crtc->changed;
+	crtc->changed=0;
+	return t;
+}
+
+void crtc6845_time(CRTC6845 *crtc)
+{
+	double neu, ftime;
+	neu=timer_get_time();
+	CRTC6845_CURSOR cursor;
+
+	if (crtc6845_clocks_in_frame(crtc)==0.0) return;
+	ftime=crtc6845_clocks_in_frame(crtc)*16.0/crtc6845->config.freq;
+	if ( CRTC6845_CURSOR_MODE==CRTC6845_CURSOR_32FRAMES) ftime*=2;
+	if (neu-crtc->cursor_time>ftime) {
+		crtc->cursor_time+=ftime;
+		crtc6845_get_cursor(crtc, &cursor);
+		if (crtc->config.cursor_changed) crtc->config.cursor_changed(&cursor);
+		crtc->cursor_on^=1;
 	}
-
-	crtc6845_init(memory);
-	crtc.cursor_on=0;
-	raster2.text.fontsize.y=8;
-	raster2.memory.mask=raster2.memory.videoram.mask=0x7ff;
-	raster2.text.charsize.x=8;
-	raster2.text.visiblesize.x=8;
 }
 
-void crtc6845_cbm600_init(UINT8 *memory)
-{
-	UINT8 *gfx = memory_region(REGION_GFX1);
-	int i;
+int crtc6845_get_char_columns(struct _CRTC6845 *crtc) 
+{ 
+	return CRTC6845_CHAR_COLUMNS;
+}
 
-	for (i=0; i<0x800; i++) {
-		gfx[0x1000+i]=gfx[0x800+i];
-		gfx[0x1800+i]=gfx[0x1000+i]^0xff;
-		gfx[0x800+i]=gfx[i]^0xff;
+int crtc6845_get_char_height(struct _CRTC6845 *crtc) 
+{
+	return CRTC6845_CHAR_HEIGHT;
+}
+
+int crtc6845_get_char_lines(struct _CRTC6845 *crtc) 
+{ 
+	return CRTC6845_CHAR_LINES;
+}
+
+int crtc6845_get_start(struct _CRTC6845 *crtc) 
+{
+	return CRTC6845_VIDEO_START;
+}
+
+void crtc6845_get_cursor(struct _CRTC6845 *crtc, CRTC6845_CURSOR *cursor)
+{
+	cursor->pos=CRTC6845_CURSOR_POS;
+	switch (CRTC6845_CURSOR_MODE) {
+	default: cursor->on=1;break;
+	case CRTC6845_CURSOR_OFF: cursor->on=0;break;
+	case CRTC6845_CURSOR_16FRAMES:
+		cursor->on=crtc->cursor_on;
+	case CRTC6845_CURSOR_32FRAMES:
+		cursor->on=crtc->cursor_on;
+		break;
 	}
-
-	crtc6845_init(memory);
-	raster2.text.fontsize.y=16;
-	raster2.text.charsize.x=8;
-	raster2.text.visiblesize.x=8;
+	cursor->top=CRTC6845_CURSOR_TOP;
+	cursor->bottom=CRTC6845_CURSOR_BOTTOM;
 }
 
-void crtc6845_cbm600hu_init(UINT8 *memory)
+void crtc6845_port_w(struct _CRTC6845 *crtc, int offset, data8_t data)
 {
-	/* no hardware reverse logic, instead double size charrom,
-	   and switching between hungarian and ascii charset */
-	crtc6845_init(memory);
-	raster2.text.fontsize.y=16;
-	raster2.text.charsize.x=8;
-	raster2.text.visiblesize.x=8;
-}
-
-void crtc6845_cbm700_init(UINT8 *memory)
-{
-	UINT8 *gfx = memory_region(REGION_GFX1);
-	int i;
-
-	for (i=0; i<0x800; i++) {
-		gfx[0x1000+i]=gfx[0x800+i];
-		gfx[0x1800+i]=gfx[0x1000+i]^0xff;
-		gfx[0x800+i]=gfx[i]^0xff;
-	}
-
-	crtc6845_init(memory);
-	raster2.text.fontsize.y=16;
-	raster2.text.charsize.x=9;
-	raster2.text.charsize.y=14;
-	raster2.text.visiblesize.x=8;
-	raster2.text.visiblesize.y=14;
-}
-
-void crtc6845_set_rastering(int on)
-{
-	raster2.display.no_rastering=!on;
-/*	raster2.text.visiblesize.x=raster2.text.visiblesize.y=8; */
-}
-
-#define COLUMNS (crtc.reg[0]+1)
-#define COLUMNS_VISIBLE (crtc.reg[1])
-#define COLUMNS_SYNC_POS (crtc.reg[2])
-#define COLUMNS_SYNC_SIZE ((crtc.reg[3]&0xf)-1)
-#define LINES_SYNC_SIZE (crtc.reg[3]>>4)
-#define LINES (crtc.reg[4]*CHARHEIGHT+crtc.reg[5]&0x1f)
-#define CHARLINES (crtc.reg[6]&0x1f)
-#define LINES_SYNC_POS (crtc.reg[7])
-#define INTERLACE (crtc.reg[8]&1)
-#define LINES400 ((crtc.reg[8]&3)==3)
-#define CHARHEIGHT (crtc.reg[9]%0x1f)
-
-
-WRITE_HANDLER ( crtc6845_port_w )
-{
+	CRTC6845_CURSOR cursor;
 	if (offset & 1)
 	{
-		if ((crtc.index & 0x1f) < 18)
-		{
-			switch (crtc.index & 0x1f)
-			{
-			case 1:
-				crtc.reg[crtc.index]=data;
-				raster2.text.size.x=data;
-				raster2.memory.videoram.size=
-					raster2.text.size.y*data;
-				praster_2_update();
-				break;
-			case 6:
-				crtc.reg[crtc.index]=data;
-				raster2.text.size.y=data;
-				raster2.memory.videoram.size=
-					raster2.text.size.x*data;
-				praster_2_update();
-				break;
-			case 9:
-				crtc.reg[crtc.index]=data;
-				raster2.text.charsize.y=(data&0x1f)+1;
-				praster_2_update();
-				break;
-			case 0xa:
-				crtc.reg[crtc.index]=data;
-				raster2.cursor.on=((data&0x60)!=0x20)&&crtc.cursor_on;
-				raster2.cursor.blinking=(data&0x60)!=0;
-				if ((data&0x60)==0x60) raster2.cursor.delay=32;
-				else raster2.cursor.delay=16;
-				raster2.cursor.ybegin=data&0x1f;
-				praster_2_cursor_update();
-				break;
-			case 0xb:
-				crtc.reg[crtc.index]=data;
-				raster2.cursor.yend=data&0x1f;
-				praster_2_cursor_update();
-				break;
-			case 0xc: case 0xd:
-				crtc.reg[crtc.index]=data;
-				raster2.memory.videoram.offset=
-					( (crtc.reg[0xc]<<8)|crtc.reg[0xd])
-					&raster2.memory.videoram.mask;
-				praster_2_update();
-				break;
-			case 0xe: case 0xf:
-				crtc.reg[crtc.index]=data;
-				raster2.cursor.pos=((crtc.reg[0xe]&0xf)<<8)|crtc.reg[0xf];
-				praster_2_cursor_update();
+		if ((crtc->index & 0x1f) < 18) {
+			switch (crtc->index & 0x1f) {
+			case 0xa:case 0xb:
+			case 0xe:case 0xf:
+				crtc6845_get_cursor(crtc, &cursor);
+				crtc->reg[crtc->index]=data;
+				if (crtc->config.cursor_changed) crtc->config.cursor_changed(&cursor);
 				break;
 			default:
-				crtc.reg[crtc.index]=data;
-				DBG_LOG (2, "crtc_port_w",
-						 ("%.2x:%.2x\n", crtc.index, data));
-				break;
+				crtc->changed=1;
+				crtc->reg[crtc->index]=data;
 			}
+				DBG_LOG (2, "crtc_port_w", ("%.2x:%.2x\n", crtc->index, data));
+		} else { 
+			DBG_LOG (1, "crtc6845_port_w", ("%.2x:%.2x\n", crtc->index, data));
 		}
-		DBG_LOG (1, "crtc6845_port_w",
-				 ("%.2x:%.2x\n", crtc.index, data));
 	}
 	else
 	{
-		crtc.index = data;
+		crtc->index = data;
 	}
 }
 
-/* internal flipflop for doubling horizontal
-   value */
-WRITE_HANDLER ( crtc6845_pet_port_w )
-{
-	if (offset & 1)
-	{
-		if ((crtc.index & 0x1f) < 18)
-		{
-			switch (crtc.index & 0x1f)
-			{
-			case 1:
-				crtc.reg[crtc.index]=data;
-				raster2.text.size.x=data*2;
-				raster2.memory.videoram.size=
-					raster2.text.size.y*data*2;
-				praster_2_update();
-				break;
-			default:
-				crtc6845_port_w(offset,data);
-				break;
-			}
-		} else
-			crtc6845_port_w(offset,data);
-	}
-	else
-	{
-		crtc6845_port_w(offset,data);
-	}
-}
-
-READ_HANDLER ( crtc6845_port_r )
+data8_t crtc6845_port_r(struct _CRTC6845 *crtc, int offset)
 {
 	int val;
 
 	val = 0xff;
 	if (offset & 1)
 	{
-		if ((crtc.index & 0x1f) < 18)
+		if ((crtc->index & 0x1f) < 18)
 		{
-			switch (crtc.index & 0x1f)
+			switch (crtc->index & 0x1f)
 			{
-			case 0x14: val=crtc.reg[offset]&0x3f;break;
+			case 0x10: val=crtc->lightpen_pos>>8;break;
+			case 0x11: val=crtc->lightpen_pos&0xff;break;
+				break;
 			default:
-				val=crtc.reg[offset];
+				val=crtc->reg[crtc->index&0x1f]&reg_mask[crtc->index&0x1f].read;
 			}
 		}
-		DBG_LOG (1, "crtc6845_port_r", ("%.2x:%.2x\n", crtc.index, val));
+		DBG_LOG (1, "crtc6845_port_r", ("%.2x:%.2x\n", crtc->index, val));
 	}
 	else
 	{
-		val = crtc.index;
+		val = crtc->index;
 	}
 	return val;
 }
 
-void crtc6845_address_line_11(int level)
+void crtc6845_state (void)
 {
-	raster2.memory.fontram.offset=level?0x800:0;
+	char text[50]="";
+
+	snprintf (text, sizeof (text), "crtc6845 %.2x %.2x %.2x %.2x",
+			  crtc6845->reg[0xc], crtc6845->reg[0xd], crtc6845->reg[0xe],crtc6845->reg[0xf]);
+
+	state_display_text(text);
 }
 
-void crtc6845_address_line_12(int level)
-{
-	raster2.memory.fontram.offset=level?0x1000:0;
-}
-
-extern void crtc6845_status (char *text, int size)
-{
-	text[0]=0;
-#if VERBOSE_DBG
-		snprintf (text, sizeof (text), "crtc6845 %.2x %.2x %.2x %.2x",
-				  crtc.reg[0xc], crtc.reg[0xd], crtc.reg[0xe],crtc.reg[0xf]);
-#endif
-}
+WRITE_HANDLER ( crtc6845_0_port_w ) { crtc6845_port_w(crtc6845, offset, data); }
+READ_HANDLER ( crtc6845_0_port_r ) { return crtc6845_port_r(crtc6845, offset); }

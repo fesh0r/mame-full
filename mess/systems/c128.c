@@ -1052,9 +1052,65 @@ INPUT_PORTS_END
 
 static void c128_init_palette (unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom)
 {
+	int i;
 	memcpy (sys_palette, vic2_palette, sizeof (vic2_palette));
 	memcpy (sys_palette+sizeof(vic2_palette), vdc8563_palette, sizeof (vdc8563_palette));
+
+	for (i=0; i<0x100; i++) {
+		sys_colortable[i*2]=0x10+((i&0xf0)>>4);
+		sys_colortable[i*2+1]=0x10+(i&0xf);
+	}
 }
+
+static struct GfxLayout c128_charlayout =
+{
+	8,16,
+	512,                                    /* 256 characters */
+	1,                      /* 1 bits per pixel */
+	{ 0 },                  /* no bitplanes; 1 bit per pixel */
+	/* x offsets */
+	{ 0,1,2,3,4,5,6,7 },
+	/* y offsets */
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+	  8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8
+	},
+	8*16
+};
+
+static struct GfxLayout c128c_charlayout =
+{
+	8,16,
+	1,                                    /* 256 characters */
+	1,                      /* 1 bits per pixel */
+	{ 0 },                  /* no bitplanes; 1 bit per pixel */
+	/* x offsets */
+	{ 0,1,2,3,4,5,6,7 },
+	/* y offsets */
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+	  8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8
+	},
+	8*16
+};
+
+static struct GfxLayout c128graphic_charlayout =
+{
+	8,1,
+	256,                                    /* 256 characters */
+	1,                      /* 1 bits per pixel */
+	{ 0 },                  /* no bitplanes; 1 bit per pixel */
+	/* x offsets */
+	{ 0,1,2,3,4,5,6,7 },
+	/* y offsets */
+	{ 0 },
+	8
+};
+
+static struct GfxDecodeInfo c128_gfxdecodeinfo[] = {
+	{ 1, 0x0000, &c128_charlayout, 0, 0x100 },
+	{ 2, 0x0000, &c128c_charlayout, 0, 0x100 },
+	{ 2, 0x0010, &c128graphic_charlayout, 0, 0x100 },
+    { -1 } /* end of array */
+};
 
 #if 0
 /* usa first 318018-02 318019-02 318020-03 rev 0*/
@@ -1142,6 +1198,7 @@ ROM_START (c128)
 	ROM_LOAD ("318020.05", 0x10c000, 0x4000, 0xba456b8e)
 	ROM_LOAD ("390059.01", 0x120000, 0x2000, 0x6aaaafe6)
 	ROM_REGION (0x10000, REGION_CPU2)
+	ROM_REGION (0x10+0x100, REGION_GFX1)
 ROM_END
 
 ROM_START (c128d)
@@ -1151,6 +1208,7 @@ ROM_START (c128d)
 	ROM_LOAD ("390059.01", 0x120000, 0x2000, 0x6aaaafe6)
 	ROM_REGION (0x10000, REGION_CPU2)
 	C1571_ROM(REGION_CPU3)
+	ROM_REGION (0x10+0x100, REGION_GFX1)
 ROM_END
 
 ROM_START (c128ger)
@@ -1160,6 +1218,7 @@ ROM_START (c128ger)
 	ROM_LOAD ("318077.01", 0x108000, 0x8000, 0xeb6e2c8f)
 	ROM_LOAD ("315079.01", 0x120000, 0x2000, 0xfe5a2db1)
 	ROM_REGION (0x10000, REGION_CPU2)
+	ROM_REGION (0x10+0x100, REGION_GFX1)
 ROM_END
 
 ROM_START (c128fra)
@@ -1176,6 +1235,7 @@ ROM_START (c128fra)
 #endif
 	ROM_LOAD ("325167.01", 0x120000, 0x2000, 0xbad36b88)
 	ROM_REGION (0x10000, REGION_CPU2)
+	ROM_REGION (0x10+0x100, REGION_GFX1)
 ROM_END
 
 ROM_START (c128ita)
@@ -1187,6 +1247,7 @@ ROM_START (c128ita)
 	ROM_LOAD ("italian.bin", 0x10c000, 0x4000, 0x74d6b084)
 	ROM_LOAD ("325167.01", 0x120000, 0x2000, 0xbad36b88)
 	ROM_REGION (0x10000, REGION_CPU2)
+	ROM_REGION (0x10+0x100, REGION_GFX1)
 ROM_END
 
 ROM_START (c128swe)
@@ -1195,6 +1256,7 @@ ROM_START (c128swe)
 	ROM_LOAD ("318034.01", 0x108000, 0x8000, 0xcb4e1719)
 	ROM_LOAD ("325181.01", 0x120000, 0x2000, 0x7a70d9b8)
 	ROM_REGION (0x10000, REGION_CPU2)
+	ROM_REGION (0x10+0x100, REGION_GFX1)
 ROM_END
 
 ROM_START (c128nor)
@@ -1206,6 +1268,7 @@ ROM_START (c128nor)
 	/* standard c64, vic20 based norwegian */
 	ROM_LOAD ("char.nor", 0x120000, 0x2000, 0xba95c625)
 	ROM_REGION (0x10000, REGION_CPU2)
+	ROM_REGION (0x10+0x100, REGION_GFX1)
 ROM_END
 
 static SID6581_interface pal_sound_interface =
@@ -1254,7 +1317,7 @@ static struct MachineDriver machine_driver_c128 =
 			c128_z80_readmem, c128_z80_writemem,
 			c128_z80_readio, c128_z80_writeio,
 			c64_frame_interrupt, 1,
-			c128_raster_irq, VIC2_HRETRACERATE,
+			vic2_raster_irq, VIC2_HRETRACERATE,
 		},
 		{
 			CPU_M8502,
@@ -1262,7 +1325,7 @@ static struct MachineDriver machine_driver_c128 =
 			c128_readmem, c128_writemem,
 			0, 0,
 			c64_frame_interrupt, 1,
-			c128_raster_irq, VIC2_HRETRACERATE,
+			vic2_raster_irq, VIC2_HRETRACERATE,
 		},
 	},
 	VIC6567_VRETRACERATE, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -1274,11 +1337,12 @@ static struct MachineDriver machine_driver_c128 =
 	656,							   /* screen width */
 	216,							   /* screen height */
 	{0, 656 - 1, 0, 216 - 1},		   /* visible_area */
-	0,								   /* graphics decode info */
+	c128_gfxdecodeinfo,								   /* graphics decode info */
 	(sizeof (vic2_palette) +sizeof(vdc8563_palette))
 	 / sizeof (vic2_palette[0]) / 3,
-	0,
+	0x100*2,
 	c128_init_palette,				   /* convert color prom */
+//	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY, //when it is supported in vic6567
 	VIDEO_TYPE_RASTER,
 	0,
 	c128_vh_start,
@@ -1303,7 +1367,7 @@ static struct MachineDriver machine_driver_c128d =
 			c128_z80_readmem, c128_z80_writemem,
 			c128_z80_readio, c128_z80_writeio,
 			c64_frame_interrupt, 1,
-			c128_raster_irq, VIC2_HRETRACERATE,
+			vic2_raster_irq, VIC2_HRETRACERATE,
 		},
 		{
 			CPU_M8502,
@@ -1311,7 +1375,7 @@ static struct MachineDriver machine_driver_c128d =
 			c128_readmem, c128_writemem,
 			0, 0,
 			c64_frame_interrupt, 1,
-			c128_raster_irq, VIC2_HRETRACERATE,
+			vic2_raster_irq, VIC2_HRETRACERATE,
 		},
 		C1571_CPU
 	},
@@ -1327,7 +1391,7 @@ static struct MachineDriver machine_driver_c128d =
 	0,								   /* graphics decode info */
 	(sizeof (vic2_palette) +sizeof(vdc8563_palette))
 	 / sizeof (vic2_palette[0]) / 3,
-	0,
+	0x100*2,
 	c128_init_palette,				   /* convert color prom */
 	VIDEO_TYPE_RASTER,
 	0,
@@ -1353,7 +1417,7 @@ static struct MachineDriver machine_driver_c128pal =
 			c128_z80_readmem, c128_z80_writemem,
 			c128_z80_readio, c128_z80_writeio,
 			c64_frame_interrupt, 1,
-			c128_raster_irq, VIC2_HRETRACERATE,
+			vic2_raster_irq, VIC2_HRETRACERATE,
 		},
 		{
 			CPU_M8502,
@@ -1361,7 +1425,7 @@ static struct MachineDriver machine_driver_c128pal =
 			c128_readmem, c128_writemem,
 			0, 0,
 			c64_frame_interrupt, 1,
-			c128_raster_irq, VIC2_HRETRACERATE,
+			vic2_raster_irq, VIC2_HRETRACERATE,
 		},
 	},
 	VIC6569_VRETRACERATE,
@@ -1377,7 +1441,7 @@ static struct MachineDriver machine_driver_c128pal =
 	0,								   /* graphics decode info */
 	(sizeof (vic2_palette) +sizeof(vdc8563_palette))
 	 / sizeof (vic2_palette[0]) / 3,
-	0,
+	0x100*2,
 	c128_init_palette,				   /* convert color prom */
 	VIDEO_TYPE_RASTER,
 	0,
@@ -1433,8 +1497,8 @@ COMPX (1985, c128ita,	c128,	c128pal,	c128ita,	c128pal,	"Commodore Business Machi
 COMPX (1985, c128swe,	c128,	c128pal,	c128swe,	c128pal,	"Commodore Business Machines Co.","Commodore 128 Swedish (PAL)", GAME_IMPERFECT_SOUND)
 /* other countries spanish, belgium, norwegian */
 /* please leave the following as testdriver */
-COMP (1985, c128nor,	c128,	c128pal,	c128ita,	c128pal,	"Commodore Business Machines Co.","Commodore 128 Norwegian (PAL)")
-COMP (1985, c128d,		0,		c128d,		c128,		c128,		"Commodore Business Machines Co.","Commodore 128D NTSC")
+COMPX (1985, c128nor,	c128,	c128pal,	c128ita,	c128pal,	"Commodore Business Machines Co.","Commodore 128 Norwegian (PAL)", GAME_NOT_WORKING)
+COMPX (1985, c128d,		c128,		c128d,		c128,		c128,		"Commodore Business Machines Co.","Commodore 128D NTSC", GAME_NOT_WORKING)
 
 #ifdef RUNTIME_LOADER
 extern void c128_runtime_loader_init(void)

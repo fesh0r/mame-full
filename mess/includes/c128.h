@@ -11,7 +11,6 @@
 
 #include "driver.h"
 
-#include "praster.h"
 #include "c64.h"
 
 #ifdef RUNTIME_LOADER
@@ -109,9 +108,8 @@ extern void c128_shutdown_machine (void);
 extern int c128_vh_start (void);
 extern void c128_vh_stop (void);
 extern void c128_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
-int c128_raster_irq (void);
 
-extern void c128_state(PRASTER *This);
+extern void c128_state(void);
 
 /* private area */
 extern int c128;					   /* computer is commodore c128 */

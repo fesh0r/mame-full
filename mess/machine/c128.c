@@ -19,7 +19,7 @@
 #include "includes/vic6567.h"
 #include "includes/vdc8563.h"
 #include "includes/sid6581.h"
-#include "includes/praster.h"
+#include "includes/state.h"
 
 #include "includes/c128.h"
 
@@ -40,12 +40,6 @@
  3 textmode
  5 graphics (turned on ram at 0x1000 for video chip
 */
-
-/* computer is a c128 */
-int c128 = 0;
-
-UINT8 c128_keyline[3] =
-{0xff, 0xff, 0xff};
 
 UINT8 *c128_basic;
 UINT8 *c128_kernal;
@@ -734,6 +728,12 @@ static int c128_dma_read_color (int offset)
 
 static void c128_common_driver_init (void)
 {
+	UINT8 *gfx=memory_region(REGION_GFX1);
+	int i;
+
+	for (i=0; i<0x10; i++) gfx[i]=0xff;
+	for (i=0; i<0x100; i++) gfx[i+0x10]=i;
+
 	memset(c64_memory, 0xff, 0x100000);
 	c128 = 1;
 	vc20_tape_open (c64_tape_read);
@@ -755,10 +755,9 @@ void c128_driver_init (void)
 	vic6567_init (1, c64_pal,
 				  c128_dma_read, c128_dma_read_color, c64_vic_interrupt);
 	vic2_set_rastering(0);
-	vdc8563_init(c128_vdcram, 0);
+	vdc8563_init(0);
 	vdc8563_set_rastering(1);
-	raster1.display_state=c64_state;
-	raster2.display_state=c128_state;
+	state_add_function(c128_state);
 }
 
 void c128pal_driver_init (void)
@@ -768,10 +767,9 @@ void c128pal_driver_init (void)
 	vic6567_init (1, c64_pal,
 				  c128_dma_read, c128_dma_read_color, c64_vic_interrupt);
 	vic2_set_rastering(1);
-	vdc8563_init(c128_vdcram, 0);
+	vdc8563_init(0);
 	vdc8563_set_rastering(0);
-	raster1.display_state=c64_state;
-	raster2.display_state=c128_state;
+	state_add_function(c128_state);
 }
 
 void c128_driver_shutdown (void)
@@ -807,7 +805,7 @@ void c128_shutdown_machine (void)
 
 int c128_vh_start (void)
 {
-	return vdc8563_vh_start()|vic2_vh_start();
+	return vdc8563_vh_start()||vic2_vh_start();
 }
 
 void c128_vh_stop (void)
@@ -822,22 +820,14 @@ void c128_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	vic2_vh_screenrefresh(bitmap,full_refresh);
 }
 
-int c128_raster_irq (void)
+void c128_state(void)
 {
-	return vdc8563_raster_irq()|vic2_raster_irq();
-}
-
-void c128_state(PRASTER *This)
-{
-	int y;
 	char text[70];
-
-	y = Machine->visible_area.max_y + 1 - Machine->uifont->height;
 
 #if VERBOSE_DBG
 # if 0
 	cia6526_status (text, sizeof (text));
-	praster_draw_text (This, text, &y);
+	state_display_text (This, text, &y);
 
 #  if 1
 	snprintf (text, size, "c128 vic:%.5x m6510:%d exrom:%d game:%d",
@@ -848,22 +838,20 @@ void c128_state(PRASTER *This)
 			  MMU_SIZE, MMU_BOTTOM?"bottom":"", MMU_TOP?"top":"",MMU_RAM_ADDR, MMU_IO_ON?"io":"",
 			  MMU_PAGE0, MMU_PAGE1);
 #  endif
-	praster_draw_text (This, text, &y);
+	state_display_text (text);
 # endif
 
-	vdc8563_status(text, sizeof(text));
-	praster_draw_text (This, text, &y);
 #endif
 
 	vc20_tape_status (text, sizeof (text));
-	praster_draw_text (This, text, &y);
+	state_display_text (text);
 #ifdef VC1541
 	vc1541_drive_status (text, sizeof (text));
 #else
 	cbm_drive_0_status (text, sizeof (text));
 #endif
-	praster_draw_text (This, text, &y);
+	state_display_text (text);
 
 	cbm_drive_1_status (text, sizeof (text));
-	praster_draw_text (This, text, &y);
+	state_display_text (text);
 }

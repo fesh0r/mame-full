@@ -117,6 +117,7 @@ when problems start with -log and look into error.log file
 #include "includes/cbm.h"
 #include "machine/6821pia.h"
 #include "machine/6522via.h"
+#include "vidhrdw/generic.h"
 #include "includes/pet.h"
 #include "includes/crtc6845.h"
 #include "includes/cbmserb.h"
@@ -136,7 +137,7 @@ MEMORY_END
 
 static MEMORY_WRITE_START( pet_writemem )
 	{0x0000, 0x7fff, MWA_RAM, &pet_memory},
-	{0x8000, 0x83ff, pet_videoram_w, &pet_videoram },
+	{0x8000, 0x83ff, videoram_w, &videoram, &videoram_size },
 	{0xa000, 0xe7ff, MWA_ROM },
 	{0xe810, 0xe813, pia_0_w },
 	{0xe820, 0xe823, pia_1_w },
@@ -151,18 +152,18 @@ static MEMORY_READ_START( pet40_readmem )
 	{0xe810, 0xe813, pia_0_r },
 	{0xe820, 0xe823, pia_1_r },
 	{0xe840, 0xe84f, via_0_r },
-	{0xe880, 0xe881, crtc6845_port_r },
+	{0xe880, 0xe881, crtc6845_0_port_r },
 	{0xf000, 0xffff, MRA_ROM },
 MEMORY_END
 
 static MEMORY_WRITE_START( pet40_writemem )
 	{0x0000, 0x7fff, MWA_RAM, &pet_memory},
-	{0x8000, 0x83ff, crtc6845_videoram_w, &pet_videoram },
+	{0x8000, 0x83ff, videoram_w, &videoram, &videoram_size },
 	{0xa000, 0xe7ff, MWA_ROM },
 	{0xe810, 0xe813, pia_0_w },
 	{0xe820, 0xe823, pia_1_w },
 	{0xe840, 0xe84f, via_0_w },
-	{0xe880, 0xe881, crtc6845_port_w },
+	{0xe880, 0xe881, crtc6845_0_port_w },
 	{0xf000, 0xffff, MWA_ROM },
 MEMORY_END
 
@@ -179,14 +180,14 @@ static MEMORY_READ_START( pet80_readmem )
 	{0xe810, 0xe813, pia_0_r },
 	{0xe820, 0xe823, pia_1_r },
 	{0xe840, 0xe84f, via_0_r },
-	{0xe880, 0xe881, crtc6845_port_r },
+	{0xe880, 0xe881, crtc6845_0_port_r },
 #endif
 	{0xf000, 0xffff, MRA_BANK8 },
 MEMORY_END
 
 static MEMORY_WRITE_START( pet80_writemem )
 	{0x0000, 0x7fff, MWA_RAM, &pet_memory},
-	{0x8000, 0x8fff, MWA_BANK1, &pet_videoram },
+	{0x8000, 0x8fff, MWA_BANK1, &videoram },
 	{0x9000, 0x9fff, MWA_BANK2 },
 	{0xa000, 0xafff, MWA_BANK3 },
 	{0xb000, 0xbfff, MWA_BANK4 },
@@ -197,7 +198,7 @@ static MEMORY_WRITE_START( pet80_writemem )
 	{0xe810, 0xe813, pia_0_w },
 	{0xe820, 0xe823, pia_1_w },
 	{0xe840, 0xe84f, via_0_w },
-	{0xe880, 0xe881, crtc6845_pet_port_w },
+	{0xe880, 0xe881, crtc6845_0_port_w },
 #endif
 	{0xf000, 0xffef, MWA_BANK8 },
     {0xfff1, 0xffff, MWA_BANK9 },
@@ -226,7 +227,7 @@ static MEMORY_READ_START( superpet_readmem )
 	{0xe810, 0xe813, pia_0_r },
 	{0xe820, 0xe823, pia_1_r },
 	{0xe840, 0xe84f, via_0_r },
-	{0xe880, 0xe881, crtc6845_port_r },
+	{0xe880, 0xe881, crtc6845_0_port_r },
 	/* 0xefe0, 0xefe3, mos 6702 */
 	/* 0xeff0, 0xeff3, acia6551 */
 	{0xeff8, 0xefff, superpet_r },
@@ -235,12 +236,12 @@ MEMORY_END
 
 static MEMORY_WRITE_START( superpet_writemem )
 	{0x0000, 0x7fff, MWA_RAM, &pet_memory},
-	{0x8000, 0x87ff, crtc6845_videoram_w, &pet_videoram },
+	{0x8000, 0x87ff, videoram_w, &videoram, &videoram_size },
 	{0xa000, 0xe7ff, MWA_ROM },
 	{0xe810, 0xe813, pia_0_w },
 	{0xe820, 0xe823, pia_1_w },
 	{0xe840, 0xe84f, via_0_w },
-	{0xe880, 0xe881, crtc6845_pet_port_w },
+	{0xe880, 0xe881, crtc6845_0_port_w },
 	{0xeff8, 0xefff, superpet_w },
 	{0xf000, 0xffff, MWA_ROM },
 MEMORY_END
@@ -253,20 +254,20 @@ static MEMORY_READ_START( superpet_m6809_readmem)
 	{0xe810, 0xe813, pia_0_r },
 	{0xe820, 0xe823, pia_1_r },
 	{0xe840, 0xe84f, via_0_r },
-	{0xe880, 0xe881, crtc6845_port_r },
+	{0xe880, 0xe881, crtc6845_0_port_r },
 	{0xeff8, 0xefff, superpet_r },
 	{0xf000, 0xffff, MRA_ROM },
 MEMORY_END
 
 static MEMORY_WRITE_START( superpet_m6809_writemem )
 	{0x0000, 0x7fff, MWA_BANK1 }, /* same memory as m6502 */
-	{0x8000, 0x87ff, crtc6845_videoram_w }, /* same memory as m6502 */
+	{0x8000, 0x87ff, videoram_w }, /* same memory as m6502 */
     {0x9000, 0x9fff, MWA_BANK3 }, /* 64 kbyte ram turned in */
 	{0xa000, 0xe7ff, MWA_ROM },
 	{0xe810, 0xe813, pia_0_w },
 	{0xe820, 0xe823, pia_1_w },
 	{0xe840, 0xe84f, via_0_w },
-	{0xe880, 0xe881, crtc6845_pet_port_w },
+	{0xe880, 0xe881, crtc6845_0_port_w },
 	{0xeff8, 0xefff, superpet_w },
 	{0xf000, 0xffff, MWA_ROM },
 	{0x10000, 0x1ffff, MWA_RAM, &superpet_memory },
@@ -568,16 +569,16 @@ unsigned char pet_palette[] =
 	0,0x80,0, /* green */
 };
 
-static unsigned short pet_colortable[] = {
-	0, 1,
+static unsigned short pet_colortable[][2] = {
+	{ 0, 1 },
 	/* reverse */
-	1, 0
+	{ 1, 0 }
 };
 
 static struct GfxLayout pet_charlayout =
 {
         8,8,
-        512,                                    /* 256 characters */
+        256,                                    /* 256 characters */
         1,                      /* 1 bits per pixel */
         { 0 },                  /* no bitplanes; 1 bit per pixel */
         /* x offsets */
@@ -588,27 +589,39 @@ static struct GfxLayout pet_charlayout =
         8*8
 };
 
-static struct GfxLayout superpet_charlayout =
+static struct GfxLayout pet80_charlayout =
 {
-        8,8,
-        1024,                                    /* 256 characters */
+        8,16,
+        256,                                    /* 256 characters */
         1,                      /* 1 bits per pixel */
         { 0 },                  /* no bitplanes; 1 bit per pixel */
         /* x offsets */
         { 0,1,2,3,4,5,6,7 },
         /* y offsets */
-        { 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+        { 
+			0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8
         },
-        8*8
+        8*16
 };
 
 static struct GfxDecodeInfo pet_gfxdecodeinfo[] = {
-	{ 1, 0x0000, &pet_charlayout,                     0, 2 },
+	{ 1, 0x0000, &pet_charlayout,                     0, 1 },
+	{ 1, 0x0800, &pet_charlayout,                     0, 1 },
+    { -1 } /* end of array */
+};
+
+static struct GfxDecodeInfo pet80_gfxdecodeinfo[] = {
+	{ 1, 0x0000, &pet80_charlayout,                     0, 1 },
+	{ 1, 0x1000, &pet80_charlayout,                     0, 1 },
     { -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo superpet_gfxdecodeinfo[] = {
-	{ 2, 0x0000, &superpet_charlayout,                     0, 2 },
+	{ 2, 0x0000, &pet80_charlayout,                     0, 1 },
+	{ 2, 0x1000, &pet80_charlayout,                     0, 1 },
+	{ 2, 0x2000, &pet80_charlayout,                     0, 1 },
+	{ 2, 0x3000, &pet80_charlayout,                     0, 1 },
     { -1 } /* end of array */
 };
 
@@ -698,7 +711,7 @@ ROM_START (pet80)
     ROM_LOAD ("901465.21", 0xd000, 0x1000, 0x36d91855)
     ROM_LOAD ("901474.03", 0xe000, 0x800, 0x5674dd5e)
     ROM_LOAD ("901465.22", 0xf000, 0x1000, 0xcc5298a1)
-	ROM_REGION (0x1000, REGION_GFX1)
+	ROM_REGION (0x2000, REGION_GFX1)
     ROM_LOAD ("901447.10", 0x0000, 0x800, 0xd8408674)
 ROM_END
 
@@ -710,7 +723,7 @@ ROM_START (pet80pal)
     ROM_LOAD ("901465.21", 0xd000, 0x1000, 0x36d91855)
     ROM_LOAD ("901474.04", 0xe000, 0x800, 0xabb000e7)
     ROM_LOAD ("901465.22", 0xf000, 0x1000, 0xcc5298a1)
-	ROM_REGION (0x1000, REGION_GFX1)
+	ROM_REGION (0x2000, REGION_GFX1)
     ROM_LOAD ("901447.10", 0x0000, 0x800, 0xd8408674)
 ROM_END
 
@@ -721,7 +734,7 @@ ROM_START (cbm80ger)
 	ROM_LOAD ("901465.21", 0xd000, 0x1000, 0x36d91855)
 	ROM_LOAD ("german.bin", 0xe000, 0x800, 0x1c1e597d)
 	ROM_LOAD ("901465.22", 0xf000, 0x1000, 0xcc5298a1)
-	ROM_REGION (0x1000, REGION_GFX1)
+	ROM_REGION (0x2000, REGION_GFX1)
 	ROM_LOAD ("chargen.de", 0x0000, 0x800, 0x3bb8cb87)
 ROM_END
 
@@ -732,7 +745,7 @@ ROM_START (cbm80swe)
     ROM_LOAD ("901465.21", 0xd000, 0x1000, 0x36d91855)
     ROM_LOAD ("editswe.bin", 0xe000, 0x800, 0x75901dd7)
     ROM_LOAD ("901465.22", 0xf000, 0x1000, 0xcc5298a1)
-	ROM_REGION (0x1000, REGION_GFX1)
+	ROM_REGION (0x2000, REGION_GFX1)
     ROM_LOAD ("901447.14", 0x0000, 0x800, 0x48c77d29)
 ROM_END
 
@@ -750,7 +763,7 @@ ROM_START (superpet)
     ROM_LOAD ("901898.04", 0xd000, 0x1000, 0xf55fc559)
     ROM_LOAD ("901897.01", 0xe000, 0x800, 0xb2cee903)
     ROM_LOAD ("901898.05", 0xf000, 0x1000, 0xf42df0cb)
-	ROM_REGION (0x2000, REGION_GFX1)
+	ROM_REGION (0x4000, REGION_GFX1)
     ROM_LOAD ("901640.01", 0x0000, 0x1000, 0xee8229c4)
 ROM_END
 
@@ -769,7 +782,7 @@ ROM_START (mmf9000)
     ROM_LOAD ("901898.04", 0xd000, 0x1000, 0xf55fc559)
     ROM_LOAD ("901897.01", 0xe000, 0x800, 0xb2cee903)
     ROM_LOAD ("901898.05", 0xf000, 0x1000, 0xf42df0cb)
-	ROM_REGION (0x2000, REGION_GFX1)
+	ROM_REGION (0x4000, REGION_GFX1)
     ROM_LOAD ("charswe.bin", 0x0000, 0x1000, 0xda1cd630)
 ROM_END
 
@@ -880,8 +893,7 @@ static struct MachineDriver machine_driver_pet =
 			1000000,
 			pet_readmem, pet_writemem,
 			0, 0,
-			0, 0,
-			pet_raster_irq, 15625,
+			pet_frame_interrupt, 1,
 		},
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -895,12 +907,12 @@ static struct MachineDriver machine_driver_pet =
 	{0, 320 - 1, 0, 200 - 1},		   /* visible_area */
 	pet_gfxdecodeinfo,			   /* graphics decode info */
 	sizeof (pet_palette) / sizeof (pet_palette[0]) / 3,
-	sizeof (pet_colortable) / sizeof(pet_colortable[0]),
+	sizeof (pet_colortable) / sizeof(pet_colortable[0][0]),
 	pet_init_palette,				   /* convert color prom */
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
-	pet_vh_start,
-	pet_vh_stop,
+	generic_vh_start,
+	generic_vh_stop,
 	pet_vh_screenrefresh,
 
   /* sound hardware */
@@ -919,8 +931,7 @@ static struct MachineDriver machine_driver_pet40 =
 			1000000,
 			pet40_readmem, pet40_writemem,
 			0, 0,
-			0, 0,
-			crtc6845_raster_irq, 15625,
+			pet_frame_interrupt, 1,
 		},
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -934,13 +945,13 @@ static struct MachineDriver machine_driver_pet40 =
 	{0, 320 - 1, 0, 200 - 1},		   /* visible_area */
 	pet_gfxdecodeinfo,			   /* graphics decode info */
 	sizeof (pet_palette) / sizeof (pet_palette[0]) / 3,
-	sizeof (pet_colortable) / sizeof(pet_colortable[0]),
+	sizeof (pet_colortable) / sizeof(pet_colortable[0][0]),
 	pet_init_palette,				   /* convert color prom */
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
-	crtc6845_vh_start,
-	crtc6845_vh_stop,
-	crtc6845_vh_screenrefresh,
+	generic_vh_start,
+	generic_vh_stop,
+	pet40_vh_screenrefresh,
 
   /* sound hardware */
 	0, 0, 0, 0,
@@ -958,8 +969,7 @@ static struct MachineDriver machine_driver_pet40pal =
 			1000000,
 			pet40_readmem, pet40_writemem,
 			0, 0,
-			0, 0,
-			crtc6845_raster_irq, 15625,
+			pet_frame_interrupt, 1,
 		},
 	},
 	50, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -973,13 +983,13 @@ static struct MachineDriver machine_driver_pet40pal =
 	{0, 320 - 1, 0, 200 - 1},		   /* visible_area */
 	pet_gfxdecodeinfo,			   /* graphics decode info */
 	sizeof (pet_palette) / sizeof (pet_palette[0]) / 3,
-	sizeof (pet_colortable) / sizeof(pet_colortable[0]),
+	sizeof (pet_colortable) / sizeof(pet_colortable[0][0]),
 	pet_init_palette,				   /* convert color prom */
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
-	crtc6845_vh_start,
-	crtc6845_vh_stop,
-	crtc6845_vh_screenrefresh,
+	generic_vh_start,
+	generic_vh_stop,
+	pet40_vh_screenrefresh,
 
   /* sound hardware */
 	0, 0, 0, 0,
@@ -997,8 +1007,7 @@ static struct MachineDriver machine_driver_pet80 =
 			1000000,
 			pet80_readmem, pet80_writemem,
 			0, 0,
-			0, 0,
-			crtc6845_raster_irq, 15625,
+			pet_frame_interrupt, 1,
 		},
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -1010,19 +1019,19 @@ static struct MachineDriver machine_driver_pet80 =
 	640,							   /* screen width */
 	250,							   /* screen height */
 	{0, 640 - 1, 0, 250 - 1},		   /* visible_area */
-	pet_gfxdecodeinfo,			   /* graphics decode info */
+	pet80_gfxdecodeinfo,			   /* graphics decode info */
 	sizeof (pet_palette) / sizeof (pet_palette[0]) / 3,
-	sizeof (pet_colortable) / sizeof(pet_colortable[0]),
+	sizeof (pet_colortable) / sizeof(pet_colortable[0][0]),
 	pet_init_palette,				   /* convert color prom */
 #ifdef PET_TEST_CODE
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 #else
-	VIDEO_PIXEL_ASPECT_RATIO_1_2|VIDEO_TYPE_RASTER,
+	VIDEO_PIXEL_ASPECT_RATIO_1_2|VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 #endif
 	0,
-	crtc6845_vh_start,
-	crtc6845_vh_stop,
-	crtc6845_vh_screenrefresh,
+	generic_vh_start,
+	generic_vh_stop,
+	pet80_vh_screenrefresh,
 
   /* sound hardware */
 	0, 0, 0, 0,
@@ -1040,8 +1049,7 @@ static struct MachineDriver machine_driver_pet80pal =
 			1000000,
 			pet80_readmem, pet80_writemem,
 			0, 0,
-			0, 0,
-			crtc6845_raster_irq, 15625,
+			pet_frame_interrupt, 1,
 		},
 	},
 	50, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -1053,19 +1061,19 @@ static struct MachineDriver machine_driver_pet80pal =
 	640,							   /* screen width */
 	250,							   /* screen height */
 	{0, 640 - 1, 0, 250 - 1},		   /* visible_area */
-	pet_gfxdecodeinfo,			   /* graphics decode info */
+	pet80_gfxdecodeinfo,			   /* graphics decode info */
 	sizeof (pet_palette) / sizeof (pet_palette[0]) / 3,
-	sizeof (pet_colortable) / sizeof(pet_colortable[0]),
+	sizeof (pet_colortable) / sizeof(pet_colortable[0][0]),
 	pet_init_palette,				   /* convert color prom */
 #ifdef PET_TEST_CODE
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORT_DIRTY,
 #else
-	VIDEO_PIXEL_ASPECT_RATIO_1_2|VIDEO_TYPE_RASTER,
+	VIDEO_PIXEL_ASPECT_RATIO_1_2|VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 #endif
 	0,
-	crtc6845_vh_start,
-	crtc6845_vh_stop,
-	crtc6845_vh_screenrefresh,
+	generic_vh_start,
+	generic_vh_stop,
+	pet80_vh_screenrefresh,
 
   /* sound hardware */
 	0, 0, 0, 0,
@@ -1078,20 +1086,19 @@ static struct MachineDriver machine_driver_superpet =
 {
   /* basic machine hardware */
 	{
-#if 1
 		{
 			CPU_M6502,
 			1000000,
 			superpet_readmem, superpet_writemem,
 			0, 0,
-			0, 0,
-			crtc6845_raster_irq, 15625,
+			pet_frame_interrupt, 1,
 		},
-#endif
 		{
 			CPU_M6809,
 			1000000,
 			superpet_m6809_readmem, superpet_m6809_writemem,
+			0, 0,
+			pet_frame_interrupt, 1,
 		},
 	},
 	50, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -1105,17 +1112,17 @@ static struct MachineDriver machine_driver_superpet =
 	{0, 640 - 1, 0, 250 - 1},		   /* visible_area */
 	superpet_gfxdecodeinfo,			   /* graphics decode info */
 	sizeof (pet_palette) / sizeof (pet_palette[0]) / 3,
-	sizeof (pet_colortable) / sizeof(pet_colortable[0]),
+	sizeof (pet_colortable) / sizeof(pet_colortable[0][0]),
 	pet_init_palette,				   /* convert color prom */
 #ifdef PET_TEST_CODE
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 #else
-	VIDEO_PIXEL_ASPECT_RATIO_1_2|VIDEO_TYPE_RASTER,
+	VIDEO_PIXEL_ASPECT_RATIO_1_2|VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 #endif
 	0,
-	crtc6845_vh_start,
-	crtc6845_vh_stop,
-	crtc6845_vh_screenrefresh,
+	generic_vh_start,
+	generic_vh_stop,
+	pet80_vh_screenrefresh,
 
   /* sound hardware */
 	0, 0, 0, 0,

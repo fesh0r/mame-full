@@ -58,6 +58,7 @@
 #include "osd_cpu.h"
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "includes/state.h"
 
 
 #define VERBOSE_DBG 1
@@ -166,8 +167,6 @@ unsigned char vic2_palette[] =
 };
 
 unsigned char vic3_palette[0x100*3]={0};
-
-void (*vic2_display_state)(PRASTER *This); /* calls machine after rastering frame*/
 
 static struct {
 	UINT8 reg[0x80];
@@ -723,6 +722,7 @@ int vic2_vh_start (void)
 {
 	int i;
 
+#if 0
 	raster1.display.bitmap=Machine->scrbitmap;
 	raster1.raytube.screenpos.x=8;
 	raster1.raytube.screenpos.y=8;
@@ -733,7 +733,7 @@ int vic2_vh_start (void)
 	/* avoid dirtybuffering */
 	raster1.raytube.screenpos.x=336;
 	raster1.raytube.screenpos.y=216;
-
+#endif
 	vic2.bitmap = Machine->scrbitmap;
 
 	if (vic2.vic3) {
@@ -2159,7 +2159,7 @@ int vic2_raster_irq (void)
 		if (vic2.vic3&&VIC3_BITPLANES) {
 			if (!osd_skip_this_frame ()) vic3_draw_bitplanes();
 		} else {
-			vic2_drawlines (vic2.lastline, vic2.lines);
+			if (vic2.on) vic2_drawlines (vic2.lastline, vic2.lines);
 		}
 		for (i = 0; i < 8; i++)
 			vic2.sprites[i].repeat = vic2.sprites[i].line = 0;
@@ -2171,7 +2171,7 @@ int vic2_raster_irq (void)
 			/* lightpen timer starten */
 			vic2.lightpentimer = timer_set (tme, 1, vic2_timer_timeout);
 		}
-		if (vic2.on&&raster1.display_state) raster1.display_state(&raster1);
+		//state_display(vic2.bitmap);
 	}
 	if (vic2.rasterline == C64_2_RASTERLINE (RASTERLINE))
 	{
@@ -2192,4 +2192,5 @@ WRITE_HANDLER( vic3_palette_w )
 
 void vic2_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 {
+	state_display(bitmap);
 }

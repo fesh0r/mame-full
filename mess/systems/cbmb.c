@@ -157,6 +157,7 @@ when problems start with -log and look into error.log file
  */
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
 #include "cpu/m6502/m6509.h"
 
 #define VERBOSE_DBG 0
@@ -231,7 +232,7 @@ static MEMORY_READ_START( cbmb_readmem )
 	{0xf8000, 0xfbfff, MRA_ROM },
 	/*	{0xfc000, 0xfcfff, MRA_ROM }, */
 	{0xfd000, 0xfd7ff, MRA_ROM },
-	{0xfd800, 0xfd8ff, crtc6845_port_r },
+	{0xfd800, 0xfd8ff, crtc6845_0_port_r },
 	/* disk units */
 	{0xfda00, 0xfdaff, sid6581_0_port_r },
 	/* db00 coprocessor */
@@ -296,8 +297,8 @@ static MEMORY_WRITE_START( cbmb_writemem )
 	{0xf4000, 0xf5fff, MWA_ROM },
 	{0xf6000, 0xf7fff, MWA_ROM },
 	{0xf8000, 0xfbfff, MWA_ROM, &cbmb_basic },
-	{0xfd000, 0xfd7ff, crtc6845_videoram_w, &cbmb_videoram }, /* VIDEORAM */
-	{0xfd800, 0xfd8ff, crtc6845_port_w },
+	{0xfd000, 0xfd7ff, videoram_w, &videoram,&videoram_size }, /* VIDEORAM */
+	{0xfd800, 0xfd8ff, crtc6845_0_port_w },
 	/* disk units */
 	{0xfda00, 0xfdaff, sid6581_0_port_w},
 	/* db00 coprocessor */
@@ -689,22 +690,8 @@ static unsigned short cbmb_colortable[] = {
 
 static struct GfxLayout cbm600_charlayout =
 {
-	8,8,
-	512,                                    /* 256 characters */
-	1,                      /* 1 bits per pixel */
-	{ 0 },                  /* no bitplanes; 1 bit per pixel */
-	/* x offsets */
-	{ 0,1,2,3,4,5,6,7 },
-	/* y offsets */
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
-	},
-	8*16
-};
-
-static struct GfxLayout cbm700_charlayout =
-{
-	8,14,
-	512,                                    /* 256 characters */
+	8,16,
+	256,                                    /* 256 characters */
 	1,                      /* 1 bits per pixel */
 	{ 0 },                  /* no bitplanes; 1 bit per pixel */
 	/* x offsets */
@@ -716,13 +703,63 @@ static struct GfxLayout cbm700_charlayout =
 	8*16
 };
 
+static struct GfxLayout cbm600c_charlayout =
+{
+	8,16,
+	1,                                    /* 256 characters */
+	1,                      /* 1 bits per pixel */
+	{ 0 },                  /* no bitplanes; 1 bit per pixel */
+	/* x offsets */
+	{ 0,1,2,3,4,5,6,7,7 },
+	/* y offsets */
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+	  8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8
+	},
+	8*16
+};
+
+static struct GfxLayout cbm700_charlayout =
+{
+	9,16,
+	256,                                    /* 256 characters */
+	1,                      /* 1 bits per pixel */
+	{ 0 },                  /* no bitplanes; 1 bit per pixel */
+	/* x offsets */
+	{ 0,1,2,3,4,5,6,7,7 }, // 8.column will be cleared in cbm700_vh_start
+	/* y offsets */
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+	  8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8
+	},
+	8*16
+};
+
+static struct GfxLayout cbm700c_charlayout =
+{
+	9,16,
+	1,                                    /* 256 characters */
+	1,                      /* 1 bits per pixel */
+	{ 0 },                  /* no bitplanes; 1 bit per pixel */
+	/* x offsets */
+	{ 0,1,2,3,4,5,6,7,7 },
+	/* y offsets */
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+	  8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8
+	},
+	8*16
+};
+
+
 static struct GfxDecodeInfo cbm600_gfxdecodeinfo[] = {
-	{ 1, 0x0000, &cbm600_charlayout, 0, 2 },
+	{ 1, 0x0000, &cbm600_charlayout, 0, 1 },
+	{ 1, 0x1000, &cbm600_charlayout, 0, 1 },
+	{ 1, 0x2000, &cbm600c_charlayout, 0, 1 },
     { -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo cbm700_gfxdecodeinfo[] = {
-	{ 1, 0x0000, &cbm700_charlayout, 0, 2 },
+	{ 1, 0x0000, &cbm700_charlayout, 0, 1 },
+	{ 1, 0x1000, &cbm700_charlayout, 0, 1 },
+	{ 1, 0x2000, &cbm700c_charlayout, 0, 1 },
     { -1 } /* end of array */
 };
 
@@ -742,7 +779,7 @@ ROM_START (cbm610)
 	ROM_LOAD ("901243.04a", 0xf8000, 0x2000, 0xb0dcb56d)
 	ROM_LOAD ("901242.04a", 0xfa000, 0x2000, 0xde04ea4f)
 	ROM_LOAD ("901244.04a", 0xfe000, 0x2000, 0x09a5667e)
-	ROM_REGION (0x2000, REGION_GFX1)
+	ROM_REGION (0x2010, REGION_GFX1)
     ROM_LOAD ("901237.01", 0x0000, 0x1000, 0x1acf5098)
 ROM_END
 
@@ -751,7 +788,7 @@ ROM_START (cbm620)
     ROM_LOAD ("901241.03", 0xf8000, 0x2000, 0x5c1f3347)
     ROM_LOAD ("901240.03", 0xfa000, 0x2000, 0x72aa44e1)
     ROM_LOAD ("901244.04a", 0xfe000, 0x2000, 0x09a5667e)
-	ROM_REGION (0x2000, REGION_GFX1)
+	ROM_REGION (0x2010, REGION_GFX1)
     ROM_LOAD ("901237.01", 0x0000, 0x1000, 0x1acf5098)
 ROM_END
 
@@ -759,7 +796,7 @@ ROM_START (cbm620hu)
 	ROM_REGION (0x100000, REGION_CPU1)
 	ROM_LOAD ("610u60.bin", 0xf8000, 0x4000, 0x8eed0d7e)
 	ROM_LOAD ("kernhun.bin", 0xfe000, 0x2000, 0x0ea8ca4d)
-	ROM_REGION (0x2000, REGION_GFX1)
+	ROM_REGION (0x2010, REGION_GFX1)
 	ROM_LOAD ("charhun.bin", 0x0000, 0x2000, 0x1fb5e596)
 ROM_END
 
@@ -768,7 +805,7 @@ ROM_START (cbm710)
 	ROM_LOAD ("901243.04a", 0xf8000, 0x2000, 0xb0dcb56d)
 	ROM_LOAD ("901242.04a", 0xfa000, 0x2000, 0xde04ea4f)
 	ROM_LOAD ("901244.04a", 0xfe000, 0x2000, 0x09a5667e)
-	ROM_REGION (0x2000, REGION_GFX1)
+	ROM_REGION (0x2010, REGION_GFX1)
     ROM_LOAD ("901232.01", 0x0000, 0x1000, 0x3a350bc3)
 ROM_END
 
@@ -777,7 +814,7 @@ ROM_START (cbm720)
     ROM_LOAD ("901241.03", 0xf8000, 0x2000, 0x5c1f3347)
     ROM_LOAD ("901240.03", 0xfa000, 0x2000, 0x72aa44e1)
     ROM_LOAD ("901244.04a", 0xfe000, 0x2000, 0x09a5667e)
-	ROM_REGION (0x2000, REGION_GFX1)
+	ROM_REGION (0x2010, REGION_GFX1)
     ROM_LOAD ("901232.01", 0x0000, 0x1000, 0x3a350bc3)
 ROM_END
 
@@ -786,7 +823,7 @@ ROM_START (cbm720se)
     ROM_LOAD ("901241.03", 0xf8000, 0x2000, 0x5c1f3347)
     ROM_LOAD ("901240.03", 0xfa000, 0x2000, 0x72aa44e1)
     ROM_LOAD ("901244.03", 0xfe000, 0x2000, 0x87bc142b)
-	ROM_REGION (0x2000, REGION_GFX1)
+	ROM_REGION (0x2010, REGION_GFX1)
     ROM_LOAD ("901233.03", 0x0000, 0x1000, 0x09518b19)
 ROM_END
 
@@ -895,7 +932,6 @@ static struct MachineDriver machine_driver_cbm600 =
 			cbmb_readmem, cbmb_writemem,
 			0, 0,
 			0, 0,
-			crtc6845_raster_irq, 15625,
 		},
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -917,9 +953,9 @@ static struct MachineDriver machine_driver_cbm600 =
 	VIDEO_PIXEL_ASPECT_RATIO_1_2|VIDEO_TYPE_RASTER,
 #endif
 	0,
-	crtc6845_vh_start,
-	crtc6845_vh_stop,
-	crtc6845_vh_screenrefresh,
+	generic_vh_start,
+	generic_vh_stop,
+	cbmb_vh_screenrefresh,
 
   /* sound hardware */
 	0, 0, 0, 0,
@@ -939,7 +975,6 @@ static struct MachineDriver machine_driver_cbm600pal =
 			cbmb_readmem, cbmb_writemem,
 			0, 0,
 			0, 0,
-			crtc6845_raster_irq, 15625,
 		},
 	},
 	50, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -956,14 +991,14 @@ static struct MachineDriver machine_driver_cbm600pal =
 	sizeof (cbmb_colortable) / sizeof(cbmb_colortable[0]),
 	cbm700_init_palette,				   /* convert color prom */
 #ifdef PET_TEST_CODE
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 #else
-	VIDEO_PIXEL_ASPECT_RATIO_1_2|VIDEO_TYPE_RASTER,
+	VIDEO_PIXEL_ASPECT_RATIO_1_2|VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 #endif
 	0,
-	crtc6845_vh_start,
-	crtc6845_vh_stop,
-	crtc6845_vh_screenrefresh,
+	generic_vh_start,
+	generic_vh_stop,
+	cbmb_vh_screenrefresh,
 
   /* sound hardware */
 	0, 0, 0, 0,
@@ -983,7 +1018,6 @@ static struct MachineDriver machine_driver_cbm700 =
 			cbmb_readmem, cbmb_writemem,
 			0, 0,
 			0, 0,
-			crtc6845_raster_irq, 353*50,
 		},
 	},
 	50, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -999,11 +1033,11 @@ static struct MachineDriver machine_driver_cbm700 =
 	sizeof (cbm700_palette) / sizeof (cbm700_palette[0]) / 3,
 	sizeof (cbmb_colortable) / sizeof(cbmb_colortable[0]),
 	cbm700_init_palette,				   /* convert color prom */
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
-	crtc6845_vh_start,
-	crtc6845_vh_stop,
-	crtc6845_vh_screenrefresh,
+	cbm700_vh_start,
+	generic_vh_stop,
+	cbmb_vh_screenrefresh,
 
   /* sound hardware */
 	0, 0, 0, 0,
@@ -1023,7 +1057,7 @@ static struct MachineDriver machine_driver_cbm500 =
 			cbm500_readmem, cbm500_writemem,
 			0, 0,
 			0, 0,
-			vic2_raster_irq, VIC2_HRETRACERATE,
+			vic2_raster_irq, VIC2_HRETRACERATE,		
 		},
 	},
 	VIC6567_VRETRACERATE, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */

@@ -11,7 +11,6 @@
 #include "driver.h"
 
 #include "cia6526.h"
-#include "praster.h"
 
 #ifdef RUNTIME_LOADER
 # ifdef __cplusplus
@@ -279,7 +278,7 @@ void c64_rom_load(void);
 void c64_rom_recognition (void);
 extern int c64_rom_id (int id);
 
-void c64_state(PRASTER *This);
+void c64_state(void);
 
 /* private area */
 

@@ -8,6 +8,9 @@
 #include "cpu/m6502/m6502.h"
 #include "cpu/m6809/m6809.h"
 
+#include "vidhrdw/generic.h"
+#include "includes/state.h"
+
 #define VERBOSE_DBG 1
 #include "includes/cbm.h"
 #include "includes/vc20tape.h"
@@ -16,6 +19,7 @@
 #include "includes/pet.h"
 #include "includes/cbmserb.h"
 #include "includes/cbmieeeb.h"
+#include "includes/crtc6845.h"
 
 /* keyboard lines */
 static UINT8 pet_keyline[10] = { 0 };
@@ -25,9 +29,12 @@ static int cbm8096=0;
 static int pet_keyline_select;
 static void *pet_clock;
 
+int pet_font=0;
 UINT8 *pet_memory;
 UINT8 *superpet_memory;
 UINT8 *pet_videoram;
+
+static void pet_state(void);
 
 /* pia at 0xe810
    port a
@@ -173,7 +180,8 @@ static struct pia6821_interface pet_pia0={
 static WRITE_HANDLER( pet_address_line_11 )
 {
 	DBG_LOG (1, "address line", ("%d\n", data));
-	crtc6845_address_line_11(data);
+	if (data) pet_font|=1;
+	else pet_font&=~1;
 }
 
 /* userport, cassettes, rest ieee488
@@ -252,7 +260,7 @@ WRITE_HANDLER(cbm8096_io_w)
 	else if (offset<0x40) ;
 	else if (offset<0x50) via_0_w(offset&0xf,data);
 	else if (offset<0x80) ;
-	else if (offset<0x82) crtc6845_pet_port_w(offset&1,data);
+	else if (offset<0x82) crtc6845_0_port_w(offset&1,data);
 }
 
 extern READ_HANDLER(cbm8096_io_r)
@@ -265,7 +273,7 @@ extern READ_HANDLER(cbm8096_io_r)
 	else if (offset<0x40) ;
 	else if (offset<0x50) data=via_0_r(offset&0xf);
 	else if (offset<0x80) ;
-	else if (offset<0x82) data=crtc6845_port_r(offset&1);
+	else if (offset<0x82) data=crtc6845_0_port_r(offset&1);
 	return data;
 }
 
@@ -305,7 +313,7 @@ WRITE_HANDLER(cbm8096_w)
 		}
 		if (data&0x20) {
 			cpu_setbank(1,pet_memory+0x8000);
-			cpu_setbankhandler_w(1, crtc6845_videoram_w);
+			cpu_setbankhandler_w(1, videoram_w);
 		} else {
 			if (!(data&1)) {
 				cpu_setbankhandler_w(1,MWA_BANK1);
@@ -354,7 +362,7 @@ WRITE_HANDLER(cbm8096_w)
 		}
 	} else {
 		cpu_setbank(1,pet_memory+0x8000);
-		cpu_setbankhandler_w(1, crtc6845_videoram_w);
+		cpu_setbankhandler_w(1, videoram_w);
 		cpu_setbank(2,pet_memory+0x9000);
 		cpu_setbankhandler_w(2, MWA_ROM);
 		cpu_setbank(3,pet_memory+0xa000);
@@ -401,6 +409,14 @@ extern WRITE_HANDLER(superpet_w)
 	}
 }
 
+static void pet_interrupt(int param)
+{
+	static int level=0;
+
+	pia_0_cb1_w(0,level);
+	level=!level;
+}
+
 static void pet_common_driver_init (void)
 {
 	int i;
@@ -410,10 +426,13 @@ static void pet_common_driver_init (void)
 	}
 	memset(pet_memory+0xe800, 0xff, 0x800);
 
-	pet_clock=timer_pulse(0.01, 0, pet_frame_interrupt);
+	pet_clock=timer_pulse(0.01, 0, pet_interrupt);
+
 	via_config(0,&pet_via);
 	pia_config(0,PIA_STANDARD_ORDERING,&pet_pia0);
 	pia_config(1,PIA_STANDARD_ORDERING,&pet_pia1);
+
+	state_add_function(pet_state);
 
 	cbm_drive_open ();
 
@@ -426,31 +445,31 @@ static void pet_common_driver_init (void)
 void pet_driver_init (void)
 {
 	pet_common_driver_init ();
-	raster2.display_state=pet_state;
-	pet_init(pet_videoram);
+	pet_vh_init();
 }
 
 void pet_basic1_driver_init (void)
 {
 	pet_basic1=1;
 	pet_common_driver_init ();
-	raster2.display_state=pet_state;
-	pet_init(pet_videoram);
+	pet_vh_init();
 }
 
+static CRTC6845_CONFIG crtc_pet= { 800000 /*?*/};
 void pet40_driver_init (void)
 {
 	pet_common_driver_init ();
-	raster2.display_state=pet_state;
-	crtc6845_pet_init(pet_videoram);
+	pet_vh_init();
+	crtc6845_init(crtc6845, &crtc_pet);
 }
 
 void cbm80_driver_init (void)
 {
 	cbm8096=1;
 	pet_common_driver_init ();
-	raster2.display_state=pet_state;
-	crtc6845_pet_init(pet_videoram);
+	videoram_size=0x800;
+	pet80_vh_init();
+	crtc6845_init(crtc6845, &crtc_pet);
 }
 
 void superpet_driver_init(void)
@@ -465,8 +484,8 @@ void superpet_driver_init(void)
 	cpu_setbank(3, superpet_memory);
 	memorycontextswap(0);
 
-	raster2.display_state=pet_state;
-	crtc6845_superpet_init(pet_videoram);
+	superpet_vh_init();
+	crtc6845_init(crtc6845, &crtc_pet);
 }
 
 void pet_driver_shutdown (void)
@@ -483,9 +502,11 @@ void pet_init_machine (void)
 		if (M6809_SELECT) {
 			cpu_set_halt_line(0,1);
 			cpu_set_halt_line(1,0);
+			pet_font=2;
 		} else {
 			cpu_set_halt_line(0,0);
 			cpu_set_halt_line(1,1);
+			pet_font=0;
 		}
 	}
 
@@ -836,24 +857,19 @@ void pet_keyboard_normal(void)
 	pet_keyline[9] = value;
 }
 
-void pet_frame_interrupt (int param)
+int pet_frame_interrupt (void)
 {
-	static int level=0;
 	static int quickload = 0;
-
-	pia_0_cb1_w(0,level);
-	level=!level;
-	if (level) return;
 
 	if (superpet) {
 		if (M6809_SELECT) {
 			cpu_set_halt_line(0,1);
 			cpu_set_halt_line(1,0);
-			crtc6845_address_line_12(1);
+			pet_font|=2;
 		} else {
 			cpu_set_halt_line(0,0);
 			cpu_set_halt_line(1,1);
-			crtc6845_address_line_12(0);
+			pet_font&=~2;
 		}
 	}
 
@@ -872,14 +888,12 @@ void pet_frame_interrupt (int param)
 	quickload = QUICKLOAD;
 
 	set_led_status (1 /*KB_CAPSLOCK_FLAG */ , KEY_B_SHIFTLOCK ? 1 : 0);
+	return 0;
 }
 
-void pet_state(PRASTER *This)
+void pet_state(void)
 {
-	int y;
 	char text[70];
-
-	y = Machine->visible_area.max_y + 1 - Machine->uifont->height;
 
 #if 0
 	snprintf(text, sizeof(text),
@@ -894,12 +908,12 @@ void pet_state(PRASTER *This)
 			 pet_keyline[7],
 			 pet_keyline[8],
 			 pet_keyline[9]);
-	praster_draw_text (This, text, &y);
+	state_display_text(text);
 #endif
 
 	cbm_drive_0_status (text, sizeof (text));
-	praster_draw_text (This, text, &y);
+	state_display_text(text);
 
 	cbm_drive_1_status (text, sizeof (text));
-	praster_draw_text (This, text, &y);
+	state_display_text(text);
 }

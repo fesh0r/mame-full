@@ -8,9 +8,6 @@
 
 #include "driver.h"
 
-#include "praster.h"
-#include "crtc6845.h"
-
 #ifdef RUNTIME_LOADER
 # ifdef __cplusplus
 	extern "C" void pet_runtime_loader_init(void);
@@ -19,19 +16,16 @@
 # endif
 #endif
 
-//  commodore pet discrete video circuit
-
 /* call to init videodriver */
-extern void pet_init (UINT8 *memory);
+extern void pet_vh_init ();
+extern void pet80_vh_init ();
+extern void superpet_vh_init ();
+void pet_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
+void pet40_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
+void pet80_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
+void superpet_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
 
-#define pet_vh_start praster_vh_start
-#define pet_vh_stop praster_vh_stop
-#define pet_vh_screenrefresh praster_vh_screenrefresh
-#define pet_raster_irq praster_raster_irq
-
-/*#define crtc6845_update praster_2_update */
-#define pet_videoram_w praster_2_videoram_w
-
+extern int pet_font;
 
 #define KEY_ATSIGN (input_port_0_word_r(0)&0x8000)
 #define KEY_1 (input_port_0_word_r(0)&0x4000)
@@ -235,11 +229,9 @@ extern void superpet_driver_init(void);
 extern void pet_driver_shutdown (void);
 extern void pet_init_machine (void);
 extern void pet_shutdown_machine (void);
-extern void pet_frame_interrupt (int param);
+extern int pet_frame_interrupt (void);
 
 int pet_rom_id (int id);
 void pet_rom_load(void);
-
-void pet_state(PRASTER *This);
 
 #endif

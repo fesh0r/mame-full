@@ -26,11 +26,23 @@
 #include "includes/vic6567.h"
 #include "includes/vdc8563.h"
 #include "includes/sid6581.h"
+#include "includes/state.h"
 
 #include "includes/c128.h"
 #include "includes/c65.h"
 
 #include "includes/c64.h"
+
+unsigned char c65_keyline = { 0xff };
+int c65=0;
+UINT8 c65_6511_port=0xff;
+
+/* computer is a c128 */
+int c128 = 0;
+
+UINT8 c128_keyline[3] =
+{0xff, 0xff, 0xff};
+
 
 /* keyboard lines */
 UINT8 c64_keyline[10] =
@@ -694,7 +706,7 @@ static void c64_common_driver_init (void)
 		vic6567_init (0, c64_pal, c64_dma_read, c64_dma_read_color,
 					  c64_vic_interrupt);
 	}
-	raster1.display_state=c64_state;
+	state_add_function(c64_state);
 }
 
 void c64_driver_init (void)
@@ -997,7 +1009,6 @@ int c64_frame_interrupt (void)
 				vdc8563_set_rastering(0);
 				osd_set_visible_area(0,335,0,215);
 			}
-			vdc8563_update();
 			monitor=MONITOR_TV;
 		}
 	}
@@ -1334,38 +1345,35 @@ int c64_frame_interrupt (void)
 	return ignore_interrupt ();
 }
 
-void c64_state(PRASTER *This)
+void c64_state(void)
 {
-	int y;
 	char text[70];
-
-	y = Machine->visible_area.max_y + 1 - Machine->uifont->height;
 
 #if VERBOSE_DBG
 #if 0
 	cia6526_status (text, sizeof (text));
-	praster_draw_text (This, text, &y);
+	state_display_text (text);
 
 	snprintf (text, sizeof(text), "c64 vic:%.4x m6510:%d exrom:%d game:%d",
 			  c64_vicaddr - c64_memory, c64_port6510 & 7,
 			  c64_exrom, c64_game);
-	praster_draw_text (This, text, &y);
+	state_display_text (text);
 #endif
 
 	vdc8563_status(text, sizeof(text));
-	praster_draw_text (This, text, &y);
+	state_display_text (text);
 #endif
 
 	vc20_tape_status (text, sizeof (text));
-	praster_draw_text (This, text, &y);
+	state_display_text (text);
 #ifdef VC1541
 	vc1541_drive_status (text, sizeof (text));
 #else
 	cbm_drive_0_status (text, sizeof (text));
 #endif
-	praster_draw_text (This, text, &y);
+	state_display_text (text);
 
 	cbm_drive_1_status (text, sizeof (text));
-	praster_draw_text (This, text, &y);
+	state_display_text (text);
 }
 

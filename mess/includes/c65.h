@@ -63,7 +63,7 @@ extern void c65_init_machine (void);
 extern void c65_shutdown_machine (void);
 
 /*only for debugging */
-void c65_state (PRASTER *This);
+void c65_state (void);
 
 extern UINT8 c65_keyline;
 extern int c65;

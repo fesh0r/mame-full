@@ -13,17 +13,23 @@
 
 #include <math.h>
 #include <stdio.h>
+#include <assert.h>
 #include "osd_cpu.h"
 #include "driver.h"
-#include "vidhrdw/generic.h"
+#include "includes/state.h"
 
-#define VERBOSE_DBG 0
-#include "includes/cbm.h"
-
-#include "includes/praster.h"
+#include "includes/crtc6845.h" // include only several register defines
 #include "includes/vdc8563.h"
 
-/* uses raster2, to allow vic6567 use raster1 */
+#define VERBOSE 0
+
+#if VERBOSE
+#define DBG_LOG(N,M,A)      \
+    if(VERBOSE>=N){ if( M )logerror("%11.6f: %-24s",timer_get_time(),(char*)M );
+ logerror A; }
+#else
+#define DBG_LOG(N,M,A)
+#endif
 
 /* seems to be a motorola m6845 variant */
 
@@ -96,66 +102,146 @@ static struct {
 	int state;
 	UINT8 reg[37];
 	UINT8 index;
-	int ram16konly;
+
 	UINT16 addr, src;
+
+	UINT16 videoram_start, colorram_start, fontram_start;
+	UINT16 videoram_size;
+
+	int rastering;
+
+	UINT8 *ram;
+	UINT8 *dirty;
+	UINT8 fontdirty[0x200];
+	UINT16 mask, fontmask;
+
+	double cursor_time;
+	int	cursor_on;
+
+	int changed;
 } vdc;
 
-void vdc8563_init (UINT8 *memory, int ram16konly)
+static const struct { 
+	int stored, 
+		read;
+} reg_mask[]= { 
+	{ 0xff, 0 },
+	{ 0xff, 0 },
+	{ 0xff, 0 },
+	{ 0xff, 0 },
+	{ 0xff, 0 },
+	{ 0x1f, 0 },
+	{ 0xff, 0 },
+	{ 0xff, 0 },
+	{  0x3, 0 }, //8
+	{  0x1f, 0 },
+	{  0x7f, 0 },
+	{  0x1f, 0 },
+	{  0xff, 0xff },
+	{  0xff, 0xff },
+	{  0xff, 0xff },
+	{  0xff, 0xff },
+	{  -1, 0xff }, //0x10
+	{  -1, 0xff },
+	{  0xff, 0xff },
+	{  0xff, 0xff },
+	{  0xff, -1 },
+	{  0x1f, -1 },
+	{  0xff, -1 },
+	{  0xff, -1 },
+	{  0xff, -1 },//0x18
+	{  0xff, -1 },
+	{  0xff, -1 },
+	{  0xff, -1 },
+	{  0xf0, -1 },
+	{  0x1f, -1 },
+	{  0xff, -1 },
+	{  0xff, -1 },
+	{  0xff, -1 }, //0x20
+	{  0xff, -1 },
+	{  0xff, -1 },
+	{  0xff, -1 },
+	{  0x0f, -1 },	
+};
+#define REG(x) (vdc.reg[x]&reg_mask[x].stored)
+
+void vdc8563_init (int ram16konly)
 {
 	memset(&vdc, 0, sizeof(vdc));
+	vdc.cursor_time=0.0;
 	vdc.state=1;
-	vdc.ram16konly=ram16konly;
 
-	praster_2_init();
-	raster2.memory.ram=memory;
-	raster2.text.fontsize.y=16;
-	raster2.raytube.screenpos.x=raster2.raytube.screenpos.y=8;
-
-	raster2.text.charsize.x=raster2.text.charsize.y=8;
-	raster2.text.visiblesize.x=raster2.text.visiblesize.y=8;
-	raster2.linediff=0;raster2.text.size.x=80;
-	raster2.text.size.y=25;
-	raster2.cursor.on=1;
-	raster2.cursor.pos=0;
-	raster2.cursor.blinking=1;
-	raster2.cursor.delay=16;
-	raster2.cursor.ybegin=0;raster2.cursor.yend=7;
-
-	if (ram16konly) {
-		raster2.memory.mask=raster2.memory.videoram.mask=
-			raster2.memory.colorram.mask=raster2.memory.fontram.mask=0x3fff;
+	if (ram16konly) { 
+		vdc.mask=0x3fff;
+		vdc.fontmask=0x2000;
 	} else {
-		raster2.memory.mask=raster2.memory.videoram.mask=
-			raster2.memory.colorram.mask=raster2.memory.fontram.mask=0xffff;
+		vdc.mask=0xffff;
+		vdc.fontmask=0xe000;
 	}
+
+	vdc.rastering=1;
+}
+
+static void vdc_videoram_w(int offset, int data)
+{
+	offset&=vdc.mask;
+    if (vdc.ram[offset]!=data) {
+		vdc.ram[offset] = data;
+		vdc.dirty[offset] = 1;
+		if ((vdc.fontram_start&vdc.fontmask)==(offset&vdc.fontmask)) 
+			vdc.fontdirty[(offset&0x1ff0)>>4]=1;
+	}
+}
+
+INLINE int vdc_videoram_r(int offset)
+{
+	return vdc.ram[offset&vdc.mask];
 }
 
 void vdc8563_set_rastering(int on)
 {
-	raster2.display.no_rastering=!on;
+	vdc.rastering=on;
+	vdc.changed|=1;
 }
 
 int vdc8563_vh_start (void)
 {
-    int r=praster_vh_start();
-	raster2.display.pens=Machine->pens+0x10;
-	raster2.display.bitmap=Machine->scrbitmap;
-	return r;
+	vdc.ram=(UINT8*)malloc(0x20000);
+	vdc.dirty=vdc.ram+0x10000;
+
+	return (!vdc.ram);
 }
 
-#define COLUMNS (vdc.reg[0]+1)
-#define COLUMNS_VISIBLE (vdc.reg[1])
-#define COLUMNS_SYNC_POS (vdc.reg[2])
-#define COLUMNS_SYNC_SIZE ((vdc.reg[3]&0xf)-1)
-#define LINES_SYNC_SIZE (vdc.reg[3]>>4)
-#define LINES (vdc.reg[4]*CHARHEIGHT+vdc.reg[5]&0x1f)
-#define CHARLINES (vdc.reg[6]&0x1f)
-#define LINES_SYNC_POS (vdc.reg[7])
-#define INTERLACE (vdc.reg[8]&1)
-#define LINES400 ((vdc.reg[8]&3)==3)
-#define CHARHEIGHT (vdc.reg[9]%0x1f)
+void vdc8563_vh_stop(void)
+{
+	free(vdc.ram);
+}
+
+#define CHAR_WIDTH (((vdc.reg[0x16]&0xf0)>>4)+1)
+#define CHAR_WIDTH_VISIBLE ((vdc.reg[0x16]&0xf)+1)
 
 #define BLOCK_COPY (vdc.reg[0x18]&0x80)
+
+#define MONOTEXT ((vdc.reg[0x19]&0xc0)==0)
+#define TEXT ((vdc.reg[0x19]&0xc0)==0x40)
+#define GRAPHIC (vdc.reg[0x19]&0x80)
+
+#define FRAMECOLOR (vdc.reg[0x1a]&0xf)
+#define MONOCOLOR (vdc.reg[0x1a]>>4)
+
+#define LINEDIFF (vdc.reg[0x1b])
+#define FONT_START ((vdc.reg[0x1c]&0xe0)<<8)
+/* 0x1c 0x10 dram 0:4416, 1: 4164 */
+
+/* 0x1d 0x1f counter for underlining */
+
+#define FILLBYTE vdc.reg[0x1f]
+
+#define CLOCK_HALFING (vdc.reg[25]&0x10)
+
+/* 0x22 number of chars from start of line to positiv edge of display enable */
+/* 0x23 number of chars from start of line to negativ edge of display enable */
+/* 0x24 0xf number of refresh cycles per line */
 
 WRITE_HANDLER ( vdc8563_port_w )
 {
@@ -167,96 +253,45 @@ WRITE_HANDLER ( vdc8563_port_w )
 		{
 			switch (vdc.index & 0x3f)
 			{
-			case 1:
+			case 1: case 4: case 0x1b:
 				vdc.reg[vdc.index]=data;
-				raster2.text.size.x=data;
-				raster2.memory.videoram.size=
-					raster2.memory.colorram.size=
-					raster2.text.size.y*data;
-				praster_2_update();
+				vdc.videoram_size=CRTC6845_CHAR_LINES*(CRTC6845_CHAR_COLUMNS+LINEDIFF);
+				vdc.changed=1;
 				break;
-			case 4:
+			case 0xe: case 0xf: case 0xa: case 0xb:
+				vdc.dirty[CRTC6845_CURSOR_POS&vdc.mask]=1;
 				vdc.reg[vdc.index]=data;
-				raster2.text.size.y=data+1;
-				raster2.memory.videoram.size=
-					raster2.memory.colorram.size=
-					raster2.text.size.x*data;
-				praster_2_update();
-				break;
-			case 9:
-				vdc.reg[vdc.index]=data;
-				raster2.text.charsize.y=(data&0x1f)+1;
-				praster_2_update();
-				break;
-			case 0xa:
-				vdc.reg[vdc.index]=data;
-				raster2.cursor.on=(data&0x60)!=0x20;
-				raster2.cursor.blinking=(data&0x60)!=0;
-				if ((data&0x60)==0x60) raster2.cursor.delay=32;
-				else raster2.cursor.delay=16;
-				raster2.cursor.ybegin=data&0x1f;
-				praster_2_cursor_update();
-				break;
-			case 0xb:
-				vdc.reg[vdc.index]=data;
-				raster2.cursor.yend=data&0x1f;
-				praster_2_cursor_update();
 				break;
 			case 0xc: case 0xd:
 				vdc.reg[vdc.index]=data;
-				raster2.memory.videoram.offset=(vdc.reg[0xc]<<8)|vdc.reg[0xd];
-				praster_2_update();
+				vdc.videoram_start=CRTC6845_VIDEO_START;
+				vdc.changed=1;
 				break;
-			case 0xe: case 0xf:
-				vdc.reg[vdc.index]=data;
-				raster2.cursor.pos=(vdc.reg[0xe]<<8)|vdc.reg[0xf];
-				praster_2_cursor_update();
-				break;
-			case 0x12:
+			case 0x12: 
 				vdc.addr=(vdc.addr&0xff)|(data<<8);
 				break;
 			case 0x13:
 				vdc.addr=(vdc.addr&0xff00)|data;
 				break;
+			case 0x20: 
+				vdc.src=(vdc.src&0xff)|(data<<8);
+				break;
+			case 0x21:
+				vdc.src=(vdc.src&0xff00)|data;
+				break;
 			case 0x14: case 0x15:
 				vdc.reg[vdc.index]=data;
-				raster2.memory.colorram.offset=(vdc.reg[0x14]<<8)|vdc.reg[0x15];
-				praster_2_update();
-				break;
-			case 0x16:
-				vdc.reg[vdc.index]=data;
-				raster2.text.visiblesize.x=(data&0xf)+1;
-				raster2.text.charsize.x=((data&0xf0)>>4)+1;
-				praster_2_update();
-				break;
-			case 0x19:
-				vdc.reg[vdc.index]=data;
-				if ((data&0xc0)==0) raster2.mode=PRASTER_MONOTEXT;
-				else if ((data&0xc0)==0x40) raster2.mode=PRASTER_TEXT;
-				else raster2.mode=PRASTER_GRAPHIC;
-				praster_2_update();
-				break;
-			case 0x1a:
-				vdc.reg[vdc.index]=data;
-				raster2.monocolor[0]=raster2.raytube.framecolor
-					=raster2.display.pens[data&0xf];
-				raster2.monocolor[1]=raster2.display.pens[data>>4];
-				praster_2_update();
-				break;
-			case 0x1b:
-				vdc.reg[vdc.index]=data;
-				raster2.linediff=data;
-				praster_2_update();
+				vdc.colorram_start=(vdc.reg[0x14]<<8)|vdc.reg[0x15];
+				vdc.changed=1;
 				break;
 			case 0x1c:
 				vdc.reg[vdc.index]=data;
-				raster2.memory.fontram.offset=(data&0xf0)<<8;
-				/* 0x10 dram 0:4416, 1: 4164 */
-				praster_2_update();
+				vdc.fontram_start=FONT_START;
+				vdc.changed=1;
 				break;
-			case 0x1d:
+			case 0x16: case 0x19: case 0x1a:
 				vdc.reg[vdc.index]=data;
-				/* 0x1f counter for underlining */
+				vdc.changed=1;
 				break;
 			case 0x1e:
 				vdc.reg[vdc.index]=data;
@@ -265,15 +300,14 @@ WRITE_HANDLER ( vdc8563_port_w )
 							 (errorlog, "src:%.4x dst:%.4x size:%.2x\n",
 							  vdc.src, vdc.addr, data));
 					i=data;do {
-						praster_2_videoram_w(vdc.addr++,
-											 praster_2_videoram_r(vdc.src++));
+						vdc_videoram_w(vdc.addr++, vdc_videoram_r(vdc.src++));
 					} while (--i!=0);
 				} else {
 					DBG_LOG (2, "vdc block set",
 							 (errorlog, "dest:%.4x value:%.2x size:%.2x\n",
-							  vdc.addr, vdc.reg[0x1f], data));
+							  vdc.addr, FILLBYTE, data));
 					i=data;do {
-						praster_2_videoram_w(vdc.addr++, vdc.reg[0x1f]);
+						vdc_videoram_w(vdc.addr++, FILLBYTE);
 					} while (--i!=0);
 				}
 				break;
@@ -282,25 +316,7 @@ WRITE_HANDLER ( vdc8563_port_w )
 						 (errorlog, "dest:%.4x size:%.2x\n",
 						  vdc.addr, data));
 				vdc.reg[vdc.index]=data;
-				praster_2_videoram_w(vdc.addr++, data);
-				break;
-			case 0x20:
-				vdc.src=(vdc.src&0xff)|(data<<8);
-				break;
-			case 0x21:
-				vdc.src=(vdc.src&0xff00)|data;
-				break;
-			case 0x22:
-				vdc.reg[vdc.index]=data;
-				/* number of chars from start of line to positiv edge of display enable */
-				break;
-			case 0x23:
-				vdc.reg[vdc.index]=data;
-				/* number of chars from start of line to negativ edge of display enable */
-				break;
-			case 0x24:
-				vdc.reg[vdc.index]=data;
-				/* 0xf number of refresh cycles per line */
+				vdc_videoram_w(vdc.addr++, data);
 				break;
 			default:
 				vdc.reg[vdc.index]=data;
@@ -339,7 +355,7 @@ READ_HANDLER ( vdc8563_port_r )
 				val=0;
 				break;
 			case 0x1f:
-				val=praster_2_videoram_r(vdc.addr);
+				val=vdc_videoram_r(vdc.addr);
 				DBG_LOG (2, "vdc read", (errorlog, "%.4x %.2x\n", vdc.addr, val));
 				break;
 			case 0x20:
@@ -349,7 +365,7 @@ READ_HANDLER ( vdc8563_port_r )
 				val=vdc.src&0xff;
 				break;
 			default:
-				val=vdc.reg[offset];
+				val=vdc.reg[vdc.index&0x3f]&reg_mask[vdc.index&0x3f].read;
 			}
 		}
 		DBG_LOG (2, "vdc8563_port_r", (errorlog, "%.2x:%.2x\n", vdc.index, val));
@@ -362,15 +378,232 @@ READ_HANDLER ( vdc8563_port_r )
 	return val;
 }
 
-extern void vdc8563_status (char *text, int size)
+static int vdc8563_clocks_in_frame()
 {
-	text[0]=0;
+	int clocks=CRTC6845_COLUMNS*CRTC6845_LINES;
+	switch (CRTC6845_INTERLACE_MODE) {
+	case CRTC6845_INTERLACE_SIGNAL: // interlace generation of video signals only
+	case CRTC6845_INTERLACE: // interlace
+		return clocks/2;
+	default:
+		return clocks;
+	}
+}
+
+void vdc8563_time(void)
+{
+	double neu, ftime;
+	neu=timer_get_time();
+
+	if (vdc8563_clocks_in_frame()==0.0) return;
+	ftime=16*vdc8563_clocks_in_frame()/2000000.0;
+	if (CLOCK_HALFING) ftime*=2;
+	switch (CRTC6845_CURSOR_MODE) {
+	case CRTC6845_CURSOR_OFF: vdc.cursor_on=0;break;
+	case CRTC6845_CURSOR_32FRAMES:
+		ftime*=2;
+	case CRTC6845_CURSOR_16FRAMES:
+		if (neu-vdc.cursor_time>ftime) {
+			vdc.cursor_time+=ftime;
+			vdc.dirty[CRTC6845_CURSOR_POS&vdc.mask]=1;
+			vdc.cursor_on^=1;
+		}
+		break;
+	default:
+		vdc.cursor_on=1;break;
+	}
+}
+
+void vdc8563_monotext_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
+{
+	int x, y, i;
+	struct rectangle rect, rect2;
+	int w=CRTC6845_CHAR_COLUMNS;
+	int h=CRTC6845_CHAR_LINES;
+	int height=CRTC6845_CHAR_HEIGHT;
+
+	rect.min_x=Machine->visible_area.min_x;
+	rect.max_x=Machine->visible_area.max_x;
+	if (full_refresh) {
+		memset(vdc.dirty+vdc.videoram_start, 1, vdc.videoram_size);
+	}
+
+	for (y=0, rect.min_y=height, rect.max_y=rect.min_y+height-1, 
+			 i=vdc.videoram_start&vdc.mask; y<h;
+		 y++, rect.min_y+=height, rect.max_y+=height) {
+		for (x=0; x<w; x++, i=(i+1)&vdc.mask) {
+			if (vdc.dirty[i]) {
+				drawgfx(bitmap,Machine->gfx[0],
+						vdc.ram[i], FRAMECOLOR|(MONOCOLOR<<4), 0, 0, 
+						Machine->gfx[0]->width*x+8,height*y+height,
+						&rect,TRANSPARENCY_NONE,0);
+				if ((vdc.cursor_on)&&(i==(CRTC6845_CURSOR_POS&vdc.mask))) {
+					rect2=rect;
+					rect2.min_y+=CRTC6845_CURSOR_TOP; 
+					if (CRTC6845_CURSOR_BOTTOM<height)
+						rect2.max_y=rect.min_y+CRTC6845_CURSOR_BOTTOM;
+					drawgfx(bitmap,Machine->gfx[1],
+							0, (FRAMECOLOR|MONOCOLOR<<4), 0, 0, Machine->gfx[0]->width*x+8,height*y+height,
+							&rect,TRANSPARENCY_NONE,0);
+				}
+
+				vdc.dirty[i]=0;
+			}
+		}
+		i+=LINEDIFF;
+	}
+}
+
+void vdc8563_text_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
+{
+	int x, y, i, j;
+	struct rectangle rect, rect2;
+	int w=CRTC6845_CHAR_COLUMNS;
+	int h=CRTC6845_CHAR_LINES;
+	int height=CRTC6845_CHAR_HEIGHT;
+	UINT8 ch;
+
+	rect.min_x=Machine->visible_area.min_x;
+	rect.max_x=Machine->visible_area.max_x;
+	if (full_refresh) {
+		memset(vdc.dirty+vdc.videoram_start, 1, vdc.videoram_size);
+	}
+
+	for (y=0, rect.min_y=height, rect.max_y=rect.min_y+height-1, 
+			 i=vdc.videoram_start&vdc.mask, j=vdc.colorram_start&vdc.mask; y<h;
+		 y++, rect.min_y+=height, rect.max_y+=height) {
+		for (x=0; x<w; x++, i=(i+1)&vdc.mask, j=(j+1)&vdc.mask) {
+			if (vdc.dirty[i]||vdc.dirty[j]) {
+				ch=vdc.ram[j];
+				drawgfx(bitmap,Machine->gfx[0],
+						vdc.ram[i]|((ch&0x80)<<1), ch&0x7f, 0, 0, 
+						Machine->gfx[0]->width*x+8,height*y+height,
+						&rect,TRANSPARENCY_NONE,0);
+				if ((vdc.cursor_on)&&(i==(CRTC6845_CURSOR_POS&vdc.mask))) {
+					rect2=rect;
+					rect2.min_y+=CRTC6845_CURSOR_TOP; 
+					if (CRTC6845_CURSOR_BOTTOM<height)
+						rect2.max_y=rect.min_y+CRTC6845_CURSOR_BOTTOM;
+					drawgfx(bitmap,Machine->gfx[1],
+							0, ch&0x7f, 0, 0, Machine->gfx[0]->width*x+8,height*y+height,
+							&rect,TRANSPARENCY_NONE,0);
+				}
+
+				vdc.dirty[i]=0;
+				vdc.dirty[j]=0;
+			}
+		}
+		i+=LINEDIFF;
+		j+=LINEDIFF;
+	}
+}
+
+void vdc8563_graphic_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
+{
+	int x, y, i, j, k;
+	struct rectangle rect;
+	int w=CRTC6845_CHAR_COLUMNS;
+	int h=CRTC6845_CHAR_LINES;
+	int height=CRTC6845_CHAR_HEIGHT;
+
+	rect.min_x=Machine->visible_area.min_x;
+	rect.max_x=Machine->visible_area.max_x;
+	if (full_refresh) {
+		memset(vdc.dirty, 1, vdc.mask+1);
+	}
+
+	for (y=0, rect.min_y=height, rect.max_y=rect.min_y+height-1, 
+			 i=vdc.videoram_start&vdc.mask; y<h;
+		 y++, rect.min_y+=height, rect.max_y+=height) {
+		for (x=0; x<w; x++, i=(i+1)&vdc.mask) {
+			for (j=0; j<height; j++) {
+				k=((i<<4)+j)&vdc.mask;
+				if (vdc.dirty[k]) {
+					drawgfx(bitmap,Machine->gfx[2],
+							vdc.ram[k], FRAMECOLOR|(MONOCOLOR<<4), 0, 0, 
+							Machine->gfx[0]->width*x+8,height*y+height+j,
+							&rect,TRANSPARENCY_NONE,0);
+					vdc.dirty[k]=0;
+				}
+			}
+		}
+		i+=LINEDIFF;
+	}
+}
+
+void vdc8563_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
+{
+	int i;
+
+	if (!vdc.rastering) return;
+	vdc8563_time();
+
+	full_refresh|=vdc.changed;
+	if (GRAPHIC) { vdc8563_graphic_screenrefresh(bitmap, full_refresh);
+	} else {
+		for (i=0; i<512; i++) {
+			if (full_refresh||vdc.fontdirty[i]) {
+				decodechar(Machine->gfx[0],i,vdc.ram+(vdc.fontram_start&vdc.mask),
+						   Machine->drv->gfxdecodeinfo[0].gfxlayout);
+				vdc.fontdirty[i]=0;
+			}
+		}
+		if (TEXT) vdc8563_text_screenrefresh(bitmap, full_refresh);
+		else vdc8563_monotext_screenrefresh(bitmap, full_refresh);
+	}
+
+	if (full_refresh) {
+		int x, y;
+		struct rectangle rect;
+		int w=CRTC6845_CHAR_COLUMNS;
+		int h=CRTC6845_CHAR_LINES;
+		int height=CRTC6845_CHAR_HEIGHT;
+		
+		rect.min_x=Machine->visible_area.min_x;
+		rect.max_x=Machine->visible_area.max_x;
+		
+		rect.min_y=0; rect.max_y=rect.min_y+height-1;			
+		for (x=0; x<w+2; x++) {
+			drawgfx(bitmap,Machine->gfx[1],
+					0, FRAMECOLOR, 0, 0, 
+					Machine->gfx[0]->width*x,0,
+					&rect,TRANSPARENCY_NONE,0);
+		}
+		rect.min_y+=height; rect.max_y+=height;
+		for (y=0; y<h; y++, rect.min_y+=height, rect.max_y+=height) {
+			drawgfx(bitmap,Machine->gfx[1],
+					0, FRAMECOLOR, 0, 0, 
+					0,height*y+height,
+					&rect,TRANSPARENCY_NONE,0);
+			drawgfx(bitmap,Machine->gfx[1],
+					0, FRAMECOLOR, 0, 0, 
+					Machine->gfx[0]->width*(w+1),height*y+height,
+					&rect,TRANSPARENCY_NONE,0);
+		}
+		for (x=0; x<w+2; x++) {
+			drawgfx(bitmap,Machine->gfx[1],
+					0, FRAMECOLOR, 0, 0, 
+					Machine->gfx[0]->width*x,height*(h+1),
+					&rect,TRANSPARENCY_NONE,0);
+		}
+
+	}
+
+	vdc.changed=0;
+
+	state_display(bitmap);
+}
+
+extern void vdc8563_state (void)
+{
 #if VERBOSE_DBG
+	char text[50]="";
 #if 1
-		snprintf (text, sizeof (text), "vdc %.2x", vdc.reg[0x1b]);
+	snprintf (text, sizeof (text), "vdc %.2x", vdc.reg[0x1b]);
 #else
-		snprintf (text, sizeof (text), "enable:%.2x occured:%.2x",
-				  vdc.reg[0x1a], vdc.reg[0x19]);
+	snprintf (text, sizeof (text), "enable:%.2x occured:%.2x",
+			  vdc.reg[0x1a], vdc.reg[0x19]);
 #endif
+	state_display_text (text);
 #endif
 }
