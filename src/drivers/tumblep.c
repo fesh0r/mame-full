@@ -11,12 +11,14 @@
   Jump Kids	            (c) 1993 Comad
   Fancy World           (c) 1995 Unico
   Hatch Catch			(c) 1995 SemiCom
-  Cookie & Bibi         (c) 1995 SemiCom
+  Cookie & Bibi[2]      (c) 1995 SemiCom
   B.C. Story            (c) 1997 SemiCom
   Jumping Pop			(c) 2001 ESD
   Super Trio[1]			(c) 1994 GameAce
 
   [1] has the same sprites as the bootlegs, not much else is the same tho
+
+  [2] test mode crashes the same way on the real board
 
   Bootleg sound is not quite correct yet (Nothing on bootleg 2).
 

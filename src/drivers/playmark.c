@@ -22,10 +22,10 @@ World Beach Volley:
 - Sound is controlled by a pic16c57 whose ROM is missing for this game.
 
 Excelsior:
-- bitmap position is wrong in some places
+- bitmap position is wrong at the end of the level and it should be trasparent
+- bitmap should be entirely visible in test mode and after the level end
 - sprite/tile priority issue during high scores (text should go behind rocks)
-  and on title screen (stars should probably be behind title)
-- Sound is controlled by a pic16c57 whose ROM is missing for this game.
+  and on title screen (stars should be behind title)
 
 ***************************************************************************/
 
@@ -158,7 +158,7 @@ static READ8_HANDLER( playmark_snd_command_r )
 
 	if ((playmark_oki_control & 0x38) == 0x30) {
 		data = playmark_snd_command;
-		logerror("PortB reading %02x from the 68K\n",data);
+//		logerror("PortB reading %02x from the 68K\n",data);
 	}
 	else if ((playmark_oki_control & 0x38) == 0x28) {
 		data = (OKIM6295_status_0_r(0) & 0x0f);
@@ -178,6 +178,21 @@ static READ8_HANDLER( playmark_snd_flag_r )
 	return 0x40;
 }
 
+
+static WRITE8_HANDLER( playmark_oki_banking_w )
+{
+	static int old_bank = 0;
+
+	if(old_bank != (data & 7))
+	{
+		old_bank = data & 7;
+
+		if(((old_bank - 1) * 0x40000) < memory_region_length(REGION_SOUND1))
+		{
+			OKIM6295_set_bank_base(0, 0x40000 * (old_bank - 1));
+		}
+	}
+}
 
 static WRITE8_HANDLER( playmark_oki_w )
 {
@@ -258,7 +273,7 @@ static ADDRESS_MAP_START( wbeachvl_main_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x710018, 0x710019) AM_READ(input_port_3_word_r)
 	AM_RANGE(0x71001a, 0x71001b) AM_READ(input_port_4_word_r)
 //	AM_RANGE(0x71001c, 0x71001d) AM_READ(playmark_snd_status???)
-	AM_RANGE(0x71001e, 0x71001f) AM_WRITE(MWA16_NOP)//playmark_snd_command_w },
+//	AM_RANGE(0x71001e, 0x71001f) AM_WRITE(MWA16_NOP)//playmark_snd_command_w },
 	AM_RANGE(0x780000, 0x780fff) AM_WRITE(paletteram16_RRRRRGGGGGBBBBBx_word_w) AM_BASE(&paletteram16)
 	AM_RANGE(0xff0000, 0xffffff) AM_RAM
 ADDRESS_MAP_END
@@ -278,7 +293,7 @@ static ADDRESS_MAP_START( excelsr_main_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x700016, 0x700017) AM_WRITE(coinctrl_w)
 	AM_RANGE(0x70001a, 0x70001b) AM_READ(input_port_3_word_r)
 	AM_RANGE(0x70001c, 0x70001d) AM_READ(input_port_4_word_r)
-	AM_RANGE(0x70001e, 0x70001f) AM_WRITENOP //(playmark_snd_command_w)
+	AM_RANGE(0x70001e, 0x70001f) AM_WRITE(playmark_snd_command_w)
 	AM_RANGE(0x780000, 0x7807ff) AM_RAM AM_WRITE(bigtwin_paletteram_w) AM_BASE(&paletteram16)
 	AM_RANGE(0xff0000, 0xffffff) AM_RAM
 ADDRESS_MAP_END
@@ -291,6 +306,7 @@ ADDRESS_MAP_END
 	/* $000 - 07F  PIC16C57 Internal Data RAM */
 
 static ADDRESS_MAP_START( playmark_sound_io_map, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(playmark_oki_banking_w)
 	AM_RANGE(0x01, 0x01) AM_READWRITE(playmark_snd_command_r, playmark_oki_w)
 	AM_RANGE(0x02, 0x02) AM_READWRITE(playmark_snd_flag_r, playmark_snd_control_w)
 	AM_RANGE(PIC16C5x_T0, PIC16C5x_T0) AM_READ(PIC16C5X_T0_clk_r)
@@ -503,7 +519,7 @@ INPUT_PORTS_START( excelsr )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -697,6 +713,10 @@ static MACHINE_DRIVER_START( wbeachvl )
 	MDRV_CPU_PROGRAM_MAP(wbeachvl_main_map, 0)
 	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
 
+//	MDRV_CPU_ADD(PIC16C57, ((32000000/8)/PIC16C5x_CLOCK_DIVIDER))	/* 4MHz ? */
+	/* Program and Data Maps are internal to the MCU */
+//	MDRV_CPU_IO_MAP(playmark_sound_io_map, 0)
+
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
@@ -727,9 +747,9 @@ static MACHINE_DRIVER_START( excelsr )
 	MDRV_CPU_PROGRAM_MAP(excelsr_main_map, 0)
 	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
 
-//	MDRV_CPU_ADD(PIC16C57, ((32000000/8)/PIC16C5x_CLOCK_DIVIDER))	/* 4MHz ? */
+	MDRV_CPU_ADD(PIC16C57, ((32000000/8)/PIC16C5x_CLOCK_DIVIDER))	/* 4MHz ? */
 	/* Program and Data Maps are internal to the MCU */
-//	MDRV_CPU_IO_MAP(playmark_sound_io_map, 0)
+	MDRV_CPU_IO_MAP(playmark_sound_io_map, 0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -810,8 +830,26 @@ ROM_START( wbeachvl )
 	ROM_LOAD( "wbv_09.bin",   0x580000, 0x20000, CRC(894ce354) SHA1(331aeabbe10cd645776da2dc0829acc2275e72dc) )
 	/* 5a0000-5fffff is empty */
 
-	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
+	ROM_REGION( 0x100000, REGION_USER2, 0 )	/* OKIM6295 samples */
 	ROM_LOAD( "wbv_01.bin",   0x00000, 0x100000, CRC(ac33f25f) SHA1(5d9ed16650aeb297d565376a99b31c88ab611668) )
+
+	/* $00000-$20000 stays the same in all sound banks, */
+	/* the second half of the bank is what gets switched */
+	ROM_REGION( 0x1c0000, REGION_SOUND1, 0 ) /* Samples */
+	ROM_COPY( REGION_USER2, 0x000000, 0x000000, 0x020000)
+	ROM_COPY( REGION_USER2, 0x020000, 0x020000, 0x020000)
+	ROM_COPY( REGION_USER2, 0x000000, 0x040000, 0x020000)
+	ROM_COPY( REGION_USER2, 0x040000, 0x060000, 0x020000)
+	ROM_COPY( REGION_USER2, 0x000000, 0x080000, 0x020000)
+	ROM_COPY( REGION_USER2, 0x060000, 0x0a0000, 0x020000)
+	ROM_COPY( REGION_USER2, 0x000000, 0x0c0000, 0x020000)
+	ROM_COPY( REGION_USER2, 0x080000, 0x0e0000, 0x020000)
+	ROM_COPY( REGION_USER2, 0x000000, 0x100000, 0x020000)
+	ROM_COPY( REGION_USER2, 0x0a0000, 0x120000, 0x020000)
+	ROM_COPY( REGION_USER2, 0x000000, 0x140000, 0x020000)
+	ROM_COPY( REGION_USER2, 0x0c0000, 0x160000, 0x020000)
+	ROM_COPY( REGION_USER2, 0x000000, 0x180000, 0x020000)
+	ROM_COPY( REGION_USER2, 0x0e0000, 0x1a0000, 0x020000)
 ROM_END
 
 ROM_START( excelsr )
@@ -823,8 +861,11 @@ ROM_START( excelsr )
 	ROM_LOAD16_BYTE( "20.u305", 0x200001, 0x80000, CRC(8692afe9) SHA1(b4411bad64a9a6efd8eb13dcf7c5eebfb5681f3d) )
 	ROM_LOAD16_BYTE( "17.u306", 0x200000, 0x80000, CRC(978f9a6b) SHA1(9514b97f071fd20740218a58af877765beffedad) )
 
-	ROM_REGION( 0x1000, REGION_CPU2, 0 )	/* sound (missing) */
-	ROM_LOAD( "pic16c57",     0x0000, 0x1000, NO_DUMP )
+	ROM_REGION( 0x1000, REGION_CPU2, 0 )	/* sound (PIC16C57) */
+	/* ROM will be copied here by the init code from REGION_USER1 */
+
+	ROM_REGION( 0x3000, REGION_USER1, ROMREGION_DISPOSE )
+	ROM_LOAD( "pic16c57-hs.i015", 0x0000, 0x2d4c, CRC(022c6941) SHA1(8ead40bfa7aa783b1ce62bd6cfa673cb876e29e7) )
 
 	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "26.u311",      0x000000, 0x80000, CRC(c171c059) SHA1(7bc45ef1d588f5f55a461adb91bca382155c1059) )
@@ -838,20 +879,18 @@ ROM_START( excelsr )
 	ROM_LOAD( "23.u323",      0x100000, 0x80000, CRC(d8e1453b) SHA1(a3edb05abe486d4cce30f5caf14be619b6886f7c) )
 	ROM_LOAD( "27.u324",      0x180000, 0x80000, CRC(eca2c079) SHA1(a07957b427d55c8ca1efb0e83ee3b603f06bed58) )
 
-	ROM_REGION( 0x80000, REGION_USER1, 0 )	/* OKIM6295 samples */
+	ROM_REGION( 0x80000, REGION_USER2, 0 )	/* OKIM6295 samples */
 	ROM_LOAD( "16.i013",      0x000000, 0x80000, CRC(7ed9da5d) SHA1(352f1e89613feb1902b6d87adb996ed1c1d8108e) )
 
 	/* $00000-$20000 stays the same in all sound banks, */
 	/* the second half of the bank is what gets switched */
-	ROM_REGION( 0x100000, REGION_SOUND1, 0 ) /* Samples */
-	ROM_COPY( REGION_USER1, 0x000000, 0x000000, 0x020000)
-	ROM_COPY( REGION_USER1, 0x000000, 0x020000, 0x020000)
-	ROM_COPY( REGION_USER1, 0x000000, 0x040000, 0x020000)
-	ROM_COPY( REGION_USER1, 0x020000, 0x060000, 0x020000)
-	ROM_COPY( REGION_USER1, 0x000000, 0x080000, 0x020000)
-	ROM_COPY( REGION_USER1, 0x040000, 0x0a0000, 0x020000)
-	ROM_COPY( REGION_USER1, 0x000000, 0x0c0000, 0x020000)
-	ROM_COPY( REGION_USER1, 0x060000, 0x0e0000, 0x020000)
+	ROM_REGION( 0xc0000, REGION_SOUND1, 0 ) /* Samples */
+	ROM_COPY( REGION_USER2, 0x000000, 0x000000, 0x020000)
+	ROM_COPY( REGION_USER2, 0x020000, 0x020000, 0x020000)
+	ROM_COPY( REGION_USER2, 0x000000, 0x040000, 0x020000)
+	ROM_COPY( REGION_USER2, 0x040000, 0x060000, 0x020000)
+	ROM_COPY( REGION_USER2, 0x000000, 0x080000, 0x020000)
+	ROM_COPY( REGION_USER2, 0x060000, 0x0a0000, 0x020000)
 ROM_END
 
 static UINT8 playmark_asciitohex(UINT8 data)
@@ -929,6 +968,6 @@ static DRIVER_INIT( bigtwin )
 	} while (src_pos < 0x2d4c);		/* 0x2d4c is the size of the HEX rom loaded */
 }
 
-GAMEX( 1995, bigtwin,  0, bigtwin,  bigtwin,  bigtwin, ROT0, "Playmark", "Big Twin", GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1995, wbeachvl, 0, wbeachvl, wbeachvl, 0,       ROT0, "Playmark", "World Beach Volley", GAME_NO_COCKTAIL | GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEX( 199?, excelsr,  0, excelsr,  excelsr,  0,       ROT0, "Playmark", "Excelsior", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
+GAMEX( 1995, bigtwin,  0, bigtwin,  bigtwin,  bigtwin, ROT0, "Playmark", "Big Twin", GAME_NO_COCKTAIL )
+GAMEX( 1995, wbeachvl, 0, wbeachvl, wbeachvl, 0,       ROT0, "Playmark", "World Beach Volley", GAME_NO_COCKTAIL | GAME_NO_SOUND )
+GAMEX( 199?, excelsr,  0, excelsr,  excelsr,  bigtwin, ROT0, "Playmark", "Excelsior", GAME_IMPERFECT_GRAPHICS )

@@ -13,6 +13,7 @@ Update 12/03/2005 - Pierpaolo Prazzoli
 - Fixed text tilemap colors
 - Fixed text tilemap scrolls
 - Fixed VSync
+- Fixed middle tilemap removing wraparound in the title screen (24/03/2005)
 
 */
 

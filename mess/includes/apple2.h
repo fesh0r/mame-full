@@ -10,6 +10,7 @@
 #define APPLE2_H
 
 #include <mame.h>
+#include "machine/ay3600.h"
 
 #define APDISK_DEVTAG	"apdsk_525"
 
@@ -58,7 +59,7 @@ struct apple2_slotdevice
 
 struct apple2_config
 {
-	int keyboard_type;
+	ay3600_keyboard_type_t keyboard_type;
 	const struct apple2_slotdevice *slots[APPLE2_SLOT_COUNT];
 };
 

@@ -100,7 +100,7 @@ static void update_main_irqs(void)
 		irq |= 4;
 	if (timer_irq_state)
 		irq |= 2;
-	
+
 	if (gprider_hack && irq > 4)
 		irq = 4;
 
@@ -119,11 +119,11 @@ static void scanline_callback(int scanline)
 {
 	int next_scanline = (scanline + 2) % 262;
 	int update = 0;
-	
+
 	/* clock the timer and set the IRQ if something happened */
 	if ((scanline % 2) != 0 && segaic16_compare_timer_clock(0))
 		timer_irq_state = update = 1;
-	
+
 	/* set VBLANK on scanline 223 */
 	if (scanline == 223)
 	{
@@ -131,7 +131,7 @@ static void scanline_callback(int scanline)
 		cpunum_set_input_line(1, 4, ASSERT_LINE);
 		next_scanline = scanline + 1;
 	}
-	
+
 	/* clear VBLANK on scanline 224 */
 	else if (scanline == 224)
 	{
@@ -203,7 +203,7 @@ MACHINE_INIT( xboard )
 	/* set up the compare/timer chip */
 	segaic16_compare_timer_init(0, sound_data_w, timer_ack_callback);
 	segaic16_compare_timer_init(1, NULL, NULL);
-	
+
 	/* start timers to track interrupts */
 	timer_set(cpu_getscanlinetime(1), 1, scanline_callback);
 }
@@ -1100,7 +1100,7 @@ MACHINE_DRIVER_END
 
 MACHINE_DRIVER_START( smgp )
 	MDRV_IMPORT_FROM(xboard)
-	
+
 	MDRV_CPU_ADD_TAG("comm", Z80, 4000000)
 	MDRV_CPU_PROGRAM_MAP(smgp_comm_map,0)
 	MDRV_CPU_IO_MAP(smgp_comm_portmap,0)
@@ -1234,8 +1234,18 @@ ROM_START( loffire )
 	ROM_LOAD16_BYTE( "epr12849.rom", 0x000000, 0x20000, CRC(61cfd2fe) SHA1(b47ae9cdf741574ab9128dd3556b1ef35e81a149) )
 	ROM_LOAD16_BYTE( "epr12850.rom", 0x000001, 0x20000, CRC(14598f2a) SHA1(13a51529ed32acefd733d9f638621c3e023dbd6d) )
 
+	/*
+	It's not possible to determine the original value with just the available
+	ROM data. The choice was between 47, 56 and 57, which decrypt correctly all
+	the code at the affected addresses (2638, 6638 and so on).
+	I chose 57 because it's the only one that has only 1 bit different from the
+	bad value in the old dump (77).
+
+	Nicola Salmoria
+	*/
+
 	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
-	ROM_LOAD( "317-0136.key", 0x0000, 0x2000, BAD_DUMP CRC(dd482fc8) SHA1(90ba9f6c4198781f60e1412d5705a6a29514c12e) )
+	ROM_LOAD( "317-0136.key", 0x0000, 0x2000, BAD_DUMP CRC(344bfe0c) SHA1(f6bb8045b46f90f8abadf1dc2e1ae1d7cef9c810) )
 
 	ROM_REGION( 0x80000, REGION_CPU2, 0 ) /* 2nd 68000 code */
 	ROM_LOAD16_BYTE( "epr12804.rom", 0x000000, 0x20000, CRC(b853480e) SHA1(de0889e99251da7ea50316282ebf6f434cc2db11) )
@@ -1513,7 +1523,7 @@ ROM_END
 
 	Xtal is 16.000 Mhz.
 
-	It has also one eprom (Epr 12587.14) two pal 16L8 (315-5336 and 315-5337) and two 
+	It has also one eprom (Epr 12587.14) two pal 16L8 (315-5336 and 315-5337) and two
 	fujitsu IC MB89372P and MB8421-12LP
 
 	Main Board : (834-8180-02)
@@ -2185,7 +2195,7 @@ static DRIVER_INIT( loffire )
 {
 	xboard_generic_init();
 	adc_reverse[1] = adc_reverse[3] = 1;
-	
+
 	/* install extra synchronization on core shared memory */
 	loffire_sync = memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x29c000, 0x29c011, 0, 0, loffire_sync0_w);
 }

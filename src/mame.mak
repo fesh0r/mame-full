@@ -685,6 +685,7 @@ $(OBJ)/konami.a: \
 	$(OBJ)/vidhrdw/lethal.o $(OBJ)/drivers/lethal.o \
 	$(OBJ)/machine/am53cf96.o $(OBJ)/drivers/konamigq.o \
 	$(OBJ)/machine/intelfsh.o $(OBJ)/drivers/konamigv.o \
+	$(OBJ)/machine/scsicd.o $(OBJ)/machine/scsihd.o \
 	$(OBJ)/drivers/gticlub.o \
 	$(OBJ)/machine/timekpr.o $(OBJ)/drivers/hornet.o \
 	$(OBJ)/drivers/nwk-tr.o \

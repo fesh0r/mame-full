@@ -149,9 +149,9 @@ VIDEO_UPDATE( calorie )
 		if(flip_screen)
 		{
 			if( calorie_sprites[x+1] & 0x10 )
-				ypos = 0xff - ypos - 31;
+				ypos = 0xff - ypos + 32;
 			else
-				ypos = 0xff - ypos - 15;
+				ypos = 0xff - ypos + 16;
 
 			xpos = 0xff - xpos - 16;
 			flipx = !flipx;
@@ -199,6 +199,10 @@ static READ8_HANDLER( calorie_soundlatch_r )
 	return latch;
 }
 
+static WRITE8_HANDLER( bogus_w )
+{
+	usrintf_showmessage("written to 3rd sound chip: data = %02X port = %02X", data, offset);
+}
 
 static ADDRESS_MAP_START( calorie_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0xbfff) AM_ROM
@@ -228,6 +232,7 @@ static ADDRESS_MAP_START( calorie_sound_io_map, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x10, 0x10) AM_WRITE(AY8910_control_port_1_w)
 	AM_RANGE(0x11, 0x11) AM_READWRITE(AY8910_read_port_1_r, AY8910_write_port_1_w)
 	// 3rd ?
+	AM_RANGE(0x00, 0xff) AM_WRITE(bogus_w)
 ADDRESS_MAP_END
 
 INPUT_PORTS_START( calorie )
@@ -291,7 +296,7 @@ INPUT_PORTS_START( calorie )
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x00, "Numbers of Bombs" )
+	PORT_DIPNAME( 0x04, 0x00, "Number of Bombs" )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x04, "5" )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )

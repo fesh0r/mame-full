@@ -267,6 +267,8 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 		h = 1 << ((spriteram[offs+5] & 0x30) >> 4);
 		sy -= 16 * h;
 
+		code &= ~(h - 1);
+
 		for (y = 0;y < h;y++)
 		{
 			int c = code;

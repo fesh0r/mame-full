@@ -10,6 +10,8 @@ TS 2004.12.26.:
 - Buccaneers - incomplete dump, different sound hw (YM2203x2)
 	(to enter test mode press any button durning memory test)
 
+Buccaneers has a 5.6888 Mhz and a 18.432 Mhz OSC
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -423,7 +425,7 @@ INPUT_PORTS_START( buccanrs )
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Lives ) )	
+	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x06, "2" )
 	PORT_DIPSETTING(    0x04, "3" )
 	PORT_DIPSETTING(    0x02, "4" )
@@ -619,13 +621,13 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( buccanrs )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 3579645)		   /* 3.579645 MHz */
+	MDRV_CPU_ADD(Z80, 5688800)		   /* 5.688800 MHz */
 	MDRV_CPU_PROGRAM_MAP(vigilant_readmem,vigilant_writemem)
 	MDRV_CPU_IO_MAP(vigilant_readport,vigilant_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-	MDRV_CPU_ADD(Z80, 3579645)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		   /* 3.579645 MHz */
+	MDRV_CPU_ADD(Z80, 18432000/6)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		   /* 3.072000 MHz */
 	MDRV_CPU_PROGRAM_MAP(buccanrs_sound_readmem,buccanrs_sound_writemem)
 	MDRV_CPU_IO_MAP(buccanrs_sound_readport,buccanrs_sound_writeport)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,128)	/* clocked by V1 */
@@ -647,7 +649,7 @@ static MACHINE_DRIVER_START( buccanrs )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 
-	MDRV_SOUND_ADD(YM2203, 3579545)
+	MDRV_SOUND_ADD(YM2203, 18432000/6)
 	MDRV_SOUND_CONFIG(ym2203_interface)
 	MDRV_SOUND_ROUTE(0, "left",  0.35)
 	MDRV_SOUND_ROUTE(0, "right", 0.35)
@@ -658,7 +660,7 @@ static MACHINE_DRIVER_START( buccanrs )
 	MDRV_SOUND_ROUTE(3, "left",  0.50)
 	MDRV_SOUND_ROUTE(3, "right", 0.50)
 
-	MDRV_SOUND_ADD(YM2203, 3579545)
+	MDRV_SOUND_ADD(YM2203, 18432000/6)
 	MDRV_SOUND_ROUTE(0, "left",  0.35)
 	MDRV_SOUND_ROUTE(0, "right", 0.35)
 	MDRV_SOUND_ROUTE(1, "left",  0.35)
@@ -669,8 +671,8 @@ static MACHINE_DRIVER_START( buccanrs )
 	MDRV_SOUND_ROUTE(3, "right", 0.50)
 
 	MDRV_SOUND_ADD(DAC, 0)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.35)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.35)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( kikcubic )

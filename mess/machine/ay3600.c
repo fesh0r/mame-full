@@ -243,7 +243,7 @@ static const unsigned char ay3600_key_remap_2e[2][9*8][4] =
 };
 
 static unsigned int *ay3600_keys;
-static int keyboard_type;
+static ay3600_keyboard_type_t keyboard_type;
 
 static UINT8 keycode;
 static UINT8 keycode_unmodified;
@@ -265,7 +265,7 @@ static UINT8 keystilldown;
   AY3600_init
 ***************************************************************************/
 
-int AY3600_init(int type)
+int AY3600_init(ay3600_keyboard_type_t type)
 {
 	/* Init the key remapping table */
  	keyboard_type = type;
@@ -285,6 +285,31 @@ int AY3600_init(int type)
 	keycode = 0;
 	keystilldown = 0;
 	return 0;
+}
+
+
+
+/***************************************************************************
+  has_rept_key
+***************************************************************************/
+
+static int has_rept_key(void)
+{
+	int result = FALSE;
+
+	switch(keyboard_type)
+	{
+		case AP2_KEYBOARD_2:
+		case AP2_KEYBOARD_2P:
+			result = FALSE;
+			break;
+
+		case AP2_KEYBOARD_2E:
+		case AP2_KEYBOARD_2GS:
+			result = TRUE;
+			break;
+	}
+	return result;
 }
 
 
@@ -311,7 +336,7 @@ static void AY3600_poll(int dummy)
 	/* check for these special cases because they affect the emulated key codes */
 
 	/* only repeat keys on a 2/2+ if special REPT key is pressed */
-	if (keyboard_type <= AP2_KEYBOARD_REPT)
+	if (has_rept_key())
 		time_until_repeat = pressed_specialkey(SPECIALKEY_REPT) ? 0 : ~0;
 			
 	/* check caps lock and set LED here */

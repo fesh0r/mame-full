@@ -8,9 +8,11 @@ Italian Serie A teams instead of the national teams.
 driver by David Haywood & Angelo Salese
 
 TODO:
--Fix minor problem with sprite colours
--Fix sound (banking?)
--Some small video offset bugs;
+-Some small video offset bugs & visible area is not right,according to some original PCB
+snaps there is one extra column on the edges of the screen;
+-Some unmapped areas,probably left-overs;
+-Colors are wrong for a frame during transitions,see intro,might be a real bug of the
+bootleg;
 
 *******************************************************************************************/
 
@@ -69,7 +71,7 @@ static UINT32 bsb_bg_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
 
 VIDEO_START(bestleag)
 {
-	tx_tilemap = tilemap_create(get_tx_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,32, 32);
+	tx_tilemap = tilemap_create(get_tx_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,256, 32);
 	bg_tilemap = tilemap_create(get_bg_tile_info,bsb_bg_scan,TILEMAP_OPAQUE,16,16,128, 64);
 	fg_tilemap = tilemap_create(get_fg_tile_info,bsb_bg_scan,TILEMAP_TRANSPARENT,16,16,128, 64);
 
@@ -84,7 +86,7 @@ VIDEO_START(bestleag)
 
 /*Note: sprite chip is different than the other Big Striker sets,and they
 include several similiarities with other Playmark games (including the sprite end code
-and the data being offset)*/
+and the data being offset(i.e spriteram starting from 0x16/2))*/
 static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	int offs;
@@ -92,7 +94,7 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 	for (offs = 0x16/2;offs < spriteram_size/2;offs += 4)
 	{
 		int code = spriteram16[offs+3] & 0xfff;
-		int color = (spriteram16[offs+2] & 0x7000) >> 12;  // &0xf000 ? ok for ball, bad for intro..
+		int color = (spriteram16[offs+2] & 0xf000) >> 12;
 		int sx = (spriteram16[offs+2] & 0x1ff)-0x10;
 		int sy = (0xff-(spriteram16[offs+0] & 0xff))-0xf;
 		int flipx = (spriteram16[offs+0] & 0x4000) >> 14;
@@ -123,6 +125,8 @@ VIDEO_UPDATE(bestleag)
 {
 	tilemap_set_scrollx(bg_tilemap,0,bestleag_vregs[0x00/2] + (bestleag_vregs[0x08/2] & 0x7) - 8);
 	tilemap_set_scrolly(bg_tilemap,0,bestleag_vregs[0x02/2]);
+	tilemap_set_scrollx(tx_tilemap,0,bestleag_vregs[0x04/2]);
+	tilemap_set_scrolly(tx_tilemap,0,bestleag_vregs[0x06/2]); /*Right?*/
 	tilemap_set_scrollx(fg_tilemap,0,bestleag_vregs[0x08/2] & 0xfff8);
 	tilemap_set_scrolly(fg_tilemap,0,bestleag_vregs[0x0a/2]);
 //	usrintf_showmessage("%04x",bestleag_vregs[0x08/2]);
@@ -185,8 +189,6 @@ static ADDRESS_MAP_START( bestleag_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	/*???*/
 //	AM_RANGE(0x304000, 0x304001) AM_READWRITE(no_read,no_write)
 
-	/*bit 1,flip screen*/
-	AM_RANGE(0x30001c, 0x30001d) AM_WRITE(MWA16_NOP)
 	AM_RANGE(0x30001e, 0x30001f) AM_READWRITE(OKIM6295_status_0_lsb_r, OKIM6295_data_0_lsb_w)
 
 	AM_RANGE(0xfe0000, 0xffffff) AM_READ(MRA16_RAM)
@@ -203,13 +205,14 @@ static ADDRESS_MAP_START( bestleag_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x0f8000, 0x0f800b) AM_WRITE(MWA16_RAM) AM_BASE(&bestleag_vregs)
 
 	AM_RANGE(0x100000, 0x100fff) AM_WRITE(paletteram16_RRRRGGGGBBBBRGBx_word_w) AM_BASE(&paletteram16)
+//	AM_RANGE(0x1f87c0, 0x1f87df) AM_WRITE(MWA16_NOP) /*Fills with 0000 PC=65CA*/
 
 	AM_RANGE(0x200000, 0x200fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size) // sprites
-
+//	AM_RANGE(0x30001c, 0x30001d) AM_WRITE(MWA16_NOP) /*0002 at team selection?*/
+//	AM_RANGE(0xd20000, 0xd20001) AM_WRITE(MWA16_NOP) /*Written on the test mode*/
 	AM_RANGE(0xfe0000, 0xffffff) AM_WRITE(MWA16_RAM)
 ADDRESS_MAP_END
 
-/* from bigstrikb, fix */
 #define bestleag_PLAYER_INPUT( player ) \
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(player) PORT_8WAY \
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_PLAYER(player) PORT_8WAY \
@@ -220,9 +223,8 @@ ADDRESS_MAP_END
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(player) \
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
-/* from bigstrikb, fix */
 INPUT_PORTS_START( bestleag )
-	PORT_START	/* System inputs (0x700004.w) */
+	PORT_START	/* System inputs */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -232,13 +234,13 @@ INPUT_PORTS_START( bestleag )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
-	PORT_START	/* Player 1 controls (0x70000c.w) */
+	PORT_START	/* Player 1 controls */
 	bestleag_PLAYER_INPUT( 1 )
 
-	PORT_START	/* Player 2 controls (0x70000a.w) */
+	PORT_START	/* Player 2 controls */
 	bestleag_PLAYER_INPUT( 2 )
 
-	PORT_START	/* DSW0 (0x700000.w) */
+	PORT_START	/* DSW0 */
 	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x07, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 3C_1C ) )
@@ -266,8 +268,8 @@ INPUT_PORTS_START( bestleag )
 	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )	// also set "Coin A" to "Free Play"
 	/* 0x10 to 0x50 gives 2C_3C */
 
-	PORT_START	/* DSW1 (0x700002.w) */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )	// Check code at 0x00097c (flip screen)
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Difficulty ) )
@@ -286,13 +288,10 @@ INPUT_PORTS_START( bestleag )
 	PORT_DIPNAME( 0x40, 0x40, "2 Players Game" )
 	PORT_DIPSETTING(    0x00, "1 Credit" )
 	PORT_DIPSETTING(    0x40, "2 Credits" )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )		// Check code at 0x000c50 (test mode ?)
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2)
 INPUT_PORTS_END
 
 /* GFX Decode */
-
 static struct GfxLayout bestleag_charlayout =
 {
 	8,8,
@@ -322,7 +321,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &bestleag_charlayout,     0x200, 16 },
 	{ REGION_GFX1, 0, &bestleag_char16layout,   0, 32 },
-	{ REGION_GFX2, 0, &bestleag_char16layout,  0x300, 16 },
+	{ REGION_GFX2, 0, &bestleag_char16layout,   0x300, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -336,7 +335,7 @@ static MACHINE_DRIVER_START( bestleag )
 
 	MDRV_GFXDECODE(gfxdecodeinfo)
 
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER )
+	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
 	MDRV_SCREEN_SIZE(32*8, 32*8)
 	MDRV_VISIBLE_AREA(1*8, 32*8-1, 2*8, 30*8-1)
 
@@ -379,4 +378,4 @@ ROM_END
 
 /* GAME drivers */
 
-GAMEX( 1992, bestleag, bigstrik, bestleag, bestleag, 0, ROT0, "bootleg", "Best League", GAME_IMPERFECT_COLORS )
+GAME( 1993, bestleag, bigstrik, bestleag, bestleag, 0, ROT0, "bootleg", "Best League" )

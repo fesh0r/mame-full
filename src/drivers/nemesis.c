@@ -367,7 +367,7 @@ static READ8_HANDLER( nemesis_portA_r )
 
 	res |= 0xd0;
 
-	if (VLM5030_BSY())
+	if (sndti_to_sndnum(SOUND_VLM5030, 0) >= 0 && VLM5030_BSY())
 		res |= 0x20;
 
 	return res;

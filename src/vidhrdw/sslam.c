@@ -137,7 +137,6 @@ VIDEO_START(sslam)
 	return 0;
 }
 
-
 VIDEO_UPDATE(sslam)
 {
 	tilemap_set_scrollx(sslam_tx_tilemap,0, sslam_regs[0]+2);
@@ -148,7 +147,23 @@ VIDEO_UPDATE(sslam)
 	tilemap_set_scrolly(sslam_bg_tilemap,0, sslam_regs[5]+8);
 
 	tilemap_draw(bitmap,cliprect,sslam_bg_tilemap,0,0);
-	tilemap_draw(bitmap,cliprect,sslam_md_tilemap,0,0);
+
+	/* remove wraparound from the tilemap (used on title screen) */
+	if(sslam_regs[2]+2 > 0x8c8)
+	{
+		struct rectangle md_clip;
+		md_clip.min_x = cliprect->min_x;
+		md_clip.max_x = cliprect->max_x - (sslam_regs[2]+2 - 0x8c8);
+		md_clip.min_y = cliprect->min_y;
+		md_clip.max_y = cliprect->max_y;
+	
+		tilemap_draw(bitmap,&md_clip,sslam_md_tilemap,0,0);
+	}
+	else
+	{
+		tilemap_draw(bitmap,cliprect,sslam_md_tilemap,0,0);
+	}
+
 	sslam_drawsprites(bitmap,cliprect);
 	tilemap_draw(bitmap,cliprect,sslam_tx_tilemap,0,0);
 }

@@ -1228,6 +1228,16 @@ static DRIVER_INIT( bullfgtr )
 	equites_init_common();
 
 	equites_8404rule(0x0e7a, 0x601, 0x00); // boot up
+	equites_8404rule(0x3dc4, 0x201, 0x0c); // goal in
+}
+
+static DRIVER_INIT( bullfgts )
+{
+	equites_id = 0x8401;
+
+	equites_init_common();
+
+	equites_8404rule(0x0e7a, 0x601, 0x00); // boot up
 	equites_8404rule(0x3da4, 0x201, 0x0c); // goal in
 }
 
@@ -1356,7 +1366,7 @@ static DRIVER_INIT( hvoltage )
 GAMEX( 1984, equites,  0,        equites,  equites,  equites,  ROT90, "Alpha Denshi Co.",                "Equites", GAME_UNEMULATED_PROTECTION | GAME_NO_COCKTAIL )
 GAMEX( 1984, equitess, equites,  equites,  equites,  equites,  ROT90, "Alpha Denshi Co. (Sega license)", "Equites (Sega)", GAME_UNEMULATED_PROTECTION | GAME_NO_COCKTAIL )
 GAMEX( 1984, bullfgtr, 0,        equites,  bullfgtr, bullfgtr, ROT90, "Alpha Denshi Co.",                "Bull Fighter", GAME_UNEMULATED_PROTECTION )
-GAMEX( 1984, bullfgts, bullfgtr, equites,  bullfgtr, bullfgtr, ROT90, "Alpha Denshi Co. (Sega license)", "Bull Fighter (Sega)", GAME_UNEMULATED_PROTECTION )
+GAMEX( 1984, bullfgts, bullfgtr, equites,  bullfgtr, bullfgts, ROT90, "Alpha Denshi Co. (Sega license)", "Bull Fighter (Sega)", GAME_UNEMULATED_PROTECTION )
 GAMEX( 1985, kouyakyu, 0,        equites,  kouyakyu, kouyakyu, ROT0,  "Alpha Denshi Co.",                "The Koukouyakyuh", GAME_UNEMULATED_PROTECTION )
 
 // Splendor Blast Hardware

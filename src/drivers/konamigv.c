@@ -16,6 +16,7 @@ susume     Susume! Taisen Puzzle-Dama   ZV610          GV027   JAPAN 1.20   96.0
 btchamp    Beat the Champ               GV999          GV053   UAA01        ?
 kdeadeye   Dead Eye                     GV999          GV054   UA01         ?
 weddingr   Wedding Rhapsody             ?              GX624   JAA          97.05.29   9:12
+nagano98   Winter Olypmics in Nagano 98 GV999          GX720   EAA01 1.03   98.01.08  10:45
 simpbowl   Simpsons Bowling             ?              GQ829   UAA          ?
 
 PCB Layouts
@@ -290,9 +291,17 @@ static void scsi_irq(void)
 	psx_irq_set(0x400);
 }
 
+static SCSIConfigTable dev_table =
+{
+	1, /* 1 SCSI device */
+	{
+		{ SCSI_ID_4, 0, SCSI_DEVICE_CDROM } /* SCSI ID 4, using CHD 0, and it's a CD-ROM */
+	}
+};
+
 static struct AM53CF96interface scsi_intf =
 {
-	AM53CF96_DEVICE_CDROM,	/* CD-ROM */
+	&dev_table,		/* SCSI device table */
 	&scsi_irq,		/* command completion IRQ */
 };
 
@@ -311,7 +320,7 @@ static MACHINE_INIT( konamigv )
 	psx_machine_init();
 
 	/* also hook up CDDA audio to the CD-ROM drive */
-	CDDA_set_cdrom(0, am53cf96_get_device());
+	CDDA_set_cdrom(0, am53cf96_get_device(SCSI_ID_4));
 }
 
 static struct PSXSPUinterface konamigv_psxspu_interface =
@@ -1037,6 +1046,16 @@ ROM_START( kdeadeye )
 	DISK_IMAGE_READONLY( "kdeadeye", 0, MD5(5109d61ab8791a6d622499b51e613a8c) SHA1(2b413a2a22e1959fb4f71b67ba51c6c8e0d58970) )
 ROM_END
 
+ROM_START( nagano98 )
+	GV_BIOS
+
+	ROM_REGION( 0x0000080, REGION_USER2, 0 ) /* default eeprom */
+	ROM_LOAD( "nagano98.25c",  0x000000, 0x000080, CRC(b64b7451) SHA1(a77a37e0cc580934d1e7e05d523bae0acd2c1480) )
+
+	DISK_REGION( REGION_DISKS )
+	DISK_IMAGE_READONLY( "nagano98", 0, MD5(cbedbd2953b70f214e72179b2cc0dcd8) SHA1(21d14864cdd34c6e052f3577f8d805dce49fcab6) )
+ROM_END
+
 /* BIOS placeholder */
 GAMEX( 1995, konamigv, 0, konamigv, konamigv, konamigv, ROT0, "Konami", "Baby Phoenix/GV System", NOT_A_DRIVER )
 
@@ -1046,4 +1065,5 @@ GAMEX( 1996, susume,   konamigv, konamigv, konamigv, konamigv, ROT0, "Konami", "
 GAMEX( 1996, btchamp,  konamigv, btchamp,  btchamp,  btchamp,  ROT0, "Konami", "Beat the Champ (GV053 UAA01)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1996, kdeadeye, konamigv, kdeadeye, kdeadeye, kdeadeye, ROT0, "Konami", "Dead Eye (GV054 UA01)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1997, weddingr, konamigv, konamigv, konamigv, konamigv, ROT0, "Konami", "Wedding Rhapsody (GX624 JAA)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1998, nagano98, konamigv, konamigv, konamigv, konamigv, ROT0, "Konami", "Nagano Winter Olympics '98 (GX720 EAA)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEX( 2000, simpbowl, konamigv, simpbowl, simpbowl, simpbowl, ROT0, "Konami", "Simpsons Bowling (GQ829 UAA)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )

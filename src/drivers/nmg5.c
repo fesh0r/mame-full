@@ -705,6 +705,30 @@ ROM_START( pclubys )
 	ROM_LOAD( "rom2.137", 0x00000, 0x80000, CRC(4ff97ad1) SHA1(d472c8298e428cb9659ce90a8ce9402c119bdb0f) )
 ROM_END
 
+ROM_START( pclubysa )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* 68000 Code */
+	ROM_LOAD16_BYTE( "rom3a.7", 0x000000, 0x80000, CRC(885aa07a) SHA1(a0af5b0704f7fb18ed21f42979a40a8b419377b1) )
+	ROM_LOAD16_BYTE( "rom4a.2", 0x000001, 0x80000, CRC(9bfbdeac) SHA1(263341b05883d4a9125da69d9d8d6f4d654f3475) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* Z80 Code */
+	ROM_LOAD( "rom1.128", 0x00000, 0x10000, CRC(25cd27f8) SHA1(97af1368381234361bbd97f4552209c435652372) )
+
+	ROM_REGION( 0x1000000, REGION_GFX1, ROMREGION_DISPOSE )	/* 8x8x8 */
+	ROM_LOAD( "rom10.167", 0x000000, 0x400000, CRC(d67e8e84) SHA1(197d1bdb321cf7ac986b5dbfa061494ffd4db6e4) )
+	ROM_LOAD( "rom12.165", 0x400000, 0x400000, CRC(6be8b733) SHA1(bdbbec77938828ac9831537c00abd5c31dc56284) )
+	ROM_LOAD( "rom11.166", 0x800000, 0x400000, CRC(672501a4) SHA1(193e1965c2f21f469e5c6c514d3cdcab3ffdf629) )
+	ROM_LOAD( "rom13.164", 0xc00000, 0x400000, CRC(fc725ce7) SHA1(d997a31a975ae67efa071720c58235c738ebbbe3) )
+
+	ROM_REGION( 0x280000, REGION_GFX2, ROMREGION_DISPOSE )	/* 16x16x5 */
+	ROM_LOAD( "rom8.83", 0x000000, 0x80000, CRC(651af101) SHA1(350698bd7ee65fc1ed084382db7f66ffb83c23c6) )
+	ROM_LOAD( "rom9a.82",0x080000, 0x80000, CRC(49681adb) SHA1(6a8d0d21aa8654b3f7dcdb54b15cb89c920e998b) )
+	ROM_LOAD( "rom7.105",0x100000, 0x80000, CRC(f7536c52) SHA1(546976f52c6f064f5172736988ada053c1c1183f) )
+	ROM_LOAD( "rom6.95", 0x180000, 0x80000, CRC(3c078a52) SHA1(be8936bcafbfd77e491c81a3d215a53dad78d652) )
+	ROM_LOAD( "rom5.97", 0x200000, 0x80000, CRC(20eae2f8) SHA1(ad9ac6e5e0331fb19652f6578dbb2f532bb22b3d) )
+
+	ROM_REGION( 0x80000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_LOAD( "rom2.137", 0x00000, 0x80000, CRC(4ff97ad1) SHA1(d472c8298e428cb9659ce90a8ce9402c119bdb0f) )
+ROM_END
 
 DRIVER_INIT( nmg5 )
 {
@@ -713,6 +737,7 @@ DRIVER_INIT( nmg5 )
 }
 
 
-GAME( 1998, nmg5,    0, nmg5,    nmg5,     nmg5, ROT0, "Yun Sung", "Multi 5 / New Multi Game 5" )
-GAME( 1999, searchey,0, nmg5,    searchey, 0,    ROT0, "Yun Sung", "Search Eye" )
-GAME( 2000, pclubys, 0, pclubys, pclubys,  0,    ROT0, "Yun Sung", "Puzzle Club (Yun Sung)" )
+GAME( 1998, nmg5,     0,       nmg5,    nmg5,      nmg5, ROT0, "Yun Sung", "Multi 5 / New Multi Game 5" )
+GAME( 1999, searchey, 0,       nmg5,    searchey,  0,    ROT0, "Yun Sung", "Search Eye" )
+GAME( 2000, pclubys,  0,       pclubys, pclubys,   0,    ROT0, "Yun Sung", "Puzzle Club (Yun Sung - set 1)" )
+GAME( 2000, pclubysa, pclubys, pclubys, pclubys,   0,    ROT0, "Yun Sung", "Puzzle Club (Yun Sung - set 2)" )

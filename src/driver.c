@@ -225,6 +225,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( harem )		/* I.G.R. */
 	DRIVER( tazzmang )
 	DRIVER( racknrol )	/* Status (Senko Kit) */
+	DRIVER( hexpool )	/* Status (Senko Kit) */
 	DRIVER( trvchlng )	/* Senko */
 
 	/* Has some similarities with Moon Cresta but Board is very different */
@@ -323,6 +324,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( ckongjeu )	/* bootleg */
 	DRIVER( ckongo )	/* bootleg */
 	DRIVER( ckongalc )	/* bootleg */
+	DRIVER( bigkong )	/* bootleg */
 	DRIVER( monkeyd )	/* bootleg */
 	DRIVER( rpatrolb )	/* bootleg */
 	DRIVER( silvland )	/* Falcon */
@@ -1152,6 +1154,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( gorf )		/* (c) 1981 */
 	DRIVER( gorfpgm1 )	/* (c) 1981 */
 	DRIVER( robby )		/* (c) 1981 Bally Midway */
+	DRIVER( demndrgn )  /* (c) 1982 Bally Midway */
 	DRIVER( profpac )	/* (c) 1983 Bally Midway */
 
 	/* Bally Midway MCR games */
@@ -1347,6 +1350,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( skingam2 )	/* (c) 1992 Irem America (US) */
 	DRIVER( hook )		/* (c) 1992 Irem (World) */
 	DRIVER( hooku )		/* (c) 1992 Irem America (US) */
+	DRIVER( hookj )		/* (c) 1992 Irem (Japan) */
 	DRIVER( rtypeleo )	/* (c) 1992 Irem (World) */
 	DRIVER( rtypelej )	/* (c) 1992 Irem (Japan) */
 	DRIVER( inthunt )	/* (c) 1993 Irem (World) */
@@ -2600,6 +2604,7 @@ V-V                           TP-027
 	DRIVER( susume )	/* GV027, Japan 1.20 */
 	DRIVER( btchamp )	/* GV053, UAA01 */
 	DRIVER( weddingr )	/* GX624, JAA */
+	DRIVER( nagano98 )	/* GX720, EAA */
 	DRIVER( simpbowl )	/* GQ829, UAA */
 
 	/* Mitchell games */
@@ -2965,16 +2970,17 @@ DokiDoki Penguin Land *not confirmed
 	/* System 16B */
 	DRIVER( aceattac )	/* (protected) */
 	DRIVER( aliensyn )	/* (c) 1987 */
-	DRIVER( aliensy3 )	/* (c) 1987 (protected) */
+	DRIVER( aliensy3 )	/* (c) 1987 */
 	DRIVER( altbeast )	/* (c) 1988 */
 	DRIVER( altbeasj )	/* (c) 1988 */
 	DRIVER( altbeas5 )	/* (c) 1988 */
 	DRIVER( altbeas4 )	/* (c) 1988 */
 	DRIVER( altbeaj3 )	/* (c) 1988 */
-	DRIVER( altbeas2 )	/* (c) 1988 (protected. Altered Beast Japan) */
+	DRIVER( altbeas2 )	/* (c) 1988 */
 	DRIVER( altbeaj1 )
 	DRIVER( aurail )	/* (c) 1990 Sega / Westone */
-	DRIVER( aurail1 )	/* (c) 1990 Sega / Westone (protected) */
+	DRIVER( aurail1 )	/* (c) 1990 Sega / Westone (FD1089) */
+	DRIVER( aurailj )	/* (C) 1990 Sega / Westone (FD1089) */
 	DRIVER( bayroute )	/* (c) 1989 Sunsoft / Sega */
 	DRIVER( bayroutj )	/* (c) 1989 (protected) */
 	DRIVER( bayrout1 )	/* (c) 1989 (protected) */
@@ -3406,7 +3412,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( mt_ggolf )	/* 04 */
 	DRIVER( mt_gsocr )	/* 05 */
 						/* 06 */
-						/* 07 */
+	DRIVER( mt_asyn )	/* 07 */
 	DRIVER( mt_shnbi )	/* 08 */
 						/* 09 */
 	DRIVER( mt_aftrb )	/* 10 */
@@ -3423,7 +3429,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( mt_wcsoc )	/* 21 */
 	DRIVER( mt_tetri )	/* 22 */
 	DRIVER( mt_gng )	/* 23 */
-						/* 24 */
+	DRIVER( mt_shang )	/* 24 */
 	DRIVER( mt_gaxe )	/* 25 */
 						/* 26 */
 	DRIVER( mt_mystd )	/* 27 */
@@ -3469,8 +3475,8 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( mp_gaxe2 )	/* 02 */
 	DRIVER( mp_gslam )	/* 03 */
 	DRIVER( mp_twc )	/* 04 */
-						/* 05 */
-						/* 06 */
+	DRIVER( mp_sor2 )	/* 05 */
+	DRIVER( mp_bio )	/* 06 */
 						/* 07 */
 						/* 08 */
 						/* 09 */
@@ -3785,6 +3791,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( bombjac2 )	/* (c) 1984 Tehkan */
 	DRIVER( pbaction )	/* (c) 1985 Tehkan */
 	DRIVER( pbactio2 )	/* (c) 1985 Tehkan */
+	DRIVER( pbactio3 )	/* (c) 1985 Tehkan */
 	/* 6009 Tank Busters */
 	/* 6011 Pontoon (c) 1985 Tehkan is a gambling game - removed */
 	/* ???? Lovely Poker (c)1985 Tehkan is also a gambling game */
@@ -4054,6 +4061,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( ssrdruac )	/* GX064 (c) 1991 (US) */
 	DRIVER( ssrdrubc )	/* GX064 (c) 1991 (US) */
 	DRIVER( ssrdrabd )	/* GX064 (c) 1991 (Asia) */
+	DRIVER( ssrdradd )	/* GX064 (c) 1991 (Asia) */
 	DRIVER( ssrdrjbd )	/* GX064 (c) 1991 (Japan) */
 	DRIVER( sunsetbl )	/* bootleg */
 	DRIVER( xmen )		/* GX065 (c) 1992 (US) */
@@ -6027,6 +6035,7 @@ Other Sun games
 	DRIVER( nmg5 )		/* (c) 1998 Yun Sung */
 	DRIVER( searchey )	/* (c) 1999 Yun Sung */
 	DRIVER( pclubys )	/* (c) 2000 Yun Sung */
+	DRIVER( pclubysa )	/* (c) 2000 Yun Sung */
 
 	/* Zilec games */
 	DRIVER( blueprnt )	/* (c) 1982 Bally Midway (Zilec in ROM 3U, and the programmer names) */

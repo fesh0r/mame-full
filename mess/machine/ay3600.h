@@ -1,16 +1,26 @@
+/***************************************************************************
+
+	ay3600.h
+
+	Include file for AY3600 keyboard; used by Apple IIs
+
+***************************************************************************/
+
 #ifndef AY3600_H
 #define AY3600_H
 
 #include "inputx.h"
 
-#define AP2_KEYBOARD_2		0
-#define AP2_KEYBOARD_2P		1
-#define AP2_KEYBOARD_REPT	10 /* values < 10 will have REPT key */
-#define AP2_KEYBOARD_2E		20
-#define AP2_KEYBOARD_2GS	30
+typedef enum
+{
+	AP2_KEYBOARD_2,
+	AP2_KEYBOARD_2P,
+	AP2_KEYBOARD_2E,
+	AP2_KEYBOARD_2GS
+} ay3600_keyboard_type_t;
 
 /* machine/ay3600.c */
-int AY3600_init(int);
+int AY3600_init(ay3600_keyboard_type_t keyboard_type);
 int AY3600_anykey_clearstrobe_r(void);
 int AY3600_keydata_strobe_r(void);
 
