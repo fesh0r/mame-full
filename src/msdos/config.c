@@ -434,10 +434,10 @@ void parse_cmdline (int argc, char **argv, int game_index)
 	options.cheat      = get_bool ("config", "cheat", NULL, 0);
 	options.mame_debug = get_bool ("config", "debug", NULL, 0);
 
+	/* Removed by Steph 20000730 */
+	#if 0
 	#ifndef MESS
-	tmpstr = get_string ("config", "cheatfile", "cf", "CHEAT.DAT");
-	if (tmpstr)
-		strcpy(cheatfile, tmpstr);
+	cheatfile = get_string ("config", "cheatfile", "cf", "CHEAT.DAT");
 	#else
 	tmpstr  = get_string ("config", "cheatfile", "cf", "CHEAT.CDB");
 	/* I assume that CHEAT.DAT (in old MESS.CFG files) and CHEAT.CDB are default filenames */
@@ -446,7 +446,15 @@ void parse_cmdline (int argc, char **argv, int game_index)
 	else
 		sprintf(cheatfile,"%s",tmpstr);
 	#endif
+	#endif
 
+	/* Steph 20000730 - Now all stuff is in function InitCheat in src/cheat.c */
+	#ifndef MESS
+	tmpstr = get_string ("config", "cheatfile", "cf", "CHEAT.DAT");
+	#else
+	tmpstr = get_string ("config", "cheatfile", "cf", "CHEAT.CDB");
+	#endif
+	strcpy(cheatfile,tmpstr);
 
  	#ifndef MESS
  	history_filename  = get_string ("config", "historyfile", NULL, "HISTORY.DAT");    /* JCK 980917 */
