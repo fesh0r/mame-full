@@ -146,18 +146,24 @@ INLINE void snes_draw_blend( UINT16 offset, UINT16 *colour, UINT8 mode )
 			r = (*colour & 0x1f) + (scanlines[SUBSCREEN].buffer[offset] & 0x1f);
 			g = ((*colour & 0x3e0) >> 5) + ((scanlines[SUBSCREEN].buffer[offset] & 0x3e0) >> 5);
 			b = ((*colour & 0x7c00) >> 10) + ((scanlines[SUBSCREEN].buffer[offset] & 0x7c00) >> 10);
+			if( (snes_ram[CGADSUB] & 0x40) && (scanlines[SUBSCREEN].zbuf[offset]) ) /* FIXME: We shouldn't half for the back colour */
+			{
+				r >>= 1;
+				g >>= 1;
+				b >>= 1;
+			}
 		}
 		else /* Fixed colour */
 		{
 			r = (*colour & 0x1f) + (Machine->remapped_colortable[FIXED_COLOUR] & 0x1f);
 			g = ((*colour & 0x3e0) >> 5) + ((Machine->remapped_colortable[FIXED_COLOUR] & 0x3e0) >> 5);
 			b = ((*colour & 0x7c00) >> 10) + ((Machine->remapped_colortable[FIXED_COLOUR] & 0x7c00) >> 10);
-		}
-		if( snes_ram[CGADSUB] & 0x40 ) /* FIXME: We shouldn't half for the back colour */
-		{
-			r >>= 1;
-			g >>= 1;
-			b >>= 1;
+			if( snes_ram[CGADSUB] & 0x40 ) /* FIXME: We shouldn't half for the back colour */
+			{
+				r >>= 1;
+				g >>= 1;
+				b >>= 1;
+			}
 		}
 		if( r > 0x1f ) r = 0x1f;
 		if( g > 0x1f ) g = 0x1f;
@@ -171,21 +177,30 @@ INLINE void snes_draw_blend( UINT16 offset, UINT16 *colour, UINT8 mode )
 			r = (*colour & 0x1f) - (scanlines[SUBSCREEN].buffer[offset] & 0x1f);
 			g = ((*colour & 0x3e0) >> 5) - ((scanlines[SUBSCREEN].buffer[offset] & 0x3e0) >> 5);
 			b = ((*colour & 0x7c00) >> 10) - ((scanlines[SUBSCREEN].buffer[offset] & 0x7c00) >> 10);
+			if( r > 0x1f ) r = 0;
+			if( g > 0x1f ) g = 0;
+			if( b > 0x1f ) b = 0;
+			if( (snes_ram[CGADSUB] & 0x40) && (scanlines[SUBSCREEN].zbuf[offset]) ) /* FIXME: We shouldn't half for the back colour */
+			{
+				r >>= 1;
+				g >>= 1;
+				b >>= 1;
+			}
 		}
 		else /* Fixed colour */
 		{
 			r = (*colour & 0x1f) - (Machine->remapped_colortable[FIXED_COLOUR] & 0x1f);
 			g = ((*colour & 0x3e0) >> 5) - ((Machine->remapped_colortable[FIXED_COLOUR] & 0x3e0) >> 5);
 			b = ((*colour & 0x7c00) >> 10) - ((Machine->remapped_colortable[FIXED_COLOUR] & 0x7c00) >> 10);
-		}
-		if( r > 0x1f ) r = 0;
-		if( g > 0x1f ) g = 0;
-		if( b > 0x1f ) b = 0;
-		if( snes_ram[CGADSUB] & 0x40 )
-		{
-			r >>= 1;
-			g >>= 1;
-			b >>= 1;
+			if( r > 0x1f ) r = 0;
+			if( g > 0x1f ) g = 0;
+			if( b > 0x1f ) b = 0;
+			if( snes_ram[CGADSUB] & 0x40 ) /* FIXME: We shouldn't half for the back colour */
+			{
+				r >>= 1;
+				g >>= 1;
+				b >>= 1;
+			}
 		}
 		*colour = ((r & 0x1f) | ((g & 0x1f) << 5) | ((b & 0x1f) << 10));
 	}
@@ -233,7 +248,7 @@ INLINE void snes_draw_tile_2( UINT8 screen, UINT16 tileaddr, INT16 x, UINT8 prio
 		/* Only draw if we have a colour (0 == transparent) */
 		if( colour )
 		{
-			if( scanlines[screen].zbuf[x+ii] <= priority )
+			if( (scanlines[screen].zbuf[x+ii] <= priority) && ((x + ii) >= 0)  )
 			{
 				c = Machine->remapped_colortable[pal + colour];
 				if( screen == MAINSCREEN )	/* Only blend main screens */
@@ -287,7 +302,7 @@ INLINE void snes_draw_tile_4( UINT8 screen, UINT16 tileaddr, INT16 x, UINT8 prio
 		/* Only draw if we have a colour (0 == transparent) */
 		if( colour )
 		{
-			if( scanlines[screen].zbuf[x+ii] <= priority )
+			if( (scanlines[screen].zbuf[x+ii] <= priority) && ((x + ii) >= 0) )
 			{
 				c = Machine->remapped_colortable[pal + colour];
 				if( screen == MAINSCREEN )	/* Only blend main screens */
@@ -349,7 +364,7 @@ INLINE void snes_draw_tile_8( UINT8 screen, UINT16 tileaddr, INT16 x, UINT8 prio
 		/* Only draw if we have a colour (0 == transparent) */
 		if( colour )
 		{
-			if( scanlines[screen].zbuf[x+ii] <= priority )
+			if( (scanlines[screen].zbuf[x+ii] <= priority) && ((x + ii) >= 0) )
 			{
 				c = Machine->remapped_colortable[colour];
 				if( screen == MAINSCREEN )	/* Only blend main screens */
@@ -783,8 +798,8 @@ static void snes_update_objects( UINT8 screen, UINT16 curline )
 	UINT16 oam, oam_extra, extra;
 	UINT8 range_over = 0, time_over = 0;
 	UINT8 size, vflip, hflip, priority, pal, blend;
-	UINT16 x, y, tile;
-	INT16 i;
+	UINT16 tile;
+	INT16 i, x, y;
 	UINT8 *oamram = (UINT8 *)snes_oam;
 
 #ifdef MAME_DEBUG
@@ -808,15 +823,18 @@ static void snes_update_objects( UINT8 screen, UINT16 curline )
 		pal = 128 + ((oamram[oam] & 0xE) << 3);
 		tile = (oamram[oam--] & 0x1) << 8;
 		tile |= oamram[oam--];
-		y = oamram[oam--];
+		y = oamram[oam--] + 1;	/* We seem to need to add one here.... */
 		x = oamram[oam--];
 		size = (extra & 0x80) >> 7;
 		extra <<= 1;
 		x |= ((extra & 0x80) << 1);
 		extra <<= 1;
 
+		/* Adjust if past maximum position */
 		if( y > 239 )
-			y -= 256;	/* y is past sprite max pos */
+			y -= 256;
+		if( x > 255 )
+			x -= 512;
 
 		/* Only sprites using palettes 4-7 can be transparent */
 		blend = (pal < 192) ? SNES_BLEND_NONE : layers[4].blend;
@@ -861,7 +879,9 @@ static void snes_update_objects( UINT8 screen, UINT16 curline )
 			{
 				/* Set the flag in STAT77 register */
 				snes_ram[STAT77] |= 0x40;
-				return;
+				/* FIXME: This stops the SNESTest rom from drawing the object
+				 * test properly.  Maybe we shouldn't stop drawing? */
+				/* return; */
 			}
 		}
 	}
@@ -1354,7 +1374,7 @@ void snes_refresh_scanline( UINT16 curline )
 #ifdef MAME_DEBUG
 		{
 			/*                             red   green  blue    purple  yellow cyan    grey    white */
-			UINT16 dbg_mode_colours[8] = { 0x1f, 0x3e0, 0x7c00, 0x7c1f, 0x3ff, 0x7fe0, 0x4210, 0x7fff };
+			static UINT16 dbg_mode_colours[8] = { 0x1f, 0x3e0, 0x7c00, 0x7c1f, 0x3ff, 0x7fe0, 0x4210, 0x7fff };
 			/* Draw some useful information about the back/fixed colours and current bg mode etc. */
 			plot_pixel( bitmap, 277, curline, Machine->pens[dbg_mode_colours[snes_ram[BGMODE] & 0x7]] );
 			plot_pixel( bitmap, 287, curline, Machine->pens[32767] );
