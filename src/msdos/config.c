@@ -132,6 +132,9 @@ static char pcrcfilename[256] = "";
 #define CONFIG_FILE "mame.cfg"
 #endif
 
+/* from zvg/zvgintrf.c, for zvg board */
+extern int zvg_enabled;
+
 /* from video.c, for centering tweaked modes */
 extern int center_x;
 extern int center_y;
@@ -858,6 +861,7 @@ struct rc_option config_opts[] =
 	{ "centerx", NULL, rc_int, &center_x, "0", 0, 0, NULL, NULL },
 	{ "centery", NULL, rc_int, &center_y, "0", 0, 0, NULL, NULL },
 	{ "waitinterlace", NULL, rc_bool, &wait_interlace, "0", 0, 0, NULL, NULL },
+    { "zvg", NULL, rc_int, &zvg_enabled, "0", 0, 0, NULL, "support for ZVG board (www.zektor.com)" },
 
 	{ "224x288_h", NULL, rc_int, &tw224x288_h, "95", 0, 0, NULL, NULL },
 	{ "224x288_v", NULL, rc_int, &tw224x288_v, "84", 0, 0, NULL, NULL },
@@ -1087,6 +1091,7 @@ static void parse_cmdline( int argc, char **argv, int game_index )
 	center_x					= get_int( "config", "centerx", NULL, 0 );
 	center_y					= get_int( "config", "centery", NULL, 0 );
 	wait_interlace				= get_bool( "config", "waitinterlace", NULL, 0 );
+	zvg_enabled 				= get_int( "config", "zvg", NULL, 0 );
 
 	/* get tweaked modes info */
 	tw224x288_h 				= get_int( "tweaked", "224x288_h",     NULL, 0x5f );

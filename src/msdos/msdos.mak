@@ -14,17 +14,17 @@ nozlib:
 	@echo Missing zlib library! Get it from http://www.cdrom.com/pub/infozip/zlib/
 endif
 
-CFLAGS += -D_HUGE=HUGE_VAL -DCLIB_DECL=
+CFLAGS += -D_HUGE=HUGE_VAL -DCLIB_DECL= -DMAME -DZVG
 
 # add allegro, audio & fpu emulator libs
-LIBS += -lalleg -laudio -lemu
+LIBS += -lalleg -laudio -lemu -lzvg
 
 # only MS-DOS specific output files and rules
 OSOBJS = $(OBJ)/msdos/msdos.o $(OBJ)/msdos/video.o $(OBJ)/msdos/blit.o $(OBJ)/msdos/asmblit.o \
 	$(OBJ)/msdos/gen15khz.o $(OBJ)/msdos/ati15khz.o $(OBJ)/msdos/twkuser.o \
 	$(OBJ)/msdos/sound.o $(OBJ)/msdos/input.o $(OBJ)/msdos/rc.o $(OBJ)/msdos/misc.o \
 	$(OBJ)/msdos/ticker.o $(OBJ)/msdos/config.o $(OBJ)/msdos/fronthlp.o \
-	$(OBJ)/msdos/fileio.o $(OBJ)/msdos/snprintf.o
+	$(OBJ)/msdos/fileio.o $(OBJ)/msdos/snprintf.o $(OBJ)/msdos/zvgintrf.o
 
 # video blitting functions
 $(OBJ)/msdos/asmblit.o: src/msdos/asmblit.asm

@@ -5,6 +5,7 @@
 #include <time.h>
 #include <ctype.h>
 #include "ticker.h"
+#include "zvgintrf.h"
 
 int  msdos_init_seal (void);
 int  msdos_init_sound(void);
@@ -41,6 +42,8 @@ int osd_init(void)
 	if (msdos_init_sound())
 		return 1;
 	msdos_init_input();
+	if (zvg_open())
+		return 1;
 	return 0;
 }
 
@@ -48,6 +51,7 @@ int osd_init(void)
 /* put here cleanup routines to be executed when the program is terminated. */
 void osd_exit(void)
 {
+	zvg_close();
 	msdos_shutdown_sound();
 	msdos_shutdown_input();
 }
