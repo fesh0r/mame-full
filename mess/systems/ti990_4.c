@@ -24,7 +24,7 @@ static int ROM_paged;
 
 void *timer;
 
-static void clear_load(int)
+static void clear_load(int dummy)
 {
 	cpu_set_nmi_line(0, CLEAR_LINE);
 }
@@ -108,7 +108,7 @@ static WRITE_HANDLER ( ti990_4_panel_write )
 */
 
 
-static void ti990_4_init_palette(unsigned char *palette, unsigned short *colortable, const unsigned char *)
+static void ti990_4_init_palette(unsigned char *palette, unsigned short *colortable, const unsigned char *dummy)
 {
 /*	memcpy(palette, & ti990_4_palette, sizeof(ti990_4_palette));
 	memcpy(colortable, & ti990_4_colortable, sizeof(ti990_4_colortable));*/
@@ -211,8 +211,11 @@ static struct MachineDriver machine_driver_ti990_4 =
 	/* sound hardware */
 	0,
 	0,0,0,
+
+#if 0
 	{ /* no sound ! */
 	}
+#endif
 };
 
 
