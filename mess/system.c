@@ -380,19 +380,19 @@ TESTDRIVER( c128d )		/* Commodore 128D - NTSC 						  */
 
 #ifndef MESS_EXCLUDE_IBMPC
 	/* IBM PC & Clones */
-TESTDRIVER( ibmpc )		/*		IBM PC									  */
-	DRIVER( ibmpca )	/* 1982 PC										  */
-	DRIVER( pcmda ) 	/* 1983 PC with MDA (MGA aka Hercules)			  */
-	DRIVER( pc )		/* 1983 PC with CGA								  */
-TESTDRIVER( europc )	/*		Schneider Euro PC (CGA or Hercules)		  */
-TESTDRIVER( bondwell )	/*		Bondwell (CGA)                         	  */
+	DRIVER( ibmpc )		/* 1982	IBM PC									  */
+	DRIVER( ibmpca )	/* 1982 IBM PC									  */
+	DRIVER( pcmda ) 	/* 1987 PC with MDA (MGA aka Hercules)			  */
+	DRIVER( pc )		/* 1987 PC with CGA								  */
+TESTDRIVER( bondwell )	/* 1985	Bondwell (CGA)                         	  */
+TESTDRIVER( europc )	/* 1988	Schneider Euro PC (CGA or Hercules)		  */
 
 	/* pc junior */
 TESTDRIVER( ibmpcjr )	/*      IBM PC Jr								  */
 	DRIVER( t1000hx )	/* 1987 Tandy 1000HX (similiar to PCJr) 		  */
 
 	/* xt */
-TESTDRIVER( ibmxt )		/*		IBM XT									  */
+	DRIVER( ibmxt )		/* 1986	IBM XT									  */
 	DRIVER( pc1512 )	/* 1986 Amstrad PC1512 (CGA compatible)			  */
 	DRIVER( pc1640 )	/* 1987 Amstrad PC1640 (EGA compatible)			  */
 
@@ -400,10 +400,10 @@ TESTDRIVER( xtcga ) 	/* 1983 IBMPC-XT (CGA, MF2 Keyboard)			  */
 	DRIVER( xtvga ) 	/* 198? PC-XT (VGA, MF2 Keyboard)				  */
 
 	/* at */
-TESTDRIVER( ibmat )		/*		IBM AT									  */
-	DRIVER( at )		/* 1984 PC-AT (CGA, MF2 Keyboard)				  */
+TESTDRIVER( ibmat )		/* 1985	IBM AT									  */
+	DRIVER( at )		/* 1987 AMI Bios and Diagnostics				  */
 TESTDRIVER( atvga ) 	/*												  */
-TESTDRIVER( neat )		/*		New Enhanced AT chipset, AMI BIOS		  */
+TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS		  */
 #endif
 
 #ifndef MESS_EXCLUDE_SINCLAIR
@@ -489,6 +489,7 @@ TESTDRIVER( avigo ) 	/*												  */
 	DRIVER( trs80l1 )	/* TRS-80 Model I	- Radio Shack Level I BASIC   */
 	DRIVER( trs80 ) 	/* TRS-80 Model I	- Radio Shack Level II BASIC  */
 	DRIVER( trs80alt )	/* TRS-80 Model I	- R/S L2 BASIC				  */
+	DRIVER( sys80 ) 	/* EACA System 80								  */
 /*	DRIVER( trs80m2 )*/	/* TRS-80 Model II -							  */
 TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
 
@@ -496,15 +497,17 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
 /*	DRIVER( coco2 )*/ 	/* Color Computer 2 							  */
 	DRIVER( coco3 ) 	/* Color Computer 3 							  */
 	DRIVER( coco3h )	/* Hacked Color Computer 3 (6309)				  */
+	DRIVER( dragon32 )	/* Dragon32 									  */
 	DRIVER( cp400 ) 	/* Prologica CP400								  */
 	DRIVER( mc10 )		/* MC-10										  */
 
 	/* DRAGON DATA LTD */
-	DRIVER( dragon32 )	/* Dragon32 									  */
+	/* dragon 32 coco compatible */
+/*	DRIVER( dragon64 */	/* Dragon 64									  */
 
 	/* EACA */
-	DRIVER( cgenie )	/* Colour Genie 								  */
-	DRIVER( sys80 ) 	/* System 80									  */
+	DRIVER( cgenie )	/* Colour Genie EG2000							  */
+	/* system 80 trs80 compatible */
 
 	/* VIDEO TECHNOLOGY */
 	DRIVER( laser110 )	/* 1983 Laser 110								  */
@@ -581,8 +584,9 @@ TESTDRIVER( comquest )	/* Comquest Plus German							*/
 	/* PIC1655A (NMOS, not CMOS 16C55) dumping problems */
 /*	DRIVER( maniac )*/	/* Maniac										  */
 
-	/* Quelle International */
+	/* Computer Electronic */
 TESTDRIVER( mk1 )		/* Chess Champion MK I							  */
+	/* Quelle International */
 	DRIVER( mk2 )		/* Chess Champion MK II							  */
 
 	/* tchibo */
