@@ -290,7 +290,7 @@ ROM_START(paladium)
 	ROM_REGION(0x100,REGION_GFX1, 0)
 ROM_END
 
-static int arcadia_load_rom(int id)
+static int arcadia_init_cart(int id)
 {
 	FILE *cartfile;
 	UINT8 *rom = memory_region(REGION_CPU1);
@@ -299,21 +299,21 @@ static int arcadia_load_rom(int id)
 	if (device_filename(IO_CARTSLOT, id) == NULL)
 	{
 		printf("%s requires Cartridge!\n", Machine->gamedrv->name);
-		return 0;
+		return INIT_FAIL;
 	}
 
 	memset(rom, 0, 0x8000);
 	if (!(cartfile = (FILE*)image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
 	{
 		logerror("%s not found\n",device_filename(IO_CARTSLOT,id));
-		return 1;
+		return INIT_FAIL;
 	}
 	size=osd_fsize(cartfile);
 
 	if (osd_fread(cartfile, rom, size)!=size) {
 		logerror("%s load error\n",device_filename(IO_CARTSLOT,id));
 		osd_fclose(cartfile);
-		return 1;
+		return INIT_FAIL;
 	}
 	osd_fclose(cartfile);
 	if (size>0x1000) memmove(rom+0x2000, rom+0x1000, size-0x1000);
@@ -346,7 +346,7 @@ static int arcadia_load_rom(int id)
 	    rom[patch[i].address]=patch[i].neu;
 	}
 #endif
-	return 0;
+	return INIT_PASS;
 }
 
 static const struct IODevice io_arcadia[] = {
@@ -356,7 +356,7 @@ static const struct IODevice io_arcadia[] = {
 		"bin\0",                        /* file extensions */
 		IO_RESET_ALL,					/* reset if file changed */
 		0,
-		arcadia_load_rom, 				/* init */
+		arcadia_init_cart, 				/* init */
 		NULL,							/* exit */
 		NULL,							/* info */
 		NULL,							/* open */
