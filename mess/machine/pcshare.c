@@ -154,15 +154,15 @@ static struct pit8253_config pc_pit8253_config =
 	TYPE8253,
 	{
 		{
-			4770000/4,				/* heartbeat IRQ */
+			4772720/4,				/* heartbeat IRQ */
 			pc_timer0_w,
 			NULL
 		}, {
-			4770000/4,				/* dram refresh */
+			4772720/4,				/* dram refresh */
 			NULL,
 			NULL
 		}, {
-			4770000/4,				/* pio port c pin 4, and speaker polling enough */
+			4772720/4,				/* pio port c pin 4, and speaker polling enough */
 			NULL,
 			pc_sh_speaker_change_clock
 		}
@@ -174,15 +174,15 @@ static struct pit8253_config pc_pit8254_config =
 	TYPE8254,
 	{
 		{
-			4770000/4,				/* heartbeat IRQ */
+			4772720/4,				/* heartbeat IRQ */
 			pc_timer0_w,
 			NULL
 		}, {
-			4770000/4,				/* dram refresh */
+			4772720/4,				/* dram refresh */
 			NULL,
 			NULL
 		}, {
-			4770000/4,				/* pio port c pin 4, and speaker polling enough */
+			4772720/4,				/* pio port c pin 4, and speaker polling enough */
 			NULL,
 			pc_sh_speaker_change_clock
 		}
