@@ -796,7 +796,7 @@ ROM_START(ti99_4ev)
 
 	/*GROM memory space*/
 	ROM_REGION(0x10000, region_grom, 0)
-	ROM_LOAD("994agrom.bin", 0x0000, 0x6000, 0xaf5c2449) /* system GROMs */
+	ROM_LOAD("994agr38.bin", 0x0000, 0x6000, 0xbdd9f09b) /* system GROMs */
 
 	/*DSR ROM space*/
 	ROM_REGION(region_dsr_len, region_dsr, 0)
