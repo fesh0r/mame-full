@@ -288,6 +288,7 @@ $(OBJ)/cbm.a:	   \
 
 $(OBJ)/dragon.a:   \
 	  $(OBJ)/mess/formats/cocopak.o  \
+	  $(OBJ)/mess/formats/cococas.o  \
 	  $(OBJ)/mess/vidhrdw/m6847.o	 \
 	  $(OBJ)/mess/machine/mc10.o	 \
 	  $(OBJ)/mess/systems/mc10.o	 \
@@ -595,6 +596,7 @@ imgtool$(EXE):	     \
 	  $(OBJ)/mess/tools/imgtool.o \
 	  $(OBJ)/mess/tools/imgwave.o \
 	  $(OBJ)/mess/tools/cococas.o   \
+	  $(OBJ)/mess/formats/cococas.o  \
 	  $(OBJ)/mess/tools/rsdos.o   \
 	  $(OBJ)/mess/tools/stream.o  \
 	  $(OBJ)/mess/tools/t64.o     \

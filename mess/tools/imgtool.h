@@ -534,6 +534,7 @@ enum {
 
 struct WaveExtra
 {
+	int (*initalt)(STREAM *instream, STREAM **outstream, int *basepos, int *length, int *channels, int *frequency, int *resolution);
 	int (*nextfile)(IMAGE *img, imgtool_dirent *ent);
 	int (*readfile)(IMAGE *img, STREAM *destf);
 	int zeropulse;
@@ -546,10 +547,11 @@ struct WaveExtra
 };
 
 #define WAVEMODULE(name,humanname,ext,zeropulse,onepulse,threshpulse,waveflags,blockheader,blockheadersize,\
-		nextfile,readfilechunk)	\
+		initalt,nextfile,readfilechunk)	\
 static int imgmodinit_##name(STREAM *f, IMAGE **outimg); \
 static struct WaveExtra waveextra_##name = \
 {						\
+	(initalt),			\
 	(nextfile),			\
 	(readfilechunk),	\
 	(zeropulse),		\

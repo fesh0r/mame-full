@@ -400,6 +400,7 @@ DRV_OBJS = \
           $(OBJ)/mess/machine/mc10.o     \
           $(OBJ)/mess/systems/mc10.o     \
           $(OBJ)/mess/formats/cocopak.o  \
+		  $(OBJ)/mess/formats/cococas.o \
           $(OBJ)/mess/vidhrdw/dragon.o   \
           $(OBJ)/mess/machine/dragon.o   \
           $(OBJ)/mess/systems/dragon.o	\
@@ -582,6 +583,7 @@ IMGTOOL_OBJS= \
           $(OBJ)/mess/tools/stream.o  \
           $(OBJ)/mess/tools/rsdos.o   \
           $(OBJ)/mess/tools/cococas.o \
+		  $(OBJ)/mess/formats/cococas.o \
           $(OBJ)/mess/tools/t64.o     \
           $(OBJ)/mess/tools/lynx.o    \
           $(OBJ)/mess/tools/crt.o     \

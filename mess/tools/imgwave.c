@@ -45,6 +45,7 @@ int imgwave_init(struct ImageModule *mod, STREAM *f, IMAGE **outimg)
 {
 	int err;
 	waveimage *wimg;
+	struct WaveExtra *extra;
 	char buf[4];
 	UINT16 format, channels, resolution;
 	UINT32 filelen, blocklen, frequency;
@@ -52,20 +53,20 @@ int imgwave_init(struct ImageModule *mod, STREAM *f, IMAGE **outimg)
 
 	offset += stream_read(f, buf, sizeof(buf));
 	if (offset < 4)
-		return IMGTOOLERR_CORRUPTIMAGE;
+		goto initalt;
 	if (memcmp(buf, "RIFF", 4))
-		return IMGTOOLERR_CORRUPTIMAGE;
+		goto initalt;
 
 	offset += stream_read(f, &filelen, sizeof(filelen));
 	if (offset < 8)
-		return IMGTOOLERR_CORRUPTIMAGE;
+		goto initalt;
 	filelen = LITTLE_ENDIANIZE_INT32(filelen);
 
 	offset += stream_read(f, buf, sizeof(buf));
 	if (offset < 12)
-		return IMGTOOLERR_CORRUPTIMAGE;
+		goto initalt;
 	if (memcmp(buf, "WAVE", 4))
-		return IMGTOOLERR_CORRUPTIMAGE;
+		goto initalt;
 
 	err = find_wavtag(f, filelen, "fmt ", &offset, &blocklen);
 	if (err)
@@ -110,6 +111,36 @@ int imgwave_init(struct ImageModule *mod, STREAM *f, IMAGE **outimg)
 	wimg->resolution = resolution;
 	wimg->lastsample = 0;
 	*outimg = &wimg->base;
+	return 0;
+
+initalt:
+	extra = (struct WaveExtra *) mod->extra;
+	if (!extra->initalt)
+		return IMGTOOLERR_CORRUPTIMAGE;
+
+	stream_seek(f, 0, SEEK_SET);
+
+	wimg = malloc(sizeof(waveimage));
+	if (!wimg)
+		return IMGTOOLERR_OUTOFMEMORY;
+
+
+	err = extra->initalt(f, &wimg->f, &wimg->basepos, &wimg->length,
+		&wimg->channels, &wimg->frequency, &wimg->resolution);
+	if (err) {
+		free(wimg);
+		return err;
+	}
+
+	wimg->base.module = mod;
+	wimg->curpos = wimg->basepos;
+	wimg->lastsample = 0;
+	stream_seek(wimg->f, wimg->basepos, SEEK_SET);
+	*outimg = &wimg->base;
+
+	if (wimg->f != f)
+		stream_close(f);
+
 	return 0;
 }
 

@@ -3,7 +3,10 @@
 #include <stdlib.h>
 #include "osdepend.h"
 #include "imgtool.h"
+#include "formats/cococas.h"
 
+static int cococas_initalt(STREAM *instream, STREAM **outstream, int *basepos,
+	int *length, int *channels, int *frequency, int *resolution);
 static int cococas_nextfile(IMAGE *img, imgtool_dirent *ent);
 static int cococas_readfile(IMAGE *img, STREAM *destf);
 
@@ -16,6 +19,7 @@ WAVEMODULE(
 	1200, 1600, 2400,		/* 0=1200 Hz, 1=2400 Hz, threshold=1600 Hz */
 	WAVEIMAGE_LSB_FIRST,
 	blockheader, sizeof(blockheader) / sizeof(blockheader[0]),
+	cococas_initalt,				/* alternate initializer */
 	cococas_nextfile,				/* enumerate next */
 	cococas_readfile				/* read file */
 )
@@ -157,4 +161,62 @@ static int cococas_readfile(IMAGE *img, STREAM *destf)
 	
 	return 0;
 }
+
+static int cococas_initalt(STREAM *instream, STREAM **outstream, int *basepos,
+	int *length, int *channels, int *frequency, int *resolution)
+{
+	int caslength;
+	int numsamples;
+	int samplepos;
+	UINT8 *bytes = NULL;
+	INT16 *buffer = NULL;
+	INT16 *newbuffer;
+
+	caslength = stream_size(instream);
+	bytes = malloc(caslength);
+	if (!bytes)
+		goto outofmemory;
+	stream_read(instream, bytes, caslength);
+
+	numsamples = COCO_WAVESAMPLES_HEADER + COCO_WAVESAMPLES_TRAILER + (caslength * 8*8);
+
+	buffer = malloc(numsamples * sizeof(INT16));
+	if (!buffer)
+		goto outofmemory;
+
+	coco_wave_size = caslength;
+
+	samplepos = 0;
+	samplepos += coco_cassette_fill_wave(&buffer[samplepos], COCO_WAVESAMPLES_HEADER, CODE_HEADER);
+	samplepos += coco_cassette_fill_wave(&buffer[samplepos], caslength, bytes);
+	samplepos += coco_cassette_fill_wave(&buffer[samplepos], COCO_WAVESAMPLES_TRAILER, CODE_TRAILER);
+
+	free(bytes);
+	bytes = NULL;
+
+	newbuffer = realloc(buffer, samplepos * sizeof(INT16));
+	if (!newbuffer)
+		goto outofmemory;
+	buffer = newbuffer;
+
+	*outstream = stream_open_mem(buffer, samplepos * sizeof(INT16));
+	if (!(*outstream))
+		goto outofmemory;
+
+	*basepos = 0;
+	*length = samplepos;
+	*channels = 1;
+	*frequency = 4800;
+	*resolution = 16;
+	return 0;
+
+outofmemory:
+	if (bytes)
+		free(bytes);
+	if (buffer)
+		free(buffer);
+	return IMGTOOLERR_OUTOFMEMORY;
+}
+
+
 
