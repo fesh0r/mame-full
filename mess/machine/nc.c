@@ -10,7 +10,7 @@
 #include "driver.h"
 #include "includes/nc.h"
 
-unsigned char *nc_card_ram;
+unsigned char *nc_card_ram = NULL;
 
 /* load image */
 int nc_load(int type, int id, unsigned char **ptr)
@@ -58,12 +58,13 @@ int nc_load(int type, int id, unsigned char **ptr)
 /* load pcmcia card */
 int nc_pcmcia_card_load(int id)
 {
-        if (nc_load(IO_CARTSLOT,id,&nc_card_ram))
+	if (nc_load(IO_CARTSLOT,id,&nc_card_ram))
 	{
-
-                nc_set_card_present_state(1);
-
-		return INIT_OK;
+		if (nc_card_ram!=NULL)
+		{
+			nc_set_card_present_state(1);
+			return INIT_OK;
+		}
 	}
 
 	return INIT_FAILED;
@@ -78,11 +79,11 @@ int nc_pcmcia_card_id(int id)
 
 void nc_pcmcia_card_exit(int id)
 {
-        if (nc_card_ram!=NULL)
-        {
-                free(nc_card_ram);
-                nc_card_ram = NULL;
-        }
+	if (nc_card_ram!=NULL)
+	{
+		free(nc_card_ram);
+		nc_card_ram = NULL;
+	}
 
-        nc_set_card_present_state(0);
+	nc_set_card_present_state(0);
 }
