@@ -105,40 +105,60 @@ static int apple2_hasslots(void)
 
 struct apple2_bankmap_entry
 {
+	/* basic bank stats */
 	UINT16 offset_begin;
 	UINT16 offset_end;
-	INT16 bank;
 	UINT32 rom_mask;
-	UINT32 switch_mask;
+	INT16 bank;
 
-	UINT32 on_offset;
-	UINT32 on_mask;
-	write8_handler on_handler;
+	/* used to compute base offset */
+	UINT32 baseswitch_mask;
+	UINT16 baseswitch_off_offset;
+	UINT16 baseswitch_on_offset;
 
-	UINT32 off_offset;
-	UINT32 off_mask;
-	write8_handler off_handler;
+	/* used to compute aux banking */
+	UINT32 auxswitch_base_mask;
+	UINT32 auxswitch_off_mask;
+	UINT32 auxswitch_on_mask;
+	
+	/* handlers for writing */
+	write8_handler main_handler;
+	write8_handler aux_handler;
 };
 
 
+#define BANK_MONO(start, end, bank, auxswitch_mask)	\
+	{ start, end, 0, bank, 0, start, 0, 0, auxswitch_mask, auxswitch_mask, NULL, NULL }
+
+#define BANK_DUAL(start, end, bank, auxsw_base_mask, auxsw_off_mask, auxsw_on_mask) \
+	{ start, end, 0, bank, 0, start, 0, auxsw_base_mask, auxsw_off_mask, auxsw_on_mask, NULL, NULL }
+
+#define BANK_DUALH(start, end, bank, auxsw_base_mask, auxsw_off_mask, auxsw_on_mask, ausw_off_handler, auxsw_on_handler) \
+	{ start, end, 0, bank, 0, start, 0, auxsw_base_mask, auxsw_off_mask, auxsw_on_mask, ausw_off_handler, auxsw_on_handler }
+
+#define BANK_RSPEC(start, end, rom_mask, bank, bankswitch_mask, auxswitch_mask, baseswitch_off_offset, baseswitch_on_offset) \
+	{ start, end, rom_mask, bank, bankswitch_mask, baseswitch_off_offset, baseswitch_on_offset, 0, auxswitch_mask, 0, NULL, NULL }
+
+#define BANK_WSPEC(start, end, rom_mask, bank, bankswitch_mask, auxswitch_mask, baseswitch_off_offset, baseswitch_on_offset) \
+	{ start, end, rom_mask, bank, bankswitch_mask, baseswitch_off_offset, baseswitch_on_offset, 0, auxswitch_mask, auxswitch_mask, NULL, NULL }
+
 static const struct apple2_bankmap_entry apple2_bankmap[] =
 {
-	{ 0x0000, 0x01FF,  A2BANK_0000,		0,			VAR_ALTZP,				0x10000, VAR_ALTZP,  NULL,					0x00000, VAR_ALTZP,  NULL },
-	{ 0x0200, 0x03FF,  A2BANK_0200_R,	0,			VAR_RAMRD,				0x10200, VAR_RAMRD,  NULL,					0x00200, VAR_RAMRD,  NULL },
-	{ 0x0200, 0x03FF,  A2BANK_0200_W,	0,			VAR_RAMWRT,				0x10200, VAR_RAMWRT, NULL,				 	0x00200, VAR_RAMWRT, NULL },
-	{ 0x0400, 0x07FF,  A2BANK_0400_R,	0,			VAR_80STORE,			0x10400, VAR_PAGE2,  NULL,					0x00400, VAR_RAMRD,  NULL },
-	{ 0x0400, 0x07FF,  A2BANK_0400_W,	0,			VAR_80STORE,			0x10400, VAR_PAGE2,	 apple2_auxram0400_w,	0x00400, VAR_RAMWRT, apple2_mainram0400_w },
-	{ 0x0800, 0x1FFF,  A2BANK_0800_R,	0,			VAR_RAMRD,				0x10800, VAR_RAMRD,  NULL,					0x00800, VAR_RAMRD,  NULL },
-	{ 0x0800, 0x1FFF,  A2BANK_0800_W,	0,			VAR_RAMWRT,				0x10800, VAR_RAMWRT, NULL,					0x00800, VAR_RAMWRT, NULL },
-	{ 0x2000, 0x3FFF,  A2BANK_2000_R,	0,			VAR_80STORE|VAR_HIRES,	0x12000, VAR_PAGE2,	 NULL,					0x02000, VAR_RAMRD,  NULL },
-	{ 0x2000, 0x3FFF,  A2BANK_2000_W,	0,			VAR_80STORE|VAR_HIRES,	0x12000, VAR_PAGE2,  apple2_auxram2000_w,	0x02000, VAR_RAMWRT, apple2_mainram2000_w },
-	{ 0x4000, 0xBFFF,  A2BANK_4000_R,	0,			VAR_RAMRD,				0x14000, VAR_RAMRD,  NULL,					0x04000, VAR_RAMRD,  NULL },
-	{ 0x4000, 0xBFFF,  A2BANK_4000_W,	0,			VAR_RAMWRT,				0x14000, VAR_RAMWRT, NULL,					0x04000, VAR_RAMWRT, NULL },
-
-	{ 0xD000, 0xDFFF,  A2BANK_D000_R,	VAR_LCRAM,	VAR_LCRAM2,				0x1D000, VAR_ALTZP,  NULL,					0x0C000, VAR_ALTZP,  NULL },
-	{ 0xD000, 0xDFFF, -A2BANK_D000_W,	VAR_LCRAM,	VAR_LCRAM2,				0x1D000, VAR_ALTZP,  NULL,					0x0C000, VAR_ALTZP,  NULL },
-	{ 0xE000, 0xFFFF,  A2BANK_E000_R,	VAR_LCRAM,	VAR_LCRAM2,				0x1E000, VAR_ALTZP,  NULL,					0x0E000, VAR_ALTZP,  NULL },
-	{ 0xE000, 0xFFFF, -A2BANK_E000_W,	VAR_LCRAM,	VAR_LCRAM2,				0x1E000, VAR_ALTZP,  NULL,					0x0E000, VAR_ALTZP,  NULL }
+	BANK_MONO ( 0x0000, 0x01FF,					A2BANK_0000,   VAR_ALTZP  ),
+	BANK_MONO ( 0x0200, 0x03FF,					A2BANK_0200_R, VAR_RAMRD  ),
+	BANK_MONO ( 0x0200, 0x03FF,					A2BANK_0200_W, VAR_RAMWRT ),
+	BANK_DUAL ( 0x0400, 0x07FF,					A2BANK_0400_R, VAR_80STORE,				VAR_RAMRD,  VAR_PAGE2 ),
+	BANK_DUALH( 0x0400, 0x07FF,					A2BANK_0400_W, VAR_80STORE,				VAR_RAMWRT, VAR_PAGE2, apple2_mainram0400_w, apple2_auxram0400_w ),
+	BANK_MONO ( 0x0800, 0x1FFF,					A2BANK_0800_R, VAR_RAMRD  ),
+	BANK_MONO ( 0x0800, 0x1FFF,					A2BANK_0800_W, VAR_RAMWRT ),
+	BANK_DUAL ( 0x2000, 0x3FFF,					A2BANK_2000_R, VAR_80STORE|VAR_HIRES,	VAR_RAMRD,  VAR_PAGE2 ),
+	BANK_DUALH( 0x2000, 0x3FFF,					A2BANK_2000_R, VAR_80STORE|VAR_HIRES,	VAR_RAMWRT, VAR_PAGE2, apple2_mainram2000_w, apple2_auxram2000_w ),
+	BANK_MONO ( 0x4000, 0xBFFF,					A2BANK_4000_R, VAR_RAMRD  ),
+	BANK_MONO ( 0x4000, 0xBFFF,					A2BANK_4000_W, VAR_RAMWRT ),
+	BANK_RSPEC( 0xD000, 0xDFFF, VAR_LCRAM,		A2BANK_D000_R, VAR_LCRAM2, VAR_ALTZP, 0xC000, 0xD000 ),
+	BANK_WSPEC( 0xD000, 0xDFFF, VAR_LCWRITE,	A2BANK_D000_W, VAR_LCRAM2, VAR_ALTZP, 0xC000, 0xD000 ),
+	BANK_RSPEC( 0xE000, 0xFFFF,	VAR_LCRAM, 		A2BANK_E000_R, VAR_LCRAM2, VAR_ALTZP, 0xE000, 0xE000 ),
+	BANK_WSPEC( 0xE000, 0xFFFF, VAR_LCWRITE,	A2BANK_E000_W, VAR_LCRAM2, VAR_ALTZP, 0xE000, 0xE000 )
 };
 
 
@@ -151,7 +171,6 @@ static const struct apple2_bankmap_entry apple2_bankmap[] =
 static void apple2_setvar(UINT32 val, UINT32 mask)
 {
 	int i;
-	write8_handler handler;
 
 	LOG(("apple2_setvar(): val=0x%06x mask=0x%06x pc=0x%04x\n", val, mask, activecpu_get_pc()));
 
@@ -173,18 +192,22 @@ static void apple2_setvar(UINT32 val, UINT32 mask)
 	for (i = 0; i < sizeof(apple2_bankmap) / sizeof(apple2_bankmap[0]); i++)
 	{
 		const struct apple2_bankmap_entry *entry;
-		UINT32 othermask;
-		int bank;
 		UINT8 *bank_mem = NULL;
+		int bank;
+		UINT32 use_aux;
+		offs_t offset;
+		write8_handler handler;
 
 		entry = &apple2_bankmap[i];
-		if (mask & (entry->rom_mask | entry->switch_mask | entry->on_mask | entry->off_mask))
+		if (mask & (entry->rom_mask | entry->baseswitch_mask | entry->auxswitch_base_mask | entry->auxswitch_off_mask | entry->auxswitch_on_mask))
 		{
 			if ((a2 & entry->rom_mask) || (entry->rom_mask == 0))
 			{
 				/* some sort of RAM */
-				handler = (a2 & entry->switch_mask) == entry->switch_mask
-					? entry->on_handler : entry->off_handler;
+				use_aux = a2 & ((a2 & entry->auxswitch_base_mask) == entry->auxswitch_base_mask
+					? entry->auxswitch_on_mask : entry->auxswitch_off_mask);
+
+				handler = use_aux ? entry->aux_handler : entry->main_handler;
 				if (handler)
 				{
 					/* this RAM uses a handler */
@@ -194,9 +217,11 @@ static void apple2_setvar(UINT32 val, UINT32 mask)
 				else
 				{
 					/* this RAM uses a bank */
-					othermask = (a2 & entry->switch_mask) == entry->switch_mask
-						? entry->on_mask : entry->off_mask;
-					bank_mem = &mess_ram[(a2 & othermask) ? entry->on_offset : entry->off_offset];
+					offset = (a2 & entry->baseswitch_mask)
+						? entry->baseswitch_on_offset : entry->baseswitch_off_offset;
+					if (use_aux)
+						offset += 0x10000;
+					bank_mem = &mess_ram[offset];
 				}
 			}
 			else if (entry->bank >= 0)
