@@ -36,12 +36,12 @@ typedef struct {
 	UINT16	r[8];	/* registers */
 	UINT8	flags;	/* flags */
 	int 	intr_enabled;
-	int		(*reset_callback)(void);
+	//int		(*reset_callback)(void);
 	int 	(*irq_callback)(int irqline);
 	UINT16	intr_vector;
-	int 	reset_pending;
-	int		intr_pending;
-	int		intrm_pending;
+	int 	reset_state;
+	int		intr_state;
+	int		intrm_state;
 	int		mask_interrupts;
 }	cp1610_Regs;
 
@@ -1562,7 +1562,7 @@ static void cp1610_xori(int d)
 void cp1610_reset(void *param)
 {
 	/* This is how we set the reset vector */
-	cpu_set_irq_line(cpu_getactivecpu(), CP1610_RESET, PULSE_LINE);
+	cpu_set_irq_line(cpu_getactivecpu(), CP1610_RESET, ASSERT_LINE);
 }
 
 /* Shut down CPU core */
@@ -2146,7 +2146,7 @@ static void cp1610_do_jumps(void)
 	arg2 = cp1610_readop(cp1610.r[7]);
     cp1610.r[7]++;
 
-    /* logerror("jumps: pc = 0x%04x, arg2 = 0x%04x\n",cp1610.r[7]-1,arg2); */
+    /*logerror("jumps: pc = 0x%04x, arg1 = 0x%04x, arg2 = 0x%04x\n",cp1610.r[7]-1,arg1,arg2);*/
 	jumptype = arg1 & 0x303;
 	addr = ((arg1 & 0x0fc) << 8) | (arg2 & 0x3ff);
 
@@ -3360,27 +3360,27 @@ int cp1610_execute(int cycles)
 
         if (cp1610.mask_interrupts == 0)
         {
-			if (cp1610.intr_pending)
+			if (cp1610.intr_state == ASSERT_LINE)
 			{
 				/* PSHR R7 */
 				cp1610_writemem16(cp1610.r[6],cp1610.r[7]);
 				cp1610.r[6]++;
 				cp1610_icount -= 9;
-				cp1610.intr_pending = 0;
+				cp1610.intr_state = CLEAR_LINE;
 				cp1610.r[7] = cp1610.irq_callback(CP1610_INT_INTR);
 			}
-			if (cp1610.intrm_pending & cp1610.intr_enabled)
+			if ((cp1610.intrm_state == ASSERT_LINE) && (cp1610.intr_enabled))
 			{
 				/* PSHR R7 */
 				cp1610_writemem16(cp1610.r[6],cp1610.r[7]);
 				cp1610.r[6]++;
 				cp1610_icount -= 9;
-				cp1610.intrm_pending = 0;
+				cp1610.intrm_state = CLEAR_LINE;
 				cp1610.r[7] = cp1610.irq_callback(CP1610_INT_INTRM);
 			}
-			if (cp1610.reset_pending)
+			if (cp1610.reset_state == ASSERT_LINE)
 			{
-				cp1610.reset_pending = 0;
+				cp1610.reset_state = CLEAR_LINE;
 				cp1610.r[7] = cp1610.irq_callback(CP1610_RESET);
 			}
 		}
@@ -3390,143 +3390,17 @@ int cp1610_execute(int cycles)
 	return cycles - cp1610_icount;
 }
 
-#if 0
-/* Get registers, return context size */
-unsigned cp1610_get_context(void *dst)
-{
-	if( dst )
-		memcpy(dst, &cp1610, sizeof(cp1610_Regs));
-	return sizeof(cp1610_Regs);
-}
-
-/* Set registers */
-void cp1610_set_context(void *src)
-{
-	if( src )
-		memcpy(&cp1610, src, sizeof(cp1610_Regs));
-}
-#endif
-
 static void cp1610_get_context (void *dst)
 {
+	if (dst)
+		*(cp1610_Regs *) dst = cp1610;
 }
 
 static void cp1610_set_context (void *src)
 {
+	if (src)
+		cp1610 = *(cp1610_Regs *) src;
 }
-
-unsigned cp1610_get_reg(int regnum)
-{
-	switch( regnum )
-	{
-	case CP1610_R0: return cp1610.r[0];
-	case CP1610_R1: return cp1610.r[1];
-	case CP1610_R2: return cp1610.r[2];
-	case CP1610_R3: return cp1610.r[3];
-	case CP1610_R4: return cp1610.r[4];
-	case CP1610_R5: return cp1610.r[5];
-	case REG_SP:
-	case CP1610_R6: return cp1610.r[6];
-	case REG_PC:
-	case CP1610_R7: return cp1610.r[7];
-	}
-	return 0;
-}
-
-void cp1610_set_reg (int regnum, unsigned val)
-{
-	switch( regnum )
-	{
-	case CP1610_R0: cp1610.r[0] = val; break;
-	case CP1610_R1: cp1610.r[1] = val; break;
-	case CP1610_R2: cp1610.r[2] = val; break;
-	case CP1610_R3: cp1610.r[3] = val; break;
-	case CP1610_R4: cp1610.r[4] = val; break;
-	case CP1610_R5: cp1610.r[5] = val; break;
-	case REG_SP:
-	case CP1610_R6: cp1610.r[6] = val; break;
-	case REG_PC:
-	case CP1610_R7: cp1610.r[7] = val; break;
-    }
-}
-
-void cp1610_set_nmi_line(int state)
-{
-	/* not applicable */
-}
-
-void cp1610_set_irq_line(int irqline, int state)
-{
-	switch( irqline )
-	{
-		case CP1610_INT_INTR:
-			if (state == ASSERT_LINE)
-				cp1610.intr_pending = 1;
-			break;
-		case CP1610_INT_INTRM:
-			if (state == ASSERT_LINE)
-				cp1610.intrm_pending = 1;
-			break;
-		case CP1610_RESET:
-			if (state == ASSERT_LINE)
-				cp1610.reset_pending = 1;
-			break;
-	}
-}
-
-void cp1610_set_irq_callback(int (*callback)(int irqline))
-{
-	cp1610.irq_callback = callback;
-}
-
-void cp1610_state_save(void *file)
-{
-}
-
-void cp1610_state_load(void *file)
-{
-}
-
-#if 0
-const char *cp1610_info(void *context, int regnum)
-{
-	static char buffer[8][15+1];
-	static int which = 0;
-	cp1610_Regs *r = context;
-
-	which = (which + 1) % 8;
-	buffer[which][0] = '\0';
-	if( !context )
-		r = &cp1610;
-
-    switch( regnum )
-	{
-		case CPU_INFO_REG+CP1610_R0:sprintf(buffer[which], "R0:%04X", r->r[0]); break;
-		case CPU_INFO_REG+CP1610_R1:sprintf(buffer[which], "R1:%04X", r->r[1]); break;
-		case CPU_INFO_REG+CP1610_R2:sprintf(buffer[which], "R2:%04X", r->r[2]); break;
-		case CPU_INFO_REG+CP1610_R3:sprintf(buffer[which], "R3:%04X", r->r[3]); break;
-		case CPU_INFO_REG+CP1610_R4:sprintf(buffer[which], "R4:%04X", r->r[4]); break;
-		case CPU_INFO_REG+CP1610_R5:sprintf(buffer[which], "R5:%04X", r->r[5]); break;
-		case CPU_INFO_REG+CP1610_R6:sprintf(buffer[which], "R6:%04X", r->r[6]); break;
-		case CPU_INFO_REG+CP1610_R7:sprintf(buffer[which], "R7:%04X", r->r[7]); break;
-        case CPU_INFO_FLAGS:
-			sprintf(buffer[which], "%c%c%c%c",
-				r->flags & 0x80 ? 'S':'.',
-				r->flags & 0x40 ? 'Z':'.',
-				r->flags & 0x10 ? 'V':'.',
-				r->flags & 0x10 ? 'C':'.');
-			break;
-		case CPU_INFO_NAME: return "CP1610";
-		case CPU_INFO_FAMILY: return "????";
-		case CPU_INFO_VERSION: return "1.0";
-		case CPU_INFO_FILE: return __FILE__;
-		case CPU_INFO_CREDITS: return "Copyright (c) 2000 Frank Palazzolo, all rights reserved.";
-		case CPU_INFO_REG_LAYOUT: return (const char*)cp1610_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char*)cp1610_win_layout;
-	}
-    return buffer[which];
-}
-#endif
 
 unsigned cp1610_dasm(char *buffer, unsigned pc)
 {
@@ -3543,15 +3417,38 @@ void cp1610_init(void)
 {
 	cp1610.intr_enabled = 0;
 
-	cp1610.reset_pending = 0;
-	cp1610.intr_pending = 0;
-	cp1610.intrm_pending = 0;
+	cp1610.reset_state = CLEAR_LINE;
+	cp1610.intr_state = CLEAR_LINE;
+	cp1610.intrm_state = CLEAR_LINE;
 
 	return;
 }
 
 static void cp1610_set_info(UINT32 state, union cpuinfo *info)
 {
+	switch (state)
+	{
+	/* --- the following bits of info are returned as 64-bit signed integers --- */
+	case CPUINFO_INT_PREVIOUSPC:	break;	/* TODO? */
+	case CPUINFO_INT_IRQ_STATE + CP1610_INT_INTRM:	cp1610.intrm_state = info->i;	break;
+	case CPUINFO_INT_IRQ_STATE + CP1610_RESET:		cp1610.reset_state = info->i;	break;
+	case CPUINFO_INT_IRQ_STATE + CP1610_INT_INTR:	cp1610.intr_state = info->i;	break;
+
+	case CPUINFO_INT_REGISTER + CP1610_R0: cp1610.r[0] = info->i; 			break;
+	case CPUINFO_INT_REGISTER + CP1610_R1: cp1610.r[1] = info->i;			break;
+	case CPUINFO_INT_REGISTER + CP1610_R2: cp1610.r[2] = info->i;			break;
+	case CPUINFO_INT_REGISTER + CP1610_R3: cp1610.r[3] = info->i;			break;
+	case CPUINFO_INT_REGISTER + CP1610_R4: cp1610.r[4] = info->i;			break;
+	case CPUINFO_INT_REGISTER + CP1610_R5: cp1610.r[5] = info->i;			break;
+	case CPUINFO_INT_SP:
+	case CPUINFO_INT_REGISTER + CP1610_R6: cp1610.r[6] = info->i;			break;
+	case CPUINFO_INT_PC:
+	case CPUINFO_INT_REGISTER + CP1610_R7: cp1610.r[7] = info->i;			break;
+
+	/* --- the following bits of info are returned as pointers to data or functions --- */
+	case CPUINFO_PTR_IRQ_CALLBACK:	cp1610.irq_callback = info->irqcallback;	break;
+	}
+	return;
 }
 
 void cp1610_get_info(UINT32 state, union cpuinfo *info)
@@ -3560,7 +3457,7 @@ void cp1610_get_info(UINT32 state, union cpuinfo *info)
 	{
 	/* --- the following bits of info are returned as 64-bit signed integers --- */
 	case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(cp1610_Regs);	break;
-	case CPUINFO_INT_IRQ_LINES:						info->i = 1;			break;
+	case CPUINFO_INT_IRQ_LINES:						info->i = 2;			break;
 	case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;			break;
 	case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_BE;	break;
 	case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;			break;
@@ -3571,7 +3468,7 @@ void cp1610_get_info(UINT32 state, union cpuinfo *info)
 
 	case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 16;	break;
 	case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 16;	break;
-	case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;	break;
+	case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = -1;	break;
 	case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 0;	break;
 	case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 0;	break;
 	case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA: 	info->i = 0;	break;
@@ -3581,7 +3478,9 @@ void cp1610_get_info(UINT32 state, union cpuinfo *info)
 
 	case CPUINFO_INT_PREVIOUSPC:		info->i = 0;	/* TODO??? */		break;
 
-	///case CPUINFO_INT_IRQ_STATE:			info->i = cp1610.irq_request;			break;
+	case CPUINFO_INT_IRQ_STATE + CP1610_INT_INTRM:	info->i = cp1610.intrm_state;	break;
+	case CPUINFO_INT_IRQ_STATE + CP1610_RESET:		info->i = cp1610.reset_state;	break;
+	case CPUINFO_INT_IRQ_STATE + CP1610_INT_INTR:	info->i = cp1610.intr_state;	break;
 
 	case CPUINFO_INT_REGISTER + CP1610_R0: info->i = cp1610.r[0];			break;
 	case CPUINFO_INT_REGISTER + CP1610_R1: info->i = cp1610.r[1];			break;
@@ -3605,7 +3504,7 @@ void cp1610_get_info(UINT32 state, union cpuinfo *info)
 	case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 
 	case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = cp1610_dasm;		break;
-	///case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = cp1610.irq_callback;	break;
+	case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = cp1610.irq_callback;	break;
 	case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &cp1610_icount;			break;
 	case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = cp1610_reg_layout;			break;
 	case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = cp1610_win_layout;			break;

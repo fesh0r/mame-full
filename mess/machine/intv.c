@@ -437,11 +437,11 @@ DEVICE_LOAD( intv_cart )
 	return intv_load_rom_file(image, file, 1);
 }
 
-/* Set Reset and INTR/INTRM Vector */
 DRIVER_INIT( intv )
 {
 }
 
+/* Set Reset and INTR/INTRM Vector */
 MACHINE_INIT( intv )
 {
 	cpu_irq_line_vector_w(0, CP1610_RESET, 0x1000);
