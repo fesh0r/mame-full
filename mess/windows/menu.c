@@ -109,6 +109,7 @@ int win_use_natural_keyboard;
 
 static HMENU win_menu_bar;
 static int is_paused;
+static HICON device_icons[IO_COUNT];
 
 
 
@@ -1020,15 +1021,32 @@ void set_menu_text(HMENU menu_bar, int command, const char *text)
 //	win_setup_menus
 //============================================================
 
-int win_setup_menus(HMENU menu_bar)
+int win_setup_menus(HMODULE module, HMENU menu_bar)
 {
 	HMENU frameskip_menu;
 	HMENU joystick_menu;
 	char buf[256];
 	int i, joystick_count = 0;
 
+	static const int bitmap_ids[][2] =
+	{
+		{ IO_CARTSLOT,	IDI_ICON_CART },
+		{ IO_HARDDISK,	IDI_ICON_HARD },
+		{ IO_CASSETTE,	IDI_ICON_CASS },
+		{ IO_FLOPPY,	IDI_ICON_FLOP },
+		{ IO_PRINTER,	IDI_ICON_PRIN },
+		{ IO_SERIAL,	IDI_ICON_SERL },
+		{ IO_SNAPSHOT,	IDI_ICON_SNAP }
+	};
+
+	// verify that our magic numbers work
 	assert((ID_DEVICE_0 + IO_COUNT * MAX_DEV_INSTANCES * DEVOPTION_MAX) < ID_JOYSTICK_0);
 	is_paused = 0;
+
+	// get the device icons
+	memset(device_icons, 0, sizeof(device_icons));
+	for (i = 0; i < sizeof(bitmap_ids) / sizeof(bitmap_ids[0]); i++)
+		device_icons[bitmap_ids[i][0]] = LoadIcon(module, MAKEINTRESOURCE(bitmap_ids[i][1]));
 
 	// remove the profiler menu item if it doesn't exist
 #if HAS_PROFILER
@@ -1109,7 +1127,7 @@ int win_create_menu(HMENU *menus)
 		if (!menu_bar)
 			goto error;
 
-		if (win_setup_menus(menu_bar))
+		if (win_setup_menus(module, menu_bar))
 			goto error;
 	}
 

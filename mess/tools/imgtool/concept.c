@@ -136,9 +136,9 @@ static int concept_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
 static void concept_image_closeenum(IMAGEENUM *enumeration);
 static imgtoolerr_t concept_image_freespace(IMAGE *img, size_t *size);
 static int concept_image_readfile(IMAGE *img, const char *fname, STREAM *destf);
-static int concept_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, option_resolution *writeoptions);
+/*static int concept_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, option_resolution *writeoptions);
 static int concept_image_deletefile(IMAGE *img, const char *fname);
-static int concept_image_create(const struct ImageModule *mod, STREAM *f, option_resolution *createoptions);
+static int concept_image_create(const struct ImageModule *mod, STREAM *f, option_resolution *createoptions);*/
 
 imgtoolerr_t concept_createmodule(imgtool_library *library)
 {

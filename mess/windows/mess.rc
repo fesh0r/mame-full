@@ -129,6 +129,21 @@ END
 #endif
 
 
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+IDI_ICON_CART           ICON    DISCARDABLE     "../../src/ui/res/cpu.ico"
+IDI_ICON_HARD           ICON    DISCARDABLE     "../../src/ui/res/harddisk.ico"
+IDI_ICON_CASS           ICON    DISCARDABLE     "../ui/res/win_cass.ico"
+IDI_ICON_FLOP           ICON    DISCARDABLE     "../ui/res/win_flop.ico"
+IDI_ICON_PRIN           ICON    DISCARDABLE     "../ui/res/win_prin.ico"
+IDI_ICON_SERL           ICON    DISCARDABLE     "../ui/res/win_serl.ico"
+IDI_ICON_SNAP           ICON    DISCARDABLE     "../ui/res/win_snap.ico"
+
+
 /////////////////////////////////////////////////////////////////////////////
 //
 // DESIGNINFO

@@ -30,6 +30,13 @@
 #define ID_HELP_ABOUT                   126
 #define ID_HELP_ABOUTSYSTEM             127
 #define IDD_TAPEDIALOG                  128
+#define IDI_ICON_CART                   1000
+#define IDI_ICON_HARD                   1001
+#define IDI_ICON_CASS                   1002
+#define IDI_ICON_FLOP                   1003
+#define IDI_ICON_PRIN                   1004
+#define IDI_ICON_SERL                   1005
+#define IDI_ICON_SNAP                   1006
 #define IDR_RUNTIME_MENU                6000
 #define IDC_SLIDER                      6000
 #define IDC_PLAY                        6001

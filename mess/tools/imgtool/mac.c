@@ -5531,8 +5531,8 @@ static void mac_image_closeenum(IMAGEENUM *enumeration);
 static imgtoolerr_t mac_image_freespace(IMAGE *img, size_t *size);
 static imgtoolerr_t mac_image_readfile(IMAGE *img, const char *fname, STREAM *destf);
 static imgtoolerr_t mac_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, option_resolution *writeoptions);
-static imgtoolerr_t mac_image_deletefile(IMAGE *img, const char *fname);
-static imgtoolerr_t mac_image_create(const struct ImageModule *mod, STREAM *f, option_resolution *createoptions);
+/*static imgtoolerr_t mac_image_deletefile(IMAGE *img, const char *fname);
+static imgtoolerr_t mac_image_create(const struct ImageModule *mod, STREAM *f, option_resolution *createoptions);*/
 
 imgtoolerr_t mac_createmodule(imgtool_library *library)
 {

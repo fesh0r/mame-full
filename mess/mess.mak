@@ -894,12 +894,16 @@ tools/imgtool$(EXE):	                   \
 	  $(OBJ)/mess/tools/imgtool/imgterrs.o \
 	  $(OBJ)/mess/tools/imgtool/rsdos.o    \
 	  $(OBJ)/mess/tools/imgtool/imgtest.o  \
+	  $(OBJ)/mess/tools/imgtool/imghd.o    \
+	  $(OBJ)/mess/tools/imgtool/mac.o      \
+	  $(OBJ)/mess/tools/imgtool/ti99.o     \
+	  $(OBJ)/mess/tools/imgtool/ti990hd.o  \
+	  $(OBJ)/mess/tools/imgtool/concept.o  \
 #	  $(OBJ)/mess/tools/imgtool/tstsuite.o \
 #	  $(OBJ)/mess/formats/fmsx_cas.o       \
 #	  $(OBJ)/mess/formats/svi_cas.o        \
 #	  $(OBJ)/mess/formats/cococas.o        \
 #	  $(OBJ)/mess/formats/ti85_ser.o       \
-#	  $(OBJ)/mess/tools/imgtool/imghd.o    \
 #	  $(OBJ)/mess/tools/imgtool/imgfile.o  \
 #	  $(OBJ)/mess/tools/imgtool/imgwave.o  \
 #	  $(OBJ)/mess/tools/imgtool/cococas.o  \
@@ -914,13 +918,9 @@ tools/imgtool$(EXE):	                   \
 #	  $(OBJ)/mess/tools/imgtool/crt.o      \
 #	  $(OBJ)/mess/tools/imgtool/d64.o      \
 #	  $(OBJ)/mess/tools/imgtool/fat.o      \
-#	  $(OBJ)/mess/tools/imgtool/mac.o      \
 #	  $(OBJ)/mess/tools/imgtool/rom16.o    \
 #	  $(OBJ)/mess/tools/imgtool/nccard.o   \
 #	  $(OBJ)/mess/tools/imgtool/ti85.o     \
-#	  $(OBJ)/mess/tools/imgtool/ti99.o     \
-#	  $(OBJ)/mess/tools/imgtool/ti990hd.o  \
-#	  $(OBJ)/mess/tools/imgtool/concept.o  \
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ $(LIBS) $(IMGTOOL_LIBS) $(OUTOPT)
 

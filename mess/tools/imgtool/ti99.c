@@ -3879,7 +3879,7 @@ static imgtoolerr_t ti99_createmodule_internal(imgtool_library *library, ti99_im
 {
 	imgtoolerr_t err;
 	struct ImageModule *module;
-	const char *identifier;
+	const char *identifier = NULL;
 
 	switch (img_format)
 	{
