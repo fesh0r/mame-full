@@ -88,7 +88,6 @@ WRITE_HANDLER( senjyo_bg1videoram_w );
 WRITE_HANDLER( senjyo_bg2videoram_w );
 WRITE_HANDLER( senjyo_bg3videoram_w );
 WRITE_HANDLER( senjyo_bgstripes_w );
-WRITE_HANDLER( senjyo_flipscreen_w );
 
 void init_starforc(void);
 void init_starfore(void);
@@ -180,7 +179,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xa800, 0xaaff, senjyo_bg2videoram_w, &senjyo_bg2videoram },
 	{ 0xb000, 0xb1ff, senjyo_bg1videoram_w, &senjyo_bg1videoram },
 	{ 0xb800, 0xbbff, MWA_RAM, &senjyo_radarram },
-	{ 0xd000, 0xd000, senjyo_flipscreen_w },
+	{ 0xd000, 0xd000, flip_screen_w },
 	{ 0xd004, 0xd004, z80pioA_0_p_w },
 	{ -1 }  /* end of table */
 };

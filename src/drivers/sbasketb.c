@@ -25,7 +25,6 @@ extern unsigned char *sbasketb_palettebank;
 extern unsigned char *sbasketb_spriteram_select;
 void sbasketb_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void sbasketb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-WRITE_HANDLER( sbasketb_flipscreen_w );
 
 extern struct VLM5030interface konami_vlm5030_interface;
 extern struct SN76496interface konami_sn76496_interface;
@@ -65,7 +64,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x3a00, 0x3bff, MWA_RAM },           /* Probably unused, but initialized */
 	{ 0x3c00, 0x3c00, watchdog_reset_w },
 	{ 0x3c20, 0x3c20, MWA_RAM, &sbasketb_palettebank },
-	{ 0x3c80, 0x3c80, sbasketb_flipscreen_w },
+	{ 0x3c80, 0x3c80, flip_screen_w },
 	{ 0x3c81, 0x3c81, interrupt_enable_w },
 	{ 0x3c83, 0x3c84, coin_counter_w },
 	{ 0x3c85, 0x3c85, MWA_RAM, &sbasketb_spriteram_select },
