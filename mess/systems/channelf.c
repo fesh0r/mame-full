@@ -44,7 +44,7 @@ static READ_HANDLER( channelf_port_0_r )
 {
 	int data = readinputport(0);
 	data = (data ^ 0xff) | latch[0];
-    LOG(("port_0_r: $%02x\n",data));
+    /*LOG(("port_0_r: $%02x\n",data));*/
 	return data;
 }
 
@@ -52,7 +52,7 @@ static READ_HANDLER( channelf_port_1_r )
 {
 	int data = readinputport(1);
 	data = (data ^ 0xff) | latch[1];
-    LOG(("port_1_r: $%02x\n",data));
+    /*LOG(("port_1_r: $%02x\n",data));*/
 	return data;
 }
 
@@ -60,7 +60,7 @@ static READ_HANDLER( channelf_port_4_r )
 {
 	int data = readinputport(2);
 	data = (data ^ 0xff) | latch[2];
-    LOG(("port_4_r: $%02x\n",data));
+    /*LOG(("port_4_r: $%02x\n",data));*/
 	return data;
 }
 
@@ -68,7 +68,7 @@ static READ_HANDLER( channelf_port_5_r )
 {
 	int data = 0xff;
 	data = (data ^ 0xff) | latch[3];
-    LOG(("port_5_r: $%02x\n",data));
+    /*LOG(("port_5_r: $%02x\n",data));*/
 	return data;
 }
 
@@ -76,7 +76,7 @@ static WRITE_HANDLER( channelf_port_0_w )
 {
 	int offs;
 
-	LOG(("port_0_w: $%02x\n",data));
+	/*LOG(("port_0_w: $%02x\n",data));*/
 
 /*
 	if (data & 0x40)
@@ -96,7 +96,7 @@ static WRITE_HANDLER( channelf_port_0_w )
 
 static WRITE_HANDLER( channelf_port_1_w )
 {
-	LOG(("port_1_w: $%02x\n",data));
+	/*LOG(("port_1_w: $%02x\n",data));*/
 
     channelf_val_reg = ((data ^ 0xff) >> 6) & 0x03;
 
@@ -105,7 +105,7 @@ static WRITE_HANDLER( channelf_port_1_w )
 
 static WRITE_HANDLER( channelf_port_4_w )
 {
-	LOG(("port_4_w: $%02x\n",data));
+	/*LOG(("port_4_w: $%02x\n",data));*/
 
     channelf_col_reg = (data | 0x80) ^ 0xff;
 
@@ -114,7 +114,7 @@ static WRITE_HANDLER( channelf_port_4_w )
 
 static WRITE_HANDLER( channelf_port_5_w )
 {
-	LOG(("port_5_w: $%02x\n",data));
+	/*LOG(("port_5_w: $%02x\n",data));*/
 
 	channelf_sound_w((data>>6)&3);
 
