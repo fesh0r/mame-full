@@ -14,8 +14,8 @@ Main  CPU	:	M68020
 ---------------------------------------------------------------------------
 Year + Game
 ---------------------------------------------------------------------------
-98  Asura Blade
-	Asura Buster
+98  Asura Blade - Sword of Dynasty
+	Asura Buster - Eternal Warriors
 ---------------------------------------------------------------------------
 
 --
@@ -246,7 +246,7 @@ PORT_END
 
 ***************************************************************************/
 
-INPUT_PORTS_START( asura )
+INPUT_PORTS_START( asurabld )
 	PORT_START	// IN0 - $800000.w/$800002.w
 	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_COIN1    )
 	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_COIN2    )
@@ -277,79 +277,49 @@ INPUT_PORTS_START( asura )
 	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_BUTTON3        | IPF_PLAYER2 )
 	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN                      )
 
-	PORT_START	// IN2 - $880000.w / $880002.w
+	PORT_START	// IN2 - $880000.w/$880002.w
 	PORT_SERVICE( 0x0001, 0x0001 )
-	PORT_DIPNAME( 0x0002, 0x0002, "Blood Colour" ) // Any other censorship?
+	PORT_DIPNAME( 0x0002, 0x0002, "Blood Colour" ) // Any other censorship? (Tested in 3 locations)
 	PORT_DIPSETTING(      0x0002, "Red" )
 	PORT_DIPSETTING(      0x0000, "Green" )
-
-	PORT_DIPNAME( 0x0004, 0x0004, "2 0x0004" )
+	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) ) // Tested @ 0917AC
 	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0008, 0x0008, "2 0x0008" )
+	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unknown ) ) // Tested @ 0917AC
 	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0010, 0x0010, "2 0x0010" )
-	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0020, 0x0020, "2 0x0020" )
-	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0030, 0x0030, "Timer" )
+	PORT_DIPSETTING(      0x0000, "Slow" )
+	PORT_DIPSETTING(      0x0030, "Medium" )
+	PORT_DIPSETTING(      0x0010, "Fast" )
+	PORT_DIPSETTING(      0x0020, "Very Fast" )
 	PORT_DIPNAME( 0x00c0, 0x0000, "Coinage Mode" )
 	PORT_DIPSETTING(      0x00c0, "Split" )
 	PORT_DIPSETTING(      0x0000, "Joint" )
-	PORT_DIPNAME( 0x0100, 0x0100, "2 0x0100" )
-	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0200, 0x0200, "2 0x0200" )
-	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0400, 0x0400, "2 0x0400" )
-	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0800, 0x0800, "2 0x0800" )
-	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x1000, 0x1000, "2 0x1000" )
-	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x2000, 0x2000, "2 0x2000" )
-	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x4000, 0x4000, "2 0x4000" )
-	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x8000, 0x8000, "2 0x8000" )
-	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-//	PORT_BIT(  0xfe00, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	// IN3 - $890000.w/$890002.w
 	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0002, 0x0002, "3 0x0002" )
-	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0004, 0x0004, "3 0x0004" )
-	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0008, 0x0008, "3 0x0008" )
-	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0010, 0x0010, "3 0x0010" )
-	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0020, 0x0020, "3 0x0020" )
-	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0040, 0x0040, "3 0x0040" )
-	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0080, 0x0080, "3 0x0080" )
-	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-
+	PORT_DIPNAME( 0x000e, 0x0000, "Computer Level" ) // See @ 0917CC
+	PORT_DIPSETTING(      0x0000, "0" )
+	PORT_DIPSETTING(      0x0008, "1" )
+	PORT_DIPSETTING(      0x0004, "2" )
+	PORT_DIPSETTING(      0x000c, "3" )
+	PORT_DIPSETTING(      0x000e, "4" )
+	PORT_DIPSETTING(      0x0002, "5" )
+	PORT_DIPSETTING(      0x000a, "6" )
+	PORT_DIPSETTING(      0x0006, "7" )
+	PORT_DIPNAME( 0x0030, 0x0010, "Damage" )
+	PORT_DIPSETTING(      0x0020, "Lowest" )
+	PORT_DIPSETTING(      0x0030, "Low" )
+	PORT_DIPSETTING(      0x0010, "Medium" )
+	PORT_DIPSETTING(      0x0000, "High" )
+	PORT_DIPNAME( 0x00c0, 0x0040, "Max Rounds" )
+	PORT_DIPSETTING(      0x0000, "1" )
+	PORT_DIPSETTING(      0x0040, "3" )
+	PORT_DIPSETTING(      0x0080, "5" )
 	PORT_DIPNAME( 0xf000, 0xf000, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(      0x8000, DEF_STR( 8C_1C ) )
 	PORT_DIPSETTING(      0x9000, DEF_STR( 7C_1C ) )
@@ -563,4 +533,4 @@ ROM_END
 
 ***************************************************************************/
 
-GAMEX( 1998, asurabld,	0, fuuki32, asura, 0, ROT0, "Fuuki", "Asura Blade (Japan)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1998, asurabld,	0, fuuki32, asurabld, 0, ROT0, "Fuuki", "Asura Blade - Sword of Dynasty (Japan)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )

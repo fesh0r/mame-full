@@ -6115,12 +6115,19 @@ READ32_HANDLER( K056832_rom_long_r )
 /* only one page is mapped to videoram at a time through a window */
 READ16_HANDLER( K056832_ram_word_r )
 {
+	// reading from tile RAM resets the ROM readback "half" offset
+	K056832_rom_half = 0;
+
 	return K056832_videoram[K056832_SelectedPagex4096+offset];
 }
 
 READ32_HANDLER( K056832_ram_long_r )
 {
 	data16_t *pMem = &K056832_videoram[K056832_SelectedPagex4096+offset*2];
+
+	// reading from tile RAM resets the ROM readback "half" offset
+	K056832_rom_half = 0;
+	
 	return(pMem[0]<<16 | pMem[1]);
 }
 

@@ -112,8 +112,7 @@ void win_ddraw_fullscreen_margins(DWORD desc_width, DWORD desc_height, RECT *mar
 	margins->right = desc_width;
 	margins->bottom = desc_height;
 
-#if WINDOW_HAS_MENU
-	if (GetMenu(win_video_window))
+	if (win_has_menu())
 	{
 		static int height_with_menubar = 0;
 		if (height_with_menubar == 0)
@@ -126,7 +125,6 @@ void win_ddraw_fullscreen_margins(DWORD desc_width, DWORD desc_height, RECT *mar
 		}
 		margins->top = height_with_menubar;
 	}
-#endif /* WINDOW_HAS_MENU */
 }
 
 

@@ -1,14 +1,13 @@
 /***************************************************************************
 
-						  -= Fuuki 16 Bit Games (FG-2) =-
+						  -= Fuuki 16 Bit Games =-
 
 					driver by	Luca Elia (l.elia@tin.it)
-					c.f. Fuuki FG-3
 
 
 	[ 4 Scrolling Layers ]
 
-							[ Layer 0 ]		[ Layer 1 ]		[ Layers 2&3 (double-buffered) ]
+							[ Layer 0 ]		[ Layer 1 ]		[ Layers 2&3 ]
 
 	Tile Size:				16 x 16 x 4		16 x 16 x 8		8 x 8 x 4
 	Layer Size (tiles):		64 x 32			64 x 32			64 x 32
@@ -24,13 +23,14 @@
 
 ***************************************************************************/
 
+#include "driver.h"
 #include "vidhrdw/generic.h"
 
 /* Variables that driver has access to: */
 
 data16_t *fuuki16_vram_0, *fuuki16_vram_1;
 data16_t *fuuki16_vram_2, *fuuki16_vram_3;
-data16_t *fuuki16_vregs,  *fuuki16_priority, *fuuki16_unknown;
+data16_t *fuuki16_vregs,  *fuuki16_unknown, *fuuki16_priority;
 
 
 /***************************************************************************
@@ -73,7 +73,6 @@ LAYER( 1 )
 LAYER( 2 )
 LAYER( 3 )
 
-
 /***************************************************************************
 
 
@@ -82,10 +81,15 @@ LAYER( 3 )
 
 ***************************************************************************/
 
-/* Not used atm, seems to be fine without clearing pens? */
 PALETTE_INIT( fuuki16 )
 {
-	int pen;
+	int color, pen;
+
+	/* Layer 0 has 8 bits per pixel, but the color code has
+	   a 16 color granularity */
+	for( color = 0; color < 64; color++ )
+		for( pen = 0; pen < 256; pen++ )
+			colortable[color * 256 + pen + 0x400*4] = ((color * 16 + pen)%(64*16)) + 0x400;
 
 	/* The game does not initialise the palette at startup. It should
 	   be totally black */
@@ -96,27 +100,25 @@ PALETTE_INIT( fuuki16 )
 VIDEO_START( fuuki16 )
 {
 	tilemap_0 = tilemap_create(	get_tile_info_0, tilemap_scan_rows,
-								TILEMAP_TRANSPARENT, 16, 16, 64,32);
+								TILEMAP_TRANSPARENT, 16,16, 0x40,0x20);
 
-	tilemap_1 = tilemap_create(	get_tile_info_1, tilemap_scan_rows,
-								TILEMAP_TRANSPARENT, 16, 16, 64,32);
+	tilemap_1 = tilemap_create(	get_tile_info_1,tilemap_scan_rows,
+								TILEMAP_TRANSPARENT, 16,16, 0x40,0x20);
 
-	tilemap_2 = tilemap_create(	get_tile_info_2, tilemap_scan_rows,
-								TILEMAP_TRANSPARENT,  8,  8, 64,32);
+	tilemap_2 = tilemap_create(	get_tile_info_2,tilemap_scan_rows,
+								TILEMAP_TRANSPARENT, 8,8, 0x40,0x20);
 
-	tilemap_3 = tilemap_create(	get_tile_info_3, tilemap_scan_rows,
-								TILEMAP_TRANSPARENT,  8,  8, 64,32);
+	tilemap_3 = tilemap_create(	get_tile_info_3,tilemap_scan_rows,
+								TILEMAP_TRANSPARENT, 8,8, 0x40,0x20);
 
 	if ( !tilemap_0 || !tilemap_1 || !tilemap_2 || !tilemap_3 )
 		return 1;
 
-	tilemap_set_transparent_pen(tilemap_0,0x0f);	// 4 bits
-	tilemap_set_transparent_pen(tilemap_1,0xff);	// 8 bits
-	tilemap_set_transparent_pen(tilemap_2,0x0f);	// 4 bits
-	tilemap_set_transparent_pen(tilemap_3,0x0f);	// 4 bits
+	tilemap_set_transparent_pen(tilemap_0,0xff);	// 8 bits
 
-	Machine->gfx[2]->color_granularity=16; /* 256 colour tiles with palette selectable on 16 colour boundaries */
-
+	tilemap_set_transparent_pen(tilemap_1,0x0f);	// 4 bits
+	tilemap_set_transparent_pen(tilemap_2,0x0f);
+	tilemap_set_transparent_pen(tilemap_3,0x0f);
 	return 0;
 }
 
@@ -140,7 +142,8 @@ VIDEO_START( fuuki16 )
 
 		4.w		fedc ---- ---- ----		Zoom X ($0 = Full Size, $F = Half Size)
 				---- ba98 ---- ----		Zoom Y ""
-				---- ---- 76-- ----		Priority
+				---- ---- 7--- ----		0 = Priority Over Foreground
+				---- ---- -6-- ----		0 = Priority Over Background
 				---- ---- --54 3210		Color
 
 		6.w								Code
@@ -180,11 +183,11 @@ static void fuuki16_draw_sprites(struct mame_bitmap *bitmap, const struct rectan
 
 		switch( (attr >> 6) & 3 )
 		{
-			case 3:		pri_mask = 0xf0|0xcc|0xaa;	break;	// behind all layers
-			case 2:		pri_mask = 0xf0|0xcc;		break;	// behind fg + middle layer
-			case 1:		pri_mask = 0xf0;			break;	// behind fg layer
+			case 3:		pri_mask = (1<<1)|(1<<2)|(1<<3);	break;
+			case 2:		pri_mask = (1<<2)|(1<<3);			break;
+//			case 1:		pri_mask = (1<<1)|(1<<3);			break;
 			case 0:
-			default:	pri_mask = 0;						// above all
+			default:	pri_mask = 0;
 		}
 
 		sx = (sx & 0x1ff) - (sx & 0x200);
@@ -192,7 +195,7 @@ static void fuuki16_draw_sprites(struct mame_bitmap *bitmap, const struct rectan
 
 		if (flip_screen)
 		{	flipx = !flipx;		sx = max_x - sx - xnum * 16;
-			flipy = !flipy;		sy = max_y - sy - ynum * 16;	}
+			flipy = !flipy;		sy = max_y - sy - ynum * 16;		}
 
 		if (flipx)	{ xstart = xnum-1;  xend = -1;    xinc = -1; }
 		else		{ xstart = 0;       xend = xnum;  xinc = +1; }
@@ -225,7 +228,7 @@ static void fuuki16_draw_sprites(struct mame_bitmap *bitmap, const struct rectan
 		}
 
 #ifdef MAME_DEBUG
-#if 0
+#if 1
 if (keyboard_pressed(KEYCODE_X))
 {	/* Display some info on each sprite */
 	struct DisplayText dt[2];	char buf[10];
@@ -237,7 +240,10 @@ if (keyboard_pressed(KEYCODE_X))
 #endif
 #endif
 	}
+
 }
+
+
 
 
 /***************************************************************************
@@ -247,10 +253,10 @@ if (keyboard_pressed(KEYCODE_X))
 
 	Video Registers (fuuki16_vregs):
 
-		00.w		Layer 0 Scroll Y
-		02.w		Layer 0 Scroll X
-		04.w		Layer 1 Scroll Y
-		06.w		Layer 1 Scroll X
+		00.w		Layer 1 Scroll Y
+		02.w		Layer 1 Scroll X
+		04.w		Layer 0 Scroll Y
+		06.w		Layer 0 Scroll X
 		08.w		Layer 2 Scroll Y
 		0a.w		Layer 2 Scroll X
 		0c.w		Layers Y Offset
@@ -258,12 +264,14 @@ if (keyboard_pressed(KEYCODE_X))
 
 		10-1a.w		? 0
 		1c.w		Trigger a level 5 irq on this raster line
-		1e.w		? $3390/$3393 (Flip Screen Off/On), $0040 is buffer for tilemap 2 or 3
+		1e.w		? $3390/$3393 (Flip Screen Off/On)
 
 	Priority Register (fuuki16_priority):
 
 		fedc ba98 7654 3---
-		---- ---- ---- -210		Layer Order
+		---- ---- ---- -2--		?
+		---- ---- ---- --1-
+		---- ---- ---- ---0		Swap Layers
 
 
 	Unknown Registers (fuuki16_unknown):
@@ -273,19 +281,17 @@ if (keyboard_pressed(KEYCODE_X))
 
 ***************************************************************************/
 
-/* Wrapper to handle bg and bg2 ttogether */
+
 static void fuuki16_draw_layer(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int i, int flag, int pri)
 {
-	int buffer = (fuuki16_vregs[0x1e/2] & 0x40);
-
 	switch( i )
 	{
-		case 2:	if (buffer)	tilemap_draw(bitmap,cliprect,tilemap_3,flag,pri);
-				else		tilemap_draw(bitmap,cliprect,tilemap_2,flag,pri);
+		case 0:	tilemap_draw(bitmap,cliprect,tilemap_0,flag,pri);
 				return;
 		case 1:	tilemap_draw(bitmap,cliprect,tilemap_1,flag,pri);
 				return;
-		case 0:	tilemap_draw(bitmap,cliprect,tilemap_0,flag,pri);
+		case 2:	tilemap_draw(bitmap,cliprect,tilemap_3,flag,pri);
+				tilemap_draw(bitmap,cliprect,tilemap_2,flag,pri);
 				return;
 	}
 }
@@ -297,23 +303,7 @@ VIDEO_UPDATE( fuuki16 )
 	data16_t layer2_scrollx, layer2_scrolly;
 	data16_t scrollx_offs,   scrolly_offs;
 
-	/*
-	It's not independant bits causing layers to switch, that wouldn't make sense with 3 bits.
-	See fuukifg3 for more justification
-	*/
-
-	int tm_back, tm_middle, tm_front;
-	int pri_table[6][3] = {
-		{ 0, 1, 2 },
-		{ 0, 2, 1 },
-		{ 1, 0, 2 },
-		{ 1, 2, 0 },
-		{ 2, 0, 1 },
-		{ 2, 1, 0 }};
-
-	tm_front  = pri_table[ fuuki16_priority[0] & 0x0f ][0];
-	tm_middle = pri_table[ fuuki16_priority[0] & 0x0f ][1];
-	tm_back   = pri_table[ fuuki16_priority[0] & 0x0f ][2];
+	int background, middleground, foreground;
 
 	flip_screen_set(fuuki16_vregs[0x1e/2] & 1);
 
@@ -322,10 +312,10 @@ VIDEO_UPDATE( fuuki16 )
 	scrolly_offs = fuuki16_vregs[0xc/2] - (flip_screen ? 0x103 : 0x1f3);
 	scrollx_offs = fuuki16_vregs[0xe/2] - (flip_screen ? 0x2a7 : 0x3f6);
 
-	layer0_scrolly = fuuki16_vregs[0x0/2] + scrolly_offs;
-	layer0_scrollx = fuuki16_vregs[0x2/2] + scrollx_offs;
-	layer1_scrolly = fuuki16_vregs[0x4/2] + scrolly_offs;
-	layer1_scrollx = fuuki16_vregs[0x6/2] + scrollx_offs;
+	layer1_scrolly = fuuki16_vregs[0x0/2] + scrolly_offs;
+	layer1_scrollx = fuuki16_vregs[0x2/2] + scrollx_offs;
+	layer0_scrolly = fuuki16_vregs[0x4/2] + scrolly_offs;
+	layer0_scrollx = fuuki16_vregs[0x6/2] + scrollx_offs;
 
 	layer2_scrolly = fuuki16_vregs[0x8/2];
 	layer2_scrollx = fuuki16_vregs[0xa/2];
@@ -336,24 +326,28 @@ VIDEO_UPDATE( fuuki16 )
 	tilemap_set_scrolly(tilemap_1, 0, layer1_scrolly);
 
 	tilemap_set_scrollx(tilemap_2, 0, layer2_scrollx + 0x10);
-	tilemap_set_scrolly(tilemap_2, 0, layer2_scrolly + 0x02);
+	tilemap_set_scrolly(tilemap_2, 0, layer2_scrolly);
 	tilemap_set_scrollx(tilemap_3, 0, layer2_scrollx + 0x10);
-	tilemap_set_scrolly(tilemap_3, 0, layer2_scrolly + 0x02);
+	tilemap_set_scrolly(tilemap_3, 0, layer2_scrolly);
+
+	background   = 0;
+	foreground   = 1;
+	middleground = 2;
+	/* swap bg with mg */
+	if (*fuuki16_priority & 1)	{ int t = background;	background = foreground;	foreground = t;		}
+	/* swap mg with fg */
+	if (*fuuki16_priority & 2)	{ int t = foreground;	foreground = middleground;	middleground = t;	}
+
+	fillbitmap(priority_bitmap,0,cliprect);
 
 	/* The backmost tilemap decides the background color(s) but sprites can
 	   go below the opaque pixels of that tilemap. We thus need to mark the
 	   transparent pixels of this layer with a different priority value */
-//	fuuki16_draw_layer(bitmap,cliprect, tm_back,  TILEMAP_IGNORE_TRANSPARENCY, 0);
+	fuuki16_draw_layer(bitmap,cliprect, background,  TILEMAP_IGNORE_TRANSPARENCY, 0);
 
-	/* Actually, bg colour is simply the last pen i.e. 0x1fff -pjp */
-	fillbitmap(bitmap,(0x800*4)-1,cliprect);
-	fillbitmap(priority_bitmap,0,cliprect);
+	fuuki16_draw_layer(bitmap,cliprect, background,  0, 1);
+	fuuki16_draw_layer(bitmap,cliprect, foreground,  0, 2);
+	fuuki16_draw_layer(bitmap,cliprect, middleground,0, 2);
 
-	fuuki16_draw_layer(bitmap,cliprect, tm_back,   0, 1);
-	fuuki16_draw_layer(bitmap,cliprect, tm_middle, 0, 2);
-	fuuki16_draw_layer(bitmap,cliprect, tm_front,  0, 4);
-
-	// don't do the rasters on the sprites . its very slow and the hw might not anyway.
-	if (cliprect->max_y == Machine->visible_area.max_y)
-		fuuki16_draw_sprites(bitmap,&Machine->visible_area);
+	fuuki16_draw_sprites(bitmap,cliprect);
 }

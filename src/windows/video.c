@@ -20,7 +20,7 @@
 #include "window.h"
 #include "rc.h"
 
-#if WINDOW_HAS_MENU
+#ifdef MESS
 #include "menu.h"
 #endif
 
@@ -617,7 +617,8 @@ static void check_inputs(void)
 	if (input_ui_pressed(IPT_OSD_1))
 		win_toggle_full_screen();
 
-#if WINDOW_HAS_MENU
+#ifdef MESS
+	// check for toggling menu bar
 	if (input_ui_pressed(IPT_OSD_2))
 		win_toggle_menubar();
 #endif

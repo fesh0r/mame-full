@@ -56,7 +56,7 @@ extern int verbose;
 // this is the maximum number of extra samples we will ask for
 // per frame (I know this looks like a lot, but most of the
 // time it will generally be nowhere close to this)
-#define MAX_SAMPLE_ADJUST		32
+#define MAX_SAMPLE_ADJUST		16
 
 
 
@@ -248,10 +248,7 @@ static void update_sample_adjustment(int buffered)
 		consecutive_highs = 0;
 
 		// adjust so that we generate more samples per frame to compensate
-//		current_adjustment = (consecutive_lows < MAX_SAMPLE_ADJUST) ? consecutive_lows : MAX_SAMPLE_ADJUST;
-		current_adjustment = ((lower_thresh - buffered) < MAX_SAMPLE_ADJUST) ? (lower_thresh-buffered) : MAX_SAMPLE_ADJUST;
-
-
+		current_adjustment = (consecutive_lows < MAX_SAMPLE_ADJUST) ? consecutive_lows : MAX_SAMPLE_ADJUST;
 
 #if LOG_SOUND
 		fprintf(sound_log, "  (too low - adjusting to %d)\n", current_adjustment);
@@ -267,9 +264,7 @@ static void update_sample_adjustment(int buffered)
 		consecutive_highs++;
 
 		// adjust so that we generate more samples per frame to compensate
-//		current_adjustment = (consecutive_highs < MAX_SAMPLE_ADJUST) ? -consecutive_highs : -MAX_SAMPLE_ADJUST;
-		current_adjustment = ((buffered - upper_thresh) < MAX_SAMPLE_ADJUST) ? -(buffered - upper_thresh) : -MAX_SAMPLE_ADJUST;
-
+		current_adjustment = (consecutive_highs < MAX_SAMPLE_ADJUST) ? -consecutive_highs : -MAX_SAMPLE_ADJUST;
 
 #if LOG_SOUND
 		fprintf(sound_log, "  (too high - adjusting to %d)\n", current_adjustment);

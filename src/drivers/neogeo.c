@@ -118,6 +118,8 @@
 
 	GAMEPLAY ISSUES / LOCKUPS :
 
+	- Viewpoint resets halfway through level 1. This is a bug in the asm 68k core.
+
 	- magdrop2 behaves strangely when P2 wins a 2 Player game (reports both as losing)
 
 	- popbounc without a patch this locks up when sound is disabled, also for this game 'paddle'
@@ -144,18 +146,6 @@
 	  are 'patched' versions of these romsets available in some locations, however these will not
 	  be supported.
 
-	- Viewpoint resets halfway through level 1.
-	  This is not a bug in the asm 68k core. Viewpoint prepares a jump list for
-	  sprite blitting and traverses it during vblank. Then it starts building a
-	  new list but will not acknowledge IRQ until it's done. The old interrupt
-	  handler clears the line too early so when frame drops, the jump list can
-	  get corrupted by new data and the game crashes.
-
-	  The C core has better interrupt management but it shouldn't be considered
-	  a requirement of the CPU. The NeoGeo's interrupt controller likely forbids
-	  nested VBIs and it seems daisy chaining them can save Viewpoint from
-	  crashing while having little to no adversative effect on other games.
-
 	OTHER MINOR THINGS :
 
 	- 2020bb version display, the program roms contains two version numbers, the one which always
@@ -171,6 +161,11 @@
 	NOTES ABOUT UNSUPPORTED GAMES :
 
 	- Diggerman (???, 2000) - Not A Real Arcade Game .. Will Not Be Supported.
+
+	VIEWPOINT CRASH
+
+	"Viewpoint resets under the ASM core due to nested IRQ1."
+
 
 =============================================================================
 
@@ -339,16 +334,10 @@ static void update_interrupts(void)
 	if (scanline_int) level = 2;
 
 	/* either set or clear the appropriate lines */
-	switch (level)
-	{
-		case 1:
-			// vblank interrupt should ack at the end of its handler to avoid nesting
-			cpu_set_irq_line(0, 1, HOLD_LINE);
-		break;
-		case 2:
-			cpu_set_irq_line(0, 2, ASSERT_LINE);
-		break;
-	}
+	if (level)
+		cpu_set_irq_line(0, level, ASSERT_LINE);
+	else
+		cpu_set_irq_line(0, 7, CLEAR_LINE);
 }
 
 static WRITE16_HANDLER( neo_irqack_w )
@@ -356,7 +345,7 @@ static WRITE16_HANDLER( neo_irqack_w )
 	if (ACCESSING_LSB)
 	{
 		if (data & 4) vblank_int = 0;
-		if (data & 2) { scanline_int = 0; cpu_set_irq_line(0, 2, CLEAR_LINE); }
+		if (data & 2) scanline_int = 0;
 		update_interrupts();
 	}
 }

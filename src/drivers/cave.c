@@ -3640,14 +3640,14 @@ DRIVER_INIT( metmqstr )
 
 DRIVER_INIT( pwrinst2 )
 {
-	cave_default_eeprom = 0;
-	cave_default_eeprom_length = 0;
-	cave_region_byte = -1;
-
 	unsigned char *buffer;
 	data8_t *src = memory_region(REGION_GFX1);
 	int len = memory_region_length(REGION_GFX1);
 	int i, j;
+
+	cave_default_eeprom = 0;
+	cave_default_eeprom_length = 0;
+	cave_region_byte = -1;
 
 	if ((buffer = malloc(len)))
 	{

@@ -258,10 +258,10 @@ struct ipd inputport_defaults[] =
 	{ IPT_BUTTON4             | IPF_PLAYER1, "P1 Button 4",    SEQ_DEF_3(KEYCODE_LSHIFT, CODE_OR, JOYCODE_1_BUTTON4) },
 	{ IPT_BUTTON5             | IPF_PLAYER1, "P1 Button 5",    SEQ_DEF_3(KEYCODE_Z, CODE_OR, JOYCODE_1_BUTTON5) },
 	{ IPT_BUTTON6             | IPF_PLAYER1, "P1 Button 6",    SEQ_DEF_3(KEYCODE_X, CODE_OR, JOYCODE_1_BUTTON6) },
-	{ IPT_BUTTON7             | IPF_PLAYER1, "P1 Button 7",    SEQ_DEF_1(KEYCODE_C) },
-	{ IPT_BUTTON8             | IPF_PLAYER1, "P1 Button 8",    SEQ_DEF_1(KEYCODE_V) },
-	{ IPT_BUTTON9             | IPF_PLAYER1, "P1 Button 9",    SEQ_DEF_1(KEYCODE_B) },
-	{ IPT_BUTTON10            | IPF_PLAYER1, "P1 Button 10",   SEQ_DEF_1(KEYCODE_N) },
+	{ IPT_BUTTON7             | IPF_PLAYER1, "P1 Button 7",    SEQ_DEF_3(KEYCODE_C, CODE_OR, JOYCODE_1_BUTTON7) },
+	{ IPT_BUTTON8             | IPF_PLAYER1, "P1 Button 8",    SEQ_DEF_3(KEYCODE_V, CODE_OR, JOYCODE_1_BUTTON8) },
+	{ IPT_BUTTON9             | IPF_PLAYER1, "P1 Button 9",    SEQ_DEF_3(KEYCODE_B, CODE_OR, JOYCODE_1_BUTTON9) },
+	{ IPT_BUTTON10            | IPF_PLAYER1, "P1 Button 10",   SEQ_DEF_3(KEYCODE_N, CODE_OR, JOYCODE_1_BUTTON10) },
 	{ IPT_JOYSTICKRIGHT_UP    | IPF_PLAYER1, "P1 Right/Up",    SEQ_DEF_3(KEYCODE_I, CODE_OR, JOYCODE_1_BUTTON2) },
 	{ IPT_JOYSTICKRIGHT_DOWN  | IPF_PLAYER1, "P1 Right/Down",  SEQ_DEF_3(KEYCODE_K, CODE_OR, JOYCODE_1_BUTTON3) },
 	{ IPT_JOYSTICKRIGHT_LEFT  | IPF_PLAYER1, "P1 Right/Left",  SEQ_DEF_3(KEYCODE_J, CODE_OR, JOYCODE_1_BUTTON1) },
@@ -281,10 +281,10 @@ struct ipd inputport_defaults[] =
 	{ IPT_BUTTON4             | IPF_PLAYER2, "P2 Button 4",    SEQ_DEF_3(KEYCODE_W, CODE_OR, JOYCODE_2_BUTTON4) },
 	{ IPT_BUTTON5             | IPF_PLAYER2, "P2 Button 5",    SEQ_DEF_1(JOYCODE_2_BUTTON5) },
 	{ IPT_BUTTON6             | IPF_PLAYER2, "P2 Button 6",    SEQ_DEF_1(JOYCODE_2_BUTTON6) },
-	{ IPT_BUTTON7             | IPF_PLAYER2, "P2 Button 7",    SEQ_DEF_0 },
-	{ IPT_BUTTON8             | IPF_PLAYER2, "P2 Button 8",    SEQ_DEF_0 },
-	{ IPT_BUTTON9             | IPF_PLAYER2, "P2 Button 9",    SEQ_DEF_0 },
-	{ IPT_BUTTON10            | IPF_PLAYER2, "P2 Button 10",   SEQ_DEF_0 },
+	{ IPT_BUTTON7             | IPF_PLAYER2, "P2 Button 7",    SEQ_DEF_1(JOYCODE_2_BUTTON7) },
+	{ IPT_BUTTON8             | IPF_PLAYER2, "P2 Button 8",    SEQ_DEF_1(JOYCODE_2_BUTTON8) },
+	{ IPT_BUTTON9             | IPF_PLAYER2, "P2 Button 9",    SEQ_DEF_1(JOYCODE_2_BUTTON9) },
+	{ IPT_BUTTON10            | IPF_PLAYER2, "P2 Button 10",   SEQ_DEF_1(JOYCODE_2_BUTTON10) },
 	{ IPT_JOYSTICKRIGHT_UP    | IPF_PLAYER2, "P2 Right/Up",    SEQ_DEF_0 },
 	{ IPT_JOYSTICKRIGHT_DOWN  | IPF_PLAYER2, "P2 Right/Down",  SEQ_DEF_0 },
 	{ IPT_JOYSTICKRIGHT_LEFT  | IPF_PLAYER2, "P2 Right/Left",  SEQ_DEF_0 },
@@ -304,10 +304,10 @@ struct ipd inputport_defaults[] =
 	{ IPT_BUTTON4             | IPF_PLAYER3, "P3 Button 4",    SEQ_DEF_1(JOYCODE_3_BUTTON4) },
 	{ IPT_BUTTON5             | IPF_PLAYER3, "P3 Button 5",    SEQ_DEF_1(JOYCODE_3_BUTTON5) },
 	{ IPT_BUTTON6             | IPF_PLAYER3, "P3 Button 6",    SEQ_DEF_1(JOYCODE_3_BUTTON6) },
-	{ IPT_BUTTON7             | IPF_PLAYER3, "P3 Button 7",    SEQ_DEF_0 },
-	{ IPT_BUTTON8             | IPF_PLAYER3, "P3 Button 8",    SEQ_DEF_0 },
-	{ IPT_BUTTON9             | IPF_PLAYER3, "P3 Button 9",    SEQ_DEF_0 },
-	{ IPT_BUTTON10            | IPF_PLAYER3, "P3 Button 10",   SEQ_DEF_0 },
+	{ IPT_BUTTON7             | IPF_PLAYER3, "P3 Button 7",    SEQ_DEF_1(JOYCODE_3_BUTTON7) },
+	{ IPT_BUTTON8             | IPF_PLAYER3, "P3 Button 8",    SEQ_DEF_1(JOYCODE_3_BUTTON8) },
+	{ IPT_BUTTON9             | IPF_PLAYER3, "P3 Button 9",    SEQ_DEF_1(JOYCODE_3_BUTTON9) },
+	{ IPT_BUTTON10            | IPF_PLAYER3, "P3 Button 10",   SEQ_DEF_1(JOYCODE_3_BUTTON10) },
 	{ IPT_JOYSTICKRIGHT_UP    | IPF_PLAYER3, "P3 Right/Up",    SEQ_DEF_0 },
 	{ IPT_JOYSTICKRIGHT_DOWN  | IPF_PLAYER3, "P3 Right/Down",  SEQ_DEF_0 },
 	{ IPT_JOYSTICKRIGHT_LEFT  | IPF_PLAYER3, "P3 Right/Left",  SEQ_DEF_0 },
@@ -327,10 +327,10 @@ struct ipd inputport_defaults[] =
 	{ IPT_BUTTON4             | IPF_PLAYER4, "P4 Button 4",    SEQ_DEF_1(JOYCODE_4_BUTTON4) },
 	{ IPT_BUTTON5             | IPF_PLAYER4, "P4 Button 5",    SEQ_DEF_1(JOYCODE_4_BUTTON5) },
 	{ IPT_BUTTON6             | IPF_PLAYER4, "P4 Button 6",    SEQ_DEF_1(JOYCODE_4_BUTTON6) },
-	{ IPT_BUTTON7             | IPF_PLAYER4, "P4 Button 7",    SEQ_DEF_0 },
-	{ IPT_BUTTON8             | IPF_PLAYER4, "P4 Button 8",    SEQ_DEF_0 },
-	{ IPT_BUTTON9             | IPF_PLAYER4, "P4 Button 9",    SEQ_DEF_0 },
-	{ IPT_BUTTON10            | IPF_PLAYER4, "P4 Button 10",   SEQ_DEF_0 },
+	{ IPT_BUTTON7             | IPF_PLAYER4, "P4 Button 7",    SEQ_DEF_1(JOYCODE_4_BUTTON7) },
+	{ IPT_BUTTON8             | IPF_PLAYER4, "P4 Button 8",    SEQ_DEF_1(JOYCODE_4_BUTTON8) },
+	{ IPT_BUTTON9             | IPF_PLAYER4, "P4 Button 9",    SEQ_DEF_1(JOYCODE_4_BUTTON9) },
+	{ IPT_BUTTON10            | IPF_PLAYER4, "P4 Button 10",   SEQ_DEF_1(JOYCODE_4_BUTTON10) },
 	{ IPT_JOYSTICKRIGHT_UP    | IPF_PLAYER4, "P4 Right/Up",    SEQ_DEF_0 },
 	{ IPT_JOYSTICKRIGHT_DOWN  | IPF_PLAYER4, "P4 Right/Down",  SEQ_DEF_0 },
 	{ IPT_JOYSTICKRIGHT_LEFT  | IPF_PLAYER4, "P4 Right/Left",  SEQ_DEF_0 },
@@ -1841,10 +1841,7 @@ getout:
 				(in->type & ~IPF_MASK) <= IPT_COIN4 &&
                  coinlockedout[(in->type & ~IPF_MASK) - IPT_COIN1]))
 			{
-				player = 0;
-				if ((in->type & IPF_PLAYERMASK) == IPF_PLAYER2) player = 1;
-				else if ((in->type & IPF_PLAYERMASK) == IPF_PLAYER3) player = 2;
-				else if ((in->type & IPF_PLAYERMASK) == IPF_PLAYER4) player = 3;
+				player = IP_GET_PLAYER(in);
 
 				if (((in->type & ~IPF_MASK) > IPT_ANALOG_START)
 					&& ((in->type & ~IPF_MASK) < IPT_ANALOG_END))
@@ -1983,10 +1980,7 @@ void save_input_port_settings(void)
 				(in->type & ~IPF_MASK) <= IPT_COIN4 &&
                  coinlockedout[(in->type & ~IPF_MASK) - IPT_COIN1]))
 			{
-				player = 0;
-				if ((in->type & IPF_PLAYERMASK) == IPF_PLAYER2) player = 1;
-				else if ((in->type & IPF_PLAYERMASK) == IPF_PLAYER3) player = 2;
-				else if ((in->type & IPF_PLAYERMASK) == IPF_PLAYER4) player = 3;
+				player = IP_GET_PLAYER(in);
 
 				if (((in->type & ~IPF_MASK) == IPT_BUTTON1) ||
 					((in->type & ~IPF_MASK) == IPT_BUTTON2) ||
@@ -2280,13 +2274,7 @@ void update_analog_port(int port)
 
 	delta = 0;
 
-	switch (in->type & IPF_PLAYERMASK)
-	{
-		case IPF_PLAYER2:          player = 1; break;
-		case IPF_PLAYER3:          player = 2; break;
-		case IPF_PLAYER4:          player = 3; break;
-		case IPF_PLAYER1: default: player = 0; break;
-	}
+	player = IP_GET_PLAYER(in);
 
 	delta = mouse_delta_axis[player][axis];
 
@@ -2483,7 +2471,7 @@ profiler_mark(PROFILER_END);
 }
 
 #define MAX_JOYSTICKS 3
-#define MAX_PLAYERS 4
+#define MAX_PLAYERS 8
 static int mJoyCurrent[MAX_JOYSTICKS*MAX_PLAYERS];
 static int mJoyPrevious[MAX_JOYSTICKS*MAX_PLAYERS];
 static int mJoy4Way[MAX_JOYSTICKS*MAX_PLAYERS];
@@ -2520,13 +2508,7 @@ ScanJoysticks( struct InputPort *in )
 				if( seq_pressed(seq) )
 				{
 					int joynum,joydir,player;
-					player = 0;
-					if ((in->type & IPF_PLAYERMASK) == IPF_PLAYER2)
-						player = 1;
-					else if ((in->type & IPF_PLAYERMASK) == IPF_PLAYER3)
-						player = 2;
-					else if ((in->type & IPF_PLAYERMASK) == IPF_PLAYER4)
-						player = 3;
+					player = IP_GET_PLAYER(in);
 
 					joynum = player * MAX_JOYSTICKS +
 							 ((in->type & ~IPF_MASK) - IPT_JOYSTICK_UP) / 4;
@@ -2682,10 +2664,7 @@ profiler_mark(PROFILER_INPUT);
 			 in++, ib++)
 		{
 #ifdef MAME_NET
-			player = 0;
-			if ((in->type & IPF_PLAYERMASK) == IPF_PLAYER2) player = 1;
-			else if ((in->type & IPF_PLAYERMASK) == IPF_PLAYER3) player = 2;
-			else if ((in->type & IPF_PLAYERMASK) == IPF_PLAYER4) player = 3;
+			player = IP_GET_PLAYER(in);
 #endif /* MAME_NET */
 			if ((in->type & ~IPF_MASK) != IPT_DIPSWITCH_SETTING &&	/* skip dipswitch definitions */
 #ifdef MESS
@@ -2767,11 +2746,7 @@ if (IP_GET_IMPULSE(in) == 0)
 #ifndef MAME_NET
 							int joynum,joydir,mask,player;
 
-
-							player = 0;
-							if ((in->type & IPF_PLAYERMASK) == IPF_PLAYER2) player = 1;
-							else if ((in->type & IPF_PLAYERMASK) == IPF_PLAYER3) player = 2;
-							else if ((in->type & IPF_PLAYERMASK) == IPF_PLAYER4) player = 3;
+							player = IP_GET_PLAYER(in);
 #else
 							int joynum,joydir,mask;
 #endif /* !MAME_NET */
@@ -3291,13 +3266,7 @@ void init_analog_seq()
 			}
 			if (analog_seq != CODE_NONE)
 			{
-				switch (in->type & IPF_PLAYERMASK)
-				{
-					case IPF_PLAYER2:          player = 1; break;
-					case IPF_PLAYER3:          player = 2; break;
-					case IPF_PLAYER4:          player = 3; break;
-					case IPF_PLAYER1: default: player = 0; break;
-				}
+				player = IP_GET_PLAYER(in);
 
 				switch (in->type & ~IPF_MASK)
 				{

@@ -7,7 +7,7 @@
 	<body>
 		<h1>How to compile MESS (Win32)</h1>
 		<p>
-			<i>(Last updated 11-Aug-2003)</i>
+			<i>(Last updated 4-Sep-2003)</i>
 		</p>
 		<p>
 			(This document is based on <a href="http://www.mame.net/compilewin.html">"How to 
@@ -22,7 +22,7 @@
 				GCC</a> and its libraries.
 		</p>
 		<p>
-			This particular how-to is written for MESS 0.72, but with a bit of luck you can 
+			This particular how-to is written for MESS 0.73, but with a bit of luck you can 
 			compile other versions with the help of this page. This how-to tells how to 
 			compile the Win32 version of MESS, which includes both the command line and GUI 
 			versions.
@@ -80,9 +80,9 @@
 			<hr>
 			<b>2. Get Win32 ports GNU Tar and GNU Unzip</b>
 		<p>
-			These utilities are needed by step 4 to properly patch 
-the MinGW toolchain.&nbsp; Again, 
-		you may already have&nbsp;an archiver capable of&nbsp;extracting .tar.gz files.&nbsp;
+		These utilities are needed by step 4 to properly patch the MinGW 
+		toolchain.&nbsp; Again, you may already have&nbsp;an archiver capable 
+		of&nbsp;extracting .tar.gz files.&nbsp;
 		<p>
 			<table width="100%" border="2" cellspacing="1" cellpadding="5" ID="Table1">
 				<TR>
@@ -126,12 +126,12 @@ the MinGW toolchain.&nbsp; Again,
 				<TR>
 					<td><span><A href="http://prdownloads.sf.net/mingw/gcc-3.2.2-20030208-1.tar.gz">gcc-3.2.2-20030208-1.tar.gz</A></span></td>
 					<td><span>7148 kB</span></td>
-					<td><span><a href="http://gcc.gnu.org/">GCC</a> 3.2.2, required for MESS 0.72. Uncompress this over the MinGW directory.</span></td>
+					<td><span><a href="http://gcc.gnu.org/">GCC</a> 3.2.2, required for MESS 0.73. Uncompress this over the MinGW directory.</span></td>
 				</TR>
 				<TR>
 					<td><span><A href="http://www.mame.net/zips/dx70_mgw.zip">dx70_mgw.zip</A></span></td>
 					<td><span>240 kB</span></td>
-					<td><span>DirectX 7.0 headers, required for MESS 0.72. Uncompress this over the MinGW directory.</span></td>
+					<td><span>DirectX 7.0 headers, required for MESS 0.73. Uncompress this over the MinGW directory.</span></td>
 				</TR>
 			</Table>
 		<p>
@@ -153,9 +153,12 @@ the MinGW toolchain.&nbsp; Again,
 				<li>
 					<span class="command">gunzip gcc-3.2.2-20030208-1.tar.gz</span>
 				<li>
-					<span class="command">tar -xvf gcc-3.2.2-20030208-1.tar</span> 
-  <LI><SPAN class=command><SPAN class=command>unzip dx70_mgw.zip -d 
-  c:\</SPAN></SPAN></LI>
+					<span class="command">tar -xvf gcc-3.2.2-20030208-1.tar</span>
+				<LI>
+					<SPAN class="command">
+						<SPAN class="command">unzip dx70_mgw.zip -d 
+  c:\</SPAN>
+					</SPAN></LI>
 			</ul>
 		<p>
 			If you do not see the message "1 archive was successfully processed.", 
@@ -222,10 +225,10 @@ the MinGW toolchain.&nbsp; Again,
 					<td><span><b>Description</b></span></td>
 				</TR>
 				<TR>
-					<td><a href="http://www.retrogames.com/mess/mess072s.zip"><b>mess072s.zip</b></a><br>
+					<td><a href="http://www.retrogames.com/mess/mess073s.zip"><b>mess073s.zip</b></a><br>
 					</td>
 					<td>2717 kB</td>
-					<td>This is the source archive of MESS 0.72.</td>
+					<td>This is the source archive of MESS 0.73.</td>
 				</TR>
 			</Table>
 		<p>
@@ -234,7 +237,7 @@ the MinGW toolchain.&nbsp; Again,
 					cd \download</span>
 			and uncompress the MESS sources by typing
 			<span class="command">
-					unzip mess072s.zip -d c:\mingw\mess\</span>
+					unzip mess073s.zip -d c:\mingw\mess\</span>
 		.
 		<p>
 			Then you can compile MESS. Type
@@ -291,10 +294,10 @@ the MinGW toolchain.&nbsp; Again,
 		should not be any reasons to redistribute such binaries since this page makes 
 		it easy for everybody to build their own binaries.
 		<p>
-			You might notice that the executables created by the 
-build are much larger than the ones released by the MESS team.&nbsp; This is 
-because the 
-			MESS releases are archived with <a href="http://upx.sourceforge.net/">UPX</a> to make them smaller.
+			You might notice that the executables created by the build are much larger than 
+			the ones released by the MESS team.&nbsp; This is because the MESS releases are 
+			archived with <a href="http://upx.sourceforge.net/">UPX</a>
+		to make them smaller.
 		<p>
 			<hr>
 			<b>9. Debug modes</b>

@@ -58,6 +58,40 @@ Sub EndFolder(ByVal objTextStream)
 	objTextStream.WriteLine("	</UL>")
 End Sub
 
+Sub AddTopics(ByVal objTextStream, ByVal objHelpXmlNode)
+	Dim objChild
+	Dim strBasePath
+	Dim strFilePath
+	Dim strText
+	
+	For Each objChild In objHelpXmlNode.ChildNodes	
+		strBasePath = ""
+		strFilePath = ""
+		strText = ""
+		On Error Resume Next
+		strBasePath = objChild.Attributes.GetNamedItem("basepath").Text
+		strFilePath = objChild.Attributes.GetNamedItem("filepath").Text
+		strText     = objChild.Attributes.GetNamedItem("text").Text
+		On Error Goto 0
+		
+		strBasePath = Replace(strBasePath, "/", "\")
+		strFilePath = Replace(strFilePath, "/", "\")
+		
+		Select Case objChild.BaseName
+		Case "topic"
+			AddTopic objTextStream, strBasePath, strFilePath, strText
+		Case "folder"
+			BeginFolder objTextStream, strText
+			AddTopics   objTextStream, objChild
+			EndFolder   objTextStream
+		Case "file"
+			AddFile objTextStream, strBasePath, strFilePath
+		End Select
+	Next
+	
+	On Error Goto 0
+End Sub
+
 strObjDir = "obj\mess\mess\ui\help\"
 strSysInfoFile = "sysinfo.dat"
 strHHC = """C:\Program Files\HTML Help Workshop\hhc.exe"""
@@ -155,19 +189,15 @@ objTextStream.WriteLine("</OBJECT>")
 objTextStream.WriteLine("<UL>")
 
 'Help files
-AddTopic	objTextStream,	"mess\ui\help",	"html\mess_overview.htm",			"Overview"
-AddTopic	objTextStream,	".",					"messnew.txt",						"Whats new"
-AddTopic	objTextStream,	"mess\ui\help",	"html\mess_compile.htm",			"Compiling"
-BeginFolder	objTextStream,																"Installation"
-AddTopic	objTextStream,	"mess\ui\help",	"html\mess_systemreq.htm",			"System Requirements"
-AddTopic	objTextStream,	"mess\ui\help",	"html\mess_download.htm",			"Download Location"
-AddTopic	objTextStream,	"mess\ui\help",	"html\mess_installprocedures.htm",	"Installation Procedures"
-EndFolder	objTextStream
-AddTopic	objTextStream,	"mess\ui\help",	"html\mess_faq.htm",				"FAQ"
-AddTopic	objTextStream,	"docs",					"imgtool.txt",						"Imgtool"
-AddFile		objTextStream,	"mess\ui\help",	"images\messlogo.gif"
-AddFile		objTextStream,	"mess\ui\help",	"html\style.css"
-
+Dim objTopicXml
+Set objTopicXml = CreateObject("MSXML.DOMDocument")
+objTopicXml.Load("mess/ui/help/topics.xml")
+If objTopicXml.Xml = "" Then
+	WScript.Echo "Cannot Open Topics.xml: " & objTopicXml.ParseError.Reason
+	WScript.Quit
+End If
+AddTopics objTextStream, objTopicXml.SelectSingleNode("/help")
+Set objTopicXml = Nothing
 
 ' Emulated systems
 BeginFolder	objTextStream,	"Emulated systems"

@@ -48,71 +48,65 @@ Preliminary Memory map:
 
 *the unused locations aren't known if they are really unused or not,needs verification...
 
-
-Version Log(for reference,to be removed):
-17/08/2003(Angelo Salese)
-\-Added several IRQs to be used & added IRQ masking register support.
-\-Improved the Vblank interrupt,now speed seems accurate.Timer 1 emulation still needs
-to be added though.
-\-Added basic DMA support in the SCU emulation,untested though...
 */
 /*
-Not working games:
+Current games status:
 - Hanagumi Taisen Columns
-\-Shows actual gameplay it has wrong and/or missing graphics,timing issues(title screen),
-  currently worked on.
+\-Boots and graphics are mostly OK.Playable.
 
 - Prikura Daisakusen
-- Shienryu
-\-Decode some of their gfx graphics,mostly text chars,then they hangs due to M68000 issues.
+\-Boots OK and works OK,needs the Sound CPU kludge to bypass initial test.
+  Seems playable if the sprites,tiles positioning and priority will be fixed.
+  Update:there's currently a *strange* compile bug with this which causes the DMA
+  to behave strangely,I believe it's something to do with the I/O...
 
-- Ejihon Tantei Jimusyo
-\-Reset when executing his specific code either because it jumps to an unmapped
-  memory,it's a M68000 issue or it's the IC13.
+- Shienryu
+\-Boots OK,needs Sound CPU kludge to bypass initial test.
+  Sprite list missing from VDP1 vram,dunno why.
+
+- Power Instinct 3 - Groove on Fight
+\-Needs sound CPU kludge to be triggered,but breaks soon after that with a credit 2 msg
+  shown on screen and some random graphics at the top of the screen.Irq mask registers
+  clears A-bus and SCSP irqs...
 
 - Shanghai - The Great Wall
-\-Hangs when executing his specific code due to M68000 issues.
+\-Hangs when executing his specific code due to M68000 issues.It puts a bitmap format in
+VDP2 then it expect something on which we haven't investigated yet...
 0609FADA: MOV.L   @R5,R2
 0609FADC: MOV.W   @R2,R0 ;$25a00800,then $25a00810
 0609FADE: EXTU.W  R0,R0
 0609FAE0: TST     R0,R0
 0609FAE2: BF      $0609FADA
 
-- Games without an IC13
-\-Shows a Sega logo in the Gfx decode,then they crashes.Update: they actually hangs due
-to Master/Slave SH2 issues,it actually reads from the SH-2 internal region,probably the
-sh2 internal doesn't actually support multiple CPUs.
-0604E38E: MOV.L   @($0C,R3),R0 (read from sh2_internal space)
-0604E390: AND     #$03,R0
-0604E392: CMP/EQ  #$01,R0
-0604E394: BT      $0604E38E
-Fighting Dragon Legend Elan Doree does uncommon stuff in the "non-IC13 party",as it sets
-704x224 for the resolution and writes different kinds of palette entries than any other
-ST-V game.
-
-- Games with an IC13
-\-Doesn't do anything useful yet.
+- The others:
+\-Some of them shows a Sega logo in the Gfx decode,then they hangs,maybe because they're
+waiting a response from the slave cpu or an A-bus IRQ or both.Some of these games have an
+IC13 rom,which fails the rom test because it's likely that it's mapped in a
+non-straight way,the games that have one of them usually do their first load at $2061ffc
+and this means that in the current rom loading they points to a 0xffff opcode
+(only the first 0x40000 of rom seems valid code)...
 */
 
 #include "driver.h"
+#include "machine/eeprom.h"
+
+extern data32_t* stv_vdp2_regs;
+extern data32_t* stv_vdp2_vram;
+extern data32_t* stv_vdp2_cram;
 
 /**************************************************************************************/
-/*to be added into a stv Header file...*/
+/*to be added into a stv Header file,remember to remove all the static...*/
 
 static data8_t *smpc_ram;
-static void stv_dump_ram(void);
+//static void stv_dump_ram(void);
 
 static data32_t* stv_workram_l;
 static data32_t* stv_workram_h;
 static data32_t* stv_scu;
-static data32_t* stv_a0_vram,*stv_a1_vram,*stv_b0_vram,*stv_b1_vram;
-static data32_t* stv_cram;
-static data32_t* stv_vdp2_regs;
 static data32_t* ioga;
-static data32_t* scsp_regs;
+static data16_t* scsp_regs;
 
-static char stv_b1_dirty[0x2000],stv_b0_dirty[0x2000],stv_a1_dirty[0x2000],stv_a0_dirty[0x2000];
-
+int stv_vblank;
 /*SMPC stuff*/
 
 /*SCU stuff*/
@@ -136,708 +130,13 @@ static UINT32 scu_src_0,		/* Source DMA lv 0 address*/
 static void dma_direct_lv0(void);	/*DMA level 0 direct transfer function*/
 static void dma_direct_lv1(void);   /*DMA level 1 direct transfer function*/
 static void dma_direct_lv2(void);   /*DMA level 2 direct transfer function*/
-
-
+static void dma_indirect_lv0(void); /*DMA level 0 indirect transfer function*/
+static void dma_indirect_lv1(void); /*DMA level 1 indirect transfer function*/
 static void dma_indirect_lv2(void); /*DMA level 2 indirect transfer function*/
+/* SCSP stuff*/
+static UINT8 SCSP_reset;
 
 /*VDP1 stuff*/
-
-/*VDP2 stuff*/
-static UINT8		 	DISP,
-						BDCLMD,
-						LSMD,
-						HRES,
-						VRES,
-						CRMD,   /*Color Mode*/
-						TPON,   /*Transparency code enable bit*/
-						SDON,   /*Screen display enable bit*/
-					    CHCTLN0,/*Character Control Registers*/
-					    CHCTLN1,
-					    CHCTLN2,
-					    CHCTLN3,
-					    PLSZ,	/*Plane Size*/
-					    BKCLMD, /*Back Screen Color Mode*/
-					    CLOFEN,	/*Color Offset Enable bits*/
-					    CLOFSL;	/*Color Offset Select bits*/
-static UINT16		    PNCN0,	/*Pattern Name Control Registers*/
-						PNCN1,
-						PNCN2,
-						PNCN3,
-						COAR,
-						COAG,
-						COAB;
-static UINT32			BKTA,  	/*Back Screen Table Address*/
-						VCPA0,  /*Vram Cycle Pattern regs*/
-						VCPA1,
-						VCPB0,
-						VCPB1;
-static void res_change(void);
-static void stv_bright(void);
-#define WIP_CODE 1
-
-/* SCSP stuff*/
-
-/*end of stv.h*/
-/**************************************************************************************/
-
-VIDEO_START(stv)
-{
-	return 0;
-}
-
-static void back_screen(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
-{
-	/*Right?*/
-	if(BDCLMD == 0)
-		fillbitmap(bitmap, get_black_pen(), cliprect);
-//	else
-//		usrintf_showmessage("Back Screen enabled right now");
-}
-
-/**********************************************************************************
-Vram Cycle Register
-four bits boundary for each timing(T0~T7).
-To avoid confusion:the Patten Name IS the actual tilemap and the Character Pattern
-IS the decoded data.
-===================================================================================
-0000 NBG0 Pattern Data Read
-0001 NBG1 Pattern Data Read
-0010 NBG2 Pattern Data Read
-0011 NBG3 Pattern Data Read
-
-0100 NBG0 Character Pattern Data Read
-0101 NBG1 Character Pattern Data Read
-0110 NBG2 Character Pattern Data Read
-0111 NBG3 Character Pattern Data Read
-
-1000 <reserved>
-1001
-1010
-1011
-
-1100 NBG0 Vertical Cell Scroll Table Data Read
-1101 NBG1 Vertical Cell Scroll Table Data Read
-1110 CPU Read/Write
-1111 No Access
-**********************************************************************************/
-
-/*start of wip code*/
-#if WIP_CODE
-static void nbg0_screen(struct mame_bitmap *bitmap,const struct rectangle *cliprect,UINT8 gfx_bank,data32_t *nbg0_vram)
-{
-	int address,data1,/*data2,*/flipx1 = 0,/*flipx2,*/flipy1 = 0,/*flipy2*/color1/*,color2*/;
-	int x,y;
-
-//	if(!(SDON & 1))
-//		return;
-	if(keyboard_pressed(KEYCODE_Z))
-		return;
-
-		for (y = 0; y < 64; y++){
-			for (x = 0; x < 64; x++){
-
-/*First $2000 is for gfx-decoding in 1h x 1v ,but the Sakura Wars Title screen data
-is written at the start of the bank?Is there a register for doing the trick?*/
-				address = 0/4;
-
-				address += (x + y*64);
-
-				data1=(nbg0_vram[address] & 0x00000fff) >> 0;
-//				data2=(stv_a0_vram[address] & 0x000003ff) >> 0;
-//				flipy1=(stv_a0_vram[address] & 0x08000000) >> 27;
-//				flipy2=(stv_a0_vram[address] & 0x00000800) >> 11;
-//				flipx1=(stv_a0_vram[address] & 0x04000000) >> 26;
-//				flipx2=(stv_a0_vram[address] & 0x00000400) >> 10;
-				color1=(nbg0_vram[address] & 0x00f00000) >> 20;
-//				color2=(stv_a0_vram[address] & 0x0000f000) >> 12;
-/*				if(!(CHCTLN0 & 2))
-				{
-					color1+=0x40;
-					color2+=0x40;
-				}*/
-
-//				data1+= ((PNCN0 & 0x001f) >> 0)*0x400;
-//				data2+= ((PNCN0 & 0x001f) >> 0)*0x400;
-/*				color1+=((PNCN0 & 0x00e0) >> 5)*0x10;
-				color2+=((PNCN0 & 0x00e0) >> 5)*0x10;
-*/
-//				if(CHCTLN0 & 1)
-//				{
-
-					drawgfx(bitmap,Machine->gfx[gfx_bank+4],data1/2,color1,flipx1,flipy1,x*8,y*8,cliprect,TRANSPARENCY_PEN,0);
-//					drawgfx(bitmap,Machine->gfx[7],data2/2,color2,flipx2,flipy2,x*16+8,y*8,cliprect,TRANSPARENCY_PEN,0);
-//				}
-//				else
-//				{*/
-//					drawgfx(bitmap,Machine->gfx[3],data1,color1,flipx1,flipy1,x*16,y*8,cliprect,TRANSPARENCY_PEN,0);
-//					drawgfx(bitmap,Machine->gfx[3],data2,color2,flipx2,flipy2,x*16+8,y*8,cliprect,TRANSPARENCY_PEN,0);
-				//}
-			}
-
-		}
-}
-
-static void nbg1_screen(struct mame_bitmap *bitmap,const struct rectangle *cliprect,UINT8 gfx_bank,data32_t *nbg1_vram)
-{
-	int address,data1,data2,flipx1,flipx2,flipy1,flipy2,color1,color2;
-	int x,y;
-
-
-//	if(!(SDON & 2))
-//		return;
-	if(keyboard_pressed(KEYCODE_X))
-		return;
-
-	for (y = 0; y < 64; y++){
-		for (x = 0; x < 32; x++){
-			/*First $2000 is for gfx-decoding*/
-			address = 0x2000/4;
-
-			address += (x + y*32);
-
-			data1=(nbg1_vram[address] & 0x03ff0000) >> 16;
-			data2=(nbg1_vram[address] & 0x000003ff) >> 0;
-			flipy1=(nbg1_vram[address] & 0x08000000) >> 27;
-			flipy2=(nbg1_vram[address] & 0x00000800) >> 11;
-			flipx1=(nbg1_vram[address] & 0x04000000) >> 26;
-			flipx2=(nbg1_vram[address] & 0x00000400) >> 10;
-			color1=(nbg1_vram[address] & 0xf0000000) >> 28;
-			color2=(nbg1_vram[address] & 0x0000f000) >> 12;
-/*			if(!(CHCTLN2 & 0x3000))
-				{
-					color1+=0x40;
-					color2+=0x40;
-				}
-*/
-//			data1+= ((PNCN2 & 0x001f) >> 0)*0x400;
-//			data2+= ((PNCN2 & 0x001f) >> 0)*0x400;
-/*			color1+=((PNCN0 & 0x00e0) >> 5)*0x10;
-			color2+=((PNCN0 & 0x00e0) >> 5)*0x10;
-*/
-
-/*			if(CHCTLN2 & 1)
-			{
-				drawgfx(bitmap,Machine->gfx[5],data1/2,color1,flipx1,flipy1,x*16,y*8,cliprect,TRANSPARENCY_PEN,0);
-				drawgfx(bitmap,Machine->gfx[5],data2/2,color2,flipx2,flipy2,x*16+8,y*8,cliprect,TRANSPARENCY_PEN,0);
-			}
-			else
-			{*/
-				drawgfx(bitmap,Machine->gfx[gfx_bank],data1,color1,flipx1,flipy1,x*16,y*8,cliprect,TRANSPARENCY_PEN,0);
-				drawgfx(bitmap,Machine->gfx[gfx_bank],data2,color2,flipx2,flipy2,x*16+8,y*8,cliprect,TRANSPARENCY_PEN,0);
-			//}
-		}
-
-	}
-}
-
-static void nbg2_screen(struct mame_bitmap *bitmap,const struct rectangle *cliprect,UINT8 gfx_bank,data32_t *nbg2_vram)
-{
-	int address,data1,data2,flipx1,flipx2,flipy1,flipy2,color1,color2;
-	int x,y;
-
-//	if(!(SDON & 4))
-//		return;
-	if(keyboard_pressed(KEYCODE_C))
-		return;
-
-	for (y = 0; y < 64; y++){
-		for (x = 0; x < 32; x++){
-			/*First $2000 is for gfx-decoding*/
-			address = 0x2000/4;
-
-			address += (x + y*32);
-
-			data1=(nbg2_vram[address] & 0x03ff0000) >> 16;
-			data2=(nbg2_vram[address] & 0x000003ff) >> 0;
-			flipy1=(nbg2_vram[address] & 0x08000000) >> 27;
-			flipy2=(nbg2_vram[address] & 0x00000800) >> 11;
-			flipx1=(nbg2_vram[address] & 0x04000000) >> 26;
-			flipx2=(nbg2_vram[address] & 0x00000400) >> 10;
-			color1=(nbg2_vram[address] & 0xf0000000) >> 28;
-			color2=(nbg2_vram[address] & 0x0000f000) >> 12;
-/*				if(!(CHCTLN2 & 0x3000))
-				{
-					color1+=0x40;
-					color2+=0x40;
-				}
-*/
-//				data1+= ((PNCN2 & 0x001f) >> 0)*0x400;
-//				data2+= ((PNCN2 & 0x001f) >> 0)*0x400;
-/*				color1+=((PNCN0 & 0x00e0) >> 5)*0x10;
-				color2+=((PNCN0 & 0x00e0) >> 5)*0x10;
-*/
-
-/*				if(CHCTLN2 & 1)
-				{
-					drawgfx(bitmap,Machine->gfx[5],data1/2,color1,flipx1,flipy1,x*16,y*8,cliprect,TRANSPARENCY_PEN,0);
-					drawgfx(bitmap,Machine->gfx[5],data2/2,color2,flipx2,flipy2,x*16+8,y*8,cliprect,TRANSPARENCY_PEN,0);
-				}
-				else
-				{*/
-					drawgfx(bitmap,Machine->gfx[gfx_bank],data1,color1,flipx1,flipy1,x*16,y*8,cliprect,TRANSPARENCY_PEN,0);
-					drawgfx(bitmap,Machine->gfx[gfx_bank],data2,color2,flipx2,flipy2,x*16+8,y*8,cliprect,TRANSPARENCY_PEN,0);
-				//}
-			}
-
-		}
-
-}
-
-static void nbg3_screen(struct mame_bitmap *bitmap,const struct rectangle *cliprect,UINT8 gfx_bank,data32_t *nbg3_vram)
-{
-	int address,data1,data2,flipx1,flipx2,flipy1,flipy2,color1,color2;
-	int x,y;
-
-//	if(!(SDON & 8))
-//		return;
-
-	if(keyboard_pressed(KEYCODE_A))
-		return;
-
-	for (y = 0; y < 64; y++){
-		for (x = 0; x < 32; x++){
-			/*First $2000 is for gfx-decoding*/
-			address = 0x2000/4;
-
-			address += (x + y*32);
-
-			data1 =(nbg3_vram[address] & 0x03ff0000) >> 16;
-			data2 =(nbg3_vram[address] & 0x000003ff) >> 0;
-			flipy1=(nbg3_vram[address] & 0x08000000) >> 27;
-			flipy2=(nbg3_vram[address] & 0x00000800) >> 11;
-			flipx1=(nbg3_vram[address] & 0x04000000) >> 26;
-			flipx2=(nbg3_vram[address] & 0x00000400) >> 10;
-			color1=(nbg3_vram[address] & 0xf0000000) >> 28;
-			color2=(nbg3_vram[address] & 0x0000f000) >> 12;
-
-			//if we are in 16 colors mode...
-			if(!(CHCTLN3 & 0x7000))
-			{
-				color1+=0x40;
-				color2+=0x40;
-			}
-
-/*				data1+= ((PNCN3 & 0x001f) >> 0)*0x400;
-				data2+= ((PNCN3 & 0x001f) >> 0)*0x400;
-				color1+=((PNCN3 & 0x00e0) >> 5)*0x10;
-				color2+=((PNCN3 & 0x00e0) >> 5)*0x10;
-*/
-/*				if(CHCTLN3 & 1)
-				{
-					drawgfx(bitmap,Machine->gfx[4],data1/2,color1,flipx1,flipy1,x*16,y*8,cliprect,TRANSPARENCY_NONE,0);
-					drawgfx(bitmap,Machine->gfx[4],data2/2,color2,flipx2,flipy2,x*16+8,y*8,cliprect,TRANSPARENCY_NONE,0);
-				}
-				else
-				{*/
-					drawgfx(bitmap,Machine->gfx[gfx_bank],data1,color1,flipx1,flipy1,x*16,y*8,cliprect,TRANSPARENCY_PEN,0);
-					drawgfx(bitmap,Machine->gfx[gfx_bank],data2,color2,flipx2,flipy2,x*16+8,y*8,cliprect,TRANSPARENCY_PEN,0);
-				//}
-			}
-		}
-}
-#endif
-/*end of wip code*/
-
-/* a complete hack just to display the text graphics used in the test mode */
-VIDEO_UPDATE(stv)
-{
-#if !WIP_CODE
-	int address,data1,data2,flipx1,flipx2,flipy1,flipy2,color1,color2;
-	int x,y;
-#endif
-
-	int i;
-	data8_t *b1tile_gfxregion = memory_region(REGION_GFX1);
-	data8_t *b0tile_gfxregion = memory_region(REGION_GFX2);
-	data8_t *a1tile_gfxregion = memory_region(REGION_GFX3);
-	data8_t *a0tile_gfxregion = memory_region(REGION_GFX4);
-//	int address,data1,data2,flipx1,flipx2,flipy1,flipy2,color1,color2;
-//	int x,y;
-
-	if ( keyboard_pressed_memory(KEYCODE_W) ) stv_dump_ram();
-
-	/* shouldn't be here .. for testing */
-	if ( keyboard_pressed_memory(KEYCODE_V) )
-	{
-		cpu_set_reset_line(2, PULSE_LINE);
-		cpu_set_halt_line(2, CLEAR_LINE);
-	}
-
-	for(i = 0;i < 0x2000;i++)
-		if(stv_b1_dirty[i] == 1)
-		{
-			stv_b1_dirty[i] = 0;
-			decodechar(Machine->gfx[0], i, (data8_t*)b1tile_gfxregion, Machine->drv->gfxdecodeinfo[0].gfxlayout);
-			decodechar(Machine->gfx[4], i/2, (data8_t*)b1tile_gfxregion, Machine->drv->gfxdecodeinfo[4].gfxlayout);
-		}
-
-	for(i = 0;i < 0x2000;i++)
-		if(stv_b0_dirty[i] == 1)
-		{
-			stv_b0_dirty[i] = 0;
-			decodechar(Machine->gfx[1], i, (data8_t*)b0tile_gfxregion, Machine->drv->gfxdecodeinfo[1].gfxlayout);
-			decodechar(Machine->gfx[5], i/2, (data8_t*)b0tile_gfxregion, Machine->drv->gfxdecodeinfo[5].gfxlayout);
-		}
-
-	for(i = 0;i < 0x2000;i++)
-		if(stv_a1_dirty[i] == 1)
-		{
-			stv_a1_dirty[i] = 0;
-			decodechar(Machine->gfx[2], i, (data8_t*)a1tile_gfxregion, Machine->drv->gfxdecodeinfo[2].gfxlayout);
-			decodechar(Machine->gfx[6], i/2, (data8_t*)a1tile_gfxregion, Machine->drv->gfxdecodeinfo[6].gfxlayout);
-		}
-
-	for(i = 0;i < 0x2000;i++)
-		if(stv_a0_dirty[i] == 1)
-		{
-			stv_a0_dirty[i] = 0;
-			decodechar(Machine->gfx[3], i, (data8_t*)a0tile_gfxregion, Machine->drv->gfxdecodeinfo[3].gfxlayout);
-			decodechar(Machine->gfx[7], i/2, (data8_t*)a0tile_gfxregion, Machine->drv->gfxdecodeinfo[7].gfxlayout);
-		}
-
-		back_screen(bitmap,cliprect);
-
-
-/*start of wip code*/
-#if WIP_CODE
-static UINT8 nbg0_gfx,nbg1_gfx,nbg2_gfx,nbg3_gfx;
-
-		for(i=0;i<8;i++)
-		{
-			/*Back Screen enabled,all Planes can't be accessed.*/
-			/*They causes crashes otherwise(and doesn't seem to be valid data as well).*/
-			if(BDCLMD == 1)
-				break;
-			/*
-			Actual timing is 1 frame/8:
-			1/60*8=1/480 a.k.a 0,002083 secs,not implemented yet.
-			*/
-			switch((VCPA0 >> (i*4)) & 0xf)
-			{
-				case 0:	nbg0_screen(bitmap,cliprect,nbg0_gfx,stv_a0_vram); break;
-		 		case 1:	nbg1_screen(bitmap,cliprect,nbg1_gfx,stv_a0_vram); break;
-		  		case 2:	nbg2_screen(bitmap,cliprect,nbg2_gfx,stv_a0_vram); break;
-				case 3:	nbg3_screen(bitmap,cliprect,nbg3_gfx,stv_a0_vram); break;
-				case 4: nbg0_gfx = 3; break;
-				case 5: nbg1_gfx = 3; break;
-				case 6: nbg2_gfx = 3; break;
-				case 7: nbg3_gfx = 3; break;
-			}
-
-			switch((VCPA1 >> (i*4)) & 0xf)
-			{
-				case 0:	nbg0_screen(bitmap,cliprect,nbg0_gfx,stv_a1_vram); break;
-		 		case 1:	nbg1_screen(bitmap,cliprect,nbg1_gfx,stv_a1_vram); break;
-		  		case 2:	nbg2_screen(bitmap,cliprect,nbg2_gfx,stv_a1_vram); break;
-				case 3:	nbg3_screen(bitmap,cliprect,nbg3_gfx,stv_a1_vram); break;
-				case 4: nbg0_gfx = 2; break;
-				case 5: nbg1_gfx = 2; break;
-				case 6: nbg2_gfx = 2; break;
-				case 7: nbg3_gfx = 2; break;
-			}
-
-			switch((VCPB0 >> (i*4)) & 0xf)
-			{
-				case 0:	nbg0_screen(bitmap,cliprect,nbg0_gfx,stv_b0_vram); break;
-		 		case 1:	nbg1_screen(bitmap,cliprect,nbg1_gfx,stv_b0_vram); break;
-		  		case 2:	nbg2_screen(bitmap,cliprect,nbg2_gfx,stv_b0_vram); break;
-				case 3:	nbg3_screen(bitmap,cliprect,nbg3_gfx,stv_b0_vram); break;
-				case 4: nbg0_gfx = 1; break;
-				case 5: nbg1_gfx = 1; break;
-				case 6: nbg2_gfx = 1; break;
-				case 7: nbg3_gfx = 1; break;
-			}
-
-			switch((VCPB1 >> (i*4)) & 0xf)
-			{
-				case 0:	nbg0_screen(bitmap,cliprect,nbg0_gfx,stv_b1_vram); break;
-		 		case 1:	nbg1_screen(bitmap,cliprect,nbg1_gfx,stv_b1_vram); break;
-		  		case 2:	nbg2_screen(bitmap,cliprect,nbg2_gfx,stv_b1_vram); break;
-				case 3:	nbg3_screen(bitmap,cliprect,nbg3_gfx,stv_b1_vram); break;
-				case 4: nbg0_gfx = 0; break;
-				case 5: nbg1_gfx = 0; break;
-				case 6: nbg2_gfx = 0; break;
-				case 7: nbg3_gfx = 0; break;
-			}
-			//printf("%08x %08x %08x %08x\n",VCPA0,VCPA1,VCPB0,VCPB1);
-		}
-/*end of wip code*/
-#else
-/*N0*/
-/*Character Size                   : 1 h x 1 v*/
-/*Character Color count            : 16 colors*/
-/*Character number supplement mode : mode 0   */
-//	if(SDON & 8)
-//	{
-		for (y = 0; y < 64; y++){
-			for (x = 0; x < 32; x++){
-				/*First $2000 is for gfx-decoding*/
-				address = 0x2000/4;
-
-				address += (x + y*32);
-
-				data1 =(stv_b1_vram[address] & 0x03ff0000) >> 16;
-				data2 =(stv_b1_vram[address] & 0x000003ff) >> 0;
-				flipy1=(stv_b1_vram[address] & 0x08000000) >> 27;
-				flipy2=(stv_b1_vram[address] & 0x00000800) >> 11;
-				flipx1=(stv_b1_vram[address] & 0x04000000) >> 26;
-				flipx2=(stv_b1_vram[address] & 0x00000400) >> 10;
-				color1=(stv_b1_vram[address] & 0xf0000000) >> 28;
-				color2=(stv_b1_vram[address] & 0x0000f000) >> 12;
-				/*wrong due to not considering the VRAM cycle*/
-				//if we are in 16 colors mode...
-				if(!(CHCTLN3 & 0x7000))
-				{
-					color1+=0x40;
-					color2+=0x40;
-				}
-
-/*				data1+= ((PNCN3 & 0x001f) >> 0)*0x400;
-				data2+= ((PNCN3 & 0x001f) >> 0)*0x400;
-				color1+=((PNCN3 & 0x00e0) >> 5)*0x10;
-				color2+=((PNCN3 & 0x00e0) >> 5)*0x10;
-*/
-/*				if(CHCTLN3 & 1)
-				{
-					drawgfx(bitmap,Machine->gfx[4],data1/2,color1,flipx1,flipy1,x*16,y*8,cliprect,TRANSPARENCY_NONE,0);
-					drawgfx(bitmap,Machine->gfx[4],data2/2,color2,flipx2,flipy2,x*16+8,y*8,cliprect,TRANSPARENCY_NONE,0);
-				}
-				else
-				{*/
-					drawgfx(bitmap,Machine->gfx[0],data1,color1,flipx1,flipy1,x*16,y*8,cliprect,TRANSPARENCY_PEN,0);
-					drawgfx(bitmap,Machine->gfx[0],data2,color2,flipx2,flipy2,x*16+8,y*8,cliprect,TRANSPARENCY_PEN,0);
-				//}
-			}
-
-		}
-
-//	}
-/* // stv logo
-	{
-		int x,y;
-
-		for (y = 0; y < 128; y++){
-			for (x = 0; x < 32; x++){
-
-				int address;
-				int data1;
-				int data2;
-
-				address = 0x2000/4;
-
-				address += (x + y*32);
-
-				data1=(stv_vram[address] & 0x0fff0000) >> 16;
-				data2=(stv_vram[address] & 0x00000fff) >> 0;
-
-				drawgfx(bitmap,Machine->gfx[1],data1/2,0,0,0,x*16,y*8,cliprect,TRANSPARENCY_PEN,0);
-				drawgfx(bitmap,Machine->gfx[1],data2/2,0,0,0,x*16+8,y*8,cliprect,TRANSPARENCY_PEN,0);
-
-
-
-
-			}
-
-		}
-
-
-	}*/
-/*N1*/
-/*Character Size                   : 1 h x 1 v*/
-/*Character Color count            : 16 colors*/
-/*Character number supplement mode : mode 0   */
-//	if(SDON & 4)
-//	{
-
-		for (y = 0; y < 64; y++){
-			for (x = 0; x < 32; x++){
-				/*First $2000 is for gfx-decoding*/
-				address = 0x2000/4;
-
-				address += (x + y*32);
-
-				data1=(stv_b0_vram[address] & 0x03ff0000) >> 16;
-				data2=(stv_b0_vram[address] & 0x000003ff) >> 0;
-				flipy1=(stv_b0_vram[address] & 0x08000000) >> 27;
-				flipy2=(stv_b0_vram[address] & 0x00000800) >> 11;
-				flipx1=(stv_b0_vram[address] & 0x04000000) >> 26;
-				flipx2=(stv_b0_vram[address] & 0x00000400) >> 10;
-				color1=(stv_b0_vram[address] & 0xf0000000) >> 28;
-				color2=(stv_b0_vram[address] & 0x0000f000) >> 12;
-/*				if(!(CHCTLN2 & 0x3000))
-				{
-					color1+=0x40;
-					color2+=0x40;
-				}
-*/
-//				data1+= ((PNCN2 & 0x001f) >> 0)*0x400;
-//				data2+= ((PNCN2 & 0x001f) >> 0)*0x400;
-/*				color1+=((PNCN0 & 0x00e0) >> 5)*0x10;
-				color2+=((PNCN0 & 0x00e0) >> 5)*0x10;
-*/
-
-/*				if(CHCTLN2 & 1)
-				{
-					drawgfx(bitmap,Machine->gfx[5],data1/2,color1,flipx1,flipy1,x*16,y*8,cliprect,TRANSPARENCY_PEN,0);
-					drawgfx(bitmap,Machine->gfx[5],data2/2,color2,flipx2,flipy2,x*16+8,y*8,cliprect,TRANSPARENCY_PEN,0);
-				}
-				else
-				{*/
-					drawgfx(bitmap,Machine->gfx[1],data1,color1,flipx1,flipy1,x*16,y*8,cliprect,TRANSPARENCY_PEN,0);
-					drawgfx(bitmap,Machine->gfx[1],data2,color2,flipx2,flipy2,x*16+8,y*8,cliprect,TRANSPARENCY_PEN,0);
-				//}
-			}
-
-		}
-
-//	}
-/*N2*/
-/*Character Size                   : 1 h x 1 v*/
-/*Character Color count            : 16 colors*/
-/*Character number supplement mode : mode 0   */
-//	if(SDON & 2)
-//	{
-
-		for (y = 0; y < 64; y++){
-			for (x = 0; x < 32; x++){
-				/*First $2000 is for gfx-decoding*/
-				address = 0x2000/4;
-
-				address += (x + y*32);
-
-				data1=(stv_a1_vram[address] & 0x03ff0000) >> 16;
-				data2=(stv_a1_vram[address] & 0x000003ff) >> 0;
-				flipy1=(stv_a1_vram[address] & 0x08000000) >> 27;
-				flipy2=(stv_a1_vram[address] & 0x00000800) >> 11;
-				flipx1=(stv_a1_vram[address] & 0x04000000) >> 26;
-				flipx2=(stv_a1_vram[address] & 0x00000400) >> 10;
-				color1=(stv_a1_vram[address] & 0xf0000000) >> 28;
-				color2=(stv_a1_vram[address] & 0x0000f000) >> 12;
-/*				if(!(CHCTLN1 & 2))
-				{
-					color1+=0x40;
-					color2+=0x40;
-				}
-*/
-//				data1+= ((PNCN2 & 0x001f) >> 0)*0x400;
-//				data2+= ((PNCN2 & 0x001f) >> 0)*0x400;
-/*				color1+=((PNCN0 & 0x00e0) >> 5)*0x10;
-				color2+=((PNCN0 & 0x00e0) >> 5)*0x10;
-*/
-/*				if(CHCTLN1 & 1)
-				{
-					drawgfx(bitmap,Machine->gfx[6],data1/2,color1,flipx1,flipy1,x*16,y*8,cliprect,TRANSPARENCY_PEN,0);
-					drawgfx(bitmap,Machine->gfx[6],data2/2,color2,flipx2,flipy2,x*16+8,y*8,cliprect,TRANSPARENCY_PEN,0);
-				}
-				else
-				{*/
-					drawgfx(bitmap,Machine->gfx[2],data1,color1,flipx1,flipy1,x*16,y*8,cliprect,TRANSPARENCY_PEN,0);
-					drawgfx(bitmap,Machine->gfx[2],data2,color2,flipx2,flipy2,x*16+8,y*8,cliprect,TRANSPARENCY_PEN,0);
-				//}
-			}
-
-		}
-
-//	}
-
-/*N3*/
-/*Character Size                   : 2 h x 2 v*/
-/*Character Color count            : 16 colors*/
-/*Character number supplement mode : mode 0   */
-//	if(SDON & 1)
-//	{
-
-		for (y = 0; y < 64; y++){
-			for (x = 0; x < 64; x++){
-
-/*First $2000 is for gfx-decoding in 1h x 1v ,but the Sakura Wars Title screen data
-is written at the start of the bank?Is there a register for doing the trick?*/
-				address = 0/4;
-
-				address += (x + y*64);
-
-				data1=(stv_a0_vram[address] & 0x00000fff) >> 0;
-//				data2=(stv_a0_vram[address] & 0x000003ff) >> 0;
-//				flipy1=(stv_a0_vram[address] & 0x08000000) >> 27;
-//				flipy2=(stv_a0_vram[address] & 0x00000800) >> 11;
-//				flipx1=(stv_a0_vram[address] & 0x04000000) >> 26;
-//				flipx2=(stv_a0_vram[address] & 0x00000400) >> 10;
-				color1=(stv_a0_vram[address] & 0x00f00000) >> 20;
-//				color2=(stv_a0_vram[address] & 0x0000f000) >> 12;
-/*				if(!(CHCTLN0 & 2))
-				{
-					color1+=0x40;
-					color2+=0x40;
-				}*/
-
-//				data1+= ((PNCN0 & 0x001f) >> 0)*0x400;
-//				data2+= ((PNCN0 & 0x001f) >> 0)*0x400;
-/*				color1+=((PNCN0 & 0x00e0) >> 5)*0x10;
-				color2+=((PNCN0 & 0x00e0) >> 5)*0x10;
-*/
-//				if(CHCTLN0 & 1)
-//				{
-
-if(!(keyboard_pressed(KEYCODE_Z)))
-					drawgfx(bitmap,Machine->gfx[7],data1/2,color1,flipx1,flipy1,x*8,y*8,cliprect,TRANSPARENCY_PEN,0);
-//					drawgfx(bitmap,Machine->gfx[7],data2/2,color2,flipx2,flipy2,x*16+8,y*8,cliprect,TRANSPARENCY_PEN,0);
-//				}
-//				else
-//				{*/
-//					drawgfx(bitmap,Machine->gfx[3],data1,color1,flipx1,flipy1,x*16,y*8,cliprect,TRANSPARENCY_PEN,0);
-//					drawgfx(bitmap,Machine->gfx[3],data2,color2,flipx2,flipy2,x*16+8,y*8,cliprect,TRANSPARENCY_PEN,0);
-				//}
-			}
-
-		}
-#endif
-
-/*Debug code,active only one at a time.*/
-/*
-	usrintf_showmessage("%d%d%d%d%d"
-	,SDON & 0x10 ? 1 : 0
-	,SDON & 8 ?    1 : 0
-	,SDON & 4 ?    1 : 0
-	,SDON & 2 ?    1 : 0
-	,SDON & 1 ?    1 : 0);
-*/
-/*	static int x0,x1,x2,x3,y0,y1,y2,y3;
-
-	switch( PLSZ & 3 )
-	{
-		case 0: x0 = 64;  y0 = 64;  break;
-		case 1: x0 = 128; y0 = 64;  break;
-		case 2: x0 = 0;   y0 = 0;   break;//invalid
-		case 3: x0 = 128; y0 = 128; break;
-	}
-	switch((PLSZ & 0xc) >> 2)
-	{
-		case 0: x1 = 64;  y1 = 64;  break;
-		case 1: x1 = 128; y1 = 64;  break;
-		case 2: x1 = 0;   y1 = 0;   break;
-		case 3: x1 = 128; y1 = 128; break;
-	}
-	switch((PLSZ & 0x30) >> 4)
-	{
-		case 0: x2 = 64;  y2 = 64;  break;
-		case 1: x2 = 128; y2 = 64;  break;
-		case 2: x2 = 0;   y2 = 0;   break;
-		case 3: x2 = 128; y2 = 128; break;
-	}
-	switch((PLSZ & 0xc0) >> 6)
-	{
-		case 0: x3 = 64;  y3 = 64;  break;
-		case 1: x3 = 128; y3 = 64;  break;
-		case 2: x3 = 0;   y3 = 0;   break;
-		case 3: x3 = 128; y3 = 128; break;
-	}
-	usrintf_showmessage("N0 %d x %d "
-						"N1 %d x %d "
-						"N2 %d x %d "
-						"N3 %d x %d ",x0,y0,x1,y1,x2,y2,x3,y3);
-*/
-}
-
 
 /* SMPC
  System Manager and Peripheral Control
@@ -974,15 +273,26 @@ if(!(keyboard_pressed(KEYCODE_Z)))
 7e
 7f -w EXLE2/1
 */
+UINT8 IOSEL1;
+UINT8 IOSEL2;
+UINT8 EXLE1;
+UINT8 EXLE2;
+UINT8 PDR1;
+UINT8 PDR2;
+
+#define SH2_DIRECT_MODE_PORT_1 IOSEL1 = 1
+#define SH2_DIRECT_MODE_PORT_2 IOSEL2 = 1
+#define SMPC_CONTROL_MODE_PORT_1 IOSEL1 = 0
+#define SMPC_CONTROL_MODE_PORT_2 IOSEL2 = 0
 
 static UINT8 stv_SMPC_r8 (int offset)
 {
 //	logerror ("8-bit SMPC Read from Offset %02x Returns %02x\n", offset, smpc_ram[offset]);
-	if (offset == 0x75)
-		return readinputport(3);//temporary kludged
+	if (offset == 0x75)//PDR1 read
+		return readinputport(0);
 
-	if (offset == 0x77)
-		return readinputport(2);
+	if (offset == 0x77)//PDR2 read
+		return readinputport(1);
 
 	return smpc_ram[offset];
 }
@@ -991,6 +301,59 @@ static void stv_SMPC_w8 (int offset, UINT8 data)
 {
 //	logerror ("8-bit SMPC Write to Offset %02x with Data %02x\n", offset, data);
 	smpc_ram[offset] = data;
+
+	if(offset == 0x75)
+	{
+		/*
+			ACTIVE LOW
+			bit 2(0x04) - EEPROM Chip enable
+			bit 3(0x08) - EEPROM clock
+			bit 4(0x10) - EEPROM data
+		*/
+		PDR1 = (data & 0x60);
+	}
+
+	if(offset == 0x77)
+	{
+		/*
+			ACTIVE LOW
+			bit 4(0x10) - Enable Sound System
+		*/
+		//usrintf_showmessage("PDR2 = %02x",smpc_ram[0x77]);
+		if(!(smpc_ram[0x77] & 0x10))
+		{
+			logerror("SMPC: M68k on\n");
+			cpu_set_reset_line(2, PULSE_LINE);
+			cpu_set_halt_line(2, CLEAR_LINE);
+		}
+		else
+		{
+			logerror("SMPC: M68k off\n");
+			cpu_set_halt_line(2, ASSERT_LINE);
+		}
+
+		PDR2 = (data & 0x60);
+	}
+
+	if(offset == 0x7d)
+	{
+		if(smpc_ram[0x7d] & 1)
+			SH2_DIRECT_MODE_PORT_1;
+		else
+			SMPC_CONTROL_MODE_PORT_1;
+
+		if(smpc_ram[0x7d] & 2)
+			SH2_DIRECT_MODE_PORT_2;
+		else
+			SMPC_CONTROL_MODE_PORT_2;
+	}
+
+	if(offset == 0x7f)
+	{
+		//enable PAD irq & VDP2 external latch for port 1/2
+		EXLE1 = smpc_ram[0x7f] & 1 ? 1 : 0;
+		EXLE2 = smpc_ram[0x7f] & 2 ? 1 : 0;
+	}
 
 	if (offset == 0x1f)
 	{
@@ -1004,7 +367,7 @@ static void stv_SMPC_w8 (int offset, UINT8 data)
 			case 0x02:
 				logerror ("SMPC: Slave ON\n");
 				smpc_ram[0x5f]=0x02;
-				cpu_set_halt_line(1,CLEAR_LINE);
+	//			cpu_set_halt_line(1,CLEAR_LINE);
 				break;
 			case 0x03:
 				logerror ("SMPC: Slave OFF\n");
@@ -1068,17 +431,18 @@ static void stv_SMPC_w8 (int offset, UINT8 data)
 			case 0x18:
 				logerror ("SMPC: NMI request\n");
 				smpc_ram[0x5f]=0x18;
-				/*NMI is unconditionally requested*/
-				cpu_set_nmi_line(0,PULSE_LINE);
+				/*NMI is unconditionally requested for the Sound CPU?*/
+				cpu_set_nmi_line(2,PULSE_LINE);
 				break;
 			case 0x19:
 				logerror ("SMPC: NMI Enable\n");
-				/*Actually used for the M68000*/
 				smpc_ram[0x5f]=0x19;
+				SCSP_reset = 1;
 				break;
 			case 0x1a:
 				logerror ("SMPC: NMI Disable\n");
 				smpc_ram[0x5f]=0x1a;
+				SCSP_reset = 0;
 				break;
 			//default:
 			//	logerror ("SMPC: Unhandled Command %02x\n",data);
@@ -1126,472 +490,6 @@ static WRITE32_HANDLER ( stv_SMPC_w32 )
 	stv_SMPC_w8(offset,writedata);
 }
 
-/**********************************************************************************
-VDP2 Registers Table
-(registers are in 16-bit format,h=high word,l=low word):
-===================================================================================
-0h  	00 		TV Screen Mode
-0l  	02		External Signal Enable Register
-1h  	04		Screen Status(VBlank)
-1l  	06		Vram Size
-
-2h  	08		H Counter
-2l		0a		V Counter
-3h		0c			< Reserved >
-3l		0e		Ram Control
------------------------------------------------------------------------------------
-4h 	 	10		Vram Cycle Pattern (Bank A0) [1/2]
-4l		12		Vram Cycle Pattern (Bank A0) [2/2]
-5h		14		Vram Cycle Pattern (Bank A1) [1/2]
-5l		16		Vram Cycle Pattern (Bank A1) [2/2]
-
-6h		18		Vram Cycle Pattern (Bank B0) [1/2]
-6l		1a		Vram Cycle Pattern (Bank B0) [2/2]
-7h		1c		Vram Cycle Pattern (Bank B1) [1/2]
-7l		1e		Vram Cycle Pattern (Bank B1) [2/2]
------------------------------------------------------------------------------------
-8h		20		Screen Display Enable
-8l		22		Mosaic Control
-9h		24		Special Function Code Select
-9l		26		Special Function Code
-
-10h		28		Character Control (NBG0,NBG1)
-10l		2a		Character Control (NBG2,NBG3,RBG0)
-11h		2c		Bitmap Palette Number (NBG0, NBG1)
-11l		2e		Bitmap Palette Number (RBG0)
------------------------------------------------------------------------------------
-12h		30		Pattern Name Control (NBG0)
-12l		32		Pattern Name Control (NBG1)
-13h		34		Pattern Name Control (NBG2)
-13l		36		Pattern Name Control (NBG3)
-
-14h		38		Pattern Name Control (RBG0)
-14l		3a		Plane Size
-15h		3c		Map Offset (NBG0-NBG3)
-15l		3e		Map Offset (Rotation Parameter A,B)
------------------------------------------------------------------------------------
-16h		40		Map
-16l		42
-17h		44
-17l		46
-
-18h		48
-18l		4a
-19h		4c
-19l		4e
------------------------------------------------------------------------------------
-20h		50		Map (Rotation Parameter A)
-20l		52
-21h		54
-21l		56
-
-22h		58
-22l		5a
-23h		5c
-23l		5e
------------------------------------------------------------------------------------
-24h		60		Map (Rotation Parameter B)
-24l		62
-25h		64
-25l		66
-
-26h		68
-26l		6a
-27h		6c
-27l		6e
------------------------------------------------------------------------------------
-28h		70		Screen Scroll Value (NBG0,H integer)
-28l		72		Screen Scroll Value (NBG0,H fractional)
-29h		74		Screen Scroll Value (NBG0,V integer)
-29l		76		Screen Scroll Value (NBG0,V fractional)
-
-30h		78		Coordinate Increment (NBG0,H integer)
-30l		7a		Coordinate Increment (NBG0,H fractional)
-31h		7c		Coordinate Increment (NBG0,V integer)
-31l		7e		Coordinate Increment (NBG0,V fractional)
------------------------------------------------------------------------------------
-32h		80		Screen Scroll Value (NBG1,H integer)
-32l		82		Screen Scroll Value (NBG1,H fractional)
-33h		84		Screen Scroll Value (NBG1,V integer)
-33l		86		Screen Scroll Value (NBG1,V fractional)
-
-34h		88		Coordinate Increment (NBG1,H integer)
-34l		8a		Coordinate Increment (NBG1,H fractional)
-35h		8c		Coordinate Increment (NBG1,V integer)
-35l		8e		Coordinate Increment (NBG1,V fractional)
------------------------------------------------------------------------------------
-36h		90		Screen Scroll Value (NBG2,H)
-36l		92		Screen Scroll Value (NBG2,V)
-37h		94		Screen Scroll Value (NBG3,H)
-37l		96		Screen Scroll Value (NBG3,V)
-
-38h		98		Reduction Enable
-38l		9a		Line and Vertical Cell Scroll Control (NBG0,NBG1)
-39h		9c		Vertical Cell Scroll Table Address (NBG0,NBG1) [1/2]
-39l		9e		Vertical Cell Scroll Table Address (NBG0,NBG1) [2/2]
------------------------------------------------------------------------------------
-40h		a0		Line Scroll Table Address (NBG0) [1/2]
-40l		a2		Line Scroll Table Address (NBG0) [2/2]
-41h		a4		Line Scroll Table Address (NBG1) [1/2]
-41l		a6		Line Scroll Table Address (NBG1) [2/2]
-
-42h		a8		Line Color Screen Table Address [1/2]
-42l		aa		Line Color Screen Table Address [2/2]
-43h		ac		Back Screen Table Address [1/2]
-43l		ae		Back Screen Table Address [2/2]
------------------------------------------------------------------------------------
-44h		b0		Rotation Parameter Mode
-44l		b2		Rotation Parameter Read Control
-45h		b4		Coefficient Table Control
-45l		b6		Coefficient Table Address Offset
-
-46h		b8		Screen Over Pattern Name (Rotation Parameter A)
-46l		ba		Screen Over Pattern Name (Rotation Parameter B)
-47h		bc		Rotation Parameter Table Address [1/2]
-47l		be		Rotation Parameter Table Address [2/2]
------------------------------------------------------------------------------------
-48h		c0		Window Position (W0 H start point)
-48l		c2		Window Position (W0 H end point)
-49h		c4		Window Position (W0 V start point)
-49l		c6		Window Position (W0 V end point)
-
-50h		c8		Window Position (W1 H start point)
-50l		ca		Window Position (W1 H end point)
-51h		cc		Window Position (W1 V start point)
-51l		ce		Window Position (W1 V end point)
------------------------------------------------------------------------------------
-52h		d0		Window Control (NBG0,NBG1)
-52l		d2		Window Control (NBG2,NBG3)
-53h		d4		Window Control (RBG0,SPRITE)
-53l		d6		Window Control (Misc.)
-
-54h		d8		Line Window Table Address (W0) [1/2]
-54l		da		Line Window Table Address (W0) [2/2]
-55h		dc		Line Window Table Address (W1) [1/2]
-55l		de		Line Window Table Address (W1) [2/2]
------------------------------------------------------------------------------------
-56h		e0		Sprite Control
-56l		e2		Shadow Control
-57h		e4		Color RAM Address Offset (NBG0-NBG3)
-57l		e6		Color RAM Address Offset (RBG0-SPRITE)
-
-58h		e8		Line Color Screen Enable
-58l		ea		Special Priority Mode
-59h		ec		Color Calculation Control
-59l		ee		Special Color Calculation Mode
------------------------------------------------------------------------------------
-60h		f0		Priority Number (SPRITE)
-60l		f2
-61h		f4
-61l		f6
-
-62h		f8		Priority Number (NBG0,NBG1)
-62l		fa		Priority Number (NBG2,NBG3)
-63h		fc		Priority Number (RBG0)
-63l		fe			< Reserved >
------------------------------------------------------------------------------------
-64h	   	100		Color Calculation Ratio (SPRITE)
-64l		102
-65h		104
-65l		106
-
-66h		108		Color Calculation Ratio (NBG0,NBG1)
-66l		10a		Color Calculation Ratio (NBG2,NBG3)
-67h		10c		Color Calculation Ratio (RBG0)
-67l		10e		Color Calculation Ratio (LINE,BACK)
------------------------------------------------------------------------------------
-68h		110		Color Offset Enable
-68l		112		Color Offset Select
-69h		114		Color Offset A R
-69l		116		Color Offset A G
-
-70h		118		Color Offset A B
-70l		11a		Color Offset B R
-71h		11c		Color Offset B G
-71l		11e		Color Offset B B
------------------------------------------------------------------------------------
-**********************************************************************************/
-
-/*An empty comment at the start of a line means             *
- *that the corrispetive bit isn't used by the driver ATM.   */
-static READ32_HANDLER ( stv_vdp2_regs_r32 )
-{
-//	if (offset!=1) logerror ("VDP2: Read from Registers, Offset %04x\n",offset);
-	switch(offset)
-	{
-		case 1:
-		/*Screen Status Register*/
-		/*VBLANK & HBLANK(bit 3 & 2 of high word),fake for now*/
-		/*VBLANK is always one when the DISP is 0*/
-			stv_vdp2_regs[offset] ^= 0x000c0000;
-		break;
-		case 3:
-		/*(V)RAM Control Register*/
-		/*Color RAM Mode (bit 13 & 12) (CRMD1 & CRMD0) */
-			CRMD = ((stv_vdp2_regs[offset] & 0x00003000) >> 12);
-		break;
-	}
-	return stv_vdp2_regs[offset];
-}
-
-static WRITE32_HANDLER ( stv_vdp2_regs_w32 )
-{
-	COMBINE_DATA(&stv_vdp2_regs[offset]);
-
-	switch(offset)
-	{
-		/*r/w*/
-		case 0:
-			/*TV screen display bit*/
-/**/		DISP = ((stv_vdp2_regs[offset] & 0x80000000) >> 31);
-			/*Border Color mode bit*/
-			BDCLMD = ((stv_vdp2_regs[offset] & 0x01000000) >> 24);
-			/*Interlace mode bit*/
-/**/		LSMD = ((stv_vdp2_regs[offset] & 0x00c00000) >> 22);
-			/*Vertical/Horizontal Resolution bits*/
-			VRES = ((stv_vdp2_regs[offset] & 0x00300000) >> 20);
-			HRES = ((stv_vdp2_regs[offset] & 0x00070000) >> 16);
-			res_change();
-		break;
-		case 3:
-			/*Color RAM mode*/
-			CRMD = ((stv_vdp2_regs[offset] & 0x00003000) >> 12);
-		break;
-		case 4: VCPA0 = (stv_vdp2_regs[4]); break;
-		case 5: VCPA1 = (stv_vdp2_regs[5]); break;
-		case 6: VCPB0 = (stv_vdp2_regs[6]); break;
-		case 7: VCPB1 = (stv_vdp2_regs[7]); break;
-		case 8:
-		/*Screen Display enable bit*/
-/**/		TPON = ((stv_vdp2_regs[offset] & 0x1f000000) >> 24);
-/**/	 	SDON = ((stv_vdp2_regs[offset] & 0x003f0000) >> 16);
-		break;
-		case 10:
-		/*Character Control Register*/
-		/*These needs to be added into a struct*/
-/**/		CHCTLN0 = ((stv_vdp2_regs[offset] & 0x007f0000) >> 16);
-/**/		CHCTLN1 = ((stv_vdp2_regs[offset] & 0x3f000000) >> 24);
-/**/		CHCTLN2 = ((stv_vdp2_regs[offset] & 0x00000003) >> 0);
-/**/		CHCTLN3 = ((stv_vdp2_regs[offset] & 0x00000030) >> 4);
-		break;
-		case 12:
-		/*Pattern Name Control Register*/
-/**/		PNCN0 = ((stv_vdp2_regs[offset] & 0xffff0000) >> 16);
-/**/		PNCN1 = ((stv_vdp2_regs[offset] & 0x0000ffff) >> 0);
-		break;
-		case 13:
-/**/		PNCN2 = ((stv_vdp2_regs[offset] & 0xffff0000) >> 16);
-/**/		PNCN3 = ((stv_vdp2_regs[offset] & 0x0000ffff) >> 0);
-		break;
-		case 14:
-/**/		PLSZ = ((stv_vdp2_regs[offset] & 0x0000ffff) >> 0);
-		break;
-		case 43:
-/**/		BKCLMD = ((stv_vdp2_regs[offset] & 0x80000000) >> 31);
-/**/		BKTA   = ((stv_vdp2_regs[offset] & 0x0007ffff) >> 0);
-		break;
-		/* Color Offset Enable/Select Register */
-		case 68:
-/**/		CLOFEN = ((stv_vdp2_regs[offset] & 0x007f0000) >> 16);
-/**/		CLOFSL = ((stv_vdp2_regs[offset] & 0x0000007f) >> 0);
-		break;
-		case 69:
-		/* Color Offset Registers*/
-			COAR = ((stv_vdp2_regs[offset] & 0x01ff0000) >> 16);
-			COAG = ((stv_vdp2_regs[offset] & 0x000001ff) >> 0);
-		break;
-		case 70:
-			COAB = ((stv_vdp2_regs[offset] & 0x01ff0000) >> 16);
-			stv_bright();
-		break;
-		case 71:
-		break;
-		}
-}
-
-/*
-**
-** Functions to emulate some aspects of the VDP-2.
-**
-*/
-
-static void res_change()
-{
-	static UINT16 horz,vert;
-
-	switch( VRES & 3 )
-	{
-		case 0: vert = 224; break;
-		case 1: vert = 240; break;
-		case 2: vert = 256; break;
-		case 3:
-		usrintf_showmessage("WARNING: V Res setting not allowed");
-		vert = 256;
-		break;
-	}
-	switch( HRES & 7 )
-	{
-		case 0: horz = 320; break;
-		case 1: horz = 352; break;
-		case 2: horz = 640; break;
-		case 3: horz = 704; break;
-		/*Exclusive modes,they sets the Vertical Resolution without considering the VRES register.*/
-		case 4: horz = 320; vert = 480; break;
-		case 5: horz = 352; vert = 480; break;
-		case 6: horz = 640; vert = 480; break;
-		case 7: horz = 704; vert = 480; break;
-	}
-
-	set_visible_area(0*8, horz-1,0*8, vert-1);
-}
-
-/*This is WRONG,the actual brightness control is much more complex than this...*/
-static void stv_bright()
-{
-	double brt = (COAR & 0x100) ? (COAR & 0xff) / 256.0 : (COAR + 0x100) / 256.0;
-
-/*	if(COAR != COAG || COAR != COAB || COAG != COAB)
-		palette_set_global_brightness(1.00);
-	else
-*/		palette_set_global_brightness(brt);
-}
-
-static void stv_dump_ram()
-{
-	FILE *fp;
-
-	fp=fopen("workraml.dmp", "w+b");
-	if (fp)
-	{
-		fwrite(stv_workram_l, 0x00100000, 1, fp);
-		fclose(fp);
-	}
-	fp=fopen("workramh.dmp", "w+b");
-	if (fp)
-	{
-		fwrite(stv_workram_h, 0x00100000, 1, fp);
-		fclose(fp);
-	}
-	fp=fopen("scu.dmp", "w+b");
-	if (fp)
-	{
-		fwrite(stv_scu, 0xd0, 1, fp);
-		fclose(fp);
-	}
-	fp=fopen("stv_a0_vram.dmp", "w+b");
-	if (fp)
-	{
-		fwrite(stv_a0_vram, 0x00020000, 1, fp);
-		fclose(fp);
-	}
-	fp=fopen("stv_a1_vram.dmp", "w+b");
-	if (fp)
-	{
-		fwrite(stv_a1_vram, 0x00020000, 1, fp);
-		fclose(fp);
-	}
-	fp=fopen("stv_b0_vram.dmp", "w+b");
-	if (fp)
-	{
-		fwrite(stv_b0_vram, 0x00020000, 1, fp);
-		fclose(fp);
-	}
-	fp=fopen("stv_b1_vram.dmp", "w+b");
-	if (fp)
-	{
-		fwrite(stv_b1_vram, 0x00020000, 1, fp);
-		fclose(fp);
-	}
-	fp=fopen("cram.dmp", "w+b");
-	if (fp)
-	{
-		fwrite(stv_cram, 0x00080000, 1, fp);
-		fclose(fp);
-	}
-	fp=fopen("68k.dmp", "w+b");
-	if (fp)
-	{
-		fwrite(memory_region(REGION_CPU3), 0x100000, 1, fp);
-		fclose(fp);
-	}
-}
-
-/*
-
-VDP-2 Handling
-
-*/
-
-static READ32_HANDLER( a0_vdp2_r )	{ return stv_a0_vram[offset]; }
-static READ32_HANDLER( a1_vdp2_r )  { return stv_a1_vram[offset]; }
-static READ32_HANDLER( b0_vdp2_r )	{ return stv_b0_vram[offset]; }
-static READ32_HANDLER( b1_vdp2_r )	{ return stv_b1_vram[offset]; }
-
-static WRITE32_HANDLER ( b1_vdp2_w )
-{
-	data8_t *btiles = memory_region(REGION_GFX1);
-
-	COMBINE_DATA (&stv_b1_vram[offset]);
-
-	data = stv_b1_vram[offset];
-	/* put in gfx region for easy decoding */
-	btiles[offset*4+0] = (data & 0xff000000) >> 24;
-	btiles[offset*4+1] = (data & 0x00ff0000) >> 16;
-	btiles[offset*4+2] = (data & 0x0000ff00) >> 8;
-	btiles[offset*4+3] = (data & 0x000000ff) >> 0;
-
-	stv_b1_dirty[offset/2] = 1;
-}
-
-static WRITE32_HANDLER ( b0_vdp2_w )
-{
-	data8_t *btiles = memory_region(REGION_GFX2);
-
-	COMBINE_DATA (&stv_b0_vram[offset]);
-
-	data = stv_b0_vram[offset];
-	/* put in gfx region for easy decoding */
-	btiles[offset*4+0] = (data & 0xff000000) >> 24;
-	btiles[offset*4+1] = (data & 0x00ff0000) >> 16;
-	btiles[offset*4+2] = (data & 0x0000ff00) >> 8;
-	btiles[offset*4+3] = (data & 0x000000ff) >> 0;
-
-	stv_b0_dirty[offset/2] = 1;
-}
-
-
-static WRITE32_HANDLER ( a1_vdp2_w )
-{
-	data8_t *btiles = memory_region(REGION_GFX3);
-
-	COMBINE_DATA (&stv_a1_vram[offset]);
-
-	data = stv_a1_vram[offset];
-	/* put in gfx region for easy decoding */
-	btiles[offset*4+0] = (data & 0xff000000) >> 24;
-	btiles[offset*4+1] = (data & 0x00ff0000) >> 16;
-	btiles[offset*4+2] = (data & 0x0000ff00) >> 8;
-	btiles[offset*4+3] = (data & 0x000000ff) >> 0;
-
-	stv_a1_dirty[offset/2] = 1;
-}
-
-static WRITE32_HANDLER ( a0_vdp2_w )
-{
-	data8_t *btiles = memory_region(REGION_GFX4);
-
-	COMBINE_DATA (&stv_a0_vram[offset]);
-
-	data = stv_a0_vram[offset];
-	/* put in gfx region for easy decoding */
-	btiles[offset*4+0] = (data & 0xff000000) >> 24;
-	btiles[offset*4+1] = (data & 0x00ff0000) >> 16;
-	btiles[offset*4+2] = (data & 0x0000ff00) >> 8;
-	btiles[offset*4+3] = (data & 0x000000ff) >> 0;
-
-	stv_a0_dirty[offset/2] = 1;
-
-}
 
 /*
 (Preliminary) explaination about this:
@@ -1612,9 +510,11 @@ SCU register[36] is the timer zero compare register.
 SCU register[40] is for IRQ masking.
 */
 
+/* to do, update bios idle skips so they work better with this arrangement.. */
+
 static INTERRUPT_GEN( stv_interrupt )
 {
-	if(cpu_getiloops() == 262)
+	if(cpu_getiloops() == 224)
 	{
 		timer_0 = 0;
 		if(timer_0 == (stv_scu[36] & 0x1ff))
@@ -1626,10 +526,15 @@ static INTERRUPT_GEN( stv_interrupt )
 			}
 		}
 
+
 		if(!(stv_scu[40] & 2))/*VBLANK-OUT*/
+		{
 			cpu_set_irq_line_and_vector(0, 0xe, HOLD_LINE , 0x41);
+			stv_vblank = 0;
+		}
+
 	}
-	else if(cpu_getiloops() <= 261 && cpu_getiloops() >= 1)/*Correct?*/
+	else if(cpu_getiloops() <= 223 && cpu_getiloops() >= 1)/*Correct?*/
 	{
 		timer_0++;
 		if(timer_0 == (stv_scu[36] & 0x1ff))
@@ -1641,13 +546,17 @@ static INTERRUPT_GEN( stv_interrupt )
 			}
 		}
 
+		/*TODO:use this *at the end* of the draw line.*/
 		if(!(stv_scu[40] & 4))/*HBLANK-IN*/
 			cpu_set_irq_line_and_vector(0, 0xd, HOLD_LINE , 0x42);
 	}
 	else if(cpu_getiloops() == 0)
 	{
 		if(!(stv_scu[40] & 1))/*VBLANK-IN*/
+		{
 			cpu_set_irq_line_and_vector(0, 0xf, HOLD_LINE , 0x40);
+			stv_vblank = 1;
+		}
 	}
 }
 
@@ -1662,27 +571,82 @@ I/O overview:
 	PORT-G  I/O 3
 	PORT-AD AD-Stick inputs?(Fake for now...)
 	SERIAL COM
+
+offsets:
+	0h PORT-A
+	0l PORT-B
+	1h PORT-C
+	1l PORT-D
+	2h PORT-E
+	2l PORT-F (extra button layout)
+	3h PORT-G
+	3l
+	4h PORT-SEL
+	4l
+	5h SERIAL COM WRITE
+	5l
+	6h SERIAL COM READ
+	6l
+	7h
+	7l PORT-AD
 */
-static unsigned char port_ad[] =
+static UINT8 port_ad[] =
 {
 	0xcc,0xb2,0x99,0x7f,0x66,0x4c,0x33,0x19
 };
 
+UINT8 port_sel;
+
+#define HI_WORD_ACCESS (mem_mask & 0x00ff0000) == 0
+#define LO_WORD_ACCESS (mem_mask & 0x000000ff) == 0
+
 READ32_HANDLER ( stv_io_r32 )
 {
 	static int i= -1;
-	//logerror("(PC=%08X): I/O r %08X & %08X\n", activecpu_get_pc(), offset*4, mem_mask);
+//	logerror("(PC=%08X): I/O r %08X & %08X\n", activecpu_get_pc(), offset*4, mem_mask);
 
 	switch(offset)
 	{
 		case 0:
-		return (readinputport(0) << 16) | (readinputport(1));
+		return (readinputport(2) << 16) | (readinputport(3));
 		case 1:
-		return (readinputport(2) << 16) | (ioga[1]);
+		return (readinputport(4) << 16) | (ioga[1]);
+		case 2:
+		/*Needs more work once that groovef works and it could be that this is bit wise
+		  rather than value wise...*/
+		switch(port_sel)
+		{
+			case 0x77:	return (readinputport(5) << 16) | (readinputport(6));
+			case 0x67:	return 0xffffffff;/**/
+			case 0x20:  return 0xffff0000 | (ioga[2] & 0xffff);
+			case 0x10:  return ((ioga[2] & 0xffff) << 16) | 0xffff;
+			case 0x60:  return 0xffffffff;/**/
+			default:
+			//usrintf_showmessage("offs: 2 %02x",port_sel);
+			return 0xffffffff;
+		}
+		break;
+		case 3:
+		switch(port_sel)
+		{
+			case 0x60:  return ((ioga[2] & 0xffff) << 16) | 0xffff;
+			default:
+			//usrintf_showmessage("offs: 3 %02x",port_sel);
+			return 0xffffffff;
+		}
+		break;
+		case 6:
+		switch(port_sel)
+		{
+			case 0x60:  return ioga[5];
+			default:
+			//usrintf_showmessage("offs: 6 %02x",port_sel);
+			return 0xffffffff;
+		}
+		break;
 		case 7:
 		i++;
-		if(i > 7)
-			i = 0;
+		if(i > 7) { i = 0; }
 		return port_ad[i];
 		default:
 		return ioga[offset];
@@ -1695,27 +659,36 @@ WRITE32_HANDLER ( stv_io_w32 )
 
 	switch(offset)
 	{
-		case 0:
-		break;
 		case 1:
-			if( (mem_mask & 0x000000ff) == 0)
-				ioga[1] = (data*0x00010000)+(data);
+			if(LO_WORD_ACCESS)
+			{
+				ioga[1] = (data) & 0xff;
+				coin_counter_w(0,~data & 0x01);
+				coin_counter_w(1,~data & 0x02);
+				coin_lockout_w(0,~data & 0x04);
+				coin_lockout_w(1,~data & 0x08);
+				/*
+				other bits reserved
+				*/
+			}
 		break;
 		case 2:
-			if( (mem_mask & 0x00ff0000) == 0)
-			{
-				ioga[2] = data/0x00010000;
+			if(HI_WORD_ACCESS)
+				ioga[2] = data >> 16;
+			else if(LO_WORD_ACCESS)
+				ioga[2] = data;
+		break;
+		case 3:
+			if(HI_WORD_ACCESS)
 				ioga[3] = data;
-			}
-			if( (mem_mask & 0x000000ff) == 0)
-				ioga[2] = data*0x00010000;
+		break;
+		case 4:
+			if(HI_WORD_ACCESS)
+				port_sel = (data & 0xffff0000) >> 16;
 		break;
 		case 5:
-			if( (mem_mask & 0x00ff0000) == 0)
-				ioga[6] = data/0x00010000;
-		break;
-		case 7:
-			ioga[7] = data;
+			if(HI_WORD_ACCESS)
+				ioga[5] = data;
 		break;
 	}
 }
@@ -1728,57 +701,6 @@ READ32_HANDLER (read_cart)
 }
 */
 
-/*
-One of the features of Sega ST-V is that the Color RAM could use two+one
-different formats of Paletteram:
-(1)Mode 0:RGB up to 5 bits per color,for 1024 possible combinations.16-bit format.
-(2)Mode 1:Same as mode 0 but with 2048 possible combinations.
-(3)Mode 2:RGB up to 8 bits per color,for 1024 possible combinations.32-bit format.
-Notice that if it's currently using the mode 0/1,the first three bits (aka bits 0,1 and 2)
-aren't used in output data(they are filled with 0).
-The MSB in any mode is known to be used as "Color Calculation"(transparency).
-*/
-
-WRITE32_HANDLER( stv_palette_w )
-{
-	int r,g,b;
-	COMBINE_DATA(&stv_cram[offset]);
-
-	switch( CRMD & 3 )
-	{
-		/*Mode 2/3*/
-		case 2:
-		case 3:
-			b = ((stv_cram[offset] & 0x00ff0000) >> 16);
-			g = ((stv_cram[offset] & 0x0000ff00) >> 8);
-			r = ((stv_cram[offset] & 0x000000ff) >> 0);
-			palette_set_color(offset,r,g,b);
-		break;
-		/*Mode 0/1*/
-		case 0:
-		case 1:
-			b = ((stv_cram[offset] & 0x00007c00) >> 10);
-			g = ((stv_cram[offset] & 0x000003e0) >> 5);
-			r = ((stv_cram[offset] & 0x0000001f) >> 0);
-			b*=0x8;
-			g*=0x8;
-			r*=0x8;
-			palette_set_color((offset*2)+1,r,g,b);
-			b = ((stv_cram[offset] & 0x7c000000) >> 26);
-			g = ((stv_cram[offset] & 0x03e00000) >> 21);
-			r = ((stv_cram[offset] & 0x001f0000) >> 16);
-			b*=0x8;
-			g*=0x8;
-			r*=0x8;
-			palette_set_color(offset*2,r,g,b);
-		break;
-	}
-}
-
-READ32_HANDLER( stv_palette_r )
-{
-	return stv_cram[offset];
-}
 
 /*
 
@@ -1852,9 +774,9 @@ DMA TODO:
 -Add timings(but how fast are each DMA?).
 -Add level priority & DMA status register.
 -Add DMA start factor conditions that are different than 7.
--Implement Indirect Modes for Level 0 and 1(actually too bored to add them ;).
--Add other data type transfers(bytes and words)
+-Add byte data type transfer.
 */
+
 #define DIRECT_MODE(_lv_)			(!(stv_scu[5+(_lv_*8)] & 0x01000000))
 #define INDIRECT_MODE(_lv_)			  (stv_scu[5+(_lv_*8)] & 0x01000000)
 
@@ -1877,21 +799,21 @@ WRITE32_HANDLER( stv_scu_w32 )
 		case 3:
 		/*Read address add value for DMA lv 0*/
 		if(stv_scu[3] & 0x100)
-			scu_src_add_0 = 0;
-		else
 			scu_src_add_0 = 4;
+		else
+			scu_src_add_0 = 0;
 
 		/*Write address add value for DMA lv 0*/
 		switch(stv_scu[3] & 7)
 		{
-			case 0: scu_dst_add_0 = 0;  break;
-			case 1: scu_dst_add_0 = 2;  break;
-			case 2: scu_dst_add_0 = 4;  break;
-			case 3: scu_dst_add_0 = 8;  break;
-			case 4: scu_dst_add_0 = 16; break;
-			case 5: scu_dst_add_0 = 32; break;
-			case 6: scu_dst_add_0 = 64; break;
-			case 7: scu_dst_add_0 = 128;break;
+			case 0: scu_dst_add_0 = 2;   break;
+			case 1: scu_dst_add_0 = 4;   break;
+			case 2: scu_dst_add_0 = 8;   break;
+			case 3: scu_dst_add_0 = 16;  break;
+			case 4: scu_dst_add_0 = 32;  break;
+			case 5: scu_dst_add_0 = 64;  break;
+			case 6: scu_dst_add_0 = 128; break;
+			case 7: scu_dst_add_0 = 256; break;
 		}
 		break;
 		case 4:
@@ -1903,11 +825,14 @@ WRITE32_HANDLER( stv_scu_w32 )
 -stv_scu[5] bit 0,bit 1 and bit 2 is DMA starting factor.
 	It must be 7 for this specific condition.
 -stv_scu[5] bit 24 is Indirect Mode/Direct Mode (0/1).
-	Must be inactive as this is Direct mode.
 */
-		if(stv_scu[4] & 1 && ((stv_scu[5] & 7) == 7) && DIRECT_MODE(0) && stv_scu[4] & 0x100)
+		if(stv_scu[4] & 1 && ((stv_scu[5] & 7) == 7) && stv_scu[4] & 0x100)
 		{
-			dma_direct_lv0();
+			if(DIRECT_MODE(0))
+				dma_direct_lv0();
+			else
+				dma_indirect_lv0();
+
 			stv_scu[4]^=1;//disable starting factor.
 		}
 		break;
@@ -1922,31 +847,35 @@ WRITE32_HANDLER( stv_scu_w32 )
 		/*LV 1 DMA*/
 		case 8:	 scu_src_1  = ((stv_scu[8] &  0x07ffffff) >> 0);  break;
 		case 9:	 scu_dst_1  = ((stv_scu[9] &  0x07ffffff) >> 0);  break;
-		case 10: scu_size_1 = ((stv_scu[10] & 0x00000fff) >> 0); break;
+		case 10: scu_size_1 = ((stv_scu[10] & 0x00001fff) >> 0);  break;
 		case 11:
 		/*Read address add value for DMA lv 1*/
 		if(stv_scu[11] & 0x100)
-			scu_src_add_1 = 0;
-		else
 			scu_src_add_1 = 4;
+		else
+			scu_src_add_1 = 0;
 
 		/*Write address add value for DMA lv 1*/
 		switch(stv_scu[11] & 7)
 		{
-			case 0: scu_dst_add_1 = 0;  break;
-			case 1: scu_dst_add_1 = 2;  break;
-			case 2: scu_dst_add_1 = 4;  break;
-			case 3: scu_dst_add_1 = 8;  break;
-			case 4: scu_dst_add_1 = 16; break;
-			case 5: scu_dst_add_1 = 32; break;
-			case 6: scu_dst_add_1 = 64; break;
-			case 7: scu_dst_add_1 = 128;break;
+			case 0: scu_dst_add_1 = 2;   break;
+			case 1: scu_dst_add_1 = 4;   break;
+			case 2: scu_dst_add_1 = 8;   break;
+			case 3: scu_dst_add_1 = 16;  break;
+			case 4: scu_dst_add_1 = 32;  break;
+			case 5: scu_dst_add_1 = 64;  break;
+			case 6: scu_dst_add_1 = 128; break;
+			case 7: scu_dst_add_1 = 256; break;
 		}
 		break;
 		case 12:
-		if(stv_scu[12] & 1 && ((stv_scu[13] & 7) == 7) && DIRECT_MODE(1) &&  stv_scu[12] & 0x100)
+		if(stv_scu[12] & 1 && ((stv_scu[13] & 7) == 7) && stv_scu[12] & 0x100)
 		{
-			dma_direct_lv1();
+			if(DIRECT_MODE(1))
+				dma_direct_lv1();
+			else
+				dma_indirect_lv1();
+
 			stv_scu[12]^=1;
 		}
 		break;
@@ -1960,36 +889,35 @@ WRITE32_HANDLER( stv_scu_w32 )
 		/*LV 2 DMA*/
 		case 16: scu_src_2  = ((stv_scu[16] & 0x07ffffff) >> 0);  break;
 		case 17: scu_dst_2  = ((stv_scu[17] & 0x07ffffff) >> 0);  break;
-		case 18: scu_size_2 = ((stv_scu[18] & 0x00000fff) >> 0);  break;
+		case 18: scu_size_2 = ((stv_scu[18] & 0x00001fff) >> 0);  break;
 		case 19:
 		/*Read address add value for DMA lv 2*/
 		if(stv_scu[19] & 0x100)
-			scu_src_add_2 = 0;
-		else
 			scu_src_add_2 = 4;
+		else
+			scu_src_add_2 = 0;
 
 		/*Write address add value for DMA lv 2*/
 		switch(stv_scu[19] & 7)
 		{
-			case 0: scu_dst_add_2 = 0;  break;
-			case 1: scu_dst_add_2 = 2;  break;
-			case 2: scu_dst_add_2 = 4;  break;
-			case 3: scu_dst_add_2 = 8;  break;
-			case 4: scu_dst_add_2 = 16; break;
-			case 5: scu_dst_add_2 = 32; break;
-			case 6: scu_dst_add_2 = 64; break;
-			case 7: scu_dst_add_2 = 128;break;
+			case 0: scu_dst_add_2 = 2;   break;
+			case 1: scu_dst_add_2 = 4;   break;
+			case 2: scu_dst_add_2 = 8;   break;
+			case 3: scu_dst_add_2 = 16;  break;
+			case 4: scu_dst_add_2 = 32;  break;
+			case 5: scu_dst_add_2 = 64;  break;
+			case 6: scu_dst_add_2 = 128; break;
+			case 7: scu_dst_add_2 = 256; break;
 		}
 		break;
 		case 20:
-		if(stv_scu[20] & 1 && ((stv_scu[21] & 7) == 7) && DIRECT_MODE(2) && stv_scu[20] & 0x100)
+		if(stv_scu[20] & 1 && ((stv_scu[21] & 7) == 7) && stv_scu[20] & 0x100)
 		{
-			dma_direct_lv2();
-			stv_scu[20]^=1;
-		}
-		else if(stv_scu[20] & 1 && ((stv_scu[21] & 7) == 7) && INDIRECT_MODE(2) && stv_scu[20] & 0x100)
-		{
-			dma_indirect_lv2();
+			if(DIRECT_MODE(2))
+				dma_direct_lv2();
+			else
+				dma_indirect_lv2();
+
 			stv_scu[20]^=1;
 		}
 		break;
@@ -2046,40 +974,31 @@ WRITE32_HANDLER( stv_scu_w32 )
 		}
 		break;
 		case 41:
-		logerror("IRQ status reg set:%08x\n",stv_scu[offset]);
+		/*This is never triggered...*/
+		logerror("IRQ status reg set:%08x\n",stv_scu[41]);
 		break;
 		case 42: /*A-Bus IRQ ACK*/ break;
 		case 49: /*This sets the SDRAM size*/ break;
-		default: logerror("Warning: undocumented SCU reg set %d = %08x\n",offset,data);
+		default: logerror("Warning: unused SCU reg set %d = %08x\n",offset,data);
 	}
 }
 
+
 static void dma_direct_lv0()
 {
-/* If the first SCU data isn't a multiply of 4 the SCU needs to transfer *
- * bytes not longs                                                       */
-	logerror("DMA lv 0 transfer START\n");
-	while(scu_src_0 & 3)
-	{
-		cpunum_write_byte(0,scu_dst_0,scu_src_0);//TODO:Fix this when the slave cpu works.
-		scu_dst_0+=(scu_dst_add_0/4);
-		scu_src_0+=(scu_src_add_0/4);
-		scu_size_0--;
-	}
+	logerror("DMA lv 0 transfer START\n"
+			 "Start %08x End %08x Size %04x\n",scu_src_0,scu_dst_0,scu_size_0);
+	logerror("Start Add %04x Destination Add %04x\n",scu_src_add_0,scu_dst_add_0);
 
-	for (; scu_size_0 > 3; scu_size_0-=4)
+	for (; scu_size_0 > 0; scu_size_0-=scu_dst_add_0)
 	{
-		cpu_writemem32bedw_dword(scu_dst_0,cpu_readmem32bedw_dword(scu_src_0));
+		if(scu_dst_add_0 == 2)
+			cpu_writemem16bew_word(scu_dst_0,cpu_readmem16bew_word(scu_src_0));
+		else
+			cpu_writemem32bedw_dword(scu_dst_0,cpu_readmem32bedw_dword(scu_src_0));
+
 		scu_dst_0+=scu_dst_add_0;
 		scu_src_0+=scu_src_add_0;
-	}
-/*ditto from above*/
-	while(scu_size_0 > 0)
-	{
-		cpunum_write_byte(0,scu_dst_0,scu_src_0);
-		scu_dst_0+=(scu_dst_add_0/4);
-		scu_src_0+=(scu_src_add_0/4);
-		scu_size_0--;
 	}
 	logerror("DMA transfer END\n");
 	if(!(stv_scu[40] & 0x800))/*Lv 0 DMA end irq*/
@@ -2088,26 +1007,19 @@ static void dma_direct_lv0()
 
 static void dma_direct_lv1()
 {
-	logerror("DMA lv 1 transfer START\n");
-	while(scu_src_1 & 3)
+	logerror("DMA lv 1 transfer START\n"
+			 "Start %08x End %08x Size %04x\n",scu_src_1,scu_dst_1,scu_size_1);
+	logerror("Start Add %04x Destination Add %04x\n",scu_src_add_1,scu_dst_add_1);
+
+	for (; scu_size_1 > 0; scu_size_1-=scu_dst_add_1)
 	{
-		cpunum_write_byte(0,scu_dst_1,scu_src_1);
-		scu_dst_1+=(scu_dst_add_1/4);
-		scu_src_1+=(scu_src_add_1/4);
-		scu_size_1--;
-	}
-	for (; scu_size_1 > 3; scu_size_1-=4)
-	{
-		cpu_writemem32bedw_dword(scu_dst_1,cpu_readmem32bedw_dword(scu_src_1));
+		if(scu_dst_add_1 == 2)
+			cpu_writemem16bew_word(scu_dst_1,cpu_readmem16bew_word(scu_src_1));
+		else
+			cpu_writemem32bedw_dword(scu_dst_1,cpu_readmem32bedw_dword(scu_src_1));
+
 		scu_dst_1+=scu_dst_add_1;
 		scu_src_1+=scu_src_add_1;
-	}
-	while(scu_size_1 > 0)
-	{
-		cpunum_write_byte(0,scu_dst_1,scu_src_1);
-		scu_dst_1+=(scu_dst_add_1/4);
-		scu_src_1+=(scu_src_add_1/4);
-		scu_size_1--;
 	}
 	logerror("DMA transfer END\n");
 	if(!(stv_scu[40] & 0x400))/*Lv 1 DMA end irq*/
@@ -2116,70 +1028,168 @@ static void dma_direct_lv1()
 
 static void dma_direct_lv2()
 {
-	logerror("DMA lv 2 transfer START\n");
-	while(scu_src_2 & 3)
-	{
-		cpunum_write_byte(0,scu_dst_2,scu_src_2);
-		scu_dst_2+=(scu_dst_add_2/4);
-		scu_src_2+=(scu_src_add_2/4);
-		scu_size_2--;
-	}
+	logerror("DMA lv 2 transfer START\n"
+			 "Start %08x End %08x Size %04x\n",scu_src_2,scu_dst_2,scu_size_2);
+	logerror("Start Add %04x Destination Add %04x\n",scu_src_add_2,scu_dst_add_2);
 
-	for (; scu_size_2 > 3; scu_size_2-=4)
+	for (; scu_size_2 > 0; scu_size_2-=scu_dst_add_2)
 	{
-		cpu_writemem32bedw_dword(scu_dst_2,cpu_readmem32bedw_dword(scu_src_2));
+		if(scu_dst_add_2 == 2)
+			cpu_writemem16bew_word(scu_dst_2,cpu_readmem16bew_word(scu_src_2));
+		else
+			cpu_writemem32bedw_dword(scu_dst_2,cpu_readmem32bedw_dword(scu_src_2));
+
 		scu_dst_2+=scu_dst_add_2;
 		scu_src_2+=scu_src_add_2;
 	}
-	while(scu_size_2 > 0)
-	{
-		cpunum_write_byte(0,scu_dst_2,scu_src_2);
-		scu_dst_2+=(scu_dst_add_2/4);
-		scu_src_2+=(scu_src_add_2/4);
-		scu_size_2--;
-	}
+
 	logerror("DMA transfer END\n");
 	if(!(stv_scu[40] & 0x200))/*Lv 2 DMA end irq*/
 		cpu_set_irq_line_and_vector(0, 6, HOLD_LINE , 0x49);
 }
 
-static void dma_indirect_lv2()
+static void dma_indirect_lv0()
 {
-	UINT8 job_done = 0;	/*Helper to get out of the cycle*/
-
+	/*Helper to get out of the cycle*/
+	UINT8 job_done = 0;
+	/*temporary storage for the transfer data*/
 	UINT32 tmp_src;
 
 	do{
-		tmp_src = scu_src_2;
+		tmp_src = scu_dst_0;
 
-		scu_dst_2 =  cpu_readmem32bedw_dword(scu_src_2+4);
-		scu_size_2 = cpu_readmem32bedw_dword(scu_src_2+8);
-		scu_src_2 =  cpu_readmem32bedw_dword(scu_src_2);
+		/*Thanks for Runik of Saturnin for pointing this out...*/
+		scu_size_0 = cpu_readmem32bedw_dword(scu_dst_0);
+		scu_src_0 =  cpu_readmem32bedw_dword(scu_dst_0+8);
+		scu_dst_0 =  cpu_readmem32bedw_dword(scu_dst_0+4);
 
 		/*Indirect Mode end factor*/
-		if(scu_size_2 & 0x80000000)
+		if(scu_src_0 & 0x80000000)
 			job_done = 1;
+
+		logerror("DMA lv 0 indirect mode transfer START\n"
+			 	 "Start %08x End %08x Size %04x\n",scu_src_0,scu_dst_0,scu_size_0);
+		logerror("Start Add %04x Destination Add %04x\n",scu_src_add_0,scu_dst_add_0);
+
+		//guess,but I believe it's right.
+		scu_src_0 &=0x07ffffff;
+		scu_dst_0 &=0x07ffffff;
+		scu_size_0 &=0xfff;
+
+		for (; scu_size_0 > 0; scu_size_0-=scu_dst_add_0)
+		{
+			if(scu_dst_add_0 == 2)
+				cpu_writemem16bew_word(scu_dst_0,cpu_readmem16bew_word(scu_src_0));
+			else
+				cpu_writemem32bedw_dword(scu_dst_0,cpu_readmem32bedw_dword(scu_src_0));
+
+			scu_dst_0+=scu_dst_add_0;
+			scu_src_0+=scu_src_add_0;
+		}
+
+		scu_dst_0 = tmp_src+0xc;
+
+	}while(job_done == 0);
+
+	if(!(stv_scu[40] & 0x800))/*Lv 0 DMA end irq*/
+		cpu_set_irq_line_and_vector(0, 5, HOLD_LINE , 0x4b);
+}
+
+static void dma_indirect_lv1()
+{
+	/*Helper to get out of the cycle*/
+	UINT8 job_done = 0;
+	/*temporary storage for the transfer data*/
+	UINT32 tmp_src;
+
+	do{
+		tmp_src = scu_dst_1;
+
+		/*Thanks for Runik of Saturnin for pointing this out...*/
+		scu_size_1 = cpu_readmem32bedw_dword(scu_dst_1);
+		scu_src_1 =  cpu_readmem32bedw_dword(scu_dst_1+8);
+		scu_dst_1 =  cpu_readmem32bedw_dword(scu_dst_1+4);
+
+		/*Indirect Mode end factor*/
+		if(scu_src_1 & 0x80000000)
+			job_done = 1;
+
+		logerror("DMA lv 1 indirect mode transfer START\n"
+			 	 "Start %08x End %08x Size %04x\n",scu_src_1,scu_dst_1,scu_size_1);
+		logerror("Start Add %04x Destination Add %04x\n",scu_src_add_1,scu_dst_add_1);
+
+		//guess,but I believe it's right.
+		scu_src_1 &=0x07ffffff;
+		scu_dst_1 &=0x07ffffff;
+		scu_size_1 &=0x1fff;
+
+		for (; scu_size_1 > 0; scu_size_1-=scu_dst_add_1)
+		{
+			if(scu_dst_add_1 == 2)
+				cpu_writemem16bew_word(scu_dst_1,cpu_readmem16bew_word(scu_src_1));
+			else
+				cpu_writemem32bedw_dword(scu_dst_1,cpu_readmem32bedw_dword(scu_src_1));
+
+			scu_dst_1+=scu_dst_add_1;
+			scu_src_1+=scu_src_add_1;
+		}
+
+		scu_dst_1 = tmp_src+0xc;
+
+	}while(job_done == 0);
+
+	if(!(stv_scu[40] & 0x400))/*Lv 1 DMA end irq*/
+		cpu_set_irq_line_and_vector(0, 6, HOLD_LINE , 0x4a);
+}
+
+static void dma_indirect_lv2()
+{
+	/*Helper to get out of the cycle*/
+	UINT8 job_done = 0;
+	/*temporary storage for the transfer data*/
+	UINT32 tmp_src;
+
+	do{
+		tmp_src = scu_dst_2;
+
+		/*Thanks for Runik of Saturnin for pointing this out...*/
+		scu_size_2 = cpu_readmem32bedw_dword(scu_dst_2);
+		scu_src_2 =  cpu_readmem32bedw_dword(scu_dst_2+8);
+		scu_dst_2 =  cpu_readmem32bedw_dword(scu_dst_2+4);
+
+		/*Indirect Mode end factor*/
+		if(scu_src_2 & 0x80000000)
+			job_done = 1;
+
+		logerror("DMA lv 2 indirect mode transfer START\n"
+			 	 "Start %08x End %08x Size %04x\n",scu_src_2,scu_dst_2,scu_size_2);
+		logerror("Start Add %04x Destination Add %04x\n",scu_src_add_2,scu_dst_add_2);
+
 		//guess,but I believe it's right.
 		scu_src_2 &=0x07ffffff;
 		scu_dst_2 &=0x07ffffff;
-		scu_size_2 &=0xfff;
+		scu_size_2 &=0x1fff; // hanagumi needs at least this or sprites vanish during special moves
 
-		//printf("%08x %08x %08x\n",scu_src_2,scu_dst_2,scu_size_2);
-		/*TODO : Add byte transfers like the Direct mode */
-		for (; scu_size_2 > 0; scu_size_2-=4)
+		for (; scu_size_2 > 0; scu_size_2-=scu_dst_add_2)
 		{
-			cpu_writemem32bedw_dword(scu_dst_2,cpu_readmem32bedw_dword(scu_src_2));
+			if(scu_dst_add_2 == 2)
+				cpu_writemem16bew_word(scu_dst_2,cpu_readmem16bew_word(scu_src_2));
+			else
+				cpu_writemem32bedw_dword(scu_dst_2,cpu_readmem32bedw_dword(scu_src_2));
+
 			scu_dst_2+=scu_dst_add_2;
 			scu_src_2+=scu_src_add_2;
 		}
 
-		scu_src_2 = tmp_src+0xc;
+		scu_dst_2 = tmp_src+0xc;
 
 	}while(job_done == 0);
 
 	if(!(stv_scu[40] & 0x200))/*Lv 2 DMA end irq*/
 		cpu_set_irq_line_and_vector(0, 6, HOLD_LINE , 0x49);
 }
+
+
 
 WRITE32_HANDLER( stv_sh2_soundram_w )
 {
@@ -2195,16 +1205,39 @@ READ32_HANDLER( stv_sh2_soundram_r )
 {
 	data8_t *SNDRAM = memory_region(REGION_CPU3);
 
+	if ((activecpu_get_pc()==0x6014298) && (offset*4 == 0x07ac))
+	{
+		logerror("hanagumi hang skip! 6014298\n");
+		return 0x01010101;
+	}
+
+	if ((activecpu_get_pc()==0x60142fe) && (offset*4 == 0x07ac))
+	{
+		logerror("hanagumi hang skip! 60142fe\n");
+		return 0x01010101;
+	}
+
 	return  (SNDRAM[offset*4+1]<<24) | (SNDRAM[offset*4+0]<<16) | (SNDRAM[offset*4+3]<<8) | (SNDRAM[offset*4+2]<<0);
 
 }
 
 static READ32_HANDLER( stv_scsp_regs_r32 )
 {
-	return scsp_regs[offset];
+	return scsp_regs[offset*2+1]<<16 | scsp_regs[offset*2+0]<<0;
 }
 
 static WRITE32_HANDLER( stv_scsp_regs_w32 )
+{
+	if (!(mem_mask & 0xffff0000)) scsp_regs[offset*2+1] = (data & 0xffff0000)>>16;
+	if (!(mem_mask & 0x0000ffff)) scsp_regs[offset*2+0] = (data & 0x0000ffff)>>0;
+}
+
+static READ16_HANDLER( stv_scsp_regs_r16 )
+{
+	return scsp_regs[offset];
+}
+
+static WRITE16_HANDLER( stv_scsp_regs_w16 )
 {
 	COMBINE_DATA(&scsp_regs[offset]);
 }
@@ -2215,6 +1248,30 @@ static WRITE32_HANDLER( minit_w )
 {
 	logerror("MINIT write at %08x = %08x\n",activecpu_get_pc(),data);
 }
+
+extern WRITE32_HANDLER ( stv_vdp2_vram_w );
+extern READ32_HANDLER ( stv_vdp2_vram_r );
+
+extern WRITE32_HANDLER ( stv_vdp2_cram_w );
+extern READ32_HANDLER ( stv_vdp2_cram_r );
+
+extern WRITE32_HANDLER ( stv_vdp2_regs_w );
+extern READ32_HANDLER ( stv_vdp2_regs_r );
+
+extern VIDEO_START ( stv_vdp2 );
+extern VIDEO_UPDATE( stv_vdp2 );
+
+extern READ32_HANDLER( stv_vdp1_regs_r );
+extern WRITE32_HANDLER( stv_vdp1_regs_w );
+extern READ32_HANDLER ( stv_vdp1_vram_r );
+extern WRITE32_HANDLER ( stv_vdp1_vram_w );
+
+static READ32_HANDLER( stv_workram_h_mirror_r )
+{
+	offset = offset & ((0x0100000/4)-1);
+	return stv_workram_h[offset];
+}
+
 
 static MEMORY_READ32_START( stv_master_readmem )
 	{ 0x00000000, 0x0007ffff, MRA32_ROM },   // bios
@@ -2230,33 +1287,39 @@ static MEMORY_READ32_START( stv_master_readmem )
 
 	/* Sound */
 	{ 0x05a00000, 0x05afffff, stv_sh2_soundram_r },
-	{ 0x05b00000, 0x05b00ee3, stv_scsp_regs_r32 },
+	{ 0x05b00000, 0x05b00fff, stv_scsp_regs_r32 },
 
 	/* VDP1 */
 	/*0x05c00000-0x05c7ffff VRAM*/
 	/*0x05c80000-0x05c9ffff Frame Buffer 0*/
 	/*0x05ca0000-0x05cbffff Frame Buffer 1*/
 	/*0x05d00000-0x05d7ffff VDP1 Regs */
-	{ 0x05c00000, 0x05cbffff, MRA32_RAM },
-	{ 0x05d00000, 0x05d0001f, MRA32_RAM },
+	{ 0x05c00000, 0x05cbffff, stv_vdp1_vram_r },
+	{ 0x05d00000, 0x05d0001f, stv_vdp1_regs_r },
 
 	/* VDP2 when VRAMSZ is 0*/
-	{ 0x5e00000 , 0x5e1ffff, a0_vdp2_r },
-	{ 0x5e20000 , 0x5e3ffff, a1_vdp2_r },
-	{ 0x5e40000 , 0x5e5ffff, b0_vdp2_r },
-	{ 0x5e60000 , 0x5e7ffff, b1_vdp2_r },
+//	{ 0x5e00000 , 0x5e1ffff, a0_vdp2_r },
+//	{ 0x5e20000 , 0x5e3ffff, a1_vdp2_r },
+//	{ 0x5e40000 , 0x5e5ffff, b0_vdp2_r },
+//	{ 0x5e60000 , 0x5e7ffff, b1_vdp2_r },
+
+
+	{ 0x5e00000 , 0x5efffff, stv_vdp2_vram_r },
+	{ 0x5f00000 , 0x5f7ffff, stv_vdp2_cram_r },
+	{ 0x5f80000 , 0x5fbffff, stv_vdp2_regs_r },
+
 	/* VDP2 when VRAMSZ is 1*/
 	/*0x5e00000-0x5e3ffff A0*/
 	/*0x5e40000-0x5e7ffff A1*/
 	/*0x5e80000-0x5ecffff B0*/
 	/*0x5ed0000-0x5efffff B1*/
 //	{ 0x05e00000, 0x05e7ffff, MRA32_RAM },
-	{ 0x05f00000, 0x05f0ffff, stv_palette_r }, /* CRAM */
-	{ 0x05f80000, 0x05fbffff, stv_vdp2_regs_r32 }, /* REGS */
+//	{ 0x05f00000, 0x05f0ffff, stv_palette_r }, /* CRAM */
+//	{ 0x05f80000, 0x05fbffff, stv_vdp2_regs_r32 }, /* REGS */
 	{ 0x05fe0000, 0x05fe00cf, stv_scu_r32 },
 
 	{ 0x06000000, 0x060fffff, MRA32_RAM },
-//	{ 0x06100000, 0x07ffffff, MRA32_NOP },
+	{ 0x06100000, 0x07ffffff, stv_workram_h_mirror_r }, // hanagumi reads the char select 1p icon and timer gfx from here ..
 MEMORY_END
 
 static MEMORY_WRITE32_START( stv_master_writemem )
@@ -2273,20 +1336,15 @@ static MEMORY_WRITE32_START( stv_master_writemem )
 
 	/* Sound */
 	{ 0x05a00000, 0x05afffff, stv_sh2_soundram_w },
-	{ 0x05b00000, 0x05b00ee3, stv_scsp_regs_w32 ,&scsp_regs },
+	{ 0x05b00000, 0x05b00fff, stv_scsp_regs_w32 },
 
 	/* VDP1 */
-	{ 0x05c00000, 0x05cbffff, MWA32_RAM },
-	{ 0x05d00000, 0x05d0001f, MWA32_RAM },
+	{ 0x05c00000, 0x05cbffff, stv_vdp1_vram_w },
+	{ 0x05d00000, 0x05d0001f, stv_vdp1_regs_w },
 
-	/* VDP2 */
-	{ 0x05e00000 ,0x05e1ffff, a0_vdp2_w },
-	{ 0x05e20000 ,0x05e3ffff, a1_vdp2_w },
-	{ 0x05e40000 ,0x05e5ffff, b0_vdp2_w },
-	{ 0x05e60000 ,0x05e7ffff, b1_vdp2_w },
-//	{ 0x05e00000, 0x05e7ffff, stv_vram_w, &stv_vram }, /* VRAM */
-	{ 0x05f00000, 0x05f0ffff, stv_palette_w }, /* CRAM */
-	{ 0x05f80000, 0x05fbffff, stv_vdp2_regs_w32 }, /* REGS */
+	{ 0x5e00000 , 0x5efffff, stv_vdp2_vram_w },
+	{ 0x5f00000 , 0x5f7ffff, stv_vdp2_cram_w },
+	{ 0x5f80000 , 0x5fbffff, stv_vdp2_regs_w },
 
 	{ 0x05fe0000, 0x05fe00cf, stv_scu_w32 },
 
@@ -2306,10 +1364,12 @@ MEMORY_END
 
 static MEMORY_READ16_START( sound_readmem )
 	{ 0x000000, 0x0fffff, MRA16_BANK2 },
+	{ 0x100000, 0x100fff, stv_scsp_regs_r16 },
 MEMORY_END
 
 static MEMORY_WRITE16_START( sound_writemem )
 	{ 0x000000, 0x0fffff, MWA16_BANK2 },	/*actually SDRAM*/
+	{ 0x100000, 0x100fff, stv_scsp_regs_w16 },
 MEMORY_END
 
 #define STV_PLAYER_INPUTS(_n_, _b1_, _b2_, _b3_, _b4_) \
@@ -2324,41 +1384,7 @@ MEMORY_END
 
 INPUT_PORTS_START( stv )
 	PORT_START
-	STV_PLAYER_INPUTS(1, BUTTON1, BUTTON2, BUTTON3, BUTTON4)
-
-	PORT_START
-	STV_PLAYER_INPUTS(2, BUTTON1, BUTTON2, BUTTON3, BUTTON4)
-/*
-	PORT_START
-	STV_PLAYER_INPUTS(3, BUTTON1, BUTTON2, BUTTON3, BUTTON4)
-
-	PORT_START
-	STV_PLAYER_INPUTS(4, BUTTON1, BUTTON2, BUTTON3, BUTTON4)
-*/
-	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, "xx" )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, "Test", KEYCODE_F2, IP_JOY_NONE )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
-	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, "2" )
+	PORT_DIPNAME( 0x01, 0x01, "PDR1" )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
@@ -2383,8 +1409,98 @@ INPUT_PORTS_START( stv )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-INPUT_PORTS_END
+	PORT_START
+	PORT_DIPNAME( 0x01, 0x01, "PDR2" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
+	PORT_START
+	STV_PLAYER_INPUTS(1, BUTTON1, BUTTON2, BUTTON3, BUTTON4)
+
+	PORT_START
+	STV_PLAYER_INPUTS(2, BUTTON1, BUTTON2, BUTTON3, BUTTON4)
+/*
+	PORT_START
+	STV_PLAYER_INPUTS(3, BUTTON1, BUTTON2, BUTTON3, BUTTON4)
+
+	PORT_START
+	STV_PLAYER_INPUTS(4, BUTTON1, BUTTON2, BUTTON3, BUTTON4)
+*/
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_SERVICE, "Test", KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_SERVICE, "1P Push Switch", KEYCODE_7, IP_JOY_NONE )
+	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_SERVICE, "2P Push Switch", KEYCODE_8, IP_JOY_NONE )
+
+	/*This might be unused,but we never know...*/
+	PORT_START
+	PORT_DIPNAME( 0x01, 0x01, "3" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	/*Extra button layout,used by Power Instinct 3*/
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON4  | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON5  | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON6  | IPF_PLAYER1 )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON4  | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON5  | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON6  | IPF_PLAYER2 )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+INPUT_PORTS_END
 
 /*
 
@@ -2404,7 +1520,7 @@ INPUT_PORTS_END
 
    (loops for 375868 instructions)
 
-   */
+*/
 
 
 static READ32_HANDLER( stv_speedup_r )
@@ -2413,6 +1529,7 @@ static READ32_HANDLER( stv_speedup_r )
 
 	return stv_workram_h[0x0335d0/4];
 }
+
 static READ32_HANDLER( stv_speedup2_r )
 {
 	if (activecpu_get_pc()==0x6013af0) cpu_spinuntil_int(); // for use in japan
@@ -2427,19 +1544,49 @@ DRIVER_INIT ( stv )
 
 	/* we allocate the memory here so its easier to share between cpus */
 	smpc_ram = auto_malloc (0x80);
-	stv_a0_vram = auto_malloc (0x20000);
-	stv_a1_vram = auto_malloc (0x20000);
-	stv_b0_vram = auto_malloc (0x20000);
-	stv_b1_vram = auto_malloc (0x20000);
-	stv_cram = auto_malloc (0x10000);
-	stv_vdp2_regs = auto_malloc (0x40000);
 	stv_scu = auto_malloc (0x100);
+	scsp_regs = auto_malloc (0x1000);
 
 /* idle skip bios? .. not 100% sure this is safe .. we'll see */
 	install_mem_read32_handler(0, 0x60335d0, 0x60335d3, stv_speedup_r );
 	install_mem_read32_handler(0, 0x60335bc, 0x60335bf, stv_speedup2_r );
-
 }
+
+static READ32_HANDLER( shienryu_speedup_r )
+{
+	if (activecpu_get_pc()==0x060041C8) cpu_spinuntil_int(); // after you enable the sound cpu ...
+	return stv_workram_h[0x0ae8e0/4];
+}
+
+
+DRIVER_INIT(shienryu)
+{
+	install_mem_read32_handler(0, 0x60ae8e0, 0x60ae8e3, shienryu_speedup_r ); // after you enable sound cpu
+
+	init_stv();
+}
+
+static READ32_HANDLER( prikura_speedup_r )
+{
+	if (activecpu_get_pc()==0x6018642) cpu_spinuntil_int(); // after you enable the sound cpu ...
+	return stv_workram_h[0x0b9228/4];
+}
+
+
+DRIVER_INIT(prikura)
+{
+/*
+ 06018640: MOV.B   @R14,R0  // 60b9228
+ 06018642: TST     R0,R0
+ 06018644: BF      $06018640
+
+    (loops for 263473 instructions)
+*/
+	install_mem_read32_handler(0, 0x60b9228, 0x60b922b, prikura_speedup_r );
+
+	init_stv();
+}
+
 
 static READ32_HANDLER( hanagumi_speedup_r )
 {
@@ -2451,7 +1598,7 @@ static READ32_HANDLER( hanagumi_speedup_r )
 
 DRIVER_INIT(hanagumi)
 {
-	/*
+/*
 	06013E1E: NOP
 	0601015E: MOV.L   @($6C,PC),R3
 	06010160: MOV.L   @R3,R0  (6094188)
@@ -2467,9 +1614,8 @@ DRIVER_INIT(hanagumi)
 	06013E1E: NOP
 
    (loops for 288688 instructions)
-   */
+*/
    	install_mem_read32_handler(0, 0x6094188, 0x609418b, hanagumi_speedup_r );
-
 
   	init_stv();
 }
@@ -2482,12 +1628,11 @@ static MACHINE_INIT( stv )
 	cpu_setbank(1,&SH2ROM[0x000000]);
 	cpu_setbank(2,&SNDRAM[0x000000]);
 
-	// don't let the 68k go anywhere
+	// don't let the slave cpu and the 68k go anywhere
+	cpu_set_halt_line(1, ASSERT_LINE);
 	cpu_set_halt_line(2, ASSERT_LINE);
 
 	timer_0 = 0;
-
-
 }
 
 static struct GfxLayout tiles8x8x4_layout =
@@ -2501,6 +1646,23 @@ static struct GfxLayout tiles8x8x4_layout =
 	32*8
 };
 
+static struct GfxLayout tiles16x16x4_layout =
+{
+	16,16,
+	RGN_FRAC(1,1),
+	4,
+	{ 0, 1, 2, 3 },
+	{ 0, 4, 8, 12, 16, 20, 24, 28,
+	  32*8+0, 32*8+4, 32*8+8, 32*8+12, 32*8+16, 32*8+20, 32*8+24, 32*8+28,
+
+	  },
+	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
+	  32*16, 32*17,32*18, 32*19,32*20,32*21,32*22,32*23
+
+	  },
+	32*32
+};
+
 static struct GfxLayout tiles8x8x8_layout =
 {
 	8,8,
@@ -2512,18 +1674,38 @@ static struct GfxLayout tiles8x8x8_layout =
 	64*8
 };
 
+static struct GfxLayout tiles16x16x8_layout =
+{
+	16,16,
+	RGN_FRAC(1,1),
+	8,
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0, 8, 16, 24, 32, 40, 48, 56,
+	64*8+0, 65*8, 66*8, 67*8, 68*8, 69*8, 70*8, 71*8
+
+	},
+	{ 0*64, 1*64, 2*64, 3*64, 4*64, 5*64, 6*64, 7*64,
+	64*16, 64*17, 64*18, 64*19, 64*20, 64*21, 64*22, 64*23
+	},
+	128*16
+};
+
+
 
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &tiles8x8x4_layout,   0x00, 0x100  },
-	{ REGION_GFX2, 0, &tiles8x8x4_layout,   0x00, 0x100  },
-	{ REGION_GFX3, 0, &tiles8x8x4_layout,   0x00, 0x100  },
-	{ REGION_GFX4, 0, &tiles8x8x4_layout,   0x00, 0x100  },
-	{ REGION_GFX1, 0, &tiles8x8x8_layout,   0x00, 0x20  },
-	{ REGION_GFX2, 0, &tiles8x8x8_layout,   0x00, 0x20  },
-	{ REGION_GFX3, 0, &tiles8x8x8_layout,   0x00, 0x20  },
-	{ REGION_GFX4, 0, &tiles8x8x8_layout,   0x00, 0x20  },
+	{ REGION_GFX1, 0, &tiles8x8x4_layout,   0x00, 0x80  },
+	{ REGION_GFX1, 0, &tiles16x16x4_layout,   0x00, 0x80  },
+	{ REGION_GFX1, 0, &tiles8x8x8_layout,   0x00, 0x10  },
+	{ REGION_GFX1, 0, &tiles16x16x8_layout,   0x00, 0x10  },
+
+	/* vdp1 .. pointless but .. */
+//	{ REGION_GFX5, 0, &tiles8x8x4_layout,   0x00, 0x100  },
+//	{ REGION_GFX5, 0, &tiles8x8x8_layout,   0x00, 0x20  },
+//	{ REGION_GFX5, 0, &tiles16x16x4_layout,   0x00, 0x100  },
+//	{ REGION_GFX5, 0, &tiles16x16x8_layout,   0x00, 0x20  },
+
 	{ -1 } /* end of array */
 };
 
@@ -2548,14 +1730,15 @@ static MACHINE_DRIVER_START( stv )
 	MDRV_MACHINE_INIT(stv)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK)
-	MDRV_SCREEN_SIZE(128*8, 64*8)
-	MDRV_VISIBLE_AREA(0*8, 352-1, 0*8, 256-1)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK | VIDEO_RGB_DIRECT )
+	MDRV_SCREEN_SIZE(32*16, 32*16)
+//	MDRV_VISIBLE_AREA(0*8, 32*16-1, 0*8, 32*16-1)
+	MDRV_VISIBLE_AREA(0*8, 320-1, 0*8, 224-1)
 	MDRV_PALETTE_LENGTH(2048)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 
-	MDRV_VIDEO_START(stv)
-	MDRV_VIDEO_UPDATE(stv)
+	MDRV_VIDEO_START(stv_vdp2)
+	MDRV_VIDEO_UPDATE(stv_vdp2)
 
 MACHINE_DRIVER_END
 
@@ -2568,13 +1751,12 @@ MACHINE_DRIVER_END
 	ROM_LOAD16_WORD_SWAP_BIOS( 1, "mp17951a.s",     0x000000, 0x080000, CRC(2672f9d8) SHA1(63cf4a6432f6c87952f9cf3ab0f977aed2367303) ) /* jp alt */ \
 	ROM_LOAD16_WORD_SWAP_BIOS( 2, "mp17952a.s",     0x000000, 0x080000, CRC(d1be2adf) SHA1(eaf1c3e5d602e1139d2090a78d7e19f04f916794) ) /* us? */ \
 	ROM_LOAD16_WORD_SWAP_BIOS( 3, "20091.bin",      0x000000, 0x080000, CRC(59ed40f4) SHA1(eff0f54c70bce05ff3a289bf30b1027e1c8cd117) ) /* newer? */ \
+	ROM_LOAD16_WORD_SWAP_BIOS( 4, "mp17953a.ic8",   0x000000, 0x080000, CRC(a4c47570) SHA1(9efc73717ec8a13417e65c54344ded9fc25bf5ef) ) /* us? */ \
 	ROM_REGION( 0x080000, REGION_CPU2, 0 ) /* SH2 code */ \
 	ROM_COPY( REGION_CPU1,0,0,0x080000) \
 	ROM_REGION( 0x100000, REGION_CPU3, 0 ) /* 68000 code */ \
-	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* GFX B1 */ \
-	ROM_REGION( 0x80000, REGION_GFX2, 0 ) /* GFX B0 */ \
-	ROM_REGION( 0x80000, REGION_GFX3, 0 ) /* GFX A1 */ \
-	ROM_REGION( 0x80000, REGION_GFX4, 0 ) /* GFX A0 */ \
+	ROM_REGION( 0x100000, REGION_GFX1, 0 ) /* VDP2 GFX */ \
+	ROM_REGION( 0x100000, REGION_GFX2, 0 ) /* VDP1 GFX */ \
 
 ROM_START( stvbios )
 	STV_BIOS
@@ -2585,6 +1767,7 @@ SYSTEM_BIOS_START( stvbios )
 	SYSTEM_BIOS_ADD( 1, "japana",      "Japan (bios mp17951a)" )
 	SYSTEM_BIOS_ADD( 2, "us",          "USA (bios mp17952a) " )
 	SYSTEM_BIOS_ADD( 3, "japanb",      "Japan (bios 20091)" )
+	SYSTEM_BIOS_ADD( 4, "asia",      "Asia? (Ver 1.13)" )
 SYSTEM_BIOS_END
 
 /* the roms marked as bad almost certainly aren't bad, theres some very weird
@@ -3237,54 +2420,59 @@ ROM_START( batmanfr )
 	ROM_LOAD( "snd3.u51",   0x600000, 0x200000, CRC(31af26ae) )
 ROM_END
 
+/* Playable */
+GAMEBX( 1998, hanagumi,  stvbios, stvbios, stv, stv,  hanagumi,  ROT0, "Sega", "Hanagumi Taisen Columns - Sakura Wars", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+
+/* Doing Something.. but not much enough yet */
+GAMEBX( 1996, prikura,   stvbios, stvbios, stv, stv,  prikura,   ROT0, "Atlus",    "Prikura Daisakusen", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, shanhigw,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sunsoft / Activision", "Shanghai - The Great Wall / Shanghai Triple Threat", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1997, shienryu,  stvbios, stvbios, stv, stv,  shienryu,  ROT0, "Warashi",  "Shienryu", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1996, groovef,   stvbios, stvbios, stv, stv,  stv,       ROT0, "Atlus",    "Power Instinct 3 - Groove On Fight", GAME_NO_SOUND | GAME_NOT_WORKING )
+
+/* not working */
+
 //GBX   YEAR, NAME,      PARENT,  BIOS,    MACH,INP,  INIT,MONITOR
-GAMEBX( 1996, stvbios,   0,       stvbios, stv, stv,  stv,  ROT0, "Sega",    "ST-V Bios", NOT_A_DRIVER )
+GAMEBX( 1996, stvbios,   0,       stvbios, stv, stv,  stv,       ROT0, "Sega",    "ST-V Bios", NOT_A_DRIVER )
 
-GAMEBX( 1998, astrass,   stvbios, stvbios, stv, stv,  stv,  ROT0, "Sunsoft","Astra SuperStars", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, bakubaku,  stvbios, stvbios, stv, stv,  stv,  ROT0, "Sega", 	"Baku Baku Animal", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, colmns97,  stvbios, stvbios, stv, stv,  stv,  ROT0, "Sega", 	"Columns 97", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1997, cotton2,   stvbios, stvbios, stv, stv,  stv,  ROT0, "Success","Cotton 2", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1998, cottonbm,  stvbios, stvbios, stv, stv,  stv,  ROT0, "Success","Cotton Boomerang", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, decathlt,  stvbios, stvbios, stv, stv,  stv,  ROT0, "Sega", 	"Decathlete", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, diehard,   stvbios, stvbios, stv, stv,  stv,  ROT0, "Sega", 	"Die Hard Arcade (US)", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, dnmtdeka,  diehard, stvbios, stv, stv,  stv,  ROT0, "Sega", 	"Dynamite Deka (Japan)", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, ejihon,    stvbios, stvbios, stv, stv,  stv,  ROT0, "Sega", 	"Ejihon Tantei Jimusyo", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1998, elandore,  stvbios, stvbios, stv, stv,  stv,  ROT0, "Sega", 	"Fighting Dragon Legend Elan Doree", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1999, ffreveng,  stvbios, stvbios, stv, stv,  stv,  ROT0, "Capcom", "Final Fight Revenge", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, fhboxers,  stvbios, stvbios, stv, stv,  stv,  ROT0, "Sega", 	"Funky Head Boxers", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, findlove,  stvbios, stvbios, stv, stv,  stv,  ROT0, "Daiki",	"Find Love", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, finlarch,  stvbios, stvbios, stv, stv,  stv,  ROT0, "Sega", 	"Final Arch (Japan)", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1994, gaxeduel,  stvbios, stvbios, stv, stv,  stv,  ROT0, "Sega", 	"Golden Axe - The Duel", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1998, grdforce,  stvbios, stvbios, stv, stv,  stv,  ROT0, "Success","Guardian Force", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, groovef,   stvbios, stvbios, stv, stv,  stv,  ROT0, "Atlus", 	"Power Instinct 3 - Groove On Fight", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1998, hanagumi,  stvbios, stvbios, stv, stv,  hanagumi,  ROT0, "Sega", "Hanagumi Taisen Columns - Sakura Wars", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, introdon,  stvbios, stvbios, stv, stv,  stv,  ROT0, "Sunsoft / Success", "Karaoke Quiz Intro Don Don!", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, kiwames,   stvbios, stvbios, stv, stv,  stv,  ROT0, "Athena", "Pro Mahjong Kiwame S", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1997, maruchan,  stvbios, stvbios, stv, stv,  stv,  ROT0, "Sega", 	"Maru-Chan de Goo!", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1998, myfairld,  stvbios, stvbios, stv, stv,  stv,  ROT0, "Micronet", "Virtual Mahjong 2 - My Fair Lady", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1998, othellos,  stvbios, stvbios, stv, stv,  stv,  ROT0, "Tsukuda Original",	"Othello Shiyouyo", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, pblbeach,  stvbios, stvbios, stv, stv,  stv,  ROT0, "T&E Soft","Pebble Beach - The Great Shot", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, prikura,   stvbios, stvbios, stv, stv,  stv,  ROT0, "Atlus", 	"Purikura Daisakusen", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, puyosun,   stvbios, stvbios, stv, stv,  stv,  ROT0, "Compile","Puyo Puyo Sun", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1998, rsgun,     stvbios, stvbios, stv, stv,  stv,  ROT0, "Treasure","Radiant Silvergun", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, sandor,    stvbios, stvbios, stv, stv,  stv,  ROT0, "Sega", 	"Sando-R", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, sassisu,   stvbios, stvbios, stv, stv,  stv,  ROT0, "Sega", 	"Taisen Tanto-R 'Sasshissu!'", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1998, seabass,   stvbios, stvbios, stv, stv,  stv,  ROT0, "A Wave inc. (Able license)", "Sea Bass Fishing", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, shanhigw,  stvbios, stvbios, stv, stv,  stv,  ROT0, "Sunsoft / Activision", "Shanghai - The Great Wall", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1997, shienryu,  stvbios, stvbios, stv, stv,  stv,  ROT0, "Warashi", "Shienryu", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, sleague,   stvbios, stvbios, stv, stv,  stv,  ROT0, "Sega", 	"Super Major League (US)", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, sokyugrt,  stvbios, stvbios, stv, stv,  stv,  ROT0, "Raizing", "Soukyugurentai / Terra Diver", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1998, sss,       stvbios, stvbios, stv, stv,  stv,  ROT0, "Victor / Cave / Capcom", "Steep Slope Sliders", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, suikoenb,  stvbios, stvbios, stv, stv,  stv,  ROT0, "Data East","Suikoenbu", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1998, twcup98,   stvbios, stvbios, stv, stv,  stv,  ROT0, "Tecmo", 	"Tecmo World Cup '98", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, vfkids,    stvbios, stvbios, stv, stv,  stv,  ROT0, "Sega", 	"Virtua Fighter Kids", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, vfremix,   stvbios, stvbios, stv, stv,  stv,  ROT0, "Sega", 	"Virtua Fighter Remix", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1997, vmahjong,  stvbios, stvbios, stv, stv,  stv,  ROT0, "Micronet", "Virtual Mahjong", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1997, winterht,  stvbios, stvbios, stv, stv,  stv,  ROT0, "Sega", 	"Winter Heat", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1997, znpwfv,    stvbios, stvbios, stv, stv,  stv,  ROT0, "Sega", 	"Zen Nippon Pro-Wrestling Featuring Virtua", GAME_NO_SOUND | GAME_NOT_WORKING )
-
-GAMEBX( 1999, danchih,   stvbios, stvbios, stv, stv,  stv,  ROT0, "Altron (distributed by Tecmo)", "Danchi de Hanafuda", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, mausuke,   stvbios, stvbios, stv, stv,  stv,  ROT0, "Data East","Mausuke no Ojama the World", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, batmanfr,  stvbios, stvbios, stv, stv,  stv,  ROT0, "Acclaim", 	"Batman Forever", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1998, astrass,   stvbios, stvbios, stv, stv,  stv,       ROT0, "Sunsoft",  "Astra SuperStars", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1996, bakubaku,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Baku Baku Animal", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1996, batmanfr,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Acclaim",  "Batman Forever", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1996, colmns97,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Columns 97", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1997, cotton2,   stvbios, stvbios, stv, stv,  stv,       ROT0, "Success",  "Cotton 2", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1998, cottonbm,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Success",  "Cotton Boomerang", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1999, danchih,   stvbios, stvbios, stv, stv,  stv,       ROT0, "Altron (distributed by Tecmo)", "Danchi de Hanafuda", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, decathlt,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Decathlete", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1996, diehard,   stvbios, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Die Hard Arcade (US)", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1996, dnmtdeka,  diehard, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Dynamite Deka (Japan)", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, ejihon,    stvbios, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Ejihon Tantei Jimusyo", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1998, elandore,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sai-Mate", "Fighting Dragon Legend Elan Doree", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1999, ffreveng,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Capcom",   "Final Fight Revenge", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, fhboxers,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Funky Head Boxers", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1996, findlove,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Daiki",	   "Find Love", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, finlarch,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Final Arch (Japan)", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1994, gaxeduel,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Golden Axe - The Duel", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1998, grdforce,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Success",  "Guardian Force", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1996, introdon,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sunsoft / Success", "Karaoke Quiz Intro Don Don!", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, kiwames,   stvbios, stvbios, stv, stv,  stv,       ROT0, "Athena",   "Pro Mahjong Kiwame S", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1997, maruchan,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Maru-Chan de Goo!", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, mausuke,   stvbios, stvbios, stv, stv,  stv,       ROT0, "Data East","Mausuke no Ojama the World", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1998, myfairld,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Micronet", "Virtual Mahjong 2 - My Fair Lady", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1998, othellos,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Tsukuda Original",	"Othello Shiyouyo", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, pblbeach,  stvbios, stvbios, stv, stv,  stv,       ROT0, "T&E Soft", "Pebble Beach - The Great Shot", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1996, puyosun,   stvbios, stvbios, stv, stv,  stv,       ROT0, "Compile",  "Puyo Puyo Sun", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1998, rsgun,     stvbios, stvbios, stv, stv,  stv,       ROT0, "Treasure", "Radiant Silvergun", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, sandor,    stvbios, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Sando-R", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1996, sassisu,   stvbios, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Taisen Tanto-R 'Sasshissu!'", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1998, seabass,   stvbios, stvbios, stv, stv,  stv,       ROT0, "A Wave inc. (Able license)", "Sea Bass Fishing", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, sleague,   stvbios, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Super Major League (US)", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1996, sokyugrt,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Raizing",  "Soukyugurentai / Terra Diver", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1998, sss,       stvbios, stvbios, stv, stv,  stv,       ROT0, "Victor / Cave / Capcom", "Steep Slope Sliders", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, suikoenb,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Data East","Suikoenbu", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1998, twcup98,   stvbios, stvbios, stv, stv,  stv,       ROT0, "Tecmo",    "Tecmo World Cup '98", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1996, vfkids,    stvbios, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Virtua Fighter Kids", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, vfremix,   stvbios, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Virtua Fighter Remix", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1997, vmahjong,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Micronet", "Virtual Mahjong", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1997, winterht,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Winter Heat", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1997, znpwfv,    stvbios, stvbios, stv, stv,  stv,       ROT0, "Sega", 	   "Zen Nippon Pro-Wrestling Featuring Virtua", GAME_NO_SOUND | GAME_NOT_WORKING )
 
 /* there are probably a bunch of other games (some fishing games with cd-rom,Print Club 2 etc.) */

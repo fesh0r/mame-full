@@ -183,6 +183,7 @@ enum { IPT_END=1,IPT_PORT,
 #define IPF_SENSITIVITY(percent)	((percent & 0xff) << 8)
 #define IPF_DELTA(val)				((val & 0xff) << 16)
 
+#define IP_GET_PLAYER(port) (((port)->type >> 16) & 7)
 #define IP_GET_IMPULSE(port) (((port)->type >> 8) & 0xff)
 #define IP_GET_SENSITIVITY(port) ((((port)+1)->type >> 8) & 0xff)
 #define IP_SET_SENSITIVITY(port,val) ((port)+1)->type = ((port+1)->type & 0xffff00ff)|((val&0xff)<<8)

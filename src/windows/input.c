@@ -183,10 +183,6 @@ static void init_keylist(void);
 static void init_joylist(void);
 
 
-#if WINDOW_HAS_MENU
-#define use_mouse_	use_mouse
-#define use_mouse	(use_mouse_ && !GetMenu(win_video_window))
-#endif
 
 //============================================================
 //	KEYBOARD LIST
@@ -576,10 +572,10 @@ static BOOL CALLBACK enum_joystick_callback(LPCDIDEVICEINSTANCE instance, LPVOID
 		goto cant_set_format;
 
 	// set the cooperative level
-#ifndef MESS
-	flags = DISCL_FOREGROUND | DISCL_EXCLUSIVE;
-#else
+#if HAS_WINDOW_MENU
 	flags = DISCL_BACKGROUND | DISCL_EXCLUSIVE;
+#else
+	flags = DISCL_FOREGROUND | DISCL_EXCLUSIVE;
 #endif
 	result = IDirectInputDevice_SetCooperativeLevel(joystick_device[joystick_count], win_video_window, 
 					flags);
@@ -735,7 +731,7 @@ void win_pause_input(int paused)
 			IDirectInputDevice_Acquire(keyboard_device[i]);
 
 		// acquire all our mice if active
-		if (mouse_active)
+		if (mouse_active && !win_has_menu())
 			for (i = 0; i < mouse_count && (use_mouse||use_lightgun); i++)
 				IDirectInputDevice_Acquire(mouse_device[i]);
 	}
@@ -834,7 +830,7 @@ void win_poll_input(void)
 	}
 
 	// poll all our mice if active
-	if (mouse_active)
+	if (mouse_active && !win_has_menu())
 		for (i = 0; i < mouse_count && (use_mouse||use_lightgun); i++)
 		{
 			// first poll the device
@@ -862,7 +858,7 @@ void win_poll_input(void)
 
 int win_is_mouse_captured(void)
 {
-	return (!input_paused && mouse_active && mouse_count > 0 && use_mouse);
+	return (!input_paused && mouse_active && mouse_count > 0 && use_mouse && !win_has_menu());
 }
 
 
@@ -1355,7 +1351,7 @@ void osd_analogjoy_read(int player, int analog_axis[], InputCode analogjoy_input
 	int i;
 
 	// if the mouse isn't yet active, make it so
-	if (!mouse_active && use_mouse)
+	if (!mouse_active && use_mouse && !win_has_menu())
 	{
 		mouse_active = 1;
 		win_pause_input(0);
@@ -1409,7 +1405,7 @@ void osd_lightgun_read(int player,int *deltax,int *deltay)
 	POINT point;
 
 	// if the mouse isn't yet active, make it so
-	if (!mouse_active && (use_mouse||use_lightgun))
+	if (!mouse_active && (use_mouse||use_lightgun) && !win_has_menu())
 	{
 		mouse_active = 1;
 		win_pause_input(0);
@@ -1453,7 +1449,7 @@ void osd_lightgun_read(int player,int *deltax,int *deltay)
 void osd_trak_read(int player, int *deltax, int *deltay)
 {
 	// if the mouse isn't yet active, make it so
-	if (!mouse_active && use_mouse)
+	if (!mouse_active && use_mouse && !win_has_menu())
 	{
 		mouse_active = 1;
 		win_pause_input(0);
@@ -1685,7 +1681,7 @@ void osd_customize_inputport_defaults(struct ipd *defaults)
 					seq_set_2 (&idef->seq, KEYCODE_LALT, KEYCODE_ENTER);
 				break;
 
-#if WINDOW_HAS_MENU
+#ifdef MESS
 				case IPT_OSD_2:
 					if (options.disable_normal_ui)
 					{
@@ -1694,7 +1690,8 @@ void osd_customize_inputport_defaults(struct ipd *defaults)
 						seq_set_1 (&idef->seq, KEYCODE_SCRLOCK);
 					}
 				break;
-#endif
+#endif /* MESS */
+
 				default:
 				break;
 			}
@@ -1708,13 +1705,13 @@ void osd_customize_inputport_defaults(struct ipd *defaults)
 			seq_copy(&idef->seq, &no_alt_tab_seq);
 		}
 
-#if WINDOW_HAS_MENU
+#ifdef MESS
 		if (idef->type == IPT_UI_THROTTLE)
 		{
 			static InputSeq empty_seq = SEQ_DEF_0;
 			seq_copy(&idef->seq, &empty_seq);
 		}
-#endif
+#endif /* MESS */
 
 		// find the next one
 		idef++;

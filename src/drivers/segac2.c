@@ -3,10 +3,11 @@
 	Sega System C/C2 Driver
 	driver by David Haywood and Aaron Giles
 	---------------------------------------
-	Version 0.722 - 24 Aug 2003
+	Version 0.73 - 03 Sept 2003
 
 	Latest Changes :
 	-----+-------------------------------------------------------------------------------------
+	0.73 | More of the Megaplay Bios Tests Pass (BR)
 	0.722| Improvements to Megaplay (BR) Added a few more Megatech sets but some are bad (DH)
 		 | --2 screens is going to cause problems with partial refresh and get_scanlines for
 		 | Megatech
@@ -1217,7 +1218,7 @@ READ16_HANDLER ( genesis_io_r )
 			}
 
 			return_value = (genesis_io_ram[offset] & 0x80) | return_value;
-			logerror ("reading joypad 1 , type %02x %02x\n",genesis_io_ram[offset] & 0x80, return_value &0x7f);
+//			logerror ("reading joypad 1 , type %02x %02x\n",genesis_io_ram[offset] & 0x80, return_value &0x7f);
 			if(bios_ctrl_inputs & 0x04) return_value = 0xff;
 			break;
 
@@ -1236,7 +1237,7 @@ READ16_HANDLER ( genesis_io_r )
 				return_value = (iport1 & 0x10) + (iport2 & 0x20);
 			}
 			return_value = (genesis_io_ram[offset] & 0x80) | return_value;
-			logerror ("reading joypad 2 , type %02x %02x\n",genesis_io_ram[offset] & 0x80, return_value &0x7f);
+//			logerror ("reading joypad 2 , type %02x %02x\n",genesis_io_ram[offset] & 0x80, return_value &0x7f);
 			if(bios_ctrl_inputs & 0x04) return_value = 0xff;
 			break;
 
@@ -1245,14 +1246,56 @@ READ16_HANDLER ( genesis_io_r )
 
 	}
 	return return_value | return_value << 8;
+}
 
+READ16_HANDLER ( megaplay_genesis_io_r )
+{
+	/* 8-bit only, data is mirrored in both halves */
 
+	UINT8 return_value = 0;
 
+	switch (offset)
+	{
+		case 0:
+		/* Charles MacDonald ( http://cgfm2.emuviews.com/ )
+		    D7 : Console is 1= Export (USA, Europe, etc.) 0= Domestic (Japan)
+		    D6 : Video type is 1= PAL, 0= NTSC
+		    D5 : Sega CD unit is 1= not present, 0= connected.
+		    D4 : Unused (always returns zero)
+		    D3 : Bit 3 of version number
+		    D2 : Bit 2 of version number
+		    D1 : Bit 1 of version number
+		    D0 : Bit 0 of version number
+		*/
+			return_value = 0x80; /* ? megatech is usa? */
+			break;
+
+		case 1: /* port A data (joypad 1) */
+
+			if (genesis_io_ram[offset] & 0x40) return_value = readinputport(1) & 0x7f;
+			else return_value = readinputport(2) & 0x7f;
+			return_value = (genesis_io_ram[offset] & 0x80) | return_value;
+			logerror ("reading joypad 1 , type %02x %02x\n",genesis_io_ram[offset] & 0xb0, return_value &0x7f);
+			break;
+
+		case 2: /* port B data (joypad 1) */
+
+			if (genesis_io_ram[offset] & 0x40) return_value = readinputport(3) & 0x7f;
+			else return_value = readinputport(4) & 0x7f;
+			return_value = (genesis_io_ram[offset] & 0x80) | return_value;
+			logerror ("reading joypad 2 , type %02x %02x\n",genesis_io_ram[offset] & 0xb0, return_value &0x7f);
+
+			break;
+	default:
+			return_value = genesis_io_ram[offset];
+
+	}
+	return return_value | return_value << 8;
 }
 
 WRITE16_HANDLER ( genesis_io_w )
 {
-//	logerror ("write io offset :%02x data %04x\n",offset,data);
+	logerror ("write io offset :%02x data %04x\n",offset,data);
 
 	switch (offset)
 	{
@@ -1287,14 +1330,36 @@ WRITE16_HANDLER ( genesis_io_w )
 		case 0x07: /* port C control */
 		genesis_io_ram[offset] = data;
 		break;
+
+		default:
+		genesis_io_ram[offset] = data;
 	}
 
+}
+
+static READ16_HANDLER( megaplay_instr_r )
+{
+	unsigned char* instr = memory_region(REGION_USER1);
+//	unsigned char* ram = memory_region(REGION_CPU3);
+
+	return instr[offset/2] | instr[offset/2] << 8;
 }
 
 
 static MEMORY_READ16_START( genesis_readmem )
 	{ 0x000000, 0x3fffff, MRA16_ROM },					/* Cartridge Program Rom */
 	{ 0xa10000, 0xa1001f, genesis_io_r },				/* Genesis Input */
+	{ 0xa00000, 0xa0ffff, genesis_68k_to_z80_r },
+	{ 0xc00000, 0xc0001f, segac2_vdp_r },				/* VDP Access */
+	{ 0xfe0000, 0xfeffff, MRA16_BANK3 },				/* Main Ram */
+	{ 0xff0000, 0xffffff, MRA16_RAM },					/* Main Ram */
+MEMORY_END
+
+static MEMORY_READ16_START( megaplay_genesis_readmem )
+	{ 0x000000, 0x3fffff, MRA16_ROM },					/* Cartridge Program Rom */
+//	{ 0x300000, 0x30ffff, megaplay_instr_r },           /* Cartridge info ROM */
+//	{ 0x310000, 0x3fffff, MRA16_ROM },					/* Cartridge Program Rom */
+	{ 0xa10000, 0xa1001f, megaplay_genesis_io_r },				/* Genesis Input */
 	{ 0xa00000, 0xa0ffff, genesis_68k_to_z80_r },
 	{ 0xc00000, 0xc0001f, segac2_vdp_r },				/* VDP Access */
 	{ 0xfe0000, 0xfeffff, MRA16_BANK3 },				/* Main Ram */
@@ -1468,20 +1533,11 @@ static READ_HANDLER( megatech_instr_r )
 		return 0xFF;
 }
 
-static READ_HANDLER( megaplay_instr_r )
-{
-	unsigned char* instr = memory_region(REGION_USER1);
-//	unsigned char* ram = memory_region(REGION_CPU3);
-
-	if(bios_mode == MP_GAME)
-		return instr[((offset/2) & 0x1000) + 0x4000];
-	else
-		return 0xFF;
-}
-
 unsigned char bios_ctrl[6];
 unsigned char bios_6600;
 unsigned char bios_6402;
+unsigned char bios_6403;
+unsigned char bios_6404;
 
 static READ_HANDLER( bios_ctrl_r )
 {
@@ -1511,16 +1567,18 @@ static WRITE_HANDLER( megaplay_bios_banksel_w )
 {
 	bios_bank = data;
 	bios_mode = MP_ROM;
+	logerror("BIOS: ROM bank %i selected [0x%02x]\n",bios_bank >> 6, data);
 }
 
 static READ_HANDLER( megaplay_bios_gamesel_r )
 {
-	return bios_game;
+	return bios_6403;
 }
 
 static WRITE_HANDLER( megaplay_bios_gamesel_w )
 {
-//	bios_game = data;
+	bios_6403 = data;
+	logerror("BIOS: 0x6403 write: 0x%02x\n",data);
 	bios_mode = data & 0x10;
 }
 
@@ -1528,8 +1586,11 @@ static WRITE_HANDLER( megaplay_bios_gamesel_w )
 static READ_HANDLER( bank_r )
 {
 	unsigned char* bank = memory_region(REGION_CPU3);
-	unsigned char* instr = memory_region(REGION_USER1);
+//	unsigned char* instr = memory_region(REGION_USER1);
 	unsigned char* game = memory_region(REGION_CPU1);
+
+	if(game_banksel == 0x142) // Genesis I/O
+		return megaplay_genesis_io_r((offset/2) & 0x1f, 0xffff);
 
 	if(bios_mode == MP_ROM)
 	{
@@ -1544,27 +1605,46 @@ static READ_HANDLER( bank_r )
 	}
 	else
 	{
-//		int sel = (bios_game >> 6) & 0x03;
-//		usrintf_showmessage("Reading from Game %i",sel);
-		if(game_banksel & 0x60)
+		if(game_banksel == 0x60 || game_banksel == 0x61)  /* read game info ROM */
 			if(bios_width & 0x08)
-				return instr[((game_banksel & 0x01)*0x8000 + offset)];
+				return game[((game_banksel)*0x8000 + offset)/2];
 			else
-				return instr[((game_banksel & 0x01)*0x8000 + offset)/2];
+				return game[((game_banksel)*0x8000 + offset)];
 		else
 			return game[(game_banksel*0x8000 + (offset ^ 0x01))];
 	}
 }
 
+static WRITE_HANDLER ( bank_w )
+{
+	if(game_banksel == 0x142) // Genesis I/O
+		genesis_io_w((offset/2) & 0x1f, data, 0xffff);
+	else
+		logerror("Write to bank region %i\n",game_banksel);
+}
+
 
 static READ_HANDLER( megaplay_bios_6402_r )
 {
-	return bios_6402 & 0xfe;
+	return bios_6402;// & 0xfe;
 }
 
 static WRITE_HANDLER( megaplay_bios_6402_w )
 {
 	bios_6402 = data;
+	logerror("BIOS: 0x6402 write: 0x%02x\n",data);
+}
+
+static READ_HANDLER( megaplay_bios_6404_r )
+{
+	logerror("BIOS: 0x6404 read: returned 0x%02x\n",bios_6404 | (bios_6403 & 0x10) >> 4);
+	return bios_6404 | (bios_6403 & 0x10) >> 4;
+}
+
+static WRITE_HANDLER( megaplay_bios_6404_w )
+{
+	bios_6404 = data;
+	logerror("BIOS: 0x6404 write: 0x%02x\n",data);
 }
 
 static WRITE_HANDLER( megaplay_bios_width_w )
@@ -1573,12 +1653,22 @@ static WRITE_HANDLER( megaplay_bios_width_w )
 //	usrintf_showmessage("Width write: %02x",data);
 }
 
+static READ_HANDLER( megaplay_bios_6600_r )
+{
+	return bios_6600;// & 0xfe;
+}
+
+static WRITE_HANDLER( megaplay_bios_6600_w )
+{
+	bios_6600 = data;
+	logerror("BIOS: 0x6600 write: 0x%02x\n",data);
+}
+
 static WRITE_HANDLER( megaplay_game_w )
 {
 	if(readpos == 1)
 		game_banksel = 0;
 	game_banksel |= (1 << (readpos-1)) * (data & 0x01);
-	logerror("serial banking bit write - bit %i = %i\n",readpos,(1 << (readpos-1)) * (data & 0x01));
 
 	readpos++;
 	if(readpos > 9)
@@ -1586,6 +1676,7 @@ static WRITE_HANDLER( megaplay_game_w )
 		bios_mode = MP_GAME;
 		readpos = 1;
 		usrintf_showmessage("Game bank selected: 0x%03x",game_banksel);
+		logerror("BIOS: 68K address space bank selected: 0x%03x\n",game_banksel);
 	}
 }
 
@@ -1623,14 +1714,16 @@ static MEMORY_READ_START(megaplay_bios_readmem)
  	{ 0x0000, 0x2fff, MRA_ROM },
 	{ 0x3000, 0x4fff, MRA_RAM },
 	{ 0x5000, 0x5fff, MRA_RAM },
-	{ 0x6200, 0x6200, input_port_2_r },
-	{ 0x6201, 0x6201, input_port_3_r },
-	{ 0x6400, 0x6400, input_port_0_r },
-	{ 0x6401, 0x6401, input_port_1_r },
+	{ 0x6200, 0x6200, input_port_7_r },
+	{ 0x6201, 0x6201, input_port_8_r },
+	{ 0x6400, 0x6400, input_port_5_r },
+	{ 0x6401, 0x6401, input_port_6_r },
 //	{ 0x6202, 0x6202, input_port_2_r },
 	{ 0x6203, 0x6203, megaplay_bios_banksel_r },
 	{ 0x6402, 0x6402, megaplay_bios_6402_r },
-//	{ 0x6403, 0x6403, megaplay_bios_gamesel_r },
+	{ 0x6403, 0x6403, megaplay_bios_gamesel_r },
+	{ 0x6404, 0x6404, megaplay_bios_6404_r },
+	{ 0x6600, 0x6600, megaplay_bios_6600_r },
 	{ 0x6800, 0x6fff, MRA_RAM },
 	{ 0x7000, 0x77ff, MRA_RAM },
 	{ 0x8000, 0xffff, bank_r },
@@ -1647,12 +1740,12 @@ static MEMORY_WRITE_START(megaplay_bios_writemem)
 	{ 0x6204, 0x6204, megaplay_bios_width_w },
 	{ 0x6402, 0x6402, megaplay_bios_6402_w },
 	{ 0x6403, 0x6403, megaplay_bios_gamesel_w },
-//	{ 0x6600, 0x6600, megaplay_bios_6600_w },
+	{ 0x6404, 0x6404, megaplay_bios_6404_w },
+	{ 0x6600, 0x6600, megaplay_bios_6600_w },
 	{ 0x6001, 0x67ff, MWA_RAM },
 	{ 0x6800, 0x6fff, MWA_RAM },
 	{ 0x7000, 0x77ff, MWA_RAM },
-	{ 0x8000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xffff, MWA_ROM },
+	{ 0x8000, 0xffff, bank_w },
 MEMORY_END
 
 
@@ -2607,49 +2700,54 @@ INPUT_PORTS_START( pclub ) /* Print Club Input Ports */
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
+#define GENESIS_PORTS \
+	PORT_START \
+ \
+	PORT_START	/* Player 1 Controls - part 1 */ \
+	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) \
+	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) \
+	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) \
+	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) \
+	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_BUTTON2 ) \
+	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_BUTTON3 ) \
+	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_UNUSED ) \
+	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNUSED ) \
+ \
+	PORT_START	/* Player 1 Controls - part 2 */ \
+	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_UNUSED ) \
+	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_UNUSED ) \
+	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_UNUSED ) \
+	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_UNUSED ) \
+	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) \
+	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_BUTTON4 ) \
+	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_UNUSED ) \
+	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNUSED ) \
+ \
+	PORT_START	/* Player 2 Controls - part 1 */ \
+	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2 ) \
+	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 ) \
+	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2 ) \
+	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2  ) \
+	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 ) \
+	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 ) \
+	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_UNUSED ) \
+	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNUSED ) \
+ \
+	PORT_START	/* Player 2 Controls - part 2 */ \
+	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_UNUSED ) \
+	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_UNUSED ) \
+	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_UNUSED ) \
+	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_UNUSED ) \
+	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 ) \
+	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 ) \
+	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_UNUSED ) \
+	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNUSED ) \
+
+
 INPUT_PORTS_START( genesis ) /* Genesis Input Ports */
-	PORT_START
-
-	PORT_START	/* Player 1 Controls - part 1 */
-	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
-	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
-	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
-	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
-	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNUSED )
-
-	PORT_START	/* Player 1 Controls - part 2 */
-	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_BUTTON3 )
-	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_BUTTON4 )
-	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNUSED )
-
-	PORT_START	/* Player 2 Controls - part 1 */
-	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2 )
-	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 )
-	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2 )
-	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2  )
-	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNUSED )
-
-	PORT_START	/* Player 2 Controls - part 2 */
-	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
-	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
-	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+GENESIS_PORTS
 INPUT_PORTS_END
+
 
 INPUT_PORTS_START( megatech ) /* Genesis Input Ports */
 	PORT_START
@@ -2863,6 +2961,7 @@ INPUT_PORTS_END
     PORT_DIPSETTING( 0x00, " 1 coin/1 credit" )
 
 INPUT_PORTS_START ( megaplay )
+	GENESIS_PORTS
 	MEGAPLAY_TEST
 	MEGAPLAY_COIN
 	MEGAPLAY_DSWA
@@ -2871,6 +2970,7 @@ INPUT_PORTS_START ( megaplay )
 INPUT_PORTS_END
 
 INPUT_PORTS_START ( mp_sonic )
+	GENESIS_PORTS
 	MEGAPLAY_TEST
 	MEGAPLAY_COIN
 	MEGAPLAY_DSWA
@@ -2878,13 +2978,13 @@ INPUT_PORTS_START ( mp_sonic )
 
 	PORT_START
 	// DSW C  (per game settings)
-	PORT_DIPNAME( 0x03, 0x00, "Initial Players" )
+	PORT_DIPNAME( 0x03, 0x01, "Initial Players" )
     PORT_DIPSETTING( 0x00, "4" )
     PORT_DIPSETTING( 0x01, "3" )
     PORT_DIPSETTING( 0x02, "2" )
     PORT_DIPSETTING( 0x03, "1" )
 
-	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Difficulty ) )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Difficulty ) )
     PORT_DIPSETTING( 0x00, "Hardest" )
     PORT_DIPSETTING( 0x04, "Hard" )
     PORT_DIPSETTING( 0x08, "Easy" )
@@ -2898,6 +2998,7 @@ INPUT_PORTS_START ( mp_sonic )
 INPUT_PORTS_END
 
 INPUT_PORTS_START ( mp_gaxe2 )
+	GENESIS_PORTS
 	MEGAPLAY_TEST
 	MEGAPLAY_COIN
 	MEGAPLAY_DSWA
@@ -3103,6 +3204,8 @@ static MACHINE_DRIVER_START( megaplay )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM( genesis )
+
+	MDRV_CPU_MEMORY(megaplay_genesis_readmem, genesis_writemem)
 
 	MDRV_VIDEO_START(megaplay)
 	MDRV_VIDEO_UPDATE(megaplay)
@@ -3562,7 +3665,7 @@ ROM_END
 ROM_START( mt_gng ) /* Ghouls and Ghosts (bad dump?) */
 	ROM_REGION( 0x400000, REGION_CPU1, 0 )
 	ROM_LOAD16_WORD_SWAP( "mp12605.ic1", 0x000000, 0x080000, BAD_DUMP CRC(0c6d6f25) SHA1(96c9c0e41036a23fc8e75e18ee2dad87654f200f) )
-	ROM_LOAD16_WORD_SWAP( "mpr12605.14", 0x080000, 0x020000, CRC(1066c6ab) SHA1(c30e4442732bdb38c96d780542f8550a94d127b0) )
+	ROM_LOAD16_WORD_SWAP( "mpr12605.14", 0x080000, 0x020000, BAD_DUMP CRC(1066c6ab) SHA1(c30e4442732bdb38c96d780542f8550a94d127b0) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* z80 */
 
@@ -3846,7 +3949,8 @@ ROM_START( mp_sonic ) /* Sonic */
 	ROM_REGION( 0x400000, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "ep15177.ic2", 0x000000, 0x040000, CRC(a389b03b) SHA1(8e9e1cf3dd65ddf08757f5a1ce472130c902ea2c) )
 	ROM_LOAD16_BYTE( "ep15176.ic1", 0x000001, 0x040000, CRC(d180cc21) SHA1(62805cfaaa80c1da6146dd89fc2b49d819fd4f22) )
-
+	ROM_LOAD16_BYTE( "15175-01.ic3", 0x300000, 0x08000, CRC(99246889) SHA1(184aa3b7fdedcf578c5e34edb7ed44f57f832258) )
+	ROM_LOAD16_BYTE( "15175-01.ic3", 0x300001, 0x08000, CRC(99246889) SHA1(184aa3b7fdedcf578c5e34edb7ed44f57f832258) )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* z80 */
 
 	ROM_REGION( 0x8000, REGION_USER1, 0 ) /* Game Instructions */

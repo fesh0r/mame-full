@@ -21,29 +21,28 @@ Year + Game
 
 To Do:
 
+- Priorities (see gogomile's logo).
+
 - Raster effects (level 5 interrupt is used for that). In pbancho
   they involve changing the *vertical* scroll value of the layers
   each scanline (when you are about to die, in the solo game).
   In gogomile they weave the water backgrounds and do some
-  parallactic scrolling on later levels. *partly done, could do with
-  some tweaking
+  parallactic scrolling on later levels.
 
 - ADPCM samples banking in gogomile.
 
-- The scroll values are generally wrong when flip screen is on and rasters are often incorrect
+- The scroll values are generally wrong when flip screen is on.
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static int fuuki16_raster_enable = 1; /* Enabled by default */
-
 /* Variables defined in vidhrdw: */
 
 extern data16_t *fuuki16_vram_0, *fuuki16_vram_1;
 extern data16_t *fuuki16_vram_2, *fuuki16_vram_3;
-extern data16_t *fuuki16_vregs,  *fuuki16_priority, *fuuki16_unknown;
+extern data16_t *fuuki16_vregs,  *fuuki16_unknown, *fuuki16_priority;
 
 /* Functions defined in vidhrdw: */
 
@@ -54,6 +53,7 @@ WRITE16_HANDLER( fuuki16_vram_3_w );
 
 VIDEO_START( fuuki16 );
 VIDEO_UPDATE( fuuki16 );
+PALETTE_INIT( fuuki16 );
 
 /***************************************************************************
 
@@ -69,8 +69,7 @@ static WRITE16_HANDLER( fuuki16_sound_command_w )
 	{
 		soundlatch_w(0,data & 0xff);
 		cpu_set_nmi_line(1,PULSE_LINE);
-//		cpu_spinuntil_time(TIME_IN_USEC(50));	// Allow the other CPU to reply
-		cpu_boost_interleave(0, TIME_IN_USEC(50)); // Fixes glitching in rasters
+		cpu_spinuntil_time(TIME_IN_USEC(50));	// Allow the other CPU to reply
 	}
 }
 
@@ -85,21 +84,20 @@ static MEMORY_READ16_START( fuuki16_readmem )
 	{ 0x810000, 0x810001, input_port_1_word_r		},	// P1 + P2
 	{ 0x880000, 0x880001, input_port_2_word_r		},	// 2 x DSW
 	{ 0x8c0000, 0x8c001f, MRA16_RAM					},	// Video Registers
-/**/{ 0x8d0000, 0x8d0003, MRA16_RAM, 				},	//
-/**/{ 0x8e0000, 0x8e0001, MRA16_RAM, 				},	//
 MEMORY_END
 
 static MEMORY_WRITE16_START( fuuki16_writemem )
 	{ 0x000000, 0x0fffff, MWA16_ROM							},	// ROM
 	{ 0x400000, 0x40ffff, MWA16_RAM							},	// RAM
-	{ 0x500000, 0x501fff, fuuki16_vram_0_w, &fuuki16_vram_0	},	// Layers
-	{ 0x502000, 0x503fff, fuuki16_vram_1_w, &fuuki16_vram_1	},	//
-	{ 0x504000, 0x505fff, fuuki16_vram_2_w, &fuuki16_vram_2	},	//
-	{ 0x506000, 0x507fff, fuuki16_vram_3_w, &fuuki16_vram_3	},	//
+	{ 0x500000, 0x501fff, fuuki16_vram_1_w, &fuuki16_vram_1	},	// Layers
+	{ 0x502000, 0x503fff, fuuki16_vram_0_w, &fuuki16_vram_0	},	//
+	{ 0x504000, 0x505fff, fuuki16_vram_3_w, &fuuki16_vram_3	},	//
+	{ 0x506000, 0x507fff, fuuki16_vram_2_w, &fuuki16_vram_2	},	//
 	{ 0x506000, 0x507fff, MWA16_RAM							},	//
 	{ 0x600000, 0x601fff, spriteram16_w, &spriteram16, &spriteram_size	},	// Sprites
 	{ 0x608000, 0x609fff, spriteram16_w						},	// Sprites (? Mirror ?)
-	{ 0x700000, 0x703fff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16	},	// Palette
+	{ 0x700000, 0x701fff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16	},	// Palette
+	{ 0x702000, 0x703fff, MWA16_RAM							},
 	{ 0x8c0000, 0x8c001f, MWA16_RAM, &fuuki16_vregs			},	// Video Registers
 	{ 0x8a0000, 0x8a0001, fuuki16_sound_command_w			},	// To Sound CPU
 	{ 0x8d0000, 0x8d0003, MWA16_RAM, &fuuki16_unknown		},	//
@@ -465,8 +463,8 @@ static struct GfxLayout layout_16x16x8 =
 static struct GfxDecodeInfo fuuki16_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_16x16x4, 0x400*2, 0x40 }, // [0] Sprites
-	{ REGION_GFX2, 0, &layout_16x16x4, 0x400*0, 0x40 }, // [1] Layer 0
-	{ REGION_GFX3, 0, &layout_16x16x8, 0x400*1, 0x40 }, // [2] Layer 1
+	{ REGION_GFX2, 0, &layout_16x16x8, 0x400*4, 0x40 }, // [1] Layer 0
+	{ REGION_GFX3, 0, &layout_16x16x4, 0x400*0, 0x40 }, // [2] Layer 1
 	{ REGION_GFX4, 0, &layout_8x8x4,   0x400*3, 0x40 }, // [3] Layer 2
 	{ REGION_GFX4, 0, &layout_8x8x4,   0x400*3, 0x40 }, // [4] Layer 3 (GFX4!)
 	{ -1 }
@@ -522,34 +520,23 @@ static struct OKIM6295interface fuuki16_m6295_intf =
 			It seems unused by the game.
 	Lev 3:	VBlank.
 	Lev 5:	Programmable to happen on a raster line. Used to do raster
-			effects when you die and its clearing the blocks
-			also used for water effects and titlescreen linescroll on gogomile
+			effects when you are about to die
+
 */
-#define INTERRUPTS_NUM	(256-1) // Give much better results than 256..
+#define INTERRUPTS_NUM	(256)
 INTERRUPT_GEN( fuuki16_interrupt )
 {
-	if ( cpu_getiloops() == 1 )
+	if ( cpu_getiloops() == 2 )
 		cpu_set_irq_line(0, 1, PULSE_LINE);
 
-//	if ( cpu_getiloops() == 2 ) /* Not used - Glitches hiscore table? */
-//		cpu_set_irq_line(0, 2, PULSE_LINE);
+	if ( cpu_getiloops() == 1 )
+		cpu_set_irq_line(0, 2, PULSE_LINE);
 
 	if ( cpu_getiloops() == 0 )
-	{
 		cpu_set_irq_line(0, 3, PULSE_LINE);	// VBlank IRQ
 
-		if (keyboard_pressed_memory(KEYCODE_F1))
-		{
-			fuuki16_raster_enable ^= 1;
-			usrintf_showmessage("raster effects %sabled",fuuki16_raster_enable ? "en" : "dis");
-		}
-	}
-
 	if ( (fuuki16_vregs[0x1c/2] & 0xff) == (INTERRUPTS_NUM-1 - cpu_getiloops()) )
-	{
 		cpu_set_irq_line(0, 5, PULSE_LINE);	// Raster Line IRQ
-		if(fuuki16_raster_enable) force_partial_update(cpu_getscanline());
-	}
 }
 
 static MACHINE_DRIVER_START( fuuki16 )
@@ -572,8 +559,10 @@ static MACHINE_DRIVER_START( fuuki16 )
 	MDRV_SCREEN_SIZE(320, 256)
 	MDRV_VISIBLE_AREA(0, 320-1, 0, 256-16-1)
 	MDRV_GFXDECODE(fuuki16_gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(0x800*4)
+	MDRV_PALETTE_LENGTH(0x400*4)
+	MDRV_COLORTABLE_LENGTH(0x400*4 + 0x40*256)	/* For the 8 bit layer */
 
+	MDRV_PALETTE_INIT(fuuki16)
 	MDRV_VIDEO_START(fuuki16)
 	MDRV_VIDEO_UPDATE(fuuki16)
 
@@ -643,14 +632,14 @@ ROM_START( gogomile )
 	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )	/* 16x16x4 Sprites */
 	ROM_LOAD( "lh537k2r.20", 0x000000, 0x200000, CRC(525dbf51) SHA1(f21876676cc60ed65bc86884da894b24830826bb) )
 
-	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* 16x16x4 Tiles */
-	ROM_LOAD( "lh5370h6.3", 0x000000, 0x200000, CRC(e2ca7107) SHA1(7174c2e1e2106275ad41b53af22651dca492367a) )	// x11xxxxxxxxxxxxxxxxxx = 0xFF
-
-	ROM_REGION( 0x800000, REGION_GFX3, ROMREGION_DISPOSE )	/* 16x16x8 Tiles */
+	ROM_REGION( 0x800000, REGION_GFX2, ROMREGION_DISPOSE )	/* 16x16x8 Tiles */
 	ROM_LOAD( "lh5370h8.11", 0x000000, 0x200000, CRC(9961c925) SHA1(c47b4f19f090527b3e0c04dd046aa9cd51ca0e16) )
 	ROM_LOAD( "lh5370ha.12", 0x200000, 0x200000, CRC(5f2a87de) SHA1(d7ed8f01b40aaf58126aaeee10ec7d948a144080) )
 	ROM_LOAD( "lh5370h7.15", 0x400000, 0x200000, CRC(34921680) SHA1(d9862f106caa14ea6ad925174e6bf2d542511593) )
 	ROM_LOAD( "lh5370h9.16", 0x600000, 0x200000, CRC(e0118483) SHA1(36f9068e6c81c171b4426c3794277742bbc926f5) )
+
+	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )	/* 16x16x4 Tiles */
+	ROM_LOAD( "lh5370h6.3", 0x000000, 0x200000, CRC(e2ca7107) SHA1(7174c2e1e2106275ad41b53af22651dca492367a) )	// x11xxxxxxxxxxxxxxxxxx = 0xFF
 
 	ROM_REGION( 0x200000, REGION_GFX4, ROMREGION_DISPOSE )	/* 16x16x4 Tiles */
 	ROM_LOAD( "lh5370hb.19", 0x000000, 0x200000, CRC(bd1e896f) SHA1(075f7600cbced1d285cf32fc196844720eb12671) )	// FIRST AND SECOND HALF IDENTICAL
@@ -673,14 +662,14 @@ ROM_START( gogomilj )
 	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )	/* 16x16x4 Sprites */
 	ROM_LOAD( "lh537k2r.20", 0x000000, 0x200000, CRC(525dbf51) SHA1(f21876676cc60ed65bc86884da894b24830826bb) )
 
-	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* 16x16x4 Tiles */
-	ROM_LOAD( "lh5370h6.3", 0x000000, 0x200000, CRC(e2ca7107) SHA1(7174c2e1e2106275ad41b53af22651dca492367a) )	// x11xxxxxxxxxxxxxxxxxx = 0xFF
-
-	ROM_REGION( 0x800000, REGION_GFX3, ROMREGION_DISPOSE )	/* 16x16x8 Tiles */
+	ROM_REGION( 0x800000, REGION_GFX2, ROMREGION_DISPOSE )	/* 16x16x8 Tiles */
 	ROM_LOAD( "lh5370h8.11", 0x000000, 0x200000, CRC(9961c925) SHA1(c47b4f19f090527b3e0c04dd046aa9cd51ca0e16) )
 	ROM_LOAD( "lh5370ha.12", 0x200000, 0x200000, CRC(5f2a87de) SHA1(d7ed8f01b40aaf58126aaeee10ec7d948a144080) )
 	ROM_LOAD( "lh5370h7.15", 0x400000, 0x200000, CRC(34921680) SHA1(d9862f106caa14ea6ad925174e6bf2d542511593) )
 	ROM_LOAD( "lh5370h9.16", 0x600000, 0x200000, CRC(e0118483) SHA1(36f9068e6c81c171b4426c3794277742bbc926f5) )
+
+	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )	/* 16x16x4 Tiles */
+	ROM_LOAD( "lh5370h6.3", 0x000000, 0x200000, CRC(e2ca7107) SHA1(7174c2e1e2106275ad41b53af22651dca492367a) )	// x11xxxxxxxxxxxxxxxxxx = 0xFF
 
 	ROM_REGION( 0x200000, REGION_GFX4, ROMREGION_DISPOSE )	/* 16x16x4 Tiles */
 	ROM_LOAD( "lh5370hb.19", 0x000000, 0x200000, CRC(bd1e896f) SHA1(075f7600cbced1d285cf32fc196844720eb12671) )	// FIRST AND SECOND HALF IDENTICAL
@@ -737,12 +726,12 @@ ROM_START( pbancho )
 	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )	/* 16x16x4 Sprites */
 	ROM_LOAD( "rom20.58", 0x000000, 0x200000, CRC(4dad0a2e) SHA1(a4f70557503110a5457b9096a79a5f249095fa55) )
 
-	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* 16x16x4 Tiles */
-	ROM_LOAD( "rom3.60",  0x000000, 0x200000, CRC(a50a3c1b) SHA1(a2b30f9f83f5dc2e069d7559aefbda9929fc640c) )
-
-	ROM_REGION( 0x400000, REGION_GFX3, ROMREGION_DISPOSE )	/* 16x16x8 Tiles */
+	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE )	/* 16x16x8 Tiles */
 	ROM_LOAD( "rom11.61", 0x000000, 0x200000, CRC(7f1213b9) SHA1(f8d6432b270c4d0954602e430ddd26841eb05656) )
 	ROM_LOAD( "rom15.59", 0x200000, 0x200000, CRC(b83dcb70) SHA1(b0b9df451535d85612fa095b4f694cf2e7930bca) )
+
+	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )	/* 16x16x4 Tiles */
+	ROM_LOAD( "rom3.60",  0x000000, 0x200000, CRC(a50a3c1b) SHA1(a2b30f9f83f5dc2e069d7559aefbda9929fc640c) )
 
 	ROM_REGION( 0x200000, REGION_GFX4, ROMREGION_DISPOSE )	/* 16x16x4 Tiles */
 	ROM_LOAD( "rom3.60",  0x000000, 0x200000, CRC(a50a3c1b) SHA1(a2b30f9f83f5dc2e069d7559aefbda9929fc640c) )	// ?maybe?
@@ -761,6 +750,6 @@ ROM_END
 
 ***************************************************************************/
 
-GAMEX(1995, gogomile, 0,        fuuki16, gogomile, 0, ROT0, "Fuuki", "Go Go! Mile Smile",          GAME_IMPERFECT_SOUND )
-GAMEX(1995, gogomilj, gogomile, fuuki16, gogomilj, 0, ROT0, "Fuuki", "Susume! Mile Smile (Japan)", GAME_IMPERFECT_SOUND )
-GAME( 1996, pbancho,  0,        fuuki16, pbancho,  0, ROT0, "Fuuki", "Gyakuten!! Puzzle Bancho (Japan)")
+GAMEX( 1995, gogomile, 0,        fuuki16, gogomile, 0, ROT0, "Fuuki", "Go Go! Mile Smile",                GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1995, gogomilj, gogomile, fuuki16, gogomilj, 0, ROT0, "Fuuki", "Susume! Mile Smile (Japan)",       GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1996, pbancho,  0,        fuuki16, pbancho,  0, ROT0, "Fuuki", "Gyakuten!! Puzzle Bancho (Japan)", GAME_IMPERFECT_GRAPHICS )
