@@ -524,23 +524,26 @@ void do_cd_command(void){
 				//end data transfer
 				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 
-				UINT32 count;
+				
+				{
+					UINT32 count;
 
-				switch(CD_trans_type){
-				case -1:	count = 0xffffff; break;			// no transfer
-				case 0:	count = (CD_data_count + 1) >> 1; break;	// data transfer
-				default:	count = (CD_info_count + 1) >> 1; break;	// info transfer
+					switch(CD_trans_type){
+					case -1:	count = 0xffffff; break;			// no transfer
+					case 0:	count = (CD_data_count + 1) >> 1; break;	// data transfer
+					default:	count = (CD_info_count + 1) >> 1; break;	// info transfer
+					}
+
+					CD_hirq |= HIRQ_CMOK;
+
+					if(count && count != 0xffffff) // not sure ...
+						CD_hirq |= HIRQ_DRDY;
+
+					CR1 = (CD_status << 8) | (count >> 16);
+					CR2 = count;
+					CR3 = 0;
+					CR4 = 0;
 				}
-
-				CD_hirq |= HIRQ_CMOK;
-
-				if(count && count != 0xffffff) // not sure ...
-					CD_hirq |= HIRQ_DRDY;
-
-				CR1 = (CD_status << 8) | (count >> 16);
-				CR2 = count;
-				CR3 = 0;
-				CR4 = 0;
 
 				break;
 		case 0x10:
@@ -549,152 +552,154 @@ void do_cd_command(void){
 
 				// sthief: must be rewritten!
 
-				UINT8 pm; // play mode
+				{
+					UINT8 pm; // play mode
 
-				pm = (CR3 >> 8);
+					pm = (CR3 >> 8);
 
-				if((CR1 & 0x80) != (CR3 & 0x80)){
+					if((CR1 & 0x80) != (CR3 & 0x80)){
 
-				}
-
-				if((CR1 & 0xff) == 0xff){
-
-					// resume
-					// bad!
-
-					logerror("play : resume , track=%i fad=%i\n", CD_cur_track, CD_cur_fad);
-
-					CD_status = CDB_STAT_PLAY;
-					CD_flag = (CD_cur_ctrl & 0x40) ? CDB_FLAG_CDROM : 0;
-
-					CD_hirq |= HIRQ_CMOK;
-
-					CD_hirq &= ~HIRQ_SCDQ;
-					CD_hirq &= ~HIRQ_CSCT;
-					CD_hirq &= ~HIRQ_PEND;
-					CD_hirq &= ~HIRQ_DRDY;
-
-					if((CD_cur_fad < CD_play_fad) &&
-					   (CD_cur_fad >= (CD_play_fad + CD_play_range))){
-
-						// already out of range
-						// lacks repeat
-
-						CD_status = CDB_STAT_PAUSE;
-						CD_flag = 0;
-
-						CD_hirq |= HIRQ_PEND;
-
-					}else{
-
-						CD_play_range = (CD_toc.track[CD_cur_track].fad - CD_toc.track[CD_cur_track-1].fad);
-						CD_play_range -= 150; // 2 sec gap
 					}
 
-				}else
-				if((CR1 & 0xff) == 0x00){
+					if((CR1 & 0xff) == 0xff){
 
-					if(CR2 == 0){
+						// resume
+						// bad!
 
-						// play default
-
-						logerror("play default\n");
-						exit(1);
-
-					}else{
-
-						// play track
-
-						UINT32 tn0, idx0;
-						UINT32 tn1, idx1;
-
-						tn0 = CR2 >> 8;
-						tn1 = CR4 >> 8;
-						idx0 = CR2 & 0xff;
-						idx1 = CR4 & 0xff;
-
-						logerror("play : pm=%02x track=%i idx=%i -> track=%i idx=%i\n", pm, tn0, idx0, tn1, idx1);
-
-						if(tn1 < tn0 || (tn1 == tn0 && idx1 < idx0)){
-							logerror("ERROR: play track negative range\n");
-							exit(1);
-						}
-
-						if((pm & 0x80) == 0){
-
-							// rewind track
-
-							CD_cur_track	= tn0;
-							CD_cur_ctrl	= CD_toc.track[tn0-1].ctrl;
-							CD_cur_idx		= idx0;
-							CD_cur_fad		= CD_toc.track[tn0-1].fad;
-							CD_cur_fid		= 0;
-						}
-
-						if(CD_cur_ctrl & 0x40){
-							logerror("ERROR: play data track\n");
-							exit(1);
-						}
-
-						CD_play_fad	= CD_toc.track[CD_cur_track-1].fad;
-						CD_play_range	= CD_toc.track[tn1-1].fad - CD_toc.track[CD_cur_track-1].fad;
+						logerror("play : resume , track=%i fad=%i\n", CD_cur_track, CD_cur_fad);
 
 						CD_status = CDB_STAT_PLAY;
-						CD_flag = 0;
+						CD_flag = (CD_cur_ctrl & 0x40) ? CDB_FLAG_CDROM : 0;
+
+						CD_hirq |= HIRQ_CMOK;
 
 						CD_hirq &= ~HIRQ_SCDQ;
 						CD_hirq &= ~HIRQ_CSCT;
 						CD_hirq &= ~HIRQ_PEND;
 						CD_hirq &= ~HIRQ_DRDY;
-						CD_hirq |= HIRQ_CMOK;
-					}
 
-				}else
-				if(CR1 & 0x80){
+						if((CD_cur_fad < CD_play_fad) &&
+						   (CD_cur_fad >= (CD_play_fad + CD_play_range))){
 
-					// play fad
+							// already out of range
+							// lacks repeat
 
-					CD_play_fad	= ((CR1 & 0x7f) << 16) | CR2; // position
-					CD_play_range	= ((CR3 & 0x7f) << 16) | CR4; // length
+							CD_status = CDB_STAT_PAUSE;
+							CD_flag = 0;
 
-					if(CD_play_range == 0){
+							CD_hirq |= HIRQ_PEND;
 
-						// <PAUSE>
+						}else{
 
-						CD_status = CDB_STAT_PAUSE;
-						CD_flag = 0;
+							CD_play_range = (CD_toc.track[CD_cur_track].fad - CD_toc.track[CD_cur_track-1].fad);
+							CD_play_range -= 150; // 2 sec gap
+						}
 
-						CD_hirq &= ~HIRQ_SCDQ;
-						CD_hirq &= ~HIRQ_CSCT;
-						CD_hirq |= HIRQ_PEND;
-						CD_hirq |= HIRQ_CMOK;
+					}else
+					if((CR1 & 0xff) == 0x00){
+
+						if(CR2 == 0){
+
+							// play default
+
+							logerror("play default\n");
+							exit(1);
+
+						}else{
+
+							// play track
+
+							UINT32 tn0, idx0;
+							UINT32 tn1, idx1;
+
+							tn0 = CR2 >> 8;
+							tn1 = CR4 >> 8;
+							idx0 = CR2 & 0xff;
+							idx1 = CR4 & 0xff;
+
+							logerror("play : pm=%02x track=%i idx=%i -> track=%i idx=%i\n", pm, tn0, idx0, tn1, idx1);
+
+							if(tn1 < tn0 || (tn1 == tn0 && idx1 < idx0)){
+								logerror("ERROR: play track negative range\n");
+								exit(1);
+							}
+
+							if((pm & 0x80) == 0){
+
+								// rewind track
+
+								CD_cur_track	= tn0;
+								CD_cur_ctrl	= CD_toc.track[tn0-1].ctrl;
+								CD_cur_idx		= idx0;
+								CD_cur_fad		= CD_toc.track[tn0-1].fad;
+								CD_cur_fid		= 0;
+							}
+
+							if(CD_cur_ctrl & 0x40){
+								logerror("ERROR: play data track\n");
+								exit(1);
+							}
+
+							CD_play_fad	= CD_toc.track[CD_cur_track-1].fad;
+							CD_play_range	= CD_toc.track[tn1-1].fad - CD_toc.track[CD_cur_track-1].fad;
+
+							CD_status = CDB_STAT_PLAY;
+							CD_flag = 0;
+
+							CD_hirq &= ~HIRQ_SCDQ;
+							CD_hirq &= ~HIRQ_CSCT;
+							CD_hirq &= ~HIRQ_PEND;
+							CD_hirq &= ~HIRQ_DRDY;
+							CD_hirq |= HIRQ_CMOK;
+						}
+
+					}else
+					if(CR1 & 0x80){
+
+						// play fad
+
+						CD_play_fad	= ((CR1 & 0x7f) << 16) | CR2; // position
+						CD_play_range	= ((CR3 & 0x7f) << 16) | CR4; // length
+
+						if(CD_play_range == 0){
+
+							// <PAUSE>
+
+							CD_status = CDB_STAT_PAUSE;
+							CD_flag = 0;
+
+							CD_hirq &= ~HIRQ_SCDQ;
+							CD_hirq &= ~HIRQ_CSCT;
+							CD_hirq |= HIRQ_PEND;
+							CD_hirq |= HIRQ_CMOK;
+
+						}else{
+
+							// <PLAY>
+
+							CD_stat = CDB_STAT_PLAY;
+							CD_flag = CDB_FLAG_CDROM;
+
+							CD_hirq &= ~HIRQ_SCDQ;
+							CD_hirq &= ~HIRQ_CSCT;
+							CD_hirq &= ~HIRQ_PEND;
+							CD_hirq &= ~HIRQ_DRDY; // this must be set on PEND
+							CD_hirq |= HIRQ_CMOK;
+
+							CD_cur_fad		= CD_play_fad;
+							CD_cur_track	= cdb_find_track(CD_cur_fad);
+							CD_cur_ctrl	= CD_toc.track[CD_cur_track-1].ctrl;
+							CD_cur_idx		= CD_toc.track[CD_cur_track-1].idx;
+							CD_cur_fid		= cdb_find_file(CD_cur_fad);
+
+							CD_repeat = 0;
+						}
 
 					}else{
 
-						// <PLAY>
-
-						CD_stat = CDB_STAT_PLAY;
-						CD_flag = CDB_FLAG_CDROM;
-
-						CD_hirq &= ~HIRQ_SCDQ;
-						CD_hirq &= ~HIRQ_CSCT;
-						CD_hirq &= ~HIRQ_PEND;
-						CD_hirq &= ~HIRQ_DRDY; // this must be set on PEND
-						CD_hirq |= HIRQ_CMOK;
-
-						CD_cur_fad		= CD_play_fad;
-						CD_cur_track	= cdb_find_track(CD_cur_fad);
-						CD_cur_ctrl	= CD_toc.track[CD_cur_track-1].ctrl;
-						CD_cur_idx		= CD_toc.track[CD_cur_track-1].idx;
-						CD_cur_fid		= cdb_find_file(CD_cur_fad);
-
-						CD_repeat = 0;
+						logerror("ERROR: invalid play command\n");
+						exit(1);
 					}
-
-				}else{
-
-					logerror("ERROR: invalid play command\n");
-					exit(1);
 				}
 
 				CD_com_play = CD_com;
@@ -1045,83 +1050,85 @@ void do_cd_command(void){
 				// b1,0	unused
 				//
 				// if reset flag is zero, all selectors are completely reset
-				UINT32 rf;
+				{
+					UINT32 rf;
 
-				rf = CR1 & 0xff;
+					rf = CR1 & 0xff;
 
-				if(rf == 0){
+					if(rf == 0){
 
-				// all partitions are reset
+					// all partitions are reset
 
-				int i;
+					int i;
 
-				for(i = 0; i < CDB_SEL_NUM; i++){
-					if(rf & 0x80){ CD_filt[i].false = 0xff; }
-					if(rf & 0x40){ CD_filt[i].true = i; }
-					if(rf & 0x20){
-						CD_filt_num = 0xff;
-						CD_mpeg_filt_num = 0xff;
-					}
-					if(rf & 0x10){
-						CD_filt[i].mode = 0x00;
-						CD_filt[i].fad = 0;
-						CD_filt[i].range = 0;
-						CD_filt[i].chan = 0;
-						CD_filt[i].fid = 0;
-						CD_filt[i].sub_val = 0;
-						CD_filt[i].sub_mask = 0;
-						CD_filt[i].cod_val = 0;
-						CD_filt[i].cod_mask = 0;
-					}
-					if(rf & 0x08){ } // ?
-						if(rf & 0x04){
-							/*
-							int j;
-							for(j = 0; j < 200; j++){
-								if(CD_part[pn].sect[j] != NULL){ size?
-									memset(CD_part[pn].sect[j].data, 0xff, 2352);
-									CD_part[pn].sect[j].size = 0;
-								}
-								CD_part[pn].sect[j] = NULL;
-							}
-							*/
+					for(i = 0; i < CDB_SEL_NUM; i++){
+						if(rf & 0x80){ CD_filt[i].false = 0xff; }
+						if(rf & 0x40){ CD_filt[i].true = i; }
+						if(rf & 0x20){
+							CD_filt_num = 0xff;
+							CD_mpeg_filt_num = 0xff;
 						}
-					}
-
-				}else{
-
-					pn = CR3 >> 8;
-
-					if(pn != 0xff){
-
-						if(pn >= CDB_SEL_NUM){
-							logerror("ERROR: invalid selector\n");
-							//exit(1);
-						}
-
-						if(rf & 0x80){ CD_filt[pn].false = 0xff; }
-						if(rf & 0x40){ CD_filt[pn].true = pn; }
-						if(rf & 0x20){ }
 						if(rf & 0x10){
-							CD_filt[pn].mode = 0x00;
-							CD_filt[pn].fad = 0;
-							CD_filt[pn].range = 0;
-							CD_filt[pn].chan = 0;
-							CD_filt[pn].fid = 0;
-							CD_filt[pn].sub_val = 0;
-							CD_filt[pn].sub_mask = 0;
-							CD_filt[pn].cod_val = 0;
-							CD_filt[pn].cod_mask = 0;
+							CD_filt[i].mode = 0x00;
+							CD_filt[i].fad = 0;
+							CD_filt[i].range = 0;
+							CD_filt[i].chan = 0;
+							CD_filt[i].fid = 0;
+							CD_filt[i].sub_val = 0;
+							CD_filt[i].sub_mask = 0;
+							CD_filt[i].cod_val = 0;
+							CD_filt[i].cod_mask = 0;
 						}
-						if(rf & 0x08){ }
-						if(rf & 0x04){
-							/*
-							*/
+						if(rf & 0x08){ } // ?
+							if(rf & 0x04){
+								/*
+								int j;
+								for(j = 0; j < 200; j++){
+									if(CD_part[pn].sect[j] != NULL){ size?
+										memset(CD_part[pn].sect[j].data, 0xff, 2352);
+										CD_part[pn].sect[j].size = 0;
+									}
+									CD_part[pn].sect[j] = NULL;
+								}
+								*/
+							}
 						}
 
 					}else{
 
-						// NUL_SEL, dunno what should happen here ...
+						pn = CR3 >> 8;
+
+						if(pn != 0xff){
+
+							if(pn >= CDB_SEL_NUM){
+								logerror("ERROR: invalid selector\n");
+								//exit(1);
+							}
+
+							if(rf & 0x80){ CD_filt[pn].false = 0xff; }
+							if(rf & 0x40){ CD_filt[pn].true = pn; }
+							if(rf & 0x20){ }
+							if(rf & 0x10){
+								CD_filt[pn].mode = 0x00;
+								CD_filt[pn].fad = 0;
+								CD_filt[pn].range = 0;
+								CD_filt[pn].chan = 0;
+								CD_filt[pn].fid = 0;
+								CD_filt[pn].sub_val = 0;
+								CD_filt[pn].sub_mask = 0;
+								CD_filt[pn].cod_val = 0;
+								CD_filt[pn].cod_mask = 0;
+							}
+							if(rf & 0x08){ }
+							if(rf & 0x04){
+								/*
+								*/
+							}
+
+						}else{
+
+							// NUL_SEL, dunno what should happen here ...
+						}
 					}
 				}
 
@@ -1167,26 +1174,28 @@ void do_cd_command(void){
 				//calc actual size
 				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 
-				int ii;
+				{
+					int ii;
 
-				CD_hirq |= HIRQ_CMOK | HIRQ_ESEL;
+					CD_hirq |= HIRQ_CMOK | HIRQ_ESEL;
 
-				pn = (CR3 >> 8);
-				sp = CR2;
-				sn = CR4;
+					pn = (CR3 >> 8);
+					sp = CR2;
+					sn = CR4;
 
-				if(pn >= CDB_SEL_NUM){
-					logerror("ERROR: invalid selector\n");
-					exit(1);
+					if(pn >= CDB_SEL_NUM){
+						logerror("ERROR: invalid selector\n");
+						exit(1);
+					}
+
+					if(sp == 0xffff){ logerror("ERROR: SPOS_END on calcactualsize\n"); exit(1); }
+					if(sn == 0xffff){ logerror("ERROR: SNUM_END on calcactualsize\n"); exit(1); }
+
+					CD_actual_size = 0;
+
+					for(ii = sp; ii < (sp+sn); ii++)
+						CD_actual_size += CD_sect[ii].size;
 				}
-
-				if(sp == 0xffff){ logerror("ERROR: SPOS_END on calcactualsize\n"); exit(1); }
-				if(sn == 0xffff){ logerror("ERROR: SNUM_END on calcactualsize\n"); exit(1); }
-
-				CD_actual_size = 0;
-
-				for(ii = sp; ii < (sp+sn); ii++)
-					CD_actual_size += CD_sect[ii].size;
 
 				CD_actual_size = (CD_actual_size + 1) >> 1;
 
@@ -1213,81 +1222,83 @@ void do_cd_command(void){
 				//get sector info
 				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 
+				{
+					sect_t * s;
 
-				sect_t * s;
+					pn = CR3 >> 8;
+					sn = CR2 & 0xff;
 
-				pn = CR3 >> 8;
-				sn = CR2 & 0xff;
+					if(pn >= CDB_SEL_NUM){
+						logerror("ERROR: invalid selector\n");
+						exit(1);
+					}
 
-				if(pn >= CDB_SEL_NUM){
-					logerror("ERROR: invalid selector\n");
-					exit(1);
+					s = CD_part[pn].sect[sn];
+
+					CR1 = (CD_status << 8) | (s->fad >> 16);
+					CR2 = s->fad;
+					CR3 = (s->fid << 8) | s->chan;
+					CR4 = (s->sub << 8) | s->cod;
 				}
-
-				s = CD_part[pn].sect[sn];
-
-				CR1 = (CD_status << 8) | (s->fad >> 16);
-				CR2 = s->fad;
-				CR3 = (s->fid << 8) | s->chan;
-				CR4 = (s->sub << 8) | s->cod;
 
 				break;
 		case 0x55:
 				//execute fad search
 				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 
-				UINT32  fad;
-				UINT32 i, j, nearest = 0, fad2 = 0;
+				{
+					UINT32  fad;
+					UINT32 i, j, nearest = 0, fad2 = 0;
 
-				CD_hirq |= HIRQ_CMOK | HIRQ_ESEL;
+					CD_hirq |= HIRQ_CMOK | HIRQ_ESEL;
 
-				pn = CR3 >> 8;
-				sp = CR2;
-				fad = ((CR3 & 0xff) << 8) | CR4;
+					pn = CR3 >> 8;
+					sp = CR2;
+					fad = ((CR3 & 0xff) << 8) | CR4;
 
-				if(pn >= CDB_SEL_NUM){
-					logerror("ERROR: invalid selector\n");
-					exit(1);
-				}
-
-				if(sp >= CD_part[pn].size){
-					// SECT_SPOS_END or something ...
-					logerror("ERROR: invalid sector\n");
-					exit(1);
-				}
-
-				CDB_SEND_REPORT();
-
-				i = sp;
-				j = (sp - 1) % CD_part[pn].size;
-				while(i != j){
-
-					if(CD_part[pn].sect[i]->fad == fad){
-
-						// matching sector fad found!
-
-						nearest = i;
-						fad2 = fad;
-
-						break;
-
-					}else
-					if((CD_part[pn].sect[i]->fad < fad) &&
-					   (CD_part[pn].sect[i]->fad > nearest)){
-
-						// adjusting to nearest sector
-
-						nearest = i;
-						fad2 = CD_part[pn].sect[i]->fad;
+					if(pn >= CDB_SEL_NUM){
+						logerror("ERROR: invalid selector\n");
+						exit(1);
 					}
 
-					i = (i + 1) % CD_part[pn].size;
+					if(sp >= CD_part[pn].size){
+						// SECT_SPOS_END or something ...
+						logerror("ERROR: invalid sector\n");
+						exit(1);
+					}
+
+					CDB_SEND_REPORT();
+
+					i = sp;
+					j = (sp - 1) % CD_part[pn].size;
+					while(i != j){
+
+						if(CD_part[pn].sect[i]->fad == fad){
+
+							// matching sector fad found!
+
+							nearest = i;
+							fad2 = fad;
+
+							break;
+
+						}else
+						if((CD_part[pn].sect[i]->fad < fad) &&
+						   (CD_part[pn].sect[i]->fad > nearest)){
+
+							// adjusting to nearest sector
+
+							nearest = i;
+							fad2 = CD_part[pn].sect[i]->fad;
+						}
+
+						i = (i + 1) % CD_part[pn].size;
+					}
+
+					CD_search_pn = pn;
+					CD_search_sp = nearest;
+					CD_search_fad = fad2;
 				}
-
-				CD_search_pn = pn;
-				CD_search_sp = nearest;
-				CD_search_fad = fad2;
-
 
 				break;
 		case 0x56:
@@ -1481,90 +1492,94 @@ void do_cd_command(void){
 				//get file info
 				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 
-				UINT32 size;
-				// check if out of scope
+				{
+					UINT32 size;
+					// check if out of scope
 
-				fid = (CR3 << 16) | CR4;
+					fid = (CR3 << 16) | CR4;
 
-				if(fid >= 254){
+					if(fid >= 254){
 
-					size = 254 * 12;
+						size = 254 * 12;
 
-					// obtain "all-files-in-scope" 's info (queued)
-					// needs file-scope emulation though
+						// obtain "all-files-in-scope" 's info (queued)
+						// needs file-scope emulation though
 
-					logerror("ERROR: getfileinfo all-files-in-scope\n");
-					exit(1);
+						logerror("ERROR: getfileinfo all-files-in-scope\n");
+						exit(1);
 
-				}else{
+					}else{
 
-					cdb_inject_file_info(fid, cdb_sat_file_info);
+						cdb_inject_file_info(fid, cdb_sat_file_info);
 
-					size = 12;
+						size = 12;
+					}
+
+					CD_hirq |= HIRQ_CMOK | HIRQ_DRDY;
+
+					CR1 = (CD_status << 8);
+					CR2 = (size + 1) >> 1;
+					CR3 = 0;
+					CR4 = 0;
+
+					CD_info_ptr	= cdb_sat_file_info;
+					CD_info_size	= size;
+					CD_info_count	= 0;
+
+					CD_trans_type	= 1; // INFO
 				}
-
-				CD_hirq |= HIRQ_CMOK | HIRQ_DRDY;
-
-				CR1 = (CD_status << 8);
-				CR2 = (size + 1) >> 1;
-				CR3 = 0;
-				CR4 = 0;
-
-				CD_info_ptr	= cdb_sat_file_info;
-				CD_info_size	= size;
-				CD_info_count	= 0;
-
-				CD_trans_type	= 1; // INFO
 
 				break;
 		case 0x74:
 				//read file
 				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 
-				UINT32 off;
+				{
+					UINT32 off;
 
-				CD_com_play = CD_com;
+					CD_com_play = CD_com;
 
-				fn = (CR3 >> 8);
-				fid = ((CR3 & 0xff) << 16) | CR4;
-				off = ((CR1 & 0xff) << 16) | CR2;
+					fn = (CR3 >> 8);
+					fid = ((CR3 & 0xff) << 16) | CR4;
+					off = ((CR1 & 0xff) << 16) | CR2;
 
-				if(fn >= CDB_SEL_NUM){
-					logerror("ERROR: invalid selector\n");
-					exit(1);
+					if(fn >= CDB_SEL_NUM){
+						logerror("ERROR: invalid selector\n");
+						exit(1);
+					}
+
+					if(fid >= CD_file_num+1){
+						logerror("ERROR: invalid file id (fid=%i file num=%i)\n", fid, CD_file_num);
+						exit(1);
+					}
+
+					if(CD_file[fid].attr & 0x02){
+						logerror("ERROR: file id %i is a directory\n", fid);
+						exit(1);
+					}
+
+					CD_play_fad	= CD_file[fid].fad + off;
+					CD_play_range	= ((CD_file[fid].size + 2047) / 2048) - off;
+
+					CD_stat = CDB_STAT_PLAY;
+					CD_flag = CD_FLAG_CDROM;
+
+					CD_hirq &= ~HIRQ_SCDQ;
+					CD_hirq &= ~HIRQ_CSCT;
+					CD_hirq &= ~HIRQ_PEND;
+					CD_hirq |= HIRQ_EFLS;
+					CD_hirq |= HIRQ_CMOK;
+
+					CD_cur_fad		= CD_play_fad;
+					CD_cur_track	= cdb_find_track(CD_play_fad);
+					CD_cur_ctrl	= CD_toc.track[CD_cur_track-1].ctrl;
+					CD_cur_idx		= CD_toc.track[CD_cur_track-1].idx;
+					CD_cur_fid		= fid;
+
+					CD_repeat = 0;
+
+					CDB_SEND_REPORT();
 				}
-
-				if(fid >= CD_file_num+1){
-					logerror("ERROR: invalid file id (fid=%i file num=%i)\n", fid, CD_file_num);
-					exit(1);
-				}
-
-				if(CD_file[fid].attr & 0x02){
-					logerror("ERROR: file id %i is a directory\n", fid);
-					exit(1);
-				}
-
-				CD_play_fad	= CD_file[fid].fad + off;
-				CD_play_range	= ((CD_file[fid].size + 2047) / 2048) - off;
-
-				CD_stat = CDB_STAT_PLAY;
-				CD_flag = CD_FLAG_CDROM;
-
-				CD_hirq &= ~HIRQ_SCDQ;
-				CD_hirq &= ~HIRQ_CSCT;
-				CD_hirq &= ~HIRQ_PEND;
-				CD_hirq |= HIRQ_EFLS;
-				CD_hirq |= HIRQ_CMOK;
-
-				CD_cur_fad		= CD_play_fad;
-				CD_cur_track	= cdb_find_track(CD_play_fad);
-				CD_cur_ctrl	= CD_toc.track[CD_cur_track-1].ctrl;
-				CD_cur_idx		= CD_toc.track[CD_cur_track-1].idx;
-				CD_cur_fid		= fid;
-
-				CD_repeat = 0;
-
-				CDB_SEND_REPORT();
 
 				break;
 		case 0x75:
@@ -1625,8 +1640,8 @@ void do_cd_command(void){
 
 static READ32_HANDLER ( cdregister_r ){
 
-	offset=offset*4;
 	UINT16 d;
+	offset=offset*4;
 
 	//logerror("read from cd block offset=%08x\n", offset);
 	switch(offset){
@@ -1917,9 +1932,9 @@ static UINT8 stv_SMPC_r8 (int offset)
 static void stv_SMPC_w8 (int offset, UINT8 data)
 {
 //	logerror ("8-bit SMPC Write to Offset %02x with Data %02x\n", offset, data);
-	smpc_ram[offset] = data;
 	time_t ltime;
 	struct tm *today;
+	smpc_ram[offset] = data;
 	time(&ltime);
 	today = localtime(&ltime);
 	if(offset == 0x75)
@@ -2278,7 +2293,7 @@ static UINT8 port_ad[] =
 	0xcc,0xb2,0x99,0x7f,0x66,0x4c,0x33,0x19
 };
 
-UINT8 port_sel,mux_data;
+static UINT8 port_sel,mux_data;
 
 #define HI_WORD_ACCESS (mem_mask & 0x00ff0000) == 0
 #define LO_WORD_ACCESS (mem_mask & 0x000000ff) == 0
@@ -4181,10 +4196,10 @@ DRIVER_INIT ( stv )
 {
 	time_t ltime;
 	struct tm *today;
+	unsigned char *ROM = memory_region(REGION_USER1);
 	time(&ltime);
 	today = localtime(&ltime);
 
-	unsigned char *ROM = memory_region(REGION_USER1);
 	cpu_setbank(1,&ROM[0x000000]);
 
 	/* we allocate the memory here so its easier to share between cpus */
