@@ -308,7 +308,7 @@ static struct MemoryReadAddress cps1_readmem[] =
 	{ 0x800052, 0x800055, forgottn_dial_0_r }, /* forgotten worlds */
 	{ 0x80005a, 0x80005d, forgottn_dial_1_r }, /* forgotten worlds */
 	{ 0x800176, 0x800177, cps1_input2_r }, /* Extra input ports */
-	{ 0x8001fc, 0x8001fc, cps1_input2_r }, /* Input ports (SF Rev E) */
+	{ 0x8001fc, 0x8001fd, cps1_input2_r }, /* Input ports (SF Rev E) */
 	{ 0x800100, 0x8001ff, cps1_output_r },   /* Output ports */
 	{ 0x900000, 0x92ffff, MRA_BANK3 },	/* SF2CE executes code from here */
 	{ 0xf0e000, 0xf0efff, cps1_protection_ram_r }, /* Slammasters protection */
