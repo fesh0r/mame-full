@@ -29,6 +29,8 @@ TODO :
 	00c0-00ee: 913 VDT
 	0100-013e: 913 VDT #2
 	0140-017e: 913 VDT #3
+	1f00-1f1e: CRU expander #1 interrupt register
+	1f20-1f3e: CRU expander #2 interrupt register
 
 
 	TPCS map:
@@ -53,8 +55,12 @@ TODO :
 
 #include "driver.h"
 #include "cpu/tms9900/tms9900.h"
-#include "machine/mt3200.h"
+#include "machine/990_hd.h"
+#include "machine/990_tap.h"
 #include "vidhrdw/911_vdt.h"
+
+/* ckon_state: 1 if line clock active (RTCLR flip-flop on schematics - SMI sheet 4) */
+static char ckon_state;
 
 static UINT16 intlines;
 
@@ -81,6 +87,12 @@ static void set_int_line(int line, int state)
 		cpu_set_irq_line(0, 0, CLEAR_LINE);
 }
 
+
+static void set_int9(int state)
+{
+	set_int_line(9, state);
+}
+
 static void set_int10(int state)
 {
 	set_int_line(10, state);
@@ -98,7 +110,8 @@ static void ti990_10_init_machine(void)
 
 	intlines = 0;
 
-	mt3200_reset();
+	ti990_tpc_init(set_int9);
+	ti990_hdc_init();
 }
 
 static void ti990_10_stop_machine(void)
@@ -110,7 +123,34 @@ static int ti990_10_vblank_interrupt(void)
 {
 	vdt911_keyboard(0);
 
+	if (ckon_state)
+		set_int_line(5, 1);
+
 	return ignore_interrupt();
+}
+
+/*static void idle_callback(int state)
+{
+}*/
+
+static void rset_callback(void)
+{
+	ckon_state = 0;
+	/* ... */
+}
+
+static void lrex_callback(void)
+{
+	/* right??? */
+	cpu_set_nmi_line(0, ASSERT_LINE);
+	timer_set(TIME_IN_MSEC(100), 0, clear_load);
+}
+
+static void ckon_ckof_callback(int state)
+{
+	ckon_state = state;
+	if (! ckon_state)
+		set_int_line(5, 0);
 }
 
 /*
@@ -204,9 +244,9 @@ static MEMORY_READ16_START (ti990_10_readmem)
 
 	{ 0x000000, 0x0fffff, MRA16_RAM },		/* let's say we have 1MB of RAM */
 	{ 0x100000, 0x1ff7ff, MRA16_NOP },		/* free TILINE space */
-	{ 0x1ff800, 0x1ff81f, MRA16_NOP },		/* disk controller TPCS - not implemented yet */
+	{ 0x1ff800, 0x1ff81f, ti990_hdc_r },	/* disk controller TPCS */
 	{ 0x1ff820, 0x1ff87f, MRA16_NOP },		/* free TPCS */
-	{ 0x1ff880, 0x1ff89f, mt3200_r },		/* tape controller TPCS */
+	{ 0x1ff880, 0x1ff89f, ti990_tpc_r },	/* tape controller TPCS */
 	{ 0x1ff8a0, 0x1ffbff, MRA16_NOP },		/* free TPCS */
 	{ 0x1ffc00, 0x1fffff, MRA16_ROM },		/* LOAD ROM */
 
@@ -216,9 +256,9 @@ static MEMORY_WRITE16_START (ti990_10_writemem)
 
 	{ 0x000000, 0x0fffff, MWA16_RAM },		/* let's say we have 1MB of RAM */
 	{ 0x100000, 0x1ff7ff, MWA16_NOP },		/* free TILINE space */
-	{ 0x1ff800, 0x1ff81f, MWA16_NOP },		/* disk controller TPCS - not implemented yet */
+	{ 0x1ff800, 0x1ff81f, ti990_hdc_w },	/* disk controller TPCS */
 	{ 0x1ff820, 0x1ff87f, MWA16_NOP },		/* free TPCS */
-	{ 0x1ff880, 0x1ff89f, mt3200_w },		/* tape controller TPCS */
+	{ 0x1ff880, 0x1ff89f, ti990_tpc_w },	/* tape controller TPCS */
 	{ 0x1ff8a0, 0x1ffbff, MWA16_NOP },		/* free TPCS */
 	{ 0x1ffc00, 0x1fffff, MWA16_ROM },		/* LOAD ROM */
 
@@ -249,6 +289,14 @@ static PORT_READ16_START ( ti990_10_readport )
 
 PORT_END
 
+ti990_10reset_param reset_params =
+{
+	/*idle_callback*/NULL,
+	rset_callback,
+	lrex_callback,
+	ckon_ckof_callback
+};
+
 static struct MachineDriver machine_driver_ti990_10 =
 {
 	/* basic machine hardware */
@@ -259,7 +307,7 @@ static struct MachineDriver machine_driver_ti990_10 =
 			ti990_10_readmem, ti990_10_writemem, ti990_10_readport, ti990_10_writeport,
 			ti990_10_vblank_interrupt, 1,
 			0, 0,
-			0
+			&reset_params
 		},
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration */
@@ -269,8 +317,8 @@ static struct MachineDriver machine_driver_ti990_10 =
 
 	/* video hardware - single 911 vdt display */
 	560,						/* screen width */
-	420,						/* screen height */
-	{ 0, 560-1, 0, 250-1},		/* visible_area */
+	280,						/* screen height pixel */
+	{ 0, 560-1, 0, /*250*/280-1},		/* visible_area (pixel aspect ratio is approx. 2:3) */
 	vdt911_gfxdecodeinfo,		/* graphics decode info */
 	vdt911_palette_size,		/* palette is 3*total_colors bytes long */
 	vdt911_colortable_size,		/* length in shorts of the color lookup table */
@@ -348,15 +396,35 @@ static void init_ti990_10(void)
 
 static const struct IODevice io_ti990_10[] =
 {
-	/* tape reader - only IO device we support */
+	/* hard disk */
+	{
+		IO_CASSETTE,			/* type */
+		2,						/* count */
+		"hd\0",					/* file extensions */
+		IO_RESET_NONE,			/* reset if file changed */
+		0,
+		ti990_hd_init,			/* init */
+		ti990_hd_exit,			/* exit */
+		NULL,					/* info */
+		NULL,					/* open */
+		NULL,					/* close */
+		NULL,					/* status */
+		NULL,					/* seek */
+		NULL,					/* tell */
+		NULL,					/* input */
+		NULL,					/* output */
+		NULL,					/* input_chunk */
+		NULL					/* output_chunk */
+	},
+	/* tape reader */
 	{
 		IO_CASSETTE,			/* type */
 		2,						/* count */
 		"tap\0",				/* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
 		0,
-		mt3200_tape_init,		/* init */
-		mt3200_tape_exit,		/* exit */
+		ti990_tape_init,		/* init */
+		ti990_tape_exit,		/* exit */
 		NULL,					/* info */
 		NULL,					/* open */
 		NULL,					/* close */
