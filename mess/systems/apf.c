@@ -443,24 +443,6 @@ WRITE_HANDLER(serial_w)
 	logerror("serial w %04x %04x\n",offset,data);
 }
 
-/* 256 bytes per sector, single sided, single density, 40 track  */
-int apfimag_floppy_init(int id)
-{
-	if (device_filename(IO_FLOPPY, id)==NULL)
-		return INIT_PASS;
-
-	if (strlen(device_filename(IO_FLOPPY, id))==0)
-		return INIT_PASS;
-
-	if (basicdsk_floppy_init(id)==INIT_PASS)
-	{
-		basicdsk_set_geometry(id, 40, 1, 8, 256, 1, 0);
-		return INIT_PASS;
-	}
-
-	return INIT_FAIL;
-}
-
 static WRITE_HANDLER(apf_wd179x_command_w)
 {
 	wd179x_command_w(offset,~data);
@@ -882,7 +864,7 @@ static const struct IODevice io_apfm1000[] =
 
 static const struct IODevice io_apfimag[] =
 {
-	IO_CASSETTE_WAVE(1,"wav\0",NULL,apf_cassette_init,apf_cassette_exit),
+	IO_CASSETTE_WAVE(1,"apt\0wav\0",NULL,apf_cassette_init,apf_cassette_exit),
 	{
 		IO_FLOPPY,					/* type */
 		2,							/* count */
