@@ -599,7 +599,6 @@ static opcodeinfo pg3opcodes[] =
 	{ 0xF6,3,"LDF",     EXT, EA_UINT8, EA_MEM_RD,    6},
 	{ 0xF7,3,"STF",     EXT, EA_UINT8, EA_MEM_WR,    6},
 	{ 0xFB,3,"ADDF",    EXT, EA_UINT8, EA_MEM_RD,    6},
-	{ 0xFC,0,"EMUDBG",  INH, 0,        0,            0},
 
 };
 

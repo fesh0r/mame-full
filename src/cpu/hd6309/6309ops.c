@@ -5376,15 +5376,6 @@ INLINE void sts_ex( void )
 	WM16(EAD,&pS);
 }
 
-/* $11fc Emulation debug (emu_dbg) */
-INLINE void emu_dbg( void )
-{
-#ifdef MAME_DEBUG
-	extern int debug_key_pressed;
-	debug_key_pressed = 1;
-#endif
-}
-
 /* $10xx opcodes */
 INLINE void pref10( void )
 {
@@ -5637,7 +5628,6 @@ INLINE void pref11( void )
 		case 0xf6: ldf_ex();		break;
 		case 0xf7: stf_ex();		break;
 		case 0xfb: addf_ex();		break;
-		case 0xfc: emu_dbg();		break;
 		
 		default:   IIError();		break;
 	}

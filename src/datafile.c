@@ -460,10 +460,7 @@ static int index_datafile (struct tDatafileIndex **_index)
                                 while (!done && TOKEN_SYMBOL == token)
                                 {
 									int game_index;
-									char *p;
-									for (p = s; *p; p++)
-										*p = tolower(*p);
-
+									strlwr(s);
 									game_index = GetGameNameIndex(s);
 									if (game_index >= 0)
 									{

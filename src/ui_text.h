@@ -41,17 +41,6 @@ enum
 	UI_vectorintensity,
 	UI_overclock,
 	UI_allcpus,
-	UI_palette,
-	UI_clut,
-	UI_gfxset,
-	UI_color,
-	UI_code_up,
-	UI_tilemap,
-	UI_orient_vert,
-	UI_orient_horz,
-	UI_pix_asp_rat,
-	UI_colors,
-	UI_sound_cmd,
 	UI_historymissing,
 
 	/* special characters */
@@ -193,14 +182,6 @@ enum
 	UI_hex,
 	UI_decimal,
 	UI_binary,
-
-	/* save state stuff */
-	UI_select_save,
-	UI_select_load,
-	UI_save_to,
-	UI_load_from,
-	UI_save_canc,
-	UI_load_canc,
 
 	/* search stuff */
 	UI_search_lives,

@@ -49,12 +49,6 @@
 #include "help.h"
 #include "resource.hm"
 
-#ifdef _MSC_VER
-#if _MSC_VER > 1200
-#define HAS_DUMMYUNIONNAME
-#endif
-#endif
-
 /***************************************************************
  * Imported function prototypes
  ***************************************************************/

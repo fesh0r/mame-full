@@ -1211,7 +1211,9 @@ static void showcharset(struct mame_bitmap *bitmap)
 				int crotwidth = (Machine->ui_orientation & ORIENTATION_SWAP_XY) ? Machine->gfx[bank]->height : Machine->gfx[bank]->width;
 				int crotheight = (Machine->ui_orientation & ORIENTATION_SWAP_XY) ? Machine->gfx[bank]->width : Machine->gfx[bank]->height;
 				cpx = uirotwidth / crotwidth;
+				if (cpx == 0) cpx = 1;
 				cpy = (uirotheight - uirotcharheight) / crotheight;
+				if (cpy == 0) cpy = 1;
 				skip_chars = cpx * cpy;
 				/*if (changed) -- temporary */
 				{
@@ -2825,11 +2827,7 @@ static int displayhistory (struct mame_bitmap *bitmap, int selected)
 		if (buf)
 		{
 			/* try to load entry */
-			#ifndef MESS
-			if (load_driver_history (Machine->gamedrv, buf, 8192) == 0)
-			#else
 			if (load_driver_history (Machine->gamedrv, buf, 200*1024) == 0)
-			#endif
 			{
 				scroll = 0;
 				wordwrap_text_buffer (buf, maxcols);

@@ -97,8 +97,8 @@ EMULATORGUI = $(GUINAME)$(EXE)
 DEFS = \
 	-DWIN32 \
 	-D_WINDOWS \
-	-DM_PI=3.1415926534 \
-	-DPI=3.1415926534 \
+	-DNONAMELESSUNION \
+	-DHAS_DUMMYUNIONNAME=1 \
 	-DINLINE='static __inline' \
 	-Dinline=__inline \
 	-D__inline__=__inline \

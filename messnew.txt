@@ -1,4 +1,4 @@
-0.64.1
+0.65
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
@@ -10,32 +10,5 @@ System Driver Changes:
 
 Source Changes:
 ---------------
-(none)
-
-0.64
-
-LICENSE CHANGE WARNING:
-We are considering changing distribution license, switching to GPL for the
-whole project and LGPL for some CPU and sound cores.
-If you contributed code to MESS and are against this change, now is the
-right time to let us know.
-
-New System Drivers Supported (in no particular order):
-------------------------------------------------------
-(none)
-
-System Driver Changes:
-----------------------
-- [SNES] SRAM is now saved/restored correctly. Allow DMA registers to be read.
-  More colour addition/subtraction improvements. Fixed the palette not updating
-  in some situations. Improved fixed-colour support. Fixed object drawing at
-  the left and top edges. Added support for clip windows. [Anthony Kruize]
-
-- [SNESPAL] Now informs carts that it's a PAL system. Corrected maximum line
-  count. [Anthony Kruize]
-
-Source Changes:
----------------
-- The core is based on MAME 0.64.  This incorporates all features of the 
+- The core is based on MAME 0.65.  This incorporates all features of the 
   update to this core.  [MAME team]
-

@@ -56,17 +56,6 @@ const char * default_text[] =
 	"Vector Intensity",
 	"Overclock",
 	"ALL CPUS",
-	"PALETTE",
-	"CLUT",
-	"GFXSET",
-	"COLOR",
-	"CODE",
-	"TILEMAP",
-	"V",
-	"H",
-	"pixel aspect ratio",
-	"colors",
-	"sound cmd",
 #ifndef MESS
 	"History not available",
 #else
@@ -227,14 +216,6 @@ const char * default_text[] =
 	"Hex",
 	"Decimal",
 	"Binary",
-
-	/* save state */
-	"Select position to save to",
-	"Select position to load from",
-	"Save to position",
-	"Load from position",
-	"Save cancelled",
-	"Load cancelled",
 
 	/* searching */
 	"Lives (or another value)",

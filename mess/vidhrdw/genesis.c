@@ -139,17 +139,17 @@ short dirty_attribute_b[16384];
 char *tile_changed_1 = NULL, *tile_changed_2 = NULL;
 
 struct GfxElement scroll_element =
-	{
-		8, 8,
-		0,
-		2048,
-      0,
-		16,      /* something wrong */
-		0,
-      0,
-		64,
-      0
-	};
+{
+	8, 8,
+	0,
+	2048,
+	16,      /* something wrong */
+	0,
+	0,
+	0,
+	64,
+	0
+};
 
 typedef struct
 {
