@@ -842,7 +842,7 @@ PORT_BIT ( 0x04, 0x04,	 IPT_UNUSED ) // lpt 1 on motherboard
 	PORT_BIT( 0x02, 0x02,	IPT_UNUSED ) /* no turbo switch */
 	PORT_BIT( 0x01, 0x01,	IPT_UNUSED )
 
-	AMSTRAD_KEYBOARD
+	PORT_INCLUDE( amstrad_keyboard )	/* IN4 - IN14 */
 
 	PORT_INCLUDE( pc_joystick_none )
 
@@ -973,7 +973,7 @@ PORT_BIT ( 0x04, 0x04,	 IPT_UNUSED ) // lpt 1 on motherboard
 	PORT_BIT( 0x02, 0x02,	IPT_UNUSED ) /* no turbo switch */
 	PORT_BIT( 0x01, 0x01,	IPT_UNUSED )
 
-	AMSTRAD_KEYBOARD
+	PORT_INCLUDE( amstrad_keyboard )	/* IN4 - IN14 */
 
 //	PORT_INCLUDE( pc_mouse_microsoft )	/* IN12 - IN14 */
 
