@@ -105,8 +105,9 @@ static void coco3_pia1_firq_b(int state);
 #define LOG_INT_MASKING	0
 #define LOG_INT_TMR		0
 #define LOG_INT_COCO3	0
-#define LOG_GIME		1
+#define LOG_GIME		0
 #define LOG_MMU			0
+#define LOG_OS9         0
 
 #define COCO_CPU_SPEED	(TIME_IN_HZ(894886))
 
@@ -1852,6 +1853,178 @@ void coco3_init_machine(void)
 void dragon_stop_machine(void)
 {
 }
+
+/***************************************************************************
+  OS9 Syscalls (This is a helper not enabled by default to aid in logging
+****************************************************************************/
+
+#if LOG_OS9
+
+static const char *os9syscalls[] = {
+	"F$Link",          /* Link to Module */
+	"F$Load",          /* Load Module from File */
+	"F$UnLink",        /* Unlink Module */
+	"F$Fork",          /* Start New Process */
+	"F$Wait",          /* Wait for Child Process to Die */
+	"F$Chain",         /* Chain Process to New Module */
+	"F$Exit",          /* Terminate Process */
+	"F$Mem",           /* Set Memory Size */
+	"F$Send",          /* Send Signal to Process */
+	"F$Icpt",          /* Set Signal Intercept */
+	"F$Sleep",         /* Suspend Process */
+	"F$SSpd",          /* Suspend Process */
+	"F$ID",            /* Return Process ID */
+	"F$SPrior",        /* Set Process Priority */
+	"F$SSWI",          /* Set Software Interrupt */
+	"F$PErr",          /* Print Error */
+	"F$PrsNam",        /* Parse Pathlist Name */
+	"F$CmpNam",        /* Compare Two Names */
+	"F$SchBit",        /* Search Bit Map */
+	"F$AllBit",        /* Allocate in Bit Map */
+	"F$DelBit",        /* Deallocate in Bit Map */
+	"F$Time",          /* Get Current Time */
+	"F$STime",         /* Set Current Time */
+	"F$CRC",           /* Generate CRC */
+	"F$GPrDsc",        /* get Process Descriptor copy */
+	"F$GBlkMp",        /* get System Block Map copy */
+	"F$GModDr",        /* get Module Directory copy */
+	"F$CpyMem",        /* Copy External Memory */
+	"F$SUser",         /* Set User ID number */
+	"F$UnLoad",        /* Unlink Module by name */
+	"F$Alarm",         /* Color Computer Alarm Call (system wide) */
+	NULL,						
+	NULL,
+	"F$NMLink",        /* Color Computer NonMapping Link */
+	"F$NMLoad",        /* Color Computer NonMapping Load */
+	NULL,
+	NULL,
+	"F$TPS",           /* Return System's Ticks Per Second */
+	"F$TimAlm",        /* COCO individual process alarm call */
+	"F$VIRQ",          /* Install/Delete Virtual IRQ */
+	"F$SRqMem",        /* System Memory Request */
+	"F$SRtMem",        /* System Memory Return */
+	"F$IRQ",           /* Enter IRQ Polling Table */
+	"F$IOQu",          /* Enter I/O Queue */
+	"F$AProc",         /* Enter Active Process Queue */
+	"F$NProc",         /* Start Next Process */
+	"F$VModul",        /* Validate Module */
+	"F$Find64",        /* Find Process/Path Descriptor */
+	"F$All64",         /* Allocate Process/Path Descriptor */
+	"F$Ret64",         /* Return Process/Path Descriptor */
+	"F$SSvc",          /* Service Request Table Initialization */
+	"F$IODel",         /* Delete I/O Module */
+	"F$SLink",         /* System Link */
+	"F$Boot",          /* Bootstrap System */
+	"F$BtMem",         /* Bootstrap Memory Request */
+	"F$GProcP",        /* Get Process ptr */
+	"F$Move",          /* Move Data (low bound first) */
+	"F$AllRAM",        /* Allocate RAM blocks */
+	"F$AllImg",        /* Allocate Image RAM blocks */
+	"F$DelImg",        /* Deallocate Image RAM blocks */
+	"F$SetImg",        /* Set Process DAT Image */
+	"F$FreeLB",        /* Get Free Low Block */
+	"F$FreeHB",        /* Get Free High Block */
+	"F$AllTsk",        /* Allocate Process Task number */
+	"F$DelTsk",        /* Deallocate Process Task number */
+	"F$SetTsk",        /* Set Process Task DAT registers */
+	"F$ResTsk",        /* Reserve Task number */
+	"F$RelTsk",        /* Release Task number */
+	"F$DATLog",        /* Convert DAT Block/Offset to Logical */
+	"F$DATTmp",        /* Make temporary DAT image (Obsolete) */
+	"F$LDAXY",         /* Load A [X,[Y]] */
+	"F$LDAXYP",        /* Load A [X+,[Y]] */
+	"F$LDDDXY",        /* Load D [D+X,[Y]] */
+	"F$LDABX",         /* Load A from 0,X in task B */
+	"F$STABX",         /* Store A at 0,X in task B */
+	"F$AllPrc",        /* Allocate Process Descriptor */
+	"F$DelPrc",        /* Deallocate Process Descriptor */
+	"F$ELink",         /* Link using Module Directory Entry */
+	"F$FModul",        /* Find Module Directory Entry */
+	"F$MapBlk",        /* Map Specific Block */
+	"F$ClrBlk",        /* Clear Specific Block */
+	"F$DelRAM",        /* Deallocate RAM blocks */
+	"F$GCMDir",        /* Pack module directory */
+	"F$AlHRam",        /* Allocate HIGH RAM Blocks */
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	"F$RegDmp",        /* Ron Lammardo's debugging register dump call */
+	"F$NVRAM",         /* Non Volatile RAM (RTC battery backed static) read/write */
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	"I$Attach",        /* Attach I/O Device */
+	"I$Detach",        /* Detach I/O Device */
+	"I$Dup",           /* Duplicate Path */
+	"I$Create",        /* Create New File */
+	"I$Open",          /* Open Existing File */
+	"I$MakDir",        /* Make Directory File */
+	"I$ChgDir",        /* Change Default Directory */
+	"I$Delete",        /* Delete File */
+	"I$Seek",          /* Change Current Position */
+	"I$Read",          /* Read Data */
+	"I$Write",         /* Write Data */
+	"I$ReadLn",        /* Read Line of ASCII Data */
+	"I$WritLn",        /* Write Line of ASCII Data */
+	"I$GetStt",        /* Get Path Status */
+	"I$SetStt",        /* Set Path Status */
+	"I$Close",         /* Close Path */
+	"I$DeletX"         /* Delete from current exec dir */
+};
+
+static const char *getos9call(int call)
+{
+	return (call >= (sizeof(os9syscalls) / sizeof(os9syscalls[0]))) ? NULL : os9syscalls[call];
+}
+
+void log_os9call(int call)
+{
+	const char *mnemonic;
+
+	mnemonic = getos9call(call);
+	if (!mnemonic)
+		mnemonic = "(unknown)";
+
+	logerror("Logged OS9 Call Through SWI2 $%02x: %s\n", (void *) call, mnemonic);
+}
+
+#endif /* LOG_OS9 */
 
 /***************************************************************************
   Other hardware
