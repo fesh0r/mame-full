@@ -49,10 +49,16 @@ extern UINT8 win_trying_to_quit;
 // window styles
 #define WINDOW_STYLE			WS_OVERLAPPEDWINDOW
 #define WINDOW_STYLE_EX			0
+#ifndef MESS
+#define WINDOW_HAS_MENU			FALSE
+#else
+#define WINDOW_HAS_MENU			TRUE
+#endif
 
 // debugger window styles
 #define DEBUG_WINDOW_STYLE		WS_OVERLAPPED
 #define DEBUG_WINDOW_STYLE_EX	0
+#define DEBUG_WINDOW_HAS_MENU	FALSE
 
 // full screen window styles
 #define FULLSCREEN_STYLE		WS_OVERLAPPED
@@ -197,7 +203,7 @@ INLINE int wnd_extra_width(void)
 	RECT window = { 100, 100, 200, 200 };
 	if (!win_window_mode)
 		return 0;
-	AdjustWindowRectEx(&window, WINDOW_STYLE, FALSE, WINDOW_STYLE_EX);
+	AdjustWindowRectEx(&window, WINDOW_STYLE, WINDOW_HAS_MENU, WINDOW_STYLE_EX);
 	return (window.right - window.left) - 100;
 }
 
@@ -212,7 +218,7 @@ INLINE int wnd_extra_height(void)
 	RECT window = { 100, 100, 200, 200 };
 	if (!win_window_mode)
 		return 0;
-	AdjustWindowRectEx(&window, WINDOW_STYLE, FALSE, WINDOW_STYLE_EX);
+	AdjustWindowRectEx(&window, WINDOW_STYLE, WINDOW_HAS_MENU, WINDOW_STYLE_EX);
 	return (window.bottom - window.top) - 100;
 }
 
@@ -227,7 +233,7 @@ INLINE int wnd_extra_left(void)
 	RECT window = { 100, 100, 200, 200 };
 	if (!win_window_mode)
 		return 0;
-	AdjustWindowRectEx(&window, WINDOW_STYLE, FALSE, WINDOW_STYLE_EX);
+	AdjustWindowRectEx(&window, WINDOW_STYLE, WINDOW_HAS_MENU, WINDOW_STYLE_EX);
 	return 100 - window.left;
 }
 
@@ -293,15 +299,6 @@ INLINE void get_screen_bounds(RECT *bounds)
 
 INLINE void set_aligned_window_pos(HWND wnd, HWND insert, int x, int y, int cx, int cy, UINT flags)
 {
-	HMENU menu;
-	RECT rect;
-	
-	menu = GetMenu(wnd);
-	if (menu)
-	{
-		GetMenuItemRect(wnd, menu, 0, &rect);
-		cy += rect.bottom - rect.top;
-	}
 	SetWindowPos(wnd, insert, get_aligned_window_pos(x), y, cx, cy, flags);
 }
 
@@ -1419,7 +1416,7 @@ static int create_debug_window(void)
 	bounds.top = bounds.left = 0;
 	bounds.right = options.debug_width;
 	bounds.bottom = options.debug_height;
-	AdjustWindowRectEx(&bounds, WINDOW_STYLE, FALSE, WINDOW_STYLE_EX);
+	AdjustWindowRectEx(&bounds, WINDOW_STYLE, DEBUG_WINDOW_HAS_MENU, WINDOW_STYLE_EX);
 
 	// get the work bounds
 	SystemParametersInfo(SPI_GETWORKAREA, 0, &work_bounds, 0);
