@@ -79,8 +79,13 @@ extern char *cheatdir;
 
 #ifdef MESS
 /* path to the CRC database files */
-	char *crcdir;
-	char *softwarepath;  /* for use in fileio.c */
+char *crcdir;
+char *softwarepath;  /* for use in fileio.c */
+#define CHEAT_NAME	"CHEAT.CDB"
+#define HISTRY_NAME "SYSINFO.DAT"
+#else
+#define CHEAT_NAME	"CHEAT.DAT"
+#define HISTRY_NAME "HISTORY.DAT"
 #endif
 
 /* from video.c, for centering tweaked modes */
@@ -100,31 +105,31 @@ char *rompath, *samplepath;
 
 struct { char *name; int id; } joy_table[] =
 {
-	{ "none",               JOY_TYPE_NONE },
-	{ "auto",               JOY_TYPE_AUTODETECT },
-	{ "standard",           JOY_TYPE_STANDARD },
-	{ "dual",               JOY_TYPE_2PADS },
-	{ "4button",            JOY_TYPE_4BUTTON },
-	{ "6button",            JOY_TYPE_6BUTTON },
-	{ "8button",            JOY_TYPE_8BUTTON },
-	{ "fspro",              JOY_TYPE_FSPRO },
-	{ "wingex",             JOY_TYPE_WINGEX },
-	{ "sidewinder",         JOY_TYPE_SIDEWINDER },
-	{ "gamepadpro",         JOY_TYPE_GAMEPAD_PRO },
-	{ "grip",               JOY_TYPE_GRIP },
-	{ "grip4",              JOY_TYPE_GRIP4 },
-	{ "sneslpt1",           JOY_TYPE_SNESPAD_LPT1 },
-	{ "sneslpt2",           JOY_TYPE_SNESPAD_LPT2 },
-	{ "sneslpt3",           JOY_TYPE_SNESPAD_LPT3 },
-	{ "psxlpt1",            JOY_TYPE_PSXPAD_LPT1 },
-	{ "psxlpt2",            JOY_TYPE_PSXPAD_LPT2 },
-	{ "psxlpt3",            JOY_TYPE_PSXPAD_LPT3 },
-	{ "n64lpt1",            JOY_TYPE_N64PAD_LPT1 },
-	{ "n64lpt2",            JOY_TYPE_N64PAD_LPT2 },
-	{ "n64lpt3",            JOY_TYPE_N64PAD_LPT3 },
-	{ "wingwarrior",        JOY_TYPE_WINGWARRIOR },
-	{ "segaisa",            JOY_TYPE_IFSEGA_ISA },
-	{ "segapci",            JOY_TYPE_IFSEGA_PCI },
+	{ "none",           JOY_TYPE_NONE },
+	{ "auto",           JOY_TYPE_AUTODETECT },
+	{ "standard",       JOY_TYPE_STANDARD },
+	{ "dual",           JOY_TYPE_2PADS },
+	{ "4button",        JOY_TYPE_4BUTTON },
+	{ "6button",        JOY_TYPE_6BUTTON },
+	{ "8button",        JOY_TYPE_8BUTTON },
+	{ "fspro",          JOY_TYPE_FSPRO },
+	{ "wingex",         JOY_TYPE_WINGEX },
+	{ "sidewinder",     JOY_TYPE_SIDEWINDER },
+	{ "gamepadpro",     JOY_TYPE_GAMEPAD_PRO },
+	{ "grip",           JOY_TYPE_GRIP },
+	{ "grip4",          JOY_TYPE_GRIP4 },
+	{ "sneslpt1",       JOY_TYPE_SNESPAD_LPT1 },
+	{ "sneslpt2",       JOY_TYPE_SNESPAD_LPT2 },
+	{ "sneslpt3",       JOY_TYPE_SNESPAD_LPT3 },
+	{ "psxlpt1",        JOY_TYPE_PSXPAD_LPT1 },
+	{ "psxlpt2",        JOY_TYPE_PSXPAD_LPT2 },
+	{ "psxlpt3",        JOY_TYPE_PSXPAD_LPT3 },
+	{ "n64lpt1",        JOY_TYPE_N64PAD_LPT1 },
+	{ "n64lpt2",        JOY_TYPE_N64PAD_LPT2 },
+	{ "n64lpt3",        JOY_TYPE_N64PAD_LPT3 },
+	{ "wingwarrior",    JOY_TYPE_WINGWARRIOR },
+	{ "segaisa",        JOY_TYPE_IFSEGA_ISA },
+	{ "segapci",        JOY_TYPE_IFSEGA_PCI },
 	{ 0, 0 }
 } ;
 
@@ -133,10 +138,10 @@ struct { char *name; int id; } joy_table[] =
 /* monitor type */
 struct { char *name; int id; } monitor_table[] =
 {
-	{ "standard",   MONITOR_TYPE_STANDARD},
-	{ "ntsc",       MONITOR_TYPE_NTSC},
-	{ "pal",                MONITOR_TYPE_PAL},
-	{ "arcade",             MONITOR_TYPE_ARCADE},
+	{ "standard",       MONITOR_TYPE_STANDARD},
+	{ "ntsc",           MONITOR_TYPE_NTSC},
+	{ "pal",            MONITOR_TYPE_PAL},
+	{ "arcade",         MONITOR_TYPE_ARCADE},
 	{ NULL, NULL }
 } ;
 
@@ -321,10 +326,13 @@ void get_rom_sample_path (int argc, char **argv, int game_index)
 	mame_argv = argv;
 	game = game_index;
 
-	rompath    = get_string ("directory", "rompath",    NULL, ".;ROMS");
-	#ifndef MESS
-	samplepath = get_string ("directory", "samplepath", NULL, ".;SAMPLES");
-	#endif
+#ifndef MESS
+	rompath 	= get_string ("directory", "rompath",    NULL, ".;ROMS");
+	samplepath	= get_string ("directory", "samplepath", NULL, ".;SAMPLES");
+#else
+	rompath 	= get_string ("directory", "biosath",      NULL, ".;BIOS");
+	softwarepath= get_string ("directory", "softwarepath", NULL, ".;SOFTWARE");
+#endif
 
 	/* handle '-romdir' hack. We should get rid of this BW */
 	alternate_name = 0;
@@ -441,109 +449,96 @@ void parse_cmdline (int argc, char **argv, int game_index)
 	options.cheat      = get_bool ("config", "cheat", NULL, 0);
 	options.mame_debug = get_bool ("config", "debug", NULL, 0);
 
-	/* Steph 20000730 - Now all stuff is in function InitCheat in src/cheat.c */
-	#ifndef MESS
-	tmpstr = get_string ("config", "cheatfile", "cf", "CHEAT.DAT");
-	#else
-	tmpstr = get_string ("config", "cheatfile", "cf", "CHEAT.CDB");
-	#endif
+	tmpstr = get_string ("config", "cheatfile", "cf", CHEAT_NAME );
 	cheatfile = malloc(strlen(tmpstr) + 1);
 	strcpy(cheatfile,tmpstr);
 
- 	#ifndef MESS
- 	history_filename  = get_string ("config", "historyfile", NULL, "HISTORY.DAT");    /* JCK 980917 */
- 	#else
- 	history_filename  = get_string ("config", "historyfile", NULL, "SYSINFO.DAT");
- 	#endif
-
+	history_filename  = get_string ("config", "historyfile", NULL, HISTRY_NAME);
 	mameinfo_filename  = get_string ("config", "mameinfofile", NULL, "MAMEINFO.DAT");    /* JCK 980917 */
 
 	/* get resolution */
 	resolution  = get_string ("config", "resolution", NULL, "auto");
 
 	/* set default subdirectories */
-	#ifndef MESS
-	nvdir      = get_string ("directory", "nvram",   NULL, "NVRAM");
-	hidir      = get_string ("directory", "hi",      NULL, "HI");
-	memcarddir = get_string ("directory", "memcard", NULL, "MEMCARD");
-	stadir     = get_string ("directory", "sta",     NULL, "STA");
-	#endif
-	artworkdir = get_string ("directory", "artwork", NULL, "ARTWORK");
-	cfgdir     = get_string ("directory", "cfg",     NULL, "CFG");
-	screenshotdir = get_string ("directory", "snap",     NULL, "SNAP");
+#ifndef MESS
+	nvdir		= get_string ("directory", "nvram",   NULL, "NVRAM");
+	hidir		= get_string ("directory", "hi",      NULL, "HI");
+	memcarddir	= get_string ("directory", "memcard", NULL, "MEMCARD");
+	stadir		= get_string ("directory", "sta",     NULL, "STA");
+	cheatdir	= get_string ("directory",  "cheat",   NULL, ".");
+#else
+	crcdir		= get_string ("directory",  "crc",     NULL, "CRC");
+	cheatdir	= get_string ("directory",  "cheat",   NULL, "CHEAT");
+#endif
+	artworkdir	= get_string ("directory", "artwork", NULL, "ARTWORK");
+	cfgdir		= get_string ("directory", "cfg",     NULL, "CFG");
+	screenshotdir = get_string ("directory", "snap", NULL, "SNAP");
 
- 	#ifndef MESS
-		cheatdir = get_string ("directory", "cheat", NULL, ".");
- 	#else
-		crcdir = get_string ("directory", "crc", NULL, "CRC");
-		cheatdir = get_string ("directory", "cheat", NULL, "CHEAT");
- 	#endif
 
 	logerror("cheatfile = %s - cheatdir = %s\n",cheatfile,cheatdir);
 
 	tmpstr = get_string ("config", "language", NULL, "english");
 	options.language_file = osd_fopen(0,tmpstr,OSD_FILETYPE_LANGUAGE,0);
 
-
 	/* get tweaked modes info */
-	tw224x288_h			= get_int ("tweaked", "224x288_h",              NULL, 0x5f);
-	tw224x288_v     	= get_int ("tweaked", "224x288_v",              NULL, 0x54);
-	tw240x256_h     = get_int ("tweaked", "240x256_h",              NULL, 0x67);
-	tw240x256_v     = get_int ("tweaked", "240x256_v",              NULL, 0x23);
-	tw256x240_h     = get_int ("tweaked", "256x240_h",              NULL, 0x55);
-	tw256x240_v     = get_int ("tweaked", "256x240_v",              NULL, 0x43);
-	tw256x256_h     = get_int ("tweaked", "256x256_h",              NULL, 0x6c);
-	tw256x256_v     = get_int ("tweaked", "256x256_v",              NULL, 0x23);
+	tw224x288_h 	= get_int ("tweaked", "224x288_h",      NULL, 0x5f);
+	tw224x288_v 	= get_int ("tweaked", "224x288_v",      NULL, 0x54);
+	tw240x256_h 	= get_int ("tweaked", "240x256_h",      NULL, 0x67);
+	tw240x256_v 	= get_int ("tweaked", "240x256_v",      NULL, 0x23);
+	tw256x240_h 	= get_int ("tweaked", "256x240_h",      NULL, 0x55);
+	tw256x240_v 	= get_int ("tweaked", "256x240_v",      NULL, 0x43);
+	tw256x256_h 	= get_int ("tweaked", "256x256_h",      NULL, 0x6c);
+	tw256x256_v 	= get_int ("tweaked", "256x256_v",      NULL, 0x23);
 	tw256x256_hor_h = get_int ("tweaked", "256x256_hor_h",  NULL, 0x55);
 	tw256x256_hor_v = get_int ("tweaked", "256x256_hor_v",  NULL, 0x60);
-	tw288x224_h     = get_int ("tweaked", "288x224_h",              NULL, 0x5f);
-	tw288x224_v     = get_int ("tweaked", "288x224_v",              NULL, 0x0c);
-	tw240x320_h             = get_int ("tweaked", "240x320_h",              NULL, 0x5a);
-	tw240x320_v             = get_int ("tweaked", "240x320_v",              NULL, 0x8c);
-	tw320x240_h             = get_int ("tweaked", "320x240_h",              NULL, 0x5f);
-	tw320x240_v             = get_int ("tweaked", "320x240_v",              NULL, 0x0c);
-	tw336x240_h             = get_int ("tweaked", "336x240_h",              NULL, 0x5f);
-	tw336x240_v             = get_int ("tweaked", "336x240_v",              NULL, 0x0c);
-	tw384x224_h             = get_int ("tweaked", "384x224_h",              NULL, 0x6c);
-	tw384x224_v             = get_int ("tweaked", "384x224_v",              NULL, 0x0c);
-	tw384x240_h             = get_int ("tweaked", "384x240_h",              NULL, 0x6c);
-	tw384x240_v             = get_int ("tweaked", "384x240_v",              NULL, 0x0c);
-	tw384x256_h             = get_int ("tweaked", "384x256_h",              NULL, 0x6c);
-	tw384x256_v             = get_int ("tweaked", "384x256_v",              NULL, 0x23);
+	tw288x224_h 	= get_int ("tweaked", "288x224_h",      NULL, 0x5f);
+	tw288x224_v 	= get_int ("tweaked", "288x224_v",      NULL, 0x0c);
+	tw240x320_h 	= get_int ("tweaked", "240x320_h",      NULL, 0x5a);
+	tw240x320_v 	= get_int ("tweaked", "240x320_v",      NULL, 0x8c);
+	tw320x240_h 	= get_int ("tweaked", "320x240_h",      NULL, 0x5f);
+	tw320x240_v 	= get_int ("tweaked", "320x240_v",      NULL, 0x0c);
+	tw336x240_h 	= get_int ("tweaked", "336x240_h",      NULL, 0x5f);
+	tw336x240_v 	= get_int ("tweaked", "336x240_v",      NULL, 0x0c);
+	tw384x224_h 	= get_int ("tweaked", "384x224_h",      NULL, 0x6c);
+	tw384x224_v 	= get_int ("tweaked", "384x224_v",      NULL, 0x0c);
+	tw384x240_h 	= get_int ("tweaked", "384x240_h",      NULL, 0x6c);
+	tw384x240_v 	= get_int ("tweaked", "384x240_v",      NULL, 0x0c);
+	tw384x256_h 	= get_int ("tweaked", "384x256_h",      NULL, 0x6c);
+	tw384x256_v 	= get_int ("tweaked", "384x256_v",      NULL, 0x23);
 
 	/* Get 15.75KHz tweak values */
-	tw224x288arc_h          = get_int ("tweaked", "224x288arc_h",   NULL, 0x5d);
-	tw224x288arc_v          = get_int ("tweaked", "224x288arc_v",   NULL, 0x38);
-	tw288x224arc_h          = get_int ("tweaked", "288x224arc_h",   NULL, 0x5d);
-	tw288x224arc_v          = get_int ("tweaked", "288x224arc_v",   NULL, 0x09);
-	tw256x240arc_h          = get_int ("tweaked", "256x240arc_h",   NULL, 0x5d);
-	tw256x240arc_v          = get_int ("tweaked", "256x240arc_v",   NULL, 0x09);
-	tw256x256arc_h          = get_int ("tweaked", "256x256arc_h",   NULL, 0x5d);
-	tw256x256arc_v          = get_int ("tweaked", "256x256arc_v",   NULL, 0x17);
-	tw320x240arc_h          = get_int ("tweaked", "320x240arc_h",   NULL, 0x69);
-	tw320x240arc_v          = get_int ("tweaked", "320x240arc_v",   NULL, 0x09);
-	tw320x256arc_h          = get_int ("tweaked", "320x256arc_h",   NULL, 0x69);
-	tw320x256arc_v          = get_int ("tweaked", "320x256arc_v",   NULL, 0x17);
-	tw352x240arc_h          = get_int ("tweaked", "352x240arc_h",   NULL, 0x6a);
-	tw352x240arc_v          = get_int ("tweaked", "352x240arc_v",   NULL, 0x09);
-	tw352x256arc_h          = get_int ("tweaked", "352x256arc_h",   NULL, 0x6a);
-	tw352x256arc_v          = get_int ("tweaked", "352x256arc_v",   NULL, 0x17);
-	tw368x224arc_h          = get_int ("tweaked", "368x224arc_h",   NULL, 0x6a);
-	tw368x224arc_v          = get_int ("tweaked", "368x224arc_v",   NULL, 0x09);
-	tw368x240arc_h          = get_int ("tweaked", "368x240arc_h",   NULL, 0x6a);
-	tw368x240arc_v          = get_int ("tweaked", "368x240arc_v",   NULL, 0x09);
-	tw368x256arc_h          = get_int ("tweaked", "368x256arc_h",   NULL, 0x6a);
-	tw368x256arc_v          = get_int ("tweaked", "368x256arc_v",   NULL, 0x17);
-	tw512x224arc_h          = get_int ("tweaked", "512x224arc_h",   NULL, 0xbf);
-	tw512x224arc_v          = get_int ("tweaked", "512x224arc_v",   NULL, 0x09);
-	tw512x256arc_h          = get_int ("tweaked", "512x256arc_h",   NULL, 0xbf);
-	tw512x256arc_v          = get_int ("tweaked", "512x256arc_v",   NULL, 0x17);
-	tw512x448arc_h          = get_int ("tweaked", "512x448arc_h",   NULL, 0xbf);
-	tw512x448arc_v          = get_int ("tweaked", "512x448arc_v",   NULL, 0x09);
-	tw512x512arc_h          = get_int ("tweaked", "512x512arc_h",   NULL, 0xbf);
-	tw512x512arc_v          = get_int ("tweaked", "512x512arc_v",   NULL, 0x17);
-	tw640x480arc_h          = get_int ("tweaked", "640x480arc_h",   NULL, 0xc1);
-	tw640x480arc_v          = get_int ("tweaked", "640x480arc_v",   NULL, 0x09);
+	tw224x288arc_h	= get_int ("tweaked", "224x288arc_h",   NULL, 0x5d);
+	tw224x288arc_v	= get_int ("tweaked", "224x288arc_v",   NULL, 0x38);
+	tw288x224arc_h	= get_int ("tweaked", "288x224arc_h",   NULL, 0x5d);
+	tw288x224arc_v	= get_int ("tweaked", "288x224arc_v",   NULL, 0x09);
+	tw256x240arc_h	= get_int ("tweaked", "256x240arc_h",   NULL, 0x5d);
+	tw256x240arc_v	= get_int ("tweaked", "256x240arc_v",   NULL, 0x09);
+	tw256x256arc_h	= get_int ("tweaked", "256x256arc_h",   NULL, 0x5d);
+	tw256x256arc_v	= get_int ("tweaked", "256x256arc_v",   NULL, 0x17);
+	tw320x240arc_h	= get_int ("tweaked", "320x240arc_h",   NULL, 0x69);
+	tw320x240arc_v	= get_int ("tweaked", "320x240arc_v",   NULL, 0x09);
+	tw320x256arc_h	= get_int ("tweaked", "320x256arc_h",   NULL, 0x69);
+	tw320x256arc_v	= get_int ("tweaked", "320x256arc_v",   NULL, 0x17);
+	tw352x240arc_h	= get_int ("tweaked", "352x240arc_h",   NULL, 0x6a);
+	tw352x240arc_v	= get_int ("tweaked", "352x240arc_v",   NULL, 0x09);
+	tw352x256arc_h	= get_int ("tweaked", "352x256arc_h",   NULL, 0x6a);
+	tw352x256arc_v	= get_int ("tweaked", "352x256arc_v",   NULL, 0x17);
+	tw368x224arc_h	= get_int ("tweaked", "368x224arc_h",   NULL, 0x6a);
+	tw368x224arc_v	= get_int ("tweaked", "368x224arc_v",   NULL, 0x09);
+	tw368x240arc_h	= get_int ("tweaked", "368x240arc_h",   NULL, 0x6a);
+	tw368x240arc_v	= get_int ("tweaked", "368x240arc_v",   NULL, 0x09);
+	tw368x256arc_h	= get_int ("tweaked", "368x256arc_h",   NULL, 0x6a);
+	tw368x256arc_v	= get_int ("tweaked", "368x256arc_v",   NULL, 0x17);
+	tw512x224arc_h	= get_int ("tweaked", "512x224arc_h",   NULL, 0xbf);
+	tw512x224arc_v	= get_int ("tweaked", "512x224arc_v",   NULL, 0x09);
+	tw512x256arc_h	= get_int ("tweaked", "512x256arc_h",   NULL, 0xbf);
+	tw512x256arc_v	= get_int ("tweaked", "512x256arc_v",   NULL, 0x17);
+	tw512x448arc_h	= get_int ("tweaked", "512x448arc_h",   NULL, 0xbf);
+	tw512x448arc_v	= get_int ("tweaked", "512x448arc_v",   NULL, 0x09);
+	tw512x512arc_h	= get_int ("tweaked", "512x512arc_h",   NULL, 0xbf);
+	tw512x512arc_v	= get_int ("tweaked", "512x512arc_v",   NULL, 0x17);
+	tw640x480arc_h	= get_int ("tweaked", "640x480arc_h",   NULL, 0xc1);
+	tw640x480arc_v	= get_int ("tweaked", "640x480arc_v",   NULL, 0x09);
 
 	/* this is handled externally cause the audit stuff needs it, too */
 	get_rom_sample_path (argc, argv, game_index);
@@ -580,8 +575,7 @@ void parse_cmdline (int argc, char **argv, int game_index)
 		gfx_mode = GFX_VESA3;
 	else
 	{
-		logerror("%s is not a valid entry for vesamode\n",
-					vesamode);
+		logerror("%s is not a valid entry for vesamode\n", vesamode);
 		gfx_mode = GFX_VESA3; /* default to VESA2L */
 	}
 
@@ -618,16 +612,14 @@ void parse_cmdline (int argc, char **argv, int game_index)
 		if (stricmp (joy_table[i].name, joyname) == 0)
 		{
 			joystick = joy_table[i].id;
-			logerror("using joystick %s = %08x\n",
-						joyname,joy_table[i].id);
+			logerror("using joystick %s = %08x\n", joyname,joy_table[i].id);
 			break;
 		}
 	}
 
 	if (joystick == -2)
 	{
-		logerror("%s is not a valid entry for a joystick\n",
-					joyname);
+		logerror("%s is not a valid entry for a joystick\n", joyname);
 		joystick = JOY_TYPE_NONE;
 	}
 
@@ -643,26 +635,14 @@ void parse_cmdline (int argc, char **argv, int game_index)
 		}
 	}
 
-	#ifdef MESS
-	/* create the default software directories ensuring they all exist */
-	{
-	int l=0;
-	char buf[20];
-	while (drivers[l])
-		{
-			sprintf(buf,"SOFTWARE\\%s", drivers[l]->name);
-			softwarepath = get_string ((char*)drivers[l]->name, "softwarepath", NULL,buf);
-			l++;
-		}
-
-    /* Grab the required Software Path from mess.cfg */
-    softwarepath = get_string ((char*)drivers[game]->name, "softwarepath", NULL,buf);
-	logerror("Using Software Path %s for %s\n",softwarepath, drivers[game]->name);
-
-	decompose_software_path(softwarepath);
-
-}
-	#endif
+#ifdef MESS
+	/* Is there an override for softwarepath= for this driver? */
+	tmpstr = get_string ((char*)drivers[game]->name,  "softwarepath", NULL, NULL);
+	if (tmpstr)
+		softwarepath = tmpstr;
+    logerror("Using Software Path %s for %s\n", softwarepath, drivers[game]->name);
+    decompose_software_path(softwarepath);
+#endif
 
 }
 
