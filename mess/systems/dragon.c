@@ -630,7 +630,7 @@ ROM_END
 
 ROM_START(coco)
      ROM_REGION(0x8000,REGION_CPU1,0)
-     ROM_LOAD(			"bas10.rom",	0x2000, 0x2000, 0x73316e3e)
+     ROM_LOAD(			"bas10.rom",	0x2000, 0x2000, 0x00b50aaa)
 ROM_END
 
 ROM_START(cocoe)
