@@ -227,8 +227,8 @@ TESTDRIVER( pcw9256 )	/* 198? PCW9256 									*/
 TESTDRIVER( pcw9512 )	/* 198? PCW9512 (+) 								*/
 TESTDRIVER( pcw10 ) 	/* 198? PCW10										*/
 TESTDRIVER( pcw16 )		/* 1995 PCW16										*/
-TESTDRIVER( nc100 ) 	/* 19?? NC100										*/
-TESTDRIVER( nc100a ) 	/* 19?? NC100										*/
+	DRIVER( nc100 ) 	/* 19?? NC100										*/
+	DRIVER( nc100a ) 	/* 19?? NC100										*/
 TESTDRIVER( nc200 )		/* 19?? NC200										*/
 
 	/* APPLE */
