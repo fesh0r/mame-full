@@ -33,10 +33,6 @@ struct InputPort
 	UINT32 type;			/* see defines below */
 	const char *name;		/* name to display */
 	InputSeq seq;                  	/* input sequence affecting the input bits */
-#ifdef MESS
-//	UINT32 arg;				/* extra argument needed in some cases */
-//	UINT16 min, max;		/* for analog controls */
-#endif
 };
 
 

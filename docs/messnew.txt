@@ -14,6 +14,8 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
+- [APPLE2] Fixed double hires colors. (bug #494) [Nate Woods]
+
 - [ATARI] Miscellaneous cleanups, and implemented Atari 5200 joystick top
   triggers. (bug #328) [Nate Woods]
 

@@ -285,18 +285,18 @@ static int internal_apple2_video_start(UINT32 ignored_softswitches, int hires_mo
 	UINT16 c;
 	UINT8 *apple2_font;
 
-	static UINT16 hires_artifact_color_table[] =
+	static const UINT8 hires_artifact_color_table[] =
 	{
 		BLACK,	PURPLE,	GREEN,	WHITE,
 		BLACK,	BLUE,	ORANGE,	WHITE
 	};
 
-	static UINT16 dhires_artifact_color_table[] =
+	static const UINT8 dhires_artifact_color_table[] =
 	{
-		BLACK,		DKRED,		BROWN,	ORANGE,
-		DKGREEN,	DKGRAY,		GREEN,	YELLOW,
-		DKBLUE,		PURPLE,		GRAY,	PINK,
-		BLUE,		LTBLUE,		AQUA,	WHITE
+		BLACK,		DKGREEN,	BROWN,	GREEN,
+		DKRED,		DKGRAY,		ORANGE,	YELLOW,
+		DKBLUE,		BLUE,		GRAY,	AQUA,
+		PURPLE,		LTBLUE,		PINK,	WHITE
 	};
 
 	apple2_font = memory_region(REGION_GFX1);

@@ -886,7 +886,7 @@ static mame_file *image_fopen_custom(mess_image *img, int filetype, int read_or_
 		if( img->fp && !is_effective_mode_create( read_or_write ) )
 		{
 			lpExt = strrchr( img->name, '.' );
-			if( stricmp( lpExt, ".ZIP" ) == 0 )
+			if (lpExt && (stricmp( lpExt, ".ZIP" ) == 0))
 			{
 				int pathindex;
 				int pathcount = osd_get_path_count(filetype);
