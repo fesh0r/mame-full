@@ -7,6 +7,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sndhrdw/taitosnd.h"
 #include "cpu/z80/z80.h"
 
 /***************************************************************************
@@ -37,10 +38,6 @@ WRITE_HANDLER( rastan_videocontrol_w );
 WRITE_HANDLER( rastan_flipscreen_w );
 
 int  rastan_s_interrupt(void);
-READ_HANDLER( rastan_sound_r );
-WRITE_HANDLER( rastan_sound_port_w );
-WRITE_HANDLER( rastan_sound_comm_w );
-
 
 /***************************************************************************
   Sound Hardware
@@ -49,11 +46,8 @@ WRITE_HANDLER( rastan_sound_comm_w );
   Jumping uses two YM2203's
 ***************************************************************************/
 
-void rastan_irq_handler(int irq);
+//void rastan_irq_handler(int irq);
 
-READ_HANDLER( rastan_a001_r );
-WRITE_HANDLER( rastan_a000_w );
-WRITE_HANDLER( rastan_a001_w );
 
 static struct MemoryReadAddress rastan_s_readmem[] =
 {
@@ -62,7 +56,7 @@ static struct MemoryReadAddress rastan_s_readmem[] =
 	{ 0x8000, 0x8fff, MRA_RAM },
 	{ 0x9001, 0x9001, YM2151_status_port_0_r },
 	{ 0x9002, 0x9100, MRA_RAM },
-	{ 0xa001, 0xa001, rastan_a001_r },
+	{ 0xa001, 0xa001, taito_soundsys_a001_r },
 	{ -1 }  /* end of table */
 };
 
@@ -72,8 +66,8 @@ static struct MemoryWriteAddress rastan_s_writemem[] =
 	{ 0x8000, 0x8fff, MWA_RAM },
 	{ 0x9000, 0x9000, YM2151_register_port_0_w },
 	{ 0x9001, 0x9001, YM2151_data_port_0_w },
-	{ 0xa000, 0xa000, rastan_a000_w },
-	{ 0xa001, 0xa001, rastan_a001_w },
+	{ 0xa000, 0xa000, taito_soundsys_a000_w },
+	{ 0xa001, 0xa001, taito_soundsys_a001_w },
 	{ -1 }  /* end of table */
 };
 
@@ -90,7 +84,7 @@ static struct YM2151interface ym2151_interface =
 	1,			/* 1 chip */
 	4000000,	/* 4 MHz ? */
 	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },
-	{ rastan_irq_handler },
+	{ taito_soundsys_irq_handler },
 	{ rastan_bankswitch_w }
 };
 
@@ -108,11 +102,11 @@ static WRITE_HANDLER( rainbow_sound_w )
 {
 	if (offset == 0)
 	{
-		rastan_sound_port_w(0,data & 0xff);
+		taito_soundsys_sound_port_w(0,data & 0xff);
 	}
 	else if (offset == 2)
 	{
-		rastan_sound_comm_w(0,data & 0xff);
+		taito_soundsys_sound_comm_w(0,data & 0xff);
 	}
 }
 
@@ -123,7 +117,7 @@ static struct MemoryReadAddress rainbow_readmem[] =
 	{ 0x200000, 0x20ffff, paletteram_word_r },
 	{ 0x390000, 0x390003, input_port_0_r },
 	{ 0x3B0000, 0x3B0003, input_port_1_r },
-	{ 0x3e0000, 0x3e0003, rastan_sound_r },
+	{ 0x3e0000, 0x3e0003, taito_soundsys_sound_r },
 	{ 0x800000, 0x80ffff, rainbow_c_chip_r },
 	{ 0xc00000, 0xc03fff, rastan_videoram1_r },
 	{ 0xc04000, 0xc07fff, MRA_BANK2 },
