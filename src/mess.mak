@@ -33,7 +33,7 @@ CPUS+=CDP1802@
 #CPUS+=8085A@
 CPUS+=M6502@
 CPUS+=M65C02@
-#CPUS+=M65SC02@
+CPUS+=M65SC02@
 #CPUS+=M65CE02@
 CPUS+=M6509@
 CPUS+=M6510@
@@ -243,7 +243,8 @@ endif
 ifdef MESS_EXCLUDE_ATARI
 COREDEFS += -DMESS_EXCLUDE_ATARI
 else
-DRVLIBS += $(OBJ)/atari.a
+DRVLIBS += $(OBJ)/atari.a $(OBJ)/lynx.a
+
 endif
 
 ifndef MESS_EXCLUDE_CBM
@@ -481,6 +482,7 @@ $(OBJ)/pc.a:	   \
 	  $(OBJ)/mess/machine/pic8259.o  \
 	  $(OBJ)/mess/vidhrdw/vga.o	 \
 	  $(OBJ)/mess/sndhrdw/pc.o	 \
+	  $(OBJ)/mess/sndhrdw/sblaster.o \
 	  $(OBJ)/mess/vidhrdw/pc_cga.o	 \
 	  $(OBJ)/mess/vidhrdw/pc_aga.o	 \
 	  $(OBJ)/mess/vidhrdw/pc_mda.o	 \
@@ -490,8 +492,6 @@ $(OBJ)/pc.a:	   \
 	  $(OBJ)/mess/machine/pc_hdc.o	 \
 	  $(OBJ)/mess/machine/pc_ide.o	 \
 	  $(OBJ)/mess/systems/pc.o
-
-#	  $(OBJ)/mess/sndhrdw/sblaster.o \
 
 $(OBJ)/p2000.a:    \
 	  $(OBJ)/mess/vidhrdw/saa5050.o  \
@@ -659,6 +659,8 @@ $(OBJ)/teamconc.a: \
 	$(OBJ)/mess/systems/comquest.o
 
 $(OBJ)/svision.a: $(OBJ)/mess/systems/svision.o
+
+$(OBJ)/lynx.a: $(OBJ)/mess/systems/lynx.o $(OBJ)/mess/machine/lynx.o
 
 $(OBJ)/mk1.a: $(OBJ)/mess/vidhrdw/mk1.o $(OBJ)/mess/systems/mk1.o
 
