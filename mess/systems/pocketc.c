@@ -8,6 +8,9 @@
 #include "cpu/sc61860/sc61860.h"
 
 #include "includes/pocketc.h"
+#include "includes/pc1401.h"
+#include "includes/pc1251.h"
+#include "includes/pc1350.h"
 
 
 /* pc1430 no peek poke operations! */
@@ -84,7 +87,7 @@ static struct MemoryReadAddress pc1401_readmem[] =
 	{ 0x2000, 0x47ff, MRA_RAM },
 /*	{ 0x5000, 0x57ff, ? }, */
 	{ 0x6000, 0x67ff, pc1401_lcd_read },
-	{ 0x6800, 0x685f, sc61860_read_internal },
+//	{ 0x6800, 0x685f, sc61860_read_internal },
 	{ 0x7000, 0x77ff, pc1401_lcd_read },
 	{ 0x8000, 0xffff, MRA_ROM },
 	MEMORY_TABLE_END
@@ -97,7 +100,7 @@ static struct MemoryWriteAddress pc1401_writemem[] =
 	{ 0x4000, 0x47ff, MWA_RAM },
 /*	{ 0x5000, 0x57ff, ? }, */
 	{ 0x6000, 0x67ff, pc1401_lcd_write },
-	{ 0x6800, 0x685f, sc61860_write_internal },
+//	{ 0x6800, 0x685f, sc61860_write_internal },
 	{ 0x7000, 0x77ff, pc1401_lcd_write },
 	{ 0x8000, 0xffff, MWA_ROM },
 	MEMORY_TABLE_END
@@ -110,7 +113,7 @@ static struct MemoryReadAddress pc1251_readmem[] =
 	{ 0x4000, 0x7fff, MRA_ROM },
 	{ 0xa000, 0xcbff, MRA_ROM },
 	{ 0xf800, 0xf8ff, pc1251_lcd_read },
-	{ 0xff00, 0xff5f, sc61860_read_internal },
+//	{ 0xff00, 0xff5f, sc61860_read_internal },
 	MEMORY_TABLE_END
 };
 
@@ -120,7 +123,7 @@ static struct MemoryWriteAddress pc1251_writemem[] =
 	{ 0x4000, 0x7fff, MWA_ROM },
 //	{ 0xa000, 0xcbff, MWA_ROM }, // c600 b800 b000 a000 tested
 	{ 0xf800, 0xf8ff, pc1251_lcd_write },
-	{ 0xff00, 0xff5f, sc61860_write_internal },
+//	{ 0xff00, 0xff5f, sc61860_write_internal },
 	MEMORY_TABLE_END
 };
 
@@ -132,7 +135,7 @@ static struct MemoryReadAddress pc1350_readmem[] =
 	{ 0x4000, 0x5fff, MRA_RAM },
 	{ 0x6000, 0x6fff, MRA_RAM },
 	{ 0x7000, 0x7eff, pc1350_lcd_read },
-	{ 0x7f00, 0x7f5f, sc61860_read_internal },
+//	{ 0x7f00, 0x7f5f, sc61860_read_internal },
 	{ 0x8000, 0xffff, MRA_ROM },
 	MEMORY_TABLE_END
 };
@@ -144,7 +147,7 @@ static struct MemoryWriteAddress pc1350_writemem[] =
 	{ 0x4000, 0x5fff, MWA_RAM }, /*ram card 16k oder 8k */
 	{ 0x6000, 0x6fff, MWA_RAM },
 	{ 0x7000, 0x7eff, pc1350_lcd_write },
-	{ 0x7f00, 0x7f5f, sc61860_write_internal },
+//	{ 0x7f00, 0x7f5f, sc61860_write_internal },
 	{ 0x8000, 0xffff, MWA_ROM },
 	MEMORY_TABLE_END
 };
@@ -615,8 +618,8 @@ static struct MachineDriver machine_driver_pc1401 =
 	594, 273, { 0, 594 - 1, 0, 273 - 1},
 //	640, 273, { 0, 640 - 1, 0, 273 - 1},
 	pc1401_gfxdecodeinfo,			   /* graphics decode info */
-	sizeof (pc1401_palette) / sizeof (pc1401_palette[0]) ,
-	sizeof (pc1401_colortable) / sizeof(pc1401_colortable[0][0]),
+	sizeof (pocketc_palette) / sizeof (pocketc_palette[0]) ,
+	sizeof (pocketc_colortable) / sizeof(pocketc_colortable[0][0]),
 	pocketc_init_colors,		/* convert color prom */
 
 	VIDEO_TYPE_RASTER| VIDEO_SUPPORTS_DIRTY,	/* video flags */
@@ -634,9 +637,9 @@ static struct MachineDriver machine_driver_pc1401 =
 
 static SC61860_CONFIG pc1251_config={
 	NULL, pc1251_brk,
-	pc1251_ina, pc1401_outa,
-	pc1251_inb, pc1401_outb,
-	pc1401_outc
+	pc1251_ina, pc1251_outa,
+	pc1251_inb, pc1251_outb,
+	pc1251_outc
 };
 
 static struct MachineDriver machine_driver_pc1251 =
@@ -666,8 +669,8 @@ static struct MachineDriver machine_driver_pc1251 =
 	608, 300, { 0, 608 - 1, 0, 300 - 1},
 //	640, 334, { 0, 640 - 1, 0, 334 - 1},
 	pc1251_gfxdecodeinfo,			   /* graphics decode info */
-	sizeof (pc1401_palette) / sizeof (pc1401_palette[0]) ,
-	sizeof (pc1401_colortable) / sizeof(pc1401_colortable[0][0]),
+	sizeof (pocketc_palette) / sizeof (pocketc_palette[0]) ,
+	sizeof (pocketc_colortable) / sizeof(pocketc_colortable[0][0]),
 	pocketc_init_colors,		/* convert color prom */
 
 	VIDEO_TYPE_RASTER| VIDEO_SUPPORTS_DIRTY,	/* video flags */
@@ -685,9 +688,9 @@ static struct MachineDriver machine_driver_pc1251 =
 
 static SC61860_CONFIG pc1350_config={
 	NULL, pc1350_brk,
-	pc1350_ina, pc1401_outa,
-	pc1350_inb, pc1401_outb,
-	pc1401_outc
+	pc1350_ina, pc1350_outa,
+	pc1350_inb, pc1350_outb,
+	pc1350_outc
 };
 
 static struct MachineDriver machine_driver_pc1350 =
@@ -717,8 +720,8 @@ static struct MachineDriver machine_driver_pc1350 =
 	640, 252, { 0, 640 - 1, 0, 252 - 1},
 //	640, 255, { 0, 640 - 1, 0, 255 - 1},
 	pc1350_gfxdecodeinfo,			   /* graphics decode info */
-	sizeof (pc1401_palette) / sizeof (pc1401_palette[0]) ,
-	sizeof (pc1401_colortable) / sizeof(pc1401_colortable[0][0]),
+	sizeof (pocketc_palette) / sizeof (pocketc_palette[0]) ,
+	sizeof (pocketc_colortable) / sizeof(pocketc_colortable[0][0]),
 	pocketc_init_colors,		/* convert color prom */
 
 	VIDEO_TYPE_RASTER| VIDEO_SUPPORTS_DIRTY,	/* video flags */
