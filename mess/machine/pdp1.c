@@ -494,7 +494,7 @@ void pdp1_tape_read_binary(void)
 int pdp1_typewriter_init(int id)
 {
 	/* open file */
-	typewriter.fd = image_fopen(IO_PRINTER, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_WRITE);
+	typewriter.fd = image_fopen_new(IO_PRINTER, id, NULL);
 
 	io_status |= io_st_tyo;
 

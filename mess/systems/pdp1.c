@@ -272,29 +272,20 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
-/* palette: grey levels follow an exponential law, so that decrementing the color index periodically
-will simulate the remanence of a cathode ray tube */
+/*
+	The static palette only includes the pens for the control panel and
+	the typewriter, as the CRT palette is generated dynamically.
+
+	The CRT palette defines various levels of intensity between white and
+	black.  Grey levels follow an exponential law, so that decrementing the
+	color index periodically will simulate the remanence of a cathode ray tube.
+*/
 static unsigned char palette[] =
 {
-	0x00,0x00,0x00, /* black */
-	11,11,11,
-	14,14,14,
-	18,18,18,
-	22,22,22,
-	27,27,27,
-	34,34,34,
-	43,43,43,
-	53,53,53,
-	67,67,67,
-	84,84,84,
-	104,104,104,
-	131,131,131,
-	163,163,163,
-	204,204,204,
-	0xFF,0xFF,0xFF,  /* white */
-	0x00,0xFF,0x00,  /* green */
-	0x00,0x40,0x00,  /* dark green */
-	0xFF,0x00,0x00   /* red */
+	0x00,0xFF,0x00,	/* green */
+	0x00,0x40,0x00,	/* dark green */
+	0xFF,0x00,0x00,	/* red */
+	0x80,0x80,0x80	/* light gray */
 };
 
 static unsigned short colortable[] =
@@ -308,9 +299,30 @@ static unsigned short colortable[] =
 static void palette_init_pdp1(unsigned short *sys_colortable, const unsigned char *dummy)
 {
 	int i;
+	double cur_level;
+	int i_cur_level;
+	const double decay = /*.8*/.95;	/* decay factor for the CRT */
 
-	for (i=0; i<(sizeof(palette)/3); i++)
-		palette_set_color(i, palette[i*3], palette[i*3+1], palette[i*3+2]);
+
+	/* initialize CRT palette */
+	cur_level = 255.;	/* start with white */
+
+	for (i=pen_crt_max_intensity; i>0; i--)
+	{
+		i_cur_level = (int) (cur_level+.5);
+		palette_set_color(i, i_cur_level, i_cur_level, i_cur_level);
+		cur_level *= decay;
+	}
+
+#ifdef MAME_DEBUG
+	if (cur_level > 0.05)
+		printf("File %s line %d: Please take higher value for pen_crt_num_levels or smaller value for decay\n", __FILE__, __LINE__);
+#endif
+
+	palette_set_color(0, 0, 0, 0);
+
+	/* load static palette */
+	palette_set_colors(pen_crt_num_levels, palette, sizeof(palette) / sizeof(palette[0]) / 3);
 
 	memcpy(sys_colortable, colortable, sizeof(colortable));
 }
@@ -377,7 +389,7 @@ static MACHINE_DRIVER_START(pdp1)
 	MDRV_VISIBLE_AREA(0, virtual_width-1, 0, virtual_height-1)
 
 	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(sizeof(palette) / sizeof(palette[0]) / 3)
+	MDRV_PALETTE_LENGTH(pen_crt_num_levels + (sizeof(palette) / sizeof(palette[0]) / 3))
 	MDRV_COLORTABLE_LENGTH(sizeof(colortable) / sizeof(colortable[0]))
 
 	MDRV_PALETTE_INIT(pdp1)

@@ -161,15 +161,16 @@ enum
 /* Color codes */
 enum
 {
-	pen_crt_max_intensity = 15,
+	/* first pen_crt_num_levels colors used for CRT remanence */
+	pen_crt_num_levels = 32,
+	pen_crt_max_intensity = pen_crt_num_levels-1,
 
 	pen_black = 0,
-	pen_white = 15,
-	/*pen_dk_gray = 8,*/
-	pen_lt_gray = 12,
-	pen_green = 16,
-	pen_dk_green = 17,
-	pen_red = 18,
+	pen_white = pen_crt_max_intensity,
+	pen_green = pen_crt_num_levels,
+	pen_dk_green = pen_crt_num_levels+1,
+	pen_red = pen_crt_num_levels+2,
+	pen_lt_gray = pen_crt_num_levels+3,
 
 	pen_panel_bg = pen_black,
 	pen_panel_caption = pen_white,
