@@ -175,13 +175,13 @@ READ_HANDLER ( coupe_port_r )
 		switch (offset & 0x03)
 		{
 			case 0x00:
-                                return wd179x_status_r(0);
-                        case 0x01:
-                                return wd179x_track_r(0);
-                        case 0x02:
-                                return wd179x_sector_r(0);
-                        case 0x03:
-                                return wd179x_data_r(0);
+				return wd179x_status_r(0);
+			case 0x01:
+				return wd179x_track_r(0);
+			case 0x02:
+				return wd179x_sector_r(0);
+			case 0x03:
+				return wd179x_data_r(0);
 		}
 	case LPEN_PORT:
 		return LPEN;
@@ -211,7 +211,8 @@ WRITE_HANDLER (  coupe_port_w )
 	if (offset==SSND_ADDR)						// Set sound address
 	{
 		SOUND_ADDR=data&0x1F;					// 32 registers max
-		return;
+		saa1099_control_port_0_w(0, SOUND_ADDR);
+        return;
 	}
 
 	switch (offset & 0xFF)
@@ -227,17 +228,17 @@ WRITE_HANDLER (  coupe_port_w )
 		switch (offset & 0x03)
 		{
 			case 0x00:
-                                wd179x_command_w(0, data);
+				wd179x_command_w(0, data);
 				break;
-			case 0x01:							// Track byte requested on address line
-                                wd179x_track_w(0, data);
-                        	break;
-			case 0x02:							// Sector byte requested on address line
-                                wd179x_sector_w(0, data);
-                                break;
-			case 0x03:							// Data byte requested on address line
-                                wd179x_data_w(0, data);
-                                break;
+			case 0x01:	/* Track byte requested on address line */
+				wd179x_track_w(0, data);
+				break;
+			case 0x02:	/* Sector byte requested on address line */
+				wd179x_sector_w(0, data);
+				break;
+			case 0x03:	/* Data byte requested on address line */
+				wd179x_data_w(0, data);
+				break;
 
 		}
 		return;
@@ -264,7 +265,8 @@ WRITE_HANDLER (  coupe_port_w )
 		speaker_level_w(0,(data>>4) & 0x01);
 		return;
 	case SSND_DATA:
-		SOUND_REG[SOUND_ADDR]=data;
+		saa1099_write_port_0_w(0, data);
+		SOUND_REG[SOUND_ADDR] = data;
 		return;
 	default:
 		logerror("Write Unsupported Port: %04x,%02x\n", offset,data);
@@ -431,8 +433,14 @@ static void coupe_init_palette(unsigned char *sys_palette, unsigned short *sys_c
 
 static struct Speaker_interface coupe_speaker_interface=
 {
- 1,
- {50},
+	1,
+	{50},
+};
+
+static struct SAA1099_interface coupe_saa1099_interface=
+{
+	1,
+	{{50,50}},
 };
 
 static struct MachineDriver machine_driver_coupe =
@@ -475,7 +483,11 @@ static struct MachineDriver machine_driver_coupe =
 			SOUND_SPEAKER,
 			&coupe_speaker_interface
 		},
-	}
+		{
+			SOUND_SAA1099,
+			&coupe_saa1099_interface
+        },
+    }
 
 };
 
@@ -494,23 +506,24 @@ ROM_END
 static const struct IODevice io_coupe[] =
 {
 	{
-		IO_FLOPPY,			/* type */
-		2,					/* count */
-		"dsk\0",            /* file extensions */		// Only .DSK (raw dump images) are supported at present
-		IO_RESET_NONE,		/* reset if file changed */
-        NULL,               /* id */
-                coupe_floppy_init,         /* init */
-                basicdsk_floppy_exit,                           /* exit */
-		NULL,				/* info */
-		NULL,				/* open */
-		NULL,				/* close */
-                floppy_status,                           /* status */
-		NULL,				/* seek */
-		NULL,				/* tell */
-        NULL,               /* input */
-		NULL,				/* output */
-		NULL,				/* input_chunk */
-		NULL				/* output_chunk */
+		IO_FLOPPY,				/* type */
+		2,						/* count */
+/* Only .DSK (raw dump images) are supported at present */
+        "dsk\0",                /* file extensions */       
+		IO_RESET_NONE,			/* reset if file changed */
+		NULL,					/* id */
+		coupe_floppy_init,		/* init */
+		basicdsk_floppy_exit,	/* exit */
+		NULL,					/* info */
+		NULL,					/* open */
+		NULL,					/* close */
+		floppy_status,			/* status */
+		NULL,					/* seek */
+		NULL,					/* tell */
+		NULL,					/* input */
+		NULL,					/* output */
+		NULL,					/* input_chunk */
+		NULL					/* output_chunk */
     },
 	{ IO_END }
 };

@@ -8,7 +8,7 @@
 #define MAX_SAA1099 1
 
 /* interface */
-struct saa1099_interface
+struct SAA1099_interface
 {
 	int numchips;						/* number of chips */
 	int volume[MAX_SAA1099][2];			/* playback volume */	

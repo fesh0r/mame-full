@@ -285,6 +285,9 @@ int cem3394_num(const struct MachineSound *msound) { return ((struct cem3394_int
 #if (HAS_QSOUND)
 int qsound_clock(const struct MachineSound *msound) { return ((struct QSound_interface*)msound->sound_interface)->clock; }
 #endif
+#if (HAS_SAA1099)
+int saa1099_num(const struct MachineSound *msound) { return ((struct SAA1099_interface*)msound->sound_interface)->numchips; }
+#endif
 #if (HAS_SPEAKER)
 int speaker_num(const struct MachineSound *msound) { return ((struct Speaker_interface*)msound->sound_interface)->num; }
 #endif
@@ -794,6 +797,18 @@ struct snd_interface sndintf[] =
 		qsound_clock,
 		qsound_sh_start,
 		qsound_sh_stop,
+		0,
+		0
+	},
+#endif
+#if (HAS_SAA1099)
+	{
+		SOUND_SAA1099,
+		"SAA1099",
+		saa1099_num,
+		0,
+		saa1099_sh_start,
+		saa1099_sh_stop,
 		0,
 		0
 	},
