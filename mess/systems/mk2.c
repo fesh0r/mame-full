@@ -268,8 +268,8 @@ void init_mk2(void)
 	rriot_config(0,&riot);
 }
 
-// seams to be developed by mostek (MK)
 CONS( 1979,	mk2,	0, 		mk2,	mk2,	mk2,	  "Quelle International",  "Chess Champion MK II")
+// second design sold (same computer/program?)
 
 #ifdef RUNTIME_LOADER
 extern void mk2_runtime_loader_init(void)
