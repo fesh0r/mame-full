@@ -8,17 +8,25 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
-- [A2600,A7800] Left and Right difficulty switches can now be toggled
-  with the [ and ] keys.  The \ key will also toggle the Black&White
-  switch on the a2600.  [Christopher Stone]
+- [A2600,A7800] Add keys to toggle switches.  New keyboard mappings are:
 
-- [A2600] Remap Select/Reset Keys to match a7800 driver (bug #670)
+  1 - Select
+  2 - Reset
+  3 - Toggle Left Difficulty switch
+  4 - Toggle Right Difficulty switch
+  C - Toggle Black & White switch (a2600 only)
+  ] - Toggle Pause switch (a7800 only)
+
   [Christopher Stone]
 
-- [APPLE2] Reset key fixes.  The default Apple RESET key is now F12.  The
-  apple2 driver no longer requires a CTRL key to reset.  (bug #642)
-  The apple2+ driver now has a DIP switch to switch between RESET and
-  CTRL-RESET. (bug #645)  [Christopher Stone]
+- [APPLE2] Reset key fixes:
+
+  + The default Apple RESET key is now F12.
+  + The apple2 driver no longer requires a CTRL key to reset.  (bug #642)
+  + The apple2+ driver now has a DIP switch to switch between RESET and
+    CTRL-RESET. (bug #645)
+
+  [Christopher Stone]
 
 - [CBM FAMILY] Fixed SID regressions introduced in 0.93.  SID chips now
   packaged as actual MAME/MESS sound cores.  (bug #658) [Nate Woods]
