@@ -2,9 +2,11 @@
 	tms3556 emulation
 
 	TODO:
-	* test VRAM read/write
 	* implement remaining flags in control registers
 	* test the whole thing
+	* find the bloody tms3556 manual.  I mean the register and VRAM interfaces
+	  are mostly guesswork full of hacks, and I'd like to compare it with
+	  documentation.
 
 	Raphael Nabet, 2004
 */
@@ -17,9 +19,11 @@ static struct
 	/* registers */
 	UINT8 controlRegs[8];
 	UINT16 addressRegs[8];
+	UINT16 writePtr;
 	/* register interface */
 	int reg_ptr;
 	int reg_access_phase;
+	int magical_mystery_flag;
 	/* memory */
 	UINT8 *vram;
 	int vram_size;
@@ -39,6 +43,8 @@ static struct
 	/* double height phase flags (one per horizontal character position) */
 	int dbl_h_phase[40];
 } vdp;
+
+static struct mame_bitmap *tmpbitmap;
 
 #define TOP_BORDER 1
 #define BOTTOM_BORDER 1
@@ -77,6 +83,12 @@ READ8_HANDLER(tms3556_vram_r)
 {
 	int reply;
 
+	if (vdp.magical_mystery_flag)
+	{
+		vdp.writePtr = ((vdp.controlRegs[2] << 8) | vdp.controlRegs[1]) + 1;
+		vdp.magical_mystery_flag = 0;
+	}
+
 	reply = vdp.vram[vdp.addressRegs[1]];
 	vdp.addressRegs[1] ++;
 
@@ -90,13 +102,14 @@ READ8_HANDLER(tms3556_vram_r)
 */
 WRITE8_HANDLER(tms3556_vram_w)
 {
-	int address;
+	if (vdp.magical_mystery_flag)
+	{
+		vdp.writePtr = (vdp.controlRegs[2] << 8) | vdp.controlRegs[1];
+		vdp.magical_mystery_flag = 0;
+	}
 
-	address = (vdp.controlRegs[1] << 8) | vdp.controlRegs[2];
-	vdp.vram[address] = data;
-	address++;
-	vdp.controlRegs[1] = address >> 8;
-	vdp.controlRegs[2] = address;
+	vdp.vram[vdp.writePtr] = data;
+	vdp.writePtr++;
 }
 
 /*
@@ -138,11 +151,21 @@ WRITE8_HANDLER(tms3556_reg_w)
 		{
 			vdp.controlRegs[vdp.reg_ptr] = data;
 			vdp.reg_access_phase = 0;
+			if (vdp.reg_ptr == 2)
+				vdp.magical_mystery_flag = 1;
+		}
+		else if (vdp.reg_ptr == 9)
+		{	/* I don't understand what is going on, but it is the only way to
+			get this to work */
+			vdp.addressRegs[vdp.reg_ptr-8] = ((vdp.controlRegs[2] << 8) | vdp.controlRegs[1]) + 1;
+			vdp.reg_access_phase = 0;
+			vdp.magical_mystery_flag = 0;
 		}
 		else
 		{
 			vdp.addressRegs[vdp.reg_ptr-8] = (vdp.addressRegs[vdp.reg_ptr-8] & 0xff00) | vdp.controlRegs[1];
 			vdp.reg_access_phase = 2;
+			vdp.magical_mystery_flag = 0;
 		}
 		break;
 	case 2:
@@ -222,6 +245,10 @@ int tms3556_init(int vram_size)
 
 	vdp.vram_size = vram_size;
 
+	tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height);
+	if (!tmpbitmap)
+		return 1;
+
 	/* allocate VRAM */
 	vdp.vram = auto_malloc(0x10000);
 	if (!vdp.vram)
@@ -252,8 +279,10 @@ void tms3556_reset(void)
 		vdp.controlRegs[i] = 0;
 		vdp.addressRegs[i] = 0;
 	}
+	vdp.writePtr = 0;
 	vdp.reg_ptr = 0;
 	vdp.reg_access_phase = 0;
+	vdp.magical_mystery_flag = 0;
 	vdp.scanline = 0;
 }
 
@@ -298,7 +327,7 @@ static void tms3556_draw_line_text_common(UINT16 *ln)
 	int alphanumeric_mode, dbl_w, dbl_h, dbl_w_phase = 0;
 
 
-	nametbl = vdp.vram + vdp.addressRegs[2];
+	nametbl = vdp.vram + vdp.addressRegs[2] /*+ 1*//*??????*/;
 	for (i=0; i<4; i++)
 		patterntbl[i] = vdp.vram + vdp.addressRegs[i+3];
 
@@ -314,6 +343,8 @@ static void tms3556_draw_line_text_common(UINT16 *ln)
 	{
 		name_hi = nametbl[name_offset];
 		name_lo = nametbl[name_offset+1];
+		if (name_hi || name_lo)
+			logerror("ding!");
 		pattern_ix = ((name_hi >> 2) & 2) | ((name_hi >> 4) & 1);
 		alphanumeric_mode = (pattern_ix < 2) || ((pattern_ix == 3) && !(vdp.controlRegs[7] & 0x08));
 		fg = Machine->pens[(name_hi >> 5) & 0x7];
@@ -561,6 +592,7 @@ static void tms3556_draw_line(struct mame_bitmap *bmp, int line)
 static VIDEO_UPDATE(tms3556)
 {
 	/* already been rendered, since we're using scanline stuff */
+	copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_NONE, 0);
 }
 
 /*
@@ -612,7 +644,7 @@ void tms3556_interrupt(void)
 	if ((vdp.scanline >= 0) && (vdp.scanline < TOTAL_HEIGHT))
 	{
 		//if (!osd_skip_this_frame())
-			tms3556_draw_line(Machine->scrbitmap, vdp.scanline);
+			tms3556_draw_line(tmpbitmap, vdp.scanline);
 	}
 
 	if (++vdp.scanline == 313)
