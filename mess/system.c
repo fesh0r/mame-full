@@ -203,21 +203,21 @@ TESTDRIVER( a310 )      /* 1988 Acorn Archimedes 310						*/
 //	DRIVER( z88 )		/*													*/
 
 	/* AMSTRAD */
-//	DRIVER( cpc464 )	/* Amstrad (Schneider in Germany) 1984				*/
-//	DRIVER( cpc664 )	/* Amstrad (Schneider in Germany) 1985				*/
-//	DRIVER( cpc6128 )	/* Amstrad (Schneider in Germany) 1985				*/
-//	DRIVER( cpc464p )	/* Amstrad CPC464  Plus - 1987						*/
-//	DRIVER( cpc6128p )	/* Amstrad CPC6128 Plus - 1987						*/
-//	DRIVER( kccomp )	/* VEB KC compact									*/
-//TESTDRIVER( pcw8256 )	/* 198? PCW8256 									*/
-//TESTDRIVER( pcw8512 )	/* 198? PCW8512 									*/
-//TESTDRIVER( pcw9256 )	/* 198? PCW9256 									*/
-//TESTDRIVER( pcw9512 )	/* 198? PCW9512 (+) 								*/
-//TESTDRIVER( pcw10 ) 	/* 198? PCW10										*/
-//TESTDRIVER( pcw16 )     /* 1995 PCW16										*/
-//TESTDRIVER( nc100 ) 	/* 19?? NC100										*/
-//TESTDRIVER( nc100a ) 	/* 19?? NC100										*/
-//TESTDRIVER( nc200 )     /* 19?? NC200										*/
+	DRIVER( cpc464 )	/* Amstrad (Schneider in Germany) 1984				*/
+	DRIVER( cpc664 )	/* Amstrad (Schneider in Germany) 1985				*/
+	DRIVER( cpc6128 )	/* Amstrad (Schneider in Germany) 1985				*/
+	DRIVER( cpc464p )	/* Amstrad CPC464  Plus - 1987						*/
+	DRIVER( cpc6128p )	/* Amstrad CPC6128 Plus - 1987						*/
+	DRIVER( kccomp )	/* VEB KC compact									*/
+TESTDRIVER( pcw8256 )	/* 198? PCW8256 									*/
+TESTDRIVER( pcw8512 )	/* 198? PCW8512 									*/
+TESTDRIVER( pcw9256 )	/* 198? PCW9256 									*/
+TESTDRIVER( pcw9512 )	/* 198? PCW9512 (+) 								*/
+TESTDRIVER( pcw10 ) 	/* 198? PCW10										*/
+TESTDRIVER( pcw16 )     /* 1995 PCW16										*/
+TESTDRIVER( nc100 ) 	/* 19?? NC100										*/
+TESTDRIVER( nc100a ) 	/* 19?? NC100										*/
+TESTDRIVER( nc200 )     /* 19?? NC200										*/
 
 	/* APPLE */
 /*
@@ -294,8 +294,8 @@ XL/XE 16kB OS roms
 //TESTDRIVER( atarist )	/* Atari ST 										*/
 
 	/* COMMODORE */
-//	DRIVER( kim1 )		/* Commodore (MOS) KIM-1 1975						*/
-//TESTDRIVER( sym1 )		/* Synertek SYM1									*/
+	DRIVER( kim1 )		/* Commodore (MOS) KIM-1 1975						*/
+TESTDRIVER( sym1 )		/* Synertek SYM1									*/
 //TESTDRIVER( aim65 )		/* Rockwell AIM65									*/
 
 	DRIVER( pet )		/* PET2001/CBM20xx Series (Basic 1) 				*/
@@ -495,15 +495,15 @@ TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS			*/
 	DRIVER( jupiter )	/* Jupiter Ace										*/
 
 	/* SORD */
-//	DRIVER( sordm5 )
+	DRIVER( sordm5 )
 
 	/* APF Electronics Inc. */
 //	DRIVER( apfm1000 )
 //	DRIVER( apfimag )
 
 	/* Tatung */
-//	DRIVER( einstein )
-//TESTDRIVER( einstei2 )
+	DRIVER( einstein )
+TESTDRIVER( einstei2 )
 
 	/* INTELLIGENT SOFTWARE */
 //	DRIVER( ep128 ) 	/* Enterprise 128 k 								*/
@@ -574,15 +574,15 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 			*/
 	DRIVER( telstrat )	/* ??? Oric Telestrat/Stratos						*/
 
 	/* PHILIPS */
-//	DRIVER( p2000t )	/* 1980 P2000T										*/
-//	DRIVER( p2000m )	/* 1980 P2000M										*/
+	DRIVER( p2000t )	/* 1980 P2000T										*/
+	DRIVER( p2000m )	/* 1980 P2000M										*/
 	/* philips g7000 odyssey2 compatible */
 
 	/* COMPUKIT */
-//	DRIVER( uk101 ) 	/* 1979 UK101										*/
+	DRIVER( uk101 ) 	/* 1979 UK101										*/
 
 	/* OHIO SCIENTIFIC */
-//	DRIVER( superbrd )	/* 1979 Superboard II								*/
+	DRIVER( superbrd )	/* 1979 Superboard II								*/
 
 	/* ASCII & MICROSOFT */
 //	DRIVER( msx )		/* 1983 MSX 										*/
@@ -623,7 +623,7 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 			*/
 	DRIVER( aquarius )	/* 1983 Aquarius									*/
 
 	/*EXIDY INC */
-//	DRIVER( exidy )  /* Sorcerer											*/
+	DRIVER( exidy )  /* Sorcerer											*/
 
 	/* GALAKSIJA */
 //	DRIVER( galaxy )

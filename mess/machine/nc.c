@@ -110,22 +110,19 @@ static int nc_card_load(int id, mame_file *file, unsigned char **ptr)
 	return 0;
 }
 
+int nc_pcmcia_card_init(int id)
+{
+	/* card not present */
+	nc_set_card_present_state(0);
+	/* card ram NULL */
+	nc_card_ram = NULL;
+	nc_card_size = 0;
+	return INIT_PASS;
+}
+
 /* load pcmcia card */
 int nc_pcmcia_card_load(int id, mame_file *fp, int open_mode)
 {
-	/* a pcmcia card is not required for this machine,
-	so if no image is specified, initialisation has succeeded */
-	if (fp == NULL)
-	{
-		/* card not present */
-		nc_set_card_present_state(0);
-		/* card ram NULL */
-		nc_card_ram = NULL;
-		nc_card_size = 0;
-
-		return INIT_PASS;
-	}
-
 	/* filename specified */
 
 	/* attempt to load file */
@@ -167,15 +164,10 @@ void nc_pcmcia_card_exit(int id)
 /*************************************************************************************************/
 /* Serial */
 
-int	nc_serial_init(int id, mame_file *fp, int open_mode)
+int	nc_serial_load(int id, mame_file *fp, int open_mode)
 {
-	/* serial device is not require for this machine, so if no image
-	is specified, initialisation has succeeded */
-	if (fp == NULL)
-		return INIT_PASS;
-
 	/* filename specified */
-	if (serial_device_init(id, fp)==INIT_PASS)
+	if (serial_device_load(id, fp)==INIT_PASS)
 	{
 		/* setup transmit parameters */
 		serial_device_setup(id, 9600, 8, 1,SERIAL_PARITY_NONE);

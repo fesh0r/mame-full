@@ -23,7 +23,7 @@
 #include "cpuintrf.h"
 #include "devices/basicdsk.h"
 /* for CPCEMU style disk images */
-#include "includes/dsk.h"
+#include "devices/dsk.h"
 #include "image.h"
 
 /* there are 64us per line, although in reality

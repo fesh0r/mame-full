@@ -1782,8 +1782,8 @@ ROM_END
 
 SYSTEM_CONFIG_START(nc_common)
 	CONFIG_DEVICE_PRINTER(1)
-	CONFIG_DEVICE_CARTSLOT_OPT(1, "crd\0card\0", nc_pcmcia_card_load, nc_pcmcia_card_exit, NULL)
-	CONFIG_DEVICE_LEGACY(IO_SERIAL, 1, "txt\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_READ, nc_serial_init, serial_device_exit, NULL)
+	CONFIG_DEVICE_CARTSLOT_OPT(1, "crd\0card\0", nc_pcmcia_card_init, NULL, nc_pcmcia_card_load, nc_pcmcia_card_exit,  NULL, NULL)
+	CONFIG_DEVICE_LEGACY(IO_SERIAL, 1, "txt\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_READ, serial_device_init, NULL, nc_serial_load, serial_device_unload, NULL)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(nc100)

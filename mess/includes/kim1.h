@@ -1,22 +1,28 @@
+#ifndef KIM1_H
+#define KIM1_H
+
 /* from mess/machine/kim1.c */
-extern DRIVER_INIT( kim1 );
-extern MACHINE_INIT( kim1 );
+DRIVER_INIT( kim1 );
+MACHINE_INIT( kim1 );
 
-extern int kim1_cassette_init(int id, mame_file *fp, int open_mode);
-extern void kim1_cassette_exit(int id);
+int kim1_cassette_load(int id, mame_file *fp, int open_mode);
 
-extern INTERRUPT_GEN( kim1_interrupt );
+#define CONFIG_DEVICE_KIM1_CASSETTE \
+	CONFIG_DEVICE_LEGACY(IO_CASSETTE, 1, "kim\0", DEVICE_LOAD_RESETS_CPU, OSD_FOPEN_READ, NULL, NULL, kim1_cassette_load, NULL, NULL)
 
-extern READ_HANDLER ( m6530_003_r );
-extern READ_HANDLER ( m6530_002_r );
-extern READ_HANDLER ( kim1_mirror_r );
+INTERRUPT_GEN( kim1_interrupt );
 
-extern WRITE_HANDLER ( m6530_003_w );
-extern WRITE_HANDLER ( m6530_002_w );
-extern WRITE_HANDLER ( kim1_mirror_w );
+READ_HANDLER ( m6530_003_r );
+READ_HANDLER ( m6530_002_r );
+READ_HANDLER ( kim1_mirror_r );
+
+WRITE_HANDLER ( m6530_003_w );
+WRITE_HANDLER ( m6530_002_w );
+WRITE_HANDLER ( kim1_mirror_w );
 
 /* from mess/vidhrdw/kim1.c */
-extern PALETTE_INIT( kim1 );
-extern VIDEO_START( kim1 );
-extern VIDEO_UPDATE( kim1 );
+PALETTE_INIT( kim1 );
+VIDEO_START( kim1 );
+VIDEO_UPDATE( kim1 );
 
+#endif /* KIM1_H */

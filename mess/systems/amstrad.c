@@ -26,7 +26,7 @@
 #include "vidhrdw/m6845.h"		/* CRTC display */
 #include "includes/amstrad.h"
 #include "includes/nec765.h"	/* for floppy disc controller */
-#include "includes/dsk.h"		/* for CPCEMU style disk images */
+#include "devices/dsk.h"		/* for CPCEMU style disk images */
 #include "devices/snapquik.h"
 #include "devices/cartslot.h"
 #include "devices/printer.h"
@@ -2783,7 +2783,7 @@ SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(cpcplus)
 	CONFIG_IMPORT_FROM(cpc6128)
-	CONFIG_DEVICE_CARTSLOT_REQ(1,	"cpr\0", amstrad_plus_cartridge_init, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT_REQ(1,	"cpr\0", NULL, NULL, amstrad_plus_cartridge_load, NULL, NULL, NULL)
 	CONFIG_DEVICE_SNAPSHOT(			"sna\0", amstrad)
 SYSTEM_CONFIG_END
 

@@ -175,25 +175,26 @@ DRVLIBS = \
 	$(OBJ)/kaypro.a   \
 	$(OBJ)/cgenie.a   \
 	$(OBJ)/aquarius.a \
-#	$(OBJ)/kim1.a     \
-#	$(OBJ)/p2000.a	  \
-#	$(OBJ)/veb.a	  \
+	$(OBJ)/kim1.a     \
+	$(OBJ)/sym1.a     \
+	$(OBJ)/p2000.a	  \
+	$(OBJ)/veb.a	  \
+	$(OBJ)/amstrad.a  \
+	$(OBJ)/tatung.a   \
+	$(OBJ)/sord.a     \
+	$(OBJ)/exidy.a    \
 #	$(OBJ)/necpc.a	  \
 #	$(OBJ)/nec.a	  \
 #	$(OBJ)/fairch.a   \
 #	$(OBJ)/ascii.a	  \
 #	$(OBJ)/nascom1.a  \
 #	$(OBJ)/samcoupe.a \
-#	$(OBJ)/tatung.a   \
-#	$(OBJ)/sord.a     \
 #	$(OBJ)/magnavox.a \
 #	$(OBJ)/mtx.a	  \
-#	$(OBJ)/amstrad.a  \
 #	$(OBJ)/ep128.a	  \
 #	$(OBJ)/mk1.a      \
 #	$(OBJ)/mk2.a      \
 #	$(OBJ)/ti85.a     \
-#	$(OBJ)/exidy.a    \
 #	$(OBJ)/galaxy.a   \
 #	$(OBJ)/vc4000.a   \
 #	$(OBJ)/lviv.a   \
@@ -211,7 +212,6 @@ DRVLIBS = \
 #	$(OBJ)/svi.a      \
 #	$(OBJ)/sharp.a    \
 #	$(OBJ)/aim65.a    \
-#	$(OBJ)/sym1.a     \
 #	$(OBJ)/avigo.a    \
 #	$(OBJ)/motorola.a \
 #	$(OBJ)/ssystem3.a \
@@ -754,11 +754,11 @@ COREOBJS += \
 	$(OBJ)/mess/machine/pckeybrd.o \
 	$(OBJ)/mess/machine/pc_fdc_h.o \
 	$(OBJ)/mess/devices/pc_flopp.o \
+	$(OBJ)/mess/devices/dsk.o      \
 	$(OBJ)/mess/machine/d88.o      \
 	$(OBJ)/mess/machine/nec765.o   \
 	$(OBJ)/mess/machine/wd179x.o   \
 	$(OBJ)/mess/machine/serial.o
-#	$(OBJ)/mess/machine/dsk.o      \
 
 
 # additional tools

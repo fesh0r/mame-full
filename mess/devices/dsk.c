@@ -13,7 +13,7 @@
 #include <stdarg.h>
 #include "driver.h"
 #include "devices/flopdrv.h"
-#include "includes/dsk.h"
+#include "devices/dsk.h"
 /* disk image and extended disk image support code */
 /* supports up to 84 tracks and 2 sides */
 
@@ -90,20 +90,17 @@ int dsk_floppy_load(int id, mame_file *fp, int open_mode)
 {
 	dsk_drive *thedrive = &drives[id];
 
-	if (fp)
+	/* load disk image */
+	if (dsk_load(fp, id, &thedrive->data))
 	{
-		/* load disk image */
-		if (dsk_load(fp, id, &thedrive->data))
+		if (thedrive->data)
 		{
-			if (thedrive->data)
-			{
-				dsk_disk_image_init(thedrive); /* initialise dsk */
-				floppy_drive_set_disk_image_interface(id,&dsk_floppy_interface);
-				if(dsk_floppy_verify(thedrive->data) == IMAGE_VERIFY_PASS)
-            		return INIT_PASS;
-				else
-            		return INIT_PASS;
-			}
+			dsk_disk_image_init(thedrive); /* initialise dsk */
+			floppy_drive_set_disk_image_interface(id,&dsk_floppy_interface);
+			if(dsk_floppy_verify(thedrive->data) == IMAGE_VERIFY_PASS)
+            	return INIT_PASS;
+			else
+            	return INIT_PASS;
 		}
 	}
 	return INIT_PASS;
@@ -140,7 +137,7 @@ static int dsk_save(int id, unsigned char **ptr)
 }
 
 
-void dsk_floppy_exit(int id)
+void dsk_floppy_unload(int id)
 {
 	dsk_drive *thedrive = &drives[id];
 

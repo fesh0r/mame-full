@@ -14,8 +14,6 @@
 #define LOG_INPUTX	0
 #endif
 
-#define KEYPRESS_TIME	TIME_IN_SEC(0.05)
-
 struct InputCode
 {
 	UINT16 port[NUM_SIMUL_KEYS];
@@ -436,6 +434,22 @@ int inputx_can_post_key(unicode_char_t ch)
 	return inputx_can_post() && (can_post_key_directly(ch) || can_post_key_alternate(ch));
 }
 
+static double choose_delay(unicode_char_t ch)
+{
+	double delay;
+
+	switch(ch) {
+	case '\r':
+		delay = TIME_IN_SEC(0.2);
+		break;
+
+	default:
+		delay = TIME_IN_SEC(0.05);
+		break;
+	}
+	return delay;
+}
+
 static void internal_post_key(unicode_char_t ch)
 {
 	struct KeyBuffer *keybuf;
@@ -445,7 +459,7 @@ static void internal_post_key(unicode_char_t ch)
 	/* need to start up the timer? */
 	if (keybuf->begin_pos == keybuf->end_pos)
 	{
-		timer_adjust(inputx_timer, 0, 0, KEYPRESS_TIME);
+		timer_adjust(inputx_timer, choose_delay(ch), 0, 0);
 		keybuf->status &= ~STATUS_KEYDOWN;
 	}
 
@@ -506,6 +520,7 @@ void inputx_postn(const unicode_char_t *text, size_t text_len)
 static void inputx_timerproc(int dummy)
 {
 	struct KeyBuffer *keybuf;
+	double delay;
 
 	keybuf = get_buffer();
 	if (keybuf->status & STATUS_KEYDOWN)
@@ -513,12 +528,16 @@ static void inputx_timerproc(int dummy)
 		keybuf->status &= ~STATUS_KEYDOWN;
 		keybuf->begin_pos++;
 		keybuf->begin_pos %= sizeof(keybuf->buffer) / sizeof(keybuf->buffer[0]);
-		if (keybuf->begin_pos == keybuf->end_pos)
-			timer_reset(inputx_timer, TIME_NEVER);
 	}
 	else
 	{
 		keybuf->status |= STATUS_KEYDOWN;
+	}
+
+	if (keybuf->begin_pos != keybuf->end_pos)
+	{
+		delay = choose_delay(keybuf->buffer[keybuf->begin_pos]);
+		timer_adjust(inputx_timer, delay, 0, 0);
 	}
 }
 

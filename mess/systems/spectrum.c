@@ -150,7 +150,7 @@ http://www.z88forever.org.uk/zxplus3e/
 /* +3 hardware */
 #include "includes/nec765.h"
 #include "cpuintrf.h"
-#include "includes/dsk.h"
+#include "devices/dsk.h"
 
 
 extern void spectrum_128_update_memory(void);

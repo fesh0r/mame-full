@@ -85,7 +85,7 @@
 #include "includes/wd179x.h"
 #include "devices/basicdsk.h"
 #include "includes/msm8251.h"
-#include "includes/dsk.h"
+#include "devices/dsk.h"
 #include "includes/centroni.h"
 #include "devices/printer.h"
 #include "image.h"

@@ -337,27 +337,19 @@ static ppi8255_interface sord_ppi8255_interface =
 
 static char cart_data[0x06fff-0x02000];
 
-static int sord_cartslot_init(int id, mame_file *file, int open_mode)
+static int sord_cartslot_load(int id, mame_file *file, int open_mode)
 {
-	if (file == NULL)
-		return INIT_FAIL;
+	int datasize;
 
-	if (file)
+	/* get file size */
+	datasize = mame_fsize(file);
+
+	if (datasize!=0)
 	{
-		int datasize;
-
-		/* get file size */
-		datasize = mame_fsize(file);
-
-		if (datasize!=0)
-		{
-			/* read whole file */
-			mame_fread(file, cart_data, datasize);
-		}
-		return INIT_PASS;
-
+		/* read whole file */
+		mame_fread(file, cart_data, datasize);
 	}
-	return INIT_FAIL;
+	return INIT_PASS;
 }
 
 static int sord_floppy_init(int id, mame_file *fp, int open_mode)
@@ -866,7 +858,7 @@ SYSTEM_CONFIG_START(sordm5)
 	CONFIG_RAM_DEFAULT(64 * 1024)
 	CONFIG_DEVICE_PRINTER			(1)
 	CONFIG_DEVICE_CASSETTE			(1, "",			sord_cassette_init)
-	CONFIG_DEVICE_CARTSLOT_REQ		(1, "rom\0",	sord_cartslot_init, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT_REQ		(1, "rom\0",	NULL, NULL, sord_cartslot_load, NULL, NULL, NULL)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(srdm5fd5)

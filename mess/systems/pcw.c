@@ -95,7 +95,7 @@
 #include "driver.h"
 // nec765 interface
 #include "includes/nec765.h"
-#include "includes/dsk.h"
+#include "devices/dsk.h"
 // pcw video hardware
 #include "includes/pcw.h"
 // pcw/pcw16 beeper

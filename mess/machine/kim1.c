@@ -637,35 +637,26 @@ MACHINE_INIT( kim1 )
 	set_chip_clock(1, 255);
 }
 
-int kim1_cassette_init(int id, mame_file *file, int open_mode)
+int kim1_cassette_load(int id, mame_file *file, int open_mode)
 {
 	const char magic[] = "KIM1";
 	char buff[4];
+	UINT16 addr, size;
+	UINT8 ident, *RAM = memory_region(REGION_CPU1);
 
-	if (file)
+	mame_fread(file, buff, sizeof (buff));
+	if (memcmp(buff, magic, sizeof (buff)))
 	{
-		UINT16 addr, size;
-		UINT8 ident, *RAM = memory_region(REGION_CPU1);
-
-		mame_fread(file, buff, sizeof (buff));
-		if (memcmp(buff, magic, sizeof (buff)))
-		{
-			logerror("kim1_rom_load: magic '%s' not found\n", magic);
-			return INIT_FAIL;
-		}
-		mame_fread_lsbfirst(file, &addr, 2);
-		mame_fread_lsbfirst(file, &size, 2);
-		mame_fread(file, &ident, 1);
-		logerror("kim1_rom_load: $%04X $%04X $%02X\n", addr, size, ident);
-		while (size-- > 0)
-			mame_fread(file, &RAM[addr++], 1);
+		logerror("kim1_rom_load: magic '%s' not found\n", magic);
+		return INIT_FAIL;
 	}
+	mame_fread_lsbfirst(file, &addr, 2);
+	mame_fread_lsbfirst(file, &size, 2);
+	mame_fread(file, &ident, 1);
+	logerror("kim1_rom_load: $%04X $%04X $%02X\n", addr, size, ident);
+	while (size-- > 0)
+		mame_fread(file, &RAM[addr++], 1);
 	return INIT_PASS;
-}
-
-void kim1_cassette_exit(int id)
-{
-	/* nothing yet */
 }
 
 static void m6530_timer_cb(int chip)

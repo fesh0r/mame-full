@@ -1,13 +1,17 @@
+#ifndef UK101_H
+#define UK101_H
+
 /* machine/uk101.c */
-extern MACHINE_INIT( uk101 );
-extern READ_HANDLER( uk101_acia0_casin );
-extern READ_HANDLER( uk101_acia0_statin );
-extern READ_HANDLER( uk101_keyb_r );
-extern WRITE_HANDLER( uk101_keyb_w );
-extern int uk101_init_cassette(int id, mame_file *fp, int open_mode);
-extern void uk101_exit_cassette(int id);
+MACHINE_INIT( uk101 );
+READ_HANDLER( uk101_acia0_casin );
+READ_HANDLER( uk101_acia0_statin );
+READ_HANDLER( uk101_keyb_r );
+WRITE_HANDLER( uk101_keyb_w );
+int uk101_cassette_load(int id, mame_file *fp, int open_mode);
+void uk101_cassette_unload(int id);
 
 /* vidhrdw/uk101.c */
-extern VIDEO_UPDATE( uk101 );
-extern VIDEO_UPDATE( superbrd );
+VIDEO_UPDATE( uk101 );
+VIDEO_UPDATE( superbrd );
 
+#endif /* UK101_H */

@@ -428,7 +428,7 @@ static void paste(void)
 		text = GlobalLock(h);
 		if (text)
 		{
-			mb_size = GlobalSize(h);
+			mb_size = strlen(text);
 			w_size = MultiByteToWideChar(CP_ACP, 0, text, mb_size, NULL, 0);
 			wtext = alloca(w_size * sizeof(WCHAR));
 			MultiByteToWideChar(CP_ACP, 0, text, mb_size, wtext, w_size);
