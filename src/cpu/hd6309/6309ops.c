@@ -986,7 +986,7 @@ INLINE void cmpr( void )
 /* $1138 TFM R0+,R1+ */
 INLINE void tfmpp( void )
 {
-	UINT8	tb, srcValue;
+	UINT8	tb, srcValue = 0;
 	int 	done = FALSE;
 	
 	IMMBYTE(tb);
@@ -1045,7 +1045,7 @@ INLINE void tfmpp( void )
 /* $1139 TFM R0-,R1- */
 INLINE void tfmmm( void )
 {
-	UINT8	tb, srcValue;
+	UINT8	tb, srcValue = 0;
 	int 	done = FALSE;
 
 	IMMBYTE(tb);
@@ -1102,7 +1102,7 @@ INLINE void tfmmm( void )
 /* $113A TFM R0+,R1 */
 INLINE void tfmpc( void )
 {
-	UINT8	tb, srcValue;
+	UINT8	tb, srcValue = 0;
 	int 	done = FALSE;
 
 	IMMBYTE(tb);
@@ -1159,7 +1159,7 @@ INLINE void tfmpc( void )
 /* $113B TFM R0,R1+ */
 INLINE void tfmcp( void )
 {
-	UINT8	tb, srcValue;
+	UINT8	tb, srcValue = 0;
 	int 	done = FALSE;
 
 	IMMBYTE(tb);
