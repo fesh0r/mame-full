@@ -72,6 +72,7 @@ struct drawline_params
 	int row;
 	UINT8 border_value;
 	void (*inner_draw_line)(struct drawline_params *_params);
+	const UINT8 *videoram_pos;
 };
 
 #ifdef ALIGN_INTS
@@ -569,24 +570,116 @@ founddirty:
 	return 1;
 }
 
+static int calc_pitch_adjust(int base_scanline, int scanline_count)
+{
+	return (((base_scanline + scanline_count) / line_info.scanlines_per_row)
+		- (base_scanline / line_info.scanlines_per_row)) * frame_info.pitch;
+}
+
+struct draw_body_params
+{
+	struct mame_bitmap *bitmap;
+	struct drawline_params dl_params;
+	int base_scanline;
+	int scanline_count;
+	int width;
+	UINT8 **db;
+	drawline_proc draw_line;
+	UINT8 *videoram_max;
+};
+
+static void draw_body_task(void *param, int task_num, int task_count)
+{
+	struct draw_body_params *dbp = (struct draw_body_params *) param;
+	struct drawline_params *dlp;
+	struct drawline_params local_params;
+	int task_base_scanline;
+	int task_scanline_count;
+	int pitch_adjust;
+	UINT8 *db;
+	int must_redraw = TRUE;
+	int row, y, screeny;
+	int drawn_row = -1;
+
+	if (task_count == 1)
+	{
+		dlp = &dbp->dl_params;
+	}
+	else
+	{
+		local_params = dbp->dl_params;
+		dlp = &local_params;
+	}
+
+	task_base_scanline = dbp->base_scanline + (dbp->scanline_count * task_num / task_count);
+	task_scanline_count = (dbp->base_scanline + (dbp->scanline_count * (task_num+1) / task_count)) - task_base_scanline;
+
+	pitch_adjust = calc_pitch_adjust(dbp->base_scanline, task_base_scanline - dbp->base_scanline);
+	dlp->videoram_pos = dlp->videoram_pos + pitch_adjust;
+	if (dlp->videoram_pos > dbp->videoram_max)
+		dlp->videoram_pos -= videoram_windowsize;
+	db = dbp->db ? (*(dbp->db) + pitch_adjust) : NULL;
+
+	/* go ahead and draw! */
+	for (y = task_base_scanline; y < task_base_scanline+task_scanline_count; y++)
+	{
+		/* what row are we at? */
+		row = y / line_info.scanlines_per_row;
+
+		/* actual location on MAME bitmap */
+		screeny = y + frame_info.bordertop_scanlines;
+
+		/* is this dirty (assuming we support dirty buffers?) */
+		if (row != drawn_row)
+			must_redraw = !db || is_row_dirty(db, frame_info.pitch);
+		if (must_redraw)
+		{
+			/* do we have to render a new scanline? */
+			if (dlp->charproc || (row != drawn_row))
+			{
+				dlp->scanline_data = ((UINT16 *) dbp->bitmap->line[screeny]) + line_info.borderleft_columns;
+				if (line_info.text_modulo)
+					dlp->row = y % line_info.text_modulo;
+				else
+					dlp->row = y - (row * line_info.scanlines_per_row);
+				dbp->draw_line(dlp);
+				drawn_row = row;
+			}
+			else
+			{
+				/* use a straight memcpy to copy the original scanline */
+				memcpy(((UINT16 *) dbp->bitmap->line[screeny]) + line_info.borderleft_columns, dlp->scanline_data, dbp->width * sizeof(UINT16));
+			}
+		}
+
+		/* time to up the row? */
+		if (((y + 1) / line_info.scanlines_per_row) != row)
+		{
+			dlp->videoram_pos += frame_info.pitch;
+			if (dlp->videoram_pos >= dbp->videoram_max)
+				dlp->videoram_pos -= videoram_windowsize;
+			if (db)
+				db += frame_info.pitch;
+		}
+	}
+}
+
 static void draw_body(struct mame_bitmap *bitmap, int base_scanline, int scanline_count, UINT8 **db)
 {
-	int row;
-	int drawn_row = -1;
-	int must_redraw = TRUE;
-	int i, y, width, screeny;
+	int i;
 	int pens_len;
 	pen_t pen;
 	UINT16 pens[512];
-	const UINT8 *videoram_max;
-	drawline_proc draw_line;
-	struct drawline_params params;
+	struct draw_body_params db_params;
+	int pitch_adjust;
 
 	profiler_mark(PROFILER_VIDEOMAP_DRAWBODY);
 
+	memset(&db_params, 0, sizeof(db_params));
+
 	/* figure out vitals */
-	width = line_info.visible_columns;
-	videoram_max = videoram + (((frame_info.video_base / videoram_windowsize) + 1) * videoram_windowsize);
+	db_params.width = line_info.visible_columns;
+	db_params.videoram_max = videoram + (((frame_info.video_base / videoram_windowsize) + 1) * videoram_windowsize);
 	
 	/* set up pens */
 	if (!line_info.charproc)
@@ -612,69 +705,41 @@ static void draw_body(struct mame_bitmap *bitmap, int base_scanline, int scanlin
 	}
 
 	/* set up parameters */
-	memset(&params, 0, sizeof(params));
-	params.bytes_per_row = line_info.grid_width * line_info.grid_depth / 8;
-	params.offset = line_info.offset;
-	params.zoomx = (line_info.visible_columns / line_info.grid_width) / (line_info.charproc ? 8 : 1);
-	params.pens = pens;
-	params.charproc = line_info.charproc;
-	params.border_value = line_info.border_value;
+	db_params.dl_params.bytes_per_row = line_info.grid_width * line_info.grid_depth / 8;
+	db_params.dl_params.offset = line_info.offset;
+	db_params.dl_params.zoomx = (line_info.visible_columns / line_info.grid_width) / (line_info.charproc ? 8 : 1);
+	db_params.dl_params.pens = pens;
+	db_params.dl_params.charproc = line_info.charproc;
+	db_params.dl_params.border_value = line_info.border_value;
 
 	/* choose a draw_line function */
-	draw_line = get_drawline_proc(line_info.grid_depth, params.zoomx, params.charproc != NULL,
+	db_params.draw_line = get_drawline_proc(line_info.grid_depth, db_params.dl_params.zoomx, db_params.dl_params.charproc != NULL,
 		line_info.flags & VIDEOMAP_FLAGS_ARTIFACT,
 		flags & FLAG_ENDIAN_FLIP);
 
 	/* do we have to do offset wrapping? */
-	if (line_info.offset_wrap && ((params.offset + params.bytes_per_row) > line_info.offset_wrap))
+	if (line_info.offset_wrap && ((db_params.dl_params.offset + db_params.dl_params.bytes_per_row) > line_info.offset_wrap))
 	{
-		params.offset_wrap = line_info.offset_wrap;
-		params.inner_draw_line = draw_line;
-		draw_line = draw_line_with_offset;
+		db_params.dl_params.offset_wrap = line_info.offset_wrap;
+		db_params.dl_params.inner_draw_line = db_params.draw_line;
+		db_params.draw_line = draw_line_with_offset;
 	}
 
 	/* go ahead and draw! */
-	for (y = base_scanline; y < base_scanline+scanline_count; y++)
-	{
-		/* what row are we at? */
-		row = y / line_info.scanlines_per_row;
+	db_params.bitmap = bitmap;
+	db_params.base_scanline = base_scanline;
+	db_params.scanline_count = scanline_count;
+	db_params.dl_params.videoram_pos = videoram_pos;
+	db_params.db = db;
+	osd_parallelize(draw_body_task, &db_params, line_info.charproc ? 1 : scanline_count / 4);
 
-		/* actual location on MAME bitmap */
-		screeny = y + frame_info.bordertop_scanlines;
+	pitch_adjust = calc_pitch_adjust(base_scanline, scanline_count);
+	videoram_pos += pitch_adjust;
+	if (videoram_pos > db_params.videoram_max)
+		videoram_pos -= videoram_windowsize;
+	if (db)
+		*db += pitch_adjust;
 
-		/* is this dirty (assuming we support dirty buffers?) */
-		if (row != drawn_row)
-			must_redraw = !db || is_row_dirty(*db, frame_info.pitch);
-		if (must_redraw)
-		{
-			/* do we have to render a new scanline? */
-			if (params.charproc || (row != drawn_row))
-			{
-				params.scanline_data = ((UINT16 *) bitmap->line[screeny]) + line_info.borderleft_columns;
-				if (line_info.text_modulo)
-					params.row = y % line_info.text_modulo;
-				else
-					params.row = y - (row * line_info.scanlines_per_row);
-				draw_line(&params);
-				drawn_row = row;
-			}
-			else
-			{
-				/* use a straight memcpy to copy the original scanline */
-				memcpy(((UINT16 *) bitmap->line[screeny]) + line_info.borderleft_columns, params.scanline_data, width * sizeof(UINT16));
-			}
-		}
-
-		/* time to up the row? */
-		if (((y + 1) / line_info.scanlines_per_row) != row)
-		{
-			videoram_pos += frame_info.pitch;
-			if (videoram_pos >= videoram_max)
-				videoram_pos -= videoram_windowsize;
-			if (db)
-				*db += frame_info.pitch;
-		}
-	}
 	profiler_mark(PROFILER_END);
 }
 
@@ -759,7 +824,7 @@ void videomap_update(struct mame_bitmap *bitmap, const struct rectangle *cliprec
 	else
 	{
 		/* writing to main bitmap; always refresh */
-		flags = 1;
+		full_refresh = 1;
 		bmp = bitmap;
 	}
 

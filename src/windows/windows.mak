@@ -11,9 +11,10 @@ OSOBJS = $(OBJ)/windows/winmain.o $(OBJ)/windows/fileio.o $(OBJ)/windows/config.
 
 ifdef MESS
 CFLAGS += -DWINUI
-OSOBJS += $(OBJ)/mess/windows/dirio.o \
-	$(OBJ)/mess/windows/messwin.o \
-	$(OBJ)/mess/windows/messopts.o
+OSOBJS += $(OBJ)/mess/windows/dirio.o	\
+	$(OBJ)/mess/windows/messwin.o		\
+	$(OBJ)/mess/windows/messopts.o		\
+	$(OBJ)/mess/windows/parallel.o
 endif 
 
 # uncomment this line to enable guard pages on all memory allocations

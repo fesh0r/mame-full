@@ -20,6 +20,7 @@
 
 #ifdef MESS
 #include "messwin.h"
+#include "parallel.h"
 #endif
 
 // from config.c
@@ -137,6 +138,11 @@ int osd_init(void)
 	result = win_init_window();
 	if (result == 0)
 		result = win_init_input();
+
+#ifdef MESS
+	if (result == 0)
+		result = win_parallel_init();
+#endif
 	return result;
 }
 
@@ -151,6 +157,10 @@ void osd_exit(void)
 	extern void win_shutdown_input(void);
 	win_shutdown_input();
 	osd_set_leds(0);
+
+#ifdef MESS
+	win_parallel_exit();
+#endif
 }
 
 

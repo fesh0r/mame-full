@@ -1,5 +1,6 @@
 #include "driver.h"
 #include "rc.h"
+#include "parallel.h"
 
 /* add_device() is called when the MESS CLI option has been identified 		*/
 /* This searches throught the devices{} struct array to grab the ID of the 	*/
@@ -50,19 +51,20 @@ static int specify_ram(struct rc_option *option, const char *arg, int priority)
 struct rc_option mess_opts[] = {
 	/* FIXME - these option->names should NOT be hardcoded! */
 	{ "MESS specific options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
-	{ "cartridge", "cart", rc_string, &dev_opts, NULL, 0, 0, add_device, "Attach software to cartridge device" },
-	{ "floppydisk","flop", rc_string, &dev_opts, NULL, 0, 0, add_device, "Attach software to floppy disk device" },
-	{ "harddisk",  "hard", rc_string, &dev_opts, NULL, 0, 0, add_device, "Attach software to hard disk device" },
-	{ "cylinder",  "cyln", rc_string, &dev_opts, NULL, 0, 0, add_device, "Attach software to cylinder device" },
-	{ "cassette",  "cass", rc_string, &dev_opts, NULL, 0, 0, add_device, "Attach software to cassette device" },
-	{ "punchcard", "pcrd", rc_string, &dev_opts, NULL, 0, 0, add_device, "Attach software to punch card device" },
-	{ "punchtape", "ptap", rc_string, &dev_opts, NULL, 0, 0, add_device, "Attach software to punch tape device" },
-	{ "printer",   "prin", rc_string, &dev_opts, NULL, 0, 0, add_device, "Attach software to printer device" },
-	{ "serial",    "serl", rc_string, &dev_opts, NULL, 0, 0, add_device, "Attach software to serial device" },
-	{ "parallel",  "parl", rc_string, &dev_opts, NULL, 0, 0, add_device, "Attach software to parallel device" },
-	{ "snapshot",  "dump", rc_string, &dev_opts, NULL, 0, 0, add_device, "Attach software to snapshot device" },
-	{ "quickload", "quik", rc_string, &dev_opts, NULL, 0, 0, add_device, "Attach software to quickload device" },
-	{ "ramsize",   "ram",  rc_string, &dev_opts, NULL, 0, 0, specify_ram, "Specifies size of RAM (if supported by driver)" },
+	{ "cartridge", "cart", rc_string, &dev_opts,		NULL, 0, 0, add_device,		"attach software to cartridge device" },
+	{ "floppydisk","flop", rc_string, &dev_opts,		NULL, 0, 0, add_device,		"attach software to floppy disk device" },
+	{ "harddisk",  "hard", rc_string, &dev_opts,		NULL, 0, 0, add_device,		"attach software to hard disk device" },
+	{ "cylinder",  "cyln", rc_string, &dev_opts,		NULL, 0, 0, add_device,		"attach software to cylinder device" },
+	{ "cassette",  "cass", rc_string, &dev_opts,		NULL, 0, 0, add_device,		"attach software to cassette device" },
+	{ "punchcard", "pcrd", rc_string, &dev_opts,		NULL, 0, 0, add_device,		"attach software to punch card device" },
+	{ "punchtape", "ptap", rc_string, &dev_opts,		NULL, 0, 0, add_device,		"attach software to punch tape device" },
+	{ "printer",   "prin", rc_string, &dev_opts,		NULL, 0, 0, add_device,		"attach software to printer device" },
+	{ "serial",    "serl", rc_string, &dev_opts,		NULL, 0, 0, add_device,		"attach software to serial device" },
+	{ "parallel",  "parl", rc_string, &dev_opts,		NULL, 0, 0, add_device,		"attach software to parallel device" },
+	{ "snapshot",  "dump", rc_string, &dev_opts,		NULL, 0, 0, add_device,		"attach software to snapshot device" },
+	{ "quickload", "quik", rc_string, &dev_opts,		NULL, 0, 0, add_device,		"attach software to quickload device" },
+	{ "ramsize",   "ram",  rc_string, &dev_opts,		NULL, 0, 0, specify_ram,	"size of RAM (if supported by driver)" },
+	{ "threads",   "thr",  rc_int,    &win_task_count,	NULL, 0, 0, NULL,			"number of threads to use for parallel operations" },
 	{ NULL, NULL, rc_end, NULL, NULL, 0, 0, NULL, NULL }
 };
 

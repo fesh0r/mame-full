@@ -62,13 +62,13 @@ static void LINEPROC_NAME(struct drawline_params *params)
 	assert((DECL_ZOOMX == 0) || (params->zoomx == DECL_ZOOMX));
 	assert(HAS_CHARPROC || !params->charproc);
 	assert(!HAS_CHARPROC || params->charproc);
-	assert(videoram_pos);
+	assert(params->videoram_pos);
 	assert(params->charproc || params->pens);
 	assert(params->scanline_data);
 	assert((params->bytes_per_row % 4) == 0);
 	assert(params->bytes_per_row > 0);
 
-	v = (const UINT32 *) (videoram_pos + params->offset);
+	v = (const UINT32 *) (params->videoram_pos + params->offset);
 	rowlongs = params->bytes_per_row / 4;
 	zoomx = DECL_ZOOMX ? DECL_ZOOMX : params->zoomx;
 	pens = params->pens;

@@ -75,6 +75,15 @@ Source Changes:
   input signals.  This process is far from perfect at this time.  In the
   future, it will be possible for drivers to customize the way that paste works
   for a more perfect translation.  [Nate Woods]
+  
+- Added a new osd_parallelize(), for basic SMP functionality.  [Nate Woods]
+
+- Renamed osd_dir.h to osd_mess.h, to further reflect that it is more than just
+  directory calls.  [Nate Woods]
+
+- [Win32] New -threads parameter, to specify the maximum amount of threads used
+  for osd_parallelize(); defaults to the number of processors in the system.
+  [Nate Woods]
 
 - [Win32 GUI] Printers are now treated separately from the other devices; you
   do not specify printer ouput like you do disk images.  Printer output now

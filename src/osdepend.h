@@ -400,8 +400,8 @@ int osd_net_game_exit(void);
 #endif /* MAME_NET */
 
 #ifdef MESS
-/* this is here to follow the current mame file hierachi style */
-#include "osd_dir.h"
+/* this is here to follow the current mame file hierarchy style */
+#include "osd_mess.h"
 #endif
 
 void CLIB_DECL logerror(const char *text,...);
