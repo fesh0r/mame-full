@@ -1,4 +1,4 @@
-0.77.1
+0.78
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
@@ -44,6 +44,9 @@ Imgtool Changes:
 
 Source Changes:
 ----------------
+- The core is based on MAME 0.78.  This incorporates all features of the
+  update to this core.  [MAME team]
+
 - Fixed a cassette crash that affected the TI-99 among other drivers.  [Nate
   Woods]
   
