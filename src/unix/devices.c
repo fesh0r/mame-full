@@ -378,8 +378,10 @@ void joy_evaluate_moves (void)
 /* 
  * return a value in the range -128 .. 128 (yes, 128, not 127)
  */
-void osd_analogjoy_read(int player,int *analog_x, int *analog_y)
+void osd_analogjoy_read(int player, int analog_axis[], InputCode analogjoy_input[])
 {
+/* NEED TO FILL THIS IN */
+/*
    int i,val;
    
    if (player < JOY && analogstick && joy_data[player].num_axis >= 2)
@@ -407,6 +409,18 @@ void osd_analogjoy_read(int player,int *analog_x, int *analog_y)
    }
    else
       *analog_x = *analog_y = 0;
+*/
+}
+
+int osd_is_joystick_axis_code(int joycode)
+{
+/* NEED TO FILL THIS IN */
+   return 0;
+}
+
+void osd_lightgun_read(int player, int *deltax, int *deltay)
+{
+/* NEED TO FILL THIS IN */
 }
 
 int osd_joystick_needs_calibration (void)
