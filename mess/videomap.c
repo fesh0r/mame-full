@@ -436,7 +436,7 @@ static void videomap_timerproc(int dummy)
 		get_line_info();
 	}
 
-	if (flags & FLAG_INVAL_FRAMEINFO && (scanline >= Machine->drv->screen_height))
+	if (flags & FLAG_INVAL_FRAMEINFO && ((scanline == 0) || (scanline >= Machine->drv->screen_height)))
 	{
 		flags &= ~FLAG_INVAL_FRAMEINFO;
 		get_frame_info();

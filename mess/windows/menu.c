@@ -1148,7 +1148,7 @@ static void help_display(const char *chapter)
 
 static void help_about_mess(void)
 {
-	help_display("mess.chm::/html/mess_overview.htm");
+	help_display("mess.chm::/windows/main.htm");
 }
 
 
