@@ -10,6 +10,7 @@
 
 /***************************************************************************/
 
+static UINT32 a2_videomask;
 static UINT32 old_a2;
 static struct tilemap *text_tilemap;
 static struct tilemap *dbltext_tilemap;
@@ -47,6 +48,13 @@ static UINT8 *lores_tiledata;
   helpers
 ***************************************************************************/
 
+INLINE UINT32 effective_a2(void)
+{
+	return a2 & a2_videomask;
+}
+
+
+
 static void apple2_draw_tilemap(struct mame_bitmap *bitmap, const struct rectangle *cliprect,
 	int beginrow, int endrow, struct tilemap *tm, int raw_videobase, int *tm_videobase)
 {
@@ -80,7 +88,7 @@ static void apple2_generaltext_gettileinfo(int gfxset, int videobase, int memory
 	
 	character = mess_ram[videobase + memory_offset];
 
-	if (a2 & VAR_ALTCHARSET)
+	if (effective_a2() & VAR_ALTCHARSET)
 		character |= 0x200;
 	else if (flash && (character >= 0x40) && (character <= 0x7f))
 		color = 1;
@@ -115,7 +123,7 @@ static UINT32 apple2_dbltext_getmemoryoffset(UINT32 col, UINT32 row, UINT32 num_
 
 static void apple2_text_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int page, int beginrow, int endrow)
 {
-	if (a2 & VAR_80COL)
+	if (effective_a2() & VAR_80COL)
 		apple2_draw_tilemap(bitmap, cliprect, beginrow, endrow, dbltext_tilemap, page ? 0x800 : 0x400, &dbltext_videobase);
 	else
 		apple2_draw_tilemap(bitmap, cliprect, beginrow, endrow, text_tilemap, page ? 0x800 : 0x400, &text_videobase);
@@ -262,7 +270,7 @@ static void apple2_hires_draw(struct mame_bitmap *bitmap, const struct rectangle
 	dtparams.bitmap = bitmap;
 	dtparams.beginrow = beginrow;
 	dtparams.rowcount = (endrow + 1) - beginrow;
-	dtparams.columns = ((a2 & (VAR_DHIRES|VAR_80COL)) == (VAR_DHIRES|VAR_80COL)) ? 80 : 40;
+	dtparams.columns = ((effective_a2() & (VAR_DHIRES|VAR_80COL)) == (VAR_DHIRES|VAR_80COL)) ? 80 : 40;
 
 	osd_parallelize(apple2_hires_draw_task, &dtparams, dtparams.rowcount);
 }
@@ -271,7 +279,7 @@ static void apple2_hires_draw(struct mame_bitmap *bitmap, const struct rectangle
   video core
 ***************************************************************************/
 
-VIDEO_START( apple2 )
+static int internal_apple2_video_start(UINT32 ignored_softswitches, int hires_modulo)
 {
 	int i, j;
 	UINT16 c;
@@ -349,8 +357,8 @@ VIDEO_START( apple2 )
 				else
 					c = 0;
 			}
-			hires_artifact_map[ 0 + j*8 + i] = hires_artifact_color_table[c];
-			hires_artifact_map[16 + j*8 + i] = hires_artifact_color_table[c+4];
+			hires_artifact_map[ 0 + j*8 + i] = hires_artifact_color_table[(c + 0) % hires_modulo];
+			hires_artifact_map[16 + j*8 + i] = hires_artifact_color_table[(c + 4) % hires_modulo];
 		}
 	}
 
@@ -362,8 +370,29 @@ VIDEO_START( apple2 )
 
 	memset(&old_a2, 0, sizeof(old_a2));
 	text_videobase = lores_videobase = 0;
+	a2_videomask = ~ignored_softswitches;
 	return 0;
 }
+
+
+
+VIDEO_START( apple2 )
+{
+	return internal_apple2_video_start(VAR_80COL | VAR_ALTCHARSET | VAR_DHIRES, 4);
+}
+
+
+VIDEO_START( apple2p )
+{
+	return internal_apple2_video_start(VAR_80COL | VAR_ALTCHARSET | VAR_DHIRES, 8);
+}
+
+
+VIDEO_START( apple2e )
+{
+	return internal_apple2_video_start(0, 8);
+}
+
 
 VIDEO_UPDATE( apple2 )
 {
@@ -380,7 +409,7 @@ VIDEO_UPDATE( apple2 )
 	}
 
 	/* read out relevant softswitch variables; to see what has changed */
-	new_a2 = a2;
+	new_a2 = effective_a2();
 	if (new_a2 & VAR_80STORE)
 		new_a2 &= ~VAR_PAGE2;
 	new_a2 &= VAR_TEXT | VAR_MIXED | VAR_HIRES | VAR_DHIRES | VAR_80COL | VAR_PAGE2 | VAR_ALTCHARSET;
@@ -396,20 +425,20 @@ VIDEO_UPDATE( apple2 )
 	/* choose which page to use */
 	page = (new_a2 & VAR_PAGE2) ? 1 : 0;
 
-	if (a2 & VAR_TEXT)
+	if (effective_a2() & VAR_TEXT)
 	{
 		apple2_text_draw(bitmap, cliprect, page, 0, 191);
 	}
-	else if ((a2 & VAR_HIRES) && (a2 & VAR_MIXED))
+	else if ((effective_a2() & VAR_HIRES) && (effective_a2() & VAR_MIXED))
 	{
 		apple2_hires_draw(bitmap, cliprect, page, 0, 159);
 		apple2_text_draw(bitmap, cliprect, page, 160, 191);
 	}
-	else if (a2 & VAR_HIRES)
+	else if (effective_a2() & VAR_HIRES)
 	{
 		apple2_hires_draw(bitmap, cliprect, page, 0, 191);
 	}
-	else if (a2 & VAR_MIXED)
+	else if (effective_a2() & VAR_MIXED)
 	{
 		apple2_lores_draw(bitmap, cliprect, page, 0, 159);
 		apple2_text_draw(bitmap, cliprect, page, 160, 191);

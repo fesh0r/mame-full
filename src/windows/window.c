@@ -547,9 +547,19 @@ int win_create_window(int width, int height, int depth, int attributes, double a
 	{
 		aspect_ratio = (double)width / (double)height;
 		if (pixel_aspect_ratio == VIDEO_PIXEL_ASPECT_RATIO_2_1)
-			aspect_ratio *= 2.0;
+		{
+			if (!blit_swapxy)
+				aspect_ratio *= 2.0;
+			else
+				aspect_ratio /= 2.0;
+		}
 		else if (pixel_aspect_ratio == VIDEO_PIXEL_ASPECT_RATIO_1_2)
-			aspect_ratio /= 2.0;
+		{
+			if (!blit_swapxy)
+				aspect_ratio /= 2.0;
+			else
+				aspect_ratio *= 2.0;
+		}
 	}
 
 	win_default_constraints = 0;
@@ -1028,9 +1038,19 @@ void win_adjust_window_for_visible(int min_x, int max_x, int min_y, int max_y)
 	{
 		aspect_ratio = (double)win_visible_width / (double)win_visible_height;
 		if (pixel_aspect_ratio == VIDEO_PIXEL_ASPECT_RATIO_2_1)
-			aspect_ratio *= 2.0;
+		{
+			if (!blit_swapxy)
+				aspect_ratio *= 2.0;
+			else
+				aspect_ratio /= 2.0;
+		}
 		else if (pixel_aspect_ratio == VIDEO_PIXEL_ASPECT_RATIO_1_2)
-			aspect_ratio /= 2.0;
+		{
+			if (!blit_swapxy)
+				aspect_ratio /= 2.0;
+			else
+				aspect_ratio *= 2.0;
+		}
 	}
 
 	// if we are adjusting the size in windowed mode without stretch, use our own way of changing the window size
@@ -1606,11 +1626,31 @@ static void compute_multipliers_internal(const RECT *rect, int visible_width, in
 
 	// adjust for pixel aspect ratio
 	if (pixel_aspect_ratio == VIDEO_PIXEL_ASPECT_RATIO_1_2)
-		if (*ymult > 1)
-			*ymult &= ~1;
+	{
+		if (!blit_swapxy)
+		{
+			if (*ymult > 1)
+				*ymult &= ~1;
+		}
+		else
+		{
+			if (*xmult > 1)
+				*xmult &= ~1;
+		}
+	}
 	if (pixel_aspect_ratio == VIDEO_PIXEL_ASPECT_RATIO_2_1)
-		if (*xmult > 1)
-			*xmult &= ~1;
+	{
+		if (!blit_swapxy)
+		{
+			if (*xmult > 1)
+				*xmult &= ~1;
+		}
+		else
+		{
+			if (*ymult > 1)
+				*ymult &= ~1;
+		}
+	}
 
 	// make sure we have at least 1
 	if (*xmult < 1)

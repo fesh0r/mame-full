@@ -59,6 +59,7 @@ struct drccore *drc_init(UINT8 cpunum, struct drcconfig *config)
 	drc->cb_entrygen  = config->cb_entrygen;
 	drc->uses_fp      = config->uses_fp;
 	drc->uses_sse     = config->uses_sse;
+	drc->fpcw_curr    = fp_control[0];
 
 	/* allocate cache */
 	drc->cache_base = malloc(config->cache_size);
@@ -430,9 +431,32 @@ void drc_append_tentative_fixed_dispatcher(struct drccore *drc, UINT32 newpc)
 	drc_append_set_fp_rounding
 ------------------------------------------------------------------*/
 
-void drc_append_set_fp_rounding(struct drccore *drc, UINT8 rounding)
+void drc_append_set_fp_rounding(struct drccore *drc, UINT8 regindex)
+{
+	_fldcw_m16isd(regindex, 2, &fp_control[0]);						// fldcw [fp_control + reg*2]
+	_fnstcw_m16abs(&drc->fpcw_curr);								// fnstcw [fpcw_curr]
+}
+
+
+
+/*------------------------------------------------------------------
+	drc_append_set_temp_fp_rounding
+------------------------------------------------------------------*/
+
+void drc_append_set_temp_fp_rounding(struct drccore *drc, UINT8 rounding)
 {
 	_fldcw_m16abs(&fp_control[rounding]);							// fldcw [fp_control]
+}
+
+
+
+/*------------------------------------------------------------------
+	drc_append_restore_fp_rounding
+------------------------------------------------------------------*/
+
+void drc_append_restore_fp_rounding(struct drccore *drc)
+{
+	_fldcw_m16abs(&drc->fpcw_curr);									// fldcw [fpcw_curr]
 }
 
 
@@ -511,7 +535,7 @@ static void append_entry_point(struct drccore *drc)
 	if (drc->uses_fp)
 	{
 		_fnstcw_m16abs(&drc->fpcw_save);							// fstcw [fpcw_save]
-		_fldcw_m16abs(&fp_control[0]);								// fldcw [fp_control]
+		_fldcw_m16abs(&drc->fpcw_curr);								// fldcw [fpcw_curr]
 	}
 	drc_append_restore_volatiles(drc);								// load volatiles
 	if (drc->cb_entrygen)

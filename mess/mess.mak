@@ -856,10 +856,19 @@ tools/mkimage$(EXE):	$(OBJ)/mess/tools/mkimage/mkimage.o $(OBJ)/mess/utils.o
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ $(LIBS) $(OUTOPT)
 
-tools/messroms$(EXE): $(OBJ)/mess/tools/messroms/main.o $(OBJ)/unzip.o
+tools/messroms$(EXE):	$(OBJ)/mess/tools/messroms/main.o $(OBJ)/unzip.o
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ $(LIBS) $(IMGTOOL_LIBS) $(OUTOPT)
 
+tools/messdocs$(EXE):						\
+	$(OBJ)/mess/tools/messdocs/messdocs.o	\
+	$(OBJ)/mess/utils.o						\
+	$(OBJ)/mess/pool.o						\
+	$(OBJ)/xml2info/xmlrole.o				\
+	$(OBJ)/xml2info/xmltok.o				\
+	$(OBJ)/xml2info/xmlparse.o
+	@echo Linking $@...
+	$(LD) $(LDFLAGS) $^ $(LIBS) $(OUTOPT)
 
 tools/imgtool$(EXE):	                   \
 	  $(PLATFORM_IMGTOOL_OBJS)	           \

@@ -10,9 +10,11 @@
  */
 
 #include "driver.h"
+#include "state.h"
 #include "cpu/m6502/m6502.h"
 #include "cpu/m6809/m6809.h"
 #include "cpu/m6800/m6800.h"
+#include "cpu/m68000/m68000.h"
 #include "namcoic.h"
 
 #ifdef MAME_DEBUG
@@ -33,10 +35,14 @@ extern READ_HANDLER( tceptor_tile_ram_r );
 extern WRITE_HANDLER( tceptor_tile_ram_w );
 extern READ_HANDLER( tceptor_tile_attr_r );
 extern WRITE_HANDLER( tceptor_tile_attr_w );
+extern READ_HANDLER( tceptor_bg_ram_r );
+extern WRITE_HANDLER( tceptor_bg_ram_w );
 
 extern data8_t *tceptor_tile_ram;
 extern data8_t *tceptor_tile_attr;
+extern data8_t *tceptor_bg_ram;
 extern data16_t *tceptor_sprite_ram;
+
 
 /*******************************************************************/
 
@@ -44,6 +50,10 @@ static data8_t *m6502_a_shared_ram;
 static data8_t *m6502_b_shared_ram;
 static data8_t *m68k_shared_ram;
 static data8_t *mcu_shared_ram;
+
+static int m6809_irq_enable;
+static int m68k_irq_enable;
+static int mcu_irq_enable;
 
 
 /*******************************************************************/
@@ -104,10 +114,53 @@ static WRITE_HANDLER( mcu_shared_w )
 
 /*******************************************************************/
 
+static INTERRUPT_GEN( m6809_vb_interrupt )
+{
+	if (m6809_irq_enable)
+	{
+		m6809_irq_enable = 0;
+		cpu_set_irq_line(0, 0, HOLD_LINE);
+	}
+}
+
+static WRITE_HANDLER( m6809_irq_enable_w )
+{
+	m6809_irq_enable = 1;
+}
+
+
+static INTERRUPT_GEN( m68k_vb_interrupt )
+{
+	if (m68k_irq_enable)
+		cpu_set_irq_line(3, MC68000_IRQ_1, HOLD_LINE);
+}
+
+static WRITE16_HANDLER( m68k_irq_enable_w )
+{
+	m68k_irq_enable = data;
+}
+
+
+static INTERRUPT_GEN( mcu_vb_interrupt )
+{
+	if (mcu_irq_enable)
+	{
+		mcu_irq_enable = 0;
+		cpu_set_irq_line(4, 0, HOLD_LINE);
+	}
+}
+
+static WRITE_HANDLER( mcu_irq_enable_w )
+{
+	mcu_irq_enable = 1;
+}
+
+
 static WRITE_HANDLER( voice_w )
 {
 	DAC_signed_data_16_w(0, data ? (data + 1) * 0x100 : 0x8000);
 }
+
 
 /* fix dsw/input data to memory mapped data */
 static data8_t fix_input0(data8_t in1, data8_t in2)
@@ -180,7 +233,7 @@ printf("%d: %04x: read from %04x\n", cpu_getcurrentframe(), activecpu_get_previo
 
 static WRITE_HANDLER( print_w )
 {
-	if (print_ram[offset] == data) return;
+//	if (print_ram[offset] == data) return;
 
 printf("%d: %04x: write %02x to %04x\n", cpu_getcurrentframe(), activecpu_get_previouspc(), data, offset);
 	print_ram[offset] = data;
@@ -230,8 +283,8 @@ static MEMORY_WRITE_START( m6809_writemem )
 	{ 0x4f00, 0x4f03, MWA_NOP },			// analog input control?
 	{ 0x5000, 0x5006, MWA_RAM },
 	{ 0x6000, 0x7fff, m68k_shared_w, &m68k_shared_ram },
-	{ 0x8000, 0x8000, MWA_NOP },			// write to ROM address!!
-	{ 0x8800, 0x8800, MWA_NOP },			// write to ROM address!!
+	{ 0x8000, 0x8000, MWA_NOP },			// IRQ ack?
+	{ 0x8800, 0x8800, m6809_irq_enable_w },
 	{ 0x8000, 0xffff, MWA_ROM },
 MEMORY_END
 
@@ -288,7 +341,7 @@ static MEMORY_WRITE16_START( m68k_writemem )
 	{ 0x300000, 0x300001, MWA16_RAM },
 	{ 0x400000, 0x4001ff, MWA16_RAM, &tceptor_sprite_ram },
 	{ 0x500000, 0x51ffff, namco_road16_w },
-	{ 0x600000, 0x600001, MWA16_RAM },
+	{ 0x600000, 0x600001, m68k_irq_enable_w },	// not sure
 	{ 0x700000, 0x703fff, m68k_shared_word_w },
 MEMORY_END
 
@@ -306,7 +359,7 @@ static MEMORY_READ_START( mcu_readmem )
 	{ 0x2200, 0x2200, input0_r },
 	{ 0x2201, 0x2201, input1_r },
 	{ 0x8000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xc800, MRA_RAM },
+	{ 0xc000, 0xc7ff, MRA_RAM },
 	{ 0xc800, 0xdfff, MRA_RAM },			// Battery Backup
 	{ 0xf000, 0xffff, MRA_ROM },
 MEMORY_END
@@ -320,8 +373,8 @@ static MEMORY_WRITE_START( mcu_writemem )
 	{ 0x1400, 0x154d, MWA_RAM },
 	{ 0x17c0, 0x17ff, MWA_RAM },
 	{ 0x2000, 0x20ff, m6502_a_shared_w },
-	{ 0x8000, 0x8000, MWA_NOP },			// write to ROM address!!
-	{ 0x8800, 0x8800, MWA_NOP },			// write to ROM address!!
+	{ 0x8000, 0x8000, MWA_NOP },			// IRQ ack?
+	{ 0x8800, 0x8800, mcu_irq_enable_w },
 	{ 0x8000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xc7ff, MWA_RAM },
 	{ 0xc800, 0xdfff, MWA_RAM, &generic_nvram, &generic_nvram_size },	// Battery Backup
@@ -415,24 +468,14 @@ static struct GfxLayout tile_layout =
 	2*8*8
 };
 
-// not decoded yet
-static struct GfxLayout bg_layout =
-{
-	16, 16,
-	768,
-	4,
-	{ 0x00000, 0x10000, 0x20000, 0x30000 },
-	{ 0, 1, 2, 3, 8, 9, 10, 11, 4, 5, 6, 7, 12, 13, 14, 15 },
-	{ 0, 16, 32, 48, 64, 80, 96, 112,  },
-	16*16
-};
-
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &tile_layout,    0, 256 },
-	{ REGION_GFX2, 0, &bg_layout,   2048, 512 },
-	//{ REGION_GFX3, 0, &spr16_layout,  1024,  64 },
-	//{ REGION_GFX4, 0, &spr32_layout,  1024,  64 },
+	{ REGION_GFX1, 0, &tile_layout,     0,  256 },
+
+	/* decode in VIDEO_START */
+	//{ REGION_GFX2, 0, &bg_layout,    2048,   32 },
+	//{ REGION_GFX3, 0, &spr16_layout, 1024,   64 },
+	//{ REGION_GFX4, 0, &spr32_layout, 1024,   64 },
 	{ -1 }
 };
 
@@ -466,12 +509,21 @@ static struct DACinterface dac_interface =
 
 /*******************************************************************/
 
+static MACHINE_INIT( tceptor )
+{
+	m6809_irq_enable = 0;
+	m68k_irq_enable = 0;
+	mcu_irq_enable = 0;
+}
+
+/*******************************************************************/
+
 static MACHINE_DRIVER_START( tceptor )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6809, 49152000/32)
 	MDRV_CPU_MEMORY(m6809_readmem,m6809_writemem)
-	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+	MDRV_CPU_VBLANK_INT(m6809_vb_interrupt,1)
 
 	MDRV_CPU_ADD(M65C02, 49152000/24)
 	MDRV_CPU_MEMORY(m6502_a_readmem,m6502_a_writemem)
@@ -481,20 +533,23 @@ static MACHINE_DRIVER_START( tceptor )
 
 	MDRV_CPU_ADD(M68000, 49152000/4)
 	MDRV_CPU_MEMORY(m68k_readmem,m68k_writemem)
-	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
+	MDRV_CPU_VBLANK_INT(m68k_vb_interrupt,1)
 
 	MDRV_CPU_ADD(HD63701, 49152000/32)	/* or compatible 6808 with extra instructions */
 	MDRV_CPU_MEMORY(mcu_readmem,mcu_writemem)
 	MDRV_CPU_PORTS(mcu_readport,mcu_writeport)
-	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+	MDRV_CPU_VBLANK_INT(mcu_vb_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60.606060)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(100)
+
 	MDRV_NVRAM_HANDLER(generic_1fill)
 
+	MDRV_MACHINE_INIT(tceptor)
+
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)
 	MDRV_SCREEN_SIZE(38*8, 32*8)
 	MDRV_VISIBLE_AREA(2*8, 34*8-1 + 2*8, 0*8, 28*8-1 + 0)
 	MDRV_GFXDECODE(gfxdecodeinfo)
@@ -510,6 +565,16 @@ static MACHINE_DRIVER_START( tceptor )
 	MDRV_SOUND_ADD(NAMCO, namco_interface)
 	MDRV_SOUND_ADD(DAC, dac_interface)
 MACHINE_DRIVER_END
+
+
+/*******************************************************************/
+
+static DRIVER_INIT( tceptor )
+{
+	state_save_register_int("tceptor", 0, "m6809_irq_enable",  &m6809_irq_enable);
+	state_save_register_int("tceptor", 0, "m68k_irq_enable",   &m68k_irq_enable);
+	state_save_register_int("tceptor", 0, "mcu_irq_enable",    &mcu_irq_enable);
+}
 
 
 /***************************************************************************
@@ -541,7 +606,8 @@ ROM_START( tceptor2 )
 	ROM_REGION( 0x02000, REGION_GFX1, ROMREGION_DISPOSE )	// text tilemap
 	ROM_LOAD( "tc1-18.6b",  0x00000, 0x02000, CRC(662B5650) SHA1(ba82fe5efd1011854a6d0d7d87075475b65c0601) )
 
-	ROM_REGION( 0x0c000, REGION_GFX2, ROMREGION_DISPOSE )	// background??
+	//ROM_REGION( 0x10000, REGION_GFX2, ROMREGION_DISPOSE )	// background
+	ROM_REGION( 0x10000, REGION_GFX2, 0 )	// background
 	ROM_LOAD( "tc2-20.10e", 0x00000, 0x08000, CRC(E72738FC) SHA1(53664400f343acdc1d8cf7e00e261ae42b857a5f) )
 	ROM_LOAD( "tc2-19.10d", 0x08000, 0x04000, CRC(9C221E21) SHA1(58bcbb998dcf2190cf46dd3d22b116ac673285a6) )
 
@@ -570,4 +636,4 @@ ROM_START( tceptor2 )
 ROM_END
 
 
-GAME( 1986, tceptor2, 0,        tceptor,  tceptor,  0,        ROT0,   "Namco", "Thunder Ceptor II" )
+GAMEX( 1986, tceptor2, 0,        tceptor,  tceptor,  tceptor,  ROT0,   "Namco", "Thunder Ceptor II", GAME_IMPERFECT_GRAPHICS )

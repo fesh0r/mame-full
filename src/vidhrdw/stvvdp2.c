@@ -30,15 +30,17 @@ Notes of Interest:
 
 -the test mode / bios is drawn with layer NBG3
 
--Hanagumi Puts a 'RED' dragon logo in tileram (base 0x64000, 4bpp, 8x8 tiles) but
-its not displayed in gurus video.Update:It's actually not drawn because his
+-hanagumi Puts a 'RED' dragon logo in tileram (base 0x64000, 4bpp, 8x8 tiles) but
+its not displayed in gurus video.Update:It's actually not drawn because its
 priority value is 0.
 
--Scrolling is screen display wise,meaning that a scrolling value is masked with the
+-scrolling is screen display wise,meaning that a scrolling value is masked with the
 screen resolution size values.
 
 -VDP1 "general purpose" priority isn't taken into account yet,for now we fix the priority
 value to six...
+
+-AFAIK Suikoenbu is the only ST-V game that uses Mode 2 as the Color RAM format.
 
 */
 
@@ -161,7 +163,7 @@ static void stv_vdp2_dynamic_res_change(void);
 
 	#define STV_VDP2_RAMCTL ((stv_vdp2_regs[0x00c/4] >> 0)&0x0000ffff)
 
-	#define STV_VDP2_CRMD ((STV_VDP2_RAMCTL & 0x0300) >> 8)
+	#define STV_VDP2_CRMD ((STV_VDP2_RAMCTL & 0x3000) >> 12)
 
 /* 180010 - r/w - -CYCA0L - VRAM CYCLE PATTERN (BANK A0)
  bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
@@ -372,6 +374,11 @@ static void stv_vdp2_dynamic_res_change(void);
        |----07----|----06----|----05----|----04----|----03----|----02----|----01----|----00----|
        |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
        \----------|----------|----------|----------|----------|----------|----------|---------*/
+
+	#define STV_VDP2_BMPNA ((stv_vdp2_regs[0x02c/4] >> 16)&0x0000ffff)
+
+	#define STV_VDP2_N1BMP ((STV_VDP2_BMPNA & 0x0700) >> 8)
+	#define STV_VDP2_N0BMP ((STV_VDP2_BMPNA & 0x0007) >> 0)
 
 /* 18002E - Bitmap Palette Number (RBG0)
  bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
@@ -1459,6 +1466,7 @@ static struct stv_vdp2_tilemap_capabilities
 	UINT8  tile_size;
 	UINT8  bitmap_enable;
 	UINT8  bitmap_size;
+	UINT8  bitmap_palette_number;
 	UINT16 map_offset[16];
 
 	UINT8  pattern_data_size;
@@ -1480,16 +1488,17 @@ static struct stv_vdp2_tilemap_capabilities
 } stv2_current_tilemap;
 
 
+
 static void stv_vdp2_draw_basic_bitmap(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 //	logerror ("bitmap enable %02x size %08x depth %08x\n",	stv2_current_tilemap.layer_name, stv2_current_tilemap.bitmap_size, stv2_current_tilemap.colour_depth);
+//	usrintf_showmessage ("bitmap enable %02x size %08x depth %08x number %02x",	stv2_current_tilemap.layer_name, stv2_current_tilemap.bitmap_size, stv2_current_tilemap.colour_depth,stv2_current_tilemap.bitmap_palette_number);
 
-	/* really just for shienryu at the moment .. needs _lots_ of work */
 	int xsize = 0;
 	int ysize = 0;
 	int xcnt,ycnt;
 	data8_t* gfxdata = memory_region(REGION_GFX1);
-	UINT16 *destline;
+	static UINT16 *destline;
 
 	/* size for n0 / n1 */
 	switch (stv2_current_tilemap.bitmap_size)
@@ -1500,30 +1509,109 @@ static void stv_vdp2_draw_basic_bitmap(struct mame_bitmap *bitmap, const struct 
 		case 3: xsize=1024; ysize=512; break;
 	}
 
-	for (ycnt = 0; ycnt <ysize;ycnt++)
+	switch(stv2_current_tilemap.colour_depth)
 	{
-		destline = (UINT16 *)(bitmap->line[ycnt]);
-
-		for (xcnt = 0; xcnt <xsize;xcnt++)
+		/*Palette Format*/
+		case 0://elandore uses this on the fight,size is wrong.
 		{
-			int r,g,b;
+			for (ycnt = 0; ycnt <ysize;ycnt++)
+			{
+				for (xcnt = 0; xcnt <xsize;xcnt+=2)
+				{
+					plot_pixel(bitmap,xcnt  ,ycnt,Machine->pens[((gfxdata[0] & 0x0f) >> 0) | (stv2_current_tilemap.bitmap_palette_number * 0x100)]);
+					plot_pixel(bitmap,xcnt+1,ycnt,Machine->pens[((gfxdata[0] & 0xf0) >> 4) | (stv2_current_tilemap.bitmap_palette_number * 0x100)]);
 
-			b = ((gfxdata[0] & 0x7c)>>2);
-			g = ((gfxdata[0] & 0x03) << 3) | ((gfxdata[1] & 0xe0) >> 5);
-			r = ((gfxdata[1] & 0x1f));
-
-			destline[xcnt] = b | g << 5 | r << 10;
-
-			gfxdata+=2;
+					gfxdata++;
+				}
+			}
 		}
+		break;
+		case 1:
+		{
+			for (ycnt = 0; ycnt <ysize;ycnt++)
+			{
+				for (xcnt = 0; xcnt <xsize;xcnt++)
+				{
+					/*elandore/shanhigw requires something else as banking,but what?*/
+					plot_pixel(bitmap,xcnt,ycnt,Machine->pens[(gfxdata[0] & 0xff) | (stv2_current_tilemap.bitmap_palette_number * 0x100)]);
+
+					gfxdata++;
+				}
+			}
+		}
+		break;
+		case 2:
+		{
+			for (ycnt = 0; ycnt <ysize;ycnt++)
+			{
+				for (xcnt = 0; xcnt <xsize;xcnt++)
+				{
+					plot_pixel(bitmap,xcnt,ycnt,Machine->pens[((gfxdata[0] & 0x07) * 0x100) | (gfxdata[1] & 0xff)]);
+
+					gfxdata+=2;
+				}
+			}
+		}
+		break;
+		/*RGB format*/
+		/*
+		M                     L
+		S                     S
+		B                     B
+		--------BBBBBGGGGGRRRRR
+		*/
+		case 3:
+		{
+			for (ycnt = 0; ycnt <ysize;ycnt++)
+			{
+				destline = (UINT16 *)(bitmap->line[ycnt]);
+
+				for (xcnt = 0; xcnt <xsize;xcnt++)
+				{
+					int r,g,b;
+
+					b = ((gfxdata[0] & 0x7c)>>2);
+					g = ((gfxdata[0] & 0x03) << 3) | ((gfxdata[1] & 0xe0) >> 5);
+					r = ((gfxdata[1] & 0x1f));
+
+					destline[xcnt] = b | g << 5 | r << 10;
+
+					gfxdata+=2;
+				}
+			}
+		}
+		break;
+		/*
+		M                              L
+		S                              S
+		B                              B
+		--------BBBBBBBBGGGGGGGGRRRRRRRR
+		*/
+		case 4:
+		{
+			for (ycnt = 0; ycnt <ysize;ycnt++)
+			{
+				destline = (UINT16 *)(bitmap->line[ycnt]);
+
+				for (xcnt = 0; xcnt <xsize;xcnt++)
+				{
+					int r,g,b;
+
+					b = ((gfxdata[1] & 0xff));
+					g = ((gfxdata[2] & 0xff));
+					r = ((gfxdata[3] & 0xff));
+
+					destline[xcnt] = b | g << 5 | r << 10;
+
+					gfxdata+=4;
+				}
+			}
+		}
+		break;
 	}
-
-
-
-	/* not done */
 }
 
-   /*---------------------------------------------------------------------------
+  /*---------------------------------------------------------------------------
    | Plane Size | Pattern Name Data Size | Character Size | Map Bits / Address |
    ----------------------------------------------------------------------------|
    |            |                        | 1 H x 1 V      | bits 6-0 * 0x02000 |
@@ -1988,6 +2076,7 @@ static void stv_vdp2_draw_NBG0(struct mame_bitmap *bitmap, const struct rectangl
 	stv2_current_tilemap.tile_size = STV_VDP2_N0CHSZ;
 	stv2_current_tilemap.bitmap_enable = STV_VDP2_N0BMEN;
 	stv2_current_tilemap.bitmap_size = STV_VDP2_N0BMSZ;
+	stv2_current_tilemap.bitmap_palette_number = STV_VDP2_N0BMP;
 	stv2_current_tilemap.map_offset[0] = STV_VDP2_N0MPA | (STV_VDP2_N0MP_ << 6);
 	stv2_current_tilemap.map_offset[1] = STV_VDP2_N0MPB | (STV_VDP2_N0MP_ << 6);
 	stv2_current_tilemap.map_offset[2] = STV_VDP2_N0MPC | (STV_VDP2_N0MP_ << 6);
@@ -2036,6 +2125,7 @@ static void stv_vdp2_draw_NBG1(struct mame_bitmap *bitmap, const struct rectangl
 	stv2_current_tilemap.tile_size = STV_VDP2_N1CHSZ;
 	stv2_current_tilemap.bitmap_enable = STV_VDP2_N1BMEN;
 	stv2_current_tilemap.bitmap_size = STV_VDP2_N1BMSZ;
+	stv2_current_tilemap.bitmap_palette_number = STV_VDP2_N1BMP;
 	stv2_current_tilemap.map_offset[0] = STV_VDP2_N1MPA | (STV_VDP2_N1MP_ << 6);
 	stv2_current_tilemap.map_offset[1] = STV_VDP2_N1MPB | (STV_VDP2_N1MP_ << 6);
 	stv2_current_tilemap.map_offset[2] = STV_VDP2_N1MPC | (STV_VDP2_N1MP_ << 6);
@@ -2092,6 +2182,7 @@ static void stv_vdp2_draw_NBG2(struct mame_bitmap *bitmap, const struct rectangl
 	stv2_current_tilemap.tile_size = STV_VDP2_N2CHSZ;
 	stv2_current_tilemap.bitmap_enable = 0; // this layer can't be a bitmap
 	stv2_current_tilemap.bitmap_size = 0; // this layer can't be a bitmap
+	stv2_current_tilemap.bitmap_palette_number = 0; //this layer can't be a bitmap
 	stv2_current_tilemap.map_offset[0] = STV_VDP2_N2MPA | (STV_VDP2_N2MP_ << 6);
 	stv2_current_tilemap.map_offset[1] = STV_VDP2_N2MPB | (STV_VDP2_N2MP_ << 6);
 	stv2_current_tilemap.map_offset[2] = STV_VDP2_N2MPC | (STV_VDP2_N2MP_ << 6);
@@ -2144,6 +2235,7 @@ static void stv_vdp2_draw_NBG3(struct mame_bitmap *bitmap, const struct rectangl
 	stv2_current_tilemap.tile_size = STV_VDP2_N3CHSZ;
 	stv2_current_tilemap.bitmap_enable = 0; // this layer can't be a bitmap
 	stv2_current_tilemap.bitmap_size = 0; // this layer can't be a bitmap
+	stv2_current_tilemap.bitmap_palette_number = 0; //this layer can't be a bitmap
 	stv2_current_tilemap.map_offset[0] = STV_VDP2_N3MPA | (STV_VDP2_N3MP_ << 6);
 	stv2_current_tilemap.map_offset[1] = STV_VDP2_N3MPB | (STV_VDP2_N3MP_ << 6);
 	stv2_current_tilemap.map_offset[2] = STV_VDP2_N3MPC | (STV_VDP2_N3MP_ << 6);
@@ -2198,7 +2290,24 @@ WRITE32_HANDLER ( stv_vdp2_cram_w )
 	int r,g,b;
 	COMBINE_DATA(&stv_vdp2_cram[offset]);
 
-	offset &= 0x7ff;
+//	usrintf_showmessage("%01x",STV_VDP2_CRMD);
+
+	switch( STV_VDP2_CRMD )
+	{
+		/*Mode 2/3*/
+		case 2:
+		case 3:
+		{
+			b = ((stv_vdp2_cram[offset] & 0x00ff0000) >> 16);
+			g = ((stv_vdp2_cram[offset] & 0x0000ff00) >> 8);
+			r = ((stv_vdp2_cram[offset] & 0x000000ff) >> 0);
+			palette_set_color(offset,r,g,b);
+		}
+		break;
+		/*Mode 0*/
+		case 0:
+		{
+			offset &= 0x3ff;
 
 			b = ((stv_vdp2_cram[offset] & 0x00007c00) >> 10);
 			g = ((stv_vdp2_cram[offset] & 0x000003e0) >> 5);
@@ -2207,7 +2316,6 @@ WRITE32_HANDLER ( stv_vdp2_cram_w )
 			g*=0x8;
 			r*=0x8;
 			palette_set_color((offset*2)+1,r,g,b);
-
 			b = ((stv_vdp2_cram[offset] & 0x7c000000) >> 26);
 			g = ((stv_vdp2_cram[offset] & 0x03e00000) >> 21);
 			r = ((stv_vdp2_cram[offset] & 0x001f0000) >> 16);
@@ -2215,13 +2323,30 @@ WRITE32_HANDLER ( stv_vdp2_cram_w )
 			g*=0x8;
 			r*=0x8;
 			palette_set_color(offset*2,r,g,b);
+		}
+		break;
+		/*Mode 1*/
+		case 1:
+		{
+			offset &= 0x7ff;
 
-//			b = ((stv_vdp2_cram[offset] & 0x00ff0000) >> 16);
-//			g = ((stv_vdp2_cram[offset] & 0x0000ff00) >> 8);
-//			r = ((stv_vdp2_cram[offset] & 0x000000ff) >> 0);
-//			palette_set_color(offset,r,g,b);
-
-
+			b = ((stv_vdp2_cram[offset] & 0x00007c00) >> 10);
+			g = ((stv_vdp2_cram[offset] & 0x000003e0) >> 5);
+			r = ((stv_vdp2_cram[offset] & 0x0000001f) >> 0);
+			b*=0x8;
+			g*=0x8;
+			r*=0x8;
+			palette_set_color((offset*2)+1,r,g,b);
+			b = ((stv_vdp2_cram[offset] & 0x7c000000) >> 26);
+			g = ((stv_vdp2_cram[offset] & 0x03e00000) >> 21);
+			r = ((stv_vdp2_cram[offset] & 0x001f0000) >> 16);
+			b*=0x8;
+			g*=0x8;
+			r*=0x8;
+			palette_set_color(offset*2,r,g,b);
+		}
+		break;
+	}
 }
 
 READ32_HANDLER ( stv_vdp2_cram_r )
@@ -2440,75 +2565,6 @@ The MSB in any mode is known to be used as "Color Calculation"(transparency).
 
 TODO: we have to refresh the entire palette when it change color mode.
 */
-
-WRITE32_HANDLER( stv_palette_w )
-{
-	int r,g,b;
-	COMBINE_DATA(&stv_cram[offset]);
-
-	switch( CRMD & 3 )
-	{
-		/*Mode 2/3*/
-		case 2:
-		case 3:
-			b = ((stv_cram[offset] & 0x00ff0000) >> 16);
-			g = ((stv_cram[offset] & 0x0000ff00) >> 8);
-			r = ((stv_cram[offset] & 0x000000ff) >> 0);
-			palette_set_color(offset,r,g,b);
-		break;
-		/*Mode 0*/
-		case 0:
-			b = ((stv_cram[offset] & 0x00007c00) >> 10);
-			g = ((stv_cram[offset] & 0x000003e0) >> 5);
-			r = ((stv_cram[offset] & 0x0000001f) >> 0);
-			b*=0x8;
-			g*=0x8;
-			r*=0x8;
-	//		dma_set_color((offset*2)+1,r,g,b);
-			/*Palette banking*/
-			if(((offset*2)+1) >= 0x400)
-				palette_set_color((((offset*2)+1)-0x400),r,g,b);
-			else
-				palette_set_color((((offset*2)+1)+0x400),r,g,b);
-
-			b = ((stv_cram[offset] & 0x7c000000) >> 26);
-			g = ((stv_cram[offset] & 0x03e00000) >> 21);
-			r = ((stv_cram[offset] & 0x001f0000) >> 16);
-			b*=0x8;
-			g*=0x8;
-			r*=0x8;
-			palette_set_color(offset*2,r,g,b);
-
-			/*Palette banking*/
-			if((offset*2) >= 0x400)
-				palette_set_color(((offset*2)-0x400),r,g,b);
-			else
-				palette_set_color(((offset*2)+0x400),r,g,b);
-		break;
-		/*Mode 1*/
-		case 1:
-			b = ((stv_cram[offset] & 0x00007c00) >> 10);
-			g = ((stv_cram[offset] & 0x000003e0) >> 5);
-			r = ((stv_cram[offset] & 0x0000001f) >> 0);
-			b*=0x8;
-			g*=0x8;
-			r*=0x8;
-			palette_set_color((offset*2)+1,r,g,b);
-			b = ((stv_cram[offset] & 0x7c000000) >> 26);
-			g = ((stv_cram[offset] & 0x03e00000) >> 21);
-			r = ((stv_cram[offset] & 0x001f0000) >> 16);
-			b*=0x8;
-			g*=0x8;
-			r*=0x8;
-			palette_set_color(offset*2,r,g,b);
-		break;
-	}
-}
-
-READ32_HANDLER( stv_palette_r )
-{
-	return stv_cram[offset];
-}
 
 /**********************************************************************************
 VDP2 Registers Table

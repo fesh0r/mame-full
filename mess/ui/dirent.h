@@ -21,12 +21,7 @@
 #endif
 
 /* Structure to keep track of the current directory status */
-typedef struct my_dir {
-    HANDLE          handle;
-    WIN32_FIND_DATA findFileData;
-    BOOLEAN         firstTime;
-    char            pathName[MAX_PATH];
-} DIR;
+typedef struct _DIR DIR;
 
 /* Standard directory name entry returned by readdir() */
 struct dirent {

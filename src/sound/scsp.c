@@ -629,12 +629,18 @@ static void SCSP_w16(unsigned int addr,unsigned short val)
 		int slot=addr/0x20;
 		addr&=0x1f;
 		*((unsigned short *) (SCSP->Slots[slot].udata.datab+(addr))) = val;
-		SCSP_UpdateSlotReg(slot,addr&0x1f);
+		if (Machine->sample_rate > 0)
+		{
+			SCSP_UpdateSlotReg(slot,addr&0x1f);
+		}
 	}
 	else if(addr<0x600)
 	{
 		*((unsigned short *) (SCSP->udata.datab+((addr&0xff)))) = val;
-		SCSP_UpdateReg(addr&0xff);
+		if (Machine->sample_rate > 0)
+		{
+			SCSP_UpdateReg(addr&0xff);
+		}
 	}	
 }
 
@@ -646,12 +652,18 @@ static unsigned short SCSP_r16(unsigned int addr)
 	{
 		int slot=addr/0x20;
 		addr&=0x1f;
-		SCSP_UpdateSlotRegR(slot,addr&0x1f);
+		if (Machine->sample_rate > 0)
+		{
+			SCSP_UpdateSlotRegR(slot,addr&0x1f);
+		}
 		v=*((unsigned short *) (SCSP->Slots[slot].udata.datab+(addr)));
 	}
 	else if(addr<0x600)
 	{
-		SCSP_UpdateRegR(addr&0xff);
+		if (Machine->sample_rate > 0)
+		{
+			SCSP_UpdateRegR(addr&0xff);
+		}
 		v= *((unsigned short *) (SCSP->udata.datab+((addr&0xff))));
 	}	
 	return v;

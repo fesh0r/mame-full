@@ -50,6 +50,8 @@ struct drccore
 
 	UINT8		uses_fp;				/* true if we need the FP unit */
 	UINT8		uses_sse;				/* true if we need the SSE unit */
+	UINT16		fpcw_curr;				/* current FPU control word */
+	UINT32		mcrxr_curr;				/* current SSE control word */
 	UINT16		fpcw_save;				/* saved FPU control word */
 	UINT32		mcrxr_save;				/* saved SSE control word */
 	
@@ -401,7 +403,7 @@ do { OP1(0x66); OP1(0xc7); MODRM_MABS(0, addr); OP2(imm); } while (0)
 do { OP1(0x66); OP1(0x89); MODRM_MABS(sreg, addr); } while (0)
 
 #define _mov_m16bd_r16(base, disp, sreg) \
-	do { OP1(0x66); OP1(0x89); MODRM_MBD(sreg, base, disp); } while (0)
+do { OP1(0x66); OP1(0x89); MODRM_MBD(sreg, base, disp); } while (0)
 
 
 
@@ -861,6 +863,9 @@ do { OP1(0xdf); OP1(0xe0); } while (0)
 #define _fldcw_m16abs(addr) \
 do { OP1(0xd9); MODRM_MABS(5, addr); } while (0)
 
+#define _fldcw_m16isd(indx, scale, addr) \
+do { OP1(0xd9); MODRM_MBISD(5, NO_BASE, indx, scale, addr); } while (0)
+
 #define _fnstcw_m16abs(addr) \
 do { OP1(0xd9); MODRM_MABS(7, addr); } while (0)
 
@@ -1128,7 +1133,9 @@ void drc_append_save_volatiles(struct drccore *drc);
 void drc_append_restore_volatiles(struct drccore *drc);
 void drc_append_save_call_restore(struct drccore *drc, void *target, UINT32 stackadj);
 void drc_append_verify_code(struct drccore *drc, void *code, UINT8 length);
-void drc_append_set_fp_rounding(struct drccore *drc, UINT8 rounding);
+void drc_append_set_fp_rounding(struct drccore *drc, UINT8 regindex);
+void drc_append_set_temp_fp_rounding(struct drccore *drc, UINT8 rounding);
+void drc_append_restore_fp_rounding(struct drccore *drc);
 
 /* disassembling drc code */
 void drc_dasm(FILE *f, unsigned pc, void *begin, void *end);

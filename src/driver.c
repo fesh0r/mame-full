@@ -2480,6 +2480,7 @@ V-V                           TP-027
 	DRIVER( sspaceat )	/* 155-162 (c) */
 	DRIVER( sspacat2 )
 	DRIVER( sspacatc )	/* 139-146 (c) */
+	DRIVER( sspacaho )	/* ? epr00001.bin - epr00008.bin */
 	DRIVER( headon )	/* 163-167/192-193 (c) Gremlin */
 	DRIVER( headonb )	/* 163-167/192-193 (c) Gremlin */
 	DRIVER( headon2 )	/* ???-??? (c) 1979 Sega */
@@ -4260,6 +4261,9 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( mjzoomin )
 	DRIVER( kakumei )
 	DRIVER( kakumei2 )
+
+	/* Based on nmk16? */
+	DRIVER( quizpani )
 
 	/* don't know what hardare Banpresto used for these games */
 	DRIVER( macrossp )	/* (c) 1996 Banpresto */

@@ -489,11 +489,11 @@ WRITE32_HANDLER( psx_dma_w )
 		switch( offset % 4 )
 		{
 		case 0:
-			verboselog( 1, "dmabase( %d ) = %08x\n", n_channel, data );
+			verboselog( 2, "dmabase( %d ) = %08x\n", n_channel, data );
 			m_p_n_dmabase[ n_channel ] = data;
 			break;
 		case 1:
-			verboselog( 1, "dmablockcontrol( %d ) = %08x\n", n_channel, data );
+			verboselog( 2, "dmablockcontrol( %d ) = %08x\n", n_channel, data );
 			m_p_n_dmablockcontrol[ n_channel ] = data;
 			break;
 		case 2:
@@ -510,10 +510,11 @@ WRITE32_HANDLER( psx_dma_w )
 				{
 					if( m_p_n_dmachannelcontrol[ n_channel ] == 0x01000201 )
 					{
-						verboselog( 1, "dma 0 write block\n", m_p_n_dmachannelcontrol[ n_channel ] );
+						verboselog( 1, "dma 0 write block %08x %08x\n",
+							m_p_n_dmabase[ n_channel ], m_p_n_dmablockcontrol[ n_channel ] );
 						n_size = (UINT32)( m_p_n_dmablockcontrol[ n_channel ] >> 16 ) * (UINT32)( m_p_n_dmablockcontrol[ n_channel ] & 0xffff );
 						mdec0_write( n_address, n_size );
-						dma_timer( n_channel, cpu_getscanline() + 2 );
+						dma_finished( n_channel );
 					}
 					else
 					{
@@ -524,10 +525,11 @@ WRITE32_HANDLER( psx_dma_w )
 				{
 					if( m_p_n_dmachannelcontrol[ n_channel ] == 0x01000200 )
 					{
-						verboselog( 1, "dma 1 read block\n", m_p_n_dmachannelcontrol[ n_channel ] );
+						verboselog( 1, "dma 1 read block %08x %08x\n",
+							m_p_n_dmabase[ n_channel ], m_p_n_dmablockcontrol[ n_channel ] );
 						n_size = (UINT32)( m_p_n_dmablockcontrol[ n_channel ] >> 16 ) * (UINT32)( m_p_n_dmablockcontrol[ n_channel ] & 0xffff );
 						mdec1_read( n_address, n_size );
-						dma_timer( n_channel, cpu_getscanline() + 5 );
+						dma_timer( n_channel, cpu_getscanline() + 16 );
 					}
 					else
 					{
@@ -538,7 +540,8 @@ WRITE32_HANDLER( psx_dma_w )
 				{
 					if( m_p_n_dmachannelcontrol[ n_channel ] == 0x01000200 )
 					{
-						verboselog( 1, "dma 2 read block\n", m_p_n_dmachannelcontrol[ n_channel ] );
+						verboselog( 1, "dma 2 read block %08x %08x\n",
+							m_p_n_dmabase[ n_channel ], m_p_n_dmablockcontrol[ n_channel ] );
 						n_size = (UINT32)( m_p_n_dmablockcontrol[ n_channel ] >> 16 ) * (UINT32)( m_p_n_dmablockcontrol[ n_channel ] & 0xffff );
 						while( n_size > 0 )
 						{
@@ -550,7 +553,8 @@ WRITE32_HANDLER( psx_dma_w )
 					}
 					else if( m_p_n_dmachannelcontrol[ n_channel ] == 0x01000201 )
 					{
-						verboselog( 1, "dma 2 write block\n", m_p_n_dmachannelcontrol[ n_channel ] );
+						verboselog( 1, "dma 2 write block %08x %08x\n",
+							m_p_n_dmabase[ n_channel ], m_p_n_dmablockcontrol[ n_channel ] );
 						n_size = (UINT32)( m_p_n_dmablockcontrol[ n_channel ] >> 16 ) * (UINT32)( m_p_n_dmablockcontrol[ n_channel ] & 0xffff );
 						while( n_size > 0 )
 						{
@@ -562,7 +566,8 @@ WRITE32_HANDLER( psx_dma_w )
 					}
 					else if( m_p_n_dmachannelcontrol[ n_channel ] == 0x01000401 )
 					{
-						verboselog( 1, "dma 2 write linked list\n", m_p_n_dmachannelcontrol[ n_channel ] );
+						verboselog( 1, "dma 2 write linked list %08x\n",
+							m_p_n_dmabase[ n_channel ] );
 						do
 						{
 							n_address &= m_n_ramsize;
@@ -584,11 +589,26 @@ WRITE32_HANDLER( psx_dma_w )
 						verboselog( 0, "dma 2 unknown mode %08x\n", m_p_n_dmachannelcontrol[ n_channel ] );
 					}
 				}
+				else if( n_channel == 5 )
+				{
+					if( m_p_n_dmachannelcontrol[ n_channel ] == 0x01000000 )
+					{
+						verboselog( 1, "dma 5 read block %08x %08x\n",
+							m_p_n_dmabase[ n_channel ], m_p_n_dmablockcontrol[ n_channel ] );
+						/* kludge */
+						dma_finished( n_channel );
+					}
+					else
+					{
+						verboselog( 0, "dma 5 unknown mode %08x\n", m_p_n_dmachannelcontrol[ n_channel ] );
+					}
+				}
 				else if( n_channel == 6 )
 				{
 					if( m_p_n_dmachannelcontrol[ n_channel ] == 0x11000002 )
 					{
-						verboselog( 1, "dma 6 reverse clear\n", m_p_n_dmachannelcontrol[ n_channel ] );
+						verboselog( 1, "dma 6 reverse clear %08x %08x\n",
+							m_p_n_dmabase[ n_channel ], m_p_n_dmablockcontrol[ n_channel ] );
 						n_size = m_p_n_dmablockcontrol[ n_channel ];
 						if( n_size > 0 )
 						{
@@ -611,7 +631,7 @@ WRITE32_HANDLER( psx_dma_w )
 				}
 				else
 				{
-					verboselog( 0, "unknown dma channel / mode (%d / %08x)\n", n_channel, m_p_n_dmachannelcontrol[ n_channel ] );
+					verboselog( 0, "unknown dma channel (%d)\n", n_channel );
 				}
 			}
 			else

@@ -50,35 +50,42 @@ Preliminary Memory map:
 
 \-ToDo / Notes:
 
-\-Main issues:
--Implement the Master/Slave communication.
--Fix the IC13 issue.
+(Main issues)
+-complete the Master/Slave communication.
+-fix properly the IC13 issue,some games still fails their booting.
 -NVRAM needs emulating.
--Clock utility in main menu of the bios is (again) broken :(.
--Sound.
+-clock utility in main menu of the bios is (again) broken :(.
 -SMPC:I don't know what the last three commands(NMI request/NMI disable/NMI enable)
  are really for.I suppose that they disable/enable the reset for the Slave and the
- sound CPU,but I'm not sure.
--Find a better fix to avoid the hanagumi hang skip kludge.
--Clean-ups and split up the various chips(SCU,SMPC,SCSP...)into their respective files.
+ sound CPU,but I'm not sure. -AS
+-Clean-ups and split the various chips(SCU,SMPC)into their respective files.
 
--prikura:Fix the compile bug which makes DMA to not work at all(now fixed?).
--groovef:Hangs soon after loaded.
--groovef,shanhigw:Find idle skip if possible.
--groovef,shanhigw:these increments *intentionally* the credit counter by two
-                  at every start-up.Missing/wrong irq I guess.
--vmahjong:locks up the emulation due to various DMA/irq issues.
-
-
------------------------ 14 Oct 2003, notes -----------
-
-most (all) of the remaining non ic-13 games which don't boot appear to use a fairly
-common sega boot sequence.
-
-the master cpu is sending 2 commands to the slave (with MINIT) and then no more.
-
-prikura sprites are controlled by the second cpu, it we patch out the frt wait loop
-then we get sprites, the main cpu never does an MINIT, i guess it should somewhere?
+(per-game issues)
+-groovef: hangs soon after loaded.
+-various: find idle skip if possible.
+-some games increments *intentionally* the credit counter by two at every start-up.
+ missing/wrong irq I guess,possibly HBLANK.
+-vmahjong:locks up the emulation due to wrong DMA/irq issues.
+-hanagumi: why do we get 2 credits on startup with sound enabled (game doesn't work
+ with sound disabled but thats known, we removed the hacks)
+-colmns97/puyosun/mausuke/cotton2/cottonbm: interrupt issues? we can't check the SCU mask
+ on SMPC or controls fail
+-prikura: slave cpu wants MINIT to draw sprites, master CPU never gives it.
+-shanhigw/shienryu: need to understand way vdp1 sprite colours work (vdp2 register related?)
+-mausuke/bakubaku/grdforce: need to sort out transparency on the colour mapped sprites
+-colmns97: corrupt background is lack of zooming, why is the top gem a bad colour tho?
+-bakubaku/colmns97/vfkids: no sound?
+-vfremix: game seems to start then waits for an address to change, another interrupt /
+ stv timers issue?
+-most: static for sounds
+-some games (rsgun,myfairld) are currently broken,they don't pass the master/slave
+ communication test again...
+-grdforce: missing backgrounds.
+-ejihon: we need somebody who can read japanese & can play this game,I (AS)
+ believe that the game works fine but I don't know how to play...
+ * according to Yasu it is playable, just missing an alpha effect on the magifying glass
+-kiwames: locks up after one match.
+-suikoenb: why the color RAM format doesn't change when you exit the test menu?
 
 */
 
@@ -92,6 +99,20 @@ extern data32_t* stv_vdp2_cram;
 
 #define USE_SLAVE 1
 
+/* stvhacks.c */
+DRIVER_INIT( ic13 );
+void install_stvbios_speedups(void);
+DRIVER_INIT(bakubaku);
+DRIVER_INIT(mausuke);
+DRIVER_INIT(puyosun);
+DRIVER_INIT(shienryu);
+DRIVER_INIT(prikura);
+DRIVER_INIT(hanagumi);
+DRIVER_INIT(cottonbm);
+DRIVER_INIT(cotton2);
+DRIVER_INIT(fhboxers);
+DRIVER_INIT(dnmtdeka);
+
 /**************************************************************************************/
 /*to be added into a stv Header file,remember to remove all the static...*/
 
@@ -99,7 +120,7 @@ static data8_t *smpc_ram;
 //static void stv_dump_ram(void);
 
 static data32_t* stv_workram_l;
-static data32_t* stv_workram_h;
+data32_t* stv_workram_h;
 static data32_t* stv_backupram;
 data32_t* stv_scu;
 static data32_t* ioga;
@@ -136,6 +157,11 @@ static void dma_direct_lv2(void);   /*DMA level 2 direct transfer function*/
 static void dma_indirect_lv0(void); /*DMA level 0 indirect transfer function*/
 static void dma_indirect_lv1(void); /*DMA level 1 indirect transfer function*/
 static void dma_indirect_lv2(void); /*DMA level 2 indirect transfer function*/
+
+static int scanline;
+
+
+
 
 /**************************************************************************************/
 
@@ -306,13 +332,16 @@ static UINT8 stv_SMPC_r8 (int offset)
 
 	return_data = smpc_ram[offset];
 
+	if ((offset == 0x61)) // ?? many games need this or the controls don't work
+		return_data = 0x20 ^ 0xff;
+
 	if (offset == 0x75)//PDR1 read
 		return_data = readinputport(0);
 
 	if (offset == 0x77)//PDR2 read
 		return_data = readinputport(1);
 
-//	if (activecpu_get_pc()==0x060020E6) return_data = 0x10;
+	if (activecpu_get_pc()==0x060020E6) return_data = 0x10;
 
 	logerror ("cpu #%d (PC=%08X) SMPC: Read from Byte Offset %02x Returns %02x\n", cpu_getactivecpu(), activecpu_get_pc(), offset, return_data);
 
@@ -434,9 +463,12 @@ static void stv_SMPC_w8 (int offset, UINT8 data)
 			case 0x10:
 				logerror ("SMPC: Status Acquire\n");
 				smpc_ram[0x5f]=0x10;
-				/*This is for RTC,cartridge code and similar stuff...*/
-				if(!(stv_scu[40] & 0x0080)) /*System Manager(SMPC) irq*/
+			//	/*This is for RTC,cartridge code and similar stuff...*/
+			//	if(!(stv_scu[40] & 0x0080)) /*System Manager(SMPC) irq*/ /* we can't check this .. breaks controls .. probably issues elsewhere? */
+				{
+					logerror ("Interrupt: System Manager (SMPC) at scanline %04x, Vector 0x47 Level 0x08\n",scanline);
 					cpu_set_irq_line_and_vector(0, 8, HOLD_LINE , 0x47);
+				}
 			break;
 			/* RTC write*/
 			case 0x16:
@@ -539,35 +571,30 @@ SCU register[40] is for IRQ masking.
 
 /* to do, update bios idle skips so they work better with this arrangement.. */
 
+
 static INTERRUPT_GEN( stv_interrupt )
 {
-	if(cpu_getiloops() == 224)
+	scanline = 261-cpu_getiloops();
+
+
+	if(scanline == 0)
 	{
-		timer_0 = 0;
-		if(timer_0 == (stv_scu[36] & 0x1ff))
-		{
-			if(!(stv_scu[40] & 8))/*Timer 0*/
-			{
-				cpu_set_irq_line_and_vector(0, 0xc, HOLD_LINE, 0x43 );
-				return;
-			}
-		}
-
-
 		if(!(stv_scu[40] & 2))/*VBLANK-OUT*/
 		{
+			logerror ("Interrupt: VBlank-OUT at scanline %04x, Vector 0x41 Level 0x0e\n",scanline);
 			cpu_set_irq_line_and_vector(0, 0xe, HOLD_LINE , 0x41);
 			stv_vblank = 0;
+			return;
 		}
-
 	}
-	else if(cpu_getiloops() <= 223 && cpu_getiloops() >= 1)/*Correct?*/
+	else if(scanline <= 223 && scanline >= 1)/*Correct?*/
 	{
 		timer_0++;
 		if(timer_0 == (stv_scu[36] & 0x1ff))
 		{
 			if(!(stv_scu[40] & 8))/*Timer 0*/
 			{
+				logerror ("Interrupt: Timer 0 at scanline %04x, Vector 0x43 Level 0x0c\n",scanline);
 				cpu_set_irq_line_and_vector(0, 0xc, HOLD_LINE, 0x43 );
 				return;
 			}
@@ -575,16 +602,36 @@ static INTERRUPT_GEN( stv_interrupt )
 
 		/*TODO:use this *at the end* of the draw line.*/
 		if(!(stv_scu[40] & 4))/*HBLANK-IN*/
-			cpu_set_irq_line_and_vector(0, 0xd, HOLD_LINE , 0x42);
-	}
-	else if(cpu_getiloops() == 0)
-	{
-		if(!(stv_scu[40] & 1))/*VBLANK-IN*/
 		{
-			cpu_set_irq_line_and_vector(0, 0xf, HOLD_LINE , 0x40);
-			stv_vblank = 1;
+			logerror ("Interrupt: HBlank-In at scanline %04x, Vector 0x42 Level 0x0d\n",scanline);
+			cpu_set_irq_line_and_vector(0, 0xd, HOLD_LINE , 0x42);
 		}
 	}
+	else if(scanline == 224)
+	{
+		timer_0 = 0;
+
+		if(!(stv_scu[40] & 1))/*VBLANK-IN*/
+		{
+			logerror ("Interrupt: VBlank IN at scanline %04x, Vector 0x40 Level 0x0f\n",scanline);
+			cpu_set_irq_line_and_vector(0, 0xf, HOLD_LINE , 0x40);
+			stv_vblank = 1;
+			return;
+		}
+
+		if(timer_0 == (stv_scu[36] & 0x1ff))
+		{
+			if(!(stv_scu[40] & 8))/*Timer 0*/
+			{
+				logerror ("Interrupt: Timer 0 at scanline %04x, Vector 0x43 Level 0x0c\n",scanline);
+				cpu_set_irq_line_and_vector(0, 0xc, HOLD_LINE, 0x43 );
+				return;
+			}
+		}
+
+
+	}
+
 }
 
 /*
@@ -1663,40 +1710,6 @@ INPUT_PORTS_START( stv )
 
 INPUT_PORTS_END
 
-/*
-
-06013AE8: MOV.L   @($D4,PC),R5
-06013AEA: MOV.L   @($D8,PC),R0
-06013AEC: MOV.W   @R5,R5
-06013AEE: MOV.L   @R0,R0
-06013AF0: AND     R10,R5
-06013AF2: TST     R0,R0
-06013AF4: BTS     $06013B00
-06013AF6: EXTS.W  R5,R5
-06013B00: EXTS.W  R5,R5
-06013B02: TST     R5,R5
-06013B04: BF      $06013B0A
-06013B06: TST     R4,R4
-06013B08: BT      $06013AE8
-
-   (loops for 375868 instructions)
-
-*/
-
-
-static READ32_HANDLER( stv_speedup_r )
-{
-	if (activecpu_get_pc()==0x60154b4) cpu_spinuntil_int(); // bios menus..
-
-	return stv_workram_h[0x0335d0/4];
-}
-
-static READ32_HANDLER( stv_speedup2_r )
-{
-	if (activecpu_get_pc()==0x6013af0) cpu_spinuntil_int(); // for use in japan
-
-	return stv_workram_h[0x0335bc/4];
-}
 
 
 WRITE32_HANDLER ( w60ffc44_write )
@@ -1735,9 +1748,7 @@ DRIVER_INIT ( stv )
 	cpu_setbank(4,&stv_workram_l[0x000000]);
 	cpu_setbank(5,&stv_backupram[0x000000]);
 
-/* idle skip bios? .. not 100% sure this is safe .. we'll see */
-	install_mem_read32_handler(0, 0x60335d0, 0x60335d3, stv_speedup_r );
-	install_mem_read32_handler(0, 0x60335bc, 0x60335bf, stv_speedup2_r );
+	install_stvbios_speedups();
 
 	/* debug .. watch the command buffer rsgun, cottonbm etc. appear to use to communicate between cpus */
 	install_mem_write32_handler(0, 0x60ffc44, 0x60ffc47, w60ffc44_write );
@@ -1747,93 +1758,7 @@ DRIVER_INIT ( stv )
 
 }
 
-static READ32_HANDLER( shienryu_slave_speedup_r )
-{
- if (activecpu_get_pc()==0x06004410)
-  cpu_spinuntil_time(TIME_IN_USEC(20)); // is this safe... we can't skip till vbl because its not a vbl wait loop
-
- return stv_workram_h[0x0ae8e4/4];
-}
-
-
-static READ32_HANDLER( shienryu_speedup_r )
-{
-	if (activecpu_get_pc()==0x060041C8) cpu_spinuntil_int(); // after you enable the sound cpu ...
-	return stv_workram_h[0x0ae8e0/4];
-}
-
-
-DRIVER_INIT(shienryu)
-{
-	install_mem_read32_handler(0, 0x60ae8e0, 0x60ae8e3, shienryu_speedup_r ); // after you enable sound cpu
-	install_mem_read32_handler(1, 0x60ae8e4, 0x60ae8e7, shienryu_slave_speedup_r ); // after you enable sound cpu
-
-	init_stv();
-}
-
-static READ32_HANDLER( prikura_speedup_r )
-{
-	if (activecpu_get_pc()==0x6018642) cpu_spinuntil_int(); // after you enable the sound cpu ...
-	return stv_workram_h[0x0b9228/4];
-}
-
-
-DRIVER_INIT(prikura)
-{
-/*
- 06018640: MOV.B   @R14,R0  // 60b9228
- 06018642: TST     R0,R0
- 06018644: BF      $06018640
-
-    (loops for 263473 instructions)
-*/
-	install_mem_read32_handler(0, 0x60b9228, 0x60b922b, prikura_speedup_r );
-
-	init_stv();
-}
-
-
-static READ32_HANDLER( hanagumi_speedup_r )
-{
-	if (activecpu_get_pc()==0x06010162) cpu_spinuntil_int(); // title logos
-
-	return stv_workram_h[0x94188/4];
-}
-
-static READ32_HANDLER( hanagumi_slave_off )
-{
-	/* just turn the slave off, i don't think the game needs it */
-	cpu_set_halt_line(1,ASSERT_LINE);
-
-	return stv_workram_h[0x015438/4];
-}
-
-DRIVER_INIT(hanagumi)
-{
-/*
-	06013E1E: NOP
-	0601015E: MOV.L   @($6C,PC),R3
-	06010160: MOV.L   @R3,R0  (6094188)
-	06010162: TST     R0,R0
-	06010164: BT      $0601015A
-	0601015A: JSR     R14
-	0601015C: NOP
-	06013E20: MOV.L   @($34,PC),R3
-	06013E22: MOV.B   @($00,R3),R0
-	06013E24: TST     R0,R0
-	06013E26: BT      $06013E1C
-	06013E1C: RTS
-	06013E1E: NOP
-
-   (loops for 288688 instructions)
-*/
-   	install_mem_read32_handler(0, 0x6094188, 0x609418b, hanagumi_speedup_r );
-   	install_mem_read32_handler(1, 0x6015438, 0x601543b, hanagumi_slave_off );
-
-  	init_stv();
-}
-
-static MACHINE_INIT( stv )
+MACHINE_INIT( stv )
 {
 
 	unsigned char *SH2ROM = memory_region(REGION_USER1);
@@ -2538,6 +2463,9 @@ ROM_START( suikoenb )
 
 	ROM_REGION32_BE( 0x2400000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_LOAD( "fpr17834.13",               0x0000000, 0x0100000, CRC(746ef686) SHA1(e31c317991a687662a8a2a45aed411001e5f1941) ) // ic13 bad
+	ROM_RELOAD ( 0x0100000, 0x0100000 )
+	ROM_RELOAD ( 0x0200000, 0x0100000 )
+	ROM_RELOAD ( 0x0300000, 0x0100000 )
 	ROM_LOAD16_WORD_SWAP( "mpr17836.2",    0x0400000, 0x0400000, CRC(55e9642d) SHA1(5198291cd1dce0398eb47760db2c19eae99273b0) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr17837.3",    0x0800000, 0x0400000, CRC(13d1e667) SHA1(cd513ceb33cc20032090113b61227638cf3b3998) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr17838.4",    0x0c00000, 0x0400000, CRC(f9e70032) SHA1(8efdbcce01bdf77acfdb293545c59bf224a9c7d2) ) // good
@@ -2648,19 +2576,19 @@ ROM_START( mausuke )
 	STV_BIOS
 
 	ROM_REGION32_BE( 0x2000000, REGION_USER1, 0 ) /* SH2 code */
-	ROM_LOAD(             "ic13.bin",      0x0000000, 0x0100000, CRC(b456f4cd) )
+	ROM_LOAD(             "ic13.bin",      0x0000000, 0x0100000, CRC(b456f4cd) SHA1(91cbe703ec7c1dd45eb3b05bdfeb06e3570599d1) )
 	/* mirroring is essential on this one */
 	ROM_RELOAD ( 0x0100000, 0x0100000 )
 	ROM_RELOAD ( 0x0200000, 0x0100000 )
 	ROM_RELOAD ( 0x0300000, 0x0100000 )
 
-	ROM_LOAD16_WORD_SWAP( "mcj-00.2",      0x0400000, 0x0200000, CRC(4eeacd6f) )// good
-	ROM_LOAD16_WORD_SWAP( "mcj-01.3",      0x0800000, 0x0200000, CRC(365a494b) )// good
-	ROM_LOAD16_WORD_SWAP( "mcj-02.4",      0x0c00000, 0x0200000, CRC(8b8e4931) )// good
-	ROM_LOAD16_WORD_SWAP( "mcj-03.5",      0x1000000, 0x0200000, CRC(9015a0e7) )// good
-	ROM_LOAD16_WORD_SWAP( "mcj-04.6",      0x1400000, 0x0200000, CRC(9d1beaee) )// good
-	ROM_LOAD16_WORD_SWAP( "mcj-05.1",      0x1800000, 0x0200000, CRC(a7626a82) )// good
-	ROM_LOAD16_WORD_SWAP( "mcj-06.8",      0x1c00000, 0x0200000, CRC(1ab8e90e) )// good
+	ROM_LOAD16_WORD_SWAP( "mcj-00.2",      0x0400000, 0x0200000, CRC(4eeacd6f) SHA1(104ca230f22cd11cc536b34abd482e54791b4d0f) )// good
+	ROM_LOAD16_WORD_SWAP( "mcj-01.3",      0x0800000, 0x0200000, CRC(365a494b) SHA1(29713dfc83a9ade63ebcc7994d14cd785c4500b9) )// good
+	ROM_LOAD16_WORD_SWAP( "mcj-02.4",      0x0c00000, 0x0200000, CRC(8b8e4931) SHA1(0c94e2ccb72902d7786d1101a3958504f7151077) )// good
+	ROM_LOAD16_WORD_SWAP( "mcj-03.5",      0x1000000, 0x0200000, CRC(9015a0e7) SHA1(8ba8a3723267e631169dc1e06620260fbccce4bd) )// good
+	ROM_LOAD16_WORD_SWAP( "mcj-04.6",      0x1400000, 0x0200000, CRC(9d1beaee) SHA1(c63b61378860319fff2e605c7b9afaa5f1bc4cd2) )// good
+	ROM_LOAD16_WORD_SWAP( "mcj-05.1",      0x1800000, 0x0200000, CRC(a7626a82) SHA1(c12a099132c5b9234a2de5674f3b8ba5fdd35289) )// good
+	ROM_LOAD16_WORD_SWAP( "mcj-06.8",      0x1c00000, 0x0200000, CRC(1ab8e90e) SHA1(8e22f03c1791a983eb330b2a9199e5349a0b1baa) )// good
 ROM_END
 
 /* acclaim game, not a standard cart ... */
@@ -2702,77 +2630,47 @@ ROM_START( batmanfr )
 	ROM_LOAD( "snd3.u51",   0x600000, 0x200000, CRC(31af26ae) )
 ROM_END
 
-/* Hack the boot vectors .. not right but allows several IC13 games (which fail the checksums before hacking) to boot */
-DRIVER_INIT( ic13 )
-{
-	/* this is WRONG but works for some games */
-	data32_t *rom = (data32_t *)memory_region(REGION_USER1);
-	rom[0xf10/4] = (rom[0xf10/4] & 0xff000000)|((rom[0xf10/4]/2)&0x00ffffff);
-	rom[0xf20/4] = (rom[0xf20/4] & 0xff000000)|((rom[0xf20/4]/2)&0x00ffffff);
-	rom[0xf30/4] = (rom[0xf30/4] & 0xff000000)|((rom[0xf30/4]/2)&0x00ffffff);
-
-	init_stv();
-}
+/* TODO: add country codes */
 
 
-static READ32_HANDLER( bakubaku_speedup_r )
-{
-	if (activecpu_get_pc()==0x06036dc8) cpu_spinuntil_int(); // title logos
-
-	return stv_workram_h[0x0833f0/4];
-}
-
-static READ32_HANDLER( bakubaku_speedup2_r )
-{
-	if (activecpu_get_pc()==0x06033762) 	cpu_set_halt_line(1,ASSERT_LINE);
-
-	return stv_workram_h[0x0033762/4];
-}
-
-static READ32_HANDLER( bakubaku_hangskip_r )
-{
-	if (activecpu_get_pc()==0x060335e4) stv_workram_h[0x0335e6/4] = 0x32300909;
-
-	return stv_workram_h[0x033660/4];
-}
-
-DRIVER_INIT(bakubaku)
-{
-   	install_mem_read32_handler(0, 0x60833f0, 0x60833f3, bakubaku_speedup_r ); // idle loop of main cpu
-   	install_mem_read32_handler(1, 0x60fdfe8, 0x60fdfeb, bakubaku_speedup2_r ); // turn off slave sh2, is it needed after boot ??
-   	install_mem_read32_handler(0, 0x6033660, 0x6033663, bakubaku_hangskip_r ); // it waits for a ram address to chamge what should change it?
-
-	init_ic13();
-}
+/* TODO: add country codes */
 
 /* Playable */
-GAMEBX( 1998, hanagumi,  stvbios, stvbios, stv, stv,  hanagumi,  ROT0, "Sega", "Hanagumi Taisen Columns - Sakura Wars", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1998, hanagumi,  stvbios, stvbios, stv, stv,  hanagumi,  ROT0, "Sega", "Hanagumi Taisen Columns - Sakura Wars", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEBX( 1996, bakubaku,  stvbios, stvbios, stv, stv,  bakubaku,  ROT0, "Sega", 	   "Baku Baku Animal", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEBX( 1997, shienryu,  stvbios, stvbios, stv, stv,  shienryu,  ROT270, "Warashi",  "Shienryu", GAME_IMPERFECT_GRAPHICS ) /* missing bomb effects, zooming, rotation */
+GAMEBX( 1997, shienryu,  stvbios, stvbios, stv, stv,  shienryu,  ROT270, "Warashi",  "Shienryu", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEBX( 1995, mausuke,   stvbios, stvbios, stv, stv,  mausuke,  ROT0, "Data East","Mausuke no Ojama the World", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1996, puyosun,   stvbios, stvbios, stv, stv,  puyosun,  ROT0, "Compile",  "Puyo Puyo Sun", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1997, cotton2,   stvbios, stvbios, stv, stv,  cotton2,       ROT0, "Success",  "Cotton 2", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1998, cottonbm,  stvbios, stvbios, stv, stv,  cottonbm,  ROT0, "Success",  "Cotton Boomerang", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1996, vfkids,    stvbios, stvbios, stv, stv,  ic13,  ROT0, "Sega", 	   "Virtua Fighter Kids", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1995, ejihon,    stvbios, stvbios, stv, stv,  ic13,     ROT0, "Sega", 	   "Ejihon Tantei Jimusyo", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1996, colmns97,  stvbios, stvbios, stv, stv,  ic13,     ROT0, "Sega", 	   "Columns 97", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1996, diehard,   stvbios, stvbios, stv, stv,  ic13,       ROT0, "Sega", 	   "Die Hard Arcade (US)", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1996, dnmtdeka,  diehard, stvbios, stv, stv,  dnmtdeka,   ROT0, "Sega", 	   "Dynamite Deka (Japan)", GAME_NO_SOUND | GAME_NOT_WORKING )
+
+/* Almost */
+GAMEBX( 1995, fhboxers,  stvbios, stvbios, stv, stv,  fhboxers,       ROT0, "Sega", 	   "Funky Head Boxers", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1998, othellos,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Tsukuda Original",	"Othello Shiyouyo", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1995, kiwames,   stvbios, stvbios, stv, stv,  ic13,     ROT0, "Athena",   "Pro Mahjong Kiwame S", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1997, winterht,  stvbios, stvbios, stv, stv,  ic13,  ROT0, "Sega", 	   "Winter Heat", GAME_NO_SOUND | GAME_NOT_WORKING )
 
 /* Doing Something.. but not enough yet */
 GAMEBX( 1996, prikura,   stvbios, stvbios, stv, stv,  prikura,   ROT0, "Atlus",    "Prikura Daisakusen", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1995, shanhigw,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sunsoft / Activision", "Shanghai - The Great Wall / Shanghai Triple Threat", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1996, groovef,   stvbios, stvbios, stv, stv,  stv,       ROT0, "Atlus",    "Power Instinct 3 - Groove On Fight", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, colmns97,  stvbios, stvbios, stv, stv,  ic13,     ROT0, "Sega", 	   "Columns 97", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1997, cotton2,   stvbios, stvbios, stv, stv,  stv,       ROT0, "Success",  "Cotton 2", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1998, cottonbm,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Success",  "Cotton Boomerang", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1999, danchih,   stvbios, stvbios, stv, stv,  stv,       ROT0, "Altron (distributed by Tecmo)", "Danchi de Hanafuda", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, ejihon,    stvbios, stvbios, stv, stv,  ic13,     ROT0, "Sega", 	   "Ejihon Tantei Jimusyo", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1998, grdforce,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Success",  "Guardian Force", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1998, elandore,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Sai-Mate", "Fighting Dragon Legend Elan Doree", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, kiwames,   stvbios, stvbios, stv, stv,  ic13,     ROT0, "Athena",   "Pro Mahjong Kiwame S", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, mausuke,   stvbios, stvbios, stv, stv,  ic13,      ROT0, "Data East","Mausuke no Ojama the World", GAME_NOT_WORKING )
 GAMEBX( 1998, myfairld,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Micronet", "Virtual Mahjong 2 - My Fair Lady", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1998, othellos,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Tsukuda Original",	"Othello Shiyouyo", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, puyosun,   stvbios, stvbios, stv, stv,  ic13,   ROT0, "Compile",  "Puyo Puyo Sun", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1998, rsgun,     stvbios, stvbios, stv, stv,  stv,       ROT0, "Treasure", "Radiant Silvergun", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1996, sassisu,   stvbios, stvbios, stv, stv,  ic13,     ROT0, "Sega", 	   "Taisen Tanto-R 'Sasshissu!'", GAME_NO_SOUND | GAME_NOT_WORKING )
+
+// crashes
 GAMEBX( 1995, suikoenb,  stvbios, stvbios, stv, stv,  ic13,  ROT0, "Data East","Suikoenbu", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, vfkids,    stvbios, stvbios, stv, stv,  ic13,  ROT0, "Sega", 	   "Virtua Fighter Kids", GAME_NO_SOUND | GAME_NOT_WORKING )
+
+// this needs the dsp
 GAMEBX( 1995, vfremix,   stvbios, stvbios, stv, stv,  ic13,     ROT0, "Sega", 	   "Virtua Fighter Remix", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1997, winterht,  stvbios, stvbios, stv, stv,  ic13,  ROT0, "Sega", 	   "Winter Heat", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, fhboxers,  stvbios, stvbios, stv, stv,  ic13,       ROT0, "Sega", 	   "Funky Head Boxers", GAME_NO_SOUND | GAME_NOT_WORKING )
 
 /* not working */
 
@@ -2782,8 +2680,6 @@ GAMEBX( 1996, stvbios,   0,       stvbios, stv, stv,  stv,       ROT0, "Sega",  
 GAMEBX( 1998, astrass,   stvbios, stvbios, stv, stv,  ic13,       ROT0, "Sunsoft",  "Astra SuperStars", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1996, batmanfr,  stvbios, stvbios, stv, stv,  ic13,       ROT0, "Acclaim",  "Batman Forever", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1995, decathlt,  stvbios, stvbios, stv, stv,  ic13,       ROT0, "Sega", 	   "Decathlete", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, diehard,   stvbios, stvbios, stv, stv,  ic13,       ROT0, "Sega", 	   "Die Hard Arcade (US)", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1996, dnmtdeka,  diehard, stvbios, stv, stv,  ic13,       ROT0, "Sega", 	   "Dynamite Deka (Japan)", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1999, ffreveng,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Capcom",   "Final Fight Revenge", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1996, findlove,  stvbios, stvbios, stv, stv,  ic13,       ROT0, "Daiki",	   "Find Love", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1995, finlarch,  stvbios, stvbios, stv, stv,  ic13,       ROT0, "Sega", 	   "Final Arch (Japan)", GAME_NO_SOUND | GAME_NOT_WORKING )
@@ -2797,7 +2693,7 @@ GAMEBX( 1998, seabass,   stvbios, stvbios, stv, stv,  ic13,       ROT0, "A Wave 
 GAMEBX( 1995, sleague,   stvbios, stvbios, stv, stv,  ic13,       ROT0, "Sega", 	   "Super Major League (US)", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1996, sokyugrt,  stvbios, stvbios, stv, stv,  ic13,     ROT0, "Raizing",  "Soukyugurentai / Terra Diver", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1998, sss,       stvbios, stvbios, stv, stv,  ic13,       ROT0, "Victor / Cave / Capcom", "Steep Slope Sliders", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1998, twcup98,   stvbios, stvbios, stv, stv,  ic13,  ROT0, "Tecmo",    "Tecmo World Cup '98", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEBX( 1998, twcup98,   stvbios, stvbios, stv, stv,  ic13,  ROT0, "Tecmo",    "Tecmo World Cup '98", GAME_NO_SOUND | GAME_NOT_WORKING ) // protected?
 GAMEBX( 1997, vmahjong,  stvbios, stvbios, stv, stv,  stv,       ROT0, "Micronet", "Virtual Mahjong", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1997, znpwfv,    stvbios, stvbios, stv, stv,  ic13,       ROT0, "Sega", 	   "Zen Nippon Pro-Wrestling Featuring Virtua", GAME_NO_SOUND | GAME_NOT_WORKING )
 

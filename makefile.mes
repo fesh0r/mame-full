@@ -177,13 +177,14 @@ LIBS = -lz
 
 OBJDIRS = obj $(OBJ) $(OBJ)/cpu $(OBJ)/sound $(OBJ)/$(MAMEOS) \
 	$(OBJ)/drivers $(OBJ)/machine $(OBJ)/vidhrdw $(OBJ)/sndhrdw
-OBJDIRS += 	$(OBJ)/mess         $(OBJ)/mess/$(MAMEOS)            \
-		$(OBJ)/mess/systems $(OBJ)/mess/machine              \
-		$(OBJ)/mess/vidhrdw $(OBJ)/mess/sndhrdw              \
-		$(OBJ)/mess/formats $(OBJ)/mess/tools                \
-		$(OBJ)/mess/devices                                  \
-		$(OBJ)/mess/tools/dat2html $(OBJ)/mess/tools/mkhdimg \
-		$(OBJ)/mess/tools/messroms $(OBJ)/mess/tools/imgtool \
+OBJDIRS += 	$(OBJ)/mess         $(OBJ)/mess/$(MAMEOS)			\
+		$(OBJ)/mess/systems $(OBJ)/mess/machine					\
+		$(OBJ)/mess/vidhrdw $(OBJ)/mess/sndhrdw					\
+		$(OBJ)/mess/formats $(OBJ)/mess/tools					\
+		$(OBJ)/mess/devices										\
+		$(OBJ)/mess/tools/dat2html $(OBJ)/mess/tools/mkhdimg	\
+		$(OBJ)/mess/tools/messroms $(OBJ)/mess/tools/imgtool	\
+		$(OBJ)/mess/tools/messdocs								\
 		$(OBJ)/mess/tools/mkimage  $(OBJ)/mess/sound \
 		$(OBJ)/ui $(OBJ)/mess/ui
 
@@ -295,6 +296,13 @@ $(OBJ)/mess/%.o: mess/%.c
 	$(CC) $(CDEFS) $(CFLAGSPEDANTIC) -c $< -o $@
 ifdef DISASSEMBLY
 	$(DASM) $(CDEFS) $(CFLAGSPEDANTIC) $< -o $(@:%.o=%.S)
+endif
+
+$(OBJ)/mess/tools/messdocs/%.o: mess/tools/messdocs/%.c
+	@echo Compiling $<...
+	$(CC) $(CDEFS) $(CFLAGS) -c $< -Wnone -o $@
+ifdef DISASSEMBLY
+	$(DASM) $(CDEFS) $(CFLAGS) $< -o $(@:%.o=%.S)
 endif
 
 # compile generated C files for the 68000 emulator

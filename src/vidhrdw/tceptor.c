@@ -14,15 +14,24 @@ extern int debug_key_pressed;
 #define TX_TILE_OFFSET_RIGHT	(32 * 0 + 2)
 #define TX_TILE_OFFSET_LEFT	(32 * 31 + 2)
 
+#define SPR_TRANS_COLOR		(0xff + 768)
+#define SPR_MASK_COLOR		(0xfe + 768)
+
 
 data8_t *tceptor_tile_ram;
 data8_t *tceptor_tile_attr;
+data8_t *tceptor_bg_ram;
 data16_t *tceptor_sprite_ram;
 
 static int sprite16;
 static int sprite32;
+static int bg;
 
 static struct tilemap *tx_tilemap;
+static struct tilemap *bg_tilemap;
+static struct mame_bitmap *temp_bitmap;
+
+static int is_mask_spr[1024/16];
 
 /*******************************************************************/
 
@@ -76,6 +85,18 @@ PALETTE_INIT( tceptor )
 	/* sprites lookup table */
 	for (i = 0;i < 1024; i++)
 		colortable[i + 1024] = *(color_prom++) + 768;
+
+	/* setup sprite mask color map */
+	/* tceptor2: only 0x23 */
+	memset(is_mask_spr, 0, sizeof is_mask_spr);
+	for (i = 0; i < 1024; i++)
+		if (colortable[i + 1024] == SPR_MASK_COLOR)
+			is_mask_spr[i / 16] = 1;
+
+	/* background lookup table */
+	/* completely wrong. cult prom is not presented? */
+	for (i = 0;i < 256; i++)
+		colortable[i + 2048] = i + 256;
 }
 
 
@@ -164,6 +185,86 @@ WRITE_HANDLER( tceptor_tile_attr_w )
 
 /*******************************************************************/
 
+static void get_bg_tile_info(int tile_index)
+{
+	if (tceptor_bg_ram)
+	{
+		int code = tceptor_bg_ram[tile_index];
+
+		SET_TILE_INFO(bg, code, 0, 0);
+	}
+	else
+	{
+		SET_TILE_INFO(bg, tile_index, 0, 0);
+	}
+}
+
+READ_HANDLER( tceptor_bg_ram_r )
+{
+	return tceptor_bg_ram[offset];
+}
+
+WRITE_HANDLER( tceptor_bg_ram_w )
+{
+	if (tceptor_bg_ram[offset] != data)
+	{
+		tceptor_bg_ram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
+	}
+}
+
+
+/*******************************************************************/
+
+static int decode_bg(int region)
+{
+	static struct GfxLayout bg_layout =
+	{
+		16, 16,
+		512,
+		3,
+		{ 4, 0x40000+4, 0 },
+		{ 0, 1, 2, 3, 8, 9, 10, 11,
+		  256, 257, 258, 259, 264, 265, 266, 267 },
+		{ 0, 16, 32, 48, 64, 80, 96, 112,
+		  128, 144, 160, 176, 192, 208, 224, 240},
+		512
+	};
+
+	int gfx_index = bg;
+	data8_t *src = memory_region(region) + 0x8000;
+	unsigned char *buffer;
+	int len = 0x8000;
+	int i;
+
+	if (!(buffer = malloc(len)))
+		return 1;
+
+	/* expand rom tc2-19.10d */
+	for (i = 0; i < len / 2; i++)
+	{
+		buffer[i*2+1] = src[i] & 0x0f;
+		buffer[i*2] = (src[i] & 0xf0) >> 4;
+	}
+
+	memcpy(src, buffer, len);
+	free(buffer);
+
+	/* decode the graphics */
+	Machine->gfx[gfx_index] = decodegfx(memory_region(region), &bg_layout);
+	if (!Machine->gfx[gfx_index])
+		return 1;
+
+	/* set the color information */
+	Machine->gfx[gfx_index]->colortable = &Machine->remapped_colortable[2048];
+	Machine->gfx[gfx_index]->total_colors = 512;
+/* I have no idea about color */
+Machine->gfx[gfx_index]->colortable = &Machine->remapped_colortable[0x40*16];
+Machine->gfx[gfx_index]->total_colors = 1;
+
+	return 0;
+}
+
 static int decode_sprite(int gfx_index, struct GfxLayout *layout, const void *data)
 {
 	/* decode the graphics */
@@ -186,7 +287,7 @@ static int decode_sprite16(int region)
 		16, 16,
 		512,
 		4,
-		{ 0x00000, 0x40000, 0x00004, 0x40004 },
+		{ 0x00000, 0x00004, 0x40000, 0x40004 },
 		{
 			0*8, 0*8+1, 0*8+2, 0*8+3, 1*8, 1*8+1, 1*8+2, 1*8+3,
 			2*8, 2*8+1, 2*8+2, 2*8+3, 3*8, 3*8+1, 3*8+2, 3*8+3
@@ -288,7 +389,11 @@ VIDEO_START( tceptor )
 	for (gfx_index = 0; gfx_index < MAX_GFX_ELEMENTS; gfx_index++)
 		if (Machine->gfx[gfx_index] == 0)
 			break;
-	if (gfx_index + 3 > MAX_GFX_ELEMENTS)
+	if (gfx_index + 4 > MAX_GFX_ELEMENTS)
+		return 1;
+
+	bg = gfx_index++;
+	if (decode_bg(REGION_GFX2))
 		return 1;
 
 	sprite16 = gfx_index++;
@@ -297,6 +402,11 @@ VIDEO_START( tceptor )
 
 	sprite32 = gfx_index++;
 	if (decode_sprite32(REGION_GFX4))
+		return 1;
+
+	/* allocate temp bitmaps */
+	temp_bitmap = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
+	if (!temp_bitmap)
 		return 1;
 
 	namco_road_init(gfx_index);
@@ -308,6 +418,11 @@ VIDEO_START( tceptor )
 	tilemap_set_scrollx(tx_tilemap, 0, -2*8);
 	tilemap_set_scrolly(tx_tilemap, 0, 0);
 	tilemap_set_transparent_pen(tx_tilemap, 7);
+
+	/* not handled yet */
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 16, 16, 8, 512/8);
+	if (!bg_tilemap)
+		return 1;
 
 	return 0;
 }
@@ -340,6 +455,7 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 {
 	data16_t *mem1 = &tceptor_sprite_ram[0x000/2];
 	data16_t *mem2 = &tceptor_sprite_ram[0x100/2];
+	int need_mask = 0;
 	int i;
 
 	for (i = 0; i < 0x100; i += 2)
@@ -371,6 +487,17 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 				scaley *= 2;
 			}
 
+			if (is_mask_spr[color])
+			{
+				if (!need_mask)
+				{
+					// backup previous bitmap
+					copybitmap(temp_bitmap, bitmap, 0, 0, 0, 0, cliprect, TRANSPARENCY_NONE, 0);
+				}
+
+				need_mask = 1;
+			}
+
 			scalex += 0x800;
 			scaley += 0x800;
 
@@ -384,10 +511,26 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 			            flipx, flipy,
 			            x, y,
 			            cliprect,
-			            TRANSPARENCY_PEN, 0,
+			            TRANSPARENCY_COLOR, SPR_TRANS_COLOR,
 			            scalex,
 			            scaley);
 		}
+	}
+
+	/* if SPR_MASK_COLOR pen is used, restore pixels from previous bitmap */
+	if (need_mask)
+	{
+		int x, y;
+
+		for (x = cliprect->min_x; x <= cliprect->max_x; x++)
+			for (y = cliprect->min_y; y <= cliprect->max_y; y++)
+				if (read_pixel(bitmap, x, y) == SPR_MASK_COLOR)
+				{
+					int color = read_pixel(temp_bitmap, x, y);
+
+					// restore pixel
+					plot_pixel(bitmap, x, y, color);
+				}
 	}
 }
 

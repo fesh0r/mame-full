@@ -223,38 +223,40 @@ endif
 #####################################################################
 
 OBJDIRS = \
-	obj \
-	$(OBJ) \
-	$(OBJ)/cpu \
-	$(OBJ)/sound \
-	$(OBJ)/drivers \
-	$(OBJ)/machine \
-	$(OBJ)/vidhrdw \
-	$(OBJ)/sndhrdw \
-	$(OBJ)/windows \
-	$(OBJ)/wince \
+	obj				\
+	$(OBJ)			\
+	$(OBJ)/cpu		\
+	$(OBJ)/sound	\
+	$(OBJ)/drivers	\
+	$(OBJ)/machine	\
+	$(OBJ)/vidhrdw	\
+	$(OBJ)/sndhrdw	\
+	$(OBJ)/xml2info	\
+	$(OBJ)/windows	\
+	$(OBJ)/wince	\
 	$(OBJ)/ui
 
 ifdef MESS
 # MESS object directories
 OBJDIRS += \
-        $(OBJ)/mess \
-		$(OBJ)/mess/cpu \
-		$(OBJ)/mess/sound \
-        $(OBJ)/mess/systems \
-        $(OBJ)/mess/machine \
-        $(OBJ)/mess/vidhrdw \
-        $(OBJ)/mess/sndhrdw \
-        $(OBJ)/mess/tools \
-        $(OBJ)/mess/tools/dat2html \
-        $(OBJ)/mess/tools/imgtool \
-        $(OBJ)/mess/tools/mkhdimg \
-        $(OBJ)/mess/tools/messroms \
-        $(OBJ)/mess/tools/mkimage \
-        $(OBJ)/mess/formats \
-        $(OBJ)/mess/devices \
-        $(OBJ)/mess/windows \
-        $(OBJ)/mess/ui
+	$(OBJ)/mess \
+	$(OBJ)/mess/cpu \
+	$(OBJ)/mess/sound \
+	$(OBJ)/mess/systems \
+	$(OBJ)/mess/machine \
+	$(OBJ)/mess/vidhrdw \
+	$(OBJ)/mess/sndhrdw \
+	$(OBJ)/mess/tools \
+	$(OBJ)/mess/tools/dat2html \
+	$(OBJ)/mess/tools/imgtool \
+	$(OBJ)/mess/tools/mkhdimg \
+	$(OBJ)/mess/tools/messroms \
+	$(OBJ)/mess/tools/messdocs \
+	$(OBJ)/mess/tools/mkimage \
+	$(OBJ)/mess/formats \
+	$(OBJ)/mess/devices \
+	$(OBJ)/mess/windows \
+	$(OBJ)/mess/ui
 endif
 
 PLATFORM_IMGTOOL_OBJS =				\

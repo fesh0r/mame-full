@@ -10,6 +10,15 @@
 
 #ifdef WIN32
 
+struct _DIR
+{
+    HANDLE          handle;
+    WIN32_FIND_DATA findFileData;
+    BOOLEAN         firstTime;
+    char            pathName[MAX_PATH];
+};
+
+
 /** open the current directory and return a structure
  *	to be used in subsequent readdir() and closedir()
  *	calls. 
@@ -18,22 +27,19 @@
  */
 DIR * opendir(const char *dirname)
 {
-	
-	static DIR dir;
+	DIR *dir;
+
+	dir = malloc(sizeof(struct _DIR));
+	if (!dir)
+		return NULL;
 
 	/* Stash the directory name */
-	strcpy(dir.pathName, dirname);
+	_snprintf(dir->pathName, sizeof(dir->pathName) / sizeof(dir->pathName[0]), "%s\\*.*", dirname);
 
 	/* set the handle to invalid and set the firstTime flag */
-	dir.handle	  = INVALID_HANDLE_VALUE;
-	dir.firstTime = TRUE;
-
-	if (strcmp(dirname, ".") == 0) {
-		return &dir;
-	}
-
-	/* Change the current directory to the one requested */
-	return (SetCurrentDirectory(dir.pathName) != 0) ? &dir : NULL;
+	dir->handle	  = INVALID_HANDLE_VALUE;
+	dir->firstTime = TRUE;
+	return dir;
 }
 
 /** Close the current directory - return 0 if success */
@@ -51,6 +57,7 @@ int closedir(DIR *dirp)
 		result = FindClose(dirp->handle);
 		dirp->handle = INVALID_HANDLE_VALUE;
 	}
+	free(dirp);
 	
 	return (result == 0) ? 1 : 0;
 }
@@ -63,7 +70,7 @@ struct dirent * readdir(DIR *dirp)
 	if (TRUE == dirp->firstTime)
 	{
 		/** Get the first entry in the directory */
-		dirp->handle = FindFirstFile("*.*", &dirp->findFileData);
+		dirp->handle = FindFirstFile(dirp->pathName, &dirp->findFileData);
 		dirp->firstTime = FALSE;
 		if (INVALID_HANDLE_VALUE == dirp->handle)
 		{

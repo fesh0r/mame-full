@@ -81,11 +81,16 @@ static READ16_HANDLER( ioc_r )
 		case 0x86/2:
 			return input_port_2_word_r(0,mem_mask);	/* IN1 */
 
+		case 0x50:
+		case 0x51:
+			return OKIM6295_status_0_r(0)<<8;
+			break;
+
 	}
 
-logerror("CPU #0 PC %06x: warning - read unmapped ioc offset %06x\n",activecpu_get_pc(),offset);
+//logerror("CPU #0 PC %06x: warning - read unmapped ioc offset %06x\n",activecpu_get_pc(),offset);
 
-	return gcpinbal_ioc_ram[offset];
+	return 0; //gcpinbal_ioc_ram[offset];
 }
 
 
@@ -104,7 +109,39 @@ static WRITE16_HANDLER( ioc_w )
 //usrintf_showmessage(" address %04x value %04x",offset,data);
 //	}
 
-logerror("CPU #0 PC %06x: warning - write ioc offset %06x with %04x\n",activecpu_get_pc(),offset,data);
+	switch (offset)
+	{
+		// these are all written every frame
+		case 0x3b:
+		case 0xa:
+		case 0xc:
+		case 0xb:
+		case 0xd:
+		case 0xe:
+		case 0xf:
+		case 0x10:
+		case 0x47:
+		case 0x44:
+		case 0x60:
+		case 0x61:
+		case 0x62:
+		case 0x63:
+		case 0x64:
+		case 0x65:
+		case 0x66:
+			break;
+
+		// OKIM6295
+		case 0x50:
+		case 0x51:
+			OKIM6295_data_0_w(0, data>>8);
+			break;
+
+		default:
+			logerror("CPU #0 PC %06x: warning - write ioc offset %06x with %04x\n",activecpu_get_pc(),offset,data);
+			break;
+	}
+
 }
 
 
@@ -283,9 +320,13 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
                             (SOUND)
 **************************************************************/
 
-
-
-
+static struct OKIM6295interface m6295_interface =
+{
+	1,  /* 1 chip */
+	{ 1056000/132 },	/* bogus value */
+	{ REGION_SOUND1 },
+	{ 100 }
+};
 
 /***********************************************************
                         MACHINE DRIVERS
@@ -318,7 +359,8 @@ static MACHINE_DRIVER_START( gcpinbal )
 	MDRV_VIDEO_UPDATE(gcpinbal)
 
 	/* sound hardware */
-//	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(OKIM6295, m6295_interface)
 MACHINE_DRIVER_END
 
 
@@ -353,5 +395,4 @@ ROM_END
 
 
 
-GAMEX( 1994, gcpinbal, 0, gcpinbal, gcpinbal, 0, ROT270, "Excellent System", "Grand Cross", GAME_NO_SOUND | GAME_NO_COCKTAIL )
-
+GAMEX( 1994, gcpinbal, 0, gcpinbal, gcpinbal, 0, ROT270, "Excellent System", "Grand Cross", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
