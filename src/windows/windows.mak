@@ -1,12 +1,18 @@
 # only Windows specific output files and rules
 # the first two targets generate the prefix.h header
 # note this requires that OSOBJS be the first target
-OSOBJS = $(OBJ)/windows/winmain.o $(OBJ)/windows/fileio.o $(OBJ)/windows/config.o \
-	 $(OBJ)/windows/ticker.o $(OBJ)/windows/fronthlp.o $(OBJ)/windows/video.o \
-	 $(OBJ)/windows/input.o $(OBJ)/windows/sound.o $(OBJ)/windows/blit.o \
-	 $(OBJ)/windows/snprintf.o $(OBJ)/windows/rc.o $(OBJ)/windows/misc.o \
-	 $(OBJ)/windows/window.o $(OBJ)/windows/asmblit.o \
-	 $(OBJ)/mess/windows/dirio.o $(OBJ)/mess/windows/fdc.o $(OBJ)/mess/windows/messwin.o 
+OSOBJS =  $(OBJ)/windows/winmain.o  $(OBJ)/windows/config.o \
+	  $(OBJ)/windows/ticker.o   $(OBJ)/windows/fronthlp.o $(OBJ)/windows/video.o \
+	  $(OBJ)/windows/input.o    $(OBJ)/windows/sound.o    $(OBJ)/windows/blit.o \
+	  $(OBJ)/windows/snprintf.o $(OBJ)/windows/rc.o       $(OBJ)/windows/misc.o \
+	  $(OBJ)/windows/window.o   $(OBJ)/windows/asmblit.o \
+
+ifndef MESS
+OSOBJS += $(OBJ)/windows/fileio.o 
+else
+OSOBJS += $(OBJ)/mess/windows/fileio.o	$(OBJ)/mess/windows/dirio.o \
+	  $(OBJ)/mess/windows/fdc.o 	$(OBJ)/mess/windows/messwin.o 
+endif
 
 # video blitting functions
 $(OBJ)/windows/asmblit.o: src/windows/asmblit.asm
@@ -15,7 +21,7 @@ $(OBJ)/windows/asmblit.o: src/windows/asmblit.asm
 	$(ASM) -o $@ $(ASMFLAGS) $(subst -D,-d,$(ASMDEFS)) $<
 
 # add our prefix files to the mix
-CFLAGS += -mwindows -include src/$(MAMEOS)/winprefix.h
+CFLAGS += -mwindows -include src/windows/winprefix.h
 
 # add the windows libaries
 LIBS += -luser32 -lgdi32 -lddraw -ldsound -ldinput -ldxguid -lwinmm
