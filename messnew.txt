@@ -32,6 +32,10 @@ System Driver Changes:
 - [PC1512] Replaced generic character ROM with one reconstructed using CGAFont.
   [John Elliott]
   
+- [COCO] Added direct support for OS-9 floppy disk images. If an attached disk's
+  filename ends in .os9, the first sector will be analyzed for geometry
+  information. [tim lindner]
+  
 Source Changes:
 ---------------
 - The core is based on MAME 0.67.  This incorporates all features of the 
