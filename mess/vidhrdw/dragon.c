@@ -230,109 +230,127 @@ void coco3_vh_stop(void)
 
 static void coco3_compute_color(int color, int *red, int *green, int *blue)
 {
+	int r, g, b;
+
 	if ((readinputport(12) & 0x08) == 0) {
 		/* CMP colors
 		 *
 		 * These colors are of the format IICCCC, where II is the intensity and
 		 * CCCC is the base color.  There is some weirdness because intensity
-		 * is often different for each base color.  Thus a table is used here
-		 * to map to RGB colors
+		 * is often different for each base color.
 		 *
-		 * This table was based on a color table the "Super Extended Color Basic
-		 * Unravelled" (http://www.giftmarket.org/unravelled/unravelled.shtml)
-		 * that mapped RGB to CMP, then I compared it with the palette that the
-		 * CoCo III uses on startup for CMP. Where they conflicted, the CoCo III
-		 * startup palette took precedence. Where neither of them helped, I guessed
+		 * The following CoCo BASIC program was used to approximate composite
+		 * colors.  (Program by SockMaster)
 		 *
-		 * The fault of this table is that some colors directly map to each other.
-		 * I do not like this, so if anyone can come up with a better formula, I'm
-		 * all ears.
+		 *	10 POKE65497,0:DIMR(63),G(63),B(63):WIDTH80:PALETTE0,0:PALETTE8,54:CLS1
+		 *	20 SAT=92:CON=53:BRI=-16:L(0)=0:L(1)=47:L(2)=120:L(3)=255
+		 *	30 W=.4195456981879*1.01:A=W*9.2:S=A+W*5:D=S+W*5:P=0:FORH=0TO3:P=P+1
+		 *	40 BRI=BRI+CON:FORG=1TO15:R(P)=COS(A)*SAT+BRI
+		 *	50 G(P)=(COS(S)*SAT)*.50+BRI:B(P)=(COS(D)*SAT)*1.9+BRI:P=P+1
+		 *	55 A=A+W:S=S+W:D=D+W:NEXT:R(P-16)=L(H):G(P-16)=L(H):B(P-16)=L(H)
+		 *	60 NEXT:R(63)=R(48):G(63)=G(48):B(63)=B(48)
+		 *	70 FORH=0TO63STEP1:R=INT(R(H)):G=INT(G(H)):B=INT(B(H)):IFR<0THENR=0
+		 *	80 IFG<0THENG=0
+		 *	90 IFB<0THENB=0
+		 *	91 IFR>255THENR=255
+		 *	92 IFG>255THENG=255
+		 *	93 IFB>255THENB=255
+		 *	100 PRINTRIGHT$(STR$(H),2);" $";:R=R+256:G=G+256:B=B+256
+		 *	110 PRINTRIGHT$(HEX$(R),2);",$";RIGHT$(HEX$(G),2);",$";RIGHT$(HEX$(B),2)
+		 *	115 IF(H AND15)=15 THENIFINKEY$=""THEN115ELSEPRINT
+		 *	120 NEXT
 		 */
 		static const UINT8 cmp2rgb[] = {
-			0,	/*  0 - Black */
-			21,	/*  1 - Magenta tint green */
-			2,	/*  2 - Low intensity green */
-			20,	/*  3 - Red tint green */
-			49,	/*  4 - Blue tint yellow */
-			6,	/*  5 - Low intensity brown */
-			35,	/*  6 - Cyan tint red */
-			36,	/*  7 - Full intensity red*/
-			33,	/*  8 - Blue tint red */
-			27,	/*  9 - Full intensity cyan */
-			14,	/* 10 - Brown tint blue */
-			9,	/* 11 - Full intensity blue */
-			1,	/* 12 - Low intensity blue */
-			10,	/* 13 - Green tint blue */
-			3,	/* 14 - Low intensity cyan */
-			28,	/* 15 - Red tint cyan */
-			7,	/* 16 - Low intensity white */
-			17,	/* 17 - Blue tint green */
-			18,	/* 18 - Full intensity green */
-			22,	/* 19 - Brown tint green */
-			48,	/* 20 - Medium intensity yellow */
-			34,	/* 21 - Light Orange */
-			34,	/* 22 - Light Orange */
-			32,	/* 23 - Medium intensity red */
-			37,	/* 24 - Magenta tint red */
-			40,	/* 25 - Medium intensity magenta */
-			42,	/* 26 - Green tint magenta */
-			13,	/* 27 - Magenta tint blue */
-			8,	/* 28 - Medium intensity blue */
-			11,	/* 29 - Cyan tint blue */
-			24,	/* 30 - Medium intensity cyan */
-			45,	/* 31 - Full intensity magenta */
-			56,	/* 32 - Medium intensity white */
-			19,	/* 33 - Cyan tint green */
-			16,	/* 34 - Medium intensity green */
-			50,	/* 35 - Green tint yellow */
-			54,	/* 36 - Full intensity yellow */
-			52,	/* 37 - Red tint yellow */
-			38,	/* 38 - Brown tint red */
-			36,	/* 39 - Full intensity red */
-			46,	/* 40 - Brown tint magenta */
-			45,	/* 41 - Full intensity magenta */
-			41,	/* 42 - Blue tint magenta */
-			15,	/* 43 - Faded blue */
-			9,	/* 44 - Full intensity blue */
-			25,	/* 45 - Blue tint cyan  */
-			27,	/* 46 - Full intensity cyan */
-			30,	/* 47 - Brown tint cyan */
-			63,	/* 48 - White */
-			58,	/* 49 - Light green */
-			58,	/* 50 - Light green */
-			51,	/* 51 - Cyan tint yellow */
-			55,	/* 52 - Faded yellow */
-			53,	/* 53 - Magenta tint yellow */
-			39,	/* 54 - Faded red */
-			60,	/* 55 - Light red */
-			47,	/* 56 - Faded magenta */
-			61,	/* 57 - Light magenta */
-			43,	/* 58 - Cyan tint magenta */
-			57,	/* 59 - Light blue */
-			29,	/* 60 - Magenta tint cyan */
-			31,	/* 61 - Faded cyan */
-			59,	/* 62 - Light cyan */
-			63,	/* 63 - White */
-		};
-		color = cmp2rgb[color & 63];
+			0x00, 0x00, 0x00,	/* 0*/
+			0x00, 0x51, 0x00,	/* 1*/
+			0x02, 0x52, 0x00,	/* 2*/
+			0x28, 0x4B, 0x00,	/* 3*/
+			0x4D, 0x3D, 0x00,	/* 4*/
+			0x6B, 0x2B, 0x00,	/* 5*/
+			0x7D, 0x18, 0x00,	/* 6*/
+			0x7F, 0x07, 0x00,	/* 7*/
+			0x71, 0x00, 0x37,	/* 8*/
+			0x56, 0x00, 0x7D,	/* 9*/
+			0x32, 0x00, 0xB3,	/* 10*/
+			0x0B, 0x05, 0xD0,	/* 11*/
+			0x00, 0x16, 0xCF,	/* 12*/
+			0x00, 0x29, 0xAF,	/* 13*/
+			0x00, 0x3C, 0x77,	/* 14*/
+			0x00, 0x4A, 0x31,	/* 15*/
+			0x2F, 0x2F, 0x2F,	/* 16*/
+			0x1B, 0x87, 0x1D,	/* 17*/
+			0x3D, 0x86, 0x00,	/* 18*/
+			0x63, 0x7E, 0x00,	/* 19*/
+			0x88, 0x6F, 0x00,	/* 20*/
+			0xA5, 0x5D, 0x00,	/* 21*/
+			0xB4, 0x4A, 0x00,	/* 22*/
+			0xB3, 0x39, 0x2F,	/* 23*/
+			0xA2, 0x2F, 0x79,	/* 24*/
+			0x85, 0x2C, 0xBD,	/* 25*/
+			0x60, 0x31, 0xEF,	/* 26*/
+			0x3A, 0x3D, 0xFF,	/* 27*/
+			0x19, 0x4E, 0xFF,	/* 28*/
+			0x04, 0x62, 0xDC,	/* 29*/
+			0x00, 0x74, 0xA1,	/* 30*/
+			0x08, 0x81, 0x59,	/* 31*/
+			0x78, 0x78, 0x78,	/* 32*/
+			0x56, 0xBC, 0x46,	/* 33*/
+			0x78, 0xBA, 0x0B,	/* 34*/
+			0x9F, 0xB1, 0x00,	/* 35*/
+			0xC3, 0xA1, 0x00,	/* 36*/
+			0xDD, 0x8E, 0x00,	/* 37*/
+			0xEA, 0x7B, 0x2C,	/* 38*/
+			0xE6, 0x6C, 0x71,	/* 39*/
+			0xD3, 0x62, 0xBA,	/* 40*/
+			0xB4, 0x61, 0xFC,	/* 41*/
+			0x8E, 0x67, 0xFF,	/* 42*/
+			0x68, 0x75, 0xFF,	/* 43*/
+			0x49, 0x87, 0xFF,	/* 44*/
+			0x36, 0x9A, 0xFF,	/* 45*/
+			0x33, 0xAB, 0xCA,	/* 46*/
+			0x40, 0xB7, 0x81,	/* 47*/
+			0xFF, 0xFF, 0xFF,	/* 48*/
+			0x90, 0xF1, 0x70,	/* 49*/
+			0xB4, 0xEE, 0x38,	/* 50*/
+			0xDA, 0xE4, 0x19,	/* 51*/
+			0xFD, 0xD3, 0x18,	/* 52*/
+			0xFF, 0xC0, 0x36,	/* 53*/
+			0xFF, 0xAD, 0x6C,	/* 54*/
+			0xFF, 0x9F, 0xB2,	/* 55*/
+			0xFF, 0x97, 0xFB,	/* 56*/
+			0xE3, 0x96, 0xFF,	/* 57*/
+			0xBC, 0x9E, 0xFF,	/* 58*/
+			0x97, 0xAD, 0xFF,	/* 59*/
+			0x7A, 0xBF, 0xFF,	/* 60*/
+			0x6A, 0xD2, 0xFF,	/* 61*/
+			0x69, 0xE3, 0xF3,	/* 62*/
+			0xFF, 0xFF, 0xFF	/* 63*/		};
+		color &= 0x3f;
+		r = cmp2rgb[color * 3 + 0];
+		g = cmp2rgb[color * 3 + 1];
+		b = cmp2rgb[color * 3 + 2];
+
+		if (coco3_gimevhreg[0] & 0x10) {
+			/* We are on a composite monitor/TV and the monochrome phase invert
+			 * flag is on in the GIME.  This means we have to average out all
+			 * colors
+			 */
+			r = g = b = (r + g + b) / 3;
+		}
 	}
-
-	/* RGB colors
-	 *
-	 * These colors are of the format RGBRGB, where the first 3 bits
-	 * are more significant than the last three bits
-	 */
-	*red = (((color >> 4) & 2) | ((color >> 2) & 1)) * 0x55;
-	*green = (((color >> 3) & 2) | ((color >> 1) & 1)) * 0x55;
-	*blue = (((color >> 2) & 2) | ((color >> 0) & 1)) * 0x55;
-
-	if (!input_port_11_r(0) && (coco3_gimevhreg[0] & 0x10)) {
-		/* We are on a composite monitor/TV and the monochrome phase invert
-		 * flag is on in the GIME.  This means we have to average out all
-		 * colors
+	else {
+		/* RGB colors
+		 *
+		 * These colors are of the format RGBRGB, where the first 3 bits
+		 * are more significant than the last three bits
 		 */
-		*red = *green = *blue = (*red + *green + *blue) / 3;
+		r = (((color >> 4) & 2) | ((color >> 2) & 1)) * 0x55;
+		g = (((color >> 3) & 2) | ((color >> 1) & 1)) * 0x55;
+		b = (((color >> 2) & 2) | ((color >> 0) & 1)) * 0x55;
 	}
+	*red = r;
+	*green = g;
+	*blue = b;
 }
 
 static void coco3_vh_palette_change_color(int color, int data)
@@ -724,33 +742,27 @@ static void coco3_getvideoinfo(int full_refresh, struct rasterbits_source *rs,
 			memset(dirtybuffer, 0, ((rows + linesperrow - 1) / linesperrow) * rvm->bytesperrow);
 	}
 	else {
-		int borderred = 0, bordergreen = 0, borderblue = 0;
+		int bordercolor = 0, borderred, bordergreen, borderblue;
 
 		switch(m6847_get_bordercolor()) {
 		case M6847_BORDERCOLOR_BLACK:
-			borderred = 0;
-			bordergreen = 0;
-			borderblue = 0;
+			bordercolor = 0;
 			break;
 
 		case M6847_BORDERCOLOR_GREEN:
-			borderred = 0;
-			bordergreen = 255;
-			borderblue = 0;
+			bordercolor = 18;
 			break;
 
 		case M6847_BORDERCOLOR_WHITE:
-			borderred = 255;
-			bordergreen = 255;
-			borderblue = 255;
+			bordercolor = 63;
 			break;
 
 		case M6847_BORDERCOLOR_ORANGE:
-			borderred = 255;
-			bordergreen = 85;
-			borderblue = 0;
+			bordercolor = 38;
 			break;
 		}
+
+		coco3_compute_color(bordercolor, &borderred, &bordergreen, &borderblue);
 
 		full_refresh += coco3_vh_setborder(borderred, bordergreen, borderblue);
 		if (palette_recalc())

@@ -21,7 +21,7 @@ can be printed now. [Kev Thacker]
 - [COCO 3] Basics of mid-frame video mode changing made.  Crystal City runs a bit better, but
 some timing is still probably off.  Hi-res text will now display the underline in the proper
 place when the lines per row is not 8.  Lo-res font now skewed one scanline, as was the original
-machine. [Nate Woods]
+machine.  Fixed Composite Monitor colors.  [Nate Woods]
 - [COCO & COCO 3] Fixed the border colors when POKE 65314, [64-79;88-95] is invoked. [Nate Woods]
 - [ORIC] fixed a bug in microdisc memory paging. Some discs start to boot now.
 Added a dipswitch to enable/disable microdisc interface [Kev Thacker]
