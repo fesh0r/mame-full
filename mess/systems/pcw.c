@@ -859,7 +859,8 @@ void pcw_init_machine(void)
 
 	cpu_0_irq_line_vector_w(0, 0x0ff);
 
-	nec765_init(&pcw_nec765_interface,NEC765A);
+    floppy_drives_init();
+    nec765_init(&pcw_nec765_interface,NEC765A);
 
 
 	/* ram paging is actually undefined at power-on */
@@ -880,9 +881,7 @@ void pcw_init_machine(void)
 	pcw_interrupt_counter = 0;
 
 	floppy_drive_set_geometry(0, FLOPPY_DRIVE_DS_80);
-	floppy_drive_set_geometry(1, FLOPPY_DRIVE_DS_80);
         floppy_drive_set_flag_state(0, FLOPPY_DRIVE_PRESENT, 1);
-        floppy_drive_set_flag_state(1, FLOPPY_DRIVE_PRESENT, 1);
 
 
 	roller_ram_offset = 0;
@@ -1294,7 +1293,7 @@ static const struct IODevice io_pcw[] =
 		NULL,				/* info */
 		NULL,				/* open */
 		NULL,				/* close */
-		NULL,				/* status */
+                floppy_status,                           /* status */
 		NULL,				/* seek */
 		NULL,				/* tell */
 		NULL,				/* input */
