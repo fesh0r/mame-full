@@ -660,9 +660,9 @@ static WRITE_HANDLER ( d_pia1_ca2_w )
 	if (tape_motor ^ data)
 	{
 		status = device_status(IO_CASSETTE, 0, -1);
-		status &= ~1;
-		if (data)
-			status |= 1;
+		status &= ~4;
+		if (!data)
+			status |= 4;
 		device_status(IO_CASSETTE, 0, status);
 		tape_motor = data;
 	}
@@ -1394,8 +1394,8 @@ int coco_cassette_init(int id)
 		if( device_open(IO_CASSETTE,id,0,&wa) )
 			return INIT_FAILED;
 
-		/* immediately pause/mute the output */
-        device_status(IO_CASSETTE,id,2);
+		/* immediately inhibit/mute/play the output */
+        device_status(IO_CASSETTE,id,7);
 		return INIT_OK;
 	}
 
@@ -1409,8 +1409,8 @@ int coco_cassette_init(int id)
 		if( device_open(IO_CASSETTE,id,1,&wa) )
             return INIT_FAILED;
 
-		/* immediately pause the output */
-        device_status(IO_CASSETTE,id,2);
+		/* immediately inhibit/mute/play the output */
+        device_status(IO_CASSETTE,id,7);
 		return INIT_OK;
     }
 

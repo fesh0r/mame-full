@@ -17,7 +17,8 @@ hardware is not complete yet [Kev Thacker]
 - [COCO] Updated CoCo and CoCo 3 drivers with new romsets to match the actual
 chips in the system.  coco.rom split into bas12.rom, extbas11.rom and
 disk11.rom, and coco3.rom now must be of length 32768.  This requires a dump
-from an EPROM reader.  Fixed a bug in cassette writing.  [Nate Woods]
+from an EPROM reader.  Fixed a bug in cassette writing.  Cassette tape controls
+and CoCo motor signal now operate independently.  [Nate Woods]
 
 Other Changes:
 --------------

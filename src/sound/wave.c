@@ -30,7 +30,7 @@ struct wave_file {
 	int samples;			/* number of samples (length * resolution / 8) */
 	int length; 			/* length in bytes */
 	void *data; 			/* sample data */
-	int mute;				/* mute if non-zero */
+	int status;				/* other status (mute, motor inhibit) */
 };
 
 static struct Wave_interface *intf;
@@ -429,7 +429,7 @@ static void wave_sound_update(int id, INT16 *buffer, int length)
 	int count = w->counter;
 	INT16 sample = w->play_sample;
 
-    if( !w->timer || w->mute )
+    if( !w->timer || (w->status & 2) )
 	{
 		while( length-- > 0 )
 			*buffer++ = sample;
@@ -555,8 +555,12 @@ int wave_status(int id, int newstatus)
 {
 	/* wave status has the following bitfields:
 	 *
+	 *  Bit 2:  Inhibit Motor (1=inhibit 0=noinhibit)
 	 *	Bit 1:	Mute (1=mute 0=nomute)
 	 *	Bit 0:	Motor (1=on 0=off)
+	 *
+	 *  Bit 0 is usually set by the tape control, and bit 2 is usually set by
+	 *  the driver
 	 *
 	 *	Also, you can pass -1 to have it simply return the status
 	 */
@@ -567,8 +571,12 @@ int wave_status(int id, int newstatus)
 
     if( newstatus != -1 )
 	{
-		w->mute = newstatus & 2;
-		newstatus &= 1;
+		w->status = newstatus;
+
+		if (newstatus & 4)
+			newstatus = 0;
+		else
+			newstatus &= 1;
 
 		if( newstatus && !w->timer )
 		{
@@ -584,7 +592,7 @@ int wave_status(int id, int newstatus)
 			bitmap_dirty = 1;
 		}
 	}
-	return (w->timer ? 1 : 0) | (w->mute ? 2 : 0);
+	return (w->timer ? 1 : 0) | (w->status & 4 ? w->status : w->status & ~1);
 }
 
 int wave_open(int id, int mode, void *args)
