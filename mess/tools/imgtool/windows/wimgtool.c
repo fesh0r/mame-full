@@ -298,7 +298,7 @@ static imgtoolerr_t full_refresh_image(HWND window)
 
 
 static imgtoolerr_t setup_openfilename_struct(OPENFILENAME *ofn, memory_pool *pool,
-	HWND window, int has_autodetect_option)
+	HWND window, BOOL creating_file)
 {
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
 	mess_pile pile;
@@ -306,11 +306,12 @@ static imgtoolerr_t setup_openfilename_struct(OPENFILENAME *ofn, memory_pool *po
 	const char *s;
 	TCHAR *filename;
 	TCHAR *filter;
+	struct imgtool_module_features features;
 
 	memset(ofn, 0, sizeof(*ofn));
 	pile_init(&pile);
 
-	if (has_autodetect_option)
+	if (!creating_file)
 	{
 		pile_puts(&pile, "Autodetect (*.*)");
 		pile_putc(&pile, '\0');
@@ -321,30 +322,34 @@ static imgtoolerr_t setup_openfilename_struct(OPENFILENAME *ofn, memory_pool *po
 	// write out library modules
 	while((module = imgtool_library_iterate(library, module)) != NULL)
 	{
-		pile_puts(&pile, module->description);
-		pile_puts(&pile, " (");
-
-		s = module->extensions;
-		while(*s)
+		features = img_get_module_features(module);
+		if (creating_file ? features.supports_create : features.supports_open)
 		{
-			if (s != module->extensions)
-				pile_putc(&pile, ';');
-			pile_printf(&pile, "*.%s", s);
-			s += strlen(s) + 1;
-		}
-		pile_putc(&pile, ')');
-		pile_putc(&pile, '\0');
+			pile_puts(&pile, module->description);
+			pile_puts(&pile, " (");
 
-		s = module->extensions;
-		while(*s)
-		{
-			if (s != module->extensions)
-				pile_putc(&pile, ';');
-			pile_printf(&pile, "*.%s", s);
-			s += strlen(s) + 1;
-		}
+			s = module->extensions;
+			while(*s)
+			{
+				if (s != module->extensions)
+					pile_putc(&pile, ';');
+				pile_printf(&pile, "*.%s", s);
+				s += strlen(s) + 1;
+			}
+			pile_putc(&pile, ')');
+			pile_putc(&pile, '\0');
 
-		pile_putc(&pile, '\0');
+			s = module->extensions;
+			while(*s)
+			{
+				if (s != module->extensions)
+					pile_putc(&pile, ';');
+				pile_printf(&pile, "*.%s", s);
+				s += strlen(s) + 1;
+			}
+
+			pile_putc(&pile, '\0');
+		}
 	}
 	pile_putc(&pile, '\0');
 	pile_putc(&pile, '\0');
@@ -375,6 +380,31 @@ static imgtoolerr_t setup_openfilename_struct(OPENFILENAME *ofn, memory_pool *po
 done:
 	pile_delete(&pile);
 	return err;
+}
+
+
+
+static const struct ImageModule *find_filter_module(int filter_index,
+	BOOL creating_file)
+{
+	const struct ImageModule *module = NULL;
+	struct imgtool_module_features features;
+
+	if (filter_index-- == 0)
+		return NULL;
+	if (!creating_file && (filter_index-- == 0))
+		return NULL;
+
+	while((module = imgtool_library_iterate(library, module)) != NULL)
+	{
+		features = img_get_module_features(module);
+		if (creating_file ? features.supports_create : features.supports_open)
+		{
+			if (filter_index-- == 0)
+				return module;
+		}
+	}
+	return NULL;
 }
 
 
@@ -660,7 +690,7 @@ static void menu_new(HWND window)
 
 	pool_init(&pool);
 
-	err = setup_openfilename_struct(&ofn, &pool, window, FALSE);
+	err = setup_openfilename_struct(&ofn, &pool, window, TRUE);
 	if (err)
 		goto done;
 	ofn.Flags |= OFN_ENABLETEMPLATE | OFN_ENABLEHOOK;
@@ -673,7 +703,7 @@ static void menu_new(HWND window)
 
 	filename = T2A(ofn.lpstrFile);
 
-	module = imgtool_library_index(library, ofn.nFilterIndex - 1);
+	module = find_filter_module(ofn.nFilterIndex, TRUE);
 	
 	err = img_create(module, filename, resolution);
 	if (err)
@@ -698,14 +728,14 @@ static void menu_open(HWND window)
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
 	memory_pool pool;
 	OPENFILENAME ofn;
-	const struct ImageModule *module = NULL;
+	const struct ImageModule *module;
 	const char *filename;
 	struct wimgtool_info *info;
 
 	info = get_wimgtool_info(window);
 	pool_init(&pool);
 
-	err = setup_openfilename_struct(&ofn, &pool, window, TRUE);
+	err = setup_openfilename_struct(&ofn, &pool, window, FALSE);
 	if (err)
 		goto done;
 	ofn.Flags |= OFN_FILEMUSTEXIST;
@@ -714,10 +744,7 @@ static void menu_open(HWND window)
 
 	filename = T2A(ofn.lpstrFile);
 
-	if (ofn.nFilterIndex > 2)
-	{
-		module = imgtool_library_index(library, ofn.nFilterIndex - 2);
-	}
+	module = find_filter_module(ofn.nFilterIndex, FALSE);
 
 	err = open_image(window, module, filename, (ofn.Flags & OFN_READONLY)
 		? OSD_FOPEN_READ : OSD_FOPEN_RW);

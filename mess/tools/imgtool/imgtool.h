@@ -313,6 +313,24 @@ INLINE const struct ImageModule *img_module(imgtool_image *img)
 	return img->module;
 }
 
+
+/* img_get_module_features
+ *
+ * Description:
+ *		Retrieves a structure identifying this module's features associated with an image
+ */
+struct imgtool_module_features
+{
+	unsigned int supports_create : 1;
+	unsigned int supports_open : 1;
+	unsigned int supports_reading : 1;
+	unsigned int supports_writing : 1;
+	unsigned int supports_deleting : 1;
+	unsigned int supports_directories : 1;
+};
+
+struct imgtool_module_features img_get_module_features(const struct ImageModule *module);
+
 /* imgtool_test
  * imgtool_test_byname
  *
