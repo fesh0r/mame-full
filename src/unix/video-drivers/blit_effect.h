@@ -195,6 +195,7 @@
      }
      break;
 
+#undef MEMCPY
 #undef EFFECT
 #undef EFFECT2X
 #undef EFFECT3X
