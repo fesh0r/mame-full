@@ -39,11 +39,6 @@ void a7800_init_machine(void) {
 
 void a7800_stop_machine(void)
 {
-
-	if (a7800_bios_f000) free(a7800_bios_f000);
-	a7800_bios_f000 = NULL;
-	if (a7800_cart_f000) free(a7800_cart_f000);
-	a7800_cart_f000 = NULL;
 }
 
 /*    Header format
@@ -88,10 +83,16 @@ return crc;
 
 void a7800_exit_rom (int id)
 {
-	if (a7800_bios_f000) free(a7800_bios_f000);
-	a7800_bios_f000 = NULL;
-	if (a7800_cart_f000) free(a7800_cart_f000);
-    a7800_cart_f000 = NULL;
+	if (a7800_bios_f000)
+	{
+		free(a7800_bios_f000);
+		a7800_bios_f000 = NULL;
+	}
+	if (a7800_cart_f000)
+	{
+		free(a7800_cart_f000);
+	    a7800_cart_f000 = NULL;
+	}
 }
 
 static int a7800_verify_cart (char header[128])

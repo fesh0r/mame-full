@@ -37,6 +37,8 @@ System Driver Changes:
 
 - [A7800] Fixed interrupt handling bug - more carts run again [Ben Bruscella]
 
+- [A7800] Fixed bug that caused crashes on resets [Nate Woods]
+
 - [ORICA] The FUNCT key (present on Oric Atmos/Telestrat model) is now recognized.
   [Stefano Priore]
 
