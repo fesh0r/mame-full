@@ -195,8 +195,9 @@ struct drawline_params
 #define MUST_ALIGN(addr)	(0)
 #endif
 
+#if 0
 #define DECLARE_DRAWLINE(decl_bpp, decl_zoomx, has_charproc, has_artifact)\
-	static void dl##decl_bpp##_##decl_zoomx##_##has_charproc####has_artifact##(struct drawline_params *params)	\
+	static void dl##decl_bpp##_##decl_zoomx##_##has_charproc##has_artifact##(struct drawline_params *params)	\
 	{																						\
 		const UINT32 *v;																	\
 		UINT32 l;																			\
@@ -274,7 +275,7 @@ struct drawline_params
 			s += (has_charproc ? 8 : 1) * (decl_zoomx ? decl_zoomx : zoomx) * (32 / decl_bpp);	\
 		}																						\
 		while(--rowlongs);																		\
-	}																							\
+	}
 
 DECLARE_DRAWLINE(1, 0, 0, 0)
 DECLARE_DRAWLINE(1, 1, 0, 0)
@@ -314,6 +315,174 @@ DECLARE_DRAWLINE(1, 2, 0, 1)
 DECLARE_DRAWLINE(1, 3, 0, 1)
 DECLARE_DRAWLINE(1, 4, 0, 1)
 DECLARE_DRAWLINE(1, 8, 0, 1)
+
+#else
+
+#define DECLARE_DRAWLINE_NOARTIFACT(decl_bpp, decl_zoomx, has_charproc)\
+	static void dl##decl_bpp##_##decl_zoomx##_##has_charproc##0##(struct drawline_params *params)	\
+	{																						\
+		const UINT32 *v;																	\
+		UINT32 l;																			\
+		UINT16 *s;																			\
+		UINT16 p;																			\
+		UINT32 pl;																			\
+		const UINT16 *pens;																	\
+		register int zoomx;																	\
+		int rowlongs;																		\
+																							\
+		assert(params->zoomx > 0);															\
+		assert((decl_zoomx == 0) || (params->zoomx == decl_zoomx));							\
+		assert(has_charproc || !params->charproc);											\
+		assert(!has_charproc || params->charproc);											\
+		assert(videoram_pos);																\
+		assert(params->charproc || params->pens);											\
+		assert(params->scanline_data);														\
+		assert((params->bytes_per_row % 4) == 0);											\
+		assert(params->bytes_per_row > 0);													\
+																							\
+		v = (const UINT32 *) (videoram_pos + params->offset);								\
+		rowlongs = params->bytes_per_row / 4;												\
+		zoomx = decl_zoomx ? decl_zoomx : params->zoomx;									\
+		pens = params->pens;																\
+																							\
+		s = params->scanline_data;															\
+		do																					\
+		{																					\
+			if (!MUST_ALIGN(v))																\
+			{																				\
+				l = *v;																		\
+																							\
+			}																				\
+			else																			\
+			{																				\
+				l =		(((UINT32) (((UINT8 *) v)[0])) << SHIFT0)							\
+					|	(((UINT32) (((UINT8 *) v)[1])) << SHIFT1)							\
+					|	(((UINT32) (((UINT8 *) v)[2])) << SHIFT2)							\
+					|	(((UINT32) (((UINT8 *) v)[3])) << SHIFT3);							\
+			}																				\
+			v++;																			\
+																							\
+			if ((decl_bpp) == 16)															\
+			{																				\
+				l = LITTLE_ENDIANIZE_INT32(l);												\
+				EMITBYTE(decl_zoomx, 0, has_charproc, (decl_bpp), 0, 0);					\
+				EMITBYTE(decl_zoomx, 1, has_charproc, (decl_bpp), 16, 0);					\
+			}																				\
+			else																			\
+			{																				\
+				EMITBYTE(decl_zoomx, 0, has_charproc, (decl_bpp), SHIFT0, 0);				\
+				EMITBYTE(decl_zoomx, 1, has_charproc, (decl_bpp), SHIFT1, 0);				\
+				EMITBYTE(decl_zoomx, 2, has_charproc, (decl_bpp), SHIFT2, 0);				\
+				EMITBYTE(decl_zoomx, 3, has_charproc, (decl_bpp), SHIFT3, 0);				\
+			}																				\
+			s += (has_charproc ? 8 : 1) * (decl_zoomx ? decl_zoomx : zoomx) * (32 / decl_bpp);	\
+		}																						\
+		while(--rowlongs);																		\
+	}
+
+#define DECLARE_DRAWLINE_ARTIFACT(decl_bpp, decl_zoomx, has_charproc)\
+	static void dl##decl_bpp##_##decl_zoomx##_##has_charproc##1##(struct drawline_params *params)	\
+	{																						\
+		const UINT32 *v;																	\
+		UINT32 l;																			\
+		UINT16 *s;																			\
+		UINT16 p;																			\
+		UINT32 pl;																			\
+		UINT32 last_l, border_value;														\
+		const UINT16 *pens;																	\
+		register int zoomx;																	\
+		int rowlongs;																		\
+																							\
+		assert(params->zoomx > 0);															\
+		assert((decl_zoomx == 0) || (params->zoomx == decl_zoomx));							\
+		assert(has_charproc || !params->charproc);											\
+		assert(!has_charproc || params->charproc);											\
+		assert(videoram_pos);																\
+		assert(params->charproc || params->pens);											\
+		assert(params->scanline_data);														\
+		assert((params->bytes_per_row % 4) == 0);											\
+		assert(params->bytes_per_row > 0);													\
+																							\
+		v = (const UINT32 *) (videoram_pos + params->offset);								\
+		rowlongs = params->bytes_per_row / 4;												\
+		zoomx = decl_zoomx ? decl_zoomx : params->zoomx;									\
+		pens = params->pens;																\
+																							\
+		last_l = border_value = params->border_value;										\
+																							\
+		s = params->scanline_data;															\
+		do																					\
+		{																					\
+			UINT32 this_l;																	\
+																							\
+			if (!MUST_ALIGN(v))																\
+			{																				\
+				l = *v;																		\
+																							\
+			}																				\
+			else																			\
+			{																				\
+				l =		(((UINT32) (((UINT8 *) v)[0])) << SHIFT0)							\
+					|	(((UINT32) (((UINT8 *) v)[1])) << SHIFT1)							\
+					|	(((UINT32) (((UINT8 *) v)[2])) << SHIFT2)							\
+					|	(((UINT32) (((UINT8 *) v)[3])) << SHIFT3);							\
+			}																				\
+			v++;																			\
+																							\
+			this_l = BIG_ENDIANIZE_INT32(l);												\
+			l = (last_l << 24) | (this_l >> 8);												\
+			EMITBYTE(decl_zoomx, 0, has_charproc, (decl_bpp), 24-8-2, 1);					\
+			EMITBYTE(decl_zoomx, 1, has_charproc, (decl_bpp), 16-8-2, 1);					\
+			l = (this_l << 8) | ((rowlongs > 1) ? ((UINT8 *) v)[0] : border_value);			\
+			EMITBYTE(decl_zoomx, 2, has_charproc, (decl_bpp),  8+8-2, 1);					\
+			EMITBYTE(decl_zoomx, 3, has_charproc, (decl_bpp),  0+8-2, 1);					\
+			last_l = this_l;																\
+																							\
+			s += (has_charproc ? 8 : 1) * (decl_zoomx ? decl_zoomx : zoomx) * (32 / decl_bpp);	\
+		}																						\
+		while(--rowlongs);																		\
+	}
+
+DECLARE_DRAWLINE_NOARTIFACT(1, 0, 0)
+DECLARE_DRAWLINE_NOARTIFACT(1, 1, 0)
+DECLARE_DRAWLINE_NOARTIFACT(1, 2, 0)
+DECLARE_DRAWLINE_NOARTIFACT(1, 3, 0)
+DECLARE_DRAWLINE_NOARTIFACT(1, 4, 0)
+DECLARE_DRAWLINE_NOARTIFACT(1, 8, 0)
+DECLARE_DRAWLINE_NOARTIFACT(2, 0, 0)
+DECLARE_DRAWLINE_NOARTIFACT(2, 1, 0)
+DECLARE_DRAWLINE_NOARTIFACT(2, 2, 0)
+DECLARE_DRAWLINE_NOARTIFACT(2, 3, 0)
+DECLARE_DRAWLINE_NOARTIFACT(2, 4, 0)
+DECLARE_DRAWLINE_NOARTIFACT(2, 8, 0)
+DECLARE_DRAWLINE_NOARTIFACT(4, 0, 0)
+DECLARE_DRAWLINE_NOARTIFACT(4, 1, 0)
+DECLARE_DRAWLINE_NOARTIFACT(4, 2, 0)
+DECLARE_DRAWLINE_NOARTIFACT(4, 3, 0)
+DECLARE_DRAWLINE_NOARTIFACT(4, 4, 0)
+DECLARE_DRAWLINE_NOARTIFACT(4, 8, 0)
+DECLARE_DRAWLINE_NOARTIFACT(8, 0, 0)
+DECLARE_DRAWLINE_NOARTIFACT(8, 1, 0)
+DECLARE_DRAWLINE_NOARTIFACT(8, 2, 0)
+DECLARE_DRAWLINE_NOARTIFACT(8, 3, 0)
+DECLARE_DRAWLINE_NOARTIFACT(8, 4, 0)
+DECLARE_DRAWLINE_NOARTIFACT(8, 8, 0)
+
+DECLARE_DRAWLINE_NOARTIFACT(8, 0, 1)
+DECLARE_DRAWLINE_NOARTIFACT(8, 1, 1)
+DECLARE_DRAWLINE_NOARTIFACT(8, 2, 1)
+DECLARE_DRAWLINE_NOARTIFACT(16, 0, 1)
+DECLARE_DRAWLINE_NOARTIFACT(16, 1, 1)
+DECLARE_DRAWLINE_NOARTIFACT(16, 2, 1)
+
+DECLARE_DRAWLINE_ARTIFACT(1, 0, 0)
+DECLARE_DRAWLINE_ARTIFACT(1, 1, 0)
+DECLARE_DRAWLINE_ARTIFACT(1, 2, 0)
+DECLARE_DRAWLINE_ARTIFACT(1, 3, 0)
+DECLARE_DRAWLINE_ARTIFACT(1, 4, 0)
+DECLARE_DRAWLINE_ARTIFACT(1, 8, 0)
+
+#endif
 
 /* this drawline function is used to accomodate cases where an offset results in a split line */
 static void draw_line_with_offset(struct drawline_params *params)
