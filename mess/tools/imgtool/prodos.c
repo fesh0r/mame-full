@@ -1485,9 +1485,83 @@ static imgtoolerr_t prodos_diskimage_createdir(imgtool_image *image, const char 
 
 
 
+static imgtoolerr_t prodos_free_directory(imgtool_image *image, UINT8 *volume_bitmap, UINT16 key_pointer)
+{
+	imgtoolerr_t err;
+	struct prodos_diskinfo *di;
+	int i;
+	UINT16 next_block;
+	UINT32 offset;
+	UINT8 buffer[BLOCK_SIZE];
+
+	di = get_prodos_info(image);
+
+	if (key_pointer != 0)
+	{
+		err = prodos_load_block(image, key_pointer, buffer);
+		if (err)
+			return err;
+
+		for (i = 0; i < di->dirents_per_block; i++)
+		{
+			offset = i * di->dirent_size + 4;
+
+			if (is_file_storagetype(buffer[offset]) || is_file_storagetype(buffer[offset]))
+				return IMGTOOLERR_DIRNOTEMPTY;
+		}
+
+		next_block = pick_integer(buffer, 2, 2);
+
+		err = prodos_free_directory(image, volume_bitmap, next_block);
+		if (err)
+			return err;
+
+		prodos_set_volume_bitmap_bit(volume_bitmap, key_pointer, 0);
+	}
+	return IMGTOOLERR_SUCCESS;
+}
+
+
+
 static imgtoolerr_t prodos_diskimage_deletedir(imgtool_image *image, const char *path)
 {
-	return IMGTOOLERR_UNIMPLEMENTED;
+	imgtoolerr_t err;
+	struct prodos_dirent ent;
+	struct prodos_direnum direnum;
+	UINT8 *volume_bitmap = NULL;
+
+	err = prodos_lookup_path(image, path, CREATE_NONE, &direnum, &ent);
+	if (err)
+		goto done;
+
+	/* only work on directories */
+	if (!is_dir_storagetype(ent.storage_type))
+	{
+		err = IMGTOOLERR_FILENOTFOUND;
+		goto done;
+	}
+
+	err = prodos_load_volume_bitmap(image, &volume_bitmap);
+	if (err)
+		goto done;
+
+	err = prodos_free_directory(image, volume_bitmap, ent.key_pointer);
+	if (err)
+		goto done;
+
+	err = prodos_save_volume_bitmap(image, volume_bitmap);
+	if (err)
+		goto done;
+
+	memset(&ent, 0, sizeof(ent));
+	err = prodos_put_dirent(image, &direnum, &ent);
+	if (err)
+		goto done;
+
+done:
+	if (volume_bitmap)
+		free(volume_bitmap);
+	return IMGTOOLERR_SUCCESS;
 }
 
 

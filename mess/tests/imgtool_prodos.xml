@@ -157,6 +157,15 @@
 	<checkfile name="/DIR/FILE.TXT">'subdir file'</checkfile>
 </imgtooltest>
 
+<imgtooltest name="prodos_006">
+	<createimage driver="apple2_do_prodos_525"/>
+	<createdirectory path="/DIR"/>
+	<putfile name="/DIR/FILE.TXT">'subdir file'</putfile>
+	<deletefile name="/DIR/FILE.TXT"/>
+	<deletedirectory path="/DIR"/>
+	<checkdirectory path="/"/>
+</imgtooltest>
+
 <imgtooltest name="prodos_525_do">
 	<createimage driver="apple2_do_prodos_525"/>
 	<checkdirectory/>
