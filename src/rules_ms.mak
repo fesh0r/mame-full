@@ -47,3 +47,17 @@ $(OBJ)/$(G6D)/g65816o4.o: $(G6D)/g65816o0.c $(G6D)/g65816.h $(G6D)/g65816cm.h $(
 else
 CPUDEFS += -DHAS_G65816=0
 endif
+
+
+CPU=$(strip $(findstring SC61860@,$(CPUS)))
+ifneq ($(CPU),)
+SCD = mess/cpu/sc61860
+OBJDIRS += $(OBJ)/$(SCD)
+CPUDEFS += -DHAS_SC61860=1
+CPUOBJS += $(OBJ)/$(SCD)/sc61860.o
+DBGOBJS += $(OBJ)/$(SCD)/scdasm.o
+$(OBJ)/$(SCD)/sc61860.o: $(SCD)/sc61860.h  $(SCD)/sc.h $(SCD)/scops.c $(SCD)/sctable.c
+else
+CPUDEFS += -DHAS_SC61860=0
+endif
+

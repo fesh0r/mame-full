@@ -123,9 +123,6 @@
 #if (HAS_SH2)
 #include "cpu/sh2/sh2.h"
 #endif
-#if (HAS_SC61860)
-#include "cpu/sc61860/sc61860.h"
-#endif
 #if (HAS_SPC700)
 #include "cpu/spc700/spc700.h"
 #endif
@@ -149,10 +146,13 @@
 #include "mess/cpu/apexc/apexc.h"
 #endif
 #if (HAS_ARM)
-#include "cpu/arm/arm.h"
+#include "mess/cpu/arm/arm.h"
 #endif
 #if (HAS_G65816)
-#include "cpu/g65816/g65816.h"
+#include "mess/cpu/g65816/g65816.h"
+#endif
+#if (HAS_SC61860)
+#include "mess/cpu/sc61860/sc61860.h"
 #endif
 
 #endif
@@ -642,10 +642,6 @@ struct cpu_interface cpuintf[] =
 #if (HAS_SH2)
 	CPU4(SH2,	   sh2, 	16,  0,1.00,SH2_INT_NONE,	   0,			   -1,			   32,32bedw, 0,32,BE,2, 2	),
 #endif
-#if (HAS_SC61860)
-	#define sc61860_ICount sc61860_icount
-	CPU0(SC61860,  sc61860,  1,  0,1.00,-1, 			   -1,			   -1,			   8, 16,	  0,16,BE,1, 4	),
-#endif
 #if (HAS_SPC700)
 	CPU0(SPC700,   spc700,	 0,  0,1.00,0,				   -1,			   -1,			   8, 16,	  0,16,LE,1, 3	),
 #endif
@@ -675,6 +671,10 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_G65816)
 	CPU0(G65816,  g65816,	 1,  0,1.00,G65816_INT_NONE,   G65816_INT_IRQ, G65816_INT_NMI, 8, 24,	  0,24,BE,1, 3	),
+#endif
+#if (HAS_SC61860)
+	#define sc61860_ICount sc61860_icount
+	CPU0(SC61860,  sc61860,  1,  0,1.00,-1, 			   -1,			   -1,			   8, 16,	  0,16,BE,1, 4	),
 #endif
 #endif
 };

@@ -240,9 +240,6 @@ enum
 #if (HAS_SH2)
 	CPU_SH2,
 #endif
-#if (HAS_SC61860)
-	CPU_SC61860,
-#endif
 #if (HAS_SPC700)
 	CPU_SPC700,
 #endif
@@ -268,6 +265,9 @@ enum
 #endif
 #if (HAS_G65816)
 	CPU_G65816,
+#endif
+#if (HAS_SC61860)
+	CPU_SC61860,
 #endif
 #endif
     CPU_COUNT

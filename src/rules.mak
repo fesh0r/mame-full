@@ -792,29 +792,6 @@ else
 CPUDEFS += -DHAS_SH2=0
 endif
 
-CPU=$(strip $(findstring SC61860@,$(CPUS)))
-ifneq ($(CPU),)
-OBJDIRS += $(OBJ)/cpu/sc61860
-CPUDEFS += -DHAS_SC61860=1
-CPUOBJS += $(OBJ)/cpu/sc61860/sc61860.o
-DBGOBJS += $(OBJ)/cpu/sc61860/scdasm.o
-$(OBJ)/cpu/sc61860/sc61860.o: src/cpu/sc61860/sc61860.h \
-	src/cpu/sc61860/sc.h src/cpu/sc61860/scops.c src/cpu/sc61860/sctable.c
-else
-CPUDEFS += -DHAS_SC61860=0
-endif
-
-CPU=$(strip $(findstring ARM@,$(CPUS)))
-ifneq ($(CPU),)
-OBJDIRS += $(OBJ)/cpu/arm
-CPUDEFS += -DHAS_ARM=1
-CPUOBJS += $(OBJ)/cpu/arm/arm.o
-DBGOBJS += $(OBJ)/cpu/arm/dasm.o
-$(OBJ)/cpu/arm/arm.o: src/cpu/arm/arm.h
-else
-CPUDEFS += -DHAS_ARM=0
-endif
-
 CPU=$(strip $(findstring SPC700@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/spc700

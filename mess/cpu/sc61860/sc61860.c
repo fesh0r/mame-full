@@ -329,3 +329,6 @@ unsigned sc61860_dasm(char *buffer, unsigned pc)
 	return 1;
 }
 #endif
+
+void sc61860_init(void){ return; }
+
