@@ -119,11 +119,10 @@ void validate_construct_formatdriver(struct InternalBdFormatDriver *drv, int tra
 struct bdf_procs
 {
 	void (*closeproc)(void *file);
-	void (*seekproc)(void *file, int offset, int whence);
+	int (*seekproc)(void *file, int offset, int whence);
 	int (*readproc)(void *file, void *buffer, int length);
-	void (*writeproc)(void *file, const void *buffer, int length);
+	int (*writeproc)(void *file, const void *buffer, int length);
 	int (*filesizeproc)(void *file);
-	int (*isreadonlyproc)(void *file);
 };
 
 enum
@@ -136,7 +135,7 @@ enum
 int bdf_create(const struct bdf_procs *procs, formatdriver_ctor format,
 	void *file, const struct disk_geometry *geometry, void **outbdf);
 int bdf_open(const struct bdf_procs *procs, const formatdriver_ctor *formats,
-	void *file, const char *extension, void **outbdf);
+	void *file, int is_readonly, const char *extension, void **outbdf);
 void bdf_close(void *bdf);
 void bdf_get_geometry(void *bdf, struct disk_geometry *geometry);
 int bdf_read_sector(void *bdf, UINT8 track, UINT8 head, UINT8 sector, int offset, void *buffer, int length);

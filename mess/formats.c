@@ -11,6 +11,7 @@ struct bdf_file
 	const struct bdf_procs *procs;
 	struct disk_geometry geometry;
 	int offset;
+	int is_readonly;
 };
 
 static int find_geometry_options(const struct InternalBdFormatDriver *drv, UINT32 file_size, UINT32 header_size,
@@ -132,7 +133,7 @@ int bdf_create(const struct bdf_procs *procs, formatdriver_ctor format,
 	{
 		formats[0] = format;
 		formats[1] = NULL;
-		err = bdf_open(procs, formats, file, NULL, outbdf);
+		err = bdf_open(procs, formats, file, 0, NULL, outbdf);
 		if (err)
 			goto error;
 	}
@@ -147,7 +148,7 @@ error:
 }
 
 int bdf_open(const struct bdf_procs *procs, const formatdriver_ctor *formats,
-	void *file, const char *extension, void **outbdf)
+	void *file, int is_readonly, const char *extension, void **outbdf)
 {
 	int err, success;
 	struct bdf_file *bdffile;
@@ -201,6 +202,7 @@ int bdf_open(const struct bdf_procs *procs, const formatdriver_ctor *formats,
 
 	bdffile->file = file;
 	bdffile->procs = procs;
+	bdffile->is_readonly = is_readonly;
 	err = BLOCKDEVICE_ERROR_SUCCESS;
 
 done:
@@ -269,7 +271,7 @@ int bdf_write_sector(void *bdf, UINT8 track, UINT8 head, UINT8 sector, int offse
 int bdf_is_readonly(void *bdf)
 {
 	struct bdf_file *bdffile = (struct bdf_file *) bdf;	
-	return bdffile->procs->isreadonlyproc(bdffile->file);
+	return bdffile->is_readonly;
 }
 
 #ifdef MAME_DEBUG

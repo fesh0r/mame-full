@@ -27,9 +27,10 @@ static void imgtool_bdf_closeproc(void *file)
 	stream_close((STREAM *) file);
 }
 
-static void imgtool_bdf_seekproc(void *file, int offset, int whence)
+static int imgtool_bdf_seekproc(void *file, int offset, int whence)
 {
 	stream_seek((STREAM *) file, offset, whence);
+	return 0;
 }
 
 static int imgtool_bdf_readproc(void *file, void *buffer, int length)
@@ -37,19 +38,15 @@ static int imgtool_bdf_readproc(void *file, void *buffer, int length)
 	return stream_read((STREAM *) file, buffer, length);
 }
 
-static void imgtool_bdf_writeproc(void *file, const void *buffer, int length)
+static int imgtool_bdf_writeproc(void *file, const void *buffer, int length)
 {
 	stream_write((STREAM *) file, buffer, length);
+	return length;
 }
 
 static int imgtool_bdf_filesizeproc(void *file)
 {
 	return stream_size((STREAM *) file);
-}
-
-static int imgtool_bdf_isreadonlyproc(void *file)
-{
-	return stream_isreadonly((STREAM *) file);
 }
 
 static struct bdf_procs imgtool_bdf_procs =
@@ -58,8 +55,7 @@ static struct bdf_procs imgtool_bdf_procs =
 	imgtool_bdf_seekproc,
 	imgtool_bdf_readproc,
 	imgtool_bdf_writeproc,
-	imgtool_bdf_filesizeproc,
-	imgtool_bdf_isreadonlyproc
+	imgtool_bdf_filesizeproc
 };
 
 struct bdf_image
@@ -91,7 +87,7 @@ int imgtool_bdf_open(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
 	formats[0] = (formatdriver_ctor) mod->extra;
 	formats[1] = NULL;
 
-	err = bdf_open(&imgtool_bdf_procs, formats, (void *) f, NULL, &bimg->bdf);
+	err = bdf_open(&imgtool_bdf_procs, formats, (void *) f, stream_isreadonly(f), NULL, &bimg->bdf);
 	if (err)
 	{
 		err = bdf_error(err);
