@@ -1,3 +1,5 @@
+#ifndef UNISTD_H
+#define UNISTD_H
 
 #define S_IFDIR		0x01
 #define _S_IFDIR	0x01
@@ -13,5 +15,6 @@ int stat( const char *path, struct stat *buffer );
 #define errno GetLastError()
 #endif
 
+#endif /* UNISTD_H */
 
 

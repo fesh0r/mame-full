@@ -446,6 +446,7 @@ int osd_faccess (const char *newfilename, int filetype)
 		pathv = samplepathv;
 		pathc = samplepathc;
 	}
+	else
 	if (filetype == OSD_FILETYPE_IMAGE_R ||
 		filetype == OSD_FILETYPE_IMAGE_RW)
 	{

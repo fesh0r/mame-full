@@ -12,8 +12,9 @@ OSOBJS = \
 		$(OBJ)/wince/dirent.o \
 		$(OBJ)/wince/playgame.o \
 		$(OBJ)/wince/invokegx.o \
-		$(OBJ)/mess/Win32/SmartListView.o \
-		$(OBJ)/mess/Win32/SoftwareList.o \
+		$(OBJ)/wince/rc.o \
+		$(OBJ)/mess/windowsui/SmartListView.o \
+		$(OBJ)/mess/windowsui/SoftwareList.o \
 		$(OBJ)/zlib/crc32.o \
 		$(OBJ)/zlib/adler32.o \
 		$(OBJ)/zlib/compress.o \
@@ -31,8 +32,10 @@ OSOBJS = \
 ifndef MESS
 OSOBJS += $(OBJ)/windows/fileio.o 
 else
-OSOBJS += $(OBJ)/mess/windows/fileio.o	$(OBJ)/mess/windows/dirio.o \
-	  $(OBJ)/mess/windows/messwin.o 
+OSOBJS += \
+		$(OBJ)/mess/windows/fileio.o \
+		$(OBJ)/mess/windows/dirio.o \
+		$(OBJ)/mess/windows/messwin.o 
 endif
 
 RES = $(OBJ)/wince/mamece.res

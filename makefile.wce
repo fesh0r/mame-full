@@ -324,8 +324,7 @@ OBJDIRS = \
         $(OBJ)/sndhrdw \
         $(OBJ)/windows \
         $(OBJ)/wince \
-        $(OBJ)/Win32 \
-        $(OBJ)/Win32/hlp \
+		$(OBJ)/windowsui \
 	$(OBJ)/zlib
 
 ifdef MESS
@@ -346,7 +345,7 @@ OBJDIRS += \
         $(OBJ)/mess/tools/mkimage \
         $(OBJ)/mess/formats \
         $(OBJ)/mess/windows \
-        $(OBJ)/mess/Win32
+        $(OBJ)/mess/windowsui
 endif
 
 #####################################################################
@@ -411,7 +410,7 @@ $(OBJ)/mess/%.o: mess/%.c
 	@echo [MESS] Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGS) -Fo$@ -c $<
 
-$(OBJ)/Win32/%.res: src/Win32/%.rc
+$(OBJ)/windowsui/%.res: src/windowsui/%.rc
 	@echo Compiling resources $<...
 	$(RC) $(RCDEFS) $(RCFLAGS) -Fo$@ $<
 
@@ -419,7 +418,7 @@ $(OBJ)/wince/%.res: src/wince/%.rc
 	@echo Compiling resources $<...
 	$(RC) $(RCDEFS) $(RCFLAGS) -Fo$@ $<
 
-$(OBJ)/mess/Win32/%.res: mess/Win32/%.rc
+$(OBJ)/mess/windowsui/%.res: mess/windowsui/%.rc
 	@echo Compiling resources $<...
 	$(RC) $(RCDEFS) $(RCFLAGS) -Fo$@ $<
 

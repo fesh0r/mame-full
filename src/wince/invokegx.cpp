@@ -125,32 +125,78 @@ public:
 	}
 };
 
+inline int reduce_width_mask(int dimension, int skip_mask)
+{
+	int new_dimension = 0;
+
+	while(dimension--) {
+		if (dimension & skip_mask)
+			new_dimension++;
+	}
+	return new_dimension;
+}
+
+static void calc_skip_mask(int dimension, int maximum, int *new_dimension, int *skip_mask)
+{
+	int i;
+
+	if (dimension > maximum) {
+		// Compute the most absurdly large mask
+		i = dimension;
+		*skip_mask = 0;
+		while(i) {
+			*skip_mask <<= 1;
+			*skip_mask |= 1;
+			i >>= 1;
+		}
+
+		do {
+			*new_dimension = reduce_width_mask(dimension, *skip_mask);
+			if (*new_dimension > maximum) {
+				*skip_mask >>= 1;
+				*skip_mask |= 1;
+			}
+		}
+		while(*new_dimension > maximum);
+	}
+	else {
+		// We already fit
+		*skip_mask = 0;
+		*new_dimension = dimension;
+	}
+}
+
 // The template that does the dirty work --- hyper optimized!!!
 template<class pixtyp, class dummy, int do_skipx, int do_skipy, class blend_functor>
 void __fastcall blit(pixtyp *pixels, long cbxPitch, long cbyPitch, int width, int height, void **linep,
-	int skipx_mask, int skipy_mask, blend_functor blend, dummy *d)
+	UINT32 *palette, int skipx_mask, int skipy_mask, blend_functor blend, dummy *d)
 {
 	UINT8 *pvBits;
 	UINT16 *line;
 	int x, y;
 	pixtyp ent;
+	long cbySkipPitch = cbyPitch;
 
 	pvBits = (UINT8 *) pixels;
+
+	// Calculate skipy pitch
+	if (do_skipy) {
+		cbySkipPitch += cbxPitch * (do_skipx ? reduce_width_mask(width, skipx_mask) : width);
+	}
 
 	// Do the dirty work
 	y = height;
 	while(y--) {
-		pvBits += cbyPitch;
-
 		if (do_skipy && !(y & skipy_mask)) {
 			// Skipped
-			pvBits += cbxPitch * width;
+			pvBits += cbySkipPitch;
 		}
 		else {
+			pvBits += cbyPitch;
 			line = (UINT16 *) *(linep++);
 			x = width;
 			while(x--) {
-				ent = *((const pixtyp *) line);
+				ent = *((pixtyp *) (&palette[*line]));
 				if (do_skipx && !(x & skipx_mask)) {
 					// Skipped
 					blend.blend((pixtyp *) pvBits, ent);
@@ -170,7 +216,7 @@ void __fastcall blit(pixtyp *pixels, long cbxPitch, long cbyPitch, int width, in
 
 template<class pixtyp, class blend_functor>
 void __fastcall blit2(pixtyp *pixels, long cbxPitch, long cbyPitch, int width, int height, void **linep,
-	int skipx_mask, int skipy_mask, int do_blend, blend_functor blend)
+	UINT32 *palette, int skipx_mask, int skipy_mask, int do_blend, blend_functor blend)
 {
 	union {
 		char c;
@@ -185,50 +231,52 @@ void __fastcall blit2(pixtyp *pixels, long cbxPitch, long cbyPitch, int width, i
 		if (skipy_mask) {
 			if (do_blend)
 				blit<pixtyp, char, TRUE, TRUE, blend_functor>(pixels, cbxPitch, cbyPitch, width, height, linep,
-					skipx_mask, skipy_mask, blend, &u.c);
+					palette, skipx_mask, skipy_mask, blend, &u.c);
 			else
 				blit<pixtyp, char, TRUE, TRUE, blendnull_functor>(pixels, cbxPitch, cbyPitch, width, height, linep,
-					skipx_mask, skipy_mask, nullfunctor, &u.c);
+					palette, skipx_mask, skipy_mask, nullfunctor, &u.c);
 		}
 		else {
 			if (do_blend)
 				blit<pixtyp, short, TRUE, FALSE, blend_functor>(pixels, cbxPitch, cbyPitch, width, height, linep,
-					skipx_mask, skipy_mask, blend, &u.s);
+					palette, skipx_mask, skipy_mask, blend, &u.s);
 			else
 				blit<pixtyp, short, TRUE, FALSE, blendnull_functor>(pixels, cbxPitch, cbyPitch, width, height, linep,
-					skipx_mask, skipy_mask, nullfunctor, &u.s);
+					palette, skipx_mask, skipy_mask, nullfunctor, &u.s);
 		}
 	}
 	else {
 		if (skipy_mask) {
 			if (do_blend)
 				blit<pixtyp, long, FALSE, TRUE, blend_functor>(pixels, cbxPitch, cbyPitch, width, height, linep,
-					skipx_mask, skipy_mask, blend, &u.l);
+					palette, skipx_mask, skipy_mask, blend, &u.l);
 			else
 				blit<pixtyp, long, FALSE, TRUE, blendnull_functor>(pixels, cbxPitch, cbyPitch, width, height, linep,
-					skipx_mask, skipy_mask, nullfunctor, &u.l);
+					palette, skipx_mask, skipy_mask, nullfunctor, &u.l);
 		}
 		else {
 			blit<pixtyp, double, FALSE, FALSE, blendnull_functor>(pixels, cbxPitch, cbyPitch, width, height, linep,
-				skipx_mask, skipy_mask, nullfunctor, &u.d);
+				palette, skipx_mask, skipy_mask, nullfunctor, &u.d);
 		}
 	}
 }
 
 
 // The uber-function that performs blits
-void gx_blit(struct osd_bitmap *bitmap, int update, const RGBQUAD *palette, int palette_len)
+void gx_blit(struct osd_bitmap *bitmap, int update, UINT32 *palette_16bit_lookup, UINT32 *palette_32bit_lookup)
 {
-	BYTE mappedpalette[256 * 3];
 	BYTE *pvBits;
 	GXDisplayProperties prop;
-	const RGBQUAD *quad;
-	int i;
 	void **linep;
 	int width, height;
+	int scaled_width, scaled_height;
 	long cbxPitch, cbyPitch;
 	int skipx_mask, skipy_mask;
 	int do_blend;
+	UINT32 *palette;
+
+	// Options
+	do_blend = 1;
 
 	// Get the surface
 	prop = GXGetDisplayProperties();
@@ -238,42 +286,36 @@ void gx_blit(struct osd_bitmap *bitmap, int update, const RGBQUAD *palette, int 
 	width = bitmap->width;
 	height = bitmap->height;
 	linep = bitmap->line;
+	palette = ((bitmap->depth == 15) || (bitmap->depth == 16)) ? palette_16bit_lookup : NULL;
+
+	// Figure out how to scale the bitmap, if appropriate
+	calc_skip_mask(width, prop.cxWidth, &scaled_width, &skipx_mask); 
+	calc_skip_mask(height, prop.cyHeight, &scaled_height, &skipy_mask); 
+
+	// Tweak the pitches and the bits
 	cbxPitch = prop.cbxPitch;
-	cbyPitch = prop.cbyPitch - (cbxPitch * 240);
+	cbyPitch = prop.cbyPitch - (cbxPitch * scaled_width);
 	pvBits -= cbxPitch;
 	pvBits -= cbyPitch;
 
-	skipx_mask = 0x0f;
-	skipy_mask = 1;
-	do_blend = 0;
-
 	if (prop.ffFormat & kfDirect)
 	{
-		if (prop.ffFormat & kfDirect555)
+		if (prop.ffFormat & kfDirect565) 
 		{
-			for (i = 0; i < palette_len; i++) {
-				quad = &palette[i];
-				((UINT16 *) mappedpalette)[i] = rgb_value(quad, 5, 5, 5);
-			}
-			blit2((UINT16 *) pvBits, cbxPitch, cbyPitch, width, height, linep, skipx_mask, skipy_mask, do_blend, blend16_functor<5,5,5>());
+			// The most common; so we are putting this first
+			blit2((UINT16 *) pvBits, cbxPitch, cbyPitch, width, height, linep, palette, skipx_mask, skipy_mask, do_blend, blend16_functor<5,6,5>());
 		}
-		else if (prop.ffFormat & kfDirect565) 
+		else if (prop.ffFormat & kfDirect444)
 		{
-			for (i = 0; i < palette_len; i++) {
-				quad = &palette[i];
-				((UINT16 *) mappedpalette)[i] = rgb_value(quad, 5, 6, 5);
-			}
-			blit2((UINT16 *) pvBits, cbxPitch, cbyPitch, width, height, linep, skipx_mask, skipy_mask, do_blend, blend16_functor<5,6,5>());
+			blit2((UINT16 *) pvBits, cbxPitch, cbyPitch, width, height, linep, palette, skipx_mask, skipy_mask, do_blend, blend16_functor<4,4,4>());
+		}
+		else if (prop.ffFormat & kfDirect555)
+		{
+			blit2((UINT16 *) pvBits, cbxPitch, cbyPitch, width, height, linep, palette, skipx_mask, skipy_mask, do_blend, blend16_functor<5,5,5>());
 		}
 		else if (prop.ffFormat & kfDirect888)
 		{
-			for (i = 0; i < palette_len; i++) {
-				quad = &palette[i];
-				((RGBTRIPLE *) mappedpalette)[i].rgbtRed = quad->rgbRed;
-				((RGBTRIPLE *) mappedpalette)[i].rgbtGreen = quad->rgbGreen;
-				((RGBTRIPLE *) mappedpalette)[i].rgbtBlue = quad->rgbBlue;
-			}
-			blit2((RGBTRIPLE *) pvBits, cbxPitch, cbyPitch, width, height, linep, skipx_mask, skipy_mask, do_blend, blend888_functor());
+			blit2((RGBTRIPLE *) pvBits, cbxPitch, cbyPitch, width, height, linep, palette, skipx_mask, skipy_mask, do_blend, blend888_functor());
 		}
 	}
 	else if (prop.ffFormat & kfPalette)

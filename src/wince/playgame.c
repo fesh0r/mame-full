@@ -2,14 +2,10 @@
 #include <stdio.h>
 #include "mamece.h"
 #include "driver.h"
+#include "rc.h"
 #include "..\windows\window.h"
 
 char *rompath_extra = NULL;
-
-void decompose_rom_sample_path (const char *_rompath, const char *_samplepath);
-#ifdef MESS
-void decompose_software_path (const char *_softwarepath);
-#endif
 
 #define localconcat(s1, s2)	((s1) ? ((s2) ? __localconcat(_alloca(strlen(s1) + strlen(s2) + 1), (s1), (s2)) : (s1)) : (s2))
 
@@ -31,67 +27,40 @@ static void get_mame_root(TCHAR *buffer, int buflen)
 	tcsrchr(buffer, '\\')[0] = '\0';
 }
 
-static void set_mame_dir(char **dir, const char *rootpath, const char *subdir)
+static void set_fileio_opt(const char *rootpath, const char *opt, const char *relpath)
 {
-	char buffer[MAX_PATH];
-
-	snprintf(buffer, sizeof(buffer) / sizeof(buffer[0]), "%s\\%s", rootpath, subdir);
-	if (*dir)
-		free(*dir);
-	*dir = strdup(buffer);
+	extern struct rc_option fileio_opts[1];
+	rc_set_option2(fileio_opts, opt, localconcat(rootpath, relpath), MAXINT_PTR);
 }
 
 void setup_paths()
 {
-	extern char *cfgdir;
-	extern char *nvdir;
-	extern char *hidir;
-	extern char *inpdir;
-	extern char *stadir;
-	extern char *memcarddir;
-	extern char *artworkdir;
-	extern char *screenshotdir;
-	extern char *cheatfile;
-	extern char *history_filename;
-	extern char *mameinfo_filename;
-	static char *my_cheatfile = NULL;
-	static char *my_history_filename = NULL;
-	static char *my_mameinfo_filename = NULL;
-
 	TCHAR rootpath_buffer[MAX_PATH];
 	char *rootpath;
-	char *rompath;
-	char *samplepath;
 
 	get_mame_root(rootpath_buffer, sizeof(rootpath_buffer) / sizeof(rootpath_buffer[0]));
 	rootpath = T2A(rootpath_buffer);
 
-	set_mame_dir(&cfgdir,				rootpath,	"Cfg");
-	set_mame_dir(&nvdir,				rootpath,	"Nvram");
-	set_mame_dir(&hidir,				rootpath,	"Hi");
-	set_mame_dir(&inpdir,				rootpath,	"Inp");
-	set_mame_dir(&stadir,				rootpath,	"Sta");
-	set_mame_dir(&memcarddir,			rootpath,	"Memcard");
-	set_mame_dir(&artworkdir,			rootpath,	"Artwork");
-	set_mame_dir(&screenshotdir,		rootpath,	"Snap");
-	set_mame_dir(&my_mameinfo_filename,	rootpath,	"mameinfo.dat");
 #ifdef MESS
-//	set_mame_dir((char**)&crcdir,		rootpath,	"Crc");
-	set_mame_dir(&my_cheatfile,			rootpath,	"cheat.cdb");
-	set_mame_dir(&my_history_filename,	rootpath,	"sysinfo.dat");
-	decompose_software_path(localconcat(rootpath, "\\Software"));
-	rompath = localconcat(rootpath, "\\Bios");
+	set_fileio_opt(rootpath, "biospath", "\\Bios");
 #else
-	set_mame_dir(&cheatfile,		rootpath,	"cheat.dat");
-	set_mame_dir(&history_filename,	rootpath,	"history.dat");
-	rompath = localconcat(rootpath, "\\ROMs");
+	set_fileio_opt(rootpath, "rompath", "\\ROMs");
 #endif
-	samplepath = localconcat(rootpath, "\\Samples");
-	decompose_rom_sample_path(rompath, samplepath);
-
-	cheatfile = my_cheatfile;
-	history_filename = my_history_filename;
-	mameinfo_filename = my_mameinfo_filename;
+	set_fileio_opt(rootpath, "samplepath",			"\\Samples");
+	set_fileio_opt(rootpath, "cfg_directory",			"\\Cfg");
+	set_fileio_opt(rootpath, "nvram_directory",		"\\Nvram");
+	set_fileio_opt(rootpath, "memcard_directory",		"\\Memcard");
+	set_fileio_opt(rootpath, "input_directory",		"\\Inp");
+	set_fileio_opt(rootpath, "hiscore_directory",		"\\Hi");
+	set_fileio_opt(rootpath, "artwork_directory",		"\\Artwork");
+	set_fileio_opt(rootpath, "snapshot_directory",	"\\Snap");
+#ifdef MESS
+	set_fileio_opt(rootpath, "cheat_file",			"\\cheat.cdb");
+#else
+	set_fileio_opt(rootpath, "cheat_file",			"\\cheat.dat");
+#endif
+	set_fileio_opt(rootpath, "history_file",			"\\history.dat");
+	set_fileio_opt(rootpath, "mameinfo_file",			"\\mameinfo.dat");
 }
 
 int play_game(int game_index, struct ui_options *opts)
@@ -190,6 +159,14 @@ void osd_exit(void)
 }
 
 
+//============================================================
+//	osd_display_loading_rom_message
+//============================================================
+
+int osd_display_loading_rom_message (const char *name, int current, int total)
+{
+	return 0;
+}
 
 //============================================================
 //	logerror
