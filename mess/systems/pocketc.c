@@ -137,14 +137,14 @@ static MEMORY_READ_START( pc1403_readmem )
 { 0x3000, 0x30bf, pc1403_lcd_read },    
 { 0x3800, 0x3fff, pc1403_asic_read },    
 { 0x4000, 0x7fff, MRA_BANK1 },
-{ 0x8000,0xffff, MRA_RAM },
+{ 0xe000,0xffff, MRA_RAM },
 MEMORY_END
 
 static MEMORY_WRITE_START( pc1403_writemem )
 	{ 0x0000, 0x1fff, MWA_ROM },
 { 0x3000, 0x30bf, pc1403_lcd_write },    
 { 0x3800, 0x3fff, pc1403_asic_write },    
-{ 0x8000,0xffff, MWA_RAM },
+{ 0xe000,0xffff, MWA_RAM },
 MEMORY_END
 
 
@@ -306,6 +306,8 @@ INPUT_PORTS_START( pc1403 )
     PORT_DIPNAME   ( 0x80, 0x80, "RAM")
 	PORT_DIPSETTING( 0x00, "PC1403(8KB)" )
 	PORT_DIPSETTING( 0x80, "PC1403H(32KB)" )
+
+    // normally no contrast control!
     PORT_DIPNAME   ( 7, 2, "Contrast")
 	PORT_DIPSETTING( 0, "0/Low" )
 	PORT_DIPSETTING( 1, "1" )
@@ -585,10 +587,10 @@ struct DACinterface pocketc_sound_interface =
 };
 
 static SC61860_CONFIG config={
-	pc1401_reset, pc1401_brk,
-	pc1401_ina, pc1401_outa,
-	pc1401_inb, pc1401_outb,
-	pc1401_outc
+    pc1401_reset, pc1401_brk, NULL,
+    pc1401_ina, pc1401_outa,
+    pc1401_inb, pc1401_outb,
+    pc1401_outc
 };
 
 static struct MachineDriver machine_driver_pc1401 =
@@ -638,10 +640,10 @@ static struct MachineDriver machine_driver_pc1401 =
 };
 
 static SC61860_CONFIG pc1251_config={
-	NULL, pc1251_brk,
-	pc1251_ina, pc1251_outa,
-	pc1251_inb, pc1251_outb,
-	pc1251_outc
+    NULL, pc1251_brk, NULL,
+    pc1251_ina, pc1251_outa,
+    pc1251_inb, pc1251_outb,
+    pc1251_outc
 };
 
 static struct MachineDriver machine_driver_pc1251 =
@@ -689,10 +691,10 @@ static struct MachineDriver machine_driver_pc1251 =
 };
 
 static SC61860_CONFIG pc1350_config={
-	NULL, pc1350_brk,
-	pc1350_ina, pc1350_outa,
-	pc1350_inb, pc1350_outb,
-	pc1350_outc
+    NULL, pc1350_brk,NULL,
+    pc1350_ina, pc1350_outa,
+    pc1350_inb, pc1350_outb,
+    pc1350_outc
 };
 
 static struct MachineDriver machine_driver_pc1350 =
@@ -739,8 +741,10 @@ static struct MachineDriver machine_driver_pc1350 =
     }
 };
 static SC61860_CONFIG pc1403_config={
-	NULL, pc1403_brk,
-	pc1403_ina, pc1403_outa,
+    NULL, pc1403_brk, NULL,
+    pc1403_ina, pc1403_outa,
+    NULL,NULL,
+    pc1403_outc
 };
 
 static struct MachineDriver machine_driver_pc1403 =

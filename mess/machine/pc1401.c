@@ -19,6 +19,7 @@
 9 other errors*/
 
 static UINT8 outa,outb;
+UINT8 pc1401_portc;
 
 static int power=1; /* simulates pressed cce when mess is started */
 
@@ -34,7 +35,8 @@ void pc1401_outb(int data)
 
 void pc1401_outc(int data)
 {
-//	logerror("%g outc %.2x\n",timer_get_time(), data);
+	logerror("%g outc %.2x\n",timer_get_time(), data);
+	pc1401_portc=data;
 }
 
 int pc1401_ina(void)
@@ -151,12 +153,12 @@ int pc1401_inb(void)
 	return data;
 }
 
-int pc1401_brk(void)
+bool pc1401_brk(void)
 {
 	return KEY_BRK;
 }
 
-int pc1401_reset(void)
+bool pc1401_reset(void)
 {
 	return KEY_RESET;
 }
