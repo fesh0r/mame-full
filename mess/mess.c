@@ -811,7 +811,7 @@ void exit_devices(void)
 	{
 		if( images[type] )
 		{
-			for( id = 0; id < device_count(dev->type); id++ )
+			for( id = 0; id < device_count(type); id++ )
 			{
 				if( images[type][id].name )
 					free(images[type][id].name);
@@ -1134,14 +1134,10 @@ int messvaliditychecks(void)
 	for(i = 0; drivers[i]; i++)
 	{
 		/* check device array */
-		if (drivers[i]->dev_)
+	    const struct IODevice *dev;
+		for(dev = device_first(drivers[i]); dev; dev = device_next(drivers[i], dev))
 		{
-			const struct IODevice *dev = drivers[i]->dev_;
-			while(dev->type != IO_END)
-			{
-				assert(dev->type < IO_COUNT);
-				dev++;
-			}
+			assert(dev->type < IO_COUNT);
 		}
 
 		/* this detects some inconsistencies in the ROM structures */

@@ -681,7 +681,6 @@ static const struct IODevice io_coco[] = {
 	IO_SNAPSHOT_COCOPAK(coco_pak_load),
 	IO_CASSETTE_WAVE(1, "cas\0wav\0", NULL, coco_cassette_init, coco_cassette_exit),
 	IO_FLOPPY_COCO,
-	IO_BITBANGER_PORT,
     { IO_END }
 };
 
@@ -690,7 +689,6 @@ static const struct IODevice io_dragon32[] = {
 	IO_SNAPSHOT_COCOPAK(coco_pak_load),
 	IO_CASSETTE_WAVE(1, "cas\0wav\0", NULL, coco_cassette_init, coco_cassette_exit),
 	IO_FLOPPY_COCO,
-	IO_BITBANGER_PORT,
     { IO_END }
 };
 
@@ -699,7 +697,6 @@ static const struct IODevice io_cp400[] = {
 	IO_SNAPSHOT_COCOPAK(coco_pak_load),
 	IO_CASSETTE_WAVE(1, "cas\0wav\0", NULL, coco_cassette_init, coco_cassette_exit),
 	IO_FLOPPY_COCO,
-	IO_BITBANGER_PORT,
     { IO_END }
 };
 
@@ -708,7 +705,6 @@ static const struct IODevice io_coco3[] = {
 	IO_SNAPSHOT_COCOPAK(coco3_pak_load),
 	IO_CASSETTE_WAVE(1, "cas\0wav\0", NULL, coco_cassette_init, coco_cassette_exit),
 	IO_FLOPPY_COCO,
-	IO_BITBANGER_PORT,
 	IO_VHD_PORT,
     { IO_END }
 };
@@ -720,7 +716,14 @@ static const struct IODevice io_coco3[] = {
 #define io_coco3h io_coco3
 #define io_dragon64 io_dragon32
 
-SYSTEM_CONFIG_START(coco)
+SYSTEM_CONFIG_START( generic_coco )
+	/* bitbanger port */
+	CONFIG_DEVICE_PRINTER( coco_bitbanger_init, coco_bitbanger_exit, coco_bitbanger_output )
+SYSTEM_CONFIG_END
+
+SYSTEM_CONFIG_START( coco )
+	CONFIG_IMPORT_FROM( generic_coco )
+
 	CONFIG_RAM(4 * 1024)
 	CONFIG_RAM(16 * 1024)
 	CONFIG_RAM(32 * 1024)
@@ -728,21 +731,29 @@ SYSTEM_CONFIG_START(coco)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(coco2)
+	CONFIG_IMPORT_FROM( generic_coco )
+
 	CONFIG_RAM(16 * 1024)
 	CONFIG_RAM_DEFAULT(64 * 1024)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(coco3)
+	CONFIG_IMPORT_FROM( generic_coco )
+
 	CONFIG_RAM(128 * 1024)
 	CONFIG_RAM_DEFAULT(512 * 1024)
 	CONFIG_RAM(2048 * 1024)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(dragon32)
+	CONFIG_IMPORT_FROM( generic_coco )
+
 	CONFIG_RAM_DEFAULT(32 * 1024)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(dragon64)
+	CONFIG_IMPORT_FROM( generic_coco )
+
 	CONFIG_RAM_DEFAULT(64 * 1024)
 SYSTEM_CONFIG_END
 

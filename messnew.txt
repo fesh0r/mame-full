@@ -15,9 +15,12 @@ Source Changes:
 
 - All MESS drivers need a SYSTEM_CONFIG (formerly COMPUTER_CONFIG) parameter
   specified.  Also changed the implementation of the SYSTEM_CONFIG_* macros to
-  provide a more flexible system for representing the data. [Nate Woods]
+  provide a more flexible system for representing the data.
 
-- Added new functions for iterating through devices, in order to better
+  Added the ability for devices to be declared within the SYSTEM_CONFIG block.
+  Consider the older way of declaring devices deprecated.
+
+  Added new functions for iterating through devices, in order to better
   abstract the internal representation of devices:
   
 		device_first()

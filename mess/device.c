@@ -178,25 +178,60 @@ void device_output_chunk(int type, int id, void *src, int chunks)
 	}
 }
 
-static const struct IODevice *get_device(const struct IODevice *dev)
+static const struct IODevice *get_sysconfig_device(const struct GameDriver *gamedrv, int device_num)
 {
-	return (dev->type != IO_END) ? dev : NULL;
+	struct SystemConfigurationParamBlock params;
+	memset(&params, 0, sizeof(params));
+	params.device_num = device_num;
+	if (gamedrv->sysconfig_ctor)
+		gamedrv->sysconfig_ctor(&params);
+	return params.dev;
 }
 
-const struct IODevice *device_first(const struct GameDriver *drv)
+const struct IODevice *device_first(const struct GameDriver *gamedrv)
 {
-	assert(drv);
-	return get_device(drv->dev_);
+	assert(gamedrv);
+
+	if ((gamedrv->dev_) && (gamedrv->dev_->type != IO_END))
+		return gamedrv->dev_;
+	else
+		return get_sysconfig_device(gamedrv, 0);
 }
 
-const struct IODevice *device_next(const struct GameDriver *drv, const struct IODevice *dev)
+const struct IODevice *device_next(const struct GameDriver *gamedrv, const struct IODevice *dev)
 {
-	assert(drv);
+	int i;
+	const struct IODevice *dev2;
+
+	assert(gamedrv);
 	assert(dev);
-	return get_device(dev + 1);
+
+	/* is dev in the legacy IODevice array? */
+	dev2 = gamedrv->dev_;
+	while((dev2->type != IO_END) && (dev2 != dev))
+		dev2++;
+
+	if (dev2 == dev)
+	{
+		dev2++;
+		if (dev2->type == IO_END)
+			dev2 = get_sysconfig_device(gamedrv, 0);
+	}
+	else
+	{
+		i = 0;
+		do
+		{
+			dev2 = get_sysconfig_device(gamedrv, i++);
+		}
+		while(dev2 && (dev2 != dev));
+		if (dev2 == dev)
+			dev2 = get_sysconfig_device(gamedrv, i);
+	}
+	return dev2;
 }
 
-const struct IODevice *device_find(const struct GameDriver *drv, int type)
+const struct IODevice *device_find(const struct GameDriver *gamedrv, int type)
 {
     const struct IODevice *dev;
 	for(dev = device_first(Machine->gamedrv); dev; dev = device_next(Machine->gamedrv, dev))

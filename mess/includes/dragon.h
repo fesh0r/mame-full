@@ -192,29 +192,6 @@ extern int coco3_mmu_translatelogicaladdr(int logicaladdr);
     }
 
 #define IO_BITBANGER IO_PRINTER
-
-#define IO_BITBANGER_PORT								\
-{														\
-	IO_BITBANGER,				/* type */				\
-	1,							/* count */				\
-	"prn\0",					/* file extensions */	\
-	IO_RESET_NONE,				/* reset depth */		\
-	OSD_FOPEN_DUMMY,			/* open mode */			\
-	NULL,						/* id */				\
-	coco_bitbanger_init,		/* init */				\
-	coco_bitbanger_exit,		/* exit */				\
-	NULL,						/* info */				\
-	NULL,						/* open */				\
-	NULL,						/* close */				\
-	NULL,						/* status */			\
-	NULL,						/* seek */				\
-	NULL,						/* tell */				\
-	NULL,						/* input */				\
-	coco_bitbanger_output,		/* output */			\
-	NULL,						/* input chunk */		\
-	NULL						/* output chunk */		\
-}
-
 #define IO_VHD IO_HARDDISK
 
 #define IO_VHD_PORT								\

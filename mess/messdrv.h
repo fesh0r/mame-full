@@ -54,6 +54,8 @@ struct SystemConfigurationParamBlock
 	int actual_ram_options;
 	int default_ram_option;
 	UINT32 *ram_options;
+	int device_num;
+	const struct IODevice *dev;
 };
 
 #define SYSTEM_CONFIG_START(name)															\
@@ -62,6 +64,9 @@ struct SystemConfigurationParamBlock
 
 #define SYSTEM_CONFIG_END																	\
 	}																						\
+
+#define CONFIG_IMPORT_FROM(name)															\
+		construct_sysconfig_##name(cfg);													\
 
 #define CONFIG_RAM(ram)																		\
 	if (cfg->max_ram_options > 0)															\
@@ -77,6 +82,22 @@ struct SystemConfigurationParamBlock
 		cfg->default_ram_option = cfg->actual_ram_options;									\
 		CONFIG_RAM(ram);																	\
 	}																						\
+
+
+#define CONFIG_DEVICE(type, count, file_extensions, reset_depth, open_mode, init, exit,		\
+						info, open, close, status, seek, tell, input, output, partialcrc)	\
+	if (cfg->device_num-- == 0)																\
+	{																						\
+		static struct IODevice device = { (type), (count), (file_extensions), (reset_depth),\
+			(open_mode), NULL, (init), (exit), (info), (open), (close), (status), (seek),	\
+			(tell), (input), (output), NULL, NULL, (partialcrc) };							\
+		cfg->dev = &device;																	\
+	}																						\
+
+
+#define CONFIG_DEVICE_PRINTER(init,exit,output)												\
+	CONFIG_DEVICE(IO_PRINTER, 1, "prn\0", IO_RESET_NONE, OSD_FOPEN_WRITE, (init), (exit),	\
+		NULL, NULL, NULL, NULL, NULL, NULL, NULL, (output), NULL)							\
 
 /******************************************************************************
  * MESS' version of the GAME() and GAMEX() macros of MAME
