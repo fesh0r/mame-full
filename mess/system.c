@@ -513,7 +513,9 @@ TESTDRIVER( ti99_232 )	/* 1983 TI 99/2 								  */
 	/* VEB MIKROELEKTRONIK */
 	/* KC compact is partial CPC compatible */
 	DRIVER( kc85_4 )	/* VEB KC 85/4									  */
-	/* pc1715 z80/u880 based */
+    DRIVER( kc85_3 )    /* VEB KC 85/3                                    */
+TESTDRIVER( kc85_4d )   /* VEB KC 85/4 with disk interface                */
+    /* pc1715 z80/u880 based */
 	/* pc1715w z80/u880 based */
 	/* a5105 z80/u880 based */
 	/* a5120 z80/u880 based */
