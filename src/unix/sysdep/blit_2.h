@@ -27,6 +27,8 @@
    This routines use long copy's so everything should always be long aligned.
 */
 
+#error unused
+
 #ifdef PACK_BITS
 /* scale destptr delta's by 3/4 since we're using 32 bits ptr's for a 24 bits
    dest */
