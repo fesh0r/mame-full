@@ -43,7 +43,10 @@ Source Changes:
 - [Windows] Fixed a bug in the core that caused the MESS process to not die if
   the close box was pressed, and the UI was disabled (bug #170). [Nate Woods]
  
-- [Windows] Fixed a bug in the UI that caused heap corruptions. [Nate Woods]
+- [Windows] Fixed a bug in the GUI that caused heap corruptions. [Nate Woods]
+
+- [Windows] Fixed a bug in the GUI that caused auditing to report BIOS-less
+  console systems as missing BIOSes. [Nate Woods]
 
 - [IMGTOOL/Windows] Added wildcard support in the put command, since the
   Windows shell doesn't do this by default. [Nate Woods] 

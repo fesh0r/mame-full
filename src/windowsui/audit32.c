@@ -158,6 +158,19 @@ static INT_PTR CALLBACK AuditWindowProc(HWND hDlg, UINT Msg, WPARAM wParam, LPAR
 	return 0;
 }
 
+#ifdef MESS
+/* Checks to see if this system even has a ROM set */
+static BOOL HasRomSet(int nDriver)
+{
+	const struct GameDriver *gamedrv = drivers[nDriver];
+	const struct RomModule *region, *rom;
+
+	for (region = rom_first_region(gamedrv); region; region = rom_next_region(region))
+		for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
+			return TRUE;
+	return FALSE;
+}
+#endif
 
 /* Callback for the Audit property sheet */
 INT_PTR CALLBACK GameAuditDialogProc(HWND hDlg,UINT Msg,WPARAM wParam,LPARAM lParam)
@@ -177,7 +190,11 @@ INT_PTR CALLBACK GameAuditDialogProc(HWND hDlg,UINT Msg,WPARAM wParam,LPARAM lPa
 			int iStatus;
 
 			iStatus = VerifyRomSet(rom_index, DetailsPrintf);
+#ifdef MESS
+			SetHasRoms(rom_index, (iStatus == CORRECT || iStatus == BEST_AVAILABLE || !HasRomSet(rom_index)) ? 1 : 0);
+#else
 			SetHasRoms(rom_index, (iStatus == CORRECT || iStatus == BEST_AVAILABLE) ? 1 : 0);
+#endif
 			SetWindowText(GetDlgItem(hDlg, IDC_PROP_ROMS), StatusString(iStatus));
 
 			/* does the game use samples at all? */
@@ -223,7 +240,11 @@ static void ProcessNextRom()
 		break;
 	}
 
+#ifdef MESS
+	SetHasRoms(rom_index, (retval == CORRECT || retval == BEST_AVAILABLE || !HasRomSet(rom_index)) ? 1 : 0);
+#else
 	SetHasRoms(rom_index, (retval == CORRECT || retval == BEST_AVAILABLE) ? 1 : 0);
+#endif
 	rom_index++;
 	SendDlgItemMessage(hAudit, IDC_ROMS_PROGRESS, PBM_SETPOS, rom_index, 0);
 
