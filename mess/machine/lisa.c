@@ -27,6 +27,7 @@
 
 #include "driver.h"
 #include "machine/6522via.h"
+#include "iwm_lisa.h"
 #include "machine/iwm.h"
 #include "machine/lisa.h"
 #include "m68k.h"
