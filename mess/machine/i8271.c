@@ -8,6 +8,7 @@
 	- Check the commands work properly using a BBC disc copier program 
     - check if 0 is specified as number of sectors, how many sectors
     is actually transfered
+	- deleted data functions (error if data finds deleted data?)
 */
 
 #include "includes/i8271.h"
@@ -285,6 +286,7 @@ static void i8271_check_all_parameters_written(void)
 	}
 }
 
+
 static void i8271_update_state(void)
 {
 	switch (i8271.state)
@@ -298,7 +300,7 @@ static void i8271_update_state(void)
 				/* setup data with byte */
 				i8271.data = i8271.pExecutionPhaseData[i8271.ExecutionPhaseCount];
 			
-				logerror("read data %02x\n", i8271.data);
+/*				logerror("read data %02x\n", i8271.data); */
 
 				/* update counters */
 				i8271.ExecutionPhaseCount++;
@@ -439,6 +441,7 @@ static void i8271_clear_data_request(void)
 	}
 }
 
+
 static void i8271_command_continue(void)
 {
 	switch (i8271.Command)
@@ -466,8 +469,9 @@ static void i8271_command_continue(void)
 		case I8271_COMMAND_WRITE_DATA_MULTI_RECORD:
 		case I8271_COMMAND_WRITE_DATA_SINGLE_RECORD:
 		{
-			/* get the sector into the buffer */
-			floppy_drive_read_sector_data(i8271.drive, i8271.side, i8271.data_id, i8271.pExecutionPhaseData, 1<<(i8271.ID_N+7));
+
+			/* put the buffer to the sector */
+			floppy_drive_write_sector_data(i8271.drive, i8271.side, i8271.data_id, i8271.pExecutionPhaseData, 1<<(i8271.ID_N+7),0);
 
 			/* completed all sectors? */
 			i8271.Counter--;
