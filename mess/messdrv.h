@@ -86,6 +86,7 @@ struct SystemConfigurationParamBlock
 	const char *(*get_custom_devicename)(mess_image *img, char *buf, size_t bufsize);
 	int (*queue_chars)(const unicode_char_t *text, size_t text_len);
 	int (*accept_char)(unicode_char_t ch);
+	int (*charqueue_empty)(void);
 };
 
 #define SYSTEM_CONFIG_START(name)															\
@@ -122,6 +123,9 @@ struct SystemConfigurationParamBlock
 #define CONFIG_ACCEPT_CHAR(accept_char_)													\
 	cfg->accept_char = inputx_accept_char_##accept_char_;									\
 
+#define CONFIG_CHARQUEUE_EMPTY(charqueue_empty_)											\
+	cfg->charqueue_empty = inputx_charqueue_empty_##charqueue_empty_;						\
+
 #define CONFIG_DEVICE_BASE(type, count, file_extensions, flags, open_mode, init, exit,		\
 		load, unload, imgverify, info, open, close, status, seek, tell, input, output,			\
 		partialcrc, display)																\
@@ -154,6 +158,9 @@ struct SystemConfigurationParamBlock
 
 #define ACCEPT_CHAR(name)																	\
 	int inputx_accept_char_##name(unicode_char_t ch)										\
+
+#define CHARQUEUE_EMPTY(name)																	\
+	int inputx_charqueue_empty_##name(void)										\
 
 /******************************************************************************
  * MESS' version of the GAME() and GAMEX() macros of MAME

@@ -953,11 +953,20 @@ QUEUE_CHARS( at_keyboard )
 }
 
 /***************************************************************************
-  ACCEPT_CHAR( at_keyboard )
+  Inputx stuff
 ***************************************************************************/
 
 ACCEPT_CHAR( at_keyboard )
 {
 	return unicode_char_to_at_keycode(ch) != 0;
 }
+
+
+
+CHARQUEUE_EMPTY( at_keyboard )
+{
+	return at_keyboard_queue_size() == 0;
+}
+
+
 

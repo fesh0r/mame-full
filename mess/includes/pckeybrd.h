@@ -21,6 +21,7 @@ void at_keyboard_set_input_port_base(int base);
 
 QUEUE_CHARS( at_keyboard );
 ACCEPT_CHAR( at_keyboard );
+CHARQUEUE_EMPTY( at_keyboard );
 
 /*
 #define KEYBOARD_ON 1

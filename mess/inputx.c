@@ -402,9 +402,10 @@ int inputx_validitycheck(const struct GameDriver *gamedrv)
 
 static struct InputCode *codes;
 static struct KeyBuffer *keybuffer;
-static void *inputx_timer;
+static mame_timer *inputx_timer;
 static int (*queue_chars)(const unicode_char_t *text, size_t text_len);
 static int (*accept_char)(unicode_char_t ch);
+static int (*charqueue_empty)(void);
 
 static void inputx_timerproc(int dummy);
 
@@ -416,6 +417,7 @@ void inputx_init(void)
 	inputx_timer = NULL;
 	queue_chars = NULL;
 	accept_char = NULL;
+	charqueue_empty = NULL;
 
 	/* posting keys directly only makes sense for a computer */
 	if (Machine->gamedrv->flags & GAME_COMPUTER)
@@ -426,6 +428,7 @@ void inputx_init(void)
 			Machine->gamedrv->sysconfig_ctor(&params);
 		queue_chars = params.queue_chars;
 		accept_char = params.accept_char;
+		charqueue_empty = params.charqueue_empty;
 
 		keybuffer = auto_malloc(sizeof(struct KeyBuffer));
 		if (!keybuffer)
@@ -678,7 +681,7 @@ int inputx_is_posting(void)
 {
 	const struct KeyBuffer *keybuf;
 	keybuf = get_buffer();
-	return keybuf->begin_pos != keybuf->end_pos;
+	return (keybuf->begin_pos != keybuf->end_pos) || (charqueue_empty && !charqueue_empty());
 }
 
 
