@@ -60,6 +60,8 @@
                      x++;
                   } while (dirty_blocks[y][x]);
 #ifdef DEST                  
+                  if (x << 3 > visual.max_x)
+                     x = (visual.max_x + 1) >> 3;
                   max_x = x << 3;
                   h     = y << 3;
                   max_h = h + 8;
