@@ -537,10 +537,7 @@ READ_HANDLER ( wd179x_status_r )
 
 	w->status &= ~STA_1_NOT_READY;
 
-	if (!(floppy_drive_get_flag_state(drv, FLOPPY_DRIVE_PRESENT)))
-		w->status |= STA_1_NOT_READY;
-
-	if (!(floppy_drive_get_flag_state(drv, FLOPPY_DRIVE_DISK_PRESENT)))
+    if (!floppy_drive_get_ready_state(drv))
 		w->status |= STA_1_NOT_READY;
 
 	return result;
@@ -635,7 +632,14 @@ WRITE_HANDLER ( wd179x_command_w )
 			w->read_cmd = data;
 			w->command = data & ~FDC_MASK_TYPE_II;
 
-			wd179x_read_sector(w);
+            if (!floppy_drive_get_ready_state(drv))
+            {
+                wd179x_complete_command();
+            }
+            else
+            {
+                wd179x_read_sector(w);
+            }
 
 			return;
 		}
@@ -648,29 +652,37 @@ WRITE_HANDLER ( wd179x_command_w )
 			w->write_cmd = data;
 			w->command = data & ~FDC_MASK_TYPE_II;
 
-			/* drive write protected? */
-			if (floppy_drive_get_flag_state(drv,FLOPPY_DRIVE_DISK_WRITE_PROTECTED))
-			{
-				w->status |= STA_2_WRITE_PRO;
-
-				wd179x_complete_command(w);
-			}
-			else
-			{
-				/* attempt to find it first before getting data from cpu */
-				if (wd179x_find_sector(w))
-				{
-					/* request data */
-					w->data_offset = 0;
-					w->data_count = w->sector_length;
-					w->status_drq = STA_2_DRQ;
-					if (w->callback)
-						(*w->callback) (WD179X_DRQ_SET);
-					w->status = STA_2_DRQ | STA_2_BUSY;
-					w->busy_count = 0;
-				}
-
-			}
+            if (!floppy_drive_get_ready_state(drv))
+            {
+                wd179x_complete_command();
+            }
+            else
+            {
+    
+                /* drive write protected? */
+                if (floppy_drive_get_flag_state(drv,FLOPPY_DRIVE_DISK_WRITE_PROTECTED))
+                {
+                    w->status |= STA_2_WRITE_PRO;
+    
+                    wd179x_complete_command(w);
+                }
+                else
+                {
+                    /* attempt to find it first before getting data from cpu */
+                    if (wd179x_find_sector(w))
+                    {
+                        /* request data */
+                        w->data_offset = 0;
+                        w->data_count = w->sector_length;
+                        w->status_drq = STA_2_DRQ;
+                        if (w->callback)
+                            (*w->callback) (WD179X_DRQ_SET);
+                        w->status = STA_2_DRQ | STA_2_BUSY;
+                        w->busy_count = 0;
+                    }
+    
+                }
+            }
 
 			return;
 		}
@@ -695,26 +707,34 @@ WRITE_HANDLER ( wd179x_command_w )
 			logerror("wd179x_command_w $%02X WRITE_TRK\n", data);
 #endif
 
-			/* drive write protected? */
-			if (floppy_drive_get_flag_state(drv,FLOPPY_DRIVE_DISK_WRITE_PROTECTED))
-			{
-				/* yes */
-				w->status |= STA_2_WRITE_PRO;
-				/* quit command */
-				wd179x_complete_command(w);
-			}
-			else
-			{
-				w->command = data & ~FDC_MASK_TYPE_III;
-				w->data_offset = 0;
-				w->data_count = (w->density) ? TRKSIZE_DD : TRKSIZE_SD;
-				w->status_drq = STA_2_DRQ;
-				if (w->callback)
-					(*w->callback) (WD179X_DRQ_SET);
-				w->status = STA_2_DRQ | STA_2_BUSY;
-				w->busy_count = 0;
-			}
-			return;
+            if (!floppy_drive_get_ready_state(drv))
+            {
+                wd179x_complete_command();
+            }
+            else
+            {
+    
+                /* drive write protected? */
+                if (floppy_drive_get_flag_state(drv,FLOPPY_DRIVE_DISK_WRITE_PROTECTED))
+                {
+                    /* yes */
+                    w->status |= STA_2_WRITE_PRO;
+                    /* quit command */
+                    wd179x_complete_command(w);
+                }
+                else
+                {
+                    w->command = data & ~FDC_MASK_TYPE_III;
+                    w->data_offset = 0;
+                    w->data_count = (w->density) ? TRKSIZE_DD : TRKSIZE_SD;
+                    w->status_drq = STA_2_DRQ;
+                    if (w->callback)
+                        (*w->callback) (WD179X_DRQ_SET);
+                    w->status = STA_2_DRQ | STA_2_BUSY;
+                    w->busy_count = 0;
+                }
+            }
+            return;
 		}
 
 		if ((data & ~FDC_MASK_TYPE_III) == FDC_READ_DAM)
@@ -722,8 +742,14 @@ WRITE_HANDLER ( wd179x_command_w )
 #if VERBOSE
 			logerror("wd179x_command_w $%02X READ_DAM\n", data);
 #endif
-			wd179x_read_id(w);
-
+            if (!floppy_drive_get_ready_state(drv))
+            {
+                wd179x_complete_command();
+            }
+            else
+            {
+                wd179x_read_id(w);
+            }
 			return;
 		}
 
