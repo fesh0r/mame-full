@@ -14,6 +14,7 @@ VIDEO_START(model1);
 VIDEO_UPDATE(model1);
 VIDEO_EOF(model1);
 extern UINT16 *model1_display_list0, *model1_display_list1;
+UINT16 *model1_color_xlat;
 READ16_HANDLER( model1_listctl_r );
 WRITE16_HANDLER( model1_listctl_w );
 
@@ -215,7 +216,7 @@ static ADDRESS_MAP_START( model1_mem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x780000, 0x7fffff) AM_READWRITE(sys24_char_r, sys24_char_w)
 
 	AM_RANGE(0x900000, 0x903fff) AM_READWRITE(MRA16_RAM, p_w) AM_BASE(&paletteram16)
-	AM_RANGE(0x910000, 0x91bfff) AM_RAM             // Network ?
+	AM_RANGE(0x910000, 0x91bfff) AM_RAM  AM_BASE(&model1_color_xlat)
 
 	AM_RANGE(0xc00000, 0xc0003f) AM_READ(io_r)
 

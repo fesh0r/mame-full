@@ -1073,8 +1073,7 @@ static void install_mem_handler(struct addrspace_data_t *space, int iswrite, int
 	/* sanity check */
 	if (space->dbits != databits)
 	{
-		printf("fatal: install_mem_handler called with a %d-bit handler for a %d-bit address space\n", databits, space->dbits);
-		exit(1);
+		osd_die("fatal: install_mem_handler called with a %d-bit handler for a %d-bit address space\n", databits, space->dbits);
 	}
 
 	/* if we're installing a new bank, make sure we mark it */

@@ -23,7 +23,7 @@ static unsigned char text_dec3_tb[64] = {
 
 static unsigned char text_dec2_tb2[16] = {
   0x00, 0x00, 0x00, 0x21, 0x31, 0x31, 0x31, 0x31, 0x21, 0x21, 0x21, 0x01, 0x11, 0x11, 0x11, 0x11,
-};
+};	
   
 static unsigned char text_dec3_tb2[4] = { 0x0c, 0x08, 0x04, 0x00 };
 static unsigned char text_dec3_tb3[4] = { 0x03, 0x01, 0x02, 0x00 };
@@ -77,5 +77,17 @@ void seibuspi_text_decrypt(unsigned char *rom)
     rom[i*3]   = ~sw8(text_sw1, rom[i*3  ]^text_gm1(i));
     rom[i*3+1] = ~sw8(text_sw2, rom[i*3+1]^text_gm2(i));
     rom[i*3+2] = ~sw8(text_sw3, rom[i*3+2]^text_gm3(i));
+  }
+}
+
+void seibuspi_bg_decrypt(unsigned char *rom)
+{
+  int i,j;
+  for(j=0; j<0x600000; j+=0xc0000) {
+    for(i=0; i<0x40000; i++) {
+	  rom[j + (i*3)]   = ~sw8(text_sw1, rom[j + (i*3)  ]^text_gm1(i / 4));
+	  rom[j + (i*3)+1] = ~sw8(text_sw2, rom[j + (i*3)+1]^text_gm2(i / 4));
+	  rom[j + (i*3)+2] = ~sw8(text_sw3, rom[j + (i*3)+2]^text_gm3(i / 4));
+	}
   }
 }

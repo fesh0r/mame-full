@@ -1110,7 +1110,7 @@ static void f72(void)
 	float k = fifoin_pop_f();
 	float l = fifoin_pop_f();
 	logerror("TGP f72 %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f (%x)\n", a, b, c, d, e, f, g, h, i, j, k, l, activecpu_get_pc());
-	fifoout_push(mame_rand() & 0xffff);
+	fifoout_push_f(mame_rand() & 0xffff);
 	next_fn();
 }
 
@@ -1225,7 +1225,7 @@ static void vmat_load(void)
 static void ram_setadr(void)
 {
     ram_scanadr = fifoin_pop() - 0x8000;
-	logerror("TGP ram_setadr 0x%x (%x)\n", ram_scanadr+0x8000, activecpu_get_pc());
+	logerror("TGP f0 ram_setadr 0x%x (%x)\n", ram_scanadr+0x8000, activecpu_get_pc());
 	next_fn();
 }
 
@@ -1248,7 +1248,7 @@ static void f89(void)
 	UINT32 b = fifoin_pop();
     UINT32 c = fifoin_pop();
 	UINT32 d = fifoin_pop();
-	logerror("TGP f89 0x%x, 0x%x, %d, length=%d (%x)\n", a, b, c, d, activecpu_get_pc());
+	logerror("TGP list set base 0x%x, 0x%x, %d, length=%d (%x)\n", a, b, c, d, activecpu_get_pc());
 	list_length = d;
 	next_fn();
 }
@@ -1336,7 +1336,7 @@ static void f98_load(void)
 static void f98(void)
 {
     UINT32 a = fifoin_pop();
-	logerror("TGP f98 %d (%x)\n", a, activecpu_get_pc());
+	logerror("TGP load list start %d (%x)\n", a, activecpu_get_pc());
 	fifoin_cbcount = list_length;
 	fifoin_cb = f98_load;
 }
@@ -1369,38 +1369,54 @@ static void f101(void)
 	next_fn();
 }
 
-static float px, py, pz;
-
 static void f102(void)
 {
+	static int ccount = 0;
+	float px, py, pz;
 	float a = fifoin_pop_f();
 	float b = fifoin_pop_f();
 	float c = fifoin_pop_f();
 	float d = fifoin_pop_f();
 	float e = fifoin_pop_f();
-	float f = fifoin_pop_f();
-	float g = fifoin_pop_f();
-	float h = fifoin_pop_f();
+	UINT32 f = fifoin_pop();
+	UINT32 g = fifoin_pop();
+	UINT32 h = fifoin_pop();
 
-	logerror("TGP mve_calc %f, %f, %f, %f, %f, %f, %f, %f (%x)\n", a, b, c, d, e, f, g, h, activecpu_get_pc());
+	ccount++;
 
+	logerror("TGP f0 mve_calc %f, %f, %f, %f, %f, %d, %d, %d (%d) (%x)\n", a, b, c, d, e, f, g, h, ccount, activecpu_get_pc());
 
-	px = ram_get_f();
-	py = ram_get_f();
-	pz = ram_get_f();
+	px = u2f(ram_data[ram_scanadr+0x16]);
+	py = u2f(ram_data[ram_scanadr+0x17]);
+	pz = u2f(ram_data[ram_scanadr+0x18]);
 
-	cmat[ 9] += cmat[0]*px+cmat[3]*py+cmat[6]*pz;
-	cmat[10] += cmat[1]*px+cmat[4]*py+cmat[7]*pz;
-	cmat[11] += cmat[2]*px+cmat[5]*py+cmat[8]*pz;
+	//	memset(cmat, 0, sizeof(cmat));
+	//	cmat[0] = 1.0;
+	//	cmat[4] = 1.0;
+	//	cmat[8] = 1.0;
 
-	//	fprintf(stderr, "(%f, %f, %f)\n", px, py, pz);
+	px = c;
+	py = d;
+	pz = e;
 
-	fifoout_push_f(1);
-	fifoout_push_f(2);
-	fifoout_push_f(3);
-	fifoout_push_f(4);
-	fifoout_push_f(5);
-	fifoout_push_f(6);
+#if 1
+	cmat[ 9] += cmat[0]*a+cmat[3]*b+cmat[6]*c;
+	cmat[10] += cmat[1]*a+cmat[4]*b+cmat[7]*c;
+	cmat[11] += cmat[2]*a+cmat[5]*b+cmat[8]*c;
+#else
+	cmat[ 9] += px;
+	cmat[10] += py;
+	cmat[11] += pz;
+#endif
+
+	logerror("    f0 mve_calc %f, %f, %f\n", px, py, pz);
+
+	fifoout_push_f(c);
+	fifoout_push_f(d);
+	fifoout_push_f(e);
+	fifoout_push(f);
+	fifoout_push(g);
+	fifoout_push(h);
 
 
 	next_fn();
@@ -1409,9 +1425,8 @@ static void f102(void)
 static void f103(void)
 {
     ram_scanadr = fifoin_pop() - 0x8000;
-	logerror("TGP mve_setadr 0x%x (%x)\n", ram_scanadr, activecpu_get_pc());
+	logerror("TGP f0 mve_setadr 0x%x (%x)\n", ram_scanadr, activecpu_get_pc());
 	ram_get_i();
-	px=py=pz=0;
 	next_fn();
 }
 
@@ -1649,7 +1664,7 @@ WRITE16_HANDLER( model1_tgp_copro_adr_w )
 READ16_HANDLER( model1_tgp_copro_ram_r )
 {
 	if(!offset) {
-		logerror("TGP ram read %04x, %08x (%f) (%x)\n", ram_adr, ram_data[ram_adr], u2f(ram_data[ram_adr]), activecpu_get_pc());
+		logerror("TGP f0 ram read %04x, %08x (%f) (%x)\n", ram_adr, ram_data[ram_adr], u2f(ram_data[ram_adr]), activecpu_get_pc());
 		return ram_data[ram_adr];
 	} else
 		return ram_data[ram_adr++] >> 16;
@@ -1660,7 +1675,7 @@ WRITE16_HANDLER( model1_tgp_copro_ram_w )
 	COMBINE_DATA(ram_latch+offset);
 	if(offset) {
 		UINT32 v = ram_latch[0]|(ram_latch[1]<<16);
-		logerror("TGP ram write %04x, %08x (%f) (%x)\n", ram_adr, v, u2f(v), activecpu_get_pc());
+		logerror("TGP f0 ram write %04x, %08x (%f) (%x)\n", ram_adr, v, u2f(v), activecpu_get_pc());
 		ram_data[ram_adr] = v;
 		ram_adr++;
 	}

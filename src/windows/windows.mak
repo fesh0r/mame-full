@@ -1,5 +1,7 @@
-# nasm for Windows has a "w" at the end
+# nasm for Windows (but not cygwin) has a "w" at the end
+ifndef COMPILESYSTEM_CYGWIN
 ASM = @nasmw
+endif
 
 # only Windows specific output files and rules
 # the first two targets generate the prefix.h header

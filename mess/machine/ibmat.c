@@ -342,6 +342,8 @@ READ8_HANDLER(at_8042_8_r)
 
 WRITE_HANDLER(at_8042_8_w)
 {
+	data8_t change;
+
 	logerror("at_8042 write %.2x %.2x\n",offset,data);
 	switch (offset) {
 	case 0:
@@ -356,9 +358,11 @@ WRITE_HANDLER(at_8042_8_w)
 			break;
 
 		case 1:
+			change = at_8042.outport ^ data;
 			at_8042.operation_write_state=0;
 			at_8042.outport=data;
-			at_8042.set_address_mask(data&2?0xffffff:0xfffff);
+			if (change & 0x02)
+				at_8042.set_address_mask(data & 0x02 ? 0xffffff : 0xfffff);
 			break;
 
 		case 2:

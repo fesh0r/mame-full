@@ -6,8 +6,14 @@
 #include <stdlib.h>
 #include <math.h>
 
+
+#define min(a,b) (a<b?a:b)
+#define max(a,b) (a>b?a:b)
+
 UINT16 *model1_display_list0, *model1_display_list1;
+UINT16 *model1_color_xlat;
 static UINT16 listctl[2];
+static UINT16 *glist;
 
 // Model 1 geometrizer TGP and rasterizer simulation
 enum { FRAC_SHIFT = 16 };
@@ -39,6 +45,14 @@ struct point {
 	struct spoint s;
 };
 
+static struct lightparam
+{
+	float a;
+	float d;
+	float s;
+	int p;
+} lightparams[32];
+
 enum { MOIRE = 0x00010000 };
 
 struct quad {
@@ -51,7 +65,7 @@ static struct point *pointdb, *pointpt;
 static struct quad *quaddb, *quadpt;
 static struct quad **quadind;
 
-static const float *poly_data;
+static UINT32 *poly_rom,*poly_ram;
 
 static float u2f(UINT32 v)
 {
@@ -142,6 +156,15 @@ static void project_point(struct point *p)
 	p->s.x = view.xc+(p->xx*view.zoomx+view.transx);
 	p->s.y = view.yc-(p->yy*view.zoomy+view.transy);
 }
+
+static void project_point_direct(struct point *p)
+{
+	p->xx = p->x /*/ p->z*/;
+	p->yy = p->y /*/ p->z*/;
+	p->s.x = view.xc+(p->xx);
+	p->s.y = view.yc-(p->yy);
+}
+
 
 static void draw_hline(struct mame_bitmap *bitmap, int x1, int x2, int y, int color)
 {
@@ -674,6 +697,33 @@ static float max4f(float a, float b, float c, float d)
 	return m;
 }
 
+static const unsigned char times[]={1,1,1,1,2,2,2,3};
+static float compute_specular(struct vector *normal, struct vector *light,float diffuse,int lmode)
+{
+#if 0
+	float s;
+	int p=lightparams[lmode].p&7;
+	int i;
+	float sv=lightparams[lmode].s;
+
+	//This is how it should be according to model2 geo program, but doesn't work fine
+	s=2*(diffuse*normal->z-light->z);
+	for(i=0;i<times[p];++i)
+		s*=s;
+	s*=sv;
+	if(s<0.0)
+		return 0.0;
+	if(s>1.0)
+		return 1.0;
+	return s;
+
+	return fabs(diffuse)*sv;
+
+#endif
+
+	return 0;
+}
+
 static void push_object(UINT32 tex_adr, UINT32 poly_adr, UINT32 size)
 {
 	int i;
@@ -681,11 +731,18 @@ static void push_object(UINT32 tex_adr, UINT32 poly_adr, UINT32 size)
 	struct point *old_p0, *old_p1, *p0, *p1;
 	struct vector vn;
 	int link, type;
-	float old_z;
 	int dump;
+	int lightmode;
+	float old_z;
 	struct quad cquad;
+	float *poly_data;
 
-	poly_adr &= 0xffffff;
+	if(poly_adr & 0x800000)
+		poly_data=(float *) poly_ram;
+	else
+		poly_data=(float *) poly_rom;
+
+	poly_adr &= 0x7fffff;
 	dump = poly_adr == 0x944ea;
 	dump = 0;
 
@@ -750,6 +807,7 @@ static void push_object(UINT32 tex_adr, UINT32 poly_adr, UINT32 size)
 
 		if(flags & 0x00001000)
 			tex_adr ++;
+		lightmode=(flags>>17)&15;
 
 		p0 = pointpt++;
 		p1 = pointpt++;
@@ -828,10 +886,28 @@ static void push_object(UINT32 tex_adr, UINT32 poly_adr, UINT32 size)
 			break;
 		}
 
-		if(flags & 0x00040000)
-			cquad.col = Machine->pens[0x1000|((tgp_ram[tex_adr-0x40000]) & 0x3ff)];
-		else
-			cquad.col = scale_color(Machine->pens[0x1000|(tgp_ram[tex_adr-0x40000] & 0x3ff)], 0.75+mult_vector(&vn, &view.light)/4);
+		{
+			/*float dif=mult_vector(&vn, &view.light);
+			float ln=lightparams[lightmode].a + lightparams[lightmode].d*max(0.0,dif);
+			cquad.col = scale_color(Machine->pens[0x1000|(tgp_ram[tex_adr-0x40000] & 0x3ff)], min(1.0,ln));
+			cquad.col = scale_color(Machine->pens[0x1000|(tgp_ram[tex_adr-0x40000] & 0x3ff)], min(1.0,ln));
+			*/
+			float dif=mult_vector(&vn, &view.light);
+			float spec=compute_specular(&vn,&view.light,dif,lightmode);
+			float ln=lightparams[lightmode].a + lightparams[lightmode].d*max(0.0,dif) + spec;
+			int lumval=255.0*min(1.0,ln);
+			int color=paletteram16[0x1000|(tgp_ram[tex_adr-0x40000] & 0x3ff)];
+			int r=(color>>0x0)&0x1f;
+			int g=(color>>0x5)&0x1f;
+			int b=(color>>0xA)&0x1f;
+			lumval>>=2;	//there must be a luma translation table somewhere
+			if(lumval>0x3f)
+				lumval=0x3f;
+			r=(model1_color_xlat[(r<<8)|lumval|0x0]>>3)&0x1f;
+			g=(model1_color_xlat[(g<<8)|lumval|0x2000]>>3)&0x1f;
+			b=(model1_color_xlat[(b<<8)|lumval|0x4000]>>3)&0x1f;
+			cquad.col=(r<<10)|(g<<5)|(b<<0);
+		}
 
 		if(flags & 0x00002000)
 			cquad.col |= MOIRE;
@@ -884,14 +960,14 @@ static UINT16 *push_direct(UINT16 *list)
 			 old_p0->x, old_p0->y, old_p0->z,
 			 old_p1->x, old_p1->y, old_p1->z);
 
-	transform_point(old_p0);
-	transform_point(old_p1);
+//	transform_point(old_p0);
+//	transform_point(old_p1);
 	if(old_p0->z > 0)
-		project_point(old_p0);
+		project_point_direct(old_p0);
 	else
 		old_p0->s.x = old_p0->s.y = 0;
 	if(old_p1->z > 0)
-		project_point(old_p1);
+		project_point_direct(old_p1);
 	else
 		old_p1->s.x = old_p1->s.y = 0;
 
@@ -944,12 +1020,12 @@ static UINT16 *push_direct(UINT16 *list)
 
 		link = (flags >> 8) & 3;
 
-		transform_point(p0);
-		transform_point(p1);
+//		transform_point(p0);
+//		transform_point(p1);
 		if(p0->z > 0)
-			project_point(p0);
+			project_point_direct(p0);
 		if(p1->z > 0)
-			project_point(p1);
+			project_point_direct(p1);
 
 #if 1
 		if(old_p0 && old_p1)
@@ -975,7 +1051,21 @@ static UINT16 *push_direct(UINT16 *list)
 		cquad.p[2] = p0;
 		cquad.p[3] = p1;
 		cquad.z    = z;
-		cquad.col  = Machine->pens[0x1000|(tgp_ram[tex_adr-0x40000] & 0x3ff)];
+		{
+			int lumval=((float) (lum>>24)) * 2.0;
+			int color=paletteram16[0x1000|(tgp_ram[tex_adr-0x40000] & 0x3ff)];
+			int r=(color>>0x0)&0x1f;
+			int g=(color>>0x5)&0x1f;
+			int b=(color>>0xA)&0x1f;
+			lumval>>=2;	//there must be a luma translation table somewhere
+			if(lumval>0x3f)
+				lumval=0x3f;
+			r=(model1_color_xlat[(r<<8)|lumval|0x0]>>3)&0x1f;
+			g=(model1_color_xlat[(g<<8)|lumval|0x2000]>>3)&0x1f;
+			b=(model1_color_xlat[(b<<8)|lumval|0x4000]>>3)&0x1f;
+			cquad.col=(r<<10)|(g<<5)|(b<<0);
+		}
+		//cquad.col  = scale_color(Machine->pens[0x1000|(tgp_ram[tex_adr-0x40000] & 0x3ff)],((float) (lum>>24)) / 128.0);
 		if(flags & 0x00002000)
 			cquad.col |= MOIRE;
 
@@ -1098,6 +1188,7 @@ static void tgp_render(struct mame_bitmap *bitmap, const struct rectangle *clipr
 
 		for(;;) {
 			int type = (list[1]<<16)|list[0];
+			glist=list;
 			switch(type & 15) {
 			case 0:
 				list += 2;
@@ -1146,10 +1237,31 @@ static void tgp_render(struct mame_bitmap *bitmap, const struct rectangle *clipr
 				list += 6+len*2;
 				break;
 			}
+			case 5:
+				{
+					int adr = readi(list+2);
+					int len = readi(list+4);
+					int i;
+					for(i=0;i<len;++i)
+					{
+						poly_ram[adr-0x800000+i]=readi(list+2*i+6);
+					}
+					list+=6+len*2;
+				}
+				break;
 			case 6: {
 				int adr = readi(list+2);
 				int len = readi(list+4);
+				int i;
 				logerror("VIDEO:   upload data, adr=%x, len=%x\n", adr, len);
+				for(i=0;i<len;++i)
+				{
+					int v=readi(list+6+i*2);
+					lightparams[i+adr].d=((float) (v&0xff))/255.0;
+					lightparams[i+adr].a=((float) ((v>>8)&0xff))/255.0;
+					lightparams[i+adr].s=((float) ((v>>16)&0xff))/255.0;
+					lightparams[i+adr].p=(v>>24)&0xff;
+				}
 				list += 6+len*2;
 				break;
 			}
@@ -1257,10 +1369,32 @@ static void tgp_scan(void)
 				list += 6+len*2;
 				break;
 			}
+			case 5:
+				{
+					int adr = readi(list+2);
+					int len = readi(list+4);
+					int i;
+					for(i=0;i<len;++i)
+					{
+						poly_ram[adr-0x800000+i]=readi(list+2*i+6);
+					}
+					list+=6+len*2;
+				}
+				break;
 			case 6: {
-				//				int adr = readi(list+2);
+				int adr = readi(list+2);
 				int len = readi(list+4);
-				//				logerror("VIDEO:   upload data, adr=%x, len=%x\n", adr, len);
+				int i;
+				//logerror("VIDEO:   upload data, adr=%x, len=%x\n", adr, len);
+				for(i=0;i<len;++i)
+				{
+					int v=readi(list+6+i*2);
+					lightparams[i+adr].d=((float) (v&0xff))/255.0;
+					lightparams[i+adr].a=((float) ((v>>8)&0xff))/255.0;
+					lightparams[i+adr].s=((float) ((v>>16)&0xff))/255.0;
+					lightparams[i+adr].p=(v>>24)&0xff;
+					//logerror("         %02X\n",v);
+				}
 				list += 6+len*2;
 				break;
 			}
@@ -1304,7 +1438,8 @@ VIDEO_START(model1)
 	if(sys24_tile_vh_start(0x3fff))
 		return 1;
 
-	poly_data = (const float *)memory_region(REGION_USER1);
+	poly_rom = (UINT32 *)memory_region(REGION_USER1);
+	poly_ram = auto_malloc(0x400000*4);
 	tgp_ram = auto_malloc((0x100000-0x40000)*2);
 	pointdb = auto_malloc(1000000*2*sizeof(struct point));
 	quaddb  = auto_malloc(1000000*sizeof(struct quad));
@@ -1318,6 +1453,7 @@ VIDEO_START(model1)
 	listctl[0] = listctl[1] = 0;
 
 	state_save_register_UINT16("video", 0, "colors",  tgp_ram, 0x100000-0x40000);
+	state_save_register_UINT32("video", 0, "polys",  poly_ram, 0x40000);
 	state_save_register_UINT16("video", 0, "listctl", listctl, 2);
 	return 0;
 }

@@ -1655,10 +1655,16 @@ static WRITE_HANDLER( megaplay_bios_6404_w )
 	logerror("BIOS: 0x6404 write: 0x%02x\n",data);
 }
 
+static READ_HANDLER( megaplay_bios_6204_r )
+{
+	// Yes, this mean that I have no idea what those low 3 bits represent. ;)
+	return (bios_width & 0xf8) + (mame_rand() & 0x07);
+}
+
 static WRITE_HANDLER( megaplay_bios_width_w )
 {
 	bios_width = data;
-//	usrintf_showmessage("Width write: %02x",data);
+	usrintf_showmessage("Width write: %02x",data);
 }
 
 static READ_HANDLER( megaplay_bios_6600_r )
@@ -1683,7 +1689,7 @@ static WRITE_HANDLER( megaplay_game_w )
 	{
 		bios_mode = MP_GAME;
 		readpos = 1;
-		usrintf_showmessage("Game bank selected: 0x%03x",game_banksel);
+//		usrintf_showmessage("Game bank selected: 0x%03x",game_banksel);
 		logerror("BIOS: 68K address space bank selected: 0x%03x\n",game_banksel);
 	}
 }
@@ -1727,7 +1733,7 @@ static ADDRESS_MAP_START( megaplay_bios_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x6201, 0x6201) AM_READ(input_port_8_r)
 	AM_RANGE(0x6400, 0x6400) AM_READ(input_port_5_r)
 	AM_RANGE(0x6401, 0x6401) AM_READ(input_port_6_r)
-//	AM_RANGE(0x6202, 0x6202) AM_READ(input_port_2_r)
+	AM_RANGE(0x6204, 0x6204) AM_READ(megaplay_bios_6204_r)
 	AM_RANGE(0x6203, 0x6203) AM_READ(megaplay_bios_banksel_r)
 	AM_RANGE(0x6402, 0x6402) AM_READ(megaplay_bios_6402_r)
 	AM_RANGE(0x6403, 0x6403) AM_READ(megaplay_bios_gamesel_r)
@@ -1836,7 +1842,7 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( megaplay_bios_writeport, ADDRESS_SPACE_IO, 8 )
 //	AM_RANGE(0x3f, 0x3f) AM_WRITE(megatech_bios_port_ctrl_w)
-//	AM_RANGE(0x7f, 0x7f) AM_WRITE(megatech_bios_port_7f_w)
+	AM_RANGE(0x7f, 0x7f) AM_WRITE(SN76496_1_w)	/* SN76489 */
 	AM_RANGE(0xbe, 0xbf) AM_WRITE(megatech_bios_port_be_bf_w)			/* VDP */
 ADDRESS_MAP_END
 
@@ -3082,6 +3088,13 @@ static struct SN76496interface sn76489_intf =
 	{ 50 }							/* Volume */
 };
 
+static struct SN76496interface megatech_sn76489_intf =
+{
+	2,		/* Two chips, one in the Genesis VDP and one in the SMS VDP */
+	{ MASTER_CLOCK/15, MASTER_CLOCK/15 },			/* Clock: 3.58 MHz */
+	{ 50, 50 }							/* Volume */
+};
+
 static struct OKIM6295interface puckpkmn_m6295_intf =
 {
 	1,
@@ -3156,7 +3169,7 @@ static MACHINE_DRIVER_START( puckpkmn )
 	MDRV_SOUND_ADD(OKIM6295, puckpkmn_m6295_intf)
 MACHINE_DRIVER_END
 
-static MACHINE_DRIVER_START( genesis )
+static MACHINE_DRIVER_START( genesis_base )
 	/*basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M68000, 53693100 / 7)
 	MDRV_CPU_PROGRAM_MAP(genesis_readmem, genesis_writemem)
@@ -3185,14 +3198,21 @@ static MACHINE_DRIVER_START( genesis )
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(YM2612, gen_ym3438_intf )
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( genesis )
+
+	MDRV_IMPORT_FROM( genesis_base )
 	MDRV_SOUND_ADD(SN76496, sn76489_intf)
+
 MACHINE_DRIVER_END
 
 
 static MACHINE_DRIVER_START( megatech )
 
 	/* basic machine hardware */
-	MDRV_IMPORT_FROM( genesis )
+	MDRV_IMPORT_FROM( genesis_base )
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS | VIDEO_HAS_HIGHLIGHTS | VIDEO_DUAL_MONITOR)
 
 	MDRV_VIDEO_START(megatech)
@@ -3207,12 +3227,14 @@ static MACHINE_DRIVER_START( megatech )
 	MDRV_CPU_PROGRAM_MAP(megatech_bios_readmem, megatech_bios_writemem)
 	MDRV_CPU_IO_MAP(megatech_bios_readport,megatech_bios_writeport)
 	MDRV_CPU_VBLANK_INT(megatech_irq, 262)
+	MDRV_SOUND_ADD(SN76496, megatech_sn76489_intf)
+
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( megaplay )
 
 	/* basic machine hardware */
-	MDRV_IMPORT_FROM( genesis )
+	MDRV_IMPORT_FROM( genesis_base )
 
 	MDRV_CPU_PROGRAM_MAP(megaplay_genesis_readmem, genesis_writemem)
 
@@ -3227,6 +3249,7 @@ static MACHINE_DRIVER_START( megaplay )
 	MDRV_CPU_ADD_TAG("megaplay_bios", Z80, 53693100 / 15) /* ?? */
 	MDRV_CPU_PROGRAM_MAP(megaplay_bios_readmem, megaplay_bios_writemem)
 	MDRV_CPU_IO_MAP(megaplay_bios_readport,megaplay_bios_writeport)
+	MDRV_SOUND_ADD(SN76496, megatech_sn76489_intf)
 	MDRV_CPU_VBLANK_INT(megatech_irq, 262)
 MACHINE_DRIVER_END
 
@@ -4004,12 +4027,14 @@ ROM_START( mp_sonic ) /* Sonic */
 	ROM_REGION( 0x400000, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "ep15177.ic2", 0x000000, 0x040000, CRC(a389b03b) SHA1(8e9e1cf3dd65ddf08757f5a1ce472130c902ea2c) )
 	ROM_LOAD16_BYTE( "ep15176.ic1", 0x000001, 0x040000, CRC(d180cc21) SHA1(62805cfaaa80c1da6146dd89fc2b49d819fd4f22) )
+	/* copy instead of load again here .. */
 	ROM_LOAD16_BYTE( "15175-01.ic3", 0x300000, 0x08000, CRC(99246889) SHA1(184aa3b7fdedcf578c5e34edb7ed44f57f832258) )
 	ROM_LOAD16_BYTE( "15175-01.ic3", 0x300001, 0x08000, CRC(99246889) SHA1(184aa3b7fdedcf578c5e34edb7ed44f57f832258) )
+
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* z80 */
 
 	ROM_REGION( 0x8000, REGION_USER1, 0 ) /* Game Instructions */
-	ROM_LOAD( "15175-01.ic3", 0x000000, 0x08000, CRC(99246889) SHA1(184aa3b7fdedcf578c5e34edb7ed44f57f832258) )
+	ROM_LOAD( "ep15175-01.ic3", 0x000000, 0x08000, CRC(99246889) SHA1(184aa3b7fdedcf578c5e34edb7ed44f57f832258) )
 
 	ROM_REGION( 0x28000, REGION_CPU3, 0 ) /* Bios */
 	MEGAPLAY_BIOS
@@ -4019,11 +4044,31 @@ ROM_START( mp_gaxe2 ) /* Golden Axe 2 */
 	ROM_REGION( 0x400000, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "ep15179b.ic2", 0x000000, 0x040000, CRC(00d97b84) SHA1(914bbf566ddf940aab67b92af237d251650ddadf) )
 	ROM_LOAD16_BYTE( "ep15178b.ic1", 0x000001, 0x040000, CRC(2ea576db) SHA1(6d96b948243533de1f488b1f80e0d5431a4f1f53) )
+	/* copy instead of load again here .. */
+	ROM_LOAD16_BYTE( "ep15175-02b.ic3", 0x300000, 0x08000, CRC(3039b653) SHA1(b19874c74d0fc0cca1169f62e5e74f0e8ca83679) ) // 15175-02b.ic3
+	ROM_LOAD16_BYTE( "ep15175-02b.ic3", 0x300001, 0x08000, CRC(3039b653) SHA1(b19874c74d0fc0cca1169f62e5e74f0e8ca83679) ) // 15175-02b.ic3
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* z80 */
 
 	ROM_REGION( 0x8000, REGION_USER1, 0 ) /* Game Instructions */
-	ROM_LOAD( "1517502b.ic3", 0x000000, 0x08000, CRC(3039b653) SHA1(b19874c74d0fc0cca1169f62e5e74f0e8ca83679) ) // 15175-02b.ic3
+	ROM_LOAD( "ep15175-02b.ic3", 0x000000, 0x08000, CRC(3039b653) SHA1(b19874c74d0fc0cca1169f62e5e74f0e8ca83679) ) // 15175-02b.ic3
+
+	ROM_REGION( 0x28000, REGION_CPU3, 0 ) /* Bios */
+	MEGAPLAY_BIOS
+ROM_END
+
+ROM_START( mp_twc ) /* Tecmo World Cup */
+	ROM_REGION( 0x400000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "ep15183.ic2", 0x000000, 0x040000, CRC(8b79b861) SHA1(c72af72840513b82f2562409eccdf13b031bf3c0) )
+	ROM_LOAD16_BYTE( "ep15182.ic1", 0x000001, 0x040000, CRC(eb8325c3) SHA1(bb21ac926c353e14184dd476222bc6a8714606e5) )
+	/* copy instead of load again here .. */
+	ROM_LOAD16_BYTE( "ep15175-04.ic3", 0x300000, 0x08000, CRC(faf7c030) SHA1(16ef405335b4d3ecb0b7d97b088dafc4278d4726) )
+	ROM_LOAD16_BYTE( "ep15175-04.ic3", 0x300001, 0x08000, CRC(faf7c030) SHA1(16ef405335b4d3ecb0b7d97b088dafc4278d4726) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* z80 */
+
+	ROM_REGION( 0x8000, REGION_USER1, 0 ) /* Game Instructions */
+	ROM_LOAD( "ep15175-04.ic3", 0x000000, 0x08000, CRC(faf7c030) SHA1(16ef405335b4d3ecb0b7d97b088dafc4278d4726) )
 
 	ROM_REGION( 0x28000, REGION_CPU3, 0 ) /* Bios */
 	MEGAPLAY_BIOS
@@ -4519,6 +4564,8 @@ static DRIVER_INIT (megaplay)
 
 }
 
-GAMEBX( 1993, megaplay, 0,        megaplay, megaplay, megaplay, megaplay, ROT0, "Sega",                  "MegaPlay: Bios", NOT_A_DRIVER )
-GAMEBX( 1993, mp_sonic, megaplay, megaplay, megaplay, mp_sonic, megaplay, ROT0, "Sega",                  "MegaPlay: Sonic The Hedgehog", GAME_NOT_WORKING  )
-GAMEBX( 1993, mp_gaxe2, megaplay, megaplay, megaplay, mp_gaxe2, megaplay, ROT0, "Sega",                  "MegaPlay: Golden Axe 2", GAME_NOT_WORKING  )
+/* -- */ GAMEBX( 1993, megaplay, 0,        megaplay, megaplay, megaplay, megaplay, ROT0, "Sega",                  "MegaPlay: Bios", NOT_A_DRIVER )
+/* 01 */ GAMEBX( 1993, mp_sonic, megaplay, megaplay, megaplay, mp_sonic, megaplay, ROT0, "Sega",                  "MegaPlay: Sonic The Hedgehog", GAME_NOT_WORKING  )
+/* 02 */ GAMEBX( 1993, mp_gaxe2, megaplay, megaplay, megaplay, mp_gaxe2, megaplay, ROT0, "Sega",                  "MegaPlay: Golden Axe 2", GAME_NOT_WORKING  )
+/* 03 */ // unknown
+/* 04 */ GAMEBX( 1993, mp_twc,   megaplay, megaplay, megaplay, mp_gaxe2, megaplay, ROT0, "Sega",                  "MegaPlay: Tecmo World Cup", GAME_NOT_WORKING  )

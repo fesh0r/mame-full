@@ -37,26 +37,93 @@ static unsigned char zz[0x400];
 static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect ,int pri_mask )
 {
 
-	const UINT8 *source = spriteram+0x1000-8;
+	const UINT8 *source = spriteram+0x1000-8 ;
 	const UINT8 *finish = spriteram;
 
 	const struct GfxElement *gfx = Machine->gfx[2];
 
-	while( source>=finish ){
-		int tile_number = source[2]|(source[3]<<8);
-		int sx = source[4];
-		int sy = source[6];
+//	static int ytlim = 1;
+//	static int xtlim = 1;
 
-		drawgfx(
-			bitmap,
-			gfx,
-			tile_number,
-			0,
-			0,0,
-			sx,sy,
-			cliprect,
-			TRANSPARENCY_PEN,15
-		);
+//	if ( keyboard_pressed_memory(KEYCODE_Q) ) ytlim--;
+//	if ( keyboard_pressed_memory(KEYCODE_W) ) ytlim++;
+
+//	if ( keyboard_pressed_memory(KEYCODE_A) ) xtlim--;
+//	if ( keyboard_pressed_memory(KEYCODE_S) ) xtlim++;
+
+
+	/*00 ???? ????  (colour / priority?)
+	  01 fhhh Fwww   h = height f=flipy w = width F = flipx
+	  02 nnnn nnnn   n = tileno
+	  03 nnnn nnnn   n = tile no
+	  04 xxxx xxxx   x = xpos
+	  05 xxxx xxxx   x = xpos
+	  06 yyyy yyyy   y = ypos
+	  07 yyyy yyyy   y = ypos
+
+	 */
+
+
+	while( source>finish ){
+		int tile_number = source[2]|(source[3]<<8);
+		int sx = source[4] | (source[5] <<8);
+		int sy = source[6] | (source[7] <<8);
+		int colr;
+		int xtiles, ytiles;
+		int ytlim, xtlim;
+		int xflip, yflip;
+		int xstep, ystep;
+
+		if (sx & 0x8000) sx -= 0x10000;
+		if (sy & 0x8000) sy -= 0x10000;
+
+
+		ytlim = (source[1] >> 4) & 0x7;
+		xtlim = (source[1] >> 0) & 0x7;
+
+		xflip = (source[1] >> 7) & 0x1;
+		yflip = (source[1] >> 3) & 0x1;
+
+		colr = source[0];
+		colr &= 0x3f;
+
+		ytlim += 1;
+		xtlim += 1;
+
+		sx += 32;
+
+		xstep = 16;
+		ystep = 16;
+
+		if (xflip)
+		{
+			ystep = -16;
+			sy += ytlim*16-16;
+		}
+
+		if (yflip)
+		{
+			xstep = -16;
+			sx += xtlim*16-16;
+		}
+
+		for (xtiles = 0; xtiles < xtlim; xtiles++)
+		{
+			for (ytiles = 0; ytiles < ytlim; ytiles++)
+			{
+				drawgfx(
+						bitmap,
+						gfx,
+						tile_number,
+						colr,
+						yflip,xflip,
+						sx+xstep*xtiles,sy+ystep*ytiles,
+						cliprect,
+						TRANSPARENCY_PEN,15);
+
+				tile_number++;
+			}
+		}
 
 		source-=8;
 	}
@@ -121,7 +188,7 @@ static void get_fore_tile_info( int tile_index )
 	int color=tile >> 12;
 
 	//	tile=tile&0xfff;
-	tile = (tile & 0xfff) | (1<<12);
+	tile = (tile & 0xfff) | (3<<12);  // 3000 intro (cliff) 1000 game (bg )
 
 	SET_TILE_INFO(1,tile,color,0)
 }
@@ -205,6 +272,7 @@ VIDEO_UPDATE (raiden2)
 			tilemap_mark_all_tiles_dirty(foreground_layer);
 		}
 	}
+//		fillbitmap(bitmap, get_black_pen(), cliprect);
 
 	tilemap_draw(bitmap,cliprect,background_layer,0,0);
 	tilemap_draw(bitmap,cliprect,foreground_layer,0,0);
@@ -402,19 +470,18 @@ static struct GfxLayout r2_t2 =
 	16, 16,
 	0x10000,
 	4,
-	{ 0, 8, 16, 24 },
+	{ 8, 0, 24, 16 },
+
 	{ 0, 1, 2, 3, 4, 5, 6, 7, 32, 33, 34, 35, 36, 37, 38, 39 },
-	//	{ 39, 38, 37, 36, 35, 34, 33, 32, 7, 6, 5, 4, 3, 2, 1, 0 },
-	//	{ 960, 896, 832, 768, 704, 640, 576, 512, 448, 384, 320, 256, 192, 128, 64, 0 },
 	{ 0, 64, 128, 192, 256, 320, 384, 448, 512, 576, 640, 704, 768, 832, 896, 960 },
 	16*16*4
 };
 
 static struct GfxDecodeInfo raiden2_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0x00000, &raiden2_charlayout, 1792, 256 },
-	{ REGION_GFX2, 0x00000, &raiden2_tilelayout, 0x400, 256 },
-	{ REGION_GFX3, 0x00000, &r2_t2, 0x400, 256 },
+	{ REGION_GFX1, 0x00000, &raiden2_charlayout, 1792, 128 },
+	{ REGION_GFX2, 0x00000, &raiden2_tilelayout, 0x400, 128 },
+	{ REGION_GFX3, 0x00000, &r2_t2, 0x000, 128 },
 	{ -1 } /* end of array */
 };
 
@@ -440,7 +507,7 @@ static MACHINE_DRIVER_START( raiden2 )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK)
 	MDRV_SCREEN_SIZE(64*8, 64*8)
-	MDRV_VISIBLE_AREA(6*8, 44*8-1, 1, 30*8)
+	MDRV_VISIBLE_AREA(5*8, 43*8-1, 1, 30*8)
 	MDRV_GFXDECODE(raiden2_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(2048)
 
@@ -1319,19 +1386,34 @@ unsigned int gm(int i)
 
 unsigned int trans(unsigned int v, unsigned int x)
 {
-  unsigned int r = v^x;
+  unsigned int R = v^x, r = R;
 
-  if((v & (1<<3)) && (x & (1<<4)))
+  if((R & (1<<3)) && (v & (1<<8)))
+    r ^= 1<<0;
+
+  if((R & (1<<24)) && (x & (1<<24)))
+    r ^= 1<<3;
+
+  if((R & (1<<10)) && (v & (1<<28)))
+    r ^= 1<<4;
+
+  if((R & (1<<0)) && (x & (1<<0)))
+    r ^= 1<<6;
+
+  if((R & (1<<1)) && (x & (1<<1)))
     r ^= 1<<11;
 
-  if((r & (1<<2)) && (x & (1<<2)))
-    r ^= 1<<10;
+  if((R & (1<<19)) && (v & (1<<19)))
+    r ^= 1<<15;
+ 
+  if((v & (1<<7)) && (x & (1<<14)))
+    r ^= 1<<16;
 
-  if((r & (1<<1)) && (x & (1<<1)))
-    r ^= 1<<9;
+  if((v & (1<<1)) && (R & (1<<9)))
+    r ^= 1<<23;
 
-  if((v & (1<<11)) && (x & (1<<6)))
-    r ^= 1<<18;
+  if((v & (1<<16)) && (x & (1<<20)))
+    r ^= 1<<30;
 
   return r;
 }
@@ -1359,10 +1441,7 @@ static void decrypt_sprites(void)
 
     x1 = gm(i);
 
-    v1 = sw(v1);
-    x1 = sw(x1);
-
-    y1 = trans(v1, x1);
+    y1 = sw(trans(v1, x1));
 
     data[i] = ~y1;
   }

@@ -253,10 +253,8 @@ void drc_register_code_at_cache_top(struct drccore *drc, UINT32 pc)
 {
 	struct pc_ptr_pair *pair = &drc->sequence_list[drc->sequence_count++];
 	if (drc->sequence_count > drc->sequence_count_max)
-	{
-		printf("drc_register_code_at_cache_top: too many instructions!\n");
-		exit(1);
-	}
+		osd_die("drc_register_code_at_cache_top: too many instructions!\n");
+
 	pair->target = drc->cache_top;
 	pair->pc = pc;
 }
@@ -417,10 +415,8 @@ void drc_append_tentative_fixed_dispatcher(struct drccore *drc, UINT32 newpc)
 {
 	struct pc_ptr_pair *pair = &drc->tentative_list[drc->tentative_count++];
 	if (drc->tentative_count > drc->tentative_count_max)
-	{
-		printf("drc_append_tentative_fixed_dispatcher: too many tentative branches!\n");
-		exit(1);
-	}
+		osd_die("drc_append_tentative_fixed_dispatcher: too many tentative branches!\n");
+
 	pair->target = drc->cache_top;
 	pair->pc = newpc;
 	drc_append_fixed_dispatcher(drc, newpc);

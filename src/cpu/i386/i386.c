@@ -176,7 +176,7 @@ static void modrm_to_EA(UINT8 mod_rm, UINT32* ea, UINT8* segment)
 			case 3: *ea = REG16(BP) + REG16(DI); *segment = SS; break;
 			case 4: *ea = REG16(SI); *segment = DS; break;
 			case 5: *ea = REG16(DI); *segment = DS; break;
-			case 6: *ea = REG16(BP); *segment = SS; break;
+			case 6: *ea = FETCH16(); *segment = DS; break;
 			case 7: *ea = REG16(BX); *segment = DS; break;
 		}
 		if( mod == 1 ) {

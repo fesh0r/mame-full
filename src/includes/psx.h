@@ -19,6 +19,7 @@ extern void psx_gpu_read( UINT32 *p_ram, INT32 n_size );
 extern void psx_gpu_write( UINT32 *p_ram, INT32 n_size );
 READ32_HANDLER( psx_gpu_r );
 WRITE32_HANDLER( psx_gpu_w );
+extern void psx_lightgun_set( int, int );
 
 /* machine */
 extern data32_t *g_p_n_psxram;

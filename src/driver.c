@@ -3063,8 +3063,10 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( mt_kcham )	/* 60 */
 
 	/* Sega MegaPlay */
-	DRIVER( mp_sonic )
-	DRIVER( mp_gaxe2 )
+	DRIVER( mp_sonic )	/* 01 */
+	DRIVER( mp_gaxe2 )	/* 02 */
+						/* 03 */
+	DRIVER( mp_twc )	/* 04 */
 
 	/* Data East "Burger Time hardware" games */
 	DRIVER( lnc )		/* (c) 1981 */
@@ -4467,7 +4469,8 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( wwfmania )	/* (c) 1995 Midway */
 	DRIVER( openice )	/* (c) 1995 Midway */
 	DRIVER( nbahangt )	/* (c) 1996 Midway */
-	DRIVER( nbamaxht )	/* (c) 1996 Midway */
+	DRIVER( nbamht )	/* (c) 1996 Midway */
+	DRIVER( nbamht1 )	/* (c) 1996 Midway */
 	DRIVER( rmpgwt )	/* (c) 1997 Midway */
 	DRIVER( rmpgwt11 )	/* (c) 1997 Midway */
 	DRIVER( crusnusa )	/* (c) 1994 Midway */
@@ -4483,12 +4486,15 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER ( wg3dh )	/* (c) 1996 Atari Games */
 	DRIVER ( mace )		/* (c) 1996 Atari Games */
 	DRIVER ( sfrush )	/* (c) 1996 Atari Games */
+	DRIVER ( sfrushrk )	/* (c) 1996 Atari Games */
 	DRIVER ( calspeed )	/* (c) 1996 Atari Games */
+	DRIVER ( vaportrx )	/* (c) 1998 Atari Games */
 	DRIVER ( carnevil )	/* (c) 1998 Midway Games */
 	DRIVER ( biofreak )	/* (c) 1997 Midway Games */
 	DRIVER ( blitz )	/* (c) 1997 Midway Games */
 	DRIVER ( blitz99 )	/* (c) 1998 Midway Games */
 	DRIVER ( blitz2k )	/* (c) 1999 Midway Games */
+	DRIVER ( hyprdriv )	/* (c) 1998 Midway Games */
 
 	/* Cinematronics raster games */
 	DRIVER( embargo )
@@ -5104,6 +5110,8 @@ Other Sun games
 	/* Tong Electronic games */
 	DRIVER( leprechn )	/* (c) 1982 */
 	DRIVER( potogold )	/* (c) 1982 */
+	DRIVER( leprechp )	/* (c) 1982 */
+	DRIVER( piratetr )	/* (c) 1982 */
 	DRIVER( beezer )	/* (c) 1982 */
 	DRIVER( beezer1 )	/* (c) 1982 */
 

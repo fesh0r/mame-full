@@ -879,13 +879,15 @@ static void read_first_sector(struct ide_state *ide)
 	/* just set a timer */
 	if (ide->command == IDE_COMMAND_READ_MULTIPLE_BLOCK)
 	{
+		int new_lba = lba_address(ide);
 		double seek_time;
 
-		if (ide->cur_lba == lba_address(ide))
+		if (new_lba == ide->cur_lba || new_lba == ide->cur_lba + 1)
 			seek_time = TIME_NO_SEEK_MULTISECTOR;
 		else
 			seek_time = TIME_SEEK_MULTISECTOR;
 
+		ide->cur_lba = new_lba;
 		timer_set(seek_time, ide - idestate, read_sector_done);
 	}
 	else

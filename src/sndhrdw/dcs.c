@@ -15,6 +15,9 @@
 #define LOG_DCS_IO					(0)
 #define LOG_BUFFER_FILLING			(0)
 
+#define HLE_TRANSFERS				(1)
+
+
 
 /***************************************************************************
 	CONSTANTS
@@ -86,7 +89,7 @@ struct dcs_state
 	UINT16	output_data;
 	UINT16	output_control;
 	UINT32	output_control_cycles;
-	
+
 	UINT8	last_output_full;
 	UINT8	last_input_empty;
 
@@ -115,14 +118,14 @@ static data16_t *dcs_polling_base;
 static data16_t *dcs_data_ram;
 static data32_t *dcs_program_ram;
 
-#if (LOG_DCS_TRANSFERS)
-static data16_t *transfer_dest;
+static int dcs_state;
 static int transfer_state;
 static int transfer_start;
 static int transfer_stop;
+static int transfer_type;
+static int transfer_temp;
 static int transfer_writes_left;
 static UINT16 transfer_sum;
-#endif
 
 
 
@@ -154,6 +157,8 @@ static void sport0_irq(int state);
 static void sound_tx_callback(int port, INT32 data);
 
 static READ16_HANDLER( dcs_polling_r );
+
+static int preprocess_write(data16_t data);
 
 
 
@@ -343,6 +348,10 @@ static void dcs_reset(void)
 	/* start the SPORT0 timer */
 	if (dcs.sport_timer)
 		timer_adjust(dcs.sport_timer, TIME_IN_HZ(1000), 0, TIME_IN_HZ(1000));
+
+#if (LOG_DCS_TRANSFERS || HLE_TRANSFERS)
+	dcs_state = transfer_state = 0;
+#endif
 }
 
 
@@ -352,18 +361,18 @@ void dcs_init(void)
 	dcs_cpunum = mame_find_cpu_index("dcs");
 	dcs.channels = 1;
 	dcs.sounddata = memory_region(REGION_SOUND1);
-	
+
 	/* reset RAM-based variables */
 	dcs_sram_bank0 = dcs_sram_bank1 = NULL;
 
 	/* create the timer */
 	dcs.reg_timer = timer_alloc(dcs_irq);
 	dcs.sport_timer = NULL;
-	
+
 	/* disable notification by default */
 	dcs.output_full_cb = NULL;
 	dcs.input_empty_cb = NULL;
-	
+
 	/* non-RAM based automatically acks */
 	dcs.auto_ack = 1;
 
@@ -383,13 +392,13 @@ void dcs2_init(offs_t polling_offset)
 
 	/* borrow memory for the extra 8k */
 	dcs_sram_bank1 = auto_malloc(0x1000*2);
-	
+
 	/* borrow memory also for the expanded ROM data and expand it */
 	dcs_expanded_rom = auto_malloc(0x2000*2);
 	for (page = 0; page < 8; page++)
 		for (i = 0; i < 0x400; i++)
 			dcs_expanded_rom[0x400 * page + i] = dcs.sounddata[BYTE_XOR_LE(0x1000 * page + i)];
-	
+
 	/* create the timer */
 	dcs.reg_timer = timer_alloc(dcs_irq);
 	dcs.sport_timer = timer_alloc(sport0_irq);
@@ -400,7 +409,7 @@ void dcs2_init(offs_t polling_offset)
 	dcs.input_empty_cb = NULL;
 	dcs.fifo_data_r = NULL;
 	dcs.fifo_status_r = NULL;
-	
+
 	/* install the speedup handler */
 	if (polling_offset)
 		dcs_polling_base = memory_install_read16_handler(dcs_cpunum, ADDRESS_SPACE_DATA, polling_offset, polling_offset, 0, dcs_polling_r);
@@ -460,7 +469,7 @@ static WRITE16_HANDLER( dcs_sram_bank_w )
 	COMBINE_DATA(&dcs.srambank);
 	cpu_setbank(21, (dcs.srambank & 0x1000) ? dcs_sram_bank1 : dcs_sram_bank0);
 
-	/* it appears that the Vegas games also access the boot ROM via this location */	
+	/* it appears that the Vegas games also access the boot ROM via this location */
 	if (((dcs.srambank >> 7) & 7) == dcs.drambank)
 		cpu_setbank(20, dcs_expanded_rom + ((dcs.srambank >> 7) & 7) * 0x400);
 }
@@ -512,7 +521,7 @@ void dcs_set_fifo_callbacks(UINT16 (*fifo_data_r)(void), UINT16 (*fifo_status_r)
 int dcs_control_r(void)
 {
 	/* only boost for DCS2 boards */
-	if (!dcs.auto_ack)
+	if (!dcs.auto_ack && !HLE_TRANSFERS)
 		cpu_boost_interleave(TIME_IN_USEC(0.5), TIME_IN_USEC(5));
 	return dcs.latch_control;
 }
@@ -529,7 +538,7 @@ void dcs_reset_w(int state)
 		dcs_reset();
 		cpu_set_reset_line(dcs_cpunum, ASSERT_LINE);
 	}
-	
+
 	/* going low resets and reactivates the CPU */
 	else
 		cpu_set_reset_line(dcs_cpunum, CLEAR_LINE);
@@ -563,68 +572,38 @@ static READ16_HANDLER( fifo_input_r )
 	INPUT LATCH (data from host to DCS)
 ****************************************************************************/
 
-void dcs_data_w(int data)
+static void dcs_delayed_data_w(int data)
 {
-#if (LOG_DCS_TRANSFERS)
-	if (dcs.sport_timer)
-		switch (transfer_state)
-		{
-			case 0:
-				if (data == 0x55d0 || data == 0x55d1)
-				{
-					logerror("DCS Transfer command %04X\n", data);
-					transfer_state++;
-				}
-				else
-					logerror("Command: %04X\n", data);
-				break;
-				
-			case 1:
-				transfer_start = data << 16;
-				transfer_state++;
-				break;
-					
-			case 2:
-				transfer_start |= data;
-				transfer_state++;
-				transfer_dest = (data16_t *)(dcs.sounddata + 0x8000 + transfer_start*2);
-				logerror("Start address = %08X\n", transfer_start);
-				break;
-
-			case 3:
-				transfer_stop = data << 16;
-				transfer_state++;
-				break;
-
-			case 4:
-				transfer_stop |= data;
-				transfer_state++;
-				logerror("Stop address = %08X\n", transfer_stop);
-				transfer_writes_left = transfer_stop - transfer_start + 1;
-				transfer_sum = 0;
-				break;
-
-			case 5:
-				transfer_sum += data;
-				if (--transfer_writes_left == 0)
-				{
-					logerror("Transfer done, sum = %04X\n", transfer_sum);
-					transfer_state = 0;
-				}
-				break;
-		}
-#endif
-
 	if (LOG_DCS_IO)
 		logerror("%08X:dcs_data_w(%04X)\n", activecpu_get_pc(), data);
 
+	/* boost the interleave temporarily */
 	cpu_boost_interleave(TIME_IN_USEC(0.5), TIME_IN_USEC(5));
+
+	/* set the IRQ line on the ADSP */
 	cpu_set_irq_line(dcs_cpunum, ADSP2105_IRQ2, ASSERT_LINE);
 
+	/* indicate we are no longer empty */
 	if (dcs.last_input_empty && dcs.input_empty_cb)
 		(*dcs.input_empty_cb)(dcs.last_input_empty = 0);
 	SET_INPUT_FULL();
+
+	/* set the data */
 	dcs.input_data = data;
+}
+
+
+void dcs_data_w(int data)
+{
+	/* preprocess the write */
+	if (preprocess_write(data))
+		return;
+
+	/* if we are DCS1, set a timer to latch the data */
+	if (!dcs.sport_timer)
+		timer_set(TIME_NOW, data, dcs_delayed_data_w);
+	else
+	 	dcs_delayed_data_w(data);
 }
 
 
@@ -914,4 +893,255 @@ static READ16_HANDLER( dcs_polling_r )
 {
 	activecpu_eat_cycles(100);
 	return *dcs_polling_base;
+}
+
+
+
+/***************************************************************************
+	DATA TRANSFER HLE MECHANISM
+****************************************************************************/
+
+static void s1_ack_callback2(int data)
+{
+	/* if the output is full, stall for a usec */
+	if (IS_OUTPUT_FULL())
+	{
+		timer_set(TIME_IN_USEC(1), data, s1_ack_callback2);
+		return;
+	}
+	output_latch_w(0, 0x000a, 0);
+}
+
+
+static void s1_ack_callback1(int data)
+{
+	/* if the output is full, stall for a usec */
+	if (IS_OUTPUT_FULL())
+	{
+		timer_set(TIME_IN_USEC(1), data, s1_ack_callback1);
+		return;
+	}
+	output_latch_w(0, data, 0);
+
+	/* chain to the next word we need to write back */
+	timer_set(TIME_IN_USEC(1), 0, s1_ack_callback2);
+}
+
+
+static int preprocess_stage_1(data16_t data)
+{
+	switch (transfer_state)
+	{
+		case 0:
+			/* look for command 0x001a to transfer chunks of data */
+			if (data == 0x001a)
+			{
+				if (LOG_DCS_TRANSFERS) logerror("%08X:DCS Transfer command %04X\n", activecpu_get_pc(), data);
+				transfer_state++;
+				if (HLE_TRANSFERS) return 1;
+			}
+
+			/* look for command 0x002a to start booting the uploaded program */
+			else if (data == 0x002a)
+			{
+				if (LOG_DCS_TRANSFERS) logerror("%08X:DCS State change %04X\n", activecpu_get_pc(), data);
+				dcs_state = 1;
+			}
+
+			/* anything else is ignored */
+			else
+			{
+				if (LOG_DCS_TRANSFERS) logerror("Command: %04X\n", data);
+			}
+			break;
+
+		case 1:
+			/* first word is the start address */
+			transfer_start = data;
+			transfer_state++;
+			if (LOG_DCS_TRANSFERS) logerror("Start address = %04X\n", transfer_start);
+			if (HLE_TRANSFERS) return 1;
+			break;
+
+		case 2:
+			/* second word is the stop address */
+			transfer_stop = data;
+			transfer_state++;
+			if (LOG_DCS_TRANSFERS) logerror("Stop address = %04X\n", transfer_stop);
+			if (HLE_TRANSFERS) return 1;
+			break;
+
+		case 3:
+			/* third word is the transfer type */
+			/* transfer type 0 = program memory */
+			/* transfer type 1 = SRAM bank 0 */
+			/* transfer type 2 = SRAM bank 1 */
+			transfer_type = data;
+			transfer_state++;
+			if (LOG_DCS_TRANSFERS) logerror("Transfer type = %04X\n", transfer_type);
+
+			/* at this point, we can compute how many words to expect for the transfer */
+			transfer_writes_left = transfer_stop - transfer_start + 1;
+			if (transfer_type == 0)
+				transfer_writes_left *= 2;
+
+			/* reset the checksum */
+			transfer_sum = 0;
+
+			/* handle the HLE case */
+			if (HLE_TRANSFERS)
+			{
+				if (transfer_type == 2)
+					dcs_sram_bank_w(0, 0x1000, 0);
+				return 1;
+			}
+			break;
+
+		case 4:
+			/* accumulate the sum over all data */
+			transfer_sum += data;
+
+			/* if we're out, stop the transfer */
+			if (--transfer_writes_left == 0)
+			{
+				if (LOG_DCS_TRANSFERS) logerror("Transfer done, sum = %04X\n", transfer_sum);
+				transfer_state = 0;
+			}
+
+			/* handle the HLE case */
+			if (HLE_TRANSFERS)
+			{
+				/* write the new data to memory */
+				cpuintrf_push_context(dcs_cpunum);
+				if (transfer_type == 0)
+				{
+					if (transfer_writes_left & 1)
+						transfer_temp = data;
+					else
+						program_write_dword(transfer_start++ * 4, (transfer_temp << 8) | (data & 0xff));
+				}
+				else
+					data_write_word(transfer_start++ * 2, data);
+				cpuintrf_pop_context();
+
+				/* if we're done, start a timer to send the response words */
+				if (transfer_state == 0)
+					timer_set(TIME_IN_USEC(1), transfer_sum, s1_ack_callback1);
+				return 1;
+			}
+			break;
+	}
+	return 0;
+}
+
+
+static void s2_ack_callback(int data)
+{
+	/* if the output is full, stall for a usec */
+	if (IS_OUTPUT_FULL())
+	{
+		timer_set(TIME_IN_USEC(1), data, s2_ack_callback);
+		return;
+	}
+	output_latch_w(0, data, 0);
+	output_control_w(0, (dcs.output_control & ~0xff00) | 0x0300, 0);
+}
+
+
+static int preprocess_stage_2(data16_t data)
+{
+	switch (transfer_state)
+	{
+		case 0:
+			/* look for command 0x55d0 or 0x55d1 to transfer chunks of data */
+			if (data == 0x55d0 || data == 0x55d1)
+			{
+				if (LOG_DCS_TRANSFERS) logerror("%08X:DCS Transfer command %04X\n", activecpu_get_pc(), data);
+				transfer_state++;
+				if (HLE_TRANSFERS) return 1;
+			}
+
+			/* anything else is ignored */
+			else
+			{
+				if (LOG_DCS_TRANSFERS) logerror("%08X:Command: %04X\n", activecpu_get_pc(), data);
+			}
+			break;
+
+		case 1:
+			/* first word is the upper bits of the start address */
+			transfer_start = data << 16;
+			transfer_state++;
+			if (HLE_TRANSFERS) return 1;
+			break;
+
+		case 2:
+			/* second word is the lower bits of the start address */
+			transfer_start |= data;
+			transfer_state++;
+			if (LOG_DCS_TRANSFERS) logerror("Start address = %08X\n", transfer_start);
+			if (HLE_TRANSFERS) return 1;
+			break;
+
+		case 3:
+			/* third word is the upper bits of the stop address */
+			transfer_stop = data << 16;
+			transfer_state++;
+			if (HLE_TRANSFERS) return 1;
+			break;
+
+		case 4:
+			/* fourth word is the lower bits of the stop address */
+			transfer_stop |= data;
+			transfer_state++;
+			if (LOG_DCS_TRANSFERS) logerror("Stop address = %08X\n", transfer_stop);
+
+			/* at this point, we can compute how many words to expect for the transfer */
+			transfer_writes_left = transfer_stop - transfer_start + 1;
+
+			/* reset the checksum */
+			transfer_sum = 0;
+			if (HLE_TRANSFERS) return 1;
+			break;
+
+		case 5:
+			/* accumulate the sum over all data */
+			transfer_sum += data;
+
+			/* if we're out, stop the transfer */
+			if (--transfer_writes_left == 0)
+			{
+				if (LOG_DCS_TRANSFERS) logerror("Transfer done, sum = %04X\n", transfer_sum);
+				transfer_state = 0;
+			}
+
+			/* handle the HLE case */
+			if (HLE_TRANSFERS)
+			{
+				/* write the new data to memory */
+				data16_t *base = (data16_t *)(dcs.sounddata + 0x8000);
+				base[transfer_start++] = data;
+
+				/* if we're done, start a timer to send the response words */
+				if (transfer_state == 0)
+					timer_set(TIME_IN_USEC(1), transfer_sum, s2_ack_callback);
+				return 1;
+			}
+			break;
+	}
+	return 0;
+}
+
+
+static int preprocess_write(data16_t data)
+{
+	/* if we're not DCS2, skip */
+	if (!dcs.sport_timer)
+		return 0;
+
+	/* state 0 - initialization phase */
+	if (dcs_state == 0)
+		return preprocess_stage_1(data);
+	else
+		return preprocess_stage_2(data);
 }

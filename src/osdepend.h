@@ -364,7 +364,10 @@ void osd_pause(int paused);
 /* aborts the program in some unexpected fatal way */
 #ifdef __GNUC__
 void CLIB_DECL osd_die(const char *text,...)
-      __attribute__ ((format (printf, 1, 2)));
+#if (__GNUC__ > 2) || (__GNUC__ == 2 && __GNUC_MINOR__ >= 5)
+	__attribute__((noreturn))
+#endif
+	__attribute__ ((format (printf, 1, 2)));
 #else
 void CLIB_DECL osd_die(const char *text,...);
 #endif
