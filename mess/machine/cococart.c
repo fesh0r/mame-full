@@ -122,7 +122,6 @@ static void coco_fdc_callback(int event)
 		drq_state = CLEAR_LINE;
 		if( COCO_HALTENABLE )
 			timer_set( TIME_IN_CYCLES(7,0), 0, raise_halt);
-/*			coco_set_halt_line(ASSERT_LINE);*/
 		else
 			coco_set_halt_line(CLEAR_LINE);
 		break;
@@ -294,7 +293,6 @@ static void set_coco_dskreg(int data)
 
 	if( COCO_HALTENABLE && (drq_state == CLEAR_LINE) )
 		timer_set( TIME_IN_CYCLES(7,0), 0, raise_halt);
-/*		coco_set_halt_line(ASSERT_LINE);*/
 	else
 		coco_set_halt_line(CLEAR_LINE);
 
@@ -352,6 +350,9 @@ READ_HANDLER(coco_floppy_r)
 		break;
 	case 11:
 		result = wd179x_data_r(0);
+		break;
+	default:
+		result = coco_vhd_io_r( offset );
 		break;
 	}
 
@@ -444,7 +445,6 @@ READ_HANDLER(dragon_floppy_r)
 		result = wd179x_data_r(0);
 		break;
 	default:
-		result = coco_vhd_io_r( offset );
 		break;
 	}
 	return result;
@@ -511,7 +511,35 @@ static WRITE_HANDLER(cartridge_banks_io_w)
 {
 /* TJL- trying to turn this into a generic banking call */
 	if (offset == 0 )
+	{
 		cartcallbacks->setbank(data);
+		LOG( ("Bankswitch: set bank: %d\n", data ) );
+	}
+	else
+		LOG( ("Bankswitch: Writing to unmapped SCS memory: $%4.4X (PC=$%4.4X)\n", 0xff40+offset, activecpu_get_pc() ) );
+}
+
+static READ_HANDLER(cartridge_banks_io_r)
+{
+/* TJL- trying to turn this into a generic banking call */
+	if (offset == 0 )
+		LOG( ("Bankswitch: reading bank (not implemented\n" ) );
+	else
+		LOG( ("Bankswitch: Reading from unmapped SCS memory: $%4.4X (PC=$%4.4X)\n", 0xff40+offset, activecpu_get_pc() ) );
+		
+	return 0;
+}
+
+static WRITE_HANDLER(cartridge_std_io_w)
+{
+	LOG( ("Standard Cart: Writing to unmapped SCS memory: $%4.4X (PC=$%4.4X)\n", 0xff40+offset, activecpu_get_pc() ) );
+}
+
+static READ_HANDLER(cartridge_std_io_r)
+{
+	LOG( ("Standard Cart: Reading from unmapped SCS memory: $%4.4X (PC=$%4.4X)\n", 0xff40+offset, activecpu_get_pc() ) );
+
+	return 0xff;
 }
 
 static WRITE_HANDLER(cartridge_Orch90_io_w)
@@ -528,8 +556,8 @@ const struct cartridge_slot cartridge_standard =
 {
 	cartidge_standard_init,
 	NULL,
-	NULL,
-	NULL,
+	cartridge_std_io_r,
+	cartridge_std_io_w,
 	NULL
 };
 
@@ -537,7 +565,7 @@ const struct cartridge_slot cartridge_banks =
 {
 	cartidge_standard_init,
 	NULL,
-	NULL,
+	cartridge_banks_io_r,
 	cartridge_banks_io_w,
 	NULL
 };
@@ -664,12 +692,6 @@ WRITE_HANDLER(coco_vhd_io_w)
 			bufferAddress += data;
 			LOG(( "vhd: BA write: %X (..%2.2X)\n", bufferAddress, data ));
 			break;
-
-
-
-
-
-
 	}
 }
 
@@ -730,6 +752,7 @@ void coco_vhd_readwrite( UINT8 data )
 				vhdStatus = 2; /* Unable to open image */
 			else
 				vhdStatus = 0; /* Aok */
+
 			break;
 
 		default:
