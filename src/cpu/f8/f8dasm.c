@@ -319,7 +319,7 @@ unsigned DasmF8(char *buffer, unsigned pc)
 	case 0x87: /* 1000 0111 */
 		size += 1;
 		sym = set_ea_info( 0, op & 7, EA_UINT8, EA_VALUE );
-		ea = pc + (INT32)(INT16)(INT8)cpu_readop_arg(pc+1);
+		ea = pc + (INT32)(INT16)(INT8)cpu_readop_arg(pc+1) - 3;
 		sym2 = set_ea_info( 1, ea, EA_UINT16, EA_REL_PC );
 		sprintf(buffer, "BT   %s,%s", sym, sym2);
         break;
@@ -360,7 +360,7 @@ unsigned DasmF8(char *buffer, unsigned pc)
 
     case 0x8f: /* 1000 1111 */
 		size += 1;
-		ea = pc + (INT32)(INT16)(INT8)cpu_readop_arg(pc+1);
+		ea = pc + (INT32)(INT16)(INT8)cpu_readop_arg(pc+1) - 3;
 		sym = set_ea_info( 0, ea, EA_UINT16, EA_REL_PC );
 		sprintf(buffer, "BR7  %s", sym);
         break;
@@ -383,7 +383,7 @@ unsigned DasmF8(char *buffer, unsigned pc)
 	case 0x9f: /* 1001 1111 */
 		size += 1;
 		sym = set_ea_info( 0, op & 15, EA_UINT8, EA_VALUE );
-		ea = pc + (INT32)(INT16)(INT8)cpu_readop_arg(pc+1) + 2;
+		ea = pc + (INT32)(INT16)(INT8)cpu_readop_arg(pc+1) - 3;
         sym2 = set_ea_info( 1, ea, EA_UINT16, EA_REL_PC );
 		sprintf(buffer, "BF   %s,%s", sym, sym2);
         break;
