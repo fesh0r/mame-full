@@ -99,7 +99,7 @@ general :
   - sound and speech (both ti99/4-like)
   - Hex-Bus
   - Cassette
-* cartidge port on the top
+* cartridge port on the top
 * 50-pin(?) expansion port on the back (so, it was not even the same as TI99/2 ????)
 
 memory map :
@@ -167,6 +167,9 @@ static void ti99_2_vblank_interrupt(void)
   We display 24 rows and 32 columns of characters.  Each 8*8 pixel character pattern is defined
   in a 128-entry table located in ROM.  Character code for each screen position are stored
   sequentially in RAM.  Colors are a fixed Black on White.
+
+	There is an EOL character that blanks the end of the current line, so that
+	the CPU can get more bus time.
 */
 
 static unsigned char ti99_2_palette[] =
