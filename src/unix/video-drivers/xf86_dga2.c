@@ -206,7 +206,7 @@ static int xf86_dga_setup_graphics(XDGAMode modeinfo)
 
         startx = ((modeinfo.viewportWidth - scaled_width) / 2) & ~3;
         starty = (modeinfo.viewportHeight - scaled_height) / 2;
-	xf86ctx.addr  = (unsigned char*)xf86ctx.device->data;
+	xf86ctx.addr  = xf86ctx.device->data;
 	xf86ctx.addr += startx * modeinfo.bitsPerPixel / 8;
 	xf86ctx.addr += starty * modeinfo.bytesPerScanline;
 
@@ -229,13 +229,13 @@ static int xf86_dga_setup_graphics(XDGAMode modeinfo)
 	else
 	  xf86ctx.max_page = 0;
 	
-	/* force a full update during the max_page-s first frames */
+	/* force a full update the first number of pages updates */
 	xf86ctx.page_dirty = xf86ctx.max_page + 1;
 	
 	/* clear the not used area of the display */
 	for(page=0; page<=xf86ctx.max_page; page++)
 	{
-	  char *page_start = xf86ctx.device->data +
+	  unsigned char *page_start = xf86ctx.device->data +
 	       page * xf86ctx.aligned_viewport_height *
 	       xf86ctx.device->mode.bytesPerScanline;
           
@@ -411,6 +411,11 @@ void xf86_dga2_update_display(struct mame_bitmap *bitmap,
       xf86ctx.aligned_viewport_height, XDGAFlipRetrace);
 
   XDGASync(display,xf86ctx.screen);
+
+  /* If the ui is dirty force a fullscreen update the next number of pages
+     updates, so that it gets updated in all pages */
+  if(flags & SYSDEP_DISPLAY_UI_DIRTY)
+    xf86ctx.page_dirty = xf86ctx.max_page + 1;
 }
 
 void xf86_dga2_close_display(void)
