@@ -92,13 +92,18 @@ void lynx_draw_lines(int newline)
 
 	if (osd_skip_this_frame()) newline=-1;
 
-	if (newline==-1) yend=102;
-	else yend=newline;
+	if (newline==-1)
+		yend = 102;
+	else
+		yend = newline;
 
-	if (yend>102) yend=102;
+	if (yend > 102)
+		yend=102;
+
 	if (yend==lynx_line_y)
 	{
-		if (newline==-1) lynx_line_y=0;
+		if (newline==-1)
+			lynx_line_y=0;
 		return;
 	}
 
@@ -106,45 +111,65 @@ void lynx_draw_lines(int newline)
 	if (mikey.data[0x92]&2)
 		j-=160*102/2-1;
 
-	if (lynx_rotate&3) { // rotation
+	if (lynx_rotate&3)
+	{
+		/* rotation */
 		h=160; w=102;
 		if ( ((lynx_rotate==1)&&(mikey.data[0x92]&2))
-				||( (lynx_rotate==2)&&!(mikey.data[0x92]&2)) ) {
-			for (;lynx_line_y<yend;lynx_line_y++) {
-				for (x=160-2;x>=0;j++,x-=2) {
+				||( (lynx_rotate==2)&&!(mikey.data[0x92]&2)) )
+		{
+			for (;lynx_line_y<yend;lynx_line_y++)
+			{
+				for (x=160-2;x>=0;j++,x-=2)
+				{
 					plot_pixel(Machine->scrbitmap, lynx_line_y, x+1, lynx_palette[mem[j]>>4]);
 					plot_pixel(Machine->scrbitmap, lynx_line_y, x, lynx_palette[mem[j]&0xf]);
 				}
 			}
-		} else {
-			for (;lynx_line_y<yend;lynx_line_y++) {
-				for (x=0;x<160;j++,x+=2) {
+		}
+		else
+		{
+			for (;lynx_line_y<yend;lynx_line_y++)
+			{
+				for (x=0;x<160;j++,x+=2)
+				{
 					plot_pixel(Machine->scrbitmap, 102-1-lynx_line_y, x, lynx_palette[mem[j]>>4]);
 					plot_pixel(Machine->scrbitmap, 102-1-lynx_line_y, x+1, lynx_palette[mem[j]&0xf]);
 				}
 			}
 		}
-	} else {
+	}
+	else
+	{
 		w=160; h=102;
-		if ( mikey.data[0x92]&2) {
-			for (;lynx_line_y<yend;lynx_line_y++) {
-				for (x=160-2;x>=0;j++,x-=2) {
+		if ( mikey.data[0x92]&2)
+		{
+			for (;lynx_line_y<yend;lynx_line_y++)
+			{
+				for (x=160-2;x>=0;j++,x-=2)
+				{
 					plot_pixel(Machine->scrbitmap, x+1, 102-1-lynx_line_y, lynx_palette[mem[j]>>4]);
 					plot_pixel(Machine->scrbitmap, x, 102-1-lynx_line_y, lynx_palette[mem[j]&0xf]);
 				}
 			}
-		} else {
-			for (;lynx_line_y<yend;lynx_line_y++) {
-				for (x=0;x<160;j++,x+=2) {
+		}
+		else
+		{
+			for (;lynx_line_y<yend;lynx_line_y++)
+			{
+				for (x=0;x<160;j++,x+=2)
+				{
 					plot_pixel(Machine->scrbitmap, x, lynx_line_y, lynx_palette[mem[j]>>4]);
 					plot_pixel(Machine->scrbitmap, x+1, lynx_line_y, lynx_palette[mem[j]&0xf]);
 				}
 			}
 		}
 	}
-	if (newline==-1) {
+	if (newline==-1)
+	{
 		lynx_line_y=0;
-		if ((w!=width)||(h!=height)) {
+		if ((w!=width)||(h!=height))
+		{
 			width=w;
 			height=h;
 			set_visible_area(0,width-1,0, height-1);
@@ -154,14 +179,15 @@ void lynx_draw_lines(int newline)
 
 static VIDEO_UPDATE( lynx )
 {
-    int j;
+	int j;
 
-    lynx_audio_debug(bitmap);
+	lynx_audio_debug(bitmap);
 
-    for (j=0; j<debug_pos; j++) {
-	ui_text(bitmap, debug_strings[j], 0, j*8);
-    }
-    debug_pos=0;
+	for (j = 0; j < debug_pos; j++)
+	{
+		ui_text(bitmap, debug_strings[j], 0, j*8);
+	}
+	debug_pos = 0;
 }
 
 static PALETTE_INIT( lynx )
@@ -169,22 +195,25 @@ static PALETTE_INIT( lynx )
     int i;
 
     for (i=0; i< 0x1000; i++)
-		palette_set_color(i, (i&0xf)*16, ((i&0xf0)>>4)*16, ((i&0xf00)>>8)*16);
-
-	/*memcpy(colortable, lynx_colortable, sizeof(lynx_colortable));*/
+	{
+		palette_set_color(i,
+			((i >> 0) & 0x0f) * 0x11,
+			((i >> 4) & 0x0f) * 0x11,
+			((i >> 8) & 0x0f) * 0x11);
+	}
 }
 
 struct CustomSound_interface lynx_sound_interface =
 {
 	lynx_custom_start,
-	lynx_custom_stop,
+	NULL,
 	lynx_custom_update
 };
 
 struct CustomSound_interface lynx2_sound_interface =
 {
 	lynx2_custom_start,
-	lynx_custom_stop,
+	NULL,
 	lynx_custom_update
 };
 

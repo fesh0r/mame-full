@@ -20,6 +20,9 @@ Source Changes:
 ---------------
 - Made some debugger fixes when dealing with 8 or 16 bit numbers.  [Nate
   Woods]
+  
+- Fixed a bug in the handline of low resolution systems; the UI would not be
+  properly rendered.  [Nate Woods]
 
 - [Windows] When the new UI is active and MESS is paused, MESS now should not
   waste any excess CPU time.  [Nate Woods]

@@ -1,5 +1,6 @@
-#ifndef __LYNX_H__
-#define __LYNX_H__
+#ifndef LYNX_H
+#define LYNX_H
+
 #include "driver.h"
 
 extern UINT32 lynx_palette[0x10];
@@ -26,6 +27,7 @@ extern int lynx_rotate;
 typedef struct {
 	UINT8 data[0x100];
 } MIKEY;
+
 extern MIKEY mikey;
 WRITE_HANDLER( lynx_memory_config );
 WRITE_HANDLER(mikey_write);
@@ -34,24 +36,17 @@ WRITE_HANDLER(suzy_write);
 READ_HANDLER(suzy_read);
 void lynx_timer_count_down(int nr);
 
-#ifdef RUNTIME_LOADER
-# ifdef __cplusplus
-extern "C" void lynx_runtime_loader_init(void);
-# else
-extern void lynx_runtime_loader_init(void);
-# endif
-#endif
-
 void lynx_audio_debug(struct mame_bitmap *bitmap);
 void lynx_audio_reset(void);
 void lynx_audio_write(int offset, UINT8 data);
 UINT8 lynx_audio_read(int offset);
 void lynx_audio_count_down(int nr);
-extern int lynx_custom_start (const struct MachineSound *driver);
-extern int lynx2_custom_start (const struct MachineSound *driver);
-extern void lynx_custom_stop (void);
-extern void lynx_custom_update (void);
-#endif
+int lynx_custom_start (const struct MachineSound *driver);
+int lynx2_custom_start (const struct MachineSound *driver);
+void lynx_custom_update (void);
+
+#endif /* LYNX_H */
+
 
 #ifdef INCLUDE_LYNX_LINE_FUNCTION
 	int j, xi, wi, i;

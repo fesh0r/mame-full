@@ -735,7 +735,7 @@ void artwork_update_video_and_audio(struct mame_display *display)
 	int artwork_changed = 0, ui_visible = 0;
 
 	/* do nothing if no artwork */
-	if (!artwork_list)
+	if (!artwork_list && !uioverlay)
 	{
 		osd_update_video_and_audio(display);
 		return;

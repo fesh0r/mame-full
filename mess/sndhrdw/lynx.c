@@ -328,32 +328,36 @@ static void lynx2_update (int param, INT16 **buffer, int length)
 
 static void lynx_audio_init(void)
 {
-    int i;
-    shift_mask=(int*)malloc(512*sizeof(int));
-    assert(shift_mask!=0);
+	int i;
+	shift_mask = (int *) auto_malloc(512 * sizeof(int));
+	assert(shift_mask);
 
-    shift_xor=(int*)malloc(4096*sizeof(int));
-    assert(shift_xor!=0);
+	shift_xor = (int *) auto_malloc(4096 * sizeof(int));
+	assert(shift_xor);
 
-    for (i=0; i<512; i++) {
-	shift_mask[i]=0;
-	if (i&1) shift_mask[i]|=1;
-	if (i&2) shift_mask[i]|=2;
-	if (i&4) shift_mask[i]|=4;
-	if (i&8) shift_mask[i]|=8;
-	if (i&0x10) shift_mask[i]|=0x10;
-	if (i&0x20) shift_mask[i]|=0x20;
-	if (i&0x40) shift_mask[i]|=0x400;
-	if (i&0x80) shift_mask[i]|=0x800;
-	if (i&0x100) shift_mask[i]|=0x80;
-    }
-    for (i=0; i<4096; i++) {
-	int j;
-	shift_xor[i]=1;
-	for (j=4096/2; j>0; j>>=1) {
-	    if (i&j) shift_xor[i]^=1;
+	for (i=0; i<512; i++)
+	{
+		shift_mask[i]=0;
+		if (i&1) shift_mask[i]|=1;
+		if (i&2) shift_mask[i]|=2;
+		if (i&4) shift_mask[i]|=4;
+		if (i&8) shift_mask[i]|=8;
+		if (i&0x10) shift_mask[i]|=0x10;
+		if (i&0x20) shift_mask[i]|=0x20;
+		if (i&0x40) shift_mask[i]|=0x400;
+		if (i&0x80) shift_mask[i]|=0x800;
+		if (i&0x100) shift_mask[i]|=0x80;
 	}
-    }
+	for (i=0; i<4096; i++)
+	{
+		int j;
+		shift_xor[i]=1;
+		for (j=4096/2; j>0; j>>=1)
+		{
+			if (i & j)
+				shift_xor[i] ^= 1;
+		}
+	}
 }
 
 void lynx_audio_reset(void)
@@ -393,15 +397,6 @@ int lynx2_custom_start (const struct MachineSound *driver)
     
     lynx_audio_init();
     return 0;
-}
-
-/************************************/
-/* Sound handler stop               */
-/************************************/
-void lynx_custom_stop (void)
-{
-    free(shift_xor);
-    free(shift_mask);
 }
 
 void lynx_custom_update (void)
