@@ -399,6 +399,8 @@ static int rsdos_diskimage_writefile(IMAGE *img, const char *fname, STREAM *sour
 	if (err)
 		return err;
 
+	ent.ftype = options->ftype;
+	ent.asciiflag = options->fascii ? 255 : 0;
 	ent.lastsectorbytes_lsb = sz % 256;
 	ent.lastsectorbytes_msb = (((sz % 256) == 0) && (sz > 0)) ? 1 : 0;
 	gptr = &ent.first_granule;

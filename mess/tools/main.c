@@ -210,9 +210,9 @@ static int cmd_put(struct command *c, int argc, char *argv[])
 	optionvals[2] = &opts.faddr;
 	optionvals[3] = &opts.fbank;
 
-	newfname = (argc >= 3) && (argv[2][0] != '-') ? argv[2] : NULL;
+	newfname = (argc >= 4) && (argv[3][0] != '-') ? argv[3] : NULL;
 
-	if (parse_options(argc - (newfname ? 3 : 2), argv + (newfname ? 3 : 2), options, optionvals))
+	if (parse_options(argc - (newfname ? 4 : 3), argv + (newfname ? 4 : 3), options, optionvals))
 		return -1;
 
 	err = img_open_byname(argv[0], argv[1], OSD_FOPEN_RW, &img);
