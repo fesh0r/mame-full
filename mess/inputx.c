@@ -37,7 +37,7 @@ struct CharInfo
 {
 	unicode_char_t ch;
 	const char *name;
-	const char *alternate;
+	const char *alternate;	/* alternative string, in UTF-8 */
 };
 
 static const struct CharInfo charinfo[] =
@@ -165,13 +165,135 @@ static const struct CharInfo charinfo[] =
 	{ 0x2047,					NULL,			"??" },		/* double question mark */
 	{ 0x2048,					NULL,			"?!" },		/* question exclamation mark */
 	{ 0x2049,					NULL,			"!?" },		/* exclamation question mark */
+	{ UCHAR_MAMEKEY(F1),		"F1",			NULL },		/* F1 function key */
+	{ UCHAR_MAMEKEY(F2),		"F2",			NULL },		/* F2 function key */
+	{ UCHAR_MAMEKEY(F3),		"F3",			NULL },		/* F3 function key */
+	{ UCHAR_MAMEKEY(F4),		"F4",			NULL },		/* F4 function key */
+	{ UCHAR_MAMEKEY(F5),		"F5",			NULL },		/* F5 function key */
+	{ UCHAR_MAMEKEY(F6),		"F6",			NULL },		/* F6 function key */
+	{ UCHAR_MAMEKEY(F7),		"F7",			NULL },		/* F7 function key */
+	{ UCHAR_MAMEKEY(F8),		"F8",			NULL },		/* F8 function key */
+	{ UCHAR_MAMEKEY(F9),		"F9",			NULL },		/* F9 function key */
+	{ UCHAR_MAMEKEY(F10),		"F10",			NULL },		/* F10 function key */
+	{ UCHAR_MAMEKEY(F11),		"F11",			NULL },		/* F11 function key */
+	{ UCHAR_MAMEKEY(F12),		"F12",			NULL },		/* F12 function key */
+	{ UCHAR_MAMEKEY(F13),		"F13",			NULL },		/* F13 function key */
+	{ UCHAR_MAMEKEY(F14),		"F14",			NULL },		/* F14 function key */
+	{ UCHAR_MAMEKEY(F15),		"F15",			NULL },		/* F15 function key */
 	{ UCHAR_MAMEKEY(ESC),		"Esc",			"\032" },	/* esc key */
 	{ UCHAR_MAMEKEY(DEL),		"Delete",		"\010" },	/* delete key */
 	{ UCHAR_MAMEKEY(HOME),		"Home",			"\014" },	/* home key */
 	{ UCHAR_MAMEKEY(LSHIFT),	"Left Shift",	NULL },		/* left shift key */
 	{ UCHAR_MAMEKEY(RSHIFT),	"Right Shift",	NULL },		/* right shift key */
 	{ UCHAR_MAMEKEY(LCONTROL),	"Left Ctrl",	NULL },		/* left control key */
-	{ UCHAR_MAMEKEY(RCONTROL),	"Right Ctrl",	NULL }		/* right control key */
+	{ UCHAR_MAMEKEY(RCONTROL),	"Right Ctrl",	NULL },		/* right control key */
+	{ 0xff01,					NULL,			"!" },		/* fullwidth exclamation point */
+	{ 0xff02,					NULL,			"\"" },		/* fullwidth quotation mark */
+	{ 0xff03,					NULL,			"#" },		/* fullwidth number sign */
+	{ 0xff04,					NULL,			"$" },		/* fullwidth dollar sign */
+	{ 0xff05,					NULL,			"%" },		/* fullwidth percent sign */
+	{ 0xff06,					NULL,			"&" },		/* fullwidth ampersand */
+	{ 0xff07,					NULL,			"\'" },		/* fullwidth apostrophe */
+	{ 0xff08,					NULL,			"(" },		/* fullwidth left parenthesis */
+	{ 0xff09,					NULL,			")" },		/* fullwidth right parenthesis */
+	{ 0xff0a,					NULL,			"*" },		/* fullwidth asterisk */
+	{ 0xff0b,					NULL,			"+" },		/* fullwidth plus */
+	{ 0xff0c,					NULL,			"," },		/* fullwidth comma */
+	{ 0xff0d,					NULL,			"-" },		/* fullwidth minus */
+	{ 0xff0e,					NULL,			"." },		/* fullwidth period */
+	{ 0xff0f,					NULL,			"/" },		/* fullwidth slash */
+	{ 0xff10,					NULL,			"0" },		/* fullwidth zero */
+	{ 0xff11,					NULL,			"1" },		/* fullwidth one */
+	{ 0xff12,					NULL,			"2" },		/* fullwidth two */
+	{ 0xff13,					NULL,			"3" },		/* fullwidth three */
+	{ 0xff14,					NULL,			"4" },		/* fullwidth four */
+	{ 0xff15,					NULL,			"5" },		/* fullwidth five */
+	{ 0xff16,					NULL,			"6" },		/* fullwidth six */
+	{ 0xff17,					NULL,			"7" },		/* fullwidth seven */
+	{ 0xff18,					NULL,			"8" },		/* fullwidth eight */
+	{ 0xff19,					NULL,			"9" },		/* fullwidth nine */
+	{ 0xff1a,					NULL,			":" },		/* fullwidth colon */
+	{ 0xff1b,					NULL,			";" },		/* fullwidth semicolon */
+	{ 0xff1c,					NULL,			"<" },		/* fullwidth less than sign */
+	{ 0xff1d,					NULL,			"=" },		/* fullwidth equals sign */
+	{ 0xff1e,					NULL,			">" },		/* fullwidth greater than sign */
+	{ 0xff1f,					NULL,			"?" },		/* fullwidth question mark */
+	{ 0xff20,					NULL,			"@" },		/* fullwidth at sign */
+	{ 0xff21,					NULL,			"A" },		/* fullwidth 'A' */
+	{ 0xff22,					NULL,			"B" },		/* fullwidth 'B' */
+	{ 0xff23,					NULL,			"C" },		/* fullwidth 'C' */
+	{ 0xff24,					NULL,			"D" },		/* fullwidth 'D' */
+	{ 0xff25,					NULL,			"E" },		/* fullwidth 'E' */
+	{ 0xff26,					NULL,			"F" },		/* fullwidth 'F' */
+	{ 0xff27,					NULL,			"G" },		/* fullwidth 'G' */
+	{ 0xff28,					NULL,			"H" },		/* fullwidth 'H' */
+	{ 0xff29,					NULL,			"I" },		/* fullwidth 'I' */
+	{ 0xff2a,					NULL,			"J" },		/* fullwidth 'J' */
+	{ 0xff2b,					NULL,			"K" },		/* fullwidth 'K' */
+	{ 0xff2c,					NULL,			"L" },		/* fullwidth 'L' */
+	{ 0xff2d,					NULL,			"M" },		/* fullwidth 'M' */
+	{ 0xff2e,					NULL,			"N" },		/* fullwidth 'N' */
+	{ 0xff2f,					NULL,			"O" },		/* fullwidth 'O' */
+	{ 0xff30,					NULL,			"P" },		/* fullwidth 'P' */
+	{ 0xff31,					NULL,			"Q" },		/* fullwidth 'Q' */
+	{ 0xff32,					NULL,			"R" },		/* fullwidth 'R' */
+	{ 0xff33,					NULL,			"S" },		/* fullwidth 'S' */
+	{ 0xff34,					NULL,			"T" },		/* fullwidth 'T' */
+	{ 0xff35,					NULL,			"U" },		/* fullwidth 'U' */
+	{ 0xff36,					NULL,			"V" },		/* fullwidth 'V' */
+	{ 0xff37,					NULL,			"W" },		/* fullwidth 'W' */
+	{ 0xff38,					NULL,			"X" },		/* fullwidth 'X' */
+	{ 0xff39,					NULL,			"Y" },		/* fullwidth 'Y' */
+	{ 0xff3a,					NULL,			"Z" },		/* fullwidth 'Z' */
+	{ 0xff3b,					NULL,			"[" },		/* fullwidth left bracket */
+	{ 0xff3c,					NULL,			"\\" },		/* fullwidth backslash */
+	{ 0xff3d,					NULL,			"]"	},		/* fullwidth right bracket */
+	{ 0xff3e,					NULL,			"^" },		/* fullwidth caret */
+	{ 0xff3f,					NULL,			"_" },		/* fullwidth underscore */
+	{ 0xff40,					NULL,			"`" },		/* fullwidth backquote */
+	{ 0xff41,					NULL,			"a" },		/* fullwidth 'a' */
+	{ 0xff42,					NULL,			"b" },		/* fullwidth 'b' */
+	{ 0xff43,					NULL,			"c" },		/* fullwidth 'c' */
+	{ 0xff44,					NULL,			"d" },		/* fullwidth 'd' */
+	{ 0xff45,					NULL,			"e" },		/* fullwidth 'e' */
+	{ 0xff46,					NULL,			"f" },		/* fullwidth 'f' */
+	{ 0xff47,					NULL,			"g" },		/* fullwidth 'g' */
+	{ 0xff48,					NULL,			"h" },		/* fullwidth 'h' */
+	{ 0xff49,					NULL,			"i" },		/* fullwidth 'i' */
+	{ 0xff4a,					NULL,			"j" },		/* fullwidth 'j' */
+	{ 0xff4b,					NULL,			"k" },		/* fullwidth 'k' */
+	{ 0xff4c,					NULL,			"l" },		/* fullwidth 'l' */
+	{ 0xff4d,					NULL,			"m" },		/* fullwidth 'm' */
+	{ 0xff4e,					NULL,			"n" },		/* fullwidth 'n' */
+	{ 0xff4f,					NULL,			"o" },		/* fullwidth 'o' */
+	{ 0xff50,					NULL,			"p" },		/* fullwidth 'p' */
+	{ 0xff51,					NULL,			"q" },		/* fullwidth 'q' */
+	{ 0xff52,					NULL,			"r" },		/* fullwidth 'r' */
+	{ 0xff53,					NULL,			"s" },		/* fullwidth 's' */
+	{ 0xff54,					NULL,			"t" },		/* fullwidth 't' */
+	{ 0xff55,					NULL,			"u" },		/* fullwidth 'u' */
+	{ 0xff56,					NULL,			"v" },		/* fullwidth 'v' */
+	{ 0xff57,					NULL,			"w" },		/* fullwidth 'w' */
+	{ 0xff58,					NULL,			"x" },		/* fullwidth 'x' */
+	{ 0xff59,					NULL,			"y" },		/* fullwidth 'y' */
+	{ 0xff5a,					NULL,			"z" },		/* fullwidth 'z' */
+	{ 0xff5b,					NULL,			"{" },		/* fullwidth left brace */
+	{ 0xff5c,					NULL,			"|" },		/* fullwidth vertical bar */
+	{ 0xff5d,					NULL,			"}" },		/* fullwidth right brace */
+	{ 0xff5e,					NULL,			"~" },		/* fullwidth tilde */
+	{ 0xff5f,					NULL,			"((" },		/* fullwidth double left parenthesis */
+	{ 0xff60,					NULL,			"))" },		/* fullwidth double right parenthesis */
+	{ 0xffe0,					NULL,			"\xC2\xA2" },		/* fullwidth cent sign */
+	{ 0xffe1,					NULL,			"\xC2\xA3" },		/* fullwidth pound sign */
+	{ 0xffe4,					NULL,			"\xC2\xA4" },		/* fullwidth broken bar */
+	{ 0xffe5,					NULL,			"\xC2\xA5" },		/* fullwidth yen sign */
+	{ 0xffe6,					NULL,			"\xE2\x82\xA9" },	/* fullwidth won sign */
+	{ 0xffe9,					NULL,			"\xE2\x86\x90" },	/* fullwidth left arrow */
+	{ 0xffea,					NULL,			"\xE2\x86\x91" },	/* fullwidth up arrow */
+	{ 0xffeb,					NULL,			"\xE2\x86\x92" },	/* fullwidth right arrow */
+	{ 0xffec,					NULL,			"\xE2\x86\x93" },	/* fullwidth down arrow */
+	{ 0xffed,					NULL,			"\xE2\x96\xAA" },	/* fullwidth solid box */
+	{ 0xffee,					NULL,			"\xE2\x97\xA6" }	/* fullwidth open circle */	
 };
 
 #define INVALID_CHAR '?'
@@ -229,7 +351,9 @@ static const char *charstr(unicode_char_t ch)
 	}
 	return buf;
 }
-#endif
+#endif /* LOG_INPUTX */
+
+
 
 static int scan_keys(const struct InputPort *input_ports, struct InputCode *codes, UINT16 *ports, const struct InputPort **shift_ports, int keys, int shift)
 {
@@ -288,10 +412,14 @@ static int scan_keys(const struct InputPort *input_ports, struct InputCode *code
 	return result;
 }
 
+
+
 static unicode_char_t unicode_tolower(unicode_char_t c)
 {
 	return (c < 128) ? tolower((char) c) : c;
 }
+
+
 
 #define CODE_BUFFER_SIZE	(sizeof(struct InputCode) * NUM_CODES)
 
@@ -330,6 +458,8 @@ static int build_codes(const struct InputPort *input_ports, struct InputCode *co
 done:
 	return rc;
 }
+
+
 
 /***************************************************************************
 
@@ -504,6 +634,8 @@ static int can_post_key_alternate(unicode_char_t ch)
 {
 	const char *s;
 	const struct CharInfo *ci;
+	unicode_char_t uchar;
+	int rc;
 
 	ci = find_charinfo(ch);
 	s = ci ? ci->alternate : NULL;
@@ -512,9 +644,12 @@ static int can_post_key_alternate(unicode_char_t ch)
 
 	while(*s)
 	{
-		if (!can_post_key_directly(*s))
+		rc = uchar_from_utf8(&uchar, s, strlen(s));
+		if (rc <= 0)
 			return 0;
-		s++;
+		if (!can_post_key_directly(uchar))
+			return 0;
+		s += rc;
 	}
 	return 1;
 }
@@ -625,7 +760,10 @@ void inputx_postn_rate(const unicode_char_t *text, size_t text_len, mame_time ra
 					assert(ci && ci->alternate);
 					s = ci->alternate;
 					while(*s)
-						internal_post_key(*(s++));
+					{
+						s += uchar_from_utf8(&ch, s, strlen(s));
+						internal_post_key(ch);
+					}
 				}
 			}
 			else
@@ -725,24 +863,29 @@ void inputx_update(UINT32 *ports)
 void inputx_handle_mess_extensions(struct InputPort *ipt)
 {
 	char buf[256];
-	int i, pos = 0;
+	int i, pos;
 	unicode_char_t ch;
 
-	/* process MESS specific extensions to the port */
-	buf[0] = '\0';
-
-	/* is this a keyboard port with the default name? */
-	if (ipt->type == IPT_KEYBOARD && (ipt->name == IP_NAME_DEFAULT))
+	/* process MESS specific extensions to all ports */
+	while(ipt->type != IPT_END)
 	{
-		for (i = 0; ipt->keyboard.chars[i] && (i < sizeof(ipt->keyboard.chars)
-			/ sizeof(ipt->keyboard.chars[0])); i++)
+		/* is this a keyboard port with the default name? */
+		if (ipt->type == IPT_KEYBOARD && (ipt->name == IP_NAME_DEFAULT))
 		{
-			ch = ipt->keyboard.chars[i];
-			pos += sprintf(&buf[pos], "%s ", inputx_key_name(ch));
-		}
+			buf[0] = '\0';
+			pos = 0;
 
-		rtrim(buf);
-		ipt->name = auto_strdup(buf);
+			for (i = 0; ipt->keyboard.chars[i] && (i < sizeof(ipt->keyboard.chars)
+				/ sizeof(ipt->keyboard.chars[0])); i++)
+			{
+				ch = ipt->keyboard.chars[i];
+				pos += sprintf(&buf[pos], "%s ", inputx_key_name(ch));
+			}
+
+			rtrim(buf);
+			ipt->name = auto_strdup(buf);
+		}
+		ipt++;
 	}
 }
 

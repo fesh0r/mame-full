@@ -449,7 +449,7 @@ static void pc_cga_plantronics_w(int data)
  */
 static int pc_cga_status_r(void)
 {
-	int data = (input_port_0_r(0) & 0x08) | cga.status;
+	int data = ((~input_port_0_r(0)) & 0x08) | cga.status;
 	cga.status ^= 0x01;
 	return data;
 }

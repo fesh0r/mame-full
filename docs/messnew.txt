@@ -8,13 +8,17 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
-(none)
+- [PC1512] Fixed a vblank regression introduced in the 0.85 input port changes
+  [Andrew Jenner]
 
 
 
 User Interface Changes:
 -----------------------
 - [Windows] Added an "Analog Controls" dialog to the new UI.  [Nate Woods]
+
+- [Windows] The MAME arrow key chars now show up in the new UI remap dialogs
+  [Nate Woods]
 
 - [Windows GUI] Added a tab view that provides an alternate way to load and
   unload software images.  [Nate Woods]
@@ -29,7 +33,7 @@ Imgtool Changes:
 
 Source Changes:
 ----------------
-(none)
+- Fixed default names for input ports that use PORT_CHAR.  [Nate Woods]
 
 
 
