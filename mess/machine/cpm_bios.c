@@ -32,7 +32,6 @@ typedef struct {
 }	SECBUF;
 
 static int curdisk = 0; 			/* currently selected disk */
-static int cur_track[NDSK];         /* current track for each drive */
 static int num_disks = 0;			/* number of supported disks */
 static int fmt[NDSK] = {0,};		/* index of disk formats */
 static int mode[NDSK] = {0,};		/* 0 read only, !0 read/write */
@@ -44,8 +43,6 @@ static void *lp = NULL; 			/* list file handle (ie. PIP LST:=X:FILE.EXT) */
 //static void *pp = NULL;			/* punch file handle (ie. PIP PUN:=X:FILE.EXT) */
 //static void *rp = NULL;			/* reader file handle (ie. PIP X:FILE.EXE=RDR:) */
 static int dma = 0; 				/* DMA transfer address */
-
-static SECBUF dsk[NDSK] = {{0,}, };
 
 static UINT8 zeropage0[8] =
 {
