@@ -668,6 +668,103 @@ const struct ImageModule *find_filter_module(int filter_index,
 
 
 
+static imgtoolerr_t get_recursive_directory(imgtool_image *image, const char *path, LPCTSTR local_path)
+{
+	imgtoolerr_t err;
+	imgtool_imageenum *imageenum;
+	imgtool_dirent entry;
+	char subpath[1024];
+	TCHAR local_subpath[MAX_PATH];
+	char path_separator;
+
+	path_separator = img_module(image)->path_separator;
+
+	if (!CreateDirectory(local_path, NULL))
+	{
+		err = IMGTOOLERR_UNEXPECTED;
+		goto done;
+	}
+
+	err = img_beginenum(image, path, &imageenum);
+	if (err)
+		goto done;
+
+	do
+	{
+		err = img_nextenum(imageenum, &entry);
+		if (err)
+			goto done;
+
+		if (!entry.eof)
+		{
+			_sntprintf(local_subpath, sizeof(local_subpath) / sizeof(local_subpath[0]), TEXT("%s\\%s"), local_path, U2T(entry.filename));
+			snprintf(subpath, sizeof(subpath) / sizeof(subpath[0]), "%s%c%s", path, path_separator, entry.filename);
+			
+			if (entry.directory)
+				err = get_recursive_directory(image, subpath, local_subpath);
+			else
+				err = img_getfile(image, subpath, T2A(local_subpath), NULL);
+			if (err)
+				goto done;
+		}
+	}
+	while(!entry.eof);
+
+done:
+	if (imageenum)
+		img_closeenum(imageenum);
+	return err;
+}
+
+
+
+
+static imgtoolerr_t put_recursive_directory(imgtool_image *image, LPCTSTR local_path, const char *path)
+{
+	imgtoolerr_t err;
+	HANDLE h = INVALID_HANDLE_VALUE;
+	WIN32_FIND_DATA wfd;
+	char subpath[1024];
+	TCHAR local_subpath[MAX_PATH];
+	char path_separator;
+
+	path_separator = img_module(image)->path_separator;
+
+	err = img_createdir(image, path);
+	if (err)
+		goto done;
+
+	_sntprintf(local_subpath, sizeof(local_subpath) / sizeof(local_subpath[0]), TEXT("%s\\*.*"), local_path, wfd.cFileName);
+
+	h = FindFirstFile(local_subpath, &wfd);
+	if (h && (h != INVALID_HANDLE_VALUE))
+	{
+		do
+		{
+			if (_tcscmp(wfd.cFileName, TEXT(".")) && _tcscmp(wfd.cFileName, TEXT("..")))
+			{
+				_sntprintf(local_subpath, sizeof(local_subpath) / sizeof(local_subpath[0]), TEXT("%s\\%s"), local_path, wfd.cFileName);
+				snprintf(subpath, sizeof(subpath) / sizeof(subpath[0]), "%s%c%s", path, path_separator, T2U(wfd.cFileName));
+
+				if (wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+					err = put_recursive_directory(image, local_subpath, subpath);
+				else
+					err = img_putfile(image, subpath, T2A(local_subpath), NULL, NULL);
+				if (err)
+					goto done;
+			}
+		}
+		while(FindNextFile(h, &wfd));
+	}
+
+done:
+	if (h && (h != INVALID_HANDLE_VALUE))
+		FindClose(h);
+	return err;
+}
+
+
+
 imgtoolerr_t wimgtool_open_image(HWND window, const struct ImageModule *module,
 	const char *filename, int read_or_write)
 {
@@ -899,57 +996,6 @@ done:
 	if (err)
 		wimgtool_report_error(window, err, image_filename, ofn.lpstrFile);
 }
-
-
-
-static imgtoolerr_t get_recursive_directory(imgtool_image *image, const char *path, LPCTSTR local_path)
-{
-	imgtoolerr_t err;
-	imgtool_imageenum *imageenum;
-	imgtool_dirent entry;
-	char subpath[1024];
-	TCHAR local_subpath[MAX_PATH];
-	char path_separator;
-
-	path_separator = img_module(image)->path_separator;
-
-	if (!CreateDirectory(local_path, NULL))
-	{
-		err = IMGTOOLERR_UNEXPECTED;
-		goto done;
-	}
-
-	err = img_beginenum(image, path, &imageenum);
-	if (err)
-		goto done;
-
-	do
-	{
-		err = img_nextenum(imageenum, &entry);
-		if (err)
-			goto done;
-
-		if (!entry.eof)
-		{
-			_sntprintf(local_subpath, sizeof(local_subpath) / sizeof(local_subpath[0]), TEXT("%s\\%s"), local_path, U2T(entry.filename));
-			snprintf(subpath, sizeof(subpath) / sizeof(subpath[0]), "%s%c%s", path, path_separator, entry.filename);
-			
-			if (entry.directory)
-				err = get_recursive_directory(image, subpath, local_subpath);
-			else
-				err = img_getfile(image, subpath, T2A(local_subpath), NULL);
-			if (err)
-				goto done;
-		}
-	}
-	while(!entry.eof);
-
-done:
-	if (imageenum)
-		img_closeenum(imageenum);
-	return err;
-}
-
 
 
 
@@ -1227,6 +1273,7 @@ static void drop_files(HWND window, HDROP drop)
 	struct wimgtool_info *info;
 	UINT count, i;
 	TCHAR buffer[MAX_PATH];
+	char subpath[1024];
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
 
 	info = get_wimgtool_info(window);
@@ -1236,7 +1283,14 @@ static void drop_files(HWND window, HDROP drop)
 	{
 		DragQueryFile(drop, i, buffer, sizeof(buffer) / sizeof(buffer[0]));
 
-		err = img_putfile(info->image, NULL, buffer, NULL, NULL);
+		// figure out the file/dir name on the image
+		snprintf(subpath, sizeof(subpath) / sizeof(subpath[0]), "%s%s",
+			info->current_directory, osd_basename(T2U(buffer)));
+
+		if (GetFileAttributes(buffer) & FILE_ATTRIBUTE_DIRECTORY)
+			err = put_recursive_directory(info->image, buffer, subpath);
+		else
+			err = img_putfile(info->image, subpath, T2A(buffer), NULL, NULL);
 		if (err)
 			goto done;
 	}
@@ -1398,6 +1452,7 @@ static void init_menu(HWND window, HMENU menu)
 	struct imgtool_module_features features;
 	struct selection_info si;
 	unsigned int can_read, can_write, can_createdir, can_delete;
+	LONG lvstyle;
 
 	memset(&features, 0, sizeof(features));
 	memset(&si, 0, sizeof(si));
@@ -1426,6 +1481,14 @@ static void init_menu(HWND window, HMENU menu)
 		MF_BYCOMMAND | (can_createdir ? MF_ENABLED : MF_GRAYED));
 	EnableMenuItem(menu, ID_IMAGE_DELETE,
 		MF_BYCOMMAND | (can_delete ? MF_ENABLED : MF_GRAYED));
+
+	lvstyle = GetWindowLong(info->listview, GWL_STYLE) & LVS_TYPEMASK;
+	CheckMenuItem(menu, ID_VIEW_ICONS,
+		MF_BYCOMMAND | (lvstyle == LVS_ICON) ? MF_CHECKED : MF_UNCHECKED);
+	CheckMenuItem(menu, ID_VIEW_LIST,
+		MF_BYCOMMAND | (lvstyle == LVS_LIST) ? MF_CHECKED : MF_UNCHECKED);
+	CheckMenuItem(menu, ID_VIEW_DETAILS,
+		MF_BYCOMMAND | (lvstyle == LVS_REPORT) ? MF_CHECKED : MF_UNCHECKED);
 }
 
 

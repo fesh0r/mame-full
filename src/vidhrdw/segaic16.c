@@ -118,6 +118,7 @@ UINT8 segaic16_tilemap_page;
  *
  *************************************/
 
+static int palette_entries;
 static UINT8 normal_pal[32];
 static UINT8 shadow_pal[32];
 static UINT8 hilight_pal[32];
@@ -147,12 +148,15 @@ static UINT8 hilight_pal[32];
 	is bit 15 of each color RAM entry.
 */
 
-void segaic16_init_palette(void)
+void segaic16_init_palette(int entries)
 {
 	static const int resistances_normal[6] = { 3900, 2000, 1000, 1000/2, 1000/4, 0   };
 	static const int resistances_sh[6]     = { 3900, 2000, 1000, 1000/2, 1000/4, 470 };
 	double weights[2][6];
 	int i;
+	
+	/* compute the number of palette entries */
+	palette_entries = entries;
 
 	/* compute weight table for regular palette entries */
 	compute_resistor_weights(0, 255, -1.0,
@@ -207,9 +211,9 @@ WRITE16_HANDLER( segaic16_paletteram_w )
 	b = ((newval >> 14) & 0x01) | ((newval >> 7) & 0x1e);
 
 	/* normal colors */
-	palette_set_color(offset,        normal_pal[r],  normal_pal[g],  normal_pal[b]);
-	palette_set_color(offset + 2048, shadow_pal[r],  shadow_pal[g],  shadow_pal[b]);
-	palette_set_color(offset + 4096, hilight_pal[r], hilight_pal[g], hilight_pal[b]);
+	palette_set_color(offset + 0 * palette_entries, normal_pal[r],  normal_pal[g],  normal_pal[b]);
+	palette_set_color(offset + 1 * palette_entries, shadow_pal[r],  shadow_pal[g],  shadow_pal[b]);
+	palette_set_color(offset + 2 * palette_entries, hilight_pal[r], hilight_pal[g], hilight_pal[b]);
 }
 
 

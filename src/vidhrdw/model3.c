@@ -7,6 +7,9 @@ extern int model3_irq_state;
 UINT64 *paletteram64;
 
 static data8_t model3_layer_enable = 0xf;
+static data32_t model3_layer_modulate;
+static data32_t model3_layer_modulate1;
+static data32_t model3_layer_modulate2;
 
 static data64_t *m3_char_ram;
 static data64_t *m3_tile_ram;
@@ -125,8 +128,6 @@ static void model3_tile_update(void)
 
 VIDEO_START( model3 )
 {
-	int i;
-
 	for(m3_gfx_index = 0; m3_gfx_index < MAX_GFX_ELEMENTS; m3_gfx_index++)
 		if (Machine->gfx[m3_gfx_index] == 0)
 			break;
@@ -187,15 +188,6 @@ VIDEO_START( model3 )
 	}
 
 	pal_lookup = auto_malloc(65536*2);
-	for(i=0; i < 65536; i++)
-	{
-		int r = (i >> 10) & 0x1f;
-		int g = (i >> 5) & 0x1f;
-		int b = i & 0x1f;
-		int a = i & 0x8000;
-		pal_lookup[a | (b << 10) | (g << 5) | r] = i;
-	}
-
 	return 0;
 }
 
@@ -203,8 +195,6 @@ static void draw_tile_4bit(struct mame_bitmap *bitmap, int tx, int ty, int tilen
 {
 	int x, y;
 	UINT8 *tile_base = (UINT8*)m3_char_ram;
-	UINT32 *palette_base = (UINT32*)paletteram64;
-	UINT32 *pal;
 	UINT8 *tile;
 
 	int tile_data = (BYTE_REVERSE16(tilenum));
@@ -213,7 +203,6 @@ static void draw_tile_4bit(struct mame_bitmap *bitmap, int tx, int ty, int tilen
 	tile_index *= 32;
 
 	tile = &tile_base[tile_index];
-	pal = &palette_base[c];
 
 	for(y = ty; y < ty+8; y++) {
 		UINT16 *d = (UINT16*)bitmap->line[y^1];
@@ -222,15 +211,15 @@ static void draw_tile_4bit(struct mame_bitmap *bitmap, int tx, int ty, int tilen
 			UINT16 pix0, pix1;
 			tile0 = *tile >> 4;
 			tile1 = *tile & 0xf;
-			pix0 = BYTE_REVERSE16(pal[tile0 ^ 1] >> 16);
-			pix1 = BYTE_REVERSE16(pal[tile1 ^ 1] >> 16);
+			pix0 = pal_lookup[c + tile0];
+			pix1 = pal_lookup[c + tile1];
 			if((pix0 & 0x8000) == 0)
 			{
-				d[x+0] = pal_lookup[pix0];
+				d[x+0] = pix0;
 			}
 			if((pix1 & 0x8000) == 0)
 			{
-				d[x+1] = pal_lookup[pix1];
+				d[x+1] = pix1;
 			}
 			++tile;
 		}
@@ -241,8 +230,6 @@ static void draw_tile_8bit(struct mame_bitmap *bitmap, int tx, int ty, int tilen
 {
 	int x, y;
 	UINT8 *tile_base = (UINT8*)m3_char_ram;
-	UINT32 *palette_base = (UINT32*)paletteram64;
-	UINT32 *pal;
 	UINT8 *tile;
 
 	int tile_data = (BYTE_REVERSE16(tilenum));
@@ -251,7 +238,6 @@ static void draw_tile_8bit(struct mame_bitmap *bitmap, int tx, int ty, int tilen
 	tile_index *= 32;
 
 	tile = &tile_base[tile_index];
-	pal = &palette_base[c];
 
 	for(y = ty; y < ty+8; y++) {
 		UINT16 *d = (UINT16*)bitmap->line[y];
@@ -259,10 +245,10 @@ static void draw_tile_8bit(struct mame_bitmap *bitmap, int tx, int ty, int tilen
 			UINT8 tile0;
 			UINT16 pix;
 			tile0 = *tile;
-			pix = BYTE_REVERSE16(pal[tile0 ^ 1] >> 16);
+			pix = pal_lookup[c + tile0];
 			if((pix & 0x8000) == 0)
 			{
-				d[x^4] = pal_lookup[pix];
+				d[x^4] = pix;
 			}
 			++tile;
 		}
@@ -274,6 +260,11 @@ static void draw_layer(struct mame_bitmap *bitmap, const struct rectangle *clipr
 	int x, y;
 	int tile_index = 0;
 	UINT16 *tiles = (UINT16*)&m3_tile_ram[layer * 0x400];
+
+	if(layer > 1)
+		model3_layer_modulate = model3_layer_modulate2;
+	else
+		model3_layer_modulate = model3_layer_modulate1;
 
 	if(bitdepth)		/* 4-bit */
 	{
@@ -345,6 +336,11 @@ WRITE64_HANDLER(model3_tile_w)
 
 READ64_HANDLER(model3_vid_reg_r)
 {
+	switch(offset)
+	{
+		case 0x20/8:	return (UINT64)model3_layer_enable << 52;
+		case 0x40/8:	return ((UINT64)model3_layer_modulate1 << 32) | (UINT64)model3_layer_modulate2;
+	}
 	return 0;
 }
 
@@ -352,8 +348,13 @@ WRITE64_HANDLER(model3_vid_reg_w)
 {
 	switch(offset)
 	{
+		case 0x00/8:	printf("vid_reg_w_0: %08X %08X\n", (UINT32)(data >> 32), (UINT32)data); break;
 		case 0x10/8:	model3_irq_state = 0;	break;		/* VBL IRQ Ack */
+		
 		case 0x20/8:	model3_layer_enable = (data >> 52);		break;
+
+		case 0x40/8:	model3_layer_modulate1 = (UINT32)(data >> 32);
+						model3_layer_modulate2 = (UINT32)(data); break;
 	}
 }
 
@@ -372,6 +373,9 @@ WRITE64_HANDLER( model3_palette_w )
 	r2 = ((data2 >> 0) & 0x1f);
 	g2 = ((data2 >> 5) & 0x1f);
 	b2 = ((data2 >> 10) & 0x1f);
+
+	pal_lookup[(offset*2)+0] = (data1 & 0x8000) | (r1 << 10) | (g1 << 5) | b1;
+	pal_lookup[(offset*2)+1] = (data2 & 0x8000) | (r2 << 10) | (g2 << 5) | b2;
 
 	b1 = (b1 << 3) | (b1 >> 2);
 	g1 = (g1 << 3) | (g1 >> 2);

@@ -529,6 +529,10 @@ const struct GameDriver *drivers[] =
 	DRIVER( popflame )	/* (c) 1982 Jaleco */
 	DRIVER( popflama )	/* (c) 1982 Jaleco */
 	DRIVER( popflamb )	/* (c) 1982 Jaleco */
+	DRIVER( trvmstr )	/* (c) 1985 Enerdyne Technologies Inc. */
+	DRIVER( trvgns )	/* (c) 198? Enerdyne Technologies Inc. */
+
+
 
 	/* Namco games (plus some intruders on similar hardware) */
 	DRIVER( geebee )	/* [1978] Namco */
@@ -2902,6 +2906,7 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( dumpmtmt )	/* (c) 1986 (Japan) */
 	DRIVER( eswat )		/* (c) 1989 (FD1094, decrypted) */
 	DRIVER( eswatu )	/* (c) 1989 (FD1094, decrypted) */
+	DRIVER( eswatj )	/* (c) 1989 (FD1094, decrypted) */
 	DRIVER( eswatbl )	/* BOOTLEG */
 	DRIVER( fantzone )	/* (c) 1986 */
 	DRIVER( fantzono )	/* (c) 1986 */
@@ -2992,6 +2997,9 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( thndrbld )	/* (protected) */
 	DRIVER( thndrbdj )  /*  */
 	DRIVER( loffire )	/* (protected) */
+	DRIVER( loffirej )
+	DRIVER( rachero )
+	DRIVER( abcop )
 
 	DRIVER( gprider )
 	DRIVER( gpridera )
@@ -3202,9 +3210,11 @@ Sep.1994 Quiz Ghost Hunter
 	/* Step 1.0 */
 	DRIVER( vf3 )
 	DRIVER( vf3tb )
+	DRIVER( bass )
 
 	/* Step 1.5 */
 	DRIVER( scud )
+	DRIVER( scuda )
 	DRIVER( lostwsga )
 	DRIVER( vs215 )
 	DRIVER( vs29815 )
@@ -3214,10 +3224,14 @@ Sep.1994 Quiz Ghost Hunter
 	DRIVER( harley )
 	DRIVER( srally2 )
 	DRIVER( von2 )
+	DRIVER( von254g )
 	DRIVER( vs298 )
 	DRIVER( vs2v991 )
+	DRIVER( vs299 )
 
 	/* Step 2.1 */
+	DRIVER( daytona2 )
+	DRIVER( dirtdvls )
 	DRIVER( swtrilgy )
 
 
@@ -5025,6 +5039,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( tokiu )		/* (c) 1989 Tad + Fabtek license (US) */
 	DRIVER( tokib )		/* bootleg */
 	DRIVER( bloodbro )	/* (c) 1990 Tad */
+	DRIVER( bloodbra )	/* (c) 1990 Tad */
 	DRIVER( weststry )	/* bootleg */
 	DRIVER( skysmash )	/* (c) 1990 Nihon System Inc. */
 	DRIVER( legionna )	/* (c) 1992 Tad (World) */
@@ -5999,6 +6014,7 @@ Other Sun games
 	DRIVER( xfiles )	/* DfPix */
 	DRIVER( misncrft )	/* (c) 2000 Sun */
 	DRIVER( coolmini )	/* (c) ???? Semicom */
+	DRIVER( promutrv )	/* (c) 1985 Enerdyne Technologies Inc */
 	DRIVER( strvmstr )	/* (c) 1986 Enerdyne Technologies Inc */
 	DRIVER( dorachan )	/* (c) 1980 Craul Denshi */
 	DRIVER( ladyfrog )	/* (c) 1990 Mondial Games */
@@ -6024,7 +6040,6 @@ Other Sun games
 	DRIVER( 1945kiii )	/* (c) 2000 Oriental */
 	DRIVER( pbchmp95 )	/* (c) 1995 Veltmeijer Automaten */
 	DRIVER( bmcbowl )	/* (c) 1994 BMC */
-	DRIVER( trvgns )	/* ? */
 	DRIVER( phrcraze )	/* (c) 1986 Merit */
 	DRIVER( tictac )	/* (c) 198? Merit */
 	DRIVER( pitboss )	/* (c) 198? Merit */

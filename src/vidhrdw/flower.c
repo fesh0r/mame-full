@@ -30,12 +30,6 @@ static void flower_drawsprites( struct mame_bitmap *bitmap, const struct rectang
 	const struct GfxElement *gfx = Machine->gfx[1];
 	data8_t *source = spriteram + 0x200;
 	data8_t *finish = source - 0x200;
-	int step;
-
-	if(flip_screen)
-		step = -16;
-	else
-		step = 16;
 
 	source -= 8;
 
@@ -43,15 +37,15 @@ static void flower_drawsprites( struct mame_bitmap *bitmap, const struct rectang
 	{
 		int xblock,yblock;
 		int sy = 256-32-source[0]+1;
-		int	sx = source[4]-55;
+		int	sx = (source[4]|(source[5]<<8))-55;
 		int code = source[1] & 0x3f;
 		int color = (source[6]>>4);
 
 		/*
 			Byte 0:	Y
 			Byte 1:
-				0x80 - Flipy?
-				0x40 - FlipX?
+				0x80 - FlipY
+				0x40 - FlipX
 				0x3f - Tile
 			Byte 2:
 				0x08 - Tile MSB
@@ -61,12 +55,13 @@ static void flower_drawsprites( struct mame_bitmap *bitmap, const struct rectang
 				0x08 - X Size
 				0x70 - Y Zoom
 				0x80 - Y Size
-			Byte 4: X
+			Byte 4: X LSB
+			Byte 5: X MSB
 			Byte 6: 
 				0xf0 - Colour
 		*/
 
-		int flipy = source[1] & 0x80; // wrong? sunflower needs it, ship afterwards breaks with it
+		int flipy = source[1] & 0x80;
 		int flipx = source[1] & 0x40;
 
 		int size = source[3];
@@ -86,24 +81,35 @@ static void flower_drawsprites( struct mame_bitmap *bitmap, const struct rectang
 		{
 			flipx = !flipx;
 			flipy = !flipy;
-			sx = source[4] - 23;
-			sy = source[0] + 25;
+			sx = sx+16;
+			sy = 250-sy;
 
 			if (ysize==2) sy += 16;
 		}
 
-
 		for (xblock = 0; xblock<xsize; xblock++)
 		{
+			int xoffs=!flipx ? (xblock*8) : ((xsize-xblock-1)*8);
+			int zoomx=((size&7)+1)<<13;
+			int zoomy=((size&0x70)+0x10)<<9;
+			int xblocksizeinpixels=(zoomx*16)>>16;
+			int yblocksizeinpixels=(zoomy*16)>>16;
+
 			for (yblock = 0; yblock<ysize; yblock++)
 			{
+				int yoffs=!flipy ? yblock : (ysize-yblock-1);
+				int sxoffs=(16-xblocksizeinpixels)/2;
+				int syoffs=(16-yblocksizeinpixels)/2;
+				if (xblock) sxoffs+=xblocksizeinpixels;
+				if (yblock) syoffs+=yblocksizeinpixels;
+
 				drawgfxzoom(bitmap,gfx,
-						code+yblock+(8*xblock),
+						code+yoffs+xoffs,
 						color,
 						flipx,flipy,
-						sx+step*xblock,sy+step*yblock,
+						sx+sxoffs,sy+syoffs,
 						cliprect,TRANSPARENCY_PEN,15,
-						((size&7)+1)<<13,((size&0x70)+0x10)<<9);
+						zoomx,zoomy);
 			}
 		}
 		source -= 8;

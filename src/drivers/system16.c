@@ -1192,7 +1192,7 @@ static DRIVER_INIT( dduxbl )
 INPUT_PORTS_START( ddux )
 	SYS16_SERVICE
 	SYS16_JOY1
-	
+
 	PORT_START
 
 	SYS16_JOY2
@@ -1237,26 +1237,10 @@ MACHINE_DRIVER_END
 
 /***************************************************************************/
 
-/* in drivers/aburner.c */
-WRITE16_HANDLER( math0_product_w );
-READ16_HANDLER( math0_product_r );
 
-/* compare chip */
-static READ16_HANDLER( eswat_prot1_r )
-{
-	return 0x4e71;
-}
-
-static READ16_HANDLER( eswat_prot2_r )
-{
-	return 0x4000;
-}
 
 static ADDRESS_MAP_START( eswat_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x3e0000, 0x3e001f) AM_READWRITE(math0_product_r, math0_product_w)
-	AM_RANGE(0x3e1006, 0x3e1007) AM_READ(eswat_prot2_r)
-	AM_RANGE(0x3e100e, 0x3e100f) AM_READ(eswat_prot1_r)
 	AM_RANGE(0x400000, 0x40ffff) AM_READ(SYS16_MRA16_TILERAM)
 	AM_RANGE(0x410000, 0x418fff) AM_READ(SYS16_MRA16_TEXTRAM) //*
 	AM_RANGE(0x440000, 0x440fff) AM_READ(SYS16_MRA16_SPRITERAM)

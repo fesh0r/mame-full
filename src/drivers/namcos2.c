@@ -1523,7 +1523,7 @@ static struct GfxDecodeInfo finallap_gfxdecodeinfo[] =
 	{ REGION_GFX1, 0x200000, &obj_layout,  0*256, 16 },
 	{ REGION_GFX2, 0x000000, &chr_layout, 16*256, 16 },
 	{ -1 }
-}; 
+};
 
 static struct GfxDecodeInfo sgunner_gfxdecodeinfo[] =
 {
@@ -4536,8 +4536,8 @@ GAME( 1988, assaultj, assault,  default2, assault,  assaultj, ROT90,  "Namco", "
 GAME( 1988, assaultp, assault,  default2, assault,  assaultp, ROT90,  "Namco", "Assault Plus (Japan)" )	/* adjusted */
 GAME( 1988, metlhawk, 0,        metlhawk, metlhawk, metlhawk, ROT90,  "Namco", "Metal Hawk")
 GAME( 1988, metlhwkj, metlhawk, metlhawk, metlhawk, metlhawk, ROT90,  "Namco", "Metal Hawk (Japan)")
-GAME( 1988, ordyne,   0,        default,  default,  ordyne,   ROT180, "Namco", "Ordyne (Japan)" )
-GAME( 1988, ordynej,  ordyne,   default,  default,  ordyne,   ROT180, "Namco", "Ordyne (Japan English Version)" )
+GAME( 1988, ordyne,   0,        default,  default,  ordyne,   ROT180, "Namco", "Ordyne (Japan, English Version)" )
+GAME( 1988, ordynej,  ordyne,   default,  default,  ordyne,   ROT180, "Namco", "Ordyne (Japan)" )
 GAME( 1988, mirninja, 0,        default,  default,  mirninja, ROT0,   "Namco", "Mirai Ninja (Japan)" )
 GAME( 1988, phelios,  0,        default2, default,  phelios , ROT90,  "Namco", "Phelios (Japan)" )		/* adjusted */
 GAME( 1989, dirtfoxj, 0,        default2, dirtfox,  dirtfoxj, ROT90,  "Namco", "Dirt Fox (Japan)" )	/* adjusted */

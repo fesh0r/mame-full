@@ -3,14 +3,9 @@
 // it really seems like this should be elsewhere - like maybe the floating point checks can hang out someplace else
 #include <math.h>
 
-static void ppc_null(UINT32 op)
+static void ppc_unimplemented(UINT32 op)
 {
-    // char    string[256];
-    // char    mnem[16], oprs[48];
-
-    // DisassemblePowerPC(op, ppc.pc, mnem, oprs, 1);
-
-	osd_die("ERROR: %08X: unhandled opcode (I need a better error !)\n", activecpu_get_pc());
+	osd_die("ppc: Unimplemented opcode %08X at %08X", op, ppc.pc);
 }
 
 static void ppc_addx(UINT32 op)
@@ -1419,144 +1414,136 @@ static void ppc_invalid(UINT32 op)
 ////////////////////////////
 
 #define DOUBLE_SIGN		(0x8000000000000000)
-#define DOUBLE_EXP		(0x7FF0000000000000)
-#define DOUBLE_FRAC		(0x000FFFFFFFFFFFFF)
+#define DOUBLE_EXP		(0x7ff0000000000000)
+#define DOUBLE_FRAC		(0x000fffffffffffff)
 #define DOUBLE_ZERO		(0)
 
 /*
   Floating point operations.
 */
 
-INLINE int is_nan_FLOAT64(FLOAT64 x){
-
-	return(
-		((*(UINT64 *)&(x) & DOUBLE_EXP) == DOUBLE_EXP) &&
-		((*(UINT64 *)&(x) & DOUBLE_FRAC) != DOUBLE_ZERO)
-	);
-}
-
-INLINE int is_qnan_FLOAT64(FLOAT64 x){
-
-	return(
-		((*(UINT64 *)&(x) & DOUBLE_EXP) == DOUBLE_EXP) &&
-		((*(UINT64 *)&(x) & 0x0007FFFFFFFFFFF) == 0x000000000000000) &&
-        ((*(UINT64 *)&(x) & 0x000800000000000) == 0x000800000000000)
-    );
-}
-
-INLINE int is_snan_FLOAT64(FLOAT64 x){
-
-	return(
-		((*(UINT64 *)&(x) & DOUBLE_EXP) == DOUBLE_EXP) &&
-        ((*(UINT64 *)&(x) & DOUBLE_FRAC) != DOUBLE_ZERO) &&
-        ((*(UINT64 *)&(x) & 0x0008000000000000) == DOUBLE_ZERO)
-	);
-}
-
-INLINE int is_infinity_FLOAT64(FLOAT64 x)
+INLINE int is_nan_double(double x)
 {
-    return (
-        ((*(UINT64 *)&(x) & DOUBLE_EXP) == DOUBLE_EXP) &&
-        ((*(UINT64 *)&(x) & DOUBLE_FRAC) == DOUBLE_ZERO)
-    );
+	return( ((*(UINT64 *)&(x) & DOUBLE_EXP) == DOUBLE_EXP) &&
+			((*(UINT64 *)&(x) & DOUBLE_FRAC) != DOUBLE_ZERO) );
 }
 
-INLINE int is_normalized_FLOAT64(FLOAT64 x)
+INLINE int is_qnan_double(double x)
 {
-    UINT64 exp;
-
-    exp = ((*(UINT64 *) &(x)) & DOUBLE_EXP) >> 52;
-
-    return (exp >= 1) && (exp <= 2046);
+	return( ((*(UINT64 *)&(x) & DOUBLE_EXP) == DOUBLE_EXP) &&
+			((*(UINT64 *)&(x) & 0x0007fffffffffff) == 0x000000000000000) &&
+			((*(UINT64 *)&(x) & 0x000800000000000) == 0x000800000000000) );
 }
 
-INLINE int is_denormalized_FLOAT64(FLOAT64 x)
+INLINE int is_snan_double(double x)
 {
-    return (
-        ((*(UINT64 *)&(x) & DOUBLE_EXP) == 0) &&
-        ((*(UINT64 *)&(x) & DOUBLE_FRAC) != DOUBLE_ZERO)
-    );
+	return( ((*(UINT64 *)&(x) & DOUBLE_EXP) == DOUBLE_EXP) &&
+			((*(UINT64 *)&(x) & DOUBLE_FRAC) != DOUBLE_ZERO) &&
+			((*(UINT64 *)&(x) & 0x0008000000000000) == DOUBLE_ZERO) );
 }
 
-INLINE int sign_FLOAT64(FLOAT64 x)
+INLINE int is_infinity_double(double x)
 {
-    return ((*(UINT64 *)&(x) & DOUBLE_SIGN) != 0);
+	return( ((*(UINT64 *)&(x) & DOUBLE_EXP) == DOUBLE_EXP) &&
+			((*(UINT64 *)&(x) & DOUBLE_FRAC) == DOUBLE_ZERO) );
 }
 
-INLINE INT32 round_FLOAT64_to_INT32(FLOAT64 v){
+INLINE int is_normalized_double(double x)
+{
+	UINT64 exp;
 
+	exp = ((*(UINT64 *) &(x)) & DOUBLE_EXP) >> 52;
+
+	return (exp >= 1) && (exp <= 2046);
+}
+
+INLINE int is_denormalized_double(double x)
+{
+	return( ((*(UINT64 *)&(x) & DOUBLE_EXP) == 0) &&
+			((*(UINT64 *)&(x) & DOUBLE_FRAC) != DOUBLE_ZERO) );
+}
+
+INLINE int sign_double(double x)
+{
+	return ((*(UINT64 *)&(x) & DOUBLE_SIGN) != 0);
+}
+
+INLINE INT32 round_double_to_int(double v)
+{
 	if(v >= 0)
 		return((INT32)(v + 0.5));
 	else
 		return(-(INT32)(-v + 0.5));
 }
 
-INLINE INT32 trunc_FLOAT64_to_INT32(FLOAT64 v){
-
+INLINE INT32 trunc_double_to_int(double v)
+{
 	if(v >= 0)
 		return((INT32)v);
 	else
 		return(-((INT32)(-v)));
 }
 
-INLINE INT32 ceil_FLOAT64_to_INT32(FLOAT64 v){
-
+INLINE INT32 ceil_double_to_int(double v)
+{
 	// !!! ??? !!!
-	FLOAT64 bob = ceil(v) ;
+	double bob = ceil(v);
 	return (INT32)bob;
 }
 
-INLINE INT32 floor_FLOAT64_to_INT32(FLOAT64 v){
-
-	FLOAT64 bob = floor(v) ;
-	return (INT32)bob ;
-}
-
-INLINE void set_fprf(FLOAT64 f)
+INLINE INT32 floor_double_to_int(double v)
 {
-    UINT32 fprf;
+	double bob = floor(v);
+	return (INT32)bob;
+}
 
-    // see page 3-30, 3-31
+INLINE void set_fprf(double f)
+{
+	UINT32 fprf;
 
-    if (is_qnan_FLOAT64(f))
-        fprf = 0x11;
-    else if (is_infinity_FLOAT64(f))
-    {
-        if (sign_FLOAT64(f))    // -INF
-            fprf = 0x09;
-        else                // +INF
-            fprf = 0x05;
-    }
-    else if (is_normalized_FLOAT64(f))
-    {
-        if (sign_FLOAT64(f))    // -Normalized
-            fprf = 0x08;
-        else                // +Normalized
-            fprf = 0x04;
-    }
-    else if (is_denormalized_FLOAT64(f))
-    {
-        if (sign_FLOAT64(f))    // -Denormalized
-            fprf = 0x18;
-        else                // +Denormalized
-            fprf = 0x14;
-    }
-    else    // Zero
-    {
-        if (sign_FLOAT64(f))    // -Zero
-            fprf = 0x12;
-        else                // +Zero
-            fprf = 0x02;
-    }
+	// see page 3-30, 3-31
 
-    ppc.fpscr &= ~0x0001F000;
-    ppc.fpscr |= (fprf << 12);
+	if (is_qnan_double(f))
+	{
+		fprf = 0x11;
+	}
+	else if (is_infinity_double(f))
+	{
+		if (sign_double(f))		// -INF
+			fprf = 0x09;
+		else					// +INF
+			fprf = 0x05;
+	}
+	else if (is_normalized_double(f))
+	{
+		if (sign_double(f))		// -Normalized
+			fprf = 0x08;
+		else					// +Normalized
+			fprf = 0x04;
+	}
+	else if (is_denormalized_double(f))
+	{
+		if (sign_double(f))		// -Denormalized
+			fprf = 0x18;
+		else					// +Denormalized
+			fprf = 0x14;
+	}
+	else    // Zero
+	{
+		if (sign_double(f))		// -Zero
+			fprf = 0x12;
+		else					// +Zero
+			fprf = 0x02;
+	}
+
+	ppc.fpscr &= ~0x0001f000;
+	ppc.fpscr |= (fprf << 12);
 }
 
 
 
-#define SET_VXSNAN(a, b)    if (is_snan_FLOAT64(a) || is_snan_FLOAT64(b)) ppc.fpscr |= 0x80000000
-#define SET_VXSNAN_1(c)     if (is_snan_FLOAT64(c)) ppc.fpscr |= 0x80000000
+#define SET_VXSNAN(a, b)    if (is_snan_double(a) || is_snan_double(b)) ppc.fpscr |= 0x80000000
+#define SET_VXSNAN_1(c)     if (is_snan_double(c)) ppc.fpscr |= 0x80000000
 
 
 
@@ -1572,24 +1559,20 @@ static void ppc_lfs(UINT32 op)
 		ea += REG(a);
 
 	i = READ32(ea);
-	FPR(t).fd = (FLOAT64)(*((FLOAT32 *)&i));
+	FPR(t).fd = (double)(*(float *)&i);
 }
 
 static void ppc_lfsu(UINT32 op)
 {
-	UINT32 itemp;
-	FLOAT32 ftemp;
-
 	UINT32 ea = SIMM16;
 	UINT32 a = RA;
 	UINT32 t = RT;
+	UINT32 i;
 
 	ea += REG(a);
 
-	itemp = READ32(ea);
-	ftemp = *(FLOAT32 *)&itemp;
-
-	FPR(t).fd = (FLOAT64)((FLOAT32)ftemp);
+	i = READ32(ea);
+	FPR(t).fd = (double)(*(float *)&i);
 
 	REG(a) = ea;
 }
@@ -1621,33 +1604,29 @@ static void ppc_lfdu(UINT32 op)
 
 static void ppc_stfs(UINT32 op)
 {
-	FLOAT32 ftemp;
-
 	UINT32 ea = SIMM16;
 	UINT32 a = RA;
 	UINT32 t = RT;
+	float f;
 
 	if(a)
 		ea += REG(a);
 
-	ftemp = (FLOAT32)((FLOAT64)FPR(t).fd);
-
-	WRITE32(ea, *(UINT32 *)&ftemp);
+	f = (float)(FPR(t).fd);
+	WRITE32(ea, *(UINT32 *)&f);
 }
 
 static void ppc_stfsu(UINT32 op)
 {
-	FLOAT32 ftemp;
-
 	UINT32 ea = SIMM16;
 	UINT32 a = RA;
 	UINT32 t = RT;
+	float f;
 
 	ea += REG(a);
 
-	ftemp = (FLOAT32)((FLOAT64)FPR(t).fd);
-
-	WRITE32(ea, *(UINT32 *)&ftemp);
+	f = (float)(FPR(t).fd);
+	WRITE32(ea, *(UINT32 *)&f);
 
 	REG(a) = ea;
 }
@@ -1677,16 +1656,6 @@ static void ppc_stfdu(UINT32 op)
 	REG(a) = ea;
 }
 
-static void ppc_59(UINT32 op)
-{
-	optable59[_XO](op);
-}
-
-static void ppc_63(UINT32 op)
-{
-	optable63[_XO](op);
-}
-
 static void ppc_lfdux(UINT32 op)
 {
 	UINT32 ea = REG(RB);
@@ -1714,39 +1683,31 @@ static void ppc_lfdx(UINT32 op)
 
 static void ppc_lfsux(UINT32 op)
 {
-	UINT32 itemp;
-	FLOAT32 ftemp;
-
 	UINT32 ea = REG(RB);
 	UINT32 a = RA;
 	UINT32 t = RT;
+	UINT32 i;
 
 	ea += REG(a);
 
-	itemp = READ32(ea);
-	ftemp = *(FLOAT32 *)&itemp;
-
-	FPR(t).fd = (FLOAT64)((FLOAT32)ftemp);
+	i = READ32(ea);
+	FPR(t).fd = (double)(*(float *)&i);
 
 	REG(a) = ea;
 }
 
 static void ppc_lfsx(UINT32 op)
 {
-	UINT32 itemp;
-	FLOAT32 ftemp;
-
 	UINT32 ea = REG(RB);
 	UINT32 a = RA;
 	UINT32 t = RT;
+	UINT32 i;
 
 	if(a)
 		ea += REG(a);
 
-	itemp = READ32(ea);
-	ftemp = *(FLOAT32 *)&itemp;
-
-	FPR(t).fd = (FLOAT64)((FLOAT32)ftemp);
+	i = READ32(ea);
+	FPR(t).fd = (double)(*(float *)&i);
 }
 
 static void ppc_mfsr(UINT32 op)
@@ -1771,17 +1732,13 @@ static void ppc_mfsrin(UINT32 op)
 
 static void ppc_mftb(UINT32 op)
 {
-	UINT32 t = RT;
-	UINT32 x = _SPRF;
+	UINT32 x = SPRF;
 
-	switch(x){
-
-	case 268: REG(t) = (UINT32)(ppc.tb); break;
-	case 269: REG(t) = (UINT32)(ppc.tb >> 32); break;
-
-	default:
-		logerror("ERROR: invalid mftb\n");
-		exit(1);
+	switch(x)
+	{
+		case 268:	REG(RT) = (UINT32)(ppc.tb); break;
+		case 269:	REG(RT) = (UINT32)(ppc.tb >> 32); break;
+		default:	osd_die("ppc: Invalid timebase register %d at %08X", x, ppc.pc); break;
 	}
 }
 
@@ -1807,7 +1764,7 @@ static void ppc_mtsrin(UINT32 op)
 
 static void ppc_dcba(UINT32 op)
 {
-	ppc_null(op);
+	/* TODO: Cache not emulated so this opcode doesn't need to be implemented */
 }
 
 static void ppc_stfdux(UINT32 op)
@@ -1844,65 +1801,62 @@ static void ppc_stfiwx(UINT32 op)
 	if(a)
 		ea += REG(a);
 
-	WRITE32(ea, FPR(t).iw);
+	WRITE32(ea, (UINT32)FPR(t).id);
 }
 
 static void ppc_stfsux(UINT32 op)
 {
-	FLOAT32 ftemp;
-
 	UINT32 ea = REG(RB);
 	UINT32 a = RA;
 	UINT32 t = RT;
+	float f;
 
 	ea += REG(a);
 
-	ftemp = (FLOAT32)((FLOAT64)FPR(t).fd);
-
-	WRITE32(ea, *(UINT32 *)&ftemp);
+	f = (float)(FPR(t).fd);
+	WRITE32(ea, *(UINT32 *)&f);
 
 	REG(a) = ea;
 }
 
 static void ppc_stfsx(UINT32 op)
 {
-	FLOAT32 ftemp;
-
 	UINT32 ea = REG(RB);
 	UINT32 a = RA;
 	UINT32 t = RT;
+	float f;
 
 	if(a)
 		ea += REG(a);
 
-	ftemp = (FLOAT32)((FLOAT64)FPR(t).fd);
+	f = (float)(FPR(t).fd);
 
-	WRITE32(ea, *(UINT32 *)&ftemp);
+	WRITE32(ea, *(UINT32 *)&f);
 }
 
 static void ppc_tlbia(UINT32 op)
 {
-	ppc_null(op);
+	/* TODO: TLB not emulated so this opcode doesn't need to implemented */
 }
 
 static void ppc_tlbie(UINT32 op)
 {
-
+	/* TODO: TLB not emulated so this opcode doesn't need to implemented */
 }
 
 static void ppc_tlbsync(UINT32 op)
 {
-
+	/* TODO: TLB not emulated so this opcode doesn't need to implemented */
 }
 
 static void ppc_eciwx(UINT32 op)
 {
-	ppc_null(op);
+	ppc_unimplemented(op);
 }
 
 static void ppc_ecowx(UINT32 op)
 {
-	ppc_null(op);
+	ppc_unimplemented(op);
 }
 
 static void ppc_fabsx(UINT32 op)
@@ -1914,7 +1868,9 @@ static void ppc_fabsx(UINT32 op)
 
 	FPR(t).id = FPR(b).id & ~DOUBLE_SIGN;
 
-	SET_FCR1();
+	if( RCBIT ) {
+		SET_CR1();
+	}
 }
 
 static void ppc_faddx(UINT32 op)
@@ -1927,17 +1883,19 @@ static void ppc_faddx(UINT32 op)
 
     SET_VXSNAN(FPR(a).fd, FPR(b).fd);
 
-	FPR(t).fd = (FLOAT64)((FLOAT64)FPR(a).fd + (FLOAT64)FPR(b).fd);
+	FPR(t).fd = FPR(a).fd + FPR(b).fd;
 
     set_fprf(FPR(t).fd);
-	SET_FCR1();
+	if( RCBIT ) {
+		SET_CR1();
+	}
 }
 
 static void ppc_fcmpo(UINT32 op)
 {
 	CHECK_FPU_AVAILABLE();
 
-    ppc_null(op);
+    ppc_unimplemented(op);
 }
 
 static void ppc_fcmpu(UINT32 op)
@@ -1951,25 +1909,20 @@ static void ppc_fcmpu(UINT32 op)
 
     SET_VXSNAN(FPR(a).fd, FPR(b).fd);
 
-    if(is_nan_FLOAT64(FPR(a).fd) ||
-	   is_nan_FLOAT64(FPR(b).fd)){
-
+    if(is_nan_double(FPR(a).fd) || is_nan_double(FPR(b).fd))
+	{
 		c = 1; /* OX */
-
-		if(is_snan_FLOAT64(FPR(a).fd) ||
-		   is_snan_FLOAT64(FPR(b).fd))
+		if(is_snan_double(FPR(a).fd) || is_snan_double(FPR(b).fd)) {
 			ppc.fpscr |= 0x01000000; /* VXSNAN */
-
-	}else if(FPR(a).fd < FPR(b).fd){
-
+		}
+	} 
+	else if(FPR(a).fd < FPR(b).fd){
 		c = 8; /* FX */
-
-	}else if(FPR(a).fd > FPR(b).fd){
-
+	} 
+	else if(FPR(a).fd > FPR(b).fd){
 		c = 4; /* FEX */
-
-	}else{
-
+	} 
+	else {
 		c = 2; /* VX */
 	}
 
@@ -1983,6 +1936,7 @@ static void ppc_fctiwx(UINT32 op)
 {
 	UINT32 b = RB;
 	UINT32 t = RT;
+	INT64 r = 0;
 
 	// TODO: fix FPSCR flags FX,VXSNAN,VXCVI
 
@@ -1990,82 +1944,82 @@ static void ppc_fctiwx(UINT32 op)
 
     SET_VXSNAN_1(FPR(b).fd);
 
-    if(FPR(b).fd > (FLOAT64)((INT32)0x7FFFFFFF)){
+	switch(ppc.fpscr & 3)
+	{
+		case 0: r = (INT64)(INT32)round_double_to_int(FPR(b).fd); break;
+		case 1: r = (INT64)(INT32)trunc_double_to_int(FPR(b).fd); break;
+		case 2: r = (INT64)(INT32)ceil_double_to_int(FPR(b).fd); break;
+		case 3: r = (INT64)(INT32)floor_double_to_int(FPR(b).fd); break;
+	}
 
-		FPR(t).iw = 0x7FFFFFFF;
-
+    if(r > (INT64)((INT32)0x7FFFFFFF))
+	{
+		FPR(t).id = 0x7FFFFFFF;
 		// FPSCR[FR] = 0
 		// FPSCR[FI] = 1
 		// FPSCR[XX] = 1
-
-	}else
-	if(FPR(b).fd < (FLOAT64)((INT32)0x80000000)){
-
-		FPR(t).iw = 0x80000000;
-
+	}
+	else if(FPR(b).fd < (INT64)((INT32)0x80000000)) 
+	{
+		FPR(t).id = 0x80000000;
 		// FPSCR[FR] = 1
 		// FPSCR[FI] = 1
 		// FPSCR[XX] = 1
-
-	}else{
-
-		switch(ppc.fpscr & 3){
-		case 0: FPR(t).id = (INT64)(INT32)round_FLOAT64_to_INT32(FPR(b).fd); break;
-		case 1: FPR(t).id = (INT64)(INT32)trunc_FLOAT64_to_INT32(FPR(b).fd); break;
-		case 2: FPR(t).id = (INT64)(INT32)ceil_FLOAT64_to_INT32(FPR(b).fd); break;
-		case 3: FPR(t).id = (INT64)(INT32)floor_FLOAT64_to_INT32(FPR(b).fd); break;
-		}
-
+	} 
+	else 
+	{
+		FPR(t).id = (UINT32)r;
 		// FPSCR[FR] = t.iw > t.fd
 		// FPSCR[FI] = t.iw == t.fd
 		// FPSCR[XX] = ?
 	}
 
 	// FPSCR[FPRF] = undefined (leave it as is)
-
-	SET_FCR1();
+	if( RCBIT ) {
+		SET_CR1();
+	}
 }
 
 static void ppc_fctiwzx(UINT32 op)
 {
 	UINT32 b = RB;
 	UINT32 t = RT;
+	INT64 r;
 
 	// TODO: fix FPSCR flags FX,VXSNAN,VXCVI
 
 	CHECK_FPU_AVAILABLE();
 
     SET_VXSNAN_1(FPR(b).fd);
+	r = trunc_double_to_int(FPR(b).fd);
 
-    if(FPR(b).fd > (FLOAT64)((INT32)0x7FFFFFFF)){
-
-		FPR(t).iw = 0x7FFFFFFF;
-
+    if(r > (INT64)((INT32)0x7fffffff))
+	{
+		FPR(t).id = 0x7fffffff;
 		// FPSCR[FR] = 0
 		// FPSCR[FI] = 1
 		// FPSCR[XX] = 1
 
-	}else
-	if(FPR(b).fd < (FLOAT64)((INT32)0x80000000)){
-
-		FPR(t).iw = 0x80000000;
-
+	}
+	else if(r < (INT64)((INT32)0x80000000))
+	{
+		FPR(t).id = 0x80000000;
 		// FPSCR[FR] = 1
 		// FPSCR[FI] = 1
 		// FPSCR[XX] = 1
-
-	}else{
-
-		FPR(t).iw = trunc_FLOAT64_to_INT32(FPR(b).fd);
-
+	} 
+	else
+	{
+		FPR(t).id = (UINT32)r;
 		// FPSCR[FR] = t.iw > t.fd
 		// FPSCR[FI] = t.iw == t.fd
 		// FPSCR[XX] = ?
 	}
 
 	// FPSCR[FPRF] = undefined (leave it as is)
-
-	SET_FCR1();
+	if( RCBIT ) {
+		SET_CR1();
+	}
 }
 
 static void ppc_fdivx(UINT32 op)
@@ -2078,10 +2032,12 @@ static void ppc_fdivx(UINT32 op)
 
     SET_VXSNAN(FPR(a).fd, FPR(b).fd);
 
-    FPR(t).fd = (FLOAT64)((FLOAT64)FPR(a).fd / (FLOAT64)FPR(b).fd);
+    FPR(t).fd = FPR(a).fd / FPR(b).fd;
 
     set_fprf(FPR(t).fd);
-	SET_FCR1();
+	if( RCBIT ) {
+		SET_CR1();
+	}
 }
 
 static void ppc_fmrx(UINT32 op)
@@ -2093,7 +2049,9 @@ static void ppc_fmrx(UINT32 op)
 
 	FPR(t).fd = FPR(b).fd;
 
-	SET_FCR1();
+	if( RCBIT ) {
+		SET_CR1();
+	}
 }
 
 static void ppc_fnabsx(UINT32 op)
@@ -2105,7 +2063,9 @@ static void ppc_fnabsx(UINT32 op)
 
 	FPR(t).id = FPR(b).id | DOUBLE_SIGN;
 
-	SET_FCR1();
+	if( RCBIT ) {
+		SET_CR1();
+	}
 }
 
 static void ppc_fnegx(UINT32 op)
@@ -2117,7 +2077,9 @@ static void ppc_fnegx(UINT32 op)
 
 	FPR(t).id = FPR(b).id ^ DOUBLE_SIGN;
 
-	SET_FCR1();
+	if( RCBIT ) {
+		SET_CR1();
+	}
 }
 
 static void ppc_frspx(UINT32 op)
@@ -2129,10 +2091,12 @@ static void ppc_frspx(UINT32 op)
 
     SET_VXSNAN_1(FPR(b).fd);
 
-	FPR(t).fd = (FLOAT32)FPR(b).fd;
+	FPR(t).fd = (float)FPR(b).fd;
 
     set_fprf(FPR(t).fd);
-	SET_FCR1();
+	if( RCBIT ) {
+		SET_CR1();
+	}
 }
 
 static void ppc_frsqrtex(UINT32 op)
@@ -2144,14 +2108,17 @@ static void ppc_frsqrtex(UINT32 op)
 
     SET_VXSNAN_1(FPR(b).fd);
 
-	FPR(t).fd = 1.0 / sqrt(FPR(b).fd); /* ??? */
+	FPR(t).fd = sqrt(FPR(b).fd);	/* verify this */
 
     set_fprf(FPR(t).fd);
-	SET_FCR1();
+	if( RCBIT ) {
+		SET_CR1();
+	}
 }
 
 static void ppc_fsqrtx(UINT32 op)
 {
+	/* NOTE: PPC603e doesn't support this opcode */
 	UINT32 b = RB;
 	UINT32 t = RT;
 
@@ -2159,10 +2126,12 @@ static void ppc_fsqrtx(UINT32 op)
 
     SET_VXSNAN_1(FPR(b).fd);
 
-	FPR(t).fd = (FLOAT64)(sqrt(FPR(b).fd));
+	FPR(t).fd = (double)(sqrt(FPR(b).fd));
 
     set_fprf(FPR(t).fd);
-	SET_FCR1();
+	if( RCBIT ) {
+		SET_CR1();
+	}
 }
 
 static void ppc_fsubx(UINT32 op)
@@ -2175,19 +2144,21 @@ static void ppc_fsubx(UINT32 op)
 
     SET_VXSNAN(FPR(a).fd, FPR(b).fd);
 
-	FPR(t).fd = (FLOAT64)((FLOAT64)FPR(a).fd - (FLOAT64)FPR(b).fd);
+	FPR(t).fd = FPR(a).fd - FPR(b).fd;
 
     set_fprf(FPR(t).fd);
-	SET_FCR1();
+	if( RCBIT ) {
+		SET_CR1();
+	}
 }
 
 static void ppc_mffsx(UINT32 op)
 {
-	UINT32 t = RT;
+	FPR(RT).id = (UINT32)ppc.fpscr;
 
-	FPR(t).iw = ppc.fpscr;
-
-	SET_FCR1();
+	if( RCBIT ) {
+		SET_CR1();
+	}
 }
 
 static void ppc_mtfsb0x(UINT32 op)
@@ -2199,7 +2170,9 @@ static void ppc_mtfsb0x(UINT32 op)
     if (crbD != 1 && crbD != 2) // these bits cannot be explicitly cleared
         ppc.fpscr &= ~(1 << (31 - crbD));
 
-    SET_FCR1();
+    if( RCBIT ) {
+		SET_CR1();
+	}
 }
 
 static void ppc_mtfsb1x(UINT32 op)
@@ -2211,27 +2184,31 @@ static void ppc_mtfsb1x(UINT32 op)
     if (crbD != 1 && crbD != 2) // these bits cannot be explicitly cleared
         ppc.fpscr |= (1 << (31 - crbD));
 
-    SET_FCR1();
+    if( RCBIT ) {
+		SET_CR1();
+	}
 }
 
 static void ppc_mtfsfx(UINT32 op)
 {
 	UINT32 b = RB;
-	UINT32 f = _FM;
+	UINT32 f = FM;
 
-	f = ppc_field_xlat[_FM];
+	f = ppc_field_xlat[FM];
 
-	ppc.fpscr &= (~f) | ~(_FEX | _VX);
-	ppc.fpscr |= (FPR(b).iw) & ~(_FEX | _VX);
+	ppc.fpscr &= (~f) | ~(FPSCR_FEX | FPSCR_VX);
+	ppc.fpscr |= (UINT32)(FPR(b).id) & ~(FPSCR_FEX | FPSCR_VX);
 
 	// FEX, VX
 
-	SET_FCR1();
+	if( RCBIT ) {
+		SET_CR1();
+	}
 }
 
 static void ppc_mtfsfix(UINT32 op)
 {
-    UINT32 crfD = _CRFD;
+    UINT32 crfd = CRFD;
     UINT32 imm = (op >> 12) & 0xF;
 
     /*
@@ -2245,54 +2222,52 @@ static void ppc_mtfsfix(UINT32 op)
      * at all here.
      */
 
-    crfD = (7 - crfD) * 4;  // calculate LSB position of field
+    crfd = (7 - crfd) * 4;  // calculate LSB position of field
 
-    if (crfD == 28)         // field containing FEX and VX is special...
+    if (crfd == 28)         // field containing FEX and VX is special...
     {                       // bits 1 and 2 of FPSCR must not be altered
-        ppc.fpscr &= 0x9FFFFFFF;
-        ppc.fpscr |= (imm & 0x9FFFFFFF);
+        ppc.fpscr &= 0x9fffffff;
+        ppc.fpscr |= (imm & 0x9fffffff);
     }
 
-    ppc.fpscr &= ~(0xF << crfD);    // clear field
-    ppc.fpscr |= (imm << crfD);     // insert new data
+    ppc.fpscr &= ~(0xf << crfd);    // clear field
+    ppc.fpscr |= (imm << crfd);     // insert new data
 
-	SET_FCR1();
+	if( RCBIT ) {
+		SET_CR1();
+	}
 }
 
 static void ppc_mcrfs(UINT32 op)
 {
-    UINT32 crfS, f;
+	UINT32 crfs, f;
+	crfs = CRFA;
 
-    crfS = _CRFA;
+	f = ppc.fpscr >> ((7 - crfs) * 4);	// get crfS field from FPSCR
+	f &= 0xf;
 
-    f = ppc.fpscr >> ((7 - crfS) * 4);  // get crfS field from FPSCR
-    f &= 0xF;
-
-//    LOG("model3.log", "MCRFS field %d\n", crfS);
-//    message(0, "MCRFS field %d", crfS);
-
-    switch (crfS)   // determine which exception bits to clear in FPSCR
-    {
-    case 0: // FX, OX
-        ppc.fpscr &= ~0x90000000;
-        break;
-    case 1: // UX, ZX, XX, VXSNAN
-        ppc.fpscr &= ~0x0F000000;
-        break;
-    case 2: // VXISI, VXIDI, VXZDZ, VXIMZ
-        ppc.fpscr &= ~0x00F00000;
-        break;
-    case 3: // VXVC
-        ppc.fpscr &= ~0x00080000;
-        break;
-    case 5: // VXSOFT, VXSQRT, VXCVI
-        ppc.fpscr &= ~0x00000E00;
-        break;
-    default:
-        break;
-    }
-
-    CR(_CRFD) = f;
+	switch(crfs)	// determine which exception bits to clear in FPSCR
+	{
+		case 0:		// FX, OX
+			ppc.fpscr &= ~0x90000000;
+			break;
+		case 1:		// UX, ZX, XX, VXSNAN
+			ppc.fpscr &= ~0x0f000000;
+			break;
+		case 2:		// VXISI, VXIDI, VXZDZ, VXIMZ
+			ppc.fpscr &= ~0x00F00000;
+			break;
+		case 3:		// VXVC
+			ppc.fpscr &= ~0x00080000;
+			break;
+		case 5:		// VXSOFT, VXSQRT, VXCVI
+			ppc.fpscr &= ~0x00000e00;
+			break;
+		default:
+			break;
+	}
+	
+	CR(CRFD) = f;
 }
 
 static void ppc_faddsx(UINT32 op)
@@ -2303,12 +2278,14 @@ static void ppc_faddsx(UINT32 op)
 
 	CHECK_FPU_AVAILABLE();
 
-    SET_VXSNAN(FPR(a).fd, FPR(b).fd);
+	SET_VXSNAN(FPR(a).fd, FPR(b).fd);
 
-    FPR(t).fd = (FLOAT32)((FLOAT64)FPR(a).fd + (FLOAT64)FPR(b).fd);
+	FPR(t).fd = (float)(FPR(a).fd + FPR(b).fd);
 
-    set_fprf(FPR(t).fd);
-	SET_FCR1();
+	set_fprf(FPR(t).fd);
+	if( RCBIT ) {
+		SET_CR1();
+	}
 }
 
 static void ppc_fdivsx(UINT32 op)
@@ -2319,12 +2296,14 @@ static void ppc_fdivsx(UINT32 op)
 
 	CHECK_FPU_AVAILABLE();
 
-    SET_VXSNAN(FPR(a).fd, FPR(b).fd);
+	SET_VXSNAN(FPR(a).fd, FPR(b).fd);
 
-    FPR(t).fd = (FLOAT32)((FLOAT64)FPR(a).fd / (FLOAT64)FPR(b).fd);
+	FPR(t).fd = (float)(FPR(a).fd / FPR(b).fd);
 
-    set_fprf(FPR(t).fd);
-	SET_FCR1();
+	set_fprf(FPR(t).fd);
+	if( RCBIT ) {
+		SET_CR1();
+	}
 }
 
 static void ppc_fresx(UINT32 op)
@@ -2334,16 +2313,19 @@ static void ppc_fresx(UINT32 op)
 
 	CHECK_FPU_AVAILABLE();
 
-    SET_VXSNAN_1(FPR(b).fd);
+	SET_VXSNAN_1(FPR(b).fd);
 
 	FPR(t).fd = 1.0 / FPR(b).fd; /* ??? */
 
-    set_fprf(FPR(t).fd);
-	SET_FCR1();
+	set_fprf(FPR(t).fd);
+	if( RCBIT ) {
+		SET_CR1();
+	}
 }
 
 static void ppc_fsqrtsx(UINT32 op)
 {
+	/* NOTE: This opcode is not supported in PPC603e */
 	UINT32 b = RB;
 	UINT32 t = RT;
 
@@ -2351,10 +2333,12 @@ static void ppc_fsqrtsx(UINT32 op)
 
     SET_VXSNAN_1(FPR(b).fd);
 
-	FPR(t).fd = (FLOAT32)(sqrt(FPR(b).fd));
+	FPR(t).fd = (float)(sqrt(FPR(b).fd));
 
     set_fprf(FPR(t).fd);
-	SET_FCR1();
+	if( RCBIT ) {
+		SET_CR1();
+	}
 }
 
 static void ppc_fsubsx(UINT32 op)
@@ -2367,10 +2351,12 @@ static void ppc_fsubsx(UINT32 op)
 
     SET_VXSNAN(FPR(a).fd, FPR(b).fd);
 
-	FPR(t).fd = (FLOAT32)((FLOAT64)FPR(a).fd - (FLOAT64)FPR(b).fd);
+	FPR(t).fd = (float)(FPR(a).fd - FPR(b).fd);
 
     set_fprf(FPR(t).fd);
-	SET_FCR1();
+	if( RCBIT ) {
+		SET_CR1();
+	}
 }
 
 static void ppc_fmaddx(UINT32 op)
@@ -2385,10 +2371,12 @@ static void ppc_fmaddx(UINT32 op)
     SET_VXSNAN(FPR(a).fd, FPR(b).fd);
     SET_VXSNAN_1(FPR(c).fd);
 
-	FPR(t).fd = (FLOAT64)((FPR(a).fd * FPR(c).fd) + FPR(b).fd);
+	FPR(t).fd = ((FPR(a).fd * FPR(c).fd) + FPR(b).fd);
 
     set_fprf(FPR(t).fd);
-	SET_FCR1();
+	if( RCBIT ) {
+		SET_CR1();
+	}
 }
 
 static void ppc_fmsubx(UINT32 op)
@@ -2403,10 +2391,12 @@ static void ppc_fmsubx(UINT32 op)
     SET_VXSNAN(FPR(a).fd, FPR(b).fd);
     SET_VXSNAN_1(FPR(c).fd);
 
-    FPR(t).fd = (FLOAT64)((FPR(a).fd * FPR(c).fd) - FPR(b).fd);
+    FPR(t).fd = ((FPR(a).fd * FPR(c).fd) - FPR(b).fd);
 
     set_fprf(FPR(t).fd);
-	SET_FCR1();
+	if( RCBIT ) {
+		SET_CR1();
+	}
 }
 
 static void ppc_fmulx(UINT32 op)
@@ -2417,12 +2407,14 @@ static void ppc_fmulx(UINT32 op)
 
 	CHECK_FPU_AVAILABLE();
 
-    SET_VXSNAN(FPR(a).fd, FPR(c).fd);
+	SET_VXSNAN(FPR(a).fd, FPR(c).fd);
 
-    FPR(t).fd = (FLOAT64)((FLOAT64)FPR(a).fd * (FLOAT64)FPR(c).fd);
+	FPR(t).fd = (FPR(a).fd * FPR(c).fd);
 
-    set_fprf(FPR(t).fd);
-	SET_FCR1();
+	set_fprf(FPR(t).fd);
+	if( RCBIT ) {
+		SET_CR1();
+	}
 }
 
 static void ppc_fnmaddx(UINT32 op)
@@ -2434,13 +2426,15 @@ static void ppc_fnmaddx(UINT32 op)
 
 	CHECK_FPU_AVAILABLE();
 
-    SET_VXSNAN(FPR(a).fd, FPR(b).fd);
-    SET_VXSNAN_1(FPR(c).fd);
+	SET_VXSNAN(FPR(a).fd, FPR(b).fd);
+	SET_VXSNAN_1(FPR(c).fd);
 
-    FPR(t).fd = (FLOAT64)(-((FPR(a).fd * FPR(c).fd) + FPR(b).fd));
+	FPR(t).fd = (-((FPR(a).fd * FPR(c).fd) + FPR(b).fd));
 
-    set_fprf(FPR(t).fd);
-	SET_FCR1();
+	set_fprf(FPR(t).fd);
+	if( RCBIT ) {
+		SET_CR1();
+	}
 }
 
 static void ppc_fnmsubx(UINT32 op)
@@ -2452,13 +2446,15 @@ static void ppc_fnmsubx(UINT32 op)
 
 	CHECK_FPU_AVAILABLE();
 
-    SET_VXSNAN(FPR(a).fd, FPR(b).fd);
-    SET_VXSNAN_1(FPR(c).fd);
+	SET_VXSNAN(FPR(a).fd, FPR(b).fd);
+	SET_VXSNAN_1(FPR(c).fd);
 
-    FPR(t).fd = (FLOAT64)(-((FPR(a).fd * FPR(c).fd) - FPR(b).fd));
+	FPR(t).fd = (-((FPR(a).fd * FPR(c).fd) - FPR(b).fd));
 
-    set_fprf(FPR(t).fd);
-	SET_FCR1();
+	set_fprf(FPR(t).fd);
+	if( RCBIT ) {
+		SET_CR1();
+	}
 }
 
 static void ppc_fselx(UINT32 op)
@@ -2472,7 +2468,9 @@ static void ppc_fselx(UINT32 op)
 
 	FPR(t).fd = (FPR(a).fd >= 0.0) ? FPR(c).fd : FPR(b).fd;
 
-	SET_FCR1();
+	if( RCBIT ) {
+		SET_CR1();
+	}
 }
 
 static void ppc_fmaddsx(UINT32 op)
@@ -2483,14 +2481,16 @@ static void ppc_fmaddsx(UINT32 op)
 	UINT32 t = RT;
 
 	CHECK_FPU_AVAILABLE();
+	
+	SET_VXSNAN(FPR(a).fd, FPR(b).fd);
+	SET_VXSNAN_1(FPR(c).fd);
 
-    SET_VXSNAN(FPR(a).fd, FPR(b).fd);
-    SET_VXSNAN_1(FPR(c).fd);
+	FPR(t).fd = (float)((FPR(a).fd * FPR(c).fd) + FPR(b).fd);
 
-    FPR(t).fd = (FLOAT32)((FPR(a).fd * FPR(c).fd) + FPR(b).fd);
-
-    set_fprf(FPR(t).fd);
-	SET_FCR1();
+	set_fprf(FPR(t).fd);
+	if( RCBIT ) {
+		SET_CR1();
+	}
 }
 
 static void ppc_fmsubsx(UINT32 op)
@@ -2502,13 +2502,15 @@ static void ppc_fmsubsx(UINT32 op)
 
 	CHECK_FPU_AVAILABLE();
 
-    SET_VXSNAN(FPR(a).fd, FPR(b).fd);
-    SET_VXSNAN_1(FPR(c).fd);
+	SET_VXSNAN(FPR(a).fd, FPR(b).fd);
+	SET_VXSNAN_1(FPR(c).fd);
 
-    FPR(t).fd = (FLOAT32)((FPR(a).fd * FPR(c).fd) - FPR(b).fd);
+	FPR(t).fd = (float)((FPR(a).fd * FPR(c).fd) - FPR(b).fd);
 
-    set_fprf(FPR(t).fd);
-	SET_FCR1();
+	set_fprf(FPR(t).fd);
+	if( RCBIT ) {
+		SET_CR1();
+	}
 }
 
 static void ppc_fmulsx(UINT32 op)
@@ -2518,13 +2520,14 @@ static void ppc_fmulsx(UINT32 op)
 	UINT32 t = RT;
 
 	CHECK_FPU_AVAILABLE();
+	SET_VXSNAN(FPR(a).fd, FPR(c).fd);
 
-    SET_VXSNAN(FPR(a).fd, FPR(c).fd);
+	FPR(t).fd = (float)(FPR(a).fd * FPR(c).fd);
 
-	FPR(t).fd = (FLOAT32)((FLOAT64)FPR(a).fd * (FLOAT64)FPR(c).fd);
-
-    set_fprf(FPR(t).fd);
-	SET_FCR1();
+	set_fprf(FPR(t).fd);
+	if( RCBIT ) {
+		SET_CR1();
+	}
 }
 
 static void ppc_fnmaddsx(UINT32 op)
@@ -2536,13 +2539,15 @@ static void ppc_fnmaddsx(UINT32 op)
 
 	CHECK_FPU_AVAILABLE();
 
-    SET_VXSNAN(FPR(a).fd, FPR(b).fd);
-    SET_VXSNAN_1(FPR(c).fd);
+	SET_VXSNAN(FPR(a).fd, FPR(b).fd);
+	SET_VXSNAN_1(FPR(c).fd);
 
-    FPR(t).fd = (FLOAT32)(-((FPR(a).fd * FPR(c).fd) + FPR(b).fd));
+    FPR(t).fd = (float)(-((FPR(a).fd * FPR(c).fd) + FPR(b).fd));
 
-    set_fprf(FPR(t).fd);
-	SET_FCR1();
+	set_fprf(FPR(t).fd);
+	if( RCBIT ) {
+		SET_CR1();
+	}
 }
 
 static void ppc_fnmsubsx(UINT32 op)
@@ -2554,11 +2559,13 @@ static void ppc_fnmsubsx(UINT32 op)
 
 	CHECK_FPU_AVAILABLE();
 
-    SET_VXSNAN(FPR(a).fd, FPR(b).fd);
-    SET_VXSNAN_1(FPR(c).fd);
+	SET_VXSNAN(FPR(a).fd, FPR(b).fd);
+	SET_VXSNAN_1(FPR(c).fd);
 
-    FPR(t).fd = (FLOAT32)(-((FPR(a).fd * FPR(c).fd) - FPR(b).fd));
+	FPR(t).fd = (float)(-((FPR(a).fd * FPR(c).fd) - FPR(b).fd));
 
-    set_fprf(FPR(t).fd);
-	SET_FCR1();
+	set_fprf(FPR(t).fd);
+	if( RCBIT ) {
+		SET_CR1();
+	}
 }

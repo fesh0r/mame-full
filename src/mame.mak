@@ -507,11 +507,12 @@ $(OBJ)/sega.a: \
 	$(OBJ)/vidhrdw/system1.o $(OBJ)/drivers/system1.o \
 	$(OBJ)/vidhrdw/segasyse.o $(OBJ)/drivers/segasyse.o \
 	$(OBJ)/machine/system16.o $(OBJ)/vidhrdw/system16.o $(OBJ)/vidhrdw/sys16spr.o \
-	$(OBJ)/sndhrdw/system16.o $(OBJ)/vidhrdw/segaic16.o \
+	$(OBJ)/sndhrdw/system16.o $(OBJ)/vidhrdw/segaic16.o $(OBJ)/machine/segaic16.o \
 	$(OBJ)/vidhrdw/segas16a.o $(OBJ)/drivers/segas16a.o \
 	$(OBJ)/vidhrdw/segas16b.o $(OBJ)/drivers/segas16b.o \
 	$(OBJ)/vidhrdw/segas18.o $(OBJ)/drivers/segas18.o \
 	$(OBJ)/machine/fd1094.o $(OBJ)/machine/s16fd.o \
+	$(OBJ)/machine/mc8123.o \
 	$(OBJ)/drivers/system16.o $(OBJ)/drivers/segas16b.o $(OBJ)/drivers/aburner.o $(OBJ)/drivers/outrun.o \
 	$(OBJ)/drivers/sharrier.o $(OBJ)/drivers/system18.o \
 	$(OBJ)/drivers/yboard.o $(OBJ)/vidhrdw/yboard.o $(OBJ)/machine/s16math.o \
@@ -521,6 +522,7 @@ $(OBJ)/sega.a: \
 	$(OBJ)/drivers/model1.o $(OBJ)/machine/model1.o $(OBJ)/vidhrdw/model1.o \
 	$(OBJ)/drivers/model2.o \
 	$(OBJ)/vidhrdw/model3.o $(OBJ)/machine/model3.o $(OBJ)/drivers/model3.o \
+	$(OBJ)/machine/53c810.o \
 	$(OBJ)/vidhrdw/segac2.o $(OBJ)/drivers/segac2.o \
 	$(OBJ)/drivers/coolridr.o \
 	$(OBJ)/drivers/stv.o $(OBJ)/drivers/stvhacks.o $(OBJ)/machine/stvcd.o \
@@ -1157,9 +1159,8 @@ $(OBJ)/nix.a: \
 $(OBJ)/othertrv.a: \
 	$(OBJ)/drivers/findout.o \
 	$(OBJ)/drivers/getrivia.o \
-	$(OBJ)/drivers/trvgns.o \
 	$(OBJ)/drivers/merit.o \
-	$(OBJ)/drivers/strvmstr.o \
+	$(OBJ)/drivers/ettrivia.o \
 	$(OBJ)/drivers/statriv2.o \
 
 $(OBJ)/other68k.a: \

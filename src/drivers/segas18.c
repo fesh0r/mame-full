@@ -213,6 +213,7 @@ static void system18_generic_init(int _rom_board)
 MACHINE_INIT( system18 )
 {
 	fd1094_machine_init();
+	system18_reset_video();
 
 	/* if we are running with a real live 8751, we need to boost the interleave at startup */
 	if (Machine->drv->cpu[2].cpu_type == CPU_I8751)

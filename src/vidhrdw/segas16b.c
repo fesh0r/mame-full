@@ -78,10 +78,7 @@ static int video_start_common(void (*tilecb)(int), void (*textcb)(int))
 	tile_bank[1] = 1;
 
 	/* compute palette info */
-	segaic16_init_palette();
-	
-	/* set a timer to latch values on scanline 261 */
-	timer_set(cpu_getscanlinetime(261), 0, latch_tilemap_values);
+	segaic16_init_palette(2048);
 	return 0;
 }
 
@@ -95,6 +92,13 @@ VIDEO_START( system16b )
 VIDEO_START( timscanr )
 {
 	return video_start_common(get_tile_info_timscanr, get_text_info_timscanr);
+}
+
+
+void system16b_reset_video(void)
+{
+	/* set a timer to latch values on scanline 261 */
+	timer_set(cpu_getscanlinetime(261), 0, latch_tilemap_values);
 }
 
 

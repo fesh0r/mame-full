@@ -66,7 +66,7 @@ VIDEO_START( system16a )
 	rowscroll = 0;
 
 	/* compute palette info */
-	segaic16_init_palette();
+	segaic16_init_palette(2048);
 	return 0;
 }
 

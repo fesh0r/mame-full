@@ -12,7 +12,7 @@ extern struct tilemap *segaic16_tilemaps[];
 extern UINT8 segaic16_tilemap_page;
 
 /* palette handling */
-void segaic16_init_palette(void);
+void segaic16_init_palette(int entries);
 WRITE16_HANDLER( segaic16_paletteram_w );
 
 /* tilemap helpers */

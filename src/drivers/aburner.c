@@ -32,6 +32,7 @@ smgp fails divide chip check
 #include "cpu/i8039/i8039.h"
 #include "system16.h"
 #include "cpu/m68000/m68000.h"
+#include "machine/s16math.h"
 
 extern void fd1094_driver_init(void);
 extern void fd1094_machine_init(void);
@@ -164,6 +165,57 @@ ROM_START( loffire )
 
 	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
 	ROM_LOAD( "317-0136.key", 0x0000, 0x2000, CRC(dd482fc8) SHA1(90ba9f6c4198781f60e1412d5705a6a29514c12e) )
+
+	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
+	ROM_LOAD( "opr12791.rom", 0x00000, 0x10000, CRC(acfa69ba) SHA1(353c43dda6c2282a785646b0a58c90cfd173cd7b) )
+	ROM_LOAD( "opr12792.rom", 0x10000, 0x10000, CRC(e506723c) SHA1(d04dc29686fe348f8f715d14c027de0e508c770f) )
+	ROM_LOAD( "opr12793.rom", 0x20000, 0x10000, CRC(0ce8cce3) SHA1(1a6b1af2b0b9e8240e681f7b15e9d08595753fe6) )
+
+	ROM_REGION( 0x400000, REGION_GFX2, 0 ) /* sprites */
+	ROM_LOAD32_BYTE( "epr12775.rom", 0x180003, 0x20000, CRC(693056ec) SHA1(82d10d960441811b9369295bbb60fa7bfc5457a3) )
+	ROM_LOAD32_BYTE( "epr12776.rom", 0x180002, 0x20000, CRC(61efbdfd) SHA1(67f267e0673c64ce77669826ea1d11cb79d0ccc1) )
+	ROM_LOAD32_BYTE( "epr12777.rom", 0x180001, 0x20000, CRC(29d5b953) SHA1(0c932a67e2aecffa7a1dbaa587c96214e1a2cc7f) )
+	ROM_LOAD32_BYTE( "epr12778.rom", 0x180000, 0x20000, CRC(2fb68e07) SHA1(8685e72aed115cbc9c6c7511217996a573b30d16) )
+	ROM_LOAD32_BYTE( "epr12779.rom", 0x100003, 0x20000, CRC(ae58af7c) SHA1(8c57f2d0b6584dd606afc5ecff039479e5068420) )
+	ROM_LOAD32_BYTE( "epr12780.rom", 0x100002, 0x20000, CRC(ee670c1e) SHA1(8a9e0808d40e210abf6c49ef5c0774d8c0d6602b) )
+	ROM_LOAD32_BYTE( "epr12781.rom", 0x100001, 0x20000, CRC(538f6bc5) SHA1(4f294ef0aa9c7e2ac7e92518d938f0870f2e46d1) )
+	ROM_LOAD32_BYTE( "epr12782.rom", 0x100000, 0x20000, CRC(5acc34f7) SHA1(ef27ab818f50e59a122b9fc65b13442d9fee307c) )
+	ROM_LOAD32_BYTE( "epr12783.rom", 0x080003, 0x20000, CRC(c13feea9) SHA1(c0c3097903079deec22b0f8de76927f7570ac0f6) )
+	ROM_LOAD32_BYTE( "epr12784.rom", 0x080002, 0x20000, CRC(39b94c65) SHA1(4deae3bf7bb4e04b011d23292a0c68471758e7ec) )
+	ROM_LOAD32_BYTE( "epr12785.rom", 0x080001, 0x20000, CRC(05ed0059) SHA1(b7404a0f4f15ffdbd08673683cea22340de3f5f9) )
+	ROM_LOAD32_BYTE( "epr12786.rom", 0x080000, 0x20000, CRC(a4123165) SHA1(024597dcfbd3be932626b84dbd6e7d38a7a0195d) )
+	ROM_LOAD32_BYTE( "epr12787.rom", 0x000003, 0x20000, CRC(6431a3a6) SHA1(63a732b7dfd2b83fe7684d47fea26063c4ece099) )
+	ROM_LOAD32_BYTE( "epr12788.rom", 0x000002, 0x20000, CRC(1982a0ce) SHA1(e4756f31b0094e0e9ddb2df53a5c938ac5559230) )
+	ROM_LOAD32_BYTE( "epr12789.rom", 0x000001, 0x20000, CRC(97d03274) SHA1(b4b9921db53949bc8e91f8a2992e89c172fe8893) )
+	ROM_LOAD32_BYTE( "epr12790.rom", 0x000000, 0x20000, CRC(816e76e6) SHA1(34d2a662af96f40f40a77497cbc0a3374fe9a34f) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* sound CPU */
+	ROM_LOAD( "epr12798.rom",	 0x00000, 0x10000, CRC(0587738d) SHA1(24c79b0c73616d5532a49a2c9121dfabe3a80c7d) )
+
+	ROM_REGION( 0x60000, REGION_SOUND1, 0 ) /* Sega PCM sound data */
+	ROM_LOAD( "epr12799.rom",    0x00000, 0x20000, CRC(bc60181c) SHA1(3c89161348db7cafb5636ab4eaba91fbd3541f90) )
+	ROM_LOAD( "epr12800.rom",    0x20000, 0x20000, CRC(1158c1a3) SHA1(e1d664a203eed5a0130b39ced7bea8328f06f107) )
+	ROM_LOAD( "epr12801.rom",    0x40000, 0x20000, CRC(2d6567c4) SHA1(542be9d8e91cf2df18d95f4e259cfda0560697cb) )
+
+	ROM_REGION( 0x80000, REGION_CPU3, 0 ) /* 2nd 68000 code */
+	ROM_LOAD16_BYTE( "epr12804.rom", 0x000000, 0x20000, CRC(b853480e) SHA1(de0889e99251da7ea50316282ebf6f434cc2db11) )
+	ROM_LOAD16_BYTE( "epr12805.rom", 0x000001, 0x20000, CRC(4a7200c3) SHA1(3e6febed36a55438e0d24441b68f2b7952791584) )
+	ROM_LOAD16_BYTE( "epr12802.rom", 0x040000, 0x20000, CRC(d746bb39) SHA1(08dc8cf565997c7e52329961bf7a229a15900cff) )
+	ROM_LOAD16_BYTE( "epr12803.rom", 0x040001, 0x20000, CRC(c1d9e751) SHA1(98b3d0b3b31702f6234b5fea2b82d512fc5d3ad2) )
+
+	ROM_REGION( 0x10000, REGION_GFX3, 0 ) /* road gfx */
+	/* none */
+ROM_END
+
+ROM_START( loffirej )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 code */
+	/* repaired using data from the loffire set since they are mostly identical when decrypted, they pass the rom check
+	  so are assumed to be ok but double checking them when possible never hurts */
+	ROM_LOAD16_BYTE( "epr12794.bin", 0x000000, 0x20000, CRC(1e588992) SHA1(fe7107e83c12643e7d22fd4b4cd0c7bcff0d84c3) )
+	ROM_LOAD16_BYTE( "epr12795.bin", 0x000001, 0x20000, CRC(d43d7427) SHA1(ecbd425bab6aa65ffbd441d6a0936ac055d5f06d) )
+
+	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
+	ROM_LOAD( "317-0134.key", 0x0000, 0x2000, CRC(732626d4) SHA1(75ed7ca417758dd62afb4edbb9daee754932c392) )
 
 	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
 	ROM_LOAD( "opr12791.rom", 0x00000, 0x10000, CRC(acfa69ba) SHA1(353c43dda6c2282a785646b0a58c90cfd173cd7b) )
@@ -1009,6 +1061,109 @@ ROM_START( smgpf )
 	/* none?? */
 ROM_END
 
+ROM_START( abcop )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 code */
+	ROM_LOAD16_BYTE( "epr13568b.58", 0x00000, 0x20000, CRC(f88db35b) SHA1(7d85c1194a2aa08427333d2ffc2a8d4f7e1beff0) )
+	ROM_LOAD16_BYTE( "epr13556b.63", 0x00001, 0x20000, CRC(337bf32e) SHA1(dafb9d9b3baf79ca76355278e8a14294f186790a) )
+	ROM_LOAD16_BYTE( "epr13559.57", 0x40000, 0x20000, CRC(4588bf19) SHA1(6a8b3d4450ac0bc41b46e6a4e1b44d82112fcd64) )
+	ROM_LOAD16_BYTE( "epr13558.62", 0x40001, 0x20000, CRC(11259ed4) SHA1(e7de174a0bdb1d1111e5e419f1d501ab5be1d32d) )
+
+	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
+	ROM_LOAD( "317-0169b.key", 0x0000, 0x2000, CRC(058da36e) SHA1(ab3f68a90725063c68fc5d0f8dbece1f8940dc7d) )
+
+	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
+	ROM_LOAD( "opr13553.154", 0x00000, 0x10000, CRC(8c418837) SHA1(e325db39fae768865e20d2cd1ee2b91a9b0165f5) )
+	ROM_LOAD( "opr13554.153", 0x10000, 0x10000, CRC(4e3df9f0) SHA1(8b481c2cd25c58612ac8ac3ffb7eeae9ca247d2e) )
+	ROM_LOAD( "opr13555.152", 0x20000, 0x10000, CRC(6c4a1d42) SHA1(6c37b045b21173f1e2f7bd19d01c00979b8107fb) )
+
+	ROM_REGION( 0x200000, REGION_GFX2, 0 ) /* sprites */
+	ROM_LOAD32_BYTE( "opr13540.93",  0x180003, 0x20000, CRC(84b42ab0) SHA1(d24ba7fe23463fc5813ef26e0395951559d6d162) )
+	ROM_LOAD32_BYTE( "opr13539.97",  0x180002, 0x20000, CRC(cd6e524f) SHA1(e6df2552a84b2da95301486379c78679b0297634) )
+	ROM_LOAD32_BYTE( "opr13538.101", 0x180001, 0x20000, CRC(bf9a4586) SHA1(6013dee83375d72d262c8c04c2e668afea2e216c) )
+	ROM_LOAD32_BYTE( "opr13537.105", 0x180000, 0x20000, CRC(fa14ed3e) SHA1(d684496ade2517696a56c1423dd4686d283c133f) )
+
+	ROM_LOAD32_BYTE( "opr13544.92",  0x100003, 0x20000, CRC(9c1436d9) SHA1(5156e1b5c7461f6dc0d449b86b6b72153b290a4c) )
+	ROM_LOAD32_BYTE( "opr13543.96",  0x100002, 0x20000, CRC(2c1c8f0e) SHA1(19c9fd4272a3db18381f435ed6cd01f994c655e7) )
+	ROM_LOAD32_BYTE( "opr13542.100", 0x100001, 0x20000, CRC(01fd52b8) SHA1(b4ab13c7b2b2ffcfdab37d8e4855d5ef8823f1cc) )
+	ROM_LOAD32_BYTE( "opr13541.104", 0x100000, 0x20000, CRC(a45c547b) SHA1(d93aaa850d14a7699a1b0411e823088a9bce7553) )
+
+	ROM_LOAD32_BYTE( "opr13548.91",  0x080003, 0x20000, CRC(080fd805) SHA1(e729565815a3a37462cfee460b7392d2f08e96e5) )
+	ROM_LOAD32_BYTE( "opr13547.95",  0x080002, 0x20000, CRC(42d4dd68) SHA1(6ae1f3585ebb20fd2908456d6fa41a893261277e) )
+	ROM_LOAD32_BYTE( "opr13546.99",  0x080001, 0x20000, CRC(ca6fbf3d) SHA1(49c3516d87f1546fa7efe785fc5c064d90b1cb8e) )
+	ROM_LOAD32_BYTE( "opr13545.103", 0x080000, 0x20000, CRC(c9e58dd2) SHA1(ace2e1630d8df2454183ffdbe26d8cb6d199e940) )
+
+	ROM_LOAD32_BYTE( "opr13552.90",  0x000003, 0x20000, CRC(cc2cf706) SHA1(ad39c22e652ebcd90ffb5e17ae35985645f93c71) )
+	ROM_LOAD32_BYTE( "opr13551.94",  0x000002, 0x20000, CRC(d6f276c1) SHA1(9ec68157ea460e09ef4b69aa8ea17687dc47ea59) )
+	ROM_LOAD32_BYTE( "opr13550.98",  0x000001, 0x20000, CRC(f16518dd) SHA1(a5f1785cd28f03069cb238ac92c6afb5a26cbd37) )
+	ROM_LOAD32_BYTE( "opr13549.102", 0x000000, 0x20000, CRC(cba407a7) SHA1(e7684d3b40baa6d832b887fd85ad67fbad8aa7de) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* sound CPU */
+	ROM_LOAD( "epr13560.17",    0x00000, 0x10000, CRC(83050925) SHA1(118710e5789c7999bb7326df4d7bd207cbffdfd4) )
+
+	ROM_REGION( 0x60000, REGION_SOUND1, 0 ) /* Sega PCM sound data */
+	ROM_LOAD( "opr13563.11",    0x00000, 0x20000, CRC(4083e74f) SHA1(e48c7ce0aa3406af0bbf79c169a8157693c97041) )
+	ROM_LOAD( "opr13562.12",    0x20000, 0x20000, CRC(3cc3968f) SHA1(d25647f6a3fa939ba30e03e7334362ef0749b23a) )
+	ROM_LOAD( "opr13561.13",    0x40000, 0x20000, CRC(80a7c02a) SHA1(7e8c1b9ba270d8657dbe90ed8be2e4b6463e5928) )
+
+	ROM_REGION( 0x80000, REGION_CPU3, 0 ) /* 2nd 68000 code */
+	ROM_LOAD16_BYTE( "epr13566.20", 0x00000, 0x20000, CRC(22e52f32) SHA1(c67a4ccb88becc58dddcbfea0a1ac2017f7b2929) )
+	ROM_LOAD16_BYTE( "epr13565.29", 0x00001, 0x20000, CRC(a21784bd) SHA1(b40ba0ef65bbfe514625253f6aeec14bf4bcf08c) )
+
+	ROM_REGION( 0x10000, REGION_GFX3, 0 ) /* ground data */
+	ROM_LOAD( "opr13564.40",	 0x00000, 0x10000, CRC(e70ba138) SHA1(85eb6618f408642227056d278f10dec8dcc5a80d) )
+ROM_END
+
+ROM_START( rachero )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 code */
+	ROM_LOAD16_BYTE( "epr13129.58", 0x00000, 0x20000,CRC(ad9f32e7) SHA1(dbcb3436782bee88dcac05d4f59c97f170a7387d) )
+	ROM_LOAD16_BYTE( "epr13130.63", 0x00001, 0x20000,CRC(6022777b) SHA1(965c76565d740be3355c4b403a1629cffb9fcd78) )
+	ROM_LOAD16_BYTE( "epr12855.57", 0x40000, 0x20000,CRC(cecf1e73) SHA1(3f8631379f32dbfda7720ef345276f9be23ada06) )
+	ROM_LOAD16_BYTE( "epr12856.62", 0x40001, 0x20000,CRC(da900ebb) SHA1(595ed65248185ddf8666b3f30ad6329162116448) )
+
+	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
+	ROM_LOAD( "317-0144.key", 0x0000, 0x2000, CRC(8740bbff) SHA1(de96e606c04a09258b966532fb01a6b4d4db86a6) )
+
+	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
+	ROM_LOAD( "epr12879.154", 0x00000, 0x10000, CRC(c1a9de7a) SHA1(2425456a9d4ba92e1f2da6c2f164a6d5a5dee7c7) )
+	ROM_LOAD( "epr12880.153", 0x10000, 0x10000, CRC(27ff04a5) SHA1(b554a6e060f4803100be8efa52977b503eb0f31d) )
+	ROM_LOAD( "epr12881.152", 0x20000, 0x10000, CRC(72f14491) SHA1(b7a6cbd08470a5edda77cdd0337abd502c4905fd) )
+
+	ROM_REGION( 0x200000, REGION_GFX2, 0 ) /* sprites */
+	ROM_LOAD32_BYTE( "epr12860.93",  0x180003, 0x20000, CRC(86b64119) SHA1(d39aedad0f05e500e33af888126bd2fc22539141) )
+	ROM_LOAD32_BYTE( "epr12861.97",  0x180002, 0x20000, CRC(bccff19b) SHA1(32c3f7802a12be02a114b78cd898c46fcb1c0a61) )
+	ROM_LOAD32_BYTE( "epr12862.101", 0x180001, 0x20000, CRC(7d4c3b05) SHA1(4e25a077b403549c681c5047912d0e28f4c07720) )
+	ROM_LOAD32_BYTE( "epr12863.105", 0x180000, 0x20000, CRC(85095053) SHA1(f93194ecc0300956280cc0515b3e3ba2c9f71364) )
+
+	ROM_LOAD32_BYTE( "epr12864.92",  0x100003, 0x20000, CRC(77d6cff4) SHA1(1e625204801d03369311844efb26d22216253ac4) )
+	ROM_LOAD32_BYTE( "epr12865.96",  0x100002, 0x20000, CRC(1e7e685b) SHA1(532fe361357383aa9dada833cbe31716c58001e5) )
+	ROM_LOAD32_BYTE( "epr12866.100", 0x100001, 0x20000, CRC(fdf31329) SHA1(9c229a0f9d8b8114acfe4f17b45a9b8640560b3e) )
+	ROM_LOAD32_BYTE( "epr12867.104", 0x100000, 0x20000, CRC(b25e37fd) SHA1(fef5bfe4690b3203b83fd565d883b2c63f439633) )
+
+	ROM_LOAD32_BYTE( "epr12868.91",  0x080003, 0x20000, CRC(96289583) SHA1(4d37e67860bc0e6ef69f0a0775c28f6f2fd6875e) )
+	ROM_LOAD32_BYTE( "epr12869.95",  0x080002, 0x20000, CRC(2ef0de02) SHA1(11ee3d77df2cddd3156da52e50565505f95f4cd4) )
+	ROM_LOAD32_BYTE( "epr12870.99",  0x080001, 0x20000, CRC(c76630e1) SHA1(7b76e4819990e147639d6b930b17b6fa10df191c) )
+	ROM_LOAD32_BYTE( "epr12871.103", 0x080000, 0x20000, CRC(23401b1a) SHA1(eaf465ffda84bdb83cc85daf781275bada396aab) )
+
+	ROM_LOAD32_BYTE( "epr12872.90",  0x000003, 0x20000, CRC(68d56139) SHA1(b5f32edbda10c31d52f90defea2bae226676069f) )
+	ROM_LOAD32_BYTE( "epr12873.94",  0x000002, 0x20000, CRC(3d3ec450) SHA1(ac96ad8c7b365478bd1e5826a073e242f1208247) )
+	ROM_LOAD32_BYTE( "epr12874.98",  0x000001, 0x20000, CRC(7d6bde23) SHA1(88b12ec6386cdad60b0028b72033a0037a0cdbdb) )
+	ROM_LOAD32_BYTE( "epr12875.102", 0x000000, 0x20000, CRC(e33092bf) SHA1(31e211e25adac0a98befb459093f23c905fbc1e6) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* sound CPU */
+	ROM_LOAD( "epr12859.17",    0x00000, 0x10000, CRC(d57881da) SHA1(75b7f331ea8c2e33d6236e0c8fc8dabe5eef8160) )
+
+	ROM_REGION( 0x60000, REGION_SOUND1, 0 ) /* Sega PCM sound data */
+	ROM_LOAD( "epr12876.11",    0x00000, 0x20000, CRC(f72a34a0) SHA1(28f7d077c24352557da3a91a7e49b0c5b79f2a2e) )
+	ROM_LOAD( "epr12877.12",    0x20000, 0x20000, CRC(18c1b6d2) SHA1(860cbb96999ab76c40ce96996bba70c42d845abc) )
+	ROM_LOAD( "epr12878.13",    0x40000, 0x20000, CRC(7c212c15) SHA1(360b332d2fb32d88949ff8b357a863ffaaca39c2) )
+
+	ROM_REGION( 0x80000, REGION_CPU3, 0 ) /* 2nd 68000 code */
+	ROM_LOAD16_BYTE( "epr12857.20", 0x00000, 0x20000, CRC(8a2328cc) SHA1(c34498428ddfb3eeb986f4153a6165a685d8fc8a) )
+	ROM_LOAD16_BYTE( "epr12858.29", 0x00001, 0x20000, CRC(38a248b7) SHA1(a17672123665403c1c56fedab6c8abf44b1131f9) )
+
+	ROM_REGION( 0x10000, REGION_GFX3, 0 ) /* ground data */
+	/* none */
+ROM_END
 
 /*****************************************************************************/
 
@@ -1239,12 +1394,12 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( smgp )
 	PORT_START_TAG("IN0")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON3 ) /* unknown */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED ) /* unknown */
 	PORT_SERVICE_NO_TOGGLE(0x02, IP_ACTIVE_LOW)
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 ) /* service */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_NAME("P1 Vulcan") /* vulcan */
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_NAME("P1 Missile")/* missle */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON3 ) // avoid button1 because it double maps to accel pedal
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON4 ) // avoid button2 because it double maps to brake pedal
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
@@ -1276,15 +1431,115 @@ INPUT_PORTS_START( smgp )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START_TAG("IN3")
-	PORT_BIT( 0xff, 0x7f, IPT_AD_STICK_X ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(100) PORT_KEYDELTA(4)
+	PORT_START_TAG("IN3") /* steering */
+	PORT_BIT( 0xff, 0x7f, IPT_AD_STICK_X ) PORT_MINMAX(0x10,0xf0) PORT_SENSITIVITY(100) PORT_KEYDELTA(4)
 
-	PORT_START_TAG("IN4")
-	PORT_BIT( 0xff, 0x7f, IPT_AD_STICK_Y ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(100) PORT_KEYDELTA(4) PORT_REVERSE
+	PORT_START_TAG("IN4") /* accelerator */
+	PORT_BIT( 0xff, 0x00, IPT_PEDAL ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(100) PORT_KEYDELTA(20) // acc pedal
 
-	PORT_START_TAG("IN5") /* throttle (old player2 hack removed, now uses Z axis) */
-	PORT_BIT( 0xff, 0x80, IPT_AD_STICK_Z ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(100) PORT_KEYDELTA(79)
+	PORT_START_TAG("IN5") /* not used */
+	PORT_BIT( 0xff, 0x00, IPT_PEDAL2 ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(100) PORT_KEYDELTA(20) // brk pedal
 INPUT_PORTS_END
+
+
+INPUT_PORTS_START( abcop )
+	PORT_START_TAG("IN0")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON3 ) /* unknown */
+	PORT_SERVICE_NO_TOGGLE(0x02, IP_ACTIVE_LOW)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 ) /* service */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) // nothing?
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) // jump
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+
+	ABURN_COINAGE
+
+	PORT_START_TAG("DSWB")
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START_TAG("IN3") /* steering */
+	PORT_BIT( 0xff, 0x7f, IPT_AD_STICK_X ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(100) PORT_KEYDELTA(4) PORT_REVERSE
+
+	PORT_START_TAG("IN4") /* accelerator (not a pedal ..)*/
+	PORT_BIT( 0xff, 0x00, IPT_AD_STICK_Y ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(100) PORT_KEYDELTA(20) PORT_REVERSE
+
+	PORT_START_TAG("IN5") /* not used */
+//	PORT_BIT( 0xff, 0x80, IPT_AD_STICK_Z ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(100) PORT_KEYDELTA(79)
+INPUT_PORTS_END
+
+INPUT_PORTS_START( rachero )
+	PORT_START_TAG("IN0")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON3 ) /* unknown */
+	PORT_SERVICE_NO_TOGGLE(0x02, IP_ACTIVE_LOW)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 ) /* service */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED ) // ?
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED ) // suicide
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+
+	ABURN_COINAGE
+
+	PORT_START_TAG("DSWB")
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START_TAG("IN3") /* steering */
+	PORT_BIT( 0xff, 0x7f, IPT_AD_STICK_X ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(100) PORT_KEYDELTA(4) PORT_REVERSE
+
+	PORT_START_TAG("IN4") /* accelerator */
+	PORT_BIT( 0xff, 0x00, IPT_PEDAL ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(100) PORT_KEYDELTA(20) // acc pedal
+
+	PORT_START_TAG("IN5") /* not used */
+	PORT_BIT( 0xff, 0x00, IPT_PEDAL2 ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(100) PORT_KEYDELTA(20) // brk pedal
+INPUT_PORTS_END
+
 
 /*****************************************************************************/
 /* aburner hardware motor/moving cockpit abstraction */
@@ -1338,6 +1593,15 @@ static WRITE16_HANDLER( aburner_analog_select_w ){
 	if( ACCESSING_LSB ) sys16_analog_select = data&0xff;
 }
 
+
+static WRITE16_HANDLER( smgp_analog_select_w ){
+
+	if (data == 0x00) sys16_analog_select = 0x10;
+	else if (data == 0xff) sys16_analog_select-=4;
+	else printf("unknown smgp_analog_select_w %04x\n",data);
+}
+
+
 static READ16_HANDLER( aburner_analog_r ){
 	switch( sys16_analog_select ){
 	case 0x00: return readinputportbytag("IN3");
@@ -1363,144 +1627,21 @@ static WRITE16_HANDLER( aburner_lamp_w ){
 
 /*****************************************************************************/
 
-/* math coprocessor for afterburner hardware */
-
-static struct math_context {
-	UINT16 product[4];
-	UINT16 quotient[4];	/* operand0_hi, operand0_lo, operand1 */
-	UINT16 compare[4];	/* F,G,H */
-} math0_context, math1_context;
-
-WRITE16_HANDLER( math0_product_w ){
-	COMBINE_DATA( &math0_context.product[offset&3]);
-}
-static WRITE16_HANDLER( math0_quotient_w ){
-	COMBINE_DATA( &math0_context.quotient[offset&3]);
-}
-static WRITE16_HANDLER( math0_compare_w ){
-	offset&=3;
-	COMBINE_DATA( &math0_context.compare[offset]);
-	if( offset==3 ){
-		soundlatch_w( 0,math0_context.compare[3]&0xff );
-		cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
-	}
-}
-READ16_HANDLER( math0_product_r ){
-	UINT32 result = ((INT16)math0_context.product[0])*((INT16)math0_context.product[1]);
-	switch( offset&3 ){
-	case 0: return math0_context.product[0];
-	case 1: return math0_context.product[1];
-	case 2: return result>>16;
-	case 3: return result&0xffff;
-	}
-	return 0;
-}
-static READ16_HANDLER( math0_quotient_r ){
-	INT32 operand0 = (math0_context.quotient[0]<<16)|math0_context.quotient[1];
-	switch( offset&7 ){
-	case 0: case 1: case 2: case 3:
-		return math0_context.quotient[offset];
-	case 4: return math0_context.quotient[2] ? (UINT16)(operand0/(INT16)math0_context.quotient[2]) : 0x7fff;
-	case 5: return math0_context.quotient[2] ? (UINT16)(operand0%(INT16)math0_context.quotient[2]) : 0x0000;
-	}
-	logerror( "unknown quotient_r\n" );
-	return 0;
-}
-static READ16_HANDLER( math0_compare_r ){ /* 0xe8006 */
-	switch( offset&3 ){
-	case 0: return math0_context.compare[0];
-	case 1: return math0_context.compare[1];
-	case 2: return math0_context.compare[2];
-	case 3:
-		{
-			INT16 F = math0_context.compare[0]; /* range min */
-			INT16 G = math0_context.compare[1]; /* range max */
-			INT16 H = math0_context.compare[2]; /* test value */
-			if( F<=G ){
-				if( H<F ) return (UINT16)-1;
-				if( H>G ) return 1;
-			}
-			else {
-				if( H<0 ) return (UINT16)-1;
-				if( H>0 ) return 1;
-			}
-		}
-		break;
-	}
-
-	return 0;
+WRITE16_HANDLER( xboard_soundlatch_w )
+{
+	soundlatch_w( 0,data&0xff );
+	cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 }
 
-/* 2nd chip */
-static WRITE16_HANDLER( math1_product_w ){
-	COMBINE_DATA( &math1_context.product[offset&3]);
-}
-static WRITE16_HANDLER( math1_quotient_w ){
-//	if( offset == 6 ) offset = 2; // tblade
-	COMBINE_DATA( &math1_context.quotient[offset&3]);
-}
-static WRITE16_HANDLER( math1_compare_w ){
-	offset&=3;
-	COMBINE_DATA( &math1_context.compare[offset]);
-	if( offset==3 ){
-		soundlatch_w( 0,math1_context.compare[3]&0xff );
-		cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
-	}
-}
-static READ16_HANDLER( math1_product_r ){
-	UINT32 result = ((INT16)math1_context.product[0])*((INT16)math1_context.product[1]);
-	switch( offset&3 ){
-	case 0: return math1_context.product[0];
-	case 1: return math1_context.product[1];
-	case 2: return result>>16;
-	case 3: return result&0xffff;
-	}
-	return 0;
-}
-static READ16_HANDLER( math1_quotient_r ){
-	INT32 operand0 = (math1_context.quotient[0]<<16)|math1_context.quotient[1];
-	switch( offset&7 ){
-	case 0: case 1: case 2: case 3:
-		return math1_context.quotient[offset];
-	case 4: return math1_context.quotient[2] ? (UINT16)(operand0/(INT16)math1_context.quotient[2]) : 0x7fff;
-	case 5: return math1_context.quotient[2] ? (UINT16)(operand0%(INT16)math1_context.quotient[2]) : 0x0000;
-	}
-	logerror( "unknown quotient_r\n" );
-	return 0;
-}
-static READ16_HANDLER( math1_compare_r ){ /* 0xe8006 */
-	switch( offset&3 ){
-	case 0: return math1_context.compare[0];
-	case 1: return math1_context.compare[1];
-	case 2: return math1_context.compare[2];
-	case 3:
-		{
-			INT16 F = math1_context.compare[0]; /* range min */
-			INT16 G = math1_context.compare[1]; /* range max */
-			INT16 H = math1_context.compare[2]; /* test value */
-			if( F<=G ){
-				if( H<F ) return (UINT16)-1;
-				if( H>G ) return 1;
-			}
-			else {
-				if( H<0 ) return (UINT16)-1;
-				if( H>0 ) return 1;
-			}
-		}
-		break;
-	}
-
-	return 0;
-}
 
 static ADDRESS_MAP_START( aburner_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
 	AM_RANGE(0x0c0000, 0x0cffff) AM_READ(SYS16_MRA16_TILERAM)			/* 16 tilemaps */
 	AM_RANGE(0x0d0000, 0x0d0fff) AM_READ(SYS16_MRA16_TEXTRAM)
 
-	AM_RANGE(0x0e0000, 0x0e001f) AM_READ(math0_product_r)
-	AM_RANGE(0x0e4000, 0x0e401f) AM_READ(math0_quotient_r)
-	AM_RANGE(0x0e8000, 0x0e801f) AM_READ(math0_compare_r)
+	AM_RANGE(0x0e0000, 0x0e001f) AM_READ(sys16_mathp_0_r)
+	AM_RANGE(0x0e4000, 0x0e401f) AM_READ(sys16_mathq_0_r)
+	AM_RANGE(0x0e8000, 0x0e801f) AM_READ(sys16_mathc_0_r)
 
 	AM_RANGE(0x100000, 0x101fff) AM_READ(SYS16_MRA16_SPRITERAM)
 	AM_RANGE(0x120000, 0x12401f) AM_READ(SYS16_MRA16_PALETTERAM)
@@ -1512,9 +1653,9 @@ static ADDRESS_MAP_START( aburner_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x200000, 0x27ffff) AM_READ(SYS16_CPU3ROM16_r)				/* CPU2 ROM */
 	AM_RANGE(0x29c000, 0x2a3fff) AM_READ(SYS16_MRA16_WORKINGRAM2)
 
-	AM_RANGE(0x2e0000, 0x2e001f) AM_READ(math1_product_r)
-	AM_RANGE(0x2e4000, 0x2e401f) AM_READ(math1_quotient_r)
-	AM_RANGE(0x2e8000, 0x2e801f) AM_READ(math1_compare_r)
+	AM_RANGE(0x2e0000, 0x2e001f) AM_READ(sys16_mathp_1_r)
+	AM_RANGE(0x2e4000, 0x2e401f) AM_READ(sys16_mathq_1_r)
+	AM_RANGE(0x2e8000, 0x2e801f) AM_READ(sys16_mathc_1_r)
 
 	AM_RANGE(0x2ec000, 0x2ee001) AM_READ(SYS16_MRA16_ROADRAM)
 	AM_RANGE(0xff8000, 0xffffff) AM_READ(SYS16_MRA16_WORKINGRAM)
@@ -1546,9 +1687,11 @@ static ADDRESS_MAP_START( aburner_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x0c0000, 0x0cffff) AM_WRITE(SYS16_MWA16_TILERAM) AM_BASE(&sys16_tileram)	/* 134,135 */
 	AM_RANGE(0x0d0000, 0x0d0fff) AM_WRITE(SYS16_MWA16_TEXTRAM) AM_BASE(&sys16_textram)	/* 132,133 */
 
-	AM_RANGE(0x0e0000, 0x0e001f) AM_WRITE(math0_product_w)
-	AM_RANGE(0x0e4000, 0x0e401f) AM_WRITE(math0_quotient_w)
-	AM_RANGE(0x0e8000, 0x0e801f) AM_WRITE(math0_compare_w)		/* includes sound latch! (0x0e8016) */
+	AM_RANGE(0x0e0000, 0x0e001f) AM_WRITE(sys16_mathp_0_w)
+	AM_RANGE(0x0e4000, 0x0e401f) AM_WRITE(sys16_mathq_0_w)
+	AM_RANGE(0x0e8016, 0x0e8017) AM_WRITE(xboard_soundlatch_w )
+	AM_RANGE(0x0e8000, 0x0e801f) AM_WRITE(sys16_mathc_0_w)		/* includes sound latch! (0x0e8016) */
+
 
 	AM_RANGE(0x100000, 0x101fff) AM_WRITE(SYS16_MWA16_SPRITERAM) AM_BASE(&sys16_spriteram)		/* 38,39 */
 	AM_RANGE(0x110000, 0x110001) AM_WRITE(MWA16_NOP)				/* unknown */
@@ -1560,9 +1703,10 @@ static ADDRESS_MAP_START( aburner_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x200000, 0x27ffff) AM_WRITE(MWA16_ROM)				/* CPU2 ROM */
 	AM_RANGE(0x29c000, 0x2a3fff) AM_WRITE(SYS16_MWA16_WORKINGRAM2) AM_BASE(&sys16_workingram2)
 
-	AM_RANGE(0x2e0000, 0x2e001f) AM_WRITE(math1_product_w)
-	AM_RANGE(0x2e4000, 0x2e401f) AM_WRITE(math1_quotient_w)
-	AM_RANGE(0x2e8000, 0x2e801f) AM_WRITE(math1_compare_w)		/* includes sound latch! */
+	AM_RANGE(0x2e0000, 0x2e001f) AM_WRITE(sys16_mathp_1_w)
+	AM_RANGE(0x2e4000, 0x2e401f) AM_WRITE(sys16_mathq_1_w)
+	AM_RANGE(0x2e8016, 0x2e8017) AM_WRITE(xboard_soundlatch_w )
+	AM_RANGE(0x2e8000, 0x2e801f) AM_WRITE(sys16_mathc_1_w)		/* includes sound latch! */
 
 	AM_RANGE(0x2ec000, 0x2ee001) AM_WRITE(SYS16_MWA16_ROADRAM) AM_BASE(&sys16_roadram)	/* 125,126 */
 	AM_RANGE(0xff8000, 0xffffff) AM_WRITE(SYS16_MWA16_WORKINGRAM) AM_BASE(&sys16_workingram)	/* 55,60 */
@@ -1573,9 +1717,9 @@ static ADDRESS_MAP_START( aburner_readmem2, ADDRESS_SPACE_PROGRAM, 16 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(20) ) // thanks to cgfm, according to schems..
 	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
 	AM_RANGE(0x09c000, 0x0a3fff) AM_READ(SYS16_MRA16_WORKINGRAM2_SHARE)
-	AM_RANGE(0x0e0000, 0x0e001f) AM_READ(math1_product_r)
-	AM_RANGE(0x0e4000, 0x0e401f) AM_READ(math1_quotient_r)
-	AM_RANGE(0x0e8000, 0x0e801f) AM_READ(math1_compare_r)
+	AM_RANGE(0x0e0000, 0x0e001f) AM_READ(sys16_mathp_1_r)
+	AM_RANGE(0x0e4000, 0x0e401f) AM_READ(sys16_mathq_1_r)
+	AM_RANGE(0x0e8000, 0x0e801f) AM_READ(sys16_mathc_1_r)
 	AM_RANGE(0x0ec000, 0x0ee001) AM_READ(SYS16_MRA16_ROADRAM_SHARE)
 ADDRESS_MAP_END
 
@@ -1583,20 +1727,21 @@ static ADDRESS_MAP_START( aburner_writemem2, ADDRESS_SPACE_PROGRAM, 16 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(20) ) // thanks to cgfm, according to schems..
 	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
 	AM_RANGE(0x09c000, 0x0a3fff) AM_WRITE(SYS16_MWA16_WORKINGRAM2_SHARE)
-	AM_RANGE(0x0e0000, 0x0e001f) AM_WRITE(math1_product_w)
-	AM_RANGE(0x0e4000, 0x0e401f) AM_WRITE(math1_quotient_w)
-	AM_RANGE(0x0e8000, 0x0e801f) AM_WRITE(math1_compare_w)
+	AM_RANGE(0x0e0000, 0x0e001f) AM_WRITE(sys16_mathp_1_w)
+	AM_RANGE(0x0e4000, 0x0e401f) AM_WRITE(sys16_mathq_1_w)
+	AM_RANGE(0x0e8016, 0x0e8017) AM_WRITE(xboard_soundlatch_w )
+	AM_RANGE(0x0e8000, 0x0e801f) AM_WRITE(sys16_mathc_1_w)
 	AM_RANGE(0x0ec000, 0x0ee001) AM_WRITE(SYS16_MWA16_ROADRAM_SHARE)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( aburner_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x0000, 0xefff) AM_READ(MRA8_ROM)
 	AM_RANGE(0xf000, 0xf0ff) AM_READ(SegaPCM_r)
 	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_RAM)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( aburner_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x0000, 0xefff) AM_WRITE(MWA8_ROM)
 	AM_RANGE(0xf000, 0xf0ff) AM_WRITE(SegaPCM_w)
 	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_RAM)
 ADDRESS_MAP_END
@@ -1634,7 +1779,7 @@ static MACHINE_INIT( aburner ){
 
 	cpunum_set_info_fct(0, CPUINFO_PTR_M68K_RESET_CALLBACK, (genf *)xboard_reset);
 	fd1094_machine_init();
-	cpunum_set_input_line(2, INPUT_LINE_HALT, ASSERT_LINE);
+//	cpunum_set_input_line(2, INPUT_LINE_HALT, ASSERT_LINE);
 
 }
 
@@ -1669,12 +1814,30 @@ static DRIVER_INIT( gprider ){
 
 }
 
+static DRIVER_INIT( smgp ){
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x130000, 0x130001, 0, 0, smgp_analog_select_w);
+	machine_init_sys16_onetime();
+	sys16_bg1_trans = 1;
+	fd1094_driver_init();
+
+}
+
+
+
+
 INTERRUPT_GEN( aburner_interrupt ){
 	if( cpu_getiloops()!=0 )
 		irq2_line_hold(); /* (?) updates sound and inputs */
 	else
 		irq4_line_hold(); /* vblank */
 }
+
+struct SEGAPCMinterface xboard_segapcm_interface_15k_512 = {
+	SEGAPCM_SAMPLE15K,
+	BANK_512,
+	REGION_SOUND1,		// memory region
+	30
+};
 
 static MACHINE_DRIVER_START( aburner )
 
@@ -1694,7 +1857,7 @@ static MACHINE_DRIVER_START( aburner )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-	MDRV_INTERLEAVE(100)
+	MDRV_INTERLEAVE(1750) // line of fire needs this, boost interleave on startup instead?
 
 	MDRV_MACHINE_INIT(aburner)
 
@@ -1711,7 +1874,7 @@ static MACHINE_DRIVER_START( aburner )
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(YM2151, sys16_ym2151_interface)
-	MDRV_SOUND_ADD(SEGAPCM, sys16_segapcm_interface_15k_512)
+	MDRV_SOUND_ADD(SEGAPCM, xboard_segapcm_interface_15k_512)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( gprider )
@@ -1727,15 +1890,18 @@ MACHINE_DRIVER_END
 /*          rom       parent    machine   inp       init */
 GAME( 1987, aburner,  aburner2, aburner,  aburner,  aburner,  ROT0, "Sega", "After Burner (Japan)" ) // not encrypted
 GAME( 1987, aburner2, 0,        aburner,  aburner2, aburner2, ROT0, "Sega", "After Burner II" ) // not encrypted
-GAMEX(1989, loffire,  0,        gprider,  aburner,  gprider,  ROT0, "Sega", "Line of Fire", GAME_NOT_WORKING ) // decrypted
+GAMEX(1989, loffire,  0,        gprider,  aburner,  gprider,  ROT0, "Sega", "Line of Fire (World, FD1094 317-0136)", GAME_NOT_WORKING ) // decrypted
+GAMEX(1989, loffirej, loffire,  gprider,  aburner,  gprider,  ROT0, "Sega", "Line of Fire (Japan, FD1094 317-0134)", GAME_NOT_WORKING ) // decrypted
 GAMEX(19??, thndrbld, 0,        aburner,  thndrbld, thndrbdj,  ROT0, "Sega", "Thunder Blade (FD1094 317-0056)", GAME_NOT_WORKING ) // decrypted
 GAMEX(19??, thndrbdj, thndrbld, aburner,  thndrbld, thndrbdj, ROT0, "Sega", "Thunder Blade (Japan)", GAME_NOT_WORKING ) // not encrypted
 GAMEX(19??, gprider,  0,        gprider,  aburner,  gprider,  ROT0, "Sega", "GP Rider (set 1, US, FD1094 317-0162)", GAME_NOT_WORKING ) // decrypted
 GAMEX(19??, gpridera, gprider,        gprider,  aburner,  gprider,  ROT0, "Sega", "GP Rider (set 2, FD1094 317-0163)", GAME_NOT_WORKING ) // decrypted, no prg roms
-GAMEX(1989, smgp,  0,        gprider,  smgp,  gprider,  ROT0, "Sega", "Super Monaco GP (set 1, US, Rev A, FD1094 317-0125a)", GAME_NOT_WORKING ) // decrypted
-GAMEX(1989, smgpa, smgp,     gprider,  smgp,  gprider,  ROT0, "Sega", "Super Monaco GP (set 2, US, FD1094 317-0125a)", GAME_NOT_WORKING ) // decrypted
-GAMEX(1989, smgpb, smgp,     gprider,  smgp,  gprider,  ROT0, "Sega", "Super Monaco GP (set 3, World, Rev A, FD1094 317-0126a)", GAME_NOT_WORKING ) // decrypted
-GAMEX(1989, smgpc, smgp,     gprider,  smgp,  gprider,  ROT0, "Sega", "Super Monaco GP (set 4, Japan, Rev B. FD1094 317-0124a)", GAME_NOT_WORKING ) // decrypted
-GAMEX(1989, smgpd, smgp,     gprider,  smgp,  gprider,  ROT0, "Sega", "Super Monaco GP (set 5, US, Rev C. FD1094 317-0125a)", GAME_NOT_WORKING ) // decrypted
-GAMEX(1989, smgpe, smgp,     gprider,  smgp,  gprider,  ROT0, "Sega", "Super Monaco GP (set 6, World, 'Air Drive Cabinet', FD1094 317-0126)", GAME_NOT_WORKING ) // decrypted
-GAMEX(1989, smgpf, smgp,     gprider,  smgp,  gprider,  ROT0, "Sega", "Super Monaco GP (set 7, World, Rev B, 'Twin', FD1094 317-0126a)", GAME_NOT_WORKING ) // decrypted
+GAMEX(1989, smgp,  0,        gprider,  smgp,  smgp,  ROT0, "Sega", "Super Monaco GP (set 1, US, Rev A, FD1094 317-0125a)", GAME_NOT_WORKING ) // decrypted
+GAMEX(1989, smgpa, smgp,     gprider,  smgp,  smgp,  ROT0, "Sega", "Super Monaco GP (set 2, US, FD1094 317-0125a)", GAME_NOT_WORKING ) // decrypted
+GAMEX(1989, smgpb, smgp,     gprider,  smgp,  smgp,  ROT0, "Sega", "Super Monaco GP (set 3, World, Rev A, FD1094 317-0126a)", GAME_NOT_WORKING ) // decrypted
+GAMEX(1989, smgpc, smgp,     gprider,  smgp,  smgp,  ROT0, "Sega", "Super Monaco GP (set 4, Japan, Rev B. FD1094 317-0124a)", GAME_NOT_WORKING ) // decrypted
+GAMEX(1989, smgpd, smgp,     gprider,  smgp,  smgp,  ROT0, "Sega", "Super Monaco GP (set 5, US, Rev C. FD1094 317-0125a)", GAME_NOT_WORKING ) // decrypted
+GAMEX(1989, smgpe, smgp,     gprider,  smgp,  smgp,  ROT0, "Sega", "Super Monaco GP (set 6, World, 'Air Drive Cabinet', FD1094 317-0126)", GAME_NOT_WORKING ) // decrypted
+GAMEX(1989, smgpf, smgp,     gprider,  smgp,  smgp,  ROT0, "Sega", "Super Monaco GP (set 7, World, Rev B, 'Twin', FD1094 317-0126a)", GAME_NOT_WORKING ) // decrypted
+GAMEX(1990, rachero, 0,     gprider,  rachero,  gprider,  ROT0, "Sega", "Racing Hero (FD1094 317-0144)", GAME_IMPERFECT_GRAPHICS ) // decrypted
+GAMEX(1990, abcop, 0,     gprider,  abcop,  gprider,  ROT0, "Sega", "A.B. Cop (FD1094 317-0169b)", GAME_IMPERFECT_GRAPHICS ) // decrypted

@@ -173,7 +173,7 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 
 VIDEO_START(yboard)
 {
-	segaic16_init_palette();
+	segaic16_init_palette(0x4000);
 	return 0;
 }
 

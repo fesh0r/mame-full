@@ -161,6 +161,16 @@ typedef struct {
 #define INT_IRQ 0x01
 #define NMI_IRQ 0x02
 
+/*
+ * Prevent warnings on NetBSD.  All identifiers beginning with an underscore 
+ * followed by an uppercase letter are reserved by the C standard (ISO/IEC 
+ * 9899:1999, 7.1.3) to be used by the implementation.  It'd be best to rename 
+ * all such instances, but this is less intrusive and error-prone.
+ */
+#undef _B
+#undef _C
+#undef _L
+
 #define _PPC	Z80.PREPC.d		/* previous program counter */
 
 #define _PCD	Z80.PC.d

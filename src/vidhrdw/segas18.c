@@ -99,11 +99,15 @@ VIDEO_START( system18 )
 		tile_bank[i] = i;
 
 	/* compute palette info */
-	segaic16_init_palette();
-	
+	segaic16_init_palette(2048);
+	return 0;
+}
+
+
+void system18_reset_video(void)
+{
 	/* set a timer to latch values on scanline 261 */
 	timer_set(cpu_getscanlinetime(261), 0, latch_tilemap_values);
-	return 0;
 }
 
 

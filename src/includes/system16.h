@@ -19,6 +19,7 @@ VIDEO_START( system16b );
 VIDEO_START( timscanr );
 VIDEO_UPDATE( system16b );
 
+void system16b_reset_video(void);
 void system16b_set_draw_enable(int enable);
 void system16b_set_screen_flip(int flip);
 void system16b_configure_sprite_banks(int use_default);
@@ -31,6 +32,7 @@ WRITE16_HANDLER( system16b_textram_w );
 VIDEO_START( system18 );
 VIDEO_UPDATE( system18 );
 
+void system18_reset_video(void);
 void system18_set_draw_enable(int enable);
 void system18_set_screen_flip(int flip);
 void system18_set_tile_bank(int which, int bank);

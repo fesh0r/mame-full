@@ -67,7 +67,6 @@ static void ppc603_set_irq_line(int irqline, int state)
 	}
 }
 
-// same!
 static int ppc603_execute(int cycles)
 {
 	ppc_icount = cycles;
@@ -75,6 +74,7 @@ static int ppc603_execute(int cycles)
 
 	while( ppc_icount > 0 )
 	{
+		int cc = (ppc_icount >> 2) & 0x1;
 		UINT32 opcode;
 		UINT32 dec_old = DEC;
 		ppc.pc = ppc.npc;
@@ -94,10 +94,9 @@ static int ppc603_execute(int cycles)
 
 		ppc_icount--;
 
-		/* TODO: Update timebase */
-		ppc.tb++;
+		ppc.tb += cc;
 		
-		DEC--;
+		DEC -= cc;
 		if(DEC > dec_old)
 			ppc603_exception(EXCEPTION_DECREMENTER);
 	}
