@@ -797,7 +797,7 @@ static imgtoolerr_t prodos_lookup_path(imgtool_image *image, const char *path,
 				goto done;
 
 			/* if we need to create a file entry and this is free, track it */
-			if (create && direnum->block && !free_block && !ent->storage_type)
+			if (create && this_block && !free_block && !ent->storage_type)
 			{
 				free_block = this_block;
 				free_index = this_index;
