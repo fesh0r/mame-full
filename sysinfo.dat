@@ -1,9 +1,8 @@
-# MESS System Information Data File v37b7 (7th of September, 2000)
-# Maintained by Chris Henry
-# Send corrections/submissions to: battlepriest@hotmail.com
-
-# Thanks to Ben Bruscella, Juergen Buchmueller, JoJo Priore, and everyone on MESSDEV.
-# Special Thanks to Thierry Schimbi!
+# MESS System Information Data File
+# Maintained by Hobie Troxell & Chris Henry 
+# Send corrections/submissions to: 
+#   Hobie Troxell <ht1848@yahoo.com> 
+#   battlepriest@hotmail.com
 
 # This file contains the basic documentation for most of the drivers presented in the MESS
 # distribution. Please read the readme.txt, mess.txt and messnew.txt prior to reading this
@@ -1639,7 +1638,8 @@ History and Trivia:
 Introduced in August 1976 at a suggested retail price of $170 (US), The Channel F was the 
 first programmable video game system to use replaceable cartridges. The controllers, which were
 often described as looking like plungers were attached directly to the system via 8 foot wires.
-The Channel F didn't fair well in the late 1970s market dominated by Atari, and Fairchild switched their efforts to developing the Spark-16 minicomputer.
+The Channel F didn't fair well in the late 1970s market dominated by Atari, and Fairchild switched 
+their efforts to developing the Spark-16 minicomputer.
 
 $end
 
@@ -1909,37 +1909,96 @@ $end
 
 $info=genesis
 $bio
-Sega Megadrive/Genesis
 
 
-Usage:
-
-Under the "Options" menu, accessible by hitting TAB, you will find the following option: 
-
-
-"Country" - this allows you to alter the 'flavour' of Genesis, to either European, Japanese 
-or American. Many cartridges compare their country codes with that of the Genesis itself and 
-may behave differently, or lock up if the two types do not match.
+Sega Megadrive/Genesis (1988)
+------------------------------------
+Bios = None required
 
 
-'Auto' attempts to auto-set the Genesis country code to the value the cartridge will appear 
-to be checking for. This may not be 100% accurate, however.
+The Sega Genesis was released in Japan on the 29th of
+October 1988, and in the USA on the 1st of September
+1989. At that time, no other console could compete
+with Sega´s powerful 16-bit system, apart from the
+PC-Engine / TurboGrafx-16, perhaps. But due to a lack
+of third-party support - especially with the arrival
+of the SNES, because many of the major game companies
+were still bound to Nintendo because of the contracts
+they made in the NES era - the Genesis never became as
+successful as Nintendo´s 16-bit console. Nevertheless,
+about 28.5 million consoles were sold worldwide,
+compared to about 48 million SNES consoles. Looking at
+the different regions of the world, the Genesis was
+most successful in the USA. It was quite strong in
+Europe, too (especially Great Britain is famous for
+being the European Sega stronghold), but did not
+succeed very well in Japan, Nintendo's home country.
+It was definitely no mistake to buy the console, as I
+did in early 1990, shortly after Super Shinobi had
+been released. Among the approximetaly 1000 games
+which were produced during the Genesis´ lifespan
+(about 10 years during 1988-1998) are a lot of
+evergreens which deserve to be played even today.
+(note taken from www.eidolons-inn.de)
 
 
-Known Issues:
+Features
+--------
+Main Processor: Motorola M68000 (16-bit) at 7.67 Mhz 
+Co-processor: Z80a at 3.58Mhz
+Sound Chips: YM2612 and a 4 channel TI PSG76489
+Ram: 64k (Plus 64k Ram for sound)
+Max Cart Size: ??
 
-Most games tend to run fairly well. Some have slight graphic glitches, incorrect colours part 
-way down the screen or other bizarre effects. See genesis.crc for a partial list.
+
+Video: 
+Max resolution: 320 X 224 
+Color pallete: 512; 64 max on screen
+Max # of sprites: 80; 20 max per scanline
+Sound: Stereo FM-based sound with 8-bit audio samples 
+
+
+Usage
+----------
+Under the "Options" menu, accessible by hitting TAB,
+you will find the following option: 
+
+
+"Country" - this allows you to alter the 'flavour' of
+Genesis, to either European, Japanese or American.
+Many cartridges compare their country codes with that
+of the Genesis itself and may behave differently, or
+lock up if the two types do not match.
+
+
+'Auto' attempts to auto-set the Genesis country code
+to the value the cartridge will appear to be checking
+for. This may not be 100% accurate, however.
+
+
+Links
+----------
+EIdolons inn - www.eidolons-inn.de
+
+
+MESS Emulation State
+---------------------------------
+Most games tend to run fairly well. Some have slight
+graphic glitches; incorrect colours part way down the
+screen or other bizarre effects. See genesis.crc for a
+partial list.
 
 
 Cartridges up to 32MBit (4MByte) are supported.
 
 
-The controller may not work well with some games. This will be resolved when more information 
-is obtained. Similarly, 6-button joypads aren't emulated yet.
+The controller may not work well with some games. This
+will be resolved when more information is obtained.
+Similarly, 6-button joypads aren't emulated yet.
 
 
-Split screen effects and interlacing are not yet supported.
+Split screen effects and interlacing are not yet
+supported.
 
 
 Sprite/layer priority should be perfect.
@@ -1948,18 +2007,25 @@ Sprite/layer priority should be perfect.
 Sound is emulated at Z80 and PSG76489 level. 
 
 
-I still consider the Genesis driver extremely preliminary. I have a lot of further work to do 
-before I consider it anywhere near complete. My initial goal is to make it as compatible as 
-possible. Currently there is scope within the driver to handle split screen colour changes/any 
-VDP effect, interlacing, without rewriting. The graphics renderer emulates VDP at scanline 
-level, and does not use tile-based methods.
+I still consider the Genesis driver extremely
+preliminary. I have a lot of further work to do before
+I consider it anywhere near complete. My initial goal
+is to make it as compatible as possible. Currently
+there is scope within the driver to handle split
+screen colour changes/any VDP effect, interlacing,
+without rewriting. The graphics renderer emulates VDP
+at scanline level, and does not use tile-based
+methods.
 
 
-Wanted: Any Sega Megadrive information! Information is extremely sparse; typically the same 
-three-four documents, with parts incomplete, conflicting, and corrupted. Specifically, some 
-of the finer points of DMA transfer, and access of the 68K memory map by the Z80. Generally, 
-points which conflict with themselves in the documentation available on the net...
-
+Wanted: Any Sega Megadrive information specifically,
+some of the finer points of DMA transfer, and access
+of the 68K memory map by the Z80! Information is
+extremely sparse; typically the same three-four
+documents, with parts incomplete, conflicting, and
+corrupted. Generally, points which conflict with
+themselves in the documentation available on the
+net...
 
 
 $end
@@ -2953,8 +3019,8 @@ roms\mtx512
 the cassette image is a flat binary image with the first 0x12 bytes being the
 original mtx header and the rest being the file data.
 
-A note about cassette naming schemes - so long as the filename of the cassette image is the same as that stored
-in the header, you should be alright.
+A note about cassette naming schemes - so long as the filename of the cassette image is the same 
+as that stored in the header, you should be alright.
 
 
 To run a tape image just type LOAD"<image name>" at the Ready Prompt.
@@ -3204,36 +3270,103 @@ Links:
 http://genesis8.free.fr/
 http://www.ncus.org.uk/
 $end
+
 #---------------------------------------------------------------------------------------------#
+
 
 $info=nes
 $bio
-Nintendo Entertainment System/Famicom
 
 
-Usage:
-Note that the one player hand controller Select is mapped as Coin 1 (default key 5), and 
-Start is mapped as Player 1 Start (default key 1). This makes it convenient to use the driver
-with a "MAME" configured controller.
-
-Famicom Disk System switching is mapped to Player 1 Button 3 (default key [space]).
+Nintendo Entertainment System / Famicom (1985 USA)
+--------------------
+Bios = None required
 
 
-Known Issues:
+The Nintendo Entertainment System (called Famicom in
+Japan) was an instant hit with such popular titles as
+Super Mario Bros., The Legend of Zelda and Excitebike.
+It was released to the states in August, 1985. The
+8-bit graphics were far superior to any-home based
+console that had come before it. Strong sales were
+were driven by the gamers wanting the feeling of
+real-life arcade games in their homes.  
 
-The NES driver should run most of the images currently out there with very little problem.
-It doesn't yet support the obscure one-game mappers used by many "pirate carts".
 
-The NES driver has quite accurate sound and sample playback. For example, you can hear speech 
-samples in Bayou Billy, Gauntlet, Dirty Harry, and Skate or Die that are not present in a 
-few other NES emulators.
+The NES boasts an impressive library of games with
+over 8000 games (Cowering goodnes), offering a
+smorgasbord of titles for fans of every genre.The
+Nintendo continued it's reign with other big hits such
+as The Mega Man series, Ninja Gaiden, Contra,
+Castlevania, Double Dragon and of course, Super Mario
+Bros 3. The NES continued it's strong sales with over
+36 million units sold worldwide by its official
+cancellation in January 1996 but not before releasing
+a remodeled NES. 
 
-The main focus up until this point has been in getting the NES driver as accurate as 
-possible. Unfortunately, the scanline rendering method is quite slow, so future efforts 
-will be focusing on bringing up the speed. 
 
-Wanted: I'd appreciate any info on some of the more obscure mappers. If you have any of this, 
-please drop me a line at bradman@pobox.com
+Usage
+--------------------
+Note that the one player hand controller Select is
+mapped as Coin 1 (default key 5), and 
+Start is mapped as Player 1 Start (default key 1).
+This makes it convenient to use the driver with a
+"MAME" configured controller.
+
+
+Famicom Disk System switching is mapped to Player 1
+Button 3 (default key [space]).
+
+
+Features
+--------
+Main Processor: 8bit NMOS 6502 CPU with a secondary
+PPU (Picture Processing Unit). Clock Speed:
+1.7897725MHz for NTSC and 1.773447MHz for the PAL
+version.
+Data Path width: 8-bits
+Color Palette: 256; 16 max on screen
+Sprites: 64 (8x8 or 8x16)
+Sound: FM with 5 sound channels (4 analog, 1 digital)
+Video Ram: 16 Kbits
+SPR-RAM: 256 Bytes
+Rom addressing: 8k
+Cart Size: 64k - 4 Megabit
+Controls:  8 directional D-Pad, A, B, select, and
+start buttons.  
+
+
+Links
+-------
+Nintendo - www.nintendo.com
+NES World - nesworld.parodius.com
+The Warp Zone - www.classicgaming.com/thewarpzone
+
+
+MESS Emulation State
+--------------------
+The NES driver should run most of the images currently
+out there with very little problem.  It doesn't yet
+support the obscure one-game mappers used by many
+"pirate carts".
+
+
+The NES driver has quite accurate sound and sample
+playback. For example, you can hear speech samples in
+Bayou Billy, Gauntlet, Dirty Harry, and Skate or Die
+that are not present in a few other NES emulators.
+
+
+The main focus up until this point has been in getting
+the NES driver as accurate as possible. 
+Unfortunately, the scanline rendering method is quite
+slow, so future efforts will be focusing on bringing
+up the speed.
+
+
+Wanted: I'd appreciate any info on some of the more
+obscure mappers. If you have any of this, please drop
+me a line at bradman@pobox.com
 
 
 $end
@@ -3327,7 +3460,8 @@ DIR [1] [2] - not comment
 INIT [,Vv] [,Dd] - formatting Disk (in first or second Disk Drive)
 DOS [f] [,Dd], [,Vv] - writing Dos on the disk without formatting It. File f automatically starts after booting
 MAP [1] [2] - show chart of the disk.
-SAVE f [,A,a] [,Ee] [,Vv] [,Dd] - Saves file on the disk. If missing parameter of the addresses A,E - saving Basic file in Memory
+SAVE f [,A,a] [,Ee] [,Vv] [,Dd] - Saves file on the disk. If missing parameter of the addresses A,E - 
+saving Basic file in Memory
 LOAD f [,Aa] [,Dd] [,Vv] - loads file in memory
 MERGE - adding program in Basic to already exists in Memory
 - -only for files B or C types. Loads file in Memory and start It. (RUN and BRUN together in Apple ][)
