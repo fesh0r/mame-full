@@ -231,20 +231,14 @@ static void saa1099_update(int chip, INT16 **buffer, int length)
         return;
 	}
 
-	/* update freq based on the actual frequency and octave */
-	for (ch = 0; ch < 6; ch++)
-	{
-		saa->channels[ch].freq = (double)(15625 << saa->channels[ch].octave) /
-			(511.0 - (double)saa->channels[ch].frequency);
-	}
 
-	for (ch = 0; ch < 2; ch++)
-	{
+    for (ch = 0; ch < 2; ch++)
+    {
 		switch (saa->noise_params[ch])
 		{
-		case 0: saa->noise[ch].freq = 31250.0; break;
-		case 1: saa->noise[ch].freq = 15625.0; break;
-		case 2: saa->noise[ch].freq =  7812.5; break;
+		case 0: saa->noise[ch].freq = 31250.0 * 2; break;
+		case 1: saa->noise[ch].freq = 15625.0 * 2; break;
+		case 2: saa->noise[ch].freq =  7812.5 * 2; break;
 		case 3: saa->noise[ch].freq = saa->channels[ch * 3].freq; break;
 		}
 	}
@@ -254,60 +248,66 @@ static void saa1099_update(int chip, INT16 **buffer, int length)
 	{
 		int output_l = 0, output_r = 0;
 
-		if (!saa->sync_state)
+		/* for each channel */
+		for (ch = 0; ch < 6; ch++)
 		{
-			for (ch = 0; ch < 2; ch++)
+			if (saa->channels[ch].freq == 0.0)
+				saa->channels[ch].freq = (double)((2 * 15625) << saa->channels[ch].octave) /
+					(511.0 - (double)saa->channels[ch].frequency);
+
+			/* check the actual position in the square wave */
+			saa->channels[ch].counter -= saa->channels[ch].freq;
+			while (saa->channels[ch].counter < 0)
 			{
-				/* check the actual position in noise generator */
-				saa->noise[ch].counter -= saa->noise[ch].freq;
-				while (saa->noise[ch].counter < 0)
+				/* calculate new frequency now after the half wave is updated */
+				saa->channels[ch].freq = (double)((2 * 15625) << saa->channels[ch].octave) /
+					(511.0 - (double)saa->channels[ch].frequency);
+
+				saa->channels[ch].counter += sample_rate;
+				saa->channels[ch].level ^= 1;
+
+				/* eventually clock the envelope counters */
+				if (ch == 1 && saa->env_clock[0] == 0)
+					saa1099_envelope(chip, 0);
+				if (ch == 4 && saa->env_clock[1] == 0)
+					saa1099_envelope(chip, 1);
+			}
+
+			/* if the noise is enabled */
+			if (saa->channels[ch].noise_enable)
+			{
+				/* if the noise level is high (noise 0: chan 0-2, noise 1: chan 3-5) */
+				if (saa->noise[ch/3].level & 1)
 				{
-					saa->noise[ch].counter += sample_rate;
-					if( ((saa->noise[ch].level & 0x4000) == 0) == ((saa->noise[ch].level & 0x0040) == 0) )
-						saa->noise[ch].level = (saa->noise[ch].level << 1) | 1;
-					else
-						saa->noise[ch].level <<= 1;
+					/* subtract to avoid overflows, also use only half amplitude */
+					output_l -= saa->channels[ch].amplitude[ LEFT] * saa->channels[ch].envelope[ LEFT] / 16 / 2;
+					output_r -= saa->channels[ch].amplitude[RIGHT] * saa->channels[ch].envelope[RIGHT] / 16 / 2;
 				}
 			}
 
-			/* for each channel */
-			for (ch = 0; ch < 6; ch++)
+			/* if the square wave is enabled */
+			if (saa->channels[ch].freq_enable)
 			{
-				/* check the actual position in the square wave */
-				saa->channels[ch].counter -= saa->channels[ch].freq;
-				while (saa->channels[ch].counter < 0)
+				/* if the channel level is high */
+				if (saa->channels[ch].level & 1)
 				{
-					saa->channels[ch].counter += sample_rate;
-					saa->channels[ch].level ^= 1;
-					/* eventually clock the envelope counters */
-                    if (ch == 1 && saa->env_clock[0] == 0)
-						saa1099_envelope(chip, 0);
-					if (ch == 4 && saa->env_clock[1] == 0)
-						saa1099_envelope(chip, 1);
-                }
-
-				/* if the noise is enabled */
-                if (saa->channels[ch].noise_enable)
-				{
-					/* if the noise level is high (noise 0: chan 0-2, noise 1: chan 3-5) */
-					if (saa->noise[ch/3].level & 1)
-					{
-						/* subtract to avoid overflows, also use only half amplitude */
-						output_l -= saa->channels[ch].amplitude[ LEFT] * saa->channels[ch].envelope[ LEFT] / 16 / 2;
-						output_r -= saa->channels[ch].amplitude[RIGHT] * saa->channels[ch].envelope[RIGHT] / 16 / 2;
-                    }
-                }
-
-				/* if the square wave is enabled */
-				if (saa->channels[ch].freq_enable)
-				{
-                    /* if the channel level is high */
-					if (saa->channels[ch].level & 1)
-					{
-						output_l += saa->channels[ch].amplitude[ LEFT] * saa->channels[ch].envelope[ LEFT] / 16;
-						output_r += saa->channels[ch].amplitude[RIGHT] * saa->channels[ch].envelope[RIGHT] / 16;
-					}
+					output_l += saa->channels[ch].amplitude[ LEFT] * saa->channels[ch].envelope[ LEFT] / 16;
+					output_r += saa->channels[ch].amplitude[RIGHT] * saa->channels[ch].envelope[RIGHT] / 16;
 				}
+			}
+		}
+
+		for (ch = 0; ch < 2; ch++)
+		{
+			/* check the actual position in noise generator */
+			saa->noise[ch].counter -= saa->noise[ch].freq;
+			while (saa->noise[ch].counter < 0)
+			{
+				saa->noise[ch].counter += sample_rate;
+				if( ((saa->noise[ch].level & 0x4000) == 0) == ((saa->noise[ch].level & 0x0040) == 0) )
+					saa->noise[ch].level = (saa->noise[ch].level << 1) | 1;
+				else
+					saa->noise[ch].level <<= 1;
 			}
 		}
         /* write sound data to the buffer */
@@ -427,10 +427,6 @@ static void saa1099_write_port_w( int chip, int offset, int data )
 		break;
 	/* channel i noise enable */
 	case 0x15:
-		if (data & 0xff)
-		{
-			logerror("%04x: (SAA1099 #%d) -reg 0x15- Noise not supported (%02x)\n",cpu_get_pc(), chip, data);
-		}
 		saa->channels[0].noise_enable = data & 0x01;
 		saa->channels[1].noise_enable = data & 0x02;
 		saa->channels[2].noise_enable = data & 0x04;
@@ -440,18 +436,18 @@ static void saa1099_write_port_w( int chip, int offset, int data )
 		break;
 	/* noise generators parameters */
 	case 0x16:
-		logerror("%04x: (SAA1099 #%d) -reg 0x16- Noise not supported (%02x)\n",cpu_get_pc(), chip, data);
 		saa->noise_params[0] = data & 0x03;
 		saa->noise_params[1] = (data >> 4) & 0x03;
 		break;
 	/* envelope generators parameters */
 	case 0x18:	case 0x19:
-		logerror("%04x: (SAA1099 #%d) -reg 0x%02x- Envelope generators not supported (%02x)\n",cpu_get_pc(), chip, reg, data);
 		reg -= 0x18;
 		saa->env_reverse_right[reg] = data & 0x01;
 		saa->env_mode[reg] = (data >> 1) & 0x07;
 		saa->env_bits[reg] = data & 0x10;
+		saa->env_clock[reg] = data & 0x20;
 		saa->env_enable[reg] = data & 0x80;
+		/* reset the envelope */
 		saa->env_step[reg] = 0;
 		break;
 	/* channels enable & reset generators */
