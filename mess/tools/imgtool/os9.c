@@ -1125,6 +1125,7 @@ static imgtoolerr_t os9_diskimage_deletedir(imgtool_image *image, const char *pa
 static imgtoolerr_t coco_os9_module_populate(imgtool_library *library, struct ImgtoolFloppyCallbacks *module)
 {
 	module->initial_path_separator	= 1;
+	module->open_is_strict			= 1;
 	module->image_extra_bytes		+= sizeof(struct os9_diskinfo);
 	module->imageenum_extra_bytes	+= sizeof(struct os9_direnum);
 	module->eoln					= EOLN_CR;

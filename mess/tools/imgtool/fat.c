@@ -101,10 +101,14 @@ struct fat_file
 {
 	unsigned int root : 1;
 	unsigned int directory : 1;
+	unsigned int eof : 1;
 	UINT32 index;
 	UINT32 filesize;
+	UINT32 first_cluster;
 	UINT32 cluster;
 	UINT32 cluster_index;
+	UINT32 dirent_first_cluster;
+	UINT32 dirent_index;
 };
 
 struct fat_dirent
@@ -115,6 +119,15 @@ struct fat_dirent
 	unsigned int eof : 1;
 	UINT32 filesize;
 	UINT32 first_cluster;
+	UINT32 dirent_first_cluster;
+	UINT32 dirent_index;
+};
+
+struct fat_freeentry_info
+{
+	UINT32 required_size;
+	UINT32 candidate_position;
+	UINT32 position;
 };
 
 struct fat_mediatype
@@ -441,19 +454,83 @@ static imgtoolerr_t fat_diskimage_create(imgtool_image *image, option_resolution
 
 
 
-static imgtoolerr_t fat_read_file(imgtool_image *image, struct fat_file *file,
-	void *buffer, size_t buffer_len, size_t *bytes_read)
+static imgtoolerr_t fat_seek_file(imgtool_image *image, struct fat_file *file, UINT32 pos)
 {
+	floperr_t ferr;
+	const struct fat_diskinfo *disk_info;
+	UINT32 bit_index;
+	UINT32 new_cluster;
+
+	disk_info = (const struct fat_diskinfo *) imgtool_floppy_extrabytes(image);
+
+	/* can't seek past end of file */
+	if (!file->directory && (pos > file->filesize))
+		pos = file->filesize;
+
+	if (file->first_cluster == 0)
+	{
+		/* special case; the root directory */
+		file->index = pos;
+	}
+	else
+	{
+		/* first, we need to check to see if we have to go back to the beginning */
+		if (pos < file->index)
+		{
+			file->cluster = file->first_cluster;
+			file->cluster_index = 0;
+			file->eof = 0;
+		}
+
+		if (file->eof)
+			pos = file->index;
+
+		/* skip ahead clusters */
+		while((file->cluster_index + (disk_info->sector_size * disk_info->sectors_per_cluster)) <= pos)
+		{
+			bit_index = file->cluster * disk_info->fat_bits;
+
+			ferr = floppy_read_sector(imgtool_floppy(image), 0, 0, 1 + disk_info->reserved_sectors,
+				bit_index / 8, &new_cluster, sizeof(new_cluster));
+			if (ferr)
+				return imgtool_floppy_error(ferr);
+
+			/* compute the new cluster number */
+			new_cluster = (UINT32) LITTLE_ENDIANIZE_INT32(new_cluster);
+			new_cluster >>= bit_index % 8;
+			if (disk_info->fat_bits < 32)
+				new_cluster &= (1 << disk_info->fat_bits) - 1;
+
+			file->cluster = new_cluster;
+			file->cluster_index += disk_info->sectors_per_cluster * disk_info->sector_size;
+
+			/* are we at the end of the file? */
+			if (new_cluster == (0xFFFFFFFF >> (32 - disk_info->fat_bits)))
+			{
+				pos = file->cluster_index;
+				file->eof = 1;
+			}
+		}
+		file->index = pos;
+	}
+	return IMGTOOLERR_SUCCESS;	
+}
+
+
+
+static imgtoolerr_t fat_readwrite_file(imgtool_image *image, struct fat_file *file,
+	void *buffer, size_t buffer_len, size_t *bytes_read, int read_or_write)
+{
+	imgtoolerr_t err;
 	floperr_t ferr;
 	const struct fat_diskinfo *disk_info;
 	UINT32 sector_index;
 	int head, track, sector, offset;
-	UINT32 bit_index;
 	size_t len;
-	UINT32 new_cluster;
 
 	disk_info = (const struct fat_diskinfo *) imgtool_floppy_extrabytes(image);
-	*bytes_read = 0;
+	if (bytes_read)
+		*bytes_read = 0;
 	if (!file->directory)
 		buffer_len = MIN(buffer_len, file->filesize - file->index);
 
@@ -467,26 +544,6 @@ static imgtoolerr_t fat_read_file(imgtool_image *image, struct fat_file *file,
 		}
 		else
 		{
-			/* do we need to move on to the next cluster? */
-			if (file->index >= (file->cluster_index + disk_info->sectors_per_cluster * disk_info->sector_size))
-			{
-				bit_index = file->cluster * disk_info->fat_bits;
-
-				ferr = floppy_read_sector(imgtool_floppy(image), 0, 0, 1 + disk_info->reserved_sectors,
-					bit_index / 8, &new_cluster, sizeof(new_cluster));
-				if (ferr)
-					return imgtool_floppy_error(ferr);
-
-				new_cluster = (UINT32) LITTLE_ENDIANIZE_INT32(new_cluster);
-				new_cluster >>= bit_index % 8;
-
-				if (disk_info->fat_bits < 32)
-					new_cluster &= (1 << disk_info->fat_bits) - 1;
-
-				file->cluster = new_cluster;
-				file->cluster_index += disk_info->sectors_per_cluster * disk_info->sector_size;
-			}
-
 			/* cluster values 0 and 1 are special */
 			if (file->cluster < 2)
 				return IMGTOOLERR_CORRUPTIMAGE;
@@ -501,17 +558,35 @@ static imgtoolerr_t fat_read_file(imgtool_image *image, struct fat_file *file,
 		offset = file->index % disk_info->sector_size;
 		len = MIN(buffer_len, disk_info->sector_size - offset);
 
-		ferr = floppy_read_sector(imgtool_floppy(image), head, track, sector,
-			offset, buffer, len);
+		/* read or write the data from the disk */
+		if (read_or_write)
+			ferr = floppy_write_sector(imgtool_floppy(image), head, track, sector,
+				offset, buffer, len);
+		else
+			ferr = floppy_read_sector(imgtool_floppy(image), head, track, sector,
+				offset, buffer, len);
 		if (ferr)
 			return imgtool_floppy_error(ferr);
 
+		/* and move the file pointer ahead */
+		err = fat_seek_file(image, file, file->index + FAT_DIRENT_SIZE);
+		if (err)
+			return err;
+
 		buffer = ((UINT8 *) buffer) + len;
 		buffer_len -= len;
-		file->index += len;
-		*bytes_read += len;
-	}
+		if (bytes_read)
+			*bytes_read += len;
+}
 	return IMGTOOLERR_SUCCESS;
+}
+
+
+
+static imgtoolerr_t fat_read_file(imgtool_image *image, struct fat_file *file,
+	void *buffer, size_t buffer_len, size_t *bytes_read)
+{
+	return fat_readwrite_file(image, file, buffer, buffer_len, bytes_read, 0);
 }
 
 
@@ -519,7 +594,7 @@ static imgtoolerr_t fat_read_file(imgtool_image *image, struct fat_file *file,
 static imgtoolerr_t fat_write_file(imgtool_image *image, struct fat_file *file,
 	const void *buffer, size_t buffer_len, size_t *bytes_read)
 {
-	return IMGTOOLERR_UNIMPLEMENTED;
+	return fat_readwrite_file(image, file, (void *) buffer, buffer_len, bytes_read, 1);
 }
 
 
@@ -527,7 +602,26 @@ static imgtoolerr_t fat_write_file(imgtool_image *image, struct fat_file *file,
 static imgtoolerr_t fat_set_file_size(imgtool_image *image, struct fat_file *file,
 	UINT32 new_size)
 {
-	return IMGTOOLERR_UNIMPLEMENTED;
+	const struct fat_diskinfo *disk_info;
+
+	disk_info = (const struct fat_diskinfo *) imgtool_floppy_extrabytes(image);
+
+	/* if this is the trivial case (not changing the size), succeed */
+	if (file->filesize == new_size)
+		return IMGTOOLERR_SUCCESS;
+
+	if (file->root)
+	{
+		/* this is the root directory; this is a special case */
+		if (new_size > (disk_info->root_entries * FAT_DIRENT_SIZE))
+			return IMGTOOLERR_NOSPACE;
+	}
+	else
+	{
+		/* TODO: need to implement setting the file size */
+		return IMGTOOLERR_UNIMPLEMENTED;
+	}
+	return IMGTOOLERR_SUCCESS;
 }
 
 
@@ -556,7 +650,40 @@ static void prepend_lfn_bytes(utf16_char_t *lfn_buf, size_t lfn_buflen, size_t *
 
 
 
-static imgtoolerr_t fat_read_dirent(imgtool_image *image, struct fat_file *file, struct fat_dirent *ent)
+static UINT8 fat_calc_filename_checksum(const UINT8 *short_filename)
+{
+	UINT8 checksum;
+	int i, j;
+
+	checksum = 0;
+	for (i = 0; i < 11; i++)
+	{
+		j = checksum & 1;
+		checksum >>= 1;
+		if (j)
+			checksum |= 0x80;
+		checksum += short_filename[i];
+	}
+	return checksum;
+}
+
+
+
+static void fat_calc_dirent_lfnchecksum(UINT8 *entry, size_t entry_len)
+{
+	UINT8 checksum;
+	int i;
+
+	checksum = fat_calc_filename_checksum(entry + entry_len - FAT_DIRENT_SIZE);
+
+	for (i = 0; i < (entry_len / FAT_DIRENT_SIZE - 1); i++)
+		entry[i * FAT_DIRENT_SIZE + 13] = checksum;
+}
+
+
+
+static imgtoolerr_t fat_read_dirent(imgtool_image *image, struct fat_file *file,
+	struct fat_dirent *ent, struct fat_freeentry_info *freeent)
 {
 	imgtoolerr_t err;
 	const struct fat_diskinfo *disk_info;
@@ -567,7 +694,8 @@ static imgtoolerr_t fat_read_dirent(imgtool_image *image, struct fat_file *file,
 	utf16_char_t lfn_buf[512];
 	size_t lfn_len = 0;
 	int lfn_lastentry = 0;
-	UINT8 lfn_checksum = 0, checksum;
+	UINT8 lfn_checksum = 0;
+	UINT32 entry_index;
 
 	lfn_buf[0] = '\0';
 	memset(ent, 0, sizeof(*ent));
@@ -585,14 +713,13 @@ static imgtoolerr_t fat_read_dirent(imgtool_image *image, struct fat_file *file,
 	 */
 	do
 	{
+		entry_index = file->index;
+
 		err = fat_read_file(image, file, entry, sizeof(entry), &bytes_read);
 		if (err)
 			return err;
-		if ((bytes_read < sizeof(entry)) || (entry[0] == '\0'))
-		{
-			ent->eof = 1;
-			return IMGTOOLERR_SUCCESS;
-		}
+		if (bytes_read < sizeof(entry))
+			memset(entry, 0, sizeof(entry));
 
 		if (entry[11] == 0x0F)
 		{
@@ -613,8 +740,27 @@ static imgtoolerr_t fat_read_dirent(imgtool_image *image, struct fat_file *file,
 			prepend_lfn_bytes(lfn_buf, sizeof(lfn_buf) / sizeof(lfn_buf[0]),
 				&lfn_len, entry,  1, 5);
 		}
+		else if (freeent && (freeent->position == ~0))
+		{
+			/* do a quick check to find out if we found space */
+			if ((entry[0] == '\0') || (entry[0] == 0xE5))
+			{
+				if (freeent->candidate_position > entry_index)
+					freeent->candidate_position = entry_index;
+
+				if (freeent->candidate_position + freeent->required_size < (entry[0] ? file->index : file->filesize))
+					freeent->position = freeent->candidate_position;
+			}
+		}
 	}
 	while((entry[0] == 0x2E) || (entry[0] == 0xE5) || (entry[11] == 0x0F));
+
+	/* no more directory entries? */
+	if (entry[0] == '\0')
+	{
+		ent->eof = 1;
+		return IMGTOOLERR_SUCCESS;
+	}
 
 	/* pick apart short filename */
 	memcpy(ent->short_filename, entry, 8);
@@ -633,18 +779,8 @@ static imgtoolerr_t fat_read_dirent(imgtool_image *image, struct fat_file *file,
 	/* and the long filename */
 	if (lfn_lastentry == 1)
 	{
-		checksum = 0;
-		for (i = 0; i < 11; i++)
-		{
-			j = checksum & 1;
-			checksum >>= 1;
-			if (j)
-				checksum |= 0x80;
-			checksum += entry[i];
-		}
-
 		/* only use the LFN if the checksum passes */
-		if (checksum == lfn_checksum)
+		if (lfn_checksum == fat_calc_filename_checksum(entry))
 		{
 			i = 0;
 			j = 0;
@@ -661,6 +797,8 @@ static imgtoolerr_t fat_read_dirent(imgtool_image *image, struct fat_file *file,
 	ent->filesize = pick_integer(entry, 28, 4);
 	ent->directory = (entry[11] & 0x10) ? 1 : 0;
 	ent->first_cluster = pick_integer(entry, 26, 2);
+	ent->dirent_first_cluster = file->first_cluster;
+	ent->dirent_index = entry_index;
 	return IMGTOOLERR_SUCCESS;
 }
 
@@ -816,6 +954,9 @@ static imgtoolerr_t fat_construct_dirent(const char *filename, creation_policy_t
 	{
 		/* need to do finishing touches on the LFN */
 		created_entry[0] |= 0x40;
+		created_entry[created_entry_len - FAT_DIRENT_SIZE + 6] = '~';
+		created_entry[created_entry_len - FAT_DIRENT_SIZE + 7] = '1';
+		fat_calc_dirent_lfnchecksum(created_entry, created_entry_len);
 	}
 
 done:
@@ -837,10 +978,10 @@ static imgtoolerr_t fat_lookup_path(imgtool_image *image, const char *path,
 	imgtoolerr_t err;
 	const struct fat_diskinfo *disk_info;
 	struct fat_dirent ent;
+	struct fat_freeentry_info freeent = { 0, };
 	const char *next_path_part;
 	UINT8 *created_entry = NULL;
 	size_t created_entry_len = 0;
-	UINT32 pos;
 
 	disk_info = (const struct fat_diskinfo *) imgtool_floppy_extrabytes(image);
 
@@ -864,11 +1005,15 @@ static imgtoolerr_t fat_lookup_path(imgtool_image *image, const char *path,
 			err = fat_construct_dirent(path, create, &created_entry, &created_entry_len);
 			if (err)
 				goto done;
+
+			freeent.required_size = created_entry_len;
+			freeent.candidate_position = ~0;
+			freeent.position = ~0;
 		}
 
 		do
 		{
-			err = fat_read_dirent(image, file, &ent);
+			err = fat_read_dirent(image, file, &ent, created_entry ? &freeent : NULL);
 			if (err)
 				goto done;
 		}
@@ -876,6 +1021,8 @@ static imgtoolerr_t fat_lookup_path(imgtool_image *image, const char *path,
 
 		if (ent.eof)
 		{
+			/* it seems that we have reached the end of this directory */
+
 			if (!created_entry)
 			{
 				err = IMGTOOLERR_FILENOTFOUND;
@@ -883,9 +1030,16 @@ static imgtoolerr_t fat_lookup_path(imgtool_image *image, const char *path,
 			}
 			else
 			{
-				pos = file->filesize;
+				if (created_entry_len > FAT_DIRENT_SIZE)
+				{
+					/* TODO: ensure uniqueness of the short filename */
+				}
 
-				err = fat_set_file_size(image, file, pos + created_entry_len);
+				err = fat_set_file_size(image, file, MAX(file->filesize, freeent.position + created_entry_len));
+				if (err)
+					goto done;
+
+				err = fat_seek_file(image, file, freeent.position);
 				if (err)
 					goto done;
 
@@ -904,6 +1058,9 @@ static imgtoolerr_t fat_lookup_path(imgtool_image *image, const char *path,
 			file->directory = ent.directory;
 			file->filesize = ent.filesize;
 			file->cluster = ent.first_cluster;
+			file->first_cluster = ent.first_cluster;
+			file->dirent_first_cluster = ent.dirent_first_cluster;
+			file->dirent_index = ent.dirent_index;
 		}
 		path = next_path_part;
 	}
@@ -942,7 +1099,7 @@ static imgtoolerr_t fat_diskimage_nextenum(imgtool_imageenum *enumeration, imgto
 	struct fat_dirent fatent;
 
 	file = (struct fat_file *) img_enum_extrabytes(enumeration);
-	err = fat_read_dirent(img_enum_image(enumeration), file, &fatent);
+	err = fat_read_dirent(img_enum_image(enumeration), file, &fatent, NULL);
 	if (err)
 		return err;
 
@@ -988,6 +1145,8 @@ static imgtoolerr_t fat_diskimage_writefile(imgtool_image *image, const char *fi
 {
 	imgtoolerr_t err;
 	struct fat_file file;
+	UINT32 bytes_left, len;
+	char buffer[1024];
 
 	err = fat_lookup_path(image, filename, CREATE_FILE, &file);
 	if (err)
@@ -996,10 +1155,21 @@ static imgtoolerr_t fat_diskimage_writefile(imgtool_image *image, const char *fi
 	if (file.directory)
 		return IMGTOOLERR_FILENOTFOUND;
 
-	err = fat_set_file_size(image, &file, (UINT32) stream_size(sourcef));
+	bytes_left = (UINT32) stream_size(sourcef);
+
+	err = fat_set_file_size(image, &file, bytes_left);
 	if (err)
 		return err;
 
+	while(bytes_left > 0)
+	{
+		len = MIN(bytes_left, sizeof(buffer));
+		stream_read(sourcef, buffer, len);
+
+		err = fat_write_file(image, &file, buffer, len, NULL);
+		if (err)
+			return err;
+	}
 	return IMGTOOLERR_SUCCESS;
 }
 
@@ -1012,7 +1182,7 @@ static imgtoolerr_t fat_diskimage_writefile(imgtool_image *image, const char *fi
 static imgtoolerr_t fat_module_populate(imgtool_library *library, struct ImgtoolFloppyCallbacks *module)
 {
 	module->initial_path_separator		= 1;
-	module->prefer_ucase				= 1;
+	module->open_is_strict				= 1;
 	module->path_separator				= '\\';
 	module->alternate_path_separator	= '/';
 	module->eoln						= EOLN_CRLF;
@@ -1023,7 +1193,7 @@ static imgtoolerr_t fat_module_populate(imgtool_library *library, struct Imgtool
 	module->begin_enum					= fat_diskimage_beginenum;
 	module->next_enum					= fat_diskimage_nextenum;
 	module->read_file					= fat_diskimage_readfile;
-	/*module->write_file					= fat_diskimage_writefile;*/
+	module->write_file					= fat_diskimage_writefile;
 	return IMGTOOLERR_SUCCESS;
 }
 

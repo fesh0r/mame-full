@@ -255,9 +255,10 @@ imgtoolerr_t imgtool_floppy_createmodule(imgtool_library *library, const char *f
 			extra->open						= floppy_callbacks.open;
 			module->eoln					= floppy_callbacks.eoln;
 			module->path_separator			= floppy_callbacks.path_separator;
+			module->alternate_path_separator	= floppy_callbacks.alternate_path_separator;
 			module->prefer_ucase			= floppy_callbacks.prefer_ucase;
 			module->initial_path_separator	= floppy_callbacks.initial_path_separator;
-			module->alternate_path_separator	= floppy_callbacks.alternate_path_separator;
+			module->open_is_strict				= floppy_callbacks.open_is_strict;
 			module->begin_enum				= floppy_callbacks.begin_enum;
 			module->next_enum				= floppy_callbacks.next_enum;
 			module->close_enum				= floppy_callbacks.close_enum;

@@ -66,6 +66,7 @@ struct ImageModule
 	/* flags */
 	unsigned int prefer_ucase : 1;
 	unsigned int initial_path_separator : 1;
+	unsigned int open_is_strict : 1;
 
 	imgtoolerr_t	(*open)			(imgtool_image *image, imgtool_stream *f);
 	void			(*close)		(imgtool_image *image);

@@ -65,7 +65,7 @@ static imgtoolerr_t evaluate_module(const char *fname,
 
 	if (image)
 	{
-		current_result = 0.5;
+		current_result = module->open_is_strict ? 0.9 : 0.5;
 
 		err = img_beginenum(image, NULL, &imageenum);
 		if (err)
