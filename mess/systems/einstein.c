@@ -67,6 +67,10 @@
 
 /* 0x40-0xff for expansion */
 
+
+/* speculator */
+/* 7e = 0, read from fe, 7e = 1, read from fe */
+
 #include "driver.h"
 #include "machine/z80fmly.h"
 #include "vidhrdw/tms9928a.h"
@@ -94,6 +98,182 @@ static void *einstein_keyboard_timer = NULL;
 static int einstein_keyboard_line = 0;
 static int einstein_keyboard_data = 0x0ff;
 
+
+/**********************************************************/
+/* 
+	80 column board has a UM6845,2K ram and a char rom:
+
+	0x040-0x047 used to access 2K ram. (bits 3-0 define a 256 byte row, bits 15-8 define 
+				the offset in the row)
+ 	0x048 = crtc register index (w), 
+	0x049 = crtc data register (w)
+
+	0x04c 
+		bit 2 = 50/60hz mode?
+		bit 1 = 1
+		bit 0 = vsync state?
+
+	0: 126 (127) horizontal total
+	1: 80 horizontal displayed
+	2: 97 horizontal sync position
+	3: &38
+	4: 26 vertical total
+	5: 19 vertical adjust
+	6: 25 vertical displayed
+	7: 26 vertical sync pos
+	8: 0 no interlace
+	9: 8 (9 scanlines tall)
+	10: 32
+
+  total scanlines: ((reg 9+1) * (reg 4+1))+reg 5 = 262
+  127 cycles per line
+  127*262 = 33274 cycles per frame, vsync len 375 cycles
+
+
+*/
+#include "vidhrdw/m6845.h"
+static int einstein_80col_state;
+static char *einstein_80col_ram = NULL;
+
+WRITE_HANDLER(einstein_80col_ram_w)
+{
+	/* lower 3 bits of address define a 256-byte "row".
+		upper 8 bits define the offset in the row,
+		data bits define data to write */
+	einstein_80col_ram[((offset & 0x07)<<8)|((offset>>8) & 0x0ff)] = data;
+}
+
+READ_HANDLER(einstein_80col_ram_r)
+{
+	return einstein_80col_ram[((offset & 0x07)<<8)|((offset>>8) & 0x0ff)];
+}
+
+READ_HANDLER(einstein_80col_state_r)
+{
+	/* fake vsync for now */
+	einstein_80col_state^=0x01;
+	return einstein_80col_state;
+}
+
+static int Einstein_6845_RA = 0;
+static int Einstein_scr_x = 0;
+static int Einstein_scr_y = 0;
+static int Einstein_HSync = 0;
+static int Einstein_VSync = 0;
+static int Einstein_DE = 0;
+
+// called when the 6845 changes the character row
+void Einstein_Set_RA(int offset, int data)
+{
+	Einstein_6845_RA=data;
+}
+
+
+// called when the 6845 changes the HSync
+void Einstein_Set_HSync(int offset, int data)
+{
+	Einstein_HSync=data;
+	if(!Einstein_HSync)
+	{
+		Einstein_scr_y++;
+		Einstein_scr_x = -40;
+	}
+}
+
+// called when the 6845 changes the VSync
+void Einstein_Set_VSync(int offset, int data)
+{
+	Einstein_VSync=data;
+	if (!Einstein_VSync)
+	{
+		Einstein_scr_y = 0;
+	}
+}
+
+void Einstein_Set_DE(int offset, int data)
+{
+	Einstein_DE = data;
+}
+
+
+static struct crtc6845_interface
+einstein_crtc6845_interface= {
+	0,// Memory Address register
+	Einstein_Set_RA,// Row Address register
+	Einstein_Set_HSync,// Horizontal status
+	Einstein_Set_VSync,// Vertical status
+	Einstein_Set_DE,// Display Enabled status
+	0,// Cursor status
+};
+
+/* 80 column card init */
+void	einstein_80col_init(void)
+{
+	/* 2K RAM */
+	einstein_80col_ram = malloc(2048);
+
+	/* initialise 6845 */
+	crtc6845_config(&einstein_crtc6845_interface);
+
+	einstein_80col_state=(1<<2)|(1<<1);
+}
+
+/* 80 column card exit */
+void	einstein_80col_exit(void)
+{
+	if (einstein_80col_ram!=NULL)
+	{
+		free(einstein_80col_ram);
+		einstein_80col_ram = NULL;
+	}
+}
+
+READ_HANDLER(einstein_80col_r)
+{
+	switch (offset & 0x0f)
+	{
+		case 0:
+		case 1:
+		case 2:
+		case 3:
+		case 4:
+		case 5:
+		case 6:
+		case 7:
+			return einstein_80col_ram_r(offset);
+		case 0x0c:
+			return einstein_80col_state_r(offset);
+		default:
+			break;
+	}
+	return 0x0ff;
+}
+
+
+WRITE_HANDLER(einstein_80col_w)
+{
+	switch (offset & 0x0f)
+	{
+		case 0:
+		case 1:
+		case 2:
+		case 3:
+		case 4:
+		case 5:
+		case 6:
+		case 7:
+			einstein_80col_ram_w(offset,data);
+			break;
+		case 8:
+			crtc6845_address_w(offset,data);
+			break;
+		case 9:
+			crtc6845_register_w(offset,data);
+			break;
+		default:
+			break;
+	}
+}
 
 /* refresh keyboard data. It is refreshed when the keyboard line is written */
 void einstein_scan_keyboard(void)
@@ -535,8 +715,190 @@ static WRITE_HANDLER(einstein_key_int_w)
 	}
 }
 
+READ_HANDLER(einstein_port_r)
+{
+	switch (offset & 0x0ff)
+	{
+		case 0x00:
+		case 0x01:
+		case 0x02:
+		case 0x03:
+		case 0x04:
+		case 0x05:
+		case 0x06:
+		case 0x07:
+			return einstein_psg_r(offset);
+		case 0x08:
+		case 0x09:
+		case 0x0a:
+		case 0x0b:
+		case 0x0c:
+		case 0x0d:
+		case 0x0e:
+		case 0x0f:
+			return einstein_vdp_r(offset);
+		case 0x10:
+		case 0x11:
+		case 0x12:
+		case 0x13:
+		case 0x14:
+		case 0x15:
+		case 0x16:
+		case 0x17:
+			return einstein_serial_r(offset);
+		case 0x18:
+		case 0x19:
+		case 0x1a:
+		case 0x1b:
+		case 0x1c:
+		case 0x1d:
+		case 0x1e:
+		case 0x1f:
+			return einstein_fdc_r(offset);
+		case 0x20:
+			return einstein_key_int_r(offset);
+		case 0x28:
+		case 0x29:
+		case 0x2a:
+		case 0x2b:
+		case 0x2c:
+		case 0x2d:
+		case 0x2e:
+		case 0x2f:
+			return einstein_ctc_r(offset);
+		case 0x30:
+		case 0x31:
+		case 0x32:
+		case 0x33:
+		case 0x34:
+		case 0x35:
+		case 0x36:
+		case 0x37:
+			return einstein_pio_r(offset);
+		case 0x40:
+		case 0x41:
+		case 0x42:
+		case 0x43:
+		case 0x44:
+		case 0x45:
+		case 0x46:
+		case 0x47:
+		case 0x48:
+		case 0x49:
+		case 0x4a:
+		case 0x4b:
+		case 0x4c:
+		case 0x4d:
+		case 0x4e:
+		case 0x4f:
+			return einstein_80col_r(offset);
 
+		default:
+			break;
+	}
+	return 0x00;
+}
 
+WRITE_HANDLER(einstein_port_w)
+{
+	switch (offset & 0x0ff)
+	{
+		case 0x00:
+		case 0x01:
+		case 0x02:
+		case 0x03:
+		case 0x04:
+		case 0x05:
+		case 0x06:
+		case 0x07:
+			einstein_psg_w(offset,data);
+			break;
+		case 0x08:
+		case 0x09:
+		case 0x0a:
+		case 0x0b:
+		case 0x0c:
+		case 0x0d:
+		case 0x0e:
+		case 0x0f:
+			einstein_vdp_w(offset,data);
+			break;
+		case 0x10:
+		case 0x11:
+		case 0x12:
+		case 0x13:
+		case 0x14:
+		case 0x15:
+		case 0x16:
+		case 0x17:
+			einstein_serial_w(offset,data);
+			break;
+		case 0x18:
+		case 0x19:
+		case 0x1a:
+		case 0x1b:
+		case 0x1c:
+		case 0x1d:
+		case 0x1e:
+		case 0x1f:
+			einstein_fdc_w(offset,data);
+			break;
+		case 0x20:
+			einstein_key_int_w(offset,data);
+			break;
+		case 0x28:
+		case 0x29:
+		case 0x2a:
+		case 0x2b:
+		case 0x2c:
+		case 0x2d:
+		case 0x2e:
+		case 0x2f:
+			einstein_ctc_w(offset,data);
+			break;
+		case 0x30:
+		case 0x31:
+		case 0x32:
+		case 0x33:
+		case 0x34:
+		case 0x35:
+		case 0x36:
+		case 0x37:
+			einstein_pio_w(offset,data);
+			break;
+		case 0x40:
+		case 0x41:
+		case 0x42:
+		case 0x43:
+		case 0x44:
+		case 0x45:
+		case 0x46:
+		case 0x47:
+		case 0x48:
+		case 0x49:
+		case 0x4a:
+		case 0x4b:
+		case 0x4c:
+		case 0x4d:
+		case 0x4e:
+		case 0x4f:
+			einstein_80col_w(offset,data);
+			break;
+
+		default:
+			break;
+	}
+}
+
+PORT_READ_START( readport_einstein )
+	{0x0000,0x0ffff, einstein_port_r},
+PORT_END
+
+PORT_WRITE_START( writeport_einstein )
+	{0x0000,0x0ffff, einstein_port_w},
+PORT_END
+
+#if 0
 PORT_READ_START( readport_einstein )
 	{0x000, 0x007, einstein_psg_r},
 	{0x008, 0x00f, einstein_vdp_r},
@@ -545,7 +907,7 @@ PORT_READ_START( readport_einstein )
 	{0x020, 0x020, einstein_key_int_r},	
 	{0x028, 0x02f, einstein_ctc_r},
 	{0x030, 0x037, einstein_pio_r},
-	{0x040, 0x0ff, einstein_unmapped_r},
+//	{0x040, 0x0ff, einstein_unmapped_r},
 PORT_END
 
 PORT_WRITE_START( writeport_einstein )
@@ -558,12 +920,13 @@ PORT_WRITE_START( writeport_einstein )
 	{0x024, 0x024, einstein_rom_w},
 	{0x028, 0x02f, einstein_ctc_w},
 	{0x030, 0x037, einstein_pio_w},
-	{0x040, 0x0ff, einstein_unmapped_w},
+//	{0x040, 0x0ff, einstein_unmapped_w},
 PORT_END
+#endif
 
 
 
-#define EINSTEIN_DUMP_RAM
+//#define EINSTEIN_DUMP_RAM
 
 #ifdef EINSTEIN_DUMP_RAM
 void einstein_dump_ram(void)
@@ -611,13 +974,18 @@ void einstein_init_machine(void)
 	/* the int is actually clocked at the system clock 4Mhz, but this would be too fast for our
 	driver. So we update at 50Hz and hope this is good enough. */
 	einstein_keyboard_timer = timer_pulse(TIME_IN_HZ(50), 0, einstein_keyboard_timer_callback);
+	
+	einstein_80col_init();
+
 }
 
 
 void einstein_shutdown_machine(void)
 {
+	einstein_80col_exit();
+#ifdef EINSTEIN_DUMP_RAM
 	einstein_dump_ram();
-
+#endif
 	if (einstein_ram)
 	{
 		free(einstein_ram);
@@ -754,6 +1122,116 @@ static struct AY8910interface einstein_ay_interface =
 	{NULL}
 };
 
+/*
+	0: 126 (127) horizontal total
+	1: 80 horizontal displayed
+	2: 97 horizontal sync position
+	3: &38
+	4: 26 vertical total
+	5: 19 vertical adjust
+	6: 25 vertical displayed
+	7: 26 vertical sync pos
+	8: 0 no interlace
+	9: 8 (9 scanlines tall)
+	10: 32
+
+  total scanlines: ((reg 9+1) * (reg 4+1))+reg 5 = 262
+  127 cycles per line
+  127*262 = 33274 cycles per frame, vsync len 375 cycles
+*/
+
+void einstein_80col_plot_char_line(int x,int y, struct osd_bitmap *bitmap)
+{
+	if (Einstein_DE)
+	{
+
+		unsigned char *data = memory_region(REGION_CPU1)+0x012000;
+		int w;
+		unsigned char data_byte;
+		int char_code;
+
+		char_code = einstein_80col_ram[crtc6845_memory_address_r(0)&0x07ff];
+		
+		data_byte = data[(char_code<<3) + Einstein_6845_RA];
+
+		for (w=0; w<8;w++)
+		{
+			if (data_byte & 0x080)
+			{
+				plot_pixel(bitmap, x+w, y,1);
+			}
+			else
+			{
+				plot_pixel(bitmap, x+w, y,0);
+			}
+
+			data_byte = data_byte<<1;
+
+		}
+	}
+	else
+	{
+		plot_pixel(bitmap, x+0, y, 0);
+		plot_pixel(bitmap, x+1, y, 0);
+		plot_pixel(bitmap, x+2, y, 0);
+		plot_pixel(bitmap, x+3, y, 0);
+		plot_pixel(bitmap, x+4, y, 0);
+		plot_pixel(bitmap, x+5, y, 0);
+		plot_pixel(bitmap, x+6, y, 0);
+		plot_pixel(bitmap, x+7, y, 0);
+	}
+
+}
+
+void einstein_80col_refresh(struct osd_bitmap *bitmap, int full_refresh)
+{
+	long c=0; // this is used to time out the screen redraw, in the case that the 6845 is in some way out state.
+
+	c=0;
+
+	// loop until the end of the Vertical Sync pulse
+	while((Einstein_VSync)&&(c<33274))
+	{
+		// Clock the 6845
+		crtc6845_clock();
+		c++;
+	}
+
+	// loop until the Vertical Sync pulse goes high
+	// or until a timeout (this catches the 6845 with silly register values that would not give a VSYNC signal)
+	while((!Einstein_VSync)&&(c<33274))
+	{
+		while ((Einstein_HSync)&&(c<33274))
+		{
+			crtc6845_clock();
+			c++;
+		}
+		// Do all the clever split mode changes in here before the next while loop
+
+		while ((!Einstein_HSync)&&(c<33274))
+		{
+			// check that we are on the emulated screen area.
+			if ((Einstein_scr_x>=0) && (Einstein_scr_x<640) && (Einstein_scr_y>=0) && (Einstein_scr_y<400))
+			{
+				einstein_80col_plot_char_line(Einstein_scr_x, Einstein_scr_y, bitmap);
+			}
+
+			Einstein_scr_x+=8;
+
+			// Clock the 6845
+			crtc6845_clock();
+			c++;
+		}
+	}
+}
+
+void einstein_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+{
+	TMS9928A_refresh(bitmap,full_refresh);
+	einstein_80col_refresh(bitmap,full_refresh);
+}
+
+
 
 static struct MachineDriver machine_driver_einstein =
 {
@@ -761,7 +1239,7 @@ static struct MachineDriver machine_driver_einstein =
 	{
 		/* MachineCPU */
 		{
-			CPU_Z80,  /* type */
+			CPU_Z80 | CPU_16BIT_PORT,  /* type */
 			EINSTEIN_SYSTEM_CLOCK,
 			readmem_einstein,		   /* MemoryReadAddress */
 			writemem_einstein,		   /* MemoryWriteAddress */
@@ -778,7 +1256,8 @@ static struct MachineDriver machine_driver_einstein =
 	einstein_init_machine,			   /* init machine */
 	einstein_shutdown_machine,
 	/* video hardware */
-	32*8, 24*8, { 0*8, 32*8-1, 0*8, 24*8-1 },
+//	32*8, 24*8, { 0*8, 32*8-1, 0*8, 24*8-1 },
+	640,400, {0,640-1, 0, 400-1},
 	0,								
 	TMS9928A_PALETTE_SIZE, TMS9928A_COLORTABLE_SIZE,
 	tms9928A_init_palette,
@@ -786,7 +1265,7 @@ static struct MachineDriver machine_driver_einstein =
 	0,								   /* MachineLayer */
 	einstein_vh_init,
 	TMS9928A_stop,
-	TMS9928A_refresh,
+	einstein_vh_screenrefresh,
 
 		/* sound hardware */
 	0,0,0,0,
@@ -807,8 +1286,9 @@ static struct MachineDriver machine_driver_einstein =
 ***************************************************************************/
 
 ROM_START(einstein)
-	ROM_REGION(0x010000+0x02000, REGION_CPU1,0)
+	ROM_REGION(0x010000+0x02000+0x0800, REGION_CPU1,0)
 	ROM_LOAD("einstein.rom",0x10000, 0x02000, 0x0ec134953)
+	ROM_LOAD("charrom.rom",0x012000, 0x0800, 0x0)
 ROM_END
 
 static const struct IODevice io_einstein[] =
@@ -836,4 +1316,4 @@ static const struct IODevice io_einstein[] =
 };
 
 /*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT COMPANY		FULLNAME */
-COMP( 1984, einstein,      0,            einstein,          einstein,      0,       "Tatung", "Tatung Einstein TC-01")
+COMP( 19??, einstein,      0,            einstein,          einstein,      0,       "Tatung", "Tatung Einstein TC-01")
