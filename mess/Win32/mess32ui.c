@@ -32,6 +32,15 @@ typedef struct tagImageData {
     const char *name;
     char *fullname;
     int type;
+
+	/* CRC info */
+	char *crcline;
+	int crc;
+	const char *longname;
+	const char *manufacturer;
+	const char *year;
+	const char *playable;
+	const char *extrainfo;
 } ImageData;
 
 static ImageData *mess_images;
@@ -579,7 +588,34 @@ static BOOL MessPickerNotify(HWND hWnd, NMHDR *nm, void (*runhandler)(void), BOO
 
             if (pnmv->item.mask & LVIF_TEXT)
             {
-                pnmv->item.pszText = (char *) mess_images_index[pnmv->item.lParam]->name;
+				ImageData *imgd;
+				const char *s;
+
+				imgd = mess_images_index[pnmv->item.lParam];
+				s = NULL;
+
+                switch (messRealColumn[pnmv->item.iSubItem]) {
+				case MESS_COLUMN_IMAGES:
+	                s = imgd->name;
+					break;
+
+				case MESS_COLUMN_GOODNAME:
+					s = imgd->longname;
+					break;
+
+				case MESS_COLUMN_MANUFACTURER:
+					s = imgd->manufacturer;
+					break;
+
+				case MESS_COLUMN_YEAR:
+					s = imgd->year;
+					break;
+
+				case MESS_COLUMN_PLAYABLE:
+					s = imgd->playable;
+					break;
+				}
+				pnmv->item.pszText = s ? (char *) s : "";
             }
         }
         return TRUE;
@@ -598,31 +634,79 @@ int DECL_SPEC CmpImageDataPtr(const void *elem1, const void *elem2)
     return stricmp(img1->name, img2->name);
 }
 
+static ImageData *ImageData_Alloc(const char *fullname)
+{
+	ImageData *newimg;
+    char *separator_pos;
+
+	newimg = malloc(sizeof(ImageData) + strlen(fullname) + 1);
+	if (!newimg)
+		return NULL;
+	memset(newimg, 0, sizeof(ImageData));
+
+	newimg->fullname = ((char *) newimg) + sizeof(ImageData);
+	strcpy(newimg->fullname, fullname);
+
+    separator_pos = strrchr(newimg->fullname, '\\');
+    newimg->name = separator_pos ? (separator_pos+1) : newimg->fullname;
+	newimg->type = IO_ALIAS;
+	return newimg;
+}
+
+static void ImageData_Free(ImageData *img)
+{
+	if (img->crcline)
+		free(img->crcline);
+	free((void *) img);
+}
+
+static void ImageData_Realize(ImageData *img, BOOL bActive, mess_image_type *imagetypes)
+{
+	if (img->type == IO_ALIAS) {
+		img->type = MessDiscoverImageType(img->fullname, imagetypes, bActive);
+	}
+}
+
+static BOOL ImageData_IsBad(ImageData *img)
+{
+	return img->type == IO_COUNT;
+}
+
+static BOOL ImageData_SetCrcLine(ImageData *img, int crc, const char *crcline)
+{
+	char *newcrcline;
+
+	newcrcline = strdup(crcline);
+	if (!newcrcline)
+		return FALSE;
+
+	if (img->crcline)
+		free(img->crcline);
+	img->crcline = newcrcline;
+	img->crc = crc;
+	img->longname = strtok(newcrcline, "|");
+	img->manufacturer = strtok(NULL, "|");
+	img->year = strtok(NULL, "|");
+	img->playable = strtok(NULL, "|");
+	img->extrainfo = strtok(NULL, "|");
+}
+
 static BOOL AppendNewImage(const char *fullname, BOOL bReadZip, ImageData ***listend, mess_image_type *imagetypes)
 {
-    int type;
-    char *separator_pos;
     ImageData *newimg;
 
-    type = MessDiscoverImageType(fullname, imagetypes, bReadZip);
-    if (type == IO_COUNT)
-        return FALSE; /* Unknown type of software */
-
-    newimg = malloc(sizeof(ImageData));
+	newimg = ImageData_Alloc(fullname);
     if (!newimg)
         return FALSE;
 
-    newimg->fullname = strdup(fullname);
-    if (!newimg->fullname) {
-        free(newimg);
-        return FALSE;
-    }
+	ImageData_Realize(newimg, bReadZip, imagetypes);
 
-    separator_pos = strrchr(newimg->fullname, '\\');
+	if (ImageData_IsBad(newimg)) {
+		/* Unknown type of software */
+		ImageData_Free(newimg);
+		return FALSE;
+	}
 
-    newimg->name = separator_pos ? (separator_pos+1) : newimg->fullname;
-    newimg->next = NULL;
-    newimg->type = type;
     **listend = newimg;
     *listend = &newimg->next;
     return TRUE;
@@ -686,9 +770,7 @@ static void FillSoftwareList(int nGame)
     imgd = mess_images;
     while(imgd) {
         ImageData *next = imgd->next;
-        if (imgd->fullname)
-            free(imgd->fullname);
-        free(imgd);
+		ImageData_Free(imgd);
         imgd = next;
     }
     mess_images = NULL;
