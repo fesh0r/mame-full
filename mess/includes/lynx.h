@@ -2,9 +2,14 @@
 #define __LYNX_H__
 #include "driver.h"
 
+extern UINT32 lynx_palette[0x10];
+
 int lynx_vh_start(void);
 void lynx_vh_stop(void);
 void lynx_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
+void lynx_draw_lines(int newline);
+
+
 extern UINT32 lynx_partialcrc(const unsigned char *,unsigned int);
 
 extern int debug_pos;
@@ -30,6 +35,7 @@ WRITE_HANDLER(mikey_write);
 READ_HANDLER(mikey_read);
 WRITE_HANDLER(suzy_write);
 READ_HANDLER(suzy_read);
+void lynx_timer_count_down(int nr);
 
 #ifdef RUNTIME_LOADER
 # ifdef __cplusplus
@@ -40,8 +46,10 @@ extern void lynx_runtime_loader_init(void);
 #endif
 
 void lynx_audio_debug(struct osd_bitmap *bitmap);
+void lynx_audio_reset(void);
 void lynx_audio_write(int offset, UINT8 data);
 UINT8 lynx_audio_read(int offset);
+void lynx_audio_count_down(int nr);
 extern int lynx_custom_start (const struct MachineSound *driver);
 extern int lynx2_custom_start (const struct MachineSound *driver);
 extern void lynx_custom_stop (void);
