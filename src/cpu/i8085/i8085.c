@@ -77,6 +77,11 @@
  * - ADC r instructions should affect parity flag.
  *   Fixed only for non x86 asm version (#define i8080_EXACT 1).
  *   There are probably more opcodes which should affect this flag, but don't.
+ *
+ * 05-09-2003 Krzysztof Strzecha
+ *
+ * - INR r, DCR r, ADD r, SUB r, CMP r instructions should affect parity flag.
+ *   Fixed only for non x86 asm version (#define i8080_EXACT 1).
  * 
  *****************************************************************************/
 
