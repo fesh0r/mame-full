@@ -138,7 +138,7 @@ DEFS += \
 	-DDECL_SPEC=_cdecl
 
 ifeq "$(WCEPLAT)" "x86em"
-DEFS += -DX86 -D_X86_ -D_WIN32_WCE_EMULATION
+DEFS += -DX86 -Dx86 -D_X86_ -D_WIN32_WCE_EMULATION
 endif
 ifeq "$(WCEPLAT)" "arm"
 DEFS += -DARM -D_ARM_
@@ -225,7 +225,6 @@ LIBS = \
 	aygshell.lib \
 	commctrl.lib \
 	uuid.lib \
-	gx.lib
 
 ifdef DX_LIBPATH
 LDFLAGS += -LIBPATH:$(subst \,\\,$(DX_LIBPATH))
