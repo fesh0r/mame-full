@@ -548,102 +548,102 @@ static struct MachineDriver machine_driver_at386 =
 #if 0
 	// ibm at
 	// most likely 2 32 kbyte chips for 16 bit access
-    ROM_LOAD("atbios.bin", 0xf0000, 0x10000,CRC( 0x674426be)) // BASIC C1.1, beeps
+    ROM_LOAD("atbios.bin", 0xf0000, 0x10000, CRC(674426be)) // BASIC C1.1, beeps
 	// split into 2 chips for 16 bit access
-    ROM_LOAD_EVEN("ibmat.0", 0xf0000, 0x8000,CRC( 0x4995be7a))
-    ROM_LOAD_ODD("ibmat.1", 0xf0000, 0x8000,CRC( 0xc32713e4))
+    ROM_LOAD_EVEN("ibmat.0", 0xf0000, 0x8000, CRC(4995be7a))
+    ROM_LOAD_ODD("ibmat.1", 0xf0000, 0x8000, CRC(c32713e4))
 
 	/* I know about a 1984 version in 2 32kb roms */
 
 	/* at, ami bios and diagnostics */
-    ROM_LOAD_EVEN("rom01.bin", 0xf0000, 0x8000,CRC( 0x679296a7))
-    ROM_LOAD_ODD("rom02.bin", 0xf0000, 0x8000,CRC( 0x65ae1f97))
+    ROM_LOAD_EVEN("rom01.bin", 0xf0000, 0x8000, CRC(679296a7))
+    ROM_LOAD_ODD("rom02.bin", 0xf0000, 0x8000, CRC(65ae1f97))
 
 	/* */
-    ROM_LOAD("neat286.bin", 0xf0000, 0x10000,CRC( 0x07985d9b))
+    ROM_LOAD("neat286.bin", 0xf0000, 0x10000, CRC(07985d9b))
 	// split into 2 chips for 16 bit access
-    ROM_LOAD_EVEN("neat.0", 0xf0000, 0x8000,CRC( 0x4c36e61d))
-    ROM_LOAD_ODD("neat.1", 0xf0000, 0x8000,CRC( 0x4e90f294))
+    ROM_LOAD_EVEN("neat.0", 0xf0000, 0x8000, CRC(4c36e61d))
+    ROM_LOAD_ODD("neat.1", 0xf0000, 0x8000, CRC(4e90f294))
 
 	/* most likely 1 chip!, for lower costs */
-    ROM_LOAD("at386.bin", 0xf0000, 0x10000,CRC( 0x3df9732a))
+    ROM_LOAD("at386.bin", 0xf0000, 0x10000, CRC(3df9732a))
 
 	/* at486 */
-    ROM_LOAD("at486.bin", 0xf0000, 0x10000,CRC( 0x31214616))
+    ROM_LOAD("at486.bin", 0xf0000, 0x10000, CRC(31214616))
 
-    ROM_LOAD("", 0x??000, 0x2000,CRC( 0x))
+    ROM_LOAD("", 0x??000, 0x2000, CRC())
 #endif
 
 ROM_START( ibmat )
     ROM_REGION(0x1000000,REGION_CPU1, 0)
-    ROM_LOAD("wdbios.rom",  0xc8000, 0x02000,CRC( 0x8e9e2bd4))
-    ROM_LOAD16_BYTE("at111585.0", 0xf0000, 0x8000,CRC( 0x4995be7a))
+    ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, CRC(8e9e2bd4))
+    ROM_LOAD16_BYTE("at111585.0", 0xf0000, 0x8000, CRC(4995be7a))
 	ROM_RELOAD(0xff0000,0x8000)
-    ROM_LOAD16_BYTE("at111585.1", 0xf0001, 0x8000,CRC( 0xc32713e4))
+    ROM_LOAD16_BYTE("at111585.1", 0xf0001, 0x8000, CRC(c32713e4))
 	ROM_RELOAD(0xff0001,0x8000)
 	ROM_REGION(0x01100,REGION_GFX1, 0)
-    ROM_LOAD("cga.chr",     0x00000, 0x01000,CRC( 0x42009069))
+    ROM_LOAD("cga.chr",     0x00000, 0x01000, CRC(42009069))
 ROM_END
 
 ROM_START( i8530286 )
     ROM_REGION(0x1000000,REGION_CPU1, 0)
-    ROM_LOAD("wdbios.rom",  0xc8000, 0x02000,CRC( 0x8e9e2bd4))
+    ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, CRC(8e9e2bd4))
 	// saved from running machine
-    ROM_LOAD16_BYTE("ps2m30.0", 0xe0000, 0x10000,CRC( 0x9965a634))
+    ROM_LOAD16_BYTE("ps2m30.0", 0xe0000, 0x10000, CRC(9965a634))
 	ROM_RELOAD(0xfe0000,0x10000)
-    ROM_LOAD16_BYTE("ps2m30.1", 0xe0001, 0x10000,CRC( 0x1448d3cb))
+    ROM_LOAD16_BYTE("ps2m30.1", 0xe0001, 0x10000, CRC(1448d3cb))
 	ROM_RELOAD(0xfe0001,0x10000)
 ROM_END
 
 ROM_START( at )
     ROM_REGION(0x1000000,REGION_CPU1, 0)
-    ROM_LOAD("wdbios.rom",  0xc8000, 0x02000,CRC( 0x8e9e2bd4))
-    ROM_LOAD16_BYTE("at110387.1", 0xf0001, 0x8000,CRC( 0x679296a7))
+    ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, CRC(8e9e2bd4))
+    ROM_LOAD16_BYTE("at110387.1", 0xf0001, 0x8000, CRC(679296a7))
 	ROM_RELOAD(0xff0001,0x8000)
-    ROM_LOAD16_BYTE("at110387.0", 0xf0000, 0x8000,CRC( 0x65ae1f97))
+    ROM_LOAD16_BYTE("at110387.0", 0xf0000, 0x8000, CRC(65ae1f97))
 	ROM_RELOAD(0xff0000,0x8000)
 	ROM_REGION(0x01100,REGION_GFX1, 0)
-    ROM_LOAD("cga.chr",     0x00000, 0x01000,CRC( 0x42009069))
+    ROM_LOAD("cga.chr",     0x00000, 0x01000, CRC(42009069))
 ROM_END
 
 ROM_START( atvga )
     ROM_REGION(0x1000000,REGION_CPU1, 0)
-    ROM_LOAD("et4000.bin", 0xc0000, 0x8000,CRC( 0xf01e4be0))
-    ROM_LOAD("wdbios.rom",  0xc8000, 0x02000,CRC( 0x8e9e2bd4))
-    ROM_LOAD16_BYTE("at110387.1", 0xf0001, 0x8000,CRC( 0x679296a7))
+    ROM_LOAD("et4000.bin", 0xc0000, 0x8000, CRC(f01e4be0))
+    ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, CRC(8e9e2bd4))
+    ROM_LOAD16_BYTE("at110387.1", 0xf0001, 0x8000, CRC(679296a7))
 	ROM_RELOAD(0xff0001,0x8000)
-    ROM_LOAD16_BYTE("at110387.0", 0xf0000, 0x8000,CRC( 0x65ae1f97))
+    ROM_LOAD16_BYTE("at110387.0", 0xf0000, 0x8000, CRC(65ae1f97))
 	ROM_RELOAD(0xff0000,0x8000)
 ROM_END
 
 ROM_START( neat )
     ROM_REGION(0x1000000,REGION_CPU1, 0)
-    ROM_LOAD("wdbios.rom",  0xc8000, 0x02000,CRC( 0x8e9e2bd4))
-    ROM_LOAD16_BYTE("at030389.0", 0xf0000, 0x8000,CRC( 0x4c36e61d))
+    ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, CRC(8e9e2bd4))
+    ROM_LOAD16_BYTE("at030389.0", 0xf0000, 0x8000, CRC(4c36e61d))
 	ROM_RELOAD(0xff0000,0x8000)
-    ROM_LOAD16_BYTE("at030389.1", 0xf0001, 0x8000,CRC( 0x4e90f294))
+    ROM_LOAD16_BYTE("at030389.1", 0xf0001, 0x8000, CRC(4e90f294))
 	ROM_RELOAD(0xff0001,0x8000)
 	ROM_REGION(0x01100,REGION_GFX1, 0)
-    ROM_LOAD("cga.chr",     0x00000, 0x01000,CRC( 0x42009069))
+    ROM_LOAD("cga.chr",     0x00000, 0x01000, CRC(42009069))
 ROM_END
 
 #ifdef HAS_I386
 ROM_START( at386 )
     ROM_REGION(0x1000000,REGION_CPU1, 0)
-    ROM_LOAD("wdbios.rom",  0xc8000, 0x02000,CRC( 0x8e9e2bd4))
-    ROM_LOAD("at386.bin", 0xf0000, 0x10000,CRC( 0x3df9732a))
+    ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, CRC(8e9e2bd4))
+    ROM_LOAD("at386.bin", 0xf0000, 0x10000, CRC(3df9732a))
 	ROM_RELOAD(0xff0000,0x10000)
 	ROM_REGION(0x01100,REGION_GFX1, 0)
-    ROM_LOAD("cga.chr",     0x00000, 0x01000,CRC( 0x42009069))
+    ROM_LOAD("cga.chr",     0x00000, 0x01000, CRC(42009069))
 ROM_END
 
 ROM_START( at486 )
     ROM_REGION(0x1000000,REGION_CPU1, 0)
-    ROM_LOAD("wdbios.rom",  0xc8000, 0x02000,CRC( 0x8e9e2bd4))
-    ROM_LOAD("at486.bin", 0xf0000, 0x10000,CRC( 0x31214616))
+    ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, CRC(8e9e2bd4))
+    ROM_LOAD("at486.bin", 0xf0000, 0x10000, CRC(31214616))
 	ROM_RELOAD(0xff0000,0x10000)
 	ROM_REGION(0x01100,REGION_GFX1, 0)
-    ROM_LOAD("cga.chr",     0x00000, 0x01000,CRC( 0x42009069))
+    ROM_LOAD("cga.chr",     0x00000, 0x01000, CRC(42009069))
 ROM_END
 #endif
 

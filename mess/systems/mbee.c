@@ -321,10 +321,10 @@ MACHINE_DRIVER_END
 
 ROM_START( mbee )
     ROM_REGION(0x10000,REGION_CPU1,0)
-    ROM_LOAD("bas522a.rom",  0x8000, 0x2000,CRC( 0x7896a696))
-    ROM_LOAD("bas522b.rom",  0xa000, 0x2000,CRC( 0xb21d9679))
-    ROM_LOAD("edasm.rom",    0xc000, 0x2000,CRC( 0x1af1b3a9))
-    ROM_LOAD("charrom.bin",  0xf000, 0x1000,CRC( 0x1f9fcee4))
+    ROM_LOAD("bas522a.rom",  0x8000, 0x2000, CRC(7896a696))
+    ROM_LOAD("bas522b.rom",  0xa000, 0x2000, CRC(b21d9679))
+    ROM_LOAD("edasm.rom",    0xc000, 0x2000, CRC(1af1b3a9))
+    ROM_LOAD("charrom.bin",  0xf000, 0x1000, CRC(1f9fcee4))
 
     ROM_REGION(0x1000,REGION_GFX1,0)
     /* videoram and colorram are remapped here */
@@ -332,10 +332,10 @@ ROM_END
 
 ROM_START( mbeepc85 )
     ROM_REGION(0x10000,REGION_CPU1,0)
-    ROM_LOAD("bas522a.rom",  0x8000, 0x2000,CRC( 0x7896a696))
-    ROM_LOAD("bas522b.rom",  0xa000, 0x2000,CRC( 0xb21d9679))
-    ROM_LOAD("wbee12.rom",   0xc000, 0x2000,CRC( 0x0fc21cb5))
-    ROM_LOAD("charrom.bin",  0xf000, 0x1000,CRC( 0x1f9fcee4))
+    ROM_LOAD("bas522a.rom",  0x8000, 0x2000, CRC(7896a696))
+    ROM_LOAD("bas522b.rom",  0xa000, 0x2000, CRC(b21d9679))
+    ROM_LOAD("wbee12.rom",   0xc000, 0x2000, CRC(0fc21cb5))
+    ROM_LOAD("charrom.bin",  0xf000, 0x1000, CRC(1f9fcee4))
 
     ROM_REGION(0x1000,REGION_GFX1,0)
     /* videoram and colorram are remapped here */
@@ -343,10 +343,10 @@ ROM_END
 
 ROM_START( mbeepc )
     ROM_REGION(0x10000,REGION_CPU1,0)
-    ROM_LOAD("bas522a.rom",  0x8000, 0x2000,CRC( 0x7896a696))
-    ROM_LOAD("bas522b.rom",  0xa000, 0x2000,CRC( 0xb21d9679))
-    ROM_LOAD("telc321.rom",  0xe000, 0x2000,CRC( 0x15b9d2df))
-    ROM_LOAD("charrom.bin",  0xf000, 0x1000,CRC( 0x1f9fcee4))
+    ROM_LOAD("bas522a.rom",  0x8000, 0x2000, CRC(7896a696))
+    ROM_LOAD("bas522b.rom",  0xa000, 0x2000, CRC(b21d9679))
+    ROM_LOAD("telc321.rom",  0xe000, 0x2000, CRC(15b9d2df))
+    ROM_LOAD("charrom.bin",  0xf000, 0x1000, CRC(1f9fcee4))
 
     ROM_REGION(0x1000,REGION_GFX1,0)
     /* videoram and colorram are remapped here */
@@ -354,8 +354,8 @@ ROM_END
 
 ROM_START( mbee56 )
     ROM_REGION(0x10000,REGION_CPU1,0)
-    ROM_LOAD("56kb.rom",     0xe000, 0x1000,CRC( 0x28211224))
-    ROM_LOAD("charrom.bin",  0xf000, 0x1000,CRC( 0x1f9fcee4))
+    ROM_LOAD("56kb.rom",     0xe000, 0x1000, CRC(28211224))
+    ROM_LOAD("charrom.bin",  0xf000, 0x1000, CRC(1f9fcee4))
 
     ROM_REGION(0x1000,REGION_GFX1,0)
     /* videoram and colorram are remapped here */

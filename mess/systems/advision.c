@@ -89,7 +89,7 @@ MACHINE_DRIVER_END
 
 ROM_START (advision)
 	ROM_REGION(0x2800,REGION_CPU1, 0)
-    ROM_LOAD ("avbios.rom", 0x1000, 0x400,CRC( 0x279e33d1))
+    ROM_LOAD ("avbios.rom", 0x1000, 0x400, CRC(279e33d1))
 ROM_END
 
 SYSTEM_CONFIG_START(advision)

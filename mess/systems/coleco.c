@@ -193,12 +193,12 @@ MACHINE_DRIVER_END
 
 ROM_START (coleco)
     ROM_REGION(0x10000,REGION_CPU1,0)
-    ROM_LOAD ("coleco.rom", 0x0000, 0x2000,CRC( 0x3aa93ef3))
+    ROM_LOAD ("coleco.rom", 0x0000, 0x2000, CRC(3aa93ef3))
 ROM_END
 
 ROM_START (colecoa)
     ROM_REGION(0x10000,REGION_CPU1, 0)
-    ROM_LOAD ("colecoa.rom", 0x0000, 0x2000,CRC( 0x39bb16fc))
+    ROM_LOAD ("colecoa.rom", 0x0000, 0x2000, CRC(39bb16fc))
 
 	/* differences to 0x3aa93ef3
 	   modified characters, added a pad 2 related fix */
@@ -206,12 +206,12 @@ ROM_END
 
 //ROM_START (colecofb_rom)
 //  ROM_REGIONX(0x10000,REGION_CPU1, 0)
-//  ROM_LOAD ("colecofb.rom", 0x0000, 0x2000,CRC( 0x640cf85b)) /* no pause after title screen */
+//  ROM_LOAD ("colecofb.rom", 0x0000, 0x2000, CRC(640cf85b)) /* no pause after title screen */
 //ROM_END
 
 //ROM_START (coleconb_rom)
 //  ROM_REGIONX(0x10000,REGION_CPU1, 0)
-//  ROM_LOAD ("coleconb.rom", 0x0000, 0x2000,CRC( 0x66cda476)) /* no title screen */
+//  ROM_LOAD ("coleconb.rom", 0x0000, 0x2000, CRC(66cda476)) /* no title screen */
 //ROM_END
 
 SYSTEM_CONFIG_START(coleco)

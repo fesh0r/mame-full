@@ -268,10 +268,10 @@ ROM_START (kaypro)
     /* totally empty :) */
 
     ROM_REGION(0x04000,REGION_GFX1,0)  /* 4 * 4K font ram */
-    ROM_LOAD ("kaypro2x.fnt", 0x0000, 0x1000,CRC( 0x5f72da5b))
+    ROM_LOAD ("kaypro2x.fnt", 0x0000, 0x1000, CRC(5f72da5b))
 
     ROM_REGION(0x01600,REGION_CPU2,0)  /* 5,5K for CCP and BDOS buffer */
-    ROM_LOAD ("cpm62k.sys",   0x0000, 0x1600,CRC( 0xd10cd036))
+    ROM_LOAD ("cpm62k.sys",   0x0000, 0x1600, CRC(d10cd036))
 ROM_END
 
 SYSTEM_CONFIG_START(kaypro)

@@ -325,7 +325,7 @@ INPUT_PORTS_END
 
 ROM_START( mac512ke )
 	ROM_REGION(0x420000,REGION_CPU1,0) /* for ram, etc */
-	ROM_LOAD16_WORD( "macplus.rom",  0x400000, 0x20000,CRC( 0xb2102e8e))
+	ROM_LOAD16_WORD( "macplus.rom",  0x400000, 0x20000, CRC(b2102e8e))
 ROM_END
 
 #else
@@ -336,7 +336,7 @@ ROM_END
 
 ROM_START( macplus )
 	ROM_REGION(0x420000,REGION_CPU1,0) /* for ram, etc */
-	ROM_LOAD16_WORD( "macplus.rom",  0x400000, 0x20000,CRC( 0xb2102e8e))
+	ROM_LOAD16_WORD( "macplus.rom",  0x400000, 0x20000, CRC(b2102e8e))
 ROM_END
 
 SYSTEM_CONFIG_START(macplus)
@@ -423,7 +423,7 @@ INPUT_PORTS_END
 
 ROM_START( mac2 )
 	ROM_REGION(0x00900000,REGION_CPU1,0) /* for ram, etc */
-	ROM_LOAD_WIDE( "256k.rom",  0x800000, 0x40000,CRC( 0x00000000))
+	ROM_LOAD_WIDE( "256k.rom",  0x800000, 0x40000, CRC(00000000))
 ROM_END
 
 COMPX( 1987, mac2,	   0,		 mac2,	   mac2,	 0/*mac2*/,  "Apple Computer",    "Macintosh II",  GAME_NOT_WORKING )

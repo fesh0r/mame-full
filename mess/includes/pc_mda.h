@@ -5,7 +5,7 @@
 #if 0
 	// cutted from some aga char rom
 	// 256 9x14 in 8x16 chars, line 3 is connected to a10
-    ROM_LOAD("mda.chr",     0x00000, 0x01000,CRC( 0xac1686f3))
+    ROM_LOAD("mda.chr",     0x00000, 0x01000, CRC(ac1686f3))
 #endif
 
 void pc_mda_init_video(struct _CRTC6845 *crtc);

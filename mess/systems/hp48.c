@@ -223,26 +223,26 @@ ROM_START(hp48s)
 	ROM_REGION(0x1c0000,REGION_CPU1, 0)
 	/* version at 0x7fff0 little endian 6 characters */
 	/* 0x3fff8 in byte wide rom */
-//	ROM_LOAD("sxrom-a", 0x00000, 0x40000,CRC( 0xa87696c7))
-//	ROM_LOAD("sxrom-b", 0x00000, 0x40000,CRC( 0x034f6ce4))
-//	ROM_LOAD("sxrom-c", 0x00000, 0x40000,CRC( 0xa9a0279d))
-//	ROM_LOAD("sxrom-d", 0x00000, 0x40000,CRC( 0x6e71244e))
-//	ROM_LOAD("sxrom-e", 0x00000, 0x40000,CRC( 0x704ffa08))
-	ROM_LOAD("sxrom-e", 0x00000, 0x40000,CRC( 0xd4f1390b)) // differences only in the hardware window
-//	ROM_LOAD("rom.sx", 0x00000, 0x40000,CRC( 0x5619ccaf)) //revision E bad dump
-//	ROM_LOAD("sxrom-j", 0x00000, 0x40000,CRC( 0x1a6378ef))
+//	ROM_LOAD("sxrom-a", 0x00000, 0x40000, CRC(a87696c7))
+//	ROM_LOAD("sxrom-b", 0x00000, 0x40000, CRC(034f6ce4))
+//	ROM_LOAD("sxrom-c", 0x00000, 0x40000, CRC(a9a0279d))
+//	ROM_LOAD("sxrom-d", 0x00000, 0x40000, CRC(6e71244e))
+//	ROM_LOAD("sxrom-e", 0x00000, 0x40000, CRC(704ffa08))
+	ROM_LOAD("sxrom-e", 0x00000, 0x40000, CRC(d4f1390b)) // differences only in the hardware window
+//	ROM_LOAD("rom.sx", 0x00000, 0x40000, CRC(5619ccaf)) //revision E bad dump
+//	ROM_LOAD("sxrom-j", 0x00000, 0x40000, CRC(1a6378ef))
 	ROM_REGION(0x100,REGION_GFX1,0)
 ROM_END
 
 ROM_START(hp48g)
 	ROM_REGION(0x580000,REGION_CPU1, 0)
 	/* version at 0x7ffbf little endian 6 characters */
-//	ROM_LOAD("gxrom-k", 0x00000, 0x80000,CRC( 0xbdd5d2ee))
-//	ROM_LOAD("gxrom-l", 0x00000, 0x80000,CRC( 0x70958e6b))
-//	ROM_LOAD("gxrom-m", 0x00000, 0x80000,CRC( 0xe21a09e4))
-//	ROM_LOAD("gxrom-p", 0x00000, 0x80000,CRC( 0x27f90428))
-	ROM_LOAD("gxrom-r", 0x00000, 0x80000,CRC( 0x00ee1a62))
-//	ROM_LOAD("rom.gx", 0x00000, 0x80000,CRC( 0xd6bb68c5)) //revision R bad dump
+//	ROM_LOAD("gxrom-k", 0x00000, 0x80000, CRC(bdd5d2ee))
+//	ROM_LOAD("gxrom-l", 0x00000, 0x80000, CRC(70958e6b))
+//	ROM_LOAD("gxrom-m", 0x00000, 0x80000, CRC(e21a09e4))
+//	ROM_LOAD("gxrom-p", 0x00000, 0x80000, CRC(27f90428))
+	ROM_LOAD("gxrom-r", 0x00000, 0x80000, CRC(00ee1a62))
+//	ROM_LOAD("rom.gx", 0x00000, 0x80000, CRC(d6bb68c5)) //revision R bad dump
 	ROM_REGION(0x100,REGION_GFX1,0)
 ROM_END
 

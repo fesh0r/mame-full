@@ -622,61 +622,61 @@ MACHINE_DRIVER_END
 
 ROM_START(dragon32)
 	ROM_REGION(0x8000,REGION_CPU1,0)
-	ROM_LOAD(           "d32.rom",      0x0000,  0x4000,CRC( 0xe3879310))
-	ROM_LOAD_OPTIONAL(  "ddos10.rom",   0x4000,  0x2000,CRC( 0xb44536f6))
+	ROM_LOAD(           "d32.rom",      0x0000,  0x4000, CRC(e3879310))
+	ROM_LOAD_OPTIONAL(  "ddos10.rom",   0x4000,  0x2000, CRC(b44536f6))
 ROM_END
 
 ROM_START(dragon64)
 	ROM_REGION(0xC000,REGION_CPU1,0)
-	ROM_LOAD(           "d64_1.rom",    0x0000,  0x4000,CRC( 0x60a4634c))
-	ROM_LOAD(           "d64_2.rom",    0x8000,  0x4000,CRC( 0x17893a42))
-	ROM_LOAD_OPTIONAL(  "ddos10.rom",   0x4000,  0x2000,CRC( 0xb44536f6))
+	ROM_LOAD(           "d64_1.rom",    0x0000,  0x4000, CRC(60a4634c))
+	ROM_LOAD(           "d64_2.rom",    0x8000,  0x4000, CRC(17893a42))
+	ROM_LOAD_OPTIONAL(  "ddos10.rom",   0x4000,  0x2000, CRC(b44536f6))
 ROM_END
 
 ROM_START(coco)
      ROM_REGION(0x8000,REGION_CPU1,0)
-     ROM_LOAD(			"bas10.rom",	0x2000, 0x2000,CRC( 0x00b50aaa))
+     ROM_LOAD(			"bas10.rom",	0x2000, 0x2000, CRC(00b50aaa))
 ROM_END
 
 ROM_START(cocoe)
      ROM_REGION(0x8000,REGION_CPU1,0)
-     ROM_LOAD(			"bas11.rom",	0x2000, 0x2000,CRC( 0x6270955a))
-     ROM_LOAD(	        "extbas10.rom",	0x0000, 0x2000,CRC( 0x6111a086))
-     ROM_LOAD_OPTIONAL(	"disk10.rom",	0x4000, 0x2000,CRC( 0xb4f9968e))
+     ROM_LOAD(			"bas11.rom",	0x2000, 0x2000, CRC(6270955a))
+     ROM_LOAD(	        "extbas10.rom",	0x0000, 0x2000, CRC(6111a086))
+     ROM_LOAD_OPTIONAL(	"disk10.rom",	0x4000, 0x2000, CRC(b4f9968e))
 ROM_END
 
 ROM_START(coco2)
      ROM_REGION(0x8000,REGION_CPU1,0)
-     ROM_LOAD(			"bas12.rom",	0x2000, 0x2000,CRC( 0x54368805))
-     ROM_LOAD(      	"extbas11.rom",	0x0000, 0x2000,CRC( 0xa82a6254))
-     ROM_LOAD_OPTIONAL(	"disk11.rom",	0x4000, 0x2000,CRC( 0x0b9c5415))
+     ROM_LOAD(			"bas12.rom",	0x2000, 0x2000, CRC(54368805))
+     ROM_LOAD(      	"extbas11.rom",	0x0000, 0x2000, CRC(a82a6254))
+     ROM_LOAD_OPTIONAL(	"disk11.rom",	0x4000, 0x2000, CRC(0b9c5415))
 ROM_END
 
 ROM_START(coco2b)
      ROM_REGION(0x8000,REGION_CPU1,0)
-     ROM_LOAD(			"bas13.rom",	0x2000, 0x2000,CRC( 0xd8f4d15e))
-     ROM_LOAD(      	"extbas11.rom",	0x0000, 0x2000,CRC( 0xa82a6254))
-     ROM_LOAD_OPTIONAL(	"disk11.rom",	0x4000, 0x2000,CRC( 0x0b9c5415))
+     ROM_LOAD(			"bas13.rom",	0x2000, 0x2000, CRC(d8f4d15e))
+     ROM_LOAD(      	"extbas11.rom",	0x0000, 0x2000, CRC(a82a6254))
+     ROM_LOAD_OPTIONAL(	"disk11.rom",	0x4000, 0x2000, CRC(0b9c5415))
 ROM_END
 
 ROM_START(coco3)
      ROM_REGION(0x10000,REGION_CPU1,0)
-	 ROM_LOAD(			"coco3.rom",	0x0000, 0x8000,CRC( 0xb4c88d6c))
-     ROM_LOAD_OPTIONAL(	"disk11.rom",	0xC000, 0x2000,CRC( 0x0b9c5415))
-     ROM_LOAD_OPTIONAL(	"disk11.rom",	0xE000, 0x2000,CRC( 0x0b9c5415))
+	 ROM_LOAD(			"coco3.rom",	0x0000, 0x8000, CRC(b4c88d6c))
+     ROM_LOAD_OPTIONAL(	"disk11.rom",	0xC000, 0x2000, CRC(0b9c5415))
+     ROM_LOAD_OPTIONAL(	"disk11.rom",	0xE000, 0x2000, CRC(0b9c5415))
 ROM_END
 
 ROM_START(coco3p)
      ROM_REGION(0x10000,REGION_CPU1,0)
-	 ROM_LOAD(			"coco3p.rom",	0x0000, 0x8000,CRC( 0xff050d80))
-     ROM_LOAD_OPTIONAL(	"disk11.rom",	0xC000, 0x2000,CRC( 0x0b9c5415))
-     ROM_LOAD_OPTIONAL(	"disk11.rom",	0xE000, 0x2000,CRC( 0x0b9c5415))
+	 ROM_LOAD(			"coco3p.rom",	0x0000, 0x8000, CRC(ff050d80))
+     ROM_LOAD_OPTIONAL(	"disk11.rom",	0xC000, 0x2000, CRC(0b9c5415))
+     ROM_LOAD_OPTIONAL(	"disk11.rom",	0xE000, 0x2000, CRC(0b9c5415))
 ROM_END
 
 ROM_START(cp400)
      ROM_REGION(0x8000,REGION_CPU1,0)
-     ROM_LOAD("cp400bas.rom",  0x0000, 0x4000,CRC( 0x878396a5))
-     ROM_LOAD("cp400dsk.rom",  0x4000, 0x2000,CRC( 0xe9ad60a0))
+     ROM_LOAD("cp400bas.rom",  0x0000, 0x4000, CRC(878396a5))
+     ROM_LOAD("cp400dsk.rom",  0x4000, 0x2000, CRC(e9ad60a0))
 ROM_END
 
 #define rom_coco3h	rom_coco3

@@ -246,14 +246,14 @@ INPUT_PORTS_END
 
 ROM_START( lisa2 )
 	ROM_REGION16_BE(0x204000,REGION_CPU1,0)	/* 68k rom and ram */
-	ROM_LOAD16_BYTE( "booth.hi", 0x000000, 0x2000,CRC( 0xadfd4516))
-	ROM_LOAD16_BYTE( "booth.lo", 0x000001, 0x2000,CRC( 0x546d6603))
+	ROM_LOAD16_BYTE( "booth.hi", 0x000000, 0x2000, CRC(adfd4516))
+	ROM_LOAD16_BYTE( "booth.lo", 0x000001, 0x2000, CRC(546d6603))
 
 	ROM_REGION(0x2000,REGION_CPU2,0)		/* 6504 RAM and ROM */
-	ROM_LOAD( "ioa8.rom", 0x1000, 0x1000,CRC( 0xbc6364f1))
+	ROM_LOAD( "ioa8.rom", 0x1000, 0x1000, CRC(bc6364f1))
 
 	ROM_REGION(0x100,REGION_GFX1,0)		/* video ROM (includes S/N) */
-	ROM_LOAD( "vidstate.rom", 0x00, 0x100,CRC( 0x75904783))
+	ROM_LOAD( "vidstate.rom", 0x00, 0x100, CRC(75904783))
 
 	ROM_REGION(0x040000, REGION_USER1, 0)	/* 1 bit per byte of CPU RAM - used for parity check emulation */
 
@@ -261,19 +261,19 @@ ROM_END
 
 ROM_START( lisa210 )
 	ROM_REGION16_BE(0x204000,REGION_CPU1, 0)	/* 68k rom and ram */
-	ROM_LOAD16_BYTE( "booth.hi", 0x000000, 0x2000,CRC( 0xadfd4516))
-	ROM_LOAD16_BYTE( "booth.lo", 0x000001, 0x2000,CRC( 0x546d6603))
+	ROM_LOAD16_BYTE( "booth.hi", 0x000000, 0x2000, CRC(adfd4516))
+	ROM_LOAD16_BYTE( "booth.lo", 0x000001, 0x2000, CRC(546d6603))
 
 #if 1
 	ROM_REGION(0x2000,REGION_CPU2, 0)		/* 6504 RAM and ROM */
-	ROM_LOAD( "io88.rom", 0x1000, 0x1000,CRC( 0xe343fe74))
+	ROM_LOAD( "io88.rom", 0x1000, 0x1000, CRC(e343fe74))
 #else
 	ROM_REGION(0x2000,REGION_CPU2, 0)		/* 6504 RAM and ROM */
-	ROM_LOAD( "io88800k.rom", 0x1000, 0x1000,CRC( 0x8c67959a))
+	ROM_LOAD( "io88800k.rom", 0x1000, 0x1000, CRC(8c67959a))
 #endif
 
 	ROM_REGION(0x100,REGION_GFX1, 0)		/* video ROM (includes S/N) */
-	ROM_LOAD( "vidstate.rom", 0x00, 0x100,CRC( 0x75904783))
+	ROM_LOAD( "vidstate.rom", 0x00, 0x100, CRC(75904783))
 
 	ROM_REGION(0x040000, REGION_USER1, 0)	/* 1 bit per byte of CPU RAM - used for parity check emulation */
 
@@ -281,19 +281,19 @@ ROM_END
 
 ROM_START( macxl )
 	ROM_REGION16_BE(0x204000,REGION_CPU1, 0)	/* 68k rom and ram */
-	ROM_LOAD16_BYTE( "boot3a.hi", 0x000000, 0x2000,CRC( 0x80add605))
-	ROM_LOAD16_BYTE( "boot3a.lo", 0x000001, 0x2000,CRC( 0xedf5222f))
+	ROM_LOAD16_BYTE( "boot3a.hi", 0x000000, 0x2000, CRC(80add605))
+	ROM_LOAD16_BYTE( "boot3a.lo", 0x000001, 0x2000, CRC(edf5222f))
 
 #if 1
 	ROM_REGION(0x2000,REGION_CPU2, 0)		/* 6504 RAM and ROM */
-	ROM_LOAD( "io88.rom", 0x1000, 0x1000,CRC( 0xe343fe74))
+	ROM_LOAD( "io88.rom", 0x1000, 0x1000, CRC(e343fe74))
 #else
 	ROM_REGION(0x2000,REGION_CPU2, 0)		/* 6504 RAM and ROM */
-	ROM_LOAD( "io88800k.rom", 0x1000, 0x1000,CRC( 0x8c67959a))
+	ROM_LOAD( "io88800k.rom", 0x1000, 0x1000, CRC(8c67959a))
 #endif
 
 	ROM_REGION(0x100,REGION_GFX1, 0)		/* video ROM (includes S/N) ; no dump known, although Lisa ROM works fine at our level of emulation */
-	ROM_LOAD( "vidstate.rom", 0x00, 0x100,CRC( 0x00000000))
+	ROM_LOAD( "vidstate.rom", 0x00, 0x100, CRC(00000000))
 
 	ROM_REGION(0x040000, REGION_USER1, 0)	/* 1 bit per byte of CPU RAM - used for parity check emulation */
 

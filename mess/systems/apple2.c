@@ -568,92 +568,92 @@ MACHINE_DRIVER_END
 
 ROM_START(apple2)
 	ROM_REGION(0x0800,REGION_GFX1,0)
-	ROM_LOAD ( "a2.chr", 0x0000, 0x0800,CRC( 0x64f415c6 ))
+	ROM_LOAD ( "a2.chr", 0x0000, 0x0800, CRC(64f415c6 ))
 
 	ROM_REGION(0x4700,REGION_CPU1,0)
-	ROM_LOAD_OPTIONAL ( "progaid1.rom", 0x1000, 0x0800,CRC( 0x4234e88a ))
+	ROM_LOAD_OPTIONAL ( "progaid1.rom", 0x1000, 0x0800, CRC(4234e88a ))
 
 /* The area $D800-$DFFF in Apple II is reserved for 3rd party add-ons:
    Maybe MESS should map this space to a CARTSLOT device?              */
 
-	ROM_LOAD ( "a2.e0", 0x2000, 0x0800,CRC( 0xc0a4ad3b ))
-	ROM_LOAD ( "a2.e8", 0x2800, 0x0800,CRC( 0xa99c2cf6 ))
-	ROM_LOAD ( "a2.f0", 0x3000, 0x0800,CRC( 0x62230d38 ))
-	ROM_LOAD ( "a2.f8", 0x3800, 0x0800,CRC( 0x020a86d0 ))
-	ROM_LOAD ( "disk2_33.rom", 0x4500, 0x0100,CRC( 0xce7144f6 )) /* Disk II ROM - DOS 3.3 version */
+	ROM_LOAD ( "a2.e0", 0x2000, 0x0800, CRC(c0a4ad3b ))
+	ROM_LOAD ( "a2.e8", 0x2800, 0x0800, CRC(a99c2cf6 ))
+	ROM_LOAD ( "a2.f0", 0x3000, 0x0800, CRC(62230d38 ))
+	ROM_LOAD ( "a2.f8", 0x3800, 0x0800, CRC(020a86d0 ))
+	ROM_LOAD ( "disk2_33.rom", 0x4500, 0x0100, CRC(ce7144f6 )) /* Disk II ROM - DOS 3.3 version */
 ROM_END
 
 ROM_START(apple2p)
 	ROM_REGION(0x0800,REGION_GFX1,0)
-	ROM_LOAD ( "a2.chr", 0x0000, 0x0800,CRC( 0x64f415c6 ))
+	ROM_LOAD ( "a2.chr", 0x0000, 0x0800, CRC(64f415c6 ))
 
 	ROM_REGION(0x4700,REGION_CPU1,0)
-	ROM_LOAD ( "a2p.d0", 0x1000, 0x0800,CRC( 0x6f05f949 ))
-	ROM_LOAD ( "a2p.d8", 0x1800, 0x0800,CRC( 0x1f08087c ))
-	ROM_LOAD ( "a2p.e0", 0x2000, 0x0800,CRC( 0x2b8d9a89 ))
-	ROM_LOAD ( "a2p.e8", 0x2800, 0x0800,CRC( 0x5719871a ))
-	ROM_LOAD ( "a2p.f0", 0x3000, 0x0800,CRC( 0x9a04eecf ))
-	ROM_LOAD ( "a2p.f8", 0x3800, 0x0800,CRC( 0xecffd453 ))
-	ROM_LOAD ( "disk2_33.rom", 0x4500, 0x0100,CRC( 0xce7144f6 )) /* Disk II ROM - DOS 3.3 version */
+	ROM_LOAD ( "a2p.d0", 0x1000, 0x0800, CRC(6f05f949 ))
+	ROM_LOAD ( "a2p.d8", 0x1800, 0x0800, CRC(1f08087c ))
+	ROM_LOAD ( "a2p.e0", 0x2000, 0x0800, CRC(2b8d9a89 ))
+	ROM_LOAD ( "a2p.e8", 0x2800, 0x0800, CRC(5719871a ))
+	ROM_LOAD ( "a2p.f0", 0x3000, 0x0800, CRC(9a04eecf ))
+	ROM_LOAD ( "a2p.f8", 0x3800, 0x0800, CRC(ecffd453 ))
+	ROM_LOAD ( "disk2_33.rom", 0x4500, 0x0100, CRC(ce7144f6 )) /* Disk II ROM - DOS 3.3 version */
 ROM_END
 
 ROM_START(apple2e)
 	ROM_REGION(0x0800,REGION_GFX1,0)
-//	ROM_LOAD ( "a2.chr", 0x0000, 0x0800,CRC( 0x64f415c6 ))
-	ROM_LOAD ( "a2e.chr", 0x0000, 0x0800,CRC( 0x186f432d ))
+//	ROM_LOAD ( "a2.chr", 0x0000, 0x0800, CRC(64f415c6 ))
+	ROM_LOAD ( "a2e.chr", 0x0000, 0x0800, CRC(186f432d ))
 
 	ROM_REGION(0x4700,REGION_CPU1,0)
-	ROM_LOAD ( "a2e.cd", 0x0000, 0x2000,CRC( 0xe248835e ))
-	ROM_LOAD ( "a2e.ef", 0x2000, 0x2000,CRC( 0xfc3d59d8 ))
-	ROM_LOAD ( "disk2_33.rom", 0x4500, 0x0100,CRC( 0xce7144f6 )) /* Disk II ROM - DOS 3.3 version */
+	ROM_LOAD ( "a2e.cd", 0x0000, 0x2000, CRC(e248835e ))
+	ROM_LOAD ( "a2e.ef", 0x2000, 0x2000, CRC(fc3d59d8 ))
+	ROM_LOAD ( "disk2_33.rom", 0x4500, 0x0100, CRC(ce7144f6 )) /* Disk II ROM - DOS 3.3 version */
 ROM_END
 
 ROM_START(apple2ee)
 	ROM_REGION(0x0800,REGION_GFX1,0)
-//	ROM_LOAD ( "a2.chr", 0x0000, 0x0800,CRC( 0x64f415c6 ))
-	ROM_LOAD ( "a2e.chr", 0x0000, 0x0800,CRC( 0x186f432d ))
+//	ROM_LOAD ( "a2.chr", 0x0000, 0x0800, CRC(64f415c6 ))
+	ROM_LOAD ( "a2e.chr", 0x0000, 0x0800, CRC(186f432d ))
 
     ROM_REGION(0x4700,REGION_CPU1,0)
-    ROM_LOAD ( "a2ee.cd", 0x0000, 0x2000,CRC( 0x443aa7c4 ))
-    ROM_LOAD ( "a2ee.ef", 0x2000, 0x2000,CRC( 0x95e10034 ))
-    ROM_LOAD ( "disk2_33.rom", 0x4500, 0x0100,CRC( 0xce7144f6 )) /* Disk II ROM - DOS 3.3 version */
+    ROM_LOAD ( "a2ee.cd", 0x0000, 0x2000, CRC(443aa7c4 ))
+    ROM_LOAD ( "a2ee.ef", 0x2000, 0x2000, CRC(95e10034 ))
+    ROM_LOAD ( "disk2_33.rom", 0x4500, 0x0100, CRC(ce7144f6 )) /* Disk II ROM - DOS 3.3 version */
 ROM_END
 
 ROM_START(apple2ep)
 	ROM_REGION(0x0800,REGION_GFX1,0)
-//	ROM_LOAD ( "a2.chr", 0x0000, 0x0800,CRC( 0x64f415c6 ))
-	ROM_LOAD ( "a2e.chr", 0x0000, 0x0800,CRC( 0x186f432d ))
+//	ROM_LOAD ( "a2.chr", 0x0000, 0x0800, CRC(64f415c6 ))
+	ROM_LOAD ( "a2e.chr", 0x0000, 0x0800, CRC(186f432d ))
 
     ROM_REGION(0x4700,REGION_CPU1,0)
-    ROM_LOAD ("a2ept.cf", 0x0000, 0x4000,CRC( 0x02b648c8))
-    ROM_LOAD ("disk2_33.rom", 0x4500, 0x0100,CRC( 0xce7144f6)) /* Disk II ROM - DOS 3.3 version */
+    ROM_LOAD ("a2ept.cf", 0x0000, 0x4000, CRC(02b648c8))
+    ROM_LOAD ("disk2_33.rom", 0x4500, 0x0100, CRC(ce7144f6)) /* Disk II ROM - DOS 3.3 version */
 ROM_END
 
 ROM_START(apple2c)
 	ROM_REGION(0x0800,REGION_GFX1,0)
-//	ROM_LOAD ( "a2.chr", 0x0000, 0x0800,CRC( 0x64f415c6 ))
-	ROM_LOAD ( "a2c.chr", 0x0000, 0x0800,CRC( 0x67aba8e7 ))
+//	ROM_LOAD ( "a2.chr", 0x0000, 0x0800, CRC(64f415c6 ))
+	ROM_LOAD ( "a2c.chr", 0x0000, 0x0800, CRC(67aba8e7 ))
 
     ROM_REGION(0x4000,REGION_CPU1,0)
-    ROM_LOAD ( "a2c.128", 0x0000, 0x4000,CRC( 0xf0edaa1b ))
+    ROM_LOAD ( "a2c.128", 0x0000, 0x4000, CRC(f0edaa1b ))
 ROM_END
 
 ROM_START(apple2c0)
 	ROM_REGION(0x0800,REGION_GFX1,0)
-//	ROM_LOAD ( "a2.chr", 0x0000, 0x0800,CRC( 0x64f415c6 ))
-	ROM_LOAD ( "a2c.chr", 0x0000, 0x0800,CRC( 0x67aba8e7 ))
+//	ROM_LOAD ( "a2.chr", 0x0000, 0x0800, CRC(64f415c6 ))
+	ROM_LOAD ( "a2c.chr", 0x0000, 0x0800, CRC(67aba8e7 ))
 
     ROM_REGION(0x8700,REGION_CPU1,0)
-    ROM_LOAD("a2c.256", 0x0000, 0x8000,CRC( 0xc8b979b3))
+    ROM_LOAD("a2c.256", 0x0000, 0x8000, CRC(c8b979b3))
 ROM_END
 
 ROM_START(apple2cp)
 	ROM_REGION(0x0800,REGION_GFX1,0)
-//	ROM_LOAD ( "a2.chr", 0x0000, 0x0800,CRC( 0x64f415c6 ))
-	ROM_LOAD ( "a2c.chr", 0x0000, 0x0800,CRC( 0x67aba8e7 ))
+//	ROM_LOAD ( "a2.chr", 0x0000, 0x0800, CRC(64f415c6 ))
+	ROM_LOAD ( "a2c.chr", 0x0000, 0x0800, CRC(67aba8e7 ))
 
     ROM_REGION(0x8700,REGION_CPU1,0)
-    ROM_LOAD("a2cplus.mon", 0x0000, 0x8000,CRC( 0x0b996420))
+    ROM_LOAD("a2cplus.mon", 0x0000, 0x8000, CRC(0b996420))
 ROM_END
 
 SYSTEM_CONFIG_START(apple2)

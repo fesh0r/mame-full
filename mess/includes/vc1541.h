@@ -61,96 +61,96 @@ extern MACHINE_DRIVER_EXTERN( cpu_c1571 );
 
 #define VC1540_ROM(cpu) \
 	ROM_REGION(0x10000,cpu,0) \
-	ROM_LOAD("325302.01",  0xc000, 0x2000,CRC( 0x29ae9752)) \
-	ROM_LOAD("325303.01",  0xe000, 0x2000,CRC( 0x10b39158))
+	ROM_LOAD("325302.01",  0xc000, 0x2000, CRC(29ae9752)) \
+	ROM_LOAD("325303.01",  0xe000, 0x2000, CRC(10b39158))
 
 #define C2031_ROM(cpu) \
 		ROM_REGION(0x10000,cpu,0) \
-		ROM_LOAD("dos2031",  0xc000, 0x4000,CRC( 0x21b80fdf))
+		ROM_LOAD("dos2031",  0xc000, 0x4000, CRC(21b80fdf))
 
 #if 1
 #define VC1541_ROM(cpu) \
 	ROM_REGION(0x10000,cpu,0) \
-	ROM_LOAD("325302.01",  0xc000, 0x2000,CRC( 0x29ae9752)) \
-	ROM_LOAD("901229.05",  0xe000, 0x2000,CRC( 0x361c9f37))
+	ROM_LOAD("325302.01",  0xc000, 0x2000, CRC(29ae9752)) \
+	ROM_LOAD("901229.05",  0xe000, 0x2000, CRC(361c9f37))
 #else
 /* for this I have the documented rom listing in german */
 #define VC1541_ROM(cpu) \
 	ROM_REGION(0x10000,cpu,0) \
-	ROM_LOAD("325302.01",  0xc000, 0x2000,CRC( 0x29ae9752)) \
-	ROM_LOAD("901229.03",  0xe000, 0x2000,CRC( 0x9126e74a))
+	ROM_LOAD("325302.01",  0xc000, 0x2000, CRC(29ae9752)) \
+	ROM_LOAD("901229.03",  0xe000, 0x2000, CRC(9126e74a))
 #endif
 
 #define DOLPHIN_ROM(cpu) \
 	ROM_REGION(0x10000,cpu,0) \
-	ROM_LOAD("c1541.rom",  0xa000, 0x6000,CRC( 0xbd8e42b2))
+	ROM_LOAD("c1541.rom",  0xa000, 0x6000, CRC(bd8e42b2))
 
 #define C1551_ROM(cpu) \
 	ROM_REGION(0x10000,cpu,0) \
-	ROM_LOAD("318008.01",  0xc000, 0x4000,CRC( 0x6d16d024))
+	ROM_LOAD("318008.01",  0xc000, 0x4000, CRC(6d16d024))
 
 #define C1570_ROM(cpu) \
 	ROM_REGION(0x10000,cpu,0) \
-	ROM_LOAD("315090.01",  0x8000, 0x8000,CRC( 0x5a0c7937))
+	ROM_LOAD("315090.01",  0x8000, 0x8000, CRC(5a0c7937))
 
 #define C1571_ROM(cpu) \
 	ROM_REGION(0x10000,cpu,0) \
-	ROM_LOAD("310654.03",  0x8000, 0x8000,CRC( 0x3889b8b8))
+	ROM_LOAD("310654.03",  0x8000, 0x8000, CRC(3889b8b8))
 
 #if 0
-	ROM_LOAD("dos2040",  0x?000, 0x2000,CRC( 0xd04c1fbb))
+	ROM_LOAD("dos2040",  0x?000, 0x2000, CRC(d04c1fbb))
 
-	ROM_LOAD("dos3040",  0x?000, 0x3000,CRC( 0xf4967a7f))
+	ROM_LOAD("dos3040",  0x?000, 0x3000, CRC(f4967a7f))
 
-	ROM_LOAD("dos4040",  0x?000, 0x3000,CRC( 0x40e0ebaa))
+	ROM_LOAD("dos4040",  0x?000, 0x3000, CRC(40e0ebaa))
 
-	ROM_LOAD("dos1001",  0xc000, 0x4000,CRC( 0x87e6a94e))
+	ROM_LOAD("dos1001",  0xc000, 0x4000, CRC(87e6a94e))
 
 	/* vc1541 drive hardware */
-	ROM_LOAD("dos2031",  0xc000, 0x4000,CRC( 0x21b80fdf))
+	ROM_LOAD("dos2031",  0xc000, 0x4000, CRC(21b80fdf))
 
-	ROM_LOAD("1540-c000.325302-01.bin",  0xc000, 0x2000,CRC( 0x29ae9752))
-	ROM_LOAD("1540-e000.325303-01.bin",  0xe000, 0x2000,CRC( 0x10b39158))
+	ROM_LOAD("1540-c000.325302-01.bin",  0xc000, 0x2000, CRC(29ae9752))
+	ROM_LOAD("1540-e000.325303-01.bin",  0xe000, 0x2000, CRC(10b39158))
 
-	ROM_LOAD("1541-e000.901229-01.bin",  0xe000, 0x2000,CRC( 0x9a48d3f0))
-	ROM_LOAD("1541-e000.901229-02.bin",  0xe000, 0x2000,CRC( 0xb29bab75))
-	ROM_LOAD("1541-e000.901229-03.bin",  0xe000, 0x2000,CRC( 0x9126e74a))
-	ROM_LOAD("1541-e000.901229-05.bin",  0xe000, 0x2000,CRC( 0x361c9f37))
+	ROM_LOAD("1541-e000.901229-01.bin",  0xe000, 0x2000, CRC(9a48d3f0))
+	ROM_LOAD("1541-e000.901229-02.bin",  0xe000, 0x2000, CRC(b29bab75))
+	ROM_LOAD("1541-e000.901229-03.bin",  0xe000, 0x2000, CRC(9126e74a))
+	ROM_LOAD("1541-e000.901229-05.bin",  0xe000, 0x2000, CRC(361c9f37))
 
-	ROM_LOAD("1541-II.251968-03.bin",  0xe000, 0x2000,CRC( 0x899fa3c5))
+	ROM_LOAD("1541-II.251968-03.bin",  0xe000, 0x2000, CRC(899fa3c5))
 
-	ROM_LOAD("1541C.251968-01.bin",  0xc000, 0x4000,CRC( 0x1b3ca08d))
-	ROM_LOAD("1541C.251968-02.bin",  0xc000, 0x4000,CRC( 0x2d862d20))
+	ROM_LOAD("1541C.251968-01.bin",  0xc000, 0x4000, CRC(1b3ca08d))
+	ROM_LOAD("1541C.251968-02.bin",  0xc000, 0x4000, CRC(2d862d20))
 
-	ROM_LOAD("dos1541.c0",  0xc000, 0x2000,CRC( 0x5b84bcef))
-	ROM_LOAD("dos1541.e0",  0xe000, 0x2000,CRC( 0x2d8c1fde))
+	ROM_LOAD("dos1541.c0",  0xc000, 0x2000, CRC(5b84bcef))
+	ROM_LOAD("dos1541.e0",  0xe000, 0x2000, CRC(2d8c1fde))
 	 /* merged gives 0x899fa3c5 */
 
 	 /* 0x29ae9752 and 0x361c9f37 merged */
-	ROM_LOAD("vc1541",  0xc000, 0x4000,CRC( 0x57224cde))
+	ROM_LOAD("vc1541",  0xc000, 0x4000, CRC(57224cde))
 
 	 /* 0x29ae9752 and 0xb29bab75 merged */
-	ROM_LOAD("vc1541",  0xc000, 0x4000,CRC( 0xd3a5789c))
+	ROM_LOAD("vc1541",  0xc000, 0x4000, CRC(d3a5789c))
 
 	/* dolphin vc1541 */
-	ROM_LOAD("c1541.rom",  0xa000, 0x6000,CRC( 0xbd8e42b2))
+	ROM_LOAD("c1541.rom",  0xa000, 0x6000, CRC(bd8e42b2))
 
-	ROM_LOAD("1551.318008-01.bin",  0xc000, 0x4000,CRC( 0x6d16d024))
+	ROM_LOAD("1551.318008-01.bin",  0xc000, 0x4000, CRC(6d16d024))
 
 	/* bug fixes introduced bugs for 1541 mode
 	 jiffydos to have fixed 1571 and working 1541 mode */
-	ROM_LOAD("1570-rom.315090-01.bin",  0x8000, 0x8000,CRC( 0x5a0c7937))
-	ROM_LOAD("1571-rom.310654-03.bin",  0x8000, 0x8000,CRC( 0x3889b8b8))
-	ROM_LOAD("1571-rom.310654-05.bin",  0x8000, 0x8000,CRC( 0x5755bae3))
-	ROM_LOAD("1571cr-rom.318047-01.bin",  0x8000, 0x8000,CRC( 0xf24efcc4))
+	ROM_LOAD("1570-rom.315090-01.bin",  0x8000, 0x8000, CRC(5a0c7937))
+	ROM_LOAD("1571-rom.310654-03.bin",  0x8000, 0x8000, CRC(3889b8b8))
+	ROM_LOAD("1571-rom.310654-05.bin",  0x8000, 0x8000, CRC(5755bae3))
+	ROM_LOAD("1571cr-rom.318047-01.bin",  0x8000, 0x8000, CRC(f24efcc4))
 
-	ROM_LOAD("1581-rom.318045-01.bin",  0x8000, 0x8000,CRC( 0x113af078))
-	ROM_LOAD("1581-rom.318045-02.bin",  0x8000, 0x8000,CRC( 0xa9011b84))
-	ROM_LOAD("1581-rom.beta.bin",  0x8000, 0x8000,CRC( 0xecc223cd))
+	ROM_LOAD("1581-rom.318045-01.bin",  0x8000, 0x8000, CRC(113af078))
+	ROM_LOAD("1581-rom.318045-02.bin",  0x8000, 0x8000, CRC(a9011b84))
+	ROM_LOAD("1581-rom.beta.bin",  0x8000, 0x8000, CRC(ecc223cd))
 	/* modified drive 0x2000-0x3ffe ram, 0x3fff 6529 */
-	ROM_LOAD("1581rom5.bin",  0x8000, 0x8000,CRC( 0xe08801d7))
+	ROM_LOAD("1581rom5.bin",  0x8000, 0x8000, CRC(e08801d7))
 
-	ROM_LOAD("",  0xc000, 0x4000,CRC( 0x))
+	ROM_LOAD("",  0xc000, 0x4000, CRC())
 #endif
 
 /* serial bus vc20/c64/c16/vc1541 and some printer */

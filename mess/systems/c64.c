@@ -612,43 +612,43 @@ ROM_END
 ROM_START (c64gs)
 	ROM_REGION (0x19400, REGION_CPU1, 0)
 	/* standard basic, modified kernel */
-	ROM_LOAD ("390852.01", 0x10000, 0x4000,	CRC(0xb0a9c2da))
-	ROM_LOAD ("901225.01", 0x14000, 0x1000,	CRC(0xec4272ee))
+	ROM_LOAD ("390852.01", 0x10000, 0x4000, CRC(b0a9c2da))
+	ROM_LOAD ("901225.01", 0x14000, 0x1000, CRC(ec4272ee))
 ROM_END
 
 ROM_START (c64)
 	ROM_REGION (0x19400, REGION_CPU1, 0)
-	ROM_LOAD ("901226.01", 0x10000, 0x2000,	CRC(0xf833d117))
-	ROM_LOAD ("901227.03", 0x12000, 0x2000,	CRC(0xdbe3e7c7))
-	ROM_LOAD ("901225.01", 0x14000, 0x1000,	CRC(0xec4272ee))
+	ROM_LOAD ("901226.01", 0x10000, 0x2000, CRC(f833d117))
+	ROM_LOAD ("901227.03", 0x12000, 0x2000, CRC(dbe3e7c7))
+	ROM_LOAD ("901225.01", 0x14000, 0x1000, CRC(ec4272ee))
 ROM_END
 
 ROM_START (c64pal)
 	ROM_REGION (0x19400, REGION_CPU1, 0)
-	ROM_LOAD ("901226.01", 0x10000, 0x2000,	CRC(0xf833d117))
-	ROM_LOAD ("901227.03", 0x12000, 0x2000,	CRC(0xdbe3e7c7))
-	ROM_LOAD ("901225.01", 0x14000, 0x1000,	CRC(0xec4272ee))
+	ROM_LOAD ("901226.01", 0x10000, 0x2000, CRC(f833d117))
+	ROM_LOAD ("901227.03", 0x12000, 0x2000, CRC(dbe3e7c7))
+	ROM_LOAD ("901225.01", 0x14000, 0x1000, CRC(ec4272ee))
 ROM_END
 
 ROM_START (vic64s)
 	ROM_REGION (0x19400, REGION_CPU1, 0)
-	ROM_LOAD ("901226.01",	0x10000, 0x2000, CRC(0xf833d117)
-	ROM_LOAD ("kernel.swe",	0x12000, 0x2000, CRC(0xf10c2c25 )
-	ROM_LOAD ("charswe.bin",0x14000, 0x1000,CRC(0xbee9b3fd))
+	ROM_LOAD ("901226.01",	0x10000, 0x2000, CRC(f833d117))
+	ROM_LOAD ("kernel.swe",	0x12000, 0x2000, CRC(f10c2c25))
+	ROM_LOAD ("charswe.bin",0x14000, 0x1000, CRC(bee9b3fd))
 ROM_END
 
 ROM_START (sx64)
 	ROM_REGION (0x19400, REGION_CPU1, 0)
-	ROM_LOAD ("901226.01", 0x10000, 0x2000,CRC( 0xf833d117))
-	ROM_LOAD( "251104.04",     0x12000, 0x2000,CRC( 0x2c5965d4 ))
-	ROM_LOAD ("901225.01", 0x14000, 0x1000,CRC( 0xec4272ee))
+	ROM_LOAD ("901226.01", 0x10000, 0x2000, CRC(f833d117))
+	ROM_LOAD( "251104.04",     0x12000, 0x2000, CRC(2c5965d4 ))
+	ROM_LOAD ("901225.01", 0x14000, 0x1000, CRC(ec4272ee))
 	VC1541_ROM (REGION_CPU2)
 ROM_END
 
 ROM_START (dx64)
 	ROM_REGION (0x19400, REGION_CPU1, 0)
-    ROM_LOAD ("901226.01", 0x10000, 0x2000,CRC( 0xf833d117))
-    ROM_LOAD( "dx64kern.bin",     0x12000, 0x2000,CRC( 0x58065128 ))
+    ROM_LOAD ("901226.01", 0x10000, 0x2000, CRC(f833d117))
+    ROM_LOAD( "dx64kern.bin",     0x12000, 0x2000, CRC(58065128 ))
     // vc1541 roms were not included in submission
     VC1541_ROM (REGION_CPU2)
 //    VC1541_ROM (REGION_CPU3)
@@ -656,41 +656,41 @@ ROM_END
 
 ROM_START (vip64)
 	ROM_REGION (0x19400, REGION_CPU1, 0)
-	ROM_LOAD ("901226.01", 0x10000, 0x2000,CRC( 0xf833d117))
-	ROM_LOAD( "kernelsx.swe",   0x12000, 0x2000,CRC( 0x7858d3d7 ))
-	ROM_LOAD ("charswe.bin", 0x14000, 0x1000,CRC( 0xbee9b3fd))
+	ROM_LOAD ("901226.01", 0x10000, 0x2000, CRC(f833d117))
+	ROM_LOAD( "kernelsx.swe",   0x12000, 0x2000, CRC(7858d3d7 ))
+	ROM_LOAD ("charswe.bin", 0x14000, 0x1000, CRC(bee9b3fd))
 	VC1541_ROM (REGION_CPU2)
 ROM_END
 
 ROM_START (pet64)
 	ROM_REGION (0x19400, REGION_CPU1, 0)
-	ROM_LOAD ("901226.01", 0x10000, 0x2000,CRC( 0xf833d117))
-	ROM_LOAD( "901246.01", 0x12000, 0x2000,CRC( 0x789c8cc5))
-	ROM_LOAD ("901225.01", 0x14000, 0x1000,CRC( 0xec4272ee))
+	ROM_LOAD ("901226.01", 0x10000, 0x2000, CRC(f833d117))
+	ROM_LOAD( "901246.01", 0x12000, 0x2000, CRC(789c8cc5))
+	ROM_LOAD ("901225.01", 0x14000, 0x1000, CRC(ec4272ee))
 ROM_END
 
 #if 0
 ROM_START (flash8)
 	ROM_REGION (0x1009400, REGION_CPU1, 0)
 #if 1
-    ROM_LOAD ("flash8", 0x010000, 0x002000,CRC( 0x3c4fb703)) // basic
+    ROM_LOAD ("flash8", 0x010000, 0x002000, CRC(3c4fb703)) // basic
     ROM_CONTINUE( 0x014000, 0x001000) // empty
     ROM_CONTINUE( 0x014000, 0x001000) // characterset
     ROM_CONTINUE( 0x012000, 0x002000) // c64 mode kernel
     ROM_CONTINUE( 0x015000, 0x002000) // kernel
 #else
-	ROM_LOAD ("flash8", 0x012000-0x6000, 0x008000,CRC( 0x3c4fb703))
+	ROM_LOAD ("flash8", 0x012000-0x6000, 0x008000, CRC(3c4fb703))
 #endif
 ROM_END
 #endif
 
 #if 0
      /* character rom */
-	 ROM_LOAD ("901225.01", 0x14000, 0x1000,CRC( 0xec4272ee))
-	 ROM_LOAD ("charswe.bin", 0x14000, 0x1000,CRC( 0xbee9b3fd))
+	 ROM_LOAD ("901225.01", 0x14000, 0x1000, CRC(ec4272ee))
+	 ROM_LOAD ("charswe.bin", 0x14000, 0x1000, CRC(bee9b3fd))
 
 	/* basic */
-	 ROM_LOAD ("901226.01", 0x10000, 0x2000,CRC( 0xf833d117))
+	 ROM_LOAD ("901226.01", 0x10000, 0x2000, CRC(f833d117))
 
 /* in c16 and some other commodore machines:
    cbm version in kernel at 0xff80 (offset 0x3f80)
@@ -698,65 +698,65 @@ ROM_END
 
 	 /* scrap */
      /* modified for alec 64, not booting */
-	 ROM_LOAD( "alec64.e0",   0x12000, 0x2000,CRC( 0x2b1b7381 ))
+	 ROM_LOAD( "alec64.e0",   0x12000, 0x2000, CRC(2b1b7381 ))
      /* unique copyright, else speeddos? */
-	 ROM_LOAD( "a.e0", 0x12000, 0x2000,CRC( 0xb8f49365 ))
+	 ROM_LOAD( "a.e0", 0x12000, 0x2000, CRC(b8f49365 ))
 	 /* ? */
-	 ROM_LOAD( "kernelx.e0",  0x12000, 0x2000,CRC( 0xbeed6d49 ))
-	 ROM_LOAD( "kernelx2.e0",  0x12000, 0x2000,CRC( 0xcfb58230 ))
+	 ROM_LOAD( "kernelx.e0",  0x12000, 0x2000, CRC(beed6d49 ))
+	 ROM_LOAD( "kernelx2.e0",  0x12000, 0x2000, CRC(cfb58230 ))
 	 /* basic x 2 */
-	 ROM_LOAD( "frodo.e0",    0x12000, 0x2000,CRC( 0x6ec94629 ))
+	 ROM_LOAD( "frodo.e0",    0x12000, 0x2000, CRC(6ec94629 ))
 
      /* commodore versions */
 	 /* 901227-01 */
-	 ROM_LOAD( "901227.01",  0x12000, 0x2000,CRC( 0xdce782fa ))
+	 ROM_LOAD( "901227.01",  0x12000, 0x2000, CRC(dce782fa ))
      /* 901227-02 */
-	 ROM_LOAD( "901227.02", 0x12000, 0x2000,CRC( 0xa5c687b3 ))
+	 ROM_LOAD( "901227.02", 0x12000, 0x2000, CRC(a5c687b3 ))
      /* 901227-03 */
-	 ROM_LOAD( "901227.03",   0x12000, 0x2000,CRC( 0xdbe3e7c7 ))
+	 ROM_LOAD( "901227.03",   0x12000, 0x2000, CRC(dbe3e7c7 ))
 	 /* 901227-03? swedish  */
-	 ROM_LOAD( "kernel.swe",   0x12000, 0x2000,CRC( 0xf10c2c25 ))
+	 ROM_LOAD( "kernel.swe",   0x12000, 0x2000, CRC(f10c2c25 ))
 	 /* c64c 901225-01 + 901227-03 */
-	 ROM_LOAD ("251913.01", 0x10000, 0x4000,CRC( 0x0010ec31))
+	 ROM_LOAD ("251913.01", 0x10000, 0x4000, CRC(0010ec31))
      /* c64gs 901225-01 with other fillbyte, modified kernel */
-	 ROM_LOAD ("390852.01", 0x10000, 0x4000,CRC( 0xb0a9c2da))
+	 ROM_LOAD ("390852.01", 0x10000, 0x4000, CRC(b0a9c2da))
 	 /* sx64 */
-	 ROM_LOAD( "251104.04",     0x12000, 0x2000,CRC( 0x2c5965d4 ))
+	 ROM_LOAD( "251104.04",     0x12000, 0x2000, CRC(2c5965d4 ))
      /* 251104.04? swedish */
-	 ROM_LOAD( "kernel.swe",   0x12000, 0x2000,CRC( 0x7858d3d7 ))
+	 ROM_LOAD( "kernel.swe",   0x12000, 0x2000, CRC(7858d3d7 ))
 	 /* 4064, Pet64, Educator 64 */
-	 ROM_LOAD( "901246.01",     0x12000, 0x2000,CRC( 0x789c8cc5 ))
+	 ROM_LOAD( "901246.01",     0x12000, 0x2000, CRC(789c8cc5 ))
 
 	 /* few differences to above versions */
-	 ROM_LOAD( "901227.02b",  0x12000, 0x2000,CRC( 0xf80eb87b ))
-	 ROM_LOAD( "901227.03b",  0x12000, 0x2000,CRC( 0x8e5c500d ))
-	 ROM_LOAD( "901227.03c",  0x12000, 0x2000,CRC( 0xc13310c2 ))
+	 ROM_LOAD( "901227.02b",  0x12000, 0x2000, CRC(f80eb87b ))
+	 ROM_LOAD( "901227.03b",  0x12000, 0x2000, CRC(8e5c500d ))
+	 ROM_LOAD( "901227.03c",  0x12000, 0x2000, CRC(c13310c2 ))
 
      /* 64er system v1
         ieee interface extension for c64 and vc1541!? */
-     ROM_LOAD( "64ersys1.e0", 0x12000, 0x2000,CRC( 0x97d9a4df ))
+     ROM_LOAD( "64ersys1.e0", 0x12000, 0x2000, CRC(97d9a4df ))
 	 /* 64er system v3 */
-	 ROM_LOAD( "64ersys3.e0", 0x12000, 0x2000,CRC( 0x5096b3bd ))
+	 ROM_LOAD( "64ersys3.e0", 0x12000, 0x2000, CRC(5096b3bd ))
 
 	 /* exos v3 */
-	 ROM_LOAD( "exosv3.e0",   0x12000, 0x2000,CRC( 0x4e54d020 ))
+	 ROM_LOAD( "exosv3.e0",   0x12000, 0x2000, CRC(4e54d020 ))
      /* 2 bytes different */
-	 ROM_LOAD( "exosv3.e0",   0x12000, 0x2000,CRC( 0x26f3339e ))
+	 ROM_LOAD( "exosv3.e0",   0x12000, 0x2000, CRC(26f3339e ))
 
 	 /* jiffydos v6.01 by cmd */
-	 ROM_LOAD( "jiffy.e0",    0x12000, 0x2000,CRC( 0x2f79984c ))
+	 ROM_LOAD( "jiffy.e0",    0x12000, 0x2000, CRC(2f79984c ))
 
 	 /* dolphin with dolphin vc1541 */
-	 ROM_LOAD( "mager.e0",    0x12000, 0x2000,CRC( 0xc9bb21bc ))
-	 ROM_LOAD( "dos20.e0",    0x12000, 0x2000,CRC( 0xffaeb9bc ))
+	 ROM_LOAD( "mager.e0",    0x12000, 0x2000, CRC(c9bb21bc ))
+	 ROM_LOAD( "dos20.e0",    0x12000, 0x2000, CRC(ffaeb9bc ))
 
 	 /* speeddos plus
 		parallel interface on userport to modified vc1541 !? */
-	 ROM_LOAD( "speeddos.e0", 0x12000, 0x2000,CRC( 0x8438e77b ))
+	 ROM_LOAD( "speeddos.e0", 0x12000, 0x2000, CRC(8438e77b ))
 	 /* speeddos plus + */
-	 ROM_LOAD( "speeddos.e0", 0x12000, 0x2000,CRC( 0x10aee0ae ))
+	 ROM_LOAD( "speeddos.e0", 0x12000, 0x2000, CRC(10aee0ae ))
 	 /* speeddos plus and 80 column text */
-	 ROM_LOAD( "rom80.e0",    0x12000, 0x2000,CRC( 0xe801dadc ))
+	 ROM_LOAD( "rom80.e0",    0x12000, 0x2000, CRC(e801dadc ))
 #endif
 
 static SID6581_interface ultimax_sound_interface =

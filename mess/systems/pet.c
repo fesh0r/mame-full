@@ -634,156 +634,156 @@ static PALETTE_INIT( pet )
 /* basic 1 */
 ROM_START (pet)
 	ROM_REGION (0x10000, REGION_CPU1, 0)
-    ROM_LOAD ("901447.09", 0xc000, 0x800,	CRC(0x03cf16d0))
-    ROM_LOAD ("901447.02", 0xc800, 0x800,	CRC(0x69fd8a8f))
-    ROM_LOAD ("901447.03", 0xd000, 0x800,	CRC(0xd349f2d4))
-    ROM_LOAD ("901447.04", 0xd800, 0x800,	CRC(0x850544eb))
-    ROM_LOAD ("901447.05", 0xe000, 0x800,	CRC(0x9e1c5cea))
-    ROM_LOAD ("901447.06", 0xf000, 0x800,	CRC(0x661a814a))
-    ROM_LOAD ("901447.07", 0xf800, 0x800,	CRC(0xc4f47ad1))
+    ROM_LOAD ("901447.09", 0xc000, 0x800, CRC(03cf16d0))
+    ROM_LOAD ("901447.02", 0xc800, 0x800, CRC(69fd8a8f))
+    ROM_LOAD ("901447.03", 0xd000, 0x800, CRC(d349f2d4))
+    ROM_LOAD ("901447.04", 0xd800, 0x800, CRC(850544eb))
+    ROM_LOAD ("901447.05", 0xe000, 0x800, CRC(9e1c5cea))
+    ROM_LOAD ("901447.06", 0xf000, 0x800, CRC(661a814a))
+    ROM_LOAD ("901447.07", 0xf800, 0x800, CRC(c4f47ad1))
 	ROM_REGION (0x1000, REGION_GFX1, 0)
-    ROM_LOAD ("901447.08", 0x0000, 0x800,	CRC(0x54f32f45))
+    ROM_LOAD ("901447.08", 0x0000, 0x800, CRC(54f32f45))
 ROM_END
 
 /* basic 2 */
 ROM_START (pet2)
 	ROM_REGION (0x10000, REGION_CPU1, 0)
-    ROM_LOAD ("901465.01", 0xc000, 0x1000,	CRC(0x63a7fe4a))
-    ROM_LOAD ("901465.02", 0xd000, 0x1000,	CRC(0xae4cb035))
-    ROM_LOAD ("901447.24", 0xe000, 0x800,	CRC(0xe459ab32))
-    ROM_LOAD ("901465.03", 0xf000, 0x1000,	CRC(0xf02238e2))
+    ROM_LOAD ("901465.01", 0xc000, 0x1000, CRC(63a7fe4a))
+    ROM_LOAD ("901465.02", 0xd000, 0x1000, CRC(ae4cb035))
+    ROM_LOAD ("901447.24", 0xe000, 0x800, CRC(e459ab32))
+    ROM_LOAD ("901465.03", 0xf000, 0x1000, CRC(f02238e2))
 	ROM_REGION (0x1000, REGION_GFX1, 0)
-    ROM_LOAD ("901447.08", 0x0000, 0x800,	CRC(0x54f32f45))
+    ROM_LOAD ("901447.08", 0x0000, 0x800, CRC(54f32f45))
 ROM_END
 
 /* basic 2 business */
 ROM_START (pet2b)
 	ROM_REGION (0x10000, REGION_CPU1, 0)
-    ROM_LOAD ("901465.01", 0xc000, 0x1000,	CRC(0x63a7fe4a))
-    ROM_LOAD ("901465.02", 0xd000, 0x1000,	CRC(0xae4cb035))
-    ROM_LOAD ("901474.01", 0xe000, 0x800,	CRC(0x05db957e))
-    ROM_LOAD ("901465.03", 0xf000, 0x1000,	CRC(0xf02238e2))
+    ROM_LOAD ("901465.01", 0xc000, 0x1000, CRC(63a7fe4a))
+    ROM_LOAD ("901465.02", 0xd000, 0x1000, CRC(ae4cb035))
+    ROM_LOAD ("901474.01", 0xe000, 0x800, CRC(05db957e))
+    ROM_LOAD ("901465.03", 0xf000, 0x1000, CRC(f02238e2))
 	ROM_REGION (0x1000, REGION_GFX1, 0)
-    ROM_LOAD ("901447.10", 0x0000, 0x800,	CRC(0xd8408674))
+    ROM_LOAD ("901447.10", 0x0000, 0x800, CRC(d8408674))
 ROM_END
 
 /* basic 4 business */
 ROM_START (pet4b)
 	ROM_REGION (0x10000, REGION_CPU1, 0)
-    ROM_LOAD ("901465.23", 0xb000, 0x1000,	CRC(0xae3deac0))
-    ROM_LOAD ("901465.20", 0xc000, 0x1000,	CRC(0x0fc17b9c))
-    ROM_LOAD ("901465.21", 0xd000, 0x1000,	CRC(0x36d91855))
-    ROM_LOAD ("901474.02", 0xe000, 0x800,	CRC(0x75ff4af7))
-    ROM_LOAD ("901465.22", 0xf000, 0x1000,	CRC(0xcc5298a1))
+    ROM_LOAD ("901465.23", 0xb000, 0x1000, CRC(ae3deac0))
+    ROM_LOAD ("901465.20", 0xc000, 0x1000, CRC(0fc17b9c))
+    ROM_LOAD ("901465.21", 0xd000, 0x1000, CRC(36d91855))
+    ROM_LOAD ("901474.02", 0xe000, 0x800, CRC(75ff4af7))
+    ROM_LOAD ("901465.22", 0xf000, 0x1000, CRC(cc5298a1))
 	ROM_REGION (0x1000, REGION_GFX1, 0)
-    ROM_LOAD ("901447.10", 0x0000, 0x800,	CRC(0xd8408674))
+    ROM_LOAD ("901447.10", 0x0000, 0x800, CRC(d8408674))
 ROM_END
 
 /* basic 4 crtc*/
 ROM_START (pet4)
 	ROM_REGION (0x10000, REGION_CPU1, 0)
-    ROM_LOAD ("901465.23", 0xb000, 0x1000,	CRC(0xae3deac0))
-    ROM_LOAD ("901465.20", 0xc000, 0x1000,	CRC(0x0fc17b9c))
-    ROM_LOAD ("901465.21", 0xd000, 0x1000,	CRC(0x36d91855))
-    ROM_LOAD ("901499.01", 0xe000, 0x800,	CRC(0x5f85bdf8))
-    ROM_LOAD ("901465.22", 0xf000, 0x1000,	CRC(0xcc5298a1))
+    ROM_LOAD ("901465.23", 0xb000, 0x1000, CRC(ae3deac0))
+    ROM_LOAD ("901465.20", 0xc000, 0x1000, CRC(0fc17b9c))
+    ROM_LOAD ("901465.21", 0xd000, 0x1000, CRC(36d91855))
+    ROM_LOAD ("901499.01", 0xe000, 0x800, CRC(5f85bdf8))
+    ROM_LOAD ("901465.22", 0xf000, 0x1000, CRC(cc5298a1))
 	ROM_REGION (0x1000, REGION_GFX1, 0)
-    ROM_LOAD ("901447.08", 0x0000, 0x800,	CRC(0x54f32f45))
+    ROM_LOAD ("901447.08", 0x0000, 0x800, CRC(54f32f45))
 ROM_END
 
 /* basic 4 crtc 50 hz */
 ROM_START (pet4pal)
 	ROM_REGION (0x10000, REGION_CPU1, 0)
-    ROM_LOAD ("901465.23", 0xb000, 0x1000,	CRC(0xae3deac0))
-    ROM_LOAD ("901465.20", 0xc000, 0x1000,	CRC(0x0fc17b9c))
-    ROM_LOAD ("901465.21", 0xd000, 0x1000,	CRC(0x36d91855))
-    ROM_LOAD ("901498.01", 0xe000, 0x800,	CRC(0x3370e359))
-    ROM_LOAD ("901465.22", 0xf000, 0x1000,	CRC(0xcc5298a1))
+    ROM_LOAD ("901465.23", 0xb000, 0x1000, CRC(ae3deac0))
+    ROM_LOAD ("901465.20", 0xc000, 0x1000, CRC(0fc17b9c))
+    ROM_LOAD ("901465.21", 0xd000, 0x1000, CRC(36d91855))
+    ROM_LOAD ("901498.01", 0xe000, 0x800, CRC(3370e359))
+    ROM_LOAD ("901465.22", 0xf000, 0x1000, CRC(cc5298a1))
 	ROM_REGION (0x1000, REGION_GFX1, 0)
-    ROM_LOAD ("901447.08", 0x0000, 0x800,	CRC(0x54f32f45))
+    ROM_LOAD ("901447.08", 0x0000, 0x800, CRC(54f32f45))
 ROM_END
 
 /* basic 4 business 80 columns */
 ROM_START (pet80)
 	ROM_REGION (0x20000, REGION_CPU1, 0)
-    ROM_LOAD ("901465.23", 0xb000, 0x1000,	CRC(0xae3deac0))
-    ROM_LOAD ("901465.20", 0xc000, 0x1000,	CRC(0x0fc17b9c))
-    ROM_LOAD ("901465.21", 0xd000, 0x1000,	CRC(0x36d91855))
-    ROM_LOAD ("901474.03", 0xe000, 0x800,	CRC(0x5674dd5e))
-    ROM_LOAD ("901465.22", 0xf000, 0x1000,	CRC(0xcc5298a1))
+    ROM_LOAD ("901465.23", 0xb000, 0x1000, CRC(ae3deac0))
+    ROM_LOAD ("901465.20", 0xc000, 0x1000, CRC(0fc17b9c))
+    ROM_LOAD ("901465.21", 0xd000, 0x1000, CRC(36d91855))
+    ROM_LOAD ("901474.03", 0xe000, 0x800, CRC(5674dd5e))
+    ROM_LOAD ("901465.22", 0xf000, 0x1000, CRC(cc5298a1))
 	ROM_REGION (0x2000, REGION_GFX1, 0)
-    ROM_LOAD ("901447.10", 0x0000, 0x800,	CRC(0xd8408674))
+    ROM_LOAD ("901447.10", 0x0000, 0x800, CRC(d8408674))
 ROM_END
 
 /* basic 4 business 80 columns 50 hz */
 ROM_START (pet80pal)
 	ROM_REGION (0x20000, REGION_CPU1, 0)
-    ROM_LOAD ("901465.23", 0xb000, 0x1000,	CRC(0xae3deac0))
-    ROM_LOAD ("901465.20", 0xc000, 0x1000,	CRC(0x0fc17b9c))
-    ROM_LOAD ("901465.21", 0xd000, 0x1000,	CRC(0x36d91855))
-    ROM_LOAD ("901474.04", 0xe000, 0x800,	CRC(0xabb000e7))
-    ROM_LOAD ("901465.22", 0xf000, 0x1000,	CRC(0xcc5298a1))
+    ROM_LOAD ("901465.23", 0xb000, 0x1000, CRC(ae3deac0))
+    ROM_LOAD ("901465.20", 0xc000, 0x1000, CRC(0fc17b9c))
+    ROM_LOAD ("901465.21", 0xd000, 0x1000, CRC(36d91855))
+    ROM_LOAD ("901474.04", 0xe000, 0x800, CRC(abb000e7))
+    ROM_LOAD ("901465.22", 0xf000, 0x1000, CRC(cc5298a1))
 	ROM_REGION (0x2000, REGION_GFX1, 0)
-    ROM_LOAD ("901447.10", 0x0000, 0x800,	CRC(0xd8408674))
+    ROM_LOAD ("901447.10", 0x0000, 0x800, CRC(d8408674))
 ROM_END
 
 ROM_START (cbm80ger)
 	ROM_REGION (0x20000, REGION_CPU1, 0)
-	ROM_LOAD ("901465.23", 0xb000, 0x1000,	CRC(0xae3deac0))
-	ROM_LOAD ("901465.20", 0xc000, 0x1000,	CRC(0x0fc17b9c))
-	ROM_LOAD ("901465.21", 0xd000, 0x1000,	CRC(0x36d91855))
-	ROM_LOAD ("german.bin", 0xe000, 0x800,	CRC(0x1c1e597d))
-	ROM_LOAD ("901465.22", 0xf000, 0x1000,	CRC(0xcc5298a1))
+	ROM_LOAD ("901465.23", 0xb000, 0x1000, CRC(ae3deac0))
+	ROM_LOAD ("901465.20", 0xc000, 0x1000, CRC(0fc17b9c))
+	ROM_LOAD ("901465.21", 0xd000, 0x1000, CRC(36d91855))
+	ROM_LOAD ("german.bin", 0xe000, 0x800, CRC(1c1e597d))
+	ROM_LOAD ("901465.22", 0xf000, 0x1000, CRC(cc5298a1))
 	ROM_REGION (0x2000, REGION_GFX1, 0)
-	ROM_LOAD ("chargen.de", 0x0000, 0x800,	CRC(0x3bb8cb87))
+	ROM_LOAD ("chargen.de", 0x0000, 0x800, CRC(3bb8cb87))
 ROM_END
 
 ROM_START (cbm80swe)
 	ROM_REGION (0x20000, REGION_CPU1, 0)
-    ROM_LOAD ("901465.23", 0xb000, 0x1000,	CRC(0xae3deac0))
-    ROM_LOAD ("901465.20", 0xc000, 0x1000,	CRC(0x0fc17b9c))
-    ROM_LOAD ("901465.21", 0xd000, 0x1000,	CRC(0x36d91855))
-    ROM_LOAD ("editswe.bin", 0xe000, 0x800,	CRC(0x75901dd7))
-    ROM_LOAD ("901465.22", 0xf000, 0x1000,	CRC(0xcc5298a1))
+    ROM_LOAD ("901465.23", 0xb000, 0x1000, CRC(ae3deac0))
+    ROM_LOAD ("901465.20", 0xc000, 0x1000, CRC(0fc17b9c))
+    ROM_LOAD ("901465.21", 0xd000, 0x1000, CRC(36d91855))
+    ROM_LOAD ("editswe.bin", 0xe000, 0x800, CRC(75901dd7))
+    ROM_LOAD ("901465.22", 0xf000, 0x1000, CRC(cc5298a1))
 	ROM_REGION (0x2000, REGION_GFX1, 0)
-    ROM_LOAD ("901447.14", 0x0000, 0x800,	CRC(0x48c77d29))
+    ROM_LOAD ("901447.14", 0x0000, 0x800, CRC(48c77d29))
 ROM_END
 
 ROM_START (superpet)
 	ROM_REGION (0x10000, REGION_CPU1, 0)
-    ROM_LOAD ("901465.23", 0xb000, 0x1000,	CRC(0xae3deac0))
-    ROM_LOAD ("901465.20", 0xc000, 0x1000,	CRC(0x0fc17b9c))
-    ROM_LOAD ("901465.21", 0xd000, 0x1000,	CRC(0x36d91855))
-    ROM_LOAD ("901474.04", 0xe000, 0x800,	CRC(0xabb000e7))
-    ROM_LOAD ("901465.22", 0xf000, 0x1000,	CRC(0xcc5298a1))
+    ROM_LOAD ("901465.23", 0xb000, 0x1000, CRC(ae3deac0))
+    ROM_LOAD ("901465.20", 0xc000, 0x1000, CRC(0fc17b9c))
+    ROM_LOAD ("901465.21", 0xd000, 0x1000, CRC(36d91855))
+    ROM_LOAD ("901474.04", 0xe000, 0x800, CRC(abb000e7))
+    ROM_LOAD ("901465.22", 0xf000, 0x1000, CRC(cc5298a1))
 	ROM_REGION (0x20000, REGION_CPU2, 0)
-    ROM_LOAD ("901898.01", 0xa000, 0x1000,	CRC(0x728a998b))
-    ROM_LOAD ("901898.02", 0xb000, 0x1000,	CRC(0x6beb7c62))
-    ROM_LOAD ("901898.03", 0xc000, 0x1000,	CRC(0x5db4983d))
-    ROM_LOAD ("901898.04", 0xd000, 0x1000,	CRC(0xf55fc559))
-    ROM_LOAD ("901897.01", 0xe000, 0x800,	CRC(0xb2cee903))
-    ROM_LOAD ("901898.05", 0xf000, 0x1000,	CRC(0xf42df0cb))
+    ROM_LOAD ("901898.01", 0xa000, 0x1000, CRC(728a998b))
+    ROM_LOAD ("901898.02", 0xb000, 0x1000, CRC(6beb7c62))
+    ROM_LOAD ("901898.03", 0xc000, 0x1000, CRC(5db4983d))
+    ROM_LOAD ("901898.04", 0xd000, 0x1000, CRC(f55fc559))
+    ROM_LOAD ("901897.01", 0xe000, 0x800, CRC(b2cee903))
+    ROM_LOAD ("901898.05", 0xf000, 0x1000, CRC(f42df0cb))
 	ROM_REGION (0x4000, REGION_GFX1, 0)
-    ROM_LOAD ("901640.01", 0x0000, 0x1000,	CRC(0xee8229c4))
+    ROM_LOAD ("901640.01", 0x0000, 0x1000, CRC(ee8229c4))
 ROM_END
 
 /* swedish m6809 roms needed */
 ROM_START (mmf9000)
 	ROM_REGION (0x10000, REGION_CPU1, 0)
-    ROM_LOAD ("901465.23", 0xb000, 0x1000,	CRC(0xae3deac0))
-    ROM_LOAD ("901465.20", 0xc000, 0x1000,	CRC(0x0fc17b9c))
-    ROM_LOAD ("901465.21", 0xd000, 0x1000,	CRC(0x36d91855))
-    ROM_LOAD ("editswe.bin", 0xe000, 0x800,	CRC(0x75901dd7))
-    ROM_LOAD ("901465.22", 0xf000, 0x1000,	CRC(0xcc5298a1))
+    ROM_LOAD ("901465.23", 0xb000, 0x1000, CRC(ae3deac0))
+    ROM_LOAD ("901465.20", 0xc000, 0x1000, CRC(0fc17b9c))
+    ROM_LOAD ("901465.21", 0xd000, 0x1000, CRC(36d91855))
+    ROM_LOAD ("editswe.bin", 0xe000, 0x800, CRC(75901dd7))
+    ROM_LOAD ("901465.22", 0xf000, 0x1000, CRC(cc5298a1))
 	ROM_REGION (0x20000, REGION_CPU2, 0)
-    ROM_LOAD ("901898.01", 0xa000, 0x1000,	CRC(0x728a998b))
-    ROM_LOAD ("901898.02", 0xb000, 0x1000,	CRC(0x6beb7c62))
-    ROM_LOAD ("901898.03", 0xc000, 0x1000,	CRC(0x5db4983d))
-    ROM_LOAD ("901898.04", 0xd000, 0x1000,	CRC(0xf55fc559))
-    ROM_LOAD ("901897.01", 0xe000, 0x800,	CRC(0xb2cee903))
-    ROM_LOAD ("901898.05", 0xf000, 0x1000,	CRC(0xf42df0cb))
+    ROM_LOAD ("901898.01", 0xa000, 0x1000, CRC(728a998b))
+    ROM_LOAD ("901898.02", 0xb000, 0x1000, CRC(6beb7c62))
+    ROM_LOAD ("901898.03", 0xc000, 0x1000, CRC(5db4983d))
+    ROM_LOAD ("901898.04", 0xd000, 0x1000, CRC(f55fc559))
+    ROM_LOAD ("901897.01", 0xe000, 0x800, CRC(b2cee903))
+    ROM_LOAD ("901898.05", 0xf000, 0x1000, CRC(f42df0cb))
 	ROM_REGION (0x4000, REGION_GFX1, 0)
-    ROM_LOAD("charswe.bin", 0x0000, 0x1000,	CRC(0xda1cd630))
+    ROM_LOAD("charswe.bin", 0x0000, 0x1000, CRC(da1cd630))
 ROM_END
 
 #if 0
@@ -792,96 +792,96 @@ ROM_END
    0x80 means pal version */
 
     /* 901447-09 + 901447-02 + 901447-03 + 901447-04 */
-    ROM_LOAD ("basic1", 0xc000, 0x2000,CRC( 0xaff78300))
+    ROM_LOAD ("basic1", 0xc000, 0x2000, CRC(aff78300))
     /* same as 901439-01, maybe same as 6540-011 */
-    ROM_LOAD ("rom-1-c000.901447-01.bin", 0xc000, 0x800,CRC( 0xa055e33a))
+    ROM_LOAD ("rom-1-c000.901447-01.bin", 0xc000, 0x800, CRC(a055e33a))
     /* same as 901439-09, 6540-019 */
-    ROM_LOAD ("rom-1-c000.901447-09.bin", 0xc000, 0x800,CRC( 0x03cf16d0))
+    ROM_LOAD ("rom-1-c000.901447-09.bin", 0xc000, 0x800, CRC(03cf16d0))
     /* same as 901439-05, 6540-012 */
-    ROM_LOAD ("rom-1-c800.901447-02.bin", 0xc800, 0x800,CRC( 0x69fd8a8f))
+    ROM_LOAD ("rom-1-c800.901447-02.bin", 0xc800, 0x800, CRC(69fd8a8f))
     /* same as 901439-02, 6540-013 */
-    ROM_LOAD ("rom-1-d000.901447-03.bin", 0xd000, 0x800,CRC( 0xd349f2d4))
+    ROM_LOAD ("rom-1-d000.901447-03.bin", 0xd000, 0x800, CRC(d349f2d4))
     /* same as 901439-06, 6540-014 */
-    ROM_LOAD ("rom-1-d800.901447-04.bin", 0xd800, 0x800,CRC( 0x850544eb))
+    ROM_LOAD ("rom-1-d800.901447-04.bin", 0xd800, 0x800, CRC(850544eb))
 
 	/* 901465-01 + 901465-02 */
-    ROM_LOAD ("basic2", 0xc000, 0x2000,CRC( 0xcf35e68b))
+    ROM_LOAD ("basic2", 0xc000, 0x2000, CRC(cf35e68b))
     /* 6540-020 + 6540-021 */
-    ROM_LOAD ("basic-2-c000.901465-01.bin", 0xc000, 0x1000,CRC( 0x63a7fe4a))
+    ROM_LOAD ("basic-2-c000.901465-01.bin", 0xc000, 0x1000, CRC(63a7fe4a))
     /* 6540-022 + 6540-023 */
-    ROM_LOAD ("basic-2-d000.901465-02.bin", 0xd000, 0x1000,CRC( 0xae4cb035))
+    ROM_LOAD ("basic-2-d000.901465-02.bin", 0xd000, 0x1000, CRC(ae4cb035))
 
 	/* 901465-23 901465-20 901465-21 */
-    ROM_LOAD ("basic4", 0xb000, 0x3000,CRC( 0x2a940f0a))
-    ROM_LOAD ("basic-4-b000.901465-19.bin", 0xb000, 0x1000,CRC( 0x3a5f5721))
-    ROM_LOAD ("basic-4-b000.901465-23.bin", 0xb000, 0x1000,CRC( 0xae3deac0))
-    ROM_LOAD ("basic-4-c000.901465-20.bin", 0xc000, 0x1000,CRC( 0x0fc17b9c))
-    ROM_LOAD ("basic-4-d000.901465-21.bin", 0xd000, 0x1000,CRC( 0x36d91855))
+    ROM_LOAD ("basic4", 0xb000, 0x3000, CRC(2a940f0a))
+    ROM_LOAD ("basic-4-b000.901465-19.bin", 0xb000, 0x1000, CRC(3a5f5721))
+    ROM_LOAD ("basic-4-b000.901465-23.bin", 0xb000, 0x1000, CRC(ae3deac0))
+    ROM_LOAD ("basic-4-c000.901465-20.bin", 0xc000, 0x1000, CRC(0fc17b9c))
+    ROM_LOAD ("basic-4-d000.901465-21.bin", 0xd000, 0x1000, CRC(36d91855))
 
     /* same as 901439-03, 6540-015 */
-    ROM_LOAD ("rom-1-e000.901447-05.bin", 0xe000, 0x800,CRC( 0x9e1c5cea))
+    ROM_LOAD ("rom-1-e000.901447-05.bin", 0xe000, 0x800, CRC(9e1c5cea))
 
-    ROM_LOAD ("edit-2-b.901474-01.bin", 0xe000, 0x800,CRC( 0x05db957e))
+    ROM_LOAD ("edit-2-b.901474-01.bin", 0xe000, 0x800, CRC(05db957e))
     /* same as 6540-024 */
-    ROM_LOAD ("edit-2-n.901447-24.bin", 0xe000, 0x800,CRC( 0xe459ab32))
+    ROM_LOAD ("edit-2-n.901447-24.bin", 0xe000, 0x800, CRC(e459ab32))
 
-    ROM_LOAD ("edit-4-40-n-50hz.901498-01.bin", 0xe000, 0x800,CRC( 0x3370e359))
-    ROM_LOAD ("edit-4-40-n-60hz.901499-01.bin", 0xe000, 0x800,CRC( 0x5f85bdf8))
-    ROM_LOAD ("edit-4-b.901474-02.bin", 0xe000, 0x800,CRC( 0x75ff4af7))
+    ROM_LOAD ("edit-4-40-n-50hz.901498-01.bin", 0xe000, 0x800, CRC(3370e359))
+    ROM_LOAD ("edit-4-40-n-60hz.901499-01.bin", 0xe000, 0x800, CRC(5f85bdf8))
+    ROM_LOAD ("edit-4-b.901474-02.bin", 0xe000, 0x800, CRC(75ff4af7))
 
-    ROM_LOAD ("edit-4-80-b-60hz.901474-03.bin", 0xe000, 0x800,CRC( 0x5674dd5e))
+    ROM_LOAD ("edit-4-80-b-60hz.901474-03.bin", 0xe000, 0x800, CRC(5674dd5e))
     /* week 36 year 81 */
-    ROM_LOAD ("edit-4-80-b-50hz.901474-04-3681.bin", 0xe000, 0x800,CRC( 0xc1ffca3a))
-    ROM_LOAD ("edit-4-80-b-50hz.901474-04.bin", 0xe000, 0x800,CRC( 0xabb000e7))
-    ROM_LOAD ("edit-4-80-b-50hz.901474-04?.bin", 0xe000, 0x800,CRC( 0x845a44e6))
-    ROM_LOAD ("edit-4-80-b-50hz.german.bin", 0xe000, 0x800,CRC( 0x1c1e597d))
-    ROM_LOAD ("edit-4-80-b-50hz.swedish.bin", 0xe000, 0x800,CRC( 0x75901dd7))
+    ROM_LOAD ("edit-4-80-b-50hz.901474-04-3681.bin", 0xe000, 0x800, CRC(c1ffca3a))
+    ROM_LOAD ("edit-4-80-b-50hz.901474-04.bin", 0xe000, 0x800, CRC(abb000e7))
+    ROM_LOAD ("edit-4-80-b-50hz.901474-04?.bin", 0xe000, 0x800, CRC(845a44e6))
+    ROM_LOAD ("edit-4-80-b-50hz.german.bin", 0xe000, 0x800, CRC(1c1e597d))
+    ROM_LOAD ("edit-4-80-b-50hz.swedish.bin", 0xe000, 0x800, CRC(75901dd7))
 
 	/* 901447-06 + 901447-07 */
-    ROM_LOAD ("kernal1", 0xf000, 0x1000,CRC( 0xf0186492))
+    ROM_LOAD ("kernal1", 0xf000, 0x1000, CRC(f0186492))
     /* same as 901439-04, 6540-016 */
-    ROM_LOAD ("rom-1-f000.901447-06.bin", 0xf000, 0x800,CRC( 0x661a814a))
+    ROM_LOAD ("rom-1-f000.901447-06.bin", 0xf000, 0x800, CRC(661a814a))
     /* same as 904139-07, 6540-018 */
-    ROM_LOAD ("rom-1-f800.901447-07.bin", 0xf800, 0x800,CRC( 0xc4f47ad1))
+    ROM_LOAD ("rom-1-f800.901447-07.bin", 0xf800, 0x800, CRC(c4f47ad1))
 
-    ROM_LOAD ("kernal-2.901465-03.bin", 0xf000, 0x1000,CRC( 0xf02238e2))
+    ROM_LOAD ("kernal-2.901465-03.bin", 0xf000, 0x1000, CRC(f02238e2))
 
-    ROM_LOAD ("kernal-4.901465-22.bin", 0xf000, 0x1000,CRC( 0xcc5298a1))
+    ROM_LOAD ("kernal-4.901465-22.bin", 0xf000, 0x1000, CRC(cc5298a1))
 
 	/* graphics */
     /* 6540-010 = 901439-08 */
 
-    ROM_LOAD ("characters-1.901447-08.bin", 0x0000, 0x800,CRC( 0x54f32f45))
+    ROM_LOAD ("characters-1.901447-08.bin", 0x0000, 0x800, CRC(54f32f45))
 	/* business */
 	/* vice chargen */
-    ROM_LOAD ("characters-2.901447-10.bin", 0x0000, 0x800,CRC( 0xd8408674))
-    ROM_LOAD ("chargen.de", 0x0000, 0x800,CRC( 0x3bb8cb87))
-    ROM_LOAD ("characters-hungarian.bin", 0x0000, 0x800,CRC( 0xa02d8122))
-    ROM_LOAD ("characters-swedish.901447-14.bin", 0x0000, 0x800,CRC( 0x48c77d29))
+    ROM_LOAD ("characters-2.901447-10.bin", 0x0000, 0x800, CRC(d8408674))
+    ROM_LOAD ("chargen.de", 0x0000, 0x800, CRC(3bb8cb87))
+    ROM_LOAD ("characters-hungarian.bin", 0x0000, 0x800, CRC(a02d8122))
+    ROM_LOAD ("characters-swedish.901447-14.bin", 0x0000, 0x800, CRC(48c77d29))
 
-    ROM_LOAD ("", 0xe000, 0x800,CRC( 0x))
+    ROM_LOAD ("", 0xe000, 0x800, CRC())
 
 	/* editor rom */
-    ROM_LOAD ("Execudesk.bin", 0xe000, 0x1000,CRC( 0xbef0eaa1))
+    ROM_LOAD ("Execudesk.bin", 0xe000, 0x1000, CRC(bef0eaa1))
 
-    ROM_LOAD ("PaperClip.bin", 0xa000, 0x1000,CRC( 0x8fb11d4b))
+    ROM_LOAD ("PaperClip.bin", 0xa000, 0x1000, CRC(8fb11d4b))
 
 	/* superpet */
-    ROM_LOAD ("waterloo-a000.901898-01.bin", 0xa000, 0x1000,CRC( 0x728a998b))
-    ROM_LOAD ("waterloo-b000.901898-02.bin", 0xb000, 0x1000,CRC( 0x6beb7c62))
-    ROM_LOAD ("waterloo-c000.901898-03.bin", 0xc000, 0x1000,CRC( 0x5db4983d))
-    ROM_LOAD ("waterloo-d000.901898-04.bin", 0xd000, 0x1000,CRC( 0xf55fc559))
-    ROM_LOAD ("waterloo-e000.901897-01.bin", 0xe000, 0x800,CRC( 0xb2cee903))
-    ROM_LOAD ("waterloo-f000.901898-05.bin", 0xf000, 0x1000,CRC( 0xf42df0cb))
+    ROM_LOAD ("waterloo-a000.901898-01.bin", 0xa000, 0x1000, CRC(728a998b))
+    ROM_LOAD ("waterloo-b000.901898-02.bin", 0xb000, 0x1000, CRC(6beb7c62))
+    ROM_LOAD ("waterloo-c000.901898-03.bin", 0xc000, 0x1000, CRC(5db4983d))
+    ROM_LOAD ("waterloo-d000.901898-04.bin", 0xd000, 0x1000, CRC(f55fc559))
+    ROM_LOAD ("waterloo-e000.901897-01.bin", 0xe000, 0x800, CRC(b2cee903))
+    ROM_LOAD ("waterloo-f000.901898-05.bin", 0xf000, 0x1000, CRC(f42df0cb))
     /* 256 chars commodore pet, 256 chars ascii m6809 */
-    ROM_LOAD ("characters.901640-01.bin", 0x0000, 0x1000,CRC( 0xee8229c4))
+    ROM_LOAD ("characters.901640-01.bin", 0x0000, 0x1000, CRC(ee8229c4))
     /* 901447-14 and the 256 chars ascii from 901640-01 */
-    ROM_LOAD ("characters.swedish.bin", 0x0000, 0x1000,CRC( 0xda1cd630))
+    ROM_LOAD ("characters.swedish.bin", 0x0000, 0x1000, CRC(da1cd630))
 
 	/* scrap */
 	/* fixed bits */
-    ROM_LOAD ("324878-01.bin", 0x?000, 0x2000,CRC( 0xd262bacd))
-    ROM_LOAD ("324878-02.bin", 0x?000, 0x2000,CRC( 0x5e00476d))
+    ROM_LOAD ("324878-01.bin", 0x?000, 0x2000, CRC(d262bacd))
+    ROM_LOAD ("324878-02.bin", 0x?000, 0x2000, CRC(5e00476d))
 #endif
 
 static MACHINE_DRIVER_START( pet )

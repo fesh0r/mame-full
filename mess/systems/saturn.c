@@ -1941,14 +1941,14 @@ MACHINE_DRIVER_END
 
 ROM_START(saturn)
      ROM_REGION(0x00421000, REGION_CPU1,0)
-     /*ROM_LOAD("sega_100.bin", 0x00000000, 0x00080000,CRC( 0x2ABA43C2)) */
-     ROM_LOAD("sega_101.bin", 0x00000000, 0x00080000,CRC( 0x224b752c))
-     /*ROM_LOAD("sega_eur.bin", 0x00000000, 0x00080000,CRC( 0x4AFCF0FA)) */
+     /*ROM_LOAD("sega_100.bin", 0x00000000, 0x00080000, CRC(2ABA43C2)) */
+     ROM_LOAD("sega_101.bin", 0x00000000, 0x00080000, CRC(224b752c))
+     /*ROM_LOAD("sega_eur.bin", 0x00000000, 0x00080000, CRC(4AFCF0FA)) */
      /*Make sure you set the PAL define to 1 otherwise euro bios will lock badly */
 
      /* STV Bios Note these are in correct endian order. not byte swapped versions */
-     /* ROM_LOAD("mp17951a.s", 0x00000000, 0x00080000,CRC( 0x574FD2C3))*/
-     /*ROM_LOAD("mp17952a.s", 0x00000000, 0x00080000,CRC( 0xBF7DBDD7)) */
+     /* ROM_LOAD("mp17951a.s", 0x00000000, 0x00080000, CRC(574FD2C3))*/
+     /*ROM_LOAD("mp17952a.s", 0x00000000, 0x00080000, CRC(BF7DBDD7)) */
      ROM_REGION(0x00080000, REGION_CPU2,0)
      ROM_REGION(0x00080000, REGION_CPU3,0)
 ROM_END

@@ -772,67 +772,67 @@ MACHINE_DRIVER_END
 
 ROM_START (msx)
     ROM_REGION (0x10000, REGION_CPU1,0)
-    ROM_LOAD ("msx.rom", 0x0000, 0x8000,CRC( 0x94ee12f3))
+    ROM_LOAD ("msx.rom", 0x0000, 0x8000, CRC(94ee12f3))
 ROM_END
 
 ROM_START (msxj)
     ROM_REGION (0x10000, REGION_CPU1,0)
-    ROM_LOAD ("msxj.rom", 0x0000, 0x8000,CRC( 0xee229390))
+    ROM_LOAD ("msxj.rom", 0x0000, 0x8000, CRC(ee229390))
 ROM_END
 
 ROM_START (msxuk)
     ROM_REGION (0x10000, REGION_CPU1,0)
-    ROM_LOAD ("msxuk.rom", 0x0000, 0x8000,CRC( 0xe9ccd789))
+    ROM_LOAD ("msxuk.rom", 0x0000, 0x8000, CRC(e9ccd789))
 ROM_END
 
 ROM_START (msxkr)
     ROM_REGION (0x10000, REGION_CPU1,0)
-    ROM_LOAD ("msxkr.rom", 0x0000, 0x8000,CRC( 0x3ab0cd3b))
-    ROM_LOAD_OPTIONAL ("msxhan.rom", 0x8000, 0x4000,CRC( 0x97478efb))
+    ROM_LOAD ("msxkr.rom", 0x0000, 0x8000, CRC(3ab0cd3b))
+    ROM_LOAD_OPTIONAL ("msxhan.rom", 0x8000, 0x4000, CRC(97478efb))
 ROM_END
 
 ROM_START (hotbit11)
     ROM_REGION (0x10000, REGION_CPU1,0)
-    ROM_LOAD ("hotbit11.rom", 0x0000, 0x8000,CRC( 0xb6942694))
+    ROM_LOAD ("hotbit11.rom", 0x0000, 0x8000, CRC(b6942694))
 ROM_END
 
 ROM_START (hotbit12)
     ROM_REGION (0x10000, REGION_CPU1,0)
-    ROM_LOAD ("hotbit12.rom", 0x0000, 0x8000,CRC( 0xf59a4a0c))
+    ROM_LOAD ("hotbit12.rom", 0x0000, 0x8000, CRC(f59a4a0c))
 ROM_END
 
 ROM_START (expert10)
     ROM_REGION (0x10000, REGION_CPU1,0)
-    ROM_LOAD ("expert10.rom", 0x0000, 0x8000,CRC( 0x07610d77))
+    ROM_LOAD ("expert10.rom", 0x0000, 0x8000, CRC(07610d77))
 ROM_END
 
 ROM_START (expert11)
     ROM_REGION (0x10000, REGION_CPU1,0)
-    ROM_LOAD ("expert11.rom", 0x0000, 0x8000,CRC( 0xefb4b972))
+    ROM_LOAD ("expert11.rom", 0x0000, 0x8000, CRC(efb4b972))
 ROM_END
 
 ROM_START (msx2)
     ROM_REGION (0x10000, REGION_CPU1,0)
-    ROM_LOAD ("msx20.rom", 0x0000, 0x8000,CRC( 0xf05ed518))
-    ROM_LOAD ("msx20ext.rom", 0x8000, 0x4000,CRC( 0x95db2959))
+    ROM_LOAD ("msx20.rom", 0x0000, 0x8000, CRC(f05ed518))
+    ROM_LOAD ("msx20ext.rom", 0x8000, 0x4000, CRC(95db2959))
 ROM_END
 
 ROM_START (msx2a)
     ROM_REGION (0x10000, REGION_CPU1,0)
-    ROM_LOAD ("msx21.rom", 0x0000, 0x8000,CRC( 0x6cdaf3a5))
-    ROM_LOAD ("msx21ext.rom", 0x8000, 0x4000,CRC( 0x66237ecf))
+    ROM_LOAD ("msx21.rom", 0x0000, 0x8000, CRC(6cdaf3a5))
+    ROM_LOAD ("msx21ext.rom", 0x8000, 0x4000, CRC(66237ecf))
 ROM_END
 
 ROM_START (msx2j)
     ROM_REGION (0x10000, REGION_CPU1,0)
-    ROM_LOAD ("msx20j.rom", 0x0000, 0x8000,CRC( 0x9b3e7b97))
-    ROM_LOAD ("msx20xtj.rom", 0x8000, 0x4000,CRC( 0x43e7a7fc))
+    ROM_LOAD ("msx20j.rom", 0x0000, 0x8000, CRC(9b3e7b97))
+    ROM_LOAD ("msx20xtj.rom", 0x8000, 0x4000, CRC(43e7a7fc))
 ROM_END
 /*
 ROM_START (msxkra)
     ROM_REGION (0x10000, REGION_CPU1,0)
-    ROM_LOAD ("msxkra.rom", 0x0000, 0x8000,CRC( 0xa781f7ca))
-    ROM_LOAD_OPTIONAL ("msxhan.rom", 0x8000, 0x4000,CRC( 0x97478efb))
+    ROM_LOAD ("msxkra.rom", 0x0000, 0x8000, CRC(a781f7ca))
+    ROM_LOAD_OPTIONAL ("msxhan.rom", 0x8000, 0x4000, CRC(97478efb))
 ROM_END
 */
 

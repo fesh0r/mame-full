@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.19 2003/05/16 04:02:06 npwoods Exp $
+  $Id: pc8801.c,v 1.20 2003/05/16 15:40:09 rnabet Exp $
 
 ***************************************************************************/
 
@@ -537,32 +537,32 @@ PORT_END
 
 ROM_START (pc88srl)
 	ROM_REGION(0x18000,REGION_CPU1,0)
-	ROM_LOAD ("n80.rom", 0x00000, 0x8000,CRC( 0x27e1857d))
-	ROM_LOAD ("n88.rom", 0x08000, 0x8000,CRC( 0xa0fc0473))
-	ROM_LOAD ("n88_0.rom", 0x10000, 0x2000,CRC( 0x710a63ec))
-	ROM_LOAD ("n88_1.rom", 0x12000, 0x2000,CRC( 0xc0bd2aa6))
-	ROM_LOAD ("n88_2.rom", 0x14000, 0x2000,CRC( 0xaf2b6efa))
-	ROM_LOAD ("n88_3.rom", 0x16000, 0x2000,CRC( 0x7713c519))
+	ROM_LOAD ("n80.rom", 0x00000, 0x8000, CRC(27e1857d))
+	ROM_LOAD ("n88.rom", 0x08000, 0x8000, CRC(a0fc0473))
+	ROM_LOAD ("n88_0.rom", 0x10000, 0x2000, CRC(710a63ec))
+	ROM_LOAD ("n88_1.rom", 0x12000, 0x2000, CRC(c0bd2aa6))
+	ROM_LOAD ("n88_2.rom", 0x14000, 0x2000, CRC(af2b6efa))
+	ROM_LOAD ("n88_3.rom", 0x16000, 0x2000, CRC(7713c519))
 	ROM_REGION(0x10000,REGION_CPU2,0)
-	ROM_LOAD ("disk.rom", 0x0000, 0x0800,CRC( 0x2158d307))
+	ROM_LOAD ("disk.rom", 0x0000, 0x0800, CRC(2158d307))
 	ROM_REGION(0x40000,REGION_GFX1,0)
-	ROM_LOAD ("kanji1.rom", 0x00000, 0x20000,CRC( 0x6178bd43))
-	ROM_LOAD ("kanji2.rom", 0x20000, 0x20000,CRC( 0x154803cc))
+	ROM_LOAD ("kanji1.rom", 0x00000, 0x20000, CRC(6178bd43))
+	ROM_LOAD ("kanji2.rom", 0x20000, 0x20000, CRC(154803cc))
 ROM_END
 
 ROM_START (pc88srh)
 	ROM_REGION(0x18000,REGION_CPU1,0)
-	ROM_LOAD ("n80.rom", 0x00000, 0x8000,CRC( 0x27e1857d))
-	ROM_LOAD ("n88.rom", 0x08000, 0x8000,CRC( 0xa0fc0473))
-	ROM_LOAD ("n88_0.rom", 0x10000, 0x2000,CRC( 0x710a63ec))
-	ROM_LOAD ("n88_1.rom", 0x12000, 0x2000,CRC( 0xc0bd2aa6))
-	ROM_LOAD ("n88_2.rom", 0x14000, 0x2000,CRC( 0xaf2b6efa))
-	ROM_LOAD ("n88_3.rom", 0x16000, 0x2000,CRC( 0x7713c519))
+	ROM_LOAD ("n80.rom", 0x00000, 0x8000, CRC(27e1857d))
+	ROM_LOAD ("n88.rom", 0x08000, 0x8000, CRC(a0fc0473))
+	ROM_LOAD ("n88_0.rom", 0x10000, 0x2000, CRC(710a63ec))
+	ROM_LOAD ("n88_1.rom", 0x12000, 0x2000, CRC(c0bd2aa6))
+	ROM_LOAD ("n88_2.rom", 0x14000, 0x2000, CRC(af2b6efa))
+	ROM_LOAD ("n88_3.rom", 0x16000, 0x2000, CRC(7713c519))
 	ROM_REGION(0x10000,REGION_CPU2,0)
-	ROM_LOAD ("disk.rom", 0x0000, 0x0800,CRC( 0x2158d307))
+	ROM_LOAD ("disk.rom", 0x0000, 0x0800, CRC(2158d307))
 	ROM_REGION(0x40000,REGION_GFX1,0)
-	ROM_LOAD ("kanji1.rom", 0x00000, 0x20000,CRC( 0x6178bd43))
-	ROM_LOAD ("kanji2.rom", 0x20000, 0x20000,CRC( 0x154803cc))
+	ROM_LOAD ("kanji1.rom", 0x00000, 0x20000, CRC(6178bd43))
+	ROM_LOAD ("kanji2.rom", 0x20000, 0x20000, CRC(154803cc))
 ROM_END
 
 static struct beep_interface pc8801_beep_interface =

@@ -181,10 +181,10 @@ ROM_START(tm990189)
 	ROM_REGION(0x4000, REGION_CPU1,0)
 
 	/* extra ROM - not dumped */
-	ROM_LOAD("unibasi2.bin", 0x0800, 0x0800,CRC( 0x00000000))
+	ROM_LOAD("unibasi2.bin", 0x0800, 0x0800, CRC(00000000))
 
 	/* boot ROM */
-	ROM_LOAD("unibasic.bin", 0x3000, 0x1000,CRC( 0xde4d9744))
+	ROM_LOAD("unibasic.bin", 0x3000, 0x1000, CRC(de4d9744))
 
 ROM_END
 

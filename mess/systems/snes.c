@@ -247,7 +247,7 @@ ROM_START(snes)
 	ROM_REGION(SNES_CGRAM_SIZE, REGION_USER1, 0)		/* CGRAM */
 	ROM_REGION(SNES_OAM_SIZE,   REGION_USER2, 0)		/* OAM */
 	ROM_REGION(0x10000,         REGION_CPU2,  0)		/* SPC700 */
-	ROM_LOAD("spc700.rom", 0xFFC0, 0x40,CRC( 0x38000B6B))	/* boot rom */
+	ROM_LOAD("spc700.rom", 0xFFC0, 0x40, CRC(38000B6B))	/* boot rom */
 ROM_END
 
 ROM_START(snespal)
@@ -256,7 +256,7 @@ ROM_START(snespal)
 	ROM_REGION(SNES_CGRAM_SIZE, REGION_USER1, 0)		/* CGRAM */
 	ROM_REGION(SNES_OAM_SIZE,   REGION_USER2, 0)		/* OAM */
 	ROM_REGION(0x10000,         REGION_CPU2,  0)		/* SPC700 */
-	ROM_LOAD("spc700.rom", 0xFFC0, 0x40,CRC( 0x38000B6B))	/* boot rom */
+	ROM_LOAD("spc700.rom", 0xFFC0, 0x40, CRC(38000B6B))	/* boot rom */
 ROM_END
 
 /*     YEAR  NAME     PARENT  COMPAT	MACHINE  INPUT  INIT  CONFIG  COMPANY     FULLNAME                                      FLAGS */
