@@ -763,6 +763,9 @@ static UINT16 bcd_tencomp( UINT16 a )
 	return t2-t6;
 }
 
+/*
+	Compute difference b-a???
+*/
 static UINT16 bcd_sub( UINT16 a, UINT16 b)
 {
 	return bcd_tencomp(b) - bcd_tencomp(a);

@@ -22,7 +22,7 @@ static void (*opfn[0x100])(void) = {
 			0xX8,   0xX9,     0xXA,    0xXB,    0xXC,    0xXD,    0xXE,    0xXF   */
 
 /* 0x0X */  nop,     idle,    illegal, illegal, illegal, eint,    dint,    setc,
-            pop_st,  stsp,    rets_imp,reti,    illegal, ldsp,    push_st, illegal,
+            pop_st,  stsp,    rets,    reti,    illegal, ldsp,    push_st, illegal,
 
 /* 0x1X */  illegal, illegal, mov_r2a, and_r2a, or_r2a,  xor_r2a, btjo_r2a,btjz_r2a,
             add_r2a, adc_r2a, sub_ra,  sbb_ra,  mpy_ra,  cmp_ra,  dac_r2a, dsb_r2a,
@@ -39,20 +39,20 @@ static void (*opfn[0x100])(void) = {
 /* 0x5X */  illegal, illegal, mov_i2b, and_i2b, or_i2b,  xor_i2b, btjo_i2b,btjz_i2b,
             add_i2b, adc_i2b, sub_ib,  sbb_ib,  mpy_ib,  cmp_ib,  dac_i2b, dsb_i2b,
 
-/* 0x6X */  illegal, illegal, mov_b2a, and_imp, or_imp,  xor_imp, btjo_imp,btjz_imp,
-            add_imp, adc_imp, sub_ba,  sbb_ba,  mpy_ba,  cmp_imp, dac_b2a, dsb_b2a,
+/* 0x6X */  illegal, illegal, mov_b2a, and_b2a, or_b2a,  xor_b2a, btjo_b2a,btjz_b2a,
+            add_b2a, adc_b2a, sub_ba,  sbb_ba,  mpy_ba,  cmp_ba,  dac_b2a, dsb_b2a,
 
 /* 0x7X */  illegal, illegal, mov_i2r, and_i2r, or_i2r,  xor_i2r, btjo_i2r,btjz_i2r,
             add_i2r, adc_i2r, sub_ir,  sbb_ir,  mpy_ir,  cmp_ir,  dac_i2r, dsb_i2r,
 
-/* 0x8X */  movp_p2a,illegal, movp_a2p,andp_a2p,orp_a2p, xorp_a2p,btjop_a, btjzp_a,
+/* 0x8X */  movp_p2a,illegal, movp_a2p,andp_a2p,orp_a2p, xorp_a2p,btjop_ap,btjzp_ap,
             movd_imm,illegal, lda_dir, sta_dir, br_dir,  cmpa_dir,call_dir,illegal,
 
-/* 0x9X */  illegal, movp_p2b, movp_b2p,andp_b2p,orp_b2p, xorp_b2p,btjop_b, btjzp_b,
-            movd_r,  illegal,lda_ind, sta_ind, br_ind,  cmpa_ind,call_ind,illegal,
+/* 0x9X */  illegal, movp_p2b,movp_b2p,andp_b2p,orp_b2p, xorp_b2p,btjop_bp,btjzp_bp,
+            movd_r,  illegal, lda_ind, sta_ind, br_ind,  cmpa_ind,call_ind,illegal,
 
-/* 0xAX */  illegal, illegal, movp_i2p,andp_i2p,orp_i2p, xorp_i2p,btjop_im,btjzp_im,
-            movd_ind,illegal, lda_inx, sta_inx, br_inx,  cmpa_inx,call_inx,illegal,
+/* 0xAX */  illegal, illegal, movp_i2p,andp_i2p,orp_i2p, xorp_i2p,btjop_ip,btjzp_ip,
+            movd_inx,illegal, lda_inx, sta_inx, br_inx,  cmpa_inx,call_inx,illegal,
 
 /* 0xBX */  clrc,    illegal, dec_a,   inc_a,   inv_a,   clr_a,   xchb_a,  swap_a,
             push_a,  pop_a,   djnz_a,  decd_a,  rr_a,    rrc_a,   rl_a,    rlc_a,
@@ -75,7 +75,7 @@ static void (*opfn_exl[0x100])(void) = {
 			0xX8,   0xX9,     0xXA,    0xXB,    0xXC,    0xXD,    0xXE,    0xXF   */
 
 /* 0x0X */  nop,     idle,    illegal, illegal, illegal, eint,    dint,    setc,
-            pop_st,  stsp,    rets_imp,reti,    illegal, ldsp,    push_st, illegal,
+            pop_st,  stsp,    rets,    reti,    illegal, ldsp,    push_st, illegal,
 
 /* 0x1X */  illegal, illegal, mov_r2a, and_r2a, or_r2a,  xor_r2a, btjo_r2a,btjz_r2a,
             add_r2a, adc_r2a, sub_ra,  sbb_ra,  mpy_ra,  cmp_ra,  dac_r2a, dsb_r2a,
@@ -92,20 +92,20 @@ static void (*opfn_exl[0x100])(void) = {
 /* 0x5X */  illegal, illegal, mov_i2b, and_i2b, or_i2b,  xor_i2b, btjo_i2b,btjz_i2b,
             add_i2b, adc_i2b, sub_ib,  sbb_ib,  mpy_ib,  cmp_ib,  dac_i2b, dsb_i2b,
 
-/* 0x6X */  illegal, illegal, mov_b2a, and_imp, or_imp,  xor_imp, btjo_imp,btjz_imp,
-            add_imp, adc_imp, sub_ba,  sbb_ba,  mpy_ba,  cmp_imp, dac_b2a, dsb_b2a,
+/* 0x6X */  illegal, illegal, mov_b2a, and_b2a, or_b2a,  xor_b2a, btjo_b2a,btjz_b2a,
+            add_b2a, adc_b2a, sub_ba,  sbb_ba,  mpy_ba,  cmp_ba,  dac_b2a, dsb_b2a,
 
 /* 0x7X */  illegal, illegal, mov_i2r, and_i2r, or_i2r,  xor_i2r, btjo_i2r,btjz_i2r,
             add_i2r, adc_i2r, sub_ir,  sbb_ir,  mpy_ir,  cmp_ir,  dac_i2r, dsb_i2r,
 
-/* 0x8X */  movp_p2a,illegal, movp_a2p,andp_a2p,orp_a2p, xorp_a2p,btjop_a, btjzp_a,
+/* 0x8X */  movp_p2a,illegal, movp_a2p,andp_a2p,orp_a2p, xorp_a2p,btjop_ap,btjzp_ap,
             movd_imm,illegal, lda_dir, sta_dir, br_dir,  cmpa_dir,call_dir,illegal,
 
-/* 0x9X */  illegal, movp_p2b, movp_b2p,andp_b2p,orp_b2p, xorp_b2p,btjop_b, btjzp_b,
-            movd_r,  illegal,lda_ind, sta_ind, br_ind,  cmpa_ind,call_ind,illegal,
+/* 0x9X */  illegal, movp_p2b,movp_b2p,andp_b2p,orp_b2p, xorp_b2p,btjop_bp,btjzp_bp,
+            movd_r,  illegal, lda_ind, sta_ind, br_ind,  cmpa_ind,call_ind,illegal,
 
-/* 0xAX */  illegal, illegal, movp_i2p,andp_i2p,orp_i2p, xorp_i2p,btjop_im,btjzp_im,
-            movd_ind,illegal, lda_inx, sta_inx, br_inx,  cmpa_inx,call_inx,illegal,
+/* 0xAX */  illegal, illegal, movp_i2p,andp_i2p,orp_i2p, xorp_i2p,btjop_ip,btjzp_ip,
+            movd_inx,illegal, lda_inx, sta_inx, br_inx,  cmpa_inx,call_inx,illegal,
 
 /* 0xBX */  clrc,    illegal, dec_a,   inc_a,   inv_a,   clr_a,   xchb_a,  swap_a,
             push_a,  pop_a,   djnz_a,  decd_a,  rr_a,    rrc_a,   rl_a,    rlc_a,
