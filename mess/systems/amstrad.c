@@ -2882,8 +2882,8 @@ static const struct IODevice io_cpc6128[] =
 		NULL,						/* info */
 		NULL,						/* open */
 		NULL,						/* close */
-		NULL,						/* status */
-		NULL,						/* seek */
+                floppy_status,                                           /* status */
+                NULL,                                           /* seek */
 		NULL,						/* tell */
 		NULL,						/* input */
 		NULL,						/* output */
