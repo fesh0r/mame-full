@@ -1,4 +1,4 @@
-// MAME headers
+/* MAME headers */
 #include "osdepend.h"
 #include "sysdep/misc.h"
 
