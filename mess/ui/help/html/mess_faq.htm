@@ -4,36 +4,43 @@
 		<title>MESS FAQ</title>
 		<link rel="StyleSheet" href="style.css" type="text/css">
 	</head>
-	<body>
+
+<body leftmargin= 20 rightmargin = 20>
 
 <h2>MESS FAQ</h2>
 <font size="-1" face="verdana, arial, helvetica, sans-serif">
+
 <b>About this FAQ</b><br>
 &nbsp;&bull;&nbsp;<a href="#q00">MESS FAQ?</a><br>
+
 <b>General</b><br>
 &nbsp;&bull;&nbsp;<a href="#q01">What is MESS? </a><br>
 &nbsp;&bull;&nbsp;<a href="#qA1">What is the purpose of MESS? </a><br>
 &nbsp;&bull;&nbsp;<a href="#qA2">What is an emulator and a simulator? </a><br>
-&nbsp;&bull;&nbsp;<a href="#q02">What do I need to run MESS? </a><br>
 &nbsp;&bull;&nbsp;<a href="#q03">What makes MESS different from other emulators?/Why yet another emulator? </a><br>
 &nbsp;&bull;&nbsp;<a href="#q04">Isn't MESS the same as MAME? </a><br>
+&nbsp;&bull;&nbsp;<a href="#q13">Why don't MESS and MAME merge?</a><br>
+&nbsp;&bull;&nbsp;<a href="#q14">Why doesn't MESS split into two versions, one for consoles and one for computers?</a><br>
+
 <b>Starting Up</b><br>
+&nbsp;&bull;&nbsp;<a href="#q02">What do I need to run MESS? </a><br>
 &nbsp;&bull;&nbsp;<a href="#q05">What's a BIOS?/What's a ROM?/What's a disk image?</a><br>
 &nbsp;&bull;&nbsp;<a href="#q06">Where do I get BIOSes/ROMs?/How do I use my old software with MESS?</a><br>
 &nbsp;&bull;&nbsp;<a href="#q07">Okay, I got some BIOSes and images, now where do I put them?</a><br>
 &nbsp;&bull;&nbsp;<a href="#q08">How do I run the MESS application?</a><br>
 &nbsp;&bull;&nbsp;<a href="#q09">I did everything just like you said, but it still doesn't work!</a><br>
 &nbsp;&bull;&nbsp;<a href="#q10">It works, but it's way too slow!</a><br>
+
 <b>How Do I...</b><br>
 &nbsp;&bull;&nbsp;<a href="#q11">How do I set up the screenshots/snapshots folder for MESS?</a><br>
 &nbsp;&bull;&nbsp;<a href="#q12">How do get screenshots?</a><br>
-&nbsp;&bull;&nbsp;<a href="#q13">Why don't MESS and MAME merge?</a><br>
-&nbsp;&bull;&nbsp;<a href="#q14">Why doesn't MESS split into two versions, one for consoles and one for computers?</a><br>
+
 &nbsp;&bull;&nbsp;<a href="#q15">I fail to understand your emphasis on "pure" hardware emulation; what does that mean?  Does this mean that you will or will not implement feature XXXXX?</a><br>
+
 <b>Trouble Shooting</b><br>
 &nbsp;&bull;&nbsp;<a href="#q16">Why don't you support a feature that allows the user to remap their keyboard to the emulated system's, eliminating the need to adjust to the system's keyboard layout? </a><br>
 &nbsp;&bull;&nbsp;<a href="#q17">Your file manager is an abomination in the eyes of God/Allah/Jehovah/Budda/Zoroaster/anyone with an ounce of sense!</a><br>
-&nbsp;&bull;&nbsp;<a href="#q18">My English isn't good, I don't understand you!</a><br>
+&nbsp;&bull;&nbsp;<a href="#q18">My English is not good. I don't understand!</a><br>
 </font>
 
 
@@ -76,17 +83,10 @@
 			they are implemented.
 		</p>
 		<p>
-			MESS and MAME are both emulators. They try to emulate the arcade, computer, and console system. This may include 			bugs or flaws that were on the original system.
+			MESS and MAME are both emulators. They try to emulate the arcade, computer, and console
+			 system. This may include bugs or flaws that were on the original system.
 		</p>
 
-<p class="topic" ID="q02">What do I need to run MESS?</p>
-		
-		<p>
-			In general a PC with a decent processor should run most of the systems at a decent speed. 
-			There are an enormous variety of systems emulated and each system has its own requirements. 
-			The best thing to do is try the system you are interested in. But remember accuracy is the primary 
-			goal not speed.
-		</p>
 
 <p class="topic" ID="q03">What makes <a href="http://www.mess.org/">MESS</a> different from 
 			other emulators?/Why yet another emulator?</p>
@@ -116,6 +116,61 @@
 			machines, and <a href="http://www.mess.org/">MESS</a> is for home computers and 
 			video game consoles.
 		</p>
+<p class="topic" ID="q13">Why don't <a href="http://www.mess.org/">MESS</a> and <a href="http://www.mame.net/">
+				MAME</a> merge?</p>
+		<p>
+			Although the people involved in developing new versions of both programs are 
+			enthusiasts working out of love for the systems involved, the systems are 
+			essentially different. Arcade games, which <a href="http://www.mame.net/">MAME</a>
+			specializes in, are usually unique, in that the hardware for any particular 
+			game was a one-time solution arrived at in order to get the game to market. 
+			Some game companies, such as SNK, Nintendo and others, did develop systems that 
+			could be changed over to play other games relatively easily, but this wasn't 
+			the rule in the arcades. To emulate an arcade game, the programmer develops a 
+			driver file which mimics hardware surrounding the arcade game's CPU or CPUs. 
+			Both MAME and MESS contain the same cores to emulate the same CPUs. The focus of MESS
+			is accurate emulation of the hardware of computer and gaming consoles, 
+			hardware which doesn't change depending on which game or program is being run. 
+			Fundamentally, MAME and MESS are being created by and are targeted for slightly different 
+			segments of the emulation community: gamers and vintage computer enthusiasts. 
+			Those two communities do often times overlap, and a merger of the two programs 
+			is theoretically possible at some point in the future.
+		</p>
+
+<p class="topic" ID="q14">Why doesn't <a href="http://www.mess.org/">MESS</a> split into two 
+			versions, one for consoles and one for computers?</p>
+		<p>
+			Why isn't there a program called MASS to mimic mainframes? So far it hasn't 
+			seemed necessary to split <A href="http://www.mess.org/">MESS</A>&nbsp;into two 
+			programs. The core program inherited on a regular basis from new updates of <A href="http://www.mame.net/">
+				MAME</A>&nbsp;can accommodate a large number of systems. If you think of 
+			each arcade game in&nbsp;<A href="http://www.mame.net/">MAME</A> as a separate 
+			computer or console, the latest version has over 3,000 different machines 
+			available, compared to <A href="http://www.mess.org/">MESS</A>' hundreds of 
+			systems listed under its All Systems menu. The border dividing gaming consoles 
+			from computers tends to blur the further back you go in time. Is Nippon 
+			Electric Company's PC Engine a game or a computer? Coleco originally marketed 
+			its Adam computer as an add-on to the Colecovision gaming system. Nintendo also 
+			had big plans to turn its NES and later SNES into full-fledged computers 
+			delivering information and services to users over an early version of the 
+			internet. The APF Imagination Machine was also built around a game console 
+			core. Atari's line of computers grew out from its original gaming console, and 
+			were probably used more for gaming in their day than any serious computing 
+			projects. The simple answer is there's still a lot of room for&nbsp;<A href="http://www.mess.org/">MESS</A>
+			to include new gaming consoles and computers. The complicated answer is that 
+			it's hard to tell the difference.
+		</p>
+
+<p class="topic" ID="q02">What do I need to run MESS?</p>
+		
+		<p>
+			In general a PC with a decent processor should run most of the systems at a decent speed. 
+			There are an enormous variety of systems emulated and each system has its own requirements. 
+			The best thing to do is try the system you are interested in. But remember accuracy is the primary 
+			goal not speed.
+		</p>
+
+
 <p class="topic" ID="q05">What's a BIOS?/What's a ROM?/What's a disk image?</p>
 
 		<p>
@@ -139,7 +194,6 @@
 
 <p class="topic" ID="q06">Where do I get BIOSes/ROMs?/How do I use my old software with <a href="http://www.mess.org/">
 				MESS</a>?</p>
-		<P></P>
 		<p>
 			In most cases, old software is physically incompatible with modern computers. 
 			No matter how hard you push, an Atari cartridge just plain won't fit in your 
@@ -168,23 +222,12 @@
 		</p>
 		<p>
 			Most systems require BIOSes. MESS is very picky about its BIOSes -- they must
-			be exactly the ones it is expecting, otherwise it will complain and probably 
-			won't work.  Some BIOS ROMs can be found at <a href="http://pkg.lugbs.linux.it/PACCHETTI/Mess-roms/CONTENTS/" 			target="_blank">MESS Roms</a> or <a href="http://www.geocities.com/messroms/" target="_blank">MESS
-			 BIOS Roms</a>.  
+			be exactly the ones it is expecting, otherwise it may not work.
 		</p>
-		<p>	
-			Game roms, Disk images, or Software images can be found
-			using various Search Engines (like <a href="http://www.google.com/" target="_blank">Google</a> or  
-			<a href="http://www.yahoo.com/" target="_blank">Yahoo!</a>). 
-			Some excellent software links (organized by system) can be found at 
-			<a href="http://www.geocities.com/the80sdude2002/" target="_blank">MESS Software</a>.
-		</p> 
-
 <p class="topic" ID="q07">Okay, I got some BIOSes and images, now where do I put them?</p>
 		<p>
-			BIOSes should go, still zipped, in the BIOS subfolder of wherever you put <a href="http://www.mess.org/">
-				MESS</a>. Game images should go into the SOFTWARE\[system name] folder. 
-			They can still be zipped, but only one image per zip file.
+			BIOSes should go, still zipped, in the BIOS subfolder of wherever you put <a 			href="http://www.mess.org/"> MESS</a>. Game images should go into the 
+			SOFTWARE\[system name] folder.They can still be zipped, but only one image per zip file.
 		</p>
 
 <p class="topic" ID="q08">How do I run the MESS application?</p>
@@ -276,52 +319,6 @@
 		various sites. Try your favorite search engine.
 		</p>
 
-<p class="topic" ID="q13">Why don't <a href="http://www.mess.org/">MESS</a> and <a href="http://www.mame.net/">
-				MAME</a> merge?</p>
-		<p>
-			Although the people involved in developing new versions of both programs are 
-			enthusiasts working out of love for the systems involved, the systems are 
-			essentially different. Arcade games, which <a href="http://www.mame.net/">MAME</a>
-			specializes in, are usually unique, in that the hardware for any particular 
-			game was a one-time solution arrived at in order to get the game to market. 
-			Some game companies, such as SNK, Nintendo and others, did develop systems that 
-			could be changed over to play other games relatively easily, but this wasn't 
-			the rule in the arcades. To emulate an arcade game, the programmer develops a 
-			driver file which mimics hardware surrounding the arcade game's CPU or CPUs. 
-			Both <a href="http://www.mame.net/">MAME</a> and <a href="http://www.mess.org/">MESS</a>
-			contain the same cores to emulate the same CPUs. <a href="http://www.mess.org/">MESS</a>' 
-			focus is accurate emulation of the hardware of computer and gaming consoles, 
-			hardware which doesn't change depending on which game or program is being run. 
-			Fundamentally, <A href="http://www.mame.net/">MAME</A> &nbsp;and <a href="http://www.mess.org/">
-				MESS</a> are being created by and are targeted for slightly different 
-			segments of the emulation community: gamers and vintage computer enthusiasts. 
-			Those two communities do often times overlap, and a merger of the two programs 
-			is theoretically possible at some point in the future.
-		</p>
-
-<p class="topic" ID="q14">Why doesn't <a href="http://www.mess.org/">MESS</a> split into two 
-			versions, one for consoles and one for computers?</p>
-		<p>
-			Why isn't there a program called MASS to mimic mainframes? So far it hasn't 
-			seemed necessary to split <A href="http://www.mess.org/">MESS</A>&nbsp;into two 
-			programs. The core program inherited on a regular basis from new updates of <A href="http://www.mame.net/">
-				MAME</A>&nbsp;can accommodate a large number of systems. If you think of 
-			each arcade game in&nbsp;<A href="http://www.mame.net/">MAME</A> as a separate 
-			computer or console, the latest version has over 3,000 different machines 
-			available, compared to <A href="http://www.mess.org/">MESS</A>' hundreds of 
-			systems listed under its All Systems menu. The border dividing gaming consoles 
-			from computers tends to blur the further back you go in time. Is Nippon 
-			Electric Company's PC Engine a game or a computer? Coleco originally marketed 
-			its Adam computer as an add-on to the Colecovision gaming system. Nintendo also 
-			had big plans to turn its NES and later SNES into full-fledged computers 
-			delivering information and services to users over an early version of the 
-			internet. The APF Imagination Machine was also built around a game console 
-			core. Atari's line of computers grew out from its original gaming console, and 
-			were probably used more for gaming in their day than any serious computing 
-			projects. The simple answer is there's still a lot of room for&nbsp;<A href="http://www.mess.org/">MESS</A>
-			to include new gaming consoles and computers. The complicated answer is that 
-			it's hard to tell the difference.
-		</p>
 
 <p class="topic" ID="q15">I fail to understand your emphasis on "pure" hardware emulation; 
 			what does that mean?&nbsp; Does this mean that you will or will not implement 
@@ -357,7 +354,7 @@
 			but we are trying to phase it out.
 		</p>
 
-<p class="topic" ID="q18">My English isn't good, I don't understand you!</p>
+<p class="topic" ID="q18">My English is not good. I don't understand!</p>
 		<p>
 			If you ask for help on the message board, post it in both English and your 
 			native language. Many people there speak more than one language and may be able 
