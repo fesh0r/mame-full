@@ -2,12 +2,47 @@ Xmame history:
 
 Last Modified by Lawrence Gold (gold@aros.net)
 
+Release 0.55.3
+	- The svgafx driver is working again--it was broken by the removal of
+	  8bpp support from the core.  (Henri and Jason)
+	- Numeric keypad support is now much better.  (Andre Majorel)	
+	- Added arbitrary height scaling, available via the -arbheight option
+	  and started sanitizing the blit core.  This currently only works with
+	  the X11 (windows, DGA1, DGA2) and svgalib drivers.  (Adam Moss)
+
+Release 0.55.2
+	- Added special-cased fast 2x1 and 3x1 scaling to the blit core.  (Adam
+	  Moss)
+	- Added several AdvanceMAME effects, available via -effect/-ef.  Note
+	  that these effects are not available for some video drivers, nor do
+	  they work on actual 24-bit (packed) displays yet.  (Ben Saylor)
+	- Added mame-listmissing to contrib/tools.  (David Griffith)
+	- Fixed compilation errors reported in snprintf.c on some platforms,
+	  e.g. HP-UX 10.20 with GCC 3.0.  (Stefan Becker)
+
+Release 0.55.1
+        - Everything from MAME 0.55.
+	- Removed the romcheck script until its author considers it far enough
+	  along for public consumption.
+	- Added mamecds to contrib/tools.  (Carlos Calzada Grau)
+	- Updated the ALSA 0.9 support: Added -alsa-buffer; replaced the use of
+	  SND_PCM_FORMAT_S16_{LE,BE} with SND_PCM_FORMAT_S16; changed
+	  -alsapcm(-pcm) to -alsa-pcm(-apcm); changed the default value of
+	  -alsa-pcm.  (Shyouzou Sugitani)
+
 Release 0.54.2
 	- Applied a fix for the Bubble Bobble driver.  (Haze)
 	- Added a couple words to the makefile to indicate that the 68020 asm
 	  core is broken.
 	- Added a.out support (e.g. for OpenBSD) to the dlsym calls in several
 	  GLmame files.  (Claudio Castiglia)
+	- Applied a fix for Konami games.  (Aaron Giles)
+	- Using -debug no longer results in a segfault.
+	- Applied a patch for the ES550x that fixes the runaway voices in Puzzle
+	  Bobble 3 and might fix other games with problems.  (Aaron Giles)
+	- Added -samplepath/-sp and -artworkpath/-ap command line options.
+	- Added mame-cd to contrib/tools.  (Mario J.Barchéin Molina)
+	- Added romcheck to contrib/tools.  (David Griffith)
 
 Release 0.54.1
 	- Everything from MAME 0.54.
