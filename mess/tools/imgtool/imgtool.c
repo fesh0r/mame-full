@@ -83,6 +83,7 @@ extern struct ImageModule imgmod_ti86e;		/* TI-86 equation file */
 extern struct ImageModule imgmod_ti86r;		/* TI-86 range settings file */
 extern struct ImageModule imgmod_ti86g;		/* TI-86 grouped file */
 extern struct ImageModule imgmod_ti86;		/* TI-86 file */
+extern struct ImageModule imgmod_ti99;		/* TI99 floppy */
 
 static const struct ImageModule *images[] = {
 	&imgmod_rsdos,
@@ -154,7 +155,8 @@ static const struct ImageModule *images[] = {
 	&imgmod_ti86e,
 	&imgmod_ti86r,
 	&imgmod_ti86g,
-	&imgmod_ti86
+	&imgmod_ti86,
+	&imgmod_ti99
 };
 
 /* ----------------------------------------------------------------------- */
