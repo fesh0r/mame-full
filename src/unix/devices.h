@@ -13,6 +13,7 @@
 #define JOY_AXES		8
 #define JOY_DIRS		2
 #define JOY_NAME_LEN		20
+#define HISTORY_LENGTH		16
 
 #ifndef USE_XINPUT_DEVICES
 /* only one mouse for now */
@@ -31,8 +32,24 @@
 #define MOUSE_LIST_TOTAL_ENTRIES MOUSE_BUTTONS
 #define MOUSE_LIST_LEN (MOUSE * MOUSE_LIST_TOTAL_ENTRIES)
 
-enum { JOY_NONE, JOY_I386, JOY_PAD, JOY_X11, JOY_I386NEW, JOY_USB, JOY_PS2,
-	JOY_SDL };
+enum
+{
+	JOY_NONE,
+	JOY_I386,
+	JOY_PAD,
+	JOY_X11,
+	JOY_I386NEW,
+	JOY_USB,
+	JOY_PS2,
+	JOY_SDL
+};
+
+enum
+{
+	AXIS_TYPE_INVALID = 0,
+	AXIS_TYPE_DIGITAL,
+	AXIS_TYPE_ANALOG
+};
 
 struct xmame_keyboard_event
 {

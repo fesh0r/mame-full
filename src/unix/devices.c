@@ -29,18 +29,22 @@
 
 
 /*============================================================ */
-/*	IMPORTS */
-/*============================================================ */
-
-extern int verbose;
-
-
-/*============================================================ */
 /*	MACROS */
 /*============================================================ */
 
-#define STRUCTSIZE(x)		((dinput_version == 0x0300) ? sizeof(x##_DX3) : sizeof(x))
 #define ELEMENTS(x)		(sizeof(x) / sizeof((x)[0]))
+
+
+
+/*============================================================ */
+/*	TYPEDEFS */
+/*============================================================ */
+
+struct axis_history
+{
+	int		value;
+	int		count;
+};
 
 
 
@@ -76,6 +80,8 @@ static struct kbd_fifo_struct *kbd_fifo = NULL;
 
 /* joystick states */
 static UINT8			joystick_digital[JOY_MAX][JOY_AXES];
+static struct axis_history	joystick_history[JOY_MAX][JOY_AXES][HISTORY_LENGTH];
+static UINT8			joystick_type[JOY_MAX][JOY_AXES];
 
 /*============================================================ */
 /*	OPTIONS */
@@ -226,6 +232,7 @@ void save_rapidfire_settings(void)
 FIFO(INLINE, kbd, struct xmame_keyboard_event)
 
 static void updatekeyboard(void);
+static void update_joystick_axes(void);
 static void init_keycodes(void);
 static void init_joycodes(void);
 
@@ -734,6 +741,71 @@ int osd_readkey_unicode(int flush)
 }
 
 
+static void update_joystick_axes(void)
+{
+	int joynum, axis;
+	
+	for (joynum = 0; joynum < JOY_MAX; joynum++)
+		for (axis = 0; axis < JOY_AXES; axis++)
+		{
+			struct axis_history *history = &joystick_history[joynum][axis][0];
+			int curval = joy_data[joynum].axis[axis].val;	
+			int newtype;
+			
+			/* if same as last time (within a small tolerance), update the count */
+			if (history[0].count > 0 && (history[0].value - curval) > -4 && (history[0].value - curval) < 4)
+				history[0].count++;
+			
+			/* otherwise, update the history */
+			else
+			{
+				memmove(&history[1], &history[0], sizeof(history[0]) * (HISTORY_LENGTH - 1));
+				history[0].count = 1;
+				history[0].value = curval;
+			}
+			
+			/* if we've only ever seen one value here, or if we've been stuck at the same value for a long */
+			/* time (1 minute), mark the axis as dead or invalid */
+			if (history[1].count == 0 || history[0].count > Machine->refresh_rate * 60)
+				newtype = AXIS_TYPE_INVALID;
+			
+			/* scan the history and count unique values; if we get more than 3, it's analog */
+			else
+			{
+				int bucketsize = (joy_data[joynum].axis[axis].max - joy_data[joynum].axis[axis].min) / 3;
+				int uniqueval[3] = { 1234567890, 1234567890, 1234567890 };
+				int histnum;
+				
+				/* assume digital unless we figure out otherwise */
+				newtype = AXIS_TYPE_DIGITAL;
+				
+				/* loop over the whole history, bucketing the values */
+				for (histnum = 0; histnum < HISTORY_LENGTH; histnum++)
+					if (history[histnum].count > 0)
+					{
+						int bucket = (history[histnum].value - joy_data[joynum].axis[axis].min) / bucketsize;
+
+						/* if we already have an entry in this bucket, we're analog */
+						if (uniqueval[bucket] != 1234567890 && uniqueval[bucket] != history[histnum].value)
+						{
+							newtype = AXIS_TYPE_ANALOG;
+							break;
+						}
+						
+						/* remember this value */
+						uniqueval[bucket] = history[histnum].value;
+					}
+			}
+			
+			/* if the type doesn't match, switch it */
+			if (joystick_type[joynum][axis] != newtype)
+			{
+				static const char *axistypes[] = { "invalid", "digital", "analog" };
+				joystick_type[joynum][axis] = newtype;
+			}
+		}
+}
+
 
 static void add_joylist_entry(const char *name, os_code_t code,
 		input_code_t standardcode)
@@ -970,6 +1042,9 @@ static void init_joycodes(void)
 		{
 			for (axis = 0; axis < JOY_AXES; axis++)
 			{
+				/* reset the type */
+				joystick_type[stick][axis] = AXIS_TYPE_INVALID;
+
 				snprintf(tempname, JOY_NAME_LEN, "Joy %d axis %d %s", stick + 1, axis + 1, "neg");
 				add_joylist_entry(tempname, JOYCODE(stick, CODETYPE_JOYAXIS, axis), CODE_OTHER_ANALOG_ABSOLUTE);
 
@@ -1080,18 +1155,22 @@ static INT32 get_joycode_value(os_code_t joycode)
 		/* analog joystick axis */
 		case CODETYPE_JOYAXIS:
 		{
-			int val = joy_data[joynum].axis[joyindex].val;	
-			int top = joy_data[joynum].axis[joyindex].max;	
-			int bottom = joy_data[joynum].axis[joyindex].min;	
+			if (joystick_type[joynum][joyindex] != AXIS_TYPE_ANALOG)
+				return ANALOG_VALUE_INVALID;
+			else
+			{
+				int val = joy_data[joynum].axis[joyindex].val;	
+				int top = joy_data[joynum].axis[joyindex].max;	
+				int bottom = joy_data[joynum].axis[joyindex].min;	
 
-			if (joytype == JOY_NONE)
-				return 0;
-			val = (INT64)val * (INT64)(ANALOG_VALUE_MAX - ANALOG_VALUE_MIN) / (INT64)(top - bottom) + ANALOG_VALUE_MIN;
-			if (val < ANALOG_VALUE_MIN)
-				val = ANALOG_VALUE_MIN;
-			if (val > ANALOG_VALUE_MAX)
-				val = ANALOG_VALUE_MAX;
-			return val;
+				val = (INT64)val * (INT64)(ANALOG_VALUE_MAX - ANALOG_VALUE_MIN) / (INT64)(top - bottom);
+				if (val < ANALOG_VALUE_MIN)
+					val = ANALOG_VALUE_MIN;
+				if (val > ANALOG_VALUE_MAX)
+					val = ANALOG_VALUE_MAX; 
+				printf("%d\n", val);
+				return val;
+			}
 		}
 
 		/* analog mouse axis */
@@ -1508,6 +1587,9 @@ void osd_poll_joysticks(void)
 #ifdef USE_LIGHTGUN_ABS_EVENT
 	lightgun_event_abs_poll();
 #endif
+
+	/* update joystick axis history */
+	update_joystick_axes();
 }
 
 
