@@ -521,7 +521,7 @@ int init_devices(const void *game)
 
 		/* try and check for valid image and compute 'partial' CRC
 		   for imageinfo if possible */
-		if(dev->id )
+		if(0/*&&dev->id*/ )
 		{
 			for( id = 0; id < dev->count; id++ )
 			{
