@@ -64,6 +64,7 @@ extern UINT8 *gb_ram;
 #define VRAM 0x8000
 
 EXTERN UINT16 gb_bpal[4];				/* Background palette */
+EXTERN UINT16 gb_wpal[4];				/* Window palette (same as bg) */
 EXTERN UINT16 gb_spal0[4];				/* Sprite 0 palette */
 EXTERN UINT16 gb_spal1[4];				/* Sprite 1 palette */
 EXTERN UINT8 *gb_chrgen;				/* Character generator */
