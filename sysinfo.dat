@@ -8895,7 +8895,7 @@ images (but not double-sided ones).
 
 
 * In addition to the floppy drives, the HFDC can support up to 3 MFM hard
-disks.  If you want to use these hard disks, you must use the HFDC as a floppy
+disks.  If you want to use these hard disks, you must use HFDC as the floppy
 disk controller.  Disk images use the MAME harddisk format (the sector size for
 HFDC harddisks is 256).  (BTW, early HFDC cards also included a tape interface
 which is not emulated.)
@@ -9143,7 +9143,7 @@ disk)). I have even managed to install the fun and games tape, and play pacman.
 
 History and Trivia:
 
-Texas Instruments has been building minicomputers since the late 1960s through
+Texas Instruments was a minicomputer manufacturer since the late 1960s through
 the 1980s.
 
 Around the summer of 1973, they started to design the TI990 as a successor to
