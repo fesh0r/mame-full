@@ -20,6 +20,7 @@
 #include "glmame.h"
 #include <math.h>
 #include "effect.h"
+#include <GL/glext.h>
 
 static int use_dirty = 0;
 
