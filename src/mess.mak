@@ -215,13 +215,13 @@ $(OBJ)/arcadia.a:  \
 
 $(OBJ)/sega.a:	   \
 	  $(OBJ)/mess/systems/saturn.o	 \
+	  $(OBJ)/mess/vidhrdw/genesis.o  \
+	  $(OBJ)/mess/machine/genesis.o  \
+	  $(OBJ)/mess/sndhrdw/genesis.o  \
+	  $(OBJ)/mess/systems/genesis.o  \
 #	  $(OBJ)/mess/vidhrdw/smsvdp.o	 \
 #	  $(OBJ)/mess/machine/sms.o	 \
 #	  $(OBJ)/mess/systems/sms.o	 \
-#	  $(OBJ)/mess/vidhrdw/genesis.o  \
-#	  $(OBJ)/mess/machine/genesis.o  \
-#	  $(OBJ)/mess/sndhrdw/genesis.o  \
-#	  $(OBJ)/mess/systems/genesis.o  \
 
 $(OBJ)/atari.a:    \
 	  $(OBJ)/mess/machine/atari.o	 \
