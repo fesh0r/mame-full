@@ -46,15 +46,15 @@ int d88image_floppy_init(int id)
 			return INIT_FAIL;
 		}
 		w->mode = 1;
-		w->image_file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
+		w->image_file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW);
 		if( !w->image_file )
 		{
 			w->mode = 0;
-			w->image_file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+			w->image_file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 			if( !w->image_file )
 			{
 				w->mode = 1;
-				w->image_file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW_CREATE);
+				w->image_file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW_CREATE);
 			}
 		}
 

@@ -419,7 +419,7 @@ static int pc1500_load_rom(int id)
 		return 0;
 	}
 	
-	if (!(cartfile = (FILE*)image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
+	if (!(cartfile = (FILE*)image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, 0)))
 	{
 		return 1;
 	}	

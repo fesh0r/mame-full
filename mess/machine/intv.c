@@ -360,7 +360,7 @@ int intv_load_rom_file(int id, int required)
 			printf("intvkbd legacy cartridge slot empty - ok\n");
 	}
 
-	if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
+	if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, 0)))
 	{
 		return INIT_FAIL;
 	}
@@ -536,7 +536,7 @@ int intvkbd_load_rom (int id)
 			return INIT_PASS;
 		}
 
-		if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
+		if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, 0)))
 		{
 			return INIT_FAIL;
 		}

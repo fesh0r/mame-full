@@ -448,8 +448,7 @@ int osd_faccess (const char *newfilename, int filetype)
 		pathc = samplepathc;
 	}
 	else
-	if (filetype == OSD_FILETYPE_IMAGE_R ||
-		filetype == OSD_FILETYPE_IMAGE_RW)
+	if (filetype == OSD_FILETYPE_IMAGE)
 	{
 		pathv = swpathv;
 		pathc = swpathc;
@@ -668,16 +667,7 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int openf
 		break;
 
 #ifdef MESS
-	case OSD_FILETYPE_IMAGE_R:
-		/* only for reading */
-		if (openforwrite)
-		{
-			logerror("osd_fopen: type %02x write not supported\n",filetype);
-			break;
-		}
-		/* pass through */
-
-	case OSD_FILETYPE_IMAGE_RW:
+	case OSD_FILETYPE_IMAGE:
 		{
 			extern char *renamed_image;	/* HACK */
 			static char *write_modes[] = {"rb","wb","r+b","r+b","w+b"};
@@ -705,7 +695,7 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int openf
 				pathv = swpathv;
 			}
 
-			LOG(("Open IMAGE_%s '%s' for %s\n", (filetype == OSD_FILETYPE_IMAGE_R) ? "R" : "RW", filename, game));
+			LOG(("Open IMAGE '%s' for %s\n", filename, game));
 
 			/* use the software paths */
 			for (indx = 0; indx < pathc && !found; indx++)

@@ -124,7 +124,7 @@ int a7800_init_cart (int id)
         return INIT_FAIL;
     }
 
-	if (!(cartfile = (FILE*)image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
+	if (!(cartfile = (FILE*)image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, 0)))
     {
 		logerror("A7800 - Unable to locate cartridge: %s\n",device_filename(IO_CARTSLOT,id) == NULL);
         return INIT_FAIL;

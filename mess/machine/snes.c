@@ -200,7 +200,7 @@ static int snes_verify_cart (UINT8 *magic)
 	unsigned char magic[4];
 	int retval=0,filePos;
 
-	if (!(romfile = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0))) return 0;
+	if (!(romfile = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, 0))) return 0;
 
 	osd_fseek (romfile,0,SEEK_END);
 	filePos=osd_ftell(romfile);
@@ -229,7 +229,7 @@ int snes_load_rom (int id)
 		return INIT_FAIL;
 	}
 
-	if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
+	if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, 0)))
 	{
 		return INIT_FAIL;
 	}

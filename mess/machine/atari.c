@@ -145,7 +145,7 @@ int a800_rom_init(int id)
 
 	/* load an optional monitor.rom */
 	filename = "monitor.rom";
-	file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_IMAGE_R, 0);
+	file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_IMAGE, 0);
 	if (file)
 	{
 		logerror("%s loading optional image '%s' to C000-CFFF\n", Machine->gamedrv->name, filename);
@@ -160,7 +160,7 @@ int a800_rom_init(int id)
 	/* load an optional (dual) cartridge (e.g. basic.rom) */
 	if( device_filename(IO_CARTSLOT,id) && strlen(device_filename(IO_CARTSLOT,id) ) )
 	{
-		file = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0);
+		file = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, 0);
 		if( file )
 		{
 			if( id > 0 )
@@ -245,7 +245,7 @@ int a800xl_load_rom(int id)
 	/* load an optional (dual) cartidge (e.g. basic.rom) */
 	if( device_filename(IO_CARTSLOT,id) && strlen(device_filename(IO_CARTSLOT,id)) )
 	{
-		file = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0);
+		file = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, 0);
 		if( file )
 		{
 			size = osd_fread(file, &mem[0x14000], 0x2000);
@@ -293,7 +293,7 @@ int a5200_rom_init(int id)
 	/* load an optional (dual) cartidge */
 	if( device_filename(IO_CARTSLOT,id) && strlen(device_filename(IO_CARTSLOT,id) ) )
 	{
-		file = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0);
+		file = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, 0);
 		if (file)
 		{
 			size = osd_fread(file, &mem[0x4000], 0x8000);
@@ -421,19 +421,19 @@ static void open_floppy(int id)
 			return;
 		/* try to open the image read/write */
 		drv[id].mode = 1;
-		file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
+		file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW);
 		if (!file)
 		{
 			/* if this fails, try to open it read only */
 			drv[id].mode = 0;
-			file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+			file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 		}
 		/* still failed, so create a new image */
 		if (!file)
 		{
 			/* if this fails, try to open it read only */
 			drv[id].mode = 1;
-			file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW_CREATE);
+			file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW_CREATE);
 			if( file )
 			{
 				int sector;

@@ -6,7 +6,7 @@ int cassette_init(int id, const struct cassette_args *args)
 	struct wave_args wa;
 
 	/* Try to open existing file */
-	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 	if (file) {
 		memset(&wa, 0, sizeof(&wa));
 
@@ -33,7 +33,7 @@ int cassette_init(int id, const struct cassette_args *args)
 	}
 
 	/* No file?  Can I create it? */
-	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW_CREATE);
+	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW_CREATE);
 	if (file) {
 		memset(&wa, 0, sizeof(&wa));
 

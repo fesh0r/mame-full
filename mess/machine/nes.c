@@ -1117,7 +1117,7 @@ int nes_init_cart (int id)
 		logerror ("battery name (minus extension): %s\n", battery_name);
 	}
 
-	if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
+	if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, 0)))
 	{
 		logerror("image_fopen failed in nes_init_cart.\n");
 			return INIT_FAIL;
@@ -1332,7 +1332,7 @@ int nes_load_disk (int id)
 			return INIT_PASS;
 	}
 
-	if (!(diskfile = image_fopen (IO_FLOPPY, id, OSD_FILETYPE_IMAGE_R, 0)))
+	if (!(diskfile = image_fopen (IO_FLOPPY, id, OSD_FILETYPE_IMAGE, 0)))
 	{
 		logerror("image_fopen failed in nes_load_disk for [%s].\n",device_filename(IO_FLOPPY,id));
 			return INIT_FAIL;

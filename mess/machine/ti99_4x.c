@@ -58,6 +58,7 @@ New (001004) :
 #include "sndhrdw/spchroms.h"
 #include "includes/basicdsk.h"
 #include <math.h>
+#include "cassette.h"
 
 #include "ti99_4x.h"
 
@@ -219,38 +220,10 @@ int ti99_floppy_init(int id)
 
 int ti99_cassette_init(int id)
 {
-	void *file;
-
-#if 1
-	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
-	if (file)
-	{
-		struct wave_args wa = {0,};
-		wa.file = file;
-		wa.display = 1;
-
-		if (device_open(IO_CASSETTE, id, 0, &wa))
-			return INIT_FAIL;
-
-		return INIT_PASS;
-	}
-#endif
-
-	/* HJB 02/18: no file, create a new file instead */
-	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_WRITE);
-	if (file)
-	{
-		struct wave_args wa = {0,};
-		wa.file = file;
-		wa.display = 1;
-		wa.smpfreq = 22050; /* maybe 11025 Hz would be sufficient? */
-		/* open in write mode */
-		if (device_open(IO_CASSETTE, id, 1, &wa))
-			return INIT_FAIL;
-		return INIT_PASS;
-	}
-
-	return INIT_PASS;
+	struct cassette_args args;
+	memset(&args, 0, sizeof(args));
+	args.create_smpfreq = 22050;	/* maybe 11025 Hz would be sufficient? */
+	return cassette_init(id, &args);
 }
 
 void ti99_cassette_exit(int id)
@@ -279,7 +252,7 @@ int ti99_load_rom(int id)
 
 	if (! slot_empty)
 	{
-		cartfile = osd_fopen(Machine->gamedrv->name, name, OSD_FILETYPE_IMAGE_R, 0);
+		cartfile = osd_fopen(Machine->gamedrv->name, name, OSD_FILETYPE_IMAGE, 0);
 		if (cartfile == NULL)
 		{
 			logerror("TI99 - Unable to locate cartridge: %s\n", name);

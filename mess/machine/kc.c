@@ -68,7 +68,7 @@ int kc_load(int type, int id, unsigned char **ptr)
 {
 	void *file;
 
-	file = image_fopen(type, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+	file = image_fopen(type, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 
 	if (file)
 	{
@@ -444,7 +444,7 @@ int kc_cassette_device_init(int id)
 	if (device_filename(IO_CASSETTE, id)==NULL)
 		return INIT_PASS;
 
-	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 	if (file)
 	{
 		struct wave_args wa = {0,};
@@ -458,7 +458,7 @@ int kc_cassette_device_init(int id)
 	}
 
 	/* HJB 02/18: no file, create a new file instead */
-	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_WRITE);
+	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_WRITE);
 	if (file)
 	{
 		struct wave_args wa = {0,};

@@ -39,7 +39,7 @@ int odyssey2_load_rom (int id)
 //    ROM = memory_region(REGION_CPU1);
     cartfile = NULL;
     logerror("ODYSSEY2 - Loading Image\n");
-    if (!(cartfile = (FILE*)image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
+    if (!(cartfile = (FILE*)image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, 0)))
     {
 	logerror("ODYSSEY2 - Unable to locate cartridge: %s\n",device_filename(IO_CARTSLOT,id) );
 	return 1;

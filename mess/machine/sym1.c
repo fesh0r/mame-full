@@ -138,7 +138,7 @@ int kim1_cassette_init(int id)
 	char buff[4];
 	void *file;
 
-	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, 0);
+	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, 0);
 	if (file)
 	{
 		UINT16 addr, size;

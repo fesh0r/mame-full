@@ -129,10 +129,10 @@ int cocovdk_floppy_init(int id)
 	{
 		return INIT_FAIL;
 	}
-	image_file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
+	image_file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW);
 	if( !image_file )
 	{
-		image_file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+		image_file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 		if( !image_file )
 		{
 			/* VDK creation not supported */

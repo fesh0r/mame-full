@@ -770,7 +770,7 @@ READ_HANDLER ( pc_HDC2_r ) { return pc_HDC_r(1, offset); }
  *************************************/
 int pc_harddisk_init(int id)
 {
-	pc_hdc_file[id] = image_fopen(IO_HARDDISK, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
+	pc_hdc_file[id] = image_fopen(IO_HARDDISK, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW);
 	return INIT_PASS;
 }
 

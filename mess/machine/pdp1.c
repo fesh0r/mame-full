@@ -30,7 +30,7 @@ int pdp1_load_rom (int id)
 	int i;
 
 	/* The spacewar! is mandatory for now. */
-	if (!(romfile = osd_fopen (Machine->gamedrv->name, "spacewar.bin",OSD_FILETYPE_IMAGE_R, 0)))
+	if (!(romfile = osd_fopen (Machine->gamedrv->name, "spacewar.bin",OSD_FILETYPE_IMAGE, 0)))
 	{
 		logerror("PDP1: can't find SPACEWAR.BIN\n");
 		return 1;

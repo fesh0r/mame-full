@@ -650,7 +650,7 @@ int amiga_fdc_init( int id ) {
 	memset( fdc_status[id].mfm, 0xaa, 544*2*11 );
 
 	fdc_status[id].disk_changed = 1;
-	fdc_status[id].f = image_fopen(IO_FLOPPY,id,OSD_FILETYPE_IMAGE_RW,0);
+	fdc_status[id].f = image_fopen(IO_FLOPPY,id,OSD_FILETYPE_IMAGE,0);
 	if ( fdc_status[id].f == NULL ) {
 		logerror("Could not open image %s\n", device_filename(IO_FLOPPY,id) );
 		return INIT_FAIL;

@@ -13,6 +13,7 @@
  *****************************************************************************/
 
 #include "includes/microtan.h"
+#include "cassette.h"
 
 #ifndef VERBOSE
 #define VERBOSE 0
@@ -442,36 +443,13 @@ WRITE_HANDLER ( microtan_bffx_w )
 
 int microtan_cassette_init(int id)
 {
-    void *file;
-    file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
-    if( file )
-    {
-        struct wave_args wa = {0,};
-        wa.file = file;
-        wa.display = 1;
-        wa.fill_wave = NULL;
-        wa.smpfreq = Machine->sample_rate;
-        wa.header_samples = 0;
-        wa.trailer_samples = 0;
-        wa.chunk_size = 1;
-        wa.chunk_samples = 8;
-        if( device_open(IO_CASSETTE,id,0,&wa) )
-            return INIT_FAIL;
-        return INIT_PASS;
-    }
-    file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW_CREATE);
-    if( file )
-    {
-        struct wave_args wa = {0,};
-        wa.file = file;
-        wa.display = 1;
-        wa.fill_wave = NULL;
-        wa.smpfreq = Machine->sample_rate;
-        if( device_open(IO_CASSETTE,id,1,&wa) )
-            return INIT_FAIL;
-        return INIT_PASS;
-    }
-    return INIT_PASS;
+	struct cassette_args args;
+	memset(&args, 0, sizeof(args));
+	args.chunk_size = 1;
+	args.chunk_samples = 8;
+	args.input_smpfreq = Machine->sample_rate;
+	args.create_smpfreq = Machine->sample_rate;
+	return cassette_init(id, &args);
 }
 
 void microtan_cassette_exit(int id)
@@ -509,7 +487,7 @@ int microtan_snapshot_init(int id)
 		return INIT_PASS;
 	}
 
-    file = image_fopen(IO_SNAPSHOT, id, OSD_FILETYPE_IMAGE_RW, 0);
+    file = image_fopen(IO_SNAPSHOT, id, OSD_FILETYPE_IMAGE, 0);
     if (file)
     {
         snapshot_size = osd_fsize(file);
@@ -713,7 +691,7 @@ int microtan_hexfile_init(int id)
 		return INIT_PASS;
 	}
 
-    file = image_fopen(IO_QUICKLOAD, id, OSD_FILETYPE_IMAGE_RW, 0);
+    file = image_fopen(IO_QUICKLOAD, id, OSD_FILETYPE_IMAGE, 0);
     if (file)
     {
         int size = osd_fsize(file);

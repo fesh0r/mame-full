@@ -786,7 +786,7 @@ int mz700_cassette_init(int id)
 {
 	void *file;
 
-    file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+    file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
     if( file )
 	{
 		struct wave_args wa = {0,};
@@ -815,7 +815,7 @@ int mz700_cassette_init(int id)
         return INIT_PASS;
 	}
 
-    file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW_CREATE);
+    file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW_CREATE);
 	if( file )
 	{
 		struct wave_args wa = {0,};

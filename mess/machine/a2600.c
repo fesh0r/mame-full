@@ -1012,7 +1012,7 @@ int a2600_load_rom(int id)
 
 	/* A cartridge isn't strictly mandatory, but it's recommended */
 	cartfile = NULL;
-	if (!(cartfile = (FILE*)image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
+	if (!(cartfile = (FILE*)image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, 0)))
 	{
 		return 1;
 	}

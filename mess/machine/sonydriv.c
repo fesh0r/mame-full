@@ -1300,10 +1300,10 @@ int sony_floppy_init(int id, int allowablesizes)
 	if (!device_filename(IO_FLOPPY,id))
 		return INIT_PASS;
 
-	f->fd = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
+	f->fd = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW);
 	if (!f->fd)
 	{
-		f->fd = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+		f->fd = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 		if (!f->fd)
 			goto error;
 		f->wp = 1;

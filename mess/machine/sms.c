@@ -208,7 +208,7 @@ int sms_init_cart(int id)
 	}
 
     /* Ensure filename was specified */
-    handle = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0);
+    handle = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, 0);
     if(handle == NULL)
     {
 		printf("Cartridge Name Required!\n");

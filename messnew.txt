@@ -36,6 +36,13 @@ Source Changes:
 
 - Removed extension renaming code. [Nate Woods]
 
+- Combined OSD_FILETYPE_IMAGE_R and OSD_FILETYPE_IMAGE_RW image load types
+  into OSD_FILETYPE_IMAGE. [Nate Woods]
+
+- Converted a few drivers (namely Amstrad, Atom, Exidy, Galaksija, Microbee,
+  Microtan, Sord, Spectrum, TI99) to use the new cassette loading APIs. [Nate
+  Woods]
+
 - On the images screen before emulation starts, only the base name of an image
   will be displayed (bug 34). [Nate Woods]
 

@@ -559,7 +559,7 @@ int wave_init(int id, const char *name)
 	void *file;
 	if( !name || strlen(name) == 0 )
 		return INIT_PASS;
-	file = osd_fopen(Machine->gamedrv->name, name, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+	file = osd_fopen(Machine->gamedrv->name, name, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 	if( file )
 	{
 		struct wave_args wa = {0,};

@@ -11,6 +11,7 @@
 #include "vidhrdw/generic.h"
 #include "includes/wd179x.h"
 #include "machine/mbee.h"
+#include "cassette.h"
 
 static UINT8 fdc_drv = 0;
 static UINT8 fdc_head = 0;
@@ -148,30 +149,10 @@ int mbee_interrupt(void)
 
 int mbee_cassette_init(int id)
 {
-	void *file;
-
-	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
-	if( file )
-	{
-		struct wave_args wa = {0,};
-		wa.file = file;
-		wa.display = 1;
-		if( device_open(IO_CASSETTE,id,0,&wa) )
-			return INIT_FAIL;
-        return INIT_PASS;
-	}
-	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW_CREATE);
-	if( file )
-    {
-		struct wave_args wa = {0,};
-		wa.file = file;
-		wa.display = 1;
-		wa.smpfreq = 11025;
-		if( device_open(IO_CASSETTE,id,1,&wa) )
-            return INIT_FAIL;
-		return INIT_PASS;
-    }
-	return INIT_PASS;
+	struct cassette_args args;
+	memset(&args, 0, sizeof(args));
+	args.create_smpfreq = 11025;
+	return cassette_init(id, &args);
 }
 
 void mbee_cassette_exit(int id)
@@ -190,7 +171,7 @@ int mbee_rom_load(int id)
 {
     void *file;
 
-	file = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+	file = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 	if( file )
 	{
 		int size = osd_fsize(file);

@@ -303,7 +303,7 @@ static int arcadia_init_cart(int id)
 	}
 
 	memset(rom, 0, 0x8000);
-	if (!(cartfile = (FILE*)image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
+	if (!(cartfile = (FILE*)image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, 0)))
 	{
 		logerror("%s not found\n",device_filename(IO_CARTSLOT,id));
 		return INIT_FAIL;

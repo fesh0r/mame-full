@@ -66,7 +66,7 @@ int vectrex_init_cart (int id)
 	 */
 	memset (memory_region(REGION_CPU1), 1, 0x8000);
 
-	cartfile = (FILE*)image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0);
+	cartfile = (FILE*)image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, 0);
 	if (cartfile)
 	{
 		osd_fread (cartfile, memory_region(REGION_CPU1), 0x8000);

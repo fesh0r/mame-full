@@ -29,6 +29,7 @@
 #include "includes/spectrum.h"
 #include "eventlst.h"
 #include "vidhrdw/border.h"
+#include "cassette.h"
 
 #ifndef MIN
 #define MIN(x,y) ((x)<(y)?(x):(y))
@@ -39,7 +40,7 @@ static unsigned long SnapshotDataSize = 0;
 static unsigned long TapePosition = 0;
 static void spectrum_setup_sna(unsigned char *pSnapshot, unsigned long SnapshotSize);
 static void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize);
-static int is48k_z80snapshot(unsigned char *pSnapshot, unsigned long SnapshotSize);
+//static int is48k_z80snapshot(unsigned char *pSnapshot, unsigned long SnapshotSize);
 static OPBASE_HANDLER(spectrum_opbaseoverride);
 static OPBASE_HANDLER(spectrum_tape_opbaseoverride);
 
@@ -88,7 +89,7 @@ int spectrum_snap_load(int id)
 {
 	void *file;
 
-	file = image_fopen(IO_SNAPSHOT, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+	file = image_fopen(IO_SNAPSHOT, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 
 	if (file)
 	{
@@ -960,6 +961,7 @@ void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize)
 int spectrum_cassette_init(int id)
 {
 	void *file;
+	struct cassette_args args;
 
 	if ((device_filename(IO_CASSETTE, id) != NULL) &&
 		!stricmp(device_filename(IO_CASSETTE, id) + strlen(device_filename(IO_CASSETTE, id) ) - 4, ".tap"))
@@ -967,7 +969,7 @@ int spectrum_cassette_init(int id)
 		int datasize;
 		unsigned char *data;
 
-		file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+		file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 		logerror(".TAP file found\n");
 		if (file)
 			datasize = osd_fsize(file);
@@ -997,38 +999,9 @@ int spectrum_cassette_init(int id)
 		return INIT_FAIL;
 	}
 
-	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
-	if (file)
-	{
-		struct wave_args wa =
-		{0,};
-
-		wa.file = file;
-		wa.display = 1;
-
-		if (device_open(IO_CASSETTE, id, 0, &wa))
-			return INIT_FAIL;
-
-		return INIT_PASS;
-	}
-
-	/* HJB 02/18: no file, create a new file instead */
-	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_WRITE);
-	if (file)
-	{
-		struct wave_args wa =
-		{0,};
-
-		wa.file = file;
-		wa.display = 1;
-		wa.smpfreq = 22050;				/* maybe 11025 Hz would be sufficient? */
-		/* open in write mode */
-		if (device_open(IO_CASSETTE, id, 1, &wa))
-			return INIT_FAIL;
-		return INIT_PASS;
-	}
-
-	return INIT_PASS;
+	memset(&args, 0, sizeof(args));
+	args.create_smpfreq = 22050;	/* maybe 11025 Hz would be sufficient? */
+	return cassette_init(id, &args);
 }
 
 void spectrum_cassette_exit(int id)
@@ -1060,7 +1033,7 @@ int spec_quick_init(int id)
 
 /*	quick.name = name; */
 
-	fp = image_fopen(IO_QUICKLOAD, id, OSD_FILETYPE_IMAGE_R, 0);
+	fp = image_fopen(IO_QUICKLOAD, id, OSD_FILETYPE_IMAGE, 0);
 	if (!fp)
 		return INIT_FAIL;
 
@@ -1105,7 +1078,7 @@ int spectrum_cart_load(int id)
 	void *file;
 
 	logerror("Trying to load cartridge!\n");
-	file = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+	file = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 	if (file)
 	{
 		int datasize;
@@ -1150,7 +1123,7 @@ int timex_cart_load(int id)
 
 	logerror ("Trying to load cart\n");
 
-	file = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+	file = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 	if (file==NULL)
 	{
 		logerror ("Error opening cart file\n");

@@ -173,7 +173,7 @@ int dragon_floppy_init(int id)
 		int heads;
 
 		diskKind[ id ] = DSK_BASIC;
-		file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_R, OSD_FOPEN_READ);
+		file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 		if (file) {
 			tracks = osd_fsize(file) / (18*256);
 			heads = (tracks > 80) ? 2 : 1;

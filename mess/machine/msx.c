@@ -113,7 +113,7 @@ int msx_load_rom (int id)
 		return 0;
 
     /* try to load it */
-    F = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0);
+    F = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, 0);
     if (!F) return 1;
     size = osd_fsize (F);
     if (size < 0x2000)
@@ -944,7 +944,7 @@ int msx_floppy_init (int id)
 	if (!device_filename(IO_FLOPPY,id) || !strlen(device_filename(IO_FLOPPY,id) ))
 		return 0;
 
-	f = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_R, OSD_FOPEN_READ);
+	f = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 	if (f)
 		{
 		size = osd_fsize (f);
@@ -1601,7 +1601,7 @@ int msx_cassette_init(int id)
 	if (!device_filename(IO_CASSETTE,id) || !strlen(device_filename(IO_CASSETTE,id) ))
 		return 0;
 
-    file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+    file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
     if( file )
     {
         struct wave_args wa = {0,};
@@ -1626,7 +1626,7 @@ int msx_cassette_init(int id)
 
 		return (ret ? INIT_FAIL : INIT_PASS);
     }
-    file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW,
+    file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE,
         OSD_FOPEN_RW_CREATE);
     if( file )
     {

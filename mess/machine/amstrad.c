@@ -26,6 +26,7 @@ rom/ram selection
 #include "machine/8255ppi.h"
 #include "includes/nec765.h"
 #include "includes/dsk.h"
+#include "cassette.h"
 
 void AmstradCPC_GA_Write(int);
 void AmstradCPC_SetUpperRom(int);
@@ -95,42 +96,10 @@ void amstrad_setup_machine(void)
 
 int amstrad_cassette_init(int id)
 {
-	void *file;
-
-	if (device_filename(IO_CASSETTE, id)==NULL)
-		return INIT_PASS;
-
-	/* filename specified */
-
-	/* attempt to open for reading */
-	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
-	if (file)
-	{
-		struct wave_args wa = {0,};
-		wa.file = file;
-		wa.display = 1;
-
-		if (device_open(IO_CASSETTE, id, 0, &wa))
-			return INIT_FAIL;
-
-		return INIT_PASS;
-	}
-
-	/* can't open it, attempt to open for writing */
-	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_WRITE);
-	if (file)
-	{
-		struct wave_args wa = {0,};
-		wa.file = file;
-		wa.display = 1;
-		wa.smpfreq = 22050; /* maybe 11025 Hz would be sufficient? */
-		/* open in write mode */
-        if (device_open(IO_CASSETTE, id, 1, &wa))
-            return INIT_FAIL;
-		return INIT_PASS;
-    }
-
-	return INIT_FAIL;
+	struct cassette_args args;
+	memset(&args, 0, sizeof(args));
+	args.create_smpfreq = 22050;	/* maybe 11025 Hz would be sufficient? */
+	return cassette_init(id, &args);
 }
 
 void amstrad_cassette_exit(int id)
@@ -284,7 +253,7 @@ int amstrad_load(int type, int id, unsigned char **ptr)
 {
 	void *file;
 
-	file = image_fopen(type, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+	file = image_fopen(type, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 
 	if (file)
 	{

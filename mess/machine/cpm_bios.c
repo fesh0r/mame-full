@@ -251,16 +251,16 @@ int cpm_init(int n, const char *ids[])
 		{
 			{
 				mode[d] = 1;
-				fp[d] = image_fopen(IO_FLOPPY, d, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
+				fp[d] = image_fopen(IO_FLOPPY, d, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW);
 				if( !fp[d] )
 				{
 					mode[d] = 0;
-					fp[d] = image_fopen(IO_FLOPPY, d, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+					fp[d] = image_fopen(IO_FLOPPY, d, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 				}
 				if( !fp[d] )
 				{
 					mode[d] = 1;
-					fp[d] = image_fopen(IO_FLOPPY, d, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_WRITE);
+					fp[d] = image_fopen(IO_FLOPPY, d, OSD_FILETYPE_IMAGE, OSD_FOPEN_WRITE);
 				}
 				if( !fp[d] )
 				{
@@ -271,7 +271,7 @@ int cpm_init(int n, const char *ids[])
 	}
 
 	/* create a file to receive list output (ie. PIP LST:=FILE.EXT) */
-	lp = osd_fopen(Machine->gamedrv->name, "cpm.lst", OSD_FILETYPE_IMAGE_RW, 1);
+	lp = osd_fopen(Machine->gamedrv->name, "cpm.lst", OSD_FILETYPE_IMAGE, 1);
 
 	cpm_jumptable();
 

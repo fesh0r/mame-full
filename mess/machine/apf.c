@@ -15,7 +15,7 @@ int apf_cassette_init(int id)
 {
 	void *file;
 
-	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 	if (file)
 	{
 		struct wave_args wa = {0,};
@@ -29,7 +29,7 @@ int apf_cassette_init(int id)
 	}
 
 	/* HJB 02/18: no file, create a new file instead */
-	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_WRITE);
+	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_WRITE);
 	if (file)
 	{
 		struct wave_args wa = {0,};

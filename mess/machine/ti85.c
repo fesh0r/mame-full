@@ -547,7 +547,7 @@ int ti85_load_snap(int id)
 {
 	void *file;
 
-	file = image_fopen(IO_SNAPSHOT, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+	file = image_fopen(IO_SNAPSHOT, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 
 	if (file)
 	{
@@ -794,7 +794,7 @@ int ti85_serial_init (int id)
 	ti85_free_serial_data_memory();
 	ti85_receive_serial (NULL,0);
 
-	file = image_fopen(IO_SERIAL, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+	file = image_fopen(IO_SERIAL, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 
 	if (file)
 	{
@@ -1375,7 +1375,7 @@ static void ti85_receive_variables (void)
 				variable_number = 0;
 				ti85_serial_status =  TI85_SEND_STOP;
 				sprintf (var_file_name, "%08d.85g", var_file_number);
-				var_file = osd_fopen(Machine->gamedrv->name, var_file_name, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW_CREATE);
+				var_file = osd_fopen(Machine->gamedrv->name, var_file_name, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW_CREATE);
 				if( var_file )
 				{
 					osd_fwrite(var_file, var_file_data, var_file_size);
@@ -1530,7 +1530,7 @@ static void ti85_receive_backup (void)
 					backup_file_data[0x42+0x06+backup_data_size[0]+backup_data_size[1]+backup_data_size[2]] = ti85_calculate_checksum(backup_file_data+0x37, 0x42+backup_data_size[0]+backup_data_size[1]+backup_data_size[2]+0x06-0x37)&0x00ff;
 					backup_file_data[0x42+0x06+backup_data_size[0]+backup_data_size[1]+backup_data_size[2]+0x01] = (ti85_calculate_checksum(backup_file_data+0x37, 0x42+backup_data_size[0]+backup_data_size[1]+backup_data_size[2]+0x06-0x37)&0xff00)>>8;
 					sprintf (backup_file_name, "%08d.85b", backup_file_number);
-					backup_file = osd_fopen(Machine->gamedrv->name, backup_file_name, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW_CREATE);
+					backup_file = osd_fopen(Machine->gamedrv->name, backup_file_name, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW_CREATE);
 					if( backup_file )
 					{
 						osd_fwrite(backup_file, backup_file_data, 0x42+0x06+backup_data_size[0]+backup_data_size[1]+backup_data_size[2]+0x02);
@@ -1600,7 +1600,7 @@ static void ti85_receive_screen (void)
 			{
 				ti85_convert_stream_to_data (ti85_receive_buffer, 1030*8, ti85_receive_data);
 				sprintf (image_file_name, "%08d.85i", image_file_number);
-				image_file = osd_fopen(Machine->gamedrv->name, image_file_name, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW_CREATE);
+				image_file = osd_fopen(Machine->gamedrv->name, image_file_name, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW_CREATE);
 				if( image_file )
 				{
 					image_file_data = malloc (0x49+1008);

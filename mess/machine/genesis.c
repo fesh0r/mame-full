@@ -101,7 +101,7 @@ int genesis_init_cart (int id)
     }
 	genesis_soundram = memory_region(REGION_CPU2);
 
-	romfile = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0);
+	romfile = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, 0);
 	if (!romfile)
     {
         printf("Genesis Requires Cartridge!\n");

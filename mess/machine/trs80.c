@@ -149,7 +149,7 @@ static void cas_copy_callback(int param)
 
 int trs80_cas_init(int id)
 {
-	void *file = image_fopen(IO_CASSETTE,id,OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+	void *file = image_fopen(IO_CASSETTE,id,OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 	if (file)
 	{
 		cas_size = osd_fsize(file);
@@ -248,7 +248,7 @@ static void cmd_copy_callback(int param)
 
 int trs80_cmd_init(int id)
 {
-	void *file = image_fopen(IO_QUICKLOAD,id,OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+	void *file = image_fopen(IO_QUICKLOAD,id,OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 	if (file)
 	{
 		cmd_size = osd_fsize(file);
@@ -291,7 +291,7 @@ int trs80_floppy_init(int id)
 
     if (id == 0)        /* first floppy? */
 	{
-		file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_R, OSD_FOPEN_READ);
+		file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 		if (file)
 		{
 
@@ -393,7 +393,7 @@ static void tape_put_byte(UINT8 value)
 				UINT8 zeroes[256] = {0,};
 
 				sprintf(filename, "basic%c.cas", tape_buffer[4]);
-				tape_put_file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
+				tape_put_file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW);
 				osd_fwrite(tape_put_file, zeroes, 256);
 				osd_fwrite(tape_put_file, tape_buffer, 8);
 			}
@@ -405,7 +405,7 @@ static void tape_put_byte(UINT8 value)
 				UINT8 zeroes[256] = {0,};
 
 				sprintf(filename, "%-6.6s.cas", tape_buffer+2);
-				tape_put_file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
+				tape_put_file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW);
 				osd_fwrite(tape_put_file, zeroes, 256);
 				osd_fwrite(tape_put_file, tape_buffer, 8);
 			}
@@ -486,7 +486,7 @@ static void tape_get_open(void)
 
 		sprintf(filename, "%-6.6s.cas", RAM + 0x41e8);
 		logerror("filename %s\n", filename);
-		tape_get_file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+		tape_get_file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 		tape_count = 0;
 	}
 }

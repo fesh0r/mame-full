@@ -564,7 +564,7 @@ static WRITE_HANDLER ( mtx_trap_write )
 
                                                                 filename[i + 1] = '\0';
 								logerror("%s\n", filename);
-                                                                if ((f = osd_fopen(Machine->gamedrv->name, filename,OSD_FILETYPE_IMAGE_RW,1)) != 0)
+                                                                if ((f = osd_fopen(Machine->gamedrv->name, filename,OSD_FILETYPE_IMAGE,1)) != 0)
 									{
                                                                                     osd_fwrite(f,mtx_savebuffer,mtx_saveindex);
                                                                                     osd_fclose(f);
@@ -588,7 +588,7 @@ static WRITE_HANDLER ( mtx_trap_write )
 								}
 								for(i=15; i>0 && filename[i] == 0x20;i--)
 								filename[i+1] = '\0';
-								if ((f = osd_fopen(Machine->gamedrv->name, filename,OSD_FILETYPE_IMAGE_R,0)) != 0)
+								if ((f = osd_fopen(Machine->gamedrv->name, filename,OSD_FILETYPE_IMAGE,0)) != 0)
 									{
 										filesize=osd_fsize(f);
                                                                                 mtx_loadindex = filesize;

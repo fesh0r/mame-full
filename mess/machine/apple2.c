@@ -93,7 +93,7 @@ int apple2_id_rom (int id)
 	UINT8 magic[4];
 	int retval;
 
-	if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0))) return 0;
+	if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, 0))) return 0;
 
 	retval = 0;
 	/* Verify the file is in Apple II format */

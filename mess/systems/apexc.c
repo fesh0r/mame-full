@@ -49,13 +49,13 @@ static int apexc_cylinder_init(int id)
 {
 	/* open file */
 	/* first try read/write mode */
-	apexc_cylinder.fd = image_fopen(IO_CYLINDER, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
+	apexc_cylinder.fd = image_fopen(IO_CYLINDER, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW);
 	if (apexc_cylinder.fd)
 		apexc_cylinder.writable = 1;
 	else
 	{	/* else try read-only mode */
 		apexc_cylinder.writable = 0;
-		apexc_cylinder.fd = image_fopen(IO_CYLINDER, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+		apexc_cylinder.fd = image_fopen(IO_CYLINDER, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 	}
 
 	if (apexc_cylinder.fd)
@@ -169,7 +169,7 @@ static int apexc_tape_init(int id)
 
 	/* open file */
 	/* unit 0 is read-only, unit 1 is write-only */
-	t->fd = image_fopen(IO_PUNCHTAPE, id, OSD_FILETYPE_IMAGE_RW,
+	t->fd = image_fopen(IO_PUNCHTAPE, id, OSD_FILETYPE_IMAGE,
 							(id==0) ? OSD_FOPEN_READ : OSD_FOPEN_WRITE);
 
 	return INIT_PASS;

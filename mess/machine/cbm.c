@@ -46,7 +46,7 @@ int cbm_quick_init (int id)
 
 	quick.specified = 1;
 
-	fp = (FILE*)image_fopen (IO_QUICKLOAD, id, OSD_FILETYPE_IMAGE_R, 0);
+	fp = (FILE*)image_fopen (IO_QUICKLOAD, id, OSD_FILETYPE_IMAGE, 0);
 	if (!fp)
 		return INIT_FAIL;
 
@@ -249,7 +249,7 @@ int cbm_rom_init(int id)
 
 	dev=cbm_rom_find_device();
 
-	fp = (FILE*)image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0);
+	fp = (FILE*)image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, 0);
 	if (!fp)
 	{
 		logerror("%s file not found\n", device_filename(IO_CARTSLOT,id));

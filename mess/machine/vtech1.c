@@ -79,7 +79,7 @@ static void common_init_machine(void)
 
 		memset(vtech1_fdc_data, 0, TRKSIZE_FM);
 
-        dos = osd_fopen(Machine->gamedrv->name, "vzdos.rom", OSD_FILETYPE_IMAGE_R, OSD_FOPEN_READ);
+        dos = osd_fopen(Machine->gamedrv->name, "vzdos.rom", OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 		if( dos )
         {
 			osd_fread(dos, &ROM[0x4000], 0x2000);
@@ -153,7 +153,7 @@ int vtech1_cassette_id(int id)
 	UINT8 buff[256];
     void *file;
 
-	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
     if( file )
     {
 		int i;
@@ -269,7 +269,7 @@ static int fill_wave(INT16 *buffer, int length, UINT8 *code)
 int vtech1_cassette_init(int id)
 {
 	void *file;
-	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 	if( file )
 	{
 		struct wave_args wa = {0,};
@@ -285,7 +285,7 @@ int vtech1_cassette_init(int id)
 			return INIT_FAIL;
 		return INIT_PASS;
     }
-	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW_CREATE);
+	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW_CREATE);
 	if( file )
     {
 		struct wave_args wa = {0,};
@@ -359,7 +359,7 @@ int vtech1_snapshot_id(int id)
     void *file;
 
 	logerror("VTECH snapshot_id\n");
-    file = image_fopen(IO_SNAPSHOT, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+    file = image_fopen(IO_SNAPSHOT, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
     if( file )
     {
         osd_fread(file, buff, sizeof(buff));
@@ -384,7 +384,7 @@ int vtech1_snapshot_init(int id)
 	void *file;
 
 	logerror("VTECH snapshot_init\n");
-    file = image_fopen(IO_SNAPSHOT, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+    file = image_fopen(IO_SNAPSHOT, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
     if( file )
 	{
 		vtech1_snapshot_size = osd_fsize(file);
@@ -417,7 +417,7 @@ int vtech1_floppy_id(int id)
     void *file;
     UINT8 buff[32];
 
-	file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+	file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
     if( file )
     {
         osd_fread(file, buff, sizeof(buff));
@@ -433,20 +433,20 @@ int vtech1_floppy_init(int id)
 {
 	/* first try to open existing image RW */
 	vtech1_fdc_wrprot[id] = 0x00;
-	vtech1_fdc_file[id] = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
+	vtech1_fdc_file[id] = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW);
 	/* failed? */
 	if( !vtech1_fdc_file[id] )
 	{
 		/* try to open existing image RO */
 		vtech1_fdc_wrprot[id] = 0x80;
-		vtech1_fdc_file[id] = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+		vtech1_fdc_file[id] = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 	}
 	/* failed? */
 	if( !vtech1_fdc_file[id] )
 	{
 		/* create new image RW */
 		vtech1_fdc_wrprot[id] = 0x00;
-		vtech1_fdc_file[id] = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW_CREATE);
+		vtech1_fdc_file[id] = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW_CREATE);
 	}
 	return INIT_PASS;
 }

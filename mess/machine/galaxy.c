@@ -11,6 +11,7 @@
 #include "driver.h"
 #include "cpu/z80/z80.h"
 #include "includes/galaxy.h"
+#include "cassette.h"
 
 #define	galaxy_NONE	0
 #define	galaxy_GAL	1
@@ -63,37 +64,10 @@ WRITE_HANDLER( galaxy_kbd_w )
 
 int galaxy_init_wav(int id)
 {
-	void *file;
-
-
-	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
-	if (file)
-	{
-		struct wave_args wa = {0,};
-
-		wa.file = file;
-		wa.display = 1;
-
-		if (device_open(IO_CASSETTE, id, 0, &wa)) return INIT_FAIL;
-
-		return INIT_PASS;
-	}
-
-	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_WRITE);
-	if (file)
-	{
-		struct wave_args wa = {0,};
-
-		wa.file = file;
-		wa.display = 1;
-		wa.smpfreq = 11025;
-
-		if (device_open(IO_CASSETTE, id, 1, &wa)) return INIT_FAIL;
-
-		return INIT_PASS;
-	}
-
-	return INIT_FAIL;
+	struct cassette_args args;
+	memset(&args, 0, sizeof(args));
+	args.create_smpfreq = 11025;
+	return cassette_init(id, &args);
 }
 
 void galaxy_exit_wav(int id)
@@ -106,7 +80,7 @@ int galaxy_load_snap(int id)
 	void *file;
 
 	logerror("galaxy_load_gal\n");
-	file = image_fopen(IO_SNAPSHOT, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+	file = image_fopen(IO_SNAPSHOT, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 
 	if (file)
 	{

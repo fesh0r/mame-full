@@ -109,7 +109,7 @@ int apple2_floppy_init(int id)
 	a2_drives[id].bytepos = 0;
 	a2_drives[id].trackpos = 0;
 
-	f = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+	f = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 	if (f==NULL)
 	{
 		logerror("Couldn't open image.\n");

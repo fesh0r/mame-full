@@ -41,7 +41,7 @@ int coleco_init_cart (int id)
 	}
 
 	/* Load the specified Cartridge File */
-	if (!(cartfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
+	if (!(cartfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, 0)))
 	{
 		logerror("Coleco - Unable to locate cartridge: %s\n",device_filename(IO_CARTSLOT,id) );
 		return INIT_FAIL;

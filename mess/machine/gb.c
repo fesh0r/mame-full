@@ -490,7 +490,7 @@ int gb_load_rom (int id)
 	memset (ROM, 0, 0x10000);
 
 	/* FIXME should check first if a file is given, should give a more clear error */
-	if (!(F = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, OSD_FOPEN_READ)))
+	if (!(F = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ)))
 	{
 		logerror("image_fopen failed in gb_load_rom.\n");
 		return 1;
@@ -507,7 +507,7 @@ int gb_load_rom (int id)
 	osd_fclose (F);
 
 	/* FIXME should check first if a file is given, should give a more clear error */
-	if (!(F = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, OSD_FOPEN_READ)))
+	if (!(F = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ)))
 	{
 		logerror("image_fopen failed in gb_load_rom.\n");
         return 1;

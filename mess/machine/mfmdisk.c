@@ -234,7 +234,7 @@ int	mfm_disk_floppy_id(int id)
 	int result = 0;
 
 	/* open file and determine image geometry */
-	file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+	file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 
 	if (file)
 	{
@@ -296,7 +296,7 @@ static int mfm_disk_load(int type, int id, unsigned char **ptr)
 {
 	void *file;
 
-	file = image_fopen(type, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+	file = image_fopen(type, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 
 	if (file)
 	{

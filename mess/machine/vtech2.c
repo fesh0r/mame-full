@@ -358,7 +358,7 @@ int laser_rom_init(int id)
 	if (device_filename(IO_CARTSLOT,id) == NULL)
 		return INIT_PASS;
 
-	file = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+	file = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
     if( file )
     {
 		size = osd_fread(file, &mem[0x30000], 0x10000);
@@ -522,7 +522,7 @@ int laser_cassette_init(int id)
 	if (device_filename(IO_CASSETTE,id) == NULL)
 		return INIT_PASS;
 
-	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 	if( file )
 	{
 		struct wave_args wa = {0,};
@@ -538,7 +538,7 @@ int laser_cassette_init(int id)
 			return INIT_FAIL;
 		return INIT_PASS;
     }
-	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW_CREATE);
+	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW_CREATE);
 	if( file )
     {
 		struct wave_args wa = {0,};
@@ -573,7 +573,7 @@ int laser_floppy_init(int id)
 	else
 		flop_specified[id] = 1;
 
-	file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+	file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
     if( file )
     {
         osd_fread(file, buff, sizeof(buff));

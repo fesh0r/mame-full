@@ -27,7 +27,7 @@ int pce_load_rom(int id)
 	logerror("*** pce_load_rom : %s\n", device_filename(IO_CARTSLOT,id));
 
     /* open file to get size */
-	fp = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0);
+	fp = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, 0);
     if(!fp) return 1;
 	if( new_memory_region(REGION_CPU1,PCE_ROM_MAXSIZE,0) )
 		return 1;

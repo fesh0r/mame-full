@@ -1843,7 +1843,7 @@ static int atarist_basic_floppy_init(int id)
 	if (basicdsk_floppy_init(id)==INIT_PASS)
 	{
 		/* Figure out correct disk format, try standard formats first */
-		file=image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+		file=image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 		if (file) {
 			int s=osd_fsize(file),i,f=0;
 			int table[][4]={
@@ -1905,7 +1905,7 @@ int atarist_load(int type, int id, unsigned char **ptr)
 {
 	void *file;
 
-	file = image_fopen(type, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+	file = image_fopen(type, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 
 	if (file)
 	{

@@ -1401,7 +1401,7 @@ int oric_cassette_init(int id)
 		return INIT_PASS;
 
 
-	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 	if( file )
 	{
 		int oric_tap_size;
@@ -1471,7 +1471,7 @@ int oric_cassette_init(int id)
 		}
 	}
 
-	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW_CREATE);
+	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW_CREATE);
 	if( file )
     {
 		memset(&wa, 0, sizeof(&wa));
@@ -1494,7 +1494,7 @@ int oric_cassette_init(int id)
 {
 	void *file;
 
-	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 	if (file)
 	{
 		struct wave_args wa = {0,};
@@ -1508,7 +1508,7 @@ int oric_cassette_init(int id)
 	}
 
 	/* HJB 02/18: no file, create a new file instead */
-	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_WRITE);
+	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_WRITE);
 	if (file)
 	{
 		struct wave_args wa = {0,};

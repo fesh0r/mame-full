@@ -135,9 +135,9 @@ static OPBASE_HANDLER (opbaseoverride)
 				logerror("failed to allocate 64K buff\n");
 				return address;
 			}
-			cmd = image_fopen(IO_CASSETTE, 0, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+			cmd = image_fopen(IO_CASSETTE, 0, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 			if( !cmd )
-				  cmd = image_fopen(IO_SNAPSHOT, 0, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+				  cmd = image_fopen(IO_SNAPSHOT, 0, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 			if( !cmd )
 			{
 				logerror("failed to open '%s'\n", device_filename(IO_CASSETTE,0));
@@ -380,7 +380,7 @@ int cgenie_floppy_init(int id)
 		return INIT_FAIL;
 
 	/* open file and determine image geometry */
-	file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+	file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 
 	if (file)
 	{
@@ -480,7 +480,7 @@ int cgenie_rom_load(int id)
 	memset(&ROM[0x4000], 0xff, 0xc000);
 
 	filename = "newe000.rom";
-	rom = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_IMAGE_R, 0);
+	rom = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_IMAGE, 0);
 	if( rom )
 	{
 		logerror("%s found '%s' ROM\n", Machine->gamedrv->name, filename);
@@ -523,7 +523,7 @@ static void tape_put_byte(UINT8 value)
 				sprintf(tape_name, "%-6.6s.cas", tape_buffer + 2);
 			else
 				strcpy(tape_name, "unknown.cas");
-			osd_fopen(Machine->gamedrv->name, tape_name, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_WRITE);
+			osd_fopen(Machine->gamedrv->name, tape_name, OSD_FILETYPE_IMAGE, OSD_FOPEN_WRITE);
 			if( tape_put_file )
 				osd_fwrite(tape_put_file, tape_buffer, 9);
 		}
@@ -759,7 +759,7 @@ static void tape_get_open(void)
 		if (tape_name[0] != ' ')
 		{
 			logerror("tape_get_open '%s'\n", tape_name);
-			tape_get_file = osd_fopen(Machine->gamedrv->name, tape_name, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+			tape_get_file = osd_fopen(Machine->gamedrv->name, tape_name, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 		}
 		if( tape_get_file )
 		{

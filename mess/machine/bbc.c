@@ -1081,7 +1081,7 @@ int bbcb_load_rom(int id)
 
 	if (device_filename(IO_CARTSLOT,id)==NULL) return 0;
 
-	fp = (FILE*)image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0);
+	fp = (FILE*)image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, 0);
 
 	if (!fp)
 	{

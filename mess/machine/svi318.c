@@ -53,7 +53,7 @@ int svi318_load_rom (int id)
 		return INIT_PASS;
 	}
 
-	f = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0);
+	f = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, 0);
 	if (f)
 	{
 		p = malloc (0x8000);
@@ -618,7 +618,7 @@ int svi318_cassette_init(int id)
 		return INIT_PASS;
 	}
 
-    file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+    file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
     if( file )
     	{
         struct wave_args wa = {0,};
@@ -643,7 +643,7 @@ int svi318_cassette_init(int id)
 
 		return (ret ? INIT_FAIL : INIT_PASS);
     	}
-    file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW,
+    file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE,
         OSD_FOPEN_RW_CREATE);
     if( file )
     	{
