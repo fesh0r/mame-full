@@ -437,6 +437,7 @@ void atom_8255_portc_w (int offset, int data)
 	atom_8255_portc = data;
 	speaker_level_w(0, (data & 0x04) >> 2);
 
+	m6847_css_w(0,(data & 0x08));
 /*	logerror("8255: Write port c, %02x\n", data); */
 }
 
@@ -531,7 +532,7 @@ static void atom_eprom_box_refresh(void)
     unsigned char *eprom_data;
 
 	/* get address of eprom data */
-	eprom_data = memory_region(REGION_CPU1) + (selected_eprom<<12);
+	eprom_data = memory_region(REGION_CPU1) + 0x010000 + (selected_eprom<<12);
 	/* set bank address */
 	cpu_setbank(1, eprom_data);
 }
