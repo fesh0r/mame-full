@@ -65,8 +65,11 @@ static WRITE16_HANDLER ( ti99_ww_wspeech );
 static void tms9901_interrupt_callback(int intreq, int ic);
 static int ti99_R9901_0(int offset);
 static int ti99_R9901_1(int offset);
+static int ti99_R9901_2(int offset);
 static int ti99_R9901_3(int offset);
 
+static void ti99_handset_set_ack(int offset, int data);
+static void ti99_handset_task(void);
 static void ti99_KeyC2(int offset, int data);
 static void ti99_KeyC1(int offset, int data);
 static void ti99_KeyC0(int offset, int data);
@@ -114,22 +117,24 @@ static fdc_kind_t fdc_kind;
 static char has_evpc;
 /* TRUE if rs232 card present */
 static char has_rs232;
+/* TRUE if ti99/4 IR remote handset present */
+static char has_handset;
 
 
 /* tms9901 setup */
 static const tms9901reset_param tms9901reset_param_ti99 =
 {
-	TMS9901_INT1 | TMS9901_INT2,	/* only input pins whose state is always known */
+	TMS9901_INT1 | TMS9901_INT2 | TMS9901_INTC,	/* only input pins whose state is always known */
 
 	{	/* read handlers */
 		ti99_R9901_0,
 		ti99_R9901_1,
-		NULL,
+		ti99_R9901_2,
 		ti99_R9901_3
 	},
 
 	{	/* write handlers */
-		NULL,
+		ti99_handset_set_ack,
 		NULL,
 		ti99_KeyC2,
 		ti99_KeyC1,
@@ -152,6 +157,16 @@ static const tms9901reset_param tms9901reset_param_ti99 =
 
 	/* clock rate = 3MHz */
 	3000000.
+};
+
+/* handset interface */
+static int handset_buf;
+static int handset_buflen;
+static int handset_clock;
+static int handset_ack;
+enum
+{
+	max_handsets = 4
 };
 
 /* keyboard interface */
@@ -585,6 +600,13 @@ void machine_init_ti99(void)
 	KeyCol = 0;
 	AlphaLockLine = 0;
 
+	/* reset handset */
+	handset_buf = 0;
+	handset_buflen = 0;
+	handset_clock = 0;
+	handset_ack = 0;
+	tms9901_set_single_int(0, 12, 0);
+
 	/* read config */
 	if (ti99_model == model_99_4p)
 		xRAM_kind = xRAM_kind_99_4p_1Mb;	/* hack */
@@ -593,6 +615,7 @@ void machine_init_ti99(void)
 	has_speech = (readinputport(input_port_config) >> config_speech_bit) & config_speech_mask;
 	fdc_kind = (readinputport(input_port_config) >> config_fdc_bit) & config_fdc_mask;
 	has_rs232 = (readinputport(input_port_config) >> config_rs232_bit) & config_rs232_mask;
+	has_handset = (ti99_model == model_99_4) && ((readinputport(input_port_config) >> config_handsets_bit) & config_handsets_mask);
 
 	/* set up optional expansion hardware */
 	ti99_exp_init();
@@ -687,6 +710,8 @@ int video_start_ti99_4ev(void)
 void ti99_vblank_interrupt(void)
 {
 	TMS9928A_interrupt();
+	if (has_handset)
+		ti99_handset_task();
 }
 
 void ti99_4ev_hblank_interrupt(void)
@@ -1066,6 +1091,151 @@ WRITE16_HANDLER ( ti99_ww_wgpl )
 }
 
 
+/*===========================================================================*/
+/*
+	Handset support (TI99/4 only)
+
+	The ti99/4 was intended to support some so-called "IR remote handsets".
+	This feature was canceled at the last minute (reportedly ten minutes before
+	the introductory press conference in June 1979), but the first thousands of
+	99/4 units had the required port, and the support code was seemingly not
+	deleted from ROMs until the introduction of the ti99/4a in 1981.  You could
+	connect up to 4 20-key keypads, and up to 4 joysticks with a maximum
+	resolution of 15 levels on each axis.
+
+	The keyboard DSR was able to couple two 20-key keypads together to emulate
+	a full 40-key keyboard.  Keyboard modes 0, 1 and 2 would select either the
+	console keyboard with its two wired remote controllers (i.e. joysticks), or
+	remote handsets 1 and 2 with their associated IR remote controllers (i.e.
+	joysticks), according to which was currently active.
+*/
+
+static int ti99_handset_poll_bus(void)
+{
+	return (has_handset) ? (handset_buf & 0xf) : 0;
+}
+
+static void ti99_handset_ack_callback(int dummy)
+{
+	handset_clock = ! handset_clock;
+	handset_buf >>= 4;
+	handset_buflen--;
+	tms9901_set_single_int(0, 12, 0);
+
+	if (handset_buflen == 1)
+	{
+		/* Unless I am missing something, the third and last nybble of the
+		message is not acknowledged by the DSR in any way, and the first nybble
+		of next message is not requested for either, so we need to decide on
+		our own when we can post a new event.  Currently, we wait for 1000us
+		after the DSR acknowledges the second nybble. */
+		timer_set(TIME_IN_USEC(1000), 0, ti99_handset_ack_callback);
+	}
+
+	if (handset_buflen == 0)
+		/* See if we need to post a new event */
+		ti99_handset_task();
+}
+
+static void ti99_handset_set_ack(int offset, int data)
+{
+	if (has_handset && handset_buflen && (data != handset_ack))
+	{
+		handset_ack = data;
+		if (data == handset_clock)
+			/* I don't know what the real delay is, but 30us apears to be enough */
+			timer_set(TIME_IN_USEC(30), 0, ti99_handset_ack_callback);
+	}
+}
+
+static int ti99_handset_poll_joystick(int num)
+{
+	static UINT8 previous_joy[max_handsets];
+	UINT8 current_joy;
+	int current_joy_x, current_joy_y;
+	int message;
+
+	/* read joystick position */
+	current_joy_x = readinputport(input_port_IR_joysticks+2*num);
+	current_joy_y = readinputport(input_port_IR_joysticks+2*num+1);
+	/* compare with last saved position */
+	current_joy = current_joy_x | (current_joy_y << 4);
+	if (current_joy != previous_joy[num])
+	{
+		/* save position */
+		previous_joy[num] = current_joy;
+
+		/* transform position to signed quantity */
+		current_joy_x -= 7;
+		current_joy_y -= 7;
+
+		message = 0;
+
+		/* set sign */
+		/* note that we set the sign if the joystick position is 0 to work
+		around a bug in the ti99/4 ROMs */
+		if (current_joy_x <= 0)
+		{
+			message |= 0x040;
+			current_joy_x = - current_joy_x;
+		}
+
+		if (current_joy_y <= 0)
+		{
+			message |= 0x400;
+			current_joy_y = - current_joy_y;
+		}
+
+		/* convert absolute values to Gray code and insert in message */
+		if (current_joy_x & 4)
+			current_joy_x ^= 3;
+		if (current_joy_x & 2)
+			current_joy_x ^= 1;
+		message |= current_joy_x << 3;
+
+		if (current_joy_y & 4)
+			current_joy_y ^= 3;
+		if (current_joy_y & 2)
+			current_joy_y ^= 1;
+		message |= current_joy_y << 7;
+
+		/* set joystick address */
+		message |= (num << 1) | 0x1;
+
+		/* post message and assert interrupt */
+		handset_clock = 1;
+		handset_buf = ~message;
+		handset_buflen = 3;
+		tms9901_set_single_int(0, 12, 1);
+
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
+static void ti99_handset_task(void)
+{
+	int i;
+
+	if (handset_buflen == 0)
+	{	/* poll every handset */
+		for (i=0; i<max_handsets; i++)
+			if (ti99_handset_poll_joystick(i))
+				return;
+	}
+	else if (handset_buflen == 3)
+	{	/* update messages after they have been posted */
+		if (handset_buf & 1)
+		{	/* keyboard */
+		}
+		else
+		{	/* joystick */
+			ti99_handset_poll_joystick((~ (handset_buf >> 1)) & 0x3);
+		}
+	}
+}
+
 
 /*===========================================================================*/
 /*
@@ -1147,12 +1317,18 @@ static int ti99_R9901_0(int offset)
 {
 	int answer;
 
-	answer = (readinputport(input_port_keyboard + KeyCol) << 3) & 0xF8;
 
-	if ((ti99_model == model_99_4a) || (ti99_model == model_99_4p))
+	if ((ti99_model == model_99_4) && (KeyCol == 7))
+		answer = ti99_handset_poll_bus() << 3;
+	else
 	{
-		if (! AlphaLockLine)
-			answer &= ~ (readinputport(input_port_caps_lock) << 3);
+		answer = (readinputport(input_port_keyboard + KeyCol) << 3) & 0xF8;
+
+		if ((ti99_model == model_99_4a) || (ti99_model == model_99_4p))
+		{
+			if (! AlphaLockLine)
+				answer &= ~ (readinputport(input_port_caps_lock) << 3);
+		}
 	}
 
 	return (answer);
@@ -1164,22 +1340,31 @@ static int ti99_R9901_0(int offset)
 	signification:
 	 bit 0-2: keyboard status bits 5 to 7
 	 bit 3: weird, not emulated
-	 bit 4: IR handset interrupt (not emulated)
+	 (bit 4: IR remote handset interrupt)
 	 bit 5-7: weird, not emulated
 */
 static int ti99_R9901_1(int offset)
 {
-	return (readinputport(input_port_keyboard + KeyCol) >> 5) & 0x07;
+	int answer;
+
+
+	if ((ti99_model == model_99_4) && (KeyCol == 7))
+		answer = 0;
+	else
+		answer = (readinputport(input_port_keyboard + KeyCol) >> 5) & 0x07;
+
+	return answer;
 }
 
 /*
 	Read pins P0-P7 of TI99's 9901.
-	Nothing is connected !
+
+	 bit 1: handset data clock pin
 */
-/*static int ti99_R9901_2(int offset)
+static int ti99_R9901_2(int offset)
 {
-	return 0;
-}*/
+	return (has_handset && handset_clock) ? 2 : 0;
+}
 
 /*
 	Read pins P8-P15 of TI99's 9901.
@@ -1189,7 +1374,12 @@ static int ti99_R9901_1(int offset)
 */
 static int ti99_R9901_3(int offset)
 {
-	int answer = 4;	/* pull on IR handset interrupt to avoid spurious interrupts */
+	int answer;
+
+	if (has_handset && (handset_buflen == 3))
+		answer = 0;
+	else
+		answer = 4;	/* on systems without handset, the pin is pulled up to avoid spurious interrupts */
 
 	/* we don't take CS2 into account, as CS2 is a write-only unit */
 	if (device_input(IO_CASSETTE, 0) > 0)
