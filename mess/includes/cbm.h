@@ -64,6 +64,7 @@ void *cbm_memset16 (void *dest, int value, size_t size);
 #define DBG_LOG(n,m,a)
 #endif
 
+#if 0
 #ifndef __cplusplus
 typedef int bool;
 #endif
@@ -73,6 +74,7 @@ typedef int bool;
 #endif
 #ifndef false
 #define false 0
+#endif
 #endif
 
 void cbm_quick_exit (int id);

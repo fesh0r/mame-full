@@ -24,7 +24,7 @@
 
 #include "lh5801.h"
 
-typedef int bool;
+//typedef int bool;
 
 #define VERBOSE 0
 

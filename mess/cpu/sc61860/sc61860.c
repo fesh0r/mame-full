@@ -27,7 +27,7 @@
 #include "sc61860.h"
 #include "sc.h"
 
-typedef int bool;
+//typedef int bool;
 
 #define VERBOSE 0
 

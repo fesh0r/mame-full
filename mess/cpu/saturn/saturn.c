@@ -27,7 +27,7 @@
 #include "saturn.h"
 #include "sat.h"
 
-typedef int bool;
+//typedef int bool;
 
 #define R0 0
 #define R1 1

@@ -22,7 +22,7 @@
 
 #include "cdp1802.h"
 
-typedef int bool;
+//typedef int bool;
 
 #define VERBOSE 0
 
