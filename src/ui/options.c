@@ -301,6 +301,7 @@ static REG_OPTION global_game_options[] =
 {
 	{"ShowDisclaimer",     "show_disclaimer",    RO_BOOL,    &settings.show_disclaimer,  0, 0},
 	{"ShowGameInfo",       "show_game_info",     RO_BOOL,    &settings.show_gameinfo,    0, 0},
+	{"high_priority",      "high_priority",      RO_BOOL,    &settings.high_priority,    0, 0},
 
 	{"Language",           "language",           RO_STRING,  &settings.language,         0, 0},
 	{"FlyerDir",           "flyer_directory",    RO_STRING,  &settings.flyerdir,         0, 0},
@@ -399,7 +400,7 @@ void OptionsInit()
 	settings.area.width  = 640;
 	settings.area.height = 400;
 	settings.windowstate = 1;
-	settings.splitter[0] = 150;
+	settings.splitter[0] = 152;
 	settings.splitter[1] = 362;
 #ifdef MESS
 	/* an algorithm to adjust for the fact that we need a larger window for the
@@ -470,6 +471,7 @@ void OptionsInit()
 
 	settings.show_disclaimer = TRUE;
 	settings.show_gameinfo = TRUE;
+	settings.high_priority = FALSE;
 
 	/* video */
 	global.autoframeskip     = TRUE;
@@ -540,9 +542,8 @@ void OptionsInit()
 	global.mame_debug        = FALSE;
 	global.errorlog          = FALSE;
 	global.sleep             = FALSE;
-	global.old_timing        = FALSE;
-	global.leds				 = TRUE;
-
+	global.old_timing        = TRUE;
+	global.leds				 = FALSE;
 #ifdef MESS
 	memset(global.extra_software_paths, '\0', sizeof(global.extra_software_paths));
 	global.use_new_ui = TRUE;
@@ -794,6 +795,16 @@ void SetShowGameInfo(BOOL show_gameinfo)
 BOOL GetShowGameInfo(void)
 {
 	return settings.show_gameinfo;
+}
+
+void SetHighPriority(BOOL high_priority)
+{
+	settings.high_priority = high_priority;
+}
+
+BOOL GetHighPriority(void)
+{
+	return settings.high_priority;
 }
 
 void SetRandomBackground(BOOL random_bg)
@@ -2000,7 +2011,9 @@ static void LoadGameOptions(int driver_index)
 	CopyGameOptions(&global,&gOpts);
 	if (LoadOptions(buffer,&game_options[driver_index],FALSE))
 	{
+		// successfully loaded
 		game_options[driver_index] = gOpts;
+		game_variables[driver_index].use_default = FALSE;
 	}
 	else
 	{
@@ -2155,7 +2168,10 @@ void SaveGameOptions(int driver_index)
 		for (i=0;i<NUM_GAME_OPTIONS;i++)
 		{
 			if (IsOptionEqual(i,&game_options[driver_index],&global) == FALSE)
+			{
 				options_different = TRUE;
+			}
+
 		}
 	}
 
@@ -2203,10 +2219,13 @@ void SaveDefaultOptions(void)
 	{
 		fprintf(fptr,"### " DEFAULT_OPTIONS_INI_FILENAME " ###\n\n");
 		
-		fprintf(fptr,"### global-only options ###\n\n");
+		if (save_gui_settings)
+		{
+			fprintf(fptr,"### global-only options ###\n\n");
 		
-		for (i=0;i<NUM_GLOBAL_GAME_OPTIONS;i++)
-			WriteOptionToFile(fptr,&global_game_options[i]);
+			for (i=0;i<NUM_GLOBAL_GAME_OPTIONS;i++)
+				WriteOptionToFile(fptr,&global_game_options[i]);
+		}
 
 		if (save_default_options)
 		{

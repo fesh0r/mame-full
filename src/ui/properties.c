@@ -19,7 +19,7 @@
     Created 8/29/98 by Mike Haaland (mhaaland@hypertech.com)
 
 ***************************************************************************/
-#define RED_TEST
+// #define RED_TEST
 
 #define WIN32_LEAN_AND_MEAN
 #define NONAMELESSUNION 1
@@ -258,6 +258,7 @@ static DWORD dwHelpIDs[] =
 	IDC_RANDOM_BG,          HIDC_RANDOM_BG,
 	IDC_SHOW_DISCLAIMER,    HIDC_SHOW_DISCLAIMER,
 	IDC_SHOW_GAME_INFO,     HIDC_SHOW_GAME_INFO,
+	IDC_HIGH_PRIORITY,      HIDC_HIGH_PRIORITY,
 
 	0,                      0
 };
@@ -725,13 +726,12 @@ static INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPAR
 		EnableWindow(GetDlgItem(hDlg, IDC_USE_DEFAULT), TRUE);
 		PropSheet_Changed(GetParent(hDlg), hDlg);
 
-#ifdef RED_TEST
 		// make sure everything's copied over, to determine what's changed
 		PropToOptions(hDlg,pGameOpts);
 		ReadControls(hDlg);
 		// redraw it, it might be a new color now
 		InvalidateRect((HWND)lParam,NULL,TRUE);
-#endif
+
 		break;
 
 	case WM_COMMAND:
@@ -877,14 +877,12 @@ static INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPAR
 			}
 			SetPropEnabledControls(hDlg);
 
-#ifdef RED_TEST
 			// make sure everything's copied over, to determine what's changed
 			PropToOptions(hDlg, pGameOpts);
 			ReadControls(hDlg);
 
 			// redraw it, it might be a new color now
 			InvalidateRect(GetDlgItem(hDlg,wID),NULL,FALSE);
-#endif
 
 		}
 		break;

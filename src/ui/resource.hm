@@ -32,6 +32,7 @@
 #define HIDC_FLIPY                      0x809a0409    // IDD_PROP_DISPLAY
 #define HIDC_FRAMESKIP                  0x809c03f4    // IDD_PROP_ADVANCED
 #define HIDC_GAMMA                      0x809a03ff    // IDD_PROP_DISPLAY
+#define HIDC_HIGH_PRIORITY              0x80ad049e    // IDD_INTERFACE_OPTIONS
 #define HIDC_HISTORY                    0x806504cb    // IDD_MAIN
 #define HIDC_HWSTRETCH                  0x809c04dc    // IDD_PROP_ADVANCED
 #define HIDC_INTENSITY                  0x809f0428    // IDD_PROP_VECTOR

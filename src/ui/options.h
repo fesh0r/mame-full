@@ -204,19 +204,19 @@ typedef struct
 
 typedef struct
 {
-	INT      folder_id;
-	BOOL     view;
-	BOOL     show_folderlist;
-	BOOL     show_toolbar;
-	BOOL     show_statusbar;
-	BOOL     show_screenshot;
-	BOOL     show_tabctrl;
-	int      show_pict_type;
-	BOOL     game_check;        /* Startup GameCheck */
-	BOOL     version_check;     /* Version mismatch warings */
-	BOOL     use_joygui;
-	BOOL     broadcast;
-	BOOL     random_bg;
+    INT      folder_id;
+    BOOL     view;
+    BOOL     show_folderlist;
+    BOOL     show_toolbar;
+    BOOL     show_statusbar;
+    BOOL     show_screenshot;
+    BOOL     show_tabctrl;
+    int      show_pict_type;
+    BOOL     game_check;        /* Startup GameCheck */
+    BOOL     version_check;     /* Version mismatch warings */
+    BOOL     use_joygui;
+    BOOL     broadcast;
+    BOOL     random_bg;
     char     *default_game;
 #ifdef MESS
 	char     *default_software;
@@ -229,16 +229,17 @@ typedef struct
 	int      mess_column_order[MESS_COLUMN_MAX];
 	int      mess_column_shown[MESS_COLUMN_MAX];
 #endif
-	int      sort_column;
-	BOOL     sort_reverse;
-	AREA     area;
-	UINT     windowstate;
+    int      sort_column;
+    BOOL     sort_reverse;
+    AREA     area;
+    UINT     windowstate;
     int      splitter[4];		/* NPW 5-Feb-2003 - I don't like hard coding this, but I don't have a choice */
-	LOGFONT  list_font;
-	COLORREF list_font_color;
+    LOGFONT  list_font;
+    COLORREF list_font_color;
     COLORREF list_clone_color;
     BOOL show_disclaimer;
     BOOL show_gameinfo;
+    BOOL high_priority;
 
 	char*    language;
 	char*    flyerdir;
@@ -308,6 +309,9 @@ BOOL GetShowDisclaimer(void);
 
 void SetShowGameInfo(BOOL show_gameinfo);
 BOOL GetShowGameInfo(void);
+
+void SetHighPriority(BOOL high_priority);
+BOOL GetHighPriority(void);
 
 void SetRandomBackground(BOOL random_bg);
 BOOL GetRandomBackground(void);

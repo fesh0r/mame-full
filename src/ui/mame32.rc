@@ -1,6 +1,5 @@
 //Microsoft Developer Studio generated resource script.
 //
-
 #include "resource.h"
 
 #ifdef MESS
@@ -242,8 +241,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,63,0,0
- PRODUCTVERSION 0,63,0,0
+ FILEVERSION 0,66,0,0
+ PRODUCTVERSION 0,66,0,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -269,7 +268,7 @@ BEGIN
             VALUE "CompanyName", "MAME Team\0"
             VALUE "FileDescription", "Multiple Arcade Machine Emulator for Win32\0"
 #endif
-            VALUE "FileVersion", "0, 63, 0, 0\0"
+            VALUE "FileVersion", "0, 66, 0, 0\0"
             VALUE "InternalName", "MAME32\0"
             VALUE "LegalCopyright", "Copyright 1997-2003 Nicola Salmoria and the MAME team\0"
             VALUE "LegalTrademarks", "\0"
@@ -280,7 +279,7 @@ BEGIN
             VALUE "OriginalFilename", "MAME32.exe\0"
             VALUE "ProductName", "MAME32\0"
 #endif
-            VALUE "ProductVersion", "0, 63, 0, 0\0"
+            VALUE "ProductVersion", "0, 66, 0, 0\0"
         END
     END
     BLOCK "VarFileInfo"
@@ -501,7 +500,7 @@ BEGIN
                     SS_NOPREFIX
     CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,20,38,178,1
     LTEXT           "Manufactured:",IDC_STATIC,20,45,47,8
-    LTEXT           "Static",IDC_PROP_MANUFACTURED,75,45,139,9
+    LTEXT           "Static",IDC_PROP_MANUFACTURED,75,45,139,9,SS_NOPREFIX
     LTEXT           "Status:",IDC_STATIC,20,55,47,8
     LTEXT           "Static",IDC_PROP_STATUS,75,55,139,9
     CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,20,68,177,1
@@ -545,7 +544,7 @@ END
 IDD_PROP_DISPLAY DIALOGEX 0, 0, 220, 205
 STYLE WS_CHILD | WS_CAPTION
 CAPTION "Display"
-FONT 8, "MS Sans Serif", 0, 0, 0x1
+FONT 8, "MS Sans Serif"
 BEGIN
     ICON            IDI_DISPLAY,IDC_STATIC,20,10,20,20
     LTEXT           "Title\nDirectory\nExtra",IDC_PROP_TITLE,52,9,161,25,
@@ -791,7 +790,7 @@ END
 IDD_PROP_VECTOR DIALOGEX 0, 0, 220, 205
 STYLE WS_CHILD | WS_CAPTION
 CAPTION "Vector"
-FONT 8, "MS Sans Serif"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
     ICON            IDI_MAME32_ICON,IDC_STATIC,20,10,20,20
     LTEXT           "Title\nDirectory\nExtra",IDC_PROP_TITLE,52,9,161,25,
@@ -873,7 +872,7 @@ CAPTION "System Filters"
 #else
 CAPTION "Game Filters"
 #endif
-FONT 8, "MS Sans Serif"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
 #ifdef MESS
     CTEXT           "System filters allow customizing the systems that are displayed in each folder by hiding games that match the filters applied.",
@@ -971,36 +970,36 @@ BEGIN
     PUSHBUTTON      "&Cancel",IDCANCEL,145,175,50,14
 END
 
-IDD_INTERFACE_OPTIONS DIALOGEX 0, 0, 209, 169
+IDD_INTERFACE_OPTIONS DIALOGEX 0, 0, 209, 175
 STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_CONTEXTHELP
 CAPTION "Interface Options"
-FONT 8, "MS Sans Serif", 0, 0, 0x1
+FONT 8, "MS Sans Serif"
 BEGIN
-    GROUPBOX        "Application Start",IDC_STATIC,9,7,190,90
+    GROUPBOX        "Application Start",IDC_STATIC,5,5,190,85
 #ifdef MESS
     CONTROL         "&Search for new systems",IDC_START_GAME_CHECK,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,14,17,85,10,0,
                     HIDC_START_GAME_CHECK
 #else
     CONTROL         "&Search for new games",IDC_START_GAME_CHECK,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,14,17,85,10,0,
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,15,85,10,0,
                     HIDC_START_GAME_CHECK
 #endif
     CONTROL         "&Enable version mismatch warning",
                     IDC_START_VERSION_WARN,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,14,33,132,10,0,HIDC_START_VERSION_WARN
+                    WS_TABSTOP,15,30,132,10,0,HIDC_START_VERSION_WARN
 #ifdef MESS
     CONTROL         "&Allow system selection by a joystick (requires restart)",
                     IDC_JOY_GUI,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,49,
                     173,10,0,HIDC_JOY_GUI
 #else
     CONTROL         "&Allow game selection by a joystick (requires restart)",
-                    IDC_JOY_GUI,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,49,
+                    IDC_JOY_GUI,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,45,
                     173,10,0,HIDC_JOY_GUI
 #endif
     CONTROL         "Select &random background image",IDC_RANDOM_BG,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,14,65,120,10,0,
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,60,120,10,0,
                     HIDC_RANDOM_BG
 #ifdef MESS
     CONTROL         "&Broadcast selected system to all windows",IDC_BROADCAST,
@@ -1008,12 +1007,12 @@ BEGIN
                     HIDC_BROADCAST
 #else
     CONTROL         "&Broadcast selected game to all windows",IDC_BROADCAST,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,81,143,10,0,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,75,143,10,0,
                     HIDC_BROADCAST
 #endif
-    GROUPBOX        "Emulation Start",IDC_STATIC,9,102,190,40
+    GROUPBOX        "Emulation",IDC_STATIC,5,95,190,55
     CONTROL         "Show &disclaimer",IDC_SHOW_DISCLAIMER,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,14,112,67,10,0,
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,105,67,10,0,
                     HIDC_SHOW_DISCLAIMER
 #ifdef MESS
     CONTROL         "Show &system info",IDC_SHOW_GAME_INFO,"Button",
@@ -1021,11 +1020,11 @@ BEGIN
                     HIDC_SHOW_GAME_INFO
 #else
     CONTROL         "Show &game info",IDC_SHOW_GAME_INFO,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,14,127,65,10,0,
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,120,65,10,0,
                     HIDC_SHOW_GAME_INFO
 #endif
-    DEFPUSHBUTTON   "&OK",IDOK,52,147,50,14
-    PUSHBUTTON      "&Cancel",IDCANCEL,107,147,50,14
+    DEFPUSHBUTTON   "&OK",IDOK,50,155,50,14
+    PUSHBUTTON      "&Cancel",IDCANCEL,105,155,50,14
 END
 
 IDD_LANGUAGE DIALOGEX 0, 0, 186, 66
@@ -1249,6 +1248,11 @@ BEGIN
         BOTTOMMARGIN, 46
     END
 
+    IDD_INTERFACE_OPTIONS, DIALOG
+    BEGIN
+        BOTTOMMARGIN, 158
+    END
+
     IDD_LANGUAGE, DIALOG
     BEGIN
         LEFTMARGIN, 7
@@ -1284,7 +1288,7 @@ IDC_CURSOR_HSPLIT       CURSOR  DISCARDABLE     "Res\\Splith.cur"
 // 24
 //
 
-IDR_MANIFEST            24      MOVEABLE PURE   "res\\mame32.manifest"
+1                       24      MOVEABLE PURE   "res\\mame32.manifest"
 
 /////////////////////////////////////////////////////////////////////////////
 //

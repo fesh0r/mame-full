@@ -407,13 +407,14 @@ INT_PTR CALLBACK InterfaceDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM 
 	switch (Msg)
 	{
 	case WM_INITDIALOG:
-		Button_SetCheck(GetDlgItem(hDlg, IDC_START_GAME_CHECK), 	GetGameCheck());
-		Button_SetCheck(GetDlgItem(hDlg, IDC_START_VERSION_WARN),	GetVersionCheck());
-		Button_SetCheck(GetDlgItem(hDlg, IDC_JOY_GUI),	GetJoyGUI());
-		Button_SetCheck(GetDlgItem(hDlg, IDC_BROADCAST),	GetBroadcast());
-		Button_SetCheck(GetDlgItem(hDlg, IDC_RANDOM_BG),	GetRandomBackground());
-		Button_SetCheck(GetDlgItem(hDlg, IDC_SHOW_DISCLAIMER), GetShowDisclaimer());
-		Button_SetCheck(GetDlgItem(hDlg, IDC_SHOW_GAME_INFO), GetShowGameInfo());
+		Button_SetCheck(GetDlgItem(hDlg,IDC_START_GAME_CHECK),GetGameCheck());
+		Button_SetCheck(GetDlgItem(hDlg,IDC_START_VERSION_WARN),GetVersionCheck());
+		Button_SetCheck(GetDlgItem(hDlg,IDC_JOY_GUI),GetJoyGUI());
+		Button_SetCheck(GetDlgItem(hDlg,IDC_BROADCAST),GetBroadcast());
+		Button_SetCheck(GetDlgItem(hDlg,IDC_RANDOM_BG),GetRandomBackground());
+		Button_SetCheck(GetDlgItem(hDlg,IDC_SHOW_DISCLAIMER),GetShowDisclaimer());
+		Button_SetCheck(GetDlgItem(hDlg,IDC_SHOW_GAME_INFO),GetShowGameInfo());
+		Button_SetCheck(GetDlgItem(hDlg,IDC_HIGH_PRIORITY),GetHighPriority());
 		return TRUE;
 
 	case WM_HELP:
@@ -436,7 +437,9 @@ INT_PTR CALLBACK InterfaceDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM 
 			SetRandomBackground(Button_GetCheck(GetDlgItem(hDlg, IDC_RANDOM_BG)));
 			SetShowDisclaimer(Button_GetCheck(GetDlgItem(hDlg, IDC_SHOW_DISCLAIMER)));
 			SetShowGameInfo(Button_GetCheck(GetDlgItem(hDlg, IDC_SHOW_GAME_INFO)));
-			/* Fall through */
+			SetHighPriority(Button_GetCheck(GetDlgItem(hDlg, IDC_HIGH_PRIORITY)));
+			EndDialog(hDlg, 0);
+			return TRUE;
 
 		case IDCANCEL :
 			EndDialog(hDlg, 0);
