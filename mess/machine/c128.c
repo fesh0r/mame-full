@@ -202,16 +202,16 @@ void c128_bankswitch_64 (int reset)
 	if (!c64_game && c64_exrom)
 	{
 		cpu_setbank (14, c64_romh);
-		cpu_setbank (15, 0x1f00 + c64_romh);
-		cpu_setbank (16, 0x1f05 + c64_romh);
+		cpu_setbank (15, c64_romh+0x1f00);
+		cpu_setbank (16, c64_romh+0x1f05);
 	}
 	else
 	{
 		if (hiram)
 		{
 			cpu_setbank (14, c64_kernal);
-			cpu_setbank (15, 0x1f00 + c64_kernal);
-			cpu_setbank (16, 0x1f05 + c64_kernal);
+			cpu_setbank (15, c64_kernal+0x1f00);
+			cpu_setbank (16, c64_kernal+0x1f05);
 		}
 		else
 		{
@@ -747,7 +747,7 @@ static void c128_common_driver_init (void)
 #endif
 		c128_basic=memory_region(REGION_CPU1)+0x100000;
 		c64_basic=memory_region(REGION_CPU1)+0x108000;
-		c64_basic=memory_region(REGION_CPU1)+0x10a000;
+		c64_kernal=memory_region(REGION_CPU1)+0x10a000;
 		c128_editor=memory_region(REGION_CPU1)+0x10c000;
 		c128_z80=memory_region(REGION_CPU1)+0x10d000;
 		c128_kernal=memory_region(REGION_CPU1)+0x10e000;
