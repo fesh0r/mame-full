@@ -258,30 +258,222 @@ struct ImageModule imgmod_##name = \
 	NULL			\
 };
 
-/* ----------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------------
+ * Image calls
+ *
+ * These are the calls that front ends should use for manipulating images. You
+ * should never call the module functions directly because they may not be
+ * implemented (i.e. - the function pointers are NULL). The img_* functions are
+ * aware of these issues and will make the appropriate checks as well as
+ * marking up return codes with the source.  In addition, some of the img_*
+ * calls are high level calls that simply image manipulation
+ *
+ * Calls that return 'int' that are not explictly noted otherwise return
+ * imgtool error codes
+ * ---------------------------------------------------------------------------
+ */
 
+/* findimagemodule
+ *
+ * Description:
+ *		Looks up the ImageModule with a certain name
+ *		
+ * Parameters:
+ *		name:				The name of the module
+ *
+ * Returns:
+ *		The module with that name.  Returns NULL if the name is unknown
+ */
 const struct ImageModule *findimagemodule(const char *name);
+
+/* getmodules
+ *
+ * Description:
+ *		Retrieves the list of modules 
+ *		
+ * Parameters:
+ *		len:				Place to receive the length of the list
+ *
+ * Returns:
+ *		An array of pointers to the modules
+ */
 const struct ImageModule **getmodules(size_t *len);
+
+/* imageerror
+ *
+ * Description:
+ *		Returns a human readable string 
+ *		
+ * Parameters:
+ *		err:				The error return code
+ */
 const char *imageerror(int err);
 
-/* ----------------------------------------------------------------------- */
-
+/* img_open
+ * img_open_byname
+ *
+ * Description:
+ *		Opens an image
+ *		
+ * Parameters:
+ *		module/modulename:	The module for this image format
+ *		fname:				The native filename for the image
+ *		read_or_write:		Open mode (use OSD_FOPEN_* constants)
+ *		outimg:				Placeholder for image pointer
+ */
 int img_open(const struct ImageModule *module, const char *fname, int read_or_write, IMAGE **outimg);
 int img_open_byname(const char *modulename, const char *fname, int read_or_write, IMAGE **outimg);
+
+/* img_close
+ *
+ * Description:
+ *		Closes an image
+ *
+ * Parameters:
+ *		img:				The image to close
+ */
 void img_close(IMAGE *img);
+
+/* img_extract
+ *
+ * Description:
+ *		???
+ *
+ * Parameters:
+ *		img:				The image to extract
+ *		fname:				???
+ */
 int img_extract(IMAGE *img, const char *fname);
+
+/* img_info
+ *
+ * Description:
+ *		Returns format specific information about an image
+ *
+ * Parameters:
+ *		img:				The image to query the info of
+ *		string:				Buffer to place info in
+ *		len:				Length of buffer
+ */
 int img_info(IMAGE *img, char *string, const int len);
+
+/* img_beginenum
+ *
+ * Description:
+ *		Begins enumerating files within an image
+ *
+ * Parameters:
+ *		img:				The image to enumerate
+ *		outenum:			The resulting enumeration
+ */
 int img_beginenum(IMAGE *img, IMAGEENUM **outenum);
+
+/* img_nextenum
+ *
+ * Description:
+ *		Continues enumerating files within an image
+ *
+ * Parameters:
+ *		enumeration:		The enumeration
+ *		ent:				Place to receive directory entry
+ */
 int img_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
+
+/* img_closeenum
+ *
+ * Description:
+ *		Closes an enumeration
+ *
+ * Parameters:
+ *		enumeration:		The enumeration to close
+ */
 void img_closeenum(IMAGEENUM *enumeration);
+
+/* img_freespace
+ *
+ * Description:
+ *		Returns free space on an image, in bytes
+ *
+ * Parameters:
+ *		img:				The image to query
+ *		sz					Place to receive free space
+ */
 int img_freespace(IMAGE *img, int *sz);
+
+/* img_readfile
+ *
+ * Description:
+ *		Start reading from a file on an image with a stream
+ *
+ * Parameters:
+ *		img:				The image to read from
+ *		fname:				The filename on the image
+ *		destf:				Place to receive the stream
+ */
 int img_readfile(IMAGE *img, const char *fname, STREAM *destf);
+
+/* img_writefile
+ *
+ * Description:
+ *		Start writing to a new file on an image with a stream
+ *
+ * Parameters:
+ *		img:				The image to read from
+ *		fname:				The filename on the image
+ *		destf:				Place to receive the stream
+ *		options:			Options to specify on the new file
+ */
 int img_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const file_options *options);
+
+/* img_getfile
+ *
+ * Description:
+ *		Read a file from an image, storing it into a native file
+ *
+ * Parameters:
+ *		img:				The image to read from
+ *		fname:				The filename on the image
+ *		dest:				Filename for native file to write to
+ */
 int img_getfile(IMAGE *img, const char *fname, const char *dest);
-int img_putfile(IMAGE *img, const char *fname, const char *source, const file_options *options);
+
+/* img_putfile
+ *
+ * Description:
+ *		Read a native file and store it on an image
+ *
+ * Parameters:
+ *		img:				The image to read from
+ *		newfname:			The filename on the image to store (if NULL, then
+ *							the file will be named basename(source)
+ *		source:				Native filename for source
+ *		options:			Options to specify on the new file
+ */
+int img_putfile(IMAGE *img, const char *newfname, const char *source, const file_options *options);
+
+/* img_deletefile
+ *
+ * Description:
+ *		Delete a file on an image
+ *
+ * Parameters:
+ *		img:				The image to read from
+ *		fname:				The filename on the image
+ */
 int img_deletefile(IMAGE *img, const char *fname);
 
-/* These calls are for creating new images */
+/* img_create
+ * img_create_byname
+ *
+ * Description:
+ *		Creates an image
+ *		
+ * Parameters:
+ *		module/modulename:	The module for this image format
+ *		fname:				The native filename for the image
+ *		options:			Options that control how the image is created
+ *							(tracks, sectors, etc)
+ */
 int img_create(const struct ImageModule *module, const char *fname, const geometry_options *options);
 int img_create_byname(const char *modulename, const char *fname, const geometry_options *options);
 
@@ -295,14 +487,32 @@ typedef struct {
 	char buffer[1024];
 } imageinfo;
 
-/* img_getinfo loads a given image, and returns information about that image.
- * Any unknown info is NULL or zero
+/* img_getinfo
+ * img_getinfo_byname
+ *
+ * Description:
+ *		Retrieves information about an image from the CRC databases
+ *		
+ * Parameters:
+ *		module/modulename:	The module for this image format
+ *		fname:				The native filename for the image
+ *		info				Place to receive information about the image
  */
 int img_getinfo(const struct ImageModule *module, const char *fname, imageinfo *info);
 int img_getinfo_byname(const char *modulename, const char *fname, imageinfo *info);
 
-/* img_goodname loads an image and figures out what its "goodname" is and
- * returns the result in result (the callee needs to call free() on result)
+/* img_goodname
+ * img_goodname_byname
+ *
+ * Description:
+ *		Figures out what the "Good" name of a particular image is
+ *		
+ * Parameters:
+ *		module/modulename:	The module for this image format
+ *		fname:				The native filename for the image
+ *		base:				Arbitrary string to prefix the good name with
+ *		result:				Placeholder to receive allocated string (i.e. you
+ *							must call free() with the "Good" name)
  */
 int img_goodname(const struct ImageModule *module, const char *fname, const char *base, char **result);
 int img_goodname_byname(const char *modulename, const char *fname, const char *base, char **result);

@@ -300,19 +300,19 @@ int img_extract(IMAGE *img, const char *fname)
 	return err;
 }
 
-int img_putfile(IMAGE *img, const char *fname, const char *source, const file_options *options)
+int img_putfile(IMAGE *img, const char *newfname, const char *source, const file_options *options)
 {
 	int err;
 	STREAM *f;
 
-	if (!source)
-		source = fname;
+	if (!newfname)
+		newfname = basename(source);
 
 	f = stream_open(source, OSD_FOPEN_READ);
 	if (!f)
 		return IMGTOOLERR_FILENOTFOUND | IMGTOOLERR_SRC_NATIVEFILE;
 
-	err = img_writefile(img, basename(fname), f, options);
+	err = img_writefile(img, newfname, f, options);
 	stream_close(f);
 	return err;
 }
