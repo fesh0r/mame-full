@@ -156,17 +156,14 @@ static int mode_disabled(unsigned int width, unsigned int height, int depth)
    and 100 for the perfect mode +10 for a mode with a well matched depth&bpp
    and +20 for a mode with the perfect depth&bpp
    (=120 for the really perfect mode). */
-int mode_match(unsigned int width, unsigned int height, int depth, int bpp, int dfb)
+int mode_match(unsigned int width, unsigned int height,
+  unsigned int line_width, int depth, int bpp)
 {
   int score, viswidth, visheight;
   double perfect_width, perfect_height, perfect_aspect = 0.0;
   static int first_time = 1;
   double aspect = (double)width/height;
 
-  /* convert depth to a pseudodepth which differentiates 24bpp packed/sparse */
-  if (depth == 24)
-    depth = bpp;
-  
   /* width and height 0 means any resolution is possible (window), in this
      case we just take 100 as a base score and only check the depth & bpp. */
   if(width && height)
@@ -175,9 +172,8 @@ int mode_match(unsigned int width, unsigned int height, int depth, int bpp, int 
     if(mode_disabled(width, height, depth))
        return 0;
     
-    /* if using direct framebuffer access, make sure the width is properly
-       aligned */
-    if(dfb && (width & 3))
+    /* make sure the line_width is properly aligned */
+    if(line_width & 3)
        return 0;
 
     /* get the width and height after scaling */
@@ -194,10 +190,10 @@ int mode_match(unsigned int width, unsigned int height, int depth, int bpp, int 
     }
     
     /* does the game fit at all ? */
-    if(width  < (dfb?
-        ((sysdep_display_params.width+3)&~3)*sysdep_display_params.widthscale:
-        viswidth) ||
-       height < visheight)
+    if((width  < viswidth) ||
+       (height < visheight) ||
+       (line_width < (((sysdep_display_params.width+3)&~3) * 
+         sysdep_display_params.widthscale)))
       return 0;
       
     /* is this mode forced? */
@@ -243,6 +239,10 @@ int mode_match(unsigned int width, unsigned int height, int depth, int bpp, int 
   }
   else
     score = 100;
+  
+  /* convert depth to a pseudodepth which differentiates 24bpp packed/sparse */
+  if (depth == 24)
+    depth = bpp;
   
   switch (sysdep_display_params.depth)
   {

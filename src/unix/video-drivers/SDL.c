@@ -4,7 +4,7 @@
  FIrst incarnation by Tadeusz Szczyrba <trevor@pik-nel.pl>,
  based on the Linux SVGALib adaptation by Phillip Ezolt.
 
- Adapted for a big video reorganisation by Hans de Goede,
+ Rewritten for the new video code by Hans de Goede,
  the text below is from before this reorganisation and in many
  ways no longer accurate!
 
@@ -30,6 +30,8 @@
        Test mouse buttons (which games use them?)
 
 ***************************************************************************/
+#include <stdlib.h>
+#include <string.h>
 #include <signal.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
@@ -38,79 +40,84 @@
 #include "SDL-keytable.h"
 #include "sysdep/sysdep_display_priv.h"
 
-static int Vid_width;
-static int Vid_height;
-static int Vid_depth = 8;
-static SDL_Surface* Surface;
-static SDL_Surface* Offscreen_surface;
-static int hardware=1;
+static SDL_Surface* video_surface = NULL;
+static int startx, starty;
 static int doublebuf=0;
-SDL_Color *Colors=NULL;
 static int cursor_state; /* previous mouse cursor state */
-
-blit_func update_function;
+static blit_func_p blit_func;
+static int scaled_height, scaled_width;
 
 static int sdl_mapkey(struct rc_option *option, const char *arg, int priority);
 
 struct rc_option sysdep_display_opts[] = {
-    /* name, shortname, type, dest, deflt, min, max, func, help */
-   { NULL, NULL, rc_link, aspect_opts, NULL, 0, 0, NULL, NULL },
-   { "SDL Related",  NULL,    rc_seperator,  NULL,
-       NULL,         0,       0,             NULL,
-       NULL },
-   { "doublebuf",   NULL,    rc_bool,       &doublebuf,
-      "0",           0,       0,             NULL,
-      "Use double buffering to reduce flicker/tearing" },
-   { "sdlmapkey",	"sdlmk",	rc_use_function,	NULL,
-     NULL,		0,			0,		sdl_mapkey,
-     "Set a specific key mapping, see xmamerc.dist" },
-   { NULL, NULL, rc_link, mode_opts, NULL, 0, 0, NULL, NULL },
-   { NULL,           NULL,    rc_end,        NULL,
-      NULL,          0,       0,             NULL,
-      NULL }
+  /* name, shortname, type, dest, deflt, min, max, func, help */
+  { NULL, NULL, rc_link, aspect_opts, NULL, 0, 0, NULL, NULL },
+  { "SDL Related", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
+  { "doublebuf", NULL, rc_bool, &doublebuf, "0", 0, 0, NULL,
+    "Use double buffering to reduce flicker/tearing" },
+  { "sdlmapkey", "sdlmk", rc_use_function, NULL, NULL, 0, 0, sdl_mapkey,
+    "Set a specific key mapping, see xmamerc.dist" },
+  { NULL, NULL, rc_link, mode_opts, NULL, 0, 0, NULL, NULL },
+  { NULL, NULL, rc_end, NULL, NULL, 0, 0, NULL, NULL }
 };
 
 int sysdep_display_init(void)
 {
-   if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-      fprintf (stderr, "SDL: Error: %s\n",SDL_GetError());
-      return 1;
-   } 
-   fprintf (stderr, "SDL: Info: SDL initialized\n");
-   atexit (SDL_Quit);
-   return 0;
+  memset(sysdep_display_properties.mode_info, 0,
+    SYSDEP_DISPLAY_VIDEO_MODES * sizeof(int));
+  sysdep_display_properties.mode_info[0] = SYSDEP_DISPLAY_WINDOWED | 
+    SYSDEP_DISPLAY_FULLSCREEN | SYSDEP_DISPLAY_EFFECTS;
+  memset(sysdep_display_properties.mode_name, 0,
+    SYSDEP_DISPLAY_VIDEO_MODES * sizeof(const char *));
+  sysdep_display_properties.mode_name[0] = "SDL";
+
+  if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+    fprintf (stderr, "SDL: Error: %s\n",SDL_GetError());
+    return 1;
+  } 
+  return 0;
 }
 
-void sysdep_close(void)
+void sysdep_display_exit(void)
 {
-   SDL_Quit();
+  SDL_Quit();
+}
+
+static int SDL_calc_depth(const SDL_PixelFormat *pixel_format)
+{
+  return ((8 - pixel_format->Rloss) + (8 - pixel_format->Gloss) +
+    (8 - pixel_format->Bloss));
 }
 
 int sysdep_display_driver_open(int reopen)
 {
-  SDL_Rect** vid_modes;
-  const SDL_VideoInfo* video_info;
   int i,j;
-  int scaled_height = sysdep_display_params.yarbsize?
-          sysdep_display_params.yarbsize:
-          sysdep_display_params.height*sysdep_display_params.heightscale;
-  int scaled_width  = sysdep_display_params.width *
-          sysdep_display_params.widthscale;
-  int depth, score, best_score = 0;
-  int best_width, best_height;
+  SDL_Rect** vid_modes;
+  SDL_PixelFormat pixel_format;
+  const SDL_VideoInfo* video_info;
+  int video_flags, score;
+  int best_bpp = 0, best_width = 0, best_height = 0, best_score = 0;
   static int firsttime = 1;
+  
+  if (reopen)
+    sysdep_display_effect_close();
+  
+  /* determine SetVideoMode flags */
+  video_flags = SDL_HWSURFACE;
+  if (sysdep_display_params.fullscreen)
+    video_flags |= SDL_FULLSCREEN;
+  if (doublebuf)
+    video_flags |= SDL_DOUBLEBUF;
 
-#ifdef SDL_DEBUG
-  fprintf (stderr,"SDL: Info: HW blits %d\n"
-      "SDL: Info: SW blits %d\n"
-      "SDL: Info: Vid mem %d\n"
-      "SDL: Info: Best supported depth %d\n",
-      video_info->blit_hw,
-      video_info->blit_sw,
-      video_info->video_mem,
-      video_info->vfmt->BitsPerPixel);
-#endif
-   
+  /* Find a suitable mode, also determine the max size of the display */
+  scaled_height = sysdep_display_params.yarbsize?
+    sysdep_display_params.yarbsize:
+    sysdep_display_params.height*sysdep_display_params.heightscale;
+  scaled_width = ((sysdep_display_params.width+3)&~3) * 
+    sysdep_display_params.widthscale;
+  sysdep_display_properties.max_width  = 0;
+  sysdep_display_properties.max_height = 0;
+  
   for (i=0; i<5; i++)
   {
     /* We can't ask SDL which pixel formats are available, so we
@@ -141,7 +148,6 @@ int sysdep_display_driver_open(int reopen)
         pixel_format.Bloss  = 3;
         pixel_format.colorkey = 0;
         pixel_format.alpha  = 255;
-        depth = 15;
         break;
       case 1:
         /* rgb 565 */
@@ -159,7 +165,6 @@ int sysdep_display_driver_open(int reopen)
         pixel_format.Bloss  = 3;
         pixel_format.colorkey = 0;
         pixel_format.alpha  = 255;
-        depth = 16;
         break;
       case 2:
         /* rgb 888 packed*/
@@ -177,7 +182,6 @@ int sysdep_display_driver_open(int reopen)
         pixel_format.Bloss  = 0;
         pixel_format.colorkey = 0;
         pixel_format.alpha  = 255;
-        depth = 24;
         break;
       case 3:
         /* rgb 888 sparse */
@@ -195,47 +199,53 @@ int sysdep_display_driver_open(int reopen)
         pixel_format.Bloss  = 0;
         pixel_format.colorkey = 0;
         pixel_format.alpha  = 255;
-        depth = 24;
         break;
       case 4:
         video_info = SDL_GetVideoInfo();
         pixel_format = *(video_info->vfmt);
         if (pixel_format.palette || (pixel_format.BitsPerPixel <= 8))
           continue;
-        depth = pixel_format.Rshift+pixel_format.Gshift+pixel_format.Bshift;
         break;
     }
-    if (sysdep_display_params.fullscreen)
-      vid_modes = SDL_ListModes(NULL, SDL_HWSURFACE|SDL_FULLSCREEN);
-    else
-      vid_modes = SDL_ListModes(&pixel_format, SDL_HWSURFACE);
+    vid_modes = SDL_ListModes(&pixel_format, video_flags);
 
     if(vid_modes == (SDL_Rect **)-1)
     {
       /* All resolutions available */
-      score = mode_match(0, 0, depth, pixel_format.BytesPerPixel*8, 0);
+      score = mode_match(0, 0, 0, SDL_calc_depth(&pixel_format),
+        pixel_format.BytesPerPixel*8);
       if (score > best_score)
       {
-        base_score  = score;
+        best_score  = score;
         best_bpp    = pixel_format.BitsPerPixel;
         best_width  = scaled_width;
         best_height = scaled_height;
       }
+      /* also determine the max size of the display */
+      sysdep_display_properties.max_width  = -1;
+      sysdep_display_properties.max_height = -1;
     }
     else if (vid_modes)
     {
       for(j=0;vid_modes[j];j++)
       {
-        /* assume dfb when there is a list of modes to choise from */
-        score = mode_match(vid_modes[j]->w, vid_modes[j]->h, depth,
-          pixel_format.BytesPerPixel*8, 1);
+        /* No way to get the line_width from SDL, so assume that this
+           is the viewport width */
+        score = mode_match(vid_modes[j]->w, vid_modes[j]->h, vid_modes[j]->w,
+          SDL_calc_depth(&pixel_format), pixel_format.BytesPerPixel*8);
         if (score > best_score)
         {
-          base_score  = score;
+          best_score  = score;
           best_bpp    = pixel_format.BitsPerPixel;
           best_width  = vid_modes[j]->w;
           best_height = vid_modes[j]->h;
         }
+        /* also determine the max size of the display */
+        if (vid_modes[j]->w > sysdep_display_properties.max_width)
+          sysdep_display_properties.max_width  = vid_modes[j]->w;
+        if (vid_modes[j]->h > sysdep_display_properties.max_height)
+          sysdep_display_properties.max_height = vid_modes[j]->h;
+
         if (firsttime)
           fprintf(stderr, "SDL found mode:%dx%dx%d\n", vid_modes[j]->w,
             vid_modes[j]->h, pixel_format.BitsPerPixel);
@@ -250,56 +260,107 @@ int sysdep_display_driver_open(int reopen)
     return 1;
   }
   
-/* todo: fill palette info, get a blit func */  
-
-  /* Set video mode according to flags */
-  i = SDL_HWSURFACE;
-  if (sysdep_display_params.fullscreen)
-    i |= SDL_FULLSCREEN;
-  if (doublebuf)
-    i |= SDL_DOUBLEBUF;
-
-  if(! (Surface = SDL_SetVideoMode(best_width, best_height, best_depth, i)))
+  /* Set video mode */
+  if (!video_surface ||
+      (video_surface->w != best_width) ||
+      (video_surface->h != best_height) ||
+      (video_surface->format->BitsPerPixel != best_bpp))
   {
-    fprintf (stderr, "SDL: Error: Setting video mode failed\n");
-    return 1;
+    if(! (video_surface = SDL_SetVideoMode(best_width, best_height, best_bpp,
+            video_flags)))
+    {
+      fprintf (stderr, "SDL: Error: Setting video mode failed\n");
+      return 1;
+    }
+    fprintf(stderr, "SDL: Using a mode with a resolution of: %dx%dx%d\n",
+      best_width, best_height, best_bpp);
+  }
+  else if ((video_flags & SDL_FULLSCREEN) !=
+           (video_surface->flags & SDL_FULLSCREEN))
+  {
+    SDL_WM_ToggleFullScreen(video_surface);
+  }
+  
+  /* fill the sysdep_display_properties struct */
+  sysdep_display_properties.palette_info.fourcc_format = 0;
+  sysdep_display_properties.palette_info.red_mask   =
+    video_surface->format->Rmask;
+  sysdep_display_properties.palette_info.green_mask =
+    video_surface->format->Gmask;
+  sysdep_display_properties.palette_info.blue_mask  =
+    video_surface->format->Bmask;
+  sysdep_display_properties.palette_info.depth      =
+    SDL_calc_depth(video_surface->format);
+  sysdep_display_properties.palette_info.bpp        =
+    video_surface->format->BytesPerPixel * 8;
+  sysdep_display_properties.vector_renderer         = NULL;
+  
+  /* get a blit func */
+  if (video_surface->flags & SDL_HWSURFACE)
+    blit_func = sysdep_display_get_blitfunc_dfb();
+  else
+    blit_func = sysdep_display_get_blitfunc();
+  if (blit_func == NULL)
+  {
+          fprintf(stderr, "Error: unsupported dept/bpp: %d/%dbpp\n",
+            sysdep_display_properties.palette_info.depth,
+            sysdep_display_properties.palette_info.bpp);
+          return 1;
+  }
+  
+  /* calculate start of screen */
+  startx = (video_surface->w - scaled_width ) / 2;
+  starty = (video_surface->h - scaled_height) / 2;
+  if (video_surface->flags & SDL_HWSURFACE)
+    startx &= ~3;
+
+  /* clear the unused area of the screen */
+  for (i=0; i<2; i++)
+  {
+    unsigned char *video_mem = video_surface->pixels;
+
+    SDL_LockSurface(video_surface);
+    
+    /* top */
+    memset(video_mem, 0, starty*video_surface->pitch);
+    /* left and right */
+    for (j=starty; j<(scaled_height+starty); j++)
+    {
+      /* left */
+      memset(video_mem + j*video_surface->pitch, 0,
+        startx * video_surface->format->BytesPerPixel);
+      /* right */
+      memset(video_mem + j*video_surface->pitch +
+        (startx + scaled_width) * video_surface->format->BytesPerPixel,
+        0, (video_surface->w - (startx + scaled_width)) *
+        video_surface->format->BytesPerPixel);
+    }
+    /* bottom */
+    memset(video_mem + (starty + scaled_height) *
+      video_surface->pitch, 0,
+      (video_surface->h - (starty + scaled_height)) *
+      video_surface->pitch);
+    
+    SDL_UnlockSurface(video_surface);
+    
+    if (video_surface->flags & SDL_DOUBLEBUF)
+      SDL_Flip(video_surface);
+    else
+      break;
   }
 
-  Offscreen_surface = SDL_CreateRGBSurface(SDL_SWSURFACE,Vid_width,Vid_height,Vid_depth,0,0,0,0); 
-  if(Offscreen_surface==NULL) {
-     SDL_Quit();
-     exit (1);
-  }
-
-
-  /* Creating event mask */
+  /* Setup event mask */
   SDL_EventState(SDL_KEYUP, SDL_ENABLE);
   SDL_EventState(SDL_KEYDOWN, SDL_ENABLE);
   SDL_EnableUNICODE(1);
   
-   /* fill the display_palette_info struct */
-   memset(&display_palette_info, 0, sizeof(struct sysdep_palette_info));
-   if (Vid_depth == 16) {
-     display_palette_info.red_mask = 0xF800;
-     display_palette_info.green_mask = 0x07E0;
-     display_palette_info.blue_mask   = 0x001F;
-   }
-   else {
-     display_palette_info.red_mask   = 0x00FF0000;
-     display_palette_info.green_mask = 0x0000FF00;
-     display_palette_info.blue_mask  = 0x000000FF;
-   };
-
   /* Hide mouse cursor and save its previous status */
   cursor_state = SDL_ShowCursor(0);
 
   /* Set window title */
-  SDL_WM_SetCaption(title, NULL);
+  SDL_WM_SetCaption(sysdep_display_params.title, NULL);
 
-  if (effect_open())
-     exit (1);
-
-  return 0;
+  return sysdep_display_effect_open();
 }
 
 /*
@@ -320,98 +381,96 @@ static int sdl_mapkey(struct rc_option *option, const char *arg, int priority)
          klookup[from] = to;
 	 return 0;
       }
-      /* stderr isn't defined yet when we're called. */
       fprintf(stderr,"Invalid keymapping %s. Ignoring...\n", arg);
    }
    return 1;
 }
 
-/* Update routines */
-void sdl_update_16_to_16bpp (struct mame_bitmap *bitmap)
+const char *sysdep_display_update(struct mame_bitmap *bitmap,
+  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
+  struct sysdep_palette_struct *palette, int keyb_leds, int flags)
 {
-#define SRC_PIXEL  unsigned short
-#define DEST_PIXEL unsigned short
-#define DEST Offscreen_surface->pixels
-#define DEST_WIDTH Vid_width
-   if(current_palette->lookup)
-   {
-#define INDIRECT current_palette->lookup
-#include "blit.h"
-#undef INDIRECT
-   }
-   else
-   {
-#include "blit.h"
-   }
-#undef DEST
-#undef DEST_WIDTH
-#undef SRC_PIXEL
-#undef DEST_PIXEL
+  unsigned char *video_mem = video_surface->pixels;
+  video_mem += startx * video_surface->format->BytesPerPixel;
+  video_mem += starty * video_surface->pitch;
+
+  SDL_LockSurface(video_surface);
+    
+  blit_func(bitmap, vis_in_dest_out, dirty_area, palette, video_mem,
+    video_surface->pitch/video_surface->format->BytesPerPixel);
+
+  SDL_UnlockSurface(video_surface);
+
+  if (video_surface->flags & SDL_DOUBLEBUF)
+    SDL_Flip(video_surface);
+  else if(!(video_surface->flags & SDL_HWSURFACE))
+  {
+    SDL_Rect drect;
+    drect.x = startx + vis_in_dest_out->min_x;
+    drect.y = starty + vis_in_dest_out->min_y;
+    drect.w = (vis_in_dest_out->max_x + 1) - vis_in_dest_out->min_x;
+    drect.h = (vis_in_dest_out->max_y + 1) - vis_in_dest_out->min_y;
+    SDL_UpdateRects(video_surface,1, &drect);
+  }
+      
+  return NULL;
 }
 
-void sysdep_update_display(struct mame_bitmap *bitmap)
+void sysdep_display_driver_clear_buffer(void)
 {
-   SDL_Rect srect = { 0,0,0,0 };
-   SDL_Rect drect = { 0,0,0,0 };
-   srect.w = Vid_width;
-   srect.h = Vid_height;
+  int i, line;
+  unsigned char *video_mem;
 
-   /* Center the display */
-   drect.x = (Vid_width - visual_width*widthscale ) >> 1;
-   drect.y = (Vid_height - visual_height*heightscale ) >> 1;
+  for (i=0; i<2; i++)
+  {
+    video_mem = video_surface->pixels;
+    video_mem += startx * video_surface->format->BytesPerPixel;
+    video_mem += starty * video_surface->pitch;
 
-   drect.w = Vid_width;
-   drect.h = Vid_height;
+    SDL_LockSurface(video_surface);
 
-   (*update_function)(bitmap);
+    for (line=0; line<scaled_height; line++)
+      memset(video_mem + line*video_surface->pitch, 0,
+        scaled_width*video_surface->format->BytesPerPixel);
 
-   
-   if(SDL_BlitSurface (Offscreen_surface, &srect, Surface, &drect)<0) 
-      fprintf (stderr,"SDL: Warn: Unsuccessful blitting\n");
+    SDL_UnlockSurface(video_surface);
 
-   if (doublebuf == 1)
-      SDL_Flip(Surface);
-   else if(hardware==0)
-      SDL_UpdateRects(Surface,1, &drect);
+    if (video_surface->flags & SDL_DOUBLEBUF)
+      SDL_Flip(video_surface);
+    else
+      break;
+  }
 }
 
 /* shut up the display */
 void sysdep_display_close(void)
 {
-   effect_close();
-
-   SDL_FreeSurface(Offscreen_surface);
+   sysdep_display_effect_close();
 
    /* Restore cursor state */
    SDL_ShowCursor(cursor_state);
 }
 
-void sysdep_mouse_poll (void)
+void sysdep_display_update_mouse(void)
 {
    int i;
    int x,y;
    Uint8 buttons;
 
    buttons = SDL_GetRelativeMouseState( &x, &y);
-   mouse_data[0].deltas[0] = x;
-   mouse_data[0].deltas[1] = y;
-   for(i=0;i<MOUSE_BUTTONS;i++) {
-      mouse_data[0].buttons[i] = buttons & (0x01 << i);
+   sysdep_display_mouse_data[0].deltas[0] = x;
+   sysdep_display_mouse_data[0].deltas[1] = y;
+   for(i=0;i<SYSDEP_DISPLAY_MOUSE_BUTTONS;i++) {
+      sysdep_display_mouse_data[0].buttons[i] = buttons & (0x01 << i);
    }
 }
 
-/* Keyboard procs */
-/* Lighting keyboard leds */
-void sysdep_set_leds(int leds) 
+int sysdep_display_driver_update_keyboard() 
 {
-}
-
-void sysdep_update_keyboard() 
-{
-   struct xmame_keyboard_event kevent;
+   struct sysdep_display_keyboard_event kevent;
    SDL_Event event;
 
-   if (Surface) {
+   if (video_surface) {
       while(SDL_PollEvent(&event)) {
          kevent.press = 0;
          
@@ -419,18 +478,10 @@ void sysdep_update_keyboard()
          {
             case SDL_KEYDOWN:
                kevent.press = 1;
-
-               /* ALT-Enter: toggle fullscreen */
-               if ( event.key.keysym.sym == SDLK_RETURN )
-               {
-                  if(event.key.keysym.mod & KMOD_ALT)
-                     SDL_WM_ToggleFullScreen(SDL_GetVideoSurface());
-               }
-
             case SDL_KEYUP:
                kevent.scancode = klookup[event.key.keysym.sym];
                kevent.unicode = event.key.keysym.unicode;
-               xmame_keyboard_register_event(&kevent);
+               sysdep_display_params.keyboard_handler(&kevent);
                if(!kevent.scancode)
                   fprintf (stderr, "Unknown symbol 0x%x\n",
                      event.key.keysym.sym);
@@ -441,35 +492,22 @@ void sysdep_update_keyboard()
 #endif
                break;
             case SDL_QUIT:
+#if 0
                /* Shoult leave this to application */
                exit(0);
+#endif
                break;
-
     	    case SDL_JOYAXISMOTION:   
-               if (event.jaxis.which < JOY_AXES)
-                  joy_data[event.jaxis.which].axis[event.jaxis.axis].val = event.jaxis.value;
-#ifdef SDL_DEBUG
-               fprintf (stderr,"Axis=%d,value=%d\n",event.jaxis.axis ,event.jaxis.value);
-#endif
-		break;
-	    case SDL_JOYBUTTONDOWN:
-
 	    case SDL_JOYBUTTONUP:
-               if (event.jbutton.which < JOY_BUTTONS)
-                  joy_data[event.jbutton.which].buttons[event.jbutton.button] = event.jbutton.state;
-#ifdef SDL_DEBUG
-               fprintf (stderr, "Button=%d,value=%d\n",event.jbutton.button ,event.jbutton.state);
-#endif
-		break;
-
-
+	       /* ignore, these are polled by the SDL joystick driver */
+               break;
             default:
 #ifdef SDL_DEBUG
                fprintf(stderr, "SDL: Debug: Other event\n");
 #endif /* SDL_DEBUG */
                break;
          }
-    joy_evaluate_moves ();
       }
    }
+   return 0;
 }

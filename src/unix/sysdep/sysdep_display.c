@@ -267,6 +267,7 @@ int sysdep_display_change_params(
 sysdep_display_change_params_error:
   /* oops this sorta sucks, FIXME don't use exit! */
   fprintf(stderr, "Fatal error in sysdep_display_change_params\n");
+  sysdep_display_exit();
   exit(1);
   return 0; /* shut up warnings, never reached */
 }

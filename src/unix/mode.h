@@ -14,8 +14,7 @@ void mode_stretch_aspect(unsigned int width, unsigned int height,
    and 100 for the perfect mode +10 for a mode with a well matched depth&bpp
    and +20 for a mode with the perfect depth&bpp
    (=120 for the really perfect mode). */
-int mode_match(unsigned int width, unsigned int height, int depth, int bpp,
-  int dfb);
+int mode_match(unsigned int width, unsigned int height, unsigned int line_width, int depth, int bpp);
 
 extern struct rc_option aspect_opts[];
 extern struct rc_option mode_opts[];

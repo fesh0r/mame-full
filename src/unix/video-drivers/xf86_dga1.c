@@ -104,8 +104,8 @@ static XF86VidModeModeInfo *xf86_vidmode_find_best_vidmode(void)
           fprintf(stderr, "XF86DGA: info: found mode: %dx%d\n",
              xf86ctx.modes[i]->hdisplay, xf86ctx.modes[i]->vdisplay);
           score = mode_match(xf86ctx.modes[i]->hdisplay, 
-            xf86ctx.modes[i]->vdisplay, screen->root_depth,
-            sysdep_display_properties.palette_info.bpp, 1);
+            xf86ctx.modes[i]->vdisplay, xf86ctx.width, screen->root_depth,
+            sysdep_display_properties.palette_info.bpp);
           if(score > best_score)
           {
                   best_score = score;
@@ -187,9 +187,12 @@ static int xf86_vidmode_setup_mode_restore(void)
 
 static int xf86_dga_setup_graphics(XF86VidModeModeInfo *modeinfo)
 {
+        int startx,starty,y;
 	int scaled_height = sysdep_display_params.yarbsize?
 	        sysdep_display_params.yarbsize:
 	        sysdep_display_params.height*sysdep_display_params.heightscale;
+        int scaled_width = ((sysdep_display_params.width+3)&~3) * 
+                sysdep_display_params.widthscale;
 	
 	if(xf86ctx.bank_size != (xf86ctx.ram_size * 1024))
 	{
@@ -205,13 +208,36 @@ static int xf86_dga_setup_graphics(XF86VidModeModeInfo *modeinfo)
 	}
 	
 	fprintf(stderr, "XF86-DGA1 running at: %dbpp\n", sysdep_display_properties.palette_info.bpp);
-	
-	xf86ctx.addr  = (unsigned char*)xf86ctx.base_addr;
-	xf86ctx.addr += (((modeinfo->hdisplay - sysdep_display_params.width*
-		sysdep_display_params.widthscale) / 2) & ~3) *
-		sysdep_display_properties.palette_info.bpp / 8;
-	xf86ctx.addr += ((modeinfo->vdisplay - scaled_height)
-		/ 2) * xf86ctx.width * sysdep_display_properties.palette_info.bpp / 8;
+
+        startx = ((modeinfo->hdisplay - scaled_width) / 2) & ~3;
+        starty = (modeinfo->vdisplay - scaled_height) / 2;
+	xf86ctx.addr  = (unsigned char *)xf86ctx.base_addr;
+	xf86ctx.addr += startx * sysdep_display_properties.palette_info.bpp / 8;
+	xf86ctx.addr += starty * xf86ctx.width *
+	  sysdep_display_properties.palette_info.bpp / 8;
+
+        /* clear the not used area of the display */
+        /* top */
+        memset(xf86ctx.base_addr, 0, starty * xf86ctx.width *
+          sysdep_display_properties.palette_info.bpp / 8);
+        for(y=starty; y < (starty+scaled_height); y++)
+        {
+          /* left */
+          memset(xf86ctx.base_addr + y * xf86ctx.width *
+             sysdep_display_properties.palette_info.bpp / 8, 0,
+             startx * sysdep_display_properties.palette_info.bpp / 8);
+          /* right */
+          memset(xf86ctx.base_addr + (startx + scaled_width + y *
+             xf86ctx.width) * sysdep_display_properties.palette_info.bpp / 8,
+             0, (modeinfo->hdisplay - (startx + scaled_width)) *
+             sysdep_display_properties.palette_info.bpp / 8);
+        }
+        /* bottom */
+        memset(xf86ctx.base_addr + (starty + scaled_height) *
+             xf86ctx.width * sysdep_display_properties.palette_info.bpp / 8, 0,
+             (modeinfo->vdisplay - (starty + scaled_height)) *
+              xf86ctx.width * sysdep_display_properties.palette_info.bpp / 8);
+
 	return 0;
 }
 
@@ -296,9 +322,6 @@ static int xf86_dga1_set_mode(void)
 	}
 	mode_set_aspect_ratio((double)bestmode->hdisplay/bestmode->vdisplay);
 
-	if(xf86_dga_setup_graphics(bestmode))
-		return 1;
-
 	if (first_time)
 	{
 		if(xf86_vidmode_setup_mode_restore())
@@ -338,7 +361,8 @@ static int xf86_dga1_set_mode(void)
 		return 1;
 	}
 
-	memset(xf86ctx.base_addr,0,xf86ctx.bank_size);
+	if(xf86_dga_setup_graphics(bestmode))
+		return 1;
 
 	return sysdep_display_effect_open();
 }
@@ -361,7 +385,17 @@ const char *xf86_dga1_update_display(struct mame_bitmap *bitmap,
 
 void xf86_dga1_clear_display(void)
 {
-	memset(xf86ctx.base_addr,0,xf86ctx.bank_size);
+  int y;
+  int scaled_height = sysdep_display_params.yarbsize?
+          sysdep_display_params.yarbsize:
+          sysdep_display_params.height*sysdep_display_params.heightscale;
+  int scaled_width = ((sysdep_display_params.width+3)&~3) * 
+          sysdep_display_params.widthscale;
+
+  for(y=0; y<scaled_height; y++)
+    memset(xf86ctx.addr + y * xf86ctx.width *
+      sysdep_display_properties.palette_info.bpp / 8, 0,
+      scaled_width * sysdep_display_properties.palette_info.bpp / 8);
 }
 
 void xf86_dga1_close_display(void)

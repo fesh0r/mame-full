@@ -226,7 +226,7 @@ LOOP()
 if (sysdep_display_params.orientation)
 {
 # define COPY_LINE2(SRC, END, DST) \
-    rotate_func(line_dest, bitmap, y, dirty_area);
+    rotate_func(DST, bitmap, y, dirty_area);
   for (y = dirty_area->min_y; y <= dirty_area->max_y; line_dest+=REPS_FOR_Y(CORRECTED_DEST_WIDTH,y,sysdep_display_params.height), y++)
            COPY_LINE_FOR_Y(y, sysdep_display_params.height, 0, bounds_width, line_dest);
 }

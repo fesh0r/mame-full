@@ -38,7 +38,7 @@ static struct
 	int max_page;
 	int max_page_limit;
 	int page_dirty;
-	struct rectangle dest_area;
+	struct rectangle old_dirty_area;
 #ifdef TDFX_DGA_WORKAROUND
 	int current_X11_mode;
 #endif
@@ -153,8 +153,10 @@ static int xf86_dga_vidmode_find_best_vidmode(void)
           
           score = mode_match(xf86ctx.modes[i].viewportWidth,
                   xf86ctx.modes[i].viewportHeight,
+                  xf86ctx.modes[i].bytesPerScanline * 8 / 
+                  xf86ctx.modes[i].bitsPerPixel,
                   xf86ctx.modes[i].depth,
-                  xf86ctx.modes[i].bitsPerPixel, 1);
+                  xf86ctx.modes[i].bitsPerPixel);
           if(score > best_score)
           {
                   best_score = score;
@@ -202,7 +204,7 @@ static int xf86_dga_setup_graphics(XDGAMode modeinfo)
 	int scaled_height = sysdep_display_params.yarbsize?
 	        sysdep_display_params.yarbsize:
 	        sysdep_display_params.height*sysdep_display_params.heightscale;
-        int scaled_width  = sysdep_display_params.width *
+        int scaled_width = ((sysdep_display_params.width+3)&~3) * 
                 sysdep_display_params.widthscale;
 	
 	xf86ctx.update_display_func = sysdep_display_get_blitfunc_dfb();
@@ -235,10 +237,10 @@ static int xf86_dga_setup_graphics(XDGAMode modeinfo)
 	    memset(page_start + y * xf86ctx.device->mode.bytesPerScanline, 0,
 	       startx * modeinfo.bitsPerPixel / 8);
             /* right */
-	    memset(page_start + ((startx + scaled_width) & ~3) * 
+	    memset(page_start + (startx + scaled_width) * 
 	       modeinfo.bitsPerPixel / 8 +
 	       y * xf86ctx.device->mode.bytesPerScanline, 0,
-	       (modeinfo.viewportWidth - ((startx + scaled_width) & ~3)) *
+	       (modeinfo.viewportWidth - (startx + scaled_width)) *
 	       modeinfo.bitsPerPixel / 8);
 	  }
 	  /* bottom */
@@ -248,8 +250,8 @@ static int xf86_dga_setup_graphics(XDGAMode modeinfo)
 	       xf86ctx.device->mode.bytesPerScanline);
 	}
 
-	/* reset dest_area */
-	memset(&xf86ctx.dest_area, 0, sizeof(xf86ctx.dest_area));
+	/* reset old_dirty_area */
+	memset(&xf86ctx.old_dirty_area, 0, sizeof(xf86ctx.old_dirty_area));
 	
 	return 0;
 }
@@ -327,8 +329,8 @@ static int xf86_dga2_set_mode(void)
                   fprintf(stderr,"XDGASetMode failed\n");
                   return 1;
           }
-          xf86ctx.width = xf86ctx.device->mode.bytesPerScanline * 8
-                  / xf86ctx.device->mode.bitsPerPixel;
+          xf86ctx.width = xf86ctx.device->mode.bytesPerScanline * 8 / 
+                  xf86ctx.device->mode.bitsPerPixel;
           xf86ctx.current_mode = bestmode;
 
   #if 0 /* DEBUG */
@@ -387,15 +389,17 @@ static int xf86_dga2_set_mode(void)
 }
 
 const char *xf86_dga2_update_display(struct mame_bitmap *bitmap,
-	  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
+	  struct rectangle *vis_area, struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette, int flags)
 {
+  struct rectangle my_dirty_area = *dirty_area;
+  
   if (xf86ctx.max_page)
   {
     /* force a full screen update */
     if (xf86ctx.page_dirty)
     {
-      *dirty_area = *vis_in_dest_out;
+      my_dirty_area = *vis_area;
       xf86ctx.page_dirty--;
     }
     while(XDGAGetViewportStatus(display, xf86ctx.screen) & (0x01 <<
@@ -405,7 +409,7 @@ const char *xf86_dga2_update_display(struct mame_bitmap *bitmap,
   }
 
   xf86ctx.page = (xf86ctx.page + 1) % (xf86ctx.max_page + 1);
-  xf86ctx.update_display_func(bitmap, vis_in_dest_out, dirty_area,
+  xf86ctx.update_display_func(bitmap, vis_area, &my_dirty_area,
         palette, xf86ctx.addr + xf86ctx.aligned_viewport_height *
 	xf86ctx.page * xf86ctx.device->mode.bytesPerScanline, xf86ctx.width);
 
@@ -414,11 +418,11 @@ const char *xf86_dga2_update_display(struct mame_bitmap *bitmap,
     XDGASetViewport(display, xf86ctx. screen, 0, xf86ctx.page *
       xf86ctx.aligned_viewport_height, XDGAFlipRetrace);
 
-    /* If the dest area has changed force a fullscreen update the next
+    /* If the dirty area has changed force a fullscreen update the next
        max_page updates, so that it gets updated in all pages */
-    if (memcmp(&xf86ctx.dest_area, vis_in_dest_out, sizeof(xf86ctx.dest_area)))
+    if (memcmp(&xf86ctx.old_dirty_area, dirty_area, sizeof(xf86ctx.old_dirty_area)))
     {
-      xf86ctx.dest_area  = *vis_in_dest_out;
+      xf86ctx.old_dirty_area = *dirty_area;
       xf86ctx.page_dirty = xf86ctx.max_page;
     }
   }
@@ -434,14 +438,16 @@ void xf86_dga2_clear_display(void)
   int scaled_height = sysdep_display_params.yarbsize?
           sysdep_display_params.yarbsize:
           sysdep_display_params.height*sysdep_display_params.heightscale;
-  int scaled_width  = sysdep_display_params.width *
+  int scaled_width = ((sysdep_display_params.width+3)&~3) * 
           sysdep_display_params.widthscale;
 
   for(page=0; page<=xf86ctx.max_page; page++)
+  {
     for(y=0; y<scaled_height; y++)
       memset(xf86ctx.addr + (xf86ctx.aligned_viewport_height * page + y) *
         xf86ctx.device->mode.bytesPerScanline, 0,
         scaled_width * xf86ctx.device->mode.bitsPerPixel / 8);
+  }
 }
 
 void xf86_dga2_close_display(void)

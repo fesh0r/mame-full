@@ -57,8 +57,7 @@ int sysdep_display_driver_open(int reopen)
 {
 	int i;
 	int best_mode = -1;
-	int score, best_score = 0;
-	int depth, bpp;
+	int depth, score, best_score = 0;
 	vga_modeinfo *my_modeinfo;
 	unsigned char *video_start;
 	static int firsttime = 1;
@@ -86,21 +85,19 @@ int sysdep_display_driver_open(int reopen)
 		{
 		  case 32768:
 		    depth = 15;
-		    bpp   = 16;
 		    break;
 		  case 65536:
 		    depth = 16;
-		    bpp   = 16;
 		    break;
 		  case 16777216:
 		    depth = 24;
-		    bpp   = my_modeinfo->bytesperpixel*8;
 		    break;
 		  default:
 		    continue;
 		}
 		score = mode_match(my_modeinfo->width, my_modeinfo->height,
-		  depth, bpp, 1);
+		  my_modeinfo->linewidth/my_modeinfo->bytesperpixel,
+		  depth, my_modeinfo->bytesperpixel*8);
 		if (score > best_score)
 		{
 			best_score = score;
@@ -115,8 +112,8 @@ int sysdep_display_driver_open(int reopen)
 
                 if (firsttime)
 		  fprintf(stderr, "Svgalib: Info: Found videomode %dx%dx%d\n",
-		    my_modeinfo->width, my_modeinfo->height,
-		    my_modeinfo->colors);
+		    my_modeinfo->width, my_modeinfo->height, (depth==24)?
+                    my_modeinfo->bytesperpixel*8:depth);
 	}
 	firsttime = 0;
 
@@ -127,10 +124,11 @@ int sysdep_display_driver_open(int reopen)
 	}
 
 	mode_set_aspect_ratio((double)(video_modeinfo.width)/video_modeinfo.height);
-        scaled_width  = sysdep_display_params.width * sysdep_display_params.widthscale;
+        scaled_width = ((sysdep_display_params.width+3)&~3) * 
+          sysdep_display_params.widthscale;
         scaled_height = sysdep_display_params.yarbsize? sysdep_display_params.yarbsize:
           sysdep_display_params.height * sysdep_display_params.heightscale;
-	startx = ((video_modeinfo.width  - scaled_width ) / 2) & ~7;
+	startx = ((video_modeinfo.width  - scaled_width ) / 2) & ~3;
 	starty =  (video_modeinfo.height - scaled_height) / 2;
 
 	fprintf(stderr, "Using videomode %dx%dx%d, starting at %dx%d\n",
@@ -146,24 +144,22 @@ int sysdep_display_driver_open(int reopen)
             sysdep_display_properties.palette_info.green_mask = 0x03E0;
             sysdep_display_properties.palette_info.blue_mask  = 0xEC00;
             sysdep_display_properties.palette_info.depth      = 15;
-            sysdep_display_properties.palette_info.bpp        = 16;
             break;
           case 65536:
             sysdep_display_properties.palette_info.red_mask   = 0xF800;
             sysdep_display_properties.palette_info.green_mask = 0x07E0;
             sysdep_display_properties.palette_info.blue_mask  = 0x001F;
             sysdep_display_properties.palette_info.depth      = 16;
-            sysdep_display_properties.palette_info.bpp        = 16;
             break;
           case 16777216:
             sysdep_display_properties.palette_info.red_mask   = 0xFF0000;
             sysdep_display_properties.palette_info.green_mask = 0x00FF00;
             sysdep_display_properties.palette_info.blue_mask  = 0x0000FF;
             sysdep_display_properties.palette_info.depth      = 24;
-            sysdep_display_properties.palette_info.bpp        = 
-              video_modeinfo.bytesperpixel*8;
             break;
 	}
+        sysdep_display_properties.palette_info.bpp = 
+              video_modeinfo.bytesperpixel*8;
 	sysdep_display_properties.vector_renderer = NULL;
 
 	/* get a blit func */
@@ -231,8 +227,8 @@ int sysdep_display_driver_open(int reopen)
                 startx * video_modeinfo.bytesperpixel);
               /* right */
               memset(video_start + i*video_modeinfo.linewidth +
-                ((startx + scaled_width) & ~3) * video_modeinfo.bytesperpixel,
-                0, (video_modeinfo.width - ((startx + scaled_width) & ~3)) *
+                (startx + scaled_width) * video_modeinfo.bytesperpixel,
+                0, (video_modeinfo.width - (startx + scaled_width)) *
                 video_modeinfo.bytesperpixel);
 	    }
 	    /* bottom */
@@ -248,8 +244,8 @@ int sysdep_display_driver_open(int reopen)
             /* left */
             gl_fillbox(0, starty, startx, scaled_height, 0);
             /* right */
-            gl_fillbox((startx + scaled_width) & ~3, starty,
-               video_modeinfo.width - ((startx + scaled_width) & ~3),
+            gl_fillbox(startx + scaled_width, starty,
+               video_modeinfo.width - (startx + scaled_width),
                scaled_height, 0);
             /* bottom */
             gl_fillbox(0, starty + scaled_height, video_modeinfo.width,
