@@ -218,6 +218,9 @@ typedef struct {
 	UINT8 *chip;
 } CBM_ROM;
 
+
+extern INT8 cbm_c64_game;
+extern INT8 cbm_c64_exrom;
 extern CBM_ROM cbm_rom[0x20];
 
 #define IODEVICE_CBM_ROM(extensions, idfunc) \

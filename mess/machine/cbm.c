@@ -202,18 +202,19 @@ int cbm_c65_quick_open (int id, int mode, void *arg)
 	return 0;
 }
 
-
+INT8 cbm_c64_game;
+INT8 cbm_c64_exrom;
 CBM_ROM cbm_rom[0x20]= { {0} };
 
 void cbm_rom_exit(int id)
 {
-	int i;
-	if (id!=0) return;
-	for (i=0;(i<sizeof(cbm_rom)/sizeof(cbm_rom[0]))
-			 &&(cbm_rom[i].size!=0);i++) {
-		free(cbm_rom[i].chip);
-		cbm_rom[i].chip=0;cbm_rom[i].size=0;
-	}
+    int i;
+    if (id!=0) return;
+    for (i=0;(i<sizeof(cbm_rom)/sizeof(cbm_rom[0]))
+	     &&(cbm_rom[i].size!=0);i++) {
+	free(cbm_rom[i].chip);
+	cbm_rom[i].chip=0;cbm_rom[i].size=0;
+    }
 }
 
 static const struct IODevice *cbm_rom_find_device(void)
@@ -233,6 +234,11 @@ int cbm_rom_init(int id)
 	char *cp;
 	int adr = 0;
 	const struct IODevice *dev;
+
+	if (id==0) {
+	    cbm_c64_game=-1;
+	    cbm_c64_exrom=-1;
+	}
 
 	if (device_filename(IO_CARTSLOT,id) == NULL)
 		return INIT_OK;
@@ -278,7 +284,9 @@ int cbm_rom_init(int id)
 		else if (stricmp (cp, ".crt") == 0)
 		{
 			unsigned short in;
-
+			osd_fseek (fp, 0x18, SEEK_SET);
+			osd_fread( fp, &cbm_c64_exrom, 1);
+			osd_fread( fp, &cbm_c64_game, 1);
 			osd_fseek (fp, 64, SEEK_SET);
 			j = 64;
 			logerror("loading rom %s size:%.4x\n",
