@@ -29,6 +29,7 @@
 #include "status.h"
 #include "dirty.h"
 #include "avi.h"
+#include "Debug.h"
 
 #define MAKECOL(r, g, b) ((((r & 0x000000F8) << 7)) | \
                           (((g & 0x000000F8) << 2)) | \
@@ -59,7 +60,6 @@ static void             AdjustPalette(void);
 static int                GDI_init(options_type *options);
 static void               GDI_exit(void);
 static struct osd_bitmap* GDI_alloc_bitmap(int width, int height,int depth);
-static void               GDI_clearbitmap(struct osd_bitmap* bitmap);
 static void               GDI_free_bitmap(struct osd_bitmap* bitmap);
 static int                GDI_create_display(int width, int height, int depth, int fps, int attributes, int orientation);
 static void               GDI_close_display(void);
@@ -68,7 +68,7 @@ static void               GDI_set_debugger_focus(int debugger_has_focus);
 static int                GDI_allocate_colors(unsigned int totalcolors, const UINT8 *palette, UINT16 *pens, int modifiable, const UINT8 *debug_palette, UINT16 *debug_pens);
 static void               GDI_modify_pen(int pen, unsigned char red, unsigned char green, unsigned char blue);
 static void               GDI_get_pen(int pen, unsigned char* pRed, unsigned char* pGreen, unsigned char* pBlue);
-static void               GDI_mark_dirty(int x1, int y1, int x2, int y2, int ui);
+static void               GDI_mark_dirty(int x1, int y1, int x2, int y2);
 static void               GDI_update_display(struct osd_bitmap *game_bitmap, struct osd_bitmap *debug_bitmap);
 static void               GDI_led_w(int leds_status);
 static void               GDI_set_gamma(float gamma);
@@ -88,7 +88,6 @@ struct OSDDisplay   GDIDisplay =
     { GDI_init },               /* init              */
     { GDI_exit },               /* exit              */
     { GDI_alloc_bitmap },       /* aloc_bitmap       */
-    { GDI_clearbitmap },        /* clearbitmap       */
     { GDI_free_bitmap },        /* free_bitmap       */
     { GDI_create_display },     /* create_display    */
     { GDI_close_display },      /* close_display     */
@@ -211,6 +210,8 @@ static int GDI_init(options_type *options)
         This.m_bScanlines = FALSE;
     }
 
+    MAME32Debug_init(options);
+
     return 0;
 }
 
@@ -220,6 +221,8 @@ static int GDI_init(options_type *options)
 static void GDI_exit(void)
 {
     OSDDisplay.exit();
+
+    MAME32Debug_exit();
 }
 
 static struct osd_bitmap* GDI_alloc_bitmap(int width, int height,int depth)
@@ -227,13 +230,6 @@ static struct osd_bitmap* GDI_alloc_bitmap(int width, int height,int depth)
     assert(OSDDisplay.alloc_bitmap != 0);
 
     return OSDDisplay.alloc_bitmap(width, height, depth);
-}
-
-static void GDI_clearbitmap(struct osd_bitmap* bitmap)
-{
-    assert(OSDDisplay.clearbitmap != 0);
-
-    OSDDisplay.clearbitmap(bitmap);
 }
 
 static void GDI_free_bitmap(struct osd_bitmap* pBitmap)
@@ -257,7 +253,6 @@ static int GDI_create_display(int width, int height, int depth, int fps, int att
     char            TitleBuf[256];
     int             bmwidth;
     int             bmheight;
-
 
     This.m_nDepth = depth;
 
@@ -410,6 +405,11 @@ static int GDI_create_display(int width, int height, int depth, int fps, int att
     ShowWindow(MAME32App.m_hWnd, SW_SHOW);
     SetForegroundWindow(MAME32App.m_hWnd);
 
+
+    MAME32Debug_create_display(options.debug_width,
+                               options.debug_height,
+                               depth, fps, attributes, orientation);
+
     return 0;
 }
 
@@ -462,6 +462,8 @@ static void GDI_close_display(void)
         free(This.m_p16BitLookup);
         This.m_p16BitLookup = NULL;
     }
+
+    MAME32Debug_close_display();
 }
 
 /*
@@ -480,7 +482,11 @@ static void GDI_set_visible_area(int min_x, int max_x, int min_y, int max_y)
 static void GDI_set_debugger_focus(int debugger_has_focus)
 {
     if (!debugger_has_focus)
+    {
         SetForegroundWindow(MAME32App.m_hWnd);
+    }
+
+    MAME32Debug_set_debugger_focus(debugger_has_focus);
 }
 
 static int GDI_allocate_colors(unsigned int totalcolors,
@@ -606,6 +612,8 @@ static int GDI_allocate_colors(unsigned int totalcolors,
         SetPaletteColors();
     }
 
+    MAME32Debug_allocate_colors(modifiable, debug_palette, debug_pens);
+
     return 0;
 }
 
@@ -652,7 +660,7 @@ static void GDI_get_pen(int pen, unsigned char* pRed, unsigned char* pGreen, uns
     }
 }
 
-static void GDI_mark_dirty(int x1, int y1, int x2, int y2, int ui)
+static void GDI_mark_dirty(int x1, int y1, int x2, int y2)
 {
 }
 
@@ -674,6 +682,8 @@ static void GDI_update_display(struct osd_bitmap *game_bitmap, struct osd_bitmap
     UpdateWindow(MAME32App.m_hWnd);
 
     StatusUpdate();
+
+    MAME32Debug_update_display(debug_bitmap);
 
     MAME32App.ProcessMessages();
 }

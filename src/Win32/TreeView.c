@@ -506,9 +506,10 @@ void InitGames(UINT nGames)
             SetAllBits( lpFolder->m_lpGameBits, FALSE);
             for (jj = 0; jj < nGames; jj++)
             {
-                if (drivers[jj]->clone_of == 0 ||
-                    drivers[jj]->clone_of == DRIVER_ROOT ||
-                    drivers[jj]->clone_of == DRIVER_NEOGEO)
+                if (drivers[jj]->clone_of == 0
+                ||  drivers[jj]->clone_of == DRIVER_ROOT
+                ||  drivers[jj]->clone_of == DRIVER_PLAYCH10
+                ||  drivers[jj]->clone_of == DRIVER_NEOGEO)
                     AddGame(lpFolder, jj);
             }
             break;
@@ -516,9 +517,10 @@ void InitGames(UINT nGames)
             SetAllBits( lpFolder->m_lpGameBits, FALSE);
             for (jj = 0; jj < nGames; jj++)
             {
-                if (drivers[jj]->clone_of != 0 &&
-                    drivers[jj]->clone_of != DRIVER_ROOT &&
-                    drivers[jj]->clone_of != DRIVER_NEOGEO)
+                if (drivers[jj]->clone_of != 0
+                &&  drivers[jj]->clone_of != DRIVER_ROOT
+                &&  drivers[jj]->clone_of != DRIVER_PLAYCH10
+                &&  drivers[jj]->clone_of != DRIVER_NEOGEO)
                     AddGame(lpFolder, jj);
             }
             break;
@@ -633,9 +635,11 @@ BOOL GameFiltered(int nGame, DWORD dwMask)
         return FALSE;
 
     /* Filter out clones? */
-    if (dwMask & F_CLONES && (drivers[nGame]->clone_of != 0 &&
-        drivers[nGame]->clone_of != DRIVER_ROOT &&
-        drivers[nGame]->clone_of != DRIVER_NEOGEO))
+    if (dwMask & F_CLONES
+    && (drivers[nGame]->clone_of != 0
+    &&  drivers[nGame]->clone_of != DRIVER_ROOT
+    &&  drivers[nGame]->clone_of != DRIVER_PLAYCH10
+    &&  drivers[nGame]->clone_of != DRIVER_NEOGEO))
         return TRUE;
 
     /* Filter non working games */
@@ -677,9 +681,11 @@ BOOL GameFiltered(int nGame, DWORD dwMask)
         return TRUE;
 
     /* FIlter original games */
-    if (dwMask & F_ORIGINALS && (drivers[nGame]->clone_of == 0 ||
-        drivers[nGame]->clone_of == DRIVER_ROOT ||
-        drivers[nGame]->clone_of == DRIVER_NEOGEO))
+    if (dwMask & F_ORIGINALS
+    && (drivers[nGame]->clone_of == 0
+    ||  drivers[nGame]->clone_of == DRIVER_ROOT
+    ||  drivers[nGame]->clone_of == DRIVER_PLAYCH10
+    ||  drivers[nGame]->clone_of == DRIVER_NEOGEO))
         return TRUE;
 
     /* Filter working games */

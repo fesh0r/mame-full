@@ -171,7 +171,7 @@ typedef union {
 #define HAS_ADSP2100    0
 #define HAS_ADSP2105    0
 #define HAS_PDP1        1
-#define HAS_MIPS        0
+#define HAS_PSXCPU      0
 #define HAS_SC61860     1
 #define HAS_ARM         1
 #define HAS_G65816      1
@@ -243,7 +243,7 @@ typedef union {
 #define HAS_ADSP2100    1
 #define HAS_ADSP2105    1
 #define HAS_PDP1        0
-#define HAS_MIPS        1
+#define HAS_PSXCPU      1
 #define HAS_SC61860     0
 #define ARM             0
 #define HAS_G65816      0
@@ -346,12 +346,14 @@ typedef union {
 #define HAS_K007232     1
 #define HAS_K051649     1
 #define HAS_K053260     1
+#define HAS_K054539     1
 #define HAS_SEGAPCM     1
 #define HAS_RF5C68      1
 #define HAS_CEM3394     1
 #define HAS_C140        1
 #define HAS_QSOUND      1
-#define HAS_SAA1099     0
+#define HAS_SAA1099     1
+#define HAS_IREMGA20    1
 #define HAS_SPEAKER     0
 #define HAS_WAVE        0
 #define HAS_BEEP        0

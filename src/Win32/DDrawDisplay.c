@@ -142,7 +142,6 @@ static BOOL             OnSetCursor(HWND hWnd, HWND hWndCursor, UINT codeHitTest
 static int                DDraw_init(options_type *options);
 static void               DDraw_exit(void);
 static struct osd_bitmap* DDraw_alloc_bitmap(int width, int height, int depth);
-static void               DDraw_clearbitmap(struct osd_bitmap* bitmap);
 static void               DDraw_free_bitmap(struct osd_bitmap* bitmap);
 static int                DDraw_create_display(int width, int height, int depth, int fps, int attributes, int orientation);
 static void               DDraw_close_display(void);
@@ -151,7 +150,7 @@ static void               DDraw_set_debugger_focus(int debugger_has_focus);
 static int                DDraw_allocate_colors(unsigned int totalcolors, const UINT8 *palette, UINT16 *pens, int modifiable, const UINT8 *debug_palette, UINT16 *debug_pens);
 static void               DDraw_modify_pen(int pen, unsigned char red, unsigned char green, unsigned char blue);
 static void               DDraw_get_pen(int pen, unsigned char* pRed, unsigned char* pGreen, unsigned char* pBlue);
-static void               DDraw_mark_dirty(int x1, int y1, int x2, int y2, int ui);
+static void               DDraw_mark_dirty(int x1, int y1, int x2, int y2);
 static void               DDraw_update_display(struct osd_bitmap *game_bitmap, struct osd_bitmap *debug_bitmap);
 static void               DDraw_led_w(int leds_status);
 static void               DDraw_set_gamma(float gamma);
@@ -171,7 +170,6 @@ struct OSDDisplay   DDrawDisplay =
     { DDraw_init },                 /* init              */
     { DDraw_exit },                 /* exit              */
     { DDraw_alloc_bitmap },         /* alloc_bitmap      */
-    { DDraw_clearbitmap },          /* clearbitmap       */
     { DDraw_free_bitmap },          /* free_bitmap       */
     { DDraw_create_display },       /* create_display    */
     { DDraw_close_display },        /* close_display     */
@@ -317,13 +315,6 @@ static struct osd_bitmap* DDraw_alloc_bitmap(int width, int height, int depth)
     assert(OSDDisplay.alloc_bitmap != 0);
 
     return OSDDisplay.alloc_bitmap(width, height, depth);
-}
-
-static void DDraw_clearbitmap(struct osd_bitmap* bitmap)
-{
-    assert(OSDDisplay.clearbitmap != 0);
-
-    OSDDisplay.clearbitmap(bitmap);
 }
 
 static void DDraw_free_bitmap(struct osd_bitmap* pBitmap)
@@ -998,9 +989,9 @@ static void DDraw_get_pen(int pen, unsigned char* pRed, unsigned char* pGreen, u
     }   
 }
 
-static void DDraw_mark_dirty(int x1, int y1, int x2, int y2, int ui)
+static void DDraw_mark_dirty(int x1, int y1, int x2, int y2)
 {
-    MarkDirty(x1, y1, x2, y2, ui);
+    MarkDirty(x1, y1, x2, y2);
 }
 
 /*

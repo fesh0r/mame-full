@@ -42,7 +42,6 @@
 static int                Display_init(options_type *options);
 static void               Display_exit(void);
 static struct osd_bitmap* Display_alloc_bitmap(int width,int height,int depth);
-static void               Display_clearbitmap(struct osd_bitmap* bitmap);
 static void               Display_free_bitmap(struct osd_bitmap* bitmap);
 static int                Display_skip_this_frame(void);
 static void               Display_update_display(struct osd_bitmap *game_bitmap, struct osd_bitmap *debug_bitmap);
@@ -61,7 +60,6 @@ struct OSDDisplay   OSDDisplay =
     { Display_init },               /* init              */
     { Display_exit },               /* exit              */
     { Display_alloc_bitmap },       /* alloc_bitmap      */
-    { Display_clearbitmap },        /* clearbitmap       */
     { Display_free_bitmap },        /* free_bitmap       */
     { 0 },                          /* create_display    */
     { 0 },                          /* close_display     */
@@ -193,29 +191,7 @@ static void Display_exit(void)
 }
 
 /*
-    Set the bitmap to black.
-*/
-static void Display_clearbitmap(struct osd_bitmap* bitmap)
-{
-    int i;
-
-    for (i = 0; i < bitmap->height; i++)
-        memset(bitmap->line[i],
-               MAME32App.m_pDisplay->GetBlackPen(),
-               bitmap->width * (bitmap->depth / 8));
-
-    if (bitmap == Machine->scrbitmap || bitmap == artwork_real_scrbitmap)
-    {
-        extern int bitmap_dirty;
-        bitmap_dirty = 1;
-
-        MarkAllDirty();
-    }
-}
-
-/*
-    Create a bitmap. Also call osd_clearbitmap() to appropriately initialize it to 
-    the background color.
+    Create a bitmap.
 */
 /* VERY IMPORTANT: the function must allocate also a "safety area" 16 pixels wide all */
 /* around the bitmap. This is required because, for performance reasons, some graphic */
@@ -274,8 +250,6 @@ static struct osd_bitmap* Display_alloc_bitmap(int width, int height, int depth)
         pBitmap->line += safety;
 
         pBitmap->_private = bm;
-
-        osd_clearbitmap(pBitmap);
     }
 
     return pBitmap;
@@ -319,13 +293,17 @@ static Display_skip_this_frame(void)
     return skiptable[This.m_nFrameSkip][This.m_nFrameskipCounter];
 }
 
+static void ClearFPSDisplay(void)
+{
+    MAME32App.m_pDisplay->UpdateFPS(FALSE, 0, 0, 0, 0, 0);
+    schedule_full_refresh();
+}
+
 /*
     Update the display.
 */
 static void Display_update_display(struct osd_bitmap *game_bitmap, struct osd_bitmap *debug_bitmap)
 {
-    int need_to_clear_bitmap = 0;
-
     if (osd_skip_this_frame() == 0)
     {   
         if (This.m_nShowFPSTemp)
@@ -334,30 +312,26 @@ static void Display_update_display(struct osd_bitmap *game_bitmap, struct osd_bi
             if ((This.m_bShowFPS == FALSE)
             &&  (This.m_nShowFPSTemp == 0))
             {
-                MAME32App.m_pDisplay->UpdateFPS(FALSE, 0, 0, 0, 0, 0);
-                need_to_clear_bitmap = 1;
+                ClearFPSDisplay();
             }
         }
 
         /*
             Frames per second.
         */
-		if (input_ui_pressed(IPT_UI_SHOW_FPS))
-		{
+        if (input_ui_pressed(IPT_UI_SHOW_FPS))
+        {
             if (This.m_nShowFPSTemp)
             {
                 This.m_nShowFPSTemp = 0;
-                need_to_clear_bitmap = 1;
+                ClearFPSDisplay();
             }
             else
             {
                 This.m_bShowFPS = (This.m_bShowFPS == TRUE) ? FALSE : TRUE;
                 if (This.m_bShowFPS == FALSE)
-                    need_to_clear_bitmap = 1;
+                    ClearFPSDisplay();
             }
-
-            if (need_to_clear_bitmap)
-                MAME32App.m_pDisplay->UpdateFPS(FALSE, 0, 0, 0, 0, 0);
         }
 
         /* Wait until it's time to update the screen. */
@@ -365,13 +339,7 @@ static void Display_update_display(struct osd_bitmap *game_bitmap, struct osd_bi
 
         MAME32App.m_pDisplay->update_display(game_bitmap, debug_bitmap);
 
-        if (need_to_clear_bitmap)
-            osd_clearbitmap(game_bitmap);
-
         ClearDirty();
-
-        if (need_to_clear_bitmap)
-            osd_clearbitmap(game_bitmap);
 
         if (This.m_bThrottled
         &&  This.m_bAutoFrameskip

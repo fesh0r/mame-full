@@ -107,7 +107,7 @@ void ExitDirty(void)
     dirty_mode = NO_DIRTY;
 }
 
-void MarkDirty(int x1, int y1, int x2, int y2, int ui)
+void MarkDirty(int x1, int y1, int x2, int y2)
 {
     if (dirty_mode == NO_DIRTY)
         return;

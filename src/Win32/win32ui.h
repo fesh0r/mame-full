@@ -17,14 +17,17 @@
 #include "options.h"
 #include "ScreenShot.h"
 
-extern const struct GameDriver driver_0;
-
-#define DRIVER_ROOT &driver_0
 #define GAME_BROKEN (GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION)
 
+#ifndef MESS
+extern struct GameDriver driver_0;
+#endif
 extern struct GameDriver driver_neogeo;
+extern struct GameDriver driver_playch10;
 
-#define DRIVER_NEOGEO &driver_neogeo
+#define DRIVER_ROOT     &driver_0
+#define DRIVER_NEOGEO   &driver_neogeo
+#define DRIVER_PLAYCH10 &driver_playch10
 
 enum
 {
@@ -44,20 +47,20 @@ typedef struct
 /* global variables */
 extern char *column_names[COLUMN_MAX];
 
-options_type * GetPlayingGameOptions(void);
-game_data_type * GetGameData(void);
+extern options_type*   GetPlayingGameOptions(void);
+extern game_data_type* GetGameData(void);
 
-HWND  GetMainWindow(void);
-int   GetNumGames(void);
-void  GetRealColumnOrder(int order[]);
-HICON LoadIconFromFile(char *iconname);
-BOOL  GameUsesTrackball(int game);
-void  UpdateScreenShot(void);
-void  ResizePickerControls(HWND hWnd);
-int   UpdateLoadProgress(const char* name, int current,int total);
+extern HWND  GetMainWindow(void);
+extern int   GetNumGames(void);
+extern void  GetRealColumnOrder(int order[]);
+extern HICON LoadIconFromFile(char *iconname);
+extern BOOL  GameUsesTrackball(int game);
+extern void  UpdateScreenShot(void);
+extern void  ResizePickerControls(HWND hWnd);
+extern int   UpdateLoadProgress(const char* name, int current, int total);
 
 // Move The in "The Title (notes)" to "Title, The (notes)"
-char *ModifyThe(const char *str);
+extern char *ModifyThe(const char *str);
 
 /* globalized for painting tree control */
 extern HBITMAP      hBitmap;

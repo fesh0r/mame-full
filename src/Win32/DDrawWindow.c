@@ -142,7 +142,6 @@ static void ReleaseDDrawObjects(void);
 static int                DDrawWindow_init(options_type *options);
 static void               DDrawWindow_exit(void);
 static struct osd_bitmap* DDrawWindow_alloc_bitmap(int width, int height, int depth);
-static void               DDrawWindow_clearbitmap(struct osd_bitmap* bitmap);
 static void               DDrawWindow_free_bitmap(struct osd_bitmap* bitmap);
 static int                DDrawWindow_create_display(int width, int height, int depth, int fps, int attributes, int orientation);
 static void               DDrawWindow_close_display(void);
@@ -151,7 +150,7 @@ static void               DDrawWindow_set_debugger_focus(int debugger_has_focus)
 static int                DDrawWindow_allocate_colors(unsigned int totalcolors, const UINT8 *palette, UINT16 *pens, int modifiable, const UINT8 *debug_palette, UINT16 *debug_pens);
 static void               DDrawWindow_modify_pen(int pen, unsigned char red, unsigned char green, unsigned char blue);
 static void               DDrawWindow_get_pen(int pen, unsigned char* pRed, unsigned char* pGreen, unsigned char* pBlue);
-static void               DDrawWindow_mark_dirty(int x1, int y1, int x2, int y2, int ui);
+static void               DDrawWindow_mark_dirty(int x1, int y1, int x2, int y2);
 static void               DDrawWindow_update_display(struct osd_bitmap *game_bitmap, struct osd_bitmap *debug_bitmap);
 static void               DDrawWindow_led_w(int leds_status);
 static void               DDrawWindow_set_gamma(float gamma);
@@ -171,7 +170,6 @@ struct OSDDisplay   DDrawWindowDisplay =
     { DDrawWindow_init },               /* init              */
     { DDrawWindow_exit },               /* exit              */
     { DDrawWindow_alloc_bitmap },       /* alloc_bitmap      */
-    { DDrawWindow_clearbitmap },        /* clearbitmap       */
     { DDrawWindow_free_bitmap },        /* free_bitmap       */
     { DDrawWindow_create_display },     /* create_display    */
     { DDrawWindow_close_display },      /* close_display     */
@@ -358,13 +356,6 @@ static struct osd_bitmap* DDrawWindow_alloc_bitmap(int width, int height, int de
     assert(OSDDisplay.alloc_bitmap != 0);
 
     return OSDDisplay.alloc_bitmap(width, height, depth);
-}
-
-static void DDrawWindow_clearbitmap(struct osd_bitmap* bitmap)
-{
-    assert(OSDDisplay.clearbitmap != 0);
-
-    OSDDisplay.clearbitmap(bitmap);
 }
 
 static void DDrawWindow_free_bitmap(struct osd_bitmap* pBitmap)
@@ -783,12 +774,12 @@ static void DDrawWindow_get_pen(int pen, unsigned char* pRed, unsigned char* pGr
     }
 }
 
-static void DDrawWindow_mark_dirty(int x1, int y1, int x2, int y2, int ui)
+static void DDrawWindow_mark_dirty(int x1, int y1, int x2, int y2)
 {
-   //printf("%3i,%3i to %3i,%3i, ui? %i\n",x1,y1,x2,y2,ui);
+   //printf("%3i,%3i to %3i,%3i\n",x1,y1,x2,y2);
 
     if (!fast_8bit)
-        MarkDirty(x1,y1,x2,y2,ui);
+        MarkDirty(x1,y1,x2,y2);
 }
 
 /*

@@ -390,14 +390,9 @@ void osd_update_video_and_audio(struct osd_bitmap *game_bitmap,
     MAME32App.m_pJoystick->poll_joysticks();
 }
 
-void osd_clearbitmap(struct osd_bitmap *bitmap)
+void osd_mark_dirty(int x1, int y1, int x2, int y2)
 {
-    MAME32App.m_pDisplay->clearbitmap(bitmap);
-}
-
-void osd_mark_dirty(int x1, int y1, int x2, int y2, int ui)
-{
-    MAME32App.m_pDisplay->mark_dirty(x1, y1, x2, y2, ui);
+    MAME32App.m_pDisplay->mark_dirty(x1, y1, x2, y2);
 }
 
 int osd_skip_this_frame()
@@ -429,11 +424,11 @@ void osd_save_snapshot(struct osd_bitmap *bitmap)
 {
     MAME32App.m_pDisplay->save_snapshot(bitmap);
 }
-
 void osd_debugger_focus(int debugger_has_focus)
 {
-	MAME32App.m_pDisplay->set_debugger_focus(debugger_has_focus);
+    MAME32App.m_pDisplay->set_debugger_focus(debugger_has_focus);
 }
+
 
 /***************************************************************************
     Sound

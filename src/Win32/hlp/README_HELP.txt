@@ -1,7 +1,7 @@
                    	---MAME32 Windows Help File---
                    	---Source Distribution Files--
-                   	---As of MAME32 0.37 Beta 5---
-			---------30 July 2000---------
+                   	---As of MAME32 0.37 Beta 8---
+			--------4 October 2000--------
 
 			*******Disclaimer Begin*******
 The help file source is being distributed free of charge as part of the MAME32 source code package.  If you wish to strip out the help file for use by itself, just extract these two files:
@@ -50,6 +50,7 @@ MAMEFILT.shg			Custom Filter dialog graphic
 MAMEFOLD.shg			Folder List graphic
 MAMEGAME.shg			Games Tab graphic
 MAMEHELP.shg			Help Menu graphic
+MAMELANG.shg			Language Options graphic
 MAMEMENU.shg			Menu Options graphic
 MAMEOPT.shg			Options Menu graphic
 MAMEOPTD.shg			Options Directories graphic

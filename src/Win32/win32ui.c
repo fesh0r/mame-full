@@ -1107,7 +1107,6 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
     RECT        rect;
     int         i;
     struct GameDriver * drvr;
-    int j, found, neogeo_clone, neogeo;
 
     mame32_message = RegisterWindowMessage("MAME32");
     bDoBroadcast = FALSE;
@@ -1157,14 +1156,17 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 
     for (i = 0; i < game_count; i++)
     {
-        neogeo_clone = FALSE;
-        neogeo = FALSE;
-        found = FALSE;
+        int j;
+        BOOL neogeo_clone = FALSE;
+        BOOL neogeo       = FALSE;
+        BOOL found        = FALSE;
+
+        drvr = (struct GameDriver *)drivers[i]->clone_of;
         
-        if ((drvr = (struct GameDriver *)drivers[i]->clone_of) == DRIVER_NEOGEO)
+        if (drvr == DRIVER_NEOGEO)
             neogeo = TRUE;
 
-        if ((drvr = (struct GameDriver *)drivers[i]->clone_of) != DRIVER_ROOT)
+        if (drvr != DRIVER_ROOT)
         {
             for (j = 0; j < game_count; j++)
             {
@@ -1180,8 +1182,10 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
                 }
             }
         }
-        if (!found && drivers[i]->clone_of != DRIVER_NEOGEO && 
-            drivers[i]->clone_of != DRIVER_ROOT)
+        if (!found
+        &&  drivers[i]->clone_of != DRIVER_NEOGEO
+        &&  drivers[i]->clone_of != DRIVER_PLAYCH10
+        &&  drivers[i]->clone_of != DRIVER_ROOT)
             found = TRUE;
 
         game_data[i].in_list = found;
@@ -2434,9 +2438,10 @@ static char* TriStateToText(int nState)
 
 static LPCSTR GetCloneParent(int nItem)
 {
-    if (drivers[nItem]->clone_of != 0 &&
-        drivers[nItem]->clone_of != DRIVER_ROOT &&
-        drivers[nItem]->clone_of != DRIVER_NEOGEO)
+    if (drivers[nItem]->clone_of != 0
+    &&  drivers[nItem]->clone_of != DRIVER_ROOT
+    &&  drivers[nItem]->clone_of != DRIVER_PLAYCH10
+    &&  drivers[nItem]->clone_of != DRIVER_NEOGEO)
         return ModifyThe(drivers[nItem]->clone_of->description);
     return "";
 }
@@ -4286,9 +4291,15 @@ static BOOL ParseCommandLine(char *command_line)
             continue;
         }
 
-        if (stricmp(argv[i], "-debug") == 0)
+        if (stricmp(argv[i], "-win32debug") == 0)
         {
             win32_debug = 1;
+            continue;
+        }
+
+        if (stricmp(argv[i], "-debug") == 0)
+        {
+            mame_debug = 1;
             continue;
         }
 
@@ -4942,7 +4953,7 @@ static void MamePlayGameWithOptions()
             options.language_file = osd_fopen(0, pLangFile, OSD_FILETYPE_LANGUAGE, 0);
     }
 
-    options.mame_debug = win32_debug;
+    options.mame_debug = mame_debug;
     options.cheat       = playing_game_options.cheat;
     options.gui_host    = 1;
 
@@ -4975,6 +4986,10 @@ static void MamePlayGameWithOptions()
         options.vector_width  = 0; /* use default */
         options.vector_height = 0; /* use default */
     }
+
+    options.debug_width  = 640;
+    options.debug_height = 480;
+
     options.norotate            = 0;  
 
     switch (playing_game_options.rotate)

@@ -302,18 +302,27 @@ COREOBJS = \
 	 $(OBJ)/mamedbg.o $(OBJ)/window.o \
          $(OBJ)/profiler.o \
          $(NET_OBJS) \
-          $(OBJ)/mess/mess.o             \
-          $(OBJ)/mess/system.o           \
-          $(OBJ)/mess/config.o           \
-          $(OBJ)/mess/filemngr.o         \
-          $(OBJ)/mess/tapectrl.o         \
-          $(OBJ)/mess/machine/wd179x.o   \
-          $(OBJ)/mess/machine/basicdsk.o \
-          $(OBJ)/mess/diskctrl.o         \
-		  $(OBJ)/mess/utils.o			\
-	 $(OBJ)/mess/machine/6522via.o	\
-	 $(OBJ)/mess/machine/nec765.o	\
-	 $(OBJ)/mess/machine/dsk.o	\
+		$(OBJ)/mess/mess.o             \
+		$(OBJ)/mess/system.o           \
+		$(OBJ)/mess/config.o           \
+		$(OBJ)/mess/filemngr.o         \
+		$(OBJ)/mess/tapectrl.o         \
+		$(OBJ)/mess/utils.o \
+		$(OBJ)/mess/machine/rriot.o	 \
+		$(OBJ)/mess/machine/riot.o	 \
+		$(OBJ)/mess/machine/pit8253.o  \
+		$(OBJ)/mess/machine/mc146818.o \
+		$(OBJ)/mess/machine/uart8250.o \
+		$(OBJ)/mess/machine/pc_mouse.o \
+		$(OBJ)/mess/machine/pclpt.o	 \
+		$(OBJ)/mess/machine/pckeybrd.o \
+		$(OBJ)/mess/machine/pc_fdc_h.o \
+		$(OBJ)/mess/machine/pc_flopp.o \
+		$(OBJ)/mess/machine/basicdsk.o \
+		$(OBJ)/mess/machine/wd179x.o   \
+		$(OBJ)/mess/diskctrl.o \
+		$(OBJ)/mess/machine/dsk.o \
+		$(OBJ)/mess/machine/nec765.o	\
 	 $(OBJ)/mess/Win32/fileio.o    \
 	 $(OBJ)/mess/Win32/dirio.o	       \
 	 $(OBJ)/mess/Win32/fdc.o

@@ -1,7 +1,7 @@
 /***************************************************************************
 
     M.A.M.E.32  -  Multiple Arcade Machine Emulator for Win32
-    Win32 Portions Copyright (C) 1997-99 Michael Soderstrom and Chris Kirmse
+    Win32 Portions Copyright (C) 1997-2000 Michael Soderstrom and Chris Kirmse
     
     This file is part of MAME32, and may only be used, modified and
     distributed under the terms of the MAME license, in "readme.txt".
@@ -12,9 +12,9 @@
 
 /***************************************************************************
 
-  debug.c
+  Debug.c
 
-  MAME debugging code, using a console
+  MAME debugging code
 
  ***************************************************************************/
 
@@ -22,16 +22,23 @@
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <windowsx.h>
 #include "MAME32.h"
+#include "Debug.h"
+#include "resource.h"
 #include "M32Util.h"
-#include "DebugKeyboard.h"
-/*#include "osd_dbg.h"*/
 
 /***************************************************************************
     function prototypes
  ***************************************************************************/
 
-static void MAMEDebug_SetForeground(void);
+static LRESULT CALLBACK     MAME32Debug_MessageProc(HWND, UINT, WPARAM, LPARAM);
+
+static void             OnPaint(HWND hWnd);
+static void             OnPaletteChanged(HWND hWnd, HWND hWndPaletteChange);
+static BOOL             OnQueryNewPalette(HWND hWnd);
+static void             OnGetMinMaxInfo(HWND hWnd, MINMAXINFO* pMinMaxInfo);
+static void             OnClose(HWND hWnd);
 
 /***************************************************************************
     External variables
@@ -41,114 +48,302 @@ static void MAMEDebug_SetForeground(void);
     Internal structures
  ***************************************************************************/
 
+struct tDisplay_private
+{
+    struct osd_bitmap*  m_pBitmap;
+    BITMAPINFO*         m_pInfo;
+    HWND                m_hWnd;
+
+    int                 m_nClientWidth;
+    int                 m_nClientHeight;
+    RECT                m_ClientRect;
+    int                 m_nWindowWidth;
+    int                 m_nWindowHeight;
+
+    int                 m_nDepth;
+    BOOL                m_bUpdatePalette;
+    HPALETTE            m_hPalette;
+    PALETTEENTRY        m_PalEntries[DEBUGGER_TOTAL_COLORS];
+    UINT32              m_nTotalColors;
+};
+
 /***************************************************************************
     Internal variables
  ***************************************************************************/
+
+static struct tDisplay_private      This;
+static const int                    safety = 16;
 
 /***************************************************************************
     External functions  
  ***************************************************************************/
 
-void osd_screen_update(void)
+int MAME32Debug_init(options_type *options)
 {
+    memset(&This, 0, sizeof(struct tDisplay_private));
 
+    return 0;
 }
 
-void osd_put_screen_char(int ch, int attr, int x, int y)
+void MAME32Debug_exit(void)
 {
-    int   written;
-    COORD coord;
     
-    coord.X = x;
-    coord.Y = y;
-    
-    WriteConsoleOutputCharacter(GetStdHandle(STD_OUTPUT_HANDLE),
-                                &(char)ch, 1, coord, &written);
-    FillConsoleOutputAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
-                                (WORD)attr, 1, coord, &written);
 }
 
-void osd_set_screen_curpos(int x, int y)
+HWND MAME32Debug_CreateWindow(HWND hWndParent)
 {
-    COORD coord;
-    
-    coord.X = x;
-    coord.Y = y;
-    
-    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
-}
+    static BOOL     bRegistered = FALSE;
+    HINSTANCE       hInstance = GetModuleHandle(NULL);
 
-void osd_set_screen_size(unsigned width, unsigned height)
-{
-    BOOL    bSuccess;
-    COORD   coordScreen;
-    SMALL_RECT rectWindow;
-
-    coordScreen.X = width;
-    coordScreen.Y = height;
-
-    SetConsoleScreenBufferSize(GetStdHandle(STD_OUTPUT_HANDLE), coordScreen);
-    rectWindow.Left   = 0;
-    rectWindow.Top    = 0;
-    rectWindow.Right  = width  - 1;
-    rectWindow.Bottom = height - 1;
-    SetConsoleWindowInfo(GetStdHandle(STD_OUTPUT_HANDLE), 1, &rectWindow);
-
-    bSuccess = SetConsoleScreenBufferSize(GetStdHandle(STD_OUTPUT_HANDLE), coordScreen);
-
-    if (!bSuccess)
+    if (bRegistered == FALSE)
     {
-        ErrorMsg("osd_set_screen_size: Unable to set screen size %dx%d\n", width, height);
-        return;
+        WNDCLASS WndClass;
+
+        WndClass.style          = CS_SAVEBITS | CS_BYTEALIGNCLIENT | CS_OWNDC;
+        WndClass.lpfnWndProc    = MAME32Debug_MessageProc;
+        WndClass.cbClsExtra     = 0;
+        WndClass.cbWndExtra     = 0;
+        WndClass.hInstance      = hInstance;
+        WndClass.hIcon          = LoadIcon(hInstance, MAKEINTATOM(IDI_MAME32_ICON));
+        WndClass.hCursor        = LoadCursor(NULL, IDC_ARROW);
+        WndClass.hbrBackground  = (HBRUSH)GetStockObject(BLACK_BRUSH);
+        WndClass.lpszMenuName   = NULL;
+        WndClass.lpszClassName  = (LPCSTR)"classDebugger";
+        
+        if (RegisterClass(&WndClass) == 0)
+            return NULL;
+        bRegistered = TRUE;
     }
 
-    /*
-       osd_set_screen_size is usually called when breaking into
-       debug mode. So bring the debug window to the foreground.
-    */
-    MAMEDebug_SetForeground();
+    This.m_hWnd = CreateWindowEx(0,
+                                 "classDebugger",
+                                 MAME32NAME " Debugger",
+                                 WS_OVERLAPPEDWINDOW | WS_BORDER,
+                                 CW_USEDEFAULT,
+                                 CW_USEDEFAULT,
+                                 0, 0,
+                                 hWndParent,
+                                 NULL,
+                                 hInstance,
+                                 NULL);
+
+    return This.m_hWnd;
 }
 
-void osd_get_screen_size(unsigned *width, unsigned *height)
+int MAME32Debug_create_display(int width, int height, int depth, int fps, int attributes, int orientation)
 {
-    BOOL    bSuccess;
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    int     i;
+    RECT    Rect;
 
-    bSuccess = GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+    This.m_nClientWidth  = width;
+    This.m_nClientHeight = height;
+    This.m_nDepth        = depth;
 
-    if (bSuccess)
+    /* Create BitmapInfo */
+    This.m_pInfo = (BITMAPINFO*)malloc(sizeof(BITMAPINFOHEADER) + sizeof(RGBQUAD) * 256);
+
+    This.m_pInfo->bmiHeader.biSize          = sizeof(BITMAPINFOHEADER); 
+    This.m_pInfo->bmiHeader.biWidth         =  (This.m_nClientWidth + (2 * safety)) / (This.m_nDepth / 8);
+    This.m_pInfo->bmiHeader.biHeight        = -(int)(This.m_nClientHeight); /* Negative means "top down" */
+    This.m_pInfo->bmiHeader.biPlanes        = 1;
+    This.m_pInfo->bmiHeader.biBitCount      = 8;
+    This.m_pInfo->bmiHeader.biCompression   = BI_RGB;
+    This.m_pInfo->bmiHeader.biSizeImage     = 0;
+    This.m_pInfo->bmiHeader.biXPelsPerMeter = 0;
+    This.m_pInfo->bmiHeader.biYPelsPerMeter = 0;
+    This.m_pInfo->bmiHeader.biClrUsed       = 0;
+    This.m_pInfo->bmiHeader.biClrImportant  = 0;
+
+    /* Palette */
+    if (This.m_nDepth == 8)
     {
-        *width  = csbi.dwSize.X;
-        *height = csbi.dwSize.Y;
+        LOGPALETTE LogPalette;
+
+        LogPalette.palVersion    = 0x0300;
+        LogPalette.palNumEntries = 1;
+        This.m_hPalette = CreatePalette(&LogPalette);
+        ResizePalette(This.m_hPalette, 256);
+
+        /* Map image values to palette index */
+        for (i = 0; i < 256; i++)
+            ((WORD*)(This.m_pInfo->bmiColors))[i] = i;
     }
-    else
+
+    This.m_ClientRect.left   = 0;
+    This.m_ClientRect.top    = 0;
+    This.m_ClientRect.right  = This.m_nClientWidth;
+    This.m_ClientRect.bottom = This.m_nClientHeight;
+
+    /* Calculate size of window based on desired client area. */
+    Rect.left   = This.m_ClientRect.left;
+    Rect.top    = This.m_ClientRect.top;
+    Rect.right  = This.m_ClientRect.right;
+    Rect.bottom = This.m_ClientRect.bottom;
+
+    This.m_hWnd = MAME32Debug_CreateWindow(MAME32App.m_hWnd);
+
+    AdjustWindowRect(&Rect, WS_OVERLAPPEDWINDOW | WS_BORDER, FALSE);
+
+    This.m_nWindowWidth  = RECT_WIDTH(Rect);
+    This.m_nWindowHeight = RECT_HEIGHT(Rect);
+
+    GetWindowRect(MAME32App.m_hWnd, &Rect);
+    SetWindowPos(This.m_hWnd,
+                 HWND_NOTOPMOST,
+                 Rect.right, Rect.top,
+                 This.m_nWindowWidth,
+                 This.m_nWindowHeight,
+                 0);
+
+    ShowWindow(This.m_hWnd, SW_SHOW);
+
+    return 0;
+}
+
+void MAME32Debug_close_display(void)
+{ 
+    if (This.m_nDepth == 8)
     {
-        ErrorMsg("osd_get_screen_size: Unable to get screen size\n");
-        *width  = 80;
-        *height = 25;
+        if (This.m_hPalette != NULL)
+        {
+            DeletePalette(This.m_hPalette);
+            This.m_hPalette = NULL;
+        }
+    }
+
+    if (This.m_pInfo != NULL)
+    {
+        free(This.m_pInfo);
+        This.m_pInfo = NULL;
     }
 }
 
+void MAME32Debug_update_display(struct osd_bitmap *debug_bitmap)
+{
+    This.m_pBitmap = debug_bitmap;
+
+    InvalidateRect(This.m_hWnd, &This.m_ClientRect, FALSE);
+
+    UpdateWindow(This.m_hWnd);
+}
+
+int MAME32Debug_allocate_colors(int          modifiable,
+                                const UINT8* debug_palette,
+                                UINT16*      debug_pens)
+{
+    int i;
+
+    if (!debug_pens)
+        return 1;
+
+    for (i = 0; i < DEBUGGER_TOTAL_COLORS; i++)
+    {
+		debug_pens[i] = i;
+        This.m_PalEntries[i].peRed    = debug_palette[3 * i + 0];
+        This.m_PalEntries[i].peGreen  = debug_palette[3 * i + 1];
+        This.m_PalEntries[i].peBlue   = debug_palette[3 * i + 2];
+        This.m_PalEntries[i].peFlags  = PC_NOCOLLAPSE;
+    }
+
+    SetPaletteEntries(This.m_hPalette, 0, DEBUGGER_TOTAL_COLORS, This.m_PalEntries);
+
+    return 0;
+}
+
+void MAME32Debug_set_debugger_focus(int debugger_has_focus)
+{
+    if (debugger_has_focus)
+    {
+        SetForegroundWindow(This.m_hWnd);
+    }
+}
 
 /***************************************************************************
     Internal functions  
  ***************************************************************************/
 
-static void MAMEDebug_SetForeground(void)
+static LRESULT CALLBACK MAME32Debug_MessageProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
-    static HWND m_hWndDebug = NULL;
-
-    if (m_hWndDebug == NULL)
+    switch (Msg)
     {
-        /* Need a better way to get the console HWND */
-        SetConsoleTitle(MAME32NAME " Debugger");
-        m_hWndDebug = FindWindow("ConsoleWindowClass", MAME32NAME " Debugger");
+        HANDLE_MSG(hWnd, WM_PAINT,              OnPaint);
+        HANDLE_MSG(hWnd, WM_PALETTECHANGED,     OnPaletteChanged);
+        HANDLE_MSG(hWnd, WM_QUERYNEWPALETTE,    OnQueryNewPalette);
+        HANDLE_MSG(hWnd, WM_GETMINMAXINFO,      OnGetMinMaxInfo);
+        HANDLE_MSG(hWnd, WM_CLOSE,              OnClose);
     }
 
-    SetForegroundWindow(m_hWndDebug);
+    return DefWindowProc(hWnd, Msg, wParam, lParam);
+}
 
-    DebugKeyboard.init(NULL);
-    MAME32App.m_pKeyboard = &DebugKeyboard;
+static void OnPaint(HWND hWnd)
+{
+    PAINTSTRUCT     ps;
+
+    BeginPaint(hWnd, &ps);
+
+    if (This.m_pBitmap == NULL)
+    {
+        EndPaint(hWnd, &ps); 
+        return;
+    }
+
+    if (This.m_nDepth == 8)
+    {
+        /* 8 bit uses windows palette. */
+        HPALETTE hOldPalette;
+
+        hOldPalette = SelectPalette(ps.hdc, This.m_hPalette, FALSE);
+        RealizePalette(ps.hdc);
+
+        StretchDIBits(ps.hdc,
+                      0, 0,
+                      This.m_nClientWidth,
+                      This.m_nClientHeight,
+                      0,
+                      0,
+                      This.m_nClientWidth,
+                      This.m_nClientHeight,
+                      This.m_pBitmap->line[0],
+                      This.m_pInfo,
+                      DIB_PAL_COLORS,
+                      SRCCOPY);
+
+        if (hOldPalette != NULL)
+            SelectPalette(ps.hdc, hOldPalette, FALSE);
+    }
+
+    EndPaint(hWnd, &ps); 
+}
+
+static void OnPaletteChanged(HWND hWnd, HWND hWndPaletteChange)
+{
+    if (hWnd == hWndPaletteChange) 
+        return; 
+    
+    OnQueryNewPalette(hWnd);
+}
+
+static BOOL OnQueryNewPalette(HWND hWnd)
+{
+    InvalidateRect(hWnd, NULL, TRUE); 
+    UpdateWindow(hWnd); 
+    return TRUE;
+}
+
+static void OnGetMinMaxInfo(HWND hWnd, MINMAXINFO* pMinMaxInfo)
+{
+    pMinMaxInfo->ptMaxSize.x      = This.m_nWindowWidth;
+    pMinMaxInfo->ptMaxSize.y      = This.m_nWindowHeight;
+    pMinMaxInfo->ptMaxTrackSize.x = This.m_nWindowWidth;
+    pMinMaxInfo->ptMaxTrackSize.y = This.m_nWindowHeight;
+    pMinMaxInfo->ptMinTrackSize.x = This.m_nWindowWidth;
+    pMinMaxInfo->ptMinTrackSize.y = This.m_nWindowHeight;
+}
+
+static void OnClose(HWND hWnd)
+{
+    SendMessage(MAME32App.m_hWnd, WM_CLOSE, 0, 0);
 }
 
 #endif

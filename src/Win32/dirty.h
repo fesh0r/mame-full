@@ -20,7 +20,7 @@ enum DirtyMode { NO_DIRTY = 0, USE_DIRTYRECT };
 extern void InitDirty(int width, int height, enum DirtyMode);
 extern void ExitDirty(void);
 
-extern void MarkDirty(int x1, int y1, int x2, int y2, int ui);
+extern void MarkDirty(int x1, int y1, int x2, int y2);
 extern void MarkDirtyPixel(int x, int y);
 extern void MarkAllDirty(void);
 extern void ClearDirty(void);
