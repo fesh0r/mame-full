@@ -175,6 +175,7 @@ int dmkdsk_floppy_init(int id)
 			{
 				/* DMK creation not supported (this will be implemented in imgtool) */
 				logerror("DMK disk creation not supported");
+			 	osd_fclose( w->image_file );
 				return INIT_FAIL;
 			}
 		}
@@ -193,14 +194,14 @@ int dmkdsk_floppy_init(int id)
 
 			if( w->header.writeProtect == 0xff )
 				floppy_drive_set_flag_state(id, FLOPPY_DRIVE_DISK_WRITE_PROTECTED, 1);
+#if VERBOSE
+			logerror("dmkdsk geometry for drive #%d is %d tracks, %c heads \n",
+				id, w->header.trackCount,  ((w->header.diskOptions & 0x10) == 0) ? '2' : '1' );
+#endif
 		}
 		else
 		 	osd_fclose( w->image_file );
 	}
-#if VERBOSE
-	logerror("dmkdsk geometry for drive #%d is %d tracks, %c heads \n",
-		id, w->header.trackCount,  ((w->header.diskOptions & 0x10) == 0) ? '2' : '1' );
-#endif
 
 	return result;
 }
