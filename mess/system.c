@@ -486,7 +486,7 @@ TESTDRIVER( ti99_232 )	/* 1983 TI 99/2 								  */
 	DRIVER( ti99_4ae )	/* 1981 TI 99/4AE								  */
 
     DRIVER( avigo )     /*                                                */
-	DRIVER( ti85v30a )	/*TI 85 rom ver. 3.0a */
+	DRIVER( ti85 )  	/*TI 85 rom ver. 3.0a */
 	DRIVER( ti85v40 )	/*TI 85 rom ver. 4.0 */
 	DRIVER( ti85v50 )	/*TI 85 rom ver. 5.0 */
 	DRIVER( ti85v60 )	/*TI 85 rom ver. 6.0 */
