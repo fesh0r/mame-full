@@ -113,7 +113,7 @@ endif
 all:	$(EMULATOR) extra
 
 IMGTOOL_OBJS = $(OBJ)/mess/$(OS)/dirio.o
-INCLUDE_PATH = -Isrc -Imess -Isrc/unix -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
+INCLUDE_PATH = -Isrc -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
 
 # include the various .mak files
 include src/core.mak
