@@ -51,7 +51,7 @@ void profiler_mark(int type)
 	{
 		if (FILO_length >= 10)
 		{
-if (errorlog) fprintf(errorlog,"Profiler error: FILO buffer overflow\n");
+logerror("Profiler error: FILO buffer overflow\n");
 			return;
 		}
 
@@ -68,7 +68,7 @@ if (errorlog) fprintf(errorlog,"Profiler error: FILO buffer overflow\n");
 	{
 		if (FILO_length <= 0)
 		{
-if (errorlog) fprintf(errorlog,"Profiler error: FILO buffer underflow\n");
+logerror("Profiler error: FILO buffer underflow\n");
 			return;
 		}
 
@@ -151,11 +151,11 @@ void profiler_show(void)
 		{
 			if (i < PROFILER_PROFILER)
 				sprintf(buf,"%s%3d%%%3d%%",names[i],
-									(int)((computed + total/200) / (total/100.0)),
-									(int)((computed + normalize/200) / (normalize/100.0)));
+						(computed * 100 + total/2) / total,
+						(computed * 100 + normalize/2) / normalize);
 			else
 				sprintf(buf,"%s%3d%%",names[i],
-									(int)((computed + total/200) / (total/100.0)));
+						(computed * 100 + total/2) / total);
 			ui_text(buf,0,(line++)*Machine->uifontheight);
 		}
 	}

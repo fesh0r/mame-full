@@ -152,6 +152,17 @@ int osd_is_key_pressed(int keycode);
 */
 int osd_wait_keypress(void);
 
+/*
+  Return the Unicode value of the most recently pressed key. This
+  function is used only by text-entry routines in the user interface and should
+  not be used by drivers. The value returned is in the range of the first 256
+  bytes of Unicode, e.g. ISO-8859-1. A return value of 0 indicates no key down.
+
+  Set flush to 1 to clear the buffer before entering text. This will avoid
+  having prior UI and game keys leak into the text entry.
+*/
+int osd_readkey_unicode(int flush);
+
 /* Code returned by the function osd_wait_keypress() if no key available */
 #define OSD_KEY_NONE 0xffffffff
 
@@ -234,17 +245,21 @@ enum
 	OSD_FILETYPE_SAMPLE,
 	OSD_FILETYPE_NVRAM,
 	OSD_FILETYPE_HIGHSCORE,
+	OSD_FILETYPE_HIGHSCORE_DB, /* LBO 040400 */
 	OSD_FILETYPE_CONFIG,
 	OSD_FILETYPE_INPUTLOG,
 	OSD_FILETYPE_STATE,
 	OSD_FILETYPE_ARTWORK,
 	OSD_FILETYPE_MEMCARD,
-	OSD_FILETYPE_SCREENSHOT
+	OSD_FILETYPE_SCREENSHOT,
+	OSD_FILETYPE_HISTORY,  /* LBO 040400 */
+	OSD_FILETYPE_CHEAT,  /* LBO 040400 */
+	OSD_FILETYPE_LANGUAGE, /* LBO 042400 */
 #ifdef MESS
-	,
 	OSD_FILETYPE_IMAGE_R,
-	OSD_FILETYPE_IMAGE_RW
+	OSD_FILETYPE_IMAGE_RW,
 #endif
+	OSD_FILETYPE_end /* dummy last entry */
 };
 
 /* gamename holds the driver name, filename is only used for ROMs and    */
@@ -274,7 +289,13 @@ void osd_fclose(void *file);
 int osd_fchecksum(const char *gamename, const char *filename, unsigned int *length, unsigned int *sum);
 int osd_fsize(void *file);
 unsigned int osd_fcrc(void *file);
-
+/* LBO 040400 - start */
+int osd_fgetc(void *file);
+int osd_ungetc(int c, void *file);
+char *osd_fgets(char *s, int n, void *file);
+int osd_feof(void *file);
+int osd_ftell(void *file);
+/* LBO 040400 - end */
 
 /******************************************************************************
 

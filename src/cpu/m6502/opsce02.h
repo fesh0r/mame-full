@@ -26,6 +26,7 @@
 #define m6502_ICount m65ce02_ICount
 
 /* stack disable extended (word) mode */
+#undef F_T
 #define F_E 0x20
 
 /* some shortcuts for improved readability */
@@ -155,21 +156,19 @@
 #define MAP 													\
  c65_map(m65ce02.a, m65ce02.x, m65ce02.y, m65ce02.z);
 #else
-if (errorlog)													\
- fprintf(errorlog,"m65ce02 at pc:%.4x unknown op map a:%.2x x:%.2x y:%.2x z:%.2x\n", \
+logerror("m65ce02 at pc:%.4x unknown op map a:%.2x x:%.2x y:%.2x z:%.2x\n", \
   m65ce02.pc.w.l-1, m65ce02.a, m65ce02.x, m65ce02.y, m65ce02.z);
 #endif
 
 /* 65ce02 ********************************************************
  *	rts imm
  ***************************************************************/
-/* who knows 
+/* who knows
    freeing local variables of procedure
    or freeing parameters of procedure call (more likely) */
 #define RTS_IMM 												\
  RD_IMM;														\
-if (errorlog)													\
- fprintf(errorlog,"m65ce02 at pc:%.4x unknown op rts %.2x\n",m65ce02.pc.w.l-2,tmp);
+logerror("m65ce02 at pc:%.4x unknown op rts %.2x\n",m65ce02.pc.w.l-2,tmp);
 
 /* 65ce02 ********************************************************
  *	NEG accu
@@ -178,8 +177,7 @@ if (errorlog)													\
 /* not sure about this */
 #if 1
 #define NEG 													\
-if (errorlog)													\
- fprintf(errorlog,"m65ce02 at pc:%.4x not sure neg\n",m65ce02.pc.w.l-1); \
+logerror("m65ce02 at pc:%.4x not sure neg\n",m65ce02.pc.w.l-1); \
 	A= (A^0xff)+1;												\
 	SET_NZ(A)
 #else
@@ -204,7 +202,7 @@ if (errorlog)													\
 #define ASW 													\
 	tmp.w.l = tmp.w.l << 1; 									\
 	P = (P & ~F_C) | (tmp.b.h2 & F_C);							\
-	SET_NZ_WORD(tmp);											
+	SET_NZ_WORD(tmp);
 
 /* 65ce02 ********************************************************
  *	ROW rotate left word
@@ -278,7 +276,8 @@ if (errorlog)													\
  *	PLA Pull accumulator
  ***************************************************************/
 #define PLZ 													\
-	PULL(Z)
+	PULL(Z); \
+    SET_NZ(Z)
 
 /* 65ce02 ********************************************************
  * TAZ	Transfer accumulator to index z
@@ -399,12 +398,31 @@ if (errorlog)													\
 	if ( P & F_I ) {											\
 		PULL(P);												\
 		if ((m6502.irq_state != CLEAR_LINE) && !(P & F_I)) {	\
-			LOG((errorlog, "M65ce02#%d PLP sets after_cli\n",cpu_getactivecpu())); \
+			LOG(("M65ce02#%d PLP sets after_cli\n",cpu_getactivecpu())); \
 			m6502.after_cli = 1;								\
 		}														\
 	} else {													\
 		PULL(P);												\
-	}
+	} \
+	P|=F_B;
+
+/* 65ce02 ********************************************************
+ * RTI	Return from interrupt
+ * pull flags, pull PC lo, pull PC hi and increment PC
+ *	PCW++;
+ ***************************************************************/
+#undef RTI
+#define RTI 													\
+	PULL(P);													\
+	PULL(PCL);													\
+	PULL(PCH);													\
+	P |= F_B;													\
+	if( (m65ce02.irq_state != CLEAR_LINE) && !(P & F_I) ) 		\
+	{															\
+		LOG(("M65ce02#%d RTI sets after_cli\n",cpu_getactivecpu())); \
+		m6502.after_cli = 1;									\
+	}															\
+	change_pc16(PCD)
 
 /* 65ce02 ********************************************************
  * TXS	Transfer index X to stack LSB

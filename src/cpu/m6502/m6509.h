@@ -72,7 +72,7 @@ extern WRITE_HANDLER ( m6509_write_00000 );
 extern WRITE_HANDLER ( m6509_write_00001 );
 
 #ifdef MAME_DEBUG
-extern unsigned Dasm6509( char *dst, unsigned pc );
+extern unsigned int Dasm6509( char *dst, unsigned pc );
 #endif
 
 #endif /* _M6509_H */

@@ -146,7 +146,7 @@ extern const char *m65ce02_info(void *context, int regnum);
 extern unsigned m65ce02_dasm(char *buffer, unsigned pc);
 
 #ifdef MAME_DEBUG
-extern unsigned Dasm65ce02( char *dst, unsigned pc );
+extern unsigned int Dasm65ce02( char *dst, unsigned pc );
 #endif
 
 #endif /* _M65CE02_H */
