@@ -665,11 +665,6 @@ void via_write(int which, int offset, int data)
 
 		if (!T2_COUNT_PB6(v->acr))
 		{
-			if (v->intf->t2_callback)
-				v->intf->t2_callback(timer_timeelapsed(v->t2));
-			else
-				logerror("6522VIA chip %d: T2 timout occured but there is no callback.  PC: %08X\n", which, activecpu_get_pc());
-
 			timer_adjust (v->t2, V_CYCLES_TO_TIME(TIMER2_VALUE(v) + IFR_DELAY), which, 0);
 		}
 		else
