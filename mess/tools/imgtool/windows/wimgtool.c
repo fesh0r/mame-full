@@ -44,6 +44,15 @@ static void nyi(HWND window)
 
 
 
+static HFONT get_window_font(HWND window)
+{
+	LRESULT rc;
+	rc = SendMessage(window, WM_GETFONT, 0, 0);
+	return (HFONT) rc;
+}
+
+
+
 static struct wimgtool_info *get_wimgtool_info(HWND window)
 {
 	struct wimgtool_info *info;
@@ -543,9 +552,30 @@ static int create_option_controls(HWND dialog, HFONT font, int margin, int *y,
 		if (aux_control)
 			SetProp(aux_control, owner_prop, (HANDLE) 1);
 
+		if (guide[i].option_type == OPTIONTYPE_ENUM_BEGIN)
+		{
+			while(guide[i+1].option_type == OPTIONTYPE_ENUM_VALUE)
+				i++;
+		}
+
 		*y += control_height;
 	}
 	return control_count;
+}
+
+
+
+static void apply_option_controls(HWND dialog, option_resolution *resolution, int control_count)
+{
+	int i;
+	HWND control;
+
+	for (i = 0; i < control_count; i++)
+	{
+		control = GetDlgItem(dialog, CONTROL_START + i);
+		if (control)
+			win_add_resolution_parameter(control, resolution);
+	}
 }
 
 
@@ -603,7 +633,6 @@ static UINT_PTR new_dialog_typechange(HWND dlgwnd, int filter_index)
 	LONG_PTR l;
 	HWND more_button;
 	HWND control, next_control;
-	LRESULT lres;
 	RECT r1, r2;
 	HFONT font;
 
@@ -629,8 +658,7 @@ static UINT_PTR new_dialog_typechange(HWND dlgwnd, int filter_index)
 	guide = info->module->createimage_optguide;
 	if (guide)
 	{
-		lres = SendMessage(more_button, WM_GETFONT, 0, 0);
-		font = (HFONT) lres;
+		font = get_window_font(more_button);
 		GetWindowRect(more_button, &r1);
 		GetWindowRect(dlgwnd, &r2);
 		y = r1.bottom + info->margin - r2.top;
@@ -647,7 +675,6 @@ static UINT_PTR new_dialog_typechange(HWND dlgwnd, int filter_index)
 static UINT_PTR CALLBACK new_dialog_hook(HWND dlgwnd, UINT message,
 	WPARAM wparam, LPARAM lparam)
 {
-	int i;
 	UINT_PTR rc = 0;
 	const NMHDR *notify;
 	const OFNOTIFY *ofn_notify;
@@ -737,14 +764,7 @@ static UINT_PTR CALLBACK new_dialog_hook(HWND dlgwnd, UINT message,
 					if (module->createimage_optguide && module->createimage_optspec)
 					{
 						resolution = option_resolution_create(module->createimage_optguide, module->createimage_optspec);
-
-						for (i = 0; i < info->control_count; i++)
-						{
-							control = GetDlgItem(dlgwnd, CONTROL_START + i);
-							if (control)
-								win_add_resolution_parameter(control, resolution);
-						}
-
+						apply_option_controls(dlgwnd, resolution, info->control_count);
 						option_resolution_finish(resolution);
 					}
 					*((option_resolution **) ofn_notify->lpOFN->lCustData) = resolution;
@@ -843,20 +863,64 @@ done:
 
 
 
+struct putfileopt_info
+{
+	option_resolution *resolution;
+	const struct OptionGuide *guide;
+	const char *optspec;
+	int control_count;
+};
+
 static INT_PTR CALLBACK putfileopt_dialogproc(HWND dialog, UINT message,
 	WPARAM wparam, LPARAM lparam)
 {
-	option_resolution *res;
+	struct putfileopt_info *pfo_info;
+	HFONT font;
+	int xmargin, ymargin, y, control_count, rc;
+	HWND ok_button, cancel_button;
+	RECT r1, r2;
+	LONG_PTR l;
 	
 	switch(message)
 	{
 		case WM_INITDIALOG:
-			res = (option_resolution *) lparam;
+			pfo_info = (struct putfileopt_info *) lparam;
+			SetWindowLongPtr(dialog, GWLP_USERDATA, lparam);
+
+			ok_button = GetDlgItem(dialog, IDOK);
+			cancel_button = GetDlgItem(dialog, IDCANCEL);
+			font = get_window_font(ok_button);
+
+			GetWindowRect(cancel_button, &r1);
+			GetWindowRect(dialog, &r2);
+			xmargin = r1.left - r2.left;
+			ymargin = y = r1.top - r2.top - 20;
+
+			control_count = create_option_controls(dialog, font, xmargin, &y, pfo_info->guide, pfo_info->optspec);
+			if (control_count < 0)
+				return -1;
+			pfo_info->control_count = control_count;
+
+			y += ymargin;
+			SetWindowPos(cancel_button, NULL, xmargin, y, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
+			GetWindowRect(ok_button, &r1);
+			SetWindowPos(ok_button, NULL, r1.left - r2.left, y, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
+			SetWindowPos(dialog, NULL, 0, 0, r2.right - r2.left, y + r1.bottom - r2.top, SWP_NOZORDER | SWP_NOMOVE);
 			break;
 
 		case WM_COMMAND:
 			if (HIWORD(wparam) == BN_CLICKED)
+			{
+				rc = LOWORD(wparam);
+				if (rc == IDOK)
+				{
+					l = GetWindowLongPtr(dialog, GWLP_USERDATA);
+					pfo_info = (struct putfileopt_info *) l;
+					apply_option_controls(dialog, pfo_info->resolution, pfo_info->control_count);
+				}
+
 				EndDialog(dialog, LOWORD(wparam));
+			}
 			break;
 	}
 	return 0;
@@ -864,17 +928,20 @@ static INT_PTR CALLBACK putfileopt_dialogproc(HWND dialog, UINT message,
 
 
 
-static imgtoolerr_t show_putfileopt_dialog(HWND window, option_resolution **result)
+static imgtoolerr_t show_putfileopt_dialog(HWND window, option_resolution **result, BOOL *cancel)
 {
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
 	const struct ImageModule *module;
 	option_resolution *res = NULL;
 	struct wimgtool_info *info;
+	struct putfileopt_info pfo_info;
+	int rc;
 
 	info = get_wimgtool_info(window);
 	module = img_module(info->image);
+	*cancel = FALSE;
 
-	if (0) //module->writefile_optguide && module->writefile_optspec)
+	if (module->writefile_optguide && module->writefile_optspec)
 	{
 		res = option_resolution_create(module->writefile_optguide,
 			module->writefile_optspec);
@@ -884,8 +951,12 @@ static imgtoolerr_t show_putfileopt_dialog(HWND window, option_resolution **resu
 			goto done;
 		}
 
-		DialogBoxParam(NULL, MAKEINTRESOURCE(IDD_FILEOPTIONS), window,
-			putfileopt_dialogproc, (LPARAM) res);
+		pfo_info.resolution = res;
+		pfo_info.guide = module->writefile_optguide;
+		pfo_info.optspec = module->writefile_optspec;
+		rc = DialogBoxParam(NULL, MAKEINTRESOURCE(IDD_FILEOPTIONS), window,
+			putfileopt_dialogproc, (LPARAM) &pfo_info);
+		*cancel = (rc == IDCANCEL);
 	}
 
 done:
@@ -909,6 +980,7 @@ static void menu_insert(HWND window)
 	OPENFILENAME ofn;
 	struct wimgtool_info *info;
 	option_resolution *opts = NULL;
+	BOOL cancel;
 
 	info = get_wimgtool_info(window);
 
@@ -922,8 +994,8 @@ static void menu_insert(HWND window)
 		goto done;
 	}
 
-	err = show_putfileopt_dialog(window, &opts);
-	if (err)
+	err = show_putfileopt_dialog(window, &opts, &cancel);
+	if (err || cancel)
 		goto done;
 
 	s = _tcsrchr(ofn.lpstrFile, '\\');

@@ -91,7 +91,7 @@ static BOOL prepare_combobox(HWND control, const struct OptionGuide *guide,
 				else
 					goto unexpected;
 
-				SendMessage(control, CB_ADDSTRING, 0, (LPARAM) buf2);
+				SendMessage(control, CB_ADDSTRING, 0, (LPARAM) text);
 				SendMessage(control, CB_SETITEMDATA, option_count, j);
 
 				if (j == default_value)
