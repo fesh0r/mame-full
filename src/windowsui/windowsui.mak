@@ -87,6 +87,10 @@ ifdef DEBUG
 RCFLAGS += -DMAME_DEBUG
 endif
 
+$(OBJ)/windowsui/%.res: src/windowsui/%.rc
+	@echo Compiling resources $<...
+	$(RC) $(RCDEFS) $(RCFLAGS) -o $@ -i $<
+
 $(OBJ)/mess/windows/%.res: mess/windows/%.rc
 	@echo Compiling resources $<...
 	$(RC) $(RCDEFS) $(RCFLAGS) -o $@ -i $<
