@@ -559,7 +559,7 @@ READ_HANDLER(genesis_io_r)
 	return 0x00;
 }
 
-READ_HANDLER(genesis_ctrl_r)
+READ16_HANDLER(genesis_ctrl_r)
 {
 /*	int returnval; */
 
@@ -583,7 +583,7 @@ READ_HANDLER(genesis_ctrl_r)
 
 }
 
-WRITE_HANDLER(genesis_ctrl_w)
+WRITE16_HANDLER(genesis_ctrl_w)
 {
 	data = COMBINE_WORD(0, data);
 

@@ -24,17 +24,17 @@ extern int	vdp_background_colour;
 extern int	vdp_h_width;
 
 /* Prototypes for video-related routines */
-READ_HANDLER  ( genesis_vdp_data_r );
-WRITE_HANDLER ( genesis_vdp_data_w );
-READ_HANDLER  ( genesis_vdp_ctrl_r );
-WRITE_HANDLER ( genesis_vdp_ctrl_w );
-READ_HANDLER  ( genesis_vdp_hv_r );
-WRITE_HANDLER ( genesis_vdp_hv_w );
+READ16_HANDLER  ( genesis_vdp_data_r );
+WRITE16_HANDLER ( genesis_vdp_data_w );
+READ16_HANDLER  ( genesis_vdp_ctrl_r );
+WRITE16_HANDLER ( genesis_vdp_ctrl_w );
+READ16_HANDLER  ( genesis_vdp_hv_r );
+WRITE16_HANDLER ( genesis_vdp_hv_w );
 
 void genesis_dma_poll (int amount);
 void genesis_initialise_dma (unsigned char *src, int dest, int length, int id, int increment);
 
-WRITE_HANDLER ( genesis_videoram1_w );
+WRITE16_HANDLER ( genesis_videoram1_w );
 
 int genesis_vh_start (void);
 void genesis_vh_stop (void);

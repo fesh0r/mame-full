@@ -266,7 +266,7 @@ void pit8253_set_clockin(int which, int timer, double new_clockin)
     pit8253_timer_pulse(which,timer);
 }
 
-static void pit8253_w(int which, offs_t offset, data_t data)
+static void pit8253_w(int which, offs_t offset, data8_t data)
 {
 	PIT8253 *this = pit + which;
     int timer, count;
@@ -367,10 +367,10 @@ static void pit8253_w(int which, offs_t offset, data_t data)
     }
 }
 
-static data_t pit8253_r(int which, offs_t offset)
+static data8_t pit8253_r(int which, offs_t offset)
 {
 	PIT8253 *this = pit + which;
-	data_t data = 0xff;
+	data8_t data = 0xff;
 	int timer = offset;
 
 	if (which >= MAX_PIT8253)
@@ -437,7 +437,7 @@ static data_t pit8253_r(int which, offs_t offset)
 	return data;
 }
 
-void pit8253_gate_w(int which, offs_t offset, data_t data)
+void pit8253_gate_w(int which, offs_t offset, data8_t data)
 {
     PIT8253 *this = pit + which;
 	int timer = offset;

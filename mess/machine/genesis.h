@@ -10,8 +10,8 @@ int genesis_id_rom (int id);
 int genesis_interrupt (void);
 WRITE_HANDLER ( genesis_io_w );
 READ_HANDLER  ( genesis_io_r );
-READ_HANDLER  ( genesis_ctrl_r );
-WRITE_HANDLER ( genesis_ctrl_w );
+READ16_HANDLER  ( genesis_ctrl_r );
+WRITE16_HANDLER ( genesis_ctrl_w );
 
 READ_HANDLER  ( cartridge_ram_r );
 WRITE_HANDLER ( cartridge_ram_w );

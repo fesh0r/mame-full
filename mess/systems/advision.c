@@ -25,7 +25,7 @@ T1	Mirror sync pulse
 #include "vidhrdw/generic.h"
 #include "includes/advision.h"
 
-static struct MemoryReadAddress readmem[] =
+static struct Memory_ReadAddress readmem[] =
 {
     { 0x0000, 0x03FF,  MRA_BANK1 },
     { 0x0400, 0x0fff,  MRA_ROM },
@@ -33,14 +33,14 @@ static struct MemoryReadAddress readmem[] =
 	{ -1 }  /* end of table */
 };
 
-static struct MemoryWriteAddress writemem[] =
+static struct Memory_WriteAddress writemem[] =
 {
     { 0x0000, 0x0fff, MWA_ROM },
 	{ 0x2000, 0x23ff, MWA_RAM },	/* MAINRAM four banks */
     { -1 }  /* end of table */
 };
 
-static struct IOReadPort readport[] =
+static struct IO_ReadPort readport[] =
 {
     { 0x00,     0xff,     advision_MAINRAM_r},
     { I8039_p1, I8039_p1, advision_getp1 },
@@ -50,7 +50,7 @@ static struct IOReadPort readport[] =
 	{ -1 }	/* end of table */
 };
 
-static struct IOWritePort writeport[] =
+static struct IO_WritePort writeport[] =
 {
     { 0x00,     0xff,     advision_MAINRAM_w },
     { I8039_p1, I8039_p1, advision_putp1 },

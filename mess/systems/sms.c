@@ -30,7 +30,7 @@
 #include "machine/sms.h"
 
 
-static struct MemoryReadAddress readmem[] =
+static struct Memory_ReadAddress readmem[] =
 {
 	{ 0x0000, 0x3FFF, MRA_RAM }, /* ROM bank #1 */
 	{ 0x4000, 0x7FFF, MRA_RAM }, /* ROM bank #2 */
@@ -42,7 +42,7 @@ static struct MemoryReadAddress readmem[] =
 
 extern void sms_system_w(int offset, int data);
 
-static struct MemoryWriteAddress writemem[] =
+static struct Memory_WriteAddress writemem[] =
 {
 	{ 0x0000, 0x3FFF, MWA_NOP		}, /* ROM bank #1 */
 	{ 0x4000, 0x7FFF, MWA_NOP		}, /* ROM bank #2 */
@@ -53,7 +53,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ -1 }
 };
 
-static struct IOReadPort sms_readport[] =
+static struct IO_ReadPort sms_readport[] =
 {
 	{ 0xBE, 0xBE, sms_vdp_data_r },
 	{ 0xBD, 0xBD, sms_vdp_ctrl_r },
@@ -67,7 +67,7 @@ static struct IOReadPort sms_readport[] =
 	{ -1 }	/* end of table */
 };
 
-static struct IOWritePort sms_writeport[] =
+static struct IO_WritePort sms_writeport[] =
 {
 	{ 0xBE, 0xBE, sms_vdp_data_w },
 	{ 0xBD, 0xBD, sms_vdp_ctrl_w },
@@ -83,7 +83,7 @@ static struct IOWritePort sms_writeport[] =
 	{ -1 }	/* end of table */
 };
 
-static struct IOReadPort gg_readport[] =
+static struct IO_ReadPort gg_readport[] =
 {
 	{ 0xBE, 0xBE, sms_vdp_data_r },
 	{ 0xBD, 0xBD, sms_vdp_ctrl_r },
@@ -98,7 +98,7 @@ static struct IOReadPort gg_readport[] =
 	{ -1 }	/* end of table */
 };
 
-static struct IOWritePort gg_writeport[] =
+static struct IO_WritePort gg_writeport[] =
 {
 	{ 0xBE, 0xBE, sms_vdp_data_w },
 	{ 0xBD, 0xBD, sms_vdp_ctrl_w },

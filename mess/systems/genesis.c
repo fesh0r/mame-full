@@ -181,7 +181,7 @@ int genesis_sharedram_r (int offset)
 
 
 
-static struct MemoryReadAddress genesis_readmem[] =
+static struct Memory_ReadAddress16 genesis_readmem[] =
 {
 	{ 0x000000, 0x3fffff, MRA_ROM },
 	{ 0xff0000, 0xffffff, MRA_BANK2}, /* RAM */
@@ -205,7 +205,7 @@ static struct MemoryReadAddress genesis_readmem[] =
 };
 
 
-static struct MemoryWriteAddress genesis_writemem[] =
+static struct Memory_WriteAddress16 genesis_writemem[] =
 {
 	{ 0xff0000, 0xffffff, MWA_BANK2, /*genesis_sharedram_w*/ },
    	{ 0xd00000, 0xd03fff, genesis_videoram1_w, &videoram, &videoram_size }, /*this is just a fake */

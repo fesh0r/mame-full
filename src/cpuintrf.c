@@ -609,9 +609,6 @@ struct cpu_interface cpuintf[] =
 #if (HAS_PSXCPU)
     CPU0(PSXCPU,   mips,     8, -1,1.00,MIPS_INT_NONE,     MIPS_INT_NONE,  MIPS_INT_NONE,  16,32lew, 0,32,LE,4, 4,32W),
 #endif
-#if (HAS_SH2)
-    CPU4(SH2,      sh2,      16, 0,1.00,SH2_INT_NONE,      0,              -1,             27bew, 0,27,BE,1, 2,27BEW),
-#endif
 #if (HAS_SC61860)
     #define sc61860_ICount sc61860_icount
     CPU0(SC61860,  sc61860,  1,  0,1.00,-1,                -1,             -1,             8, 16,     0,16,BE,1, 4,16   ),

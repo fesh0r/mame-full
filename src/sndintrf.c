@@ -437,17 +437,9 @@ struct snd_interface sndintf[] =
 		YM2203_sh_reset
 	},
 #endif
-#if (HAS_YM2151 || HAS_YM2151_ALT)
-    {
-		SOUND_YM2151,
-		"YM-2151",
-		YM2151_num,
-		YM2151_clock,
-		YM2151_sh_start,
-		YM2151_sh_stop,
-		0,
-		YM2151_sh_reset
-	},
+#if (HAS_YM2151)
+#endif
+#if (HAS_YM2151_ALT)
 #endif
 #if (HAS_YM2608)
     {
