@@ -49,8 +49,8 @@ General:
 Mapper:
 	Mapper has 4kb page size (-> 16 pages per map file), 32 bits per page
 	entry.  Address bits A0-A3 are the page index, whereas bits A4-A15 are the
-	offset in the page.  Virtual address space is 16Mbytes.  All virtual pages
-	are 4 kBytes in lenght, and they can start anywhere in the 24-bit virtual
+	offset in the page.  Physical address space is 16Mbytes.  All pages are 4
+	kBytes in lenght, and they can start anywhere in the 24-bit physical
 	address space.  The mapper can load any of 4 map files from SRAM by DMA.
 	Map file 0 is used by BIOS, file 1 by memory XOPs(?), file 2 by P-code
 	interpreter(???).
@@ -154,7 +154,10 @@ Keyboard interface:
 #include "machine/tms9901.h"
 #include "sndhrdw/spchroms.h"
 #include "machine/99_peb.h"
+#include "machine/994x_ser.h"
+#include "machine/99_dsk.h"
 #include "cpu/tms9900/tms9900.h"
+#include "devices/basicdsk.h"
 #include "devices/cassette.h"
 
 /*
@@ -377,28 +380,28 @@ static struct Wave_interface tape_input_intf =
 };
 
 
-static const TMS9928a_interface tms9918a_interface =
+static const TMS9928a_interface tms9118_interface =
 {
 	TMS99x8A,
 	0x4000,
 	tms9901_set_int2
 };
 
-/*static const TMS9928a_interface tms9929a_interface =
+static const TMS9928a_interface tms9129_interface =
 {
 	TMS9929A,
 	0x4000,
 	tms9901_set_int2
-};*/
+};
 
 static struct tms9995reset_param ti99_8_processor_config =
 {
-	0,				/* disable automatic wait state generation (right???) */
+	0,				/* disable automatic wait state generation (cf January 83 99/8 schematics sheet 9: the delay logic seems to keep READY low for one cycle when RESET* in asserted) */
 	0,				/* no IDLE callback */
 	1				/* MP9537 mask */
 };
 
-static MACHINE_DRIVER_START(ti99_8)
+static MACHINE_DRIVER_START(ti99_8_60hz)
 
 	/* basic machine hardware */
 	/* TMS9995-MP9537 CPU @ 10.7 MHz */
@@ -419,7 +422,7 @@ static MACHINE_DRIVER_START(ti99_8)
 	/*MDRV_NVRAM_HANDLER( NULL )*/
 
 	/* video hardware */
-	MDRV_TMS9928A( &tms9918a_interface )
+	MDRV_TMS9928A( &tms9118_interface )
 
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(0)
@@ -429,7 +432,36 @@ static MACHINE_DRIVER_START(ti99_8)
 
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START(ti99_8_50hz)
 
+	/* basic machine hardware */
+	/* TMS9995-MP9537 CPU @ 10.7 MHz */
+	MDRV_CPU_ADD(TMS9995, 10738635)
+	/*MDRV_CPU_FLAGS(0)*/
+	MDRV_CPU_CONFIG(ti99_8_processor_config)
+	MDRV_CPU_MEMORY(ti99_8_readmem, ti99_8_writemem)
+	MDRV_CPU_PORTS(ti99_8_readcru, ti99_8_writecru)
+	MDRV_CPU_VBLANK_INT(ti99_vblank_interrupt, 1)
+	/*MDRV_CPU_PERIODIC_INT(func, rate)*/
+
+	MDRV_FRAMES_PER_SECOND(50)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	/*MDRV_INTERLEAVE(interleave)*/
+
+	MDRV_MACHINE_INIT( ti99 )
+	MDRV_MACHINE_STOP( ti99 )
+	/*MDRV_NVRAM_HANDLER( NULL )*/
+
+	/* video hardware */
+	MDRV_TMS9928A( &tms9129_interface )
+
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(0)
+	MDRV_SOUND_ADD(SN76496, tms9919interface)
+	MDRV_SOUND_ADD(TMS5220, tms5220interface)
+	MDRV_SOUND_ADD(WAVE, tape_input_intf)
+
+MACHINE_DRIVER_END
 
 /*
   ROM loading
@@ -459,6 +491,8 @@ ROM_START(ti99_8)
 
 ROM_END
 
+#define rom_ti99_8e rom_ti99_8
+
 SYSTEM_CONFIG_START(ti99_8)
 	/* one cartridge port */
 	/* one cassette unit port */
@@ -467,7 +501,7 @@ SYSTEM_CONFIG_START(ti99_8)
 
 	CONFIG_DEVICE_CASSETTE			(1, NULL)
 	CONFIG_DEVICE_LEGACY			(IO_CARTSLOT,	3,	"bin\0c\0d\0g\0m\0crom\0drom\0grom\0mrom\0",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_READ,	NULL,	NULL,	device_load_ti99_cart,	device_unload_ti99_cart,	NULL)
-#if 0
+#if 1
 	CONFIG_DEVICE_FLOPPY_BASICDSK	(4,	"dsk\0",										device_load_ti99_floppy)
 	CONFIG_DEVICE_LEGACY			(IO_HARDDISK, 	4, "hd\0",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_OR_READ,device_init_ti99_hd, NULL, device_load_ti99_hd, device_unload_ti99_hd, NULL)
 	CONFIG_DEVICE_LEGACY			(IO_PARALLEL,	1, "\0",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_CREATE_OR_READ,	NULL,	NULL,	device_load_ti99_4_pio,	device_unload_ti99_4_pio,		NULL)
@@ -478,4 +512,5 @@ SYSTEM_CONFIG_START(ti99_8)
 SYSTEM_CONFIG_END
 
 /*		YEAR	NAME		PARENT		COMPAT	MACHINE		INPUT	INIT		CONFIG		COMPANY					FULLNAME */
-COMP(	1983,	ti99_8,		0,			0,		ti99_8,		ti99_8,	ti99_8,		ti99_8,		"Texas Instruments",	"TI-99/8 Computer" )
+COMP(	1983,	ti99_8,		0,			0,		ti99_8_60hz,ti99_8,	ti99_8,		ti99_8,		"Texas Instruments",	"TI-99/8 Computer (US)" )
+COMP(	1983,	ti99_8e,	ti99_8,		0,		ti99_8_50hz,ti99_8,	ti99_8,		ti99_8,		"Texas Instruments",	"TI-99/8 Computer (Europe)" )
