@@ -20,7 +20,7 @@
  * The vidmem array is used to optimise the screen redrawing
  * whenever a memory location is written to the same location is set in the vidmem array
  * if none of the video registers have been changed and a full redraw is not needed
- * the video display emulation will only redraw the video memory location that have been changed.
+ * the video display emulation will only redraw the video memory locations that have been changed.
  ************************************************************************/
 
 static int video_refresh;
@@ -304,25 +304,33 @@ void BBC_draw_hi_res_enabled(void)
 
 }
 
-/************************************************************************
- * SAA5050 Teletext
- ************************************************************************/
 
+/*********************
+part of the video ula
+that recieves the output from the teletext IC
+**********************/
 
-static unsigned int teletext_pallette[8]={ 7,6,5,4,3,2,1,0 };
-static unsigned int teletext_cursor_pallette[8]={ 0,1,2,3,4,5,6,7 };
-
-static unsigned int *teletext_pallet_lookup=teletext_pallette;// holds the pallet now being used.
+static unsigned int teletext_cursor_state=7;
 
 void teletext_select_pallet(void)
 {
-	if (!VideoULA_CR) teletext_pallet_lookup=teletext_pallette;
-	if ( VideoULA_CR) teletext_pallet_lookup=teletext_cursor_pallette;
+	teletext_cursor_state=VideoULA_CR?0:7;
 }
 
-enum Teletext_Flash    { Steady,Flashing };
-enum Teletext_Height   { Normal,Double };
-enum Teletext_Conceal  { No,Yes };
+static int ttx_c;
+
+void BBC_ula_showteletext(int col)
+{
+	int tcol;
+	tcol=Machine->pens[col^teletext_cursor_state];
+	BBC_display[ttx_c++]=tcol;
+	BBC_display[ttx_c++]=tcol;
+	BBC_display[ttx_c++]=tcol;
+}
+
+/************************************************************************
+ * SAA5050 Teletext
+ ************************************************************************/
 
 static char *tt_lookup=teletext_characters;
 static char *tt_graphics=teletext_graphics;
@@ -370,19 +378,15 @@ void teletext_LOSE(void)
 	}
 }
 
-void BBC_draw_teletext_enabled(void)
+
+
+
+void SA5050_clock(int i)
 {
-	int meml;
-	int i=0;
 	int sc1;
-	int c=0;
-	int pixel_temp=0;
 
+	i=i&0x7f;
 
-
-
-	meml=video_ram_lookup[crtc6845_memory_address_r(0)-1];
-	i=BBC_Video_RAM[meml]&0x7f;
 	switch (i)
 	{
 		// 0x00 Not used
@@ -493,14 +497,25 @@ void BBC_draw_teletext_enabled(void)
 	i=(i-0x20)*60+(6*((tt_linecount+tt_start_line)>>tt_double_height));
 	for(sc1=0;sc1<6;sc1++)
 	{
-		pixel_temp=tt_lookup[i++]?Machine->pens[teletext_pallet_lookup[tt_colour]]:Machine->pens[teletext_pallet_lookup[tt_bgcolour]];
+		BBC_ula_showteletext(tt_lookup[i++]?tt_colour:tt_bgcolour);
 
-		BBC_display[c++]=pixel_temp;
-		BBC_display[c++]=pixel_temp;
-		BBC_display[c++]=pixel_temp;
+
+		/* this has all been pulled out into its own function */
+		//pixel_temp=tt_lookup[i++]?Machine->pens[teletext_pallet_lookup[tt_colour]]:Machine->pens[teletext_pallet_lookup[tt_bgcolour]];
+
+		//pixel_temp=tt_lookup[i++]?tt_colour:tt_bgcolour;
+
+		//BBC_display[c++]=pixel_temp;
+		//BBC_display[c++]=pixel_temp;
+		//BBC_display[c++]=pixel_temp;
 	}
 }
 
+void BBC_draw_teletext_enabled(void)
+{
+	ttx_c=0;
+	SA5050_clock( BBC_Video_RAM[ video_ram_lookup[crtc6845_memory_address_r(0)-1] ]&0x7f );
+}
 
 
 void BBC_draw_screen_disabled(void)
