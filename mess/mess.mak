@@ -306,6 +306,7 @@ $(OBJ)/coco.a:   \
 	  $(OBJ)/mess/formats/cococas.o  \
 	  $(OBJ)/mess/machine/cococart.o \
 	  $(OBJ)/mess/formats/dmkdsk.o   \
+	  $(OBJ)/mess/formats/cocovdk.o   \
 	  $(OBJ)/mess/machine/mc10.o	 \
 	  $(OBJ)/mess/systems/mc10.o	 \
 	  $(OBJ)/mess/machine/dragon.o	 \

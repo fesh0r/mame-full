@@ -199,7 +199,7 @@ int dmkdsk_floppy_init(int id)
 	}
 #if VERBOSE
 	logerror("dmkdsk geometry for drive #%d is %d tracks, %c heads \n",
-		id, w->header.trackCount,  (w->header.diskOptions & 0x10 == 0) ? '2' : '1' );
+		id, w->header.trackCount,  ((w->header.diskOptions & 0x10) == 0) ? '2' : '1' );
 #endif
 
 	return result;
