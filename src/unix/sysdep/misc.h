@@ -26,7 +26,7 @@
 #include <OS.h>
 /* BeOS doesn't have the "usleep()" function. It has the "snooze()"
    one which sleeps in microseconds, not milliseconds. */
-#define usleep(x) snooze((x)/1000)
+#define usleep(x) snooze(x)
 #endif
 
 /* clock stuff */
