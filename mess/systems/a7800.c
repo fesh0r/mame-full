@@ -12,7 +12,6 @@
 #include "vidhrdw/generic.h"
 #include "cpu/m6502/m6502.h"
 #include "sound/tiaintf.h"
-#include <zlib.h>
 
 /* vidhrdw/a7800.c */
 extern int a7800_vh_start(void);

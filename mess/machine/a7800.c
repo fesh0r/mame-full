@@ -11,7 +11,6 @@
 #include "cpu/m6502/m6502.h"
 #include "sound/tiasound.h"
 #include "cpuintrf.h"
-#include <zlib.h>
 
 unsigned char *a7800_cart_f000;
 unsigned char *a7800_bios_f000;

@@ -3,7 +3,6 @@
 #include "vidhrdw/generic.h"
 #include "includes/nes.h"
 #include "machine/nes_mmc.h"
-#include <zlib.h>
 
 /* Uncomment this to dump reams of ppu state info to the errorlog */
 //#define LOG_PPU
