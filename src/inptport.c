@@ -2827,6 +2827,7 @@ static unsigned input_port_count(const struct InputPortTiny *src)
 			case IPT_EXTENSION:
 #ifdef MESS
 			case IPT_CATEGORY:
+			case IPT_UCHAR:
 #endif /* MESS */
 				break;
 
@@ -2946,16 +2947,7 @@ struct InputPort* input_port_allocate(const struct InputPortTiny *src)
 
 #ifdef MESS
 		/* process MESS specific extensions to the port */
-		while((ext->type & ~IPF_MASK) == IPT_UCHAR ||
-			(ext->type & ~IPF_MASK) == IPT_CATEGORY)
-		{
-			if ((ext->type & ~IPF_MASK) == IPT_CATEGORY)
-			{
-				for (i = 0; i < port_size; i++)
-					dst[i].category = ext->default_value;
-			}
-			ext++;
-		}
+		ext = inputx_handle_mess_extensions(ext, dst, port_size);
 #endif /* MESS */
 
 		src = ext;

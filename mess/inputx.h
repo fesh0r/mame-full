@@ -98,6 +98,8 @@ enum
 /* these are called by the core; they should not be called from FEs */
 void inputx_init(void);
 void inputx_update(unsigned short *ports);
+const struct InputPortTiny *inputx_handle_mess_extensions(
+	const struct InputPortTiny *ext, struct InputPort *dst, int port_size);
 
 #ifdef MAME_DEBUG
 int inputx_validitycheck(const struct GameDriver *gamedrv);
@@ -107,6 +109,7 @@ int inputx_validitycheck(const struct GameDriver *gamedrv);
 int inputx_can_post(void);
 int inputx_can_post_key(unicode_char_t ch);
 int inputx_is_posting(void);
+const char *inputx_key_name(unicode_char_t ch);
 
 /* various posting functions; can be called from FEs */
 void inputx_post(const unicode_char_t *text);

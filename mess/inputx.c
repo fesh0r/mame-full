@@ -33,7 +33,178 @@ struct KeyBuffer
 	unicode_char_t buffer[4096];
 };
 
+struct CharInfo
+{
+	unicode_char_t ch;
+	const char *name;
+	const char *alternate;
+};
+
+static const struct CharInfo charinfo[] =
+{
+	{ 0x0008,					"Backspace",	NULL },		/* Backspace */	
+	{ 0x0009,					"Tab",			"    " },	/* Tab */
+	{ 0x000c,					"Clear",		NULL },		/* Clear */
+	{ 0x000d,					"Enter",		NULL },		/* Enter */
+	{ 0x001a,					"Esc",			NULL },		/* Esc */
+	{ 0x0061,					NULL,			"A" },		/* a */
+	{ 0x0062,					NULL,			"B" },		/* b */
+	{ 0x0063,					NULL,			"C" },		/* c */
+	{ 0x0064,					NULL,			"D" },		/* d */
+	{ 0x0065,					NULL,			"E" },		/* e */
+	{ 0x0066,					NULL,			"F" },		/* f */
+	{ 0x0067,					NULL,			"G" },		/* g */
+	{ 0x0068,					NULL,			"H" },		/* h */
+	{ 0x0069,					NULL,			"I" },		/* i */
+	{ 0x006a,					NULL,			"J" },		/* j */
+	{ 0x006b,					NULL,			"K" },		/* k */
+	{ 0x006c,					NULL,			"L" },		/* l */
+	{ 0x006d,					NULL,			"M" },		/* m */
+	{ 0x006e,					NULL,			"N" },		/* n */
+	{ 0x006f,					NULL,			"O" },		/* o */
+	{ 0x0070,					NULL,			"P" },		/* p */
+	{ 0x0071,					NULL,			"Q" },		/* q */
+	{ 0x0072,					NULL,			"R" },		/* r */
+	{ 0x0073,					NULL,			"S" },		/* s */
+	{ 0x0074,					NULL,			"T" },		/* t */
+	{ 0x0075,					NULL,			"U" },		/* u */
+	{ 0x0076,					NULL,			"V" },		/* v */
+	{ 0x0077,					NULL,			"W" },		/* w */
+	{ 0x0078,					NULL,			"X" },		/* x */
+	{ 0x0079,					NULL,			"Y" },		/* y */
+	{ 0x007a,					NULL,			"Z" },		/* z */
+	{ 0x00a0,					NULL,			" " },		/* non breaking space */
+	{ 0x00a1,					NULL,			"!" },		/* inverted exclaimation mark */
+	{ 0x00a6,					NULL,			"|" },		/* broken bar */
+	{ 0x00a9,					NULL,			"(c)" },	/* copyright sign */
+	{ 0x00ab,					NULL,			"<<" },		/* left pointing double angle */
+	{ 0x00ae,					NULL,			"(r)" },	/* registered sign */
+	{ 0x00bb,					NULL,			">>" },		/* right pointing double angle */
+	{ 0x00bc,					NULL,			"1/4" },	/* vulgar fraction one quarter */
+	{ 0x00bd,					NULL,			"1/2" },	/* vulgar fraction one half */
+	{ 0x00be,					NULL,			"3/4" },	/* vulgar fraction three quarters */
+	{ 0x00bf,					NULL,			"?" },		/* inverted question mark */
+	{ 0x00c0,					NULL,			"A" },		/* 'A' grave */
+	{ 0x00c1,					NULL,			"A" },		/* 'A' acute */
+	{ 0x00c2,					NULL,			"A" },		/* 'A' circumflex */
+	{ 0x00c3,					NULL,			"A" },		/* 'A' tilde */
+	{ 0x00c4,					NULL,			"A" },		/* 'A' diaeresis */
+	{ 0x00c5,					NULL,			"A" },		/* 'A' ring above */
+	{ 0x00c6,					NULL,			"AE" },		/* 'AE' ligature */
+	{ 0x00c7,					NULL,			"C" },		/* 'C' cedilla */
+	{ 0x00c8,					NULL,			"E" },		/* 'E' grave */
+	{ 0x00c9,					NULL,			"E" },		/* 'E' acute */
+	{ 0x00ca,					NULL,			"E" },		/* 'E' circumflex */
+	{ 0x00cb,					NULL,			"E" },		/* 'E' diaeresis */
+	{ 0x00cc,					NULL,			"I" },		/* 'I' grave */
+	{ 0x00cd,					NULL,			"I" },		/* 'I' acute */
+	{ 0x00ce,					NULL,			"I" },		/* 'I' circumflex */
+	{ 0x00cf,					NULL,			"I" },		/* 'I' diaeresis */
+	{ 0x00d0,					NULL,			"D" },		/* 'ETH' */
+	{ 0x00d1,					NULL,			"N" },		/* 'N' tilde */
+	{ 0x00d2,					NULL,			"O" },		/* 'O' grave */
+	{ 0x00d3,					NULL,			"O" },		/* 'O' acute */
+	{ 0x00d4,					NULL,			"O" },		/* 'O' circumflex */
+	{ 0x00d5,					NULL,			"O" },		/* 'O' tilde */
+	{ 0x00d6,					NULL,			"O" },		/* 'O' diaeresis */
+	{ 0x00d7,					NULL,			"X" },		/* multiplication sign */
+	{ 0x00d8,					NULL,			"O" },		/* 'O' stroke */
+	{ 0x00d9,					NULL,			"U" },		/* 'U' grave */
+	{ 0x00da,					NULL,			"U" },		/* 'U' acute */
+	{ 0x00db,					NULL,			"U" },		/* 'U' circumflex */
+	{ 0x00dc,					NULL,			"U" },		/* 'U' diaeresis */
+	{ 0x00dd,					NULL,			"Y" },		/* 'Y' acute */
+	{ 0x00df,					NULL,			"SS" },		/* sharp S */
+	{ 0x00e0,					NULL,			"a" },		/* 'a' grave */
+	{ 0x00e1,					NULL,			"a" },		/* 'a' acute */
+	{ 0x00e2,					NULL,			"a" },		/* 'a' circumflex */
+	{ 0x00e3,					NULL,			"a" },		/* 'a' tilde */
+	{ 0x00e4,					NULL,			"a" },		/* 'a' diaeresis */
+	{ 0x00e5,					NULL,			"a" },		/* 'a' ring above */
+	{ 0x00e6,					NULL,			"ae" },		/* 'ae' ligature */
+	{ 0x00e7,					NULL,			"c" },		/* 'c' cedilla */
+	{ 0x00e8,					NULL,			"e" },		/* 'e' grave */
+	{ 0x00e9,					NULL,			"e" },		/* 'e' acute */
+	{ 0x00ea,					NULL,			"e" },		/* 'e' circumflex */
+	{ 0x00eb,					NULL,			"e" },		/* 'e' diaeresis */
+	{ 0x00ec,					NULL,			"i" },		/* 'i' grave */
+	{ 0x00ed,					NULL,			"i" },		/* 'i' acute */
+	{ 0x00ee,					NULL,			"i" },		/* 'i' circumflex */
+	{ 0x00ef,					NULL,			"i" },		/* 'i' diaeresis */
+	{ 0x00f0,					NULL,			"d" },		/* 'eth' */
+	{ 0x00f1,					NULL,			"n" },		/* 'n' tilde */
+	{ 0x00f2,					NULL,			"o" },		/* 'o' grave */
+	{ 0x00f3,					NULL,			"o" },		/* 'o' acute */
+	{ 0x00f4,					NULL,			"o" },		/* 'o' circumflex */
+	{ 0x00f5,					NULL,			"o" },		/* 'o' tilde */
+	{ 0x00f6,					NULL,			"o" },		/* 'o' diaeresis */
+	{ 0x00f8,					NULL,			"o" },		/* 'o' stroke */
+	{ 0x00f9,					NULL,			"u" },		/* 'u' grave */
+	{ 0x00fa,					NULL,			"u" },		/* 'u' acute */
+	{ 0x00fb,					NULL,			"u" },		/* 'u' circumflex */
+	{ 0x00fc,					NULL,			"u" },		/* 'u' diaeresis */
+	{ 0x00fd,					NULL,			"y" },		/* 'y' acute */
+	{ 0x00ff,					NULL,			"y" },		/* 'y' diaeresis */
+	{ 0x2010,					NULL,			"-" },		/* hyphen */
+	{ 0x2011,					NULL,			"-" },		/* non-breaking hyphen */
+	{ 0x2012,					NULL,			"-" },		/* figure dash */
+	{ 0x2013,					NULL,			"-" },		/* en dash */
+	{ 0x2014,					NULL,			"-" },		/* em dash */
+	{ 0x2015,					NULL,			"-" },		/* horizontal dash */
+	{ 0x2018,					NULL,			"\'" },		/* left single quotation mark */
+	{ 0x2019,					NULL,			"\'" },		/* right single quotation mark */
+	{ 0x201a,					NULL,			"\'" },		/* single low quotation mark */
+	{ 0x201b,					NULL,			"\'" },		/* single high reversed quotation mark */
+	{ 0x201c,					NULL,			"\"" },		/* left double quotation mark */
+	{ 0x201d,					NULL,			"\"" },		/* right double quotation mark */
+	{ 0x201e,					NULL,			"\"" },		/* double low quotation mark */
+	{ 0x201f,					NULL,			"\"" },		/* double high reversed quotation mark */
+	{ 0x2024,					NULL,			"." },		/* one dot leader */
+	{ 0x2025,					NULL,			".." },		/* two dot leader */
+	{ 0x2026,					NULL,			"..." },	/* horizontal ellipsis */
+	{ 0x2047,					NULL,			"??" },		/* double question mark */
+	{ 0x2048,					NULL,			"?!" },		/* question exclamation mark */
+	{ 0x2049,					NULL,			"!?" },		/* exclamation question mark */
+	{ UCHAR_MAMEKEY(ESC),		"Esc",			"\032" },	/* esc key */
+	{ UCHAR_MAMEKEY(DEL),		"Delete",		"\010" },	/* delete key */
+	{ UCHAR_MAMEKEY(HOME),		"Home",			"\014" },	/* home key */
+	{ UCHAR_MAMEKEY(LCONTROL),	"Left Ctrl",	NULL },		/* left control key */
+	{ UCHAR_MAMEKEY(RCONTROL),	"Right Ctrl",	NULL },		/* right control key */
+	{ UCHAR_MAMEKEY(LSHIFT),	"Left Shift",	NULL },		/* left shift key */
+	{ UCHAR_MAMEKEY(RSHIFT),	"Right Shift",	NULL }		/* right shift key */
+};
+
 #define INVALID_CHAR '?'
+
+/***************************************************************************
+
+	Char info lookup
+
+***************************************************************************/
+
+static const struct CharInfo *find_charinfo(unicode_char_t target_char)
+{
+	int low = 0;
+	int high = sizeof(charinfo) / sizeof(charinfo[0]);
+	int i;
+	unicode_char_t ch;
+
+	/* perform a simple binary search to find the proper alternate */
+	while(high > low)
+	{
+		i = (high + low) / 2;
+		ch = charinfo[i].ch;
+		if (ch < target_char)
+			low = i + 1;
+		else if (ch > target_char)
+			high = i;
+		else
+			return &charinfo[i];
+	}
+	return NULL;
+}
+
+
 
 /***************************************************************************
 
@@ -167,164 +338,6 @@ static int build_codes(const struct GameDriver *gamedrv, struct InputCode *codes
 
 /***************************************************************************
 
-	Alternative key translations
-
-***************************************************************************/
-
-static const struct
-{
-	unicode_char_t ch;
-	const char *str;
-} alternate_charmap[] =
-{
-	{ 0x0009,				"    " },	/* TAB */
-	{ 0x0061,				"A" },		/* a */
-	{ 0x0062,				"B" },		/* b */
-	{ 0x0063,				"C" },		/* c */
-	{ 0x0064,				"D" },		/* d */
-	{ 0x0065,				"E" },		/* e */
-	{ 0x0066,				"F" },		/* f */
-	{ 0x0067,				"G" },		/* g */
-	{ 0x0068,				"H" },		/* h */
-	{ 0x0069,				"I" },		/* i */
-	{ 0x006a,				"J" },		/* j */
-	{ 0x006b,				"K" },		/* k */
-	{ 0x006c,				"L" },		/* l */
-	{ 0x006d,				"M" },		/* m */
-	{ 0x006e,				"N" },		/* n */
-	{ 0x006f,				"O" },		/* o */
-	{ 0x0070,				"P" },		/* p */
-	{ 0x0071,				"Q" },		/* q */
-	{ 0x0072,				"R" },		/* r */
-	{ 0x0073,				"S" },		/* s */
-	{ 0x0074,				"T" },		/* t */
-	{ 0x0075,				"U" },		/* u */
-	{ 0x0076,				"V" },		/* v */
-	{ 0x0077,				"W" },		/* w */
-	{ 0x0078,				"X" },		/* x */
-	{ 0x0079,				"Y" },		/* y */
-	{ 0x007a,				"Z" },		/* z */
-	{ 0x00a0,				" " },		/* non breaking space */
-	{ 0x00a1,				"!" },		/* inverted exclaimation mark */
-	{ 0x00a6,				"|" },		/* broken bar */
-	{ 0x00a9,				"(c)" },	/* copyright sign */
-	{ 0x00ab,				"<<" },		/* left pointing double angle */
-	{ 0x00ae,				"(r)" },	/* registered sign */
-	{ 0x00bb,				">>" },		/* right pointing double angle */
-	{ 0x00bc,				"1/4" },	/* vulgar fraction one quarter */
-	{ 0x00bd,				"1/2" },	/* vulgar fraction one half */
-	{ 0x00be,				"3/4" },	/* vulgar fraction three quarters */
-	{ 0x00bf,				"?" },		/* inverted question mark */
-	{ 0x00c0,				"A" },		/* 'A' grave */
-	{ 0x00c1,				"A" },		/* 'A' acute */
-	{ 0x00c2,				"A" },		/* 'A' circumflex */
-	{ 0x00c3,				"A" },		/* 'A' tilde */
-	{ 0x00c4,				"A" },		/* 'A' diaeresis */
-	{ 0x00c5,				"A" },		/* 'A' ring above */
-	{ 0x00c6,				"AE" },		/* 'AE' ligature */
-	{ 0x00c7,				"C" },		/* 'C' cedilla */
-	{ 0x00c8,				"E" },		/* 'E' grave */
-	{ 0x00c9,				"E" },		/* 'E' acute */
-	{ 0x00ca,				"E" },		/* 'E' circumflex */
-	{ 0x00cb,				"E" },		/* 'E' diaeresis */
-	{ 0x00cc,				"I" },		/* 'I' grave */
-	{ 0x00cd,				"I" },		/* 'I' acute */
-	{ 0x00ce,				"I" },		/* 'I' circumflex */
-	{ 0x00cf,				"I" },		/* 'I' diaeresis */
-	{ 0x00d0,				"D" },		/* 'ETH' */
-	{ 0x00d1,				"N" },		/* 'N' tilde */
-	{ 0x00d2,				"O" },		/* 'O' grave */
-	{ 0x00d3,				"O" },		/* 'O' acute */
-	{ 0x00d4,				"O" },		/* 'O' circumflex */
-	{ 0x00d5,				"O" },		/* 'O' tilde */
-	{ 0x00d6,				"O" },		/* 'O' diaeresis */
-	{ 0x00d7,				"X" },		/* multiplication sign */
-	{ 0x00d8,				"O" },		/* 'O' stroke */
-	{ 0x00d9,				"U" },		/* 'U' grave */
-	{ 0x00da,				"U" },		/* 'U' acute */
-	{ 0x00db,				"U" },		/* 'U' circumflex */
-	{ 0x00dc,				"U" },		/* 'U' diaeresis */
-	{ 0x00dd,				"Y" },		/* 'Y' acute */
-	{ 0x00df,				"SS" },		/* sharp S */
-	{ 0x00e0,				"a" },		/* 'a' grave */
-	{ 0x00e1,				"a" },		/* 'a' acute */
-	{ 0x00e2,				"a" },		/* 'a' circumflex */
-	{ 0x00e3,				"a" },		/* 'a' tilde */
-	{ 0x00e4,				"a" },		/* 'a' diaeresis */
-	{ 0x00e5,				"a" },		/* 'a' ring above */
-	{ 0x00e6,				"ae" },		/* 'ae' ligature */
-	{ 0x00e7,				"c" },		/* 'c' cedilla */
-	{ 0x00e8,				"e" },		/* 'e' grave */
-	{ 0x00e9,				"e" },		/* 'e' acute */
-	{ 0x00ea,				"e" },		/* 'e' circumflex */
-	{ 0x00eb,				"e" },		/* 'e' diaeresis */
-	{ 0x00ec,				"i" },		/* 'i' grave */
-	{ 0x00ed,				"i" },		/* 'i' acute */
-	{ 0x00ee,				"i" },		/* 'i' circumflex */
-	{ 0x00ef,				"i" },		/* 'i' diaeresis */
-	{ 0x00f0,				"d" },		/* 'eth' */
-	{ 0x00f1,				"n" },		/* 'n' tilde */
-	{ 0x00f2,				"o" },		/* 'o' grave */
-	{ 0x00f3,				"o" },		/* 'o' acute */
-	{ 0x00f4,				"o" },		/* 'o' circumflex */
-	{ 0x00f5,				"o" },		/* 'o' tilde */
-	{ 0x00f6,				"o" },		/* 'o' diaeresis */
-	{ 0x00f8,				"o" },		/* 'o' stroke */
-	{ 0x00f9,				"u" },		/* 'u' grave */
-	{ 0x00fa,				"u" },		/* 'u' acute */
-	{ 0x00fb,				"u" },		/* 'u' circumflex */
-	{ 0x00fc,				"u" },		/* 'u' diaeresis */
-	{ 0x00fd,				"y" },		/* 'y' acute */
-	{ 0x00ff,				"y" },		/* 'y' diaeresis */
-	{ 0x2010,				"-" },		/* hyphen */
-	{ 0x2011,				"-" },		/* non-breaking hyphen */
-	{ 0x2012,				"-" },		/* figure dash */
-	{ 0x2013,				"-" },		/* en dash */
-	{ 0x2014,				"-" },		/* em dash */
-	{ 0x2015,				"-" },		/* horizontal dash */
-	{ 0x2018,				"\'" },		/* left single quotation mark */
-	{ 0x2019,				"\'" },		/* right single quotation mark */
-	{ 0x201a,				"\'" },		/* single low quotation mark */
-	{ 0x201b,				"\'" },		/* single high reversed quotation mark */
-	{ 0x201c,				"\"" },		/* left double quotation mark */
-	{ 0x201d,				"\"" },		/* right double quotation mark */
-	{ 0x201e,				"\"" },		/* double low quotation mark */
-	{ 0x201f,				"\"" },		/* double high reversed quotation mark */
-	{ 0x2024,				"." },		/* one dot leader */
-	{ 0x2025,				".." },		/* two dot leader */
-	{ 0x2026,				"..." },	/* horizontal ellipsis */
-	{ 0x2047,				"??" },		/* double question mark */
-	{ 0x2048,				"?!" },		/* question exclamation mark */
-	{ 0x2049,				"!?" },		/* exclamation question mark */
-	{ UCHAR_MAMEKEY(ESC),	"\032" },	/* esc key */
-	{ UCHAR_MAMEKEY(DEL),	"\010" },	/* delete key */
-	{ UCHAR_MAMEKEY(HOME),	"\014" }	/* clear key */
-};
-
-static const char *find_alternate(unicode_char_t target_char)
-{
-	int low = 0;
-	int high = sizeof(alternate_charmap) / sizeof(alternate_charmap[0]);
-	int i;
-	unicode_char_t ch;
-
-	/* perform a simple binary search to find the proper alternate */
-	while(high > low)
-	{
-		i = (high + low) / 2;
-		ch = alternate_charmap[i].ch;
-		if (ch < target_char)
-			low = i + 1;
-		else if (ch > target_char)
-			high = i;
-		else
-			return alternate_charmap[i].str;
-	}
-	return NULL;
-}
-
-/***************************************************************************
-
 	Validity checks
 
 ***************************************************************************/
@@ -339,6 +352,7 @@ int inputx_validitycheck(const struct GameDriver *gamedrv)
 	const char *str;
 	int error = 0;
 	unicode_char_t last_char = 0;
+	const struct CharInfo *ci;
 
 	if (gamedrv)
 	{
@@ -369,24 +383,24 @@ int inputx_validitycheck(const struct GameDriver *gamedrv)
 	}
 	else
 	{
-		/* check to make sure that alternate_charmap is in order */
-		for (i = 0; i < sizeof(alternate_charmap) / sizeof(alternate_charmap[0]); i++)
+		/* check to make sure that charinfo is in order */
+		for (i = 0; i < sizeof(charinfo) / sizeof(charinfo[0]); i++)
 		{
-			if (last_char >= alternate_charmap[i].ch)
+			if (last_char >= charinfo[i].ch)
 			{
-				printf("inputx: alternate_charmap is out of order; 0x%08x should be higher than 0x%08x\n", alternate_charmap[i].ch, last_char);
+				printf("inputx: charinfo is out of order; 0x%08x should be higher than 0x%08x\n", charinfo[i].ch, last_char);
 				error = 1;
 			}
-			last_char = alternate_charmap[i].ch;
+			last_char = charinfo[i].ch;
 		}
 
 		/* check to make sure that I can look up everything on alternate_charmap */
-		for (i = 0; i < sizeof(alternate_charmap) / sizeof(alternate_charmap[0]); i++)
+		for (i = 0; i < sizeof(charinfo) / sizeof(charinfo[0]); i++)
 		{
-			str = find_alternate(alternate_charmap[i].ch);
-			if (str != alternate_charmap[i].str)
+			ci = find_charinfo(charinfo[i].ch);
+			if (ci != &charinfo[i])
 			{
-				printf("inputx: expected find_alternate(0x%08x) to return '%s', but instead got '%s'\n", alternate_charmap[i].ch, alternate_charmap[i].str, str);
+				printf("inputx: expected find_charinfo(0x%08x) to work properly\n", charinfo[i].ch);
 				error = 1;
 			}
 		}
@@ -488,8 +502,10 @@ static int can_post_key_directly(unicode_char_t ch)
 static int can_post_key_alternate(unicode_char_t ch)
 {
 	const char *s;
+	const struct CharInfo *ci;
 
-	s = find_alternate(ch);
+	ci = find_charinfo(ch);
+	s = ci ? ci->alternate : NULL;
 	if (!s)
 		return 0;
 
@@ -574,6 +590,7 @@ void inputx_postn_rate(const unicode_char_t *text, size_t text_len, mame_time ra
 	int last_cr = 0;
 	unicode_char_t ch;
 	const char *s;
+	const struct CharInfo *ci;
 
 	current_rate = rate;
 
@@ -603,8 +620,9 @@ void inputx_postn_rate(const unicode_char_t *text, size_t text_len, mame_time ra
 				else if (can_post_key_alternate(ch))
 				{
 					/* we can post this key with an alternate representation */
-					s = find_alternate(ch);
-					assert(s);
+					ci = find_charinfo(ch);
+					assert(ci && ci->alternate);
+					s = ci->alternate;
 					while(*s)
 						internal_post_key(*(s++));
 				}
@@ -700,6 +718,91 @@ void inputx_update(unsigned short *ports)
 }
 
 
+
+const struct InputPortTiny *inputx_handle_mess_extensions(
+	const struct InputPortTiny *ext, struct InputPort *dst, int port_size)
+{
+	char buf[256];
+	int i, pos = 0;
+	const char *s;
+	unicode_char_t ch;
+
+	/* process MESS specific extensions to the port */
+	buf[0] = '\0';
+	while((ext->type & ~IPF_MASK) == IPT_UCHAR ||
+		(ext->type & ~IPF_MASK) == IPT_CATEGORY)
+	{
+		switch(ext->type & ~IPF_MASK)
+		{
+			case IPT_CATEGORY:
+				for (i = 0; i < port_size; i++)
+					dst[i].category = ext->default_value;
+				break;
+			case IPT_UCHAR:
+				ch = ext->mask;
+				ch <<= 16;
+				ch |= ext->default_value;
+				pos += sprintf(&buf[pos], "%s ", inputx_key_name(ch));
+				break;
+		}
+		ext++;
+	}
+
+	if (buf[0])
+	{
+		/* we have a default name for this keyboard port; iterate through the
+		 * ports and identify any keyboard ports that use IP_NAME_DEFAULT */
+		s = NULL;
+		for (i = 0; i < port_size; i++)
+		{
+			if (dst[i].name == IP_NAME_DEFAULT)
+			{
+				if (!s)
+				{
+					/* we have not allocated our copy of buf yet; allocate it
+					 * now */
+					rtrim(buf);
+					s = auto_strdup(buf);
+				}
+				dst[i].name = s;
+			}
+		}
+	}
+	return ext;
+}
+
+
+
+const char *inputx_key_name(unicode_char_t ch)
+{
+	static char buf[2];
+	const struct CharInfo *ci;
+	const char *result;
+
+	ci = find_charinfo(ch);
+	result = ci ? ci->name : NULL;
+
+	if (ci && ci->name)
+	{
+		result = ci->name;
+	}
+	else
+	{
+		if ((ch <= 0x7F) && isprint(ch))
+		{
+			buf[0] = (char) ch;
+			buf[1] = '\0';
+			result = buf;
+		}
+		else
+			result = "???";
+	}
+	return result;
+}
+
+
+
+/* --------------------------------------------------------------------- */
 
 int inputx_is_posting(void)
 {

@@ -102,27 +102,41 @@ void pc_sh_update(int param, INT16 *buffer, int length)
 
 	baseclock = pit8253_get_frequency(0, 2);
 
-	switch( speaker_gate )
-	{
-	case 0: /* speaker off */
+	switch( speaker_gate ) {
+	case 0:
+		/* speaker off */
 		while( length-- > 0 )
 			*sample++ = 0;
 		break;
-	case 1: /* speaker on */
+
+	case 1:
+		/* speaker on */
 		while( length-- > 0 )
 			*sample++ = 0x7fff;
         break;
-	case 2: /* speaker gate tone from PIT channel #2 */
-		while( length-- > 0 )
+
+	case 2:
+		/* speaker gate tone from PIT channel #2 */
+		if (baseclock > rate)
 		{
-			*sample++ = signal;
-			incr -= baseclock;
-			while( incr < 0 )
+			/* if the tone is too high to play, don't play it */
+			while( length-- > 0 )
+				*sample++ = 0;
+		}
+		else
+		{
+			while( length-- > 0 )
 			{
-				incr += rate;
-				signal = -signal;
+				*sample++ = signal;
+				incr -= baseclock;
+				while( incr < 0 )
+				{
+					incr += rate;
+					signal = -signal;
+				}
 			}
 		}
+		break;
 	}
 }
 

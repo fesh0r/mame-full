@@ -1,4 +1,4 @@
-0.82.1
+0.83
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
@@ -27,7 +27,11 @@ System Driver Changes:
 
 - [GENESIS] Split Genesis driver into gen_usa, gen_eur and gen_jpn drivers
   for different countries.  Also fixed a bug that caused sound to be gone in
-  certain games, and fixed Raiden Trad and Wani Wani World  [Anonymous]
+  certain games, and fixed Raiden Trad and Wani Wani World.  [Anonymous]
+
+- [PC] The speaker will now be silent if the 8253 is instructed to generate
+  a waveform that is higher frequency than the emulation sample rate.  Also
+  corrected the CGA color set.  [Andrew Jenner]
 
 - [VTECH1] Fixed graphics and added printer support.  [Dirk Best]
 
@@ -60,6 +64,9 @@ Source Changes:
   which inputs pertain to a given peripheral, like a gamepad or a lightgun.
   Changed A2600 and NES drivers to use this feature.  (bug #550 was a related
   issue) [Nate Woods]
+
+- It is now possible to specify IP_NAME_DEFAULT in PORT_KEY declarations; the
+  name of the key will be derived by the unicode values.  [Nate Woods]
 
 - [A400/A800] Fixed cartridge loading and partial state save support.  [Nate
   Woods]

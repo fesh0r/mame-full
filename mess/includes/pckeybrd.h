@@ -33,66 +33,66 @@ CHARQUEUE_EMPTY( at_keyboard );
 #define PC_KEYBOARD \
     PORT_START  /* IN4 */\
 	PORT_BIT ( 0x0001, 0x0000, IPT_UNUSED ) 	/* unused scancode 0 */\
-	PC_KEYB_HELPER( 0x0002, "Esc",          KEYCODE_ESC,        CODE_NONE ) /* Esc                         01  81 */\
-	PC_KEYB_HELPER( 0x0004, "1 !",          KEYCODE_1,          CODE_NONE ) /* 1                           02  82 */\
-	PC_KEYB_HELPER( 0x0008, "2 @",          KEYCODE_2,          CODE_NONE ) /* 2                           03  83 */\
-	PC_KEYB_HELPER( 0x0010, "3 #",          KEYCODE_3,          CODE_NONE ) /* 3                           04  84 */\
-	PC_KEYB_HELPER( 0x0020, "4 $",          KEYCODE_4,          CODE_NONE ) /* 4                           05  85 */\
-	PC_KEYB_HELPER( 0x0040, "5 %",          KEYCODE_5,          CODE_NONE ) /* 5                           06  86 */\
-	PC_KEYB_HELPER( 0x0080, "6 ^",          KEYCODE_6,          CODE_NONE ) /* 6                           07  87 */\
-	PC_KEYB_HELPER( 0x0100, "7 &",          KEYCODE_7,          CODE_NONE ) /* 7                           08  88 */\
-	PC_KEYB_HELPER( 0x0200, "8 *",          KEYCODE_8,          CODE_NONE ) /* 8                           09  89 */\
-	PC_KEYB_HELPER( 0x0400, "9 (",          KEYCODE_9,          CODE_NONE ) /* 9                           0A  8A */\
-	PC_KEYB_HELPER( 0x0800, "0 )",          KEYCODE_0,          CODE_NONE ) /* 0                           0B  8B */\
-	PC_KEYB_HELPER( 0x1000, "- _",          KEYCODE_MINUS,      CODE_NONE ) /* -                           0C  8C */\
-	PC_KEYB_HELPER( 0x2000, "= +",          KEYCODE_EQUALS,     CODE_NONE ) /* =                           0D  8D */\
-	PC_KEYB_HELPER( 0x4000, "<--",          KEYCODE_BACKSPACE,  CODE_NONE ) /* Backspace                   0E  8E */\
-	PC_KEYB_HELPER( 0x8000, "Tab",          KEYCODE_TAB,        CODE_NONE ) /* Tab                         0F  8F */\
+	PORT_KEY1( 0x0002, 0x0000, IP_NAME_DEFAULT, KEYCODE_ESC,        CODE_NONE, 26 )			/* Esc                         01  81 */\
+	PORT_KEY2( 0x0004, 0x0000, IP_NAME_DEFAULT, KEYCODE_1,          CODE_NONE, '1', '!' )	/* 1                           02  82 */\
+	PORT_KEY2( 0x0008, 0x0000, IP_NAME_DEFAULT, KEYCODE_2,          CODE_NONE, '2', '@' )	/* 2                           03  83 */\
+	PORT_KEY2( 0x0010, 0x0000, IP_NAME_DEFAULT, KEYCODE_3,          CODE_NONE, '3', '#' )	/* 3                           04  84 */\
+	PORT_KEY2( 0x0020, 0x0000, IP_NAME_DEFAULT, KEYCODE_4,          CODE_NONE, '4', '$' )	/* 4                           05  85 */\
+	PORT_KEY2( 0x0040, 0x0000, IP_NAME_DEFAULT, KEYCODE_5,          CODE_NONE, '5', '%' )	/* 5                           06  86 */\
+	PORT_KEY2( 0x0080, 0x0000, IP_NAME_DEFAULT, KEYCODE_6,          CODE_NONE, '6', '^' )	/* 6                           07  87 */\
+	PORT_KEY2( 0x0100, 0x0000, IP_NAME_DEFAULT, KEYCODE_7,          CODE_NONE, '7', '&' )	/* 7                           08  88 */\
+	PORT_KEY2( 0x0200, 0x0000, IP_NAME_DEFAULT, KEYCODE_8,          CODE_NONE, '8', '*' )	/* 8                           09  89 */\
+	PORT_KEY2( 0x0400, 0x0000, IP_NAME_DEFAULT, KEYCODE_9,          CODE_NONE, '9', '(' )	/* 9                           0A  8A */\
+	PORT_KEY2( 0x0800, 0x0000, IP_NAME_DEFAULT, KEYCODE_0,          CODE_NONE, '0', ')' )	/* 0                           0B  8B */\
+	PORT_KEY2( 0x1000, 0x0000, IP_NAME_DEFAULT, KEYCODE_MINUS,      CODE_NONE, '-', '_' )	/* -                           0C  8C */\
+	PORT_KEY2( 0x2000, 0x0000, IP_NAME_DEFAULT, KEYCODE_EQUALS,     CODE_NONE, '=', '+' )	/* =                           0D  8D */\
+	PORT_KEY1( 0x4000, 0x0000, IP_NAME_DEFAULT, KEYCODE_BACKSPACE,  CODE_NONE, 8 )			/* Backspace                   0E  8E */\
+	PORT_KEY1( 0x8000, 0x0000, IP_NAME_DEFAULT, KEYCODE_TAB,        CODE_NONE, 9 )			/* Tab                         0F  8F */\
 		\
 	PORT_START	/* IN5 */\
-	PC_KEYB_HELPER( 0x0001, "Q",            KEYCODE_Q,          CODE_NONE ) /* Q                           10  90 */\
-	PC_KEYB_HELPER( 0x0002, "W",            KEYCODE_W,          CODE_NONE ) /* W                           11  91 */\
-	PC_KEYB_HELPER( 0x0004, "E",            KEYCODE_E,          CODE_NONE ) /* E                           12  92 */\
-	PC_KEYB_HELPER( 0x0008, "R",            KEYCODE_R,          CODE_NONE ) /* R                           13  93 */\
-	PC_KEYB_HELPER( 0x0010, "T",            KEYCODE_T,          CODE_NONE ) /* T                           14  94 */\
-	PC_KEYB_HELPER( 0x0020, "Y",            KEYCODE_Y,          CODE_NONE ) /* Y                           15  95 */\
-	PC_KEYB_HELPER( 0x0040, "U",            KEYCODE_U,          CODE_NONE ) /* U                           16  96 */\
-	PC_KEYB_HELPER( 0x0080, "I",            KEYCODE_I,          CODE_NONE ) /* I                           17  97 */\
-	PC_KEYB_HELPER( 0x0100, "O",            KEYCODE_O,          CODE_NONE ) /* O                           18  98 */\
-	PC_KEYB_HELPER( 0x0200, "P",            KEYCODE_P,          CODE_NONE ) /* P                           19  99 */\
-	PC_KEYB_HELPER( 0x0400, "[ {",          KEYCODE_OPENBRACE,  CODE_NONE ) /* [                           1A  9A */\
-	PC_KEYB_HELPER( 0x0800, "] }",          KEYCODE_CLOSEBRACE, CODE_NONE ) /* ]                           1B  9B */\
-	PC_KEYB_HELPER( 0x1000, "Enter",        KEYCODE_ENTER,      CODE_NONE ) /* Enter                       1C  9C */\
-	PC_KEYB_HELPER( 0x2000, "L-Ctrl",       KEYCODE_LCONTROL,   CODE_NONE ) /* Left Ctrl                   1D  9D */\
-	PC_KEYB_HELPER( 0x4000, "A",            KEYCODE_A,          CODE_NONE ) /* A                           1E  9E */\
-	PC_KEYB_HELPER( 0x8000, "S",            KEYCODE_S,          CODE_NONE ) /* S                           1F  9F */\
+	PORT_KEY1( 0x0001, 0x0000, IP_NAME_DEFAULT, KEYCODE_Q,          CODE_NONE, 'Q' ) /* Q                           10  90 */\
+	PORT_KEY1( 0x0002, 0x0000, IP_NAME_DEFAULT, KEYCODE_W,          CODE_NONE, 'W' ) /* W                           11  91 */\
+	PORT_KEY1( 0x0004, 0x0000, IP_NAME_DEFAULT, KEYCODE_E,          CODE_NONE, 'E' ) /* E                           12  92 */\
+	PORT_KEY1( 0x0008, 0x0000, IP_NAME_DEFAULT, KEYCODE_R,          CODE_NONE, 'R' ) /* R                           13  93 */\
+	PORT_KEY1( 0x0010, 0x0000, IP_NAME_DEFAULT, KEYCODE_T,          CODE_NONE, 'T' ) /* T                           14  94 */\
+	PORT_KEY1( 0x0020, 0x0000, IP_NAME_DEFAULT, KEYCODE_Y,          CODE_NONE, 'Y' ) /* Y                           15  95 */\
+	PORT_KEY1( 0x0040, 0x0000, IP_NAME_DEFAULT, KEYCODE_U,          CODE_NONE, 'U' ) /* U                           16  96 */\
+	PORT_KEY1( 0x0080, 0x0000, IP_NAME_DEFAULT, KEYCODE_I,          CODE_NONE, 'I' ) /* I                           17  97 */\
+	PORT_KEY1( 0x0100, 0x0000, IP_NAME_DEFAULT, KEYCODE_O,          CODE_NONE, 'O' ) /* O                           18  98 */\
+	PORT_KEY1( 0x0200, 0x0000, IP_NAME_DEFAULT, KEYCODE_P,          CODE_NONE, 'P' ) /* P                           19  99 */\
+	PORT_KEY2( 0x0400, 0x0000, IP_NAME_DEFAULT, KEYCODE_OPENBRACE,  CODE_NONE, '[', '{' ) /* [                           1A  9A */\
+	PORT_KEY2( 0x0800, 0x0000, IP_NAME_DEFAULT, KEYCODE_CLOSEBRACE, CODE_NONE, ']', '}' ) /* ]                           1B  9B */\
+	PORT_KEY1( 0x1000, 0x0000, IP_NAME_DEFAULT, KEYCODE_ENTER,      CODE_NONE, 13  ) /* Enter                       1C  9C */\
+	PORT_KEY1( 0x2000, 0x0000, IP_NAME_DEFAULT, KEYCODE_LCONTROL,   CODE_NONE, UCHAR_MAMEKEY(LCONTROL) )      /* Left Ctrl                   1D  9D */\
+	PORT_KEY1( 0x4000, 0x0000, IP_NAME_DEFAULT, KEYCODE_A,          CODE_NONE, 'A' ) /* A                           1E  9E */\
+	PORT_KEY1( 0x8000, 0x0000, IP_NAME_DEFAULT, KEYCODE_S,          CODE_NONE, 'S' ) /* S                           1F  9F */\
 		\
 	PORT_START	/* IN6 */\
-	PC_KEYB_HELPER( 0x0001, "D",            KEYCODE_D,          CODE_NONE ) /* D                           20  A0 */\
-	PC_KEYB_HELPER( 0x0002, "F",            KEYCODE_F,          CODE_NONE ) /* F                           21  A1 */\
-	PC_KEYB_HELPER( 0x0004, "G",            KEYCODE_G,          CODE_NONE ) /* G                           22  A2 */\
-	PC_KEYB_HELPER( 0x0008, "H",            KEYCODE_H,          CODE_NONE ) /* H                           23  A3 */\
-	PC_KEYB_HELPER( 0x0010, "J",            KEYCODE_J,          CODE_NONE ) /* J                           24  A4 */\
-	PC_KEYB_HELPER( 0x0020, "K",            KEYCODE_K,          CODE_NONE ) /* K                           25  A5 */\
-	PC_KEYB_HELPER( 0x0040, "L",            KEYCODE_L,          CODE_NONE ) /* L                           26  A6 */\
-	PC_KEYB_HELPER( 0x0080, "; :",          KEYCODE_COLON,      CODE_NONE ) /* ;                           27  A7 */\
-	PC_KEYB_HELPER( 0x0100, "' \"",         KEYCODE_QUOTE,      CODE_NONE ) /* '                           28  A8 */\
-	PC_KEYB_HELPER( 0x0200, "` ~",          KEYCODE_TILDE,      CODE_NONE ) /* `                           29  A9 */\
-	PC_KEYB_HELPER( 0x0400, "L-Shift",      KEYCODE_LSHIFT,     CODE_NONE ) /* Left Shift                  2A  AA */\
-	PC_KEYB_HELPER( 0x0800, "\\ |",         KEYCODE_BACKSLASH,  CODE_NONE ) /* \                           2B  AB */\
-	PC_KEYB_HELPER( 0x1000, "Z",            KEYCODE_Z,          CODE_NONE ) /* Z                           2C  AC */\
-	PC_KEYB_HELPER( 0x2000, "X",            KEYCODE_X,          CODE_NONE ) /* X                           2D  AD */\
-	PC_KEYB_HELPER( 0x4000, "C",            KEYCODE_C,          CODE_NONE ) /* C                           2E  AE */\
-	PC_KEYB_HELPER( 0x8000, "V",            KEYCODE_V,          CODE_NONE ) /* V                           2F  AF */\
+	PORT_KEY1( 0x0001, 0x0000, IP_NAME_DEFAULT, KEYCODE_D,          CODE_NONE, 'D' ) /* D                           20  A0 */\
+	PORT_KEY1( 0x0002, 0x0000, IP_NAME_DEFAULT, KEYCODE_F,          CODE_NONE, 'F' ) /* F                           21  A1 */\
+	PORT_KEY1( 0x0004, 0x0000, IP_NAME_DEFAULT, KEYCODE_G,          CODE_NONE, 'G' ) /* G                           22  A2 */\
+	PORT_KEY1( 0x0008, 0x0000, IP_NAME_DEFAULT, KEYCODE_H,          CODE_NONE, 'H' ) /* H                           23  A3 */\
+	PORT_KEY1( 0x0010, 0x0000, IP_NAME_DEFAULT, KEYCODE_J,          CODE_NONE, 'J' ) /* J                           24  A4 */\
+	PORT_KEY1( 0x0020, 0x0000, IP_NAME_DEFAULT, KEYCODE_K,          CODE_NONE, 'K' ) /* K                           25  A5 */\
+	PORT_KEY1( 0x0040, 0x0000, IP_NAME_DEFAULT, KEYCODE_L,          CODE_NONE, 'L' ) /* L                           26  A6 */\
+	PORT_KEY2( 0x0080, 0x0000, IP_NAME_DEFAULT, KEYCODE_COLON,      CODE_NONE, ';', ':' ) /* ;                           27  A7 */\
+	PORT_KEY2( 0x0100, 0x0000, IP_NAME_DEFAULT, KEYCODE_QUOTE,      CODE_NONE, '\'', '\"' ) /* '                           28  A8 */\
+	PORT_KEY2( 0x0200, 0x0000, IP_NAME_DEFAULT, KEYCODE_TILDE,      CODE_NONE, '`', '~' ) /* `                           29  A9 */\
+	PORT_KEY1( 0x0400, 0x0000, IP_NAME_DEFAULT, KEYCODE_LSHIFT,     CODE_NONE, UCHAR_MAMEKEY(LSHIFT) ) /* Left Shift                  2A  AA */\
+	PORT_KEY2( 0x0800, 0x0000, IP_NAME_DEFAULT, KEYCODE_BACKSLASH,  CODE_NONE, '\\', '|' ) /* \                           2B  AB */\
+	PORT_KEY1( 0x1000, 0x0000, IP_NAME_DEFAULT, KEYCODE_Z,          CODE_NONE, 'Z' ) /* Z                           2C  AC */\
+	PORT_KEY1( 0x2000, 0x0000, IP_NAME_DEFAULT, KEYCODE_X,          CODE_NONE, 'X' ) /* X                           2D  AD */\
+	PORT_KEY1( 0x4000, 0x0000, IP_NAME_DEFAULT, KEYCODE_C,          CODE_NONE, 'C' ) /* C                           2E  AE */\
+	PORT_KEY1( 0x8000, 0x0000, IP_NAME_DEFAULT, KEYCODE_V,          CODE_NONE, 'V' ) /* V                           2F  AF */\
 		\
 	PORT_START	/* IN7 */\
-	PC_KEYB_HELPER( 0x0001, "B",            KEYCODE_B,          CODE_NONE ) /* B                           30  B0 */\
-	PC_KEYB_HELPER( 0x0002, "N",            KEYCODE_N,          CODE_NONE ) /* N                           31  B1 */\
-	PC_KEYB_HELPER( 0x0004, "M",            KEYCODE_M,          CODE_NONE ) /* M                           32  B2 */\
-	PC_KEYB_HELPER( 0x0008, ", <",          KEYCODE_COMMA,      CODE_NONE ) /* ,                           33  B3 */\
-	PC_KEYB_HELPER( 0x0010, ". >",          KEYCODE_STOP,       CODE_NONE ) /* .                           34  B4 */\
-	PC_KEYB_HELPER( 0x0020, "/ ?",          KEYCODE_SLASH,      CODE_NONE ) /* /                           35  B5 */\
-	PC_KEYB_HELPER( 0x0040, "R-Shift",      KEYCODE_RSHIFT,     CODE_NONE ) /* Right Shift                 36  B6 */\
+	PORT_KEY1( 0x0001, 0x0000, IP_NAME_DEFAULT, KEYCODE_B,          CODE_NONE, 'B' ) /* B                           30  B0 */\
+	PORT_KEY1( 0x0002, 0x0000, IP_NAME_DEFAULT, KEYCODE_N,          CODE_NONE, 'N' ) /* N                           31  B1 */\
+	PORT_KEY1( 0x0004, 0x0000, IP_NAME_DEFAULT, KEYCODE_M,          CODE_NONE, 'M' ) /* M                           32  B2 */\
+	PORT_KEY2( 0x0008, 0x0000, IP_NAME_DEFAULT, KEYCODE_COMMA,      CODE_NONE, ',', '<' ) /* ,                           33  B3 */\
+	PORT_KEY2( 0x0010, 0x0000, IP_NAME_DEFAULT, KEYCODE_STOP,       CODE_NONE, '.', '>' ) /* .                           34  B4 */\
+	PORT_KEY2( 0x0020, 0x0000, IP_NAME_DEFAULT, KEYCODE_SLASH,      CODE_NONE, '/', '?' ) /* /                           35  B5 */\
+	PORT_KEY1( 0x0040, 0x0000, IP_NAME_DEFAULT, KEYCODE_RSHIFT,     CODE_NONE, UCHAR_MAMEKEY(RSHIFT) ) /* Right Shift                 36  B6 */\
 	PC_KEYB_HELPER( 0x0080, "KP * (PrtScr)",KEYCODE_ASTERISK,   CODE_NONE ) /* Keypad *  (PrtSc)           37  B7 */\
 	PC_KEYB_HELPER( 0x0100, "Alt",          KEYCODE_LALT,       CODE_NONE ) /* Left Alt                    38  B8 */\
 	PC_KEYB_HELPER( 0x0200, "Space",        KEYCODE_SPACE,      CODE_NONE ) /* Space                       39  B9 */\
