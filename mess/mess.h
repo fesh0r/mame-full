@@ -47,6 +47,7 @@ extern void showmessinfo(void);
 extern int displayimageinfo(struct osd_bitmap *bitmap, int selected);
 extern int filemanager(struct osd_bitmap *bitmap, int selected);
 extern int tapecontrol(struct osd_bitmap *bitmap, int selected);
+extern int diskcontrol(struct osd_bitmap *bitmap, int selected);
 
 /* driver.h - begin */
 #define IPT_SELECT1		IPT_COIN1
@@ -112,20 +113,12 @@ int parse_image_types(char *arg);
  *	osd_fdc_exit
  *		shut down
  *	osd_fdc_motors
- *		start motors for <unit> number (0 = A:, 1 = B:)
+ *              start/stop motors for <unit> number (0 = A:, 1 = B:)
  *	osd_fdc_density
  *		set type of drive from bios info (1: 360K, 2: 1.2M, 3: 720K, 4: 1.44M)
  *		set density (0:FM,LO 1:FM,HI 2:MFM,LO 3:MFM,HI) ( FM doesn't work )
  *		tracks, sectors per track and sector length code are given to
  *		calculate the appropriate double step and GAP II, GAP III values
- *	osd_fdc_interrupt
- *		stop motors and interrupt the current command
- *	osd_fdc_recal
- *		recalibrate the current drive and update *track if not NULL
- *	osd_fdc_seek
- *		seek to a given track number and update *track if not NULL
- *	osd_fdc_step
- *		step into a direction (+1/-1) and update *track if not NULL
  *	osd_fdc_format
  *		format track t, head h, spt sectors per track
  *		sector map at *fmt
@@ -145,15 +138,19 @@ int parse_image_types(char *arg);
 
 int  osd_fdc_init(void);
 void osd_fdc_exit(void);
-void osd_fdc_motors(unsigned char unit);
+void osd_fdc_motors(unsigned char unit, unsigned char state);
 void osd_fdc_density(unsigned char unit, unsigned char density, unsigned char tracks, unsigned char spt, unsigned char eot, unsigned char secl);
-void osd_fdc_interrupt(int param);
-unsigned char osd_fdc_recal(unsigned char *track);
-unsigned char osd_fdc_seek(unsigned char t, unsigned char *track);
-unsigned char osd_fdc_step(int dir, unsigned char *track);
-unsigned char osd_fdc_format(unsigned char t, unsigned char h, unsigned char spt, unsigned char *fmt);
-unsigned char osd_fdc_put_sector(unsigned char track, unsigned char side, unsigned char head, unsigned char sector, unsigned char *buff, unsigned char ddam);
-unsigned char osd_fdc_get_sector(unsigned char track, unsigned char side, unsigned char head, unsigned char sector, unsigned char *buff);
+
+void osd_fdc_format(unsigned char t, unsigned char h, unsigned char spt, unsigned char *fmt);
+void osd_fdc_put_sector(unsigned char unit, unsigned char side, unsigned char C, unsigned char H, unsigned char R, unsigned char N,unsigned char *buff, unsigned char ddam);
+void osd_fdc_get_sector(unsigned char unit,unsigned char side, unsigned char C, unsigned char H, unsigned char R, unsigned char N,unsigned char *buff);
+
+/* perform a seek on physical drive 'unit'. dir will be -ve or +ve.
+For a single step this will be -1 or +1. */
+void osd_fdc_seek(unsigned char unit, signed int dir);
+
+/* get status of physical drive 'unit' */
+unsigned char osd_fdc_get_status(unsigned char unit);
 
 #ifdef MAX_KEYS
  #undef MAX_KEYS
