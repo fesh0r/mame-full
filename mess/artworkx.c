@@ -72,29 +72,29 @@ static int mess_activate_artwork(struct osd_create_params *params)
 	return FALSE;
 }
 
-static mame_file *mess_load_artwork_file(const struct GameDriver *driver)
+static mame_file *mess_load_artwork_file(const struct GameDriver **driver)
 {
 	char filename[2048];
 	mame_file *artfile = NULL;
 	const char *s;
 
-	while (driver)
+	while (*driver)
 	{
-		if (driver->name)
+		if ((*driver)->name)
 		{
 			s = override_artfile ? override_artfile : "";
 			do
 			{
-				sprintf(filename, "%s.art", *s ? s : driver->name);
+				sprintf(filename, "%s.art", *s ? s : (*driver)->name);
 				if (*s)
 					s += strlen(s) + 1;
-				artfile = mame_fopen(driver->name, filename, FILETYPE_ARTWORK, 0);
+				artfile = mame_fopen((*driver)->name, filename, FILETYPE_ARTWORK, 0);
 			}
 			while(!artfile && *s);
 			if (artfile)
 				break;
 		}
-		driver = driver->clone_of;
+		*driver = (*driver)->clone_of;
 	}
 	return artfile;
 }
