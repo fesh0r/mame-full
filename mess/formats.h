@@ -98,7 +98,7 @@ void validate_construct_formatdriver(struct InternalBdFormatDriver *drv, int tra
 #define BDFD_HEADER_DECODE(header_decode_)			drv->header_decode = header_decode_;
 #define BDFD_FILLER_BYTE(filler_byte_)				drv->filler_byte = filler_byte_;
 #define BDFD_READ_SECTOR(read_sector_)				drv->read_sector = read_sector_;
-#define BDFD_WRITE_SECTOR(read_sector_)				drv->write_sector = write_sector_;
+#define BDFD_WRITE_SECTOR(write_sector_)				drv->write_sector = write_sector_;
 
 /***************************************************************************
 
@@ -133,7 +133,12 @@ enum
 {
 	BLOCKDEVICE_ERROR_SUCCESS,
 	BLOCKDEVICE_ERROR_OUTOFMEMORY,
-	BLOCKDEVICE_ERROR_CANTDECODEFORMAT
+	BLOCKDEVICE_ERROR_CANTDECODEFORMAT,
+	BLOCKDEVICE_ERROR_CANTENCODEFORMAT,
+	BLOCKDEVICE_ERROR_SECORNOTFOUND,
+	BLOCKDEVICE_ERROR_CORRUPTDATA,
+	BLOCKDEVICE_ERROR_UNEXPECTEDLENGTH,
+	BLOCKDEVICE_ERROR_UNDEFINEERROR
 };
 
 int bdf_create(const struct bdf_procs *procs, formatdriver_ctor format,

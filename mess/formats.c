@@ -58,6 +58,9 @@ int bdf_create(const struct bdf_procs *procs, formatdriver_ctor format,
 	int bytes_to_write, len, err;
 	UINT32 header_size;
 	formatdriver_ctor formats[2];
+	
+	if( drv.header_encode == NULL )
+		return BLOCKDEVICE_ERROR_CANTENCODEFORMAT;
 
 	format(&drv);
 

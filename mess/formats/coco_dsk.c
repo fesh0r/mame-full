@@ -134,7 +134,7 @@ struct vdk_header
 	UINT8  compression;	/* compression flags and name length */
 };
 
-static int validate_header(struct vdk_header *hdr)
+static int validate_vdk_header(struct vdk_header *hdr)
 {
 	/* Check magic bytes */
 	if ((hdr->magic1 != VDK_MAGIC1) || (hdr->magic2 != VDK_MAGIC2)) {
@@ -175,7 +175,7 @@ static int cocovdk_decode_header(const void *h, UINT32 file_size, UINT32 header_
 
 	hdr = (struct vdk_header *) h;
 
-	err = validate_header(hdr);
+	err = validate_vdk_header(hdr);
 	if (err != INIT_PASS)
 		return err;
 
@@ -224,9 +224,326 @@ BLOCKDEVICE_FORMATDRIVER_START( coco_vdk )
 	BDFD_FILLER_BYTE( 0xFF )
 BLOCKDEVICE_FORMATDRIVER_END
 
+/* ----------------------------------------------------------------------- *
+ * DMK file format                                                         *
+ *                                                                         *
+ * David M. Keil's disk image format is aptly called an 'on disk' image    *
+ * format. This means that whatever written to the disk is enocded into    *
+ * the image file. IDAMS, sector headers, traling CRCs, and intra          *
+ * sector spacing.                                                         *
+ * ----------------------------------------------------------------------- */
+
+#define DMK_HEADER_LEN	16
+#define DMK_TOC_LEN 64
+#define DMK_DATA_GAP 80
+#define DMK_IDFIELD 7
+
+#ifdef macintosh
+#pragma options align=packed
+#endif
+
+struct dmk_header
+{
+	UINT8		writeProtect; /* 0xff = writed protected, 0x00 = OK to write											*/
+	UINT8		trackCount;   /* Ones based. Per side.																	*/
+	UINT16		trackLength;  /* Bytes used for each track. This number includes DMK track header. Little endian.		*/
+	UINT8		diskOptions;  /* Bit 0: Unused. 																		*/
+							  /* Bit 1: Unused.																			*/
+							  /* Bit 2: Unused.																			*/
+							  /* Bit 3: Unused.																			*/
+							  /* Bit 4: Single sided?																	*/
+							  /* Bit 5: Unused.																			*/
+							  /* Bit 6: Single density?																	*/
+							  /* Bit 7: Ignore density flags? (always write one byte, depreciated)						*/
+	UINT8		reserved[7];
+	UINT32		realDiskCode; /* If this is 0x12345678 (little endian) then access a real disk							*/
+							  /* drive (unsupported)																	*/
+};
+
+struct dmk_track_toc
+{
+	UINT16		idamOffset[DMK_TOC_LEN];	/* Note: little endian in file				*/
+											/* Bit 15: Sector double density?			*/
+											/* Bit 14: Undefined (reserved)				*/
+											/* Bit 13-0: Offset from begining of track
+										         header to 'FE' byte of IDAM
+										         Note these are always sorted
+										         from first to last. All empty
+										         entires are 0x00						*/
+};
+
+struct dmk_IDAM
+{
+	UINT8	type;
+	UINT8	trackNumber;
+	UINT8	sideNumber;
+	UINT8	sectorNumber;
+	UINT8	sectorLength;
+	UINT16	crc;				/* Big endian */
+};
+
+#ifdef macintosh
+#pragma options align=reset
+#endif
+
+/* crc.c
+   Compute CCITT CRC-16 using the correct bit order for floppy disks.
+   CRC code courtesy of Tim Mann.
+*/
+
+/* Accelerator table to compute the CRC eight bits at a time */
+const UINT16 dmk_crc16_table[256] = {
+  0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50A5, 0x60C6, 0x70E7,
+  0x8108, 0x9129, 0xA14A, 0xB16B, 0xC18C, 0xD1AD, 0xE1CE, 0xF1EF,
+  0x1231, 0x0210, 0x3273, 0x2252, 0x52B5, 0x4294, 0x72F7, 0x62D6,
+  0x9339, 0x8318, 0xB37B, 0xA35A, 0xD3BD, 0xC39C, 0xF3FF, 0xE3DE,
+  0x2462, 0x3443, 0x0420, 0x1401, 0x64E6, 0x74C7, 0x44A4, 0x5485,
+  0xA56A, 0xB54B, 0x8528, 0x9509, 0xE5EE, 0xF5CF, 0xC5AC, 0xD58D,
+  0x3653, 0x2672, 0x1611, 0x0630, 0x76D7, 0x66F6, 0x5695, 0x46B4,
+  0xB75B, 0xA77A, 0x9719, 0x8738, 0xF7DF, 0xE7FE, 0xD79D, 0xC7BC,
+  0x48C4, 0x58E5, 0x6886, 0x78A7, 0x0840, 0x1861, 0x2802, 0x3823,
+  0xC9CC, 0xD9ED, 0xE98E, 0xF9AF, 0x8948, 0x9969, 0xA90A, 0xB92B,
+  0x5AF5, 0x4AD4, 0x7AB7, 0x6A96, 0x1A71, 0x0A50, 0x3A33, 0x2A12,
+  0xDBFD, 0xCBDC, 0xFBBF, 0xEB9E, 0x9B79, 0x8B58, 0xBB3B, 0xAB1A,
+  0x6CA6, 0x7C87, 0x4CE4, 0x5CC5, 0x2C22, 0x3C03, 0x0C60, 0x1C41,
+  0xEDAE, 0xFD8F, 0xCDEC, 0xDDCD, 0xAD2A, 0xBD0B, 0x8D68, 0x9D49,
+  0x7E97, 0x6EB6, 0x5ED5, 0x4EF4, 0x3E13, 0x2E32, 0x1E51, 0x0E70,
+  0xFF9F, 0xEFBE, 0xDFDD, 0xCFFC, 0xBF1B, 0xAF3A, 0x9F59, 0x8F78,
+  0x9188, 0x81A9, 0xB1CA, 0xA1EB, 0xD10C, 0xC12D, 0xF14E, 0xE16F,
+  0x1080, 0x00A1, 0x30C2, 0x20E3, 0x5004, 0x4025, 0x7046, 0x6067,
+  0x83B9, 0x9398, 0xA3FB, 0xB3DA, 0xC33D, 0xD31C, 0xE37F, 0xF35E,
+  0x02B1, 0x1290, 0x22F3, 0x32D2, 0x4235, 0x5214, 0x6277, 0x7256,
+  0xB5EA, 0xA5CB, 0x95A8, 0x8589, 0xF56E, 0xE54F, 0xD52C, 0xC50D,
+  0x34E2, 0x24C3, 0x14A0, 0x0481, 0x7466, 0x6447, 0x5424, 0x4405,
+  0xA7DB, 0xB7FA, 0x8799, 0x97B8, 0xE75F, 0xF77E, 0xC71D, 0xD73C,
+  0x26D3, 0x36F2, 0x0691, 0x16B0, 0x6657, 0x7676, 0x4615, 0x5634,
+  0xD94C, 0xC96D, 0xF90E, 0xE92F, 0x99C8, 0x89E9, 0xB98A, 0xA9AB,
+  0x5844, 0x4865, 0x7806, 0x6827, 0x18C0, 0x08E1, 0x3882, 0x28A3,
+  0xCB7D, 0xDB5C, 0xEB3F, 0xFB1E, 0x8BF9, 0x9BD8, 0xABBB, 0xBB9A,
+  0x4A75, 0x5A54, 0x6A37, 0x7A16, 0x0AF1, 0x1AD0, 0x2AB3, 0x3A92,
+  0xFD2E, 0xED0F, 0xDD6C, 0xCD4D, 0xBDAA, 0xAD8B, 0x9DE8, 0x8DC9,
+  0x7C26, 0x6C07, 0x5C64, 0x4C45, 0x3CA2, 0x2C83, 0x1CE0, 0x0CC1,
+  0xEF1F, 0xFF3E, 0xCF5D, 0xDF7C, 0xAF9B, 0xBFBA, 0x8FD9, 0x9FF8,
+  0x6E17, 0x7E36, 0x4E55, 0x5E74, 0x2E93, 0x3EB2, 0x0ED1, 0x1EF0
+};
+
+#define COCODMK_CALC_CRC1(crc, c) (((crc) << 8) ^ dmk_crc16_table[((crc) >> 8) ^ (c)])
+
+static void cocodmk_calculate_crc( UINT16 *crc, UINT8 *buffer, int size )
+{
+	int	i;
+
+	for( i=0; i<size; i++ )
+		*crc = COCODMK_CALC_CRC1( *crc, buffer[i] );
+}
+
+static int validate_dmk_header(struct dmk_header *hdr, UINT32 file_size)
+{
+	int				result = INIT_FAIL;
+	unsigned long	calc_size;
+	int				side_count = (hdr->diskOptions && 0x10) ? 1 : 2;
+
+	calc_size = LITTLE_ENDIANIZE_INT16( hdr->trackLength ) * hdr->trackCount * side_count + sizeof( struct dmk_header );
+
+	/* If this expression is true then we are virtuality guaranteed that this is a real DMK image */
+	if( calc_size == file_size )
+	{
+		if( LITTLE_ENDIANIZE_INT32( hdr->realDiskCode ) == 0x00000000 ) /* Real disk files not supported */
+			result = INIT_PASS;
+		else
+			result = INIT_FAIL;
+	}
+
+	return result;
+}
+
+static int cocodmk_decode_header(const void *header, UINT32 file_size, UINT32 header_size, struct disk_geometry *geometry, int *offset)
+{
+	int err = INIT_FAIL;
+	struct dmk_header *hdr;
+	
+	assert( sizeof(struct dmk_header) == DMK_HEADER_LEN);
+	assert( header_size == DMK_HEADER_LEN );
+	assert( sizeof( struct dmk_IDAM ) == DMK_IDFIELD );
+	assert( sizeof( struct dmk_track_toc ) == DMK_TOC_LEN * sizeof( UINT16 ) );
+	
+	hdr = (struct dmk_header *) header;
+
+	err = validate_dmk_header( hdr, file_size );
+	
+	if( err == INIT_FAIL )
+		return err;
+		
+	*offset = DMK_HEADER_LEN;
+	geometry->tracks = hdr->trackCount;
+	geometry->heads = (hdr->diskOptions && 0x10) ? 1 : 2;
+	geometry->sectors = 18; /* hmm. */
+	geometry->sector_size = 256;  /* Hmm. */
+	geometry->first_sector_id = 1;  /* Hmm. */
+
+	return err;
+}
+
+static int cocodmk_encode_header(void *buffer, UINT32 *header_size, const struct disk_geometry *geometry)
+{
+	/* To be implemented */
+
+	return 0;
+}
+
+static int cocodmk_seek_to_start_of_sector( void *bdf, struct dmk_header *hdr, UINT8 track, UINT8 head, UINT8 sector, int *length )
+{
+	int						error = 0, offset, i, IDAM_offset, count, state;
+	UINT8					val;
+	UINT16					calculated_crc;
+	struct dmk_track_toc	t_toc;
+	struct dmk_IDAM			idam;
+	int						sideCount = (hdr->diskOptions && 0x10) ? 1 : 2,
+							trackLength = LITTLE_ENDIANIZE_INT16(hdr->trackLength);	
+
+	*length = 0;
+	
+	/* Seek to start of track */
+	offset = DMK_HEADER_LEN + (trackLength * track * sideCount) + (trackLength * head);
+	bdf_seek( bdf, offset, SEEK_SET );
+	
+	/* Read in DMK track table of contents */
+	count = bdf_read( bdf, &t_toc, sizeof( struct dmk_track_toc ) );
+	if( count != sizeof( struct dmk_track_toc ) )
+		return BLOCKDEVICE_ERROR_OUTOFMEMORY;
+		
+	/* Search for matching IDAM */
+	for( i=0; i<DMK_TOC_LEN; i++ )
+	{
+		IDAM_offset = (LITTLE_ENDIANIZE_INT16( t_toc.idamOffset[i] )) & 0x3fff;
+		
+		if( IDAM_offset == 0 )
+		{
+			i = DMK_TOC_LEN;
+			break;
+		}
+		
+		bdf_seek( bdf, offset+IDAM_offset, SEEK_SET );
+		count = bdf_read( bdf, &idam, sizeof( struct dmk_IDAM ) );
+		if( count != sizeof( struct dmk_IDAM ) )
+			return BLOCKDEVICE_ERROR_OUTOFMEMORY;
+		
+		calculated_crc = 0xcdb4;	/* Seed crc with proper value */
+		cocodmk_calculate_crc( &calculated_crc, (UINT8 *)&idam, sizeof( struct dmk_IDAM ) - 2 );
+
+		/* Check IDAM integraity. Check for matching sector */
+		if( calculated_crc == BIG_ENDIANIZE_INT16(idam.crc) && idam.trackNumber == track && idam.sideNumber == head && idam.sectorNumber == sector )
+			break;
+	}
+	
+	if( i == DMK_TOC_LEN )
+		return BLOCKDEVICE_ERROR_SECORNOTFOUND;
+
+	/* Hey, we found a matching sector ID */
+	*length = 128 << idam.sectorLength;
+
+	state = 0;
+	
+	/* Find pattern: 0xA1A1FB
+	   This represents the start of a data sector */
+	for( i=0; i < DMK_DATA_GAP; i++ )
+	{
+		bdf_read( bdf, &val, 1 );
+		
+		if( val == 0xA1 )
+			state++;
+		else if( val == 0xFB && state > 0 )
+			break;
+		else
+			state = 0;
+	}
+	
+	if( i >= DMK_DATA_GAP )
+		error = BLOCKDEVICE_ERROR_SECORNOTFOUND;
+		
+	return error;
+}
+
+static int cocodmk_read_sector(void *bdf, const void *header, UINT8 track, UINT8 head, UINT8 sector, int offset, void *buffer, int length)
+{
+	int					error, actual_sector_length, size;
+	UINT16				crc_on_disk, calculated_crc;
+	struct dmk_header	*hdr;
+	UINT8				*sectorData;
+	
+	hdr = (struct dmk_header *) header;
+	
+	if( track > hdr->trackCount)
+		return BLOCKDEVICE_ERROR_UNDEFINEERROR;
+
+	if( head > ((hdr->diskOptions && 0x10) ? 0 : 1) )
+		return BLOCKDEVICE_ERROR_UNDEFINEERROR;
+		
+	error = cocodmk_seek_to_start_of_sector( bdf, hdr, track, head, sector, &actual_sector_length );
+	
+	if( error )
+		return error;
+
+	if( (offset + length) > actual_sector_length )
+		return BLOCKDEVICE_ERROR_UNDEFINEERROR;
+		
+	sectorData = (UINT8 *)malloc( actual_sector_length );
+	
+	/* Read sector data into buffer */
+	size = bdf_read( bdf, sectorData, actual_sector_length);
+	if( size != actual_sector_length )
+	{
+		free( sectorData );
+		return BLOCKDEVICE_ERROR_OUTOFMEMORY;
+	}
+	
+	/* Read CRC bytes into variable */
+	size = bdf_read( bdf, &crc_on_disk, 2 );
+	if( size != 2 )
+	{
+		free( sectorData );
+		return BLOCKDEVICE_ERROR_OUTOFMEMORY;
+	}
+
+	calculated_crc = 0xE295;	/* Seed crc with proper value */
+	cocodmk_calculate_crc( &calculated_crc, sectorData, actual_sector_length );
+
+	if( calculated_crc != BIG_ENDIANIZE_INT16( crc_on_disk ) )
+		error =  BLOCKDEVICE_ERROR_CORRUPTDATA;
+	
+	memcpy( buffer, sectorData + offset, length );
+	
+	free( sectorData );
+	
+	return error;
+}
+
+static int cocodmk_write_sector(void *bdf, const void *header, UINT8 track, UINT8 head, UINT8 sector, int offset, const void *buffer, int length)
+{
+	/* To be implemented */
+
+	return 0;
+}
+
+BLOCKDEVICE_FORMATDRIVER_START( coco_dmk )
+	BDFD_EXTENSION( "dsk" )
+	BDFD_TRACKS_OPTION( 35 )
+	BDFD_TRACKS_OPTION( 40 )
+	BDFD_TRACKS_OPTION( 80 )
+	BDFD_SECTORS_OPTION( 18 )
+	BDFD_BYTES_PER_SECTOR( 256 )
+	BDFD_HEADER_SIZE( DMK_HEADER_LEN )
+	BDFD_HEADER_ENCODE( cocodmk_encode_header )
+	BDFD_HEADER_DECODE( cocodmk_decode_header )
+	BDFD_FILLER_BYTE( 0xFF );
+	BDFD_READ_SECTOR(cocodmk_read_sector)
+	BDFD_WRITE_SECTOR(cocodmk_write_sector)
+BLOCKDEVICE_FORMATDRIVER_END
+
 /* ----------------------------------------------------------------------- */
 
 BLOCKDEVICE_FORMATCHOICES_START( coco )
 	BDFC_CHOICE( coco_jvc )
 	BDFC_CHOICE( coco_vdk )
+	BDFC_CHOICE( coco_dmk )
 BLOCKDEVICE_FORMATCHOICES_END

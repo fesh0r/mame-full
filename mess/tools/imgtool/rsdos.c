@@ -66,6 +66,12 @@ FLOPPYMODULE_BEGIN( coco_rsdos_vdk )
 	FMOD_FORMAT( coco_vdk )
 FLOPPYMODULE_END
 
+FLOPPYMODULE_BEGIN( coco_rsdos_dmk )
+	FMOD_IMPORT_FROM( coco_rsdos_jvc )
+	FMOD_HUMANNAME("Tandy CoCo RS-DOS disk image (DMK image format)")
+	FMOD_FORMAT( coco_dmk )
+FLOPPYMODULE_END
+
 #define MAX_DIRENTS		((18-2)*(256/32))
 static int get_rsdos_dirent(IMAGE *f, int index_loc, rsdos_dirent *ent)
 {
