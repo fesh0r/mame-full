@@ -29,7 +29,7 @@ typedef struct {
 		int default_mixer_level;
 		SIDTYPE type;
 		int clock;
-		int (*ad_read)(int index);
+		int (*ad_read)(int channel);
 	} chips[MAX_SID6581];
 } SID6581_interface;
 
