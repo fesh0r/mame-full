@@ -771,7 +771,7 @@ static void mouse_callback(void)
 		}
 		x_needs_update = 1;
 	}
-	if (count_y)
+	else if (count_y)
 	{
 		if (count_y < 0)
 		{
