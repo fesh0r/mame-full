@@ -99,8 +99,7 @@ OBJ     = $(TARGET).obj
 OBJDIRS = $(OBJ) $(OBJ)/cpu $(OBJ)/sound $(OBJ)/drivers $(OBJ)/machine \
 	$(OBJ)/vidhrdw $(OBJ)/sndhrdw
 ifeq ($(TARGET),mess)
-OBJDIRS += $(OBJ)/mess $(OBJ)/mess/systems $(OBJ)/mess/machine $(OBJ)/mess/vidh
-rdw \
+OBJDIRS += $(OBJ)/mess $(OBJ)/mess/systems $(OBJ)/mess/machine $(OBJ)/mess/vidhrdw \
 	$(OBJ)/mess/sndhrdw $(OBJ)/mess/tools $(OBJ)/mess/formats
 endif
 IMGTOOL_OBJS = $(OBJ)/unix.$(DISPLAY_METHOD)/dirio.o
