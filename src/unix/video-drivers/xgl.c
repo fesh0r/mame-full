@@ -22,6 +22,7 @@
 #include <X11/Xutil.h>
 #include <X11/Xmd.h>
 
+#include "xmame.h"
 #include "glxtool.h"
 
 #include "sysdep/sysdep_display_priv.h"
@@ -90,7 +91,7 @@ int xgl_init(void)
   
   if (!loadGLLibrary(libGLName, libGLUName))
   {
-    fprintf(stderr, "Use of OpenGL mode disabled\n");
+    fprintf(stderr_file, "Use of OpenGL mode disabled\n");
     return 1;
   }
 
@@ -113,7 +114,7 @@ int xgl_open_display(void)
   
   mode_set_aspect_ratio((double)screen->width/screen->height);
 
-  fprintf(stderr, xgl_version_str);
+  fprintf(stderr_file, xgl_version_str);
   
   /* Determine window size, type, etc. If using 3Dfx */
   if((glxfx=getenv("MESA_GLX_FX")) && (glxfx[0]=='f'))
@@ -206,7 +207,7 @@ int xgl_open_display(void)
 
   if(vgc.success==0)
   {
-	fprintf(stderr,"OSD ERROR: failed to obtain visual.\n");
+	fprintf(stderr_file,"OSD ERROR: failed to obtain visual.\n");
 	return 1; 
   }
 
@@ -214,12 +215,12 @@ int xgl_open_display(void)
   glContext=vgc.gc;
 
   if (!window) {
-	fprintf(stderr,"OSD ERROR: failed in XCreateWindow().\n");
+	fprintf(stderr_file,"OSD ERROR: failed in XCreateWindow().\n");
 	return 1; 
   }
   
   if(!glContext) {
-	fprintf(stderr,"OSD ERROR: failed to create OpenGL context.\n");
+	fprintf(stderr_file,"OSD ERROR: failed to create OpenGL context.\n");
 	return 1; 
   }
   
@@ -265,7 +266,7 @@ void xgl_close_display (void)
    XSync (display, True); /* send all events to sync; discard events */
 
 #ifndef NDEBUG
-   fprintf(stderr, "GLINFO: xgl display closed !\n");
+   fprintf(stderr_file, "GLINFO: xgl display closed !\n");
 #endif
 }
 

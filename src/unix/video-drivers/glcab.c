@@ -136,7 +136,7 @@ static void MakeString(char *buf)
 static void ParsePan(char *buf,PanType type)
 {
   if(pannum==numpans) {
-	fprintf(stderr, "GLError (cab): too many camera pans specified\n");
+	fprintf(stderr_file, "GLError (cab): too many camera pans specified\n");
 	return;
   }
 
@@ -167,14 +167,14 @@ static void ParseLine(char *buf)
   if(!strncasecmp(buf,"startgeom",9)) {
         CHECK_GL_BEGINEND();
 
-	if(ingeom) fprintf(stderr, "GLError (cab): second call to startgeom\n");
+	if(ingeom) fprintf(stderr_file, "GLError (cab): second call to startgeom\n");
 	ingeom=1;
   }
   else if(!strncasecmp(buf,"numtex",6)) {
         CHECK_GL_BEGINEND();
 
 	if(ingeom)
-	  fprintf(stderr, "GLError (cab):numtex must be called before beginning model geometry\n");
+	  fprintf(stderr_file, "GLError (cab):numtex must be called before beginning model geometry\n");
 	else {
 	  numtex=atoi(buf+7);
 
@@ -188,10 +188,10 @@ static void ParseLine(char *buf)
         CHECK_GL_BEGINEND();
 
 	if(ingeom)
-	  fprintf(stderr, "GLError (cab):loadtex calls cannot come after beginning model geometry\n");
+	  fprintf(stderr_file, "GLError (cab):loadtex calls cannot come after beginning model geometry\n");
 	else {
 	  if(!cabtex)
-		fprintf(stderr, "GLError (cab): Number of textures must be declared before texture loading\n");
+		fprintf(stderr_file, "GLError (cab): Number of textures must be declared before texture loading\n");
 	  else {
 		buf=SkipToSpace(buf);
 		buf=SkipSpace(buf);
@@ -199,7 +199,7 @@ static void ParseLine(char *buf)
 		texnum=atoi(buf);
 		
 		if(texnum>=numtex)
-		  fprintf(stderr, "GLError (cab): Hightest possible texture number is %d\n",numtex-1);
+		  fprintf(stderr_file, "GLError (cab): Hightest possible texture number is %d\n",numtex-1);
 		else {
 		  buf=SkipToSpace(buf);
 		  buf=SkipSpace(buf);
@@ -217,7 +217,7 @@ static void ParseLine(char *buf)
 		  MakeString(buf);
 		  
 		  #ifndef NDEBUG
-		    fprintf(stderr, "GLINFO (cab): Loading texture %d (%dx%d) from %s\n",
+		    fprintf(stderr_file, "GLINFO (cab): Loading texture %d (%dx%d) from %s\n",
 		  	   texnum,xdim,ydim,buf);
 		  #endif
 		  
@@ -230,7 +230,7 @@ static void ParseLine(char *buf)
 		  snprintf(filename, 256, "%s/cab/%s/%s",XMAMEROOT,cabname, buf);
 		  cabimg[texnum]=read_JPEG_file(filename);
 		  if(!cabimg[texnum])
-			fprintf(stderr, "GLError (cab): Unable to read %s\n", filename);
+			fprintf(stderr_file, "GLError (cab): Unable to read %s\n", filename);
 		  
 		  if(!wirecabinet)
 		  	disp__glTexImage2D(GL_TEXTURE_2D,0,3,xdim,ydim,0,
@@ -254,11 +254,11 @@ static void ParseLine(char *buf)
 	inpan=1;
   }
   else if(!strncasecmp(buf,"goto",4)) {
-	if(!inpan) fprintf(stderr, "GLError (cab): pan command outside of camerapan\n");
+	if(!inpan) fprintf(stderr_file, "GLError (cab): pan command outside of camerapan\n");
 	else ParsePan(buf+4,pan_goto);
   }
   else if(!strncasecmp(buf,"moveto",6)) {
-	if(!inpan) fprintf(stderr, "GLError (cab): pan command outside of camerapan\n");
+	if(!inpan) fprintf(stderr_file, "GLError (cab): pan command outside of camerapan\n");
 	else ParsePan(buf+6,pan_moveto);
   }
   else if(!strncasecmp(buf,"end",3)) {
@@ -273,16 +273,16 @@ static void ParseLine(char *buf)
 		inscreen=0;
 	else
 	{
-	          fprintf(stderr, "GLError (cab): end command without begin, screen or camerapan\n");
+	          fprintf(stderr_file, "GLError (cab): end command without begin, screen or camerapan\n");
 	}
   } else {
 	if(!ingeom) 
 	{
-		fprintf(stderr, "GLError (cab): A startgeom call is needed before specifying any geometry\n");
+		fprintf(stderr_file, "GLError (cab): A startgeom call is needed before specifying any geometry\n");
         } else if(!strncasecmp(buf,"pointsize",9)) 
 	{
 	      if(inbegin) 
-	          fprintf(stderr, "GLError (cab): pointsize command within begin/end\n");
+	          fprintf(stderr_file, "GLError (cab): pointsize command within begin/end\n");
 	      else 
 	      {
 		  ParseArg(buf+10, &a);
@@ -292,7 +292,7 @@ static void ParseLine(char *buf)
 	{
 	  if(inbegin!=0)
 	  {
-		fprintf(stderr, "GLError (cab): begin is called within begin/end !\n");
+		fprintf(stderr_file, "GLError (cab): begin is called within begin/end !\n");
 	  }
 	  if(!strncasecmp(buf+6,"points",6)) {
 		CHECK_GL_BEGINEND();
@@ -319,7 +319,7 @@ static void ParseLine(char *buf)
 		inscreen=1;
 		scrvert=1;
 	  }
-	  else fprintf(stderr, "GLError (cab): Invalid object type -- %s",buf+6);
+	  else fprintf(stderr_file, "GLError (cab): Invalid object type -- %s",buf+6);
 	}
 	else if(!strncasecmp(buf,"color3",6)) {
 	  ParseVec3(buf+7,&x,&y,&z);
@@ -345,7 +345,7 @@ static void ParseLine(char *buf)
 		  ParseVec3(buf+7,&vx_cscr_p4,&vy_cscr_p4,&vz_cscr_p4);
 		  break;
 		default:
-		  fprintf(stderr, "GLError (cab): Error: Too many vertices in screen definition\n");
+		  fprintf(stderr_file, "GLError (cab): Error: Too many vertices in screen definition\n");
 		  break;
 		}
 		
@@ -361,23 +361,23 @@ static void ParseLine(char *buf)
 		disp__glShadeModel(GL_FLAT);
 	  else if(!strncasecmp(buf+8,"smooth",6))
 		disp__glShadeModel(GL_SMOOTH);
-	  else fprintf(stderr, "GLError (cab): Invalid shading model -- %s",buf+8);
+	  else fprintf(stderr_file, "GLError (cab): Invalid shading model -- %s",buf+8);
 	}
 	else if(!strncasecmp(buf,"enable",6)) {
 	  if(!strncasecmp(buf+7,"texture",7))
 		disp__glEnable(GL_TEXTURE_2D);
-	  else fprintf(stderr, "GLError (cab): Invalid feature to enable -- %s",buf+7);
+	  else fprintf(stderr_file, "GLError (cab): Invalid feature to enable -- %s",buf+7);
 	}
 	else if(!strncasecmp(buf,"disable",7)) {
 	  if(!strncasecmp(buf+8,"texture",7))
 		disp__glDisable(GL_TEXTURE_2D);
-	  else fprintf(stderr, "GLError (cab): Invalid feature to disable -- %s",buf+7);
+	  else fprintf(stderr_file, "GLError (cab): Invalid feature to disable -- %s",buf+7);
 	}
 	else if(!strncasecmp(buf,"settex",6)) {
 	  texnum=atoi(buf+7);
 	  
 	  if(texnum>=numtex)
-		fprintf(stderr, "GLError (cab): Hightest possible texture number is %d\n",numtex-1);
+		fprintf(stderr_file, "GLError (cab): Hightest possible texture number is %d\n",numtex-1);
 	  else if(!wirecabinet)
 		disp__glBindTexture(GL_TEXTURE_2D,cabtex[texnum]);
 	}
@@ -385,7 +385,7 @@ static void ParseLine(char *buf)
 	  ParseVec2(buf+9,&x,&y);
 	  disp__glTexCoord2d(x,y);
 	}
-	else fprintf(stderr, "GLError (cab): Invalid command -- %s",buf);
+	else fprintf(stderr_file, "GLError (cab): Invalid command -- %s",buf);
   }
 }
 
@@ -445,7 +445,7 @@ int LoadCabinet(const char *cabname)
 	return 0;
 
   #ifndef NDEBUG
-    fprintf(stderr, "GLINFO: Loading Cabinet from %s\n",buf);
+    fprintf(stderr_file, "GLINFO: Loading Cabinet from %s\n",buf);
   #endif
 
   cablist=disp__glGenLists(1);
@@ -454,7 +454,7 @@ int LoadCabinet(const char *cabname)
   inlist=1;
 
   if(!fgets(buf,256,cfp)) {
-	fprintf(stderr, "GLError (cab): File is empty\n");
+	fprintf(stderr_file, "GLError (cab): File is empty\n");
 	return 0;
   }
 
@@ -462,7 +462,7 @@ int LoadCabinet(const char *cabname)
      strncasecmp(buf,"cabv1.1",7)
     ) 
   {
-	fprintf(stderr, "GLError (cab): File is not a v1.0, or v1.1 cabinet file -- cannot load\n");
+	fprintf(stderr_file, "GLError (cab): File is not a v1.0, or v1.1 cabinet file -- cannot load\n");
 	return 0;
   }
 
