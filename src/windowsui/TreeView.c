@@ -193,8 +193,6 @@ void InitTree(LPFOLDERDATA lpFolderData, LPFILTER_ITEM lpFilterList)
 
 	InitFolders();
 
-	CreateTreeIcons();
-
 	/* this will subclass the treeview (where WM_DRAWITEM gets sent for
 	   the header control) */
 	g_lpTreeWndProc = (WNDPROC)(LONG)(int)GetWindowLong(GetTreeView(), GWL_WNDPROC);
@@ -1034,9 +1032,10 @@ BOOL InitFolders(void)
 	{
 		LPEXFOLDERDATA  fExData = ExtraFolderData[i];
 
-		/* OR in the saved folder flags */
+		// OR in the saved folder flags
 		dwFolderFlags = fExData->m_dwFlags | GetFolderFlags(fExData->m_szTitle);
-		/* create the folder */
+		// create the folder
+		//dprintf("creating top level custom folder with icon %i",fExData->m_nIconId);
 		treeFolders[numFolders] = NewFolder(fExData->m_szTitle,
 		                                    fExData->m_nFolderId, fExData->m_nParent,
 		                                    fExData->m_nIconId, dwFolderFlags);
@@ -1045,6 +1044,9 @@ BOOL InitFolders(void)
 	}
 
 	CreateAllChildFolders();
+
+	CreateTreeIcons();
+
 	AddTreeFolders(0,numFolders);
 
 	ResetWhichGamesInFolders();
@@ -1054,18 +1056,19 @@ BOOL InitFolders(void)
 	return TRUE;
 }
 
-/* create iconlist and Treeview control */
+// create iconlist and Treeview control
 static BOOL CreateTreeIcons()
 {
 	HICON	hIcon;
 	INT 	i;
 	HINSTANCE hInst = GetModuleHandle(0);
 
-	int numIcons = 11 + numExtraIcons;
+	int numIcons = ICON_MAX + numExtraIcons;
 
 	hTreeSmall = ImageList_Create (16, 16, ILC_COLORDDB | ILC_MASK, numIcons, numIcons);
 
-	for (i = 0; i < sizeof(treeIconNames) / sizeof(treeIconNames[0]); i++)
+	//dprintf("Trying to load %i normal icons",ICON_MAX);
+	for (i = 0; i < ICON_MAX; i++)
 	{
 		hIcon = LoadIconFromFile(treeIconNames[i].lpName);
 		if (!hIcon)
@@ -1078,6 +1081,7 @@ static BOOL CreateTreeIcons()
 		}
 	}
 
+	//dprintf("Trying to load %i extra custom-folder icons",numExtraIcons);
 	for (i = 0; i < numExtraIcons; i++)
 	{
 		if ((hIcon = LoadIconFromFile(ExtraFolderIcons[i])) == 0)
@@ -1100,10 +1104,10 @@ static BOOL CreateTreeIcons()
 
 	// Be sure that all the small icons were added.
 
-	if (ImageList_GetImageCount (hTreeSmall) < 11)
+	if (ImageList_GetImageCount (hTreeSmall) < ICON_MAX)
 	{
-		ErrorMsg("Error with icon list--too few images.  %i < 11",
-				 ImageList_GetImageCount(hTreeSmall));
+		ErrorMsg("Error with icon list--too few images.  %i < %i",
+				 ImageList_GetImageCount(hTreeSmall),ICON_MAX);
 		return FALSE;
 	}
 
@@ -1602,8 +1606,11 @@ static int InitExtraFolders(void)
 						ExtraFolderData[count]->m_nFolderId   = next_folder_id++;
 						ExtraFolderData[count]->m_nParent	  = -1;
 						ExtraFolderData[count]->m_dwFlags	  = F_CUSTOM;
-						ExtraFolderData[count]->m_nIconId	  = icon[0] ? icon[0] : IDI_FOLDER;
-						ExtraFolderData[count]->m_nSubIconId  = icon[1] ? icon[1] : IDI_FOLDER;
+						ExtraFolderData[count]->m_nIconId	  = icon[0] ? -icon[0] : IDI_FOLDER;
+						ExtraFolderData[count]->m_nSubIconId  = icon[1] ? -icon[1] : IDI_FOLDER;
+						//dprintf("extra folder with icon %i, subicon %i",
+						//ExtraFolderData[count]->m_nIconId,
+						//ExtraFolderData[count]->m_nSubIconId);
 						count++;
 					}
 				}
@@ -1648,7 +1655,7 @@ static void SetExtraIcons(char *name, int *id)
 	ExtraFolderIcons[numExtraIcons] = malloc(strlen(name) + 1);
 	if (ExtraFolderIcons[numExtraIcons])
 	{
-		*id = (sizeof(treeIconNames) / sizeof(treeIconNames[0])) + 1 + numExtraIcons;
+		*id = ICON_MAX + numExtraIcons;
 		strcpy(ExtraFolderIcons[numExtraIcons], name);
 		numExtraIcons++;
 	}
@@ -1963,9 +1970,13 @@ HIMAGELIST GetTreeViewIconList(void)
 static int FindIconIndex(int nResourceID)
 {
 	int i;
+
+	if (nResourceID < 0)
+		return -nResourceID;
+
 	for (i = 0; i < sizeof(treeIconNames) / sizeof(treeIconNames[0]); i++)
 	{
-		if (nResourceID == treeIconNames[i].nResourceID)
+		if (treeIconNames[i].nResourceID == nResourceID)
 			return i;
 	}
 	return -1;

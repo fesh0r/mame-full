@@ -22,8 +22,8 @@ static void MessColumnDecodeString(const char* str, void* data)
 
 static void MessColumnDecodeWidths(const char* str, void* data)
 {
-    if (settings.view == VIEW_REPORT)
-        MessColumnDecodeString(str, data);
+	if (settings.view == VIEW_REPORT || settings.view == VIEW_GROUPED)
+		MessColumnDecodeString(str, data);
 }
 
 void SetDefaultSoftware(const char *name)
