@@ -8,24 +8,24 @@
 
 ******************************************************************************/
 
-extern int bbcb_keyscan(void);
+int bbcb_keyscan(void);
 
-extern void init_machine_bbca(void);
-extern void init_machine_bbcb(void);
-extern void stop_machine_bbcb(void);
+void init_machine_bbca(void);
+void init_machine_bbcb(void);
+void stop_machine_bbcb(void);
 
 int bbc_floppy_init(int);
 
 void bbc_floppy_exit(int);
 void check_disc_status(void);
 
-READ_HANDLER ( bbc_wd1770_read);
+READ_HANDLER ( bbc_wd1770_read );
 WRITE_HANDLER ( bbc_wd1770_write );
 
 
 
-READ_HANDLER(bbc_i8271_read);
-WRITE_HANDLER(bbc_i8271_write);
+READ_HANDLER( bbc_i8271_read );
+WRITE_HANDLER( bbc_i8271_write );
 
 
 
@@ -41,6 +41,6 @@ READ_HANDLER ( videoULA_r );
 void setscreenstart(int b4,int b5);
 
 WRITE_HANDLER ( BBC_6845_w );
-READ_HANDLER (BBC_6845_r);
+READ_HANDLER ( BBC_6845_r );
 
 extern unsigned char vidmem[0x8000];
