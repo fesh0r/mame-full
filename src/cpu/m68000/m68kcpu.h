@@ -1,9 +1,10 @@
+#include <stdio.h>
 /* ======================================================================== */
 /* ========================= LICENSING & COPYRIGHT ======================== */
 /* ======================================================================== */
 /*
  *                                  MUSASHI
- *                                Version 3.1
+ *                                Version 3.2
  *
  * A portable Motorola M680x0 processor emulation engine.
  * Copyright 1999,2000 Karl Stenerud.  All rights reserved.
@@ -27,21 +28,26 @@
 
 #include "m68k.h"
 #include <limits.h>
+#include <setjmp.h>
 
 /* ======================================================================== */
 /* ==================== ARCHITECTURE-DEPENDANT DEFINES ==================== */
 /* ======================================================================== */
 
-/* Check if we have > 32bit sizes */
-#define M68K_INT_GT_32BIT  UINT_MAX > 0xffffffff
+/* Check for > 32bit sizes */
+#if UINT_MAX > 0xffffffff
+	#define M68K_INT_GT_32_BIT  1
+#endif
 
 /* Data types used in this emulation core */
 #undef sint8
 #undef sint16
 #undef sint32
+#undef sint64
 #undef uint8
 #undef uint16
 #undef uint32
+#undef uint64
 #undef sint
 #undef uint
 
@@ -57,9 +63,19 @@
 #define uint   unsigned int
 
 
+#if M68K_USE_64_BIT
+#define sint64 signed   long long
+#define uint64 unsigned long long
+#else
+#define sint64 sint32
+#define uint64 uint32
+#endif /* M68K_USE_64_BIT */
+
+
+
 /* Allow for architectures that don't have 8-bit sizes */
 #if UCHAR_MAX == 0xff
-	#define MAKE_INT_8(A) (sint8)((A)&0xff)
+	#define MAKE_INT_8(A) (sint8)(A)
 #else
 	#undef  sint8
 	#define sint8  signed   int
@@ -74,7 +90,7 @@
 
 /* Allow for architectures that don't have 16-bit sizes */
 #if USHRT_MAX == 0xffff
-	#define MAKE_INT_16(A) (sint16)((A)&0xffff)
+	#define MAKE_INT_16(A) (sint16)(A)
 #else
 	#undef  sint16
 	#define sint16 signed   int
@@ -89,11 +105,7 @@
 
 /* Allow for architectures that don't have 32-bit sizes */
 #if ULONG_MAX == 0xffffffff
-	#if M68K_INT_GT_32BIT
-		#define MAKE_INT_32(A) (sint32)((A)&0xffffffff)
-	#else
-		#define MAKE_INT_32(A) (sint32)(A)
-	#endif /* M68K_INT_GT_32BIT */
+	#define MAKE_INT_32(A) (sint32)(A)
 #else
 	#undef  sint32
 	#define sint32  signed   int
@@ -107,13 +119,14 @@
 
 
 
+
 /* ======================================================================== */
 /* ============================ GENERAL DEFINES =========================== */
 /* ======================================================================== */
 
 /* Exception Vectors handled by emulation */
-#define EXCEPTION_BUS_ERROR                2
-#define EXCEPTION_ADDRESS_ERROR            3
+#define EXCEPTION_BUS_ERROR                2 /* This one is not emulated! */
+#define EXCEPTION_ADDRESS_ERROR            3 /* This one is partially emulated (doesn't stack a proper frame yet) */
 #define EXCEPTION_ILLEGAL_INSTRUCTION      4
 #define EXCEPTION_ZERO_DIVIDE              5
 #define EXCEPTION_CHK                      6
@@ -146,7 +159,7 @@
 #define STOP_LEVEL_HALT 2
 
 #ifndef NULL
-#define NULL 0L
+#define NULL (void *)0		/* HJB: fixed */
 #endif
 
 /* ======================================================================== */
@@ -196,42 +209,34 @@
 #define GET_MSB_16(A) ((A) & 0x8000)
 #define GET_MSB_17(A) ((A) & 0x10000)
 #define GET_MSB_32(A) ((A) & 0x80000000)
+#if M68K_USE_64_BIT
+#define GET_MSB_33(A) ((A) & 0x100000000)
+#endif /* M68K_USE_64_BIT */
 
 /* Isolate nibbles */
-#define LOW_NIBBLE(A) ((A) & 0x0f)
+#define LOW_NIBBLE(A)  ((A) & 0x0f)
 #define HIGH_NIBBLE(A) ((A) & 0xf0)
 
 /* These are used to isolate 8, 16, and 32 bit sizes */
 #define MASK_OUT_ABOVE_2(A)  ((A) & 3)
 #define MASK_OUT_ABOVE_8(A)  ((A) & 0xff)
 #define MASK_OUT_ABOVE_16(A) ((A) & 0xffff)
+#define MASK_OUT_ABOVE_32(A) ((A) & 0xffffffff)
 #define MASK_OUT_BELOW_2(A)  ((A) & ~3)
 #define MASK_OUT_BELOW_8(A)  ((A) & ~0xff)
 #define MASK_OUT_BELOW_16(A) ((A) & ~0xffff)
-
-/* No need for useless masking if we're 32-bit */
-#if M68K_INT_GT_32BIT
-	#define MASK_OUT_ABOVE_32(A) ((A) & 0xffffffff)
-	#define MASK_OUT_BELOW_32(A) ((A) & ~0xffffffff)
-#else
-	#define MASK_OUT_ABOVE_32(A) (A)
-	#define MASK_OUT_BELOW_32(A) 0
-#endif /* M68K_INT_GT_32BIT */
-
+#define MASK_OUT_BELOW_32(A) ((A) & ~0xffffffff)
 
 /* Simulate address lines of 68k family */
 #define ADDRESS_68K(A) ((A)&CPU_ADDRESS_MASK)
 
 
-/* Shift & Rotate Macros.
- * 32-bit shifts defined in architecture-dependant section.
- */
-
+/* Shift & Rotate Macros. */
 #define LSL(A, C) ((A) << (C))
 #define LSR(A, C) ((A) >> (C))
 
 /* Some > 32-bit optimizations */
-#if M68K_INT_GT_32BIT
+#if N68K_INT_GT_32BIT
 	/* Shift left and right */
 	#define LSR_32(A, C) ((A) >> (C))
 	#define LSL_32(A, C) ((A) << (C))
@@ -241,21 +246,28 @@
 	 */
 	#define LSR_32(A, C) ((C) < 32 ? (A) >> (C) : 0)
 	#define LSL_32(A, C) ((C) < 32 ? (A) << (C) : 0)
-#endif /* M68K_INT_GT_32BIT */
+#endif /* N68K_INT_GT_32BIT */
+
+#if M68K_USE_64_BIT
+	#define LSL_32_64(A, C) ((A) << (C))
+	#define LSR_32_64(A, C) ((A) >> (C))
+	#define ROL_33_64(A, C) (LSL_32_64(A, C) | LSR_32_64(A, 33-(C)))
+	#define ROR_33_64(A, C) (LSR_32_64(A, C) | LSL_32_64(A, 33-(C)))
+#endif /* M68K_USE_64_BIT */
 
 #define ROL_8(A, C)      MASK_OUT_ABOVE_8(LSL(A, C) | LSR(A, 8-(C)))
-#define ROL_9(A, C)                       LSL(A, C) | LSR(A, 9-(C))
+#define ROL_9(A, C)                      (LSL(A, C) | LSR(A, 9-(C)))
 #define ROL_16(A, C)    MASK_OUT_ABOVE_16(LSL(A, C) | LSR(A, 16-(C)))
-#define ROL_17(A, C)                      LSL(A, C) | LSR(A, 17-(C))
-#define ROL_32(A, C) MASK_OUT_ABOVE_32(LSL_32(A, C) | LSR_32(A, 32-(C)))
-#define ROL_33(A, C)                  (LSL_32(A, C) | LSR_32(A, 33-(C)))
+#define ROL_17(A, C)                     (LSL(A, C) | LSR(A, 17-(C)))
+#define ROL_32(A, C)    MASK_OUT_ABOVE_32(LSL_32(A, C) | LSR_32(A, 32-(C)))
+#define ROL_33(A, C)                     (LSL_32(A, C) | LSR_32(A, 33-(C)))
 
 #define ROR_8(A, C)      MASK_OUT_ABOVE_8(LSR(A, C) | LSL(A, 8-(C)))
-#define ROR_9(A, C)                       LSR(A, C) | LSL(A, 9-(C))
+#define ROR_9(A, C)                      (LSR(A, C) | LSL(A, 9-(C)))
 #define ROR_16(A, C)    MASK_OUT_ABOVE_16(LSR(A, C) | LSL(A, 16-(C)))
-#define ROR_17(A, C)                      LSR(A, C) | LSL(A, 17-(C))
-#define ROR_32(A, C) MASK_OUT_ABOVE_32(LSR_32(A, C) | LSL_32(A, 32-(C)))
-#define ROR_33(A, C)                  (LSR_32(A, C) | LSL_32(A, 33-(C)))
+#define ROR_17(A, C)                     (LSR(A, C) | LSL(A, 17-(C)))
+#define ROR_32(A, C)    MASK_OUT_ABOVE_32(LSR_32(A, C) | LSL_32(A, 32-(C)))
+#define ROR_33(A, C)                     (LSR_32(A, C) | LSL_32(A, 33-(C)))
 
 
 
@@ -263,6 +275,7 @@
 
 /* Access the CPU registers */
 #define CPU_TYPE         m68ki_cpu.cpu_type
+
 #define REG_DA           m68ki_cpu.dar /* easy access to data and address regs */
 #define REG_D            m68ki_cpu.dar
 #define REG_A            (m68ki_cpu.dar+8)
@@ -279,6 +292,7 @@
 #define REG_CACR         m68ki_cpu.cacr
 #define REG_CAAR         m68ki_cpu.caar
 #define REG_IR           m68ki_cpu.ir
+
 #define FLAG_T1          m68ki_cpu.t1_flag
 #define FLAG_T0          m68ki_cpu.t0_flag
 #define FLAG_S           m68ki_cpu.s_flag
@@ -289,6 +303,7 @@
 #define FLAG_V           m68ki_cpu.v_flag
 #define FLAG_C           m68ki_cpu.c_flag
 #define FLAG_INT_MASK    m68ki_cpu.int_mask
+
 #define CPU_INT_LEVEL    m68ki_cpu.int_level /* ASG: changed from CPU_INTS_PENDING */
 #define CPU_INT_CYCLES   m68ki_cpu.int_cycles /* ASG */
 #define CPU_STOPPED      m68ki_cpu.stopped
@@ -458,11 +473,21 @@
 #endif /* M68K_EMULATE_TRACE */
 
 
+
+/* Address error */
+#if M68K_EMULATE_ADDRESS_ERROR
+	extern jmp_buf m68ki_address_error_trap;
+	#define m68ki_set_address_error_trap() if(setjmp(m68ki_address_error_trap)) m68ki_exception_address_error();
+	#define m68ki_check_address_error(A) if((A)&1) longjmp(m68ki_address_error_jump, 1);
+#else
+	#define m68ki_set_address_error_trap()
+	#define m68ki_check_address_error(A)
+#endif /* M68K_ADDRESS_ERROR */
+
 /* Logging */
 #if M68K_LOG_ENABLE
 	#include <stdio.h>
 	extern FILE* M68K_LOG_FILEHANDLE
-	extern char* m68k_disassemble_quick(uint pc);
 	extern char* m68ki_cpu_names[];
 
 	#define M68K_DO_LOG(A) if(M68K_LOG_FILEHANDLE) fprintf A
@@ -555,13 +580,13 @@
 #define CFLAG_8(A) (A)
 #define CFLAG_16(A) ((A)>>8)
 
-#if M68K_INT_GT_32BIT
-	#define CFLAG_ADD_32(A) ((A)>>24)
-	#define CFLAG_SUB_32(A) ((A)>>24)
+#if M68K_INT_GT_32_BIT
+	#define CFLAG_ADD_32(S, D, R) ((R)>>24)
+	#define CFLAG_SUB_32(S, D, R) ((R)>>24)
 #else
 	#define CFLAG_ADD_32(S, D, R) (((S & D) | (~R & (S | D)))>>23)
 	#define CFLAG_SUB_32(S, D, R) (((S & R) | (~D & (S | R)))>>23)
-#endif /* M68K_INT_GT_32BIT */
+#endif /* M68K_INT_GT_32_BIT */
 
 #define VFLAG_ADD_8(S, D, R) ((S^R) & (D^R))
 #define VFLAG_ADD_16(S, D, R) (((S^R) & (D^R))>>8)
@@ -574,6 +599,7 @@
 #define NFLAG_8(A) (A)
 #define NFLAG_16(A) ((A)>>8)
 #define NFLAG_32(A) ((A)>>24)
+#define NFLAG_64(A) ((A)>>56)
 
 #define ZFLAG_8(A) MASK_OUT_ABOVE_8(A)
 #define ZFLAG_16(A) MASK_OUT_ABOVE_16(A)
@@ -661,10 +687,10 @@
 
 /* ---------------------------- Cycle Counting ---------------------------- */
 
-#define ADD_CYCLES(A) m68ki_remaining_cycles += (A)
-#define USE_CYCLES(A) m68ki_remaining_cycles -= (A)
-#define SET_CYCLES(A) m68ki_remaining_cycles = A
-#define GET_CYCLES()  m68ki_remaining_cycles
+#define ADD_CYCLES(A)    m68ki_remaining_cycles += (A)
+#define USE_CYCLES(A)    m68ki_remaining_cycles -= (A)
+#define SET_CYCLES(A)    m68ki_remaining_cycles = A
+#define GET_CYCLES()     m68ki_remaining_cycles
 #define USE_ALL_CYCLES() m68ki_remaining_cycles = 0
 
 
@@ -676,7 +702,7 @@
 #define m68ki_read_16(A) m68ki_read_16_fc(A, FLAG_S | m68ki_get_address_space())
 #define m68ki_read_32(A) m68ki_read_32_fc(A, FLAG_S | m68ki_get_address_space())
 
-/* Write in the data space */
+/* Write to the current data space */
 #define m68ki_write_8(A, V)  m68ki_write_8_fc (A, FLAG_S | FUNCTION_CODE_USER_DATA, V)
 #define m68ki_write_16(A, V) m68ki_write_16_fc(A, FLAG_S | FUNCTION_CODE_USER_DATA, V)
 #define m68ki_write_32(A, V) m68ki_write_32_fc(A, FLAG_S | FUNCTION_CODE_USER_DATA, V)
@@ -755,16 +781,15 @@ typedef struct
 } m68ki_cpu_core;
 
 
-
 extern m68ki_cpu_core m68ki_cpu;
-extern sint          m68ki_remaining_cycles;
-extern uint          m68ki_tracing;
-extern uint8         m68ki_shift_8_table[];
-extern uint16        m68ki_shift_16_table[];
-extern uint          m68ki_shift_32_table[];
-extern uint8         m68ki_exception_cycle_table[][256];
-extern uint          m68ki_address_space;
-extern uint8         m68ki_ea_idx_cycle_table[];
+extern sint           m68ki_remaining_cycles;
+extern uint           m68ki_tracing;
+extern uint8          m68ki_shift_8_table[];
+extern uint16         m68ki_shift_16_table[];
+extern uint           m68ki_shift_32_table[];
+extern uint8          m68ki_exception_cycle_table[][256];
+extern uint           m68ki_address_space;
+extern uint8          m68ki_ea_idx_cycle_table[];
 
 
 /* Read data immediately after the program counter */
@@ -781,11 +806,13 @@ INLINE void m68ki_write_8_fc (uint address, uint fc, uint value);
 INLINE void m68ki_write_16_fc(uint address, uint fc, uint value);
 INLINE void m68ki_write_32_fc(uint address, uint fc, uint value);
 
-INLINE uint m68ki_get_ea_pcdi(void);                 /* Get ea for program counter indirect + displacement */
-INLINE uint m68ki_get_ea_pcix(void);                 /* Get ea for program counter indirect + index */
-INLINE uint m68ki_get_ea_ix(uint An);                /* Get ea for register indirect + index */
+/* Indexed and PC-relative ea fetching */
+INLINE uint m68ki_get_ea_pcdi(void);
+INLINE uint m68ki_get_ea_pcix(void);
+INLINE uint m68ki_get_ea_ix(uint An);
 
-INLINE uint OPER_AY_AI_8(void);                      /* Get various kinds of operands */
+/* Operand fetching */
+INLINE uint OPER_AY_AI_8(void);
 INLINE uint OPER_AY_AI_16(void);
 INLINE uint OPER_AY_AI_32(void);
 INLINE uint OPER_AY_PI_8(void);
@@ -833,23 +860,27 @@ INLINE uint OPER_PCIX_8(void);
 INLINE uint OPER_PCIX_16(void);
 INLINE uint OPER_PCIX_32(void);
 
-INLINE void m68ki_push_16(uint value);               /* Stack operations */
+/* Stack operations */
+INLINE void m68ki_push_16(uint value);
 INLINE void m68ki_push_32(uint value);
 INLINE uint m68ki_pull_16(void);
 INLINE uint m68ki_pull_32(void);
 
-INLINE void m68ki_jump(uint new_pc);                 /* Program flow */
+/* Program flow operations */
+INLINE void m68ki_jump(uint new_pc);
 INLINE void m68ki_jump_vector(uint vector);
 INLINE void m68ki_branch_8(uint offset);
 INLINE void m68ki_branch_16(uint offset);
 INLINE void m68ki_branch_32(uint offset);
 
-INLINE void m68ki_set_s_flag(uint value);            /* Set the S flag (must be 4 or 0) */
-INLINE void m68ki_set_sm_flag(uint value);           /* Set the S and M flags (only bits 1 and 2 of value should be set) */
+/* Status register operations. */
+INLINE void m68ki_set_s_flag(uint value);            /* Only bit 2 of value should be set (i.e. 4 or 0) */
+INLINE void m68ki_set_sm_flag(uint value);           /* only bits 1 and 2 of value should be set */
 INLINE void m68ki_set_ccr(uint value);               /* set the condition code register */
-INLINE void m68ki_set_sr_noint(uint value);          /* set the status register */
 INLINE void m68ki_set_sr(uint value);                /* set the status register */
+INLINE void m68ki_set_sr_noint(uint value);          /* set the status register */
 
+/* Exception processing */
 INLINE uint m68ki_init_exception(void);              /* Initial exception processing */
 INLINE void m68ki_stack_frame_3word(uint pc, uint sr); /* Stack various frame types */
 INLINE void m68ki_stack_frame_0000(uint pc, uint sr, uint vector);
@@ -872,9 +903,13 @@ INLINE void m68ki_check_interrupts(void);            /* ASG: check for interrupt
 
 /* ---------------------------- Read Immediate ---------------------------- */
 
+/* Handles all immediate reads, does address error check, function code setting,
+ * and prefetching if they are enabled in m68kconf.h
+ */
 INLINE uint m68ki_read_imm_16(void)
 {
-	m68ki_set_fc(FLAG_S | FUNCTION_CODE_USER_PROGRAM);
+	m68ki_set_fc(FLAG_S | FUNCTION_CODE_USER_PROGRAM); /* auto-disable (see m68kcpu.h) */
+	m68ki_check_address_error(REG_PC); /* auto-disable (see m68kcpu.h) */
 #if M68K_EMULATE_PREFETCH
 	if(MASK_OUT_BELOW_2(REG_PC) != CPU_PREF_ADDR)
 	{
@@ -893,7 +928,8 @@ INLINE uint m68ki_read_imm_32(void)
 #if M68K_EMULATE_PREFETCH
 	uint temp_val;
 
-	m68ki_set_fc(FLAG_S | FUNCTION_CODE_USER_PROGRAM);
+	m68ki_set_fc(FLAG_S | FUNCTION_CODE_USER_PROGRAM); /* auto-disable (see m68kcpu.h) */
+	m68ki_check_address_error(REG_PC); /* auto-disable (see m68kcpu.h) */
 	if(MASK_OUT_BELOW_2(REG_PC) != CPU_PREF_ADDR)
 	{
 		CPU_PREF_ADDR = MASK_OUT_BELOW_2(REG_PC);
@@ -911,7 +947,8 @@ INLINE uint m68ki_read_imm_32(void)
 
 	return temp_val;
 #else
-	m68ki_set_fc(FLAG_S | FUNCTION_CODE_USER_PROGRAM);
+	m68ki_set_fc(FLAG_S | FUNCTION_CODE_USER_PROGRAM); /* auto-disable (see m68kcpu.h) */
+	m68ki_check_address_error(REG_PC); /* auto-disable (see m68kcpu.h) */
 	REG_PC += 4;
 	return m68k_read_immediate_32(ADDRESS_68K(REG_PC-4));
 #endif /* M68K_EMULATE_PREFETCH */
@@ -921,35 +958,45 @@ INLINE uint m68ki_read_imm_32(void)
 
 /* ------------------------- Top level read/write ------------------------- */
 
+/* Handles all memory accesses (except for immediate reads if they are
+ * configured to use separate functions in m68kconf.h).
+ * All memory accesses must go through these top level functions.
+ * These functions will also check for address error and set the function
+ * code if they are enabled in m68kconf.h.
+ */
 INLINE uint m68ki_read_8_fc(uint address, uint fc)
 {
-	m68ki_set_fc(fc);
+	m68ki_set_fc(fc); /* auto-disable (see m68kcpu.h) */
 	return m68k_read_memory_8(ADDRESS_68K(address));
 }
 INLINE uint m68ki_read_16_fc(uint address, uint fc)
 {
-	m68ki_set_fc(fc);
+	m68ki_set_fc(fc); /* auto-disable (see m68kcpu.h) */
+	m68ki_check_address_error(address); /* auto-disable (see m68kcpu.h) */
 	return m68k_read_memory_16(ADDRESS_68K(address));
 }
 INLINE uint m68ki_read_32_fc(uint address, uint fc)
 {
-	m68ki_set_fc(fc);
+	m68ki_set_fc(fc); /* auto-disable (see m68kcpu.h) */
+	m68ki_check_address_error(address); /* auto-disable (see m68kcpu.h) */
 	return m68k_read_memory_32(ADDRESS_68K(address));
 }
 
 INLINE void m68ki_write_8_fc(uint address, uint fc, uint value)
 {
-	m68ki_set_fc(fc);
+	m68ki_set_fc(fc); /* auto-disable (see m68kcpu.h) */
 	m68k_write_memory_8(ADDRESS_68K(address), value);
 }
 INLINE void m68ki_write_16_fc(uint address, uint fc, uint value)
 {
-	m68ki_set_fc(fc);
+	m68ki_set_fc(fc); /* auto-disable (see m68kcpu.h) */
+	m68ki_check_address_error(address); /* auto-disable (see m68kcpu.h) */
 	m68k_write_memory_16(ADDRESS_68K(address), value);
 }
 INLINE void m68ki_write_32_fc(uint address, uint fc, uint value)
 {
-	m68ki_set_fc(fc);
+	m68ki_set_fc(fc); /* auto-disable (see m68kcpu.h) */
+	m68ki_check_address_error(address); /* auto-disable (see m68kcpu.h) */
 	m68k_write_memory_32(ADDRESS_68K(address), value);
 }
 
@@ -957,6 +1004,9 @@ INLINE void m68ki_write_32_fc(uint address, uint fc, uint value)
 
 /* --------------------- Effective Address Calculation -------------------- */
 
+/* The program counter relative addressing modes cause operands to be
+ * retrieved from program space, not data space.
+ */
 INLINE uint m68ki_get_ea_pcdi(void)
 {
 	uint old_pc = REG_PC;
@@ -1138,48 +1188,61 @@ INLINE uint OPER_PCIX_32(void)  {uint ea = EA_PCIX_32();  return m68ki_read_32(e
 
 /* ---------------------------- Stack Functions --------------------------- */
 
+/* Push/pull data from the stack */
 INLINE void m68ki_push_16(uint value)
 {
-	REG_A[7] = MASK_OUT_ABOVE_32(REG_A[7] - 2);
-	m68ki_write_16(REG_A[7], value);
+	REG_SP = MASK_OUT_ABOVE_32(REG_SP - 2);
+	m68ki_write_16(REG_SP, value);
 }
 
 INLINE void m68ki_push_32(uint value)
 {
-	REG_A[7] = MASK_OUT_ABOVE_32(REG_A[7] - 4);
-	m68ki_write_32(REG_A[7], value);
+	REG_SP = MASK_OUT_ABOVE_32(REG_SP - 4);
+	m68ki_write_32(REG_SP, value);
 }
 
 INLINE uint m68ki_pull_16(void)
 {
-	REG_A[7] = MASK_OUT_ABOVE_32(REG_A[7] + 2);
-	return m68ki_read_16(REG_A[7]-2);
-}
-
-INLINE void m68ki_fake_pull_16(void)
-{
-	REG_A[7] = MASK_OUT_ABOVE_32(REG_A[7] + 2);
+	REG_SP = MASK_OUT_ABOVE_32(REG_SP + 2);
+	return m68ki_read_16(REG_SP-2);
 }
 
 INLINE uint m68ki_pull_32(void)
 {
-	REG_A[7] = MASK_OUT_ABOVE_32(REG_A[7] + 4);
-	return m68ki_read_32(REG_A[7]-4);
+	REG_SP = MASK_OUT_ABOVE_32(REG_SP + 4);
+	return m68ki_read_32(REG_SP-4);
+}
+
+
+/* Increment/decrement the stack as if doing a push/pull but
+ * don't do any memory access.
+ */
+INLINE void m68ki_fake_push_16(void)
+{
+	REG_SP = MASK_OUT_ABOVE_32(REG_SP - 2);
+}
+
+INLINE void m68ki_fake_push_32(void)
+{
+	REG_SP = MASK_OUT_ABOVE_32(REG_SP - 4);
+}
+
+INLINE void m68ki_fake_pull_16(void)
+{
+	REG_SP = MASK_OUT_ABOVE_32(REG_SP + 2);
 }
 
 INLINE void m68ki_fake_pull_32(void)
 {
-	REG_A[7] = MASK_OUT_ABOVE_32(REG_A[7] + 4);
+	REG_SP = MASK_OUT_ABOVE_32(REG_SP + 4);
 }
 
 
 /* ----------------------------- Program Flow ----------------------------- */
 
-/* I set the PC this way to let host programs be nicer.
- * This is mainly for programs running from separate ram banks.
- * If the host program knows where the PC is, it can offer faster
- * ram access times for data to be retrieved immediately following
- * the PC.
+/* Jump to a new program location or vector.
+ * These functions will also call the pc_changed callback if it was enabled
+ * in m68kconf.h.
  */
 INLINE void m68ki_jump(uint new_pc)
 {
@@ -1195,7 +1258,11 @@ INLINE void m68ki_jump_vector(uint vector)
 }
 
 
- /* So far it's been safe to not call m68ki_jump() for branch byte and word. */
+/* Branch to a new memory location.
+ * The 32-bit branch will call pc_changed if it was enabled in m68kconf.h.
+ * So far I've found no problems with not calling pc_changed for 8 or 16
+ * bit branches.
+ */
 INLINE void m68ki_branch_8(uint offset)
 {
 	REG_PC += MAKE_INT_8(offset);
@@ -1208,7 +1275,8 @@ INLINE void m68ki_branch_16(uint offset)
 
 INLINE void m68ki_branch_32(uint offset)
 {
-	m68ki_jump(REG_PC + offset);
+	REG_PC += offset;
+	m68ki_pc_changed(REG_PC);
 }
 
 
@@ -1265,8 +1333,6 @@ INLINE void m68ki_set_sr_noint(uint value)
 	FLAG_INT_MASK = value & 0x0700;
 	m68ki_set_ccr(value);
 	m68ki_set_sm_flag((value >> 11) & 6);
-
-	m68ki_check_interrupts();
 }
 
 INLINE void m68ki_set_sr(uint value)
@@ -1278,6 +1344,7 @@ INLINE void m68ki_set_sr(uint value)
 
 /* ------------------------- Exception Processing ------------------------- */
 
+/* Initiate exception processing */
 INLINE uint m68ki_init_exception(void)
 {
 	/* Save the old status register */
@@ -1292,12 +1359,16 @@ INLINE uint m68ki_init_exception(void)
 	return sr;
 }
 
+/* 3 word stack frame (68000 only) */
 INLINE void m68ki_stack_frame_3word(uint pc, uint sr)
 {
 	m68ki_push_32(pc);
 	m68ki_push_16(sr);
 }
 
+/* Format 0 stack frame.
+ * This is the standard stack frame for 68010+.
+ */
 INLINE void m68ki_stack_frame_0000(uint pc, uint sr, uint vector)
 {
 	m68ki_push_16(vector<<2);
@@ -1305,6 +1376,9 @@ INLINE void m68ki_stack_frame_0000(uint pc, uint sr, uint vector)
 	m68ki_push_16(sr);
 }
 
+/* Format 1 stack frame (68020).
+ * For 68020, this is the 4 word throwaway frame.
+ */
 INLINE void m68ki_stack_frame_0001(uint pc, uint sr, uint vector)
 {
 	m68ki_push_16(0x1000 | (vector<<2));
@@ -1312,6 +1386,9 @@ INLINE void m68ki_stack_frame_0001(uint pc, uint sr, uint vector)
 	m68ki_push_16(sr);
 }
 
+/* Format 2 stack frame.
+ * This is used only by 68020 for trap exceptions.
+ */
 INLINE void m68ki_stack_frame_0010(uint sr, uint vector)
 {
 	m68ki_push_32(REG_PPC);
@@ -1319,6 +1396,195 @@ INLINE void m68ki_stack_frame_0010(uint sr, uint vector)
 	m68ki_push_32(REG_PC);
 	m68ki_push_16(sr);
 }
+
+
+/* Bus error stack frame (68000 only).
+ */
+INLINE void m68ki_stack_frame_buserr(uint pc, uint sr, uint address, uint write, uint instruction, uint fc)
+{
+	m68ki_push_32(pc);
+	m68ki_push_16(sr);
+	m68ki_push_16(REG_IR);
+	m68ki_push_32(address);	/* access address */
+	/* 0 0 0 0 0 0 0 0 0 0 0 R/W I/N FC
+	 * R/W  0 = write, 1 = read
+	 * I/N  0 = instruction, 1 = not
+	 * FC   3-bit function code
+	 */
+	m68ki_push_16(((!write)<<4) | ((!instruction)<<3) | fc);
+}
+
+/* Format 8 stack frame (68010).
+ * 68010 only.  This is the 29 word bus/address error frame.
+ */
+INLINE void m68ki_stack_frame_1000(uint pc, uint sr, uint vector)
+{
+	/* VERSION
+	 * NUMBER
+	 * INTERNAL INFORMATION, 16 WORDS
+	 */
+	m68ki_fake_push_32();
+	m68ki_fake_push_32();
+	m68ki_fake_push_32();
+	m68ki_fake_push_32();
+	m68ki_fake_push_32();
+	m68ki_fake_push_32();
+	m68ki_fake_push_32();
+	m68ki_fake_push_32();
+
+	/* INSTRUCTION INPUT BUFFER */
+	m68ki_push_16(0);
+
+	/* UNUSED, RESERVED (not written) */
+	m68ki_fake_push_16();
+
+	/* DATA INPUT BUFFER */
+	m68ki_push_16(0);
+
+	/* UNUSED, RESERVED (not written) */
+	m68ki_fake_push_16();
+
+	/* DATA OUTPUT BUFFER */
+	m68ki_push_16(0);
+
+	/* UNUSED, RESERVED (not written) */
+	m68ki_fake_push_16();
+
+	/* FAULT ADDRESS */
+	m68ki_push_32(0);
+
+	/* SPECIAL STATUS WORD */
+	m68ki_push_16(0);
+
+	/* 1000, VECTOR OFFSET */
+	m68ki_push_16(0x8000 | (vector<<2));
+
+	/* PROGRAM COUNTER */
+	m68ki_push_32(pc);
+
+	/* STATUS REGISTER */
+	m68ki_push_16(sr);
+}
+
+/* Format A stack frame (short bus fault).
+ * This is used only by 68020 for bus fault and address error
+ * if the error happens at an instruction boundary.
+ * PC stacked is address of next instruction.
+ */
+INLINE void m68ki_stack_frame_1010(uint sr, uint vector, uint pc)
+{
+	/* INTERNAL REGISTER */
+	m68ki_push_16(0);
+
+	/* INTERNAL REGISTER */
+	m68ki_push_16(0);
+
+	/* DATA OUTPUT BUFFER (2 words) */
+	m68ki_push_32(0);
+
+	/* INTERNAL REGISTER */
+	m68ki_push_16(0);
+
+	/* INTERNAL REGISTER */
+	m68ki_push_16(0);
+
+	/* DATA CYCLE FAULT ADDRESS (2 words) */
+	m68ki_push_32(0);
+
+	/* INSTRUCTION PIPE STAGE B */
+	m68ki_push_16(0);
+
+	/* INSTRUCTION PIPE STAGE C */
+	m68ki_push_16(0);
+
+	/* SPECIAL STATUS REGISTER */
+	m68ki_push_16(0);
+
+	/* INTERNAL REGISTER */
+	m68ki_push_16(0);
+
+	/* 1010, VECTOR OFFSET */
+	m68ki_push_16(0xa000 | (vector<<2));
+
+	/* PROGRAM COUNTER */
+	m68ki_push_32(pc);
+
+	/* STATUS REGISTER */
+	m68ki_push_16(sr);
+}
+
+/* Format B stack frame (long bus fault).
+ * This is used only by 68020 for bus fault and address error
+ * if the error happens during instruction execution.
+ * PC stacked is address of instruction in progress.
+ */
+INLINE void m68ki_stack_frame_1011(uint sr, uint vector, uint pc)
+{
+	/* INTERNAL REGISTERS (18 words) */
+	m68ki_push_32(0);
+	m68ki_push_32(0);
+	m68ki_push_32(0);
+	m68ki_push_32(0);
+	m68ki_push_32(0);
+	m68ki_push_32(0);
+	m68ki_push_32(0);
+	m68ki_push_32(0);
+	m68ki_push_32(0);
+
+	/* VERSION# (4 bits), INTERNAL INFORMATION */
+	m68ki_push_16(0);
+
+	/* INTERNAL REGISTERS (3 words) */
+	m68ki_push_32(0);
+	m68ki_push_16(0);
+
+	/* DATA INTPUT BUFFER (2 words) */
+	m68ki_push_32(0);
+
+	/* INTERNAL REGISTERS (2 words) */
+	m68ki_push_32(0);
+
+	/* STAGE B ADDRESS (2 words) */
+	m68ki_push_32(0);
+
+	/* INTERNAL REGISTER (4 words) */
+	m68ki_push_32(0);
+	m68ki_push_32(0);
+
+	/* DATA OUTPUT BUFFER (2 words) */
+	m68ki_push_32(0);
+
+	/* INTERNAL REGISTER */
+	m68ki_push_16(0);
+
+	/* INTERNAL REGISTER */
+	m68ki_push_16(0);
+
+	/* DATA CYCLE FAULT ADDRESS (2 words) */
+	m68ki_push_32(0);
+
+	/* INSTRUCTION PIPE STAGE B */
+	m68ki_push_16(0);
+
+	/* INSTRUCTION PIPE STAGE C */
+	m68ki_push_16(0);
+
+	/* SPECIAL STATUS REGISTER */
+	m68ki_push_16(0);
+
+	/* INTERNAL REGISTER */
+	m68ki_push_16(0);
+
+	/* 1011, VECTOR OFFSET */
+	m68ki_push_16(0xb000 | (vector<<2));
+
+	/* PROGRAM COUNTER */
+	m68ki_push_32(pc);
+
+	/* STATUS REGISTER */
+	m68ki_push_16(sr);
+}
+
 
 /* Used for Group 2 exceptions.
  * These stack a type 2 frame on the 020.
@@ -1432,6 +1698,12 @@ INLINE void m68ki_exception_illegal(void)
 }
 
 
+INLINE void m68ki_exception_address_error(void)
+{
+	/* Not properly handled yet */
+	m68ki_exception(EXCEPTION_ADDRESS_ERROR);
+}
+
 /* Service an interrupt request and start exception processing */
 INLINE void m68ki_service_interrupt(uint int_level)
 {
@@ -1494,7 +1766,7 @@ INLINE void m68ki_service_interrupt(uint int_level)
 			break;
 		case CPU_TYPE_EC020:
 		case CPU_TYPE_020:
-			m68ki_stack_frame_0010(sr, vector);
+			m68ki_stack_frame_0000(REG_PC, sr, vector);
 			if(FLAG_M)
 			{
 				/* Create throwaway frame */

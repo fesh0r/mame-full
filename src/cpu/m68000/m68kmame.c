@@ -26,7 +26,6 @@ static UINT8 m68000_win_layout[] = {
 	 0,23,80, 1 	/* command line window (bottom rows) */
 };
 
-#if HAS_M68010
 static UINT8 m68010_reg_layout[] = {
 	M68K_PC,  M68K_ISP, -1,
 	M68K_SR,  M68K_USP, -1,
@@ -49,9 +48,7 @@ static UINT8 m68010_win_layout[] = {
 	48,14,32, 8,	/* memory #2 window (right, middle) */
 	 0,23,80, 1 	/* command line window (bottom rows) */
 };
-#endif
 
-#if HAS_M68020
 static UINT8 m68020_reg_layout[] = {
 	M68K_PC,  M68K_MSP, -1,
 	M68K_SR,  M68K_ISP, -1,
@@ -74,7 +71,7 @@ static UINT8 m68020_win_layout[] = {
 	48,14,32, 8,	/* memory #2 window (right, middle) */
 	 0,23,80, 1 	/* command line window (bottom rows) */
 };
-#endif
+
 
 
 void m68000_reset(void* param)

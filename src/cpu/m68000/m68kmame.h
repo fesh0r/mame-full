@@ -38,6 +38,9 @@
 #define M68K_LOG_1010_1111          OPT_OFF
 #define M68K_LOG_FILEHANDLE         errorlog
 
+#define M68K_EMULATE_ADDRESS_ERROR  OPT_OFF
+
+#define M68K_USE_64_BIT             OPT_OFF
 
 
 /* Redirect memory calls */
