@@ -2235,21 +2235,21 @@ $bio
 Apple Lisa
 
 
-Usage :
+Usage:
 
 This driver is still buggy. Neither the hard drive nor the serial port are supported. There are
 many other bugs remaining with MMU emulation. Only Macworks will boot.
 
-When you boot up the Lisa, you can see a self-test progress indicator. At least one test will fail :
+When you boot up the Lisa, you can see a self-test progress indicator. At least one test will fail:
 you must discard the error message by selecting the 'Ignore' or 'Start-up from...' button. Then,
 you get a boot device menu. Select the floppy drive unit, since it is the only available device.
 If the mouse temporarily refuses to work, you may use the keyboard shortcuts Apple+2 and Apple+3
-(the Apple key should be mapped to Control ; you must use the numeric keys on the main keyboard, not
+(the Apple key should be mapped to Control; you must use the numeric keys on the main keyboard, not
 on the numeric keypad). If the computer does boot, you will see an icon representing a weird floppy
 disk with a cross (maybe it actually represents a twiggy disk).
 
 
-History and Trivia :
+History and Trivia:
 
 The Lisa project started in the summer of 1979. At the time, the idea was merely designing
 a powerful business computer, with scheduled release in march 1981. After his legendary visit
@@ -2263,12 +2263,12 @@ on January, 19th, 1983.
 The Lisa was an impressive computer for its time. It had TONS of memory (1Mb on Lisa 1),
 a high-resolution graphic display, and it was fairly expandable. Its OS (weirdly called
 "Lisa 7/7 Office System") featured a complete GUI, and full preemptive multitasking
-with memory protection (something neither Windows 98 nor MacOS offer !).
+with memory protection (something neither Windows 98 nor MacOS offer!).
 Its 68000 CPU was one of the fastest microprocessor in its time.
 
 Unfortunately, Lisa was never too successful. It was quite expensive, and relatively few units were
 sold (possibly about 10,000 Lisa 1 and 80,000 Lisa 2). Little software was developed for it.
-Also, it was extremely resource hungry : it was reportedly slow, and its memory requirements were
+Also, it was extremely resource hungry: it was reportedly slow, and its memory requirements were
 the major cause for its high price.
 
 
@@ -2276,15 +2276,15 @@ On 24th January 1984, Lisa 1 was replaced by Lisa 2, with 3.5" floppies and seve
 hardware changes. In January 1985, Lisa 2 was replaced by Macintosh XL, which had a modified video
 hardware, and used a variant of the Macintosh system instead of the 7/7 Lisa OS. Mac XL was
 discontinued in May 1985 (although it was still available at much later dates). Rumor has it that
-an enhanced, 68020-based, Lisa was in development when Apple discontinued the Lisa.
+an enhanced, 68020-based Lisa was in development when Apple discontinued the Lisa.
 
 Note that, contrary to a common belief, the Macintosh is not a mere offspring of the Lisa, since
 both projects were led simulteanously. While the Macintosh borrowed many ideas from the Lisa project
-(which had more financial resources), the reverse is often true, too : for instance, the Macintosh
+(which had more financial resources), the reverse is often true, too: for instance, the Macintosh
 included a GUI from the beginning.
 
 
-The significance of Lisa :
+The significance of Lisa:
 
 Lisa is a milestone in the history of computing. Arguably, the Xerox PARC research center invented
 most GUI concepts (along with Object-Oriented programming and Ethernet) 10 years before Lisa was
@@ -2305,7 +2305,7 @@ $bio
 Apple Macintosh 512ke
 
 
-History and Trivia :
+History and Trivia:
 
 Introduced on 14th April 1986, the Macintosh 512ke was essentially a Macintosh 512k with
 the same 128k ROMs and double-sided 800 KB internal floppy drive as the Mac Plus.
@@ -2326,18 +2326,18 @@ $bio
 Apple Macintosh Plus
 
 
-History and Trivia :
+History and Trivia:
 
 Introduced on 16th January 1986, the Macintosh Plus was the first real improvement of
 the original Macintosh 128k (The Macintosh 512k was just a Mac 128k with 512 kb of RAM). It had
 several new features.
 
-The extended ROM held the new version of operating system : it supported hard disk units,
-the SCSI bus, and the new file system : HFS (Hierarchical File System), along with many other
+The extended ROM held the new version of operating system: it supported hard disk units,
+the SCSI bus, and the new file system: HFS (Hierarchical File System), along with many other
 new features (Time Manager...). Additionally, various routines and managers previously located
 in RAM (Appletalk manager, RAM Serial Driver, Standard File Package...) had been moved to ROM.
 
-The new floppy disk unit could use double-sided 800 KB disks (compared to only one-sided 400 KB
+The new floppy disk unit could use double-sided 800 kb disks (compared to single-sided 400 kb
 for the Macintosh 128k). It came with 1 Mb of RAM, and could easily be expanded to 4 Mb, using
 standard 1Mb SIMMs. It had an enhanced keyboard with a numeric pad and last but not least, it had
 a SCSI 1 interface which allowed to connect several high speed peripherals (maximal transfer rate of
@@ -2357,25 +2357,25 @@ $bio
 Apple Macintosh XL
 
 
-Usage :
+Usage:
 
 This driver is still buggy. Neither the hard drive nor the serial port are supported. There are
 many other bugs remaining with MMU emulation. Only Macworks will boot.
 
-When you boot up the Lisa, you can see a self-test progress indicator. At least one test will fail :
+When you boot up the Lisa, you can see a self-test progress indicator. At least one test will fail:
 you must discard the error message by selecting the 'Ignore' or 'Start-up from...' button. Then,
 you get a boot device menu. Select the floppy drive unit, since it is the only available device.
 If the mouse temporarily refuses to work, you may use the keyboard shortcuts Apple+2 and Apple+3
-(the Apple key should be mapped to Control ; you must use the numeric keys on the main keyboard, not
+(the Apple key should be mapped to Control; you must use the numeric keys on the main keyboard, not
 on the numeric keypad). If the computer does boot, you will see an icon representing a weird floppy
 disk with a cross (maybe it actually represents a twiggy disk).
 
 If you boot MacWorks, you should eventually see a floppy disk icon with a question mark. At this
-point, it is time to insert a bootable Macintosh image : to do so, use the file manager or whatever
+point, it is time to insert a bootable Macintosh image: to do so, use the file manager or whatever
 osd equivalent you may have.
 
 
-History and Trivia :
+History and Trivia:
 
 In late 1984, Apple's financial health was questionable, and Apple came to the conclusion that
 it did not make sense to support both Lisa and Macintosh.
@@ -2386,12 +2386,12 @@ a program named MacWorks, which enabled a Lisa to run the Macintosh operating sy
 The same day, they introduced a new variation of the Lisa hardware, named Macintosh XL,
 which was a Lisa 2 whose video hardware was modified in order for it to display square pixels.
 Additionally, existing Lisas could be upgraded to Macintosh XL. This modification improved
-the appearance of Macintosh programs ; however, it prevented the Macintosh XL from running
+the appearance of Macintosh programs; however, it prevented the Macintosh XL from running
 the Lisa operating system, or any Lisa program, for that matter. Needless to say, it would have
-been very easy to patch the Lisa OS to support the new video resolution : this was simply not done,
+been very easy to patch the Lisa OS to support the new video resolution: this was simply not done,
 since Apple had discontinued the Lisa OS.
 
-Macintosh XL was not very successful : Apple discontinued it in May 1985, and the remaining
+Macintosh XL was not very successful: Apple discontinued it in May 1985, and the remaining
 stocks were sold to another company (Sun Remarketing) which did manage to sell them.
 
 Though ill-fated, the Macintosh XL was an interesting machine. It was slow, slower than even
@@ -4011,12 +4011,11 @@ $bio
 DEC PDP-1
 
 
-Currently supports three images: Spacewar!, Munching Squares and LISP. Since interactive
-typewriter output is not emulated, LISP cannot be used interactively. No other images are
-known at the time of writing: I know there was an editor (Expensive Typewriter),
-an assembler/linker (MACRO), a debugger (DDT), and even a multi-user multi-tasking operating
-system (MIT PDP-1 Timesharing System), but I have no idea where a copy of these programs could be
-found.
+Currently supports three images: Spacewar!, Munching Squares and LISP. No
+other images are known at the time of writing: I know there were a text editor
+(Expensive Typewriter), an assembler/linker (MACRO), a debugger (DDT), and
+even a multi-user, multi-tasking operating system (MIT PDP-1 Timesharing
+System), but I have no idea where a copy of these programs could be found.
 
 
 This driver emulates a complete pdp-1 system, including:
@@ -4034,7 +4033,8 @@ This driver emulates a complete pdp-1 system, including:
 * optional type 10 automatic multiply and divide
 
 
-The only standard feature which is still missing is the sequence break (i.e. interrupt) system.
+The internals of the sequence break (i.e. interrupt) system are implemented,
+but no device has been set up to trigger an interrupt.
 
 
 Usage Notes:
@@ -4049,12 +4049,13 @@ Panel key (Left Control) and the Read In key (main keypad Return)).
 
 Three dip switches (RAM size, Hardware multiply and Hardware divide) enable or disable computer
 extensions. These switches are only read at reset. Therefore, if you edit them, you must reset
-the machine for the changes to be taken into account.
+the emulator (press F3 in partial keyboard emulation mode) for the changes to be taken into
+account.
 
 The "RAM size" switch install and remove type 15 memory expansion control: it is disabled
 when set on 4kw, enabled with 15-bit addresses when set on 32kw, and enabled with 16-bit addresses
 when set on 64kw. All known programs work well whether memory expansion control is
-installed or not. Only LISP can make use the extra RAM.
+installed or not. Only LISP can take advantage of the extra RAM.
 
 The "Hardware multiply" and "Hardware divide" switches enable or disable automatic
 multiply/divide extension. When they are enabled, two pdp-1 machine instructions are replaced
@@ -4105,7 +4106,7 @@ of Spacewar!, which was the first computer-based videogame, but this is another 
 The pdp-1 was a reasonably successful machine: 49 units were sold, which was not as bad as it
 sounds for this time. DEC intended to sell variants of pdp-1 with a bigger word size
 (pdp-3 with 36-bit words, and possibly other variants (pdp-2???) with 24-bit or 30-bit words),
-but it eventually did not. However, it later relaced pdp-1 with other models, including the first
+but it eventually did not. However, it later replaced pdp-1 with other models, including the first
 minicomputer (the pdp-8 in 1965), and, by the early 1970's, it had become a major computer
 manufacturer, second only to IBM.
 
@@ -4599,6 +4600,77 @@ $end
 
 #---------------------------------------------------------------------------------------------#
 
+$info=ti990_10
+$bio
+Texas Instruments Model TI-990/10 Minicomputer System
+
+
+Known Issues:
+
+No complete DX10 or DNOS image is available at the time of writing.
+
+The controller panel is not emulated yet.
+
+
+Usage:
+
+This driver emulates a TI990/10 CPU with mapping option, 1Mbyte of RAM,
+a generic disk controller at TILINE base >1ff800, a generic tape controller
+at TILINE base >1ff880, and a 911 VDT at CRU base >0100.
+
+This is enough to build DX10 or DNOS. I have been using a build tape image
+as tape unit #1 and a blank disk image as disk unit #1 (with the SCOSTA flag
+at offset >A4 set to >0002, so that the build tape does not try to format the
+disk). The build tape boots, and I am able to build a bootable disk image.
+The problems start at step 3 (restore after reboot), as it seems I do not
+have an image of the backup tape that goes with the build tape.
+
+
+History and Trivia:
+
+Texas Instruments has been building minicomputers since the late 1960s through
+the 1980s.
+
+In 1974, TI started to build the prototype of the TI990 series, the TI990/9.
+
+In 1975, they released the first commercial system, the TI990/10. It was
+a minicomputer built with TTL logic. Although it was a 16-bit CPU,
+it supported an optional mapper to expand address space from 64kbytes
+to 2Mbytes.
+
+The TI990 series development continued. In 1975 or 1976, TI started shipping
+the TMS9900 microprocessor, which implemented a subset of the TI990/10 feature
+set. Two CPU boards were built around the TMS9900: the TI990/4 (1976) and
+the improved TI990/5 (date unknown). These boards were much cheaper than the
+TI990/10, but they could only address 64kbytes, did not implement the memory
+bus fully (no DMA support), and could not run the DX10 OS.
+
+Around 1978, TI released the TI990/12, a higher-end TTL implementation, which
+was faster, and supported many additional instructions and features when
+compared to TI990/10. It was replaced with a revised but similar TI990/12LR
+computer in 1982 or 1983.
+
+In 1981, TI released the new TMS99000 microprocessor. In 1982, they replaced
+the TI990/10 CPU with a cheaper, smaller, faster, and more energy-efficient
+TI990/10A board built around the TMS99000 CPU. Additionally, they released
+an all-in-one Business System 300 (1982), later replaced with the Business
+System 300A (1984). Both computers included the CPU, RAM, video terminal, and
+hard disk/tape interface in a terminal case.
+
+The TI990 series must have been abandonned around 1985, when TI introduced
+the S1500 series built around a 68020.
+
+The TI990 computers were primarily used for business applications.
+
+Two disk-based OS were available. DX10 was a multi-tasking, multi-user OS.
+DNOS (released around 1981) was similar to DX10 and mostly compatible with it:
+it supported extra features but it was bigger and slower. Neither OS could run
+on the lower-end 990/4 and /5 systems, but a kernel and various OS utilities
+were available as static-link libraries for embedded applications.
+
+$end
+
+#---------------------------------------------------------------------------------------------#
 
 $info=ti99_4
 $bio
@@ -4612,7 +4684,7 @@ This TI99/4 driver is preliminary and could not be tested.
 
 History and Trivia:
 
-The TI99/4 Home Computer was designed and built by Texas Instrument.  About
+The TI99/4 Home Computer was designed and built by Texas Instruments.  About
 200 prototypes were built in 1978, it was first shown in June 1979, and TI
 started shipping it in October 1979.  It was replaced with TI99/4a in the
 summer of 1981.  It was first sold in US, then was available in Europe in
@@ -4627,7 +4699,7 @@ the first 16-bit home computer.
 
 The general architecture was odd.  The computer had only 256 bytes of CPU
 RAM, the remaining 16kb of RAM were attached to the video processor.  It
-had been designed to use some slow "GROM" cartridge, written in an
+had been designed to use some slow "GROM" cartridges, written in an
 interpreted language, "GPL".
 
 Due to these poor designing and programming choices, the computer was slow.
@@ -4642,7 +4714,7 @@ The design of TI99/4 caused many headaches to TI engineers.  It was first
 designed as a console, then an inexpensive home computer (which explains
 its slowness and kludgy design), then a hybrid (with remote I/R joysticks
 and keypads - which were abandoned at the last minute - and a cartridge
-port).  It was intended to use a TI-designed processor, tms9985, but the
+port).  It was intended to use a TI-designed microcontroller, tms9985, but the
 processor was never actually produced, so engineers had to use a
 software-compatible, high-end (in 1979) tms9900 with tons of glue logic.
 Note that the processor software design was remarkably weird (no stack, no
@@ -4651,8 +4723,7 @@ on-chip data register).
 
 Wanted:
 
-If you have a TI99/4 ROM image, or if you know how the extra system GROM
-maps in the memory space, please mail me at pytheas@club-internet.fr
+If you have a TI99/4 ROM image, please mail me at pytheas@club-internet.fr
 
 $end
 
@@ -4665,21 +4736,34 @@ Texas Instruments TI-99/4a Home Computer
 
 Known Issues:
 
-Requires full keyboard emulation. At startup, full keyboard emulation mode is enabled by default. Whilst in full keyboard emulation mode, some key associated functionality may be disabled (like the ESC key for EXIT). The keyboard emulation mode is toggled using the scroll_lock key.
+Requires full keyboard emulation.  At startup, full keyboard emulation mode is
+enabled by default.  Whilst in full keyboard emulation mode, some key
+associated functionality may be disabled (like the ESC key for EXIT).
+The keyboard emulation mode is toggled using the scroll_lock key.
 
 
 Usage:
 
-This TI99/4a driver offers a high level of compatibility.  It currently
-supports V9t9-format cart images and up to SSSD disk images.  Speech
-synthesis is partially supported.
+This TI99/4a driver offers a high level of compatibility. It currently
+supports V9t9-format cartridge images, sampled tapes in wave format
+(CS1 unit only), and up to 3 SSSD disk images. Speech synthesis is emulated,
+although speech ROM emulation is still in the works. TI, Super AMS and
+Foundation memory expansion cards are supported.
 
-Loading a cart:
+Loading a cartridge:
 
-No cartridge is required, as TI99/4a has a built-in small basic interpreter.
+You do not need a cartridge image to run the computer, since TI99/4a has
+a small built-in basic interpreter.
 
 V9t9-format cart images are typically split into up to 3 files. These can be
-loaded in any order, so long as all necessary portions are loaded. 
+loaded in any order, so long as all necessary portions are loaded.
+
+Setting up the system configuration:
+
+A few dip switches enable or disable computer extensions. These switches are
+only read at reset. Therefore, if you edit them, you must reset the emulator
+(press F3 in partial keyboard emulation mode) for the changes to be taken
+into account.
 
 
 History and Trivia:
@@ -4694,6 +4778,39 @@ market was so harsh that TI had to cut down the price of TI99/4a to less
 than $100, while suffering heavy losses.  So, by the end of 1983, TI had
 abandoned TI99/4a, its prototype successors, and withdrawn from the home
 computer market.
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=ti99_4ev
+$bio
+Texas Instruments TI-99/4a Home Computer with SNUG EVPC video card
+
+
+See the TI99/4a driver for non-EVPC information.
+
+
+Known Issues:
+
+EVPC emulation is not complete.  The palette chip is not emulated.
+Also, TI BASIC will not run under this driver, though it might be normal
+(I know there are some bugs in the TI's system ROMs which prevent them
+from running with a v9938).
+
+
+History and Trivia:
+
+A common hack on the ti99/4a is replacing the old tms9918/9928/9929a with
+a higher-end, upward-compatible v9938. This enhanced vdp supports true 16-
+and 256-color graphic modes, high-res 512*192 graphic and 80-column text
+modes, accelerated 2D graphics, etc. The only drawback is that some programs
+(including TI's system ROMs) will not run with the v9938.
+
+The EVPC card does just that: it includes a v9938 with 128kb of VRAM, 64kb of
+extended RAM, an additional palette chip to program the palette in 256-color
+mode, and a DSR ROM with various useful subroutines.
+
 
 $end
 
