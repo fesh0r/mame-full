@@ -13,7 +13,6 @@ This family of computers bank-switches everything up the wazoo.
 static MEMORY_READ_START( readmem_apple2 )
     { 0x0000, 0x01ff, MRA_BANK4 },
     { 0x0200, 0xbfff, MRA_BANK5 },
-//  { 0x0200, 0xbfff, MRA_RAM },
     { 0xc000, 0xc00f, apple2_c00x_r },
     { 0xc010, 0xc01f, apple2_c01x_r },
     { 0xc020, 0xc02f, apple2_c02x_r },
@@ -47,13 +46,6 @@ MEMORY_END
 static MEMORY_WRITE_START( writemem_apple2 )
     { 0x0000, 0x01ff, MWA_BANK4 },
     { 0x0200, 0xbfff, MWA_BANK5 },
-//  { 0x0200, 0x03ff, MWA_RAM },
-//  { 0x0400, 0x07ff, apple2_lores_text1_w, &apple2_lores_text1_ram },
-//  { 0x0800, 0x0bff, apple2_lores_text2_w, &apple2_lores_text2_ram },
-//  { 0x0c00, 0x1fff, MWA_RAM },
-//  { 0x2000, 0x3fff, apple2_hires1_w, &apple2_hires1_ram },
-//  { 0x4000, 0x5fff, apple2_hires2_w, &apple2_hires2_ram },
-//  { 0x6000, 0xbfff, MWA_RAM },
     { 0xc000, 0xc00f, apple2_c00x_w },
     { 0xc010, 0xc01f, apple2_c01x_w },
     { 0xc020, 0xc02f, apple2_c02x_w },

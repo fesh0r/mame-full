@@ -48,6 +48,7 @@ static WRITE_HANDLER ( apple2_auxram_w );
 MACHINE_INIT( apple2e )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
+	mess_ram = RAM;
 
 	/* Init our language card banks to initially point to ROM */
 	memory_set_bankhandler_w (1, 0, MWA_ROM);
@@ -76,52 +77,6 @@ MACHINE_INIT( apple2e )
 	mockingboard_init (4);
 	apple2_slot6_init();
 }
-
-#if 0
-/***************************************************************************
-  apple2_id_rom
-***************************************************************************/
-int apple2_id_rom (int id)
-{
-	FILE *romfile;
-	UINT8 magic[4];
-	int retval;
-
-	/* open read-only image */
-	if (!(romfile = image_fopen_new(IO_CARTSLOT, id, NULL))) return 0;
-
-	retval = 0;
-	/* Verify the file is in Apple II format */
-	osd_fread (romfile, magic, 4);
-	if (memcmp(magic,"2IMG",4)==0)
-		retval = 1;
-
-	osd_fclose (romfile);
-	return retval;
-}
-
-/***************************************************************************
-  apple2e_load_rom
-***************************************************************************/
-int apple2e_load_rom (int id)
-{
-	/* Initialize second half of graphics memory to 0xFF for sneaky decoding purposes */
-	memset(memory_region(REGION_GFX1) + 0x1000, 0xFF, 0x1000);
-
-	return INIT_PASS;
-}
-
-/***************************************************************************
-  apple2ee_load_rom
-***************************************************************************/
-int apple2ee_load_rom (int id)
-{
-	/* Initialize second half of graphics memory to 0xFF for sneaky decoding purposes */
-	memset(memory_region(REGION_GFX1) + 0x1000, 0xFF, 0x1000);
-
-	return INIT_PASS;
-}
-#endif
 
 /***************************************************************************
   apple2_interrupt
@@ -186,8 +141,8 @@ static WRITE_HANDLER ( apple2_LC_ram_w )
 WRITE_HANDLER ( apple2_mainram_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
-
 	RAM[0x0200 + offset] = data;
+	apple2_video_touch(0x0200 + offset);
 }
 
 /***************************************************************************
@@ -196,8 +151,8 @@ WRITE_HANDLER ( apple2_mainram_w )
 WRITE_HANDLER ( apple2_auxram_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
-
 	RAM[0x10200 + offset] = data;
+	apple2_video_touch(0x10200 + offset);
 }
 
 void apple2_slotrom_disable (int offset, int data)

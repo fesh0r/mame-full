@@ -155,18 +155,8 @@ extern WRITE_HANDLER ( apple2_slot6_w );
 
 
 /* vidhrdw/apple2.c */
-extern UINT8 *apple2_lores_text1_ram;
-extern UINT8 *apple2_lores_text2_ram;
-extern UINT8 *apple2_hires1_ram;
-extern UINT8 *apple2_hires2_ram;
-
 extern VIDEO_START( apple2 );
 extern VIDEO_UPDATE( apple2 );
-
-extern void apple2_lores_text1_w(int offset, int data);
-extern void apple2_lores_text2_w(int offset, int data);
-extern void apple2_hires1_w(int offset, int data);
-extern void apple2_hires2_w(int offset, int data);
-
+extern void apple2_video_touch(offs_t offset);
 
 #endif

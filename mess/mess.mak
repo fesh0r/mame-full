@@ -362,6 +362,7 @@ $(OBJ)/apple.a:   \
 	  $(OBJ)/mess/vidhrdw/apple2.o	 \
 	  $(OBJ)/mess/machine/apple2.o	 \
 	  $(OBJ)/mess/systems/apple2.o   \
+	  $(OBJ)/mess/formats/ap2_disk.o \
 	  $(OBJ)/mess/machine/ay3600.o	 \
 	  $(OBJ)/mess/sndhrdw/mac.o	 \
 	  $(OBJ)/mess/machine/sonydriv.o \
