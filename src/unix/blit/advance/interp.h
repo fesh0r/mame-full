@@ -28,6 +28,12 @@
  * do so, delete this exception statement from your version.
  */
 
+/*
+ * 20041225 LEG Replaced "static inline" with "INLINE", which is defined in the 
+ * top-level xmame/xmess makefile.  This prevents errors with more pedantic 
+ * compiler settings.
+ */
+
 #ifndef __INTERP_H
 #define __INTERP_H
 
