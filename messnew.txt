@@ -82,7 +82,7 @@ System Driver Changes:
 - [COCO3] Added support for Jeff Vavassour's virtual hard disk. His Color
   Computer 3 emulator comes with an OS-9 driver. [tim lindner]
 
-- [INTV] Added collision detection [Kyle Davis]
+- [INTV] Added collision detection (Bug #163) [Kyle Davis]
 
 - [PDP1] Added support for perforated tape and read-in mode.  Removed the
   current image load hack, since the use of the perforated tape reader in
