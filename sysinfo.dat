@@ -1,9 +1,8 @@
-# MESS System Information Data File
-# Maintained by Hobie Troxell &  Chris Henry
+# MESS System Information File
 
-# Send corrections/submissions to: 
-#   Hobie Troxell <ht1848@yahoo.com> 
-#   Chris Henry <battlepriest@hotmail.com>
+# All corrections/submissions are welcome. Please zip either a patch file or the entire 
+# modified file to:
+#	Hobie Troxell [ht1848@yahoo.com]
 
 # This file contains the basic documentation for most of the drivers presented in the MESS
 # distribution. Please read the readme.txt, mess.txt and messnew.txt prior to reading this
@@ -13,12 +12,11 @@
 # Driver entries are usually divided into sections such as: Usage, Features, Links, Known Issues,
 # History and Trivia, and MESS Emulation State.
 
-
 # History and Trivia - This section contains various background pieces for a system. Much of the 
 # information in these sections was kindly provided by Thierry Schembri and Olivier Boisseau of the 
 # "Old-computers.com Museum". Visit the excellent site at:  www.old-computers.com.
 
-# Features - Usually a quick list of important features of that system.
+# Features - Usually a quick list of important or unique features of that system.
 
 # Usage - This section lists any helpful commands for the computer or console in question, 
 # such as disk operating system and file loading BASIC commands. This information is not 
@@ -26,13 +24,12 @@
 # the most simple commands that can also be found on any of dozens of websites devoted to 
 # the system.
 
-# Known Issues - This section lists any known problematic spots for the driver. These will be
+# Known Issues - This section lists any known issues or bugs for the driver. These will be
 # fixed as time and knowledge permit. Please be patient. If you have information that may
 # help the MESS team resolve these issues go to www.mess.org.
 
 # MESS Emulation State: This section highlights the overall status of the MESS driver. Some system
 # drivers are TESTDRIVERS.
-
 
 #---------------------------------------------------------------------------------------------#
 
@@ -367,7 +364,7 @@ with its successor, the Amiga 2000) had a PAL display, enhanced video modes
 
 MESS Emulation State:
 
-This system is a TESTDRIVER.
+
 
 $end
 
@@ -780,9 +777,9 @@ Apple ][
 Known issues:
 
 Optional cassette drive not yet supported; in fact, no peripherals are supported
-(bug 477)
+(bug #477)
 
-Colors are incorrect (bug 475).
+Colors are incorrect (bug #475).
 
 Requires full keyboard emulation. At startup, full keyboard emulation mode is enabled by 
 default. Whilst in full keyboard emulation mode, some key associated functionality may be 
@@ -856,7 +853,8 @@ default. Whilst in full keyboard emulation mode, some key associated functionali
 disabled (like the ESC key for EXIT). The keyboard emulation mode is toggled using the
 scroll_lock key.
 
-Colors are incorrect (bug#475).
+Colors are incorrect (bug #475).
+
 
 Usage:
 
@@ -894,6 +892,7 @@ Memory: RAM 48kB, 12kB ROM
 Screen: 8 colors at 280x192, 4-bit color at 40x48
 
 Data path: 8-bit
+
 
 Links:
 
@@ -2907,11 +2906,11 @@ There are a few excellent utilities for creating and maintaining
 disk images for the Amstrad CPC emulators. Here are just a couple - 
 
 CPDRead   http://www.classicgaming.com/caprice/
+
 CPCfs     ftp://ftp.lip6.fr/pub/amstrad/emu-util/cpcfs085.zip
 
 
 Others can be found in the FAQ at http://genesis8.free.fr/
-
 
 
 Known Issues:
@@ -2999,11 +2998,11 @@ There are a few excellent utilities for creating and maintaining
 disk images for the Amstrad CPC emulators. Here are just a couple - 
 
 CPDRead   http://www.classicgaming.com/caprice/
+
 CPCfs     ftp://ftp.lip6.fr/pub/amstrad/emu-util/cpcfs085.zip
 
 
 Others can be found in the FAQ at http://genesis8.free.fr
-
 
 
 Known Issues:
@@ -3197,15 +3196,15 @@ Tapes are not supported.
 History and Trivia:
 
 The Enterprise 64 was a very long-awaited computer, two years between its announce and 
-its marketing ! It changed its name a lot of times : its first name was Elan 64, then 
-Flan, lastly Enterprise. It has great features, which wasn't found on all other home 
+its marketing! It changed its name many times. Its first name was Elan 64, then 
+Flan and finaly Enterprise. It has great features, which wasn't found on all other home 
 computers like its interfaces and its great graphics and sounds capacities provided by 
 two special custom chips called "Nick" and "Dave". The Basic is supplied on a ROM 
 cartridge and can be easily replaced with an other language. This basic is a very 
 powerful structured basic with great graphic commands and can store several programs 
 simultaneously in RAM. It has a small word processing in ROM and up to 32 computers can 
 be linked together. Despite its great characteristics and all its interfaces, the 
-Enterprise 64 had few success. Several months later, a new model was launched : the 
+Enterprise 64 had few successes. Several months later, a new model was launched - the 
 Enterprise 128 which is an Enterprise 64 with 128 KB RAM. 
 
 
@@ -4384,8 +4383,8 @@ Game cartridge slot
 
 Battery holder (six AA) ~4-5 hours
 
-
 Size: 9.25" x 4.25" x 2" (10.75" x 4.25" x 1.5" for original Lynx)
+
 Screen: 3.5" diagonal (3.25" x 1.88" approx.) 
 
 
@@ -6325,6 +6324,7 @@ Early Z80 based computer commonly used in Japan
 Features:
 
 Main Z80 CPU 4MHz(some models has 8MHz version)
+
 Sub Z80 CPU 4MHz(for 5'floppy disk drive)
 
 64KB RAM
@@ -6382,7 +6382,7 @@ BIOS images has same format as one of images for M88 emulator, but
 last 6KB of "disk.rom". M88 emulator and BIOS tools can be downloaded
 from this:
 
-	http://www.remus.dti.ne.jp/~cisc/m88/
+http://www.remus.dti.ne.jp/~cisc/m88/
 
 Currently PC-8801mkIISR ROM is only tested.
 
@@ -6403,7 +6403,7 @@ http://member.nifty.ne.jp/arearea/M882.html
 
 TODO:
 
-integrate "high-resolution" and "low-resolution" mode
+Integrate "high-resolution" and "low-resolution" mode
 
 optimization of CPU switching
 
@@ -6875,7 +6875,7 @@ implement them).
 
 Disk:
 
-The disk drive interface has a boot-rom which loads the DOS from the disc
+The disk drive interface has a boot-ROM which loads the DOS from the disc
 in the drive. 
 
 The driver supports 2 versions of the disc interface:
@@ -7028,7 +7028,6 @@ Sony Playstation
 
 MESS Emulation State:
 
-Driver is currently a TESTDRIVER.
 
 
 $end
@@ -7109,7 +7108,7 @@ CDROM: Max 2x speed - custom interface controlled by Hitachi SH1 processor. (512
 
 MESS Emulation State:
 
-See source code for more information. Driver is currently a TESTDRIVER.
+See source code for more information.
 
 Bios starts requesting pad data so maybe we are now in the time set area ????
 Need to emulate pad system, add more interrupts and get some grafix working so we can see exactly 
@@ -7299,7 +7298,7 @@ Add support for fullgraphic mode(partially done).
 
 Fix support for Mode 7. (In Progress)
 
-Handle interleaved roms (maybe even multi-part roms, but how?)
+Handle interleaved ROMs (maybe even multi-part ROMs, but how?)
 
 Add support for running at 3.58Mhz at the appropriate time.
 
@@ -9449,19 +9448,22 @@ $bio
 RCA Cosmac VIP (1977)
 
 
-very early home computer for TV connection
+Very early home computer for TV connection
 
 
 Features:
 
 Tape interface
+
 TV output
+
 Integrated speaker
 
 
 MESS Emulation State:
 
 display, keyboard working
+
 Stopped. For me it is much too cryptic to operate and therefore not interesting.
 (I did it because it is the same hardware as in the studio2)
 
@@ -9553,7 +9555,7 @@ Cartrige Capacity: ROM or FLASHROM max 512Mbit(LUXSOR2), RAM max 512Mbit(LUXSOR2
 
 MESS Emulation State:
 
-Very Preliminary Driver. Driver is currently a TESTDRIVER.
+Very Preliminary Driver.
 
 $end
 
