@@ -154,10 +154,10 @@ else
 DRVLIBS += \
 		$(OBJ)/advision.a \
 		$(OBJ)/coleco.a   \
-		$(OBJ)/nec.a	    \
+		$(OBJ)/nec.a	  \
 		$(OBJ)/bally.a    \
-		$(OBJ)/gce.a	    \
-		$(OBJ)/rca.a	    \
+		$(OBJ)/gce.a	  \
+		$(OBJ)/rca.a	  \
 		$(OBJ)/fairch.a   \
 		$(OBJ)/magnavox.a \
 		$(OBJ)/cpschngr.a \
@@ -168,7 +168,7 @@ ifdef MESS_EXCLUDE_MISC_COMPUTERS
 COREDEFS += -DMESS_EXCLUDE_MISC_COMPUTERS
 else
 DRVLIBS += \
-		$(OBJ)/veb.a \
+		$(OBJ)/veb.a      \
 		$(OBJ)/dragon.a   \
 		$(OBJ)/kaypro.a   \
 		$(OBJ)/trs80.a    \
@@ -182,7 +182,7 @@ DRVLIBS += \
 		$(OBJ)/jupiter.a  \
 		$(OBJ)/mbee.a     \
 		$(OBJ)/nascom1.a  \
-		$(OBJ)/mtx.a	    \
+		$(OBJ)/mtx.a	  \
 		$(OBJ)/samcoupe.a \
 		$(OBJ)/aquarius.a \
 		$(OBJ)/teamconc.a \
@@ -336,9 +336,9 @@ $(OBJ)/cbmshare.a: \
 	  $(OBJ)/mess/machine/tpi6525.o  \
 	  $(OBJ)/mess/machine/cia6526.o  \
 	  $(OBJ)/mess/machine/cbm.o	 \
-	  $(OBJ)/mess/sndhrdw/sid.o  \
-	  $(OBJ)/mess/sndhrdw/sidenvel.o  \
-	  $(OBJ)/mess/sndhrdw/sidvoice.o  \
+	  $(OBJ)/mess/sndhrdw/sid.o      \
+	  $(OBJ)/mess/sndhrdw/sidenvel.o \
+	  $(OBJ)/mess/sndhrdw/sidvoice.o \
 	  $(OBJ)/mess/sndhrdw/sid6581.o  \
 	  $(OBJ)/mess/machine/cbmdrive.o \
 	  $(OBJ)/mess/machine/vc1541.o	 \
@@ -450,13 +450,13 @@ $(OBJ)/fairch.a: \
 	  $(OBJ)/mess/systems/channelf.o \
 
 $(OBJ)/ti99.a:	   \
-		$(OBJ)/mess/machine/tms9901.o  \
-		$(OBJ)/mess/sndhrdw/spchroms.o \
-		$(OBJ)/mess/machine/ti99_4x.o  \
-		$(OBJ)/mess/systems/ti99_4x.o  \
-		$(OBJ)/mess/systems/ti99_2.o	 \
-		$(OBJ)/mess/systems/ti990_4.o  \
-		$(OBJ)/mess/sndhrdw/spchroms.o
+	  $(OBJ)/mess/machine/tms9901.o  \
+	  $(OBJ)/mess/sndhrdw/spchroms.o \
+	  $(OBJ)/mess/machine/ti99_4x.o  \
+	  $(OBJ)/mess/systems/ti99_4x.o  \
+	  $(OBJ)/mess/systems/ti99_2.o	 \
+	  $(OBJ)/mess/systems/ti990_4.o  \
+	  $(OBJ)/mess/sndhrdw/spchroms.o
 
 $(OBJ)/bally.a:    \
 	  $(OBJ)/sound/astrocde.o	 \
@@ -467,7 +467,7 @@ $(OBJ)/bally.a:    \
 $(OBJ)/pc.a:	   \
 	  $(OBJ)/mess/machine/tandy1t.o  \
 	  $(OBJ)/mess/machine/amstr_pc.o \
-	  $(OBJ)/mess/machine/europc.o \
+	  $(OBJ)/mess/machine/europc.o   \
 	  $(OBJ)/mess/machine/at.o	 \
 	  $(OBJ)/mess/machine/dma8237.o  \
 	  $(OBJ)/mess/machine/pic8259.o  \
@@ -483,13 +483,13 @@ $(OBJ)/pc.a:	   \
 	  $(OBJ)/mess/systems/pc.o
 
 $(OBJ)/p2000.a:    \
-	  $(OBJ)/mess/vidhrdw/saa5050.o   \
-	  $(OBJ)/mess/vidhrdw/p2000m.o	  \
-	  $(OBJ)/mess/systems/p2000t.o	  \
-	  $(OBJ)/mess/machine/p2000t.o	  \
-	  $(OBJ)/mess/machine/mc6850.o	  \
-	  $(OBJ)/mess/vidhrdw/uk101.o	  \
-	  $(OBJ)/mess/machine/uk101.o	  \
+	  $(OBJ)/mess/vidhrdw/saa5050.o  \
+	  $(OBJ)/mess/vidhrdw/p2000m.o	 \
+	  $(OBJ)/mess/systems/p2000t.o	 \
+	  $(OBJ)/mess/machine/p2000t.o	 \
+	  $(OBJ)/mess/machine/mc6850.o	 \
+	  $(OBJ)/mess/vidhrdw/uk101.o	 \
+	  $(OBJ)/mess/machine/uk101.o	 \
 	  $(OBJ)/mess/systems/uk101.o
 
 $(OBJ)/amstrad.a:  \
@@ -523,8 +523,8 @@ $(OBJ)/ep128.a :   \
 	  $(OBJ)/mess/systems/enterp.o
 
 $(OBJ)/ascii.a :   \
-	  $(OBJ)/mess/machine/msx.o	 	 \
-	  $(OBJ)/mess/machine/msx_dsk.o	 	 \
+	  $(OBJ)/mess/machine/msx.o	 \
+	  $(OBJ)/mess/machine/msx_dsk.o	 \
 	  $(OBJ)/mess/formats/fmsx_cas.o \
 	  $(OBJ)/mess/systems/msx.o
 
@@ -590,7 +590,7 @@ $(OBJ)/mtx.a:	   \
 	  $(OBJ)/mess/systems/mtx.o
 
 $(OBJ)/lisa.a:	   \
-	  $(OBJ)/mess/machine/iwm.o \
+	  $(OBJ)/mess/machine/iwm.o      \
 	  $(OBJ)/mess/machine/sonydriv.o \
 	  $(OBJ)/mess/machine/lisa.o	 \
 	  $(OBJ)/mess/systems/lisa.o
@@ -603,7 +603,7 @@ $(OBJ)/acorn.a:    \
 	  $(OBJ)/mess/machine/upd7002.o  \
 	  $(OBJ)/mess/vidhrdw/bbc.o	 \
 	  $(OBJ)/mess/machine/bbc.o	 \
-	  $(OBJ)/mess/systems/bbc.o \
+	  $(OBJ)/mess/systems/bbc.o      \
 	  $(OBJ)/mess/systems/a310.o	 \
 	  $(OBJ)/mess/systems/z88.o	 \
 	  $(OBJ)/mess/vidhrdw/z88.o
@@ -637,13 +637,13 @@ $(OBJ)/magnavox.a: \
 	  $(OBJ)/mess/systems/odyssey2.o
 
 $(OBJ)/teamconc.a: \
-	$(OBJ)/mess/vidhrdw/comquest.o \
+	$(OBJ)/mess/vidhrdw/comquest.o   \
 	$(OBJ)/mess/systems/comquest.o
 
 $(OBJ)/quelle.a: \
-	$(OBJ)/mess/vidhrdw/mk1.o \
-	$(OBJ)/mess/systems/mk1.o \
-	$(OBJ)/mess/vidhrdw/mk2.o \
+	$(OBJ)/mess/vidhrdw/mk1.o        \
+	$(OBJ)/mess/systems/mk1.o        \
+	$(OBJ)/mess/vidhrdw/mk2.o        \
 	$(OBJ)/mess/systems/mk2.o
 
 $(OBJ)/motorola.a: \
