@@ -22,20 +22,19 @@ struct Devices
  * this list matches the ENUM from device.h, so searches can use IO_COUNT	*/
 static const struct Devices devices[] =
 {
-	{IO_END,		"NONE",			"NONE"}, /*  0 */
-	{IO_CARTSLOT,	"cartridge",	"cart"}, /*  1 */
-	{IO_FLOPPY,		"floppydisk",	"flop"}, /*  2 */
-	{IO_HARDDISK,	"harddisk",		"hard"}, /*  3 */
-	{IO_CYLINDER,	"cylinder",		"cyln"}, /*  4 */
-	{IO_CASSETTE,	"cassette",		"cass"}, /*  5 */
-	{IO_PUNCHCARD,	"punchcard",	"pcrd"}, /*  6 */
-	{IO_PUNCHTAPE,	"punchtape",	"ptap"}, /*  7 */
-	{IO_PRINTER,	"printer",		"prin"}, /*  8 */
-	{IO_SERIAL,		"serial",		"serl"}, /*  9 */
-	{IO_PARALLEL,   "parallel",		"parl"}, /* 10 */
-	{IO_SNAPSHOT,	"snapshot",		"dump"}, /* 11 */
-	{IO_QUICKLOAD,	"quickload",	"quik"}, /* 12 */
-	{IO_COUNT,		NULL,			NULL  }, /* 13 Always at end of this array! */
+	{IO_CARTSLOT,	"cartridge",	"cart"}, /*  0 */
+	{IO_FLOPPY,		"floppydisk",	"flop"}, /*  1 */
+	{IO_HARDDISK,	"harddisk",		"hard"}, /*  2 */
+	{IO_CYLINDER,	"cylinder",		"cyln"}, /*  3 */
+	{IO_CASSETTE,	"cassette",		"cass"}, /*  4 */
+	{IO_PUNCHCARD,	"punchcard",	"pcrd"}, /*  5 */
+	{IO_PUNCHTAPE,	"punchtape",	"ptap"}, /*  6 */
+	{IO_PRINTER,	"printer",		"prin"}, /*  7 */
+	{IO_SERIAL,		"serial",		"serl"}, /*  8 */
+	{IO_PARALLEL,   "parallel",		"parl"}, /*  9 */
+	{IO_SNAPSHOT,	"snapshot",		"dump"}, /* 10 */
+	{IO_QUICKLOAD,	"quickload",	"quik"}, /* 11 */
+	{IO_COUNT,		NULL,			NULL  }, /* 12 Always at end of this array! */
 };
 
 
@@ -47,7 +46,7 @@ int register_device (const int type, const char *arg)
 	extern struct GameOptions options;
 
 	/* Check the the device type is valid, otherwise this lookup will be bad*/
-	if (type <= IO_END || type >= IO_COUNT || !type)
+	if (type < 0 || type >= IO_COUNT)
 	{
 		mess_printf("register_device() failed! - device type [%d] is not valid\n",type);
 		return -1;
@@ -215,7 +214,7 @@ int device_count(int type)
 int device_typeid(const char *name)
 {
 	int i;
-	for(i = 1; i < sizeof(devices) / sizeof(devices[0]); i++)
+	for(i = 0; i < sizeof(devices) / sizeof(devices[0]); i++)
 	{
 		if (devices[i].name && (!strcmpi(name, devices[i].name) || !strcmpi(name, devices[i].shortname)))
 			return i;

@@ -98,14 +98,14 @@ struct deviceentry
 /* ------------------------------------------------------------------------ *
  * Image types
  *
- * IO_END (0) is used for ZIP files
+ * IO_ZIP is used for ZIP files
  * IO_ALIAS is used for unknown types
  * IO_COUNT is used for bad files
  * ------------------------------------------------------------------------ */
 
-#define IO_ZIP		(IO_END)
-#define IO_BAD		(IO_COUNT + 0)
-#define IO_UNKNOWN	(IO_COUNT + 1)
+#define IO_ZIP		(IO_COUNT + 0)
+#define IO_BAD		(IO_COUNT + 1)
+#define IO_UNKNOWN	(IO_COUNT + 2)
 
 /* TODO - We need to make icons for Cylinders, Punch Cards, and Punch Tape! */
 static struct deviceentry s_devices[] =
@@ -126,8 +126,8 @@ static struct deviceentry s_devices[] =
 
 static void AssertValidDevice(int d)
 {
-	assert((sizeof(s_devices) / sizeof(s_devices[0])) + 1 == IO_COUNT);
-	assert(((d > IO_END) && (d < IO_COUNT)) || (d == IO_UNKNOWN) || (d == IO_BAD));
+	assert((sizeof(s_devices) / sizeof(s_devices[0])) == IO_COUNT);
+	assert(((d >= 0) && (d < IO_COUNT)) || (d == IO_UNKNOWN) || (d == IO_BAD) || (d == IO_ZIP));
 }
 
 static const struct deviceentry *lookupdevice(int d)
@@ -191,7 +191,8 @@ static int GetMessIcon(int nGame, int nSoftwareType)
     char buffer[32];
 	const char *iconname;
 
-    if ((nSoftwareType > IO_END) && (nSoftwareType < IO_COUNT)) {
+    if ((nSoftwareType >= 0) && (nSoftwareType < IO_COUNT))
+	{
 		iconname = device_brieftypename(nSoftwareType);
         the_index = (nGame * IO_COUNT) + nSoftwareType;
 
@@ -447,13 +448,15 @@ static void InitMessPicker(void)
 
 static void MessCreateCommandLine(char *pCmdLine, options_type *pOpts, const struct GameDriver *gamedrv)
 {
-	int i;
+	int i, imgtype;
 	const char *optname;
 	const char *software;
 
 	for (i = 0; i < options.image_count; i++)
 	{
-		optname = device_brieftypename(options.image_files[i].type);
+		imgtype = options.image_files[i].type;
+		assert(imgtype < IO_COUNT);
+		optname = device_brieftypename(imgtype);
 		software = options.image_files[i].name;
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -%s \"%s\"", optname, software);
 	}
@@ -462,6 +465,7 @@ static void MessCreateCommandLine(char *pCmdLine, options_type *pOpts, const str
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -ramsize %d", pOpts->ram_size);
 
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%snewui", pOpts->use_new_ui ? "" : "no");
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -writeconfig");
 }
 
 /* ------------------------------------------------------------------------ *
@@ -499,7 +503,8 @@ static BOOL CommonFileImageDialog(char *the_last_directory, common_file_dialog_p
     s += strlen(s) + 1;
 
     // The others
-    for (i = 0; imagetypes[i].ext; i++) {
+    for (i = 0; imagetypes[i].ext; i++)
+	{
 		if (imagetypes[i].type == IO_ZIP)
 			typname = "Compressed images";
 		else
@@ -566,12 +571,12 @@ static void MessSetupDevice(common_file_dialog_proc cfd, int iDevice)
 
 static void MessOpenOtherSoftware(int iDevice)
 {
-    MessSetupDevice(GetOpenFileName, iDevice);
+	MessSetupDevice(GetOpenFileName, iDevice);
 }
 
 static void MessCreateDevice(int iDevice)
 {
-    MessSetupDevice(GetSaveFileName, iDevice);
+	MessSetupDevice(GetSaveFileName, iDevice);
 }
 
 /* ------------------------------------------------------------------------ *
@@ -676,11 +681,11 @@ static BOOL MessCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 {
 	switch (id) {
 	case ID_MESS_OPEN_SOFTWARE:
-		MessOpenOtherSoftware(IO_END);
+		MessOpenOtherSoftware(IO_COUNT);
 		break;
 
 	case ID_MESS_CREATE_SOFTWARE:
-		MessCreateDevice(IO_END);
+		MessCreateDevice(IO_COUNT);
 		break;
 
 #ifdef MAME_DEBUG
@@ -690,52 +695,6 @@ static BOOL MessCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 #endif /* MAME_DEBUG */
 	}
 	return FALSE;
-}
-
-/* ------------------------------------------------------------------------ *
- * New File Manager                                                         *
- *                                                                          *
- * This code implements a MESS32 specific file manger.  However, it isn't   *
- * ready for prime time so it isn't enabled by default                      *
- * ------------------------------------------------------------------------ */
-
-//static const char *s_pInitialFileName;
-static BOOL s_bChosen;
-static struct SmartListView *s_pFileMgrListView;
-static long s_lSelectedItem;
-
-static void FileMgrListClass_Run(struct SmartListView *pListView)
-{
-	s_bChosen = TRUE;
-}
-
-/*
-static struct SmartListViewClass s_filemgrListClass =
-{
-	sizeof(struct SingleItemSmartListView),
-	FileMgrListClass_Run,
-	SingleItemSmartListViewClass_ItemChanged,
-	SoftwareListClass_WhichIcon,
-	SoftwareList_GetText,
-	SoftwareListClass_GetColumnInfo,
-	SoftwareListClass_SetColumnInfo,
-	SingleItemSmartListViewClass_IsItemSelected,
-	Compare_TextCaseInsensitive,
-	SoftwareList_CanIdle,
-	SoftwareList_Idle,
-	sizeof(mess_column_names) / sizeof(mess_column_names[0]),
-	mess_column_names
-};
-*/
-static void EndFileManager(HWND hDlg, long lSelectedItem)
-{
-	s_lSelectedItem = lSelectedItem;
-	PostMessage(hDlg, WM_QUIT, 0, 0);
-
-	if (s_pFileMgrListView) {
-		SmartListView_Free(s_pFileMgrListView);
-		s_pFileMgrListView = NULL;
-	}
 }
 
 /* ------------------------------------------------------------------------ *
