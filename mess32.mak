@@ -43,7 +43,7 @@ ASMFLAGS = -f win32
 ASMDEFS =
 
 # uncomment out the DEBUG = line to build a debugging version of mame32.
-# DEBUG = 1
+DEBUG = 1
 
 # uncomment next line to do a smaller compile including only one driver
 # TINY_COMPILE = 1

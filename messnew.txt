@@ -129,6 +129,7 @@ System Driver Changes:
   playable now, converted the CoCo/Dragon driver to use an include file, moved PAK loading 
   code into a new src/mess/formats directory [Nate Woods]
 
+- PDP/1: Fixed a null pointer access if no image is loaded. [Nate Woods]
 
 Other Changes:
 --------------
