@@ -1,19 +1,23 @@
 // Microsoft Developer Studio generated Help ID include file.
 // Used by mame32.rc
 //
+#define HIDC_A2D                        0x809d04fe    // IDD_PROP_INPUT
 #define HIDC_ANTIALIAS                  0x809f0425    // IDD_PROP_VECTOR
+#define HIDC_ARTRES                     0x809e04fc    // IDD_PROP_MISC
 #define HIDC_ARTWORK                    0x809e0479    // IDD_PROP_MISC
+#define HIDC_ARTWORK_CROP               0x809e040d    // IDD_PROP_MISC
 #define HIDC_ASPECTRATIOD               0x809c04f5    // IDD_PROP_ADVANCED
 #define HIDC_ASPECTRATION               0x809c04f4    // IDD_PROP_ADVANCED
 #define HIDC_AUTOFRAMESKIP              0x809c0480    // IDD_PROP_ADVANCED
+#define HIDC_BACKDROPS                  0x809e040c    // IDD_PROP_MISC
 #define HIDC_BEAM                       0x809f0426    // IDD_PROP_VECTOR
+#define HIDC_BEZELS                     0x809e0410    // IDD_PROP_MISC
+#define HIDC_BRIGHTCORRECT              0x809a0415    // IDD_PROP_DISPLAY
 #define HIDC_BRIGHTNESS                 0x809c047a    // IDD_PROP_ADVANCED
 #define HIDC_BROADCAST                  0x80ad04f8    // IDD_START_OPTIONS
 #define HIDC_CHEAT                      0x809e0409    // IDD_PROP_MISC
 #define HIDC_DDRAW                      0x809c0411    // IDD_PROP_ADVANCED
 #define HIDC_DEFAULT_INPUT              0x809d04d0    // IDD_PROP_INPUT
-#define HIDC_DEPTH                      0x809a0424    // IDD_PROP_DISPLAY
-#define HIDC_DIRTY                      0x809a041d    // IDD_PROP_DISPLAY
 #define HIDC_EFFECT                     0x809a04ee    // IDD_PROP_DISPLAY
 #define HIDC_FILTER_CLONES              0x80a9049a    // IDD_FILTERS
 #define HIDC_FILTER_EDIT                0x80a904d5    // IDD_FILTERS
@@ -31,15 +35,18 @@
 #define HIDC_GAMMA                      0x809a0414    // IDD_PROP_DISPLAY
 #define HIDC_HISTORY                    0x806504cb    // IDD_MAIN
 #define HIDC_HWSTRETCH                  0x809c04dc    // IDD_PROP_ADVANCED
+#define HIDC_INTENSITY                  0x809f0428    // IDD_PROP_VECTOR
 #define HIDC_JOYSTICK                   0x809d03ed    // IDD_PROP_INPUT
 #define HIDC_JOY_GUI                    0x80ad04f7    // IDD_START_OPTIONS
 #define HIDC_KEEPASPECT                 0x809a04e0    // IDD_PROP_DISPLAY
 #define HIDC_LANGUAGECHECK              0x80b204d1    // IDD_LANGUAGE
 #define HIDC_LANGUAGEEDIT               0x80b204d4    // IDD_LANGUAGE
+#define HIDC_LEDS                       0x809e040f    // IDD_PROP_MISC
 #define HIDC_LOG                        0x809e040a    // IDD_PROP_MISC
 #define HIDC_MATCHREFRESH               0x809c04e1    // IDD_PROP_ADVANCED
 #define HIDC_MAXIMIZE                   0x809a04df    // IDD_PROP_DISPLAY
 #define HIDC_NOROTATE                   0x809a04e3    // IDD_PROP_DISPLAY
+#define HIDC_OVERLAYS                   0x809e040e    // IDD_PROP_MISC
 #define HIDC_PROP_RESET                 0x809c0486    // IDD_PROP_ADVANCED
 #define HIDC_REFRESH                    0x809c04ec    // IDD_PROP_ADVANCED
 #define HIDC_RESDEPTH                   0x809c04e8    // IDD_PROP_ADVANCED

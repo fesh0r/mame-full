@@ -543,12 +543,14 @@ BEGIN
     CONTROL         "GammaSlider",IDC_GAMMA,"msctls_trackbar32",TBS_BOTH |
                     TBS_NOTICKS | WS_TABSTOP,123,118,82,11,0,HIDC_GAMMA
     LTEXT           "2.00",IDC_GAMMADISP,158,129,15,8,NOT WS_GROUP
-    GROUPBOX        "Bits per pixel",IDC_STATIC,113,143,100,36
-    COMBOBOX        IDC_DEPTH,123,156,83,56,CBS_DROPDOWNLIST | WS_VSCROLL |
-                    WS_TABSTOP,0,HIDC_DEPTH
     PUSHBUTTON      "Reset",IDC_PROP_RESET,7,184,97,14,0,0,HIDC_PROP_RESET
     PUSHBUTTON      "Restore Default Settings",IDC_USE_DEFAULT,114,184,99,14,
                     0,0,HIDC_USE_DEFAULT
+    GROUPBOX        "Brightness correction",IDC_STATIC,113,144,100,35
+    CONTROL         "GammaSlider",IDC_BRIGHTCORRECT,"msctls_trackbar32",
+                    TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,123,157,82,11,0,
+                    HIDC_BRIGHTCORRECT
+    LTEXT           "1.00",IDC_BRIGHTCORRECTDISP,155,168,15,8,NOT WS_GROUP
 END
 
 IDD_PROP_SOUND DIALOGEX 0, 0, 220, 205

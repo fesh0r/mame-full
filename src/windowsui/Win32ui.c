@@ -567,6 +567,7 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -rompath \"%s\"",            GetRomDirs());
 #endif
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -samplepath \"%s\"",         GetSampleDirs());
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -inipath \"%s\"",			GetIniDirs());
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -cfg_directory \"%s\"",      GetCfgDir());
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -nvram_directory \"%s\"",    GetNvramDir());
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -memcard_directory \"%s\"",  GetMemcardDir());
@@ -576,7 +577,7 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -artwork_directory \"%s\"",  GetArtDir());
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -snapshot_directory \"%s\"", GetImgDir());
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -diff_directory \"%s\"",     GetDiffDir());
-//	sprintf(&pCmdLine[strlen(pCmdLine)], " -icons_directory \"%s\"",    GetIconsDir());
+/*	sprintf(&pCmdLine[strlen(pCmdLine)], " -icons_directory \"%s\"",    GetIconsDir()); */
 /*	sprintf(&pCmdLine[strlen(pCmdLine)], " -cheat_directory %s",        GetCheatDir());*/
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -cheat_file \"%s\"",         GetCheatFileName());
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -history_file \"%s\"",       GetHistoryFileName());
@@ -600,7 +601,6 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%skeepaspect",              pOpts->keepaspect      ? "" : "no");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%smatchrefresh",            pOpts->matchrefresh    ? "" : "no");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%ssyncrefresh",             pOpts->syncrefresh     ? "" : "no");
-//	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sdirty",                   pOpts->use_dirty       ? "" : "no");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sthrottle",                pOpts->throttle        ? "" : "no");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -full_screen_brightness %f", pOpts->gfx_brightness);
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -frames_to_run %d",          pOpts->frames_to_display);
@@ -608,28 +608,30 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -screen_aspect %s",          pOpts->aspect);
 
 	/* input */
-//	sprintf(&pCmdLine[strlen(pCmdLine)], " -%shotrod",                  pOpts->hotrod          ? "" : "no");
-//	sprintf(&pCmdLine[strlen(pCmdLine)], " -%shotrodse",                pOpts->hotrodse        ? "" : "no");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%smouse",                   pOpts->use_mouse       ? "" : "no");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sjoystick",                pOpts->use_joystick    ? "" : "no");
+	if (pOpts->use_joystick) {
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -a2d %f",                pOpts->f_a2d);
+	}
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%ssteadykey",               pOpts->steadykey    ? "" : "no");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -ctrlr \"%s\"",               	pOpts->ctrlr);
 
 	/* core video */
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -bpp %d",                    pOpts->color_depth); 
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -brightness %f",             pOpts->f_bright_correct); 
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%snorotate",                pOpts->norotate        ? "" : "no");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sror",                     pOpts->ror             ? "" : "no");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%srol",                     pOpts->rol             ? "" : "no");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sflipx",                   pOpts->flipx           ? "" : "no");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sflipy",                   pOpts->flipy           ? "" : "no");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -debug_resolution %s",       pOpts->debugres); 
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -gamma %f",                  pOpts->gamma_correct);
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -gamma %f",                  pOpts->f_gamma_correct);
 
 	/* vector */
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%santialias",               pOpts->antialias       ? "" : "no");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%stranslucency",            pOpts->translucency    ? "" : "no");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -beam %f",                   pOpts->f_beam);
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -flicker %f",                pOpts->f_flicker);
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -intensity %f",              pOpts->f_intensity);
 
 	/* sound */
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -samplerate %d",             pOpts->samplerate);
@@ -638,8 +640,18 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%ssound",                   pOpts->enable_sound    ? "" : "no");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -volume %d",                 pOpts->attenuation);
 
-	/* misc */
+	/* misc artwork options */
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sartwork",                 pOpts->use_artwork     ? "" : "no");
+
+	if (pOpts->use_artwork == TRUE) {
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -%sbackdrop",            pOpts->backdrops       ? "" : "no");
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -%soverlay",             pOpts->overlays        ? "" : "no");
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -%sbezel",               pOpts->bezels          ? "" : "no");
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -%sartcrop",             pOpts->artwork_crop    ? "" : "no");
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -artres %d",             pOpts->artres);
+	}
+
+	/* misc */
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%scheat",                   pOpts->cheat           ? "" : "no");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sdebug",                   pOpts->mame_debug      ? "" : "no");
 	if (g_pPlayBkName != NULL)
@@ -648,6 +660,8 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -record \"%s\"",         g_pRecordName);
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%slog",                     pOpts->errorlog        ? "" : "no");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%ssleep",                   pOpts->sleep           ? "" : "no");
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sleds",                    pOpts->leds            ? "" : "no");
+
 }
 
 static BOOL WaitWithMessageLoop(HANDLE hEvent)
@@ -1186,7 +1200,7 @@ void ResizePickerControls(HWND hWnd)
 
 #ifdef MESS
 		/* In MESS32, screenshot gets 2/5, and the treecontrol gets 1/5 */
-        nSplitterOffset[0] = rect.right / 5;
+		nSplitterOffset[0] = rect.right / 5;
 		nListWidth = nSplitterOffset[1] = nSplitterOffset[0] * 2;
 		nListWidth2 = nSplitterOffset[2] = nSplitterOffset[0] * 3;
 #else
@@ -1221,7 +1235,7 @@ void ResizePickerControls(HWND hWnd)
 	MoveWindow(GetDlgItem(hWnd, IDC_DIVIDER), rect.left, rect.top - 4, rect.right, 2, TRUE);
 
 #ifdef MESS
-    nScreenShotWidth = (rect.right - nListWidth2) - 4;
+	nScreenShotWidth = (rect.right - nListWidth2) - 4;
 #else
 	nScreenShotWidth = (rect.right - nListWidth) - 4;
 #endif
@@ -1244,13 +1258,13 @@ void ResizePickerControls(HWND hWnd)
 		4, (rect.bottom - rect.top) - 2, doSSControls);
 
 #ifdef MESS
-    /* Image list control */
-    MoveWindow(GetDlgItem(hWnd, IDC_LIST2), 4 + nListWidth, rect.top + 2,
-        (nListWidth2 - nListWidth) - 4, (rect.bottom - rect.top) - 4, TRUE);
+	/* Image list control */
+	MoveWindow(GetDlgItem(hWnd, IDC_LIST2), 4 + nListWidth, rect.top + 2,
+		(nListWidth2 - nListWidth) - 4, (rect.bottom - rect.top) - 4, TRUE);
 
-    /* Splitter window #3 */
-    MoveWindow(GetDlgItem(hWnd, IDC_SPLITTER3), nListWidth2, rect.top + 2,
-        4, (rect.bottom - rect.top) - 2, doSSControls);
+	/* Splitter window #3 */
+	MoveWindow(GetDlgItem(hWnd, IDC_SPLITTER3), nListWidth2, rect.top + 2,
+		4, (rect.bottom - rect.top) - 2, doSSControls);
 
 	nListWidth = nListWidth2;
 #endif
@@ -1457,11 +1471,11 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 #ifdef MESS
 	AddSplitter(GetDlgItem(hPicker, IDC_SPLITTER2), hwndList,
                 hwndSoftware,AdjustSplitter1Rect);
-    AddSplitter(GetDlgItem(hPicker, IDC_SPLITTER3), hwndSoftware,
-				GetDlgItem(hPicker,IDC_SSFRAME),AdjustSplitter2Rect);
+	AddSplitter(GetDlgItem(hPicker, IDC_SPLITTER3), hwndSoftware,
+		GetDlgItem(hPicker,IDC_SSFRAME),AdjustSplitter2Rect);
 #else
-    AddSplitter(GetDlgItem(hPicker, IDC_SPLITTER2), hwndList,
-                GetDlgItem(hPicker,IDC_SSFRAME),AdjustSplitter2Rect);
+	AddSplitter(GetDlgItem(hPicker, IDC_SPLITTER2), hwndList,
+		GetDlgItem(hPicker,IDC_SSFRAME),AdjustSplitter2Rect);
 #endif
 
 	/* Initial adjustment of controls on the Picker window */
@@ -1725,6 +1739,10 @@ static long WINAPI MameWindowProc(HWND hWnd, UINT message, UINT wParam, LONG lPa
 
 	case WM_TIMER:
 		PollGUIJoystick();
+		return TRUE;
+
+	case WM_QUERYENDSESSION:
+		PostMessage(hWnd, WM_CLOSE, 0, 0);
 		return TRUE;
 
 	case WM_CLOSE:
@@ -3235,7 +3253,7 @@ static void PickFont(void)
 		TreeView_SetTextColor(hTreeView,textColor);
 #ifdef MESS
 		SetWindowFont(s_pSoftwareListView->hwndListView, hFont, TRUE);
-	    SmartListView_SetTextColor(s_pSoftwareListView, textColor);
+		SmartListView_SetTextColor(s_pSoftwareListView, textColor);
 #endif
 		SetListFontColor(cf.rgbColors);
 		SetWindowFont(GetDlgItem(hPicker, IDC_HISTORY), hFont, FALSE);
@@ -3523,8 +3541,8 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 		break;
 
 	case ID_HELP_WHATS_NEW:
-		// DisplayTextFile(hMain, HELPTEXT_WHATS_NEW);
-		Help_HtmlHelp(hMain, MAME32HELP "::/html/mame_whatsnew.htm", HH_DISPLAY_TOPIC, 0);
+//		DisplayTextFile(hMain, HELPTEXT_WHATS_NEW);
+		Help_HtmlHelp(hMain, MAME32HELP "::/docs/whatsnew.txt", HH_DISPLAY_TOPIC, 0);
 		break;
 #endif /* HAS_HELP */
 
@@ -4485,8 +4503,8 @@ static void AdjustMetrics(void)
 
 	ListView_SetTextColor(hwndList, textColor);
 #ifdef MESS
-    ListView_SetBkColor(s_pSoftwareListView->hwndListView, GetSysColor(COLOR_WINDOW));
-    SmartListView_SetTextColor(s_pSoftwareListView, textColor);
+	ListView_SetBkColor(s_pSoftwareListView->hwndListView, GetSysColor(COLOR_WINDOW));
+	SmartListView_SetTextColor(s_pSoftwareListView, textColor);
 #endif
 	TreeView_SetBkColor(hTreeView, GetSysColor(COLOR_WINDOW));
 	TreeView_SetTextColor(hTreeView, textColor);

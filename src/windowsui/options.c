@@ -133,6 +133,7 @@ static REG_OPTIONS regSettings[] =
 
 	{"rompath",            RO_PSTRING, &settings.romdirs,          0, 0},
 	{"samplepath",         RO_PSTRING, &settings.sampledirs,       0, 0},
+	{"inipath",			   RO_PSTRING, &settings.inidirs,          0, 0},
 	{"cfg_directory",      RO_PSTRING, &settings.cfgdir,           0, 0},
 	{"nvram_directory",    RO_PSTRING, &settings.nvramdir,         0, 0},
 	{"memcard_directory",  RO_PSTRING, &settings.memcarddir,       0, 0},
@@ -148,6 +149,7 @@ static REG_OPTIONS regSettings[] =
 	{"history_file",       RO_PSTRING, &settings.history_filename, 0, 0},
 	{"mameinfo_file",      RO_PSTRING, &settings.mameinfo_filename,0, 0},
 	{"ctrlr_directory",    RO_PSTRING, &settings.ctrlrdir,         0, 0},
+	{"folder_directory",   RO_PSTRING, &settings.folderdir,        0, 0},
 
 	/* ListMode needs to be before ColumnWidths settings */
 	{"ListMode",           RO_ENCODE,  &settings.view,             ListEncodeString,     ListDecodeString},
@@ -183,7 +185,6 @@ static REG_OPTIONS regGameOpts[] =
 	{ "keepaspect",             RO_BOOL,    &gOpts.keepaspect,        0, 0},
 	{ "matchrefresh",           RO_BOOL,    &gOpts.matchrefresh,      0, 0},
 	{ "syncrefresh",            RO_BOOL,    &gOpts.syncrefresh,       0, 0},
-	{ "dirty",                  RO_BOOL,    &gOpts.use_dirty,         0, 0},
 	{ "throttle",               RO_BOOL,    &gOpts.throttle,          0, 0},
 	{ "full_screen_brightness", RO_DOUBLE,  &gOpts.gfx_brightness,    0, 0},
 	{ "frames_to_run",          RO_INT,     &gOpts.frames_to_display, 0, 0},
@@ -199,20 +200,21 @@ static REG_OPTIONS regGameOpts[] =
 	{ "ctrlr",                  RO_STRING,  &gOpts.ctrlr,             0, 0},
 
 	/* core video */
-	{ "bpp",                    RO_INT,     &gOpts.color_depth,       0, 0}, 
+	{ "brightness",             RO_DOUBLE,  &gOpts.f_bright_correct,  0, 0}, 
 	{ "norotate",               RO_BOOL,    &gOpts.norotate,          0, 0},
 	{ "ror",                    RO_BOOL,    &gOpts.ror,               0, 0},
 	{ "rol",                    RO_BOOL,    &gOpts.rol,               0, 0},
 	{ "flipx",                  RO_BOOL,    &gOpts.flipx,             0, 0},
 	{ "flipy",                  RO_BOOL,    &gOpts.flipy,             0, 0},
 	{ "debug_resolution",       RO_STRING,  &gOpts.debugres,          0, 0}, 
-	{ "gamma",                  RO_DOUBLE,  &gOpts.gamma_correct,     0, 0},
+	{ "gamma",                  RO_DOUBLE,  &gOpts.f_gamma_correct,   0, 0},
 
 	/* vector */
 	{ "antialias",              RO_BOOL,    &gOpts.antialias,         0, 0},
 	{ "translucency",           RO_BOOL,    &gOpts.translucency,      0, 0},
 	{ "beam",                   RO_DOUBLE,  &gOpts.f_beam,            0, 0},
 	{ "flicker",                RO_DOUBLE,  &gOpts.f_flicker,         0, 0},
+	{ "intensity",              RO_DOUBLE,  &gOpts.f_intensity,       0, 0},
 
 	/* sound */
 	{ "samplerate",             RO_INT,     &gOpts.samplerate,        0, 0},
@@ -221,18 +223,26 @@ static REG_OPTIONS regGameOpts[] =
 	{ "sound",                  RO_BOOL,    &gOpts.enable_sound,      0, 0},
 	{ "volume",                 RO_INT,     &gOpts.attenuation,       0, 0},
 
-	/* misc */
+	/* misc artwork options */
 	{ "artwork",                RO_BOOL,    &gOpts.use_artwork,       0, 0},
+	{ "backdrops",              RO_BOOL,    &gOpts.backdrops,         0, 0},
+	{ "overlays",               RO_BOOL,    &gOpts.overlays,          0, 0},
+	{ "bezels",                 RO_BOOL,    &gOpts.bezels,            0, 0},
+	{ "artwork_crop",           RO_BOOL,    &gOpts.artwork_crop,      0, 0},
+	{ "artres",                 RO_INT,     &gOpts.artres,            0, 0},
+
+	/* misc */
 	{ "cheat",                  RO_BOOL,    &gOpts.cheat,             0, 0},
 	{ "debug",                  RO_BOOL,    &gOpts.mame_debug,        0, 0},
 /*	{ "playback",               RO_STRING,  &gOpts.playbackname,      0, 0},*/
 /*	{ "record",                 RO_STRING,  &gOpts.recordname,        0, 0},*/
 	{ "log",                    RO_BOOL,    &gOpts.errorlog,          0, 0},
 	{ "sleep",                  RO_BOOL,    &gOpts.sleep,             0, 0},
+	{ "leds",                   RO_BOOL,    &gOpts.leds,              0, 0}
 
 #ifdef MESS
 	/* mess options */
-	{ "extra_software",			RO_STRING,	&gOpts.extra_software_paths,	0, 0},
+	,{ "extra_software",		RO_STRING,	&gOpts.extra_software_paths,	0, 0},
 	{ "use_new_filemgr",		RO_BOOL,	&gOpts.use_new_filemgr,			0, 0},
 	{ "ram_size",				RO_BOOL,	&gOpts.ram_size,			0, 0}
 #endif
@@ -338,6 +348,7 @@ void OptionsInit(int total_games)
     settings.softwaredirs      = strdup("software");
 	settings.crcdir            = strdup("crc");
 #endif
+	settings.inidirs		   = strdup("ini");
 	settings.cfgdir            = strdup("cfg");
 	settings.nvramdir          = strdup("nvram");
 	settings.memcarddir        = strdup("memcard");
@@ -358,6 +369,7 @@ void OptionsInit(int total_games)
 	settings.mameinfo_filename = strdup("mameinfo.dat");
 #endif
 	settings.ctrlrdir          = strdup("ctrlr");
+	settings.folderdir         = strdup("folders");
 
 	settings.list_font.lfHeight         = -8;
 	settings.list_font.lfWidth          = 0;
@@ -401,38 +413,37 @@ void OptionsInit(int total_games)
 	global.keepaspect        = TRUE;
 	global.matchrefresh      = FALSE;
 	global.syncrefresh       = FALSE;
-	global.use_dirty         = TRUE;
 	global.throttle          = TRUE;
 	global.gfx_brightness    = 1.0;
 	global.frames_to_display = 0;
 	strcpy(global.effect,    "none");
 	strcpy(global.aspect,    "4:3");
 
-	/* sound */
-
 	/* input */
 	global.hotrod            = FALSE;
 	global.hotrodse          = FALSE;
 	global.use_mouse         = FALSE;
 	global.use_joystick      = FALSE;
+	global.f_a2d             = 0.3;
 	global.steadykey         = FALSE;
 	strcpy(global.ctrlr,     "Standard");
 
 	/* Core video */
-	global.color_depth       = 0;
+	global.f_bright_correct  = 1.0;
 	global.norotate          = FALSE;
 	global.ror               = FALSE;
 	global.rol               = FALSE;
 	global.flipx             = FALSE;
 	global.flipy             = FALSE;
 	strcpy(global.debugres, "auto");
-	global.gamma_correct     = 1.0;
+	global.f_gamma_correct   = 1.0;
 
 	/* Core vector */
 	global.antialias         = TRUE;
 	global.translucency      = TRUE;
 	global.f_beam            = 1.0;
 	global.f_flicker         = 0.0;
+	global.f_intensity		 = 1.5;
 
 	/* Sound */
 	global.samplerate        = 44100;
@@ -441,14 +452,23 @@ void OptionsInit(int total_games)
 	global.enable_sound      = TRUE;
 	global.attenuation       = 0;
 
-	/* misc */
+	/* misc artwork options */
 	global.use_artwork       = TRUE;
+	global.backdrops         = TRUE;
+	global.overlays          = TRUE;
+	global.bezels            = TRUE;
+	global.artwork_crop      = FALSE;
+	global.artres            = 0; /* auto */
+
+	/* misc */
 	global.cheat             = FALSE;
 	global.mame_debug        = FALSE;
 	global.playbackname      = NULL;
 	global.recordname        = NULL;
 	global.errorlog          = FALSE;
 	global.sleep             = FALSE;
+	global.leds				 = TRUE;
+
 
 #ifdef MESS
 	global.use_new_filemgr = TRUE;
@@ -475,6 +495,7 @@ void OptionsExit(void)
     free(settings.language);
     free(settings.romdirs);
     free(settings.sampledirs);
+	free(settings.inidirs);
     free(settings.cfgdir);
     free(settings.hidir);
     free(settings.inpdir);
@@ -493,6 +514,7 @@ void OptionsExit(void)
 	free(settings.history_filename);
 	free(settings.mameinfo_filename);
     free(settings.ctrlrdir);
+	free(settings.folderdir);
 }
 
 options_type * GetDefaultOptions(void)
@@ -817,6 +839,23 @@ void SetSampleDirs(const char* paths)
 		settings.sampledirs = strdup(paths);
 }
 
+const char* GetIniDirs(void)
+{
+	return settings.inidirs;
+}
+
+void SetIniDirs(const char* paths)
+{
+	if (settings.inidirs != NULL)
+	{
+		free(settings.inidirs);
+		settings.inidirs = NULL;
+	}
+
+	if (paths != NULL)
+		settings.inidirs = strdup(paths);
+}
+
 const char* GetCtrlrDir(void)
 {
 	return settings.ctrlrdir;
@@ -1053,6 +1092,23 @@ void SetIconsDir(const char* path)
 
 	if (path != NULL)
 		settings.iconsdir = strdup(path);
+}
+
+const char* GetFolderDir(void)
+{
+	return settings.folderdir;
+}
+
+void SetFolderDir(const char* path)
+{
+	if (settings.folderdir != NULL)
+	{
+		free(settings.folderdir);
+		settings.folderdir = NULL;
+	}
+
+	if (path != NULL)
+		settings.folderdir = strdup(path);
 }
 
 const char* GetCheatDir(void)
@@ -1559,7 +1615,7 @@ static void SavePlayCount(int game_index)
 
 		if (result == ERROR_SUCCESS)
 		{
-			PutRegOption(hKey, "PlayCount", game[game_index].play_count);
+			PutRegOption(hSubkey, "PlayCount", game[game_index].play_count);
 			RegCloseKey(hSubkey);
 		}
 		RegCloseKey(hKey);

@@ -82,7 +82,10 @@ static void OptOnHScroll(HWND hWnd, HWND hwndCtl, UINT code, int pos);
 static void BeamSelectionChange(HWND hwnd);
 static void FlickerSelectionChange(HWND hwnd);
 static void GammaSelectionChange(HWND hwnd);
+static void BrightCorrectSelectionChange(HWND hwnd);
 static void BrightnessSelectionChange(HWND hwnd);
+static void IntensitySelectionChange(HWND hwnd);
+static void A2DSelectionChange(HWND hwnd);
 static void ResDepthSelectionChange(HWND hWnd, HWND hWndCtrl);
 static void RefreshSelectionChange(HWND hWnd, HWND hWndCtrl);
 static void VolumeSelectionChange(HWND hwnd);
@@ -91,11 +94,11 @@ static void InitializeDisplayModeUI(HWND hwnd);
 static void InitializeSoundUI(HWND hwnd);
 static void InitializeSkippingUI(HWND hwnd);
 static void InitializeRotateUI(HWND hwnd);
-static void InitializeDepthUI(HWND hwnd);
 static void InitializeResDepthUI(HWND hwnd);
 static void InitializeRefreshUI(HWND hwnd);
 static void InitializeDefaultInputUI(HWND hWnd);
 static void InitializeEffectUI(HWND hWnd);
+static void InitializeArtresUI(HWND hWnd);
 static void PropToOptions(HWND hWnd, options_type *o);
 static void OptionsToProp(HWND hWnd, options_type *o);
 static void SetPropEnabledControls(HWND hWnd);
@@ -118,14 +121,16 @@ static BOOL g_bUseDefaults     = FALSE;
 static BOOL g_bReset           = FALSE;
 static int  g_nSampleRateIndex = 0;
 static int  g_nVolumeIndex     = 0;
-static int  g_nDepthIndex      = 0;
 static int  g_nGammaIndex      = 0;
+static int  g_nBrightCorrectIndex = 0;
 static int  g_nBeamIndex       = 0;
 static int  g_nFlickerIndex    = 0;
+static int  g_nIntensityIndex  = 0;
 static int  g_nRotateIndex     = 0;
 static int  g_nInputIndex      = 0;
 static int  g_nBrightnessIndex = 0;
 static int  g_nEffectIndex     = 0;
+static int  g_nA2DIndex		   = 0;
 
 /* Game history variables */
 #define MAX_HISTORY_LEN     (8 * 1024)
@@ -155,19 +160,24 @@ static DWORD dwDlgId[] =
 /* Help IDs */
 static DWORD dwHelpIDs[] =
 {
+	
+	IDC_A2D,				HIDC_A2D,
 	IDC_ANTIALIAS,          HIDC_ANTIALIAS,
+	IDC_ARTRES,				HIDC_ARTRES,
 	IDC_ARTWORK,            HIDC_ARTWORK,
+	IDC_ARTWORK_CROP,		HIDC_ARTWORK_CROP,
 	IDC_ASPECTRATIOD,       HIDC_ASPECTRATIOD,
 	IDC_ASPECTRATION,       HIDC_ASPECTRATION,
 	IDC_AUTOFRAMESKIP,      HIDC_AUTOFRAMESKIP,
+	IDC_BACKDROPS,			HIDC_BACKDROPS,
 	IDC_BEAM,               HIDC_BEAM,
+	IDC_BEZELS,				HIDC_BEZELS,
 	IDC_BRIGHTNESS,         HIDC_BRIGHTNESS,
+	IDC_BRIGHTCORRECT,      HIDC_BRIGHTCORRECT,
 	IDC_BROADCAST,			HIDC_BROADCAST,
 	IDC_CHEAT,              HIDC_CHEAT,
 	IDC_DDRAW,              HIDC_DDRAW,
 	IDC_DEFAULT_INPUT,      HIDC_DEFAULT_INPUT,
-	IDC_DEPTH,              HIDC_DEPTH,
-	IDC_DIRTY,              HIDC_DIRTY,
 	IDC_EFFECT,             HIDC_EFFECT,
 	IDC_FILTER_CLONES,      HIDC_FILTER_CLONES,
 	IDC_FILTER_EDIT,        HIDC_FILTER_EDIT,
@@ -187,15 +197,18 @@ static DWORD dwHelpIDs[] =
 	IDC_GAMMA,              HIDC_GAMMA,
 	IDC_HISTORY,            HIDC_HISTORY,
 	IDC_HWSTRETCH,          HIDC_HWSTRETCH,
+	IDC_INTENSITY,          HIDC_INTENSITY,
 	IDC_JOYSTICK,           HIDC_JOYSTICK,
 	IDC_KEEPASPECT,         HIDC_KEEPASPECT,
 	IDC_LANGUAGECHECK,      HIDC_LANGUAGECHECK,
 	IDC_LANGUAGEEDIT,       HIDC_LANGUAGEEDIT,
+	IDC_LEDS,				HIDC_LEDS,
 	IDC_LOG,                HIDC_LOG,
 	IDC_SLEEP,				HIDC_SLEEP,
 	IDC_MATCHREFRESH,       HIDC_MATCHREFRESH,
 	IDC_MAXIMIZE,           HIDC_MAXIMIZE,
 	IDC_NOROTATE,           HIDC_NOROTATE,
+	IDC_OVERLAYS,			HIDC_OVERLAYS,
 	IDC_PROP_RESET,         HIDC_PROP_RESET,
 	IDC_REFRESH,            HIDC_REFRESH,
 	IDC_RESDEPTH,           HIDC_RESDEPTH,
@@ -852,13 +865,13 @@ static INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPAR
 
 			switch (wID)
 			{
-			case IDC_DEPTH:
 			case IDC_SIZES:
 			case IDC_FRAMESKIP:
 			case IDC_EFFECT:
 			case IDC_DEFAULT_INPUT:
 			case IDC_ROTATE:
 			case IDC_SAMPLERATE:
+			case IDC_ARTRES:
 				if (wNotifyCode == CBN_SELCHANGE)
 					changed = TRUE;
 				break;
@@ -1309,6 +1322,7 @@ static void OptionsToProp(HWND hWnd, options_type* o)
 		}
 	}
 
+	
 	hCtrl = GetDlgItem(hWnd, IDC_BRIGHTNESSDISP);
 	if (hCtrl)
 	{
@@ -1342,7 +1356,22 @@ static void OptionsToProp(HWND hWnd, options_type* o)
 	hCtrl = GetDlgItem(hWnd, IDC_GAMMADISP);
 	if (hCtrl)
 	{
-		sprintf(buf, "%03.02f", o->gamma_correct);
+		sprintf(buf, "%03.02f", o->f_gamma_correct);
+		Static_SetText(hCtrl, buf);
+	}
+
+	hCtrl = GetDlgItem(hWnd, IDC_BRIGHTCORRECTDISP);
+	if (hCtrl)
+	{
+		sprintf(buf, "%03.02f", o->f_bright_correct);
+		Static_SetText(hCtrl, buf);
+	}
+
+	/* Input */
+	hCtrl = GetDlgItem(hWnd, IDC_A2DDISP);
+	if (hCtrl)
+	{
+		sprintf(buf, "%03.02f", o->f_a2d);
 		Static_SetText(hCtrl, buf);
 	}
 
@@ -1358,6 +1387,13 @@ static void OptionsToProp(HWND hWnd, options_type* o)
 	if (hCtrl)
 	{
 		sprintf(buf, "%03.02f", o->f_flicker);
+		Static_SetText(hCtrl, buf);
+	}
+
+	hCtrl = GetDlgItem(hWnd, IDC_INTENSITYDISP);
+	if (hCtrl)
+	{
+		sprintf(buf, "%03.02f", o->f_intensity);
 		Static_SetText(hCtrl, buf);
 	}
 
@@ -1403,7 +1439,8 @@ static void SetPropEnabledControls(HWND hWnd)
 	int  nIndex;
 	int  sound;
 	int  ddraw = 0;
-    BOOL dirty;
+	int  useart = 0;
+	int joystick_attached = 9;
 
 	nIndex = g_nGame;
 
@@ -1426,9 +1463,24 @@ static void SetPropEnabledControls(HWND hWnd)
 	EnableWindow(GetDlgItem(hWnd, IDC_ASPECTRATION),    ddraw && DirectDraw_HasHWStretch() && Button_GetCheck(GetDlgItem(hWnd, IDC_HWSTRETCH)));
 	EnableWindow(GetDlgItem(hWnd, IDC_ASPECTRATIOD),    ddraw && DirectDraw_HasHWStretch() && Button_GetCheck(GetDlgItem(hWnd, IDC_HWSTRETCH)));
 
-	hCtrl = GetDlgItem(hWnd, IDC_JOYSTICK);
-	if (hCtrl)
-		Button_Enable(hCtrl, DIJoystick.Available());
+	/* Artwork options */
+	hCtrl = GetDlgItem(hWnd, IDC_ARTWORK);
+	useart = Button_GetCheck(hCtrl);
+
+	EnableWindow(GetDlgItem(hWnd, IDC_ARTWORK_CROP),	useart);
+	EnableWindow(GetDlgItem(hWnd, IDC_BACKDROPS),		useart);
+	EnableWindow(GetDlgItem(hWnd, IDC_BEZELS),			useart);
+	EnableWindow(GetDlgItem(hWnd, IDC_OVERLAYS),		useart);
+	EnableWindow(GetDlgItem(hWnd, IDC_ARTRES),			useart);
+	EnableWindow(GetDlgItem(hWnd, IDC_ARTRESTEXT),		useart);
+
+	/* Joystick options */
+	joystick_attached = DIJoystick.Available();
+
+	Button_Enable(GetDlgItem(hWnd,IDC_JOYSTICK),		joystick_attached);
+	EnableWindow(GetDlgItem(hWnd, IDC_A2DTEXT),			joystick_attached);
+	EnableWindow(GetDlgItem(hWnd, IDC_A2DDISP),			joystick_attached);
+	EnableWindow(GetDlgItem(hWnd, IDC_A2D),				joystick_attached);
 
 	/* Trackball / Mouse options */
 	if (nIndex == -1 || GameUsesTrackball(nIndex))
@@ -1457,28 +1509,6 @@ static void SetPropEnabledControls(HWND hWnd)
 		SetYM3812Enabled(hWnd, nIndex);
 	}
     
-    dirty = (nIndex == -1);
-    if (!dirty)
-    {
-        struct InternalMachineDriver drv;
-        expand_machine_driver(drivers[nIndex]->drv,&drv);
-        if ((drv.video_attributes & VIDEO_SUPPORTS_DIRTY) 
-            || (drv.video_attributes & VIDEO_TYPE_VECTOR))
-            dirty = TRUE;
-	}
-
-
-	/* Dirty rectangles */
-	if (dirty)
-	{
-		Button_Enable(GetDlgItem(hWnd, IDC_DIRTY), TRUE);
-	}
-	else
-	{
-		Button_Enable(  GetDlgItem(hWnd, IDC_DIRTY), FALSE);
-		Button_SetCheck(GetDlgItem(hWnd, IDC_DIRTY), FALSE);
-	}
-
 	if (Button_GetCheck(GetDlgItem(hWnd, IDC_AUTOFRAMESKIP)))
 		EnableWindow(GetDlgItem(hWnd, IDC_FRAMESKIP), FALSE);
 	else
@@ -1505,21 +1535,16 @@ static void AssignVolume(HWND hWnd)
 	pGameOpts->attenuation = g_nVolumeIndex - 32;
 }
 
-static void AssignDepth(HWND hWnd)
+static void AssignBrightCorrect(HWND hWnd)
 {
-	switch (g_nDepthIndex)
-	{
-		default:
-		case 0:  pGameOpts->color_depth =  0; break;
-		case 1:  pGameOpts->color_depth = 15; break;
-		case 2:  pGameOpts->color_depth = 16; break;
-		case 3:  pGameOpts->color_depth = 32; break;
-	}
+	/* "1.0", 0.5, 2.0 */
+	pGameOpts->f_bright_correct = g_nBrightCorrectIndex / 20.0 + 0.5;
+	
 }
 
 static void AssignGamma(HWND hWnd)
 {
-	pGameOpts->gamma_correct = g_nGammaIndex / 20.0 + 0.5;
+	pGameOpts->f_gamma_correct = g_nGammaIndex / 20.0 + 0.5;
 }
 
 static void AssignBrightness(HWND hWnd)
@@ -1535,6 +1560,16 @@ static void AssignBeam(HWND hWnd)
 static void AssignFlicker(HWND hWnd)
 {
 	pGameOpts->f_flicker = g_nFlickerIndex;
+}
+
+static void AssignIntensity(HWND hWnd)
+{
+	pGameOpts->f_intensity = g_nIntensityIndex / 20.0 + 0.5;
+}
+
+static void AssignA2D(HWND hWnd)
+{
+	pGameOpts->f_a2d = g_nA2DIndex / 20.0;
 }
 
 static void AssignRotate(HWND hWnd)
@@ -1570,10 +1605,13 @@ static void AssignEffect(HWND hWnd)
 static void ResetDataMap(void)
 {
 	int i;
-	g_nGammaIndex      = (int)((pGameOpts->gamma_correct  - 0.5) * 20.0);
+	g_nGammaIndex			= (int)((pGameOpts->f_gamma_correct  - 0.5) * 20.0);
 	g_nBrightnessIndex = (int)((pGameOpts->gfx_brightness - 0.1) * 20.0);
+	g_nBrightCorrectIndex	= (int)((pGameOpts->f_bright_correct - 0.5) * 20.0);
 	g_nBeamIndex       = (int)((pGameOpts->f_beam         - 1.0) * 20.0);
 	g_nFlickerIndex    = (int)(pGameOpts->f_flicker);
+	g_nIntensityIndex		= (int)((pGameOpts->f_intensity      - 0.5) * 20.0);
+	g_nA2DIndex				= (int)(pGameOpts->f_a2d                    * 20.0);
 
 	// if no controller type was specified or it was standard
 	if ((pGameOpts->ctrlr == NULL) || *pGameOpts->ctrlr == 0 || (stricmp(pGameOpts->ctrlr,"Standard") == 0))
@@ -1611,15 +1649,6 @@ static void ResetDataMap(void)
 		case 44100:  g_nSampleRateIndex = 2; break;
 	}
 
-	switch (pGameOpts->color_depth)
-	{
-		default:
-		case 0:  g_nDepthIndex = 0; break;
-		case 15: g_nDepthIndex = 1; break;
-		case 16: g_nDepthIndex = 2; break;
-		case 32: g_nDepthIndex = 3; break;
-	}
-
 	g_nEffectIndex = 0;
 	for (i = 0; i < NUMEFFECTS; i++)
 	{
@@ -1652,7 +1681,6 @@ static void BuildDataMap(void)
 	DataMapAdd(IDC_KEEPASPECT,    DM_BOOL, CT_BUTTON,   &pGameOpts->keepaspect,    0, 0, 0);
 	DataMapAdd(IDC_MATCHREFRESH,  DM_BOOL, CT_BUTTON,   &pGameOpts->matchrefresh,  0, 0, 0);
 	DataMapAdd(IDC_SYNCREFRESH,   DM_BOOL, CT_BUTTON,   &pGameOpts->syncrefresh,   0, 0, 0);
-	DataMapAdd(IDC_DIRTY,         DM_BOOL, CT_BUTTON,   &pGameOpts->use_dirty,     0, 0, 0);
 	DataMapAdd(IDC_THROTTLE,      DM_BOOL, CT_BUTTON,   &pGameOpts->throttle,      0, 0, 0);
 	DataMapAdd(IDC_BRIGHTNESS,    DM_INT,  CT_SLIDER,   &g_nBrightnessIndex, 0, 0, AssignBrightness);
 	/* pGameOpts->frames_to_display */
@@ -1663,10 +1691,11 @@ static void BuildDataMap(void)
 	DataMapAdd(IDC_DEFAULT_INPUT, DM_INT,  CT_COMBOBOX, &g_nInputIndex, 0, 0, AssignInput);
 	DataMapAdd(IDC_USE_MOUSE,     DM_BOOL, CT_BUTTON,   &pGameOpts->use_mouse,     0, 0, 0);
 	DataMapAdd(IDC_JOYSTICK,      DM_BOOL, CT_BUTTON,   &pGameOpts->use_joystick,  0, 0, 0);
+	DataMapAdd(IDC_A2D,           DM_INT,  CT_SLIDER,   &g_nA2DIndex,              0, 0, AssignA2D);
 	DataMapAdd(IDC_STEADYKEY,     DM_BOOL, CT_BUTTON,   &pGameOpts->steadykey,     0, 0, 0);
 
 	/* core video */
-	DataMapAdd(IDC_DEPTH,         DM_INT,  CT_COMBOBOX, &g_nDepthIndex, 0, 0, AssignDepth);
+	DataMapAdd(IDC_BRIGHTCORRECT, DM_INT,  CT_SLIDER,   &g_nBrightCorrectIndex,    0, 0, AssignBrightCorrect);
 	DataMapAdd(IDC_NOROTATE,      DM_BOOL, CT_BUTTON,   &pGameOpts->norotate,      0, 0, 0);
 	DataMapAdd(IDC_ROTATE,        DM_INT,  CT_COMBOBOX, &g_nRotateIndex, 0, 0, AssignRotate);
 	DataMapAdd(IDC_FLIPX,         DM_BOOL, CT_BUTTON,   &pGameOpts->flipx,         0, 0, 0);
@@ -1679,6 +1708,7 @@ static void BuildDataMap(void)
 	DataMapAdd(IDC_TRANSLUCENCY,  DM_BOOL, CT_BUTTON,   &pGameOpts->translucency,  0, 0, 0);
 	DataMapAdd(IDC_BEAM,          DM_INT,  CT_SLIDER,   &g_nBeamIndex, 0, 0, AssignBeam);
 	DataMapAdd(IDC_FLICKER,       DM_INT,  CT_SLIDER,   &g_nFlickerIndex, 0, 0, AssignFlicker);
+	DataMapAdd(IDC_INTENSITY,     DM_INT,  CT_SLIDER,   &g_nIntensityIndex,        0, 0, AssignIntensity);	
 
 	/* sound */
 	DataMapAdd(IDC_SAMPLERATE,    DM_INT,  CT_COMBOBOX, &g_nSampleRateIndex, 0, 0, AssignSampleRate);
@@ -1687,12 +1717,20 @@ static void BuildDataMap(void)
 	DataMapAdd(IDC_USE_SOUND,     DM_BOOL, CT_BUTTON,   &pGameOpts->enable_sound,  0, 0, 0);
 	DataMapAdd(IDC_VOLUME,        DM_INT,  CT_SLIDER,   &g_nVolumeIndex, 0, 0, AssignVolume);
 
-	/* misc */
+	/* misc artwork options */
 	DataMapAdd(IDC_ARTWORK,       DM_BOOL, CT_BUTTON,   &pGameOpts->use_artwork,   0, 0, 0);
+	DataMapAdd(IDC_BACKDROPS,     DM_BOOL, CT_BUTTON,   &pGameOpts->backdrops,     0, 0, 0);
+	DataMapAdd(IDC_OVERLAYS,      DM_BOOL, CT_BUTTON,   &pGameOpts->overlays,      0, 0, 0);
+	DataMapAdd(IDC_BEZELS,        DM_BOOL, CT_BUTTON,   &pGameOpts->bezels,        0, 0, 0);
+	DataMapAdd(IDC_ARTRES,        DM_INT,  CT_COMBOBOX, &pGameOpts->artres,        0, 0, 0);
+	DataMapAdd(IDC_ARTWORK_CROP,  DM_BOOL, CT_BUTTON,   &pGameOpts->artwork_crop,  0, 0, 0);
+
+	/* misc */
 	DataMapAdd(IDC_CHEAT,         DM_BOOL, CT_BUTTON,   &pGameOpts->cheat,         0, 0, 0);
 /*	DataMapAdd(IDC_DEBUG,         DM_BOOL, CT_BUTTON,   &pGameOpts->mame_debug,    0, 0, 0);*/
 	DataMapAdd(IDC_LOG,           DM_BOOL, CT_BUTTON,   &pGameOpts->errorlog,      0, 0, 0);
 	DataMapAdd(IDC_SLEEP,         DM_BOOL, CT_BUTTON,   &pGameOpts->sleep,         0, 0, 0);
+	DataMapAdd(IDC_LEDS,          DM_BOOL, CT_BUTTON,   &pGameOpts->leds,          0, 0, 0);
 #ifdef MESS
 	DataMapAdd(IDC_NEW_FILEMGR,   DM_BOOL, CT_BUTTON,   &pGameOpts->use_new_filemgr, 0, 0, 0);
 #endif
@@ -1785,7 +1823,6 @@ static void SetSamplesEnabled(HWND hWnd, int nIndex, BOOL bSoundEnabled)
 /* Moved here cause it's called in a few places */
 static void InitializeOptions(HWND hDlg)
 {
-	InitializeDepthUI(hDlg);
 	InitializeResDepthUI(hDlg);
 	InitializeRefreshUI(hDlg);
 	InitializeDisplayModeUI(hDlg);
@@ -1794,6 +1831,7 @@ static void InitializeOptions(HWND hDlg)
 	InitializeRotateUI(hDlg);
 	InitializeDefaultInputUI(hDlg);
 	InitializeEffectUI(hDlg);
+	InitializeArtresUI(hDlg);
 }
 
 /* Moved here because it is called in several places */
@@ -1805,9 +1843,21 @@ static void InitializeMisc(HWND hDlg)
 				(WPARAM)FALSE,
 				(LPARAM)MAKELONG(0, 30)); /* [0.50, 2.00] in .05 increments */
 
+	SendMessage(GetDlgItem(hDlg, IDC_BRIGHTCORRECT), TBM_SETRANGE,
+				(WPARAM)FALSE,
+				(LPARAM)MAKELONG(0, 30)); /* [0.50, 2.00] in .05 increments */
+
 	SendMessage(GetDlgItem(hDlg, IDC_BRIGHTNESS), TBM_SETRANGE,
 				(WPARAM)FALSE,
 				(LPARAM)MAKELONG(0, 38)); /* [0.10, 2.00] in .05 increments */
+
+	SendMessage(GetDlgItem(hDlg, IDC_INTENSITY), TBM_SETRANGE,
+				(WPARAM)FALSE,
+				(LPARAM)MAKELONG(0, 50)); /* [0.50, 3.00] in .05 increments */
+
+	SendMessage(GetDlgItem(hDlg, IDC_A2D), TBM_SETRANGE,
+				(WPARAM)FALSE,
+				(LPARAM)MAKELONG(0, 20)); /* [0.00, 1.00] in .05 increments */
 
 	SendMessage(GetDlgItem(hDlg, IDC_FLICKER), TBM_SETRANGE,
 				(WPARAM)FALSE,
@@ -1834,6 +1884,11 @@ static void OptOnHScroll(HWND hwnd, HWND hwndCtl, UINT code, int pos)
 		GammaSelectionChange(hwnd);
 	}
 	else
+	if (hwndCtl == GetDlgItem(hwnd, IDC_BRIGHTCORRECT))
+	{
+		BrightCorrectSelectionChange(hwnd);
+	}
+	else
 	if (hwndCtl == GetDlgItem(hwnd, IDC_BRIGHTNESS))
 	{
 		BrightnessSelectionChange(hwnd);
@@ -1852,6 +1907,16 @@ static void OptOnHScroll(HWND hwnd, HWND hwndCtl, UINT code, int pos)
 	if (hwndCtl == GetDlgItem(hwnd, IDC_VOLUME))
 	{
 		VolumeSelectionChange(hwnd);
+	}
+	else
+	if (hwndCtl == GetDlgItem(hwnd, IDC_INTENSITY))
+	{
+		IntensitySelectionChange(hwnd);
+	}
+	else
+	if (hwndCtl == GetDlgItem(hwnd, IDC_A2D))
+	{
+		A2DSelectionChange(hwnd);
 	}
 }
 
@@ -1906,6 +1971,23 @@ static void GammaSelectionChange(HWND hwnd)
 	Static_SetText(GetDlgItem(hwnd, IDC_GAMMADISP), buf);
 }
 
+/* Handle changes to the Brightness Correction slider */
+static void BrightCorrectSelectionChange(HWND hwnd)
+{
+	char   buf[100];
+	UINT   nValue;
+	double dValue;
+
+	/* Get the current value of the control */
+	nValue = SendMessage(GetDlgItem(hwnd, IDC_BRIGHTCORRECT), TBM_GETPOS, 0, 0);
+
+	dValue = nValue / 20.0 + 0.5;
+
+	/* Set the static display to the new value */
+	sprintf(buf, "%03.02f", dValue);
+	Static_SetText(GetDlgItem(hwnd, IDC_BRIGHTCORRECTDISP), buf);
+}
+
 /* Handle changes to the Brightness slider */
 static void BrightnessSelectionChange(HWND hwnd)
 {
@@ -1921,6 +2003,40 @@ static void BrightnessSelectionChange(HWND hwnd)
 	/* Set the static display to the new value */
 	sprintf(buf, "%03.02f", dBrightness);
 	Static_SetText(GetDlgItem(hwnd, IDC_BRIGHTNESSDISP), buf);
+}
+
+/* Handle changes to the Intensity slider */
+static void IntensitySelectionChange(HWND hwnd)
+{
+	char   buf[100];
+	UINT   nValue;
+	double dIntensity;
+
+	/* Get the current value of the control */
+	nValue = SendMessage(GetDlgItem(hwnd, IDC_INTENSITY), TBM_GETPOS, 0, 0);
+
+	dIntensity = nValue / 20.0 + 0.5;
+
+	/* Set the static display to the new value */
+	sprintf(buf, "%03.02f", dIntensity);
+	Static_SetText(GetDlgItem(hwnd, IDC_INTENSITYDISP), buf);
+}
+
+/* Handle changes to the A2D slider */
+static void A2DSelectionChange(HWND hwnd)
+{
+	char   buf[100];
+	UINT   nValue;
+	double dA2D;
+
+	/* Get the current value of the control */
+	nValue = SendMessage(GetDlgItem(hwnd, IDC_A2D), TBM_GETPOS, 0, 0);
+
+	dA2D = nValue / 20.0;
+
+	/* Set the static display to the new value */
+	sprintf(buf, "%03.02f", dA2D);
+	Static_SetText(GetDlgItem(hwnd, IDC_A2DDISP), buf);
 }
 
 /* Handle changes to the Color Depth drop down */
@@ -2102,25 +2218,6 @@ static void InitializeRotateUI(HWND hwnd)
 	}
 }
 
-/* Populate the Color depth drop down */
-static void InitializeDepthUI(HWND hwnd)
-{
-	HWND hCtrl = GetDlgItem(hwnd, IDC_DEPTH);
-
-	if (hCtrl)
-	{
-		ComboBox_AddString(hCtrl, "Auto");
-		ComboBox_AddString(hCtrl, "15 bit");
-		ComboBox_AddString(hCtrl, "16 bit");
-		ComboBox_AddString(hCtrl, "32 bit");
-
-		ComboBox_SetItemData(hCtrl, 0,  0);
-		ComboBox_SetItemData(hCtrl, 1, 15);
-		ComboBox_SetItemData(hCtrl, 2, 16);
-		ComboBox_SetItemData(hCtrl, 3, 32);
-	}
-}
-
 /* Populate the resolution depth drop down */
 static void InitializeResDepthUI(HWND hwnd)
 {
@@ -2254,8 +2351,6 @@ static void InitializeDefaultInputUI(HWND hwnd)
 			
 			FindClose (hFind);
 		}
-//		ComboBox_AddString(hCtrl, "HotRod");
-//		ComboBox_AddString(hCtrl, "HotRod SE");
 	}
 }
 
@@ -2271,6 +2366,19 @@ static void InitializeEffectUI(HWND hwnd)
 			ComboBox_InsertString(hCtrl, i, g_ComboBoxEffect[i].m_pText);
 			ComboBox_SetItemData( hCtrl, i, g_ComboBoxEffect[i].m_pData);
 		}
+	}
+}
+
+/* Populate the Art Resolution drop down */
+static void InitializeArtresUI(HWND hwnd)
+{
+	HWND hCtrl = GetDlgItem(hwnd, IDC_ARTRES);
+
+	if (hCtrl)
+	{
+		ComboBox_AddString(hCtrl, "Auto");		/* 0 */
+		ComboBox_AddString(hCtrl, "Standard");  /* 1 */
+		ComboBox_AddString(hCtrl, "High");		/* 2 */
 	}
 }
 
