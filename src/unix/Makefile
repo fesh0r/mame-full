@@ -12,7 +12,7 @@ COMMON_OBJS  =  \
 	$(OBJDIR)/video.o $(OBJDIR)/dirty.o $(OBJDIR)/mode.o \
 	$(OBJDIR)/fileio.o $(OBJDIR)/dirio.o $(OBJDIR)/config.o \
 	$(OBJDIR)/fronthlp.o $(OBJDIR)/ident.o $(OBJDIR)/network.o \
-	$(OBJDIR)/snprintf.o $(OBJDIR)/nec765_dummy.o
+	$(OBJDIR)/snprintf.o $(OBJDIR)/nec765_dummy.o $(OBJDIR)/effect.o
 
 # sysdep objs
 SYSDEP_DIR  = $(OBJDIR)/sysdep
@@ -34,8 +34,7 @@ VID_OBJS.xgl    = $(VID_DIR)/gltool.o $(VID_DIR)/glxtool.o $(VID_DIR)/glcaps.o \
 VID_OBJS.xfx    = $(VID_DIR)/fxgen.o $(VID_DIR)/fxvec.o $(VID_DIR)/xinput.o \
 	$(VID_DIR)/vectorgen.o
 VID_OBJS.svgalib = $(VID_DIR)/svgainput.o
-VID_OBJS.svgafx = $(VID_DIR)/svgainput.o $(VID_DIR)/fxgen.o \
-	$(VID_DIR)/fxvec.o $(VID_DIR)/vectorgen.o
+VID_OBJS.svgafx = $(VID_DIR)/svgainput.o $(VID_DIR)/fxgen.o 
 VID_OBJS.openstep = $(VID_DIR)/openstep_input.o
 VID_OBJS.photon2 = $(VID_DIR)/photon2_input.o \
 	$(VID_DIR)/photon2_window.o \
@@ -128,13 +127,14 @@ $(OBJDIR)/%.o: %.m xmame.h
 	$(CC_COMMENT) @echo 'Compiling src/unix/$< ...'
 	$(CC_COMPILE) $(CC) $(MY_CFLAGS) -o $@ -c $<
 
-$(OBJDIR)/video.o: video-drivers/glmame.h
+$(OBJDIR)/video.o: video-drivers/glmame.h effect.h
+$(OBJDIR)/effect.o: effect.h
 
-$(VID_DIR)/x11_window.o: video-drivers/blit.h video-drivers/blit_core.h
-$(VID_DIR)/svgalib.o: video-drivers/blit.h video-drivers/blit_core.h video-drivers/twkmodes.h video-drivers/twkuser.c
-$(VID_DIR)/xf86_dga1.o: video-drivers/xf86_dga1.c video-drivers/blit.h video-drivers/blit_core.h
-$(VID_DIR)/xf86_dga2.o: video-drivers/xf86_dga2.c video-drivers/blit.h video-drivers/blit_core.h
-$(VID_DIR)/SDL.o: video-drivers/blit.h video-drivers/blit_core.h
+$(VID_DIR)/x11_window.o: video-drivers/blit.h video-drivers/blit_core.h effect.h
+$(VID_DIR)/svgalib.o: video-drivers/blit.h video-drivers/blit_core.h video-drivers/twkmodes.h video-drivers/twkuser.c effect.h
+$(VID_DIR)/xf86_dga1.o: video-drivers/xf86_dga1.c video-drivers/blit.h video-drivers/blit_core.h effect.h
+$(VID_DIR)/xf86_dga2.o: video-drivers/xf86_dga2.c video-drivers/blit.h video-drivers/blit_core.h effect.h
+$(VID_DIR)/SDL.o: video-drivers/blit.h video-drivers/blit_core.h effect.h
 $(VID_DIR)/xinput.o:  video-drivers/xkeyboard.h video-drivers/glmame.h
 $(VID_DIR)/xinput.o:  video-drivers/xkeyboard.h video-drivers/glmame.h
 $(VID_DIR)/xinput.o:  video-drivers/xkeyboard.h

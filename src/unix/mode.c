@@ -109,15 +109,16 @@ void mode_perfect(int *width, int *height)
       else
       {
          pixel_aspect_ratio = (visual_width * widthscale) / 
-            (visual_height * heightscale * game_aspect_ratio);
+	   (yarbsize ? yarbsize :
+	    (visual_height * heightscale * game_aspect_ratio));
       }
       
        
       /* should we maximize the used height, or the used width? */
       if (display_aspect_ratio >= game_aspect_ratio)
       {
-         *height = visual_height * heightscale;
-         *width  = *height * pixel_aspect_ratio * display_aspect_ratio;
+	*height = yarbsize ? yarbsize : (visual_height * heightscale);
+	*width  = *height * pixel_aspect_ratio * display_aspect_ratio;
       }
       else
       {
@@ -150,7 +151,7 @@ int mode_match(int width, int height)
        
    /* does the game fit at all ? */
    if(width  < (visual_width  * widthscale) ||
-      height < (visual_height * heightscale))
+      height < (yarbsize ? yarbsize : (visual_height * heightscale)))
       return 0;
    
    return ( 100 *

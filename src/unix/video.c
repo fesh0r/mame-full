@@ -9,30 +9,36 @@
 #ifdef xgl
 	#include "video-drivers/glmame.h"
 #endif
-
+#include <stdio.h>
 #include "driver.h"
 #include "profiler.h"
 #include "input.h"
 #include "keyboard.h"
 /* for uclock */
 #include "sysdep/misc.h"
+#include "effect.h"
 
 #define FRAMESKIP_DRIVER_COUNT 2
-
 static const int safety = 16;
 static float beam_f;
-static int normal_widthscale = 1, normal_heightscale = 1;
+int normal_widthscale = 1, normal_heightscale = 1;
+int yarbsize = 0;
 static char *vector_res = NULL;
 static int use_auto_double = 1;
 static int frameskipper = 0;
 static int brightness = 100;
-static float brightness_paused_adjust = 1.0;
+float brightness_paused_adjust = 1.0;
 static int bitmap_depth;
 static int rgb_direct;
 static struct osd_bitmap *scrbitmap = NULL;
 static int debugger_has_focus = 0;
 static struct my_rectangle normal_visual;
 static struct my_rectangle debug_visual;
+
+#ifdef svgafx
+UINT16 *color_values;
+#endif
+
 
 float gamma_correction = 1.0;
 
@@ -61,6 +67,9 @@ struct rc_option video_opts[] = {
    { "bpp",		"b",			rc_int,		&options.color_depth,
      "0",		0,			0,		video_verify_bpp,
      "Specify the colordepth the core should render, one of: auto(0), 8, 16" },
+   { "arbheight",	"ah",			rc_int,		&yarbsize,
+     "0",		0,			4096,		NULL,
+     "Scale video to exactly this height (0 = disable)" },
    { "heightscale",	"hs",			rc_int,		&normal_heightscale,
      "1",		1,			8,		NULL,
      "Set Y-Scale aspect ratio" },
@@ -70,6 +79,15 @@ struct rc_option video_opts[] = {
    { "scale",		"s",			rc_use_function, NULL,
      NULL,		0,			0,		video_handle_scale,
      "Set X-Y Scale to the same aspect ratio. For vector games scale (and also width- and heightscale) may have value's like 1.5 and even 0.5. For scaling of regular games this will be rounded to an int" },
+   { "effect",		"ef",			rc_int,		&effect,
+     EFFECT_NONE,	EFFECT_NONE,		EFFECT_LAST,	NULL,
+     "Video effect:\n"
+	     "0 = none (default)\n"
+	     "1 = scale2x (smooth scaling effect)\n"
+	     "2 = scan2 (light scanlines)\n"
+	     "3 = rgbstripe (3x2 rgb vertical stripes)\n"
+	     "4 = rgbscan (2x3 rgb horizontal scanlines)\n"
+	     "5 = scan3 (3x3 deluxe scanlines)\n" },
    { "autodouble",	"adb",			rc_bool,	&use_auto_double,
      "1",		0,			0,		NULL,
      "Enable/disable automatic scale doubling for 1:2 pixel aspect ratio games" },
@@ -426,7 +444,7 @@ static void osd_change_display_settings(struct my_rectangle *new_visual,
    int new_heightscale, int new_use_aspect_ratio)
 {
    int new_visual_width, new_visual_height, palette_dirty = 0;
-   
+  
    /* always update the visual info */
    visual = *new_visual;
    
@@ -550,7 +568,8 @@ int osd_allocate_colors(unsigned int totalcolors, const unsigned char *palette,
    int i = 0;
    int r, g, b;
    int normal_colors;
-
+   UINT8 rr,gg,bb;
+   rr=gg=bb=0;
    /* if we have debug pens, map them 1:1 */
    if (debug_pens)
    {
@@ -721,6 +740,23 @@ int osd_allocate_colors(unsigned int totalcolors, const unsigned char *palette,
          sysdep_palette_set_pen(normal_palette, i, palette[i * 3], 
             palette[i * 3 + 1], palette[i * 3 + 2]);
       }
+#ifdef svgafx
+      color_values = malloc(video_colors_used * sizeof(UINT16));
+#endif
+
+      for (i = 0; i < totalcolors; i++) {
+	 palette_get_color(i, (UINT8*)&rr, (UINT8*)&gg, (UINT8*)&bb);
+
+#ifdef svgafx
+         color_values[i] = (((rr >> 3) << 10) | ((gg >> 3) << 5) | (bb >> 3));
+#endif
+      }
+
+#ifdef svgafx
+	color_values[totalcolors] = 0x0000;
+	color_values[totalcolors+1] = 0x7FFF;
+#endif
+
    }
    
    /* set the current_palette to the normal_palette */
@@ -750,6 +786,10 @@ void osd_get_pen(int pen,unsigned char *red, unsigned char *green, unsigned char
 
 void osd_modify_pen(int pen, unsigned char red,unsigned char green,unsigned char blue) 
 {
+#ifdef svgafx
+   color_values[pen] = (((red >> 3) << 10) | ((green >> 3) << 5) | (blue >> 3));
+#endif
+
    sysdep_palette_set_pen(normal_palette, pen, red, green, blue);
 }
 
@@ -791,7 +831,8 @@ void osd_update_video_and_audio(struct osd_bitmap *normal_bitmap,
    int skip_this_frame;
    struct osd_bitmap *current_bitmap = normal_bitmap;
    
-   /* save the active bitmap for use in osd_clearbitmap, I know this
+   
+/* save the active bitmap for use in osd_clearbitmap, I know this
       sucks blame the core ! */
    scrbitmap = normal_bitmap;
    
@@ -986,10 +1027,10 @@ void osd_save_snapshot(struct osd_bitmap *bitmap)
 
 void osd_pause(int paused)
 {
-   if (paused)
+   if (paused) 
       brightness_paused_adjust = 0.65;
    else
       brightness_paused_adjust = 1.0;
-   
+
    osd_set_brightness(brightness);
 }

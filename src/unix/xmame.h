@@ -80,7 +80,8 @@ EXTERN unsigned char **dirty_blocks;
 
 EXTERN int		sound_enabled;
 EXTERN int	 	widthscale;        /* X scale */
-EXTERN int	 	heightscale;       /* Y SCALE */
+EXTERN int	 	heightscale;       /* Y scale */
+EXTERN int		yarbsize;          /* arbitrary height */
 EXTERN int		video_colors_used; /* max colors used by any palette */
 EXTERN int		video_fps;
 EXTERN char		*home_dir;
@@ -164,7 +165,7 @@ int config_init (int argc, char *argv[]);
 void config_exit(void);
 int frontend_list(char *gamename);
 int frontend_ident(char *gamename);
-void init_rom_path(void);
+void init_search_paths(void);
 #ifndef HAVE_SNPRINTF
 int snprintf(char *s, size_t maxlen, const char *fmt, ...);
 #endif
