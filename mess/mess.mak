@@ -740,7 +740,9 @@ $(OBJ)/tatung.a:     \
 
 $(OBJ)/sony.a:     \
 	$(OBJ)/mess/systems/psx.o	\
-	$(OBJ)/mess/machine/psx.o
+	$(OBJ)/mess/machine/psx.o \
+	$(OBJ)/machine/psx.o	\
+	$(OBJ)/vidhrdw/psx.o
 
 $(OBJ)/concept.a:  \
 	$(OBJ)/mess/systems/concept.o   \
