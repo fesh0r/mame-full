@@ -153,9 +153,11 @@ static int mode_disabled(unsigned int width, unsigned int height, int depth)
 
 /* match a given mode to the needed width, height and aspect ratio to
    perfectly display a game. This function returns 0 for a not usable mode
-   and 100 for the perfect mode +10 for a mode with a well matched depth&bpp
-   and +20 for a mode with the perfect depth&bpp
-   (=120 for the really perfect mode). */
+   and 100 for the perfect mode.
+   +5  for a mode with a somewhat preferred depth&bpp 
+   +10 for a mode with a well matched depth&bpp
+   +20 for a mode with the perfect depth&bpp
+   (=115 for the really perfect mode). */
 int mode_match(unsigned int width, unsigned int height,
   unsigned int line_width, int depth, int bpp)
 {
@@ -236,6 +238,8 @@ int mode_match(unsigned int width, unsigned int height,
       (perfect_width  / (fabs(width -perfect_width )+perfect_width )) *
       (perfect_height / (fabs(height-perfect_height)+perfect_height)) *
       (perfect_aspect / (fabs(aspect-perfect_aspect)+perfect_aspect));
+    if (score < 1)
+      score = 1;
   }
   else
     score = 100;
