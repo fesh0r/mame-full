@@ -22,6 +22,8 @@ typedef struct {
     UINT8 *empty, *ram;
     /* memory status */
     MSX_CART cart[MSX_MAX_CARTS];
+	/* printer */
+	UINT8 prn_data, prn_strobe;
 } MSX;
 
 /* start/stop functions */

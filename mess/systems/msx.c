@@ -11,6 +11,7 @@
 #include "vidhrdw/tms9928a.h"
 #include "machine/msx.h"
 #include "sndhrdw/scc.h"
+#include "printer.h"
 
 extern MSX msx1;
 
@@ -590,6 +591,7 @@ static const struct IODevice io_msx[] = {
     NULL                        /* output_chunk */
 },
     IO_CASSETTE_WAVE (1, "cas\0wav\0", NULL, msx_cassette_init, msx_cassette_exit),
+	IO_PRINTER_PORT (1, "prn\0"),
     { IO_END }
 };
 

@@ -18,6 +18,7 @@
 #include "vidhrdw/tms9928a.h"
 #include "sndhrdw/scc.h"
 #include "formats/fmsx_cas.h"
+#include "printer.h"
 
 MSX msx1;
 static void msx_set_all_mem_banks (void);
@@ -604,17 +605,32 @@ WRITE_HANDLER ( msx_psg_port_b_w )
 }
 
 WRITE_HANDLER ( msx_printer_w )
-{
-     if (offset == 1) {
+	{
+     if (offset == 1) 
+		{
         /* SIMPL emulation */
         DAC_signed_data_w (0, data);
-     }
-}
+		msx1.prn_data = data;
+   		}
+	else
+		{
+		if ( (msx1.prn_strobe & 2) && !(data & 2) )
+			device_output (IO_PRINTER, 0, msx1.prn_data);
+	
+		msx1.prn_strobe = data;
+		}
+	}
 
 READ_HANDLER ( msx_printer_r )
-{
+	{
+	if (offset == 0)
+		{
+		if (device_status (IO_PRINTER, 0, 0) )
+			return 253;
+		}
+
     return 0xff;
-}
+	}
 
 WRITE_HANDLER ( msx_fmpac_w )
 {
