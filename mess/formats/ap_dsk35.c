@@ -917,22 +917,34 @@ static FLOPPY_CONSTRUCT(apple35_diskcopy_construct)
 	UINT32 data_offset, data_size;
 	UINT32 tag_offset, tag_size;
 	INT16 format_byte_param = -1;
+	struct header_diskcopy header;
 
 	if (params)
 	{
 		/* create */
 		sides = option_resolution_lookup_int(params, PARAM_HEADS);
-	}
-	else
-	{
-		/* load */
-		err = apple35_diskcopy_headerdecode(floppy, &data_offset, &data_size,
-			&tag_offset, &tag_size, &format_byte, &sides);
-		if (err)
-			return err;
 
-		format_byte_param = format_byte;
+		data_size = 80*sides*10*512;
+		tag_size = 80*sides*10*12;
+
+		memset(&header, 0, sizeof(header));
+		header.data_size = BIG_ENDIANIZE_INT32(data_size);
+		header.tag_size = BIG_ENDIANIZE_INT32(tag_size);
+		header.disk_format = (sides > 1) ? 1 : 0;
+		header.magic = BIG_ENDIANIZE_INT16(0x100);
+
+		floppy_image_write(floppy, &header, 0, sizeof(header));
+		floppy_image_write_filler(floppy, 0, sizeof(header), data_size + tag_size); 
 	}
+
+	/* load */
+	err = apple35_diskcopy_headerdecode(floppy, &data_offset, &data_size,
+		&tag_offset, &tag_size, &format_byte, &sides);
+	if (err)
+		return err;
+
+	format_byte_param = format_byte;
+
 	return apple35_construct(floppy, data_offset, data_size,
 		tag_offset, tag_size, format_byte_param, sides);
 }
@@ -1037,11 +1049,24 @@ static FLOPPY_CONSTRUCT(apple35_2img_construct)
 	UINT32 data_offset;
 	UINT32 data_size;
 	UINT8 sides = 2;
+	struct header_2img header;
 
 	if (params)
 	{
 		/* create */
 		sides = option_resolution_lookup_int(params, PARAM_HEADS);
+
+		data_offset = sizeof(header);
+		data_size = 80*sides*10*512;
+
+		memset(&header, 0, sizeof(header));
+		header.header_length	= LITTLE_ENDIANIZE_INT16(sizeof(header));
+		header.block_count		= LITTLE_ENDIANIZE_INT32(80*sides*10);
+		header.data_offset		= LITTLE_ENDIANIZE_INT32(data_offset);
+		header.data_length		= LITTLE_ENDIANIZE_INT32(data_size);
+
+		floppy_image_write(floppy, &header, 0, sizeof(header));
+		floppy_image_write_filler(floppy, 0, sizeof(header), data_size);
 	}
 	else
 	{
