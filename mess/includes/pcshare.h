@@ -76,3 +76,5 @@ WRITE_HANDLER(pc_page_w);
 READ_HANDLER(at_page_r);
 WRITE_HANDLER(at_page_w);
 
+int pc_turbo_setup(int cpunum, int port, int mask, double off_speed, double on_speed);
+

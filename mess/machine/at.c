@@ -72,6 +72,7 @@ void init_at_vga(void)
 	};
 
 	init_pc_common(PCCOMMON_KEYBOARD_AT | PCCOMMON_DMA8237_AT);
+	pc_turbo_setup(0, 3, 0x02, 4.77/12, 1);
 
 	pit8253_config(0,&at_pit8253_config);
 
@@ -104,17 +105,6 @@ MACHINE_INIT( at_vga )
 
 void at_cga_frame_interrupt (void)
 {
-	static int turboswitch=-1;
-
-	if (turboswitch !=(input_port_3_r(0)&2))
-	{
-		if (input_port_3_r(0)&2)
-			cpunum_set_clockscale(0, 1);
-		else
-			cpunum_set_clockscale(0, 4.77/12);
-		turboswitch=input_port_3_r(0)&2;
-	}
-
 	pc_cga_timer();
 
 	at_keyboard_polling();
@@ -123,16 +113,6 @@ void at_cga_frame_interrupt (void)
 
 void at_vga_frame_interrupt (void)
 {
-	static int turboswitch=-1;
-
-	if (turboswitch !=(input_port_3_r(0)&2)) {
-		if (input_port_3_r(0)&2)
-			cpunum_set_clockscale(0, 1);
-		else
-			cpunum_set_clockscale(0, 4.77/12);
-		turboswitch=input_port_3_r(0)&2;
-	}
-
 //	vga_timer();
 
 	at_keyboard_polling();

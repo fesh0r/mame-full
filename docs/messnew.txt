@@ -43,6 +43,9 @@ Source Changes:
   no longer supported.  Additionally, the MAME hard disk manager (CHDMAN)
   is now distributed with MESS.  [Nate Woods]
 
+- Fixed a bug in which low resolution systems (specifically the Channel F and
+  Gameboy) would not properly save screenshots.  (bug #521) [Nate Woods]
+
 
 
 0.79
