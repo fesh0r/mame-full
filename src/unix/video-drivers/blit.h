@@ -33,46 +33,7 @@
                  in scenarios where there are reads from the destination,
                  in other scenarios it is ignored.
 
-   These routines assume sysdep_display_params. height, width, min_x, min_y, max_x and max_y
-   are all a multiple off 8 !
-
-ChangeLog:
-
-18 August 2004 (Hans de Goede):
--removed some unused vars, which totally flooded my term with warnings
--moved PUT_IMAGE to bottom, since this needs to be done exactly the same
- for each effect
--removed #ifdef DEST, we always need a DEST nowadays for rotation and effects,
- better to break compiles for targets not setting DEST
--created EFFECT, EFFECT2X and EFFECT3x macros which abstract all the
- doublebuf and indirect stuff.
--created LOOP and LOOP2X macros which abstract the loops with
- and without rotation. The LOOP2X macro uses circulating pointers instead
- of doing the rotation 3 times for each line for a small speedup
--fixed rotation in 6tap2x (broken by my previous patch)
--made the no effect code use CORRECTED_DEST_WIDTH instead of DEST_WIDTH,
- so that atleast the no effect code should work on 24 bpp packed displays,
- no complaints about this?
--BIG CLEANUP:
--removed a bunch of defines since these are no longer used
--removed 16BPP_HACK, not used by any driver, and not usefull
- since it is a HACK to speedup 8 to 16 bpp blits, which we won't be doing
- anymore, since the core doesn't do 8 bit anymore.
--made arbysize code honor use_scanlines
--removed non arb y scaling, the speed advantage is non measurable on my
- ancient computer, so on newer computers it will be even less!
--moved non-effect code from blit_core.h to a macro in blit.h
--renamed blit_core.h to blit_effect.h
--only include blit_effect.h once instead of once for each widthscale,
- since each effect has a distinct widthscale and does this scaling itself
- including it for every widthscale case makes no sense
--removed #ifdef LOW_MEM, blit.h now is so small that this should no longer be
- needed
--created a GETPIXEL macro that abstracts INDIRECT being set or not,
- removed all the not INDIRECT special cases
--added changelog
--actualised documentation in the top
--added a CONVERT_PIXEL define. See above.
+These routines assume dirty_params->min_x and DEST_WIDTH are a multiple off 4!
 */
 
 #ifdef PACK_BITS
@@ -89,18 +50,6 @@ ChangeLog:
 #define REPS_FOR_Y(N,YV,YMAX) ((N)* ( (((YV)+1)*yarbsize)/(YMAX) - ((YV)*yarbsize)/(YMAX)))
 
 #ifdef DOUBLEBUFFER
-
-#if defined INDIRECT || defined CONVERT_PIXEL
-#define COPY_LINE_FOR_Y(YV, YMAX, SRC, END, DST) \
-{ \
-   int reps = REPS_FOR_Y(1, YV, YMAX); \
-   if (reps >0) { \
-     COPY_LINE2(SRC, END, (DEST_PIXEL *)effect_dbbuf); \
-     do { memcpy((DST)+(reps*(CORRECTED_DEST_WIDTH)), effect_dbbuf, ((END)-(SRC))*DEST_PIXEL_SIZE*sysdep_display_params.widthscale); \
-     } while (--reps > sysdep_display_params.scanlines); \
-   } \
-}
-#else /* speedup hack for GETPIXEL(src) == (src) */
 #define COPY_LINE_FOR_Y(YV, YMAX, SRC, END, DST) \
 { \
    int reps = REPS_FOR_Y(1, YV, YMAX); \
@@ -109,8 +58,6 @@ ChangeLog:
      } while (--reps > sysdep_display_params.scanlines); \
    } \
 }
-#endif
-
 #else
 #define COPY_LINE_FOR_Y(YV, YMAX, SRC, END, DST) \
 { \
@@ -132,8 +79,7 @@ if (sysdep_display_params.orientation) { \
            COPY_LINE_FOR_Y(y, sysdep_display_params.height, line_src, line_end, line_dest); \
   } \
 } else { \
-  y = dirty_area->min_y; \
-  for (;line_src < line_end; \
+  for (y = dirty_area->min_y; line_src < line_end; \
         line_dest+=REPS_FOR_Y(CORRECTED_DEST_WIDTH,y,sysdep_display_params.height), \
                 line_src+=src_width, y++) \
            COPY_LINE_FOR_Y(y,sysdep_display_params.height, \
@@ -190,7 +136,7 @@ if (sysdep_display_params.orientation) { \
 case 1:
 #ifdef PACK_BITS
 #define COPY_LINE2(SRC, END, DST) \
-      {\
+{\
    SRC_PIXEL  *src = SRC; \
    SRC_PIXEL  *end = END; \
    DEST_PIXEL *dst = DST; \
@@ -200,7 +146,8 @@ case 1:
       *(dst+1) = (GETPIXEL(*(src+1))>> 8) | (GETPIXEL(*(src+2))<<16); \
       *(dst+2) = (GETPIXEL(*(src+2))>>16) | (GETPIXEL(*(src+3))<< 8); \
    }\
-      }
+}
+LOOP()
 #elif defined BLIT_HWSCALE_YUY2
 /* HWSCALE_YUY2 has seperate code for direct / indirect, see above */
 #ifdef INDIRECT
@@ -270,14 +217,31 @@ case 1:
       }\
    }
 #endif /* HWSCALE_YUY2 direct or indirect */
+LOOP()
 #else  /* normal */
-/* speedup hack for 1x widthscale and GETPIXEL(src) == (src) */
+/* speedup hack for GETPIXEL(src) == (src) */
 #if !defined INDIRECT && !defined CONVERT_PIXEL
-#define COPY_LINE2(SRC, END, DST) \
-   memcpy(DST, SRC, ((END)-(SRC))*DEST_PIXEL_SIZE);
+if (sysdep_display_params.orientation)
+{
+# define COPY_LINE2(SRC, END, DST) \
+    rotate_func(line_dest, bitmap, y, dirty_area);
+  for (y = dirty_area->min_y; y <= dirty_area->max_y; line_dest+=REPS_FOR_Y(CORRECTED_DEST_WIDTH,y,sysdep_display_params.height), y++)
+           COPY_LINE_FOR_Y(y, sysdep_display_params.height, 0, bounds_width, line_dest);
+}
+else
+{
+# undef COPY_LINE2
+# define COPY_LINE2(SRC, END, DST) \
+    memcpy(DST, SRC, bounds_width*DEST_PIXEL_SIZE);
+  for (y = dirty_area->min_y; line_src < line_end;
+    line_dest+=REPS_FOR_Y(CORRECTED_DEST_WIDTH,y,sysdep_display_params.height),
+    line_src+=src_width, y++)
+      COPY_LINE_FOR_Y(y,sysdep_display_params.height,
+                           line_src, line_src+bounds_width, line_dest);
+}
 #else /* really normal */
 #define COPY_LINE2(SRC, END, DST) \
-      {\
+{\
    SRC_PIXEL  *src = SRC; \
    SRC_PIXEL  *end = END; \
    DEST_PIXEL *dst = DST; \
@@ -288,11 +252,11 @@ case 1:
       *(dst+2) = GETPIXEL(*(src+2)); \
       *(dst+3) = GETPIXEL(*(src+3)); \
    }\
-      }
-#endif /* speedup hack for 1x sysdep_display_params.widthscale and GETPIXEL(src) == (src) */
+}
+LOOP()
+#endif /* speedup hack for GETPIXEL(src) == (src) */
 #endif /* packed / yuv / normal */
 
-LOOP()
 
 #undef COPY_LINE2
 break;
@@ -356,10 +320,10 @@ case 2:
    DEST_PIXEL *dst = DST; \
    for(;src<end; src+=4, dst+=8) \
    { \
-      *(dst   ) = *(dst+ 1) = GETPIXEL(*(src  )); \
-      *(dst+ 2) = *(dst+ 3) = GETPIXEL(*(src+1)); \
-      *(dst+ 4) = *(dst+ 5) = GETPIXEL(*(src+2)); \
-      *(dst+ 6) = *(dst+ 7) = GETPIXEL(*(src+3)); \
+      *(dst+ 1) = *(dst   ) = GETPIXEL(*(src  )); \
+      *(dst+ 3) = *(dst+ 2) = GETPIXEL(*(src+1)); \
+      *(dst+ 5) = *(dst+ 4) = GETPIXEL(*(src+2)); \
+      *(dst+ 7) = *(dst+ 6) = GETPIXEL(*(src+3)); \
    } \
 }
 #endif /* pack bits */
@@ -381,10 +345,10 @@ case 3:
    DEST_PIXEL *dst = DST; \
    for(;src<end; src+=4, dst+=12) \
    { \
-      *(dst   ) = *(dst+ 1) = *(dst+ 2) = GETPIXEL(*(src  )); \
-      *(dst+ 3) = *(dst+ 4) = *(dst+ 5) = GETPIXEL(*(src+1)); \
-      *(dst+ 6) = *(dst+ 7) = *(dst+ 8) = GETPIXEL(*(src+2)); \
-      *(dst+ 9) = *(dst+10) = *(dst+11) = GETPIXEL(*(src+3)); \
+      *(dst+ 2) = *(dst+ 1) = *(dst   ) = GETPIXEL(*(src  )); \
+      *(dst+ 5) = *(dst+ 4) = *(dst+ 3) = GETPIXEL(*(src+1)); \
+      *(dst+ 8) = *(dst+ 7) = *(dst+ 6) = GETPIXEL(*(src+2)); \
+      *(dst+11) = *(dst+10) = *(dst+ 9) = GETPIXEL(*(src+3)); \
    } \
 }
 
