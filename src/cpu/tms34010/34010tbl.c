@@ -393,62 +393,6 @@ static void vfill_l(void);
 static void vlcol(void);
 
 
-/* 34020 instructions */
-static void addxyi_a(void);
-static void addxyi_b(void);
-static void blmove(void);
-static void cexec_l(void);
-static void cexec_s(void);
-static void clip(void);
-static void cmovcg_a(void);
-static void cmovcg_b(void);
-static void cmovcm_f(void);
-static void cmovcm_b(void);
-static void cmovgc_a(void);
-static void cmovgc_b(void);
-static void cmovgc_a_s(void);
-static void cmovgc_b_s(void);
-static void cmovmc_f(void);
-static void cmovmc_f_va(void);
-static void cmovmc_f_vb(void);
-static void cmovmc_b(void);
-static void cmp_k_a(void);
-static void cmp_k_b(void);
-static void cvdxyl_a(void);
-static void cvdxyl_b(void);
-static void cvmxyl_a(void);
-static void cvmxyl_b(void);
-static void cvsxyl_a(void);
-static void cvsxyl_b(void);
-static void exgps_a(void);
-static void exgps_b(void);
-static void fline(void);
-static void fpixeq(void);
-static void fpixne(void);
-static void getps_a(void);
-static void getps_b(void);
-static void idle(void);
-static void linit(void);
-static void mwait(void);
-static void pfill_xy(void);
-static void pixblt_l_m_l(void);
-static void retm(void);
-static void rmo_a(void);
-static void rmo_b(void);
-static void rpix_a(void);
-static void rpix_b(void);
-static void setcdp(void);
-static void setcmp(void);
-static void setcsp(void);
-static void swapf_a(void);
-static void swapf_b(void);
-static void tfill_xy(void);
-static void trapl(void);
-static void vblt_b_l(void);
-static void vfill_l(void);
-static void vlcol(void);
-
-
 /* Opcode Table */
 static void (*opcode_table[65536 >> 4])(void) =
 {
