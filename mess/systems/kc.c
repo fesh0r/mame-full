@@ -247,16 +247,6 @@ ROM_START(kc85_4)
     ROM_LOAD("caos__e0.854", 0x13000, 0x2000, 0xd64cd50b)
 ROM_END
 
-
-
-ROM_START(kc85_4b)
-	ROM_REGION(0x016000, REGION_CPU1,0)
-
-    ROM_LOAD("kc855c.rom", 0x10000, 0x2000, 0x0dfd594d1)
-    ROM_LOAD("kc855b.rom", 0x12000, 0x1000, 0x0104ec9ef)
-    ROM_LOAD("kc855a.rom", 0x14000, 0x2000, 0x0dfe34b08)
-ROM_END
-
 ROM_START(kc85_3)
 	ROM_REGION(0x014000, REGION_CPU1,0)
 
@@ -291,9 +281,7 @@ static const struct IODevice io_kc85_4[] =
 };
 
 #define io_kc85_3 io_kc85_4
-#define io_kc85_4b io_kc85_4
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
 COMPX( 19??, kc85_3,   0,     kc85_3,  kc85_3,        0,                "VEB Mikroelektronik", "KC 85/3", GAME_NOT_WORKING)
 COMPX( 19??, kc85_4,   0,     kc85_4,  kc85_4,        0,                "VEB Mikroelektronik", "KC 85/4", GAME_NOT_WORKING)
-COMPX( 19??, kc85_4b,   0,     kc85_4,  kc85_4,        0,                "VEB Mikroelektronik", "KC 85/4 with 256k ram", GAME_NOT_WORKING)
