@@ -225,17 +225,15 @@ static void set_dragon_dskreg(int data)
 								data & 0x01 ? '1' : '0',
 								data ));
 
-	if (data & 0x04) {
+	if (data & 0x04)
 		wd179x_set_drive( data & 0x03 );
-		wd179x_set_side( 0 );
-	}
+
 	wd179x_set_density( (data & 0x08) ? DEN_FM_LO: DEN_MFM_LO );
 	dskreg = data;
 }
 
 /* ---------------------------------------------------- */
 
-READ_HANDLER(coco_floppy_r);
 READ_HANDLER(coco_floppy_r)
 {
 	int result = 0;
@@ -284,7 +282,6 @@ READ_HANDLER(coco_floppy_r)
 	return result;
 }
 
-WRITE_HANDLER(coco_floppy_w);
 WRITE_HANDLER(coco_floppy_w)
 {
 	switch(offset & 0xef) {
@@ -328,7 +325,6 @@ WRITE_HANDLER(coco_floppy_w)
 /*	logerror("SCS write: address %4.4X, data %2.2X\n", 0xff40+offset, data );*/
 }
 
-READ_HANDLER(dragon_floppy_r);
 READ_HANDLER(dragon_floppy_r)
 {
 	int result = 0;
@@ -352,12 +348,14 @@ READ_HANDLER(dragon_floppy_r)
 	return result;
 }
 
-WRITE_HANDLER(dragon_floppy_w);
 WRITE_HANDLER(dragon_floppy_w)
 {
 	switch(offset & 0xef) {
 	case 0:
 		wd179x_command_w(0, data);
+
+		/* disk head is encoded in the command byte */
+		wd179x_set_side((data & 0x02) ? 1 : 0);
 		break;
 	case 1:
 		wd179x_track_w(0, data);
