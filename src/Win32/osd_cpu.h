@@ -169,6 +169,7 @@ typedef union {
 #define HAS_PDP1        1
 #define HAS_MIPS        0
 #define HAS_SC61860     1
+#define HAS_ARM			1
 #else
 #define HAS_Z80         1
 #define HAS_Z80GB       0
