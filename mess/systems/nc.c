@@ -107,9 +107,9 @@
 /* for serial data transfers */
 #include "includes/serial.h"
 /* uncomment for verbose debugging information */
-//#define VERBOSE
+#define VERBOSE
 
-//#define NC200_DEBUG
+#define NC200_DEBUG
 
 #include "includes/centroni.h"
 #include "printer.h"
@@ -186,7 +186,7 @@ int nc_membank_card_ram_mask;
 			bit 7     select card register 1=common, 0=attribute
 			bit 6     parallel interface Strobe signal
 
-			bit 5     used in disc interface
+			bit 5     used in disc interface; (set to 0)
 
 			bit 4     uPD4711 line driver, 1=off, 0=on
 			bit 3     UART clock and reset, 1=off, 0=on
@@ -256,7 +256,7 @@ int nc_membank_card_ram_mask;
 	NC200:
 		bit 7: nc200 power on/off: 1 = on, 0=off
 		bit 2: backlight: 1=off, 0=on
-		bit 1: disk motor??
+		bit 1: disk motor: 1=off, 0=disk motor???
 		bit 0: nec765 terminal count input
 */
 
@@ -356,7 +356,7 @@ static void nc_refresh_memory_bank_config(int bank)
                 {
                    unsigned char *addr;
 
-                   mem_bank = mem_bank & nc_membank_rom_mask;
+				mem_bank = mem_bank & nc_membank_rom_mask;
 
                    addr = (memory_region(REGION_CPU1)+0x010000) + (mem_bank<<14);
 
@@ -1484,7 +1484,7 @@ void nc200_init_machine(void)
     nec765_init(&nc200_nec765_interface, NEC765A);
     /* double sided, 80 track drive */
 	floppy_drive_set_geometry(0, FLOPPY_DRIVE_DS_80);
-	floppy_drive_set_index_pulse_callback(0, nc200_floppy_drive_index_callback);
+	//floppy_drive_set_index_pulse_callback(0, nc200_floppy_drive_index_callback);
 
 	mc146818_init(MC146818_STANDARD);
 
