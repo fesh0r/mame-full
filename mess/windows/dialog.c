@@ -1010,6 +1010,10 @@ int win_dialog_add_adjuster(dialog_box *dialog, const char *item_label, int defa
 			0, (LPARAM) s, NULL, NULL))
 		goto error;
 
+	// add the trigger invoked when the apply button is pressed
+	if (dialog_add_trigger(dialog, dialog->item_count, TRIGGER_APPLY, 0, dialog_get_adjuster_value, 0, 0, storeval, storeval_param))
+		goto error;
+
 	if (dialog_write_item(dialog, WS_CHILD | WS_VISIBLE | WS_TABSTOP | SBS_VERT,
 			x, y, DIM_ADJUSTER_SCR_WIDTH, DIM_ADJUSTER_HEIGHT, NULL, DLGITEM_SCROLLBAR, NULL))
 		goto error;
@@ -1018,10 +1022,6 @@ int win_dialog_add_adjuster(dialog_box *dialog, const char *item_label, int defa
 	if (dialog_add_trigger(dialog, dialog->item_count, TRIGGER_INITDIALOG, 0, adjuster_sb_setup,
 			0, MAKELONG(min_value, max_value), NULL, NULL))
 		return 1;
-
-	// add the trigger invoked when the apply button is pressed
-	if (dialog_add_trigger(dialog, dialog->item_count, TRIGGER_APPLY, 0, dialog_get_adjuster_value, 0, 0, storeval, storeval_param))
-		goto error;
 
 	y += DIM_COMBO_ROW_HEIGHT + DIM_VERTICAL_SPACING * 2;
 
