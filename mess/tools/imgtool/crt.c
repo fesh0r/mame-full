@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include "osdepend.h"
 #include "imgtool.h"
+#include "zlib.h"
 
 #ifdef LSB_FIRST
 typedef struct { 
@@ -405,8 +406,8 @@ IMAGEMODULE(
 	c64crt,
 	"Commodore 64 Cartridge",	/* human readable name */
 	"crt",								/* file extension */
-	NULL,								/* crcfile */
-	NULL,								/* crc system name */
+	"c64.crc",								/* crcfile */
+	"c64",								/* crc system name */
 	NULL,								/* eoln */
 	0,									/* flags */
 	crt_image_init,				/* init function */
@@ -497,13 +498,16 @@ static int crt_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 	
 	if (!(ent->eof=(iter->pos>=iter->image->size))) {
 		sprintf(ent->fname,"%d", iter->number);
-		if (ent->attr)
-			sprintf(ent->attr,"%-4s %s bank:%-2d addr:%.4x",
+		ent->filesize=GET_UWORD( PACKET(iter->image, iter->pos)->length );
+		if (ent->attr) {
+		    unsigned crc=crc32(0, iter->image->data+iter->pos+sizeof(crt_packet), ent->filesize);
+			sprintf(ent->attr,"%-4s %s bank:%-2d addr:%.4x crc:%8x",
 					(char*)PACKET(iter->image, iter->pos),
 					chip_types[GET_UWORD(PACKET(iter->image,iter->pos)->chip_type)],
 					GET_UWORD( PACKET(iter->image,iter->pos)->bank),
-					GET_UWORD( PACKET(iter->image,iter->pos)->address) );
-		ent->filesize=GET_UWORD( PACKET(iter->image, iter->pos)->length );
+					GET_UWORD( PACKET(iter->image,iter->pos)->address),
+				crc);
+		}
 		iter->number++;
 
 		iter->pos+=GET_ULONG( PACKET(iter->image, iter->pos)->packet_length );
