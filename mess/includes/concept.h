@@ -14,7 +14,6 @@ enum
 	input_port_keyboard_concept = 0
 };
 
-DEVICE_LOAD( corvus_floppy );
 MACHINE_INIT(concept);
 VIDEO_START(concept);
 VIDEO_UPDATE(concept);

@@ -31,7 +31,8 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "includes/concept.h"
-#include "devices/basicdsk.h"
+#include "devices/mflopimg.h"
+#include "formats/basicdsk.h"
 
 static ADDRESS_MAP_START(concept_memmap, ADDRESS_SPACE_PROGRAM, 16)
 
@@ -41,7 +42,7 @@ static ADDRESS_MAP_START(concept_memmap, ADDRESS_SPACE_PROGRAM, 16)
 	AM_RANGE(0x020000, 0x021fff) AM_READWRITE(MRA16_ROM, MWA16_ROM)		/* macsbugs ROM (optional) */
 	AM_RANGE(0x030000, 0x03ffff) AM_READWRITE(concept_io_r,concept_io_w)/* I/O space */
 
-	AM_RANGE(0x080000, 0x0fffff) AM_READWRITE(MRA16_BANK2, MWA16_BANK2)	/* DRAM */
+	AM_RANGE(0x080000, 0x0fffff) AM_READWRITE(/*MRA16_BANK2, MWA16_BANK2*/MRA16_RAM, MWA16_RAM)	/* DRAM */
 
 ADDRESS_MAP_END
 
@@ -202,7 +203,7 @@ ROM_START( concept )
 	// version 1 lvl 7 release
 	ROM_LOAD16_BYTE("bootl17h", 0x010000, 0x1000, CRC(6dd9718f))
 	ROM_LOAD16_BYTE("bootl17l", 0x010001, 0x1000, CRC(107a3830))
-#elif 1
+#elif 0
 	// version 0 lvl 8 release
 	ROM_LOAD16_BYTE("bootl08h", 0x010000, 0x1000, CRC(ee479f51))
 	ROM_LOAD16_BYTE("bootl08l", 0x010001, 0x1000, CRC(acaefd07))
@@ -212,19 +213,65 @@ ROM_START( concept )
 	ROM_LOAD16_WORD("cc.prm", 0x010000, 0x2000, CRC(b5a87dab))
 #endif
 
+#if 0
 	// only known MACSbug release for the concept, with reset vector and
 	// entry point (the reset vector seems to be bogus: is the ROM dump bad,
 	// or were the ROMs originally loaded with buggy code?)
 	ROM_LOAD16_BYTE("macsbugh", 0x020000, 0x1000, CRC(aa357112))
 	ROM_LOAD16_BYTE("macsbugl", 0x020001, 0x1000, CRC(b4b59de9))
+#endif
 
 ROM_END
 
 
+static FLOPPY_OPTIONS_START(concept)
+#if 1
+	/* SSSD 8" */
+	FLOPPY_OPTION(concept, "img\0", "Corvus Concept 8\" SSSD disk image", basicdsk_identify_default, basicdsk_construct_default,
+		HEADS([1])
+		TRACKS([77])
+		SECTORS([26])
+		SECTOR_LENGTH([128])
+		FIRST_SECTOR_ID([1]))
+#elif 0
+	/* SSDD 8" (according to ROMs) */
+	FLOPPY_OPTION(concept, "img\0", "Corvus Concept 8\" SSDD disk image", basicdsk_identify_default, basicdsk_construct_default,
+		HEADS([1])
+		TRACKS([77])
+		SECTORS([26])
+		SECTOR_LENGTH([256])
+		FIRST_SECTOR_ID([1]))
+#elif 0
+	/* Apple II DSDD 5"1/4 (according to ROMs) */
+	FLOPPY_OPTION(concept, "img\0", "Corvus Concept Apple II 5\"1/4 DSDD disk image", basicdsk_identify_default, basicdsk_construct_default,
+		HEADS([2])
+		TRACKS([35])
+		SECTORS([16])
+		SECTOR_LENGTH([256])
+		FIRST_SECTOR_ID([1]))
+#elif 0
+	/* actual formats found */
+	FLOPPY_OPTION(concept, "img\0", "Corvus Concept 5\"1/4 DSDD disk image (256-byte sectors)", basicdsk_identify_default, basicdsk_construct_default,
+		HEADS([2])
+		TRACKS([80])
+		SECTORS([16])
+		SECTOR_LENGTH([256])
+		FIRST_SECTOR_ID([1]))
+#else
+	FLOPPY_OPTION(concept, "img\0", "Corvus Concept 5\"1/4 DSDD disk image (512-byte sectors)", basicdsk_identify_default, basicdsk_construct_default,
+		HEADS([2])
+		TRACKS([80])
+		SECTORS([9])
+		SECTOR_LENGTH([512])
+		FIRST_SECTOR_ID([1]))
+#endif
+FLOPPY_OPTIONS_END
+
 SYSTEM_CONFIG_START(concept)
 	/* The concept should eventually support floppies, hard disks, etc. */
-	CONFIG_DEVICE_FLOPPY_BASICDSK	(4,	"dsk\0",	device_load_corvus_floppy)
+	CONFIG_DEVICE_FLOPPY(4,	concept)
 SYSTEM_CONFIG_END
+
 
 /*	  YEAR  NAME	  PARENT	COMPAT	MACHINE   INPUT	   INIT	 CONFIG   COMPANY           FULLNAME */
 COMP( 1982, concept,  0,		0,		concept,  concept, 0,    concept, "Corvus Systems", "Concept" )

@@ -80,33 +80,6 @@ struct
 
 static void concept_fdc_init(int slot);
 
-
-DEVICE_LOAD( corvus_floppy )
-{
-	if (device_load_basicdsk_floppy(image, file) == INIT_PASS)
-	{
-#if 1
-		/* SSSD 8" */
-		basicdsk_set_geometry(image, 77, 1, 26, 128, 1, 0, 0);
-#elif 0
-		/* DSSD 8" (according to ROMs) */
-		basicdsk_set_geometry(image, 77, 1, 26, 256, 1, 0, 0);
-#elif 0
-		/* Apple II DSDD 5"1/4 (according to ROMs) */
-		basicdsk_set_geometry(image, 35, 2, 16, 256, 1, 0, 0);
-#elif 0
-		/* actual formats found */
-		basicdsk_set_geometry(image, 80, 2, 16, 256, 1, 0, 0);
-#else
-		basicdsk_set_geometry(image, 80, 2, 9, 512, 1, 0, 0);
-#endif
-
-		return INIT_PASS;
-	}
-
-	return INIT_FAIL;
-}
-
 MACHINE_INIT(concept)
 {
 	cpu_setbank(1, memory_region(REGION_CPU1) + rom0_base);
@@ -272,7 +245,7 @@ static WRITE_HANDLER(via_out_a)
 */
 static READ_HANDLER(via_in_b)
 {
-	return 0;
+	return 0/*0xc0*/;
 }
 
 static WRITE_HANDLER(via_out_b)
