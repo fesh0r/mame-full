@@ -80,6 +80,13 @@ void apple2_slot6_init(void)
 	{
 		image = image_from_devtag_and_index(APDISK_DEVTAG, i);
 		floppy_install_unload_proc(image, apple2_floppy_unload);
+
+		/* seek middle sector */
+		if (image_exists(image))
+		{
+			floppy_drive_seek(image, -999);
+			floppy_drive_seek(image, +35/2);
+		}
 	}
 }
 
