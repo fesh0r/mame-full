@@ -135,6 +135,7 @@ int filter_readfromstream(FILTER *f, STREAM *s, void *buf, int buflen)
 	if (sz) {
 		memcpy(bbuf, instance->buffer, sz);
 		instance->buffersize -= sz;
+		instance->buffer += sz;
 		if (instance->buffersize == 0) {
 			free(instance->bufferbase);
 			instance->bufferbase = NULL;
