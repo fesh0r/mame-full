@@ -29,14 +29,14 @@ typedef struct {
 } XInputDeviceData;
 
 static XInputDeviceData XIdevices[XINPUT_MAX_NUM_DEVICES] = {
-   { NULL, NULL, XMAME_NULLDEVICE, {}, 1 },
-   { NULL, NULL, XMAME_NULLDEVICE, {}, 1 },
-   { NULL, NULL, XMAME_NULLDEVICE, {}, 1 },
-   { NULL, NULL, XMAME_NULLDEVICE, {}, 1 },
-   { NULL, NULL, XMAME_NULLDEVICE, {}, 1 },
-   { NULL, NULL, XMAME_NULLDEVICE, {}, 1 },
-   { NULL, NULL, XMAME_NULLDEVICE, {}, 1 },
-   { NULL, NULL, XMAME_NULLDEVICE, {}, 1 }
+   { NULL, NULL, XMAME_NULLDEVICE, {0}, 1 },
+   { NULL, NULL, XMAME_NULLDEVICE, {0}, 1 },
+   { NULL, NULL, XMAME_NULLDEVICE, {0}, 1 },
+   { NULL, NULL, XMAME_NULLDEVICE, {0}, 1 },
+   { NULL, NULL, XMAME_NULLDEVICE, {0}, 1 },
+   { NULL, NULL, XMAME_NULLDEVICE, {0}, 1 },
+   { NULL, NULL, XMAME_NULLDEVICE, {0}, 1 },
+   { NULL, NULL, XMAME_NULLDEVICE, {0}, 1 }
 } ;
 
 /* prototypes */
