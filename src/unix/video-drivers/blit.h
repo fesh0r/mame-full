@@ -1,4 +1,4 @@
-/* this routine is the generic blit routine used in many cases, trough a number
+/* this routine is the generic blit routine used in many cases, through a number
    of defines it can be customised for specific cases.
    Currently recognised defines:
    DEST		ptr of type DEST_PIXEL to which should be blitted, if this is
@@ -24,7 +24,7 @@
                 tremendously speeds up the reads done to copy one line to
                 the next.
    
-   This routines use long copy's so everything should always be long aligned.
+   These routines use long copies so everything should always be long aligned.
 */
 
 #ifdef PACK_BITS
