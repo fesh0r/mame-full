@@ -5,13 +5,13 @@
 VERSION = -DVERSION=37
 
 # uncomment out the BETA_VERSION = line to build a beta version of MAME
-BETA_VERSION = -DBETA_VERSION=5
+BETA_VERSION = -DBETA_VERSION=6
 
 # uncomment this to build an release canidate version
 # RELEASE_CANDIDATE = -DRELEASE_CANDIDATE=1
 
 # uncomment out the MAME_DEBUG = line to build a version of MAME for debugging games
-MAME_DEBUG = -DMAME_DEBUG
+#MAME_DEBUG = -DMAME_DEBUG
 
 # if MAME_MMX is defined, MMX will be compiled in
 MAME_MMX = -DMAME_MMX
@@ -342,6 +342,7 @@ DRV_OBJS = \
 	$(OBJ)/vidhrdw/popeye.o $(OBJ)/drivers/popeye.o \
 	$(OBJ)/vidhrdw/punchout.o $(OBJ)/drivers/punchout.o \
 	$(OBJ)/vidhrdw/playch10.o $(OBJ)/machine/playch10.o $(OBJ)/drivers/playch10.o \
+	$(OBJ)/machine/vsnes.o $(OBJ)/vidhrdw/vsnes.o $(OBJ)/drivers/vsnes.o \
 	$(OBJ)/machine/rp5h01.o $(OBJ)/vidhrdw/ppu2c03b.o \
 	$(OBJ)/machine/8080bw.o $(OBJ)/machine/74123.o \
 	$(OBJ)/vidhrdw/8080bw.o $(OBJ)/sndhrdw/8080bw.o $(OBJ)/drivers/8080bw.o \
@@ -413,7 +414,7 @@ DRV_OBJS = \
 	$(OBJ)/vidhrdw/gng.o $(OBJ)/drivers/gng.o \
 	$(OBJ)/vidhrdw/gunsmoke.o $(OBJ)/drivers/gunsmoke.o \
 	$(OBJ)/vidhrdw/srumbler.o $(OBJ)/drivers/srumbler.o \
-	$(OBJ)/machine/lwings.o $(OBJ)/vidhrdw/lwings.o $(OBJ)/drivers/lwings.o \
+	$(OBJ)/vidhrdw/lwings.o $(OBJ)/drivers/lwings.o \
 	$(OBJ)/vidhrdw/sidearms.o $(OBJ)/drivers/sidearms.o \
 	$(OBJ)/vidhrdw/bionicc.o $(OBJ)/drivers/bionicc.o \
 	$(OBJ)/vidhrdw/1943.o $(OBJ)/drivers/1943.o \
@@ -568,6 +569,7 @@ DRV_OBJS = \
 	$(OBJ)/machine/subs.o $(OBJ)/vidhrdw/subs.o $(OBJ)/drivers/subs.o \
 	$(OBJ)/vidhrdw/canyon.o $(OBJ)/drivers/canyon.o \
 	$(OBJ)/vidhrdw/skydiver.o $(OBJ)/drivers/skydiver.o \
+	$(OBJ)/machine/videopin.o $(OBJ)/vidhrdw/videopin.o $(OBJ)/drivers/videopin.o \
 	$(OBJ)/vidhrdw/warlord.o $(OBJ)/drivers/warlord.o \
 	$(OBJ)/vidhrdw/centiped.o $(OBJ)/drivers/centiped.o \
 	$(OBJ)/vidhrdw/milliped.o $(OBJ)/drivers/milliped.o \
@@ -661,6 +663,7 @@ DRV_OBJS = \
 	$(OBJ)/vidhrdw/psychic5.o $(OBJ)/drivers/psychic5.o \
 	$(OBJ)/vidhrdw/ginganin.o $(OBJ)/drivers/ginganin.o \
 	$(OBJ)/vidhrdw/megasys1.o $(OBJ)/drivers/megasys1.o \
+	$(OBJ)/vidhrdw/skyfox.o $(OBJ)/drivers/skyfox.o \
 	$(OBJ)/vidhrdw/cischeat.o $(OBJ)/drivers/cischeat.o \
 	$(OBJ)/vidhrdw/rpunch.o $(OBJ)/drivers/rpunch.o \
 	$(OBJ)/vidhrdw/tail2nos.o $(OBJ)/drivers/tail2nos.o \
@@ -686,6 +689,7 @@ DRV_OBJS = \
 	$(OBJ)/drivers/shanghai.o \
 	$(OBJ)/vidhrdw/shangha3.o $(OBJ)/drivers/shangha3.o \
 	$(OBJ)/vidhrdw/gundealr.o $(OBJ)/drivers/gundealr.o \
+	$(OBJ)/vidhrdw/dooyong.o $(OBJ)/drivers/dooyong.o \
 	$(OBJ)/vidhrdw/macross.o $(OBJ)/drivers/macross.o \
 	$(OBJ)/vidhrdw/bjtwin.o $(OBJ)/drivers/bjtwin.o \
 	$(OBJ)/vidhrdw/spacefb.o $(OBJ)/drivers/spacefb.o \
@@ -701,11 +705,13 @@ DRV_OBJS = \
 	$(OBJ)/vidhrdw/sharkatt.o $(OBJ)/drivers/sharkatt.o \
 	$(OBJ)/vidhrdw/kingobox.o $(OBJ)/drivers/kingobox.o \
 	$(OBJ)/vidhrdw/zerozone.o $(OBJ)/drivers/zerozone.o \
+	$(OBJ)/vidhrdw/galspnbl.o $(OBJ)/drivers/galspnbl.o \
 	$(OBJ)/vidhrdw/speedbal.o $(OBJ)/drivers/speedbal.o \
 	$(OBJ)/vidhrdw/sauro.o $(OBJ)/drivers/sauro.o \
 	$(OBJ)/vidhrdw/ambush.o $(OBJ)/drivers/ambush.o \
 	$(OBJ)/vidhrdw/starcrus.o $(OBJ)/drivers/starcrus.o \
 	$(OBJ)/vidhrdw/goindol.o $(OBJ)/drivers/goindol.o \
+	$(OBJ)/vidhrdw/bssoccer.o $(OBJ)/drivers/bssoccer.o \
 	$(OBJ)/drivers/dlair.o \
 	$(OBJ)/vidhrdw/meteor.o $(OBJ)/drivers/meteor.o \
 	$(OBJ)/vidhrdw/aztarac.o $(OBJ)/sndhrdw/aztarac.o $(OBJ)/drivers/aztarac.o \
@@ -715,8 +721,8 @@ DRV_OBJS = \
 	$(OBJ)/vidhrdw/polyplay.o $(OBJ)/sndhrdw/polyplay.o $(OBJ)/drivers/polyplay.o \
 	$(OBJ)/vidhrdw/mermaid.o $(OBJ)/drivers/mermaid.o \
 	$(OBJ)/vidhrdw/magix.o $(OBJ)/drivers/magix.o \
-	$(OBJ)/drivers/royalmah.o \
-	$(OBJ)/drivers/lastday.o $(OBJ)/vidhrdw/lastday.o \
+	$(OBJ)/drivers/royalmah.o 
+#	$(OBJ)/drivers/lastday.o $(OBJ)/vidhrdw/lastday.o \
 
 
 !ifdef TINY_COMPILE
