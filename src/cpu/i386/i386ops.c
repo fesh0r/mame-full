@@ -1885,7 +1885,7 @@ static void I386OP(escape)(void)			// Opcodes 0xd8 - 0xdf
 {
 	UINT8 modrm = FETCH();
 	CYCLES(3);	// TODO: confirm this
-	LOAD_RM8(modrm);
+	(void) LOAD_RM8(modrm);
 }
 
 

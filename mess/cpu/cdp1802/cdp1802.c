@@ -32,36 +32,6 @@
 #define LOG(x)
 #endif
 
-
-enum {
-	CDP1802_P=1,
-	CDP1802_X,
-	CDP1802_D,
-	CDP1802_B,
-	CDP1802_T,
-
-	CDP1802_R0,
-	CDP1802_R1,
-	CDP1802_R2,
-	CDP1802_R3,
-	CDP1802_R4,
-	CDP1802_R5,
-	CDP1802_R6,
-	CDP1802_R7,
-	CDP1802_R8,
-	CDP1802_R9,
-	CDP1802_Ra,
-	CDP1802_Rb,
-	CDP1802_Rc,
-	CDP1802_Rd,
-	CDP1802_Re,
-	CDP1802_Rf,
-
-	CDP1802_DF,
-	CDP1802_IE,
-	CDP1802_Q,
-	CDP1802_IRQ_STATE
-};
 /* Layout of the registers in the debugger */
 static UINT8 cdp1802_reg_layout[] = {
 	CDP1802_R0,
@@ -336,8 +306,8 @@ void cdp1802_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 0;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
-		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 0;					break;
-		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 8;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 3;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
 
 		case CPUINFO_INT_IRQ_STATE + CDP1802_IRQ_STATE:		info->i = cdp1802.irq_state;		break;

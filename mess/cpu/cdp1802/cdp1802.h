@@ -32,14 +32,40 @@
 extern "C" {
 #endif
 
+enum {
+	CDP1802_P=1,
+	CDP1802_X,
+	CDP1802_D,
+	CDP1802_B,
+	CDP1802_T,
 
+	CDP1802_R0,
+	CDP1802_R1,
+	CDP1802_R2,
+	CDP1802_R3,
+	CDP1802_R4,
+	CDP1802_R5,
+	CDP1802_R6,
+	CDP1802_R7,
+	CDP1802_R8,
+	CDP1802_R9,
+	CDP1802_Ra,
+	CDP1802_Rb,
+	CDP1802_Rc,
+	CDP1802_Rd,
+	CDP1802_Re,
+	CDP1802_Rf,
+
+	CDP1802_DF,
+	CDP1802_IE,
+	CDP1802_Q,
+	CDP1802_IRQ_STATE
+};
 
 typedef struct {
 	/* called after execution of an instruction with cycles,
 	   return cycles taken by dma hardware */
 	void (*dma)(int cycles);
-	void (*out_n)(int data, int n);
-	int (*in_n)(int n);
 	void (*out_q)(int level);
 	int (*in_ef)(void);
 } CDP1802_CONFIG;

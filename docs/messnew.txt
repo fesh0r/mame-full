@@ -23,6 +23,10 @@ System Driver Changes:
 - [PC] Cleanups; code simplified and CGA video slightly faster now.  [Nate
   Woods]
 
+- [STUDIO2] Modified to use io_write_byte/io_read_byte for I/O ports, moved
+  registers enum to cdp1802.h for access needed by a future driver, and changed
+  studio2/vip drivers to work on the modified core.  [Curt Coder]
+
 
 
 User Interface Changes:

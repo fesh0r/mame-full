@@ -103,10 +103,9 @@ VIDEO_UPDATE( studio2 )
 	}
 }
 
-int studio2_in_n(int n)
+READ_HANDLER( cdp1861_video_enable_r )
 {
-	if (n==1)
-		studio2_video.state=1;
+	studio2_video.state=1;
 	return 0; //?
 }
 

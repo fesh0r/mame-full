@@ -220,13 +220,12 @@ INLINE void cdp1802_read_px(void)
 INLINE void cdp1802_out_n(int n)
 {
 	UINT8 i=program_read_byte(X++);
-	if (cdp1802.config&&cdp1802.config->out_n) cdp1802.config->out_n(i, n);
+	io_write_byte(n, i);
 }
 
 INLINE void cdp1802_in_n(int n)
 {
-	UINT8 i=0;
-	if (cdp1802.config&&cdp1802.config->in_n) i=cdp1802.config->in_n(n);
+	UINT8 i=io_read_byte(n);
 	cdp1802.d=i;
 	program_write_byte(program_read_byte(X),i);
 }

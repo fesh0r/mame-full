@@ -9,77 +9,118 @@
 #include "cpu/cdp1802/cdp1802.h"
 #include "devices/cartslot.h"
 #include "includes/studio2.h"
+#include "inputx.h"
 
-static ADDRESS_MAP_START( studio2_readmem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE( 0x0000, 0x07ff) AM_READ( MRA8_ROM )
-	AM_RANGE( 0x0800, 0x09ff) AM_READ( MRA8_RAM )
+extern READ_HANDLER( cdp1861_video_enable_r );
+
+static UINT8 keylatch;
+
+/* vidhrdw */
+
+static unsigned char studio2_palette[] =
+{
+	0, 0, 0,
+	255,255,255
+};
+
+static unsigned short studio2_colortable[1][2] = {
+	{ 0, 1 },
+};
+
+static PALETTE_INIT( studio2 )
+{
+	palette_set_colors(0, studio2_palette, sizeof(studio2_palette) / 3);
+	memcpy(colortable,studio2_colortable,sizeof(studio2_colortable));
+}
+
+/* Read/Write Handlers */
+
+static WRITE_HANDLER( keylatch_w )
+{
+	keylatch = data & 0x0f;
+}
+
+static WRITE_HANDLER( bankswitch_w )
+{
+	cpu_setbank(1, memory_region(REGION_CPU1));
+}
+
+/* Memory Maps */
+
+static ADDRESS_MAP_START( studio2_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_ROM
+	AM_RANGE(0x0800, 0x09ff) AM_RAM
+	AM_RANGE(0x0a00, 0xffff) AM_RAM
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( studio2_writemem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE( 0x0000, 0x07ff) AM_WRITE( MWA8_ROM )
-	AM_RANGE( 0x0800, 0x09ff) AM_WRITE( MWA8_RAM )
+static ADDRESS_MAP_START( studio2_io_map, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x01, 0x01) AM_READ(cdp1861_video_enable_r)
+	AM_RANGE(0x02, 0x02) AM_WRITE(keylatch_w)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( vip_readmem , ADDRESS_SPACE_PROGRAM, 8)
-    AM_RANGE( 0x0000, 0x03ff) AM_READ( MRA8_BANK1 ) // rom mapped in at reset, switched to ram with out 4
-	AM_RANGE( 0x0400, 0x0fff) AM_READ( MRA8_RAM )
-	AM_RANGE( 0x8000, 0x83ff) AM_READ( MRA8_ROM )
+static ADDRESS_MAP_START( vip_map, ADDRESS_SPACE_PROGRAM, 8 )
+    AM_RANGE(0x0000, 0x03ff) AM_RAMBANK(1) // rom mapped in at reset, switched to ram with out 4
+	AM_RANGE(0x0400, 0x0fff) AM_RAM
+	AM_RANGE(0x8000, 0x83ff) AM_ROM
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( vip_writemem , ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE( 0x0000, 0x03ff) AM_WRITE( MWA8_RAM )
-	AM_RANGE( 0x0400, 0x0fff) AM_WRITE( MWA8_RAM )
-	AM_RANGE( 0x8000, 0x83ff) AM_WRITE( MWA8_ROM )
+static ADDRESS_MAP_START( vip_io_map, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x01, 0x01) AM_READ(cdp1861_video_enable_r)
+	AM_RANGE(0x02, 0x02) AM_WRITE(keylatch_w)
+	AM_RANGE(0x04, 0x04) AM_WRITE(bankswitch_w)
 ADDRESS_MAP_END
 
-#define DIPS_HELPER(bit, name, keycode, r) \
-   PORT_BITX(bit, IP_ACTIVE_HIGH, IPT_KEYBOARD, name, keycode, r)
+/* Input Ports */
 
 INPUT_PORTS_START( studio2 )
 	PORT_START
-	DIPS_HELPER( 0x002, "Player 1/Left 1", KEYCODE_1, CODE_NONE)
-	DIPS_HELPER( 0x004, "Player 1/Left 2", KEYCODE_2, CODE_NONE)
-	DIPS_HELPER( 0x008, "Player 1/Left 3", KEYCODE_3, CODE_NONE)
-	DIPS_HELPER( 0x010, "Player 1/Left 4", KEYCODE_4, KEYCODE_Q)
-	DIPS_HELPER( 0x020, "Player 1/Left 5", KEYCODE_5, KEYCODE_W)
-	DIPS_HELPER( 0x040, "Player 1/Left 6", KEYCODE_6, KEYCODE_E)
-	DIPS_HELPER( 0x080, "Player 1/Left 7", KEYCODE_7, KEYCODE_A)
-	DIPS_HELPER( 0x100, "Player 1/Left 8", KEYCODE_8, KEYCODE_S)
-	DIPS_HELPER( 0x200, "Player 1/Left 9", KEYCODE_9, KEYCODE_D)
-	DIPS_HELPER( 0x001, "Player 1/Left 0", KEYCODE_0, KEYCODE_X)
+	PORT_KEY0( 0x001, IP_ACTIVE_HIGH, "Player 1/Left 0", KEYCODE_0, KEYCODE_X )
+	PORT_KEY0( 0x002, IP_ACTIVE_HIGH, "Player 1/Left 1", KEYCODE_1, CODE_NONE )
+	PORT_KEY0( 0x004, IP_ACTIVE_HIGH, "Player 1/Left 2", KEYCODE_2, CODE_NONE )
+	PORT_KEY0( 0x008, IP_ACTIVE_HIGH, "Player 1/Left 3", KEYCODE_3, CODE_NONE )
+	PORT_KEY0( 0x010, IP_ACTIVE_HIGH, "Player 1/Left 4", KEYCODE_4, KEYCODE_Q )
+	PORT_KEY0( 0x020, IP_ACTIVE_HIGH, "Player 1/Left 5", KEYCODE_5, KEYCODE_W )
+	PORT_KEY0( 0x040, IP_ACTIVE_HIGH, "Player 1/Left 6", KEYCODE_6, KEYCODE_E )
+	PORT_KEY0( 0x080, IP_ACTIVE_HIGH, "Player 1/Left 7", KEYCODE_7, KEYCODE_A )
+	PORT_KEY0( 0x100, IP_ACTIVE_HIGH, "Player 1/Left 8", KEYCODE_8, KEYCODE_S )
+	PORT_KEY0( 0x200, IP_ACTIVE_HIGH, "Player 1/Left 9", KEYCODE_9, KEYCODE_D )
+
 	PORT_START
-	DIPS_HELPER( 0x002, "Player 2/Right 1", KEYCODE_1_PAD, CODE_NONE)
-	DIPS_HELPER( 0x004, "Player 2/Right 2", KEYCODE_2_PAD, KEYCODE_UP)
-	DIPS_HELPER( 0x008, "Player 2/Right 3", KEYCODE_3_PAD, CODE_NONE)
-	DIPS_HELPER( 0x010, "Player 2/Right 4", KEYCODE_4_PAD, KEYCODE_LEFT)
-	DIPS_HELPER( 0x020, "Player 2/Right 5", KEYCODE_5_PAD, CODE_NONE)
-	DIPS_HELPER( 0x040, "Player 2/Right 6", KEYCODE_6_PAD, KEYCODE_RIGHT)
-	DIPS_HELPER( 0x080, "Player 2/Right 7", KEYCODE_7_PAD, CODE_NONE)
-	DIPS_HELPER( 0x100, "Player 2/Right 8", KEYCODE_8_PAD, KEYCODE_DOWN)
-	DIPS_HELPER( 0x200, "Player 2/Right 9", KEYCODE_9_PAD, CODE_NONE)
-	DIPS_HELPER( 0x001, "Player 2/Right 0", KEYCODE_0_PAD, CODE_NONE)
+	PORT_KEY0( 0x001, IP_ACTIVE_HIGH, "Player 2/Right 0", KEYCODE_0_PAD, CODE_NONE )
+	PORT_KEY0( 0x002, IP_ACTIVE_HIGH, "Player 2/Right 1", KEYCODE_1_PAD, CODE_NONE )
+	PORT_KEY0( 0x004, IP_ACTIVE_HIGH, "Player 2/Right 2", KEYCODE_2_PAD, KEYCODE_UP )
+	PORT_KEY0( 0x008, IP_ACTIVE_HIGH, "Player 2/Right 3", KEYCODE_3_PAD, CODE_NONE )
+	PORT_KEY0( 0x010, IP_ACTIVE_HIGH, "Player 2/Right 4", KEYCODE_4_PAD, KEYCODE_LEFT )
+	PORT_KEY0( 0x020, IP_ACTIVE_HIGH, "Player 2/Right 5", KEYCODE_5_PAD, CODE_NONE )
+	PORT_KEY0( 0x040, IP_ACTIVE_HIGH, "Player 2/Right 6", KEYCODE_6_PAD, KEYCODE_RIGHT )
+	PORT_KEY0( 0x080, IP_ACTIVE_HIGH, "Player 2/Right 7", KEYCODE_7_PAD, CODE_NONE )
+	PORT_KEY0( 0x100, IP_ACTIVE_HIGH, "Player 2/Right 8", KEYCODE_8_PAD, KEYCODE_DOWN )
+	PORT_KEY0( 0x200, IP_ACTIVE_HIGH, "Player 2/Right 9", KEYCODE_9_PAD, CODE_NONE )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( vip )
 	PORT_START
-	DIPS_HELPER( 0x0002, "1", KEYCODE_1, KEYCODE_1_PAD)
-	DIPS_HELPER( 0x0004, "2", KEYCODE_2, KEYCODE_2_PAD)
-	DIPS_HELPER( 0x0008, "3", KEYCODE_3, KEYCODE_3_PAD)
-	DIPS_HELPER( 0x1000, "C", KEYCODE_C, CODE_NONE)
-	DIPS_HELPER( 0x0010, "4", KEYCODE_4, KEYCODE_4_PAD)
-	DIPS_HELPER( 0x0020, "5", KEYCODE_5, KEYCODE_5_PAD)
-	DIPS_HELPER( 0x0040, "6", KEYCODE_6, KEYCODE_6_PAD)
-	DIPS_HELPER( 0x2000, "D", KEYCODE_D, CODE_NONE)
-	DIPS_HELPER( 0x0080, "7", KEYCODE_7, KEYCODE_7_PAD)
-	DIPS_HELPER( 0x0100, "8", KEYCODE_8, KEYCODE_8_PAD)
-	DIPS_HELPER( 0x0200, "9", KEYCODE_9, KEYCODE_9_PAD)
-	DIPS_HELPER( 0x4000, "E", KEYCODE_E, CODE_NONE)
-	DIPS_HELPER( 0x0400, "A    MR", KEYCODE_A, CODE_NONE)
-	DIPS_HELPER( 0x0001, "0    MW", KEYCODE_0, KEYCODE_0_PAD)
-	DIPS_HELPER( 0x0800, "B    TR", KEYCODE_B, CODE_NONE)
-	DIPS_HELPER( 0x8000, "F    TW", KEYCODE_F, CODE_NONE)
+	PORT_KEY0( 0x0001, IP_ACTIVE_HIGH, "0 MW", KEYCODE_0, KEYCODE_0_PAD )
+	PORT_KEY0( 0x0002, IP_ACTIVE_HIGH, "1", KEYCODE_1, KEYCODE_1_PAD )
+	PORT_KEY0( 0x0004, IP_ACTIVE_HIGH, "2", KEYCODE_2, KEYCODE_2_PAD )
+	PORT_KEY0( 0x0008, IP_ACTIVE_HIGH, "3", KEYCODE_3, KEYCODE_3_PAD )
+	PORT_KEY0( 0x0010, IP_ACTIVE_HIGH, "4", KEYCODE_4, KEYCODE_4_PAD )
+	PORT_KEY0( 0x0020, IP_ACTIVE_HIGH, "5", KEYCODE_5, KEYCODE_5_PAD )
+	PORT_KEY0( 0x0040, IP_ACTIVE_HIGH, "6", KEYCODE_6, KEYCODE_6_PAD )
+	PORT_KEY0( 0x0080, IP_ACTIVE_HIGH, "7", KEYCODE_7, KEYCODE_7_PAD )
+	PORT_KEY0( 0x0100, IP_ACTIVE_HIGH, "8", KEYCODE_8, KEYCODE_8_PAD )
+	PORT_KEY0( 0x0200, IP_ACTIVE_HIGH, "9", KEYCODE_9, KEYCODE_9_PAD )
+	PORT_KEY0( 0x0400, IP_ACTIVE_HIGH, "A MR", KEYCODE_A, CODE_NONE )
+	PORT_KEY0( 0x0800, IP_ACTIVE_HIGH, "B TR", KEYCODE_B, CODE_NONE )
+	PORT_KEY0( 0x1000, IP_ACTIVE_HIGH, "C", KEYCODE_C, CODE_NONE )
+	PORT_KEY0( 0x2000, IP_ACTIVE_HIGH, "D", KEYCODE_D, CODE_NONE )
+	PORT_KEY0( 0x4000, IP_ACTIVE_HIGH, "E", KEYCODE_E, CODE_NONE )
+	PORT_KEY0( 0x8000, IP_ACTIVE_HIGH, "F TW", KEYCODE_F, CODE_NONE )
+
 	PORT_START
 INPUT_PORTS_END
+
+/* Graphics Layouts */
 
 static struct GfxLayout studio2_charlayout =
 {
@@ -103,14 +144,20 @@ static struct GfxLayout studio2_charlayout =
         1*8
 };
 
+/* Graphics Decode Information */
+
 static struct GfxDecodeInfo studio2_gfxdecodeinfo[] = {
 	{ REGION_GFX1, 0x0000, &studio2_charlayout,                     0, 2 },
     { -1 } /* end of array */
 };
 
+/* Interrupt Generators */
+
 static INTERRUPT_GEN( studio2_frame_int )
 {
 }
+
+/* CDP1802 Configuration */
 
 /* studio 2
    output q speaker (300 hz tone on/off)
@@ -131,28 +178,13 @@ static INTERRUPT_GEN( studio2_frame_int )
    f3 keyboard in
  */
 
-static UINT8 studio2_keyboard_select;
-
-static void studio2_out_n(int data, int n)
-{
-	if (n==2) studio2_keyboard_select=data;
-}
-
-static void vip_out_n(int data, int n)
-{
-	if (n==2) studio2_keyboard_select=data;
-	if (n==4) {
-		cpu_setbank(1,memory_region(REGION_CPU1)+0);
-	}
-}
-
 static int studio2_in_ef(void)
 {
 	int a=0;
 	if (studio2_get_vsync()) a|=1;
 
-	if (readinputport(0)&(1<<studio2_keyboard_select)) a|=4;
-	if (readinputport(1)&(1<<studio2_keyboard_select)) a|=8;
+	if (readinputport(0)&(1<<keylatch)) a|=4;
+	if (readinputport(1)&(1<<keylatch)) a|=8;
 
 	return a;
 }
@@ -162,7 +194,7 @@ static int vip_in_ef(void)
 	int a=0;
 	if (studio2_get_vsync()) a|=1;
 
-	if (readinputport(0)&(1<<studio2_keyboard_select)) a|=4;
+	if (readinputport(0)&(1<<keylatch)) a|=4;
 
 	return a;
 }
@@ -174,35 +206,17 @@ static void studio2_out_q(int level)
 
 static CDP1802_CONFIG studio2_config={
 	studio2_video_dma,
-	studio2_out_n,
-	studio2_in_n,
 	studio2_out_q,
 	studio2_in_ef
 };
 
 static CDP1802_CONFIG vip_config={
 	studio2_video_dma,
-	vip_out_n,
-	studio2_in_n,
 	studio2_out_q,
 	vip_in_ef
 };
 
-static unsigned char studio2_palette[] =
-{
-	0, 0, 0,
-	255,255,255
-};
-
-static unsigned short studio2_colortable[1][2] = {
-	{ 0, 1 },
-};
-
-static PALETTE_INIT( studio2 )
-{
-	palette_set_colors(0, studio2_palette, sizeof(studio2_palette) / 3);
-	memcpy(colortable,studio2_colortable,sizeof(studio2_colortable));
-}
+/* Machine Initialization */
 
 static MACHINE_INIT( studio2 )
 {
@@ -213,17 +227,21 @@ static MACHINE_INIT( vip )
 	cpu_setbank(1,memory_region(REGION_CPU1)+0x8000);
 }
 
+/* Sound Interfaces */
+
 static struct beep_interface studio2_sound=
 {
 	1,
 	{100}
 };
 
+/* Machine Drivers */
 
 static MACHINE_DRIVER_START( studio2 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", CDP1802, 1780000/8)
-	MDRV_CPU_PROGRAM_MAP(studio2_readmem,studio2_writemem)
+	MDRV_CPU_PROGRAM_MAP(studio2_map, 0)
+	MDRV_CPU_IO_MAP(studio2_io_map, 0)
 	MDRV_CPU_VBLANK_INT(studio2_frame_int, 1)
 	MDRV_CPU_CONFIG(studio2_config)
 	MDRV_FRAMES_PER_SECOND(60)
@@ -248,15 +266,16 @@ static MACHINE_DRIVER_START( studio2 )
 	MDRV_SOUND_ADD(BEEP, studio2_sound)
 MACHINE_DRIVER_END
 
-
 static MACHINE_DRIVER_START( vip )
 	MDRV_IMPORT_FROM( studio2 )
 	MDRV_CPU_MODIFY( "main" )
-	MDRV_CPU_PROGRAM_MAP( vip_readmem,vip_writemem )
+	MDRV_CPU_PROGRAM_MAP(vip_map, 0)
+	MDRV_CPU_IO_MAP(vip_io_map, 0)
 	MDRV_CPU_CONFIG( vip_config )
 	MDRV_MACHINE_INIT( vip )
 MACHINE_DRIVER_END
 
+/* ROMs */
 
 ROM_START(studio2)
 	ROM_REGION(0x10000,REGION_CPU1, 0)
@@ -271,6 +290,8 @@ ROM_START(vip)
 	ROM_REGION(0x100,REGION_GFX1, 0)
 ROM_END
 
+/* System Configuration */
+
 static DEVICE_LOAD( studio2_cart )
 {
 	return cartslot_load_generic(file, REGION_CPU1, 0x0400, 0x0001, 0xfc00, 0);
@@ -283,11 +304,7 @@ SYSTEM_CONFIG_START(studio2)
 	CONFIG_DEVICE_CARTSLOT_OPT(1, "bin\0", NULL, NULL, device_load_studio2_cart, NULL, NULL, NULL)
 SYSTEM_CONFIG_END
 
-/***************************************************************************
-
-  Game driver(s)
-
-***************************************************************************/
+/* Driver Initialization */
 
 static DRIVER_INIT( studio2 )
 {
@@ -308,6 +325,7 @@ static DRIVER_INIT( vip )
 	memory_region(REGION_CPU1)[0x8022] = 0x3e; //bn3, default monitor
 }
 
+/* Game Drivers */
 
 /*    YEAR	NAME		PARENT	COMPAT	MACHINE		INPUT		INIT		CONFIG      COMPANY   FULLNAME */
 // rca cosmac elf development board (2 7segment leds, some switches/keys)

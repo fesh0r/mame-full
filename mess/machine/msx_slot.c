@@ -1257,7 +1257,7 @@ static READ_HANDLER (msx_diskrom2_page1_r)
 	case 1: return wd179x_track_r (0);
 	case 2: return wd179x_sector_r (0);
 	case 3: return wd179x_data_r (0);
-	case 7: return msx1.dsk_stat;
+	case 4: return msx1.dsk_stat;
 	default: 
 		return msx1.state[1]->mem[offset + 0x3ff8];
 	}
@@ -1275,7 +1275,7 @@ static READ_HANDLER (msx_diskrom2_page2_r)
 			return wd179x_sector_r (0);
 		case 0x7bb: 
 			return wd179x_data_r (0);
-		case 0x7bf: 
+		case 0x7bc: 
 			return msx1.dsk_stat;
 		default: 
 			return msx1.state[2]->mem[offset + 0x3800];
@@ -1296,12 +1296,12 @@ MSX_SLOT_MAP(diskrom2)
 	case 1:
 		msx_cpu_setbank (3, state->mem);
 		msx_cpu_setbank (4, state->mem + 0x2000);
-		install_mem_read_handler (0, 0x7fb8, 0x7fbf, msx_diskrom2_page1_r);
+		install_mem_read_handler (0, 0x7fb8, 0x7fbc, msx_diskrom2_page1_r);
 		break;
 	case 2:
 		msx_cpu_setbank (5, msx1.empty);
 		msx_cpu_setbank (6, msx1.empty);
-		install_mem_read_handler (0, 0xb800, 0xbfff, msx_diskrom2_page2_r);
+		install_mem_read_handler (0, 0xb800, 0xbfbc, msx_diskrom2_page2_r);
 		break;
 	case 3:
 		msx_cpu_setbank (7, msx1.empty);
@@ -1330,12 +1330,11 @@ MSX_SLOT_WRITE(diskrom2)
 	case 0x7fbc:
 		wd179x_set_side (val & 1);
 		state->mem[0x3fbc] = val | 0xfe;
-	case 0x7fbd:
 		wd179x_set_drive (val & 1);
-		if ((state->mem[0x3fbd] ^ val) & 0x40) {
+		if ((state->mem[0x3fbc] ^ val) & 0x40) {
 			set_led_status (0, !(val & 0x40));
 		}
-		state->mem[0x3fbd] = (val | 0x7c) & ~0x04;
+		state->mem[0x3fbc] = (val | 0x7c) & ~0x04;
 		break;
 	}
 }
@@ -2219,5 +2218,6 @@ MSX_SLOT_START
 	MSX_SLOT_RAM (SLOT_RAM_MM, rammm)
 	MSX_SLOT_NULL (SLOT_CARTRIDGE1)
 	MSX_SLOT_NULL (SLOT_CARTRIDGE2)
+	MSX_SLOT (SLOT_DISK_ROM2, diskrom2)
 MSX_SLOT_END
 
