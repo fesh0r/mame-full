@@ -61,7 +61,7 @@ struct rc_option frontend_list_opts[] = {
      "Like -list, with the number of colors used" },
 #ifdef MESS
    { "listdevices",	"ldev",			rc_set_int,	&list,
-     NULL,		LIST_DEVICES,	0,		NULL,
+     NULL,		LIST_DEVICES,		0,		NULL,
      "Like -list, with devices and image file extensions supported" },
 #endif
    { "listromsize",	"lrs",			rc_set_int,	&list,
@@ -364,7 +364,7 @@ int frontend_list(char *gamename)
 
    for (i=0;drivers[i];i++)
    {
-         if ( (showclones || (drivers[i]->clone_of == 0) ||
+         if ( (showclones || drivers[i]->clone_of == 0 ||
                 (drivers[i]->clone_of->flags & NOT_A_DRIVER)) &&
               !strwildcmp(gamename, drivers[i]->name) )
          {
@@ -395,8 +395,8 @@ int frontend_list(char *gamename)
                   /* First, the rom name */
                   fprintf(stdout_file, "%-8s ",drivers[i]->name);
 
-                  /* source file (skip the leading path) */
-                  fprintf(stdout_file, "%-10s  ", strrchr (drivers[i]->source_file, '/') + 1);
+                  /* source file (skip the leading path) */ 
+                  fprintf(stdout_file, "%-10s ", strrchr(drivers[i]->source_file, '/') + 1);
 
                   /* Then, cpus */
                   for(j=0;j<MAX_CPU;j++)
@@ -525,7 +525,7 @@ int frontend_list(char *gamename)
                      drivers[i]->drv->total_colors);
                   break;
 #ifdef MESS
-               case LIST_DEVICES: /* list extensions */
+               case LIST_DEVICES: /* list devices */
                    if(drivers[i]->dev && (drivers[i]->dev->type != IO_END))
                    {
                       const struct IODevice *dev = drivers[i]->dev;
@@ -637,11 +637,11 @@ int frontend_list(char *gamename)
                      
                      for( j = 0; drivers[i]->drv->sound[j].sound_type && j < MAX_SOUND; j++ )
                      {
-#ifdef HAS_SAMPLES                     
+#if (HAS_SAMPLES)
                         if( drivers[i]->drv->sound[j].sound_type == SOUND_SAMPLES )
                            samplenames = ((struct Samplesinterface *)drivers[i]->drv->sound[j].sound_interface)->samplenames;
 #endif
-#ifdef HAS_VLM5030                     
+#if (HAS_VLM5030)
                         if( drivers[i]->drv->sound[j].sound_type == SOUND_VLM5030 )
                            samplenames = ((struct VLM5030interface *)drivers[i]->drv->sound[j].sound_interface)->samplenames;
 #endif
