@@ -1,4 +1,4 @@
-/* register names for apexc_get_reg apexc_set_reg */
+/* register names for apexc_get_reg & apexc_set_reg */
 enum
 {
 	APEXC_CR =1,	/* control register */
@@ -6,7 +6,7 @@ enum
 	APEXC_R,		/* register */
 	APEXC_ML,		/* memory location */
 	APEXC_WS,		/* working store */
-	APEXC_FLAGS		/* various flags */
+	APEXC_STATE		/* whether CPU is running */
 };
 
 extern int apexc_ICount;
@@ -30,4 +30,5 @@ int apexc_execute(int cycles);
 
 #ifdef MAME_DEBUG
 unsigned DasmAPEXC(char *buffer, unsigned pc);
+#define apexc_readop(address)	cpu_readmem18bedw_dword(address << 2)
 #endif
