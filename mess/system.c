@@ -465,6 +465,7 @@ TESTDRIVER( mz800  )	/* 1982 Sharp MZ800 							  */
 
 	/* TEXAS INSTRUMENTS */
 TESTDRIVER( ti990_4 )	/* 197? TI 990/4								  */
+TESTDRIVER( ti990_10 )	/* 197? TI 990/10								  */
 TESTDRIVER( ti99_224 )	/* 1983 TI 99/2 								  */
 TESTDRIVER( ti99_232 )	/* 1983 TI 99/2 								  */
 	DRIVER( ti99_4 )	/* 1978 TI 99/4 								  */
