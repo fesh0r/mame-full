@@ -143,8 +143,11 @@ TESTDRIVER( vip )		/* Cosmac VIP										*/
 	/* COLECO */
 	DRIVER( coleco )	/* ColecoVision (Original BIOS)						*/
 	DRIVER( colecoa )	/* ColecoVision (Thick Characters)					*/
+	/* Please dont include these next 2 in a distribution, they are Hacks */
+#ifdef COLECO_HACKS
 TESTDRIVER( colecofb )	/* ColecoVision (Fast BIOS load)					*/
 TESTDRIVER( coleconb )	/* ColecoVision (No BIOS load)						*/
+#endif
 
 	/* NEC */
 	DRIVER( pce )		/* PC/Engine - Turbo Graphics-16  NEC 1989-1993		*/
@@ -186,7 +189,7 @@ TESTDRIVER( vc4000 )	/* Interton vc4000									*/
 	DRIVER( bbcbp )     /* 198? BBC Micro Model B+ 64K						*/
 	DRIVER( bbcbp128 )  /* 198? BBC Micro Model B+ 128K						*/
 TESTDRIVER( bbcb6502 )  /* 198? BBC B WD1770 with a 6502 second processor	*/
-TESTDRIVER( electron )	/* 198? Acorn Electron								*/
+//TESTDRIVER( electron )	/* 198? Acorn Electron								*/
 TESTDRIVER( a310 )      /* 1988 Acorn Archimedes 310						*/
 
 	/* CAMBRIDGE COMPUTERS */
@@ -254,7 +257,7 @@ TESTDRIVER( a310 )      /* 1988 Acorn Archimedes 310						*/
  * Macintosh SE			 ?					 1987
  * Macintosh II 		 ?					 1987
  */
-TESTDRIVER( mac512k )	/* 1984 Apple Macintosh 512k						*/
+//TESTDRIVER( mac512k )	/* 1984 Apple Macintosh 512k						*/
 	DRIVER( mac512ke )  /* 1986 Apple Macintosh 512ke						*/
 	DRIVER( macplus )	/* 1986 Apple Macintosh Plus						*/
 
@@ -421,9 +424,9 @@ TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS			*/
 	DRIVER( specp3es )	/* 2000 ZX Spectrum +3e (Spain)						*/
 
 	/* SHARP */
-TESTDRIVER( pc1500 )	/* 1982 Pocket Computer 1500						*/
-TESTDRIVER( trs80pc2 )	/* 1982 Tandy TRS80 PC 2							*/
-TESTDRIVER( pc1500a )	/* 1984 Pocket Computer 1500A						*/
+//TESTDRIVER( pc1500 )	/* 1982 Pocket Computer 1500						*/
+//TESTDRIVER( trs80pc2 )	/* 1982 Tandy TRS80 PC 2							*/
+//TESTDRIVER( pc1500a )	/* 1984 Pocket Computer 1500A						*/
 	DRIVER( pc1251 )	/* Pocket Computer 1251 							*/
 TESTDRIVER( trs80pc3 )	/* Tandy TRS80 PC-3									*/
 
