@@ -206,40 +206,39 @@ UINT8 snes_fakeapu_r_port( UINT8 port )
 			switch( portcount )
 			{
 				case 0:
-				case 1:
 					retVal = fakeapu_port[port];
 					break;
-				case 2:
+				case 1:
 					retVal = activecpu_get_reg(4) & 0xFF;
 					break;
-				case 3:
+				case 2:
 					retVal = (activecpu_get_reg(4) >> 8) & 0xFF;
 					break;
-				case 4:
+				case 3:
 					retVal = activecpu_get_reg(5) & 0xFF;
 					break;
-				case 5:
+				case 4:
 					retVal = (activecpu_get_reg(5) >> 8) & 0xFF;
 					break;
-				case 6:
+				case 5:
 					retVal = activecpu_get_reg(6) & 0xFF;
 					break;
-				case 7:
+				case 6:
 					retVal = (activecpu_get_reg(6) >> 8) & 0xFF;
 					break;
-				case 8:
+				case 7:
 					retVal = 0xAA;
 					break;
-				case 9:
+				case 8:
 					retVal = 0xBB;
 					break;
+				case 9:
 				case 10:
-				case 11:
 					retVal = rand() & 0xFF;
 					break;
 			}
 			portcount++;
-			if( portcount > 11 )
+			if( portcount > 10 )
 				portcount = 0;
 			return retVal;
 		} break;
