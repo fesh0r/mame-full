@@ -89,56 +89,39 @@ struct rc_option video_opts[] = {
      NULL },
    { "fullscreen",   	NULL,    		rc_bool,	&normal_params.fullscreen,
      "0",           	0,       		0,		NULL,
-     "Start in fullscreen mode (default: false)" },
+     "Select fullscreen mode (left-alt + page-down)" },
    { "arbheight",	"ah",			rc_int,		&normal_params.yarbsize,
      "0",		0,			4096,		NULL,
      "Scale video to exactly this height (0 = disable), this overrides the heightscale and scale options" },
-   { "heightscale",	"hs",			rc_int,		&normal_params.heightscale,
-     "1",		1,			8,		NULL,
-     "Set Y-Scale factor" },
    { "widthscale",	"ws",			rc_int,		&normal_params.widthscale,
      "1",		1,			8,		NULL,
-     "Set X-Scale factor" },
+     "Set X-Scale factor (increase: left-shift + insert, decrease: left-shift + delete)" },
+   { "heightscale",	"hs",			rc_int,		&normal_params.heightscale,
+     "1",		1,			8,		NULL,
+     "Set Y-Scale factor (increase: left-shift + home, decrease: left-shift + end)" },
    { "scale",		"s",			rc_use_function, NULL,
      NULL,		0,			0,		video_handle_scale,
-     "Set X- and Y-Scale to the same factor." },
+     "Set X- and Y-Scale to the same factor (increase: left-shift + page-up, decrease: left-shift + page-down)" },
    { "effect",		"ef",			rc_int,		&normal_params.effect,
      "0",		SYSDEP_DISPLAY_EFFECT_NONE, SYSDEP_DISPLAY_EFFECT_LAST,	NULL,
      "Video effect:\n"
 	     "0 = none (default)\n"
-	     "1 = scale2x (smooth scaling effect)\n"
-	     "2 = scan2 (light scanlines)\n"
+	     "1 = scale2x (2x smooth scaling effect)\n"
+	     "2 = scan2 (2x light scanlines)\n"
 	     "3 = rgbstripe (3x2 rgb vertical stripes)\n"
 	     "4 = rgbscan (2x3 rgb horizontal scanlines)\n"
-	     "5 = scan3 (3x3 deluxe scanlines)\n"
+	     "5 = scan3 (3x deluxe scanlines)\n"
 	     "6 = lq2x (2x low  quality magnification filter)\n"
 	     "7 = hq2x (2x high quality magnification filter)\n"
-	     "8 = 6tap2x (2x sinc-based 6-tap filter with scanlines\n"
-	     "9 = fake scanlines (skip 1 line during height scaling)" },
+	     "8 = 6tap2x (2x 6-tap filter with scanlines)\n"
+	     "9 = fakescan (skip 1 line with heigth scaling)\n"
+             "(increase: left-ctrl + page-up, decrease: left-ctrl + page-down)" },
    { "autodouble",	"adb",			rc_bool,	&use_auto_double,
      "1",		0,			0,		NULL,
      "Enable/disable automatic scale doubling for 1:2 pixel aspect ratio games" },
-   { "artwork",		"art",			rc_bool,	&use_artwork,
-     "1",		0,			0,		video_verify_artwork,
-     "Use additional game artwork (sets default for specific options below)" },
-   { "use_backdrops",	"backdrop",		rc_bool,	&use_backdrops,
-     "1",		0,			0,		video_verify_artwork,
-     "Use backdrop artwork" },
-   { "use_overlays",	"overlay",		rc_bool,	&use_overlays,
-     "1",		0,			0,		video_verify_artwork,
-     "Use overlay artwork" },
-   { "use_bezels",	"bezel",		rc_bool,	&use_bezels,
-     "1",		0,			0,		video_verify_artwork,
-     "Use bezel artwork" },
-   { "artwork_crop",	"artcrop",		rc_bool,	&options.artwork_crop,
-     "0",		0,			0,		NULL,
-     "Crop artwork to game screen only." },
-   { "artwork_resolution", "artres",		rc_int,		&options.artwork_res,
-     "1",		1,			2,		NULL,
-     "Artwork resolution" },
    { "frameskipper",	"fsr",			rc_int,		&frameskipper,
      "1",		0,			FRAMESKIP_DRIVER_COUNT-1, NULL,
-     "Select which autoframeskip and throttle routines to use. Available choices are:\n0 Dos frameskip code\n1 Enhanced frameskip code by William A. Barath" },
+     "Select which autoframeskip and throttle routines to use. Available choices are:\n0 Dos frameskip code (left-ctrl + insert)\n1 Enhanced frameskip code by William A. Barath (left-ctrl + home)" },
    { "throttle",	"th",			rc_bool,	&throttle,
      "1",		0,			0,		NULL,
      "Enable/disable throttle" },
@@ -187,6 +170,27 @@ struct rc_option video_opts[] = {
    { "flipy",		"fy",			rc_bool,	&video_flipy,
      "0",		0,			0,		NULL,
      "Flip screen upside-down" },
+   { "Use additional game artwork?", NULL,	rc_seperator,	NULL,
+     NULL,		0,			0,		NULL,
+     NULL },
+   { "artwork",		"art",			rc_bool,	&use_artwork,
+     "1",		0,			0,		video_verify_artwork,
+     "Global artwork enable/disable" },
+   { "use_backdrops",	"backdrop",		rc_bool,	&use_backdrops,
+     "1",		0,			0,		video_verify_artwork,
+     "Use backdrop artwork" },
+   { "use_overlays",	"overlay",		rc_bool,	&use_overlays,
+     "1",		0,			0,		video_verify_artwork,
+     "Use overlay artwork" },
+   { "use_bezels",	"bezel",		rc_bool,	&use_bezels,
+     "1",		0,			0,		video_verify_artwork,
+     "Use bezel artwork" },
+   { "artwork_crop",	"artcrop",		rc_bool,	&options.artwork_crop,
+     "0",		0,			0,		NULL,
+     "Crop artwork to game screen only." },
+   { "artwork_scale",   "artscale",		rc_int,		&options.artwork_res,
+     "1",		1,			2,		NULL,
+     "Artwork Scaling (1 or 2x)" },
    { "Vector Games Related", NULL,		rc_seperator,	NULL,
      NULL,		0,			0,		NULL,
      NULL },
@@ -237,7 +241,7 @@ static int video_verify_mode(struct rc_option *option, const char *arg,
       /* mode available */
       if(sysdep_display_properties.mode_info[i])
       {
-        n = snprintf(dest, bufsize, "\n%d = %s (hotkey left-alt + %s)",
+        n = snprintf(dest, bufsize, "\n%d = %s (left-alt + %s)",
           i, sysdep_display_properties.mode_name[i], hotkey[i]);
         if ((n < 0) || (n >= (bufsize-1)))
           break;
