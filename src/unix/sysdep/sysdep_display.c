@@ -38,8 +38,8 @@ struct sysdep_display_open_params sysdep_display_params;
    for use in sysdep_display_change_params */
 static struct sysdep_display_open_params current_params;
 
-/* make sysdep_display_update_keyboard return 1 after the first call to
-   sysdep_display_open() */
+/* make the first call to sysdep_display_update_keyboard return 1 after
+   sysdep_display_change_params() has closed and opened the display */
 static int force_keyboard_dirty = 0;
 
 static int sysdep_display_check_params(struct sysdep_display_open_params *params)
@@ -127,8 +127,6 @@ static void sysdep_display_set_params(const struct sysdep_display_open_params *p
 
 int sysdep_display_open (struct sysdep_display_open_params *params)
 {
-  force_keyboard_dirty = 1;
-    
   if (sysdep_display_check_params(params))
     return 1;
     
@@ -209,8 +207,9 @@ int sysdep_display_change_params(
     if ((new_params->video_mode != orig_params.video_mode) ||
         (new_params->fullscreen != orig_params.fullscreen))
     {
-      reopen = 0;
       sysdep_display_driver_close();
+      force_keyboard_dirty = 1;
+      reopen = 0;
     }
 
     /* (re)open the display) */
@@ -218,6 +217,7 @@ int sysdep_display_change_params(
     if (sysdep_display_driver_open(reopen))
     {
       sysdep_display_driver_close();
+      force_keyboard_dirty = 1;
 
       if (force)
         goto sysdep_display_change_params_error;
