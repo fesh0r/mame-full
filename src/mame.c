@@ -172,6 +172,9 @@ static struct performance_info performance;
 static int settingsloaded;
 static int leds_status;
 
+#ifdef MESS
+int skip_this_frame;
+#endif
 
 
 /***************************************************************************
@@ -1130,7 +1133,18 @@ void force_partial_update(int scanline)
 	if (clip.min_y <= clip.max_y)
 	{
 		profiler_mark(PROFILER_VIDEO);
+#ifdef MESS
+		{
+			int update_says_skip = 0;
+			(*Machine->drv->video_update)(Machine->scrbitmap, &clip, &update_says_skip);
+			if (!update_says_skip)
+				skip_this_frame = 0;
+			else if (skip_this_frame == -1)
+				skip_this_frame = 1;
+		}
+#else
 		(*Machine->drv->video_update)(Machine->scrbitmap, &clip);
+#endif
 		performance.partial_updates_this_frame++;
 		profiler_mark(PROFILER_END);
 	}
@@ -1165,6 +1179,12 @@ void update_video_and_audio(void)
 
 #ifdef MAME_DEBUG
 	debug_trace_delay = 0;
+#endif
+
+#ifdef MESS
+	if (skip_this_frame == 1)
+		skipped_it = 1;
+	skip_this_frame = -1;
 #endif
 
 	/* fill in our portion of the display */

@@ -1129,7 +1129,7 @@ static void v9938_refresh_line (struct mame_bitmap *bmp, int line)
 		}
 	}
 
-void video_update_v9938(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+VIDEO_UPDATE( v9938 )
 {
 	/* already been rendered, since we're using scanline stuff */
 }

@@ -1673,8 +1673,8 @@ static VIDEO_UPDATE( einstein_80col )
 
 static VIDEO_UPDATE( einstein2 )
 {
-	video_update_tms9928a(bitmap, cliprect);
-	video_update_einstein_80col(bitmap, cliprect);
+	video_update_tms9928a(bitmap, cliprect, do_skip);
+	video_update_einstein_80col(bitmap, cliprect, do_skip);
 }
 
 static const TMS9928a_interface tms9928a_interface =

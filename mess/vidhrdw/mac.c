@@ -54,10 +54,3 @@ VIDEO_START( mac )
 
 	return videomap_init(&cfg);
 }
-
-#if 0
-VIDEO_UPDATE( mac )
-{
-	videomap_update(bitmap, cliprect);
-}
-#endif

@@ -559,6 +559,7 @@ struct draw_body_params
 	UINT8 **db;
 	drawline_proc draw_line;
 	UINT8 *videoram_max;
+	int *do_skip;
 };
 
 static void draw_body_task(void *param, int task_num, int task_count)
@@ -607,6 +608,8 @@ static void draw_body_task(void *param, int task_num, int task_count)
 			must_redraw = !db || is_row_dirty(db, frame_info.pitch);
 		if (must_redraw)
 		{
+			*(dbp->do_skip) = 0;
+
 			/* do we have to render a new scanline? */
 			if (dlp->charproc || (row != drawn_row))
 			{
@@ -637,7 +640,7 @@ static void draw_body_task(void *param, int task_num, int task_count)
 	}
 }
 
-static void draw_body(struct mame_bitmap *bitmap, int base_scanline, int scanline_count, UINT8 **db)
+static void draw_body(struct mame_bitmap *bitmap, int base_scanline, int scanline_count, UINT8 **db, int *do_skip)
 {
 	int i;
 	int pens_len;
@@ -704,6 +707,7 @@ static void draw_body(struct mame_bitmap *bitmap, int base_scanline, int scanlin
 	db_params.scanline_count = scanline_count;
 	db_params.dl_params.videoram_pos = videoram_pos;
 	db_params.db = db;
+	db_params.do_skip = do_skip;
 	osd_parallelize(draw_body_task, &db_params, line_info.charproc ? 1 : scanline_count / 4);
 
 	pitch_adjust = calc_pitch_adjust(base_scanline, scanline_count);
@@ -728,11 +732,14 @@ static void plot_modified_border(struct mame_bitmap *bitmap, int x, int y, int w
 }
 
 /* main video update routine; draws the border and relies on draw_body to do the active display area */
-static void internal_videomap_update(struct mame_bitmap *bitmap, const struct rectangle *cliprect, UINT8 **db, int draw_border)
+static void internal_videomap_update(struct mame_bitmap *bitmap, const struct rectangle *cliprect, UINT8 **db, int draw_border, int *do_skip)
 {
 	int scanline_length;
 	int height, width, base;
 	void (*plot_border)(struct mame_bitmap *_bitmap, int x, int y, int _width, int _height, pen_t pen);
+
+	if (draw_border)
+		*do_skip = 0;
 
 	profiler_mark(PROFILER_VIDEOMAP_DRAWBORDER);
 
@@ -767,7 +774,7 @@ static void internal_videomap_update(struct mame_bitmap *bitmap, const struct re
 
 		/* body */
 		profiler_mark(PROFILER_END);
-		draw_body(bitmap, base - frame_info.bordertop_scanlines, height, db);
+		draw_body(bitmap, base - frame_info.bordertop_scanlines, height, db, do_skip);
 		profiler_mark(PROFILER_VIDEOMAP_DRAWBORDER);
 	}
 
@@ -783,7 +790,7 @@ static void internal_videomap_update(struct mame_bitmap *bitmap, const struct re
 	profiler_mark(PROFILER_END);
 }
 
-void videomap_update(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+VIDEO_UPDATE(videomap)
 {
 	struct mame_bitmap *bmp = bitmap;
 	int full_refresh;
@@ -809,9 +816,12 @@ void videomap_update(struct mame_bitmap *bitmap, const struct rectangle *cliprec
 	if (cliprect->min_y == Machine->visible_area.min_y)
 		calc_videoram_pos();
 
+	*do_skip = 1;
+
 	internal_videomap_update(bmp, cliprect,
 		(!full_refresh && videoram_dirtybuffer) ? &videoram_dirtybuffer_pos : NULL,
-		((flags & FLAG_BORDER_MODIFIED) || full_refresh) ? 1 : 0);
+		((flags & FLAG_BORDER_MODIFIED) || full_refresh) ? 1 : 0,
+		do_skip);
 
 	/* if we are writing to buffered bitmap, copy it */
 	if (tmpbitmap)

@@ -8,12 +8,15 @@ System Driver Changes:
 ----------------------
 - [C16/VC20] Fixed crashes in quickloader. [Nate Woods]
 - [C16] Improved TED7360 sound emulation. [Attila Grosz]
-- [PDP1] Added support for lightpen with variable tip size.
-  [Raphael Nabet]
+- [PDP1] Added support for lightpen with variable tip size. [Raphael Nabet]
 
 Source Changes:
 ---------------
-(none)
+- VIDEO_UPDATE() now has a do_skip parameter, which enables drivers to inform
+  the core that no significant drawing has occured, and it is safe to skip
+  blitting the current frame. [Nate Woods]
+
+- [Windows] SSE optimizations to the blitter. [Nate Woods]
 
 
 0.66

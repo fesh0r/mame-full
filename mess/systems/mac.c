@@ -122,8 +122,6 @@ static struct CustomSound_interface custom_interface =
 	mac_sh_update
 };
 
-#define video_update_mac videomap_update
-
 static MACHINE_DRIVER_START( mac512ke )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M68000, 7833600)        /* 7.8336 Mhz */
@@ -144,7 +142,7 @@ static MACHINE_DRIVER_START( mac512ke )
 	MDRV_PALETTE_INIT(mac)
 
 	MDRV_VIDEO_START(mac)
-	MDRV_VIDEO_UPDATE(mac)
+	MDRV_VIDEO_UPDATE(videomap)
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(CUSTOM, custom_interface)

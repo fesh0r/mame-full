@@ -124,10 +124,10 @@ VIDEO_UPDATE( pc_aga )
 {
 	switch (aga.mode) {
 	case AGA_COLOR:
-		video_update_pc_cga(bitmap, cliprect);
+		video_update_pc_cga(bitmap, cliprect, do_skip);
 		break;
 	case AGA_MONO:
-		video_update_pc_mda(bitmap, cliprect);
+		video_update_pc_mda(bitmap, cliprect, do_skip);
 		break;
 	case AGA_OFF:
 		break;
@@ -138,10 +138,10 @@ static VIDEO_UPDATE( pc200 )
 {
 	switch (PC200_MODE) {
 	case PC200_MDA:
-		video_update_pc_mda(bitmap, cliprect);
+		video_update_pc_mda(bitmap, cliprect, do_skip);
 		break;
 	default:
-		video_update_pc_cga(bitmap, cliprect);
+		video_update_pc_cga(bitmap, cliprect, do_skip);
 		break;
 	}
 }

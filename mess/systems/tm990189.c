@@ -61,7 +61,7 @@ static int video_start_tm990_189(void)
 	return 0;
 }
 
-static void video_update_tm990_189(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static VIDEO_UPDATE( tm990_189 )
 {
 	/* ... */
 }

@@ -707,5 +707,5 @@ VIDEO_START( pc1512 )
 
 VIDEO_UPDATE( pc1512 )
 {
-	video_update_pc_cga(bitmap, cliprect);
+	video_update_pc_cga(bitmap, cliprect, do_skip);
 }

@@ -132,7 +132,7 @@ static int video_start_ti990_10(void)
 	return vdt911_init_term(0, & params);
 }
 
-static void video_update_ti990_10(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+VIDEO_UPDATE( ti990_10 )
 {
 	vdt911_refresh(bitmap, 0, 0, 0);
 }

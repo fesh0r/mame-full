@@ -504,7 +504,7 @@ static void apexc_draw_string(struct mame_bitmap *bitmap, const char *buf, int x
 }
 
 
-static void video_update_apexc(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+VIDEO_UPDATE( apexc )
 {
 	int i;
 	char the_char;

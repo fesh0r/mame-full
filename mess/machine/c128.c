@@ -835,8 +835,8 @@ VIDEO_START( c128 )
 
 VIDEO_UPDATE( c128 )
 {
-	video_update_vdc8563(bitmap, cliprect);
-	video_update_vic2(bitmap, cliprect);
+	video_update_vdc8563(bitmap, cliprect, do_skip);
+	video_update_vic2(bitmap, cliprect, do_skip);
 }
 
 void c128_state(void)

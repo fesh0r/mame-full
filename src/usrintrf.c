@@ -484,6 +484,11 @@ void ui_drawchar(struct mame_bitmap *dest, int ch, int color, int sx, int sy)
 {
 	struct rectangle bounds;
 
+#ifdef MESS
+	extern int skip_this_frame;
+	skip_this_frame = 0;
+#endif
+
 	/* construct a rectangle in rotated coordinates, then transform it */
 	bounds.min_x = sx + uirotbounds.min_x;
 	bounds.min_y = sy + uirotbounds.min_y;

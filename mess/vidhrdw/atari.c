@@ -789,7 +789,7 @@ VIDEO_START( atari )
  ************************************************************************/
 VIDEO_UPDATE( atari )
 {
-	video_update_generic_bitmapped(bitmap, cliprect);
+	video_update_generic_bitmapped(bitmap, cliprect, do_skip);
 
 	if( tv_artifacts != (readinputport(0) & 0x40) )
 	{

@@ -769,10 +769,10 @@ static void log_video(void)
  * All models of the CoCo has 262.5 scan lines.  However, we pretend that it has
  * 240 so that the emulation fits on a 640x480 screen
  */
-void video_update_coco3(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+VIDEO_UPDATE( coco3 )
 {
 	coco3_palette_recalc(0);
-	internal_video_update_m6847(bitmap, cliprect);
+	internal_video_update_m6847(bitmap, cliprect, do_skip);
 }
 
 static void coco3_ram_w(int offset, int data, int block)
