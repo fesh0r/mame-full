@@ -13,6 +13,7 @@
 #include "inputx.h"
 #include "utils.h"
 #include "strconv.h"
+#include "mscommon.h"
 
 #ifdef UNDER_CE
 #include "invokegx.h"
@@ -75,6 +76,14 @@ struct dialog_info
 	int combo_default_value;
 	void *memory_pool;
 };
+
+//============================================================
+//	IMPORTS
+//============================================================
+
+// from input.c
+extern void win_poll_input(void);
+
 
 //============================================================
 //	PARAMETERS
@@ -487,12 +496,16 @@ static INT_PTR CALLBACK seqselect_wndproc(HWND editwnd, UINT msg, WPARAM wparam,
 	switch(msg) {
 	case WM_KEYDOWN:
 	case WM_SYSKEYDOWN:
+	case WM_CHAR:
+	case WM_KEYUP:
+	case WM_SYSKEYUP:
 		result = 1;
 		break;
 
 	case WM_TIMER:
 		if (wparam == TIMER_ID)
 		{
+			win_poll_input();
 			code = code_read_async();
 			if (code != CODE_NONE)
 			{
@@ -600,7 +613,7 @@ static int dialog_add_single_seqselect(struct dialog_info *di, short x, short y,
 	if (dialog_write_item(di, WS_CHILD | WS_VISIBLE | ES_CENTER,
 			x, y, cx, cy, "", DLGITEM_EDIT))
 		return 1;
-	stuff = pool_malloc(&di->memory_pool, sizeof(struct seqselect_stuff));
+	stuff = (struct seqselect_stuff *) pool_malloc(&di->memory_pool, sizeof(struct seqselect_stuff));
 	if (!stuff)
 		return 1;
 	stuff->code = code;

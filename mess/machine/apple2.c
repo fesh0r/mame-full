@@ -415,15 +415,15 @@ READ_HANDLER ( apple2_c06x_r )
 	switch (offset) {
 	case 0x01:
 		/* Open-Apple/Joystick button 0 */
-		result = input_port_1_r(0) & 0x02;
+		result = pressed_specialkey(SPECIALKEY_BUTTON0);
 		break;
 	case 0x02:
 		/* Closed-Apple/Joystick button 1 */
-		result = input_port_1_r(0) & 0x04;
+		result = pressed_specialkey(SPECIALKEY_BUTTON1);
 		break;
 	case 0x03:
 		/* Joystick button 2. Later revision motherboards connected this to SHIFT also */
-		result = input_port_1_r(0) & 0x08;
+		result = pressed_specialkey(SPECIALKEY_BUTTON2);
 		break;
 	case 0x04:
 		/* X Joystick axis */

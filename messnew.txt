@@ -13,6 +13,9 @@ System Driver Changes:
 
 - [APPLE2] Added support for lo-res color and 80 column text. [Nate Woods]
 
+- [APPLE2] Fixed open/closed apple keys and joystick buttons. (bug #297,
+  bug #302) [Nate Woods]
+
 - [A800] Fixed a recently introduced bug in disk support. [Lawrence Gold]
 
 - [SFZCH] Fixed and re-enabled. [Anthony Kruize]

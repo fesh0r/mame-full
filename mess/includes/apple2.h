@@ -159,4 +159,14 @@ extern VIDEO_START( apple2 );
 extern VIDEO_UPDATE( apple2 );
 extern void apple2_video_touch(offs_t offset);
 
+/* keyboard wrappers */
+#define pressed_specialkey(key)	(input_port_8_r(0) & (key))
+#define SPECIALKEY_CAPSLOCK		0x01
+#define SPECIALKEY_SHIFT		0x06
+#define SPECIALKEY_CONTROL		0x08
+#define SPECIALKEY_BUTTON0		0x10	/* open apple */
+#define SPECIALKEY_BUTTON1		0x20	/* closed apple */
+#define SPECIALKEY_BUTTON2		0x40
+#define SPECIALKEY_RESET		0x80
+
 #endif

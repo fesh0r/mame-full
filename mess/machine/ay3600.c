@@ -17,6 +17,7 @@
 
 #include "driver.h"
 #include "machine/ay3600.h"
+#include "includes/apple2.h"
 
 #ifdef MAME_DEBUG
 #define LOG(x)	logerror x
@@ -198,7 +199,7 @@ void AY3600_interrupt(void)
 	/* Check for these special cases because they affect the emulated key codes */
 
 	/* Check caps lock and set LED here */
-	if (readinputport(8) & 0x01)
+	if (pressed_specialkey(SPECIALKEY_CAPSLOCK))
 	{
 		caps_lock = 1;
 		set_led_status(1,1);
@@ -212,13 +213,22 @@ void AY3600_interrupt(void)
 	switchkey = A2_KEY_NORMAL;
 
 	/* Shift key check */
-	if( keyboard_pressed(KEYCODE_LSHIFT) ||
-		keyboard_pressed(KEYCODE_RSHIFT) )
+	if (pressed_specialkey(SPECIALKEY_SHIFT))
 		switchkey |= A2_KEY_SHIFT;
 
 	/* Control key check - only one control key on the left side on the Apple */
-	if( keyboard_pressed(KEYCODE_LCONTROL) )
+	if (pressed_specialkey(SPECIALKEY_CONTROL))
+	{
 		switchkey |= A2_KEY_CONTROL;
+
+		/* Reset key check */
+		if (pressed_specialkey(SPECIALKEY_RESET) &&
+			(pressed_specialkey(SPECIALKEY_BUTTON0)
+			|| pressed_specialkey(SPECIALKEY_BUTTON1)))
+		{
+			machine_reset();
+		}
+	}
 
 	/* Run through real keys and see what's being pressed */
 	for( port = 0; port < 7; port++ )
