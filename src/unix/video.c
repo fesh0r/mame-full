@@ -228,7 +228,7 @@ static int video_verify_vectorres(struct rc_option *option, const char *arg,
 struct osd_bitmap *osd_alloc_bitmap(int width,int height,int depth)       /* ASG 980209 */
 {
 	struct osd_bitmap *bitmap;
-	int w,h;
+
 
 	if (depth != 8 && depth != 15 && depth != 16 && depth != 32)
 	{
