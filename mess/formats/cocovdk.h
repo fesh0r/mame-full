@@ -18,3 +18,4 @@
 /* Returns INIT_PASS if successful, INIT_FAIL if not */
 int cocovdk_decode_header(void *hdr, UINT8 *tracks, UINT8 *sides, UINT8 *sec_per_track, UINT16 *sector_length, size_t *offset);
 int cocovdk_encode_header(void *hdr, UINT8 tracks, UINT8 sides, UINT8 sec_per_track, UINT16 sector_length);
+int cocovdk_floppy_init(int id);

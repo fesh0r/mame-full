@@ -1,5 +1,6 @@
 #include <assert.h>
 #include "cocovdk.h"
+#include "includes/basicdsk.h"
 
 #if MAME_DEBUG
 #define LOG_VDK 1
@@ -113,5 +114,57 @@ int cocovdk_encode_header(void *h, UINT8 tracks, UINT8 sides, UINT8 sec_per_trac
 	hdr->tracks = tracks;
 	hdr->sides = sides;
 	return INIT_PASS;
+}
+
+/* attempt to insert a disk into the drive specified with id */
+int cocovdk_floppy_init(int id)
+{
+	const char			*name = device_filename(IO_FLOPPY, id);
+	int					result = INIT_FAIL, read = 0;
+	void				*image_file;
+	struct vdk_header	hdr;
+
+	/* do we have an image name ? */
+	if (!name || !name[0])
+	{
+		return INIT_FAIL;
+	}
+	image_file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
+	if( !image_file )
+	{
+		image_file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+		if( !image_file )
+		{
+			/* VDK creation not supported */
+			logerror("VDK disk creation not supported");
+			return INIT_FAIL;
+		}
+	}
+
+	osd_fseek(image_file, 0, SEEK_SET);
+	read = osd_fread(image_file, &hdr, sizeof( struct vdk_header ) );
+	osd_fclose( image_file );
+	
+	if( read != 0 )
+	{
+		UINT8 tracks;
+		UINT8 sides;
+		UINT8 sec_per_track;
+		UINT16 sector_length;
+		size_t offset;
+		
+		result = cocovdk_decode_header( &hdr, &tracks, &sides, &sec_per_track, &sector_length, &offset);
+
+		if( result == INIT_PASS )
+		{
+			result = basicdsk_floppy_init(id);
+			if( result == INIT_PASS )
+				basicdsk_set_geometry(id, tracks, sides, sec_per_track, sector_length, 1, offset);			
+		}
+	}
+	else
+		result = INIT_FAIL;
+	
+	return result;
 }
 
