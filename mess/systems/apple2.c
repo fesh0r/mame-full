@@ -169,34 +169,6 @@ INPUT_PORTS_START( apple2 )
 	PORT_ANALOGX( 0xff, 0x80,  IPT_AD_STICK_Y | IPF_PLAYER1 | IPF_CENTER, JOYSTICK_SENSITIVITY, JOYSTICK_DELTA, 0, 0xff, KEYCODE_8_PAD, KEYCODE_2_PAD, JOYCODE_1_UP, JOYCODE_1_DOWN)
 INPUT_PORTS_END
 
-static struct GfxLayout apple2_text_layout =
-{
-    14,8,          /* 14*8 characters */
-    256,           /* 256 characters */
-    1,             /* 1 bits per pixel */
-    { 0 },         /* no bitplanes; 1 bit per pixel */
-    { 7, 7, 6, 6, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1 },   /* x offsets */
-    { 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-    8*8        /* every char takes 8 bytes */
-};
-
-static struct GfxLayout apple2_dbltext_layout =
-{
-    7,8,           /* 7*8 characters */
-    256,           /* 256 characters */
-    1,             /* 1 bits per pixel */
-    { 0 },         /* no bitplanes; 1 bit per pixel */
-    { 7, 6, 5, 4, 3, 2, 1 },    /* x offsets */
-    { 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-    8*8        /* every char takes 8 bytes */
-};
-
-static struct GfxDecodeInfo apple2_gfxdecodeinfo[] =
-{
-    { 1, 0x0000, &apple2_text_layout, 0, 16 },
-    { 1, 0x0000, &apple2_dbltext_layout, 0, 16 },
-MEMORY_END   /* end of array */
-
 static unsigned char apple2_palette[] =
 {
     0x00, 0x00, 0x00, /* Black */
@@ -274,7 +246,7 @@ static struct AY8910interface ay8910_interface =
     { 0 }
 };
 
-static MACHINE_DRIVER_START( standard )
+static MACHINE_DRIVER_START( apple2e )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M6502, 1021800)		/* close to actual CPU frequency of 1.020484 MHz */
 	MDRV_CPU_MEMORY(readmem_apple2, writemem_apple2)
@@ -288,12 +260,12 @@ static MACHINE_DRIVER_START( standard )
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2)
 	MDRV_SCREEN_SIZE(280*2, 192)
 	MDRV_VISIBLE_AREA(0, (280*2)-1,0,192-1)
-	MDRV_GFXDECODE(apple2_gfxdecodeinfo)
+	//MDRV_GFXDECODE(apple2_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(sizeof(apple2_palette)/3)
 	MDRV_COLORTABLE_LENGTH(sizeof(apple2_colortable)/sizeof(unsigned short))
 	MDRV_PALETTE_INIT(apple2)
 
-	MDRV_VIDEO_START(apple2)
+	MDRV_VIDEO_START(apple2e)
 	MDRV_VIDEO_UPDATE(apple2)
 
 	/* sound hardware */
@@ -302,10 +274,17 @@ static MACHINE_DRIVER_START( standard )
 MACHINE_DRIVER_END
 
 
-static MACHINE_DRIVER_START( enhanced )
-	MDRV_IMPORT_FROM( standard )
+static MACHINE_DRIVER_START( apple2ee )
+	MDRV_IMPORT_FROM( apple2e )
 	MDRV_CPU_REPLACE("main", M65C02, 1021800)		/* close to actual CPU frequency of 1.020484 MHz */
 MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( apple2c )
+	MDRV_IMPORT_FROM( apple2ee )
+	MDRV_VIDEO_START( apple2c )
+MACHINE_DRIVER_END
+
 
 /***************************************************************************
 
@@ -317,14 +296,10 @@ ROM_START(apple2e)
     ROM_REGION(0x24700,REGION_CPU1,0)
     /* 64k main RAM, 64k aux RAM */
 
-//	ROM_LOAD("apple.rom", 0x21000, 0x3000, 0xf66f9c26 )
     ROM_LOAD ( "a2e.cd", 0x20000, 0x2000, 0xe248835e )
     ROM_LOAD ( "a2e.ef", 0x22000, 0x2000, 0xfc3d59d8 )
     /* 0x700 for individual slot ROMs */
     ROM_LOAD ( "disk2_33.rom", 0x24500, 0x0100, 0xce7144f6 ) /* Disk II ROM - DOS 3.3 version */
-
-    ROM_REGION(0x2000,REGION_GFX1,0)
-    ROM_LOAD ( "a2e.vid", 0x0000, 0x1000, 0x816a86f1 )
 ROM_END
 
 ROM_START(apple2ee)
@@ -334,9 +309,6 @@ ROM_START(apple2ee)
     /* 0x4000 for bankswitched RAM */
     /* 0x700 for individual slot ROMs */
     ROM_LOAD ( "disk2_33.rom", 0x24500, 0x0100, 0xce7144f6 ) /* Disk II ROM - DOS 3.3 version */
-
-    ROM_REGION(0x2000,REGION_GFX1,0)
-    ROM_LOAD ( "a2c.vid", 0x0000, 0x1000, 0x2651014d)
 ROM_END
 
 ROM_START(apple2ep)
@@ -345,33 +317,21 @@ ROM_START(apple2ep)
     /* 0x4000 for bankswitched RAM */
     /* 0x700 for individual slot ROMs */
     ROM_LOAD ("disk2_33.rom", 0x24500, 0x0100, 0xce7144f6) /* Disk II ROM - DOS 3.3 version */
-
-    ROM_REGION(0x2000,REGION_GFX1,0)
-    ROM_LOAD("a2c.vid", 0x0000, 0x1000, 0x2651014d)
 ROM_END
 
 ROM_START(apple2c)
     ROM_REGION(0x24700,REGION_CPU1,0)
     ROM_LOAD ( "a2c.128", 0x20000, 0x4000, 0xf0edaa1b )
-
-    ROM_REGION(0x2000,REGION_GFX1,0)
-    ROM_LOAD ( "a2c.vid", 0x0000, 0x1000, 0x2651014d )
 ROM_END
 
 ROM_START(apple2c0)
     ROM_REGION(0x28000,REGION_CPU1,0)
     ROM_LOAD("a2c.256", 0x20000, 0x8000, 0xc8b979b3)
-
-    ROM_REGION(0x2000,REGION_GFX1,0)
-    ROM_LOAD("a2c.vid", 0x0000, 0x1000, 0x2651014d)
 ROM_END
 
 ROM_START(apple2cp)
     ROM_REGION(0x28000,REGION_CPU1,0)
     ROM_LOAD("a2cplus.mon", 0x20000, 0x8000, 0x0b996420)
-
-    ROM_REGION(0x2000,REGION_GFX1,0)
-    ROM_LOAD("a2c.vid", 0x0000, 0x1000, 0x2651014d)
 ROM_END
 
 SYSTEM_CONFIG_START(apple2)
@@ -382,10 +342,10 @@ SYSTEM_CONFIG_START(apple2)
 SYSTEM_CONFIG_END
 
 /*     YEAR  NAME      PARENT    MACHINE   INPUT     INIT      CONFIG	COMPANY            FULLNAME */
-COMP ( 1983, apple2e,  0,        standard, apple2,   0,        apple2,	"Apple Computer", "Apple //e" )
-COMP ( 1985, apple2ee, apple2e,  enhanced, apple2,   0,        apple2,	"Apple Computer", "Apple //e (enhanced)" )
-COMP ( 1987, apple2ep, apple2e,  enhanced, apple2,   0,        apple2,	"Apple Computer", "Apple //e (Platinum)" )
-COMP ( 1984, apple2c,  0,        enhanced, apple2,   0,        apple2,	"Apple Computer", "Apple //c" )
-COMP ( 1986, apple2c0, apple2c,  enhanced, apple2,   0,        apple2,	"Apple Computer", "Apple //c (3.5 ROM)" )
-COMP ( 1988, apple2cp, apple2c,  enhanced, apple2,   0,        apple2,	"Apple Computer", "Apple //c Plus" )
+COMP ( 1983, apple2e,  0,        apple2e,  apple2,   0,        apple2,	"Apple Computer", "Apple //e" )
+COMP ( 1985, apple2ee, apple2e,  apple2ee, apple2,   0,        apple2,	"Apple Computer", "Apple //e (enhanced)" )
+COMP ( 1987, apple2ep, apple2e,  apple2ee, apple2,   0,        apple2,	"Apple Computer", "Apple //e (Platinum)" )
+COMP ( 1984, apple2c,  0,        apple2c,  apple2,   0,        apple2,	"Apple Computer", "Apple //c" )
+COMPX( 1986, apple2c0, apple2c,  apple2c,  apple2,   0,        apple2,	"Apple Computer", "Apple //c (3.5 ROM)",	GAME_NOT_WORKING )
+COMPX( 1988, apple2cp, apple2c,  apple2c,  apple2,   0,        apple2,	"Apple Computer", "Apple //c Plus",			GAME_NOT_WORKING )
 

@@ -17,7 +17,7 @@ System Driver Changes:
   Manual. [Stefano Priore]
 
 - [APPLE2] Enhanced models now have the M65C02 processor specified; apple2c
-  now boots. [Nate Woods]
+  now boots.  Also, *.vid files no longer needed. [Nate Woods]
 
 Source Changes:
 ---------------

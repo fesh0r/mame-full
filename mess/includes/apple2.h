@@ -155,7 +155,8 @@ extern WRITE_HANDLER ( apple2_slot6_w );
 
 
 /* vidhrdw/apple2.c */
-extern VIDEO_START( apple2 );
+extern VIDEO_START( apple2e );
+extern VIDEO_START( apple2c );
 extern VIDEO_UPDATE( apple2 );
 extern void apple2_video_touch(offs_t offset);
 
