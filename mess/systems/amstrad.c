@@ -36,6 +36,7 @@
 #include "eventlst.h"
 #endif
 
+
 /*-------------------------------------------*/
 /* MULTIFACE */
 static void multiface_rethink_memory(void);
@@ -66,6 +67,7 @@ Bits for this port:
 static unsigned long amstrad_cycles_at_frame_end = 0;
 /* cycle count of last write */
 static unsigned long amstrad_cycles_last_write = 0;
+static unsigned long time_delta_fraction = 0;
 
 static void amstrad_update_video(void)
 {
@@ -75,17 +77,16 @@ static void amstrad_update_video(void)
     /* current cycles */
     current_time = cpu_getcurrentcycles() + amstrad_cycles_at_frame_end;
     /* time between last write and this write */
-    time_delta = (current_time - amstrad_cycles_last_write)>>2;
-	/* set new previous write */
-	amstrad_cycles_last_write = current_time;
+    time_delta = current_time - amstrad_cycles_last_write + time_delta_fraction;
+    /* The timing used to be spot on, but now it can give odd cycles, hopefully
+    this will compensate for that! */
+    time_delta_fraction = time_delta & 0x03;
+    time_delta = time_delta>>2;
 
+       /* set new previous write */
+        amstrad_cycles_last_write = current_time;
 
-	if (time_delta<0)
-	{
-		logerror("x");
-	}
-
-	if (time_delta!=0)
+    if (time_delta!=0)
     {
 		amstrad_vh_execute_crtc_cycles(time_delta);
     }
@@ -1043,6 +1044,7 @@ void amstrad_interrupt_timer_trigger_reset_by_vsync(void)
 
 void amstrad_interrupt_timer_update(void)
 {
+
 	/* update counter */
 	amstrad_52_divider++;
 
@@ -2210,6 +2212,14 @@ static UINT8 amstrad_cycle_table_ex[256]=
 	US_TO_CPU_CYCLES(1),	/* RST 38 */
 };
 
+static void *previous_op_table;
+static void *previous_cb_table;
+static void *previous_ed_table;
+static void *previous_xy_table;
+static void *previous_xycb_table;
+static void *previous_ex_table;
+
+
 void amstrad_common_init(void)
 {
 
@@ -2225,7 +2235,7 @@ void amstrad_common_init(void)
 
 	AmstradCPC_GA_RomConfiguration = 0;
 	amstrad_interrupt_timer = NULL;
-    amstrad_interrupt_timer = timer_pulse(TIME_IN_USEC(64), 0,amstrad_interrupt_timer_callback);
+        amstrad_interrupt_timer = timer_pulse(TIME_IN_USEC(64), 0,amstrad_interrupt_timer_callback);
 
 	amstrad_52_divider = 0;
 	amstrad_52_divider_vsync_reset = 0;
@@ -2250,6 +2260,7 @@ void amstrad_common_init(void)
 
 	amstrad_cycles_at_frame_end = 0;
 	amstrad_cycles_last_write = 0;
+        time_delta_fraction = 0;
 
 	cpu_0_irq_line_vector_w(0, 0x0ff);
 
@@ -2272,6 +2283,13 @@ void amstrad_common_init(void)
         so that they are all multiple of 4 T states long. All opcode
         timings are a multiple of 1us in length. */
 
+        previous_op_table = cpu_get_cycle_table(Z80_TABLE_op);
+        previous_cb_table = cpu_get_cycle_table(Z80_TABLE_cb);
+        previous_ed_table = cpu_get_cycle_table(Z80_TABLE_ed);
+        previous_xy_table = cpu_get_cycle_table(Z80_TABLE_xy);
+        previous_xycb_table = cpu_get_cycle_table(Z80_TABLE_xycb);
+        previous_ex_table = cpu_get_cycle_table(Z80_TABLE_ex);
+
         /* Using the cool code Juergen has provided, I will override
         the timing tables with the values for the amstrad */
         cpu_set_cycle_tbl(Z80_TABLE_op, amstrad_cycle_table_op);
@@ -2282,6 +2300,31 @@ void amstrad_common_init(void)
         cpu_set_cycle_tbl(Z80_TABLE_ex, amstrad_cycle_table_ex);
 }
 
+void amstrad_shutdown_machine(void)
+{
+        if (Amstrad_Memory!=NULL)
+        {
+                free(Amstrad_Memory);
+                Amstrad_Memory = NULL;
+        }
+
+        if (amstrad_interrupt_timer!=NULL)
+        {
+                timer_remove(amstrad_interrupt_timer);
+                amstrad_interrupt_timer = NULL;
+        }
+
+        /* restore previous tables */
+        cpu_set_cycle_tbl(Z80_TABLE_op, previous_op_table);
+        cpu_set_cycle_tbl(Z80_TABLE_cb, previous_cb_table);
+        cpu_set_cycle_tbl(Z80_TABLE_ed, previous_ed_table);
+        cpu_set_cycle_tbl(Z80_TABLE_xy, previous_xy_table);
+        cpu_set_cycle_tbl(Z80_TABLE_xycb, previous_xycb_table);
+        cpu_set_cycle_tbl(Z80_TABLE_ex, previous_ex_table);
+
+        cpu_set_irq_callback(0, NULL);
+
+}
 
 void amstrad_init_machine(void)
 {
