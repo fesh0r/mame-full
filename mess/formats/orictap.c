@@ -1,4 +1,4 @@
-#include "orictap.h"
+#include "formats/orictap.h"
 
 /* this code based heavily on tap2wav by Fabrice Frances */
 
