@@ -17,28 +17,13 @@
 unsigned char *z88_memory = NULL;
 static void *z88_rtc_timer = NULL;
 
-typedef struct blink_hw
-{
-	int pb[4];
-	int sbr;
-	int com;
-	int ints;
-	int sta;
-	int ack;
-	int tack;
-	int tmk;
-	int mem[4];
-	int tim[5];
-	int tsta;
-} blink_hw;
 
-blink_hw blink;
+struct blink_hw blink;
 
 static void blink_reset(void)
 {
-
 	/* rams is cleared on reset */
-	blink.com &= (1<<2);
+        blink.com &=~(1<<2);
 }
 
 
@@ -66,12 +51,11 @@ static void z88_interrupt_refresh(void)
 	
 		{
 			cpu_set_irq_line(0,0,HOLD_LINE);
-		}
+                        return;
+                }
 	}
-	else
-	{
-		cpu_set_irq_line(0,0,CLEAR_LINE);
-	}
+
+        cpu_set_irq_line(0,0,CLEAR_LINE);
 }
 
 
@@ -83,20 +67,34 @@ static void z88_rtc_timer_callback(int dummy)
 
 		blink.tim[0]++;
 
+                if ((blink.tim[0]%10)==0)
+                {
+                  /* set tick int has occured */
+                  blink.tsta |= (1<<0);
+                }
+
 		if (blink.tim[0]==200)
 		{
 			blink.tim[0] = 0;
+
+                        /* set seconds int has occured */
+                        blink.tsta |= (1<<1);
 
 			blink.tim[1]++;
 
 			if (blink.tim[1]==60)
 			{
+                                /* set minutes int has occured */
+                                blink.tsta |=(1<<2);
+
 				blink.tim[1]=0;
 
 				blink.tim[2]++;
 
 				if (blink.tim[2]==256)
 				{
+                                        blink.tim[2] = 0;
+
 					blink.tim[3]++;
 
 					if (blink.tim[3]==256)
@@ -114,12 +112,15 @@ static void z88_rtc_timer_callback(int dummy)
 			}
 		}
 	}
+
+        z88_interrupt_refresh();
 }
 
 
 static void z88_refresh_memory(void)
 {
         unsigned char *addr;
+        int block;
 
 	addr = z88_memory + (blink.mem[0]<<14);
 
@@ -146,15 +147,64 @@ static void z88_refresh_memory(void)
 		cpu_setbankhandler_w(6, MWA_BANK6);
 	}
 
-	addr = z88_memory + (blink.mem[1]<<14);
+
+        if (blink.mem[1] & 0x020)
+        {
+           block = blink.mem[1] & (~0x020);
+
+           addr = z88_memory;
+           cpu_setbankhandler_w(8, MWA_BANK8);
+
+        }
+        else
+        {
+           block = blink.mem[1];
+
+           addr = memory_region(REGION_CPU1) + 0x010000;
+           cpu_setbankhandler_w(8, MWA_NOP);
+        }
+
+        addr = addr + (block<<14);
 	cpu_setbank(3, addr);
 	cpu_setbank(8, addr);
 
-	addr = z88_memory + (blink.mem[2]<<14);
+
+        if (blink.mem[2] & 0x020)
+        {
+           block = blink.mem[2] & (~0x020);
+        
+           addr = z88_memory;
+           cpu_setbankhandler_w(9, MWA_BANK9);
+
+        }
+        else
+        {
+           block = blink.mem[2];
+
+           addr = memory_region(REGION_CPU1) + 0x010000;
+           cpu_setbankhandler_w(9, MWA_NOP);
+        }
+
+        addr = addr + (block<<14);
 	cpu_setbank(4, addr);
 	cpu_setbank(9, addr);
 
-	addr = z88_memory + (blink.mem[3]<<14);
+        if (blink.mem[3] & 0x020)
+        {
+           block = blink.mem[3] & (~0x020);
+
+           addr = z88_memory;
+           cpu_setbankhandler_w(10, MWA_BANK10);
+        }
+        else
+        {
+           block = blink.mem[3];
+
+           addr = memory_region(REGION_CPU1) + 0x010000;
+           cpu_setbankhandler_w(10, MWA_NOP);
+        }
+
+        addr = addr + (block<<14);
 	cpu_setbank(5, addr);
 	cpu_setbank(10, addr);
 }
@@ -164,6 +214,8 @@ void z88_init_machine(void)
 	z88_memory = malloc(512*1024);
 
 	z88_rtc_timer = timer_pulse(TIME_IN_MSEC(5), 0, z88_rtc_timer_callback);
+
+        blink_reset();
 
 	cpu_setbankhandler_r(1, MRA_BANK1);
 	cpu_setbankhandler_r(2, MRA_BANK2);
@@ -254,7 +306,8 @@ static void blink_pb_w(int offset, int data, int reg_index)
 		case 0x04:
 		{
 			blink.sbr = addr & 2047;
-		}
+                        blink.sbf = blink.sbf;
+                }
 		break;
 	
 		default:
@@ -276,6 +329,9 @@ WRITE_HANDLER(z88_port_w)
 	unsigned char port;
 
 	port = offset & 0x0ff;
+
+        logerror("blink w: %04x %02x\r\n", offset, data);
+
 
 	switch (port)
 	{
@@ -368,6 +424,8 @@ READ_HANDLER(z88_port_r)
 	unsigned char port;
 
 	port = offset & 0x0ff;
+
+        logerror("blink r: %04x \r\n", offset);
 
 	switch (port)
 	{
@@ -589,8 +647,8 @@ static struct MachineDriver machine_driver_z88 =
         z88_shutdown_machine,
 	/* video hardware */
         Z88_SCREEN_WIDTH, /* screen width */
-        Z88_SCREEN_HEIGHT,  /* screen height */
-        {0, (Z88_SCREEN_WIDTH - 1), 0, (Z88_SCREEN_HEIGHT - 1)},        /* rectangle: visible_area */
+        480,  /* screen height */
+        {0, (Z88_SCREEN_WIDTH - 1), 0, (480 - 1)},        /* rectangle: visible_area */
 	0,								   /*amstrad_gfxdecodeinfo, 			 *//* graphics
 										* decode info */
         Z88_NUM_COLOURS,                                                        /* total colours */
