@@ -21,7 +21,7 @@ extern void crtc6845_init (UINT8 *memory);
 extern void crtc6845_pet_init (UINT8 *memory);
 extern void crtc6845_superpet_init (UINT8 *memory);
 extern void crtc6845_cbm600_init (UINT8 *memory);
-extern void crtc6845_cbm600pal_init (UINT8 *memory);
+extern void crtc6845_cbm600hu_init (UINT8 *memory);
 extern void crtc6845_cbm700_init (UINT8 *memory);
 
 extern void crtc6845_set_rastering(int on);

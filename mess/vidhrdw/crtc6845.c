@@ -108,7 +108,7 @@ void crtc6845_cbm600_init(UINT8 *memory)
 	raster2.text.visiblesize.x=8;
 }
 
-void crtc6845_cbm600pal_init(UINT8 *memory)
+void crtc6845_cbm600hu_init(UINT8 *memory)
 {
 	/* no hardware reverse logic, instead double size charrom,
 	   and switching between hungarian and ascii charset */
