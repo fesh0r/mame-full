@@ -262,7 +262,7 @@ TESTDRIVER( z88 )		/*												  */
 
 #ifndef MESS_EXCLUDE_ATARI
 	/* ATARI */
-/* 
+/*
 400/800 10kB OS roms
 A    NTSC  (?)         (?)         (?)
 A    PAL   (?)         0x72b3fed4  CO15199, CO15299, CO12399B
@@ -540,7 +540,7 @@ TESTDRIVER( telestrat ) /* ??? Oric Telestrat/Stratos                       */
 TESTDRIVER( mekd2 )     /* 1977 Motorola Evaluation Kit                   */
 
     /* DEC */
-	DRIVER( pdp1 )      /* 1962 DEC PDP1 for SPACEWAR! - 1962             */
+//!!	DRIVER( pdp1 )      /* 1962 DEC PDP1 for SPACEWAR! - 1962             */
 
     /* MEMOTECH */
 	DRIVER( mtx512 )    /* 1983 Memotech MTX512                           */
