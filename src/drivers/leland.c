@@ -51,35 +51,22 @@
  *
  *************************************/
 
-static ADDRESS_MAP_START( master_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x2000, 0x9fff) AM_READ(MRA8_BANK1)
-	AM_RANGE(0xa000, 0xdfff) AM_READ(MRA8_BANK2)
-	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xf000, 0xf3ff) AM_READ(leland_gated_paletteram_r)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( master_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x9fff) AM_WRITE(MWA8_ROM)
+static ADDRESS_MAP_START( master_map_program, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_ROM
+	AM_RANGE(0x2000, 0x9fff) AM_ROMBANK(1)
+	AM_RANGE(0xa000, 0xdfff) AM_ROMBANK(2)
 	AM_RANGE(0xa000, 0xdfff) AM_WRITE(leland_battery_ram_w)
-	AM_RANGE(0xe000, 0xefff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xf000, 0xf3ff) AM_WRITE(leland_gated_paletteram_w) AM_BASE(&paletteram)
+	AM_RANGE(0xe000, 0xefff) AM_RAM
+	AM_RANGE(0xf000, 0xf3ff) AM_READWRITE(leland_gated_paletteram_r, leland_gated_paletteram_w) AM_BASE(&paletteram)
 	AM_RANGE(0xf800, 0xf801) AM_WRITE(leland_master_video_addr_w)
 ADDRESS_MAP_END
 
 
-static ADDRESS_MAP_START( master_readport, ADDRESS_SPACE_IO, 8 )
-    AM_RANGE(0xf2, 0xf2) AM_READ(leland_i86_response_r)
-    AM_RANGE(0xfd, 0xff) AM_READ(leland_master_analog_key_r)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( master_writeport, ADDRESS_SPACE_IO, 8 )
+static ADDRESS_MAP_START( master_map_io, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0xf0, 0xf0) AM_WRITE(leland_master_alt_bankswitch_w)
-	AM_RANGE(0xf2, 0xf2) AM_WRITE(leland_i86_command_lo_w)
+    AM_RANGE(0xf2, 0xf2) AM_READWRITE(leland_i86_response_r, leland_i86_command_lo_w)
 	AM_RANGE(0xf4, 0xf4) AM_WRITE(leland_i86_command_hi_w)
-    AM_RANGE(0xfd, 0xff) AM_WRITE(leland_master_analog_key_w)
+    AM_RANGE(0xfd, 0xff) AM_READWRITE(leland_master_analog_key_r, leland_master_analog_key_w)
 ADDRESS_MAP_END
 
 
@@ -90,48 +77,31 @@ ADDRESS_MAP_END
  *
  *************************************/
 
-static ADDRESS_MAP_START( slave_small_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x2000, 0xdfff) AM_READ(MRA8_BANK3)
-	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xf802, 0xf802) AM_READ(leland_raster_r)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( slave_small_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xdfff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xe000, 0xefff) AM_WRITE(MWA8_RAM)
+static ADDRESS_MAP_START( slave_small_map_program, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_ROM
+	AM_RANGE(0x2000, 0xdfff) AM_ROMBANK(3)
+	AM_RANGE(0xe000, 0xefff) AM_RAM
 	AM_RANGE(0xf800, 0xf801) AM_WRITE(leland_slave_video_addr_w)
+	AM_RANGE(0xf802, 0xf802) AM_READ(leland_raster_r)
 	AM_RANGE(0xf803, 0xf803) AM_WRITE(leland_slave_small_banksw_w)
 ADDRESS_MAP_END
 
 
-static ADDRESS_MAP_START( slave_large_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x4000, 0xbfff) AM_READ(MRA8_BANK3)
-	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_RAM)
+static ADDRESS_MAP_START( slave_large_map_program, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_ROM
+	AM_RANGE(0x4000, 0xbfff) AM_ROMBANK(3)
+	AM_RANGE(0xc000, 0xc000) AM_WRITE(leland_slave_large_banksw_w)
+	AM_RANGE(0xe000, 0xefff) AM_RAM
+	AM_RANGE(0xf800, 0xf801) AM_WRITE(leland_slave_video_addr_w)
 	AM_RANGE(0xf802, 0xf802) AM_READ(leland_raster_r)
 ADDRESS_MAP_END
 
 
-static ADDRESS_MAP_START( slave_large_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xc000, 0xc000) AM_WRITE(leland_slave_large_banksw_w)
-	AM_RANGE(0xe000, 0xefff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xf800, 0xf801) AM_WRITE(leland_slave_video_addr_w)
+static ADDRESS_MAP_START( slave_map_io, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x1f) AM_READWRITE(leland_svram_port_r, leland_svram_port_w)
+	AM_RANGE(0x40, 0x5f) AM_READWRITE(leland_svram_port_r, leland_svram_port_w)
 ADDRESS_MAP_END
 
-
-static ADDRESS_MAP_START( slave_readport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x00, 0x1f) AM_READ(leland_svram_port_r)
-	AM_RANGE(0x40, 0x5f) AM_READ(leland_svram_port_r)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( slave_writeport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x00, 0x1f) AM_WRITE(leland_svram_port_w)
-	AM_RANGE(0x40, 0x5f) AM_WRITE(leland_svram_port_w)
-ADDRESS_MAP_END
 
 
 /*************************************
@@ -730,13 +700,13 @@ static MACHINE_DRIVER_START( leland )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("master", Z80, 6000000)
-	MDRV_CPU_PROGRAM_MAP(master_readmem,master_writemem)
-	MDRV_CPU_IO_MAP(master_readport,master_writeport)
+	MDRV_CPU_PROGRAM_MAP(master_map_program,0)
+	MDRV_CPU_IO_MAP(master_map_io,0)
 	MDRV_CPU_VBLANK_INT(leland_master_interrupt,1)
 
 	MDRV_CPU_ADD_TAG("slave", Z80, 6000000)
-	MDRV_CPU_PROGRAM_MAP(slave_small_readmem,slave_small_writemem)
-	MDRV_CPU_IO_MAP(slave_readport,slave_writeport)
+	MDRV_CPU_PROGRAM_MAP(slave_small_map_program,0)
+	MDRV_CPU_IO_MAP(slave_map_io,0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION((1000000*16)/(256*60))
@@ -767,8 +737,8 @@ static MACHINE_DRIVER_START( redline )
 	MDRV_IMPORT_FROM(leland)
 	MDRV_CPU_ADD_TAG("sound", I186, 16000000/2)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_PROGRAM_MAP(leland_i86_readmem,leland_i86_writemem)
-	MDRV_CPU_IO_MAP(leland_i86_readport,redline_i86_writeport)
+	MDRV_CPU_PROGRAM_MAP(leland_i86_map_program,0)
+	MDRV_CPU_IO_MAP(redline_i86_map_io,0)
 	
 	/* sound hardware */
 	MDRV_SOUND_REPLACE("custom", CUSTOM, redline_custom_interface)
@@ -780,7 +750,7 @@ static MACHINE_DRIVER_START( quarterb )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(redline)
 	MDRV_CPU_MODIFY("sound")
-	MDRV_CPU_IO_MAP(leland_i86_readport,leland_i86_writeport)
+	MDRV_CPU_IO_MAP(leland_i86_map_io,0)
 	
 	/* sound hardware */
 	MDRV_SOUND_REPLACE("custom", CUSTOM, i186_custom_interface)
@@ -792,7 +762,7 @@ static MACHINE_DRIVER_START( lelandi )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(quarterb)
 	MDRV_CPU_MODIFY("slave")
-	MDRV_CPU_PROGRAM_MAP(slave_large_readmem,slave_large_writemem)
+	MDRV_CPU_PROGRAM_MAP(slave_large_map_program,0)
 MACHINE_DRIVER_END
 
 

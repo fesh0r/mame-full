@@ -10,6 +10,7 @@ enum messtest_command_type
 	MESSTEST_COMMAND_WAIT,
 	MESSTEST_COMMAND_INPUT,
 	MESSTEST_COMMAND_IMAGE_CREATE,
+	MESSTEST_COMMAND_IMAGE_LOAD,
 	MESSTEST_COMMAND_VERIFY_MEMORY
 };
 
@@ -57,10 +58,13 @@ struct messtest_testcase
 
 
 
+#define MESSTEST_ALWAYS_DUMP_SCREENSHOT		1
+
+
 int memory_region_from_string(const char *region_name);
 const char *memory_region_to_string(int region);
 
-enum messtest_result run_test(const struct messtest_testcase *testcase);
-int messtest(const char *script_filename, int *test_count, int *failure_count);
+enum messtest_result run_test(const struct messtest_testcase *testcase, int flags);
+int messtest(const char *script_filename, int flags, int *test_count, int *failure_count);
 
 #endif /* MESSTEST_H */

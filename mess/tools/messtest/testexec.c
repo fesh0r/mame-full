@@ -24,6 +24,30 @@ static double wait_target;
 static double final_time;
 static const struct messtest_command *current_command;
 static int abort_test;
+static int test_flags;
+
+static void message(enum messtest_messagetype msgtype, const char *fmt, ...);
+
+
+
+static void dump_screenshot(void)
+{
+	mame_file *fp;
+	char buf[128];
+
+	/* if we are at runtime, dump a screenshot */
+	if (final_time > 0.0)
+	{
+		snprintf(buf, sizeof(buf) / sizeof(buf[0]), "test_%s.png", current_testcase->name);
+		fp = mame_fopen(Machine->gamedrv->name, buf, FILETYPE_SCREENSHOT, 1);
+		if (fp)
+		{
+			save_screen_snapshot_as(fp, artwork_get_ui_bitmap());
+			mame_fclose(fp);
+			message(MSG_INFO, "Saved screenshot as %s", buf);
+		}
+	}
+}
 
 
 
@@ -31,7 +55,6 @@ static void message(enum messtest_messagetype msgtype, const char *fmt, ...)
 {
 	char buf[1024];
 	va_list va;
-	mame_file *fp;
 
 	va_start(va, fmt);
 	vsnprintf(buf, sizeof(buf) / sizeof(buf[0]), fmt, va);
@@ -44,25 +67,13 @@ static void message(enum messtest_messagetype msgtype, const char *fmt, ...)
 	{
 		state = STATE_ABORTED;
 		final_time = timer_get_time();
-
-		/* if we are at runtime, dump a screenshot */
-		if (final_time > 0.0)
-		{
-			snprintf(buf, sizeof(buf) / sizeof(buf[0]), "test_%s.png", current_testcase->name);
-			fp = mame_fopen(Machine->gamedrv->name, buf, FILETYPE_SCREENSHOT, 1);
-			if (fp)
-			{
-				save_screen_snapshot_as(fp, artwork_get_ui_bitmap());
-				mame_fclose(fp);
-				message(MSG_INFO, "Saved screenshot as %s", buf);
-			}
-		}
+		dump_screenshot();
 	}
 }
 
 
 
-enum messtest_result run_test(const struct messtest_testcase *testcase)
+enum messtest_result run_test(const struct messtest_testcase *testcase, int flags)
 {
 	int driver_num;
 	enum messtest_result result;
@@ -88,6 +99,7 @@ enum messtest_result run_test(const struct messtest_testcase *testcase)
 	/* prepare testing state */
 	current_command = testcase->commands;
 	state = STATE_READY;
+	test_flags = flags;
 
 	/* set up options */
 	memset(&options, 0, sizeof(options));
@@ -196,6 +208,7 @@ void osd_update_video_and_audio(struct mame_display *display)
 		break;
 
 	case MESSTEST_COMMAND_IMAGE_CREATE:
+	case MESSTEST_COMMAND_IMAGE_LOAD:
 		device_slot = current_command->u.image_args.device_slot;
 		device_type = current_command->u.image_args.device_type;
 
@@ -216,10 +229,22 @@ void osd_update_video_and_audio(struct mame_display *display)
 			filename = buf;
 		}
 
-		/* actually create the image */
-		if (image_create(image, filename, 0, NULL))
-		{
-			message(MSG_FAILURE, "Failed to create image '%s'", filename);
+		/* actually create or load the image */
+		switch(current_command->command_type) {
+		case MESSTEST_COMMAND_IMAGE_CREATE:
+			if (image_create(image, filename, 0, NULL))
+			{
+				message(MSG_FAILURE, "Failed to create image '%s'", filename);
+				break;
+			}
+			break;
+		
+		case MESSTEST_COMMAND_IMAGE_LOAD:
+			if (image_load(image, filename))
+			{
+				message(MSG_FAILURE, "Failed to load image '%s'", filename);
+				break;
+			}
 			break;
 		}
 		break;
@@ -276,6 +301,9 @@ void osd_update_video_and_audio(struct mame_display *display)
 		/* at the end of our test */
 		state = STATE_DONE;
 		final_time = current_time;
+
+		if (test_flags & MESSTEST_ALWAYS_DUMP_SCREENSHOT)
+			dump_screenshot();
 		break;
 	}
 

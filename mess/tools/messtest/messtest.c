@@ -51,6 +51,7 @@ struct messtest_state
 
 	enum blobparse_state blobstate;
 
+	int test_flags;
 	int test_count;
 	int failure_count;
 };
@@ -184,10 +185,14 @@ static void start_handler(void *data, const XML_Char *tagname, const XML_Char **
 			/* <input> - inputs natural keyboard data into a system */
 			state->current_command.command_type = MESSTEST_COMMAND_INPUT;
 		}
-		else if (!strcmp(tagname, "imagecreate"))
+		else if (!strcmp(tagname, "imagecreate") || !strcmp(tagname, "imageload"))
 		{
 			/* <imagecreate> - creates an image */
-			state->current_command.command_type = MESSTEST_COMMAND_IMAGE_CREATE;
+			/* <imageload> - loads an image */
+			if (!strcmp(tagname, "imagecreate"))
+				state->current_command.command_type = MESSTEST_COMMAND_IMAGE_CREATE;
+			else
+				state->current_command.command_type = MESSTEST_COMMAND_IMAGE_LOAD;
 
 			/* 'filename' attribute */
 			s1 = find_attribute(attributes, "filename");
@@ -281,7 +286,7 @@ static void end_handler(void *data, const XML_Char *name)
 		if (!append_command(state))
 			goto outofmemory;
 
-		if (run_test(&state->testcase))
+		if (run_test(&state->testcase, state->test_flags))
 			state->failure_count++;
 		state->test_count++;
 		state->phase = STATE_ROOT;
@@ -480,7 +485,7 @@ outofmemory:
 
 
 
-int messtest(const char *script_filename, int *test_count, int *failure_count)
+int messtest(const char *script_filename, int flags, int *test_count, int *failure_count)
 {
 	struct messtest_state state;
 	char buf[1024];
@@ -489,6 +494,7 @@ int messtest(const char *script_filename, int *test_count, int *failure_count)
 	int result = -1;
 
 	memset(&state, 0, sizeof(state));
+	state.test_flags = flags;
 	state.script_filename = script_filename;
 
 	/* open the script file */

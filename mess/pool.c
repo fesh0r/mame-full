@@ -96,7 +96,7 @@ void *pool_malloc(memory_pool *pool, size_t size)
 
 char *pool_strdup(memory_pool *pool, const char *src)
 {
-	return pool_strdup_len(pool, src, strlen(src));
+	return src ? pool_strdup_len(pool, src, strlen(src)) : NULL;
 }
 
 char *pool_strdup_len(memory_pool *pool, const char *src, size_t len)

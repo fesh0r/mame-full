@@ -46,16 +46,9 @@ static void mockingboard_init (int slot);
 static int mockingboard_r (int offset);
 static void mockingboard_w (int offset, int data);
 static WRITE_HANDLER ( apple2_mainram0400_w );
-static WRITE_HANDLER ( apple2_mainram0800_w );
 static WRITE_HANDLER ( apple2_mainram2000_w );
-static WRITE_HANDLER ( apple2_mainram4000_w );
 static WRITE_HANDLER ( apple2_auxram0400_w );
-static WRITE_HANDLER ( apple2_auxram0800_w );
 static WRITE_HANDLER ( apple2_auxram2000_w );
-static WRITE_HANDLER ( apple2_auxram4000_w );
-static WRITE_HANDLER ( apple2_LC_ram_w );
-static WRITE_HANDLER ( apple2_LC_ram1_w );
-static WRITE_HANDLER ( apple2_LC_ram2_w );
 
 static double joystick_x1_time;
 static double joystick_y1_time;
@@ -112,34 +105,40 @@ static int apple2_hasslots(void)
 
 struct apple2_bankmap_entry
 {
-	UINT16 offset;
+	UINT16 offset_begin;
+	UINT16 offset_end;
 	INT16 bank;
 	UINT32 rom_mask;
 	UINT32 switch_mask;
+
 	UINT32 on_offset;
 	UINT32 on_mask;
+	write8_handler on_handler;
+
 	UINT32 off_offset;
 	UINT32 off_mask;
+	write8_handler off_handler;
 };
+
 
 static const struct apple2_bankmap_entry apple2_bankmap[] =
 {
-	{ 0x0000,  A2BANK_0000,		~1,			VAR_ALTZP,				0x10000, VAR_ALTZP,		0x00000, VAR_ALTZP },
-	{ 0x0200,  A2BANK_0200_R,	~1,			VAR_RAMRD,				0x10200, VAR_RAMRD,		0x00200, VAR_RAMRD },
-	{ 0x0200,  A2BANK_0200_W,	~1,			VAR_RAMWRT,				0x10200, VAR_RAMWRT,	0x00200, VAR_RAMWRT },
-	{ 0x0400,  A2BANK_0400_R,	~1,			VAR_80STORE,			0x10400, VAR_PAGE2,		0x00400, VAR_RAMRD },
-	{ 0x0400,  A2BANK_0400_W,	~1,			VAR_80STORE,			0x10400, VAR_PAGE2,		0x00400, VAR_RAMWRT },
-	{ 0x0800,  A2BANK_0800_R,	~1,			VAR_RAMRD,				0x10800, VAR_RAMRD,		0x00800, VAR_RAMRD },
-	{ 0x0800,  A2BANK_0800_W,	~1,			VAR_RAMWRT,				0x10800, VAR_RAMWRT,	0x00800, VAR_RAMWRT },
-	{ 0x2000,  A2BANK_2000_R,	~1,			VAR_80STORE|VAR_HIRES,	0x12000, VAR_PAGE2,		0x02000, VAR_RAMRD },
-	{ 0x2000,  A2BANK_2000_W,	~1,			VAR_80STORE|VAR_HIRES,	0x12000, VAR_PAGE2,		0x02000, VAR_RAMWRT },
-	{ 0x4000,  A2BANK_4000_R,	~1,			VAR_RAMRD,				0x14000, VAR_RAMRD,		0x04000, VAR_RAMRD },
-	{ 0x4000,  A2BANK_4000_W,	~1,			VAR_RAMWRT,				0x14000, VAR_RAMWRT,	0x04000, VAR_RAMWRT },
+	{ 0x0000, 0x01FF,  A2BANK_0000,		0,			VAR_ALTZP,				0x10000, VAR_ALTZP,  NULL,					0x00000, VAR_ALTZP,  NULL },
+	{ 0x0200, 0x03FF,  A2BANK_0200_R,	0,			VAR_RAMRD,				0x10200, VAR_RAMRD,  NULL,					0x00200, VAR_RAMRD,  NULL },
+	{ 0x0200, 0x03FF,  A2BANK_0200_W,	0,			VAR_RAMWRT,				0x10200, VAR_RAMWRT, NULL,				 	0x00200, VAR_RAMWRT, NULL },
+	{ 0x0400, 0x07FF,  A2BANK_0400_R,	0,			VAR_80STORE,			0x10400, VAR_PAGE2,  NULL,					0x00400, VAR_RAMRD,  NULL },
+	{ 0x0400, 0x07FF,  A2BANK_0400_W,	0,			VAR_80STORE,			0x10400, VAR_PAGE2,	 apple2_auxram0400_w,	0x00400, VAR_RAMWRT, apple2_mainram0400_w },
+	{ 0x0800, 0x1FFF,  A2BANK_0800_R,	0,			VAR_RAMRD,				0x10800, VAR_RAMRD,  NULL,					0x00800, VAR_RAMRD,  NULL },
+	{ 0x0800, 0x1FFF,  A2BANK_0800_W,	0,			VAR_RAMWRT,				0x10800, VAR_RAMWRT, NULL,					0x00800, VAR_RAMWRT, NULL },
+	{ 0x2000, 0x3FFF,  A2BANK_2000_R,	0,			VAR_80STORE|VAR_HIRES,	0x12000, VAR_PAGE2,	 NULL,					0x02000, VAR_RAMRD,  NULL },
+	{ 0x2000, 0x3FFF,  A2BANK_2000_W,	0,			VAR_80STORE|VAR_HIRES,	0x12000, VAR_PAGE2,  apple2_auxram2000_w,	0x02000, VAR_RAMWRT, apple2_mainram2000_w },
+	{ 0x4000, 0xBFFF,  A2BANK_4000_R,	0,			VAR_RAMRD,				0x14000, VAR_RAMRD,  NULL,					0x04000, VAR_RAMRD,  NULL },
+	{ 0x4000, 0xBFFF,  A2BANK_4000_W,	0,			VAR_RAMWRT,				0x14000, VAR_RAMWRT, NULL,					0x04000, VAR_RAMWRT, NULL },
 
-	{ 0xD000,  A2BANK_D000_R,	VAR_LCRAM,	VAR_LCRAM2,				0x1D000, VAR_ALTZP,		0x0C000, VAR_ALTZP },
-	{ 0xD000, -A2BANK_D000_W,	VAR_LCRAM,	VAR_LCRAM2,				0x1D000, VAR_ALTZP,		0x0C000, VAR_ALTZP },
-	{ 0xE000,  A2BANK_E000_R,	VAR_LCRAM,	VAR_LCRAM2,				0x1E000, VAR_ALTZP,		0x0E000, VAR_ALTZP },
-	{ 0xE000, -A2BANK_E000_W,	VAR_LCRAM,	VAR_LCRAM2,				0x1E000, VAR_ALTZP,		0x0E000, VAR_ALTZP }
+	{ 0xD000, 0xDFFF,  A2BANK_D000_R,	VAR_LCRAM,	VAR_LCRAM2,				0x1D000, VAR_ALTZP,  NULL,					0x0C000, VAR_ALTZP,  NULL },
+	{ 0xD000, 0xDFFF, -A2BANK_D000_W,	VAR_LCRAM,	VAR_LCRAM2,				0x1D000, VAR_ALTZP,  NULL,					0x0C000, VAR_ALTZP,  NULL },
+	{ 0xE000, 0xFFFF,  A2BANK_E000_R,	VAR_LCRAM,	VAR_LCRAM2,				0x1E000, VAR_ALTZP,  NULL,					0x0E000, VAR_ALTZP,  NULL },
+	{ 0xE000, 0xFFFF, -A2BANK_E000_W,	VAR_LCRAM,	VAR_LCRAM2,				0x1E000, VAR_ALTZP,  NULL,					0x0E000, VAR_ALTZP,  NULL }
 };
 
 
@@ -152,6 +151,7 @@ static const struct apple2_bankmap_entry apple2_bankmap[] =
 static void apple2_setvar(UINT32 val, UINT32 mask)
 {
 	int i;
+	write8_handler handler;
 
 	LOG(("apple2_setvar(): val=0x%06x mask=0x%06x pc=0x%04x\n", val, mask, activecpu_get_pc()));
 
@@ -175,23 +175,34 @@ static void apple2_setvar(UINT32 val, UINT32 mask)
 		const struct apple2_bankmap_entry *entry;
 		UINT32 othermask;
 		int bank;
-		UINT8 *bank_mem;
+		UINT8 *bank_mem = NULL;
 
 		entry = &apple2_bankmap[i];
-		if (mask & (entry->switch_mask | entry->on_mask | entry->off_mask))
+		if (mask & (entry->rom_mask | entry->switch_mask | entry->on_mask | entry->off_mask))
 		{
-
-			if (a2 & entry->rom_mask)
+			if ((a2 & entry->rom_mask) || (entry->rom_mask == 0))
 			{
 				/* some sort of RAM */
-				othermask = (a2 & entry->switch_mask) == entry->switch_mask
-					? entry->on_mask : entry->off_mask;
-				bank_mem = &mess_ram[(a2 & othermask) ? entry->on_offset : entry->off_offset];
+				handler = (a2 & entry->switch_mask) == entry->switch_mask
+					? entry->on_handler : entry->off_handler;
+				if (handler)
+				{
+					/* this RAM uses a handler */
+					memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM,
+						entry->offset_begin, entry->offset_end, 0, handler);
+				}
+				else
+				{
+					/* this RAM uses a bank */
+					othermask = (a2 & entry->switch_mask) == entry->switch_mask
+						? entry->on_mask : entry->off_mask;
+					bank_mem = &mess_ram[(a2 & othermask) ? entry->on_offset : entry->off_offset];
+				}
 			}
 			else if (entry->bank >= 0)
 			{
 				/* ROM for read */
-				bank_mem = &apple_rom[entry->offset & 0x3FFF];
+				bank_mem = &apple_rom[entry->offset_begin & 0x3FFF];
 			}
 			else
 			{
@@ -199,8 +210,11 @@ static void apple2_setvar(UINT32 val, UINT32 mask)
 				bank_mem = dummy_memory;
 			}
 
-			bank = entry->bank >= 0 ? entry->bank : -entry->bank;
-			cpu_setbank(bank, bank_mem);
+			if (bank_mem)
+			{
+				bank = entry->bank >= 0 ? entry->bank : -entry->bank;
+				cpu_setbank(bank, bank_mem);
+			}
 		}
 	}
 
@@ -418,7 +432,7 @@ MACHINE_INIT( apple2 )
 	if (apple2_hasslots())
 	{
 		/* Slot 3 is funky - it isn't mapped like the other slot ROMs */
-		cpu_setbank(A2BANK_C300, &apple_rom[0x0100]);
+		cpu_setbank(A2BANK_C100, &apple_rom[0x0100]);
 		memcpy(apple2_slotrom(3), &apple_rom[0x0300], 0x100);
 	}
 
@@ -476,52 +490,17 @@ void apple2_interrupt(void)
 }
 
 /***************************************************************************
-  apple2_LC_ram1_w
+	apple2_mainram0400_w
+	apple2_mainram2000_w
+	apple2_auxram0400_w
+	apple2_auxram2000_w
 ***************************************************************************/
-static WRITE_HANDLER ( apple2_LC_ram1_w )
-{
-	/* If the aux switch is set, use the aux language card bank as well */
-	int aux_offset = (a2 & VAR_ALTZP) ? 0x10000 : 0x0000;
-	mess_ram[0xc000 + offset + aux_offset] = data;
-}
 
-/***************************************************************************
-  apple2_LC_ram2_w
-***************************************************************************/
-static WRITE_HANDLER ( apple2_LC_ram2_w )
-{
-	/* If the aux switch is set, use the aux language card bank as well */
-	int aux_offset = (a2 & VAR_ALTZP) ? 0x10000 : 0x0000;
-	mess_ram[0xd000 + offset + aux_offset] = data;
-}
-
-/***************************************************************************
-  apple2_LC_ram_w
-***************************************************************************/
-static WRITE_HANDLER ( apple2_LC_ram_w )
-{
-	/* If the aux switch is set, use the aux language card bank as well */
-	int aux_offset = (a2 & VAR_ALTZP) ? 0x10000 : 0x0000;
-	mess_ram[0xe000 + offset + aux_offset] = data;
-}
-
-/***************************************************************************
-  apple2_mainram0400_w
-  apple2_mainram0800_w
-  apple2_mainram2000_w
-  apple2_mainram4000_w
-***************************************************************************/
 static WRITE_HANDLER ( apple2_mainram0400_w )
 {
 	offset += 0x400;
 	mess_ram[offset] = data;
 	apple2_video_touch(offset);
-}
-
-static WRITE_HANDLER ( apple2_mainram0800_w )
-{
-	offset += 0x800;
-	mess_ram[offset] = data;
 }
 
 static WRITE_HANDLER ( apple2_mainram2000_w )
@@ -531,29 +510,11 @@ static WRITE_HANDLER ( apple2_mainram2000_w )
 	apple2_video_touch(offset);
 }
 
-static WRITE_HANDLER ( apple2_mainram4000_w )
-{
-	offset += 0x4000;
-	mess_ram[offset] = data;
-}
-
-/***************************************************************************
-  apple2_auxram0400_w
-  apple2_auxram0800_w
-  apple2_auxram2000_w
-  apple2_auxram4000_w
-***************************************************************************/
 static WRITE_HANDLER ( apple2_auxram0400_w )
 {
 	offset += 0x10400;
 	mess_ram[offset] = data;
 	apple2_video_touch(offset);
-}
-
-static WRITE_HANDLER ( apple2_auxram0800_w )
-{
-	offset += 0x10800;
-	mess_ram[offset] = data;
 }
 
 static WRITE_HANDLER ( apple2_auxram2000_w )
@@ -563,15 +524,10 @@ static WRITE_HANDLER ( apple2_auxram2000_w )
 	apple2_video_touch(offset);
 }
 
-static WRITE_HANDLER ( apple2_auxram4000_w )
-{
-	offset += 0x14000;
-	mess_ram[offset] = data;
-}
-
 /***************************************************************************
   apple2_c00x_r
 ***************************************************************************/
+
 READ_HANDLER ( apple2_c00x_r )
 {
 	data8_t result;

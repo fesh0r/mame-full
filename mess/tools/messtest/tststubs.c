@@ -157,21 +157,6 @@ int osd_keyboard_disabled(void)
 	return 0;
 }
 
-int osd_is_absolute_path(const char *path)
-{
-	return 0;
-}
-
-const char *osd_path_separator(void)
-{
-	return "/";
-}
-
-int osd_is_path_separator(char ch)
-{
-	return (ch == '/');
-}
-
 void osd_begin_final_unloading(void)
 {
 }
@@ -179,14 +164,3 @@ void osd_begin_final_unloading(void)
 void osd_image_load_status_changed(mess_image *img, int is_final_unload)
 {
 }
-
-char *osd_dirname(const char *filename)
-{
-	return NULL;
-}
-
-char *osd_basename(char *filename)
-{
-	return NULL;
-}
-
