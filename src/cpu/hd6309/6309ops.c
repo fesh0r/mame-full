@@ -347,8 +347,8 @@ INLINE void exg( void )
 {
 	UINT16 t1,t2;
 	UINT8 tb;
-	int		promote = FALSE;
-	
+	int 	promote = FALSE;
+
 	IMMBYTE(tb);
 	if( (tb^(tb>>4)) & 0x08 )	/* HJB 990225: mixed 8/16 bit case? */
 	{
@@ -371,7 +371,7 @@ INLINE void exg( void )
 		case 12: t1 = 0;  break;
 		case 13: t1 = 0;  break;
 		case 14: t1 = (promote ? W : E ); break;
-		case 15: t1 = (promote ? W : F ); break;
+		default: t1 = (promote ? W : F ); break;
 	}
 	switch(tb&15) {
 		case  0: t2 = D;  break;
@@ -389,8 +389,8 @@ INLINE void exg( void )
 		case 12: t2 = 0;  break;
 		case 13: t2 = 0;  break;
 		case 14: t2 = (promote ? W : E); break;
-		case 15: t2 = (promote ? W : F); break;
-    }
+		default: t2 = (promote ? W : F); break;
+	}
 
 	switch(tb>>4) {
 		case  0: D = t2;  break;
@@ -435,13 +435,13 @@ INLINE void tfr( void )
 {
 	UINT8 tb;
 	UINT16 t;
-	int		promote = FALSE;
-	
+	int 	promote = FALSE;
+
 	IMMBYTE(tb);
 	if( (tb^(tb>>4)) & 0x08 )
 	{
 		promote = TRUE;
-    }
+	}
 
 	switch(tb>>4) {
 		case  0: t = D;  break;
@@ -459,8 +459,8 @@ INLINE void tfr( void )
 		case 12: t = 0;  break;
 		case 13: t = 0;  break;
 		case 14: t = (promote ? W : E ); break;
-		case 15: t = (promote ? W : F ); break;
-    }
+		default: t = (promote ? W : F ); break;
+	}
 
 	switch(tb&15) {
 		case  0: D = t;  break;
@@ -479,7 +479,7 @@ INLINE void tfr( void )
 		case 13: /* 0 = t1 */ break;
 		case 14: if (promote) W = t; else E = t; break;
 		case 15: if (promote) W = t; else F = t; break;
-    }
+	}
 }
 
 #if macintosh
@@ -953,16 +953,16 @@ INLINE void addr_r( void )
 	UINT8	tb, z8 = 0;
 	UINT16	z16 = 0, r8;
 	UINT32	r16;
-	UINT8	*src8Reg, *dst8Reg;
-	UINT16	*src16Reg, *dst16Reg;
-	int		promote = FALSE, large = FALSE;
-	
-	
+	UINT8	*src8Reg = NULL, *dst8Reg = NULL;
+	UINT16	*src16Reg = NULL, *dst16Reg = NULL;
+	int 	promote = FALSE, large = FALSE;
+
+
 	IMMBYTE(tb);
 	if( (tb^(tb>>4)) & 0x08 )	/* HJB 990225: mixed 8/16 bit case? */
 	{
 		promote = TRUE;
-    }
+	}
 
 	switch(tb>>4) {
 		case  0: src16Reg = &D; large = TRUE;  break;
@@ -980,8 +980,8 @@ INLINE void addr_r( void )
 		case 12: if (promote) src16Reg = &z16; else src8Reg = &z8; break;
 		case 13: if (promote) src16Reg = &z16; else src8Reg = &z8; break;
 		case 14: if (promote) src16Reg = &W; else src8Reg = &E; break;
-		case 15: if (promote) src16Reg = &W; else src8Reg = &F; break;
-    }
+		default: if (promote) src16Reg = &W; else src8Reg = &F; break;
+	}
 
 	switch(tb&15) {
 		case  0: dst16Reg = &D; large = TRUE;  break;
@@ -999,8 +999,8 @@ INLINE void addr_r( void )
 		case 12: if (promote) dst16Reg = &z16; else dst8Reg = &z8; break;
 		case 13: if (promote) dst16Reg = &z16; else dst8Reg = &z8; break;
 		case 14: if (promote) dst16Reg = &W; else dst8Reg = &E; break;
-		case 15: if (promote) dst16Reg = &W; else dst8Reg = &F; break;
-    }
+		default: if (promote) dst16Reg = &W; else dst8Reg = &F; break;
+	}
 
 
 	if ( large )
@@ -1009,8 +1009,8 @@ INLINE void addr_r( void )
 		CLR_HNZVC;
 		SET_FLAGS16(*src16Reg,*dst16Reg,r16);
 		*dst16Reg = r16;
-		
-		if ( tb&15 == 5 )
+
+		if ( (tb&15) == 5 )
 		{
 			CHANGE_PC;
 		}
@@ -1023,7 +1023,7 @@ INLINE void addr_r( void )
 		/* SET_H(*src8Reg,*src8Reg,r8);*/ /*Experimentation prooved this not to be the case */
 		*dst8Reg = r8;
 	}
-	
+
 }
 
 #define MATH16( r1, r2 )			\
@@ -1486,10 +1486,9 @@ INLINE void swi( void )
 
 /* $1130 BAND */
 
-typedef union {
-	struct { UINT8 tReg:2, src:3, dst:3; } dBit;
-	UINT8	theValue;
-} decodePB;
+#define decodePB_tReg(n)	((n)&3)
+#define decodePB_src(n) 	(((n)>>2)&7)
+#define decodePB_dst(n) 	(((n)>>5)&7)
 
 static unsigned char *	regTable[4] = { &(CC), &(A), &(B), &(E) };
 
@@ -1497,144 +1496,144 @@ static UINT8	bitTable[] = { 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80 };
 
 INLINE void band( void )
 {
-	decodePB	pb;
+	UINT8		pb;
 	UINT16		db;
-	
-	IMMBYTE( (pb.theValue) );
-	
+
+	IMMBYTE(pb);
+
 	DIRBYTE(db);
-	
-	if ( ( *(regTable[pb.dBit.tReg]) & bitTable[pb.dBit.dst] ) && ( db & bitTable[pb.dBit.src] ))
-		*(regTable[pb.dBit.tReg]) |= bitTable[pb.dBit.dst];
+
+	if ( ( *(regTable[decodePB_tReg(pb)]) & bitTable[decodePB_dst(pb)] ) && ( db & bitTable[decodePB_src(pb)] ))
+		*(regTable[decodePB_tReg(pb)]) |= bitTable[decodePB_dst(pb)];
 	else
-		*(regTable[pb.dBit.tReg]) &= (~bitTable[pb.dBit.dst]);
+		*(regTable[decodePB_tReg(pb)]) &= (~bitTable[decodePB_dst(pb)]);
 }
 
 /* $1131 BIAND */
 
 INLINE void biand( void )
 {
-	decodePB	pb;
+	UINT8		pb;
 	UINT16		db;
-	
-	IMMBYTE( (pb.theValue) );
-	
+
+	IMMBYTE(pb);
+
 	DIRBYTE(db);
-	
-	if ( ( *(regTable[pb.dBit.tReg]) & bitTable[pb.dBit.dst] ) && ( (~db) & bitTable[pb.dBit.src] ))
-		*(regTable[pb.dBit.tReg]) |= bitTable[pb.dBit.dst];
+
+	if ( ( *(regTable[decodePB_tReg(pb)]) & bitTable[decodePB_dst(pb)] ) && ( (~db) & bitTable[decodePB_src(pb)] ))
+		*(regTable[decodePB_tReg(pb)]) |= bitTable[decodePB_dst(pb)];
 	else
-		*(regTable[pb.dBit.tReg]) &= (~bitTable[pb.dBit.dst]);
+		*(regTable[decodePB_tReg(pb)]) &= (~bitTable[decodePB_dst(pb)]);
 }
 
 /* $1132 BOR */
 
 INLINE void bor( void )
 {
-	decodePB	pb;
+	UINT8		pb;
 	UINT16		db;
-	
-	IMMBYTE( (pb.theValue) );
-	
+
+	IMMBYTE(pb);
+
 	DIRBYTE(db);
-	
-	if ( ( *(regTable[pb.dBit.tReg]) & bitTable[pb.dBit.dst] ) || ( db & bitTable[pb.dBit.src] ))
-		*(regTable[pb.dBit.tReg]) |= bitTable[pb.dBit.dst];
+
+	if ( ( *(regTable[decodePB_tReg(pb)]) & bitTable[decodePB_dst(pb)] ) || ( db & bitTable[decodePB_src(pb)] ))
+		*(regTable[decodePB_tReg(pb)]) |= bitTable[decodePB_dst(pb)];
 	else
-		*(regTable[pb.dBit.tReg]) &= (~bitTable[pb.dBit.dst]);
+		*(regTable[decodePB_tReg(pb)]) &= (~bitTable[decodePB_dst(pb)]);
 }
 
 /* $1133 BIOR */
 
 INLINE void bior( void )
 {
-	decodePB	pb;
+	UINT8		pb;
 	UINT16		db;
-	
-	IMMBYTE( (pb.theValue) );
-	
+
+	IMMBYTE(pb);
+
 	DIRBYTE(db);
-	
-	if ( ( *(regTable[pb.dBit.tReg]) & bitTable[pb.dBit.dst] ) || ( (~db) & bitTable[pb.dBit.src] ))
-		*(regTable[pb.dBit.tReg]) |= bitTable[pb.dBit.dst];
+
+	if ( ( *(regTable[decodePB_tReg(pb)]) & bitTable[decodePB_dst(pb)] ) || ( (~db) & bitTable[decodePB_src(pb)] ))
+		*(regTable[decodePB_tReg(pb)]) |= bitTable[decodePB_dst(pb)];
 	else
-		*(regTable[pb.dBit.tReg]) &= (~bitTable[pb.dBit.dst]);
+		*(regTable[decodePB_tReg(pb)]) &= (~bitTable[decodePB_dst(pb)]);
 }
 
 /* $1134 BEOR */
 
 INLINE void beor( void )
 {
-	decodePB	pb;
+	UINT8		pb;
 	UINT16		db;
 	UINT8		tReg, tMem;
-	
-	IMMBYTE( (pb.theValue) );
-	
+
+	IMMBYTE(pb);
+
 	DIRBYTE(db);
-	
-	tReg = *(regTable[pb.dBit.tReg]) & bitTable[pb.dBit.dst];
-	tMem = db & bitTable[pb.dBit.src];
-	
+
+	tReg = *(regTable[decodePB_tReg(pb)]) & bitTable[decodePB_dst(pb)];
+	tMem = db & bitTable[decodePB_src(pb)];
+
 	if ( (tReg || tMem ) && !(tReg && tMem) )
-		*(regTable[pb.dBit.tReg]) |= bitTable[pb.dBit.dst];
+		*(regTable[decodePB_tReg(pb)]) |= bitTable[decodePB_dst(pb)];
 	else
-		*(regTable[pb.dBit.tReg]) &= (~bitTable[pb.dBit.dst]);
+		*(regTable[decodePB_tReg(pb)]) &= (~bitTable[decodePB_dst(pb)]);
 }
 
 /* $1135 BIEOR */
 
 INLINE void bieor( void )
 {
-	decodePB	pb;
+	UINT8		pb;
 	UINT16		db;
 	UINT8		tReg, tMem;
-	
-	IMMBYTE( (pb.theValue) );
-	
+
+	IMMBYTE(pb);
+
 	DIRBYTE(db);
-	
-	tReg = *(regTable[pb.dBit.tReg]) & bitTable[pb.dBit.dst];
-	tMem = (~db) & bitTable[pb.dBit.src];
-	
+
+	tReg = *(regTable[decodePB_tReg(pb)]) & bitTable[decodePB_dst(pb)];
+	tMem = (~db) & bitTable[decodePB_src(pb)];
+
 	if ( (tReg || tMem ) && !(tReg && tMem) )
-		*(regTable[pb.dBit.tReg]) |= bitTable[pb.dBit.dst];
+		*(regTable[decodePB_tReg(pb)]) |= bitTable[decodePB_dst(pb)];
 	else
-		*(regTable[pb.dBit.tReg]) &= (~bitTable[pb.dBit.dst]);
+		*(regTable[decodePB_tReg(pb)]) &= (~bitTable[decodePB_dst(pb)]);
 }
 
 /* $1133 LDBT */
 
 INLINE void ldbt( void )
 {
-	decodePB	pb;
+	UINT8		pb;
 	UINT16		db;
-	
-	IMMBYTE( (pb.theValue) );
-	
+
+	IMMBYTE(pb);
+
 	DIRBYTE(db);
-	
-	if ( ( db & bitTable[pb.dBit.src] ) )
-		*(regTable[pb.dBit.tReg]) |= bitTable[pb.dBit.dst];
+
+	if ( ( db & bitTable[decodePB_src(pb)] ) )
+		*(regTable[decodePB_tReg(pb)]) |= bitTable[decodePB_dst(pb)];
 	else
-		*(regTable[pb.dBit.tReg]) &= (~bitTable[pb.dBit.dst]);
+		*(regTable[decodePB_tReg(pb)]) &= (~bitTable[decodePB_dst(pb)]);
 }
 
 /* $1134 STBT */
 
 INLINE void stbt( void )
 {
-	decodePB	pb;
+	UINT8		pb;
 	UINT16		db;
-	
-	IMMBYTE( (pb.theValue) );
-	
+
+	IMMBYTE(pb);
+
 	DIRBYTE(db);
-	
-	if ( ( *(regTable[pb.dBit.tReg]) & bitTable[pb.dBit.dst] ) )
-		WM( EAD, db | bitTable[pb.dBit.src] );
+
+	if ( ( *(regTable[decodePB_tReg(pb)]) & bitTable[decodePB_dst(pb)] ) )
+		WM( EAD, db | bitTable[decodePB_src(pb)] );
 	else
-		WM( EAD, db & (~bitTable[pb.dBit.src]) );
+		WM( EAD, db & (~bitTable[decodePB_src(pb)]) );
 }
 
 /* $103F SWI2 absolute indirect ----- */
@@ -2735,7 +2734,7 @@ INLINE void ldx_im( void )
 INLINE void ldq_im( void )
 {
 	PAIR	q;
-	
+
 	IMMLONG(q);
 	CLR_NZV;
 	SET_NZ32(q.d);
@@ -3045,7 +3044,7 @@ INLINE void muld_di( void )
 
 	DIRWORD(t);
 	q.d = (signed short) D * (signed short)t.w.l;
-	
+
 	D = q.w.h;
 	W = q.w.l;
 	/* Warning: Set CC */
@@ -3071,7 +3070,7 @@ INLINE void divq_di( void )
 
 	q.w.h = D;
 	q.w.l = W;
-	
+
 	DIRWORD(t);
 	v = (signed long) q.d / (signed short) t.w.l;
 	W = (signed long) q.d % (signed short) t.w.l;
@@ -3084,7 +3083,7 @@ INLINE void divq_di( void )
 INLINE void ldq_di( void )
 {
 	PAIR	q;
-	
+
 	DIRLONG(q);
 	CLR_NZV;
 	SET_NZ32(q.d);
@@ -3113,10 +3112,10 @@ INLINE void stx_di( void )
 INLINE void stq_di( void )
 {
 	PAIR	q;
-	
+
 	q.w.h = D;
 	q.w.l = W;
-	
+
 	CLR_NZV;
 	SET_NZ32(q.d);
 	DIRECT;
@@ -3385,7 +3384,7 @@ INLINE void muld_ix( void )
 	fetch_effective_address();
 	t=RM16(EAD);
 	q.d = (signed short) D * (signed short)t;
-	
+
 	D = q.w.h;
 	W = q.w.l;
 
@@ -3410,7 +3409,7 @@ INLINE void divq_ix( void )
 {
 	UINT16	t;
 	PAIR	q;
-	
+
 	q.w.h = D;
 	q.w.l = W;
 
@@ -3426,7 +3425,7 @@ INLINE void divq_ix( void )
 INLINE void ldq_ix( void )
 {
 	PAIR	q;
-	
+
 	fetch_effective_address();
 	q.d=RM32(EAD);
 	CLR_NZV;
@@ -3457,10 +3456,10 @@ INLINE void stx_ix( void )
 INLINE void stq_ix( void )
 {
 	PAIR	q;
-	
+
 	q.w.h = D;
 	q.w.l = W;
-	
+
 	fetch_effective_address();
 	CLR_NZV;
 	SET_NZ32(q.d);
@@ -3714,10 +3713,10 @@ INLINE void muld_ex( void )
 
 	EXTWORD(t);
 	q.d = (signed short) D * (signed short)t.w.l;
-	
+
 	D = q.w.h;
 	W = q.w.l;
-	
+
 	/* Warning: Set CC */
 }
 
@@ -3740,7 +3739,7 @@ INLINE void divq_ex( void )
 
 	q.w.h = D;
 	q.w.l = W;
-	
+
 	EXTWORD(t);
 	D = (signed long) q.d / (signed short) t.w.l;
 	W = (signed long) q.d % (signed short) t.w.l;
@@ -3752,11 +3751,11 @@ INLINE void divq_ex( void )
 INLINE void ldq_ex( void )
 {
 	PAIR	q;
-	
+
 	EXTLONG(q);
 	CLR_NZV;
 	SET_NZ32(q.d);
-	
+
 	D = q.w.h;
 	W = q.w.l;
 }
@@ -3782,10 +3781,10 @@ INLINE void stx_ex( void )
 INLINE void stq_ex( void )
 {
 	PAIR	q;
-	
+
 	q.w.h = D;
 	q.w.l = W;
-	
+
 	CLR_NZV;
 	SET_NZ32(q.d);
 	EXTENDED;
