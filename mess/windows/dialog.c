@@ -996,7 +996,7 @@ int win_dialog_add_portselect(dialog_box *dialog, struct InputPort *port, RECT *
 	{
 		dialog_new_control(di, &x, &y);
 
-		if (dialog_write_item(di, WS_CHILD | WS_VISIBLE | SS_LEFT, x, y, 
+		if (dialog_write_item(di, WS_CHILD | WS_VISIBLE | SS_LEFT | SS_NOPREFIX, x, y, 
 				dialog->layout->label_width, DIM_NORMAL_ROW_HEIGHT, port_name, DLGITEM_STATIC, NULL))
 			return 1;
 		x += dialog->layout->label_width + DIM_HORIZONTAL_SPACING;

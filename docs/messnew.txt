@@ -41,6 +41,9 @@ User Interface Changes:
   scrolling to malfunction if the mouse wheel was used.  (bug #539) [Nate
   Woods]
 
+- [Windows] Fixed a bug that caused input items with ampersands in them to
+  have the ampersands dropped.  (bug #541) [Nate Woods]
+
 
 
 Imgtool Changes:
