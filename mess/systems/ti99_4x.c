@@ -791,8 +791,8 @@ static const struct IODevice io_ti99_4[] =
 #define io_ti99_4ae io_ti99_4a
 
 /*	  YEAR	NAME	  PARENT		MACHINE 	  INPUT    INIT   COMPANY			   FULLNAME */
-COMP( 1978, ti99_4,   0,			ti99_4_60hz,  ti99_4,  0,	  "Texas Instruments", "TI99/4 Home Computer (60 Hz)" )
-COMP( 1980, ti99_4e,  ti99_4,		ti99_4_50hz,  ti99_4,  0,	  "Texas Instruments", "TI99/4 Home Computer (50 Hz)" )
-COMP( 1981, ti99_4a,  0/*ti99_4*/,  ti99_4a_60hz, ti99_4a, 0,     "Texas Instruments", "TI99/4A Home Computer (60 Hz)" )
-COMP( 1981, ti99_4ae, ti99_4a,		ti99_4a_50hz, ti99_4a, 0,	  "Texas Instruments", "TI99/4A Home Computer (50 Hz)" )
+COMP( 1978, ti99_4,   0,			ti99_4_60hz,  ti99_4,  0,	  "Texas Instruments", "TI99/4 Home Computer (US)" )
+COMP( 1980, ti99_4e,  ti99_4,		ti99_4_50hz,  ti99_4,  0,	  "Texas Instruments", "TI99/4 Home Computer (Europe)" )
+COMP( 1981, ti99_4a,  0/*ti99_4*/,  ti99_4a_60hz, ti99_4a, 0,     "Texas Instruments", "TI99/4A Home Computer (US)" )
+COMP( 1981, ti99_4ae, ti99_4a,		ti99_4a_50hz, ti99_4a, 0,	  "Texas Instruments", "TI99/4A Home Computer (Europe)" )
 
