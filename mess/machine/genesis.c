@@ -1119,20 +1119,20 @@ READ16_HANDLER( genesis_68000_z80_read )
 
 	if (!genesis_68k_has_z80_bus)
 	{
-		printf("Attempting to read Z80 without bus!\n");
+		logerror("Attempting to read Z80 without bus!\n");
 		return 0x00;
 	}
 
 	if ((offset >= 0) && (offset <= 0x3fff))
 	{
 		offset &=0x1fff; // due to mirror
-	//	printf("Read Mask %04x from Z80 offset %04x\n", mem_mask, offset);
+	//	logerror("Read Mask %04x from Z80 offset %04x\n", mem_mask, offset);
 		return memory_region(REGION_CPU2)[offset^1] | (memory_region(REGION_CPU2)[offset] <<8);
 
 	}
 	else if ((offset>=0x4000) && (offset<=0x5fff))
 	{
-//		printf("Unhandled 68k->Z80 YM read\n");
+//		logerror("Unhandled 68k->Z80 YM read\n");
 		switch (offset & 3)
 		{
 			case 0:
@@ -1148,7 +1148,7 @@ READ16_HANDLER( genesis_68000_z80_read )
 	}
 	else
 	{
-		printf("Unhandled 68k->Z80 read\n");
+		logerror("Unhandled 68k->Z80 read\n");
 	}
 
 	return 0x00;
@@ -1161,7 +1161,7 @@ WRITE16_HANDLER( genesis_68000_z80_write )
 	if (!genesis_68k_has_z80_bus)
 	{
 		/* james pond 2 attempts this?, should it? */
-	//	printf("Attempting to write Z80 without bus!\n");
+	//	logerror("Attempting to write Z80 without bus!\n");
 		return;
 	}
 
@@ -1169,11 +1169,11 @@ WRITE16_HANDLER( genesis_68000_z80_write )
 	{
 		offset &=0x1fff; // due to mirror
 
-//		printf("Write Data %04x Mask %04x to Z80 offset %04x\n", data, mem_mask, offset);
+//		logerror("Write Data %04x Mask %04x to Z80 offset %04x\n", data, mem_mask, offset);
 
 		if ((ACCESSING_LSB) && (ACCESSING_MSB))
 		{
-		//	printf("word access wrote to z80!\n");
+		//	logerror("word access wrote to z80!\n");
 			// ignore LSB
 			memory_region(REGION_CPU2)[offset] = (data & 0xff00)>>8;
 
@@ -1202,13 +1202,13 @@ WRITE16_HANDLER( genesis_68000_z80_write )
 	}
 	else
 	{
-		printf("Unhandled 68k->Z80 write\n");
+		logerror("Unhandled 68k->Z80 write\n");
 	}
 }
 
 READ16_HANDLER( genesis_68000_z80_busreq_r )
 {
-//	printf("genesis_68000_z80_busreq_r\n");
+//	logerror("genesis_68000_z80_busreq_r\n");
 	if ((genesis_68k_has_z80_bus) && (!genesis_z80_is_reset)) return 0x0000;
 	else return 0x0100;
 
@@ -1216,13 +1216,13 @@ READ16_HANDLER( genesis_68000_z80_busreq_r )
 
 WRITE16_HANDLER( genesis_68000_z80_busreq_w )
 {
-//	printf("genesis_68000_z80_busreq_w %04x",data);
+//	logerror("genesis_68000_z80_busreq_w %04x",data);
 	// write 0100 requests z80 bus (z80 paused)
 	if (data == 0x0000)
 	{
 		cpunum_set_input_line(1, INPUT_LINE_HALT,  CLEAR_LINE);
 		genesis_68k_has_z80_bus = 0;
-//			printf("-- z80 running %04x\n",data);
+//			logerror("-- z80 running %04x\n",data);
 
 	}
 
@@ -1230,7 +1230,7 @@ WRITE16_HANDLER( genesis_68000_z80_busreq_w )
 	{
 		cpunum_set_input_line(1, INPUT_LINE_HALT,  ASSERT_LINE);
 		genesis_68k_has_z80_bus = 1;
-//			printf("-- z80 stopped %04x\n",data);
+//			logerror("-- z80 stopped %04x\n",data);
 
 
 	}
@@ -1239,7 +1239,7 @@ WRITE16_HANDLER( genesis_68000_z80_busreq_w )
 
 WRITE16_HANDLER ( genesis_68000_z80_reset_w )
 {
-	//printf("genesis_68000_z80_reset_w %04x\n",data);
+	//logerror("genesis_68000_z80_reset_w %04x\n",data);
 	// write 0 set reset line? (pause)
 	// write 1 clear reset line? (run)
 
@@ -1305,14 +1305,14 @@ READ16_HANDLER ( genesis_68000_io_r )
 	int paddata,p;
 	int inlines, outlines;
 
-//printf("I/O read .. offset %02x data %02x\n",offset,genesis_io_ram[offset]);
+//logerror("I/O read .. offset %02x data %02x\n",offset,genesis_io_ram[offset]);
 
 	switch (offset)
 	{
 		case 0x00: // version register
 			return genesis_io_ram[offset];
 		case 0x01:
-//			printf("I/O Data A read \n");
+//			logerror("I/O Data A read \n");
 
 /*
                 When TH=0          When TH=1
@@ -1342,7 +1342,7 @@ READ16_HANDLER ( genesis_68000_io_r )
 			inlines = (genesis_io_ram[0x04]^0xff)&0x7f;
 			outlines = (genesis_io_ram[0x04] | 0x80);
 
-//			printf ("ioram %02x inlines %02x paddata %02x outlines %02x othdata %02x\n",genesis_io_ram[0x04], inlines, paddata, outlines, genesis_io_ram[0x01]);
+//			logerror ("ioram %02x inlines %02x paddata %02x outlines %02x othdata %02x\n",genesis_io_ram[0x04], inlines, paddata, outlines, genesis_io_ram[0x01]);
 
 
 
@@ -1353,7 +1353,7 @@ READ16_HANDLER ( genesis_68000_io_r )
 
 			return genesis_io_ram[offset];
 		case 0x02:
-//			printf("I/O Data B read \n");
+//			logerror("I/O Data B read \n");
 
 			p = readinputport(1);
 			if (genesis_io_ram[offset]&0x40)
@@ -1374,7 +1374,7 @@ READ16_HANDLER ( genesis_68000_io_r )
 			return p | p <<8;
 
 		case 0x03:
-//			printf("I/O Data C read \n");
+//			logerror("I/O Data C read \n");
 			return genesis_io_ram[offset];
 
 		case 0x04:
@@ -1390,7 +1390,7 @@ READ16_HANDLER ( genesis_68000_io_r )
 		case 0x0e:
 		case 0x0f:
 		default:
-			printf("Unhandled I/O read \n");
+			logerror("Unhandled I/O read \n");
 			return genesis_io_ram[offset];
 
 	}
@@ -1448,23 +1448,23 @@ $A1001F 	Port C serial contro
 WRITE16_HANDLER ( genesis_68000_io_w )
 {
 
-//	printf("I/O write offset %02x data %04x\n",offset,data);
+//	logerror("I/O write offset %02x data %04x\n",offset,data);
 
 	switch (offset)
 	{
 		case 0x00:  // Version (read only?)
-			printf("attempted write to version register?!\n");
+			logerror("attempted write to version register?!\n");
 			break;
 		case 0x01: // Port A data
-//			printf("write to data port A with control register A %02x step1 %02x step2 %02x\n", genesis_io_ram[0x04], (genesis_io_ram[0x01] & !((genesis_io_ram[0x04]&0x7f)|0x80)),  (data & ((genesis_io_ram[0x04]&0x7f)|0x80))   );
+//			logerror("write to data port A with control register A %02x step1 %02x step2 %02x\n", genesis_io_ram[0x04], (genesis_io_ram[0x01] & !((genesis_io_ram[0x04]&0x7f)|0x80)),  (data & ((genesis_io_ram[0x04]&0x7f)|0x80))   );
 			genesis_io_ram[0x01] = (genesis_io_ram[0x01] & ((genesis_io_ram[0x04]^0xff)|0x80)) | (data & ((genesis_io_ram[0x04]&0x7f)|0x80));
 			break;
 		case 0x02: // Port B data
-//			printf("write to data port B with control register B %02x\n", genesis_io_ram[0x05]);
+//			logerror("write to data port B with control register B %02x\n", genesis_io_ram[0x05]);
 			genesis_io_ram[0x02] = (genesis_io_ram[0x02] & ((genesis_io_ram[0x05]^0xff)|0x80)) | (data & ((genesis_io_ram[0x05]&0x7f)|0x80));
 			break;
 		case 0x03: // Port C data
-//			printf("write to data port C with control register C %02x\n", genesis_io_ram[0x06]);
+//			logerror("write to data port C with control register C %02x\n", genesis_io_ram[0x06]);
 			genesis_io_ram[0x03] = (genesis_io_ram[0x03] & ((genesis_io_ram[0x06]^0xff)|0x80)) | (data & ((genesis_io_ram[0x06]&0x7f)|0x80));
 			break;
 		case 0x04: // Port A control
@@ -1489,14 +1489,14 @@ WRITE16_HANDLER ( genesis_68000_io_w )
 		case 0x0f:
 		default:
 			genesis_io_ram[offset]=data;
-			printf("unhandled IO write (offset %02x data %02x)\n",offset,data);
+			logerror("unhandled IO write (offset %02x data %02x)\n",offset,data);
 			break;
 	}
 }
 
 data16_t genesis_vdp_data_read ( genvdp *current_vdp )
 {
-//	printf("Read VDP Data Port\n");
+//	logerror("Read VDP Data Port\n");
 	/* clear command pending flag */
 	data16_t retdata;
 
@@ -1518,7 +1518,7 @@ data16_t genesis_vdp_data_read ( genvdp *current_vdp )
 			break;
 
 		default:
-			printf("illegal VDP data port read\n");
+			logerror("illegal VDP data port read\n");
 	}
 	current_vdp -> genesis_vdp_cmdaddr += current_vdp -> genesis_vdp_regs[0x0f];
 
@@ -1528,7 +1528,7 @@ data16_t genesis_vdp_data_read ( genvdp *current_vdp )
 data16_t genesis_vdp_control_read ( genvdp *current_vdp )
 {
 	int retvalue;
-	//printf("Read VDP Control Port (Status Register)\n");
+	//logerror("Read VDP Control Port (Status Register)\n");
 	/* clear command pending flag */
 	current_vdp -> genesis_vdp_command_pending = 0;
 
@@ -1572,13 +1572,13 @@ data16_t genesis_vdp_hvcounter_read ( genvdp *current_vdp )
 
 //	vcnt -=1;
 
-//	if (vcnt > 0xe0) printf("HV read %04x\n",vcnt);
+//	if (vcnt > 0xe0) logerror("HV read %04x\n",vcnt);
 
 	if (vcnt>0xea) vcnt -=5;
 
 
 
-//	printf("Read from HV Counters\n");
+//	logerror("Read from HV Counters\n");
 	return (((vcnt))&0xff)<<8|(cpu_gethorzbeampos()&0xff);
 }
 
@@ -1588,7 +1588,7 @@ data16_t genesis_vdp_read ( genvdp *current_vdp, offs_t offset, data16_t mem_mas
 
 	retdata = 0x00;
 
-//	printf("Genesis VDP Read %06x, %04x\n", offset, mem_mask);
+//	logerror("Genesis VDP Read %06x, %04x\n", offset, mem_mask);
 
 
 
@@ -1615,7 +1615,7 @@ data16_t genesis_vdp_read ( genvdp *current_vdp, offs_t offset, data16_t mem_mas
 		case 0x12: // SN76489 PSG (mirror)
 		case 0x14: // SN76489 PSG (mirror)
 		case 0x16: // SN76489 PSG (mirror)
-			printf("Read from SN76489 PSG (machine lockup!)\n");
+			logerror("Read from SN76489 PSG (machine lockup!)\n");
 			retdata = 0x00;
 			break;
 
@@ -1623,7 +1623,7 @@ data16_t genesis_vdp_read ( genvdp *current_vdp, offs_t offset, data16_t mem_mas
 		case 0x1a: // nothing
 		case 0x1c: // nothing
 		case 0x1e: // nothing
-			printf("Read from unused VDP addresses\n"); break;
+			logerror("Read from unused VDP addresses\n"); break;
 			retdata = 0x00;
 			break;
 
@@ -1633,7 +1633,7 @@ data16_t genesis_vdp_read ( genvdp *current_vdp, offs_t offset, data16_t mem_mas
 
 void genesis_vdp_data_write ( genvdp *current_vdp, data16_t data )
 {
-//	printf("Genesis VDP DATA Write  DATA: %04x CMDMODE: %02x OFFSET: %06x INC %02x\n", data, current_vdp -> genesis_vdp_cmdmode,  current_vdp -> genesis_vdp_cmdaddr,  current_vdp -> genesis_vdp_regs[0x0f] );
+//	logerror("Genesis VDP DATA Write  DATA: %04x CMDMODE: %02x OFFSET: %06x INC %02x\n", data, current_vdp -> genesis_vdp_cmdmode,  current_vdp -> genesis_vdp_cmdaddr,  current_vdp -> genesis_vdp_regs[0x0f] );
 	/* clear command pending flag */
 	current_vdp -> genesis_vdp_command_pending = 0;
 
@@ -1649,7 +1649,7 @@ void genesis_vdp_data_write ( genvdp *current_vdp, data16_t data )
 		  (current_vdp -> genesis_vdp_regs[0x14] << 8)  |
 		  (current_vdp -> genesis_vdp_regs[0x13] << 0);
 
-		printf("fill addr %04x data %04x count %04x\n", current_vdp -> genesis_vdp_cmdaddr, data, current_vdp -> dma_transfer_count);
+		logerror("fill addr %04x data %04x count %04x\n", current_vdp -> genesis_vdp_cmdaddr, data, current_vdp -> dma_transfer_count);
 
 		for (i = 0; i < current_vdp -> dma_transfer_count;i++)
 		{
@@ -1695,7 +1695,7 @@ void genesis_vdp_set_register ( genvdp *current_vdp, data16_t data )
 
 	current_vdp -> genesis_vdp_regs[reg]=val;
 
-//	printf("Genesis VDP Register %02x set to %02x\n", reg,  current_vdp -> genesis_vdp_regs[reg]);
+//	logerror("Genesis VDP Register %02x set to %02x\n", reg,  current_vdp -> genesis_vdp_regs[reg]);
 
 	/* clear address (maybe?) + mode flags */
 	current_vdp -> genesis_vdp_cmdmode = 0;
@@ -1779,7 +1779,7 @@ void genesis_vdp_do_dma ( genvdp *current_vdp )
 		if ((sourceaddr >=0) &&  (sourceaddr <=0x3fffff))
 		{
 			// read from rom
-			//printf("DMA FROM ROM!\n");
+			//logerror("DMA FROM ROM!\n");
 			readdata = ((data16_t*)memory_region(REGION_CPU1))[sourceaddr>>1];
 		}
 
@@ -1896,7 +1896,7 @@ void genesis_68k_xram_dma_set ( genvdp *current_vdp )
 
 	if (current_vdp ->dma_transfer_count ==0)
 	{
-		printf("zero length dma!\n");
+		logerror("zero length dma!\n");
 		current_vdp ->dma_transfer_count = 0xffff;
 	}
 
@@ -1906,22 +1906,22 @@ void genesis_68k_xram_dma_set ( genvdp *current_vdp )
 	{
 		case 0x01:
 			current_vdp -> dma_transfer_type = 1;
-	//		printf("DMA set 68k -> VRAM source %06x count %06x to %06x\n", (current_vdp -> dma_transfer_start), current_vdp -> dma_transfer_count, current_vdp -> genesis_vdp_cmdaddr );
+	//		logerror("DMA set 68k -> VRAM source %06x count %06x to %06x\n", (current_vdp -> dma_transfer_start), current_vdp -> dma_transfer_count, current_vdp -> genesis_vdp_cmdaddr );
 			break;
 
 		case 0x03:
 			current_vdp -> dma_transfer_type = 3;
-	//		printf("DMA set 68k -> CRAM source %06x count %06x to %06x\n", (current_vdp -> dma_transfer_start), current_vdp -> dma_transfer_count, current_vdp -> genesis_vdp_cmdaddr );
+	//		logerror("DMA set 68k -> CRAM source %06x count %06x to %06x\n", (current_vdp -> dma_transfer_start), current_vdp -> dma_transfer_count, current_vdp -> genesis_vdp_cmdaddr );
 			break;
 
 		case 0x05:
 			current_vdp -> dma_transfer_type = 5;
-	//		printf("DMA set 68k -> VSRAM source %06x count %06x to %06x\n", (current_vdp -> dma_transfer_start), current_vdp -> dma_transfer_count, current_vdp -> genesis_vdp_cmdaddr );
+	//		logerror("DMA set 68k -> VSRAM source %06x count %06x to %06x\n", (current_vdp -> dma_transfer_start), current_vdp -> dma_transfer_count, current_vdp -> genesis_vdp_cmdaddr );
 			break;
 
 		default:
 			current_vdp -> dma_transfer_type = 0;
-			printf("DMA set 68k -> INVALID source %06x count %06x to %06x\n", (current_vdp -> dma_transfer_start), current_vdp -> dma_transfer_count, current_vdp -> genesis_vdp_cmdaddr );
+			logerror("DMA set 68k -> INVALID source %06x count %06x to %06x\n", (current_vdp -> dma_transfer_start), current_vdp -> dma_transfer_count, current_vdp -> genesis_vdp_cmdaddr );
 			break;
 	}
 
@@ -1946,13 +1946,13 @@ void genesis_vdp_check_dma ( genvdp *current_vdp )
 			break;
 
 		case 0x80:
-			printf("Vram fill!\n");
+			logerror("Vram fill!\n");
 			current_vdp -> genesis_vdp_fill_mode = 1; // do we need to set .. or can we check these bits later? ..
 			// vram fill
 			break;
 
 		case 0xc0:
-			printf("Vram copy!\n");
+			logerror("Vram copy!\n");
 			genesis_68k_set_vram_copy( current_vdp );
 			// vram copy
 			break;
@@ -1972,7 +1972,7 @@ void genesis_vdp_set_cmdmode_cmdaddr ( genvdp *current_vdp, data16_t data )
 		current_vdp -> genesis_vdp_cmdaddr = (current_vdp -> genesis_vdp_cmdaddr & 0x3fff) | addrpart;
 
 //		logerror("Second Part of VDP Command / Address set %02x %08x\n", current_vdp -> genesis_vdp_cmdmode,  current_vdp -> genesis_vdp_cmdaddr);
-//		printf("Registers 21: %02x 22: %02x 23: %02x\n",current_vdp -> genesis_vdp_regs[21], current_vdp -> genesis_vdp_regs[22], current_vdp -> genesis_vdp_regs[23]);
+//		logerror("Registers 21: %02x 22: %02x 23: %02x\n",current_vdp -> genesis_vdp_regs[21], current_vdp -> genesis_vdp_regs[22], current_vdp -> genesis_vdp_regs[23]);
 		//what_mode ( current_vdp );
 
 		/* if bit 0x20 of the mode is set we have some kind of DMA transfer request */
@@ -1986,7 +1986,7 @@ void genesis_vdp_set_cmdmode_cmdaddr ( genvdp *current_vdp, data16_t data )
 		current_vdp -> genesis_vdp_cmdmode = (current_vdp -> genesis_vdp_cmdmode &   0x3c) | modepart;
 		current_vdp -> genesis_vdp_cmdaddr = (current_vdp -> genesis_vdp_cmdaddr & 0xc000) | addrpart;
 
-//		printf("First Part of VDP Command / Address set %02x %08x\n", current_vdp -> genesis_vdp_cmdmode,  current_vdp -> genesis_vdp_cmdaddr);
+//		logerror("First Part of VDP Command / Address set %02x %08x\n", current_vdp -> genesis_vdp_cmdmode,  current_vdp -> genesis_vdp_cmdaddr);
 	}
 }
 
@@ -2003,7 +2003,7 @@ void genesis_vdp_control_write ( genvdp *current_vdp, data16_t data )
 {
 	if (current_vdp -> genesis_vdp_command_pending) // second part of a command word
 	{
-//			printf("Genesis VDP command word second part %04x\n",data);
+//			logerror("Genesis VDP command word second part %04x\n",data);
 			genesis_vdp_set_cmdmode_cmdaddr(current_vdp,data);
 			current_vdp -> genesis_vdp_command_pending = 0;
 	}
@@ -2012,13 +2012,13 @@ void genesis_vdp_control_write ( genvdp *current_vdp, data16_t data )
 		/* if 10xxxxxx xxxxxxxx this is a register setting command */
 		if ((data & 0xc000) == 0x8000)
 		{
-//			printf("Genesis VDP set register %04x\n",data);
+//			logerror("Genesis VDP set register %04x\n",data);
 			genesis_vdp_set_register(current_vdp,data&0x1fff);
 			// set register
 		}
 		else
 		{
-//			printf("Genesis VDP command word first part %04x\n",data);
+//			logerror("Genesis VDP command word first part %04x\n",data);
 			genesis_vdp_set_cmdmode_cmdaddr(current_vdp,data);
 			current_vdp -> genesis_vdp_command_pending = 1;
 		}
@@ -2027,7 +2027,7 @@ void genesis_vdp_control_write ( genvdp *current_vdp, data16_t data )
 
 void genesis_vdp_write ( genvdp *current_vdp, offs_t offset, data16_t data, data16_t mem_mask )
 {
-//	if ((offset!=0x00) && (offset !=0x02)) printf("Genesis VDP Write %06x, %04x, %04x\n", offset, data, mem_mask);
+//	if ((offset!=0x00) && (offset !=0x02)) logerror("Genesis VDP Write %06x, %04x, %04x\n", offset, data, mem_mask);
 
 	switch (offset)
 	{
@@ -2051,7 +2051,7 @@ void genesis_vdp_write ( genvdp *current_vdp, offs_t offset, data16_t data, data
 		case 0x0a: // HV Counters (mirror)
 		case 0x0c: // HV Counters (mirror)
 		case 0x0e: // HV Counters (mirror)
-			printf("Attempting to write to HV Counters (machine lockup!)\n");
+			logerror("Attempting to write to HV Counters (machine lockup!)\n");
 			break;
 
 		case 0x10: // SN76489 PSG
@@ -2069,12 +2069,12 @@ void genesis_vdp_write ( genvdp *current_vdp, offs_t offset, data16_t data, data
 
 		case 0x18: // nothing
 		case 0x1a: // nothing
-			printf("Write to VDP offset 0x18 / 0x1a, no effect!\n"); break;
+			logerror("Write to VDP offset 0x18 / 0x1a, no effect!\n"); break;
 			break;
 
 		case 0x1c: // corrupt VDP state
 		case 0x1e: // corrupt VDP state (mirror)
-			printf("Write to VDP offset 0x1c / 0x1e, see http://cgfm2.emuviews.com/txt/newreg.txt \n"); break;
+			logerror("Write to VDP offset 0x1c / 0x1e, see http://cgfm2.emuviews.com/txt/newreg.txt \n"); break;
 			break;
 	}
 
@@ -2106,7 +2106,7 @@ READ16_HANDLER( genesis_68000_vdp_r )
 	offset <<= 1; // convert word offset to byte offset;
 	if (offset & 0x2700e0) // throw out invalid offsets (see cgfm docs)
 	{
-		printf ("invalid vdp read offset!\n");
+		logerror ("invalid vdp read offset!\n");
 		return 0x00;
 	}
 	offset &= 0x1f; // only low 5 bits of offset matter
@@ -2122,7 +2122,7 @@ WRITE16_HANDLER( genesis_68000_vdp_w )
 
 	if (offset & 0x2700e0) // throw out invalid offsets (see cgfm docs)
 	{
-		printf ("invalid vdp write offset!\n");
+		logerror ("invalid vdp write offset!\n");
 		return;
 	}
 	offset &= 0x1f; // only low 5 bits of offset matter
@@ -2143,12 +2143,12 @@ WRITE8_HANDLER( genesis_z80_vdp_w )
 	int mem_mask;
 	int dat;
 
-//	printf("VDP via z80 write address offset %02x data %02x\n",offset,data);
+//	logerror("VDP via z80 write address offset %02x data %02x\n",offset,data);
 
 
 	if (offset > 0x1f )
 	{
-	//	printf("illegal vdp via z80 write address\n");
+	//	logerror("illegal vdp via z80 write address\n");
 	}
 
 	if (offset & 1)
@@ -2162,7 +2162,7 @@ WRITE8_HANDLER( genesis_z80_vdp_w )
 		dat = (data <<8)&0xff00;
 	}
 
-//	if (offset > 0x10) printf("GEN SN %02x %02x\n",offset,data);
+//	if (offset > 0x10) logerror("GEN SN %02x %02x\n",offset,data);
 
 	genesis_vdp_write( &genesis_vdp, offset&0x1e, dat, mem_mask );
 }
@@ -2174,7 +2174,7 @@ WRITE8_HANDLER( genesis_z80_bank_sel_w )
 
 
 	genesis_z80_bank_partial |= ((data &0x01) << genesis_z80_bank_step);
-//	printf("bank bit %02x set %02x %02x partial %08x\n", genesis_z80_bank_step , data, data &1, genesis_z80_bank_partial);
+//	logerror("bank bit %02x set %02x %02x partial %08x\n", genesis_z80_bank_step , data, data &1, genesis_z80_bank_partial);
 
 	genesis_z80_bank_step++;
 
@@ -2183,7 +2183,7 @@ WRITE8_HANDLER( genesis_z80_bank_sel_w )
 		genesis_z80_bank_addr = genesis_z80_bank_partial << 15;
 		genesis_z80_bank_partial = 0;
 		genesis_z80_bank_step = 0;
-//		printf("z80 68k bank set to %08x\n", genesis_z80_bank_addr);
+//		logerror("z80 68k bank set to %08x\n", genesis_z80_bank_addr);
 
 	}
 
@@ -2199,20 +2199,20 @@ WRITE8_HANDLER( genesis_z80_bank_sel_w )
 	data32_t addr;
 //	data16_t dat;
 
-//	printf("z80 PC %04x accessing  68k space %08x offset %04x\n", activecpu_get_pc(), genesis_z80_bank_addr, offset);
+//	logerror("z80 PC %04x accessing  68k space %08x offset %04x\n", activecpu_get_pc(), genesis_z80_bank_addr, offset);
 
 	addr = genesis_z80_bank_addr | offset;
 
 	if ((addr>=0) && (addr<=0x3fffff))
 	{
-//		printf("from rom!\n");
+//		logerror("from rom!\n");
 		return memory_region(REGION_CPU1)[BYTE_XOR(addr)];
 
 
 	}
 	else
 	{
-	//	printf("unhandled!\n");
+	//	logerror("unhandled!\n");
 	}
 
 	return 0x00;
@@ -2221,7 +2221,7 @@ WRITE8_HANDLER( genesis_z80_bank_sel_w )
 WRITE8_HANDLER ( z80_ym2612_w )
 {
 	offset &=0x03;
-//	printf("z80 PC %04x accessing z80_ym2612_w offset %02x data %08x\n",  activecpu_get_pc(), offset, data);
+//	logerror("z80 PC %04x accessing z80_ym2612_w offset %02x data %08x\n",  activecpu_get_pc(), offset, data);
 
 	switch (offset)
 	{
@@ -2280,7 +2280,7 @@ void genesis_init_frame(void)
 /* this (and the hv counter stuff) appear to be wrong .. various glitches .. rasters not working right in many games */
 INTERRUPT_GEN( genesis_interrupt )
 {
-//	printf("interrupt %d\n",cpu_getiloops());
+//	logerror("interrupt %d\n",cpu_getiloops());
 	int scan, irqlevel = 0;
 	scan = genesis_vdp.sline = 261 - cpu_getiloops();
 
@@ -2328,7 +2328,7 @@ INTERRUPT_GEN( genesis_interrupt )
 
 MACHINE_INIT ( genesis )
 {
-//	printf("MACHINE_INIT ( genesis )\n");
+//	logerror("MACHINE_INIT ( genesis )\n");
 	/* prevent the z80 from running (code must be uploaded by the 68k first) */
 	cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE);
 	genesis_z80_is_reset = 1;

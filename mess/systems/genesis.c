@@ -275,7 +275,7 @@ DEVICE_LOAD(genesis_cart)
 
 		if (!tmpROMnew)
 		{
-			printf("Memory allocation failed reading roms!\n");
+			logerror("Memory allocation failed reading roms!\n");
 			goto bad;
 		}
 
