@@ -68,12 +68,6 @@ static void acquire_function(void)
    mouse and keyboard can't be setup before the display has. */
 int sysdep_create_display(int depth)
 {
-  if(depth == 16)
-  {
-     fprintf(stderr_file, "%s doesn't support 16bpp video modes\n", title);
-     return OSD_NOT_OK;
-  }
-
   if (InitVScreen() != OSD_OK)
      return OSD_NOT_OK;
      

@@ -12,11 +12,24 @@
 *****************************************************************/
 
 #if defined xfx || defined svgafx
-
+#include <stdio.h>
 #include <math.h>
 #include <glide.h>
 #include "xmame.h"
 #include "driver.h"
+
+#define _32TO16(p) (UINT16)((((p) & 0x00F80000) >> 9) | \
+                            (((p) & 0x0000F800) >> 6) | \
+                            (((p) & 0x000000F8) >> 3))
+
+#define PIXELCOLOR(x) fxdepth == 15 ? \
+						(UINT16)(x) : \
+                        (fxdepth == 16 ? \
+                        	color_values[(UINT16)(x)] : \
+                            (fxdepth == 24 || fxdepth == 32 ? \
+                            _32TO16((UINT32)(x)) : 0))
+
+#define PAUSEDCOLOR(p) (UINT16) ((((p) >> 11) << 10) | ((((p) &0x03E0) >> 6)<< 5) | (((p) & 0x001F) >> 1))
 
 void CalcPoint(GrVertex *vert,int x,int y);
 void InitTextures(void);
@@ -29,28 +42,32 @@ void UpdateFXDisplay(struct osd_bitmap *bitmap);
 static int SetResolution(struct rc_option *option, const char *arg,
    int priority);
 
-extern int antialias;
 extern int pointnum;
-extern GrVertex vec_vert[10000];
+extern UINT32 direct_rgb_components[3];
+extern UINT16 *color_values;
+extern float brightness_paused_adjust;
 
 int fxwidth = 640;
 int fxheight = 480;
+static int fxdepth;
+static int black;
+static int white;
+
 GuTexPalette texpal;
 
+static int Gr_format = GR_TEXFMT_ARGB_1555;
 static GrScreenResolution_t Gr_resolution = GR_RESOLUTION_640x480;
 static GrHwConfiguration hwconfig;
 static char version[80];
 static GrTexInfo texinfo;
-static int palette_changed=0;
 static int bilinear=1; /* Do binlinear filtering? */
-static int screendirty=1;  /* Has the bitmap been modified since the last frame? */
 static const int texsize=256;
 
 /* The squares that are tiled to make up the game screen polygon */
 
 struct TexSquare
 {
-  unsigned char *texture;
+  UINT16 *texture;
   unsigned int texobj;
   long texadd;
   float x1,y1,z1,x2,y2,z2,x3,y3,z3,x4,y4,z4;
@@ -74,8 +91,6 @@ float cscrx1,cscry1,cscrz1,cscrx2,cscry2,cscrz2,
 float cscrwdx,cscrwdy,cscrwdz;
 float cscrhdx,cscrhdy,cscrhdz;
 
-int vecgame=0;
-
 struct rc_option fx_opts[] = {
    /* name, shortname, type, dest, deflt, min, max, func, help */
    { "FX (Glide) Related", NULL,		rc_seperator,	NULL,
@@ -94,7 +109,7 @@ struct rc_option fx_opts[] = {
 
 int sysdep_display_16bpp_capable(void)
 {
-   return 0;
+   return 1;
 }
 
 /* Allocate a palette */
@@ -108,9 +123,6 @@ int sysdep_display_alloc_palette(int writable_colors)
 int sysdep_display_set_pen(int pen, unsigned char red,unsigned char green,
 					unsigned char blue) 
 {
-  palette_changed=1;
-
-  texpal.data[pen]=red<<16|green<<8|blue;
   return 0;
 }
 
@@ -146,40 +158,21 @@ int InitGlide(void)
 
 void InitTextures(void)
 {
-  int x,y,point;
+  int x,y;
   struct TexSquare *tsq;
   long texmem,memaddr;
 
   texinfo.smallLod=texinfo.largeLod=GR_LOD_256;
   texinfo.aspectRatio=GR_ASPECT_1x1;
-  texinfo.format=GR_TEXFMT_P_8;
+  texinfo.format=Gr_format;
 
   texmem=grTexTextureMemRequired(GR_MIPMAPLEVELMASK_BOTH,&texinfo);
 
-  if(vecgame) {
-	grColorCombine(GR_COMBINE_FUNCTION_LOCAL,
-				   GR_COMBINE_FACTOR_NONE,
-				   GR_COMBINE_LOCAL_ITERATED,
-				   GR_COMBINE_OTHER_NONE,
-				   FXFALSE);
-	
-	grAlphaCombine(GR_COMBINE_FUNCTION_SCALE_OTHER,
-				   GR_COMBINE_FACTOR_ONE,
-				   GR_COMBINE_LOCAL_NONE,
-				   GR_COMBINE_LOCAL_ITERATED,
-				   FXFALSE);
-	
-    grAlphaBlendFunction(GR_BLEND_ALPHA_SATURATE,GR_BLEND_ONE,
-						 GR_BLEND_ALPHA_SATURATE,GR_BLEND_ONE);
-	
-  }
-  else {
-	grColorCombine(GR_COMBINE_FUNCTION_SCALE_OTHER,
+  grColorCombine(GR_COMBINE_FUNCTION_SCALE_OTHER,
 				   GR_COMBINE_FACTOR_ONE,
 				   GR_COMBINE_LOCAL_NONE,
 				   GR_COMBINE_OTHER_TEXTURE,
 				   FXFALSE);
-  }
 
   grTexCombine(GR_TMU0,
 			   GR_COMBINE_FUNCTION_LOCAL,GR_COMBINE_FACTOR_NONE,
@@ -213,15 +206,11 @@ void InitTextures(void)
   xinc=vscrnwidth*((float)texsize/(float)visual_width);
   yinc=vscrnheight*((float)texsize/(float)visual_height);
   
-  /* printf("%d %d %d %d\n",visual_width,visual_height,texnumx,texnumy); */
-  
   texpercx=(float)texsize/(float)visual_width;
   if(texpercx>1.0) texpercx=1.0;
   
   texpercy=(float)texsize/(float)visual_height;
   if(texpercy>1.0) texpercy=1.0;
-  
-  /*	printf("-- %f %f\n",texpercx,texpercy); */
   
   texgrid=(struct TexSquare *)
 	malloc(texnumx*texnumy*sizeof(struct TexSquare));
@@ -262,12 +251,9 @@ void InitTextures(void)
 	  tsq->vtxD.tmuvtx[0].sow=0.0;
 	  tsq->vtxD.tmuvtx[0].tow=256.0*tsq->ycov;
 	  
-	  tsq->texture=malloc(texsize*texsize);
 
 	  /* Initialize the texture memory */
-
-	  for(point=0;point<(texsize*texsize);point++)
-		tsq->texture[point]=0;
+	  tsq->texture=calloc(texsize*texsize, sizeof *(tsq->texture));
 	}
   }
 }
@@ -334,13 +320,11 @@ static int SetResolution(struct rc_option *option, const char *arg,
 
 int InitVScreen(void)
 {
-  int line;
   float scrnaspect,vscrnaspect;
 
-  if(Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
-	vecgame=1;
-
   grGlideGetVersion(version);
+
+  fxdepth = Machine->color_depth;
 
   fprintf(stderr_file, "info: using Glide version %s\n", version);
   
@@ -358,6 +342,7 @@ int InitVScreen(void)
   /* clear the buffer */
 
   grBufferClear(0,0,GR_ZDEPTHVALUE_FARTHEST);
+
 
   if (use_aspect_ratio)
   {
@@ -387,8 +372,25 @@ int InitVScreen(void)
   
   /* fill the display_palette_info struct */
   memset(&display_palette_info, 0, sizeof(struct sysdep_palette_info));
-  display_palette_info.depth = 8;
-  display_palette_info.writable_colors = 256;
+  switch(fxdepth) {
+    case 15:
+    case 16:
+      display_palette_info.depth = 16;
+      display_palette_info.red_mask   = 0x7C00;
+      display_palette_info.green_mask = 0x03E0;
+      display_palette_info.blue_mask  = 0x001F;
+      break;
+    case 24:
+    case 32:
+      display_palette_info.depth = 32;
+      display_palette_info.red_mask   = 0xFF0000;
+      display_palette_info.green_mask = 0x00FF00;
+      display_palette_info.blue_mask  = 0x0000FF;
+      break;
+  }
+   
+  black = video_colors_used -2;
+  white = video_colors_used -1;
 
   return OSD_OK;
 }
@@ -426,108 +428,104 @@ void sysdep_clear_screen(void)
 
 void UpdateTexture(struct osd_bitmap *bitmap)
 {
-  int max_y,y,rline,texline,xsquare,ysquare,ofs,width;
-  int x, max_x;
-  struct TexSquare *square;
-  int min,max;
-  unsigned long *src,*dest,*end;
-  int blocky;
+	int y,rline,texline,xsquare,ysquare,ofs,width, i;
+	struct TexSquare *square;
 
-  if(visual_width<=texsize) width=visual_width;
-  else width=texsize;
+	if(visual_width<=texsize) width=visual_width;
+	else width=texsize;
 
-  switch(use_dirty) {
-  case 0:
-	screendirty=1;
+	switch (fxdepth) {
 
-	for(y=visual.min_y;y<=visual.max_y;y++) {
-	  rline=y-visual.min_y;
-	ysquare=rline/texsize;
-	texline=rline%texsize;
-	  
-	for(xsquare=0;xsquare<texnumx;xsquare++) {
-	  ofs=xsquare*texsize;
-		
-	  if(xsquare<(texnumx-1) || !(visual_width%texsize))
-		width=texsize;
-	  else width=visual_width%texsize;
-	  
-		square=texgrid+(ysquare*texnumx)+xsquare;
-		
-		src=(unsigned long *)(bitmap->line[y]+visual.min_x+ofs);
-		dest=(unsigned long *)(square->texture+texline*texsize);
-		end=(unsigned long *)((unsigned int)src+width);
-		
-		for(;src<end;src++,dest++)
-		  *dest=*src;
-	  }
-	}
 
-	break;
+	case 15:
+		for(y=visual.min_y;y<=visual.max_y;y++) {
+			rline=y-visual.min_y;
+			ysquare=rline/texsize;
+			texline=rline%texsize;
+			
+			for(xsquare=0;xsquare<texnumx;xsquare++) {
+				ofs=xsquare*texsize;
+				
+				if(xsquare<(texnumx-1) || !(visual_width%texsize))
+					width=texsize;
+				else width=visual_width%texsize;
+				
+				square=texgrid+(ysquare*texnumx)+xsquare;
 
-  case 1:
-	/*osd_dirty_merge();*/
-
-  case 2:
-	max_y=(visual.max_y+1) >> 3;
-
-	for(y=visual.min_y>>3;y<max_y;y++) {
-	  if(dirty_lines[y]) {
-		screendirty=1;
-
-		rline=(y<<3)-visual.min_y;
-		ysquare=rline/texsize;
-
-		for(blocky=0;blocky<8;blocky++) {
-		  texline=(rline+blocky)%texsize;
-
-		  for(xsquare=0;xsquare<texnumx;xsquare++) {
-			ofs=xsquare*texsize;
-
-			square=texgrid+(ysquare*texnumx)+xsquare;
-
-			grTexDownloadMipMapLevelPartial(GR_TMU0,square->texadd,
-											GR_LOD_256,GR_LOD_256,
-											GR_ASPECT_1x1,
-											GR_TEXFMT_P_8,
-											GR_MIPMAPLEVELMASK_BOTH,
-											bitmap->line[(y<<3)+blocky]+
-											visual.min_x+ofs,
-											texline,texline);
-		  }
-		}
-
-		/*
-		max_x=(visual.max_x+1) >> 3;
-
-		for(x=visual.min_x>>3;x<max_x;x++) {
-		  if(dirty_blocks[y][x]) {
-			xsquare=((x<<3)-visual.min_x)/texsize;
-			ofs=((x<<3)-visual.min_x)%texsize;		  
-			square=texgrid+(ysquare*texnumx)+xsquare;
-
-			for(blocky=0;blocky<8;blocky++) {
-			  texline=(rline+blocky)%texsize;
-
-			  src=(unsigned long *)(bitmap->line[(y<<3)+blocky]+(x<<3));
-			  dest=(unsigned long *)(square->texture+(texline*texsize)+ofs);
-			  end=(unsigned long *)((unsigned int)src+8);
-		
-			  for(;src<end;src++,dest++)
-				*dest=*src;
+				if (brightness_paused_adjust == 1.0) {	
+					for(i = 0;i < width;i++) {	
+						square->texture[texline*texsize+i] = ((UINT16*)(bitmap->line[y]))[visual.min_x+ofs+i];
+					}
+				} else {
+                                       	for(i = 0;i < width;i++) {
+                                               	square->texture[texline*texsize+i] = PAUSEDCOLOR((((UINT16*)(bitmap->line[y]))[visual.min_x+ofs+i]));
+                                       	}
+				}
 			}
+		} 
+		break;
 
-			dirty_blocks[y][x]=0;
-		  }
+	case 16:
+		
+		for(y=visual.min_y;y<=visual.max_y;y++) {
+			rline=y-visual.min_y;
+			ysquare=rline/texsize;
+			texline=rline%texsize;
+			
+			for(xsquare=0;xsquare<texnumx;xsquare++) {
+				ofs=xsquare*texsize;
+				
+				if(xsquare<(texnumx-1) || !(visual_width%texsize))
+					width=texsize;
+				else width=visual_width%texsize;
+				
+				square=texgrid+(ysquare*texnumx)+xsquare;
+				if (brightness_paused_adjust == 1.0) {
+					for(i = 0;i < width;i++) {
+						square->texture[texline*texsize+i] = 
+							color_values[(((UINT16*)(bitmap->line[y]))[visual.min_x+ofs+i])];
+					}
+				} else {
+					for(i = 0;i < width;i++) {
+						square->texture[texline*texsize+i] =
+							PAUSEDCOLOR(color_values[(((UINT16*)(bitmap->line[y]))[visual.min_x+ofs+i])]);
+					}
+				}
+			}
 		}
-		*/
+		break;
 
-		dirty_lines[y] = 0;
+	case 24:
+	case 32:
+		for(y=visual.min_y;y<=visual.max_y;y++) {
+			rline=y-visual.min_y;
+			ysquare=rline/texsize;
+			texline=rline%texsize;
+			
+			for(xsquare=0;xsquare<texnumx;xsquare++) {
+				ofs=xsquare*texsize;
+				
+				if(xsquare<(texnumx-1) || !(visual_width%texsize))
+					width=texsize;
+				else width=visual_width%texsize;
+				
+				square=texgrid+(ysquare*texnumx)+xsquare;
+					
+				if (brightness_paused_adjust == 1.0) {
+					for(i = 0;i < width;i++) {
+						square->texture[texline*texsize+i] = 
+							PIXELCOLOR((((UINT32*)(bitmap->line[y]))[visual.min_x+ofs+i]));
+					}
+				} else {
+					for(i = 0;i < width;i++) {
+						square->texture[texline*texsize+i] =
+							PAUSEDCOLOR(PIXELCOLOR((((UINT32*)(bitmap->line[y]))[visual.min_x+ofs+i])));
+					}
+				}
+			}
+		}
+		break;
 	}
-  }
-	
-	break;		
-  }
 }
 
 void DrawFlatBitmap(void)
@@ -535,23 +533,16 @@ void DrawFlatBitmap(void)
   struct TexSquare *square;
   int x,y;
 
-  /* If the palette was changed, update the color table */
-	  
-  if(palette_changed)
-	grTexDownloadTable(GR_TMU0,GR_TEXTABLE_PALETTE,&texpal);
-	  
   for(y=0;y<texnumy;y++) {
 	for(x=0;x<texnumx;x++) {
 	  square=texgrid+y*texnumx+x;
 
 	  texinfo.data=(void *)square->texture;
 
-	  if(!use_dirty) {
 	  grTexDownloadMipMapLevel(GR_TMU0,square->texadd,
 							   GR_LOD_256,GR_LOD_256,GR_ASPECT_1x1,
-							   GR_TEXFMT_P_8,
+							   Gr_format,
 							   GR_MIPMAPLEVELMASK_BOTH,texinfo.data);
-	  }
 
 	  grTexSource(GR_TMU0,square->texadd,
 				  GR_MIPMAPLEVELMASK_BOTH,&texinfo);
@@ -564,81 +555,17 @@ void DrawFlatBitmap(void)
 
 void UpdateFlatDisplay(void)
 {
-  int point;
-  GrVertex *v1,*v2;
-  GrVertex tmpvert;
-
   grBufferClear(0,0,GR_ZDEPTHVALUE_FARTHEST);
-
-  if(vecgame) {
-	for(point=1;point<pointnum;point++) {
-	  v1=vec_vert+(point-1);
-	  v2=vec_vert+point;
-
-	  if(v2->a>0.0) {
-		if(v1->x==v2->x&&v1->y==v2->y) {
-		  if(antialias)
-			grAADrawPoint(v2);
-		  else grDrawPoint(v2);
-		}
-		else {
-		  tmpvert.oow=1.0;
-		  tmpvert.r=v2->r; tmpvert.g=v2->g; tmpvert.b=v2->b; tmpvert.a=v2->a;
-		  tmpvert.x=v1->x; tmpvert.y=v1->y;
-
-		  if(antialias)
-			grAADrawLine(&tmpvert,v2);
-		  else
-			grDrawLine(&tmpvert,v2);
-		}
-	  }
-	}
-  }
-
-  if(!vecgame||screendirty) {
-	if(vecgame) {
-	  grColorCombine(GR_COMBINE_FUNCTION_SCALE_OTHER,
-					 GR_COMBINE_FACTOR_ONE,
-					 GR_COMBINE_LOCAL_NONE,
-					 GR_COMBINE_OTHER_TEXTURE,
-					 FXFALSE);
-
-	  grAlphaCombine(GR_COMBINE_FUNCTION_LOCAL,
-					 GR_COMBINE_FACTOR_LOCAL,
-					 GR_COMBINE_LOCAL_CONSTANT,
-					 GR_COMBINE_OTHER_NONE,
-					 FXFALSE);
-	}
-
-	DrawFlatBitmap();
-
-	if(vecgame) {
-	  grColorCombine(GR_COMBINE_FUNCTION_LOCAL,
-					 GR_COMBINE_FACTOR_NONE,
-					 GR_COMBINE_LOCAL_ITERATED,
-					 GR_COMBINE_OTHER_NONE,
-					 FXFALSE);
-
-	  grAlphaCombine(GR_COMBINE_FUNCTION_LOCAL,
-					 GR_COMBINE_FACTOR_LOCAL,
-					 GR_COMBINE_LOCAL_ITERATED,
-					 GR_COMBINE_OTHER_NONE,
-					 FXFALSE);
-	}
-  }
-
+  DrawFlatBitmap();
   grBufferSwap(1);
-
-  palette_changed=0;
 }
 
 void UpdateFXDisplay(struct osd_bitmap *bitmap)
 {
-  if(bitmap && (!vecgame||screendirty)) UpdateTexture(bitmap);
+  if(bitmap) 
+    UpdateTexture(bitmap);
 
   UpdateFlatDisplay();
-
-  /* screendirty=0; */
 }
 
 /* used when expose events received */
@@ -656,8 +583,6 @@ void osd_refresh_screen(void)
 void sysdep_update_display(struct osd_bitmap *bitmap)
 {
   if(keyboard_pressed(KEYCODE_RCONTROL)) {
-	if(keyboard_pressed_memory(KEYCODE_A))
-	  antialias=1-antialias;
 	if(keyboard_pressed_memory(KEYCODE_B)) {
 	  bilinear=1-bilinear;
 
