@@ -187,6 +187,7 @@ DRVLIBS += \
 		$(OBJ)/mtx.a	  \
 		$(OBJ)/samcoupe.a \
 		$(OBJ)/aquarius.a \
+		$(OBJ)/galaxy.a \
 		$(OBJ)/teamconc.a \
 		$(OBJ)/motorola.a \
 		$(OBJ)/svi.a
@@ -650,6 +651,11 @@ $(OBJ)/aquarius.a: \
 	  $(OBJ)/mess/machine/aquarius.o \
 	  $(OBJ)/mess/vidhrdw/aquarius.o \
 	  $(OBJ)/mess/systems/aquarius.o
+
+$(OBJ)/galaxy.a: \
+	  $(OBJ)/mess/machine/galaxy.o \
+	  $(OBJ)/mess/vidhrdw/galaxy.o \
+	  $(OBJ)/mess/systems/galaxy.o
 
 $(OBJ)/magnavox.a: \
 	  $(OBJ)/mess/machine/odyssey2.o \
