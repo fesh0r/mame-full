@@ -8,6 +8,10 @@
         system driver
 
 
+        TODO:
+        - speaker controlled by constant tone or txd
+
+
         Kevin Thacker [MESS driver]
 
  ******************************************************************************/
@@ -24,6 +28,7 @@ static void blink_reset(void)
 {
 	/* rams is cleared on reset */
         blink.com &=~(1<<2);
+        blink.sbf = 0;
 }
 
 
@@ -116,102 +121,151 @@ static void z88_rtc_timer_callback(int dummy)
         z88_interrupt_refresh();
 }
 
+static mem_read_handler z88_read_handler[] =
+{
+ MRA_BANK1, MRA_BANK2, MRA_BANK3, MRA_BANK4, MRA_BANK5
+};
+
+
+static mem_write_handler z88_write_handler[] =
+{
+ MWA_BANK6, MWA_BANK7, MWA_BANK8, MWA_BANK9, MWA_BANK10
+};
+
+/* Assumption:
+
+all banks can access the same memory blocks in the same way.
+bank 0 is special. If a bit is set in the com register,
+the lower 8k is replaced with the rom. Bank 0 has been split
+into 2 8k chunks, and all other banks into 16k chunks.
+I wanted to handle all banks in the code below, and this
+explains why the extra checks are done */
+
+static void z88_refresh_memory_bank(int index1)
+{
+        unsigned char *addr;
+        unsigned long block;
+        int read_bank,write_bank;
+
+        /* bank index for read's for use with cpu_setbank, cpu_setbankhandler */
+        read_bank = 2+index1;
+        /* bank index for write's for use with cpu_setbank, cpu_setbankhandler */
+        write_bank = 7+index1;
+        
+        /* ram? */
+        if (blink.mem[index1] & 0x020)
+        {
+           block = blink.mem[index1] & (~0x020);
+
+           logerror("ram selected\r\n");
+
+           addr = z88_memory;
+           cpu_setbankhandler_r(read_bank, z88_read_handler[index1+1]);
+           cpu_setbankhandler_w(write_bank, z88_write_handler[index1+1]);
+
+           if (index1==0)
+           {
+                cpu_setbankhandler_r(read_bank-1, z88_read_handler[index1]);
+                cpu_setbankhandler_w(write_bank-1, z88_write_handler[index1]);
+           }
+
+           addr = addr + (block<<14);
+
+           cpu_setbank(read_bank, addr);
+           cpu_setbank(write_bank, addr);
+
+           if (index1==0)
+           {
+                cpu_setbank(read_bank-1, addr+0x02000);
+                cpu_setbank(write_bank-1, addr+0x02000);
+           }
+        }
+        else
+        {
+           block = blink.mem[index1];
+
+           /* in rom area, but rom not present */
+           if (block & 8)
+           {
+                logerror("unmapped rom selected\r\n");
+
+                cpu_setbankhandler_r(read_bank, MRA_NOP);
+                cpu_setbankhandler_w(write_bank, MRA_NOP);
+
+                if (index1==0)
+                {
+                        cpu_setbankhandler_r(read_bank-1, MRA_NOP);
+                        cpu_setbankhandler_w(write_bank-1, MRA_NOP);
+                }
+           }
+           else
+           {
+                logerror("rom selected\r\n");
+
+                addr = memory_region(REGION_CPU1) + 0x010000;
+                cpu_setbankhandler_r(read_bank, z88_read_handler[index1+1]);
+                cpu_setbankhandler_w(write_bank, MWA_NOP);
+
+                if (index1==0)
+                {
+                        cpu_setbankhandler_r(read_bank-1, z88_read_handler[index1]);
+                        cpu_setbankhandler_w(write_bank-1, z88_write_handler[index1]);
+                }
+
+                addr = addr + (block<<14);
+                cpu_setbank(read_bank, addr);
+                cpu_setbank(write_bank, addr);
+
+                if (index1==0)
+                {
+                        cpu_setbank(read_bank-1, addr+0x02000);
+                        cpu_setbank(write_bank-1, addr+0x02000);
+                }
+           }
+        }
+}
+
 
 static void z88_refresh_memory(void)
 {
-        unsigned char *addr;
-        int block;
+        /* setup bank 0 like all other banks would be */
+        z88_refresh_memory_bank(0);
 
-	addr = z88_memory + (blink.mem[0]<<14);
-
-	/* set read/write base for 0x02000-0x03fff */
-	cpu_setbank(2, addr+0x02000);
-	cpu_setbank(7, addr+0x02000);
-
-	/* set read/write base for 0x0000-0x01fff */
+        /* override setting for lower 8k of bank 0 */
 
 	/* enable rom? */
 	if ((blink.com & (1<<2))==0)
 	{
+                unsigned char *addr;
+
 		/* yes */
 		addr = memory_region(REGION_CPU1) + 0x010000;
 
 		cpu_setbank(1, addr);
-		cpu_setbankhandler_w(6, MWA_NOP);
+                cpu_setbankhandler_r(1, MRA_BANK1);
+                cpu_setbankhandler_w(6, MWA_NOP);
 	}
-	else
-	{
-		cpu_setbank(1, addr);
-		cpu_setbank(6, addr);
-
-		cpu_setbankhandler_w(6, MWA_BANK6);
-	}
-
-
-        if (blink.mem[1] & 0x020)
-        {
-           block = blink.mem[1] & (~0x020);
-
-           addr = z88_memory;
-           cpu_setbankhandler_w(8, MWA_BANK8);
-
-        }
         else
         {
-           block = blink.mem[1];
+                /* ram bank 20 */
+                unsigned char *addr;
 
-           addr = memory_region(REGION_CPU1) + 0x010000;
-           cpu_setbankhandler_w(8, MWA_NOP);
+                addr = z88_memory;
+
+                cpu_setbank(1, addr);
+                cpu_setbank(6, addr);
+                cpu_setbankhandler_r(1, MRA_BANK1);
+                cpu_setbankhandler_w(6, MWA_BANK6);
         }
 
-        addr = addr + (block<<14);
-	cpu_setbank(3, addr);
-	cpu_setbank(8, addr);
-
-
-        if (blink.mem[2] & 0x020)
-        {
-           block = blink.mem[2] & (~0x020);
-        
-           addr = z88_memory;
-           cpu_setbankhandler_w(9, MWA_BANK9);
-
-        }
-        else
-        {
-           block = blink.mem[2];
-
-           addr = memory_region(REGION_CPU1) + 0x010000;
-           cpu_setbankhandler_w(9, MWA_NOP);
-        }
-
-        addr = addr + (block<<14);
-	cpu_setbank(4, addr);
-	cpu_setbank(9, addr);
-
-        if (blink.mem[3] & 0x020)
-        {
-           block = blink.mem[3] & (~0x020);
-
-           addr = z88_memory;
-           cpu_setbankhandler_w(10, MWA_BANK10);
-        }
-        else
-        {
-           block = blink.mem[3];
-
-           addr = memory_region(REGION_CPU1) + 0x010000;
-           cpu_setbankhandler_w(10, MWA_NOP);
-        }
-
-        addr = addr + (block<<14);
-	cpu_setbank(5, addr);
-	cpu_setbank(10, addr);
+        z88_refresh_memory_bank(1);
+        z88_refresh_memory_bank(2);
+        z88_refresh_memory_bank(3);
 }
 
 void z88_init_machine(void)
 {
-	z88_memory = malloc(512*1024);
+        z88_memory = malloc(2048*1024); //512*1024);
 
 	z88_rtc_timer = timer_pulse(TIME_IN_MSEC(5), 0, z88_rtc_timer_callback);
 
@@ -272,41 +326,67 @@ static struct MemoryWriteAddress writemem_z88[] =
 	{-1}							   /* end of table */
 };
 
+unsigned long blink_pb_offset(int num_bits, unsigned long addr_written, int shift)
+{
+        unsigned long offset;
+
+        offset = addr_written & ((unsigned long)0x0ffffffff>>(16-num_bits));
+
+        offset = (
+                        ((addr_written & 0x01fe0)<<2) |
+                        (addr_written & 0x01f)
+                        );
+        offset = offset<<shift;
+
+        return offset;
+}
+
 static void blink_pb_w(int offset, int data, int reg_index)
 {
-	int addr = (offset & 0x0ff00) | (data & 0x0ff);
-
-	switch (offset)
+        unsigned short addr_written = (offset & 0x0ff00) | (data & 0x0ff);
+ 
+        switch (reg_index)
 	{
 		case 0x00:
 		{
-			blink.pb[3] = addr & 8191;
-		}
+                        blink.pb[0] = addr_written;
+                        blink.lores0 = blink_pb_offset(13, addr_written, 9);
+                        logerror("lores0 %04x\r\n",blink.lores0);
+                }
 		break;
 
 		case 0x01:
 		{
-			blink.pb[1] = addr & 1023;
+                        blink.pb[1] = addr_written;
+                        blink.lores1 = blink_pb_offset(10, addr_written, 11);
+                        logerror("lores1 %04x\r\n",blink.lores1);
 		}
 		break;
 
 		case 0x02:
 		{
-			blink.pb[2] = addr & 511;
-		}
+                        blink.pb[2] = addr_written;
+                        blink.hires0 = blink_pb_offset(9, addr_written, 13);
+                        logerror("hires0 %04x\r\n", blink.hires0);
+                }
 		break;
 
 	
 		case 0x03:
 		{
-			blink.pb[3] = addr & 2047;
-		}
-		break;
+                        blink.pb[3] = addr_written;
+                        blink.hires1 = blink_pb_offset(11, addr_written, 10);
+
+                        logerror("hires1 %04x\r\n", blink.hires1);
+                }
+                break;
 
 		case 0x04:
 		{
-			blink.sbr = addr & 2047;
-                        blink.sbf = blink.sbf;
+                        blink.sbr = addr_written;
+                        blink.sbf = blink_pb_offset(11, addr_written, 10);
+                        logerror("%04x\r\n", blink.sbf);
+
                 }
 		break;
 	
@@ -372,6 +452,10 @@ WRITE_HANDLER(z88_port_w)
 
 		case 0x0b0:
 		{
+                        UINT8 previous_com;
+
+                        previous_com = blink.com;
+
 			blink.com = data;
 
 			/* reset clock? */
@@ -380,8 +464,25 @@ WRITE_HANDLER(z88_port_w)
 				blink.tim[0] = (blink.tim[1] = (blink.tim[2] = (blink.tim[3] = (blink.tim[4] = 0))));
 			}
 
+                        /* SBIT controls speaker direct? */
+                        if ((blink.com & (1<<7))==0)
+                        {
+                           /* yes */
 
-			
+                           /* speaker controlled by SBIT */
+                           if (((previous_com^blink.com) & (1<<6))!=0)
+                           {
+                               speaker_level_w(0, (blink.com>>6) & 0x01);
+                           }
+                        }
+                        else
+                        {
+                           /* speaker under control of continuous tone,
+                           or txd */
+
+
+                        }
+
 			z88_refresh_memory();
 		}
 		break;
@@ -414,7 +515,7 @@ WRITE_HANDLER(z88_port_w)
 		case 0x0d1:
 		case 0x0d2:
 		case 0x0d3:
-			blink_srx_w(port-0x0b0, data);
+			blink_srx_w(port-0x0d0, data);
 			return;
 	}
 }
@@ -520,6 +621,12 @@ static struct IOWritePort writeport_z88[] =
 	{0x0000, 0x0ffff, z88_port_w},
 	{-1}                                                       /* end of table */
         
+};
+
+static struct Speaker_interface z88_speaker_interface=
+{
+  1,
+  {50}
 };
 
 /*
@@ -666,6 +773,13 @@ static struct MachineDriver machine_driver_z88 =
 	0,								   /* sh start */
 	0,								   /* sh stop */
 	0,								   /* sh update */
+        {
+                {
+                SOUND_SPEAKER,
+                &z88_speaker_interface,
+                }
+        }
+
 };
 
 
