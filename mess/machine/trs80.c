@@ -147,22 +147,6 @@ static void cas_copy_callback(int param)
 	cpu_set_reg(Z80_PC, entry);
 }
 
-#ifdef VERIFY_IMAGE
-int trs80_cas_id(int id)
-{
-	void *file = image_fopen(IO_CASSETTE,id,OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
-	if (file)
-	{
-		UINT8 buffer[8];
-		osd_fread(file, buffer, 8);
-		osd_fclose(file);
-		if (buffer[1] == 0x55)	/* SYSTEM tape */
-			return 1;
-	}
-	return 0;
-}
-#endif
-
 int trs80_cas_init(int id)
 {
 	void *file = image_fopen(IO_CASSETTE,id,OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
