@@ -327,37 +327,6 @@ static WRITE32_HANDLER( latch_w )
 
 /*************************************
  *
- *	EEPROM access
- *
- *************************************/
-
-static READ32_HANDLER( eeprom_data_r )
-{
-	return ((UINT32 *)generic_nvram)[offset] | 0x00ffffff;
-}
-
-
-static WRITE32_HANDLER( eeprom_enable_w )
-{
-	eeprom_enable = 1;
-}
-
-
-static WRITE32_HANDLER( eeprom_data_w )
-{
-//	if (eeprom_enable)
-	{
-		((UINT32 *)generic_nvram)[offset] = data & 0xff000000;
-	}
-//	else
-//		logerror("%08X:error writing to disabled EEPROM\n", activecpu_get_previouspc());
-	eeprom_enable = 0;
-}
-
-
-
-/*************************************
- *
  *	GPU synchronization & speedup
  *
  *************************************/
@@ -632,7 +601,6 @@ MACHINE_DRIVER_START( jaguar )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	MDRV_MACHINE_INIT(jaguar)
-	MDRV_NVRAM_HANDLER(generic_1fill)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)

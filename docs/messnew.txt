@@ -19,6 +19,8 @@ System Driver Changes:
 - [COCO3H] Fixed a bug in the 6309 LDBT/STBT instructions.  (bug #625) [Nate
   Woods]
 
+- [JAGUAR] Fixed fatal regression introduced in 0.89.  (bug #626) [Nate Woods]
+
 - [PC] Implemented CGA color composite artifact colors.  (bug #431) [John
   Elliott]
 
