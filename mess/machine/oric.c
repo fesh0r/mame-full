@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include "driver.h"
 #include "includes/oric.h"
+#include "includes/basicdsk.h"
+#include "includes/wd179x.h"
 
 /*
 
@@ -29,7 +31,18 @@ low priority,
 add Inport_ports structures so key info menu in mess GUI shows keys
 loading tape image to update MESS GUI settings for current image
 
+  KT:
+	Added preliminary floppy disc support from Fabrice Frances document.
+
+  TODO:
+  - Microdisc interface: ROMDIS and Eprom select 
+  - Jasmin: overlay ram access, ROMDIS, fdc reset
+
 */
+
+/* if defined, enable microdisc floppy disc interface */
+/* if not defined, enable Jasmin floppy disc interface */
+#define MICRODISC_FLOPPY_DISC_INTERFACE	
 
 unsigned char *oric_ram;
 int oric_load_rom (int id);
@@ -74,6 +87,90 @@ int oric_tape_position;
 char oric_rom_version[40];
 
 static const char *rom_name = NULL;
+
+
+
+#ifdef MICRODISC_FLOPPY_DISC_INTERFACE
+/* bit 7 is intrq state */
+unsigned char port_314_r;
+/* bit 7 is drq state (active low) */
+unsigned char port_318_r;
+/* bit 6,5: drive */
+/* bit 4: side */
+/* bit 3: double density enable */
+/* bit 0: enable FDC IRQ to trigger IRQ on CPU */
+unsigned char port_314_w;
+#endif
+
+
+static void oric_wd179x_callback(int State)
+{
+	switch (State)
+	{
+		case WD179X_IRQ_CLR:
+		{
+#ifdef MICRODISC_FLOPPY_DISC_INTERFACE
+			port_314_r &=~(1<<7);
+
+			if (port_314_w & (1<<0))
+			{
+				cpu_set_irq_line(0,0,CLEAR_LINE);
+			}
+#endif
+		}
+		break;
+
+		case WD179X_IRQ_SET:
+		{
+#ifdef MICRODISC_FLOPPY_DISC_INTERFACE
+			port_314_r |= (1<<7);
+
+			if (port_314_r & (1<<0))
+			{
+				cpu_set_irq_line(0,0,HOLD_LINE);
+			}
+#endif
+		}
+		break;
+
+		case WD179X_DRQ_CLR:
+		{
+#ifdef MICRODISC_FLOPPY_DISC_INTERFACE
+			port_318_r |= (1<<7);
+#else
+			/* on Jasmin interface, DRQ is connected to IRQ on CPU */
+			cpu_set_irq_line(0,0, CLEAR_LINE);
+#endif
+		}
+		break;
+
+		case WD179X_DRQ_SET:
+		{
+#ifdef MICRODISC_FLOPPY_DISC_INTERFACE
+			port_318_r &=~(1<<7);
+#else
+			/* on Jasmin interface, DRQ is connected to IRQ on CPU */
+			cpu_set_irq_line(0,0, HOLD_LINE);
+#endif
+		}
+		break;
+	}
+}
+
+int oric_floppy_init(int id)
+{
+	if (basicdsk_floppy_init(id))
+	{
+		/* I don't know what the geometry of the disc image should be, so the
+		default is 80 tracks, 2 sides, 9 sectors per track */
+		basicdsk_set_geometry(id, 80, 2, 9, 512, 1);
+
+		return INIT_OK;
+	}
+
+	return INIT_FAILED;
+}
+
 
 void oric_init_machine (void)
 {
@@ -206,6 +303,8 @@ void oric_init_machine (void)
 	 * }
 	 * }
 	 */
+
+	wd179x_init(oric_wd179x_callback);
 }
 
 void oric_shutdown_machine (void)
@@ -214,6 +313,8 @@ void oric_shutdown_machine (void)
 	free (oric_IO);
 	if (oric_tape_data != NULL)
 		free (oric_tape_data);
+
+	wd179x_exit();
 }
 
 #if 0
@@ -246,6 +347,36 @@ READ_HANDLER ( oric_IO_r )
 		case 0x0f:
 			return (oric_porta_r & (oric_portmask_a ^ 0xff));
     }
+
+	switch (offset & 0x0ff)
+	{
+#ifdef MICRODISC_FLOPPY_DISC_INTERFACE
+		/* microdisc floppy disc interface */
+		case 0x010:
+			return	wd179x_status_r(0);
+		case 0x011:
+			return	wd179x_track_r(0);
+		case 0x012:
+			return	wd179x_sector_r(0);
+		case 0x013:
+			return	wd179x_data_r(0);
+		case 0x014:
+			return	port_314_r;
+		case 0x018:
+			return	port_318_r;
+#else
+		/* Jasmin floppy disc interface */
+		case 0x0f4:
+			return wd179x_status_r(0);
+		case 0x0f5:
+			return wd179x_track_r(0);
+		case 0x0f6:
+			return wd179x_sector_r(0);
+		case 0x0f7:
+			return wd179x_data_r(0);
+#endif
+	}
+
 	return (oric_IO[(offset & 0x0f)]);
 }
 
@@ -380,7 +511,77 @@ WRITE_HANDLER ( oric_IO_w )
 		}
 	}
 
+	switch (offset & 0x0ff)
+	{
+#ifdef MICRODISC_FLOPPY_DISC_INTERFACE
+		/* microdisc floppy disc interface */
+		case 0x010:
+			wd179x_command_w(0,data);
+			break;
+		case 0x011:
+			wd179x_track_w(0,data);
+			break;
+		case 0x012:
+			wd179x_sector_w(0,data);
+			break;
+		case 0x013:
+			wd179x_data_w(0,data);
+			break;
+		case 0x014:
+		{
+			int density;
 
+			port_314_w = data;
+
+			/* bit 6,5: drive */
+			/* bit 4: side */
+			/* bit 3: double density enable */
+			/* bit 0: enable FDC IRQ to trigger IRQ on CPU */
+			wd179x_set_drive((data>>6) & 0x03);
+			wd179x_set_side((data>>4) & 0x01);
+			if (data & (1<<3))
+			{
+				density = DEN_MFM_LO;
+			}
+			else
+			{
+				density = DEN_FM_HI;
+			}
+
+			wd179x_set_density(density);
+		}
+		break;		
+#else
+		/* Jasmin floppy disc interface */
+		case 0x0f4:
+			wd179x_command_w(0);
+			break;
+		case 0x0f5:
+			wd179x_track_w(0);
+			break;
+		case 0x0f6:
+			wd179x_sector_w(0);
+			break;
+		case 0x0f7:
+			wd179x_data_w(0);
+			break;
+		case 0x0f8:
+		{
+			/* bit 0: side select */
+			wd179x_set_side(data & 0x01);
+		}
+		break;
+
+		/* port 0x03fc selects drive 0, port 0x03fd selects drive 1.. */
+		case 0x0fc:
+		case 0x0fd:
+		case 0x0fe:
+		case 0x0ff:
+			wd179x_set_drive(offset & 0x03);
+			break;
+#endif		
+
+	}
 }
 
 int oric_interrupt (void)
