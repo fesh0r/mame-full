@@ -59,6 +59,8 @@ TODO:
 #include "99_ide.h"
 #include "99_hsgpl.h"
 
+#include "sound/tms5220.h"	/* for tms5220_set_variant() */
+
 #include "devices/mess_hd.h"	/* for device_init_mess_hd() */
 #include "smc92x4.h"	/* for smc92x4_hd_load()/smc92x4_hd_unload() */
 
@@ -636,6 +638,8 @@ void machine_init_ti99(void)
 
 		install_mem_read16_handler(0, 0x9000, 0x93ff, ti99_rw_rspeech);
 		install_mem_write16_handler(0, 0x9400, 0x97ff, ti99_ww_wspeech);
+
+		tms5220_set_variant(variant_tms0285);
 	}
 	else
 	{
@@ -705,6 +709,9 @@ void machine_init_ti99(void)
 
 void machine_stop_ti99(void)
 {
+	if (has_speech)
+		tms5220_set_variant(variant_tms5220);
+
 	if (has_hsgpl)
 		ti99_hsgpl_save_memcard();
 
