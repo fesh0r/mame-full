@@ -4,7 +4,8 @@
 ** Todo:
 **
 ** - memory emulation needs be rewritten
-** - add support for printer and serial ports
+** - add support for serial ports
+** - fix mouse support
 ** - add support for SCC+ and megaRAM
 ** - add support for diskdrives
 **
@@ -12,7 +13,7 @@
 */
 
 #include "driver.h"
-#include "msx.h"
+#include "includes/msx.h"
 #include "vidhrdw/generic.h"
 #include "machine/8255ppi.h"
 #include "vidhrdw/tms9928a.h"
@@ -129,21 +130,20 @@ int msx_load_rom (int id)
     }
     /* get mapper type */
     pext = (char *)device_extrainfo (IO_CARTSLOT, id);
-    if (!pext || (1 != sscanf (pext, "%d", &type) ) )
-    {
-        logerror("Cart #%d No extra info found in crc file\n", id);
-        type = -1;
-    }
-    else
-    {
-        if (type < 0 || type > 13)
-        {
-            logerror("Cart #%d Invalid extra info\n", id);
-            type = -1;
-        }
-        else logerror("Cart %d extra info: %s\n", id, pext);
-    }
-
+	if (!pext || (1 != sscanf (pext, "%d", &type) ) )
+   		{
+       	logerror("Cart #%d No extra info found in crc file\n", id);
+       	type = -1;
+   		}
+   	else
+   		{
+       	if (type < 0 || type > 13)
+       		{
+           	logerror("Cart #%d Invalid extra info\n", id);
+           	type = -1;
+       		}
+       	else logerror("Cart %d extra info: %s\n", id, pext);
+   		}
 
     /* calculate aligned size (8, 16, 32, 64, 128, 256, etc. (kB) ) */
     size_aligned = 0x2000;
@@ -516,7 +516,7 @@ void msx_ch_reset(void) {
         msx1.ram = (UINT8*)malloc (0x10000);
         if (!msx1.ram || !msx1.empty)
         {
-            logerror("malloc () in init_msx () failed!\n");
+            logerror("malloc () in msx_ch_reset () failed!\n");
             return;
         }
 
@@ -529,16 +529,33 @@ void msx_ch_reset(void) {
 }
 
 void init_msx (void)
-{
+    {
     /* this function is called at a very early stage, and not after a reset. */
     TMS9928A_int_callback(msx_vdp_interrupt);
-}
+    }
 
-void msx_ch_stop (void) {
+void msx_ch_stop (void) 
+	{
     free (msx1.empty); msx1.empty = NULL;
     free (msx1.ram); msx1.ram = NULL;
     msx1.run = 0;
-}
+	}
+
+int msx_interrupt()
+	{
+    int i;
+
+    for (i=0;i<2;i++)
+        {
+        msx1.mouse[i] = readinputport (12+i);
+        msx1.mouse_stat[i] = -1;
+        }
+
+    TMS9928A_set_spriteslimit (readinputport (11) & 0x20);
+    TMS9928A_interrupt();
+
+    return ignore_interrupt();
+	}
 
 /*
 ** The I/O funtions
@@ -575,16 +592,54 @@ WRITE_HANDLER ( msx_psg_w )
 
 READ_HANDLER ( msx_psg_port_a_r )
 {
-    int data;
+    int data, inp;
 
     data = (device_input (IO_CASSETTE, 0) > 255 ? 0x80 : 0);
 
-    if (msx1.psg_b & 0x40)
-        data |= input_port_10_r (0) & 0x7f;
-    else
-        data |= input_port_9_r (0) & 0x7f;
+    if ( (msx1.psg_b ^ readinputport (11) ) & 0x40)
+		{
+		/* game port 2 */
+        inp = input_port_10_r (0) & 0x7f;
+		if ( !(inp & 0x80) )
+			{
+			/* joystick */
+			return (inp & 0x7f) | data;
+			}
+		else
+			{
+			/* mouse */
+			data |= inp & 0x70;
+			if (msx1.mouse_stat[1] < 0)
+				inp = 0xf;
+			else
+				inp = ~(msx1.mouse[1] >> (4*msx1.mouse_stat[1]) ) & 15;
 
-    return data;
+			return data | inp;
+			}
+		}
+    else
+		{
+		/* game port 1 */
+        inp = input_port_9_r (0) & 0x7f;
+		if ( !(inp & 0x80) )
+			{
+			/* joystick */
+			return (inp & 0x7f) | data;
+			}
+		else
+			{
+			/* mouse */
+			data |= inp & 0x70;
+			if (msx1.mouse_stat[0] < 0)
+				inp = 0xf;
+			else
+				inp = ~(msx1.mouse[0] >> (4*msx1.mouse_stat[0]) ) & 15;
+
+			return data | inp;
+			}
+		}
+
+    return 0;
 }
 
 READ_HANDLER ( msx_psg_port_b_r )
@@ -601,33 +656,46 @@ WRITE_HANDLER ( msx_psg_port_b_w )
 {
     /* Arabic or kana mode led */
 	if ( (data ^ msx1.psg_b) & 0x80) set_led_status (1, !(data & 0x80) );
-        msx1.psg_b = data;
+
+    if ( (msx1.psg_b ^ data) & 0x10)
+		{
+		if (++msx1.mouse_stat[0] > 3) msx1.mouse_stat[0] = -1;
+		}
+    if ( (msx1.psg_b ^ data) & 0x20)
+		{
+		if (++msx1.mouse_stat[1] > 3) msx1.mouse_stat[1] = -1;
+		}
+
+    msx1.psg_b = data;
 }
 
 WRITE_HANDLER ( msx_printer_w )
 	{
-     if (offset == 1) 
+	if (readinputport (11) & 0x80)
 		{
-        /* SIMPL emulation */
-        DAC_signed_data_w (0, data);
-		msx1.prn_data = data;
-   		}
+		/* SIMPL emulation */
+		if (offset == 1)
+        	DAC_signed_data_w (0, data);
+		}
 	else
 		{
-		if ( (msx1.prn_strobe & 2) && !(data & 2) )
-			device_output (IO_PRINTER, 0, msx1.prn_data);
+   		if (offset == 1) 
+			msx1.prn_data = data;
+		else
+			{
+			if ( (msx1.prn_strobe & 2) && !(data & 2) )
+				device_output (IO_PRINTER, 0, msx1.prn_data);
 	
-		msx1.prn_strobe = data;
+			msx1.prn_strobe = data;
+			}
 		}
 	}
 
 READ_HANDLER ( msx_printer_r )
 	{
-	if (offset == 0)
-		{
-		if (device_status (IO_PRINTER, 0, 0) )
-			return 253;
-		}
+	if (offset == 0 && ! (readinputport (11) & 0x80) && 
+		device_status (IO_PRINTER, 0, 0) )
+		return 253;
 
     return 0xff;
 	}
