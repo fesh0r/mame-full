@@ -6,6 +6,7 @@
  *
  *************************************************************************/
 
+#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 #include "driver.h"
@@ -23,6 +24,18 @@
 #else
 #define LOG(x)
 #endif
+
+#ifdef RUNTIME_LOADER
+struct cpu_interface
+s2650_interface=
+CPU0(S2650,    s2650,	 2,  0,1.00,S2650_INT_NONE,    -1,			   -1,			   8, 16,	  0,15,LE,1, 3	);
+
+extern void s2650_runtime_loader_init(void)
+{
+	cpuintf[CPU_S2650]=s2650_interface;
+}
+#endif
+
 
 /* define this to expand all EA calculations inline */
 #define INLINE_EA	1
@@ -1237,7 +1250,7 @@ int s2650_execute(int cycles)
 			case 0x91:		/* illegal */
 				break;
 			case 0x92:		/* LPSU */
-				S.psu = R0 & ~PSU34;
+				S.psu = (R0 & ~PSU34)&~SI;
 				break;
 			case 0x93:		/* LPSL */
 				/* change register set ? */
