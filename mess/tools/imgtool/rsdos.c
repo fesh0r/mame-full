@@ -262,7 +262,7 @@ static imgtoolerr_t process_rsdos_file(struct rsdos_dirent *ent, imgtool_image *
 	}
 
 	if ((i < 0xc0) || (i > 0xc9))
-		return (size_t) -1;
+		return IMGTOOLERR_CORRUPTIMAGE;
 
 	if (lastgransize)
 		i--;

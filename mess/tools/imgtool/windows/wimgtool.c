@@ -314,6 +314,7 @@ static imgtoolerr_t full_refresh_image(HWND window)
 	int column_index = 0;
 	int i;
 	char buf[256];
+	TCHAR file_title[MAX_PATH];
 	const char *statusbar_text[2];
 
 	info = get_wimgtool_info(window);
@@ -321,9 +322,11 @@ static imgtoolerr_t full_refresh_image(HWND window)
 	module = info->image ? img_module(info->image) : NULL;
 	if (info->filename)
 	{
+		GetFileTitle(U2T(info->filename), file_title, sizeof(file_title) / sizeof(file_title[0]));
+
 		snprintf(buf, sizeof(buf) / sizeof(buf[0]),
 			(info->current_directory && info->current_directory[0]) ? "%s - %s" : "%s",
-			info->filename, info->current_directory);
+			T2U(file_title), info->current_directory);
 		statusbar_text[0] = osd_basename((char *) info->filename);
 		statusbar_text[1] = module->description;
 	}

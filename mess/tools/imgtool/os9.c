@@ -137,10 +137,10 @@ static imgtoolerr_t os9_decode_disk_header(imgtool_image *image, struct os9_disk
 		info->sector_size = 256;
 
 	if (info->sectors_per_track != track_size_in_sectors)
-		return -1;
+		return IMGTOOLERR_CORRUPTIMAGE;
 	if (info->total_sectors % info->sectors_per_track)
-		return -1;
-	return 0;
+		return IMGTOOLERR_CORRUPTIMAGE;
+	return IMGTOOLERR_SUCCESS;
 }
 
 

@@ -16,70 +16,26 @@ struct _imgtool_imageenum
 
 static imgtoolerr_t markerrorsource(imgtoolerr_t err)
 {
-	switch(err) {
-	case IMGTOOLERR_OUTOFMEMORY:
-	case IMGTOOLERR_UNEXPECTED:
-	case IMGTOOLERR_BUFFERTOOSMALL:
-		/* Do nothing */
-		break;
+	assert(imgtool_error != NULL);
 
-	case IMGTOOLERR_FILENOTFOUND:
-	case IMGTOOLERR_BADFILENAME:
-		err |= IMGTOOLERR_SRC_FILEONIMAGE;
-		break;
+	switch(err)
+	{
+		case IMGTOOLERR_OUTOFMEMORY:
+		case IMGTOOLERR_UNEXPECTED:
+		case IMGTOOLERR_BUFFERTOOSMALL:
+			/* Do nothing */
+			break;
 
-	default:
-		err |= IMGTOOLERR_SRC_IMAGEFILE;
-		break;
+		case IMGTOOLERR_FILENOTFOUND:
+		case IMGTOOLERR_BADFILENAME:
+			err |= IMGTOOLERR_SRC_FILEONIMAGE;
+			break;
+
+		default:
+			err |= IMGTOOLERR_SRC_IMAGEFILE;
+			break;
 	}
 	return err;
-}
-
-
-
-imgtoolerr_t img_identify(imgtool_library *library, const char *fname,
-	ImageModuleConstPtr *modules, size_t count)
-{
-	imgtoolerr_t err;
-	const struct ImageModule *module = NULL;
-	imgtool_image *image;
-	size_t i = 0;
-	const char *extension;
-	int null_terminate;
-
-	if (count <= 0)
-		return IMGTOOLERR_UNEXPECTED;
-	null_terminate = (count > 1);
-	if (null_terminate)
-		count--;
-
-	extension = strrchr(fname, '.');
-	if (extension)
-		extension++;
-
-	while((module = imgtool_library_iterate(library, module)) != NULL)
-	{
-		if (!extension || findextension(module->extensions, extension))
-		{
-			image = NULL;
-			err = img_open(module, fname, OSD_FOPEN_READ, &image);
-			if (err && (ERRORCODE(err) != IMGTOOLERR_CORRUPTIMAGE))
-				return err;
-
-			if (image)
-			{
-				if (i < count)
-					modules[i++] = module;
-				img_close(image);
-			}
-		}
-	}
-
-	if (i <= 0)
-		return IMGTOOLERR_MODULENOTFOUND;
-	if (null_terminate)
-		modules[i] = NULL;
-	return IMGTOOLERR_SUCCESS;
 }
 
 
