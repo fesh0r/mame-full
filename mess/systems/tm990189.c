@@ -652,24 +652,24 @@ static WRITE_HANDLER(video_joy_w)
 
 static ADDRESS_MAP_START(tm990_189_memmap, ADDRESS_SPACE_PROGRAM, 8)
 
-	AM_RANGE(0x0000, 0x07ff) AM_READWRITE(MRA8_RAM, MWA8_RAM)	/* RAM */
-	AM_RANGE(0x0800, 0x0fff) AM_READWRITE(MRA8_ROM, MWA8_ROM)	/* extra ROM - application programs with unibug, remaining 2kb of program for university basic */
-	AM_RANGE(0x1000, 0x2fff) AM_READWRITE(MRA8_NOP, MWA8_NOP)	/* reserved for expansion (RAM and/or tms9918 video controller) */
-	AM_RANGE(0x3000, 0x3fff) AM_READWRITE(MRA8_ROM, MWA8_ROM)	/* main ROM - unibug or university basic */
+	AM_RANGE(0x0000, 0x07ff) AM_RAM									/* RAM */
+	AM_RANGE(0x0800, 0x0fff) AM_ROM									/* extra ROM - application programs with unibug, remaining 2kb of program for university basic */
+	AM_RANGE(0x1000, 0x2fff) AM_NOP									/* reserved for expansion (RAM and/or tms9918 video controller) */
+	AM_RANGE(0x3000, 0x3fff) AM_ROM									/* main ROM - unibug or university basic */
 
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START(tm990_189_v_memmap, ADDRESS_SPACE_PROGRAM, 8)
 
-	AM_RANGE(0x0000, 0x07ff) AM_READWRITE(MRA8_RAM, MWA8_RAM)		/* RAM */
-	AM_RANGE(0x0800, 0x0fff) AM_READWRITE(MRA8_ROM, MWA8_ROM)		/* extra ROM - application programs with unibug, remaining 2kb of program for university basic */
+	AM_RANGE(0x0000, 0x07ff) AM_RAM									/* RAM */
+	AM_RANGE(0x0800, 0x0fff) AM_ROM									/* extra ROM - application programs with unibug, remaining 2kb of program for university basic */
 
 	AM_RANGE(0x1000, 0x17ff) AM_READWRITE(MRA8_ROM, MWA8_NOP)		/* video board ROM 1 */
 	AM_RANGE(0x1800, 0x1fff) AM_READWRITE(MRA8_ROM, video_joy_w)	/* video board ROM 2 and joystick write port*/
 	AM_RANGE(0x2000, 0x27ff) AM_READWRITE(video_vdp_r, MWA8_NOP)	/* video board tms9918 read ports (bogus) */
 	AM_RANGE(0x2800, 0x2fff) AM_READWRITE(video_joy_r, video_vdp_w)	/* video board joystick read port and tms9918 write ports */
 
-	AM_RANGE(0x3000, 0x3fff) AM_READWRITE(MRA8_ROM, MWA8_ROM)		/* main ROM - unibug or university basic */
+	AM_RANGE(0x3000, 0x3fff) AM_ROM									/* main ROM - unibug or university basic */
 
 ADDRESS_MAP_END
 
@@ -734,7 +734,7 @@ static ADDRESS_MAP_START(tm990_189_writecru, ADDRESS_SPACE_IO, 8)
 	AM_RANGE(0x200, 0x3ff) AM_WRITE(tms9901_1_cru_w)	/* system I/O tms9901 */
 //	AM_RANGE(0x400, 0x5ff) AM_WRITE(tms9902_0_cru_w)	/* optional tms9902 */
 
-	AM_RANGE(0x0800,0x1fff)AM_WRITE(ext_instr_decode)		/* external instruction decoding (IDLE, RSET, CKON, CKOF, LREX) */
+	AM_RANGE(0x0800,0x1fff)AM_WRITE(ext_instr_decode)	/* external instruction decoding (IDLE, RSET, CKON, CKOF, LREX) */
 
 ADDRESS_MAP_END
 
