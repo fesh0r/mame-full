@@ -2883,7 +2883,7 @@ ROM_START(kccomp)
 	ROM_LOAD("kccos.rom", 0x10000, 0x04000, 0x7f9ab3f7)
 	ROM_LOAD("kccbas.rom", 0x14000, 0x04000, 0xca6af63d)
 	ROM_REGION(0x018000+0x0800, REGION_PROMS, 0 )
-	ROM_LOAD("farben.rom", 0x018000, 0x0800, 0x01)
+	ROM_LOAD("farben.rom", 0x018000, 0x0800, 0xa50fa3cf)
 
 	/* fake region - required by graphics decode structure */
 	/*ROM_REGION(0x0c00, REGION_GFX1) */
