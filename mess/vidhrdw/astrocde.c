@@ -409,7 +409,13 @@ void astrocade_copy_line(int line)
 			if (i<ColourSplit)
 				color += 4;
 
-			plot_pixel(tmpbitmap,x,line,Machine->pens[Colour[color]]);
+			if (astrocade_mode == 0)
+			{
+				plot_pixel(tmpbitmap,2*x,line,Machine->pens[Colour[color]]);
+				plot_pixel(tmpbitmap,2*x+1,line,Machine->pens[Colour[color]]);
+			}
+			else
+				plot_pixel(tmpbitmap,x,line,Machine->pens[Colour[color]]);
 
 			data >>= 2;
 		}
