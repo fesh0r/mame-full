@@ -2695,6 +2695,10 @@ OP(xxcb,ff) { _A = SET(7, RM(EA) ); WM( EA,_A );					} /* SET  7,A=(XY+o)  */
 
 OP(illegal,1) {
 	_PC--;
+        _R--;
+
+        /* KT - executing a sequence of dd, fd, will increment pc by 1
+        and R by 1 only! */
 	logerror("Z80#%d ill. opcode $%02x $%02x\n",
 			cpu_getactivecpu(), cpu_readop((_PCD-1)&0xffff), cpu_readop(_PCD));
 }
