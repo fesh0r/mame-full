@@ -5860,3 +5860,4 @@ GAME( 1993, qcrayon,  0,        qcrayon,  qcrayon,  0,        ROT0,   "Taito Cor
 GAME( 1993, qcrayon2, 0,        qcrayon2, qcrayon2, 0,        ROT0,   "Taito Corporation", "Quiz Crayon Shinchan Orato Asobo (Japan)" )
 GAME( 1991, driftout, 0,        driftout, driftout, 0,        ROT270, "Visco", "Drift Out (Japan)" )
 GAMEX(1991, driveout, driftout, driftout, driftout, 0,        ROT270, "bootleg", "Drive Out", GAME_NO_SOUND )
+

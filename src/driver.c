@@ -948,8 +948,8 @@ TESTDRIVER( arkblock )	/* bootleg */
 	DRIVER( finalb )	/* B82 (c) 1988 Taito Corporation Japan (World) */
 	DRIVER( finalbj )	/* B82 (c) 1988 Taito Corporation (Japan) */
 	DRIVER( dondokod )	/* B95 (c) 1989 Taito Corporation (Japan) */
-TESTDRIVER( megab )		/* C11 (c) 1989 Taito Corporation Japan (World) */
-TESTDRIVER( megabj )	/* C11 (c) 1989 Taito Corporation (Japan) */
+	DRIVER( megab ) 	/* C11 (c) 1989 Taito Corporation Japan (World) */
+	DRIVER( megabj )	/* C11 (c) 1989 Taito Corporation (Japan) */
 	DRIVER( thundfox )	/* C28 (c) 1990 Taito Corporation (Japan) */
 	DRIVER( cameltry )	/* C38 (c) 1989 Taito Corporation (Japan) */
 	DRIVER( cameltru )	/* C38 (c) 1989 Taito America Corporation (US) */
@@ -978,8 +978,8 @@ TESTDRIVER( megabj )	/* C11 (c) 1989 Taito Corporation (Japan) */
 	DRIVER( qzquest )	/* C92 (c) 1991 Taito Corporation (Japan) */
 	DRIVER( pulirula )	/* C98 (c) 1991 Taito Corporation Japan (World) */
 	DRIVER( pulirulj )	/* C98 (c) 1991 Taito Corporation (Japan) */
-TESTDRIVER( metalb )	/* D16? (c) 1991 Taito Corporation Japan (World) */
-TESTDRIVER( metalbj )	/* D12 (c) 1991 Taito Corporation (Japan) */
+	DRIVER( metalb )	/* D16? (c) 1991 Taito Corporation Japan (World) */
+	DRIVER( metalbj )	/* D12 (c) 1991 Taito Corporation (Japan) */
 	DRIVER( qzchikyu )	/* D19 (c) 1991 Taito Corporation (Japan) */
 	DRIVER( yesnoj )	/* D20 (c) 1992 Taito Corporation (Japan) */
 	DRIVER( deadconx )	/* D28 (c) 1992 Taito Corporation Japan (World) */
