@@ -1039,7 +1039,7 @@ INLINE void tfmpp( void )
 		}
 	}
 	else
-		hd6309_ICount -= 3;   /* Needs three aditional cycles  to get the 6+3n */
+		hd6309_ICount -= 6;   /* Needs six aditional cycles to get the 6+3n */
 }
 
 /* $1139 TFM R0-,R1- */
@@ -1098,7 +1098,7 @@ INLINE void tfmmm( void )
 		}
 	}
 	else
-		hd6309_ICount -= 3;   /* Needs three aditional cycles  to get the 6+3n */
+		hd6309_ICount -= 6;   /* Needs six aditional cycles to get the 6+3n */
 }
 
 /* $113A TFM R0+,R1 */
@@ -1157,7 +1157,7 @@ INLINE void tfmpc( void )
 		}
 	}
 	else
-		hd6309_ICount -= 3;   /* Needs three aditional cycles  to get the 6+3n */
+		hd6309_ICount -= 6;   /* Needs six aditional cycles to get the 6+3n */
 }
 
 /* $113B TFM R0,R1+ */
@@ -1216,7 +1216,7 @@ INLINE void tfmcp( void )
 		}
 	}
 	else
-		hd6309_ICount -= 3;   /* Needs three aditional cycles  to get the 6+3n */
+		hd6309_ICount -= 6;   /* Needs six aditional cycles to get the 6+3n */
 }
 
 /* $30 LEAX indexed --*-- */
@@ -1440,7 +1440,6 @@ INLINE void swi( void )
 	{
 		PUSHBYTE(F);
 		PUSHBYTE(E);
-		hd6309_ICount -= 2;
 	}
 	PUSHBYTE(B);
 	PUSHBYTE(A);
@@ -1615,7 +1614,6 @@ INLINE void swi2( void )
 	{
 		PUSHBYTE(F);
 		PUSHBYTE(E);
-		hd6309_ICount -= 2;
 	}
 	PUSHBYTE(B);
 	PUSHBYTE(A);
@@ -1637,7 +1635,6 @@ INLINE void swi3( void )
 	{
 		PUSHBYTE(F);
 		PUSHBYTE(E);
-		hd6309_ICount -= 2;
 	}
 	PUSHBYTE(B);
 	PUSHBYTE(A);

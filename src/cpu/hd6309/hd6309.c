@@ -349,7 +349,8 @@ static UINT8 *index_cycle;
 	IMMWORD(t); 						\
 	if( f ) 							\
 	{									\
-		hd6309_ICount -= 1; 			\
+		if( !(MD & MD_EM) )				\
+			hd6309_ICount -= 1;			\
 		PC += t.w.l;					\
 		CHANGE_PC;						\
 	}									\
