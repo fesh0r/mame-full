@@ -2899,9 +2899,7 @@ static void setup_menu_init(void)
 	menu_item[menu_total] = ui_getstring (UI_history); menu_action[menu_total++] = UI_HISTORY;
 #else
 	menu_item[menu_total] = ui_getstring (UI_imageinfo); menu_action[menu_total++] = UI_IMAGEINFO;
-#ifdef MAME_DEBUG
 	menu_item[menu_total] = ui_getstring (UI_filemanager); menu_action[menu_total++] = UI_FILEMANAGER;
-#endif
 	if (device_count(IO_CASSETTE)!=0)
 	{
 		menu_item[menu_total] = ui_getstring (UI_tapecontrol); menu_action[menu_total++] = UI_TAPECONTROL;
