@@ -278,27 +278,6 @@ void pc_cga_init(void)
 	install_port_write_handler(0, 0x3d0, 0x3df, pc_CGA_w );
 }
 
-void pc_vga_init(void)
-{
-	install_mem_read_handler(0, 0xa0000, 0xaffff, MRA8_BANK1 );
-	install_mem_read_handler(0, 0xb0000, 0xb7fff, MRA8_BANK2 );
-	install_mem_read_handler(0, 0xb8000, 0xbffff, MRA8_BANK3 );
-	install_mem_read_handler(0, 0xc0000, 0xc7fff, MRA8_ROM );
-
-	install_mem_write_handler(0, 0xa0000, 0xaffff, MWA8_BANK1 );
-	install_mem_write_handler(0, 0xb0000, 0xb7fff, MWA8_BANK2 );
-	install_mem_write_handler(0, 0xb8000, 0xbffff, MWA8_BANK3 );
-	install_mem_write_handler(0, 0xc0000, 0xc7fff, MWA8_ROM );
-
-	install_port_read_handler(0, 0x3b0, 0x3bf, vga_port_03b0_r );
-	install_port_read_handler(0, 0x3c0, 0x3cf, vga_port_03c0_r );
-	install_port_read_handler(0, 0x3d0, 0x3df, vga_port_03d0_r );
-
-	install_port_write_handler(0, 0x3b0, 0x3bf, vga_port_03b0_w );
-	install_port_write_handler(0, 0x3c0, 0x3cf, vga_port_03c0_w );
-	install_port_write_handler(0, 0x3d0, 0x3df, vga_port_03d0_w );
-}
-
 /***********************************/
 /* PC interface to PC COM hardware */
 /* Done this way because PCW16 also has PC-com hardware but it

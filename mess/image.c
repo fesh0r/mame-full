@@ -793,6 +793,7 @@ static mame_file *image_fopen_custom(mess_image *img, int filetype, int read_or_
 	const char *sysname;
 	mame_file *file;
 	char buffer[512];
+	const struct GameDriver *gamedrv = Machine->gamedrv;
 
 	assert(img);
 
@@ -803,9 +804,15 @@ static mame_file *image_fopen_custom(mess_image *img, int filetype, int read_or_
 		/* If already open, we won't open the file again until it is closed. */
 		return NULL;
 
-	sysname = Machine->gamedrv->name;
-	logerror("image_fopen: trying %s for system %s\n", img->name, sysname);
-	img->fp = file = mame_fopen(sysname, img->name, filetype, read_or_write);
+	do
+	{
+		sysname = gamedrv->name;
+		logerror("image_fopen: trying %s for system %s\n", img->name, sysname);
+		img->fp = file = mame_fopen(sysname, img->name, filetype, read_or_write);
+
+		gamedrv = gamedrv->clone_of ? gamedrv->clone_of : gamedrv->compatible_with;
+	}
+	while(!img->fp && gamedrv && !(gamedrv->flags & NOT_A_DRIVER));
 
 	if ((file) && ! is_effective_mode_create(read_or_write))
 	{

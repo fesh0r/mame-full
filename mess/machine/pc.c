@@ -182,7 +182,6 @@ DRIVER_INIT( pc_vga )
 	ppi8255_init(&pc_ppi8255_interface);
 
 	vga_init(input_port_0_r);
-	pc_vga_init();
 }
 
 MACHINE_INIT( pc_mda )

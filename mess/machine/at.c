@@ -74,7 +74,6 @@ void init_at_vga(void)
 
 	pit8253_config(0,&at_pit8253_config);
 
-	pc_vga_init();
 	mc146818_init(MC146818_STANDARD);
 
 	vga_init(input_port_0_r);

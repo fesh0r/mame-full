@@ -46,6 +46,7 @@ struct crtc6845 *pc_video_start(const struct crtc6845_config *config,
 	pc_anythingdirty = 1;
 	pc_current_height = -1;
 	pc_current_width = -1;
+	tmpbitmap = NULL;
 
 	videoram_size = vramsize;
 
