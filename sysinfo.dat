@@ -1449,13 +1449,20 @@ then EXEC (if it's an assembler program)
 
 or RUN (if it's a basic program)
 
+If you include the name of the file (eg. CLOAD "PROG") it will skip any files preceding the
+one you specified.
 
-	- Cartridge/Snapshot images (.PAK)
+	- Snapshot images (.PAK)
 
 Go to file menu pick the .pak
 Should automatically start running the game.
-if it does not run it isnt supported yet.
+if it does not run, it isnt supported yet.
 
+    - Cartridge rom images (.ROM)
+
+Go to file menu and pick the .rom
+Reset to CoCo and it will start running the game.
+if it does not run it isnt supported yet.
 
 	-Diskette images (.DSK)
 
@@ -1464,16 +1471,14 @@ from the file manager. Once you return to the coco emulation, switch back to key
 emulation mode by pressing SCROLL LOCK and type:
 DIR
 
-To load an assembly file (.BIN), type LOADM "1:GAME.BIN" (replacing the "1:" with the 
-appropriate drive designation "1:" through "4:" )
+To load a binary file (/BIN), type LOADM "GAME/BIN:1" (replacing the ":1" with the 
+appropriate drive designation ":0" through ":3" )
 
 then EXEC
 
-
-To load a basic file (.BAS), type LOAD "1:GAME.BAS"
+To load a basic file (/BAS), type LOAD "GAME/BAS:0"
 
 then RUN
-
 
 Thanks to "Axe" for the command summary.
 
@@ -1488,28 +1493,29 @@ scroll_lock key.
 
 History and Trivia:
 
-The Tandy TRS 80 color computer was typically called 'coco'. It was compatible with the 
+The Tandy TRS-80 Color Computer was typically called 'CoCo'. It was compatible with the 
 Welsh Dragon 32: they can use same softwares and cartridges. Unlike the Dragon, though, it 
 used its own basic, Tandy Basic instead of the Microsoft basic. It was followed by the 
-TRS 80 color computer II.
+TRS 80 color computer II. The two BASICs use different tokens so they are not binary
+compatible.
 
 
-The TRS 80 color model II (coco2) replaced the model I in 1983. It has the same 
-characteristics than the Model 1. It has 16 KB RAM and can have a 16 KB ROM which contains 
-Microsoft Basic. It was replaced with the TRS80 color model III in 1986. 
+The Tandy/TRS-80 Color Computer 2 (CoCo 2) replaced the original in 1983. It has the same 
+characteristics than the first. It has 16 KB RAM and can have a 16 KB ROM which contains 
+Microsoft Basic. It was replaced with the Tandy Color Computer 3 in 1986. 
 
 
-The Tandy TRS 80 Color Computer III is the successor of the TRS 80 Color Computer II. It can 
-work with OS-9 (an operating system designed for 6809 processors). As this processor is an 8 
-bit (strange choice when Atari and Commodore were using a 68000), it can't access 
+The Tandy Color Computer 3 is the successor of the Tandy/TRS-80 Color Computer 2. It can 
+work with OS-9 Level II (an operating system designed for 6809 processors). As this processor
+is an 8 bit (strange choice when Atari and Commodore were using a 68000), it can't access 
 simultaneously to the 128 KB (or 512 KB), it uses several RAM banks (as the Thomson TO8, or 
-MSX 2 computers) which can be switched. 
+MSX 2 computers) which can be switched in 8K blocks. 
 
 
-Tandy made several prototypes of a TRS 80 color model IV but it was never released. The 
+Tandy made several prototypes of a Tandy Color Computer 4 but it was never released. The 
 DRAGON 32 enjoyed a pretty good success in Europe. Its ROM holds the Operating System and a 
 BASIC programming language by Microsoft. One of its characteristics is partial compatibility 
-with the Tandy TRS 80 Color Computer Series: they can use same peripherals and some 
+with the Tandy TRS-80 Color Computer Series: they can use same peripherals and some 
 cartridges. Two years later, Welsh launched the DRAGON 64 which has the same 
 characteristics except the added memory (64 KB instead of 32 KB), a RS232c port and a keyboard 
 with repetitive keys.
