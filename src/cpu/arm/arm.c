@@ -92,110 +92,105 @@ int arm_ICount;
 #define RD	arm.reg[(OP>>12)&15]
 
 /* store multiple registers */
-#define STM(wr,pre,post) \
-{   \
-	if( OP & 0x0001 ) { ea=(ea+pre)&MASK; wr(ea,arm.reg[ 0]); ea=(ea+post)&MASK; }	\
-	if( OP & 0x0002 ) { ea=(ea+pre)&MASK; wr(ea,arm.reg[ 1]); ea=(ea+post)&MASK; }	\
-	if( OP & 0x0004 ) { ea=(ea+pre)&MASK; wr(ea,arm.reg[ 2]); ea=(ea+post)&MASK; }	\
-	if( OP & 0x0008 ) { ea=(ea+pre)&MASK; wr(ea,arm.reg[ 3]); ea=(ea+post)&MASK; }	\
-	if( OP & 0x0010 ) { ea=(ea+pre)&MASK; wr(ea,arm.reg[ 4]); ea=(ea+post)&MASK; }	\
-	if( OP & 0x0020 ) { ea=(ea+pre)&MASK; wr(ea,arm.reg[ 5]); ea=(ea+post)&MASK; }	\
-	if( OP & 0x0040 ) { ea=(ea+pre)&MASK; wr(ea,arm.reg[ 6]); ea=(ea+post)&MASK; }	\
-	if( OP & 0x0080 ) { ea=(ea+pre)&MASK; wr(ea,arm.reg[ 7]); ea=(ea+post)&MASK; }	\
-	if( OP & 0x0100 ) { ea=(ea+pre)&MASK; wr(ea,arm.reg[ 8]); ea=(ea+post)&MASK; }	\
-	if( OP & 0x0200 ) { ea=(ea+pre)&MASK; wr(ea,arm.reg[ 9]); ea=(ea+post)&MASK; }	\
-	if( OP & 0x0400 ) { ea=(ea+pre)&MASK; wr(ea,arm.reg[10]); ea=(ea+post)&MASK; }	\
-	if( OP & 0x0800 ) { ea=(ea+pre)&MASK; wr(ea,arm.reg[11]); ea=(ea+post)&MASK; }	\
-	if( OP & 0x1000 ) { ea=(ea+pre)&MASK; wr(ea,arm.reg[12]); ea=(ea+post)&MASK; }	\
-	if( OP & 0x2000 ) { ea=(ea+pre)&MASK; wr(ea,arm.reg[13]); ea=(ea+post)&MASK; }	\
-	if( OP & 0x4000 ) { ea=(ea+pre)&MASK; wr(ea,arm.reg[14]); ea=(ea+post)&MASK; }	\
-	if( OP & 0x8000 ) { ea=(ea+pre)&MASK; wr(ea,arm.reg[15]); ea=(ea+post)&MASK; }	\
+#define STM(wm,pre,post)					\
+{											\
+	int i;									\
+	for( i = 0; i < 16; i++ )				\
+	{										\
+		if( OP & (1<<i) )					\
+		{									\
+			ea=(ea + pre) & MASK;			\
+			wm(ea, arm.reg[i]); 			\
+			ea=(ea + post) & MASK;			\
+		}									\
+	}										\
 }
 
 /* load multiple registers */
-#define LDM(rm,pre,post) \
-{   \
-	if( OP & 0x0001 ) { ea=(ea+pre)&MASK; arm.reg[ 0] = rm(ea); ea=(ea+post)&MASK; }  \
-	if( OP & 0x0002 ) { ea=(ea+pre)&MASK; arm.reg[ 1] = rm(ea); ea=(ea+post)&MASK; }  \
-	if( OP & 0x0004 ) { ea=(ea+pre)&MASK; arm.reg[ 2] = rm(ea); ea=(ea+post)&MASK; }  \
-	if( OP & 0x0008 ) { ea=(ea+pre)&MASK; arm.reg[ 3] = rm(ea); ea=(ea+post)&MASK; }  \
-	if( OP & 0x0010 ) { ea=(ea+pre)&MASK; arm.reg[ 4] = rm(ea); ea=(ea+post)&MASK; }  \
-	if( OP & 0x0020 ) { ea=(ea+pre)&MASK; arm.reg[ 5] = rm(ea); ea=(ea+post)&MASK; }  \
-	if( OP & 0x0040 ) { ea=(ea+pre)&MASK; arm.reg[ 6] = rm(ea); ea=(ea+post)&MASK; }  \
-	if( OP & 0x0080 ) { ea=(ea+pre)&MASK; arm.reg[ 7] = rm(ea); ea=(ea+post)&MASK; }  \
-	if( OP & 0x0100 ) { ea=(ea+pre)&MASK; arm.reg[ 8] = rm(ea); ea=(ea+post)&MASK; }  \
-	if( OP & 0x0200 ) { ea=(ea+pre)&MASK; arm.reg[ 9] = rm(ea); ea=(ea+post)&MASK; }  \
-	if( OP & 0x0400 ) { ea=(ea+pre)&MASK; arm.reg[10] = rm(ea); ea=(ea+post)&MASK; }  \
-	if( OP & 0x0800 ) { ea=(ea+pre)&MASK; arm.reg[11] = rm(ea); ea=(ea+post)&MASK; }  \
-	if( OP & 0x1000 ) { ea=(ea+pre)&MASK; arm.reg[12] = rm(ea); ea=(ea+post)&MASK; }  \
-	if( OP & 0x2000 ) { ea=(ea+pre)&MASK; arm.reg[13] = rm(ea); ea=(ea+post)&MASK; }  \
-	if( OP & 0x4000 ) { ea=(ea+pre)&MASK; arm.reg[14] = rm(ea); ea=(ea+post)&MASK; }  \
-	if( OP & 0x8000 ) { ea=(ea+pre)&MASK; SET_PC(rm(ea),0); 	ea=(ea+post)&MASK; }  \
+#define LDM(rm,pre,post)					\
+{											\
+	int i;									\
+	for( i = 0; i < 15; i++ )				\
+	{										\
+		if( OP & (1<<i) )					\
+		{									\
+			ea=(ea + pre) & MASK;			\
+			arm.reg[i] = rm(ea);			\
+			ea=(ea + post) & MASK;			\
+		}									\
+	}										\
+	if( OP & 0x8000 )						\
+	{										\
+		ea = (ea + pre) & MASK; 			\
+		SET_PC(rm(ea),0);					\
+		ea = (ea + post) & MASK;			\
+	}										\
 }
 
 /* register operand #2
  * ??????0?????S nnnn dddd sssss mm0 xxxx
- *				 Rn   Rd   shift mod count?
- *						   rrrr0 mm1 xxxx
- *						   reg	 mod count?
+ *				 Rn   Rd   shift mod Rs
+ * or
+ *                         rrrr0 mm1 xxxx
+ *						   reg	 mod Rs
  */
 INLINE UINT32 RS(void)
 {
 	UINT32 m = OP & 0x70;
 	UINT32 s = (OP>>7) & 31;
-	UINT32 rn = arm.reg[(OP>>16) & 15];
+	UINT32 rs = arm.reg[OP & 15];
 
 	switch( m & 0x70 )
 	{
 	case 0x00:
 		/* LSL (aka ASL) #0 .. 31# */
-        return rn << s;
+		return rs << s;
 
     case 0x10:
 		/* LSL (aka ASL) R0 .. R15 */
 		s = arm.reg[s >> 1];
-		return rn << s;
+		return rs << s;
 
 	case 0x20:
 		/* LSR #1 .. #32 */
         if (s)
-            return rn >> s;
+			return rs >> s;
         /* LSR #32 effectively returns 0 */
         return 0;
 
     case 0x30:
 		/* LSR R0 .. R15 */
 		s = arm.reg[s >> 1];
-		return rn >> s;
+		return rs >> s;
 
 	case 0x40:
 		/* ASR #1 .. #32 */
         if (s)
-            return (UINT32)((INT32)rn >> s);
+			return (UINT32)((INT32)rs >> s);
         /* ASR #32 effectively returns 0 or 0xffffffff depending on bit 31 */
-        return (rn & N) ? 0xffffffffL : 0;
+		return (rs & N) ? 0xffffffffL : 0;
 
     case 0x50:
 		/* ASR R0 .. R15 */
 		s = arm.reg[s >> 1];
-		return (UINT32)((INT32)rn >> s);
+		return (UINT32)((INT32)rs >> s);
 
 	case 0x60:
 		/* shift count == 0 is RRX */
         if (s == 0)
         {
-            UINT32 c = rn & 1;
-            UINT32 rc = ((PSW & C) << 3) | (rn >> 1);
+			UINT32 c = rs & 1;
+			UINT32 rc = ((PSW & C) << 3) | (rs >> 1);
             PSW = (PSW & ~C) | (c << 29);
             return rc;
         }
 		/* ROR #1 .. #31 */
-        return (rn << (32 - s)) | (rn >> s);
+		return (rs << (32 - s)) | (rs >> s);
 
 	default:
 		/* ROR R0 .. R15 */
 		s = arm.reg[s >> 1];
-		return (rn << (32 - s)) | (rn >> s);
+		return (rs << (32 - s)) | (rs >> s);
     }
 }
 
@@ -567,8 +562,8 @@ INLINE void SET_PC(UINT32 val, int link)
     /* if this is a BL (branch with link) make a copy of R15 and the status now */
 	if (link) arm.reg[14] = arm.reg[15] | PSW;
 
-    /* store the status flags in their extra field */
-	PSW = val & (N | Z | C | V | I | F | S01);
+	/* store the status flags in an extra field */
+	PSW = val & (N|Z|C|V|I|F|S01);
 
     /* only store the address part of val into r[15] */
 	PC = val ^ PSW;
@@ -589,7 +584,7 @@ INLINE void SET_PC(UINT32 val, int link)
 INLINE void PUT_RD(UINT32 val)
 {
 	UINT32 rd = (OP>>12)&15;
-	if ( rd != 15 ) /* destination is R15 (PC) ? */
+	if ( rd == 15 ) /* destination is R15 (PC) ? */
         SET_PC(val, 0);
 	else
         RD = val;
@@ -617,6 +612,7 @@ INLINE void PUT_RD(UINT32 val)
 		(v && d > s ? C : 0) |								\
 		( ((INT32)v < 0 && (INT32)d < (INT32)s) ||			\
 		  ((INT32)v > 0 && (INT32)d > (INT32)d) ? V : 0)
+
 
 /*****************************************************************************
  *
@@ -737,7 +733,7 @@ static void adds_r(void)
 {
 	UINT32 rs = RS();
 	UINT32 rd = RN + rs;
-	SET_NZCV_ADD(RD,RN,rs);
+	SET_NZCV_ADD(rd,RN,rs);
 	PUT_RD(rd);
 }
 
@@ -1049,8 +1045,9 @@ static void sub_i (void)
  */
 static void subs_i(void)
 {
-	UINT32 rd = RN - IM;
-	SET_NZCV_SUB(rd,RN,IM);
+	UINT32 im = IM;
+	UINT32 rd = RN - im;
+	SET_NZCV_SUB(rd,RN,im);
 	PUT_RD(rd);
 }
 
@@ -1114,8 +1111,8 @@ static void adcs_i(void)
 {
 	UINT32 c = GET_C;
 	UINT32 im = IM;
-	UINT32 rd = RN + (im+c);
-	SET_NZCV_ADD(rd,RN,im+c);
+	UINT32 rd = RN + (im + c);
+	SET_NZCV_ADD(rd,RN,im + c);
 	PUT_RD(rd);
 }
 
@@ -1137,8 +1134,8 @@ static void sbcs_i(void)
 {
 	UINT32 c = GET_C;
 	UINT32 im = IM;
-	UINT32 rd = RN - (im+c);
-	SET_NZCV_SUB(rd,RN,im+c);
+	UINT32 rd = RN - (im + c);
+	SET_NZCV_SUB(rd,RN,im + c);
 	PUT_RD(rd);
 }
 
@@ -1160,8 +1157,8 @@ static void rscs_i(void)
 {
 	UINT32 c = GET_C;
 	UINT32 im = IM;
-	UINT32 rd = RN - (im+c);
-	SET_NZCV_SUB(rd,RN,im+c);
+	UINT32 rd = RN - (im + c);
+	SET_NZCV_SUB(rd,RN,im + c);
 	PUT_RD(rd);
 }
 
@@ -2434,7 +2431,7 @@ static void b(void)
 {
 	UINT32 offs = OP & 0x00ffffff;
 
-	PC = (PC + offs) & MASK;
+	PC = (PC + (offs << 2)) & MASK;
 	change_pc26lew(PC);
     /* pre-fill the instruction queue */
 	arm.queue[1] = ARM_RDMEM_32(PC);
@@ -2454,7 +2451,7 @@ static void bl(void)
 	/* save PC */
 	arm.reg[14] = PC | PSW;
 
-	PC = (PC + offs) & MASK;
+	PC = (PC + (offs << 2)) & MASK;
 	change_pc26lew(PC);
     /* pre-fill the instruction queue */
 	arm.queue[1] = ARM_RDMEM_32(PC);
@@ -2462,6 +2459,12 @@ static void bl(void)
     arm.queue[2] = ARM_RDMEM_32(PC);
 	PC = (PC + 4) & MASK;
 }
+
+/*****************************************************************************
+ *
+ *	ILLEGAL OPCODES
+ *
+ *****************************************************************************/
 
 /*
  * ---- cccc1100xxxxxxxxxxxxxxxxxxxxxxxx
