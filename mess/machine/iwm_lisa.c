@@ -470,7 +470,8 @@ static int iwm_status(void)
 			action, (int) cpu_get_pc(), (iwm_lines & IWM_MOTOR) ? "" : " (MOTOR OFF)");
 	#endif
 
-	if (iwm_lines & IWM_MOTOR) {
+	//if (iwm_lines & IWM_MOTOR)
+	{
 		f = &iwm_floppy[iwm_floppy_select];
 
 		switch(action) {
@@ -478,7 +479,7 @@ static int iwm_status(void)
 			result = f->wp ? 0 : 1;
 			break;
 		case 0x01:	/* optical recalibration (At track -1 ????) */
-			result = /*f->track != 0*/0;	/* 0=track zero 1=not track zero */
+			result = f->track != 0/*0*/;	/* 0=track zero 1=not track zero */
 			break;
 		case 0x02:	/* eject button */
 			result = 0;
