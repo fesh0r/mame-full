@@ -38,8 +38,8 @@ cursor                  1
 mitshm                  1
 xsync                   1
 privatecmap             0
-xil                     1
-mtxil                   0
+#xil                     1
+#mtxil                   0
 run-in-root-window      0
 root_window_id          0
 geometry                640x480
