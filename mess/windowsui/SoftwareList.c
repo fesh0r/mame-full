@@ -131,24 +131,27 @@ void SetupImageTypes(int nDriver, mess_image_type *types, int count, BOOL bZip, 
 
 	for(dev = device_first(drivers[nDriver]); dev; dev = device_next(drivers[nDriver], dev))
 	{
-        const char *ext = dev->file_extensions;
-		if (ext)
+		if (dev->type != IO_PRINTER)
 		{
-			while(*ext)
+			const char *ext = dev->file_extensions;
+			if (ext)
 			{
-				if ((type == 0) || (type == dev->type))
+				while(*ext)
 				{
-					if (num_extensions < count)
+					if ((type == 0) || (type == dev->type))
 					{
-						types[num_extensions].type = dev->type;
-						types[num_extensions].ext = ext;
+						if (num_extensions < count)
+						{
+							types[num_extensions].type = dev->type;
+							types[num_extensions].ext = ext;
 #if HAS_CRC
-						types[num_extensions].partialcrc = dev->partialcrc;
+							types[num_extensions].partialcrc = dev->partialcrc;
 #endif
-						num_extensions++;
+							num_extensions++;
+						}
 					}
+					ext += strlen(ext) + 1;
 				}
-				ext += strlen(ext) + 1;
 			}
 		}
     }

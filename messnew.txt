@@ -58,6 +58,11 @@ Source Changes:
   provided a cassette_exit() function that drivers can specify, removing this
   responsibility from system drivers. [Nate Woods]
 
+- [Win32 GUI] Printers are now treated separately from the other devices; you
+  do not specify printer ouput like you do disk images.  Printer output now
+  gets specified in the configuration tab of the system properties.  The added
+  benefit is that the same output file can be used repeatedly. [Nate Woods]
+
 - [Imgtool] Imgtool floppy drivers can now be "templated"; a driver for a
   particular file system format can point at a structure that lists allowable
   disk image formats.  This allows for the addition of new disk image format

@@ -956,24 +956,13 @@ static INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPAR
 				}
 
 				break;
-#ifdef MESS
-			case IDC_DIR_BROWSE:
-				if (wNotifyCode == BN_CLICKED)
-					changed = SoftwareDirectories_OnInsertBrowse(hDlg, TRUE, NULL);
-				break;
-
-			case IDC_DIR_INSERT:
-				if (wNotifyCode == BN_CLICKED)
-					changed = SoftwareDirectories_OnInsertBrowse(hDlg, FALSE, NULL);
-				break;
-
-			case IDC_DIR_DELETE:
-				if (wNotifyCode == BN_CLICKED)
-					changed = SoftwareDirectories_OnDelete(hDlg);
-				break;
-#endif
 
 			default:
+#ifdef MESS
+				if (MessPropertiesCommand(hDlg, wNotifyCode, wID, &changed))
+					break;
+#endif
+
 				if (wNotifyCode == BN_CLICKED)
 				{
 					switch (wID)

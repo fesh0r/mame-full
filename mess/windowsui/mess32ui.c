@@ -7,6 +7,7 @@
 #include <wingdi.h>
 
 #include "windowsui/mame32.h"
+#include "windowsui/MessResource.h"
 #include "mess.h"
 #include "config.h"
 #include "SmartListView.h"
@@ -21,18 +22,12 @@
 
 /* #define INPROCESS_MAME */
 
-/* from src/mess/win32.c */
-/*
-char *strncatz(char *dest, const char *source, size_t len);
-char *strncpyz(char *dest, const char *source, size_t len);
-*/
-
 /* from src/win32/Directories.c */
 const char *GetMessSoftwarePath(int i);
 int GetMessSoftwarePathCount(void);
 
 static int requested_device_type(char *tchar);
-
+static void MessCreateCommandLine(char *pCmdLine, options_type *pOpts);
 
 static int SoftwareListClass_WhichIcon(struct SmartListView *pListView, int nItem);
 static void SoftwareListClass_GetColumnInfo(struct SmartListView *pListView, int *pShown, int *pOrder, int *pWidths);
@@ -317,6 +312,23 @@ static void InitMessPicker(void)
 	}
 }
 
+static void MessCreateCommandLine(char *pCmdLine, options_type *pOpts)
+{
+	int i;
+	extern struct rc_option mess_opts[1];
+
+	for (i = 0; i < options.image_count; i++)
+	{
+		const char *optname = mess_opts[options.image_files[i].type].shortname;
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -%s \"%s\"", optname, options.image_files[i].name);
+	}
+
+	if (pOpts->ram_size != 0)
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -ramsize %d", pOpts->ram_size);
+	if (pOpts->printer[0])
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -prin \"%s\"", pOpts->printer);
+}
+
 /* ------------------------------------------------------------------------ *
  * Open others dialog                                                       *
  * ------------------------------------------------------------------------ */
@@ -408,13 +420,13 @@ static BOOL CommonFileImageDialog(char *the_last_directory, common_file_dialog_p
 
 static void MessSetupDevice(common_file_dialog_proc cfd, int iDevice)
 {
-    char filename[MAX_PATH];
-    mess_image_type imagetypes[64];
+	char filename[MAX_PATH];
+	mess_image_type imagetypes[64];
 
-    SetupImageTypes(GetSelectedPickItem(), imagetypes, sizeof(imagetypes) / sizeof(imagetypes[0]), TRUE, iDevice);
+	SetupImageTypes(GetSelectedPickItem(), imagetypes, sizeof(imagetypes) / sizeof(imagetypes[0]), TRUE, iDevice);
 
-    if (CommonFileImageDialog(last_directory, cfd, filename, imagetypes))
-        MessIntroduceItem(s_pSoftwareListView, filename, imagetypes);
+	if (CommonFileImageDialog(last_directory, cfd, filename, imagetypes))
+		MessIntroduceItem(s_pSoftwareListView, filename, imagetypes);
 }
 
 static void MessOpenOtherSoftware(int iDevice)

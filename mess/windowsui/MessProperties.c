@@ -10,11 +10,13 @@
 
 #include "windowsui/mame32.h"
 #include "windowsui/Directories.h"
+#include "MessResource.h"
 #include "mess.h"
 #include "utils.h"
 
 static void MessOptionsToProp(HWND hWnd, options_type *o);
 static void MessPropToOptions(HWND hWnd, options_type *o);
+static BOOL MessPropertiesCommand(HWND hWnd, WORD wNotifyCode, WORD wID, BOOL *changed);
 
 static BOOL SoftwareDirectories_OnInsertBrowse(HWND hDlg, BOOL bBrowse, LPCSTR lpItem);
 static BOOL SoftwareDirectories_OnDelete(HWND hDlg);
@@ -27,7 +29,6 @@ static BOOL PropSheetFilter_Config(const struct InternalMachineDriver *drv, cons
 #include "../../src/windowsui/Properties.c"
 
 extern BOOL BrowseForDirectory(HWND hwnd, const char* pStartDir, char* pResult);
-extern char *strncatz(char *dest, const char *source, size_t len);
 BOOL g_bModifiedSoftwarePaths = FALSE;
 
 static void AppendList(HWND hList, LPCSTR lpItem, int nItem)
@@ -38,78 +39,6 @@ static void AppendList(HWND hList, LPCSTR lpItem, int nItem)
 	Item.pszText = (LPSTR) lpItem;
 	Item.iItem = nItem;
 	ListView_InsertItem(hList, &Item);
-}
-
-static void SoftwareDirectories_GetList(HWND hDlg, LPSTR lpBuf, UINT iBufLen)
-{
-	HWND hList;
-    LV_ITEM Item;
-	int iCount, i;
-
-	hList = GetDlgItem(hDlg, IDC_DIR_LIST);
-	if (!hList)
-		return;
-	memset(lpBuf, '\0', iBufLen);
-
-	iCount = ListView_GetItemCount(hList);
-	if (iCount)
-		iCount--;
-
-	memset(&Item, '\0', sizeof(Item));
-	Item.mask = LVIF_TEXT;
-
-	*lpBuf = '\0';
-
-	for (i = 0; i < iCount; i++) {
-		if (i > 0)
-			strncatz(lpBuf, ";", iBufLen);
-
-		Item.iItem = i;
-		Item.pszText = lpBuf + strlen(lpBuf);
-		Item.cchTextMax = iBufLen - strlen(lpBuf);
-		ListView_GetItem(hList, &Item);
-	}
-}
-
-static void SoftwareDirectories_InitList(HWND hDlg, LPCSTR lpList)
-{
-	HWND hList;
-    RECT        rectClient;
-    LVCOLUMN    LVCol;
-	int nItem;
-	int nLen;
-	char buf[MAX_PATH];
-	LPCSTR s;
-
-	hList = GetDlgItem(hDlg, IDC_DIR_LIST);
-	if (!hList)
-		return;
-
-	ListView_DeleteAllItems(hList);
-
-	GetClientRect(hList, &rectClient);
-	memset(&LVCol, 0, sizeof(LVCOLUMN));
-	LVCol.mask    = LVCF_WIDTH;
-	LVCol.cx      = rectClient.right - rectClient.left - GetSystemMetrics(SM_CXHSCROLL);
-	ListView_InsertColumn(hList, 0, &LVCol);
-
-	nItem = 0;
-	while(*lpList) {
-		s = strchr(lpList, ';');
-		nLen = (s) ? (s - lpList) : (strlen(lpList));
-		if (nLen >= sizeof(buf) / sizeof(buf[0]))
-			nLen = (sizeof(buf) / sizeof(buf[0])) - 1;
-		strncpy(buf, lpList, nLen);
-		buf[nLen] = '\0';
-		lpList += nLen;
-		if (*lpList == ';')
-			lpList++;
-
-		AppendList(hList, buf, nItem++);
-	}
-	AppendList(hList, DIRLIST_NEWENTRYTEXT, nItem);
-
-    ListView_SetItemState(hList, 0, LVIS_SELECTED, LVIS_SELECTED);
 }
 
 static BOOL SoftwareDirectories_OnInsertBrowse(HWND hDlg, BOOL bBrowse, LPCSTR lpItem)
@@ -283,95 +212,320 @@ static BOOL SoftwareDirectories_OnNotify(HWND hDlg, int id, NMHDR* pNMHDR)
     return FALSE;
 }
 
-static void RamSize_InitList(HWND hDlg, UINT32 default_ram)
+static BOOL PropSheetFilter_Config(const struct InternalMachineDriver *drv, const struct GameDriver *gamedrv)
 {
-	char buf[RAM_STRING_BUFLEN];
-	int i, ramopt_count, sel, default_index;
-	UINT32 ramopt, default_ramopt;
-	HWND hRamComboBox, hRamCaption;
-	const struct GameDriver *gamedrv = NULL;
-
-	/* locate the controls */
-	hRamComboBox = GetDlgItem(hDlg, IDC_RAM_COMBOBOX);
-	hRamCaption = GetDlgItem(hDlg, IDC_RAM_CAPTION);
-	if (!hRamComboBox || !hRamCaption)
-		return;
-
-	/* figure out how many RAM options we have */
-	if (g_nGame >= 0)
-	{
-		/* ask the driver */
-		gamedrv = drivers[g_nGame];
-		ramopt_count = ram_option_count(gamedrv);
-	}
-	else
-	{
-		/* default options; in which case we are disabled */
-		ramopt_count = 0;
-	}
-
-	if (ramopt_count > 0)
-	{
-		/* we have RAM options */
-		ComboBox_ResetContent(hRamComboBox);
-		default_ramopt = ram_default(gamedrv);
-		default_index = sel = -1;
-
-		for (i = 0; i < ramopt_count; i++)
-		{
-			ramopt = ram_option(gamedrv, i);
-			ram_string(buf, ramopt);
-			ComboBox_AddString(hRamComboBox, buf);
-			ComboBox_SetItemData(hRamComboBox, i, ramopt);
-
-			if (sel < 0) {
-				if (default_ramopt == ramopt)
-					default_index = i;
-				else if (default_ram == ramopt)
-					sel = i;
-			}
-		}
-		
-		if (sel < 0)
-		{
-			/* there doesn't seem to be a default RAM option */
-			assert(default_index >= 0);
-			sel = default_index;
-		}
-		ComboBox_SetCurSel(hRamComboBox, sel);
-	}
-	else
-	{
-		/* we do not have RAM options */
-		ShowWindow(hRamComboBox, SW_HIDE);
-		ShowWindow(hRamCaption, SW_HIDE);
-	}
+	return (ram_option_count(gamedrv) > 0) || device_find(gamedrv, IO_PRINTER);
 }
 
-static void MessOptionsToProp(HWND hWnd, options_type* o)
+/* ------------------------------------------------------------------------ */
+
+struct component_param_block
 {
-	SoftwareDirectories_InitList(hWnd, o->extra_software_paths);
-	RamSize_InitList(hWnd, o->ram_size);
+	options_type *o;
+	WORD wID;
+	WORD wNotifyCode;
+	BOOL *changed;
+};
+
+enum component_msg
+{
+	CMSG_OPTIONSTOPROP,
+	CMSG_PROPTOOPTIONS,
+	CMSG_COMMAND
+};
+
+static BOOL SoftwareDirectories_ComponentProc(enum component_msg msg, HWND hWnd, const struct GameDriver *gamedrv, struct component_param_block *params)
+{
+	HWND hList;
+	RECT        rectClient;
+	LVCOLUMN    LVCol;
+	int nItem;
+	int nLen;
+	char buf[MAX_PATH];
+	LPCSTR s;
+	LPCSTR lpList;
+    LV_ITEM Item;
+	int iCount, i;
+	LPSTR lpBuf;
+	int iBufLen;
+	options_type *o = params->o;
+
+	hList = GetDlgItem(hWnd, IDC_DIR_LIST);
+	if (!hList)
+		return FALSE;
+
+	switch(msg) {
+	case CMSG_OPTIONSTOPROP:
+		ListView_DeleteAllItems(hList);
+
+		GetClientRect(hList, &rectClient);
+		memset(&LVCol, 0, sizeof(LVCOLUMN));
+		LVCol.mask    = LVCF_WIDTH;
+		LVCol.cx      = rectClient.right - rectClient.left - GetSystemMetrics(SM_CXHSCROLL);
+		ListView_InsertColumn(hList, 0, &LVCol);
+
+		lpList = o->extra_software_paths;
+
+		nItem = 0;
+		while(*lpList)
+		{
+			s = strchr(lpList, ';');
+			nLen = (s) ? (s - lpList) : (strlen(lpList));
+			if (nLen >= sizeof(buf) / sizeof(buf[0]))
+				nLen = (sizeof(buf) / sizeof(buf[0])) - 1;
+			strncpy(buf, lpList, nLen);
+			buf[nLen] = '\0';
+			lpList += nLen;
+			if (*lpList == ';')
+				lpList++;
+
+			AppendList(hList, buf, nItem++);
+		}
+		AppendList(hList, DIRLIST_NEWENTRYTEXT, nItem);
+
+		ListView_SetItemState(hList, 0, LVIS_SELECTED, LVIS_SELECTED);
+		break;
+
+	case CMSG_PROPTOOPTIONS:
+		lpBuf = o->extra_software_paths;
+		iBufLen = sizeof(o->extra_software_paths) / sizeof(o->extra_software_paths[0]);
+		memset(lpBuf, '\0', iBufLen);
+
+		iCount = ListView_GetItemCount(hList);
+		if (iCount)
+			iCount--;
+
+		memset(&Item, '\0', sizeof(Item));
+		Item.mask = LVIF_TEXT;
+
+		*lpBuf = '\0';
+
+		for (i = 0; i < iCount; i++) {
+			if (i > 0)
+				strncatz(lpBuf, ";", iBufLen);
+
+			Item.iItem = i;
+			Item.pszText = lpBuf + strlen(lpBuf);
+			Item.cchTextMax = iBufLen - strlen(lpBuf);
+			ListView_GetItem(hList, &Item);
+		}
+		break;
+
+	case CMSG_COMMAND:
+		switch(params->wID) {
+		case IDC_DIR_BROWSE:
+			if (params->wNotifyCode == BN_CLICKED)
+				*(params->changed) = SoftwareDirectories_OnInsertBrowse(hWnd, TRUE, NULL);
+			break;
+
+		case IDC_DIR_INSERT:
+			if (params->wNotifyCode == BN_CLICKED)
+				*(params->changed) = SoftwareDirectories_OnInsertBrowse(hWnd, FALSE, NULL);
+			break;
+
+		case IDC_DIR_DELETE:
+			if (params->wNotifyCode == BN_CLICKED)
+				*(params->changed) = SoftwareDirectories_OnDelete(hWnd);
+			break;
+
+		default:
+			return FALSE;
+		}
+		break;
+
+	default:
+		assert(0);
+		break;
+	}
+	return TRUE;
+}
+
+static BOOL RamSize_ComponentProc(enum component_msg msg, HWND hWnd, const struct GameDriver *gamedrv, struct component_param_block *params)
+{
+	char buf[RAM_STRING_BUFLEN];
+	int i, ramopt_count, sel, default_index, nIndex;
+	UINT32 ramopt, default_ramopt;
+	HWND hRamComboBox, hRamCaption;
+	options_type *o = params->o;
+
+	/* locate the controls */
+	hRamComboBox = GetDlgItem(hWnd, IDC_RAM_COMBOBOX);
+	hRamCaption = GetDlgItem(hWnd, IDC_RAM_CAPTION);
+	if (!hRamComboBox || !hRamCaption)
+		return FALSE;
+
+	switch(msg) {
+	case CMSG_OPTIONSTOPROP:
+		/* RAM options? */
+		ramopt_count = gamedrv ? ram_option_count(gamedrv) : 0;
+		if (ramopt_count > 0)
+		{
+			/* we have RAM options */
+			ComboBox_ResetContent(hRamComboBox);
+			default_ramopt = ram_default(gamedrv);
+			default_index = sel = -1;
+
+			for (i = 0; i < ramopt_count; i++)
+			{
+				ramopt = ram_option(gamedrv, i);
+				ram_string(buf, ramopt);
+				ComboBox_AddString(hRamComboBox, buf);
+				ComboBox_SetItemData(hRamComboBox, i, ramopt);
+
+				if (sel < 0) {
+					if (default_ramopt == ramopt)
+						default_index = i;
+					else if (o->ram_size == ramopt)
+						sel = i;
+				}
+			}
+			
+			if (sel < 0)
+			{
+				/* there doesn't seem to be a default RAM option */
+				assert(default_index >= 0);
+				sel = default_index;
+			}
+			ComboBox_SetCurSel(hRamComboBox, sel);
+		}
+		else
+		{
+			/* we do not have RAM options */
+			ShowWindow(hRamComboBox, SW_HIDE);
+			ShowWindow(hRamCaption, SW_HIDE);
+		}
+		break;
+
+	case CMSG_PROPTOOPTIONS:
+		nIndex = ComboBox_GetCurSel(hRamComboBox);
+		if (nIndex != CB_ERR)
+			o->ram_size = ComboBox_GetItemData(hRamComboBox, nIndex);
+		break;
+
+	case CMSG_COMMAND:
+		return FALSE;
+
+	default:
+		assert(0);
+		break;
+	}
+	return TRUE;
+}
+
+static BOOL Printer_ComponentProc(enum component_msg msg, HWND hWnd, const struct GameDriver *gamedrv, struct component_param_block *params)
+{
+	HWND hPrinterText, hPrinterCaption, hPrinterBrowse;
+	options_type *o = params->o;
+
+	hPrinterText = GetDlgItem(hWnd, IDC_PRINTER_EDITTEXT);
+	hPrinterCaption = GetDlgItem(hWnd, IDC_PRINTER_CAPTION);
+	hPrinterBrowse = GetDlgItem(hWnd, IDC_PRINTER_BROWSE);
+	if (!hPrinterText || !hPrinterCaption|| !hPrinterBrowse)
+		return FALSE;
+
+	/* printer options? */
+	switch(msg) {
+	case CMSG_OPTIONSTOPROP:
+		if (!gamedrv || device_find(gamedrv, IO_PRINTER))
+		{
+			/* we have printer options */
+			SetWindowText(hPrinterText, o->printer);
+		}
+		else
+		{
+			/* we do not have printer options */
+			ShowWindow(hPrinterText, SW_HIDE);
+			ShowWindow(hPrinterCaption, SW_HIDE);
+			ShowWindow(hPrinterBrowse, SW_HIDE);
+		}
+		break;
+
+	case CMSG_PROPTOOPTIONS:
+		GetWindowText(hPrinterText, o->printer, sizeof(o->printer) / sizeof(o->printer[0]));
+		break;
+
+	case CMSG_COMMAND:
+		switch(params->wID) {
+		case IDC_PRINTER_BROWSE:
+			{
+				OPENFILENAME ofn;
+				TCHAR path[MAX_PATH];
+				BOOL changed;
+
+				memset(&ofn, 0, sizeof(ofn));
+				ofn.lStructSize = sizeof(ofn);
+				ofn.hwndOwner = hWnd;
+				ofn.lpstrFile = path;
+				ofn.nMaxFile = sizeof(path) / sizeof(path[0]);
+				*(params->changed) = changed = GetSaveFileName(&ofn);
+				if (changed)
+					SetWindowText(hPrinterText, path);
+			}
+			break;
+
+		default:
+			return TRUE;
+		}
+		break;
+
+	default:
+		assert(0);
+		break;
+	}
+	return TRUE;
+}
+
+/* ------------------------------------------------------------------------ */
+
+typedef BOOL (*component_proc)(enum component_msg msg, HWND hWnd, const struct GameDriver *gamedrv, struct component_param_block *params);
+
+static component_proc s_ComponentProcs[] =
+{
+	SoftwareDirectories_ComponentProc,
+	RamSize_ComponentProc,
+	Printer_ComponentProc
+};
+
+static BOOL InvokeComponentProcs(enum component_msg msg, HWND hWnd, struct component_param_block *params)
+{
+	int i;
+	const struct GameDriver *gamedrv;
+	BOOL handled = FALSE;
+
+	/* figure out which GameDriver we're using.  NULL indicated default options */
+	gamedrv = (g_nGame >= 0) ? drivers[g_nGame] : NULL;
+
+	for (i = 0; i < sizeof(s_ComponentProcs) / sizeof(s_ComponentProcs[0]); i++)
+	{
+		if (s_ComponentProcs[i](msg, hWnd, gamedrv, params))
+			handled = TRUE;
+	}
+	return handled;
+}
+
+static void MessOptionsToProp(HWND hWnd, options_type *o)
+{
+	struct component_param_block params;
+	memset(&params, 0, sizeof(params));
+	params.o = o;
+	InvokeComponentProcs(CMSG_OPTIONSTOPROP, hWnd, &params);
 }
 
 static void MessPropToOptions(HWND hWnd, options_type *o)
 {
-	HWND hRamComboBox;
-	int nIndex;
-
-	SoftwareDirectories_GetList(hWnd, o->extra_software_paths,
-		sizeof(o->extra_software_paths) / sizeof(o->extra_software_paths[0]));
-
-	hRamComboBox = GetDlgItem(hWnd, IDC_RAM_COMBOBOX);
-	if (hRamComboBox)
-	{
-		nIndex = ComboBox_GetCurSel(hRamComboBox);
-		if (nIndex != CB_ERR)
-			o->ram_size = ComboBox_GetItemData(hRamComboBox, nIndex);
-	}
+	struct component_param_block params;
+	memset(&params, 0, sizeof(params));
+	params.o = o;
+	InvokeComponentProcs(CMSG_PROPTOOPTIONS, hWnd, &params);
 }
 
-static BOOL PropSheetFilter_Config(const struct InternalMachineDriver *drv, const struct GameDriver *gamedrv)
+static BOOL MessPropertiesCommand(HWND hWnd, WORD wNotifyCode, WORD wID, BOOL *changed)
 {
-	return ram_option_count(gamedrv) > 0;
+	struct component_param_block params;
+	memset(&params, 0, sizeof(params));
+	params.wID = wID;
+	params.wNotifyCode = wNotifyCode;
+	params.changed = changed;
+	return InvokeComponentProcs(CMSG_COMMAND, hWnd, &params);
 }
+

@@ -564,10 +564,6 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 {
 	char pModule[_MAX_PATH];
 	options_type* pOpts;
-#ifdef MESS
-	int i;
-	extern struct rc_option mess_opts[1];
-#endif
 
 	GetModuleFileName(GetModuleHandle(NULL), pModule, _MAX_PATH);
 
@@ -576,14 +572,7 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 	sprintf(pCmdLine, "%s %s", pModule, drivers[nGameIndex]->name);
 
 #ifdef MESS
-	for (i = 0; i < options.image_count; i++)
-	{
-		const char *optname = mess_opts[options.image_files[i].type].shortname;
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -%s \"%s\"", optname, options.image_files[i].name);
-	}
-
-	if (pOpts->ram_size != 0)
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -ramsize %d", pOpts->ram_size);
+	MessCreateCommandLine(pCmdLine, pOpts);
 #endif
 
 #ifdef MESS

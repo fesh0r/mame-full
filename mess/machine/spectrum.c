@@ -127,7 +127,7 @@ int spectrum_snap_load(int id)
 
 		if (datasize != 0)
 		{
-			data = malloc(datasize);
+			data = image_malloc(IO_SNAPSHOT, id, datasize);
 
 			if (data != NULL)
 			{
@@ -175,7 +175,6 @@ void spectrum_snap_exit(int id)
 	if (pSnapshotData != NULL)
 	{
 		/* free snapshot/tape data */
-		free(pSnapshotData);
 		pSnapshotData = NULL;
 
 		/* ensure op base is cleared */
@@ -1187,7 +1186,7 @@ int spectrum_cassette_init(int id)
 			datasize = 0;
 		if (datasize != 0)
 		{
-			data = malloc(datasize);
+			data = image_malloc(IO_SNAPSHOT, id, datasize);
 
 			if (data != NULL)
 			{

@@ -234,7 +234,7 @@ const struct IODevice *device_next(const struct GameDriver *gamedrv, const struc
 const struct IODevice *device_find(const struct GameDriver *gamedrv, int type)
 {
     const struct IODevice *dev;
-	for(dev = device_first(Machine->gamedrv); dev; dev = device_next(Machine->gamedrv, dev))
+	for(dev = device_first(gamedrv); dev; dev = device_next(gamedrv, dev))
 	{
 		if (dev->type == type)
 			return dev;

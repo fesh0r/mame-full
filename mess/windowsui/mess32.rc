@@ -1,5 +1,5 @@
-
 #include "resource.h"
+#include "MessResource.h"
 #include "windows.h"
 #include "commctrl.h"
 
@@ -49,9 +49,12 @@ BEGIN
     LTEXT           "Title\nDirectory\nExtra",IDC_PROP_TITLE,52,9,161,25,
                     SS_NOPREFIX
     CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,20,38,178,1
-    LTEXT           "RAM size",IDC_RAM_CAPTION,40,50,50,10
-    COMBOBOX        IDC_RAM_COMBOBOX,90,50,80,76,CBS_DROPDOWNLIST | WS_VSCROLL |
+    LTEXT           "RAM size",IDC_RAM_CAPTION,20,50,50,10
+    COMBOBOX        IDC_RAM_COMBOBOX,70,50,100,76,CBS_DROPDOWNLIST | WS_VSCROLL |
                     WS_TABSTOP
+	LTEXT			"Printer",IDC_PRINTER_CAPTION,20,70,50,10,SS_NOPREFIX
+	EDITTEXT		IDC_PRINTER_EDITTEXT,70,70,85,14, ES_AUTOHSCROLL | ES_LEFT,0
+	PUSHBUTTON		"Browse",IDC_PRINTER_BROWSE,158,70,40,14,0,0
 END
 
 IDD_FILEMGR DIALOGEX 0, 0, 300, 200

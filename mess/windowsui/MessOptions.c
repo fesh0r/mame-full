@@ -133,3 +133,4 @@ BOOL GetUseNewFileMgr(int num_game)
 
     return game[num_game].use_new_filemgr;
 }
+
