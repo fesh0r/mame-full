@@ -108,8 +108,9 @@ CFLAGSGLOBAL = -Gr -I. -Isrc -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000 -Isrc/Win32 -I
                -IZLIB $(AUDIOFLAGS) -W3 -nologo -MT \
                $(MAME_DEBUG) $(RELEASE_CANDIDATE) $(BETA_VERSION) $(VERSION) \
                $(MAME_NET) $(MAME_MMX) $(HAS_CPUS) $(HAS_SOUND) $(M68KDEF) \
-			   -DMESS -DNEOFREE -DMAME32NAME="\"MESS32\"" -DMAMENAME="\"MESS\"" \
-			   -DM_PI=3.14159265
+               -DMESS -DNEOFREE -DMAME32NAME="\"MESS32\"" -DMAMENAME="\"MESS\"" \
+               -DM_PI=3.14159265 -DMESS_CBM -DMESS_AMSTRAD -DMESS_IBMPC \
+               -DMESS_SINCLAIR -DMESS_SHARP
 
 CFLAGSDEBUG = -Zi -Od
 
