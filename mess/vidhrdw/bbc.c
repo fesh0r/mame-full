@@ -308,6 +308,18 @@ void BBC_draw_hi_res_enabled(void)
  * SAA5050 Teletext
  ************************************************************************/
 
+
+static unsigned int teletext_pallette[8]={ 7,6,5,4,3,2,1,0 };
+static unsigned int teletext_cursor_pallette[8]={ 0,1,2,3,4,5,6,7 };
+
+static unsigned int *teletext_pallet_lookup=teletext_pallette;// holds the pallet now being used.
+
+void teletext_select_pallet(void)
+{
+	if (!VideoULA_CR) teletext_pallet_lookup=teletext_pallette;
+	if ( VideoULA_CR) teletext_pallet_lookup=teletext_cursor_pallette;
+}
+
 enum Teletext_Colours  { Black,Red,Green,Yellow,Blue,Magenta,Cyan,White};
 enum Teletext_Flash    { Steady,Flashing };
 enum Teletext_Height   { Normal,Double };
@@ -378,31 +390,31 @@ void BBC_draw_teletext_enabled(void)
 
 		case 0x01:  // Alpha Red
 			tt_lookup=teletext_characters;
-			tt_colour=Machine->pens[6];
+			tt_colour=1;
 			break;
 		case 0x02:  // Alpha Green
 			tt_lookup=teletext_characters;
-			tt_colour=Machine->pens[5];
+			tt_colour=2;
 			break;
 		case 0x03:  // Alpha Yellow
 			tt_lookup=teletext_characters;
-			tt_colour=Machine->pens[4];
+			tt_colour=3;
 			break;
 		case 0x04:  // Alpha Blue
 			tt_lookup=teletext_characters;
-			tt_colour=Machine->pens[3];
+			tt_colour=4;
 			break;
 		case 0x05:  //  Alpha Magenta
 			tt_lookup=teletext_characters;
-			tt_colour=Machine->pens[2];
+			tt_colour=5;
 			break;
 		case 0x06:  //  Alpha Cyan
 			tt_lookup=teletext_characters;
-			tt_colour=Machine->pens[1];
+			tt_colour=6;
 			break;
 		case 0x07:  //  Alpha White
 			tt_lookup=teletext_characters;
-			tt_colour=Machine->pens[0];
+			tt_colour=7;
 			break;
 
 		// 0x08		Flash
@@ -424,31 +436,31 @@ void BBC_draw_teletext_enabled(void)
 
 		case 0x11:  // Graphics Red
 			tt_lookup=tt_graphics;
-			tt_colour=Machine->pens[6];
+			tt_colour=1;
 			break;
 		case 0x12:  // Graphics Green
 			tt_lookup=tt_graphics;
-			tt_colour=Machine->pens[5];
+			tt_colour=2;
 			break;
 		case 0x13:  // Graphics Yellow
 			tt_lookup=tt_graphics;
-			tt_colour=Machine->pens[4];
+			tt_colour=3;
 			break;
 		case 0x14:  // Graphics Blue
 			tt_lookup=tt_graphics;
-			tt_colour=Machine->pens[3];
+			tt_colour=4;
 			break;
 		case 0x15:  //  Graphics Magenta
 			tt_lookup=tt_graphics;
-			tt_colour=Machine->pens[2];
+			tt_colour=5;
 			break;
 		case 0x16:  //  Graphics Cyan
 			tt_lookup=tt_graphics;
-			tt_colour=Machine->pens[1];
+			tt_colour=6;
 			break;
 		case 0x17:  //  Graphics White
 			tt_lookup=tt_graphics;
-			tt_colour=Machine->pens[0];
+			tt_colour=7;
 			break;
 
 		// 0x18		Conceal Display
@@ -467,7 +479,7 @@ void BBC_draw_teletext_enabled(void)
 		// 0x1b		ESC
 
 		case 0x1c:  //  Black Background
-			tt_bgcolour=Machine->pens[7];
+			tt_bgcolour=0;
 			break;
 		case 0x1d:  //  New Background
 			tt_bgcolour=tt_colour;
@@ -482,7 +494,7 @@ void BBC_draw_teletext_enabled(void)
 	i=(i-0x20)*60+(6*((tt_linecount+tt_start_line)>>tt_double_height));
 	for(sc1=0;sc1<6;sc1++)
 	{
-		pixel_temp=tt_lookup[i++]?tt_colour:tt_bgcolour;
+		pixel_temp=tt_lookup[i++]?Machine->pens[teletext_pallet_lookup[tt_colour]]:Machine->pens[teletext_pallet_lookup[tt_bgcolour]];
 
 		BBC_display[c++]=pixel_temp;
 		BBC_display[c++]=pixel_temp;
@@ -587,6 +599,7 @@ void BBC_Set_CR(int offset, int data)
 		video_refresh=video_refresh|4;
 		// set the pallet to the cursor pallet
 		videoULA_select_pallet();
+		teletext_select_pallet();
 	};
 }
 
@@ -598,6 +611,7 @@ void BBC_Clock_CR(void)
 		VideoULA_CR=0;
 		video_refresh=video_refresh&0xfb;
 		videoULA_select_pallet();
+		teletext_select_pallet();
 	}
 }
 
