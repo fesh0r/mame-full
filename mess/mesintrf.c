@@ -3,6 +3,8 @@
 #include "input.h"
 #include "mame.h"
 
+extern void display_fps(struct mame_bitmap *bitmap);
+
 extern int show_profiler;
 int mess_pause_for_ui = 0;
 
@@ -23,6 +25,7 @@ int handle_mess_user_interface(struct mame_bitmap *bitmap)
 		{
 			if (show_profiler)
 				profiler_show(bitmap);
+			display_fps(bitmap);
 		}
 		else
 		{

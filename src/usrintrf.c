@@ -79,8 +79,8 @@ static int osd_selected;
 static int jukebox_selected;
 static int single_step;
 
-static int showfps;
-static int showfpstemp;
+int showfps;
+int showfpstemp;
 
 UINT8 ui_dirty;
 
@@ -3727,7 +3727,7 @@ void ui_show_fps_temp(double seconds)
 }
 
 
-static void display_fps(struct mame_bitmap *bitmap)
+void display_fps(struct mame_bitmap *bitmap)
 {
 	const char *text, *end;
 	char textbuf[256];

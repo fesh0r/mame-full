@@ -28,6 +28,10 @@
 // from input.c
 extern UINT8 win_trying_to_quit;
 
+// from usrintrf.c
+extern int showfps;
+extern int showfpstemp;
+
 //============================================================
 //	PARAMETERS
 //============================================================
@@ -534,6 +538,7 @@ static void prepare_menus(void)
 	set_command_state(win_menu_bar, ID_OPTIONS_PAUSE,		is_paused					? MFS_CHECKED : MFS_ENABLED);
 	set_command_state(win_menu_bar, ID_OPTIONS_THROTTLE,	throttle					? MFS_CHECKED : MFS_ENABLED);
 	set_command_state(win_menu_bar, ID_OPTIONS_FULLSCREEN,	!win_window_mode			? MFS_CHECKED : MFS_ENABLED);
+	set_command_state(win_menu_bar, ID_OPTIONS_TOGGLEFPS,	(showfps || showfpstemp)	? MFS_CHECKED : MFS_ENABLED);
 #if HAS_PROFILER
 	set_command_state(win_menu_bar, ID_OPTIONS_PROFILER,	show_profiler				? MFS_CHECKED : MFS_ENABLED);
 #endif
@@ -610,6 +615,28 @@ void win_toggle_menubar(void)
 }
 #endif // HAS_TOGGLEMENUBAR
 
+
+//============================================================
+//	toggle_fps
+//============================================================
+
+static void toggle_fps(void)
+{
+	/* if we're temporarily on, turn it off immediately */
+	if (showfpstemp)
+	{
+		showfpstemp = 0;
+		schedule_full_refresh();
+	}
+
+	/* otherwise, just toggle; force a refresh if going off */
+	else
+	{
+		showfps ^= 1;
+		if (!showfps)
+			schedule_full_refresh();
+	}
+}
 
 //============================================================
 //	device_command
@@ -773,6 +800,10 @@ static int invoke_command(UINT command)
 
 	case ID_OPTIONS_FULLSCREEN:
 		win_toggle_full_screen();
+		break;
+
+	case ID_OPTIONS_TOGGLEFPS:
+		toggle_fps();
 		break;
 
 #if HAS_TOGGLEMENUBAR

@@ -18,6 +18,9 @@ Source Changes:
 
 - Added new snapshot/quickload code, to hide the details about loading
   snapshots and quickloads from the drivers.  [Nate Woods]
+  
+- [WIN32] Added the ability to toggle the frames per second view in the new UI.
+  [Nate Woods]
 
 System Driver Changes:
 ----------------------
