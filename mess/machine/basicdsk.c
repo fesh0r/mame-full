@@ -33,6 +33,8 @@ floppy_interface basicdsk_floppy_interface=
 int basicdsk_floppy_init(int id)
 {
 	const char *name = device_filename(IO_FLOPPY, id);
+	int effective_mode;
+
 
 	if (id < basicdsk_MAX_DRIVES)
 	{
@@ -43,18 +45,9 @@ int basicdsk_floppy_init(int id)
 		{
 			return INIT_PASS;
 		}
-		w->mode = 1;
-		w->image_file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW);
-		if( !w->image_file )
-		{
-			w->mode = 0;
-			w->image_file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
-			if( !w->image_file )
-			{
-				w->mode = 1;
-				w->image_file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW_CREATE);
-			}
-		}
+
+		w->image_file = image_fopen_new(IO_FLOPPY, id, & effective_mode);
+		w->mode = (w->image_file) && is_effective_mode_writable(effective_mode);
 
 		/* this will be setup in the set_geometry function */
 		w->ddam_map = NULL;
