@@ -321,6 +321,10 @@ INPUT_PORTS_START( coco )
 	PORT_DIPNAME( 0x04, 0x00, "Autocenter Joysticks" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x18, 0x00, "RAM Selector Switch" )
+	PORT_DIPSETTING(    0x00, "32/64K" )
+	PORT_DIPSETTING(    0x08, "16K" )
+	PORT_DIPSETTING(    0x10, "4K" )
 
 INPUT_PORTS_END
 
@@ -545,6 +549,53 @@ static struct MachineDriver machine_driver_coco =
 	}
 };
 
+static struct MachineDriver machine_driver_coco2 =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M6809,
+			COCO_CPU_SPEED_HZ,
+			d64_readmem,d64_writemem,
+			0, 0,
+			m6847_vh_interrupt, M6847_INTERRUPTS_PER_FRAME,
+			0, 0,
+		},
+	},
+	COCO_FRAMES_PER_SECOND, 0,		 /* frames per second, vblank duration */
+	0,
+	coco2_init_machine,
+	dragon_stop_machine,
+
+	/* video hardware */
+	320,					/* screen width */
+	240,					/* screen height (pixels doubled) */
+	{ 0, 319, 0, 239 },		/* visible_area */
+	0,						/* graphics decode info */
+	M6847_TOTAL_COLORS,
+	0,
+	m6847_vh_init_palette,						/* initialise palette */
+
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+	0,
+	dragon_vh_start,
+	m6847_vh_stop,
+	m6847_vh_update,
+
+	/* sound hardware */
+	0, 0, 0, 0,
+	{
+		{
+			SOUND_DAC,
+			&d_dac_interface
+		},
+        {
+			SOUND_WAVE,
+            &d_wave_interface
+        }
+	}
+};
+
 static struct MachineDriver machine_driver_coco2b =
 {
 	/* basic machine hardware */
@@ -560,7 +611,7 @@ static struct MachineDriver machine_driver_coco2b =
 	},
 	COCO_FRAMES_PER_SECOND, 0,		 /* frames per second, vblank duration */
 	0,
-	coco_init_machine,
+	coco2_init_machine,
 	dragon_stop_machine,
 
 	/* video hardware */
@@ -791,7 +842,7 @@ static const struct IODevice io_coco3[] = {
 /*     YEAR  NAME       PARENT  MACHINE    INPUT     INIT     COMPANY               FULLNAME */
 COMP(  1980, coco,      0,		coco,      coco,     0,		  "Tandy Radio Shack",  "Color Computer" )
 COMP(  1981, cocoe,     coco,	coco,      coco,     0,		  "Tandy Radio Shack",  "Color Computer (Extended BASIC 1.0)" )
-COMP(  198?, coco2,     coco,	coco,      coco,     0,		  "Tandy Radio Shack",  "Color Computer 2" )
+COMP(  198?, coco2,     coco,	coco2,     coco,     0,		  "Tandy Radio Shack",  "Color Computer 2" )
 COMP(  198?, coco2b,    coco,	coco2b,    coco,     0,		  "Tandy Radio Shack",  "Color Computer 2B" )
 COMP(  1986, coco3,     coco, 	coco3,	   coco3,    0,		  "Tandy Radio Shack",  "Color Computer 3 (NTSC)" )
 COMP(  1986, coco3p,    coco, 	coco3,	   coco3,    0,		  "Tandy Radio Shack",  "Color Computer 3 (PAL)" )

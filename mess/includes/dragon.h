@@ -63,6 +63,7 @@ extern void coco3_vh_blink(void);
 extern void dragon32_init_machine(void);
 extern void dragon64_init_machine(void);
 extern void coco_init_machine(void);
+extern void coco2_init_machine(void);
 extern void coco3_init_machine(void);
 extern void dragon_stop_machine(void);
 extern int coco_cassette_init(int id);

@@ -73,7 +73,7 @@ static int pia0_irq_a, pia0_irq_b;
 static int pia1_firq_a, pia1_firq_b;
 static int gime_firq, gime_irq;
 static int cart_line, cart_inserted;
-static UINT8 pia0_pb, soundmux_status, tape_motor;
+static UINT8 pia0_pb, pia1_pb1, soundmux_status, tape_motor;
 static UINT8 joystick_axis, joystick;
 static int d_dac;
 
@@ -85,6 +85,8 @@ static READ_HANDLER (  d_pia0_ca1_r );
 static READ_HANDLER (  d_pia0_cb1_r );
 static READ_HANDLER (  d_pia0_pa_r );
 static READ_HANDLER (  d_pia1_pa_r );
+static READ_HANDLER (  d_pia1_pb_r_dragon );
+static READ_HANDLER (  d_pia1_pb_r_coco2 );
 static WRITE_HANDLER ( d_pia0_pa_w );
 static WRITE_HANDLER ( d_pia0_pb_w );
 static WRITE_HANDLER ( d_pia1_cb2_w);
@@ -165,7 +167,24 @@ static struct pia6821_interface dragon_pia_intf[] =
 
 	/* PIA 1 */
 	{
-		/*inputs : A/B,CA/B1,CA/B2 */ d_pia1_pa_r, 0, 0, d_pia1_cb1_r, 0, 0,
+		/*inputs : A/B,CA/B1,CA/B2 */ d_pia1_pa_r, d_pia1_pb_r_dragon, 0, d_pia1_cb1_r, 0, 0,
+		/*outputs: A/B,CA/B2	   */ d_pia1_pa_w, d_pia1_pb_w, d_pia1_ca2_w, d_pia1_cb2_w,
+		/*irqs	 : A/B			   */ d_pia1_firq_a, d_pia1_firq_b
+	}
+};
+
+static struct pia6821_interface coco2_pia_intf[] =
+{
+	/* PIA 0 */
+	{
+		/*inputs : A/B,CA/B1,CA/B2 */ d_pia0_pa_r, 0, d_pia0_ca1_r, d_pia0_cb1_r, 0, 0,
+		/*outputs: A/B,CA/B2	   */ d_pia0_pa_w, d_pia0_pb_w, d_pia0_ca2_w, d_pia0_cb2_w,
+		/*irqs	 : A/B			   */ d_pia0_irq_a, d_pia0_irq_b
+	},
+
+	/* PIA 1 */
+	{
+		/*inputs : A/B,CA/B1,CA/B2 */ d_pia1_pa_r, d_pia1_pb_r_coco2, 0, d_pia1_cb1_r, 0, 0,
 		/*outputs: A/B,CA/B2	   */ d_pia1_pa_w, d_pia1_pb_w, d_pia1_ca2_w, d_pia1_cb2_w,
 		/*irqs	 : A/B			   */ d_pia1_firq_a, d_pia1_firq_b
 	}
@@ -175,7 +194,7 @@ static struct pia6821_interface coco3_pia_intf[] =
 {
 	/* PIA 0 */
 	{
-		/*inputs : A/B,CA/B1,CA/B2 */ d_pia0_pa_r, 0, d_pia0_ca1_r, d_pia0_cb1_r, 0, 0,
+		/*inputs : A/B,CA/B1,CA/B2 */ d_pia0_pa_r, d_pia1_pb_r_coco2, d_pia0_ca1_r, d_pia0_cb1_r, 0, 0,
 		/*outputs: A/B,CA/B2	   */ d_pia0_pa_w, d_pia0_pb_w, d_pia0_ca2_w, d_pia0_cb2_w,
 		/*irqs	 : A/B			   */ coco3_pia0_irq_a, coco3_pia0_irq_b
 	},
@@ -823,27 +842,34 @@ static void soundmux_update(void)
 	casstatus = device_status(IO_CASSETTE, 0, -1);
 	new_casstatus = casstatus | WAVE_STATUS_MUTED;
 
-	/* We only write to the DAC if we are enabled; otherwise we let it be.  If
-	 * we write 0 to the DAC when disabled, Popcorn has a very annoying buzz
-	 * not present on an actual CoCo
+	/* We only write the CoCo's 6-bit DAC to MESS' DAC if we are enabled;
+	 * otherwise we let it be.
 	 */
 	if (soundmux_status & SOUNDMUX_STATUS_ENABLE) {
 		switch(soundmux_status) {
 		case SOUNDMUX_STATUS_ENABLE:
 			/* DAC */
-			DAC_data_w(0, d_dac);
+			DAC_data_w(0, pia1_pb1 + (d_dac >> 1) );  /* Mix the two sources */
 			break;
 
 		case SOUNDMUX_STATUS_ENABLE | SOUNDMUX_STATUS_SEL1:
 			/* CSN */
 			new_casstatus &= ~WAVE_STATUS_MUTED;
+			/* This pia line is always connected to the output */
+			DAC_data_w(0, pia1_pb1);
 			break;
 
 		default:
-			/* Other */
-			DAC_data_w(0, 0);
+			/* This pia line is always connected to the output */
+			DAC_data_w(0, pia1_pb1);
 			break;
 		}
+	}
+	else
+	{
+		/* This pia line is always connected to the output */
+		/* Even if the MUX is disabled */
+		DAC_data_w(0, pia1_pb1);
 	}
 
 	coco_cartridge_enablesound(soundmux_status == (SOUNDMUX_STATUS_ENABLE|SOUNDMUX_STATUS_SEL2));
@@ -1005,7 +1031,7 @@ READ_HANDLER( coco3_pia_1_r )
   PIA1 PA2-PA7	- DAC
   PIA1 PB0		- RS232 IN
   PIA1 PB1		- Single bit sound
-  PIA1 PB2		- RAMSZ (I believe this was a jumper cable?)
+  PIA1 PB2		- RAMSZ (32/64K, 16K, and 4K three position switch)
   PIA1 PB3		- M6847 CSS
   PIA1 PB4		- M6847 INT/EXT and M6847 GM0
   PIA1 PB5		- M6847 GM1
@@ -1033,7 +1059,7 @@ static WRITE_HANDLER ( d_pia1_pa_w )
 	 *	This port appears at $FF20
 	 *
 	 *	Bits
-	 *  7-2:	DAC or cassette
+	 *  7-2:	DAC to speaker or cassette
 	 *    1:	Serial out
 	 */
 	d_dac = data & 0xfc;
@@ -1065,13 +1091,15 @@ static WRITE_HANDLER( d_pia1_pb_w )
 	m6847_css_w(0,		data & 0x08);
 	schedule_full_refresh();
 
-	/* When SNDEN if false, PB1 will drive the sound output.  This is a rarely
-	 * used single bit sound mode
+	/* PB1 will drive the sound output.  This is a rarely
+	 * used single bit sound mode. It is always connected thus
+	 * cannot be disabled.
 	 *
 	 * Source:  Page 31 of the Tandy Color Computer Serice Manual
 	 */
-	if ((soundmux_status & SOUNDMUX_STATUS_ENABLE) == 0)
-		DAC_data_w(0, (data & 0x02) ? 0xff : 0x00);
+	 
+	 pia1_pb1 = ((data & 0x02) ? 127 : 0);
+	 soundmux_update();
 }
 
 static WRITE_HANDLER( coco3_pia1_pb_w )
@@ -1098,6 +1126,48 @@ static WRITE_HANDLER ( d_pia1_ca2_w )
 static READ_HANDLER ( d_pia1_pa_r )
 {
 	return (device_input(IO_CASSETTE, 0) >= 0) ? 1 : 0;
+}
+
+static READ_HANDLER ( d_pia1_pb_r_dragon )
+{
+	/* This handles the reading of the memory sense switch (pb2) for the Dragon and CoCo 1,
+	 * and serial-in (pb0). Serial-in not yet implemented.
+	 */
+	
+	switch( readinputport(12) & 0x18 )		/* Read dip switch setting "on motherboard" */
+	{
+		case 0x00: /* 32/64K: wire output of pia0_pb7 to input pia1_pb2  */
+			return (pia0_pb & 0x80) >> 5;	
+			break;
+		case 0x08: /* 16K: wire pia1_pb2 high */
+			return 0x04;
+			break;
+		case 0x10: /* 4K: wire pia1_pb2 low */
+			return 0x00;
+			break;
+	}
+	return 0;
+}
+
+static READ_HANDLER ( d_pia1_pb_r_coco2 )
+{
+	/* This handles the reading of the memory sense switch (pb2) for the CoCo 2 and 3,
+	 * and serial-in (pb0). Serial-in not yet implemented.
+	 */
+	
+	switch( readinputport(12) & 0x18 )		/* Read dip switch setting "on motherboard" */
+	{
+		case 0x00: /* 32/64K: wire output of pia0_pb6 to input pia1_pb2  */
+			return (pia0_pb & 0x40) >> 4;	
+			break;
+		case 0x08: /* 16K: wire pia1_pb2 high */
+			return 0x04;
+			break;
+		case 0x10: /* 4K: wire pia1_pb2 low */
+			return 0x00;
+			break;
+	}
+	return 0;
 }
 
 /***************************************************************************
@@ -1905,7 +1975,7 @@ static void generic_init_machine(struct pia6821_interface *piaintf, struct sam68
 	pia1_firq_a = CLEAR_LINE;
 	pia1_firq_b = CLEAR_LINE;
 
-	pia0_pb = soundmux_status = tape_motor = 0;
+	pia0_pb = pia1_pb1 = soundmux_status = tape_motor = 0;
 	joystick_axis = joystick = 0;
 	d_dac = 0;
 
@@ -1942,6 +2012,12 @@ void coco_init_machine(void)
 {
 	coco_rom = memory_region(REGION_CPU1) + 0x10000;
 	generic_init_machine(dragon_pia_intf, &dragon64_sam_intf, &cartridge_fdc_coco, &coco_cartcallbacks);
+}
+
+void coco2_init_machine(void)
+{
+	coco_rom = memory_region(REGION_CPU1) + 0x10000;
+	generic_init_machine(coco2_pia_intf, &dragon64_sam_intf, &cartridge_fdc_coco, &coco_cartcallbacks);
 }
 
 void coco3_init_machine(void)
