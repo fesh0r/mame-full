@@ -646,20 +646,52 @@ ROM_START(apple2cp)
 	ROM_LOAD("a2cplus.mon", 0x0000, 0x8000, CRC(0b996420))
 ROM_END
 
-SYSTEM_CONFIG_START(apple2)
+SYSTEM_CONFIG_START(apple2_common)
 	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 2, "dsk\0bin\0do\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_READ, device_init_apple2_floppy, NULL, device_load_apple2_floppy, NULL, NULL)
 	CONFIG_GET_CUSTOM_DEVICENAME( apple2 )
-	CONFIG_RAM_DEFAULT			(128 * 1024)
 	CONFIG_QUEUE_CHARS			( AY3600 )
 	CONFIG_ACCEPT_CHAR			( AY3600 )
 SYSTEM_CONFIG_END
 
+SYSTEM_CONFIG_START(apple2)
+//	CONFIG_IMPORT_FROM( apple2_common )
+//	CONFIG_RAM				(4 * 1024)	/* Still unsupported? */
+//	CONFIG_RAM				(8 * 1024)	/* Still unsupported? */
+//	CONFIG_RAM				(12 * 1024)	/* Still unsupported? */
+//	CONFIG_RAM				(16 * 1024)
+//	CONFIG_RAM				(20 * 1024)
+//	CONFIG_RAM				(24 * 1024)
+//	CONFIG_RAM				(32 * 1024)
+//	CONFIG_RAM				(36 * 1024)
+//	CONFIG_RAM				(48 * 1024)
+//	CONFIG_RAM_DEFAULT			(64 * 1024)	/* At the moment the RAM bank $C000-$FFFF is available only if you choose   */
+								/* default configuration: on real machine is present also in configurations */
+								/* with less memory, provided that the language card is installed           */
+	CONFIG_RAM_DEFAULT			(128 * 1024)	/* ONLY TEMPORARY - ACTUALLY NOT SUPPORTED!!! */
+SYSTEM_CONFIG_END
+
+SYSTEM_CONFIG_START(apple2p)
+	CONFIG_IMPORT_FROM( apple2_common )
+//	CONFIG_RAM				(16 * 1024)
+//	CONFIG_RAM				(32 * 1024)
+//	CONFIG_RAM				(48 * 1024)
+//	CONFIG_RAM_DEFAULT			(64 * 1024)	/* At the moment the RAM bank $C000-$FFFF is available only if you choose   */
+								/* default configuration: on real machine is present also in configurations */
+								/* with less memory, provided that the language card is installed           */
+	CONFIG_RAM_DEFAULT                      (128 * 1024)    /* ONLY TEMPORARY - ACTUALLY NOT SUPPORTED!!! */
+SYSTEM_CONFIG_END
+
+SYSTEM_CONFIG_START(apple2e)
+	CONFIG_IMPORT_FROM( apple2_common )
+	CONFIG_RAM_DEFAULT			(128 * 1024)
+SYSTEM_CONFIG_END
+
 /*     YEAR  NAME      PARENT    COMPAT		MACHINE   INPUT     INIT      CONFIG	COMPANY            FULLNAME */
 COMPX( 1977, apple2,   0,        0,			apple2,   apple2,   apple2,   apple2,	"Apple Computer", "Apple ][", GAME_IMPERFECT_COLORS )
-COMPX( 1979, apple2p,  apple2,   0,			apple2,   apple2,   apple2,   apple2,	"Apple Computer", "Apple ][+", GAME_IMPERFECT_COLORS )
-COMP ( 1983, apple2e,  0,        apple2,	apple2e,  apple2,   apple2,   apple2,	"Apple Computer", "Apple //e" )
-COMP ( 1985, apple2ee, apple2e,  0,			apple2ee, apple2,   apple2,   apple2,	"Apple Computer", "Apple //e (enhanced)" )
-COMP ( 1987, apple2ep, apple2e,  0,			apple2ee, apple2,   apple2,   apple2,	"Apple Computer", "Apple //e (Platinum)" )
-COMP ( 1984, apple2c,  0,        apple2,	apple2c,  apple2,   apple2,   apple2,	"Apple Computer", "Apple //c" )
-COMPX( 1985, apple2c0, apple2c,  0,			apple2c,  apple2,   apple2,   apple2,	"Apple Computer", "Apple //c (UniDisk 3.5)",	GAME_NOT_WORKING )
-COMPX( 1988, apple2cp, apple2c,  0,			apple2c,  apple2,   apple2,   apple2,	"Apple Computer", "Apple //c Plus",			GAME_NOT_WORKING )
+COMPX( 1979, apple2p,  apple2,   0,			apple2,   apple2,   apple2,   apple2p,	"Apple Computer", "Apple ][+", GAME_IMPERFECT_COLORS )
+COMP ( 1983, apple2e,  0,        apple2,	apple2e,  apple2,   apple2,   apple2e,	"Apple Computer", "Apple //e" )
+COMP ( 1985, apple2ee, apple2e,  0,			apple2ee, apple2,   apple2,   apple2e,	"Apple Computer", "Apple //e (enhanced)" )
+COMP ( 1987, apple2ep, apple2e,  0,			apple2ee, apple2,   apple2,   apple2e,	"Apple Computer", "Apple //e (Platinum)" )
+COMP ( 1984, apple2c,  0,        apple2,	apple2c,  apple2,   apple2,   apple2e,	"Apple Computer", "Apple //c" )
+COMPX( 1985, apple2c0, apple2c,  0,			apple2c,  apple2,   apple2,   apple2e,	"Apple Computer", "Apple //c (UniDisk 3.5)",	GAME_NOT_WORKING )
+COMPX( 1988, apple2cp, apple2c,  0,			apple2c,  apple2,   apple2,   apple2e,	"Apple Computer", "Apple //c Plus",			GAME_NOT_WORKING )
