@@ -34,15 +34,17 @@ static BOOL messOldControl = FALSE;
 static int  messRealColumn[MESS_COLUMN_MAX];
 static BOOL mess_idle_work;
 static UINT nIdleImageNum;
+static int nTheCurrentGame;
 
 static void OnMessIdle(void);
 
 extern const char *osd_get_cwd(void);
 extern void osd_change_directory(const char *);
-static void FillImageList(int nGame);
+static void FillSoftwareList(int nGame);
 static void InitMessPicker(void);
 static void DrawMessItem(LPDRAWITEMSTRUCT lpDrawItemStruct);
 static BOOL MessPickerNotify(NMHDR *nm);
+static void MessUpdateSoftwareList(void);
 #else
 static void MessImageConfig(HWND hMain, char *last_directory, int image);
 #endif /* MESS_PICKER */
@@ -493,7 +495,7 @@ static void AddImagesFromDirectory(const char *dir, BOOL bRecurse, char *buffer,
 	}
 }
 
-static void FillImageList(int nGame)
+static void FillSoftwareList(int nGame)
 {
 	LV_ITEM lvi;
 	int i;
@@ -501,6 +503,8 @@ static void FillImageList(int nGame)
 	ImageData **pimgd;
 	char *olddir;
 	char buffer[2000];
+
+	nTheCurrentGame = nGame;
 
 	/* Remove any currently selected images */
 	MessRemoveImage(-1);
@@ -574,6 +578,11 @@ static void FillImageList(int nGame)
 	mess_idle_work = TRUE;
 	nIdleImageNum = 0;
 	qsort(mess_images_index, mess_images_count, sizeof(ImageData *), CmpImageDataPtr);
+}
+
+static void MessUpdateSoftwareList(void)
+{
+	FillSoftwareList(nTheCurrentGame);
 }
 
 static void DrawMessItem(LPDRAWITEMSTRUCT lpDrawItemStruct)

@@ -2259,7 +2259,7 @@ static void EnableSelection(int nGame)
     options_type    *o = GetGameOptions(nGame);
     
 #ifdef MESS_PICKER
-	FillImageList(nGame);
+	FillSoftwareList(nGame);
 #endif
 
     sprintf(buf,"&Play %s",
@@ -3135,6 +3135,9 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
             int  nResult;
             BOOL bUpdateRoms;
             BOOL bUpdateSamples;
+#ifdef MESS_PICKER
+			BOOL bUpdateSoftware;
+#endif
 
             nResult = DialogBox(GetModuleHandle(NULL),
                                 MAKEINTRESOURCE(IDD_DIRECTORIES),
@@ -3142,6 +3145,9 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
                                 DirectoriesDialogProc);
             bUpdateRoms    = ((nResult & DIRDLG_ROMS)    == DIRDLG_ROMS)    ? TRUE : FALSE;
             bUpdateSamples = ((nResult & DIRDLG_SAMPLES) == DIRDLG_SAMPLES) ? TRUE : FALSE;
+#ifdef MESS_PICKER
+			bUpdateSoftware = ((nResult & DIRDLG_SOFTWARE) == DIRDLG_SOFTWARE) ? TRUE : FALSE;
+#endif
 
             /* update file code */
             if (bUpdateRoms == TRUE)
@@ -3153,6 +3159,13 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
             /* update game list */
             if (bUpdateRoms    == TRUE ||  bUpdateSamples == TRUE)
                 UpdateGameList();
+
+#ifdef MESS_PICKER
+			if (bUpdateSoftware) {
+				File_UpdateSoftwarePath(GetSoftwareDirs());
+				MessUpdateSoftwareList();
+			}
+#endif
             SetFocus(hwndList);
         }
         return TRUE;

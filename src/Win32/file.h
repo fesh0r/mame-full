@@ -41,6 +41,10 @@ extern void     File_UpdateRomPath(const char *path);
 extern void     File_UpdateSamplePath(const char *path);
 extern BOOL     File_Status(const char *gamename,const char *filename,int filetype);
 
+#ifdef MESS
+extern void     File_UpdateSoftwarePath(const char *path);
+#endif
+
 #define OSD_FILETYPE_FLYER      1001
 
 #endif

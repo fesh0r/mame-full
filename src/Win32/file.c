@@ -1151,6 +1151,21 @@ void File_UpdateSamplePath(const char *path)
     SetPaths(&SampleDirPath, path);
 }
 
+#ifdef MESS
+void File_UpdateSoftwarePath(const char *path)
+{
+    if (path == NULL)
+        return;
+
+    if (SoftwareDirPath.m_Buf != NULL)
+    {
+        free(SoftwareDirPath.m_Buf);
+        SoftwareDirPath.m_Buf = NULL;
+    }
+    SetPaths(&SoftwareDirPath, path);
+}
+#endif
+
 /* Only checks for a .zip file */
 BOOL File_ExistZip(const char *gamename, int filetype)
 {
