@@ -100,14 +100,29 @@ static void coco2b_charproc(UINT8 c)
 	m6847_inv_w(0, inv);
 }
 
+static WRITE_HANDLER( coco_m6847_hs_w )
+{
+	pia_0_ca1_w(0, data);
+}
+
+static WRITE_HANDLER( coco_m6847_fs_w )
+{
+	pia_0_cb1_w(0, data);
+}
+
 static int internal_dragon_vh_start(int m6847_version, void (*charproc)(UINT8))
 {
 	struct m6847_init_params p;
+
+	memset(&p, '\0', sizeof(p));
 	p.version = m6847_version;
 	p.artifactdipswitch = 12;
 	p.ram = memory_region(REGION_CPU1);
 	p.ramsize = 0x10000;
 	p.charproc = charproc;
+	p.hs_func = coco_m6847_hs_w;
+	p.fs_func = coco_m6847_fs_w;
+	p.callback_delay = (TIME_IN_HZ(894886) * 2);
 
 	if (m6847_vh_start(&p))
 		return 1;
@@ -190,6 +205,7 @@ int coco3_vh_start(void)
     int i;
 	struct m6847_init_params p;
 
+	memset(&p, '\0', sizeof(p));
 	p.version = M6847_VERSION_M6847T1;
 	p.artifactdipswitch = 12;
 	p.ram = memory_region(REGION_CPU1);

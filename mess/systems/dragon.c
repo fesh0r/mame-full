@@ -470,7 +470,7 @@ static struct MachineDriver machine_driver_dragon32 =
 			894886,	/* 0,894886 Mhz */
 			dragon32_readmem,dragon32_writemem,
 			0, 0,
-			dragon_interrupt, 1,
+			0, 0,
 			0, 0,
 		},
 	},
@@ -517,7 +517,7 @@ static struct MachineDriver machine_driver_coco =
 			894886,	/* 0,894886 Mhz */
 			d64_readmem,d64_writemem,
 			0, 0,
-			dragon_interrupt, 1,
+			0, 0,
 			0, 0,
 		},
 	},
@@ -564,7 +564,7 @@ static struct MachineDriver machine_driver_coco2b =
 			894886,	/* 0,894886 Mhz */
 			d64_readmem,d64_writemem,
 			0, 0,
-			dragon_interrupt, 1,
+			0, 0,
 			0, 0,
 		},
 	},
@@ -658,7 +658,7 @@ static struct MachineDriver machine_driver_coco3h =
 			894886,	/* 0,894886 Mhz */
 			coco3_readmem,coco3_writemem,
 			0, 0,
-			coco3_hblank, 262,
+			coco3_hblank, 263,
 			0, 0,
 		},
 	},

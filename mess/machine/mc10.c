@@ -137,6 +137,7 @@ int mc10_vh_start(void)
 	extern void dragon_charproc(UINT8 c);
 	struct m6847_init_params p;
 
+	memset(&p, '\0', sizeof(p));
 	p.version = M6847_VERSION_ORIGINAL;
 	p.artifactdipswitch = 7;
 	p.ram = memory_region(REGION_CPU1);

@@ -16,6 +16,7 @@ extern "C" {
 
 enum {
 	M6847_VERSION_ORIGINAL,
+	M6847_VERSION_M6847Y,
 	M6847_VERSION_M6847T1
 };
 
@@ -25,6 +26,10 @@ struct m6847_init_params {
 	UINT8 *ram;					/* the base of RAM */
 	int ramsize;				/* the size of accessible RAM */
 	void (*charproc)(UINT8 c);	/* the proc that gives the host a chance to change mode bits */
+
+	mem_write_handler hs_func;	/* Horizontal sync */
+	mem_write_handler fs_func;	/* Field sync */
+	double callback_delay;		/* Amount of time to wait before invoking callbacks (this is a CoCo related hack */
 };
 
 void m6847_vh_init_palette(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom);
@@ -67,6 +72,7 @@ READ_HANDLER( m6847_css_r );
 READ_HANDLER( m6847_gm2_r );
 READ_HANDLER( m6847_gm1_r );
 READ_HANDLER( m6847_gm0_r );
+READ_HANDLER( m6847_hs_r );
 READ_HANDLER( m6847_fs_r );
 
 WRITE_HANDLER( m6847_ag_w );

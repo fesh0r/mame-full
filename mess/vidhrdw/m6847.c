@@ -9,6 +9,7 @@
  *  M6847T1 info from Rainbow magazine (10/86-12/86)
  */
 
+#include <assert.h>
 #include "m6847.h"
 #include "vidhrdw/generic.h"
 #include "includes/rstrbits.h"
@@ -17,14 +18,19 @@
 /* The "Back doors" are declared here */
 #include "includes/dragon.h"
 
+#define LOG_FS	1
+#define LOG_HS	0
+
 struct m6847_state {
 	struct m6847_init_params initparams;
 	int modebits;
 	int videooffset;
 	int rowsize;
+	int fs, hs;
 };
 
 static struct m6847_state the_state;
+static void m6847_timer_initial_state(int dummy);
 
 enum {
 	M6847_MODEBIT_AG		= 0x80,
@@ -262,10 +268,14 @@ int internal_m6847_vh_start(const struct m6847_init_params *params, int dirtyram
 	the_state.modebits = 0;
 	the_state.videooffset = 0;
 	the_state.rowsize = 12;
+	the_state.fs = 1;
+	the_state.hs = 1;
 
 	videoram_size = dirtyramsize;
 	if (generic_vh_start())
 		return 1;
+
+	m6847_timer_initial_state(0);
 
 	return 0;
 }
@@ -274,6 +284,159 @@ int m6847_vh_start(const struct m6847_init_params *params)
 {
 	return internal_m6847_vh_start(params, MAX_VRAM);
 }
+
+/* --------------------------------------------------
+ * Timing
+ *
+ * This M6847 code attempts to emulate the tricky timing of the M6847.  There
+ * are two signals in question:  HS (Horizontal Sync) and FS (Field Sync).
+ * Below are tables that show when each signal changes
+ *
+ * How to read these tables:
+ *     "@ CLK(i) + j"  means "at clock cycle i plus j"
+ *
+ * HS:  Total Period: 227.5 clock cycles
+ *		@ CLK(0) + DHS_F			- Turns low
+ *		@ CLK(16.5) + DHS_R			- Turns high
+ *		@ CLK(227.5) + DHS_F		- Turns low
+ *		...	
+ *   
+ * FS:	Total Period 262*227.5 clock cycles
+ *      @ CLK(0) + DFS_F			- Turns low
+ *		@ CLK(32*227.5) + DFS_R		- Turns high
+ *		@ CLK(262*227.5) + DFS_F	- Turns low
+ *
+ * The only difference is on the M6847Y, replace 262 with 262.5
+ *
+ * Source: Motorola M6847 Manual
+ * -------------------------------------------------- */
+
+#define CLK		TIME_IN_HZ(3588545.0)
+#define DHS_F	TIME_IN_NSEC(550)
+#define DHS_R	TIME_IN_NSEC(740)
+#define DFS_F	TIME_IN_NSEC(520)
+#define DFS_R	TIME_IN_NSEC(600)
+
+/* The reason we have a delay is because of a very fine point in MAME/MESS's
+ * emulation.  In the CoCo, fs/hs are tied to interrupts, and the game "Popcorn"
+ * polls the interrupt sync flag (on $ff03 in PIA0), waiting for fs to trigger
+ * an interrupt.  In a real CoCo, CPU instructions are executed among different
+ * clock cycles, and it is possible for fs to be changed while an instruction is
+ * happening.  In MAME/MESS, the change doesn't occur until the instruction is
+ * over, and it jumps right to the interrupt handler, which clears the interrupt
+ * sync flag.  Thus, the main program never sees the interrupt flag change, and
+ * the emulation waits for ever.  Since MAME/MESS will most likely never split
+ * instructions up, this delay is an attempt to delay the interrupts and allow
+ * the program to see fs change before the interrupt handler is invoked
+ */
+struct callback_info {
+	mem_write_handler callback;
+	int value;
+};
+
+static void do_invoke(int ci_int)
+{
+	struct callback_info *ci;
+	ci = (struct callback_info *) ci_int;
+	ci->callback(0, ci->value);
+	free(ci);
+}
+
+static void invoke_callback(mem_write_handler callback, double delay, int value)
+{
+	struct callback_info *ci;
+
+	if (callback) {
+		ci = (struct callback_info *) malloc(sizeof(struct callback_info));
+		if (!ci)
+			return;
+		ci->callback = callback;
+		ci->value = value;
+		timer_set(delay, (int) ci, do_invoke);
+	}
+}
+
+static void hs_fall(int hsyncsleft)
+{
+	the_state.hs = 0;
+	invoke_callback(the_state.initparams.hs_func, the_state.initparams.callback_delay, the_state.hs);
+
+	if (hsyncsleft)
+		timer_set(CLK * 227.5, hsyncsleft - 1, hs_fall);
+
+#if LOG_HS
+	logerror("hs_fall(): hs=0 time=%g\n", timer_get_time());
+#endif
+}
+
+static void hs_rise(int hsyncsleft)
+{
+	the_state.hs = 1;
+	invoke_callback(the_state.initparams.hs_func, the_state.initparams.callback_delay, the_state.hs);
+
+	if (hsyncsleft)
+		timer_set(CLK * 227.5, hsyncsleft - 1, hs_rise);
+
+#if LOG_HS
+	logerror("hs_rise(): hs=1 time=%g\n", timer_get_time());
+#endif
+}
+
+static void fs_fall(int dummy)
+{
+	the_state.fs = 0;
+	invoke_callback(the_state.initparams.fs_func, the_state.initparams.callback_delay, the_state.fs);
+
+#if LOG_FS
+	logerror("fs_fall(): fs=0 time=%g\n", timer_get_time());
+#endif
+}
+
+static void fs_rise(int dummy)
+{
+	the_state.fs = 1;
+	invoke_callback(the_state.initparams.fs_func, the_state.initparams.callback_delay, the_state.fs);
+
+#if LOG_FS
+	logerror("fs_rise(): fs=1 time=%g\n", timer_get_time());
+#endif
+}
+
+static void m6847_timer_initial_state(int dummy)
+{
+	double rows;
+	int hsyncs;
+
+	switch(the_state.initparams.version) {
+	case M6847_VERSION_ORIGINAL:
+		rows = 262;
+		hsyncs = 262;
+		break;
+
+	case M6847_VERSION_M6847T1:
+	case M6847_VERSION_M6847Y:
+		rows = 262.5;
+		hsyncs = 263;
+		break;
+
+	default:
+		/* Not allowed */
+		rows = 0;
+		hsyncs = 0;
+		assert(0);
+		break;
+	}
+
+	timer_set(CLK * 0			+ DHS_F,	hsyncs-1,	hs_fall);
+	timer_set(CLK * 16.5		+ DHS_R,	hsyncs-1,	hs_rise);
+	timer_set(CLK * 0			+ DFS_F,	0,			fs_fall);
+	timer_set(CLK * 227.5*32	+ DFS_R,	0,			fs_rise);
+	timer_set(CLK * 227.5*rows,				0,			m6847_timer_initial_state);
+}
+
+/* --------------------------------------------------
+ * The meat
+ * -------------------------------------------------- */
 
 void m6847_set_ram_size(int ramsize)
 {
@@ -605,15 +768,8 @@ READ_HANDLER( m6847_css_r )		{ return (the_state.modebits & M6847_MODEBIT_CSS) ?
 READ_HANDLER( m6847_gm2_r )		{ return (the_state.modebits & M6847_MODEBIT_GM2) ? 1 : 0; }
 READ_HANDLER( m6847_gm1_r )		{ return (the_state.modebits & M6847_MODEBIT_GM1) ? 1 : 0; }
 READ_HANDLER( m6847_gm0_r )		{ return (the_state.modebits & M6847_MODEBIT_GM0) ? 1 : 0; }
-
-READ_HANDLER( m6847_fs_r )
-{
-	/* HACK HACK */
-	int i;
-	i = (int) (timer_get_time() / TIME_IN_HZ(60) * 128.0);
-	i &= 0x7f;
-	return i < 10;
-}
+READ_HANDLER( m6847_fs_r )		{ return the_state.fs; }
+READ_HANDLER( m6847_hs_r )		{ return the_state.hs; }
 
 static void write_modebits(int data, int mask, int causesrefresh)
 {

@@ -131,6 +131,7 @@ int vtech1_vh_start(void)
 {
 	struct m6847_init_params p;
 
+	memset(&p, '\0', sizeof(p));
 	p.version = M6847_VERSION_ORIGINAL;
 	p.artifactdipswitch = -1;
 	p.ram = memory_region(REGION_CPU1) + 0x7000;

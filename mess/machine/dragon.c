@@ -669,25 +669,113 @@ static int coco_hiresjoy_ry(void)
 }
 
 /***************************************************************************
-  PIA
-***************************************************************************/
+  PIA0 ($FF00-$FF1F) (Chip U8)
 
-int dragon_interrupt(void)
-{
-	pia_0_cb1_w (0, 0);
-	pia_0_cb1_w (0, 1);
-	return ignore_interrupt();
-}
+  PIA0 PA0-PA7	- Keyboard/Joystick read
+  PIA0 PB0-PB7	- Keyboard write
+  PIA0 CA1		- M6847 HS (Horizontal Sync)
+  PIA0 CA2		- MUX SEL 1 (NYI)
+  PIA0 CB1		- M6847 FS (Field Sync)
+  PIA0 CB2		- MUX SEL 2 (NYI)
+***************************************************************************/
 
 static READ_HANDLER ( d_pia0_ca1_r )
 {
-	return 0;
+	return m6847_hs_r(0);
 }
 
 static READ_HANDLER ( d_pia0_cb1_r )
 {
 	return m6847_fs_r(0);
 }
+
+static WRITE_HANDLER ( d_pia0_cb2_w )
+{
+	joystick = data;
+}
+
+static WRITE_HANDLER ( d_pia0_ca2_w )
+{
+	joystick_axis = data;
+}
+
+static int keyboard_r(void)
+{
+	int porta = 0x7f;
+	int joyport;
+	double joyval;
+
+	if ((input_port_0_r(0) | pia0_pb) != 0xff) porta &= ~0x01;
+	if ((input_port_1_r(0) | pia0_pb) != 0xff) porta &= ~0x02;
+	if ((input_port_2_r(0) | pia0_pb) != 0xff) porta &= ~0x04;
+	if ((input_port_3_r(0) | pia0_pb) != 0xff) porta &= ~0x08;
+	if ((input_port_4_r(0) | pia0_pb) != 0xff) porta &= ~0x10;
+	if ((input_port_5_r(0) | pia0_pb) != 0xff) porta &= ~0x20;
+	if ((input_port_6_r(0) | pia0_pb) != 0xff) porta &= ~0x40;
+
+
+	if (!joystick && (joystick_mode() != JOYSTICKMODE_NORMAL)) {
+		/* Hi res joystick */
+		if (joystick_axis ? coco_hiresjoy_ry() : coco_hiresjoy_rx())
+			porta |= 0x80;
+
+	}
+	else {
+		/* Normal joystick */
+		joyport = joystick ? (joystick_axis ? JOYSTICK_LEFT_Y : JOYSTICK_LEFT_X) : (joystick_axis ? JOYSTICK_RIGHT_Y : JOYSTICK_RIGHT_X);
+		joyval = readinputport(joyport);
+		if (d_dac <= ((int) (joyval * 255.0)))
+			porta |= 0x80;
+	}
+
+	porta &= ~readinputport(11);
+
+	return porta;
+}
+
+static READ_HANDLER ( d_pia0_pa_r )
+{
+	return keyboard_r();
+}
+
+static void coco3_poll_keyboard(int dummy)
+{
+	int porta;
+	porta = keyboard_r() & 0x7f;
+	coco3_raise_interrupt(COCO3_INT_EI1, (porta == 0x7f) ? CLEAR_LINE : ASSERT_LINE);
+}
+
+static WRITE_HANDLER ( d_pia0_pa_w )
+{
+	if (joystick_mode() == JOYSTICKMODE_HIRES_CC3MAX) {
+		coco_hiresjoy_w(data & 0x04);
+	}
+}
+
+static WRITE_HANDLER ( d_pia0_pb_w )
+{
+	pia0_pb = data;
+}
+
+/***************************************************************************
+  PIA1 ($FF20-$FF3F) (Chip U4)
+
+  PIA1 PA0		- CASSDIN
+  PIA1 PA1		- RS232 OUT
+  PIA1 PA2-PA7	- DAC
+  PIA1 PB0		- RS232 IN
+  PIA1 PB1		- ??? (NYI)
+  PIA1 PB2		- RAMSZ (I believe this was a jumper cable?)
+  PIA1 PB3		- M6847 CSS
+  PIA1 PB4		- M6847 INT/EXT and M6847 GM0
+  PIA1 PB5		- M6847 GM1
+  PIA1 PB6		- M6847 GM2
+  PIA1 PB7		- M6847 A/G
+  PIA1 CA1		- CD (Carrier Detect; NYI)
+  PIA1 CA2		- CASSMOT (Cassette Motor)
+  PIA1 CB1		- CART (Cartridge Detect)
+  PIA1 CB2		- SNDEN (Sound Enable)
+***************************************************************************/
 
 static READ_HANDLER ( d_pia1_cb1_r )
 {
@@ -756,11 +844,6 @@ static WRITE_HANDLER( coco3_pia1_pb_w )
 	m6847_set_cannonical_row_height();
 }
 
-static WRITE_HANDLER ( d_pia0_cb2_w )
-{
-	joystick = data;
-}
-
 static WRITE_HANDLER ( d_pia1_ca2_w )
 {
 	int status;
@@ -776,82 +859,9 @@ static WRITE_HANDLER ( d_pia1_ca2_w )
 	}
 }
 
-static WRITE_HANDLER ( d_pia0_ca2_w )
-{
-	joystick_axis = data;
-}
-
-static int keyboard_r(void)
-{
-	int porta = 0x7f;
-	int joyport;
-	double joyval;
-
-	if ((input_port_0_r(0) | pia0_pb) != 0xff) porta &= ~0x01;
-	if ((input_port_1_r(0) | pia0_pb) != 0xff) porta &= ~0x02;
-	if ((input_port_2_r(0) | pia0_pb) != 0xff) porta &= ~0x04;
-	if ((input_port_3_r(0) | pia0_pb) != 0xff) porta &= ~0x08;
-	if ((input_port_4_r(0) | pia0_pb) != 0xff) porta &= ~0x10;
-	if ((input_port_5_r(0) | pia0_pb) != 0xff) porta &= ~0x20;
-	if ((input_port_6_r(0) | pia0_pb) != 0xff) porta &= ~0x40;
-
-
-	if (!joystick && (joystick_mode() != JOYSTICKMODE_NORMAL)) {
-		/* Hi res joystick */
-		if (joystick_axis ? coco_hiresjoy_ry() : coco_hiresjoy_rx())
-			porta |= 0x80;
-
-	}
-	else {
-		/* Normal joystick */
-		joyport = joystick ? (joystick_axis ? JOYSTICK_LEFT_Y : JOYSTICK_LEFT_X) : (joystick_axis ? JOYSTICK_RIGHT_Y : JOYSTICK_RIGHT_X);
-		joyval = readinputport(joyport);
-		if (d_dac <= ((int) (joyval * 255.0)))
-			porta |= 0x80;
-	}
-
-	porta &= ~readinputport(11);
-
-	return porta;
-}
-
-static READ_HANDLER ( d_pia0_pa_r )
-{
-	return keyboard_r();
-}
-
-static void coco3_poll_keyboard(int dummy)
-{
-	static int old_porta = 0x7f;
-	int porta;
-	int new_porta;
-
-	porta = keyboard_r();
-	new_porta = (~old_porta | porta) & 0x7f;
-	old_porta = porta;
-
-	/* If there is a new hit on the keyboard, generate EI1 */
-	if (new_porta != 0x7f) {
-		coco3_raise_interrupt(COCO3_INT_EI1, 1);
-		coco3_raise_interrupt(COCO3_INT_EI1, 0);
-	}
-}
-
 static READ_HANDLER ( d_pia1_pa_r )
 {
 	return (device_input(IO_CASSETTE, 0) >= 0) ? 1 : 0;
-}
-
-static WRITE_HANDLER ( d_pia0_pa_w )
-{
-	if (joystick_mode() == JOYSTICKMODE_HIRES_CC3MAX) {
-		coco_hiresjoy_w(data & 0x04);
-	}
-}
-
-static WRITE_HANDLER ( d_pia0_pb_w )
-{
-	pia0_pb = data;
 }
 
 /***************************************************************************
@@ -1810,11 +1820,6 @@ void coco_bitbanger_output (int id, int data)
   Machine Initialization
 ***************************************************************************/
 
-static void dragon_hblank(int dummy)
-{
-	pia_0_ca1_w(0, 0);
-}
-
 int coco3_hblank(void)
 {
 	int scanline;
@@ -1889,7 +1894,6 @@ void dragon32_init_machine(void)
 
 	if (cart_inserted)
 		cpu_set_irq_line(0, M6809_FIRQ_LINE, ASSERT_LINE);
-	timer_pulse(COCO_TIMER_HSYNC, 0, dragon_hblank);
 }
 
 void coco_init_machine(void)
@@ -1902,7 +1906,6 @@ void coco_init_machine(void)
 	if (cart_inserted)
 		cpu_set_irq_line(0, M6809_FIRQ_LINE, ASSERT_LINE);
 	dragon64_sam_himemmap(0, 0);
-	timer_pulse(COCO_TIMER_HSYNC, 0, dragon_hblank);
 }
 
 

@@ -33,7 +33,6 @@ extern void coco3_vh_stop(void);
 extern void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 extern WRITE_HANDLER ( dragon_sam_display_offset );
 extern WRITE_HANDLER ( dragon_sam_vdg_mode );
-extern int dragon_interrupt(void);
 extern WRITE_HANDLER ( coco_ram_w );
 extern READ_HANDLER ( coco3_gimevh_r );
 extern WRITE_HANDLER ( coco3_gimevh_w );
