@@ -894,13 +894,13 @@ static READ_HANDLER( mapper5_l_r )
 	}
 }
 
-static void mapper5_sync_vrom (int mode)
-{
-	int i;
-
-	for (i = 0; i < 8; i ++)
-		nes_vram[i] = vrom_bank[0 + (mode * 8)] * 64;
-}
+//static void mapper5_sync_vrom (int mode)
+//{
+//	int i;
+//
+//	for (i = 0; i < 8; i ++)
+//		nes_vram[i] = vrom_bank[0 + (mode * 8)] * 64;
+//}
 
 static WRITE_HANDLER( mapper5_l_w )
 {

@@ -211,11 +211,6 @@ void	serial_device_set_transmit_state(int id, int state)
 
 }
 
-static int	data_stream_get_bytes_remaining(struct data_stream *stream)
-{
-	return (stream->DataLength - stream->ByteCount) + ((stream->BitCount+7)>>3);
-}
-
 /* get a bit from input stream */
 static int	data_stream_get_data_bit_from_data_byte(struct data_stream *stream)
 {
@@ -266,36 +261,6 @@ static int data_stream_get_byte(struct data_stream *stream)
 
 	return data_byte;
 }
-
-/* put a bit to output stream */
-static void data_stream_put_data_bit_to_data_byte(struct data_stream *stream, int bit)
-{
-	/* over end of buffer */
-	if (stream->ByteCount>=stream->DataLength)
-		return;
-
-	/* get data from buffer */
-	stream->pData[stream->ByteCount] &=~(1<<(7-stream->BitCount));
-
-	if (bit)
-	{
-		stream->pData[stream->ByteCount] |= (1<<(7-stream->BitCount));
-	}
-
-	/* update bit count */
-	stream->BitCount++;
-	/* ripple overflow onto byte count */
-	stream->ByteCount+=stream->BitCount>>3;
-	/* lock bit count into range */
-	stream->BitCount &=0x07;
-
-	/* do not let it read over end of data */
-	if (stream->ByteCount>=stream->DataLength)
-	{
-		stream->ByteCount = stream->DataLength-1;
-	}
-}
-
 
 void	receive_register_setup(struct serial_receive_register *receive, struct data_form *data_form)
 {

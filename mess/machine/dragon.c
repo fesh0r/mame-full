@@ -1073,11 +1073,6 @@ static WRITE_HANDLER ( d_pia0_pb_w )
 	pia0_pb = data;
 }
 
-static WRITE_HANDLER ( d_pia0_pb_w_dragon64 )
-{
-	d_pia0_pb_w(offset, data);
-}
-
 /* The following hacks are necessary because a large portion of cartridges
  * tie the Q line to the CART line.  Since Q pulses with every single clock
  * cycle, this would be prohibitively slow to emulate.  Thus we are only

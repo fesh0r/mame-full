@@ -34,35 +34,6 @@ static int default_write_sector(void *bdf, const void *header, UINT8 track, UINT
 static void default_get_sector_info(void *bdf, const void *header, UINT8 track, UINT8 head, UINT8 sector_index, UINT8 *sector, UINT16 *sector_size);
 static UINT8 default_get_sector_count(void *bdf, const void *header, UINT8 track, UINT8 head);
 
-static int find_geometry_options(const struct InternalBdFormatDriver *drv, UINT32 file_size, UINT32 header_size,
-	 UINT8 *tracks, UINT8 *heads, UINT8 *sectors)
-{
-	int expected_size;
-	int tracks_opt, heads_opt, sectors_opt;
-
-	for(tracks_opt = 0; drv->tracks_options[tracks_opt]; tracks_opt++)
-	{
-		*tracks = drv->tracks_options[tracks_opt];
-		for(heads_opt = 0; drv->heads_options[heads_opt]; heads_opt++)
-		{
-			*heads = drv->heads_options[heads_opt];
-			for(sectors_opt = 0; drv->sectors_options[sectors_opt]; sectors_opt++)
-			{
-				*sectors = drv->sectors_options[sectors_opt];
-
-				expected_size = *heads * *tracks * *sectors * drv->bytes_per_sector + header_size;
-				if (expected_size == file_size)
-					return 0;
-
-				if ((drv->flags & BDFD_ROUNDUP_TRACKS) && (expected_size > file_size)
-						&& (((expected_size - file_size) % (*heads * *sectors * drv->bytes_per_sector)) == 0))
-					return 0;
-			}
-		}
-	}
-	return 1;	/* failure */
-}
-
 int bdf_create(const struct bdf_procs *procs, formatdriver_ctor format,
 	void *file, const struct disk_geometry *geometry, void **outbdf)
 {

@@ -463,18 +463,6 @@ static READ_HANDLER( vc1541_via0_read_portb )
 	return value;
 }
 
-static void vc1541_acka(void)
-{
-	int value=vc1541->drive.serial.data;
-	if (vc1541->drive.serial.acka!=serial.atn[0]) {
-		value=0;
-	}
-	if (value!= vc1541->drive.serial.serial_data)
-	{
-		vc1541_serial_data_write (1, vc1541->drive.serial.serial_data = value );
-	}
-}
-
 static WRITE_HANDLER( vc1541_via0_write_portb )
 {
 	DBG_LOG(2, "vc1541 serial write",("%s %s %s\n",
@@ -484,14 +472,12 @@ static WRITE_HANDLER( vc1541_via0_write_portb )
 
 	vc1541->drive.serial.data=data&2?0:1;
 	vc1541->drive.serial.acka=(data&0x10)?1:0;
-#if 0
-	vc1541_acka();
-#else
+
 	if ((!(data & 2)) != vc1541->drive.serial.serial_data)
 	{
 		vc1541_serial_data_write (1, vc1541->drive.serial.serial_data = !(data & 2));
 	}
-#endif
+
 	if ((!(data & 8)) != vc1541->drive.serial.serial_clock)
 	{
 		vc1541_serial_clock_write (1, vc1541->drive.serial.serial_clock = !(data & 8));

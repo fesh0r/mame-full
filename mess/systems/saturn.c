@@ -276,6 +276,7 @@ static WRITE32_HANDLER( saturn_fb1_ram_w )
 }
 
 /* FB2 not mapped directly */
+#if 0
 static READ32_HANDLER( saturn_fb2_ram_r )
 {
 	offs_t ea;
@@ -295,6 +296,7 @@ static WRITE32_HANDLER( saturn_fb2_ram_w )
 	ea = (SATURN_FB2_RAM_BASE / 4) + offset;
 	mem[ea] = (mem[ea] & mem_mask) | data;
 }
+#endif
 /* END FB2 */
 
 static READ32_HANDLER( saturn_color_ram_r )

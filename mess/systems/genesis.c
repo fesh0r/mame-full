@@ -160,6 +160,7 @@ static int genesis_sharedram_r (int offset)
 
 
 #ifdef EASPORTS_HACK
+#if 0
 static READ16_HANDLER(cartridge_ram_r)
 {
 	logerror("cartridge ram read.. %x\n", offset);
@@ -170,6 +171,7 @@ static WRITE16_HANDLER(cartridge_ram_w)
 	logerror("cartridge ram write.. %x to %x\n", data, offset);
 	cartridge_ram[offset] = data;
 }
+#endif
 #endif
 
 static MEMORY_READ16_START(genesis_readmem)

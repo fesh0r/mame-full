@@ -263,10 +263,8 @@ static PALETTE_INIT(a7800)
 
 static PALETTE_INIT(a7800p)
 {
-
 	palette_set_colors(0, a7800p_palette, sizeof(a7800p_palette) / 3);
     memcpy(colortable,a7800_colortable,sizeof(a7800_colortable));
-
 }
 
 
@@ -345,7 +343,7 @@ static MACHINE_DRIVER_START( a7800p )
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(sizeof(a7800p_palette) / sizeof(a7800p_palette[0]) / 3)
 	MDRV_COLORTABLE_LENGTH(sizeof(a7800_colortable) / sizeof(a7800_colortable[0]))
-	MDRV_PALETTE_INIT(a7800)
+	MDRV_PALETTE_INIT(a7800p)
 
 	MDRV_VIDEO_START(a7800)
 	MDRV_VIDEO_UPDATE(a7800)

@@ -765,28 +765,6 @@ static void log_video(void)
 }
 #endif
 
-static UINT8 *coco3_textmapper_noattr(UINT8 *mem, int param, int *fg, int *bg, int *attr)
-{
-	/* This mapper uses the character map in the CoCo 3 ROM to display text */
-	UINT8 *result;
-	int b;
-	UINT8 *ROM;
-	
-	/* Subtracting here so that we can get an offset that looks like a real CoCo address */
-	ROM = memory_region(REGION_CPU1) - 0x8000;
-
-	b = (*mem) & 0x7f;
-	if (b < 32) {
-		/* Characters 0-31 are at $FA10 - $FB0F */
-		result = &ROM[0xfa10 + (b * 8)];
-	}
-	else {
-		/* Characters 32-127 are at $F09D - $F39C */
-		result = &ROM[0xf09d + ((b - 32) * 8)];
-	}
-	return result;
-}
-
 /*
  * All models of the CoCo has 262.5 scan lines.  However, we pretend that it has
  * 240 so that the emulation fits on a 640x480 screen

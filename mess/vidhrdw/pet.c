@@ -13,18 +13,14 @@
 #include "includes/crtc6845.h"
 #include "includes/pet.h"
 
-static void pet_vh_set_font(int font)
-{
-	pet_font=font;
-}
-
 void pet_vh_init (void)
 {
 	UINT8 *gfx = memory_region(REGION_GFX1);
 	int i;
 
 	/* inversion logic on board */
-    for (i = 0; i < 0x400; i++) {
+    for (i = 0; i < 0x400; i++)
+	{
 		gfx[0x800+i] = gfx[0x400+i];
 		gfx[0x400+i] = gfx[i]^0xff;
 		gfx[0xc00+i] = gfx[0x800+i]^0xff;

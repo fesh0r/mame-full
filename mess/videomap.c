@@ -395,34 +395,6 @@ static void get_line_info(void)
 	assert(line_info.scanlines_per_row);
 }
 
-enum
-{
-	POSITION_DISPLAY,
-	POSITION_BORDER_TOP,
-	POSITION_BORDER_BOTTOM,
-	POSITION_BORDER_LEFT,
-	POSITION_BORDER_RIGHT
-};
-
-static int in_border(void)
-{
-	int scanline;
-	int horzbeampos;
-
-	scanline = cpu_getscanline();
-	if (scanline < frame_info.bordertop_scanlines)
-		return POSITION_BORDER_TOP;
-	if (scanline >= (frame_info.bordertop_scanlines + frame_info.visible_scanlines))
-		return POSITION_BORDER_BOTTOM;
-
-	horzbeampos = cpu_gethorzbeampos();
-	if (horzbeampos < line_info.borderleft_columns)
-		return POSITION_BORDER_LEFT;
-	if (horzbeampos >= (line_info.borderleft_columns + line_info.visible_columns))
-		return POSITION_BORDER_RIGHT;
-	return POSITION_DISPLAY;
-}
-
 /* ----------------------------------------------------------------------- *
  * video mode invalidation                                                 *
  * ----------------------------------------------------------------------- */
