@@ -365,6 +365,26 @@ unsigned int device_crc(int type, int id)
 }
 
 /*
+ * Set the 'id'th crc for a device of type 'type',
+ * this is to be used if only a 'partial crc' shall be used.
+ */
+void device_set_crc(int type, int id, UINT32 new_crc)
+{
+    if (type >= IO_COUNT)
+	{
+		logerror("device_set_crc: type out of bounds (%d)\n", type);
+		return;
+	}
+    if (id < count[type])
+	{
+		images[type][id].crc = new_crc;
+		logerror("device_set_crc: new_crc %08x\n", new_crc);
+    }
+	else
+		logerror("device_set_crc: id out of bounds (%d)\n", id);
+}
+
+/*
  * Return the 'id'th length for a device of type 'type',
  * NULL if not enough image names of that type are available.
  */

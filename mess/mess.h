@@ -206,6 +206,7 @@ extern const char *device_typename_id(int type, int id);
 extern const char *device_filename(int type, int id);
 extern unsigned int device_length(int type, int id);
 extern unsigned int device_crc(int type, int id);
+extern void device_set_crc(int type, int id, UINT32 new_crc);
 extern const char *device_longname(int type, int id);
 extern const char *device_manufacturer(int type, int id);
 extern const char *device_year(int type, int id);
