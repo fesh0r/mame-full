@@ -4,6 +4,8 @@
 #include "vidhrdw/generic.h"
 #include "includes/oric.h"
 #include "includes/flopdrv.h"
+#include "includes/centroni.h"
+#include "printer.h"
 
 static MEMORY_READ_START(oric_readmem)
     { 0x0000, 0x02FF, MRA_RAM },
@@ -189,6 +191,11 @@ static void oric_init_palette(unsigned char *sys_palette, unsigned short *sys_co
 	memcpy(sys_colortable,oric_colortable,sizeof(oric_colortable));
 }
 
+static struct Wave_interface wave_interface = {
+	1,		/* 1 cassette recorder */
+	{ 50 }	/* mixing levels in percent */
+};
+
 static struct AY8910interface oric_ay_interface =
 {
 	1,	/* 1 chips */
@@ -240,6 +247,11 @@ static struct MachineDriver machine_driver_oric =
 		{
 			SOUND_AY8910,
 			&oric_ay_interface
+		},
+		/* cassette noise */
+		{
+			SOUND_WAVE,
+			&wave_interface
 		}
 	}
 };
@@ -284,6 +296,11 @@ static struct MachineDriver machine_driver_telestrat =
 		{
 			SOUND_AY8910,
 			&oric_ay_interface
+		},
+		/* cassette noise */
+		{
+			SOUND_WAVE,
+			&wave_interface
 		}
 	}
 };
@@ -308,26 +325,8 @@ ROM_START(telestrat)
 	ROM_LOAD ("telmon24.rom", 0x01c000, 0x04000, 0x0)
 ROM_END
 
-static const struct IODevice io_oric1[] = {
-	{
-		IO_CARTSLOT,		/* type */
-		1,					/* count */
-		"tap\0",            /* file extensions */
-		IO_RESET_NONE,		/* reset if file changed */
-        NULL,               /* id */
-		oric_load_rom,		/* init */
-		NULL,				/* exit */
-        NULL,               /* info */
-        NULL,               /* open */
-        NULL,               /* close */
-        NULL,               /* status */
-        NULL,               /* seek */
-		NULL,				/* tell */
-        NULL,               /* input */
-        NULL,               /* output */
-        NULL,               /* input_chunk */
-        NULL                /* output_chunk */
-    },
+static const struct IODevice io_oric1[] = 
+{
 	IO_CASSETTE_WAVE(1,"wav\0",NULL,oric_cassette_init,oric_cassette_exit),
  	{
 		IO_FLOPPY,				/* type */
@@ -348,6 +347,7 @@ static const struct IODevice io_oric1[] = {
 		NULL,					/* input_chunk */
 		NULL					/* output_chunk */
 	},
+	IO_PRINTER_PORT(1,"\0"),
 	{ IO_END }
 };
 
