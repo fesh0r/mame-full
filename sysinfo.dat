@@ -4837,28 +4837,112 @@ There is no documentation on the hardware available and more is required.
 
 $end
 #---------------------------------------------------------------------------------------------#
+$info=srdm5fd5
+$bio
+Sord M5 with PI-5 parallel interface and FD-5 disc interface
+
+This computer used cartridges. You can insert game cartridges, or if you want
+to use basic, you can insert one of 3 basic cartridges:
+"BASIC-I" a integer based basic, "BASIC-G" a basic for graphics, "BASIC-F" a basic
+for floating point operations.
+
+To use the disc interface, use the floating point basic "BASIC-F". This has support
+for the disc interface built-in.
+
+This driver consists of:
+- a Sord M5 computer
+- a Sord FD-5 disc interface
+- a Sord PI-5 parallel interface
+
+The Sord M5 computer communicates with the FD-5 through the parallel interface.
+
+The parallel interface has:
+- a Intel 8255 parallel peripheral interface chip
+Communication with the FD-5 is done using mode-2 operation. i.e. port A is
+a bi-directional 8-bit port, port C upper is a control port.
+
+The floppy disc interface:
+- Z80
+- 16k ROM
+- RAM
+- NEC765 compatible disc controller
+- internally the disc interface uses interrupts to transfer data into it's own
+ram.
+
+The floppy disc drives are 3" and are believed to use 40 track, double density, double sided discs,
+giving 360K per disc.
+
+The M5 sends 3 character commands, with parameters to the disc interface using the following
+command:
+
+fx 0,<command>
+
+<command> can be:
+
+TDA
+TRA
+WBI
+RBI
+WTX
+RTX
+WBL
+RBL
+WMM
+RMM
+EXC
+SDR
+WDR
+RDR
+RDC
+OPN
+CLS
+CHN
+MAP
+SAP
+CAP
+ATR
+NAM
+DEL
+FMT	- Format disc
+CPY
+GEN
+VPR
+RVI
+IDV
+FNM
+RDB
+WDB
+WHO
+DOM
+
+Known issues:
+- See sordm5 description
+
+
+$end
+
+#---------------------------------------------------------------------------------------------#
 
 $info=sordm5
 $bio
 Sord M5
 
-Some cartridges work. Basic is supplied on a cartridge and so must be inserted
-as a cartridge like in the real machine.
+This computer used cartridges. You can insert game cartridges, or if you want
+to use basic, you can insert one of 3 basic cartridges:
+"BASIC-I" a integer based basic, "BASIC-G" a basic for graphics, "BASIC-F" a basic
+for floating point operations.
 
 Known Issues:
-
-- cassette not working
-- disc emulation not working
+- some cartridges may not work
+- cassette emulation is working, but may not be perfect.
 - no memory expansion supported
 - no extra peripherals supported
-
-Development has been temporarily halted until I can work out the disc interface.
 
 History and Trivia:
 
 The Sord M5 is similar in design to the MSX but not compatible with it.
-(It has the same CPU (Z80), a Z80 CTC timer chip and the same video chip, but a different sound chip
-and the I/O port assignments are not the same).
+(It has the same CPU (Z80), a Z80 CTC timer chip and the same video chip, but 
+a different sound chip and the I/O port assignments are not the same).
 
 In fact some MSX games have been converted to the Sord by enthusiasts.
 
@@ -7335,7 +7419,7 @@ which will start CP/M and from here you can run many CP/M based
 programs.
 
 You can put a disk image into the drive and boot CP/M by pressing
-CTRL+ALT togethr.
+CTRL+ALT together.
 
 Usage/Known Issues:
 
