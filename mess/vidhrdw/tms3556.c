@@ -140,6 +140,8 @@ READ8_HANDLER(tms3556_reg_r)
 */
 WRITE8_HANDLER(tms3556_reg_w)
 {
+	if ((vdp.reg_access_phase == 3) && (data))
+		vdp.reg_access_phase = 0;	/* ???????????? */
 	switch (vdp.reg_access_phase)
 	{
 	case 0:
@@ -327,7 +329,7 @@ static void tms3556_draw_line_text_common(UINT16 *ln)
 	int alphanumeric_mode, dbl_w, dbl_h, dbl_w_phase = 0;
 
 
-	nametbl = vdp.vram + vdp.addressRegs[2] /*+ 1*//*??????*/;
+	nametbl = vdp.vram + vdp.addressRegs[2];
 	for (i=0; i<4; i++)
 		patterntbl[i] = vdp.vram + vdp.addressRegs[i+3];
 
@@ -343,8 +345,6 @@ static void tms3556_draw_line_text_common(UINT16 *ln)
 	{
 		name_hi = nametbl[name_offset];
 		name_lo = nametbl[name_offset+1];
-		if (name_hi || name_lo)
-			logerror("ding!");
 		pattern_ix = ((name_hi >> 2) & 2) | ((name_hi >> 4) & 1);
 		alphanumeric_mode = (pattern_ix < 2) || ((pattern_ix == 3) && !(vdp.controlRegs[7] & 0x08));
 		fg = Machine->pens[(name_hi >> 5) & 0x7];
@@ -357,8 +357,8 @@ static void tms3556_draw_line_text_common(UINT16 *ln)
 			}
 			else
 				bg = vdp.bg_color;
-			dbl_w = name_hi & 0x1;
-			dbl_h = name_hi & 0x2;
+			dbl_w = name_hi & 0x2;
+			dbl_h = name_hi & 0x1;
 		}
 		else
 		{

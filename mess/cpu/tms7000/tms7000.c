@@ -764,11 +764,12 @@ static UINT16 bcd_tencomp( UINT16 a )
 }
 
 /*
-	Compute difference b-a???
+	Compute difference a-b???
 */
 static UINT16 bcd_sub( UINT16 a, UINT16 b)
 {
-	return bcd_tencomp(b) - bcd_tencomp(a);
+	//return bcd_tencomp(b) - bcd_tencomp(a);
+	return bcd_add(a, bcd_tencomp(b) & 0xff);
 }
 
 WRITE8_HANDLER( tms7000_internal_w ) {
