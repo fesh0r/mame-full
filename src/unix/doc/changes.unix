@@ -2,6 +2,20 @@ Xmame history:
 
 Last Modified by Lawrence Gold (gold@aros.net)
 
+Release 0.84.2
+	- Fixed a problem in makefile.unix that prevented the xgl target from 
+	  building.
+	- Those who have the commercial NVIDIA driver installed can now build 
+	  the xgl target without installing the Mesa headers.  (Jonas Laurio 
+	  and me).
+	- Adjusted the LinuxPPC compile and link flags to prevent relocation 
+	  errors resulting from the application being too large for 24-bit 
+	  offsets in branch instructions.  (Christian Groessler)
+	- Improved the NetBSD USB joystick driver: Added support for up to 8 
+	  axes and 1 hat and made manual calibration optional via the command 
+	  line option -joyusb-calibrate.  (Dieter Baron)
+	- Building xmess.xgl no longer results in link errors from messtest.
+
 Release 0.84.1, 17 July 2004
 	- Everything from MAME 0.84 (http://x.mame.net/changes-mame.html) and
 	  MESS 0.84 (http://x.mame.net/changes-mess.html).
