@@ -728,6 +728,12 @@ SOUNDDEFS += -DHAS_TMS36XX=1
 SOUNDOBJS += $(OBJ)/sound/tms36xx.o
 endif
 
+SOUND=$(strip $(findstring TMS5110@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_TMS5110=1
+SOUNDOBJS += $(OBJ)/sound/tms5110.o $(OBJ)/sound/5110intf.o
+endif
+
 SOUND=$(strip $(findstring TMS5220@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_TMS5220=1

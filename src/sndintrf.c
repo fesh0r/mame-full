@@ -243,6 +243,9 @@ int VLM5030_clock(const struct MachineSound *msound) { return ((struct VLM5030in
 #if (HAS_TMS36XX)
 int TMS36XX_num(const struct MachineSound *msound) { return ((struct TMS36XXinterface*)msound->sound_interface)->num; }
 #endif
+#if (HAS_TMS5110)
+int TMS5110_clock(const struct MachineSound *msound) { return ((struct TMS5110interface*)msound->sound_interface)->baseclock; }
+#endif
 #if (HAS_TMS5220)
 int TMS5220_clock(const struct MachineSound *msound) { return ((struct TMS5220interface*)msound->sound_interface)->baseclock; }
 #endif
