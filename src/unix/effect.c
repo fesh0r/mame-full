@@ -42,6 +42,7 @@
  *   - scale2x smooth scaling effect
  */
 
+#define __EFFECT_C_
 #include "xmame.h"
 #include "osd_cpu.h"
 #include "effect.h"
