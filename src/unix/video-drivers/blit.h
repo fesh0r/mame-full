@@ -1,36 +1,79 @@
-/* this routine is the generic blit routine used in many cases, through a number
-   of defines it can be customised for specific cases.
+/* this routine is the generic blit routine used in many cases, through a
+   number of defines it can be customised for specific cases.
    Currently recognised defines:
-   DEST		ptr of type DEST_PIXEL to which should be blitted, if this is
-		not defined only PUT_IMAGE is called if defined.
-   DEST_PIXEL	type of the buffer to which is blitted, only needed if
-                DEST is defined.
-   DEST_WIDTH   Width of the destination buffer in pixels! Only needed if
-                DEST is defined.
-   SRC_PIXEL    type of the buffer from which is blitted, currently
-                8 bpp (unsigned char) and 16 bpp (unsigned short) are supported.
-   PUT_IMAGE    This function is called to update the parts of the screen
-		which need updating. This is only called if defined.
-   INDIRECT     This needs to be defined if DEST_PIXEL != unsigned char,
-                this is a ptr to a list of pixels/colormappings for the
-                colordepth conversion.
-   BLIT_16BPP_HACK This one speaks for itself, it's a speedup hack for 8bpp
-                to 16bpp blits.
-   PACK_BITS    Write to packed 24bit pixels, DEST_PIXEL must be 32bits and
-                INDIRECT must be on.
-   DOUBLEBUFFER First copy each line to a buffer called doublebuffer_buffer,
-                then do a memcpy to the real destination. This speeds up
-                scaling when writing directly to framebuffer since it
-                tremendously speeds up the reads done to copy one line to
-                the next.
+   DEST		 ptr of type DEST_PIXEL to which should be blitted
+   DEST_PIXEL	 type of the buffer to which is blitted
+   DEST_WIDTH    Width of the destination buffer in pixels!
+   SRC_PIXEL     type of the buffer from which is blitted
+   PUT_IMAGE     This function is called to update the parts of the screen
+		 which need updating. This is only called if defined.
+   INDIRECT      Define this if you want SRC_PIXELs to be an index to a lookup
+                 table, the contents of this define is used as the lookuptable.
+   CONVERT_PIXEL If defined then the blit core will call CONVERT_PIXEL on each
+                 src_pixel (after looking it up in INDIRECT if defined).
+                 This could be used to show for example a 32 bpp bitmap
+                 (artwork) on a 16 bpp X-server by defining a CONVER_PIXEL
+                 function which downgrades the direct RGB  pixels to 16 bpp.
+   PACK_BITS     If defined write to packed 24bit pixels, DEST_PIXEL must be
+                 32bits and the contents of SRC_PIXEL after applying INDIRECT
+                 and CONVERT_PIXEL should be 32 bits RGB 888.
+   BLIT_HWSCALE_YUY2	Write to a 16 bits DEST in YUY2 format if INDIRECT is
+                 set the contents of SRC_PIXEL after applying INDIRECT and
+                 CONVERT_PIXEL should be a special pre calculated 32 bits
+                 format, see x11_window.c for an example.
+                 If indirect is not set the contents of SRC_PIXEL after
+                 applying CONVERT_PIXEL should be 32 bits RGB 888.
+   DOUBLEBUFFER  First copy each line to a buffer called doublebuffer_buffer,
+                 then do a memcpy to the real destination. This speeds up
+                 scaling when writing directly to framebuffer since it
+                 tremendously speeds up the reads done to copy one line to
+                 the next.
 
-   These routines use long copies so everything should always be long aligned.
+   These routines assume visual_ height, width, min_x, min_y, max_x and max_y
+   are all a multiple off 8 !
+
+ChangeLog:
+
+18 August 2004 (Hans de Goede):
+-removed some unused vars, which totally flooded my term with warnings
+-moved PUT_IMAGE to bottom, since this needs to be done exactly the same
+ for each effect
+-removed #ifdef DEST, we always need a DEST nowadays for rotation and effects,
+ better to break compiles for targets not setting DEST
+-created EFFECT, EFFECT2X and EFFECT3x macros which abstract all the
+ doublebuf and indirect stuff.
+-created LOOP and LOOP2X macros which abstract the loops with
+ and without rotation. The LOOP2X macro uses circulating pointers instead
+ of doing the rotation 3 times for each line for a small speedup
+-fixed rotation in 6tap2x (broken by my previous patch)
+-made the no effect code use CORRECTED_DEST_WIDTH instead of DEST_WIDTH,
+ so that atleast the no effect code should work on 24 bpp packed displays,
+ no complaints about this?
+-BIG CLEANUP:
+-removed a bunch of defines since these are no longer used
+-removed 16BPP_HACK, not used by any driver, and not usefull
+ since it is a HACK to speedup 8 to 16 bpp blits, which we won't be doing
+ anymore, since the core doesn't do 8 bit anymore.
+-made arbysize code honor use_scanlines
+-removed non arb y scaling, the speed advantage is non measurable on my
+ ancient computer, so on newer computers it will be even less!
+-moved non-effect code from blit_core.h to a macro in blit.h
+-renamed blit_core.h to blit_effect.h
+-only include blit_effect.h once instead of once for each widthscale,
+ since each effect has a distinct widthscale and does this scaling itself
+ including it for every widthscale case makes no sense
+-removed #ifdef LOW_MEM, blit.h now is so small that this should no longer be
+ needed
+-created a GETPIXEL macro that abstracts INDIRECT being set or not,
+ removed all the not INDIRECT special cases
+-added changelog
+-actualised documentation in the top
+-added a CONVERT_PIXEL define. See above.
 */
 
 #ifdef PACK_BITS
 /* scale destptr delta's by 3/4 since we're using 32 bits ptr's for a 24 bits
    dest */
-#define DEST_SCALE 3/4
 #define DEST_PIXEL_SIZE 3
 #define CORRECTED_DEST_WIDTH ((DEST_WIDTH*3)/4)
 #else
@@ -38,416 +81,111 @@
 #define CORRECTED_DEST_WIDTH DEST_WIDTH
 #endif
 
-if (yarbsize) /* using arbitrary Y-scaling (Adam D. Moss <adam@gimp.org>) */
-{
-  switch(widthscale)
-    {
-#ifdef INDIRECT
-
-#ifdef BLIT_16BPP_HACK
-#define COPY_LINE2(SRC, END, DST) \
-      {\
-   unsigned short *src = (unsigned short *)(SRC); \
-   unsigned short *end = (unsigned short *)(END); \
-   unsigned int   *dst = (unsigned int   *)(DST); \
-   for(;src<end;src+=4,dst+=4) \
-   { \
-      *(dst  ) = INDIRECT[*(src  )]; \
-      *(dst+1) = INDIRECT[*(src+1)]; \
-      *(dst+2) = INDIRECT[*(src+2)]; \
-      *(dst+3) = INDIRECT[*(src+3)]; \
-   }\
-      }
-#elif defined PACK_BITS
-#define COPY_LINE2(SRC, END, DST) \
-      {\
-   SRC_PIXEL  *src = SRC; \
-   SRC_PIXEL  *end = END; \
-   DEST_PIXEL *dst = DST; \
-   for(;src<end;dst+=3,src+=4) \
-   { \
-      *(dst  ) = (INDIRECT[*(src  )]    ) | (INDIRECT[*(src+1)]<<24); \
-      *(dst+1) = (INDIRECT[*(src+1)]>> 8) | (INDIRECT[*(src+2)]<<16); \
-      *(dst+2) = (INDIRECT[*(src+2)]>>16) | (INDIRECT[*(src+3)]<< 8); \
-   }\
-      }
-#elif defined BLIT_HWSCALE_YUY2
-#ifdef LSB_FIRST /* x86 etc */
-#define COPY_LINE2(SRC, END, DST) \
-   {\
-      SRC_PIXEL  *src = SRC; \
-      SRC_PIXEL  *end = END; \
-      unsigned long *dst = (unsigned long *)DST; \
-      unsigned int r,y,y2,uv1,uv2; \
-      for(;src<end;) \
-      { \
-         r=INDIRECT[*src++]; \
-         y=r&255; \
-         uv1=(r&0xff00ff00)>>1; \
-         r=INDIRECT[*src++]; \
-         uv2=(r&0xff00ff00)>>1; \
-         y2=r&0xff0000; \
-         *dst++=y|y2|((uv1+uv2)&0xff00ff00);\
-      } \
-   }
-#else /* ppc etc */
-#define COPY_LINE2(SRC, END, DST) \
-   {\
-      SRC_PIXEL  *src = SRC; \
-      SRC_PIXEL  *end = END; \
-      unsigned long *dst = (unsigned long *)DST; \
-      unsigned int r,y,y2,uv1,uv2; \
-      for(;src<end;) \
-      { \
-         r=INDIRECT[*src++]; \
-         y=r&0xff000000 ; \
-         uv1=(r&0x00ff00ff); \
-         r=INDIRECT[*src++]; \
-         uv2=(uv1+(r&0x00ff00ff))>>1; \
-         y2=r&0xff00; \
-         *dst++=y|y2|(uv2&0x00ff00ff); \
-      } \
-   }
-#endif
-#else /* normal indirect */
-#define COPY_LINE2(SRC, END, DST) \
-      {\
-   SRC_PIXEL  *src = SRC; \
-   SRC_PIXEL  *end = END; \
-   DEST_PIXEL *dst = DST; \
-   for(;src<end;src+=8,dst+=8) \
-   { \
-      *(dst  ) = INDIRECT[*(src  )]; \
-      *(dst+1) = INDIRECT[*(src+1)]; \
-      *(dst+2) = INDIRECT[*(src+2)]; \
-      *(dst+3) = INDIRECT[*(src+3)]; \
-      *(dst+4) = INDIRECT[*(src+4)]; \
-      *(dst+5) = INDIRECT[*(src+5)]; \
-      *(dst+6) = INDIRECT[*(src+6)]; \
-      *(dst+7) = INDIRECT[*(src+7)]; \
-   }\
-      }
-#endif /* dga_16bpp_hack / packed / normal indirect */
-
-#else  /* not indirect */
-#define COPY_LINE2(SRC, END, DST) \
-   memcpy(DST, SRC, ((END)-(SRC))*DEST_PIXEL_SIZE);
-#endif /* indirect */
-
-#define SCALE_Y(Y) (((Y)*yarbsize)/visual_height)
+/* arbitrary Y-scaling (Adam D. Moss <adam@gimp.org>) */
 #define REPS_FOR_Y(N,YV,YMAX) ((N)* ( (((YV)+1)*yarbsize)/(YMAX) - ((YV)*yarbsize)/(YMAX)))
 
-    case 1:
-#define SCALE_X(X) (X)
 #ifdef DOUBLEBUFFER
 
-#ifdef INDIRECT
+#if defined INDIRECT || defined CONVERT_PIXEL
 #define COPY_LINE_FOR_Y(YV, YMAX, SRC, END, DST) \
 { \
    int reps = REPS_FOR_Y(1, YV, YMAX); \
-   if (reps >0) COPY_LINE2(SRC, END, (DEST_PIXEL *)doublebuffer_buffer); \
-   while (reps-- >0) { memcpy((DST)+(reps*(CORRECTED_DEST_WIDTH)), doublebuffer_buffer, ((END)-(SRC))*DEST_PIXEL_SIZE*SCALE_X(1)); } \
+   if (reps >0) { \
+     COPY_LINE2(SRC, END, (DEST_PIXEL *)doublebuffer_buffer); \
+     do { memcpy((DST)+(reps*(CORRECTED_DEST_WIDTH)), doublebuffer_buffer, ((END)-(SRC))*DEST_PIXEL_SIZE*widthscale); \
+     } while (reps-- > use_scanlines); \
+   } \
 }
+#else /* speedup hack for GETPIXEL(src) == (src) */
+#define COPY_LINE_FOR_Y(YV, YMAX, SRC, END, DST) \
+{ \
+   int reps = REPS_FOR_Y(1, YV, YMAX); \
+   if (reps >0) { \
+     do { COPY_LINE2(SRC, END, (DST)+(reps*(CORRECTED_DEST_WIDTH))); \
+     } while (reps-- > use_scanlines); \
+   } \
+}
+#endif
+
 #else
 #define COPY_LINE_FOR_Y(YV, YMAX, SRC, END, DST) \
 { \
    int reps = REPS_FOR_Y(1, YV, YMAX); \
-   while (reps-- >0) COPY_LINE2(SRC, END, (DST)+(reps*(CORRECTED_DEST_WIDTH)));\
+   if (reps >0) { \
+     COPY_LINE2(SRC, END, DST); \
+     while (reps-- > (1+use_scanlines)) \
+       memcpy((DST)+(reps*(CORRECTED_DEST_WIDTH)), DST, ((END)-(SRC))*DEST_PIXEL_SIZE*widthscale); \
+  } \
 }
 #endif
 
+#define LOOP() \
+if (!blit_hardware_rotation && current_palette != debug_palette \
+                 && (blit_flipx || blit_flipy || blit_swapxy)) { \
+  for (y = visual.min_y; y <= visual.max_y; line_dest+=REPS_FOR_Y(CORRECTED_DEST_WIDTH,y,visual_height), y++) { \
+           rotate_func(rotate_dbbuf, bitmap, y); \
+           line_src = (SRC_PIXEL *)rotate_dbbuf; \
+           line_end = (SRC_PIXEL *)rotate_dbbuf + visual_width; \
+           COPY_LINE_FOR_Y(y, visual_height, line_src, line_end, line_dest); \
+  } \
+} else { \
+y = visual.min_y; \
+for (;line_src < line_end; \
+        line_dest+=REPS_FOR_Y(CORRECTED_DEST_WIDTH,y,visual_height), \
+                line_src+=src_width, y++) \
+           COPY_LINE_FOR_Y(y,visual_height, \
+                           line_src, line_src+visual_width, line_dest); \
+}
+
+#ifdef CONVERT_PIXEL
+#  ifdef INDIRECT
+#  define GETPIXEL(src) CONVERT_PIXEL(INDIRECT[src])
+#  else
+#  define GETPIXEL(src) CONVERT_PIXEL((src))
+#  endif
 #else
-#define COPY_LINE_FOR_Y(YV, YMAX, SRC, END, DST) \
-{ \
-   int reps = REPS_FOR_Y(1, YV, YMAX); \
-   if (reps >0) COPY_LINE2(SRC, END, DST); \
-   while (reps-- >1) memcpy((DST)+(reps*(CORRECTED_DEST_WIDTH)), DST, ((END)-(SRC))*DEST_PIXEL_SIZE*SCALE_X(1)); \
-}
-#endif
-/*#define COPY_LINE(SRC, END, DST) { COPY_LINE2(SRC, END, DST) }*/
-#include "blit_core.h"
-break;
-
-#undef SCALE_X
-#undef COPY_LINE2
-
-
-
-
-#ifndef LOW_MEM
-case 2:
-#define SCALE_X(X) ((X)*2)
-#ifdef INDIRECT
-
-#ifdef PACK_BITS
-#define COPY_LINE2(SRC, END, DST) \
-{ \
-   SRC_PIXEL  *src = SRC; \
-   SRC_PIXEL  *end = END; \
-   DEST_PIXEL *dst = DST; \
-   for(;src<end; src+=2, dst+=3) \
-   { \
-      *(dst  ) = (INDIRECT[*(src  )]    ) | (INDIRECT[*(src  )]<<24); \
-      *(dst+1) = (INDIRECT[*(src  )]>> 8) | (INDIRECT[*(src+1)]<<16); \
-      *(dst+2) = (INDIRECT[*(src+1)]>>16) | (INDIRECT[*(src+1)]<<8); \
-   } \
-}
-#else /* not pack bits */
-#define COPY_LINE2(SRC, END, DST) \
-{ \
-   SRC_PIXEL  *src = SRC; \
-   SRC_PIXEL  *end = END; \
-   DEST_PIXEL *dst = DST; \
-   for(;src<end; src+=8, dst+=16) \
-   { \
-      *(dst   ) = *(dst+ 1) = INDIRECT[*(src  )]; \
-      *(dst+ 2) = *(dst+ 3) = INDIRECT[*(src+1)]; \
-      *(dst+ 4) = *(dst+ 5) = INDIRECT[*(src+2)]; \
-      *(dst+ 6) = *(dst+ 7) = INDIRECT[*(src+3)]; \
-      *(dst+ 8) = *(dst+ 9) = INDIRECT[*(src+4)]; \
-      *(dst+10) = *(dst+11) = INDIRECT[*(src+5)]; \
-      *(dst+12) = *(dst+13) = INDIRECT[*(src+6)]; \
-      *(dst+14) = *(dst+15) = INDIRECT[*(src+7)]; \
-   } \
-}
-#endif /* pack bits */
-
-#else /* not indirect */
-
-#define COPY_LINE2(SRC, END, DST) \
-{ \
-   SRC_PIXEL  *src = SRC; \
-   SRC_PIXEL  *end = END; \
-   DEST_PIXEL *dst = DST; \
-   for(;src<end; src+=8, dst+=16) \
-   { \
-      *(dst   ) = *(dst+ 1) = *(src  ); \
-      *(dst+ 2) = *(dst+ 3) = *(src+1); \
-      *(dst+ 4) = *(dst+ 5) = *(src+2); \
-      *(dst+ 6) = *(dst+ 7) = *(src+3); \
-      *(dst+ 8) = *(dst+ 9) = *(src+4); \
-      *(dst+10) = *(dst+11) = *(src+5); \
-      *(dst+12) = *(dst+13) = *(src+6); \
-      *(dst+14) = *(dst+15) = *(src+7); \
-   } \
-}
-#endif
-#include "blit_core.h"
-break;
-
-#undef SCALE_X
-#undef COPY_LINE2
-
-
-
-
-case 3:
-#define SCALE_X(X)   ((X)*3)
-#ifdef INDIRECT
-
-#define COPY_LINE2(SRC, END, DST) \
-{ \
-   SRC_PIXEL  *src = SRC; \
-   SRC_PIXEL  *end = END; \
-   DEST_PIXEL *dst = DST; \
-   for(;src<end; src+=8, dst+=24) \
-   { \
-      *(dst   ) = *(dst+ 1) = *(dst+ 2) = INDIRECT[*(src  )]; \
-      *(dst+ 3) = *(dst+ 4) = *(dst+ 5) = INDIRECT[*(src+1)]; \
-      *(dst+ 6) = *(dst+ 7) = *(dst+ 8) = INDIRECT[*(src+2)]; \
-      *(dst+ 9) = *(dst+10) = *(dst+11) = INDIRECT[*(src+3)]; \
-      *(dst+12) = *(dst+13) = *(dst+14) = INDIRECT[*(src+4)]; \
-      *(dst+15) = *(dst+16) = *(dst+17) = INDIRECT[*(src+5)]; \
-      *(dst+18) = *(dst+19) = *(dst+20) = INDIRECT[*(src+6)]; \
-      *(dst+21) = *(dst+22) = *(dst+23) = INDIRECT[*(src+7)]; \
-   } \
-}
-#else /* not indirect */
-#define COPY_LINE2(SRC, END, DST) \
-{ \
-   SRC_PIXEL  *src = SRC; \
-   SRC_PIXEL  *end = END; \
-   DEST_PIXEL *dst = DST; \
-   for(;src<end; src+=8, dst+=24) \
-   { \
-      *(dst   ) = *(dst+ 1) = *(dst+ 2) = *(src  ); \
-      *(dst+ 3) = *(dst+ 4) = *(dst+ 5) = *(src+1); \
-      *(dst+ 6) = *(dst+ 7) = *(dst+ 8) = *(src+2); \
-      *(dst+ 9) = *(dst+10) = *(dst+11) = *(src+3); \
-      *(dst+12) = *(dst+13) = *(dst+14) = *(src+4); \
-      *(dst+15) = *(dst+16) = *(dst+17) = *(src+5); \
-      *(dst+18) = *(dst+19) = *(dst+20) = *(src+6); \
-      *(dst+21) = *(dst+22) = *(dst+23) = *(src+7); \
-   } \
-}
-#endif
-#include "blit_core.h"
-break;
-
-#endif /* #ifndef LOW_MEM */
-#undef SCALE_X
-#undef COPY_LINE2
-
-
-
-
-default:
-#define SCALE_X(X)   ((X)*widthscale)
-
-#ifdef INDIRECT
-
-#ifdef PACK_BITS
-#define COPY_LINE2(SRC, END, DST) \
-{ \
-   SRC_PIXEL  *src = SRC; \
-   SRC_PIXEL  *end = END; \
-   DEST_PIXEL *dst = DST; \
-   DEST_PIXEL pixel; \
-   int i, step=0; \
-   for(;src<end;src++) \
-   { \
-      pixel = INDIRECT[*src]; \
-      for(i=0; i<widthscale; i++,step=(step+1)&3) \
-      { \
-         switch(step) \
-         { \
-            case 0: \
-               *(dst  )  = pixel; \
-               break; \
-            case 1: \
-               *(dst  ) |= pixel << 24; \
-               *(dst+1)  = pixel >> 8; \
-               break; \
-            case 2: \
-               *(dst+1) |= pixel << 16; \
-               *(dst+2)  = pixel >> 16; \
-               break; \
-            case 3: \
-               *(dst+2) |= pixel << 8; \
-               dst+=3; \
-               break; \
-         } \
-      } \
-   } \
-}
-#else
-#define COPY_LINE2(SRC, END, DST) \
-{ \
-   SRC_PIXEL  *src = SRC; \
-   SRC_PIXEL  *end = END; \
-   DEST_PIXEL *dst = DST; \
-   int i; \
-   for(;src<end;src++) \
-   { \
-      const DEST_PIXEL v = INDIRECT[*(src)]; \
-      i=(widthscale+7)/8; \
-      dst+=widthscale&7; \
-      switch (widthscale&7) \
-      { \
-         case 0: do{  dst+=8; \
-                      *(dst-8) = v; \
-         case 7:      *(dst-7) = v; \
-         case 6:      *(dst-6) = v; \
-         case 5:      *(dst-5) = v; \
-         case 4:      *(dst-4) = v; \
-         case 3:      *(dst-3) = v; \
-         case 2:      *(dst-2) = v; \
-         case 1:      *(dst-1) = v; \
-                 } while(--i>0); \
-      } \
-   } \
-}
+#  ifdef INDIRECT
+#  define GETPIXEL(src) INDIRECT[src]
+#  else
+#  define GETPIXEL(src) (src)
+#  endif
 #endif
 
-#else
-#define COPY_LINE2(SRC, END, DST) \
-{ \
-   SRC_PIXEL  *src = SRC; \
-   SRC_PIXEL  *end = END; \
-   DEST_PIXEL *dst = DST; \
-   int i; \
-   for(;src<end;src++) \
-   { \
-      const DEST_PIXEL v = *(src); \
-      i=(widthscale+7)/8; \
-      dst+=widthscale&7; \
-      switch (widthscale&7) \
-      { \
-         case 0: do{  dst+=8; \
-                      *(dst-8) = v; \
-         case 7:      *(dst-7) = v; \
-         case 6:      *(dst-6) = v; \
-         case 5:      *(dst-5) = v; \
-         case 4:      *(dst-4) = v; \
-         case 3:      *(dst-3) = v; \
-         case 2:      *(dst-2) = v; \
-         case 1:      *(dst-1) = v; \
-                 } while(--i>0); \
-      } \
-   } \
-}
-#endif
-#include "blit_core.h"
-break;
-
-#undef SCALE_X
-#undef COPY_LINE2
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#undef COPY_LINE
-
-#undef SCALE_Y
-#undef REPS_FOR_Y
-#undef COPY_LINE_FOR_Y
-
-#define COPY_LINE_FOR_Y(YV,YMAX, SRC,END,DST) COPY_LINE(SRC,END,DST)
-#define REPS_FOR_Y(N,YV,YMAX) SCALE_Y(N)
-    }
-}
-else
-switch (heightscale | (widthscale << 8) | (use_scanlines << 16))
+/* begin actual blit code */
 {
-/* 1x1 */
+  int org_yarbsize = yarbsize;
+  int y;
+  int src_width = (((SRC_PIXEL *)bitmap->line[1]) - ((SRC_PIXEL *)bitmap->line[0]));
+  SRC_PIXEL *line_src = (SRC_PIXEL *)bitmap->line[visual.min_y] + visual.min_x;
+  SRC_PIXEL *line_end = (SRC_PIXEL *)bitmap->line[visual.max_y+1] + visual.min_x;
+  DEST_PIXEL *line_dest = (DEST_PIXEL *)(DEST);
 
-#ifdef INDIRECT
+  if (yarbsize==0) 
+    yarbsize = heightscale * visual_height;
 
-#ifdef BLIT_16BPP_HACK
+  switch(effect)
+  {
+    case 0:
+      switch(widthscale)
+      {
+
+case 1:
+#ifdef PACK_BITS
 #define COPY_LINE2(SRC, END, DST) \
-   unsigned short *src = (unsigned short *)(SRC); \
-   unsigned short *end = (unsigned short *)(END); \
-   unsigned int   *dst = (unsigned int   *)(DST); \
-   for(;src<end;src+=4,dst+=4) \
-   { \
-      *(dst  ) = INDIRECT[*(src  )]; \
-      *(dst+1) = INDIRECT[*(src+1)]; \
-      *(dst+2) = INDIRECT[*(src+2)]; \
-      *(dst+3) = INDIRECT[*(src+3)]; \
-   }
-#elif defined PACK_BITS
-#define COPY_LINE2(SRC, END, DST) \
+      {\
    SRC_PIXEL  *src = SRC; \
    SRC_PIXEL  *end = END; \
    DEST_PIXEL *dst = DST; \
    for(;src<end;dst+=3,src+=4) \
    { \
-      *(dst  ) = (INDIRECT[*(src  )]    ) | (INDIRECT[*(src+1)]<<24); \
-      *(dst+1) = (INDIRECT[*(src+1)]>> 8) | (INDIRECT[*(src+2)]<<16); \
-      *(dst+2) = (INDIRECT[*(src+2)]>>16) | (INDIRECT[*(src+3)]<< 8); \
-   }
+      *(dst  ) = (GETPIXEL(*(src  ))    ) | (GETPIXEL(*(src+1))<<24); \
+      *(dst+1) = (GETPIXEL(*(src+1))>> 8) | (GETPIXEL(*(src+2))<<16); \
+      *(dst+2) = (GETPIXEL(*(src+2))>>16) | (GETPIXEL(*(src+3))<< 8); \
+   }\
+      }
 #elif defined BLIT_HWSCALE_YUY2
+/* HWSCALE_YUY2 has seperate code for direct / indirect, see above */
+#ifdef INDIRECT
 #ifdef LSB_FIRST /* x86 etc */
 #define COPY_LINE2(SRC, END, DST) \
    {\
@@ -457,10 +195,10 @@ switch (heightscale | (widthscale << 8) | (use_scanlines << 16))
       unsigned int r,y,y2,uv1,uv2; \
       for(;src<end;) \
       { \
-         r=INDIRECT[*src++]; \
+         r=GETPIXEL(*src++); \
          y=r&255; \
          uv1=(r&0xff00ff00)>>1; \
-         r=INDIRECT[*src++]; \
+         r=GETPIXEL(*src++); \
          uv2=(r&0xff00ff00)>>1; \
          y2=r&0xff0000; \
          *dst++=y|y2|((uv1+uv2)&0xff00ff00);\
@@ -475,36 +213,17 @@ switch (heightscale | (widthscale << 8) | (use_scanlines << 16))
       unsigned int r,y,y2,uv1,uv2; \
       for(;src<end;) \
       { \
-         r=INDIRECT[*src++]; \
+         r=GETPIXEL(*src++); \
          y=r&0xff000000 ; \
          uv1=(r&0x00ff00ff); \
-         r=INDIRECT[*src++]; \
+         r=GETPIXEL(*src++); \
          uv2=(uv1+(r&0x00ff00ff))>>1; \
          y2=r&0xff00; \
          *dst++=y|y2|(uv2&0x00ff00ff); \
       } \
    }
-#endif
-#else /* normal indirect */
-#define COPY_LINE2(SRC, END, DST) \
-   SRC_PIXEL  *src = SRC; \
-   SRC_PIXEL  *end = END; \
-   DEST_PIXEL *dst = DST; \
-   for(;src<end;src+=8,dst+=8) \
-   { \
-      *(dst  ) = INDIRECT[*(src  )]; \
-      *(dst+1) = INDIRECT[*(src+1)]; \
-      *(dst+2) = INDIRECT[*(src+2)]; \
-      *(dst+3) = INDIRECT[*(src+3)]; \
-      *(dst+4) = INDIRECT[*(src+4)]; \
-      *(dst+5) = INDIRECT[*(src+5)]; \
-      *(dst+6) = INDIRECT[*(src+6)]; \
-      *(dst+7) = INDIRECT[*(src+7)]; \
-   }
-#endif /* dga_16bpp_hack / packed / normal indirect */
-
-#else  /* not indirect */
-#ifdef BLIT_HWSCALE_YUY2
+#endif /* ifdef LSB_FIRST */
+#else  /* HWSCLALE_YUY2, not indirect */
 #define COPY_LINE2(SRC, END, DST) \
    {\
       SRC_PIXEL  *src = SRC; \
@@ -513,11 +232,11 @@ switch (heightscale | (widthscale << 8) | (use_scanlines << 16))
       int r,g,b,r2,g2,b2,y,y2,u,v; \
       for(;src<end;) \
       { \
-         r=g=b=*src++; \
+         r=g=b=GETPIXEL(*src++); \
          r&=RMASK;  r>>=16; \
          g&=GMASK;  g>>=8; \
          b&=BMASK;  b>>=0; \
-         r2=g2=b2=*src++; \
+         r2=g2=b2=GETPIXEL(*src++); \
          r2&=RMASK;  r2>>=16; \
          g2&=GMASK;  g2>>=8; \
          b2&=BMASK;  b2>>=0; \
@@ -532,482 +251,112 @@ switch (heightscale | (widthscale << 8) | (use_scanlines << 16))
          *dst++=v; \
       }\
    }
-#else
+#endif /* HWSCLALE_YUY2 direct or indirect */
+#else  /* normal */
+/* speedup hack for 1x widthscale and GETPIXEL(src) == (src) */
+#if !defined INDIRECT && !defined CONVERT_PIXEL
 #define COPY_LINE2(SRC, END, DST) \
    memcpy(DST, SRC, ((END)-(SRC))*DEST_PIXEL_SIZE);
-#endif
-#endif /* indirect */
+#else /* really normal */
+#define COPY_LINE2(SRC, END, DST) \
+      {\
+   SRC_PIXEL  *src = SRC; \
+   SRC_PIXEL  *end = END; \
+   DEST_PIXEL *dst = DST; \
+   for(;src<end;src+=8,dst+=8) \
+   { \
+      *(dst  ) = GETPIXEL(*(src  )); \
+      *(dst+1) = GETPIXEL(*(src+1)); \
+      *(dst+2) = GETPIXEL(*(src+2)); \
+      *(dst+3) = GETPIXEL(*(src+3)); \
+      *(dst+4) = GETPIXEL(*(src+4)); \
+      *(dst+5) = GETPIXEL(*(src+5)); \
+      *(dst+6) = GETPIXEL(*(src+6)); \
+      *(dst+7) = GETPIXEL(*(src+7)); \
+   }\
+      }
+#endif /* speedup hack for 1x widthscale and GETPIXEL(src) == (src) */
+#endif /* packed / yuv / normal */
 
-#define SCALE_X(X) (X)
-#define SCALE_Y(Y) (Y)
-
-/* 1x1 we don't do scanlines with 1x1 */
-case 0x00101:
-case 0x10101:
-#define COPY_LINE(SRC, END, DST) { COPY_LINE2(SRC, END, DST) }
-#include "blit_core.h"
-#undef COPY_LINE
-break;
-
-#undef SCALE_Y
-
-/* 1x2 */
-
-#define SCALE_Y(Y)   ((Y)<<1)
-
-/* 1x2 no scanlines */
-#ifndef LOW_MEM
-case 0x00102:
-
-#ifdef DOUBLEBUFFER
-
-#ifdef INDIRECT
-#define COPY_LINE(SRC, END, DST) \
-{ \
-   COPY_LINE2(SRC, END, (DEST_PIXEL *)doublebuffer_buffer) \
-   memcpy((DST),                        doublebuffer_buffer, ((END)-(SRC))*DEST_PIXEL_SIZE); \
-   memcpy((DST)+(CORRECTED_DEST_WIDTH), doublebuffer_buffer, ((END)-(SRC))*DEST_PIXEL_SIZE); \
-}
-#else
-#define COPY_LINE(SRC, END, DST) \
-{ \
-   COPY_LINE2(SRC, END, (DST)); \
-   COPY_LINE2(SRC, END, (DST)+(CORRECTED_DEST_WIDTH)); \
-}
-#endif
-
-#else
-#define COPY_LINE(SRC, END, DST) \
-{ \
-   COPY_LINE2(SRC, END, DST) \
-   memcpy((DST)+(CORRECTED_DEST_WIDTH), DST, ((END)-(SRC))*DEST_PIXEL_SIZE); \
-}
-#endif
-
-#include "blit_core.h"
-#undef COPY_LINE
-break;
-
-/* 1x2 scanlines */
-case 0x10102:
-#define COPY_LINE(SRC, END, DST) { COPY_LINE2(SRC, END, DST) }
-#include "blit_core.h"
-#undef COPY_LINE
-break;
+LOOP()
 
 #undef COPY_LINE2
-#undef SCALE_X
-#undef SCALE_Y
+break;
 
 
-/* 2x2 */
-
-#ifdef INDIRECT
-
+/* HWSCALE always uses widthscale=1 for non effect blits */
+#ifndef BLIT_HWSCALE_YUY2 
+case 2:
 #ifdef PACK_BITS
 #define COPY_LINE2(SRC, END, DST) \
+{ \
    SRC_PIXEL  *src = SRC; \
    SRC_PIXEL  *end = END; \
    DEST_PIXEL *dst = DST; \
    for(;src<end; src+=2, dst+=3) \
    { \
-      *(dst  ) = (INDIRECT[*(src  )]    ) | (INDIRECT[*(src  )]<<24); \
-      *(dst+1) = (INDIRECT[*(src  )]>> 8) | (INDIRECT[*(src+1)]<<16); \
-      *(dst+2) = (INDIRECT[*(src+1)]>>16) | (INDIRECT[*(src+1)]<<8); \
-   }
-#elif defined BLIT_HWSCALE_YUY2
-#define COPY_LINE2(SRC, END, DST) \
-   {\
-      SRC_PIXEL  *src = SRC; \
-      SRC_PIXEL  *end = END; \
-      unsigned int *dst = (unsigned int *)DST; \
-      int r; \
-      for(;src<end;) \
-      { \
-          r=INDIRECT[*src++]; \
-          *dst++=r; \
-          r=INDIRECT[*src++]; \
-          *dst++=r; \
-          r=INDIRECT[*src++]; \
-          *dst++=r; \
-          r=INDIRECT[*src++]; \
-          *dst++=r; \
-          r=INDIRECT[*src++]; \
-          *dst++=r; \
-          r=INDIRECT[*src++]; \
-          *dst++=r; \
-          r=INDIRECT[*src++]; \
-          *dst++=r; \
-          r=INDIRECT[*src++]; \
-          *dst++=r; \
-      } \
-   }
+      *(dst  ) = (GETPIXEL(*(src  ))    ) | (GETPIXEL(*(src  ))<<24); \
+      *(dst+1) = (GETPIXEL(*(src  ))>> 8) | (GETPIXEL(*(src+1))<<16); \
+      *(dst+2) = (GETPIXEL(*(src+1))>>16) | (GETPIXEL(*(src+1))<<8); \
+   } \
+}
 #else /* not pack bits */
 #define COPY_LINE2(SRC, END, DST) \
+{ \
    SRC_PIXEL  *src = SRC; \
    SRC_PIXEL  *end = END; \
    DEST_PIXEL *dst = DST; \
    for(;src<end; src+=8, dst+=16) \
    { \
-      *(dst   ) = *(dst+ 1) = INDIRECT[*(src  )]; \
-      *(dst+ 2) = *(dst+ 3) = INDIRECT[*(src+1)]; \
-      *(dst+ 4) = *(dst+ 5) = INDIRECT[*(src+2)]; \
-      *(dst+ 6) = *(dst+ 7) = INDIRECT[*(src+3)]; \
-      *(dst+ 8) = *(dst+ 9) = INDIRECT[*(src+4)]; \
-      *(dst+10) = *(dst+11) = INDIRECT[*(src+5)]; \
-      *(dst+12) = *(dst+13) = INDIRECT[*(src+6)]; \
-      *(dst+14) = *(dst+15) = INDIRECT[*(src+7)]; \
-   }
+      *(dst   ) = *(dst+ 1) = GETPIXEL(*(src  )); \
+      *(dst+ 2) = *(dst+ 3) = GETPIXEL(*(src+1)); \
+      *(dst+ 4) = *(dst+ 5) = GETPIXEL(*(src+2)); \
+      *(dst+ 6) = *(dst+ 7) = GETPIXEL(*(src+3)); \
+      *(dst+ 8) = *(dst+ 9) = GETPIXEL(*(src+4)); \
+      *(dst+10) = *(dst+11) = GETPIXEL(*(src+5)); \
+      *(dst+12) = *(dst+13) = GETPIXEL(*(src+6)); \
+      *(dst+14) = *(dst+15) = GETPIXEL(*(src+7)); \
+   } \
+}
 #endif /* pack bits */
 
-#else /* not indirect */
-
-#ifdef BLIT_HWSCALE_YUY2
-#define COPY_LINE2(SRC, END, DST) \
-   {\
-      SRC_PIXEL  *src = SRC; \
-      SRC_PIXEL  *end = END; \
-      unsigned char *dst = (unsigned char *)DST; \
-      int r,g,b,y,u,v; \
-      for(;src<end;) \
-      { \
-         r=g=b=*src++; \
-         r&=RMASK;  r>>=16; \
-         g&=GMASK;  g>>=8; \
-         b&=BMASK;  b>>=0; \
-         y = (( 9836*r + 19310*g + 3750*b ) >> 15); \
-         *dst++=y; \
-         u = (( -5527*r - 10921*g + 16448*b ) >> 15) + 128; \
-         *dst++=u; \
-         v = (( 16448*r - 13783*g - 2665*b ) >> 15 ) + 128; \
-         *dst++=y; \
-         *dst++=v; \
-      }\
-   }
-#else
-#define COPY_LINE2(SRC, END, DST) \
-   SRC_PIXEL  *src = SRC; \
-   SRC_PIXEL  *end = END; \
-   DEST_PIXEL *dst = DST; \
-   for(;src<end; src+=8, dst+=16) \
-   { \
-      *(dst   ) = *(dst+ 1) = *(src  ); \
-      *(dst+ 2) = *(dst+ 3) = *(src+1); \
-      *(dst+ 4) = *(dst+ 5) = *(src+2); \
-      *(dst+ 6) = *(dst+ 7) = *(src+3); \
-      *(dst+ 8) = *(dst+ 9) = *(src+4); \
-      *(dst+10) = *(dst+11) = *(src+5); \
-      *(dst+12) = *(dst+13) = *(src+6); \
-      *(dst+14) = *(dst+15) = *(src+7); \
-   }
-#endif
-#endif
-
-#define SCALE_X(X)   ((X)<<1)
-#define SCALE_Y(Y)   ((Y))
-
-/* 2x1 no scanlines */
-case 0x00201:
-
-#ifdef DOUBLEBUFFER
-#define COPY_LINE(SRC, END, DST) \
-{ \
-   COPY_LINE2(SRC, END, (DEST_PIXEL *)doublebuffer_buffer) \
-   memcpy((DST), doublebuffer_buffer, ((END)-(SRC))*DEST_PIXEL_SIZE*2); \
-}
-#else
-#define COPY_LINE(SRC, END, DST) \
-{ \
-   COPY_LINE2(SRC, END, DST) \
-}
-#endif
-
-#include "blit_core.h"
-#undef COPY_LINE
-break;
-
-#undef SCALE_X
-#undef SCALE_Y
-
-#define SCALE_X(X)   ((X)<<1)
-#define SCALE_Y(Y)   ((Y)<<1)
-
-/* 2x2 no scanlines */
-case 0x00202:
-
-#ifdef DOUBLEBUFFER
-#define COPY_LINE(SRC, END, DST) \
-{ \
-   COPY_LINE2(SRC, END, (DEST_PIXEL *)doublebuffer_buffer) \
-   memcpy((DST),                        doublebuffer_buffer, ((END)-(SRC))*DEST_PIXEL_SIZE*2); \
-   memcpy((DST)+(CORRECTED_DEST_WIDTH), doublebuffer_buffer, ((END)-(SRC))*DEST_PIXEL_SIZE*2); \
-}
-#else
-#define COPY_LINE(SRC, END, DST) \
-{ \
-   COPY_LINE2(SRC, END, DST) \
-   memcpy((DST)+(CORRECTED_DEST_WIDTH), DST, ((END)-(SRC))*DEST_PIXEL_SIZE*2); \
-}
-#endif
-
-#include "blit_core.h"
-#undef COPY_LINE
-break;
-
-/* 2x2 scanlines */
-case 0x10202:
-
-#ifdef DOUBLEBUFFER
-#define COPY_LINE(SRC, END, DST) \
-{ \
-   COPY_LINE2(SRC, END, (DEST_PIXEL *)doublebuffer_buffer) \
-   memcpy((DST),                        doublebuffer_buffer, ((END)-(SRC))*DEST_PIXEL_SIZE*2); \
-}
-#else
-#define COPY_LINE(SRC, END, DST) { COPY_LINE2(SRC, END, DST) }
-#endif
-
-#include "blit_core.h"
-#undef COPY_LINE
-break;
+LOOP()
 
 #undef COPY_LINE2
-#undef SCALE_X
-#undef SCALE_Y
+break;
 
-#ifndef PACK_BITS
-/* 3x3 */
 
-/* this macro is used to copy a line */
-#ifdef INDIRECT
-
+#ifndef PACK_BITS /* no optimised 3x COPY_LINE2 for PACK_BITS */
+case 3:
 #define COPY_LINE2(SRC, END, DST) \
+{ \
    SRC_PIXEL  *src = SRC; \
    SRC_PIXEL  *end = END; \
    DEST_PIXEL *dst = DST; \
    for(;src<end; src+=8, dst+=24) \
    { \
-      *(dst   ) = *(dst+ 1) = *(dst+ 2) = INDIRECT[*(src  )]; \
-      *(dst+ 3) = *(dst+ 4) = *(dst+ 5) = INDIRECT[*(src+1)]; \
-      *(dst+ 6) = *(dst+ 7) = *(dst+ 8) = INDIRECT[*(src+2)]; \
-      *(dst+ 9) = *(dst+10) = *(dst+11) = INDIRECT[*(src+3)]; \
-      *(dst+12) = *(dst+13) = *(dst+14) = INDIRECT[*(src+4)]; \
-      *(dst+15) = *(dst+16) = *(dst+17) = INDIRECT[*(src+5)]; \
-      *(dst+18) = *(dst+19) = *(dst+20) = INDIRECT[*(src+6)]; \
-      *(dst+21) = *(dst+22) = *(dst+23) = INDIRECT[*(src+7)]; \
-   }
-#else /* not indirect */
-#define COPY_LINE2(SRC, END, DST) \
-   SRC_PIXEL  *src = SRC; \
-   SRC_PIXEL  *end = END; \
-   DEST_PIXEL *dst = DST; \
-   for(;src<end; src+=8, dst+=24) \
-   { \
-      *(dst   ) = *(dst+ 1) = *(dst+ 2) = *(src  ); \
-      *(dst+ 3) = *(dst+ 4) = *(dst+ 5) = *(src+1); \
-      *(dst+ 6) = *(dst+ 7) = *(dst+ 8) = *(src+2); \
-      *(dst+ 9) = *(dst+10) = *(dst+11) = *(src+3); \
-      *(dst+12) = *(dst+13) = *(dst+14) = *(src+4); \
-      *(dst+15) = *(dst+16) = *(dst+17) = *(src+5); \
-      *(dst+18) = *(dst+19) = *(dst+20) = *(src+6); \
-      *(dst+21) = *(dst+22) = *(dst+23) = *(src+7); \
-   }
-#endif
-
-#define SCALE_X(X)   ((X)*3)
-#define SCALE_Y(Y)   ((Y))
-
-/* 3x1 no scanlines */
-case 0x00301:
-
-#ifdef DOUBLEBUFFER
-#define COPY_LINE(SRC, END, DST) \
-{ \
-   COPY_LINE2(SRC, END, (DEST_PIXEL *)doublebuffer_buffer) \
-   memcpy((DST), doublebuffer_buffer, ((END)-(SRC))*DEST_PIXEL_SIZE*3); \
+      *(dst   ) = *(dst+ 1) = *(dst+ 2) = GETPIXEL(*(src  )); \
+      *(dst+ 3) = *(dst+ 4) = *(dst+ 5) = GETPIXEL(*(src+1)); \
+      *(dst+ 6) = *(dst+ 7) = *(dst+ 8) = GETPIXEL(*(src+2)); \
+      *(dst+ 9) = *(dst+10) = *(dst+11) = GETPIXEL(*(src+3)); \
+      *(dst+12) = *(dst+13) = *(dst+14) = GETPIXEL(*(src+4)); \
+      *(dst+15) = *(dst+16) = *(dst+17) = GETPIXEL(*(src+5)); \
+      *(dst+18) = *(dst+19) = *(dst+20) = GETPIXEL(*(src+6)); \
+      *(dst+21) = *(dst+22) = *(dst+23) = GETPIXEL(*(src+7)); \
+   } \
 }
-#else
-#define COPY_LINE(SRC, END, DST) \
-{ \
-   COPY_LINE2(SRC, END, DST) \
-}
-#endif
 
-#include "blit_core.h"
-#undef COPY_LINE
-break;
-
-#undef SCALE_X
-#undef SCALE_Y
-
-#define SCALE_X(X)   ((X)*3)
-#define SCALE_Y(Y)   ((Y)*3)
-
-/* 3x3 no scanlines */
-case 0x00303:
-
-/* should we use doublebuffering ? */
-#ifdef DOUBLEBUFFER
-#define COPY_LINE(SRC, END, DST) \
-{ \
-   COPY_LINE2(SRC, END, (DEST_PIXEL *)doublebuffer_buffer) \
-   memcpy((DST),                          doublebuffer_buffer, ((END)-(SRC))*DEST_PIXEL_SIZE*3); \
-   memcpy((DST)+(CORRECTED_DEST_WIDTH),   doublebuffer_buffer, ((END)-(SRC))*DEST_PIXEL_SIZE*3); \
-   memcpy((DST)+(CORRECTED_DEST_WIDTH)*2, doublebuffer_buffer, ((END)-(SRC))*DEST_PIXEL_SIZE*3); \
-}
-#else
-#define COPY_LINE(SRC, END, DST) \
-{ \
-   COPY_LINE2(SRC, END, DST) \
-   memcpy((DST)+(CORRECTED_DEST_WIDTH),   DST, ((END)-(SRC))*DEST_PIXEL_SIZE*3); \
-   memcpy((DST)+(CORRECTED_DEST_WIDTH)*2, DST, ((END)-(SRC))*DEST_PIXEL_SIZE*3); \
-}
-#endif
-
-#include "blit_core.h"
-#undef COPY_LINE
-break;
-
-/* 3x3 scanlines */
-case 0x10303:
-
-/* should we use doublebuffering ? */
-#ifdef DOUBLEBUFFER
-#define COPY_LINE(SRC, END, DST) \
-{ \
-   COPY_LINE2(SRC, END, (DEST_PIXEL *)doublebuffer_buffer) \
-   memcpy((DST),                          doublebuffer_buffer, ((END)-(SRC))*DEST_PIXEL_SIZE*3); \
-   memcpy((DST)+(CORRECTED_DEST_WIDTH),   doublebuffer_buffer, ((END)-(SRC))*DEST_PIXEL_SIZE*3); \
-}
-#else
-#define COPY_LINE(SRC, END, DST) \
-{ \
-   COPY_LINE2(SRC, END, DST) \
-   memcpy((DST)+(CORRECTED_DEST_WIDTH),   DST, ((END)-(SRC))*DEST_PIXEL_SIZE*3); \
-}
-#endif
-
-#include "blit_core.h"
-#undef COPY_LINE
-break;
+LOOP()
 
 #undef COPY_LINE2
-#undef SCALE_X
-#undef SCALE_Y
-
-/* 4x4 */
-
-#ifdef INDIRECT
-
-#define COPY_LINE2(SRC, END, DST) \
-   SRC_PIXEL  *src = SRC; \
-   SRC_PIXEL  *end = END; \
-   DEST_PIXEL *dst = DST; \
-   for(;src<end; src+=8, dst+=32) \
-   { \
-      *(dst   ) = *(dst+ 1) = *(dst+ 2) = *(dst+ 3) = INDIRECT[*(src  )]; \
-      *(dst+ 4) = *(dst+ 5) = *(dst+ 6) = *(dst+ 7) = INDIRECT[*(src+1)]; \
-      *(dst+ 8) = *(dst+ 9) = *(dst+10) = *(dst+11) = INDIRECT[*(src+2)]; \
-      *(dst+12) = *(dst+13) = *(dst+14) = *(dst+15) = INDIRECT[*(src+3)]; \
-      *(dst+16) = *(dst+17) = *(dst+18) = *(dst+19) = INDIRECT[*(src+4)]; \
-      *(dst+20) = *(dst+21) = *(dst+22) = *(dst+23) = INDIRECT[*(src+5)]; \
-      *(dst+24) = *(dst+25) = *(dst+26) = *(dst+27) = INDIRECT[*(src+6)]; \
-      *(dst+28) = *(dst+29) = *(dst+30) = *(dst+31) = INDIRECT[*(src+7)]; \
-   }
-#else /* not indirect */
-#define COPY_LINE2(SRC, END, DST) \
-   SRC_PIXEL  *src = SRC; \
-   SRC_PIXEL  *end = END; \
-   DEST_PIXEL *dst = DST; \
-   for(;src<end; src+=8, dst+=32) \
-   { \
-      *(dst   ) = *(dst+ 1) = *(dst+ 2) = *(dst+ 3) = *(src  ); \
-      *(dst+ 4) = *(dst+ 5) = *(dst+ 6) = *(dst+ 7) = *(src+1); \
-      *(dst+ 8) = *(dst+ 9) = *(dst+10) = *(dst+11) = *(src+2); \
-      *(dst+12) = *(dst+13) = *(dst+14) = *(dst+15) = *(src+3); \
-      *(dst+16) = *(dst+17) = *(dst+18) = *(dst+19) = *(src+4); \
-      *(dst+20) = *(dst+21) = *(dst+22) = *(dst+23) = *(src+5); \
-      *(dst+24) = *(dst+25) = *(dst+26) = *(dst+27) = *(src+6); \
-      *(dst+28) = *(dst+29) = *(dst+30) = *(dst+31) = *(src+7); \
-   }
-#endif
-
-#define SCALE_X(X)   ((X)<<2)
-#define SCALE_Y(Y)   ((Y)<<2)
-
-/* 4x4 no scanlines */
-case 0x00404:
-
-/* should we use doublebuffering ? */
-#ifdef DOUBLEBUFFER
-#define COPY_LINE(SRC, END, DST) \
-{ \
-   COPY_LINE2(SRC, END, (DEST_PIXEL *)doublebuffer_buffer) \
-   memcpy((DST),                          doublebuffer_buffer, ((END)-(SRC))*DEST_PIXEL_SIZE*4); \
-   memcpy((DST)+(CORRECTED_DEST_WIDTH),   doublebuffer_buffer, ((END)-(SRC))*DEST_PIXEL_SIZE*4); \
-   memcpy((DST)+(CORRECTED_DEST_WIDTH)*2, doublebuffer_buffer, ((END)-(SRC))*DEST_PIXEL_SIZE*4); \
-   memcpy((DST)+(CORRECTED_DEST_WIDTH)*3, doublebuffer_buffer, ((END)-(SRC))*DEST_PIXEL_SIZE*4); \
-}
-#else
-#define COPY_LINE(SRC, END, DST) \
-{ \
-   COPY_LINE2(SRC, END, DST) \
-   memcpy((DST)+(CORRECTED_DEST_WIDTH),   DST, ((END)-(SRC))*DEST_PIXEL_SIZE*4); \
-   memcpy((DST)+(CORRECTED_DEST_WIDTH)*2, DST, ((END)-(SRC))*DEST_PIXEL_SIZE*4); \
-   memcpy((DST)+(CORRECTED_DEST_WIDTH)*3, DST, ((END)-(SRC))*DEST_PIXEL_SIZE*4); \
-}
-#endif
-
-#include "blit_core.h"
-#undef COPY_LINE
 break;
+#endif /* PACK_BITS (no optimised 3x COPY_LINE2 for PACK_BITS) */
 
-/* 4x4 scanlines */
-case 0x10404:
 
-/* should we use doublebuffering ? */
-#ifdef DOUBLEBUFFER
-#define COPY_LINE(SRC, END, DST) \
-{ \
-   COPY_LINE2(SRC, END, (DEST_PIXEL *)doublebuffer_buffer) \
-   memcpy((DST),                          doublebuffer_buffer, ((END)-(SRC))*DEST_PIXEL_SIZE*4); \
-   memcpy((DST)+(CORRECTED_DEST_WIDTH),   doublebuffer_buffer, ((END)-(SRC))*DEST_PIXEL_SIZE*4); \
-   memcpy((DST)+(CORRECTED_DEST_WIDTH)*2, doublebuffer_buffer, ((END)-(SRC))*DEST_PIXEL_SIZE*4); \
-}
-#else
-#define COPY_LINE(SRC, END, DST) \
-{ \
-   COPY_LINE2(SRC, END, DST) \
-   memcpy((DST)+(CORRECTED_DEST_WIDTH),   DST, ((END)-(SRC))*DEST_PIXEL_SIZE*4); \
-   memcpy((DST)+(CORRECTED_DEST_WIDTH)*2, DST, ((END)-(SRC))*DEST_PIXEL_SIZE*4); \
-}
-#endif
-
-#include "blit_core.h"
-#undef COPY_LINE
-break;
-
-#undef COPY_LINE2
-#undef SCALE_X
-#undef SCALE_Y
-
-#endif /* #ifndef PACK_BITS */
-
-/* Generic scaling code here (arbitrary values) */
-
-/* This is what happens when you give an assembly-language programmer
-   a C compiler.  Thanks to td, of course.                             -JDL */
-
-#endif /* #ifndef LOW_MEM */
-#undef COPY_LINE2
-#undef SCALE_X
-#undef SCALE_Y
 default:
-
-#ifdef INDIRECT
-
 #ifdef PACK_BITS
 #define COPY_LINE2(SRC, END, DST) \
+{ \
    SRC_PIXEL  *src = SRC; \
    SRC_PIXEL  *end = END; \
    DEST_PIXEL *dst = DST; \
@@ -1015,7 +364,7 @@ default:
    int i, step=0; \
    for(;src<end;src++) \
    { \
-      pixel = INDIRECT[*src]; \
+      pixel = GETPIXEL(*src); \
       for(i=0; i<widthscale; i++,step=(step+1)&3) \
       { \
          switch(step) \
@@ -1037,16 +386,18 @@ default:
                break; \
          } \
       } \
-   }
+   } \
+}
 #else
 #define COPY_LINE2(SRC, END, DST) \
+{ \
    SRC_PIXEL  *src = SRC; \
    SRC_PIXEL  *end = END; \
    DEST_PIXEL *dst = DST; \
    int i; \
    for(;src<end;src++) \
    { \
-      const DEST_PIXEL v = INDIRECT[*(src)]; \
+      const DEST_PIXEL v = GETPIXEL(*(src)); \
       i=(widthscale+7)/8; \
       dst+=widthscale&7; \
       switch (widthscale&7) \
@@ -1062,76 +413,32 @@ default:
          case 1:      *(dst-1) = v; \
                  } while(--i>0); \
       } \
-   }
-#endif
-
-#else
-#define COPY_LINE2(SRC, END, DST) \
-   SRC_PIXEL  *src = SRC; \
-   SRC_PIXEL  *end = END; \
-   DEST_PIXEL *dst = DST; \
-   int i; \
-   for(;src<end;src++) \
-   { \
-      const DEST_PIXEL v = *(src); \
-      i=(widthscale+7)/8; \
-      dst+=widthscale&7; \
-      switch (widthscale&7) \
-      { \
-         case 0: do{  dst+=8; \
-                      *(dst-8) = v; \
-         case 7:      *(dst-7) = v; \
-         case 6:      *(dst-6) = v; \
-         case 5:      *(dst-5) = v; \
-         case 4:      *(dst-4) = v; \
-         case 3:      *(dst-3) = v; \
-         case 2:      *(dst-2) = v; \
-         case 1:      *(dst-1) = v; \
-                 } while(--i>0); \
-      } \
-   }
-#endif
-
-#define SCALE_X(X)   ((X)*widthscale)
-#define SCALE_Y(Y)   ((Y)*heightscale)
-
-/* should we use doublebuffering ? */
-#ifdef DOUBLEBUFFER
-#define COPY_LINE(SRC, END, DST) \
-{ \
-   int max_i = heightscale-use_scanlines; \
-   COPY_LINE2(SRC, END, (DEST_PIXEL *)doublebuffer_buffer) \
-   dst = (DST); \
-   if (max_i < 1) max_i = 1; \
-   for(i=0; i<max_i; i++, dst+=CORRECTED_DEST_WIDTH) \
-      memcpy(dst, doublebuffer_buffer, ((END)-(SRC))*DEST_PIXEL_SIZE*widthscale); \
-}
-#else
-#define COPY_LINE(SRC, END, DST) \
-{ \
-   COPY_LINE2(SRC, END, DST) \
-   dst = (DST) + (CORRECTED_DEST_WIDTH); \
-   for(i=1; i<(heightscale-use_scanlines); i++, dst+=CORRECTED_DEST_WIDTH) \
-      memcpy(dst, DST, ((END)-(SRC))*DEST_PIXEL_SIZE*widthscale); \
+   } \
 }
 #endif
 
-#include "blit_core.h"
-#undef COPY_LINE
+LOOP()
 
 #undef COPY_LINE2
-#undef SCALE_X
-#undef SCALE_Y
+break;
+#endif /* ifndef BLIT_HWSCALE_YUY2  */
 
-break;      
+
+    } /* end switch(widtscale) */
+    break;
+#undef LOOP
+#include "blit_effect.h"
+  } /* end switch(effect) */
+
+#ifdef PUT_IMAGE
+  PUT_IMAGE(0, 0, widthscale*visual_width, yarbsize)
+#endif
+
+  yarbsize=org_yarbsize;
 }
 
-#ifdef DEST_SCALE
-#undef DEST_SCALE
-#endif
 #undef DEST_PIXEL_SIZE
 #undef CORRECTED_DEST_WIDTH
-
-
 #undef REPS_FOR_Y
 #undef COPY_LINE_FOR_Y
+#undef GETPIXEL
