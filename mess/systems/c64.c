@@ -1,7 +1,8 @@
 /***************************************************************************
 	commodore c64 home computer
 
-    peter.trauner@jk.uni-linz.ac.at
+	PeT mess@utanet.at
+
     documentation
      www.funet.fi
 ***************************************************************************/

@@ -1,7 +1,8 @@
 /***************************************************************************
 	commodore pet series computer
 
-    peter.trauner@jk.uni-linz.ac.at
+	PeT mess@utanet.at
+
 	documentation
 	 vice emulator
      www.funet.fi

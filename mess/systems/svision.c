@@ -1,7 +1,7 @@
 /******************************************************************************
  watara supervision handheld
 
- peter.trauner@jk.uni-linz.ac.at in december 2000
+ PeT mess@utanet.at in december 2000
 ******************************************************************************/
 
 #include <assert.h>

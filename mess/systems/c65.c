@@ -1,7 +1,8 @@
 /***************************************************************************
 
 	commodore c65 home computer
-	peter.trauner@jk.uni-linz.ac.at
+	PeT mess@utanet.at
+
     documention
      www.funet.fi
 

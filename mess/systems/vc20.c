@@ -1,8 +1,7 @@
 /***************************************************************************
 
 	commodore vic20 home computer
-	Peter Trauner
-	(peter.trauner@jk.uni-linz.ac.at)
+	PeT mess@utanet.at
 
 	documentation
 	 Marko.Makela@HUT.FI (vic6560)

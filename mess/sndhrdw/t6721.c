@@ -7,7 +7,7 @@
      communication with c364 works, no speech synthesis
 	includes c364 interface hardware
 
-	peter.trauner@jk.uni-linz.ac.at
+	PeT mess@utanet.at
     documentation
  	 www.funet.fi
 

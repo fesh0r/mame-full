@@ -1,5 +1,5 @@
 /******************************************************************************
- Peter.Trauner@jk.uni-linz.ac.at May 2000
+ PeT mess@utanet.at May 2000
 
  Paul Robson's Emulator at www.classicgaming.com/studio2 made it possible
 ******************************************************************************/

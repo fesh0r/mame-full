@@ -1,5 +1,5 @@
 /******************************************************************************
- Peter.Trauner@jk.uni-linz.ac.at December 2000
+ PeT mess@utanet.at 2000,2001
 
  info found in bastian schick's bll
  and in cc65 for lynx

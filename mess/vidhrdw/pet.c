@@ -2,7 +2,7 @@
 
   commodore pet discrete video circuit
 
-  copyright peter.trauner@jk.uni-linz.ac.at
+  PeT mess@utanet.at
 
 ***************************************************************************/
 
