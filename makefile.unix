@@ -774,14 +774,12 @@ GLLIBS += -ldl
 # use Mesa's GLU, you may have to add -DGLU_VERSION_1_2 to 
 # the GLCFLAGS below.
 #
-# To get more verbose debugging messages, just add -DGLDEBUG !
-GLCFLAGS += -D_X11_
+# If you wish you can remove -DGLDEBUG for a very small speedup, but this is
+# not advised
+GLCFLAGS += -D_X11_ -DGLDEBUG
 
 # Uncomment to add more libraries that Mesa may require.
 # GLLIBS += -lXmu -lXi
-
-# Sun and IRIX OpenGL implementations need these.
-# GLCFLAGS += -DNOGLEXT78 -DNOTEXIDXSIZE
 
 ###########################################################################
 # Debug support and object file format
