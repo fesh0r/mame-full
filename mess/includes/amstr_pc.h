@@ -1,0 +1,7 @@
+WRITE_HANDLER( pc1640_port60_w );
+READ_HANDLER( pc1640_port60_r );
+
+READ_HANDLER( pc1640_port3d0_r );
+READ_HANDLER( pc1640_port378_r );
+READ_HANDLER( pc1640_port4278_r );
+READ_HANDLER( pc1640_port278_r );
