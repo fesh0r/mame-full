@@ -20,7 +20,7 @@
 #define ALIEN_SHOOT  0x10
 #define PLAYER_SHOOT 0x20
 #define BONUS		 0x40
-#define HBEAT_RATE	 0x80	 /* currently not used */
+#define HBEAT_RATE	 0x80
 
 #define SIZZLE		 0x01
 #define GATE		 0x02
@@ -101,19 +101,28 @@ INLINE int clang(void)
 
 INLINE int key(void)
 {
-	static int counter;
-	static int sample;
+	static int counter_tone;
+	static int output;
+	static int counter_filter;
+    static int sample;
 
-	if (sound_latch_1 & KEY)
+    if (sound_latch_1 & KEY)
 		return 0;
 
-	/* filter R = 330k, C = 0.0022uF -> 7.26e-4 * 0.693 ~= 1988Hz */
-	counter -= 1988;
-	while (counter < 0)
+    /* bistable flip flop R = 1M, C =  0.05uF ~= 20Hz */
+	counter_tone -= 20;
+	while (counter_tone < 0)
 	{
-		sample = noise[noise_count];
-		counter += sample_rate;
+		counter_tone += sample_rate;
+        output ^= 1;
 	}
+	/* filter R = 330k, C = 0.0022uF -> 7.26e-4 * 0.693 ~= 1988Hz */
+	counter_filter -= 1988;
+	while (counter_filter < 0)
+	{
+		counter_filter += sample_rate;
+		sample = noise[noise_count] / 2 + (output ? 0x2000 : 0x3000);
+    }
 
 	return sample;
 }
@@ -465,8 +474,8 @@ INLINE int birth(void)
 }
 
 /* resistor values at 5 outputs of a counter/1-of-10 demux 4017 (reset at count 5) */
-static int heart_beat_4017_1[10] = {
-	100000,  62000,  47000,  33000,  22000,
+static int heart_beat_4017_1[5] = {
+	100000,  62000,  47000,  33000,  22000
 };
 
 INLINE int heart_beat(void)
@@ -479,28 +488,39 @@ INLINE int heart_beat(void)
 	static int counter_filter_1;
 	static int counter_filter_2;
 	static int sample;
+	static int signal;
 
 	if (sound_latch_2 & HEART_BEAT)
-		return 0;
-
-	/* R = 100k, C = 0.05uF -> 0.005 ~= 200Hz
-	 * with HBEAT_RATE there's another 1M resistor, so probably(?)
-	 * R = 90.9k, C = 0.05uF -> 0.004545 ~= 220Hz ?
-	 */
-	counter_4017_1 -= (sound_latch_1 & HBEAT_RATE) ? 220 : 200;
-	while (counter_4017_1 < 0)
 	{
-		counter_4017_1 += sample_rate;
-		index_4017_1 = ++index_4017_1 % 5;
+		index_4017_1 = 0;
+		return 0;
+	}
+
+	/* R = 100k, C = 0.05uF -> 0.005 ~= 200Hz */
+	if (sound_latch_1 & HBEAT_RATE)
+	{
+		counter_4017_1 -= 200;
+		while (counter_4017_1 < 0)
+		{
+			counter_4017_1 += sample_rate;
+			index_4017_1 = ++index_4017_1 % 5;
+		}
+	}
+	else
+	/* with HBEAT_RATE the first 4017 can be reset 'externally'. */
+	{
+		index_4017_1 = 0;
 	}
 	/*
 	 * Ra is 10k, Rb is 470k, C is 0.1uF
 	 * charge time t1 = 0.693 * (Ra + Rb) * C -> 0.033264 ~= 30Hz
 	 * discharge time t2 = 0.693 * Rb * C -> 0.032571 ~= 31 Hz
+	 * The rate is controlled with the voltage coming from the
+	 * first 4017 and resistor network, but don't ask me exactly how :-P
 	 */
 	if (output_555)
 	{
-		counter_555 -= 31 * heart_beat_4017_1[index_4017_1] / 100000;
+		counter_555 -= 31 * heart_beat_4017_1[index_4017_1] / 47000;
 		while (counter_555 < 0)
 		{
 			counter_555 += sample_rate;
@@ -511,7 +531,7 @@ INLINE int heart_beat(void)
 	}
 	else
 	{
-		counter_555 -= 30 * heart_beat_4017_1[index_4017_1] / 100000;
+		counter_555 -= 30 * heart_beat_4017_1[index_4017_1] / 47000;
 		while (counter_555 < 0)
 		{
 			counter_555 += sample_rate;
@@ -539,7 +559,13 @@ INLINE int heart_beat(void)
 			sample = noise[noise_count];
 	}
 
-	return sample;
+	if (signal > sample)
+		signal = (signal - sample) / 2 + 1;
+	else
+	if (signal < sample)
+		signal = (sample - signal) / 2 + 1;
+
+	return signal;
 }
 
 INLINE int moving_maze(void)
@@ -650,17 +676,17 @@ static const char *channel_names[] = {
 
 static int channel_mixing_levels[] = {
 	25, /* CLANG		*/
-	25, /* KEY			*/
-	25, /* ALIEN HIT	*/
-	25, /* PLAYER HIT	*/
-	25, /* ALIEN SHOOT	*/
-	25, /* PLAYER SHOOT */
+	60, /* KEY			*/
+	35, /* ALIEN HIT	*/
+	45, /* PLAYER HIT	*/
+	20, /* ALIEN SHOOT	*/
+	20, /* PLAYER SHOOT */
 	25, /* BONUS		*/
 	25, /* SIZZLE		*/
-	25, /* GATE 		*/
+	40, /* GATE 		*/
 	25, /* BIRTH		*/
-	25, /* HEART-BEAT	*/
-	25	/* MOVING MAZE	*/
+	20, /* HEART-BEAT	*/
+	65	/* MOVING MAZE	*/
 };
 
 int pulsar_sh_start(const struct MachineSound *msound)
