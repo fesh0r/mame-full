@@ -39,7 +39,8 @@ Imgtool Changes:
 
 Source Changes:
 ----------------
-- [A400/A800] Fixed cartridge loading.  [Nate Woods]
+- [A400/A800] Fixed cartridge loading and partial state save support.  [Nate
+  Woods]
 
 - [GENESIS] Split Genesis driver into gen_usa, gen_eur and gen_jpn drivers
   for different countries.  Also fixed a bug that caused sound to be gone in

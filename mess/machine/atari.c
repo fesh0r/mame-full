@@ -11,6 +11,7 @@
 #include "cpu/m6502/m6502.h"
 #include "includes/atari.h"
 #include "image.h"
+#include "state.h"
 
 #define VERBOSE_POKEY	0
 #define VERBOSE_SERIAL	0
@@ -82,8 +83,8 @@ static void a800_setbank(int n)
 			}
 			else
 			{
-				read_addr = &mem[0x08000];
-				write_addr = &mem[0x08000];
+				read_addr = &mess_ram[0x08000];
+				write_addr = &mess_ram[0x08000];
 			}
 			break;
 	}
@@ -1524,5 +1525,26 @@ void a5200_handle_keypads(void)
 	/* remove key pressed status bit from skstat */
 	pokey1_kbcode_w(0xFF, 0);
 	atari_last = 0xff;
+}
+
+
+
+DRIVER_INIT( atari )
+{
+	offs_t ram_top;
+	
+	/* install RAM */
+	ram_top = MAX(mess_ram_size, 0x8000) - 1;
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM,
+		0x0000, ram_top, 0, MRA8_BANK2);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM,
+		0x0000, ram_top, 0, MWA8_BANK2);
+	cpu_setbank(2, mess_ram);
+
+	/* save states */
+	state_save_register_UINT8("atari", 0, "antic_r", (UINT8 *) &antic.r, sizeof(antic.r));
+	state_save_register_UINT8("atari", 0, "antic_w", (UINT8 *) &antic.w, sizeof(antic.w));
+	state_save_register_UINT8("atari", 0, "gtia_r", (UINT8 *) &gtia.r, sizeof(gtia.r));
+	state_save_register_UINT8("atari", 0, "gtia_w", (UINT8 *) &gtia.w, sizeof(gtia.w));
 }
 

@@ -202,8 +202,7 @@
 ******************************************************************************/
 
 static ADDRESS_MAP_START(a400_mem, ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE(0x0000, 0x3fff) AM_RAM
-	AM_RANGE(0x4000, 0x9fff) AM_RAM									/* optional RAM */
+	AM_RANGE(0x0000, 0x9fff) AM_NOP	/* RAM installed at runtime */
 	AM_RANGE(0xa000, 0xbfff) AM_READWRITE(MRA8_BANK1, MWA8_BANK1)
 	AM_RANGE(0xc000, 0xcfff) AM_ROM
 	AM_RANGE(0xd000, 0xd0ff) AM_READWRITE(atari_gtia_r, atari_gtia_w)
@@ -217,7 +216,7 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START(a800_mem, ADDRESS_SPACE_PROGRAM, 8)
-	AM_RANGE(0x0000, 0x9fff) AM_RAM
+	AM_RANGE(0x0000, 0x9fff) AM_NOP	/* RAM installed at runtime */
 	AM_RANGE(0xa000, 0xbfff) AM_READWRITE(MRA8_BANK1, MWA8_BANK1)
 	AM_RANGE(0xc000, 0xcfff) AM_ROM
 	AM_RANGE(0xd000, 0xd0ff) AM_READWRITE(atari_gtia_r, atari_gtia_w)
@@ -919,11 +918,14 @@ SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(a400)
 	CONFIG_IMPORT_FROM(atari)
+	CONFIG_RAM_DEFAULT(16 * 1024)
+	CONFIG_RAM        (40 * 1024)
 	CONFIG_DEVICE_CARTSLOT_OPT(1, "rom\0bin\0", NULL, NULL, device_load_a800_cart, device_unload_a800_cart, NULL, NULL)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(a800)
 	CONFIG_IMPORT_FROM(atari)
+	CONFIG_RAM_DEFAULT(40 * 1024)
 	CONFIG_DEVICE_CARTSLOT_OPT(2, "rom\0bin\0", NULL, NULL, device_load_a800_cart, device_unload_a800_cart, NULL, NULL)
 SYSTEM_CONFIG_END
 
@@ -938,9 +940,9 @@ SYSTEM_CONFIG_END
 ***************************************************************************/
 
 /*     YEAR  NAME      PARENT    COMPAT	MACHINE		INPUT    INIT	CONFIG	COMPANY   FULLNAME */
-COMP ( 1979, a400,	   0,		 0,		a400,		a800,	 0, 	a400,	"Atari",  "Atari 400 (NTSC)" )
-COMP ( 1979, a400pal,  a400,	 0,		a400pal,	a800,	 0, 	a400,	"Atari",  "Atari 400 (PAL)" )
-COMP ( 1979, a800,	   0,		 0,		a800,		a800,	 0, 	a800,	"Atari",  "Atari 800 (NTSC)" )
-COMP ( 1979, a800pal,  a800,	 0,		a800pal,	a800,	 0,		a800,	"Atari",  "Atari 800 (PAL)" )
-COMPX( 1983, a800xl,   a800,	 0,		a800xl,		a800xl,	 0, 	a800,	"Atari",  "Atari 800XL", GAME_NOT_WORKING )
-CONS ( 1982, a5200,    0,		 0,		a5200,		a5200,	 0, 	a5200,	"Atari",  "Atari 5200")
+COMP ( 1979, a400,	   0,		 0,		a400,		a800,	 atari, a400,	"Atari",  "Atari 400 (NTSC)" )
+COMP ( 1979, a400pal,  a400,	 0,		a400pal,	a800,	 atari, a400,	"Atari",  "Atari 400 (PAL)" )
+COMP ( 1979, a800,	   0,		 0,		a800,		a800,	 atari, a800,	"Atari",  "Atari 800 (NTSC)" )
+COMP ( 1979, a800pal,  a800,	 0,		a800pal,	a800,	 atari,	a800,	"Atari",  "Atari 800 (PAL)" )
+COMPX( 1983, a800xl,   a800,	 0,		a800xl,		a800xl,	 atari, a800,	"Atari",  "Atari 800XL", GAME_NOT_WORKING )
+CONS ( 1982, a5200,    0,		 0,		a5200,		a5200,	 atari, a5200,	"Atari",  "Atari 5200")

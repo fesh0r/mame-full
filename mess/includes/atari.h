@@ -79,6 +79,8 @@ void a5200_handle_keypads(void);
 void gtia_reset(void);
 void antic_reset(void);
 
+DRIVER_INIT( atari );
+
 /* video */
 
 /* Enable this to make the video code use readmem16 to retrieve data */
