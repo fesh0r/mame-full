@@ -25,13 +25,9 @@
 #include "machine/pc_hdc.h"
 #include "devices/harddriv.h"
 
-#define VERBOSE_HDC 0		/* HDC (hard disk controller) */
-
-#if VERBOSE_HDC
-#define HDC_LOG(n,m,a) LOG(VERBOSE_HDC,n,m,a)
-#else
-#define HDC_LOG(n,m,a)
-#endif
+#define LOG_HDC_STATUS		0
+#define LOG_HDC_CALL		0
+#define LOG_HDC_DATA		0
 
 
 #define MAX_HARD	2
@@ -104,6 +100,7 @@ static mame_timer *timer[MAX_BOARD];
 static int data_cnt = 0;                /* data count */
 static UINT8 *buffer;					/* data buffer */
 static UINT8 *ptr = 0;					/* data pointer */
+static UINT8 hdc_control;
 
 
 static void pc_hdc_command(int n);
@@ -111,6 +108,8 @@ static void pc_hdc_command(int n);
 int pc_hdc_setup(void)
 {
 	int i;
+
+	hdc_control = 0;
 
 	buffer = auto_malloc(17*4*512);
 	if (!buffer)
@@ -146,19 +145,31 @@ static void pc_hdc_result(int n)
 	/* dip switch selected INT 5 or 2 */
 	pic8259_0_issue_irq((dip[n] & 0x40) ? 5 : 2);
 
-	HDC_LOG(1,"hdc_result",("$%02x to $%04x\n", csb[n], data_cnt));
+#if LOG_HDC_STATUS
+	logerror("pc_hdc_result(): $%02x to $%04x\n", csb[n], data_cnt);
+#endif
+
 	buffer[data_cnt++] = csb[n];
 
-	if (csb[n] & CSB_ERROR) {
+	if (csb[n] & CSB_ERROR)
+	{
         buffer[data_cnt++] = error[n];
-		if (error[n] & 0x80) {
+		if (error[n] & 0x80)
+		{
 			buffer[data_cnt++] = (drv << 5) | head[idx];
 			buffer[data_cnt++] = ((cylinder[idx] >> 2) & 0xc0) | sector[idx];
 			buffer[data_cnt++] = cylinder[idx] & 0xff;
-			HDC_LOG(1,"hdc_result",("result [%02x %02x %02x %02x]\n",
-				buffer[data_cnt-4],buffer[data_cnt-3],buffer[data_cnt-2],buffer[data_cnt-1]));
-		} else {
-			HDC_LOG(1,"hdc_result",("result [%02x]\n", buffer[data_cnt-1]));
+
+#if LOG_HDC_STATUS
+			logerror("pc_hdc_result(): result [%02x %02x %02x %02x]\n",
+				buffer[data_cnt-4], buffer[data_cnt-3], buffer[data_cnt-2], buffer[data_cnt-1]);
+#endif
+		}
+		else
+		{
+#if LOG_HDC_STATUS
+			logerror("pc_hdc_result(): result [%02x]\n", buffer[data_cnt-1]);
+#endif
         }
     }
 	status[n] |= STA_INTERRUPT | STA_INPUT | STA_REQUEST | STA_COMMAND | STA_READY;
@@ -168,7 +179,7 @@ static void pc_hdc_result(int n)
 
 static int no_dma(void)
 {
-	return dma8237_0_r(10) & (0x10 << HDC_DMA);
+	return (hdc_control & CTL_DMA) == 0;
 }
 
 
@@ -318,7 +329,8 @@ static void execute_write(void)
 		do
 		{
 			pc_hdc_dack_w(buffer[data_cnt++]);
-		} while (hdcdma_write || hdcdma_size);
+		}
+		while (hdcdma_write || hdcdma_size);
 	}
 	else
 	{
@@ -371,76 +383,62 @@ static void pc_hdc_command(int n)
 	ptr = buffer;
 	cmd = buffer[0];
 
+#if LOG_HDC_STATUS
+	logerror("pc_hdc_command(): Executing command; pc=0x%08x cmd=0x%02x drv=%d\n", (unsigned) cpunum_get_reg(0, REG_PC), cmd, drv);
+#endif
+
 	switch (cmd)
 	{
 		case CMD_TESTREADY:
+		case CMD_SENSE:
 			get_drive(n);
-			HDC_LOG(1,"hdc test ready",("INDEX #%d D:%d\n", idx, drv));
 			test_ready(n);
             break;
 		case CMD_RECALIBRATE:
 			get_drive(n);
 			get_chsn(n);
-			HDC_LOG(1,"hdc recalibrate",("INDEX #%d D:%d CTL:$%02x\n", idx, drv, control[idx]));
 /*			test_ready(n); */
             break;
-		case CMD_SENSE:
-			get_drive(n);
-			HDC_LOG(1,"hdc sense",("INDEX #%d D:%d\n", idx, drv));
-			test_ready(n);
-            break;
+
 		case CMD_FORMATDRV:
-			get_drive(n);
-			get_chsn(n);
-			HDC_LOG(1,"hdc format drive",("INDEX #%d D:%d C:%d H:%d S:%d N:%d CTL:$%02x\n",
-				idx, drv, cylinder[idx], head[idx], sector[idx], sector_cnt[idx], control[idx]));
-			test_ready(n);
-            break;
 		case CMD_VERIFY:
-			get_drive(n);
-			get_chsn(n);
-			HDC_LOG(1,"hdc verify",("INDEX #%d D:%d C:%d H:%d S:%d N:%d CTL:$%02x\n",
-				idx, drv, cylinder[idx], head[idx], sector[idx], sector_cnt[idx], control[idx]));
-			test_ready(n);
-            break;
 		case CMD_FORMATTRK:
-			get_drive(n);
-			get_chsn(n);
-			HDC_LOG(1,"hdc format track",("INDEX #%d D:%d C:%d H:%d S:%d N:%d CTL:$%02x\n",
-				idx, drv, cylinder[idx], head[idx], sector[idx], sector_cnt[idx], control[idx]));
-			test_ready(n);
-            break;
 		case CMD_FORMATBAD:
+		case CMD_SEEK:
+		case CMD_DRIVEDIAG:
 			get_drive(n);
 			get_chsn(n);
-			HDC_LOG(1,"hdc format track (bad)",("INDEX #%d D:%d C:%d H:%d S:%d N:%d CTL:$%02x\n",
-				idx, drv, cylinder[idx], head[idx], sector[idx], sector_cnt[idx], control[idx]));
 			test_ready(n);
             break;
+
 		case CMD_READ:
+		case CMD_READLONG:
 			get_drive(n);
 			get_chsn(n);
-			HDC_LOG(1,"hdc read",("INDEX #%d D:%d C:%d H:%d S:%d N:%d CTL:$%02x\n",
-				idx, drv, cylinder[idx], head[idx], sector[idx], sector_cnt[idx], control[idx]));
+
+#if LOG_HDC_STATUS
+			logerror("hdc read pc=0x%08x INDEX #%d D:%d C:%d H:%d S:%d N:%d CTL:$%02x\n",
+				(unsigned) cpunum_get_reg(0, REG_PC), idx, drv, cylinder[idx], head[idx], sector[idx], sector_cnt[idx], control[idx]);
+#endif
+
 			if (test_ready(n))
 				execute_read();
-/*			{ extern int debug_key_pressed; debug_key_pressed = 1; } */
 			break;
+
 		case CMD_WRITE:
+		case CMD_WRITELONG:
 			get_drive(n);
 			get_chsn(n);
-			HDC_LOG(1,"hdc write",("INDEX #%d D:%d C:%d H:%d S:%d N:%d CTL:$%02x\n",
-				idx, drv, cylinder[idx], head[idx], sector[idx], sector_cnt[idx], control[idx]));
+
+#if LOG_HDC_STATUS
+			logerror("hdc write pc=0x%08x INDEX #%d D:%d C:%d H:%d S:%d N:%d CTL:$%02x\n",
+				(unsigned) cpunum_get_reg(0, REG_PC), idx, drv, cylinder[idx], head[idx], sector[idx], sector_cnt[idx], control[idx]);
+#endif
+
 			if (test_ready(n))
 				execute_write();
 			break;
-		case CMD_SEEK:
-			get_drive(n);
-			get_chsn(n);
-			HDC_LOG(1,"hdc seek",("INDEX #%d D:%d C:%d H:%d S:%d N:%d CTL:$%02x\n",
-				idx, drv, cylinder[idx], head[idx], sector[idx], sector_cnt[idx], control[idx]));
-			test_ready(n);
-			break;
+
 		case CMD_SETPARAM:
 			get_drive(n);
 			get_chsn(n);
@@ -449,48 +447,18 @@ static void pc_hdc_command(int n)
 			rwc[idx] = ((buffer[9]&3)<<8) | buffer[10];
 			wp[idx] = ((buffer[11]&3)<<8) | buffer[12];
 			ecc[idx] = buffer[13];
-			HDC_LOG(1,"hdc set param",("INDEX #%d D:%d C:%d H:%d RW:%d WP:%d ECC:%d\n",
-				idx, drv, cylinders[idx], heads[idx], rwc[idx], wp[idx], ecc[idx]));
 			break;
+
 		case CMD_GETECC:
-			HDC_LOG(1,"hdc get ECC",("controller #%d\n", n));
 			buffer[data_cnt++] = ecc[idx];
 			break;
+
 		case CMD_READSBUFF:
-			HDC_LOG(1,"hdc read sector buffer",("controller #%d\n", n));
-			break;
 		case CMD_WRITESBUFF:
-			HDC_LOG(1,"hdc write sector buffer",("controller #%d\n", n));
-			break;
 		case CMD_RAMDIAG:
-			HDC_LOG(1,"hdc RAM diag",("controller #%d", n));
-			break;
-		case CMD_DRIVEDIAG:
-			get_drive(n);
-			get_chsn(n);
-			HDC_LOG(1,"hdc drive diag",("INDEX #%d D:%d C:%d H:%d S:%d N:%d CTL:$%02x\n",
-				idx, drv, cylinder[idx], head[idx], sector[idx], sector_cnt[idx], control[idx]));
-			test_ready(n);
-			break;
 		case CMD_INTERNDIAG:
-			HDC_LOG(1,"hdc internal diag",("BOARD #%d\n", n));
 			break;
-		case CMD_READLONG:
-			get_drive(n);
-			get_chsn(n);
-			HDC_LOG(1,"hdc read long",("INDEX #%d D:%d C:%d H:%d S:%d N:%d CTL:$%02x\n",
-				idx, drv, cylinder[idx], head[idx], sector[idx], sector_cnt[idx], control[idx]));
-			if (test_ready(n))
-				execute_read();
-			break;
-		case CMD_WRITELONG:
-			get_drive(n);
-			get_chsn(n);
-			HDC_LOG(1,"hdc write long",("INDEX #%d D:%d C:%d H:%d S:%d N:%d CTL:$%02x\n",
-				idx, drv, cylinder[idx], head[idx], sector[idx], sector_cnt[idx], control[idx]));
-			if (test_ready(n))
-				execute_write();
-			break;
+
 	}
 	pc_hdc_result(n);
 }
@@ -520,77 +488,46 @@ static void pc_hdc_data_w(int n, int data)
 {
 	if( data_cnt == 0 )
 	{
-		HDC_LOG(2,"hdc_data_w",("BOARD #%d $%02x: ", n, data));
+#if LOG_HDC_DATA
+		logerror("hdc_data_w BOARD #%d $%02x: ", n, data));
+#endif
+
         ptr = buffer;
 		data_cnt = 6;	/* expect 6 bytes including this one */
 		status[n] &= ~STA_READY;
 		status[n] &= ~STA_INPUT;
 		switch (data)
 		{
-			case CMD_TESTREADY:
-				HDC_LOG(2,0,("test ready\n"));
-				break;
-			case CMD_RECALIBRATE:
-				HDC_LOG(2,0,("recalibrate\n"));
-                break;
-			case CMD_SENSE:
-				HDC_LOG(2,0,("sense\n"));
-                break;
-			case CMD_FORMATDRV:
-				HDC_LOG(2,0,("format drive\n"));
-                break;
-			case CMD_VERIFY:
-				HDC_LOG(2,0,("verify\n"));
-                break;
-			case CMD_FORMATTRK:
-				HDC_LOG(2,0,("format track\n"));
-                break;
-			case CMD_FORMATBAD:
-				HDC_LOG(2,0,("format track (bad)\n"));
-                break;
-			case CMD_READ:
-				HDC_LOG(2,0,("read\n"));
-                break;
-			case CMD_WRITE:
-				HDC_LOG(2,0,("write\n"));
-                break;
-			case CMD_SEEK:
-				HDC_LOG(2,0,("seek\n"));
-                break;
 			case CMD_SETPARAM:
-				HDC_LOG(2,0,("set param\n"));
 				data_cnt += 8;
 				break;
+
+			case CMD_TESTREADY:
+			case CMD_RECALIBRATE:
+			case CMD_SENSE:
+			case CMD_FORMATDRV:
+			case CMD_VERIFY:
+			case CMD_FORMATTRK:
+			case CMD_FORMATBAD:
+			case CMD_READ:
+			case CMD_WRITE:
+			case CMD_SEEK:
 			case CMD_GETECC:
-				HDC_LOG(2,0,("get ECC\n"));
-                break;
             case CMD_READSBUFF:
-				HDC_LOG(2,0,("read sector buffer\n"));
-                break;
 			case CMD_WRITESBUFF:
-				HDC_LOG(2,0,("write sector buffer\n"));
-                break;
 			case CMD_RAMDIAG:
-				HDC_LOG(2,0,("RAM diag\n"));
-                break;
             case CMD_DRIVEDIAG:
-				HDC_LOG(2,0,("drive diag\n"));
-                break;
 			case CMD_INTERNDIAG:
-				HDC_LOG(2,0,("internal diag\n"));
-                break;
 			case CMD_READLONG:
-				HDC_LOG(2,0,("read long\n"));
-                break;
 			case CMD_WRITELONG:
-				HDC_LOG(2,0,("write long\n"));
                 break;
-            default:
-				HDC_LOG(2,0,("unknown command!\n"));
+
+			default:
 				data_cnt = 0;
 				status[n] |= STA_INPUT;
 				csb[n] |= CSB_ERROR | 0x20; /* unknown command */
 				pc_hdc_result(n);
+				break;
 		}
 		if( data_cnt )
 			status[n] |= STA_REQUEST;
@@ -598,22 +535,18 @@ static void pc_hdc_data_w(int n, int data)
 
 	if (data_cnt)
 	{
-		HDC_LOG(3,"hdc_data_w",("BOARD #%d $%02x\n", n, data));
+#if LOG_HDC_DATA
+		logerror("hdc_data_w BOARD #%d $%02x\n", n, data);
+#endif
+
 		*ptr++ = data;
 		status[n] |= STA_READY;
 		if( --data_cnt == 0 )
 		{
-			if( buffer[0] == CMD_SETPARAM )
-			{
-				HDC_LOG(2,"hdc_command",("[%02x %02x %02x %02x %02x %02x] [%02x %02x %02x %02x %02x %02x %02x %02x]\n",
-					buffer[0], buffer[1], buffer[2], buffer[3], buffer[4], buffer[5],
-					buffer[6],buffer[7],buffer[8],buffer[9],buffer[10],buffer[11],buffer[12],buffer[13]));
-			}
-			else
-			{
-				HDC_LOG(2,"hdc_command",("[%02x %02x %02x %02x %02x %02x]\n",
-					buffer[0], buffer[1], buffer[2], buffer[3], buffer[4], buffer[5]));
-			}
+#if LOG_HDC_STATUS
+			logerror("pc_hdc_data_w(): Launching command; pc=0x%08x\n", (unsigned) cpunum_get_reg(0, REG_PC));
+#endif
+
             status[n] &= ~STA_COMMAND;
 			status[n] &= ~STA_REQUEST;
 			status[n] &= ~STA_READY;
@@ -629,7 +562,6 @@ static void pc_hdc_data_w(int n, int data)
 
 static void pc_hdc_reset_w(int n, int data)
 {
-	HDC_LOG(1,"hdc_reset_w",("INDEX #%d $%02x\n", n, data));
 	cylinder[n] = 0;
 	head[n] = 0;
 	sector[n] = 0;
@@ -644,7 +576,6 @@ static void pc_hdc_reset_w(int n, int data)
 
 static void pc_hdc_select_w(int n, int data)
 {
-	HDC_LOG(3,"hdc_select_w",("BOARD #%d $%02x\n", n, data));
 	status[n] &= ~STA_INTERRUPT;
 	status[n] |= STA_SELECT;
 }
@@ -653,7 +584,11 @@ static void pc_hdc_select_w(int n, int data)
 
 static void pc_hdc_control_w(int n, int data)
 {
-	HDC_LOG(3,"hdc_control_w",("BOARD #%d $%02x\n", n, data));
+#if LOG_HDC_STATUS
+	logerror("pc_hdc_control_w(): Control write pc=0x%08x data=%d\n", (unsigned) cpunum_get_reg(0, REG_PC), data);
+#endif
+
+	hdc_control = data;
 }
 
 
@@ -673,7 +608,6 @@ static int  pc_hdc_data_r(int n)
 			status[n] |= STA_COMMAND;
 		}
 	}
-	HDC_LOG(3,"hdc_data_r",("BOARD #%d $%02x [$%04x]\n", n, data, (int)(ptr-buffer)-1));
     return data;
 }
 
@@ -681,14 +615,7 @@ static int  pc_hdc_data_r(int n)
 
 static int  pc_hdc_status_r(int n)
 {
-	static int old_stat = 0;
 	int data = status[n];
-	if( old_stat != data )
-	{
-		old_stat = data;
-		HDC_LOG(4,"hdc_status_r",("BOARD #%d $%02x: RDY:%d INP:%d CMD:%d SEL:%d REQ:%d INT:%d\n",
-			n, data, data&1, (data>>1)&1, (data>>2)&1, (data>>3)&1, (data>>4)&1, (data>>5)&1));
-	}
 	return data;
 }
 
@@ -697,7 +624,6 @@ static int  pc_hdc_status_r(int n)
 static int  pc_hdc_dipswitch_r(int n)
 {
 	int data = dip[n];
-	HDC_LOG(4,"hdc_dipswitch_r",("BOARD #%d $%02x\n", n, data));
 	return data;
 }
 
@@ -722,6 +648,11 @@ static int pc_HDC_r(int chip, int offs)
 		case 2: data = pc_hdc_dipswitch_r(chip); break;
 		case 3: break;
 	}
+
+#if LOG_HDC_CALL
+	logerror("pc_HDC_r(): chip=%d offs=%d result=0x%02x\n", chip, offs, data);
+#endif
+
 	return data;
 }
 
@@ -729,6 +660,10 @@ static int pc_HDC_r(int chip, int offs)
 
 static void pc_HDC_w(int chip, int offs, int data)
 {
+#if LOG_HDC_CALL
+	logerror("pc_HDC_w(): chip=%d offs=%d data=0x%02x\n", chip, offs, data);
+#endif
+
 	if( !(input_port_3_r(0) & (0x08>>chip)) || !pc_hdc_file(chip<<1) )
 		return;
 

@@ -17,6 +17,8 @@ System Driver Changes:
   critical long standing bug in the PC floppy emulation. (bug #154) [Nate
   Woods]
 
+- [PC] Hard disk controller enhancements; FreeDOS now boots.  [Nate Woods]
+
 
 
 User Interface Changes:

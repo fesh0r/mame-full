@@ -12,6 +12,7 @@
 #include <string.h>
 #include "pool.h"
 #include "opresolv.h"
+#include "osdepend.h"
 
 #ifndef TRUE
 #define TRUE 1
