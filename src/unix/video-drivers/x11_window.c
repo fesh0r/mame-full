@@ -104,6 +104,13 @@ struct rc_option x11_window_opts[] = {
      NULL }
 };
 
+#if defined(__sgi)
+/* Needed for setting the application class */
+static XClassHint class_hints = {
+  NAME, NAME,
+};
+#endif
+
 /*
  * Create a display screen, or window, large enough to accomodate a bitmap
  * of the given dimensions.
@@ -405,6 +412,19 @@ int x11_window_create_display (int bitmap_depth)
 
       XSetWMHints (display, window, &wm_hints);
       XSetWMNormalHints (display, window, &hints);
+
+#if defined(__sgi)
+      /* Force first resource class char to be uppercase */
+      class_hints.res_class[0] &= 0xDF;
+      /*
+       * Set the application class (WM_CLASS) so that 4Dwm can display
+       * the appropriate pixmap when the application is iconified
+       */
+      XSetClassHint(display, window, &class_hints);
+      /* Use a simpler name for the icon */
+      XSetIconName(display, window, NAME);
+#endif
+
       XStoreName (display, window, title);
 
       /* Select event mask */
