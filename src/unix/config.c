@@ -165,30 +165,30 @@ static int config_printf(const char *fmt, ...)
 
 static int config_handle_arg(char *arg)
 {
-	if (!got_gamename) /* notice: for MESS game means system */
+	/* notice: for MESS game means system */
+	if (got_gamename)
 	{
-		gamename     = arg;
-		got_gamename = 1;
-	}
-	else
-#ifdef MESS
-	{
-		if( options.image_count >= MAX_IMAGES )
-		{
-			fprintf(stderr, "error: too many image names specified!\n");
-			return -1;
-		}
-		/* options.image_files[options.image_count].type = iodevice_type; */
-		/* options.image_files[options.image_count].name = arg; */
-		/* options.image_count++; */
-	}
-#else
-	{
-		fprintf(stderr,"error: duplicate gamename: %s\n", arg);
+		fprintf(stderr, "error: duplicate gamename: %s\n", arg);
 		return -1;
 	}
-#endif
 
+	rompath_extra = osd_dirname(arg);
+
+	if (rompath_extra && !strlen(rompath_extra))
+	{
+		free(rompath_extra);
+		rompath_extra = NULL;
+	}
+
+	gamename = arg;
+
+	if (!gamename || !strlen(gamename))
+	{
+		fprintf(stderr, "error: no gamename given in %s\n", arg);
+		return -1;
+	}
+
+	got_gamename = 1;
 	return 0;
 }
 
@@ -255,12 +255,9 @@ int config_init (int argc, char *argv[])
 		return OSD_NOT_OK;
 	}
 
-	/* some settings which are static for xmame and thus aren't controled
+	/* some settings which are static for xmame and thus aren't controlled 
 	   by options */
 	options.gui_host = 1;
-#ifdef MESS
-	options.mess_printf_output = xmess_printf_output;
-#endif
 	cheatfile = NULL;
 	db_filename = NULL;
 	history_filename = NULL;
@@ -582,11 +579,11 @@ int config_init (int argc, char *argv[])
 			}
 
 			/* Look up the filename extension in the drivers device list */
-			if (ext && (dev = device_first(drivers[game_index])))
+			if (ext && (dev = Machine->devices))
 			{
 				ext++; /* skip the "." */
 
-				while (dev)
+				while (dev->type < IO_COUNT)
 				{
 					const char *dst = dev->file_extensions;
 					/* scan supported extensions for this device */
@@ -603,7 +600,7 @@ int config_init (int argc, char *argv[])
 						/* skip '\0' once in the list of extensions */
 						dst += strlen(dst) + 1;
 					}
-					dev = device_next(drivers[game_index], dev); 
+					dev++;
 				}
 			}
 			if(!options.image_files[i].type)

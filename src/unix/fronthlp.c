@@ -5,13 +5,17 @@
 #include "common.h"
 #include "info.h"
 
+#ifdef MESS
+#include "xmess.h"
+#endif
+
 static int frontend_list_clones(char *gamename);
 static int frontend_list_cpu(void);
 static int frontend_list_gamelistheader(void);
 static int frontend_list_hash(int type);
 
 static int list       = 0;
-static int showclones = 1;
+static int listclones = 1;
 static int verbose    = 1;
 static int correct    = 0;
 static int incorrect  = 0;
@@ -21,14 +25,16 @@ static int sortby     = 0;
 enum {
 	/* standard list commands */
 	LIST_LIST = 1, LIST_FULL, LIST_GAMES, LIST_DETAILS, LIST_GAMELIST,
-	LIST_SOURCEFILE, LIST_COLORS, LIST_DEVICES, LIST_ROMSIZE, LIST_PALETTESIZE,
+	LIST_SOURCEFILE, LIST_COLORS, LIST_ROMSIZE, LIST_PALETTESIZE,
 	LIST_ROMS, LIST_CRC, LIST_SHA1, LIST_MD5, LIST_SAMPLES, LIST_SAMDIR, 
 	VERIFY_ROMS, VERIFY_ROMSETS, VERIFY_SAMPLES, VERIFY_SAMPLESETS,
 	/* internal verification list commands (developers only) */
 	LIST_MISSINGROMS, LIST_DUPCRC, LIST_WRONGORIENTATION, LIST_WRONGMERGE,
 	LIST_WRONGFPS,
-	/* standard listcommands which require special handling */
-	LIST_CLONES, LIST_XML, LIST_CPU
+	/* standard list commands which require special handling */
+	LIST_CLONES, LIST_XML, LIST_CPU,
+	/* MESS-specific commands */
+	LIST_MESSTEXT, LIST_MESSDEVICES, LIST_MESSCREATEDIR
 };
    
 /* Mame frontend interface & commandline */
@@ -45,7 +51,9 @@ struct rc_option frontend_list_opts[] = {
 	{ "listsourcefile", "lsf", rc_set_int, &list, NULL, LIST_SOURCEFILE, 0, NULL, "Like -list, with driver sourcefile" },
 	{ "listcolors", "lcol", rc_set_int, &list, NULL, LIST_COLORS, 0, NULL, "Like -list, with the number of colors used" },
 #ifdef MESS
-	{ "listdevices", "ldev", rc_set_int, &list, NULL, LIST_DEVICES, 0, NULL, "Like -list, with devices and image file extensions supported" },
+	{ "listdevices", NULL, rc_set_int, &list, NULL, LIST_MESSDEVICES, 0, NULL, "list available devices" },
+	{ "listtext", NULL, rc_set_int, &list, NULL, LIST_MESSTEXT, 0, NULL, "list available file extensions" },
+	{ "createdir", NULL, rc_set_int, &list, NULL, LIST_MESSCREATEDIR, 0, NULL, NULL },
 #endif
 	{ "listromsize", "lrs", rc_set_int, &list, NULL, LIST_ROMSIZE, 0, NULL, "Like -list, with the year and size of the roms used" },
 	{ "listpalettesize", "lps", rc_set_int, &list, NULL, LIST_ROMSIZE, 0, NULL, "Like -list, with the year and palette size of the roms used" },
@@ -63,7 +71,7 @@ struct rc_option frontend_list_opts[] = {
 	{ "verifysamples", "vs", rc_set_int, &list, NULL, VERIFY_SAMPLES, 0, NULL, "Like -verifyroms but verify audio samples instead" },
 	{ "verifysamplesets", "vss", rc_set_int, &list, NULL, VERIFY_SAMPLESETS, 0, NULL, "Like -verifysamples, but less verbose" },
 #endif
-	{ "clones", "cl", rc_bool, &showclones, "1", 0, 0, NULL, "Show / don't show bootlegs/clones in the above list commands" },
+	{ "clones", "cl", rc_bool, &listclones, "1", 0, 0, NULL, "Show / don't show bootlegs/clones in the above list commands" },
 	{ "listclones", "lcl", rc_set_int, &list, NULL, LIST_CLONES, 0, NULL, "Like -list, but lists the clones of the specified game" },
 	{ "listxml", "lx", rc_set_int, &list, NULL, LIST_XML, 0, NULL, "List all available info on drivers in XML format" },
 	{ "listcpu", "lc", rc_set_int, &list, NULL, LIST_CPU, 0, NULL, "List cpu usage statics per year" },
@@ -238,7 +246,7 @@ char *get_description(int driver)
 		strncpy(description, copy, BUF_SIZE);
 
 	/* Print the additional description only if we are listing clones */
-	if (showclones && p)
+	if (listclones && p)
 	{
 		int len = strlen(description);
 
@@ -353,7 +361,7 @@ int frontend_list(char *gamename)
 	for (i=0;drivers[i];i++)
 	{
 		expand_machine_driver(drivers[i]->drv, &drv);	
-		if ( (showclones || drivers[i]->clone_of == 0 ||
+		if ( (listclones || drivers[i]->clone_of == 0 ||
 					(drivers[i]->clone_of->flags & NOT_A_DRIVER)) &&
 				!strwildcmp(gamename, drivers[i]->name) )
 		{
@@ -506,39 +514,27 @@ int frontend_list(char *gamename)
 							drv.total_colors);
 					break;
 #ifdef MESS
-				case LIST_DEVICES: /* list devices */
-					if(device_first(drivers[i]))
+				case LIST_MESSTEXT: /* all mess specific calls here */
 					{
-						const struct IODevice *dev = device_first(drivers[i]);
-
-						j = 0;
-
-						fprintf(stdout_file, "%-8s  ", drivers[i]->name);
-
-						while (dev)
-						{
-							const char *src = dev->file_extensions;
-
-							if (!j) /* first time ? */
-								fprintf(stdout_file, "%-10s  ",
-										device_typename(dev->type));
-							else
-								fprintf(stdout_file, "%-8s  %-10s  ", "",
-										device_typename(dev->type));
-
-							while (*src)
-							{
-								fprintf(stdout_file, ".%-3s  ", src);
-								src += strlen(src) + 1;
-							}
-							fprintf(stdout_file, "\n");
-							j++;
-							dev = device_next(drivers[i], dev);
-						}
+						/* send the gamename and arg to mess.c */
+						list_mess_info(gamename, "-listtext", listclones);
+						return 0;
+						break;
 					}
-					else
-						skipped++;
-					break;
+				case LIST_MESSDEVICES:
+					{
+						/* send the gamename and arg to mess.c */
+						list_mess_info(gamename, "-listdevices", listclones);
+						return 0;
+						break;
+					}
+				case LIST_MESSCREATEDIR:
+					{
+						/* send the gamename and arg to mess.c */
+						list_mess_info(gamename, "-createdir", listclones);
+						return 0;
+						break;
+					}
 #endif
 				case LIST_ROMSIZE:
 					{
@@ -550,13 +546,13 @@ int frontend_list(char *gamename)
 								for (chunk = rom_first_chunk(rom); chunk; chunk = rom_next_chunk(chunk))
 									j += ROM_GETLENGTH(chunk);
 
-						printf("%-8s\t%-5s\t%u\n", drivers[i]->name, drivers[i]->year, j);
+						fprintf(stdout_file, "%-8s\t%-5s\t%u\n", drivers[i]->name, drivers[i]->year, j);
 					}
 					break;
 
 				case LIST_PALETTESIZE:
 					{
-						printf("%-8s\t%-5s\t%u\n",drivers[i]->name,drivers[i]->year,drv.total_colors); 
+						fprintf(stdout_file, "%-8s\t%-5s\t%u\n",drivers[i]->name,drivers[i]->year,drv.total_colors); 
 					}
 
 				case LIST_ROMS: /* game roms list */
@@ -592,17 +588,17 @@ int frontend_list(char *gamename)
 
 									while (samplenames[k] != 0)
 									{
-										printf("%s\n", samplenames[k]);
+										fprintf(stdout_file, "%s\n", samplenames[k]);
 										k++;
 									}
 								}
 								else
 								{
-									printf("%-10s",drivers[i]->name);
+									fprintf(stdout_file, "%-10s",drivers[i]->name);
 									if (samplenames[0][0] == '*')
-										printf("%s\n",samplenames[0]+1);
+										fprintf(stdout_file, "%s\n",samplenames[0]+1);
 									else
-										printf("%s\n",drivers[i]->name);
+										fprintf(stdout_file, "%s\n",drivers[i]->name);
 								}
 							}
 						}
@@ -684,9 +680,9 @@ int frontend_list(char *gamename)
 														hash_data_used_functions(ROM_GETHASHDATA(rom1));
 
 													hash_data_print(ROM_GETHASHDATA(rom), functions, temp);
-													printf("%s\n", temp);
-													printf("  %-12s %-8s\n", ROM_GETNAME(rom), drivers[i]->name);
-													printf("  %-12s %-8s\n", ROM_GETNAME(rom1),drivers[j]->name);
+													fprintf(stdout_file, "%s\n", temp);
+													fprintf(stdout_file, "  %-12s %-8s\n", ROM_GETNAME(rom), drivers[i]->name);
+													fprintf(stdout_file, "  %-12s %-8s\n", ROM_GETNAME(rom1),drivers[j]->name);
 													found = 1;
 												}
 									}
@@ -933,10 +929,8 @@ static int frontend_list_cpu(void)
 	int i, j;
 	int year;
 
-	/* for (j = 1; j < CPU_COUNT; j++) */
-	/*   fprintf(stdout_file, "\t%s", cputype_name(j)); */
 	for (j = 0; j < 3; j++)
-		printf("\t%d", 8 << j);
+		fprintf(stdout_file, "\t%d", 8 << j);
 
 	fprintf(stdout_file, "\n");
 
@@ -978,10 +972,8 @@ static int frontend_list_cpu(void)
 		}
 
 		fprintf(stdout_file, "%d", year);
-		/* for (j = 1; j < CPU_COUNT; j++) */
-		/*   fprintf(stdout_file, "\t%d", count[j]); */
 		for (j = 0; j < 3; j++)
-			printf("\t%d", count_buswidth[j]);
+			fprintf(stdout_file, "\t%d", count_buswidth[j]);
 
 		fprintf(stdout_file, "\n");
 	}
@@ -993,7 +985,7 @@ static int frontend_list_gamelistheader(void)
 	fprintf(stdout_file,
 			"This is the complete list of games supported by %s %s.\n",
 			NAME, build_version);
-	if (!showclones)
+	if (!listclones)
 		fprintf(stdout_file,
 				"Variants of the same game are not included, you can use the -listclones command\n"
 				"to get a list of the alternate versions of a given game.\n");
@@ -1069,4 +1061,29 @@ static int frontend_list_hash(int type)
 	}
 
 	return OSD_OK;
+}
+
+/*============================================================ */
+/*	osd_display_loading_rom_message */
+/*============================================================ */
+
+/* 
+ * Called while loading ROMs.  It is called a last time with name == 0 to 
+ * signal that the ROM loading process is finished.  return non-zero to abort 
+ * loading
+ */
+int osd_display_loading_rom_message(const char *name,
+		struct rom_load_data *romdata)
+{
+	static int count = 0;
+	
+	if (name)
+		fprintf(stderr_file,"loading rom %d: %-32s\n", count, name);
+	else
+		fprintf(stderr_file,"done\n");
+	
+	fflush(stderr_file);
+	count++;
+
+	return 0;
 }
