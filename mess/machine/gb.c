@@ -1049,7 +1049,7 @@ WRITE_HANDLER ( gbc_w_io )
 			if( data & 0x1 )
 			{
 				data = (gb_ram[offset] & 0x80)?0x00:0x80;
-				timer_set_overclock( 0, (data & 0x80)?2.0:1.0 );
+//				timer_set_overclock( 0, (data & 0x80)?2.0:1.0 );
 				logerror( "Switched to %s mode.\n", (data & 0x80) ? "FAST":"NORMAL" );
 			}
 			break;
