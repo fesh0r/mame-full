@@ -256,11 +256,26 @@ $(sort $(OBJDIRS)):
 
 maketree: $(sort $(OBJDIRS))
 
-clean:
+
+clean: cleantools cleantexts
 	@echo Deleting object tree $(OBJ)...
 	$(RM) -r $(OBJ)
 	@echo Deleting $(EMULATOR)...
 	$(RM) $(EMULATOR)
+	@echo Deleting Map file...
+	$(RM) $(NAME).map
+	
+cleantools:
+	@echo Cleaning Tools
+	$(RM) $(TOOLS)
+
+cleantexts:
+	@echo Cleaning Text Files
+	$(RM) $(TEXTS)
+	@echo Removing Sysinfo directory contents
+	$(RM) -r sysinfo
+	
+
 
 clean68k:
 	@echo Deleting 68k files...
@@ -268,7 +283,4 @@ clean68k:
 	$(RM) -r $(OBJ)/drivers/cps2.o
 	$(RM) -r $(OBJ)/cpu/m68000
 
-cleantools:
-	@echo Cleaning Tools
-	$(RM) $(TOOLS)
 	
