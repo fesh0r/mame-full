@@ -58,7 +58,7 @@ struct mode
 static struct mode disabled_modes[MODE_DISABLED_MAX];
 static struct mode forced_mode;
 
-/* Note: depthis not really the standard definition of depth, but, the depth
+/* Note: depth is not really the standard definition of depth, but, the depth
          for all modes, except for depth 24 32bpp sparse where 32 should be
          passed. This is done to differentiate depth 24 24bpp packed pixel
          and depth 24 32bpp sparse. */

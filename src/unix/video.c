@@ -861,7 +861,7 @@ void osd_update_video_and_audio(struct mame_display *display)
                   /* check if the effect fits the screen */
                   do
                   {
-                    if (!(i&1)) /* 1st try, 3th try, etc: next effect */
+                    if (!(i&1)) /* 1st try, 3rd try, etc: next effect */
                     {
                       /* next effect */
                       normal_params.effect += effect_mod;

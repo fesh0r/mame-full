@@ -455,7 +455,7 @@ int sysdep_display_effect_open(void)
     }
     if (effect_index == -1)
     {
-      fprintf(stderr, "Warning your current color format is not supported by the effect code, disabling effects\n");
+      fprintf(stderr, "Warning: Your current color format is not supported by the effect code, disabling effects\n");
       sysdep_display_params.effect = 0;
     }
     else
