@@ -22,6 +22,7 @@ struct disk_geometry
 	UINT8 sectors;
 	UINT8 first_sector_id;
 	UINT16 sector_size;
+	UINT16 bytes_per_sector;
 };
 
 /***************************************************************************
@@ -48,11 +49,8 @@ struct InternalBdFormatDriver
 {
 	const char *name;
 	const char *humanname;
-	const char *extension;
-	UINT8 tracks_options[8];
-	UINT8 heads_options[8];
-	UINT8 sectors_options[2];
-	UINT16 bytes_per_sector;
+	const char *extensions;
+	const char *geometry_options[16];
 	UINT32 header_size;
 	UINT8 filler_byte;
 	int (*header_decode)(const void *header, UINT32 file_size, UINT32 header_size, struct disk_geometry *geometry, int *offset);
@@ -75,32 +73,28 @@ typedef void (*formatdriver_ctor)(struct InternalBdFormatDriver *drv);
 
 /* no need to directly call this */
 #ifdef MAME_DEBUG
-void validate_construct_formatdriver(struct InternalBdFormatDriver *drv, int tracks_optnum, int heads_optnum, int sectors_optnum);
+void validate_construct_formatdriver(struct InternalBdFormatDriver *drv, int geometry_optnum);
 #else
-#define validate_construct_formatdriver(drv, tracks_optnum, heads_optnum, sectors_optnum)
+#define validate_construct_formatdriver(drv, geometry_optnum)
 #endif
 
-#define BLOCKDEVICE_FORMATDRIVER_START( format_name )												\
-	void construct_formatdriver_##format_name(struct InternalBdFormatDriver *drv)					\
-	{																								\
-		int tracks_optnum = 0, heads_optnum = 0, sectors_optnum = 0;								\
-		memset(drv, 0, sizeof(*drv));																\
+#define BLOCKDEVICE_FORMATDRIVER_START( format_name )								\
+	void construct_formatdriver_##format_name(struct InternalBdFormatDriver *drv)	\
+	{																				\
+		int geometry_optnum = 0;													\
+		memset(drv, 0, sizeof(*drv));												\
 
-#define BLOCKDEVICE_FORMATDRIVER_END																\
-		if (heads_optnum == 0)	drv->heads_options[heads_optnum++] = 1;								\
-		validate_construct_formatdriver(drv, tracks_optnum, heads_optnum, sectors_optnum);			\
-	}																								\
+#define BLOCKDEVICE_FORMATDRIVER_END												\
+		validate_construct_formatdriver(drv, geometry_optnum);						\
+	}																				\
 
 #define BLOCKDEVICE_FORMATDRIVER_EXTERN( format_name )												\
 	extern void construct_formatdriver_##format_name(struct InternalBdFormatDriver *drv)
 
 #define	BDFD_NAME(name_)							drv->name = name_;
 #define	BDFD_HUMANNAME(humanname_)					drv->humanname = humanname_;
-#define	BDFD_EXTENSION(ext)							drv->extension = ext;
-#define BDFD_TRACKS_OPTION(tracks_option)			drv->tracks_options[tracks_optnum++] = tracks_option;
-#define BDFD_HEADS_OPTION(heads_option)				drv->heads_options[heads_optnum++] = heads_option;
-#define BDFD_SECTORS_OPTION(sectors_option)			drv->sectors_options[sectors_optnum++] = sectors_option;
-#define BDFD_BYTES_PER_SECTOR(bytes_per_sector_)	drv->bytes_per_sector = bytes_per_sector_;
+#define	BDFD_EXTENSIONS(ext)						drv->extensions = ext;
+#define BDFD_GEOMETRY(tracks,heads,sectors,secsize)	drv->geometry_options[geometry_optnum++] = (#tracks "," #heads "," #sectors "," #secsize);
 #define BDFD_FLAGS(flags_)							drv->flags = flags_;
 #define BDFD_HEADER_SIZE(header_size_)				drv->header_size = (header_size_);
 #define BDFD_HEADER_SIZE_MODULO(header_size_)		drv->header_size = (header_size_) | HEADERSIZE_FLAG_MODULO;
@@ -168,5 +162,26 @@ int bdf_write_sector(bdf_file *bdf, UINT8 track, UINT8 head, UINT8 sector, int o
 void bdf_get_sector_info(bdf_file *bdf, UINT8 track, UINT8 head, UINT8 sector_index, UINT8 *sector, UINT16 *sector_size);
 UINT8 bdf_get_sector_count(bdf_file *bdf, UINT8 track, UINT8 head);
 int bdf_is_readonly(bdf_file *bdf);
+
+/***************************************************************************
+
+	Geometry string parsing
+
+***************************************************************************/
+
+struct geometry_test
+{
+	UINT32 min_size;
+	UINT32 max_size;
+	UINT32 size_step;
+	struct
+	{
+		UINT32 cumulative_size;
+		UINT32 size_divisor;
+	} dimensions[4];
+};
+
+int process_geometry_string(const char *geometry_string, struct geometry_test *tests, int max_test_count);
+int deduce_geometry(const struct geometry_test *tests, int test_count, UINT32 size, UINT32 *params);
 
 #endif /* FORMATS_H */

@@ -1176,7 +1176,7 @@ static int find_catalog_entry(ti99_image *image, const char *fpath, int *parent_
 	const char *element_start, *element_end;
 	int element_len;
 	char element[10];
-	int is_dir;
+	int is_dir = FALSE;
 
 
 #if 0
@@ -1544,7 +1544,7 @@ static int alloc_file_sectors(ti99_image *image, ti99_fdr *fdr, int nb_alloc_sec
 */
 static int new_file(ti99_image *image, int parent_ref, char fname[10], int *out_fdr_physrec/*, ti99_fdr *fdr,*/)
 {
-	ti99_catalog *catalog = & (parent_ref ? image->subdir_catalog[parent_ref-1] : image->catalog);
+	ti99_catalog *catalog =  parent_ref ? &image->subdir_catalog[parent_ref-1] : &image->catalog;
 	int fdr_physrec;
 	int catalog_index, i;
 	int reply = 0;
@@ -2428,7 +2428,7 @@ static int ti99_image_writefile(IMAGE *img, const char *fpath, STREAM *sourcef, 
 		return IMGTOOLERR_WRITEERROR;
 
 	/* update catalog */
-	catalog = & (parent_ref ? image->subdir_catalog[parent_ref-1] : image->catalog);
+	catalog = parent_ref ? &image->subdir_catalog[parent_ref-1] : &image->catalog;
 	for (i=0; i<128; i++)
 	{
 		buf[2*i] = catalog->files[i].fdr_physrec >> 8;
@@ -2502,7 +2502,7 @@ static int ti99_image_deletefile(IMAGE *img, const char *fname)
 	}
 	else
 	{
-		catalog = & (parent_ref ? image->subdir_catalog[parent_ref-1] : image->catalog);
+		catalog = parent_ref ? &image->subdir_catalog[parent_ref-1] : &image->catalog;
 
 		if (read_absolute_physrec(& image->lvl1_ref, catalog->files[catalog_index].fdr_physrec, &fdr))
 			return IMGTOOLERR_READERROR;

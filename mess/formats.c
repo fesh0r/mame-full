@@ -105,7 +105,7 @@ int bdf_create(const struct bdf_procs *procs, formatdriver_ctor format,
 	}
 	else
 	{
-		bytes_to_write = ((int) drv.bytes_per_sector) * geometry->tracks * geometry->heads * geometry->sectors;
+		bytes_to_write = ((int) geometry->bytes_per_sector) * geometry->tracks * geometry->heads * geometry->sectors;
 		memset(buffer, drv.filler_byte, sizeof(buffer));
 
 		while(bytes_to_write > 0)
@@ -141,14 +141,22 @@ static int try_format_driver(const struct InternalBdFormatDriver *drv, const str
 	UINT32 header_size;
 	int bdf_size;
 	bdf_file *bdf;
+	const char *s;
+	int result, i;
 
 	*bdffile = NULL;
 
 	/* match the extension; if either the formatdriver or the caller do not
 	 * specify the extension, count that as a match
 	 */
-	if (extension && drv->extension && strcmpi(extension, drv->extension))
-		return 0;
+	if (extension && drv->extensions)
+	{
+		s = drv->extensions;
+		while(*s && strcmpi(s, extension))
+			s += strlen(s) + 1;
+		if (*s == '\0')
+			return 0;
+	}
 
 	/* if there is a header, try to read it */
 	header_size = drv->header_size & ~HEADERSIZE_FLAGS;
@@ -180,25 +188,44 @@ static int try_format_driver(const struct InternalBdFormatDriver *drv, const str
 
 	/* try to decode the header */
 	bdf->offset = header_size;	/* the default offset is the header size */
-	if (!drv->header_decode)
+	if (drv->header_decode)
 	{
-		bdf->geometry.tracks = drv->tracks_options[0];
-		bdf->geometry.sectors = drv->sectors_options[0];
-		bdf->geometry.heads = drv->heads_options[0];
-		bdf->geometry.sector_size = drv->bytes_per_sector;
-		/* success! */
-		*bdffile = bdf;
-	}
-	else if (!drv->header_decode(header_size ? &bdf->header : NULL, file_size, header_size, &bdf->geometry, &bdf->offset))
-	{
-		/* success! */
-		*bdffile = bdf;
+		/* we have a header decode function; use it */
+		result = drv->header_decode(header_size ? &bdf->header : NULL, file_size, header_size, &bdf->geometry, &bdf->offset);
 	}
 	else
 	{
-		/* failure; free the bdf_file */
-		free(bdf);
+		/* deduce the geometry from the various options */
+		struct geometry_test tests[128];
+		UINT32 params[4];
+		int test_count = 0;
+
+		for(i = 0; (i < sizeof(drv->geometry_options) / sizeof(drv->geometry_options[0])) && drv->geometry_options[i]; i++)
+		{
+			test_count += process_geometry_string(drv->geometry_options[i], tests + test_count,
+				sizeof(tests) / sizeof(tests[0]) - test_count);
+		}
+
+		if (deduce_geometry(tests, test_count, file_size - header_size, params))
+		{
+			/* success */
+			result = 0;
+			bdf->geometry.tracks			= (UINT8) params[0];
+			bdf->geometry.heads				= (UINT8) params[1];
+			bdf->geometry.sectors			= (UINT8) params[2];
+			bdf->geometry.bytes_per_sector	= (UINT16) params[3];
+		}
+		else
+		{
+			/* failure */
+			result = 1;
+		}
 	}
+
+	if (result)
+		free(bdf);		/* failure; free the bdf_file */
+	else
+		*bdffile = bdf;	/* success! */
 	return 0;
 }
 
@@ -417,13 +444,160 @@ UINT8 bdf_get_sector_count(bdf_file *bdf, UINT8 track, UINT8 head)
 	return bdf->get_sector_count(bdf, (const void *) &bdf->header, track, head);
 }
 
-#ifdef MAME_DEBUG
-void validate_construct_formatdriver(struct InternalBdFormatDriver *drv, int tracks_optnum, int heads_optnum, int sectors_optnum)
+/***************************************************************************
+
+	Geometry string parsing
+
+***************************************************************************/
+
+static void accumulate_test(struct geometry_test *tests, int test_count, int dimension, int value)
 {
-	assert(heads_optnum && tracks_optnum && sectors_optnum);
-	assert(tracks_optnum < sizeof(drv->tracks_options) / sizeof(drv->tracks_options[0]));
-	assert(heads_optnum < sizeof(drv->heads_options) / sizeof(drv->heads_options[0]));
-	assert(sectors_optnum < sizeof(drv->sectors_options) / sizeof(drv->sectors_options[0]));
-	assert(drv->header_decode || ((tracks_optnum == 1) && (heads_optnum == 1) && (sectors_optnum == 1)));
+	int i, j;
+	UINT32 multiple;
+
+	for (i = 0; i < test_count; i++)
+	{
+		tests[i].min_size *= value;
+		tests[i].max_size *= value;
+		tests[i].size_step *= value;
+		multiple = 1;
+		for (j = 0; j < dimension; j++)
+		{
+			multiple *= tests[i].dimensions[j].cumulative_size;
+			tests[i].dimensions[j].size_divisor *= value;
+		}
+		tests[i].dimensions[dimension].cumulative_size = value;
+		tests[i].dimensions[dimension].size_divisor = multiple;
+	}
+}
+
+int process_geometry_string(const char *geometry_string, struct geometry_test *tests, int max_test_count)
+{
+	int value = -1;
+	int dimension = 0;
+	int test_count = 1;
+	int incremental_tests = 0;
+	char c;
+
+	if (!geometry_string || *geometry_string == '\0')
+		return 0;
+
+	if (tests)
+	{
+		if (max_test_count < 1)
+			return 0;
+		tests[0].min_size = 1;
+		tests[0].max_size = 1;
+		tests[0].size_step = 1;
+	}
+
+	do
+	{
+		c = *(geometry_string++);
+
+		switch(c) {
+		case '0':
+		case '1':
+		case '2':
+		case '3':
+		case '4':
+		case '5':
+		case '6':
+		case '7':
+		case '8':
+		case '9':
+			if (value == -1)
+				value = 0;
+			else
+				value *= 10;
+			value += c - '0';
+			break;
+
+		case '/':
+			if (tests)
+			{
+				if (max_test_count <= test_count * (incremental_tests+1))
+					return 0;
+				memcpy(tests + test_count * (incremental_tests+1), tests + test_count * (incremental_tests+0), sizeof(tests[0]) * test_count);
+				accumulate_test(tests + test_count * incremental_tests, test_count, dimension, value);
+			}
+			incremental_tests++;
+			value = -1;
+			break;
+
+		case ',':
+		case '\0':
+			if (value == -1)
+				return 0;
+			if (tests)
+				accumulate_test(tests + test_count * incremental_tests, test_count, dimension, value);
+			dimension++;
+
+			value = -1;
+			test_count *= 1 + incremental_tests;
+			incremental_tests = 0;
+			if (c != '\0' && dimension >= (sizeof(tests[0].dimensions) / sizeof(tests[0].dimensions[0])))
+				return 0;
+			break;
+
+		case ' ':
+			break;
+
+		default:
+			return 0;
+		}
+
+	}
+	while(c);
+
+	/* verify that the string is the correct size */
+	if (dimension != (sizeof(tests[0].dimensions) / sizeof(tests[0].dimensions[0])))
+		return 0;
+
+	return test_count;
+}
+
+int deduce_geometry(const struct geometry_test *tests, int test_count, UINT32 size, UINT32 *params)
+{
+	int i, j;
+
+	for (i = 0; i < test_count; i++)
+	{
+		if ((size >= tests[i].min_size) && (size <= tests[i].max_size))
+		{
+			if (!tests[i].size_step || ((size - tests[i].min_size) % tests[i].size_step == 0))
+			{
+				for (j = 0; j < sizeof(tests[i].dimensions) / sizeof(tests[i].dimensions[0]); j++)
+				{
+					params[j] = size / tests[i].dimensions[j].size_divisor;
+				}
+				return 1;
+			}
+		}
+	}
+
+	for (i = 0; i < sizeof(tests[0].dimensions) / sizeof(tests[0].dimensions[0]); i++)
+		params[i] = (UINT32) -1;
+	return 0;
+}
+
+/*-------------------------------------------------
+	validate_construct_formatdriver - consistency
+	checks on format drivers
+-------------------------------------------------*/
+
+#ifdef MAME_DEBUG
+void validate_construct_formatdriver(struct InternalBdFormatDriver *drv, int geometry_optnum)
+{
+	int i;
+	if (geometry_optnum)
+	{
+		for(i = 0; (i < sizeof(drv->geometry_options) / sizeof(drv->geometry_options[0])) && drv->geometry_options[i]; i++)
+			assert(process_geometry_string(drv->geometry_options[i], NULL, 0));
+	}
+	else
+	{
+		assert(drv->header_decode);
+	}
 }
 #endif

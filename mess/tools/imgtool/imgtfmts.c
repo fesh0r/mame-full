@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include "imgtoolx.h"
 #include "snprintf.h"
 #include "formats.h"
@@ -201,6 +202,27 @@ int imgtool_bdf_is_readonly(IMAGE *img)
 	return bdf_is_readonly(get_bdf(img));
 }
 
+static void process_options(const char *geo, size_t *i, int *minimum, int *maximum)
+{
+	int value;
+	char c;
+
+	do
+	{
+		while(geo[*i] == ' ')
+			(*i)++;
+		sscanf(geo + *i, "%i", &value);
+		while((geo[*i] == ' ') || isdigit(geo[*i]))
+			(*i)++;
+		c = geo[(*i)++];
+
+		if ((*minimum < 0) || (*minimum > value))
+			*minimum = value;
+		if ((*maximum < 0) || (*maximum < value))
+			*maximum = value;
+	}
+	while(c == '/');
+}
 
 int imgtool_bdf_formatdrvctor(struct ImageModuleCtorParams *params, const formatdriver_ctor *formats)
 {
@@ -208,7 +230,7 @@ int imgtool_bdf_formatdrvctor(struct ImageModuleCtorParams *params, const format
 	struct ImageModule *imgmod = params->imgmod;
 	struct OptionTemplate *createoptions;
 	size_t max_opts;
-	size_t i;
+	size_t i, j;
 	struct InternalBdFormatDriver drv;
 	int tracks_min = -1, tracks_max = 0;
 	int heads_min = -1, heads_max = 0;
@@ -235,26 +257,12 @@ int imgtool_bdf_formatdrvctor(struct ImageModuleCtorParams *params, const format
 	createoptions = imgmod->createoptions_template;
 	max_opts = sizeof(imgmod->createoptions_template) / sizeof(imgmod->createoptions_template[0]);
 
-	for (i = 0; drv.tracks_options[i] && (i < sizeof(drv.tracks_options) / sizeof(drv.tracks_options[0])); i++)
+	for (i = 0; (i < sizeof(drv.geometry_options) / sizeof(drv.geometry_options[0])) && drv.geometry_options[i]; i++)
 	{
-		if ((tracks_min < 0) || (drv.tracks_options[i] < tracks_min))
-			tracks_min = drv.tracks_options[i];
-		if ((tracks_max < 0) || (drv.tracks_options[i] > tracks_max))
-			tracks_max = drv.tracks_options[i];
-	}
-	for (i = 0; drv.heads_options[i] && (i < sizeof(drv.heads_options) / sizeof(drv.heads_options[0])); i++)
-	{
-		if ((heads_min < 0) || (drv.heads_options[i] < heads_min))
-			heads_min = drv.heads_options[i];
-		if ((heads_max < 0) || (drv.heads_options[i] > heads_max))
-			heads_max = drv.heads_options[i];
-	}
-	for (i = 0; drv.sectors_options[i] && (i < sizeof(drv.sectors_options) / sizeof(drv.sectors_options[0])); i++)
-	{
-		if ((sectors_min < 0) || (drv.sectors_options[i] < sectors_min))
-			sectors_min = drv.sectors_options[i];
-		if ((sectors_max < 0) || (drv.sectors_options[i] > sectors_max))
-			sectors_max = drv.sectors_options[i];
+		j = 0;
+		process_options(drv.geometry_options[i], &j, &tracks_min, &tracks_max);
+		process_options(drv.geometry_options[i], &j, &heads_min, &heads_max);
+		process_options(drv.geometry_options[i], &j, &sectors_min, &sectors_max);
 	}
 
 	createoptions[OPT_TRACKS].name = "tracks";

@@ -211,15 +211,17 @@ static void specify_extension(char *extbuf, size_t extbuflen, formatdriver_ctor 
 {
 	struct InternalBdFormatDriver drv;
 	size_t len;
+	const char *extension;
 
 	format(&drv);
 
-	if (drv.extension)
+	extension = drv.extensions;
+	while(extension && *extension)
 	{
 		while(*extbuf)
 		{
 			/* already have this extension? */
-			if (!strcmpi(extbuf, drv.extension))
+			if (!strcmpi(extbuf, extension))
 				return;
 
 			len = strlen(extbuf) + 1;
@@ -227,8 +229,10 @@ static void specify_extension(char *extbuf, size_t extbuflen, formatdriver_ctor 
 			extbuflen -= len;
 		}
 
-		assert(strlen(drv.extension)+1 <= extbuflen);
-		strncpyz(extbuf, drv.extension, extbuflen);
+		assert(strlen(extension)+1 <= extbuflen);
+		strncpyz(extbuf, extension, extbuflen);
+
+		extension += strlen(extension) + 1;
 	}
 }
 

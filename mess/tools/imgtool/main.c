@@ -557,8 +557,8 @@ static void listoptions(const struct OptionTemplate *opttemplate)
 
 	assert(opttemplate);
 
-	fprintf(stdout, "Option   Type      Min  Max  Default Description\n");
-	fprintf(stdout, "-------- --------- ---- ---- ------- -----------\n");
+	fprintf(stdout, "Option     Type      Min  Max  Default Description\n");
+	fprintf(stdout, "---------- --------- ---- ---- ------- -----------\n");
 
 	while(opttemplate->name) {
 		minval = maxval = "";
@@ -592,7 +592,7 @@ static void listoptions(const struct OptionTemplate *opttemplate)
 
 		snprintf(buf1, sizeof(buf1) / sizeof(buf1[0]), "--%s", opttemplate->name);
 
-		fprintf(stdout, "%8s %-9s %4s %4s %7s %s\n", buf1, attrtypename, minval, maxval,
+		fprintf(stdout, "%10s %-9s %4s %4s %7s %s\n", buf1, attrtypename, minval, maxval,
 			opttemplate->defaultvalue ? opttemplate->defaultvalue : "",
 			opttemplate->description ? opttemplate->description : "");
 		opttemplate++;

@@ -3,10 +3,8 @@
 BLOCKDEVICE_FORMATDRIVER_START( apple2_dsk )
 	BDFD_NAME( "dsk" )
 	BDFD_HUMANNAME( "DOS3.3 Order Disk Image" )
-	BDFD_EXTENSION( "dsk" )
-	BDFD_TRACKS_OPTION( 35 )
-	BDFD_SECTORS_OPTION( 16 )
-	BDFD_BYTES_PER_SECTOR( 256 )
+	BDFD_EXTENSIONS( "do\0dsk\0" )
+	BDFD_GEOMETRY( 35,1,16,256 )
 BLOCKDEVICE_FORMATDRIVER_END
 
 /* ----------------------------------------------------------------------- */
