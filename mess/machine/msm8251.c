@@ -20,10 +20,19 @@ static void msm8251_update_tx_ready(void);
 
 static void msm8251_in_callback(int id, unsigned long state)
 {
+	int changed;
+
+	changed = uart.connection.input_state^state;
+
 	uart.connection.input_state = state;
 
-	msm8251_update_tx_ready();
-
+	/* did cts change state? */
+	if (changed & SERIAL_STATE_CTS)
+	{
+		/* yes */
+		/* update tx ready */
+		msm8251_update_tx_ready();
+	}
 }
 
 
@@ -37,16 +46,15 @@ void	msm8251_init(struct msm8251_interface *iface)
 	{
 		memcpy(&uart.interface, iface, sizeof(struct msm8251_interface));
 	}
-	
-	uart.baud_rate = -1;
-	/* reset chip */
-	msm8251_reset();
 
 	/* setup this side of the serial connection */
 	serial_connection_init(&uart.connection);
 	serial_connection_set_in_callback(&uart.connection, msm8251_in_callback);
-	transmit_register_reset(&uart.transmit_reg);
-	receive_register_reset(&uart.receive_reg);
+	uart.connection.input_state = 0;	
+	uart.baud_rate = -1;
+	/* reset chip */
+	msm8251_reset();
+
 }
 
 /* stop */
@@ -61,7 +69,7 @@ void	msm8251_stop(void)
 
 static void msm8251_update_rx_ready(void)
 {
-	UINT8 state;
+	int state;
 
 	state = uart.status & MSM8251_STATUS_RX_READY;
 
@@ -78,39 +86,52 @@ static void msm8251_update_rx_ready(void)
 
 static void uart_timer_callback(int id)
 {
-	/* get bit received from other side and update receive register */
-	receive_register_update_bit(&uart.receive_reg, get_in_data_bit(uart.connection.input_state));
-	
-	if (uart.receive_reg.flags & RECEIVE_REGISTER_FULL)
+	/* receive enable? */
+	if (uart.command & (1<<2))
 	{
-		receive_register_extract(&uart.receive_reg, &uart.data_form);
-		msm8251_receive_character(uart.receive_reg.byte_received);
-	}
-
-	/* transmit register full? */
-	if ((uart.status & MSM8251_STATUS_TX_EMPTY)==0)
-	{
-		/* if transmit reg is empty */
-		if (uart.transmit_reg.flags & TRANSMIT_REGISTER_EMPTY)
+		//logerror("MSM8251\n");
+		/* get bit received from other side and update receive register */
+		receive_register_update_bit(&uart.receive_reg, get_in_data_bit(uart.connection.input_state));
+		
+		if (uart.receive_reg.flags & RECEIVE_REGISTER_FULL)
 		{
-			/* set it up */
-			transmit_register_setup(&uart.transmit_reg, &uart.data_form, uart.data);
-			/* msm8251 transmit reg now empty */
-			uart.status |=MSM8251_STATUS_TX_EMPTY;
-			uart.flags |=MSM8251_TX_READY;
-			uart.status |=MSM8251_STATUS_TX_READY;
-			msm8251_update_tx_empty();
-			msm8251_update_tx_ready();
+			receive_register_extract(&uart.receive_reg, &uart.data_form);
+			msm8251_receive_character(uart.receive_reg.byte_received);
 		}
 	}
-	
-	/* if transmit is not empty... transmit data */
-	if ((uart.transmit_reg.flags & TRANSMIT_REGISTER_EMPTY)==0)
+
+
+	/* transmit enable? */
+	if (uart.command & (1<<0))
 	{
-//		logerror("MSM8251\n");
-		transmit_register_send_bit(&uart.transmit_reg, &uart.connection);
+
+		/* transmit register full? */
+		if ((uart.status & MSM8251_STATUS_TX_READY)==0)
+		{
+			/* if transmit reg is empty */
+			if ((uart.transmit_reg.flags & TRANSMIT_REGISTER_EMPTY)!=0)
+			{
+				/* set it up */
+				transmit_register_setup(&uart.transmit_reg, &uart.data_form, uart.data);
+				/* msm8251 transmit reg now empty */
+				uart.status |=MSM8251_STATUS_TX_EMPTY;
+				/* ready for next transmit */
+				uart.status |=MSM8251_STATUS_TX_READY;
+			
+				msm8251_update_tx_empty();
+				msm8251_update_tx_ready();
+			}
+		}
+		
+		/* if transmit is not empty... transmit data */
+		if ((uart.transmit_reg.flags & TRANSMIT_REGISTER_EMPTY)==0)
+		{
+	//		logerror("MSM8251\n");
+			transmit_register_send_bit(&uart.transmit_reg, &uart.connection);
+		}
 	}
 
+#if 0
 	/* hunt mode? */
 	/* after each bit has been shifted in, it is compared against the current sync byte */
 	if (uart.command & (1<<7))
@@ -135,24 +156,23 @@ static void uart_timer_callback(int id)
 			uart.sync_byte_offset = 0;
 		}
 	}
+#endif
 }
 
 
 static void msm8251_update_tx_ready(void)
 {
-	UINT8 state;
-	unsigned long previous_flags;
-
-	previous_flags = uart.flags;
-
 	/* clear tx ready state */
-	uart.flags &=~MSM8251_TX_READY;
+	int tx_ready;
 	
 	/* tx ready output is set if:
 		DB Buffer Empty &
 		CTS is set &
 		Transmit enable is 1 
 	*/
+
+
+	tx_ready = 0;
 
 	/* transmit enable? */
 	if ((uart.command & (1<<0))!=0)
@@ -163,25 +183,26 @@ static void msm8251_update_tx_ready(void)
 			if (uart.status & MSM8251_STATUS_TX_EMPTY)
 			{
 				/* enable transfer */
-				uart.flags |=MSM8251_TX_READY;
+				tx_ready = 1;
 			}
 		}
 	}
 
-	/* did state change? */
-	if (((uart.flags^previous_flags) & MSM8251_TX_READY)!=0)
-	{
-		state = uart.flags & MSM8251_TX_READY;
-
-		if (uart.interface.tx_ready_callback)
-			uart.interface.tx_ready_callback((state!=0));
-	}
+	if (uart.interface.tx_ready_callback)
+		uart.interface.tx_ready_callback(tx_ready);
 }
 
 static void msm8251_update_tx_empty(void)
 {
+	if (uart.status & MSM8251_STATUS_TX_EMPTY)
+	{
+		/* tx is in marking state (high) when tx empty! */
+		set_out_data_bit(uart.connection.State,1);
+		serial_connection_out(&uart.connection);
+	}
 	if (uart.interface.tx_empty_callback)
 		uart.interface.tx_empty_callback(((uart.status & MSM8251_STATUS_TX_EMPTY)!=0));
+	
 }
 
 /* set baud rate */
@@ -208,12 +229,32 @@ void	msm8251_reset(void)
 
 	/* what is the default setup when the 8251 has been reset??? */
 
+	/* msm8251 datasheet explains the state of tx pin at reset */
+	/* tx is set to 1 */
+	set_out_data_bit(uart.connection.State,1);
+
+	/* assumption, rts is set to 1 */
+	uart.connection.State |= SERIAL_STATE_RTS;
+	serial_connection_out(&uart.connection);
+
+	transmit_register_reset(&uart.transmit_reg);
+	receive_register_reset(&uart.receive_reg);
+	/* expecting mode byte */
 	uart.flags |= MSM8251_EXPECTING_MODE;
+	/* not expecting a sync byte */
 	uart.flags &= ~MSM8251_EXPECTING_SYNC_BYTE;
-	uart.status |= MSM8251_STATUS_TX_EMPTY | MSM8251_STATUS_TX_READY;
-	
+
+	/* no character to read by cpu */
+	/* transmitter is ready and is empty */
+	uart.status = MSM8251_STATUS_TX_EMPTY | MSM8251_STATUS_TX_READY;
+	uart.mode_byte = 0;
+	uart.command = 0;
+
+	/* update tx empty pin output */
 	msm8251_update_tx_empty();
+	/* update rx ready pin output */
 	msm8251_update_rx_ready();
+	/* update tx ready pin output */
 	msm8251_update_tx_ready();
 }
 
@@ -239,6 +280,7 @@ WRITE_HANDLER(msm8251_control_w)
 				/* finished transfering sync bytes, now expecting command */
 				uart.flags &= ~(MSM8251_EXPECTING_MODE | MSM8251_EXPECTING_SYNC_BYTE);
 				uart.sync_byte_offset = 0;
+			//	uart.status = MSM8251_STATUS_TX_EMPTY | MSM8251_STATUS_TX_READY;
 			}
 		}
 		else
@@ -361,6 +403,7 @@ WRITE_HANDLER(msm8251_control_w)
 #endif
 				/* not expecting mode byte now */
 				uart.flags &= ~MSM8251_EXPECTING_MODE;
+//				uart.status = MSM8251_STATUS_TX_EMPTY | MSM8251_STATUS_TX_READY;
 			}
 			else
 			{
@@ -493,6 +536,13 @@ WRITE_HANDLER(msm8251_control_w)
 			uart.connection.State |= SERIAL_STATE_DTR;
 		}
 
+		if ((data & (1<<0))==0)
+		{
+			/* held in high state when transmit disable */
+			set_out_data_bit(uart.connection.State,1);
+		}
+
+
 		/* refresh outputs */
 		serial_connection_out(&uart.connection);
 
@@ -506,6 +556,7 @@ WRITE_HANDLER(msm8251_control_w)
 			msm8251_reset();
 		}
 
+		msm8251_update_rx_ready();
 		msm8251_update_tx_ready();
 
 	}
@@ -530,17 +581,17 @@ WRITE_HANDLER(msm8251_data_w)
 
 	/* writing clears */
 	uart.status &=~MSM8251_STATUS_TX_READY;
-	/* writing sets - it's not empty */
-	uart.status &= ~MSM8251_STATUS_TX_EMPTY;
+
+	/* if transmitter is active, then tx empty will be signalled */
 
 	msm8251_update_tx_ready();
-	msm8251_update_tx_empty();
-
 }
 
 /* called when last bit of data has been received */
 static void msm8251_receive_character(UINT8 ch)
 {
+	logerror("msm8251 receive char: %02x\n",ch);
+
 	uart.data = ch;
 	
 	/* char has not been read and another has arrived! */
@@ -556,11 +607,11 @@ static void msm8251_receive_character(UINT8 ch)
 /* read data */
 READ_HANDLER(msm8251_data_r)
 {
+	logerror("read data: %02x\n",uart.data);
 	/* reading clears */
 	uart.status &= ~MSM8251_STATUS_RX_READY;
 	
 	msm8251_update_rx_ready();
-
 	return uart.data;
 }
 
