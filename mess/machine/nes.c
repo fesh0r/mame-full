@@ -116,13 +116,13 @@ static void init_nes_core (void)
 	memcpy (battery_ram, battery_data, BATTERY_SIZE);
 }
 
-void init_nes (void)
+DRIVER_INIT( nes )
 {
 	ppu_scanlines_per_frame = NTSC_SCANLINES_PER_FRAME;
 	init_nes_core ();
 }
 
-void init_nespal (void)
+DRIVER_INIT( nespal )
 {
 	ppu_scanlines_per_frame = PAL_SCANLINES_PER_FRAME;
 	init_nes_core ();
