@@ -572,6 +572,12 @@ all: $(EXENAME) $(TOOLS) $(HELPFILE)
 all: $(EXENAME) $(TOOLS)
 !endif
 
+# workaround for a compiler optimization bug:
+!ifndef DEBUG
+$(OBJ)/input.o: src/input.c
+	$(CC) $(DEFS) $(CFLAGSGLOBAL) -Oi -Ot -Oy -Ob1 -Gs -G5 -Gr -DCLIB_DECL=__cdecl -DDECL_SPEC=__cdecl -Fo$@ -c src/input.c
+!endif
+
 $(EXENAME): $(COREOBJS) $(WIN32_OBJS) $(OBJS) $(RES)
 	$(LD) @<<
         $(LDFLAGS) $(WINDOWS_PROGRAM) -out:$(EXENAME) $(COREOBJS) $(WIN32_OBJS) $(OBJS) $(RES) $(LIBS) $(NET_LIBS)

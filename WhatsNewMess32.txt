@@ -6,6 +6,9 @@ Whats new:
 
 - New GUI with a software picker (No more Image 0-3 menu!) [Nate Woods]
 
+- Worked around a MSFT compiler bug that caused the emulation to stop on the
+  disclaimer screens. [Nate Woods]
+
 ----------
 0.37 BETA 4
 ------------
