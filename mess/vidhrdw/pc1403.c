@@ -110,17 +110,23 @@ static const POCKETC_FIGURE busy={
 	"1 1 1 1 1  1",
 	"1 1  1  1  1e" 
 }, pro={ 
-	"11  11   1  ",
+	"11  11   1",
 	"1 1 1 1 1 1",
 	"11  11  1 1",
 	"1   1 1 1 1",
 	"1   1 1  1e" 
-}, japan={ 
-	"  1  1  11   1  1  1",
-	"  1 1 1 1 1 1 1 11 1",
-	"  1 111 11  111 1 11",
-	"1 1 1 1 1   1 1 1  1",
-	" 1  1 1 1   1 1 1  1e" 
+}, kana={ 
+	"  1     1 ",
+	" 11111 111",
+	"  1  1  1 ",
+	" 1   1  1 ",
+	"1   1  1e" 
+}, kana_small={
+	"    1    ",
+	" 1  1  1 ",
+	"1   1   1",
+	"    1    ",
+	"   1e"
 }, sml={ 
 	" 11 1 1 1",
 	"1   111 1",
@@ -194,7 +200,6 @@ void pc1403_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 	osd_mark_dirty(RIGHT, DOWN, RIGHT+(24*(5+1)-1)*2-1, DOWN+7*3-1);
     }
 
-
     pocketc_draw_special(bitmap,RIGHT,DOWN-13,busy,
 			 pc1403_lcd.reg[0x3d]&1?color[1]:color[0]);
     pocketc_draw_special(bitmap,RIGHT+18,DOWN-13,def,
@@ -204,10 +209,12 @@ void pc1403_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
     pocketc_draw_special(bitmap,RIGHT+63,DOWN-13,hyp,
 			 pc1403_lcd.reg[0x3d]&8?color[1]:color[0]);
     
-    pocketc_draw_special(bitmap,RIGHT+100,DOWN-13,sml, // position, looking?
-			 pc1403_lcd.reg[0x3c]&4?color[1]:color[0]);
-    pocketc_draw_special(bitmap,RIGHT+140,DOWN-13,japan, // position, looking?
+    pocketc_draw_special(bitmap,RIGHT+100,DOWN-13,kana,
 			 pc1403_lcd.reg[0x3c]&1?color[1]:color[0]);
+    pocketc_draw_special(bitmap,RIGHT+120,DOWN-13,kana_small,
+			 pc1403_lcd.reg[0x3c]&2?color[1]:color[0]);
+    pocketc_draw_special(bitmap,RIGHT+160,DOWN-13,sml,
+			 pc1403_lcd.reg[0x3c]&4?color[1]:color[0]);
 
     pocketc_draw_special(bitmap,RIGHT+191,DOWN-13,de,
 			 pc1403_lcd.reg[0x7c]&0x20?color[1]:color[0]);
