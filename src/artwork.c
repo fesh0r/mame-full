@@ -3256,3 +3256,17 @@ intersect:
 		hintbase[closestindex] = (hintstart << 16) | hintend;
 	}
 }
+
+/* export some variables needed by osd vector draw code */
+const struct rectangle *artwork_get_game_rect(void)
+{
+	if(artwork_list)
+		return &gamerect;
+	else
+		return NULL;
+}
+
+int artwork_overlay_active(void)
+{
+	return num_overlays;
+}

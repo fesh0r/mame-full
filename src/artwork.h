@@ -97,5 +97,9 @@ void artwork_show(const char *tag, int show);
 
 mame_file *artwork_load_artwork_file(const struct GameDriver **driver);
 
-#endif /* ARTWORK_H */
+/* export some variables needed by osd vector draw code */
+const struct rectangle *artwork_get_game_rect(void);
+int artwork_overlay_active(void);
 
+
+#endif /* ARTWORK_H */
