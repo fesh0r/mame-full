@@ -84,6 +84,26 @@ const struct ImageModule *imgtool_library_findmodule(
 
 
 
+const struct ImageModule *imgtool_library_iterate(
+	imgtool_library *library, const struct ImageModule *module)
+{
+	return module ? module->next : library->first;
+}
+
+
+
+const struct ImageModule *imgtool_library_index(
+	imgtool_library *library, int i)
+{
+	const struct ImageModule *module;
+	module = library->first;
+	while(module && i--)
+		module = module->next;
+	return module;
+}
+
+
+
 void *imgtool_library_alloc(imgtool_library *library, size_t mem)
 {
 	return pool_malloc(&library->pool, mem);

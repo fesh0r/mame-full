@@ -85,4 +85,9 @@ const struct ImageModule *imgtool_library_findmodule(
 void *imgtool_library_alloc(imgtool_library *library, size_t mem);
 char *imgtool_library_strdup(imgtool_library *library, const char *s);
 
+const struct ImageModule *imgtool_library_iterate(
+	imgtool_library *library, const struct ImageModule *module);
+const struct ImageModule *imgtool_library_index(
+	imgtool_library *library, int i);
+
 #endif /* LIBRARY_H */
