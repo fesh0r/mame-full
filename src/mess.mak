@@ -298,6 +298,7 @@ $(OBJ)/p2000.a:    \
 
 $(OBJ)/amstrad.a:  \
           $(OBJ)/machine/8255ppi.o       \
+	  $(OBJ)/mess/machine/flopdrv.o  \
           $(OBJ)/mess/vidhrdw/hd6845s.o  \
           $(OBJ)/mess/vidhrdw/amstrad.o  \
           $(OBJ)/mess/vidhrdw/kc.o       \
