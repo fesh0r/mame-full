@@ -210,7 +210,7 @@ int xv_open_display(void)
 {
 	XGCValues xgcv;
         XvAttribute *attr;
-	int height, width;
+	unsigned int height, width;
         int i, count;
         int dest_bpp=0;
 
@@ -533,13 +533,13 @@ void xv_update_display(struct mame_bitmap *bitmap,
   Window _dw;
   int _dint;
   unsigned int _duint;
-  int pw,ph;
+  unsigned int pw,ph;
   struct rectangle vis_area = *vis_in_dest_out;
 
   sysdep_display_orient_bounds(&vis_area, bitmap->width, bitmap->height);
 
   xv_update_display_func(bitmap, vis_in_dest_out, dirty_area,
-    palette, xvimage->data, xvimage->width);
+    palette, (unsigned char *)xvimage->data, xvimage->width);
 
   XGetGeometry(display, window, &_dw, &_dint, &_dint, &window_width, &window_height, &_duint, &_duint);
   if (sysdep_display_params.fullscreen)

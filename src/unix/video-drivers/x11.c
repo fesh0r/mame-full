@@ -413,7 +413,7 @@ int x11_create_resizable_window(unsigned int *width, unsigned int *height)
       kept to sysdep_display_params.aspect .
    2: Resizable initial size is width and height
    3: Fullscreen return width and height in width and height */
-int x11_create_window(int *width, int *height, int type)
+int x11_create_window(unsigned int *width, unsigned int *height, int type)
 {
 	XSetWindowAttributes winattr;
 	XEvent event;
@@ -483,8 +483,8 @@ void x11_set_window_hints(unsigned int width, unsigned int height, int type)
 {
         XWMHints wm_hints;
 	XSizeHints hints = x11_init_hints;
-	int x = 1024;
-	int y = 1024;
+	unsigned int x = 1024;
+	unsigned int y = 1024;
 
 	/* WM hints */
         wm_hints.input    = True;

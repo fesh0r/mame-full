@@ -267,7 +267,8 @@ int mode_match(int width, int height, int depth, int dga)
 
 /* calculate a virtual screen contained within the given dimensions
    which will give the game the correct aspect ratio */
-void mode_clip_aspect(int width, int height, int *corr_width, int *corr_height)
+void mode_clip_aspect(unsigned int width, unsigned int height, 
+		unsigned int *corr_width, unsigned int *corr_height)
 {
   double ch, cw;
 
@@ -292,7 +293,8 @@ void mode_clip_aspect(int width, int height, int *corr_width, int *corr_height)
 
 /* calculate a screen with at least the given dimensions
    which will give the game the correct aspect ratio */
-void mode_stretch_aspect(int width, int height, int *corr_width, int *corr_height)
+void mode_stretch_aspect(unsigned int width, unsigned int height, 
+		unsigned int *corr_width, unsigned int *corr_height)
 {
   double ch, cw;
 

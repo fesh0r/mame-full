@@ -87,6 +87,14 @@ Release 0.87.1
 	  * Added a "-fxresolution (-fxres)" option for GLIDE: Now "-geometry 
 	    (-geo)" can be used for hardware-scaled windows (Xv, OpenGL) 
 	    without causing GLIDE to complain about an invalid resolution.
+	  * Completely rewrote the handling of visual area changes in order to 
+	    catch a few corner cases: In non-hardware scaling display targets, 
+	    the display is no longer destroyed and recreated when the visual 
+	    area changes; only the window is resized or the video mode changed.
+	  * Made XIL a separate X11 mode, which can be enabled with "-x11-mode 
+	    (-x11) 4" or left-alt + end.
+	  * Fixed a rounding error which caused vector games to get a slightly 
+	    different resolution than requested.
 	- Added an ALSA mixer plugin, which can be enabled with 
 	  "-sound-mixer-plugin (-smp) alsa".  The new "-alsa-mixer (-amixer)" 
 	  option accepts the name of a "simple mixer control", which you can 

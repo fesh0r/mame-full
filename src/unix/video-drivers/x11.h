@@ -78,7 +78,7 @@ int x11_create_resizable_window(unsigned int *width, unsigned int *height);
       kept to sysdep_display_params.aspect .
    2: Resizable initial size is width and height
    3: Fullscreen return width and height in width and height */
-int x11_create_window(int *width, int *height, int type);
+int x11_create_window(unsigned int *width, unsigned int *height, int type);
 /* Set the hints for a window, window-type can be:
    0: Fixed size
    1: Resizable, aspect is always kept to sysdep_display_params.aspect .

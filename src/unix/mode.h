@@ -5,8 +5,10 @@
 
 /* mode handling functions */
 void mode_set_aspect_ratio(double display_resolution_aspect_ratio);
-void mode_clip_aspect(int width, int height, int *corr_width, int *corr_height);
-void mode_stretch_aspect(int width, int height, int *corr_width, int *corr_height);
+void mode_clip_aspect(unsigned int width, unsigned int height, 
+		unsigned int *corr_width, unsigned int *corr_height);
+void mode_stretch_aspect(unsigned int width, unsigned int height, 
+		unsigned int *corr_width, unsigned int *corr_height);
 /* match a given mode to the needed width, height and aspect ratio to
    perfectly display a game. This function returns 0 for a not usable mode
    and 100 for the perfect mode +10 for a mode with a well matched depth and

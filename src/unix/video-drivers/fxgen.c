@@ -40,12 +40,12 @@ struct TexSquare
 
 int vscrntlx;
 int vscrntly;
-int vscrnwidth;
-int vscrnheight;
+unsigned int vscrnwidth;
+unsigned int vscrnheight;
 int vecvscrntlx;
 int vecvscrntly;
-int vecvscrnwidth;
-int vecvscrnheight;
+unsigned int vecvscrnwidth;
+unsigned int vecvscrnheight;
 unsigned int fxwidth;
 unsigned int fxheight;
 

@@ -1202,7 +1202,7 @@ int gl_set_windowsize(void)
   }
   else
   {
-          int vw, vh;
+          unsigned int vw, vh;
           int vscrndx;
           int vscrndy;
 
