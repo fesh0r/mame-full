@@ -2636,22 +2636,22 @@ static const struct IODevice io_pc[] = {
 
 /*	   YEAR  NAME	   PARENT	 MACHINE   INPUT	 INIT	   COMPANY	 FULLNAME */
 COMP ( 1982, pc,	   0,		 pccga,    pccga,	 pc,	   "International Business Machines",  "PC" )
-COMP ( 1983, pcmda,    pc,		 pcmda,    pcmda,	 pc,	   "International Business Machines",  "PC-XT, MDA" )
-COMP ( 1983, pccga,    pc,		 pccga,    pccga,	 pc,	   "International Business Machines",  "PC-XT, CGA" )
+COMP ( 1983, pcmda,    pc,		 pcmda,    pcmda,	 pc,	   "International Business Machines",  "PC-XT (MDA)" )
+COMP ( 1983, pccga,    pc,		 pccga,    pccga,	 pc,	   "International Business Machines",  "PC-XT (CGA)" )
 
 // pcjr (better graphics, better sound)
 COMPX( 1987, t1000hx,  pc,		 t1000hx,  tandy1t,  t1000hx,  "Tandy Radio Shack",  "Tandy 1000HX", GAME_IMPERFECT_COLORS )
 
 // xt class (pc but 8086)
-COMPX ( 198?, xtvga,    pc,		 xtvga,    xtvga,	 pc_vga,   "International Business Machines",  "PC-XT, VGA, MF2 Keyboard", GAME_NOT_WORKING )
+COMPX ( 198?, xtvga,    pc,		 xtvga,    xtvga,	 pc_vga,   "International Business Machines",  "PC-XT (VGA, MF2 Keyboard)", GAME_NOT_WORKING )
 COMPX ( 1987, pc1512,   pc,		 pc1512,   pc1512,	 pc1512,   "Amstrad plc",  "Amstrad PC1512", GAME_NOT_WORKING )
-COMPX ( 1987, pc1640,   pc,		 pc1640,   pc1640,	 pc1640,   "Amstrad plc",  "Amstrad PC1640/PC6400(US)", GAME_NOT_WORKING )
+COMPX ( 1987, pc1640,   pc,		 pc1640,   pc1640,	 pc1640,   "Amstrad plc",  "Amstrad PC1640 / PC6400 (US)", GAME_NOT_WORKING )
 // ppc640 portable pc1512?, nec processor?
 // pc2086 pc1512 with vga??
 
 // at class (many differences to xt)
-COMPX ( 1984, atcga,    pc,		 atcga,    atcga,	 at,	   "International Business Machines",  "PC-AT, CGA, MF2 Keyboard", GAME_NOT_WORKING )
+COMPX ( 1984, atcga,    pc,		 atcga,    atcga,	 at,	   "International Business Machines",  "PC-AT (CGA, MF2 Keyboard)", GAME_NOT_WORKING )
 
 // please leave these as testdriver
-COMP ( 1983, xtcga,    pc,		 xtcga,    xtcga,	 pc,	   "International Business Machines",  "PC-XT, CGA, MF2 Keyboard" )
-COMP ( 198?, atvga,    pc,		 atvga,    atvga,	 at_vga,   "International Business Machines",  "PC-AT, VGA, MF2 Keyboard" )
+COMP ( 1983, xtcga,    pc,		 xtcga,    xtcga,	 pc,	   "International Business Machines",  "PC-XT (CGA, MF2 Keyboard)" )
+COMP ( 198?, atvga,    pc,		 atvga,    atvga,	 at_vga,   "International Business Machines",  "PC-AT (VGA, MF2 Keyboard)" )
