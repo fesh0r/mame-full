@@ -1,4 +1,4 @@
-#include "6883sam.h"
+#include "includes/6883sam.h"
 #include "state.h"
 
 /* The Motorola 6883 SAM has 16 bits worth of state, but the state is changed
