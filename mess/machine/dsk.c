@@ -12,7 +12,7 @@
 
 #include <stdarg.h>
 #include "driver.h"
-#include "includes/nec765.h"
+#include "includes/flopdrv.h"
 #include "includes/dsk.h"
 /* disk image and extended disk image support code */
 /* supports up to 84 tracks and 2 sides */
@@ -99,7 +99,7 @@ int dsk_floppy_load(int id)
 		{
 			dsk_disk_image_init(thedrive); /* initialise dsk */
 			floppy_drive_set_flag_state(id, FLOPPY_DRIVE_DISK_PRESENT, 1);
-			floppy_drive_set_interface(id,&dsk_floppy_interface);
+            floppy_drive_set_disk_image_interface(id,&dsk_floppy_interface);
 			return INIT_OK;
 		}
 	}
@@ -445,11 +445,14 @@ void dsk_get_id_callback(int drive, chrn_id *id, int id_index, int side)
 	id->R = track_header[id_offset + 2];
 	id->N = track_header[id_offset + 3];
 	id->flags = 0;
+        id->data_id = id_index;
 
 	if (track_header[id_offset + 5] & 0x040)
 	{
 		id->flags |= ID_FLAG_DELETED_DATA;
 	}
+
+
 
 
 //	id->ST0 = track_header[id_offset + 4];
@@ -528,6 +531,7 @@ void dsk_read_sector_data_into_buffer(int drive, int side, int index1, char *ptr
 	if (pSectorData!=NULL)
 	{
 		memcpy(ptr, pSectorData, length);
+
 	}
 }
 
