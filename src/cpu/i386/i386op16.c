@@ -397,8 +397,16 @@ static void I386OP(call_abs16)(void)		// Opcode 0x9a
 		/* TODO */
 		osd_die("i386: call_abs16 in protected mode unimplemented\n");
 	} else {
-		PUSH32( I.sreg[CS].selector );
-		PUSH32( I.eip );
+		if (I.sreg[CS].d)
+		{
+			PUSH32( I.sreg[CS].selector );
+			PUSH32( I.eip );
+		}
+		else
+		{
+			PUSH16( I.sreg[CS].selector );
+			PUSH16( I.eip );
+		}
 		I.sreg[CS].selector = ptr;
 		I.eip = offset;
 		CYCLES(17 + 1);		/* TODO: Timing = 17 + m */
