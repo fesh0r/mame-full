@@ -103,11 +103,13 @@ enum
 	input_port_config = 0,
 	input_port_mousex,			/* optional mouse */
 	input_port_mousey,									/* optional mouse */
-	input_port_keyboard,
+	input_port_keyboard,								/* /4x only */
 
 	input_port_mouse_buttons = input_port_keyboard+3,	/* /4x only: optional mouse */
-	input_port_mouse_buttons_8 = input_port_keyboard+16,/* /8 only: optional mouse */
+	input_port_mouse_buttons_8 = input_port_mousey+1,	/* /8 only: optional mouse */
 		input_port_mouse_buttons_shift = 13,			/* hack: we share this port with the wired joysticks */
+
+	input_port_keyboard_8 = input_port_mouse_buttons_8+1,/* /8 only */
 
 	input_port_caps_lock = input_port_keyboard+4,		/* /4a only */
 

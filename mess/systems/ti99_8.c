@@ -168,7 +168,7 @@ INPUT_PORTS_START(ti99_8)
 			PORT_DIPSETTING( 1 << config_mecmouse_bit, DEF_STR( On ) )
 
 
-	/* 2 ports for mouse */
+	/* 3 ports for mouse */
 	PORT_START /* Mouse - X AXIS */
 		PORT_ANALOGX( 0xff, 0x00, IPT_TRACKBALL_X | IPF_PLAYER1, 100, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
 
@@ -176,8 +176,8 @@ INPUT_PORTS_START(ti99_8)
 		PORT_ANALOGX( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_PLAYER1, 100, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
 
 	PORT_START /* Mouse - buttons */
-		PORT_BIT(0x2000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1)
-		PORT_BIT(0x4000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2)
+		PORT_BIT(0x2000, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1)
+		PORT_BIT(0x4000, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2)
 
 
 	/* 16 ports for keyboard and joystick */
@@ -341,9 +341,9 @@ static const TMS9928a_interface tms9918a_interface =
 
 static struct tms9995reset_param ti99_8_processor_config =
 {
-	/*1*/0,			/* enable automatic wait state generation */
+	0,				/* disable automatic wait state generation (right???) */
 	0,				/* no IDLE callback */
-	1
+	1				/* MP9537 mask */
 };
 
 static MACHINE_DRIVER_START(ti99_8)
@@ -403,7 +403,7 @@ ROM_START(ti99_8)
 
 	/*TMS5220 ROM space*/
 	ROM_REGION(0x8000, region_speech_rom, 0)
-	ROM_LOAD_OPTIONAL("spchrom.bin", 0x0000, 0x8000, CRC(58b155f7)) /* system speech ROM */
+	ROM_LOAD_OPTIONAL("spchrom.bin", 0x0000, 0x8000, BAD_DUMP CRC(58b155f7)) /* system speech ROM */
 
 ROM_END
 

@@ -1295,10 +1295,10 @@ READ_HANDLER ( ti99_8_r )
 	if (ti99_8_CRUS)
 	{
 		/* memory mapped ports enabled */
-		if (page == 0)
+		if ((offset >= 0x0000) && (offset < 0x2000))
 			/* ROM? */
 			return ROM0_ptr_8[offset & 0x1fff];
-		else if (page == 8)
+		else if ((offset >= 0x8000) && (offset < 0xa000))
 		{
 			/* ti99 scratch pad and memory-mapped registers */
 			/* 0x8000-0x9fff */
@@ -1423,10 +1423,10 @@ WRITE_HANDLER ( ti99_8_w )
 	if (ti99_8_CRUS)
 	{
 		/* memory mapped ports enabled */
-		if (page == 0)
+		if ((offset >= 0x0000) && (offset < 0x2000))
 			/* ROM? */
 			return;
-		else if (page == 8)
+		else if ((offset >= 0x8000) && (offset < 0xa000))
 		{
 			/* ti99 scratch pad and memory-mapped registers */
 			/* 0x8000-0x9fff */
@@ -1453,16 +1453,6 @@ WRITE_HANDLER ( ti99_8_w )
 					int i;
 
 					if (data & 1)
-					{	/* save */
-						for (i=0; i<16; i++)
-						{
-							sRAM_ptr_8[(file << 6) + (i << 2)] = ti99_8_mapper_regs[i] >> 24;
-							sRAM_ptr_8[(file << 6) + (i << 2) + 1] = ti99_8_mapper_regs[i] >> 16;
-							sRAM_ptr_8[(file << 6) + (i << 2) + 2] = ti99_8_mapper_regs[i] >> 8;
-							sRAM_ptr_8[(file << 6) + (i << 2) + 3] = ti99_8_mapper_regs[i];
-						}
-					}
-					else
 					{	/* load */
 						for (i=0; i<16; i++)
 						{
@@ -1470,6 +1460,16 @@ WRITE_HANDLER ( ti99_8_w )
 													| (sRAM_ptr_8[(file << 6) + (i << 2) + 1] << 16)
 													| (sRAM_ptr_8[(file << 6) + (i << 2) + 2] << 8)
 													| sRAM_ptr_8[(file << 6) + (i << 2) + 3];
+						}
+					}
+					else
+					{	/* save */
+						for (i=0; i<16; i++)
+						{
+							sRAM_ptr_8[(file << 6) + (i << 2)] = ti99_8_mapper_regs[i] >> 24;
+							sRAM_ptr_8[(file << 6) + (i << 2) + 1] = ti99_8_mapper_regs[i] >> 16;
+							sRAM_ptr_8[(file << 6) + (i << 2) + 2] = ti99_8_mapper_regs[i] >> 8;
+							sRAM_ptr_8[(file << 6) + (i << 2) + 3] = ti99_8_mapper_regs[i];
 						}
 					}
 				}
@@ -2152,7 +2152,7 @@ static int ti99_8_R9901_0(int offset)
 			answer |= 0x40;
 	}
 	else
-		answer = (readinputport(input_port_keyboard + KeyCol) << 6) & 0xC0;
+		answer = (readinputport(input_port_keyboard_8 + KeyCol) << 6) & 0xC0;
 
 	return answer;
 }
@@ -2182,7 +2182,8 @@ static int ti99_8_R9901_1(int offset)
 			answer |= 0x04;
 	}
 	else
-		answer = (readinputport(input_port_keyboard) >> 2) & 0x07;
+
+		answer = (readinputport(input_port_keyboard_8 + KeyCol) >> 2) & 0x07;
 
 	/* we don't take CS2 into account, as CS2 is a write-only unit */
 	/*if (device_input(image_from_devtype_and_index(IO_CASSETTE, 0)) > 0)
