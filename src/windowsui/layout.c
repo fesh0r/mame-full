@@ -32,6 +32,7 @@
 #include "resource.h"
 #include "directories.h"
 #include "options.h"
+#include "splitters.h"
 
 FOLDERDATA g_folderData[] =
 {
@@ -95,11 +96,11 @@ DIRECTORYINFO g_directoryInfo[] =
 	{ NULL }
 };
 
-const double g_dSplitterPositions[] =
+const SPLITTERINFO g_splitterInfo[] =
 {
-	0.25,
-	0.5,
-	-1
+	{ 0.25,	IDC_SPLITTER,	IDC_TREE,	IDC_LIST,		AdjustSplitter1Rect },
+	{ 0.5,	IDC_SPLITTER2,	IDC_LIST,	IDC_SSFRAME,	AdjustSplitter2Rect },
+	{ -1 }
 };
 
 const char g_szDefaultGame[] = "pacman";

@@ -52,6 +52,7 @@ int GetMinimumScreenShotWindowWidth(void);
 // we maintain an array of drivers sorted by name, useful all around
 int GetDriverIndex(const struct GameDriver *driver);
 int GetGameNameIndex(const char *name);
+int GetIndexFromSortedIndex(int sorted_index);
 
 
 #endif

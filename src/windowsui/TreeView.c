@@ -1523,6 +1523,12 @@ static int InitExtraFolders(void)
 
 	memset(ExtraFolderData, 0, MAX_EXTRA_FOLDERS * sizeof(LPEXFOLDERDATA));
 
+	/* NPW 9-Feb-2003 - MSVC stat() doesn't like stat() called with an empty
+	 * string
+	 */
+	if (dir[0] == '\0')
+		dir = ".";
+
 	if (stat(dir, &stat_buffer) != 0)
     {
 		_mkdir(dir);
@@ -1906,13 +1912,16 @@ BOOL TrySaveExtraFolder(LPTREEFOLDER lpFolder)
 
 
 	   fprintf(fp,"[FOLDER_SETTINGS]\n");
-	   if (extra_folder->m_nIconId != IDI_FOLDER)
+	   // negative values for icons means it's custom, so save 'em
+	   if (extra_folder->m_nIconId < 0)
 	   {
-		   fprintf(fp, "RootFolderIcon %s\n", ExtraFolderIcons[extra_folder->m_nIconId-ICON_MAX-1]);
+		   fprintf(fp, "RootFolderIcon %s\n",
+				   ExtraFolderIcons[(-extra_folder->m_nIconId) - ICON_MAX]);
 	   }
-	   if (extra_folder->m_nSubIconId != IDI_FOLDER)
+	   if (extra_folder->m_nSubIconId < 0)
 	   {
-		   fprintf(fp,"SubFolderIcon %s\n",ExtraFolderIcons[extra_folder->m_nSubIconId-ICON_MAX-1]);
+		   fprintf(fp,"SubFolderIcon %s\n",
+				   ExtraFolderIcons[(-extra_folder->m_nSubIconId) - ICON_MAX]);
 	   }
 
 	   /* need to loop over all our TREEFOLDERs--first the root one, then each child.
@@ -1924,10 +1933,11 @@ BOOL TrySaveExtraFolder(LPTREEFOLDER lpFolder)
 
 	   for (i=0;i<GetNumGames();i++)
 	   {
-		  if (TestBit(folder_data->m_lpGameBits,i))
-		  {
-			  fprintf(fp,"%s\n",drivers[i]->name);
-		  }
+		   int driver_index = GetIndexFromSortedIndex(i); 
+		   if (TestBit(folder_data->m_lpGameBits,driver_index))
+		   {
+			   fprintf(fp,"%s\n",drivers[driver_index]->name);
+		   }
 	   }
 
 	   /* look through the custom folders for ones with our root as parent */
@@ -1942,9 +1952,10 @@ BOOL TrySaveExtraFolder(LPTREEFOLDER lpFolder)
 			   
 			   for (i=0;i<GetNumGames();i++)
 			   {
-				   if (TestBit(folder_data->m_lpGameBits,i))
+				   int driver_index = GetIndexFromSortedIndex(i); 
+				   if (TestBit(folder_data->m_lpGameBits,driver_index))
 				   {
-					  fprintf(fp,"%s\n",drivers[i]->name);
+					   fprintf(fp,"%s\n",drivers[driver_index]->name);
 				   }
 			   }
 		   }

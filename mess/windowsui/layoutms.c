@@ -22,6 +22,7 @@
 #include "windowsui/ms32util.h"
 #include "windowsui/directories.h"
 #include "windowsui/options.h"
+#include "windowsui/Splitters.h"
 
 FOLDERDATA g_folderData[] =
 {
@@ -91,12 +92,12 @@ DIRECTORYINFO g_directoryInfo[] =
 	{ NULL }
 };
 
-const double g_dSplitterPositions[] =
+const SPLITTERINFO g_splitterInfo[] =
 {
-	0.2,
-	0.4,
-	0.6,
-	-1
+	{ 0.2,	IDC_SPLITTER,	IDC_TREE,	IDC_LIST,		AdjustSplitter1Rect },
+	{ 0.4,	IDC_SPLITTER2,	IDC_LIST,	IDC_LIST2,		AdjustSplitter1Rect },
+	{ 0.6,	IDC_SPLITTER3,	IDC_LIST2,	IDC_SSFRAME,	AdjustSplitter2Rect },
+	{ -1 }
 };
 
 const char g_szDefaultGame[] = "nes";

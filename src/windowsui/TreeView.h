@@ -131,22 +131,22 @@ typedef enum
 
 typedef struct
 {
-    LPSTR       m_lpTitle;          /* String contains the folder name */
-    UINT        m_nFolderId;        /* Index / Folder ID number */
-    int         m_nParent;          /* Parent folder index in treeFolders[] */
-    UINT        m_nIconId;          /* Icon to use with this folder */
-    DWORD       m_dwFlags;          /* Misc flags */
-    LPBITS      m_lpGameBits;       /* Game bits, represent game indices */
+    LPSTR       m_lpTitle;        // String contains the folder name
+    UINT        m_nFolderId;      // Index / Folder ID number
+    int         m_nParent;        // Parent folder index in treeFolders[]
+    int         m_nIconId;        // negative icon index into the ImageList, or IDI_xxx resource id
+    DWORD       m_dwFlags;        // Misc flags
+    LPBITS      m_lpGameBits;     // Game bits, represent game indices
 } TREEFOLDER, *LPTREEFOLDER;
 
 typedef struct
 {
-    char        m_szTitle[64];  /* Folder Title */
-    UINT        m_nFolderId;    /* ID */
-    int         m_nParent;      /* Parent Folder index in treeFolders[] */
-    DWORD       m_dwFlags;      /* Flags - Customizable and Filters */
-    UINT        m_nIconId;      /* Icon index into the ImageList */
-    UINT        m_nSubIconId;   /* Sub folder's Icon index into the ImageList */
+    char        m_szTitle[64];  // Folder Title
+    UINT        m_nFolderId;    // ID
+    int         m_nParent;      // Parent Folder index in treeFolders[]
+    DWORD       m_dwFlags;      // Flags - Customizable and Filters
+    int         m_nIconId;      // negative icon index into the ImageList, or IDI_xxx resource id
+    int         m_nSubIconId;   // negative icon index into the ImageList, or IDI_xxx resource id
 } EXFOLDERDATA, *LPEXFOLDERDATA;
 
 extern void FreeFolders(void);

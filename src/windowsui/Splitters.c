@@ -200,7 +200,7 @@ void OnSizeSplitter(HWND hWnd)
 
 		if (bMustChange)
 		{
-			nSplitterOffset[i] = (rWindowRect.right - rWindowRect.left) * g_dSplitterPositions[i];
+			nSplitterOffset[i] = (rWindowRect.right - rWindowRect.left) * g_splitterInfo[i].dPosition;
 			changed = TRUE;
 		}
 	}
@@ -384,7 +384,7 @@ void OnLButtonUp(HWND hWnd, UINT nFlags, POINTS p)
 int GetSplitterCount(void)
 {
 	int nSplitterCount = 0;
-	while(g_dSplitterPositions[nSplitterCount] > 0)
+	while(g_splitterInfo[nSplitterCount].dPosition > 0)
 		nSplitterCount++;
 	return nSplitterCount;
 }

@@ -24,7 +24,9 @@
 
 ***************************************************************************/
 #ifdef _MSC_VER
+#ifndef NONAMELESSUNION
 #define NONAMELESSUNION 
+#endif
 #endif
 
 #define WIN32_LEAN_AND_MEAN
@@ -1201,29 +1203,24 @@ void ResizePickerControls(HWND hWnd)
 	int  nListWidth, nScreenShotWidth, nTreeWidth;
 	static BOOL firstTime = TRUE;
 	int  doSSControls = TRUE;
+	int i, nSplitterCount;
 #ifdef MESS
 	int nListWidth2;
 #endif
 
+	nSplitterCount = GetSplitterCount();
 
 	/* Size the List Control in the Picker */
 	GetClientRect(hWnd, &rect);
 
-	/* Calc 1/2 of the display for the screenshot and 1/4 for the treecontrol */
+	/* Calc the display sizes based on g_splitterInfo */
 	if (firstTime)
 	{
 		RECT rWindow;
 
-#ifdef MESS
-		/* In MESS32, screenshot gets 2/5, and the treecontrol gets 1/5 */
-		nSplitterOffset[0] = rect.right / 5;
-		nListWidth = nSplitterOffset[1] = nSplitterOffset[0] * 2;
-		nListWidth2 = nSplitterOffset[2] = nSplitterOffset[0] * 3;
-#else
-		nListWidth = rect.right / 2;
-		nSplitterOffset[1] = nListWidth;
-		nSplitterOffset[0] = nListWidth / 2;
-#endif
+		for (i = 0; i < nSplitterCount; i++)
+			nSplitterOffset[i] = rect.right * g_splitterInfo[i].dPosition;
+
 		GetWindowRect(hStatusBar, &rWindow);
 		bottomMargin = rWindow.bottom - rWindow.top;
 		GetWindowRect(hToolBar, &rWindow);
@@ -1235,12 +1232,12 @@ void ResizePickerControls(HWND hWnd)
 	else
 	{
 		doSSControls = GetShowScreenShot();
-		nListWidth = nSplitterOffset[1];
-
-#ifdef MESS
-		nListWidth2 = nSplitterOffset[2];
-#endif
 	}
+
+	nListWidth = nSplitterOffset[1];
+#ifdef MESS
+	nListWidth2 = nSplitterOffset[2];
+#endif
 
 	if (bShowStatusBar)
 		rect.bottom -= bottomMargin;
@@ -1250,11 +1247,7 @@ void ResizePickerControls(HWND hWnd)
 
 	MoveWindow(GetDlgItem(hWnd, IDC_DIVIDER), rect.left, rect.top - 4, rect.right, 2, TRUE);
 
-#ifdef MESS
-	nScreenShotWidth = (rect.right - nListWidth2) - 4;
-#else
-	nScreenShotWidth = (rect.right - nListWidth) - 4;
-#endif
+	nScreenShotWidth = (rect.right - nSplitterOffset[nSplitterCount-1]) - 4;
 
 	/* Tree Control */
 	nTreeWidth = nSplitterOffset[0];
@@ -1397,6 +1390,11 @@ int GetGameNameIndex(const char *name)
 
 }
 
+int GetIndexFromSortedIndex(int sorted_index)
+{
+	return sorted_drivers[sorted_index].index;
+}
+
 /***************************************************************************
     Internal functions
  ***************************************************************************/
@@ -1497,7 +1495,7 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	WNDCLASS	wndclass;
 	RECT		rect;
-	int i;
+	int i, nSplitterCount;
 	extern FOLDERDATA g_folderData[];
 	extern FILTER_ITEM g_filterList[];
 
@@ -1623,17 +1621,19 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 	if (!InitSplitters())
 		return FALSE;
 
-	AddSplitter(GetDlgItem(hMain, IDC_SPLITTER), hTreeView, hwndList,
-				AdjustSplitter1Rect);
-#ifdef MESS
-	AddSplitter(GetDlgItem(hMain, IDC_SPLITTER2), hwndList,
-                hwndSoftware,AdjustSplitter1Rect);
-	AddSplitter(GetDlgItem(hMain, IDC_SPLITTER3), hwndSoftware,
-		GetDlgItem(hMain,IDC_SSFRAME),AdjustSplitter2Rect);
-#else
-	AddSplitter(GetDlgItem(hMain, IDC_SPLITTER2), hwndList,
-				GetDlgItem(hMain,IDC_SSFRAME),AdjustSplitter2Rect);
-#endif
+	nSplitterCount = GetSplitterCount();
+	for (i = 0; i < nSplitterCount; i++)
+	{
+		HWND hWnd;
+		HWND hWndLeft;
+		HWND hWndRight;
+
+		hWnd = GetDlgItem(hMain, g_splitterInfo[i].nSplitterWindow);
+		hWndLeft = GetDlgItem(hMain, g_splitterInfo[i].nLeftWindow);
+		hWndRight = GetDlgItem(hMain, g_splitterInfo[i].nRightWindow);
+
+		AddSplitter(hWnd, hWndLeft, hWndRight, g_splitterInfo[i].pfnAdjust);
+	}
 
 	/* Initial adjustment of controls on the Picker window */
 	ResizePickerControls(hMain);

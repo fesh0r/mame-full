@@ -52,7 +52,16 @@ int     GetSplitterCount(void);
 
 extern int *nSplitterOffset;
 
-extern const double g_dSplitterPositions[];
+typedef struct 
+{
+	double dPosition;
+	int nSplitterWindow;
+	int nLeftWindow;
+	int nRightWindow;
+	void (*pfnAdjust)(HWND hWnd,LPRECT lpRect);
+} SPLITTERINFO;
+
+extern const SPLITTERINFO g_splitterInfo[];
 
 
 #endif /* SPLITTER_H */
