@@ -2662,7 +2662,7 @@ const char *osd_get_fps_text(const struct performance_info *performance)
 			autoframeskip ? "auto" : "fskp", frameskip, 
 			(int)(performance->game_speed_percent + 0.5), 
 			(int)(performance->frames_per_second + 0.5),
-			(int)(Machine->drv->frames_per_second + 0.5));
+			(int)(Machine->refresh_rate + 0.5));
 
 	/* for vector games, add the number of vector updates */
 	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
