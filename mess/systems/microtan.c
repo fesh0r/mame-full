@@ -293,55 +293,12 @@ ROM_START(microtan)
         /* initialized in init_microtan */
 ROM_END
 
-
-
-static const struct IODevice io_microtan[] = {
-    {
-        IO_SNAPSHOT,        /* type */
-        1,                  /* count */
-        "m65\0",            /* file extensions */
-        IO_RESET_CPU,       /* reset if file changed */
-		OSD_FOPEN_READ,		/* open mode */
-        0,
-        microtan_snapshot_init, /* init */
-        microtan_snapshot_exit, /* exit */
-        NULL,               /* info */
-        NULL,               /* open */
-        NULL,               /* close */
-        NULL,               /* status */
-        NULL,               /* seek */
-        NULL,               /* tell */
-        NULL,               /* input */
-        NULL,               /* output */
-        NULL,               /* input_chunk */
-        NULL                /* output_chunk */
-    },
-    {
-        IO_QUICKLOAD,       /* type */
-        1,                  /* count */
-        "hex\0",            /* file extensions */
-        IO_RESET_CPU,       /* reset if file changed */
-		OSD_FOPEN_READ,		/* open mode */
-        0,
-        microtan_hexfile_init,  /* init */
-        microtan_hexfile_exit,  /* exit */
-        NULL,               /* info */
-        NULL,               /* open */
-        NULL,               /* close */
-        NULL,               /* status */
-        NULL,               /* seek */
-        NULL,               /* tell */
-        NULL,               /* input */
-        NULL,               /* output */
-        NULL,               /* input_chunk */
-        NULL                /* output_chunk */
-    },
-    { IO_END }
-};
+#define io_microtan	io_NULL
 
 SYSTEM_CONFIG_START(microtan)
 	CONFIG_DEVICE_CASSETTE(1, "tap\0", microtan_cassette_init)
-	CONFIG_DEVICE_SNAPSHOT(1, "m65\0", microtan_snapshot_init, microtan_snapshot_exit)
+	CONFIG_DEVICE_SNAPSHOT(   "m65\0", microtan_snapshot_init, microtan_snapshot_exit)
+	CONFIG_DEVICE_QUICKLOAD(  "hex\0", microtan_hexfile_init, microtan_hexfile_exit)
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      CONFIG    COMPANY      FULLNAME */

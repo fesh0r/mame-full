@@ -382,35 +382,13 @@ static int lynx_quickload(int id)
 	return 0;
 }
 
-static const struct IODevice io_lynx[] = {
-	{
-		IO_QUICKLOAD,					/* type */
-		1,								/* count */
-		"o\0",                        /* file extensions */
-		IO_RESET_CPU,					/* reset if file changed */
-		OSD_FOPEN_READ,					/* open mode */
-		0,
-		lynx_quickload, 				/* init */
-		NULL,							/* exit */
-		NULL,							/* info */
-		NULL,							/* open */
-		NULL,							/* close */
-		NULL,							/* status */
-		NULL,							/* seek */
-		NULL,							/* tell */
-		NULL,							/* input */
-		NULL,							/* output */
-		NULL,							/* input_chunk */
-		NULL,							/* output_chunk */
-	},
-    { IO_END }
-};
-
-#define io_lynxa io_lynx
-#define io_lynx2 io_lynx
+#define io_lynx		io_NULL
+#define io_lynxa	io_NULL
+#define io_lynx2	io_NULL
 
 SYSTEM_CONFIG_START(lynx)
-	CONFIG_DEVICE_CARTSLOT(1, "lnx\0", lynx_init_cart, NULL, lynx_partialcrc)
+	CONFIG_DEVICE_CARTSLOT(1, "lnx\0",	lynx_init_cart, NULL, lynx_partialcrc)
+	CONFIG_DEVICE_QUICKLOAD(  "o\0",	lynx_quickload, NULL)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

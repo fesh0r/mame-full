@@ -274,32 +274,10 @@ ROM_START (kaypro)
     ROM_LOAD ("cpm62k.sys",   0x0000, 0x1600, 0xd10cd036)
 ROM_END
 
-
-static const struct IODevice io_kaypro[] = {
-    {
-		IO_FLOPPY,          	/* type */
-		4,                  	/* count */
-		"dsk\0",            	/* file extensions */
-		IO_RESET_NONE,      	/* reset if file changed */
-		OSD_FOPEN_RW_CREATE_OR_READ,/* open mode */
-		0,
-		kaypro_floppy_init, 	/* init */
-		basicdsk_floppy_exit,	/* exit */
-		NULL,               	/* info */
-		NULL,               	/* open */
-		NULL,               	/* close */
-		NULL,               	/* status */
-		NULL,               	/* seek */
-		NULL,               	/* tell */
-		NULL,               	/* input */
-		NULL,               	/* output */
-		NULL,               	/* input_chunk */
-		NULL                	/* output_chunk */
-    },
-    { IO_END }
-};
+#define io_kaypro	io_NULL
 
 SYSTEM_CONFIG_START(kaypro)
+	CONFIG_DEVICE_FLOPPY_BASICDSK	(4,	"dsk\0",	kaypro_floppy_init)
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      CONFIG    COMPANY   FULLNAME */

@@ -615,29 +615,8 @@ ROM_END
 
 #define io_ep128a io_ep128
 
-static const struct IODevice io_ep128[] = {
-#if 0
-	{
-		IO_FLOPPY,				/* type */
-		4,						/* count */
-		"dsk\0",                /* file extensions */
-		IO_RESET_NONE,			/* reset if file changed */
-		OSD_FOPEN_RW_CREATE_OR_READ,/* open mode */
-		0,
-		enterprise_floppy_init, /* init */
-		basicdsk_floppy_exit,	/* exit */
-		NULL,					/* info */
-		NULL,					/* open */
-		NULL,					/* close */
-		floppy_status,			/* status */
-		NULL,					/* seek */
-		NULL,					/* tell */
-		NULL,					/* input */
-		NULL,					/* output */
-		NULL,					/* input_chunk */
-		NULL					/* output_chunk */
-	},
-#endif
+static const struct IODevice io_ep128[] =
+{
 	{
 		IO_FLOPPY,					/* type */
 		4,							/* count */
@@ -669,6 +648,9 @@ static const struct IODevice io_ep128[] = {
 
 SYSTEM_CONFIG_START(ep128)
 	CONFIG_RAM_DEFAULT((128*1024)+32768)
+#if 0
+	CONFIG_DEVICE_FLOPPY_BASICDSK	(4,	"dsk\0",	enterprise_floppy_init)
+#endif
 SYSTEM_CONFIG_END
 
 /*      YEAR  NAME     PARENT   MACHINE   INPUT     INIT  CONFIG, COMPANY                 FULLNAME */

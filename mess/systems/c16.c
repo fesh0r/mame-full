@@ -851,25 +851,6 @@ MACHINE_DRIVER_END
 static const struct IODevice io_c16[] =
 {
 	IODEVICE_CBM_QUICK,
-	{
-		IO_CARTSLOT,				   /* type */
-		2,							   /* normal 1 *//* count */
-		"bin\0rom\0",                  /* file extensions */
-		IO_RESET_CPU,				   /* reset if file changed */
-		OSD_FOPEN_READ,					/* open mode */
-		0,
-		c16_rom_init,				   /* init */
-		NULL,						   /* exit */
-		NULL,						   /* info */
-		NULL,						   /* open */
-		NULL,						   /* close */
-		NULL,						   /* status */
-		NULL,						   /* seek */
-		NULL,						   /* input */
-		NULL,						   /* output */
-		NULL,						   /* input_chunk */
-		NULL						   /* output_chunk */
-	},
 	IODEVICE_VC20TAPE,
 	IODEVICE_CBM_DRIVE,
 	{IO_END}

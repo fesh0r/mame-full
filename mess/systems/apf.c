@@ -778,36 +778,13 @@ ROM_START(apfm1000)
 	ROM_LOAD("apf_4000.rom",0x010000, 0x0800, 0x2a331a33)
 ROM_END
 
-static const struct IODevice io_apfimag[] =
-{
-	{
-		IO_FLOPPY,					/* type */
-		2,							/* count */
-		"apd\0",                    /* file extensions */
-		IO_RESET_NONE,				/* reset if file changed */
-		OSD_FOPEN_RW_CREATE_OR_READ,/* open mode */
-		0,
-		apfimag_floppy_init,			/* init */
-		basicdsk_floppy_exit,			/* exit */
-		NULL,						/* info */
-		NULL,						/* open */
-		NULL,						/* close */
-		floppy_status,                                           /* status */
-		NULL,                                           /* seek */
-		NULL,						/* tell */
-		NULL,						/* input */
-		NULL,						/* output */
-		NULL,						/* input_chunk */
-		NULL						/* output_chunk */
-	},
-	{ IO_END }
-};
-
 SYSTEM_CONFIG_START( apfimag )
-	CONFIG_DEVICE_CASSETTE(1, "apt\0", apf_cassette_init)
+	CONFIG_DEVICE_CASSETTE			(1, "apt\0", apf_cassette_init)
+	CONFIG_DEVICE_FLOPPY_BASICDSK	(2, "apd\0", apfimag_floppy_init)
 SYSTEM_CONFIG_END
 
-#define io_apfm1000		io_NULL
+#define io_apfimag	io_NULL
+#define io_apfm1000	io_NULL
 
 /***************************************************************************
 

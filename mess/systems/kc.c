@@ -452,65 +452,18 @@ ROM_START(kc85_3)
 	ROM_LOAD("caos__e0.853", 0x12000, 0x2000, 0x52bc2199)
 ROM_END
 
-
-
-#define KC85_IO \
-{ \
-   IO_QUICKLOAD,	   /* type */ \
-   1,				   /* count */ \
-   "kcc\0",       /*file extensions */ \
-	IO_RESET_NONE,		/* reset if file changed */ \
-	OSD_FOPEN_READ,	/* open mode */\
-   NULL,               /* id */ \
-   kc_quickload_load,     /* init */ \
-   NULL,     /* exit */ \
-   NULL,               /* info */ \
-   NULL,     /* open */ \
-   NULL,               /* close */ \
-   NULL,               /* status */ \
-   NULL,               /* seek */ \
-   NULL,               /* input */ \
-   NULL,               /* output */ \
-   NULL,               /* input_chunk */ \
-   NULL                /* output_chunk */ \
-}
-
-
-static const struct IODevice io_kc85_4[] =
-{
-	KC85_IO,
-	{IO_END}
-};
-
-static const struct IODevice io_kc85_4d[] =
-{
-	KC85_IO,
-	{
-		IO_FLOPPY,				/* type */
-		4,						/* count */
-		"dsk\0",                /* file extensions */
-		IO_RESET_NONE,			/* reset if file changed */
-		OSD_FOPEN_RW_CREATE_OR_READ,/* open mode */
-		0,
-		kc85_floppy_init,		/* init */
-		basicdsk_floppy_exit,	/* exit */
-		NULL,					/* info */
-		NULL,					/* open */
-		NULL,					/* close */
-		floppy_status,			/* status */
-		NULL,					/* seek */
-		NULL,					/* tell */
-		NULL,					/* input */
-		NULL,					/* output */
-		NULL,					/* input_chunk */
-		NULL					/* output_chunk */
-	},
-	{IO_END}
-};
-#define io_kc85_3 io_kc85_4
+#define io_kc85_3	io_NULL
+#define io_kc85_4	io_NULL
+#define io_kc85_4d	io_NULL
 
 SYSTEM_CONFIG_START(kc85)
-	CONFIG_DEVICE_CASSETTE(1, "", kc_cassette_device_init)
+	CONFIG_DEVICE_CASSETTE			(1, "",			kc_cassette_device_init)
+	CONFIG_DEVICE_QUICKLOAD			(	"kcc\0",	kc_quickload_load, NULL)
+SYSTEM_CONFIG_END
+
+SYSTEM_CONFIG_START(kc85d)
+	CONFIG_IMPORT_FROM(kc85)
+	CONFIG_DEVICE_FLOPPY_BASICDSK	(4,	"dsk\0",	kc85_floppy_init)
 SYSTEM_CONFIG_END
 
 /*     YEAR  NAME      PARENT   MACHINE  INPUT     INIT  CONFIG  COMPANY   FULLNAME */

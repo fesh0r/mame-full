@@ -2781,28 +2781,6 @@ ROM_START(cpc464p)
 	ROM_REGION(0, REGION_CPU1,0)
 ROM_END
 
-#define AMSTRAD_IO_SNAPSHOT \
-	{ \
-		IO_SNAPSHOT,				/* type */ \
-		1,							/* count */ \
-		"sna\0",                    /* file extensions */ \
-		IO_RESET_CPU,				/* reset if file changed */ \
-		OSD_FOPEN_READ,				/* open mode */ \
-		0, \
-		amstrad_snapshot_load,		/* init */ \
-		amstrad_snapshot_exit,		/* exit */ \
-		NULL,						/* info */ \
-		NULL,						/* open */ \
-		NULL,						/* close */ \
-		NULL,						/* status */ \
-		NULL,						/* seek */ \
-		NULL,						/* tell */ \
-		NULL,						/* input */ \
-		NULL,						/* output */ \
-		NULL,						/* input_chunk */ \
-		NULL						/* output_chunk */ \
-	}
-
 #define AMSTRAD_IO_DISK \
 	{ \
 		IO_FLOPPY,					/* type */ \
@@ -2827,7 +2805,6 @@ ROM_END
 
 static const struct IODevice io_cpc6128[] =
 {
-	AMSTRAD_IO_SNAPSHOT,
 	AMSTRAD_IO_DISK,
 	{IO_END}
 };
@@ -2838,7 +2815,6 @@ static const struct IODevice io_cpc6128[] =
 
 static const struct IODevice io_cpcplus[] =
 {
-	AMSTRAD_IO_SNAPSHOT,
 	AMSTRAD_IO_DISK,
 	{ IO_END }
 };
@@ -2854,7 +2830,8 @@ SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(cpcplus)
 	CONFIG_IMPORT_FROM(cpc6128)
-	CONFIG_DEVICE_CARTSLOT(1, "cpr\0", amstrad_plus_cartridge_init, amstrad_plus_cartridge_exit, NULL)
+	CONFIG_DEVICE_CARTSLOT(1,	"cpr\0", amstrad_plus_cartridge_init, amstrad_plus_cartridge_exit, NULL)
+	CONFIG_DEVICE_SNAPSHOT(		"sna\0", amstrad_snapshot_load, amstrad_snapshot_exit)
 SYSTEM_CONFIG_END
 
 /*      YEAR  NAME       PARENT  MACHINE    INPUT    INIT    CONFIG,  COMPANY               FULLNAME */

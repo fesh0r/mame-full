@@ -365,38 +365,16 @@ ROM_END
   Game driver(s)
 
 ***************************************************************************/
-static const struct IODevice io_mbee[] =
-{
-    {
-        IO_FLOPPY,              /* type */
-        4,                      /* count */
-        "dsk\0",                /* file extensions */
-        IO_RESET_NONE,          /* reset if file changed */
-		OSD_FOPEN_RW_CREATE_OR_READ,/* open mode */
-        0,
-        basicdsk_floppy_init,   /* init */
-        basicdsk_floppy_exit,   /* exit */
-        NULL,                   /* info */
-        NULL,                   /* open */
-        NULL,                   /* close */
-        floppy_status,          /* status */
-        NULL,                   /* seek */
-        NULL,                   /* tell */
-        NULL,                   /* input */
-        NULL,                   /* output */
-        NULL,                   /* input_chunk */
-        NULL                    /* output_chunk */
-    },
-    { IO_END }
-};
 
-#define io_mbeepc    io_mbee
-#define io_mbeepc85  io_mbee
-#define io_mbee56    io_mbee
+#define io_mbee		io_NULL
+#define io_mbeepc	io_NULL
+#define io_mbeepc85	io_NULL
+#define io_mbee56	io_NULL
 
 SYSTEM_CONFIG_START(mbee)
-	CONFIG_DEVICE_CASSETTE(1, "", mbee_cassette_init)
-	CONFIG_DEVICE_CARTSLOT(1, "rom\0", mbee_rom_load, NULL, NULL)
+	CONFIG_DEVICE_CASSETTE			(1, "",			mbee_cassette_init)
+	CONFIG_DEVICE_CARTSLOT			(1, "rom\0",	mbee_rom_load, NULL, NULL)
+	CONFIG_DEVICE_FLOPPY_BASICDSK	(4,	"dsk\0",	basicdsk_floppy_init)
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      CONFIG	COMPANY   FULLNAME */

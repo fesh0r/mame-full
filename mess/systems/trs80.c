@@ -453,26 +453,6 @@ static const struct IODevice io_trs80[] = {
 		NULL,					/* input_chunk */
 		NULL					/* output_chunk */
 	},
-	{
-		IO_QUICKLOAD,			/* type */
-		1,						/* count */
-		"cmd\0",                /* file extensions */
-		IO_RESET_CPU,			/* reset if file changed */
-		OSD_FOPEN_READ,			/* open mode */
-		0,
-		trs80_cmd_init, 		/* init */
-		trs80_cmd_exit, 		/* exit */
-		NULL,					/* info */
-		NULL,					/* open */
-		NULL,					/* close */
-		NULL,					/* status */
-		NULL,					/* seek */
-		NULL,					/* tell */
-		NULL,					/* input */
-		NULL,					/* output */
-		NULL,					/* input_chunk */
-		NULL					/* output_chunk */
-	},
 	{ IO_END }
 };
 
@@ -498,46 +478,6 @@ static const struct IODevice io_trs80l2[] = {
 		NULL,					/* input_chunk */
 		NULL					/* output_chunk */
 	},
-	{
-		IO_QUICKLOAD,			/* type */
-		1,						/* count */
-		"cmd\0",                /* file extensions */
-		IO_RESET_CPU,			/* reset if file changed */
-		OSD_FOPEN_READ,			/* open mode */
-		0,
-		trs80_cmd_init, 		/* init */
-		trs80_cmd_exit, 		/* exit */
-		NULL,					/* info */
-		NULL,					/* open */
-		NULL,					/* close */
-		NULL,					/* status */
-		NULL,					/* seek */
-		NULL,					/* tell */
-		NULL,					/* input */
-		NULL,					/* output */
-		NULL,					/* input_chunk */
-		NULL					/* output_chunk */
-	},
-	{
-		IO_FLOPPY,				/* type */
-		4,						/* count */
-		"dsk\0",                /* file extensions */
-		IO_RESET_NONE,			/* reset if file changed */
-		OSD_FOPEN_RW_CREATE_OR_READ,/* open mode */
-		0,
-		trs80_floppy_init,		/* init */
-		basicdsk_floppy_exit,	/* exit */
-		NULL,					/* info */
-		NULL,					/* open */
-		NULL,					/* close */
-		floppy_status,			/* status */
-		NULL,					/* seek */
-		NULL,					/* tell */
-		NULL,					/* input */
-		NULL,					/* output */
-		NULL,					/* input_chunk */
-		NULL					/* output_chunk */
-	},
 	{ IO_END }
 };
 
@@ -547,13 +487,19 @@ static const struct IODevice io_trs80l2[] = {
 #define io_trs80m3	io_trs80l2
 
 SYSTEM_CONFIG_START(trs80)
+	CONFIG_DEVICE_QUICKLOAD			(	"cmd\0", trs80_cmd_init, trs80_cmd_exit)
+SYSTEM_CONFIG_END
+
+SYSTEM_CONFIG_START(trs8012)
+	CONFIG_IMPORT_FROM(trs80)
+	CONFIG_DEVICE_FLOPPY_BASICDSK	(4,	"dsk\0",	trs80_floppy_init)
 SYSTEM_CONFIG_END
 
 /*	   YEAR  NAME	   PARENT	 MACHINE   INPUT	 INIT	   CONFIG	COMPANY	 FULLNAME */
 COMP ( 1977, trs80,    0,		 level1,   trs80,	 trs80,    trs80,	"Tandy Radio Shack",  "TRS-80 Model I (Level I Basic)" )
-COMP ( 1978, trs80l2,  trs80,	 model1,   trs80,	 trs80,    trs80,	"Tandy Radio Shack",  "TRS-80 Model I (Radio Shack Level II Basic)" )
-COMP ( 1978, trs80l2a, trs80,	 model1,   trs80,	 trs80,    trs80,	"Tandy Radio Shack",  "TRS-80 Model I (R/S L2 Basic)" )
-COMP ( 1980, sys80,    trs80,	 model1,   trs80,	 trs80,    trs80,	"EACA Computers Ltd.","System-80" )
-COMPX( 1981, lnw80,    trs80,	 model1,   trs80,	 trs80,    trs80,	"LNW Research","LNW-80", GAME_NOT_WORKING )
-COMPX( 19??, trs80m3,  trs80,	 model3,   trs80,	 trs80,    trs80,	"Tandy Radio Shack",  "TRS-80 Model III", GAME_NOT_WORKING )
+COMP ( 1978, trs80l2,  trs80,	 model1,   trs80,	 trs80,    trs8012,	"Tandy Radio Shack",  "TRS-80 Model I (Radio Shack Level II Basic)" )
+COMP ( 1978, trs80l2a, trs80,	 model1,   trs80,	 trs80,    trs8012,	"Tandy Radio Shack",  "TRS-80 Model I (R/S L2 Basic)" )
+COMP ( 1980, sys80,    trs80,	 model1,   trs80,	 trs80,    trs8012,	"EACA Computers Ltd.","System-80" )
+COMPX( 1981, lnw80,    trs80,	 model1,   trs80,	 trs80,    trs8012,	"LNW Research","LNW-80", GAME_NOT_WORKING )
+COMPX( 19??, trs80m3,  trs80,	 model3,   trs80,	 trs80,    trs8012,	"Tandy Radio Shack",  "TRS-80 Model III", GAME_NOT_WORKING )
 

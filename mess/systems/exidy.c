@@ -817,34 +817,12 @@ ROM_START(exidy)
 	ROM_LOAD_OPTIONAL("exsb1-4.dat", 0x0d800, 0x0800, 0xa370cb19)	
 ROM_END
 
-static const struct IODevice io_exidy[] =
-{
-	{
-		IO_FLOPPY,					/* type */
-		4,							/* count */
-		"dsk\0",                    /* file extensions */
-		IO_RESET_NONE,				/* reset if file changed */
-		OSD_FOPEN_RW_CREATE_OR_READ,/* open mode */
-		0,
-		exidy_floppy_init,			/* init */
-		basicdsk_floppy_exit,		/* exit */
-		NULL,						/* info */
-		NULL,						/* open */
-		NULL,						/* close */
-        floppy_status,                                           /* status */
-        NULL,                                           /* seek */
-		NULL,						/* tell */
-		NULL,						/* input */
-		NULL,						/* output */
-		NULL,						/* input_chunk */
-		NULL						/* output_chunk */
-	},
-	{IO_END}
-};
+#define io_exidy	io_NULL
 
 SYSTEM_CONFIG_START(exidy)
-	//CONFIG_DEVICE_CASSETTE(2, "", exidy_cassette_init)
-	CONFIG_DEVICE_PRINTER(1)
+	CONFIG_DEVICE_PRINTER			(1)
+	CONFIG_DEVICE_FLOPPY_BASICDSK	(4,	"dsk\0",	exidy_floppy_init)
+	//CONFIG_DEVICE_CASSETTE		(2,	"",			exidy_cassette_init)
 SYSTEM_CONFIG_END
 
 /*	  YEAR	NAME	PARENT	MACHINE	INPUT	INIT	CONFIG	COMPANY        FULLNAME */

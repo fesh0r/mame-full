@@ -465,37 +465,13 @@ ROM_START(coupe)
 	ROM_LOAD("sam_rom1.rom", 0x4000, 0x4000, 0xF031AED4)
 ROM_END
 
-static const struct IODevice io_coupe[] =
-{
-	{
-		IO_FLOPPY,				/* type */
-		2,						/* count */
-/* Only .DSK (raw dump images) are supported at present */
-        "dsk\0",                /* file extensions */
-		IO_RESET_NONE,			/* reset if file changed */
-		OSD_FOPEN_RW_CREATE_OR_READ,/* open mode */
-		NULL,					/* id */
-		coupe_floppy_init,		/* init */
-		basicdsk_floppy_exit,	/* exit */
-		NULL,					/* info */
-		NULL,					/* open */
-		NULL,					/* close */
-		floppy_status,			/* status */
-		NULL,					/* seek */
-		NULL,					/* tell */
-		NULL,					/* input */
-		NULL,					/* output */
-		NULL,					/* input_chunk */
-		NULL					/* output_chunk */
-    },
-	{ IO_END }
-};
-#define io_coupe256 io_coupe
-#define io_coupe512 io_coupe
+#define io_coupe	io_NULL
 
 SYSTEM_CONFIG_START(coupe)
 	CONFIG_RAM_DEFAULT(256 * 1024)
 	CONFIG_RAM(512 * 1024)
+
+	CONFIG_DEVICE_FLOPPY_BASICDSK	(2, "dsk\0", coupe_floppy_init)
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME      PARENT    MACHINE         INPUT     INIT  CONFIG  COMPANY                 		  FULLNAME */

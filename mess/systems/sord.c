@@ -868,40 +868,20 @@ ROM_START(srdm5fd5)
 ROM_END
 
 #define io_sordm5	io_NULL
-
-static const struct IODevice io_srdm5fd5[] = 
-{
-	{
-		IO_FLOPPY,				/* type */
-		4,						/* count */
-		"dsk\0",                /* file extensions */
-		IO_RESET_NONE,			/* reset if file changed */
-		OSD_FOPEN_RW_CREATE_OR_READ,/* open mode */
-		NULL,
-		sord_floppy_init,		/* init */
-		basicdsk_floppy_exit,	/* exit */
-		NULL,					/* info */
-		NULL,					/* open */
-		NULL,					/* close */
-		floppy_status,			/* status */
-		NULL,					/* seek */
-		NULL,					/* tell */
-		NULL,					/* input */
-		NULL,					/* output */
-		NULL,					/* input_chunk */
-		NULL					/* output_chunk */
-	},
-	{IO_END}
-};
-
+#define	io_srdm5fd5	io_NULL
 
 SYSTEM_CONFIG_START(sordm5)
 	CONFIG_RAM_DEFAULT(64 * 1024)
-	CONFIG_DEVICE_CASSETTE(1, "", sord_cassette_init)
-	CONFIG_DEVICE_PRINTER(1)
-	CONFIG_DEVICE_CARTSLOT(1, "rom\0", sord_cartslot_init, NULL, NULL)
+	CONFIG_DEVICE_PRINTER			(1)
+	CONFIG_DEVICE_CASSETTE			(1, "",			sord_cassette_init)
+	CONFIG_DEVICE_CARTSLOT			(1, "rom\0",	sord_cartslot_init, NULL, NULL)
 SYSTEM_CONFIG_END
 
-/*    YEAR  NAME       PARENT  MACHINE    INPUT     INIT     CONFIG,  COMPANY               FULLNAME */
-COMP( 1983, sordm5,      0,    sord_m5,   sord_m5,  0,       sordm5, "Sord", "Sord M5")
-COMPX(1983, srdm5fd5,	0,	sord_m5_fd5, sord_m5, 0, sordm5, "Sord", "Sord M5 + PI5 + FD5", GAME_NOT_WORKING)
+SYSTEM_CONFIG_START(srdm5fd5)
+	CONFIG_IMPORT_FROM(sordm5)
+	CONFIG_DEVICE_FLOPPY_BASICDSK	(4,	"dsk\0",	sord_floppy_init)
+SYSTEM_CONFIG_END
+
+/*    YEAR  NAME		PARENT  MACHINE			INPUT		INIT	CONFIG		COMPANY		FULLNAME */
+COMP( 1983, sordm5,		0,		sord_m5,		sord_m5,	0,		sordm5,		"Sord",		"Sord M5")
+COMPX(1983, srdm5fd5,	0,		sord_m5_fd5,	sord_m5,	0,		srdm5fd5,	"Sord",		"Sord M5 + PI5 + FD5", GAME_NOT_WORKING)

@@ -677,45 +677,19 @@ ROM_END
  * in the side port.  None of these are emulated.
  */
 
-static const struct IODevice io_ti99_4[] =
-{
-	{
-		IO_FLOPPY,				/* type */
-		3,						/* count */
-		"dsk\0",				/* file extensions */
-		IO_RESET_NONE,			/* reset if file changed */
-		OSD_FOPEN_RW_CREATE_OR_READ,/* open mode */
-		0,
-		ti99_floppy_init,		/* init */
-		basicdsk_floppy_exit,	/* exit */
-		NULL,					/* info */
-		NULL,					/* open */
-		NULL,					/* close */
-		floppy_status,			/* status */
-		NULL,					/* seek */
-		NULL,					/* tell */
-		NULL,					/* input */
-		NULL,					/* output */
-		NULL,					/* input_chunk */
-		NULL					/* output_chunk */
-	},
-	{ IO_END }
-};
-
-
-
-
-#define io_ti99_4e io_ti99_4
-#define io_ti99_4a io_ti99_4
-#define io_ti99_4ae io_ti99_4a
-#define io_ti99_4ev io_ti99_4a
+#define io_ti99_4	io_NULL
+#define io_ti99_4e	io_NULL
+#define io_ti99_4a	io_NULL
+#define io_ti99_4ae	io_NULL
+#define io_ti99_4ev	io_NULL
 
 #define rom_ti99_4e rom_ti99_4
 #define rom_ti99_4ae rom_ti99_4a
 
 SYSTEM_CONFIG_START(ti99_4)
-	CONFIG_DEVICE_CASSETTE(2, "", ti99_cassette_init)
-	CONFIG_DEVICE_CARTSLOT(3, "bin\0c\0d\0g\0m\0crom\0drom\0grom\0mrom\0", ti99_load_rom, ti99_rom_cleanup, NULL)
+	CONFIG_DEVICE_CASSETTE			(2, "",												ti99_cassette_init)
+	CONFIG_DEVICE_CARTSLOT			(3,	"bin\0c\0d\0g\0m\0crom\0drom\0grom\0mrom\0",	ti99_load_rom, ti99_rom_cleanup, NULL)
+	CONFIG_DEVICE_FLOPPY_BASICDSK	(3,	"dsk\0",										ti99_floppy_init)
 SYSTEM_CONFIG_END
 
 /*	  YEAR	NAME	  PARENT   MACHINE		 INPUT	  INIT		CONFIG	COMPANY				FULLNAME */

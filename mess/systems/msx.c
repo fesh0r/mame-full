@@ -835,47 +835,24 @@ ROM_START (msxkra)
 ROM_END
 */
 
-static const struct IODevice io_msx[] =
-{
-    {
-        IO_FLOPPY,              /* type */
-        2,                      /* count */
-        "dsk\0",                /* file extensions */
-        IO_RESET_NONE,          /* reset if file changed */
-		OSD_FOPEN_RW_CREATE_OR_READ,/* open mode */
-        0,
-        msx_floppy_init,   		/* init */
-        basicdsk_floppy_exit,   /* exit */
-        NULL,                   /* info */
-        NULL,                   /* open */
-        NULL,                   /* close */
-        floppy_status,          /* status */
-        NULL,                   /* seek */
-        NULL,                   /* tell */
-        NULL,                   /* input */
-        NULL,                   /* output */
-        NULL,                   /* input_chunk */
-        NULL                    /* output_chunk */
-    },
-    { IO_END }
-};
-
-#define io_msxj io_msx
-#define io_msxkr io_msx
-/* #define io_msxkra io_msx */
-#define io_msxuk io_msx
-#define io_msx2  io_msx
-#define io_msx2a io_msx
-#define io_msx2j io_msx
-#define io_hotbit11 io_msx
-#define io_hotbit12 io_msx
-#define io_expert10 io_msx
-#define io_expert11 io_msx
+#define	io_msx		io_NULL
+#define io_msxj		io_NULL
+#define io_msxkr	io_NULL
+#define io_msxkra	io_NULL
+#define io_msxuk	io_NULL
+#define io_msx2		io_NULL
+#define io_msx2a	io_NULL
+#define io_msx2j	io_NULL
+#define io_hotbit11	io_NULL
+#define io_hotbit12	io_NULL
+#define io_expert10	io_NULL
+#define io_expert11	io_NULL
 
 SYSTEM_CONFIG_START(msx)
 	CONFIG_DEVICE_CASSETTE(1, "cas\0", msx_cassette_init)
 	CONFIG_DEVICE_PRINTER(1)
 	CONFIG_DEVICE_CARTSLOT(MSX_MAX_CARTS, "rom\0", msx_load_rom, msx_exit_rom, NULL)
+	CONFIG_DEVICE_FLOPPY_BASICDSK(2, "dsk\0", msx_floppy_init)
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME      PARENT  MACHINE  INPUT     INIT   CONFIG  COMPANY              FULLNAME */

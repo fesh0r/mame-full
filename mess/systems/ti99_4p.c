@@ -319,34 +319,11 @@ ROM_START(ti99_4p)
 	ROM_LOAD("spchrom.bin", 0x0000, 0x8000, 0x58b155f7) /* system speech ROM */
 ROM_END
 
-
-static const struct IODevice io_ti99_4p[] =
-{
-	{
-		IO_FLOPPY,				/* type */
-		3,						/* count */
-		"dsk\0",				/* file extensions */
-		IO_RESET_NONE,			/* reset if file changed */
-		OSD_FOPEN_RW_CREATE_OR_READ,/* open mode */
-		0,
-		ti99_floppy_init,		/* init */
-		basicdsk_floppy_exit,	/* exit */
-		NULL,					/* info */
-		NULL,					/* open */
-		NULL,					/* close */
-		floppy_status,			/* status */
-		NULL,					/* seek */
-		NULL,					/* tell */
-		NULL,					/* input */
-		NULL,					/* output */
-		NULL,					/* input_chunk */
-		NULL					/* output_chunk */
-	},
-	{ IO_END }
-};
+#define	io_ti99_4p	io_NULL
 
 SYSTEM_CONFIG_START(ti99_4p)
-	CONFIG_DEVICE_CASSETTE(2, "", ti99_cassette_init)
+	CONFIG_DEVICE_CASSETTE			(2,	"",			ti99_cassette_init)
+	CONFIG_DEVICE_FLOPPY_BASICDSK	(3,	"dsk\0",	ti99_floppy_init)
 SYSTEM_CONFIG_END
 
 /*	  YEAR	NAME	  PARENT   MACHINE		ÊINPUT	  INIT	   CONFIG	COMPANY		FULLNAME */

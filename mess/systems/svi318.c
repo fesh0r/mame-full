@@ -371,38 +371,17 @@ ROM_START (svi328a)
     ROM_LOAD ("svi111.rom", 0x0000, 0x8000, 0xbc433df6)
 ROM_END
 
-static const struct IODevice io_svi318[] = {
-#ifdef SVI_DISK
-    {
-        IO_FLOPPY,              /* type */
-        2,                      /* count */
-        "dsk\0",                /* file extensions */
-        IO_RESET_NONE,          /* reset if file changed */
-        0,
-        svi318_floppy_init,     /* init */
-        basicdsk_floppy_exit,   /* exit */
-        NULL,                   /* info */
-        NULL,                   /* open */
-        NULL,                   /* close */
-        floppy_status,          /* status */
-        NULL,                   /* seek */
-        NULL,                   /* tell */
-        NULL,                   /* input */
-        NULL,                   /* output */
-        NULL,                   /* input_chunk */
-        NULL                    /* output_chunk */
-    },
-#endif
-		{ IO_END }
-	};
-
-#define io_svi328  io_svi318
-#define io_svi328a io_svi318
+#define	io_svi318	io_NULL
+#define io_svi328	io_NULL
+#define io_svi328a	io_NULL
 
 SYSTEM_CONFIG_START(svi318)
-	CONFIG_DEVICE_CASSETTE(1, "cas\0", svi318_cassette_init)
-	CONFIG_DEVICE_PRINTER(1)
-	CONFIG_DEVICE_CARTSLOT(1, "rom\0", svi318_load_rom, svi318_exit_rom, NULL)
+	CONFIG_DEVICE_PRINTER			(1)
+	CONFIG_DEVICE_CASSETTE			(1,	"cas\0",	svi318_cassette_init)
+	CONFIG_DEVICE_CARTSLOT			(1,	"rom\0",	svi318_load_rom, svi318_exit_rom, NULL)
+#ifdef SVI_DISK
+	CONFIG_DEVICE_FLOPPY_BASICDSK	(2,	"dsk\0",	svi318_floppy_init)
+#endif
 SYSTEM_CONFIG_END
 
 /*   YEAR	NAME		PARENT	MACHINE	INPUT	INIT	CONFIG	COMPANY FULLNAME */

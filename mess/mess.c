@@ -574,6 +574,9 @@ int messvaliditychecks(void)
 	int i;
 	int error = 0;
 	const struct RomModule *region, *rom;
+	const struct IODevice *dev;
+	long used_devices;
+	const char *s;
 
 	/* Check the device struct array */
 	i=0;
@@ -581,25 +584,63 @@ int messvaliditychecks(void)
 	{
 		if (devices[i].id != i)
 		{
-			mess_printf("MESS Validity Error - Device struct array order mismatch\n");
+			printf("MESS Validity Error - Device struct array order mismatch\n");
 			error = 1;
 		}
 		i++;
 	}
 	if (i < IO_COUNT)
 	{
-		mess_printf("MESS Validity Error - Device struct entry missing\n");
+		printf("MESS Validity Error - Device struct entry missing\n");
 		error = 1;
 	}
 
 	/* MESS specific driver validity checks */
 	for(i = 0; drivers[i]; i++)
 	{
+
 		/* check device array */
-	    const struct IODevice *dev;
+		used_devices = 0;
 		for(dev = device_first(drivers[i]); dev; dev = device_next(drivers[i], dev))
 		{
-			assert(dev->type < IO_COUNT);
+			if (dev->type >= IO_COUNT)
+			{
+				printf("%s: invalid device type %i\n", drivers[i]->name, dev->type);
+				error = 1;
+			}
+
+			/* make sure that we can't duplicate devices */
+			if (used_devices & (1 << dev->type))
+			{
+				printf("%s: device type '%s' is specified multiple times\n", drivers[i]->name, devices[dev->type].name);
+				error = 1;
+			}
+			used_devices |= (1 << dev->type);
+
+			/* make sure that the file extensions array is valid */
+			s = dev->file_extensions;
+			while(*s)
+				s += strlen(s) + 1;
+
+			/* enforce certain rules for certain device types */
+			switch(dev->type) {
+			case IO_QUICKLOAD:
+			case IO_SNAPSHOT:
+				if (dev->count != 1)
+				{
+					printf("%s: there can only be one instance of devices of type '%s'\n", drivers[i]->name, devices[dev->type].name);
+					error = 1;
+				}
+				/* fallthrough */
+
+			case IO_CARTSLOT:
+				if (dev->open_mode != OSD_FOPEN_READ)
+				{
+					printf("%s: devices of type '%s' must have open mode OSD_FOPEN_READ\n", drivers[i]->name, devices[dev->type].name);
+					error = 1;
+				}
+				break;
+			}
 		}
 
 		/* this detects some inconsistencies in the ROM structures */

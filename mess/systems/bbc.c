@@ -1150,241 +1150,30 @@ static MACHINE_DRIVER_START( bbcb6502 )
 	MDRV_CPU_MEMORY(readmem_bbc6502,writemem_bbc6502)
 MACHINE_DRIVER_END
 
-static const struct IODevice io_bbca[] = {
-	{
-		IO_CASSETTE,			/* type */
-		1,						/* count */
-		"wav\0",                /* File extensions */
-		IO_RESET_NONE,			/* reset if file changed */
-		OSD_FOPEN_DUMMY,		/* open mode */
-		NULL,					/* id */
-		NULL,					/* init */
-		NULL,					/* exit */
-		NULL,					/* info */
-		NULL,					/* open */
-		NULL,					/* close */
-		NULL,					/* status */
-		NULL,					/* seek */
-		NULL,					/* tell */
-		NULL,					/* input */
-		NULL,					/* output */
-		NULL,					/* input_chunk */
-		NULL					/* output_chunk */
-	},
-	{ IO_END }
-};
+#define io_bbca		io_NULL
+#define	io_bbcb		io_NULL
+#define io_bbcb1770	io_NULL
+#define	io_bbcbp	io_NULL
+#define io_bbcbp128	io_NULL
+#define io_bbcb6502	io_NULL
 
-static const struct IODevice io_bbcb[] = {
-	{
-		IO_FLOPPY,				/* type */
-		2,						/* count */
-        "ssd\0bbc\0img\0",      /* file extensions */
-		IO_RESET_NONE,			/* reset if file changed */
-		OSD_FOPEN_RW_CREATE_OR_READ,/* open mode */
-		0,
-		bbc_floppy_init,		/* init */
-		basicdsk_floppy_exit,	/* exit */
-		NULL,					/* info */
-		NULL,					/* open */
-		NULL,					/* close */
-		floppy_status,			/* status */
-		NULL,					/* seek */
-		NULL,					/* tell */
-		NULL,					/* input */
-		NULL,					/* output */
-		NULL,					/* input_chunk */
-		NULL					/* output_chunk */
-	},    {
-        IO_CARTSLOT,            /* type */
-        4,                      /* count */
-        "rom\0",                /* file extensions */
-        IO_RESET_NONE,          /* reset if file changed */
-		OSD_FOPEN_READ,			/* open mode */
-        0,
-        bbcb_load_rom,          /* init */
-        NULL,                   /* exit */
-        NULL,                   /* info */
-        NULL,                   /* open */
-        NULL,                   /* close */
-        NULL,                   /* status */
-        NULL,                   /* seek */
-        NULL,                   /* tell */
-        NULL,                   /* input */
-        NULL,                   /* output */
-        NULL,                   /* input_chunk */
-        NULL                    /* output_chunk */
-    },
-	{ IO_END }
-};
+SYSTEM_CONFIG_START(bbc)
+	CONFIG_DEVICE_CARTSLOT			(4, "rom\0",			bbcb_load_rom, NULL, NULL)
+	CONFIG_DEVICE_FLOPPY_BASICDSK	(2, "ssd\0bbc\0img\0",	bbc_floppy_init)
+SYSTEM_CONFIG_END
 
-
-static const struct IODevice io_bbcb1770[] = {
-	{
-		IO_FLOPPY,				/* type */
-		2,						/* count */
-        "ssd\0bbc\0img\0",      /* file extensions */
-		IO_RESET_NONE,			/* reset if file changed */
-		OSD_FOPEN_RW_CREATE_OR_READ,/* open mode */
-		0,
-		bbc_floppy_init,		/* init */
-		basicdsk_floppy_exit,	/* exit */
-		NULL,					/* info */
-		NULL,					/* open */
-		NULL,					/* close */
-		floppy_status,			/* status */
-		NULL,					/* seek */
-		NULL,					/* tell */
-		NULL,					/* input */
-		NULL,					/* output */
-		NULL,					/* input_chunk */
-		NULL					/* output_chunk */
-	},    {
-        IO_CARTSLOT,            /* type */
-        4,                      /* count */
-        "rom\0",                /* file extensions */
-        IO_RESET_NONE,          /* reset if file changed */
-		OSD_FOPEN_READ,			/* open mode */
-        0,
-        bbcb_load_rom,          /* init */
-        NULL,                   /* exit */
-        NULL,                   /* info */
-        NULL,                   /* open */
-        NULL,                   /* close */
-        NULL,                   /* status */
-        NULL,                   /* seek */
-        NULL,                   /* tell */
-        NULL,                   /* input */
-        NULL,                   /* output */
-        NULL,                   /* input_chunk */
-        NULL                    /* output_chunk */
-    },
-	{ IO_END }
-};
-
-
-static const struct IODevice io_bbcbp[] = {
-	{
-		IO_FLOPPY,				/* type */
-		2,						/* count */
-        "ssd\0bbc\0img\0",      /* file extensions */
-		IO_RESET_NONE,			/* reset if file changed */
-		OSD_FOPEN_RW_CREATE_OR_READ,/* open mode */
-		0,
-		bbc_floppy_init,		/* init */
-		basicdsk_floppy_exit,	/* exit */
-		NULL,					/* info */
-		NULL,					/* open */
-		NULL,					/* close */
-		floppy_status,			/* status */
-		NULL,					/* seek */
-		NULL,					/* tell */
-		NULL,					/* input */
-		NULL,					/* output */
-		NULL,					/* input_chunk */
-		NULL					/* output_chunk */
-	},    {
-        IO_CARTSLOT,            /* type */
-        4,                      /* count */
-        "rom\0",                /* file extensions */
-        IO_RESET_NONE,          /* reset if file changed */
-		OSD_FOPEN_READ,			/* open mode */
-        0,
-        bbcb_load_rom,          /* init */
-        NULL,                   /* exit */
-        NULL,                   /* info */
-        NULL,                   /* open */
-        NULL,                   /* close */
-        NULL,                   /* status */
-        NULL,                   /* seek */
-        NULL,                   /* tell */
-        NULL,                   /* input */
-        NULL,                   /* output */
-        NULL,                   /* input_chunk */
-        NULL                    /* output_chunk */
-    },
-	{ IO_END }
-};
-
-static const struct IODevice io_bbcbp128[] = {
-	{
-		IO_FLOPPY,				/* type */
-		2,						/* count */
-        "ssd\0bbc\0img\0",      /* file extensions */
-		IO_RESET_NONE,			/* reset if file changed */
-		OSD_FOPEN_RW_CREATE_OR_READ,/* open mode */
-		0,
-		bbc_floppy_init,		/* init */
-		basicdsk_floppy_exit,	/* exit */
-		NULL,					/* info */
-		NULL,					/* open */
-		NULL,					/* close */
-		floppy_status,			/* status */
-		NULL,					/* seek */
-		NULL,					/* tell */
-		NULL,					/* input */
-		NULL,					/* output */
-		NULL,					/* input_chunk */
-		NULL					/* output_chunk */
-	},    {
-        IO_CARTSLOT,            /* type */
-        4,                      /* count */
-        "rom\0",                /* file extensions */
-        IO_RESET_NONE,          /* reset if file changed */
-		OSD_FOPEN_READ,			/* open mode */
-        0,
-        bbcb_load_rom,          /* init */
-        NULL,                   /* exit */
-        NULL,                   /* info */
-        NULL,                   /* open */
-        NULL,                   /* close */
-        NULL,                   /* status */
-        NULL,                   /* seek */
-        NULL,                   /* tell */
-        NULL,                   /* input */
-        NULL,                   /* output */
-        NULL,                   /* input_chunk */
-        NULL                    /* output_chunk */
-    },
-	{ IO_END }
-};
-
-
-
-static const struct IODevice io_bbcb6502[] = {
-	{
-		IO_FLOPPY,				/* type */
-		2,						/* count */
-        "ssd\0bbc\0img\0",      /* file extensions */
-		IO_RESET_NONE,			/* reset if file changed */
-		OSD_FOPEN_RW_CREATE_OR_READ,/* open mode */
-		0,
-		bbc_floppy_init,		/* init */
-		basicdsk_floppy_exit,	/* exit */
-		NULL,					/* info */
-		NULL,					/* open */
-		NULL,					/* close */
-		floppy_status,			/* status */
-		NULL,					/* seek */
-		NULL,					/* tell */
-		NULL,					/* input */
-		NULL,					/* output */
-		NULL,					/* input_chunk */
-		NULL					/* output_chunk */
-	},
-	{ IO_END }
-};
-
-SYSTEM_CONFIG_START(bbca)
+SYSTEM_CONFIG_START(bbc6502)
+	CONFIG_DEVICE_FLOPPY_BASICDSK	(2, "ssd\0bbc\0img\0",	bbc_floppy_init)
 SYSTEM_CONFIG_END
 
 /*	   YEAR  NAME	   PARENT	 MACHINE   INPUT	 INIT	   CONFIG	COMPANY	 FULLNAME */
-COMP ( 1981, bbca,	   0,		 bbca,     bbca,     0,        bbca,    "Acorn","BBC Micro Model A" )
-COMP ( 1981, bbcb,     bbca,	 bbcb,     bbca,     0,	       bbca,    "Acorn","BBC Micro Model B" )
-COMP ( 1981, bbcb1770, bbca, 	 bbcb1770, bbca,     0,	       bbca,    "Acorn","BBC Micro Model B with WD1770 disc controller" )
-COMP ( 1985, bbcbp,    bbca,	 bbcbp,    bbca,     0,        bbca,    "Acorn","BBC Micro Model B+ 64K" )
-COMP ( 1985, bbcbp128, bbca,     bbcbp128, bbca,     0,        bbca,    "Acorn","BBC Micro Model B+ 128k" )
+COMP ( 1981, bbca,	   0,		 bbca,     bbca,     0,        NULL,	"Acorn","BBC Micro Model A" )
+COMP ( 1981, bbcb,     bbca,	 bbcb,     bbca,     0,	       bbc,		"Acorn","BBC Micro Model B" )
+COMP ( 1981, bbcb1770, bbca, 	 bbcb1770, bbca,     0,	       bbc,		"Acorn","BBC Micro Model B with WD1770 disc controller" )
+COMP ( 1985, bbcbp,    bbca,	 bbcbp,    bbca,     0,        bbc,		"Acorn","BBC Micro Model B+ 64K" )
+COMP ( 1985, bbcbp128, bbca,     bbcbp128, bbca,     0,        bbc,		"Acorn","BBC Micro Model B+ 128k" )
 /*
-COMP ( 198?, bbcm,     0,        bbcm,     bbcm,     0,        bbca,    "Acorn","BBC Master" )
+COMP ( 198?, bbcm,     0,        bbcm,     bbcm,     0,        bbc,		"Acorn","BBC Master" )
 */
 
 
@@ -1395,5 +1184,5 @@ COMP ( 198?, bbcm,     0,        bbcm,     bbcm,     0,        bbca,    "Acorn",
 // The code for this second processor upgrade is more or less complete here now.
 // It just needs a TUBE driver made to connect it to the BBC
 
-COMP (198?,bbcb6502,    bbca,     bbcb6502, bbca,    0,        bbca,    "Acorn","BBC Micro Model B with a 6502 Second Processor")
+COMP (198?,bbcb6502,    bbca,     bbcb6502, bbca,    0,        bbc6502,	"Acorn","BBC Micro Model B with a 6502 Second Processor")
 
