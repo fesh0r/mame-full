@@ -28,7 +28,7 @@
 
 #include "driver.h"
 #include "machine/6522via.h"
-#include "iwm_lisa.h"
+/*#include "iwm_lisa.h"*/
 #include "machine/iwm.h"
 #include "machine/lisa.h"
 #include "m68k.h"
@@ -937,12 +937,12 @@ static OPBASE_HANDLER (lisa_fdc_OPbaseoverride)
 
 int lisa_floppy_init(int id)
 {
-	return iwm_lisa_floppy_init(id, IWM_FLOPPY_ALLOW400K /*| IWM_FLOPPY_ALLOW800K*/);
+	return /*iwm_lisa_floppy_init*/iwm_floppy_init(id, IWM_FLOPPY_ALLOW400K /*| IWM_FLOPPY_ALLOW800K*/);
 }
 
 void lisa_floppy_exit(int id)
 {
-	iwm_lisa_floppy_exit(id);
+	/*iwm_lisa_floppy_exit*/iwm_floppy_exit(id);
 }
 
 
@@ -959,7 +959,7 @@ void lisa_init_machine()
 	memory_set_opbase_handler(0, lisa_OPbaseoverride);
 	memory_set_opbase_handler(1, lisa_fdc_OPbaseoverride);
 
-	/* int MMU */
+	/* init MMU */
 
 	setup = TRUE;
 
@@ -996,7 +996,7 @@ void lisa_init_machine()
 	COPS_via_out_ca2(0, 0);	/* VIA core forgets to do so */
 
 	/* initialize floppy */
-	iwm_lisa_init();
+	/*iwm_lisa_init*/iwm_init();
 }
 
 int lisa_interrupt(void)
@@ -1093,27 +1093,29 @@ READ_HANDLER ( lisa_fdc_io_r )
 	switch ((offset & 0x0030) >> 4)
 	{
 	case 0:	/* IWM */
-		answer = iwm_lisa_r(offset);
+		answer = /*iwm_lisa_r*/iwm_r(offset);
 		break;
 
 	case 1:	/* TTL glue */
 		switch ((offset & 0x000E) >> 1)
 		{
 		case 0:
-			/*stop = offset & 1;*/	/* ???? */
+			/*stop = offset & 1;*/	/* stop/run a clock (same as PWM LOAD -  never used) */
 			break;
 		case 2:
 			/*MT0 = offset & 1;*/	/* ???? */
+									/* generate motor pulses for Sony */
 			break;
 		case 3:
-			/*MT1 = offset & 1;*/	/* ???? */
+			/*MT1 = offset & 1;*/	/* enable/disable the clock compare (same as PWM LOAD) */
+									/* generate motor pulses for Sony */
 			break;
 		case 4:
-			/*DIS = offset & 1;*/	/* ???? */
+			/*DIS = offset & 1;*/	/* forbids access from the 68000 to our RAM */
 			break;
 		case 5:
-			/*HDS = offset & 1;*/		/* head select (-> disk side) */
-			iwm_lisa_set_head_line(offset & 1);
+			/*HDS = offset & 1;*/		/* head select (-> disk side) on twiggy */
+			/*iwm_lisa_set_head_line*/iwm_set_sel_line(offset & 1);
 			break;
 		case 6:
 			DISK_DIAG = offset & 1;
@@ -1143,7 +1145,7 @@ WRITE_HANDLER ( lisa_fdc_io_w )
 	switch ((offset & 0x0030) >> 4)
 	{
 	case 0:	/* IWM */
-		iwm_lisa_w(offset, data);
+		/*iwm_lisa_w*/iwm_w(offset, data);
 		break;
 
 	case 1:	/* TTL glue */
@@ -1154,16 +1156,18 @@ WRITE_HANDLER ( lisa_fdc_io_w )
 			break;
 		case 2:
 			/*MT0 = offset & 1;*/	/* ???? */
+									/* generate motor pulses for Sony */
 			break;
 		case 3:
 			/*MT1 = offset & 1;*/	/* enable/disable the clock compare (same as PWM LOAD) */
+									/* generate motor pulses for Sony */
 			break;
 		case 4:
-			/*DIS = offset & 1;*/	/* ???? */
+			/*DIS = offset & 1;*/	/* forbids access from the 68000 to our RAM */
 			break;
 		case 5:
-			/*HDS = offset & 1;*/		/* head select (-> disk side) */
-			iwm_lisa_set_head_line(offset & 1);
+			/*HDS = offset & 1;*/		/* head select (-> disk side) on twiggy */
+			/*iwm_lisa_set_head_line*/iwm_set_sel_line(offset & 1);
 			break;
 		case 6:
 			DISK_DIAG = offset & 1;
@@ -1176,7 +1180,7 @@ WRITE_HANDLER ( lisa_fdc_io_w )
 		break;
 
 	case 2:	/* pulses the PWM LOAD line (never used) */
-		/* reload a clock with value written */
+		/* the written value is loaded in a clock comparison chip -> width of pulses is changed */
 		break;
 
 	case 3:	/* not used */
