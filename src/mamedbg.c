@@ -1781,7 +1781,7 @@ static unsigned get_register_id( char **parg, int *size )
 	for( i = 0; i < DBGREGS.count; i++ )
 	{
 		l = strlen( DBGREGS.name[i] );
-		if( l > 0 && !strncmp( *parg, DBGREGS.name[i], l ) )
+		if( l > 0 && !strnicmp( *parg, DBGREGS.name[i], l ) )
 		{
 			if( !isalnum( (*parg)[l] ) )
 			{
@@ -2688,6 +2688,7 @@ static void dump_regs( void )
 			{
 				win_printf( win, "Cycles:%6u\n", cpu_geticount() );
 			}
+			y++;
 		}
 		else
 		{
@@ -2708,6 +2709,7 @@ static void dump_regs( void )
 					else
 						win_printf( win, "%s\n", flags );
 				}
+				y++;
 			}
 			else
 			{
@@ -2726,9 +2728,12 @@ static void dump_regs( void )
 					win_printf( win, "%s\n", flags );
 				}
 				y++;
-				win_printf( win, "Cycles:%6u\n", cpu_geticount() );
+				if( y < h )
+				{
+					win_printf( win, "Cycles:%6u\n", cpu_geticount() );
+				}
+				y++;
 			}
-			y++;
 		}
 	}
 	regs->top = y;
@@ -2767,15 +2772,14 @@ static void dump_regs( void )
 			/* edit structure not yet initialized? */
 			if( regs->count == 0 )
 			{
-				char *p;
+				const char *p;
 				/* Get the cursor position */
 				pedit->x = x;
 				pedit->y = y + regs->base;
-				strncpy( regs->name[j], name, sizeof(regs->name[j]) - 1 );
 				if( strlen(name) >= regs->max_width )
 					regs->max_width = strlen(name) + 1;
 				/* Find a colon */
-				p = strchr( regs->name[j], ':');
+				p = strchr( name, ':' );
 				if( p )
 				{
 					pedit->w = strlen( p + 1 );
@@ -2783,30 +2787,36 @@ static void dump_regs( void )
 				else
 				{
 					/* Or else find an apostrophe */
-					p = strchr( regs->name[j], '\'' );
+					p = strchr( name, '\'' );
 					if( p )
 					{
 						/* Include the apostrophe in the name! */
 						++p;
 						pedit->w = strlen( p );
 					}
+					else
+					{
+						/* TODO: other characters to delimit a register name from it's value? */
+						/* this is certainly wrong :( */
+						p = name;
+						pedit->w = strlen( p );
+					}
 				}
-				/* TODO: other characters to delimit a register name from it's value? */
-				if( p )
+				/* length of the name (total length - length of nibbles) */
+				pedit->n = strlen( name ) - pedit->w;
+
+				/* strip trailing spaces */
+				l = p - name;
+				while( l != 0 && name[ l - 1 ] == ' ' )
 				{
-					/* length of the name (total length - length of nibbles) */
-					pedit->n = strlen( name ) - pedit->w;
-					/* terminate name at (or after) the delimiting character */
-					*p = '\0';
-					/* eventually strip trailing spaces */
-					while( *--p == ' ' ) *p = '\0';
+					l--;
 				}
-				else
+				if( l > sizeof( regs->name[ j ] ) - 1 )
 				{
-					/* this is certainly wrong :( */
-					pedit->w = strlen(regs->name[j]);
-					pedit->n = 0;
+					l = sizeof( regs->name[ j ] ) - 1;
 				}
+				memcpy( regs->name[ j ], name, l );
+				regs->name[ j ][ l ] = 0;
 			}
 			if( y >= regs->base && y < regs->base + h - regs->top )
 			{
@@ -3057,15 +3067,11 @@ static void dump_mem_hex( int which, unsigned len_addr, unsigned len_data )
 		if( (column * 2 / len_data) & 1 )
 			color ^= dim_bright;
 
-		/* edit structure not yet initialized? */
-		if( pedit->w == 0 )
-		{
-			/* store memory edit x,y */
-			pedit->x = win_get_cx( win );
-			pedit->y = win_get_cy( win );
-			pedit->w = 2;
-			pedit->n = order(column % (len_data / 2), len_data / 2);
-		}
+		/* store memory edit x,y */
+		pedit->x = win_get_cx( win );
+		pedit->y = win_get_cy( win );
+		pedit->w = 2;
+		pedit->n = order(column % (len_data / 2), len_data / 2);
 		pedit++;
 
 		win_set_color( win, color );
@@ -3161,7 +3167,7 @@ static void edit_regs( void )
 	i = readkey();
 	k = keyboard_name(i);
 
-	shift = (pedit->w - 1 - regs->nibble) * 4;
+	shift = ( pedit[ regs->idx ].w - 1 - regs->nibble ) * 4;
 	mask = ~(0x0000000f << shift);
 
 	if( strlen(k) == 1 )
@@ -3960,7 +3966,7 @@ static void cmd_brk_regs_set( void )
 	int length;
 
 	DBG.brk_regs = get_register_id( &cmd, &length );
-	if( DBG.brk_regs != INVALID )
+	if( DBG.brk_regs > 0 )
 	{
 		DBG.brk_regs_oldval = cpu_get_reg(DBG.brk_regs);
 		data = get_register_or_value( &cmd, &length );
@@ -4895,7 +4901,14 @@ static void cmd_trace_to_file( void )
 		while( *cmd )
 		{
 			regs[regcnt] = get_register_id( &cmd, &length );
-			if( length ) regcnt++;
+			if( regs[ regcnt ] > 0 )
+			{
+				regcnt++;
+			}
+			else
+			{
+				break;
+			}
 		}
 		regs[regcnt] = 0;
 
