@@ -7520,7 +7520,9 @@ $bio
 Texas Instruments TI-99/4a Home Computer
 
 
+
 Known Issues:
+
 
 Requires full keyboard emulation.  At startup, full keyboard emulation mode is
 enabled by default.  Whilst in full keyboard emulation mode, some key
@@ -7528,20 +7530,67 @@ associated functionality may be disabled (like the ESC key for EXIT).
 The keyboard emulation mode is toggled using the scroll_lock key.
 
 
+
 Usage:
 
-This TI99/4a driver offers a high level of compatibility.  It currently
-supports V9t9-format cartridge images, sampled tapes in wave format
-(CS1 and CS2), and up to 3 SSSD or DSDD disk images.  Speech synthesis should
-now emulated completely.  Both TI and BwG disk controllers are supported.
-TI, Super AMS and Foundation memory expansion cards are supported.  Serial port
-and PIO emulation is incomplete, but it enables you to redirect PIO output to a
-file and save listings to this file by "printing" them to PIO.
+
+This TI99/4a driver offers a high level of compatibility, and implements
+several optional extensions:
+
+
+* Image cartridges are in V9t9 format (see below for instructions).
+
+
+* Speech synthesis is emulated completely.
+
+
+* Three types of memory expansion cards are emulated: the original TI 32kbyte
+card, and the Super AMS card, and the Foundation card.
+
+
+* Any of three different floppy disk controllers can be emulated: TI's original
+SD disk controller, SNUG's BwG disk controller, and Myarc's HFDC disk
+controller.  Note that neither the hard disk nor tape interface of the HFDC
+card are emulated.  These hard disks have different abilities: TI's controller
+only supports single density disks with 9 sectors per track 40 tracks per
+sides; the BwG controller supports double density, and it uses no VDP RAM at
+all; the HFDC controller supports 80-track disks as well (high density support
+is incomplete and non-functional).  Three floppy disk drives are emulated.
+Floppy disk images are in a MESS-specific format that is compatible with
+single-sided V9T9 disk images (but not double-sided ones).
+
+
+* Thierry Nouspickel's IDE card prototype is emulated.  A description can be
+found on Thierry's page along with the required disk-based DSR.  Note that
+there are two minor errors in the DSR disk image: the byte at offset >12 must
+be edited from >02 to >01, and the byte at offset >7601 must be edited from >21
+to >20; the byte at offset >13 should be edited from >02 to >01, too, but this
+is not a critical issue at present.  Note that the disk image does not work
+very well with the BwG disk controller, though I cannot figure out why (it
+works fine with both the TI controller and the HFDC controller).  The hard disk
+image is a standard MAME disk image; since MESS does not support image diff
+file currently, only un-compressed images can be written to (compressed images
+ARE supported, but only as read-only disks).
+
+
+* Serial port and PIO emulation is incomplete.  On the one hand, nothing useful
+can be done with the RS232 interface, but, on the other hand, the PIO interface
+enables you to redirect PIO output to a file and save listings to this file by
+"printing" them to PIO.
+
+
+* The tape interface is emulated.  The CS1 unit is read/write, whereas CS2 is
+read-only.   Tapes are stored as sampled wave files.  You may find that the emulated tape
+interface is a relatively simple way to exchnage files with real-world TI99s.
+
+
 
 Loading a cartridge:
 
+
 You do not need a cartridge image to run the computer, since TI99/4a has
 a small built-in basic interpreter.
+
 
 V9t9-format cart images are typically split into up to 3 files.  You MUST load
 all individual files.  Loading a single zip archive containing all the
@@ -7549,19 +7598,25 @@ cartridge files will NOT work, you must uncompress the archive and select every
 file instead.  These files can be loaded in any order, as long as all necessary
 files are loaded.
 
+
+
 Setting up the system configuration:
 
-A few dip switches enable or disable computer extensions. These switches are
-only read at reset. Therefore, if you edit them, you must reset the emulator
+
+A few dip switches enable or disable computer extensions.  These switches are
+only read at reset.  Therefore, if you edit them, you must reset the emulator
 (press F3 in partial keyboard emulation mode) for the changes to be taken
 into account.
 
 
+
 History and Trivia:
+
 
 The TI99/4a Home Computer was a TI99/4 with improved keyboard, revised
 ROMs, and an additional graphics mode.  It was officially introduced in
 June 1981, and was retired in late 1983.
+
 
 TI99/4a was quite successful in Europe and US (possibly hundreds of
 thousand units built).  In 1983, though, competition on the home computer
