@@ -110,7 +110,7 @@ extern void spectrum_plus3_update_memory(void);
 static struct AY8910interface spectrum_ay_interface =
 {
 	1,
-	1000000,
+	1773400,
 	{25,25},
 	{0},
 	{0},
@@ -2340,6 +2340,58 @@ static struct MachineDriver machine_driver_ts2068 =
 	}
 };
 
+static struct MachineDriver machine_driver_uk2086 =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80|CPU_16BIT_PORT,
+			3580000,		/* 3.58 Mhz */
+			ts2068_readmem,ts2068_writemem,
+			ts2068_readport,ts2068_writeport,
+			spec_interrupt,1,
+		},
+	},
+		50, 2500,		/* frames per second, vblank duration */
+	1,
+	ts2068_init_machine,
+	ts2068_exit_machine,
+
+	/* video hardware */
+	TS2068_SCREEN_WIDTH,			/* screen width */
+	TS2068_SCREEN_HEIGHT,			/* screen height */
+	{ 0, TS2068_SCREEN_WIDTH-1, 0, TS2068_SCREEN_HEIGHT-1},  /* visible_area */
+	spectrum_gfxdecodeinfo, 			 /* graphics decode info */
+	16, 256,							 /* colors used for the characters */
+	spectrum_init_palette,				 /* initialise palette */
+
+	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2,
+	ts2068_eof_callback,
+	spectrum_128_vh_start,
+	spectrum_128_vh_stop,
+	ts2068_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		/*  Ay-3-8912 sound */
+		{
+				SOUND_AY8910,
+				&spectrum_ay_interface,
+		},
+		/* standard spectrum sound */
+		{
+				SOUND_SPEAKER,
+				&spectrum_speaker_interface
+		},
+		/* cassette wave sound */
+		{
+				SOUND_WAVE,
+				&spectrum_wave_interface,
+		}
+	}
+};
+
 static struct MachineDriver machine_driver_tc2048 =
 {
 	/* basic machine hardware */
@@ -2819,7 +2871,7 @@ COMP ( 1985, tk90x,    spectrum, spectrum, spectrum,	0, "Micro Digital",	"TK-90x
 COMP ( 1986, tk95,     spectrum, spectrum, spectrum,	0, "Micro Digital",	"TK-95 Color Computer" )
 COMP ( 198?, tc2048,   spectrum, tc2048,   spectrum,	0, "Timex of Portugal",	"TC-2048" )
 COMP ( 1983, ts2068,   spectrum, ts2068,   spectrum,	0, "Timex Sinclair",	"TS-2068" )
-COMP ( 1986, uk2086,   spectrum, ts2068,   spectrum,	0, "Unipolbrit",	"UK-2086 ver. 1.2" )
+COMP ( 1986, uk2086,   spectrum, uk2086,   spectrum,	0, "Unipolbrit",	"UK-2086 ver. 1.2" )
 
 COMPX( 1986, spec128,  0,		 spectrum_128,	 spectrum, 0,			 "Sinclair Research",    "ZX Spectrum 128" ,GAME_NOT_WORKING)
 COMPX( 1985, spec128s, spec128,  spectrum_128,	 spectrum, 0,			 "Sinclair Research",    "ZX Spectrum 128 (Spain)" ,GAME_NOT_WORKING)
