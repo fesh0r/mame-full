@@ -48,12 +48,12 @@ MACHINE_INIT( snes )
 	spc_ram = (UINT8 *)memory_region( REGION_CPU2 );
 
 	/* Init Colour RAM */
-	snes_cgram = (UINT16 *)malloc(0x200);	/* 256 words of colour ram + 1 for fixed colour */
+	snes_cgram = (UINT16 *)malloc(0x202);	/* 256 words of colour ram + 1 for fixed colour */
 	if( snes_cgram == NULL )
 	{
 		logerror( "Error allocating memory for colour ram.\n" );
 	}
-	memset( snes_cgram, 0, 0x200 );
+	memset( snes_cgram, 0, 0x202 );
 
 	/* Init oam RAM */
 	snes_oam = (UINT8 *)malloc(0x400);		/* 1024 bytes of oam */
@@ -325,7 +325,7 @@ READ_HANDLER( snes_r_io )
 WRITE_HANDLER( snes_w_io )
 {
 	static UINT8 vwrite = 0, bg1hw = 0, bg1vw = 0, bg2hw = 0, bg2vw = 0;
-/*	static UINT8 bg3hw = 0, bg3vw = 0, bg4hw = 0, bg4vw = 0; */
+/*	static UINT8 bg3hw = 0, bg3vw = 0, bg4hw = 0, bg4vw = 0;*/
 
 	/* offset is from 0x000000 */
 	switch( offset )
@@ -633,7 +633,7 @@ WRITE_HANDLER( snes_w_io )
 				if( data & 0x80 )
 					b = data & 0x1f;
 				snes_cgram[FIXED_COLOUR] = (r | (g << 5) | (b << 10));
-				Machine->remapped_colortable[FIXED_COLOUR] = snes_cgram[FIXED_COLOUR]; // * ((snes_ram[INIDISP] & 0xf) + 1)) >> 4;
+				Machine->remapped_colortable[FIXED_COLOUR] = snes_cgram[FIXED_COLOUR];
 			} break;
 		case SETINI:	/* Screen mode/video select */
 			break;
@@ -675,18 +675,18 @@ WRITE_HANDLER( snes_w_io )
 			break;
 		case WRDVDD:	/* Divisor */
 			{
-				UINT16 value, div_, rem;
-				div_ = rem = 0;
+				UINT16 value, dividend, remainder;
+				dividend = remainder = 0;
 				if( data > 0 )
 				{
 					value = (snes_ram[WRDIVH] << 8) + snes_ram[WRDIVL];
-					div_ = value / data;
-					rem = value % data;
+					dividend = value / data;
+					remainder = value % data;
 				}
-				snes_ram[RDDIVL] = div_ & 0xff;
-				snes_ram[RDDIVH] = (div_ >> 8) & 0xff;
-				snes_ram[RDMPYL] = rem & 0xff;
-				snes_ram[RDMPYH] = (rem >> 8) & 0xff;
+				snes_ram[RDDIVL] = dividend & 0xff;
+				snes_ram[RDDIVH] = (dividend >> 8) & 0xff;
+				snes_ram[RDMPYL] = remainder & 0xff;
+				snes_ram[RDMPYH] = (remainder >> 8) & 0xff;
 			} break;
 		case HTIMEL:	/* H-Count timer settings (low)  */
 		case HTIMEH:	/* H-Count timer settings (high) */
@@ -791,7 +791,7 @@ WRITE_HANDLER( snes_w_io )
 			break;
 		default:
 #ifdef V_REGISTERS
-//			printf( "IO write to %X: %X\n", offset, data );
+/*			printf( "IO write to %X: %X\n", offset, data ); */
 #endif
 			break;
 	}
