@@ -14,6 +14,9 @@ System Driver Changes:
   card and 80-track drives. Fixed AMS memory card emulation. Enabled support
   for ti99 disk images larger than 1600 sectors in imgtool. [Raphael Nabet]
 
+- [AQUARIUS] The palette now corresponds to the one described in the User's
+  Manual. [Stefano Priore]
+
 Source Changes:
 ---------------
 (none)
