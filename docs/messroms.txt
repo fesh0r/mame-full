@@ -147,6 +147,11 @@ f0000-fffff bigger bios
 
 In dumppc.zip you find a msdos utility dumping the complete c0000-fffff area.
 
+VAMPIRE warning
+vampire extracts only the basic and the bios areas,
+and therefor does incomplete dumps on many pcs!
+(ibm pcjr, ibm xt, ibm at, tandy 1000hx, tandy 2500xl, at's )
+
 IBMAT
 -----
 This saves the boot area of intel 386 compatibles at's
