@@ -19,6 +19,11 @@ void tms9902_push_data(int which, int data);
 int tms9902_CRU_read(int which, int offset);
 void tms9902_CRU_write(int which, int offset, int data);
 
+/*********************** Standard 8-bit CPU interfaces *********************/
+
+READ_HANDLER ( tms9902_0_CRU_read );
+WRITE_HANDLER ( tms9902_0_CRU_write );
+
 /*********************** Standard 16-bit CPU interfaces *********************/
 
 READ16_HANDLER ( tms9902_0_CRU_read16 );
