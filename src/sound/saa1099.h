@@ -5,7 +5,7 @@
 	Philips SAA1099 Sound driver
 **********************************************/
 
-#define MAX_SAA1099 1
+#define MAX_SAA1099 2
 
 /* interface */
 struct SAA1099_interface
@@ -14,11 +14,20 @@ struct SAA1099_interface
 	int volume[MAX_SAA1099][2];			/* playback volume */	
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int saa1099_sh_start(const struct MachineSound *msound);
 void saa1099_sh_stop(void);
 
 WRITE_HANDLER( saa1099_control_port_0_w );
 WRITE_HANDLER( saa1099_write_port_0_w );
+WRITE_HANDLER( saa1099_control_port_1_w );
+WRITE_HANDLER( saa1099_write_port_1_w );
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif
