@@ -25,7 +25,7 @@ static struct MemoryReadAddress readmem[] =
     { 0xa000, 0xbfff, MRA_BANK6 },
     { 0xc000, 0xdfff, MRA_BANK7 },
     { 0xe000, 0xffff, MRA_BANK8 },
-	{ -1 }	/* end of table */
+        { -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
@@ -34,7 +34,7 @@ static struct MemoryWriteAddress writemem[] =
     { 0x4000, 0x7fff, msx_writemem1 },
     { 0x8000, 0xbfff, msx_writemem2 },
     { 0xc000, 0xffff, msx_writemem3 },
-	{ -1 }	/* end of table */
+        { -1 }  /* end of table */
 };
 
 static struct IOReadPort readport[] =
@@ -43,7 +43,7 @@ static struct IOReadPort readport[] =
     { 0xa0, 0xa7, msx_psg_r },
     { 0xa8, 0xab, ppi8255_0_r },
     { 0x98, 0x99, msx_vdp_r },
-	{ -1 }	/* end of table */
+        { -1 }  /* end of table */
 };
 
 static struct IOWritePort writeport[] =
@@ -53,7 +53,7 @@ static struct IOWritePort writeport[] =
     { 0xa0, 0xa7, msx_psg_w },
     { 0xa8, 0xab, ppi8255_0_w },
     { 0x98, 0x99, msx_vdp_w },
-	{ -1 }	/* end of table */
+        { -1 }  /* end of table */
 };
 
 
@@ -390,14 +390,14 @@ INPUT_PORTS_END
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ -1 } /* end of array */
+        { -1 } /* end of array */
 };
 extern READ_HANDLER ( msx_psg_read_port_a );
 
 static struct AY8910interface ay8910_interface =
 {
-    1,	/* 1 chip */
-    1789773,	/* 1.7897725 MHz */
+    1,  /* 1 chip */
+    1789773,    /* 1.7897725 MHz */
     { 10 },
     { msx_psg_port_a_r },
     { msx_psg_port_b_r },
@@ -446,12 +446,12 @@ static struct MachineDriver machine_driver_msx =
 {
     /* basic machine hardware */
     {
-	{
-	    CPU_Z80,
-	    3579545,	/* 3.579545 Mhz */
-	    readmem,writemem,readport,writeport,
-	    msx_interrupt,1
-	}
+        {
+            CPU_Z80,
+            3579545,    /* 3.579545 Mhz */
+            readmem,writemem,readport,writeport,
+            msx_interrupt,1
+        }
     },
     60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
     1,
@@ -473,14 +473,14 @@ static struct MachineDriver machine_driver_msx =
     /* sound hardware */
     0,0,0,0,
     {
-	{
-	    SOUND_AY8910,
-	    &ay8910_interface
-	},
-	{
-	    SOUND_CUSTOM,
-	    &scc_custom_interface
- 	},
+        {
+            SOUND_AY8910,
+            &ay8910_interface
+        },
+        {
+            SOUND_CUSTOM,
+            &scc_custom_interface
+        },
         {
             SOUND_DAC,
             &dac_interface
@@ -489,10 +489,10 @@ static struct MachineDriver machine_driver_msx =
             SOUND_YM2413,
             &ym2413_interface
         },
-	{
-	    SOUND_WAVE,
-	    &wave_interface
-	}
+        {
+            SOUND_WAVE,
+            &wave_interface
+        }
     }
 };
 
@@ -500,12 +500,12 @@ static struct MachineDriver machine_driver_msx_pal =
 {
     /* basic machine hardware */
     {
-	{
-	    CPU_Z80,
-	    3579545,	/* 3.579545 Mhz */
-	    readmem,writemem,readport,writeport,
-	    msx_interrupt,1
-	}
+        {
+            CPU_Z80,
+            3579545,    /* 3.579545 Mhz */
+            readmem,writemem,readport,writeport,
+            msx_interrupt,1
+        }
     },
     50, DEFAULT_REAL_60HZ_VBLANK_DURATION,
     1,
@@ -527,14 +527,14 @@ static struct MachineDriver machine_driver_msx_pal =
     /* sound hardware */
     0,0,0,0,
     {
-	{
-	    SOUND_AY8910,
-	    &ay8910_interface
-	},
-	{
-	    SOUND_CUSTOM,
-	    &scc_custom_interface
- 	},
+        {
+            SOUND_AY8910,
+            &ay8910_interface
+        },
+        {
+            SOUND_CUSTOM,
+            &scc_custom_interface
+        },
         {
             SOUND_DAC,
             &dac_interface
@@ -543,10 +543,10 @@ static struct MachineDriver machine_driver_msx_pal =
             SOUND_YM2413,
             &ym2413_interface
         },
-	{
-	    SOUND_WAVE,
-	    &wave_interface
-	}
+        {
+            SOUND_WAVE,
+            &wave_interface
+        }
     }
 };
 
@@ -574,28 +574,28 @@ ROM_END
 ROM_START (msxkr)
     ROM_REGION (0x10000, REGION_CPU1)
     ROM_LOAD ("msxkr.rom", 0x0000, 0x8000, 0x3ab0cd3b)
-    ROM_LOAD ("msxhan.rom", 0x8000, 0x4000, 0x97478efb)
+    ROM_LOAD_OPTIONAL ("msxhan.rom", 0x8000, 0x4000, 0x97478efb)
 ROM_END
 
 static const struct IODevice io_msx[] = {
 {
-    IO_CARTSLOT,		/* type */
-    MSX_MAX_CARTS,		/* count */
-    "rom\0",			/* file extensions */
-    NULL,               	/* private */
-    msx_id_rom, 		/* id */
-    msx_load_rom,		/* init */
-    msx_exit_rom,		/* exit */
-    NULL,                	/* info */
-    NULL,               	/* open */
-    NULL,               	/* close */
-    NULL,               	/* status */
-    NULL,               	/* seek */
-    NULL,               	/* tell */
-    NULL,               	/* input */
-    NULL,               	/* output */
-    NULL,               	/* input_chunk */
-    NULL       		        /* output_chunk */
+    IO_CARTSLOT,                /* type */
+    MSX_MAX_CARTS,              /* count */
+    "rom\0",                    /* file extensions */
+    NULL,                       /* private */
+    msx_id_rom,                 /* id */
+    msx_load_rom,               /* init */
+    msx_exit_rom,               /* exit */
+    NULL,                       /* info */
+    NULL,                       /* open */
+    NULL,                       /* close */
+    NULL,                       /* status */
+    NULL,                       /* seek */
+    NULL,                       /* tell */
+    NULL,                       /* input */
+    NULL,                       /* output */
+    NULL,                       /* input_chunk */
+    NULL                        /* output_chunk */
 },
     IO_CASSETTE_WAVE (1, "wav\0", NULL, msx_cassette_init, msx_cassette_exit),
     { IO_END }
