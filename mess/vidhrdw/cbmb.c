@@ -80,7 +80,7 @@ VIDEO_UPDATE( cbmb )
 
 	rect.min_x=Machine->visible_area.min_x;
 	rect.max_x=Machine->visible_area.max_x;
-	if (full_refresh||crtc6845_do_full_refresh(crtc6845)) {
+	if (full_refresh) {
 		memset(dirtybuffer, 1, videoram_size);
 	}
 

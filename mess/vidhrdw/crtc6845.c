@@ -23,12 +23,12 @@
 #define DBG_LOG(N,M,A)
 #endif
 
-typedef struct _CRTC6845 {
+typedef struct _CRTC6845
+{
 	CRTC6845_CONFIG config;
 	UINT8 reg[18];
 	UINT8 index;
 	int lightpen_pos;
-	int changed;
 	double cursor_time;
 	int cursor_on;
 } CRTC6845;
@@ -83,14 +83,7 @@ static int crtc6845_clocks_in_frame(CRTC6845 *crtc)
 void crtc6845_set_clock(struct _CRTC6845 *crtc, int freq)
 {
 	crtc->config.freq=freq;
-	crtc->changed=1;
-}
-
-int crtc6845_do_full_refresh(struct _CRTC6845 *crtc) 
-{
-	int t=crtc->changed;
-	crtc->changed=0;
-	return t;
+	schedule_full_refresh();
 }
 
 void crtc6845_time(CRTC6845 *crtc)
@@ -161,8 +154,9 @@ void crtc6845_port_w(struct _CRTC6845 *crtc, int offset, data8_t data)
 				if (crtc->config.cursor_changed) crtc->config.cursor_changed(&cursor);
 				break;
 			default:
-				crtc->changed=1;
+				schedule_full_refresh();
 				crtc->reg[crtc->index]=data;
+				break;
 			}
 				DBG_LOG (2, "crtc_port_w", ("%.2x:%.2x\n", crtc->index, data));
 		} else { 

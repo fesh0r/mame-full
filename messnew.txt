@@ -2,9 +2,10 @@
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
-- Myarc Geneve 9640 [Raphael Nabet]
 - Apple ][, Apple ][+ [Stefano Priore]
 - GameBoy Pocket [Anthony Kruize]
+- Myarc Geneve 9640 [Raphael Nabet]
+- PC AT and PC AT VGA [Nate Woods]
 
 System Driver Changes:
 ---------------------- 

@@ -43,8 +43,6 @@ void crtc6845_set_clock(struct _CRTC6845 *crtc, int freq);
 // to be called before drawing screen
 void crtc6845_time(struct _CRTC6845 *crtc);
 
-int crtc6845_do_full_refresh(struct _CRTC6845 *crtc);
-
 int crtc6845_get_char_columns(struct _CRTC6845 *crtc);
 int crtc6845_get_char_height(struct _CRTC6845 *crtc);
 int crtc6845_get_char_lines(struct _CRTC6845 *crtc);
@@ -97,6 +95,8 @@ void crtc6845_state(void);
 #define CRTC6845_CURSOR_OFF 0x20
 #define CRTC6845_CURSOR_16FRAMES 0x40
 #define CRTC6845_CURSOR_32FRAMES 0x60
+
+#define CRTC6845_SKEW	(REG(8)&15)
 
 #define CRTC6845_CURSOR_POS ((REG(0xe)<<8)|REG(0xf))
 

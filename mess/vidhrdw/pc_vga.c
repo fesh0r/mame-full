@@ -40,6 +40,12 @@
 
 #define DBG_LOG(n,m,a)
 
+#ifdef MAME_DEBUG
+#define LOG(x)	logerror x
+#else
+#define LOG(x)
+#endif
+
 /* vga
  standard compatible to mda, cga, hercules?, ega
  (mda, cga, hercules not real register compatible)
@@ -289,8 +295,9 @@ static struct {
 #define LINES_HELPER ( (vga.crtc.data[0x12] \
 				|((vga.crtc.data[7]&2)<<7) \
 				|((vga.crtc.data[7]&0x40)<<3))+1 )
-#define TEXT_LINES (LINES_HELPER)
+//#define TEXT_LINES (LINES_HELPER)
 #define LINES (DOUBLESCAN?LINES_HELPER>>1:LINES_HELPER)
+#define TEXT_LINES (LINES_HELPER >> ((vga.crtc.data[9]&0x80) ? 1 : 0))
 
 #define GRAPHIC_MODE (vga.gc.data[6]&1) /* else textmodus */
 
@@ -685,10 +692,15 @@ static WRITE_HANDLER(vga_crtc_w)
 		DBG_LOG(1,"vga feature control write",("%.2x %.2x\n",offset,data));
 		vga.feature_control=data;
 		break;
-	case 4: vga.crtc.index=data;break;
+
+	case 4:
+		vga.crtc.index = data;
+		break;
+
 	case 5:
 		DBG_LOG(1,"vga crtc write",("%.2x %.2x\n",vga.crtc.index,data));
-		if (vga.crtc.index<sizeof(vga.crtc.data)) {
+		if (vga.crtc.index<sizeof(vga.crtc.data))
+		{
 			switch (vga.crtc.index) {
 			case 0xa:case 0xb: case 0xe: case 0xf:
 				vga.dirty[CRTC6845_CURSOR_POS<<2]=1;
@@ -697,8 +709,10 @@ static WRITE_HANDLER(vga_crtc_w)
 			vga.crtc.data[vga.crtc.index]=data;
 		}
 		break;
+
 	default:
 		DBG_LOG(1,"0x3[bd]0 write",("%.2x %.2x\n",offset,data));
+		break;
 	}
 }
 
@@ -834,14 +848,16 @@ READ_HANDLER(vga_port_03d0_r)
 
 WRITE_HANDLER( vga_port_03b0_w )
 {
-	/*DBG_LOG(1,"vga 0x3b0 write",("%.2x %.2x\n", offset, data)); */
+	LOG(("vga_port_03b0_w(): port=0x%04x data=0x%02x\n", offset + 0x3b0, data));
+
 	if (CRTC_PORT_ADDR!=0x3b0) return;
 	vga_crtc_w(offset, data);
 }
 
 WRITE_HANDLER(vga_port_03c0_w)
 {
-	/*DBG_LOG(1,"03c0 write",("%.2x %.2x\n",offset,data)); */
+	LOG(("vga_port_03c0_w(): port=0x%04x data=0x%02x\n", offset + 0x3c0, data));
+
 	switch (offset) {
 	case 0:
 		if (vga.attribute.state==0) {
@@ -941,7 +957,8 @@ WRITE_HANDLER(vga_port_03c0_w)
 
 WRITE_HANDLER(vga_port_03d0_w)
 {
-	/*DBG_LOG(1,"vga 0x3d0 write",("%.2x %.2x\n", offset, data)); */
+	LOG(("vga_port_03d0_w(): port=0x%04x data=0x%02x\n", offset + 0x3d0, data));
+
 	if (CRTC_PORT_ADDR==0x3d0)
 		vga_crtc_w(offset,data);
 }
@@ -999,10 +1016,10 @@ void vga_init(mem_read_handler read_dipswitch)
 			}
 		}
 	}
-	vga.read_dipswitch=read_dipswitch;
-	vga.memory=(UINT8*)malloc(0x40000);
-	vga.dirty=(UINT8*)malloc(0x40000);
-	vga.fontdirty=(UINT8*)malloc(0x800);
+	vga.read_dipswitch = read_dipswitch;
+	vga.memory =	(UINT8*) auto_malloc(0x40000);
+	vga.dirty =		(UINT8*) auto_malloc(0x40000);
+	vga.fontdirty =	(UINT8*) auto_malloc(0x800);
 	vga_reset();
 }
 
@@ -1052,7 +1069,7 @@ static void vga_vh_text(struct mame_bitmap *bitmap, int full_refresh)
 		}
 	}
 
-	for (addr = TEXT_START_ADDRESS, line = 0; line < TEXT_LINES;
+	for (addr = TEXT_START_ADDRESS, line = -CRTC6845_SKEW; line < TEXT_LINES;
 		 line += height, addr += TEXT_LINE_LENGTH)
 	{
 		for (pos = addr, column=0; column<TEXT_COLUMNS; column++, pos++)
@@ -1063,6 +1080,9 @@ static void vga_vh_text(struct mame_bitmap *bitmap, int full_refresh)
 
 			for (h=0; (h<height)&&(line+h<TEXT_LINES); h++)
 			{
+				if (line+h < 0)
+					continue;
+
 				bitmapline = (UINT16 *) bitmap->line[line+h];
 				bits = font[h<<2];
 
@@ -1100,19 +1120,20 @@ static void vga_vh_text(struct mame_bitmap *bitmap, int full_refresh)
 
 static void vga_vh_ega(struct mame_bitmap *bitmap, int full_refresh)
 {
-	int pos, line, column, c, addr;
+	int pos, line, column, c, addr, i;
+	int height = CRTC6845_CHAR_HEIGHT;
 	UINT16 *bitmapline;
+	UINT16 *newbitmapline;
 	pen_t pen;
 
 	for (addr=EGA_START_ADDRESS, pos=0, line=0; line<LINES;
-		 line++, addr=(addr+EGA_LINE_LENGTH)&0x3ffff)
+		 line += height, addr=(addr+EGA_LINE_LENGTH)&0x3ffff)
 	{
 		bitmapline = (UINT16 *) Machine->scrbitmap->line[line];
 
 		for (pos=addr, c=0, column=0; column<EGA_COLUMNS; column++, c+=8, pos=(pos+4)&0x3ffff)
 		{
 			int data[4];
-			int i;
 
 			data[0]=vga.memory[pos];
 			data[1]=vga.memory[pos+1]<<1;
@@ -1129,6 +1150,15 @@ static void vga_vh_ega(struct mame_bitmap *bitmap, int full_refresh)
 				data[2]>>=1;
 				data[3]>>=1;
 			}
+		}
+
+		for (i = 1; i < height; i++)
+		{
+			if (line + i >= LINES)
+				break;
+
+			newbitmapline = (UINT16 *) Machine->scrbitmap->line[line+i];
+			memcpy(newbitmapline, bitmapline, EGA_COLUMNS * 8 * sizeof(UINT16));
 		}
 	}
 }
@@ -1167,22 +1197,28 @@ VIDEO_UPDATE( ega )
 {
 	static int columns=720, raws=480;
 	int new_columns, new_raws;
+	int i;
 
-	if (CRTC_ON) {
-		int i;
-		for (i=0; i<16;i++) {
+	if (CRTC_ON)
+	{
+		for (i=0; i<16;i++)
+		{
 			vga.pens[i]=Machine->pens[i/*vga.attribute.data[i]&0x3f*/];
 		}
-		if (!GRAPHIC_MODE) {
+		if (!GRAPHIC_MODE)
+		{
 			vga_vh_text(bitmap, 1);
 			new_raws=TEXT_LINES;
 			new_columns=TEXT_COLUMNS*CHAR_WIDTH;
-		} else {
+		}
+		else
+		{
 			vga_vh_ega(bitmap, 1);
 			new_raws=LINES;
 			new_columns=EGA_COLUMNS*8;
 		}
-		if ((new_columns!=columns)||(new_raws!=raws)) {
+		if ((new_columns!=columns)||(new_raws!=raws))
+		{
 			raws=new_raws;
 			columns=new_columns;
 			if ((columns>100)&&(raws>100))

@@ -214,7 +214,7 @@ static struct {
 
 void pc_cga_cursor(CRTC6845_CURSOR *cursor)
 {
-	if (dirtybuffer)
+	if (dirtybuffer && (videoram_size > cursor->pos*2))
 		dirtybuffer[cursor->pos*2]=1;
 }
 
@@ -361,8 +361,6 @@ static void cga_text_inten(struct mame_bitmap *bitmap)
 				if (cursor.on&&(cga.pc_framecnt&32)&&(offs==cursor.pos*2))
 				{
 					int k=height-cursor.top;
-					struct rectangle rect2=r;
-					rect2.min_y+=cursor.top; 
 					if (cursor.bottom<height) k=cursor.bottom-cursor.top+1;
 
 					if (k>0)
@@ -399,6 +397,9 @@ static void cga_text_blink(struct mame_bitmap *bitmap)
 
 	for (sy=0, r.min_y=0, r.max_y=height-1; sy<lines; sy++, r.min_y+=height,r.max_y+=height)
 	{
+		if (r.min_y >= Machine->scrbitmap->height)
+			break;
+
 		for (sx=0, r.min_x=0, r.max_x=7; sx<columns; 
 			 sx++, offs=(offs+2)&0x3fff, r.min_x+=8, r.max_x+=8)
 		{
@@ -421,11 +422,9 @@ static void cga_text_blink(struct mame_bitmap *bitmap)
 				if (cursor.on&&(cga.pc_framecnt&32)&&(offs==cursor.pos*2))
 				{
 					int k=height-cursor.top;
-					struct rectangle rect2=r;
-					rect2.min_y+=cursor.top; 
 					if (cursor.bottom<height) k=cursor.bottom-cursor.top+1;
 
-					if (k>0)
+					if (k > 0)
 					{
 						plot_box(Machine->scrbitmap, r.min_x, 
 								 r.min_y+cursor.top, 

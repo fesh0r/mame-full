@@ -111,7 +111,7 @@ void init_europc(void)
 //	europc_rtc_set_time();
 }
 
-extern void init_t1000hx(void)
+void init_t1000hx(void)
 {
 	UINT8 *gfx = &memory_region(REGION_GFX1)[0x1000];
 	int i;

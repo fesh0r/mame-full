@@ -787,7 +787,7 @@ VIDEO_UPDATE( pc_t1t )
 
     /* draw entire scrbitmap because of usrintrf functions
 	   called osd_clearbitmap or attr change / scanline change */
-	if (crtc6845_do_full_refresh(pcjr.crtc) || pcjr.full_refresh)
+	if (1)
 	{
 		pcjr.full_refresh = 0;
 		memset(dirtybuffer, 1, videoram_size);

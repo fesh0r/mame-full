@@ -101,7 +101,7 @@ VIDEO_UPDATE( pet40 )
 	int start=crtc6845_get_start(crtc6845)&0x3ff;
 	int full_refresh = 1;
 
-	if (full_refresh||crtc6845_do_full_refresh(crtc6845)) {
+	if (full_refresh) {
 		memset(dirtybuffer, 1, videoram_size);
 	}
 	for (y=0, i=start; y<h;y++) {
@@ -132,7 +132,7 @@ VIDEO_UPDATE( pet80 )
 
 	rect.min_x=Machine->visible_area.min_x;
 	rect.max_x=Machine->visible_area.max_x;
-	if (full_refresh||crtc6845_do_full_refresh(crtc6845)) {
+	if (full_refresh) {
 		memset(dirtybuffer, 1, videoram_size);
 	}
 	for (y=0, rect.min_y=0, rect.max_y=height-1, i=start; y<h;

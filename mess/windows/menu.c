@@ -41,6 +41,9 @@ extern UINT8 win_trying_to_quit;
 extern int showfps;
 extern int showfpstemp;
 
+// from mamedbg.c
+extern int debug_key_pressed;
+
 //============================================================
 //	PARAMETERS
 //============================================================
@@ -71,8 +74,10 @@ enum
 
 #ifdef MAME_DEBUG
 #define HAS_PROFILER	1
+#define HAS_DEBUGGER	1
 #else
 #define HAS_PROFILER	0
+#define HAS_DEBUGGER	0
 #endif
 
 #ifdef UNDER_CE
@@ -891,6 +896,12 @@ static int invoke_command(UINT command)
 		break;
 #endif
 
+#if HAS_DEBUGGER
+	case ID_OPTIONS_DEBUGGER:
+		debug_key_pressed = 1;
+		break;
+#endif
+
 	case ID_OPTIONS_DIPSWITCHES:
 		setdipswitches();
 		break;
@@ -1005,6 +1016,9 @@ int win_setup_menus(HMENU menu_bar)
 #else
 	DeleteMenu(menu_bar, ID_OPTIONS_PROFILER, MF_BYCOMMAND);
 #endif
+
+	if (!HAS_DEBUGGER || !mame_debug)
+		DeleteMenu(menu_bar, ID_OPTIONS_DEBUGGER, MF_BYCOMMAND);
 
 #if !HAS_TOGGLEFULLSCREEN
 	DeleteMenu(menu_bar, ID_OPTIONS_FULLSCREEN, MF_BYCOMMAND);

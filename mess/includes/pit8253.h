@@ -24,21 +24,21 @@ typedef struct {
 	} timer[3];
 } PIT8253_CONFIG;
 
-extern void pit8253_config(int which, PIT8253_CONFIG *config);
-extern void pit8253_reset(int which);
+void pit8253_config(int which, PIT8253_CONFIG *config);
+void pit8253_reset(int which);
 
-extern READ_HANDLER ( pit8253_0_r );
-extern READ_HANDLER ( pit8253_1_r );
+READ_HANDLER ( pit8253_0_r );
+READ_HANDLER ( pit8253_1_r );
 
-extern WRITE_HANDLER ( pit8253_0_w );
-extern WRITE_HANDLER ( pit8253_1_w );
+WRITE_HANDLER ( pit8253_0_w );
+WRITE_HANDLER ( pit8253_1_w );
 
-extern WRITE_HANDLER ( pit8253_0_gate_w );
-extern WRITE_HANDLER ( pit8253_1_gate_w );
+WRITE_HANDLER ( pit8253_0_gate_w );
+WRITE_HANDLER ( pit8253_1_gate_w );
 
-extern int pit8253_get_frequency(int which, int timer);
-extern int pit8253_get_output(int which, int timer);
-extern void pit8253_set_clockin(int which, int timer, double new_clockin);
+int pit8253_get_frequency(int which, int timer);
+int pit8253_get_output(int which, int timer);
+void pit8253_set_clockin(int which, int timer, double new_clockin);
 
 #ifdef __cplusplus
 }

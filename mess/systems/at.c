@@ -16,6 +16,7 @@
 #include "includes/pc_cga.h"
 #include "includes/pc_mda.h"
 #include "includes/pc_video.h"
+#include "includes/pc.h"
 
 #include "devices/pc_hdc.h"
 #include "includes/pc_ide.h"
@@ -470,7 +471,7 @@ MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( atvga )
 	/* basic machine hardware */
-	MDRV_CPU_ATPC(at, at, I286, 12000000, at_cga_frame_interrupt)
+	MDRV_CPU_ATPC(at, at, I286, 12000000, at_vga_frame_interrupt)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -672,5 +673,4 @@ COMPX ( 1988,	at386,		ibmat,	0,		at386,      atcga,		at386,	    ibmat,   "MITAC 
 COMPX ( 1990,	at486,		ibmat,	0,		at386,      atcga,		at386,	    ibmat,   "",  "PC/AT 486(CGA, MF2 Keyboard)", GAME_NOT_WORKING )
 #endif
 
-// these drivers will be discarded soon
-COMPX ( 1987,	atvga,		ibmat,	0,		atvga,      atvga,		at_vga,     ibmat,   "",  "PC/AT (VGA, MF2 Keyboard)", GAME_NOT_WORKING )
+COMP  ( 1987,	atvga,		ibmat,	0,		atvga,      atvga,		at_vga,     ibmat,   "",  "PC/AT (VGA, MF2 Keyboard)" )

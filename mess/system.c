@@ -392,7 +392,7 @@ TESTDRIVER( t1000sx )	/* 1987 Tandy 1000SX (similiar to PCJr)				*/
 TESTDRIVER( ibmat )		/* 1985	IBM AT										*/
 TESTDRIVER( i8530286 )	/* 1988 IBM PS2 Model 30 286 (VGA)					*/
 	DRIVER( at )		/* 1987 AMI Bios and Diagnostics					*/
-TESTDRIVER( atvga ) 	/*													*/
+	DRIVER( atvga ) 	/*													*/
 TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS			*/
 
 	/* SINCLAIR */
