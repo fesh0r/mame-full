@@ -25,7 +25,7 @@ User Interface Changes:
 
 Imgtool Changes:
 ----------------
-(none)
+- [OS9] The Imgtool OS-9 driver now supports writing files.  [Nate Woods]
 
 
 

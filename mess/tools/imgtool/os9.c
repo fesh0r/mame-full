@@ -57,6 +57,7 @@ struct os9_fileinfo
 	unsigned int user_write : 1;
 	unsigned int user_read : 1;
 
+	UINT32 lsn;
 	UINT32 owner_id;
 	UINT32 link_count;
 	UINT32 file_size;
@@ -261,11 +262,11 @@ static imgtoolerr_t os9_decode_file_header(imgtool_image *image,
 	if (err)
 		return err;
 
-	attributes			= pick_integer(header, 0, 1);
-	info->owner_id		= pick_integer(header, 1, 2);
-	info->link_count	= pick_integer(header, 8, 1);
-	info->file_size		= pick_integer(header, 9, 4);
-
+	info->lsn				= lsn;
+	attributes				= pick_integer(header, 0, 1);
+	info->owner_id			= pick_integer(header, 1, 2);
+	info->link_count		= pick_integer(header, 8, 1);
+	info->file_size			= pick_integer(header, 9, 4);
 	info->directory			= (attributes & 0x80) ? 1 : 0;
 	info->non_sharable		= (attributes & 0x40) ? 1 : 0;
 	info->public_execute	= (attributes & 0x20) ? 1 : 0;
@@ -357,14 +358,15 @@ static UINT32 os9_get_free_lsns(imgtool_image *image)
 
 	
 
-static imgtoolerr_t os9_set_file_size(imgtool_image *image, struct os9_fileinfo *file_info,
-	UINT32 new_size)
+static imgtoolerr_t os9_set_file_size(imgtool_image *image,
+	struct os9_fileinfo *file_info, UINT32 new_size)
 {
 	imgtoolerr_t err;
 	const struct os9_diskinfo *disk_info;
 	UINT32 new_lsn_count, current_lsn_count, free_lsns;
-	UINT32 lsn;
-	int sector_map_length;
+	UINT32 lsn, i;
+	int sector_map_length = -1;
+	UINT8 header[256];
 
 	/* easy way out? */
 	if (file_info->file_size == new_size)
@@ -433,12 +435,36 @@ static imgtoolerr_t os9_set_file_size(imgtool_image *image, struct os9_fileinfo 
 				file_info->sector_map[sector_map_length].lsn = lsn;
 				file_info->sector_map[sector_map_length].count = 1;
 				sector_map_length++;
+				file_info->sector_map[sector_map_length].lsn = 0;
+				file_info->sector_map[sector_map_length].count = 0;
 			}
 			current_lsn_count++;
 		}
 	}
 
-	return IMGTOOLERR_UNIMPLEMENTED;
+	/* now lets write back the sector */
+	err = os9_read_lsn(image, file_info->lsn, 0, header, sizeof(header));
+	if (err)
+		return err;
+
+	file_info->file_size = new_size;
+	place_integer(header, 9, 4, file_info->file_size);
+
+	/* do we have to write the sector map? */
+	if (sector_map_length >= 0)
+	{
+		for (i = 0; i < MIN(sector_map_length + 1, sizeof(file_info->sector_map) / sizeof(file_info->sector_map[0])); i++)
+		{
+			place_integer(header, 16 + (i * 5) + 0, 3, file_info->sector_map[i].lsn);
+			place_integer(header, 16 + (i * 5) + 3, 2, file_info->sector_map[i].count);
+		}
+	}
+
+	err = os9_write_lsn(image, file_info->lsn, 0, header, disk_info->sector_size);
+	if (err)
+		return err;
+
+	return IMGTOOLERR_SUCCESS;
 }
 
 
@@ -526,6 +552,7 @@ static imgtoolerr_t os9_lookup_path(imgtool_image *img, const char *path,
 				goto done;
 
 			/* directory entry append complete; no need to hold this lsn */
+			current_lsn = allocated_lsn;
 			allocated_lsn = 0;
 		}
 		path += strlen(path) + 1;
@@ -552,9 +579,11 @@ done:
 static imgtoolerr_t os9_diskimage_open(imgtool_image *image)
 {
 	struct os9_diskinfo *info;
-	UINT32 track_size_in_sectors, attributes;
+	UINT32 track_size_in_sectors, attributes, i;
 	UINT8 header[256];
 	floperr_t ferr;
+	UINT32 allocation_bitmap_lsns;
+	UINT8 b, mask;
 
 	info = (struct os9_diskinfo *) imgtool_floppy_extrabytes(image);
 
@@ -587,19 +616,41 @@ static imgtoolerr_t os9_diskimage_open(imgtool_image *image)
 	if (info->sector_size == 0)
 		info->sector_size = 256;
 
+	/* does the root directory and allocation bitmap collide? */
+	allocation_bitmap_lsns = (info->allocation_bitmap_bytes + info->sector_size - 1) / info->sector_size;
+	if (1 + allocation_bitmap_lsns > info->root_dir_lsn)
+		return IMGTOOLERR_CORRUPTIMAGE;
+
+	/* is the allocation bitmap too big? */
 	if (info->allocation_bitmap_bytes > sizeof(info->allocation_bitmap))
 		return IMGTOOLERR_CORRUPTIMAGE;
+
+	/* sectors per track and track size dont jive? */
 	if (info->sectors_per_track != track_size_in_sectors)
 		return IMGTOOLERR_CORRUPTIMAGE;
+
+	/* zero sectors per track? */
 	if (info->sectors_per_track == 0)
 		return IMGTOOLERR_CORRUPTIMAGE;
+
+	/* do we have an odd number of sectors? */
 	if (info->total_sectors % info->sectors_per_track)
 		return IMGTOOLERR_CORRUPTIMAGE;
 
+	/* read the allocation bitmap */
 	ferr = floppy_read_sector(imgtool_floppy(image), 0, 0, 2, 0, info->allocation_bitmap,
 		info->allocation_bitmap_bytes);
 	if (ferr)
 		return imgtool_floppy_error(ferr);
+
+	/* check to make sure that the allocation bitmap and root sector are reserved */
+	for (i = 0; i <= allocation_bitmap_lsns; i++)
+	{
+		b = info->allocation_bitmap[i / 8];
+		mask = 1 << (7 - (i % 8));
+		if ((b & mask) == 0)
+			return IMGTOOLERR_CORRUPTIMAGE;
+	}
 
 	return IMGTOOLERR_SUCCESS;
 }
@@ -651,7 +702,7 @@ static imgtoolerr_t os9_diskimage_create(imgtool_image *img, option_resolution *
 	place_integer(header,   3,  1, sectors);
 	place_integer(header,   4,  2, (allocation_bitmap_bits + 7) / 8);
 	place_integer(header,   6,  2, cluster_size);
-	place_integer(header,   8,  3, allocation_bitmap_lsns);
+	place_integer(header,   8,  3, 1 + allocation_bitmap_lsns);
 	place_integer(header,  11,  2, owner_id);
 	place_integer(header,  13,  1, attributes);
 	place_integer(header,  14,  2, disk_id);
@@ -880,22 +931,67 @@ static imgtoolerr_t os9_diskimage_writefile(imgtool_image *image, const char *pa
 	struct os9_fileinfo file_info;
 	UINT64 sz;
 	UINT64 free_space;
+	size_t write_size;
+	void *buf = NULL;
+	int i = -1;
+	UINT32 lsn = 0;
+	UINT32 count = 0;
+	const struct os9_diskinfo *disk_info;
+
+	disk_info = (const struct os9_diskinfo *) imgtool_floppy_extrabytes(image);
 
 	err = os9_diskimage_freespace(image, &free_space);
 	if (err)
-		return err;
-
-	err = os9_lookup_path(image, path, NULL, CREATE_FILE, &file_info);
-	if (err)
-		return err;
+		goto done;
 
 	sz = stream_size(sourcef);
 	if (sz > free_space)
-		return IMGTOOLERR_NOSPACE;
+	{
+		err = IMGTOOLERR_NOSPACE;
+		goto done;
+	}
 
-	// NEED TO FINISH
+	buf = malloc(disk_info->sector_size);
+	if (!buf)
+	{
+		err = IMGTOOLERR_OUTOFMEMORY;
+		goto done;
+	}
 
-	return IMGTOOLERR_SUCCESS;
+	err = os9_lookup_path(image, path, NULL, CREATE_FILE, &file_info);
+	if (err)
+		goto done;
+
+	err = os9_set_file_size(image, &file_info, (UINT32) sz);
+	if (err)
+		goto done;
+
+	while(sz > 0)
+	{
+		write_size = (size_t) MIN(sz, (UINT64) disk_info->sector_size);
+
+		stream_read(sourcef, buf, write_size);
+
+		while(count == 0)
+		{
+			i++;
+			lsn = file_info.sector_map[i].lsn;
+			count = file_info.sector_map[i].count;
+		}
+
+		err = os9_write_lsn(image, lsn, 0, buf, write_size);
+		if (err)
+			goto done;
+
+		lsn++;
+		count--;
+		sz -= write_size;
+	}
+
+done:
+	if (buf)
+		free(buf);
+	return err;
 }
 
 
@@ -913,7 +1009,7 @@ static imgtoolerr_t coco_os9_module_populate(imgtool_library *library, struct Im
 	module->next_enum				= os9_diskimage_nextenum;
 	module->free_space				= os9_diskimage_freespace;
 	module->read_file				= os9_diskimage_readfile;
-//	module->write_file				= os9_diskimage_writefile;
+	module->write_file				= os9_diskimage_writefile;
 	return IMGTOOLERR_SUCCESS;
 }
 
