@@ -966,8 +966,8 @@ static ADDRESS_MAP_START( system24_cpu2_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x800100, 0x800101) AM_WRITE(ym_register_w)
 	AM_RANGE(0x800102, 0x800103) AM_READWRITE(ym_status_r, ym_data_w)
 	AM_RANGE(0xa00000, 0xa00007) AM_READWRITE(irq_r, irq_w)
-//	AM_RANGE(0xb00000, 0xb00007) AM_READWRITE(fdc_r, fdc_w)
-//	AM_RANGE(0xb00008, 0xb0000f) AM_READWRITE(fdc_status_r, fdc_ctrl_w)
+	AM_RANGE(0xb00000, 0xb00007) AM_READWRITE(fdc_r, fdc_w)
+	AM_RANGE(0xb00008, 0xb0000f) AM_READWRITE(fdc_status_r, fdc_ctrl_w)
 	AM_RANGE(0xb80000, 0xbbffff) AM_ROMBANK(1)
 	AM_RANGE(0xbc0000, 0xbc0001) AM_READWRITE(curbank_r, curbank_w)
 	AM_RANGE(0xbc0006, 0xbc0007) AM_READWRITE(mlatch_r, mlatch_w)
@@ -1066,6 +1066,8 @@ static DRIVER_INIT(sspirits)
 	system24temp_sys16_io_set_callbacks(hotrod_io_r, hotrod_io_w, resetcontrol_w, iod_r, iod_w);
 	mlatch_table = 0;
 	track_size = 0x2d00;
+	s24_fd1094_driver_init();
+
 }
 
 static DRIVER_INIT(dcclubfd)
@@ -1085,6 +1087,8 @@ static DRIVER_INIT(sgmast)
 	system24temp_sys16_io_set_callbacks(hotrod_io_r, hotrod_io_w, resetcontrol_w, iod_r, iod_w);
 	mlatch_table = 0;
 	track_size = 0x2d00;
+	s24_fd1094_driver_init();
+
 }
 
 static DRIVER_INIT(qsww)
@@ -1816,7 +1820,7 @@ ROM_START( sgmastc )
 	ROM_LOAD( "317-0058-05c.key", 0x0000, 0x2000, CRC(ae0eabe5) SHA1(692d7565bf9c5b32cc80bb4bd88c9193aa04cbb0) )
 
 	ROM_REGION( 0x1c2000, REGION_USER2, 0)
-	ROM_LOAD( "ds3-5000-05c.dsk",         0x000000, 0x1c2000, NO_DUMP )
+	ROM_LOAD( "josmg.dsk",      0x000000, 0x1c2000, CRC(06c4f834) SHA1(5e178ed0edff7721c93f76da2e03ae188dc5efa4) )
 ROM_END
 
 ROM_START( qsww )
@@ -1925,6 +1929,7 @@ GAME( 1994, quizmeku, 0,        system24, quizmeku, quizmeku, ROT0,   "Sega", "Q
 GAME( 1994, qrouka,   0,        system24, qgh,      qrouka,   ROT0,   "Sega", "Quiz Rouka Ni Tattenasai")
 GAME( 1994, mahmajn2, 0,        system24, mahmajn,  mahmajn2, ROT0,   "Sega", "Tokoro San no MahMahjan 2")
 GAME( 1988, sspirits, 0,        system24, sspirits, sspirits, ROT270, "Sega", "Scramble Spirits" )
+GAMEX(1989, sgmastc,  sgmast,   system24, bnzabros, sgmast,   ROT0,   "Sega", "Jumbo Ozaki Super Masters Golf (FD1094 317-0058-05c)", GAME_NOT_WORKING) // decrypted
 
 /* Encrypted */
 GAMEX( ????, sgmast,   0, system24, bnzabros, sgmast,   ROT0,	"Sega", "Super Masters Golf (FD1094 317-0058-05d?)", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION)
@@ -1934,4 +1939,3 @@ GAMEX( ????, crkdown,  0, system24, bnzabros, crkdown,  ROT0,	"Sega", "Crackdown
 
 /* decrypted but missing disk images */
 GAMEX(1988, sspirtfc, sspirits,        system24, sspirits, sspirits, ROT270, "Sega", "Scramble Spirits (FD1094 317-0058-02c)",GAME_NOT_WORKING )
-GAMEX(????, sgmastc,  sgmast,          system24, bnzabros, sgmast,   ROT0,	 "Sega", "Super Masters Golf (FD1094 317-0058-05c)", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION)

@@ -69,7 +69,7 @@ DISCRETE_SOUND_START(hitme_discrete_interface)
 	DISCRETE_COMP_ADDER(NODE_23,1,NODE_22,&desc_hitme_adder)
 
 	/* The combined capacitance is input to a 555 timer in astable mode. */
-	DISCRETE_555_ASTABLE(NODE_24,1,22e3,39e3,NODE_23,NODE_NC,&desc_hitme_555)
+	DISCRETE_555_ASTABLE(NODE_24,1,22e3,39e3,NODE_23,&desc_hitme_555)
 
 	/* The output of the 555 timer is fed through a simple CR filter in the amp stage. */
 	DISCRETE_CRFILTER(NODE_25,1,NODE_24,1e3,50e-6)

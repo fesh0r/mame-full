@@ -648,7 +648,6 @@ const struct GameDriver *drivers[] =
 	DRIVER( pacmania )	/* (c) 1987 */
 	DRIVER( pacmanij )	/* (c) 1987 (Japan) */
 	DRIVER( galaga88 )	/* (c) 1987 */
-	DRIVER( galag88b )	/* (c) 1987 */
 	DRIVER( galag88j )	/* (c) 1987 (Japan) */
 	DRIVER( ws )		/* (c) 1988 (Japan) */
 	DRIVER( berabohm )	/* (c) 1988 (Japan) */
@@ -2989,6 +2988,7 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( smgpa )
 	DRIVER( smgpb )
 	DRIVER( smgpc )
+	DRIVER( smgpd )
 
 	/* Y-Board */
 	DRIVER( gforce2 )
@@ -3824,6 +3824,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( citybmrj )	/* GX787 (c) 1987 (Japan) */
 	DRIVER( kittenk )	/* GX712 (c) 1988 */
 	DRIVER( nyanpani )	/* GX712 (c) 1988 (Japan) */
+	DRIVER( hcrash )	/* GX790 */
 
 	/* GX400 BIOS based games */
 	DRIVER( rf2 )		/* GX561 (c) 1985 */

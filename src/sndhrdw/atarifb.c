@@ -75,7 +75,7 @@ DISCRETE_SOUND_START(atarifb_discrete_interface)
 	/************************************************/
 	/* Whistle effect is a triggered 555 cap charge */
 	/************************************************/
-	DISCRETE_555_ASTABLE(NODE_20, ATARIFB_WHISTLE_EN, 2200, 2200, 1e-7, NODE_NC, &atarifbWhistl555)
+	DISCRETE_555_ASTABLE(NODE_20, ATARIFB_WHISTLE_EN, 2200, 2200, 1e-7, &atarifbWhistl555)
 	DISCRETE_MULTIPLY(ATARIFB_WHISTLE_SND, ATARIFB_WHISTLE_EN, NODE_20, 1000.0/3.3)
 
 	DISCRETE_ADDER3(NODE_90, ATARIFB_ATTRACT_EN, ATARIFB_HIT_SND, ATARIFB_WHISTLE_SND, ATARIFB_CROWD_SND)
@@ -131,7 +131,7 @@ DISCRETE_FILTER2(ABASEB_HIT_SND, 1, ATARIFB_HIT_EN, 10.0, 5, DISC_FILTER_HIGHPAS
 	/************************************************/
 	/* Whistle effect is a triggered 555 cap charge */
 	/************************************************/
-	DISCRETE_555_ASTABLE(NODE_20, ATARIFB_WHISTLE_EN, 2200, 2200, 1e-7, NODE_NC, &atarifbWhistl555)
+	DISCRETE_555_ASTABLE(NODE_20, ATARIFB_WHISTLE_EN, 2200, 2200, 1e-7, &atarifbWhistl555)
 	DISCRETE_MULTIPLY(ATARIFB_WHISTLE_SND, ATARIFB_WHISTLE_EN, NODE_20, 1000.0/5)
 
 	DISCRETE_ADDER3(NODE_90, ATARIFB_ATTRACT_EN, ABASEB_HIT_SND, ABASEB_WHISTLE_SND, ABASEB_CROWD_SND)

@@ -15,13 +15,12 @@
  ************************************************************************/
 
 /* NOTE: We will cheat and store the value written by discrete_sound_w
- *       in an unused input.  DSS_INPUT__DSW_DATA
+ *       in an unused input.  context->data
  */
 
-#define DSS_INPUT__GAIN		node->input[0]
-#define DSS_INPUT__OFFSET	node->input[1]
-#define DSS_INPUT__INIT		node->input[2]
-#define DSS_INPUT__DSW_DATA	node->input[3]
+#define DSS_INPUT__GAIN		(*(node->input[0]))
+#define DSS_INPUT__OFFSET	(*(node->input[1]))
+#define DSS_INPUT__INIT		(*(node->input[2]))
 
 
 struct dss_adjustment_context
@@ -36,10 +35,16 @@ struct dss_adjustment_context
 };
 
 
+struct dss_input_context
+{
+	data8_t data;
+};
+
+
 READ8_HANDLER(discrete_sound_r)
 {
 	struct node_description *node = discrete_find_node(offset);
-	int data = 0;
+	data8_t data = 0;
 
 	if (!Machine->sample_rate) return 0;
 
@@ -48,9 +53,11 @@ READ8_HANDLER(discrete_sound_r)
 	/* Read the node input value if allowed */
 	if (node)
 	{
+		struct dss_input_context *context = node->context;
+
 		if ((node->module.type >= DSS_INPUT_DATA) && (node->module.type <= DSS_INPUT_PULSE))
 		{
-			data = DSS_INPUT__DSW_DATA;
+			data = context->data;
 		}
 	}
 	else
@@ -71,17 +78,19 @@ WRITE8_HANDLER(discrete_sound_w)
 	/* Update the node input value if it's a proper input node */
 	if (node)
 	{
+		struct dss_input_context *context = node->context;
+
 		switch (node->module.type)
 		{
 			case DSS_INPUT_DATA:
-				DSS_INPUT__DSW_DATA = data;
+				context->data = data;
 				break;
 			case DSS_INPUT_LOGIC:
 			case DSS_INPUT_PULSE:
-				DSS_INPUT__DSW_DATA = data ? 1 : 0;
+				context->data = data ? 1 : 0;
 				break;
 			case DSS_INPUT_NOT:
-				DSS_INPUT__DSW_DATA = data ? 0 : 1;
+				context->data = data ? 0 : 1;
 				break;
 		}
 	}
@@ -103,11 +112,13 @@ WRITE8_HANDLER(discrete_sound_w)
  * input[6]    -
  *
  ************************************************************************/
-#define DSS_ADJUSTMENT__ENABLE	node->input[0]
-#define DSS_ADJUSTMENT__MIN		node->input[1]
-#define DSS_ADJUSTMENT__MAX		node->input[2]
-#define DSS_ADJUSTMENT__LOG		node->input[3]
-#define DSS_ADJUSTMENT__PORT	node->input[4]
+#define DSS_ADJUSTMENT__ENABLE	(*(node->input[0]))
+#define DSS_ADJUSTMENT__MIN		(*(node->input[1]))
+#define DSS_ADJUSTMENT__MAX		(*(node->input[2]))
+#define DSS_ADJUSTMENT__LOG		(*(node->input[3]))
+#define DSS_ADJUSTMENT__PORT	(*(node->input[4]))
+#define DSS_ADJUSTMENT__PMIN	(*(node->input[5]))
+#define DSS_ADJUSTMENT__PMAX	(*(node->input[6]))
 
 void dss_adjustment_step(struct node_description *node)
 {
@@ -142,8 +153,8 @@ void dss_adjustment_reset(struct node_description *node)
 
 	context->port = DSS_ADJUSTMENT__PORT;
 	context->lastpval = 0x7fffffff;
-	context->pmin = node->input[5];
-	context->pscale = 1.0 / (double)(node->input[6] - node->input[5]);
+	context->pmin = DSS_ADJUSTMENT__PMIN;
+	context->pscale = 1.0 / (double)(DSS_ADJUSTMENT__PMAX - DSS_ADJUSTMENT__PMIN);
 
 	/* linear scale */
 	if (DSS_ADJUSTMENT__LOG == 0)
@@ -171,9 +182,11 @@ void dss_adjustment_reset(struct node_description *node)
  * input[0]    - Constant value
  *
  ************************************************************************/
+#define DSS_CONSTANT__INIT	(*(node->input[0]))
+
 void dss_constant_step(struct node_description *node)
 {
-	node->output=node->input[0];
+	node->output= DSS_CONSTANT__INIT;
 }
 
 
@@ -189,22 +202,26 @@ void dss_constant_step(struct node_description *node)
  ************************************************************************/
 void dss_input_step(struct node_description *node)
 {
-	node->output = DSS_INPUT__DSW_DATA * DSS_INPUT__GAIN + DSS_INPUT__OFFSET;
+	struct dss_input_context *context = node->context;
+
+	node->output = context->data * DSS_INPUT__GAIN + DSS_INPUT__OFFSET;
 }
 
 void dss_input_reset(struct node_description *node)
 {
+	struct dss_input_context *context = node->context;
+
 	switch (node->module.type)
 	{
 		case DSS_INPUT_DATA:
-			DSS_INPUT__DSW_DATA = DSS_INPUT__INIT;
+			context->data = DSS_INPUT__INIT;
 			break;
 		case DSS_INPUT_LOGIC:
 		case DSS_INPUT_PULSE:
-			DSS_INPUT__DSW_DATA = (DSS_INPUT__INIT == 0) ? 0 : 1;
+			context->data = (DSS_INPUT__INIT == 0) ? 0 : 1;
 			break;
 		case DSS_INPUT_NOT:
-			DSS_INPUT__DSW_DATA = (DSS_INPUT__INIT == 0) ? 1 : 0;
+			context->data = (DSS_INPUT__INIT == 0) ? 1 : 0;
 			break;
 	}
 	dss_input_step(node);
@@ -212,9 +229,11 @@ void dss_input_reset(struct node_description *node)
 
 void dss_input_pulse_step(struct node_description *node)
 {
+	struct dss_input_context *context = node->context;
+
 	/* Set a valid output */
-	node->output = DSS_INPUT__DSW_DATA;
+	node->output = context->data;
 	/* Reset the input to default for the next cycle */
 	/* node order is now important */
-	DSS_INPUT__DSW_DATA = DSS_INPUT__INIT;
+	context->data = DSS_INPUT__INIT;
 }

@@ -882,10 +882,10 @@ ROM_END
 ROM_START( toutrunk )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* 68000 code */
 // custom cpu 317-0118
-	ROM_LOAD16_BYTE( "epr12512.bin", 0x000001, 0x10000, CRC(f90372ad) SHA1(b42dd8c580421b4d7ffacf8d3baa7b9fc9e392ef) )
-	ROM_LOAD16_BYTE( "epr12513.bin", 0x000000, 0x10000, CRC(ae8835a5) SHA1(09573964d4f42ac0f08be3682b73e3420df27c6d) )
-	ROM_LOAD16_BYTE( "epr12514.bin", 0x020001, 0x10000, CRC(5539e9c3) SHA1(01046e3b836f66ba6d5c4be1611de48197aca67f) )
-	ROM_LOAD16_BYTE( "epr12515.bin", 0x020000, 0x10000, CRC(1f047df4) SHA1(c1c67847f1390e671c19f0b90c3cbfbc237d960b) )
+	ROM_LOAD16_BYTE( "epr12513.113", 0x000000, 0x10000, CRC(ae8835a5) SHA1(09573964d4f42ac0f08be3682b73e3420df27c6d) )
+	ROM_LOAD16_BYTE( "epr12512.118", 0x000001, 0x10000, CRC(f90372ad) SHA1(b42dd8c580421b4d7ffacf8d3baa7b9fc9e392ef) )
+	ROM_LOAD16_BYTE( "epr12515.132", 0x020000, 0x10000, CRC(1f047df4) SHA1(c1c67847f1390e671c19f0b90c3cbfbc237d960b) )
+	ROM_LOAD16_BYTE( "epr12514.117", 0x020001, 0x10000, CRC(5539e9c3) SHA1(01046e3b836f66ba6d5c4be1611de48197aca67f) )
 	ROM_LOAD16_BYTE( "epr12293.131", 0x040000, 0x10000, CRC(f4321eea) SHA1(64334acc82c14bb58b7d51719f34fd81cfb9fc6b) )
 	ROM_LOAD16_BYTE( "epr12292.116", 0x040001, 0x10000, CRC(51d98af0) SHA1(6e7115706bfafb687faa23d55d4a8c8e498a4df2) )
 
@@ -898,14 +898,14 @@ ROM_START( toutrunk )
 	ROM_LOAD( "opr12325.104", 0x20000, 0x10000, CRC(1405137a) SHA1(367db88d36852e35c5e839f692be5ea8c8e072d2) )
 
 	ROM_REGION( 0x100000, REGION_GFX2, 0 ) /* sprites */
-	ROM_LOAD( "mpr12336.new",  0x00000, 0x20000, CRC(dda465c7) SHA1(83acc12a387b004986f084f25964c15a9f88a41a) )
-	ROM_LOAD( "mpr12337.new",  0x40000, 0x20000, CRC(828233d1) SHA1(d73a200af4245d590e1fd3ac436723f99cc50452) )
-	ROM_LOAD( "mpr12338.new",  0x80000, 0x20000, CRC(46b4b5f4) SHA1(afeb2e5ac6792edafe7328993fe8dfcd4bce1924) )
-	ROM_LOAD( "mpr12339.new",  0xc0000, 0x20000, CRC(0d7e3bab) SHA1(fdb603df55785ded593daf591ddd90f8f24e0d47) )
-	ROM_LOAD( "mpr12364.new",  0x20000, 0x20000, CRC(a4b83e65) SHA1(966d8c163cef0842abff54e1dba3f15248e73f68) )
-	ROM_LOAD( "mpr12365.new",  0x60000, 0x20000, CRC(4a80b2a9) SHA1(14b4fe71e102622a73c8dc0dbd0013cbbe6fcf9d) )
-	ROM_LOAD( "mpr12366.new",  0xa0000, 0x20000, CRC(385cb3ab) SHA1(fec6d80d488bfe26524fa3a48b195a45a073e481) )
-	ROM_LOAD( "mpr12367.new",  0xe0000, 0x20000, CRC(4930254a) SHA1(00f24be3bf02b143fa554f4d32e283bdac79af6a) )
+	ROM_LOAD( "mpr12336.9",   0x00000, 0x20000, CRC(dda465c7) SHA1(83acc12a387b004986f084f25964c15a9f88a41a) )
+	ROM_LOAD( "mpr12337.10",  0x40000, 0x20000, CRC(828233d1) SHA1(d73a200af4245d590e1fd3ac436723f99cc50452) )
+	ROM_LOAD( "mpr12338.11",  0x80000, 0x20000, CRC(46b4b5f4) SHA1(afeb2e5ac6792edafe7328993fe8dfcd4bce1924) )
+	ROM_LOAD( "mpr12339.12",  0xc0000, 0x20000, CRC(0d7e3bab) SHA1(fdb603df55785ded593daf591ddd90f8f24e0d47) )
+	ROM_LOAD( "mpr12364.13",  0x20000, 0x20000, CRC(a4b83e65) SHA1(966d8c163cef0842abff54e1dba3f15248e73f68) )
+	ROM_LOAD( "mpr12365.14",  0x60000, 0x20000, CRC(4a80b2a9) SHA1(14b4fe71e102622a73c8dc0dbd0013cbbe6fcf9d) )
+	ROM_LOAD( "mpr12366.15",  0xa0000, 0x20000, CRC(385cb3ab) SHA1(fec6d80d488bfe26524fa3a48b195a45a073e481) )
+	ROM_LOAD( "mpr12367.16",  0xe0000, 0x20000, CRC(4930254a) SHA1(00f24be3bf02b143fa554f4d32e283bdac79af6a) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* sound CPU */
 	ROM_LOAD( "epr12300.88",	0x00000, 0x10000, CRC(e8ff7011) SHA1(6eaf3aea507007ea31d507ed7825d905f4b8e7ab) )
@@ -1196,6 +1196,7 @@ static DRIVER_INIT( toutrun )
 	machine_init_sys16_onetime();
 	sys16_interleave_sprite_data( 0x100000 );
 	generate_gr_screen(512,2048,0,0,3,0x8000);
+
 	fd1094_driver_init();
 
 }
@@ -1315,7 +1316,7 @@ PORT_START
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
 //	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON3 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON5 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
@@ -1657,5 +1658,5 @@ GAME( 1986, outruna,  outrun,   outrun,   outrun,   outrun,   ROT0,         "Seg
 GAME( 1986, outrunb,  outrun,   outrun,   outrun,   outrunb,  ROT0,         "bootleg", "Out Run (set 3)" )
 GAME( 1986, outrundx, outrun,   outrun,   outrun,   outrun,   ROT0,         "Sega",    "Out Run (Deluxe?)" )
 GAMEX(1989, toutrun,  0,        toutrun,   outrun,   toutrun,   ROT0,         "Sega",	   "Turbo Out Run (set 1)", GAME_NOT_WORKING )
-GAMEX(1989, toutruna, toutrun,  toutrun,   outrun,   toutrun,   ROT0,         "Sega",    "Turbo Out Run (set 2, upright, 317-unknown)", GAME_NOT_WORKING ) // decrypted
-GAMEX(1989, toutrunk, toutrun,  toutrun,  outrun,   toutrun,   ROT0,         "Sega",    "Turbo Out Run (set3, upgrade kit, 317-0118)", GAME_NOT_WORKING ) // decrypted
+GAMEX(1989, toutruna, toutrun,  toutrun,   outrun,   toutrun,   ROT0,         "Sega",    "Turbo Out Run (set 2, upright, 317-unknown)", GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND ) // decrypted
+GAMEX(1989, toutrunk, toutrun,  toutrun,  outrun,   toutrun,   ROT0,         "Sega",    "Turbo Out Run (set 3, upgrade kit, 317-0118)", GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND  ) // decrypted

@@ -7,6 +7,9 @@
 #include "driver.h"
 #include "vicdual.h"
 
+// defined in src\includes\vicdual.h
+#ifndef FROGS_USE_SAMPLES
+
 /* Discrete Sound Input Nodes */
 #define FROGS_FLY_EN		NODE_01
 #define FROGS_JUMP_EN		NODE_03
@@ -18,12 +21,12 @@
 
 WRITE8_HANDLER( frogs_sh_port2_w )
 {
-		discrete_sound_w(FROGS_HOP_EN, data & 0x01);
-		discrete_sound_w(FROGS_JUMP_EN, data & 0x02);
-		discrete_sound_w(FROGS_TONGUE_EN, data & 0x04);
-		discrete_sound_w(FROGS_CAPTURE_EN, data & 0x08);
-		discrete_sound_w(FROGS_FLY_EN, data & 0x10);
-		discrete_sound_w(FROGS_SPLASH_EN, data & 0x80);
+	discrete_sound_w(FROGS_HOP_EN, data & 0x01);
+	discrete_sound_w(FROGS_JUMP_EN, data & 0x02);
+	discrete_sound_w(FROGS_TONGUE_EN, data & 0x04);
+	discrete_sound_w(FROGS_CAPTURE_EN, data & 0x08);
+	discrete_sound_w(FROGS_FLY_EN, data & 0x10);
+	discrete_sound_w(FROGS_SPLASH_EN, data & 0x80);
 }
 
 /************************************************************************
@@ -102,3 +105,42 @@ DISCRETE_SOUND_START(frogs_discrete_interface)
 	DISCRETE_OUTPUT(NODE_90, 100)
 
 DISCRETE_SOUND_END
+
+#else
+
+static const char *frogs_sample_names[] =
+{
+	"*frogs",
+	"hop.wav",
+	"boing.wav",
+	"zip.wav",
+	"croak.wav",
+	"buzzz.wav",
+	"splash.wav",
+	0       /* end of array */
+};
+
+struct Samplesinterface frogs_samples_interface =
+{
+	6,	/* 6 channels */
+	25,	/* volume */
+	frogs_sample_names
+};
+
+WRITE8_HANDLER( frogs_sh_port2_w )
+{
+	if (data & 0x01)
+		sample_start (0, 0, 0);	// Hop
+	if (data & 0x02)
+		sample_start (1, 1, 0);	// Boing
+	if (data & 0x04)
+		sample_start (2, 2, 0);	// Zip
+	if (data & 0x08)
+		sample_start (3, 3, 0);	// Croak
+	if (data & 0x10)
+		sample_start (4, 4, 0);	// Buzzz
+	if (data & 0x80)
+		sample_start (5, 5, 0);	// Splash
+}
+
+#endif

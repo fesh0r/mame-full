@@ -45,32 +45,31 @@
  *  |        | |           |          |                 | ADDER |-->OUT
  *  | NODE11 | |           |  NODE12  |                 |       |
  *  '--------' |           '----------'              .->|       |
- *             |                                     |  |NODE16 |
- *             |  .------.   .------.   .---------.  |  '-------'
- *             |  |      |   |      |   |         |  |       ^
- *             |  | INV  |Ena| ADD  |Ena| SINEWVE |  |       |
- *             '->| ERT  |-->| ER2  |-->| 4000Hz  |--'  .-------.
- *                |      |ble|      |ble|         |     |       |
- *                |NODE13|   |NODE14|   | NODE15  |     | INPUT |
- *                '------'   '------'   '---------'     |       |
+ *             |                                     |  |NODE20 |
+ *             |  .------.              .---------.  |  '-------'
+ *             |  |Logic |              |         |  |       ^
+ *             |  | INV  |       Enable | SINEWVE |  |       |
+ *             '->| ERT  |------------->| 4000Hz  |--'  .-------.
+ *                |      |              |         |     |       |
+ *                |NODE13|              | NODE14  |     | INPUT |
+ *                '------'              '---------'     |       |
  *                                                      |NODE01 |
  *                                                      '-------'
  *
  * This should give you an alternating two tone sound switching
  * between the 2000Hz and 4000Hz sine waves at the frequency of the
  * square wave, with the memory mapped enable signal mapped onto NODE07
- * so discrete_sound_w(NODE_07,1) will enable the sound, and
- * discrete_sound_w(NODE_07,0) will disable the sound.
+ * so discrete_sound_w(NODE_01,1) will enable the sound, and
+ * discrete_sound_w(NODE_01,0) will disable the sound.
  *
  *  DISCRETE_SOUND_START(test_interface)
- *      DISCRETE_SQUAREWAVE(NODE_01,1,0.5,1,50,0,0)
- *      DISCRETE_SINEWAVE(NODE_02,NODE_01,2000,10000,0,0)
- *      DISCRETE_INVERT(NODE_03,NODE_01)
- *      DISCRETE_ADDER2(NODE_04,1,NODE_03,1)
- *      DISCRETE_SINEWAVE(NODE_05,NODE_04,4000,10000,0,0)
- *      DISCRETE_ADDER2(NODE_06,NODE_07,NODE_02,NODE_05)
- *      DISCRETE_INPUT(NODE_07,1)
- *      DISCRETE_OUTPUT(NODE_06,100)
+ *      DISCRETE_INPUT_LOGIC(NODE_01)
+ *      DISCRETE_SQUAREWFIX(NODE_11, 1, 0.5, 1, 50, 1.0/2, 0)	// Output 0:1
+ *      DISCRETE_SINEWAVE(NODE_12, NODE_11, 2000, 10000, 0, 0)
+ *      DISCRETE_LOGIC_INVERT(NODE_13, 1, NODE_11)
+ *      DISCRETE_SINEWAVE(NODE_14, NODE_13, 4000, 10000, 0, 0)
+ *      DISCRETE_ADDER2(NODE_20, NODE_01, NODE_12, NODE_14)
+ *      DISCRETE_OUTPUT(NODE_20, 100)
  *  DISCRETE_SOUND_END
  *
  * To aid simulation speed it is preferable to use the enable/disable
@@ -88,6 +87,13 @@
  * out your node numbering scheme.
  *
  * Node numbers NODE_01 to NODE_299 are defined at present.
+ *
+ * It is recomended to put all Inputs at the start of the interface.
+ * That way they are updated first.
+ *
+ * Each sound effects final node should come after all nodes that
+ * create it.  The final mixing of all sound effects should come
+ * at the end of the interface.
  *
  ***********************************************************************
  *
@@ -2300,7 +2306,6 @@ struct discrete_sound_block
 };
 
 
-
 /*************************************
  *
  *	Discrete module definition
@@ -2325,16 +2330,23 @@ struct discrete_module
  *
  *************************************/
 
+struct r_node
+{
+	double			r;					/* resistance of this node */
+	int				r_is_variable;		/* TRUE if the resistance varies */
+};
+
 struct node_description
 {
-	int				node;							/* The nodes index number in the node list */
-	struct discrete_module module;					/* Copy of the nodes module info */
-	double			output;							/* The nodes last output value */
+	int				node;							/* The node's index number in the node list */
+	struct	discrete_module module;					/* Copy of the node's module info */
+	double			output;							/* The node's last output value */
+	struct r_node	node_r;							/* info about the node's resistance */
 
 	int				active_inputs;					/* Number of active inputs on this node type */
-	struct node_description *
-					input_node[DISCRETE_MAX_INPUTS];/* Either pointer to input node OR NULL in which case use the input value */
-	double			input[DISCRETE_MAX_INPUTS];		/* Input values for this node */
+	int				input_is_node;					/* Bit Flags.  1 in bit location means input_is_node */
+	const double *	input[DISCRETE_MAX_INPUTS];		/* Addresses of Input values */
+	const struct r_node * input_r[DISCRETE_MAX_INPUTS];	/* Addresses of Input resistance info */
 
 	void *			context;						/* Contextual information specific to this node type */
 	const char *	name;							/* Text name string for identification/debug */
@@ -2702,7 +2714,7 @@ enum
  *************************************/
 
 #define DISCRETE_SOUND_START(STRUCTURENAME) struct discrete_sound_block STRUCTURENAME[] = {
-#define DISCRETE_SOUND_END                                              { NODE_00, DSS_NULL        , 0, { NODE_NC }, { 0 } ,NULL  ,"End Marker" }  };
+#define DISCRETE_SOUND_END                                              { NODE_00, DSS_NULL     , 0, { NODE_NC }, { 0 } ,NULL  ,"End Marker" }  };
 
 /* from disc_inp.c */
 #define DISCRETE_ADJUSTMENT(NODE,ENAB,MIN,MAX,LOGLIN,PORT)              { NODE, DSS_ADJUSTMENT  , 7, { ENAB,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC }, { ENAB,MIN,MAX,LOGLIN,PORT,0   ,100  }, NULL  , NULL  },
@@ -2745,7 +2757,7 @@ enum
 #define DISCRETE_CLAMP(NODE,ENAB,INP0,MIN,MAX,CLAMP)                    { NODE, DST_CLAMP       , 5, { ENAB,INP0,MIN,MAX,CLAMP }, { ENAB,INP0,MIN,MAX,CLAMP }, NULL, "Signal Clamp" },
 #define DISCRETE_DIVIDE(NODE,ENAB,INP0,INP1)                            { NODE, DST_DIVIDE      , 3, { ENAB,INP0,INP1 }, { ENAB,INP0,INP1 }, NULL, "Divider" },
 #define DISCRETE_GAIN(NODE,INP0,GAIN)                                   { NODE, DST_GAIN        , 4, { NODE_NC,INP0,NODE_NC,NODE_NC }, { 1,INP0,GAIN,0 }, NULL, "Gain" },
-#define DISCRETE_INVERT(NODE,INP0)                                      { NODE, DST_GAIN        , 4, { NODE_NC,INP0,NODE_NC,NODE_NC }, { 1,0,-1,0 }, NULL, "Inverter" },
+#define DISCRETE_INVERT(NODE,INP0)                                      { NODE, DST_GAIN        , 4, { NODE_NC,INP0,NODE_NC,NODE_NC }, { 1,INP0,-1,0 }, NULL, "Inverter" },
 #define DISCRETE_LOGIC_INVERT(NODE,ENAB,INP0)                           { NODE, DST_LOGIC_INV   , 2, { ENAB,INP0 }, { ENAB,INP0 }, NULL, "Logic Invertor" },
 #define DISCRETE_LOGIC_AND(NODE,ENAB,INP0,INP1)                         { NODE, DST_LOGIC_AND   , 5, { ENAB,INP0,INP1,NODE_NC,NODE_NC }, { ENAB,INP0,INP1,1.0,1.0 }, NULL, "Logic AND (2inp)" },
 #define DISCRETE_LOGIC_AND3(NODE,ENAB,INP0,INP1,INP2)                   { NODE, DST_LOGIC_AND   , 5, { ENAB,INP0,INP1,INP2,NODE_NC }, { ENAB,INP0,INP1,INP2,1.0 }, NULL, "Logic AND (3inp)" },
@@ -2815,7 +2827,8 @@ enum
 #define DISCRETE_CUSTOM3(NODE,ENAB,IN0,IN1,IN2,CALL)                    { NODE, DST_CUSTOM      , 4, { ENAB,IN0,IN1,IN2 }, { ENAB,IN0,IN1,IN2 }, CALL, "3 input custom module" },
 #define DISCRETE_CUSTOM4(NODE,ENAB,IN0,IN1,IN2,IN3,CALL)                { NODE, DST_CUSTOM      , 5, { ENAB,IN0,IN1,IN2,IN3 }, { ENAB,IN0,IN1,IN2,IN3 }, CALL, "4 input custom module" },
 /* Component specific */
-#define DISCRETE_555_ASTABLE(NODE,RESET,R1,R2,C,CTRLV,OPTIONS)          { NODE, DSD_555_ASTBL   , 5, { RESET,R1,R2,C,CTRLV }, { RESET,R1,R2,C,CTRLV }, OPTIONS, "555 Astable" },
+#define DISCRETE_555_ASTABLE(NODE,RESET,R1,R2,C,OPTIONS)                { NODE, DSD_555_ASTBL   , 5, { RESET,R1,R2,C,NODE_NC }, { RESET,R1,R2,C,-1 }, OPTIONS, "555 Astable" },
+#define DISCRETE_555_ASTABLE_CV(NODE,RESET,R1,R2,C,CTRLV,OPTIONS)       { NODE, DSD_555_ASTBL   , 5, { RESET,R1,R2,C,CTRLV }, { RESET,R1,R2,C,CTRLV }, OPTIONS, "555 Astable with CV" },
 #define DISCRETE_555_MSTABLE(NODE,RESET,TRIG,R,C,OPTIONS)               { NODE, DSD_555_MSTBL   , 4, { RESET,TRIG,R,C }, { RESET,TRIG,R,C }, OPTIONS, "555 Monostable" },
 #define DISCRETE_555_CC(NODE,RESET,VIN,R,C,RBIAS,RGND,RDIS,OPTIONS)     { NODE, DSD_555_CC      , 7, { RESET,VIN,R,C,RBIAS,RGND,RDIS }, { RESET,VIN,R,C,RBIAS,RGND,RDIS }, OPTIONS, "555 Constant Current VCO" },
 #define DISCRETE_566(NODE,ENAB,VMOD,R,C,OPTIONS)                        { NODE, DSD_566         , 4, { ENAB,VMOD,R,C }, { ENAB,VMOD,R,C }, OPTIONS, "566" },

@@ -1195,7 +1195,12 @@ static MACHINE_DRIVER_START( frogs )
 	MDRV_IMPORT_FROM(2ports)
 
 	/* sound hardware */
+// defined in src\includes\vicdual.h
+#ifndef FROGS_USE_SAMPLES
 	MDRV_SOUND_ADD(DISCRETE, frogs_discrete_interface)
+#else
+	MDRV_SOUND_ADD(SAMPLES, frogs_samples_interface)
+#endif
 MACHINE_DRIVER_END
 
 
