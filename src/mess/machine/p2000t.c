@@ -13,14 +13,12 @@
 void p2000t_init_machine(void)
 {
 
-	if (errorlog)
-		fprintf(errorlog, "p2000t_init\r\n");
+	logerror("p2000t_init\r\n");
 
 }
 
 void p2000t_stop_machine(void)
 {
 
-	if (errorlog)
-		fprintf(errorlog, "p2000t_stop\r\n");
+	logerror("p2000t_stop\r\n");
 }

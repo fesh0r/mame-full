@@ -217,7 +217,7 @@ static void dc_floppy_command(char byte, int hardware)
 */
 
 		default:
-			if (errorlog) fprintf(errorlog,"Bad disk command: command=%i\n", (int) byte);
+			logerror("Bad disk command: command=%i\n", (int) byte);
 	}
 }
 
@@ -307,7 +307,7 @@ static void dc_floppy_write_data(char byte, int hardware)
 		case DC_FORMAT:	dc_floppy_nmi(DCS_OK, hardware);
 						break;
 		default:
-			if (errorlog) fprintf (errorlog, "Bad disk drive mode when writing data\n");
+			logerror("Bad disk drive mode when writing data\n");
         	break;
 	}
 }
@@ -468,7 +468,7 @@ int coco_floppy_init(int id)
 	const char *name = device_filename(IO_FLOPPY,id);
     if(name==NULL)
 		return INIT_OK;
-	if(errorlog) fprintf(errorlog,"coco_floppy_init - name is %s\n", name);
+	logerror("coco_floppy_init - name is %s\n", name);
 	dc_floppies[id].fd = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
 	if(!dc_floppies[id].fd)
 		dc_floppies[id].fd = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);

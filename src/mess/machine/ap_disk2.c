@@ -108,7 +108,7 @@ int apple2_floppy_init(int id)
 	f = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
 	if (f==NULL)
 	{
-		if (errorlog) fprintf(errorlog,"Couldn't open image.\n");
+		logerror("Couldn't open image.\n");
 		return INIT_FAILED;
 	}
 
@@ -116,7 +116,7 @@ int apple2_floppy_init(int id)
 	{
 		if (osd_fseek(f,256*16*t,SEEK_CUR)!=0)
 		{
-			if (errorlog) fprintf(errorlog,"Couldn't find track %d.\n", t);
+			logerror("Couldn't find track %d.\n", t);
 			return INIT_FAILED;
 		}
 
@@ -131,13 +131,13 @@ int apple2_floppy_init(int id)
 			sec_pos = 256*r_skewing6[s] + t*256*16;
 			if (osd_fseek(f,sec_pos,SEEK_SET)!=0)
 			{
-				if (errorlog) fprintf(errorlog,"Couldn't find sector %d.\n", s);
+				logerror("Couldn't find sector %d.\n", s);
 				return INIT_FAILED;
 			}
 
 			if (osd_fread(f,data,256)<256)
 			{
-				if (errorlog) fprintf(errorlog,"Couldn't read track %d sector %d (pos: %d).\n", t, s, sec_pos);
+				logerror("Couldn't read track %d sector %d (pos: %d).\n", t, s, sec_pos);
 				return INIT_FAILED;
 			}
 
@@ -251,7 +251,7 @@ static int ReadByte(int drive)
 		a2_drives[drive].bytepos = 0;
 	}
 
-//	if (errorlog) fprintf (errorlog, "pos: %d (track %d sector %d)\n", a2_drives[drive].bytepos, a2_drives[drive].track / 2, a2_drives[drive].bytepos / NIBBLE_SIZE);
+//	logerror("pos: %d (track %d sector %d)\n", a2_drives[drive].bytepos, a2_drives[drive].track / 2, a2_drives[drive].bytepos / NIBBLE_SIZE);
 	return value;
 }
 
@@ -287,7 +287,7 @@ int apple2_c0xx_slot6_r(int offset)
 			if (phase==3)				        a2_drives[cur_drive].track--;
 			if (a2_drives[cur_drive].track<0)	a2_drives[cur_drive].track=0;
 			a2_drives[cur_drive].trackpos = (a2_drives[cur_drive].track/2) * NIBBLE_SIZE*16;
-			if (errorlog) fprintf (errorlog, "new track: %02x\n", a2_drives[cur_drive].track / 2);
+			logerror("new track: %02x\n", a2_drives[cur_drive].track / 2);
 			break;
 		/* MOTOROFF */
 		case 0x08:
@@ -375,7 +375,7 @@ void apple2_c0xx_slot6_w(int offset, int data)
 			disk6byte = data;
 			break;
 		default:	/* Otherwise, do same as slot6_r ? */
-			if (errorlog) fprintf (errorlog, "slot6_w\n");
+			logerror("slot6_w\n");
 			apple2_c0xx_slot6_r(offset);
 			break;
 	}

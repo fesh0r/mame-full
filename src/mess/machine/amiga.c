@@ -292,13 +292,11 @@ static void blitter_proc( int param ) {
 		unsigned short dataA, dataB;
 
 		if ( ( custom_regs.BLTSIZE & 0x003f ) != 0x0002 ) {
-			if ( errorlog )
-				fprintf( errorlog, "Blitter: BLTSIZE.w != 2 in line mode!\n" );
+			logerror("Blitter: BLTSIZE.w != 2 in line mode!\n" );
 		}
 
 		if ( ( custom_regs.BLTCON0 & 0x0b00 ) != 0x0b00 ) {
-			if ( errorlog )
-				fprintf( errorlog, "Blitter: Channel selection incorrect in line mode!\n" );
+			logerror("Blitter: Channel selection incorrect in line mode!\n" );
 		}
 
 		linesize = ( custom_regs.BLTSIZE >> 6 ) & 0x3ff;
@@ -582,8 +580,7 @@ static void blitter_setup( void ) {
 		return;
 
 	if ( custom_regs.DMACON & 0x4000 ) { /* Is there another blitting in progress? */
-		if ( errorlog )
-			fprintf( errorlog, "This program is playing tricks with the blitter\n" );
+		logerror("This program is playing tricks with the blitter\n" );
 		return;
 	}
 
@@ -662,8 +659,7 @@ int amiga_fdc_init( int id ) {
 	fdc_status[id].disk_changed = 1;
 	fdc_status[id].f = image_fopen(IO_FLOPPY,id,OSD_FILETYPE_IMAGE_RW,0);
 	if ( fdc_status[id].f == NULL ) {
-		if ( errorlog )
-			fprintf( errorlog, "Could not open image %s\n", device_filename(IO_FLOPPY,id) );
+		logerror("Could not open image %s\n", device_filename(IO_FLOPPY,id) );
 		return INIT_FAILED;
 	}
 	fdc_status[id].disk_changed = 0;
@@ -684,8 +680,7 @@ static int fdc_get_curpos( int drive ) {
 	int pos;
 
 	if ( fdc_status[drive].rev_timer == 0 ) {
-		if ( errorlog )
-			fprintf( errorlog, "Rev timer not started on drive %d, cant get position!\n", drive );
+		logerror("Rev timer not started on drive %d, cant get position!\n", drive );
 		return 0;
 	}
 
@@ -743,8 +738,7 @@ static void fdc_dma_proc( int drive ) {
 	setup_fdc_buffer( drive );
 
 	if ( custom_regs.DSKLEN & 0x4000 ) {
-		if ( errorlog )
-			fprintf( errorlog, "Write to disk unsupported yet\n" );
+		logerror("Write to disk unsupported yet\n" );
 	} else {
 		unsigned char *RAM = &memory_region(REGION_CPU1)[( custom_regs.DSKPTH << 16 ) | custom_regs.DSKPTL];
 		int cur_pos = fdc_status[drive].pos;
@@ -784,8 +778,7 @@ static void fdc_setup_dma( void ) {
 	}
 
 	if ( drive == -1 ) {
-		if ( errorlog )
-			fprintf( errorlog, "Disk DMA started with no drive selected!\n" );
+		logerror("Disk DMA started with no drive selected!\n" );
 		return;
 	}
 
@@ -798,8 +791,7 @@ static void fdc_setup_dma( void ) {
 
 	if ( custom_regs.ADKCON & 0x0400 ) { /* Wait for sync */
 		if ( custom_regs.DSKSYNC != 0x4489 ) {
-			if ( errorlog )
-				fprintf( errorlog, "Attempting to read a non-standard SYNC\n" );
+			logerror("Attempting to read a non-standard SYNC\n" );
 		}
 
 		i = cur_pos;
@@ -814,8 +806,7 @@ static void fdc_setup_dma( void ) {
 		} while( i != cur_pos );
 
 		if ( i == cur_pos && time != 0 ) {
-			if ( errorlog )
-				fprintf( errorlog, "SYNC not found on track!\n" );
+			logerror("SYNC not found on track!\n" );
 			return;
 		} else {
 			fdc_status[drive].pos = i + 2;
@@ -854,8 +845,7 @@ static void setup_fdc_buffer( int drive ) {
 		return;
 
 	if ( osd_fseek( fdc_status[drive].f, offset * len, SEEK_SET ) ) {
-		if ( errorlog )
-			fprintf( errorlog, "FDC: osd_fseek failed!\n" );
+		logerror("FDC: osd_fseek failed!\n" );
 		osd_fclose( fdc_status[drive].f );
 		fdc_status[drive].f = NULL;
 		fdc_status[drive].disk_changed = 1;
@@ -971,8 +961,7 @@ static void start_rev_timer( int drive ) {
 	int time;
 
 	if ( fdc_status[drive].rev_timer ) {
-		if ( errorlog )
-			fprintf( errorlog, "Revolution timer started twice?!\n" );
+		logerror("Revolution timer started twice?!\n" );
 		return;
 	}
 
@@ -985,8 +974,7 @@ static void start_rev_timer( int drive ) {
 
 static void stop_rev_timer( int drive ) {
 	if ( fdc_status[drive].rev_timer == 0 ) {
-		if ( errorlog )
-			fprintf( errorlog, "Revolution timer never started?!\n" );
+		logerror("Revolution timer never started?!\n" );
 		return;
 	}
 
@@ -1286,8 +1274,7 @@ static int cia_0_portA_r( void ) {
 }
 
 static int cia_0_portB_r( void ) {
-	if ( errorlog )
-		fprintf( errorlog, "Program read from the parallel port\n" );
+	logerror("Program read from the parallel port\n" );
 	return 0;
 }
 
@@ -1297,8 +1284,7 @@ static void cia_0_portA_w( int data ) {
 }
 
 static void cia_0_portB_w( int data ) {
-	if ( errorlog )
-		fprintf( errorlog, "Program wrote to the parallel port\n" );
+	logerror("Program wrote to the parallel port\n" );
 }
 
 static int cia_1_portA_r( void ) {
@@ -1447,8 +1433,7 @@ int amiga_cia_r( int offs ) {
 	}
 
 #if LOG_CIA
-	if ( errorlog )
-		fprintf( errorlog, "PC = %06x - Read from CIA %01x\n", cpu_getpc(), cia_sel );
+	logerror("PC = %06x - Read from CIA %01x\n", cpu_getpc(), cia_sel );
 #endif
 
 	return 0;
@@ -1589,8 +1574,7 @@ void amiga_cia_w( int offs, int data ) {
 	}
 
 #if LOG_CIA
-	if ( errorlog )
-		fprintf( errorlog, "PC = %06x - Wrote to CIA %01x (%02x)\n", cpu_getpc(), cia_sel, data );
+	logerror("PC = %06x - Wrote to CIA %01x (%02x)\n", cpu_getpc(), cia_sel, data );
 #endif
 }
 
@@ -1715,8 +1699,7 @@ int amiga_custom_r( int offs ) {
 
 		default:
 #if LOG_CUSTOM
-			if ( errorlog )
-				fprintf( errorlog, "PC = %06x - Read from Custom %04x\n", cpu_getpc(), offs );
+			logerror("PC = %06x - Read from Custom %04x\n", cpu_getpc(), offs );
 #endif
 		break;
 	}
@@ -1932,8 +1915,7 @@ void amiga_custom_w( int offs, int data ) {
 
 			if ( ( custom_regs.BPLCON0 & ( BPLCON0_BPU0 | BPLCON0_BPU1 | BPLCON0_BPU2 ) ) == ( BPLCON0_BPU0 | BPLCON0_BPU1 | BPLCON0_BPU2 ) ) {
 				/* planes go from 0 to 6, inclusive */
-				if ( errorlog )
-					printf( "This game is doing funky planes stuff. (planes > 6)\n" );
+				logerror("This game is doing funky planes stuff. (planes > 6)\n" );
 				custom_regs.BPLCON0 &= ~BPLCON0_BPU0;
 			}
 		break;
@@ -2035,8 +2017,7 @@ void amiga_custom_w( int offs, int data ) {
 
 		default:
 #if LOG_CUSTOM
-		if ( errorlog )
-			fprintf( errorlog, "PC = %06x - Wrote to Custom %04x (%04x)\n", cpu_getpc(), offs, data );
+		logerror("PC = %06x - Wrote to Custom %04x (%04x)\n", cpu_getpc(), offs, data );
 #endif
 		break;
 	}

@@ -11,8 +11,8 @@ struct RIOTinterface {
 	int baseclock[MAX_RIOTS];
 	int (*port_a_r[MAX_RIOTS])(int chip);
 	int (*port_b_r[MAX_RIOTS])(int chip);
-	void (*port_a_w[MAX_RIOTS])(int chip, int data);
-	void (*port_b_w[MAX_RIOTS])(int chip, int data);
+	void (*port_a_w[MAX_RIOTS])(int chip, int offset, int data);
+	void (*port_b_w[MAX_RIOTS])(int chip, int offset, int data);
 	void (*irq_callback[MAX_RIOTS])(int chip);
 };
 

@@ -36,26 +36,24 @@ int pdp1_load_rom (int id)
 	/* The spacewar! is mandatory for now. */
 	if (!(romfile = osd_fopen (Machine->gamedrv->name, "spacewar.bin",OSD_FILETYPE_IMAGE_R, 0)))
 	{
-		if (errorlog) fprintf(errorlog,"PDP1: can't find SPACEWAR.BIN\n");
+		logerror("PDP1: can't find SPACEWAR.BIN\n");
 		return 1;
 	}
 
 	if (!name || strlen(name)==0)
 	{
-		if (errorlog)
-			fprintf(errorlog,"PDP1: no file specified (doesn't matter, not used anyway)!\n");
+		logerror("PDP1: no file specified (doesn't matter, not used anyway)!\n");
 	}
 	else
 	/* if (!(cartfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_ROM_CART, 0))) */
 	{
-		if (errorlog)
-			fprintf(errorlog,"PDP1: file specified, but ignored");
+		logerror("PDP1: file specified, but ignored");
 	}
 
 	/* Allocate memory and set up memory regions */
 	if( new_memory_region(REGION_CPU1, 0x10000 * sizeof(int)) )
 	{
-		fprintf(errorlog,"PDP1: Memory allocation failed!\n");
+		logerror("PDP1: Memory allocation failed!\n");
 		return 1;
     }
 
@@ -93,7 +91,7 @@ int pdp1_id_rom (int id)
 	/* This driver doesn't ID images yet */
 	return 0;
 }
-static int setOPbasefunc(UINT32 i)
+static OPBASE_HANDLER(setOPbasefunc)
 {
 	/* just to get rid of the warnings */
 	return -1;
@@ -151,8 +149,7 @@ int pdp1_iot(int *io, int md)
    * TAPE CHANNELS  8  7  6  5  4  3  2  1
    */
    int read_byte=0;
-   if (errorlog)
-	fprintf(errorlog,"\nWarning, RPA instruction not fully emulated: io=0%06o, y=0%06o, pc=0%06o",*io,cpu_get_reg(PDP1_Y),cpu_get_reg(PDP1_PC));
+   logerror("\nWarning, RPA instruction not fully emulated: io=0%06o, y=0%06o, pc=0%06o",*io,cpu_get_reg(PDP1_Y),cpu_get_reg(PDP1_PC));
 
    etime=10; /* probably some more */
    /* somehow read a byte... */
@@ -200,8 +197,7 @@ int pdp1_iot(int *io, int md)
    * the type-in status bit.
    */
 
-   if (errorlog)
-	fprintf(errorlog,"\nWarning, TYI instruction not fully emulated: io=0%06o, y=0%06o, pc=0%06o",*io,cpu_get_reg(PDP1_Y),cpu_get_reg(PDP1_PC));
+   logerror("\nWarning, TYI instruction not fully emulated: io=0%06o, y=0%06o, pc=0%06o",*io,cpu_get_reg(PDP1_Y),cpu_get_reg(PDP1_PC));
 
    etime=10; /* probably heaps more */
    *io=0;
@@ -270,8 +266,7 @@ int pdp1_iot(int *io, int md)
   }
   case 030: /* RRB */
   {
-   if (errorlog)
-	fprintf(errorlog,"\nWarning, RRB instruction not fully emulated: io=0%06o, y=0%06o, pc=0%06o",*io,cpu_get_reg(PDP1_Y),cpu_get_reg(PDP1_PC));
+   logerror("\nWarning, RRB instruction not fully emulated: io=0%06o, y=0%06o, pc=0%06o",*io,cpu_get_reg(PDP1_Y),cpu_get_reg(PDP1_PC));
    etime=5;
    cpu_set_reg(PDP1_F1,0);
    *io=0;
@@ -292,10 +287,7 @@ int pdp1_iot(int *io, int md)
   default:
   {
    etime=5;
-   if (errorlog)
-   {
-	fprintf(errorlog,"\nNot supported IOT command: io=0%06o, y=0%06o, pc=0%06o",*io,cpu_get_reg(PDP1_Y),cpu_get_reg(PDP1_PC));
-   }
+   logerror("\nNot supported IOT command: io=0%06o, y=0%06o, pc=0%06o",*io,cpu_get_reg(PDP1_Y),cpu_get_reg(PDP1_PC));
    break;
   }
  }

@@ -14,10 +14,12 @@ TIA tia;
 
 int a2600_scanline_interrupt(void);
 
+
+#ifdef USE_RIOT
 static int a2600_riot_a_r(int chip);
 static int a2600_riot_b_r(int chip);
-static void a2600_riot_a_w(int chip, int data);
-static void a2600_riot_b_w(int chip, int data);
+static void a2600_riot_a_w(int chip, int offset, int data);
+static void a2600_riot_b_w(int chip, int offset, int data);
 
 
 static struct RIOTinterface a2600_riot = {
@@ -29,6 +31,7 @@ static struct RIOTinterface a2600_riot = {
 	{ a2600_riot_b_w }, 	/* port b output */
 	{ NULL }				/* interrupt callback */
 };
+#endif
 
 
 static int msize0;
@@ -40,6 +43,8 @@ struct osd_bitmap *stella_bitmap;
 /* local */
 static unsigned char *a2600_cartridge_rom;
 
+
+#ifdef USE_RIOT
 static int a2600_riot_a_r(int chip)
 {
 	/* joystick !? */
@@ -49,18 +54,72 @@ static int a2600_riot_a_r(int chip)
 static int a2600_riot_b_r(int chip)
 {
 	/* console switches !? */
-    return readinputport(0);
+    return readinputport(1);
 }
 
-static void a2600_riot_a_w(int chip, int data)
+static void a2600_riot_a_w(int chip, int offset, int data)
 {
-	/* anything? */
+	UINT8 *ROM = memory_region(REGION_CPU1);
+	ROM[offset] = data;
 }
 
-static void a2600_riot_b_w(int chip, int data)
+static void a2600_riot_b_w(int chip, int offset, int data)
 {
-	/* anything? */
+	UINT8 *ROM = memory_region(REGION_CPU1);
+	ROM[offset] = data;
 }
+#endif
+
+
+/***************************************************************************
+
+  RIOT Reads.
+
+***************************************************************************/
+int a2600_riot_r(int offset)
+{
+	UINT8 *ROM = memory_region(REGION_CPU1);
+
+	switch(offset)
+	{
+		case 0x00:
+        return readinputport(0);
+
+
+		case 0x01:
+		return readinputport(1);
+
+
+		case 0x02:
+		return readinputport(2);
+
+
+		case 0x04: /*TIMER READ */
+
+		break;
+	}
+
+	return 	ROM[offset];
+}
+
+
+/***************************************************************************
+
+  RIOT Writes.
+
+***************************************************************************/
+
+void a2600_riot_w(int offset, int data)
+{
+	UINT8 *ROM = memory_region(REGION_CPU1);
+
+	ROM[offset] = data;
+
+}
+
+
+
+
 
 
 
@@ -72,6 +131,7 @@ static void a2600_riot_b_w(int chip, int data)
 
 int a2600_TIA_r(int offset)
 {
+	UINT8 *ROM = memory_region(REGION_CPU1);
 
 	switch (offset) {
 			case CXM0P:
@@ -82,46 +142,51 @@ int a2600_TIA_r(int offset)
             case CXM1FB:
             case CXBLPF:
             case CXPPMM:
-					if (errorlog && TIA_VERBOSE)
-						fprintf(errorlog,"TIA_r - COLLISION range\n");
-			break;
-
+			//break;
+ #ifdef CRAP
 	        case INPT0:	  /* offset 0x08 */
 	            if (input_port_1_r(0) & 0x02)
 	                return 0x80;
 	            else
 	                return 0x00;
+				//break;
 	        case INPT1:	  /* offset 0x09 */
 	            if (input_port_1_r(0) & 0x08)
 	                return 0x80;
 	            else
 	                return 0x00;
+				//break;
 	        case INPT2:	  /* offset 0x0A */
 	            if (input_port_1_r(0) & 0x01)
 	                return 0x80;
 	            else
 	                return 0x00;
+				//break;
 	        case INPT3:	  /* offset 0x0B */
 	            if (input_port_1_r(0) & 0x04)
 	                return 0x80;
 	            else
 	                return 0x00;
+				//break;
 	        case INPT4:	  /* offset 0x0C */
 	            if ((input_port_1_r(0) & 0x08) || (input_port_1_r(0) & 0x02))
 	                return 0x00;
 	            else
 	                return 0x80;
+				//break;
 	        case INPT5:	  /* offset 0x0D */
 	            if ((input_port_1_r(0) & 0x01) || (input_port_1_r(0) & 0x04))
 	                return 0x00;
 	            else
 	                return 0x80;
+				//break;
+#endif
 	        default:
-	            if (errorlog) fprintf(errorlog,"TIA_r undefined read %x\n",offset);
+	            logerror("TIA_r undefined read %x\n",offset);
 
 	    }
-    return 0xFF;
-
+    //return 0xFF;
+	return 	ROM[offset];
 
 }
 
@@ -145,173 +210,169 @@ void a2600_TIA_w(int offset, int data)
 			if ( !(data & 0x00) )
 			{
 
-				if (errorlog && TIA_VERBOSE)
+				if (TIA_VERBOSE)
 				{
-                    fprintf(errorlog,"TIA_w - VSYNC Stop\n");
+                    logerror("TIA_w - VSYNC Stop\n");
 				}
 
 			}
 			else if (data & 0x02)
 			{
 
-				if (errorlog && TIA_VERBOSE)
-					fprintf(errorlog,"TIA_w - VSYNC Start\n");
+				if (TIA_VERBOSE)
+					logerror("TIA_w - VSYNC Start\n");
 
 			}
 			else /* not allowed */
 			{
-				if (errorlog)
-					fprintf(errorlog,"TIA_w - VSYNC Write Error! offset $%02x & data $%02x\n", offset, data);
+				logerror("TIA_w - VSYNC Write Error! offset $%02x & data $%02x\n", offset, data);
 			}
-            break;
+           // break;
 
 
 		case VBLANK:     	/* offset 0x01, bits 7,6 and 1 used */
 			if ( !(data & 0x00) )
 			{
-				if (errorlog && TIA_VERBOSE)
-					fprintf(errorlog,"TIA_w - VBLANK Stop\n");
+				if (TIA_VERBOSE)
+					logerror("TIA_w - VBLANK Stop\n");
 			}
 			else if (data & 0x02)
 			{
-				if (errorlog && TIA_VERBOSE)
-					fprintf(errorlog,"TIA_w - VBLANK Start\n");
+				if (TIA_VERBOSE)
+					logerror("TIA_w - VBLANK Start\n");
 			}
 			else
 			{
-				if (errorlog)
-					fprintf(errorlog,"TIA_w - VBLANK Write Error! offset $%02x & data $%02x\n", offset, data);
+				logerror("TIA_w - VBLANK Write Error! offset $%02x & data $%02x\n", offset, data);
 			}
-		    break;
+		    //break;
 
 
 		case WSYNC:     	/* offset 0x02 */
 			if ( !(data & 0x00) )
 			{
-				if (errorlog && TIA_VERBOSE)
-					fprintf(errorlog,"TIA_w - WSYNC \n");
+				if (TIA_VERBOSE)
+					logerror("TIA_w - WSYNC \n");
 				//cpu_spinuntil_int (); /* wait til end of scanline */
 			}
 			else
 			{
-				if (errorlog && TIA_VERBOSE)
-					fprintf(errorlog,"TIA_w - WSYNC Write Error! offset $%02x & data $%02x\n", offset, data);
+				if (TIA_VERBOSE)
+					logerror("TIA_w - WSYNC Write Error! offset $%02x & data $%02x\n", offset, data);
 			}
-            break;
+            //break;
 
 
 
 		case RSYNC:     	/* offset 0x03 */
 			if ( !(data & 0x00) )
 			{
-				if (errorlog && TIA_VERBOSE)
-					fprintf(errorlog,"TIA_w - RSYNC \n");
+				if (TIA_VERBOSE)
+					logerror("TIA_w - RSYNC \n");
 			}
 			else
 			{
-				if (errorlog && TIA_VERBOSE)
-					fprintf(errorlog,"TIA_w - RSYNC Write Error! offset $%02x & data $%02x\n", offset, data);
+				if (TIA_VERBOSE)
+					logerror("TIA_w - RSYNC Write Error! offset $%02x & data $%02x\n", offset, data);
 			}
-            break;
+            //break;
 
 
 
 		case NUSIZ0:     	/* offset 0x04 */
 			msize0 = 2^(data>>4);
-			if (errorlog)
-				fprintf(errorlog,"TIA_w - NUSIZ0, Missile Size = %d clocks at horzpos %d\n",msize0, cpu_gethorzbeampos());
+			logerror("TIA_w - NUSIZ0, Missile Size = %d clocks at horzpos %d\n",msize0, cpu_gethorzbeampos());
 			/* must implement player size checking! */
 
-            break;
+            //break;
 
 
 		case NUSIZ1:     	/* offset 0x05 */
 			msize1 = 2^(data>>4);
-			if (errorlog)
-				fprintf(errorlog,"TIA_w - NUSIZ1, Missile Size = %d clocks at horzpos %d\n",msize1, cpu_gethorzbeampos());
+			logerror("TIA_w - NUSIZ1, Missile Size = %d clocks at horzpos %d\n",msize1, cpu_gethorzbeampos());
 			/* must implement player size checking! */
 
-            break;
+            //break;
 
 
 		case COLUP0:     	/* offset 0x06 */
 
 			tia.colreg.P0 = data>>4;
 			tia.colreg.M0 = tia.colreg.P0; /* missile same color */
-   			if (errorlog && TIA_VERBOSE)
-				fprintf(errorlog,"TIA_w - COLUP0 Write color is $%02x\n", tia.colreg.P0);
-            break;
+   			if (TIA_VERBOSE)
+				logerror("TIA_w - COLUP0 Write color is $%02x\n", tia.colreg.P0);
+            //break;
 
 		case COLUP1:     	/* offset 0x07 */
 
 			tia.colreg.P1 = data>>4;
 			tia.colreg.M1 = tia.colreg.P1; /* missile same color */
-   			if (errorlog && TIA_VERBOSE)
-				fprintf(errorlog,"TIA_w - COLUP1 Write color is $%02x\n", tia.colreg.P1);
-            break;
+   			if (TIA_VERBOSE)
+				logerror("TIA_w - COLUP1 Write color is $%02x\n", tia.colreg.P1);
+            //break;
 
 		case COLUPF:     	/* offset 0x08 */
 
 			tia.colreg.PF = data>>4;
 			tia.colreg.BL = data>>4;  /* ball is same as playfield */
-   			if (errorlog && TIA_VERBOSE)
-				fprintf(errorlog,"TIA_w - COLUPF Write color is $%02x\n", tia.colreg.PF);
-            break;
+   			if (TIA_VERBOSE)
+				logerror("TIA_w - COLUPF Write color is $%02x\n", tia.colreg.PF);
+            //break;
 
 		case COLUBK:     	/* offset 0x09 */
 
 			tia.colreg.BK = data>>4;
-   			if (errorlog && TIA_VERBOSE)
-				fprintf(errorlog,"TIA_w - COLUBK Write color is $%02x\n", tia.colreg.BK);
-            break;
+   			if (TIA_VERBOSE)
+				logerror("TIA_w - COLUBK Write color is $%02x\n", tia.colreg.BK);
+            //break;
 
 
 		case CTRLPF:     	/* offset 0x0A */
 
 
-				if (errorlog && TIA_VERBOSE)
-					fprintf(errorlog,"TIA_w - CTRLPF Write offset $%02x & data $%02x\n", offset, data);
+				if (TIA_VERBOSE)
+					logerror("TIA_w - CTRLPF Write offset $%02x & data $%02x\n", offset, data);
 
-            break;
+            //break;
 
 
 
 		case REFP0:
 			if ( !(data & 0x00) )
 			{
-                if (errorlog && TIA_VERBOSE)
-					fprintf(errorlog,"TIA_w - REFP0 No reflect \n");
+                if (TIA_VERBOSE)
+					logerror("TIA_w - REFP0 No reflect \n");
 			}
 			else if ( data & 0x08)
 			{
-				if (errorlog && TIA_VERBOSE)
-					fprintf(errorlog,"TIA_w - REFP0 Reflect \n");
+				if (TIA_VERBOSE)
+					logerror("TIA_w - REFP0 Reflect \n");
 			}
 			else
 			{
-            	if (errorlog && TIA_VERBOSE)
-					fprintf(errorlog,"TIA_w - Write Error, REFP0 offset $%02x & data $%02x\n", offset, data);
+            	if (TIA_VERBOSE)
+					logerror("TIA_w - Write Error, REFP0 offset $%02x & data $%02x\n", offset, data);
 			}
-            break;
+            //break;
 
 
 		case REFP1:
 			if ( !(data & 0x00) )
 			{
-                if (errorlog && TIA_VERBOSE)
-					fprintf(errorlog,"TIA_w - REFP1 No reflect \n");
+                if (TIA_VERBOSE)
+					logerror("TIA_w - REFP1 No reflect \n");
 			}
 			else if ( data & 0x08)
 			{
-				if (errorlog && TIA_VERBOSE)
-					fprintf(errorlog,"TIA_w - REFP1 Reflect \n");
+				if (TIA_VERBOSE)
+					logerror("TIA_w - REFP1 Reflect \n");
 			}
 			else
 			{
-            	if (errorlog && TIA_VERBOSE)
-					fprintf(errorlog,"TIA_w - Write Error, REFP1 offset $%02x & data $%02x\n", offset, data);
+            	if (TIA_VERBOSE)
+					logerror("TIA_w - Write Error, REFP1 offset $%02x & data $%02x\n", offset, data);
 			}
-            break;
+            //break;
 
 
 
@@ -320,40 +381,40 @@ void a2600_TIA_w(int offset, int data)
 
 		case PF0:	    /* 0x0D Playfield Register Byte 0 */
 			tia.pfreg.B0 = data;
-			if (errorlog && TIA_VERBOSE)
-				fprintf(errorlog,"TIA_w - PF0 register is $%02x \n", tia.pfreg.B0);
-			break;
+			if (TIA_VERBOSE)
+				logerror("TIA_w - PF0 register is $%02x \n", tia.pfreg.B0);
+		//	break;
 
         case PF1:		/* 0x0E Playfield Register Byte 1 */
 			tia.pfreg.B1 = data;
-			if (errorlog && TIA_VERBOSE)
-				fprintf(errorlog,"TIA_w - PF1 register is $%02x \n", tia.pfreg.B1);
-			break;
+			if (TIA_VERBOSE)
+				logerror("TIA_w - PF1 register is $%02x \n", tia.pfreg.B1);
+			//break;
 
 		case PF2: 		/* 0x0F Playfield Register Byte 2 */
 			tia.pfreg.B2 = data;
-			if (errorlog && TIA_VERBOSE)
-				fprintf(errorlog,"TIA_w - PF2 register is $%02x \n", tia.pfreg.B2);
-			break;
+			if (TIA_VERBOSE)
+				logerror("TIA_w - PF2 register is $%02x \n", tia.pfreg.B2);
+			//break;
 
 
 /* These next 5 Registers are Strobe registers            */
 /* They will need to update the screen as soon as written */
 
 		case RESP0: 	/* 0x10 Reset Player 0 */
-			break;
+			//break;
 
 		case RESP1: 	/* 0x11 Reset Player 1 */
-			break;
+			//break;
 
 		case RESM0:		/* 0x12 Reset Missle 0 */
-			break;
+			//break;
 
 		case RESM1: 	/* 0x13 Reset Missle 1 */
-			break;
+			//break;
 
 		case RESBL: 	/* 0x14 Reset Ball */
-			break;
+			//break;
 
 
 
@@ -369,70 +430,68 @@ void a2600_TIA_w(int offset, int data)
 		case AUDV1: /* audio volume 1 */
 
 			tia_w(offset,data);
-			ROM[offset] = data;
-			break;
+			//break;
 
 
 		case GRP0:		/* 0x1B Graphics Register Player 0 */
-			break;
+			//break;
 
 		case GRP1:		/* 0x1C Graphics Register Player 0 */
-			break;
+			//break;
 
 		case ENAM0: 	/* 0x1D Graphics Enable Missle 0 */
-			break;
+			//break;
 
 		case ENAM1:		/* 0x1E Graphics Enable Missle 1 */
-			break;
+			//break;
 
 		case ENABL: 	/* 0x1F Graphics Enable Ball */
-			break;
+			//break;
 
 		case HMP0:		/* 0x20	Horizontal Motion Player 0 */
-			break;
+			//break;
 
 		case HMP1: 		/* 0x21 Horizontal Motion Player 0 */
-			break;
+			//break;
 
 		case HMM0:		/* 0x22 Horizontal Motion Missle 0 */
-			break;
+			//break;
 
 		case HMM1: 		/* 0x23 Horizontal Motion Missle 1 */
-			break;
+			//break;
 
 		case HMBL: 		/* 0x24 Horizontal Motion Ball */
-			break;
+			//break;
 
 		case VDELP0:	/* 0x25 Vertical Delay Player 0 */
-			break;
+			//break;
 
 		case VDELP1: 	/* 0x26 Vertical Delay Player 1 */
-			break;
+			//break;
 
 		case VDELBL: 	/* 0x27 Vertical Delay Ball	*/
-			break;
+			//break;
 
 		case RESMP0:	/* 0x28 Reset Missle 0 to Player 0 */
-			break;
+			//break;
 
 		case RESMP1:	/* 0x29 Reset Missle 1 to Player 1 */
-			break;
+			//break;
 
 		case HMOVE: 	/* 0x2A Apply Horizontal Motion	*/
-			break;
+			//break;
 
 		case HMCLR: 	/* 0x2B Clear Horizontal Move Registers */
-			break;
+			//break;
 
 		case CXCLR:		/* 0x2C Clear Collision Latches	*/
-			break;
+			//break;
 
 
-
-
+		ROM[offset] = data;
+		break;
 		default:
-			if (errorlog)
-				fprintf(errorlog,"TIA_w - UNKNOWN - offset %02x & data %02x\n", offset, data);
+			logerror("TIA_w - UNKNOWN - offset %02x & data %02x\n", offset, data);
 		/* all others */
 		ROM[offset] = data;
 	}
@@ -443,7 +502,8 @@ void a2600_init_machine(void)
 
 
 	/* start RIOT interface */
-	riot_init(&a2600_riot);
+	///riot_init(&a2600_riot);
+	return;
 
 }
 
@@ -479,10 +539,10 @@ int a2600_load_rom (int id)
 	cartfile = NULL;
 	if (!(cartfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
 	{
-		if (errorlog) fprintf(errorlog,"A2600 - Unable to locate cartridge: %s\n",rom_name);
+		logerror("A2600 - Unable to locate cartridge: %s\n",rom_name);
 		return 1;
 	}
-	if (errorlog) fprintf(errorlog,"A2600 - loading Cart - %s \n",rom_name);
+	logerror("A2600 - loading Cart - %s \n",rom_name);
 
     a2600_cartridge_rom = &(ROM[0x1000]);		/* 'plug' cart into 0x1000 */
 
@@ -576,9 +636,6 @@ int a2600_scanline_interrupt(void)
 /* This routine is called at the start of vblank to refresh the screen */
 void a2600_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	if (errorlog)
-		fprintf(errorlog,"SCREEN UPDATE CALLED\n");
-
     copybitmap(bitmap,stella_bitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
 }

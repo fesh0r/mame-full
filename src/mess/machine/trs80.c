@@ -14,11 +14,6 @@
 
 #define VERBOSE 0
 
-#if VERBOSE
-#define LOG(x)	if( errorlog ) fprintf x
-#else
-#define LOG(x)	/* x */
-#endif
 
 UINT8 port_ff = 0;
 
@@ -110,7 +105,7 @@ void init_trs80(void)
     }
 }
 
-static int opbaseoverride(UINT32 PC)
+static OPBASE_HANDLER( opbaseoverride )
 {
 	UINT8 *ram = memory_region(REGION_CPU1);
 	if( trs80_load_cas && ram[0x3c00+3*64] == 0x3e )
@@ -125,7 +120,7 @@ static int opbaseoverride(UINT32 PC)
 
 			if( !buff )
 			{
-				if( errorlog ) fprintf(errorlog, "failed to allocate 64K buffer\n");
+				logerror("failed to allocate 64K buffer\n");
 				return 1;
 			}
 			cmd = image_fopen(IO_SNAPSHOT, 0, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
@@ -133,7 +128,7 @@ static int opbaseoverride(UINT32 PC)
 				cmd = image_fopen(IO_CASSETTE, 0, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
 			if( !cmd )
 			{
-				if( errorlog ) fprintf(errorlog, "failed to open '%s'\n", tape_name);
+				logerror("failed to open '%s'\n", tape_name);
 			}
 			else
 			{
@@ -160,7 +155,7 @@ static int opbaseoverride(UINT32 PC)
 								block_len = 256;
 						}
 						size -= 4;
-						LOG((errorlog, "trs80_cmd_load block ($%02X) %d at $%04X\n", data, block_len, block_ofs));
+						logerror("trs80_cmd_load block ($%02X) %d at $%04X\n", data, block_len, block_ofs);
 						while( block_len && size )
 							{
 							cpu_writemem16(block_ofs, *s);
@@ -178,10 +173,10 @@ static int opbaseoverride(UINT32 PC)
 					case 0x78:
 						entry = *s++;
 							entry += 256 * *s++;
-						LOG((errorlog, "trs80_cmd_load entry ($%02X) at $%04X\n", data, entry));
+						logerror("trs80_cmd_load entry ($%02X) at $%04X\n", data, entry);
 						size -= 3;
 						if( size <= 3 )
-							LOG((errorlog,"starting program at $%04X\n", block_ofs));
+							logerror("starting program at $%04X\n", block_ofs);
 						break;
 					default:
 						size--;
@@ -194,7 +189,7 @@ static int opbaseoverride(UINT32 PC)
 		}
         cpu_setOPbaseoverride(0,NULL);
     }
-	return PC;
+	return address;
 }
 
 int trs80_cassette_init(int id)
@@ -362,7 +357,7 @@ static void tape_get_open(void)
         char filename[12+1];
 
         sprintf(filename, "%-6.6s.cas", RAM + 0x41e8);
-		LOG((errorlog, "filename %s\n", filename));
+		logerror("filename %s\n", filename);
 		tape_get_file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
 		tape_count = 0;
 	}
@@ -655,7 +650,7 @@ void trs80_motor_w(int offset, int data)
 	int n;
 	void *file0, *file1;
 
-	LOG((errorlog, "trs80 motor_w $%02X\n", data));
+	logerror("trs80 motor_w $%02X\n", data);
 
 	switch (data)
 	{

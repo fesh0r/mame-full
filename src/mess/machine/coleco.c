@@ -28,12 +28,9 @@ int coleco_id_rom (int id)
 	unsigned char magic[2];
 	int retval;
 
-	if(errorlog)
-	{
-		fprintf(errorlog,"---------coleco_id_rom-----\n");
-		fprintf(errorlog,"Gamename is %s\n",gamename);
-		fprintf(errorlog,"filetype is %d\n",OSD_FILETYPE_IMAGE_R);
-	}
+	logerror("---------coleco_id_rom-----\n");
+	logerror("Gamename is %s\n",gamename);
+	logerror("filetype is %d\n",OSD_FILETYPE_IMAGE_R);
 
 	/* If no file was specified, don't bother */
 	if (!gamename || !gamename[0])
@@ -61,24 +58,20 @@ int coleco_load_rom (int id)
 
 	UINT8 *ROM = memory_region(REGION_CPU1);
 
-	if(errorlog)
-	{
-		fprintf(errorlog,"---------coleco_load_rom-----\n");
-		fprintf(errorlog,"filetype is %d  \n",OSD_FILETYPE_IMAGE_R);
-		fprintf(errorlog,"Machine->game->name is %s  \n",Machine->gamedrv->name);
-		fprintf(errorlog,"romname[0] is %s  \n",rom_name);
-	}
+	logerror("---------coleco_load_rom-----\n");
+	logerror("filetype is %d  \n",OSD_FILETYPE_IMAGE_R);
+	logerror("Machine->game->name is %s  \n",Machine->gamedrv->name);
+	logerror("romname[0] is %s  \n",rom_name);
 
 	/* A cartridge isn't strictly mandatory, but it's recommended */
 	cartfile = NULL;
 	if (!rom_name || !rom_name[0])
 	{
-		if (errorlog) fprintf(errorlog,"Coleco - warning: no cartridge specified!\n");
+		logerror("Coleco - warning: no cartridge specified!\n");
 	}
 	else if (!(cartfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
 	{
-		if (errorlog)
-			fprintf(errorlog,"Coleco - Unable to locate cartridge: %s\n",rom_name);
+		logerror("Coleco - Unable to locate cartridge: %s\n",rom_name);
 		return 1;
 	}
 

@@ -75,7 +75,7 @@ const struct GameDriver *drivers[] =
   /****************CONSOLES****************************************************/
 
       /* ATARI */
-      DRIVER( a2600 )       /* Atari 2600                                     */
+  TESTDRIVER( a2600 )       /* Atari 2600                                     */
       DRIVER( a5200 )       /* Atari 5200                                     */
       DRIVER( a7800 )       /* Atari 7800                                     */
 
@@ -170,22 +170,28 @@ const struct GameDriver *drivers[] =
 	  DRIVER( cbm4064 ) 	/* Commodore CBM4064							  */
   TESTDRIVER( sx64 )		/* Commodore SX 64 - PAL						  */
       DRIVER( max )         /* Ulitimax                                       */
+      DRIVER( vic64s )      /*                                                */
       DRIVER( c65 ) 		/* Commodore 65 - NTSC							  */
       DRIVER( c65ger )		/* Commodore 65 - PAL (german)					  */
 	  DRIVER( c128 )		/* Commodore 128 - NTSC 						  */
 	  DRIVER( c128ger ) 	/* Commodore 128 - PAL (german) 				  */
 	  DRIVER( c128fra ) 	/* Commodore 128 - PAL (french) 				  */
+	  DRIVER( c128ita ) 	/* Commodore 128 - PAL (italian) 				  */
       DRIVER( vic20 )       /* Commodore Vic-20 NTSC                          */
+      DRIVER( vic20swe )    /*                                                */
       DRIVER( vc20 )        /* Commodore Vic-20 PAL                           */
 
       DRIVER( pet )
 	  DRIVER( cbm30 )
 	  DRIVER( cbm30b )
 	  DRIVER( cbm40 )
+	  DRIVER( cbm40pal )
 	  DRIVER( cbm40b )
 	  DRIVER( cbm80 )
+	  DRIVER( cbm80pal )
 	  DRIVER( cbm80ger )
 	  DRIVER( cbm80swe )
+	  DRIVER( superpet )
 
       DRIVER( cbm710 )
       DRIVER( cbm720 )
@@ -263,7 +269,11 @@ const struct GameDriver *drivers[] =
   TESTDRIVER( pc )          /* IBM PC  - parent Driver, so no need            */
 	  DRIVER( pcmda )		/* IBM PC/XT with MDA (MGA aka Hercules)		  */
 	  DRIVER( pccga )		/* IBM PC/XT with CGA							  */
+
 	  DRIVER( tandy1t ) 	/* Tandy 1000TX (similiar to PCJr)				  */
+
+
+
 
 	  DRIVER( p2000t )		/* Philips - P2000T 							  */
 	  DRIVER( p2000m )		/*                  							  */
@@ -279,8 +289,16 @@ const struct GameDriver *drivers[] =
 	  DRIVER( pow3000 ) 	/* Creon Enterprises - Power 3000				  */
 
 	  DRIVER( spectrum )	/* Sinclair ZX Spectrum 48k 					  */
+	  DRIVER( specpls4 )	/*                                                */
+	  DRIVER( inves )	    /*                                                */
+	  DRIVER( tk90x )   	/*                                                */
+	  DRIVER( tk95 )	    /*                                                */
+	  DRIVER( tc2048 )	    /*                                                */
+	  DRIVER( ts2068 )    	/*                                                */
+
       DRIVER( spec128  )    /* Spectrum                                       */
       DRIVER( specpls2 )    /* Spectrum                                       */
+      DRIVER( specpl2a )    /* Spectrum                                       */
       DRIVER( specpls3 )    /* Spectrum Plus 3                                */
 
 	  /* ASCII & Microsoft */
@@ -291,6 +309,15 @@ const struct GameDriver *drivers[] =
 
       /* Nascom */
 	  DRIVER( nascom1 ) 	/* Nascom 1 									  */
+	  DRIVER( nascom2 ) 	/* Nascom 2 									  */
+
+
+      /* ACORN */
+	  DRIVER( atom ) 	    /* Acorn Atom           						  */
+
+
+      /* SAM COUPE */
+	  DRIVER( coupe ) 	    /*                      						  */
 
 
   TESTDRIVER( mekd2 ) 	    /* Motorola 									  */
@@ -300,6 +327,8 @@ const struct GameDriver *drivers[] =
 
       DRIVER( kim1 )        /* Commodore (MOS) KIM-1 1975                     */
       DRIVER( pdp1 ) 	    /* DEC PDP1 for SPACEWAR! - 1962                  */
+      DRIVER( mtx512 ) 	    /*                                                */
+
 
       DRIVER( sfzch )       /* CPS Changer (Street Fighter ZERO)              */
 
@@ -308,7 +337,6 @@ const struct GameDriver *drivers[] =
 
 
 
-    //DRIVER( applemac )    /* Apple Macintosh                                */
     //DRIVER( arcadia )     /* Arcadia 2001                                   */
     //DRIVER( atarist )     /* Atari ST                                       */
 

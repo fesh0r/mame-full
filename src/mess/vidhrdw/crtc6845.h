@@ -15,6 +15,7 @@
 /* call to init videodriver */
 extern void crtc6845_init (UINT8 *memory);
 extern void crtc6845_pet_init (UINT8 *memory);
+extern void crtc6845_superpet_init (UINT8 *memory);
 extern void crtc6845_cbm600_init (UINT8 *memory);
 extern void crtc6845_cbm600pal_init (UINT8 *memory);
 extern void crtc6845_cbm700_init (UINT8 *memory);
@@ -26,7 +27,7 @@ extern void crtc6845_set_rastering(int on);
 #define crtc6845_vh_screenrefresh praster_vh_screenrefresh
 #define crtc6845_raster_irq praster_raster_irq
 
-//#define crtc6845_update praster_2_update
+/*#define crtc6845_update praster_2_update */
 #define crtc6845_videoram_w praster_2_videoram_w
 
 /* to be called when writting to port */

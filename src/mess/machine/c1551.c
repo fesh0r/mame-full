@@ -123,8 +123,7 @@ static int d64_open (int id)
 	cbm_drive[id].d.d64.imagename= device_filename(IO_FLOPPY, id);
 	if (!(in = image_fopen (IO_FLOPPY, id, OSD_FILETYPE_IMAGE_R, 0)))
 	{
-		if (errorlog)
-			fprintf (errorlog, " image %s not found\n", device_filename(IO_FLOPPY,id));
+		logerror(" image %s not found\n", device_filename(IO_FLOPPY,id));
 		return 1;
 	}
 	size = osd_fsize (in);
@@ -141,8 +140,7 @@ static int d64_open (int id)
 	}
 	osd_fclose (in);
 
-	if (errorlog)
-		fprintf (errorlog, "floppy image %s loaded\n", 
+	logerror("floppy image %s loaded\n",
 				 cbm_drive[id].d.d64.imagename);
 
 	cbm_drive[id].drive = D64_IMAGE;
@@ -179,14 +177,14 @@ static int c1551_read_data (CBM_Drive * c1551)
 
 static void c1551_write_handshake (CBM_Drive * c1551, int data)
 {
-	c1551->i.iec.handshakein = data;
+	c1551->i.iec.handshakein = data&0x40?1:0;
 	c1551_state (c1551);
 }
 
 static int c1551_read_handshake (CBM_Drive * c1551)
 {
 	c1551_state (c1551);
-	return c1551->i.iec.handshakeout;
+	return c1551->i.iec.handshakeout?0x80:0;
 }
 
 static int c1551_read_status (CBM_Drive * c1551)

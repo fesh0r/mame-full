@@ -10,14 +10,6 @@
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 
-#define VERBOSE 1
-
-#if VERBOSE
-#define LOG(x)	if( errorlog ) fprintf x
-#else
-#define LOG(x)						   /* x */
-#endif
-
 void *ula_nmi = NULL;
 void *ula_irq = NULL;
 int ula_frame_vsync = 0;
@@ -48,7 +40,7 @@ void zx_ula_bkgnd(int color)
 
 		new_y = cpu_getscanline();
 		new_x = cpu_gethorzbeampos();
-		LOG((errorlog, "zx_ula_bkgnd: %3d,%3d - %3d,%3d\n", old_x, old_y, new_x, new_y));
+		logerror("zx_ula_bkgnd: %3d,%3d - %3d,%3d\n", old_x, old_y, new_x, new_y);
 		y = old_y;
 		for (;;)
 		{
@@ -99,7 +91,7 @@ void zx_ula_nmi(int param)
 
 	r.min_y = r.max_y = cpu_getscanline();
 	fillbitmap(Machine->scrbitmap, Machine->pens[1], &r);
-	LOG((errorlog, "ULA %3d[%d] NMI, R:$%02X, $%04x\n", cpu_getscanline(), ula_scancode_count, cpu_get_reg(Z80_R), cpu_get_pc()));
+	logerror("ULA %3d[%d] NMI, R:$%02X, $%04x\n", cpu_getscanline(), ula_scancode_count, cpu_get_reg(Z80_R), cpu_get_pc());
 	cpu_set_nmi_line(0, PULSE_LINE);
 	if (++ula_scanline_count == Machine->drv->screen_height)
 		ula_scanline_count = 0;
@@ -112,7 +104,7 @@ void zx_ula_irq(int param)
 	 * bit 6 goes low. In MESS this IRQ timed from the first read
 	 * from the copy of the DFILE in the upper 32K in zx_ula_r().
 	 */
-	LOG((errorlog, "ULA %3d[%d] IRQ, R:$%02X, $%04x\n", cpu_getscanline(), ula_scancode_count, cpu_get_reg(Z80_R), cpu_get_pc()));
+	logerror("ULA %3d[%d] IRQ, R:$%02X, $%04x\n", cpu_getscanline(), ula_scancode_count, cpu_get_reg(Z80_R), cpu_get_pc());
 	ula_irq = NULL;
 	if (++ula_scancode_count == 8)
 		ula_scancode_count = 0;
@@ -139,7 +131,7 @@ int zx_ula_r(int offs, int region)
 #else
 	y = ula_scanline_count;
 #endif
-	LOG((errorlog, "ULA %3d[%d] VID, R:$%02X, $%04x:", y, ula_scancode_count, rreg, offs & 0x7fff));
+	logerror("ULA %3d[%d] VID, R:$%02X, $%04x:", y, ula_scancode_count, rreg, offs & 0x7fff);
 
 	if (ula_irq)
 		timer_remove(ula_irq);
@@ -149,7 +141,7 @@ int zx_ula_r(int offs, int region)
 	{
 		chr = rom[offs & 0x7fff];
 		if (!halted)
-			LOG((errorlog, " %02x", chr));
+			logerror(" %02x", chr);
 		if (chr & 0x40)
 		{
 			halted = 1;
@@ -167,8 +159,8 @@ int zx_ula_r(int offs, int region)
 		drawgfx(bitmap, Machine->gfx[0], data, 0, 0, 0, x, y, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
 	}
 	if (!halted)
-		LOG((errorlog, " %02x", rom[offs & 0x7fff]));
-	LOG((errorlog, "\n"));
+		logerror(" %02x", rom[offs & 0x7fff]);
+	logerror("\n");
 	return rom[offs0];
 }
 

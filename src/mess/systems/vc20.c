@@ -415,8 +415,11 @@ static void vc20_init_palette (unsigned char *sys_palette,
 	ROM_LOAD ("901486.07", 0xe000, 0x2000, 0x4be07cb4)
 
 	/* patched pal system for swedish/finish keyboard and chars */
-	ROM_LOAD ("char.80", 0x8000, 0x1000, 0xd808551d)
-	ROM_LOAD ("kernal7p.c0", 0xe000, 0x2000, 0xb2a60662)	 
+    /* but in rom? (maybe patched means in this case nec version) */
+	ROM_LOAD ("nec22101.207", 0x8000, 0x1000, 0xd808551d)
+	ROM_LOAD ("nec22081.206", 0xe000, 0x2000, 0xb2a60662)	 
+
+	/* ieee488 cartridge */
 	ROM_LOAD ("325329-04.bin", 0xb000, 0x800, 0xd37b6335)	 
 #endif
 
@@ -425,6 +428,13 @@ ROM_START (vic20)
 	ROM_LOAD ("901460.03", 0x8000, 0x1000, 0x83e032a6)
 	ROM_LOAD ("901486.01", 0xc000, 0x2000, 0xdb4c43c1)
 	ROM_LOAD ("901486.06", 0xe000, 0x2000, 0xe5e7c174)
+ROM_END
+
+ROM_START (vic20swe)
+	ROM_REGION (0x10000, REGION_CPU1)
+	ROM_LOAD ("nec22101.207", 0x8000, 0x1000, 0xd808551d)
+	ROM_LOAD ("901486.01", 0xc000, 0x2000, 0xdb4c43c1)
+	ROM_LOAD ("nec22081.206", 0xe000, 0x2000, 0xb2a60662)	 
 ROM_END
 
 #ifdef PET_TEST_CODE
@@ -768,17 +778,20 @@ static const struct IODevice io_vc20i[] =
 #define init_vc20		vc20_driver_init
 #define init_vic20		vic20_driver_init
 #define io_vic20		io_vc20
+#define io_vic20swe		io_vc20
 #define io_vic20v		io_vc20v
 #define io_vic20i		io_vc20i
 
 #ifdef PET_TEST_CODE
-/*		YEAR	NAME	PARENT	MACHINE	INPUT	INIT	COMPANY								FULLNAME */
-COMP (	1981,	vic20,	0,		vic20,	vic20,	vic20,	"Commodore Business Machines Co.",	"Commodore VIC20 (NTSC)")
-COMP (	1981,	vic20v,	vic20,	vic20v,	vic20,	vic20,	"Commodore Business Machines Co.",	"Commodore VIC20 (NTSC), VC1540")
-COMP (	1981,	vic20i,	vic20,	vic20i,	vic20,	vic20,	"Commodore Business Machines Co.",	"Commodore VIC20 (NTSC), IEEE488, 2031")
-COMP (	1981,	vc20,	vic20,	vc20,	vc20,	vc20,	"Commodore Business Machines Co.",	"Commodore VC20 (PAL)")
-COMP (	1981,	vc20v,	vic20,	vc20v,	vic20,	vc20,	"Commodore Business Machines Co.",	"Commodore VC20 (PAL), VC1541")
+/*		YEAR	NAME		PARENT	MACHINE	INPUT		INIT	COMPANY								FULLNAME */
+COMP (	1981,	vic20,		0,		vic20,	vic20,		vic20,	"Commodore Business Machines Co.",	"Commodore VIC20 (NTSC)")
+COMP (	1981,	vic20v,		vic20,	vic20v,	vic20,		vic20,	"Commodore Business Machines Co.",	"Commodore VIC20 (NTSC), VC1540")
+COMP (	1981,	vic20i,		vic20,	vic20i,	vic20,		vic20,	"Commodore Business Machines Co.",	"Commodore VIC20 (NTSC), IEEE488, 2031")
+COMP (	1981,	vc20,		vic20,	vc20,	vc20,		vc20,	"Commodore Business Machines Co.",	"Commodore VC20 (PAL)")
+COMP (	1981,	vic20swe,	vic20,	vc20,	vic20,		vc20,	"Commodore Business Machines Co.",	"Commodore VIC20 PAL, Swedish Expansion Kit")
+COMP (	1981,	vc20v,		vic20,	vc20v,	vic20,		vc20,	"Commodore Business Machines Co.",	"Commodore VC20 (PAL), VC1541")
 #else
-COMPX (	1981,	vic20,	0,		vic20,	vic20,	vic20,	"Commodore Business Machines Co.",	"Commodore VIC20 (NTSC)",	GAME_IMPERFECT_SOUND)
-COMPX (	1981,	vc20,	vic20,	vc20,	vc20,	vc20,	"Commodore Business Machines Co.", 	"Commodore VC20 (PAL)",		GAME_IMPERFECT_SOUND)
+COMPX (	1981,	vic20,		0,		vic20,	vic20,		vic20,	"Commodore Business Machines Co.",	"Commodore VIC20 (NTSC)",	GAME_IMPERFECT_SOUND)
+COMPX (	1981,	vc20,		vic20,	vc20,	vc20,		vc20,	"Commodore Business Machines Co.", 	"Commodore VC20 (PAL)",		GAME_IMPERFECT_SOUND)
+COMPX (	1981,	vic20swe,	vic20,	vc20,	vc20,		vc20,	"Commodore Business Machines Co.",	"Commodore VIC20 PAL, Swedish Expansion Kit", GAME_IMPERFECT_SOUND)
 #endif

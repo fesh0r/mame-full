@@ -66,20 +66,20 @@ int c128_capslock_r (void)
 	return !KEY_DIN;
 }
 
-static void c128_dma8726_port_w(int offset, int data)
+static WRITE_HANDLER(c128_dma8726_port_w)
 {
-	DBG_LOG(1,"dma write",(errorlog,"%.3x %.2x\n",offset,data));
+	DBG_LOG(1,"dma write",("%.3x %.2x\n",offset,data));
 }
 
-static int c128_dma8726_port_r(int offset)
+static READ_HANDLER(c128_dma8726_port_r)
 {
-	DBG_LOG(1,"dma read",(errorlog,"%.3x\n",offset));
+	DBG_LOG(1,"dma read",("%.3x\n",offset));
 	return 0xff;
 }
 
-WRITE_HANDLER ( c128_mmu8722_port_w );
-READ_HANDLER ( c128_mmu8722_port_r );
-WRITE_HANDLER ( c128_write_d000 )
+WRITE_HANDLER( c128_mmu8722_port_w );
+READ_HANDLER( c128_mmu8722_port_r );
+WRITE_HANDLER( c128_write_d000 )
 {
 	if (!c128_write_io) {
 		if (offset + 0xd000 >= c128_ram_top)
@@ -113,13 +113,13 @@ WRITE_HANDLER ( c128_write_d000 )
 			c128_dma8726_port_w(offset&0xff,data);
 			break;
 		case 0xe:
-			DBG_LOG (1, "io write", (errorlog, "%.3x %.2x\n", offset, data));
+			DBG_LOG (1, "io write", ("%.3x %.2x\n", offset, data));
 			break;
 		}
 	}
 }
 
-static READ_HANDLER ( c128_read_io )
+static READ_HANDLER( c128_read_io )
 {
 	switch ((offset&0xf00)>>8) {
 	case 0:case 1: case 2: case 3:
@@ -139,24 +139,24 @@ static READ_HANDLER ( c128_read_io )
 	case 0xf:
 		return c128_dma8726_port_r(offset&0xff);
 	case 0xe:default:
-		DBG_LOG (1, "io read", (errorlog, "%.3x\n", offset));
+		DBG_LOG (1, "io read", ("%.3x\n", offset));
 		return 0xff;
 	}
 }
 
-void c128_bankswitch_64 (void)
+void c128_bankswitch_64 (int reset)
 {
-	extern int c64_bank_old;
-	static int data, loram, hiram, charen;
+	static int old, exrom, game;
+	int data, loram, hiram, charen;
 
 	if (!c64mode)
 		return;
 
 	data = ((c64_port6510 & c64_ddr6510) | (c64_ddr6510 ^ 0xff)) & 7;
-	if (data == c64_bank_old)
+	if ((data == old)&&(exrom==c64_exrom)&&(game==c64_game)&&!reset)
 		return;
 
-	DBG_LOG (1, "bankswitch", (errorlog, "%d\n", data & 7));
+	DBG_LOG (1, "bankswitch", ("%d\n", data & 7));
 	loram = (data & 1) ? 1 : 0;
 	hiram = (data & 2) ? 1 : 0;
 	charen = (data & 4) ? 1 : 0;
@@ -226,7 +226,9 @@ void c128_bankswitch_64 (void)
 			cpu_setbank (16, c64_memory + 0xff05);
 		}
 	}
-	c64_bank_old = data;
+	old = data;
+	exrom= c64_exrom;
+	game=c64_game;
 }
 
 UINT8 c128_mmu[0x0b];
@@ -316,7 +318,7 @@ static int mmu_page0, mmu_page1;
 #endif
  }
 
- static void c128_bankswitch_128 (void)
+ static void c128_bankswitch_128 (int reset)
  {
 	c64mode = MMU_64MODE;
 	if (c64mode)
@@ -339,7 +341,7 @@ static int mmu_page0, mmu_page1;
 
 		cpu_setbank (12, c64_memory + 0xc000);
 
-		c128_bankswitch_64 ();
+		c128_bankswitch_64 (reset);
 	}
 	else
 	{
@@ -479,14 +481,14 @@ static int mmu_page0, mmu_page1;
  }
 
 
-static void c128_bankswitch (void)
+static void c128_bankswitch (int reset)
 {
 	if (mmu_cpu != MMU_CPU8502) {
 		if (!MMU_CPU8502)
 			{
 				{
 					DBG_LOG (1, "switching to z80",
-							 (errorlog, "active %d\n",cpu_getactivecpu()) );
+							 ("active %d\n",cpu_getactivecpu()) );
 					memorycontextswap(0);
 					c128_bankswitch_z80();
 					memorycontextswap(1);
@@ -497,9 +499,9 @@ static void c128_bankswitch (void)
 		else
 			{
 				DBG_LOG (1, "switching to m6502",
-						 (errorlog, "active %d\n",cpu_getactivecpu()) );
+						 ("active %d\n",cpu_getactivecpu()) );
 				memorycontextswap(1);
-				c128_bankswitch_128();
+				c128_bankswitch_128(reset);
 				memorycontextswap(0);
 				cpu_set_halt_line (1, 0);
 				cpu_set_halt_line (0, 1);
@@ -510,7 +512,7 @@ static void c128_bankswitch (void)
 	if (!MMU_CPU8502) {
 		c128_bankswitch_z80();
 	} else {
-		c128_bankswitch_128();
+		c128_bankswitch_128(reset);
 	}
 }
 
@@ -541,10 +543,10 @@ void c128_mmu8722_reset (void)
 	mmu_cpu=0;
     mmu_page0=0;
     mmu_page1=0x0100;
-	c128_bankswitch ();
+	c128_bankswitch (1);
 }
 
-WRITE_HANDLER ( c128_mmu8722_port_w )
+WRITE_HANDLER( c128_mmu8722_port_w )
 {
 	offset &= 0xf;
 	switch (offset)
@@ -561,7 +563,7 @@ WRITE_HANDLER ( c128_mmu8722_port_w )
 	case 5:
 	case 6:
 		c128_mmu[offset] = data;
-		c128_bankswitch ();
+		c128_bankswitch (0);
 		break;
 	case 7:
 		c128_mmu[offset] = data;
@@ -570,7 +572,7 @@ WRITE_HANDLER ( c128_mmu8722_port_w )
 	case 9:
 		c128_mmu[offset] = data;
 		mmu_page1=MMU_PAGE1;
-		c128_bankswitch ();
+		c128_bankswitch (0);
 		break;
 	case 0xb:
 		break;
@@ -582,7 +584,7 @@ WRITE_HANDLER ( c128_mmu8722_port_w )
 	}
 }
 
-READ_HANDLER ( c128_mmu8722_port_r )
+READ_HANDLER( c128_mmu8722_port_r )
 {
 	int data;
 
@@ -618,13 +620,13 @@ READ_HANDLER ( c128_mmu8722_port_r )
 	return data;
 }
 
-void c128_mmu8722_ff00_w (int offset, int data)
+WRITE_HANDLER( c128_mmu8722_ff00_w )
 {
 	switch (offset)
 	{
 	case 0:
 		c128_mmu[offset] = data;
-		c128_bankswitch ();
+		c128_bankswitch (0);
 		break;
 	case 1:
 	case 2:
@@ -635,47 +637,47 @@ void c128_mmu8722_ff00_w (int offset, int data)
 #else
 		c128_mmu[0]|= c128_mmu[offset];
 #endif
-		c128_bankswitch ();
+		c128_bankswitch (0);
 		break;
 	}
 }
 
-READ_HANDLER ( c128_mmu8722_ff00_r )
+READ_HANDLER( c128_mmu8722_ff00_r )
 {
 	return c128_mmu[offset];
 }
 
-WRITE_HANDLER ( c128_write_0000 )
+WRITE_HANDLER( c128_write_0000 )
 {
 	if (c128_ram!=NULL)
 		c128_ram[0x0000 + offset] = data;
 }
 
-WRITE_HANDLER ( c128_write_1000 )
+WRITE_HANDLER( c128_write_1000 )
 {
 	if (c128_ram!=NULL)
 		c128_ram[0x1000 + offset] = data;
 }
 
-WRITE_HANDLER ( c128_write_4000 )
+WRITE_HANDLER( c128_write_4000 )
 {
 	if (c128_ram!=NULL)
 		c128_ram[0x4000 + offset] = data;
 }
 
-WRITE_HANDLER ( c128_write_8000 )
+WRITE_HANDLER( c128_write_8000 )
 {
 	if (c128_ram!=NULL)
 		c128_ram[0x8000 + offset] = data;
 }
 
-WRITE_HANDLER ( c128_write_a000 )
+WRITE_HANDLER( c128_write_a000 )
 {
 	if (c128_ram!=NULL)
 		c128_ram[0xa000 + offset] = data;
 }
 
-WRITE_HANDLER ( c128_write_e000 )
+WRITE_HANDLER( c128_write_e000 )
 {
 	if (offset + 0xe000 >= c128_ram_top)
 		c64_memory[0xe000 + offset] = data;
@@ -683,7 +685,7 @@ WRITE_HANDLER ( c128_write_e000 )
 		c128_ram[0xe000 + offset] = data;
 }
 
-WRITE_HANDLER ( c128_write_ff00 )
+WRITE_HANDLER( c128_write_ff00 )
 {
 	if (!c64mode)
 		c128_mmu8722_ff00_w (offset, data);
@@ -691,7 +693,7 @@ WRITE_HANDLER ( c128_write_ff00 )
 		c64_memory[0xff00 + offset] = data;
 }
 
-WRITE_HANDLER ( c128_write_ff05 )
+WRITE_HANDLER( c128_write_ff05 )
 {
 	if (offset + 0xff05 >= c128_ram_top)
 		c64_memory[0xff05 + offset] = data;
@@ -704,7 +706,7 @@ WRITE_HANDLER ( c128_write_ff05 )
  * a15 and a14 portlines
  * 0x1000-0x1fff, 0x9000-0x9fff char rom
  */
-static int c128_dma_read (int offset)
+static int c128_dma_read(int offset)
 {
 	/* main memory configuration to include */
 	if (c64mode)
@@ -793,7 +795,7 @@ void c128_driver_shutdown (void)
 
 void c128_init_machine (void)
 {
-	if (errorlog) fprintf(errorlog, "reset\n");
+	logerror("reset\n");
 	c64_common_init_machine ();
 	c128_vicaddr = c64_vicaddr = c64_memory;
 

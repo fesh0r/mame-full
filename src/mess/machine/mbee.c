@@ -12,14 +12,6 @@
 #include "mess/machine/wd179x.h"
 #include "mess/machine/mbee.h"
 
-#define VERBOSE 1
-
-#if VERBOSE
-#define LOG(x)	if( errorlog ) fprintf x
-#else
-#define LOG(x)	/* x */
-#endif
-
 static const char *floppy_name[4] = {NULL,NULL,NULL,NULL};
 static void *fdc_file[4] = {NULL,NULL};
 static UINT8 fdc_drv = 0;
@@ -114,13 +106,13 @@ static void mbee_fdc_callback(int param)
 
 READ_HANDLER ( mbee_fdc_status_r )
 {
-	if( errorlog ) fprintf(errorlog,"mbee fdc_motor_r $%02X\n", fdc_status);
+	logerror("mbee fdc_motor_r $%02X\n", fdc_status);
 	return fdc_status;
 }
 
 WRITE_HANDLER ( mbee_fdc_motor_w )
 {
-	if( errorlog ) fprintf(errorlog,"mbee fdc_motor_w $%02X\n", data);
+	logerror("mbee fdc_motor_w $%02X\n", data);
 	/* Controller latch bits
 	 * 0-1	driver select
 	 * 2	head select
@@ -145,7 +137,7 @@ int mbee_interrupt(void)
 		device_seek(IO_CASSETTE,0,0,SEEK_SET);
 
     /* once per frame, pulse the PIO B bit 7 */
-    if( errorlog ) fprintf(errorlog, "mbee interrupt\n");
+    logerror("mbee interrupt\n");
 	z80pio_p_w(0, 1, 0x80);
     z80pio_p_w(0, 1, 0x00);
     return ignore_interrupt();

@@ -883,6 +883,16 @@ mess cpc6128 -snap "snapshot name"
 The snapshot will start automatically.
 
 
+There are a few excellent utilities for creating and maintaining
+disk images for the Amstrad CPC emulators.
+
+Here are just a couple. Others can be
+found in the FAQ at http://www.multimania.com/genesis8/ :
+
+CPDRead   http://www.classicgaming.com/caprice/
+CPCfs     ftp://ftp.lip6.fr/pub/amstrad/emu-util/cpcfs085.zip
+
+
 Known Issues:
 
 Requires full keyboard emulation. At startup, full keyboard emulation mode is enabled by 
@@ -1584,6 +1594,81 @@ A lot of software(especially a lot of games from Sega, Konami, Taito, Ascii,...)
 hardware was developed for this standard. Despite all its qualities, the MSX family didn't 
 have great success in USA, however was pretty known in Europe (Netherlands and France), in 
 South Americca (Brazil) and USSR. This standard was replaced in 1985 by MSX 2. 
+
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=mtx512
+$bio
+Memotech MTX512
+
+
+Usage:
+
+
+currently, the driver requires cassette images to be stored
+in the following directory - 
+
+roms\mtx512
+
+the cassette image is a flat binary image with the first 0x12 bytes being the
+original mtx header and the rest being the file data.
+
+A note about cassette naming schemes - so long as the filename of the cassette image is the same as that stored
+in the header, you should be alright.
+
+
+To run a tape image just type LOAD"<image name>" at the Ready Prompt.
+
+MTX basic is pretty much a standard dialect, so you should have no problems
+using it, but graphic handling etc is a bit esoteric.
+
+
+
+Known Issues:
+
+
+Improving the tape support, because at the moment it is just a hack.
+
+Improve the TMS99x8 driver (appears the dirtyrect handling there is not
+quite right)
+
+RELCPMH Mode (CP/M Memory configuration)
+
+support for additional roms
+
+No Cassette Save support.
+
+No Printer support
+
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=nascom1
+$bio
+Nascom 1 & 2
+
+Usage Notes:
+The Nascom 2 clone has support for .cas, .bin and .nas cassette files.
+
+The .cas files are used by BASIC. To get there from the monitor, type
+EE000, enter 49152 as the memory size then CLOAD "<letter>". You can use
+RUN/LIST etc. The <letter> for the existing cassettes are:
+
+adventr.cas     A
+snailr.cas      S
+startrek.cas    T
+swinghs.cas     M
+swords.cas      S
+
+The .nas files are loaded by the monitor. Type L, wait for the loading to
+finish, then E<start addr>. The start address is the address first
+displayed by the load, usually 1000. To load the .bin files, use R in the
+monitor.
 
 
 $end

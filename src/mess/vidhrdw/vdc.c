@@ -15,7 +15,7 @@ void pce_refresh_sprites(int line);
 
 int pce_vh_start(void)
 {
-    if(errorlog) fprintf(errorlog, "*** pce_vh_start\n");
+    logerror("*** pce_vh_start\n");
 
     /* clear context */
     memset(&vdc, 0, sizeof(vdc));
@@ -34,7 +34,7 @@ int pce_vh_start(void)
 
 void pce_vh_stop(void)
 {
-    if(errorlog) fprintf(errorlog, "*** pce_vh_stop\n");
+    logerror("*** pce_vh_stop\n");
     if(vdc.vram) free (vdc.vram);
     if(vdc.bmp) osd_free_bitmap(vdc.bmp);
 }
@@ -88,13 +88,13 @@ WRITE_HANDLER ( vdc_w )
                      break;
 
                 case LENR:
-//                   if(errorlog) fprintf(errorlog, "LENR LSB = %02X\n", data);
+//                   logerror("LENR LSB = %02X\n", data);
                      break;
                 case SOUR:
-//                   if(errorlog) fprintf(errorlog, "SOUR LSB = %02X\n", data);
+//                   logerror("SOUR LSB = %02X\n", data);
                      break;
                 case DESR:
-//                   if(errorlog) fprintf(errorlog, "DESR LSB = %02X\n", data);
+//                   logerror("DESR LSB = %02X\n", data);
                      break;
              }
              break;
@@ -131,13 +131,13 @@ WRITE_HANDLER ( vdc_w )
                      break;
 
                 case LENR:
-//                   if(errorlog) fprintf(errorlog, "LENR MSB = %02X\n", data);
+//                   logerror("LENR MSB = %02X\n", data);
                      break;
                 case SOUR:
-//                   if(errorlog) fprintf(errorlog, "SOUR MSB = %02X\n", data);
+//                   logerror("SOUR MSB = %02X\n", data);
                      break;
                 case DESR:
-//                   if(errorlog) fprintf(errorlog, "DESR MSB = %02X\n", data);
+//                   logerror("DESR MSB = %02X\n", data);
                      break;
              }
              break;

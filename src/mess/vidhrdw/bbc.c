@@ -93,7 +93,7 @@ static unsigned int crct6845reg_no;
 
 WRITE_HANDLER ( crtc6845_w )
 {
-	if (errorlog) { fprintf(errorlog, "crct6845 write register %d = %d\n",offset,data); };
+	logerror("crct6845 write register %d = %d\n",offset,data);
 	switch (offset&0x01)
 	{
 	case 0:
@@ -140,7 +140,7 @@ static int VideoULAPallet[16];
 
 WRITE_HANDLER ( videoULA_w )
 {
-	//if (errorlog) { fprintf(errorlog, "video ULA write register %d = %d\n",offset,data); };
+
 	switch (offset&0x01)
 	{
 		case 0:
@@ -162,7 +162,7 @@ WRITE_HANDLER ( videoULA_w )
 
 READ_HANDLER ( videoULA_r )
 {
-	//if (errorlog) { fprintf(errorlog, "video ULA read register %02x\n",offset); }
+	//logerror("video ULA read register %02x\n",offset);
 	return 0;
 }
 
@@ -185,7 +185,7 @@ void setscreenstart(int b4,int b5)
 {
 		hardware_screenstart=hardware_screenstart_lookup[b4+(b5<<1)];
 		reg_refresh=1;
-	//	if (errorlog) { fprintf(errorlog, "screen hardware scroll %04x\n",hardware_screenstart); };
+
 }
 
 

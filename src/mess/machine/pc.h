@@ -34,7 +34,7 @@ extern UINT8 pc_port[0x400];
  * where "info" can also be 0 to append .."%fmt",args to a line.
  **************************************************************************/
 #define LOG(LEVEL,N,M,A)  \
-	if( errorlog && (LEVEL>=N) ){ if( M )fprintf( errorlog,"%11.6f: %-24s",timer_get_time(),(char*)M ); fprintf##A; }
+	if( (LEVEL>=N) ){ if( M ) logerror("%11.6f: %-24s",timer_get_time(),(char*)M ); }
 
 #if VERBOSE_DBG
 #define DBG_LOG(n,m,a) LOG(VERBOSE_DBG,n,m,a)

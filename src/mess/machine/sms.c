@@ -80,7 +80,7 @@ WRITE_HANDLER ( sms_ram_w )
 
 WRITE_HANDLER ( gg_sio_w )
 {
-    if(errorlog) fprintf(errorlog, "*** write %02X to SIO register #%d\n", data, offset);
+    logerror("*** write %02X to SIO register #%d\n", data, offset);
 
     switch(offset & 7)
     {
@@ -103,7 +103,7 @@ WRITE_HANDLER ( gg_sio_w )
 
 READ_HANDLER ( gg_sio_r )
 {
-    if(errorlog) fprintf(errorlog, "*** read SIO register #%d\n", offset);
+    logerror("*** read SIO register #%d\n", offset);
 
     switch(offset & 7)
     {

@@ -67,7 +67,7 @@ WRITE_HANDLER ( battery_ram_w )
 	switch (Mapper)
 	{
 		case 34:
-			if (errorlog) fprintf (errorlog, "Mapper 34 (trainer) w, offset: %04x, data: %02x\n", offset, data);
+			logerror("Mapper 34 (trainer) w, offset: %04x, data: %02x\n", offset, data);
 			switch (offset)
 			{
 				case 0x1ffd:
@@ -93,7 +93,7 @@ WRITE_HANDLER ( battery_ram_w )
 			}
 			break;
 		case 79:
-			if (errorlog) fprintf (errorlog, "Mapper 79 (trainer) w, offset: %04x, data: %02x\n", offset, data);
+			logerror("Mapper 79 (trainer) w, offset: %04x, data: %02x\n", offset, data);
 			if (offset & 0x0100)
 			/* Select 8k VNES_ROM bank */
 			{

@@ -105,8 +105,7 @@ int cbm_quick_open (int id, int mode, void *arg)
 	memcpy (memory + quick.addr, quick.data, quick.length);
 	memory[0x31] = memory[0x2f] = memory[0x2d] = addr & 0xff;
 	memory[0x32] = memory[0x30] = memory[0x2e] = addr >> 8;
-	if (errorlog)
-		fprintf (errorlog, "quick loading %s at %.4x size:%.4x\n",
+	logerror("quick loading %s at %.4x size:%.4x\n",
 				 quick.name, quick.addr, quick.length);
 
 	return 0;
@@ -124,8 +123,7 @@ int cbm_pet_quick_open (int id, int mode, void *arg)
 	memcpy (memory + quick.addr, quick.data, quick.length);
 	memory[0x2e] = memory[0x2c] = memory[0x2a] = addr & 0xff;
 	memory[0x2f] = memory[0x2d] = memory[0x2b] = addr >> 8;
-	if (errorlog)
-		fprintf (errorlog, "quick loading %s at %.4x size:%.4x\n",
+	logerror("quick loading %s at %.4x size:%.4x\n",
 				 quick.name, quick.addr, quick.length);
 
 	return 0;
@@ -143,8 +141,7 @@ int cbm_pet1_quick_open (int id, int mode, void *arg)
 	memcpy (memory + quick.addr, quick.data, quick.length);
 	memory[0x80] = memory[0x7e] = memory[0x7c] = addr & 0xff;
 	memory[0x81] = memory[0x7f] = memory[0x7d] = addr >> 8;
-	if (errorlog)
-		fprintf (errorlog, "quick loading %s at %.4x size:%.4x\n",
+	logerror("quick loading %s at %.4x size:%.4x\n",
 				 quick.name, quick.addr, quick.length);
 
 	return 0;
@@ -162,8 +159,7 @@ int cbmb_quick_open (int id, int mode, void *arg)
 	memcpy (memory + quick.addr+0x10000, quick.data, quick.length);
 	memory[0xf0046] = addr & 0xff;
 	memory[0xf0047] = addr >> 8;
-	if (errorlog)
-		fprintf (errorlog, "quick loading %s at %.4x size:%.4x\n",
+	logerror("quick loading %s at %.4x size:%.4x\n",
 				 quick.name, quick.addr, quick.length);
 
 	return 0;
@@ -181,8 +177,7 @@ int cbm500_quick_open (int id, int mode, void *arg)
 	memcpy (memory + quick.addr, quick.data, quick.length);
 	memory[0xf0046] = addr & 0xff;
 	memory[0xf0047] = addr >> 8;
-	if (errorlog)
-		fprintf (errorlog, "quick loading %s at %.4x size:%.4x\n",
+	logerror("quick loading %s at %.4x size:%.4x\n",
 				 quick.name, quick.addr, quick.length);
 
 	return 0;
@@ -200,8 +195,7 @@ int cbm_c65_quick_open (int id, int mode, void *arg)
 	memcpy (memory + quick.addr, quick.data, quick.length);
 	memory[0x5a] = addr & 0xff;
 	memory[0x5b] = addr >> 8;
-	if (errorlog)
-		fprintf (errorlog, "quick loading %s at %.4x size:%.4x\n",
+	logerror("quick loading %s at %.4x size:%.4x\n",
 				 quick.name, quick.addr, quick.length);
 
 	return 0;
@@ -250,8 +244,7 @@ int cbm_rom_init(int id)
 	fp = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0);
 	if (!fp)
 	{
-		if (errorlog)
-			fprintf (errorlog, "%s file not found\n", name);
+		logerror("%s file not found\n", name);
 		return INIT_FAILED;
 	}
 
@@ -264,11 +257,9 @@ int cbm_rom_init(int id)
 			unsigned short in;
 
 			osd_fread_lsbfirst (fp, &in, 2);
-			if (errorlog)
-				fprintf (errorlog, "rom prg %.4x\n", in);
+			logerror("rom prg %.4x\n", in);
 			size -= 2;
-			if (errorlog)
-				fprintf (errorlog, "loading rom %s at %.4x size:%.4x\n",
+			logerror("loading rom %s at %.4x size:%.4x\n",
 						 name, in, size);
 			if (!(cbm_rom[i].chip=malloc(size)) ) {
 				osd_fclose(fp);
@@ -287,8 +278,7 @@ int cbm_rom_init(int id)
 
 			osd_fseek (fp, 64, SEEK_SET);
 			j = 64;
-			if (errorlog)
-				fprintf (errorlog, "loading rom %s size:%.4x\n",
+			logerror("loading rom %s size:%.4x\n",
 						 name, size);
 			while (j < size)
 			{
@@ -301,14 +291,12 @@ int cbm_rom_init(int id)
 				osd_fread (fp, &number, 1);
 				osd_fread_msbfirst (fp, &adr, 2);
 				osd_fread_msbfirst (fp, &in, 2);
-				if (errorlog)
-				{
-					fprintf (errorlog, "%.4s %.2x %.2x %.4x %.2x %.2x %.2x %.2x %.4x:%.4x\n",
+				logerror("%.4s %.2x %.2x %.4x %.2x %.2x %.2x %.2x %.4x:%.4x\n",
 							 buffer, buffer[4], buffer[5], segsize,
 							 buffer[6], buffer[7], buffer[8], number,
 							 adr, in);
-					fprintf (errorlog, "loading chip at %.4x size:%.4x\n", adr, in);
-				}
+				logerror("loading chip at %.4x size:%.4x\n", adr, in);
+
 
 				if (!(cbm_rom[i].chip=malloc(size)) ) {
 					osd_fclose(fp);
@@ -358,8 +346,7 @@ int cbm_rom_init(int id)
 			else if (stricmp (cp, ".f0") == 0)
 				adr = 0xf000;
 			else adr = CBM_ROM_ADDR_UNKNOWN;
-			if (errorlog)
-				fprintf (errorlog, "loading %s rom at %.4x size:%.4x\n",
+			logerror("loading %s rom at %.4x size:%.4x\n",
 						 name, adr, size);
 			if (!(cbm_rom[i].chip=malloc(size)) ) {
 				osd_fclose(fp);

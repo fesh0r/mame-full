@@ -16,13 +16,6 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-#define VERBOSE 1
-
-#if VERBOSE
-#define LOG(x)	if( errorlog ) fprintf x
-#else
-#define LOG(x)	/* x */
-#endif
 
 /* from mame.c */
 extern int bitmap_dirty;
@@ -79,7 +72,7 @@ static READ_HANDLER ( mra_bank3) { return mra_bank(2,offset); }
 static READ_HANDLER ( mra_bank4) { return mra_bank(3,offset); }
 
 /* read banked memory (handle memory mapped i/o) */
-static int (*mra_bank_soft[4])(UINT32) =
+static UINT32 (*mra_bank_soft[4])(UINT32) =
 {
     mra_bank1,  /* mapped in 0000-3fff */
     mra_bank2,  /* mapped in 4000-7fff */
@@ -97,7 +90,7 @@ static void (*mwa_bank_soft[4])(UINT32,UINT32) =
 };
 
 /* read banked memory (plain ROM/RAM) */
-static int (*mra_bank_hard[4])(UINT32) =
+static UINT32 (*mra_bank_hard[4])(UINT32) =
 {
     MRA_BANK1,  /* mapped in 0000-3fff */
     MRA_BANK2,  /* mapped in 4000-7fff */
@@ -129,7 +122,7 @@ void laser350_init_machine(void)
 	laser_bank_mask = 0xf00f;
     laser_video_bank = 3;
 	videoram = mem + laser_video_bank * 0x04000;
-	LOG((errorlog,"laser350 init machine: bank mask $%04X, video %d [$%05X]\n", laser_bank_mask, laser_video_bank, laser_video_bank * 0x04000));
+	logerror("laser350 init machine: bank mask $%04X, video %d [$%05X]\n", laser_bank_mask, laser_video_bank, laser_video_bank * 0x04000);
 }
 
 void laser500_init_machine(void)
@@ -139,7 +132,7 @@ void laser500_init_machine(void)
 	laser_bank_mask = 0xf0f7;
     laser_video_bank = 7;
     videoram = mem + laser_video_bank * 0x04000;
-	LOG((errorlog,"laser500 init machine: bank mask $%04X, video %d [$%05X]\n", laser_bank_mask, laser_video_bank, laser_video_bank * 0x04000));
+	logerror("laser500 init machine: bank mask $%04X, video %d [$%05X]\n", laser_bank_mask, laser_video_bank, laser_video_bank * 0x04000);
 }
 
 void laser700_init_machine(void)
@@ -149,7 +142,7 @@ void laser700_init_machine(void)
 	laser_bank_mask = 0xfff7;
     laser_video_bank = 7;
     videoram = mem + laser_video_bank * 0x04000;
-	LOG((errorlog,"laser700 init machine: bank mask $%04X, video %d [$%05X]\n", laser_bank_mask, laser_video_bank, laser_video_bank * 0x04000));
+	logerror("laser700 init machine: bank mask $%04X, video %d [$%05X]\n", laser_bank_mask, laser_video_bank, laser_video_bank * 0x04000);
 }
 
 void laser_shutdown_machine(void)
@@ -186,7 +179,7 @@ void laser_bank_select_w(int offs, int data)
 	if( data != laser_bank[offs] )
     {
         laser_bank[offs] = data;
-		LOG((errorlog,"select bank #%d $%02X [$%05X] %s\n", offs+1, data, 0x4000 * (data & 15), bank_name[data]));
+		logerror("select bank #%d $%02X [$%05X] %s\n", offs+1, data, 0x4000 * (data & 15), bank_name[data]);
 
         /* memory mapped I/O bank selected? */
 		if (data == 2)
@@ -203,7 +196,7 @@ void laser_bank_select_w(int offs, int data)
 				/* video RAM bank selected? */
 				if( data == laser_video_bank )
 				{
-					LOG((errorlog,"select bank #%d VIDEO!\n", offs+1));
+					logerror("select bank #%d VIDEO!\n", offs+1);
                     cpu_setbankhandler_w(1+offs,mwa_bank_soft[offs]);
 				}
 				else
@@ -213,7 +206,7 @@ void laser_bank_select_w(int offs, int data)
 			}
 			else
 			{
-				LOG((errorlog,"select bank #%d MASKED!\n", offs+1));
+				logerror("select bank #%d MASKED!\n", offs+1);
 				cpu_setbankhandler_r(1+offs,mra_empty);
 				cpu_setbankhandler_w(1+offs,mwa_empty);
 			}
@@ -305,7 +298,7 @@ static int mra_bank(int bank, int offs)
 	level_old = level;
 
 	data &= ~cassette_bit;
-    // LOG((errorlog,"bank #%d keyboard_r [$%04X] $%02X\n", bank, offs, data));
+    // logerror("bank #%d keyboard_r [$%04X] $%02X\n", bank, offs, data);
 
     return data;
 }
@@ -328,12 +321,12 @@ static void mwa_bank(int bank, int offs, int data)
     {
     case  0:    /* ROM lower 16K */
     case  1:    /* ROM upper 16K */
-		LOG((errorlog,"bank #%d write to ROM [$%05X] $%02X\n", bank+1, offs, data));
+		logerror("bank #%d write to ROM [$%05X] $%02X\n", bank+1, offs, data);
         break;
     case  2:    /* memory mapped output */
         if (data != laser_latch)
         {
-            LOG((errorlog,"bank #%d write to I/O [$%05X] $%02X\n", bank+1, offs, data));
+            logerror("bank #%d write to I/O [$%05X] $%02X\n", bank+1, offs, data);
             /* Toggle between graphics and text modes? */
             if ((data ^ laser_latch) & 0x08)
                 bitmap_dirty = 1;
@@ -350,12 +343,12 @@ static void mwa_bank(int bank, int offs, int data)
     case 13:    /* ext. ROM #2 */
     case 14:    /* ext. ROM #3 */
     case 15:    /* ext. ROM #4 */
-		LOG((errorlog,"bank #%d write to ROM [$%05X] $%02X\n", bank+1, offs, data));
+		logerror("bank #%d write to ROM [$%05X] $%02X\n", bank+1, offs, data);
         break;
     default:    /* RAM */
         if( laser_bank[bank] == laser_video_bank && mem[offs] != data )
 		{
-			LOG((errorlog,"bank #%d write to videoram [$%05X] $%02X\n", bank+1, offs, data));
+			logerror("bank #%d write to videoram [$%05X] $%02X\n", bank+1, offs, data);
             dirtybuffer[offs&0x3fff] = 1;
 		}
         mem[offs] = data;
@@ -428,12 +421,12 @@ int laser_cassette_id(int id)
 			return 1;
         if( buff[128+5] == 0xf0 )
         {
-			LOG((errorlog, "vtech2_cassette_id: BASIC magic $%02X '%s' found\n", buff[128+5], buff+128+5+1));
+			logerror("vtech2_cassette_id: BASIC magic $%02X '%s' found\n", buff[128+5], buff+128+5+1);
             return 0;
         }
 		if( buff[128+5] == 0xf1 )
         {
-			LOG((errorlog, "vtech2_cassette_id: MCODE magic $%02X '%s' found\n", buff[128+5], buff+128+5+1));
+			logerror("vtech2_cassette_id: MCODE magic $%02X '%s' found\n", buff[128+5], buff+128+5+1);
             return 0;
         }
     }
@@ -622,7 +615,7 @@ static void laser_get_track(void)
         offs = TRKSIZE_VZ * laser_track_x2[laser_drive]/2;
         osd_fseek(laser_fdc_file[laser_drive], offs, SEEK_SET);
         size = osd_fread(laser_fdc_file[laser_drive], laser_fdc_data, size);
-        LOG((errorlog,"get track @$%05x $%04x bytes\n", offs, size));
+        logerror("get track @$%05x $%04x bytes\n", offs, size);
     }
     laser_fdc_offs = 0;
     laser_fdc_write = 0;
@@ -637,7 +630,7 @@ static void laser_put_track(void)
         offs = TRKSIZE_VZ * laser_track_x2[laser_drive]/2;
         osd_fseek(laser_fdc_file[laser_drive], offs + laser_fdc_start, SEEK_SET);
         size = osd_fwrite(laser_fdc_file[laser_drive], &laser_fdc_data[laser_fdc_start], laser_fdc_write);
-        LOG((errorlog,"put track @$%05X+$%X $%04X/$%04X bytes\n", offs, laser_fdc_start, size, laser_fdc_write));
+        logerror("put track @$%05X+$%X $%04X/$%04X bytes\n", offs, laser_fdc_start, size, laser_fdc_write);
     }
 }
 
@@ -658,15 +651,15 @@ int laser_fdc_r(int offset)
                 laser_fdc_bits--;
             data = (laser_data >> laser_fdc_bits) & 0xff;
 #if 0
-            LOG((errorlog,"laser_fdc_r bits %d%d%d%d%d%d%d%d\n",
+            logerror("laser_fdc_r bits %d%d%d%d%d%d%d%d\n",
                 (data>>7)&1,(data>>6)&1,(data>>5)&1,(data>>4)&1,
-                (data>>3)&1,(data>>2)&1,(data>>1)&1,(data>>0)&1 ));
+                (data>>3)&1,(data>>2)&1,(data>>1)&1,(data>>0)&1 );
 #endif
         }
         if( laser_fdc_bits == 0 )
         {
             laser_data = laser_fdc_data[laser_fdc_offs];
-            LOG((errorlog,"laser_fdc_r %d : data ($%04X) $%02X\n", offset, laser_fdc_offs, laser_data));
+            logerror("laser_fdc_r %d : data ($%04X) $%02X\n", offset, laser_fdc_offs, laser_data);
             if( laser_fdc_status & 0x80 )
             {
                 laser_fdc_bits = 8;
@@ -684,7 +677,7 @@ int laser_fdc_r(int offset)
     case 3: /* write protect status (read-only) */
         if( laser_drive >= 0 )
             data = laser_fdc_wrprot[laser_drive];
-        LOG((errorlog,"laser_fdc_r %d : write_protect $%02X\n", offset, data));
+        logerror("laser_fdc_r %d : write_protect $%02X\n", offset, data);
         break;
     }
     return data;
@@ -713,7 +706,7 @@ void laser_fdc_w(int offset, int data)
             {
                 if( laser_track_x2[laser_drive] > 0 )
                     laser_track_x2[laser_drive]--;
-                LOG((errorlog,"laser_fdc_w(%d) $%02X drive %d: stepout track #%2d.%d\n", offset, data, laser_drive, laser_track_x2[laser_drive]/2,5*(laser_track_x2[laser_drive]&1)));
+                logerror("laser_fdc_w(%d) $%02X drive %d: stepout track #%2d.%d\n", offset, data, laser_drive, laser_track_x2[laser_drive]/2,5*(laser_track_x2[laser_drive]&1));
                 if( (laser_track_x2[laser_drive] & 1) == 0 )
                     laser_get_track();
             }
@@ -725,7 +718,7 @@ void laser_fdc_w(int offset, int data)
             {
                 if( laser_track_x2[laser_drive] < 2*40 )
                     laser_track_x2[laser_drive]++;
-                LOG((errorlog,"laser_fdc_w(%d) $%02X drive %d: stepin track #%2d.%d\n", offset, data, laser_drive, laser_track_x2[laser_drive]/2,5*(laser_track_x2[laser_drive]&1)));
+                logerror("laser_fdc_w(%d) $%02X drive %d: stepin track #%2d.%d\n", offset, data, laser_drive, laser_track_x2[laser_drive]/2,5*(laser_track_x2[laser_drive]&1));
                 if( (laser_track_x2[laser_drive] & 1) == 0 )
                     laser_get_track();
             }
@@ -748,7 +741,7 @@ void laser_fdc_w(int offset, int data)
                         if( laser_data & 0x0010 ) value |= 0x04;
                         if( laser_data & 0x0004 ) value |= 0x02;
                         if( laser_data & 0x0001 ) value |= 0x01;
-                        LOG((errorlog,"laser_fdc_w(%d) data($%04X) $%02X <- $%02X ($%04X)\n", offset, laser_fdc_offs, laser_fdc_data[laser_fdc_offs], value, laser_data));
+                        logerror("laser_fdc_w(%d) data($%04X) $%02X <- $%02X ($%04X)\n", offset, laser_fdc_offs, laser_fdc_data[laser_fdc_offs], value, laser_data);
                         laser_fdc_data[laser_fdc_offs] = value;
                         laser_fdc_offs = ++laser_fdc_offs % TRKSIZE_FM;
                         laser_fdc_write++;

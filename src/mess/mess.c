@@ -131,13 +131,13 @@ void *image_fopen(int type, int id, int filetype, int read_or_write)
 
     if( type >= IO_COUNT )
 	{
-		if( errorlog ) fprintf(errorlog, "image_fopen: type out of range (%d)\n", type);
+		logerror("image_fopen: type out of range (%d)\n", type);
         return NULL;
 	}
 
     if( id >= count[type] )
 	{
-		if( errorlog ) fprintf(errorlog, "image_fopen: id out of range (%d)\n", id);
+		logerror("image_fopen: id out of range (%d)\n", id);
 		return NULL;
     }
 
@@ -153,7 +153,7 @@ void *image_fopen(int type, int id, int filetype, int read_or_write)
 		int l;
 
         sysname = Machine->gamedrv->name;
-		if( errorlog ) fprintf(errorlog, "image_fopen: trying %s for system %s\n", img->name, sysname);
+		logerror("image_fopen: trying %s for system %s\n", img->name, sysname);
 		file = osd_fopen(sysname, img->name, filetype, read_or_write);
 		/* file found, break out */
 		if( file )
@@ -162,7 +162,7 @@ void *image_fopen(int type, int id, int filetype, int read_or_write)
 			Machine->gamedrv->clone_of != &driver_0 )
 		{
             sysname = Machine->gamedrv->clone_of->name;
-			if( errorlog ) fprintf(errorlog, "image_fopen: now trying %s for system %s\n", img->name, sysname);
+			logerror("image_fopen: now trying %s for system %s\n", img->name, sysname);
             file = osd_fopen(sysname, img->name, filetype, read_or_write);
 		}
 		if( file )
@@ -187,7 +187,7 @@ void *image_fopen(int type, int id, int filetype, int read_or_write)
 				img->name = realloc(img->name, l - strlen(p) + strlen(ext) + 1);
 				if( !img->name )
 				{
-					if( errorlog ) fprintf(errorlog, "image_fopen: realloc failed.. damn it!\n");
+					logerror("image_fopen: realloc failed.. damn it!\n");
                     return NULL;
 				}
 			}
@@ -198,7 +198,7 @@ void *image_fopen(int type, int id, int filetype, int read_or_write)
 			img->name = realloc(img->name, l + 1 + strlen(ext) + 1);
 			if( !img->name )
 			{
-				if( errorlog ) fprintf(errorlog, "image_fopen: realloc failed.. damn it!\n");
+				logerror("image_fopen: realloc failed.. damn it!\n");
                 return NULL;
 			}
 			sprintf(img->name + l, ".%s", ext);
@@ -209,14 +209,14 @@ void *image_fopen(int type, int id, int filetype, int read_or_write)
     {
         void *config;
 
-		if( errorlog ) fprintf(errorlog, "image_fopen: found image %s for system %s\n", img->name, sysname);
+		logerror("image_fopen: found image %s for system %s\n", img->name, sysname);
         img->length = osd_fsize(file);
 		img->crc = osd_fcrc(file);
 		if( img->crc == 0 && img->length < 0x100000 )
 		{
-			if( errorlog ) fprintf(errorlog, "image_fopen: calling osd_fchecksum() for %d bytes\n", img->length);
+			logerror("image_fopen: calling osd_fchecksum() for %d bytes\n", img->length);
             osd_fchecksum(sysname, img->name, &img->length, &img->crc);
-			if( errorlog ) fprintf(errorlog, "image_fopen: CRC is %08x\n", img->crc);
+			logerror("image_fopen: CRC is %08x\n", img->crc);
         }
 		free_image_info(img);
 
@@ -245,7 +245,7 @@ static int read_crc_config (const char *file, struct image_info *img, const char
 		config_load_string(config,sysname,0,crc,line,sizeof(line));
 		if( line[0] )
 		{
-			if( errorlog ) fprintf(errorlog, "found CRC %s= %s\n", crc, line);
+			logerror("found CRC %s= %s\n", crc, line);
 			img->longname = dupe(stripspace(strtok(line, "|")));
 			img->manufacturer = dupe(stripspace(strtok(NULL, "|")));
 			img->year = dupe(stripspace(strtok(NULL, "|")));
@@ -469,14 +469,12 @@ int get_filenames(void)
 				if( !images[type][count[type]].name )
 					return 1;
 			}
-			if (errorlog)
-				fprintf(errorlog, "%s #%d: %s\n", typename[type], count[type]+1, images[type][count[type]].name);
+			logerror("%s #%d: %s\n", typename[type], count[type]+1, images[type][count[type]].name);
 			count[type]++;
 		}
 		else
 		{
-			if(errorlog)
-				fprintf(errorlog, "Invalid IO_ type %d for %s\n", type, options.image_files[i].name);
+			logerror("Invalid IO_ type %d for %s\n", type, options.image_files[i].name);
 			return 1;
 		}
 	}
@@ -530,9 +528,9 @@ int init_devices(const void *game)
 				int result;
 
 				/* initialize */
-				if (errorlog) fprintf(errorlog, "%s init (%s)\n", device_typename_id(dev->type,id), filename ? filename : "NULL");
+				logerror("%s init (%s)\n", device_typename_id(dev->type,id), filename ? filename : "NULL");
 				result = (*dev->init)(id);
-				if (errorlog) fprintf(errorlog, "%s init returns %d\n", device_typename_id(dev->type,id), result);
+				logerror("%s init returns %d\n", device_typename_id(dev->type,id), result);
 
                 if( result != INIT_OK && filename )
 				{
@@ -543,7 +541,7 @@ int init_devices(const void *game)
 		}
 		else
 		{
-			if (errorlog) fprintf(errorlog, "%s does not support init!\n", device_typename(dev->type));
+			logerror("%s does not support init!\n", device_typename(dev->type));
 		}
 		dev++;
 	}
@@ -571,7 +569,7 @@ void exit_devices(void)
 		}
 		else
 		{
-			if (errorlog) fprintf(errorlog, "%s does not support exit!\n", device_typename(dev->type));
+			logerror("%s does not support exit!\n", device_typename(dev->type));
 		}
 		dev++;
 	}

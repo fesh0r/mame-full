@@ -74,6 +74,29 @@ void crtc6845_pet_init (UINT8 *memory)
 	raster2.text.visiblesize.x=8;
 }
 
+void crtc6845_superpet_init (UINT8 *memory)
+{
+	UINT8 *gfx = memory_region(REGION_GFX1);
+	int i;
+
+	for (i=0; i<0x400; i++) {
+		gfx[0x1000+i]=gfx[0x800+i];
+		gfx[0x1800+i]=gfx[0xc00+i];
+		gfx[0x1c00+i]=gfx[0x1800+i]^0xff;
+		gfx[0x1400+i]=gfx[0x1000+i]^0xff;
+		gfx[0x800+i]=gfx[0x400+i];
+		gfx[0xc00+i]=gfx[0x800+i]^0xff;
+		gfx[0x400+i]=gfx[i]^0xff;
+	}
+
+	crtc6845_init(memory);
+	crtc.cursor_on=0;
+	raster2.text.fontsize.y=8;
+	raster2.memory.mask=raster2.memory.videoram.mask=0x7ff;
+	raster2.text.charsize.x=8;
+	raster2.text.visiblesize.x=8;
+}
+
 void crtc6845_cbm600_init(UINT8 *memory)
 {
 	UINT8 *gfx = memory_region(REGION_GFX1);
@@ -123,7 +146,7 @@ void crtc6845_cbm700_init(UINT8 *memory)
 void crtc6845_set_rastering(int on)
 {
 	raster2.display.no_rastering=!on;
-//	raster2.text.visiblesize.x=raster2.text.visiblesize.y=8;
+/*	raster2.text.visiblesize.x=raster2.text.visiblesize.y=8; */
 }
 
 #define COLUMNS (crtc.reg[0]+1)

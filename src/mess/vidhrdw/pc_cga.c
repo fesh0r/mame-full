@@ -170,12 +170,14 @@ void pc_cga_port_w(int data)
 		case VIDH:
 			CGA_LOG(1,"CGA_base_high_w",(errorlog,"$%02x\n",data));
 			if (CGA_crtc[CGA_reg] == data) return;
+			memset(dirtybuffer,1,videoram_size);
             CGA_VIDH = data;
 			CGA_base = (CGA_VIDH*256+CGA_VIDL) % videoram_size;
             break;
 		case VIDL:
 			CGA_LOG(1,"CGA_base_low_w",(errorlog,"$%02x\n",data));
 			if (CGA_crtc[CGA_reg] == data) return;
+			memset(dirtybuffer,1,videoram_size);
             CGA_VIDL = data;
 			CGA_base = (CGA_VIDH*256+CGA_VIDL) % videoram_size;
             break;
@@ -661,7 +663,7 @@ static void cga_text_80_blink(struct osd_bitmap *bitmap)
 ***************************************************************************/
 static void cga_gfx_2bpp(struct osd_bitmap *bitmap)
 {
-	int i, sx, sy, offs = CGA_base, size = CGA_size * 2;
+	int i, sx, sy, offs = (CGA_base&0x1fff)*2, size = CGA_size * 2;
 
 	/* for every code in the Video RAM, check if it been modified
 	   since last time and update it accordingly. */
@@ -688,12 +690,12 @@ static void cga_gfx_2bpp(struct osd_bitmap *bitmap)
 			sx = 0;
 			sy += CGA_maxscan;
 		}
-		if( ++offs == videoram_size )
+		if( ++offs == 0x2000 )
 			offs = 0;
     }
 
 	/* now draw the odd scanlines */
-	offs = (CGA_base + 0x2000) % videoram_size;
+	offs = ((CGA_base&0x1fff)*2)|0x2000;
 	for( i = 0, sx = 0, sy = CGA_maxscan / 2; i < size; i++ )
 	{
 		if( dirtybuffer[offs] )
@@ -715,8 +717,8 @@ static void cga_gfx_2bpp(struct osd_bitmap *bitmap)
 			sx = 0;
 			sy += CGA_maxscan;
 		}
-		if( ++offs == videoram_size )
-			offs = 0;
+		if( ++offs == 0x4000 )
+			offs = 0x2000;
     }
 }
 
@@ -838,5 +840,21 @@ void pc_cga_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 			if (video_active && --video_active == 0)
 				fillbitmap(bitmap, Machine->pens[0], &Machine->drv->visible_area);
     }
-}
 
+
+#if 0
+	{ 
+		int x, i;
+		char text[40];
+		sprintf(text,"%.2x %.2x", input_port_16_r(0), input_port_17_r(0));
+
+		for (x=0, i=0; text[i]; i++, x+= Machine->uifont->width)
+		{
+			drawgfx (bitmap, Machine->uifont, text[i], 0, 0,
+					 0, x, 100, 0,
+					 TRANSPARENCY_NONE, 0);
+		}
+		
+	}
+#endif
+}

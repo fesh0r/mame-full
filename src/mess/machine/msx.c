@@ -116,7 +116,7 @@ int msx_load_rom (int id)
     size = osd_fsize (F);
     if (size < 0x2000)
     {
-        if (errorlog) fprintf (errorlog, "%s: file to small\n",
+        logerror("%s: file to small\n",
 	    device_filename (IO_CARTSLOT, id));
 	osd_fclose (F);
 	return 1;
@@ -125,20 +125,17 @@ int msx_load_rom (int id)
     pext = (char *)device_extrainfo (IO_CARTSLOT, id);
     if (!pext || (1 != sscanf (pext, "%d", &type) ) )
     {
-	if (errorlog) fprintf (errorlog,
-	    "Cart #%d No extra info found in crc file\n", id);
+	logerror("Cart #%d No extra info found in crc file\n", id);
 	type = -1;
     }
     else
     {
 	if (type < 0 || type > 13)
 	{
-	    if (errorlog) fprintf (errorlog,
-		"Cart #%d Invalid extra info\n", id);
+	    logerror("Cart #%d Invalid extra info\n", id);
 	    type = -1;
 	}
-	else if (errorlog)
-	    fprintf (errorlog, "Cart %d extra info: %s\n", id, pext);
+	else logerror("Cart %d extra info: %s\n", id, pext);
     }
 
 
@@ -149,14 +146,14 @@ int msx_load_rom (int id)
     pmem = (UINT8*)malloc (size_aligned);
     if (!pmem)
     {
-	if (errorlog) fprintf (errorlog, "malloc () failed\n");
+	logerror("malloc () failed\n");
 	osd_fclose (F);
 	return 1;
     }
     memset (pmem, 0xff, size_aligned);
     if (osd_fread (F, pmem, size) != size)
     {
-        if (errorlog) fprintf (errorlog, "%s: can't read file\n",
+        logerror("%s: can't read file\n",
 	    device_filename (IO_CARTSLOT, id));
 	osd_fclose (F);
         free (msx1.cart[id].mem); msx1.cart[id].mem = NULL;
@@ -170,13 +167,10 @@ int msx_load_rom (int id)
 
 	if ( !( (pmem[0] == 'A') && (pmem[1] == 'B') ) )
 	{
-	    if (errorlog) fprintf (errorlog,
-		"%s: May not be a valid ROM file\n",
-		device_filename (IO_CARTSLOT, id) );
+	    logerror("%s: May not be a valid ROM file\n",device_filename (IO_CARTSLOT, id) );
 	}
 
-        if (errorlog) fprintf (errorlog,
-	    "Probed cartridge mapper %s\n", mapper_types[type]);
+        logerror("Probed cartridge mapper %s\n", mapper_types[type]);
     }
 
     /* mapper type 0 always needs 64kB */
@@ -186,7 +180,7 @@ int msx_load_rom (int id)
 	pmem = realloc (pmem, 0x10000);
 	if (!pmem)
 	{
-	    if (errorlog) fprintf (errorlog, "Realloc failed!\n");
+	    logerror("Realloc failed!\n");
             free (msx1.cart[id].mem); msx1.cart[id].mem = NULL;
 	    return 1;
 	}
@@ -199,14 +193,13 @@ int msx_load_rom (int id)
     msx1.cart[id].type = type;
     msx1.cart[id].bank_mask = (size_aligned / 0x2000) - 1;
     for (i=0;i<4;i++) msx1.cart[id].banks[i] = (i & msx1.cart[id].bank_mask);
-    if (errorlog) fprintf (errorlog, "Cart #%d size %d, mask %d, type: %s\n",
-        id, size, msx1.cart[id].bank_mask, mapper_types[type]);
+    logerror("Cart #%d size %d, mask %d, type: %s\n",id, size, msx1.cart[id].bank_mask, mapper_types[type]);
     /* set filename for sram (memcard) */
     msx1.cart[id].sramfile = malloc (strlen (device_filename
 	(IO_CARTSLOT, id)) + 1);
     if (!msx1.cart[id].sramfile)
     {
-	if (errorlog) fprintf (errorlog, "malloc () failed\n");
+	logerror("malloc () failed\n");
         free (msx1.cart[id].mem); msx1.cart[id].mem = NULL;
 	return 1;
     }
@@ -261,12 +254,12 @@ int msx_load_rom (int id)
 		memset (pmem, 0xff, 0x4000);
 	    }
 	}
-	if (errorlog)
+
 	{
 	    if (p >= 0)
-		fprintf (errorlog, "Cart #%d in page %d\n", id, p);
+		logerror("Cart #%d in page %d\n", id, p);
 	    else
-		fprintf (errorlog, "Cart #%d memory duplicated in all pages\n", id);
+		logerror("Cart #%d memory duplicated in all pages\n", id);
 	}
 	break;
    case 1: /* msx-dos 2: extra blank page for page 2 */
@@ -293,10 +286,10 @@ int msx_load_rom (int id)
 	{
 	    memcpy (pmem + 0x20000, pmem + 0x21000, 0x1000);
 	    memcpy (pmem + 0x23000, pmem + 0x22000, 0x1000);
-	    if (errorlog) fprintf (errorlog, "Cart #%d SRAM loaded\n", id);
+	    logerror("Cart #%d SRAM loaded\n", id);
 	} else {
 	    memset (pmem + 0x20000, 0, 0x4000);
-	    if (errorlog) fprintf (errorlog, "Cart #%d Failed to load SRAM\n", id);
+	    logerror("Cart #%d Failed to load SRAM\n", id);
 	}
 	if (F) osd_fclose (F);
 
@@ -329,10 +322,10 @@ int msx_load_rom (int id)
 		OSD_FILETYPE_MEMCARD, 0);
 	if (F && (osd_fread (F, pmem + size_aligned, 0x2000) == 0x2000) )
 	{
-	    if (errorlog) fprintf (errorlog, "Cart #%d SRAM loaded\n", id);
+	    logerror("Cart #%d SRAM loaded\n", id);
 	} else {
 	    memset (pmem + size_aligned, 0, 0x2000);
-	    if (errorlog) fprintf (errorlog, "Cart #%d Failed to load SRAM\n", id);
+	    logerror("Cart #%d Failed to load SRAM\n", id);
 	}
 	if (F) osd_fclose (F);
 
@@ -354,10 +347,10 @@ int msx_load_rom (int id)
 		memcpy (pmem + size_aligned + i * 0x800,
 		    pmem + size_aligned, 0x800);
 	    }
-	    if (errorlog) fprintf (errorlog, "Cart #%d SRAM loaded\n", id);
+	    logerror("Cart #%d SRAM loaded\n", id);
 	} else {
 	    memset (pmem + size_aligned, 0, 0x4000);
-	    if (errorlog) fprintf (errorlog, "Cart #%d Failed to load SRAM\n", id);
+	    logerror("Cart #%d Failed to load SRAM\n", id);
 	}
 	if (F) osd_fclose (F);
 
@@ -389,11 +382,10 @@ int msx_load_rom (int id)
 		!strncmp (buf, PAC_HEADER, PAC_HEADER_LEN) &&
 	        (osd_fread (F, pmem + 0x10000, 0x1ffe) == 0x1ffe) )
 	    {
-	       if (errorlog) fprintf (errorlog, "Cart #%d SRAM loaded\n", id);
+	       logerror("Cart #%d SRAM loaded\n", id);
 	    } else {
 	       memset (pmem + 0x10000, 0, 0x2000);
-	       if (errorlog) fprintf (errorlog,
-		   "Cart #%d Failed to load SRAM\n", id);
+	       logerror("Cart #%d Failed to load SRAM\n", id);
 	    }
 	    if (F) osd_fclose (F);
 	}
@@ -465,10 +457,9 @@ void msx_exit_rom (int id)
 	    break;
 	}
         if (res == 0) {
- 	    if (errorlog) fprintf (errorlog, "Cart %d# SRAM saved\n", id);
+ 	    logerror("Cart %d# SRAM saved\n", id);
         } else if (res > 0) {
-	    if (errorlog) fprintf (errorlog,
-		"Cart %d# failed to save SRAM\n", id);
+	    logerror("Cart %d# failed to save SRAM\n", id);
 	}
         free (msx1.cart[id].mem);
         free (msx1.cart[id].sramfile);
@@ -494,8 +485,7 @@ void msx_ch_reset(void) {
         msx1.ram = (UINT8*)malloc (0x10000);
         if (!msx1.ram || !msx1.empty)
         {
-            if (errorlog)
-		fprintf (errorlog, "malloc () in init_msx () failed!\n");
+            logerror("malloc () in init_msx () failed!\n");
  	    return;
         }
 
@@ -959,8 +949,7 @@ static void msx_cart_write (int cart, int offset, int data)
 	    msx1.cart[cart].mem[0xfff6] = n;
 	    msx1.cart[cart].mem[0x13ff6] = n;
 	    msx1.opll_active = data & 1;
-	    if (errorlog) fprintf (errorlog, "FM-PAC: OPLL %s\n",
-		(data & 1 ? "activated" : "deactivated"));
+	    logerror("FM-PAC: OPLL %s\n",(data & 1 ? "activated" : "deactivated"));
 	    break;
 	}
 	if ( (offset == 0x1ffe || offset == 0x1fff) && msx1.cart[cart].pacsram)

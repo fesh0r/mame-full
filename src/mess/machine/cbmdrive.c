@@ -3,8 +3,9 @@
 #include <ctype.h>
 #include <string.h>
 #include "driver.h"
+//#include "usrintrf.h"
 
-#define VERBOSE_DBG 0				   /* general debug messages */
+#define VERBOSE_DBG 1				   /* general debug messages */
 #include "cbm.h"
 #include "c1551.h"
 
@@ -138,14 +139,19 @@ static void d64_readprg (CBM_Drive * c1551, int pos)
 	}
 	c1551->size += c1551->d.d64.image[i + 1];
 
-	DBG_LOG (3, "d64 readprg", (errorlog, "size %d\n", c1551->size));
+	DBG_LOG (3, "d64 readprg", ("size %d\n", c1551->size));
 
-	c1551->buffer = malloc (c1551->size);
-	if (!c1551->buffer) return;
+	c1551->buffer = realloc (c1551->buffer, c1551->size);
+	if (!c1551->buffer) {
+		logerror("out of memory %s %d\n",
+				__FILE__, __LINE__);
+		osd_exit();
+		exit(1);
+	}
 
 	c1551->size--;
 
-	DBG_LOG (3, "d64 readprg", (errorlog, "track: %d sector: %d\n",
+	DBG_LOG (3, "d64 readprg", ("track: %d sector: %d\n",
 								c1551->d.d64.image[pos + 1],
 								c1551->d.d64.image[pos + 2]));
 
@@ -156,7 +162,7 @@ static void d64_readprg (CBM_Drive * c1551, int pos)
 			memcpy (c1551->buffer + i, c1551->d.d64.image + pos + 2, 254);
 			pos = d64_tracksector2offset (c1551->d.d64.image[pos + 0],
 									  c1551->d.d64.image[pos + 1]);
-			DBG_LOG (3, "d64 readprg", (errorlog, "track: %d sector: %d\n",
+			DBG_LOG (3, "d64 readprg", ("track: %d sector: %d\n",
 										c1551->d.d64.image[pos],
 										c1551->d.d64.image[pos + 1]));
 		}
@@ -177,11 +183,14 @@ static void d64_read_sector (CBM_Drive * c1551, int track, int sector)
 
 	pos = d64_tracksector2offset (track, sector);
 
-	c1551->buffer = malloc (256);
-	if (!c1551->buffer) return;
+	c1551->buffer = realloc (c1551->buffer,256);
+	if (!c1551->buffer) {
+		logerror("out of memory %s %d\n",__FILE__, __LINE__);
+		osd_exit();
+		exit(1);
+	}
 
-	if (errorlog)
-		fprintf (errorlog, "d64 read track %d sector %d\n", track, sector);
+	logerror("d64 read track %d sector %d\n", track, sector);
 
 	memcpy (c1551->buffer, c1551->d.d64.image + pos, 256);
 	c1551->size = 256;
@@ -193,8 +202,13 @@ static void d64_read_directory (CBM_Drive * c1551)
 {
 	int pos, track, sector, i, j, blocksfree, addr = 0x1001;
 
-	c1551->buffer = malloc (8 * 18 * 25);
-	if (!c1551->buffer) return;
+	c1551->buffer = realloc (c1551->buffer, 8 * 18 * 25);
+	if (!c1551->buffer) {
+		logerror("out of memory %s %d\n",
+				__FILE__, __LINE__);
+		osd_exit();
+		exit(1);
+	}
 
 	c1551->size = 0;
 
@@ -352,8 +366,13 @@ static int c1551_fs_command (CBM_Drive * c1551, unsigned char *name)
 		if (name[strlen ((char *) name) - 1] == '0')
 		{
 			c1551->size = osd_fsize (fp);
-			c1551->buffer = malloc (c1551->size);
-			if (!c1551->buffer) return 1;
+			c1551->buffer = realloc (c1551->buffer, c1551->size);
+			if (!c1551->buffer) {
+				logerror("out of memory %s %d\n",__FILE__, __LINE__);
+				osd_exit();
+				exit(1);
+			}
+
 			read = osd_fread (fp, c1551->buffer, 26);
 			strncpy (c1551->d.fs.filename, (char *) c1551->buffer + 8, 16);
 			c1551->size -= 26;
@@ -362,19 +381,22 @@ static int c1551_fs_command (CBM_Drive * c1551, unsigned char *name)
 		else
 		{
 			c1551->size = osd_fsize (fp);
-			c1551->buffer = malloc (c1551->size);
-			if (!c1551->buffer) return 1;
+			c1551->buffer = realloc (c1551->buffer,c1551->size);
+			if (!c1551->buffer) {
+				logerror("out of memory %s %d\n",__FILE__, __LINE__);
+				osd_exit();
+				exit(1);
+			}
+
 			read = osd_fread (fp, c1551->buffer, c1551->size);
 			osd_fclose (fp);
-			if (errorlog)
-				fprintf (errorlog, "loading file %s\n", name);
+			logerror("loading file %s\n", name);
 			strcpy (c1551->d.fs.filename, (char *) name);
 		}
 	}
 	else
 	{
-		if (errorlog)
-			fprintf (errorlog, "file %s not found\n", name);
+		logerror("file %s not found\n", name);
 		return 1;
 	}
 	return 0;
@@ -445,8 +467,7 @@ static void cbm_command (CBM_Drive * drive)
 		&& (drive->cmdbuffer[2] == '#')
 		&& (drive->cmdbuffer[3] == 0x3f))
 	{
-		if (errorlog)
-			fprintf (errorlog, "floppy direct access channel %d opened\n",
+		logerror("floppy direct access channel %d opened\n",
 					 (unsigned) drive->cmdbuffer[1] & 0xf);
 	}
 	else if ((drive->cmdpos >= 4)
@@ -496,7 +517,7 @@ static void cbm_command (CBM_Drive * drive)
 			drive->state = OPEN;
 			drive->pos = 0;
 		}
-		DBG_LOG (1, "cbm_open", (errorlog, "%s %s type:%c %c\n", name,
+		DBG_LOG (1, "cbm_open", ("%s %s type:%c %c\n", name,
 								 rc ? "failed" : "success", type, mode ? mode : ' '));
 	}
 	else if ((drive->cmdpos == 1) && (drive->cmdbuffer[0] == 0x5f))
@@ -536,16 +557,15 @@ static void cbm_command (CBM_Drive * drive)
 	}
 	else
 	{
-		if (errorlog)
-		{
-			fprintf (errorlog, "unknown floppycommand(size:%d):", drive->cmdpos);
-			for (i = 0; i < drive->cmdpos; i++)
-				fprintf (errorlog, "%.2x", drive->cmdbuffer[i]);
-			fprintf (errorlog, " ");
-			for (i = 0; i < drive->cmdpos; i++)
-				fprintf (errorlog, "%c", drive->cmdbuffer[i]);
-			fprintf (errorlog, "\n");
-		}
+
+		logerror("unknown floppycommand(size:%d):", drive->cmdpos);
+		for (i = 0; i < drive->cmdpos; i++)
+			logerror("%.2x", drive->cmdbuffer[i]);
+		logerror(" ");
+		for (i = 0; i < drive->cmdpos; i++)
+			logerror("%c", drive->cmdbuffer[i]);
+		logerror("\n");
+
 		drive->state = 0;
 	}
 	drive->cmdpos = 0;
@@ -622,7 +642,7 @@ void c1551_state (CBM_Drive * c1551)
 		if (!c1551->i.iec.handshakein)
 		{
 			c1551->i.iec.state++;
-/*      DBG_LOG(1,"c1551",(errorlog,"taken data %.2x\n",c1551->i.iec.datain)); */
+			DBG_LOG(1,"c1551",("taken data %.2x\n",c1551->i.iec.datain));
 			if (c1551->cmdpos < sizeof (c1551->cmdbuffer))
 				c1551->cmdbuffer[c1551->cmdpos++] = c1551->i.iec.datain;
 			if ((c1551->i.iec.datain == 0x3f) || (c1551->i.iec.datain == 0x5f))

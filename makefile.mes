@@ -24,8 +24,8 @@ endif
 
 # uncomment next line to do a smaller compile including only one driver
 # TINY_COMPILE = 1
-TINY_NAME = driver_spinlbrk
-TINY_OBJS = obj/drivers/aerofgt.o obj/vidhrdw/aerofgt.o
+TINY_NAME = driver_flstory
+TINY_OBJS = obj/drivers/flstory.o obj/vidhrdw/flstory.o obj/machine/flstory.o
 
 # uncomment one of the two next lines to not compile the NeoGeo games or to
 # compile only the NeoGeo games
@@ -59,9 +59,16 @@ CPUS+=M65SC02@
 CPUS+=M65CE02@
 CPUS+=M6509@
 CPUS+=M6510@
+CPUS+=M6510T@
+CPUS+=M7501@
+CPUS+=M8502@
 CPUS+=N2A03@
 CPUS+=H6280@
 CPUS+=I86@
+CPUS+=I88@
+CPUS+=I186@
+CPUS+=I188@
+#CPUS+=I286@
 #CPUS+=V20@
 #CPUS+=V30@
 #CPUS+=V33@
@@ -247,6 +254,27 @@ CPUOBJS += obj/cpu/m6502/m6502.o
 DBGOBJS += obj/cpu/m6502/6502dasm.o
 endif
 
+CPU=$(strip $(findstring M6510T@,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_M6510=1 -DHAS_M6510T=1
+CPUOBJS += obj/cpu/m6502/m6502.o
+DBGOBJS += obj/cpu/m6502/6502dasm.o
+endif
+
+CPU=$(strip $(findstring M7501T@,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_M6510=1 -DHAS_M7501=1
+CPUOBJS += obj/cpu/m6502/m6502.o
+DBGOBJS += obj/cpu/m6502/6502dasm.o
+endif
+
+CPU=$(strip $(findstring M8502T@,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_M6510=1 -DHAS_M8502=1
+CPUOBJS += obj/cpu/m6502/m6502.o
+DBGOBJS += obj/cpu/m6502/6502dasm.o
+endif
+
 CPU=$(strip $(findstring N2A03@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_N2A03=1
@@ -265,6 +293,34 @@ CPU=$(strip $(findstring I86@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_I86=1
 CPUOBJS += obj/cpu/i86/i86.o
+DBGOBJS += obj/cpu/i86/i86dasm.o
+endif
+
+CPU=$(strip $(findstring I88@,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_I88=1
+CPUOBJS += obj/cpu/i86/i86.o
+DBGOBJS += obj/cpu/i86/i86dasm.o
+endif
+
+CPU=$(strip $(findstring I186@,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_I186=1
+CPUOBJS += obj/cpu/i86/i86.o
+DBGOBJS += obj/cpu/i86/i86dasm.o
+endif
+
+CPU=$(strip $(findstring I188@,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_I188=1
+CPUOBJS += obj/cpu/i86/i86.o
+DBGOBJS += obj/cpu/i86/i86dasm.o
+endif
+
+CPU=$(strip $(findstring I286@,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_I286=1
+CPUOBJS += obj/cpu/i86/i286.o
 DBGOBJS += obj/cpu/i86/i86dasm.o
 endif
 
@@ -876,7 +932,8 @@ LIBS = -lalleg -laudio -lz \
 COREOBJS = obj/version.o obj/mess/system.o obj/mame.o obj/mess/mess.o \
         obj/mess/config.o obj/mess/filemngr.o obj/mess/tapectrl.o \
         obj/mess/machine/6522via.o  obj/mess/machine/nec765.o   \
-	obj/drawgfx.o obj/common.o obj/usrintrf.o \
+        obj/mess/machine/dsk.o      \
+	obj/drawgfx.o obj/common.o obj/usrintrf.o obj/ui_text.o \
 	obj/cpuintrf.o obj/memory.o obj/timer.o obj/palette.o \
 	obj/input.o obj/inptport.o obj/cheat.o obj/unzip.o \
 	obj/audit.o obj/info.o obj/png.o obj/artwork.o \
@@ -895,7 +952,6 @@ COREOBJS = obj/version.o obj/mess/system.o obj/mame.o obj/mess/mess.o \
 	obj/mamedbg.o obj/window.o \
 	obj/profiler.o \
 	$(sort $(DBGOBJS)) \
-
 
 DRVLIBS = obj/advision.a  \
           obj/sega.a     \
@@ -929,8 +985,10 @@ DRVLIBS = obj/advision.a  \
           obj/nascom1.a  \
           obj/bbc.a      \
           obj/cpschngr.a \
+	  obj/mtx.a      \
+	  obj/acorn.a    \
+	  obj/samcoupe.a \
           #obj/motorola.a  \
-
 
 NEOLIBS = obj/neogeo.a \
 
@@ -959,7 +1017,12 @@ else
 	endif
 endif
 
-all: $(EMULATOR_EXE) romcmp.exe dat2html.exe
+
+TOOLS_EXE = dat2html.exe \
+            mkhdimg.exe  \
+            imgtool.exe
+
+all: $(EMULATOR_EXE) mess.txt $(TOOLS_EXE)
 
 $(EMULATOR_EXE):  $(COREOBJS) $(MSDOSOBJS) $(OBJS) $(LIBS)
 # always recompile the version string
@@ -967,18 +1030,36 @@ $(EMULATOR_EXE):  $(COREOBJS) $(MSDOSOBJS) $(OBJS) $(LIBS)
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $(COREOBJS) $(MSDOSOBJS) $(OBJS) $(LIBS) -o $@
 ifndef DEBUG
-	$(EMULATOR_EXE) -listtext > mess.txt
-	$(EMULATOR_EXE) -listdevices >> mess.txt
 	upx $(EMULATOR_EXE)
 endif
+
+mess.txt: $(EMULATOR_EXE)
+	@echo Generating $@...
+	@$(EMULATOR_EXE) -listtext > mess.txt
+	@$(EMULATOR_EXE) -listdevices >> mess.txt
 
 romcmp.exe: obj/romcmp.o obj/unzip.o
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ -lz -o $@
 
-dat2html.exe: obj/mess/dat2html.o 
+dat2html.exe: obj/mess/tools/dat2html/dat2html.o 
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ -lz -o $@
+
+mkhdimg.exe:  obj/mess/tools/mkhdimg/mkhdimg.o 
+	@echo Linking $@...
+	$(LD) $(LDFLAGS) $^ -lz -o $@
+
+imgtool.exe:  obj/unzip.o                      \
+              obj/mess/tools/imgtool/stubs.o   \
+              obj/mess/tools/imgtool/main.o    \
+              obj/mess/tools/imgtool/imgtool.o \
+              obj/mess/tools/imgtool/rsdos.o   \
+              obj/mess/tools/imgtool/stream.o  
+	@echo Linking $@...
+	$(LD) $(LDFLAGS) $^ -lz -o $@
+
+
 
 obj/%.o: src/%.c
 	@echo Compiling $<...
@@ -1141,7 +1222,6 @@ obj/kaypro.a:   \
                 obj/mess/systems/kaypro.o   \
 
 obj/sinclair.a: \
-                obj/mess/machine/dsk.o      \
                 obj/mess/vidhrdw/spectrum.o \
                 obj/mess/machine/spectrum.o \
                 obj/mess/systems/spectrum.o \
@@ -1166,6 +1246,7 @@ obj/apple2.a:   \
 
 obj/mac.a: \
                 obj/mess/sndhrdw/mac.o      \
+                obj/mess/machine/iwm.o      \
                 obj/mess/vidhrdw/mac.o      \
                 obj/mess/machine/mac.o      \
                 obj/mess/systems/mac.o      \
@@ -1185,6 +1266,7 @@ obj/bally.a:    \
                 obj/mess/systems/astrocde.o 
 
 obj/pc.a:       \
+                obj/mess/vidhrdw/vga.o      \
                 obj/mess/sndhrdw/pc.o       \
                 obj/mess/vidhrdw/pc_cga.o   \
                 obj/mess/vidhrdw/pc_mda.o   \
@@ -1205,7 +1287,6 @@ obj/p2000.a:	\
 		obj/mess/systems/uk101.o     
 
 obj/amstrad.a:  \
-                obj/mess/machine/dsk.o      \
                 obj/machine/8255ppi.o       \
                 obj/mess/vidhrdw/hd6845s.o  \
                 obj/mess/vidhrdw/amstrad.o  \
@@ -1288,13 +1369,25 @@ obj/bbc.a:      \
 obj/cpschngr.a: \
                 obj/machine/eeprom.o        \
                 obj/vidhrdw/cps1.o          \
-                obj/mess/systems/cpschngr.o \
+                obj/mess/systems/cpschngr.o 
+
+obj/mtx.a:      \
+                obj/mess/systems/mtx.o           
+
+obj/acorn.a:    \
+                obj/mess/machine/atom.o     \
+                obj/mess/vidhrdw/atom.o     \
+                obj/mess/systems/atom.o    
+
+obj/samcoupe.a: \
+                obj/mess/machine/coupe.o    \
+                obj/mess/vidhrdw/coupe.o    \
+                obj/mess/systems/coupe.o    
 
 obj/motorola.a: \
 		obj/mess/vidhrdw/mekd2.o    \
 		obj/mess/machine/mekd2.o    \
                 obj/mess/systems/mekd2.o
-
 
 # dependencies
 obj/cpu/z80/z80.o: z80.c z80.h z80daa.h
@@ -1363,7 +1456,10 @@ clean:
 	@del $(EMULATOR_EXE)
 	@echo Deleting romcmp.exe...
 	@del romcmp.exe
+	@echo Deleting mess files...
 	@del dat2html.exe
+	@del mkhdimg.exe
+	@del imgtool.exe
 
 cleandebug:
 	@echo Deleting debug obj tree...
@@ -1411,6 +1507,7 @@ cleantiny:
 	@del obj\vidhrdw\konamiic.o
 	@del obj\msdos\input.o
 
+
 messdir:
 	@echo Creating MESS dir tree...
 	@md obj\mess
@@ -1418,5 +1515,10 @@ messdir:
 	@md obj\mess\systems
 	@md obj\mess\vidhrdw
 	@md obj\mess\sndhrdw
+	@md obj\mess\tools
+	@md obj\mess\tools\dat2html
+	@md obj\mess\tools\mkhdimg
+	@md obj\mess\tools\imgtool
+
 
 

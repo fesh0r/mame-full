@@ -12,6 +12,7 @@
  *		0xa00000 - 0xbfffff		Zilog 8530 SCC (Serial Control Chip) Write
  *		0xc00000 - 0xdfffff		IWM (Integrated Woz Machine; floppy)
  *		0xe80000 - 0xefffff		Rockwell 6522 VIA
+ *		0xf00000 - 0xffffef		??? (the ROM appears to be accessing here)
  *		0xfffff0 - 0xffffff		Auto Vector
  *
  *
@@ -53,6 +54,7 @@ extern READ_HANDLER ( macplus_scsi_r );
 extern WRITE_HANDLER ( macplus_scsi_w );
 extern int macplus_floppy_init(int id);
 extern void macplus_floppy_exit(int id);
+extern void macplus_nvram_handler(void *file, int read_or_write);
 
 /* from vidhrdw/mac.c */
 extern int macplus_vh_start(void);
@@ -69,13 +71,13 @@ static struct MemoryReadAddress readmem[] =
 {
 	{ 0x000000, 0x3fffff, MRA_BANK1 },	/* ram/rom */
 	{ 0x400000, 0x41ffff, MRA_BANK3 }, /* rom */
-	{ 0x420000, 0x43ffff, MRA_BANK3 }, /* rom - mirror */
-	{ 0x440000, 0x45ffff, MRA_BANK3 }, /* rom - mirror */
-	{ 0x460000, 0x47ffff, MRA_BANK3 }, /* rom - mirror */
-	{ 0x480000, 0x49ffff, MRA_BANK3 }, /* rom - mirror */
-	{ 0x4a0000, 0x4bffff, MRA_BANK3 }, /* rom - mirror */
-	{ 0x4c0000, 0x4dffff, MRA_BANK3 }, /* rom - mirror */
-	{ 0x4e0000, 0x4fffff, MRA_BANK3 }, /* rom - mirror */
+	{ 0x420000, 0x43ffff, MRA_BANK4 }, /* rom - mirror */
+	{ 0x440000, 0x45ffff, MRA_BANK5 }, /* rom - mirror */
+	{ 0x460000, 0x47ffff, MRA_BANK6 }, /* rom - mirror */
+	{ 0x480000, 0x49ffff, MRA_BANK7 }, /* rom - mirror */
+	{ 0x4a0000, 0x4bffff, MRA_BANK8 }, /* rom - mirror */
+	{ 0x4c0000, 0x4dffff, MRA_BANK9 }, /* rom - mirror */
+	{ 0x4e0000, 0x4fffff, MRA_BANK10 }, /* rom - mirror */
 	{ 0x580000, 0x5fffff, macplus_scsi_r },
 	{ 0x600000, 0x6fffff, MRA_BANK2 },	/* ram */
 	{ 0x800000, 0x9fffff, macplus_scc_r },
@@ -152,7 +154,9 @@ static struct MachineDriver machine_driver_macplus =
 			SOUND_CUSTOM,
 			&custom_interface
 		}
-	}
+	},
+
+	macplus_nvram_handler
 };
 
 INPUT_PORTS_START( macplus )
@@ -181,7 +185,7 @@ ROM_END
 static const struct IODevice io_macplus[] = {
 	{
 		IO_FLOPPY,			/* type */
-		1,					/* count */
+		2,					/* count */
 		"dsk\0",			/* file extensions */
         NULL,               /* private */
         NULL,               /* id */

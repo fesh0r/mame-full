@@ -97,8 +97,7 @@ static void fdd_select(void)
 			if (f->side2[i] > eot)
 				eot = f->side2[i];
     }
-	if (errorlog)
-		fprintf(errorlog, "DISK #%d select den:%d cyl:%d spt:%d eot:%d secl:%d\n",
+	logerror("DISK #%d select den:%d cyl:%d spt:%d eot:%d secl:%d\n",
 			curdisk, f->density, f->cylinders, f->spt, eot, secl);
 	osd_fdc_density(dsk[curdisk].unit, f->density, f->cylinders, f->spt, eot, secl);
 }
@@ -112,8 +111,7 @@ static void fdd_set_track(int t)
 	dsk_fmt *f = &formats[fmt[curdisk]];
 	UINT8 pcn;
 
-    if (errorlog)
-		fprintf(errorlog, "DISK #%d settrk %d\n", curdisk, t);
+    logerror("DISK #%d settrk %d\n", curdisk, t);
 	osd_fdc_motors(dsk[curdisk].unit);
     if (t == 0)
 		osd_fdc_recal(&pcn);
@@ -193,8 +191,7 @@ static int fdd_access_sector(int * record_offset)
 			cyl  = o % f->cylinders;
     }
 
-	if (errorlog)
-		fprintf(errorlog, "DISK #%d access CYL:%d SIDE:%d HEAD:%d SEC:%d RECOFS:0x%04x\n",
+	logerror("DISK #%d access CYL:%d SIDE:%d HEAD:%d SEC:%d RECOFS:0x%04x\n",
 			curdisk, cyl, side, head, sec, recofs);
     /* changed cylinder, head or sector for this disk ? */
 	if (cyl != dsk[curdisk].cyl ||
@@ -215,25 +212,23 @@ static int fdd_access_sector(int * record_offset)
 				n = osd_fdc_put_sector(dsk[curdisk].cyl, dsk[curdisk].side, dsk[curdisk].head, dsk[curdisk].sec, dsk[curdisk].buffer, 0);
 				if (n & STA_2_ERROR)
 				{
-					if (errorlog)
-					{
-						fprintf(errorlog, "cpm_access_sector: (put) status 0x%02x:", n);
-						if (n & STA_2_LOST_DAT)
-						  fprintf(errorlog, " LOST_DAT");
-						if (n & STA_2_CRC_ERR)
-						  fprintf(errorlog, " CRC_ERR");
-						if (n & STA_2_REC_N_FND)
-						  fprintf(errorlog, " REC_N_FND");
-						if (n & STA_2_REC_TYPE)
-						  fprintf(errorlog, "REC_TYPE");
-						if (n & STA_2_NOT_READY)
-						  fprintf(errorlog, " NOT_READY");
-						fprintf(errorlog, " (try #%d)\n", tries);
-					}
+
+					logerror("cpm_access_sector: (put) status 0x%02x:", n);
+					if (n & STA_2_LOST_DAT)
+					  logerror(" LOST_DAT");
+					if (n & STA_2_CRC_ERR)
+					  logerror(" CRC_ERR");
+					if (n & STA_2_REC_N_FND)
+					  logerror(" REC_N_FND");
+					if (n & STA_2_REC_TYPE)
+					  logerror("REC_TYPE");
+					if (n & STA_2_NOT_READY)
+					  logerror(" NOT_READY");
+					logerror(" (try #%d)\n", tries);
+
 				}
 			} while ((tries++ < 10) && (n & STA_2_ERROR));
-			if (errorlog)
-			  fprintf(errorlog, "DISK %d flush  CYL:%d SIDE:%d HEAD:%d SEC:%d -> 0x%02X\n",
+			logerror("DISK %d flush  CYL:%d SIDE:%d HEAD:%d SEC:%d -> 0x%02X\n",
 				  curdisk, cyl, side, head, sec, n);
 			dsk[curdisk].dirty = 0; /* seek to current track number */
 			fdd_set_track(cyl);
@@ -253,26 +248,22 @@ static int fdd_access_sector(int * record_offset)
 					 sec, dsk[curdisk].buffer);
 		  if (n & STA_2_ERROR)
 		  {
-				if (errorlog)
-				{
-					fprintf(errorlog, "cpm_access_sector: (get) status 0x%02x:", n);
-					if (n & STA_2_LOST_DAT)
-						fprintf(errorlog, " LOST_DAT");
-					if (n & STA_2_CRC_ERR)
-						fprintf(errorlog, "CRC_ERR");
-					if (n & STA_2_REC_N_FND)
-						fprintf(errorlog, " REC_N_FND");
-					if (n & STA_2_REC_TYPE)
-						fprintf(errorlog, "REC_TYPE");
-					if (n & STA_2_NOT_READY)
-						fprintf(errorlog, " NOT_READY");
-					fprintf(errorlog, " (try #%d)\n", tries);
-				}
+				logerror("cpm_access_sector: (get) status 0x%02x:", n);
+				if (n & STA_2_LOST_DAT)
+					logerror(" LOST_DAT");
+				if (n & STA_2_CRC_ERR)
+					logerror("CRC_ERR");
+				if (n & STA_2_REC_N_FND)
+					logerror(" REC_N_FND");
+				if (n & STA_2_REC_TYPE)
+					logerror("REC_TYPE");
+				if (n & STA_2_NOT_READY)
+					logerror(" NOT_READY");
+				logerror(" (try #%d)\n", tries);
 			}
 		} while ((tries++ < 10) && (n &	STA_2_ERROR));
 
-		if (errorlog)
-		  fprintf(errorlog, "DISK #%d read   CYL:%d SIDE:%d HEAD:%d SEC:%d -> 0x%02X\n",
+		logerror("DISK #%d read   CYL:%d SIDE:%d HEAD:%d SEC:%d -> 0x%02X\n",
 			  curdisk, cyl, side, head, sec, n);
 	}
 	*record_offset = recofs;
@@ -389,12 +380,9 @@ int cpm_init(int n, const char *ids[])
 		RAM[i] = zeropage0[i];
 
 #if VERBOSE
-	if (errorlog)
-	{
-		fprintf(errorlog, "CPM CCP     %04X\n", CCP);
-		fprintf(errorlog, "CPM BDOS    %04X\n", BDOS);
-		fprintf(errorlog, "CPM BIOS    %04X\n", BIOS);
-	}
+		logerror("CPM CCP     %04X\n", CCP);
+		logerror("CPM BDOS    %04X\n", BDOS);
+		logerror("CPM BIOS    %04X\n", BIOS);
 #endif
 	/* Start allocating CSV & ALV */
     i = DATA_START;
@@ -409,8 +397,7 @@ int cpm_init(int n, const char *ids[])
 			if( cpm_disk_select_format(d, ids[d]) )
 			{
 #if VERBOSE
-				if (errorlog)
-					fprintf(errorlog, "Error drive #%d id '%s' is unknown\n", d, ids[d]);
+				logerror("Error drive #%d id '%s' is unknown\n", d, ids[d]);
 #endif
 				return 1;
 			}
@@ -434,30 +421,26 @@ int cpm_init(int n, const char *ids[])
 			RAM[DPB0 + d * DPBL + 13] = f->dpb.off & 0xff;
 			RAM[DPB0 + d * DPBL + 14] = f->dpb.off >> 8;
 #if VERBOSE
-			if (errorlog)
-				fprintf(errorlog, "CPM DPB%d    %04X\n", d, DPB0 + d * DPBL);
+			logerror("CPM DPB%d    %04X\n", d, DPB0 + d * DPBL);
 #endif
 
 			/* TODO: generate sector translation table and
 			   allocate space for it; for now it is always 0 */
 			dph[d].xlat = 0;
 #if VERBOSE
-			if (errorlog)
-				fprintf(errorlog, "CPM XLAT%d   %04X\n", d, dph[d].xlat);
+			logerror("CPM XLAT%d   %04X\n", d, dph[d].xlat);
 #endif
 
 			/* memory address for dirbuf */
 			dph[d].dirbuf = DIRBUF + d * RECL;
 #if VERBOSE
-			if (errorlog)
-				fprintf(errorlog, "CPM DIRBUF%d %04X\n", d, dph[d].dirbuf);
+			logerror("CPM DIRBUF%d %04X\n", d, dph[d].dirbuf);
 #endif
 
 			/* memory address for CSV */
 			dph[d].csv = i;
 #if VERBOSE
-			if (errorlog)
-				fprintf(errorlog, "CPM CSV%d    %04X\n", d, dph[d].csv);
+			logerror("CPM CSV%d    %04X\n", d, dph[d].csv);
 #endif
 
 			/* length is CKS bytes */
@@ -466,8 +449,7 @@ int cpm_init(int n, const char *ids[])
 			/* memory address for ALV */
 			dph[d].alv = i;
 #if VERBOSE
-			if (errorlog)
-				fprintf(errorlog, "CPM ALV%d    %04X\n", d, dph[d].alv);
+			logerror("CPM ALV%d    %04X\n", d, dph[d].alv);
 #endif
 
 			/* length is DSM+1 bits */
@@ -476,8 +458,7 @@ int cpm_init(int n, const char *ids[])
 			if (i >= BIOS_00)
 			{
 #if VERBOSE
-				if (errorlog)
-					fprintf(errorlog, "Error configuring BIOS tables: out of memory!\n");
+				logerror("Error configuring BIOS tables: out of memory!\n");
 #endif
 				return 1;
 			}
@@ -487,8 +468,7 @@ int cpm_init(int n, const char *ids[])
 			memset(&dph[d], 0, DPHL);
 		}
 
-		if (errorlog)
-			fprintf(errorlog, "CPM DPH%d    %04X\n", d, DPH0 + d * DPHL);
+		logerror("CPM DPH%d    %04X\n", d, DPH0 + d * DPHL);
 
 		/* transfer DPH to memory */
 		RAM[DPH0 + d * DPHL +  0] = dph[d].xlat & 0xff;
@@ -613,8 +593,7 @@ int cpm_disk_select_format(int d, const char *id)
 		return 1;
 
 #if VERBOSE
-    if (errorlog)
-		fprintf(errorlog, "CPM search format '%s'\n", id);
+    logerror("CPM search format '%s'\n", id);
 #endif
 
 	for (i = 0; formats[i].id && stricmp(formats[i].id, id); i++)
@@ -623,8 +602,7 @@ int cpm_disk_select_format(int d, const char *id)
 	if (!formats[i].id)
 	{
 #if VERBOSE
-		if (errorlog)
-			fprintf(errorlog, "CPM format '%s' not supported\n", id);
+		logerror("CPM format '%s' not supported\n", id);
 #endif
 		return 1;
 	}
@@ -633,8 +611,7 @@ int cpm_disk_select_format(int d, const char *id)
 	if (formats[i].ref)
 	{
 #if VERBOSE
-		if (errorlog)
-			fprintf(errorlog, "CPM search format '%s' for '%s'\n", formats[i].ref, id);
+		logerror("CPM search format '%s' for '%s'\n", formats[i].ref, id);
 #endif
 	/* search for the referred id */
 		for (j = 0; formats[j].id && stricmp(formats[j].id, formats[i].ref); j++)
@@ -642,8 +619,7 @@ int cpm_disk_select_format(int d, const char *id)
 		if (!formats[j].id)
 		{
 #if VERBOSE
-			if (errorlog)
-				fprintf(errorlog, "CPM format '%s' not supported\n", formats[i].ref);
+			logerror("CPM format '%s' not supported\n", formats[i].ref);
 #endif
 			return 1;
 		}
@@ -656,12 +632,12 @@ int cpm_disk_select_format(int d, const char *id)
 		fmt[d] = i;
     }
 #if VERBOSE
-	if (errorlog)
+
 	{
 		dsk_fmt *f = &formats[fmt[d]];
 
-        fprintf(errorlog, "CPM '%s' is '%s'\n", id, f->name);
-		fprintf(errorlog, "CPM #%d %dK (%d cylinders, %d sides, %d %d bytes sectors/track)\n",
+        logerror("CPM '%s' is '%s'\n", id, f->name);
+		logerror("CPM #%d %dK (%d cylinders, %d sides, %d %d bytes sectors/track)\n",
 			d,
 			f->cylinders * f->sides * f->spt * f->seclen / 1024,
 			f->cylinders, f->sides, f->spt, f->seclen);
@@ -700,8 +676,7 @@ void cpm_disk_image_seek(void)
 			if (bdos_trk[curdisk] >= f->cylinders)
 				offs += (int)f->cylinders * f->sides * f->spt * f->seclen / 2;
 #if VERBOSE_FDD
-			if (errorlog)
-				fprintf(errorlog, "CPM image #%d ord_cylinders C:%2d H:%d S:%2d REC:%d -> 0x%08X\n", curdisk, bdos_trk[curdisk], h, s, r, offs * RECL);
+			logerror("CPM image #%d ord_cylinders C:%2d H:%d S:%2d REC:%d -> 0x%08X\n", curdisk, bdos_trk[curdisk], h, s, r, offs * RECL);
 #endif
 	    break;
 
@@ -720,8 +695,7 @@ void cpm_disk_image_seek(void)
 			s -= f->side1[1];       /* subtract first sector number */
 			offs += (h * f->spt + s) * f->seclen + r * RECL;
 #if VERBOSE_FDD
-	    if (errorlog)
-				fprintf(errorlog, "CPM image #%d ord_eagle     C:%2d H:%d S:%2d REC:%d -> 0x%08X\n", curdisk, bdos_trk[curdisk], h, s, r, offs);
+	    logerror("CPM image #%d ord_eagle     C:%2d H:%d S:%2d REC:%d -> 0x%08X\n", curdisk, bdos_trk[curdisk], h, s, r, offs);
 #endif
 	    break;
 
@@ -739,8 +713,7 @@ void cpm_disk_image_seek(void)
 			s -= f->side1[1];       /* subtract first sector number */
 			offs += (h * f->spt + s) * f->seclen + r * RECL;
 #if VERBOSE_FDD
-	    if (errorlog)
-				fprintf(errorlog, "CPM image #%d ord_sides     C:%2d H:%d S:%2d REC:%d -> 0x%08X\n", curdisk, bdos_trk[curdisk], h, s, r, offs);
+	    logerror("CPM image #%d ord_sides     C:%2d H:%d S:%2d REC:%d -> 0x%08X\n", curdisk, bdos_trk[curdisk], h, s, r, offs);
 #endif
 	    break;
 
@@ -815,12 +788,12 @@ void cpm_disk_set_dma(int d)
 static void dump_sector(void)
 {
 	UINT8 *DMA = memory_region(REGION_CPU1) + dma;
-    if (errorlog)
+
     {
 		int i;
 		for (i = 0x00; i < 0x80; i += 0x10)
 		{
-			fprintf(errorlog,"%02X: %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c\n",
+			logerror("%02X: %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c\n",
 				i,
 				DMA[i+0x00],DMA[i+0x01],DMA[i+0x02],DMA[i+0x03],
 				DMA[i+0x04],DMA[i+0x05],DMA[i+0x06],DMA[i+0x07],
@@ -863,10 +836,8 @@ int cpm_disk_read_sector(void)
 	}
 	if (result)
 	{
-		if (errorlog)
-			fprintf(errorlog, "BDOS Err on %c: Select\n", curdisk + 'A');
+		logerror("BDOS Err on %c: Select\n", curdisk + 'A');
 	}
-	if (errorlog)
 		dump_sector();
     return result;
 }
@@ -899,8 +870,7 @@ int cpm_disk_write_sector(void)
 		}
 	}
 	if (result)
-		if (errorlog)
-			fprintf(errorlog, "BDOS Err on %c: Select\n", curdisk + 'A');
+		logerror("BDOS Err on %c: Select\n", curdisk + 'A');
 	return result;
 }
 
@@ -927,8 +897,7 @@ WRITE_HANDLER ( cpm_bios_command_w )
     {
 	case 0x00: /* CBOOT */
 #if VERBOSE
-		if (errorlog)
-			fprintf(errorlog, "BIOS 00 cold boot\n");
+		logerror("BIOS 00 cold boot\n");
 #endif
 
 		cpm_conout_str("MESS CP/M 2.2 Emulator\r\n\n");
@@ -957,8 +926,7 @@ WRITE_HANDLER ( cpm_bios_command_w )
 
 	case 0x01: /* WBOOT */
 #if VERBOSE
-		if (errorlog)
-			fprintf(errorlog, "BIOS 01 warm boot\n");
+		logerror("BIOS 01 warm boot\n");
 #endif
 		zeropage0[4] = curdisk;
 		/* copy substantial zero page data */
@@ -981,8 +949,7 @@ WRITE_HANDLER ( cpm_bios_command_w )
 		tmp = cpu_readport(BIOS_CONST) & 0xff;
 		af = (af & 0xff) | (tmp << 8);
 #if VERBOSE_CONIO
-		if (errorlog)
-			fprintf(errorlog, "BIOS 02 console status      A:%02X\n", tmp);
+		logerror("BIOS 02 console status      A:%02X\n", tmp);
 #endif
 		break;
 
@@ -992,13 +959,11 @@ WRITE_HANDLER ( cpm_bios_command_w )
 #if VERBOSE_CONIO
 		if( timer_iscpususpended(0,SUSPEND_REASON_HALT) )
 		{
-			if (errorlog)
-				fprintf(errorlog, "BIOS 03 console input       CPU suspended\n");
+			logerror("BIOS 03 console input       CPU suspended\n");
 		}
 		else
 		{
-			if (errorlog)
-				fprintf(errorlog, "BIOS 03 console input       A:%02X\n", tmp);
+			logerror("BIOS 03 console input       A:%02X\n", tmp);
 		}
 #endif
 		break;
@@ -1006,8 +971,7 @@ WRITE_HANDLER ( cpm_bios_command_w )
     case 0x04: /* CONOUT */
 		tmp = bc & 0xff;
 #if VERBOSE_CONIO
-		if (errorlog)
-			fprintf(errorlog, "BIOS 04 console output      C:%02X\n", tmp);
+		logerror("BIOS 04 console output      C:%02X\n", tmp);
 #endif
 		cpm_conout_chr( tmp );
 		break;
@@ -1015,8 +979,7 @@ WRITE_HANDLER ( cpm_bios_command_w )
     case 0x05: /* LSTOUT */
 		tmp = bc & 0xff;
 #if VERBOSE_BIOS
-		if (errorlog)
-			fprintf(errorlog, "BIOS 05 list output         C:%02X\n", tmp);
+		logerror("BIOS 05 list output         C:%02X\n", tmp);
 #endif
 		/* If the line printer file is created */
         if (lp)
@@ -1027,8 +990,7 @@ WRITE_HANDLER ( cpm_bios_command_w )
     case 0x06: /* PUNOUT */
 		tmp = bc & 0xff;
 #if VERBOSE_BIOS
-		if (errorlog)
-			fprintf(errorlog, "BIOS 06 punch output        C:%02X\n", tmp);
+		logerror("BIOS 06 punch output        C:%02X\n", tmp);
 #endif
 		/* We have no punch in MESS (yet ;-) */
 		break;
@@ -1039,16 +1001,14 @@ WRITE_HANDLER ( cpm_bios_command_w )
 		tmp = 0x00;
 		af = (af & 0xff) | (tmp << 8);
 #if VERBOSE_BIOS
-		if (errorlog)
-			fprintf(errorlog, "BIOS 07 reader input        A:%02X\n", tmp);
+		logerror("BIOS 07 reader input        A:%02X\n", tmp);
 #endif
 		break;
 
 
     case 0x08: /* HOME */
 #if VERBOSE_BIOS
-		if (errorlog)
-			fprintf(errorlog, "BIOS 08 home\n");
+		logerror("BIOS 08 home\n");
 #endif
 		cpm_disk_home();
 		break;
@@ -1057,8 +1017,7 @@ WRITE_HANDLER ( cpm_bios_command_w )
     case 0x09: /* SELDSK */
 		tmp = bc & 0xff;
 #if VERBOSE_BIOS
-		if (errorlog)
-			fprintf(errorlog, "BIOS 09 select disk         C:%02X\n", tmp);
+		logerror("BIOS 09 select disk         C:%02X\n", tmp);
 #endif
 		hl = cpm_disk_select(tmp);
 		break;
@@ -1066,8 +1025,7 @@ WRITE_HANDLER ( cpm_bios_command_w )
     case 0x0a: /* SETTRK */
 		tmp = bc;
 #if VERBOSE_BIOS
-		if (errorlog)
-			fprintf(errorlog, "BIOS 0A set bdos_trk        BC:%04X\n", tmp);
+		logerror("BIOS 0A set bdos_trk        BC:%04X\n", tmp);
 #endif
 		cpm_disk_set_track(tmp);
 		break;
@@ -1076,8 +1034,7 @@ WRITE_HANDLER ( cpm_bios_command_w )
     case 0x0b: /* SETSEC */
 		tmp = bc & 0xff;
 #if VERBOSE_BIOS
-		if (errorlog)
-			fprintf(errorlog, "BIOS 0B set bdos_sec        C:%02X\n", tmp);
+		logerror("BIOS 0B set bdos_sec        C:%02X\n", tmp);
 #endif
 		cpm_disk_set_sector(tmp);
 		break;
@@ -1086,8 +1043,7 @@ WRITE_HANDLER ( cpm_bios_command_w )
     case 0x0c: /* SETDMA */
 		tmp = bc;
 #if VERBOSE_BIOS
-		if (errorlog)
-			fprintf(errorlog, "BIOS 0C set DMA             BC:%04X\n", tmp);
+		logerror("BIOS 0C set DMA             BC:%04X\n", tmp);
 #endif
 		cpm_disk_set_dma(tmp);
 		break;
@@ -1097,8 +1053,7 @@ WRITE_HANDLER ( cpm_bios_command_w )
 		tmp = cpm_disk_read_sector();
 		af = (af & 0xff) | (tmp << 8);
 #if VERBOSE_BIOS
-		if (errorlog)
-			fprintf(errorlog, "BIOS 0D read sector         A:%02X\n", tmp);
+		logerror("BIOS 0D read sector         A:%02X\n", tmp);
 #endif
 		break;
 
@@ -1107,8 +1062,7 @@ WRITE_HANDLER ( cpm_bios_command_w )
 		tmp = cpm_disk_write_sector();
 		af = (af & 0xff) | (tmp << 8);
 #if VERBOSE_BIOS
-		if (errorlog)
-			fprintf(errorlog, "BIOS 0E write sector        A:%02X\n", tmp);
+		logerror("BIOS 0E write sector        A:%02X\n", tmp);
 #endif
 		break;
 
@@ -1116,8 +1070,7 @@ WRITE_HANDLER ( cpm_bios_command_w )
 		tmp = 0xff;    /* always ready */
 		af = (af & 0xff) | (tmp << 8);
 #if VERBOSE_BIOS
-		if (errorlog)
-			fprintf(errorlog, "BIOS 0F list status         A:%02X\n", tmp);
+		logerror("BIOS 0F list status         A:%02X\n", tmp);
 #endif
 		break;
 
@@ -1145,8 +1098,7 @@ WRITE_HANDLER ( cpm_bios_command_w )
 		if( curdisk >= 0 && curdisk < num_disks )
 			bdos_sec[curdisk] = hl & 0xff;
 #if VERBOSE_BIOS
-		if (errorlog)
-			fprintf(errorlog, "BIOS 10 sector trans        BC:%04X DE:%04X HL:%04X A:%02X\n", bc, de, hl, af>>8 );
+		logerror("BIOS 10 sector trans        BC:%04X DE:%04X HL:%04X A:%02X\n", bc, de, hl, af>>8 );
 #endif
 		break;
 
@@ -1155,11 +1107,8 @@ WRITE_HANDLER ( cpm_bios_command_w )
 		sprintf( buff, "Program traps in BIOS:\r\n%s\r\n", cpu_dump_state() );
 		cpm_conout_str(buff);
 #if VERBOSE_BIOS
-		if (errorlog)
-		{
-			fprintf(errorlog, "BIOS 11 trap\n");
-			fprintf(errorlog, "%s\n", cpu_dump_state() );
-        }
+			logerror("BIOS 11 trap\n");
+			logerror("%s\n", cpu_dump_state() );
 #endif
 		break;
     }

@@ -74,23 +74,23 @@ extern UINT8 *c128_internal_function;
 extern UINT8 *c128_external_function;
 extern UINT8 *c128_vdcram;
 
-extern void c128_m6510_port_w (int offset, int data);
-extern int c128_m6510_port_r (int offset);
-WRITE_HANDLER ( c128_mmu8722_port_w );
-READ_HANDLER ( c128_mmu8722_port_r );
-void c128_mmu8722_ff00_w (int offset, int data);
-READ_HANDLER ( c128_mmu8722_ff00_r );
+WRITE_HANDLER(c128_m6510_port_w);
+READ_HANDLER(c128_m6510_port_r);
+WRITE_HANDLER(c128_mmu8722_port_w);
+READ_HANDLER(c128_mmu8722_port_r);
+WRITE_HANDLER(c128_mmu8722_ff00_w);
+READ_HANDLER(c128_mmu8722_ff00_r);
 int c128_capslock_r (void);
-void c128_colorram_write (int offset, int value);
-WRITE_HANDLER ( c128_write_0000 );
-WRITE_HANDLER ( c128_write_1000 );
-WRITE_HANDLER ( c128_write_4000 );
-WRITE_HANDLER ( c128_write_8000 );
-WRITE_HANDLER ( c128_write_a000 );
-WRITE_HANDLER ( c128_write_d000 );
-WRITE_HANDLER ( c128_write_e000 );
-WRITE_HANDLER ( c128_write_ff00 );
-WRITE_HANDLER ( c128_write_ff05 );
+WRITE_HANDLER(c128_colorram_write);
+WRITE_HANDLER(c128_write_0000);
+WRITE_HANDLER(c128_write_1000);
+WRITE_HANDLER(c128_write_4000);
+WRITE_HANDLER(c128_write_8000);
+WRITE_HANDLER(c128_write_a000);
+WRITE_HANDLER(c128_write_d000);
+WRITE_HANDLER(c128_write_e000);
+WRITE_HANDLER(c128_write_ff00);
+WRITE_HANDLER(c128_write_ff05);
 
 extern void c128_driver_init (void);
 extern void c128pal_driver_init (void);
@@ -110,6 +110,6 @@ extern void c128_state(PRASTER *this);
 extern int c128;					   /* computer is commodore c128 */
 extern UINT8 c128_keyline[3];
 
-void c128_bankswitch_64 (void);
+void c128_bankswitch_64 (int reset);
 
 #endif

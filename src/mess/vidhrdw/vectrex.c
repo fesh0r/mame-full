@@ -535,8 +535,7 @@ void raaspec_led_w (int offset, int data)
 	struct rectangle clip;
 	static int old_data=0;
 
-	if (errorlog)
-		fprintf (errorlog, "Spectrum I+ LED: %i%i%i%i%i%i%i%i\n",
+	logerror("Spectrum I+ LED: %i%i%i%i%i%i%i%i\n",
 				 (data>>7)&0x1, (data>>6)&0x1, (data>>5)&0x1, (data>>4)&0x1,
 				 (data>>3)&0x1, (data>>2)&0x1, (data>>1)&0x1, data&0x1);
 

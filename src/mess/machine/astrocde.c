@@ -53,7 +53,7 @@ void astrocade_interrupt_enable_w(int offset, int data)
 	lightpen_interrupt_mode = data & 0x01;
 
 #ifdef MAME_DEBUG
-    if (errorlog) fprintf(errorlog,"Interrupt Flag set to %02x\n",data & 0x0f);
+    logerror("Interrupt Flag set to %02x\n",data & 0x0f);
 #endif
 }
 
@@ -62,7 +62,7 @@ void astrocade_interrupt_w(int offset, int data)
 	/* A write to 0F triggers an interrupt at that scanline */
 
 #ifdef MAME_DEBUG
-	if (errorlog) fprintf(errorlog,"Scanline interrupt set to %02x\n",data);
+	logerror("Scanline interrupt set to %02x\n",data);
 #endif
 
     NextScanInt = data;

@@ -405,7 +405,7 @@ int gb_load_rom (int id)
 	}
 	if( new_memory_region(REGION_CPU1, 0x10000) )
 	{
-		if(errorlog) fprintf(errorlog,"Memory allocation failed reading roms!\n");
+		logerror("Memory allocation failed reading roms!\n");
         return 1;
     }
 
@@ -415,7 +415,7 @@ int gb_load_rom (int id)
 	/* FIXME should check first if a file is given, should give a more clear error */
 	if (!(F = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, OSD_FOPEN_READ)))
 	{
-		if(errorlog) fprintf(errorlog,"image_fopen failed in gb_load_rom.\n");
+		logerror("image_fopen failed in gb_load_rom.\n");
 		return 1;
 	}
 
@@ -432,19 +432,19 @@ int gb_load_rom (int id)
 	/* FIXME should check first if a file is given, should give a more clear error */
 	if (!(F = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, OSD_FOPEN_READ)))
 	{
-		if(errorlog) fprintf(errorlog,"image_fopen failed in gb_load_rom.\n");
+		logerror("image_fopen failed in gb_load_rom.\n");
         return 1;
 	}
 
 	if (J == 512)
 	{
-		if(errorlog) fprintf(errorlog,"ROM-header found skipping\n");
+		logerror("ROM-header found skipping\n");
 		osd_fread (F, gb_ram, 512);
 	}
 
 	if (osd_fread (F, gb_ram, 0x4000) != 0x4000)
 	{
-		if(errorlog) fprintf(errorlog,"Error while reading from file: %s\n", rom_name);
+		logerror("Error while reading from file: %s\n", rom_name);
 		osd_fclose (F);
 		return 1;
 	}
@@ -457,7 +457,7 @@ int gb_load_rom (int id)
 
 	if ((gb_ram[0x0147] == 4) || (gb_ram[0x0147] > 6))
 	{
-		if(errorlog) fprintf(errorlog,"Error loading cartridge: Unknown ROM type");
+		logerror("Error loading cartridge: Unknown ROM type");
 		osd_fclose (F);
 		return 1;
 	}
@@ -466,25 +466,25 @@ int gb_load_rom (int id)
 	{
 		strncpy (S, (char *)&gb_ram[0x0134], 16);
 		S[16] = '\0';
-		if( errorlog ) fprintf (errorlog, "OK\n  Name: %s\n", S);
-		if( errorlog ) fprintf (errorlog, "  Type: %s\n", CartTypes[gb_ram[0x0147]]);
-		if( errorlog ) fprintf (errorlog, "  ROM Size: %d 16kB Banks\n", ROMBanks);
+		logerror("OK\n  Name: %s\n", S);
+		logerror("  Type: %s\n", CartTypes[gb_ram[0x0147]]);
+		logerror("  ROM Size: %d 16kB Banks\n", ROMBanks);
 		J = (gb_ram[0x0149] & 0x03) * 2;
 		J = J ? (1 << (J - 1)) : 0;
-		if( errorlog ) fprintf (errorlog, "  RAM Size: %d kB\n", J);
+		logerror("  RAM Size: %d kB\n", J);
 
 		J = ((UINT16) gb_ram[0x014B] << 8) + gb_ram[0x014A];
 		for (I = 0, P = NULL; !P && Companies[I].Name; I++)
 			if (J == Companies[I].Code)
 				P = Companies[I].Name;
-		if( errorlog ) fprintf (errorlog, "  Manufacturer ID: %Xh", J);
-		if( errorlog ) fprintf (errorlog, " [%s]\n", P ? P : "?");
+		logerror("  Manufacturer ID: %Xh", J);
+		logerror(" [%s]\n", P ? P : "?");
 
-		if( errorlog ) fprintf (errorlog, "  Version Number: %Xh\n", gb_ram[0x014C]);
-		if( errorlog ) fprintf (errorlog, "  Complement Check: %Xh\n", gb_ram[0x014D]);
-		if( errorlog ) fprintf (errorlog, "  Checksum: %Xh\n", Checksum);
+		logerror("  Version Number: %Xh\n", gb_ram[0x014C]);
+		logerror("  Complement Check: %Xh\n", gb_ram[0x014D]);
+		logerror("  Checksum: %Xh\n", Checksum);
 		J = ((UINT16) gb_ram[0x0103] << 8) + gb_ram[0x0102];
-		if( errorlog ) fprintf (errorlog, "  Start Address: %Xh\n", J);
+		logerror("  Start Address: %Xh\n", J);
 	}
 
 	Checksum += gb_ram[0x014E] + gb_ram[0x014F];
@@ -492,7 +492,7 @@ int gb_load_rom (int id)
 		Checksum -= gb_ram[I];
 
 	if (Verbose)
-		if( errorlog ) fprintf (errorlog, "Loading %dx16kB ROM banks:.", ROMBanks);
+		logerror("Loading %dx16kB ROM banks:.", ROMBanks);
 	for (I = 1; I < ROMBanks; I++)
 	{
 		if ((ROMMap[I] = malloc (0x4000)))
@@ -506,13 +506,13 @@ int gb_load_rom (int id)
 			}
 			else
 			{
-				if( errorlog ) fprintf (errorlog, "Error while reading from file: %s\n", rom_name);
+				logerror("Error while reading from file: %s\n", rom_name);
 				break;
 			}
 		}
 		else
 		{
-			if( errorlog ) fprintf (errorlog, "Error alocating memory\n");
+			logerror("Error alocating memory\n");
 			break;
 		}
 	}
@@ -523,7 +523,7 @@ int gb_load_rom (int id)
 
 	if (CheckCRC && (Checksum & 0xFFFF))
 	{
-		if( errorlog ) fprintf (errorlog, "Error loading cartridge: Checksum is wrong");
+		logerror("Error loading cartridge: Checksum is wrong");
 		return 1;
 	}
 
@@ -535,7 +535,7 @@ int gb_load_rom (int id)
 				memset (RAMMap[I], 0, 0x2000);
 			else
 			{
-				if( errorlog ) fprintf (errorlog, "Error alocating memory\n");
+				logerror("Error alocating memory\n");
 				return 1;
 			}
 		}
@@ -548,11 +548,11 @@ int gb_load_rom (int id)
 		strcpy (TempFileName, BaseCartName);
 		strcat (TempFileName, ".sav");
 		if (Verbose)
-			if( errorlog ) fprintf (errorlog, "Opening %s...", TempFileName);
+			logerror("Opening %s...", TempFileName);
 		if (F = fopen (TempFileName, "rb"))
 		{
 			if (Verbose)
-				if( errorlog ) fprintf (errorlog, "reading...");
+				logerror("reading...");
 			if (gb_ram[0x0147] == 3)
 			{
 				J = 0;

@@ -7,11 +7,12 @@
  	 www.funet.fi
 
 ***************************************************************************/
+
 #include <ctype.h>
 #include "driver.h"
 #include "cpu/m6502/m6502.h"
 
-#define VERBOSE_DBG 0
+#define VERBOSE_DBG 1
 #include "cbm.h"
 #include "tpi6525.h"
 #include "c1551.h"
@@ -57,6 +58,167 @@ static UINT8 *c16_memory_24000;
 static UINT8 *c16_memory_28000;
 static UINT8 *c16_memory_2c000;
 
+/*
+ c364 speech
+ say 0 .. 10
+ rate 0 .. 15?
+ voc ?
+ rdy ? (only c64)
+
+ 0 bit 0..3 ???
+   bit 456 0?
+   bit 7 writen 0 1
+   reset 9 9 b
+   set playback rate
+    rate 4: 2 a 4 5 4 6 0 7 a (default)
+         0          0
+         1          1
+    rate 2: 2 a 4 5 2 6 0 7 a
+    rate 3:         3
+    rate 9:
+   start: 1
+ 1 bit 01 set to 1 for start ?
+   bit 6 polled until set (at $80ec)
+       7 set ready to transmit new byte?
+ 2 0..7 sample data
+
+seems to be a toshiba t6721a build in
+(8 khz 9bit output)
+generates output for 20ms (or 10ms) out of 6 byte voice data!
+(P?ARCOR voice synthesizing and analyzing method
+ Nippon Telegraph and Telephon Public Corporation)
+End code also in voice data
+technical info at www.funet.fi covers only the chip, not
+the synthesizing method
+
+magic voice in c64:
+The internal electronics depicted in Danny's picture above are as follows, going from the MOS chip at top and then clockwise: MOS
+6525B (4383), MOS 251476-01 (8A-06 4341) system ROM, General Instruments 8343SEA (LA05-123), Toshiba T6721A (3L)
+sound generator (?), CD40105BE (RCA H 432) and a 74LS222A logic chip.
+
+*/
+static struct {
+	void *timer;
+
+	bool busy, endOfSample;
+	bool playing;
+	int rate;
+	struct {
+		UINT8 data;
+		int state;
+	} command;
+	struct {
+		UINT8 data[6],index;
+	} sample;
+
+	UINT8 state;
+
+	int sampleindex;
+	UINT8 readindex, writeindex;
+	UINT64 data[0x10];
+
+} speech={ 0 };
+
+void c364_speech_timer(int arg)
+{
+	if (!speech.playing) return;
+
+	if (speech.sampleindex<8000/50) {
+		speech.sampleindex++;
+	} else {
+		speech.endOfSample=
+				(memcmp(speech.sample.data,"\xff\xff\xff\xff\xff\xff",6)==0);
+		//speech.endOfSample=true;
+		speech.busy=false;
+	}
+}
+
+WRITE_HANDLER(c364_speech_w)
+{
+	DBG_LOG (2, "364", ("port write %.2x %.2x\n", offset, data));
+	switch (offset) {
+	case 0:
+		if (data&0x80) {
+			switch (speech.command.state) {
+			case 0:
+				switch (speech.command.data) {
+				case 9:case 0xb:
+					speech.playing=false;
+					break;
+				case 1: // start
+					speech.timer=timer_pulse(1.0/8000, 0, c364_speech_timer);
+					speech.playing=true;
+					speech.endOfSample=false;
+					speech.sampleindex=0;
+					break;
+				case 2:
+					speech.endOfSample=false;
+					//speech.busy=false;
+					if (speech.timer) {
+						timer_remove(speech.timer);
+						speech.timer=0;
+					}
+					speech.playing=false;
+					break;
+				case 5: // set rate (in next nibble)
+					speech.command.state=1;
+					break;
+				case 6: // condition
+					speech.command.state=2;
+					break;
+				}
+				break;
+			case 1:
+				speech.command.state=0;
+				speech.rate=speech.command.data;
+				break;
+			case 2:
+				speech.command.state=0;
+				break;
+			}
+		} else {
+			speech.command.data=data;
+		}
+		break;
+	case 1:
+		speech.state=(speech.state&~0x3f)|data;
+		break;
+	case 2:
+		speech.sample.data[speech.sample.index++]=data;
+		if (speech.sample.index==sizeof(speech.sample.data)) {
+			DBG_LOG(1,"t6721",("%.2x%.2x%.2x%.2x%.2x%.2x\n",
+							   speech.sample.data[0],
+							   speech.sample.data[1],
+							   speech.sample.data[2],
+							   speech.sample.data[3],
+							   speech.sample.data[4],
+							   speech.sample.data[5]));
+			speech.sample.index=0;
+			//speech.endOfSample=false;
+			speech.busy=true;
+			speech.state=0;
+		}
+		break;
+	}
+}
+
+READ_HANDLER(c364_speech_r)
+{
+	int data=0xff;
+	switch (offset) {
+	case 1:
+		data=speech.state;
+		data=1;
+		if (!speech.endOfSample) {
+				data|=0x41;
+				if (!speech.busy) data |=0x81;
+		}
+		break;
+	}
+	DBG_LOG (2, "364", ("port read %.2x %.2x\n", offset, data));
+	return data;
+}
+
 
 /**
   ddr bit 1 port line is output
@@ -81,7 +243,7 @@ static UINT8 *c16_memory_2c000;
   p6 serial clock in
   p7 serial data in, serial bus 5
  */
-WRITE_HANDLER ( c16_m7501_port_w )
+WRITE_HANDLER(c16_m7501_port_w)
 {
 	int dat, atn, clk;
 
@@ -104,7 +266,7 @@ WRITE_HANDLER ( c16_m7501_port_w )
 	vc20_tape_motor (data & 8);
 }
 
-READ_HANDLER ( c16_m7501_port_r )
+READ_HANDLER(c16_m7501_port_r)
 {
 	if (offset)
 	{
@@ -166,7 +328,7 @@ static void c16_bankswitch (void)
 	cpu_setbank (4, c16_memory + 0x17c00);
 }
 
-WRITE_HANDLER ( c16_switch_to_rom )
+WRITE_HANDLER(c16_switch_to_rom)
 {
 	ted7360_rom = 1;
 	c16_bankswitch ();
@@ -185,7 +347,7 @@ WRITE_HANDLER ( c16_switch_to_rom )
  * 0  1  plus4 hi
  * 1  0  c1 high
  * 1  1  c2 high */
-extern WRITE_HANDLER ( c16_select_roms )
+WRITE_HANDLER(c16_select_roms)
 {
 	lowrom = offset & 3;
 	highrom = (offset & 0xc) >> 2;
@@ -193,7 +355,7 @@ extern WRITE_HANDLER ( c16_select_roms )
 		c16_bankswitch ();
 }
 
-WRITE_HANDLER ( c16_switch_to_ram )
+WRITE_HANDLER(c16_switch_to_ram)
 {
 	ted7360_rom = 0;
 	switch (DIPMEMORY)
@@ -219,7 +381,7 @@ WRITE_HANDLER ( c16_switch_to_ram )
 	}
 }
 
-WRITE_HANDLER ( plus4_switch_to_ram )
+WRITE_HANDLER(plus4_switch_to_ram)
 {
 	ted7360_rom = 0;
 	cpu_setbank (2, c16_memory + 0x8000);
@@ -272,12 +434,12 @@ int c16_read_keyboard (int databus)
  * output low means keyboard line selected
  * keyboard line is then read into the ted7360 latch
  */
-WRITE_HANDLER ( c16_6529_port_w )
+WRITE_HANDLER(c16_6529_port_w)
 {
 	port6529 = data;
 }
 
-READ_HANDLER ( c16_6529_port_r )
+READ_HANDLER(c16_6529_port_r)
 {
 	return port6529 & (c16_read_keyboard (0xff /*databus */ ) | (port6529 ^ 0xff));
 }
@@ -292,11 +454,11 @@ READ_HANDLER ( c16_6529_port_r )
  * p6 Userport j
  * p7 Userport f
  */
-WRITE_HANDLER ( plus4_6529_port_w )
+WRITE_HANDLER(plus4_6529_port_w)
 {
 }
 
-READ_HANDLER ( plus4_6529_port_r )
+READ_HANDLER(plus4_6529_port_r)
 {
 	int data = 0;
 
@@ -305,7 +467,7 @@ READ_HANDLER ( plus4_6529_port_r )
 	return data;
 }
 
-READ_HANDLER ( c16_fd1x_r )
+READ_HANDLER(c16_fd1x_r)
 {
 	int data = 0;
 
@@ -351,58 +513,58 @@ READ_HANDLER ( c16_fd1x_r )
    1111 19200
  control register
   */
-WRITE_HANDLER ( c16_6551_port_w )
+WRITE_HANDLER(c16_6551_port_w)
 {
 	offset &= 3;
-	DBG_LOG (3, "6551", (errorlog, "port write %.2x %.2x\n", offset, data));
+	DBG_LOG (3, "6551", ("port write %.2x %.2x\n", offset, data));
 	port6529 = data;
 }
 
-READ_HANDLER ( c16_6551_port_r )
+READ_HANDLER(c16_6551_port_r)
 {
 	int data = 0;
 
 	offset &= 3;
-	DBG_LOG (3, "6551", (errorlog, "port read %.2x %.2x\n", offset, data));
+	DBG_LOG (3, "6551", ("port read %.2x %.2x\n", offset, data));
 	return data;
 }
 
-static WRITE_HANDLER ( c16_write_3f20 )
+static WRITE_HANDLER(c16_write_3f20)
 {
 	c16_memory[0x3f20 + offset] = data;
 }
 
-static WRITE_HANDLER ( c16_write_3f40 )
+static WRITE_HANDLER(c16_write_3f40)
 {
 	c16_memory[0x3f40 + offset] = data;
 }
 
-static WRITE_HANDLER ( c16_write_7f20 )
+static WRITE_HANDLER(c16_write_7f20)
 {
 	c16_memory[0x7f20 + offset] = data;
 }
 
-static WRITE_HANDLER ( c16_write_7f40 )
+static WRITE_HANDLER(c16_write_7f40)
 {
 	c16_memory[0x7f40 + offset] = data;
 }
 
-static int ted7360_dma_read_16k (int offset )
+static READ_HANDLER(ted7360_dma_read_16k)
 {
 	return c16_memory[offset & 0x3fff];
 }
 
-static int ted7360_dma_read_32k (int offset )
+static READ_HANDLER(ted7360_dma_read_32k)
 {
 	return c16_memory[offset & 0x7fff];
 }
 
-static int ted7360_dma_read (int offset)
+static READ_HANDLER(ted7360_dma_read)
 {
 	return c16_memory[offset];
 }
 
-static int ted7360_dma_read_rom (int offset )
+static READ_HANDLER(ted7360_dma_read_rom)
 {
 	/* should read real c16 system bus from 0xfd00 -ff1f */
 	if (offset >= 0xc000)
@@ -453,7 +615,7 @@ void c16_interrupt (int level)
 
 	if (level != old_level)
 	{
-		DBG_LOG (3, "mos7501", (errorlog, "irq %s\n", level ? "start" : "end"));
+		DBG_LOG (3, "mos7501", ("irq %s\n", level ? "start" : "end"));
 		cpu_set_irq_line (0, M6510_INT_IRQ, level);
 		old_level = level;
 	}
@@ -683,8 +845,7 @@ int c16_rom_load (int id)
 	fp = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0);
 	if (!fp)
 	{
-		if (errorlog)
-			fprintf (errorlog, "%s file not found\n", name);
+		logerror("%s file not found\n", name);
 		return 1;
 	}
 
@@ -697,8 +858,7 @@ int c16_rom_load (int id)
 			unsigned short in;
 
 			osd_fread_lsbfirst (fp, &in, 2);
-			if (errorlog)
-				fprintf (errorlog, "rom prg %.4x\n", in);
+			logerror("rom prg %.4x\n", in);
 			addr = in;
 			size -= 2;
 		}
@@ -707,9 +867,7 @@ int c16_rom_load (int id)
 	{
 		addr = 0x20000;
 	}
-	if (errorlog)
-		fprintf (errorlog, "loading rom %s at %.5x size:%.4x\n",
-				 name, addr, size);
+	logerror("loading rom %s at %.5x size:%.4x\n", name, addr, size);
 	read = osd_fread (fp, mem + addr, size);
 	addr += size;
 	osd_fclose (fp);
@@ -728,13 +886,11 @@ int c16_rom_id (int id)
 	FILE *romfile;
 	char *cp;
 
-	if (errorlog)
-		fprintf (errorlog, "c16_rom_id %s\n", name);
+	logerror("c16_rom_id %s\n", name);
 	retval = 0;
 	if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
 	{
-		if (errorlog)
-			fprintf (errorlog, "rom %s not found\n", name);
+		logerror("rom %s not found\n", name);
 		return 0;
 	}
 
@@ -754,13 +910,10 @@ int c16_rom_id (int id)
 			retval = 1;
 	}
 
-	if (errorlog)
-	{
 		if (retval)
-			fprintf (errorlog, "rom %s recognized\n", name);
+			logerror("rom %s recognized\n", name);
 		else
-			fprintf (errorlog, "rom %s not recognized\n", name);
-	}
+			logerror("rom %s not recognized\n", name);
 	return retval;
 }
 

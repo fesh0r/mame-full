@@ -107,7 +107,7 @@ static int load_pak_into_region(void *fp, int *pakbase, int *paklen, UINT8 *mem,
 
 			skiplen = segaddr - *pakbase;
 			if (osd_fseek(fp, skiplen, SEEK_CUR)) {
-				if (errorlog) fprintf(errorlog,"Could not fully read PAK.\n");
+				logerror("Could not fully read PAK.\n");
 				return 1;
 			}
 
@@ -123,7 +123,7 @@ static int load_pak_into_region(void *fp, int *pakbase, int *paklen, UINT8 *mem,
 				seglen = *paklen;
 
 			if (osd_fread(fp, mem, seglen) < seglen) {
-				if (errorlog) fprintf(errorlog,"Could not fully read PAK.\n");
+				logerror("Could not fully read PAK.\n");
 				return 1;
 			}
 
@@ -136,20 +136,48 @@ static int load_pak_into_region(void *fp, int *pakbase, int *paklen, UINT8 *mem,
 
 /* PAK file loader */
 
-/* PAK files have the following format:
+/*	PAK files have the following format:
  *
- * length		(two bytes, little endian)
- * base address (two bytes, little endian, typically 0xc000)
- * ...data... (size is length)
- * extra info
+ *	length		(two bytes, little endian)
+ *	base address (two bytes, little endian, typically 0xc000)
+ *	...data... (size is length)
+ *	optional trailer
  *
- * The format for PAK files just plain bites - the extra info is snapshot info
- * and it is loaded with internal state specific to Jeff's emulator. What ever
- * happened to desiging clean file formats that don't need to be changed with
- * every version of ones program?
+ *	The format for PAK files just plain bites - the extra info is snapshot info
+ *	and it is loaded with internal state specific to Jeff's emulator. What ever
+ *	happened to desiging clean file formats that don't need to be changed with
+ *	every version of ones program?
  *
- * For alignment purposes, some 16 bit values are divided into two UINT8s
+ *	For alignment purposes, some 16 bit values are divided into two UINT8s
+ *
+ *	The PAK file format's trailer defines the state of the machine other then
+ *	the core memory.  This trailer comes in many variations.  I have labeled
+ *	them in the following way (trailer sizes are in parentheses):
+ *
+ *		V12		- The version in JeffV's emulator version 1.2
+ *		V14		- The version in JeffV's emulator version 1.4	(457)
+ *		VOTHER	- From some "other" version of JeffV's emulator
+ *		VLITE	- From yet another version of JeffV's emulator	(35)
+ *
+ *	The following table shows what segments appear in each trailer variant:
+ *
+ *	Trailer Segment		V12		V14		VOTHER	VLITE
+ *	---------------		---		---		------	-----
+ *	pak_trailer1		1		1		1		1
+ *	pak_trailer2		2
+ *	pak_trailer3		3		2		2		2
+ *	pak_trailer4		4		3		3
+ *	pak_trailer5		5
+ *	pak_trailer6		6		5		4
+ *	pak_trailer7		7				5
+ *	pak_trailer8				6
+ *	pak_trailer9		8		7		6
+ *	pak_trailer10		9		4		7
+ *	pak_trailer11		10		8		8
+ *	pak_trailer12				9
+ *	pak_trailer13		11				9
  */
+
 
 #ifdef LSB_FIRST
 #define ENDIANIZE(x) (x)
@@ -178,6 +206,10 @@ typedef struct {
 /* All versions */
 typedef struct {
 	UINT16 reg_pc;
+} pak_trailer3;
+
+/* All versions except lite */
+typedef struct {
 	UINT16 reg_x;
 	UINT16 reg_y;
 	UINT16 reg_u;
@@ -186,27 +218,27 @@ typedef struct {
 	UINT8 reg_dp;
 	UINT8 reg_b;
 	UINT8 reg_a;
-} pak_trailer3;
+} pak_trailer4;
 
 /* Only version 1.2 */
 typedef struct {
 	UINT16 debug_unknown;
-} pak_trailer4;
+} pak_trailer5;
 
-/* All versions */
+/* All versions except lite */
 typedef struct {
 	UINT8 flags_8086_lsb; /* ?!? */
 	UINT8 flags_8086_msb; /* ?!? */
 	UINT8 reg_cc;
-} pak_trailer5;
+} pak_trailer6;
 
-/* All versions except 1.4 */
+/* All versions except 1.4 and lite*/
 typedef struct {
 	UINT16 lowmem_readseg;
 	UINT16 lowmem_writeseg;
 	UINT16 himem_readseg;
 	UINT16 himem_writeseg;
-} pak_trailer6;
+} pak_trailer7;
 
 /* Only version 1.4 */
 typedef struct {
@@ -215,18 +247,18 @@ typedef struct {
 	UINT8 io_ff02;
 	UINT8 io_ff03;
 	UINT8 io_ff22;
-} pak_trailer7;
+} pak_trailer8;
 
-/* All versions */
+/* All versions except lite */
 typedef struct {
 	UINT16 video_base;
 	UINT16 video_end;
-} pak_trailer8;
+} pak_trailer9;
 
-/* All versions; come before pak_trailer5 in 1.4 */
+/* All versions except lite; come before pak_trailer6 in 1.4 */
 typedef struct {
 	UINT8 dummy_zero2[6];
-} pak_trailer9;
+} pak_trailer10;
 
 /* Used by PC-Dragon; UINT16's are little endian */
 typedef struct {
@@ -282,7 +314,7 @@ typedef struct {
 	UINT8 hardjoy_resol;
 } pcd_info2;
 
-/* All versions */
+/* All versions except lite */
 typedef struct {
 	UINT8 writeprotect;
 	char disk_directory[66];
@@ -299,7 +331,7 @@ typedef struct {
 	UINT8 sound;
 	UINT8 artifact;
 	UINT8 dragon_rom;
-} pak_trailer10;
+} pak_trailer11;
 
 /* Only version 1.4 */
 typedef struct {
@@ -310,9 +342,9 @@ typedef struct {
 	UINT8 cassette_mode;
 	char cassette_directory[66];
 	char cassette_name[33];
-} pak_trailer11;
+} pak_trailer12;
 
-/* All versions except 1.4 */
+/* All versions except 1.4 and lite */
 typedef struct {
 	UINT8 dummy_zero3[4];
 	UINT16 video_base2;
@@ -321,22 +353,24 @@ typedef struct {
 	UINT8 io_ff22;
 	UINT8 io_ff02;
 	UINT8 io_ff03;
-} pak_trailer12;
+} pak_trailer13;
 
 #define PAK_V12_SIZE	(sizeof(pak_trailer1) + sizeof(pak_trailer2) + \
 	sizeof(pak_trailer3) + sizeof(pak_trailer4) + sizeof(pak_trailer5) + \
-	sizeof(pak_trailer6) + sizeof(pak_trailer8) + \
-	sizeof(pak_trailer9) + sizeof(pak_trailer10) + sizeof(pak_trailer12))
+	sizeof(pak_trailer6) + sizeof(pak_trailer7) + sizeof(pak_trailer9) + \
+	sizeof(pak_trailer10) + sizeof(pak_trailer11) + sizeof(pak_trailer13))
 
 #define PAK_V14_SIZE	(sizeof(pak_trailer1) + sizeof(pak_trailer3) + \
-	sizeof(pak_trailer9) + sizeof(pak_trailer5) + \
-	sizeof(pak_trailer7) + sizeof(pak_trailer8) + sizeof(pak_trailer10) + \
-	sizeof(pak_trailer11))
+	sizeof(pak_trailer4) + sizeof(pak_trailer10) + sizeof(pak_trailer6) + \
+	sizeof(pak_trailer8) + sizeof(pak_trailer9) + sizeof(pak_trailer11) + \
+	sizeof(pak_trailer12))
 
 #define PAK_VOTHER_SIZE	(sizeof(pak_trailer1) + sizeof(pak_trailer3) + \
-	sizeof(pak_trailer5) + sizeof(pak_trailer6) + \
-	sizeof(pak_trailer8) + sizeof(pak_trailer9) + sizeof(pak_trailer10) + \
-	sizeof(pak_trailer12))
+	sizeof(pak_trailer4) + sizeof(pak_trailer6) + sizeof(pak_trailer7) + \
+	sizeof(pak_trailer9) + sizeof(pak_trailer10) + sizeof(pak_trailer11) + \
+	sizeof(pak_trailer13))
+
+#define PAK_VLITE_SIZE (sizeof(pak_trailer1) + sizeof(pak_trailer3))
 
 typedef struct {
 	UINT16 video_base;
@@ -362,14 +396,15 @@ typedef struct {
 static int pak_decode_trailer(UINT8 *rawtrailer, int rawtrailerlen, pak_trailer *trailer)
 {
 	pak_trailer3 p3;
-	pak_trailer5 p5;
-	pak_trailer8 p8;
+	pak_trailer4 p4;
+	pak_trailer6 p6;
+	pak_trailer9 p9;
 
 	union {
-		pak_trailer7 p7;
+		pak_trailer8 p8;
 		struct {
-			pak_trailer6 p6;
-			pak_trailer12 p12;
+			pak_trailer7 p7;
+			pak_trailer13 p13;
 		} s;
 	} u1;
 
@@ -377,10 +412,17 @@ static int pak_decode_trailer(UINT8 *rawtrailer, int rawtrailerlen, pak_trailer 
 	case PAK_V12_SIZE:
 	case PAK_V14_SIZE:
 	case PAK_VOTHER_SIZE:
+	case PAK_VLITE_SIZE:
 		break;
 	default:
 		return 1;
 	}
+
+	memset(&p3, 0, sizeof(p3));
+	memset(&p4, 0, sizeof(p4));
+	memset(&p6, 0, sizeof(p6));
+	memset(&p9, 0, sizeof(p9));
+	memset(&u1, 0, sizeof(u1));
 
 	rawtrailer += sizeof(pak_trailer1);
 
@@ -391,68 +433,96 @@ static int pak_decode_trailer(UINT8 *rawtrailer, int rawtrailerlen, pak_trailer 
 	memcpy(&p3, rawtrailer, sizeof(pak_trailer3));
 	rawtrailer += sizeof(pak_trailer3);
 
-	if (rawtrailerlen == PAK_V14_SIZE) {
-		rawtrailer += sizeof(pak_trailer9);
-	}
-	else if (rawtrailerlen == PAK_V12_SIZE) {
+	if (rawtrailerlen != PAK_VLITE_SIZE) {
+		memcpy(&p4, rawtrailer, sizeof(pak_trailer4));
 		rawtrailer += sizeof(pak_trailer4);
 	}
 
-	memcpy(&p5, rawtrailer, sizeof(pak_trailer5));
-	rawtrailer += sizeof(pak_trailer5);
+	if (rawtrailerlen == PAK_V14_SIZE) {
+		rawtrailer += sizeof(pak_trailer10);
+	}
+	else if (rawtrailerlen == PAK_V12_SIZE) {
+		rawtrailer += sizeof(pak_trailer5);
+	}
 
-	if (rawtrailerlen != PAK_V14_SIZE) {
-		memcpy(&u1.s.p6, rawtrailer, sizeof(pak_trailer6));
+	if (rawtrailerlen != PAK_VLITE_SIZE) {
+		memcpy(&p6, rawtrailer, sizeof(pak_trailer6));
 		rawtrailer += sizeof(pak_trailer6);
 	}
-	else {
-		memcpy(&u1.p7, rawtrailer, sizeof(pak_trailer7));
+
+	if (rawtrailerlen == PAK_V14_SIZE) {
+		memcpy(&u1.p8, rawtrailer, sizeof(pak_trailer8));
+		rawtrailer += sizeof(pak_trailer8);
+	}
+	else if (rawtrailerlen != PAK_VLITE_SIZE) {
+		memcpy(&u1.s.p7, rawtrailer, sizeof(pak_trailer7));
 		rawtrailer += sizeof(pak_trailer7);
 	}
 
-	memcpy(&p8, rawtrailer, sizeof(pak_trailer8));
-	rawtrailer += sizeof(pak_trailer8);
-
-	if (rawtrailerlen != PAK_V14_SIZE) {
+	if (rawtrailerlen != PAK_VLITE_SIZE) {
+		memcpy(&p9, rawtrailer, sizeof(pak_trailer9));
 		rawtrailer += sizeof(pak_trailer9);
 	}
 
-	rawtrailer += sizeof(pak_trailer10);
-
-	if (rawtrailerlen != PAK_V14_SIZE) {
-		memcpy(&u1.s.p12, rawtrailer, sizeof(pak_trailer12));
-		rawtrailer += sizeof(pak_trailer12);
+	if ((rawtrailerlen != PAK_V14_SIZE) && (rawtrailerlen != PAK_VLITE_SIZE)) {
+		rawtrailer += sizeof(pak_trailer10);
 	}
-	else {
+
+	if (rawtrailerlen != PAK_VLITE_SIZE) {
 		rawtrailer += sizeof(pak_trailer11);
 	}
 
-	trailer->reg_pc = ENDIANIZE(p3.reg_pc);
-	trailer->reg_x = ENDIANIZE(p3.reg_x);
-	trailer->reg_y = ENDIANIZE(p3.reg_y);
-	trailer->reg_u = ENDIANIZE(p3.reg_u);
-	trailer->reg_s = ENDIANIZE(p3.reg_s);
-	trailer->reg_dp = p3.reg_dp;
-	trailer->reg_b = p3.reg_b;
-	trailer->reg_a = p3.reg_a;
-	trailer->reg_cc = p5.reg_cc;
-
 	if (rawtrailerlen == PAK_V14_SIZE) {
-		trailer->io_ff02 = u1.p7.io_ff02;
-		trailer->io_ff03 = u1.p7.io_ff03;
-		trailer->io_ff22 = u1.p7.io_ff22;
-		trailer->enable_hiram = (u1.p7.rom_status == 0xdf);
+		rawtrailer += sizeof(pak_trailer12);
 	}
-	else {
-		trailer->io_ff02 = u1.s.p12.io_ff02;
-		trailer->io_ff03 = u1.s.p12.io_ff03;
-		trailer->io_ff22 = u1.s.p12.io_ff22;
-		trailer->enable_hiram = (u1.s.p6.himem_readseg == 0);
+	else if (rawtrailerlen != PAK_VLITE_SIZE) {
+		memcpy(&u1.s.p13, rawtrailer, sizeof(pak_trailer13));
+		rawtrailer += sizeof(pak_trailer13);
 	}
 
-	trailer->video_base = ENDIANIZE(p8.video_base);
-	trailer->video_end = ENDIANIZE(p8.video_end);
+	trailer->reg_pc = ENDIANIZE(p3.reg_pc);
+	trailer->reg_x = ENDIANIZE(p4.reg_x);
+	trailer->reg_y = ENDIANIZE(p4.reg_y);
+	trailer->reg_u = ENDIANIZE(p4.reg_u);
+	trailer->reg_s = ENDIANIZE(p4.reg_s);
+	trailer->reg_dp = p4.reg_dp;
+	trailer->reg_b = p4.reg_b;
+	trailer->reg_a = p4.reg_a;
+	trailer->reg_cc = p6.reg_cc;
 
+	switch(rawtrailerlen) {
+	case PAK_V14_SIZE:
+		trailer->io_ff02 = u1.p8.io_ff02;
+		trailer->io_ff03 = u1.p8.io_ff03;
+		trailer->io_ff22 = u1.p8.io_ff22;
+		trailer->enable_hiram = (u1.p8.rom_status == 0xdf);
+		trailer->video_base = ENDIANIZE(p9.video_base);
+		trailer->video_end = ENDIANIZE(p9.video_end);
+		break;
+
+	case PAK_VLITE_SIZE:
+		/* This is a "lite" format that gives no trailer information except
+		 * for the program counter... I have to set everything up as default
+		 * including the stack pointer... arg this sucks...
+		 */
+		trailer->io_ff02 = 0xff;
+		trailer->io_ff03 = 0x34;
+		trailer->io_ff22 = 0x00;
+		trailer->enable_hiram = 0;
+		trailer->video_base = 0x400;
+		trailer->video_end = 0x600;
+		trailer->reg_s = 0x3d7;
+		break;
+
+	default:
+		trailer->io_ff02 = u1.s.p13.io_ff02;
+		trailer->io_ff03 = u1.s.p13.io_ff03;
+		trailer->io_ff22 = u1.s.p13.io_ff22;
+		trailer->enable_hiram = (u1.s.p7.himem_readseg == 0);
+		trailer->video_base = ENDIANIZE(p9.video_base);
+		trailer->video_end = ENDIANIZE(p9.video_end);
+		break;
+	}
 	return 0;
 }
 
@@ -557,7 +627,7 @@ static int generic_rom_load(int id, UINT8 *rambase, UINT8 *rombase, UINT8 *pakba
 		UINT8 trailerraw[500];
 
 		if (osd_fread(fp, &header, sizeof(header)) < sizeof(header)) {
-			if (errorlog) fprintf(errorlog,"Could not fully read PAK.\n");
+			logerror("Could not fully read PAK.\n");
 			osd_fclose(fp);
 			return 1;
 		}
@@ -571,7 +641,7 @@ static int generic_rom_load(int id, UINT8 *rambase, UINT8 *rombase, UINT8 *pakba
 			paklength = 0xff00;
 
 		if (osd_fseek(fp, paklength, SEEK_CUR)) {
-			if (errorlog) fprintf(errorlog,"Could not fully read PAK.\n");
+			logerror("Could not fully read PAK.\n");
 			osd_fclose(fp);
 			return 1;
 		}
@@ -579,7 +649,7 @@ static int generic_rom_load(int id, UINT8 *rambase, UINT8 *rombase, UINT8 *pakba
 		trailerlen = osd_fread(fp, trailerraw, sizeof(trailerraw));
 		if (trailerlen) {
 			if (pak_decode_trailer(trailerraw, trailerlen, &trailer)) {
-				if (errorlog) fprintf(errorlog,"Invalid or unknown PAK trailer.\n");
+				logerror("Invalid or unknown PAK trailer.\n");
 				osd_fclose(fp);
 				return 1;
 			}
@@ -588,7 +658,7 @@ static int generic_rom_load(int id, UINT8 *rambase, UINT8 *rombase, UINT8 *pakba
 		}
 
 		if (osd_fseek(fp, sizeof(pak_header), SEEK_SET)) {
-			if (errorlog) fprintf(errorlog,"Unexpected error while reading PAK.\n");
+			logerror("Unexpected error while reading PAK.\n");
 			osd_fclose(fp);
 			return 1;
 		}
@@ -1330,24 +1400,24 @@ static int coco_cassette_fill_wave(INT16 *buffer, int length, UINT8 *bytes)
         case 0: /* sync bytes */
             if (b == 0x3c)
             {
-                if (errorlog) fprintf(errorlog,"COCO wave block start $%02x\n", b);
+                logerror("COCO wave block start $%02x\n", b);
                 state = 1;  /* block type following */
                 return 0;
             }
             else
             {
-                if (errorlog) fprintf(errorlog,"COCO wave skip sync $%02x\n", b);
+                logerror("COCO wave skip sync $%02x\n", b);
                 return 0;
             }
             break;
         case 1: /* block type */
-            if (errorlog) fprintf(errorlog,"COCO wave block type $%02x\n", b);
+            logerror("COCO wave block type $%02x\n", b);
             block_chksum = b;
             state = 2;  /* block length following */
 
             /* was the last block a filename block? */
 			if (block_type == 0x00 || block_type == 0xff) {
-				if (errorlog) fprintf(errorlog,"COCO filling silence %d\n", WAVESAMPLES_HEADER);
+				logerror("COCO filling silence %d\n", WAVESAMPLES_HEADER);
 				/* silence */
 				for (i = 0; i < WAVESAMPLES_HEADER; i++)
 					*(p++) = WAVEENTRY_NULL;
@@ -1361,7 +1431,7 @@ static int coco_cassette_fill_wave(INT16 *buffer, int length, UINT8 *bytes)
             block_type = b;
             break;
         case 2: /* block length */
-            if (errorlog) fprintf(errorlog,"COCO wave block length $%02x (%d)\n", b, b);
+            logerror("COCO wave block length $%02x (%d)\n", b, b);
             block_length = b;
             block_chksum += b;
             state = 3;  /* data */
@@ -1374,7 +1444,7 @@ static int coco_cassette_fill_wave(INT16 *buffer, int length, UINT8 *bytes)
             }
             else
             {
-                if (errorlog) fprintf(errorlog,"COCO wave block checksum read $%02x, calculated $%02x\n", b, block_chksum);
+                logerror("COCO wave block checksum read $%02x, calculated $%02x\n", b, block_chksum);
                 state = 0;
                 p = fill_wave_byte(p, b);
                 /* one trailing magic byte 0x55 */

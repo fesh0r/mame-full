@@ -14,8 +14,7 @@
 void uk101_init_machine(void)
 {
 
-	if (errorlog)
-		fprintf(errorlog, "uk101_init\r\n");
+	logerror("uk101_init\r\n");
 }
 
 void uk101_stop_machine(void)

@@ -326,6 +326,14 @@ READ_HANDLER( input_port_12_r );
 READ_HANDLER( input_port_13_r );
 READ_HANDLER( input_port_14_r );
 READ_HANDLER( input_port_15_r );
+READ_HANDLER( input_port_16_r );
+READ_HANDLER( input_port_17_r );
+READ_HANDLER( input_port_18_r );
+READ_HANDLER( input_port_19_r );
+
+
+
+
 
 struct ipd
 {

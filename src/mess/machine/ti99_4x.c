@@ -187,8 +187,8 @@ extern int tms9900_ICount;
 ================================================================*/
 
 static unsigned char *cartidge_pages[2] = {NULL, NULL};
-static int cartidge_paged;
-static int current_page_number;
+static int cartidge_paged = 0;
+static int minimemory = 0;
 static unsigned char *current_page_ptr;
 
 static const char *floppy_name[3] /*= {NULL, NULL, NULL}*/;
@@ -257,87 +257,69 @@ int ti99_load_rom(int id)
 	int slot_empty = ! (name && name[0]);
 
 	/* ti99_cart_mem is not initialized yet, so we initialize a local equivalent */
-	ti99_cart_mem = memory_region(REGION_CPU1)+0x6000;
-
-	/*current_page_ptr = ti99_cart_mem;*/
+  cartidge_pages[0] = memory_region(REGION_CPU1)+0x06000;
+  cartidge_pages[1] = memory_region(REGION_CPU1)+0x10000;
 
 	if (! slot_empty)
 	{
 		cartfile = osd_fopen(Machine->gamedrv->name, name, OSD_FILETYPE_IMAGE_R, 0);
 		if (cartfile == NULL)
 		{
-			if (errorlog)
-				fprintf(errorlog, "TI99 - Unable to locate cartridge: %s\n", name);
+			logerror("TI99 - Unable to locate cartridge: %s\n", name);
 			return INIT_FAILED;
 		}
 	}
 
-#if 0
-	{
-		/* Trick - we identify file types according to their extension */
-		/* Original idea by Norberto Bensa */
-		char *ch, *ch2;
+  {
+    /* Trick - we identify file types according to their extension */
+    /* Original idea by Norberto Bensa <nbensa@hotmail.com> */
+    char *ch;
 
 		ch = strrchr(name, '.');
-		ch2 = ch -1;
 
 		if (ch)
 		{
-			if (/*(! stricmp(ch2, "g.bin")) ||*/ (! stricmp(ch, ".grom")) || (! stricmp(ch, ".g")))
+      if ((! stricmp(ch-1, "g.bin")) || (! stricmp(ch, ".grom")) || (! stricmp(ch, ".g")))
 			{
 				/* grom */
 				id = 0;
 			}
-			else if (/*(! stricmp(ch2, "c.bin")) ||*/ (! stricmp(ch, ".crom")) || (! stricmp(ch, ".c")))
+      else if ((! stricmp(ch-1, "c.bin")) || (! stricmp(ch, ".crom")) || (! stricmp(ch, ".c")))
 			{
 				/* rom first page */
 				id = 1;
 			}
-			else if (/*(! stricmp(ch2, "d.bin")) ||*/ (! stricmp(ch, ".drom")) || (! stricmp(ch, ".d")))
+      else if ((! stricmp(ch-1, "d.bin")) || (! stricmp(ch, ".drom")) || (! stricmp(ch, ".d")))
 			{
 				/* rom second page */
 				id = 2;
 			}
+      else if ((! stricmp(ch-1, "m.bin")) || (! stricmp(ch, ".mrom")) || (! stricmp(ch, ".m")))
+			{
+        /* rom minimemory  */
+        id = 3;
+			}
+
+      switch (id)
+      {
+      case 0:
+        osd_fread(cartfile, memory_region(REGION_USER1) + 0x6000, 0xA000);
+        break;
+
+      case 3:
+        minimemory = 1;
+      case 1:
+        osd_fread_msbfirst(cartfile, cartidge_pages[0], 0x2000);
+        break;
+
+      case 2:
+        cartidge_paged = TRUE;
+        osd_fread_msbfirst(cartfile, cartidge_pages[1], 0x2000);
+        break;
+      }
 		}
 	}
-#endif
 
-	switch (id)
-	{
-	case 0:
-		if (slot_empty)
-			memset(memory_region(REGION_USER1) + 0x6000, 0, 0xA000);
-		else
-			osd_fread(cartfile, memory_region(REGION_USER1) + 0x6000, 0xA000);
-
-		break;
-
-	case 1:
-		cartidge_pages[0] = /*malloc(0x2000)*/memory_region(REGION_CPU1)+0x10000;
-
-		if (slot_empty)
-			memset(cartidge_pages[0], 0, 0x2000);
-		else
-			osd_fread_msbfirst(cartfile, cartidge_pages[0], 0x2000);
-
-		/* set first page as current page */
-		current_page_number = 0;
-		current_page_ptr = cartidge_pages[current_page_number];
-		/*memcpy(ti99_cart_mem, cartidge_pages[0], 0x2000);*/
-
-		break;
-
-	case 2:
-		cartidge_pages[1] = /*malloc(0x2000)*/memory_region(REGION_CPU1)+0x12000;
-		if (slot_empty)
-			cartidge_paged = FALSE;
-		else
-		{
-			cartidge_paged = TRUE;
-			osd_fread_msbfirst(cartfile, cartidge_pages[1], 0x2000);
-		}
-		break;
-	}
 
 	if (! slot_empty)
 	{
@@ -436,6 +418,8 @@ void ti99_init_machine(void)
 	}
 
 	tms9901_init(& tms9901reset_param_ti99);
+
+  current_page_ptr = cartidge_pages[0];
 }
 
 void ti99_stop_machine(void)
@@ -558,17 +542,10 @@ WRITE_HANDLER ( ti99_ww_cartmem )
 {
 	tms9900_ICount -= 4;
 
-	if (cartidge_paged)
-	{	/* if cartidge is paged */
-		int new_page = (offset >> 1) & 1;	/* new page number */
-
-		if (current_page_number != new_page)
-		{									/* if page number changed */
-			current_page_number = new_page;
-
-			current_page_ptr = cartidge_pages[current_page_number];
-		}
-	}
+  if (minimemory && offset >= 0x1000)
+    WRITE_WORD(current_page_ptr+offset, data | (READ_WORD(current_page_ptr+offset) & (data >> 16)));
+  else if (cartidge_paged)
+    current_page_ptr = cartidge_pages[( offset >> 1 )& 1];
 }
 
 /*----------------------------------------------------------------

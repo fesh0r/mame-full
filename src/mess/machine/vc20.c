@@ -64,7 +64,7 @@ static int vc20_via0_read_ca1 (int offset)
 
 static int vc20_via0_read_ca2 (int offset)
 {
-	DBG_LOG (1, "tape", (errorlog, "motor read %d\n", via0_ca2));
+	DBG_LOG (1, "tape", ("motor read %d\n", via0_ca2));
 	return via0_ca2;
 }
 
@@ -97,7 +97,7 @@ static int vc20_via0_read_porta (int offset)
 static void vc20_via0_write_porta (int offset, int data)
 {
 	cbm_serial_atn_write (serial_atn = !(data & 0x80));
-	DBG_LOG (1, "serial out", (errorlog, "atn %s\n", serial_atn ? "high" : "low"));
+	DBG_LOG (1, "serial out", ("atn %s\n", serial_atn ? "high" : "low"));
 }
 
 /* via 1 addr 0x9120
@@ -178,7 +178,7 @@ static void vc20_via1_write_portb (int offset, int data)
 
 static int vc20_via1_read_cb1 (int offset)
 {
-	DBG_LOG (1, "serial in", (errorlog, "request read\n"));
+	DBG_LOG (1, "serial in", ("request read\n"));
 	return cbm_serial_request_read ();
 }
 
@@ -383,8 +383,7 @@ int vc20_rom_load (int id)
 	fp = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0);
 	if (!fp)
 	{
-		if (errorlog)
-			fprintf (errorlog, "%s file not found\n", name);
+		logerror("%s file not found\n", name);
 		return 1;
 	}
 
@@ -417,8 +416,7 @@ int vc20_rom_load (int id)
 				unsigned short in;
 
 				osd_fread_lsbfirst (fp, &in, 2);
-				if (errorlog)
-					fprintf (errorlog, "rom prg %.4x\n", in);
+				logerror("rom prg %.4x\n", in);
 				addr = in;
 				size -= 2;
 			}
@@ -436,9 +434,7 @@ int vc20_rom_load (int id)
 		}
 	}
 
-	if (errorlog)
-		fprintf (errorlog, "loading rom %s at %.4x size:%.4x\n",
-				 name, addr, size);
+	logerror("loading rom %s at %.4x size:%.4x\n",name, addr, size);
 	read = osd_fread (fp, mem + addr, size);
 	osd_fclose (fp);
 	if (read != size)
@@ -456,12 +452,10 @@ int vc20_rom_id (int id)
 	char *cp;
 	int retval;
 
-	if (errorlog)
-		fprintf (errorlog, "vc20_rom_id %s\n", name);
+	logerror("vc20_rom_id %s\n", name);
 	if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
 	{
-		if (errorlog)
-			fprintf (errorlog, "rom %s not found\n", name);
+		logerror("rom %s not found\n", name);
 		return 0;
 	}
 
@@ -486,13 +480,10 @@ int vc20_rom_id (int id)
 			retval = 1;
 	}
 
-	if (errorlog)
-	{
 		if (retval)
-			fprintf (errorlog, "rom %s recognized\n", name);
+			logerror("rom %s recognized\n", name);
 		else
-			fprintf (errorlog, "rom %s not recognized\n", name);
-	}
+			logerror("rom %s not recognized\n", name);
 
 	return retval;
 }

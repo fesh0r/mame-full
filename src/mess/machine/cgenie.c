@@ -15,13 +15,6 @@
 #include "mess/vidhrdw/cgenie.h"
 #include "mess/machine/wd179x.h"
 
-#define VERBOSE 1
-
-#if VERBOSE
-#define LOG(x)	if( errorlog ) fprintf x
-#else
-#define LOG(x)	/* x */
-#endif
 
 #define AYWriteReg(chip,port,value) \
 	AY8910_control_port_0_w(0,port);  \
@@ -133,7 +126,7 @@ static int get_cycles = 0;
 static void tape_put_close(void);
 
 
-static int opbaseoverride(UINT32 PC)
+static OPBASE_HANDLER (opbaseoverride)
 {
 	UINT8 *RAM = memory_region(REGION_CPU1);
 	/* check if the BASIC prompt is visible on the screen */
@@ -148,15 +141,15 @@ static int opbaseoverride(UINT32 PC)
 
 			if( !buff )
 			{
-				if( errorlog ) fprintf(errorlog, "failed to allocate 64K buff\n");
-				return PC;
+				logerror("failed to allocate 64K buff\n");
+				return address;
 			}
 			cmd = image_fopen(IO_CASSETTE, 0, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
 			if( !cmd )
 				  cmd = image_fopen(IO_SNAPSHOT, 0, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
 			if( !cmd )
             {
-				if( errorlog ) fprintf(errorlog, "failed to open '%s'\n", cassette_name);
+				logerror("failed to open '%s'\n", cassette_name);
             }
 			else
 			{
@@ -169,13 +162,13 @@ static int opbaseoverride(UINT32 PC)
 					{
 						*s++ = '\n';
 						*s++ = '\0';
-						LOG((errorlog,"%s",s));
+						logerror("%s",s);
 					}
 					size -= s - buff;
 				}
 				if( s[0] == 0x66 && s[1] == 0x55 && s[8] == 0x3c )
 					{
-					LOG((errorlog,"image name: [%-6.6s]\n",s+1));
+					logerror("image name: [%-6.6s]\n",s+1);
 					s += 8;
 					size -= 8;
 					while( size > 3 )
@@ -199,7 +192,7 @@ static int opbaseoverride(UINT32 PC)
 									block_len = 256;
 							}
 							size -= 4;
-							LOG((errorlog, "cgenie_cmd_load block ($%02X) %d at $%04X\n", data, block_len, block_ofs));
+							logerror("cgenie_cmd_load block ($%02X) %d at $%04X\n", data, block_len, block_ofs);
 							while( block_len && size )
 							{
 								cpu_writemem16(block_ofs, *s);
@@ -219,11 +212,11 @@ static int opbaseoverride(UINT32 PC)
 							block_ofs += 256 * *s++;
 							if( !entry )
 								entry = block_ofs;
-							LOG((errorlog, "cgenie_cmd_load entry ($%02X) at $%04X\n", data, entry));
+							logerror( "cgenie_cmd_load entry ($%02X) at $%04X\n", data, entry);
 							size -= 3;
 							if( size <= 3 )
 							{
-								LOG((errorlog,"starting program at $%04X\n", block_ofs));
+								logerror("starting program at $%04X\n", block_ofs);
 							}
 							break;
 						default:
@@ -238,7 +231,7 @@ static int opbaseoverride(UINT32 PC)
 		}
         cpu_setOPbaseoverride(0,NULL);
     }
-	return PC;
+	return address;
 }
 
 void init_cgenie(void)
@@ -282,7 +275,7 @@ void cgenie_init_machine(void)
 
 	if( readinputport(0) & 0x80 )
 	{
-		LOG((errorlog, "cgenie floppy discs enabled\n"));
+		logerror("cgenie floppy discs enabled\n");
 		if( floppy_name[0] && floppy_name[0][0] )
 		{
             wd179x_init(1);
@@ -293,13 +286,13 @@ void cgenie_init_machine(void)
 		}
 		else
 		{
-			LOG((errorlog, "cgenie floppy discs disabled (no floppy image given)\n"));
+			logerror("cgenie floppy discs disabled (no floppy image given)\n");
             wd179x_init(0);
         }
 	}
 	else
 	{
-        LOG((errorlog, "cgenie floppy discs disabled\n"));
+        logerror("cgenie floppy discs disabled\n");
 		wd179x_init(0);
 	}
 
@@ -310,21 +303,21 @@ void cgenie_init_machine(void)
 		{
             install_mem_read_handler(0, 0xc000, 0xdfff, MRA_ROM);
             install_mem_write_handler(0, 0xc000, 0xdfff, MWA_ROM);
-            LOG((errorlog, "cgenie DOS enabled\n"));
+            logerror("cgenie DOS enabled\n");
 			memcpy(&ROM[0x0c000],&ROM[0x10000], 0x2000);
 		}
 		else
 		{
             install_mem_read_handler(0, 0xc000, 0xdfff, MRA_NOP);
             install_mem_write_handler(0, 0xc000, 0xdfff, MWA_NOP);
-            LOG((errorlog, "cgenie DOS disabled (no floppy image given)\n"));
+            logerror("cgenie DOS disabled (no floppy image given)\n");
         }
 	}
 	else
 	{
 		install_mem_read_handler(0, 0xc000, 0xdfff, MRA_NOP);
         install_mem_write_handler(0, 0xc000, 0xdfff, MWA_NOP);
-        LOG((errorlog, "cgenie DOS disabled\n"));
+        logerror("cgenie DOS disabled\n");
 		memset(&memory_region(REGION_CPU1)[0x0c000], 0x00, 0x2000);
 	}
 
@@ -333,7 +326,7 @@ void cgenie_init_machine(void)
 	{
         install_mem_read_handler(0, 0xe000, 0xefff, MRA_ROM);
         install_mem_write_handler(0, 0xe000, 0xefff, MWA_ROM);
-        LOG((errorlog, "cgenie EXT enabled\n"));
+        logerror("cgenie EXT enabled\n");
 		memcpy(&memory_region(REGION_CPU1)[0x0e000],
 			   &memory_region(REGION_CPU1)[0x12000], 0x1000);
 	}
@@ -341,7 +334,7 @@ void cgenie_init_machine(void)
 	{
         install_mem_read_handler(0, 0xe000, 0xefff, MRA_NOP);
         install_mem_write_handler(0, 0xe000, 0xefff, MWA_NOP);
-        LOG((errorlog, "cgenie EXT disabled\n"));
+        logerror("cgenie EXT disabled\n");
 		memset(&memory_region(REGION_CPU1)[0x0e000], 0x00, 0x1000);
 	}
 
@@ -392,13 +385,13 @@ int cgenie_rom_load(int id)
 	rom = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_IMAGE_R, 0);
 	if( rom )
 	{
-		LOG((errorlog, "%s found '%s' ROM\n", Machine->gamedrv->name, filename));
+		logerror("%s found '%s' ROM\n", Machine->gamedrv->name, filename);
 		osd_fread(rom, &ROM[0x12000], 0x1000);
 		osd_fclose(rom);
 	}
 	else
 	{
-		LOG((errorlog, "%s optional ROM image '%s' not found\n", Machine->gamedrv->name, filename));
+		logerror("%s optional ROM image '%s' not found\n", Machine->gamedrv->name, filename);
 	}
 
 	return result;
@@ -577,7 +570,7 @@ static void tape_put_bit(void)
 			}
 		}
 
-		LOG((errorlog, "%4d %4d %d bits %04X\n", diff, limit, in_sync, tape_bits & 0xffff));
+		logerror("%4d %4d %d bits %04X\n", diff, limit, in_sync, tape_bits & 0xffff);
 
 		/* collected 8 sync plus 8 data bits ? */
 		if( put_bit_count >= 16 )
@@ -673,7 +666,7 @@ static void tape_get_open(void)
 		if( p ) *p = '\0';
 		strcat(tape_name, ".cas");
 
-        LOG((errorlog, "tape_get_open '%s'\n", tape_name));
+        logerror("tape_get_open '%s'\n", tape_name);
 		tape_get_file = osd_fopen(Machine->gamedrv->name, tape_name, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
 		if( tape_get_file )
 		{
@@ -1036,7 +1029,7 @@ void cgenie_motor_w(int offset, int data)
 	UINT8 drive = 255;
 	void *file;
 
-	LOG((errorlog, "cgenie motor_w $%02X\n", data));
+	logerror("cgenie motor_w $%02X\n", data);
 
 	if( data & 1 )
 		drive = 0;

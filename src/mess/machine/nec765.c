@@ -12,7 +12,7 @@
 ***************************************************************************/
 #include "driver.h"
 #include "mess/machine/nec765.h"
-                   
+
 typedef enum
 {
         NEC765_COMMAND_PHASE_FIRST_BYTE,
@@ -22,7 +22,7 @@ typedef enum
         NEC765_EXECUTION_PHASE_WRITE
 } NEC765_PHASE;
 
-// uncomment the following line for verbose information
+/* uncomment the following line for verbose information */
 #define VERBOSE
 
 unsigned char    FDC_main;
@@ -77,7 +77,7 @@ static void     nec765_setup_execution_phase_write(char *ptr, int size)
         nec765_transfer_bytes_remaining = size;
         execution_phase_data = ptr;
         nec765_phase = NEC765_EXECUTION_PHASE_WRITE;
-}                                                  
+}
 
 
 static void     nec765_setup_result_phase(void)
@@ -162,11 +162,11 @@ static void     nec765_read_data(void)
 
                 nec765_iface.get_sector_data_callback(nec765_drive, idx, nec765_side, &ptr);
 
-                
+
                 /* 0-> 128 bytes, 1->256 bytes, 2->512 bytes etc */
                 /* data_size = ((1<<(N+7)) */
                 data_size = 1<<(nec765_command_bytes[5]+7);
-        
+
                 nec765_setup_execution_phase_read(ptr, data_size);
         }
         else
@@ -174,7 +174,7 @@ static void     nec765_read_data(void)
                 nec765_status[0] = 0x040 | nec765_drive;
                 nec765_status[1] = 0x04;
                 nec765_status[2] = 0x00;
-                
+
                 nec765_result_bytes[0] = nec765_status[0];
                 nec765_result_bytes[1] = nec765_status[1];
                 nec765_result_bytes[2] = nec765_status[2];
@@ -182,7 +182,7 @@ static void     nec765_read_data(void)
                 nec765_result_bytes[4] = nec765_command_bytes[3]; /* H */
                 nec765_result_bytes[5] = nec765_command_bytes[4]; /* R */
                 nec765_result_bytes[6] = nec765_command_bytes[5]; /* N */
-                                     
+
                 nec765_setup_result_phase();
         }
 
@@ -192,6 +192,17 @@ static void     nec765_continue_command(void)
 {
         switch (nec765_command_bytes[0] & 0x01f)
         {
+                case 0x05:
+                                nec765_result_bytes[0] = nec765_status[0];
+                                nec765_result_bytes[1] = nec765_status[1];
+                                nec765_result_bytes[2] = nec765_status[2];
+                                nec765_result_bytes[3] = nec765_command_bytes[2]; /* C */
+                                nec765_result_bytes[4] = nec765_command_bytes[3]; /* H */
+                                nec765_result_bytes[5] = nec765_command_bytes[4]; /* R */
+                                nec765_result_bytes[6] = nec765_command_bytes[5]; /* N */
+
+                                nec765_setup_result_phase();
+				break;
                 case 0x06:
                 {
                         /* read all sectors? */
@@ -204,7 +215,7 @@ static void     nec765_continue_command(void)
                                 nec765_result_bytes[4] = nec765_command_bytes[3]; /* H */
                                 nec765_result_bytes[5] = nec765_command_bytes[4]; /* R */
                                 nec765_result_bytes[6] = nec765_command_bytes[5]; /* N */
-                                     
+
                                 nec765_setup_result_phase();
                         }
                         else
@@ -221,6 +232,67 @@ static void     nec765_continue_command(void)
                         break;
        }
 }
+static void     nec765_write_data(void)
+{
+        int data_size;
+        int idx;
+        int spt;
+
+        idx = -1;
+        spt = 0;
+
+        if (nec765_iface.get_sectors_per_track)
+        {
+                spt = nec765_iface.get_sectors_per_track(nec765_drive, nec765_side);
+        }
+
+        if (spt!=0)
+        {
+                nec765_id id;
+                int i;
+
+                for (i=0; i<spt; i++)
+                {
+                     nec765_iface.get_id_callback(nec765_drive, &id, i, nec765_side);
+
+                     if ((id.R == nec765_command_bytes[4]) && (id.C == nec765_command_bytes[2]) && (id.H == nec765_command_bytes[3]))
+                     {
+                        idx = i;
+                        break;
+                     }
+                }
+        }
+
+        if (idx!=-1)
+        {
+                char *ptr;
+
+                nec765_iface.get_sector_data_callback(nec765_drive, idx, nec765_side, &ptr);
+                //ptr=&ptr;
+                /* 0-> 128 bytes, 1->256 bytes, 2->512 bytes etc */
+                /* data_size = ((1<<(N+7)) */
+                data_size = 1<<(nec765_command_bytes[5]+7);
+
+                nec765_setup_execution_phase_write(ptr, data_size);
+        }
+        else
+        {
+                nec765_status[0] = 0x040 | nec765_drive;
+                nec765_status[1] = 0x04;
+                nec765_status[2] = 0x00;
+
+                nec765_result_bytes[0] = nec765_status[0];
+                nec765_result_bytes[1] = nec765_status[1];
+                nec765_result_bytes[2] = nec765_status[2];
+                nec765_result_bytes[3] = nec765_command_bytes[2]; /* C */
+                nec765_result_bytes[4] = nec765_command_bytes[3]; /* H */
+                nec765_result_bytes[5] = nec765_command_bytes[4]; /* R */
+                nec765_result_bytes[6] = nec765_command_bytes[5]; /* N */
+
+                nec765_setup_result_phase();
+        }
+
+}
 
 int nec765_data_r(void)
 {
@@ -234,8 +306,7 @@ int nec765_data_r(void)
                 data = nec765_result_bytes[nec765_transfer_bytes_count];
 
 #ifdef VERBOSE
-                if (errorlog)
-                        fprintf(errorlog, "NEC765: RESULT: %02x\r\n", data);
+                logerror("NEC765: RESULT: %02x\r\n", data);
 #endif
 
                 nec765_transfer_bytes_count++;
@@ -253,7 +324,7 @@ int nec765_data_r(void)
             {
                 int data;
 
-                data = execution_phase_data[nec765_transfer_bytes_count];       //0x0e5;   //nec765_result_bytes[nec765_transfer_bytes_count];
+                data = execution_phase_data[nec765_transfer_bytes_count];       /*0x0e5;   //nec765_result_bytes[nec765_transfer_bytes_count]; */
                 nec765_transfer_bytes_count++;
                 nec765_transfer_bytes_remaining--;
 
@@ -301,7 +372,7 @@ static void     nec765_setup_command(void)
 
                 nec765_setup_result_phase();
                 break;
-                
+
             case 0x07:          /* recalibrate */
                 nec765_drive = nec765_command_bytes[1] & 0x03;
 
@@ -345,7 +416,7 @@ static void     nec765_setup_command(void)
             {
                 int spt;
                 nec765_id id;
-                
+
                 /* get drive */
                 nec765_drive = nec765_command_bytes[1] & 0x03;
                 /* get side */
@@ -356,7 +427,7 @@ static void     nec765_setup_command(void)
                 nec765_status[0] = 0;
                 nec765_status[1] = 0;
                 nec765_status[2] = 0;
-                                
+
                 if (nec765_iface.get_sectors_per_track)
                 {
                         spt = nec765_iface.get_sectors_per_track(nec765_drive, nec765_side);
@@ -369,7 +440,7 @@ static void     nec765_setup_command(void)
 
                         if (nec765_iface.get_id_callback)
                                 nec765_iface.get_id_callback(nec765_drive, &id, nec765_id_index, nec765_side);
-                 }             
+                 }
                  else
                  {
                         nec765_status[0] = 0x040;
@@ -389,17 +460,17 @@ static void     nec765_setup_command(void)
             }
             break;
 
-             
+
 		case 0x08: /* sense interrupt status */
   			nec765_result_bytes[0] = nec765_status[0];
-             		
+
 			if (nec765_status[0] == 0x080)
 			{
 				nec765_command_bytes[0] = 0;
 			}
 			else
 			{
-	
+
 		    		nec765_status[0] = 0x080;
                 		nec765_result_bytes[1] = nec765_pcn;
 			}
@@ -413,6 +484,15 @@ static void     nec765_setup_command(void)
                 nec765_status[2] = 0;
 
                 nec765_read_data();
+            }
+	    break;
+            case 0x05:  /* write data */
+            {
+                nec765_status[0] = 0;
+                nec765_status[1] = 0;
+                nec765_status[2] = 0;
+
+                nec765_write_data();
             }
             break;
 
@@ -430,8 +510,7 @@ void nec765_data_w(int data)
                 {
                         FDC_main |= 0x10;                      /* set BUSY */
 #ifdef VERBOSE
-                        if (errorlog)
-                                fprintf(errorlog,"NEC765: COMMAND: %02x\r\n",data);
+                        logerror("NEC765: COMMAND: %02x\r\n",data);
 
 #endif
                         nec765_command_bytes[0] = data;
@@ -454,8 +533,7 @@ void nec765_data_w(int data)
                 case NEC765_COMMAND_PHASE_BYTES:
                 {
 #ifdef VERBOSE
-                        if (errorlog)
-                                fprintf(errorlog,"NEC765: COMMAND: %02x\r\n",data);
+                        logerror("NEC765: COMMAND: %02x\r\n",data);
 #endif
                         nec765_command_bytes[nec765_transfer_bytes_count] = data;
                         nec765_transfer_bytes_count++;
@@ -468,18 +546,20 @@ void nec765_data_w(int data)
                 }
                 break;
 
-                case NEC765_EXECUTION_PHASE_WRITE:
-                {
-                        nec765_command_bytes[nec765_transfer_bytes_count] = data;
-                        nec765_transfer_bytes_count++;
-                        nec765_transfer_bytes_remaining--;
+            case NEC765_EXECUTION_PHASE_WRITE:
+            {
+                execution_phase_data[nec765_transfer_bytes_count]=data;       /*0x0e5;   //nec765_result_bytes[nec765_transfer_bytes_count]; */
+                nec765_transfer_bytes_count++;
+                nec765_transfer_bytes_remaining--;
 
-                        if (nec765_transfer_bytes_remaining==0)
-                        {
-                                nec765_continue_command();
-                        }
+                if (nec765_transfer_bytes_remaining==0)
+                {
+
+                        nec765_continue_command();
                 }
-                break;
+
+            }
+	    break;
 
 
                 default:

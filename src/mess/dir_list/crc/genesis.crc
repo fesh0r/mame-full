@@ -1,5 +1,5 @@
 # Sega Megadrive/Genesis Cartridge CRC list
-# Compiled by Gerardo Jorrin, with Chris Henry
+# Compiled by Gerardo Jorrin, Takuma Sakazaki, and Chris Henry
 # Note: This list is provided as a record of known dumps for this system.  
 #       These checksums have not been validated and cannot be assumed correct.  
 #       They are provided here as a database to help the emulation of this system.  
@@ -30,7 +30,7 @@ d28d5c40 = Alisia Dragoon | 1992 | Game Arts | GRAPHIC GLITCHES
 e9742041 = Another World | 1992 | Virgin | NOT PLAYABLE
 a0bef835 = Arcade Classics | 1996 | Sega
 246f960d = Arch Rivals | 19?? | Acclaim | NOT PLAYABLE
-b6f3b0ed = Art of Fighting | 1983 | Sega | NOT PLAYABLE
+b6f3b0ed = Art of Fighting | 1993 | Sega | NOT PLAYABLE
 226ecee2 = Asterix and the Power of the Gods | 1995 | Sega | NOT PLAYABLE
 6c184c71 = Atomic Runner | 1992 | Data East
 1f07577f = Awesome Possum | 1993 | Tengen
@@ -80,9 +80,14 @@ edfcbf6e = Psycho Pinball | 1994 | Codemasters | NOT PLAYABLE
 8f043cb3 = Pulseman
 05d14885 = The Punisher |  |  | NOT PLAYABLE
 416332a2 = Rainbow Islands Extra Version | 1990 | Taito
+56d6f710 = Samurai Shodown | 1994 | Saurus/Takara | GRAPHIC GLITCHES, Input problems
 a1e89b52 = Shane Warne Cricket | 1996 | Codemasters
 f9394e97 = Sonic the Hedgehog | 1991 | Sega
+d8b6d8f0 = Sonic the Hedgehog 2 | 1992 | Sega | Crashes if machine attempts to enter split screen mode
+d58e6e0b = Street Fighter II' Champion Edition Plus | 1993 | Capcom | NOT PLAYABLE
+00a04acd = Streets of Rage 2 | 1992 | Sega | NOT PLAYABLE
 26836223 = Super Baseball 2020 | 1993 | Electronic Arts | NOT PLAYABLE
+6a07b6df = Ultimate Mortal Kombat 3 | 1996 | Williams | 6-button pad mode not emulated
 43f7dfc1 = Two Crude Dudes | 1991 | Data East
 ca55ebda = World Series Baseball '96 | 1996 | Sega | NOT PLAYABLE
 8b19df0e = ??????? | 19?? | Vic Tokai | NOT PLAYABLE

@@ -93,16 +93,14 @@ void SCCWriteReg (int n, int r, int v, int t)
 		case SCC_MEGAROM:
 		    if (r >= 0xe0) {
 			SCC[n].Regs[SCC_DEFORM] = v ;
-			if (v && errorlog) fprintf (errorlog,
-			    "SCC: %02xh written to unemulated register\n", v);
+			if (v) logerror("SCC: %02xh written to unemulated register\n", v);
 
 		    }
 		    break ;
 		case SCC_PLUSCOMP:
 		    if ( (r < 0xe0) && (r >= 0xc0) ) {
 			SCC[n].Regs[SCC_DEFORM] = v ;
-			if (v && errorlog) fprintf (errorlog,
-			    "SCC: %02xh written to unemulated register\n", v);
+			if (v) logerror("SCC: %02xh written to unemulated register\n", v);
 		    }
 		    break ;
 		}
@@ -114,8 +112,7 @@ void SCCWriteReg (int n, int r, int v, int t)
 		SCC[n].Regs[r & 15] = (v & Mask[r & 15]) ;
 	    } else if (r < 0xe0) {
 		SCC[n].Regs[SCC_DEFORM] = v ;
-		if (v && errorlog) fprintf (errorlog,
-		    "SCC: %02xh written to unemulated register\n", v);
+		if (v) logerror("SCC: %02xh written to unemulated register\n", v);
 	    }
 	    break ;
     }

@@ -11,9 +11,27 @@ Nascom 1 Memory map
 	Interrupts:
 
 	Ports:
-		00			Keyboard
-		01,02		UART
+		OUT (00)	0:	Increment portstatoard scan
+					1:	Reset portstatoard scan
+					2:
+					3:	Read from cassette
+					4:
+					5:
+					6:
+					7:
+		IN  (00)	Read portstatoard
+		OUT (01)	Write to cassette/serial
+		IN  (01)	Read from cassette/serial
+		OUT (02)	Unused
+		IN  (02)	?
 
+Nascom 2 Memory map
+	CPU: z80
+		0000-07ff	ROM
+		0800-0bff	RAM (Screen)
+		0c00-cfff	RAM
+		d000-dfff	ROM (Expansion)
+		e000-ffff	ROM (Basic)
 
 ************************************************************************/
 
@@ -30,17 +48,23 @@ extern	int		nascom1_vh_start (void);
 extern	void	nascom1_vh_stop (void);
 extern	void	nascom1_vh_screenrefresh (struct osd_bitmap *bitmap,
 													int full_refresh);
+extern	void	nascom2_vh_screenrefresh (struct osd_bitmap *bitmap,
+													int full_refresh);
+extern	int		nascom2_init_cassette (int id);
+extern	void	nascom2_exit_cassette (int id);
+extern	int		nascom2_read_cassette (void);
 
 /* structures */
 
 static	struct
 {
-	UINT8	key_flags;
-	UINT8	key_count;
-} nascom1_keyb;
+	UINT8	stat_flags;
+	UINT8	stat_count;
+} nascom1_portstat;
 
 #define NASCOM1_KEY_RESET	0x02
 #define NASCOM1_KEY_INCR	0x01
+#define NASCOM1_CAS_ENABLE	0x10
 
 /* functions */
 
@@ -50,10 +74,16 @@ READ_HANDLER ( nascom1_port_00_r )
 
 {
 
-if (errorlog) fprintf (errorlog, "in (00). Count: %d.\n",
-						nascom1_keyb.key_count);
+if (readinputport (nascom1_portstat.stat_count) != 0x3f) {
+  logerror("in (00). Count: %d. input: %02x\n",
+						nascom1_portstat.stat_count,
+						readinputport (nascom1_portstat.stat_count));
+}
 
-return (readinputport (nascom1_keyb.key_count) | ~0x3f);
+if (nascom1_portstat.stat_count < 9)
+		return (readinputport (nascom1_portstat.stat_count) | ~0x7f);
+
+return (0xff);
 
 }
 
@@ -61,13 +91,24 @@ READ_HANDLER ( nascom1_port_01_r )
 
 {
 
-return (0xff);
+int rpl;
+
+if (nascom1_portstat.stat_flags & NASCOM1_CAS_ENABLE) {
+  rpl = nascom2_read_cassette();
+  logerror("in (01): %d.\n", rpl);
+  return (rpl);
+}
+
+return (0);
 
 }
 
 READ_HANDLER ( nascom1_port_02_r )
 
 {
+
+logerror("in (02).\n");
+if (nascom1_portstat.stat_flags & NASCOM1_CAS_ENABLE) return (0x80);
 
 return (0x00);
 
@@ -77,13 +118,27 @@ WRITE_HANDLER (	nascom1_port_00_w )
 
 {
 
+nascom1_portstat.stat_flags &= ~NASCOM1_CAS_ENABLE;
+nascom1_portstat.stat_flags |= (data & NASCOM1_CAS_ENABLE);
+
 if (!(data & NASCOM1_KEY_RESET)) {
-  if (nascom1_keyb.key_flags & NASCOM1_KEY_RESET) nascom1_keyb.key_count = 0;
-} else nascom1_keyb.key_flags = NASCOM1_KEY_RESET;
+  if (nascom1_portstat.stat_flags & NASCOM1_KEY_RESET) nascom1_portstat.stat_count = 0;
+} else nascom1_portstat.stat_flags = NASCOM1_KEY_RESET;
 
 if (!(data & NASCOM1_KEY_INCR)) {
-  if (nascom1_keyb.key_flags & NASCOM1_KEY_INCR) nascom1_keyb.key_count++;
-} else nascom1_keyb.key_flags = NASCOM1_KEY_INCR;
+  if (nascom1_portstat.stat_flags & NASCOM1_KEY_INCR) nascom1_portstat.stat_count++;
+} else nascom1_portstat.stat_flags = NASCOM1_KEY_INCR;
+
+/* logerror("out (00): %d. Count: %d.\n", data,
+						nascom1_portstat.stat_count); */
+
+}
+
+WRITE_HANDLER (	nascom1_port_01_w )
+
+{
+
+logerror("out (01): %d.\n", data);
 
 }
 
@@ -98,6 +153,7 @@ static	struct	IOReadPort	nascom1_readport[] =
 static	struct	IOWritePort	nascom1_writeport[] =
 {
 	{ 0x00, 0x00, nascom1_port_00_w},
+	{ 0x01, 0x01, nascom1_port_01_w},
 	{-1}
 };
 
@@ -119,6 +175,24 @@ static	struct	MemoryWriteAddress	nascom1_writemem[] =
 	{-1}
 };
 
+static	struct	MemoryReadAddress	nascom2_readmem[] =
+{
+	{0x0000, 0x07ff, MRA_ROM},
+	{0x0800, 0x0bff, videoram_r},
+	{0x0c00, 0xdfff, MRA_RAM},
+	{0xe000, 0xffff, MRA_ROM},
+	{-1}
+};
+
+static	struct	MemoryWriteAddress	nascom2_writemem[] =
+{
+	{0x0000, 0x07ff, MWA_ROM},
+	{0x0800, 0x0bff, videoram_w, &videoram, &videoram_size},
+	{0x0c00, 0xdfff, MWA_RAM},
+	{0xe000, 0xffff, MWA_ROM},
+	{-1}
+};
+
 /* graphics output */
 
 struct	GfxLayout	nascom1_charlayout =
@@ -136,6 +210,24 @@ struct	GfxLayout	nascom1_charlayout =
 static	struct	GfxDecodeInfo	nascom1_gfxdecodeinfo[] =
 {
 	{ 1, 0x0000, &nascom1_charlayout, 0, 2},
+	{-1}
+};
+
+struct	GfxLayout	nascom2_charlayout =
+{
+	8, 14,
+	256,
+	1,
+	{ 0 },
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8,  3*8,  4*8,  5*8,  6*8,
+	  7*8, 8*8, 9*8, 10*8, 11*8, 12*8, 13*8 },
+	8 * 16
+};
+
+static	struct	GfxDecodeInfo	nascom2_gfxdecodeinfo[] =
+{
+	{ 1, 0x0000, &nascom2_charlayout, 0, 2},
 	{-1}
 };
 
@@ -172,6 +264,7 @@ INPUT_PORTS_START (nascom1)
 	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "SHIFT", KEYCODE_LSHIFT, IP_JOY_NONE)
 	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "SHIFT", KEYCODE_RSHIFT, IP_JOY_NONE)
 	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_KEYBOARD, "deadkey", KEYCODE_NONE, IP_JOY_NONE)
+	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_KEYBOARD, "deadkey", KEYCODE_NONE, IP_JOY_NONE)
 
 	PORT_START							/* count = 1 */
 	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "H", KEYCODE_H, IP_JOY_NONE)
@@ -180,6 +273,7 @@ INPUT_PORTS_START (nascom1)
 	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "F", KEYCODE_F, IP_JOY_NONE)
 	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "X", KEYCODE_X, IP_JOY_NONE)
 	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_KEYBOARD, "T", KEYCODE_T, IP_JOY_NONE)
+	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_KEYBOARD, "up", KEYCODE_UP, IP_JOY_NONE)
 
 	PORT_START							/* count = 2 */
 	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "J", KEYCODE_J, IP_JOY_NONE)
@@ -188,6 +282,7 @@ INPUT_PORTS_START (nascom1)
 	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "D", KEYCODE_D, IP_JOY_NONE)
 	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "Z", KEYCODE_Z, IP_JOY_NONE)
 	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_KEYBOARD, "Y", KEYCODE_Y, IP_JOY_NONE)
+	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_KEYBOARD, "left", KEYCODE_LEFT, IP_JOY_NONE)
 
 	PORT_START							/* count = 3 */
 	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "K", KEYCODE_K, IP_JOY_NONE)
@@ -196,6 +291,7 @@ INPUT_PORTS_START (nascom1)
 	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "E", KEYCODE_E, IP_JOY_NONE)
 	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "S", KEYCODE_S, IP_JOY_NONE)
 	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_KEYBOARD, "U", KEYCODE_U, IP_JOY_NONE)
+	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_KEYBOARD, "down", KEYCODE_DOWN, IP_JOY_NONE)
 
 	PORT_START							/* count = 4 */
 	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "L", KEYCODE_L, IP_JOY_NONE)
@@ -204,6 +300,7 @@ INPUT_PORTS_START (nascom1)
 	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "W", KEYCODE_W, IP_JOY_NONE)
 	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "A", KEYCODE_A, IP_JOY_NONE)
 	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_KEYBOARD, "I", KEYCODE_I, IP_JOY_NONE)
+	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_KEYBOARD, "right", KEYCODE_RIGHT, IP_JOY_NONE)
 
 	PORT_START							/* count = 5 */
 	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, ";", KEYCODE_COLON, IP_JOY_NONE)
@@ -212,6 +309,7 @@ INPUT_PORTS_START (nascom1)
 	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "3", KEYCODE_3, IP_JOY_NONE)
 	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "Q", KEYCODE_Q, IP_JOY_NONE)
 	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_KEYBOARD, "O", KEYCODE_O, IP_JOY_NONE)
+	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_KEYBOARD, "deadkey", KEYCODE_NONE, IP_JOY_NONE)
 
 	PORT_START							/* count = 6 */
 	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, ":", KEYCODE_TILDE, IP_JOY_NONE)
@@ -220,6 +318,7 @@ INPUT_PORTS_START (nascom1)
 	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "2", KEYCODE_2, IP_JOY_NONE)
 	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "1", KEYCODE_1, IP_JOY_NONE)
 	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_KEYBOARD, "P", KEYCODE_P, IP_JOY_NONE)
+	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_KEYBOARD, "deadkey", KEYCODE_NONE, IP_JOY_NONE)
 
 	PORT_START							/* count = 7 */
 	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "G", KEYCODE_G, IP_JOY_NONE)
@@ -228,6 +327,7 @@ INPUT_PORTS_START (nascom1)
 	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "C", KEYCODE_C, IP_JOY_NONE)
 	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "SPACE", KEYCODE_SPACE, IP_JOY_NONE)
 	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_KEYBOARD, "R", KEYCODE_R, IP_JOY_NONE)
+	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_KEYBOARD, "deadkey", KEYCODE_NONE, IP_JOY_NONE)
 
 	PORT_START							/* count = 8 */
 	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "BACKSPACE", KEYCODE_BACKSPACE, IP_JOY_NONE)
@@ -236,6 +336,7 @@ INPUT_PORTS_START (nascom1)
 	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "deadkey", KEYCODE_NONE, IP_JOY_NONE)
 	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "deadkey", KEYCODE_NONE, IP_JOY_NONE)
 	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_KEYBOARD, "@", KEYCODE_QUOTE, IP_JOY_NONE)
+	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_KEYBOARD, "deadkey", KEYCODE_NONE, IP_JOY_NONE)
 
 INPUT_PORTS_END
 
@@ -272,11 +373,48 @@ static	struct	MachineDriver	machine_driver_nascom1 =
 	0, 0, 0, 0,
 };
 
+static	struct	MachineDriver	machine_driver_nascom2 =
+{
+	{
+		{
+			CPU_Z80,
+			2000000,
+			nascom2_readmem, nascom2_writemem,
+			nascom1_readport, nascom1_writeport,
+			interrupt, 1,
+		},
+	},
+	50, 2500,
+	1,
+	nascom1_init_machine,
+	nascom1_stop_machine,
+	48 * 8,
+	16 * 14,
+	{ 0, 48 * 8 - 1, 0, 16 * 14 - 1},
+	nascom2_gfxdecodeinfo,
+	2, 4,
+	nascom1_init_palette,
+	VIDEO_TYPE_RASTER,
+	0,
+	nascom1_vh_start,
+	nascom1_vh_stop,
+	nascom2_vh_screenrefresh,
+	0, 0, 0, 0,
+};
+
 ROM_START(nascom1)
 	ROM_REGION(0x10000, REGION_CPU1)
-	ROM_LOAD("nascom1.rom", 0x0000, 0x0800, 0x00000000)
+	ROM_LOAD("nasbug4.rom", 0x0000, 0x0800, 0x00000000)
 	ROM_REGION(0x0500, REGION_GFX1)
 	ROM_LOAD("nascom1.chr", 0x0000, 0x0500, 0x00000000)
+ROM_END
+
+ROM_START(nascom2)
+	ROM_REGION(0x10000, REGION_CPU1)
+	ROM_LOAD("nassys1.rom", 0x0000, 0x0800, 0x00000000)
+	ROM_LOAD("basic.rom", 0xe000, 0x2000, 0x00000000)
+	ROM_REGION(0x1000, REGION_GFX1)
+	ROM_LOAD("nasgra.chr", 0x0000, 0x1000, 0x00000000)
 ROM_END
 
 static	const	struct	IODevice	io_nascom1[] =
@@ -284,5 +422,30 @@ static	const	struct	IODevice	io_nascom1[] =
 	{ IO_END }
 };
 
-/*		YEAR	NAME		PARENT	MACHINE		INPUT		INIT	COMPANY		FULLNAME */
-COMP(	1978,	nascom1,	0,		nascom1,	nascom1,	0,		"Nascom",	"Nascom 1" )
+static	const	struct	IODevice	io_nascom2[] =
+{
+	{
+		IO_CASSETTE,			/* type */
+		1,						/* count */
+		"cas\0nas\0bin\0",		/* file extn */
+		NULL,					/* private */
+		NULL,					/* id */
+		nascom2_init_cassette,	/* init */
+		nascom2_exit_cassette,	/* exit */
+		NULL,					/* info */
+		NULL,					/* open */
+		NULL,					/* close */
+		NULL,					/* status */
+		NULL,					/* seek */
+		NULL,					/* tell */
+		NULL,					/* input */
+		NULL,					/* output */
+		NULL,					/* input_chunk */
+		NULL					/* output_chunk */
+	},
+	{ IO_END }
+};
+
+/*		YEAR	NAME		PARENT		MACHINE		INPUT		INIT	COMPANY		FULLNAME */
+COMP(	1978,	nascom1,	0,			nascom1,	nascom1,	0,		"Nascom",	"Nascom 1" )
+COMP(	1979,	nascom2,	nascom1,	nascom2,	nascom1,	0,		"Nascom",	"Nascom 2" )

@@ -29,13 +29,6 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-#define VERBOSE 1
-
-#if VERBOSE
-#define LOG(x)	if( errorlog ) fprintf x
-#else
-#define LOG(x)	/* x */
-#endif
 
 extern char vtech1_frame_message[64+1];
 extern int vtech1_frame_time;
@@ -182,12 +175,12 @@ int vtech1_cassette_id(int id)
 			return 1;
         if( buff[128+5] == 0xf0 )
         {
-			LOG((errorlog, "vtech1_cassette_id: BASIC magic $%02X '%s' found\n", buff[128+5], buff+128+5+1));
+			logerror("vtech1_cassette_id: BASIC magic $%02X '%s' found\n", buff[128+5], buff+128+5+1);
             return 0;
         }
 		if( buff[128+5] == 0xf1 )
         {
-			LOG((errorlog, "vtech1_cassette_id: MCODE magic $%02X '%s' found\n", buff[128+5], buff+128+5+1));
+			logerror("vtech1_cassette_id: MCODE magic $%02X '%s' found\n", buff[128+5], buff+128+5+1);
             return 0;
         }
     }
@@ -331,7 +324,7 @@ static void vtech1_snapshot_copy(void)
 			memcpy(&RAM[start], &vtech1_snapshot_data[24], end - start);
             sprintf(vtech1_frame_message, "BASIC snapshot %04x-%04x", start, end);
 			vtech1_frame_time = Machine->drv->frames_per_second;
-			LOG((errorlog,"VTECH1 BASIC snapshot %04x-%04x\n", start, end));
+			logerror("VTECH1 BASIC snapshot %04x-%04x\n", start, end);
             /* patch BASIC variables */
 			RAM[0x78a4] = start % 256;
 			RAM[0x78a5] = start / 256;
@@ -347,7 +340,7 @@ static void vtech1_snapshot_copy(void)
 			memcpy(&RAM[start], &vtech1_snapshot_data[24], end - start);
 			sprintf(vtech1_frame_message, "M-Code snapshot %04x-%04x", start, end);
 			vtech1_frame_time = Machine->drv->frames_per_second;
-			LOG((errorlog,"VTECH1 MCODE snapshot %04x-%04x\n", start, end));
+			logerror("VTECH1 MCODE snapshot %04x-%04x\n", start, end);
             /* set USR() address */
 			RAM[0x788e] = start % 256;
 			RAM[0x788f] = start / 256;
@@ -363,7 +356,7 @@ int vtech1_snapshot_id(int id)
 	UINT8 buff[256];
     void *file;
 
-	LOG((errorlog, "VTECH snapshot_id\n"));
+	logerror("VTECH snapshot_id\n");
     file = image_fopen(IO_SNAPSHOT, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
     if( file )
     {
@@ -371,12 +364,12 @@ int vtech1_snapshot_id(int id)
 		osd_fclose(file);
 		if( memcmp(buff, "  \0\0", 4) == 0 && buff[21] == 0xf1 )
         {
-			LOG((errorlog, "vtech1_snapshot_id: MCODE magic found '%s'\n", buff+4));
+			logerror("vtech1_snapshot_id: MCODE magic found '%s'\n", buff+4);
             return 0;
         }
 		if( memcmp(buff, "VZF0", 4) == 0 && buff[21] == 0xf0 )
         {
-			LOG((errorlog, "vtech1_snapshot_id: BASIC magic found %s\n", buff+4));
+			logerror("vtech1_snapshot_id: BASIC magic found %s\n", buff+4);
             return 0;
         }
     }
@@ -387,7 +380,7 @@ int vtech1_snapshot_init(int id)
 {
 	void *file;
 
-	LOG((errorlog, "VTECH snapshot_init\n"));
+	logerror("VTECH snapshot_init\n");
     file = image_fopen(IO_SNAPSHOT, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
     if( file )
 	{
@@ -408,7 +401,7 @@ int vtech1_snapshot_init(int id)
 
 void vtech1_snapshot_exit(int id)
 {
-	LOG((errorlog, "VTECH snapshot_exit\n"));
+	logerror("VTECH snapshot_exit\n");
     if( vtech1_snapshot_data )
 		free(vtech1_snapshot_data);
 	vtech1_snapshot_data = NULL;
@@ -475,7 +468,7 @@ static void vtech1_get_track(void)
 		offs = TRKSIZE_VZ * vtech1_track_x2[vtech1_drive]/2;
 		osd_fseek(vtech1_fdc_file[vtech1_drive], offs, SEEK_SET);
 		size = osd_fread(vtech1_fdc_file[vtech1_drive], vtech1_fdc_data, size);
-		LOG((errorlog,"get track @$%05x $%04x bytes\n", offs, size));
+		logerror("get track @$%05x $%04x bytes\n", offs, size);
     }
 	vtech1_fdc_offs = 0;
 	vtech1_fdc_write = 0;
@@ -490,7 +483,7 @@ static void vtech1_put_track(void)
 		offs = TRKSIZE_VZ * vtech1_track_x2[vtech1_drive]/2;
 		osd_fseek(vtech1_fdc_file[vtech1_drive], offs + vtech1_fdc_start, SEEK_SET);
 		size = osd_fwrite(vtech1_fdc_file[vtech1_drive], &vtech1_fdc_data[vtech1_fdc_start], vtech1_fdc_write);
-		LOG((errorlog,"put track @$%05X+$%X $%04X/$%04X bytes\n", offs, vtech1_fdc_start, size, vtech1_fdc_write));
+		logerror("put track @$%05X+$%X $%04X/$%04X bytes\n", offs, vtech1_fdc_start, size, vtech1_fdc_write);
     }
 }
 
@@ -511,15 +504,15 @@ int vtech1_fdc_r(int offset)
 				vtech1_fdc_bits--;
 			data = (vtech1_data >> vtech1_fdc_bits) & 0xff;
 #if 0
-			LOG((errorlog,"vtech1_fdc_r bits %d%d%d%d%d%d%d%d\n",
+			logerror("vtech1_fdc_r bits %d%d%d%d%d%d%d%d\n",
                 (data>>7)&1,(data>>6)&1,(data>>5)&1,(data>>4)&1,
-                (data>>3)&1,(data>>2)&1,(data>>1)&1,(data>>0)&1 ));
+                (data>>3)&1,(data>>2)&1,(data>>1)&1,(data>>0)&1 );
 #endif
         }
 		if( vtech1_fdc_bits == 0 )
         {
 			vtech1_data = vtech1_fdc_data[vtech1_fdc_offs];
-			LOG((errorlog,"vtech1_fdc_r %d : data ($%04X) $%02X\n", offset, vtech1_fdc_offs, vtech1_data));
+			logerror("vtech1_fdc_r %d : data ($%04X) $%02X\n", offset, vtech1_fdc_offs, vtech1_data);
 			if( vtech1_fdc_status & 0x80 )
             {
 				vtech1_fdc_bits = 8;
@@ -537,7 +530,7 @@ int vtech1_fdc_r(int offset)
     case 3: /* write protect status (read-only) */
 		if( vtech1_drive >= 0 )
 			data = vtech1_fdc_wrprot[vtech1_drive];
-		LOG((errorlog,"vtech1_fdc_r %d : write_protect $%02X\n", offset, data));
+		logerror("vtech1_fdc_r %d : write_protect $%02X\n", offset, data);
         break;
     }
     return data;
@@ -566,7 +559,7 @@ void vtech1_fdc_w(int offset, int data)
             {
 				if( vtech1_track_x2[vtech1_drive] > 0 )
 					vtech1_track_x2[vtech1_drive]--;
-				LOG((errorlog,"vtech1_fdc_w(%d) $%02X drive %d: stepout track #%2d.%d\n", offset, data, vtech1_drive, vtech1_track_x2[vtech1_drive]/2,5*(vtech1_track_x2[vtech1_drive]&1)));
+				logerror("vtech1_fdc_w(%d) $%02X drive %d: stepout track #%2d.%d\n", offset, data, vtech1_drive, vtech1_track_x2[vtech1_drive]/2,5*(vtech1_track_x2[vtech1_drive]&1));
 				if( (vtech1_track_x2[vtech1_drive] & 1) == 0 )
 					vtech1_get_track();
             }
@@ -578,7 +571,7 @@ void vtech1_fdc_w(int offset, int data)
             {
 				if( vtech1_track_x2[vtech1_drive] < 2*40 )
 					vtech1_track_x2[vtech1_drive]++;
-				LOG((errorlog,"vtech1_fdc_w(%d) $%02X drive %d: stepin track #%2d.%d\n", offset, data, vtech1_drive, vtech1_track_x2[vtech1_drive]/2,5*(vtech1_track_x2[vtech1_drive]&1)));
+				logerror("vtech1_fdc_w(%d) $%02X drive %d: stepin track #%2d.%d\n", offset, data, vtech1_drive, vtech1_track_x2[vtech1_drive]/2,5*(vtech1_track_x2[vtech1_drive]&1));
 				if( (vtech1_track_x2[vtech1_drive] & 1) == 0 )
 					vtech1_get_track();
             }
@@ -601,7 +594,7 @@ void vtech1_fdc_w(int offset, int data)
 						if( vtech1_data & 0x0010 ) value |= 0x04;
 						if( vtech1_data & 0x0004 ) value |= 0x02;
 						if( vtech1_data & 0x0001 ) value |= 0x01;
-						LOG((errorlog,"vtech1_fdc_w(%d) data($%04X) $%02X <- $%02X ($%04X)\n", offset, vtech1_fdc_offs, vtech1_fdc_data[vtech1_fdc_offs], value, vtech1_data));
+						logerror("vtech1_fdc_w(%d) data($%04X) $%02X <- $%02X ($%04X)\n", offset, vtech1_fdc_offs, vtech1_fdc_data[vtech1_fdc_offs], value, vtech1_data);
 						vtech1_fdc_data[vtech1_fdc_offs] = value;
 						vtech1_fdc_offs = ++vtech1_fdc_offs % TRKSIZE_FM;
 						vtech1_fdc_write++;
@@ -741,7 +734,7 @@ int vtech1_keyboard_r(int offset)
  ************************************************/
 void vtech1_latch_w(int offset, int data)
 {
-    LOG((errorlog, "vtech1_latch_w $%02X\n", data));
+    logerror("vtech1_latch_w $%02X\n", data);
 	/* cassette data bits toggle? */
     if( (vtech1_latch ^ data ) & 0x06 )
     {
@@ -759,9 +752,9 @@ void vtech1_latch_w(int offset, int data)
 		extern int bitmap_dirty;
         bitmap_dirty = 1;
 		if( (vtech1_latch ^ data) & 0x10 )
-			LOG((errorlog, "vtech1_latch_w: change background %d\n", (data>>4)&1));
+			logerror("vtech1_latch_w: change background %d\n", (data>>4)&1);
 		if( (vtech1_latch ^ data) & 0x08 )
-			LOG((errorlog, "vtech1_latch_w: change mode to %s\n", (data&0x08)?"gfx":"text"));
+			logerror("vtech1_latch_w: change mode to %s\n", (data&0x08)?"gfx":"text");
     }
 
     vtech1_latch = data;

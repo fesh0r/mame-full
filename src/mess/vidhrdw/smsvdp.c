@@ -1,76 +1,64 @@
 
 /*
-    Video Display Processor emulation
-
-    The video chip used in the SMS and GG is a derivative of the
-    TMS9918, with an additional screen mode (mode 4). Only one licenced
-    SMS game is known to use the regular TMS9918 modes (F-15 Strike Eagle),
-    so this emulation only covers Mode 4 and doesn't emulate any other
-    aspects of the TMS9918.
-
-    The GG only has mode 4, with some of the CRT-specific features
-    removed. In addition, the color memory is doubled, with four bits
-    per component for a total of 4096 possible colors. You can still
-    only have 32 colors on-screen, though.
-
-    The exact behavior of line interrupts are unknown. A number of games
-    exhibit incorrectly rendered graphics where raster effects appear
-    to be off by a line, due to this. Some games have bad flicker such
-    as Outrun and Gunstar Heroes.
-
-    The color RAM cannot be read, it is unknown what data is returned
-    when the data port is read in CRAM mode.
-
-    Missing features:
-
-    - Background / sprite priority. The priority level is set by the
-      background attributes, not by sprites.
-
-    - Sprite collision flag. Fantasy Zone (GG) uses it.
-
-    - The leftmost 8 columns can be locked so vertical scrolling has no
-      effect. Golvelius and Gauntlet use this.
-
-    - Sprite clipping. Ghouls and Ghosts also requires clipping on the
-      leftmost edge as it uses delayed sprites.
-
-    - Zoomed sprites. X-Men and X-Men 2 (GG) use it.
+    For more information, please see:
+    http://www.emucamp.com/cgfm2/smsvdp.txt
 */
-
 
 #include "driver.h"
 #include "mess/vidhrdw/smsvdp.h"
 #include "vidhrdw/generic.h"
+#include "cpu/z80/z80.h"
 
-/* VDP data */
+UINT8 reg[0x10];
+UINT8 cram[0x40];
+UINT8 vram[0x4000];
+int addr;
+int code;
+int pending;
+int latch;
+int buffer;
+int status;
 
-UINT8 vram[0x4000];         /* 16k video RAM */
-UINT8 cram[0x40];           /* On-chip color RAM */
-UINT8 vdpreg[0x10];         /* VDP registers */
-UINT8 pending;              /* 1= expecting 2nd write to ctrl port */
-UINT8 latch;                /* Result of 1st write to ctrl port*/
-UINT8 status;               /* VDP status flag */
-UINT8 buffer;               /* Read-ahead buffer */
-UINT8 mode;                 /* Accessing: 0=VRAM 1=CRAM */
-UINT8 cram_ptr;             /* Index into color RAM */
-UINT16 vram_ptr;            /* Index into video RAM */
-UINT16 ntab;                /* Address of name table in VRAM */
-UINT16 satb;                /* Address of sprite table in VRAM */
-int curline;                /* Current scan line */
-int linesleft;              /* # of lines until a raster interrupt */
-
-/* Display stuff */
-
-UINT8 is_vram_dirty;        /* 1= patterns were modified */
-UINT8 vram_dirty[512];      /* Table of altered patterns */
-UINT8 is_cram_dirty;        /* 1= color was modified */
-UINT8 cram_dirty[32];       /* Table of altered colors */
-UINT8 cache[64*512*4];      /* Converted tile cache */
-
-//struct osd_bitmap *tmpbitmap = NULL;
-static int irq_state = 0;
+int is_vram_dirty;
+int is_cram_dirty;
+UINT8 vram_dirty[0x200];
+UINT8 cram_dirty[0x20];
+UINT8 cache[0x20000];
 
 int GameGear;
+int vpstart;
+int vpend;
+int ntab;
+int satb;
+int curline;
+int linesleft;
+int irq_state;      /* The status of the IRQ line, as seen by the VDP */
+
+/*--------------------------------------------------------------------------*/
+
+/* Precalculated return values from the V counter */
+static UINT8 vcnt[0x200] =
+{
+    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
+    0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F,
+    0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2A, 0x2B, 0x2C, 0x2D, 0x2E, 0x2F,
+    0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F,
+    0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4A, 0x4B, 0x4C, 0x4D, 0x4E, 0x4F,
+    0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59, 0x5A, 0x5B, 0x5C, 0x5D, 0x5E, 0x5F,
+    0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6A, 0x6B, 0x6C, 0x6D, 0x6E, 0x6F,
+    0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79, 0x7A, 0x7B, 0x7C, 0x7D, 0x7E, 0x7F,
+    0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8A, 0x8B, 0x8C, 0x8D, 0x8E, 0x8F,
+    0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97, 0x98, 0x99, 0x9A, 0x9B, 0x9C, 0x9D, 0x9E, 0x9F,
+    0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7, 0xA8, 0xA9, 0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xAF,
+    0xB0, 0xB1, 0xB2, 0xB3, 0xB4, 0xB5, 0xB6, 0xB7, 0xB8, 0xB9, 0xBA, 0xBB, 0xBC, 0xBD, 0xBE, 0xBF,
+    0xC0, 0xC1, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF,
+    0xD0, 0xD1, 0xD2, 0xD3, 0xD4, 0xD5, 0xD6, 0xD7, 0xD8, 0xD9, 0xDA,
+                                  0xD5, 0xD6, 0xD7, 0xD8, 0xD9, 0xDA, 0xDB, 0xDC, 0xDD, 0xDE, 0xDF,
+    0xE0, 0xE1, 0xE2, 0xE3, 0xE4, 0xE5, 0xE6, 0xE7, 0xE8, 0xE9, 0xEA, 0xEB, 0xEC, 0xED, 0xEE, 0xEF,
+    0xF0, 0xF1, 0xF2, 0xF3, 0xF4, 0xF5, 0xF6, 0xF7, 0xF8, 0xF9, 0xFA, 0xFB, 0xFC, 0xFD, 0xFE, 0xFF,
+};
+
+/*--------------------------------------------------------------------------*/
 
 int sms_vdp_start(void)
 {
@@ -84,33 +72,41 @@ int gamegear_vdp_start(void)
 
 READ_HANDLER ( sms_vdp_curline_r )
 {
-    return (curline);
+    return (vcnt[(curline & 0x1FF)]);
 }
 
 int SMSVDP_start (int vdp_type)
 {
     GameGear = vdp_type;
 
-    memset(vram, 0, 0x4000);
-    memset(cram, 0, 0x40);
-    memset(vdpreg, 0, 0x10);
-    memset(cache, 0, sizeof(cache));
+    vpstart = GameGear ? 24 : 0;
+    vpend   = GameGear ? 168 : 192;
 
-    pending = latch = status = buffer = mode = \
-    cram_ptr = vram_ptr = ntab = satb = irq_state = \
-    curline = linesleft = 0;
+    /* Clear RAM */
+    memset(reg, 0, 0x10);
+    memset(cram, 0, 0x40);
+    memset(vram, 0, 0x4000);
+
+    /* Initialize VDP state variables */
+    addr = code = pending = latch = buffer = status = \
+    ntab = satb = curline = linesleft = irq_state = 0;
 
     is_vram_dirty = 1;
-    memset(vram_dirty, 1, sizeof(vram_dirty));
+    memset(vram_dirty, 1, 0x200);
 
     is_cram_dirty = 1;
-    memset(cram_dirty, 1, sizeof(cram_dirty));
+    memset(cram_dirty, 1, 0x20);
 
+    /* Clear pattern cache */
+    memset(cache, 0, 0x20000);
+
+    /* Make temp bitmap for rendering */
     tmpbitmap = osd_create_bitmap(256, 224);
     if(!tmpbitmap) return (1);
 
     return (0);
 }
+
 
 void sms_vdp_stop(void)
 {
@@ -120,103 +116,147 @@ void sms_vdp_stop(void)
 
 int sms_vdp_interrupt(void)
 {
-    static int need_vint = 0;
-
+    /* Bump scanline counter */
     curline = (curline + 1) % 262;
 
-    if ((curline < 192) && (!osd_skip_this_frame()))
+    if(curline <= 0xC0)
+    {
+        /* Technically, this happens at cycle 0xF4 of line 0xBF, but
+           this is close enough. */
+        if(curline == 0xC0)
+        {
+            status |= STATUS_VINT;
+        }
+
+        if(curline == 0x00)
+        {
+            linesleft = reg[10];
+        }
+
+        if(linesleft == 0x00)
+        {
+            linesleft = reg[10];
+            status |= STATUS_HINT;
+        }
+        else
+        {
+            linesleft -= 1;
+        }
+
+        if((status & STATUS_HINT) && (reg[0] & 0x10))
+        {
+            irq_state = 1;
+            z80_set_irq_line(0, ASSERT_LINE);
+        }
+    }
+    else
+    {
+        linesleft = reg[10];
+
+        if((curline < 0xE0) && (status & STATUS_VINT) && (reg[1] & 0x20))
+        {
+            irq_state = 1;
+            z80_set_irq_line(0, ASSERT_LINE);
+        }
+    }
+
+    if( (curline >= vpstart) && (curline < vpend) && (!osd_skip_this_frame()) )
     {
         sms_cache_tiles();
         sms_refresh_line(tmpbitmap, curline);
     }
 
-    if(curline >= 193)
-    {
-        if((curline < 224) && (status & STATUS_VIRQ) && (vdpreg[1] & 0x20))
-        {
-            irq_state = 1;
-        }
-    }
-    else
-    {
-        if(curline == 192) need_vint = 1;
-
-        if(!curline) linesleft = vdpreg[10];
-        if(linesleft) linesleft--;
-        else
-        {
-            linesleft = vdpreg[10];
-
-            status |= STATUS_HIRQ;
-        }
-
-        if((status & STATUS_HIRQ) && (vdpreg[0] & 0x10))
-        {
-            irq_state = 1;
-        }
-    }
-
-    if(need_vint == 1)
-    {
-        need_vint = 0;
-        status |= STATUS_VIRQ;
-    }
-
-    return (irq_state ? 0x38 : ignore_interrupt());
+    return (Z80_IGNORE_INT);
 }
 
 
 
 READ_HANDLER ( sms_vdp_data_r )
 {
-    int temp;
+    int temp = 0;
 
-    if (mode == MODE_CRAM)
-	{
-        temp = cram[cram_ptr];
-        cram_ptr = (cram_ptr + 1) & (GameGear ? 0x3F : 0x1F);
-	}
-    else
-	{
-        temp = buffer;
-        buffer = vram[vram_ptr];
-        vram_ptr = (vram_ptr + 1) & 0x3FFF;
-	}
+    /* Clear pending write flag */
+    pending = 0;
+
+    switch(code)
+    {
+        case 0x00: /* VRAM */
+        case 0x01: /* VRAM */
+        case 0x02: /* VRAM */
+
+            /* Return read buffer contents */
+            temp = buffer;
+
+            /* Load read buffer */
+            buffer = vram[(addr & 0xFFFF)];
+            break;
+
+        case 0x03: /* CRAM (invalid) */
+            /* This should never happen; only known use is a
+               dummy read in the GG game 'NBA Action' */
+            break;
+    }
+
+    /* Bump internal address register */
+    addr += 1;
     return (temp);
 }
+
 
 READ_HANDLER ( sms_vdp_ctrl_r )
 {
     int temp = status;
+
     pending = 0;
-    irq_state = 0;
-    status &= ~(STATUS_VIRQ | STATUS_HIRQ | STATUS_SPRCOL);
+
+    status &= ~(STATUS_VINT | STATUS_HINT | STATUS_SPRCOL);
+
+    if(irq_state == 1)
+    {
+        irq_state = 0;
+        z80_set_irq_line(0, CLEAR_LINE);
+    }
+
     return (temp);
 }
 
 
 WRITE_HANDLER ( sms_vdp_data_w )
 {
-    if (mode == MODE_CRAM)
-	{
-        if(data != cram[cram_ptr])
-        {
-            cram[cram_ptr] = data;
-            cram_dirty[GameGear ? cram_ptr >> 1 : cram_ptr] = is_cram_dirty = 1;
-        }
-        cram_ptr = (cram_ptr + 1) & (GameGear ? 0x3F : 0x1F);
-	}
-    else
-    {
-        if(data != vram[vram_ptr])
-        {
-            vram[vram_ptr] = data;
-            vram_dirty[vram_ptr >> 5] = is_vram_dirty = 1;
-        }
+    pending = 0;
 
-        buffer = data;
-        vram_ptr = (vram_ptr + 1) & 0x3FFF;
+    switch(code)
+    {
+        case 0x00:
+        case 0x01:
+        case 0x02:
+            {
+                int address = (addr & 0x3FFF);
+                int _index   = (addr & 0x3FFF) >> 5;
+
+                if(data != vram[address])
+                {
+                    vram[address] = data;
+                    vram_dirty[_index] = is_vram_dirty = 1;
+                }
+            }
+            break;
+
+        case 0x03:
+            {
+                int address = GameGear ? (addr & 0x3F) : (addr & 0x1F);
+                int _index   = GameGear ? ((addr & 0x3E) >> 1) : (addr & 0x1F);
+
+                if(data != cram[address])
+                {
+                    cram[address] = data;
+                    cram_dirty[_index] = is_cram_dirty = 1;
+                }
+            }
+            break;
     }
+
+    addr += 1;
 }
 
 
@@ -224,36 +264,30 @@ WRITE_HANDLER ( sms_vdp_data_w )
 
 WRITE_HANDLER ( sms_vdp_ctrl_w )
 {
-    if (pending == 0)
-	{
+    if(pending == 0)
+    {
         pending = 1;
         latch = data;
-	}
-	else
-	{
+    }
+    else
+    {
         pending = 0;
 
         if((data & 0xF0) == 0x80)
         {
-            vdpreg[data & 0x0F] = latch;
-            ntab = (vdpreg[2] << 10) & 0x3800;
-            satb = (vdpreg[5] <<  7) & 0x3F00;
-        }
-        else
-        if((data & 0xC0) == 0xC0)
-        {
-            cram_ptr = (latch & (GameGear ? 0x3F : 0x1F));
-            mode = MODE_CRAM;
+            reg[(data & 0x0F)] = latch;
+            ntab = (reg[2] << 10) & 0x3800;
+            satb = (reg[5] <<  7) & 0x3F00;
         }
         else
         {
-            vram_ptr = (int)((data << 8) | latch) & 0x3FFF;
-            mode = MODE_VRAM;
+            code = (data >> 6) & 3;
+            addr = (data << 8 | latch);
 
-            if(!(data & 0xC0))
+            if(code == 0x00)
             {
-                buffer = vram[vram_ptr];
-                vram_ptr = (vram_ptr + 1) & 0x3FFF;
+                buffer = vram[(addr & 0x3FFF)];
+                addr += 1;
             }
         }
     }
@@ -264,16 +298,16 @@ void sms_refresh_line(struct osd_bitmap *bitmap, int line)
 {
     int i, x, color;
     int charindex, palselect;
-    int sy, sx, sn, sl, width = 8, height = (vdpreg[1] & 0x02 ? 16 : 8);
-    int v_line = (line + vdpreg[9]) % 224, v_row = v_line & 7;
+    int sy, sx, sn, sl, width = 8, height = (reg[1] & 0x02 ? 16 : 8);
+    int v_line = (line + reg[9]) % 224, v_row = v_line & 7;
     UINT16 *nametable = (UINT16 *)&(vram[ntab+((v_line >> 3) << 6)]);
     UINT8 *objtable = (UINT8 *)&(vram[satb]);
-    int xscroll = (((vdpreg[0] & 0x40)&&(line < 16)) ? 0 : vdpreg[8]);
+    int xscroll = (((reg[0] & 0x40)&&(line < 16)) ? 0 : reg[8]);
 
     /* Check if display is disabled */
-    if(!(vdpreg[1] & 0x40))
+    if(!(reg[1] & 0x40))
     {
-        memset(&bitmap->line[line][0], Machine->pens[0x10 + vdpreg[7]], 0x100);
+        memset(&bitmap->line[line][0], Machine->pens[0x10 + reg[7]], 0x100);
         return;
     }
 
@@ -292,7 +326,7 @@ void sms_refresh_line(struct osd_bitmap *bitmap, int line)
         for(x=0;x<8;x++)
         {
             color = cache[ (charindex << 6) + (v_row << 3) + (x)];
-            bitmap->line[line][(xscroll+(i<<3)+x)%256] = Machine->pens[color | palselect];
+            bitmap->line[line][(xscroll+(i<<3)+x) & 0xFF] = Machine->pens[color | palselect];
         }
     }
 
@@ -304,24 +338,24 @@ void sms_refresh_line(struct osd_bitmap *bitmap, int line)
         if((line>=sy)&&(line<(sy+height)))
         {
             sx = objtable[0x80 + (i << 1)];
-            if(vdpreg[0]&0x08) sx -= 8;   /* sprite shift */
+            if(reg[0]&0x08) sx -= 8;   /* sprite shift */
             sn = objtable[0x81 + (i << 1)];
-            if(vdpreg[6]&0x04) sn += 256; /* pattern table select */
-            if(vdpreg[1]&0x02) sn &= 0x01FE; /* force even indexes */
+            if(reg[6]&0x04) sn += 256; /* pattern table select */
+            if(reg[1]&0x02) sn &= 0x01FE; /* force even index */
 
             sl = (line - sy);
 
             for(x=0;x<width;x++)
             {
                 color = cache[(sn << 6)+(sl << 3) + (x)];
-                if(color) bitmap->line[line][(sx + x) % 256] = Machine->pens[0x10 | color];
+                if(color) bitmap->line[line][(sx + x) & 0xFF] = Machine->pens[0x10 | color];
             }
         }
     }
 
-    if(vdpreg[0] & 0x20)
+    if(reg[0] & 0x20)
     {
-        memset(&bitmap->line[line][0], Machine->pens[0x10 + vdpreg[7]], 8);
+        memset(&bitmap->line[line][0], Machine->pens[0x10 + reg[7]], 8);
     }
 }
 
@@ -331,11 +365,14 @@ void sms_update_palette(void)
     int i, r, g, b;
 
     if(is_cram_dirty == 0) return;
+    is_cram_dirty = 0;
 
     for(i = 0; i < 0x20; i += 1)
     {
         if(cram_dirty[i] == 1)
         {
+            cram_dirty[i] = 0;
+
             if(GameGear == 1)
             {
                 r = ((cram[i * 2 + 0] >> 0) & 0x0F) << 4;
@@ -352,9 +389,6 @@ void sms_update_palette(void)
             palette_change_color(i, r, g, b);
         }
     }
-
-    is_cram_dirty = 0;
-    memset(cram_dirty, 0, sizeof(cram_dirty));
 }
 
 
@@ -365,11 +399,14 @@ void sms_cache_tiles(void)
     int i0, i1, i2, i3;
 
     if(is_vram_dirty == 0) return;
+    is_vram_dirty = 0;
 
     for(i = 0; i < 0x200; i += 1)
     {
         if(vram_dirty[i] == 1)
         {
+            vram_dirty[i] = 0;
+
             for(y=0;y<8;y++)
             {
                 b0 = vram[(i << 5) + (y << 2) + 0];
@@ -394,8 +431,6 @@ void sms_cache_tiles(void)
             }
         }
     }
-    is_vram_dirty = 0;
-    memset(vram_dirty, 0, sizeof(vram_dirty));
 }
 
 

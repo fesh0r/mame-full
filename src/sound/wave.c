@@ -627,6 +627,7 @@ int wave_status(int id, int newstatus)
 		{
 			if( w->timer )
 				w->offset += timer_timeelapsed(w->timer) * w->smpfreq;
+			timer_remove(w->timer);
 			w->timer = NULL;
 			bitmap_dirty = 1;
 		}

@@ -15,9 +15,9 @@
 #include "machine/6821pia.h"
 #include "inptport.h"
 
-int apple1_pia0_kbdin(UINT32);
-int apple1_pia0_dsprdy(UINT32);
-int apple1_pia0_kbdrdy(UINT32);
+READ_HANDLER( apple1_pia0_kbdin );
+READ_HANDLER( apple1_pia0_dsprdy );
+READ_HANDLER( apple1_pia0_kbdrdy );
 void apple1_pia0_dspout(UINT32, UINT32);
 void apple1_vh_dsp_w(int);
 void apple1_vh_dsp_clr(void);
@@ -62,8 +62,7 @@ static int apple1_kbd_data;
 void apple1_init_machine(void)
 {
 
-	if (errorlog)
-		fprintf(errorlog, "apple1_init\r\n");
+	logerror("apple1_init\r\n");
 
 }
 
@@ -108,7 +107,7 @@ int apple1_interrupt(void)
 					apple1_kbd_data = apple1_kbd_conv[loop];
 				}
 				loop = 51;
-				//if (errorlog) fprintf (errorlog, "key: %c\r\n", apple1_kbd_data);
+				//logerror("key: %c\r\n", apple1_kbd_data);
 			}
 		}
 	}
@@ -126,21 +125,21 @@ void init_apple1(void)
 
 /* || */
 
-int apple1_pia0_kbdin(UINT32 offset)
+READ_HANDLER( apple1_pia0_kbdin )
 {
 
 	return (apple1_kbd_data | 0x80);
 
 }
 
-int apple1_pia0_dsprdy(UINT32 offset)
+READ_HANDLER( apple1_pia0_dsprdy )
 {
 
 	return (0x00);					   /* Screen always ready */
 
 }
 
-int apple1_pia0_kbdrdy(UINT32 offset)
+READ_HANDLER( apple1_pia0_kbdrdy )
 {
 
 	if (apple1_kbd_data)

@@ -10,13 +10,6 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-#define VERBOSE 1
-
-#if VERBOSE
-#define LOG(x)	if( errorlog ) fprintf x
-#else
-#define LOG(x)	/* x */
-#endif
 
 #define BORDER_H	64
 #define BORDER_V	32
@@ -372,7 +365,7 @@ void laser_bg_mode_w(int offs, int data)
     {
         bitmap_dirty = 1;
         laser_bg_mode = data;
-		LOG((errorlog,"laser border:$%X mode:$%X\n", data >> 4, data & 15));
+		logerror("laser border:$%X mode:$%X\n", data >> 4, data & 15);
     }
 }
 
@@ -382,7 +375,7 @@ void laser_two_color_w(int offs, int data)
 	{
 		bitmap_dirty = 1;
 		laser_two_color = data;
-		LOG((errorlog,"laser foreground:$%X background:$%X\n", data >> 4, data & 15));
+		logerror("laser foreground:$%X background:$%X\n", data >> 4, data & 15);
     }
 }
 

@@ -115,6 +115,8 @@ extern void a2600_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 /* machine/a2600.c */
 extern READ_HANDLER  ( a2600_TIA_r );
 extern WRITE_HANDLER ( a2600_TIA_w );
+extern READ_HANDLER  ( a2600_riot_r );
+extern WRITE_HANDLER ( a2600_riot_w );
 extern void a2600_init_machine(void);
 extern void a2600_stop_machine(void);
 extern int	a2600_id_rom (int id);
@@ -138,15 +140,19 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x0240, 0x027F, a2600_TIA_r },
 
 	//{ 0x0280, 0x0297, riot_0_r    },	/* RIOT reads for a2600 */
-	{ 0x0280, 0x028F, riot_0_r    },	/* RIOT reads for a2600 */
-	{ 0x0290, 0x0297, riot_0_r    },	/* RIOT reads for a2600 */
+	//{ 0x0280, 0x0284, riot_0_r    },	/* RIOT reads for a2600 */
+	//{ 0x0294, 0x0297, riot_0_r    },	/* RIOT reads for a2600 */
+	{ 0x0280, 0x0297, a2600_riot_r },	/* RIOT reads for a2600 */
+
 
 	{ 0x0300, 0x033F, a2600_TIA_r },
 	{ 0x0340, 0x037F, a2600_TIA_r },
 
 	//{ 0x0380, 0x0397, riot_0_r    },	/* RIOT reads for a2600 */
-	{ 0x0380, 0x038F, riot_0_r    },	/* RIOT reads for a2600 */
-	{ 0x0390, 0x0397, riot_0_r    },	/* RIOT reads for a2600 */
+	//{ 0x0380, 0x0384, riot_0_r    },	/* RIOT reads for a2600 */
+	//{ 0x0394, 0x0397, riot_0_r    },	/* RIOT reads for a2600 */
+	{ 0x0280, 0x0297, a2600_riot_r },	/* RIOT reads for a2600 */
+
 
 	{ 0x1000, 0x17FF, MRA_ROM     },
 	{ 0x1800, 0x1FFF, MRA_ROM     },	/* ROM mirror for 2k images */
@@ -167,15 +173,20 @@ static struct MemoryWriteAddress writemem[] =
 
 	{ 0x0200, 0x023F, a2600_TIA_w },
 	{ 0x0240, 0x027F, a2600_TIA_w },
+
 	//{ 0x0280, 0x0297, riot_0_w    },	/* RIOT writes for a2600 */
-	{ 0x0280, 0x028F, riot_0_w    },	/* RIOT writes for a2600 */
-	{ 0x0290, 0x0297, riot_0_w    },	/* RIOT writes for a2600 */
+	//{ 0x0280, 0x0284, riot_0_w    },	/* RIOT writes for a2600 */
+	//{ 0x0294, 0x0297, riot_0_w    },	/* RIOT writes for a2600 */
+	{ 0x0280, 0x0297, a2600_riot_w },	/* RIOT writes for a2600 */
+
 
 	{ 0x0300, 0x033F, a2600_TIA_w },
 	{ 0x0340, 0x037F, a2600_TIA_w },
+
 	//{ 0x0380, 0x0397, riot_0_w    },	/* RIOT writes for a2600 */
-	{ 0x0380, 0x038F, riot_0_w    },	/* RIOT writes for a2600 */
-	{ 0x0390, 0x0397, riot_0_w    },	/* RIOT writes for a2600 */
+	//{ 0x0380, 0x0384, riot_0_w    },	/* RIOT writes for a2600 */
+	//{ 0x0394, 0x0397, riot_0_w    },	/* RIOT writes for a2600 */
+	{ 0x0280, 0x0297, a2600_riot_w },	/* RIOT writes for a2600 */
 
 	{ 0x1000, 0x17FF, MWA_ROM  },
 	{ 0x1800, 0x1FFF, MWA_ROM  },	/* ROM mirror for 2k images */
@@ -186,7 +197,9 @@ static struct MemoryWriteAddress writemem[] =
 
 
 INPUT_PORTS_START( a2600 )
-	PORT_START      /* IN0 DONE!*/
+
+
+	PORT_START /* SWCHA 0x280 RIOT */
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2 )
 	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2 )
 	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2 )
@@ -196,21 +209,14 @@ INPUT_PORTS_START( a2600 )
 	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT)
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT)
 
-	PORT_START      /* IN1 */
-    PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
-    PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-    PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2 )
-    PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON2 )
-	PORT_BIT ( 0xF0, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_START /* SWACNT 0x281 RIOT */
+	PORT_BIT ( 0x00, IP_ACTIVE_HIGH, IPT_UNKNOWN)
 
-    PORT_START      /* IN2 */
-	PORT_BIT (0x7F, IP_ACTIVE_LOW, IPT_UNUSED)
-	//PORT_BIT (0x80, IP_ACTIVE_HIGH, IPT_VBLANK)
-
-	PORT_START      /* IN3 */
+    PORT_START /* SWCHB 0x282 RIOT */
 	PORT_BITX( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN, "Reset", KEYCODE_R, IP_JOY_DEFAULT)
 	PORT_BITX( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN, "Start", KEYCODE_S, IP_JOY_DEFAULT)
-	PORT_BIT ( 0xFC, IP_ACTIVE_LOW, IPT_UNUSED)
+	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_UNUSED)
+	PORT_BITX( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN, "Color/BW", KEYCODE_C, IP_JOY_DEFAULT)
 
 INPUT_PORTS_END
 
@@ -401,7 +407,7 @@ static void init_a2600(void)
 
 ROM_START( a2600 )
 	ROM_REGION( 0x10000, REGION_CPU1 ) /* 6502 memory */
-	ROM_REGION( 0x00100, REGION_GFX1 ) /* memory for bit patterns */
+	//ROM_REGION( 0x00100, REGION_GFX1 ) /* memory for bit patterns */
 ROM_END
 
 static const struct IODevice io_a2600[] = {

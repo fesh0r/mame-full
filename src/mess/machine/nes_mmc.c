@@ -57,7 +57,7 @@ void nes_mapper_w (int offset, int data)
 /* Handle unusual mapper reads from $4100-$5fff */
 int nes_strange_mapper_r (int offset)
 {
-	if (errorlog) fprintf (errorlog, "low mapper area read, addr: %04x\n", offset + 0x4100);
+	logerror("low mapper area read, addr: %04x\n", offset + 0x4100);
 	switch (Mapper)
 	{
 		case 5:
@@ -81,7 +81,7 @@ void nes_strange_mapper_w (int offset, int data)
 	{
 		case 5:
 			/* The bulk of this information comes via D and Jim Geffre */
-			if (errorlog) fprintf (errorlog, "Mapper 5 write, offset: %04x, data: %02x\n", offset + 0x4100, data);
+			logerror("Mapper 5 write, offset: %04x, data: %02x\n", offset + 0x4100, data);
 			switch (offset)
 			{
 				/* $5010 - sound IRQ control? uncharted, cv3 set to 0 */
@@ -224,7 +224,7 @@ void nes_strange_mapper_w (int offset, int data)
 				case 0x406:
 				case 0x407:
 					data &= ((PRG_Rom << 1) - 1);
-					if (errorlog) fprintf (errorlog, "Mapper 17 bank switch, bank: %02x, data: %02x\n", offset & 0x03, data);
+					logerror("Mapper 17 bank switch, bank: %02x, data: %02x\n", offset & 0x03, data);
 					cpu_setbank ((offset & 0x03) + 1, &NES_ROM[0x2000 * (data) + 0x10000]);
 					break;
 				/* $4510 - $4517 : 1k CHR-Rom switch */
@@ -240,12 +240,12 @@ void nes_strange_mapper_w (int offset, int data)
 					nes_vram[offset & 0x07] = data * 64;
 					break;
 				default:
-					if (errorlog) fprintf (errorlog, "Mapper 17 write, offset: %04x, data: %02x\n", offset, data);
+					logerror("Mapper 17 write, offset: %04x, data: %02x\n", offset, data);
 					break;
 			}
 			break;
 		default:
-			if (errorlog) fprintf (errorlog, "Unimplemented write, offset: %04x, data: %02x\n", offset + 0x4100, data);
+			logerror("Unimplemented write, offset: %04x, data: %02x\n", offset + 0x4100, data);
 			break;
 	}
 }
@@ -254,7 +254,7 @@ void nes_strange_mapper_w (int offset, int data)
  */
 static void NoneWR (int offset, int data)
 {
-	if (errorlog) fprintf (errorlog, "Unimplemented mapper write, offset: %04x, data: %02x\n", offset, data);
+	logerror("Unimplemented mapper write, offset: %04x, data: %02x\n", offset, data);
 #if 1
 	if (! mapper_warning)
 	{
@@ -280,7 +280,7 @@ static void NoneWR (int offset, int data)
  */
 static void RomSw_Write (int offset, int data)
 {
-	if (errorlog) fprintf (errorlog, "* Mapper 2 switch %02x\n", data);
+	logerror("* Mapper 2 switch %02x\n", data);
 	data &= (PRG_Rom - 1);
 	cpu_setbank (1, &NES_ROM[data * 0x4000 + 0x10000]);
 	cpu_setbank (2, &NES_ROM[data * 0x4000 + 0x12000]);
@@ -294,7 +294,7 @@ static void Mapper8_Write (int offset, int data)
 	int bank;
 	int i;
 
-	if (errorlog) fprintf (errorlog, "* Mapper 8 switch, vrom: %02x, rom: %02x\n", data & 0x07, (data >> 3));
+	logerror("* Mapper 8 switch, vrom: %02x, rom: %02x\n", data & 0x07, (data >> 3));
 	/* Switch 8k VROM bank */
 	bank = data & (CHR_Rom - 1);
 	for (i = 0; i < 8; i ++)
@@ -313,7 +313,7 @@ static void CDrms_Write (int offset, int data)
 	int bank;
 	int i;
 
-	if (errorlog) fprintf (errorlog, "* Mapper 11 switch, data: %02x\n", data);
+	logerror("* Mapper 11 switch, data: %02x\n", data);
 
 	/* Switch 8k VROM bank */
 	bank = (data >> 4) & (CHR_Rom - 1);
@@ -351,7 +351,7 @@ static void MMC1_Write (int offset, int data)
 		MMC1_Size_16k = 1;
 		MMC1_Switch_Low = 1;
 		/* TODO: should we switch banks at this time also? */
-		if (errorlog) fprintf (errorlog, "=== MMC1 regs reset to default\n");
+		logerror("=== MMC1 regs reset to default\n");
 		return;
 	}
 
@@ -365,7 +365,7 @@ static void MMC1_Write (int offset, int data)
 
 	if (MMC1_reg_count == 5)
 	{
-//		if (errorlog) fprintf (errorlog, "   MMC1 reg#%02x val:%02x\n", offset, MMC1_reg);
+//		logerror("   MMC1 reg#%02x val:%02x\n", offset, MMC1_reg);
 		switch (reg)
 		{
 			case 0:
@@ -403,34 +403,32 @@ static void MMC1_Write (int offset, int data)
 				PPU_one_screen = (!(MMC1_reg & 0x02)) << 13;
 				MMC1_SizeVrom_4k = (MMC1_reg & 0x10);
 #ifdef VERBOSE_ERRORS
-				if (errorlog) fprintf (errorlog, "   MMC1 reg #1 val:%02x\n", MMC1_reg);
-				if (errorlog)
-				{
-					fprintf (errorlog, "\t\tBank Size: ");
+				logerror("   MMC1 reg #1 val:%02x\n", MMC1_reg);
+					logerror("\t\tBank Size: ");
 					if (MMC1_Size_16k)
-						fprintf (errorlog, "16k\n");
-					else fprintf (errorlog, "32k\n");
+						logerror("16k\n");
+					else logerror("32k\n");
 
-					fprintf (errorlog, "\t\tBank Select: ");
+					logerror("\t\tBank Select: ");
 					if (MMC1_Switch_Low)
-						fprintf (errorlog, "$8000\n");
-					else fprintf (errorlog, "$C000\n");
+						logerror("$8000\n");
+					else logerror("$C000\n");
 
-					fprintf (errorlog, "\t\tVROM Bankswitch Size Select: ");
+					logerror("\t\tVROM Bankswitch Size Select: ");
 					if (MMC1_SizeVrom_4k)
-						fprintf (errorlog, "4k\n");
-					else fprintf (errorlog, "8k\n");
+						logerror("4k\n");
+					else logerror("8k\n");
 
-					fprintf (errorlog, "\t\tMirroring: ");
+					logerror("\t\tMirroring: ");
 					if (Mirroring == 2)
-						fprintf (errorlog, "Vertical\n");
-					else fprintf (errorlog, "Horizontal\n");
+						logerror("Vertical\n");
+					else logerror("Horizontal\n");
 
-					fprintf (errorlog, "\t\tOne Screen: ");
+					logerror("\t\tOne Screen: ");
 					if (PPU_one_screen)
-						fprintf (errorlog, "On\n");
-					else fprintf (errorlog, "Off\n");
-				}
+						logerror("On\n");
+					else logerror("Off\n");
+
 #endif
 				break;
 
@@ -447,7 +445,7 @@ static void MMC1_Write (int offset, int data)
 						cpu_setbank (2, &NES_ROM[MMC1_extended_base + MMC1_bank2]);
 						cpu_setbank (3, &NES_ROM[MMC1_extended_base + MMC1_bank3]);
 						cpu_setbank (4, &NES_ROM[MMC1_extended_base + MMC1_bank4]);
-						if (errorlog) fprintf (errorlog, "MMC1_extended 1024k bank (no reg) select: %02x\n", MMC1_extended_bank);
+						logerror("MMC1_extended 1024k bank (no reg) select: %02x\n", MMC1_extended_bank);
 					}
 					else
 					{
@@ -459,7 +457,7 @@ static void MMC1_Write (int offset, int data)
 							cpu_setbank (2, &NES_ROM[MMC1_extended_base + MMC1_bank2]);
 							cpu_setbank (3, &NES_ROM[MMC1_extended_base + MMC1_bank3]);
 							cpu_setbank (4, &NES_ROM[MMC1_extended_base + MMC1_bank4]);
-							if (errorlog) fprintf (errorlog, "MMC1_extended 1024k bank (reg 1) select: %02x\n", MMC1_extended_bank);
+							logerror("MMC1_extended 1024k bank (reg 1) select: %02x\n", MMC1_extended_bank);
 							MMC1_extended_swap = 0;
 						}
 						else MMC1_extended_swap = 1;
@@ -473,11 +471,11 @@ static void MMC1_Write (int offset, int data)
 					cpu_setbank (2, &NES_ROM[MMC1_extended_base + MMC1_bank2]);
 					cpu_setbank (3, &NES_ROM[MMC1_extended_base + MMC1_bank3]);
 					cpu_setbank (4, &NES_ROM[MMC1_extended_base + MMC1_bank4]);
-					if (errorlog) fprintf (errorlog, "MMC1_extended 512k bank select: %02x\n", MMC1_extended_bank & 0x01);
+					logerror("MMC1_extended 512k bank select: %02x\n", MMC1_extended_bank & 0x01);
 				}
 				else if (CHR_Rom > 0)
 				{
-//					if (errorlog) fprintf (errorlog, "MMC1_SizeVrom_4k: %02x bank:%02x\n", MMC1_SizeVrom_4k, MMC1_reg);
+//					logerror("MMC1_SizeVrom_4k: %02x bank:%02x\n", MMC1_SizeVrom_4k, MMC1_reg);
 
 					if (!MMC1_SizeVrom_4k)
 					{
@@ -486,7 +484,7 @@ static void MMC1_Write (int offset, int data)
 						for (i = 0; i < 8; i ++)
 							nes_vram[i] = bank * 256 + 64*i;
 #ifdef VERBOSE_ERRORS
-						if (errorlog) fprintf (errorlog, "MMC1 8k VROM switch: %02x\n", MMC1_reg);
+						logerror("MMC1 8k VROM switch: %02x\n", MMC1_reg);
 						#ifdef macintosh
 //						SysBeep (0);
 						#endif
@@ -499,7 +497,7 @@ static void MMC1_Write (int offset, int data)
 						for (i = 0; i < 4; i ++)
 							nes_vram[i] = bank * 256 + 64*i;
 #ifdef VERBOSE_ERRORS
-						if (errorlog) fprintf (errorlog, "MMC1 4k VROM switch (low): %02x\n", MMC1_reg);
+						logerror("MMC1 4k VROM switch (low): %02x\n", MMC1_reg);
 #endif
 					}
 				}
@@ -510,7 +508,7 @@ static void MMC1_Write (int offset, int data)
 //Ò       Ò $DFFF Ò          Ò  Sets the 4K CHR-RAM page at $1000, but    Ò
 //Ò       Ò       Ò          Ò  only if 4K CHR-RAM pages are selected via Ò
 //Ò       Ò       Ò          Ò  Register #0 (otherwise ignored).          Ò
-//				if (errorlog) fprintf (errorlog, "MMC1_Reg_2: %02x\n",MMC1_Reg_2);
+//				logerror("MMC1_Reg_2: %02x\n",MMC1_Reg_2);
 				MMC1_extended_bank = (MMC1_extended_bank & ~0x02) | ((MMC1_reg & 0x10) >> 3);
 				if (MMC1_extended == 2 && MMC1_SizeVrom_4k)
 				{
@@ -522,7 +520,7 @@ static void MMC1_Write (int offset, int data)
 						cpu_setbank (2, &NES_ROM[MMC1_extended_base + MMC1_bank2]);
 						cpu_setbank (3, &NES_ROM[MMC1_extended_base + MMC1_bank3]);
 						cpu_setbank (4, &NES_ROM[MMC1_extended_base + MMC1_bank4]);
-						if (errorlog) fprintf (errorlog, "MMC1_extended 1024k bank (reg 2) select: %02x\n", MMC1_extended_bank);
+						logerror("MMC1_extended 1024k bank (reg 2) select: %02x\n", MMC1_extended_bank);
 						MMC1_extended_swap = 0;
 					}
 					else
@@ -535,7 +533,7 @@ static void MMC1_Write (int offset, int data)
 					for (i = 4; i < 8; i ++)
 						nes_vram[i] = bank * 256 + 64*(i-4);
 #ifdef VERBOSE_ERRORS
-						if (errorlog) fprintf (errorlog, "MMC1 4k VROM switch (high): %02x\n", MMC1_reg);
+						logerror("MMC1 4k VROM switch (high): %02x\n", MMC1_reg);
 #endif
 				}
 				break;
@@ -565,7 +563,7 @@ static void MMC1_Write (int offset, int data)
 						cpu_setbank (3, &NES_ROM[MMC1_extended_base + MMC1_bank3]);
 						cpu_setbank (4, &NES_ROM[MMC1_extended_base + MMC1_bank4]);
 					}
-					if (errorlog) fprintf (errorlog, "MMC1 32k bank select: %02x\n", MMC1_reg);
+					logerror("MMC1 32k bank select: %02x\n", MMC1_reg);
 				}
 				else
 				/* Switching one 16k bank */
@@ -586,7 +584,7 @@ static void MMC1_Write (int offset, int data)
 							cpu_setbank (3, &NES_ROM[MMC1_extended_base + MMC1_bank3]);
 							cpu_setbank (4, &NES_ROM[MMC1_extended_base + MMC1_bank4]);
 						}
-						if (errorlog) fprintf (errorlog, "MMC1 16k-low bank select: %02x\n", MMC1_reg);
+						logerror("MMC1 16k-low bank select: %02x\n", MMC1_reg);
 					}
 					else
 					{
@@ -605,16 +603,14 @@ static void MMC1_Write (int offset, int data)
 							cpu_setbank (3, &NES_ROM[MMC1_extended_base + MMC1_bank3]);
 							cpu_setbank (4, &NES_ROM[MMC1_extended_base + MMC1_bank4]);
 						}
-						if (errorlog) fprintf (errorlog, "MMC1 16k-high bank select: %02x\n", MMC1_reg);
+						logerror("MMC1 16k-high bank select: %02x\n", MMC1_reg);
 					}
 				}
-			if (errorlog)
-			{
-				fprintf (errorlog, "-- page1: %06x\n", MMC1_bank1);
-				fprintf (errorlog, "-- page2: %06x\n", MMC1_bank2);
-				fprintf (errorlog, "-- page3: %06x\n", MMC1_bank3);
-				fprintf (errorlog, "-- page4: %06x\n", MMC1_bank4);
-			}
+
+				logerror("-- page1: %06x\n", MMC1_bank1);
+				logerror("-- page2: %06x\n", MMC1_bank2);
+				logerror("-- page3: %06x\n", MMC1_bank3);
+				logerror("-- page4: %06x\n", MMC1_bank4);
 				break;
 		}
 	MMC1_reg_count = 0;
@@ -629,7 +625,7 @@ static void VRomSw_Write (int offset, int data)
 {
 	int i;
 
-	if (errorlog) fprintf (errorlog, "Mapper 3 vrom switch, %04x:%02x\n", offset, data);
+	logerror("Mapper 3 vrom switch, %04x:%02x\n", offset, data);
 	for (i = 0; i < 8; i ++)
 		nes_vram[i] = (data & (CHR_Rom -1)) * 512 + 64*i;
 }
@@ -642,12 +638,12 @@ static void Mapper4_Write (int offset, int data)
 	static int select_high;
 	static int page;
 
-//	if (errorlog) fprintf (errorlog, "mapper4_w offset: %04x, data: %02x, scanline: %d\n", offset, data, current_scanline);
+//	logerror("mapper4_w offset: %04x, data: %02x, scanline: %d\n", offset, data, current_scanline);
 
 	switch (offset & 0x7001)
 	{
 		case 0x0000:
-//			if (errorlog) fprintf (errorlog, "MMC3 0x8000 write value: %02x\n",data);
+//			logerror("MMC3 0x8000 write value: %02x\n",data);
 			cmd = data & 0x07;
 			if (data & 0x80)
 				chr = 0x1000;
@@ -662,7 +658,7 @@ static void Mapper4_Write (int offset, int data)
 				#ifdef macintosh
 				SysBeep (0);
 				#endif
-				if (errorlog) fprintf (errorlog, "HACK ALERT -- MMC3 select_high has changed!\n");
+				logerror("HACK ALERT -- MMC3 select_high has changed!\n");
 				/* TODO: this makes PowerPunch 2 work, but is it correct? */
 				if (data & 0x40)
 				{
@@ -674,7 +670,7 @@ static void Mapper4_Write (int offset, int data)
 				}
 			}
 			select_high = data & 0x40;
-			if (errorlog) fprintf (errorlog, "   MMC3 select_high: %02x\n", select_high);
+			logerror("   MMC3 select_high: %02x\n", select_high);
 			break;
 
 		case 0x0001:
@@ -715,12 +711,12 @@ static void Mapper4_Write (int offset, int data)
 					if (select_high)
 					{
 						cpu_setbank (3, &NES_ROM[0x2000 * (data) + 0x10000]);
-						if (errorlog) fprintf (errorlog, "     MMC3 switch ($c000) cmd 6 value: %02x\n", data);
+						logerror("     MMC3 switch ($c000) cmd 6 value: %02x\n", data);
 					}
 					else
 					{
 						cpu_setbank (1, &NES_ROM[0x2000 * (data) + 0x10000]);
-						if (errorlog) fprintf (errorlog, "     MMC3 switch ($8000) cmd 6 value: %02x\n", data);
+						logerror("     MMC3 switch ($8000) cmd 6 value: %02x\n", data);
 					}
 					break;
 				case 7:
@@ -728,46 +724,46 @@ static void Mapper4_Write (int offset, int data)
 					/* i.e. the Simpsons series, the Batman games, Gauntlet 2, etc. */
 					data &= ((PRG_Rom << 1) - 1);
 					cpu_setbank (2, &NES_ROM[0x2000 * (data) + 0x10000]);
-					if (errorlog) fprintf (errorlog, "     MMC3 switch ($a000) cmd 7 value: %02x select_high: %02x\n", data, select_high);
+					logerror("     MMC3 switch ($a000) cmd 7 value: %02x select_high: %02x\n", data, select_high);
 					break;
 			}
 			cmd = 8;
 			break;
 		case 0x2000:
-			if (errorlog) fprintf (errorlog, "     MMC3 mirroring: %02x\n", data);
+			logerror("     MMC3 mirroring: %02x\n", data);
 			Mirroring = 0x02 >> (data & 0x01);
 			break;
 
 		case 0x4000: /* IRQ scanline counter */
 			MMC3_IRQ = data;
-			if (errorlog) fprintf (errorlog, "     MMC3 copy/set irq latch: %02x\n", data);
+			logerror("     MMC3 copy/set irq latch: %02x\n", data);
 			break;
 
 		case 0x4001: /* IRQ latch value */
 			irq = data;
-			if (errorlog) fprintf (errorlog, "     MMC3 set latch: %02x\n", data);
+			logerror("     MMC3 set latch: %02x\n", data);
 			break;
 
 		case 0x6000: /* Copy latch & disable IRQs */
-			if (errorlog) fprintf (errorlog, "     MMC3 copy latch (disable irqs): %02x\n", data);
+			logerror("     MMC3 copy latch (disable irqs): %02x\n", data);
 			MMC3_IRQ = irq;
 			MMC3_DOIRQ = 0;
 			break;
 
 		case 0x6001: /* Enable IRQs */
 			MMC3_DOIRQ = 1;
-			if (errorlog) fprintf (errorlog, "     MMC3 enable irqs: %02x\n", data);
+			logerror("     MMC3 enable irqs: %02x\n", data);
 			break;
 
 		default:
-			if (errorlog) fprintf (errorlog, "MMC3 addr: %04x value: %02x\n", offset + 0x8000, data);
+			logerror("MMC3 addr: %04x value: %02x\n", offset + 0x8000, data);
 			break;
 	}
 }
 
 void Mapper5_Write (int offset, int data)
 {
-//	if (errorlog) fprintf (errorlog, "MMC5 W %04x: %02x\n", addr, data);
+//	logerror("MMC5 W %04x: %02x\n", addr, data);
 }
 
 void Mapper7_Write (int offset, int data)
@@ -861,7 +857,7 @@ videoram you access.
 				for (i = 0; i < 4; i ++)
 					nes_vram[i] = data * 256 + 64*i;
 			}
-			if (errorlog) fprintf (errorlog, "MMC2 VROM switch #1 (low): %02x\n", data);
+			logerror("MMC2 VROM switch #1 (low): %02x\n", data);
 			break;
 		case 0x5000:
 			if (MMC2_bank1 == 0xfd)
@@ -871,8 +867,8 @@ videoram you access.
 					nes_vram[i] = data * 256 + 64*(i-4);
 				MMC2_hibank1_val = data;
 			}
-			else if (errorlog) fprintf (errorlog, "IGNORED -- ");
-			if (errorlog) fprintf (errorlog, "MMC2 VROM switch #1 (high): %02x\n", data);
+			else logerror("IGNORED -- ");
+			logerror("MMC2 VROM switch #1 (high): %02x\n", data);
 			break;
 		case 0x6000:
 			if (MMC2_bank1 == 0xfe)
@@ -882,8 +878,8 @@ videoram you access.
 					nes_vram[i] = data * 256 + 64*(i-4);
 				MMC2_hibank2_val = data;
 			}
-			else if (errorlog) fprintf (errorlog, "IGNORED -- ");
-			if (errorlog) fprintf (errorlog, "MMC2 VROM switch #2 (high): %02x\n", data);
+			else logerror("IGNORED -- ");
+			logerror("MMC2 VROM switch #2 (high): %02x\n", data);
 			break;
 		/* TODO: Punch-Out seems to need CHR-NES_ROM bank 0 switched in high at the top of each frame */
 		case 0x7000:
@@ -893,7 +889,7 @@ videoram you access.
 				Mirroring = 1;
 			break;
 	}
-	if (errorlog) fprintf (errorlog, "MMC2 w: %04x:%02x\n", offset, data);
+	logerror("MMC2 w: %04x:%02x\n", offset, data);
 }
 
 /*
@@ -993,183 +989,183 @@ static void Mapper18_Write (int offset, int data)
 			bank_8000 = (bank_8000 & 0xf0) | (data & 0x0f);
 			bank_8000 &= ((PRG_Rom << 1) - 1);
 			cpu_setbank (1, &NES_ROM[0x2000 * (bank_8000) + 0x10000]);
-//			if (errorlog) fprintf (errorlog, "     Mapper 18 switch ($8000 low 4) value: %02x\n", data);
+//			logerror("     Mapper 18 switch ($8000 low 4) value: %02x\n", data);
 			break;
 		case 0x0001:
 			/* Switch 8k bank at $8000 - high 4 bits */
 			bank_8000 = (bank_8000 & 0x0f) | (data << 4);
 			bank_8000 &= ((PRG_Rom << 1) - 1);
 			cpu_setbank (1, &NES_ROM[0x2000 * (bank_8000) + 0x10000]);
-//			if (errorlog) fprintf (errorlog, "     Mapper 18 switch ($8000 high 4) value: %02x\n", data);
+//			logerror("     Mapper 18 switch ($8000 high 4) value: %02x\n", data);
 			break;
 		case 0x0002:
 			/* Switch 8k bank at $a000 - low 4 bits */
 			bank_a000 = (bank_a000 & 0xf0) | (data & 0x0f);
 			bank_a000 &= ((PRG_Rom << 1) - 1);
 			cpu_setbank (2, &NES_ROM[0x2000 * (bank_a000) + 0x10000]);
-//			if (errorlog) fprintf (errorlog, "     Mapper 18 switch ($a000 low 4) value: %02x\n", data);
+//			logerror("     Mapper 18 switch ($a000 low 4) value: %02x\n", data);
 			break;
 		case 0x0003:
 			/* Switch 8k bank at $a000 - high 4 bits */
 			bank_a000 = (bank_a000 & 0x0f) | (data << 4);
 			bank_a000 &= ((PRG_Rom << 1) - 1);
 			cpu_setbank (2, &NES_ROM[0x2000 * (bank_a000) + 0x10000]);
-//			if (errorlog) fprintf (errorlog, "     Mapper 18 switch ($a000 high 4) value: %02x\n", data);
+//			logerror("     Mapper 18 switch ($a000 high 4) value: %02x\n", data);
 			break;
 		case 0x1000:
 			/* Switch 8k bank at $c000 - low 4 bits */
 			bank_c000 = (bank_c000 & 0xf0) | (data & 0x0f);
 			bank_c000 &= ((PRG_Rom << 1) - 1);
 			cpu_setbank (3, &NES_ROM[0x2000 * (bank_c000) + 0x10000]);
-//			if (errorlog) fprintf (errorlog, "     Mapper 18 switch ($c000 low 4) value: %02x, new bank: %02x\n", data, bank_c000);
+//			logerror("     Mapper 18 switch ($c000 low 4) value: %02x, new bank: %02x\n", data, bank_c000);
 			break;
 		case 0x1001:
 			/* Switch 8k bank at $c000 - high 4 bits */
 			bank_c000 = (bank_c000 & 0x0f) | (data << 4);
 			bank_c000 &= ((PRG_Rom << 1) - 1);
 			cpu_setbank (3, &NES_ROM[0x2000 * (bank_c000) + 0x10000]);
-//			if (errorlog) fprintf (errorlog, "     Mapper 18 switch ($c000 high 4) value: %02x, new bank: %02x\n", data, bank_c000);
+//			logerror("     Mapper 18 switch ($c000 high 4) value: %02x, new bank: %02x\n", data, bank_c000);
 			break;
 		case 0x2000:
 			/* Switch 1k vrom at $0000 - low 4 bits */
 			vrom_bank[0] = (vrom_bank[0] & 0xf0) | (data & 0x0f);
 			vrom_bank[0] &= ((CHR_Rom << 3) - 1);
 			nes_vram[0] = vrom_bank[0] * 64;
-//			if (errorlog) fprintf (errorlog, "     Mapper 18 vrom ($0000 low 4) value: %02x\n", data);
+//			logerror("     Mapper 18 vrom ($0000 low 4) value: %02x\n", data);
 			break;
 		case 0x2001:
 			/* Switch 1k vrom at $0000 - high 4 bits */
 			vrom_bank[0] = (vrom_bank[0] & 0x0f) | (data << 4);
 			vrom_bank[0] &= ((CHR_Rom << 3) - 1);
 			nes_vram[0] = vrom_bank[0] * 64;
-//			if (errorlog) fprintf (errorlog, "     Mapper 18 vrom ($0000 high 4) value: %02x\n", data);
+//			logerror("     Mapper 18 vrom ($0000 high 4) value: %02x\n", data);
 			break;
 		case 0x2002:
 			/* Switch 1k vrom at $0400 - low 4 bits */
 			vrom_bank[1] = (vrom_bank[1] & 0xf0) | (data & 0x0f);
 			vrom_bank[1] &= ((CHR_Rom << 3) - 1);
 			nes_vram[1] = vrom_bank[1] * 64;
-//			if (errorlog) fprintf (errorlog, "     Mapper 18 vrom ($0400 low 4) value: %02x\n", data);
+//			logerror("     Mapper 18 vrom ($0400 low 4) value: %02x\n", data);
 			break;
 		case 0x2003:
 			/* Switch 1k vrom at $0400 - high 4 bits */
 			vrom_bank[1] = (vrom_bank[1] & 0x0f) | (data << 4);
 			vrom_bank[1] &= ((CHR_Rom << 3) - 1);
 			nes_vram[1] = vrom_bank[1] * 64;
-//			if (errorlog) fprintf (errorlog, "     Mapper 18 vrom ($0400 high 4) value: %02x\n", data);
+//			logerror("     Mapper 18 vrom ($0400 high 4) value: %02x\n", data);
 			break;
 		case 0x3000:
 			/* Switch 1k vrom at $0800 - low 4 bits */
 			vrom_bank[2] = (vrom_bank[2] & 0xf0) | (data & 0x0f);
 			vrom_bank[2] &= ((CHR_Rom << 3) - 1);
 			nes_vram[2] = vrom_bank[2] * 64;
-//			if (errorlog) fprintf (errorlog, "     Mapper 18 vrom ($0800 low 4) value: %02x\n", data);
+//			logerror("     Mapper 18 vrom ($0800 low 4) value: %02x\n", data);
 			break;
 		case 0x3001:
 			/* Switch 1k vrom at $0800 - high 4 bits */
 			vrom_bank[2] = (vrom_bank[2] & 0x0f) | (data << 4);
 			vrom_bank[2] &= ((CHR_Rom << 3) - 1);
 			nes_vram[2] = vrom_bank[2] * 64;
-//			if (errorlog) fprintf (errorlog, "     Mapper 18 vrom ($0800 high 4) value: %02x\n", data);
+//			logerror("     Mapper 18 vrom ($0800 high 4) value: %02x\n", data);
 			break;
 		case 0x3002:
 			/* Switch 1k vrom at $0c00 - low 4 bits */
 			vrom_bank[3] = (vrom_bank[3] & 0xf0) | (data & 0x0f);
 			vrom_bank[3] &= ((CHR_Rom << 3) - 1);
 			nes_vram[3] = vrom_bank[3] * 64;
-//			if (errorlog) fprintf (errorlog, "     Mapper 18 vrom ($0c00 low 4) value: %02x\n", data);
+//			logerror("     Mapper 18 vrom ($0c00 low 4) value: %02x\n", data);
 			break;
 		case 0x3003:
 			/* Switch 1k vrom at $0c00 - high 4 bits */
 			vrom_bank[3] = (vrom_bank[3] & 0x0f) | (data << 4);
 			vrom_bank[3] &= ((CHR_Rom << 3) - 1);
 			nes_vram[3] = vrom_bank[3] * 64;
-//			if (errorlog) fprintf (errorlog, "     Mapper 18 vrom ($0c00 high 4) value: %02x\n", data);
+//			logerror("     Mapper 18 vrom ($0c00 high 4) value: %02x\n", data);
 			break;
 		case 0x4000:
 			/* Switch 1k vrom at $1000 - low 4 bits */
 			vrom_bank[4] = (vrom_bank[4] & 0xf0) | (data & 0x0f);
 			vrom_bank[4] &= ((CHR_Rom << 3) - 1);
 			nes_vram[4] = vrom_bank[4] * 64;
-//			if (errorlog) fprintf (errorlog, "     Mapper 18 vrom ($1000 low 4) value: %02x\n", data);
+//			logerror("     Mapper 18 vrom ($1000 low 4) value: %02x\n", data);
 			break;
 		case 0x4001:
 			/* Switch 1k vrom at $1000 - high 4 bits */
 			vrom_bank[4] = (vrom_bank[4] & 0x0f) | (data << 4);
 			vrom_bank[4] &= ((CHR_Rom << 3) - 1);
 			nes_vram[4] = vrom_bank[4] * 64;
-//			if (errorlog) fprintf (errorlog, "     Mapper 18 vrom ($1000 high 4) value: %02x\n", data);
+//			logerror("     Mapper 18 vrom ($1000 high 4) value: %02x\n", data);
 			break;
 		case 0x4002:
 			/* Switch 1k vrom at $1400 - low 4 bits */
 			vrom_bank[5] = (vrom_bank[5] & 0xf0) | (data & 0x0f);
 			vrom_bank[5] &= ((CHR_Rom << 3) - 1);
 			nes_vram[5] = vrom_bank[5] * 64;
-//			if (errorlog) fprintf (errorlog, "     Mapper 18 vrom ($1400 low 4) value: %02x\n", data);
+//			logerror("     Mapper 18 vrom ($1400 low 4) value: %02x\n", data);
 			break;
 		case 0x4003:
 			/* Switch 1k vrom at $1400 - high 4 bits */
 			vrom_bank[5] = (vrom_bank[5] & 0x0f) | (data << 4);
 			vrom_bank[5] &= ((CHR_Rom << 3) - 1);
 			nes_vram[5] = vrom_bank[5] * 64;
-//			if (errorlog) fprintf (errorlog, "     Mapper 18 vrom ($1400 high 4) value: %02x\n", data);
+//			logerror("     Mapper 18 vrom ($1400 high 4) value: %02x\n", data);
 			break;
 		case 0x5000:
 			/* Switch 1k vrom at $1800 - low 4 bits */
 			vrom_bank[6] = (vrom_bank[6] & 0xf0) | (data & 0x0f);
 			vrom_bank[6] &= ((CHR_Rom << 3) - 1);
 			nes_vram[6] = vrom_bank[6] * 64;
-//			if (errorlog) fprintf (errorlog, "     Mapper 18 vrom ($1800 low 4) value: %02x\n", data);
+//			logerror("     Mapper 18 vrom ($1800 low 4) value: %02x\n", data);
 			break;
 		case 0x5001:
 			/* Switch 1k vrom at $1800 - high 4 bits */
 			vrom_bank[6] = (vrom_bank[6] & 0x0f) | (data << 4);
 			vrom_bank[6] &= ((CHR_Rom << 3) - 1);
 			nes_vram[6] = vrom_bank[6] * 64;
-//			if (errorlog) fprintf (errorlog, "     Mapper 18 vrom ($1800 high 4) value: %02x new bank: %02x\n", data, vrom_bank[6]);
+//			logerror("     Mapper 18 vrom ($1800 high 4) value: %02x new bank: %02x\n", data, vrom_bank[6]);
 			break;
 		case 0x5002:
 			/* Switch 1k vrom at $1c00 - low 4 bits */
 			vrom_bank[7] = (vrom_bank[7] & 0xf0) | (data & 0x0f);
 			vrom_bank[7] &= ((CHR_Rom << 3) - 1);
 			nes_vram[7] = vrom_bank[7] * 64;
-//			if (errorlog) fprintf (errorlog, "     Mapper 18 vrom ($1c00 low 4) value: %02x\n", data);
+//			logerror("     Mapper 18 vrom ($1c00 low 4) value: %02x\n", data);
 			break;
 		case 0x5003:
 			/* Switch 1k vrom at $1c00 - high 4 bits */
 			vrom_bank[7] = (vrom_bank[7] & 0x0f) | (data << 4);
 			vrom_bank[7] &= ((CHR_Rom << 3) - 1);
 			nes_vram[7] = vrom_bank[7] * 64;
-//			if (errorlog) fprintf (errorlog, "     Mapper 18 vrom ($1c00 high 4) value: %02x new bank: %02x\n", data, vrom_bank[7]);
+//			logerror("     Mapper 18 vrom ($1c00 high 4) value: %02x new bank: %02x\n", data, vrom_bank[7]);
 			break;
 
 		case 0x6000: /* IRQ scanline counter - low byte */
 			MMC3_IRQ = (MMC3_IRQ & 0xff00) | data;
-			if (errorlog) fprintf (errorlog, "     Mapper 18 copy/set irq latch (low): %02x\n", data);
+			logerror("     Mapper 18 copy/set irq latch (low): %02x\n", data);
 			break;
 		case 0x6001: /* IRQ scanline counter - high byte */
 			MMC3_IRQ = (MMC3_IRQ & 0x00ff) | (data << 8);
-			if (errorlog) fprintf (errorlog, "     Mapper 18 copy/set irq latch (high): %02x\n", data);
+			logerror("     Mapper 18 copy/set irq latch (high): %02x\n", data);
 			break;
 
 		case 0x7000: /* IRQ Control 0 */
 			if (data & 0x01) MMC3_DOIRQ = 1;
-			if (errorlog) fprintf (errorlog, "     Mapper 18 IRQ Control 0: %02x\n", data);
+			logerror("     Mapper 18 IRQ Control 0: %02x\n", data);
 			break;
 		case 0x7001: /* IRQ Control 1 */
 			MMC3_DOIRQ = data & 0x01;
-			if (errorlog) fprintf (errorlog, "     Mapper 18 IRQ Control 1: %02x\n", data);
+			logerror("     Mapper 18 IRQ Control 1: %02x\n", data);
 			break;
 
 		case 0x7002: /* Misc */
 			Mirroring = (!(data & 0x01)) + 1;
 			PPU_one_screen = (data & 0x02) << 12;
-			if (errorlog) fprintf (errorlog, "     Mapper 18 IRQ Control 1: %02x\n", data);
+			logerror("     Mapper 18 IRQ Control 1: %02x\n", data);
 			break;
 
 
 		default:
-			if (errorlog) fprintf (errorlog, "Mapper 18 addr: %04x value: %02x\n", offset + 0x8000, data);
+			logerror("Mapper 18 addr: %04x value: %02x\n", offset + 0x8000, data);
 			break;
 	}
 }
@@ -1184,130 +1180,130 @@ static void Mapper25_Write (int offset, int data)
 			/* Switch 8k bank at $8000 */
 			data &= ((PRG_Rom << 1) - 1);
 			cpu_setbank (1, &NES_ROM[0x2000 * (data) + 0x10000]);
-//			if (errorlog) fprintf (errorlog, "     Mapper 25 switch ($8000) value: %02x\n", data);
+//			logerror("     Mapper 25 switch ($8000) value: %02x\n", data);
 			break;
 
 		case 0x2000:
 			/* Switch 8k bank at $a000 */
 			data &= ((PRG_Rom << 1) - 1);
 			cpu_setbank (2, &NES_ROM[0x2000 * (data) + 0x10000]);
-//			if (errorlog) fprintf (errorlog, "     Mapper 25 switch ($a000) value: %02x\n", data);
+//			logerror("     Mapper 25 switch ($a000) value: %02x\n", data);
 			break;
 		case 0x3000:
 			/* Switch 1k vrom at $0000 - low 4 bits */
 			vrom_bank[0] = (vrom_bank[0] & 0xf0) | (data & 0x0f);
 			vrom_bank[0] &= ((CHR_Rom << 3) - 1);
 			nes_vram[0] = vrom_bank[0] * 64;
-//			if (errorlog) fprintf (errorlog, "     Mapper 25 vrom ($0000 low 4) value: %02x\n", data);
+//			logerror("     Mapper 25 vrom ($0000 low 4) value: %02x\n", data);
 			break;
 		case 0x3002:
 			/* Switch 1k vrom at $0000 - high 4 bits */
 			vrom_bank[0] = (vrom_bank[0] & 0x0f) | (data << 4);
 			vrom_bank[0] &= ((CHR_Rom << 3) - 1);
 			nes_vram[0] = vrom_bank[0] * 64;
-//			if (errorlog) fprintf (errorlog, "     Mapper 25 vrom ($0000 high 4) value: %02x\n", data);
+//			logerror("     Mapper 25 vrom ($0000 high 4) value: %02x\n", data);
 			break;
 		case 0x3001:
 			/* Switch 1k vrom at $0400 - low 4 bits */
 			vrom_bank[1] = (vrom_bank[1] & 0xf0) | (data & 0x0f);
 			vrom_bank[1] &= ((CHR_Rom << 3) - 1);
 			nes_vram[1] = vrom_bank[1] * 64;
-//			if (errorlog) fprintf (errorlog, "     Mapper 25 vrom ($0400 low 4) value: %02x\n", data);
+//			logerror("     Mapper 25 vrom ($0400 low 4) value: %02x\n", data);
 			break;
 		case 0x3003:
 			/* Switch 1k vrom at $0400 - high 4 bits */
 			vrom_bank[1] = (vrom_bank[1] & 0x0f) | (data << 4);
 			vrom_bank[1] &= ((CHR_Rom << 3) - 1);
 			nes_vram[1] = vrom_bank[1] * 64;
-//			if (errorlog) fprintf (errorlog, "     Mapper 25 vrom ($0400 high 4) value: %02x\n", data);
+//			logerror("     Mapper 25 vrom ($0400 high 4) value: %02x\n", data);
 			break;
 		case 0x4000:
 			/* Switch 1k vrom at $0800 - low 4 bits */
 			vrom_bank[2] = (vrom_bank[2] & 0xf0) | (data & 0x0f);
 			vrom_bank[2] &= ((CHR_Rom << 3) - 1);
 			nes_vram[2] = vrom_bank[2] * 64;
-//			if (errorlog) fprintf (errorlog, "     Mapper 25 vrom ($0800 low 4) value: %02x\n", data);
+//			logerror("     Mapper 25 vrom ($0800 low 4) value: %02x\n", data);
 			break;
 		case 0x4002:
 			/* Switch 1k vrom at $0800 - high 4 bits */
 			vrom_bank[2] = (vrom_bank[2] & 0x0f) | (data << 4);
 			vrom_bank[2] &= ((CHR_Rom << 3) - 1);
 			nes_vram[2] = vrom_bank[2] * 64;
-//			if (errorlog) fprintf (errorlog, "     Mapper 25 vrom ($0800 high 4) value: %02x\n", data);
+//			logerror("     Mapper 25 vrom ($0800 high 4) value: %02x\n", data);
 			break;
 		case 0x4001:
 			/* Switch 1k vrom at $0c00 - low 4 bits */
 			vrom_bank[3] = (vrom_bank[3] & 0xf0) | (data & 0x0f);
 			vrom_bank[3] &= ((CHR_Rom << 3) - 1);
 			nes_vram[3] = vrom_bank[3] * 64;
-//			if (errorlog) fprintf (errorlog, "     Mapper 25 vrom ($0c00 low 4) value: %02x\n", data);
+//			logerror("     Mapper 25 vrom ($0c00 low 4) value: %02x\n", data);
 			break;
 		case 0x4003:
 			/* Switch 1k vrom at $0c00 - high 4 bits */
 			vrom_bank[3] = (vrom_bank[3] & 0x0f) | (data << 4);
 			vrom_bank[3] &= ((CHR_Rom << 3) - 1);
 			nes_vram[3] = vrom_bank[3] * 64;
-//			if (errorlog) fprintf (errorlog, "     Mapper 25 vrom ($0c00 high 4) value: %02x\n", data);
+//			logerror("     Mapper 25 vrom ($0c00 high 4) value: %02x\n", data);
 			break;
 		case 0x5000:
 			/* Switch 1k vrom at $1000 - low 4 bits */
 			vrom_bank[4] = (vrom_bank[4] & 0xf0) | (data & 0x0f);
 			vrom_bank[4] &= ((CHR_Rom << 3) - 1);
 			nes_vram[4] = vrom_bank[4] * 64;
-//			if (errorlog) fprintf (errorlog, "     Mapper 25 vrom ($1000 low 4) value: %02x\n", data);
+//			logerror("     Mapper 25 vrom ($1000 low 4) value: %02x\n", data);
 			break;
 		case 0x5002:
 			/* Switch 1k vrom at $1000 - high 4 bits */
 			vrom_bank[4] = (vrom_bank[4] & 0x0f) | (data << 4);
 			vrom_bank[4] &= ((CHR_Rom << 3) - 1);
 			nes_vram[4] = vrom_bank[4] * 64;
-//			if (errorlog) fprintf (errorlog, "     Mapper 25 vrom ($1000 high 4) value: %02x\n", data);
+//			logerror("     Mapper 25 vrom ($1000 high 4) value: %02x\n", data);
 			break;
 		case 0x5001:
 			/* Switch 1k vrom at $1400 - low 4 bits */
 			vrom_bank[5] = (vrom_bank[5] & 0xf0) | (data & 0x0f);
 			vrom_bank[5] &= ((CHR_Rom << 3) - 1);
 			nes_vram[5] = vrom_bank[5] * 64;
-//			if (errorlog) fprintf (errorlog, "     Mapper 25 vrom ($1400 low 4) value: %02x\n", data);
+//			logerror("     Mapper 25 vrom ($1400 low 4) value: %02x\n", data);
 			break;
 		case 0x5003:
 			/* Switch 1k vrom at $1400 - high 4 bits */
 			vrom_bank[5] = (vrom_bank[5] & 0x0f) | (data << 4);
 			vrom_bank[5] &= ((CHR_Rom << 3) - 1);
 			nes_vram[5] = vrom_bank[5] * 64;
-//			if (errorlog) fprintf (errorlog, "     Mapper 25 vrom ($1400 high 4) value: %02x\n", data);
+//			logerror("     Mapper 25 vrom ($1400 high 4) value: %02x\n", data);
 			break;
 		case 0x6000:
 			/* Switch 1k vrom at $1800 - low 4 bits */
 			vrom_bank[6] = (vrom_bank[6] & 0xf0) | (data & 0x0f);
 			vrom_bank[6] &= ((CHR_Rom << 3) - 1);
 			nes_vram[6] = vrom_bank[6] * 64;
-//			if (errorlog) fprintf (errorlog, "     Mapper 25 vrom ($1800 low 4) value: %02x\n", data);
+//			logerror("     Mapper 25 vrom ($1800 low 4) value: %02x\n", data);
 			break;
 		case 0x6002:
 			/* Switch 1k vrom at $1800 - high 4 bits */
 			vrom_bank[6] = (vrom_bank[6] & 0x0f) | (data << 4);
 			vrom_bank[6] &= ((CHR_Rom << 3) - 1);
 			nes_vram[6] = vrom_bank[6] * 64;
-//			if (errorlog) fprintf (errorlog, "     Mapper 25 vrom ($1800 high 4) value: %02x\n", data);
+//			logerror("     Mapper 25 vrom ($1800 high 4) value: %02x\n", data);
 			break;
 		case 0x6001:
 			/* Switch 1k vrom at $1c00 - low 4 bits */
 			vrom_bank[7] = (vrom_bank[7] & 0xf0) | (data & 0x0f);
 			vrom_bank[7] &= ((CHR_Rom << 3) - 1);
 			nes_vram[7] = vrom_bank[7] * 64;
-//			if (errorlog) fprintf (errorlog, "     Mapper 25 vrom ($1c00 low 4) value: %02x\n", data);
+//			logerror("     Mapper 25 vrom ($1c00 low 4) value: %02x\n", data);
 			break;
 		case 0x6003:
 			/* Switch 1k vrom at $1c00 - high 4 bits */
 			vrom_bank[7] = (vrom_bank[7] & 0x0f) | (data << 4);
 			vrom_bank[7] &= ((CHR_Rom << 3) - 1);
 			nes_vram[7] = vrom_bank[7] * 64;
-//			if (errorlog) fprintf (errorlog, "     Mapper 25 vrom ($1c00 high 4) value: %02x\n", data);
+//			logerror("     Mapper 25 vrom ($1c00 high 4) value: %02x\n", data);
 			break;
 
 		default:
-			if (errorlog) fprintf (errorlog, "Mapper 25 offset: %04x value: %02x\n", offset, data);
+			logerror("Mapper 25 offset: %04x value: %02x\n", offset, data);
 			break;
 	}
 }
@@ -1315,7 +1311,7 @@ static void Mapper25_Write (int offset, int data)
 static void Mapper26_Write (int offset, int data)
 {
 
-//	if (errorlog) fprintf (errorlog, "mapper26_w offset: %04x, data: %02x, scanline: %d\n", offset, data, current_scanline);
+//	logerror("mapper26_w offset: %04x, data: %02x, scanline: %d\n", offset, data, current_scanline);
 
 	switch (offset & 0x7007)
 	{
@@ -1398,19 +1394,19 @@ static void Mapper26_Write (int offset, int data)
 		/* Note - this is an incrementing IRQ counter */
 		case 0x7000: /* IRQ latch value */
 			MMC3_IRQ = data;
-			if (errorlog) fprintf (errorlog, "     Mapper 26 set latch: %02x\n", data);
+			logerror("     Mapper 26 set latch: %02x\n", data);
 			break;
 		case 0x7001: /* Enable IRQs */
 			MMC3_DOIRQ = data & 0x01;
-			if (errorlog) fprintf (errorlog, "     Mapper 26 enable irqs: %02x\n", data);
+			logerror("     Mapper 26 enable irqs: %02x\n", data);
 			break;
 		case 0x7002: /* Reset counter */
-			if (errorlog) fprintf (errorlog, "     Mapper 26 copy latch (disable irqs): %02x\n", data);
+			logerror("     Mapper 26 copy latch (disable irqs): %02x\n", data);
 			MMC3_IRQ = 0;
 			break;
 
 		default:
-			if (errorlog) fprintf (errorlog, "Mapper 26 addr: %04x value: %02x\n", offset + 0x8000, data);
+			logerror("Mapper 26 addr: %04x value: %02x\n", offset + 0x8000, data);
 			break;
 	}
 }
@@ -1418,7 +1414,7 @@ static void Mapper26_Write (int offset, int data)
 static void Mapper33_Write (int offset, int data)
 {
 
-//	if (errorlog) fprintf (errorlog, "mapper33_w offset: %04x, data: %02x, scanline: %d\n", offset, data, current_scanline);
+//	logerror("mapper33_w offset: %04x, data: %02x, scanline: %d\n", offset, data, current_scanline);
 
 	switch (offset & 0x7007)
 	{
@@ -1459,7 +1455,7 @@ static void Mapper33_Write (int offset, int data)
 			nes_vram [7] = data * 64;
 			break;
 		default:
-			if (errorlog) fprintf (errorlog, "Uncaught mapper 33 write, addr: %04x value: %02x\n", offset + 0x8000, data);
+			logerror("Uncaught mapper 33 write, addr: %04x value: %02x\n", offset + 0x8000, data);
 			break;
 	}
 }
@@ -1468,7 +1464,7 @@ static void Mapper34_Write (int offset, int data)
 {
 	/* This portion of the mapper is nearly identical to Mapper 7, except no one-screen mirroring */
 	/* Deadly Towers is really a Mapper 34 game - the demo screens look wrong using mapper 7. */
-	if (errorlog) fprintf (errorlog, "Mapper 34 w, offset: %04x, data: %02x\n", offset, data);
+	logerror("Mapper 34 w, offset: %04x, data: %02x\n", offset, data);
 	data &= ((PRG_Rom >> 1) - 1);
 	cpu_setbank (1, &NES_ROM[data * 0x8000 + 0x10000]);
 	cpu_setbank (2, &NES_ROM[data * 0x8000 + 0x12000]);
@@ -1483,12 +1479,12 @@ static void Mapper64_Write (int offset, int data)
 	static int select_high;
 	static int page;
 
-//	if (errorlog) fprintf (errorlog, "mapper64_w offset: %04x, data: %02x, scanline: %d\n", offset, data, current_scanline);
+//	logerror("mapper64_w offset: %04x, data: %02x, scanline: %d\n", offset, data, current_scanline);
 
 	switch (offset & 0x7001)
 	{
 		case 0x0000:
-//			if (errorlog) fprintf (errorlog, "Mapper 64 0x8000 write value: %02x\n",data);
+//			logerror("Mapper 64 0x8000 write value: %02x\n",data);
 			cmd = data & 0x0f;
 			if (data & 0x80)
 				chr = 0x1000;
@@ -1499,7 +1495,7 @@ static void Mapper64_Write (int offset, int data)
 			/* Toggle switching between $8000/$A000/$C000 and $A000/$C000/$8000 */
 			if (select_high != (data & 0x40))
 			{
-				if (errorlog) fprintf (errorlog, "HACK ALERT -- select_high has changed!\n");
+				logerror("HACK ALERT -- select_high has changed!\n");
 				if (data & 0x40)
 				{
 					cpu_setbank (1, &NES_ROM[(PRG_Rom-1) * 0x4000 + 0x10000]);
@@ -1511,7 +1507,7 @@ static void Mapper64_Write (int offset, int data)
 			}
 
 			select_high = data & 0x40;
-			if (errorlog) fprintf (errorlog, "   Mapper 64 select_high: %02x\n", select_high);
+			logerror("   Mapper 64 select_high: %02x\n", select_high);
 			break;
 
 		case 0x0001:
@@ -1551,12 +1547,12 @@ static void Mapper64_Write (int offset, int data)
 					if (select_high)
 					{
 						cpu_setbank (2, &NES_ROM[0x2000 * (data) + 0x10000]);
-						if (errorlog) fprintf (errorlog, "     Mapper 64 switch ($A000) cmd 6 value: %02x\n", data);
+						logerror("     Mapper 64 switch ($A000) cmd 6 value: %02x\n", data);
 					}
 					else
 					{
 						cpu_setbank (1, &NES_ROM[0x2000 * (data) + 0x10000]);
-						if (errorlog) fprintf (errorlog, "     Mapper 64 switch ($8000) cmd 6 value: %02x\n", data);
+						logerror("     Mapper 64 switch ($8000) cmd 6 value: %02x\n", data);
 					}
 					break;
 				case 7:
@@ -1564,12 +1560,12 @@ static void Mapper64_Write (int offset, int data)
 					if (select_high)
 					{
 						cpu_setbank (3, &NES_ROM[0x2000 * (data) + 0x10000]);
-						if (errorlog) fprintf (errorlog, "     Mapper 64 switch ($C000) cmd 7 value: %02x\n", data);
+						logerror("     Mapper 64 switch ($C000) cmd 7 value: %02x\n", data);
 					}
 					else
 					{
 						cpu_setbank (2, &NES_ROM[0x2000 * (data) + 0x10000]);
-						if (errorlog) fprintf (errorlog, "     Mapper 64 switch ($A000) cmd 7 value: %02x\n", data);
+						logerror("     Mapper 64 switch ($A000) cmd 7 value: %02x\n", data);
 					}
 					break;
 				case 8:
@@ -1585,23 +1581,23 @@ static void Mapper64_Write (int offset, int data)
 					if (select_high)
 					{
 						cpu_setbank (1, &NES_ROM[0x2000 * (data) + 0x10000]);
-						if (errorlog) fprintf (errorlog, "     Mapper 64 switch ($C000) cmd 15 value: %02x\n", data);
+						logerror("     Mapper 64 switch ($C000) cmd 15 value: %02x\n", data);
 					}
 					else
 					{
 						cpu_setbank (3, &NES_ROM[0x2000 * (data) + 0x10000]);
-						if (errorlog) fprintf (errorlog, "     Mapper 64 switch ($A000) cmd 15 value: %02x\n", data);
+						logerror("     Mapper 64 switch ($A000) cmd 15 value: %02x\n", data);
 					}
 					break;
 			}
 			cmd = 16;
 			break;
 		case 0x2000:
-			if (errorlog) fprintf (errorlog, "     Mapper 64 mirroring: %02x\n", data);
+			logerror("     Mapper 64 mirroring: %02x\n", data);
 			Mirroring = 0x02 >> (data & 0x01);
 			break;
 		default:
-			if (errorlog) fprintf (errorlog, "Mapper 64 addr: %04x value: %02x\n", offset + 0x8000, data);
+			logerror("Mapper 64 addr: %04x value: %02x\n", offset + 0x8000, data);
 			break;
 	}
 }
@@ -1614,14 +1610,14 @@ static void Mapper65_Write (int offset, int data)
 			/* Switch 8k bank at $8000 */
 			data &= ((PRG_Rom << 1) - 1);
 			cpu_setbank (1, &NES_ROM[0x2000 * (data) + 0x10000]);
-			if (errorlog) fprintf (errorlog, "     Mapper 65 switch ($8000) value: %02x\n", data);
+			logerror("     Mapper 65 switch ($8000) value: %02x\n", data);
 			break;
 
 		case 0x2000:
 			/* Switch 8k bank at $a000 */
 			data &= ((PRG_Rom << 1) - 1);
 			cpu_setbank (2, &NES_ROM[0x2000 * (data) + 0x10000]);
-			if (errorlog) fprintf (errorlog, "     Mapper 65 switch ($a000) value: %02x\n", data);
+			logerror("     Mapper 65 switch ($a000) value: %02x\n", data);
 			break;
 
 		case 0x3000:
@@ -1657,7 +1653,7 @@ static void Mapper65_Write (int offset, int data)
 			nes_vram [7] = data * 64;
 			break;
 		default:
-			if (errorlog) fprintf (errorlog, "Mapper 65 addr: %04x value: %02x\n", offset + 0x8000, data);
+			logerror("Mapper 65 addr: %04x value: %02x\n", offset + 0x8000, data);
 			break;
 	}
 }
@@ -1670,7 +1666,7 @@ static void Mapper65_Write (int offset, int data)
 static void Mapper66_Write (int offset, int data)
 {
 	int i;
-	if (errorlog) fprintf (errorlog, "* Mapper 66 switch, offset %04x, data: %02x\n", offset, data);
+	logerror("* Mapper 66 switch, offset %04x, data: %02x\n", offset, data);
 
 	cpu_setbank (1, &NES_ROM[((data & 0x30) >> 4) * 0x8000 + 0x10000]);
 	cpu_setbank (2, &NES_ROM[((data & 0x30) >> 4) * 0x8000 + 0x12000]);
@@ -1687,7 +1683,7 @@ static void Mapper66_Write (int offset, int data)
 static void Mapper68_Write (int offset, int data)
 {
 	/* TODO: I can't figure out the mirroring/ppu screen base! */
-	if (errorlog) fprintf (errorlog, "mapper68_w offset: %04x, data: %02x\n", offset, data);
+	logerror("mapper68_w offset: %04x, data: %02x\n", offset, data);
 
 	switch (offset & 0x7000)
 	{
@@ -1747,7 +1743,7 @@ static void Mapper68_Write (int offset, int data)
  */
 static void Mapper71_Write (int offset, int data)
 {
-	if (errorlog) fprintf (errorlog, "* Mapper 71 switch %02x\n", data);
+	logerror("* Mapper 71 switch %02x\n", data);
 	data &= (PRG_Rom - 1);
 	cpu_setbank (1, &NES_ROM[data * 0x4000 + 0x10000]);
 	cpu_setbank (2, &NES_ROM[data * 0x4000 + 0x12000]);
@@ -1761,7 +1757,7 @@ static void Mapper78_Write (int offset, int data)
 	int bank;
 	int i;
 
-	if (errorlog) fprintf (errorlog, "* Mapper 78 switch %02x\n", data);
+	logerror("* Mapper 78 switch %02x\n", data);
 	/* Switch 8k VROM bank */
 	bank = ((data & 0xf0)) >> 4 & (CHR_Rom - 1);
 	for (i = 0; i < 8; i ++)
@@ -1780,7 +1776,7 @@ static void Mapper78_Write (int offset, int data)
 
 static void Mapper79_Write (int offset, int data)
 {
-	if (errorlog) fprintf (errorlog, "Mapper 79 w: %04x:%02x\n", offset, data);
+	logerror("Mapper 79 w: %04x:%02x\n", offset, data);
 }
 
 /*
@@ -1842,13 +1838,10 @@ int Reset_Mapper (int mapperNum)
 			cpu_setbank (2, &NES_ROM[MMC1_extended_base + MMC1_bank2]);
 			cpu_setbank (3, &NES_ROM[MMC1_extended_base + MMC1_bank3]);
 			cpu_setbank (4, &NES_ROM[MMC1_extended_base + MMC1_bank4]);
-			if (errorlog)
-			{
-				fprintf (errorlog, "-- page1: %06x\n", MMC1_bank1);
-				fprintf (errorlog, "-- page2: %06x\n", MMC1_bank2);
-				fprintf (errorlog, "-- page3: %06x\n", MMC1_bank3);
-				fprintf (errorlog, "-- page4: %06x\n", MMC1_bank4);
-			}
+			logerror("-- page1: %06x\n", MMC1_bank1);
+			logerror("-- page2: %06x\n", MMC1_bank2);
+			logerror("-- page3: %06x\n", MMC1_bank3);
+			logerror("-- page4: %06x\n", MMC1_bank4);
 			break;
 		case 2:
 			/* These games don't switch VROM, but some NES_ROMs incorrectly have CHR-NES_ROM chunks */

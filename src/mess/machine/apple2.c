@@ -319,7 +319,7 @@ void apple2_c00x_w(int offset, int data)
 		case 0x0F:		a2.ALTCHARSET = 0x80;	break;
 	}
 
-	if (errorlog) fprintf (errorlog, "a2 softswitch_w: %04x\n", offset + 0xc000);
+	logerror("a2 softswitch_w: %04x\n", offset + 0xc000);
 }
 
 /***************************************************************************
@@ -327,7 +327,7 @@ void apple2_c00x_w(int offset, int data)
 ***************************************************************************/
 int apple2_c01x_r(int offset)
 {
-//	if (errorlog) fprintf (errorlog, "a2 softswitch_r: %04x\n", offset + 0xc010);
+//	logerror("a2 softswitch_r: %04x\n", offset + 0xc010);
 	switch (offset)
 	{
 		case 0x00:			return AY3600_anykey_clearstrobe_r();
@@ -905,7 +905,7 @@ int apple2_c08x_r(int offset)
 	/* If the aux switch is set, use the aux language card bank as well */
 	int aux_offset = a2.ALTZP ? 0x10000 : 0x0000;
 
-	if (errorlog) fprintf (errorlog, "language card bankswitch read, offset: $c08%0x\n", offset);
+	logerror("language card bankswitch read, offset: $c08%0x\n", offset);
 
 	if ((offset & 0x01)==0x00)
 	{
@@ -958,7 +958,7 @@ int apple2_c08x_r(int offset)
 void apple2_c08x_w(int offset, int data)
 {
 	/* same as reading */
-	if (errorlog) fprintf (errorlog, "write -- ");
+	logerror("write -- ");
 	apple2_c08x_r (offset);
 }
 
@@ -1149,7 +1149,7 @@ static int mockingboard_r (int offset)
 			return flip2;
 			break;
 		default:
-//			if (errorlog) fprintf (errorlog, "mockingboard_r unmapped, offset: %02x, pc: %04x\n", offset, cpu_getpc());
+//			logerror("mockingboard_r unmapped, offset: %02x, pc: %04x\n", offset, cpu_getpc());
 			break;
 	}
 	return 0x00;
@@ -1159,7 +1159,7 @@ static void mockingboard_w (int offset, int data)
 {
 	static int latch0, latch1;
 
-	if (errorlog) fprintf (errorlog, "mockingboard_w, $%02x:%02x\n", offset, data);
+	logerror("mockingboard_w, $%02x:%02x\n", offset, data);
 
 	/* There is a 6522 in here which interfaces to the 8910s */
 	switch (offset)

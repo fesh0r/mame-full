@@ -186,7 +186,7 @@ void genesis_vh_convert_color_prom (unsigned char *palette, unsigned char *color
 
 WRITE_HANDLER ( genesis_videoram1_w )
 {
-	if (errorlog) fprintf(errorlog, "what is this doing? %x, %x\n", offset, data);
+	logerror("what is this doing? %x, %x\n", offset, data);
 	offset = data;
 }
 
@@ -371,7 +371,7 @@ unsigned char *get_dma_dest_address(int id)
 			return (unsigned char *)&vdp_vsram[0];
 			break;
 		default:
-			if (errorlog) fprintf(errorlog, "Unknown get_dma_dest_address id %x!!\n", id);
+			logerror("Unknown get_dma_dest_address id %x!!\n", id);
 	}
 	return NULL;
 }
@@ -380,7 +380,7 @@ READ_HANDLER ( genesis_vdp_data_r )
 {
 	int data = 0;		 /* don't worry about this for now, really doesn't happen */
 
-   	if (errorlog) fprintf(errorlog, "reading from... %x\n", (((vdp_address & 0xfffffffe)+ (int)&vdp_vram[0])) );
+   	logerror("reading from... %x\n", (((vdp_address & 0xfffffffe)+ (int)&vdp_vram[0])) );
 
 	switch (vdp_id)
 	{
@@ -394,7 +394,7 @@ READ_HANDLER ( genesis_vdp_data_r )
 			data = /*ENDIANISE*/(*(short *)(((vdp_address & 0xfffffffe)+ vdp_cram) ));
 			break;
 		default:
-			if (errorlog) fprintf(errorlog,"unknown vdp port read type %x\n", vdp_id);
+			logerror("unknown vdp port read type %x\n", vdp_id);
 	}
 
    /*	if ((offset == 1) || (offset == 3))	  */
@@ -407,7 +407,7 @@ WRITE_HANDLER ( genesis_vdp_data_w )
 {
   	int tempsource = 0;
   	int temp_vdp_address = vdp_address;
-	/*if (errorlog) fprintf(errorlog, "vdp data w offset = %x\n", offset);*/
+	/*logerror("vdp data w offset = %x\n", offset);*/
 
 	/* need a special case for byte writes...? */
 
@@ -418,7 +418,7 @@ WRITE_HANDLER ( genesis_vdp_data_w )
 
 		 vdp_vram_fill = COMBINE_WORD(vdp_vram_fill, data);
 			temp_vdp_address = vdp_address;
-//			if (errorlog) fprintf(errorlog,"DMA VRAM FILL, dest %x, fill %x, length %x, real dest %x, id %x, inc %x\n", vdp_address, vdp_vram_fill, vdp_dma_length, get_dma_dest_address(vdp_id)+vdp_address, vdp_id, vdp_auto_increment);
+//			logerror("DMA VRAM FILL, dest %x, fill %x, length %x, real dest %x, id %x, inc %x\n", vdp_address, vdp_vram_fill, vdp_dma_length, get_dma_dest_address(vdp_id)+vdp_address, vdp_id, vdp_auto_increment);
 			/* now do the rest of the DMA fill */
 
 			for (tempsource = 0; tempsource < (vdp_dma_length*2); tempsource++)
@@ -436,7 +436,7 @@ WRITE_HANDLER ( genesis_vdp_data_w )
 
 			if (vdp_id == MODE_CRAM_WRITE_DMA)
 			{
-				 if (errorlog) fprintf(errorlog, "*** %x-%x\n", temp_vdp_address, vdp_dma_length*2);
+				 logerror("*** %x-%x\n", temp_vdp_address, vdp_dma_length*2);
 				memset(dirty_colour + (temp_vdp_address), 1, (vdp_dma_length*2));
 			}
 
@@ -473,12 +473,12 @@ WRITE_HANDLER ( genesis_vdp_data_w )
 		}
 		return;
 	}
-	  /*	if (errorlog) fprintf(errorlog,"%x",vdp_vram_fill);*/
+	  /*	logerror("%x",vdp_vram_fill);*/
 
 	/*  if (first_access && (offset == 1 || offset == 3))
-		if (errorlog) fprintf(errorlog, "misaligned\n"); */
-		 /*  	if (errorlog) fprintf(errorlog,"would write %x to... %x\n", data, ((vdp_address+ 0*//*(int)&vdp_vram[0]*//*) +(  (offset & 0x01))) );*/
-	if ((vdp_address & 1) && errorlog) fprintf(errorlog, "!");
+		logerror("misaligned\n"); */
+		 /*  	logerror("would write %x to... %x\n", data, ((vdp_address+ 0*//*(int)&vdp_vram[0]*//*) +(  (offset & 0x01))) );*/
+	if ((vdp_address & 1)) logerror("!");
 
 	switch (vdp_id)
 	{
@@ -505,17 +505,17 @@ WRITE_HANDLER ( genesis_vdp_data_w )
 		case MODE_CRAM_WRITE:
 			COMBINE_WORD_MEM(vdp_address+(int)vdp_cram, data);
 			dirty_colour[vdp_address>>1] = 1;
-			//if (errorlog) fprintf(errorlog, "%x\n", vdp_address);
+			//logerror("%x\n", vdp_address);
 			break;
 
 		default:
-			if (errorlog) fprintf(errorlog,"unknown vdp port write type %x\n", vdp_id);
+			logerror("unknown vdp port write type %x\n", vdp_id);
 	}
 
    //	if ((offset == 1 || offset == 3) /*|| (data_width == 1)*/)
 		vdp_address += vdp_auto_increment;
 
-	if (vdp_auto_increment == 1 && errorlog) fprintf(errorlog, "1");
+	if (vdp_auto_increment == 1) logerror("1");
 /*		first_access=0;*/
 }
 
@@ -533,7 +533,7 @@ fake_dma_mode ^=8;
 				 //	cpu_cause_interrupt(0,6);
 
 				   //	cpu_halt(0,0);
-				//	if (errorlog) fprintf(errorlog, "vdp ctrl status offset = %x\n", offset);
+				//	logerror("vdp ctrl status offset = %x\n", offset);
 	return vdp_ctrl_status;
 }
 
@@ -547,7 +547,7 @@ WRITE_HANDLER ( genesis_vdp_ctrl_w )
 	{
 		case 0:
 	  	case 2:
-	  	  	 /* if (errorlog) fprintf(errorlog, "genesis_vdp_ctrl_w %x, %x, %x, %x\n", offset, data, vdp_data, data >>16);*/
+	  	  	 /* logerror("genesis_vdp_ctrl_w %x, %x, %x, %x\n", offset, data, vdp_data, data >>16);*/
 
 
 
@@ -556,7 +556,7 @@ WRITE_HANDLER ( genesis_vdp_ctrl_w )
 				first_read = 1;
 				vdp_register = (vdp_data >> 8) & 0x1f;
 			  	vdp_data = full_vdp_data & 0xff;
-				/*if (errorlog) fprintf(errorlog,"register %d writing %x\n", vdp_register, vdp_data);*/
+				/*logerror("register %d writing %x\n", vdp_register, vdp_data);*/
 				switch (vdp_register)
 				{
 					case 0:	/* register 0, interrupt enable etc */
@@ -573,24 +573,24 @@ WRITE_HANDLER ( genesis_vdp_ctrl_w )
 						break;
 					case 2:	/* pattern name table address, scroll A */
 						vdp_pattern_scroll_a= (char *)(&vdp_vram[0]+(vdp_data << 10));
-//						if (errorlog) fprintf(errorlog, "scrolla = %x\n", vdp_pattern_scroll_a-(int)&vdp_vram[0]);
-//						if (errorlog) fprintf(errorlog, "VRAM is %x\n", &vdp_vram[0]);
+//						logerror("scrolla = %x\n", vdp_pattern_scroll_a-(int)&vdp_vram[0]);
+//						logerror("VRAM is %x\n", &vdp_vram[0]);
 					   //	memset(dirty_attribute_a, -1, (128*128)*sizeof(short));
 						break;
 					case 3:	/* pattern name table address, window */
 						vdp_pattern_window	= (char *)(&vdp_vram[0]+(vdp_data <<10));
-//						if (errorlog) fprintf(errorlog, "window = %x\n", vdp_pattern_window-(int)&vdp_vram[0]);
+//						logerror("window = %x\n", vdp_pattern_window-(int)&vdp_vram[0]);
 
 						break;
 					case 4:	/* pattern name table address, scroll B */
 						vdp_pattern_scroll_b= (char *)(&vdp_vram[0]+(vdp_data <<13));
 					  //	memset(dirty_attribute_b, -1, (128*128)*sizeof(short));
 
-//						if (errorlog) fprintf(errorlog, "scrollb = %x\n", vdp_pattern_scroll_b-(int)&vdp_vram[0]);
+//						logerror("scrollb = %x\n", vdp_pattern_scroll_b-(int)&vdp_vram[0]);
 						break;
 					case 5:	/* pattern name table address, sprite */
 						vdp_pattern_sprite	= (unsigned char *)(&vdp_vram[0]+(vdp_data <<9));
-//						if (errorlog) fprintf(errorlog, "sprite = %x\n", vdp_pattern_sprite-(int)&vdp_vram[0]);
+//						logerror("sprite = %x\n", vdp_pattern_sprite-(int)&vdp_vram[0]);
 						break;
 					case 6: /* nothing */
 						break;
@@ -607,13 +607,13 @@ WRITE_HANDLER ( genesis_vdp_ctrl_w )
 						vdp_scrollmode		= vdp_data;
 						vdp_h_scrollmode	= (vdp_data & 3);
 						vdp_v_scrollmode	= (vdp_data >> 2) & 1;
-						if (errorlog) fprintf(errorlog, "scroll modes %x, %x\n", vdp_h_scrollmode, vdp_v_scrollmode);
+						logerror("scroll modes %x, %x\n", vdp_h_scrollmode, vdp_v_scrollmode);
 						break;
 					case 12: /* character mode, interlace etc */
 						vdp_screenmode		= vdp_data;
 						vdp_h_width = ((vdp_data & 1) ? 320 : 256);
 						vdp_interlace = (vdp_data >> 1) & 3;
-						if (errorlog) fprintf(errorlog, "screen width, interlace flag = %d, %d\n", vdp_h_width, vdp_interlace);
+						logerror("screen width, interlace flag = %d, %d\n", vdp_h_width, vdp_interlace);
 						break;
 					case 13: /* H scroll data address */
 						vdp_h_scroll_addr	= (char *)(&vdp_vram[0]+(vdp_data<<10));
@@ -626,7 +626,7 @@ WRITE_HANDLER ( genesis_vdp_ctrl_w )
 					case 16: /* scroll size */
 						vdp_h_scrollsize	= (vdp_data & 3);
 						vdp_v_scrollsize	= ((vdp_data >> 4) & 3);
-						if (errorlog) fprintf(errorlog, "initial h scrollsize = %x\n", vdp_h_scrollsize);
+						logerror("initial h scrollsize = %x\n", vdp_h_scrollsize);
 						switch (vdp_h_scrollsize)
 						{
 							case 0: vdp_h_scrollsize = 32; break;
@@ -643,7 +643,7 @@ WRITE_HANDLER ( genesis_vdp_ctrl_w )
 							case 3: vdp_v_scrollsize = 128; break;
 						}
 						vdp_scroll_height = vdp_v_scrollsize << 3;
-						if (errorlog) fprintf(errorlog, "scrollsizes are %d, %d\n", vdp_h_scrollsize, vdp_v_scrollsize);
+						logerror("scrollsizes are %d, %d\n", vdp_h_scrollsize, vdp_v_scrollsize);
 
 					  //	scroll_a->width = scroll_b->width = vdp_h_scrollsize << 3;
 					  //	scroll_a->height = scroll_b->height = vdp_scroll_height;
@@ -657,11 +657,11 @@ WRITE_HANDLER ( genesis_vdp_ctrl_w )
 						break;
 					case 19: /* DMA length counter low */
 						vdp_dma_length		= (vdp_dma_length & 0xff00) | vdp_data;
-						if (errorlog) fprintf(errorlog,"DMA length low.. length is %x\n", vdp_dma_length);
+						logerror("DMA length low.. length is %x\n", vdp_dma_length);
 						break;
 					case 20: /* DMA length counter high */
 						vdp_dma_length		= (vdp_dma_length & 0xff) | (vdp_data << 8);
-						if (errorlog) fprintf(errorlog,"DMA length high.. length is %x\n", vdp_dma_length);
+						logerror("DMA length high.. length is %x\n", vdp_dma_length);
 						break;
 					case 21: /* DMA source low  (total is SA1-SA22, thus the extra shift */
 						vdp_dma_source		= (vdp_dma_source & 0x7ffe00) | (vdp_data << 1);
@@ -673,7 +673,7 @@ WRITE_HANDLER ( genesis_vdp_ctrl_w )
 						vdp_dma_source		= (vdp_dma_source & 0x01fffe) | ((vdp_data & 0x7f) << 17) ;
 
 						vdp_dma_mode		= (vdp_data >> 6) & 0x03;
-						if (errorlog) fprintf(errorlog,"23:%x, %x\n",vdp_dma_mode, vdp_dma_source);
+						logerror("23:%x, %x\n",vdp_dma_mode, vdp_dma_source);
 						break;
 				}
 			}
@@ -681,20 +681,20 @@ WRITE_HANDLER ( genesis_vdp_ctrl_w )
 			{
 				if (first_read)
 				{
-					/* if (errorlog) fprintf(errorlog,"vdp data on first read is %x\n", vdp_data); */
+					/* logerror("vdp data on first read is %x\n", vdp_data); */
 					vdp_address = (vdp_data & 0x3fff);
 					vdp_id		= (vdp_data & 0xc000) >> 14;
 					first_read	= 0;
 				}
 				else
 				{
-				   /*	 if (errorlog) fprintf(errorlog,"vdp data on second read is %x\n", vdp_data); */
+				   /*	 logerror("vdp data on second read is %x\n", vdp_data); */
 					vdp_address |= ((vdp_data & 0x03) << 14);
 					vdp_id |= ( (vdp_data & 0xf0) >> 2);
 					first_read	= 1;
-					if (errorlog) fprintf(errorlog,"vdp id is %x\n", vdp_id);
+					logerror("vdp id is %x\n", vdp_id);
 
-					if (errorlog) fprintf(errorlog,"address set, %x\n", vdp_address);
+					logerror("address set, %x\n", vdp_address);
 
 					if (vdp_dma_enable && (vdp_id & 0x20))
 					{
@@ -704,14 +704,14 @@ WRITE_HANDLER ( genesis_vdp_ctrl_w )
 						{
 /*#if 0*/
 							case DMA_ROM_VRAM:
-//								if (errorlog) fprintf(errorlog,"DMA ROM->VRAM, src %x dest %x, length %x, real dest %x, id %x, inc %x\n",  vdp_dma_source, vdp_address, vdp_dma_length, get_dma_dest_address(vdp_id)+vdp_address, vdp_id, vdp_auto_increment);
+//								logerror("DMA ROM->VRAM, src %x dest %x, length %x, real dest %x, id %x, inc %x\n",  vdp_dma_source, vdp_address, vdp_dma_length, get_dma_dest_address(vdp_id)+vdp_address, vdp_id, vdp_auto_increment);
 
 							  	genesis_initialise_dma(&memory_region(REGION_CPU1)[vdp_dma_source & 0x3fffff], vdp_address,	vdp_dma_length * 2, vdp_id, vdp_auto_increment);
 
 /*#endif*/
 								break;
 							case DMA_RAM_VRAM:
-//								if (errorlog) fprintf(errorlog,"DMA RAM->VRAM, src %x dest %x, length %x, real dest %x, id %x, inc %x\n",  vdp_dma_source, vdp_address, vdp_dma_length, get_dma_dest_address(vdp_id)+vdp_address, vdp_id, vdp_auto_increment);
+//								logerror("DMA RAM->VRAM, src %x dest %x, length %x, real dest %x, id %x, inc %x\n",  vdp_dma_source, vdp_address, vdp_dma_length, get_dma_dest_address(vdp_id)+vdp_address, vdp_id, vdp_auto_increment);
 
 								/*	if (vdp_address+(vdp_dma_length*vdp_auto_increment) > 0xffff) printf("error! sdil: %x %x %x %x\n", vdp_dma_source, vdp_address, vdp_auto_increment, vdp_dma_length);*/
 
@@ -719,10 +719,10 @@ WRITE_HANDLER ( genesis_vdp_ctrl_w )
 
 								break;
 							case DMA_VRAM_FILL: /* handled at other port :-) */
-								if (errorlog) fprintf(errorlog, "VRAM FILL pending, awaiting fill data set\n");
+								logerror("VRAM FILL pending, awaiting fill data set\n");
 								break;
 							case DMA_VRAM_COPY:
-//								if (errorlog) fprintf(errorlog,"DMA VRAM COPY, src %x dest %x, length %x, real dest %x, id %x, inc %x\n",  vdp_dma_source, vdp_address, vdp_dma_length, get_dma_dest_address(vdp_id)+vdp_address, vdp_id, vdp_auto_increment);
+//								logerror("DMA VRAM COPY, src %x dest %x, length %x, real dest %x, id %x, inc %x\n",  vdp_dma_source, vdp_address, vdp_dma_length, get_dma_dest_address(vdp_id)+vdp_address, vdp_id, vdp_auto_increment);
 								/*	tempdest = vdp_vram+vdp_address;
 								for (tempsource = 0; tempsource < (vdp_dma_length); tempsource++)
 								{
@@ -732,7 +732,7 @@ WRITE_HANDLER ( genesis_vdp_ctrl_w )
 								*/
 								break;
 							default:
-								if (errorlog) fprintf(errorlog,"unknown vdp dma mode type %x\n", vdp_dma_mode);
+								logerror("unknown vdp dma mode type %x\n", vdp_dma_mode);
 								break;
 						}
 					}
@@ -758,7 +758,7 @@ void genesis_dma_poll (int amount)
 	if (vdp_dma_busy)
 	{
 	//cpu_yield();
-		if (errorlog) fprintf(errorlog, "poll: src %p, end %p, id %x, vram dest %x, inc %x\n", current_dma_src, current_dma_end, current_dma_id, current_dma_vram_dest, current_dma_increment);
+		logerror("poll: src %p, end %p, id %x, vram dest %x, inc %x\n", current_dma_src, current_dma_end, current_dma_id, current_dma_vram_dest, current_dma_increment);
 
 		while (indx < amount && current_dma_src < current_dma_end)
 		{
@@ -782,7 +782,7 @@ void genesis_dma_poll (int amount)
 
 		if (vdp_id == MODE_CRAM_WRITE_DMA)
 			{
-				if (errorlog) fprintf(errorlog, "%x-%x\n", current_dma_vram_dest, counter);
+				logerror("%x-%x\n", current_dma_vram_dest, counter);
 				memset(dirty_colour + (current_dma_vram_dest), 1, counter);
 			}
 
@@ -828,7 +828,7 @@ void genesis_dma_poll (int amount)
 				#endif
 
 			 	if ((sy >> 3) < 0x7ff) tile_changed_1[sy >> BLOCK_SHIFT] = tile_changed_2[sy >> BLOCK_SHIFT] = 1;
-				//if (errorlog && (sy >> 3) > 0x800) fprintf(errorlog, "ERK! %x\n", (sy >> 3));
+
 
 
 				offset += 4;
@@ -1373,7 +1373,7 @@ void plot_sprites(int priority)
 
 
 
-	   /*	if (errorlog) fprintf(errorlog, "addr = %x, sprcount %x\n", current_sprite, numberofsprites);  */
+	   /*	logerror("addr = %x, sprcount %x\n", current_sprite, numberofsprites);  */
 		if (*(current_sprite + NEXT) == 0) break;
 		current_sprite = (vdp_pattern_sprite + (*(current_sprite + NEXT)<<3) );
 
@@ -1431,7 +1431,7 @@ void genesis_modify_display(int inter)
  //  if (z80running)
  //  {
  //  		cpu_cause_interrupt(1,Z80_NMI_INT);
- //		if (errorlog) fprintf(errorlog, "Allowing Z80 interrupt\n");
+ //		logerror("Allowing Z80 interrupt\n");
  //  }
 
 	/* Setup the non-constant fields */
@@ -1744,7 +1744,7 @@ void genesis_vh_convert_color_prom (unsigned char *palette, unsigned char *color
 
 void genesis_videoram1_w (int offset, int data)
 {
-	if (errorlog) fprintf(errorlog, "what is this doing? %x, %x\n", offset, data);
+	logerror("what is this doing? %x, %x\n", offset, data);
 	offset = data;
 }
 
@@ -1929,7 +1929,7 @@ unsigned char *get_dma_dest_address(int id)
 			return (unsigned char *)&vdp_vsram[0];
 			break;
 		default:
-			if (errorlog) fprintf(errorlog, "Unknown get_dma_dest_address id %x!!\n", id);
+			logerror("Unknown get_dma_dest_address id %x!!\n", id);
 	}
 	return NULL;
 }
@@ -1938,7 +1938,7 @@ int genesis_vdp_data_r (int offset)
 {
 	int data = 0;		 /* don't worry about this for now, really doesn't happen */
 
-   	if (errorlog) fprintf(errorlog, "reading from... %x\n", (((vdp_address & 0xfffffffe)+ (int)&vdp_vram[0])) );
+   	logerror("reading from... %x\n", (((vdp_address & 0xfffffffe)+ (int)&vdp_vram[0])) );
 
 	switch (vdp_id)
 	{
@@ -1952,7 +1952,7 @@ int genesis_vdp_data_r (int offset)
 			data = /*ENDIANISE*/(*(short *)(((vdp_address & 0xfffffffe)+ vdp_cram) ));
 			break;
 		default:
-			if (errorlog) fprintf(errorlog,"unknown vdp port read type %x\n", vdp_id);
+			logerror("unknown vdp port read type %x\n", vdp_id);
 	}
 
    /*	if ((offset == 1) || (offset == 3))	  */
@@ -1965,7 +1965,7 @@ void genesis_vdp_data_w (int offset, int data)
 {
   	int tempsource = 0;
   	int temp_vdp_address = vdp_address;
-	/*if (errorlog) fprintf(errorlog, "vdp data w offset = %x\n", offset);*/
+	/*logerror("vdp data w offset = %x\n", offset);*/
 
 	/* need a special case for byte writes...? */
 
@@ -1976,7 +1976,7 @@ void genesis_vdp_data_w (int offset, int data)
 
 		 vdp_vram_fill = COMBINE_WORD(vdp_vram_fill, data);
 			temp_vdp_address = vdp_address;
-//			if (errorlog) fprintf(errorlog,"DMA VRAM FILL, dest %x, fill %x, length %x, real dest %x, id %x, inc %x\n", vdp_address, vdp_vram_fill, vdp_dma_length, get_dma_dest_address(vdp_id)+vdp_address, vdp_id, vdp_auto_increment);
+//			logerror("DMA VRAM FILL, dest %x, fill %x, length %x, real dest %x, id %x, inc %x\n", vdp_address, vdp_vram_fill, vdp_dma_length, get_dma_dest_address(vdp_id)+vdp_address, vdp_id, vdp_auto_increment);
 			/* now do the rest of the DMA fill */
 
 			for (tempsource = 0; tempsource < (vdp_dma_length*2); tempsource++)
@@ -1994,7 +1994,7 @@ void genesis_vdp_data_w (int offset, int data)
 
 			if (vdp_id == MODE_CRAM_WRITE_DMA)
 			{
-				 if (errorlog) fprintf(errorlog, "*** %x-%x\n", temp_vdp_address, vdp_dma_length*2);
+				 logerror("*** %x-%x\n", temp_vdp_address, vdp_dma_length*2);
 				memset(dirty_colour + (temp_vdp_address), 1, (vdp_dma_length*2));
 			}
 
@@ -2031,12 +2031,12 @@ void genesis_vdp_data_w (int offset, int data)
 		}
 		return;
 	}
-	  /*	if (errorlog) fprintf(errorlog,"%x",vdp_vram_fill);*/
+	  /*	logerror("%x",vdp_vram_fill);*/
 
 	/*  if (first_access && (offset == 1 || offset == 3))
-		if (errorlog) fprintf(errorlog, "misaligned\n"); */
-		 /*  	if (errorlog) fprintf(errorlog,"would write %x to... %x\n", data, ((vdp_address+ 0*//*(int)&vdp_vram[0]*//*) +(  (offset & 0x01))) );*/
-	if ((vdp_address & 1) && errorlog) fprintf(errorlog, "!");
+		logerror("misaligned\n"); */
+		 /*  	logerror("would write %x to... %x\n", data, ((vdp_address+ 0*//*(int)&vdp_vram[0]*//*) +(  (offset & 0x01))) );*/
+	if ((vdp_address & 1)) logerror("!");
 
 	switch (vdp_id)
 	{
@@ -2063,17 +2063,17 @@ void genesis_vdp_data_w (int offset, int data)
 		case MODE_CRAM_WRITE:
 			COMBINE_WORD_MEM(vdp_address+(int)vdp_cram, data);
 			dirty_colour[vdp_address>>1] = 1;
-			//if (errorlog) fprintf(errorlog, "%x\n", vdp_address);
+			//logerror("%x\n", vdp_address);
 			break;
 
 		default:
-			if (errorlog) fprintf(errorlog,"unknown vdp port write type %x\n", vdp_id);
+			logerror("unknown vdp port write type %x\n", vdp_id);
 	}
 
    //	if ((offset == 1 || offset == 3) /*|| (data_width == 1)*/)
 		vdp_address += vdp_auto_increment;
 
-	if (vdp_auto_increment == 1 && errorlog) fprintf(errorlog, "1");
+	if (vdp_auto_increment == 1) logerror("1");
 /*		first_access=0;*/
 }
 
@@ -2091,7 +2091,7 @@ fake_dma_mode ^=8;
 				 //	cpu_cause_interrupt(0,6);
 
 				   //	cpu_halt(0,0);
-				//	if (errorlog) fprintf(errorlog, "vdp ctrl status offset = %x\n", offset);
+				//	logerror("vdp ctrl status offset = %x\n", offset);
 	return vdp_ctrl_status;
 }
 
@@ -2105,7 +2105,7 @@ void genesis_vdp_ctrl_w (int offset, int data)
 	{
 		case 0:
 	  	case 2:
-	  	  	 /* if (errorlog) fprintf(errorlog, "genesis_vdp_ctrl_w %x, %x, %x, %x\n", offset, data, vdp_data, data >>16);*/
+	  	  	 /* logerror("genesis_vdp_ctrl_w %x, %x, %x, %x\n", offset, data, vdp_data, data >>16);*/
 
 
 
@@ -2114,7 +2114,7 @@ void genesis_vdp_ctrl_w (int offset, int data)
 				first_read = 1;
 				vdp_register = (vdp_data >> 8) & 0x1f;
 			  	vdp_data = full_vdp_data & 0xff;
-				/*if (errorlog) fprintf(errorlog,"register %d writing %x\n", vdp_register, vdp_data);*/
+				/*logerror("register %d writing %x\n", vdp_register, vdp_data);*/
 				switch (vdp_register)
 				{
 					case 0:	/* register 0, interrupt enable etc */
@@ -2131,24 +2131,24 @@ void genesis_vdp_ctrl_w (int offset, int data)
 						break;
 					case 2:	/* pattern name table address, scroll A */
 						vdp_pattern_scroll_a= (char *)(&vdp_vram[0]+(vdp_data << 10));
-//						if (errorlog) fprintf(errorlog, "scrolla = %x\n", vdp_pattern_scroll_a-(int)&vdp_vram[0]);
-//						if (errorlog) fprintf(errorlog, "VRAM is %x\n", &vdp_vram[0]);
+//						logerror("scrolla = %x\n", vdp_pattern_scroll_a-(int)&vdp_vram[0]);
+//						logerror("VRAM is %x\n", &vdp_vram[0]);
 					   //	memset(dirty_attribute_a, -1, (128*128)*sizeof(short));
 						break;
 					case 3:	/* pattern name table address, window */
 						vdp_pattern_window	= (char *)(&vdp_vram[0]+(vdp_data <<10));
-//						if (errorlog) fprintf(errorlog, "window = %x\n", vdp_pattern_window-(int)&vdp_vram[0]);
+//						logerror("window = %x\n", vdp_pattern_window-(int)&vdp_vram[0]);
 
 						break;
 					case 4:	/* pattern name table address, scroll B */
 						vdp_pattern_scroll_b= (char *)(&vdp_vram[0]+(vdp_data <<13));
 					  //	memset(dirty_attribute_b, -1, (128*128)*sizeof(short));
 
-//						if (errorlog) fprintf(errorlog, "scrollb = %x\n", vdp_pattern_scroll_b-(int)&vdp_vram[0]);
+//						logerror("scrollb = %x\n", vdp_pattern_scroll_b-(int)&vdp_vram[0]);
 						break;
 					case 5:	/* pattern name table address, sprite */
 						vdp_pattern_sprite	= (char *)(&vdp_vram[0]+(vdp_data <<9));
-//						if (errorlog) fprintf(errorlog, "sprite = %x\n", vdp_pattern_sprite-(int)&vdp_vram[0]);
+//						logerror("sprite = %x\n", vdp_pattern_sprite-(int)&vdp_vram[0]);
 						break;
 					case 6: /* nothing */
 						break;
@@ -2165,13 +2165,13 @@ void genesis_vdp_ctrl_w (int offset, int data)
 						vdp_scrollmode		= vdp_data;
 						vdp_h_scrollmode	= (vdp_data & 3);
 						vdp_v_scrollmode	= (vdp_data >> 2) & 1;
-						if (errorlog) fprintf(errorlog, "scroll modes %x, %x\n", vdp_h_scrollmode, vdp_v_scrollmode);
+						logerror("scroll modes %x, %x\n", vdp_h_scrollmode, vdp_v_scrollmode);
 						break;
 					case 12: /* character mode, interlace etc */
 						vdp_screenmode		= vdp_data;
 						vdp_h_width = ((vdp_data & 1) ? 320 : 256);
 						vdp_interlace = (vdp_data >> 1) & 3;
-						if (errorlog) fprintf(errorlog, "screen width, interlace flag = %d, %d\n", vdp_h_width, vdp_interlace);
+						logerror("screen width, interlace flag = %d, %d\n", vdp_h_width, vdp_interlace);
 						break;
 					case 13: /* H scroll data address */
 						vdp_h_scroll_addr	= (char *)(&vdp_vram[0]+(vdp_data<<10));
@@ -2184,7 +2184,7 @@ void genesis_vdp_ctrl_w (int offset, int data)
 					case 16: /* scroll size */
 						vdp_h_scrollsize	= (vdp_data & 3);
 						vdp_v_scrollsize	= ((vdp_data >> 4) & 3);
-						if (errorlog) fprintf(errorlog, "initial h scrollsize = %x\n", vdp_h_scrollsize);
+						logerror("initial h scrollsize = %x\n", vdp_h_scrollsize);
 						switch (vdp_h_scrollsize)
 						{
 							case 0: vdp_h_scrollsize = 32; break;
@@ -2201,7 +2201,7 @@ void genesis_vdp_ctrl_w (int offset, int data)
 							case 3: vdp_v_scrollsize = 128; break;
 						}
 						vdp_scroll_height = vdp_v_scrollsize << 3;
-						if (errorlog) fprintf(errorlog, "scrollsizes are %d, %d\n", vdp_h_scrollsize, vdp_v_scrollsize);
+						logerror("scrollsizes are %d, %d\n", vdp_h_scrollsize, vdp_v_scrollsize);
 
 					  //	scroll_a->width = scroll_b->width = vdp_h_scrollsize << 3;
 					  //	scroll_a->height = scroll_b->height = vdp_scroll_height;
@@ -2215,11 +2215,11 @@ void genesis_vdp_ctrl_w (int offset, int data)
 						break;
 					case 19: /* DMA length counter low */
 						vdp_dma_length		= (vdp_dma_length & 0xff00) | vdp_data;
-						if (errorlog) fprintf(errorlog,"DMA length low.. length is %x\n", vdp_dma_length);
+						logerror("DMA length low.. length is %x\n", vdp_dma_length);
 						break;
 					case 20: /* DMA length counter high */
 						vdp_dma_length		= (vdp_dma_length & 0xff) | (vdp_data << 8);
-						if (errorlog) fprintf(errorlog,"DMA length high.. length is %x\n", vdp_dma_length);
+						logerror("DMA length high.. length is %x\n", vdp_dma_length);
 						break;
 					case 21: /* DMA source low  (total is SA1-SA22, thus the extra shift */
 						vdp_dma_source		= (vdp_dma_source & 0x7ffe00) | (vdp_data << 1);
@@ -2231,7 +2231,7 @@ void genesis_vdp_ctrl_w (int offset, int data)
 						vdp_dma_source		= (vdp_dma_source & 0x01fffe) | ((vdp_data & 0x7f) << 17) ;
 
 						vdp_dma_mode		= (vdp_data >> 6) & 0x03;
-						if (errorlog) fprintf(errorlog,"23:%x, %x\n",vdp_dma_mode, vdp_dma_source);
+						logerror("23:%x, %x\n",vdp_dma_mode, vdp_dma_source);
 						break;
 				}
 			}
@@ -2239,20 +2239,20 @@ void genesis_vdp_ctrl_w (int offset, int data)
 			{
 				if (first_read)
 				{
-					/* if (errorlog) fprintf(errorlog,"vdp data on first read is %x\n", vdp_data); */
+					/* logerror("vdp data on first read is %x\n", vdp_data); */
 					vdp_address = (vdp_data & 0x3fff);
 					vdp_id		= (vdp_data & 0xc000) >> 14;
 					first_read	= 0;
 				}
 				else
 				{
-				   /*	 if (errorlog) fprintf(errorlog,"vdp data on second read is %x\n", vdp_data); */
+				   /*	 logerror("vdp data on second read is %x\n", vdp_data); */
 					vdp_address |= ((vdp_data & 0x03) << 14);
 					vdp_id |= ( (vdp_data & 0xf0) >> 2);
 					first_read	= 1;
-					if (errorlog) fprintf(errorlog,"vdp id is %x\n", vdp_id);
+					logerror("vdp id is %x\n", vdp_id);
 
-					if (errorlog) fprintf(errorlog,"address set, %x\n", vdp_address);
+					logerror("address set, %x\n", vdp_address);
 
 					if (vdp_dma_enable && (vdp_id & 0x20))
 					{
@@ -2262,14 +2262,14 @@ void genesis_vdp_ctrl_w (int offset, int data)
 						{
 /*#if 0*/
 							case DMA_ROM_VRAM:
-//								if (errorlog) fprintf(errorlog,"DMA ROM->VRAM, src %x dest %x, length %x, real dest %x, id %x, inc %x\n",  vdp_dma_source, vdp_address, vdp_dma_length, get_dma_dest_address(vdp_id)+vdp_address, vdp_id, vdp_auto_increment);
+//								logerror("DMA ROM->VRAM, src %x dest %x, length %x, real dest %x, id %x, inc %x\n",  vdp_dma_source, vdp_address, vdp_dma_length, get_dma_dest_address(vdp_id)+vdp_address, vdp_id, vdp_auto_increment);
 
 							  	genesis_initialise_dma(&memory_region(REGION_CPU1)[vdp_dma_source & 0x3fffff], vdp_address,	vdp_dma_length * 2, vdp_id, vdp_auto_increment);
 
 /*#endif*/
 								break;
 							case DMA_RAM_VRAM:
-//								if (errorlog) fprintf(errorlog,"DMA RAM->VRAM, src %x dest %x, length %x, real dest %x, id %x, inc %x\n",  vdp_dma_source, vdp_address, vdp_dma_length, get_dma_dest_address(vdp_id)+vdp_address, vdp_id, vdp_auto_increment);
+//								logerror("DMA RAM->VRAM, src %x dest %x, length %x, real dest %x, id %x, inc %x\n",  vdp_dma_source, vdp_address, vdp_dma_length, get_dma_dest_address(vdp_id)+vdp_address, vdp_id, vdp_auto_increment);
 
 								/*	if (vdp_address+(vdp_dma_length*vdp_auto_increment) > 0xffff) printf("error! sdil: %x %x %x %x\n", vdp_dma_source, vdp_address, vdp_auto_increment, vdp_dma_length);*/
 
@@ -2277,10 +2277,10 @@ void genesis_vdp_ctrl_w (int offset, int data)
 
 								break;
 							case DMA_VRAM_FILL: /* handled at other port :-) */
-								if (errorlog) fprintf(errorlog, "VRAM FILL pending, awaiting fill data set\n");
+								logerror("VRAM FILL pending, awaiting fill data set\n");
 								break;
 							case DMA_VRAM_COPY:
-//								if (errorlog) fprintf(errorlog,"DMA VRAM COPY, src %x dest %x, length %x, real dest %x, id %x, inc %x\n",  vdp_dma_source, vdp_address, vdp_dma_length, get_dma_dest_address(vdp_id)+vdp_address, vdp_id, vdp_auto_increment);
+//								logerror("DMA VRAM COPY, src %x dest %x, length %x, real dest %x, id %x, inc %x\n",  vdp_dma_source, vdp_address, vdp_dma_length, get_dma_dest_address(vdp_id)+vdp_address, vdp_id, vdp_auto_increment);
 								/*	tempdest = vdp_vram+vdp_address;
 								for (tempsource = 0; tempsource < (vdp_dma_length); tempsource++)
 								{
@@ -2290,7 +2290,7 @@ void genesis_vdp_ctrl_w (int offset, int data)
 								*/
 								break;
 							default:
-								if (errorlog) fprintf(errorlog,"unknown vdp dma mode type %x\n", vdp_dma_mode);
+								logerror("unknown vdp dma mode type %x\n", vdp_dma_mode);
 								break;
 						}
 					}
@@ -2316,7 +2316,7 @@ void genesis_dma_poll (int amount)
 	if (vdp_dma_busy)
 	{
 	//cpu_yield();
-		if (errorlog) fprintf(errorlog, "poll: src %p, end %p, id %x, vram dest %x, inc %x\n", current_dma_src, current_dma_end, current_dma_id, current_dma_vram_dest, current_dma_increment);
+		logerror("poll: src %p, end %p, id %x, vram dest %x, inc %x\n", current_dma_src, current_dma_end, current_dma_id, current_dma_vram_dest, current_dma_increment);
 
 		while (indx < amount && current_dma_src < current_dma_end)
 		{
@@ -2340,7 +2340,7 @@ void genesis_dma_poll (int amount)
 
 		if (vdp_id == MODE_CRAM_WRITE_DMA)
 			{
-				if (errorlog) fprintf(errorlog, "%x-%x\n", current_dma_vram_dest, counter);
+				logerror("%x-%x\n", current_dma_vram_dest, counter);
 				memset(dirty_colour + (current_dma_vram_dest), 1, counter);
 			}
 
@@ -2386,7 +2386,6 @@ void genesis_dma_poll (int amount)
 				#endif
 
 			 	if ((sy >> 3) < 0x7ff) tile_changed_1[sy >> BLOCK_SHIFT] = tile_changed_2[sy >> BLOCK_SHIFT] = 1;
-				//if (errorlog && (sy >> 3) > 0x800) fprintf(errorlog, "ERK! %x\n", (sy >> 3));
 
 
 				offset += 4;
@@ -2745,11 +2744,11 @@ void combinelayers2(struct osd_bitmap *dest, int startline, int endline)
 
 
 			}
-			//if (errorlog) fprintf(errorlog, "%d, %d\n", scroll_a_y, scroll_b_y);
+			//logerror("%d, %d\n", scroll_a_y, scroll_b_y);
 
 			scroll_a_y = (-scroll_a_y+(sy /*& v_mask*/)) & v_mask;
 			scroll_b_y = (-scroll_b_y+(sy /*& v_mask*/)) & v_mask;
-			//if (errorlog) fprintf(errorlog, "%d, %d\n", scroll_a_y, scroll_b_y);
+			//logerror("%d, %d\n", scroll_a_y, scroll_b_y);
 			switch (vdp_h_scrollmode)
 				{
 					case 0: /* horizontally scroll as a whole */
@@ -3189,7 +3188,7 @@ void plot_sprites(int priority)
 
 
 
-	   /*	if (errorlog) fprintf(errorlog, "addr = %x, sprcount %x\n", current_sprite, numberofsprites);  */
+	   /*	logerror("addr = %x, sprcount %x\n", current_sprite, numberofsprites);  */
 		if (*(current_sprite + NEXT) == 0) break;
 		current_sprite = (vdp_pattern_sprite + (*(current_sprite + NEXT)<<3) );
 
@@ -3248,7 +3247,7 @@ void genesis_modify_display(int inter)
  //  if (z80running)
  //  {
  //  		cpu_cause_interrupt(1,Z80_NMI_INT);
- //		if (errorlog) fprintf(errorlog, "Allowing Z80 interrupt\n");
+ //		logerror("Allowing Z80 interrupt\n");
  //  }
 
 	/* Setup the non-constant fields */

@@ -10,15 +10,6 @@
 #include "artwork.h"
 #include "vidhrdw/generic.h"
 
-#ifndef VERBOSE
-#define VERBOSE 1
-#endif
-
-#if VERBOSE
-#define LOG(x)	if( errorlog ) fprintf x
-#else
-#define LOG(x)	/* x */
-#endif
 
 static struct artwork *kim1_backdrop;
 
@@ -75,12 +66,12 @@ void kim1_init_colors (unsigned char *palette, unsigned short *colortable, const
 
     if ((kim1_backdrop = artwork_load (backdrop_name, nextfree, Machine->drv->total_colors - nextfree)) != NULL)
     {
-        LOG ((errorlog, "backdrop %s successfully loaded\n", backdrop_name));
+        logerror("backdrop %s successfully loaded\n", backdrop_name);
         memcpy (&palette[nextfree * 3], kim1_backdrop->orig_palette, kim1_backdrop->num_pens_used * 3 * sizeof (unsigned char));
     }
     else
     {
-        LOG ((errorlog, "no backdrop loaded\n"));
+        logerror("no backdrop loaded\n");
     }
 }
 

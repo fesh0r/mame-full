@@ -25,7 +25,7 @@ static int speaker_gate = 0;
 /************************************/
 int pc_sh_start(void)
 {
-	if (errorlog) fprintf(errorlog, "pc_sh_start\n");
+	logerror("pc_sh_start\n");
 	channel = stream_init("PC speaker", 50, Machine->sample_rate, 0, pc_sh_update);
     return 0;
 }
@@ -40,7 +40,7 @@ int pc_sh_custom_start(const struct MachineSound* driver)
 /************************************/
 void pc_sh_stop(void)
 {
-	if (errorlog) fprintf(errorlog, "pc_sh_stop\n");
+	logerror("pc_sh_stop\n");
 }
 
 void pc_sh_speaker(int mode)
@@ -53,15 +53,15 @@ void pc_sh_speaker(int mode)
     switch( mode )
 	{
 		case 0: /* completely off */
-			SND_LOG(1,"PC_speaker",(errorlog,"off\n"));
+			SND_LOG(1,"PC_speaker",("off\n"));
 			speaker_gate = 0;
             break;
 		case 1: /* completely on */
-			SND_LOG(1,"PC_speaker",(errorlog,"on\n"));
+			SND_LOG(1,"PC_speaker",("on\n"));
 			speaker_gate = 1;
             break;
 		case 2: /* play the tone */
-			SND_LOG(1,"PC_speaker",(errorlog,"tone\n"));
+			SND_LOG(1,"PC_speaker",("tone\n"));
 			speaker_gate = 2;
             break;
     }

@@ -81,7 +81,7 @@ static int kc85_86_data;
 
 //static int opbase_reset_done = 0;
 
-int     kc85_opbaseoverride(UINT32 PC)
+OPBASE_HANDLER( kc85_opbaseoverride )
 {
         //if (!opbase_reset_done)
         //{
@@ -115,11 +115,10 @@ static READ_HANDLER ( kc85_4_pio_control_r )
 static WRITE_HANDLER ( kc85_4_pio_data_w )
 {
 
-   if (errorlog)
    {
-        int PC = cpu_get_pc();
+   int PC = cpu_get_pc();
 
-        fprintf(errorlog, "PIO W: PC: %04x O %02x D %02x\r\n",PC, offset, data);
+        logerror( "PIO W: PC: %04x O %02x D %02x\r\n",PC, offset, data);
    }
 
    kc85_4_pio_data[offset] = data;
@@ -152,14 +151,14 @@ static READ_HANDLER ( kc85_4_ctc_r )
 
 static WRITE_HANDLER ( kc85_4_ctc_w )
 {
-        if (errorlog) fprintf(errorlog, "CTC W: %02x\r\n",data);
+        logerror("CTC W: %02x\r\n",data);
 
         z80ctc_0_w(offset,data);
 }
 
 static WRITE_HANDLER ( kc85_4_84_w )
 {
-        if (errorlog) fprintf(errorlog, "0x084 W: %02x\r\n",data);
+        logerror("0x084 W: %02x\r\n",data);
 
         kc85_84_data = data;
 
@@ -207,31 +206,30 @@ static void kc85_4_update_0x08000(void)
         if (kc85_4_pio_data[0] & 4)
         {
                 /* IRM enabled - has priority over RAM8 enabled */
-                if (errorlog)
-                        fprintf(errorlog, "IRM enabled\r\n");
+                logerror("IRM enabled\r\n");
 
                 /* base address: screen 0 pixel data */
                 ram_page = kc85_4_video_ram;
 
-                if (errorlog)
+
                 {
 
                         if (kc85_84_data & 0x04)
                         {
-                                fprintf(errorlog, "access screen 1\r\n");
+                                logerror("access screen 1\r\n");
                         }
                         else
                         {
-                                fprintf(errorlog, "access screen 0\r\n");
+                                logerror("access screen 0\r\n");
                         }
 
                         if (kc85_84_data & 0x02)
                         {
-                                fprintf(errorlog, "access colour\r\n");
+                                logerror("access colour\r\n");
                         }
                         else
                         {
-                                fprintf(errorlog, "access pixel\r\n");
+                                logerror("access pixel\r\n");
                         }
                }
 
@@ -262,8 +260,7 @@ static void kc85_4_update_0x08000(void)
         if (kc85_4_pio_data[1] & 0x020)
         {
                 /* RAM8 ACCESS */
-                if (errorlog)
-                        fprintf(errorlog, "RAM8 enabled\r\n");
+                logerror("RAM8 enabled\r\n");
 
                 ram_page = kc85_ram + 0x08000;
 
@@ -292,7 +289,7 @@ static void kc85_4_update_0x08000(void)
 
 static WRITE_HANDLER ( kc85_4_86_w )
 {
-        if (errorlog) fprintf(errorlog, "0x086 W: %02x\r\n",data);
+        logerror("0x086 W: %02x\r\n",data);
 
 	kc85_86_data = data;
 
@@ -362,7 +359,7 @@ static void kc85_4_update_0x0c000(void)
 	{
 		/* CAOS rom takes priority */
 
-                if (errorlog) fprintf(errorlog,"CAOS rom 0x0c000\r\n");
+                logerror("CAOS rom 0x0c000\r\n");
 
                 cpu_setbank(1,memory_region(REGION_CPU1) + 0x012000);
      //           cpu_setbankhandler_r(1,MRA_BANK1);
@@ -371,14 +368,14 @@ static void kc85_4_update_0x0c000(void)
 	if (kc85_4_pio_data[0] & 0x080)
 	{
 		/* BASIC takes next priority */
-                if (errorlog) fprintf(errorlog,"BASIC rom 0x0c000\r\n");
+                logerror("BASIC rom 0x0c000\r\n");
 
                 cpu_setbank(1, memory_region(REGION_CPU1) + 0x010000);
        //         cpu_setbankhandler_r(1, MRA_BANK1);
 	}
 	else
 	{
-                if (errorlog) fprintf(errorlog,"No roms 0x0c000\r\n");
+                logerror("No roms 0x0c000\r\n");
 
       //          cpu_setbankhandler_r(1, MRA_NOP);
 	}
@@ -391,7 +388,7 @@ static void kc85_4_update_0x0e000(void)
 	{
 		/* enable CAOS rom in memory range 0x0e000-0x0ffff */
 
-                if (errorlog) fprintf(errorlog,"CAOS rom 0x0e000\r\n");
+                logerror("CAOS rom 0x0e000\r\n");
 
 		/* read will access the rom */
                 cpu_setbank(2,memory_region(REGION_CPU1) + 0x014000);
@@ -399,7 +396,7 @@ static void kc85_4_update_0x0e000(void)
 	}
 	else
 	{
-                if (errorlog) fprintf(errorlog, "no rom 0x0e000\r\n");
+                logerror("no rom 0x0e000\r\n");
 
 		/* enable empty space memory range 0x0e000-0x0ffff */
        //         cpu_setbankhandler_r(2, MRA_NOP);

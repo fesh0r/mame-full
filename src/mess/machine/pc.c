@@ -21,6 +21,8 @@
 ***************************************************************************/
 #include "mess/machine/pc.h"
 
+#include "mess/vidhrdw/vga.h"
+
 static void (*pc_blink_textcolors)(int on);
 
 int pc_framecnt = 0;
@@ -35,6 +37,48 @@ static UINT8 kb_tail = 0;
 static UINT8 make[128] = {0, };
 static UINT8 kb_delay = 60;   /* 240/60 -> 0,25s */
 static UINT8 kb_repeat = 8;   /* 240/ 8 -> 30/s */
+static int keyboard_numlock=0;
+static const struct {
+        char* pressed;
+        char* released;
+} keyboard_mf2_code[2/*numlock off, on*/][0x10]={ 
+        {
+                { "\xe0\x12", "\xe0\x92" },
+                { "\xe0\x13", "\xe0\x93" },
+                { "\xe0\x35", "\xe0\xb5" },
+                { "\xe0\x37", "\xe0\xb7" },
+                { "\xe0\x38", "\xe0\xb8" },
+                { "\xe0\x47", "\xe0\xc7" },
+                { "\xe0\x48", "\xe0\xc8" },
+                { "\xe0\x49", "\xe0\xc9" },
+                { "\xe0\x4b", "\xe0\xcb" },
+                { "\xe0\x4d", "\xe0\xcd" },
+                { "\xe0\x4f", "\xe0\xcf" },
+                { "\xe0\x50", "\xe0\xd0" },
+                { "\xe0\x51", "\xe0\xd1" },
+                { "\xe0\x52", "\xe0\xd2" },
+                { "\xe0\x53", "\xe0\xd3" },
+                { "\xe1\x1d\x45\xe1\x9d\xc5", "" }
+        },{
+                { "\xe0\x12", "\xe0\x92" },
+                { "\xe0\x13", "\xe0\x93" },
+                { "\xe0\x35", "\xe0\xb5" },
+                { "\xe0\x37", "\xe0\xb7" },
+                { "\xe0\x38", "\xe0\xb8" },
+                { "\xe0\x2a\xe0\x47", "\xe0\xc7\xe0\xaa" },
+                { "\xe0\x2a\xe0\x48", "\xe0\xc8\xe0\xaa" },
+                { "\xe0\x2a\xe0\x49", "\xe0\xc9\xe0\xaa" },
+                { "\xe0\x2a\xe0\x4b", "\xe0\xcb\xe0\xaa" },
+                { "\xe0\x2a\xe0\x4d", "\xe0\xcd\xe0\xaa" },
+                { "\xe0\x2a\xe0\x4f", "\xe0\xcf\xe0\xaa" },
+                { "\xe0\x2a\xe0\x50", "\xe0\xd0\xe0\xaa" },
+                { "\xe0\x2a\xe0\x51", "\xe0\xd1\xe0\xaa" },
+                { "\xe0\x2a\xe0\x52", "\xe0\xd2\xe0\xaa" },
+                { "\xe0\x2a\xe0\x53", "\xe0\xd3\xe0\xaa" },
+                { "\xe0\x2a\xe1\x1d\x45\xe1\x9d\xc5", "" }
+        }
+};
+
 
 /* mouse */
 static UINT8 m_queue[256];
@@ -51,6 +95,31 @@ void init_pc(void)
     /* just a plain bit pattern for graphics data generation */
     for (i = 0; i < 256; i++)
 		gfx[i] = i;
+}
+
+void init_pc_vga(void)
+{
+        int i; 
+        UINT8 *memory=memory_region(REGION_CPU1)+0xc0000;
+        UINT8 chksum;
+
+        /* plausibility check of retrace signals goes wrong */
+        memory[0x00f5]=memory[0x00f6]=memory[0x00f7]=0x90;
+        memory[0x00f8]=memory[0x00f9]=memory[0x00fa]=0x90;
+        for (chksum=0, i=0;i<0x7fff;i++) {
+                chksum+=memory[i];
+        }
+        memory[i]=0x100-chksum;
+
+#if 0
+        for (chksum=0, i=0;i<0x8000;i++) {
+                chksum+=memory[i];
+        }
+        printf("checksum %.2x\n",chksum);
+#endif
+
+        vga_init(input_port_15_r);
+        pc_blink_textcolors = NULL;
 }
 
 int pc_floppy_init(int id)
@@ -78,7 +147,7 @@ int pc_floppy_init(int id)
 		pc_fdc_scl[id]=2;
 		pc_fdc_heads[id]=2;
 		length=osd_fsize(pc_fdc_file[id]);
-		for( i = sizeof(common_length_spt_heads)/sizeof(common_length_spt_heads[0]); i >= 0; --i )
+		for( i = sizeof(common_length_spt_heads)/sizeof(common_length_spt_heads[0])-1; i >= 0; --i )
 		{
 			if( length == common_length_spt_heads[i][0] )
 			{
@@ -128,6 +197,7 @@ void pc_mda_init_machine(void)
 {
 	int i;
 
+	keyboard_numlock=0;
 	pc_blink_textcolors = pc_cga_blink_textcolors;
 
     /* remove pixel column 9 for character codes 0 - 175 and 224 - 255 */
@@ -144,11 +214,18 @@ void pc_mda_init_machine(void)
 
 void pc_cga_init_machine(void)
 {
+	keyboard_numlock=0;
 	pc_blink_textcolors = pc_cga_blink_textcolors;
+}
+
+void pc_vga_init_machine(void)
+{
+        keyboard_numlock=0;
 }
 
 void pc_t1t_init_machine(void)
 {
+	keyboard_numlock=0;
 	pc_blink_textcolors = pc_t1t_blink_textcolors;
 }
 
@@ -1144,7 +1221,6 @@ READ_HANDLER ( pc_COM4_r ) { return pc_COM_r(3, offset); }
  *************************************************************************/
 
 static double JOY_time = 0.0;
-static int JOY_x = 0, JOY_y = 0;
 
 WRITE_HANDLER ( pc_JOY_w )
 {
@@ -1153,34 +1229,25 @@ WRITE_HANDLER ( pc_JOY_w )
 
 READ_HANDLER ( pc_JOY_r )
 {
-	int data = 0xff, x, y, delta;
+	int data, delta;
 	double new_time = timer_get_time();
-	if (osd_is_joy_pressed(JOYCODE_1_BUTTON1)) data &= ~0x10;
-	if (osd_is_joy_pressed(JOYCODE_1_BUTTON2)) data &= ~0x20;
+
+	data=input_port_15_r(0)^0xf0;
     /* timer overflow? */
 	if (new_time - JOY_time > 0.01)
 	{
-		data &= ~0x0f;
+		//data &= ~0x0f;
 		JOY_LOG(2,"JOY_r",(errorlog,"$%02x, time > 0.01s\n", data));
 	}
 	else
 	{
-		delta = 2048 * 100 * (new_time - JOY_time) - 1024;
-/*		osd_analogjoy_read(&x, &y); */
-		osd_trak_read(0,&x, &y);
-		if (JOY_x + x < -1024) JOY_x = -1024;
-		else if (JOY_x + x > 1023) JOY_x = 1023;
-		else JOY_x += x;
-		if (JOY_y + y < -1024) JOY_y = -1024;
-		else if (JOY_y + y > 1023) JOY_y = 1023;
-		else JOY_y += y;
-		if (JOY_x > delta) data &= ~0x01;
-		if (JOY_y > delta) data &= ~0x02;
-		data &= ~0x0c;	 /* no 2nd joystick connected */
-		JOY_LOG(1,"JOY_r",(errorlog,"$%02x: X:%d, Y:%d, time %8.5f, delta %d\n", data, JOY_x, JOY_y, new_time - JOY_time, delta));
+		delta = 256 * 1000 * (new_time - JOY_time);
+		if (input_port_16_r(0) < delta) data &= ~0x01;
+		if (input_port_17_r(0) < delta) data &= ~0x02;
+		if (input_port_18_r(0) < delta) data &= ~0x04;
+		if (input_port_19_r(0) < delta) data &= ~0x08;
+		JOY_LOG(1,"JOY_r",(errorlog,"$%02x: X:%d, Y:%d, time %8.5f, delta %d\n", data, input_port_16_r(0), input_port_17_r(0), new_time - JOY_time, delta));
 	}
-	JOY_x -= JOY_x / 8;
-	JOY_y -= JOY_y / 8;
 
 	return data;
 }
@@ -1549,6 +1616,15 @@ READ_HANDLER ( pc_T1T_r )
  *
  **************************************************************************/
 
+static void pc_keyboard_helper(const char *codes)
+{
+	int i;
+	for (i=0; codes[i]; i++) {
+		kb_queue[kb_head] = codes[i];
+		kb_head = ++kb_head % 256;
+	}
+}
+
 /**************************************************************************
  *	scan keys and stuff make/break codes
  **************************************************************************/
@@ -1557,13 +1633,14 @@ static void pc_keyboard(void)
 	int i;
 
 	update_input_ports();
-    for( i = 0x01; i < 0x80; i++  )
+    for( i = 0x01; i < 0x60; i++  )
 	{
 		if( readinputport(i/16 + 4) & (1 << (i & 15)) )
 		{
 			if( make[i] == 0 )
 			{
 				make[i] = 1;
+				if (i==0x45) keyboard_numlock^=1;
 				kb_queue[kb_head] = i;
 				kb_head = ++kb_head % 256;
 			}
@@ -1592,6 +1669,39 @@ static void pc_keyboard(void)
 			kb_head = ++kb_head % 256;
 		}
     }
+
+    for( i = 0x60; i < 0x70; i++  )
+	{
+		if( readinputport(i/16 + 4) & (1 << (i & 15)) )
+		{
+			if( make[i] == 0 )
+			{
+				make[i] = 1;
+				pc_keyboard_helper(keyboard_mf2_code[keyboard_numlock][i-0x60].pressed);
+			}
+			else
+			{
+				make[i] += 1;
+				if( make[i] == kb_delay )
+				{
+					pc_keyboard_helper(keyboard_mf2_code[keyboard_numlock][i-0x60].pressed);
+				}
+				else
+					if( make[i] == kb_delay + kb_repeat )
+					{
+						make[i]=kb_delay;
+						pc_keyboard_helper(keyboard_mf2_code[keyboard_numlock][i-0x60].pressed);
+					}
+			}
+		}
+		else
+			if( make[i] )
+			{
+				make[i] = 0;
+				pc_keyboard_helper(keyboard_mf2_code[keyboard_numlock][i-0x60].released);
+			}
+    }
+	
 
 	if( !pc_PIC_irq_pending(1) )
 	{
@@ -1742,7 +1852,17 @@ static void pc_mouse_poll(int n)
 
 int pc_frame_interrupt (void)
 {
-	if( (++pc_framecnt & 63) == 63 )
+	static int turboswitch=-1;
+
+	if (turboswitch !=(input_port_3_r(0)&2)) {
+		if (input_port_3_r(0)&2)
+			timer_set_overclock(0, 1);
+		else 
+			timer_set_overclock(0, 4.77/12);
+		turboswitch=input_port_3_r(0)&2;
+	}
+
+	if( ((++pc_framecnt & 63) == 63)&&pc_blink_textcolors)
 		(*pc_blink_textcolors)(pc_framecnt & 64 );
 
     if( !onscrd_active() && !setup_active() )

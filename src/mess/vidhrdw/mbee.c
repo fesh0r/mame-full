@@ -59,14 +59,14 @@ extern struct GfxLayout mbee_charlayout;
 
 void mbee_pcg_color_latch_w(int offs, int data)
 {
-	if( errorlog ) fprintf(errorlog, "mbee pcg_color_latch_w $%02X\n", data);
+	logerror("mbee pcg_color_latch_w $%02X\n", data);
 	mbee_pcg_color_latch = data;
 }
 
 int mbee_pcg_color_latch_r(int offs)
 {
 	int data = mbee_pcg_color_latch;
-	if( errorlog ) fprintf(errorlog, "mbee pcg_color_latch_r $%02X\n", data);
+	logerror("mbee pcg_color_latch_r $%02X\n", data);
 	return data;
 }
 
@@ -74,7 +74,7 @@ void mbee_videoram_w(int offs, int data)
 {
     if( videoram[offs] != data )
 	{
-		if( errorlog ) fprintf(errorlog, "mbee videoram [$%04X] <- $%02X\n",offs,data);
+		logerror("mbee videoram [$%04X] <- $%02X\n",offs,data);
 		videoram[offs] = data;
 		dirtybuffer[offs] = 1;
 	}
@@ -86,12 +86,12 @@ int mbee_videoram_r(int offs)
 	if( m6545_video_bank & 0x01 )
 	{
 		data = pcgram[offs];
-		if( errorlog ) fprintf(errorlog, "mbee pcgram [$%04X] -> $%02X\n",offs,data);
+		logerror("mbee pcgram [$%04X] -> $%02X\n",offs,data);
 	}
 	else
 	{
 		data = videoram[offs];
-		if( errorlog ) fprintf(errorlog, "mbee videoram [$%04X] -> $%02X\n",offs,data);
+		logerror("mbee videoram [$%04X] -> $%02X\n",offs,data);
     }
     return data;
 }
@@ -104,7 +104,7 @@ void mbee_pcg_color_w(int offs, int data)
         {
             int chr = 0x80 + offs / 16;
 
-            if( errorlog ) fprintf(errorlog, "mbee pcgram  [$%04X] <- $%02X\n",offs,data);
+            logerror("mbee pcgram  [$%04X] <- $%02X\n",offs,data);
             pcgram[0x0800+offs] = data;
             /* decode character graphics again */
             decodechar(Machine->gfx[0], chr, pcgram, &mbee_charlayout);
@@ -121,7 +121,7 @@ void mbee_pcg_color_w(int offs, int data)
 	{
 		if( colorram[offs] != data )
         {
-            if( errorlog ) fprintf(errorlog, "colorram [$%04X] <- $%02X\n",offs,data);
+            logerror("colorram [$%04X] <- $%02X\n",offs,data);
             colorram[offs] = data;
             dirtybuffer[offs] = 1;
         }
@@ -176,7 +176,7 @@ int keyboard_matrix_r(int offs)
 		crt.lpen_lo = offs & 0xff;
 		crt.lpen_hi = (offs >> 8) & 0x03;
 		crt.lpen_strobe = 1;
-		if( errorlog ) fprintf(errorlog, "mbee keyboard_matrix_r $%03X (port:%d bit:%d) = %d\n", offs, port, bit, data);
+		logerror("mbee keyboard_matrix_r $%03X (port:%d bit:%d) = %d\n", offs, port, bit, data);
 	}
 	return data;
 }
@@ -199,32 +199,32 @@ static void m6545_offset_xy(void)
 
 	bitmap_dirty = 1;
 
-	if( errorlog ) fprintf(errorlog, "6545 offset x:%d  y:%d\n", off_x, off_y);
+	logerror("6545 offset x:%d  y:%d\n", off_x, off_y);
 }
 
 int mbee_color_bank_r(int offs)
 {
 	int data = m6545_color_bank;
-	if( errorlog ) fprintf(errorlog, "6545 color_bank_r $%02X\n", data);
+	logerror("6545 color_bank_r $%02X\n", data);
 	return data;
 }
 
 void mbee_color_bank_w(int offs, int data)
 {
-	if( errorlog ) fprintf(errorlog, "6545 color_bank_w $%02X\n", data);
+	logerror("6545 color_bank_w $%02X\n", data);
 	m6545_color_bank = data;
 }
 
 int mbee_video_bank_r(int offs)
 {
 	int data = m6545_video_bank;
-	if( errorlog ) fprintf(errorlog, "6545 video_bank_r $%02X\n", data);
+	logerror("6545 video_bank_r $%02X\n", data);
 	return data;
 }
 
 void mbee_video_bank_w(int offs, int data)
 {
-	if( errorlog ) fprintf(errorlog, "6545 video_bank_w $%02X\n", data);
+	logerror("6545 video_bank_w $%02X\n", data);
     m6545_video_bank = data;
 }
 
@@ -235,7 +235,7 @@ void m6545_update_strobe(int param)
     crt.update_strobe = 1;
 	if( data )
 	{
-		if( errorlog ) fprintf(errorlog, "6545 update_strobe_cb $%04X = $%02X\n", param, data);
+		logerror("6545 update_strobe_cb $%04X = $%02X\n", param, data);
 	}
 }
 
@@ -250,7 +250,7 @@ int m6545_status_r(int offs)
 		data |= 0x40;	/* lpen register full */
 	if( crt.update_strobe )
 		data |= 0x80;	/* update strobe has occured */
-	if( errorlog ) fprintf(errorlog, "6545 status_r $%02X\n", data);
+	logerror("6545 status_r $%02X\n", data);
     return data;
 }
 
@@ -298,33 +298,33 @@ int m6545_data_r(int offs)
 		data = crt.cursor_address_lo;
 		break;
 	case 16:
-		if( errorlog ) fprintf(errorlog, "6545 lpen_hi_r $%02X (lpen:%d upd:%d)\n", crt.lpen_hi, crt.lpen_strobe, crt.update_strobe);
+		logerror("6545 lpen_hi_r $%02X (lpen:%d upd:%d)\n", crt.lpen_hi, crt.lpen_strobe, crt.update_strobe);
 		crt.lpen_strobe = 0;
         crt.update_strobe = 0;
 		data = crt.lpen_hi;
 		break;
 	case 17:
-		if( errorlog ) fprintf(errorlog, "6545 lpen_lo_r $%02X (lpen:%d upd:%d)\n", crt.lpen_lo, crt.lpen_strobe, crt.update_strobe);
+		logerror("6545 lpen_lo_r $%02X (lpen:%d upd:%d)\n", crt.lpen_lo, crt.lpen_strobe, crt.update_strobe);
         crt.lpen_strobe = 0;
 		crt.update_strobe = 0;
         data = crt.lpen_lo;
 		break;
 	case 18:
-		if( errorlog ) fprintf(errorlog, "6545 transp_hi_r $%02X\n", crt.transp_hi);
+		logerror("6545 transp_hi_r $%02X\n", crt.transp_hi);
 		data = crt.transp_hi;
 		break;
 	case 19:
-		if( errorlog ) fprintf(errorlog, "6545 transp_lo_r $%02X\n", crt.transp_lo);
+		logerror("6545 transp_lo_r $%02X\n", crt.transp_lo);
 		data = crt.transp_lo;
 		break;
 	case 31:
 		/* shared memory latch */
 		addr = crt.transp_hi * 256 + crt.transp_lo;
-		if( errorlog ) fprintf(errorlog, "6545 transp_latch $%04X\n", addr);
+		logerror("6545 transp_latch $%04X\n", addr);
 		m6545_update_strobe(addr);
         break;
     default:
-		if( errorlog ) fprintf(errorlog, "6545 read unmapped port $%X\n", crt.idx);
+		logerror("6545 read unmapped port $%X\n", crt.idx);
     }
 	return data;
 }
@@ -344,7 +344,7 @@ void m6545_data_w(int offs, int data)
 		if( crt.horizontal_total == data )
 			break;
 		crt.horizontal_total = data;
-        if( errorlog ) fprintf(errorlog, "6545 horizontal total        %d\n", data);
+        logerror("6545 horizontal total        %d\n", data);
         m6545_offset_xy();
 		break;
 	case 1:
@@ -352,58 +352,58 @@ void m6545_data_w(int offs, int data)
 			break;
 		bitmap_dirty = 1;
 		crt.horizontal_displayed = data;
-		if( errorlog ) fprintf(errorlog, "6545 horizontal displayed    %d\n", data);
+		logerror("6545 horizontal displayed    %d\n", data);
         break;
 	case 2:
 		if( crt.horizontal_sync_pos == data )
 			break;
 		crt.horizontal_sync_pos = data;
-		if( errorlog ) fprintf(errorlog, "6545 horizontal sync pos     %d\n", data);
+		logerror("6545 horizontal sync pos     %d\n", data);
         m6545_offset_xy();
 		break;
 	case 3:
 		crt.horizontal_length = data;
-		if( errorlog ) fprintf(errorlog, "6545 horizontal length       %d\n", data);
+		logerror("6545 horizontal length       %d\n", data);
         break;
 	case 4:
 		if( crt.vertical_total == data )
 			break;
 		crt.vertical_total = data;
-		if( errorlog ) fprintf(errorlog, "6545 vertical total          %d\n", data);
+		logerror("6545 vertical total          %d\n", data);
         m6545_offset_xy();
 		break;
 	case 5:
 		if( crt.vertical_adjust == data )
 			break;
 		crt.vertical_adjust = data;
-		if( errorlog ) fprintf(errorlog, "6545 vertical adjust         %d\n", data);
+		logerror("6545 vertical adjust         %d\n", data);
         m6545_offset_xy();
 		break;
 	case 6:
 		if( crt.vertical_displayed == data )
 			break;
 		bitmap_dirty = 1;
-		if( errorlog ) fprintf(errorlog, "6545 vertical displayed      %d\n", data);
+		logerror("6545 vertical displayed      %d\n", data);
         crt.vertical_displayed = data;
 		break;
 	case 7:
 		if( crt.vertical_sync_pos == data )
 			break;
 		crt.vertical_sync_pos = data;
-		if( errorlog ) fprintf(errorlog, "6545 vertical sync pos       %d\n", data);
+		logerror("6545 vertical sync pos       %d\n", data);
         m6545_offset_xy();
 		break;
 	case 8:
 		crt.crt_mode = data;
-		if( errorlog )
+
 		{
-			fprintf(errorlog, "6545 mode_w $%02X\n", data);
-			fprintf(errorlog, "     interlace          %d\n", data & 3);
-			fprintf(errorlog, "     addr mode          %d\n", (data >> 2) & 1);
-			fprintf(errorlog, "     refresh RAM        %s\n", ((data >> 3) & 1) ? "transparent" : "shared");
-			fprintf(errorlog, "     disp enb, skew     %d\n", (data >> 4) & 3);
-			fprintf(errorlog, "     pin 34             %s\n", ((data >> 6) & 1) ? "update strobe" : "RA4");
-			fprintf(errorlog, "     update read mode   %s\n", ((data >> 7) & 1) ? "interleaved" : "during h/v-blank");
+			logerror("6545 mode_w $%02X\n", data);
+			logerror("     interlace          %d\n", data & 3);
+			logerror("     addr mode          %d\n", (data >> 2) & 1);
+			logerror("     refresh RAM        %s\n", ((data >> 3) & 1) ? "transparent" : "shared");
+			logerror("     disp enb, skew     %d\n", (data >> 4) & 3);
+			logerror("     pin 34             %s\n", ((data >> 6) & 1) ? "update strobe" : "RA4");
+			logerror("     update read mode   %s\n", ((data >> 7) & 1) ? "interleaved" : "during h/v-blank");
         }
 		break;
 	case 9:
@@ -411,14 +411,14 @@ void m6545_data_w(int offs, int data)
 		if( crt.scan_lines == data )
 			break;
 		crt.scan_lines = data;
-		if( errorlog ) fprintf(errorlog, "6545 scanlines               %d\n", data);
+		logerror("6545 scanlines               %d\n", data);
         m6545_offset_xy();
 		break;
 	case 10:
 		if( crt.cursor_top == data )
 			break;
 		crt.cursor_top = data;
-		if( errorlog ) fprintf(errorlog, "6545 cursor top              %d/$%02X\n", data & 31, data);
+		logerror("6545 cursor top              %d/$%02X\n", data & 31, data);
 		addr = 256 * crt.cursor_address_hi + crt.cursor_address_lo;
         dirtybuffer[addr] = 1;
 		break;
@@ -426,7 +426,7 @@ void m6545_data_w(int offs, int data)
 		if( crt.cursor_bottom == data )
 			break;
 		crt.cursor_bottom = data;
-        if( errorlog ) fprintf(errorlog, "6545 cursor bottom           %d/$%02X\n", data & 31, data);
+        logerror("6545 cursor bottom           %d/$%02X\n", data & 31, data);
 		addr = 256 * crt.cursor_address_hi + crt.cursor_address_lo;
         dirtybuffer[addr] = 1;
 		break;
@@ -436,14 +436,14 @@ void m6545_data_w(int offs, int data)
 			break;
 		update_all = 1;
 		crt.screen_address_hi = data;
-		if( errorlog ) fprintf(errorlog, "6545 screen address hi       $%02X\n", data);
+		logerror("6545 screen address hi       $%02X\n", data);
         break;
 	case 13:
 		if( crt.screen_address_lo == data )
 			break;
 		update_all = 1;
 		crt.screen_address_lo = data;
-		if( errorlog ) fprintf(errorlog, "6545 screen address lo       $%02X\n", data);
+		logerror("6545 screen address lo       $%02X\n", data);
         break;
 	case 14:
 		data &= 63;
@@ -452,7 +452,7 @@ void m6545_data_w(int offs, int data)
 		crt.cursor_address_hi = data;
 		addr = 256 * crt.cursor_address_hi + crt.cursor_address_lo;
 		dirtybuffer[addr] = 1;
-		if( errorlog ) fprintf(errorlog, "6545 cursor address hi       $%02X\n", data);
+		logerror("6545 cursor address hi       $%02X\n", data);
         break;
 	case 15:
 		if( crt.cursor_address_lo == data )
@@ -460,7 +460,7 @@ void m6545_data_w(int offs, int data)
 		crt.cursor_address_lo = data;
 		addr = 256 * crt.cursor_address_hi + crt.cursor_address_lo;
 		dirtybuffer[addr] = 1;
-		if( errorlog ) fprintf(errorlog, "6545 cursor address lo       $%02X\n", data);
+		logerror("6545 cursor address lo       $%02X\n", data);
         break;
 	case 16:
 		/* lpen hi is read only */
@@ -473,22 +473,22 @@ void m6545_data_w(int offs, int data)
 		if( crt.transp_hi == data )
             break;
 		crt.transp_hi = data;
-        if( errorlog ) fprintf(errorlog, "6545 transp_hi_w $%02X\n", data);
+        logerror("6545 transp_hi_w $%02X\n", data);
 		break;
     case 19:
 		if( crt.transp_lo == data )
             break;
 		crt.transp_lo = data;
-        if( errorlog ) fprintf(errorlog, "6545 transp_lo_w $%02X\n", data);
+        logerror("6545 transp_lo_w $%02X\n", data);
 		break;
 	case 31:
 		/* shared memory latch */
 		addr = crt.transp_hi * 256 + crt.transp_lo;
-        if( errorlog ) fprintf(errorlog, "6545 transp_latch $%04X\n", addr);
+        logerror("6545 transp_latch $%04X\n", addr);
 		m6545_update_strobe(addr);
         break;
 	default:
-		if( errorlog ) fprintf(errorlog, "6545 write unmapped port $%X <- $%02X\n", crt.idx, data);
+		logerror("6545 write unmapped port $%X <- $%02X\n", crt.idx, data);
     }
 }
 

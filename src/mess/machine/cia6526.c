@@ -19,7 +19,7 @@
 #include "driver.h"
 #include "assert.h"
 
-#define VERBOSE_DBG 0				   /* general debug messages */
+#define VERBOSE_DBG 1				   /* general debug messages */
 #include "cbm.h"
 
 #include "cia6526.h"
@@ -97,6 +97,7 @@ static CIA6526 cia[MAX_CIA] =
 
 static void cia_timer1_timeout (int which);
 static void cia_timer2_timeout (int which);
+static void cia_tod_timeout (int which);
 
 /******************* configuration *******************/
 
@@ -134,6 +135,7 @@ void cia6526_reset (void)
 		cia[i].intf = intf;
 		cia[i].t1l = 0xffff;
 		cia[i].t2l = 0xffff;
+		if (cia[i].intf!=0) cia[i].todtimer=timer_set(0.1,i,cia_tod_timeout);
 	}
 }
 
@@ -523,7 +525,7 @@ static int cia6526_read (CIA6526 *this, int offset)
 		val = this->sdr;
 		break;
 	}
-	DBG_LOG (2, "cia read", (errorlog, "%d %.2x:%.2x\n", this->number, offset, val));
+	DBG_LOG (1, "cia read", (errorlog, "%d %.2x:%.2x\n", this->number, offset, val));
 	return val;
 }
 
@@ -532,7 +534,7 @@ static int cia6526_read (CIA6526 *this, int offset)
 
 static void cia6526_write (CIA6526 *this, int offset, int data)
 {
-	DBG_LOG (2, "cia write", (errorlog, "%d %.2x:%.2x\n", this->number, offset, data));
+	DBG_LOG (1, "cia write", (errorlog, "%d %.2x:%.2x\n", this->number, offset, data));
 	offset &= 0xf;
 
 	switch (offset)

@@ -14,6 +14,9 @@
  KT 27/2/00 - Added my changes for the WAV support
 --------------------------------------------------*/
 /* DJR 14/3/00 - Fixed +3 tape loading and added option to 'rewind' tapes when end reached */
+/* DJR 21/4/00 - Added support for 128K .SNA and .Z80 files */
+/* DJR 21/4/00 - Ensure 48K Basic ROM is used when running 48K snapshots on 128K machine */
+
 #include <stdarg.h>
 #include "driver.h"
 #include "cpu/z80/z80.h"
@@ -28,11 +31,13 @@ static unsigned long TapePosition = 0;
 static void spectrum_setup_sna(unsigned char *pSnapshot, unsigned long SnapshotSize);
 static void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize);
 static int is48k_z80snapshot(unsigned char *pSnapshot, unsigned long SnapshotSize);
-static int spectrum_opbaseoverride(UINT32);
-static int spectrum_tape_opbaseoverride(UINT32);
+static OPBASE_HANDLER (spectrum_opbaseoverride);
+static OPBASE_HANDLER (spectrum_tape_opbaseoverride);
 
 extern int spectrum_128_port_7ffd_data;
 extern int spectrum_plus3_port_1ffd_data;
+extern void spectrum_128_update_memory(void);
+extern void spectrum_plus3_update_memory(void);
 
 typedef enum
 {
@@ -51,7 +56,7 @@ void spectrum_init_machine(void)
 	{
                 if (spectrum_snapshot_type == SPECTRUM_TAPEFILE_TAP)
                 {
-                        if (errorlog) fprintf(errorlog, ".TAP file support enabled\n");
+                        logerror(".TAP file support enabled\n");
                         cpu_setOPbaseoverride(0, spectrum_tape_opbaseoverride);
                 }
                 else
@@ -98,22 +103,19 @@ int spectrum_rom_load(int id)
                                 {
                                         spectrum_snapshot_type = SPECTRUM_TAPEFILE_TAP;
                                 }
-
-                                else if (datasize == 49179)
-                                        spectrum_snapshot_type = SPECTRUM_SNAPSHOT_SNA;
-                                else
+                                else if (!stricmp (filename+strlen(filename)-4,".sna"))
                                 {
-                                        if (!is48k_z80snapshot(pSnapshotData, SnapshotDataSize))
+                                        if ((SnapshotDataSize != 49179) && (SnapshotDataSize != 131103) && (SnapshotDataSize != 14787))
                                         {
-                                                if (errorlog) fprintf(errorlog, "Not a 48K .Z80 file\n");
+                                                logerror("Invalid .SNA file size\n");
                                                 return 1;
                                         }
-                                        spectrum_snapshot_type = SPECTRUM_SNAPSHOT_Z80;
+                                        spectrum_snapshot_type = SPECTRUM_SNAPSHOT_SNA;
                                 }
+                                else
+                                        spectrum_snapshot_type = SPECTRUM_SNAPSHOT_Z80;
 
-
-				if (errorlog)
-                                        fprintf(errorlog, "File loaded!\n");
+				logerror("File loaded!\n");
 
 				return 0;
 			}
@@ -146,7 +148,7 @@ void    spectrum_rom_exit(int id)
 }
 
 
-int spectrum_opbaseoverride(UINT32 pc)
+static OPBASE_HANDLER (spectrum_opbaseoverride)
 {
 	/* clear op base override */
 	cpu_setOPbaseoverride(0, 0);
@@ -176,7 +178,7 @@ int spectrum_opbaseoverride(UINT32 pc)
                         break;
                 }
         }
-if (errorlog) fprintf(errorlog, "Snapshot loaded - new PC = %04x\n", cpu_get_reg(Z80_PC) & 0x0ffff);
+        logerror("Snapshot loaded - new PC = %04x\n", cpu_get_reg(Z80_PC) & 0x0ffff);
 
 	return (cpu_get_reg(Z80_PC) & 0x0ffff);
 }
@@ -202,16 +204,16 @@ if (errorlog) fprintf(errorlog, "Snapshot loaded - new PC = %04x\n", cpu_get_reg
  *      load routine so things get rather messy!
  *
  *******************************************************************/
-int spectrum_tape_opbaseoverride(UINT32 pc)
+static OPBASE_HANDLER (spectrum_tape_opbaseoverride)
 {
         int i, tap_block_length, load_length;
         unsigned char lo, hi, a_reg;
-        unsigned short addr, af_reg, de_reg, sp_reg;
+        unsigned short load_addr, return_addr, af_reg, de_reg, sp_reg;
         static int data_loaded=0; /* Whether any data files (not headers) were loaded */
 
-//        if (errorlog) fprintf(errorlog, "PC=%02x\n", pc);
+/*        logerror("PC=%02x\n", address); */
 
-        if ((pc >= 0x05e3) && (pc <= 0x0604))
+        if ((address >= 0x05e3) && (address <= 0x0604))
         /* It is not always possible to trap the call to the actual load
            routine so trap the LD-EDGE-1 and LD-EDGE-2 routines which
            check the earphone socket.
@@ -223,10 +225,10 @@ int spectrum_tape_opbaseoverride(UINT32 pc)
                         if (spectrum_plus3_port_1ffd_data != -1)
                         {
                                 if (!spectrum_plus3_port_1ffd_data & 0x04)
-                                        return pc;
+                                        return address;
                         }
                         if (!spectrum_128_port_7ffd_data & 0x10)
-                                return pc;
+                                return address;
                 }
 
                 lo = pSnapshotData[TapePosition] & 0x0ff;
@@ -242,44 +244,42 @@ int spectrum_tape_opbaseoverride(UINT32 pc)
                 if ((a_reg == pSnapshotData[TapePosition+2]) && (af_reg & 0x0001))
                 {
                         /* Correct flag byte and carry flag set so try loading */
-                        addr = cpu_get_reg(Z80_IX);
+                        load_addr = cpu_get_reg(Z80_IX);
                         de_reg = cpu_get_reg(Z80_DE);
 
                         load_length = MIN(de_reg, tap_block_length-2);
-                        load_length = MIN(load_length, 65536-addr);
+                        load_length = MIN(load_length, 65536-load_addr);
                         /* Actual number of bytes of block that can be loaded -
                            Don't try to load past the end of memory */
 
                         for (i = 0; i < load_length; i++)
-                                cpu_writemem16(addr+i, pSnapshotData[TapePosition+i+3]);
-                        cpu_set_reg(Z80_IX, addr+load_length);
+                                cpu_writemem16(load_addr+i, pSnapshotData[TapePosition+i+3]);
+                        cpu_set_reg(Z80_IX, load_addr+load_length);
                         cpu_set_reg(Z80_DE, de_reg-load_length);
                         if (de_reg == (tap_block_length-2))
                         {
                                 /* Successful load - Set carry flag and A to 0 */
                                 if ((de_reg != 17) || (a_reg))
-                                        data_loaded = 1; // Non-header file loaded
+                                        data_loaded = 1; /* Non-header file loaded */
                                 cpu_set_reg(Z80_AF, (af_reg & 0x00ff) | 0x0001);
-                                if (errorlog) fprintf(errorlog, "Loaded %04x bytes from address %04x onwards (type=%02x) using tape block at offset %ld\n", load_length, addr, a_reg, TapePosition);
+                                logerror("Loaded %04x bytes from address %04x onwards (type=%02x) using tape block at offset %ld\n", load_length, load_addr, a_reg, TapePosition);
                         }
                         else
                         {
                                 /* Wrong tape block size - reset carry flag */
                                 cpu_set_reg(Z80_AF, af_reg & 0xfffe);
-                                if (errorlog) fprintf(errorlog, "Bad block length %04x bytes wanted starting at address %04x (type=%02x) , Data length of tape block at offset %ld is %04x bytes\n", de_reg, addr, a_reg, TapePosition, tap_block_length-2);
+                                logerror("Bad block length %04x bytes wanted starting at address %04x (type=%02x) , Data length of tape block at offset %ld is %04x bytes\n", de_reg, load_addr, a_reg, TapePosition, tap_block_length-2);
                         }
                 }
                 else
                 {
                         /* Wrong flag byte or verify selected so reset carry flag to indicate failure */
                         cpu_set_reg(Z80_AF, af_reg & 0xfffe);
-                        if (errorlog)
-                        {
+
                                 if (af_reg & 0x0001)
-                                        fprintf(errorlog, "Failed to load tape block at offset %ld - type wanted %02x, got type %02x\n", TapePosition, a_reg, pSnapshotData[TapePosition+2]);
+                                        logerror("Failed to load tape block at offset %ld - type wanted %02x, got type %02x\n", TapePosition, a_reg, pSnapshotData[TapePosition+2]);
                                 else
-                                        fprintf(errorlog, "Failed to load tape block at offset %ld - verify selected\n", TapePosition);
-                        }
+                                        logerror("Failed to load tape block at offset %ld - verify selected\n", TapePosition);
                 }
 
                 TapePosition+= (tap_block_length+2);
@@ -292,19 +292,19 @@ int spectrum_tape_opbaseoverride(UINT32 pc)
                                 {
                                         TapePosition = 0;
                                         data_loaded = 0;
-                                        if (errorlog) fprintf(errorlog, "All tape blocks used! - rewinding tape to start\n");
+                                        logerror("All tape blocks used! - rewinding tape to start\n");
                                 }
                                 else
                                 {
                                         /* Disable .TAP support if no files were loaded to avoid getting caught in infinite loop */
                                         cpu_setOPbaseoverride(0, 0);
-                                        if (errorlog) fprintf(errorlog, "No valid data loaded! - disabling .TAP support\n");
+                                        logerror("No valid data loaded! - disabling .TAP support\n");
                                 }
                         }
                         else
                         {
                                 cpu_setOPbaseoverride(0, 0);
-                                if (errorlog) fprintf(errorlog, "All tape blocks used! - disabling .TAP support\n");
+                                logerror("All tape blocks used! - disabling .TAP support\n");
                         }
                 }
 
@@ -314,27 +314,103 @@ int spectrum_tape_opbaseoverride(UINT32 pc)
                 */
                 do
                 {
-                        addr = cpu_geturnpc();
-                        cpu_set_reg(Z80_PC, (addr & 0x0ffff));
+                        return_addr = cpu_geturnpc();
+                        cpu_set_reg(Z80_PC, (return_addr & 0x0ffff));
 
                         sp_reg = cpu_get_reg(Z80_SP);
                         sp_reg += 2;
                         cpu_set_reg(Z80_SP, (sp_reg & 0x0ffff));
                         cpu_set_sp((sp_reg & 0x0ffff));
-                } while ((addr != 0x053f) && (addr < 0x0605));
-                if (errorlog) fprintf(errorlog, "Load return address=%04x, SP=%04x\n", addr, sp_reg);
-                return addr;
+                } while ((return_addr != 0x053f) && (return_addr < 0x0605));
+                logerror("Load return address=%04x, SP=%04x\n", return_addr, sp_reg);
+                return return_addr;
         }
         else
-                return pc;
+                return address;
 }
 
+/*******************************************************************
+ *
+ *      Update the memory and paging of the spectrum being emulated
+ *
+ *      if port_7ffd_data is -1 then machine is 48K - no paging
+ *      if port_1ffd_data is -1 then machine is 128K
+ *      if neither port is -1 then machine is +2a/+3
+ *
+ *      Note: the 128K .SNA and .Z80 file formats do not store the
+ *      port 1FFD setting so it is necessary to calculate the appropriate
+ *      value for the ROM paging.
+ *
+ *******************************************************************/
+static void spectrum_update_paging(void)
+{
+        if (spectrum_128_port_7ffd_data == -1)
+                return;
+        if (spectrum_plus3_port_1ffd_data == -1)
+                spectrum_128_update_memory();
+        else
+        {
+                if (spectrum_128_port_7ffd_data & 0x10)
+                        /* Page in Spec 48K basic ROM */
+                        spectrum_plus3_port_1ffd_data = 0x04;
+                else
+                        spectrum_plus3_port_1ffd_data = 0;
+                spectrum_plus3_update_memory();
+        }
+}
+
+/* Page in the 48K Basic ROM. Used when running 48K snapshots on a 128K machine. */
+static void spectrum_page_basicrom(void)
+{
+        if (spectrum_128_port_7ffd_data == -1)
+                return;
+        spectrum_128_port_7ffd_data |= 0x10;
+        spectrum_update_paging();
+}
+
+/*******************************************************************
+ *
+ *      Load a 48K or 128K .SNA file.
+ *
+ *      48K Format as follows:
+ *      Offset  Size    Description (all registers stored with LSB first)
+ *      0       1       I
+ *      1       18      HL',DE',BC',AF',HL,DE,BC,IY,IX
+ *      19      1       Interrupt (bit 2 contains IFF2 1=EI/0=DI
+ *      20      1       R
+ *      21      4       AF,SP
+ *      25      1       Interrupt Mode (0=IM0/1=IM1/2=IM2)
+ *      26      1       Border Colour (0..7)
+ *      27      48K     RAM dump 0x4000-0xffff
+ *      PC is stored on stack.
+ *
+ *      128K Format as follows:
+ *      Offset  Size    Description
+ *      0       27      Header as 48K
+ *      27      16K     RAM bank 5 (0x4000-0x7fff)
+ *      16411   16K     RAM bank 2 (0x8000-0xbfff)
+ *      32795   16K     RAM bank n (0xc000-0xffff - currently paged bank)
+ *      49179   2       PC
+ *      49181   1       port 7FFD setting
+ *      49182   1       TR-DOS rom paged (1=yes)
+ *      49183   16K     remaining RAM banks in ascending order
+ *
+ *      The bank in 0xc000 is always included even if it is page 2 or 5
+ *      in which case it is included twice.
+ *
+ *******************************************************************/
 void spectrum_setup_sna(unsigned char *pSnapshot, unsigned long SnapshotSize)
 {
-	int i;
-     //   unsigned char *RAM;
+        int i, j, usedbanks[8];
+        long bank_offset;
 	unsigned char lo, hi, data;
 	unsigned short addr;
+
+        if ((SnapshotDataSize != 49179) && (spectrum_128_port_7ffd_data == -1))
+        {
+                logerror("Can't load 128K .SNA file into 48K Machine\n");
+                return;
+        }
 
 	cpu_set_reg(Z80_I, (pSnapshot[0] & 0x0ff));
 	lo = pSnapshot[1] & 0x0ff;
@@ -379,30 +455,76 @@ void spectrum_setup_sna(unsigned char *pSnapshot, unsigned long SnapshotSize)
 	data = (pSnapshot[25] & 0x0ff);
 	cpu_set_reg(Z80_IM, data);
 
-	// snapshot + 26 = border colour
+        /* snapshot + 26 = border colour */
 
 	cpu_set_reg(Z80_NMI_STATE, 0);
 	cpu_set_reg(Z80_IRQ_STATE, 0);
 	cpu_set_reg(Z80_HALT, 0);
 
-   //     RAM = memory_region(REGION_CPU1);
+        if (SnapshotDataSize == 49179)
+                /* 48K Snapshot */
+                spectrum_page_basicrom();
+        else
+        {
+                /* 128K Snapshot */
+                spectrum_128_port_7ffd_data = (pSnapshot[49181] & 0x0ff);
+                spectrum_update_paging();
+        }
 
-	// memory dump
-//	memcpy(&RAM[16384], &pSnapshot[27],49152);
-	for (i = 0; i < 49152; i++)
+        /* memory dump */
+        for (i = 0; i < 49152; i++)
 	{
-		cpu_writemem16(i + 16384, pSnapshot[27 + i]);
+                cpu_writemem16(i + 16384, pSnapshot[27 + i]);
 	}
 
-	/* get pc from stack */
-	addr = cpu_geturnpc();
-	cpu_set_reg(Z80_PC, (addr & 0x0ffff));
-	//cpu_set_pc((addr & 0x0ffff));
+        if (SnapshotDataSize == 49179)
+        {
+                /* get pc from stack */
+                addr = cpu_geturnpc();
+                cpu_set_reg(Z80_PC, (addr & 0x0ffff));
 
-	addr = cpu_get_reg(Z80_SP);
-	addr += 2;
-	cpu_set_reg(Z80_SP, (addr & 0x0ffff));
-	cpu_set_sp((addr & 0x0ffff));
+                addr = cpu_get_reg(Z80_SP);
+                addr += 2;
+                cpu_set_reg(Z80_SP, (addr & 0x0ffff));
+                cpu_set_sp((addr & 0x0ffff));
+        }
+        else
+        {
+                /* Set up other RAM banks */
+                bank_offset = 49183;
+                for (i = 0; i < 8; i++)
+                        usedbanks[i] = 0;
+
+                if (spectrum_128_port_7ffd_data & 0x08)
+                        usedbanks[7] = 1; /* Screen */
+                else
+                        usedbanks[5] = 1;
+                usedbanks[2] = 1; /* 0x8000-0xbfff */
+                usedbanks[spectrum_128_port_7ffd_data & 0x07] = 1; /* 0x8000-0xbfff */
+
+                for (i = 0; i < 8; i++)
+                {
+                        if (!usedbanks[i])
+                        {
+                                logerror("Loading bank %d from offset %ld\n", i, bank_offset);
+                                spectrum_128_port_7ffd_data &= 0xf8;
+                                spectrum_128_port_7ffd_data+= i;
+                                spectrum_update_paging();
+                                for (j = 0; j < 16384; j++)
+                                        cpu_writemem16(j + 49152, pSnapshot[bank_offset + j]);
+                                bank_offset+= 16384;
+                        }
+                }
+
+                /* Reset paging */
+                spectrum_128_port_7ffd_data = (pSnapshot[49181] & 0x0ff);
+                spectrum_update_paging();
+
+                /* program counter */
+                lo = pSnapshot[49179] & 0x0ff;
+                hi = pSnapshot[49180] & 0x0ff;
+                cpu_set_reg(Z80_PC, (hi << 8) | lo);
+        }
 }
 
 
@@ -472,13 +594,18 @@ static void spectrum_z80_decompress_block(unsigned char *pSource, int Dest, int 
    while (size>0);
 }
 
-/* for now, only 48k .Z80 are supported */
+/* now supports 48k & 128k .Z80 files */
 void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize)
 {
-	int i;
-        //unsigned char *RAM;
+        int i, is48ksnap;
 	unsigned char lo, hi, data;
 
+        is48ksnap = is48k_z80snapshot(pSnapshotData, SnapshotDataSize);
+        if ((spectrum_128_port_7ffd_data == -1) && !is48ksnap)
+        {
+                logerror("Not a 48K .Z80 file\n");
+                return;
+        }
 
         /* AF */
         hi = pSnapshot[0] & 0x0ff;
@@ -545,9 +672,7 @@ void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize)
         else
         {
                 cpu_set_reg(Z80_IFF1, 1);
-
                 //cpu_set_reg(Z80_IRQ_STATE, 1);
-
         }
 
 	cpu_set_reg(Z80_NMI_STATE, 0);
@@ -571,17 +696,18 @@ void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize)
 
         if ((pSnapshot[6] | pSnapshot[7])!=0)
         {
-                if (errorlog) fprintf(errorlog,"Old 1.45 V of Z80 snapshot found!\n");
+                logerror("Old 1.45 V of Z80 snapshot found!\n");
 
                 /* program counter is specified. Old 1.45 */
                 lo = pSnapshot[6] & 0x0ff;
                 hi = pSnapshot[7] & 0x0ff;
                 cpu_set_reg(Z80_PC, (hi << 8) | lo);
 
+                spectrum_page_basicrom();
 
                 if ((pSnapshot[12] & 0x020)==0)
                 {
-                        if (errorlog) fprintf(errorlog, "Not compressed\n");
+                        logerror("Not compressed\n");
 
                         /* not compressed */
                        for (i = 0; i < 49152; i++)
@@ -591,12 +717,10 @@ void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize)
                 }
                 else
                 {
-                        if (errorlog) fprintf(errorlog, "Compressed\n");
+                        logerror("Compressed\n");
 
                    /* compressed */
                    spectrum_z80_decompress_block(pSnapshot+30, 16384, 49152);
-
-
                 }
          }
          else
@@ -604,7 +728,7 @@ void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize)
                 unsigned char *pSource;
                 int header_size;
 
-                if (errorlog) fprintf(errorlog, "v2.0+ V of Z80 snapshot found!\n");
+                logerror("v2.0+ V of Z80 snapshot found!\n");
 
                 header_size = 30 + 2 + ((pSnapshot[30] & 0x0ff) | ((pSnapshot[31] & 0x0ff)<<8));
 
@@ -612,19 +736,22 @@ void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize)
                 hi = pSnapshot[33] & 0x0ff;
                 cpu_set_reg(Z80_PC, (hi << 8) | lo);
 
-                for (i=0; i<16; i++)
+                if (spectrum_128_port_7ffd_data != -1)
                 {
-                        AY8910_control_port_0_w(0, i);
-
-                        AY8910_write_port_0_w(0, pSnapshot[39+i]);
+                        /* Only set up sound registers for 128K machine! */
+                        for (i=0; i<16; i++)
+                        {
+                                AY8910_control_port_0_w(0, i);
+                                AY8910_write_port_0_w(0, pSnapshot[39+i]);
+                        }
+                        AY8910_control_port_0_w(0, pSnapshot[38]);
                 }
-
-                AY8910_control_port_0_w(0, pSnapshot[38]);
-
 
                 pSource = pSnapshot + header_size;
 
-
+                if (is48ksnap)
+                        /* Ensure 48K Basic ROM is used */
+                        spectrum_page_basicrom();
 
              do
              {
@@ -635,48 +762,56 @@ void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize)
                 length = (pSource[0] & 0x0ff) | ((pSource[1] & 0x0ff)<<8);
                 page = pSource[2];
 
-                switch (page)
+                if (is48ksnap)
                 {
-                        case 4:
+                        switch (page)
                         {
-                            Dest = 0x08000;
-                        }
-                        break;
+                                case 4:
+                                    Dest = 0x08000; break;
 
-                        case 5:
+                                case 5:
+                                    Dest = 0x0c000; break;
+
+                                case  8:
+                                    Dest = 0x04000; break;
+
+                                default:
+                                    Dest = 0; break;
+                        }
+                }
+                else
+                {
+                        /* 3 = bank 0, 4 = bank 1 ... 10 = bank 7 */
+                        if ((page >= 3) && (page <= 10))
                         {
-                            Dest = 0x0c000;
+                                /* Page the appropriate bank into 0xc000 - 0xfff */
+                                spectrum_128_port_7ffd_data = page - 3;
+                                spectrum_update_paging();
+                                Dest = 0x0c000;
                         }
-                        break;
-
-                        case  8:
-                        {
-                            Dest = 0x04000;
-                        }
-                        break;
-
-                        default:
-                            break;
+                        else
+                                /* Other values correspond to ROM pages */
+                                Dest = 0x0;
                 }
 
-                if ((page==4) || (page==5) || (page==8))
+                if (Dest != 0)
                 {
                         if (length==0x0ffff)
                         {
                                 /* block is uncompressed */
-                                if (errorlog) fprintf(errorlog, "Not compressed\n");
+                                logerror("Not compressed\n");
 
                                 /* not compressed */
-                               for (i = 0; i < 49152; i++)
+                               for (i = 0; i < 16384; i++)
                                {
-                                  cpu_writemem16(i+16384, pSnapshot[30 + i]);
+                                  cpu_writemem16(i+Dest, pSource[i]);
                                }
 
 
                         }
                         else
                         {
-                               if (errorlog) fprintf(errorlog, "Compressed\n");
+                               logerror("Compressed\n");
 
                                 /* block is compressed */
                                 spectrum_z80_decompress_block(&pSource[3], Dest, 16383);
@@ -687,6 +822,13 @@ void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize)
                 pSource+=(3+length);
             }
             while (((unsigned long)pSource-(unsigned long)pSnapshot)<SnapshotDataSize);
+
+            if ((spectrum_128_port_7ffd_data != -1) && !is48ksnap)
+            {
+                /* Set up paging */
+                spectrum_128_port_7ffd_data = (pSnapshot[35] & 0x0ff);
+                spectrum_update_paging();
+            }
       }
 }
 
@@ -783,5 +925,3 @@ void spectrum_nmi_generate(int param)
 {
 	cpu_cause_interrupt(0, Z80_NMI_INT);
 }
-
-

@@ -120,10 +120,12 @@ INPUT_PORTS_START(ti99_4a)
 
 	PORT_START	/* col 0 */
 		PORT_BITX(0x88, IP_ACTIVE_LOW, IPT_UNUSED, DEF_STR( Unused ), IP_KEY_NONE, IP_JOY_NONE)
+    PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_KEYBOARD, "CTRL", KEYCODE_RCONTROL, IP_JOY_NONE)
 		PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_KEYBOARD, "CTRL", KEYCODE_LCONTROL, IP_JOY_NONE)
 		PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_KEYBOARD, "SHIFT", KEYCODE_LSHIFT, IP_JOY_NONE)
 		/* TI99/4a has a second shift key which maps the same */
 		PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_KEYBOARD, "SHIFT", KEYCODE_RSHIFT, IP_JOY_NONE)
+    PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "FCTN", KEYCODE_RALT, IP_JOY_NONE)
 		PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "FCTN", KEYCODE_LALT, IP_JOY_NONE)
 		PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "ENTER", KEYCODE_ENTER, IP_JOY_NONE)
 		PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "(SPACE)", KEYCODE_SPACE, IP_JOY_NONE)
@@ -322,10 +324,10 @@ Color           Y	R-Y	B-Y	R	G	B
 1 Black         0.00	0.47	0.47	0.00	0.00	0.00
 2 Medium green  0.53	0.07	0.20	0.13?	0.53	0.13?
 3 Light green   0.67	0.17	0.27	0.37?	0.67	0.37?
-4 Dark blue     0.40	0.40	1.00	0.33?	0.40	
+4 Dark blue     0.40	0.40	1.00	0.33?	0.40
 5 Light blue    0.53	0.43	0.93	0.49?	0.43
-6 Dark red      0.47	0.83	0.30	
-7 Cyan          0.73	0.00	0.70	
+6 Dark red      0.47	0.83	0.30
+7 Cyan          0.73	0.00	0.70
 8 Medium red    0.53	0.93	0.27
 9 Light red     0.67	0.93	0.27
 A Dark yellow   0.73	0.57	0.07
@@ -470,7 +472,7 @@ static struct MachineDriver machine_driver_ti99_4_60hz =
 		}
 	},
 
-	/* NVRAM handler */	
+	/* NVRAM handler */
 	NULL
 };
 
@@ -718,7 +720,7 @@ static const struct IODevice io_ti99_4[] =
 	{
 		IO_CARTSLOT,		/* type */
 		3,					/* count */
-		"bin\0",			/* file extensions */
+    "bin\0c\0d\0g\0m\0crom\0drom\0grom\0mrom\0",      /* file extensions */
 		NULL,				/* private */
 		ti99_id_rom,		/* id */
 		ti99_load_rom,		/* init */

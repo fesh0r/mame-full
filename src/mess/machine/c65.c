@@ -80,15 +80,12 @@ static void c65_dma_port_w(int offset, int value)
 		switch (addr[0]) {
 		case 0:
 			if ( (src.d+len.w.l>=0x100000)||(dst.d+len.w.l>=0x100000)) {
-				if (errorlog)
-					fprintf(errorlog,
-							"dma copy job len:%.4x src:%.6x "
+				logerror("dma copy job len:%.4x src:%.6x "
 							"dst:%.6x sub:%.2x modrm:%.2x\n",
 							len.w.l, src.d, dst.d, addr[9], addr[10]);
 			} else {
 				DBG_LOG(2,"dma copy job",
-						(errorlog,
-						 "len:%.4x src:%.6x dst:%.6x sub:%.2x modrm:%.2x\n",
+						("len:%.4x src:%.6x dst:%.6x sub:%.2x modrm:%.2x\n",
 						 len.w.l, src.d, dst.d, addr[9], addr[10]));
 			}
 			if (C65_MAIN_MEMORY==C65_512KB) {
@@ -105,16 +102,13 @@ static void c65_dma_port_w(int offset, int value)
 			break;
 		case 3:
 			if (dst.d+len.w.l>=0x100000) {
-				if (errorlog)
-					fprintf(errorlog,
-							"dma fill job len:%.4x value:%.2x "
+				logerror("dma fill job len:%.4x value:%.2x "
 							"dst:%.6x sub:%.2x modrm:%.2x\n",
 							len.w.l, addr[3], dst.d, addr[9], addr[10]);
 				return;
 			} else {
 				DBG_LOG(2,"dma fill job",
-						(errorlog,
-						 "len:%.4x value:%.2x dst:%.6x sub:%.2x modrm:%.2x\n",
+						("len:%.4x value:%.2x dst:%.6x sub:%.2x modrm:%.2x\n",
 						 len.w.l, addr[3], dst.d, addr[9], addr[10]));
 			}
 			if (C65_MAIN_MEMORY==C65_512KB) {
@@ -131,13 +125,12 @@ static void c65_dma_port_w(int offset, int value)
 			break;
 		default:
 			DBG_LOG(1,"dma job",
-					(errorlog,
-					 "cmd:%.2x len:%.4x src:%.6x dst:%.6x sub:%.2x modrm:%.2x\n",
+					("cmd:%.2x len:%.4x src:%.6x dst:%.6x sub:%.2x modrm:%.2x\n",
 					 addr[0],len.w.l, src.d, dst.d, addr[9], addr[10]));
 		}
 		break;
 	default:
-		DBG_LOG (1, "dma chip write", (errorlog, "%.3x %.2x\n", offset,value));
+		DBG_LOG (1, "dma chip write", ("%.3x %.2x\n", offset,value));
 		break;
 	}
 }
@@ -145,7 +138,7 @@ static void c65_dma_port_w(int offset, int value)
 static int c65_dma_port_r(int offset)
 {
 	/* offset 3 bit 7 in progress ? */
-	DBG_LOG (1, "dma chip read", (errorlog, "%.3x\n", offset));
+	DBG_LOG (1, "dma chip read", ("%.3x\n", offset));
     return 0x7f;
 }
 
@@ -154,23 +147,23 @@ static void c65_6511_port_w(int offset, int value)
 	if (offset==7) {
 		c65_6511_port=value;
 	}
-	DBG_LOG (2, "r6511 write", (errorlog, "%.2x %.2x\n", offset, value));
+	DBG_LOG (2, "r6511 write", ("%.2x %.2x\n", offset, value));
 }
 
 static int c65_6511_port_r(int offset)
 {
-	DBG_LOG (2, "r6511 read", (errorlog, "%.2x\n", offset));
+	DBG_LOG (2, "r6511 read", ("%.2x\n", offset));
 	return 0xff;
 }
 
 static void wd1770_port_w(int offset, int value)
 {
-	DBG_LOG (1, "wd1770 write", (errorlog, "%.2x %.2x\n", offset, value));
+	DBG_LOG (1, "wd1770 write", ("%.2x %.2x\n", offset, value));
 }
 
 static int wd1770_port_r(int offset)
 {
-	DBG_LOG (1, "wd1770 read", (errorlog, "%.2x\n", offset));
+	DBG_LOG (1, "wd1770 read", ("%.2x\n", offset));
 	return 0;
 }
 
@@ -186,12 +179,12 @@ WRITE_HANDLER ( c65_write_d000 )
 			else if (offset < 0xa0) {
 				wd1770_port_w(offset&0x1f,data);
 			} else {
-				DBG_LOG (1, "io write", (errorlog, "%.3x %.2x\n", offset, data));
+				DBG_LOG (1, "io write", ("%.3x %.2x\n", offset, data));
 				/*ram expansion crtl optional */
 			}
 			break;
 		case 0x100:case 0x200: case 0x300:
-			DBG_LOG (1, "io write", (errorlog, "%.3x %.2x\n", offset, data));
+			DBG_LOG (1, "io write", ("%.3x %.2x\n", offset, data));
 			/*ramdac ((offset&0x3ff)-0x100); */
 			break;
 		case 0x400:
@@ -200,10 +193,10 @@ WRITE_HANDLER ( c65_write_d000 )
 			else if (offset<0x480)
 				sid6581_1_port_w(offset&0x3f, data);
 			else
-				DBG_LOG (1, "io write", (errorlog, "%.3x %.2x\n", offset, data));
+				DBG_LOG (1, "io write", ("%.3x %.2x\n", offset, data));
 			break;
 		case 0x500:
-			DBG_LOG (1, "io write", (errorlog, "%.3x %.2x\n", offset, data));
+			DBG_LOG (1, "io write", ("%.3x %.2x\n", offset, data));
 			break;
 		case 0x600:
 			c65_6511_port_w(offset&0xff,data);
@@ -230,7 +223,7 @@ WRITE_HANDLER ( c65_write_d000 )
 			if (!c65_write_io_dc00)
 				c64_memory[0xd000 + offset] = data;
 			else
-				DBG_LOG (1, "io write", (errorlog, "%.3x %.2x\n", offset, data));
+				DBG_LOG (1, "io write", ("%.3x %.2x\n", offset, data));
 			break;
 		}
 	}
@@ -245,12 +238,12 @@ static READ_HANDLER ( c65_read_io )
 		if (offset < 0xa0) {
 			return wd1770_port_r(offset&0x1f);
 		} else {
-			DBG_LOG (1, "io read", (errorlog, "%.3x\n", offset));
+			DBG_LOG (1, "io read", ("%.3x\n", offset));
 			/*return; ram expansion crtl optional */
 		}
 		break;
 	case 0x100:case 0x200: case 0x300:
-		DBG_LOG (1, "io read", (errorlog, "%.3x\n", offset));
+		DBG_LOG (1, "io read", ("%.3x\n", offset));
 	    /*return ramdac ((offset&0x3ff)-0x100); */
 		break;
 	case 0x400:
@@ -258,10 +251,10 @@ static READ_HANDLER ( c65_read_io )
 			return sid6581_0_port_r (offset & 0x3f);
 		if (offset<0x480)
 			return sid6581_1_port_r(offset&0x3f);
-		DBG_LOG (1, "io read", (errorlog, "%.3x\n", offset));
+		DBG_LOG (1, "io read", ("%.3x\n", offset));
 		break;
 	case 0x500:
-		DBG_LOG (1, "io read", (errorlog, "%.3x\n", offset));
+		DBG_LOG (1, "io read", ("%.3x\n", offset));
 		break;
 	case 0x600:
 		return c65_6511_port_r(offset&0xff);
@@ -282,7 +275,7 @@ static READ_HANDLER ( c65_read_io_dc00 )
 		return cia6526_1_port_r (offset & 0xff);
 	case 0x200:
 	case 0x300:
-		DBG_LOG (1, "io read", (errorlog, "%.3x\n", offset+0xc00));
+		DBG_LOG (1, "io read", ("%.3x\n", offset+0xc00));
 		break;
 	}
 	return 0xff;
@@ -330,7 +323,7 @@ static void c65_bankswitch_interface(int value)
 */
 void c65_bankswitch (void)
 {
-	DBG_LOG (1, "bankswitch", (errorlog, "%.2x\n", c64_port6510));
+	DBG_LOG (1, "bankswitch", ("%.2x\n", c64_port6510));
 	if (!c64mode) {
 		if (c65_dosmode) {
             /* ram in cpu port position!*/
@@ -390,7 +383,7 @@ void c65_bankswitch (void)
 		if (data == old)
 			return;
 
-		DBG_LOG (1, "bankswitch", (errorlog, "%d\n", data & 7));
+		DBG_LOG (1, "bankswitch", ("%d\n", data & 7));
 		loram = (data & 1) ? 1 : 0;
 		hiram = (data & 2) ? 1 : 0;
 		charen = (data & 4) ? 1 : 0;
@@ -476,8 +469,7 @@ void c65_map(int a, int x, int y, int z)
 		c64mode=0;c65_dosmode=0;c65_monitormode=0;
 	}
 	c65_bankswitch();
-	if (errorlog)
-		fprintf(errorlog,"m65ce02 map a:%.2x x:%.2x y:%.2x z:%.2x\n",
+	logerror("m65ce02 map a:%.2x x:%.2x y:%.2x z:%.2x\n",
 				a, x, y, z);
 }
 

@@ -253,6 +253,7 @@ static struct MemoryWriteAddress c16_writemem[] =
 #endif
 	{-1}							   /* end of table */
 };
+
 static struct MemoryReadAddress plus4_readmem[] =
 {
 	{0x0000, 0x0001, c16_m7501_port_r},
@@ -280,6 +281,53 @@ static struct MemoryWriteAddress plus4_writemem[] =
 	{0x0002, 0xfcff, MWA_RAM},
 	{0xfd00, 0xfd0f, c16_6551_port_w},
 	{0xfd10, 0xfd1f, plus4_6529_port_w},
+	{0xfd30, 0xfd3f, c16_6529_port_w}, /* 6529 keyboard matrix */
+#if 0
+	{0xfd40, 0xfd5f, sid6581_0_port_w},
+#endif
+	{0xfdd0, 0xfddf, c16_select_roms}, /* rom chips selection */
+#if 0
+	{0xfec0, 0xfedf, c16_iec9_port_w}, /*configured in c16_common_init */
+	{0xfee0, 0xfeff, c16_iec8_port_w}, /*configured in c16_common_init */
+#endif
+	{0xff00, 0xff1f, ted7360_port_w},
+	{0xff20, 0xff3d, MWA_RAM},
+	{0xff3e, 0xff3e, c16_switch_to_rom},
+	{0xff3f, 0xff3f, plus4_switch_to_ram},
+	{0xff40, 0xffff, MWA_RAM},
+	{0x10000, 0x3ffff, MWA_ROM},
+	{-1}							   /* end of table */
+};
+
+static struct MemoryReadAddress c364_readmem[] =
+{
+	{0x0000, 0x0001, c16_m7501_port_r},
+	{0x0002, 0x7fff, MRA_RAM},
+	{0x8000, 0xbfff, MRA_BANK2},
+	{0xc000, 0xfbff, MRA_BANK3},
+	{0xfc00, 0xfcff, MRA_BANK4},
+	{0xfd00, 0xfd0f, c16_6551_port_r},
+	{0xfd10, 0xfd1f, plus4_6529_port_r},
+	{0xfd20, 0xfd2f, c364_speech_r },
+	{0xfd30, 0xfd3f, c16_6529_port_r}, /* 6529 keyboard matrix */
+#if 0
+	{ 0xfd40, 0xfd5f, sid6581_0_port_r }, /* sidcard, eoroidpro ... */
+	{0xfec0, 0xfedf, c16_iec9_port_r}, /* configured in c16_common_init */
+	{0xfee0, 0xfeff, c16_iec8_port_r}, /* configured in c16_common_init */
+#endif
+	{0xff00, 0xff1f, ted7360_port_r},
+	{0xff20, 0xffff, MRA_BANK8},
+/*  { 0x10000, 0x3ffff, MRA_ROM }, */
+	{-1}							   /* end of table */
+};
+
+static struct MemoryWriteAddress c364_writemem[] =
+{
+	{0x0000, 0x0001, c16_m7501_port_w, &c16_memory},
+	{0x0002, 0xfcff, MWA_RAM},
+	{0xfd00, 0xfd0f, c16_6551_port_w},
+	{0xfd10, 0xfd1f, plus4_6529_port_w},
+	{0xfd20, 0xfd2f, c364_speech_w },
 	{0xfd30, 0xfd3f, c16_6529_port_w}, /* 6529 keyboard matrix */
 #if 0
 	{0xfd40, 0xfd5f, sid6581_0_port_w},
@@ -963,7 +1011,7 @@ static struct MachineDriver machine_driver_c364 =
 		{
 			CPU_M6510,				   /* MOS 7501 */
 			1200000,				   /*TED7360NTSC_CLOCK/2, */
-			plus4_readmem, plus4_writemem,
+			c364_readmem, c364_writemem,
 			0, 0,
 			c16_frame_interrupt, 1,
 			ted7360_raster_interrupt, TED7360_HRETRACERATE,

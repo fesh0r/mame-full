@@ -6,6 +6,7 @@
 #include <ctype.h>
 #include "driver.h"
 #include "cpu/m6502/m6502.h"
+#include "cpu/m6809/m6809.h"
 
 #define VERBOSE_DBG 1
 #include "cbm.h"
@@ -19,10 +20,12 @@
 /* keyboard lines */
 static UINT8 pet_keyline[10] = { 0 };
 static int pet_basic1=0; /* basic version 1 for quickloader */
+static int superpet=0;
 static int pet_keyline_select;
 static void *pet_clock;
 
 UINT8 *pet_memory;
+UINT8 *superpet_memory;
 UINT8 *pet_videoram;
 
 /* pia at 0xe810
@@ -40,7 +43,7 @@ static READ_HANDLER ( pet_pia0_port_a_read )
 
 static WRITE_HANDLER ( pet_keyboard_line_select )
 {
-	pet_keyline_select=data;  //data is actually line here!
+	pet_keyline_select=data;  /*data is actually line here! */
 }
 
 static READ_HANDLER ( pet_keyboard_line )
@@ -68,6 +71,8 @@ static void pet_irq (int level)
 	if (level != old_level)
 	{
 		DBG_LOG (3, "mos6502", (errorlog, "irq %s\n", level ? "start" : "end"));
+		if (superpet)
+			cpu_set_irq_line (1, M6809_IRQ_LINE, level);
 		cpu_set_irq_line (0, M6502_INT_IRQ, level);
 		old_level = level;
 	}
@@ -139,6 +144,38 @@ static struct via6522_interface pet_via={
 	pet_address_line_11
 };
 
+static struct {
+	int bank; /* rambank to be switched in 0x9000 */
+	int rom; /* rom socket 6502? at 0x9000 */
+} spet= { 0 };
+
+extern READ_HANDLER(superpet_r)
+{
+	int data=0xff;
+	switch (offset) {
+	}
+	return data;
+}
+
+extern WRITE_HANDLER(superpet_w)
+{
+	switch (offset) {
+	case 6:case 7:
+		spet.rom=data&1;
+		
+		break;
+	case 4:case 5:
+		spet.bank=data&0xf;
+		cpu_setbank(3,superpet_memory+(spet.bank<<12));
+		/* 7 low writeprotects systemlatch */
+		break;
+	case 0:case 1:case 2:case 3:
+		/* 3: 1 pull down diagnostic pin on the userport
+		   1: 1 if jumpered programable ram r/w 
+		   0: 0 if jumpered programable m6809, 1 m6502 selected */
+		break;
+	}
+}
 
 static void pet_common_driver_init (void)
 {
@@ -177,6 +214,22 @@ void pet40_driver_init (void)
 	crtc6845_pet_init(pet_videoram);
 }
 
+void superpet_driver_init(void)
+{
+	superpet=1;
+	pet_common_driver_init ();
+
+	cpu_setbank(3, superpet_memory);
+	memorycontextswap(1);
+	cpu_setbank(1, pet_memory);
+	cpu_setbank(2, pet_memory+0x8000);
+	cpu_setbank(3, superpet_memory);
+	memorycontextswap(0);
+
+	raster2.display_state=pet_state;
+	crtc6845_superpet_init(pet_videoram);
+}
+
 void pet_driver_shutdown (void)
 {
 }
@@ -185,6 +238,18 @@ void pet_init_machine (void)
 {
 	via_reset();
 	pia_reset();
+
+	if (superpet) {
+		spet.rom=0;
+		if (M6809_SELECT) {
+			cpu_set_halt_line(0,1);
+			cpu_set_halt_line(1,0);
+		} else {
+			cpu_set_halt_line(0,0);
+			cpu_set_halt_line(1,1);
+		}
+	}
+
 	switch (MEMORY) {
 	case MEMORY_4:
 		install_mem_write_handler (0, 0x1000, 0x1fff, MWA_NOP);
@@ -218,8 +283,8 @@ void pet_keyboard_business(void)
 	int value;
 
 	value = 0;
-	//if (KEY_ESCAPE) value|=0x80; // nothing, not blocking
-	//if (KEY_REVERSE) value|=0x40; // nothing, not blocking
+	/*if (KEY_ESCAPE) value|=0x80; // nothing, not blocking */
+	/*if (KEY_REVERSE) value|=0x40; // nothing, not blocking */
 	if (KEY_B_CURSOR_RIGHT) value |= 0x20;
 	if (KEY_B_PAD_8) value |= 0x10;
 	if (KEY_B_MINUS) value |= 8;
@@ -230,7 +295,7 @@ void pet_keyboard_business(void)
 
 	value = 0;
 	if (KEY_B_PAD_9) value |= 0x80;
-	//if (KEY_ESCAPE) value|=0x40; // nothing, not blocking
+	/*if (KEY_ESCAPE) value|=0x40; // nothing, not blocking */
 	if (KEY_B_ARROW_UP) value |= 0x20;
 	if (KEY_B_PAD_7) value |= 0x10;
 	if (KEY_B_PAD_0) value |= 8;
@@ -247,7 +312,7 @@ void pet_keyboard_business(void)
 	if (KEY_B_H) value |= 8;
 	if (KEY_B_F) value |= 4;
 	if (KEY_B_S) value |= 2;
-	if (KEY_B_ESCAPE) value |= 1; // upper case
+	if (KEY_B_ESCAPE) value |= 1; /* upper case */
 	pet_keyline[2] = value;
 
 	value = 0;
@@ -286,7 +351,7 @@ void pet_keyboard_business(void)
 	value = 0;
 	if (KEY_B_PAD_3) value |= 0x80;
 	if (KEY_B_RIGHT_SHIFT) value |= 0x40;
-	//if (KEY_REVERSE) value |= 0x20; // clear line
+	/*if (KEY_REVERSE) value |= 0x20; // clear line */
 	if (KEY_B_PAD_POINT) value |= 0x10;
 	if (KEY_B_POINT) value |= 8;
 	if (KEY_B_B) value |= 4;
@@ -297,7 +362,7 @@ void pet_keyboard_business(void)
 	value = 0;
 	if (KEY_B_PAD_2) value |= 0x80;
 	if (KEY_B_REPEAT) value |= 0x40;
-	//if (KEY_REVERSE) value |= 0x20; // blocking
+	/*if (KEY_REVERSE) value |= 0x20; // blocking */
 	if (KEY_B_0) value |= 0x10;
 	if (KEY_B_COMMA) value |= 8;
 	if (KEY_B_N) value |= 4;
@@ -308,17 +373,17 @@ void pet_keyboard_business(void)
 	value = 0;
 	if (KEY_B_PAD_1) value |= 0x80;
 	if (KEY_B_SLASH) value |= 0x40;
-	//if (KEY_ESCAPE) value |= 0x20; // special clear
+	/*if (KEY_ESCAPE) value |= 0x20; // special clear */
 	if (KEY_B_HOME) value |= 0x10;
 	if (KEY_B_M) value |= 8;
 	if (KEY_B_SPACE) value |= 4;
 	if (KEY_B_X) value |= 2;
-	if (KEY_B_REVERSE) value |= 1; // lower case
+	if (KEY_B_REVERSE) value |= 1; /* lower case */
 	pet_keyline[8] = value;
 
 	value = 0;
-	//if (KEY_ESCAPE) value |= 0x80; // blocking
-	//if (KEY_REVERSE) value |= 0x40; // blocking
+	/*if (KEY_ESCAPE) value |= 0x80; // blocking */
+	/*if (KEY_REVERSE) value |= 0x40; // blocking */
 	if (KEY_B_COLON) value |= 0x20;
 	if (KEY_B_STOP) value |= 0x10;
 	if (KEY_B_9) value |= 8;
@@ -345,7 +410,7 @@ void pet_keyboard_normal(void)
 	value = 0;
 	if (KEY_PAD_DEL) value |= 0x80;
 	if (KEY_CURSOR_DOWN) value |= 0x40;
-	//if (KEY_3) value |= 0x20; // not blocking
+	/*if (KEY_3) value |= 0x20; // not blocking */
 	if (KEY_0) value |= 0x10;
 	if (KEY_8) value |= 8;
 	if (KEY_6) value |= 4;
@@ -375,7 +440,7 @@ void pet_keyboard_normal(void)
 	if (KEY_PAD_SLASH) value |= 0x80;
 	if (KEY_PAD_8)
 		value |= 0x40;
-	//if (KEY_5) value |= 0x20; // not blocking
+	/*if (KEY_5) value |= 0x20; // not blocking */
 	if (KEY_P)
 		value |= 0x10;
 	if (KEY_I)
@@ -393,7 +458,7 @@ void pet_keyboard_normal(void)
 		value |= 0x80;
 	if (KEY_PAD_4)
 		value |= 0x40;
-	// if (KEY_6) value |= 0x20; // not blocking
+	/* if (KEY_6) value |= 0x20; // not blocking */
 	if (KEY_L)
 		value |= 0x10;
 	if (KEY_J)
@@ -410,7 +475,7 @@ void pet_keyboard_normal(void)
 	if (KEY_PAD_ASTERIX) value |= 0x80;
 	if (KEY_PAD_5)
 		value |= 0x40;
-	//if (KEY_8) value |= 0x20; // not blocking
+	/*if (KEY_8) value |= 0x20; // not blocking */
 	if (KEY_COLON) value |= 0x10;
 	if (KEY_K)
 		value |= 8;
@@ -444,7 +509,7 @@ void pet_keyboard_normal(void)
 	if (KEY_PAD_PLUS) value |= 0x80;
 	if (KEY_PAD_2)
 		value |= 0x40;
-	//if (KEY_2) value |= 0x20; // non blocking
+	/*if (KEY_2) value |= 0x20; // non blocking */
 	if (KEY_QUESTIONMARK) value |= 0x10;
 	if (KEY_COMMA)
 		value |= 8;
@@ -462,7 +527,7 @@ void pet_keyboard_normal(void)
 	if (KEY_PAD_0) value |= 0x40;
     if (KEY_RIGHT_SHIFT) value |= 0x20;
 	if (KEY_BIGGER) value |= 0x10;
-	//if (KEY_5) value |= 8; // non blocking
+	/*if (KEY_5) value |= 8; // non blocking */
 	if (KEY_CLOSEBRACE) value |= 4;
 	if (KEY_ATSIGN) value |= 2;
 	if (KEY_LEFT_SHIFT) value |= 1;
@@ -472,7 +537,7 @@ void pet_keyboard_normal(void)
 	if (KEY_PAD_EQUALS) value |= 0x80;
 	if (KEY_PAD_POINT)
 		value |= 0x40;
-	//if (KEY_6) value |= 0x20; // non blocking
+	/*if (KEY_6) value |= 0x20; // non blocking */
 	if (KEY_STOP) value |= 0x10;
 	if (KEY_SMALLER) value |= 8;
 	if (KEY_SPACE) value |= 4;
@@ -489,7 +554,19 @@ void pet_frame_interrupt (int param)
 
 	pia_0_cb1_w(0,level);
 	level=!level;
-	if (level) return ;
+	if (level) return;
+
+	if (superpet) {
+		if (M6809_SELECT) {
+			cpu_set_halt_line(0,1);
+			cpu_set_halt_line(1,0);
+			crtc6845_address_line_12(1);
+		} else {
+			cpu_set_halt_line(0,0);
+			cpu_set_halt_line(1,1);
+			crtc6845_address_line_12(0);
+		}
+	}
 
 	if (BUSINESS_KEYBOARD) {
 		pet_keyboard_business();

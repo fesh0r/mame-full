@@ -197,7 +197,7 @@ void AY3600_interrupt(void)
 ***************************************************************************/
 int AY3600_keydata_strobe_r(void)
 {
-	if( errorlog ) fprintf(errorlog, "AY3600_keydata_strobe_r $%02X\n", keydata_strobe);
+	logerror("AY3600_keydata_strobe_r $%02X\n", keydata_strobe);
     return keydata_strobe;
 }
 
@@ -207,7 +207,7 @@ int AY3600_keydata_strobe_r(void)
 ***************************************************************************/
 int AY3600_anykey_clearstrobe_r(void)
 {
-	if( errorlog ) fprintf(errorlog, "AY3600_clearstrobe_r $%02X (keydata_strobe $%02X)\n", anykey_clearstrobe, keydata_strobe);
+	logerror("AY3600_clearstrobe_r $%02X (keydata_strobe $%02X)\n", anykey_clearstrobe, keydata_strobe);
     keydata_strobe &= 0x7F;
     return anykey_clearstrobe;
 }

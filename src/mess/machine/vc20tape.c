@@ -297,19 +297,16 @@ static void vc20_wav_open (const char *name)
 	fp = osd_fopen (Machine->gamedrv->name, name, OSD_FILETYPE_IMAGE_R, 0);
 	if (!fp)
 	{
-		if (errorlog)
-			fprintf (errorlog, "tape %s file not found\n", name);
+		logerror("tape %s file not found\n", name);
 		return;
 	}
 	if ((wav.sample = vc20_read_wav_sample (fp)) == NULL)
 	{
-		if (errorlog)
-			fprintf (errorlog, "tape %s could not be loaded\n", name);
+		logerror("tape %s could not be loaded\n", name);
 		osd_fclose (fp);
 		return;
 	}
-	if (errorlog)
-		fprintf (errorlog, "tape %s loaded\n", name);
+	logerror("tape %s loaded\n", name);
 	osd_fclose (fp);
 
 	wav.imagename = name;
@@ -436,21 +433,18 @@ static void vc20_prg_open (const char *name)
 	fp = osd_fopen (Machine->gamedrv->name, name, OSD_FILETYPE_IMAGE_R, 0);
 	if (!fp)
 	{
-		if (errorlog)
-			fprintf (errorlog, "tape %s file not found\n", name);
+		logerror("tape %s file not found\n", name);
 		return;
 	}
 	prg.length = osd_fsize (fp);
 	if ((prg.prg = (UINT8 *) malloc (prg.length)) == NULL)
 	{
-		if (errorlog)
-			fprintf (errorlog, "tape %s could not be loaded\n", name);
+		logerror("tape %s could not be loaded\n", name);
 		osd_fclose (fp);
 		return;
 	}
 	osd_fread (fp, prg.prg, prg.length);
-	if (errorlog)
-		fprintf (errorlog, "tape %s loaded\n", name);
+	logerror("tape %s loaded\n", name);
 	osd_fclose (fp);
 
 	for (i = 0; name[i] != 0; i++)
@@ -486,8 +480,7 @@ static void vc20_prg_write (int data)
 		int diff = (neu - time) * 1000000;
 
 		count++;
-		if (errorlog)
-			fprintf (errorlog, "%f %d %s %d\n", (PCM_LONG + PCM_MIDDLE) / 2,
+		logerror("%f %d %s %d\n", (PCM_LONG + PCM_MIDDLE) / 2,
 					 bytecount, old ? "high" : "low",
 					 diff);
 		if (old)
@@ -552,8 +545,7 @@ static void vc20_prg_write (int data)
 				case 16:
 					if (diff > (PCM_MIDDLE + PCM_SHORT) * 1e6 / 2)
 						byte |= 0x80;
-					if (errorlog)
-						fprintf (errorlog, "byte %.2x\n", byte);
+					logerror("byte %.2x\n", byte);
 					bytecount = 0;
 					break;
 				}
@@ -1032,8 +1024,7 @@ static void vc20_zip_readfile (void)
 	prg.length = zip.zipentry->uncompressed_size;
 	if ((prg.prg = (UINT8 *) malloc (prg.length)) == NULL)
 	{
-		if (errorlog)
-			fprintf (errorlog, "out of memory\n");
+		logerror("out of memory\n");
 		zip.state = 0;
 	}
 	readuncompresszip (zip.zip, zip.zipentry, (char *) prg.prg);
@@ -1043,13 +1034,11 @@ static void vc20_zip_open (const char *name)
 {
 	if (!(zip.zip = openzip (name)))
 	{
-		if (errorlog)
-			fprintf (errorlog, "tape %s not found\n", name);
+		logerror("tape %s not found\n", name);
 		return;
 	}
 
-	if (errorlog)
-		fprintf (errorlog, "tape %s linked\n", name);
+	logerror("tape %s linked\n", name);
 
 	tape.type = TAPE_ZIP;
 	tape.on = 1;

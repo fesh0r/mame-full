@@ -51,7 +51,7 @@ int advision_load_rom (int id)
     cartfile = NULL;
 	if (!(cartfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
 	{
-		if (errorlog) fprintf(errorlog,"Advision - Unable to locate cartridge: %s\n",rom_name);
+		logerror("Advision - Unable to locate cartridge: %s\n",rom_name);
 		return 1;
 	}
 	osd_fread (cartfile, &ROM[0x0000], 4096);
@@ -98,7 +98,7 @@ void advision_putp2(int offset, int data) {
         advision_vh_hpos++;
         if (advision_vh_hpos > 255) {
             advision_vh_hpos = 0;
-            if (errorlog) fprintf(errorlog,"HPOS OVERFLOW\n");
+            logerror("HPOS OVERFLOW\n");
         }
       }
       advision_videoenable = data & 0x10;
@@ -108,7 +108,7 @@ void advision_putp2(int offset, int data) {
 int  advision_getp1(int offset) {
     int d,in;
 
-    if (errorlog) fprintf(errorlog,"P1 READ PC=%x\n",cpu_get_pc());
+    logerror("P1 READ PC=%x\n",cpu_get_pc());
     in = input_port_0_r(0);
     d = in | 0x0F;
     if (in & 0x02) d = d & 0xF7;    /* Button 3 */

@@ -284,7 +284,7 @@ int fs_alloc(void)
 	if (fs_chunk)
 	{
 		fs_chunk += 50;
-		if (errorlog) fprintf(errorlog, "fs_alloc() next chunk (total %d)\n", fs_chunk);
+		logerror("fs_alloc() next chunk (total %d)\n", fs_chunk);
 		fs_item = realloc(fs_item, fs_chunk * sizeof(char **));
 		fs_subitem = realloc(fs_subitem, fs_chunk * sizeof(char **));
 		fs_flags = realloc(fs_flags, fs_chunk * sizeof(char *));
@@ -294,7 +294,7 @@ int fs_alloc(void)
 	else
 	{
 		fs_chunk = 200;
-		if (errorlog) fprintf(errorlog, "fs_alloc() first chunk %d\n", fs_chunk);
+		logerror("fs_alloc() first chunk %d\n", fs_chunk);
 		fs_item = malloc(fs_chunk * sizeof(char **));
 		fs_subitem = malloc(fs_chunk * sizeof(char **));
 		fs_flags = malloc(fs_chunk * sizeof(char *));
@@ -305,11 +305,7 @@ int fs_alloc(void)
 	/* what do we do if reallocation fails? raise(SIGABRT) seems a way outa here */
 	if (!fs_item || !fs_subitem || !fs_flags || !fs_types || !fs_order)
 	{
-		if (errorlog)
-		{
-			fprintf(errorlog, "failed to allocate fileselect buffers!\n");
-			fflush(errorlog);
-		}
+		logerror("failed to allocate fileselect buffers!\n");
 		raise(SIGABRT);
 	}
 
@@ -404,7 +400,7 @@ void fs_generate_filelist(void)
 	count = osd_num_devices();
 	if (count > 0)
 	{
-		if (errorlog) fprintf(errorlog, "fs_generate_filelist: %d devices\n", count);
+		logerror("fs_generate_filelist: %d devices\n", count);
 		for (i = 0; i < count; i++)
 		{
 			if (fs_total >= MAX_ENTRIES_IN_MENU)
@@ -452,7 +448,7 @@ void fs_generate_filelist(void)
 	fs_types[n] = FILESELECT_NONE;
 	fs_flags[n] = 0;
 
-	if (errorlog) fprintf(errorlog, "fs_generate_filelist: sorting %d entries\n", n - qsort_start);
+	logerror("fs_generate_filelist: sorting %d entries\n", n - qsort_start);
 	qsort(&fs_order[qsort_start], n - qsort_start, sizeof(int), fs_compare);
 
 	tmp_menu_item = malloc(n * sizeof(char *));

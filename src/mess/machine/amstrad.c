@@ -47,7 +47,7 @@ extern unsigned char *Amstrad_Memory;
 static int snapshot_loaded;
 
 /* used to setup computer if a snapshot was specified */
-int amstrad_opbaseoverride(UINT32 pc)
+OPBASE_HANDLER( amstrad_opbaseoverride )
 {
 	/* clear op base override */
 	cpu_setOPbaseoverride(0,0);
@@ -307,7 +307,7 @@ int amstrad_load(int type, int id, unsigned char **ptr)
 				/* close file */
 				osd_fclose(file);
 
-				if (errorlog) fprintf(errorlog,"File loaded!\r\n");
+				logerror("File loaded!\r\n");
 
 				/* ok! */
 				return 1;

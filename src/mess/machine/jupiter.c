@@ -34,13 +34,13 @@ jupiter_tape;
 static UINT8 *jupiter_data = NULL;
 static int jupiter_data_type = JUPITER_NONE;
 
-int jupiter_opbaseoverride(UINT32 pc)
+OPBASE_HANDLER( jupiter_opbaseoverride)
 {
 
 	int loop;
 	unsigned short tmpword;
 
-	if (pc == 0x059d)
+	if (address == 0x059d)
 	{
 		cpu_setOPbaseoverride(0, 0);
 		if (jupiter_data_type == JUPITER_ACE)
@@ -87,8 +87,7 @@ int jupiter_opbaseoverride(UINT32 pc)
 void jupiter_init_machine(void)
 {
 
-	if (errorlog)
-		fprintf(errorlog, "jupiter_init\r\n");
+	logerror("jupiter_init\r\n");
 
 	if (jupiter_data)
 	{
@@ -131,8 +130,7 @@ int jupiter_load_ace(int id)
 	{
 		if ((jupiter_data = malloc(0x6000)))
 		{
-			if (errorlog)
-				fprintf(errorlog, "Loading file %s.\r\n", device_filename(IO_CARTSLOT,id));
+			logerror("Loading file %s.\r\n", device_filename(IO_CARTSLOT,id));
 			while (!done && (jupiter_index < 0x6001))
 			{
 				osd_fread(file, &jupiter_byte, 1);
@@ -142,8 +140,7 @@ int jupiter_load_ace(int id)
 					switch (jupiter_byte)
 					{
 					case 0x00:
-						if (errorlog)
-							fprintf(errorlog, "File loaded!\r\n");
+						logerror("File loaded!\r\n");
 						done = 1;
 						break;
 					case 0x01:
@@ -151,8 +148,7 @@ int jupiter_load_ace(int id)
 						jupiter_data[jupiter_index++] = jupiter_byte;
 						break;
 					case 0x02:
-						if (errorlog)
-							fprintf(errorlog, "Sequence 0xED 0x02 found in .ace file\r\n");
+						logerror("Sequence 0xED 0x02 found in .ace file\r\n");
 						break;
 					default:
 						osd_fread(file, &jupiter_repeat, 1);
@@ -169,8 +165,7 @@ int jupiter_load_ace(int id)
 	}
 	if (!done)
 	{
-		if (errorlog)
-			fprintf(errorlog, "file not loaded\r\n");
+		logerror("file not loaded\r\n");
 		if (jupiter_data)
 		{
 			free(jupiter_data);
@@ -179,8 +174,7 @@ int jupiter_load_ace(int id)
 		return (1);
 	}
 
-	if (errorlog)
-		fprintf(errorlog, "Decoded %d bytes.\r\n", jupiter_index);
+	logerror("Decoded %d bytes.\r\n", jupiter_index);
 	jupiter_data_type = JUPITER_ACE;
 
 	return (0);
@@ -198,8 +192,7 @@ int jupiter_load_tap(int id)
 	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, 0);
 	if (file)
 	{
-		if (errorlog)
-			fprintf(errorlog, "Loading file %s.\r\n", device_filename(IO_CASSETTE,id));
+		logerror("Loading file %s.\r\n", device_filename(IO_CASSETTE,id));
 
         osd_fread(file, &inpbyt, 1);
 		hdr_len = inpbyt;
@@ -236,16 +229,14 @@ int jupiter_load_tap(int id)
 		{
 			osd_fread(file, jupiter_data, jupiter_tape.dat_len);
 			jupiter_data_type = JUPITER_TAP;
-			if (errorlog)
-				fprintf(errorlog, "File loaded\r\n");
+			logerror("File loaded\r\n");
 		}
 		osd_fclose(file);
 	}
 
 	if (!jupiter_data)
 	{
-		if (errorlog)
-			fprintf(errorlog, "file not loaded\r\n");
+		logerror("file not loaded\r\n");
 		return (1);
 	}
 

@@ -131,33 +131,35 @@
 
 extern UINT8 *c16_memory;
 
-extern WRITE_HANDLER ( c16_m7501_port_w );
-extern READ_HANDLER  ( c16_m7501_port_r );
+extern WRITE_HANDLER(c16_m7501_port_w);
+extern READ_HANDLER(c16_m7501_port_r);
 
-extern WRITE_HANDLER ( c16_6551_port_w );
-extern READ_HANDLER  ( c16_6551_port_r );
+extern WRITE_HANDLER(c16_6551_port_w);
+extern READ_HANDLER(c16_6551_port_r);
 
-extern READ_HANDLER  ( c16_fd1x_r );
-extern WRITE_HANDLER ( plus4_6529_port_w );
-extern READ_HANDLER  ( plus4_6529_port_r );
+extern READ_HANDLER(c16_fd1x_r);
+extern WRITE_HANDLER(plus4_6529_port_w);
+extern READ_HANDLER(plus4_6529_port_r);
 
-extern WRITE_HANDLER ( c16_6529_port_w );
-extern READ_HANDLER  ( c16_6529_port_r );
+extern WRITE_HANDLER(c16_6529_port_w);
+extern READ_HANDLER(c16_6529_port_r);
 
+extern WRITE_HANDLER(c364_speech_w);
+extern READ_HANDLER(c364_speech_r);
 
 #if 0
-extern void c16_iec9_port_w (int offset, int data);
-extern int c16_iec9_port_r (int offset);
+extern WRITE_HANDLER(c16_iec9_port_w);
+extern READ_HANDLER(c16_iec9_port_r);
 
-extern void c16_iec8_port_w (int offset, int data);
-extern int c16_iec8_port_r (int offset);
+extern WRITE_HANDLER(c16_iec8_port_w);
+extern READ_HANDLER(c16_iec8_port_r);
 
 #endif
 
-extern WRITE_HANDLER ( c16_select_roms  );
-extern WRITE_HANDLER ( c16_switch_to_rom );
-extern WRITE_HANDLER ( c16_switch_to_ram );
-extern WRITE_HANDLER ( plus4_switch_to_ram );
+extern WRITE_HANDLER(c16_select_roms);
+extern WRITE_HANDLER(c16_switch_to_rom);
+extern WRITE_HANDLER(c16_switch_to_ram);
+extern WRITE_HANDLER(plus4_switch_to_ram);
 
 /* ted reads */
 extern int c16_read_keyboard (int databus);

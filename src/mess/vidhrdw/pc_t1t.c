@@ -6,6 +6,10 @@
 #include "mess/machine/pc.h"
 #include "mess/vidhrdw/pc.h"
 
+/* crtc address line allow only decoding of 8kbyte memory
+   so are in graphics mode 2 or 4 of such banks distinquished
+   by line */
+
 #define T1T_HTOTAL	T1T_crtc[HTOTAL]
 #define T1T_HDISP	T1T_crtc[HDISP]
 #define T1T_HSYNCP	T1T_crtc[HSYNCP]
@@ -490,15 +494,20 @@ void pc_t1t_bank_w(int data)
 		pc_port[0x3df] = data;
 	/* it seems the video ram is mapped to the last 128K of main memory */
 #if 1
-		dram = 0x80000 + ((data & 0x07) << 14);
-		vram = 0x80000 + ((data & 0x38) << (14-3));
+		if ((data&0xc0)==0xc0) { /* needed for lemmings */
+			dram = 0x80000 + ((data & 0x06) << 14);
+			vram = 0x80000 + ((data & 0x30) << (14-3));
+		} else {
+			dram = 0x80000 + ((data & 0x07) << 14);
+			vram = 0x80000 + ((data & 0x38) << (14-3));
+		}
 #else
 		dram = (data & 0x07) << 14;
 		vram = (data & 0x38) << (14-3);
 #endif
         videoram = &memory_region(REGION_CPU1)[vram];
 		displayram = &memory_region(REGION_CPU1)[dram];
-        memset(dirtybuffer, 1, sizeof(dirtybuffer));
+        memset(dirtybuffer, 1, videoram_size);
 		DBG_LOG(1,"t1t_bank_w",(errorlog, "$%02x: display ram $%05x, video ram $%05x\n", data, dram, vram));
 	}
 }
@@ -1001,7 +1010,7 @@ static void t1t_gfx_4bpp_320(struct osd_bitmap *bitmap)
     /* for every code in the Video RAM, check if it been modified
        since last time and update it accordingly. */
 
-	offs = T1T_base % videoram_size;
+	offs = T1T_base &0x1fff;
 	for (i = 0, sx = 0, sy = 0 * T1T_maxscan/4; i < size; i++)
 	{
 		if (dirtybuffer[offs])
@@ -1023,10 +1032,10 @@ static void t1t_gfx_4bpp_320(struct osd_bitmap *bitmap)
 			sx = 0;
 			sy += T1T_maxscan;
 		}
-		if( ++offs == videoram_size ) offs = 0;
+		if( ++offs == 0x2000 ) offs = 0;
     }
 
-	offs = (T1T_base + 0x2000) % videoram_size;
+	offs = (T1T_base&0x1fff) | 0x2000;
 	for (i = 0, sx = 0, sy = 1 * T1T_maxscan/4; i < size; i++)
 	{
 		if (dirtybuffer[offs])
@@ -1048,11 +1057,11 @@ static void t1t_gfx_4bpp_320(struct osd_bitmap *bitmap)
 			sx = 0;
 			sy += T1T_maxscan;
 		}
-		if( ++offs == videoram_size )
-			offs = 0;
+		if( ++offs == 0x4000 )
+			offs = 0x2000;
     }
 
-	offs = (T1T_base + 0x4000) % videoram_size;
+	offs = (T1T_base&0x1fff) | 0x4000;
 	for (i = 0, sx = 0, sy = 2 * T1T_maxscan/4; i < size; i++)
 	{
 		if (dirtybuffer[offs])
@@ -1074,11 +1083,11 @@ static void t1t_gfx_4bpp_320(struct osd_bitmap *bitmap)
 			sx = 0;
 			sy += T1T_maxscan;
 		}
-		if( ++offs == videoram_size )
-			offs = 0;
+		if( ++offs == 0x6000 )
+			offs = 0x4000;
     }
 
-	offs = (T1T_base + 0x6000) % videoram_size;
+	offs = (T1T_base&0x1fff) |0x6000 ;
 	for (i = 0, sx = 0, sy = 3 * T1T_maxscan/4; i < size; i++)
 	{
 		if (dirtybuffer[offs])
@@ -1100,8 +1109,8 @@ static void t1t_gfx_4bpp_320(struct osd_bitmap *bitmap)
 			sx = 0;
 			sy += T1T_maxscan;
 		}
-		if( ++offs == videoram_size )
-			offs = 0;
+		if( ++offs == 0x8000 )
+			offs = 0x6000;
     }
 }
 

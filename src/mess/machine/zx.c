@@ -14,13 +14,6 @@
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 
-#define VERBOSE 1
-
-#if VERBOSE
-#define LOG(n,x)  if( errorlog && VERBOSE >= n ) fprintf x
-#else
-#define LOG(n,x)
-#endif
 
 extern char zx_frame_message[128];
 extern int zx_frame_time;
@@ -65,12 +58,12 @@ void init_zx(void)
 		gfx[i] = i;
 }
 
-static int zx_setopbase(UINT32 pc)
+static OPBASE_HANDLER(zx_setopbase)
 {
-	if (pc & 0x8000)
-		return zx_ula_r(pc, REGION_CPU1);
+	if (address & 0x8000)
+		return zx_ula_r(address, REGION_CPU1);
 	else
-	if (pc == 0x0066 && tape_size > 0)
+	if (address == 0x0066 && tape_size > 0)
 	{
 		UINT8 *ram = memory_region(REGION_CPU1);
 		UINT8 border = ram[0x4028];
@@ -79,16 +72,16 @@ static int zx_setopbase(UINT32 pc)
 		ram[0x4028] = border;
 		tape_size = 0;
 		ram[0x03a7] = 0xff;
-		pc = 0x03a6;
+		address = 0x03a6;
 	}
-	return pc;
+	return address;
 }
 
-static int pc8300_setopbase(UINT32 pc)
+static OPBASE_HANDLER( pc8300_setopbase )
 {
-	if (pc & 0x8000)
-		return zx_ula_r(pc, REGION_GFX2);
-	else if (pc == 0x0066 && tape_size > 0)
+	if (address & 0x8000)
+		return zx_ula_r(address, REGION_GFX2);
+	else if (address == 0x0066 && tape_size > 0)
 	{
 		UINT8 *ram = memory_region(REGION_CPU1);
 		UINT8 border = ram[0x4028];
@@ -97,16 +90,16 @@ static int pc8300_setopbase(UINT32 pc)
 		ram[0x4028] = border;
 		tape_size = 0;
 		ram[0x03a7] = 0xff;
-		pc = 0x03a6;
+		address = 0x03a6;
 	}
-	return pc;
+	return address;
 }
 
-static int pow3000_setopbase(UINT32 pc)
+static OPBASE_HANDLER(pow3000_setopbase)
 {
-	if (pc & 0x8000)
-		return zx_ula_r(pc, REGION_GFX2);
-	return pc;
+	if (address & 0x8000)
+		return zx_ula_r(address, REGION_GFX2);
+	return address;
 }
 
 static void common_init_machine(void)
@@ -224,15 +217,15 @@ static void tape_bit_shift(int param)
 		zx_ula_bkgnd(tape_mask ? 1 : 0);
 		if (tape_wave == 1)
 		{
-			LOG(3, (errorlog, "TAPE wave #%d done (%02X AF:%04X BC:%04X DE:%04X HL:%04X)\n", param, tape_mask, cpu_get_reg
-					(Z80_AF), cpu_get_reg(Z80_BC), cpu_get_reg(Z80_DE), cpu_get_reg(Z80_HL)));
+			logerror("TAPE wave #%d done (%02X AF:%04X BC:%04X DE:%04X HL:%04X)\n", param, tape_mask, cpu_get_reg
+					(Z80_AF), cpu_get_reg(Z80_BC), cpu_get_reg(Z80_DE), cpu_get_reg(Z80_HL));
 			tape_bit_timer = timer_set(TIME_IN_USEC(TAPE_DELAY),
 									   (tape_bits << 4), tape_bit_shift);
 		}
 		else
 		{
-			LOG(3, (errorlog, "TAPE wave #%d      (%02X AF:%04X BC:%04X DE:%04X HL:%04X)\n", param, tape_mask, cpu_get_reg
-					(Z80_AF), cpu_get_reg(Z80_BC), cpu_get_reg(Z80_DE), cpu_get_reg(Z80_HL)));
+			logerror("TAPE wave #%d      (%02X AF:%04X BC:%04X DE:%04X HL:%04X)\n", param, tape_mask, cpu_get_reg
+					(Z80_AF), cpu_get_reg(Z80_BC), cpu_get_reg(Z80_DE), cpu_get_reg(Z80_HL));
 			tape_bit_timer = timer_set(TIME_IN_USEC(tape_mask ? TAPE_PULSE : TAPE_PULSE * 6 / 7),
 									   (tape_bits << 4) | (tape_wave - 1), tape_bit_shift);
 		}
@@ -244,8 +237,7 @@ static void tape_bit_shift(int param)
 		if (tape_name_offs < tape_name_size)
 		{
 			tape_data = tape_dump[tape_name_offs];
-			if (errorlog)
-				fprintf(errorlog, "TAPE name @$%04X: $%02X (%02X AF:%04X BC:%04X DE:%04X HL:%04X)\n", tape_name_offs, tape_data,
+			logerror("TAPE name @$%04X: $%02X (%02X AF:%04X BC:%04X DE:%04X HL:%04X)\n", tape_name_offs, tape_data,
 						tape_mask, cpu_get_reg(Z80_AF), cpu_get_reg(Z80_BC), cpu_get_reg(Z80_DE), cpu_get_reg(Z80_HL));
 			tape_bits = 8;
 			tape_name_offs++;
@@ -254,8 +246,7 @@ static void tape_bit_shift(int param)
 		}
 		else if (osd_fread(tape_file, &tape_data, 1) == 1)
 		{
-			if (errorlog)
-				fprintf(errorlog, "TAPE data @$%04X: $%02X (%02X AF:%04X BC:%04X DE:%04X HL:%04X)\n", tape_data_offs, tape_data,
+			logerror("TAPE data @$%04X: $%02X (%02X AF:%04X BC:%04X DE:%04X HL:%04X)\n", tape_data_offs, tape_data,
 						tape_mask, cpu_get_reg(Z80_AF), cpu_get_reg(Z80_BC), cpu_get_reg(Z80_DE), cpu_get_reg(Z80_HL));
 			tape_bits = 8;
 			tape_data_offs++;
@@ -268,8 +259,7 @@ static void tape_bit_shift(int param)
 			tape_file = NULL;
 			tape_trailer = 256 * 8;
 			tape_bit_timer = timer_set(TIME_IN_USEC(TAPE_PULSE), 0, tape_bit_shift);
-			if (errorlog)
-				fprintf(errorlog, "TAPE trailer %d\n", tape_trailer);
+			logerror("TAPE trailer %d\n", tape_trailer);
 		}
 	}
 
@@ -278,15 +268,13 @@ static void tape_bit_shift(int param)
 		tape_bits--;
 		if ((tape_data >> tape_bits) & 1)
 		{
-			if (errorlog)
-				fprintf(errorlog, "TAPE get bit #%d:1 (%02X AF:%04X BC:%04X DE:%04X HL:%04X)\n", tape_bits, tape_mask,
+			logerror("TAPE get bit #%d:1 (%02X AF:%04X BC:%04X DE:%04X HL:%04X)\n", tape_bits, tape_mask,
 						cpu_get_reg(Z80_AF), cpu_get_reg(Z80_BC), cpu_get_reg(Z80_DE), cpu_get_reg(Z80_HL));
 			tape_wave = 9;
 		}
 		else
 		{
-			if (errorlog)
-				fprintf(errorlog, "TAPE get bit #%d:0 (%02X AF:%04X BC:%04X DE:%04X HL:%04X)\n", tape_bits, tape_mask,
+			logerror("TAPE get bit #%d:0 (%02X AF:%04X BC:%04X DE:%04X HL:%04X)\n", tape_bits, tape_mask,
 						cpu_get_reg(Z80_AF), cpu_get_reg(Z80_BC), cpu_get_reg(Z80_DE), cpu_get_reg(Z80_HL));
 			tape_mask ^= 0x80;
 			zx_ula_bkgnd(tape_mask ? 1 : 0);
@@ -329,11 +317,11 @@ static void extract_name(void)
 		tape_name_size = i + 1;
 		tape_name[tape_name_size] = '\0';
 		tape_name_offs = 0;
-		LOG(1, (errorlog, "extracted tape name '%s'\n", tape_name));
+		logerror("extracted tape name '%s'\n", tape_name);
 	}
 	else
 	{
-		LOG(1, (errorlog, "no tape name found"));
+		logerror("no tape name found");
 	}
 }
 
@@ -341,8 +329,8 @@ int zx_tape_get_bit(void)
 {
 	if (tape_file || tape_header || tape_trailer)
 	{
-		LOG(4, (errorlog, "      read status (%02X AF:%04X BC:%04X DE:%04X HL:%04X)\n", tape_mask, cpu_get_reg(Z80_AF),
-				cpu_get_reg(Z80_BC), cpu_get_reg(Z80_DE), cpu_get_reg(Z80_HL)));
+		logerror("      read status (%02X AF:%04X BC:%04X DE:%04X HL:%04X)\n", tape_mask, cpu_get_reg(Z80_AF),
+				cpu_get_reg(Z80_BC), cpu_get_reg(Z80_DE), cpu_get_reg(Z80_HL));
 	}
 	else
 	{
@@ -354,7 +342,7 @@ int zx_tape_get_bit(void)
 		if (cycles_this_bit - cycles_last_bit < 64)
 		{
 			fast_read_count++;
-			LOG(2, (errorlog, "TAPE time between reads %d cycles %d times\n", cycles_this_bit - cycles_last_bit, fast_read_count));
+			logerror("TAPE time between reads %d cycles %d times\n", cycles_this_bit - cycles_last_bit, fast_read_count);
 			if (fast_read_count > 64)
 			{
 				extract_name();
@@ -385,8 +373,7 @@ int zx_tape_get_bit(void)
 						tape_header = 1024 * 8;
 						tape_data_offs = 0;
 						tape_mask = 0x80;
-						if (errorlog)
-							fprintf(errorlog, "TAPE header %d\n", tape_header);
+						logerror("TAPE header %d\n", tape_header);
 					}
 				}
 			}
@@ -403,17 +390,17 @@ int zx_tape_get_bit(void)
 
 void zx_io_w(int offs, int data)
 {
-	LOG(2, (errorlog, "IOW %3d $%04X", cpu_getscanline(), offs));
+	logerror("IOW %3d $%04X", cpu_getscanline(), offs);
 	if ((offs & 2) == 0)
 	{
-		LOG(2, (errorlog, " ULA NMIs off\n"));
+		logerror(" ULA NMIs off\n");
 		if (ula_nmi)
 			timer_remove(ula_nmi);
 		ula_nmi = NULL;
 	}
 	else if ((offs & 1) == 0)
 	{
-		LOG(2, (errorlog, " ULA NMIs on\n"));
+		logerror(" ULA NMIs on\n");
 		ula_nmi = timer_pulse(TIME_IN_CYCLES(207, 0), 0, zx_ula_nmi);
 		/* remove the IRQ */
 		if (ula_irq)
@@ -424,7 +411,7 @@ void zx_io_w(int offs, int data)
 	}
 	else
 	{
-		LOG(2, (errorlog, " ULA IRQs on\n"));
+		logerror(" ULA IRQs on\n");
 		zx_ula_bkgnd(1);
 		if (ula_frame_vsync == 2)
 		{
@@ -470,7 +457,7 @@ int zx_io_r(int offs)
 
 		if (ula_irq)
 		{
-			LOG(2, (errorlog, "IOR %3d $%04X data $%02X (ULA IRQs off)\n", cpu_getscanline(), offs, data));
+			logerror("IOR %3d $%04X data $%02X (ULA IRQs off)\n", cpu_getscanline(), offs, data);
 			zx_ula_bkgnd(0);
 			timer_remove(ula_irq);
 			ula_irq = NULL;
@@ -478,17 +465,17 @@ int zx_io_r(int offs)
 		else
 		{
 			data &= ~zx_tape_get_bit();
-			LOG(2, (errorlog, "IOR %3d $%04X data $%02X (tape)\n", cpu_getscanline(), offs, data));
+			logerror("IOR %3d $%04X data $%02X (tape)\n", cpu_getscanline(), offs, data);
 		}
 		if (ula_frame_vsync == 3)
 		{
 			ula_frame_vsync = 2;
-			LOG(2, (errorlog, "vsync starts in scanline %3d\n", cpu_getscanline()));
+			logerror("vsync starts in scanline %3d\n", cpu_getscanline());
 		}
 	}
 	else
 	{
-		LOG(2, (errorlog, "IOR %3d $%04X data $%02X\n", cpu_getscanline(), offs, data));
+		logerror("IOR %3d $%04X data $%02X\n", cpu_getscanline(), offs, data);
 	}
 	return data;
 }
@@ -529,7 +516,7 @@ int pow3000_io_r(int offs)
 
 		if (ula_irq)
 		{
-			LOG(2, (errorlog, "IOR %3d $%04X data $%02X (ULA IRQs off)\n", cpu_getscanline(), offs, data));
+			logerror("IOR %3d $%04X data $%02X (ULA IRQs off)\n", cpu_getscanline(), offs, data);
 			zx_ula_bkgnd(0);
 			timer_remove(ula_irq);
 			ula_irq = 0;
@@ -537,17 +524,17 @@ int pow3000_io_r(int offs)
 		else
 		{
 			data &= ~zx_tape_get_bit();
-			LOG(2, (errorlog, "IOR %3d $%04X data $%02X (tape)\n", cpu_getscanline(), offs, data));
+			logerror("IOR %3d $%04X data $%02X (tape)\n", cpu_getscanline(), offs, data);
 		}
 		if (ula_frame_vsync == 3)
 		{
 			ula_frame_vsync = 2;
-			LOG(2, (errorlog, "vsync starts in scanline %3d\n", cpu_getscanline()));
+			logerror("vsync starts in scanline %3d\n", cpu_getscanline());
 		}
 	}
 	else
 	{
-		LOG(2, (errorlog, "IOR %3d $%04X data $%02X\n", cpu_getscanline(), offs, data));
+		logerror("IOR %3d $%04X data $%02X\n", cpu_getscanline(), offs, data);
 	}
 	return data;
 }

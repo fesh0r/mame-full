@@ -417,7 +417,7 @@ static void vc1541_timer(int param)
 static void vc1541_via0_irq (int level)
 {
 	vc1541->via0irq = level;
-	DBG_LOG(2, "vc1541 via0 irq",(errorlog, "level %d %d\n",vc1541->via0irq,vc1541->via1irq));
+	DBG_LOG(2, "vc1541 via0 irq",("level %d %d\n",vc1541->via0irq,vc1541->via1irq));
 	cpu_set_irq_line (vc1541->cpunumber,
 					  M6502_INT_IRQ, vc1541->via1irq || vc1541->via0irq);
 }
@@ -448,12 +448,13 @@ static int vc1541_via0_read_portb (int offset)
 		break;
 	}
 	if (value!=old) {
-		DBG_LOG(2, "vc1541 serial read",(errorlog, "%s %s %s\n",
+
+		DBG_LOG(2, "vc1541 serial read",("%s %s %s\n",
 										 serial.atn[0]?"ATN":"atn",
 										 serial.clock[0]?"CLOCK":"clock",
 										 serial.data[0]?"DATA":"data"));
 
-		DBG_LOG(2, "vc1541 serial read",(errorlog, "%s %s %s\n",
+		DBG_LOG(2, "vc1541 serial read",("%s %s %s\n",
 										 value&0x80?"ATN":"atn",
 										 value&4?"CLOCK":"clock",
 										 value&1?"DATA":"data"));
@@ -477,7 +478,7 @@ static void vc1541_acka(void)
 
 static void vc1541_via0_write_portb (int offset, int data)
 {
-	DBG_LOG(2, "vc1541 serial write",(errorlog, "%s %s %s\n",
+	DBG_LOG(2, "vc1541 serial write",("%s %s %s\n",
 									 data&0x10?"ATN":"atn",
 									 data&8?"CLOCK":"clock",
 									 data&2?"DATA":"data"));
@@ -529,7 +530,7 @@ static void vc1541_via0_write_portb (int offset, int data)
 static void vc1541_via1_irq (int level)
 {
 	vc1541->via1irq = level;
-	DBG_LOG(2, "vc1541 via1 irq",(errorlog, "level %d %d\n",vc1541->via0irq,vc1541->via1irq));
+	DBG_LOG(2, "vc1541 via1 irq",("level %d %d\n",vc1541->via0irq,vc1541->via1irq));
 	cpu_set_irq_line (vc1541->cpunumber,
 					  M6502_INT_IRQ, vc1541->via1irq || vc1541->via0irq);
 }
@@ -537,13 +538,13 @@ static void vc1541_via1_irq (int level)
 static int vc1541_via1_read_porta (int offset)
 {
 	int data=vc1541->head.data[vc1541->d64.pos];
-	DBG_LOG(2, "vc1541 drive",(errorlog, "port a read %.2x\n", data));
+	DBG_LOG(2, "vc1541 drive",("port a read %.2x\n", data));
 	return data;
 }
 
 static void vc1541_via1_write_porta (int offset, int data)
 {
-	DBG_LOG(1, "vc1541 drive",(errorlog, "port a write %.2x\n", data));
+	DBG_LOG(1, "vc1541 drive",("port a write %.2x\n", data));
 }
 
 static int vc1541_via1_read_portb (int offset)
@@ -565,7 +566,7 @@ static void vc1541_via1_write_portb (int offset, int data)
 {
 	static int old=0;
 	if (data!=old) {
-		DBG_LOG(1, "vc1541 drive",(errorlog, "%.2x\n", data));
+		DBG_LOG(1, "vc1541 drive",("%.2x\n", data));
 		if ((old&3)!=(data&3)) {
 			switch (old&3) {
 			case 0:
@@ -663,8 +664,7 @@ int vc1541_init (int id)
 	}
 	osd_fclose (in);
 
-	if (errorlog)
-		fprintf (errorlog, "floppy image %s loaded\n", imagename);
+	logerror("floppy image %s loaded\n", imagename);
 
 	//vc1541->drive = ;
 	vc1541->d64.name = imagename;
@@ -760,7 +760,7 @@ void vc1541_serial_atn_write (int which, int level)
 			serial.atn[0] = serial.atn[1] && serial.atn[2];
 			if (serial.atn[0] == level)
 			{
-				DBG_LOG(1, "vc1541",(errorlog, "%d:%.4x atn %s\n",
+				DBG_LOG(1, "vc1541",("%d:%.4x atn %s\n",
 									 cpu_getactivecpu (),
 									 cpu_get_pc(),
 									 serial.atn[0]?"ATN":"atn"));
@@ -801,7 +801,7 @@ void vc1541_serial_data_write (int which, int level)
 			serial.data[0] = serial.data[1] && serial.data[2];
 			if (serial.data[0] == level)
 			{
-				DBG_LOG(1, "vc1541",(errorlog, "%d:%.4x data %s\n",
+				DBG_LOG(1, "vc1541",("%d:%.4x data %s\n",
 									 cpu_getactivecpu (),
 									 cpu_get_pc(),
 									 serial.data[0]?"DATA":"data"));
@@ -831,7 +831,7 @@ void vc1541_serial_clock_write (int which, int level)
 			serial.clock[0] = serial.clock[1] && serial.clock[2];
 			if (serial.clock[0] == level)
 			{
-				DBG_LOG(1, "vc1541",(errorlog, "%d:%.4x clock %s\n",
+				DBG_LOG(1, "vc1541",("%d:%.4x clock %s\n",
 									 cpu_getactivecpu (),
 									 cpu_get_pc(),
 									 serial.clock[0]?"CLOCK":"clock"));
@@ -871,11 +871,11 @@ static WRITE_HANDLER ( c1551_port_w )
 {
 	static int old=0;
 	if (offset) {
-		DBG_LOG(1, "c1551 port",(errorlog, "write %.2x\n",data));
+		DBG_LOG(1, "c1551 port",("write %.2x\n",data));
 		vc1541->drive.c1551.cpu_port=data;
 
 		if (data!=old) {
-			DBG_LOG(1, "vc1541 drive",(errorlog, "%.2x\n", data));
+			DBG_LOG(1, "vc1541 drive",("%.2x\n", data));
 			if ((old&3)!=(data&3)) {
 				switch (old&3) {
 				case 0:
@@ -920,7 +920,7 @@ static WRITE_HANDLER ( c1551_port_w )
 		vc1541->led = data & 8;
 	} else {
 		vc1541->drive.c1551.cpu_ddr=data;
-		DBG_LOG(1, "c1551 ddr",(errorlog, "write %.2x\n",data));
+		DBG_LOG(1, "c1551 ddr",("write %.2x\n",data));
 	}
 }
 
@@ -940,10 +940,10 @@ static READ_HANDLER ( c1551_port_r )
 		}
 		data&=~vc1541->drive.c1551.cpu_ddr;
 		data|=vc1541->drive.c1551.cpu_ddr&vc1541->drive.c1551.cpu_port;
-		DBG_LOG(3, "c1551 port",(errorlog, "read %.2x\n", data));
+		DBG_LOG(3, "c1551 port",("read %.2x\n", data));
 	} else {
 		data=vc1541->drive.c1551.cpu_ddr;
-		DBG_LOG(3, "c1551 ddr",(errorlog, "read %.2x\n", data));
+		DBG_LOG(3, "c1551 ddr",("read %.2x\n", data));
 	}
 	return data;
 }
@@ -975,7 +975,7 @@ static int c1551_port_c_r(void)
 static int c1551_port_b_r (void)
 {
 	int data=vc1541->head.data[vc1541->d64.pos];
-	DBG_LOG(2, "c1551 drive",(errorlog, "port a read %.2x\n", data));
+	DBG_LOG(2, "c1551 drive",("port a read %.2x\n", data));
 	return data;
 }
 
@@ -1013,7 +1013,7 @@ struct MemoryWriteAddress c1551_writemem[] =
 
 void c1551x_write_data (TPI6525 *this, int data)
 {
-	DBG_LOG(1, "c1551 cpu",(errorlog, "%d write data %.2x\n",
+	DBG_LOG(1, "c1551 cpu", ("%d write data %.2x\n",
 						 cpu_getactivecpu (), data));
 #ifdef CPU_SYNC
 	cpu_sync();
@@ -1028,14 +1028,14 @@ int c1551x_read_data (TPI6525 *this)
 	cpu_sync ();
 #endif
 	data=tpi6525_0_port_a_r(0);
-	DBG_LOG(2, "c1551 cpu",(errorlog, "%d read data %.2x\n",
+	DBG_LOG(2, "c1551 cpu",("%d read data %.2x\n",
 						 cpu_getactivecpu (), data));
 	return data;
 }
 
 void c1551x_write_handshake (TPI6525 *this, int data)
 {
-	DBG_LOG(1, "c1551 cpu",(errorlog, "%d write handshake %.2x\n",
+	DBG_LOG(1, "c1551 cpu",("%d write handshake %.2x\n",
 						 cpu_getactivecpu (), data));
 #ifdef CPU_SYNC
 	cpu_sync();
@@ -1050,7 +1050,7 @@ int c1551x_read_handshake (TPI6525 *this)
 	cpu_sync();
 #endif
 	data=tpi6525_0_port_c_r(0)&8?0x80:0;
-	DBG_LOG(2, "c1551 cpu",(errorlog, "%d read handshake %.2x\n",
+	DBG_LOG(2, "c1551 cpu",("%d read handshake %.2x\n",
 						 cpu_getactivecpu (), data));
 	return data;
 }
@@ -1062,7 +1062,7 @@ int c1551x_read_status (TPI6525 *this)
 	cpu_sync();
 #endif
 	data=tpi6525_0_port_c_r(0)&3;
-	DBG_LOG(1, "c1551 cpu",(errorlog, "%d read status %.2x\n",
+	DBG_LOG(1, "c1551 cpu",("%d read status %.2x\n",
 						 cpu_getactivecpu (), data));
 	return data;
 }

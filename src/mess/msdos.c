@@ -49,8 +49,7 @@ static int detect_image_type(int game_index, int type, char *arg)
 
 	if (type)
 	{
-		if (errorlog)
-			fprintf(errorlog, "User specified %s for %s\n", device_typename(type), arg);
+		logerror("User specified %s for %s\n", device_typename(type), arg);
 		/* the user specified a device type */
 		options.image_files[options.image_count].type = type;
 		options.image_files[options.image_count].name = strdup(arg);
@@ -74,8 +73,7 @@ static int detect_image_type(int game_index, int type, char *arg)
 			{
 				if (stricmp(dst, ext) == 0)
 				{
-					if (errorlog)
-						fprintf(errorlog, "Extension match %s [%s] for %s\n", device_typename(dev->type), dst, arg);
+					logerror("Extension match %s [%s] for %s\n", device_typename(dev->type), dst, arg);
 					options.image_files[options.image_count].type = dev->type;
 					options.image_files[options.image_count].name = strdup(arg);
 					options.image_count++;
@@ -89,8 +87,7 @@ static int detect_image_type(int game_index, int type, char *arg)
 	}
 
 	type = IO_CARTSLOT;
-	if (errorlog)
-		fprintf(errorlog, "Default %s for %s\n", device_typename(type), arg);
+	logerror("Default %s for %s\n", device_typename(type), arg);
 	/* Every unrecognized image type is added here */
 	options.image_files[options.image_count].type = type;
 	options.image_files[options.image_count].name = strdup(arg);
@@ -178,7 +175,7 @@ void parse_alias(char *src, int *argc, char **argv)
 int requested_device_type(char *tchar)
 {
 
-	if (errorlog) fprintf(errorlog, "Requested device is %s\n", tchar);
+	logerror("Requested device is %s\n", tchar);
 
 	if      (!stricmp(tchar, "-cartridge")  || !stricmp(tchar, "-cart"))
 			return(IO_CARTSLOT);
@@ -201,7 +198,7 @@ int requested_device_type(char *tchar)
 	/* all other switches set type to -1 */
 	else
 	{
-        if(errorlog) fprintf(errorlog,"Requested Device not supported!!\n");
+        logerror("Requested Device not supported!!\n");
         return -1;
 	}
 }
@@ -231,8 +228,7 @@ int load_image(int argc, char **argv, int j, int game_index)
 
 				if (type>IO_END && !system_supports_device(game_index, type))
 				{
-					if (errorlog)
-						fprintf(errorlog,"Specified Device (%s) not supported by this system\n", argv[i]);
+					logerror("Specified Device (%s) not supported by this system\n", argv[i]);
 					type = -1; /* strip device if systems doesnt support it */
 				}
 			}
@@ -252,8 +248,7 @@ int load_image(int argc, char **argv, int j, int game_index)
 					int alias_argc;
 					char *alias_argv[32];  /* more than 32 arguments per alias?? */
 
-    				if (errorlog)
-						fprintf(errorlog, "Using alias %s (%s) for driver %s\n", argv[i], alias, driver);
+    				logerror("Using alias %s (%s) for driver %s\n", argv[i], alias, driver);
 					parse_alias(alias, &alias_argc, alias_argv);
 					type = IO_END;
 
@@ -264,8 +259,7 @@ int load_image(int argc, char **argv, int j, int game_index)
 							type = requested_device_type(alias_argv[k]);
 							if (type>IO_END && !system_supports_device(game_index, type))
 							{
-								if (errorlog)
-									fprintf(errorlog,"Specified Device (%s) not supported by this system\n", argv[i]);
+								logerror("Specified Device (%s) not supported by this system\n", argv[i]);
 								type = -1; /* strip device if systems doesnt support it */
 							}
 						}
@@ -289,8 +283,7 @@ int load_image(int argc, char **argv, int j, int game_index)
 			/* use normal command line argument! */
 			else if (type != IO_END)
 			{
-				if (errorlog)
-					fprintf(errorlog, "Loading image - No alias used\n");
+				logerror("Loading image - No alias used\n");
 				res = detect_image_type(game_index, type, argv[i]);
 				type = IO_END; /* image detected, reset type */
 			}
@@ -591,7 +584,7 @@ void list_mess_info(char *gamename, char *arg, int listclones)
                "      MESS <system> <device> <image_name> <options>\n\n");
 		printf("*For a complete list of systems emulated,  use: MESS -listfull\n"
 			   "*For system files (ROMS) required by each system, use: MESS <system> -listroms\n"
-			   "*See below for valid device names and usage."
+			   "*See below for valid device names and usage.\n"
 			   "*See the MAME readme.txt and below for a detailed list of options.\n\n"
 			   "Make sure you have ROMS and IMAGES in a subdirectory from your ROMPATH\n"
 			   "with the same name as the system (eg ROMS/COLECO)\n\n\n");
@@ -605,7 +598,7 @@ void list_mess_info(char *gamename, char *arg, int listclones)
 			   "        <options>     = none specified, so default options (see mess.cfg)\n\n"
 			   "    MESS coleco -cart dkong -soundcard 0\n"
 			   "        will run MESS in the following way:\n\n"
-			   "        <system>      = coleco          (Nintendo Entertainment System)\n"
+			   "        <system>      = coleco          (ColecoVision)\n"
 			   "        <device>      = CARTRIDGE\n"
 			   "        <image_name>  = dkong.rom       (Donkey Kong cartridge)\n"
 			   "        <options>     = default options without sound (see mess.cfg)\n\n"
@@ -614,7 +607,7 @@ void list_mess_info(char *gamename, char *arg, int listclones)
 			   "        <system>      = trs80           (TRs-80 model 1)\n"
 			   "        <device1>     = FLOPPYDISK\n"
 			   "        <image_name1> = boot.dsk        (The Trs80 boot floppy diskl)\n"
-			   "        <device1>     = FLOPPYDISK\n"
+			   "        <device2>     = FLOPPYDISK\n"
 			   "        <image_name2> = arcade1.dsk     (floppy Disk which contains games)\n"
 			   "        <options>     = default options (all listed in mess.cfg)\n\n"
 			   "    MESS cgenie -flop games1\n"
@@ -647,7 +640,44 @@ void list_mess_info(char *gamename, char *arg, int listclones)
 
 	}
 
+    else if (!stricmp(arg, "-createdir"))
+	{
+	/***************************************************/
+	/* I was sick of manually tracking these, so...... */
+	/* this should only be run by the maintainer of the source code */
+		char* sys_rom_path  = "src\\mess\\dir_list\\roms";
+		char* dir_file_path = "src\\mess\\docs\\templates\\dir.txt";
+		char* sys_file_path = "src\\mess\\docs\\templates\\systems.txt";
+		char path[128];
+		char buf[128];
+		int d=0;
 
+			/* ensure the roms directory exists! */
+			sprintf(buf,"%s %s","md",sys_rom_path);
+			printf("%s\n",buf);
+			system(buf);
+
+			/* copy the systems.txt file there */
+			sprintf(buf,"%s %s %s","copy",sys_file_path, sys_rom_path);
+			printf("%s\n",buf);
+			system(buf);
+
+			/* create directory for all currently supported drivers */
+			while(drivers[d])
+			{
+				/* create the systems directory */
+				sprintf(buf,"%s %s\\%s","md",sys_rom_path,drivers[d]->name);
+				printf("%s\n",buf);
+				system(buf);
+
+				/* copy the dir.txt file into that directory */
+				sprintf(path,"%s\\%s",sys_rom_path,drivers[d]->name);
+				sprintf(buf,"%s %s %s","copy",dir_file_path, path);
+				printf("%s\n",buf);
+				system(buf);
+				d++;
+			}
+	}
 
 
 }

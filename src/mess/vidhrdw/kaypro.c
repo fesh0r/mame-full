@@ -738,7 +738,7 @@ WRITE_HANDLER ( kaypro_conout_w )
 		case 0x00: /* NUL is ignored */
 			break;
 		case 0x07: /* ring my bell ;) */
-			if (errorlog) fprintf(errorlog, "KAYPRO <007>     bell\n");
+			logerror("KAYPRO <007>     bell\n");
 			kaypro_bell();
 			break;
 		case 0x08: /* cursor left */
@@ -757,22 +757,22 @@ WRITE_HANDLER ( kaypro_conout_w )
 			kaypro_carriage_return();
 			break;
 		case 0x17: /* clear to end of screen */
-			if (errorlog) fprintf(errorlog, "KAYPRO <027>     clear to end of screen\n");
+			logerror("KAYPRO <027>     clear to end of screen\n");
 			kaypro_erase_end_of_screen();
 			break;
 		case 0x18: /* clear to end of line */
-			if (errorlog) fprintf(errorlog, "KAYPRO <030>     clear to end of line\n");
+			logerror("KAYPRO <030>     clear to end of line\n");
 			kaypro_erase_end_of_line();
 			break;
 		case 0x1a: /* clear screen */
-			if (errorlog) fprintf(errorlog, "KAYPRO <032>     clear screen, home cursor\n");
+			logerror("KAYPRO <032>     clear screen, home cursor\n");
 			kaypro_clear_screen();
 			break;
 		case 0x1b: /* ESCape sequence prefix */
 			state = ST_ESCAPE;
 			break;
 		case 0x1e: /* kaypro cursor home */
-			if (errorlog) fprintf(errorlog, "KAYPRO <036>     cursor home\n");
+			logerror("KAYPRO <036>     cursor home\n");
 			kaypro_cursor_home();
 			break;
 		default:
@@ -808,7 +808,7 @@ WRITE_HANDLER ( kaypro_conout_w )
 			state = ST_CLR_PIXEL;
 			break;
 		case '=': /* cursor positioning */
-			if (errorlog) fprintf(errorlog, "KAYPRO <ESC>=    cursor position\n");
+			logerror("KAYPRO <ESC>=    cursor position\n");
 			state = ST_CURPOS_ROW;
 			break;
 		case '*': /* set dot */
@@ -816,14 +816,14 @@ WRITE_HANDLER ( kaypro_conout_w )
 			state = ST_SET_PIXEL;
 			break;
 		case 'A': /* Display lower case */
-			if (errorlog) fprintf(errorlog, "KAYPRO <ESC>A    display lower case (ignored)\n");
+			logerror("KAYPRO <ESC>A    display lower case (ignored)\n");
 			break;
 		case 'B': /* enable attribute */
-			if (errorlog) fprintf(errorlog, "KAYPRO <ESC>B    enable attribute\n");
+			logerror("KAYPRO <ESC>B    enable attribute\n");
 			state = ST_SET_ATTRIB;
 			break;
 		case 'C': /* disable attribute */
-			if (errorlog) fprintf(errorlog, "KAYPRO <ESC>C    disable attribute\n");
+			logerror("KAYPRO <ESC>C    disable attribute\n");
 			state = ST_CLR_ATTRIB;
 			break;
 		case 'D': /* delete line of dots */
@@ -831,14 +831,14 @@ WRITE_HANDLER ( kaypro_conout_w )
 			state = ST_CLR_LINE;
 			break;
 		case 'E': /* insert line */
-			if (errorlog) fprintf(errorlog, "KAYPRO <ESC>E    insert line\n");
+			logerror("KAYPRO <ESC>E    insert line\n");
 			kaypro_scroll(cur_y, -1);
 			break;
 		case 'G': /* Display greek */
-			if (errorlog) fprintf(errorlog, "KAYPRO <ESC>G    display greek (ignored)\n");
+			logerror("KAYPRO <ESC>G    display greek (ignored)\n");
 			break;
 		case 'H': /* cursor home */
-			if (errorlog) fprintf(errorlog, "KAYPRO <ESC>H    cursor home\n");
+			logerror("KAYPRO <ESC>H    cursor home\n");
 			kaypro_cursor_home();
 			break;
 		case 'L': /* set line of dots */
@@ -846,17 +846,17 @@ WRITE_HANDLER ( kaypro_conout_w )
 			state = ST_SET_LINE;
 			break;
 		case 'R': /* delete line */
-			if (errorlog) fprintf(errorlog, "KAYPRO <ESC>R    delete line\n");
+			logerror("KAYPRO <ESC>R    delete line\n");
 			kaypro_scroll(cur_y, +1);
 			break;
 		default:  /* some other escape sequence? */
-			if (errorlog) fprintf(errorlog, "KAYPRO <ESC>%c    unknown\n", data);
+			logerror("KAYPRO <ESC>%c    unknown\n", data);
 		}
 		break;
 
     case ST_CURPOS_ROW:
 		cur_y = data - ' ';
-		if (errorlog) fprintf(errorlog, "KAYPRO cursor y  %d\n", cur_y);
+		logerror("KAYPRO cursor y  %d\n", cur_y);
 		if( cur_y < 0 )
 			cur_y = 0;
 		if( cur_y >= KAYPRO_SCREEN_H )
@@ -866,7 +866,7 @@ WRITE_HANDLER ( kaypro_conout_w )
 
     case ST_CURPOS_COL:
 		cur_x = data - ' ';
-		if (errorlog) fprintf(errorlog, "KAYPRO cursor x  %d\n", cur_x);
+		logerror("KAYPRO cursor x  %d\n", cur_x);
 		if( cur_x < 0 )
 			cur_x = 0;
 		if( cur_x >= KAYPRO_SCREEN_W )
@@ -879,41 +879,41 @@ WRITE_HANDLER ( kaypro_conout_w )
 		switch (data)
 		{
 		case '0': /* reverse video */
-			if (errorlog) fprintf(errorlog, "KAYPRO <ESC>B0   reverse on\n");
+			logerror("KAYPRO <ESC>B0   reverse on\n");
 			attrib |= AT_REVERSE;
 			break;
 		case '1': /* half intensity */
-			if (errorlog) fprintf(errorlog, "KAYPRO <ESC>B1   half intensity\n");
+			logerror("KAYPRO <ESC>B1   half intensity\n");
 			attrib |= AT_HALF_INTENSITY;
 			break;
 		case '2': /* start blinking */
-			if (errorlog) fprintf(errorlog, "KAYPRO <ESC>B2   start blinking\n");
+			logerror("KAYPRO <ESC>B2   start blinking\n");
 			attrib |= AT_BLINK;
 			break;
 		case '3': /* start underlining */
-			if (errorlog) fprintf(errorlog, "KAYPRO <ESC>B3   start underlining\n");
+			logerror("KAYPRO <ESC>B3   start underlining\n");
 			attrib |= AT_UNDERLINE;
 			break;
 		case '4': /* cursor on */
-			if (errorlog) fprintf(errorlog, "KAYPRO <ESC>B4   cursor on\n");
+			logerror("KAYPRO <ESC>B4   cursor on\n");
 			cursor = 1;
 			break;
 		case '5': /* video mode on */
-			if (errorlog) fprintf(errorlog, "KAYPRO <ESC>B5   video mode on\n");
+			logerror("KAYPRO <ESC>B5   video mode on\n");
 			attrib |= AT_VIDEO;
 			gb1 = AT_VIDEO_GB1;
 			break;
 		case '6': /* remember cursor position */
-			if (errorlog) fprintf(errorlog, "KAYPRO <ESC>B6   save cursor (%d,%d)\n", cur_x, cur_y);
+			logerror("KAYPRO <ESC>B6   save cursor (%d,%d)\n", cur_x, cur_y);
 			old_x = cur_x;
 			old_y = cur_y;
 			break;
 		case '7': /* preserve status line */
-			if (errorlog) fprintf(errorlog, "KAYPRO <ESC>B7   preserve status line\n");
+			logerror("KAYPRO <ESC>B7   preserve status line\n");
 			scroll_lines = KAYPRO_SCREEN_H - 1;
 			break;
 		default:
-			if (errorlog) fprintf(errorlog, "KAYPRO <ESC>B%c   unknown\n", data);
+			logerror("KAYPRO <ESC>B%c   unknown\n", data);
 			break;
 		}
 		break;
@@ -923,40 +923,40 @@ WRITE_HANDLER ( kaypro_conout_w )
 		switch (data)
 		{
 		case '0': /* stop reverse video */
-			if (errorlog) fprintf(errorlog, "KAYPRO <ESC>C0   reverse off\n");
+			logerror("KAYPRO <ESC>C0   reverse off\n");
 			attrib &= ~ AT_REVERSE;
 			break;
 		case '1': /* normal intensity */
-			if (errorlog) fprintf(errorlog, "KAYPRO <ESC>C1   normal intensity\n");
+			logerror("KAYPRO <ESC>C1   normal intensity\n");
 			attrib &= ~ AT_HALF_INTENSITY;
 			break;
 		case '2': /* stop blinking */
-			if (errorlog) fprintf(errorlog, "KAYPRO <ESC>C2   stop blinking\n");
+			logerror("KAYPRO <ESC>C2   stop blinking\n");
 			attrib &= ~ AT_BLINK;
 			break;
 		case '3': /* stop underlining */
-			if (errorlog) fprintf(errorlog, "KAYPRO <ESC>C3   stop underlining\n");
+			logerror("KAYPRO <ESC>C3   stop underlining\n");
 			attrib &= ~ AT_UNDERLINE;
 			break;
 		case '4': /* cursor off */
-			if (errorlog) fprintf(errorlog, "KAYPRO <ESC>C4   cursor off\n");
+			logerror("KAYPRO <ESC>C4   cursor off\n");
 			cursor = 0;
 			break;
 		case '5': /* video mode off */
-			if (errorlog) fprintf(errorlog, "KAYPRO <ESC>C5   video mode off\n");
+			logerror("KAYPRO <ESC>C5   video mode off\n");
 			attrib &= ~ AT_VIDEO;
 			break;
 		case '6': /* restore cursor position */
-			if (errorlog) fprintf(errorlog, "KAYPRO <ESC>C6   restore cursor (%d,%d)\n", old_x, old_y);
+			logerror("KAYPRO <ESC>C6   restore cursor (%d,%d)\n", old_x, old_y);
 			cur_x = old_x;
 			cur_y = old_y;
 			break;
 		case '7': /* don't preserve status line */
-			if (errorlog) fprintf(errorlog, "KAYPRO <ESC>C7   don't preserve status line\n");
+			logerror("KAYPRO <ESC>C7   don't preserve status line\n");
 			scroll_lines = KAYPRO_SCREEN_H;
 			break;
 		default:
-			if (errorlog) fprintf(errorlog, "KAYPRO <ESC>C%c   unknown\n", data);
+			logerror("KAYPRO <ESC>C%c   unknown\n", data);
 			break;
 		}
 		break;
@@ -972,7 +972,7 @@ WRITE_HANDLER ( kaypro_conout_w )
 				y1 = argval[1];
 				x0 = argval[2];
 				y0 = argval[3];
-				if (errorlog) fprintf(errorlog, "KAYPRO <ESC>L    set line %d,%d - %d,%d\n", x0,y0,x1,y1);
+				logerror("KAYPRO <ESC>L    set line %d,%d - %d,%d\n", x0,y0,x1,y1);
 				kaypro_line(x0,y0,x1,y1, 1);
 				argcnt = 0;
 				state = ST_NORMAL;
@@ -991,7 +991,7 @@ WRITE_HANDLER ( kaypro_conout_w )
 				y1 = argval[1];
 				x0 = argval[2];
 				y0 = argval[3];
-				if (errorlog) fprintf(errorlog, "KAYPRO <ESC>D    clr line %d,%d - %d,%d\n", x0,y0,x1,y1);
+				logerror("KAYPRO <ESC>D    clr line %d,%d - %d,%d\n", x0,y0,x1,y1);
 				kaypro_line(x0,y0,x1,y1, 0);
 				argcnt = 0;
 				state = ST_NORMAL;
@@ -1008,7 +1008,7 @@ WRITE_HANDLER ( kaypro_conout_w )
 				int x0, y0;
 				x0 = argval[0];
 				y0 = argval[1];
-				if (errorlog) fprintf(errorlog, "KAYPRO <ESC>*    set pixel %d,%d\n", x0, y0);
+				logerror("KAYPRO <ESC>*    set pixel %d,%d\n", x0, y0);
 				kaypro_pixel(x0,y0, 1);
 				argcnt = 0;
 				state = ST_NORMAL;
@@ -1025,7 +1025,7 @@ WRITE_HANDLER ( kaypro_conout_w )
 				int x0, y0;
 				x0 = argval[0];
 				y0 = argval[1];
-				if (errorlog) fprintf(errorlog, "KAYPRO <ESC>     clr pixel %d,%d\n", x0, y0);
+				logerror("KAYPRO <ESC>     clr pixel %d,%d\n", x0, y0);
 				kaypro_pixel(x0,y0, 0);
 				argcnt = 0;
 				state = ST_NORMAL;

@@ -168,8 +168,11 @@ struct ipd inputport_defaults[] =
 	{ IPT_SERVICE2, "Service 2",     SEQ_DEF_1(KEYCODE_0) },
 	{ IPT_SERVICE3, "Service 3",     SEQ_DEF_1(KEYCODE_MINUS) },
 	{ IPT_SERVICE4, "Service 4",     SEQ_DEF_1(KEYCODE_EQUALS) },
+#ifndef MESS
 	{ IPT_TILT,   "Tilt",            SEQ_DEF_1(KEYCODE_T) },
-
+#else
+	{ IPT_TILT,   "Tilt",            SEQ_DEF_0 },
+#endif
 	{ IPT_JOYSTICK_UP         | IPF_PLAYER1, "P1 Up",          SEQ_DEF_3(KEYCODE_UP, CODE_OR, JOYCODE_1_UP)    },
 	{ IPT_JOYSTICK_DOWN       | IPF_PLAYER1, "P1 Down",        SEQ_DEF_3(KEYCODE_DOWN, CODE_OR, JOYCODE_1_DOWN)  },
 	{ IPT_JOYSTICK_LEFT       | IPF_PLAYER1, "P1 Left",        SEQ_DEF_3(KEYCODE_LEFT, CODE_OR, JOYCODE_1_LEFT)  },
@@ -1668,6 +1671,10 @@ READ_HANDLER( input_port_12_r ) { return readinputport(12); }
 READ_HANDLER( input_port_13_r ) { return readinputport(13); }
 READ_HANDLER( input_port_14_r ) { return readinputport(14); }
 READ_HANDLER( input_port_15_r ) { return readinputport(15); }
+READ_HANDLER( input_port_16_r ) { return readinputport(16); }
+READ_HANDLER( input_port_17_r ) { return readinputport(17); }
+READ_HANDLER( input_port_18_r ) { return readinputport(18); }
+READ_HANDLER( input_port_19_r ) { return readinputport(19); }
 
 #ifdef MAME_NET
 void set_default_player_controls(int player)

@@ -110,8 +110,7 @@ WD179X *w = wd[drive];
 	if (drive < MAX_DRIVES)
 	{
 #if VERBOSE
-		if (errorlog)
-			fprintf(errorlog, "WD179X select #%d head %d\n", drive, head);
+		logerror("WD179X select #%d head %d\n", drive, head);
 #endif
 		drv = drive;
 		w->head = head;
@@ -123,8 +122,7 @@ WD179X *w = wd[drive];
 			if (w->image_file)
 			{
 #if VERBOSE
-				if (errorlog)
-					fprintf(errorlog, "WD179X close image #%d %s\n",
+				logerror("WD179X close image #%d %s\n",
 							drv, w->image_name);
 #endif
 				/* if it wasn't a real floppy disk drive */
@@ -154,8 +152,7 @@ WD179X *w = wd[drive];
         if (stricmp(name, "fd0.dsk") == 0)
 		{
 #if VERBOSE
-			if (errorlog)
-				fprintf(errorlog, "WD179X open [fd0] #%d '%s'\n",
+			logerror("WD179X open [fd0] #%d '%s'\n",
 						drv, w->image_name);
 #endif
 			w->unit = 0;
@@ -167,8 +164,7 @@ WD179X *w = wd[drive];
 		if (stricmp(name, "fd1.dsk") == 0)
 		{
 #if VERBOSE
-			if (errorlog)
-				fprintf(errorlog, "WD179X open [fd1] #%d '%s'\n",
+			logerror("WD179X open [fd1] #%d '%s'\n",
 						drv, w->image_name);
 #endif
 			w->unit = 1;
@@ -178,8 +174,7 @@ WD179X *w = wd[drive];
         else
         {
 #if VERBOSE
-			if (errorlog)
-				fprintf(errorlog, "WD179X open image #%d '%s'\n",
+			logerror("WD179X open image #%d '%s'\n",
 						drv, w->image_name);
 #endif
 			w->mode = 1;
@@ -227,8 +222,7 @@ int i;
 			{
 #if 0
 #if VERBOSE
-				if (errorlog)
-					fprintf(errorlog, "WD179X drive #%d [fd0] %s closed\n", i, w->image_name);
+				logerror("WD179X drive #%d [fd0] %s closed\n", i, w->image_name);
 #endif
 				/* stop the motors */
 				osd_fdc_interrupt(0);
@@ -237,8 +231,7 @@ int i;
 			else
 			{
 #if VERBOSE
-				if (errorlog)
-					fprintf(errorlog, "WD179X drive #%d image %s closed\n", i, w->image_name);
+				logerror("WD179X drive #%d image %s closed\n", i, w->image_name);
 #endif
                 osd_fclose(w->image_file);
 			}
@@ -281,11 +274,8 @@ UINT8 head;
 	*heads = w->heads++;
 	*sec_per_track = w->sec_per_track++;
 #if VERBOSE
-	if (errorlog)
-	{
-		fprintf(errorlog, "WD179X geometry for drive #%d is %d tracks, %d heads, %d sec/track\n",
+	logerror("WD179X geometry for drive #%d is %d tracks, %d heads, %d sec/track\n",
 				drive, w->tracks, w->heads, w->sec_per_track);
-	}
 #endif
 }
 
@@ -295,22 +285,18 @@ WD179X *w = wd[drive];
 
 	if (drive >= MAX_DRIVES)
 	{
-		if (errorlog)
-			fprintf(errorlog, "WD179X drive #%d not supported!\n", drive);
+		logerror("WD179X drive #%d not supported!\n", drive);
 		return;
 	}
 
 #if VERBOSE
-	if (errorlog)
-	{
-		fprintf(errorlog, "WD179X geometry for drive #%d is %d tracks, %d heads, %d sec/track\n",
+		logerror("WD179X geometry for drive #%d is %d tracks, %d heads, %d sec/track\n",
 				drive, tracks, heads, sec_per_track);
 		if (dir_length)
 		{
-			fprintf(errorlog, "WD179X directory at sector # %d, %d sectors\n",
+			logerror("WD179X directory at sector # %d, %d sectors\n",
 					dir_sector, dir_length);
 		}
-	}
 #endif
 
 	w->density = DEN_MFM_LO;	// !!!!!! for now !!!!!!
@@ -372,14 +358,12 @@ UINT8 head;
 				if (head == h)
 				{
 #if VERBOSE
-					if (errorlog)
-						fprintf(errorlog, "WD179X seek #%d track:%d head:%d sector:%d-> offset #0x%08lX\n",
+					logerror("WD179X seek #%d track:%d head:%d sector:%d-> offset #0x%08lX\n",
 								drv, t, h, s, offset);
 #endif
 					if (osd_fseek(w->image_file, offset, SEEK_SET) < 0)
 					{
-						if (errorlog)
-							fprintf(errorlog, "WD179X seek failed\n");
+						logerror("WD179X seek failed\n");
 						return STA_1_SEEK_ERR;
 					}
 					return 0;
@@ -388,8 +372,7 @@ UINT8 head;
 			offset += 0x100;
 		}
 #if VERBOSE
-		if (errorlog)
-			fprintf(errorlog, "WD179X seek #%d track:%d head:%d sector:%d : seek err\n",
+		logerror("WD179X seek #%d track:%d head:%d sector:%d : seek err\n",
 					drv, t, h, s);
 #endif
 		return STA_1_SEEK_ERR;
@@ -398,8 +381,7 @@ UINT8 head;
 	/* allow two additional tracks */
     if (t >= w->tracks + 2)
 	{
-		if (errorlog)
-			fprintf(errorlog, "WD179X track %d >= %d\n", t, w->tracks + 2);
+		logerror("WD179X track %d >= %d\n", t, w->tracks + 2);
 		return STA_1_SEEK_ERR;
 	}
 
@@ -408,15 +390,13 @@ UINT8 head;
 
     if (h >= w->heads)
     {
-		if (errorlog)
-			fprintf(errorlog, "WD179X head %d >= %d\n", h, w->heads);
+		logerror("WD179X head %d >= %d\n", h, w->heads);
 		return STA_1_SEEK_ERR;
 	}
 
     if (s >= (w->first_sector_id + w->sec_per_track))
 	{
-		if (errorlog)
-                        fprintf(errorlog, "WD179X sector %d >= %d\n", w->sector, w->sec_per_track+w->first_sector_id);
+		logerror("WD179X sector %d >= %d\n", w->sector, w->sec_per_track+w->first_sector_id);
 		return STA_2_REC_N_FND;
 	}
 
@@ -428,22 +408,19 @@ UINT8 head;
 	offset *= w->sector_length;
 
 #if VERBOSE
-	if (errorlog)
-		fprintf(errorlog, "WD179X seek #%d track:%d head:%d sector:%d-> offset #0x%08lX\n",
+	logerror("WD179X seek #%d track:%d head:%d sector:%d-> offset #0x%08lX\n",
 				drv, t, h, s, offset);
 #endif
 
 	if (offset > w->image_size)
 	{
-		if (errorlog)
-			fprintf(errorlog, "WD179X seek offset %ld >= %ld\n", offset, w->image_size);
+		logerror("WD179X seek offset %ld >= %ld\n", offset, w->image_size);
 		return STA_1_SEEK_ERR;
 	}
 
 	if (osd_fseek(w->image_file, offset, SEEK_SET) < 0)
 	{
-		if (errorlog)
-			fprintf(errorlog, "WD179X seek failed\n");
+		logerror("WD179X seek failed\n");
 		return STA_1_SEEK_ERR;
 	}
 
@@ -473,8 +450,7 @@ UINT8 head;
 	if (rel_sector >= w->dir_sector && rel_sector < w->dir_sector + w->dir_length)
 	{
 #if VERBOSE
-		if (errorlog)
-			fprintf(errorlog, "WD179X deleted DAM at sector #%d\n", rel_sector);
+		logerror("WD179X deleted DAM at sector #%d\n", rel_sector);
 #endif
 		return STA_2_REC_TYPE;
 	}
@@ -547,8 +523,7 @@ static void read_sector(WD179X * w)
 				w->sector == w->dam_list[i][2])
 			{
 #if VERBOSE
-				if (errorlog)
-					fprintf(errorlog, "WD179X reading formatted sector %d, track %d, head %d\n", w->sector, w->track, w->head);
+				logerror("WD179X reading formatted sector %d, track %d, head %d\n", w->sector, w->track, w->head);
 #endif
 				w->data_offset = w->dam_data[i];
 				return;
@@ -754,7 +729,7 @@ int cnt;
     if (w->image_file != REAL_FDD && w->mode == 0)
     {
 #if VERBOSE
-		if (errorlog) fprintf(errorlog, "WD179X write_track write protected image\n");
+		logerror("WD179X write_track write protected image\n");
 #endif
         w->status = STA_2_WRITE_PRO;
         return;
@@ -765,7 +740,7 @@ int cnt;
 
 	f = w->buffer;
 #if VERBOSE
-	if (errorlog) fprintf(errorlog, "WD179X write_track %s_LOW\n", (w->density) ? "MFM" : "FM" );
+	logerror("WD179X write_track %s_LOW\n", (w->density) ? "MFM" : "FM" );
 #endif
     cnt = (w->density) ? TRKSIZE_DD : TRKSIZE_SD;
 
@@ -786,8 +761,7 @@ int cnt;
 			/* sector length in bytes */
 			seclen = 128 << w->dam_list[w->dam_cnt][3];
 #if VERBOSE
-			if (errorlog)
-				fprintf(errorlog, "WD179X write_track FE @%5d T:%02X H:%02X S:%02X L:%02X\n",
+			logerror("WD179X write_track FE @%5d T:%02X H:%02X S:%02X L:%02X\n",
 					(int)(f - w->buffer),
 					w->dam_list[w->dam_cnt][0],w->dam_list[w->dam_cnt][1],
 					w->dam_list[w->dam_cnt][2],w->dam_list[w->dam_cnt][3]);
@@ -804,8 +778,7 @@ int cnt;
 				w->dam_data[w->dam_cnt] = (int)(f - w->buffer);
 				w->dam_cnt++;
 #if VERBOSE
-				if (errorlog)
-					fprintf(errorlog, "WD179X write_track %02X @%5d data: %02X %02X %02X %02X ... %02X %02X %02X %02X\n",
+				logerror("WD179X write_track %02X @%5d data: %02X %02X %02X %02X ... %02X %02X %02X %02X\n",
 						f[-1],
 						(int)(f - w->buffer),
 						f[0], f[1], f[2], f[3],
@@ -872,9 +845,8 @@ int result = w->status;
 	w->status |= w->status_drq;
 
 #if VERBOSE
-    if (errorlog)
 		if (w->data_count < 4)
-			fprintf(errorlog, "wd179x_status_r: $%02X (data_count %d)\n", result, w->data_count);
+			logerror("wd179x_status_r: $%02X (data_count %d)\n", result, w->data_count);
 #endif
 	return result;
 }
@@ -885,8 +857,7 @@ READ_HANDLER ( wd179x_track_r )
 WD179X *w = wd[drv];
 
 #if VERBOSE
-	if (errorlog)
-		fprintf(errorlog, "wd179x_track_r: $%02X\n", w->track_reg);
+	logerror("wd179x_track_r: $%02X\n", w->track_reg);
 #endif
 	return w->track_reg;
 }
@@ -897,8 +868,7 @@ READ_HANDLER ( wd179x_sector_r )
 WD179X *w = wd[drv];
 
 #if VERBOSE
-	if (errorlog)
-		fprintf(errorlog, "wd179x_sector_r: %02X\n", w->sector);
+	logerror("wd179x_sector_r: %02X\n", w->sector);
 #endif
 	return w->sector;
 }
@@ -933,8 +903,7 @@ WD179X *w = wd[drv];
 #if VERBOSE
 	else
 	{
-		if (errorlog)
-			fprintf(errorlog, "wd179x_data_r: $%02X (data_count 0)\n", w->data);
+		logerror("wd179x_data_r: $%02X (data_count 0)\n", w->data);
     }
 #endif
 	return w->data;
@@ -957,8 +926,7 @@ WD179X *w = wd[drv];
 	if ((data & ~FDC_MASK_TYPE_IV) == FDC_FORCE_INT)
 	{
 #if VERBOSE
-		if (errorlog)
-			fprintf(errorlog, "wd179x_command_w $%02X FORCE_INT (data_count %d)\n", data, w->data_count);
+		logerror("wd179x_command_w $%02X FORCE_INT (data_count %d)\n", data, w->data_count);
 #endif
 		w->data_count = 0;
 		w->data_offset = 0;
@@ -981,8 +949,7 @@ WD179X *w = wd[drv];
 		if ((data & ~FDC_MASK_TYPE_II) == FDC_READ_SEC)
 		{
 #if VERBOSE
-			if (errorlog)
-				fprintf(errorlog, "wd179x_command_w $%02X READ_SEC\n", data);
+			logerror("wd179x_command_w $%02X READ_SEC\n", data);
 #endif
 			w->read_cmd = data;
             w->command = data & ~FDC_MASK_TYPE_II;
@@ -995,8 +962,7 @@ WD179X *w = wd[drv];
 		if ((data & ~FDC_MASK_TYPE_II) == FDC_WRITE_SEC)
 		{
 #if VERBOSE
-			if (errorlog)
-				fprintf(errorlog, "wd179x_command_w $%02X WRITE_SEC\n", data);
+			logerror("wd179x_command_w $%02X WRITE_SEC\n", data);
 #endif
 			w->write_cmd = data;
 			w->command = data & ~FDC_MASK_TYPE_II;
@@ -1013,8 +979,7 @@ WD179X *w = wd[drv];
 		if ((data & ~FDC_MASK_TYPE_III) == FDC_READ_TRK)
 		{
 #if VERBOSE
-			if (errorlog)
-				fprintf(errorlog, "wd179x_command_w $%02X READ_TRK\n", data);
+			logerror("wd179x_command_w $%02X READ_TRK\n", data);
 #endif
 			w->command = data & ~FDC_MASK_TYPE_III;
 			w->status = seek(w, w->track, w->head, w->sector);
@@ -1026,8 +991,7 @@ WD179X *w = wd[drv];
 		if ((data & ~FDC_MASK_TYPE_III) == FDC_WRITE_TRK)
 		{
 #if VERBOSE
-			if (errorlog)
-				fprintf(errorlog, "wd179x_command_w $%02X WRITE_TRK\n", data);
+			logerror("wd179x_command_w $%02X WRITE_TRK\n", data);
 #endif
 			w->command = data & ~FDC_MASK_TYPE_III;
 			w->data_offset = 0;
@@ -1043,8 +1007,7 @@ WD179X *w = wd[drv];
 		if ((data & ~FDC_MASK_TYPE_III) == FDC_READ_DAM)
 		{
 #if VERBOSE
-			if (errorlog)
-				fprintf(errorlog, "wd179x_command_w $%02X READ_DAM\n", data);
+			logerror("wd179x_command_w $%02X READ_DAM\n", data);
 #endif
 			w->status = seek(w, w->track, w->head, w->sector);
 			if (w->status == 0)
@@ -1053,8 +1016,7 @@ WD179X *w = wd[drv];
 		}
 
 #if VERBOSE
-        if (errorlog)
-			fprintf(errorlog, "wd179x_command_w $%02X unknown\n", data);
+        logerror("wd179x_command_w $%02X unknown\n", data);
 #endif
         return;
 	}
@@ -1063,8 +1025,7 @@ WD179X *w = wd[drv];
 	if ((data & ~FDC_MASK_TYPE_I) == FDC_RESTORE)
 	{
 #if VERBOSE
-		if (errorlog)
-			fprintf(errorlog, "wd179x_command_w $%02X RESTORE\n", data);
+		logerror("wd179x_command_w $%02X RESTORE\n", data);
 #endif
 		/* simulate seek time busy signal */
 		w->busy_count = w->track * ((data & FDC_STEP_RATE) + 1);
@@ -1084,8 +1045,7 @@ WD179X *w = wd[drv];
 	{
 	UINT8 newtrack = w->data;
 #if VERBOSE
-		if (errorlog)
-			fprintf(errorlog, "wd179x_command_w $%02X SEEK (data_reg is $%02X)\n", data, newtrack);
+		logerror("wd179x_command_w $%02X SEEK (data_reg is $%02X)\n", data, newtrack);
 #endif
 		/* if it is a real floppy, issue a seek command */
         /* simulate seek time busy signal */
@@ -1100,8 +1060,7 @@ WD179X *w = wd[drv];
 	if ((data & ~(FDC_STEP_UPDATE | FDC_MASK_TYPE_I)) == FDC_STEP)
 	{
 #if VERBOSE
-		if (errorlog)
-			fprintf(errorlog, "wd179x_command_w $%02X STEP dir %+d\n", data, w->direction);
+		logerror("wd179x_command_w $%02X STEP dir %+d\n", data, w->direction);
 #endif
 		/* if it is a real floppy, issue a step command */
         /* simulate seek time busy signal */
@@ -1115,8 +1074,7 @@ WD179X *w = wd[drv];
 	if ((data & ~(FDC_STEP_UPDATE | FDC_MASK_TYPE_I)) == FDC_STEP_IN)
 	{
 #if VERBOSE
-		if (errorlog)
-			fprintf(errorlog, "wd179x_command_w $%02X STEP_IN\n", data);
+		logerror("wd179x_command_w $%02X STEP_IN\n", data);
 #endif
         w->direction = +1;
 		/* simulate seek time busy signal */
@@ -1131,8 +1089,7 @@ WD179X *w = wd[drv];
 	if ((data & ~(FDC_STEP_UPDATE | FDC_MASK_TYPE_I)) == FDC_STEP_OUT)
 	{
 #if VERBOSE
-		if (errorlog)
-			fprintf(errorlog, "wd179x_command_w $%02X STEP_OUT\n", data);
+		logerror("wd179x_command_w $%02X STEP_OUT\n", data);
 #endif
         w->direction = -1;
 		/* simulate seek time busy signal */
@@ -1176,8 +1133,7 @@ WRITE_HANDLER ( wd179x_track_w )
 WD179X *w = wd[drv];
 	w->track = w->track_reg = data;
 #if VERBOSE
-	if (errorlog)
-		fprintf(errorlog, "wd179x_track_w $%02X\n", data);
+	logerror("wd179x_track_w $%02X\n", data);
 #endif
 }
 
@@ -1188,8 +1144,7 @@ WD179X *w = wd[drv];
 
 	w->sector = data;
 #if VERBOSE
-	if (errorlog)
-		fprintf(errorlog, "wd179x_sector_w $%02X\n", data);
+	logerror("wd179x_sector_w $%02X\n", data);
 #endif
 }
 
@@ -1204,8 +1159,7 @@ WD179X *w = wd[drv];
 		if (--w->data_count <= 0)
 		{
 #if VERBOSE
-			if (errorlog)
-				fprintf(errorlog, "WD179X buffered %d byte\n", w->data_offset);
+			logerror("WD179X buffered %d byte\n", w->data_offset);
 #endif
 			w->status_drq = 0;
 			if (w->callback)
@@ -1222,8 +1176,7 @@ WD179X *w = wd[drv];
 #if VERBOSE
 	else
 	{
-		if (errorlog)
-			fprintf(errorlog, "wd179x_data_w $%02X\n", data);
+		logerror("wd179x_data_w $%02X\n", data);
 	}
 #endif
 	w->data = data;

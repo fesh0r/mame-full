@@ -39,7 +39,7 @@ void genesis_init_machine (void)
 	cpu_set_halt_line (1,ASSERT_LINE);
 
 	z80running = 0;
-	if (errorlog) fprintf (errorlog, "Machine init\n");
+	logerror("Machine init\n");
 }
 
 
@@ -53,7 +53,7 @@ int genesis_load_rom (int id)
 	int length;
 	int ptr, x;
 
-if (errorlog) fprintf (errorlog, "ROM load/init regions\n");
+	logerror("ROM load/init regions\n");
 
 
 	if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
@@ -64,7 +64,7 @@ if (errorlog) fprintf (errorlog, "ROM load/init regions\n");
 	/* Allocate memory and set up memory regions */
 	if( new_memory_region(REGION_CPU1,0x405000) )
 	{
-		if(errorlog) fprintf(errorlog,"new_memory_region failed!\n");
+		logerror("new_memory_region failed!\n");
 		return 1;
 	}
 	rawROM = memory_region(REGION_CPU1);
@@ -73,7 +73,7 @@ if (errorlog) fprintf (errorlog, "ROM load/init regions\n");
 	length = osd_fread (romfile, rawROM+0x2000, 0x400200);
 	if (!length) return 1;
 
-	if (errorlog) fprintf(errorlog, "image length = 0x%x", length);
+	logerror("image length = 0x%x", length);
 
 	if ((rawROM[0x2008] == 0xaa)
 	 && (rawROM[0x2009] == 0xbb)
@@ -195,12 +195,12 @@ if (inter == 0)
 //	if (inter < 20) return -1;
 	if (vdp_v_interrupt /*&& vdp_display_enable*/)
 	{
-		if (errorlog) fprintf(errorlog, "Interrupt\n");
+		logerror("Interrupt\n");
 		return 6;  /*Interrupt vector 6 is V interrupt, 4 is H interrupt and 2 is ext */
 	}
 	if (vdp_h_interrupt /*&& vdp_display_enable*/)
 	{
-  		if (errorlog) fprintf(errorlog, "H Interrupt\n");
+  		logerror("H Interrupt\n");
 		return 4;  /*Interrupt vector 6 is V interrupt, 4 is H interrupt and 2 is ext */
 	}
 /*	else
@@ -213,18 +213,18 @@ return 0;
 WRITE_HANDLER ( genesis_io_w )
 {
   	data = COMBINE_WORD(0, data);
-  //	if (errorlog) fprintf(errorlog, "genesis_io_w %x, %x\n", offset, data);
+  //	logerror("genesis_io_w %x, %x\n", offset, data);
   	switch (offset)
 		{
 			case 2: /* joystick port a IO bit set */
-		  //	if (errorlog) fprintf(errorlog, "port a set to %x\n", port_a_io);
+		  //	logerror("port a set to %x\n", port_a_io);
 				port_a_io = data & 0xff;
 				break;
 			case 4: /* joystick port b IO bit set */
 				port_b_io = data & 0xff;
 				break;
 			case 8:
-		  //	 if (errorlog) fprintf(errorlog, "port a dir set to %x\n", data & 0xff);
+		  //	 logerror("port a dir set to %x\n", data & 0xff);
 
 				break;
 			case 0x0a:
@@ -236,7 +236,7 @@ READ_HANDLER ( genesis_io_r )
 
 	int returnval = 0x80;
 
-   //	fprintf(errorlog, "inputport 3 is %d\n", readinputport(3));
+   //	logerror("inputport 3 is %d\n", readinputport(3));
 
 	switch (readinputport(4))
 
@@ -291,11 +291,11 @@ READ_HANDLER ( genesis_io_r )
 	}
 
 
-  //	if (errorlog) fprintf(errorlog, "genesis_io_r %x\n", offset);
+  //	logerror("genesis_io_r %x\n", offset);
 	switch (offset)
 		{
 			case 0:
-  				// if (errorlog) fprintf(errorlog,"coo!\n");
+  				// logerror("coo!\n");
   				return returnval; /* was just NTSC, overseas (USA) no FDD, now auto */
 				break;
 			case 2: /* joystick port a */
@@ -316,14 +316,14 @@ READ_HANDLER ( genesis_io_r )
 READ_HANDLER ( genesis_ctrl_r )
 {
 	//int returnval;
-   //	if (errorlog) fprintf(errorlog, "genesis_ctrl_r %x\n", offset);
+   //	logerror("genesis_ctrl_r %x\n", offset);
 	switch (offset)
 		{
 			case 0:	 /* DRAM mode is write only */
 				return 0xffff;
 				break;
 			case 0x100: /* return Z80 CPU Function Stop Accessible or not */
-			 //	if (errorlog) fprintf(errorlog, "Returning z80 state\n");
+			 //	logerror("Returning z80 state\n");
 				return (z80running ? 0x0100 : 0x0);
 				/* docs comflict here, page 91 says 0 == z80 has access */
 				/* page 76 says 0 means you can access the space */
@@ -339,7 +339,7 @@ WRITE_HANDLER ( genesis_ctrl_w )
 {
   data = COMBINE_WORD(0, data);
 
-  //	if (errorlog) fprintf(errorlog, "genesis_ctrl_w %x, %x\n", offset, data);
+  //	logerror("genesis_ctrl_w %x, %x\n", offset, data);
 
 	switch (offset)
 		{
@@ -351,7 +351,7 @@ WRITE_HANDLER ( genesis_ctrl_w )
 					{
 					  	z80running = 0;
 						cpu_set_halt_line(1,ASSERT_LINE); /* halt Z80 */
-				   //		if (errorlog) fprintf(errorlog, "z80 stopped by 68k BusReq\n");
+				   //		logerror("z80 stopped by 68k BusReq\n");
 					}
 					else
 					{
@@ -359,7 +359,7 @@ WRITE_HANDLER ( genesis_ctrl_w )
 						cpu_setbank(1, &genesis_soundram[0]);
 
 						cpu_set_halt_line(1,CLEAR_LINE);
-				   //		if (errorlog) fprintf(errorlog, "z80 started, BusReq ends\n");
+				   //		logerror("z80 started, BusReq ends\n");
 					}
 				return;
 				break;
@@ -370,13 +370,13 @@ WRITE_HANDLER ( genesis_ctrl_w )
 					cpu_set_reset_line(1,PULSE_LINE);
 
 					cpu_set_halt_line(1,ASSERT_LINE);
-				  //	if (errorlog) fprintf(errorlog, "z80 reset, ram is %p\n", &genesis_soundram[0]);
+				  //	logerror("z80 reset, ram is %p\n", &genesis_soundram[0]);
 			   	  	z80running = 0;
 				  	return;
 				}
 				else
 				{
-				 //  if (errorlog) fprintf(errorlog, "z80 out of reset\n");
+				 //  logerror("z80 out of reset\n");
 				}
 				return;
 
@@ -386,12 +386,12 @@ WRITE_HANDLER ( genesis_ctrl_w )
 #if 0
 READ_HANDLER ( cartridge_ram_r )
 {
-/*  if (errorlog) fprintf(errorlog, "cartridge ram read.. %x\n", offset);*/
+/*  logerror("cartridge ram read.. %x\n", offset);*/
 	return cartridge_ram[offset];
 }
 WRITE_HANDLER ( cartridge_ram_w )
 {
-/*  if (errorlog) fprintf(errorlog, "cartridge ram write.. %x to %x\n", data, offset);*/
+/*  logerror("cartridge ram write.. %x to %x\n", data, offset);*/
 	cartridge_ram[offset] = data;
 }
 #endif

@@ -484,8 +484,8 @@ bool ted7360_rom;
 static int lines;
 static void *timer1 = 0, *timer2 = 0, *timer3 = 0;
 static bool cursor1 = false;
-static int (*vic_dma_read) (int);
-static int (*vic_dma_read_rom) (int);
+static mem_read_handler vic_dma_read;
+static mem_read_handler vic_dma_read_rom;
 static int chargenaddr, bitmapaddr, videoaddr;
 
 static int x_begin, x_end;
@@ -522,7 +522,8 @@ void ted7360_init (int pal)
 	chargenaddr = bitmapaddr = videoaddr = 0;
 }
 
-void ted7360_set_dma (int (*dma_read) (int), int (*dma_read_rom) (int))
+void ted7360_set_dma (mem_read_handler dma_read, 
+					  mem_read_handler dma_read_rom)
 {
 	vic_dma_read = dma_read;
 	vic_dma_read_rom = dma_read_rom;

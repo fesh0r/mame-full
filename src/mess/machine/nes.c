@@ -93,7 +93,7 @@ void nes_init_machine (void)
 	Joypad_Read_1 = 0;
 	Joypad_Read_2 = 0;
 
-//	if (errorlog) fprintf (errorlog, "MMC_low_base: %06x MMC_high_base: %06x\n", MMC_low_base, MMC_high_base);
+//	logerror("MMC_low_base: %06x MMC_high_base: %06x\n", MMC_low_base, MMC_high_base);
 }
 
 /* TODO: fix the gamepad routines to be readable by humans */
@@ -104,7 +104,7 @@ int nes_IN0_r (int offset)
 	Joypad_1 = readinputport (0);
 	*nes_io_0 = (Joypad_1 >> (Joypad_Read_1 & 0x07)) & 0x01;
 	Joypad_Read_1 ++;
-//	if (errorlog) fprintf (errorlog, "Joy 0 r, # in a row: %02x\n", Joypad_Read_1);
+//	logerror("Joy 0 r, # in a row: %02x\n", Joypad_Read_1);
 	/* Some games expect bit 6 to be set because the last entry on the data bus shows up */
 	/* in the unused upper 3 bits, so typically a read from $4016 leaves 0x40 there. */
 	return (*nes_io_0 | 0x40);
@@ -117,7 +117,7 @@ int nes_IN1_r (int offset)
 	Joypad_2 = readinputport (1);
 	*nes_io_1 = (Joypad_2 >> (Joypad_Read_2 & 0x07)) & 0x01;
 	Joypad_Read_2 ++;
-//	if (errorlog) fprintf (errorlog, "Joy 1 r, # in a row: %02x\n", Joypad_Read_2);
+//	logerror("Joy 1 r, # in a row: %02x\n", Joypad_Read_2);
 	/* Some games expect bit 6 to be set because the last entry on the data bus shows up */
 	/* in the unused upper 3 bits, so typically a read from $4016 leaves 0x40 there. */
 	return (*nes_io_1 | 0x40);
@@ -176,7 +176,7 @@ int nes_interrupt (void)
 	/* Has the vblank started? */
 	else if ((current_scanline >= VBLANK_START_SCANLINE) && (first_time_in_vblank == 0))
 	{
-   		if (errorlog) fprintf (errorlog, "** Vblank started\n");
+   		logerror("** Vblank started\n");
 
 		/* VBlank in progress, set flag */
 		PPU_Status |= 0x80;
@@ -216,7 +216,7 @@ int nes_interrupt (void)
 		/* Clear the vblank & sprite hit flag */
 		PPU_Status &= ~0xc0;
 
-   		if (errorlog) fprintf (errorlog, "** New frame\n");
+   		logerror("** New frame\n");
 
 #if 1
 		/* TODO: verify - this code assumes games with CHR_Rom won't generate chars on the fly */
@@ -234,12 +234,12 @@ int nes_interrupt (void)
 #endif
 	}
 
-	if ((ret != M6502_INT_NONE) && (errorlog))
+	if ((ret != M6502_INT_NONE))
 	{
-    	fprintf (errorlog, "--- scanline %d", current_scanline);
+    	logerror("--- scanline %d", current_scanline);
     	if (ret == M6502_INT_IRQ)
-    		fprintf (errorlog, " IRQ\n");
-    	else fprintf (errorlog, " NMI\n");
+    		logerror(" IRQ\n");
+    	else logerror(" NMI\n");
     }
 	return ret;
 }
@@ -248,7 +248,7 @@ int nes_ppu_r (int offset)
 {
 	int retVal;
 
-//if (errorlog) fprintf (errorlog, "PPU read, offset: %04x\n", offset);
+//logerror("PPU read, offset: %04x\n", offset);
 
 	switch (offset & 0x07)
 	{
@@ -290,7 +290,7 @@ int nes_ppu_r (int offset)
 			int retval = PPU_Status;
 
 #ifdef VERBOSE_ERRORS
-//		if (errorlog) fprintf (errorlog, "PPU status read, data: %02x\n", PPU_Status);
+//		logerror("PPU status read, data: %02x\n", PPU_Status);
 #endif
 			/* Clear the vblank flag - takes effect on the next read */
 			PPU_Status &= 0x80;
@@ -326,7 +326,7 @@ int nes_ppu_r (int offset)
 
 			PPU_Addr &= 0x3fff;
 #ifdef VERBOSE_ERRORS
-			if (errorlog) fprintf (errorlog, "PPU read from vram - %04x!\n", PPU_Addr);
+			logerror("PPU read from vram - %04x!\n", PPU_Addr);
 #endif
 			/* Read the data and increment the videoram pointer */
 			retVal = videoram[PPU_Addr];
@@ -348,7 +348,7 @@ int nes_ppu_r (int offset)
 			retVal = PPU_latch;
 
 #ifdef VERBOSE_ERRORS
-			if (errorlog) fprintf (errorlog, "PPU read from vram - %04x!\n", PPU_Addr);
+			logerror("PPU read from vram - %04x!\n", PPU_Addr);
 #endif
 			/* Read the data and increment the videoram pointer */
 			PPU_latch = videoram[PPU_Addr];
@@ -421,16 +421,13 @@ void nes_ppu_w (int offset, int data)
 			else
 				PPU_add = 1;
 #ifdef VERBOSE_ERRORS
-			if (errorlog)
-			{
-				fprintf (errorlog, "------ scanline: %d -------\n", current_scanline);
-				fprintf (errorlog, "PPU_w Name table: %04x\n", PPU_name_table);
-				fprintf (errorlog, "PPU_w tile page: %04x\n", PPU_tile_page);
-				fprintf (errorlog, "PPU_w sprite page: %04x\n", PPU_sprite_page);
-				fprintf (errorlog, "---------------------------\n");
-			}
+			logerror("------ scanline: %d -------\n", current_scanline);
+			logerror("PPU_w Name table: %04x\n", PPU_name_table);
+			logerror("PPU_w tile page: %04x\n", PPU_tile_page);
+			logerror("PPU_w sprite page: %04x\n", PPU_sprite_page);
+			logerror("---------------------------\n");
 #endif
-//			if (errorlog) fprintf (errorlog, "W PPU_Control0: %02x\n", PPU_Control0);
+//			logerror("W PPU_Control0: %02x\n", PPU_Control0);
 			break;
 /*
     |  $2001  | PPU Control Register #2 (W)                              |
@@ -462,7 +459,7 @@ void nes_ppu_w (int offset, int data)
 				if (data != PPU_Control1) PPU_scanline_effects = 1;
 			}
 			PPU_Control1 = data;
-//			if (errorlog) fprintf (errorlog, "W PPU_Control1: %02x\n", PPU_Control1);
+//			logerror("W PPU_Control1: %02x\n", PPU_Control1);
 			break;
 		case 2: /* PPU Status */
 			if (current_scanline < BOTTOM_VISIBLE_SCANLINE)
@@ -470,7 +467,7 @@ void nes_ppu_w (int offset, int data)
 				if (data != PPU_Status) PPU_scanline_effects = 1;
 			}
 			PPU_Status = data;
-//			if (errorlog) fprintf (errorlog, "W PPU_Status: %02x\n", PPU_Status);
+//			logerror("W PPU_Status: %02x\n", PPU_Status);
 
 			break;
 		case 3: /* PPU Sprite Memory Address */
@@ -499,7 +496,7 @@ void nes_ppu_w (int offset, int data)
 				{
 					if (data != PPU_Scroll_Y)
 					{
-						if (errorlog) fprintf (errorlog, "    yscroll_w: %d\n", data < 240 ? data : data - 256);
+						logerror("    yscroll_w: %d\n", data < 240 ? data : data - 256);
 					}
 					if (data < 240)
 						PPU_Scroll_Y =  data;
@@ -509,10 +506,7 @@ void nes_ppu_w (int offset, int data)
 				}
 				else
 				{
-					if (errorlog)
-					{
-						fprintf (errorlog, "    yscroll %d ignored (mid-frame @ %d)\n", data, current_scanline);
-					}
+					logerror("    yscroll %d ignored (mid-frame @ %d)\n", data, current_scanline);
 //					PPU_Scroll_Y = 0;
 				}
 			}
@@ -521,7 +515,7 @@ void nes_ppu_w (int offset, int data)
 			{
 				if (data != PPU_Scroll_X)
 				{
-					if (errorlog) fprintf (errorlog, "    xscroll_w: %d\n", data);
+					logerror("    xscroll_w: %d\n", data);
 					if (current_scanline <= BOTTOM_VISIBLE_SCANLINE) PPU_scanline_effects = 1;
 				}
 				PPU_Scroll_X = data;
@@ -555,16 +549,14 @@ void nes_ppu_w (int offset, int data)
 					PPU_name_table = (PPU_Addr & 0x0c00) | 0x2000;
 					current_drawline = 0;
 					hblank_occurred = 0;
-					if (errorlog)
-					{
-						fprintf (errorlog, "=== Mid-screen change @ scanline %d ===\n", current_scanline);
-						fprintf (errorlog, "    PPU_Scroll_X: %d\n", PPU_Scroll_X);
-						fprintf (errorlog, "    PPU_Scroll_Y: %d\n", PPU_Scroll_Y);
-						fprintf (errorlog, "    PPU_name_table: %04x\n", PPU_name_table);
-						fprintf (errorlog, "    (PPU_Addr: %04x)\n", PPU_Addr);
-						fprintf (errorlog, "    (PPU_Status: %02x)\n", PPU_Status);
-						fprintf (errorlog, "===\n");
-					}
+
+					logerror("=== Mid-screen change @ scanline %d ===\n", current_scanline);
+					logerror("    PPU_Scroll_X: %d\n", PPU_Scroll_X);
+					logerror("    PPU_Scroll_Y: %d\n", PPU_Scroll_Y);
+					logerror("    PPU_name_table: %04x\n", PPU_name_table);
+					logerror("    (PPU_Addr: %04x)\n", PPU_Addr);
+					logerror("    (PPU_Status: %02x)\n", PPU_Status);
+					logerror("===\n");
 				}
 
 			}
@@ -583,7 +575,7 @@ void nes_ppu_w (int offset, int data)
 			if (PPU_Status & 0x10) break;
 			if (current_scanline <= BOTTOM_VISIBLE_SCANLINE)
 			{
-//				if (errorlog) fprintf (errorlog, "*** PPU write during hblank: %02x: %02x\n", offset & 0x07, data);
+//				logerror("*** PPU write during hblank: %02x: %02x\n", offset & 0x07, data);
 				PPU_scanline_effects = 1;
 			}
 			Write_PPU (data);
@@ -711,13 +703,10 @@ static void Write_PPU (int data)
 		/* Set VRAM latches for MMC4 */
 		if (Mapper == 10)
 		{
-			if (errorlog)
-			{
 				if (PPU_Addr >= 0xfd0 && PPU_Addr < 0x1000)
-					fprintf (errorlog, "MMC2 vrom switch (0xf00): %02x\n", data);
+					logerror("MMC2 vrom switch (0xf00): %02x\n", data);
 				if (PPU_Addr >= 0x1fd0 && PPU_Addr < 0x2000)
-					fprintf (errorlog, "MMC2 vrom switch (0x1f00): %02x\n", data);
-			}
+					logerror("MMC2 vrom switch (0x1f00): %02x\n", data);
 			if (PPU_Addr >= 0x0fd0 && PPU_Addr <= 0x0fdf)
 				MMC2_bank0 = 0xfd;
 			if (PPU_Addr >= 0x0fe0 && PPU_Addr <= 0x0fef)
@@ -728,8 +717,8 @@ static void Write_PPU (int data)
 				MMC2_bank1 = 0xfe;
 		}
 #endif
-		if ((errorlog) && (CHR_Rom != 0))
-			fprintf (errorlog, "****** PPU write to vram with CHR_ROM - %04x:%02x!\n", PPU_Addr, data);
+		if (CHR_Rom != 0)
+			logerror("****** PPU write to vram with CHR_ROM - %04x:%02x!\n", PPU_Addr, data);
 	}
 
 	if (Mapper == 9)
@@ -826,17 +815,17 @@ int nes_load_rom (int id)
 		return INIT_FAILED;
 	}
 
-	if(errorlog) fprintf (errorlog,"Beginning nes_load_rom\n");
+	logerror("Beginning nes_load_rom\n");
 	if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
 	{
-		if(errorlog) fprintf (errorlog,"image_fopen failed in nes_load_rom.\n");
+		logerror("image_fopen failed in nes_load_rom.\n");
 			return 1;
 	}
-	if(errorlog) fprintf (errorlog,"Finished osd_Fopen for ROM\n");
+	logerror("Finished osd_Fopen for ROM\n");
 
 	/* Verify the file is in iNES format */
 	osd_fread (romfile, magic, 4);
-	if(errorlog) fprintf (errorlog,"Cart is in NES format?\n");
+	logerror("Cart is in NES format?\n");
 
 	if ((magic[0] != 'N') ||
 		(magic[1] != 'E') ||
@@ -847,11 +836,11 @@ int nes_load_rom (int id)
 	osd_fread (romfile, &CHR_Rom, 1);
 
 	Cart_Size = (PRG_Rom << 4) + CHR_Rom * 8;
-	if(errorlog) fprintf (errorlog,"Cart file length is %d \n",Cart_Size);
+	logerror("Cart file length is %d \n",Cart_Size);
 
 	/* Read the first ROM option byte (offset 6) */
 	osd_fread (romfile, &m, 1);
-	if(errorlog) fprintf (errorlog,"Read first ROM option BYTE.\n");
+	logerror("Read first ROM option BYTE.\n");
 
 	/* Interpret the iNES header flags */
 	Mapper = (m & 0xf0) >> 4;
@@ -859,24 +848,24 @@ int nes_load_rom (int id)
 
 	/* Read the second ROM option byte (offset 7) */
 	osd_fread (romfile, &m, 1);
-	if(errorlog) fprintf (errorlog,"Read second ROM option BYTE.\n");
+	logerror("Read second ROM option BYTE.\n");
 
 	/* Check for skanky headers */
 	osd_fread (romfile, &skank, 8);
-	if(errorlog) fprintf (errorlog,"Checked for skanky headers.\n");
+	logerror("Checked for skanky headers.\n");
 
 	/* If the header has junk in the unused bytes, assume the extra mapper byte is also invalid */
 	/* We only check the first 4 unused bytes for now */
 	for (i = 0; i < 4; i ++)
 	{
-		if (errorlog) fprintf (errorlog, "%02x ", skank[i]);
+		logerror("%02x ", skank[i]);
 		if (skank[i] != 0x00)
 		{
-			if (errorlog) fprintf (errorlog, "(skank: %d)", i);
+			logerror("(skank: %d)", i);
 			m = 0;
 		}
 	}
-	if (errorlog) fprintf (errorlog, "\n");
+	logerror("\n");
 
 	Mapper = Mapper | (m & 0xf0);
 
@@ -901,13 +890,10 @@ int nes_load_rom (int id)
 	}
 
 	Mirroring = (local_options & 0x01) + 1;
-	if (errorlog)
-	{
-		if (Mirroring == 1) fprintf (errorlog, "Horizontal mirroring\n");
-		if (Mirroring == 2) fprintf (errorlog, "Vertical mirroring\n");
-	}
+		if (Mirroring == 1) logerror("Horizontal mirroring\n");
+		if (Mirroring == 2) logerror("Vertical mirroring\n");
 	battery = local_options & 0x02;
-	if ((errorlog) && (battery)) fprintf (errorlog, "-- Battery found\n");
+	if (battery) logerror("-- Battery found\n");
 	trainer = local_options & 0x04;
 	/* Check for 4-screen VRAM */
 	if (local_options & 0x08) four_screen_vram = 1;
@@ -935,7 +921,7 @@ int nes_load_rom (int id)
 	if (trainer)
 	{
 		osd_fread (romfile, &NES_ROM[0x7000], 0x200);
-		if (errorlog) fprintf (errorlog, "-- Trainer found\n");
+		logerror("-- Trainer found\n");
 	}
 
 	/* Read in the PRG_Rom chunks */
@@ -949,9 +935,9 @@ int nes_load_rom (int id)
 	else
 		osd_fread (romfile, &NES_ROM[0x10000], 0x4000 * PRG_Rom);
 
-	if (errorlog) fprintf (errorlog, "**\n");
-	if (errorlog) fprintf (errorlog, "Mapper: %d\n", Mapper);
-	if (errorlog) fprintf (errorlog, "PRG chunks: %02x, size: %06x\n", PRG_Rom, 0x4000*PRG_Rom);
+	logerror("**\n");
+	logerror("Mapper: %d\n", Mapper);
+	logerror("PRG chunks: %02x, size: %06x\n", PRG_Rom, 0x4000*PRG_Rom);
 
 	/* Read in any CHR_Rom chunks */
 	if (CHR_Rom > 0)
@@ -980,8 +966,8 @@ int nes_load_rom (int id)
 		nes_charlayout.total = 512;
 	}
 
-	if (errorlog) fprintf (errorlog, "CHR chunks: %02x, size: %06x\n", CHR_Rom, 0x4000*CHR_Rom);
-	if (errorlog) fprintf (errorlog, "**\n");
+	logerror("CHR chunks: %02x, size: %06x\n", CHR_Rom, 0x4000*CHR_Rom);
+	logerror("**\n");
 
 	/* TODO: load a battery file here */
 
@@ -990,7 +976,7 @@ int nes_load_rom (int id)
 	return 0;
 
 bad:
-	if(errorlog) fprintf (errorlog,"BAD section hit during LOAD ROM.\n");
+	logerror("BAD section hit during LOAD ROM.\n");
 	osd_fclose (romfile);
 	return 1;
 }

@@ -23,7 +23,7 @@ int pce_load_rom(int id)
 	int size;
     FILE *fp = NULL;
 	unsigned char *ROM;
-	if(errorlog) fprintf(errorlog, "*** pce_load_rom : %s\n", device_filename(IO_CARTSLOT,id));
+	logerror("*** pce_load_rom : %s\n", device_filename(IO_CARTSLOT,id));
 
     /* open file to get size */
 	fp = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0);
@@ -39,7 +39,7 @@ int pce_load_rom(int id)
     /* handle header accordingly */
     if((size/512)&1)
     {
-        if(errorlog) fprintf(errorlog, "*** pce_load_rom : Header present\n");
+        logerror("*** pce_load_rom : Header present\n");
         size -= 512;
         osd_fseek(fp, 512, SEEK_SET);
     }
@@ -51,7 +51,7 @@ int pce_load_rom(int id)
 
 int pce_id_rom (int id)
 {
-    if(errorlog) fprintf(errorlog, "*** pce_id_rom\n");
+    logerror("*** pce_id_rom\n");
     return 0;
 }
 
@@ -59,7 +59,7 @@ void pce_init_machine(void)
 {
     void *f;
 
-    if(errorlog) fprintf(errorlog, "*** pce_init_machine\n");
+    logerror("*** pce_init_machine\n");
     pce_user_ram = calloc(0x2000, 1);
     pce_save_ram = calloc(0x2000, 1);
 
@@ -68,7 +68,7 @@ void pce_init_machine(void)
     f = osd_fopen(Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 0);
     if(f)
     {
-        if(errorlog) fprintf(errorlog, "*** pce_init_machine - BRAM loaded\n");
+        logerror("*** pce_init_machine - BRAM loaded\n");
         osd_fread(f, pce_save_ram, 0x2000);
         osd_fclose(f);
     }
@@ -78,13 +78,13 @@ void pce_stop_machine(void)
 {
     void *f;
 
-    if(errorlog) fprintf(errorlog, "*** pce_stop_machine\n");
+    logerror("*** pce_stop_machine\n");
 
     /* write battery backed memory to disk */
     f = osd_fopen(Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 1);
     if(f)
     {
-        if(errorlog) fprintf(errorlog, "*** pce_stop_machine - BRAM saved\n");
+        logerror("*** pce_stop_machine - BRAM saved\n");
         osd_fwrite(f, pce_save_ram, 0x2000);
         osd_fclose(f);
     }

@@ -106,40 +106,40 @@ WRITE_HANDLER (genesis_vdp_76489_w )
 WRITE_HANDLER ( genesis_ramlatch_w ) /* note value will be meaningless unless all bits are correctly set in */
 {
   	if (offset !=0 ) return;
-	if (errorlog && !z80running) fprintf(errorlog, "undead Z80 latch write!\n");
+	if (!z80running) logerror("undead Z80 latch write!\n");
   //	cpu_halt(0,0);
 	if (z80_latch_bitcount == 0) z80_68000_latch = 0;
-/*	if (errorlog) fprintf(errorlog, "latch update\n");*/
+/*	logerror("latch update\n");*/
   	z80_68000_latch = z80_68000_latch | ((( ((unsigned char)data) & 0x01) << (15+z80_latch_bitcount)));
- 	if (errorlog) fprintf(errorlog, "value %x written to latch\n", data);
+ 	logerror("value %x written to latch\n", data);
 	z80_latch_bitcount++;
 	if (z80_latch_bitcount == 9)
 	{
 	   //	cpu_halt(0,1);
 		z80_latch_bitcount = 0;
-		if (errorlog) fprintf (errorlog, "latch set, value %x\n", z80_68000_latch);
+		logerror("latch set, value %x\n", z80_68000_latch);
 	}
 }
 
 WRITE_HANDLER ( genesis_s_68000_ram_w )
 {
 	unsigned int address = (z80_68000_latch) + (offset & 0x7fff);
-	if (errorlog && !z80running) fprintf(errorlog, "undead Z80->68000 write!\n");
-	if (z80_latch_bitcount != 0 && errorlog) fprintf(errorlog, "writing whilst latch being set!\n");
+	if (!z80running) logerror("undead Z80->68000 write!\n");
+	if (z80_latch_bitcount != 0) logerror("writing whilst latch being set!\n");
 
   	if (address > 0xff0000) genesis_sharedram[BYTE_XOR(offset)] = data;
-	if (errorlog) fprintf (errorlog, "z80 poke to address %x\n", address);
+	logerror("z80 poke to address %x\n", address);
 }
 
 READ_HANDLER ( genesis_s_68000_ram_r )
 {
 	int address = (z80_68000_latch) + (offset & 0x7fff);
 
-if (errorlog && !z80running) fprintf(errorlog, "undead Z80->68000 read!\n");
+	if (!z80running) logerror("undead Z80->68000 read!\n");
 
-	if (z80_latch_bitcount != 0 && errorlog) fprintf(errorlog, "reading whilst latch being set!\n");
+	if (z80_latch_bitcount != 0) logerror("reading whilst latch being set!\n");
 
-	if (errorlog) fprintf (errorlog, "z80 read from address %x\n", address);
+	logerror("z80 read from address %x\n", address);
 
 	/* Read the data out of the 68k ROM */
 	if (address < 0x400000) return memory_region(REGION_CPU1)[BYTE_XOR(address)];
@@ -151,8 +151,8 @@ if (errorlog && !z80running) fprintf(errorlog, "undead Z80->68000 read!\n");
 
 WRITE_HANDLER ( genesis_soundram_w )
 {
-	if (z80running && errorlog) fprintf(errorlog, "Z80 written whilst running!\n");
-	if (errorlog) fprintf(errorlog,"68000->z80 sound write, %x to %x\n", data, offset);
+	if (z80running) logerror("Z80 written whilst running!\n");
+	logerror("68000->z80 sound write, %x to %x\n", data, offset);
 
 	if (LOWER_BYTE_ACCESS(data)) genesis_soundram[offset+1] = data & 0xff;
 	if (UPPER_BYTE_ACCESS(data)) genesis_soundram[offset] = (data >> 8) & 0xff;
@@ -160,8 +160,8 @@ WRITE_HANDLER ( genesis_soundram_w )
 
 READ_HANDLER ( genesis_soundram_r )
 {
-	if (z80running && errorlog) fprintf(errorlog, "Z80 read whilst running!\n");
-	if (errorlog) fprintf(errorlog, "soundram_r returning %x\n",(genesis_soundram[offset] << 8) + genesis_soundram[offset+1]);
+	if (z80running) logerror("Z80 read whilst running!\n");
+	logerror("soundram_r returning %x\n",(genesis_soundram[offset] << 8) + genesis_soundram[offset+1]);
 	return (genesis_soundram[offset] << 8) + genesis_soundram[offset+1];
 
 }

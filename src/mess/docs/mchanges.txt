@@ -9,29 +9,49 @@ MESS misc info
 3.  NEOFREE = 1
 4.  uncomment all the required CPU cores (use all is ok) see below
 5.  COREOBJS first 3 lines are:
-COREOBJS = obj/version.o obj/mess/system.o obj/mame.o obj/mess/mess.o \
-         obj/mess/config.o obj/mess/filemngr.o obj/mess/tapectrl.o \
-         obj/mess/machine/6522via.o  obj/mess/machine/nec765.o   \
+    COREOBJS = obj/version.o obj/mess/system.o obj/mame.o obj/mess/mess.o \
+        obj/mess/config.o obj/mess/filemngr.o obj/mess/tapectrl.o \
+        obj/mess/machine/6522via.o  obj/mess/machine/nec765.o   \
+        obj/mess/machine/dsk.o      \
 6.  DRVLIBS replace with MESS ones
 7.  MSDOSOBJS += obj/mess/msdos.o obj/msdos/nec765.o
 8.  version....  after $(TINYFLAGS) -DMESS
-9.  all: $(EMULATOR_EXE) romcmp.exe dat2html.exe
-10. add dat2html definition after romcmp.exe:
-dat2html.exe: obj/mess/dat2html.o 
-	@echo Linking $@...
-	$(LD) $(LDFLAGS) $^ -lz -o $@
-11. replace MAME's ifndef DEBUG section to:
-    ifndef DEBUG
-	$(EMULATOR_EXE) -listtext > mess.txt
-	$(EMULATOR_EXE) -listdevices >> mess.txt
-	upx $(EMULATOR_EXE)
+9.  Above all:, add:
+	TOOLS_EXE = dat2html.exe \
+		    mkhdimg.exe  \
+		    imgtool.exe
 
-    endif
+10. all: $(EMULATOR_EXE) mess.txt $(TOOLS_EXE)
+11. mess.txt: $(EMULATOR_EXE)
+	@echo Generating $@...
+	@$(EMULATOR_EXE) -listtext > mess.txt
+	@$(EMULATOR_EXE) -listdevices >> mess.txt
+12. add mess tool exe definitions:
+	dat2html.exe: obj/mess/tools/dat2html/dat2html.o 
+		@echo Linking $@...
+		$(LD) $(LDFLAGS) $^ -lz -o $@
 
-12. replace archive definitions
-13. add MAKE MESSDIR to the bottom of MAKETREE
-14. add messdir:
-15. add del dat2html.exe to make clean
+	mkhdimg.exe:  obj/mess/tools/mkhdimg/mkhdimg.o 
+		@echo Linking $@...
+		$(LD) $(LDFLAGS) $^ -lz -o $@
+
+	imgtool.exe:  obj/unzip.o                      \
+		      obj/mess/tools/imgtool/stubs.o   \
+		      obj/mess/tools/imgtool/main.o    \
+		      obj/mess/tools/imgtool/imgtool.o \
+		      obj/mess/tools/imgtool/rsdos.o   \
+		      obj/mess/tools/imgtool/stream.o  
+		@echo Linking $@...
+		$(LD) $(LDFLAGS) $^ -lz -o $@
+13. replace archive definitions
+14. add MAKE MESSDIR to the bottom of MAKETREE
+15. add to make clean:
+	@echo Deleting mess files...
+	@del dat2html.exe
+	@del mkhdimg.exe
+	@del imgtool.exe
+16. add messdir:
+
 
 
 # uncomment the following lines to include a CPU core
@@ -43,9 +63,15 @@ CPUS+=M65SC02@
 CPUS+=M65CE02@
 CPUS+=M6509@
 CPUS+=M6510@
+CPUS+=M6510T@
+CPUS+=M7501@
+CPUS+=M8502@
 CPUS+=N2A03@
 CPUS+=H6280@
 CPUS+=I86@
+CPUS+=I88@
+CPUS+=I186@
+CPUS+=I188@
 CPUS+=I8039@
 CPUS+=I8048@
 CPUS+=M6800@

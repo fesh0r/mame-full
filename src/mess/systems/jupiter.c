@@ -43,7 +43,7 @@ extern void jupiter_vh_stop (void);
 extern void jupiter_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
 extern WRITE_HANDLER ( jupiter_vh_charram_w );
 extern unsigned char *jupiter_charram;
-extern int jupiter_charram_size;
+extern size_t jupiter_charram_size;
 
 /* functions */
 

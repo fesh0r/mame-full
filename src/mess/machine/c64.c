@@ -47,6 +47,7 @@ UINT8 *c64_chargen;
 UINT8 *c64_roml=0;
 UINT8 *c64_romh=0;
 
+static UINT8 *roml=0, *romh=0;
 static int ultimax = 0;
 int c64_tape_on = 1;
 static int c64_cia1_on = 1;
@@ -60,7 +61,6 @@ cartridgetype = CartridgeAuto;
 static UINT8 cia0porta;
 static UINT8 serial_clock, serial_data, serial_atn;
 static UINT8 vicirq = 0, cia0irq = 0;
-int c64_bank_old;
 
 /*
  * cia 0
@@ -146,7 +146,7 @@ static void c64_irq (int level)
 
 	if (level != old_level)
 	{
-		DBG_LOG (3, "mos6510", (errorlog, "irq %s\n", level ? "start" : "end"));
+		DBG_LOG (3, "mos6510", ("irq %s\n", level ? "start" : "end"));
 		if (c128) {
 			if (0&&(cpu_getactivecpu()==0)) {
 				cpu_set_irq_line (0, Z80_IRQ_INT, level);
@@ -160,7 +160,7 @@ static void c64_irq (int level)
 	}
 }
 
-WRITE_HANDLER ( c64_tape_read )
+WRITE_HANDLER(c64_tape_read)
 {
 	cia6526_0_set_input_flag (data);
 }
@@ -239,7 +239,7 @@ static void c64_cia1_interrupt (int level)
 
 	if (level != old_level)
 	{
-		DBG_LOG (1, "mos6510", (errorlog, "nmi %s\n", level ? "start" : "end"));
+		DBG_LOG (1, "mos6510", ("nmi %s\n", level ? "start" : "end"));
 		/*      cpu_set_nmi_line(0, level); */
 		old_level = level;
 	}
@@ -273,15 +273,15 @@ struct cia6526_interface c64_cia0 =
 	0xc7, 0xff, 0
 };
 
-static void c64_bankswitch (void);
+static void c64_bankswitch (int reset);
 static void c64_robocop2_w(int offset, int value)
 {
 	/* robocop2 0xe00
 	 * 80 94 80 94 80
 	 * 80 81 80 82 83 80
 	 */
-	c64_roml=cbm_rom[value&0xf].chip;
-	c64_romh=cbm_rom[(value&0xf)+0x10].chip;
+	roml=cbm_rom[value&0xf].chip;
+	romh=cbm_rom[(value&0xf)+0x10].chip;
 	if (value & 0x80)
 		{
 			c64_game = value & 0x10;
@@ -292,9 +292,9 @@ static void c64_robocop2_w(int offset, int value)
 			c64_game = c64_exrom = 1;
 		}
 	if (c128)
-		c128_bankswitch_64 ();
+		c128_bankswitch_64 (0);
 	else
-		c64_bankswitch ();
+		c64_bankswitch (0);
 }
 
 static void c64_supergames_w(int offset, int value)
@@ -303,8 +303,8 @@ static void c64_supergames_w(int offset, int value)
 	 * 4 9 4
 	 * 4 0 c
 	 */
-	c64_roml=cbm_rom[value&3].chip;
-	c64_romh=cbm_rom[value&3].chip+0x2000;
+	roml=cbm_rom[value&3].chip;
+	romh=cbm_rom[value&3].chip+0x2000;
 	if (value & 4)
 		{
 			c64_game = 0;
@@ -319,12 +319,12 @@ static void c64_supergames_w(int offset, int value)
 			c64_game = c64_exrom = 0;
 		}
 	if (c128)
-		c128_bankswitch_64 ();
+		c128_bankswitch_64 (0);
 	else
-		c64_bankswitch ();
+		c64_bankswitch (0);
 }
 
-WRITE_HANDLER ( c64_write_io )
+WRITE_HANDLER( c64_write_io )
 {
 	if (offset < 0x400)
 		vic2_port_w (offset & 0x3ff, data);
@@ -339,7 +339,7 @@ WRITE_HANDLER ( c64_write_io )
 		if (c64_cia1_on)
 			cia6526_1_port_w (offset & 0xff, data);
 		else
-			DBG_LOG (1, "io write", (errorlog, "%.3x %.2x\n", offset, data));
+			DBG_LOG (1, "io write", ("%.3x %.2x\n", offset, data));
 	}
 	else if (offset < 0xf00)
 	{
@@ -349,7 +349,7 @@ WRITE_HANDLER ( c64_write_io )
 			c64_robocop2_w(offset&0xff, data);
 		}
 		else
-			DBG_LOG (1, "io write", (errorlog, "%.3x %.2x\n", offset, data));
+			DBG_LOG (1, "io write", ("%.3x %.2x\n", offset, data));
 	}
 	else
 	{
@@ -359,11 +359,11 @@ WRITE_HANDLER ( c64_write_io )
 			c64_supergames_w(offset&0xff, data);
 		}
 		else
-			DBG_LOG (1, "io write", (errorlog, "%.3x %.2x\n", offset, data));
+			DBG_LOG (1, "io write", ("%.3x %.2x\n", offset, data));
 	}
 }
 
-READ_HANDLER ( c64_read_io )
+READ_HANDLER( c64_read_io )
 {
 	if (offset < 0x400)
 		return vic2_port_r (offset & 0x3ff);
@@ -375,7 +375,7 @@ READ_HANDLER ( c64_read_io )
 		return cia6526_0_port_r (offset & 0xff);
 	else if (c64_cia1_on && (offset < 0xe00))
 		return cia6526_1_port_r (offset & 0xff);
-	DBG_LOG (1, "io read", (errorlog, "%.3x\n", offset));
+	DBG_LOG (1, "io read", ("%.3x\n", offset));
 	return 0xff;
 }
 
@@ -437,15 +437,15 @@ READ_HANDLER ( c64_read_io )
  * E000    ROMH    RAM
  * F000    ROMH    ROMH
  */
-static void c64_bankswitch (void)
+static void c64_bankswitch (int reset)
 {
-	static int data, loram, hiram, charen;
+	static int old = -1, exrom, game;
+	int data, loram, hiram, charen;
 
 	data = ((c64_port6510 & c64_ddr6510) | (c64_ddr6510 ^ 0xff)) & 7;
-	if (data == c64_bank_old)
-		return;
+	if ((data == old)&&(exrom==c64_exrom)&&(game==c64_game)&&!reset) return;
 
-	DBG_LOG (1, "bankswitch", (errorlog, "%d\n", data & 7));
+	DBG_LOG (1, "bankswitch", ("%d\n", data & 7));
 	loram = (data & 1) ? 1 : 0;
 	hiram = (data & 2) ? 1 : 0;
 	charen = (data & 4) ? 1 : 0;
@@ -453,7 +453,7 @@ static void c64_bankswitch (void)
 	if ((!c64_game && c64_exrom)
 		|| (loram && hiram && !c64_exrom))
 	{
-		cpu_setbank (1, c64_roml);
+		cpu_setbank (1, roml);
 		cpu_setbankhandler_w (2, MWA_NOP);
 	}
 	else
@@ -465,7 +465,7 @@ static void c64_bankswitch (void)
 	if ((!c64_game && c64_exrom && hiram)
 		|| (!c64_exrom))
 	{
-		cpu_setbank (3, c64_romh);
+		cpu_setbank (3, romh);
 	}
 	else if (loram && hiram)
 	{
@@ -499,7 +499,7 @@ static void c64_bankswitch (void)
 
 	if (!c64_game && c64_exrom)
 	{
-		cpu_setbank (7, c64_romh);
+		cpu_setbank (7, romh);
 		cpu_setbankhandler_w (8, MWA_NOP);
 	}
 	else
@@ -514,7 +514,9 @@ static void c64_bankswitch (void)
 			cpu_setbank (7, c64_memory + 0xe000);
 		}
 	}
-	c64_bank_old = data;
+	game=c64_game;
+	exrom=c64_exrom;
+	old = data;
 }
 
 /**
@@ -529,7 +531,7 @@ static void c64_bankswitch (void)
   p5 output cassette motor
   p6,7 not available on M6510
  */
-WRITE_HANDLER ( c64_m6510_port_w )
+WRITE_HANDLER(c64_m6510_port_w)
 {
 	if (offset)
 	{
@@ -547,14 +549,14 @@ WRITE_HANDLER ( c64_m6510_port_w )
 		vc20_tape_motor (data & 0x20);
 	}
 	if (c128)
-		c128_bankswitch_64 ();
+		c128_bankswitch_64 (0);
 	else if (c65)
 		c65_bankswitch();
 	else if (!ultimax)
-		c64_bankswitch ();
+		c64_bankswitch (0);
 }
 
-READ_HANDLER ( c64_m6510_port_r )
+READ_HANDLER(c64_m6510_port_r)
 {
 	if (offset)
 	{
@@ -613,12 +615,12 @@ int c64_paddle_read (int which)
 	}
 }
 
-READ_HANDLER ( c64_colorram_read )
+READ_HANDLER(c64_colorram_read)
 {
 	return c64_colorram[offset & 0x3ff];
 }
 
-WRITE_HANDLER ( c64_colorram_write )
+WRITE_HANDLER( c64_colorram_write )
 {
 	c64_colorram[offset & 0x3ff] = data | 0xf0;
 }
@@ -756,7 +758,6 @@ void c64_common_init_machine (void)
 	vicirq = cia0irq = 0;
 	c64_port6510 = 0xff;
 	c64_ddr6510 = 0;
-	c64_bank_old = -1;
 }
 
 void c64_init_machine (void)
@@ -767,9 +768,9 @@ void c64_init_machine (void)
 	c64_rom_load();
 
 	if (c128)
-		c128_bankswitch_64 ();
+		c128_bankswitch_64 (1);
 	if (!ultimax)
-		c64_bankswitch ();
+		c64_bankswitch (1);
 }
 
 void c64_shutdown_machine (void)
@@ -787,13 +788,11 @@ int c64_rom_id (int id)
 	char *cp;
 	const char *name=device_filename(IO_CARTSLOT,id);
 
-	if (errorlog)
-		fprintf (errorlog, "c64_rom_id %s\n", name);
+	logerror("c64_rom_id %s\n", name);
 	retval = 0;
 	if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
 	{
-		if (errorlog)
-			fprintf (errorlog, "rom %s not found\n", name);
+		logerror("rom %s not found\n", name);
 		return 0;
 	}
 
@@ -820,13 +819,12 @@ int c64_rom_id (int id)
 			retval = 1;
 	}
 
-	if (errorlog)
-	{
-		if (retval)
-			fprintf (errorlog, "rom %s recognized\n", name);
-		else
-			fprintf (errorlog, "rom %s not recognized\n", name);
-	}
+
+	if (retval)
+		logerror("rom %s recognized\n", name);
+	else
+		logerror("rom %s not recognized\n", name);
+
 	return retval;
 }
 
@@ -836,6 +834,7 @@ int c64_rom_id (int id)
 void c64_rom_recognition (void)
 {
 	int i;
+	cartridgetype=CartridgeAuto;
 	for (i=0; (i<sizeof(cbm_rom)/sizeof(cbm_rom[0]))
 			 &&(cbm_rom[i].size!=0); i++) {
 		cartridge=1;
@@ -861,18 +860,15 @@ void c64_rom_load(void)
 	{
 		if (AUTO_MODULE && (cartridgetype == CartridgeAuto))
 		{
-			if (errorlog)
-				fprintf (errorlog, "Cartridge type not recognized using Machine type\n");
+			logerror("Cartridge type not recognized using Machine type\n");
 		}
 		if (C64_MODULE && (cartridgetype == CartridgeUltimax))
 		{
-			if (errorlog)
-				fprintf (errorlog, "Cartridge could be ultimax type!?\n");
+			logerror("Cartridge could be ultimax type!?\n");
 		}
 		if (ULTIMAX_MODULE && (cartridgetype == CartridgeC64))
 		{
-			if (errorlog)
-				fprintf (errorlog, "Cartridge could be c64 type!?\n");
+			logerror("Cartridge could be c64 type!?\n");
 		}
 		if (C64_MODULE)
 			cartridgetype = CartridgeC64;
@@ -904,49 +900,50 @@ void c64_rom_load(void)
 			}
         } else if ( (cartridgetype==CartridgeRobocop2)
 					||(cartridgetype==CartridgeSuperGames) ) {
-			c64_roml=0;
-			c64_romh=0;
+			roml=0;
+			romh=0;
 			for (i=0; (i<sizeof(cbm_rom)/sizeof(cbm_rom[0]))
 					 &&(cbm_rom[i].size!=0); i++) {
-				if (!c64_roml
+				if (!roml
 					&& ((cbm_rom[i].addr==CBM_ROM_ADDR_UNKNOWN)
 						||(cbm_rom[i].addr==CBM_ROM_ADDR_LO)
 						||(cbm_rom[i].addr==0x8000)) ) {
-					c64_roml=cbm_rom[i].chip;
+					roml=cbm_rom[i].chip;
 				}
-				if (!c64_romh
+				if (!romh
 					&& ((cbm_rom[i].addr==CBM_ROM_ADDR_HI)
 						||(cbm_rom[i].addr==0xa000) ) ){
-					c64_romh=cbm_rom[i].chip;
+					romh=cbm_rom[i].chip;
 				}
-				if (!c64_romh
+				if (!romh
 					&& (cbm_rom[i].addr==0x8000)
 					&&(cbm_rom[i].size=0x4000) ){
-					c64_romh=cbm_rom[i].chip+0x2000;
+					romh=cbm_rom[i].chip+0x2000;
 				}
 			}
 		} else /*if ((cartridgetype == CartridgeC64)||
 				 (cartridgetype == CartridgeUltimax) )*/{
-			c64_roml=malloc(0x4000);
-			if(!c64_roml) return;
-			c64_romh=c64_roml+0x2000;
+			roml=c64_roml;
+			romh=c64_romh;
+			memset(roml, 0, 0x2000);
+			memset(romh, 0, 0x2000);
 			for (i=0; (i<sizeof(cbm_rom)/sizeof(cbm_rom[0]))
 					 &&(cbm_rom[i].size!=0); i++) {
 				if ((cbm_rom[i].addr==CBM_ROM_ADDR_UNKNOWN)
 					||(cbm_rom[i].addr==CBM_ROM_ADDR_LO) ) {
-					memcpy(c64_roml+0x2000-cbm_rom[i].size,
+					memcpy(roml+0x2000-cbm_rom[i].size,
 						   cbm_rom[i].chip, cbm_rom[i].size);
 				} else if ( ((cartridgetype == CartridgeC64)
 					  &&(cbm_rom[i].addr==CBM_ROM_ADDR_HI))
 					 ||((cartridgetype==CartridgeUltimax)
 						&&(cbm_rom[i].addr==CBM_ROM_ADDR_HI)) ) {
-					memcpy(c64_romh+0x2000-cbm_rom[i].size,
+					memcpy(romh+0x2000-cbm_rom[i].size,
 						   cbm_rom[i].chip, cbm_rom[i].size);
 				} else if (cbm_rom[i].addr<0xc000) {
-					memcpy(c64_roml+cbm_rom[i].addr-0x8000, cbm_rom[i].chip,
+					memcpy(roml+cbm_rom[i].addr-0x8000, cbm_rom[i].chip,
 						   cbm_rom[i].size);
 				} else {
-					memcpy(c64_romh+cbm_rom[i].addr-0xe000,
+					memcpy(romh+cbm_rom[i].addr-0xe000,
 						   cbm_rom[i].chip, cbm_rom[i].size);
 				}
 			}

@@ -191,12 +191,19 @@
 #define MEMORY_16 0x100
 #define MEMORY_32 0x180
 
+#define M6809_SELECT (input_port_5_r(0)&1)
+
 extern UINT8 *pet_memory;
 extern UINT8 *pet_videoram;
+extern UINT8 *superpet_memory;
+
+extern READ_HANDLER(superpet_r);
+extern WRITE_HANDLER(superpet_w);
 
 extern void pet_driver_init (void);
 extern void pet_basic1_driver_init (void);
 extern void pet40_driver_init (void);
+extern void superpet_driver_init(void);
 extern void pet_driver_shutdown (void);
 extern void pet_init_machine (void);
 extern void pet_shutdown_machine (void);

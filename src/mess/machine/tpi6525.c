@@ -116,7 +116,7 @@ static void tpi6525_set_interrupt(TPI6525 *this)
 {
 	if (!this->interrupt.level && (this->air!=0)) {
 		this->interrupt.level=1;
-		DBG_LOG (3, "tpi6525",(errorlog, "%d set interrupt\n",this->number));
+		DBG_LOG (3, "tpi6525",("%d set interrupt\n",this->number));
 		if (this->interrupt.output!=NULL)
 			this->interrupt.output(this->interrupt.level);
 	}

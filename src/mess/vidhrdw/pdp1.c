@@ -88,8 +88,7 @@ void pdp1_plot(int x, int y)
 	if (new_index >= MAX_POINTS)
 	{
 		new_index--;
-		if (errorlog)
-			fprintf (errorlog, "*** Warning! PDP1 Point list overflow!\n");
+		logerror("*** Warning! PDP1 Point list overflow!\n");
 	}
 }
 
@@ -227,7 +226,7 @@ int pdp1_keyboard(void)
 		case_state=(case_state+1)%2;
 		return 1;
 	}
-	
+
 	while (kbd[i].fio_dec!=257)
 	{
 		if (case_state==0) /* lower case */

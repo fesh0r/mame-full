@@ -126,7 +126,7 @@ static struct MemoryReadAddress pet_readmem[] =
 {
 	{0x0000, 0x7fff, MRA_RAM},
 	{0x8000, 0x83ff, MRA_RAM },
-	{0xb000, 0xe7ff, MRA_ROM },
+	{0xa000, 0xe7ff, MRA_ROM },
 	{0xe810, 0xe813, pia_0_r },
 	{0xe820, 0xe823, pia_1_r },
 	{0xe840, 0xe84f, via_0_r },
@@ -138,7 +138,7 @@ static struct MemoryWriteAddress pet_writemem[] =
 {
 	{0x0000, 0x7fff, MWA_RAM, &pet_memory},
 	{0x8000, 0x83ff, pet_videoram_w, &pet_videoram },
-	{0xb000, 0xe7ff, MWA_ROM },
+	{0xa000, 0xe7ff, MWA_ROM },
 	{0xe810, 0xe813, pia_0_w },
 	{0xe820, 0xe823, pia_1_w },
 	{0xe840, 0xe84f, via_0_w },
@@ -150,7 +150,7 @@ static struct MemoryReadAddress pet40_readmem[] =
 {
 	{0x0000, 0x7fff, MRA_RAM},
 	{0x8000, 0x83ff, MRA_RAM },
-	{0xb000, 0xe7ff, MRA_ROM },
+	{0xa000, 0xe7ff, MRA_ROM },
 	{0xe810, 0xe813, pia_0_r },
 	{0xe820, 0xe823, pia_1_r },
 	{0xe840, 0xe84f, via_0_r },
@@ -163,7 +163,7 @@ static struct MemoryWriteAddress pet40_writemem[] =
 {
 	{0x0000, 0x7fff, MWA_RAM, &pet_memory},
 	{0x8000, 0x83ff, crtc6845_videoram_w, &pet_videoram },
-	{0xb000, 0xe7ff, MWA_ROM },
+	{0xa000, 0xe7ff, MWA_ROM },
 	{0xe810, 0xe813, pia_0_w },
 	{0xe820, 0xe823, pia_1_w },
 	{0xe840, 0xe84f, via_0_w },
@@ -172,16 +172,90 @@ static struct MemoryWriteAddress pet40_writemem[] =
 	{-1}							   /* end of table */
 };
 
+static struct MemoryReadAddress pet80_readmem[] =
+{
+	{0x0000, 0x7fff, MRA_RAM},
+	{0x8000, 0x83ff, MRA_RAM },
+	{0xa000, 0xe7ff, MRA_ROM },
+	{0xe810, 0xe813, pia_0_r },
+	{0xe820, 0xe823, pia_1_r },
+	{0xe840, 0xe84f, via_0_r },
+	{0xe880, 0xe881, crtc6845_port_r },
+	{0xf000, 0xffff, MRA_ROM },
+	{-1}							   /* end of table */
+};
+
 static struct MemoryWriteAddress pet80_writemem[] =
 {
 	{0x0000, 0x7fff, MWA_RAM, &pet_memory},
 	{0x8000, 0x87ff, crtc6845_videoram_w, &pet_videoram },
-	{0xb000, 0xe7ff, MWA_ROM },
+	{0xa000, 0xe7ff, MWA_ROM },
 	{0xe810, 0xe813, pia_0_w },
 	{0xe820, 0xe823, pia_1_w },
 	{0xe840, 0xe84f, via_0_w },
 	{0xe880, 0xe881, crtc6845_pet_port_w },
 	{0xf000, 0xffff, MWA_ROM },
+	{-1}							   /* end of table */
+};
+
+static struct MemoryReadAddress superpet_readmem[] =
+{
+	{0x0000, 0x7fff, MRA_RAM},
+	{0x8000, 0x87ff, MRA_RAM },
+	{0xa000, 0xe7ff, MRA_ROM },
+	{0xe810, 0xe813, pia_0_r },
+	{0xe820, 0xe823, pia_1_r },
+	{0xe840, 0xe84f, via_0_r },
+	{0xe880, 0xe881, crtc6845_port_r },
+	/* 0xefe0, 0xefe3, mos 6702 */
+	/* 0xeff0, 0xeff3, acia6551 */
+	{0xeff8, 0xefff, superpet_r },
+	{0xf000, 0xffff, MRA_ROM },
+	{-1}							   /* end of table */
+};
+
+static struct MemoryWriteAddress superpet_writemem[] =
+{
+	{0x0000, 0x7fff, MWA_RAM, &pet_memory},
+	{0x8000, 0x87ff, crtc6845_videoram_w, &pet_videoram },
+	{0xa000, 0xe7ff, MWA_ROM },
+	{0xe810, 0xe813, pia_0_w },
+	{0xe820, 0xe823, pia_1_w },
+	{0xe840, 0xe84f, via_0_w },
+	{0xe880, 0xe881, crtc6845_pet_port_w },
+	{0xeff8, 0xefff, superpet_w },
+	{0xf000, 0xffff, MWA_ROM },
+	{-1}							   /* end of table */
+};
+
+static struct MemoryReadAddress superpet_m6809_readmem[] =
+{
+	{0x0000, 0x7fff, MRA_BANK1,},
+	{0x8000, 0x87ff, MRA_BANK2 },
+    {0x9000, 0x9fff, MRA_BANK3 },
+	{0xa000, 0xe7ff, MRA_ROM },
+	{0xe810, 0xe813, pia_0_r },
+	{0xe820, 0xe823, pia_1_r },
+	{0xe840, 0xe84f, via_0_r },
+	{0xe880, 0xe881, crtc6845_port_r },
+	{0xeff8, 0xefff, superpet_r },
+	{0xf000, 0xffff, MRA_ROM },
+	{-1}							   /* end of table */
+};
+
+static struct MemoryWriteAddress superpet_m6809_writemem[] =
+{
+	{0x0000, 0x7fff, MWA_BANK1 }, /* same memory as m6502 */
+	{0x8000, 0x87ff, crtc6845_videoram_w }, /* same memory as m6502 */
+    {0x9000, 0x9fff, MWA_BANK3 }, /* 64 kbyte ram turned in */
+	{0xa000, 0xe7ff, MWA_ROM },
+	{0xe810, 0xe813, pia_0_w },
+	{0xe820, 0xe823, pia_1_w },
+	{0xe840, 0xe84f, via_0_w },
+	{0xe880, 0xe881, crtc6845_pet_port_w },
+	{0xeff8, 0xefff, superpet_w },
+	{0xf000, 0xffff, MWA_ROM },
+	{0x10000, 0x1ffff, MWA_RAM, &superpet_memory },
 	{-1}							   /* end of table */
 };
 
@@ -426,6 +500,28 @@ INPUT_PORTS_START (petb)
 	PORT_DIPSETTING(  0x180, "32KByte" )
 INPUT_PORTS_END
 
+INPUT_PORTS_START (superpet)
+	PET_B_KEYBOARD
+    PORT_START 
+    DIPS_HELPER( 0x8000, "Quickload", KEYCODE_F8)
+#ifdef PET_TEST_CODE
+	PORT_DIPNAME   ( 0x4000, 0x4000, "Tape Drive/Device 1")
+	PORT_DIPSETTING(  0, DEF_STR( Off ) )
+	PORT_DIPSETTING(0x4000, DEF_STR( On ) )
+	PORT_DIPNAME   ( 0x2000, 0x00, " Tape Sound")
+	PORT_DIPSETTING(  0, DEF_STR( Off ) )
+	PORT_DIPSETTING(0x2000, DEF_STR( On ) )
+	DIPS_HELPER( 0x1000, "Tape Drive Play",       KEYCODE_F5)
+	DIPS_HELPER( 0x0800, "Tape Drive Record",     KEYCODE_F6)
+	DIPS_HELPER( 0x0400, "Tape Drive Stop",       KEYCODE_F7)
+#endif
+	PORT_BIT (0x200, 0x200, IPT_UNUSED) /* business keyboard/bios */
+	PORT_BIT (0x180, 0x180, IPT_UNUSED) /* 32KByte */
+	PORT_DIPNAME   ( 1, 1, "CPU Select")
+	PORT_DIPSETTING( 0, "M6502" )
+	PORT_DIPSETTING( 1, "M6809" )	
+INPUT_PORTS_END
+
 unsigned char pet_palette[] =
 {
 	0,0,0, /* black */
@@ -452,8 +548,27 @@ static struct GfxLayout pet_charlayout =
         8*8                                     
 };
 
+static struct GfxLayout superpet_charlayout =
+{
+        8,8,                                   
+        1024,                                    /* 256 characters */
+        1,                      /* 1 bits per pixel */
+        { 0 },                  /* no bitplanes; 1 bit per pixel */
+        /* x offsets */
+        { 0,1,2,3,4,5,6,7 },  
+        /* y offsets */
+        { 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+        },
+        8*8                                     
+};
+
 static struct GfxDecodeInfo pet_gfxdecodeinfo[] = {
 	{ 1, 0x0000, &pet_charlayout,                     0, 2 },
+    { -1 } /* end of array */
+};
+
+static struct GfxDecodeInfo superpet_gfxdecodeinfo[] = {
+	{ 2, 0x0000, &superpet_charlayout,                     0, 2 },
     { -1 } /* end of array */
 };
 
@@ -466,7 +581,6 @@ static void pet_init_palette (unsigned char *sys_palette, unsigned short *sys_co
 /* basic 1 */
 ROM_START (pet)
 	ROM_REGION (0x10000, REGION_CPU1)
-	 /* hangs in checksum checking */
     ROM_LOAD ("901447.09", 0xc000, 0x800, 0x03cf16d0)
     ROM_LOAD ("901447.02", 0xc800, 0x800, 0x69fd8a8f)
     ROM_LOAD ("901447.03", 0xd000, 0x800, 0xd349f2d4)
@@ -512,7 +626,6 @@ ROM_START (pet4b)
     ROM_LOAD ("901447.10", 0x0000, 0x800, 0xd8408674)
 ROM_END
 
-#if 0
 /* basic 4 crtc*/
 ROM_START (pet4)
 	ROM_REGION (0x10000, REGION_CPU1)
@@ -524,7 +637,6 @@ ROM_START (pet4)
 	ROM_REGION (0x1000, REGION_GFX1)
     ROM_LOAD ("901447.08", 0x0000, 0x800, 0x54f32f45)
 ROM_END
-#endif
 
 /* basic 4 crtc 50 hz */
 ROM_START (pet4pal)
@@ -550,7 +662,6 @@ ROM_START (pet80)
     ROM_LOAD ("901447.10", 0x0000, 0x800, 0xd8408674)
 ROM_END
 
-#if 0
 /* basic 4 business 80 columns 50 hz */
 ROM_START (pet80pal)
 	ROM_REGION (0x10000, REGION_CPU1)
@@ -562,9 +673,8 @@ ROM_START (pet80pal)
 	ROM_REGION (0x1000, REGION_GFX1)
     ROM_LOAD ("901447.10", 0x0000, 0x800, 0xd8408674)
 ROM_END
-#endif
 
-ROM_START (pet80ger)
+ROM_START (cbm80ger)
 	ROM_REGION (0x10000, REGION_CPU1)
 	ROM_LOAD ("901465.23", 0xb000, 0x1000, 0xae3deac0)
 	ROM_LOAD ("901465.20", 0xc000, 0x1000, 0x0fc17b9c)
@@ -575,16 +685,55 @@ ROM_START (pet80ger)
 	ROM_LOAD ("chargen.de", 0x0000, 0x800, 0x3bb8cb87)
 ROM_END
 
-ROM_START (pet80swe)
+ROM_START (cbm80swe)
 	ROM_REGION (0x10000, REGION_CPU1)
     ROM_LOAD ("901465.23", 0xb000, 0x1000, 0xae3deac0)
     ROM_LOAD ("901465.20", 0xc000, 0x1000, 0x0fc17b9c)
     ROM_LOAD ("901465.21", 0xd000, 0x1000, 0x36d91855)
-    ROM_LOAD ("swedish.bin", 0xe000, 0x800, 0x75901dd7)
+    ROM_LOAD ("editswe.bin", 0xe000, 0x800, 0x75901dd7)
     ROM_LOAD ("901465.22", 0xf000, 0x1000, 0xcc5298a1)
 	ROM_REGION (0x1000, REGION_GFX1)
     ROM_LOAD ("901447.14", 0x0000, 0x800, 0x48c77d29)
 ROM_END
+
+ROM_START (superpet)
+	ROM_REGION (0x10000, REGION_CPU1)
+    ROM_LOAD ("901465.23", 0xb000, 0x1000, 0xae3deac0)
+    ROM_LOAD ("901465.20", 0xc000, 0x1000, 0x0fc17b9c)
+    ROM_LOAD ("901465.21", 0xd000, 0x1000, 0x36d91855)
+    ROM_LOAD ("901474.04", 0xe000, 0x800, 0xabb000e7)
+    ROM_LOAD ("901465.22", 0xf000, 0x1000, 0xcc5298a1)
+	ROM_REGION (0x20000, REGION_CPU2)
+    ROM_LOAD ("901898.01", 0xa000, 0x1000, 0x728a998b)
+    ROM_LOAD ("901898.02", 0xb000, 0x1000, 0x6beb7c62)
+    ROM_LOAD ("901898.03", 0xc000, 0x1000, 0x5db4983d)
+    ROM_LOAD ("901898.04", 0xd000, 0x1000, 0xf55fc559)
+    ROM_LOAD ("901897.01", 0xe000, 0x800, 0xb2cee903)
+    ROM_LOAD ("901898.05", 0xf000, 0x1000, 0xf42df0cb)
+	ROM_REGION (0x2000, REGION_GFX1)
+    ROM_LOAD ("901640.01", 0x0000, 0x1000, 0xee8229c4)
+ROM_END
+
+#ifdef PET_TEST_CODE
+/* swedish m6809 roms needed */
+ROM_START (mmf9000)
+	ROM_REGION (0x10000, REGION_CPU1)
+    ROM_LOAD ("901465.23", 0xb000, 0x1000, 0xae3deac0)
+    ROM_LOAD ("901465.20", 0xc000, 0x1000, 0x0fc17b9c)
+    ROM_LOAD ("901465.21", 0xd000, 0x1000, 0x36d91855)
+    ROM_LOAD ("editswe.bin", 0xe000, 0x800, 0x75901dd7)
+    ROM_LOAD ("901465.22", 0xf000, 0x1000, 0xcc5298a1)
+	ROM_REGION (0x20000, REGION_CPU2)
+    ROM_LOAD ("901898.01", 0xa000, 0x1000, 0x728a998b)
+    ROM_LOAD ("901898.02", 0xb000, 0x1000, 0x6beb7c62)
+    ROM_LOAD ("901898.03", 0xc000, 0x1000, 0x5db4983d)
+    ROM_LOAD ("901898.04", 0xd000, 0x1000, 0xf55fc559)
+    ROM_LOAD ("901897.01", 0xe000, 0x800, 0xb2cee903)
+    ROM_LOAD ("901898.05", 0xf000, 0x1000, 0xf42df0cb)
+	ROM_REGION (0x2000, REGION_GFX1)
+    ROM_LOAD ("charswe.bin", 0x0000, 0x1000, 0xda1cd630)
+ROM_END
+#endif
 
 
 #if 0
@@ -592,17 +741,24 @@ ROM_END
    cbm version in kernel at 0xff80 (offset 0x3f80)
    0x80 means pal version */
 
-    /* 901447-09, 901447-02, 901447-03, 901447-04 */
+    /* 901447-09 + 901447-02 + 901447-03 + 901447-04 */
     ROM_LOAD ("basic1", 0xc000, 0x2000, 0xaff78300)
+    /* same as 901439-01, maybe same as 6540-011 */
     ROM_LOAD ("rom-1-c000.901447-01.bin", 0xc000, 0x800, 0xa055e33a)
+    /* same as 901439-09, 6540-019 */
     ROM_LOAD ("rom-1-c000.901447-09.bin", 0xc000, 0x800, 0x03cf16d0)
+    /* same as 901439-05, 6540-012 */
     ROM_LOAD ("rom-1-c800.901447-02.bin", 0xc800, 0x800, 0x69fd8a8f)
+    /* same as 901439-02, 6540-013 */
     ROM_LOAD ("rom-1-d000.901447-03.bin", 0xd000, 0x800, 0xd349f2d4)
+    /* same as 901439-06, 6540-014 */
     ROM_LOAD ("rom-1-d800.901447-04.bin", 0xd800, 0x800, 0x850544eb)
 
-	/* 901465-01 901465-02 */
+	/* 901465-01 + 901465-02 */
     ROM_LOAD ("basic2", 0xc000, 0x2000, 0xcf35e68b)
+    /* 6540-020 + 6540-021 */
     ROM_LOAD ("basic-2-c000.901465-01.bin", 0xc000, 0x1000, 0x63a7fe4a)
+    /* 6540-022 + 6540-023 */
     ROM_LOAD ("basic-2-d000.901465-02.bin", 0xd000, 0x1000, 0xae4cb035)
 
 	/* 901465-23 901465-20 901465-21 */
@@ -612,27 +768,30 @@ ROM_END
     ROM_LOAD ("basic-4-c000.901465-20.bin", 0xc000, 0x1000, 0x0fc17b9c)
     ROM_LOAD ("basic-4-d000.901465-21.bin", 0xd000, 0x1000, 0x36d91855)
 
+    /* same as 901439-03, 6540-015 */
     ROM_LOAD ("rom-1-e000.901447-05.bin", 0xe000, 0x800, 0x9e1c5cea)
 
     ROM_LOAD ("edit-2-b.901474-01.bin", 0xe000, 0x800, 0x05db957e)
+    /* same as 6540-024 */
     ROM_LOAD ("edit-2-n.901447-24.bin", 0xe000, 0x800, 0xe459ab32)
 
     ROM_LOAD ("edit-4-40-n-50hz.901498-01.bin", 0xe000, 0x800, 0x3370e359)
     ROM_LOAD ("edit-4-40-n-60hz.901499-01.bin", 0xe000, 0x800, 0x5f85bdf8)
-	/* edit4b40 in vice */
     ROM_LOAD ("edit-4-b.901474-02.bin", 0xe000, 0x800, 0x75ff4af7)
 
+    ROM_LOAD ("edit-4-80-b-60hz.901474-03.bin", 0xe000, 0x800, 0x5674dd5e)
+    /* week 36 year 81 */
     ROM_LOAD ("edit-4-80-b-50hz.901474-04-3681.bin", 0xe000, 0x800, 0xc1ffca3a)
     ROM_LOAD ("edit-4-80-b-50hz.901474-04.bin", 0xe000, 0x800, 0xabb000e7)
-    ROM_LOAD ("edit-4-80-b-60hz.901474-03.bin", 0xe000, 0x800, 0x5674dd5e)
-	/* edit4b80 in vice */
-    ROM_LOAD ("edit-4-80-b-50hz.901474-04_3f.bin", 0xe000, 0x800, 0x845a44e6)
+    ROM_LOAD ("edit-4-80-b-50hz.901474-04?.bin", 0xe000, 0x800, 0x845a44e6)
     ROM_LOAD ("edit-4-80-b-50hz.german.bin", 0xe000, 0x800, 0x1c1e597d)
     ROM_LOAD ("edit-4-80-b-50hz.swedish.bin", 0xe000, 0x800, 0x75901dd7)
 
-	/* 901447-06 901447-07 */
+	/* 901447-06 + 901447-07 */
     ROM_LOAD ("kernal1", 0xf000, 0x1000, 0xf0186492)
+    /* same as 901439-04, 6540-016 */
     ROM_LOAD ("rom-1-f000.901447-06.bin", 0xf000, 0x800, 0x661a814a)
+    /* same as 904139-07, 6540-018 */
     ROM_LOAD ("rom-1-f800.901447-07.bin", 0xf800, 0x800, 0xc4f47ad1)
 
     ROM_LOAD ("kernal-2.901465-03.bin", 0xf000, 0x1000, 0xf02238e2)
@@ -640,6 +799,8 @@ ROM_END
     ROM_LOAD ("kernal-4.901465-22.bin", 0xf000, 0x1000, 0xcc5298a1)
 
 	/* graphics */
+    /* 6540-010 = 901439-08 */
+
     ROM_LOAD ("characters-1.901447-08.bin", 0x0000, 0x800, 0x54f32f45)
 	/* business */
 	/* vice chargen */
@@ -652,7 +813,9 @@ ROM_END
 
 	/* 8296 */
     ROM_LOAD ("324878-01.bin", 0x?000, 0x2000, 0xd262bacd)
+
     ROM_LOAD ("324878-02.bin", 0x?000, 0x2000, 0x5e00476d)
+
     ROM_LOAD ("Execudesk.bin", 0x?000, 0x1000, 0xbef0eaa1)
     ROM_LOAD ("PaperClip.bin", 0x?000, 0x1000, 0x8fb11d4b)
 
@@ -661,10 +824,12 @@ ROM_END
     ROM_LOAD ("waterloo-b000.901898-02.bin", 0xb000, 0x1000, 0x6beb7c62)
     ROM_LOAD ("waterloo-c000.901898-03.bin", 0xc000, 0x1000, 0x5db4983d)
     ROM_LOAD ("waterloo-d000.901898-04.bin", 0xd000, 0x1000, 0xf55fc559)
-    ROM_LOAD ("waterloo-e000.901897-01.bin", 0xe000, 0x1000, 0xb2cee903)
+    ROM_LOAD ("waterloo-e000.901897-01.bin", 0xe000, 0x800, 0xb2cee903)
     ROM_LOAD ("waterloo-f000.901898-05.bin", 0xf000, 0x1000, 0xf42df0cb)
-    ROM_LOAD ("characters.901640-01.bin", 0xe000, 0x1000, 0xee8229c4)
-    ROM_LOAD ("characters.swedish.bin", 0xe000, 0x1000, 0xda1cd630)
+    /* 256 chars commodore pet, 256 chars ascii m6809 */
+    ROM_LOAD ("characters.901640-01.bin", 0x0000, 0x1000, 0xee8229c4)
+    /* 901447-14 and the 256 chars ascii from 901640-01 */
+    ROM_LOAD ("characters.swedish.bin", 0x0000, 0x1000, 0xda1cd630)
 #endif
 
 static struct MachineDriver machine_driver_pet =
@@ -745,6 +910,45 @@ static struct MachineDriver machine_driver_pet40 =
 	}
 };
 
+static struct MachineDriver machine_driver_pet40pal =
+{
+  /* basic machine hardware */
+	{
+		{
+			CPU_M6502,
+			1000000,
+			pet40_readmem, pet40_writemem,
+			0, 0,
+			0, 0,
+			crtc6845_raster_irq, 15625,
+		},
+	},
+	50, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	0,
+	pet_init_machine,
+	pet_shutdown_machine,
+
+  /* video hardware */
+	320,							   /* screen width */
+	200,							   /* screen height */
+	{0, 320 - 1, 0, 200 - 1},		   /* visible_area */
+	pet_gfxdecodeinfo,			   /* graphics decode info */
+	sizeof (pet_palette) / sizeof (pet_palette[0]) / 3,
+	sizeof (pet_colortable) / sizeof(pet_colortable[0]),
+	pet_init_palette,				   /* convert color prom */
+	VIDEO_TYPE_RASTER,
+	0,
+	crtc6845_vh_start,
+	crtc6845_vh_stop,
+	crtc6845_vh_screenrefresh,
+
+  /* sound hardware */
+	0, 0, 0, 0,
+	{
+		{ 0 }
+	}
+};
+
 static struct MachineDriver machine_driver_pet80 =
 {
   /* basic machine hardware */
@@ -752,7 +956,7 @@ static struct MachineDriver machine_driver_pet80 =
 		{
 			CPU_M6502,
 			1000000,
-			pet40_readmem, pet80_writemem,
+			pet80_readmem, pet80_writemem,
 			0, 0,
 			0, 0,
 			crtc6845_raster_irq, 15625,
@@ -768,6 +972,99 @@ static struct MachineDriver machine_driver_pet80 =
 	250,							   /* screen height */
 	{0, 640 - 1, 0, 250 - 1},		   /* visible_area */
 	pet_gfxdecodeinfo,			   /* graphics decode info */
+	sizeof (pet_palette) / sizeof (pet_palette[0]) / 3,
+	sizeof (pet_colortable) / sizeof(pet_colortable[0]),
+	pet_init_palette,				   /* convert color prom */
+#ifdef PET_TEST_CODE
+	VIDEO_TYPE_RASTER,
+#else
+	VIDEO_PIXEL_ASPECT_RATIO_1_2|VIDEO_TYPE_RASTER,
+#endif
+	0,
+	crtc6845_vh_start,
+	crtc6845_vh_stop,
+	crtc6845_vh_screenrefresh,
+
+  /* sound hardware */
+	0, 0, 0, 0,
+	{
+		{ 0 }
+	}
+};
+
+static struct MachineDriver machine_driver_pet80pal =
+{
+  /* basic machine hardware */
+	{
+		{
+			CPU_M6502,
+			1000000,
+			pet80_readmem, pet80_writemem,
+			0, 0,
+			0, 0,
+			crtc6845_raster_irq, 15625,
+		},
+	},
+	50, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	0,
+	pet_init_machine,
+	pet_shutdown_machine,
+
+  /* video hardware */
+	640,							   /* screen width */
+	250,							   /* screen height */
+	{0, 640 - 1, 0, 250 - 1},		   /* visible_area */
+	pet_gfxdecodeinfo,			   /* graphics decode info */
+	sizeof (pet_palette) / sizeof (pet_palette[0]) / 3,
+	sizeof (pet_colortable) / sizeof(pet_colortable[0]),
+	pet_init_palette,				   /* convert color prom */
+#ifdef PET_TEST_CODE
+	VIDEO_TYPE_RASTER,
+#else
+	VIDEO_PIXEL_ASPECT_RATIO_1_2|VIDEO_TYPE_RASTER,
+#endif
+	0,
+	crtc6845_vh_start,
+	crtc6845_vh_stop,
+	crtc6845_vh_screenrefresh,
+
+  /* sound hardware */
+	0, 0, 0, 0,
+	{
+		{ 0 }
+	}
+};
+
+static struct MachineDriver machine_driver_superpet =
+{
+  /* basic machine hardware */
+	{
+#if 1
+		{
+			CPU_M6502,
+			1000000,
+			superpet_readmem, superpet_writemem,
+			0, 0,
+			0, 0,
+			crtc6845_raster_irq, 15625,
+		},
+#endif
+		{
+			CPU_M6809,
+			1000000,
+			superpet_m6809_readmem, superpet_m6809_writemem,
+		},
+	},
+	50, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	0,
+	pet_init_machine,
+	pet_shutdown_machine,
+
+  /* video hardware */
+	640,							   /* screen width */
+	250,							   /* screen height */
+	{0, 640 - 1, 0, 250 - 1},		   /* visible_area */
+	superpet_gfxdecodeinfo,			   /* graphics decode info */
 	sizeof (pet_palette) / sizeof (pet_palette[0]) / 3,
 	sizeof (pet_colortable) / sizeof(pet_colortable[0]),
 	pet_init_palette,				   /* convert color prom */
@@ -809,41 +1106,53 @@ static const struct IODevice io_pet2[] =
 #define init_pet1 pet_basic1_driver_init
 #define init_pet pet_driver_init
 #define init_pet40 pet40_driver_init
+#define init_superpet superpet_driver_init
 
 #define io_cbm30 io_pet2
 #define io_cbm30b io_pet2
 #define io_cbm40 io_pet2
+#define io_cbm40pal io_pet2
 #define io_cbm40b io_pet2
 #define io_cbm80 io_pet2
+#define io_cbm80pal io_pet2
 #define io_cbm80ger io_pet2
 #define io_cbm80swe io_pet2
+#define io_superpet io_pet2
+#define io_mmf9000 io_pet2
 
 #define rom_cbm30 rom_pet2
 #define rom_cbm30 rom_pet2
 #define rom_cbm30b rom_pet2b
-#define rom_cbm40 rom_pet4pal
+#define rom_cbm40 rom_pet4
+#define rom_cbm40pal rom_pet4pal
 #define rom_cbm40b rom_pet4b
 #define rom_cbm80 rom_pet80
-#define rom_cbm80ger rom_pet80ger
-#define rom_cbm80swe rom_pet80swe
+#define rom_cbm80pal rom_pet80pal
 
 #ifdef PET_TEST_CODE
-COMP (1977, 	pet, 		0, 		pet, 	pet, 	pet1, 	"Commodore Business Machines Co.",	"Commodore PET2001/CBM2000 Series (Basic 1)")
-COMP (1979, 	cbm30, 		pet, 	pet, 	pet, 	pet, 	"Commodore Business Machines Co.",	"Commodore CBM3000 Series (Basic 2)")
-COMP (1979, 	cbm30b, 	pet, 	pet, 	petb, 	pet, 	"Commodore Business Machines Co.",	"Commodore CBM3000 Series (Basic 2) (business keyboard)")
-COMP (198 ?, 	cbm40, 		pet, 	pet40, 	pet, 	pet40, 	"Commodore Business Machines Co.",	"Commodore CBM4000 FAT Series (CRTC 50Hz)")
-COMP (198 ?, 	cbm40b, 	pet, 	pet, 	petb, 	pet, 	"Commodore Business Machines Co.",	"Commodore CBM4000 THIN Series (business keyboard)")
-COMP (1980, 	cbm80, 		pet, 	pet80,	petb, 	pet40, 	"Commodore Business Machines Co.",	"Commodore CBM8000 60Hz")
-COMP (198 ?, 	cbm80ger, 	pet, 	pet80,	petb, 	pet40, 	"Commodore Business Machines Co.",	"Commodore CBM8000 German (50Hz)")
-COMP (198 ?, 	cbm80swe, 	pet, 	pet80,	petb, 	pet40, 	"Commodore Business Machines Co.",	"Commodore CBM8000 Swedish (50Hz)")
+COMP (1977, 	pet, 		0, 		pet,		pet,			pet1,		"Commodore Business Machines Co.",	"Commodore PET2001/CBM2000 Series (Basic 1)")
+COMP (1979, 	cbm30, 		pet, 	pet,		pet,			pet,		"Commodore Business Machines Co.",	"Commodore CBM3000 Series (Basic 2)")
+COMP (1979, 	cbm30b, 	pet, 	pet,		petb,			pet,		"Commodore Business Machines Co.",	"Commodore CBM3000 Series (Basic 2) (business keyboard)")
+COMP (198 ?, 	cbm40, 		pet, 	pet40,		pet,			pet40,		"Commodore Business Machines Co.",	"Commodore CBM4000 FAT Series (CRTC) 60Hz")
+COMP (198 ?, 	cbm40pal, 	pet, 	pet40pal, 	pet,			pet40,		"Commodore Business Machines Co.",	"Commodore CBM4000 FAT Series (CRTC) 50Hz")
+COMP (198 ?, 	cbm40b, 	pet, 	pet,		petb,			pet,		"Commodore Business Machines Co.",	"Commodore CBM4000 THIN Series (business keyboard)")
+COMP (1980, 	cbm80, 		pet, 	pet80,		petb,			pet40,		"Commodore Business Machines Co.",	"Commodore CBM8000 60Hz")
+COMP (1980, 	cbm80pal, 	pet, 	pet80pal,	 petb,			pet40,		"Commodore Business Machines Co.",	"Commodore CBM8000 50Hz")
+COMP (198 ?, 	cbm80ger, 	pet, 	pet80pal,	petb,			pet40,		"Commodore Business Machines Co.",	"Commodore CBM8000 German (50Hz)")
+COMP (198 ?, 	cbm80swe, 	pet, 	pet80pal,	petb,			pet40,		"Commodore Business Machines Co.",	"Commodore CBM8000 Swedish (50Hz)")
+COMP (198 ?, 	superpet, 	pet, 	superpet,	superpet,		superpet,	"Commodore Business Machines Co.",	"Commodore SP9000/MMF9000 (50Hz)")
+COMP (198 ?, 	mmf9000, 	pet, 	superpet,	superpet,		superpet,	"Commodore Business Machines Co.",	"Commodore Micro Mainframe 9000 (50Hz) Swedish")
 #else
-/*     YEAR 	NAME		PARENT	MACHINE	INPUT	INIT 	COMPANY   							FULLNAME */
-COMPX (1977,	pet, 		0,		pet, 	pet, 	pet1, 	"Commodore Business Machines Co.",	"Commodore PET2001/CBM2000 Series (Basic 1)", 				GAME_NO_SOUND)
-COMPX (1979,	cbm30, 		pet,	pet, 	pet, 	pet, 	"Commodore Business Machines Co.",	"Commodore CBM3000 Series (Basic 2)", 						GAME_NO_SOUND)
-COMPX (1979,	cbm30b, 	pet,	pet, 	petb, 	pet,	"Commodore Business Machines Co.",	"Commodore CBM3000 Series (Basic 2) (business keyboard)",	GAME_NO_SOUND)
-COMPX (198 ?,	cbm40, 		pet,	pet40, 	pet, 	pet40, 	"Commodore Business Machines Co.",	"Commodore CBM4000 FAT Series (CRTC 50Hz)", 				GAME_NO_SOUND)
-COMPX (198 ?,	cbm40b, 	pet,	pet, 	petb, 	pet, 	"Commodore Business Machines Co.",	"Commodore CBM4000 THIN Series (business keyboard)",		GAME_NO_SOUND)
-COMPX (1980,	cbm80, 		pet,	pet80, 	petb, 	pet40, 	"Commodore Business Machines Co.",	"Commodore CBM8000 60Hz", 									GAME_NO_SOUND)
-COMPX (198?,	cbm80ger,	pet,	pet80, 	petb, 	pet40, 	"Commodore Business Machines Co.",	"Commodore CBM8000 German (50Hz)", 							GAME_NO_SOUND)
-COMPX (198?,	cbm80swe,	pet,	pet80, 	petb, 	pet40, 	"Commodore Business Machines Co.",	"Commodore CBM8000 Swedish (50Hz)", 						GAME_NO_SOUND)
+/*     YEAR 	NAME		PARENT	MACHINE		INPUT	INIT 	COMPANY   							FULLNAME */
+COMPX (1977,	pet, 		0,		pet,		pet,			pet1, 	"Commodore Business Machines Co.",	"Commodore PET2001/CBM2000 Series (Basic 1)", 				GAME_NO_SOUND)
+COMPX (1979,	cbm30, 		pet,	pet,		pet,			pet, 	"Commodore Business Machines Co.",	"Commodore CBM3000 Series (Basic 2)", 						GAME_NO_SOUND)
+COMPX (1979,	cbm30b, 	pet,	pet,		petb,			pet,	"Commodore Business Machines Co.",	"Commodore CBM3000 Series (Basic 2) (business keyboard)",	GAME_NO_SOUND)
+COMPX (198 ?,	cbm40, 		pet,	pet40,		pet,			pet40,		"Commodore Business Machines Co.",	"Commodore CBM4000 FAT Series (CRTC) 60Hz", 			GAME_NO_SOUND)
+COMPX (198 ?,	cbm40pal, 	pet,	pet40pal, 	pet,			pet40, 	"Commodore Business Machines Co.",	"Commodore CBM4000 FAT Series (CRTC) 50Hz", 				GAME_NO_SOUND)
+COMPX (198 ?,	cbm40b, 	pet,	pet,		petb,			pet, 	"Commodore Business Machines Co.",	"Commodore CBM4000 THIN Series (business keyboard)",		GAME_NO_SOUND)
+COMPX (1980,	cbm80, 		pet,	pet80,		petb,			pet40, 	"Commodore Business Machines Co.",	"Commodore CBM8000 60Hz", 									GAME_NO_SOUND)
+COMPX (198?,	cbm80pal,	pet,	pet80pal, 	petb,			pet40, 	"Commodore Business Machines Co.",	"Commodore CBM8000 50Hz", 						           GAME_NO_SOUND)
+COMPX (198?,	cbm80ger,	pet,	pet80pal, 	petb,			pet40, 	"Commodore Business Machines Co.",	"Commodore CBM8000 German (50Hz)", 							GAME_NO_SOUND)
+COMPX (198?,	cbm80swe,	pet,	pet80pal, 	petb,			pet40, 	"Commodore Business Machines Co.",	"Commodore CBM8000 Swedish (50Hz)", 						GAME_NO_SOUND)
+COMPX (198 ?, 	superpet, 	pet, 	superpet,	superpet,		superpet,	"Commodore Business Machines Co.",	"Commodore SP9000/MMF9000 (50Hz)",                     GAME_NO_SOUND|GAME_NOT_WORKING )
 #endif
