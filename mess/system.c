@@ -570,6 +570,14 @@ TESTDRIVER( ti99_232 )	/* 1983 TI 99/2 								  */
 	/* CANTAB */
 	DRIVER( jupiter )	/* Jupiter Ace									  */
 
+        /* SORD */
+TESTDRIVER( sordm5 )
+
+        /* APF Electronics Inc. */
+
+TESTDRIVER( apfm1000 )
+TESTDRIVER( apfimag )
+
 	/* INTELLIGENT SOFTWARE */
 	DRIVER( ep128 ) 	/* Enterprise 128 k 							  */
 	DRIVER( ep128a )	/* Enterprise 128 k 							  */

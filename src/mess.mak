@@ -197,6 +197,8 @@ DRVLIBS = \
 	$(OBJ)/ti85.a     \
 	$(OBJ)/avigo.a    \
         $(OBJ)/amiga.a    \
+        $(OBJ)/apf.a      \
+        $(OBJ)/sord.a     \
 #	$(OBJ)/hp48.a     \
 
 
@@ -657,6 +659,13 @@ $(OBJ)/intv.a:     \
 	$(OBJ)/mess/machine/intv.o	\
 	$(OBJ)/mess/sndhrdw/intv.o	\
 	$(OBJ)/mess/systems/intv.o
+
+$(OBJ)/apf.a:      \
+	$(OBJ)/mess/systems/apf.o	\
+	$(OBJ)/mess/vidhrdw/apf.o
+
+$(OBJ)/sord.a:     \
+	$(OBJ)/mess/systems/sord.o
 
 # MESS specific core $(OBJ)s
 COREOBJS += \
