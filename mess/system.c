@@ -676,7 +676,7 @@ TESTDRIVER( psxe41 )
 	DRIVER(concept)		/* 1982 Corvus Concept								*/
 
 	/* DAI */
-TESTDRIVER(dai)			/* DAI												*/
+	DRIVER(dai)			/* DAI									*/
 
 /****************Games*******************************************************/
 	/* Computer Electronic */

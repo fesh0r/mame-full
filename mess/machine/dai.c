@@ -11,6 +11,7 @@
 
 #include <stdarg.h>
 #include "driver.h"
+#include "devices/cassette.h"
 #include "cpu/i8085/i8085.h"
 #include "includes/dai.h"
 #include "includes/pit8253.h"
@@ -34,14 +35,15 @@
 /* Discrete I/O devices */
 static UINT8 dai_noise_volume;
 static UINT8 dai_osc_volume[3];
-static UINT8 dai_cassette_data_output;
 static UINT8 dai_paddle_select;
 static UINT8 dai_paddle_enable;
 static UINT8 dai_cassette_motor[2];
 
 
-INTERRUPT_GEN( dai_vblank_int )
+static OPBASE_HANDLER(dai_opbaseoverride)
 {
+	tms5501_set_pio_bit_7 (0, (readinputport(8) & 0x04) ? 1:0);
+	return address;
 }
 
 /* Memory */
@@ -58,17 +60,24 @@ static void dai_bootstrap_callback (int param)
 	cpunum_set_reg(0, I8080_PC, 0xc000);
 }
 
-static UINT8 dai_keyboard_handler (UINT8 scan)
+static UINT8 dai_keyboard_scan_mask = 0;
+
+static UINT8 dai_keyboard_read (void)
 {
 	UINT8 data = 0x00;
 	int i;
 
 	for (i = 0; i < 8; i++)
 	{
-		if (scan & (1 << i))
+		if (dai_keyboard_scan_mask & (1 << i))
 			data |= readinputport(i);
 	}
 	return data;
+}
+
+static void dai_keyboard_write (UINT8 data)
+{
+	dai_keyboard_scan_mask = data;
 }
 
 static void dai_interrupt_callback(int intreq, UINT8 vector)
@@ -81,7 +90,8 @@ static void dai_interrupt_callback(int intreq, UINT8 vector)
 
 static const tms5501_init_param tms5501_init_param_dai =
 {
-	dai_keyboard_handler,
+	dai_keyboard_read,
+	dai_keyboard_write,
 	dai_interrupt_callback,
 	2000000.
 };
@@ -104,6 +114,8 @@ static PIT8253_CONFIG pit8253_intf =
 
 MACHINE_INIT( dai )
 {
+	memory_set_opbase_handler(0, dai_opbaseoverride);
+
 	memory_set_bankhandler_r(1, 0, MRA_BANK1);
 	memory_set_bankhandler_r(2, 0, MRA_BANK2);
 
@@ -159,6 +171,8 @@ READ_HANDLER( dai_io_discrete_devices_r )
 		data = readinputport(8);
 		data |= 0x08;	// serial ready
 		logerror ("Discrete devices read 0xfd00: %02x\n", data);
+		if (device_input(image_from_devtype_and_index(IO_CASSETTE, 0)) > 255)
+			data |= 0x80;
 		break;
 
 	default:
@@ -198,9 +212,10 @@ WRITE_HANDLER( dai_io_discrete_devices_w )
 #endif
 		dai_cassette_motor[0] = (data&0x10)>>4;
 		dai_cassette_motor[1] = (data&0x20)>>5;
-		dai_cassette_data_output = data&0x01;
+		device_status(image_from_devtype_and_index(IO_CASSETTE, 0), !dai_cassette_motor[0]);
+		device_output(image_from_devtype_and_index(IO_CASSETTE, 0), (data & 0x01) ? -32768 : 32767);
 #if LOG_TAPE
-		logerror ("Cassette: motor 1: %02x motor 2: %02x output: %02x\n", dai_cassette_motor[0], dai_cassette_motor[1], dai_cassette_data_output);
+		logerror ("Cassette: motor 1: %02x motor 2: %02x\n", dai_cassette_motor[0], dai_cassette_motor[1]);
 #endif
 		dai_update_memory ((data&0xc0)>>6);
 #if LOG_MEMORY
@@ -230,4 +245,14 @@ READ_HANDLER( amd9511_r )
 
 WRITE_HANDLER( amd9511_w )
 {
+}
+
+
+DEVICE_LOAD( dai_cassette )
+{
+	struct cassette_args args;
+	memset(&args, 0, sizeof(args));
+	args.initial_status = WAVE_STATUS_MOTOR_INHIBIT;
+	args.create_smpfreq = 44100;
+	return cassette_init(image, file, &args);
 }

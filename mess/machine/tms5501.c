@@ -5,9 +5,7 @@
 
 	TODO:
 	- SIO
-	- cleanup PIO
-	- timers should trigger interrupts when 0 is written to them
-	- external devices interrupts
+	- INTA
 	- status register
 */
 
@@ -33,7 +31,10 @@ typedef struct tms5501_t
 	UINT8 serial_rate;		//SIO configuration register
 	UINT8 serial_output_buffer;	//SIO output buffer
 
-	UINT8 keyboard_scanner_mask;	//PIO input buffer
+	UINT8 pio_input_buffer;		//PIO input buffer
+	UINT8 pio_output_buffer;	//PIO output buffer
+
+	UINT8 sensor;			//Sensor input
 
 	UINT8 interrupt_mask;		//interrupt mask register
 	UINT8 pending_interrupts;	//pending interrupts register
@@ -46,8 +47,9 @@ typedef struct tms5501_t
 
 	UINT8 int_ack;			//'1' - enables to accept a INTA signal from CPU
 
-	/* PIO handlers */
-	UINT8 (*keyboard_read_handler)(UINT8);
+	/* PIO callbacks */
+	UINT8 (*pio_read_callback)(void);
+	void (*pio_write_callback)(UINT8);
 
 	/* SIO handlers */
 
@@ -138,7 +140,8 @@ static void decrementer_callback_3(int which)
 
 static void decrementer_callback_4(int which)
 {
-	tms5501[which].pending_interrupts |= 0x80;
+	if (!tms5501[which].int7)
+		tms5501[which].pending_interrupts |= 0x80;
 	tms5501_field_interrupts(which);
 }
 
@@ -150,6 +153,7 @@ static void tms5501_timer_reload_0(int which)
 	}
 	else
 	{	/* clock interval == 0 -> no timer */
+		decrementer_callback_0(which);
 		timer_enable(tms5501[which].timer[0], 0);
 	}
 }
@@ -162,6 +166,7 @@ static void tms5501_timer_reload_1(int which)
 	}
 	else
 	{	/* clock interval == 0 -> no timer */
+		decrementer_callback_1(which);
 		timer_enable(tms5501[which].timer[1], 0);
 	}
 }
@@ -174,6 +179,7 @@ static void tms5501_timer_reload_2(int which)
 	}
 	else
 	{	/* clock interval == 0 -> no timer */
+		decrementer_callback_2(which);
 		timer_enable(tms5501[which].timer[2], 0);
 	}
 }
@@ -186,6 +192,7 @@ static void tms5501_timer_reload_3(int which)
 	}
 	else
 	{	/* clock interval == 0 -> no timer */
+		decrementer_callback_3(which);
 		timer_enable(tms5501[which].timer[3], 0);
 	}
 }
@@ -198,6 +205,7 @@ static void tms5501_timer_reload_4(int which)
 	}
 	else
 	{	/* clock interval == 0 -> no timer */
+		decrementer_callback_4(which);
 		timer_enable(tms5501[which].timer[4], 0);
 	}
 }
@@ -209,18 +217,16 @@ static void tms5501_reset (int which)
 	tms5501[which].status = 0;
 	tms5501[which].serial_rate = 0;
 	tms5501[which].serial_output_buffer = 0;
-	tms5501[which].keyboard_scanner_mask = 0;
+	tms5501[which].pio_input_buffer = 0;
+	tms5501[which].pio_output_buffer = 0;
         tms5501[which].pending_interrupts = 0;
 
 	for (i=0; i<5; i++)
+	{
 		tms5501[which].timer_counter[i] = 0;
+		timer_enable(tms5501[which].timer[i], 0);
+	}
 
-	tms5501_timer_reload_0(which);
-	tms5501_timer_reload_1(which);
-	tms5501_timer_reload_2(which);
-	tms5501_timer_reload_3(which);
-	tms5501_timer_reload_4(which);
-	
 	LOG_TMS5501(which, "Reset", 0);
 }
 
@@ -232,7 +238,9 @@ void tms5501_init (int which, const tms5501_init_param *param)
 	tms5501[which].timer[3] = timer_alloc(decrementer_callback_3);
 	tms5501[which].timer[4] = timer_alloc(decrementer_callback_4);
 
-	tms5501[which].keyboard_read_handler = param->keyboard_read_handler;
+	tms5501[which].pio_read_callback = param->pio_read_callback;
+	tms5501[which].pio_write_callback = param->pio_write_callback;
+
 	tms5501[which].clock_rate = param->clock_rate;
 	tms5501[which].interrupt_callback = param->interrupt_callback;
 
@@ -266,10 +274,25 @@ static void tms5501_serial_output (int which, UINT8 data)
 //	LOG_TMS5501(which, "Serial output data", data);
 }
 
-static void tms5501_keyboard_scanner (int which, UINT8 data)
+void tms5501_set_pio_bit_7 (int which, UINT8 data)
 {
-	tms5501[which].keyboard_scanner_mask = data;
-//	LOG_TMS5501(which, "Keyboard scanner mask:", data);
+	if (!(tms5501[which].pio_input_buffer & 0x80) && data && tms5501[which].int7)
+		tms5501[which].pending_interrupts |= 0x80;
+
+	tms5501[which].pio_input_buffer &= 0x7f;
+	if (data)
+		tms5501[which].pio_input_buffer |= 0x80;
+	tms5501_field_interrupts(which);
+}
+
+void tms5501_sensor (int which, UINT8 data)
+{
+	if (!(tms5501[which].sensor) && data)
+		tms5501[which].pending_interrupts |= 0x04;
+
+	tms5501[which].sensor = data;
+
+	tms5501_field_interrupts(which);
 }
 
 UINT8 tms5501_read (int which, UINT16 offset)
@@ -280,9 +303,10 @@ UINT8 tms5501_read (int which, UINT16 offset)
 		case 0x00:	// Serial input buffer
 			LOG_TMS5501(which, "Reading from serial input buffer", data);
 			break;
-		case 0x01:	// Keyboard input port, Page blanking signal
-			data = tms5501[which].keyboard_read_handler(tms5501[which].keyboard_scanner_mask);
-//			LOG_TMS5501(which, "Reading from keyboard.", data);
+		case 0x01:	// PIO input port
+			if (tms5501[which].pio_read_callback)
+				data = tms5501[which].pio_read_callback();
+			LOG_TMS5501(which, "Reading from PIO", data);
 			break;
 		case 0x02:	// Interrupt address register
 			data = tms5501[which].interrupt_address;
@@ -378,8 +402,11 @@ void tms5501_write (int which, UINT16 offset, UINT8 data)
 		case 0x06:	// Serial output buffer
 			tms5501_serial_output(which, data);
 			break;
-		case 0x07:	// Keyboard scanner mask
-			tms5501_keyboard_scanner (which, data);
+		case 0x07:	// PIO output
+			tms5501[which].pio_output_buffer = data;
+			if (tms5501[which].pio_write_callback)
+				tms5501[which].pio_write_callback(tms5501[which].pio_output_buffer);
+			LOG_TMS5501(which, "Writing to PIO", data);
 			break;
 		case 0x08:
 			// Interrupt mask register

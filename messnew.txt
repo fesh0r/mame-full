@@ -2,7 +2,7 @@
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
-(none)
+- DAI Personal Computer [Krzysztof Strzecha, Nate Woods]
 
 System Driver Changes:
 ----------------------
