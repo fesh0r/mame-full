@@ -1,3 +1,11 @@
+/*********************************************************************
+
+	pool.h
+
+	Utility code for maintaining memory pools and tagged memory pools
+
+*********************************************************************/
+
 #ifndef POOL_H
 #define POOL_H
 
@@ -9,7 +17,7 @@
 
 ***************************************************************************/
 
-typedef struct memory_pool_header *memory_pool;
+typedef struct _memory_pool *memory_pool;
 
 void pool_init(memory_pool *pool);
 void pool_exit(memory_pool *pool);

@@ -390,17 +390,17 @@ typedef struct ti990_iterator
 } ti990_iterator;
 
 
-static int ti990_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
+static imgtoolerr_t ti990_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
 static void ti990_image_exit(IMAGE *img);
 static void ti990_image_info(IMAGE *img, char *string, const int len);
-static int ti990_image_beginenum(IMAGE *img, IMAGEENUM **outenum);
-static int ti990_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
+static imgtoolerr_t ti990_image_beginenum(IMAGE *img, IMAGEENUM **outenum);
+static imgtoolerr_t ti990_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
 static void ti990_image_closeenum(IMAGEENUM *enumeration);
 static imgtoolerr_t ti990_image_freespace(IMAGE *img, size_t *size);
-static int ti990_image_readfile(IMAGE *img, const char *fpath, STREAM *destf);
-static int ti990_image_writefile(IMAGE *img, const char *fpath, STREAM *sourcef, option_resolution *writeoptions);
-static int ti990_image_deletefile(IMAGE *img, const char *fpath);
-static int ti990_image_create(const struct ImageModule *mod, STREAM *f, option_resolution *createoptions);
+static imgtoolerr_t ti990_image_readfile(IMAGE *img, const char *fpath, STREAM *destf);
+static imgtoolerr_t ti990_image_writefile(IMAGE *img, const char *fpath, STREAM *sourcef, option_resolution *writeoptions);
+static imgtoolerr_t ti990_image_deletefile(IMAGE *img, const char *fpath);
+static imgtoolerr_t ti990_image_create(const struct ImageModule *mod, STREAM *f, option_resolution *createoptions);
 
 enum
 {
@@ -1097,7 +1097,7 @@ static int qsort_catalog_compare(const void *p1, const void *p2)
 /*
 	Open a file as a ti990_image.
 */
-static int ti990_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
+static imgtoolerr_t ti990_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
 {
 	ti990_image *image;
 	disk_image_header header;
@@ -1198,7 +1198,7 @@ static void ti990_image_info(IMAGE *img, char *string, const int len)
 /*
 	Open the disk catalog for enumeration 
 */
-static int ti990_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
+static imgtoolerr_t ti990_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
 {
 	ti990_image *image = (ti990_image*) img;
 	ti990_iterator *iter;
@@ -1234,7 +1234,7 @@ static int ti990_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
 /*
 	Enumerate disk catalog next entry
 */
-static int ti990_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
+static imgtoolerr_t ti990_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 {
 	ti990_iterator *iter = (ti990_iterator*) enumeration;
 	int flag;
@@ -1475,11 +1475,11 @@ static imgtoolerr_t ti990_image_freespace(IMAGE *img, size_t *size)
 /*
 	Extract a file from a ti990_image.
 */
-static int ti990_image_readfile(IMAGE *img, const char *fpath, STREAM *destf)
+static imgtoolerr_t ti990_image_readfile(IMAGE *img, const char *fpath, STREAM *destf)
 {
 	ti990_image *image = (ti990_image*) img;
 	int catalog_index, fdr_secnum, parent_fdr_secnum;
-	int reply;
+	imgtoolerr_t reply;
 
 
 	reply = find_fdr(image, fpath, &catalog_index, &fdr_secnum, &parent_fdr_secnum);
@@ -1571,11 +1571,11 @@ static int ti990_image_readfile(IMAGE *img, const char *fpath, STREAM *destf)
 /*
 	Add a file to a ti990_image.
 */
-static int ti990_image_writefile(IMAGE *img, const char *fpath, STREAM *sourcef, option_resolution *writeoptions)
+static imgtoolerr_t ti990_image_writefile(IMAGE *img, const char *fpath, STREAM *sourcef, option_resolution *writeoptions)
 {
 	ti990_image *image = (ti990_image*) img;
 	int catalog_index, fdr_secnum, parent_fdr_secnum;
-	int reply;
+	imgtoolerr_t reply;
 
 
 	/* check that file does not exist */
@@ -1694,11 +1694,11 @@ static int ti990_image_writefile(IMAGE *img, const char *fpath, STREAM *sourcef,
 /*
 	Delete a file from a ti990_image.
 */
-static int ti990_image_deletefile(IMAGE *img, const char *fpath)
+static imgtoolerr_t ti990_image_deletefile(IMAGE *img, const char *fpath)
 {
 	ti990_image *image = (ti990_image*) img;
 	int catalog_index, fdr_secnum, parent_fdr_secnum;
-	int reply;
+	imgtoolerr_t reply;
 
 
 	reply = find_fdr(image, fpath, &catalog_index, &fdr_secnum, &parent_fdr_secnum);
@@ -1782,7 +1782,7 @@ static int ti990_image_deletefile(IMAGE *img, const char *fpath)
 /*
 	Create a blank ti990_image.
 */
-static int ti990_image_create(const struct ImageModule *mod, STREAM *f, option_resolution *createoptions)
+static imgtoolerr_t ti990_image_create(const struct ImageModule *mod, STREAM *f, option_resolution *createoptions)
 {
 	//const char *volname;
 	ti990_geometry geometry;

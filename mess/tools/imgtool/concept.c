@@ -128,17 +128,17 @@ typedef struct concept_iterator
 } concept_iterator;
 
 
-static int concept_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
+static imgtoolerr_t concept_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
 static void concept_image_exit(IMAGE *img);
 static void concept_image_info(IMAGE *img, char *string, const int len);
-static int concept_image_beginenum(IMAGE *img, IMAGEENUM **outenum);
-static int concept_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
+static imgtoolerr_t concept_image_beginenum(IMAGE *img, IMAGEENUM **outenum);
+static imgtoolerr_t concept_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
 static void concept_image_closeenum(IMAGEENUM *enumeration);
 static imgtoolerr_t concept_image_freespace(IMAGE *img, size_t *size);
-static int concept_image_readfile(IMAGE *img, const char *fname, STREAM *destf);
-/*static int concept_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, option_resolution *writeoptions);
-static int concept_image_deletefile(IMAGE *img, const char *fname);
-static int concept_image_create(const struct ImageModule *mod, STREAM *f, option_resolution *createoptions);*/
+static imgtoolerr_t concept_image_readfile(IMAGE *img, const char *fname, STREAM *destf);
+/*static imgtoolerr_t concept_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, option_resolution *writeoptions);
+static imgtoolerr_t concept_image_deletefile(IMAGE *img, const char *fname);
+static imgtoolerr_t concept_image_create(const struct ImageModule *mod, STREAM *f, option_resolution *createoptions);*/
 
 imgtoolerr_t concept_createmodule(imgtool_library *library)
 {
@@ -263,7 +263,7 @@ static int get_catalog_entry(concept_image *image, const unsigned char *fname, i
 /*
 	Open a file as a concept_image.
 */
-static int concept_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
+static imgtoolerr_t concept_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
 {
 	concept_image *image;
 	int reply;
@@ -335,7 +335,7 @@ static void concept_image_info(IMAGE *img, char *string, const int len)
 /*
 	Open the disk catalog for enumeration 
 */
-static int concept_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
+static imgtoolerr_t concept_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
 {
 	concept_image *image = (concept_image*) img;
 	concept_iterator *iter;
@@ -356,7 +356,7 @@ static int concept_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
 /*
 	Enumerate disk catalog next entry
 */
-static int concept_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
+static imgtoolerr_t concept_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 {
 	concept_iterator *iter = (concept_iterator*) enumeration;
 
@@ -450,7 +450,7 @@ static imgtoolerr_t concept_image_freespace(IMAGE *img, size_t *size)
 /*
 	Extract a file from a concept_image.
 */
-static int concept_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
+static imgtoolerr_t concept_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 {
 	concept_image *image = (concept_image *) img;
 	size_t fname_len = strlen(fname);
@@ -486,7 +486,7 @@ static int concept_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 /*
 	Add a file to a concept_image.
 */
-static int concept_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, option_resolution *writeoptions)
+static imgtoolerr_t concept_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, option_resolution *writeoptions)
 {
 	/* ... */
 
@@ -496,7 +496,7 @@ static int concept_image_writefile(IMAGE *img, const char *fname, STREAM *source
 /*
 	Delete a file from a concept_image.
 */
-static int concept_image_deletefile(IMAGE *img, const char *fname)
+static imgtoolerr_t concept_image_deletefile(IMAGE *img, const char *fname)
 {
 	/* ... */
 
@@ -506,7 +506,7 @@ static int concept_image_deletefile(IMAGE *img, const char *fname)
 /*
 	Create a blank concept_image.
 */
-static int concept_image_create(const struct ImageModule *mod, STREAM *f, option_resolution *createoptions)
+static imgtoolerr_t concept_image_create(const struct ImageModule *mod, STREAM *f, option_resolution *createoptions)
 {
 	/* ... */
 

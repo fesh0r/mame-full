@@ -165,28 +165,6 @@ static const struct CharInfo charinfo[] =
 	{ 0x2047,					NULL,			"??" },		/* double question mark */
 	{ 0x2048,					NULL,			"?!" },		/* question exclamation mark */
 	{ 0x2049,					NULL,			"!?" },		/* exclamation question mark */
-	{ UCHAR_MAMEKEY(F1),		"F1",			NULL },		/* F1 function key */
-	{ UCHAR_MAMEKEY(F2),		"F2",			NULL },		/* F2 function key */
-	{ UCHAR_MAMEKEY(F3),		"F3",			NULL },		/* F3 function key */
-	{ UCHAR_MAMEKEY(F4),		"F4",			NULL },		/* F4 function key */
-	{ UCHAR_MAMEKEY(F5),		"F5",			NULL },		/* F5 function key */
-	{ UCHAR_MAMEKEY(F6),		"F6",			NULL },		/* F6 function key */
-	{ UCHAR_MAMEKEY(F7),		"F7",			NULL },		/* F7 function key */
-	{ UCHAR_MAMEKEY(F8),		"F8",			NULL },		/* F8 function key */
-	{ UCHAR_MAMEKEY(F9),		"F9",			NULL },		/* F9 function key */
-	{ UCHAR_MAMEKEY(F10),		"F10",			NULL },		/* F10 function key */
-	{ UCHAR_MAMEKEY(F11),		"F11",			NULL },		/* F11 function key */
-	{ UCHAR_MAMEKEY(F12),		"F12",			NULL },		/* F12 function key */
-	{ UCHAR_MAMEKEY(F13),		"F13",			NULL },		/* F13 function key */
-	{ UCHAR_MAMEKEY(F14),		"F14",			NULL },		/* F14 function key */
-	{ UCHAR_MAMEKEY(F15),		"F15",			NULL },		/* F15 function key */
-	{ UCHAR_MAMEKEY(ESC),		"Esc",			"\032" },	/* esc key */
-	{ UCHAR_MAMEKEY(DEL),		"Delete",		"\010" },	/* delete key */
-	{ UCHAR_MAMEKEY(HOME),		"Home",			"\014" },	/* home key */
-	{ UCHAR_MAMEKEY(LSHIFT),	"Left Shift",	NULL },		/* left shift key */
-	{ UCHAR_MAMEKEY(RSHIFT),	"Right Shift",	NULL },		/* right shift key */
-	{ UCHAR_MAMEKEY(LCONTROL),	"Left Ctrl",	NULL },		/* left control key */
-	{ UCHAR_MAMEKEY(RCONTROL),	"Right Ctrl",	NULL },		/* right control key */
 	{ 0xff01,					NULL,			"!" },		/* fullwidth exclamation point */
 	{ 0xff02,					NULL,			"\"" },		/* fullwidth quotation mark */
 	{ 0xff03,					NULL,			"#" },		/* fullwidth number sign */
@@ -293,7 +271,29 @@ static const struct CharInfo charinfo[] =
 	{ 0xffeb,					NULL,			"\xE2\x86\x92" },	/* fullwidth right arrow */
 	{ 0xffec,					NULL,			"\xE2\x86\x93" },	/* fullwidth down arrow */
 	{ 0xffed,					NULL,			"\xE2\x96\xAA" },	/* fullwidth solid box */
-	{ 0xffee,					NULL,			"\xE2\x97\xA6" }	/* fullwidth open circle */	
+	{ 0xffee,					NULL,			"\xE2\x97\xA6" },	/* fullwidth open circle */	
+	{ UCHAR_MAMEKEY(F1),		"F1",			NULL },		/* F1 function key */
+	{ UCHAR_MAMEKEY(F2),		"F2",			NULL },		/* F2 function key */
+	{ UCHAR_MAMEKEY(F3),		"F3",			NULL },		/* F3 function key */
+	{ UCHAR_MAMEKEY(F4),		"F4",			NULL },		/* F4 function key */
+	{ UCHAR_MAMEKEY(F5),		"F5",			NULL },		/* F5 function key */
+	{ UCHAR_MAMEKEY(F6),		"F6",			NULL },		/* F6 function key */
+	{ UCHAR_MAMEKEY(F7),		"F7",			NULL },		/* F7 function key */
+	{ UCHAR_MAMEKEY(F8),		"F8",			NULL },		/* F8 function key */
+	{ UCHAR_MAMEKEY(F9),		"F9",			NULL },		/* F9 function key */
+	{ UCHAR_MAMEKEY(F10),		"F10",			NULL },		/* F10 function key */
+	{ UCHAR_MAMEKEY(F11),		"F11",			NULL },		/* F11 function key */
+	{ UCHAR_MAMEKEY(F12),		"F12",			NULL },		/* F12 function key */
+	{ UCHAR_MAMEKEY(F13),		"F13",			NULL },		/* F13 function key */
+	{ UCHAR_MAMEKEY(F14),		"F14",			NULL },		/* F14 function key */
+	{ UCHAR_MAMEKEY(F15),		"F15",			NULL },		/* F15 function key */
+	{ UCHAR_MAMEKEY(ESC),		"Esc",			"\032" },	/* esc key */
+	{ UCHAR_MAMEKEY(DEL),		"Delete",		"\010" },	/* delete key */
+	{ UCHAR_MAMEKEY(HOME),		"Home",			"\014" },	/* home key */
+	{ UCHAR_MAMEKEY(LSHIFT),	"Left Shift",	NULL },		/* left shift key */
+	{ UCHAR_MAMEKEY(RSHIFT),	"Right Shift",	NULL },		/* right shift key */
+	{ UCHAR_MAMEKEY(LCONTROL),	"Left Ctrl",	NULL },		/* left control key */
+	{ UCHAR_MAMEKEY(RCONTROL),	"Right Ctrl",	NULL }		/* right control key */
 };
 
 #define INVALID_CHAR '?'

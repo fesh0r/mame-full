@@ -9,77 +9,91 @@
 #include "driver.h"
 #include "machine/random.h"
 
-data16_t *mcu_ram;
+data16_t *mcu_ram; /* for calc3 and toybox */
 
 /***************************************************************************
+								Gals Panic (set 2)
+								Gals Panic (set 3)
 								Sand Scorpion
 ***************************************************************************/
 
-/*
-	MCU Tasks:
+/* see notes about this "calculator" implementation in drivers\galpanic.c */
 
-	- Collision detection (test if 2 rectangles overlap)
-	- Multiply 2 words, obtaining a long word
-	- Return a random value?
-*/
+static struct {
+	UINT16 x1p, y1p, x1s, y1s;
+	UINT16 x2p, y2p, x2s, y2s;
 
-READ16_HANDLER( sandscrp_mcu_ram_r )
+	INT16 x12, y12, x21, y21;
+
+	UINT16 mult_a, mult_b;
+} hit;
+
+READ16_HANDLER(galpanib_calc_r)
 {
-	switch( offset )
+	UINT16 data = 0;
+
+	switch (offset)
 	{
-		case 0x04/2:	// Bit 0: collision detection
-		{
-			/* First rectangle */
-			int x_10		=	mcu_ram[0x00/2];
-			int x_11		=	mcu_ram[0x02/2] + x_10;
-			int y_10		=	mcu_ram[0x04/2];
-			int y_11		=	mcu_ram[0x06/2] + y_10;
+		case 0x00/2: // watchdog
+			return watchdog_reset_r(0);
 
-			/* Second rectangle */
-			int x_20		=	mcu_ram[0x08/2];
-			int x_21		=	mcu_ram[0x0a/2] + x_20;
-			int y_20		=	mcu_ram[0x0c/2];
-			int y_21		=	mcu_ram[0x0e/2] + y_20;
+		case 0x04/2: // similar to the hit detection from SuperNova, but much simpler
 
-			/* Sign extend the words */
-			x_10 = (x_10 & 0x7fff) - (x_10 & 0x8000);
-			x_11 = (x_11 & 0x7fff) - (x_11 & 0x8000);
-			y_10 = (y_10 & 0x7fff) - (y_10 & 0x8000);
-			y_11 = (y_11 & 0x7fff) - (y_11 & 0x8000);
-			x_20 = (x_20 & 0x7fff) - (x_20 & 0x8000);
-			x_21 = (x_21 & 0x7fff) - (x_21 & 0x8000);
-			y_20 = (y_20 & 0x7fff) - (y_20 & 0x8000);
-			y_21 = (y_21 & 0x7fff) - (y_21 & 0x8000);
+			// X Absolute Collision
+			if      (hit.x1p >  hit.x2p)	data |= 0x0200;
+			else if (hit.x1p == hit.x2p)	data |= 0x0400;
+			else if (hit.x1p <  hit.x2p)	data |= 0x0800;
 
-			/* Check if they overlap */
-			if	(	( x_10 > x_21 ) || ( x_11 < x_20 ) ||
-					( y_10 > y_21 ) || ( y_11 < y_20 )	)
-				return 0;
-			else
-				return 1;
-		}
-		break;
+			// Y Absolute Collision
+			if      (hit.y1p >  hit.y2p)	data |= 0x2000;
+			else if (hit.y1p == hit.y2p)	data |= 0x4000;
+			else if (hit.y1p <  hit.y2p)	data |= 0x8000;
 
-		case 0x10/2:	// Multiply 2 words, obtain a long word.
+			// XY Overlap Collision
+			hit.x12 = (hit.x1p) - (hit.x2p + hit.x2s);
+			hit.y12 = (hit.y1p) - (hit.y2p + hit.y2s);
+			hit.x21 = (hit.x1p + hit.x1s) - (hit.x2p);
+			hit.y21 = (hit.y1p + hit.y1s) - (hit.y2p);
+
+			if ((hit.x12 < 0) && (hit.y12 < 0) &&
+				(hit.x21 >= 0) && (hit.y21 >= 0))
+					data |= 0x0001;
+
+			return data;
+
+		case 0x10/2:
+			return (((UINT32)hit.mult_a * (UINT32)hit.mult_b) >> 16);
 		case 0x12/2:
-		{
-			int res = mcu_ram[0x10/2] * mcu_ram[0x12/2];
-			if (offset == 0x10/2)	return (res >> 16) & 0xffff;
-			else					return (res >>  0) & 0xffff;
-		}
-		break;
+			return (((UINT32)hit.mult_a * (UINT32)hit.mult_b) & 0xffff);
 
-		case 0x14/2:	// Random?
+		case 0x14/2:
 			return (mame_rand() & 0xffff);
+
+		default:
+			logerror("CPU #0 PC %06x: warning - read unmapped calc address %06x\n",activecpu_get_pc(),offset<<1);
 	}
 
-	logerror("CPU #0 PC %06X : Unknown MCU word %04X read\n",activecpu_get_pc(),offset*2);
-	return mcu_ram[offset];
+	return 0;
 }
 
-WRITE16_HANDLER( sandscrp_mcu_ram_w )
+WRITE16_HANDLER(galpanib_calc_w)
 {
-	COMBINE_DATA(&mcu_ram[offset]);
+	switch (offset)
+	{
+		// p is position, s is size
+		case 0x00/2: hit.x1p    = data; break;
+		case 0x02/2: hit.x1s    = data; break;
+		case 0x04/2: hit.y1p    = data; break;
+		case 0x06/2: hit.y1s    = data; break;
+		case 0x08/2: hit.x2p    = data; break;
+		case 0x0a/2: hit.x2s    = data; break;
+		case 0x0c/2: hit.y2p    = data; break;
+		case 0x0e/2: hit.y2s    = data; break;
+		case 0x10/2: hit.mult_a = data; break;
+		case 0x12/2: hit.mult_b = data; break;
+		default:
+			logerror("CPU #0 PC %06x: warning - write unmapped hit address %06x\n",activecpu_get_pc(),offset<<1);
+	}
 }
 
 
@@ -335,7 +349,7 @@ First code snippet provided by the MCU:
 ---------------------------------------------------------------------------
 								TOYBOX
 
-94	Bonks Adventure				TOYBOX?		       TBSOP01
+94	Bonk's Adventure			TOYBOX?		       TBSOP01
 94	Blood Warrior				TOYBOX?		       TBS0P01 452 9339PK001
 94	Great 1000 Miles Rally		TOYBOX													"MM0525-TOYBOX199","USMM0713-TB1994 "
 95	Great 1000 Miles Rally 2	TOYBOX		KANEKO TBSOP02 454 9451MK002 (74 pin PQFP)	"USMM0713-TB1994 "

@@ -1,9 +1,16 @@
+#ifndef MBEE_H
+#define MBEE_H
+
+#include "devices/snapquik.h"
+
 /* from mess/machine/mbee.c */
 MACHINE_INIT( mbee );
 
 void mbee_interrupt(void);
 
 DEVICE_LOAD( mbee_cart );
+
+QUICKLOAD_LOAD( mbee );
 
  READ8_HANDLER ( mbee_pio_r );
 WRITE8_HANDLER ( mbee_pio_w );
@@ -38,3 +45,5 @@ WRITE8_HANDLER ( mbee_pcg_color_w );
 
 VIDEO_START( mbee );
 VIDEO_UPDATE( mbee );
+
+#endif /* MBEE_H */

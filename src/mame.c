@@ -276,9 +276,11 @@ int run_game(int game)
 
 	begin_resource_tracking();
 
+#ifndef MESS
 	/* validity checks -- perform these in all builds now due to the number of incorrect submissions */
 	if (mame_validitychecks())
 		return 1;
+#endif /* MESS */
 
 	/* first give the machine a good cleaning */
 	memset(Machine, 0, sizeof(Machine));

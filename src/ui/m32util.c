@@ -39,6 +39,21 @@
 /***************************************************************************
 	Internal structures
  ***************************************************************************/
+static struct DriversInfo
+{
+	BOOL isClone;
+	BOOL isBroken;
+	BOOL isHarddisk;
+	BOOL hasOptionalBIOS;
+	BOOL isStereo;
+	BOOL isMultiMon;
+	BOOL isVector;
+	BOOL usesRoms;
+	BOOL usesSamples;
+	BOOL usesTrackball;
+	BOOL usesLightGun;
+} *drivers_info = NULL;
+
 
 /***************************************************************************
 	Internal variables
@@ -283,168 +298,143 @@ const char * GetDriverFilename(int nIndex)
 	return tmp;
 }
 
+static struct DriversInfo* GetDriversInfo(int driver_index)
+{
+	if (drivers_info == NULL)
+	{
+		int ndriver, i;
+		drivers_info = malloc(sizeof(struct DriversInfo) * GetNumGames());
+		for (ndriver = 0; ndriver < GetNumGames(); ndriver++)
+		{
+			const struct GameDriver *gamedrv = drivers[ndriver];
+			struct DriversInfo *gameinfo = &drivers_info[ndriver];
+			const struct RomModule *region, *rom;
+			struct InternalMachineDriver drv;
+			const struct InputPort *input_ports;
+			gameinfo->isClone = ((gamedrv->clone_of->flags & NOT_A_DRIVER) == 0);
+			gameinfo->isBroken = ((gamedrv->flags & GAME_NOT_WORKING) != 0);
+			gameinfo->isHarddisk = FALSE;
+			for (region = rom_first_region(gamedrv); region; region = rom_next_region(region))
+				if (ROMREGION_ISDISKDATA(region))
+				{
+					gameinfo->isHarddisk = TRUE;
+					break;
+				}
+			gameinfo->hasOptionalBIOS = (gamedrv->bios != NULL);
+			expand_machine_driver(gamedrv->drv, &drv);
+			gameinfo->isStereo = ((drv.sound_attributes & SOUND_SUPPORTS_STEREO) != 0);
+			gameinfo->isMultiMon = ((drv.video_attributes & VIDEO_DUAL_MONITOR) != 0);
+			gameinfo->isVector = ((drv.video_attributes & VIDEO_TYPE_VECTOR) != 0);
+			gameinfo->usesRoms = FALSE;
+			for (region = rom_first_region(gamedrv); region; region = rom_next_region(region))
+				for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
+				{
+					gameinfo->usesRoms = TRUE; 
+					break; 
+				}
+			gameinfo->usesSamples = FALSE;
+#if (HAS_SAMPLES == 1) || (HAS_VLM5030 == 1)
+			for (i = 0; drv.sound[i].sound_type && i < MAX_SOUND; i++)
+			{
+				const char **samplenames = NULL;
+#if (HAS_SAMPLES == 1)
+				if (drv.sound[i].sound_type == SOUND_SAMPLES)
+					samplenames = ((struct Samplesinterface
+									*)drv.sound[i].sound_interface)->samplenames;
+#endif
+				/*
+				  #if (HAS_VLM5030 == 1)
+				  if (drv.sound[i].sound_type == SOUND_VLM5030)
+				  samplenames = ((struct VLM5030interface
+				  *)drv.sound[i].sound_interface)->samplenames;
+				  #endif
+				*/
+				if (samplenames != 0 && samplenames[0] != 0)
+				{
+					gameinfo->usesSamples = TRUE;
+					break;
+				}
+			}
+#endif
+			gameinfo->usesTrackball = FALSE;
+			gameinfo->usesLightGun = FALSE;
+			if (gamedrv->construct_ipt != NULL)
+			{
+				begin_resource_tracking();
+				input_ports = input_port_allocate(gamedrv->construct_ipt);
+				while (1)
+				{
+					UINT32 type;
+					type = input_ports->type;
+					if (type == IPT_END)
+						break;
+					if (type == IPT_DIAL || type == IPT_PADDLE || 
+						type == IPT_TRACKBALL_X || type == IPT_TRACKBALL_Y ||
+						type == IPT_AD_STICK_X || type == IPT_AD_STICK_Y)
+						gameinfo->usesTrackball = TRUE;
+					if (type == IPT_LIGHTGUN_X || type == IPT_LIGHTGUN_Y)
+						gameinfo->usesLightGun = TRUE;
+					input_ports++;
+				}
+				end_resource_tracking();
+			}
+		}
+	}
+	return &drivers_info[driver_index];
+}
+
 BOOL DriverIsClone(int driver_index)
 {
-	return (drivers[driver_index]->clone_of->flags & NOT_A_DRIVER) == 0;
+	 return GetDriversInfo(driver_index)->isClone;
 }
 
 BOOL DriverIsBroken(int driver_index)
 {
-	return (drivers[driver_index]->flags & GAME_NOT_WORKING) != 0;
+	return GetDriversInfo(driver_index)->isBroken;
 }
 
 BOOL DriverIsHarddisk(int driver_index)
 {
-	const struct RomModule *region;
-
-	const struct GameDriver *gamedrv = drivers[driver_index];
-
-	for (region = rom_first_region(gamedrv); region; region = rom_next_region(region))
-		if (ROMREGION_ISDISKDATA(region))
-			return TRUE;
-
-	return FALSE;	
+	return GetDriversInfo(driver_index)->isHarddisk;
 }
 
 BOOL DriverHasOptionalBIOS(int driver_index)
 {
-	const struct GameDriver *gamedrv = drivers[driver_index];
-
-	return gamedrv->bios != NULL;
+	return GetDriversInfo(driver_index)->hasOptionalBIOS;
 }
 
 BOOL DriverIsStereo(int driver_index)
 {
-    struct InternalMachineDriver drv;
-    expand_machine_driver(drivers[driver_index]->drv, &drv);
-	return (drv.sound_attributes & SOUND_SUPPORTS_STEREO) != 0;
+	return GetDriversInfo(driver_index)->isStereo;
 }
 BOOL DriverIsMultiMon(int driver_index)
 {
-    struct InternalMachineDriver drv;
-    expand_machine_driver(drivers[driver_index]->drv, &drv);
-	return (drv.video_attributes & VIDEO_DUAL_MONITOR) != 0;
+	return GetDriversInfo(driver_index)->isMultiMon;
 }
-
 
 BOOL DriverIsVector(int driver_index)
 {
-    struct InternalMachineDriver drv;
-    expand_machine_driver(drivers[driver_index]->drv, &drv);
-	return (drv.video_attributes & VIDEO_TYPE_VECTOR) != 0;
+	return GetDriversInfo(driver_index)->isVector;
 }
 
 BOOL DriverUsesRoms(int driver_index)
 {
-	const struct GameDriver *gamedrv = drivers[driver_index];
-	const struct RomModule *region, *rom;
-
-	for (region = rom_first_region(gamedrv); region; region = rom_next_region(region))
-		for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
-			return TRUE;
-	return FALSE;
+	return GetDriversInfo(driver_index)->usesRoms;
 }
 
 BOOL DriverUsesSamples(int driver_index)
 {
-#if (HAS_SAMPLES == 1) || (HAS_VLM5030 == 1)
-
-	int i;
-    struct InternalMachineDriver drv;
-
-	expand_machine_driver(drivers[driver_index]->drv,&drv);
-
-	for (i = 0; drv.sound[i].sound_type && i < MAX_SOUND; i++)
-	{
-		const char **samplenames = NULL;
-
-#if (HAS_SAMPLES == 1)
-		if (drv.sound[i].sound_type == SOUND_SAMPLES)
-			samplenames = ((struct Samplesinterface *)drv.sound[i].sound_interface)->samplenames;
-#endif
-
-        /*
-#if (HAS_VLM5030 == 1)
-		if (drv.sound[i].sound_type == SOUND_VLM5030)
-			samplenames = ((struct VLM5030interface *)drv.sound[i].sound_interface)->samplenames;
-#endif
-        */
-		if (samplenames != 0 && samplenames[0] != 0)
-			return TRUE;
-	}
-
-#endif
-
-	return FALSE;
+	return GetDriversInfo(driver_index)->usesSamples;
 }
 
 BOOL DriverUsesTrackball(int driver_index)
 {
-	const struct InputPort *input_ports;
-	BOOL retval = FALSE;
-
-	if (drivers[driver_index]->construct_ipt == NULL)
-		return FALSE;
-		
-	begin_resource_tracking();
-	input_ports = input_port_allocate(drivers[driver_index]->construct_ipt);
-
-	while (1)
-	{
-		UINT32 type;
-
-		type = input_ports->type;
-
-		if (type == IPT_END)
-			break;
-
-		if (type == IPT_DIAL || type == IPT_PADDLE || 
-			type == IPT_TRACKBALL_X || type == IPT_TRACKBALL_Y ||
-			type == IPT_AD_STICK_X || type == IPT_AD_STICK_Y)
-			{
-				retval = TRUE;
-				break;
-			}
-
-		input_ports++;
-	}
-
-	end_resource_tracking();
-
-	return retval;
+	return GetDriversInfo(driver_index)->usesTrackball;
 }
 
 BOOL DriverUsesLightGun(int driver_index)
 {
-	const struct InputPort *input_ports;
-	BOOL retval = FALSE;
-	if (drivers[driver_index]->construct_ipt == NULL)
-		return FALSE;
-
-	begin_resource_tracking();
-	input_ports = input_port_allocate(drivers[driver_index]->construct_ipt);
-
-	while (1)
-	{
-		UINT32 type;
-
-		type = input_ports->type;
-
-		if (type == IPT_END)
-			break;
-
-		if (type == IPT_LIGHTGUN_X || type == IPT_LIGHTGUN_Y)
-		{
-			retval = TRUE;
-			break;
-		}
-
-		input_ports++;
-	}
-
-	end_resource_tracking();
-
-	return retval;
+	return GetDriversInfo(driver_index)->usesLightGun;
 }
 
 

@@ -146,15 +146,6 @@ static void start_handler(void *data, const XML_Char *tagname, const XML_Char **
 
 			memset(&state->testcase, 0, sizeof(state->testcase));
 
-			/* 'name' attribute */
-			attr_name = "name";
-			s = find_attribute(attributes, attr_name);
-			if (!s)
-				goto missing_attribute;
-			state->testcase.name = pool_strdup(&state->pool, s);
-			if (!state->testcase.name)
-				goto outofmemory;
-
 			/* 'driver' attribute */
 			attr_name = "driver";
 			s = find_attribute(attributes, attr_name);
@@ -163,6 +154,20 @@ static void start_handler(void *data, const XML_Char *tagname, const XML_Char **
 			state->testcase.driver = pool_strdup(&state->pool, s);
 			if (!state->testcase.driver)
 				goto outofmemory;
+
+			/* 'name' attribute */
+			attr_name = "name";
+			s = find_attribute(attributes, attr_name);
+			if (s)
+			{
+				state->testcase.name = pool_strdup(&state->pool, s);
+				if (!state->testcase.name)
+					goto outofmemory;
+			}
+			else
+			{
+				state->testcase.name = state->testcase.driver;
+			}
 
 			/* 'ramsize' attribute */
 			s = find_attribute(attributes, "ramsize");

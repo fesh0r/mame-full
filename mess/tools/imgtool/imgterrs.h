@@ -2,7 +2,7 @@
 #define IMGTERRS_H
 
 /* Error codes */
-enum 
+typedef enum 
 {
 	IMGTOOLERR_SUCCESS,
 	IMGTOOLERR_OUTOFMEMORY,
@@ -23,9 +23,7 @@ enum
 	IMGTOOLERR_BADFILENAME,
 	IMGTOOLERR_NOSPACE,
 	IMGTOOLERR_INPUTPASTEND
-};
-
-typedef int imgtoolerr_t;
+} imgtoolerr_t;
 
 
 

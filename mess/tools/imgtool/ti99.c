@@ -3828,26 +3828,26 @@ typedef struct win_iterator
 } win_iterator;
 
 
-static int dsk_image_init_mess(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
-static int dsk_image_init_v9t9(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
-static int dsk_image_init_pc99_fm(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
-static int dsk_image_init_pc99_mfm(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
-static int win_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
+static imgtoolerr_t dsk_image_init_mess(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
+static imgtoolerr_t dsk_image_init_v9t9(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
+static imgtoolerr_t dsk_image_init_pc99_fm(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
+static imgtoolerr_t dsk_image_init_pc99_mfm(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
+static imgtoolerr_t win_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
 static void ti99_image_exit(IMAGE *img);
 static void ti99_image_info(IMAGE *img, char *string, const int len);
-static int dsk_image_beginenum(IMAGE *img, IMAGEENUM **outenum);
-static int dsk_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
+static imgtoolerr_t dsk_image_beginenum(IMAGE *img, IMAGEENUM **outenum);
+static imgtoolerr_t dsk_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
 static void dsk_image_closeenum(IMAGEENUM *enumeration);
-static int win_image_beginenum(IMAGE *img, IMAGEENUM **outenum);
-static int win_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
+static imgtoolerr_t win_image_beginenum(IMAGE *img, IMAGEENUM **outenum);
+static imgtoolerr_t win_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
 static void win_image_closeenum(IMAGEENUM *enumeration);
 static imgtoolerr_t ti99_image_freespace(IMAGE *img, size_t *size);
-static int ti99_image_readfile(IMAGE *img, const char *fpath, STREAM *destf);
-static int ti99_image_writefile(IMAGE *img, const char *fpath, STREAM *sourcef, option_resolution *writeoptions);
-static int dsk_image_deletefile(IMAGE *img, const char *fpath);
-static int win_image_deletefile(IMAGE *img, const char *fpath);
-static int dsk_image_create_mess(const struct ImageModule *mod, STREAM *f, option_resolution *createoptions);
-static int dsk_image_create_v9t9(const struct ImageModule *mod, STREAM *f, option_resolution *createoptions);
+static imgtoolerr_t ti99_image_readfile(IMAGE *img, const char *fpath, STREAM *destf);
+static imgtoolerr_t ti99_image_writefile(IMAGE *img, const char *fpath, STREAM *sourcef, option_resolution *writeoptions);
+static imgtoolerr_t dsk_image_deletefile(IMAGE *img, const char *fpath);
+static imgtoolerr_t win_image_deletefile(IMAGE *img, const char *fpath);
+static imgtoolerr_t dsk_image_create_mess(const struct ImageModule *mod, STREAM *f, option_resolution *createoptions);
+static imgtoolerr_t dsk_image_create_v9t9(const struct ImageModule *mod, STREAM *f, option_resolution *createoptions);
 
 enum
 {
@@ -4118,7 +4118,7 @@ static int dsk_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outi
 /*
 	Open a file as a ti99_image (MESS format).
 */
-static int dsk_image_init_mess(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
+static imgtoolerr_t dsk_image_init_mess(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
 {
 	return dsk_image_init(mod, f, outimg, if_mess);
 }
@@ -4126,7 +4126,7 @@ static int dsk_image_init_mess(const struct ImageModule *mod, STREAM *f, IMAGE *
 /*
 	Open a file as a ti99_image (V9T9 format).
 */
-static int dsk_image_init_v9t9(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
+static imgtoolerr_t dsk_image_init_v9t9(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
 {
 	return dsk_image_init(mod, f, outimg, if_v9t9);
 }
@@ -4134,7 +4134,7 @@ static int dsk_image_init_v9t9(const struct ImageModule *mod, STREAM *f, IMAGE *
 /*
 	Open a file as a ti99_image (PC99 FM format).
 */
-static int dsk_image_init_pc99_fm(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
+static imgtoolerr_t dsk_image_init_pc99_fm(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
 {
 	return dsk_image_init(mod, f, outimg, if_pc99_fm);
 }
@@ -4142,7 +4142,7 @@ static int dsk_image_init_pc99_fm(const struct ImageModule *mod, STREAM *f, IMAG
 /*
 	Open a file as a ti99_image (PC99 MFM format).
 */
-static int dsk_image_init_pc99_mfm(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
+static imgtoolerr_t dsk_image_init_pc99_mfm(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
 {
 	return dsk_image_init(mod, f, outimg, if_pc99_mfm);
 }
@@ -4150,7 +4150,7 @@ static int dsk_image_init_pc99_mfm(const struct ImageModule *mod, STREAM *f, IMA
 /*
 	Open a file as a ti99_image (harddisk format).
 */
-static int win_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
+static imgtoolerr_t win_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
 {
 	ti99_lvl2_imgref *image;
 	win_vib_ddr vib;
@@ -4246,7 +4246,7 @@ static void ti99_image_info(IMAGE *img, char *string, const int len)
 /*
 	Open the disk catalog for enumeration 
 */
-static int dsk_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
+static imgtoolerr_t dsk_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
 {
 	ti99_lvl2_imgref *image = (ti99_lvl2_imgref *) img;
 	dsk_iterator *iter;
@@ -4270,7 +4270,7 @@ static int dsk_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
 /*
 	Enumerate disk catalog next entry
 */
-static int dsk_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
+static imgtoolerr_t dsk_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 {
 	dsk_iterator *iter = (dsk_iterator*) enumeration;
 	dsk_fdr fdr;
@@ -4385,11 +4385,11 @@ static void dsk_image_closeenum(IMAGEENUM *enumeration)
 /*
 	Open the disk catalog for enumeration 
 */
-static int win_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
+static imgtoolerr_t win_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
 {
 	ti99_lvl2_imgref *image = (ti99_lvl2_imgref *) img;
 	win_iterator *iter;
-	int errorcode;
+	imgtoolerr_t errorcode;
 
 
 	iter = malloc(sizeof(win_iterator));
@@ -4412,7 +4412,7 @@ static int win_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
 /*
 	Enumerate disk catalog next entry
 */
-static int win_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
+static imgtoolerr_t win_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 {
 	win_iterator *iter = (win_iterator*) enumeration;
 	unsigned fdr_aphysrec;
@@ -4567,7 +4567,7 @@ static imgtoolerr_t ti99_image_freespace(IMAGE *img, size_t *size)
 /*
 	Extract a file from a ti99_image.  The file is saved in tifile format.
 */
-static int ti99_image_readfile(IMAGE *img, const char *fpath, STREAM *destf)
+static imgtoolerr_t ti99_image_readfile(IMAGE *img, const char *fpath, STREAM *destf)
 {
 #if 1
 
@@ -4579,7 +4579,7 @@ static int ti99_image_readfile(IMAGE *img, const char *fpath, STREAM *destf)
 	int fphysrecs;
 	int i;
 	UINT8 buf[256];
-	int errorcode;
+	imgtoolerr_t errorcode;
 
 
 	if (check_fpath(fpath))
@@ -4704,7 +4704,7 @@ static int ti99_image_readfile(IMAGE *img, const char *fpath, STREAM *destf)
 /*
 	Add a file to a ti99_image.  The file must be in tifile format.
 */
-static int ti99_image_writefile(IMAGE *img, const char *fpath, STREAM *sourcef, option_resolution *writeoptions)
+static imgtoolerr_t ti99_image_writefile(IMAGE *img, const char *fpath, STREAM *sourcef, option_resolution *writeoptions)
 {
 	ti99_lvl2_imgref *image = (ti99_lvl2_imgref *) img;
 	const char *fname;
@@ -4715,7 +4715,7 @@ static int ti99_image_writefile(IMAGE *img, const char *fpath, STREAM *sourcef, 
 	int i;
 	int fphysrecs;
 	UINT8 buf[256];
-	int errorcode;
+	imgtoolerr_t errorcode;
 	int parent_ref_valid, parent_ref;
 	ti99_catalog *catalog, catalog_buf;
 
@@ -4925,7 +4925,7 @@ static int ti99_image_writefile(IMAGE *img, const char *fpath, STREAM *sourcef, 
 /*
 	Delete a file from a ti99_image.
 */
-static int dsk_image_deletefile(IMAGE *img, const char *fpath)
+static imgtoolerr_t dsk_image_deletefile(IMAGE *img, const char *fpath)
 {
 	ti99_lvl2_imgref *image = (ti99_lvl2_imgref *) img;
 	dsk_fdr fdr;
@@ -4933,7 +4933,7 @@ static int dsk_image_deletefile(IMAGE *img, const char *fpath)
 	unsigned cur_AU, cluster_lastfphysrec;
 	int fphysrecs;
 	int parent_ref, is_dir, catalog_index;
-	int errorcode;
+	imgtoolerr_t errorcode;
 	UINT8 buf[256];
 	ti99_catalog *catalog;
 
@@ -5063,7 +5063,7 @@ static int dsk_image_deletefile(IMAGE *img, const char *fpath)
 	return 0;
 }
 
-static int win_image_deletefile(IMAGE *img, const char *fpath)
+static imgtoolerr_t win_image_deletefile(IMAGE *img, const char *fpath)
 {
 	ti99_lvl2_imgref *image = (ti99_lvl2_imgref *) img;
 	int parent_ddr_AU, is_dir, catalog_index;
@@ -5277,7 +5277,7 @@ static int win_image_deletefile(IMAGE *img, const char *fpath)
 
 	Supports MESS and V9T9 formats only
 */
-static int dsk_image_create(const struct ImageModule *mod, STREAM *f, option_resolution *createoptions, ti99_img_format img_format)
+static imgtoolerr_t dsk_image_create(const struct ImageModule *mod, STREAM *f, option_resolution *createoptions, ti99_img_format img_format)
 {
 	const char *volname;
 	int density;
@@ -5400,7 +5400,7 @@ static int dsk_image_create(const struct ImageModule *mod, STREAM *f, option_res
 /*
 	Create a blank ti99_image (MESS format).
 */
-static int dsk_image_create_mess(const struct ImageModule *mod, STREAM *f, option_resolution *createoptions)
+static imgtoolerr_t dsk_image_create_mess(const struct ImageModule *mod, STREAM *f, option_resolution *createoptions)
 {
 	return dsk_image_create(mod, f, createoptions, if_mess);
 }
@@ -5408,7 +5408,7 @@ static int dsk_image_create_mess(const struct ImageModule *mod, STREAM *f, optio
 /*
 	Create a blank ti99_image (V9T9 format).
 */
-static int dsk_image_create_v9t9(const struct ImageModule *mod, STREAM *f, option_resolution *createoptions)
+static imgtoolerr_t dsk_image_create_v9t9(const struct ImageModule *mod, STREAM *f, option_resolution *createoptions)
 {
 	return dsk_image_create(mod, f, createoptions, if_v9t9);
 }

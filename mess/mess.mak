@@ -916,7 +916,7 @@ MESSTEST_OBJS =								\
 	$(OBJ)/mess/tools/messtest/tststubs.o	\
 	$(OBJ)/mess/tools/messtest/tstutils.o	\
 
-IMGTOOL_OBJS =								\
+IMGTOOL_LIB_OBJS =							\
 	$(OBJ)/unzip.o							\
 	$(OBJ)/chd.o							\
 	$(OBJ)/harddisk.o						\
@@ -934,7 +934,6 @@ IMGTOOL_OBJS =								\
 	$(OBJ)/mess/formats/coco_cas.o			\
 	$(OBJ)/mess/formats/wavfile.o			\
 	$(OBJ)/mess/tools/imgtool/stubs.o		\
-	$(OBJ)/mess/tools/imgtool/main.o     \
 	$(OBJ)/mess/tools/imgtool/stream.o   \
 	$(OBJ)/mess/tools/imgtool/library.o  \
 	$(OBJ)/mess/tools/imgtool/modules.o  \
@@ -973,6 +972,10 @@ IMGTOOL_OBJS =								\
 #	  $(OBJ)/mess/tools/imgtool/rom16.o    \
 #	  $(OBJ)/mess/tools/imgtool/nccard.o   \
 #	  $(OBJ)/mess/tools/imgtool/ti85.o     \
+
+IMGTOOL_OBJS =							\
+	$(IMGTOOL_LIB_OBJS)					\
+	$(OBJ)/mess/tools/imgtool/main.o     \
 
 # text files
 TEXTS = sysinfo.htm

@@ -215,7 +215,7 @@ imgtoolerr_t img_freespace(IMAGE *img, int *sz)
 	return IMGTOOLERR_SUCCESS;
 }
 
-static int process_filter(STREAM **mainstream, STREAM **newstream, const struct ImageModule *imgmod, FILTERMODULE filter, int purpose)
+static imgtoolerr_t process_filter(STREAM **mainstream, STREAM **newstream, const struct ImageModule *imgmod, FILTERMODULE filter, int purpose)
 {
 	FILTER *f;
 
@@ -234,9 +234,11 @@ static int process_filter(STREAM **mainstream, STREAM **newstream, const struct 
 	return 0;
 }
 
-int img_readfile(IMAGE *img, const char *fname, STREAM *destf, FILTERMODULE filter)
+
+
+imgtoolerr_t img_readfile(IMAGE *img, const char *fname, STREAM *destf, FILTERMODULE filter)
 {
-	int err;
+	imgtoolerr_t err;
 	STREAM *newstream = NULL;
 
 	if (!img->module->read_file)

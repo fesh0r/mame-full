@@ -362,10 +362,18 @@ static void mbee_floppy_getinfo(struct IODevice *dev)
 	dev->load = device_load_basicdsk_floppy;
 }
 
+static void mbee_quickload_getinfo(struct IODevice *dev)
+{
+	/* quickload */
+	quickload_device_getinfo(dev, quickload_load_mbee, 0.0);
+	dev->file_extensions = "bin\0";
+}
+
 SYSTEM_CONFIG_START(mbee)
 	CONFIG_DEVICE(mbee_cassette_getinfo)
 	CONFIG_DEVICE(mbee_cartslot_getinfo)
 	CONFIG_DEVICE(mbee_floppy_getinfo)
+	/*CONFIG_DEVICE(mbee_quickload_getinfo)*/
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME      PARENT	COMPAT	MACHINE   INPUT     INIT      CONFIG	COMPANY   FULLNAME */

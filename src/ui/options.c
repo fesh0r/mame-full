@@ -647,7 +647,7 @@ BOOL OptionsInit()
 #endif /* MAME_DEBUG */
 
 	num_games = GetNumGames();
-	
+	code_init();
 	// Load all default settings
 	LoadDefaultOptions(regSettings);
 	LoadDefaultOptions(global_game_options);
@@ -914,7 +914,8 @@ void SyncInFolderOptions(options_type *opts, int folder_index)
 						//we have a source ini to create, so remove the ".c" at the end of the title
 						strncpy(title, ExtraFolderData[folder_index]->m_szTitle, strlen(ExtraFolderData[folder_index]->m_szTitle)-2 );
 						title[strlen(ExtraFolderData[folder_index]->m_szTitle)-2] = '\0';
-						snprintf(buffer,sizeof(buffer),"%s\\%s\\%s.ini",GetIniDir(),pParent, title );
+						//Core expects it there
+						snprintf(buffer,sizeof(buffer),"%s\\mame\\src\\drivers\\%s.ini",GetIniDir(), title );
 					}
 					else
 					{
@@ -1009,7 +1010,8 @@ options_type * GetSourceOptions(int driver_index )
 	//If it has source folder settings sync in the source\sourcefile.ini settings
 	strcpy(title, GetDriverFilename(driver_index) );
 	title[strlen(title)-2] = '\0';
-	snprintf(buffer,sizeof(buffer),"%s\\Source\\%s.ini",GetIniDir(),title );
+	//Core expects it there
+	snprintf(buffer,sizeof(buffer),"%s\\mame\\src\\drivers\\%s.ini",GetIniDir(), title );
 	SyncInGameOptions(&game_options[driver_index], buffer);
 	return &gOpts;
 }
@@ -1031,7 +1033,8 @@ options_type * GetGameOptions(int driver_index, int folder_index )
 	//If it has source folder settings sync in the source\sourcefile.ini settings
 	strcpy(title, GetDriverFilename(driver_index) );
 	title[strlen(title)-2] = '\0';
-	snprintf(buffer,sizeof(buffer),"%s\\Source\\%s.ini",GetIniDir(),title );
+	//Core expects it there
+	snprintf(buffer,sizeof(buffer),"%s\\mame\\src\\drivers\\%s.ini",GetIniDir(), title );
 	SyncInGameOptions(&game_options[driver_index], buffer);
 	//last but not least, sync in game specific settings
 	snprintf(buffer,sizeof(buffer),"%s\\%s.ini",GetIniDir(),drivers[driver_index]->name );
@@ -3213,7 +3216,8 @@ void LoadFolderOptions(int folder_index )
 						//we have a source ini to create, so remove the ".c" at the end of the title
 						strncpy(title, ExtraFolderData[folder_index]->m_szTitle, strlen(ExtraFolderData[folder_index]->m_szTitle)-2 );
 						title[strlen(ExtraFolderData[folder_index]->m_szTitle)-2] = '\0';
-						snprintf(buffer,sizeof(buffer),"%s\\%s\\%s.ini",GetIniDir(),pParent, title );
+						//Core expects it there
+						snprintf(buffer,sizeof(buffer),"%s\\mame\\src\\drivers\\%s.ini",GetIniDir(), title );
 					}
 					else
 					{
@@ -3606,25 +3610,41 @@ void SaveFolderOptions(int folder_index, int game_index)
 						//we have a source ini to create, so remove the ".c" at the end of the title
 						strncpy(title, ExtraFolderData[folder_index]->m_szTitle, strlen(ExtraFolderData[folder_index]->m_szTitle)-2 );
 						title[strlen(ExtraFolderData[folder_index]->m_szTitle)-2] = '\0';
-						snprintf(buffer,sizeof(buffer),"%s\\%s\\%s.ini",GetIniDir(),pParent, title );
+						//Core expects it there
+						snprintf(buffer,sizeof(buffer),"%s\\mame\\src\\drivers\\%s.ini",GetIniDir(), title );
+						snprintf(subdir,sizeof(subdir),"%s\\mame\\src\\drivers\\",GetIniDir() );
 					}
 					else
 					{
 						snprintf(buffer,sizeof(buffer),"%s\\%s\\%s.ini",GetIniDir(),pParent, ExtraFolderData[folder_index]->m_szTitle );
+						snprintf(subdir,sizeof(subdir),"%s\\%s",GetIniDir(),pParent );
 					}
 					inititle = strdup(ExtraFolderData[folder_index]->m_szTitle );
-					snprintf(subdir,sizeof(subdir),"%s\\%s",GetIniDir(),pParent );
 					//need to check if Subdirectory Exists
 					/* Don't allow empty entries. */
 					if (strcmp(subdir, ""))
 					{
-						/* Check validity of edited directory. */
-						if (! (stat(subdir, &file_stat) == 0
-						&&	(file_stat.st_mode & S_IFDIR)) )
-						{
-							//Create it
-							CreateDirectory( subdir, NULL );
-						}
+						char *tmp, tmp1[MAX_PATH];
+						tmp = strdup(subdir);
+						tmp = strtok(tmp,"\\");
+						strcpy(tmp1, tmp);
+						while( tmp != NULL)
+ 						{
+							/* Check validity of edited directory. */
+							if (! (stat(tmp1, &file_stat) == 0
+							&&	(file_stat.st_mode & S_IFDIR)) )
+							{
+								//Create all parts of it 
+								CreateDirectory( tmp1, NULL );
+							}
+							tmp = strtok(NULL,"\\");
+							if( tmp != NULL)
+							{
+								strcat(tmp1,"\\");
+								strcat(tmp1, tmp);
+							}
+ 						}
+						free(tmp);
 					}
 					break;
 				}
@@ -3662,9 +3682,21 @@ void SaveFolderOptions(int folder_index, int game_index)
 		//Check if SubDir
 		if( subdir )
 		{
-			//we just call rmdir on the subdir, if it is empty, it gets deleted, 
-			//otherwise it just stays as is
-			_rmdir( subdir );
+			//we just call rmdir on the subdirs, if they are empty, they get deleted, 
+ 			//otherwise it just stays as is
+			char *tmp, *tmp1;
+			int result;
+			tmp = strdup(subdir);
+			tmp1 = strrchr(tmp-1,'\\');
+			while( tmp != NULL && tmp1 != NULL)
+			{
+				_rmdir( tmp );
+				result = tmp1-tmp;
+				strncpy(tmp, subdir, result);
+				tmp[result] = '\0';
+				tmp1 = strrchr(tmp-1,'\\');
+			}
+			free(tmp);
  		}
  	}
 	if( inititle != NULL)

@@ -267,10 +267,16 @@ BOOL IsControlDifferent(HWND hDlg,HWND hwnd_ctrl,options_type *o,options_type *b
 	{
 		data_item = &dataMap[i];
 
+		// This assertion checks to see if encoded_var is actually on options_type
+		if (data_item->encoded_type != DM_NONE)
+		{
+			size_t offset;
+			offset = (char *)data_item->encoded_var - (char *)o;
+			assert(offset < sizeof(*o));
+		}
+
 		if (GetDlgItem(hDlg,data_item->dwCtrlId) != hwnd_ctrl)
 			continue;
-
-		assert(((char *)data_item->encoded_var - (char *)o) < sizeof(*o));
 
 		// found the item, now compare the value
 

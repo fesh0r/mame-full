@@ -116,8 +116,8 @@ typedef struct tagIMAGEENUM IMAGEENUM;
  *		read_or_write:		Open mode (use OSD_FOPEN_* constants)
  *		outimg:				Placeholder for image pointer
  */
-int img_open(const struct ImageModule *module, const char *fname, int read_or_write, IMAGE **outimg);
-int img_open_byname(imgtool_library *library, const char *modulename, const char *fname, int read_or_write, IMAGE **outimg);
+imgtoolerr_t img_open(const struct ImageModule *module, const char *fname, int read_or_write, IMAGE **outimg);
+imgtoolerr_t img_open_byname(imgtool_library *library, const char *modulename, const char *fname, int read_or_write, IMAGE **outimg);
 
 /* img_close
  *

@@ -1,3 +1,11 @@
+/*********************************************************************
+
+	pool.c
+
+	Utility code for maintaining memory pools and tagged memory pools
+
+*********************************************************************/
+
 #include <assert.h>
 #include <string.h>
 
@@ -15,10 +23,10 @@
 #define GUARD_BYTES
 #endif
 
-struct pool_memory_header
+struct _memory_pool
 {
-	struct pool_memory_header *next;
-	struct pool_memory_header **prev;
+	struct _memory_pool *next;
+	struct _memory_pool **prev;
 #ifdef GUARD_BYTES
 	size_t size;
 	UINT32 canary;
@@ -32,10 +40,10 @@ void pool_init(memory_pool *pool)
 
 void pool_exit(memory_pool *pool)
 {
-	struct pool_memory_header *mem;
-	struct pool_memory_header *next;
+	struct _memory_pool *mem;
+	struct _memory_pool *next;
 
-	mem = (struct pool_memory_header *) *pool;
+	mem = (struct _memory_pool *) *pool;
 	while(mem)
 	{
 #ifdef GUARD_BYTES
@@ -51,17 +59,17 @@ void pool_exit(memory_pool *pool)
 
 void *pool_realloc(memory_pool *pool, void *ptr, size_t size)
 {
-	struct pool_memory_header *block;
+	struct _memory_pool *block;
 	size_t actual_size;
 
-	actual_size = sizeof(struct pool_memory_header) + size;
+	actual_size = sizeof(struct _memory_pool) + size;
 #ifdef GUARD_BYTES
 	actual_size += sizeof(block->canary);
 #endif
 
 	if (ptr)
 	{
-		block = ((struct pool_memory_header *) ptr) - 1;
+		block = ((struct _memory_pool *) ptr) - 1;
 #ifdef GUARD_BYTES
 		assert(block->canary == 0xdeadbeef);
 #endif
@@ -74,8 +82,8 @@ void *pool_realloc(memory_pool *pool, void *ptr, size_t size)
 		block = malloc(actual_size);
 		if (!block)
 			return NULL;
-		block->next = (struct pool_memory_header *) *pool;
-		block->prev = (struct pool_memory_header **) pool;
+		block->next = (struct _memory_pool *) *pool;
+		block->prev = (struct _memory_pool **) pool;
 	}
 	if (block->next)
 		block->next->prev = &block->next;
@@ -113,9 +121,9 @@ char *pool_strdup_len(memory_pool *pool, const char *src, size_t len)
 
 void pool_freeptr(memory_pool *pool, void *ptr)
 {
-	struct pool_memory_header *block;
+	struct _memory_pool *block;
 
-	block = ((struct pool_memory_header *) ptr) - 1;
+	block = ((struct _memory_pool *) ptr) - 1;
 
 	if (block->next)
 		block->next->prev = block->prev;

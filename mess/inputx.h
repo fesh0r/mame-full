@@ -35,9 +35,14 @@ enum
 
 ***************************************************************************/
 
-#define UCHAR_SHIFT_1		(0xf700)
-#define UCHAR_SHIFT_2		(0xf701)
-#define UCHAR_MAMEKEY_BEGIN	(0xf702)
+/* MESS uses Supplementary private use B to represent code points
+ * corresponding to MAME keycodes and shift keys.  The nice thing about
+ * supplemental private use B is that it is higher than any possible code
+ * points */
+#define UCHAR_PRIVATE		(0x100000)
+#define UCHAR_SHIFT_1		(UCHAR_PRIVATE + 0)
+#define UCHAR_SHIFT_2		(UCHAR_PRIVATE + 1)
+#define UCHAR_MAMEKEY_BEGIN	(UCHAR_PRIVATE + 2)
 #define UCHAR_MAMEKEY_END	(UCHAR_MAMEKEY_BEGIN + __code_key_last)
 #define UCHAR_MAMEKEY(code)	(UCHAR_MAMEKEY_BEGIN + KEYCODE_##code)
 

@@ -1405,17 +1405,17 @@ typedef struct floppy_tag_record
 								/* (DV17 says "disk block number", but it cannot be true) */
 } floppy_tag_record;
 
-static int mfs_image_open(mac_l2_imgref *l2_img, img_open_buf *buf);
-static int hfs_image_open(mac_l2_imgref *l2_img, img_open_buf *buf);
+static imgtoolerr_t mfs_image_open(mac_l2_imgref *l2_img, img_open_buf *buf);
+static imgtoolerr_t hfs_image_open(mac_l2_imgref *l2_img, img_open_buf *buf);
 static void hfs_image_close(mac_l2_imgref *l2_img);
-static int mfs_file_get_nth_block_address(mac_fileref *fileref, UINT32 block_num, UINT32 *block_address);
-static int hfs_file_get_nth_block_address(mac_fileref *fileref, UINT32 block_num, UINT32 *block_address);
-static int mfs_resolve_fpath(mac_l2_imgref *l2_img, const char *fpath, mac_str255 fname, mac_cat_info *cat_info, int create_it);
-static int hfs_resolve_fpath(mac_l2_imgref *l2_img, const char *fpath, UINT32 *parID, mac_str255 fname, mac_cat_info *cat_info);
-static int mfs_file_open(mac_l2_imgref *l2_img, const mac_str255 fname, mac_forkID fork, mac_fileref *fileref);
-static int hfs_file_open(mac_l2_imgref *l2_img, UINT32 parID, const mac_str255 fname, mac_forkID fork, mac_fileref *fileref);
-static int mfs_file_setABeof(mac_fileref *fileref, UINT32 newABeof);
-static int mfs_dir_update(mac_fileref *fileref);
+static imgtoolerr_t mfs_file_get_nth_block_address(mac_fileref *fileref, UINT32 block_num, UINT32 *block_address);
+static imgtoolerr_t hfs_file_get_nth_block_address(mac_fileref *fileref, UINT32 block_num, UINT32 *block_address);
+static imgtoolerr_t mfs_resolve_fpath(mac_l2_imgref *l2_img, const char *fpath, mac_str255 fname, mac_cat_info *cat_info, int create_it);
+static imgtoolerr_t hfs_resolve_fpath(mac_l2_imgref *l2_img, const char *fpath, UINT32 *parID, mac_str255 fname, mac_cat_info *cat_info);
+static imgtoolerr_t mfs_file_open(mac_l2_imgref *l2_img, const mac_str255 fname, mac_forkID fork, mac_fileref *fileref);
+static imgtoolerr_t hfs_file_open(mac_l2_imgref *l2_img, UINT32 parID, const mac_str255 fname, mac_forkID fork, mac_fileref *fileref);
+static imgtoolerr_t mfs_file_setABeof(mac_fileref *fileref, UINT32 newABeof);
+static imgtoolerr_t mfs_dir_update(mac_fileref *fileref);
 
 /*
 	mac_image_open
@@ -3186,15 +3186,15 @@ typedef struct BT_leaf_rec_enumerator
 	int cur_rec;
 } BT_leaf_rec_enumerator;
 
-static int BT_open(mac_BTref *BTref, int (*key_compare_func)(const void *key1, const void *key2), int is_extent);
+static imgtoolerr_t BT_open(mac_BTref *BTref, int (*key_compare_func)(const void *key1, const void *key2), int is_extent);
 static void BT_close(mac_BTref *BTref);
-static int BT_search_leaf_rec(mac_BTref *BTref, const void *search_key,
+static imgtoolerr_t BT_search_leaf_rec(mac_BTref *BTref, const void *search_key,
 								UINT32 *node_ID, int *record_ID,
 								void **record_ptr, int *record_len,
 								int search_exact_match, int *match_found);
-static int BT_get_keyed_record_data(mac_BTref *BTref, void *rec_ptr, int rec_len, void **data_ptr, int *data_len);
-static int BT_leaf_rec_enumerator_open(mac_BTref *BTref, BT_leaf_rec_enumerator *enumerator);
-static int BT_leaf_rec_enumerator_read(BT_leaf_rec_enumerator *enumerator, void **record_ptr, int *rec_len);
+static imgtoolerr_t BT_get_keyed_record_data(mac_BTref *BTref, void *rec_ptr, int rec_len, void **data_ptr, int *data_len);
+static imgtoolerr_t BT_leaf_rec_enumerator_open(mac_BTref *BTref, BT_leaf_rec_enumerator *enumerator);
+static imgtoolerr_t BT_leaf_rec_enumerator_read(BT_leaf_rec_enumerator *enumerator, void **record_ptr, int *rec_len);
 
 typedef struct hfs_cat_enumerator
 {

@@ -150,7 +150,7 @@ static UINT32 imgtool_chd_write(struct chd_interface_file *file, UINT64 offset, 
 
 	Create a MAME HD image
 */
-static int imghd_create(STREAM *stream, UINT64 logicalbytes, UINT32 hunkbytes, UINT32 compression)
+static imgtoolerr_t imghd_create(STREAM *stream, UINT64 logicalbytes, UINT32 hunkbytes, UINT32 compression)
 {
 	char encoded_image_ref[encoded_image_ref_max_len];
 	struct chd_interface interface_save;
@@ -169,9 +169,11 @@ static int imghd_create(STREAM *stream, UINT64 logicalbytes, UINT32 hunkbytes, U
 	return reply ? IMGTOOLERR_UNEXPECTED : 0;
 }
 
-int imghd_create_base_v1_v2(STREAM *stream, UINT32 version, UINT32 blocksize, UINT32 cylinders, UINT32 heads, UINT32 sectors, UINT32 seclen)
+
+
+imgtoolerr_t imghd_create_base_v1_v2(STREAM *stream, UINT32 version, UINT32 blocksize, UINT32 cylinders, UINT32 heads, UINT32 sectors, UINT32 seclen)
 {
-	int errorcode;
+	imgtoolerr_t errorcode;
 	char *buf;
 	void *disk;
 	UINT32 tot_sectors;
@@ -307,7 +309,7 @@ const struct hard_disk_info *imghd_get_header(struct hard_disk_file *disk)
 }
 
 
-static int mess_hd_image_create(const struct ImageModule *mod, STREAM *f, option_resolution *createoptions);
+static imgtoolerr_t mess_hd_image_create(const struct ImageModule *mod, STREAM *f, option_resolution *createoptions);
 
 enum
 {
@@ -380,6 +382,8 @@ IMAGEMODULE(
 )
 #endif
 
+
+
 imgtoolerr_t mess_hd_createmodule(imgtool_library *library)
 {
 	imgtoolerr_t err;
@@ -400,7 +404,9 @@ imgtoolerr_t mess_hd_createmodule(imgtool_library *library)
 	return IMGTOOLERR_SUCCESS;
 }
 
-static int mess_hd_image_create(const struct ImageModule *mod, STREAM *f, option_resolution *createoptions)
+
+
+static imgtoolerr_t mess_hd_image_create(const struct ImageModule *mod, STREAM *f, option_resolution *createoptions)
 {
 	UINT32  version, blocksize, cylinders, heads, sectors, seclen;
 

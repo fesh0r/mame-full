@@ -1,4 +1,4 @@
-0.86.1
+0.87
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
@@ -8,6 +8,8 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
+- [APPLE1] Added natural keyboard support.  [Nate Woods]
+
 - [AMSTRAD] M6845 changes; the Backtro demo now runs.  [bobz, Nate Woods]
 
 - [NESPAL] Fixed a major slowdown that only affected the PAL version of the
@@ -36,7 +38,7 @@ Imgtool Changes:
 
 Source Changes:
 ----------------
-- The core is based on MAME 0.86u5.  This incorporates all features of the
+- The core is based on MAME 0.87.  This incorporates all features of the
   update to this core.  [MAME team]
 
 - Major changes to the IODevice structure; made major changes to how they are

@@ -182,6 +182,7 @@ HBRUSH highlight_brush = NULL;
 HBRUSH background_brush = NULL;
 #define VECTOR_COLOR RGB( 190, 0, 0) //DARK RED
 #define FOLDER_COLOR RGB( 0, 128, 0 ) // DARK GREEN
+#define PARENT_COLOR RGB( 190, 128, 192 ) // PURPLE
 #define GAME_COLOR RGB( 0, 128, 192 ) // DARK BLUE
 
 BOOL PropSheetFilter_Vector(const struct InternalMachineDriver *drv, const struct GameDriver *gamedrv)
@@ -433,7 +434,7 @@ void InitDefaultPropertyPage(HINSTANCE hInst, HWND hWnd)
 	PROPSHEETHEADER pshead;
 	PROPSHEETPAGE   *pspage;
 
-	g_nGame = -1;
+	g_nGame = GLOBAL_OPTIONS;
 
 	/* Get default options to populate property sheets */
 	pGameOpts = GetDefaultOptions(-1, FALSE);
@@ -553,7 +554,7 @@ void InitPropertyPageToPage(HINSTANCE hInst, HWND hWnd, int game_num, HICON hIco
 			pGameOpts = GetFolderOptions( game_num, FALSE );
 		}
 		/* Stash the result for comparing later */
-		g_nGame = -2;
+		g_nGame = FOLDER_OPTIONS;
 		CopyGameOptions(pGameOpts,&origGameOpts);
 	}
 	orig_uses_defaults = g_bUseDefaults;
@@ -907,9 +908,9 @@ char *GameInfoTitle(UINT nIndex)
 {
 	static char buf[1024];
 
-	if (nIndex == -1)
+	if (nIndex == GLOBAL_OPTIONS)
 		strcpy(buf, "Global game options\nDefault options used by all games");
-	else if (nIndex == -2)
+	else if (nIndex == FOLDER_OPTIONS)
 		strcpy(buf, "Global folder options\nDefault options used by all games in the folder");
 	else
 		sprintf(buf, "%s\n\"%s\"", ModifyThe(drivers[nIndex]->description), drivers[nIndex]->name); 
@@ -1004,6 +1005,7 @@ static BOOL ReadSkipCtrl(HWND hWnd, UINT nCtrlID, int *value)
 INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
 	RECT rc;
+	int nParentIndex = -1;
 	switch (Msg)
 	{
 	case WM_INITDIALOG:
@@ -1028,7 +1030,7 @@ INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 				g_bUseDefaults = TRUE;
 			}
 		}
-		if( g_nGame == -2)
+		if( g_nGame == FOLDER_OPTIONS)
 		{
 			if( g_nFolder == FOLDER_VECTOR )
 			{
@@ -1054,7 +1056,7 @@ INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 			}
 		}
 		SetPropEnabledControls(hDlg);
-		if (g_nGame == -1)
+		if (g_nGame == GLOBAL_OPTIONS)
 			ShowWindow(GetDlgItem(hDlg, IDC_USE_DEFAULT), SW_HIDE);
 		else
 			EnableWindow(GetDlgItem(hDlg, IDC_USE_DEFAULT), (g_bUseDefaults) ? FALSE : TRUE);
@@ -1178,25 +1180,37 @@ INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 				break;
 
 			case IDC_USE_DEFAULT:
-				if (g_nGame != -1)
+				if (g_nGame != GLOBAL_OPTIONS)
 				{
-					if( g_nGame != -2 )
+					if( g_nGame != FOLDER_OPTIONS )
 					{
 						SetGameUsesDefaults(g_nGame,TRUE);
-						CopyGameOptions(GetSourceOptions(g_nGame), pGameOpts);
+						if( DriverIsClone(g_nGame) )
+						{
+							int nParentIndex = -1;
+							nParentIndex = GetGameNameIndex( drivers[g_nGame]->clone_of->name );
+							if( nParentIndex >= 0)
+								CopyGameOptions(GetGameOptions(nParentIndex, g_nFolder), pGameOpts );
+							else
+								//No Parent found, use source
+								CopyGameOptions(GetSourceOptions(g_nGame), pGameOpts);
+						}
+						else
+							//No Parent found, use source
+							CopyGameOptions(GetSourceOptions(g_nGame), pGameOpts);
 						g_bUseDefaults = TRUE;
 					}
 					else
 					{
 						SetGameUsesDefaults(g_nGame,TRUE);
 						if( g_nFolder == FOLDER_VECTOR)
-							CopyGameOptions(GetDefaultOptions(-1, TRUE), pGameOpts);
+							CopyGameOptions(GetDefaultOptions(GLOBAL_OPTIONS, TRUE), pGameOpts);
 						//Not Vector Folder, but Source Folder of Vector Games
 						else if ( DriverIsVector(g_nFolderGame) )
 							CopyGameOptions(GetVectorOptions(), pGameOpts);
 						// every other folder
 						else
-							CopyGameOptions(GetDefaultOptions(-1, FALSE), pGameOpts);
+							CopyGameOptions(GetDefaultOptions(GLOBAL_OPTIONS, FALSE), pGameOpts);
 						g_bUseDefaults = TRUE;
 					}
 					BuildDataMap();
@@ -1284,9 +1298,9 @@ INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 			/* Save and apply the options here */
 			PropToOptions(hDlg, pGameOpts);
 			ReadControls(hDlg);
-			if (g_nGame == -1)
+			if (g_nGame == GLOBAL_OPTIONS)
 				pGameOpts = GetDefaultOptions(g_nGame, FALSE);
-			else if (g_nGame == -2)
+			else if (g_nGame == FOLDER_OPTIONS)
 				pGameOpts = pGameOpts;
 				//origGameOpts = GetFolderOptions(g_nFolder);
 			else
@@ -1336,6 +1350,13 @@ INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 		break;
 	case WM_CTLCOLORSTATIC :
 	case WM_CTLCOLOREDIT :
+		if( g_nGame>=0)
+		{
+			if( DriverIsClone(g_nGame) )
+			{
+				nParentIndex = GetGameNameIndex( drivers[g_nGame]->clone_of->name );
+			}
+		}
 		//Set the Coloring of the elements
 		if( GetControlID(hDlg,(HWND)lParam) < 0)
 			break;
@@ -1351,6 +1372,10 @@ INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 		else if (IsControlOptionValue(hDlg,(HWND)lParam, GetSourceOptions(g_nFolderGame ) ) )
 		{
 			SetTextColor((HDC)wParam,FOLDER_COLOR);
+		}
+		else if ((nParentIndex >=0) && (IsControlOptionValue(hDlg,(HWND)lParam, GetGameOptions(nParentIndex, g_nFolder ) ) ) )
+		{
+			SetTextColor((HDC)wParam,PARENT_COLOR);
 		}
 //		else if ( (g_nGame >= 0) && (IsControlOptionValue(hDlg,(HWND)lParam, GetGameOptions(g_nGame, g_nFolder) ) ) )
 		else if ( (g_nGame >= 0) && (IsControlOptionValue(hDlg,(HWND)lParam, &origGameOpts ) ) )
@@ -2231,15 +2256,10 @@ static void BuildDataMap(void)
 	DataMapAdd(IDC_D3D_ROTATE_EFFECTS,DM_BOOL,CT_BUTTON,&pGameOpts->d3d_rotate_effects,DM_BOOL,&pGameOpts->d3d_rotate_effects, 0, 0, 0);
 	DataMapAdd(IDC_D3D_SCANLINES_ENABLE,DM_BOOL, CT_BUTTON, &g_d3d_scanlines_enable, DM_BOOL, &pGameOpts->d3d_scanlines, 0, 0, 0);
 	DataMapAdd(IDC_D3D_SCANLINES, DM_INT,  CT_SLIDER,   &g_d3d_scanlines,          DM_INT, &pGameOpts->d3d_scanlines, 0, 0, AssignD3DScanlines);
-
-//	NPW 28-Aug-2004 - Commenting this out because it seems to cause crashes	
-//	DataMapAdd(IDC_D3D_SCANLINES_DISP, DM_NONE,  CT_NONE,   NULL, DM_INT, &g_d3d_scanlines, 0, 0, 0);
-
+	DataMapAdd(IDC_D3D_SCANLINES_DISP, DM_NONE,  CT_NONE,   NULL, DM_NONE, NULL, 0, 0, 0);
 	DataMapAdd(IDC_D3D_FEEDBACK_ENABLE,DM_BOOL, CT_BUTTON, &g_d3d_feedback_enable, DM_BOOL, &pGameOpts->d3d_feedback, 0, 0, 0);
 	DataMapAdd(IDC_D3D_FEEDBACK,  DM_INT,  CT_SLIDER,   &g_d3d_feedback,           DM_INT, &pGameOpts->d3d_feedback, 0, 0, AssignD3DFeedback);
-
-//	NPW 28-Aug-2004 - Commenting this out because it seems to cause crashes	
-//	DataMapAdd(IDC_D3D_FEEDBACK_DISP,  DM_NONE,  CT_NONE,   NULL,  DM_INT, &g_d3d_scanlines, 0, 0, 0);
+	DataMapAdd(IDC_D3D_FEEDBACK_DISP,  DM_NONE,  CT_NONE,   NULL,  DM_NONE, NULL, 0, 0, 0);
 
 	/* input */
 	DataMapAdd(IDC_DEFAULT_INPUT, DM_INT,  CT_COMBOBOX, &g_nInputIndex,            DM_STRING, &pGameOpts->ctrlr, 0, 0, AssignInput);

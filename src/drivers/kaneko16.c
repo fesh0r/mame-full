@@ -34,7 +34,7 @@ Year + Game					PCB			Notes
 	B.Rap Boys							MCU protection (not working, game can be
                                                         run on a shoggwar board ok)
 94	Great 1000 Miles Rally				MCU protection (EEPROM handling etc.)
-	Bonks Adventure			Z09AF-003	MCU protection
+	Bonk's Adventure		Z09AF-003	MCU protection (EEPROM handling etc.)
 95	Great 1000 Miles Rally 2			MCU protection (EEPROM handling etc.)
 ---------------------------------------------------------------------------
 
@@ -416,6 +416,7 @@ static ADDRESS_MAP_START( berlwall, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x780000, 0x780001) AM_READ(watchdog_reset16_r)		// Watchdog
 	AM_RANGE(0x800000, 0x80001f) AM_READWRITE(kaneko16_YM2149_0_r, kaneko16_YM2149_0_w)	// Sound
 	AM_RANGE(0x800200, 0x80021f) AM_READWRITE(kaneko16_YM2149_1_r, kaneko16_YM2149_1_w)
+	AM_RANGE(0x8003fe, 0x8003ff) AM_NOP // for OKI when accessed as .l
 	AM_RANGE(0x800400, 0x800401) AM_READWRITE(OKIM6295_status_0_lsb_r, OKIM6295_data_0_lsb_w)
 	AM_RANGE(0xc00000, 0xc00fff) AM_READWRITE(MRA16_RAM, kaneko16_vram_1_w) AM_BASE(&kaneko16_vram_1)	// Layers
 	AM_RANGE(0xc01000, 0xc01fff) AM_READWRITE(MRA16_RAM, kaneko16_vram_0_w) AM_BASE(&kaneko16_vram_0)	//
@@ -849,7 +850,7 @@ static WRITE16_HANDLER( sandscrp_soundlatch_word_w )
 static ADDRESS_MAP_START( sandscrp, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x07ffff) AM_ROM		// ROM
 	AM_RANGE(0x700000, 0x70ffff) AM_RAM		// RAM
-	AM_RANGE(0x200000, 0x20001f) AM_READWRITE(sandscrp_mcu_ram_r, sandscrp_mcu_ram_w) AM_BASE(&mcu_ram)	// Protection
+	AM_RANGE(0x200000, 0x20001f) AM_READWRITE(galpanib_calc_r,galpanib_calc_w)	// Protection
 	AM_RANGE(0x300000, 0x30000f) AM_READWRITE(MRA16_RAM, kaneko16_layers_0_regs_w) AM_BASE(&kaneko16_layers_0_regs)	// Layers 0 Regs
 	AM_RANGE(0x400000, 0x400fff) AM_READWRITE(MRA16_RAM, kaneko16_vram_1_w) AM_BASE(&kaneko16_vram_1)	// Layers 0
 	AM_RANGE(0x401000, 0x401fff) AM_READWRITE(MRA16_RAM, kaneko16_vram_0_w) AM_BASE(&kaneko16_vram_0)	//
@@ -1367,7 +1368,7 @@ INPUT_PORTS_END
 ***************************************************************************/
 
 INPUT_PORTS_START( bloodwar )
-	PORT_START	// IN0 - Player 2 - b00000.w
+	PORT_START	// IN0 - Player 1 - b00000.w
 	PORT_BIT(  0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP		) PORT_PLAYER(1)
 	PORT_BIT(  0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN		) PORT_PLAYER(1)
 	PORT_BIT(  0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT		) PORT_PLAYER(1)
@@ -1390,9 +1391,9 @@ INPUT_PORTS_START( bloodwar )
 	PORT_START	// IN2 - Coins - b00004.w
 	PORT_BIT(  0x0100, IP_ACTIVE_LOW, IPT_START1	)
 	PORT_BIT(  0x0200, IP_ACTIVE_LOW, IPT_START2	)
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_COIN1 ) PORT_IMPULSE(2)
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_COIN2 ) PORT_IMPULSE(2)
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2)
+	PORT_BIT(  0x0400, IP_ACTIVE_LOW, IPT_COIN1 ) PORT_IMPULSE(2)
+	PORT_BIT(  0x0800, IP_ACTIVE_LOW, IPT_COIN2 ) PORT_IMPULSE(2)
+	PORT_BIT(  0x1000, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2)
 	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_TILT		)
 	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_SERVICE1	)
 	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_SERVICE2	)	// tested
@@ -1433,11 +1434,11 @@ INPUT_PORTS_START( bloodwar )
 INPUT_PORTS_END
 
 /***************************************************************************
-								Bonk
+								Bonk's Adventure
 ***************************************************************************/
 
 INPUT_PORTS_START( bonkadv )
-	PORT_START	// IN0 - Player 2 - b00000.w
+	PORT_START	// IN0 - Player 1 - b00000.w
 	PORT_BIT(  0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP		) PORT_PLAYER(1)
 	PORT_BIT(  0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN		) PORT_PLAYER(1)
 	PORT_BIT(  0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT		) PORT_PLAYER(1)
@@ -1460,46 +1461,46 @@ INPUT_PORTS_START( bonkadv )
 	PORT_START	// IN2 - Coins - b00004.w
 	PORT_BIT(  0x0100, IP_ACTIVE_LOW, IPT_START1	)
 	PORT_BIT(  0x0200, IP_ACTIVE_LOW, IPT_START2	)
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_COIN1 ) PORT_IMPULSE(2)
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_COIN2 ) PORT_IMPULSE(2)
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2)
+	PORT_BIT(  0x0400, IP_ACTIVE_LOW, IPT_COIN1 ) PORT_IMPULSE(2)
+	PORT_BIT(  0x0800, IP_ACTIVE_LOW, IPT_COIN2 ) PORT_IMPULSE(2)
+	PORT_BIT(  0x1000, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2)
 	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_TILT		)
 	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_SERVICE1	)
-	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_SERVICE2	)	// tested
+	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_SERVICE2	)
 
 	PORT_START	// IN3 - ? - b00006.w
-	PORT_BIT(  0x0100, IP_ACTIVE_LOW, IPT_UNKNOWN )	// tested
+	PORT_BIT(  0x0100, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT(  0x0200, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT(  0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN )	// tested
+	PORT_BIT(  0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT(  0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT(  0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN ) // tested
+	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN ) // tested
 	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START	// IN4 - DSW from the MCU - $10497e.b <- $208000.b
-	PORT_DIPNAME( 0x0100, 0x0100, "Unk" )
+	PORT_START	// IN4 - DSW from the MCU - $10019e.b <- $200200.b
+	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_SERVICE( 0x0200, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x0400, 0x0000, DEF_STR( Flip_Screen ) )
+	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0400, 0x0000, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x3800, 0x3800, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x3800, "1 Easy" )
-	PORT_DIPSETTING(      0x3000, "2" )
-	PORT_DIPSETTING(      0x2800, "3" )
-	PORT_DIPSETTING(      0x2000, "4" )
-	PORT_DIPSETTING(      0x1800, "5" )
-	PORT_DIPSETTING(      0x1000, "6" )
-	PORT_DIPSETTING(      0x0800, "7" )
-	PORT_DIPSETTING(      0x0000, "8 Hard" )
-	PORT_DIPNAME( 0x4000, 0x0000, "Join During Game" )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x4000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Allow_Continue ) )
-	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
+	PORT_DIPNAME( 0x0800, 0x0800, "Reserved" ) /* Reserved / Ticket dispenser */
+	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x1000, 0x0000, "Title Level Display" )
+	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x2000, 0x2000, "Reserved" )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000, 0x4000, "Reserved" )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_SERVICE( 0x8000, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
 
@@ -2272,7 +2273,7 @@ static MACHINE_DRIVER_START( gtmr2 )
 MACHINE_DRIVER_END
 
 /***************************************************************************
-							Bonks Adventure
+							Bonk's Adventure
 ***************************************************************************/
 
 static MACHINE_DRIVER_START( bonkadv )
@@ -3594,9 +3595,9 @@ ROM_END
 
 /**********************************************************************
 
-							Bonks Adventure
+							Bonk's Adventure
 
-Bonks Adventure
+Bonk's Adventure
 Kaneko, 1994
 
 PCB Layout
@@ -3704,4 +3705,4 @@ GAMEX(1992, shogwarr, 0,        shogwarr, shogwarr, shogwarr, ROT0,  "Kaneko", "
 GAMEX(1992, fjbuster, shogwarr, shogwarr, shogwarr, shogwarr, ROT0,  "Kaneko", "Fujiyama Buster (Japan)", GAME_NOT_WORKING )
 GAMEX(1992, brapboys, 0,        shogwarr, shogwarr, 0,        ROT0,  "Kaneko", "B.Rap Boys",              GAME_NOT_WORKING )
 GAMEX(1994, bloodwar, 0,        bloodwar, bloodwar, kaneko16, ROT0,  "Kaneko", "Blood Warrior",           GAME_NOT_WORKING )
-GAMEX(1994, bonkadv,  0,        bonkadv , bonkadv,  kaneko16, ROT0,  "Kaneko", "Bonks Adventure",         GAME_NOT_WORKING )
+GAMEX(1994, bonkadv,  0,        bonkadv , bonkadv,  kaneko16, ROT0,  "Kaneko", "Bonk's Adventure",         GAME_NOT_WORKING )

@@ -199,7 +199,8 @@ DRVLIBS = \
 	$(OBJ)/usgames.a $(OBJ)/sanritsu.a $(OBJ)/rare.a \
 	$(OBJ)/nihonsys.a $(OBJ)/alba.a $(OBJ)/homedata.a $(OBJ)/artmagic.a \
 	$(OBJ)/taiyo.a $(OBJ)/edevices.a $(OBJ)/other.a $(OBJ)/excelent.a $(OBJ)/nix.a \
-	$(OBJ)/othertrv.a $(OBJ)/other68k.a $(OBJ)/otherz80.a $(OBJ)/other.a \
+	$(OBJ)/othertrv.a $(OBJ)/other68k.a $(OBJ)/otherz80.a \
+	$(OBJ)/hyprston.a $(OBJ)/other.a \
 	$(OBJ)/neogeo.a \
 
 $(OBJ)/pacman.a: \
@@ -816,6 +817,7 @@ $(OBJ)/upl.a: \
 
 $(OBJ)/nmk.a: \
 	$(OBJ)/vidhrdw/nmk16.o $(OBJ)/drivers/nmk16.o \
+	$(OBJ)/drivers/acommand.o \
 	$(OBJ)/drivers/jalmah.o \
 	$(OBJ)/drivers/quizpani.o $(OBJ)/vidhrdw/quizpani.o \
 	$(OBJ)/vidhrdw/macrossp.o $(OBJ)/drivers/macrossp.o \
@@ -1168,6 +1170,12 @@ $(OBJ)/otherz80.a: \
 	$(OBJ)/drivers/onetwo.o \
 	$(OBJ)/drivers/pbchmp95.o \
 	$(OBJ)/drivers/suprgolf.o \
+	$(OBJ)/drivers/trucocl.o $(OBJ)/vidhrdw/trucocl.o \
+	
+$(OBJ)/hyprston.a: \
+	$(OBJ)/drivers/vamphalf.o \
+	$(OBJ)/drivers/dfpix.o \
+	$(OBJ)/drivers/eolith.o \
 
 $(OBJ)/other.a: \
 	$(OBJ)/vidhrdw/redalert.o $(OBJ)/sndhrdw/redalert.o $(OBJ)/drivers/redalert.o \
@@ -1184,7 +1192,6 @@ $(OBJ)/other.a: \
 	$(OBJ)/vidhrdw/lethalj.o $(OBJ)/drivers/lethalj.o \
 	$(OBJ)/vidhrdw/sbugger.o $(OBJ)/drivers/sbugger.o \
 	$(OBJ)/drivers/ltcasino.o \
-	$(OBJ)/drivers/vamphalf.o \
 	$(OBJ)/drivers/malzak.o $(OBJ)/vidhrdw/malzak.o \
 	$(OBJ)/drivers/supertnk.o \
 	$(OBJ)/drivers/dynadice.o \

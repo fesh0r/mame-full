@@ -1806,8 +1806,6 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 	int i, j = 0, nSplitterCount;
 	extern FOLDERDATA g_folderData[];
 	extern FILTER_ITEM g_filterList[];
-	extern const char g_szHistoryFileName[];
-	extern const char g_szMameInfoFileName[];
 	extern const char *history_filename;
 	extern const char *mameinfo_filename;
 	LONG common_control_version = GetCommonControlVersion();
@@ -1987,8 +1985,8 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 	hTreeView = GetDlgItem(hMain, IDC_TREE);
 	hwndList  = GetDlgItem(hMain, IDC_LIST);
 
-	history_filename = strdup(g_szHistoryFileName);
-	mameinfo_filename = strdup(g_szMameInfoFileName);
+	history_filename = strdup(GetHistoryFileName());
+	mameinfo_filename = strdup(GetMAMEInfoFileName());
 
 	if (!InitSplitters())
 		return FALSE;
