@@ -16,10 +16,11 @@ System Driver Changes:
   us know of any breakages).  Also, keys now configurable from OSD for both 
   controllers [Ben]
 
-- [DRAGON/COCO1-2-3] Fixed ROM loading so that ROMs are properly mirrored, and
-  worked on improving the way that the CART signal is handled.  These changes
-  make many more cartridges work properly.  Also, properly NOP'd invalid memory
-  areas, which prevented Arkanoid from running.  [Nate Woods]
+- [DRAGON/COCO1-2-3] Totally reworked ROM support; cartridge IO is now modular,
+  the CART signal is handled better, and ROMs that don't take up the full
+  address space are properly mirrored.  These changes make many more cartridges
+  work properly, including Mind-Roll which is banked.  Also, properly NOP'd
+  invalid memory areas, which prevented Arkanoid from running.  [Nate Woods]
 
 - [MSX2] The V9938 emulation is improved, added interlaced mode, fixed blitter 
   timings, sprites, and GRAPHIC 5 (SCREEN 6). The MSX2 now has a 128kB memory 

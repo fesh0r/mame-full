@@ -1798,18 +1798,55 @@ static void coco3_setcartline(int data)
 	coco3_raise_interrupt(COCO3_INT_EI0, cart_line ? 1 : 0);
 }
 
+static int is_twobank(void)
+{
+	/* This function, and all calls of it, are hacks for MindRoll */
+	return device_crc(IO_CARTSLOT, 0) == 0x9c241cdc;
+}
+
+static void generic_setcartbank(int bank, UINT8 *cartpos)
+{
+	void *fp;
+
+	if (is_twobank()) {
+		fp = image_fopen(IO_CARTSLOT, 0, OSD_FILETYPE_IMAGE_R, 0);
+		if (fp) {
+			if (bank)
+				osd_fseek(fp, 0x4000, SEEK_SET);
+			osd_fread(fp, cartpos, 0x4000);
+			osd_fclose(fp);
+		}
+	}
+}
+
+static void coco_setcartbank(int bank)
+{
+	UINT8 *ROM = memory_region(REGION_CPU1);
+	generic_setcartbank(bank, &ROM[0x14000]);
+}
+
+static void coco3_setcartbank(int bank)
+{
+	UINT8 *ROM = memory_region(REGION_CPU1);
+	generic_setcartbank(bank, &ROM[0x8C000]);
+}
+
 static const struct cartridge_callback coco_cartcallbacks =
 {
-	coco_setcartline
+	coco_setcartline,
+	coco_setcartbank
 };
 
 static const struct cartridge_callback coco3_cartcallbacks =
 {
-	coco3_setcartline
+	coco3_setcartline,
+	coco3_setcartbank
 };
 
 static void generic_init_machine(struct pia6821_interface *piaintf, struct sam6883_interface *samintf, const struct cartridge_slot *cartinterface, const struct cartridge_callback *cartcallback)
 {
+	const struct cartridge_slot *cartslottype;
+
 	cart_line = CARTLINE_CLEAR;
 	pia0_irq_a = CLEAR_LINE;
 	pia0_irq_b = CLEAR_LINE;
@@ -1831,7 +1868,10 @@ static void generic_init_machine(struct pia6821_interface *piaintf, struct sam68
 		timer_set(0, 0, pak_load_trailer_callback);
 	}
 
-	coco_cartrige_init(cart_inserted ? &cartridge_standard : cartinterface, cartcallback);
+	/* HACK */
+	cartslottype = is_twobank() ? &cartridge_twobanks : &cartridge_standard;
+
+	coco_cartrige_init(cart_inserted ? cartslottype : cartinterface, cartcallback);
 	autocenter_init(12, 0x04);
 
 	timer_pulse(TIME_IN_HZ(600), 0, coco_bitbanger_poll);

@@ -53,6 +53,7 @@ endif
 
 ifdef MAME_NET
 OSOBJS += \
+		$(OBJ)/network.o \
         $(OBJ)/Win32/net32.o \
         $(OBJ)/Win32/netchat32.o
 endif

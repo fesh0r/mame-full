@@ -11,6 +11,7 @@ enum {
 
 struct cartridge_callback {
 	void (*setcartline)(int data);
+	void (*setbank)(int bank);
 };
 
 struct cartridge_slot {
@@ -24,5 +25,6 @@ struct cartridge_slot {
 extern const struct cartridge_slot cartridge_fdc_coco;
 extern const struct cartridge_slot cartridge_fdc_dragon;
 extern const struct cartridge_slot cartridge_standard;
+extern const struct cartridge_slot cartridge_twobanks;
 
 #endif /* COCOCART_H */

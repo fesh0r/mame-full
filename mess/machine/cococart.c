@@ -3,6 +3,8 @@
 #include "includes/basicdsk.h"
 #include "includes/dragon.h"
 
+static const struct cartridge_callback *cartcallbacks;
+
 /***************************************************************************
   Floppy disk controller
  ***************************************************************************
@@ -44,7 +46,6 @@ static int dskreg;
 static void coco_fdc_callback(int event);
 static void dragon_fdc_callback(int event);
 static int ff4b_count;
-static const struct cartridge_callback *cartcallbacks;
 
 enum {
 	HW_COCO,
@@ -329,7 +330,13 @@ const struct cartridge_slot cartridge_fdc_dragon =
 
 static void cartidge_standard_init(const struct cartridge_callback *callbacks)
 {
-	callbacks->setcartline(CARTLINE_Q);
+	cartcallbacks = callbacks;
+	cartcallbacks->setcartline(CARTLINE_Q);
+}
+
+static WRITE_HANDLER(cartridge_twobanks_io_w)
+{
+	cartcallbacks->setbank(data & 1);
 }
 
 const struct cartridge_slot cartridge_standard =
@@ -338,6 +345,15 @@ const struct cartridge_slot cartridge_standard =
 	NULL,
 	NULL,
 	NULL,
+	NULL
+};
+
+const struct cartridge_slot cartridge_twobanks =
+{
+	cartidge_standard_init,
+	NULL,
+	NULL,
+	cartridge_twobanks_io_w,
 	NULL
 };
 
