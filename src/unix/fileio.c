@@ -1038,4 +1038,9 @@ int osd_select_file(int sel, char *filename)
 {
 	return 0;
 }
+
+void osd_device_eject(int type, int id)
+{
+	device_filename_change(type, id, NULL);
+}
 #endif
