@@ -156,15 +156,15 @@ INLINE void cdp1802_sub(UINT8 left,UINT8 right)
 {
 	int i;
 	i=left-right;
-	cdp1802.d=i&0xff;cdp1802.df=i>0;
+	cdp1802.d=i&0xff;cdp1802.df=i>=0;
 }
 
 INLINE void cdp1802_sub_carry(UINT8 left,UINT8 right)
 {
 	int i;
-	if (cdp1802.df) i=left-right-1;
+	if (cdp1802.df) i=left-right-1;  //?
 	else i=left-right;
-	cdp1802.d=i&0xff;cdp1802.df=i>0;
+	cdp1802.d=i&0xff;cdp1802.df=i>=0;
 }
 
 INLINE UINT16 cdp1802_read_operand_word(void)
@@ -301,6 +301,10 @@ static void cdp1802_instruction(void)
 			case 0x77: cdp1802_sub_carry(cdp1802.d, cpu_readmem16(X));break;
 			case 0x78: cpu_writemem16(X, cdp1802.t);break;
 			case 0x79:
+				cdp1802.t=cdp1802.x<<4|cdp1802.p;
+				cpu_writemem16(cdp1802.reg[2].w.l, cdp1802.t);
+				cdp1802.x=cdp1802.p;
+				cdp1802.reg[2].w.l--;
 				logerror("cpu cdp1802 unsure mark(0x79) at %.4x\n",oper, PC-1);
 				break;
 			case 0x7a: cdp1802_q(0);break;
