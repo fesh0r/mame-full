@@ -92,9 +92,16 @@ void nc_pcmcia_card_exit(int id)
 
 int	nc_serial_init(int id)
 {
-	if (serial_device_init(id))
+	if (serial_device_init(id)==INIT_OK)
 	{
-		msm8251_init_serial_transfer(id);
+		/* setup transmit parameters */
+		serial_device_setup(id, 600, 8, 1,SERIAL_PARITY_NONE);
+
+		/* connect serial chip to serial device */
+		msm8251_connect_to_serial_device(id);
+
+		/* and start transmit */
+		serial_device_set_transmit_state(id,1);
 		
 		return INIT_OK;
 	}
