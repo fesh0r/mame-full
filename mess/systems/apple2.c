@@ -400,6 +400,35 @@ static unsigned char apple2gs_palette[] =
 };
 #endif
 
+struct  GfxLayout       apple2_80col_charlayout =
+{
+                7, 8,
+                256,
+                1,
+                { 0 },
+                { 1, 2, 3, 4, 5, 6, 7 },
+                { 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+                8 * 8
+};
+
+struct  GfxLayout       apple2_40col_charlayout =
+{
+	        14, 8,
+	        256,
+	        1,
+	        { 0 },
+	        { 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7 },
+	        { 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	        8 * 8
+};
+
+static struct GfxDecodeInfo apple2_gfxdecodeinfo[] =
+{
+		{ REGION_GFX1, 0x0000, &apple2_40col_charlayout, 29, 1},
+	        { REGION_GFX1, 0x0000, &apple2_80col_charlayout, 29, 1},
+	        { -1 } /* end of array */
+};
+
 static unsigned short apple2_colortable[] =
 {
     0,0,
@@ -471,6 +500,7 @@ static MACHINE_DRIVER_START( apple2e )
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2)
 	MDRV_SCREEN_SIZE(280*2, 192)
 	MDRV_VISIBLE_AREA(0, (280*2)-1,0,192-1)
+	MDRV_GFXDECODE(apple2_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(sizeof(apple2_palette)/3)
 	MDRV_COLORTABLE_LENGTH(sizeof(apple2_colortable)/sizeof(unsigned short))
 	MDRV_PALETTE_INIT(apple2)
