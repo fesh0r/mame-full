@@ -3,16 +3,14 @@ OSOBJS = \
 		$(OBJ)/wince/crtsuppl.o \
 		$(OBJ)/wince/cesound.o \
 		$(OBJ)/wince/ceinput.o \
-		$(OBJ)/wince/config.o \
 		$(OBJ)/wince/video.o \
 		$(OBJ)/wince/window.o \
-		$(OBJ)/wince/winmain.o \
 		$(OBJ)/wince/cemain.o \
-		$(OBJ)/wince/rc.o \
 		$(OBJ)/wince/fronthlp.o \
 		$(OBJ)/wince/snprintf.o \
 		$(OBJ)/wince/misc.o \
 		$(OBJ)/wince/dirent.o \
+		$(OBJ)/wince/playgame.o \
 		$(OBJ)/zlib/crc32.o \
 		$(OBJ)/zlib/adler32.o \
 		$(OBJ)/zlib/compress.o \

@@ -50,8 +50,12 @@
 extern void win32_pause_input(int pause);
 extern int is_mouse_captured(void);
 extern UINT8 trying_to_quit;
-extern int verbose;
 
+#ifdef UNDER_CE
+#define verbose 0
+#else
+extern int verbose;
+#endif
 
 
 //============================================================

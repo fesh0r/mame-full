@@ -4,6 +4,7 @@
 #include <time.h>
 #include <windows.h>
 #include <unistd.h>
+#include "mamece.h"
 
 void abort(void)
 {
@@ -27,16 +28,25 @@ int _kbhit(void)
 
 // --------------------------------------------------------------------------
 
-#define A2T(asciistr)	ascii2wide(_alloca(ascii2widelen(asciistr) * sizeof(WCHAR)), (asciistr))
+int __wide2asciilen(const WCHAR *widestr)
+{
+	return WideCharToMultiByte(CP_ACP, 0, widestr, -1, NULL, 0, NULL, NULL);
+}
 
-static int ascii2widelen(const char *asciistr)
+char *__wide2ascii(char *dest, const WCHAR *widestr)
+{
+	WideCharToMultiByte(CP_ACP, 0, widestr, -1, dest, __wide2asciilen(widestr), NULL, NULL);
+	return dest;
+}
+
+int __ascii2widelen(const char *asciistr)
 {
 	return MultiByteToWideChar(CP_ACP, 0, asciistr, -1, NULL, 0);
 }
 
-static WCHAR *ascii2wide(WCHAR *dest, const char *asciistr)
+WCHAR *__ascii2wide(WCHAR *dest, const char *asciistr)
 {
-	MultiByteToWideChar(CP_ACP, 0, asciistr, -1, dest, ascii2widelen(asciistr));
+	MultiByteToWideChar(CP_ACP, 0, asciistr, -1, dest, __ascii2widelen(asciistr));
 	return dest;
 }
 

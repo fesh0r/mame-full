@@ -1,6 +1,5 @@
 #include <windows.h>
 #include <commctrl.h>
-
 // I don't understand why this is necessary when building for x86em
 #define SHCreateMenuBar         dummy_SHCreateMenuBar   
 #define SHInitDialog            dummy_SHInitDialog   
@@ -13,23 +12,7 @@ BOOL WINAPI SHInitDialog(PSHINITDLGINFO pshidi);
 
 #include "resource.h"
 #include "driver.h"
-
-// our dialog/configured options //
-struct ui_options
-{
-	BOOL		enable_sound;		// Enable sound in games
-	BOOL		show_all_games;		// Should we show all games?
-	BOOL		show_clones;		// Don't show clone games
-	BOOL		show_framerate;		// Display Frame Rate
-	BOOL		show_profiler;		// Display the profiler
-	BOOL		enable_flicker;		// Enable Flicker
-	BOOL		enable_translucency;// Enable Translucency
-	BOOL		enable_antialias;	// Enable AntiAlias
-	BOOL		enable_dirtyline;	// Enable Dirty Line Drawing
-	BOOL		disable_throttle;	// Disable Throttling
-	BOOL		rotate_left;		// Rotate the Screen to the Left
-	BOOL		rotate_right;		// Rotate the Screen to the Right
-};
+#include "mamece.h"
 
 struct status_of_data
 {
@@ -61,7 +44,6 @@ static struct ui_options tUI;
 static HWND		hGameList; 
 static HBRUSH hBrush2; //Background Checkers
 static HWND				hwndCB;					// The command bar handle
-static HMENU				hMenu;					// The menu Handle
 static SHACTIVATEINFO s_sai;
 
 static void SetDefaultOptions(struct ui_options *opts)
@@ -78,62 +60,6 @@ static void SetDefaultOptions(struct ui_options *opts)
 	opts->disable_throttle = 0;
 	opts->rotate_left = 0;
 	opts->rotate_right = 0;
-}
-
-static void PlayGame(const struct GameDriver *drv, struct ui_options *opts)
-{
-	extern int DECL_SPEC main(int argc, char **argv);
-	int argc = 0;
-	char *argv[50];
-	WCHAR szFileNameWide[MAX_PATH];
-	char szFileName[MAX_PATH];
-
-	GetModuleFileName(NULL, szFileNameWide, sizeof(szFileNameWide) / sizeof(szFileNameWide[0]));
-	_snprintf(szFileName, sizeof(szFileName) / sizeof(szFileName[0]), "%S", szFileNameWide);
-
-	// Set up command line args
-	argv[argc++] = szFileName;
-	argv[argc++] = (char *) drv->name;
-	argv[argc++] = "-rompath";
-	argv[argc++] = "\\ROMs";
-	argv[argc++] = "-samplepath";
-	argv[argc++] = "\\Samples";
-	argv[argc++] = "-cfg_directory";
-	argv[argc++] = "\\Cfg";
-	argv[argc++] = "-nvram_directory";
-	argv[argc++] = "\\Nvram";
-	argv[argc++] = "-input_directory";
-	argv[argc++] = "\\inp";
-	argv[argc++] = "-hiscore_directory";
-	argv[argc++] = "\\hiscore";
-	argv[argc++] = "-state_directory";
-	argv[argc++] = "\\Sta";
-	argv[argc++] = "-artwork_directory";
-	argv[argc++] = "\\Artwork";
-	argv[argc++] = "-snapshot_directory";
-	argv[argc++] = "\\Snapshot";
-
-	if (opts->rotate_left)
-		argv[argc++] = "-rol";
-	else if (opts->rotate_right)
-		argv[argc++] = "-ror";
-
-	argv[argc++] = (opts->enable_translucency) ? "-translucency" : "-notranslucency";
-	argv[argc++] = (opts->enable_antialias) ? "-antialias" : "-noantialias";
-	argv[argc++] = (opts->enable_dirtyline) ? "-dirty" : "-nodirty";
-	argv[argc++] = (opts->disable_throttle) ? "-nothrottle" : "-throttle";
-
-	argv[argc++] = "-sound";
-	argv[argc++] = (opts->enable_sound) ? "-sound" : "-nosound";
-
-	argv[argc++] = "-flicker";
-	argv[argc++] = (opts->enable_flicker) ? "100.0" : "0.0";
-
-	//opts->show_framerate = 0;
-	//opts->show_profiler = 0;
-
-	// Invoke the game
-	main(argc, argv);
 }
 
 int WINAPI WinMain(	HINSTANCE hInstance,
@@ -166,7 +92,7 @@ int WINAPI WinMain(	HINSTANCE hInstance,
 
 			if (iPlay_Game >= 0)
 			{
-				PlayGame(drivers[iPlay_Game], &tUI);
+				play_game(iPlay_Game, &tUI);
 				iPlay_Game = -1;
 				RefreshGameListBox();
 			}
@@ -271,6 +197,29 @@ static BOOL InitInstance(int nCmdShow)
 	return TRUE;
 }
 
+struct MainWindowExtra
+{
+	HMENU hMenu;
+};
+
+static void CheckMenuOption(HWND hWnd, int nOptionID, BOOL *pbOption, BOOL bToggle)
+{
+	struct MainWindowExtra *pExtra;
+
+	pExtra = (struct MainWindowExtra *) GetWindowLong(hWnd, GWL_USERDATA);
+
+	if (bToggle)
+		*pbOption = !(*pbOption);
+	CheckMenuItem(pExtra->hMenu, nOptionID, MF_BYCOMMAND | (*pbOption ? MF_CHECKED : MF_UNCHECKED));
+}
+
+static void CheckMenuOptionEx(HWND hWnd, int nOptionID, BOOL *pbOption, int nCounterOptionID, BOOL *pbCounterOption)
+{
+	if (*pbCounterOption)
+		CheckMenuOption(hWnd, nCounterOptionID, pbCounterOption, TRUE);
+	CheckMenuOption(hWnd, nOptionID, pbOption, TRUE);
+}
+
 //
 //  FUNCTION: WndProc(HWND, unsigned, WORD, LONG)
 //
@@ -291,6 +240,7 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 	HBITMAP		hBitmap;
 	BITMAP		bitmap;
 	HINSTANCE hInst;
+	struct MainWindowExtra *pExtra;
 
 	hInst = GetModuleHandle(NULL);
 	
@@ -310,123 +260,62 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 					SendMessage (hWnd, WM_CLOSE, 0, 0);
 					break;
 				case ID_OPTIONS_ENABLESOUND:
-					{
-						tUI.enable_sound = !tUI.enable_sound;
-						CheckMenuItem(hMenu, ID_OPTIONS_ENABLESOUND,
-							MF_BYCOMMAND | (tUI.enable_sound ? MF_CHECKED : MF_UNCHECKED) );
-					}
+					CheckMenuOption(hWnd, ID_OPTIONS_ENABLESOUND, &tUI.enable_sound, TRUE);
 					break;
 				case ID_OPTIONS_SHOWCLONES:
-					{
-						tUI.show_clones = !tUI.show_clones;
-						CheckMenuItem(hMenu, ID_OPTIONS_SHOWCLONES,
-							MF_BYCOMMAND | (tUI.show_clones ? MF_CHECKED : MF_UNCHECKED) );
-						RefreshGameListBox();
-					}
+					CheckMenuOption(hWnd, ID_OPTIONS_SHOWCLONES, &tUI.show_clones, TRUE);
+					RefreshGameListBox();
 					break;
 				case ID_OPTIONS_SHOWALLGAMES:
-					{
-						tUI.show_all_games = !tUI.show_all_games;
-						CheckMenuItem(hMenu, ID_OPTIONS_SHOWALLGAMES,
-							MF_BYCOMMAND | (tUI.show_all_games ? MF_CHECKED : MF_UNCHECKED) );
-						RefreshGameListBox();
-					}
+					CheckMenuOption(hWnd, ID_OPTIONS_SHOWALLGAMES, &tUI.show_all_games, TRUE);
+					RefreshGameListBox();
 					break;
 				case ID_OPTIONS_SHOWFRAMERATE:
-					{
-						tUI.show_framerate = !tUI.show_framerate;
-						CheckMenuItem(hMenu, ID_OPTIONS_SHOWFRAMERATE,
-							MF_BYCOMMAND | (tUI.show_framerate ? MF_CHECKED : MF_UNCHECKED) );
-					}
+					CheckMenuOption(hWnd, ID_OPTIONS_SHOWFRAMERATE, &tUI.show_framerate, TRUE);
 					break;
 				case ID_OPTIONS_SHOWPROFILER:
-					{
-						tUI.show_profiler = !tUI.show_profiler;
-						CheckMenuItem(hMenu, ID_OPTIONS_SHOWPROFILER,
-							MF_BYCOMMAND | (tUI.show_profiler ? MF_CHECKED : MF_UNCHECKED) );
-					}
+					CheckMenuOption(hWnd, ID_OPTIONS_SHOWPROFILER, &tUI.show_profiler, TRUE);
 					break;
 				case ID_OPTIONS_ENABLEANTIALIASING:
-					{
-						tUI.enable_antialias = !tUI.enable_antialias;
-						CheckMenuItem(hMenu, ID_OPTIONS_ENABLEANTIALIASING,
-							MF_BYCOMMAND | (tUI.enable_antialias ? MF_CHECKED : MF_UNCHECKED) );
-					}
+					CheckMenuOption(hWnd, ID_OPTIONS_ENABLEANTIALIASING, &tUI.enable_antialias, TRUE);
 					break;
 				case ID_OPTIONS_ENABLETRANSLUCENCY:
-					{
-						tUI.enable_translucency = !tUI.enable_translucency;
-						CheckMenuItem(hMenu, ID_OPTIONS_ENABLETRANSLUCENCY,
-							MF_BYCOMMAND | (tUI.enable_translucency ? MF_CHECKED : MF_UNCHECKED) );
-					}
+					CheckMenuOption(hWnd, ID_OPTIONS_ENABLETRANSLUCENCY, &tUI.enable_translucency, TRUE);
 					break;
 				case ID_OPTIONS_ENABLEFLICKER:
-					{
-						tUI.enable_flicker = !tUI.enable_flicker;
-						CheckMenuItem(hMenu, ID_OPTIONS_ENABLEFLICKER,
-							MF_BYCOMMAND | (tUI.enable_flicker ? MF_CHECKED : MF_UNCHECKED) );
-					}
+					CheckMenuOption(hWnd, ID_OPTIONS_ENABLEFLICKER, &tUI.enable_flicker, TRUE);
 					break;
 				case ID_OPTIONS_DISABLETHROTTLE:
-					{
-						tUI.disable_throttle = !tUI.disable_throttle;
-						CheckMenuItem(hMenu, ID_OPTIONS_DISABLETHROTTLE,
-							MF_BYCOMMAND | (tUI.disable_throttle ? MF_CHECKED : MF_UNCHECKED) );
-					}
+					CheckMenuOption(hWnd, ID_OPTIONS_DISABLETHROTTLE, &tUI.disable_throttle, TRUE);
 					break;
 				case ID_OPTIONS_ENABLEDIRTYLINE:
-					{
-						tUI.enable_dirtyline = !tUI.enable_dirtyline;
-						CheckMenuItem(hMenu, ID_OPTIONS_ENABLEDIRTYLINE,
-							MF_BYCOMMAND | (tUI.enable_dirtyline ? MF_CHECKED : MF_UNCHECKED) );
-					}
+					CheckMenuOption(hWnd, ID_OPTIONS_ENABLEDIRTYLINE, &tUI.enable_dirtyline, TRUE);
 					break;
 				case ID_OPTIONS_ROTATESCREENLEFT:
-					{
-						if (tUI.rotate_right == 1)
-						{
-							tUI.rotate_right = !tUI.rotate_right;
-							CheckMenuItem(hMenu, ID_OPTIONS_ROTATESCREENRIGHT,
-							MF_BYCOMMAND | (tUI.rotate_right ? MF_CHECKED : MF_UNCHECKED) );
-						}
-						tUI.rotate_left = !tUI.rotate_left;
-						CheckMenuItem(hMenu, ID_OPTIONS_ROTATESCREENLEFT,
-							MF_BYCOMMAND | (tUI.rotate_left ? MF_CHECKED : MF_UNCHECKED) );
-					}
+					CheckMenuOptionEx(hWnd, ID_OPTIONS_ROTATESCREENLEFT, &tUI.rotate_left, ID_OPTIONS_ROTATESCREENRIGHT, &tUI.rotate_right);
 					break;				
 				case ID_OPTIONS_ROTATESCREENRIGHT:
-					{
-						if (tUI.rotate_left == 1)
-						{
-							tUI.rotate_left = !tUI.rotate_left;
-							CheckMenuItem(hMenu, ID_OPTIONS_ROTATESCREENLEFT,
-							MF_BYCOMMAND | (tUI.rotate_left ? MF_CHECKED : MF_UNCHECKED) );
-						}
-						tUI.rotate_right = !tUI.rotate_right;
-						CheckMenuItem(hMenu, ID_OPTIONS_ROTATESCREENRIGHT,
-							MF_BYCOMMAND | (tUI.rotate_right ? MF_CHECKED : MF_UNCHECKED) );
-					}
+					CheckMenuOptionEx(hWnd, ID_OPTIONS_ROTATESCREENRIGHT, &tUI.rotate_right, ID_OPTIONS_ROTATESCREENLEFT, &tUI.rotate_left);
 					break;
-				case ID_OPTIONS_RESETOPTIONSTODEFAULT:
-					{
-						// Reset Check Boxes back to Defaults
-						CheckMenuItem(hMenu, ID_OPTIONS_ENABLESOUND,		MF_BYCOMMAND | MF_CHECKED);
-						CheckMenuItem(hMenu, ID_OPTIONS_SHOWALLGAMES,		MF_BYCOMMAND | MF_UNCHECKED);
-						CheckMenuItem(hMenu, ID_OPTIONS_SHOWCLONES,			MF_BYCOMMAND | MF_UNCHECKED);
-						CheckMenuItem(hMenu, ID_OPTIONS_SHOWPROFILER,		MF_BYCOMMAND | MF_UNCHECKED);
-						CheckMenuItem(hMenu, ID_OPTIONS_SHOWFRAMERATE,		MF_BYCOMMAND | MF_UNCHECKED);
-						CheckMenuItem(hMenu, ID_OPTIONS_ENABLEANTIALIASING,	MF_BYCOMMAND | MF_UNCHECKED);
-						CheckMenuItem(hMenu, ID_OPTIONS_ENABLETRANSLUCENCY,	MF_BYCOMMAND | MF_UNCHECKED);
-						CheckMenuItem(hMenu, ID_OPTIONS_ENABLEFLICKER,		MF_BYCOMMAND | MF_UNCHECKED);
-						CheckMenuItem(hMenu, ID_OPTIONS_DISABLETHROTTLE,	MF_BYCOMMAND | MF_UNCHECKED);
-						CheckMenuItem(hMenu, ID_OPTIONS_ENABLEDIRTYLINE,	MF_BYCOMMAND | MF_UNCHECKED);
-						CheckMenuItem(hMenu, ID_OPTIONS_ROTATESCREENLEFT,	MF_BYCOMMAND | MF_UNCHECKED);
-						CheckMenuItem(hMenu, ID_OPTIONS_ROTATESCREENRIGHT,	MF_BYCOMMAND | MF_UNCHECKED);
-						// Set Defualt Variable States back to Defaults
-						SetDefaultOptions(&tUI);
 
-						RefreshGameListBox();
-					}
+				case ID_OPTIONS_RESETOPTIONSTODEFAULT:
+					// Set Defualt Variable States back to Defaults
+					SetDefaultOptions(&tUI);
+					CheckMenuOption(hWnd, ID_OPTIONS_ENABLESOUND, &tUI.enable_sound, FALSE);
+					CheckMenuOption(hWnd, ID_OPTIONS_SHOWCLONES, &tUI.show_clones, FALSE);
+					CheckMenuOption(hWnd, ID_OPTIONS_SHOWALLGAMES, &tUI.show_all_games, FALSE);
+					CheckMenuOption(hWnd, ID_OPTIONS_SHOWFRAMERATE, &tUI.show_framerate, FALSE);
+					CheckMenuOption(hWnd, ID_OPTIONS_SHOWPROFILER, &tUI.show_profiler, FALSE);
+					CheckMenuOption(hWnd, ID_OPTIONS_ENABLEANTIALIASING, &tUI.enable_antialias, FALSE);
+					CheckMenuOption(hWnd, ID_OPTIONS_ENABLETRANSLUCENCY, &tUI.enable_translucency, FALSE);
+					CheckMenuOption(hWnd, ID_OPTIONS_ENABLEFLICKER, &tUI.enable_flicker, TRUE);
+					CheckMenuOption(hWnd, ID_OPTIONS_DISABLETHROTTLE, &tUI.disable_throttle, FALSE);
+					CheckMenuOption(hWnd, ID_OPTIONS_ENABLEDIRTYLINE, &tUI.enable_dirtyline, FALSE);
+					CheckMenuOption(hWnd, ID_OPTIONS_ROTATESCREENLEFT, &tUI.rotate_left, FALSE);
+					CheckMenuOption(hWnd, ID_OPTIONS_ROTATESCREENRIGHT, &tUI.rotate_right, FALSE);
+					RefreshGameListBox();
+					break;
+
 				case IDC_PLAY:
 					if (wmEvent == BN_CLICKED)
 					{
@@ -462,10 +351,13 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 				tbbi.cbSize = sizeof(tbbi);
 				tbbi.dwMask = TBIF_LPARAM;
 				SendMessage(hwndCB,TB_GETBUTTONINFO,ID_OPTIONS,(LPARAM)&tbbi);
-				hMenu = (HMENU)tbbi.lParam;	//Grab Menu Selection
+
+				pExtra = malloc(sizeof(struct MainWindowExtra));
+				pExtra->hMenu = (HMENU) tbbi.lParam;
+				SetWindowLong(hWnd, GWL_USERDATA, (LONG_PTR) pExtra);
 				
 				//Turn Sound on by default and mark it Checked
-				//	CheckMenuItem(hMenu, ID_OPTIONS_ENABLESOUND,
+				//	CheckMenuItem(g_hMenu, ID_OPTIONS_ENABLESOUND,
 				//			MF_BYCOMMAND | ((enable_sound = 0) ? MF_CHECKED : MF_UNCHECKED) );
 
 				GetClientRect(hWnd, &rBtns);
@@ -508,10 +400,12 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 			}
 			break; 
 		case WM_DESTROY:
+			pExtra = (struct MainWindowExtra *) GetWindowLong(hWnd, GWL_USERDATA);
 			DeleteObject(hBrush2);	// Background Checkers
 			free(ptGame_Data);		// Delete Memory allocated in mamece_init or Play Loop
 			free(pGame_Index);		// Delete Memory allocated in mamece_init or Play Loop
 			CommandBar_Destroy(hwndCB);
+			free(pExtra);
 			PostQuitMessage(0);
 			break;
 		case WM_SETTINGCHANGE:
@@ -596,7 +490,6 @@ static void RefreshGameListBox()
 {
 	int i, j, pos;
 	int	iGame_Index_Count = 0;
-	WCHAR szBuffer[256];
 
 	SendMessage(hGameList, LB_RESETCONTENT, 0, 0);
 
@@ -608,9 +501,7 @@ static void RefreshGameListBox()
 		if (!tUI.show_all_games && !tUI.show_clones && drivers[i]->clone_of->clone_of != 0)
 			continue;
 
-		_snwprintf(szBuffer, sizeof(szBuffer) / sizeof(szBuffer[0]), TEXT("%S"), drivers[i]->description);
-
-		pos = SendMessage(hGameList, LB_ADDSTRING, 0, (LPARAM)szBuffer);
+		pos = SendMessage(hGameList, LB_ADDSTRING, 0, (LPARAM)A2T(drivers[i]->description));
 
 		for (j = iGame_Index_Count - 1; j >= pos; j--)
 			pGame_Index[j + 1] = pGame_Index[j];
@@ -655,14 +546,10 @@ static void mamece3_init()
 {
 	int i;
 	int nGameCount;
-	extern int rompathc;
-	extern char **rompathv;
-	char *normal_rompath = "\\ROMs";
+
+	setup_paths();
 
 	iPlay_Game = -1;	
-
-	rompathc = 1;
-	rompathv = &normal_rompath;
 
 	nGameCount = 0;	//Empty Game Count
 	while (drivers[nGameCount] != NULL)

@@ -10,7 +10,7 @@ TARGET = mess
 # TARGET = tiny
 
 # uncomment next line to make a debug version
-# DEBUG = 1
+DEBUG = 1
 
 # build a version for debugging games
 # MAME_DEBUG = -DMAME_DEBUG
