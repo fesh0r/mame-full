@@ -11,9 +11,9 @@ COMMON_OBJS  =  \
 	$(OBJDIR)/keyboard.o $(OBJDIR)/devices.o \
 	$(OBJDIR)/video.o $(OBJDIR)/mode.o \
 	$(OBJDIR)/fileio.o $(OBJDIR)/dirio.o $(OBJDIR)/config.o \
-	$(OBJDIR)/fronthlp.o $(OBJDIR)/ident.o $(OBJDIR)/network.o \
-	$(OBJDIR)/snprintf.o $(OBJDIR)/nec765_dummy.o $(OBJDIR)/effect.o \
-	$(OBJDIR)/ticker.o $(OBJDIR)/parallel.o
+	$(OBJDIR)/fronthlp.o $(OBJDIR)/network.o $(OBJDIR)/snprintf.o \
+	$(OBJDIR)/nec765_dummy.o $(OBJDIR)/effect.o $(OBJDIR)/ticker.o \
+	$(OBJDIR)/parallel.o
 
 # sysdep objs
 SYSDEP_DIR  = $(OBJDIR)/sysdep
