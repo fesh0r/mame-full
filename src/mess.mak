@@ -781,52 +781,50 @@ else
 OUTOPT = -o $@
 endif
 
-dat2html$(EXE): $(OBJ)/mess/tools/dat2html.o $(OBJ)/mess/utils.o
+dat2html$(EXE): $(OBJ)/mess/tools/dat2html/dat2html.o $(OBJ)/mess/utils.o
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ $(LIBS) $(OUTOPT)
 
-mkhdimg$(EXE):	$(OBJ)/mess/tools/mkhdimg.o
+mkhdimg$(EXE):	$(OBJ)/mess/tools/mkhdimg/mkhdimg.o
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ $(LIBS) $(OUTOPT)
 
-OBJDIRS += $(OBJ)/mess/messroms
-
-messroms$(EXE): $(OBJ)/mess/messroms/main.o $(OBJ)/unzip.o
+messroms$(EXE): $(OBJ)/mess/tools/messroms/main.o $(OBJ)/unzip.o
 	@echo Linking $@...
 #	$(LD) $(LDFLAGS) $^ $(LIBS) $(IMGTOOL_LIBS) -o $@
 	$(LD) $(LDFLAGS) $^ $(LIBS) $(IMGTOOL_LIBS) $(OUTOPT)
 
 imgtool$(EXE):	     \
-	  $(IMGTOOL_OBJS)                \
-	  $(OBJ)/mess/tools/stubs.o      \
-	  $(OBJ)/mess/config.o	         \
-	  $(OBJ)/unzip.o	         \
-	  $(OBJ)/mess/utils.o	         \
-	  $(OBJ)/mess/tools/main.o       \
-	  $(OBJ)/mess/tools/imgtool.o    \
-	  $(OBJ)/mess/tools/imgwave.o    \
-	  $(OBJ)/mess/tools/filter.o     \
-	  $(OBJ)/mess/tools/filteoln.o   \
-	  $(OBJ)/mess/tools/filtbas.o    \
-	  $(OBJ)/mess/tools/cococas.o	 \
-	  $(OBJ)/mess/tools/vmsx_tap.o	 \
-	  $(OBJ)/mess/tools/vmsx_gm2.o	 \
-	  $(OBJ)/mess/formats/fmsx_cas.o \
-	  $(OBJ)/mess/tools/fmsx_cas.o	 \
-	  $(OBJ)/mess/formats/svi_cas.o  \
-	  $(OBJ)/mess/tools/svi_cas.o    \
-	  $(OBJ)/mess/formats/cococas.o  \
-	  $(OBJ)/mess/tools/msx_dsk.o    \
-	  $(OBJ)/mess/tools/xsa.o        \
-	  $(OBJ)/mess/tools/rsdos.o      \
-	  $(OBJ)/mess/tools/stream.o     \
-	  $(OBJ)/mess/tools/t64.o        \
-	  $(OBJ)/mess/tools/lynx.o       \
-	  $(OBJ)/mess/tools/crt.o        \
-	  $(OBJ)/mess/tools/d64.o        \
-	  $(OBJ)/mess/tools/fat.o        \
-	  $(OBJ)/mess/tools/rom16.o      \
-	  $(OBJ)/mess/tools/nccard.o     \
+	  $(IMGTOOL_OBJS)                      \
+	  $(OBJ)/mess/tools/imgtool/stubs.o    \
+	  $(OBJ)/mess/config.o	               \
+	  $(OBJ)/unzip.o	               \
+	  $(OBJ)/mess/utils.o	               \
+	  $(OBJ)/mess/tools/imgtool/main.o     \
+	  $(OBJ)/mess/tools/imgtool/imgtool.o  \
+	  $(OBJ)/mess/tools/imgtool/imgwave.o  \
+	  $(OBJ)/mess/tools/imgtool/filter.o   \
+	  $(OBJ)/mess/tools/imgtool/filteoln.o \
+	  $(OBJ)/mess/tools/imgtool/filtbas.o  \
+	  $(OBJ)/mess/tools/imgtool/cococas.o  \
+	  $(OBJ)/mess/tools/imgtool/vmsx_tap.o \
+	  $(OBJ)/mess/tools/imgtool/vmsx_gm2.o \
+	  $(OBJ)/mess/formats/fmsx_cas.o       \
+	  $(OBJ)/mess/tools/imgtool/fmsx_cas.o \
+	  $(OBJ)/mess/formats/svi_cas.o        \
+	  $(OBJ)/mess/tools/imgtool/svi_cas.o  \
+	  $(OBJ)/mess/formats/cococas.o        \
+	  $(OBJ)/mess/tools/imgtool/msx_dsk.o  \
+	  $(OBJ)/mess/tools/imgtool/xsa.o      \
+	  $(OBJ)/mess/tools/imgtool/rsdos.o    \
+	  $(OBJ)/mess/tools/imgtool/stream.o   \
+	  $(OBJ)/mess/tools/imgtool/t64.o      \
+	  $(OBJ)/mess/tools/imgtool/lynx.o     \
+	  $(OBJ)/mess/tools/imgtool/crt.o      \
+	  $(OBJ)/mess/tools/imgtool/d64.o      \
+	  $(OBJ)/mess/tools/imgtool/fat.o      \
+	  $(OBJ)/mess/tools/imgtool/rom16.o    \
+	  $(OBJ)/mess/tools/imgtool/nccard.o   \
 	  $(OBJ)/mess/snprintf.o
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ $(LIBS) $(IMGTOOL_LIBS) $(OUTOPT)
@@ -836,8 +834,8 @@ ifeq ($(OS),msdos)
 TEXTS = mess.txt
 mess.txt: $(EMULATOR)
 	@echo Generating $@...
-	@$(EMULATOR) -listtext > mess.txt
-	@$(EMULATOR) -listdevices >> mess.txt
+	@$(EMULATOR) -listtext > docs/mess.txt
+	@$(EMULATOR) -listdevices >> docs/mess.txt
 endif
 
 mess/makedep/makedep$(EXE): $(wildcard mess/makedep/*.c) $(wildcard mess/makedep/*.h)
