@@ -72,6 +72,7 @@ struct ImageModule
 	unsigned int open_is_strict : 1;
 	unsigned int supports_creation_time : 1;
 	unsigned int supports_lastmodified_time : 1;
+	unsigned int tracks_are_called_cylinders : 1;
 
 	imgtoolerr_t	(*open)			(imgtool_image *image, imgtool_stream *f);
 	void			(*close)		(imgtool_image *image);

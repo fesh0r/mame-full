@@ -2350,6 +2350,54 @@ static void fat_chd_diskimage_close(imgtool_image *image)
 
 
 
+static imgtoolerr_t	fat_chd_diskimage_getsectorsize(imgtool_image *image, UINT32 track, UINT32 head, UINT32 sector, UINT32 *sector_size)
+{
+	struct fat_diskinfo *disk_info;
+	disk_info = fat_get_diskinfo(image);
+	*sector_size = imghd_get_header(&disk_info->harddisk)->sectorbytes;
+	return IMGTOOLERR_SUCCESS;
+}
+
+
+
+static UINT32 fat_chd_calc_lbasector(struct fat_diskinfo *disk_info, UINT32 track, UINT32 head, UINT32 sector)
+{
+	UINT32 lbasector;
+	const struct hard_disk_info *hd_info;
+
+	hd_info = imghd_get_header(&disk_info->harddisk);
+	lbasector = track;
+	lbasector *= hd_info->heads;
+	lbasector += head;
+	lbasector *= hd_info->sectors;
+	lbasector += sector;
+	return lbasector;
+}
+
+
+
+static imgtoolerr_t	fat_chd_diskimage_readsector(imgtool_image *image, UINT32 track, UINT32 head, UINT32 sector, void *buffer, size_t len)
+{
+	struct fat_diskinfo *disk_info;
+	disk_info = fat_get_diskinfo(image);
+	return imghd_read(&disk_info->harddisk,
+		fat_chd_calc_lbasector(disk_info, track, head, sector),
+		1, buffer);
+}
+
+
+
+static imgtoolerr_t	fat_chd_diskimage_writesector(imgtool_image *image, UINT32 track, UINT32 head, UINT32 sector, const void *buffer, size_t len)
+{
+	struct fat_diskinfo *disk_info;
+	disk_info = fat_get_diskinfo(image);
+	return imghd_write(&disk_info->harddisk,
+		fat_chd_calc_lbasector(disk_info, track, head, sector),
+		1, buffer);
+}
+
+
+
 imgtoolerr_t pc_chd_createmodule(imgtool_library *library)
 {
 	imgtoolerr_t err;
@@ -2366,6 +2414,7 @@ imgtoolerr_t pc_chd_createmodule(imgtool_library *library)
 	module->open_is_strict				= 1;
 	module->supports_creation_time		= 1;
 	module->supports_lastmodified_time	= 1;
+	module->tracks_are_called_cylinders	= 1;
 	module->path_separator				= '\\';
 	module->alternate_path_separator	= '/';
 	module->eoln						= EOLN_CRLF;
@@ -2382,6 +2431,9 @@ imgtoolerr_t pc_chd_createmodule(imgtool_library *library)
 	module->free_space					= fat_diskimage_freespace;
 	module->create_dir					= fat_diskimage_createdir;
 	module->delete_dir					= fat_diskimage_deletedir;
+	module->get_sector_size				= fat_chd_diskimage_getsectorsize;
+	module->read_sector					= fat_chd_diskimage_readsector;
+	module->write_sector				= fat_chd_diskimage_writesector;
 	module->createimage_optguide		= fat_chd_create_optionguide;
 	module->createimage_optspec			= fat_chd_create_optionspec;
 	return IMGTOOLERR_SUCCESS;
