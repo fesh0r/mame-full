@@ -1668,8 +1668,7 @@ static void coco_fdc_callback(int event)
 	 */
 	switch(event) {
 	case WD179X_IRQ_CLR:
-		m6809_set_nmi_line(CLEAR_LINE);
-		/* cpu_set_irq_line(0, M6809_INT_NMI, CLEAR_LINE); */
+		cpu_set_nmi_line(0, CLEAR_LINE);
 		break;
 	case WD179X_IRQ_SET:
 		raise_nmi = 1;
@@ -1782,8 +1781,7 @@ static void dc_floppy_w(int offset, int data, int hardware)
 	case 6:
 	case 7:
 		if (raise_nmi) {
-			m6809_set_nmi_line(ASSERT_LINE);
-			/* cpu_set_irq_line(0, M6809_INT_NMI, ASSERT_LINE); */
+			cpu_set_nmi_line(0, ASSERT_LINE);
 			raise_nmi = 0;
 		}
 		set_dskreg(data, hardware);
