@@ -14,6 +14,9 @@
                  This could be used to show for example a 32 bpp bitmap
                  (artwork) on a 16 bpp X-server by defining a CONVER_PIXEL
                  function which downgrades the direct RGB  pixels to 16 bpp.
+                 When you use this you should also make sure that effect.c
+                 renders in SRC_PIXEL color depth and format after lookup in
+                 INDIRECT.
    PACK_BITS     If defined write to packed 24bit pixels, DEST_PIXEL must be
                  32bits and the contents of SRC_PIXEL after applying INDIRECT
                  and CONVERT_PIXEL should be 32 bits RGB 888.
@@ -23,11 +26,10 @@
                  format, see x11_window.c for an example.
                  If indirect is not set the contents of SRC_PIXEL after
                  applying CONVERT_PIXEL should be 32 bits RGB 888.
-   DOUBLEBUFFER  First copy each line to a buffer called doublebuffer_buffer,
-                 then do a memcpy to the real destination. This speeds up
-                 scaling when writing directly to framebuffer since it
-                 tremendously speeds up the reads done to copy one line to
-                 the next.
+   DOUBLEBUFFER  First copy each line to a buffer then do a memcpy to the
+                 real destination. This speeds up scaling when writing directly
+                 to framebuffer since it tremendously speeds up the reads done
+                 to copy one line to the next.
 
    These routines assume visual_ height, width, min_x, min_y, max_x and max_y
    are all a multiple off 8 !
@@ -91,8 +93,8 @@ ChangeLog:
 { \
    int reps = REPS_FOR_Y(1, YV, YMAX); \
    if (reps >0) { \
-     COPY_LINE2(SRC, END, (DEST_PIXEL *)doublebuffer_buffer); \
-     do { memcpy((DST)+(reps*(CORRECTED_DEST_WIDTH)), doublebuffer_buffer, ((END)-(SRC))*DEST_PIXEL_SIZE*widthscale); \
+     COPY_LINE2(SRC, END, (DEST_PIXEL *)effect_dbbuf); \
+     do { memcpy((DST)+(reps*(CORRECTED_DEST_WIDTH)), effect_dbbuf, ((END)-(SRC))*DEST_PIXEL_SIZE*widthscale); \
      } while (reps-- > use_scanlines); \
    } \
 }
@@ -143,12 +145,30 @@ for (;line_src < line_end; \
 #  else
 #  define GETPIXEL(src) CONVERT_PIXEL((src))
 #  endif
+#  define MEMCPY(d, s, n) \
+   {\
+     SRC_PIXEL  *src = (SRC_PIXEL *)(s); \
+     SRC_PIXEL  *end = (SRC_PIXEL *)((char *)(s) + (n)); \
+     DEST_PIXEL *dst = (DEST_PIXEL *)(d); \
+     for(;src<end;src+=8,dst+=8) \
+     { \
+        *(dst  ) = CONVERT_PIXEL(*(src  )); \
+        *(dst+1) = CONVERT_PIXEL(*(src+1)); \
+        *(dst+2) = CONVERT_PIXEL(*(src+2)); \
+        *(dst+3) = CONVERT_PIXEL(*(src+3)); \
+        *(dst+4) = CONVERT_PIXEL(*(src+4)); \
+        *(dst+5) = CONVERT_PIXEL(*(src+5)); \
+        *(dst+6) = CONVERT_PIXEL(*(src+6)); \
+        *(dst+7) = CONVERT_PIXEL(*(src+7)); \
+     }\
+   }
 #else
 #  ifdef INDIRECT
 #  define GETPIXEL(src) INDIRECT[src]
 #  else
 #  define GETPIXEL(src) (src)
 #  endif
+#  define MEMCPY memcpy
 #endif
 
 /* begin actual blit code */
@@ -426,8 +446,27 @@ break;
 
     } /* end switch(widtscale) */
     break;
+
+/* these aren't used by the effect code, so undef them now */
+#undef REPS_FOR_Y
+#undef COPY_LINE_FOR_Y
 #undef LOOP
+#undef GETPIXEL
+
+/* we must double buffer when converting pixels, since the pixel conversion
+   is done in the MEMCPY macro */
+#if defined CONVERT_PIXEL && !defined DOUBLEBUFFER
+#define DOUBLEBUFFER
+#define DOUBLEBUFFER_defined
+#endif
+   
 #include "blit_effect.h"
+
+/* clean up */
+#ifdef DOUBLEBUFFER_defined
+#undef DOUBLEBUFFER
+#endif
+
   } /* end switch(effect) */
 
 #ifdef PUT_IMAGE
@@ -437,8 +476,7 @@ break;
   yarbsize=org_yarbsize;
 }
 
+/* clean up */
 #undef DEST_PIXEL_SIZE
 #undef CORRECTED_DEST_WIDTH
-#undef REPS_FOR_Y
-#undef COPY_LINE_FOR_Y
-#undef GETPIXEL
+#undef MEMCPY

@@ -177,26 +177,26 @@ void effect_init1()
  * and allocates buffer for doublebuffering */
 void effect_init2(int src_depth, int dst_depth, int dst_width)
 {
-  if (effect) {
-    int i,rddepth;
+  int rddepth;
 
-    switch(dst_depth) {
+  switch(dst_depth) {
 #ifdef USE_HWSCALE
-      case FOURCC_YUY2:
-      case FOURCC_YV12:
-        rddepth=16;
-        break;
+    case FOURCC_YUY2:
+    case FOURCC_YV12:
+      rddepth=16;
+      break;
 #endif
-      default:
-        rddepth=dst_depth;
-        break;
-    }
+    default:
+      rddepth=dst_depth;
+      break;
+  }
 
+  free(effect_dbbuf);
+  effect_dbbuf = malloc(dst_width*normal_heightscale*rddepth/8);
+  memset(effect_dbbuf, dst_width*normal_heightscale*rddepth/8, 0);
+
+  if (effect) {
     fprintf(stderr, "Initializing video effect %d: bitmap depth = %d, display depth = %d\n", effect, src_depth, rddepth);
-    free(effect_dbbuf);
-    effect_dbbuf = malloc(dst_width*normal_heightscale*rddepth/8);
-    for (i=0; i<dst_width*normal_heightscale*rddepth/8; i++)
-      effect_dbbuf[i] = 0;
     switch (dst_depth) {
       case 15:
       case 16:

@@ -519,6 +519,7 @@ int x11_window_create_display (int bitmap_depth)
 	int image_height;
 	int i;
 	int window_width, window_height;
+	int effect_dest_depth;
 	int event_mask = 0;
 	int my_use_private_cmap = use_private_cmap;
 
@@ -1098,11 +1099,14 @@ int x11_window_create_display (int bitmap_depth)
 		return OSD_NOT_OK;
 
 	fprintf(stderr_file, "Actual bits per pixel = %d... ", depth);
+	effect_dest_depth = depth;
 	if (bitmap_depth == 32)
 	{
 #ifdef USE_HWSCALE
 		if(use_hwscale && hwscale_yuv)
 		{
+		        /* HACK - HACK - HACK - sending FourCC code for YUV format in place of depth... */
+		        effect_dest_depth = hwscale_format;
 			switch(hwscale_format)
 			{
 				case FOURCC_YUY2:
@@ -1136,6 +1140,9 @@ int x11_window_create_display (int bitmap_depth)
 			switch(depth)
 			{
                             case 16:
+                                /* make effect render in 32 bpp, we then
+                                   convert this ourselves */
+                                effect_dest_depth = 32;
                                 if ((xvisual->red_mask   == (0x1F << 11)) &&
                                     (xvisual->green_mask == (0x3F <<  5)) &&
                                     (xvisual->blue_mask  == (0x1F      )))
@@ -1160,6 +1167,8 @@ int x11_window_create_display (int bitmap_depth)
 #ifdef USE_HWSCALE
 		if(use_hwscale && hwscale_yuv)
 		{
+		        /* HACK - HACK - HACK - sending FourCC code for YUV format in place of depth... */
+		        effect_dest_depth = hwscale_format;
 			switch(hwscale_format)
 			{
 				case FOURCC_YUY2:
@@ -1235,13 +1244,7 @@ int x11_window_create_display (int bitmap_depth)
 			XDefineCursor (display, window, normal_cursor);
 	}
 
-#ifdef USE_HWSCALE
-	if(use_hwscale && hwscale_yuv)
-		effect_init2(bitmap_depth, hwscale_format, window_width);
-	/* HACK - HACK - HACK - sending FourCC code for YUV format in place of depth... */
-	else
-#endif
-		effect_init2(bitmap_depth, depth, window_width);
+	effect_init2(bitmap_depth, effect_dest_depth, window_width);
 
 	return OSD_OK;
 }
