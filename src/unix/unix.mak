@@ -564,11 +564,7 @@ imgtool: $(IMGTOOL_OBJS) $(PLATFORM_IMGTOOL_OBJS)
 	$(CC_COMMENT) @echo 'Compiling $@...'
 	$(CC_COMPILE) $(LD) $(LDFLAGS) $^ -lz -o $@
 
-messtest: $(OBJS) $(DRVLIBS) $(MESSTEST_OBJS) \
-	$(OBJ)/mess/tools/messtest/messtest.o \
-	$(OBJ)/mess/tools/messtest/testexec.o \
-	$(OBJ)/mess/tools/messtest/tststubs.o \
-	$(OBJ)/mess/tools/messtest/tstutils.o \
+messtest: $(OBJS) $(MESSTEST_OBJS) \
 	$(OBJDIR)/dirio.o \
 	$(OBJDIR)/fileio.o \
 	$(OBJDIR)/ticker.o \
@@ -577,7 +573,7 @@ messtest: $(OBJS) $(DRVLIBS) $(MESSTEST_OBJS) \
 	$(OBJDIR)/sysdep/rc.o \
 	$(OBJDIR)/tststubs.o
 	$(CC_COMMENT) @echo 'Linking $@...'
-	$(CC_COMPILE) $(LD) $(LDFLAGS) $(MY_LIBS) $^ -o $@
+	$(CC_COMPILE) $(LD) $(LDFLAGS) $(MY_LIBS) $^ -Wl,--allow-multiple-definition -o $@
 
 $(OBJDIR)/tststubs.o: src/unix/tststubs.c
 	$(CC_COMPILE) $(CC) $(MY_CFLAGS) -o $@ -c $<
