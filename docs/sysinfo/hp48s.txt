@@ -18,6 +18,12 @@ infrared interface
 serial rs232 interface
 
 
+Notes
+-----
+on and - decreases contrast
+on and + increases contrast
+
+
 Official and legal HP rom images
 --------------------------------
 http://www.hpcalc.org/hp.php
