@@ -1339,7 +1339,10 @@ static struct {
 
 	{ 0x82030062 , 0x080000, "USR Pilot 1000/5000 OS v1.0" },
 	{ 0xbaa5b36a , 0x100000, "Palm Pilot Professional OS v2.0 Pro" },
+	{ 0x4f31e1c9 , 0x119000, "Palm III OS v3.0" },
+	{ 0xa0b059f9 , 0x119000, "Palm III OS v3.0 (debug)" },
 	{ 0x467ff0de , 0x148000, "Palm III OS v3.3" },
+	{ 0x785e771b , 0x150000, "Palm III OS v3.3 (german) (ID 00X00XX00XXX-C)" },
 	{ 0xedb269d8 , 0x180000, "Palm III OS v3.5" },
 	{ 0x50961ee6 , 0x180000, "Palm III OS v3.5 (debug)" },
 	{ 0x280f1090 , 0x198000, "Palm III OS v4.0" },
@@ -1352,8 +1355,16 @@ static struct {
 	{ 0x695f379e , 0x258000, "Palm IIIc OS v4.0 (EFIGS) (alt)" },
 	{ 0x006a977f , 0x268000, "Palm IIIc OS v4.0 (japanese)" },
 	{ 0x53cb10a2 , 0x280000, "Palm IIIc OS v4.0 (japanese) (debug)" },
+	{ 0x5a64ef2b , 0x128000, "Palm IIIe/IIIx/V OS v3.1" },
 	{ 0xdc560ed1 , 0x138000, "Palm IIIx/V/Vx OS v3.3" },
+	{ 0x0011f920 , 0x140000, "Palm IIIx/V/Vx OS v3.3 (ID 00X000X00000-R)" },
+	{ 0x08ee205e , 0x150000, "Palm IIIx/V/Vx OS v3.3 (german) (ID 00X000X00000-R)" },
+	{ 0x20c79493 , 0x140000, "Palm IIIx/V/Vx OS v3.3 (ID 10EV19Q96BTW-V)" },
+	{ 0x30da34a1 , 0x148000, "Palm IIIx/V/Vx OS v3.3 (debug)" },
 	{ 0xb9fdb1ce , 0x178000, "Palm IIIx/V/Vx OS v3.5" },
+	{ 0x85412370 , 0x180000, "Palm IIIx/V/Vx OS v3.5 (alt)" },
+	{ 0xc8ddb563 , 0x180000, "Palm IIIx/V/Vx OS v3.5 (german)" },
+	{ 0x1f0f5841 , 0x188000, "Palm IIIx/V/Vx OS v3.5 (ID 10HA14M07KHB-J)" },
 	{ 0x4c700386 , 0x178000, "Palm IIIx/V/Vx OS v3.5 (debug)" },
 	{ 0x9531c50c , 0x118000, "Palm IIIx/V/Vx OS v3.5.2 (modified)" },
 	{ 0xcfbdef34 , 0x198000, "Palm IIIx/V/Vx OS v4.0" },
@@ -1363,14 +1374,20 @@ static struct {
 	{ 0x39f24dc0 , 0x358000, "Palm V/Vx OS v4.0 (EFIGS)" },
 	{ 0x80b78ab7 , 0x338000, "Palm V/Vx OS v4.0 (EFIGS) (debug)" },
 	{ 0x0fe71ec1 , 0x350000, "Palm V/Vx OS v4.0 (japanese) (full) (debug)" },
+	{ 0x29b5d84e , 0x1F0000, "Palm VII OS v3.2" },
 	{ 0x9bd7c6fe , 0x178000, "Palm m100 OS v3.5.1" },
 	{ 0xdd93b80f , 0x1f0000, "Palm m505 OS v4.0" },
 	{ 0xd1f37309 , 0x210000, "Palm m505 OS v4.0 (debug)" },
 
 	{ 0xb47295a8 , 0x200000, "Handspring Visor OS v3.1" },
-	{ 0xc9e55271 , 0x200000, "Handspring Visor Platinum/Prism/Edge OS v3.5.2" },
+	{ 0x93cded38 , 0x200000, "Handspring Visor OS v3.1H2" },
+	{ 0xc9e55271 , 0x200000, "Handspring Visor Platinum/Prism/Edge OS v3.5.2H1.1" },
 
-	{ 0xa0b059f9 , 0x119000, "BAD Dump PalmOs" },
+	{ 0x361ba712 , 0x190000, "Sony CLIE PEG-S300 OS v3.5.1" },
+	{ 0xd39dc1e2 , 0x3b0000, "Sony CLIE PEG-S300 OS v3.5.1 (japanese)" },
+	{ 0x566d18ec , 0x3b0000, "Sony CLIE PEG-S500c OS v3.5.1 (japanese)" },
+
+	{ 0xdd93b80f , 0x1f0000, "TRG Pro OS v3.5.2" },
 
 
 /* Hewlett Packard Calculators *************************************************/
