@@ -211,8 +211,9 @@ include src/$(TARGET).mak
 endif
 ifeq ($(TARGET), mage)
 include mage/src/$(TARGET).mak
-else
-include $(TARGET)/$(TARGET).mak
+endif
+ifeq ($(TARGET), mess)
+include mess/$(TARGET).mak
 endif
 
 ifeq ($(TARGET), mage)
