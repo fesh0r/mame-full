@@ -71,16 +71,10 @@ extern int dragon64_pak_load(int id);
 extern int coco3_pak_load(int id);
 extern READ_HANDLER ( dragon_mapped_irq_r );
 extern READ_HANDLER ( coco3_mapped_irq_r );
-//extern WRITE_HANDLER ( dragon64_sam_himemmap );
-//extern WRITE_HANDLER ( coco3_sam_himemmap );
 extern READ_HANDLER ( coco3_mmu_r );
 extern WRITE_HANDLER ( coco3_mmu_w );
 extern READ_HANDLER ( coco3_gime_r );
 extern WRITE_HANDLER ( coco3_gime_w );
-//extern WRITE_HANDLER ( dragon_sam_speedctrl );
-//extern WRITE_HANDLER ( coco3_sam_speedctrl );
-//extern WRITE_HANDLER ( dragon_sam_page_mode );
-//extern WRITE_HANDLER ( dragon_sam_memory_size );
 extern READ_HANDLER ( coco_cartridge_r);
 extern WRITE_HANDLER ( coco_cartridge_w );
 extern READ_HANDLER ( coco3_cartridge_r);
@@ -97,6 +91,8 @@ extern int coco_bitbanger_init (int id);
 extern void coco_bitbanger_exit (int id);
 extern void coco_bitbanger_output (int id, int data);
 extern int coco3_calculate_rows(int *bordertop, int *borderbottom);
+extern READ_HANDLER( coco_pia_1_r );
+extern READ_HANDLER( coco3_pia_1_r );
 
 /* Returns whether a given piece of logical memory is contiguous or not */
 extern int coco3_mmu_ismemorycontiguous(int logicaladdr, int len);

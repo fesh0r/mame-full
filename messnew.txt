@@ -11,8 +11,9 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
-- [DRAGON/COCO1-2-3] Fixed ROM loading so that ROMs are properly mirrored.
-  [Nate Woods]
+- [DRAGON/COCO1-2-3] Fixed ROM loading so that ROMs are properly mirrored, and
+  worked on improving the way that the CART signal is handled.  These changes
+  make many more cartridges work properly.  [Nate Woods]
 
 Other Changes:
 --------------

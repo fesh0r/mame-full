@@ -75,7 +75,7 @@ static int coco3_interupt_line;
 static int pia0_irq_a, pia0_irq_b;
 static int pia1_firq_a, pia1_firq_b;
 static int gime_firq, gime_irq;
-static int cart_inserted;
+static int cart_line, cart_line_on_q;
 static UINT8 pia0_pb, soundmux_status, tape_motor;
 static UINT8 joystick_axis, joystick;
 static int d_dac;
@@ -108,6 +108,8 @@ static void d_sam_set_mpurate(int val);
 static void d_sam_set_memorysize(int val);
 static void d_sam_set_maptype(int val);
 static void coco3_sam_set_maptype(int val);
+static void coco_setcartline(int data);
+static void coco3_setcartline(int data);
 
 /* These sets of defines control logging.  When MAME_DEBUG is off, all logging
  * is off.  There is a different set of defines for when MAME_DEBUG is on so I
@@ -214,6 +216,19 @@ static struct sam6883_interface coco3_sam_intf =
 	NULL,
 	coco3_sam_set_maptype
 };
+
+struct cartridge_callback {
+	void (*cart_w)(int data);
+};
+
+struct cartridge_slot {
+	void (*init)(const struct cartridge_callback *callbacks);
+	mem_read_handler io_r;
+	mem_write_handler io_w;
+	void (*enablesound)(int enable);
+};
+
+static const struct cartridge_slot *coco_cart_interface;
 
 /***************************************************************************
   PAK files
@@ -340,7 +355,7 @@ static int generic_pak_load(int id, UINT8 *rambase, UINT8 *rombase, UINT8 *pakba
 		paklength = header.length ? LITTLE_ENDIANIZE_INT16(header.length) : 0x10000;
 		pakstart = LITTLE_ENDIANIZE_INT16(header.start);
 		if (pakstart == 0xc000)
-			cart_inserted = 1;
+			cart_line_on_q = 1;
 
 		if (osd_fseek(fp, paklength, SEEK_CUR)) {
 #if LOG_PAK
@@ -448,7 +463,7 @@ static int generic_rom_load(int id, UINT8 *dest, UINT16 destlength)
 	UINT16 romsize;
 	void *fp;
 
-	cart_inserted = 0;
+	cart_line_on_q = 0;
 
 	fp = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0);
 	if (fp) {
@@ -458,7 +473,7 @@ static int generic_rom_load(int id, UINT8 *dest, UINT16 destlength)
 
 		osd_fread(fp, dest, romsize);
 
-		cart_inserted = 1;
+		cart_line_on_q = 1;
 		osd_fclose(fp);
 
 		/* Now we need to repeat the mirror the ROM throughout the ROM memory */
@@ -936,6 +951,29 @@ static WRITE_HANDLER ( d_pia0_pb_w )
 	pia0_pb = data;
 }
 
+/* The following hacks are necessary because a large portion of cartridges
+ * tie the Q line to the CART line.  Since Q pulses with every single clock
+ * cycle, this would be prohibitively slow to emulate.  Thus we are only
+ * going to pulse when the PIA is read from; which seems good enough (for now)
+ */
+READ_HANDLER( coco_pia_1_r )
+{
+	if (cart_line_on_q) {
+		coco_setcartline(0);
+		coco_setcartline(1);
+	}
+	return pia_1_r(offset);
+}
+
+READ_HANDLER( coco3_pia_1_r )
+{
+	if (cart_line_on_q) {
+		coco3_setcartline(0);
+		coco3_setcartline(1);
+	}
+	return pia_1_r(offset);
+}
+
 /***************************************************************************
   PIA1 ($FF20-$FF3F) (Chip U4)
 
@@ -958,7 +996,7 @@ static WRITE_HANDLER ( d_pia0_pb_w )
 
 static READ_HANDLER ( d_pia1_cb1_r )
 {
-	return cart_inserted;
+	return cart_line;
 }
 
 static WRITE_HANDLER ( d_pia1_cb2_w )
@@ -1676,19 +1714,6 @@ void coco_cassette_exit(int id)
   Cartridge Expansion Slot
  ***************************************************************************/
 
-struct cartridge_callback {
-	void (*cart_w)(int data);
-};
-
-struct cartridge_slot {
-	void (*init)(const struct cartridge_callback *callbacks);
-	mem_read_handler io_r;
-	mem_write_handler io_w;
-	void (*enablesound)(int enable);
-};
-
-static const struct cartridge_slot *coco_cart_interface;
-
 static void coco_cartrige_init(const struct cartridge_slot *cartinterface, const struct cartridge_callback *callbacks)
 {
 	coco_cart_interface = cartinterface;
@@ -2091,15 +2116,15 @@ void coco_bitbanger_output (int id, int data)
 
 static void coco_setcartline(int data)
 {
-	cart_inserted = data;
+	cart_line = data;
 	pia_1_cb1_w(0, data);
 }
 
 static void coco3_setcartline(int data)
 {
-	cart_inserted = data;
+	cart_line = data;
 	pia_1_cb1_w(0, data);
-	coco3_raise_interrupt(COCO3_INT_EI0, cart_inserted ? 1 : 0);
+	coco3_raise_interrupt(COCO3_INT_EI0, cart_line ? 1 : 0);
 }
 
 static const struct cartridge_callback coco_cartcallbacks =
@@ -2126,11 +2151,6 @@ static void generic_init_machine(struct pia6821_interface *piaintf, struct sam68
 	pia_config(0, PIA_STANDARD_ORDERING | PIA_8BIT, &piaintf[0]);
 	pia_config(1, PIA_STANDARD_ORDERING | PIA_8BIT, &piaintf[1]);
 	pia_reset();
-
-	if (cart_inserted) {
-		/* HACK */
-		timer_set(0.25, 1, cartcallback->cart_w);
-	}
 
 	sam_init(samintf);
 
