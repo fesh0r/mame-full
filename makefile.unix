@@ -35,6 +35,7 @@
 # Uncomment one of these.
 TARGET = mame
 # TARGET = mess
+# TARGET = mage
 # TARGET = mmsnd
 # example for a tiny compile
 # TARGET = tiny

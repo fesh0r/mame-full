@@ -163,6 +163,9 @@ INCLUDE_PATH = -I. -Imess -Isrc -Isrc/includes -Isrc/unix -Isrc/unix/sysdep -I$(
 else
 INCLUDE_PATH = -I. -Isrc -Isrc/includes -Isrc/unix -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
 endif
+ifeq ($(TARGET), mage)
+INCLUDE_PATH = -I. -Image/src -Image/src/includes -Isrc/unix -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
+endif
 
 ##############################################################################
 # "Calculate" the final CFLAGS, unix CONFIG, LIBS and OBJS
@@ -195,15 +198,26 @@ PLATFORM_IMGTOOL_OBJS = $(OBJDIR)/dirio.o \
 			$(OBJDIR)/fileio.o \
 			$(OBJDIR)/sysdep/misc.o
 
-include src/core.mak
-
-ifeq ($(TARGET), mess)
-include mess/mess.mak
+ifeq ($(TARGET), mage)
+include mage/src/core.mak
 else
-include src/$(TARGET).mak
+include src/core.mak
 endif
 
+ifeq ($(TARGET), mame)
+include src/$(TARGET).mak
+endif
+ifeq ($(TARGET), mage)
+include mage/src/$(TARGET).mak
+else
+include $(TARGET)/$(TARGET).mak
+endif
+
+ifeq ($(TARGET), mage)
+include mage/src/rules.mak
+else
 include src/rules.mak
+endif
 
 ifeq ($(TARGET), mess)
 include mess/rules_ms.mak
@@ -562,9 +576,15 @@ $(OBJ)/mess/%.o: mess/%.c
 	$(CC_COMPILE) $(CC) $(MY_CFLAGS) -o $@ -c $<
 endif
 
+ifdef MAGE
+$(OBJ)/%.o: mage/src/%.c
+	$(CC_COMMENT) @echo '[MAGE] Compiling $< ...'
+	$(CC_COMPILE) $(CC) $(MY_CFLAGS) -o $@ -c $<
+else
 $(OBJ)/%.o: src/%.c
 	$(CC_COMMENT) @echo 'Compiling $< ...'
 	$(CC_COMPILE) $(CC) $(MY_CFLAGS) -o $@ -c $<
+endif
 
 $(OBJ)/%.a:
 	$(CC_COMMENT) @echo 'Archiving $@ ...'
