@@ -50,6 +50,10 @@ Imgtool Changes:
 - [Windows Imgtool] Now handles multiple selections better, as well as
   cosmetic changes and fixups.  [Nate Woods]
 
+- [Windows Imgtool] Fixed problems with error reporting with CHD hard drive
+  files under certain conditions, and disabled certain functionity when read
+  only files are open.  [Nate Woods]
+
 
 
 Source Changes:

@@ -1434,11 +1434,12 @@ static void init_menu(HWND window, HMENU menu)
 	}
 
 	can_read      = features.supports_reading && (si.has_files || si.has_directories);
-	can_write     = features.supports_writing;
-	can_createdir = features.supports_createdir;
+	can_write     = features.supports_writing && (info->open_mode != OSD_FOPEN_READ);
+	can_createdir = features.supports_createdir && (info->open_mode != OSD_FOPEN_READ);
 	can_delete    = (si.has_files || si.has_directories)
 						&& (!si.has_files || features.supports_deletefile)
-						&& (!si.has_directories || features.supports_deletedir);
+						&& (!si.has_directories || features.supports_deletedir)
+						&& (info->open_mode != OSD_FOPEN_READ);
 
 	EnableMenuItem(menu, ID_IMAGE_INSERT,
 		MF_BYCOMMAND | (can_write ? MF_ENABLED : MF_GRAYED));

@@ -28,10 +28,10 @@ imgtoolerr_t imghd_open(imgtool_stream *stream, struct mess_hard_disk_file *hard
 void imghd_close(struct mess_hard_disk_file *disk);
 
 /* reads data from a hard disk */
-UINT32 imghd_read(struct mess_hard_disk_file *disk, UINT32 lbasector, UINT32 numsectors, void *buffer);
+imgtoolerr_t imghd_read(struct mess_hard_disk_file *disk, UINT32 lbasector, UINT32 numsectors, void *buffer);
 
 /* writes data to a hard disk */
-UINT32 imghd_write(struct mess_hard_disk_file *disk, UINT32 lbasector, UINT32 numsectors, const void *buffer);
+imgtoolerr_t imghd_write(struct mess_hard_disk_file *disk, UINT32 lbasector, UINT32 numsectors, const void *buffer);
 
 /* gets the header from a hard disk */
 const struct hard_disk_info *imghd_get_header(struct mess_hard_disk_file *disk);

@@ -374,6 +374,7 @@ static imgtoolerr_t fat_read_sector(imgtool_image *image, UINT32 sector_index,
 	int offset, void *buffer, size_t buffer_len)
 {
 	const struct fat_diskinfo *disk_info;
+	imgtoolerr_t err;
 	floperr_t ferr;
 	int head, track, sector;
 	UINT8 data[FAT_SECLEN];
@@ -386,7 +387,9 @@ static imgtoolerr_t fat_read_sector(imgtool_image *image, UINT32 sector_index,
 	{
 		while(buffer_len > 0)
 		{
-			imghd_read(&fat_get_diskinfo(image)->harddisk, sector_index++, 1, data);
+			err = imghd_read(&fat_get_diskinfo(image)->harddisk, sector_index++, 1, data);
+			if (err)
+				return err;
 
 			len = MIN(buffer_len, sizeof(data) - offset);
 			memcpy(buffer, data + offset, len);
@@ -412,6 +415,7 @@ static imgtoolerr_t fat_write_sector(imgtool_image *image, UINT32 sector_index,
 	int offset, const void *buffer, size_t buffer_len)
 {
 	const struct fat_diskinfo *disk_info;
+	imgtoolerr_t err;
 	floperr_t ferr;
 	int head, track, sector;
 	UINT8 data[FAT_SECLEN];
@@ -429,7 +433,9 @@ static imgtoolerr_t fat_write_sector(imgtool_image *image, UINT32 sector_index,
 
 			if ((offset != 0) || (buffer_len < sizeof(data)))
 			{
-				imghd_read(&fat_get_diskinfo(image)->harddisk, sector_index, 1, data);
+				err = imghd_read(&fat_get_diskinfo(image)->harddisk, sector_index, 1, data);
+				if (err)
+					return err;
 				memcpy(data + offset, buffer, len);
 				write_data = data;
 			}
@@ -438,7 +444,9 @@ static imgtoolerr_t fat_write_sector(imgtool_image *image, UINT32 sector_index,
 				write_data = buffer;
 			}
 
-			imghd_write(&fat_get_diskinfo(image)->harddisk, sector_index++, 1, write_data);
+			err = imghd_write(&fat_get_diskinfo(image)->harddisk, sector_index++, 1, write_data);
+			if (err)
+				return err;
 
 			buffer = ((const UINT8 *) buffer) + len;
 			buffer_len -= len;

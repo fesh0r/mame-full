@@ -1322,7 +1322,7 @@ static int read_absolute_physrec(ti99_lvl1_imgref *l1_img, unsigned aphysrec, vo
 
 		return read_sector(l1_img, & address, dest);*/
 
-		return imghd_read(&l1_img->harddisk_handle, aphysrec, 1, dest) != 1;
+		return imghd_read(&l1_img->harddisk_handle, aphysrec, 1, dest) != IMGTOOLERR_SUCCESS;
 	}
 	else
 	{
@@ -1352,7 +1352,7 @@ static int write_absolute_physrec(ti99_lvl1_imgref *l1_img, unsigned aphysrec, c
 
 		return write_sector(l1_img, & address, dest);*/
 
-		return imghd_write(&l1_img->harddisk_handle, aphysrec, 1, src) != 1;
+		return imghd_write(&l1_img->harddisk_handle, aphysrec, 1, src) != IMGTOOLERR_SUCCESS;
 	}
 	else
 	{
