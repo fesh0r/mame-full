@@ -12,6 +12,8 @@ System Driver Changes:
 
 - [AMSTRAD] M6845 changes; the Backtro demo now runs.  [bobz, Nate Woods]
 
+- [MICROBEE] Implemented a binary quickload device.  (bug #599) [Nate Woods]
+
 - [NESPAL] Fixed a major slowdown that only affected the PAL version of the
   NES driver.  (bug #457) [Nate Woods]
 

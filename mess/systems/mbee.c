@@ -373,7 +373,7 @@ SYSTEM_CONFIG_START(mbee)
 	CONFIG_DEVICE(mbee_cassette_getinfo)
 	CONFIG_DEVICE(mbee_cartslot_getinfo)
 	CONFIG_DEVICE(mbee_floppy_getinfo)
-	/*CONFIG_DEVICE(mbee_quickload_getinfo)*/
+	CONFIG_DEVICE(mbee_quickload_getinfo)
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME      PARENT	COMPAT	MACHINE   INPUT     INIT      CONFIG	COMPANY   FULLNAME */
