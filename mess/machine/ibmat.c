@@ -319,7 +319,7 @@ void at_8042_time(void)
  *
  *	Input port controller
  *		7: 0=Keyboard Locked
- *		6: 1 = Monochrome 0 = Color (true for real IBM, clones are undefined are use CMOS RAM data)
+ *		6: 1 = Monochrome 0 = Color (true for real IBM, clones are undefined and use CMOS RAM data)
  *		5..2: reserved
  *		1: Mouse data in
  *		0: Keyboard data in
