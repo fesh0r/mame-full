@@ -2815,6 +2815,6 @@ static const struct IODevice io_cpc6128[] =
 /*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT COMPANY   FULLNAME */
 COMP( 1984, cpc464,   0,		amstrad,  amstrad,	0,	 "Amstrad plc", "Amstrad/Schneider CPC464")
 COMP( 1985, cpc664,   cpc464,		amstrad,  amstrad,	0,	 "Amstrad plc", "Amstrad/Schneider CPC664")
-COMP( 1985, cpc6128,  0,		amstrad,  amstrad,	0,	 "Amstrad plc", "Amstrad/Schneider CPC6128")
-COMP( 19??, kccomp,   cpc6128,	kccomp,   kccomp,	0,	 "VEB Mikroelektronik", "KC Compact")
+COMP( 1985, cpc6128,  cpc464,		amstrad,  amstrad,	0,	 "Amstrad plc", "Amstrad/Schneider CPC6128")
+COMP( 19??, kccomp,   cpc464,	kccomp,   kccomp,	0,	 "VEB Mikroelektronik", "KC Compact")
 
