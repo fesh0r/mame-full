@@ -560,7 +560,7 @@ static DRIVER_INIT( jaguar )
 
 static DEVICE_LOAD( jaguar_cart )
 {
-	return cartslot_load_generic(file, REGION_CPU1, 0x800000, 1, 0x600000, 0);
+	return cartslot_load_generic(file, REGION_CPU1, 0x800000, 1, 0x600000, CARTLOAD_16BIT_BE);
 }
 
 SYSTEM_CONFIG_START(jaguar)

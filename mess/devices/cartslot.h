@@ -7,7 +7,11 @@
 enum
 {
 	CARTLOAD_MUSTBEPOWEROFTWO	= 1,
-	CARTLOAD_MIRROR				= 2
+	CARTLOAD_MIRROR				= 2,
+
+	CARTLOAD_8BIT				= 0,
+	CARTLOAD_16BIT_LE			= 4,
+	CARTLOAD_16BIT_BE			= 8
 };
 
 int cartslot_load_generic(mame_file *fp, int memregion, UINT32 offset, UINT32 minsize, UINT32 maxsize, int flags);

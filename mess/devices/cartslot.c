@@ -36,6 +36,7 @@ int cartslot_load_generic(mame_file *fp, int memregion, UINT32 offset, UINT32 mi
 	UINT32 bytes_read;
 	UINT64 size;
 	UINT32 s;
+	UINT32 (*readfile)(mame_file *file, void *buffer, UINT32 length);
 
 	mem = memory_region(memregion);
 
@@ -46,6 +47,10 @@ int cartslot_load_generic(mame_file *fp, int memregion, UINT32 offset, UINT32 mi
 
 	size = mame_fsize(fp);
 	if ((size < minsize) || (size > maxsize))
+		return INIT_FAIL;
+
+	/* check to see if 16 bit cartridge has odd size */
+	if ((flags & (CARTLOAD_16BIT_LE|CARTLOAD_16BIT_BE)) && (size & 1))
 		return INIT_FAIL;
 
 	if (flags & CARTLOAD_MUSTBEPOWEROFTWO)
@@ -63,7 +68,15 @@ int cartslot_load_generic(mame_file *fp, int memregion, UINT32 offset, UINT32 mi
 	mem += offset;
 	memset(mem, 0, maxsize);
 
-	bytes_read = mame_fread(fp, mem, maxsize);
+	/* choose a proper read proc */
+	if (flags & CARTLOAD_16BIT_BE)
+		readfile = mame_fread_msbfirst;
+	else if (flags & CARTLOAD_16BIT_LE)
+		readfile = mame_fread_lsbfirst;
+	else
+		readfile = mame_fread;
+
+	bytes_read = readfile(fp, mem, maxsize);
 	if (bytes_read != size)
 		return INIT_FAIL;
 
