@@ -193,11 +193,6 @@ int ti990_hd_init(int id, void *fp, int open_mode)
 	}
 
 	return INIT_PASS;
-
-error:
-	if (d->fd)
-		osd_fclose(d->fd);
-	return INIT_FAIL;
 }
 
 /*

@@ -131,11 +131,6 @@ int ti990_tape_init(int id, void *fp, int open_mode)
 	t->bot = 1;
 
 	return INIT_PASS;
-
-error:
-	if (t->fd)
-		osd_fclose(t->fd);
-	return INIT_FAIL;
 }
 
 /*
