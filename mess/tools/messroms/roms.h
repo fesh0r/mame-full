@@ -359,6 +359,7 @@ static struct {
 
 /* Commodore C16/C116/Plus4/1551 *************************************************************/
 	{ 0x74eaae87, 0x4000, "318006.01 PLUS4 Basic 8000" },
+	{ 0xdbdc3319, 0x4000, "318004.01 PLUS4 Kernel PAL R1 c000" },
 	{ 0x77bab934, 0x4000, "318004.03 PLUS4 Kernel Pal R3 c000" },
 	{ 0xbe54ed79, 0x4000, "318004.04 PLUS4 Kernel Pal R4 c000" },
 	{ 0x71c07bd4, 0x4000, "318004.05 PLUS4 Kernel Pal R5 c000" },
@@ -377,6 +378,7 @@ static struct {
 
 /* Commodore VIC20 **************************************************************************/
 	{ 0xdb4c43c1, 0x2000, "901486.01 VIC20 Basic c000" },
+	{ 0x336900d7, 0x2000, "901486.02 VIC20 Kernel vic1001 NTSC-M e000" },
 	{ 0xe5e7c174, 0x2000, "901486.06 VIC20 Kernel NTSC e000" },
 	{ 0x4be07cb4, 0x2000, "901486.07 VIC20 Kernel PAL e000" },
 	{ 0x83e032a6, 0x1000, "901460.03 VIC20 character set 8000" },
