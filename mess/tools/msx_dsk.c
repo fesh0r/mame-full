@@ -1,9 +1,7 @@
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
 #include "osdepend.h"
 #include "imgtool.h"
 #include "osdtools.h"
+#include "utils.h"
 
 /*
  * msx_dsk.c : converts .ddi/.img/.msx disk images to .dsk image
@@ -84,7 +82,7 @@ static int msx_dsk_image_init(STREAM *f, IMAGE **outimg)
 
     if (!memcmp (header, "PCK\010", 4) )
 		{
-		format = XSA_2DD; 
+		format = XSA_2DD;
 		if (4 != stream_read (f, &len, 4) ) return IMGTOOLERR_READERROR;
 		len = intelLong (len);
 		if (4 != stream_read (f, header, 4) ) return IMGTOOLERR_READERROR;
@@ -93,9 +91,9 @@ static int msx_dsk_image_init(STREAM *f, IMAGE **outimg)
 		{
 		case 720*1024+1:
 		case 360*1024+1:
-			if ( (header[0] * 360 * 1024 + 1) == len) 
+			if ( (header[0] * 360 * 1024 + 1) == len)
 				format = header[0]; /* bit evil, but works */
-			
+
 			len--;
 			break;
 		case 720*1024:
@@ -104,13 +102,13 @@ static int msx_dsk_image_init(STREAM *f, IMAGE **outimg)
 				name_len = strlen (f->name);
 				if (name_len > 4 || !strcmpi (f->name + name_len - 4, ".msx") )
 					format = MSX_2DD;
-				}	
+				}
 			break;
 		case 720*1024+0x1800:
 			len -= 0x1800;
 			format = DDI_2DD;
 		}
-	
+
 	if (!format) return IMGTOOLERR_CORRUPTIMAGE;
 
 	image = (DSK_IMAGE*)malloc (sizeof (DSK_IMAGE) );
@@ -160,7 +158,7 @@ static int msx_dsk_image_init(STREAM *f, IMAGE **outimg)
 			*outimg=NULL;
 			return IMGTOOLERR_OUTOFMEMORY;
 			}
-		if (XSA_MAX_FILENAME != stream_read (f, image->file_name, 
+		if (XSA_MAX_FILENAME != stream_read (f, image->file_name,
 			XSA_MAX_FILENAME) )
 			{
 			free(image->file_name);
@@ -322,13 +320,13 @@ static huf_node huftbl[2*tblsize-1];
 /****************************************************************/
 /* maak de huffman codeer informatie				*/
 /****************************************************************/
-static void mkhuftbl()
+static void mkhuftbl( void )
 {
   unsigned count;
   huf_node  *hufpos;
   huf_node  *l1pos, *l2pos;
   SHORT tempw;
- 
+
   /* Initialize the huffman tree */
   for (count=0, hufpos=huftbl; count != tblsize; count++) {
     (hufpos++)->weight=1+(tblsizes[count] >>= 1);
@@ -342,7 +340,7 @@ static void mkhuftbl()
       ;
     l1pos = hufpos++;
     while (!(hufpos->weight))
-      hufpos++; 
+      hufpos++;
     if (hufpos->weight < l1pos->weight) {
       l2pos = l1pos;
       l1pos = hufpos++;
@@ -370,7 +368,7 @@ static void mkhuftbl()
 /****************************************************************/
 /* initialize the huffman info tables                           */
 /****************************************************************/
-static void inithufinfo()
+static void inithufinfo( void )
 {
   unsigned offs, count;
 
@@ -406,13 +404,13 @@ static UINT8 bitcnt;  /* #resterende bits   */
 /****************************************************************/
 /* The function prototypes					*/
 /****************************************************************/
-static void unlz77();       /* perform the real decompression       */
+static void unlz77( void );       /* perform the real decompression       */
 static void charout(UINT8);      /* put a character in the output stream */
-static unsigned rdstrlen(); /* read string length                   */
-static unsigned rdstrpos(); /* read string pos                      */
-static void flushoutbuf();
-static UINT8 charin();       /* read a char                          */
-static UINT8 bitin();        /* read a bit                           */
+static unsigned rdstrlen( void ); /* read string length                   */
+static unsigned rdstrpos( void ); /* read string pos                      */
+static void flushoutbuf( void );
+static UINT8 charin( void );       /* read a char                          */
+static UINT8 bitin( void );        /* read a bit                           */
 
 /****************************************************************/
 /* de hoofdlus							*/
@@ -429,7 +427,7 @@ int xsa_extract (STREAM *in, STREAM *out)
 		} while (byt);
 	in_stream = in;
     bitcnt = 0;         /* nog geen bits gelezen               */
-	
+
 	/* setup the out buffer */
     outbuf = malloc (outbufsize);
     if (!outbuf) return 2;
@@ -451,25 +449,25 @@ int xsa_extract (STREAM *in, STREAM *out)
 /****************************************************************/
 /* the actual decompression algorithm itself			*/
 /****************************************************************/
-static void unlz77()
+static void unlz77( void )
 {
-  UINT8 strlen = 0;
+  UINT8 strl = 0;
   unsigned strpos;
 
   do {
     switch (bitin()) {
       case 0 : charout(charin()); break;
-      case 1 : strlen = rdstrlen();
-	       if (strlen == (maxstrlen+1))
+      case 1 : strl = rdstrlen();
+	       if (strl == (maxstrlen+1))
 		 break;
 	       strpos = rdstrpos();
-	       while (strlen--)
+	       while (strl--)
 		 charout(*(outbufpos-strpos));
-	       strlen = 0;
+	       strl = 0;
 	       break;
     }
   }
-  while (strlen != (maxstrlen+1)&&!error_occ);
+  while (strl != (maxstrlen+1)&&!error_occ);
   flushoutbuf ();
 }
 
@@ -496,10 +494,10 @@ static void charout(UINT8 ch)
 /****************************************************************/
 /* flush the output buffer                                      */
 /****************************************************************/
-static void flushoutbuf()
+static void flushoutbuf( void )
 {
   if (!error_occ && outbufcnt) {
-    if (outbufcnt != stream_write (out_stream, outbuf, outbufcnt) ) 
+    if (outbufcnt != stream_write (out_stream, outbuf, outbufcnt) )
 		error_occ = IMGTOOLERR_WRITEERROR;
 
     outbufcnt = 0;
@@ -509,7 +507,7 @@ static void flushoutbuf()
 /****************************************************************/
 /* read string length						*/
 /****************************************************************/
-static unsigned rdstrlen()
+static unsigned rdstrlen( void )
 {
   UINT8 len;
   UINT8 nrbits;
@@ -534,7 +532,7 @@ static unsigned rdstrlen()
 /****************************************************************/
 /* read string pos						*/
 /****************************************************************/
-static unsigned rdstrpos()
+static unsigned rdstrpos( void )
 {
   UINT8 nrbits;
   UINT8 cpdindex;
@@ -566,7 +564,7 @@ static unsigned rdstrpos()
     strpos=0;
     for (nrbits = cpdext[cpdindex]; nrbits--; strpos |= bitin())
       strpos <<= 1;
-  }    
+  }
   if (!(updhufcnt--))
     mkhuftbl(); /* make the huffman table */
 
@@ -576,7 +574,7 @@ static unsigned rdstrpos()
 /****************************************************************/
 /* read a bit from the input file				*/
 /****************************************************************/
-static UINT8 bitin()
+static UINT8 bitin( void )
 {
   UINT8 temp;
 
@@ -594,14 +592,14 @@ static UINT8 bitin()
 /****************************************************************/
 /* Get the next character from the input buffer.                */
 /****************************************************************/
-static UINT8 charin()
+static UINT8 charin( void )
 	{
 	UINT8 byte;
 
 	if (error_occ)
 		return 0;
 	else
-        { 
+        {
 		if (1 != stream_read (in_stream, &byte, 1) )
 			{
 			error_occ = IMGTOOLERR_READERROR;
