@@ -22,6 +22,19 @@ enum
 	region_cpu1_len = 0x106100	/* total len */
 };
 
+enum
+{
+	offset_rom0_4p = 0x4000,
+	offset_rom4_4p = 0xc000,
+	offset_rom6_4p = 0x6000,
+	offset_rom6b_4p= 0xe000,
+	offset_sram_4p = 0x10000,		/* scratch RAM (1kbyte) */
+	offset_cart_4p = 0x10400,		/* cartridge ROM/RAM (2*8 kbytes) */
+	offset_xram_4p = 0x12400,		/* extended RAM (32 kbytes - 512kb with myarc-like mapper, 1Mb with super AMS) */
+	region_cpu1_len_4p = 0x112400	/* total len */
+};
+
+
 /* offsets for region_dsr */
 enum
 {
@@ -38,7 +51,8 @@ typedef enum
 	xRAM_kind_foundation_128k,	/* 128kb foundation */
 	xRAM_kind_foundation_512k,	/* 512kb foundation */
 	xRAM_kind_myarc_128k,		/* 128kb myarc clone (no ROM) */
-	xRAM_kind_myarc_512k		/* 512kb myarc clone (no ROM) */
+	xRAM_kind_myarc_512k,		/* 512kb myarc clone (no ROM) */
+	xRAM_kind_99_4p_1Mb			/* ti99/4p super AMS clone */
 } xRAM_kind_t;
 
 /* defines for input ports */
@@ -65,6 +79,7 @@ enum
 
 void init_ti99_4(void);
 void init_ti99_4a(void);
+void init_ti99_4p(void);
 
 void ti99_init_machine(void);
 void ti99_stop_machine(void);
@@ -98,3 +113,9 @@ WRITE16_HANDLER ( ti99_expansion_CRU_w );
 
 READ16_HANDLER ( ti99_rw_expansion );
 WRITE16_HANDLER ( ti99_ww_expansion );
+
+
+READ16_HANDLER ( ti99_4p_expansion_CRU_r );
+WRITE16_HANDLER ( ti99_4p_expansion_CRU_w );
+READ16_HANDLER ( ti99_4p_rw_expansion );
+WRITE16_HANDLER ( ti99_4p_ww_expansion );
