@@ -74,7 +74,8 @@ static struct {
 
 int vc4000_vh_start(void)
 {
-    for (int i=0;i<0x20; i++) {
+    int i;
+    for (i=0;i<0x20; i++) {
 	sprite_collision[i]=0;
 	if ((i&3)==3) sprite_collision[i]|=0x20;
 	if ((i&5)==5) sprite_collision[i]|=0x10;
@@ -244,9 +245,11 @@ void vc4000_draw_digit(struct osd_bitmap *bitmap, int x, int y, int d, int line)
 
 INLINE void vc4000_collision_plot(UINT8 *collision, UINT8 data, UINT8 color, int scale)
 {
-    for (int j=0,m=0x80; j<8; j++, m>>=1) {
+    int j,m;
+    for (j=0,m=0x80; j<8; j++, m>>=1) {
 	if (data&m) {
-	    for (int i=0; i<scale; i++, collision++) *collision|=color;
+	    int i;
+	    for (i=0; i<scale; i++, collision++) *collision|=color;
 	} else
 	    collision+=scale;
     }
@@ -414,7 +417,8 @@ INLINE void vc4000_draw_grid(UINT8 *collision)
     }
     for (x=30, j=0, m=0x80; j<16; j++, x+=8, m>>=1) {
 	if (vc4000_video.reg.d.grid[i][j>>3]&m) {
-	    for (int l=0; l<w; l++) {
+	    int l;
+	    for (l=0; l<w; l++) {
 		collision[x+l]|=0x10;
 	    }
 	    plot_box(Machine->scrbitmap, x, vc4000_video.line, w, 1, Machine->pens[(vc4000_video.reg.d.background>>4)&7]);
@@ -425,7 +429,7 @@ INLINE void vc4000_draw_grid(UINT8 *collision)
 
 int vc4000_video_line(void)
 {
-    int x,y;
+    int x,y,i;
     UINT8 collision[400]={0}; // better alloca or gcc feature of non constant long automatic arrays
     assert(sizeof(collision)>=Machine->scrbitmap->width);
 
@@ -440,7 +444,7 @@ int vc4000_video_line(void)
 	plot_box(Machine->scrbitmap, 0, 0, 
 		 Machine->scrbitmap->width, Machine->scrbitmap->height, 
 		 Machine->pens[1]);
-	for (int i=0; i<4; i++) {
+	for (i=0; i<4; i++) {
 	    char message[40];
 	    sprintf(message, "%.2x %.2x %.2x %.2x", 
 		    vc4000_video.sprites[i].data->x1, vc4000_video.sprites[i].data->y1,
@@ -463,7 +467,7 @@ int vc4000_video_line(void)
 
 //    if (!(vc4000_video.reg.d.sprite_collision&0x40)) {
 //	for (int i=0; i<Machine->scrbitmap->width; i++) {
-	for (int i=0; i<160; i++) {
+	for (i=0; i<160; i++) {
 	    vc4000_video.sprite_collision|=sprite_collision[collision[i]];
 	    vc4000_video.background_collision|=background_collision[collision[i]];
 	}
