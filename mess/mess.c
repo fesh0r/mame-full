@@ -345,6 +345,8 @@ void exit_devices(void)
 	/* shutdown all devices */
 	image_unload_all();
 
+	inputx_exit();
+
 	/* KT: clean up */
 	floppy_drives_exit();
 

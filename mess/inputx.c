@@ -331,6 +331,12 @@ void inputx_init(void)
 	}
 }
 
+void inputx_exit(void)
+{
+	codes = NULL;
+	inputx_timer = NULL;
+}
+
 int inputx_can_post(void)
 {
 	return codes != NULL;
