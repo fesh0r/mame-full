@@ -184,9 +184,7 @@ static struct {
 	{ 0xa81ceb7c , 0x80000, "ARCHIMEDES 310 bios 30000" },
 	{ 0x707b0c6c , 0x80000, "ARCHIMEDES 310 bios 38000" },
 
-/* atari ******************************************************************************/
-	{ 0x649913e5 , 0x1000, "ATARI7800 bios" },
-
+/* Atari 8 bit computers *******************************************************/
 	{ 0x6a5d766e , 0x800, "CO12399B? A800 floating point d800" },
 	{ 0x8e547f56 , 0x1000, "CO15199? A800 PAL A e000" },
 	{ 0xbe55b413 , 0x1000, "CO15299? A800 PAL A f000" },
@@ -212,16 +210,57 @@ static struct {
 	{ 0xf0202fb3 , 0x2000, "CO60302A A800XL BASIC REV B" },
 	{ 0x7d684184 , 0x2000, "CO24947A A800XL BASIC REV C" },
 
-	{ 0x4248d3e3 , 0x800, "ATARI5200 bios" },
+/* Atari ST ********************************************************************/
+	/* info on Atari ST TOS dumps taken from dat by TOSEC team */
+	/* not verified, probably needs many corrections */
+	{ 0x16e3e979 , 0x30000 , "Atari ST TOS v1.0 (De) (1985)" },
+	{ 0x2b7f2117 , 0x30000 , "Atari ST TOS v1.0 (Fr) (1985)" },
+	{ 0x1a586c64 , 0x30000 , "Atari ST TOS v1.0 (Uk) (1985)" },
+	{ 0xd331af30 , 0x30000 , "Atari ST TOS v1.0 (Us) (1985)" },
+	{ 0x5fe16c66 , 0x30000 , "Atari ST TOS v1.2 (Ch) (1987)" },
+	{ 0x8688fce6 , 0x30000 , "Atari ST TOS v1.2 (Fr) (1987)" },
+	{ 0x673fd0c2 , 0x30000 , "Atari ST TOS v1.2 (Sw) (1987)" },
+	{ 0x3b5cd0c5 , 0x30000 , "Atari ST TOS v1.2 (Uk) (1987)" },
+	{ 0xd3c32283 , 0x30000 , "Atari ST TOS v1.2 (Us) (1987)" },
+	{ 0xf4e8ecd2 , 0x30000 , "Atari ST TOS v1.4 (Sp) (1989)" },
+	{ 0x80ecfdce , 0x30000 , "Atari ST TOS v1.4 (Sw) (1989)" },
+	{ 0xa50d1d43 , 0x30000 , "Atari ST TOS v1.4 (Uk) (1989)" },
+	{ 0x90f4fbff , 0x30000 , "Atari ST TOS v1.4 (Us) (1989)" },
+	{ 0x7c67c5c9 , 0x40000 , "Atari ST TOS v1.6 (De) (1989)" },
+	{ 0xb6e58a46 , 0x40000 , "Atari ST TOS v1.6 (Fr) (1989)" },
+	{ 0x2cdeb5e5 , 0x40000 , "Atari ST TOS v1.62 (De) (1990)" },
+	{ 0x90f124b1 , 0x40000 , "Atari ST TOS v1.62 (Sw) (1990)" },
+	{ 0xd1c6f2fa , 0x40000 , "Atari ST TOS v1.62 (Uk) (1990)" },
+	{ 0x1c1a4eba , 0x40000 , "Atari ST TOS v1.62 (Uk) (1990) (alt)" },
+	{ 0x8c4fe57d , 0x40000 , "Atari ST TOS v2.6 (Ch) (1991)" },
+	{ 0x143cd2ab , 0x40000 , "Atari ST TOS v2.6 (De) (1991)" },
+	{ 0xe3a99ca7 , 0x40000 , "Atari ST TOS v2.6 (Fr) (1991)" },
+	{ 0xbe61906d , 0x40000 , "Atari ST TOS v2.6 (Sw) (1991)" },
+	{ 0x08538e39 , 0x40000 , "Atari ST TOS v2.6 (Uk) (1991)" },
+	{ 0x3f2f840f , 0x40000 , "Atari ST TOS v2.6 (Us) (1991)" },
+	{ 0x3c3e811c , 0x30000 , "Atari ST Kaos TOS v1.4 (De) (1989)" },
 
-	{ 0xd331af30 , 0x30000, "ATARIST TOS 100" },
-	{ 0x3b5cd0c5, 0x30000, "ATARIST TOS 104" },
-	{ 0x08538e39, 0x40000, "ATARIST TOS 206" },
+	{ 0xe50e6bf9 , 0x2ff80 , "BAD DUMP Atari ST TOS v1.0 (Ch) (1985)" },
+	{ 0xe58f0bdf , 0x30000 , "BAD DUMP Atari ST TOS v1.4 (Ch) (1989)" },
+	{ 0xa2e25337 , 0x40000 , "BAD DUMP Atari ST TOS v1.6 (Fr) (1989)" },
+	{ 0xde62800c , 0x30000 , "BAD DUMP Atari ST TOS v1.6 (Uk) (1989)" },
+	{ 0x6372e5bd , 0x40000 , "BAD DUMP Atari ST TOS v1.62 (Us) (1990)" },
+	{ 0x27b83d2f , 0x40000 , "BAD DUMP Atari ST TOS v2.5 (Fr) (1990)" },
+	{ 0xb28bf5a1 , 0x40000 , "BAD DUMP Atari ST TOS v2.5 (It) (1990)" },
+	{ 0x6d49ccbe , 0x40000 , "BAD DUMP Atari ST TOS v2.5 (Sw) (1990)" },
+	{ 0xd8845f8d , 0x40000 , "BAD DUMP Atari ST TOS v2.5 (Us) (1990)" },
+	{ 0xcf40329c , 0x40000 , "BAD DUMP Atari ST TOS v2.6 (Uk) (1991)" },
+	{ 0x2efbfd7e , 0x30000 , "BAD DUMP Atari ST Kaos TOS v1.4.3 (Ch) (1991)" },
 
-	{ 0xe1ffecb6, 0x200, "LYNX saved (fff9 not authentic)" },
-	{ 0x0d973c9d, 0x200, "LYNX saved (fff9 different to 0xe1ffecb6)" },
+/* Atari consoles **************************************************************/
+	{ 0x4248d3e3 , 0x800, "Atari 5200 bios" },
+	{ 0x649913e5 , 0x1000, "Atari 7800 bios" },
 
-	{ 0xfb731aaa, 0x20000, "JAGUAR" },
+	{ 0xe1ffecb6, 0x200, "Atari Lynx saved (fff9 not authentic)" },
+	{ 0x0d973c9d, 0x200, "Atari Lynx saved (fff9 different to 0xe1ffecb6)" },
+	{ 0x7a91840c, 0x200, "Atari Lynx dummy boot image" },
+
+	{ 0xfb731aaa, 0x20000, "Atari Jaguar" },
 
 /* amstrad *********************************************************************/
 	{ 0x0219bb74 , 0x4000, "CPC6128 os" },
@@ -531,9 +570,63 @@ static struct {
 
 	{ 0xecc43f0f , 0x1000, "Wiesemann Interface (CBM Serial bus to Centronics Printer)" },
 
+/* Commodore AMIGA *************************************************************/
+	/* info on AMIGA Kickstart dumps taken from dats by TOSEC team */
+	/* not verified, probably needs many corrections */
+	{ 0x428a9a4b , 0x40000 , "Amiga Kickstart 0.7 (27.3) (NTSC) (A1000) (Commodore) (1985)" },
+	{ 0x299790ff , 0x40000 , "Amiga Kickstart 1.0 (NTSC) (A1000) (Commodore) (1985)" },
+	{ 0xd060572a , 0x40000 , "Amiga Kickstart 1.1 (31.34) (NTSC) (A1000) (Commodore) (1985)" },
+	{ 0xec86dae2 , 0x40000 , "Amiga Kickstart 1.1 (31.34) (PAL) (A1000) (Commodore) (1986)" },
+	{ 0x9ed783d0 , 0x40000 , "Amiga Kickstart 1.2 (33.166) (A1000) (Commodore) (1986)" },
+	{ 0xa6ce1636 , 0x40000 , "Amiga Kickstart 1.2 (33.180) (A500-A2000) (Commodore) (1986)" },
+	{ 0xc4f0f55f , 0x40000 , "Amiga Kickstart 1.3 (34.5) (A500-A2500-A3000-CDTV) (Commodore) (1987)" },
+	{ 0xa3ba6116 , 0x40000 , "Amiga Kickstart 1.4 (36.015) (A500-A2000) Alpha Release 15 (Commodore) (1989)" },
+	{ 0x39779507 , 0x80000 , "Amiga Kickstart 1.4 (36.02.20) (A3000) Alpha Release 18 (Commodore) (1989)" },
+	{ 0xb333d3c6 , 0x80000 , "Amiga Kickstart 2.0 (36.143) (A3000) (Commodore) (1990)" },
+	{ 0x234a7233 , 0x80000 , "Amiga Kickstart 2.0 (37.175) (A3000) (Commodore) (1991)" },
+	{ 0x8da9bd72 , 0x80000 , "Amiga Kickstart 2.0 (37.175.20) Development (Commodore) (1991)" },
+	{ 0xca2685fd , 0x80000 , "Amiga Kickstart 2.0 (37.210) (A2500) (Commodore) (1991)" },
+	{ 0x4c0c1603 , 0x80000 , "Amiga Kickstart 2.0 (37.210) (A3000) (Commodore) (1991)" },
+	{ 0x83028fb5 , 0x80000 , "Amiga Kickstart 2.0 (37.299) (A600) (Commodore) (1991)" },
+	{ 0x64466c2a , 0x80000 , "Amiga Kickstart 2.0 (37.300) (A600) (Commodore) (1991)" },
+	{ 0x43b0df7b , 0x80000 , "Amiga Kickstart 2.0 (37.350) (A600) (Commodore) (1992)" },
+	{ 0xc3bdb240 , 0x80000 , "Amiga Kickstart 2.04 (37.175) (A500+) (Commodore) (1991)" },
+	{ 0x6c9b07d2 , 0x80000 , "Amiga Kickstart 3.0 (39.106) (A1200) (Commodore) (1992)" },
+	{ 0x9e6ac152 , 0x80000 , "Amiga Kickstart 3.0 (39.106) (A4000) (Commodore) (1992)" },
+	{ 0xbcec8e55 , 0x80000 , "Amiga Kickstart 3.1 (40.055) (A3000) (Commodore) (1993)" },
+	{ 0x1e62d4a5 , 0x80000 , "Amiga Kickstart 3.1 (40.060) (CD32) (Commodore) (1993)" },
+	{ 0xfc24ae0d , 0x80000 , "Amiga Kickstart 3.1 (40.063) (A600) (Commodore) (1993)" },
+	{ 0xb506177b , 0x80000 , "Amiga Kickstart 3.1 (40.063) (A600) (Commodore) (1993) (alt)" },
+	{ 0x1483a091 , 0x80000 , "Amiga Kickstart 3.1 (40.068) (A1200) (Commodore) (1993)" },
+	{ 0x4d1575a6 , 0x80000 , "Amiga Kickstart 3.1 (40.068) (A1200) (Commodore) (1993) (alt)" },
+	{ 0xd6bae334 , 0x80000 , "Amiga Kickstart 3.1 (40.068) (A4000) (Commodore) (1993)" },
+	{ 0x88136ca9 , 0x80000 , "Amiga Kickstart 3.1 (40.068) (A600) (Commodore) (1993)" },
+	{ 0x1d9aa278 , 0x80000 , "Amiga Kickstart 3.1 (40.069) (A1200) (Commodore) (1993)" },
+	{ 0x917100a0 , 0x80000 , "Amiga Kickstart 3.1 (40.070) (A4000) (Commodore) (1993) (alt)" },
+	{ 0x3f0056d3 , 0x80000 , "Amiga Kickstart 3.1 (40.070) (A4000T) (Commodore) (1993)" },
+	{ 0xe75a53f4 , 0x80000 , "Amiga Kickstart 3.5 (40.071) (OS3.5) (Commodore) (1996)" },
 
+	{ 0xda979111 , 0x40000 , "MODIFIED Amiga Kickstart 1.3 (34.5) (A500-A2500-A3000-CDTV) (Commodore) (1987)" },
+	{ 0xe0f37258 , 0x40000 , "MODIFIED Amiga Kickstart 1.3 (34.5) (A500-A2500-A3000-CDTV) (Commodore-Cloanto) (1987)" },
+	{ 0x74680d37 , 0x40000 , "MODIFIED Amiga Kickstart 1.3 (34.5) (A500-A2500-A3000-CDTV) (Guardian 1.2) (Commodore-Transactor) (1988)" },
+	{ 0x43b6dd22 , 0x80000 , "MODIFIED Amiga Kickstart 3.1 (40.068) (A4000) (Commodore-Cloanto) (1993)" },
+	{ 0xbabd04c5 , 0x80000 , "MODIFIED Amiga Kickstart 3.1 (40.068) (A4000) (ShapeShifter) (Commodore) (1993)" },
 
-	{ 0xf6290043 , 0x80000, "AMIGA kickstart 1.3" },
+	{ 0xb95e1d73 , 0x40000 , "BAD DUMP Amiga Kickstart 1.2 (33.166) (A1000) (Commodore) (1986)" },
+	{ 0x42baa124 , 0x40000 , "BAD DUMP Amiga Kickstart 1.3 (34.1001) (CDTV) (Commodore) (1991)" },
+	{ 0x09a9fab2 , 0x40000 , "BAD DUMP Amiga Kickstart 1.3 (34.5) (A500-A2500-A3000-CDTV) (Commodore) (1987) (early build)" },
+	{ 0x63f473ab , 0x80000 , "BAD DUMP Amiga Kickstart 3.1 (40.070) (A4000) (Commodore) (1993) (alt)" },
+
+	{ 0x1cb4eb2f , 0x6F980 , "BAD/OVER DUMP Amiga Kickstart 1.2 (33.180) (A500-A2000) (Commodore) (1986)" },
+
+	{ 0xde142fa9 , 0x80000 , "OVER DUMP Amiga Kickstart 1.1 (31.34) (NTSC) (A1000) (Commodore) (1985)" },
+	{ 0xdcc0b32f , 0x80000 , "OVER DUMP Amiga Kickstart 1.1 (31.34) (PAL) (A1000) (Commodore-Cloanto) (1986)" },
+	{ 0xb5f86782 , 0x80000 , "OVER DUMP Amiga Kickstart 1.2 (33.180) (A500-A2000) (Commodore) (1986)" },
+	{ 0xf6290043 , 0x80000 , "OVER DUMP Amiga Kickstart 1.3 (34.5) (A500-A2500-A3000-CDTV) (Commodore) (1987)" },
+	{ 0x3cac66c7 , 0x80a00 , "OVER DUMP Amiga Kickstart 3.1 (40.055) (A3000) (Commodore) (1993)" },
+
+	{ 0xad01f2fe , 0x80000 , "OVER DUMP, MODIFIED Amiga Kickstart 1.3 (34.5) (A500-A2500-A3000-CDTV) (Commodore) (1987) { 0xh]" },
+	{ 0xfbb4799d , 0x80000 , "OVER DUMP, MODIFIED Amiga Kickstart 1.3 (34.5) (A500-A2500-A3000-CDTV) (Commodore-Cloanto) (1987)" },
 
 /* ibm pc and compatibles ******************************************************/
 	{ 0x80d3cf5d , 0x2000, "IBM PC basic c1.10 f6000" },
