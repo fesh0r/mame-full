@@ -20,8 +20,7 @@
 #define DBG_LOG(level, text, print)
 #endif
 
-#define true TRUE
-#define false FALSE
+
 #define bool int
 
 /*
@@ -60,7 +59,7 @@ f0119
 f10d8
 f10b7 system board error
 
-f019f 
+f019f
 f025b
 f02e6
 f0323
@@ -107,7 +106,7 @@ f13f3 3b
 f1429
 f1462
 f1493 40
-f1532 
+f1532
  keyboard lock
  f1 to unlock
 f155c
@@ -132,7 +131,7 @@ at386
 -----
 fd28c fd
 fd2c3 fc
-f40dc 
+f40dc
 fd949
 fd8e3
 fd982
@@ -219,7 +218,7 @@ void at_8042_init(AT8042_CONFIG *config)
 	at_8042.set_address_mask=config->set_address_mask;
 	at_8042.inport=0xa0; // ibmat bios wants 0x20 set! (keyboard locked when not set)
 						//	0x80
-	
+
 }
 
 static void at_8042_receive(UINT8 data)
@@ -298,7 +297,7 @@ READ_HANDLER(at_8042_r)
 		/* polled for changes in ibmat bios */
 		if (--poll_delay<0) {
 			if (at_8042.type!=AT8042_PS2) {
-				poll_delay=4; // ibmat 
+				poll_delay=4; // ibmat
 			} else {
 				poll_delay=8; // ibm ps2m30
 			}
