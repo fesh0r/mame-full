@@ -92,7 +92,7 @@ unsigned DasmAPEXC(char *buffer, unsigned pc)
 	the_desc = & instructions[function >> 1];
 
 	/* generate mnemonic : append a 'v' to the basic mnemonic if it is a vector instruction */
-	sprintf(mnemonic, "%.*s%c", sizeof(mnemonic)-2, the_desc->mnemonic, vector ? 'v' : ' ');
+	sprintf(mnemonic, "%.*s%c", (int)sizeof(mnemonic)-2, the_desc->mnemonic, vector ? 'v' : ' ');
 
 	/* print mnemonic and n immediate */
 	switch (the_desc->format)
@@ -117,7 +117,7 @@ unsigned DasmAPEXC(char *buffer, unsigned pc)
 		n = 33-c6;
 		if (n == 32)
 			/* case "32" : do not show bit specifier */
-			buffer += sprintf(buffer, "%-8s", mnemonic, n);	/* 8 chars */
+			buffer += sprintf(buffer, "%-8s", mnemonic);	/* 8 chars */
 		else
 			buffer += sprintf(buffer, "%-2s%2d    ", mnemonic, n);	/* 8 chars */
 		break;
