@@ -142,7 +142,7 @@ WRITE_HANDLER(spectrum_port_fe_w)
 	if ((Changed & 0x07)!=0)
 	{
 		/* yes - send event */
-		EventList_AddItemOffset(0x0fe, data & 0x07, cpu_getcurrentcycles());
+		EventList_AddItemOffset(0x0fe, data & 0x07, TIME_TO_CYCLES(0,cpu_getscanline()*cpu_getscanlineperiod()));
 	}
 
 	if ((Changed & (1<<4))!=0)
@@ -2211,7 +2211,7 @@ static struct MachineDriver machine_driver_ts2068 =
 	16, 256,							 /* colors used for the characters */
 	spectrum_init_palette,				 /* initialise palette */
 
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2,
 	ts2068_eof_callback,
 	spectrum_128_vh_start,
 	spectrum_128_vh_stop,
@@ -2263,7 +2263,7 @@ static struct MachineDriver machine_driver_tc2048 =
 	16, 256,							 /* colors used for the characters */
 	spectrum_init_palette,				 /* initialise palette */
 
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2,
 	spectrum_eof_callback,
 	spectrum_128_vh_start,
 	spectrum_128_vh_stop,
@@ -2487,6 +2487,12 @@ ROM_START(ts2068)
 		ROM_LOAD("ts2068_x.rom",0x14000,0x2000, 0xae16233a)
 ROM_END
 
+ROM_START(uk2068)
+		ROM_REGION(0x16000,REGION_CPU1,0)
+		ROM_LOAD("uk2068_h.rom",0x10000,0x4000, 0x5ddc0ca2)
+		ROM_LOAD("ts2068_x.rom",0x14000,0x2000, 0xae16233a)
+ROM_END
+
 ROM_START(specp2fr)
 		ROM_REGION(0x18000,REGION_CPU1,0)
 		ROM_LOAD("plus2fr0.rom",0x10000,0x4000, 0xc684c535)
@@ -2665,6 +2671,7 @@ static const struct IODevice io_ts2068[] = {
 #define io_tk90x	io_spectrum
 #define io_tk95 	io_spectrum
 #define io_tc2048	io_spectrum
+#define io_uk2068	io_ts2068
 #define io_specpl2a io_specpls3
 #define io_specp2fr io_spectrum
 #define io_specp2sp io_spectrum
@@ -2681,10 +2688,11 @@ COMPX( ????, specgrot, spectrum, spectrum,		 spectrum, 0,			 "Amstrad plc",     
 COMPX( 1985, specimc,  spectrum, spectrum,		 spectrum, 0,			 "Amstrad plc",          "ZX Spectrum (Collier's Upgrade)", GAME_COMPUTER_MODIFIED )
 COMPX( 1987, speclec,  spectrum, spectrum,		 spectrum, 0,			 "Amstrad plc",          "ZX Spectrum (LEC Upgrade)", GAME_COMPUTER_MODIFIED )
 COMP ( 1986, inves,    spectrum, spectrum,		 spectrum, 0,			 "Investronica",         "Inves Spectrum 48K+" )
-COMP ( 1985, tk90x,    spectrum, spectrum,		 spectrum, 0,			 "Micro Digital",        "TK90x Color Computer" )
-COMP ( 1986, tk95,	   spectrum, spectrum,		 spectrum, 0,			 "Micro Digital",        "TK95 Color Computer" )
-COMP ( 198?, tc2048,   spectrum, tc2048,		 spectrum, 0,			 "Timex of Portugal",    "TC2048" )
-COMP ( 1983, ts2068,   spectrum, ts2068,		 spectrum, 0,			 "Timex Sinclair",       "TS2068" )
+COMP ( 1985, tk90x,    spectrum, spectrum,		 spectrum, 0,			 "Micro Digital",        "TK-90x Color Computer" )
+COMP ( 1986, tk95,	   spectrum, spectrum,		 spectrum, 0,			 "Micro Digital",        "TK-95 Color Computer" )
+COMP ( 198?, tc2048,   spectrum, tc2048,		 spectrum, 0,			 "Timex of Portugal",    "TC-2048" )
+COMP ( 1983, ts2068,   spectrum, ts2068,		 spectrum, 0,			 "Timex Sinclair",       "TS-2068" )
+COMP ( 1986, uk2068,   spectrum, ts2068,		 spectrum, 0,			 "Unipolbrit",       "UK-2068 ver. 1.2" )
 
 COMPX( 1986, spec128,  0,		 spectrum_128,	 spectrum, 0,			 "Sinclair Research",    "ZX Spectrum 128" ,GAME_NOT_WORKING)
 COMPX( 1985, spec128s, spec128,  spectrum_128,	 spectrum, 0,			 "Sinclair Research",    "ZX Spectrum 128 (Spain)" ,GAME_NOT_WORKING)
