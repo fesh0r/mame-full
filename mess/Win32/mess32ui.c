@@ -1306,6 +1306,9 @@ static void MessCreateDevice(int iDevice)
 
 /* ------------------------------------------------------------------------ *
  * New File Manager                                                         *
+ *                                                                          *
+ * This code implements a MESS32 specific file manger.  However, it isn't   *
+ * ready for prime time so it isn't enabled by default                      *
  * ------------------------------------------------------------------------ */
 
 static BOOL s_bChosen;
@@ -1358,6 +1361,9 @@ static INT_PTR CALLBACK FileManagerProc(HWND hDlg, UINT message, WPARAM wParam, 
 			rPicker.bottom - rPicker.top,\
 			SWP_DRAWFRAME);
 
+		s_bChosen = FALSE;
+		s_lSelectedItem = -1;
+
 		/* Initialize */
 		InitMessPicker(hSoftwarePicker, FALSE);
 		break;
@@ -1388,6 +1394,17 @@ static INT_PTR CALLBACK FileManagerProc(HWND hDlg, UINT message, WPARAM wParam, 
         }
         break;
 
+	case WM_KEYDOWN:
+		switch(wParam) {
+		case VK_ESCAPE:
+			EndDialog(hDlg, -1);
+			break;
+
+		default:
+			return FALSE;
+		}
+		break;
+
 	default:
 		return FALSE;
 	}
@@ -1416,9 +1433,6 @@ int osd_select_file(int sel, char *filename)
 	if (UseNewFileManager()) {
 		ShowCursor(TRUE);
 
-		s_bChosen = FALSE;
-		s_lSelectedItem = -1;
-
 		if (MAME32App.m_pDisplay->AllowModalDialog)
 			MAME32App.m_pDisplay->AllowModalDialog(TRUE);
 
@@ -1430,8 +1444,8 @@ int osd_select_file(int sel, char *filename)
 		ShowCursor(FALSE);
 
 		result = -1;
-		if (s_lSelectedItem > -1) {
-			strcpy(filename, mess_images_index[s_lSelectedItem]->fullname);
+		if (nSelectedItem > -1) {
+			strcpy(filename, mess_images_index[nSelectedItem]->fullname);
 			result = 1;
 		}
 		else {
