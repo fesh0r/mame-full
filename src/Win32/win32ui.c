@@ -1815,6 +1815,27 @@ static void ColumnSort(int column, BOOL bColumn)
     Header_SetSortInfo(hwndList, use_column, !reverse_sort);
 }
 
+static BOOL IsGameRomless(void)
+{
+	const struct RomModule  *romp;
+
+	romp = drivers[game_index]->rom;
+	if (romp)
+	{
+		while (romp->name || romp->offset || romp->length)
+		{
+			if (romp->name || romp->length)
+				return FALSE; /* expecting ROM_REGION */
+
+			romp++;
+
+			if (romp->length)
+				return FALSE;
+		}
+	}
+	return TRUE;
+}
+
 static BOOL GameCheck(void)
 {
 
@@ -1835,7 +1856,7 @@ static BOOL GameCheck(void)
      
     if (GetHasRoms(game_index) == UNKNOWN)
     {
-        if (NULL == drivers[game_index]->rom)
+        if (IsGameRomless())
         {
             success = TRUE;
         }

@@ -31,6 +31,9 @@ Whats new:
   icons directory that matches the name of the driver.  Thus an icon for NES
   cartridges would have the path "nes/cart.ico" [Nate Woods]
 
+- Fixed a bug that caused ROMless drivers to be marked as "Missing ROMs" [Nate
+  Woods]
+
 ----------
 0.37 BETA 5
 ------------
