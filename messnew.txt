@@ -1,17 +1,12 @@
-0.73
+0.73.1
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
-- DAI Personal Computer [Krzysztof Strzecha, Nate Woods]
+(none)
 
 System Driver Changes:
 ----------------------
-- [COCO] CoCo joystick buttons can now be mapped to the mouse buttons (bug
-  #317).  [Nate Woods]
-  
-- [COCO3] Now supports option for 8MB of RAM. [Nate Woods]
-
-- [SNES] Improved sprite to sprite priority. [Anthony Kruize]
+(none)
 
 User Interface Changes:
 -----------------------
@@ -23,21 +18,5 @@ Imgtool Changes:
 
 Source Changes:
 ---------------
-- The core is based on MAME 0.73.  This incorporates all features of the
-  update to this core.  [MAME team]
+(none)
 
-- Added some bounds checking to opcode fetches (bug #352).  [Nate Woods]
-
-- Made some debugger fixes when dealing with 8 or 16 bit numbers.  [Nate
-  Woods]
-  
-- Fixed a bug in the handline of low resolution systems; the UI would not be
-  properly rendered.  [Nate Woods]
-
-- Adds info regarding device extensions to -listinfo and -listxml output.
-  [Andrea Mazzoleni]
-
-- Renamed config.? to crcfile.?.  [Nate Woods]
-
-- [Windows] When the new UI is active and MESS is paused, MESS now should not
-  waste any excess CPU time.  [Nate Woods]
