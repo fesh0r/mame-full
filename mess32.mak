@@ -334,7 +334,7 @@ DRV_OBJS = \
           $(OBJ)/mess/vidhrdw/genesis.o  \
           $(OBJ)/mess/machine/genesis.o  \
           $(OBJ)/mess/sndhrdw/genesis.o  \
-#          $(OBJ)/mess/systems/genesis.o	\
+          $(OBJ)/mess/systems/genesis.o	\
           $(OBJ)/mess/machine/atari.o    \
           $(OBJ)/mess/vidhrdw/antic.o    \
           $(OBJ)/mess/vidhrdw/gtia.o     \
