@@ -96,6 +96,14 @@
 #define INLINE
 #endif
 
+#ifndef true
+#define true 1
+#endif
+
+#ifndef false
+#define false 0
+#endif
+
 void CHECK_IRQ_LINES( void );
 
 static UINT8 hd6309_reg_layout[] = {
