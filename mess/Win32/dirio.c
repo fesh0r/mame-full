@@ -75,6 +75,11 @@ static void checkinit_curdir(void)
 	}
 }
 
+void resetdir(void)
+{
+	szCurrentDirectory[0] = '\0';
+}
+
 /* This function takes in a pathname, and resolves it according to our 
  * current directory
  */

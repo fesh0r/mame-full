@@ -39,6 +39,7 @@ static int nTheCurrentGame;
 static void OnMessIdle(void);
 
 extern const char *osd_get_cwd(void);
+extern void resetdir(void);
 extern void osd_change_directory(const char *);
 static void FillSoftwareList(int nGame);
 static void InitMessPicker(void);
@@ -503,6 +504,9 @@ static void FillSoftwareList(int nGame)
 	ImageData **pimgd;
 	char *olddir;
 	char buffer[2000];
+
+	/* This fixes any changes the file manager may have introduced */
+	resetdir();
 
 	nTheCurrentGame = nGame;
 
