@@ -79,6 +79,7 @@ void Picker_SetSelectedPick(HWND hwndPicker, int nIndex);
 int Picker_GetNumColumns(HWND hWnd);
 void Picker_ResetIdle(HWND hwndPicker);
 BOOL Picker_IsIdling(HWND hwndPicker);
+void Picker_SetHeaderImageList(HWND hwndPicker, HIMAGELIST hHeaderImages);
 
 // These are used to handle events received by the parent regarding
 // picker controls

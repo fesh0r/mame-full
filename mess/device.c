@@ -225,36 +225,35 @@ const char *device_brieftypename(int type)
 	return "UNKNOWN";
 }
 
+
 /* Return a name for a device of type 'type' with id 'id' */
-const char *device_typename_id(mess_image *img)
+const char *device_typename_devtypeid(const struct GameDriver *drv, const struct IODevice *dev, int id)
 {
 	static char typename_id[40][31+1];
 	static int which = 0;
-	const struct IODevice *dev;
 	const char *name = "UNKNOWN";
 	const char *newname;
 	struct SystemConfigurationParamBlock cfg;
 
- 	dev = image_device(img);
 	if (dev)
 	{
 		newname = NULL;
 		memset(&cfg, 0, sizeof(cfg));
-		Machine->gamedrv->sysconfig_ctor(&cfg);
+		drv->sysconfig_ctor(&cfg);
 		if (cfg.get_custom_devicename)
 		{
 			/* use a custom devicename */
-			newname = cfg.get_custom_devicename(img, typename_id[which], sizeof(typename_id[which]) / sizeof(typename_id[which][0]));
+			newname = cfg.get_custom_devicename(dev->type, id, typename_id[which], sizeof(typename_id[which]) / sizeof(typename_id[which][0]));
 			if (newname)
 				name = newname;
 		}
 		if (!newname)
 		{
-			name = ui_getstring((UI_cartridge - IO_CARTSLOT) + image_devtype(img));
+			name = ui_getstring((UI_cartridge - IO_CARTSLOT) + dev->type);
 			if (dev->count > 1)
 			{
 				/* for the average user counting starts at #1 ;-) */
-				sprintf(typename_id[which], "%s #%d", name, image_index_in_device(img)+1);
+				sprintf(typename_id[which], "%s #%d", name, id+1);
 				name = typename_id[which];
 			}
 		}
@@ -263,6 +262,14 @@ const char *device_typename_id(mess_image *img)
 	if ((name >= typename_id[which]) && (name < typename_id[which] + sizeof(typename_id[which])))
 		which = (which + 1) % (sizeof(typename_id) / sizeof(typename_id[which]));
 	return name;
+}
+
+const char *device_typename_id(mess_image *img)
+{
+	return device_typename_devtypeid(
+		Machine->gamedrv,
+		image_device(img),
+		image_index_in_device(img));
 }
 
 /*

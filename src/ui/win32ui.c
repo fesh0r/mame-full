@@ -681,7 +681,7 @@ static ResizeItem main_resize_items[] =
 	{ RA_ID,   { IDC_HISTORY },  TRUE,	RA_RIGHT | RA_BOTTOM | RA_TOP,     NULL },
 	{ RA_ID,   { IDC_SSTAB },    FALSE,	RA_RIGHT | RA_TOP,                 NULL },
 #ifdef MESS
-	{ RA_ID,   { IDC_LIST2 },    TRUE,	RA_RIGHT | RA_BOTTOM | RA_TOP,     NULL },
+	{ RA_ID,   { IDC_SWLIST },    TRUE,	RA_RIGHT | RA_BOTTOM | RA_TOP,     NULL },
 	{ RA_ID,   { IDC_SPLITTER3 },FALSE,	RA_RIGHT | RA_BOTTOM | RA_TOP,     NULL },
 #endif /* MESS */
 	{ RA_END,  { 0 },            FALSE, 0,                                 NULL }
@@ -2406,15 +2406,10 @@ static long WINAPI MameWindowProc(HWND hWnd, UINT message, UINT wParam, LONG lPa
 	case WM_DRAWITEM:
 		{
 			LPDRAWITEMSTRUCT lpDis = (LPDRAWITEMSTRUCT)lParam;
-			switch (lpDis->CtlID)
-			{
-			case IDC_LIST:
-#ifdef MESS
-			case IDC_LIST2:
-#endif
+
+			GetClassName(lpDis->hwndItem, szClass, sizeof(szClass) / sizeof(szClass[0]));
+			if (!strcmp(szClass, "SysListView32"))
 				Picker_HandleDrawItem(GetDlgItem(hMain, lpDis->CtlID), lpDis);
-				break;
-			}
 		}
 		break;
 
@@ -3745,12 +3740,17 @@ static void SetView(int menu_id)
 
 	Picker_SetViewID(hwndList, menu_id - ID_VIEW_LARGE_ICON);
 #ifdef MESS
-	Picker_SetViewID(GetDlgItem(hMain, IDC_LIST2), menu_id - ID_VIEW_LARGE_ICON);
+	Picker_SetViewID(GetDlgItem(hMain, IDC_SWLIST), menu_id - ID_VIEW_LARGE_ICON);
 #endif
 
 
 	if (force_reset)
+	{
 		Picker_Sort(hwndList);
+#ifdef MESS
+		Picker_Sort(GetDlgItem(hMain, IDC_SWLIST));
+#endif
+	}
 }
 
 static void ResetListView()
@@ -4890,7 +4890,6 @@ static DWORD GetShellSmallIconSize(void)
 // create iconlist for Listview control
 static void CreateIcons(void)
 {
-	HWND header;
 	DWORD dwLargeIconSize = GetShellLargeIconSize();
 	HICON hIcon;
 	int icon_count;
@@ -4925,17 +4924,20 @@ static void CreateIcons(void)
 	// restore our view
 	SetWindowLong(hwndList,GWL_STYLE,dwStyle);
 
+#ifdef MESS
+	CreateMessIcons();
+#endif
+
+	// Now set up header specific stuff
 	hHeaderImages = ImageList_Create(8,8,ILC_COLORDDB | ILC_MASK,2,2);
 	hIcon = LoadIcon(hInst,MAKEINTRESOURCE(IDI_HEADER_UP));
 	ImageList_AddIcon(hHeaderImages,hIcon);
 	hIcon = LoadIcon(hInst,MAKEINTRESOURCE(IDI_HEADER_DOWN));
 	ImageList_AddIcon(hHeaderImages,hIcon);
 
-	header = ListView_GetHeader(hwndList);
-	Header_SetImageList(header,hHeaderImages);
-
+	Picker_SetHeaderImageList(hwndList, hHeaderImages);
 #ifdef MESS
-	CreateMessIcons();
+	Picker_SetHeaderImageList(GetDlgItem(hMain, IDC_SWLIST), hHeaderImages);
 #endif
 }
 

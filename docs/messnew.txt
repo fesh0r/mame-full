@@ -10,6 +10,8 @@ System Driver Changes:
 ----------------------
 - [A2600] Various fixes on certain Activision games.  (bug #570) [Judge]
 
+- [AMSTRAD] Renamed cpc6128fr to cpc6128f to be 8.3 compliant.  [Nate Woods]
+
 - [GENESIS] Fixed button input declarations.  [Nate Woods]
 
 - [PC] New PIT implementation; Styx and Digger run better now.  Also fixed the

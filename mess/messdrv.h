@@ -86,7 +86,7 @@ struct SystemConfigurationParamBlock
 	UINT32 *ram_options;
 	int device_num;
 	const struct IODevice *dev;
-	const char *(*get_custom_devicename)(mess_image *img, char *buf, size_t bufsize);
+	const char *(*get_custom_devicename)(int devtype, int devid, char *buf, size_t bufsize);
 	int (*queue_chars)(const unicode_char_t *text, size_t text_len);
 	int (*accept_char)(unicode_char_t ch);
 	int (*charqueue_empty)(void);
@@ -154,7 +154,7 @@ struct SystemConfigurationParamBlock
 /*****************************************************************************/
 
 #define GET_CUSTOM_DEVICENAME(name)															\
-	const char *get_custom_devicename_##name(mess_image *img, char *buf, size_t bufsize)	\
+	const char *get_custom_devicename_##name(int devtype, int id, char *buf, size_t bufsize)	\
 
 #define QUEUE_CHARS(name)																	\
 	int inputx_queue_chars_##name(const unicode_char_t *text, size_t text_len)				\

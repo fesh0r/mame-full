@@ -169,6 +169,7 @@ extern const char  *device_brieftypename(int type);
 extern int          device_typeid(const char *name);
 extern const char  *device_typename_id(mess_image *img);
 extern const char  *device_file_extension(int type, int extnum);
+extern const char *device_typename_devtypeid(const struct GameDriver *drv, const struct IODevice *dev, int id);
 
 /* access functions from the struct IODevice arrays of a driver */
 extern const void *device_info(int type, int id);

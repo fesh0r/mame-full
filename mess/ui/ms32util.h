@@ -5,6 +5,7 @@
 
 BOOL DriverIsComputer(int driver_index);
 BOOL DriverIsModified(int driver_index);
+BOOL DriverUsesMouse(int driver_index);
 
 #endif /* MS32UTIL_H */
 

@@ -4,16 +4,18 @@
 #include "ui/resource.h"
 
 #define IDC_SPLITTER3				    2000
-#define IDC_LIST2                       2001
-#define IDC_FILTER_COMPUTER             2002
-#define IDC_FILTER_CONSOLE              2003
-#define IDC_FILTER_MODIFIED             2004
-#define IDC_USE_NEW_UI                  2005
-#define IDC_RAM_COMBOBOX				2006
-#define IDC_RAM_CAPTION					2007
-#define IDC_PRINTER_CAPTION				2008
-#define IDC_PRINTER_EDITTEXT			2009
-#define IDC_PRINTER_BROWSE				2010
+#define IDC_SWTAB                       2001
+#define IDC_SWLIST                      2002
+#define IDC_SWDEVVIEW                   2003
+#define IDC_FILTER_COMPUTER             2004
+#define IDC_FILTER_CONSOLE              2005
+#define IDC_FILTER_MODIFIED             2006
+#define IDC_USE_NEW_UI                  2007
+#define IDC_RAM_COMBOBOX				2008
+#define IDC_RAM_CAPTION					2009
+#define IDC_PRINTER_CAPTION				2010
+#define IDC_PRINTER_EDITTEXT			2011
+#define IDC_PRINTER_BROWSE				2012
 #define IDI_WIN_NOROMSNEEDED			2100
 #define IDI_WIN_MISSINGOPTROM			2101
 #define IDI_WIN_FLOP                    2102

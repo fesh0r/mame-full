@@ -1662,3 +1662,11 @@ LPCTSTR *Picker_GetColumnNames(HWND hwndPicker)
 }
 
 
+
+void Picker_SetHeaderImageList(HWND hwndPicker, HIMAGELIST hHeaderImages)
+{
+	HWND hwndHeader;
+	hwndHeader = ListView_GetHeader(hwndPicker);
+	Header_SetImageList(hwndHeader, hHeaderImages);
+}
+

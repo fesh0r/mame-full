@@ -166,8 +166,8 @@ static BOOL CreateMessIcons(void)
         mess_icon_index[i] = 0;
 
 	// Associate the image lists with the list view control.
-	ListView_SetImageList(GetDlgItem(hMain, IDC_LIST2), hSmall, LVSIL_SMALL);
-	ListView_SetImageList(GetDlgItem(hMain, IDC_LIST2), hLarge, LVSIL_NORMAL);
+	ListView_SetImageList(GetDlgItem(hMain, IDC_SWLIST), hSmall, LVSIL_SMALL);
+	ListView_SetImageList(GetDlgItem(hMain, IDC_SWLIST), hLarge, LVSIL_NORMAL);
 	return TRUE;
 }
 
@@ -259,7 +259,7 @@ static void MyFillSoftwareList(int nGame, BOOL bForce)
 		}
 	}
 
-	FillSoftwareList(GetDlgItem(hMain, IDC_LIST2), nGame, path_count, pathsv, extra_path,
+	FillSoftwareList(GetDlgItem(hMain, IDC_SWLIST), nGame, path_count, pathsv, extra_path,
 		MessHashErrorProc);
 }
 
@@ -283,7 +283,7 @@ static BOOL IsSoftwarePaneDevice(int devtype)
 
 static void MessReadMountedSoftware(int nGame)
 {
-	HWND hwndSoftware = GetDlgItem(hMain, IDC_LIST2);
+	HWND hwndSoftware = GetDlgItem(hMain, IDC_SWLIST);
 	const char *selected_software_const;
 	char *this_software;
 	char *selected_software;
@@ -436,7 +436,7 @@ static void InitMessPicker(void)
 	struct PickerOptions opts;
 	HWND hwndSoftware;
 
-	hwndSoftware = GetDlgItem(hMain, IDC_LIST2);
+	hwndSoftware = GetDlgItem(hMain, IDC_SWLIST);
 
 	memset(&opts, 0, sizeof(opts));
 	opts.pCallbacks = &s_softwareListCallbacks;
@@ -572,7 +572,7 @@ static void MessSetupDevice(common_file_dialog_proc cfd, int iDevice)
 	SetupImageTypes(Picker_GetSelectedItem(hwndList), imagetypes, sizeof(imagetypes) / sizeof(imagetypes[0]), TRUE, iDevice);
 
 	if (CommonFileImageDialog(last_directory, cfd, filename, imagetypes))
-		MessIntroduceItem(GetDlgItem(hMain, IDC_LIST2), filename, imagetypes);
+		MessIntroduceItem(GetDlgItem(hMain, IDC_SWLIST), filename, imagetypes);
 }
 
 static void MessOpenOtherSoftware(int iDevice)
@@ -610,7 +610,7 @@ static int SoftwarePicker_GetItemImage(int nItem)
 
     nType = GetImageType(nItem);
 
-    nIcon = GetMessIcon(Picker_GetSelectedItem(GetDlgItem(hMain, IDC_LIST2)), nType);
+    nIcon = GetMessIcon(Picker_GetSelectedItem(GetDlgItem(hMain, IDC_SWLIST)), nType);
     if (!nIcon)
 	{
 		switch(nType)
@@ -643,7 +643,7 @@ static int SoftwarePicker_GetItemImage(int nItem)
 
 static void SoftwarePicker_LeavingItem(int nItem)
 {
-	HWND hwndSoftware = GetDlgItem(hMain, IDC_LIST2);
+	HWND hwndSoftware = GetDlgItem(hMain, IDC_SWLIST);
 	SoftwareList_ItemChanged(hwndSoftware, TRUE, FALSE, nItem);
 }
 
@@ -653,7 +653,7 @@ static void SoftwarePicker_EnteringItem(int nItem)
 {
 	const char *name;
 	char *s;
-	HWND hwndSoftware = GetDlgItem(hMain, IDC_LIST2);
+	HWND hwndSoftware = GetDlgItem(hMain, IDC_SWLIST);
 	SoftwareList_ItemChanged(hwndSoftware, FALSE, TRUE, nItem);
 
 	name = GetImageName(nItem);
@@ -756,7 +756,7 @@ static void SoftwarePicker_OnHeaderContextMenu(POINT pt, int nColumn)
 
 	DestroyMenu(hMenuLoad);
 
-	hwndPicker = GetDlgItem(hMain, IDC_LIST2);
+	hwndPicker = GetDlgItem(hMain, IDC_SWLIST);
 
 	switch(nMenuItem) {
 	case ID_SORT_ASCENDING:
@@ -831,11 +831,11 @@ static void MessTestsColumns(void)
 			shown[j] = (i & (1<<(j-1))) ? 1 : 0;
 
 		SetMessColumnShown(shown);
-		Picker_ResetColumnDisplay(GetDlgItem(hMain, IDC_LIST2));
+		Picker_ResetColumnDisplay(GetDlgItem(hMain, IDC_SWLIST));
 	}
 
 	SetMessColumnShown(oldshown);
-	Picker_ResetColumnDisplay(GetDlgItem(hMain, IDC_LIST2));
+	Picker_ResetColumnDisplay(GetDlgItem(hMain, IDC_SWLIST));
 }
 
 
@@ -848,7 +848,7 @@ static void CALLBACK MessTestsTimerProc(HWND hwnd, UINT uMsg, UINT_PTR idEvent, 
 	/* if either of the pickers have further idle work to do, or we are
 	 * already in this timerproc, do not do anything */
 	if (s_bInTimerProc || Picker_IsIdling(GetDlgItem(hMain, IDC_LIST))
-		|| Picker_IsIdling(GetDlgItem(hMain, IDC_LIST2)))
+		|| Picker_IsIdling(GetDlgItem(hMain, IDC_SWLIST)))
 		return;
 	s_bInTimerProc = TRUE;
 
@@ -866,7 +866,7 @@ static void CALLBACK MessTestsTimerProc(HWND hwnd, UINT uMsg, UINT_PTR idEvent, 
 	}
 	else
 	{
-		MessTestsFlex(GetDlgItem(hMain, IDC_LIST2), drivers[Picker_GetSelectedItem(hwndList)]);
+		MessTestsFlex(GetDlgItem(hMain, IDC_SWLIST), drivers[Picker_GetSelectedItem(hwndList)]);
 		Picker_SetSelectedPick(hwndList, nNewGame);
 	}
 	s_bInTimerProc = FALSE;
