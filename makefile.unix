@@ -154,7 +154,7 @@ ifneq (,$(findstring gcc,$(CC)))
   # Special cases
   #########################################################################
 
-  # Uncomment for Linux on a PowerPC system.
+  # Uncomment for a Linux/PowerPC system.
   # CFLAGS += -fsigned-char -mlongcall
 
   # Uncomment for OpenStep.  This might also apply to some versions of 
@@ -373,7 +373,10 @@ IL	= '-DINLINE=static __inline__'
 ###########################################################################
 
 # Normal linking.
-LD	= $(CC) -Wl,-s,--relax
+LD	= $(CC) -Wl,-s
+
+# For a Linux/PowerPC system.
+# LD	= $(CC) -Wl,-s,--relax
 
 # For the Intel C++ Compiler -- expect large link time due to -ipo 
 # optimization.
@@ -619,6 +622,11 @@ ARCH  = linux
 # must have the input layer and support for your devices (e.g. USB) for
 # this to work.
 # LIGHTGUN_ABS_EVENT = 1
+
+# Uncomment this if you get errors about a input_absinfo being undefined.
+# Some versions of the Linux headers define this, others don't, and it 
+# seems to vary by distribution.
+# LIGHTGUN_DEFINE_INPUT_ABSINFO = 1
 
 
 ###########################################################################

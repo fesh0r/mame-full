@@ -34,7 +34,6 @@
 #include "xmame.h"
 #include "devices.h"
 
-#include <linux/version.h>
 #include <linux/input.h>
 
 #include "lightgun_abs_event.h"
@@ -43,7 +42,7 @@ enum { LG_X_AXIS, LG_Y_AXIS, LG_MAX_AXIS };
 
 #define test_bit(bit, array)	(array[bit/8] & (1<<(bit%8)))
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
+#ifdef LIGHTGUN_DEFINE_INPUT_ABSINFO
 struct input_absinfo {
 	int abs;
 	int minimum;
