@@ -70,6 +70,7 @@ System Driver Changes:
   * Fixed mapper 40 (SMB2j pirate) - it should be close to 100%
   * Fixed some issues with the disk support. It now supports that stupid padded format with 
   the useless header in addition to the other format.
+  * DPCM samples fixed (now hear SMB3 in all it's steel drum glory).
   [Brad Oliver]
 
 - COCO: Now using schedule_full_refresh() and PAK loader fixes applied [Nate Woods]
