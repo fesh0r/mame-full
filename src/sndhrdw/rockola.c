@@ -259,18 +259,6 @@ WRITE_HANDLER( fantasy_sound0_w )
 	Sound0Mask = 0xff;
 	Sound0StopOnRollover = 0;
 
-	/* play noise samples requested by sound command byte */
-	if (Machine->samples!=0 && Machine->samples->sample[0]!=0)
-	{
-		if (data & 0x80 && !(LastPort1 & 0x80))
-		{
-			mixer_play_sample(samplechannels+0,Machine->samples->sample[0]->data,
-			                  Machine->samples->sample[0]->length,
-			                  Machine->samples->sample[0]->smpfreq,
-			                  0);
-		}
-	}
-
 	if (data & 0x08)
 		NoSound0=0;
 	else
@@ -286,6 +274,21 @@ WRITE_HANDLER( fantasy_sound0_w )
 		Sound2Offset = 0;
 		NoSound2=1;
 	}
+
+	/* BOMB */
+
+	/*
+
+		In the real hardware the SN76477 enable line is grounded
+		and the sound output is switched on/off by a 4066 IC. 
+		The mixer inputs are hardwired to the below configuration.
+
+	*/
+
+	SN76477_mixer_a_w(0, 0);
+	SN76477_mixer_b_w(0, 1);
+	SN76477_mixer_c_w(0, 0);
+	SN76477_enable_w(0, (data & 0x80) ? 0 : 1);
 
 	LastPort1 = data;
 }

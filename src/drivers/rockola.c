@@ -1,5 +1,21 @@
 /***************************************************************************
 
+	Sasuke vs. Commander
+	SNK/Rock-ola
+
+	driver by ?
+
+	Games supported:
+		* Sasuke vs. Commander
+		* Satan of Saturn
+		* Zarzon
+		* Vanguard
+		* Fantasy
+		* Pioneer Balloon
+		* Nibbler					G-208
+
+****************************************************************************
+
 Vanguard memory map (preliminary)
 
 0000-03ff RAM
@@ -21,6 +37,8 @@ write
 3103      bit 7 = flip screen
 3200      y scroll register
 3300      x scroll register
+
+****************************************************************************
 
 Fantasy and Nibbler memory map (preliminary)
 
@@ -49,6 +67,8 @@ write
 2300      x scroll register
 
 Interrupts: VBlank causes an IRQ. Coin insertion causes a NMI.
+
+****************************************************************************
 
 Pioneer Balloon memory map (preliminary)
 
@@ -85,6 +105,22 @@ b300	  x scroll register
 Interrupts: VBlank causes an IRQ. Coin insertion causes a NMI.
 
 ***************************************************************************/
+
+/*
+
+	TODO:
+
+	- sasuke discrete sound
+	- get rid of samples?
+	- merge all sound calls to one handler
+	- add volume control
+	- SN76477 volume?
+	- CPU clock speeds
+	- use MDRV_IMPORT_FROM in machine drivers
+	- clean up dips/inputs for all games
+	- correct ROM names
+
+*/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
@@ -127,150 +163,116 @@ extern WRITE_HANDLER( fantasy_sound2_w );
 int rockola_sh_start(const struct MachineSound *msound);
 void rockola_sh_update(void);
 
+/* Memory Maps */
 
-
-static ADDRESS_MAP_START( sasuke_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x03ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x0400, 0x07ff) AM_WRITE(rockola_videoram2_w) AM_BASE(&rockola_videoram2)
-	AM_RANGE(0x0800, 0x0bff) AM_WRITE(rockola_videoram_w) AM_BASE(&videoram)
-	AM_RANGE(0x0c00, 0x0fff) AM_WRITE(rockola_colorram_w) AM_BASE(&colorram)
-	AM_RANGE(0x1000, 0x1fff) AM_WRITE(rockola_charram_w) AM_BASE(&rockola_charram)
-	AM_RANGE(0x4000, 0x97ff) AM_WRITE(MWA8_ROM)
+static ADDRESS_MAP_START( sasuke_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_RAM
+	AM_RANGE(0x0400, 0x07ff) AM_RAM AM_WRITE(rockola_videoram2_w) AM_BASE(&rockola_videoram2)
+	AM_RANGE(0x0800, 0x0bff) AM_RAM AM_WRITE(rockola_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x0c00, 0x0fff) AM_RAM AM_WRITE(rockola_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0x1000, 0x1fff) AM_RAM AM_WRITE(rockola_charram_w) AM_BASE(&rockola_charram)
 	AM_RANGE(0x3000, 0x3000) AM_WRITE(crtc6845_address_w)
 	AM_RANGE(0x3001, 0x3001) AM_WRITE(crtc6845_register_w)
+	AM_RANGE(0x4000, 0x97ff) AM_ROM
+	AM_RANGE(0xb000, 0xb000) AM_WRITENOP	// sound
+	AM_RANGE(0xb001, 0xb001) AM_WRITENOP	// sound
 	AM_RANGE(0xb002, 0xb002) AM_WRITE(satansat_b002_w)	/* flip screen & irq enable */
 	AM_RANGE(0xb003, 0xb003) AM_WRITE(satansat_backcolor_w)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( satansat_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x4000, 0x97ff) AM_READ(MRA8_ROM)
 	AM_RANGE(0xb004, 0xb004) AM_READ(input_port_0_r) /* IN0 */
 	AM_RANGE(0xb005, 0xb005) AM_READ(input_port_1_r) /* IN1 */
 	AM_RANGE(0xb006, 0xb006) AM_READ(input_port_2_r) /* DSW */
 	AM_RANGE(0xb007, 0xb007) AM_READ(input_port_3_r) /* IN2 */
-	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xf800, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( satansat_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x03ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x0400, 0x07ff) AM_WRITE(rockola_videoram2_w) AM_BASE(&rockola_videoram2)
-	AM_RANGE(0x0800, 0x0bff) AM_WRITE(rockola_videoram_w) AM_BASE(&videoram)
-	AM_RANGE(0x0c00, 0x0fff) AM_WRITE(rockola_colorram_w) AM_BASE(&colorram)
-	AM_RANGE(0x1000, 0x1fff) AM_WRITE(rockola_charram_w) AM_BASE(&rockola_charram)
-	AM_RANGE(0x4000, 0x97ff) AM_WRITE(MWA8_ROM)
+static ADDRESS_MAP_START( satansat_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_RAM
+	AM_RANGE(0x0400, 0x07ff) AM_RAM AM_WRITE(rockola_videoram2_w) AM_BASE(&rockola_videoram2)
+	AM_RANGE(0x0800, 0x0bff) AM_RAM AM_WRITE(rockola_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x0c00, 0x0fff) AM_RAM AM_WRITE(rockola_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0x1000, 0x1fff) AM_RAM AM_WRITE(rockola_charram_w) AM_BASE(&rockola_charram)
 	AM_RANGE(0x3000, 0x3000) AM_WRITE(crtc6845_address_w)
 	AM_RANGE(0x3001, 0x3001) AM_WRITE(crtc6845_register_w)
+	AM_RANGE(0x4000, 0x97ff) AM_ROM
 	AM_RANGE(0xb000, 0xb000) AM_WRITE(satansat_sound0_w)
 	AM_RANGE(0xb001, 0xb001) AM_WRITE(satansat_sound1_w)
 	AM_RANGE(0xb002, 0xb002) AM_WRITE(satansat_b002_w)	/* flip screen & irq enable */
 	AM_RANGE(0xb003, 0xb003) AM_WRITE(satansat_backcolor_w)
+	AM_RANGE(0xb004, 0xb004) AM_READ(input_port_0_r) /* IN0 */
+	AM_RANGE(0xb005, 0xb005) AM_READ(input_port_1_r) /* IN1 */
+	AM_RANGE(0xb006, 0xb006) AM_READ(input_port_2_r) /* DSW */
+	AM_RANGE(0xb007, 0xb007) AM_READ(input_port_3_r) /* IN2 */
+	AM_RANGE(0xf800, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( vanguard_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x3104, 0x3104) AM_READ(input_port_0_r)	/* IN0 */
-	AM_RANGE(0x3105, 0x3105) AM_READ(input_port_1_r)	/* IN1 */
-	AM_RANGE(0x3106, 0x3106) AM_READ(input_port_2_r)	/* DSW */
-	AM_RANGE(0x3107, 0x3107) AM_READ(input_port_3_r)	/* IN2 */
-	AM_RANGE(0x4000, 0xbfff) AM_READ(MRA8_ROM)
-	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_ROM)	/* for the reset / interrupt vectors */
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( vanguard_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x03ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x0400, 0x07ff) AM_WRITE(rockola_videoram2_w) AM_BASE(&rockola_videoram2)
-	AM_RANGE(0x0800, 0x0bff) AM_WRITE(rockola_videoram_w) AM_BASE(&videoram)
-	AM_RANGE(0x0c00, 0x0fff) AM_WRITE(rockola_colorram_w) AM_BASE(&colorram)
-	AM_RANGE(0x1000, 0x1fff) AM_WRITE(rockola_charram_w) AM_BASE(&rockola_charram)
+static ADDRESS_MAP_START( vanguard_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_RAM
+	AM_RANGE(0x0400, 0x07ff) AM_RAM AM_WRITE(rockola_videoram2_w) AM_BASE(&rockola_videoram2)
+	AM_RANGE(0x0800, 0x0bff) AM_RAM AM_WRITE(rockola_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x0c00, 0x0fff) AM_RAM AM_WRITE(rockola_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0x1000, 0x1fff) AM_RAM AM_WRITE(rockola_charram_w) AM_BASE(&rockola_charram)
 	AM_RANGE(0x3000, 0x3000) AM_WRITE(crtc6845_address_w)
 	AM_RANGE(0x3001, 0x3001) AM_WRITE(crtc6845_register_w)
 	AM_RANGE(0x3100, 0x3100) AM_WRITE(vanguard_sound0_w)
 	AM_RANGE(0x3101, 0x3101) AM_WRITE(vanguard_sound1_w)
-//	AM_RANGE(0x3102, 0x3102)	/* TODO: music channels #0 and #1 volume */
+	AM_RANGE(0x3102, 0x3102) AM_WRITENOP	/* TODO: music channels #0 and #1 volume */
 	AM_RANGE(0x3103, 0x3103) AM_WRITE(rockola_flipscreen_w)
+	AM_RANGE(0x3104, 0x3104) AM_READ(input_port_0_r)	/* IN0 */
+	AM_RANGE(0x3105, 0x3105) AM_READ(input_port_1_r)	/* IN1 */
+	AM_RANGE(0x3106, 0x3106) AM_READ(input_port_2_r)	/* DSW */
+	AM_RANGE(0x3107, 0x3107) AM_READ(input_port_3_r)	/* IN2 */
 	AM_RANGE(0x3200, 0x3200) AM_WRITE(rockola_scrollx_w)
 	AM_RANGE(0x3300, 0x3300) AM_WRITE(rockola_scrolly_w)
-	AM_RANGE(0x4000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x3400, 0x3400) AM_WRITENOP // ???
+	AM_RANGE(0x4000, 0xbfff) AM_ROM
+	AM_RANGE(0xf000, 0xffff) AM_ROM	/* for the reset / interrupt vectors */
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( fantasy_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x2104, 0x2104) AM_READ(input_port_0_r)	/* IN0 */
-	AM_RANGE(0x2105, 0x2105) AM_READ(input_port_1_r)	/* IN1 */
-	AM_RANGE(0x2106, 0x2106) AM_READ(input_port_2_r)	/* DSW */
-	AM_RANGE(0x2107, 0x2107) AM_READ(input_port_3_r)	/* IN2 */
-	AM_RANGE(0x3000, 0xbfff) AM_READ(MRA8_ROM)
-	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_ROM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( fantasy_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x03ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x0400, 0x07ff) AM_WRITE(rockola_videoram2_w) AM_BASE(&rockola_videoram2)
-	AM_RANGE(0x0800, 0x0bff) AM_WRITE(rockola_videoram_w) AM_BASE(&videoram)
-	AM_RANGE(0x0c00, 0x0fff) AM_WRITE(rockola_colorram_w) AM_BASE(&colorram)
-	AM_RANGE(0x1000, 0x1fff) AM_WRITE(rockola_charram_w) AM_BASE(&rockola_charram)
+static ADDRESS_MAP_START( fantasy_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_RAM
+	AM_RANGE(0x0400, 0x07ff) AM_RAM AM_WRITE(rockola_videoram2_w) AM_BASE(&rockola_videoram2)
+	AM_RANGE(0x0800, 0x0bff) AM_RAM AM_WRITE(rockola_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x0c00, 0x0fff) AM_RAM AM_WRITE(rockola_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0x1000, 0x1fff) AM_RAM AM_WRITE(rockola_charram_w) AM_BASE(&rockola_charram)
 	AM_RANGE(0x2000, 0x2000) AM_WRITE(crtc6845_address_w)
 	AM_RANGE(0x2001, 0x2001) AM_WRITE(crtc6845_register_w)
 	AM_RANGE(0x2100, 0x2100) AM_WRITE(fantasy_sound0_w)
 	AM_RANGE(0x2101, 0x2101) AM_WRITE(fantasy_sound1_w)
-//	AM_RANGE(0x2102, 0x2102)	/* TODO: music channels #0 and #1 volume */
+	AM_RANGE(0x2102, 0x2102) AM_WRITENOP	/* TODO: music channels #0 and #1 volume */
 	AM_RANGE(0x2103, 0x2103) AM_WRITE(fantasy_sound2_w)	/* + flipscreen, gfx bank, bg color */
+	AM_RANGE(0x2104, 0x2104) AM_READ(input_port_0_r)	/* IN0 */
+	AM_RANGE(0x2105, 0x2105) AM_READ(input_port_1_r)	/* IN1 */
+	AM_RANGE(0x2106, 0x2106) AM_READ(input_port_2_r)	/* DSW */
+	AM_RANGE(0x2107, 0x2107) AM_READ(input_port_3_r)	/* IN2 */
 	AM_RANGE(0x2200, 0x2200) AM_WRITE(rockola_scrollx_w)
 	AM_RANGE(0x2300, 0x2300) AM_WRITE(rockola_scrolly_w)
-	AM_RANGE(0x3000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x3000, 0xbfff) AM_ROM
+	AM_RANGE(0xf000, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( pballoon_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x3000, 0x9fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0xb104, 0xb104) AM_READ(input_port_0_r)	/* IN0 */
-	AM_RANGE(0xb105, 0xb105) AM_READ(input_port_1_r)	/* IN1 */
-	AM_RANGE(0xb106, 0xb106) AM_READ(input_port_2_r)	/* DSW */
-	AM_RANGE(0xb107, 0xb107) AM_READ(input_port_3_r)	/* IN2 */
-	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_ROM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( pballoon_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x03ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x0400, 0x07ff) AM_WRITE(rockola_videoram2_w) AM_BASE(&rockola_videoram2)
-	AM_RANGE(0x0800, 0x0bff) AM_WRITE(rockola_videoram_w) AM_BASE(&videoram)
-	AM_RANGE(0x0c00, 0x0fff) AM_WRITE(rockola_colorram_w) AM_BASE(&colorram)
-	AM_RANGE(0x1000, 0x1fff) AM_WRITE(rockola_charram_w) AM_BASE(&rockola_charram)
-	AM_RANGE(0x3000, 0x9fff) AM_WRITE(MWA8_ROM)
+static ADDRESS_MAP_START( pballoon_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_RAM
+	AM_RANGE(0x0400, 0x07ff) AM_RAM AM_WRITE(rockola_videoram2_w) AM_BASE(&rockola_videoram2)
+	AM_RANGE(0x0800, 0x0bff) AM_RAM AM_WRITE(rockola_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x0c00, 0x0fff) AM_RAM AM_WRITE(rockola_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0x1000, 0x1fff) AM_RAM AM_WRITE(rockola_charram_w) AM_BASE(&rockola_charram)
+	AM_RANGE(0x3000, 0x9fff) AM_ROM
 	AM_RANGE(0xb000, 0xb000) AM_WRITE(crtc6845_address_w)
 	AM_RANGE(0xb001, 0xb001) AM_WRITE(crtc6845_register_w)
 	AM_RANGE(0xb100, 0xb100) AM_WRITE(fantasy_sound0_w)
 	AM_RANGE(0xb101, 0xb101) AM_WRITE(fantasy_sound1_w)
-//	AM_RANGE(0xb102, 0xb102)	/* TODO: music channels #0 and #1 volume */
+	AM_RANGE(0xb102, 0xb102) AM_WRITENOP	/* TODO: music channels #0 and #1 volume */
 	AM_RANGE(0xb103, 0xb103) AM_WRITE(fantasy_sound2_w)	/* + flipscreen, gfx bank, bg color */
+	AM_RANGE(0xb104, 0xb104) AM_READ(input_port_0_r)	/* IN0 */
+	AM_RANGE(0xb105, 0xb105) AM_READ(input_port_1_r)	/* IN1 */
+	AM_RANGE(0xb106, 0xb106) AM_READ(input_port_2_r)	/* DSW */
+	AM_RANGE(0xb107, 0xb107) AM_READ(input_port_3_r)	/* IN2 */
 	AM_RANGE(0xb200, 0xb200) AM_WRITE(rockola_scrollx_w)
 	AM_RANGE(0xb300, 0xb300) AM_WRITE(rockola_scrolly_w)
+	AM_RANGE(0xf000, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
-
-
-static INTERRUPT_GEN( satansat_interrupt )
-{
-	if (cpu_getiloops() != 0)
-	{
-		/* user asks to insert coin: generate a NMI interrupt. */
-		if (readinputport(3) & 1)
-			cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
-	}
-	else cpu_set_irq_line(0, 0, HOLD_LINE);	/* one IRQ per frame */
-}
-
-static INTERRUPT_GEN( rockola_interrupt )
-{
-	if (cpu_getiloops() != 0)
-	{
-		/* user asks to insert coin: generate a NMI interrupt. */
-		if (readinputport(3) & 3)
-			cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
-	}
-	else cpu_set_irq_line(0, 0, HOLD_LINE);	/* one IRQ per frame */
-}
+/* Input Ports */
 
 /* Derived from Zarzon. Might not reflect the actual hardware. */
 INPUT_PORTS_START( sasuke )
@@ -562,20 +564,20 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( nibbler )
 	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* Slow down */
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* debug command? */
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* debug command */
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* debug command */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Debug 0", KEYCODE_Z, CODE_NONE ) // slow down
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_SERVICE, "Debug 1", KEYCODE_X, CODE_NONE )
+	PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_SERVICE, "Debug 2", KEYCODE_C, CODE_NONE )
+	PORT_BITX(0x08, IP_ACTIVE_HIGH, IPT_SERVICE, "Debug 3", KEYCODE_V, CODE_NONE )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY)
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY)
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 
 	PORT_START	/* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* Pause */
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* Unpause */
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* End game */
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* debug command */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Debug 4", KEYCODE_B, CODE_NONE ) // pause
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_SERVICE, "Debug 5", KEYCODE_N, CODE_NONE ) // unpause
+	PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_SERVICE, "Debug 6", KEYCODE_M, CODE_NONE ) // end game
+	PORT_BITX(0x08, IP_ACTIVE_HIGH, IPT_SERVICE, "Debug 7", KEYCODE_K, CODE_NONE )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
@@ -587,24 +589,21 @@ INPUT_PORTS_START( nibbler )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
 	PORT_DIPSETTING(    0x03, "6" )
-	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x00, "Easy" )
-	PORT_DIPSETTING(    0x04, "Hard" )
+	PORT_DIPNAME( 0x04, 0x00, "Pause at Corners" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
-	PORT_BITX(    0x10, 0x00, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Rack Test", KEYCODE_F1, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_SERVICE( 0x10, IP_ACTIVE_HIGH )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Free_Play ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 4C_3C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPNAME( 0x80, 0x00, "Bonus Every 2 Credits" )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Yes ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 2C_3C ) )
 
 	PORT_START	/* IN2 */
 	PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_HIGH, IPT_COIN2, 1 )
@@ -617,7 +616,7 @@ INPUT_PORTS_START( nibbler )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START1 )
 INPUT_PORTS_END
 
-
+/* Graphics Layouts */
 
 static struct GfxLayout swapcharlayout =
 {
@@ -629,6 +628,7 @@ static struct GfxLayout swapcharlayout =
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8     /* every char takes 8 consecutive bytes */
 };
+
 static struct GfxLayout charlayout =
 {
 	8,8,    /* 8*8 characters */
@@ -639,6 +639,7 @@ static struct GfxLayout charlayout =
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8     /* every char takes 8 consecutive bytes */
 };
+
 static struct GfxLayout charlayout_memory =
 {
 	8,8,    /* 8*8 characters */
@@ -650,7 +651,7 @@ static struct GfxLayout charlayout_memory =
 	8*8     /* every char takes 8 consecutive bytes */
 };
 
-
+/* Graphics Decode Information */
 
 static struct GfxDecodeInfo sasuke_gfxdecodeinfo[] =
 {
@@ -673,7 +674,7 @@ static struct GfxDecodeInfo vanguard_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-
+/* Sound Interfaces */
 
 static struct CustomSound_interface custom_interface =
 {
@@ -689,13 +690,60 @@ static struct Samplesinterface vanguard_samples_interface =
 	vanguard_sample_names
 };
 
+static struct SN76477interface fantasy_sn76477_intf =
+{
+	1,			/* 1 chip */
+	{ 100 },	/* mixing level   pin description */
+	{ RES_K(470) },	/*	4  noise_res		 */
+	{ RES_M(1.5) },	/*	5  filter_res		 */
+	{ CAP_P(220) },	/*	6  filter_cap		 */
+	{ 0 },			/*	7  decay_res		 */
+	{ 0 },			/*	8  attack_decay_cap  */
+	{ 0 },			/* 10  attack_res		 */
+	{ RES_K(470) },	/* 11  amplitude_res	 */
+	{ RES_K(4.7) },	/* 12  feedback_res 	 */
+	{ 0 },			/* 16  vco_voltage		 */
+	{ 0 },			/* 17  vco_cap			 */
+	{ 0 },			/* 18  vco_res			 */
+	{ 0 },			/* 19  pitch_voltage	 */
+	{ 0 },			/* 20  slf_res			 */
+	{ 0 },			/* 21  slf_cap			 */
+	{ 0 },			/* 23  oneshot_cap		 */
+	{ 0 }			/* 24  oneshot_res		 */
+};
 
+/* Interrupt Generators */
+
+static INTERRUPT_GEN( satansat_interrupt )
+{
+	if (cpu_getiloops() != 0)
+	{
+		/* user asks to insert coin: generate a NMI interrupt. */
+		if (readinputport(3) & 0x01)
+			cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+	}
+	else
+		cpu_set_irq_line(0, 0, HOLD_LINE);	/* one IRQ per frame */
+}
+
+static INTERRUPT_GEN( rockola_interrupt )
+{
+	if (cpu_getiloops() != 0)
+	{
+		/* user asks to insert coin: generate a NMI interrupt. */
+		if (readinputport(3) & 0x03)
+			cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+	}
+	else
+		cpu_set_irq_line(0, 0, HOLD_LINE);	/* one IRQ per frame */
+}
+
+/* Machine Drivers */
 
 static MACHINE_DRIVER_START( sasuke )
-
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502,11289000/16)    /* 700 kHz */
-	MDRV_CPU_PROGRAM_MAP(satansat_readmem,sasuke_writemem)
+	MDRV_CPU_PROGRAM_MAP(sasuke_map, 0)
 	MDRV_CPU_VBLANK_INT(satansat_interrupt,2)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -716,12 +764,10 @@ static MACHINE_DRIVER_START( sasuke )
 	/* sound hardware */
 MACHINE_DRIVER_END
 
-
 static MACHINE_DRIVER_START( satansat )
-
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502,11289000/16)    /* 700 kHz */
-	MDRV_CPU_PROGRAM_MAP(satansat_readmem,satansat_writemem)
+	MDRV_CPU_PROGRAM_MAP(satansat_map, 0)
 	MDRV_CPU_VBLANK_INT(satansat_interrupt,2)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -744,12 +790,10 @@ static MACHINE_DRIVER_START( satansat )
 	MDRV_SOUND_ADD(CUSTOM, custom_interface)
 MACHINE_DRIVER_END
 
-
 static MACHINE_DRIVER_START( vanguard )
-
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502, 1000000)    /* 1 MHz??? */
-	MDRV_CPU_PROGRAM_MAP(vanguard_readmem,vanguard_writemem)
+	MDRV_CPU_PROGRAM_MAP(vanguard_map, 0)
 	MDRV_CPU_VBLANK_INT(rockola_interrupt,2)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -771,13 +815,11 @@ static MACHINE_DRIVER_START( vanguard )
 	MDRV_SOUND_ADD(SAMPLES, vanguard_samples_interface)
 	MDRV_SOUND_ADD(CUSTOM, custom_interface)
 MACHINE_DRIVER_END
-
 
 static MACHINE_DRIVER_START( fantasy )
-
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M6502, 1000000)    /* 1 MHz??? */
-	MDRV_CPU_PROGRAM_MAP(fantasy_readmem,fantasy_writemem)
+	MDRV_CPU_ADD(M6502, 11289000/8)	// 1.4 MHz
+	MDRV_CPU_PROGRAM_MAP(fantasy_map, 0)
 	MDRV_CPU_VBLANK_INT(rockola_interrupt,2)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -796,17 +838,15 @@ static MACHINE_DRIVER_START( fantasy )
 	MDRV_VIDEO_UPDATE(rockola)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SAMPLES, vanguard_samples_interface)
 	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+	MDRV_SOUND_ADD(SN76477, fantasy_sn76477_intf)
 MACHINE_DRIVER_END
-
 
 /* note that in this driver the visible area is different! */
 static MACHINE_DRIVER_START( pballoon )
-
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502, 1000000)    /* 1 MHz??? */
-	MDRV_CPU_PROGRAM_MAP(pballoon_readmem,pballoon_writemem)
+	MDRV_CPU_PROGRAM_MAP(pballoon_map, 0)
 	MDRV_CPU_VBLANK_INT(rockola_interrupt,2)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -825,17 +865,11 @@ static MACHINE_DRIVER_START( pballoon )
 	MDRV_VIDEO_UPDATE(rockola)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SAMPLES, vanguard_samples_interface)
 	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+	MDRV_SOUND_ADD(SN76477, fantasy_sn76477_intf)
 MACHINE_DRIVER_END
 
-
-
-/***************************************************************************
-
-  Game driver(s)
-
-***************************************************************************/
+/* ROMs */
 
 ROM_START( sasuke )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
@@ -1151,7 +1185,7 @@ ROM_START( nibblera )
 	ROM_LOAD( "g959-45.53",   0x1000, 0x0800, CRC(33189917) SHA1(01a1b1693db0172609780daeb60430fa0c8bcec2) )
 ROM_END
 
-
+/* Game Drivers */
 
 GAMEX( 1980, sasuke,   0,        sasuke,   sasuke,   0, ROT90, "SNK", "Sasuke vs. Commander", GAME_NO_SOUND )
 GAMEX( 1981, satansat, 0,        satansat, satansat, 0, ROT90, "SNK", "Satan of Saturn", GAME_IMPERFECT_SOUND )

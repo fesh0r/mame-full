@@ -56,7 +56,7 @@ static int size;
 void LL_format(char *source, char *dest, UINT16 op)
 {
 	strcpy(source, L_REG[SOURCECODE(op)]);
-	strcpy(dest, G_REG[DESTCODE(op)]);
+	strcpy(dest, L_REG[DESTCODE(op)]);
 }
 
 void LR_format(char *source, char *dest, UINT16 op)
@@ -70,7 +70,7 @@ void LR_format(char *source, char *dest, UINT16 op)
 		strcpy(source, G_REG[SOURCECODE(op)]);
 	}
 
-	strcpy(dest, G_REG[DESTCODE(op)]);
+	strcpy(dest, L_REG[DESTCODE(op)]);
 }
 
 void RR_format(char *source, char *dest, UINT16 op)
@@ -291,7 +291,7 @@ INT32 RRimm_format(char *dest, UINT16 op, unsigned *pc)
 
 UINT8 Ln_format(char *dest, UINT16 op)
 {
-	strcpy(dest, G_REG[DESTCODE(op)]);
+	strcpy(dest, L_REG[DESTCODE(op)]);
 
 	return N_VALUE(op);
 }
@@ -1978,10 +1978,75 @@ unsigned dasm_e132xs(char *buffer, unsigned pc)
 
 		// TRAPxx - TRAP
 		case 0xfd: case 0xfe: case 0xff:
+		{
+			UINT8 code = ((op & 0x300) >> 6) | (op & 0x03);
+			UINT8 trapno = (op & 0xfc) >> 2;
 
-			buffer += sprintf(buffer, "TRAPxx");
+			switch( code )
+			{
+				case TRAPLE:
+					buffer += sprintf(buffer, "TRAPLE %d", trapno);
+					
+					break;
+
+				case TRAPGT:
+					buffer += sprintf(buffer, "TRAPGT %d", trapno);
+
+					break;
+
+				case TRAPLT:
+					buffer += sprintf(buffer, "TRAPLT %d", trapno);
+
+					break;
+
+				case TRAPGE:
+					buffer += sprintf(buffer, "TRAPGE %d", trapno);
+					
+					break;
+
+				case TRAPSE:
+					buffer += sprintf(buffer, "TRAPSE %d", trapno);
+					
+					break;
+
+				case TRAPHT:
+					buffer += sprintf(buffer, "TRAPHT %d", trapno);
+					
+					break;
+
+				case TRAPST:
+					buffer += sprintf(buffer, "TRAPST %d", trapno);
+					
+					break;
+
+				case TRAPHE:
+					buffer += sprintf(buffer, "TRAPHE %d", trapno);
+					
+					break;
+
+				case TRAPE:
+					buffer += sprintf(buffer, "TRAPE %d", trapno);
+					
+					break;
+
+				case TRAPNE:
+					buffer += sprintf(buffer, "TRAPNE %d", trapno);
+					
+					break;
+
+				case TRAPV:
+					buffer += sprintf(buffer, "TRAPV %d", trapno);
+					
+					break;
+
+				case TRAP:
+					buffer += sprintf(buffer, "TRAP %d", trapno);
+					
+					break;
+			}
 
 			break;
+		}
 
 		default:
 

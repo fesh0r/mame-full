@@ -213,6 +213,11 @@ static UINT16 m_p_n_prevpointlist4[] = { 2, 0, 3, 1 };
 static UINT16 m_p_n_nextpointlist3[] = { 1, 2, 0 };
 static UINT16 m_p_n_prevpointlist3[] = { 2, 0, 1 };
 
+static UINT16 m_p_n_g0r0[ 0x10000 ];
+static UINT16 m_p_n_b0[ 0x10000 ];
+static UINT16 m_p_n_r1[ 0x10000 ];
+static UINT16 m_p_n_b1g1[ 0x10000 ];
+
 #define SINT11( x ) ( ( (INT32)( x ) << 21 ) >> 21 )
 
 #define ADJUST_COORD( a ) \
@@ -562,6 +567,11 @@ static int psx_gpu_init( int n_width, int n_height )
 		m_p_n_greenb1[ n_level ] = ( ( n_level >> 5 ) & ( MAX_LEVEL - 1 ) ) * MAX_LEVEL;
 		m_p_n_blueb1[ n_level ] = ( ( n_level >> 10 ) & ( MAX_LEVEL - 1 ) ) * MAX_LEVEL;
 
+		/* 24bit to 15 bit conversion */
+		m_p_n_g0r0[ n_level ] = ( ( ( n_level >> 11 ) & ( MAX_LEVEL - 1 ) ) << 5 ) | ( ( ( n_level >> 3 ) & ( MAX_LEVEL - 1 ) ) << 0 );
+		m_p_n_b0[ n_level ] = ( ( n_level >> 3 ) & ( MAX_LEVEL - 1 ) ) << 10;
+		m_p_n_r1[ n_level ] = ( ( n_level >> 11 ) & ( MAX_LEVEL - 1 ) ) << 0;
+		m_p_n_b1g1[ n_level ] = ( ( ( n_level >> 11 ) & ( MAX_LEVEL - 1 ) ) << 10 ) | ( ( ( n_level >> 3 ) & ( MAX_LEVEL - 1 ) ) << 5 );
 	}
 
 	for( n_level = 0; n_level < MAX_LEVEL; n_level++ )
@@ -728,12 +738,28 @@ VIDEO_UPDATE( psx )
 
 		if( ( m_n_gpustatus & ( 1 << 0x15 ) ) != 0 )
 		{
-			usrintf_showmessage_secs( 1, "24bit mode not supported" );
-		}
+			for( n_y = 0; n_y < m_n_screenheight; n_y++ )
+			{
+				data16_t *p_n_src = m_p_p_vram[ n_y + m_n_displaystarty ];
+				data16_t *p_n_dest = &( (data16_t *)bitmap->line[ n_y ] )[ 0 ];
 
-		for( n_y = 0; n_y < m_n_screenheight; n_y++ )
+				for( n_x = 0; n_x < m_n_screenwidth / 2; n_x++ )
+				{
+					data32_t n_g0r0 = *( p_n_src++ );
+					data32_t n_r1b0 = *( p_n_src++ );
+					data32_t n_b1g1 = *( p_n_src++ );
+
+					*( p_n_dest++ ) = m_p_n_g0r0[ n_g0r0 ] | m_p_n_b0[ n_r1b0 ];
+					*( p_n_dest++ ) = m_p_n_r1[ n_r1b0 ] | m_p_n_b1g1[ n_b1g1 ];
+				}
+			}
+		}
+		else
 		{
-			draw_scanline16( bitmap, 0, n_y, m_n_screenwidth, m_p_p_vram[ n_y + m_n_displaystarty ] + n_x, Machine->pens, -1 );
+			for( n_y = 0; n_y < m_n_screenheight; n_y++ )
+			{
+				draw_scanline16( bitmap, 0, n_y, m_n_screenwidth, m_p_p_vram[ n_y + m_n_displaystarty ] + n_x, Machine->pens, -1 );
+			}
 		}
 	}
 }

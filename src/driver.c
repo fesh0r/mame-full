@@ -216,6 +216,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( ladybugg )	/* bootleg */
 	DRIVER( vpool )		/* bootleg */
 	DRIVER( drivfrcg )	/* Shinkai */
+	DRIVER( drivfrcb )	/* bootleg */
 	DRIVER( bongo )		/* Jetsoft */
 	DRIVER( hunchbkg )	/* Century */
 
@@ -1727,6 +1728,16 @@ const struct GameDriver *drivers[] =
 	DRIVER( landmakr )	/* E61 (c) 1998 Taito Corporation (Japan) */
 	DRIVER( landmkrp )	/* E61 (c) 1998 Taito Corporation (World, prototype) */
 
+	/* Taito JC System */
+	DRIVER( landgear )	/* E17 (c) 199? Taito Corporation */
+	DRIVER( dendeg )	/* E35 (c) 199? Taito Corporation */
+	DRIVER( dendegx )	/* E35 (c) 199? Taito Corporation */
+	DRIVER( dendeg2 )	/* E52 (c) 199? Taito Corporation */
+	DRIVER( dendeg2x )	/* E52 (c) 199? Taito Corporation */
+	DRIVER( sidebs )	/* E23 (c) 199? Taito Corporation */
+	DRIVER( sidebs2 )	/* E38 (c) 199? Taito Corporation */
+
+
 	/* Toaplan games */
 	DRIVER( perfrman )	/* (c) 1985 Data East Corporation (Japan) */
 	DRIVER( perfrmau )	/* (c) 1985 Data East USA (US) */
@@ -1774,6 +1785,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( snowbros )	/* MIN16-02 (c) 1990 Toaplan + Romstar license */
 	DRIVER( snowbroa )	/* MIN16-02 (c) 1990 Toaplan + Romstar license */
 	DRIVER( snowbrob )	/* MIN16-02 (c) 1990 Toaplan + Romstar license */
+	DRIVER( snowbroc )	/* MIN16-02 (c) 1990 Toaplan + Romstar license */
 	DRIVER( snowbroj )	/* MIN16-02 (c) 1990 Toaplan */
 	DRIVER( wintbob )	/* bootleg */
 	/* SemiCom games on snowbros like hardware */
@@ -5167,6 +5179,7 @@ Other Sun games
 	DRIVER( looping )	/* (c) 1982 Venture Line + licensed from Video Games */
 	DRIVER( loopinga )	/* (c) 1982 Venture Line + licensed from Video Games */
 	DRIVER( skybump )	/* (c) 1982 Venture Line */
+	DRIVER( suprridr )	/* (c) 1983 Venture Line + Taito license */
 
 	/* Yun Sung games */
 	DRIVER( paradise )	/* (c) >1994 Yun Sung */
@@ -5267,6 +5280,7 @@ Other Sun games
 	DRIVER( cabaret )
 	DRIVER( chindrag )
 	DRIVER( grtwall )
+	DRIVER( lordgun )	/* (c) 1994 */
 
 	/* IGS PGM System Games */
 	DRIVER( orlegend )	/* (c) 1997 */
@@ -5322,7 +5336,11 @@ Other Sun games
 	/* Rare games */
 	DRIVER( btoads )	/* (c) 1994 Rare */
 	DRIVER( kinst )		/* (c) 1994 Rare */
+	DRIVER( kinst14 )	/* (c) 1994 Rare */
+	DRIVER( kinst13 )	/* (c) 1994 Rare */
 	DRIVER( kinst2 )	/* (c) 1994 Rare */
+	DRIVER( kinst213 )	/* (c) 1994 Rare */
+	DRIVER( kinst211 )	/* (c) 1994 Rare */
 
 	/* Nihon System games */
 	DRIVER( gigasb )
@@ -5655,7 +5673,7 @@ Other Sun games
 	DRIVER( wakuwak7 )	/* 0225 (c) 1996 Sunsoft */
 	/* 0226 Pair Pair Wars (prototype) 1996 Sunsoft? */
 	DRIVER( stakwin2 )	/* 0227 (c) 1996 Saurus */
-	/* 0228 GhostLop (prototype) 1996? Data East */
+	DRIVER( ghostlop )	/* 0228 GhostLop (prototype) 1996? Data East */
 	/* 0229 King of Fighters '96 CD Collection (CD only) */
 	DRIVER( breakers )	/* 0230 (c) 1996 Visco */
 	DRIVER( miexchng )	/* 0231 (c) 1997 Face */

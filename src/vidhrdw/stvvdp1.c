@@ -1493,8 +1493,8 @@ void stv_vdp1_process_list(struct mame_bitmap *bitmap, const struct rectangle *c
 
 				case 0x000a:
 					if (vdp1_sprite_log) logerror ("Sprite List Local Co-Ordinate Set\n");
-					stvvdp1_local_x = stv2_current_sprite.CMDXA;
-					stvvdp1_local_y = stv2_current_sprite.CMDYA;
+					stvvdp1_local_x = (INT16)stv2_current_sprite.CMDXA;
+					stvvdp1_local_y = (INT16)stv2_current_sprite.CMDYA;
 					break;
 
 				default:

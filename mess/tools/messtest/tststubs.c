@@ -1,3 +1,5 @@
+#include <stdlib.h>
+#include <windows.h>
 #include "osdepend.h"
 
 int osd_init(void)
@@ -144,6 +146,7 @@ void osd_pause(int paused)
 
 void CLIB_DECL osd_die(const char *text,...)
 {
+	exit(-1);
 }
 
 void CLIB_DECL logerror(const char *text,...)
@@ -167,3 +170,26 @@ void osd_begin_final_unloading(void)
 void osd_image_load_status_changed(mess_image *img, int is_final_unload)
 {
 }
+
+//============================================================
+//	osd_alloc_executable
+//============================================================
+
+void *osd_alloc_executable(size_t size)
+{
+	return VirtualAlloc(NULL, size, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+}
+
+
+
+//============================================================
+//	osd_free_executable
+//============================================================
+
+void osd_free_executable(void *ptr)
+{
+	VirtualFree(ptr, 0, MEM_RELEASE);
+}
+
+
+

@@ -370,15 +370,16 @@ static void I386OP(cmpsb)(void)				// Opcode 0xa6
 
 static void I386OP(in_al_i8)(void)			// Opcode 0xe4
 {
-	//UINT8 port = FETCH();
-	printf("i386: in_al_i8 unimplemented !\n");
-	exit(1);
+	UINT16 port = FETCH();
+	UINT8 data = READPORT8(port);
+	REG8(AL) = data;
 }
 
 static void I386OP(in_al_dx)(void)			// Opcode 0xec
 {
-	printf("i386: in_al_dx unimplemented !\n");
-	exit(1);
+	UINT16 port = REG16(DX);
+	UINT8 data = READPORT8(port);
+	REG8(AL) = data;
 }
 
 static void I386OP(ja_rel8)(void)			// Opcode 0x77
@@ -668,8 +669,7 @@ static void I386OP(mov_cr_r32)(void)		// Opcode 0x0f 22
 		case 2: CYCLES(4); break;
 		case 3: CYCLES(5); break;
 		default:
-			printf("i386: mov_cr_r32 CR%d !\n", cr);
-			exit(1);
+			osd_die("i386: mov_cr_r32 CR%d !\n", cr);
 			break;
 	}
 }
@@ -867,25 +867,22 @@ static void I386OP(or_al_i8)(void)			// Opcode 0x0c
 
 static void I386OP(out_al_i8)(void)			// Opcode 0xe6
 {
-	//UINT8 port = FETCH();
-	printf("i386: out_al_i8 unimplemented !\n");
-	exit(1);
+	UINT16 port = FETCH();
+	UINT8 data = REG8(AL);
+	WRITEPORT8(port, data);
 }
 
 static void I386OP(out_al_dx)(void)			// Opcode 0xee
 {
-	printf("i386: out_al_dx unimplemented !\n");
-	exit(1);
+	UINT16 port = REG16(DX);
+	UINT8 data = REG8(AL);
+	WRITEPORT8(port, data);
 }
 
 static void I386OP(push_i8)(void)			// Opcode 0x6a
 {
 	UINT8 value = FETCH();
-	if( I.operand_size ) {
-		PUSH32(value);
-	} else {
-		PUSH16(value);
-	}
+	PUSH8(value);
 	CYCLES(2);
 }
 
@@ -1839,8 +1836,7 @@ static void I386OP(groupFE_8)(void)			// Opcode 0xfe
 			}
 			break;
 		default:
-			printf("i386: groupFE_8 /%d unimplemented\n", (modrm >> 3) & 0x7);
-			exit(1);
+			osd_die("i386: groupFE_8 /%d unimplemented\n", (modrm >> 3) & 0x7);
 			break;
 	}
 }
@@ -1875,6 +1871,5 @@ static void I386OP(nop)(void)				// Opcode 0x90
 
 static void I386OP(invalid)(void)
 {
-	printf("i386: Invalid opcode %02X at %08X\n", I.opcode, I.pc - 1 );
-	exit(1);
+	osd_die("i386: Invalid opcode %02X at %08X\n", I.opcode, I.pc - 1 );
 }

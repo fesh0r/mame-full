@@ -62,7 +62,7 @@ struct drccore *drc_init(UINT8 cpunum, struct drcconfig *config)
 	drc->fpcw_curr    = fp_control[0];
 
 	/* allocate cache */
-	drc->cache_base = malloc(config->cache_size);
+	drc->cache_base = osd_alloc_executable(config->cache_size);
 	if (!drc->cache_base)
 		return NULL;
 	drc->cache_end = drc->cache_base + config->cache_size;
@@ -160,7 +160,7 @@ void drc_exit(struct drccore *drc)
 
 	/* free the cache */
 	if (drc->cache_base)
-		free(drc->cache_base);
+		osd_free_executable(drc->cache_base);
 
 	/* free all the l2 tables allocated */
 	for (i = 0; i < (1 << drc->l1bits); i++)

@@ -33,6 +33,11 @@ INLINE UINT8 psxreadbyte( UINT32 n_address )
 	return *( (UINT8 *)g_p_n_psxram + BYTE_XOR_LE( n_address ) );
 }
 
+INLINE void psxwriteword( data32_t n_address, data16_t n_data )
+{
+	*( (UINT16 *)( (UINT8 *)g_p_n_psxram + WORD_XOR_LE( n_address ) ) ) = n_data;
+}
+
 INLINE UINT16 psxreadword( UINT32 n_address )
 {
 	return *( (UINT16 *)( (UINT8 *)g_p_n_psxram + WORD_XOR_LE( n_address ) ) );
@@ -75,7 +80,7 @@ WRITE32_HANDLER( psx_irq_w )
 	case 0x01:
 		verboselog( 2, "psx irq mask ( %08x, %08x ) %08x -> %08x\n", data, mem_mask, m_n_irqmask, ( m_n_irqmask & mem_mask ) | data );
 		m_n_irqmask = ( m_n_irqmask & mem_mask ) | data;
-		if( ( m_n_irqmask & ~( 0x1 | 0x08 | 0x10 | 0x20 | 0x40 | 0x200 | 0x400 ) ) != 0 )
+		if( ( m_n_irqmask & ~( 0x1 | 0x08 | 0x10 | 0x20 | 0x40 | 0x100 | 0x200 | 0x400 ) ) != 0 )
 		{
 			verboselog( 0, "psx_irq_w( %08x, %08x, %08x ) unknown irq\n", offset, data, mem_mask );
 		}
@@ -494,7 +499,14 @@ static void sio_interrupt( int n_port )
 {
 	verboselog( 1, "sio_interrupt( %d )\n", n_port );
 	m_p_n_sio_status[ n_port ] |= SIO_STATUS_IRQ;
-	psx_irq_set( 0x80 );
+	if( n_port == 0 )
+	{
+		psx_irq_set( 0x80 );
+	}
+	else
+	{
+		psx_irq_set( 0x100 );
+	}
 }
 
 static void sio_timer( int n_port )
@@ -796,9 +808,10 @@ static UINT32 m_n_mdec0_size;
 static UINT32 m_n_mdec1_command;
 static UINT32 m_n_mdec1_status;
 
-static UINT16 m_p_n_mdec_r15[ 256 * 3 ];
-static UINT16 m_p_n_mdec_g15[ 256 * 3 ];
-static UINT16 m_p_n_mdec_b15[ 256 * 3 ];
+static UINT16 m_p_n_mdec_clamp8[ 256 * 3 ];
+static UINT16 m_p_n_mdec_r5[ 256 * 3 ];
+static UINT16 m_p_n_mdec_g5[ 256 * 3 ];
+static UINT16 m_p_n_mdec_b5[ 256 * 3 ];
 
 static UINT32 m_p_n_mdec_zigzag[ DCTSIZE2 ] =
 {
@@ -959,25 +972,30 @@ INLINE INT32 mdec_cb_to_b( INT32 n_cb )
 	return ( 1814 * n_cb ) >> 10;
 }
 
-INLINE UINT16 mdec_clamp_r15( INT32 n_r )
+INLINE UINT16 mdec_clamp_r5( INT32 n_r )
 {
-	return m_p_n_mdec_r15[ n_r + 128 + 256 ];
+	return m_p_n_mdec_r5[ n_r + 128 + 256 ];
 }
 
-INLINE UINT16 mdec_clamp_g15( INT32 n_g )
+INLINE UINT16 mdec_clamp_g5( INT32 n_g )
 {
-	return m_p_n_mdec_g15[ n_g + 128 + 256 ];
+	return m_p_n_mdec_g5[ n_g + 128 + 256 ];
 }
 
-INLINE UINT16 mdec_clamp_b15( INT32 n_b )
+INLINE UINT16 mdec_clamp_b5( INT32 n_b )
 {
-	return m_p_n_mdec_b15[ n_b + 128 + 256 ];
+	return m_p_n_mdec_b5[ n_b + 128 + 256 ];
 }
 
-INLINE UINT32 mdec_makergb15( INT32 n_r, INT32 n_g, INT32 n_b, INT32 *p_n_y )
+INLINE void mdec_makergb15( UINT32 n_address, INT32 n_r, INT32 n_g, INT32 n_b, INT32 *p_n_y, UINT32 n_stp )
 {
-	return mdec_clamp_r15( p_n_y[ BYTE_XOR_LE( 0 ) ] + n_r ) | mdec_clamp_g15( p_n_y[ BYTE_XOR_LE( 0 ) ] + n_g ) | mdec_clamp_b15( p_n_y[ BYTE_XOR_LE( 0 ) ] + n_b ) |
-		( mdec_clamp_r15( p_n_y[ BYTE_XOR_LE( 1 ) ] + n_r ) | mdec_clamp_g15( p_n_y[ BYTE_XOR_LE( 1 ) ] + n_g ) | mdec_clamp_b15( p_n_y[ BYTE_XOR_LE( 1 ) ] + n_b ) ) << 16;
+	g_p_n_psxram[ n_address / 4 ] = n_stp |
+		mdec_clamp_r5( p_n_y[ BYTE_XOR_LE( 0 ) ] + n_r ) |
+		mdec_clamp_g5( p_n_y[ BYTE_XOR_LE( 0 ) ] + n_g ) |
+		mdec_clamp_b5( p_n_y[ BYTE_XOR_LE( 0 ) ] + n_b ) |
+		( mdec_clamp_r5( p_n_y[ BYTE_XOR_LE( 1 ) ] + n_r ) |
+		mdec_clamp_g5( p_n_y[ BYTE_XOR_LE( 1 ) ] + n_g ) |
+		mdec_clamp_b5( p_n_y[ BYTE_XOR_LE( 1 ) ] + n_b ) ) << 16;
 }
 
 static void mdec_yuv2_to_rgb15( UINT32 n_address )
@@ -1020,8 +1038,8 @@ static void mdec_yuv2_to_rgb15( UINT32 n_address )
 				n_g = mdec_cr_to_g( n_cr ) + mdec_cb_to_g( n_cb );
 				n_b = mdec_cb_to_b( n_cb );
 
-				g_p_n_psxram[ ( n_address +  0 ) / 4 ] = mdec_makergb15( n_r, n_g, n_b, p_n_y ) | n_stp;
-				g_p_n_psxram[ ( n_address + 32 ) / 4 ] = mdec_makergb15( n_r, n_g, n_b, p_n_y + 8 ) | n_stp;
+				mdec_makergb15( ( n_address +  0 ), n_r, n_g, n_b, p_n_y, n_stp );
+				mdec_makergb15( ( n_address + 32 ), n_r, n_g, n_b, p_n_y + 8, n_stp );
 
 				n_cr = *( p_n_cr + 4 );
 				n_cb = *( p_n_cb + 4 );
@@ -1029,8 +1047,8 @@ static void mdec_yuv2_to_rgb15( UINT32 n_address )
 				n_g = mdec_cr_to_g( n_cr ) + mdec_cb_to_g( n_cb );
 				n_b = mdec_cb_to_b( n_cb );
 
-				g_p_n_psxram[ ( n_address + 16 ) / 4 ] = mdec_makergb15( n_r, n_g, n_b, p_n_y + DCTSIZE2 ) | n_stp;
-				g_p_n_psxram[ ( n_address + 48 ) / 4 ] = mdec_makergb15( n_r, n_g, n_b, p_n_y + DCTSIZE2 + 8 ) | n_stp;
+				mdec_makergb15( ( n_address + 16 ), n_r, n_g, n_b, p_n_y + DCTSIZE2, n_stp );
+				mdec_makergb15( ( n_address + 48 ), n_r, n_g, n_b, p_n_y + DCTSIZE2 + 8, n_stp );
 
 				p_n_cr++;
 				p_n_cb++;
@@ -1041,6 +1059,84 @@ static void mdec_yuv2_to_rgb15( UINT32 n_address )
 			p_n_cb += 4;
 			p_n_y += 8;
 			n_address += 48;
+		}
+		p_n_y += DCTSIZE2;
+	}
+}
+
+INLINE UINT16 mdec_clamp8( INT32 n_r )
+{
+	return m_p_n_mdec_clamp8[ n_r + 128 + 256 ];
+}
+
+INLINE void mdec_makergb24( UINT32 n_address, INT32 n_r, INT32 n_g, INT32 n_b, INT32 *p_n_y, UINT32 n_stp )
+{
+	psxwriteword( n_address + 0, ( mdec_clamp8( p_n_y[ BYTE_XOR_LE( 0 ) ] + n_g ) << 8 ) | mdec_clamp8( p_n_y[ BYTE_XOR_LE( 0 ) ] + n_r ) );
+	psxwriteword( n_address + 2, ( mdec_clamp8( p_n_y[ BYTE_XOR_LE( 1 ) ] + n_r ) << 8 ) | mdec_clamp8( p_n_y[ BYTE_XOR_LE( 0 ) ] + n_b ) );
+	psxwriteword( n_address + 4, ( mdec_clamp8( p_n_y[ BYTE_XOR_LE( 1 ) ] + n_b ) << 8 ) | mdec_clamp8( p_n_y[ BYTE_XOR_LE( 1 ) ] + n_g ) );
+}
+
+static void mdec_yuv2_to_rgb24( UINT32 n_address )
+{
+	INT32 n_r;
+	INT32 n_g;
+	INT32 n_b;
+	INT32 n_cb;
+	INT32 n_cr;
+	INT32 *p_n_cb;
+	INT32 *p_n_cr;
+	INT32 *p_n_y;
+	UINT32 n_x;
+	UINT32 n_y;
+	UINT32 n_z;
+	UINT32 n_stp;
+
+	if( ( m_n_mdec0_command & ( 1L << 25 ) ) != 0 )
+	{
+		n_stp = 0x80008000;
+	}
+	else
+	{
+		n_stp = 0x00000000;
+	}
+
+	p_n_cb = &m_p_n_mdec_unpacked[ 0 ];
+	p_n_cr = &m_p_n_mdec_unpacked[ DCTSIZE2 ];
+	p_n_y = &m_p_n_mdec_unpacked[ DCTSIZE2 * 2 ];
+
+	for( n_z = 0; n_z < 2; n_z++ )
+	{
+		for( n_y = 0; n_y < 4; n_y++ )
+		{
+			for( n_x = 0; n_x < 4; n_x++ )
+			{
+				n_cr = *( p_n_cr );
+				n_cb = *( p_n_cb );
+				n_r = mdec_cr_to_r( n_cr );
+				n_g = mdec_cr_to_g( n_cr ) + mdec_cb_to_g( n_cb );
+				n_b = mdec_cb_to_b( n_cb );
+
+				mdec_makergb24( ( n_address +  0 ), n_r, n_g, n_b, p_n_y, n_stp );
+				mdec_makergb24( ( n_address + 48 ), n_r, n_g, n_b, p_n_y + 8, n_stp );
+
+				n_cr = *( p_n_cr + 4 );
+				n_cb = *( p_n_cb + 4 );
+				n_r = mdec_cr_to_r( n_cr );
+				n_g = mdec_cr_to_g( n_cr ) + mdec_cb_to_g( n_cb );
+				n_b = mdec_cb_to_b( n_cb );
+
+				mdec_makergb24( ( n_address + 24 ), n_r, n_g, n_b, p_n_y + DCTSIZE2, n_stp );
+				mdec_makergb24( ( n_address + 72 ), n_r, n_g, n_b, p_n_y + DCTSIZE2 + 8, n_stp );
+
+				p_n_cr++;
+				p_n_cb++;
+				p_n_y += 2;
+				n_address += 6;
+			}
+			p_n_cr += 4;
+			p_n_cb += 4;
+			p_n_y += 8;
+			n_address += 72;
 		}
 		p_n_y += DCTSIZE2;
 	}
@@ -1084,17 +1180,28 @@ static void mdec1_read( UINT32 n_address, INT32 n_size )
 {
 	if( ( m_n_mdec0_command & ( 1L << 29 ) ) != 0 )
 	{
-		while( n_size > 0 )
+		if( ( m_n_mdec0_command & ( 1L << 27 ) ) != 0 )
 		{
-			m_n_mdec0_address = mdec_unpack( m_n_mdec0_address );
-			mdec_yuv2_to_rgb15( n_address );
-			n_address += ( 16 * 16 ) * 2;
-			n_size -= ( 16 * 16 ) / 2;
+			while( n_size > 0 )
+			{
+				m_n_mdec0_address = mdec_unpack( m_n_mdec0_address );
+				mdec_yuv2_to_rgb15( n_address );
+				n_address += ( 16 * 16 ) * 2;
+				n_size -= ( 16 * 16 ) / 2;
+			}
 		}
-	}
-	else
-	{
-		verboselog( 0, "mdec 24bit not supported\n" );
+		else
+		{
+			verboselog( 0, "mdec 24bit not supported\n" );
+
+			while( n_size > 0 )
+			{
+				m_n_mdec0_address = mdec_unpack( m_n_mdec0_address );
+				mdec_yuv2_to_rgb24( n_address );
+				n_address += ( 24 * 16 ) * 2;
+				n_size -= ( 24 * 16 ) / 2;
+			}
+		}
 	}
 	m_n_mdec1_status &= ~( 1L << 29 );
 }
@@ -1209,17 +1316,21 @@ void psx_driver_init( void )
 
 	for( n = 0; n < 256; n++ )
 	{
-		m_p_n_mdec_r15[ n ] = 0;
-		m_p_n_mdec_r15[ n + 256 ] = ( n >> 3 ) << 10;
-		m_p_n_mdec_r15[ n + 512 ] = ( 255 >> 3 ) << 10;
+		m_p_n_mdec_clamp8[ n ] = 0;
+		m_p_n_mdec_clamp8[ n + 256 ] = n;
+		m_p_n_mdec_clamp8[ n + 512 ] = 255;
 
-		m_p_n_mdec_g15[ n ] = 0;
-		m_p_n_mdec_g15[ n + 256 ] = ( n >> 3 ) << 5;
-		m_p_n_mdec_g15[ n + 512 ] = ( 255 >> 3 ) << 5;
+		m_p_n_mdec_r5[ n ] = 0;
+		m_p_n_mdec_r5[ n + 256 ] = ( n >> 3 ) << 10;
+		m_p_n_mdec_r5[ n + 512 ] = ( 255 >> 3 ) << 10;
 
-		m_p_n_mdec_b15[ n ] = 0;
-		m_p_n_mdec_b15[ n + 256 ] = ( n >> 3 );
-		m_p_n_mdec_b15[ n + 512 ] = ( 255 >> 3 );
+		m_p_n_mdec_g5[ n ] = 0;
+		m_p_n_mdec_g5[ n + 256 ] = ( n >> 3 ) << 5;
+		m_p_n_mdec_g5[ n + 512 ] = ( 255 >> 3 ) << 5;
+
+		m_p_n_mdec_b5[ n ] = 0;
+		m_p_n_mdec_b5[ n + 256 ] = ( n >> 3 );
+		m_p_n_mdec_b5[ n + 512 ] = ( 255 >> 3 );
 	}
 
 	for( n = 0; n < 2; n++ )

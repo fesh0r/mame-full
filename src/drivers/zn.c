@@ -224,7 +224,7 @@ static struct
 	{ "shngmtkb", mg01, mg04 }, /* OK */
 	{ "doapp",    mg01, mg05 }, /* system error D094 */
 	{ "tondemo",  mg01, mg09 }, /* system error D094 */
-	{ "brvblade", mg01, mg11 }, /* system error E */
+	{ "brvblade", mg01, mg11 }, /* OK ( missing graphics, crashes after first level ) */
 	{ "sfchamp",  tt01, tt02 }, /* red screen */
 	{ "psyfrcex", tt01, tt03 }, /* red screen */
 	{ "psyforce", tt01, tt03 }, /* red screen */
@@ -266,7 +266,6 @@ static void znsec_write( int n_chip, int n_data )
 
 	n_output = znsec_step( n_chip, n_data );
 	psx_sio_send( 0, n_output );
-
 	if( n_data >= 0x20 && n_data <= 0x7f )
 	{
 		sprintf( s_output, " '%c'", n_data );
@@ -1180,6 +1179,8 @@ static ADDRESS_MAP_START( psarc_snd_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x080000, 0x0fffff) AM_RAM
 	AM_RANGE(0x100000, 0x10001f) AM_READWRITE( psarc_ymf_r, psarc_ymf_w )
 	AM_RANGE(0x180008, 0x180009) AM_READ( psarc_latch_r )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITENOP
+	AM_RANGE(0x100020, 0xffffff) AM_WRITENOP
 ADDRESS_MAP_END
 
 static struct YMF271interface ymf271_interface =
@@ -2305,15 +2306,15 @@ ROM_END
 ROM_START( doapp )
 	TPS_BIOS
 
- 	ROM_REGION32_LE( 0x01c00000, REGION_USER2, 0 )
+	ROM_REGION32_LE( 0x01c00000, REGION_USER2, 0 )
 	ROM_LOAD16_BYTE( "doapp119.bin", 0x0000001, 0x100000, CRC(bbe04cef) SHA1(f2dae4810ca78075fc3007a6001531a455235a2e) )
 	ROM_LOAD16_BYTE( "doapp120.bin", 0x0000000, 0x100000, CRC(b614d7e6) SHA1(373756d9b88b45c677e987ee1e5cb2d5446ecfe8) )
- 	ROM_LOAD( "doapp-0.216",         0x0400000, 0x400000, CRC(acc6c539) SHA1(a744567a3d75634098b1749103307981be9acbdd) )
- 	ROM_LOAD( "doapp-1.217",         0x0800000, 0x400000, CRC(14b961c4) SHA1(3fae1fcb4665ba8bad391881b26c2d087718d42f) )
- 	ROM_LOAD( "doapp-2.218",         0x0c00000, 0x400000, CRC(134f698f) SHA1(6422972cf5d30a0f09f0c20f042691d5969207b4) )
- 	ROM_LOAD( "doapp-3.219",         0x1000000, 0x400000, CRC(1c6540f3) SHA1(8631fde93a1da6325d7b31c7edf12c964f0ac4fc) )
- 	ROM_LOAD( "doapp-4.220",         0x1400000, 0x400000, CRC(f83bacf7) SHA1(5bd66da993f0db966581dde80dd7e5b377754412) )
- 	ROM_LOAD( "doapp-5.221",         0x1800000, 0x400000, CRC(e11e8b71) SHA1(b1d1b9532b5f074ce216a603436d5674d136865d) )
+	ROM_LOAD( "doapp-0.216",         0x0400000, 0x400000, CRC(acc6c539) SHA1(a744567a3d75634098b1749103307981be9acbdd) )
+	ROM_LOAD( "doapp-1.217",         0x0800000, 0x400000, CRC(14b961c4) SHA1(3fae1fcb4665ba8bad391881b26c2d087718d42f) )
+	ROM_LOAD( "doapp-2.218",         0x0c00000, 0x400000, CRC(134f698f) SHA1(6422972cf5d30a0f09f0c20f042691d5969207b4) )
+	ROM_LOAD( "doapp-3.219",         0x1000000, 0x400000, CRC(1c6540f3) SHA1(8631fde93a1da6325d7b31c7edf12c964f0ac4fc) )
+	ROM_LOAD( "doapp-4.220",         0x1400000, 0x400000, CRC(f83bacf7) SHA1(5bd66da993f0db966581dde80dd7e5b377754412) )
+	ROM_LOAD( "doapp-5.221",         0x1800000, 0x400000, CRC(e11e8b71) SHA1(b1d1b9532b5f074ce216a603436d5674d136865d) )
 ROM_END
 
 ROM_START( tondemo )
@@ -2586,10 +2587,10 @@ ROM_START( brvblade )
 	ROM_LOAD( "flash1.024",   0x0400000, 0x200000, CRC(d9d40a34) SHA1(c91dbc6f85404e9397fa79a4bac28e8c3c1a5228) )
 
 	ROM_REGION( 0x100000, REGION_CPU2, 0 )
-	ROM_LOAD( "spu0u049.bin", 0x0000000, 0x080000, CRC(c9df8ed9) SHA1(00a58522189091c48d781b6703e4378e04343c33) )
-	ROM_LOAD( "spu1u412.bin", 0x0080000, 0x080000, CRC(6408b5b2) SHA1(ba60aa1074df87e98fa260211e9ec99cea25023f) )
+	ROM_LOAD16_BYTE( "spu0u049.bin", 0x0000000, 0x080000, CRC(c9df8ed9) SHA1(00a58522189091c48d781b6703e4378e04343c33) )
+	ROM_LOAD16_BYTE( "spu1u412.bin", 0x0000001, 0x080000, CRC(6408b5b2) SHA1(ba60aa1074df87e98fa260211e9ec99cea25023f) )
 
-	ROM_REGION( 0x800000, REGION_SOUND1, ROMREGION_SOUNDONLY )
+	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY )
 	ROM_LOAD( "ra-bbl_rom2.336", 0x000000, 0x400000, CRC(cd052c02) SHA1(d955a70a89b3b1a0b505a05c0887c399fe7a2c68) )
 ROM_END
 

@@ -489,9 +489,15 @@ INLINE UINT32 DEC32(UINT32 dst)
 INLINE void PUSH8(UINT8 value)
 {
 	UINT32 ea;
-	REG32(ESP) -= 1;
-	ea = i386_translate( SS, REG32(ESP) );
-	WRITE8( ea, value );
+	if( I.operand_size ) {
+		REG32(ESP) -= 4;
+		ea = i386_translate( SS, REG32(ESP) );
+		WRITE32( ea, (INT32)(INT8)value );
+	} else {
+		REG32(ESP) -= 2;
+		ea = i386_translate( SS, REG32(ESP) );
+		WRITE16( ea, (INT16)(INT8)value );
+	}
 }
 INLINE void PUSH16(UINT16 value)
 {

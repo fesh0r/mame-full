@@ -438,8 +438,7 @@ static void I386OP(call_abs32)(void)		// Opcode 0x9a
 
 	if( PROTECTED_MODE ) {
 		/* TODO */
-		printf("i386: call_abs32 in protected mode unimplemented\n");
-		exit(1);
+		osd_die("i386: call_abs32 in protected mode unimplemented\n");
 	} else {
 		PUSH32( I.sreg[CS].selector );
 		PUSH32( I.eip );
@@ -632,15 +631,16 @@ static void I386OP(imul_r32_rm32_i8)(void)	// Opcode 0x6b
 
 static void I386OP(in_eax_i8)(void)			// Opcode 0xe5
 {
-	//UINT8 port = FETCH();
-	printf("i386: in_eax_i8 unimplemented !\n");
-	exit(1);
+	UINT16 port = FETCH();
+	UINT32 data = READPORT32(port);
+	REG32(EAX) = data;
 }
 
 static void I386OP(in_eax_dx)(void)			// Opcode 0xed
 {
-	printf("i386: in_eax_dx unimplemented !\n");
-	exit(1);
+	UINT16 port = REG16(DX);
+	UINT32 data = READPORT32(port);
+	REG32(EAX) = data;
 }
 
 static void I386OP(inc_eax)(void)			// Opcode 0x40
@@ -1268,15 +1268,16 @@ static void I386OP(or_eax_i32)(void)		// Opcode 0x0d
 
 static void I386OP(out_eax_i8)(void)		// Opcode 0xe7
 {
-	//UINT8 port = FETCH();
-	printf("i386: out_eax_i8 unimplemented !\n");
-	exit(1);
+	UINT16 port = FETCH();
+	UINT32 data = REG32(EAX);
+	WRITEPORT32(port, data);
 }
 
 static void I386OP(out_eax_dx)(void)		// Opcode 0xef
 {
-	printf("i386: out_eax_dx unimplemented !\n");
-	exit(1);
+	UINT16 port = REG16(DX);
+	UINT32 data = REG32(EAX);
+	WRITEPORT32(port, data);
 }
 
 static void I386OP(pop_eax)(void)			// Opcode 0x58
@@ -2473,8 +2474,7 @@ static void I386OP(groupFF_32)(void)		// Opcode 0xff
 			}
 			break;
 		default:
-			printf("i386: groupFF_32 /%d unimplemented\n", (modrm >> 3) & 0x7);
-			exit(1);
+			osd_die("i386: groupFF_32 /%d unimplemented\n", (modrm >> 3) & 0x7);
 			break;
 	}
 }
@@ -2513,8 +2513,7 @@ static void I386OP(group0F01_32)(void)		// Opcode 0x0f 01
 				break;
 			}
 		default:
-			printf("i386: unimplemented opcode 0x0f 01 /%d at %08X\n", (modrm >> 3) & 0x7, I.eip - 2);
-			exit(1);
+			osd_die("i386: unimplemented opcode 0x0f 01 /%d at %08X\n", (modrm >> 3) & 0x7, I.eip - 2);
 			break;
 	}
 }
@@ -2634,8 +2633,7 @@ static void I386OP(group0FBA_32)(void)		// Opcode 0x0f ba
 			}
 			break;
 		default:
-			printf("i386: group0FBA_32 /%d unknown\n", (modrm >> 3) & 0x7);
-			exit(1);
+			osd_die("i386: group0FBA_32 /%d unknown\n", (modrm >> 3) & 0x7);
 			break;
 	}
 }

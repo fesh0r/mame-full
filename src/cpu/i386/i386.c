@@ -220,13 +220,11 @@ static void i386_interrupt(int irq)
 		
 		/* Check if IRQ is out of IDTR's bounds */
 		if( entry > I.idtr.limit ) {
-			printf("I386 Interrupt: IRQ out of IDTR bounds (IRQ: %d, IDTR Limit: %d)\n", irq, I.idtr.limit);
-			exit(1);
+			osd_die("I386 Interrupt: IRQ out of IDTR bounds (IRQ: %d, IDTR Limit: %d)\n", irq, I.idtr.limit);
 		}
 
 		if( !I.sreg[CS].d ) {
-			printf("I386: 16-bit interrupts are not supported !\n");
-			exit(1);
+			osd_die("I386: 16-bit interrupts are not supported !\n");
 		}
 
 		PUSH32( get_flags() & 0x00fcffff );
@@ -429,7 +427,6 @@ int i386_execute(int num_cycles)
 
 	while( I.cycles > 0 )
 	{
-		UINT32 ip = I.eip;
 		I.operand_size = I.sreg[CS].d;
 		I.address_size = I.sreg[CS].d;
 		I.segment_prefix = 0;
@@ -437,11 +434,6 @@ int i386_execute(int num_cycles)
 		CALL_MAME_DEBUG;
 		
 		I386OP(decode_opcode)();
-
-		if( I.eip > 0xffffff ) {
-			printf("EIP: %08X, old eip: %08X\n",I.eip,ip);
-			exit(1);
-		}
 	}
 
 	return num_cycles;

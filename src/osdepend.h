@@ -346,6 +346,10 @@ cycles_t osd_profiling_ticks(void);
 
 ******************************************************************************/
 
+/* called to allocate/free memory that can contain executable code */
+void *osd_alloc_executable(size_t size);
+void osd_free_executable(void *ptr);
+
 /* called while loading ROMs. It is called a last time with name == 0 to signal */
 /* that the ROM loading process is finished. */
 /* return non-zero to abort loading */
