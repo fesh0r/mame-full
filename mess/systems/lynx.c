@@ -12,6 +12,9 @@
 #include "includes/lynx.h"
 #include <zlib.h>
 
+static int rotate=0;
+int lynx_rotate;
+
 static MEMORY_READ_START( lynx_readmem )
 	{ 0x0000, 0xfbff, MRA_RAM },
 	{ 0xfc00, 0xfcff, MRA_BANK1 },
@@ -44,15 +47,18 @@ INPUT_PORTS_START( lynx )
 	PORT_BITX( 0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Pause",  KEYCODE_3, IP_JOY_DEFAULT )
 	// power on and power off buttons
 	PORT_START
-	PORT_DIPNAME ( 0x03, 0, "90 Degree Rotation")
+	PORT_DIPNAME ( 0x03, 3, "90 Degree Rotation")
+	PORT_DIPSETTING(	2, "counterclockwise" )
 	PORT_DIPSETTING(	1, "clockwise" )
 	PORT_DIPSETTING(	0, "None" )
-	PORT_DIPSETTING(	2, "counterclockwise" )
+	PORT_DIPSETTING(	3, "crcfile" )
 INPUT_PORTS_END
 
 static int lynx_frame_int(void)
 {
-	return 0;
+    lynx_rotate=rotate;
+    if ((readinputport(2)&3)!=3) lynx_rotate=readinputport(2)&3;
+    return 0;
 }
 
 static unsigned char lynx_palette[16][3]=
@@ -82,61 +88,61 @@ DISPCTL EQU $FD92       ; set to $D by INITMIKEY
 */
 void lynx_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 {
-	static int height=-1, width=-1;
-	int h,w;
-	int x, y;
-	UINT16 j; // clipping needed!
-	UINT8 *mem=memory_region(REGION_CPU1);
-
-	if( palette_recalc() ) full_refresh = 1;
-
-	if (readinputport(2)&3) { // rotation
-		h=160; w=102;
-		if ( ( ((readinputport(2)&3)==1)&&(mikey.data[0x92]&2))
-			 ||( ((readinputport(2)&3)==2)&&!(mikey.data[0x92]&2)) ) {
-			for (j=mikey.data[0x94]|(mikey.data[0x95]<<8),y=0; y<102;y++) {
-				for (x=160-2;x>=0;j++,x-=2) {
-					plot_pixel(bitmap, y, x+1, Machine->pens[mem[j]>>4]);
-					plot_pixel(bitmap, y, x, Machine->pens[mem[j]&0xf]);
-				}
-			}
-		} else {
-			for (j=mikey.data[0x94]|(mikey.data[0x95]<<8),y=102-1; y>=0;y--) {
-				for (x=0;x<160;j++,x+=2) {
-					plot_pixel(bitmap, y, x, Machine->pens[mem[j]>>4]);
-					plot_pixel(bitmap, y, x+1, Machine->pens[mem[j]&0xf]);
-				}
-			}
+    static int height=-1, width=-1;
+    int h,w;
+    int x, y;
+    UINT16 j; // clipping needed!
+    UINT8 *mem=memory_region(REGION_CPU1);
+    
+    if( palette_recalc() ) full_refresh = 1;
+    
+    if (lynx_rotate&3) { // rotation
+	h=160; w=102;
+	if ( ((lynx_rotate==1)&&(mikey.data[0x92]&2))
+	     ||( (lynx_rotate==2)&&!(mikey.data[0x92]&2)) ) {
+	    for (j=mikey.data[0x94]|(mikey.data[0x95]<<8),y=0; y<102;y++) {
+		for (x=160-2;x>=0;j++,x-=2) {
+		    plot_pixel(bitmap, y, x+1, Machine->pens[mem[j]>>4]);
+		    plot_pixel(bitmap, y, x, Machine->pens[mem[j]&0xf]);
 		}
+	    }
 	} else {
-		w=160; h=102;
-		if ( mikey.data[0x92]&2) {
-			for (j=mikey.data[0x94]|(mikey.data[0x95]<<8),y=102-1; y>=0;y--) {
-				for (x=160-2;x>=0;j++,x-=2) {
-					plot_pixel(bitmap, x+1, y, Machine->pens[mem[j]>>4]);
-					plot_pixel(bitmap, x, y, Machine->pens[mem[j]&0xf]);
-				}
-			}
-		} else {
-			for (j=mikey.data[0x94]|(mikey.data[0x95]<<8),y=0; y<102;y++) {
-				for (x=0;x<160;j++,x+=2) {
-					plot_pixel(bitmap, x, y, Machine->pens[mem[j]>>4]);
-					plot_pixel(bitmap, x+1, y, Machine->pens[mem[j]&0xf]);
-				}
-			}
+	    for (j=mikey.data[0x94]|(mikey.data[0x95]<<8),y=102-1; y>=0;y--) {
+		for (x=0;x<160;j++,x+=2) {
+		    plot_pixel(bitmap, y, x, Machine->pens[mem[j]>>4]);
+		    plot_pixel(bitmap, y, x+1, Machine->pens[mem[j]&0xf]);
 		}
+	    }
 	}
-	if ((w!=width)||(h!=height)) {
-		width=w;
-		height=h;
-		osd_set_visible_area(0,width-1,0, height-1);
+    } else {
+	w=160; h=102;
+	if ( mikey.data[0x92]&2) {
+	    for (j=mikey.data[0x94]|(mikey.data[0x95]<<8),y=102-1; y>=0;y--) {
+		for (x=160-2;x>=0;j++,x-=2) {
+		    plot_pixel(bitmap, x+1, y, Machine->pens[mem[j]>>4]);
+		    plot_pixel(bitmap, x, y, Machine->pens[mem[j]&0xf]);
+		}
+	    }
+	} else {
+	    for (j=mikey.data[0x94]|(mikey.data[0x95]<<8),y=0; y<102;y++) {
+		for (x=0;x<160;j++,x+=2) {
+		    plot_pixel(bitmap, x, y, Machine->pens[mem[j]>>4]);
+		    plot_pixel(bitmap, x+1, y, Machine->pens[mem[j]&0xf]);
+		}
+	    }
 	}
-	lynx_audio_debug(bitmap);
-
-	for (j=0; j<debug_pos; j++) {
-	    ui_text(bitmap, debug_strings[j], 0, j*8);
-	}
-	debug_pos=0;
+    }
+    if ((w!=width)||(h!=height)) {
+	width=w;
+	height=h;
+	osd_set_visible_area(0,width-1,0, height-1);
+    }
+    lynx_audio_debug(bitmap);
+    
+    for (j=0; j<debug_pos; j++) {
+	ui_text(bitmap, debug_strings[j], 0, j*8);
+    }
+    debug_pos=0;
 }
 
 static void lynx_init_colors (unsigned char *sys_palette,
@@ -154,12 +160,60 @@ struct CustomSound_interface lynx_sound_interface =
 	lynx_custom_update
 };
 
+struct CustomSound_interface lynx2_sound_interface =
+{
+	lynx2_custom_start,
+	lynx_custom_stop,
+	lynx_custom_update
+};
+
+
 static struct MachineDriver machine_driver_lynx =
 {
 	/* basic machine hardware */
 	{
 		{
-			CPU_M65SC02, // integrated in vlsi, stz, but not bbr bbs
+			CPU_M65SC02, // vti core, integrated in vlsi, stz, but not bbr bbs
+			4000000,
+			lynx_readmem,lynx_writemem,0,0,
+			lynx_frame_int, 1,
+        }
+	},
+	/* frames per second, VBL duration */
+	60, DEFAULT_60HZ_VBLANK_DURATION, // lcd!
+	1,				/* single CPU */
+	lynx_machine_init,
+	0,//pc1401_machine_stop,
+
+	// 160 x 102
+//	160, 102, { 0, 160 - 1, 0, 102 - 1},
+	160, 160, { 0, 160 - 1, 0, 102 - 1},
+	0, //lynx_gfxdecodeinfo,			   /* graphics decode info */
+	// 16 out of 4096
+	sizeof (lynx_palette) / sizeof (lynx_palette[0]) ,
+	0, //sizeof (lynx_colortable) / sizeof(lynx_colortable[0][0]),
+	lynx_init_colors,		/* convert color prom */
+
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,	/* video flags */
+	0,						/* obsolete */
+    lynx_vh_start,
+	lynx_vh_stop,
+	lynx_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{SOUND_CUSTOM, &lynx_sound_interface},
+		{ 0 }
+    }
+};
+
+static struct MachineDriver machine_driver_lynx2 =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M65SC02, // vti core, integrated in vlsi, stz, but not bbr bbs
 			4000000,
 			lynx_readmem,lynx_writemem,0,0,
 			lynx_frame_int, 1,
@@ -189,7 +243,7 @@ static struct MachineDriver machine_driver_lynx =
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		{SOUND_CUSTOM, &lynx_sound_interface},
+		{SOUND_CUSTOM, &lynx2_sound_interface},
 		{ 0 }
     }
 };
@@ -219,8 +273,6 @@ ROM_START(lynx2)
 	ROM_REGION(0x100,REGION_GFX1, 0)
 	ROM_REGION(0x100000, REGION_USER1, 0)
 ROM_END
-
-// extern unsigned int crc32 (unsigned int crc, const unsigned char *buf, unsigned int len);
 
 UINT32 lynx_partialcrc(const unsigned char *buf,unsigned int size)
 {
@@ -260,6 +312,18 @@ int lynx_id_rom (int id)
 	logerror("returning ID_OK\n");
 	return ID_OK;
 }
+
+static void lynx_crc_keyword(int io_device, int id)
+{
+    const char *info;
+    info=device_extrainfo(io_device, id);
+    rotate=0;
+    if (info!=NULL) {
+	if (strcmp(info, "ROTATE90DEGREE")==0) rotate=1;
+	else if (strcmp(info, "ROTATE270DEGREE")==0) rotate=2;
+    }
+}
+
 
 static int lynx_load_rom(int id)
 {
@@ -303,6 +367,9 @@ static int lynx_load_rom(int id)
 		return 1;
 	}
 	osd_fclose(cartfile);
+
+	lynx_crc_keyword(IO_CARTSLOT, id);
+
 	return 0;
 }
 
@@ -344,6 +411,9 @@ static int lynx_quickload(int id)
 
 	rom[0xfffc+0x200]=start&0xff;
 	rom[0xfffd+0x200]=start>>8;
+
+	lynx_crc_keyword(IO_QUICKLOAD, id);
+
 	return 0;
 }
 
@@ -386,7 +456,6 @@ static const struct IODevice io_lynx[] = {
 		NULL,							/* output */
 		NULL,							/* input_chunk */
 		NULL,							/* output_chunk */
-//		lynx_partialcrc,				/* partial crc */
 	},
     { IO_END }
 };
@@ -395,8 +464,12 @@ void init_lynx(void)
 {
 	int i;
 	UINT8 *gfx=memory_region(REGION_GFX1);
+
 	for (i=0; i<256; i++) gfx[i]=i;
+
 	lynx_quickload(0);
+
+
 }
 
 #define io_lynxa io_lynx
@@ -405,7 +478,7 @@ void init_lynx(void)
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      MONITOR	COMPANY   FULLNAME */
 CONSX( 1989, lynx,	  0, 		lynx,  lynx, 	lynx,	  "Atari",  "Lynx", GAME_NOT_WORKING|GAME_IMPERFECT_SOUND)
 CONSX( 1989, lynxa,	  lynx, 	lynx,  lynx, 	lynx,	  "Atari",  "Lynx (alternate rom save!)", GAME_NOT_WORKING|GAME_IMPERFECT_SOUND)
-CONSX( 1990, lynx2,	  lynx, 	lynx,  lynx, 	lynx,	  "Atari",  "Lynx II", GAME_NOT_WORKING|GAME_IMPERFECT_SOUND)
+CONSX( 1991, lynx2,	  lynx, 	lynx2,  lynx, 	lynx,	  "Atari",  "Lynx II", GAME_NOT_WORKING|GAME_IMPERFECT_SOUND)
 
 #ifdef RUNTIME_LOADER
 extern void lynx_runtime_loader_init(void)
