@@ -507,10 +507,10 @@ ROM_END
 
 static const struct IODevice io_ti99_2[] =
 {
-	/* one expansion/cartidge port on the back */
-	/* one tape drive port */
-	/* Hex-bus disk controller supports up to 4 floppy disk drives */
-	/* None of these is supported (tape should be easy) */
+	/* one expansion/cartridge port on the back */
+	/* one cassette unit port */
+	/* Hex-bus disk controller: supports up to 4 floppy disk drives */
+	/* None of these is supported (tape should be easy to emulate) */
     { IO_END }
 };
 
