@@ -32,13 +32,24 @@ static struct {
 	{ 0x5e607dcf, 0x2000, "FAMICOM disk" },
 	{ 0x38000b6b, 0x40, "SNES" },
 
-	{ 0x3b601fc8, 0x80000, "PSX scph1000" },
-	{ 0x318178bf, 0x80000, "PSX 41A" },
-
 	{ 0xcbce86f7, 0x2000, "INTV" },
 	{ 0x683a4158, 0x800, "INTV" },
 
-/* Sega ***********************************************************************/
+/* Sony Playstation ***********************************************************/
+	{ 0x37157331, 0x80000, "Sony Playstation DTHL-3000 v2.2A (95.12.04)" },
+	{ 0x1e26792f, 0x80000, "Sony Playstation DTHL-3002 v2.2E (95.12.04)" },
+	{ 0x3b601fc8, 0x80000, "Sony Playstation SCPH-1000 J (94.09.22)" },
+	{ 0x37157331, 0x80000, "Sony Playstation SCPH-1001 v2.2A (95.12.04)" },
+	{ 0x24fc7e17, 0x80000, "Sony Playstation SCPH-5000 v2.2J (95.12.04)" },
+	{ 0xff3eeb8c, 0x80000, "Sony Playstation SCPH-5500 v3.0J (96.09.09)" },
+	{ 0x4d9e7c86, 0x80000, "Sony Playstation SCPH-5502 v3.0E (97.01.06)" },
+	{ 0xec541cd0, 0x80000, "Sony Playstation SCPH-7000 v4.0J (97.08.18)" },
+	{ 0x502224b6, 0x80000, "Sony Playstation SCPH-7001 v4.1A (97.12.16)" },
+	{ 0x8d8cb7e4, 0x80000, "Sony Playstation SCPH-7003 v3.0A (97.11.18)" },
+	{ 0x318178bf, 0x80000, "Sony Playstation SCPH-7502 v4.1E (97.12.16)" },
+
+
+/* Sega Consoles **************************************************************/
 	{ 0xf691f9c7, 0x8000, "SC3000 basic 2j" },
 	{ 0x155fd01f, 0x8000, "SC3000 basic 31" },
 
@@ -46,10 +57,14 @@ static struct {
 	{ 0xdd9c46b8, 0x800, "SYS32X" },
 	{ 0xbfda1fe5, 0x400, "SYS32X" },
 
-	{ 0x2aba43c2, 0x80000, "SATURN 100" },
-	{ 0x224b752c, 0x80000, "SATURN 101" },
+	{ 0x2aba43c2, 0x80000, "Sega Saturn 1.00 (940921)" },
+	{ 0x4afcf0fa, 0x80000, "Sega Saturn 1.00 (941115)" },
+	{ 0x224b752c, 0x80000, "Sega Saturn 1.01 (941228)" },
 
-/* NEC ***********************************************************************/
+	{ 0x574fd2c3, 0x80000, "Sega ST-V 1.13J (950425)" },
+	{ 0xbf7dbdd7, 0x80000, "Sega ST-V 1.13U (950425)" },
+
+/* NEC ***********(************************************************************/
 	{ 0xf82771f1, 0x2000, "PCEngine cdrom bios" },
 
 	{ 0xe983ad21, 0x8000, "BAD DUMP PC6001 (2nd half 0xff)" },
@@ -141,9 +156,11 @@ static struct {
 	{ 0x80add605, 0x2000, "lisa 68000 hi??" },
 	{ 0xedf5222f, 0x2000, "lisa 68000 lo??" },
 
+
+	{ 0xb2102e8e , 0x20000, "Macintosh Plus v3 Loud Harmonicas 342-0341+342-0342 (4d1f8172)" },
+
 	{ 0xf69697e6 , 0x10000, "? MAC + v1 even" },
 	{ 0x49f25913 , 0x10000, "? MAC + v1 odd" },
-	{ 0xb2102e8e , 0x20000, "COMBINED MAC + v1" },
 	{ 0xe133094a , 0x21d50, "COMBINED MAC + v1 and additional data!?" },
 	{ 0x6eb97aff , 0x10000, "342-0341 MAC + v2 even" },
 	{ 0xbfdc37d1 , 0x10000, "342-0342 MAC + v2 odd" },
@@ -217,6 +234,7 @@ static struct {
 	{ 0x64ccfc53 , 0x4000 , "Atari 800XL Qmeg OS ver. 4.2" },
 	{ 0xbe2242da , 0x4000 , "Atari 800XL Qmeg OS ver. 4.3" },
 
+/* Atari 8-bit computers external devices **************************************/
 	{ 0xf10064a3 , 0x1000 , "Atari 1060 CP/M Module boot ROM"},
 	{ 0xd1c68dda , 0x1000 , "Atari 1060 CP/M Module character set ROM"},
 
@@ -909,12 +927,15 @@ static struct {
 
 	{ 0x82047489 , 0x2000 , "Disciple GDOS3 v3.0" },
 	{ 0x569f7e55 , 0x2000 , "Disciple +D G+DOS v1.A" },
+	{ 0x1fe7f4fa , 0x2000 , "Disciple Uni-DOS" },
+	{ 0x60920496 , 0x2000 , "Disciple +D Uni-DOS" },
 
 	{ 0x619973f9 , 0x2000 , "Opus Discovery v1.2" },
 	{ 0x50f0eae0 , 0x2000 , "Opus Discovery v2.2" },
 	{ 0xd042b32a , 0x2000 , "Opus Discovery QuickDOS for FDD 720Kb" },
 
 	{ 0x1ccf4add , 0x0800 , "Timex FDD-3000 Internal ROM" },
+	{ 0xe9db941c , 0x1000 , "Timex FDD-3000 Interface" },
 	{ 0xa0a9779c , 0x1000 , "Timex FDD-3000 Interface modified for +3" },
 	{ 0x77c517f4 , 0x1000 , "Timex FDD-3000 Interface with square ULA modified for 128K" },
 
@@ -932,6 +953,8 @@ static struct {
 	{ 0xc43d717f , 0x4000 , "Beta 128 TR-DOS v5.03 (supplied with x128)" },
 	{ 0x561662f2 , 0x4000 , "Beta 128 TR-DOS v5.03 (supplied with speccy)" },
 	{ 0x23dbc387 , 0x4000 , "Beta 128 TR-DOS v5.03 (supplied with z80)" },
+	{ 0x1c5a25b1 , 0x4000 , "Beta 128 TR-DOS v5.03 (supplied with z80) (alt)" },
+	{ 0x2f97fe06 , 0x4000 , "Beta 128 TR-DOS v5.03M" },
  	{ 0xba310874 , 0x4000 , "Beta 128 TR-DOS v5.04" },
  	{ 0xda170c65 , 0x4000 , "Beta 128 TR-DOS v5.04.1 & LPrint-III for Profi by Michael Markowsky" },
 	{ 0x0d3f8b43 , 0x4000 , "Beta 128 TR-DOS v5.04EM by Elsy Corp" },
@@ -965,23 +988,25 @@ static struct {
 
 /* probably useless roms *******************************************************/
 	{ 0x2959719b , 0x02000 , "PART ZX Spectrum 48K (0000h-1fffh)" },
-	{ 0x39e997a8 , 0x20000 , "MERGED Timex TS-2068 (probably modified)" },
 	{ 0x87369b50 , 0x03000 , "MERGED Sinclair ZX-80 & ZX-81" },
 	{ 0x05ad8750 , 0x0a000 , "MERGED ZX Spectrum roms (262bd888+60efaf07+9e5392aa)" },
 	{ 0x6d96f172 , 0x10000 , "MERGED ZX Spectrum roms (help screen+124ad9e0+b96a36be+c43d717f)" },
 	{ 0xe640a642 , 0x10000 , "MERGED ZX Spectrum roms (help screen+124ad9e0+b96a36be+561662f2)" },
+	{ 0x863c7e0b , 0x10000 , "MERGED ZX Spectrum roms (help screen+124ad9e0+b96a36be+2f97fe06)" },
 	{ 0xf8a79acc , 0x16000 , "MERGED ZX Spectrum roms (ddee531f+9e5392aa+262bd888+793b7eb7+b96a36be+e76799d2)" },
 	{ 0x23af5893 , 0x20000 , "MERGED ZX Spectrum roms (ddee531f+9e5392aa+262bd888+793b7eb7+b96a36be+e76799d2+8c7e6a55+9191480c+78ec8cfd)" },
 	{ 0x9f54a710 , 0x20000 , "MERGED ZX Spectrum roms (ddee531f+9e5392aa+262bd888+793b7eb7+b96a36be+e76799d2+dd6f66ca+05b041fc+78ec8cfd)" },
 	{ 0xad99f054 , 0x20000 , "MERGED ZX Spectrum roms (ddee531f+9e5392aa+262bd888+793b7eb7+b96a36be+e76799d2+27d4c5f6+4250c4cd+78ec8cfd)" },
 	{ 0xf8635431 , 0x20000 , "MERGED ZX Spectrum roms (ddee531f+bb66dd1e+262bd888+793b7eb7+b96a36be+e76799d2+dd6f66ca+05b041fc+78ec8cfd)" },
 	{ 0xe0fda867 , 0x20000 , "MERGED ZX Spectrum roms (ddee531f+9e5392aa+262bd888+793b7eb7+b96a36be+124ad9e0+8c7e6a55+9191480c+78ec8cfd)" },
+	{ 0x2ae772ba , 0x30000 , "MERGED ZX Spectrum roms (ddee531f+e76799d2+b96a36be+5d2e8c66+98b1320b+17373da2+f1d1d99e+3dbf351d+04448eaa+bf44ec3f+ae16233a+filled with 00h)" },
 	{ 0xe55b40f8 , 0x0c000 , "MERGED ZX Spectrum 48K + ZX Spectrum 128K" },
 	{ 0x545f8520 , 0x04000 , "MODIFIED ZX Spectrum 48K by Lec v1.6 for 80kB (modified for Psim)" },
 	{ 0x996bc458 , 0x04000 , "MODIFIED ZX Spectrum 48K (modified for ZX Spectrum Simulator)" },
 	{ 0x705192c7 , 0x04000 , "MODIFIED ZX Spectrum 128K (4000h) (modified to be use as 48K ROM in SpecEm)" },
 	{ 0x9e5392aa , 0x02000 , "MODIFIED Interface 1 v2 (modified for z80 pre-v4)" },
 	{ 0xeed3e349 , 0x04000 , "MODIFIED ISO-ROM 128K (Ramramis 128K) (8000h) (modified for X128)" },
+	{ 0xf473991e , 0x02000 , "MODIFIED Multiface 128 v3.6 (87.2) (Romantic Robot)" },
 	{ 0xca7622c1 , 0x04000 , "OVERDUMP Multiface 1 (Romantic Robot)" },
 	{ 0xff83b282 , 0x04000 , "Disciple GDOS3 v3.0 with System 3b" },
  	{ 0x27d4c5f6 , 0x04000 , "Disciple GDOS3 v3.0 with System 3b & Epson printer code" },
@@ -991,6 +1016,7 @@ static struct {
  	{ 0x8c7e6a55 , 0x04000 , "Disciple GDOS3 v3.0 with System 3b & Epson printer code (alt 2)" },
 	{ 0x9191480c , 0x04000 , "Disciple GDOS3 v3.0 with System 3b & HP printer code (alt 2)" },
 	{ 0x6edbf20a , 0x04000 , "Disciple +D G+DOS v1.A with System 2a" },
+	{ 0x44c8e6ce , 0x04000 , "Disciple +D G+DOS v1.A with System 2a (alt)" },
  
 
 /* Sinclair QL Computer ********************************************************/
@@ -1375,10 +1401,14 @@ static struct {
 	/* the rest have flash memory, which can be mmodified by user */
 
 	{ 0x82030062 , 0x080000, "USR Pilot 1000/5000 OS v1.0" },
+	{ 0x6ed137b1 , 0x080000, "USR Pilot 1000/5000 OS v1.0.3 (german)" },
 	{ 0xbaa5b36a , 0x100000, "Palm Pilot Professional OS v2.0 Pro" },
 	{ 0x40ea8baa , 0x100000, "Palm Pilot Professional OS v2.0 Pro (modified)" },
 	{ 0x0c6f533e , 0x0ea000, "Palm Pilot Professional OS v2.0.2+ Pro (debug)" },
 	{ 0x4f31e1c9 , 0x119000, "Palm III OS v3.0" },
+	{ 0xfaaafc62 , 0x130000, "Palm III OS v3.0 (french)" },
+	{ 0x8a2f7468 , 0x130000, "Palm III OS v3.0 (german)" },
+	{ 0x60cb2ae7 , 0x130000, "Palm III OS v3.0 (spanish)" },
 	{ 0xa0b059f9 , 0x119000, "Palm III OS v3.0 (debug)" },
 	{ 0x467ff0de , 0x148000, "Palm III OS v3.3" },
 	{ 0x785e771b , 0x150000, "Palm III OS v3.3 (german) (ID 00X00XX00XXX-C)" },
@@ -1395,6 +1425,7 @@ static struct {
 	{ 0x006a977f , 0x268000, "Palm IIIc OS v4.0 (japanese)" },
 	{ 0x53cb10a2 , 0x280000, "Palm IIIc OS v4.0 (japanese) (debug)" },
 	{ 0x5a64ef2b , 0x128000, "Palm IIIe/IIIx/V OS v3.1" },
+	{ 0xb1db61b8 , 0x128000, "Palm IIIe/IIIx/V OS v3.1 E31" },
 	{ 0xdc560ed1 , 0x138000, "Palm IIIx/V/Vx OS v3.3" },
 	{ 0x0011f920 , 0x140000, "Palm IIIx/V/Vx OS v3.3 (ID 00X000X00000-R)" },
 	{ 0x08ee205e , 0x150000, "Palm IIIx/V/Vx OS v3.3 (german) (ID 00X000X00000-R)" },
@@ -1427,7 +1458,9 @@ static struct {
 	{ 0xd39dc1e2 , 0x3b0000, "Sony CLIE PEG-S300 OS v3.5.1 (japanese)" },
 	{ 0x566d18ec , 0x3b0000, "Sony CLIE PEG-S500c OS v3.5.1 (japanese)" },
 
-	{ 0xdd93b80f , 0x1f0000, "TRG Pro OS v3.5.2" },
+	{ 0x382e2432 , 0x1c0000, "TRG Pro OS v3.5.3 (16.07.2001)" },
+	{ 0x7aa24b38 , 0x1c0000, "TRG Pro OS v3.5.3 (21.06.2000)" },
+	{ 0xfab125a9 , 0x1f8000, "HandEra 330 OS v3.5.3" },
 
 	{ 0xd0bdba79 , 0x1f8000, "IBM WorkPad OS v3.1 (japanese)" },
 
