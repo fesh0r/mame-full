@@ -168,7 +168,7 @@ int vdt911_cru_r(int offset, int unit)
 		switch (offset)
 		{
 		case 0:
-			reply = vdt[unit].data_reg;
+			reply = /*vdt[unit].data_reg*/vdt[unit].display_RAM[vdt[unit].cursor_address];
 			break;
 
 		case 1:
