@@ -317,6 +317,15 @@ static void dma8237_write(int which, offs_t offset, data8_t data)
 		dma[which].command = data;
 		break;
 
+	case 10:
+		/* DMA mask register */
+		channel = DMA_MODE_CHANNEL(data);
+		if (data & 0x04)
+			dma[which].mask |= 0x11 << channel;
+		else
+			dma[which].mask &= ~(0x11 << channel);
+		break;
+
 	case 11:
 		/* DMA mode register */
 		channel = DMA_MODE_CHANNEL(data);

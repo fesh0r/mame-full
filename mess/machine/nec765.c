@@ -290,6 +290,7 @@ static void nec765_seek_complete(void)
 	/* set drive and side */
 	fdc.nec765_status[0] |= fdc.drive | (fdc.side<<2);
 
+	nec765_set_int(0);
 	nec765_set_int(1);
 
 	fdc.nec765_flags &= ~NEC765_SEEK_ACTIVE;
@@ -583,7 +584,7 @@ static void nec765_change_flags(unsigned int flags, unsigned int mask)
 		nec765_iface.interrupt((fdc.nec765_flags & NEC765_INT) ? 1 : 0);
 
 	/* if DRQ changed, call the handler */
-	if ((changed_flags & NEC765_INT) && nec765_iface.dma_drq)
+	if ((changed_flags & NEC765_DMA_DRQ) && nec765_iface.dma_drq)
 		nec765_iface.dma_drq((fdc.nec765_flags & NEC765_DMA_DRQ) ? 1 : 0, fdc.FDC_main & (1<<6));
 }
 
