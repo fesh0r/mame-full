@@ -200,6 +200,20 @@ void decompose_rom_sample_path(char *rompath, char *samplepath)
 		token = strtok(NULL, ";");
 	}
 
+	strcpy (samples, samplepath);
+	token = strtok (samples, ";");
+	while( token )
+	{
+		if( samplepathc )
+			samplepathv = realloc (samplepathv, (samplepathc + 1) * sizeof(char *));
+		else
+			samplepathv = malloc (sizeof(char *));
+		if( !samplepathv )
+			break;
+		samplepathv[samplepathc++] = token;
+		token = strtok (NULL, ";");
+	}
+
 #if FILE_CACHE
 	/* AM 980919 */
 	if (file_cache_max == 0)

@@ -336,9 +336,8 @@ void get_rom_sample_path (int argc, char **argv, int game_index, char *override_
 #endif
 	}
 
-#ifndef MESS
 	samplepath = get_string ("directory", "samplepath", NULL, ".;SAMPLES");
-#else
+#ifdef MESS
 	softwarepath= get_string ("directory", "softwarepath", NULL, ".;SOFTWARE");
 #endif
 
