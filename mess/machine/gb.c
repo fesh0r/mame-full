@@ -107,6 +107,7 @@ WRITE_HANDLER ( gb_w_io )
 
 	offset += 0xFF00;
 
+	logerror("Hardware hit %04x, %02x\n", offset, data);
 	switch (offset)
 	{
 	case 0xFF00:
@@ -281,6 +282,30 @@ WRITE_HANDLER ( gb_w_io )
 #endif
 	}
 	gb_ram [offset] = data;
+}
+
+READ_HANDLER ( gb_ser_regs )
+{
+	offset += 0xFF00;
+
+	switch(offset)
+	{
+		case 0xFF00:
+						logerror("Location read 0xff00\n");
+						break;
+		case 0xFF01:
+						logerror("Location read 0xff01\n");
+						break;
+		case 0xFF02:
+						logerror("Location read 0xff02\n");
+						break;
+		case 0xFF03:
+						logerror("Location read 0xff03\n");
+						break;
+	}
+
+	return gb_ram[offset];
+
 }
 
 READ_HANDLER ( gb_r_divreg )
@@ -644,6 +669,8 @@ int gb_scanline_interrupt (void)
 
 		CURLINE = (CURLINE + 1) % 154;
 
+		//gb_ram[0xFF44] = CURLINE;
+
 		if (CURLINE < 144)
 		{
 			/* first  lcdstate change after aprox 49 uS */
@@ -657,7 +684,10 @@ int gb_scanline_interrupt (void)
 
 			/* generate lcd interrupt if requested */
 			if( LCDSTAT & 0x08 )
-				cpu_set_irq_line(0, LCD_INT, HOLD_LINE);
+				{
+					logerror("generating lcd interrupt\n");
+					cpu_set_irq_line(0, LCD_INT, HOLD_LINE);
+				}
 		}
 		else
 		{

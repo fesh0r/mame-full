@@ -44,7 +44,8 @@ static MEMORY_READ_START (readmem)
 	{ 0x4000, 0x7fff, MRA_BANK1 }, /* 16k switched ROM bank */
 	{ 0x8000, 0x9fff, MRA_RAM },   /* 8k video ram */
 	{ 0xa000, 0xbfff, MRA_BANK2 }, /* 8k RAM bank (on cartridge) */
-	{ 0xc000, 0xff03, MRA_RAM },   /* internal ram + echo + sprite Ram & IO */
+	{ 0xc000, 0xfeff, MRA_RAM },   /* internal ram + echo + sprite Ram & IO */
+	{ 0xff00, 0xff03, gb_ser_regs },    /* serial regs */
 	{ 0xff04, 0xff04, gb_r_divreg },    /* special case for the division reg */
 	{ 0xff05, 0xff05, gb_r_timer_cnt }, /* special case for the timer count reg */
 	{ 0xff06, 0xffff, MRA_RAM },   /* IO */
