@@ -180,7 +180,7 @@ const struct ImageModule *getmodules(size_t *len)
 
 	struct ImageModuleCtorParams params;
 	size_t allocated_modules;
-	int i, index, count;
+	int i, idx, count;
 
 	if (!modules)
 	{
@@ -191,7 +191,7 @@ const struct ImageModule *getmodules(size_t *len)
 
 		for (i = 0; i < sizeof(module_ctors) / sizeof(module_ctors[0]); i++)
 		{
-			index = 0;
+			idx = 0;
 			do
 			{
 				if (module_count >= allocated_modules)
@@ -203,10 +203,10 @@ const struct ImageModule *getmodules(size_t *len)
 				}
 
 				params.imgmod = &modules[module_count++];
-				params.index = index++;
+				params.index = idx++;
 				count = module_ctors[i](&params);
 			}
-			while(index < count);
+			while(idx < count);
 		}
 	}
 

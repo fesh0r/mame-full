@@ -1,4 +1,5 @@
 #include "imgtoolx.h"
+#include "snprintf.h"
 #include "formats.h"
 
 enum
@@ -220,7 +221,7 @@ int imgtool_bdf_formatdrvctor(struct ImageModuleCtorParams *params, const format
 
 	/* specify the format */
 	assert(params->index < format_count);
-	imgmod->extra = formats[params->index];
+	imgmod->extra = (void *) formats[params->index];
 
 	/* get the format driver info */
 	formats[params->index](&drv);
