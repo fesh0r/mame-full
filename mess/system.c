@@ -141,7 +141,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( gamegear )	/* Sega Game Gear Handheld						  */
 	DRIVER( sms )		/* Sega Sega Master System						  */
 	DRIVER( genesis )	/* Sega Genesis/MegaDrive						  */
-//TESTDRIVER( saturn )	/* Sega Saturn									  */
+TESTDRIVER( saturn )	/* Sega Saturn									  */
 #endif
 
 #ifndef MESS_EXCLUDE_MISC_CONSOLES
@@ -261,6 +261,22 @@ TESTDRIVER( z88 )		/*												  */
 
 #ifndef MESS_EXCLUDE_ATARI
 	/* ATARI */
+/* 
+400/800 10kB OS roms
+A    NTSC  (?)         (?)         (?)
+A    PAL   (?)         0x72b3fed4  CO15199, CO15299, CO12399B
+B    NTSC  (?)         0x0e86d61d  CO12499B, CO14599B, 12399B
+B    PAL   (?)         (?)         (?)
+
+XL/XE 16kB OS roms
+10   1200XL  10/26/1982  0xc5c11546  CO60616A, CO60617A
+11   1200XL  12/23/1982  (?)         CO60616B, CO60617B
+1    600XL   03/11/1983  0x643bcc98  CO62024
+2    XL/XE   05/10/1983  0x1f9cd270  CO61598B
+3    800XE   03/01/1985  0x29f133f7  C300717
+4    XEGS    05/07/1987  0x1eaf4002  C101687
+*/
+
 	DRIVER( a400 )		/* 1979 Atari 400								  */
 	DRIVER( a400pal )	/* 1979 Atari 400 PAL							  */
 	DRIVER( a800 )		/* 1979 Atari 800								  */
