@@ -426,14 +426,31 @@ BOOL GetScreenShotRect(HWND hWnd, RECT *pRect, BOOL restrict)
     return TRUE;
 }
 
+#ifdef MESS
+static BOOL LoadSoftwareScreenShot(const struct GameDriver *drv, LPCSTR lpSoftwareName, int nType)
+{
+	char *s = _alloca(strlen(drv->name) + 1 + strlen(lpSoftwareName) + 1);
+	sprintf(s, "%s/%s", drv->name, lpSoftwareName);
+	return LoadDIB(s, &m_hDIB, &m_hPal, nType);
+}
+#endif /* MESS */
+
 /* Allow us to pre-load the DIB once for future draws */
+#ifdef MESS
+BOOL LoadScreenShot(int nGame, LPCSTR lpSoftwareName, int nType)
+#else /* !MESS */
 BOOL LoadScreenShot(int nGame, int nType)
+#endif /* MESS */
 {
     static int use_flyer = -1;
     BOOL loaded = FALSE;
 
     /* No need to reload the same one again */
-    if (nGame == nLastGame && m_hDIB != 0 && use_flyer == nType)
+    if (nGame == nLastGame && m_hDIB != 0 && use_flyer == nType
+#ifdef MESS
+		&& !lpSoftwareName
+#endif
+		)
     {
         return TRUE;
     }
@@ -442,7 +459,18 @@ BOOL LoadScreenShot(int nGame, int nType)
     FreeScreenShot();
 
     /* Load the DIB */
-    loaded = LoadDIB(drivers[nGame]->name, &m_hDIB, &m_hPal, nType);
+#ifdef MESS
+	if (lpSoftwareName)
+	{
+		loaded = LoadSoftwareScreenShot(drivers[nGame], lpSoftwareName, nType);
+		if (!loaded && (drivers[nGame]->clone_of))
+			loaded = LoadSoftwareScreenShot(drivers[nGame]->clone_of, lpSoftwareName, nType);
+	}
+	if (!loaded)
+#endif /* MESS */
+	{
+	    loaded = LoadDIB(drivers[nGame]->name, &m_hDIB, &m_hPal, nType);
+	}
 
     /* If not loaded, see if there is a clone and try that */
     if (!loaded

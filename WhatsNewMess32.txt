@@ -10,6 +10,10 @@ Whats new:
 - Added the ability for the software view to lookup information from the .crc
   files and display them in different columns, as well as the ability to move
   columns in the software view similar to the system view.  [Nate Woods]
+- The main view will now display screenshots pertaining to software items; not
+  just systems.  These screenshots must be placed in subdirectories with names
+  matching the system off of the snapshots directory, and be named the same as
+  the software item.  [Nate Woods]
 
 ----------
 0.37 BETA 13

@@ -1029,6 +1029,47 @@ static BOOL SoftwareListClass_ItemChanged(struct SmartListView *pListView, BOOL 
     {
         /* entering item */
         MessAddImage(nRow);
+
+		{
+            BOOL bNewScreenShot;
+			const char *name;
+			char *s;
+			char *newname;
+
+			name = mess_images_index[nRow]->name;
+			s = strrchr(name, '\\');
+			if (s)
+				name = s + 1;
+			newname = _alloca(strlen(name) + 1);
+			strcpy(newname, name);
+			s = strrchr(newname, '.');
+			if (s)
+				*s = '\0';
+
+			bNewScreenShot = LoadScreenShot(GetSelectedPickItem(), newname, nPictType);
+			if (bNewScreenShot || bScreenShotAvailable)
+            {
+                HWND hWnd;
+
+                if (GetShowScreenShot()
+                &&  (hWnd = GetDlgItem(hPicker, IDC_SSFRAME)))
+                {
+                    RECT    rect;
+                    HWND    hParent;
+                    POINT   p = {0, 0};
+
+                    hParent = GetParent(hWnd);
+
+                    GetWindowRect(hWnd,&rect);
+                    ClientToScreen(hParent, &p);
+                    OffsetRect(&rect, -p.x, -p.y);
+                    InvalidateRect(hParent, &rect, FALSE);
+                    UpdateWindow(hParent);
+                }
+            }
+            bScreenShotAvailable = bNewScreenShot;
+		}
+
     }
 	return TRUE;
 }

@@ -2502,7 +2502,6 @@ static BOOL PickerHitTest(HWND hWnd)
 static BOOL MamePickerNotify(NMHDR *nm)
 {
     NM_LISTVIEW *pnmv;
-    static int nLastState = -1;
     static int nLastItem  = -1;
 
     switch (nm->code)
@@ -2634,14 +2633,17 @@ static BOOL MamePickerNotify(NMHDR *nm)
         if (!(pnmv->uOldState & LVIS_SELECTED) 
             && (pnmv->uNewState & LVIS_SELECTED))
         {
-            int  nState;
+            BOOL bNewScreenShot;
 
             /* We load the screen shot DIB here, instead
              * of loading everytime we want to display it.
              */
-            nState = LoadScreenShot(pnmv->lParam, nPictType);
-            bScreenShotAvailable = nState;
-            if (nState == TRUE || nState != nLastState)
+#ifdef MESS
+            bNewScreenShot = LoadScreenShot(pnmv->lParam, NULL, nPictType);
+#else
+            bNewScreenShot = LoadScreenShot(pnmv->lParam, nPictType);
+#endif
+            if (bNewScreenShot || bScreenShotAvailable)
             {
                 HWND hWnd;
 
@@ -2659,9 +2661,9 @@ static BOOL MamePickerNotify(NMHDR *nm)
                     OffsetRect(&rect, -p.x, -p.y);
                     InvalidateRect(hParent, &rect, FALSE);
                     UpdateWindow(hParent);
-                    nLastState = nState;
                 }
             }
+            bScreenShotAvailable = bNewScreenShot;
 
             /* printf("entering %s\n",drivers[pnmv->lParam]->name); */
             if (bDoBroadcast == TRUE)
@@ -3355,7 +3357,11 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
     case IDC_SSDEFPIC:
 		nPictType = (nPictType + 1) % MAX_PICT_TYPES;
 		SetShowPictType(nPictType);
+#ifdef MESS
+        bScreenShotAvailable = LoadScreenShot(GetSelectedPickItem(), NULL, nPictType);
+#else
         bScreenShotAvailable = LoadScreenShot(GetSelectedPickItem(), nPictType);
+#endif
         UpdateScreenShot();
 		SendMessage(hPicker, WM_PAINT, 0, 0);
         break;
