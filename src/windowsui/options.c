@@ -224,6 +224,12 @@ static REG_OPTIONS regGameOpts[] =
 /*	{ "playback",               RO_STRING,  &gOpts.playbackname,      0, 0},*/
 /*	{ "record",                 RO_STRING,  &gOpts.recordname,        0, 0},*/
 	{ "log",                    RO_BOOL,    &gOpts.errorlog,          0, 0},
+
+#ifdef MESS
+	/* mess options */
+	{ "extra_software",			RO_STRING,	&gOpts.extra_software_paths,	0, 0},
+	{ "use_new_filemgr",		RO_BOOL,	&gOpts.use_new_filemgr,			0, 0}
+#endif
 };
 
 #define NUM_SETTINGS (sizeof(regSettings) / sizeof(regSettings[0]))
