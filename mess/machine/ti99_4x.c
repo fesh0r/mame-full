@@ -917,7 +917,7 @@ WRITE16_HANDLER ( ti99_ww_wv38 )
 {
 	tms9900_ICount -= 4;
 
-	switch (offset & /*3*/1)
+	switch (offset & 3)
 	{
 	case 0:
 		/* write VDP data */
@@ -927,16 +927,14 @@ WRITE16_HANDLER ( ti99_ww_wv38 )
 		/* write VDP address */
 		v9938_command_w(0, (data >> 8) & 0xff);
 		break;
-#if 0
 	case 2:
 		/* write VDP palette */
-		v9938_palette_w(0, data);
+		v9938_palette_w(0, (data >> 8) & 0xff);
 		break;
 	case 3:
 		/* write VDP register */
-		v9938_register_w(0, data);
+		v9938_register_w(0, (data >> 8) & 0xff);
 		break;
-#endif
 	}
 }
 

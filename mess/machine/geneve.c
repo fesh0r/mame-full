@@ -738,16 +738,26 @@ WRITE_HANDLER ( geneve_w )
 				/* VDP write */
 				if (! (offset & 1))
 				{
-					if (offset & 2)
-					{	/* write VDP address */
-						v9938_command_w(0, data);
-					}
-					else
-					{	/* write VDP RAM */
+
+					switch ((offset >> 1) & 3)
+					{
+					case 0:
+						/* write VDP RAM */
 						v9938_vram_w(0, data);
+						break;
+					case 1:
+						/* write VDP address */
+						v9938_command_w(0, data);
+						break;
+					case 2:
+						/* write palette */
+						v9938_palette_w(0, data);
+						break;
+					case 3:
+						/* write register */
+						v9938_register_w(0, data);
+						break;
 					}
-					if (offset & 0x03fc)
-						logerror("aha?\n");
 				}
 				return;
 
@@ -1138,7 +1148,7 @@ static void tms9901_interrupt_callback(int intreq, int ic)
 }
 
 /*
-	Read pins INT3*-INT7* of TI99's 9901.
+	Read pins INT3*-INT7* of Geneve 9901.
 
 	signification:
 	 (bit 1: INT1 status)
@@ -1155,12 +1165,12 @@ static int R9901_0(int offset)
 }
 
 /*
-	Read pins INT8*-INT15* of TI99's 9901.
+	Read pins INT8*-INT15* of Geneve 9901.
 
 	signification:
 	 (bit 0: keyboard interrupt)
 	 bit 1: unused
-	 (bit 2: mouse interrupt)
+	 bit 2: mouse right button
 	 (bit 3: clock interrupt)
 	 (bit 4: INTB from PE-bus)
 	 bit 5 & 7: used as output
@@ -1170,13 +1180,13 @@ static int R9901_1(int offset)
 {
 	int answer;
 
-	answer = 0;//((readinputport(input_port_keyboard + (KeyCol >> 1)) >> ((KeyCol & 1) * 8)) >> 5) & 0x07;
+	answer = readinputport(input_port_mouse_buttons_geneve) & 4;
 
 	return answer;
 }
 
 /*
-	Read pins P0-P7 of TI99's 9901.
+	Read pins P0-P7 of Geneve 9901.
 */
 static int R9901_2(int offset)
 {
@@ -1184,11 +1194,17 @@ static int R9901_2(int offset)
 }
 
 /*
-	Read pins P8-P15 of TI99's 9901.
+	Read pins P8-P15 of Geneve 9901.
+	bit 4: mouse right button
 */
 static int R9901_3(int offset)
 {
-	return 0;
+	int answer = 0;
+
+	if (readinputport(input_port_mouse_buttons_geneve) & 4)
+		answer |= 0x10;
+
+	return answer;
 }
 
 
