@@ -1581,7 +1581,7 @@ ROM_END
 ROM_START( ibmxt )
 	ROM_REGION16_LE(0x100000,REGION_CPU1, 0)
 	ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, CRC(8e9e2bd4))
-	ROM_LOAD16_BYTE("xt050986.0", 0xf0000, 0x8000, CRC(83727c42)) 
+	ROM_LOAD16_BYTE("xt050986.0", 0xf0000, 0x8000, CRC(83727c42))
 	ROM_LOAD16_BYTE("xt050986.1", 0xf0001, 0x8000, CRC(2a629953))
 	ROM_REGION(0x01100,REGION_GFX1, 0)
 	ROM_LOAD("cga.chr",     0x00000, 0x01000, CRC(42009069))
@@ -1617,6 +1617,30 @@ ROM_START( pc20 )
 	// - John Elliott
     ROM_LOAD16_BYTE("pc20v2.0", 0xfc001, 0x2000, CRC(41302eb8)) // v2
     ROM_LOAD16_BYTE("pc20v2.1", 0xfc000, 0x2000, CRC(71b84616)) // v2
+	// also mapped to f0000, f4000, f8000
+	ROM_REGION(0x08100,REGION_GFX1, 0)
+    ROM_LOAD("40109.bin",     0x00000, 0x08000, CRC(a8b67639))
+ROM_END
+
+ROM_START( ppc512 )
+//    ROM_REGION(0x100000,REGION_CPU1, 0)
+    ROM_REGION16_LE(0x100000,REGION_CPU1, 0)
+    ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, CRC(8e9e2bd4))
+	// special bios at 0xe0000 !?
+    ROM_LOAD16_BYTE("40107.v1", 0xfc001, 0x2000, CRC(4e37e769)) // v1.9
+    ROM_LOAD16_BYTE("40108.v1", 0xfc000, 0x2000, CRC(4f0302d9)) // v1.9
+	// also mapped to f0000, f4000, f8000
+	ROM_REGION(0x08100,REGION_GFX1, 0)
+    ROM_LOAD("40109.bin",     0x00000, 0x08000, CRC(a8b67639))
+ROM_END
+
+ROM_START( ppc640 )
+//    ROM_REGION(0x100000,REGION_CPU1, 0)
+    ROM_REGION16_LE(0x100000,REGION_CPU1, 0)
+    ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, CRC(8e9e2bd4))
+	// special bios at 0xe0000 !?
+    ROM_LOAD16_BYTE("40107.v2", 0xfc001, 0x2000, CRC(0785b63e)) // v2.1
+    ROM_LOAD16_BYTE("40108.v2", 0xfc000, 0x2000, CRC(5351cf8c)) // v2.1
 	// also mapped to f0000, f4000, f8000
 	ROM_REGION(0x08100,REGION_GFX1, 0)
     ROM_LOAD("40109.bin",     0x00000, 0x08000, CRC(a8b67639))
@@ -1683,10 +1707,11 @@ COMP(  1987,	t1000sx,	ibmpc,	0,		t1000sx,    tandy1t,	t1000hx,	ibmpc,   "Tandy R
 COMP(  1986,	ibmxt,		ibmpc,	0,		xtcga,      xtcga,		pccga,		ibmpc,   "International Business Machines",  "IBM PC/XT (CGA)" )
 COMP(  1988,	pc200,		ibmpc,	0,		pc200,		pc200,		pc200,		ibmpc,   "Sinclair Research",  "PC200 Professional Series")
 COMP(  1988,	pc20,		ibmpc,	0,		pc200,		pc200,		pc200,		ibmpc,   "Amstrad plc",  "Amstrad PC20" )
+COMP(  1988,	ppc512,		ibmpc,	0,		pc200,		pc200,		pc200,		ibmpc,   "Amstrad plc",  "Amstrad PPC512")
+COMP(  1988,	ppc640,		ibmpc,	0,		pc200,		pc200,		pc200,		ibmpc,   "Amstrad plc",  "Amstrad PPC640")
 COMP(  1986,	pc1512,		ibmpc,	0,		pc1512,     pc1512,		pc1512,		ibmpc,   "Amstrad plc",  "Amstrad PC1512 (version 1)")
 COMP(  198?,	pc1512v2,	ibmpc,	0,		pc1512,     pc1512,		pc1512,		ibmpc,   "Amstrad plc",  "Amstrad PC1512 (version 2)")
 COMPX( 1987,	pc1640,		ibmpc,	0,		pc1640,     pc1640,		pc1640,		ibmpc,   "Amstrad plc",  "Amstrad PC1640 / PC6400 (US)", GAME_NOT_WORKING )
-// ppc640 portable pc1512?, nec processor?
 // pc2086 pc1512 with vga??
 COMP ( 1987,	pcmda,		ibmpc,	0,		pcmda,      pcmda,		pcmda,	    ibmpc,   "",  "PC (MDA)" )
 COMP ( 1987,	xtvga,		ibmpc,	0,		xtvga,      xtvga,		pc_vga,     ibmpc,   "",  "PC/XT (VGA, MF2 Keyboard)" )

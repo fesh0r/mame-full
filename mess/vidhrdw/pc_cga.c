@@ -725,16 +725,16 @@ pc_video_update_proc pc_cga_choosevideomode(int *width, int *height, struct crtc
 		cga_text_inten,		cga_text_inten,		cga_gfx_2bpp_alt,	cga_gfx_2bpp_alt,
 
 		/* 0x10 - 0x1f */
-		pc1512_gfx_4bpp,	pc1512_gfx_4bpp,	pc1512_gfx_4bpp,	pc1512_gfx_4bpp,
-		pc1512_gfx_4bpp,	pc1512_gfx_4bpp,	pc1512_gfx_4bpp,	pc1512_gfx_4bpp,
+		cga_text_inten,		cga_text_inten,		pc1512_gfx_4bpp,	pc1512_gfx_4bpp,
+		cga_text_inten,		cga_text_inten,		pc1512_gfx_4bpp,	pc1512_gfx_4bpp,
 
 		/* 0x20 - 0x2f */
 		cga_text_blink,		cga_text_blink,		cga_gfx_2bpp,		cga_gfx_2bpp,
 		cga_text_blink,		cga_text_blink,		cga_gfx_2bpp_alt,	cga_gfx_2bpp_alt,
 
 		/* 0x30 - 0x3f */
-		pc1512_gfx_4bpp,	pc1512_gfx_4bpp,	pc1512_gfx_4bpp,	pc1512_gfx_4bpp,
-		pc1512_gfx_4bpp,	pc1512_gfx_4bpp,	pc1512_gfx_4bpp,	pc1512_gfx_4bpp
+		cga_text_blink,		cga_text_blink,		pc1512_gfx_4bpp,	pc1512_gfx_4bpp,
+		cga_text_blink,		cga_text_blink,		pc1512_gfx_4bpp,	pc1512_gfx_4bpp
 	};
 
 	static const pc_video_update_proc *videoprocs[] =
