@@ -46,10 +46,10 @@
 		</ol>
 		<p>
 			For the sake of clarity, the official MESS terminology for #1 is "BIOS", after 
-			what they are typically called in Intel PC systems.&nbsp; The term "cartridge 
-			image" is used to refer to #2, where "image" is a generic term that applies to 
-			downloaded images of removable media, whether they be a cartridge, a floppy 
-			drive, or a hard disk.
+			what they are typically called in Intel PC systems, and the term "ROM" is 
+			avoided.&nbsp; The term "cartridge image" is used to refer to #2, where "image" 
+			is a generic term that applies to downloaded images of removable media, whether 
+			they be a cartridge, a floppy drive, or a hard disk.
 		</p>
 		<p class="topic">Where do I get BIOSes/ROMs?/How do I use my old software with <a href="http://www.mess.org/">
 				MESS</a>?</p>
@@ -182,8 +182,31 @@
 			to include new gaming consoles and computers. The complicated answer is that 
 			it's hard to tell the difference.
 		</p>
+		<p class="topic">I fail to understand your emphasis on "pure" hardware emulation; 
+			what does that mean?&nbsp; Does this mean that you will or will not implement 
+			feature XXXXX?</p>
+		<p>Obviously, this depends on what XXXXX is.&nbsp; Both <A href="http://www.mame.net/">MAME</A>&nbsp;and
+			<A href="http://www.mess.org/">MESS</A>&nbsp;go by an idea that the emulation 
+			should be "pure".&nbsp; Pure can be taken in any number of ways; in one sense, 
+			a truly pure emulation would be a gate level simulator that tried to track the 
+			state of every gate in the system.&nbsp; We don't go for that because that 
+			would be impractical.&nbsp; When we say "pure", we mean that we emulate all 
+			CPU(s) instruction by instruction and clock cycle by clock cycle and try to 
+			make the hardware look "authentic" from the perspective of the CPU(s).&nbsp; As 
+			long as that condition is satisfied, we are generally willing to implement 
+			anything.&nbsp; Features like anything external to the emulation itself, such 
+			as image file formats and UI fall in that category.&nbsp; This approach 
+			constasts with the High Level Emulation (HLE) approach taken by <a href="http://www.uni-mainz.de/~bauec002/B2Main.html">
+				Basilisk II</a> and <a href="http://www.emuunlim.com/UltraHLE/">UltraHLE</a>, 
+			where BIOS and/or OS routines are patched and the actual hardware is bypassed 
+			for either speed or convenience reasons.</p>
+		<p class="topic">Why don't you support a feature that allows the user to remap 
+			their keyboard to the emulated system's, eliminating the need to adjust to the 
+			system's keyboard layout?</p>
+		<p>We are working on this feature; the paste feature in <A href="http://www.mess.org/">MESS</A>
+			&nbsp;0.62 laid the foundation for this feature. Sit tight</p>
 		<p class="topic">Your file manager is an abomination in the eyes of 
-			God/Allah/Jehovah/Buddah/Zoroaster/anyone with an ounce of sense</p>
+			God/Allah/Jehovah/Budda/Zoroaster/anyone with an ounce of sense!</p>
 		<p>
 			We hear your cries. We hate the thing too. For the moment we are stuck with it, 
 			but we are trying to phase it out.

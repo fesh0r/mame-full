@@ -234,6 +234,104 @@ void inputx_validitycheck(const struct GameDriver *gamedrv)
 
 /***************************************************************************
 
+	Alternative key translations
+
+***************************************************************************/
+
+static const char *find_alternate(wchar_t ch)
+{
+	static const struct
+	{
+		wchar_t ch;
+		const char *str;
+	} map[] =
+	{
+		{ 0x00a0,	" " },		/* non breaking space */
+		{ 0x00a1,	"!" },		/* inverted exclaimation mark */
+		{ 0x00a6,	"|" },		/* broken bar */
+		{ 0x00a9,	"(c)" },	/* copyright sign */
+		{ 0x00ab,	"<<" },		/* left pointing double angle */
+		{ 0x00ae,	"(r)" },	/* registered sign */
+		{ 0x00bb,	">>" },		/* right pointing double angle */
+		{ 0x00bc,	"1/4" },	/* vulgar fraction one quarter */
+		{ 0x00bd,	"1/2" },	/* vulgar fraction one half */
+		{ 0x00be,	"3/4" },	/* vulgar fraction three quarters */
+		{ 0x00bf,	"?" },		/* inverted question mark */
+		{ 0x00c0,	"A" },		/* 'A' grave */
+		{ 0x00c1,	"A" },		/* 'A' acute */
+		{ 0x00c2,	"A" },		/* 'A' circumflex */
+		{ 0x00c3,	"A" },		/* 'A' tilde */
+		{ 0x00c4,	"A" },		/* 'A' diaeresis */
+		{ 0x00c5,	"A" },		/* 'A' ring above */
+		{ 0x00c6,	"AE" },		/* 'AE' ligature */
+		{ 0x00c7,	"C" },		/* 'C' cedilla */
+		{ 0x00c8,	"E" },		/* 'E' grave */
+		{ 0x00c9,	"E" },		/* 'E' acute */
+		{ 0x00ca,	"E" },		/* 'E' circumflex */
+		{ 0x00cb,	"E" },		/* 'E' diaeresis */
+		{ 0x00cc,	"I" },		/* 'I' grave */
+		{ 0x00cd,	"I" },		/* 'I' acute */
+		{ 0x00ce,	"I" },		/* 'I' circumflex */
+		{ 0x00cf,	"I" },		/* 'I' diaeresis */
+		{ 0x00d0,	"D" },		/* 'ETH' */
+		{ 0x00d1,	"N" },		/* 'N' tilde */
+		{ 0x00d2,	"O" },		/* 'O' grave */
+		{ 0x00d3,	"O" },		/* 'O' acute */
+		{ 0x00d4,	"O" },		/* 'O' circumflex */
+		{ 0x00d5,	"O" },		/* 'O' tilde */
+		{ 0x00d6,	"O" },		/* 'O' diaeresis */
+		{ 0x00d7,	"X" },		/* multiplication sign */
+		{ 0x00d8,	"O" },		/* 'O' stroke */
+		{ 0x00d9,	"U" },		/* 'U' grave */
+		{ 0x00da,	"U" },		/* 'U' acute */
+		{ 0x00db,	"U" },		/* 'U' circumflex */
+		{ 0x00dc,	"U" },		/* 'U' diaeresis */
+		{ 0x00dd,	"Y" },		/* 'Y' acute */
+		{ 0x00df,	"SS" },		/* sharp S */
+		{ 0x00e0,	"a" },		/* 'a' grave */
+		{ 0x00e1,	"a" },		/* 'a' acute */
+		{ 0x00e2,	"a" },		/* 'a' circumflex */
+		{ 0x00e3,	"a" },		/* 'a' tilde */
+		{ 0x00e4,	"a" },		/* 'a' diaeresis */
+		{ 0x00e5,	"a" },		/* 'a' ring above */
+		{ 0x00e6,	"ae" },		/* 'ae' ligature */
+		{ 0x00e7,	"c" },		/* 'c' cedilla */
+		{ 0x00e8,	"e" },		/* 'e' grave */
+		{ 0x00e9,	"e" },		/* 'e' acute */
+		{ 0x00ea,	"e" },		/* 'e' circumflex */
+		{ 0x00eb,	"e" },		/* 'e' diaeresis */
+		{ 0x00ec,	"i" },		/* 'i' grave */
+		{ 0x00ed,	"i" },		/* 'i' acute */
+		{ 0x00ee,	"i" },		/* 'i' circumflex */
+		{ 0x00ef,	"i" },		/* 'i' diaeresis */
+		{ 0x00f0,	"d" },		/* 'eth' */
+		{ 0x00f1,	"n" },		/* 'n' tilde */
+		{ 0x00f2,	"o" },		/* 'o' grave */
+		{ 0x00f3,	"o" },		/* 'o' acute */
+		{ 0x00f4,	"o" },		/* 'o' circumflex */
+		{ 0x00f5,	"o" },		/* 'o' tilde */
+		{ 0x00f6,	"o" },		/* 'o' diaeresis */
+		{ 0x00f8,	"o" },		/* 'o' stroke */
+		{ 0x00f9,	"u" },		/* 'u' grave */
+		{ 0x00fa,	"u" },		/* 'u' acute */
+		{ 0x00fb,	"u" },		/* 'u' circumflex */
+		{ 0x00fc,	"u" },		/* 'u' diaeresis */
+		{ 0x00fd,	"y" },		/* 'y' acute */
+		{ 0x00ff,	"y" }		/* 'y' diaeresis */
+	};
+
+	int i;
+
+	for (i = 0; i < sizeof(map) / sizeof(map[0]); i++)
+	{
+		if (ch == map[i].ch)
+			return map[i].str;
+	}
+	return NULL;
+}
+
+/***************************************************************************
+
 	Core
 
 ***************************************************************************/
@@ -270,21 +368,48 @@ static struct KeyBuffer *get_buffer(void)
 	return (struct KeyBuffer *) (codes + NUM_CODES);
 }
 
-int inputx_can_post_key(wchar_t ch)
+static int can_post_key_directly(wchar_t ch)
 {
-	if ((ch >= 128) || !inputx_can_post())
+	assert(codes);
+	return ((ch < NUM_CODES) && codes[ch].ipt[0] != NULL);
+}
+
+static int can_post_key_alternate(wchar_t ch)
+{
+	const char *s;
+
+	s = find_alternate(ch);
+	if (!s)
 		return 0;
 
-	assert(codes);
-	return codes[ch].ipt[0] != NULL;
+	while(*s)
+	{
+		if (!can_post_key_directly(*s))
+			return 0;
+		s++;
+	}
+	return 1;
+}
+
+int inputx_can_post_key(wchar_t ch)
+{
+	return inputx_can_post() && (can_post_key_directly(ch) || can_post_key_alternate(ch));
+}
+
+static void internal_post_key(wchar_t ch)
+{
+	struct KeyBuffer *keybuf;
+	keybuf = get_buffer();
+	keybuf->buffer[keybuf->end_pos++] = ch;
+	keybuf->end_pos %= sizeof(keybuf->buffer) / sizeof(keybuf->buffer[0]);
 }
 
 void inputx_wpost(const wchar_t *text)
 {
 	struct KeyBuffer *keybuf;
 	int last_cr = 0;
-	int can_post;
 	wchar_t ch;
+	const char *s;
 
 	if (!text[0] || !inputx_can_post())
 		return;
@@ -310,16 +435,20 @@ void inputx_wpost(const wchar_t *text)
 			else
 				last_cr = (ch == '\r');
 
-			can_post = inputx_can_post_key(ch);
-
 #if LOG_INPUTX
 			logerror("inputx_wpost(): code=%i (%s) port=%i ipt->name='%s'\n", (int) ch, charstr(ch), codes[ch].port[0], codes[ch].ipt[0] ? codes[ch].ipt[0]->name : "<null>");
 #endif
 
-			if (can_post)
+			if (can_post_key_directly(ch))
 			{
-				keybuf->buffer[keybuf->end_pos++] = ch;
-				keybuf->end_pos %= sizeof(keybuf->buffer) / sizeof(keybuf->buffer[0]);
+				internal_post_key(ch);
+			}
+			else if (can_post_key_alternate(ch))
+			{
+				s = find_alternate(ch);
+				assert(s);
+				while(*s)
+					internal_post_key(*(s++));
 			}
 		}
 		else
