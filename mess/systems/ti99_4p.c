@@ -328,7 +328,7 @@ static const struct IODevice io_ti99_4p[] =
 		3,						/* count */
 		"dsk\0",				/* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
-		OSD_FOPEN_DUMMY,		/* open mode */
+		OSD_FOPEN_RW_CREATE_OR_READ,/* open mode */
 		0,
 		ti99_floppy_init,		/* init */
 		basicdsk_floppy_exit,	/* exit */
@@ -346,5 +346,8 @@ static const struct IODevice io_ti99_4p[] =
 	{ IO_END }
 };
 
-/*	  YEAR	NAME	  PARENT   MACHINE		ÊINPUT	  INIT	   COMPANY				FULLNAME */
-COMP( 1996, ti99_4p,  0,	   ti99_4p_60hz, ti99_4p, ti99_4p, "snug",              "TI99/4P (60 Hz only)" )
+SYSTEM_CONFIG_START(ti99_4p)
+SYSTEM_CONFIG_END
+
+/*	  YEAR	NAME	  PARENT   MACHINE		ÊINPUT	  INIT	   CONFIG	COMPANY		FULLNAME */
+COMP( 1996, ti99_4p,  0,	   ti99_4p_60hz, ti99_4p, ti99_4p, ti99_4p,	"snug",		"TI99/4P (60 Hz only)" )
