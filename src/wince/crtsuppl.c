@@ -109,8 +109,18 @@ void system(const char *command)
 {
 }
 
-#ifdef DEBUG
-void _fail(const char *exp, const char *file, int lineno)
+#ifndef NDEBUG
+int _fail(const char *exp, const char *file, int lineno)
 {
+	char buffer[1024];
+	LPCTSTR lpMsg;
+
+	snprintf(buffer, sizeof(buffer) / sizeof(buffer[0]), "assertion failed: %s line %i: %s", file, lineno, exp);
+	lpMsg = A2T(buffer);
+
+	OutputDebugString(lpMsg);
+	MessageBox(NULL, lpMsg, NULL, MB_OK);
+	exit(-1);
+	return -1;
 }
 #endif

@@ -204,8 +204,13 @@ END
 // Bitmap
 //
 
+#ifdef MESS
+IDB_BITMAP1             BITMAP  DISCARDABLE     "UImess.BMP"
+IDB_BITMAP2             BITMAP  DISCARDABLE     "greensolid.bmp"
+#else
 IDB_BITMAP1             BITMAP  DISCARDABLE     "UImame.BMP"
 IDB_BITMAP2             BITMAP  DISCARDABLE     "bluecheckbox.bmp"
+#endif
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -214,9 +219,16 @@ IDB_BITMAP2             BITMAP  DISCARDABLE     "bluecheckbox.bmp"
 
 STRINGTABLE DISCARDABLE 
 BEGIN
-    IDS_APP_TITLE           "MameCE3"
-    IDS_HELLO               "MameCE3"
-    IDC_MAMECE3             "MAMECE3"
+#ifdef MESS
+    IDS_APP_TITLE           "MessCE"
+    IDS_HELLO               "MessCE"
+#else
+    IDS_APP_TITLE           "MameCE"
+    IDS_HELLO               "MameCE"
+#endif
+
+	// This string is just a window class; so it doesn't need to be localized
+    IDC_MAMECE3             "MAMECE"
 END
 
 STRINGTABLE DISCARDABLE 

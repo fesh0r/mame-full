@@ -357,11 +357,11 @@ CDEFS = $(DEFS) $(COREDEFS) $(CPUDEFS) $(SOUNDDEFS) $(ASMDEFS) $(DBGDEFS) $(BSCD
 
 $(EMULATOR): $(OBJS) $(COREOBJS) $(OSOBJS) $(DRVLIBS) $(RES) 
 # always recompile the version string
-	$(CC) $(CDEFS) $(CFLAGS) -Fo$(OBJ)/version.o -c src/version.c
+	$(CC) $(CDEFS) $(CFLAGS) -FR$(OBJ)/version.sbr -Fo$(OBJ)/version.o -c src/version.c
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $(WINDOWS_PROGRAM) -out:$(EMULATOR) $(LIBS) $(COREOBJS) $(OBJS) $(OSOBJS) $(DRVLIBS) $(RES)
 ifdef BSCMAKE
-	$(BSCMAKE) -nologo -o$(<:%.exe=%.bsc) $(OBJS:%.o=%.sbr) $(COREOBJS:%.o=%.sbr) $(OSOBJS:%.o=%.sbr)
+	$(BSCMAKE) -nologo -o$(EMULATOR:%.exe=%.bsc) $(OBJS:%.o=%.sbr) $(COREOBJS:%.o=%.sbr) $(OSOBJS:%.o=%.sbr)
 endif
 
 romcmp$(EXE): $(OBJ)/romcmp.o $(OBJ)/unzip.o
@@ -411,7 +411,6 @@ $(M68000_GENERATED_OBJS): $(OBJ)/cpu/m68000/m68kmake$(EXE)
 # additional rule, because m68kcpu.c includes the generated m68kops.h :-/
 $(OBJ)/cpu/m68000/m68kcpu.o: $(OBJ)/cpu/m68000/m68kmake$(EXE)
 
-
 # generate C source files for the 68000 emulator
 $(OBJ)/cpu/m68000/m68kmake$(EXE): src/cpu/m68000/m68kmake.c
 	@echo M68K make $<...
@@ -444,7 +443,7 @@ $(OBJ)/cpu/m68000/68020.o:  $(OBJ)/cpu/m68000/68020.asm
 $(OBJ)/%.a:
 	@echo Archiving $@...
 	@-$(RM) $(subst /,\,$@)
-	$(AR) -out:$@ $^
+	$(AR) -nologo -out:$@ $^
 
 makedir:
 	@echo make makedir is no longer necessary, just type make

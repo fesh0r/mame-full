@@ -663,6 +663,7 @@ void update_cursor_state(void)
 
 static void update_system_menu(void)
 {
+#ifndef UNDER_CE
 	HMENU menu;
 
 	// revert the system menu
@@ -672,6 +673,7 @@ static void update_system_menu(void)
 	menu = GetSystemMenu(video_window, FALSE);
 	if (menu)
 		AppendMenu(menu, MF_ENABLED | MF_STRING, MENU_FULLSCREEN, TEXT("Full Screen\tAlt+Enter"));
+#endif
 }
 
 
@@ -1512,6 +1514,7 @@ static void dib_draw_window(HDC dc, struct osd_bitmap *bitmap, int update)
 	UINT8 *pvBits;
 	int depth = (bitmap->depth == 15) ? 16 : bitmap->depth;
 	int xmult, ymult;
+	float xmultf, ymultf, shrink_factor;
 	RECT client;
 	int cx, cy;
 	int i;
@@ -1537,16 +1540,25 @@ static void dib_draw_window(HDC dc, struct osd_bitmap *bitmap, int update)
 		pvBits += video_dib_info->bmiHeader.biWidth * 8 / depth;
 	}
 
+	// take into account the possibility that we have to shrink the screen
+	shrink_factor = 1;
+	if ((client.right - client.left) < (visible_width * shrink_factor))
+		shrink_factor = (client.right - client.left) / (float)visible_width;
+	if ((client.bottom - client.top) < (visible_height * shrink_factor))
+		shrink_factor = (client.bottom - client.top) / (float)visible_height;
+	xmultf = xmult * shrink_factor;
+	ymultf = ymult * shrink_factor;
+
 	// compute the center position
-	cx = client.left + ((client.right - client.left) - visible_width * xmult) / 2;
-	cy = client.top + ((client.bottom - client.top) - visible_height * ymult) / 2;
+	cx = client.left + ((client.right - client.left) - visible_width * xmultf) / 2;
+	cy = client.top + ((client.bottom - client.top) - visible_height * ymultf) / 2;
 
 	hDcBitmap = CreateCompatibleDC(dc);
 	SelectObject(hDcBitmap, hBitmap);
 
 	// blit to the screen
-	StretchBlt(dc, cx, cy, visible_width * xmult, visible_height * ymult,
-		hDcBitmap, 0, 0, visible_width * xmult, visible_height * ymult, SRCCOPY);
+	StretchBlt(dc, cx, cy, visible_width * xmultf, visible_height * ymultf,
+		hDcBitmap, 0, 0, visible_width, visible_height, SRCCOPY);
 
 	DeleteDC(hDcBitmap);
 	DeleteObject(hBitmap);

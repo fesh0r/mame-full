@@ -14,7 +14,9 @@
 
 struct SmartListView;
 
-struct SmartListViewClass {
+struct SmartListViewClass
+{
+	size_t nObjectSize;
 	void (*pfnRun)(struct SmartListView *pListView);
 	BOOL (*pfnItemChanged)(struct SmartListView *pListView, BOOL bWasSelected, BOOL bNowSelected, int nRow);
 	int (*pfnWhichIcon)(struct SmartListView *pListView, int nItem);
@@ -29,7 +31,8 @@ struct SmartListViewClass {
 	const TCHAR **ppColumnNames;
 };
 
-struct SmartListViewOptions {
+struct SmartListViewOptions
+{
 	const struct SmartListViewClass *pClass;
 	HWND hwndParent;
 	int nIDDlgItem;
@@ -46,12 +49,14 @@ struct SmartListViewOptions {
 	int nInsetPixels;
 };
 
-struct RowMapping {
+struct RowMapping
+{
 	int nVisualToLogical;
 	int nLogicalToVisual;
 };
 
-struct SmartListView {
+struct SmartListView
+{
 	/* The underlying list view */
 	HWND hwndListView;
 
@@ -96,3 +101,19 @@ void SmartListView_AssociateImageLists(struct SmartListView *pListView, HIMAGELI
 void SmartListView_SetTextColor(struct SmartListView *pListView, COLORREF clrText);
 
 int Compare_TextCaseInsensitive(struct SmartListView *pListView, int nRow1, int nRow2, int nColumn);
+
+/* -------------------------------------------------------------------------------------------- */
+
+struct SingleItemSmartListView
+{
+	struct SmartListView base;
+	int nSelectedItem;
+};
+
+/* Class functions */
+BOOL SingleItemSmartListViewClass_ItemChanged(struct SmartListView *pListView, BOOL bWasSelected, BOOL bNowSelected, int nRow);
+BOOL SingleItemSmartListViewClass_IsItemSelected(struct SmartListView *pListView, int nItem);
+
+/* Callable functions */
+/* int SingleItemSmartListView_GetSelectedItem(struct SmartListView *pListView) */
+#define SingleItemSmartListView_GetSelectedItem(pListView)	(((struct SingleItemSmartListView *) (pListView))->nSelectedItem)

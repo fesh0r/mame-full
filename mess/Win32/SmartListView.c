@@ -9,6 +9,7 @@
 
 static void SmartListView_InternalResetColumnDisplay(struct SmartListView *pListView, BOOL bFirstTime);
 static int SmartListView_InsertItem(struct SmartListView *pListView, int nItem);
+static void SmartListView_GetColumnInfo(struct SmartListView *pListView, int *pShown, int *pOrder, int *pWidths);
 
 /* Add ... to Items in ListView if needed */
 static LPCTSTR MakeShortString(HDC hDC, LPCTSTR lpszLong, int nColumnLen, int nOffset)
@@ -66,7 +67,7 @@ static int GetNumColumns(struct SmartListView *pListView)
 	int  *shown;
 
 	shown = _alloca(pListView->pClass->nNumColumns * sizeof(int));
-	pListView->pClass->pfnGetColumnInfo(pListView, shown, NULL, NULL);
+	SmartListView_GetColumnInfo(pListView, shown, NULL, NULL);
 	hwndHeader = GetDlgItem(pListView->hwndListView, 0);
 
 	if ((nColumn = Header_GetItemCount(hwndHeader)) < 1) {
@@ -84,18 +85,28 @@ struct SmartListView *SmartListView_Init(struct SmartListViewOptions *pOptions)
 	HWND hwndListView;
 	struct SmartListView *pListView;
 	RECT rParent, rListView;
+	size_t nObjectSize;
 
 	assert(pOptions);
 	assert(pOptions->pClass);
 	assert(pOptions->hwndParent);
+	assert(pOptions->pClass->nNumColumns > 0);
 	
 	hwndListView = GetDlgItem(pOptions->hwndParent, pOptions->nIDDlgItem);
 	assert(hwndListView);
 
-	pListView = malloc(sizeof(struct SmartListView));
-	if (!pListView) {
+	/* Figure out size of object */
+	nObjectSize = pOptions->pClass->nObjectSize;
+	if (nObjectSize == 0)
+		nObjectSize = sizeof(struct SmartListView);
+
+	/* Allocate it */
+	pListView = malloc(nObjectSize);
+	if (!pListView)
 		return NULL;
-	}
+	memset(pListView, 0, nObjectSize);
+
+	/* Allocate column lists */
 	pListView->piRealColumns = malloc(pOptions->pClass->nNumColumns * sizeof(int));
 	if (!pListView->piRealColumns) {
 		free(pListView);
@@ -172,7 +183,7 @@ static int SmartListView_VisualColumnToLogical(struct SmartListView *pListView, 
 	return pListView->piRealColumns[nVisualColumn];
 }
 
-static const char *SmartListView_GetText(struct SmartListView *pListView, int nLogicalRow, int nVisualColumn)
+static const TCHAR *SmartListView_GetText(struct SmartListView *pListView, int nLogicalRow, int nVisualColumn)
 {
 	int nLogicalColumn;
 	LPCTSTR s = NULL;
@@ -181,14 +192,22 @@ static const char *SmartListView_GetText(struct SmartListView *pListView, int nL
 		nLogicalColumn = SmartListView_VisualColumnToLogical(pListView, nVisualColumn);
 		s = pListView->pClass->pfnGetText(pListView, nLogicalRow, nLogicalColumn);
 	}
-	return s ? s : "";
+	return s ? s : TEXT("");
 }
 
 static BOOL SmartListView_IsItemSelected(struct SmartListView *pListView, int nVisualRow)
 {
 	int nLogicalRow;
-	nLogicalRow = SmartListView_VisualRowToLogical(pListView, nVisualRow);
-	return pListView->pClass->pfnIsItemSelected(pListView, nLogicalRow);
+	BOOL bSelected;
+
+	if (pListView->pClass->pfnIsItemSelected) {
+		nLogicalRow = SmartListView_VisualRowToLogical(pListView, nVisualRow);
+		bSelected = pListView->pClass->pfnIsItemSelected(pListView, nLogicalRow);
+	}
+	else {
+		bSelected = FALSE;
+	}
+	return bSelected;
 }
 
 static BOOL SmartListView_ItemChanged(struct SmartListView *pListView, NM_LISTVIEW *lpNmHdr)
@@ -217,6 +236,33 @@ static int SmartListView_WhichIcon(struct SmartListView *pListView, int nLogical
 		nIcon = 0;
 	}
 	return nIcon;
+}
+
+static void SmartListView_GetColumnInfo(struct SmartListView *pListView, int *pShown, int *pOrder, int *pWidths)
+{
+	int i;
+	RECT r;
+	int nWidth;
+
+	if (pListView->pClass->pfnGetColumnInfo) {
+		pListView->pClass->pfnGetColumnInfo(pListView, pShown, pOrder, pWidths);
+	}
+	else {
+		if (pWidths) {
+			GetClientRect(pListView->hwndListView, &r);
+			nWidth = r.right - r.left;
+		}
+
+		/* No default GetColumnInfo function? */
+		for (i = 0; i < pListView->pClass->nNumColumns; i++) {
+			if (pShown)
+				pShown[i] = 1;
+			if (pOrder)
+				pOrder[i] = i;
+			if (pWidths)
+				pWidths[i] = nWidth;
+		}
+	}
 }
 
 /* ------------------------------------------------------------------------ *
@@ -436,7 +482,7 @@ static void SmartListView_HandleDrawItem(struct SmartListView *pListView, LPDRAW
 	nColumnMax = GetNumColumns(pListView);
 
 	if (pListView->bOldControl) {
-		pListView->pClass->pfnGetColumnInfo(pListView, NULL, order, NULL);
+		SmartListView_GetColumnInfo(pListView, NULL, order, NULL);
 	}
 	else {
 		/* Get the Column Order and save it */
@@ -741,7 +787,7 @@ void SmartListView_SaveColumnSettings(struct SmartListView *pListView)
 	widths = (int *) _alloca(pListView->pClass->nNumColumns * sizeof(*widths));
 	tmpOrder = (int *) _alloca(pListView->pClass->nNumColumns * sizeof(*tmpOrder));
 
-	pListView->pClass->pfnGetColumnInfo(pListView, shown, order, widths);
+	SmartListView_GetColumnInfo(pListView, shown, order, widths);
 	nColumnMax = GetNumColumns(pListView);
 
 	if (pListView->bOldControl) {
@@ -771,11 +817,13 @@ static void SmartListView_InternalResetColumnDisplay(struct SmartListView *pList
 	int nColumn;
 	int nNumColumns;
 
-	shown = (int *) _alloca(pListView->pClass->nNumColumns * sizeof(*shown));
-	order = (int *) _alloca(pListView->pClass->nNumColumns * sizeof(*order));
-	widths = (int *) _alloca(pListView->pClass->nNumColumns * sizeof(*widths));
+	nNumColumns = pListView->pClass->nNumColumns;
 
-	pListView->pClass->pfnGetColumnInfo(pListView, shown, order, widths);
+	shown = (int *) _alloca(nNumColumns * sizeof(*shown));
+	order = (int *) _alloca(nNumColumns * sizeof(*order));
+	widths = (int *) _alloca(nNumColumns * sizeof(*widths));
+
+	SmartListView_GetColumnInfo(pListView, shown, order, widths);
 
 	if (!bFirstTime) {
 		nColumn = GetNumColumns(pListView);
@@ -784,7 +832,8 @@ static void SmartListView_InternalResetColumnDisplay(struct SmartListView *pList
 		for (i = 0; i < nColumn; i++)
 			widths[pListView->piRealColumns[i]] = ListView_GetColumnWidth(pListView->hwndListView, i);
 
-		pListView->pClass->pfnSetColumnInfo(pListView, NULL, NULL, widths);
+		if (pListView->pClass->pfnSetColumnInfo)
+			pListView->pClass->pfnSetColumnInfo(pListView, NULL, NULL, widths);
 
 		for (i = nColumn; i > 0; i--)
 			ListView_DeleteColumn(pListView->hwndListView, i - 1);
@@ -793,7 +842,6 @@ static void SmartListView_InternalResetColumnDisplay(struct SmartListView *pList
 	ListView_SetExtendedListViewStyle(pListView->hwndListView, LVS_EX_FULLROWSELECT | LVS_EX_HEADERDRAGDROP);
 
 	nColumn = 0;
-	nNumColumns = pListView->pClass->nNumColumns;
 
 	for (i = 0; i < nNumColumns; i++) {
 		if (shown[order[i]]) {
@@ -1042,9 +1090,9 @@ int Compare_TextCaseInsensitive(struct SmartListView *pListView, int nRow1, int 
 	LPCTSTR s2;
 	s1 = pListView->pClass->pfnGetText(pListView, nRow1, nColumn);
 	s2 = pListView->pClass->pfnGetText(pListView, nRow2, nColumn);
-	s1 = s1 ? s1 : "";
-	s2 = s2 ? s2 : "";
-	return _tcscoll(s1, s2);
+	s1 = s1 ? s1 : TEXT("");
+	s2 = s2 ? s2 : TEXT("");
+	return _tcsicmp(s1, s2);
 }
 
 /* ------------------------------------------------------------------------ *
@@ -1074,5 +1122,29 @@ BOOL SmartListView_IdleUntilMsg(struct SmartListView *pListView)
 		SmartListView_Idle(pListView);
 
 	return !bCanIdle;
+}
+
+/* ------------------------------------------------------------------------ *
+ * Single Item List View Class                                              *
+ * ------------------------------------------------------------------------ */
+
+BOOL SingleItemSmartListViewClass_ItemChanged(struct SmartListView *pListView, BOOL bWasSelected, BOOL bNowSelected, int nRow)
+{
+	struct SingleItemSmartListView *pSiListView;
+
+	pSiListView = (struct SingleItemSmartListView *) pListView;
+
+	if (!bWasSelected && bNowSelected) {
+		/* entering item */
+		pSiListView->nSelectedItem = nRow;
+	}
+	return TRUE;
+}
+
+BOOL SingleItemSmartListViewClass_IsItemSelected(struct SmartListView *pListView, int nItem)
+{
+	struct SingleItemSmartListView *pSiListView;
+	pSiListView = (struct SingleItemSmartListView *) pListView;
+	return nItem == pSiListView->nSelectedItem;
 }
 

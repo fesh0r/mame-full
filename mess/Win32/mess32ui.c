@@ -75,6 +75,7 @@ static char *mess_column_names[] = {
 
 static struct SmartListViewClass s_softwareListClass = 
 {
+	0,
 	SoftwareListClass_Run,
 	SoftwareListClass_ItemChanged,
 	SoftwareListClass_WhichIcon,
@@ -1157,6 +1158,7 @@ static BOOL FileMgrListClass_IsItemSelected(struct SmartListView *pListView, int
 
 static struct SmartListViewClass s_filemgrListClass = 
 {
+	0,
 	FileMgrListClass_Run,
 	FileMgrListClass_ItemChanged,
 	SoftwareListClass_WhichIcon,

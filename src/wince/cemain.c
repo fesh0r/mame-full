@@ -13,12 +13,12 @@ BOOL WINAPI SHInitDialog(PSHINITDLGINFO pshidi);
 #include "resource.h"
 #include "driver.h"
 #include "mamece.h"
+#include "../Win32/SmartListView.h"
 
 struct status_of_data
 {
-    BOOL has_roms;
-    BOOL has_samples;
-    BOOL is_neogeo_clone;
+    BOOL bHasRoms;
+    LPTSTR lpDescription;
 };
 
 static void mamece3_init();
@@ -37,14 +37,56 @@ static HWND CreateRpCommandBar(HWND hwnd);
 #define IDC_PLAY		201
 #define MENU_HEIGHT 26
 
-static int iPlay_Game;
 static int*				pGame_Index;	// Index of available games
 static struct status_of_data *ptGame_Data;	// Game Data Structure - such as hasRoms etc
 static struct ui_options tUI;
-static HWND		hGameList; 
 static HBRUSH hBrush2; //Background Checkers
 static HWND				hwndCB;					// The command bar handle
 static SHACTIVATEINFO s_sai;
+
+static struct SmartListView *s_pGameListView;
+
+static int s_nPlayGame;
+
+/* ----------------------------------------------------------------------- *
+ * Game list view class                                                    *
+ * ----------------------------------------------------------------------- */
+
+static LPCTSTR s_lpColumnNames[] = 
+{
+	TEXT("System")
+};
+
+static void GameList_Run(struct SmartListView *pListView)
+{
+	s_nPlayGame = pGame_Index[SingleItemSmartListView_GetSelectedItem(pListView)];
+}
+
+static LPCTSTR GameList_GetText(struct SmartListView *pListView, int nRow, int nColumn)
+{
+	return ptGame_Data[pGame_Index[nRow]].lpDescription;
+}
+
+static struct SmartListViewClass s_GameListClass =
+{
+	sizeof(struct SingleItemSmartListView),
+	GameList_Run,									/* pfnRun */
+	SingleItemSmartListViewClass_ItemChanged,		/* pfnItemChanged */
+	NULL,											/* pfnWhichIcon */
+	GameList_GetText,								/* pfnGetText */
+	NULL,											/* pfnGetColumnInfo */
+	NULL,											/* pfnSetColumnInfo */
+	SingleItemSmartListViewClass_IsItemSelected,	/* pfnIsItemSelected */
+	Compare_TextCaseInsensitive,
+	NULL,											/* pfnCanIdle */
+	NULL,											/* pfnIdle */
+	sizeof(s_lpColumnNames) / sizeof(s_lpColumnNames[0]),
+	s_lpColumnNames
+};
+
+/* ----------------------------------------------------------------------- *
+ * Blah                                                                    *
+ * ----------------------------------------------------------------------- */
 
 static void SetDefaultOptions(struct ui_options *opts)
 {
@@ -90,11 +132,8 @@ int WINAPI WinMain(	HINSTANCE hInstance,
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 
-			if (iPlay_Game >= 0)
-			{
-				play_game(iPlay_Game, &tUI);
-				iPlay_Game = -1;
-				RefreshGameListBox();
+			if (s_nPlayGame != -1) {
+				play_game(s_nPlayGame, &tUI);
 			}
 		}
 	}
@@ -242,6 +281,9 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 	HINSTANCE hInst;
 	struct MainWindowExtra *pExtra;
 
+	if (s_pGameListView && SmartListView_IsEvent(s_pGameListView, message, wParam, lParam))
+		return SmartListView_HandleEvent(s_pGameListView, message, wParam, lParam);
+
 	hInst = GetModuleHandle(NULL);
 	
 	switch (message) 
@@ -318,20 +360,8 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 
 				case IDC_PLAY:
 					if (wmEvent == BN_CLICKED)
-					{
-						iPlay_Game = SendMessage(hGameList, LB_GETCURSEL, 0, 0);
-					}
-					if (iPlay_Game >= 0)
-						iPlay_Game = pGame_Index[iPlay_Game];
+						GameList_Run(s_pGameListView);
 					break;
-				case IDC_PLAYLIST:
-					if (wmEvent == LBN_DBLCLK)
-					{
-						iPlay_Game = SendMessage(hGameList, LB_GETCURSEL, 0, 0);
-					}
-					if (iPlay_Game >= 0)
-						iPlay_Game = pGame_Index[iPlay_Game];
-				   break;
 				case ID_FILE_INSTRUCTIONS:
 					DialogBox(hInst, (LPCTSTR)IDD_INSTRUCTIONBOX, hWnd, (DLGPROC)Instructions);
 					break;
@@ -361,19 +391,29 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 				//			MF_BYCOMMAND | ((enable_sound = 0) ? MF_CHECKED : MF_UNCHECKED) );
 
 				GetClientRect(hWnd, &rBtns);
-				hGameList = CreateWindowEx(0, _T("LISTBOX"), _T(""),
-					WS_VISIBLE | WS_CHILD | WS_TABSTOP | LBS_STANDARD | LBS_NOINTEGRALHEIGHT, 
-					9, 61, rBtns.right - 18, rBtns.bottom - 100 - 30,
+				CreateWindowEx(0, TEXT("SysListView32"), TEXT(""),
+					WS_VISIBLE | WS_CHILD | WS_TABSTOP | LVS_REPORT | 
+                    LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_OWNERDRAWFIXED, 
+					10, 56, rBtns.right - 18, rBtns.bottom - 100 - 25,
 					hWnd, (HMENU)IDC_PLAYLIST, hInst, NULL);
-				CreateWindowEx(0, _T("BUTTON"), _T("Play"),
+				CreateWindowEx(0, TEXT("BUTTON"), TEXT("Play"),
 					WS_VISIBLE | WS_CHILD | WS_TABSTOP, 
 					9, rBtns.bottom - 33 - 30, 108, 26, 
 					hWnd, (HMENU)IDC_PLAY, hInst, NULL); 
-				CreateWindowEx(0, _T("BUTTON"), _T("Exit"),
+				CreateWindowEx(0, TEXT("BUTTON"), TEXT("Exit"),
 					WS_VISIBLE | WS_CHILD | WS_TABSTOP, 
 					123, rBtns.bottom - 33 - 30, 108, 26, 
 					hWnd, (HMENU)IDOK, hInst, NULL);
 			
+				{
+					struct SmartListViewOptions opts;
+					memset(&opts, 0, sizeof(opts));
+					opts.pClass = &s_GameListClass;
+					opts.hwndParent = hWnd;
+					opts.nIDDlgItem = IDC_PLAYLIST;
+					s_pGameListView = SmartListView_Init(&opts);
+				}
+
 				RefreshGameListBox();
 			}
 			break;
@@ -488,27 +528,25 @@ static LRESULT CALLBACK Instructions(HWND hDlg, UINT message, WPARAM wParam, LPA
 
 static void RefreshGameListBox()
 {
-	int i, j, pos;
-	int	iGame_Index_Count = 0;
+	int i, pos = 0;
 
-	SendMessage(hGameList, LB_RESETCONTENT, 0, 0);
+	/* Clear out the list */
+	SmartListView_ResetColumnDisplay(s_pGameListView);
 
-	for (i = 0; drivers[i]; i++)
-	{
-		if (!tUI.show_all_games && !ptGame_Data[i].has_roms)
+	/* Add the drivers */
+	for (i = 0; drivers[i]; i++) {
+		if (!tUI.show_all_games && !ptGame_Data[i].bHasRoms)
 			continue;
 				
-		if (!tUI.show_all_games && !tUI.show_clones && drivers[i]->clone_of->clone_of != 0)
+		if (!tUI.show_all_games && !tUI.show_clones && (drivers[i]->clone_of->flags & NOT_A_DRIVER))
 			continue;
 
-		pos = SendMessage(hGameList, LB_ADDSTRING, 0, (LPARAM)A2T(drivers[i]->description));
-
-		for (j = iGame_Index_Count - 1; j >= pos; j--)
-			pGame_Index[j + 1] = pGame_Index[j];
-		
-		pGame_Index[pos] = i;
-		iGame_Index_Count++;
+		pGame_Index[pos++] = i;
 	}
+
+	/* Sort them */
+	SmartListView_SetTotalItems(s_pGameListView, pos);
+	SmartListView_SetSorting(s_pGameListView, 0, FALSE);
 }
 
 static void Display_FAQ(HWND hWnd)
@@ -547,9 +585,9 @@ static void mamece3_init()
 	int i;
 	int nGameCount;
 
-	setup_paths();
+	s_nPlayGame = -1;
 
-	iPlay_Game = -1;	
+	setup_paths();
 
 	nGameCount = 0;	//Empty Game Count
 	while (drivers[nGameCount] != NULL)
@@ -560,10 +598,12 @@ static void mamece3_init()
 
 	for (i = 0; i < nGameCount; i++)
 	{
-		ptGame_Data[i].has_roms = FindRomSet(i);
-		ptGame_Data[i].has_samples = TRUE; //FindSampleSet(i);
+		ptGame_Data[i].bHasRoms = FindRomSet(i);
+		ptGame_Data[i].lpDescription = _tcsdup(A2T(drivers[i]->description));
 	}
 	
 }
+
+
 
 
