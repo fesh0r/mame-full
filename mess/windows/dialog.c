@@ -465,7 +465,7 @@ int win_dialog_add_combobox_item(void *dialog, const char *item_label, int item_
 
 struct seqselect_stuff
 {
-	INT_PTR (CALLBACK *oldwndproc)(HWND editwnd, UINT msg, WPARAM wparam, LPARAM lparam);
+	WNDPROC oldwndproc;
 	InputSeq *code;
 	InputSeq newcode;
 	UINT_PTR timer;
@@ -521,7 +521,7 @@ static INT_PTR CALLBACK seqselect_wndproc(HWND editwnd, UINT msg, WPARAM wparam,
 		}
 		else
 		{
-			result = stuff->oldwndproc(editwnd, msg, wparam, lparam);
+			result = CallWindowProc(stuff->oldwndproc, editwnd, msg, wparam, lparam);
 		}
 		break;
 
@@ -529,7 +529,7 @@ static INT_PTR CALLBACK seqselect_wndproc(HWND editwnd, UINT msg, WPARAM wparam,
 		if (stuff->timer)
 			KillTimer(editwnd, stuff->timer);
 		stuff->timer = SetTimer(editwnd, TIMER_ID, 100, (TIMERPROC) NULL);
-		result = stuff->oldwndproc(editwnd, msg, wparam, lparam);
+		result = CallWindowProc(stuff->oldwndproc, editwnd, msg, wparam, lparam);
 		break;
 
 	case WM_KILLFOCUS:
@@ -538,7 +538,7 @@ static INT_PTR CALLBACK seqselect_wndproc(HWND editwnd, UINT msg, WPARAM wparam,
 			KillTimer(editwnd, stuff->timer);
 			stuff->timer = 0;
 		}
-		result = stuff->oldwndproc(editwnd, msg, wparam, lparam);
+		result = CallWindowProc(stuff->oldwndproc, editwnd, msg, wparam, lparam);
 		break;
 
 	case WM_LBUTTONDOWN:
@@ -549,7 +549,7 @@ static INT_PTR CALLBACK seqselect_wndproc(HWND editwnd, UINT msg, WPARAM wparam,
 		break;
 
 	default:
-		result = stuff->oldwndproc(editwnd, msg, wparam, lparam);
+		result = CallWindowProc(stuff->oldwndproc, editwnd, msg, wparam, lparam);
 		break;
 	}
 	return result;
@@ -563,13 +563,11 @@ static LRESULT seqselect_setup(HWND editwnd, UINT message, WPARAM wparam, LPARAM
 {
 	char buf[256];
 	struct seqselect_stuff *stuff = (struct seqselect_stuff *) lparam;
-	LONG_PTR oldwndproc;
 
 	memcpy(stuff->newcode, *(stuff->code), sizeof(stuff->newcode));
 	seq_name(stuff->code, buf, sizeof(buf) / sizeof(buf[0]));
 	SetWindowText(editwnd, buf);
-	oldwndproc = SetWindowLongPtr(editwnd, GWLP_WNDPROC, (LONG) seqselect_wndproc);
-	memcpy(&stuff->oldwndproc, &oldwndproc, sizeof(oldwndproc));
+	stuff->oldwndproc = (WNDPROC) SetWindowLongPtr(editwnd, GWLP_WNDPROC, (LONG) seqselect_wndproc);
 	SetWindowLongPtr(editwnd, GWLP_USERDATA, lparam);
 	return 0;
 }
