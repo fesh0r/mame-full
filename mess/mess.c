@@ -62,25 +62,19 @@ static int distribute_images(struct distributed_images *images)
 	{
 		int type = options.image_files[i].type;
 
-		if (type < IO_COUNT)
-		{
-			/* Do we have too many devices? */
-			if (images->count[type] >= MAX_DEV_INSTANCES)
-			{
-				mess_printf(" Too many devices of type %d\n", type);
-				return 1;
-			}
+		assert(options.image_files[i].name);
+		assert(type < IO_COUNT);
 
-			/* Add a filename to the arrays of names */
-			if (options.image_files[i].name)
-				images->names[type][images->count[type]] = options.image_files[i].name;
-			images->count[type]++;
-		}
-		else
+		/* Do we have too many devices? */
+		if (images->count[type] >= MAX_DEV_INSTANCES)
 		{
-			mess_printf(" Invalid Device type %d for %s\n", type, options.image_files[i].name);
+			mess_printf(" Too many devices of type %d\n", type);
 			return 1;
 		}
+
+		/* Add a filename to the arrays of names */
+		images->names[type][images->count[type]] = options.image_files[i].name;
+		images->count[type]++;
 	}
 
 	/* everything was fine */
