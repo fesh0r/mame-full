@@ -29,11 +29,11 @@ static oprandinfo of[] = {
 /* 04 */ { {" %%>%X",	",A",		"",			""},		{UI8, NONE, DONE, DONE} },
 /* 05 */ { {" %%>%X",	",B",		"",			""},		{UI8, NONE, DONE, DONE} },
 /* 06 */ { {" %%>%X",	",R%u",		"",			""},		{UI8, UI8, DONE, DONE} },
-	
+
 /* 07 */ { {" A",		",P%u",		"",			""},		{NONE,UI8,DONE,DONE} },
 /* 08 */ { {" B",		",P%u",		"",			""},		{NONE,UI8,DONE,DONE} },
-/* 09 */ { {" %%>%02X",",P%u",		"",			""},		{UI8,UI8,DONE,DONE} },
-	
+/* 09 */ { {" %%>%02X",	",P%u",		"",			""},		{UI8,UI8,DONE,DONE} },
+
 /* 10 */ { {" @>%04X",	"",			"",			""},		{UI16,DONE,DONE,DONE} },
 /* 11 */ { {" R%u",		"",			"",			""},		{UI8, DONE, DONE, DONE} },
 /* 12 */ { {" @>%04X(B)","",		"",			""},		{UI16, DONE, DONE, DONE} },
@@ -48,7 +48,7 @@ static oprandinfo of[] = {
 
 /* 20 */ { {" A,P%u",	",%s",		"",			""},		{UI8, PCREL, DONE, DONE} },
 /* 21 */ { {" B,P%u",	",%s",		"",			""},		{UI8, PCREL, DONE, DONE} },
-/* 22 */ { {" R%u",		",P%u",		",%s"		""},		{UI8, UI8, PCREL, DONE} },
+/* 22 */ { {" %%>%02X",	",P%u",		",%s"		""},		{UI8, UI8, PCREL, DONE} },
 
 /* 23 */ { {"",			"",			"",			""},		{DONE, DONE, DONE, DONE} },
 /* 24 */ { {" R%u",		"",			"",			""},		{UI8, DONE, DONE, DONE} },			

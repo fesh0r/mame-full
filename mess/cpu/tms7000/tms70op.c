@@ -1008,7 +1008,7 @@ void btjzp_a( void )
 	
 	IMMBYTE(p);
 	
-	t = RM(0x100+p) & ~RDA;
+	t = RDA & ~RM(0x100+p);
 	
 	CLR_NZC;
 	SET_N8(t);
@@ -1037,7 +1037,7 @@ void btjzp_b( void )
 	
 	IMMBYTE(p);
 	
-	t = RM(0x100+p) & ~RDB;
+	t = RDB & ~RM(0x100+p);
 	
 	CLR_NZC;
 	SET_N8(t);
@@ -1067,7 +1067,7 @@ void btjzp_im( void )
 	IMMBYTE(i);
 	IMMBYTE(p);
 	
-	t = RM(0x100+p) & ~i;
+	t = i & ~RM(0x100+p);
 	
 	CLR_NZC;
 	SET_N8(t);

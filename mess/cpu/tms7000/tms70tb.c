@@ -48,8 +48,8 @@ static void (*opfn[0x100])(void) = {
 /* 0x8X */  movp_p2a,illegal, movp_a2p,andp_a2p,orp_a2p, xorp_a2p,btjop_a, btjzp_a,
             movd_imm,illegal, lda_dir, sta_dir, br_dir,  cmpa_dir,call_dir,illegal,
 
-/* 0x9X */  illegal, illegal, movp_b2p,andp_b2p,orp_b2p, xorp_b2p,btjop_b, btjzp_b,
-            movd_r,  movp_p2b,lda_ind, sta_ind, br_ind,  cmpa_ind,call_ind,illegal,
+/* 0x9X */  illegal, movp_p2b, movp_b2p,andp_b2p,orp_b2p, xorp_b2p,btjop_b, btjzp_b,
+            movd_r,  illegal,lda_ind, sta_ind, br_ind,  cmpa_ind,call_ind,illegal,
 
 /* 0xAX */  illegal, illegal, movp_i2p,andp_i2p,orp_i2p, xorp_i2p,btjop_im,btjzp_im,
             movd_ind,illegal, lda_inx, sta_inx, br_inx,  cmpa_inx,call_inx,illegal,
@@ -101,8 +101,8 @@ static void (*opfn_exl[0x100])(void) = {
 /* 0x8X */  movp_p2a,illegal, movp_a2p,andp_a2p,orp_a2p, xorp_a2p,btjop_a, btjzp_a,
             movd_imm,illegal, lda_dir, sta_dir, br_dir,  cmpa_dir,call_dir,illegal,
 
-/* 0x9X */  illegal, illegal, movp_b2p,andp_b2p,orp_b2p, xorp_b2p,btjop_b, btjzp_b,
-            movd_r,  movp_p2b,lda_ind, sta_ind, br_ind,  cmpa_ind,call_ind,illegal,
+/* 0x9X */  illegal, movp_p2b, movp_b2p,andp_b2p,orp_b2p, xorp_b2p,btjop_b, btjzp_b,
+            movd_r,  illegal,lda_ind, sta_ind, br_ind,  cmpa_ind,call_ind,illegal,
 
 /* 0xAX */  illegal, illegal, movp_i2p,andp_i2p,orp_i2p, xorp_i2p,btjop_im,btjzp_im,
             movd_ind,illegal, lda_inx, sta_inx, br_inx,  cmpa_inx,call_inx,illegal,

@@ -45,7 +45,7 @@
 
 /* Private prototypes */
 
-void tms7000_set_irq_line(int irqline, int state);
+static void tms7000_set_irq_line(int irqline, int state);
 static void tms7000_get_context(void *dst);
 static void tms7000_set_context(void *src);
 static unsigned tms7000_dasm(char *buffer, unsigned pc);
@@ -413,24 +413,27 @@ static unsigned tms7000_dasm(char *buffer, unsigned pc)
 
 void tms7000_set_irq_line(int irqline, int state)
 {
-	tms7000.irq_state[ irqline ] = state;
+	if (tms7000.irq_state[irqline] != state)
+	{	/* check for transition */
+		tms7000.irq_state[irqline] = state;
 
-	LOG(("tms7000: (cpu #%d) set_irq_line (INT%d, state %d)\n", cpu_getactivecpu(), irqline+1, state));
+		LOG(("tms7000: (cpu #%d) set_irq_line (INT%d, state %d)\n", cpu_getactivecpu(), irqline+1, state));
 
-	if (state == CLEAR_LINE)
-	{
-		return;
+		if (state == CLEAR_LINE)
+		{
+			return;
+		}
+
+		tms7000.pf[0] |= (0x02 << (irqline * 2));	/* Set INTx iocntl0 flag */
+		
+		if( irqline == TMS7000_IRQ3_LINE )
+		{
+			/* Latch the value in perpherial file register 3 */
+			tms7000.t1_capture_latch = tms7000.t1_decrementer & 0x00ff;
+		}
+		
+		tms7000_check_IRQ_lines();
 	}
-
-	tms7000.pf[0] |= (0x02 << (irqline * 2));	/* Set INTx iocntl0 flag */
-	
-	if( irqline == TMS7000_IRQ3_LINE )
-	{
-		/* Latch the value in perpherial file register 3 */
-		tms7000.t1_capture_latch = tms7000.t1_decrementer & 0x00ff;
-	}
-	
-	tms7000_check_IRQ_lines();
 }
 
 static void tms7000_set_irq_callback(int (*callback)(int irqline))
@@ -442,11 +445,12 @@ static void tms7000_check_IRQ_lines( void )
 {
 	if( pSR & SR_I ) /* Check Global Interrupt bit: Status register, bit 4 */
 	{
-		if( tms7000.irq_state[ TMS7000_IRQ1_LINE ] == ASSERT_LINE )
+		if ((tms7000.irq_state[TMS7000_IRQ1_LINE] == ASSERT_LINE) || (tms7000.pf[0] & 0x02))
 		{
 			if( tms7000.pf[0] & 0x01 ) /* INT1 Enable bit */
 			{
 				tms7000_do_interrupt( 0xfffc, TMS7000_IRQ1_LINE );
+				tms7000.pf[0] &= ~0x02;
 				return;
 			}
 		}
@@ -460,11 +464,12 @@ static void tms7000_check_IRQ_lines( void )
 			}
 		}
 
-		if( tms7000.irq_state[ TMS7000_IRQ3_LINE ] == ASSERT_LINE )
+		if ((tms7000.irq_state[TMS7000_IRQ3_LINE] == ASSERT_LINE) || (tms7000.pf[0] & 0x20))
 		{
 			if( tms7000.pf[0] & 0x10 ) /* INT3 Enable bit */
 			{
 				tms7000_do_interrupt( 0xfff8, TMS7000_IRQ3_LINE );
+				tms7000.pf[0] &= ~0x20;
 				return;
 			}
 		}
@@ -545,6 +550,7 @@ static int tms7000_exl_execute(int cycles)
 
 		if( tms7000.idle_state == 0 )
 		{
+
 			op = cpu_readop(pPC++);
 	
 			opfn_exl[op]();
@@ -682,6 +688,10 @@ WRITE8_HANDLER( tms70x0_pf_w )	/* Perpherial file write */
 	{
 		case 0x00:	/* IOCNT0, Input/Ouput control */
 			result = tms7000.pf[0x00];
+			if (tms7000.irq_state[TMS7000_IRQ1_LINE] == ASSERT_LINE)
+				result |= 0x02;
+			if (tms7000.irq_state[TMS7000_IRQ3_LINE] == ASSERT_LINE)
+				result |= 0x20;
 			break;
 		
 		case 0x02:	/* T1DATA, timer 1 8-bit decrementer */
@@ -695,6 +705,7 @@ WRITE8_HANDLER( tms70x0_pf_w )	/* Perpherial file write */
 		case 0x04: /* Port A read */
 			result = io_read_byte_8( TMS7000_PORTA );
 			break;
+			
 			
 		case 0x06: /* Port B read */
 			/* Port B is write only, return a previous written value */
