@@ -472,6 +472,8 @@ TESTDRIVER( mz800  )	/* 1982 Sharp MZ800 								*/
 	DRIVER( ti99_4a )	/* 1981 TI-99/4A									*/
 	DRIVER( ti99_4ae )	/* 1981 TI-99/4A with 50Hz video					*/
 	DRIVER( ti99_4ev)	/* 1994 TI-99/4A with EVPC video card				*/
+	DRIVER( ti99_8 )	/* 1983 TI-99/8 									*/
+	DRIVER( ti99_8e )	/* 1983 TI-99/8 with 50Hz video						*/
 	/* TI 99 clones */
 	DRIVER( tutor)		/* 1983? Tomy Tutor									*/
 	DRIVER( geneve )	/* 1987? Myarc Geneve 9640							*/
