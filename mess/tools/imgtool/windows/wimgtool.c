@@ -760,6 +760,8 @@ static void menu_extract(HWND window)
 	struct wimgtool_info *info;
 	char *s;
 	const char *filename;
+	const char *image_basename;
+	int i;
 
 	info = get_wimgtool_info(window);
 
@@ -771,7 +773,14 @@ static void menu_extract(HWND window)
 		goto done;
 	filename = entry.filename;
 
-	strcpy(host_filename, image_filename);
+	image_basename = image_filename;
+	for (i = 0; image_filename[i]; i++)
+	{
+		if (image_filename[i] == img_module(info->image)->path_separator)
+			image_basename = &image_filename[i + 1];
+	}
+
+	_tcscpy(host_filename, U2T(image_basename));
 
 	memset(&ofn, 0, sizeof(ofn));
 	ofn.lStructSize = sizeof(ofn);
