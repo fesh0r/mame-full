@@ -761,19 +761,11 @@ tools/imgtool$(EXE):	     \
 	$(LD) $(LDFLAGS) $^ $(LIBS) $(IMGTOOL_LIBS) $(OUTOPT)
 
 # text files
-ifeq ($(OS),msdos)
 TEXTS = mess.txt
 mess.txt: $(EMULATOR)
 	@echo Generating $@...
-	@$(EMULATOR) -listtext > mess.txt
-	@$(EMULATOR) -listdevices >> mess.txt
-endif
-ifeq ($(OS),windows)
-TEXTS = mess.txt
-mess.txt: $(EMULATOR)
-	@echo Generating $@...
-	@$(CURPATH)$(EMULATOR) -gamelist -noclones -sortname > mess.txt
-endif
+	@$(CURPATH)$(EMULATOR) -listtext -noclones -sortname > mess.txt
+
 
 mess/makedep/makedep$(EXE): $(wildcard mess/makedep/*.c) $(wildcard mess/makedep/*.h)
 	make -Cmess/makedep
