@@ -608,6 +608,28 @@ static void I386OP(imul_r32_rm32)(void)		// Opcode 0x0f af
 	I.CF = I.OF = !(result == (INT64)(INT32)result);
 }
 
+static void I386OP(imul_r32_rm32_i8)(void)	// Opcode 0x6b
+{
+	UINT8 modrm = FETCH();
+	INT64 result;
+	INT64 src, dst;
+	if( modrm >= 0xc0 ) {
+		dst = (INT64)(INT32)LOAD_RM32(modrm);
+		CYCLES(12);		/* TODO: Correct multiply timing */
+	} else {
+		UINT32 ea = GetEA(modrm);
+		dst = (INT64)(INT32)READ32(ea);
+		CYCLES(15);		/* TODO: Correct multiply timing */
+	}
+
+	src = (INT64)(INT8)FETCH();
+	result = src * dst;
+
+	STORE_REG32(modrm, (UINT32)result);
+
+	I.CF = I.OF = !(result == (INT64)(INT32)result);
+}
+
 static void I386OP(in_eax_i8)(void)			// Opcode 0xe5
 {
 	//UINT8 port = FETCH();

@@ -194,6 +194,9 @@ struct MachineSound
 #if (HAS_CDDA)
 #include "sound/cdda.h"
 #endif
+#if (HAS_ICS2115)
+#include "sound/ics2115.h"
+#endif
 
 #ifdef MESS
 #if (HAS_BEEP)
@@ -420,6 +423,9 @@ enum
 #endif
 #if (HAS_CDDA)
 	SOUND_CDDA,
+#endif
+#if (HAS_ICS2115)
+	SOUND_ICS2115,
 #endif
 
 #ifdef MESS

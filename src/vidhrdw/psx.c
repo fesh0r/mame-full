@@ -85,6 +85,12 @@ static union
 	{
 		PAIR n_bgr;
 		PAIR n_coord;
+	} FlatRectangle16x16;
+
+	struct
+	{
+		PAIR n_bgr;
+		PAIR n_coord;
 		PAIR n_texture;
 	} Sprite8x8;
 
@@ -654,7 +660,7 @@ VIDEO_UPDATE( psx )
 	if( keyboard_pressed_memory( KEYCODE_I ) )
 	{
 		m_n_debugskip++;
-		if( m_n_debugskip > 13 )
+		if( m_n_debugskip > 14 )
 		{
 			m_n_debugskip = 0;
 		}
@@ -2427,6 +2433,72 @@ static void FlatRectangle( void )
 	}
 }
 
+static void FlatRectangle16x16( void )
+{
+	INT16 n_y;
+	INT16 n_x;
+
+	UINT8 n_cmd;
+	UINT32 n_abr;
+
+	UINT16 *p_n_f;
+	UINT16 *p_n_redb;
+	UINT16 *p_n_greenb;
+	UINT16 *p_n_blueb;
+	UINT16 *p_n_redtrans;
+	UINT16 *p_n_greentrans;
+	UINT16 *p_n_bluetrans;
+
+	PAIR n_r;
+	PAIR n_g;
+	PAIR n_b;
+
+	INT32 n_distance;
+	INT32 n_h;
+	UINT16 *p_vram;
+
+#if defined( MAME_DEBUG )
+	if( m_n_debugskip == 9 )
+	{
+		return;
+	}
+	DebugMesh( COORD_X( m_packet.FlatRectangle16x16.n_coord ) + m_n_drawoffset_x, COORD_Y( m_packet.FlatRectangle16x16.n_coord ) + m_n_drawoffset_y );
+	DebugMesh( COORD_X( m_packet.FlatRectangle16x16.n_coord ) + m_n_drawoffset_x + 16, COORD_Y( m_packet.FlatRectangle16x16.n_coord ) + m_n_drawoffset_y );
+	DebugMesh( COORD_X( m_packet.FlatRectangle16x16.n_coord ) + m_n_drawoffset_x, COORD_Y( m_packet.FlatRectangle16x16.n_coord ) + m_n_drawoffset_y + 16 );
+	DebugMesh( COORD_X( m_packet.FlatRectangle16x16.n_coord ) + m_n_drawoffset_x + 16, COORD_Y( m_packet.FlatRectangle16x16.n_coord ) + m_n_drawoffset_y + 16 );
+	DebugMeshEnd();
+#endif
+
+	n_cmd = BGR_C( m_packet.FlatRectangle16x16.n_bgr );
+
+	SOLIDSETUP( m_n_drawmode )
+
+	n_r.w.h = BGR_R( m_packet.FlatRectangle16x16.n_bgr ); n_r.w.l = 0;
+	n_g.w.h = BGR_G( m_packet.FlatRectangle16x16.n_bgr ); n_g.w.l = 0;
+	n_b.w.h = BGR_B( m_packet.FlatRectangle16x16.n_bgr ); n_b.w.l = 0;
+
+	n_y = COORD_Y( m_packet.FlatRectangle16x16.n_coord ) + m_n_drawoffset_y;
+	n_h = 16;
+
+	while( n_h > 0 )
+	{
+		n_x = COORD_X( m_packet.FlatRectangle16x16.n_coord ) + m_n_drawoffset_x;
+
+		n_distance = 16;
+		if( n_distance > 0 && n_y >= (INT32)m_n_drawarea_y1 && n_y <= (INT32)m_n_drawarea_y2 )
+		{
+			if( ( (INT32)m_n_drawarea_x1 - n_x ) > 0 )
+			{
+				n_distance -= ( m_n_drawarea_x1 - n_x );
+				n_x = m_n_drawarea_x1;
+			}
+			SOLIDFILL( FLATRECTANGEUPDATE )
+		}
+		n_y++;
+		n_h--;
+	}
+}
+
 static void FlatTexturedRectangle( void )
 {
 	INT16 n_y;
@@ -2464,7 +2536,7 @@ static void FlatTexturedRectangle( void )
 	UINT16 n_bgr;
 
 #if defined( MAME_DEBUG )
-	if( m_n_debugskip == 9 )
+	if( m_n_debugskip == 10 )
 	{
 		return;
 	}
@@ -2559,7 +2631,7 @@ static void Sprite8x8( void )
 	UINT16 n_bgr;
 
 #if defined( MAME_DEBUG )
-	if( m_n_debugskip == 10 )
+	if( m_n_debugskip == 11 )
 	{
 		return;
 	}
@@ -2644,7 +2716,7 @@ static void Sprite16x16( void )
 	UINT16 n_bgr;
 
 #if defined( MAME_DEBUG )
-	if( m_n_debugskip == 11 )
+	if( m_n_debugskip == 12 )
 	{
 		return;
 	}
@@ -2702,7 +2774,7 @@ static void Dot( void )
 	UINT16 *p_vram;
 
 #if defined( MAME_DEBUG )
-	if( m_n_debugskip == 12 )
+	if( m_n_debugskip == 13 )
 	{
 		return;
 	}
@@ -2738,7 +2810,7 @@ static void MoveImage( void )
 	INT16 n_dstx;
 
 #if defined( MAME_DEBUG )
-	if( m_n_debugskip == 13 )
+	if( m_n_debugskip == 14 )
 	{
 		return;
 	}
@@ -3059,6 +3131,20 @@ void psx_gpu_write( UINT32 *p_ram, INT32 n_size )
 				verboselog( 1, "%02x: 8x8 sprite %08x %08x %08x\n", m_packet.n_entry[ 0 ] >> 24,
 					m_packet.n_entry[ 0 ], m_packet.n_entry[ 1 ], m_packet.n_entry[ 2 ] );
 				Sprite8x8();
+				m_n_gpu_buffer_offset = 0;
+			}
+			break;
+		case 0x78:
+			/* 16*16 rectangle */
+			if( m_n_gpu_buffer_offset < 1 )
+			{
+				m_n_gpu_buffer_offset++;
+			}
+			else
+			{
+				verboselog( 1, "%02x: 16x16 rectangle %08x %08x\n", m_packet.n_entry[ 0 ] >> 24,
+					m_packet.n_entry[ 0 ], m_packet.n_entry[ 1 ] );
+				FlatRectangle16x16();
 				m_n_gpu_buffer_offset = 0;
 			}
 			break;

@@ -40,60 +40,60 @@
  *
  *************************************/
 
-#define IDE_DISK_SECTOR_SIZE		512
+#define IDE_DISK_SECTOR_SIZE			512
 
 #define MINIMUM_COMMAND_TIME			(TIME_IN_USEC(10))
 
-#define TIME_PER_SECTOR				(TIME_IN_USEC(100))
-#define TIME_PER_ROTATION			(TIME_IN_HZ(5400/60))
-#define TIME_SECURITY_ERROR		(TIME_IN_MSEC(1000))
+#define TIME_PER_SECTOR					(TIME_IN_USEC(100))
+#define TIME_PER_ROTATION				(TIME_IN_HZ(5400/60))
+#define TIME_SECURITY_ERROR				(TIME_IN_MSEC(1000))
 
-#define TIME_SEEK_MULTISECTOR		(TIME_IN_MSEC(13))
-#define TIME_NO_SEEK_MULTISECTOR	(TIME_IN_USEC(16.3))
+#define TIME_SEEK_MULTISECTOR			(TIME_IN_MSEC(13))
+#define TIME_NO_SEEK_MULTISECTOR		(TIME_IN_USEC(16.3))
 
-#define IDE_STATUS_ERROR			0x01
-#define IDE_STATUS_HIT_INDEX		0x02
-#define IDE_STATUS_BUFFER_READY		0x08
-#define IDE_STATUS_SEEK_COMPLETE	0x10
-#define IDE_STATUS_DRIVE_READY		0x40
-#define IDE_STATUS_BUSY				0x80
+#define IDE_STATUS_ERROR				0x01
+#define IDE_STATUS_HIT_INDEX			0x02
+#define IDE_STATUS_BUFFER_READY			0x08
+#define IDE_STATUS_SEEK_COMPLETE		0x10
+#define IDE_STATUS_DRIVE_READY			0x40
+#define IDE_STATUS_BUSY					0x80
 
-#define IDE_CONFIG_REGISTERS		0x10
+#define IDE_CONFIG_REGISTERS			0x10
 
-#define IDE_ADDR_CONFIG_UNK			0x034
-#define IDE_ADDR_CONFIG_REGISTER	0x038
-#define IDE_ADDR_CONFIG_DATA		0x03c
+#define IDE_ADDR_CONFIG_UNK				0x034
+#define IDE_ADDR_CONFIG_REGISTER		0x038
+#define IDE_ADDR_CONFIG_DATA			0x03c
 
-#define IDE_ADDR_DATA				0x1f0
-#define IDE_ADDR_ERROR				0x1f1
-#define IDE_ADDR_SECTOR_COUNT		0x1f2
-#define IDE_ADDR_SECTOR_NUMBER		0x1f3
-#define IDE_ADDR_CYLINDER_LSB		0x1f4
-#define IDE_ADDR_CYLINDER_MSB		0x1f5
-#define IDE_ADDR_HEAD_NUMBER		0x1f6
-#define IDE_ADDR_STATUS_COMMAND		0x1f7
+#define IDE_ADDR_DATA					0x1f0
+#define IDE_ADDR_ERROR					0x1f1
+#define IDE_ADDR_SECTOR_COUNT			0x1f2
+#define IDE_ADDR_SECTOR_NUMBER			0x1f3
+#define IDE_ADDR_CYLINDER_LSB			0x1f4
+#define IDE_ADDR_CYLINDER_MSB			0x1f5
+#define IDE_ADDR_HEAD_NUMBER			0x1f6
+#define IDE_ADDR_STATUS_COMMAND			0x1f7
 
-#define IDE_ADDR_STATUS_CONTROL		0x3f6
+#define IDE_ADDR_STATUS_CONTROL			0x3f6
 
-#define IDE_COMMAND_READ_MULTIPLE	0x20
+#define IDE_COMMAND_READ_MULTIPLE		0x20
 #define IDE_COMMAND_READ_MULTIPLE_ONCE	0x21
-#define IDE_COMMAND_WRITE_MULTIPLE	0x30
-#define IDE_COMMAND_SET_CONFIG		0x91
+#define IDE_COMMAND_WRITE_MULTIPLE		0x30
+#define IDE_COMMAND_SET_CONFIG			0x91
 #define IDE_COMMAND_READ_MULTIPLE_BLOCK	0xc4
 #define IDE_COMMAND_WRITE_MULTIPLE_BLOCK 0xc5
 #define IDE_COMMAND_SET_BLOCK_COUNT		0xc6
 #define IDE_COMMAND_READ_DMA			0xc8
 #define IDE_COMMAND_WRITE_DMA			0xca
-#define IDE_COMMAND_GET_INFO		0xec
+#define IDE_COMMAND_GET_INFO			0xec
 #define IDE_COMMAND_SET_FEATURES		0xef
-#define IDE_COMMAND_SECURITY_UNLOCK	0xf2
-#define IDE_COMMAND_UNKNOWN_F9		0xf9
+#define IDE_COMMAND_SECURITY_UNLOCK		0xf2
+#define IDE_COMMAND_UNKNOWN_F9			0xf9
 
-#define IDE_ERROR_NONE				0x00
-#define IDE_ERROR_DEFAULT			0x01
-#define IDE_ERROR_UNKNOWN_COMMAND	0x04
-#define IDE_ERROR_BAD_LOCATION		0x10
-#define IDE_ERROR_BAD_SECTOR		0x80
+#define IDE_ERROR_NONE					0x00
+#define IDE_ERROR_DEFAULT				0x01
+#define IDE_ERROR_UNKNOWN_COMMAND		0x04
+#define IDE_ERROR_BAD_LOCATION			0x10
+#define IDE_ERROR_BAD_SECTOR			0x80
 
 #define IDE_BUSMASTER_STATUS_ACTIVE		0x01
 #define IDE_BUSMASTER_STATUS_ERROR		0x02
@@ -770,7 +770,7 @@ static void write_buffer_to_dma(struct ide_state *ide)
 {
 	int bytesleft = IDE_DISK_SECTOR_SIZE;
 	UINT8 *data = ide->buffer;
-	
+
 //	LOG(("Writing sector to %08X\n", ide->dma_address));
 
 	/* loop until we've consumed all bytes */
@@ -785,7 +785,7 @@ static void write_buffer_to_dma(struct ide_state *ide)
 				LOG(("DMA Out of buffer space!\n"));
 				return;
 			}
-		
+
 			/* fetch the address */
 			ide->dma_address = cpunum_read_byte(ide->dma_cpu, ide->dma_descriptor++ ^ ide->dma_address_xor);
 			ide->dma_address |= cpunum_read_byte(ide->dma_cpu, ide->dma_descriptor++ ^ ide->dma_address_xor) << 8;
@@ -802,10 +802,10 @@ static void write_buffer_to_dma(struct ide_state *ide)
 			ide->dma_bytes_left &= 0xfffe;
 			if (ide->dma_bytes_left == 0)
 				ide->dma_bytes_left = 0x10000;
-			
+
 //			LOG(("New DMA descriptor: address = %08X  bytes = %04X  last = %d\n", ide->dma_address, ide->dma_bytes_left, ide->dma_last_buffer));
 		}
-		
+
 		/* write the next byte */
 		cpunum_write_byte(ide->dma_cpu, ide->dma_address++, *data++);
 		ide->dma_bytes_left--;
@@ -845,8 +845,8 @@ static void read_sector_done(int which)
 		if (--ide->sectors_until_int == 0 || ide->sector_count == 1)
 		{
 			ide->sectors_until_int = ((ide->command == IDE_COMMAND_READ_MULTIPLE_BLOCK) ? ide->block_count : 1);
-		signal_interrupt(ide);
-	}
+			signal_interrupt(ide);
+		}
 
 		/* keep going for DMA */
 		if (ide->dma_active)
@@ -956,7 +956,7 @@ static void read_buffer_from_dma(struct ide_state *ide)
 {
 	int bytesleft = IDE_DISK_SECTOR_SIZE;
 	UINT8 *data = ide->buffer;
-	
+
 //	LOG(("Reading sector from %08X\n", ide->dma_address));
 
 	/* loop until we've consumed all bytes */
@@ -971,7 +971,7 @@ static void read_buffer_from_dma(struct ide_state *ide)
 				LOG(("DMA Out of buffer space!\n"));
 				return;
 			}
-		
+
 			/* fetch the address */
 			ide->dma_address = cpunum_read_byte(ide->dma_cpu, ide->dma_descriptor++ ^ ide->dma_address_xor);
 			ide->dma_address |= cpunum_read_byte(ide->dma_cpu, ide->dma_descriptor++ ^ ide->dma_address_xor) << 8;
@@ -988,10 +988,10 @@ static void read_buffer_from_dma(struct ide_state *ide)
 			ide->dma_bytes_left &= 0xfffe;
 			if (ide->dma_bytes_left == 0)
 				ide->dma_bytes_left = 0x10000;
-			
+
 //			LOG(("New DMA descriptor: address = %08X  bytes = %04X  last = %d\n", ide->dma_address, ide->dma_bytes_left, ide->dma_last_buffer));
 		}
-		
+
 		/* read the next byte */
 		*data++ = cpunum_read_byte(ide->dma_cpu, ide->dma_address++);
 		ide->dma_bytes_left--;
@@ -1033,13 +1033,13 @@ static void write_sector_done(int which)
 			ide->sectors_until_int = ((ide->command == IDE_COMMAND_WRITE_MULTIPLE_BLOCK) ? ide->block_count : 1);
 			signal_interrupt(ide);
 		}
-		
+
 		/* signal an interrupt if there's more data needed */
 		if (ide->sector_count > 0)
 			ide->sector_count--;
 		if (ide->sector_count == 0)
 			ide->status &= ~IDE_STATUS_BUFFER_READY;
-		
+
 		/* keep going for DMA */
 		if (ide->dma_active && ide->sector_count != 0)
 		{
@@ -1231,6 +1231,8 @@ void handle_command(struct ide_state *ide, UINT8 command)
 			LOGPRINT(("IDE Set block count (%02X)\n", ide->sector_count));
 
 			ide->block_count = ide->sector_count;
+			// judge dredd wants 'drive ready' on this command
+			ide->status |= IDE_STATUS_DRIVE_READY;
 
 			/* signal an interrupt */
 			signal_interrupt(ide);
@@ -1637,6 +1639,15 @@ void ide_bus_0_w(int select, int offset, int data)
 		ide_controller_write(&idestate[0], offset, 1, data & 0xff);
 }
 
+int ide_controller_0_r(int reg)
+{
+	return ide_controller_read(&idestate[0], reg, 1);
+}
+
+void ide_controller_0_w(int reg, int data)
+{
+	ide_controller_write(&idestate[0], reg, 1, data);
+}
 
 
 /*************************************

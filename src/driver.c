@@ -2305,11 +2305,12 @@ V-V                           TP-027
 	DRIVER( mpangj )	/* 11/10/2000 (c) 2000 Mitchell */
 
 	/* Capcom CPS3 games */
-	/* 10/1996 Warzard */
-	/*  2/1997 Street Fighter III - New Generation */
-	/* ???? Jojo's Bizarre Adventure */
-	/* ???? Street Fighter 3: Second Impact ~giant attack~ */
-	/* ???? Street Fighter 3: Third Strike ~fight to the finish~ */
+	DRIVER( warzard )	/* 10/1996 Warzard */
+	DRIVER( sfiii )		/* 02/1997 Street Fighter III - New Generation */
+	DRIVER( jojo )		/* ??/???? Jojo's Venture */
+	DRIVER( jojoba )	/* ??/???? Jojo's Bizarre Adventure */
+	DRIVER( sfiii2 )	/* ??/???? Street Fighter 3: Second Impact ~giant attack~ */
+	DRIVER( sfiii3 )	/* ??/???? Street Fighter 3: Third Strike ~fight to the finish~ */
 
 	/* Capcom ZN1 */
 	DRIVER( ts2 )		/* Battle Arena Toshinden 2 (USA 951124) */
@@ -2872,6 +2873,12 @@ Sep.1994 Quiz Ghost Hunter
 	DRIVER( harddunj )	/* (c) 1994 (Japan) */
 	DRIVER( titlef )
 	DRIVER( scross )	/* (c) 1992 (World) */
+
+	/* Model 1 Games */
+	DRIVER( vf1 )
+	DRIVER( vr )
+	DRIVER( swa )
+	DRIVER( wingwar )
 
 	/* Sega ST-V games */
 	DRIVER( astrass )
@@ -4569,6 +4576,17 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 
 
 	DRIVER( raiden2 )
+	DRIVER( raiden2a )
+	DRIVER( raiden2b )
+	DRIVER( raiden2c )
+	DRIVER( raiden2e )
+	DRIVER( raidndx )
+	DRIVER( raidndxa )
+	DRIVER( raidndxb )
+	DRIVER( raidndxj )
+	DRIVER( zeroteam )
+	DRIVER( nzerotea )
+
 
 /* Seibu STI System games:
 

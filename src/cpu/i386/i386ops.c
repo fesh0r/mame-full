@@ -901,6 +901,18 @@ static void I386OP(rep)(void)				// Opcode 0xf3
 	} while( REG32(ECX) != 0 );
 }
 
+static void I386OP(repne)(void)				// Opcode 0xf2
+{
+	UINT32 eip = I.eip;
+	UINT32 pc = I.pc;
+	do {
+		I.eip = eip;
+		I.pc = pc;
+		I386OP(decode_opcode)();
+		REG32(ECX)--;
+	} while( REG32(ECX) != 0 && I.ZF != 0 );
+}
+
 static void I386OP(sahf)(void)				// Opcode 0x9e
 {
 	set_flags( (get_flags() & 0xffffff00) | (REG8(AH) & 0xd7) );

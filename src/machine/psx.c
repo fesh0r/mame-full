@@ -38,6 +38,12 @@ INLINE UINT16 psxreadword( UINT32 n_address )
 	return *( (UINT16 *)( (UINT8 *)g_p_n_psxram + WORD_XOR_LE( n_address ) ) );
 }
 
+READ32_HANDLER( psx_com_delay_r )
+{
+	verboselog( 1, "psx_com_delay_r()\n" );
+	return 0;
+}
+
 /* IRQ */
 
 static UINT32 m_n_irqdata;

@@ -1285,7 +1285,7 @@ mame_time cpu_getscanlinetime_mt(int scanline)
 	mame_time scantime, abstime;
 	
 	/* compute the target time */
-	scantime = add_subseconds_to_mame_time(mame_timer_starttime(refresh_timer), scanline * scanline_period.subseconds);
+	scantime = add_subseconds_to_mame_time(mame_timer_starttime(refresh_timer), scanline * (scanline_period.subseconds + 1));
 	
 	/* get the current absolute time */
 	abstime = mame_timer_get_time();
@@ -1628,8 +1628,9 @@ static void cpu_vblankcallback(int param)
 {
 	int cpunum;
 
-   if (vblank_countdown == 1)
-      vblank = 1;
+	logerror("cpu_vblankcallback\n");
+	if (vblank_countdown == 1)
+		vblank = 1;
 
 	/* loop over CPUs */
 	for (cpunum = 0; cpunum < cpu_gettotalcpu(); cpunum++)
@@ -1944,5 +1945,8 @@ static void cpu_inittimers(void)
 		first_time = add_mame_times(first_time, vblank_period);
 	}
 	mame_timer_set(first_time, 0, cpu_firstvblankcallback);
+	
+	/* reset the refresh timer to get ourself back in sync */
+	mame_timer_adjust(refresh_timer, time_never, 0, time_never);
 }
 

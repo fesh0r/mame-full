@@ -29,7 +29,7 @@
 #include "cpuintrf.h"
 #include "vidhrdw/generic.h"
 
-//#define SOUND_HACK
+void seibuspi_text_decrypt(unsigned char *rom);
 
 VIDEO_START( spi );
 VIDEO_UPDATE( spi );
@@ -57,12 +57,6 @@ READ32_HANDLER( sound_0x400_r )
 
 READ32_HANDLER( sound_0x600_r )
 {
-
-#ifdef SOUND_HACK
-	z80_semaphore |= 0x3;
-	i386_semaphore |= 0x3;
-#endif
-
 	return 0xffffffff;
 }
 
@@ -76,12 +70,22 @@ READ32_HANDLER( sound_0x608_r )
 	return 0xffffffff;
 }
 
-READ32_HANDLER( sound_6dc_r )
+READ32_HANDLER( sound_6d0_r )
 {
-	if( ACCESSING_LSB32 ) {
-		return 0;
-	}
+	/*if( ACCESSING_LSB32 ) {
+		printf("Read32 %08X\n",0x6d0 + (offset * 4));
+		return YMF271_0_r(offset);
+	}*/
 	return 0;
+}
+
+static UINT32 sound_6d0;
+WRITE32_HANDLER( sound_6d0_w )
+{
+	COMBINE_DATA( &sound_6d0 );
+	/*if( ACCESSING_LSB32 ) {
+		printf("Write32 %08X to %08X\n",sound_6d0, 0x6d0 + (offset * 4) );
+	}*/
 }
 
 READ32_HANDLER( sound_com_r )
@@ -96,7 +100,8 @@ WRITE32_HANDLER( sound_com_w )
 	if( (mem_mask & 0xff) == 0 ) {
 		z80_com = data & 0xff;
 		i386_semaphore = 0;
-		z80_semaphore = 0x2;	/* data available */
+		z80_semaphore = 0x3;	/* data available */
+		cpu_spin();
 		printf("sound_com_w %08X\n",data);
 	}
 }
@@ -123,10 +128,10 @@ WRITE32_HANDLER( z80_fifo_w )
 WRITE32_HANDLER( z80_enable_w )
 {
 	z80_fifo_pos = 0;
-	/* Enable the Z80 */
 	if( data & 0x1 ) {
-		printf("Z80 enabled\n");
 		cpunum_set_halt_line( 1, CLEAR_LINE );
+	} else {
+		cpunum_set_halt_line( 1, ASSERT_LINE );
 	}
 }
 
@@ -212,7 +217,8 @@ WRITE8_HANDLER( z80_com_w )
 	printf("z80_com_w %02X\n",data);
 	z80_com = data;
 	z80_semaphore = 0;
-	i386_semaphore = 0x2;	/* data available */
+	i386_semaphore = 0x3;	/* data available */
+	cpu_spin();
 }
 
 
@@ -228,7 +234,7 @@ static ADDRESS_MAP_START( spi_readmem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x0000060c, 0x0000060f) AM_READ(spi_controls2_r)	/* Player controls (start) */
 	AM_RANGE(0x00000680, 0x00000683) AM_READ(sound_com_r)		/* Used in checksum checking */
 	AM_RANGE(0x00000684, 0x00000687) AM_READ(sound_semaphore_r)
-	AM_RANGE(0x000006dc, 0x000006df) AM_READ(sound_6dc_r)
+	AM_RANGE(0x000006d0, 0x000006df) AM_READ(sound_6d0_r)
 	AM_RANGE(0x00000800, 0x00036fff) AM_READ(MRA32_RAM)
 	AM_RANGE(0x00037000, 0x00037fff) AM_READ(MRA32_RAM)		/* Sprites */
 	AM_RANGE(0x00038000, 0x00038fff) AM_READ(MRA32_RAM)		/* Background layer */
@@ -249,6 +255,7 @@ static ADDRESS_MAP_START( spi_writemem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00000684, 0x00000687) AM_WRITE(sound_status_w)	/* Unknown */
 	AM_RANGE(0x00000688, 0x0000068b) AM_WRITE(z80_fifo_w)		/* FIFO port for Z80 code */
 	AM_RANGE(0x0000068c, 0x0000068f) AM_WRITE(z80_enable_w)		/* Used to enable Z80 after sending the program */
+	AM_RANGE(0x000006d0, 0x000006df) AM_WRITE(sound_6d0_w)
 	AM_RANGE(0x00000800, 0x00036fff) AM_WRITE(MWA32_RAM)
 	AM_RANGE(0x00037000, 0x00037fff) AM_WRITE(MWA32_RAM) AM_BASE(&spriteram32) AM_SIZE(&spriteram_size)	/* Sprites */
 	AM_RANGE(0x00038000, 0x00038fff) AM_WRITE(spi_back_layer_w) AM_BASE(&back_ram)	/* Background layer */
@@ -408,9 +415,9 @@ static struct GfxLayout spi_charlayout =
 	4096,		/* 4096 characters */
 	6,			/* 6 bits per pixel */
 	{ 0, 4, 8, 12, 16, 20 },
-	{ 3,2,1,0,27,26,25,24 },
+	{ 0, 1, 2, 3, 24, 25, 26, 27 },
 	{ 0*48, 1*48, 2*48, 3*48, 4*48, 5*48, 6*48, 7*48 },
-	48*8
+	6*8*8
 };
 
 static struct GfxLayout spi_tilelayout =
@@ -488,23 +495,36 @@ static MACHINE_DRIVER_START( spi )
 
 MACHINE_DRIVER_END
 
+static DRIVER_INIT( spi )
+{
+	seibuspi_text_decrypt(memory_region(REGION_GFX1));
+}
 
 static DRIVER_INIT( raidnfgt )
 {
-
-#ifdef SOUND_HACK
 	UINT8* rom = memory_region(REGION_USER1);
-	/* sound system hacks for Raiden Fighters */
-	rom[0x6d7f1] = 0xeb;
-	rom[0x6d7f2] = 0x4c;
-	rom[0x6c65b] = 0x33;
-	rom[0x6c681] = 0x33;
-	rom[0x017a2] = 0x33;
-	rom[0x6bc58] = 0x33;
-	rom[0x6d890] = 0x90;
-	rom[0x6d891] = 0x90;
-#endif
+	/* sound hack */
+	rom[0x6d847] = 0x00;
 
+	init_spi();
+}
+
+static DRIVER_INIT( senkyu )
+{
+	UINT8* rom = memory_region(REGION_USER1);
+	/* sound hack */
+	rom[0x13c813] = 0x00;
+
+	init_spi();
+}
+
+static DRIVER_INIT( ejanhs )
+{
+	UINT8* rom = memory_region(REGION_USER1);
+	/* sound hack */
+	rom[0x12f167] = 0x00;
+
+	init_spi();
 }
 
 
@@ -544,7 +564,7 @@ MACHINE_DRIVER_END
 
 /*******************************************************************/
 #define ROM_LOAD24_BYTE(name,offset,length,hash)		ROMX_LOAD(name, offset, length, hash, ROM_SKIP(2))
-#define ROM_LOAD24_WORD(name,offset,length,hash)		ROMX_LOAD(name, offset, length, hash, ROM_GROUPWORD | ROM_SKIP(1))
+#define ROM_LOAD24_WORD(name,offset,length,hash)		ROMX_LOAD(name, offset, length, hash, ROM_GROUPWORD | ROM_SKIP(1) | ROM_REVERSE)
 
 /* SPI games */
 
@@ -844,13 +864,13 @@ ROM_END
 /*******************************************************************/
 
 /* SPI */
-GAMEX( 1995, senkyu,    0,	     spi, spi_2button, 0, ROT0,		"Seibu Kaihatsu",	"Senkyu", GAME_NOT_WORKING )
-GAMEX( 1995, batlball,	senkyu,	 spi, spi_2button, 0, ROT0,		"Seibu Kaihatsu",	"Battle Balls", GAME_NOT_WORKING )
-GAMEX( 1995, viperp1,	0,	     spi, spi_2button, 0, ROT270,	"Seibu Kaihatsu",	"Viper Phase 1 (New Version)", GAME_NOT_WORKING )
-GAMEX( 1995, viperp1o,  viperp1, spi, spi_2button, 0, ROT270,	"Seibu Kaihatsu",	"Viper Phase 1", GAME_NOT_WORKING )
-GAMEX( 1996, ejanhs, 	0,	     spi, spi_2button, 0, ROT270,	"Seibu Kaihatsu",	"E-Jan High School (JPN)", GAME_NOT_WORKING )
+GAMEX( 1995, senkyu,    0,	     spi, spi_2button, senkyu, ROT0,	"Seibu Kaihatsu",	"Senkyu", GAME_NOT_WORKING )
+GAMEX( 1995, batlball,	senkyu,	 spi, spi_2button, senkyu, ROT0,	"Seibu Kaihatsu",	"Battle Balls", GAME_NOT_WORKING )
+GAMEX( 1995, viperp1,	0,	     spi, spi_2button, spi, ROT270,	"Seibu Kaihatsu",	"Viper Phase 1 (New Version)", GAME_NOT_WORKING )
+GAMEX( 1995, viperp1o,  viperp1, spi, spi_2button, spi, ROT270,	"Seibu Kaihatsu",	"Viper Phase 1", GAME_NOT_WORKING )
+GAMEX( 1996, ejanhs, 	0,	     spi, spi_2button, ejanhs, ROT0,	"Seibu Kaihatsu",	"E-Jan High School (JPN)", GAME_NOT_WORKING )
 GAMEX( 1996, raidnfgt,	0,	     spi, spi_3button, raidnfgt, ROT270,	"Seibu Kaihatsu",	"Raiden Fighters", GAME_NOT_WORKING )
-GAMEX( 1997, rf2_eur,	0,       spi, spi_2button, 0, ROT270,	"Seibu Kaihatsu",	"Raiden Fighters 2 (EUR, SPI)", GAME_NOT_WORKING )
+GAMEX( 1997, rf2_eur,	0,       spi, spi_2button, spi, ROT270,	"Seibu Kaihatsu",	"Raiden Fighters 2 (EUR, SPI)", GAME_NOT_WORKING )
 /* there is another rf dump rf_spi_asia.zip but it seems strange, 1 program rom, cart pic seems to show others as a different type of rom */
 
 /* SXX2F */

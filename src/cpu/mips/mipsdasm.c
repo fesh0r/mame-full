@@ -498,7 +498,8 @@ unsigned DasmMIPS( char *buffer, UINT32 oldpc )
 					}
 					break;
 				case 0x10:
-					if( INS_CO( op ) == 0x108041b )
+					if( INS_CO( op ) == 0x108041b ||
+						INS_CO( op ) == 0x108043f )
 					{
 						sprintf( buffer, "nccs" );
 					}

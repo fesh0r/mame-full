@@ -84,8 +84,6 @@ void set_flags( UINT32 f )
 
 static void sib_byte(UINT8 mod, UINT32* ea, UINT8* segment)
 {
-	UINT32 disp32;
-	UINT8 disp8;
 	UINT8 scale, i, base;
 	UINT8 sib = FETCH();
 	scale = (sib >> 6) & 0x3;
@@ -104,12 +102,10 @@ static void sib_byte(UINT8 mod, UINT32* ea, UINT8* segment)
 				*ea = FETCH32();
 				*segment = DS;
 			} else if( mod == 1 ) {
-				disp8 = FETCH();
-				*ea = REG32(EBP) + disp8;
+				*ea = REG32(EBP);
 				*segment = SS;
 			} else if( mod == 2 ) {
-				disp32 = FETCH32();
-				*ea = REG32(EBP) + disp32;
+				*ea = REG32(EBP);
 				*segment = SS;
 			}
 			break;
@@ -433,6 +429,7 @@ int i386_execute(int num_cycles)
 
 	while( I.cycles > 0 )
 	{
+		UINT32 ip = I.eip;
 		I.operand_size = I.sreg[CS].d;
 		I.address_size = I.sreg[CS].d;
 		I.segment_prefix = 0;
@@ -440,6 +437,11 @@ int i386_execute(int num_cycles)
 		CALL_MAME_DEBUG;
 		
 		I386OP(decode_opcode)();
+
+		if( I.eip > 0xffffff ) {
+			printf("EIP: %08X, old eip: %08X\n",I.eip,ip);
+			exit(1);
+		}
 	}
 
 	return num_cycles;

@@ -2283,7 +2283,8 @@ static void docop2( int gteop )
 		}
 		break;
 	case 0x10:
-		if( gteop == 0x108041b )
+		if( gteop == 0x108041b ||
+			gteop == 0x108043f )
 		{
 			GTELOG( "NCCS" );
 			FLAG = 0;
@@ -2505,8 +2506,6 @@ static void docop2( int gteop )
 	logerror( "%08x: unknown GTE op %08x\n", mipscpu.pc, gteop );
 	mips_stop();
 }
-
-
 
 /**************************************************************************
  * Generic set_info
