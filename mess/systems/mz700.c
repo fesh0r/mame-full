@@ -76,8 +76,7 @@
 #define LOG(N,M,A)
 #endif
 
-static struct MemoryReadAddress readmem_mz700[] =
-{
+MEMORY_READ_START( readmem_mz700 )
 	{ 0x00000, 0x00fff, MRA_BANK1 },
 	{ 0x01000, 0x0cfff, MRA_RAM },
 	{ 0x0d000, 0x0d7ff, MRA_BANK6 },
@@ -87,11 +86,9 @@ static struct MemoryReadAddress readmem_mz700[] =
 	{ 0x12000, 0x127ff, MRA_RAM },
 	{ 0x12800, 0x12fff, MRA_RAM },
 	{ 0x16000, 0x16fff, MRA_RAM },
-    {-1}
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_mz700[] =
-{
+MEMORY_WRITE_START( writemem_mz700 )
 	{ 0x00000, 0x00fff, MWA_BANK1 },
 	{ 0x01000, 0x0cfff, MWA_RAM },
 	{ 0x0d000, 0x0d7ff, MWA_BANK6 },
@@ -100,22 +97,16 @@ static struct MemoryWriteAddress writemem_mz700[] =
 	{ 0x12000, 0x127ff, videoram_w, &videoram, &videoram_size },
 	{ 0x12800, 0x12fff, colorram_w, &colorram },
 	{ 0x16000, 0x16fff, pcgram_w },
-    {-1}
-};
+MEMORY_END
 
-static struct IOReadPort readport_mz700[] =
-{
-	{-1}
-};
+PORT_READ_START( readport_mz700 )
+PORT_END
 
-static struct IOWritePort writeport_mz700[] =
-{
+PORT_WRITE_START( writeport_mz700 )
 	{ 0xe0, 0xe6, mz700_bank_w },
-	{-1}
-};
+PORT_END
 
-static struct MemoryReadAddress readmem_mz800[] =
-{
+MEMORY_READ_START( readmem_mz800 )
 	{ 0x00000, 0x00fff, MRA_BANK1 },
 	{ 0x01000, 0x01fff, MRA_BANK2 },
 	{ 0x02000, 0x07fff, MRA_RAM },
@@ -128,11 +119,9 @@ static struct MemoryReadAddress readmem_mz800[] =
 	{ 0x10000, 0x10fff, MRA_ROM },
 	{ 0x11000, 0x11fff, MRA_ROM },
 	{ 0x12000, 0x15fff, MRA_RAM },
-    {-1}
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_mz800[] =
-{
+MEMORY_WRITE_START( writemem_mz800 )
 	{ 0x00000, 0x00fff, MWA_BANK1 },
 	{ 0x01000, 0x01fff, MWA_BANK2 },
 	{ 0x02000, 0x07fff, MWA_RAM },
@@ -146,20 +135,16 @@ static struct MemoryWriteAddress writemem_mz800[] =
 	{ 0x11000, 0x11fff, MWA_ROM },
     { 0x12000, 0x16fff, videoram_w, &videoram, &videoram_size },
 	{ 0x12800, 0x12fff, colorram_w, &colorram },
-    {-1}
-};
+MEMORY_END
 
-static struct IOReadPort readport_mz800[] =
-{
+PORT_READ_START( readport_mz800 )
 	{ 0xce, 0xce, mz800_crtc_r },
 	{ 0xd0, 0xd7, mz800_mmio_r },
 	{ 0xe0, 0xe9, mz800_bank_r },
 	{ 0xea, 0xea, mz800_ramdisk_r },
-    {-1}
-};
+PORT_END
 
-static struct IOWritePort writeport_mz800[] =
-{
+PORT_WRITE_START( writeport_mz800 )
 	{ 0xcc, 0xcc, mz800_write_format_w },
 	{ 0xcd, 0xcd, mz800_read_format_w },
 	{ 0xce, 0xce, mz800_display_mode_w },
@@ -169,8 +154,7 @@ static struct IOWritePort writeport_mz800[] =
 	{ 0xea, 0xea, mz800_ramdisk_w },
 	{ 0xeb, 0xeb, mz800_ramaddr_w },
 	{ 0xf0, 0xf0, mz800_palette_w },
-    {-1}
-};
+PORT_END
 
 INPUT_PORTS_START( mz700 )
 	PORT_START /* status */
@@ -300,8 +284,7 @@ static struct GfxLayout char_layout =
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &char_layout, 0, 256 },
-	{ -1 } /* end of array */
-};
+MEMORY_END	 /* end of array */
 
 static struct beep_interface mz700_beep_interface =
 {

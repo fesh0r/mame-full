@@ -28,12 +28,12 @@ static UINT8 ne556_out[2] = {0,};		/* NE556 current output status */
 static UINT8 mz700_motor_ff = 0;    /* cassette motor control flipflop */
 static UINT8 mz700_motor_on = 0;	/* cassette motor key (play key) */
 
-static READ_HANDLER( pio_port_a_r );
-static READ_HANDLER( pio_port_b_r );
-static READ_HANDLER( pio_port_c_r );
-static WRITE_HANDLER( pio_port_a_w );
-static WRITE_HANDLER( pio_port_b_w );
-static WRITE_HANDLER( pio_port_c_w );
+static int pio_port_a_r (int chip);
+static int pio_port_b_r (int chip);
+static int pio_port_c_r (int chip);
+static void pio_port_a_w (int chip, int data);
+static void pio_port_b_w (int chip, int data);
+static void pio_port_c_w (int chip, int data);
 
 static ppi8255_interface ppi8255 = {
     1,
@@ -130,31 +130,31 @@ static void pit_irq_2(int which)
 
 /************************ PIO ************************************************/
 
-static READ_HANDLER( pio_port_a_r )
+static int pio_port_a_r (int chip)
 {
-    data_t data = ppi8255_peek(0, 0);
+    data8_t data = ppi8255_peek(0, 0);
 	LOG(2,"mz700_pio_port_a_r",("%02X\n", data));
     return data;
 }
 
 /* read keyboard row - indexed by a demux LS145 which is connected to PA0-3 */
-static READ_HANDLER( pio_port_b_r )
+static int pio_port_b_r (int chip)
 {
-	data_t demux_LS145, data = 0xff;
+	data8_t demux_LS145, data = 0xff;
 
 	if( setup_active() || onscrd_active() )
 		return data;
 
     demux_LS145 = ppi8255_peek(0, 0) & 15;
-    data = readinputport(1 + demux_LS145);
+    chip = readinputport(1 + demux_LS145);
 	LOG(2,"mz700_pio_port_b_r",("%02X\n", data));
 
     return data;
 }
 
-static READ_HANDLER( pio_port_c_r )
+static int pio_port_c_r (int chip)
 {
-    data_t data = ppi8255_peek(0, 2) & 0x0f;
+    data8_t data = ppi8255_peek(0, 2) & 0x0f;
 
     /*
      * bit 7 in     vertical blank
@@ -178,12 +178,12 @@ static READ_HANDLER( pio_port_c_r )
     return data;
 }
 
-static WRITE_HANDLER( pio_port_a_w )
+static void pio_port_a_w (int chip, int data)
 {
 	LOG(2,"mz700_pio_port_a_w",("%02X\n", data));
 }
 
-static WRITE_HANDLER( pio_port_b_w )
+static void pio_port_b_w (int chip, int data)
 {
 	/*
 	 * bit 7	NE556 reset
@@ -201,7 +201,7 @@ static WRITE_HANDLER( pio_port_b_w )
     timer_enable(ne556_timer[0], (data & 0x80) ? 0 : 1);
 }
 
-static WRITE_HANDLER( pio_port_c_w )
+static void pio_port_c_w (int chip, int data)
 {
     /*
      * bit 3 out    motor control (0 = on)
@@ -221,7 +221,7 @@ static WRITE_HANDLER( pio_port_c_w )
 
 READ_HANDLER ( mz700_mmio_r )
 {
-	data_t data = 0x7e;
+	data8_t data = 0x7e;
 
 	switch (offset & 15)
 	{
@@ -843,7 +843,7 @@ static UINT8 mz800_palette_bank;
 /* port CE */
 READ_HANDLER( mz800_crtc_r )
 {
-	data_t data = 0x00;
+	data8_t data = 0x00;
 	LOG(1,"mz800_crtc_r",("%02X\n",data));
     return data;
 }
@@ -851,7 +851,7 @@ READ_HANDLER( mz800_crtc_r )
 /* port D0 - D7 / memory E000 - FFFF */
 READ_HANDLER( mz800_mmio_r )
 {
-	data_t data = 0x7e;
+	data8_t data = 0x7e;
 
 	switch (offset & 15)
 	{
@@ -875,7 +875,7 @@ READ_HANDLER( mz800_mmio_r )
 READ_HANDLER( mz800_bank_r )
 {
 	UINT8 *mem = memory_region(REGION_CPU1);
-    data_t data = 0xff;
+    data8_t data = 0xff;
 
     switch (offset)
     {
@@ -937,7 +937,7 @@ READ_HANDLER( mz800_bank_r )
 READ_HANDLER( mz800_ramdisk_r )
 {
 	UINT8 *mem = memory_region(REGION_USER1);
-	data_t data = mem[mz800_ramaddr];
+	data8_t data = mem[mz800_ramaddr];
 	LOG(2,"mz800_ramdisk_r",("[%04X] -> %02X\n", mz800_ramaddr, data));
 	if (mz800_ramaddr++ == 0)
 		LOG(1,"mz800_ramdisk_r",("address wrap 0000\n"));
