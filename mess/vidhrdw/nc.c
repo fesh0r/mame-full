@@ -47,6 +47,7 @@ void nc_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,
 
 extern int nc_display_memory_start;
 extern char *nc_memory;
+extern UINT8 nc_type;
 
 /***************************************************************************
   Draw the game screen in the given osd_bitmap.
@@ -59,18 +60,30 @@ void nc_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
         int b;
         int x;
         int pen0, pen1;
+        int height, width;
+
+        if (nc_type==NC_TYPE_200)
+        {
+                height = NC200_SCREEN_HEIGHT;
+                width = NC200_SCREEN_WIDTH;
+        }
+        else
+        {
+                height = NC_SCREEN_HEIGHT;
+                width = NC_SCREEN_WIDTH;
+        }
 
         pen0 = Machine->pens[0];
         pen1 = Machine->pens[1];
 
-        for (y=0; y<NC_SCREEN_HEIGHT; y++)
+        for (y=0; y<height; y++)
         {
                 int by;
                 /* 64 bytes per line */
                 char *line_ptr = nc_memory + nc_display_memory_start + (y<<6);
 
                 x = 0;
-                for (by=0; by<NC_SCREEN_WIDTH>>3; by++)
+                for (by=0; by<width>>3; by++)
                 {
                         unsigned char byte;
         
