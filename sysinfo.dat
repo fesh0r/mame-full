@@ -8867,9 +8867,11 @@ several optional extensions:
 
 * Speech synthesis is emulated completely.  The speech synthesizer occasionally
 generates some weird noise instead of the expected phonemes.  I think the
-actual reason for this issue is the original ti-99/4(a) speech synthesizer did
-not use the tms5220 chip that is used under emulation: I think I have read
-somewhere that TI 99/8, which did use a tms5220, was affected by similar bugs.
+actual reason for this issue is the original ti-99/4(a) speech synthesizer uses
+a tms0285 instead of the tms5220 chip that is emulated: I think I have read
+somewhere that TI 99/8, which did use a tms5220, was affected by similar bugs. 
+Incidentally, I have tried to hack the tms5220 emulator to sound more like a
+tms0285, but it is just a hack, I have not reverse-engineered the tms0285.
 
 
 * Three types of memory expansion cards are emulated: the original TI 32kbyte
@@ -8894,23 +8896,19 @@ images (but not double-sided ones).
 
 * In addition to the floppy drives, the HFDC can support up to 3 MFM hard
 disks.  If you want to use these hard disks, you must use the HFDC as a floppy
-disk controller.  Disk images use a variant of the MAME harddisk format that
-supports sector sizes other than 512 (the sector size for HFDC harddisks is
-256).  (BTW, early HFDC cards also included a tape interface  which is not
-emulated.)
+disk controller.  Disk images use the MAME harddisk format (the sector size for
+HFDC harddisks is 256).  (BTW, early HFDC cards also included a tape interface
+which is not emulated.)
 
 
 * Thierry Nouspickel's IDE card prototype is emulated.  A description can be
-found on Thierry's page along with the required disk-based DSR.  Note that
-there are two minor errors in the DSR disk image: the byte at offset >12 must
-be edited from >02 to >01, and the byte at offset >7601 must be edited from >21
-to >20; the byte at offset >13 should be edited from >02 to >01, too, but this
-is not a critical issue at present.  Note that the disk image does not work
-very well with the BwG disk controller, though I cannot figure out why (it
-works fine with both the TI controller and the HFDC controller).  The hard disk
-image is in the standard MESS/MAME hardddisk format; since MESS does not
-support image diff file currently, only un-compressed images can be written to
-(compressed images ARE supported, but only as read-only disks).
+found on Thierry's site along with the required disk-based DSR.  Note that the
+disk image does not work very well with the BwG disk controller, though I
+cannot figure out why (it works fine with both the TI controller and the HFDC
+controller).  The hard disk image is in the standard MESS/MAME hardddisk
+format (with 512-byte sectors); since MESS does not support image diff file
+currently, only un-compressed images can be written to (compressed images ARE
+supported, but only as read-only disks).
 
 
 * Serial port and PIO emulation is incomplete.  On the one hand, nothing useful
@@ -8930,6 +8928,10 @@ data.   The DSR and system GROM0 needs to be loaded into the FEEPROM: to do so,
 you can use a hex editor to create a hsgpl.mem file in correct format.
 Afterwards, you may write extra GROM using the HSGPL DSR.  Note that Supercart
 and MBX paging are not emulated correctly, and there must be other issues.
+
+
+* The SmartMedia part of the USB-SmartMedia card is supposed to be emulated,
+but it has not been tested yet.
 
 
 * The tape interface is emulated.  The CS1 unit is read/write, whereas CS2 is
@@ -9078,8 +9080,8 @@ Usage:
 The TI99/8 looks a lot like the /4(a).  Press any key to begin, then press A
 for the built-in BASIC interpreter, B to set speed, C, D, etc, for any
 inserted cartridge.  Set speed does not apply to the built-in BASIC
-interpreter, which will always at full speed.  The default speed is "B TI-99/4A
-speed": you must run set speed to select any other speed.
+interpreter, which will always run at full speed.  The default speed is "B
+TI-99/4A speed": you must run set speed to select any other speed.
 
 Though the level of compatibility with the /4a is high, you may not access
 extensions provided by an inserted cartridge from /8 BASIC, whether they are
