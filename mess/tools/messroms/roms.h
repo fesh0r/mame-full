@@ -1464,7 +1464,7 @@ static struct {
 
 	{ 0x44a347d9 ,0x4000, "PK-01 Lviv" },
 	{ 0x551622f5 ,0x4000, "PK-01 Lviv (alternate)" },
-	{ 0xf171c282 ,0x4000, "PK-01 Lviv (early)" },
+	{ 0xf171c282 ,0x4000, "PK-01 Lviv (prototype)" },
 
 /* Palm OS PDA *****************************************************************/
 	/* some of this roms may be modified */
