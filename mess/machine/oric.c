@@ -31,7 +31,7 @@
 from tape */
 static void *oric_tape_timer = NULL;
 /* ==0 if oric1 or oric atmos, !=0 if telestrat */
-static int oric_is_telestrat = 1;
+static int oric_is_telestrat = 0;
 
 /* This does not exist in the real hardware. I have used it to
 know which sources are interrupting */
@@ -83,7 +83,7 @@ static char oric_keyboard_mask;
 
 static unsigned char oric_via_port_a_data;
 
-#define ORIC_DUMP_RAM
+//#define ORIC_DUMP_RAM
 
 #ifdef ORIC_DUMP_RAM
 /* load image */
@@ -269,11 +269,25 @@ This allows the via to trigger on bit changes and issue interrupts */
 static void    oric_refresh_tape(int dummy)
 {
 	int data;
+	int input_port_9;
 
 	data = 0;
 
 	if (device_input(IO_CASSETTE,0) > 255)
 		data |=1;
+
+	/* "A simple cable to catch the vertical retrace signal !
+	 This cable connects the video output for the television/monitor
+	to the via cb1 input. Interrupts can be generated from the vertical
+	sync, and flicker free games can be produced */
+
+	input_port_9 = readinputport(0x09);
+	/* cable is enabled? */
+	if ((input_port_9 & 0x02)!=0)
+	{
+		/* return state of vsync */
+		data = input_port_9>>2;
+	}
 
     via_set_input_cb1(0, data);
 
@@ -670,7 +684,7 @@ void oric_common_init_machine(void)
     /* clear all irqs */
 	oric_irqs = 0;
 	/* prevent initial interrupt from initialising wd179x */
-	oric_is_telestrat = 1;
+	oric_is_telestrat = 0;
 	oric_ram_0x0c000 = NULL;
 
     oric_tape_timer = timer_pulse(TIME_IN_HZ(11025), 0, oric_refresh_tape);
@@ -1028,13 +1042,13 @@ static READ_HANDLER(telestrat_via2_in_b_func)
 	/* left joystick selected? */
 	if (telestrat_via2_port_b_data & (1<<6))
 	{
-		data &= readinputport(9);
+		data &= readinputport(10);
 	}
 
 	/* right joystick selected? */
 	if (telestrat_via2_port_b_data & (1<<7))
 	{
-		data &= readinputport(10);
+		data &= readinputport(11);
 	}
 
 	data |= telestrat_via2_port_b_data & ((1<<7) | (1<<6) | (1<<5));
