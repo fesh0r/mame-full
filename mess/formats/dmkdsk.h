@@ -25,7 +25,7 @@ typedef struct
 	UINT8	idCRC_high;
 	UINT8	idCRC_low;
 	UINT8	DM;
-	UINT8	*data;
+	UINT8	data[];
 } packedIDData, *packedIDData_P;
 
 typedef struct
@@ -74,10 +74,10 @@ typedef struct
 
 } dmkdsk;
 
-typedef union
+typedef struct
 {
 
-	UINT16		idamOffset[80];	/* Note: little endian in file				*/
+	UINT16		idamOffset[64];	/* Note: little endian in file				*/
 								/* Bit 15: Sector double density?			*/
 								/* Bit 14: Undefined (reserved)				*/
 								/* Bit 13-0: Offset from begining of track
@@ -85,7 +85,7 @@ typedef union
 									         Note these are always sorted
 									         from first to last. All empty
 									         entires are 0x00				*/
-	UINT8		*trackData;	/* Actual track data (including header)		*/
+	UINT8		trackData[];
 } dmkTrack, *dmkTrack_p;
 
 #define DMKSIDECOUNT( x )  ((x.diskOptions & 0x10) == 0) ? 0 : 1

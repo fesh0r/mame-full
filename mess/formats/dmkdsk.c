@@ -371,7 +371,7 @@ static void dmkdsk_read_track_data_info_buffer( int drive, int side, char *ptr, 
 		else
 			*length = size;
 
-		pointer = (char *)(temp_track->trackData) + sizeof( dmkTrack );
+		pointer = (char *)(temp_track) + sizeof( dmkTrack );
 		memcpy( ptr, pointer, size );
 
 		free( temp_track );
@@ -404,6 +404,7 @@ static void dmkdsk_write_sector_data_from_buffer(int drive, int side, int index1
 			return;
 		}
 
+		disp -= 128;
 		if( track_data->trackData[ disp ] == 0xfe )
 		{
 			size = 128 << track_data->trackData[ disp+ 4 ];
@@ -528,7 +529,7 @@ static packedIDData_P GetPackedSector( int drive, int track, int id_index, int s
 	{
 		disp = LITTLE_ENDIANIZE_INT16(track_data->idamOffset[id_index]);
 		disp &= 0x3fff;
-
+		
 		/* Check if sector index is out of bounds */
 		if( disp == 0 )
 		{
@@ -537,6 +538,7 @@ static packedIDData_P GetPackedSector( int drive, int track, int id_index, int s
 			return NULL;
 		}
 
+		disp -= 128;
 		if( track_data->trackData[ disp ] == 0xfe )
 		{
 			size = 128 << track_data->trackData[ disp+ 4 ];
