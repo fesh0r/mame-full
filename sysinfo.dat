@@ -8219,6 +8219,54 @@ $end
 
 #---------------------------------------------------------------------------------------------#
 
+$info=tmc600
+$bio
+Telmac TMC-600
+
+
+History and Trivia:
+
+Telmac TMC-600 is the only microcomputer ever designed and manufactured in Finland. Only 600 units were produced, hence the model name. The computer casing was available in both black and brown. The computer is believed to be designed by T.V. and H.P. Two versions were released, the new version improved peripheral handling.
+
+The TMC-700 expansion added support for Centronics printers, an RF modulator and a real-time clock. Also a 5.25" floppy disk drive was available. Other add-ons included memory expansions (both RAM and ROM), I/O and A/D cards, an RS-232C controller, a B/W 132-character display controller, and a parallel/serial slave computer. The TMC-600 was designed to be used also in process control, so BASIC ROMs with user-customized keywords were sold.
+
+The manufacturer, Telercas Oy, was the Finnish distributor of RCA semiconductors. Telercas Oy was merged with the Finnish electronics retailer Yleiselektroniikka Oy in the early 1990s. The original documentation and hardware have disappeared and cannot be located as of autumn 2003.
+
+
+Features:
+
+CPU: 8-bit CDP1802 3.58 MHz
+Memory: 20-28K internal ROM operating system, 8K RAM
+Sound: 8 octaves, white noise generator
+Color: 8 colors
+Resolution: 240 x 216 pixels (40 x 24 / 20 x 24 characters)
+
+Connectors: Tape recorder (DIN), EURO connector, composite video
+with TMC-700: Centronics printer, RF modulator, RTC
+
+
+Known Issues:
+
+- keyboard repeat delay is very small, use natural keyboard as a workaround
+- color RAM is not emulated
+- sound is not emulated
+- real-time clock is not emulated
+- printer output is not emulated
+
+
+Links:
+
+Pelikonepeijoonit - http://www.pelikonepeijoonit.net/cgi-bin/page.cgi?pkpcode=telmac
+
+
+MESS Emulation State:
+
+preliminary
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
 $info=telstrat
 $bio
 Oric Telestrat
