@@ -19,10 +19,10 @@
 struct _MENU;
 extern struct _MENU *m_setup;
 
-typedef enum { 
+typedef enum {
 	MENU_ENTRY_TEXT, // display line of text
 	MENU_ENTRY_BUTTON, // execute callback when enter pressed
-	MENU_ENTRY_SELECTION, // use left, right to select item
+	MENU_ENTRY_SELECTION // use left, right to select item
 #if 0
 	MENU_ENTRY_INPUT, // define input key
 	MENU_ENTRY_DIRECTORY, // enter directory
