@@ -323,9 +323,8 @@ void	floppy_drive_set_geometry(int drive, floppy_type type)
 	}
 
 	drives[drive].id_index = 0;
-	drives[drive].current_track = 0;
-	drives[drive].flags |= FLOPPY_DRIVE_HEAD_AT_TRACK_0;
-
+    drives[drive].current_track = 3;
+    floppy_drive_seek(drive, -1);
 }
 
 void    floppy_drive_seek(int drive, signed int signed_tracks)
@@ -351,6 +350,8 @@ void    floppy_drive_seek(int drive, signed int signed_tracks)
 		{
 			pDrive->current_track = pDrive->max_track-1;
 		}
+
+        logerror("CUR TRACK: %04x\r\n", pDrive->current_track);
 
 		/* set track 0 flag */
 		pDrive->flags &= ~FLOPPY_DRIVE_HEAD_AT_TRACK_0;
