@@ -6,7 +6,7 @@
 
   Original code                               Carsten Sorensen   1998
   Mess modifications, bug fixes and speedups  Hans de Goede      1998
-  Bug fixes, SGB and CGB code                 Anthony Kruize     2002
+  Bug fixes, SGB and GBC code                 Anthony Kruize     2002
 
 ***************************************************************************/
 #include "driver.h"
@@ -115,6 +115,7 @@ struct layer_struct
 	/* GBC specific */
 	UINT16 *gbc_tiles[2];
 	UINT8  *gbc_map;
+	INT16  bgline;
 };
 
 void gb_refresh_scanline (void)
@@ -493,11 +494,10 @@ void sgb_refresh_border(void)
 		map += (yidx % 8) ? 0 : 32;
 		for( xidx = 0; xidx < 32; xidx++ )
 		{
-			UINT8 *sgb_tile_data_ = memory_region( REGION_GFX1 );
 			if( map[xidx] & 0x8000 ) /* Vertical flip */
-				tiles = (UINT16 *)sgb_tile_data_ + (7 - (yidx % 8));
+				tiles = (UINT16 *)sgb_tile_data + (7 - (yidx % 8));
 			else /* No vertical flip */
-				tiles = (UINT16 *)sgb_tile_data_ + (yidx % 8);
+				tiles = (UINT16 *)sgb_tile_data + (yidx % 8);
 			tiles2 = tiles + 8;
 
 			pal = ((map[xidx] & 0x1C00) >> 10) * 16;
@@ -579,7 +579,7 @@ INLINE void gbc_update_sprites (void)
 			if( gbc_mode == GBC_MODE_MONO )
 				pal = (oam[3] & 0x10) ? 8 : 4;
 			else
-				pal = GBC_PAL_OBJ_OFFSET + (oam[3] & 0x3) * 4;
+				pal = GBC_PAL_OBJ_OFFSET + (oam[3] & 0x7) * 4;
 
 			xindex = oam[1] - 8;
 			if (oam[3] & 0x40)		   /* flip y ? */
@@ -673,6 +673,7 @@ void gbc_refresh_scanline (void)
 
 		bgline = (SCROLLY + CURLINE) & 0xFF;
 
+		layer[0].bgline = bgline;
 		layer[0].bg_map = gb_bgdtab;
 		layer[0].bg_map += (bgline << 2) & 0x3E0;
 		layer[0].gbc_map = gbc_bgdtab;
@@ -695,6 +696,7 @@ void gbc_refresh_scanline (void)
 		if (xpos < 0)
 			xpos = 0;
 
+		layer[1].bgline = bgline;
 		layer[1].bg_map = gb_wndtab;
 		layer[1].bg_map += (bgline << 2) & 0x3E0;
 		layer[1].gbc_map = gbc_wndtab;
@@ -730,14 +732,13 @@ void gbc_refresh_scanline (void)
 		i = layer[l].xend;
 
 		tiles = layer[l].gbc_tiles[(gbcmap[xidx] & 0x8) >> 3];
-		if( (gbcmap[xidx] & 0x40) >> 6 ) /* vertical flip (DOESN'T WORK) */
-			data = (UINT16) (tiles[(map[xidx] ^ gb_tile_no_mod) * 8 + ((CURLINE + 1) % 8)] << bit);
-		else /* no vertical flip */
-			data = (UINT16) (tiles[(map[xidx] ^ gb_tile_no_mod) * 8] << bit);
-
+		if( (gbcmap[xidx] & 0x40) >> 6 ) /* vertical flip */
+			tiles -= ((layer[l].bgline & 7) << 1) - 7;
+		data = (UINT16)(tiles[(map[xidx] ^ gb_tile_no_mod) * 8] << bit);
 #ifndef LSB_FIRST
 		data = (data << 8) | (data >> 8);
 #endif
+
 		xindex = layer[l].xstart;
 		while (i)
 		{
@@ -754,7 +755,7 @@ void gbc_refresh_scanline (void)
 					colour = ((data & 0x8000) ? 2 : 0) | ((data & 0x0080) ? 1 : 0);
 					data <<= 1;
 				}
-				plot_pixel(bitmap, xindex, yindex, Machine->remapped_colortable[(((gbcmap[xidx] & 0x3) * 4) + colour) & 0x7fff]);
+				plot_pixel(bitmap, xindex, yindex, Machine->remapped_colortable[(((gbcmap[xidx] & 0x7) * 4) + colour)]);
 				xindex++;
 				*zbuf++ = colour;
 				bit++;
@@ -763,13 +764,9 @@ void gbc_refresh_scanline (void)
 			xidx = (xidx + 1) & 31;
 			bit = 0;
 			tiles = layer[l].gbc_tiles[(gbcmap[xidx] & 0x8) >> 3];
-			if( (gbcmap[xidx] & 0x40) >> 6 )
-				data = (UINT16) (tiles[(map[xidx] ^ gb_tile_no_mod) * 8 + ((CURLINE + 1) % 8)]);
-			else
-				data = (UINT16) (tiles[(map[xidx] ^ gb_tile_no_mod) * 8]);
-#ifndef LSB_FIRST
-			data = (data << 8) | (data >> 8);
-#endif
+			if( (gbcmap[xidx] & 0x40) >> 6 ) /* vertical flip */
+				tiles -= ((layer[l].bgline & 7) << 1) - 7;
+			data = (UINT16)(tiles[(map[xidx] ^ gb_tile_no_mod) * 8]);
 		}
 		l++;
 	}
