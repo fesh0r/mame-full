@@ -290,7 +290,7 @@ static int default_column_shown[] = {   1,  0,  1,  1,  1,  1,  1,  1,  1,  1,  
 /* Hidden columns need to go at the end of the order array */
 static int default_column_order[] = {   0,  2,  3,  4,  5,  6,  7,  8,  9,  1, 10 };
 
-static const char *view_modes[VIEW_MAX] = { "Large Icons", "Small Icons", "List", "Details" };
+static const char *view_modes[VIEW_MAX] = { "Large Icons", "Small Icons", "List", "Report", "Details" };
 
 static char oldInfoMsg[400] = 
 MAME32NAME " has detected outdated configuration data.\n\n\

@@ -1076,7 +1076,7 @@ static void SelectDefaultFolder(void)
 		if (hti_next == NULL)
 		{
 			hti_next = TreeView_GetNextSibling(hTreeView,hti);
-			while (hti_next == NULL)
+			if (hti_next == NULL)
 			{
 				hti_next = TreeView_GetParent(hTreeView,hti);
 				if (hti_next != NULL)
@@ -2016,6 +2016,8 @@ BOOL TryRenameCustomFolder(LPTREEFOLDER lpFolder,const char *new_name)
 	
 	if (lpFolder->m_nParent >= 0)
 	{
+		// a child extra folder was renamed, so do the rename and save the parent
+
 		// save old title
 		char *old_title = lpFolder->m_lpTitle;
 
