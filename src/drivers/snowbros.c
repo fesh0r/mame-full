@@ -442,14 +442,14 @@ ROM_START( wintbob )
 	ROM_LOAD( "wb05.bin",     0x0000, 0x10000,0x53FE59DF ) /* Need to Cut in Half? */
 
 	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD_EVEN( "wb13.bin",     0x00000, 0x10000, 0x426921DE )
-	ROM_LOAD_ODD ( "wb06.bin",     0x00000, 0x10000, 0x68204937 )
-	ROM_LOAD_EVEN( "wb12.bin",     0x20000, 0x10000, 0xEF4E04C7 )
-	ROM_LOAD_ODD ( "wb07.bin",     0x20000, 0x10000, 0x53F40978 )
-	ROM_LOAD_EVEN( "wb11.bin",     0x40000, 0x10000, 0x41CB4563 )
-	ROM_LOAD_ODD ( "wb08.bin",     0x40000, 0x10000, 0x9497B88C )
-	ROM_LOAD_EVEN( "wb10.bin",     0x60000, 0x10000, 0x5FA22B1E )
-	ROM_LOAD_ODD ( "wb09.bin",     0x60000, 0x10000, 0x9BE718CA )
+	ROM_LOAD_ODD ( "wb13.bin",     0x00000, 0x10000, 0x426921DE )
+	ROM_LOAD_EVEN( "wb06.bin",     0x00000, 0x10000, 0x68204937 )
+	ROM_LOAD_ODD ( "wb12.bin",     0x20000, 0x10000, 0xEF4E04C7 )
+	ROM_LOAD_EVEN( "wb07.bin",     0x20000, 0x10000, 0x53F40978 )
+	ROM_LOAD_ODD ( "wb11.bin",     0x40000, 0x10000, 0x41CB4563 )
+	ROM_LOAD_EVEN( "wb08.bin",     0x40000, 0x10000, 0x9497B88C )
+	ROM_LOAD_ODD ( "wb10.bin",     0x60000, 0x10000, 0x5FA22B1E )
+	ROM_LOAD_EVEN( "wb09.bin",     0x60000, 0x10000, 0x9BE718CA )
 ROM_END
 
 GAME( 1990, snowbros, 0,        snowbros, snowbros, 0, ROT0, "Toaplan (Romstar license)", "Snow Bros. - Nick & Tom (set 1)" )
