@@ -882,12 +882,9 @@ static void setup_artifact_palette(int destcolor, UINT16 c0, UINT16 c1,
 
 PALETTE_INIT( m6847 )
 {
-	int i;
-
 	assert((sizeof(artifactfactors) / (sizeof(artifactfactors[0]) * 3)) == M6847_ARTIFACT_COLOR_COUNT);
 
-	for(i = 0; i < (sizeof(palette) / (sizeof(palette[0])*3)); i++)
-		palette_set_color(i, palette[i * 3 + 0], palette[i * 3 + 1], palette[i * 3 + 2]);
+	palette_set_colors(0, palette, sizeof(palette) / 3);
 
 	setup_artifact_palette(sizeof(palette) / (sizeof(palette[0])*3) + (M6847_ARTIFACT_COLOR_COUNT*0),
 		0, 1, artifactfactors, M6847_ARTIFACT_COLOR_COUNT, 0);

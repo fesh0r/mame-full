@@ -8,8 +8,7 @@
 
 #include "driver.h"
 #include "cpu/m6502/m6502.h"
-#include "machine/atari.h"
-#include "vidhrdw/atari.h"
+#include "includes/atari.h"
 
 /******************************************************************************
     Atari 800 memory map (preliminary)
@@ -677,7 +676,7 @@ INPUT_PORTS_START( a5200 )
 INPUT_PORTS_END
 
 
-static UINT8 palette[256*3] =
+static UINT8 atari_palette[256*3] =
 {
 	/* Grey */
     0x00,0x00,0x00, 0x1c,0x1c,0x1c, 0x39,0x39,0x39, 0x59,0x59,0x59,
@@ -761,7 +760,7 @@ static UINT8 palette[256*3] =
 	0xff,0xc1,0x60, 0xff,0xc6,0x71, 0xff,0xcb,0x83, 0xff,0xcb,0x83
 };
 
-static unsigned short colortable[] =
+static unsigned short atari_colortable[] =
 {
 	0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,
 	0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,
@@ -782,10 +781,10 @@ static unsigned short colortable[] =
 };
 
 /* Initialise the palette */
-static void atari_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
+static PALETTE_INIT( atari )
 {
-	memcpy(sys_palette,palette,sizeof(palette));
-	memcpy(sys_colortable,colortable,sizeof(colortable));
+	palette_set_colors(0, atari_palette, sizeof(atari_palette) / 3);
+	memcpy(colortable,atari_colortable,sizeof(atari_colortable));
 }
 
 
@@ -813,265 +812,111 @@ static struct DACinterface dac_interface =
 	{ 50 }				/* volume */
 };
 
-static struct MachineDriver machine_driver_a400 =
-{
+
+static MACHINE_DRIVER_START( atari_common_nodac )
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6510,
-			FREQ_17_EXACT,
-			readmem_a400,writemem_a400,0,0,
-			a400_interrupt, TOTAL_LINES_60HZ	/* every scanline */
-        }
-	},
-	/* frames per second, VBL handled by atari_interrupt */
-	FRAME_RATE_60HZ, 0,
-    1,
-	a400_init_machine,
-	a800_close_floppy,
+	MDRV_CPU_ADD_TAG("main", M6510, FREQ_17_EXACT)
+	MDRV_VBLANK_DURATION(0)
+	MDRV_VBLANK_DURATION(1)
 
 	/* video hardware */
-	HWIDTH*8, TOTAL_LINES_60HZ, { MIN_X, MAX_X, MIN_Y, MAX_Y },
-    0,
-	sizeof(palette) / sizeof(palette[0]) / 3,
-	sizeof(colortable) / sizeof(colortable[0]),
-	atari_init_palette,
+	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
+	MDRV_VISIBLE_AREA(MIN_X, MAX_X, MIN_Y, MAX_Y)
+	MDRV_PALETTE_LENGTH(sizeof(atari_palette) / sizeof(atari_palette[0]) / 3)
+	MDRV_COLORTABLE_LENGTH(sizeof(atari_colortable) / sizeof(atari_colortable[0]))
+	MDRV_PALETTE_INIT(atari)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	atari_vh_start,
-	atari_vh_stop,
-	atari_vh_screenrefresh,
+	MDRV_VIDEO_START(atari)
+	MDRV_VIDEO_UPDATE(atari)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_POKEY,
-			&pokey_interface
-		},
-        {
-			SOUND_DAC,
-			&dac_interface
-		}
-    }
-};
+	MDRV_SOUND_ADD(POKEY, pokey_interface)
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_a400pal =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_M6510,
-			FREQ_17_EXACT,
-			readmem_a400,writemem_a400,0,0,
-			a400_interrupt, TOTAL_LINES_50HZ	/* every scanline */
-        }
-	},
-	/* frames per second, VBL handled by atari_interrupt */
-	FRAME_RATE_50HZ, 0,
-    1,
-	a400_init_machine,
-	a800_close_floppy,
 
-	/* video hardware */
-	HWIDTH*8, TOTAL_LINES_50HZ, { MIN_X, MAX_X, MIN_Y, MAX_Y },
-    0,
-	sizeof(palette) / sizeof(palette[0]) / 3,
-	sizeof(colortable) / sizeof(colortable[0]),
-	atari_init_palette,
+static MACHINE_DRIVER_START( atari_common )
+	MDRV_IMPORT_FROM( atari_common_nodac )
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
-	VIDEO_TYPE_RASTER,
-	0,
-	atari_vh_start,
-	atari_vh_stop,
-	atari_vh_screenrefresh,
 
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_POKEY,
-			&pokey_interface
-		},
-        {
-			SOUND_DAC,
-			&dac_interface
-		}
-    }
-};
+static MACHINE_DRIVER_START( a400 )
+	MDRV_IMPORT_FROM( atari_common )
 
-static struct MachineDriver machine_driver_a800 =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_M6510,
-			FREQ_17_EXACT,
-			readmem_a800,writemem_a800,0,0,
-			a800_interrupt, TOTAL_LINES_60HZ	/* every scanline */
-        }
-	},
-	/* frames per second, VBL handled by atari_interrupt */
-	FRAME_RATE_60HZ, 0,
-    1,
-	a800_init_machine,
-	a800_close_floppy,
+	MDRV_CPU_MODIFY( "main" )
+	MDRV_CPU_MEMORY(readmem_a400,writemem_a400)
+	MDRV_CPU_VBLANK_INT(a400_interrupt, TOTAL_LINES_60HZ)
 
-	/* video hardware */
-	HWIDTH*8, TOTAL_LINES_60HZ, { MIN_X, MAX_X, MIN_Y, MAX_Y },
-    0,
-	sizeof(palette) / sizeof(palette[0]) / 3,
-	sizeof(colortable) / sizeof(colortable[0]),
-	atari_init_palette,
+	MDRV_MACHINE_INIT( a400 )
+	MDRV_FRAMES_PER_SECOND(FRAME_RATE_60HZ)
+	MDRV_SCREEN_SIZE(HWIDTH*8, TOTAL_LINES_60HZ)
+MACHINE_DRIVER_END
 
-	VIDEO_TYPE_RASTER,
-	0,
-	atari_vh_start,
-	atari_vh_stop,
-	atari_vh_screenrefresh,
 
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_POKEY,
-			&pokey_interface
-		},
-        {
-			SOUND_DAC,
-			&dac_interface
-		}
-    }
-};
+static MACHINE_DRIVER_START( a400pal )
+	MDRV_IMPORT_FROM( atari_common )
 
-static struct MachineDriver machine_driver_a800pal =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_M6510,
-			FREQ_17_EXACT,
-			readmem_a800,writemem_a800,0,0,
-			a800_interrupt, TOTAL_LINES_50HZ	/* every scanline */
-        }
-	},
-	/* frames per second, VBL handled by atari_interrupt */
-	FRAME_RATE_50HZ, 0,
-    1,
-	a800_init_machine,
-	a800_close_floppy,
+	MDRV_CPU_MODIFY( "main" )
+	MDRV_CPU_MEMORY(readmem_a400,writemem_a400)
+	MDRV_CPU_VBLANK_INT(a400_interrupt, TOTAL_LINES_50HZ)
 
-	/* video hardware */
-	HWIDTH*8, TOTAL_LINES_50HZ, { MIN_X, MAX_X, MIN_Y, MAX_Y },
-    0,
-	sizeof(palette) / sizeof(palette[0]) / 3,
-	sizeof(colortable) / sizeof(colortable[0]),
-	atari_init_palette,
+	MDRV_MACHINE_INIT( a400 )
+	MDRV_FRAMES_PER_SECOND(FRAME_RATE_50HZ)
+	MDRV_SCREEN_SIZE(HWIDTH*8, TOTAL_LINES_50HZ)
+MACHINE_DRIVER_END
 
-	VIDEO_TYPE_RASTER,
-	0,
-	atari_vh_start,
-	atari_vh_stop,
-	atari_vh_screenrefresh,
 
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_POKEY,
-			&pokey_interface
-		},
-        {
-			SOUND_DAC,
-			&dac_interface
-		}
-    }
-};
+static MACHINE_DRIVER_START( a800 )
+	MDRV_IMPORT_FROM( atari_common )
 
-static struct MachineDriver machine_driver_a800xl =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_M6510,
-			FREQ_17_EXACT,
-            readmem_a800xl,writemem_a800xl,0,0,
-			a800xl_interrupt, TOTAL_LINES_60HZ	 /* every scanline */
-        }
-	},
-	/* frames per second, VBL handled by atari_interrupt */
-	FRAME_RATE_60HZ, 0,
-    1,
-	a800xl_init_machine,
-	a800_close_floppy,
+	MDRV_CPU_MODIFY( "main" )
+	MDRV_CPU_MEMORY(readmem_a800,writemem_a800)
+	MDRV_CPU_VBLANK_INT(a800_interrupt, TOTAL_LINES_60HZ)
 
-	/* video hardware */
-	HWIDTH*8, TOTAL_LINES_60HZ, { MIN_X, MAX_X, MIN_Y, MAX_Y },
-    0,
-	sizeof(palette) / sizeof(palette[0]) / 3,
-	sizeof(colortable) / sizeof(colortable[0]),
-	atari_init_palette,
+	MDRV_MACHINE_INIT( a800 )
+	MDRV_FRAMES_PER_SECOND(FRAME_RATE_60HZ)
+	MDRV_SCREEN_SIZE(HWIDTH*8, TOTAL_LINES_60HZ)
+MACHINE_DRIVER_END
 
-	VIDEO_TYPE_RASTER,
-	0,
-	atari_vh_start,
-	atari_vh_stop,
-	atari_vh_screenrefresh,
 
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_POKEY,
-			&pokey_interface
-		},
-        {
-			SOUND_DAC,
-			&dac_interface
-		}
-    }
-};
+static MACHINE_DRIVER_START( a800pal )
+	MDRV_IMPORT_FROM( atari_common )
 
-static struct MachineDriver machine_driver_a5200 =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_M6510,
-			FREQ_17_EXACT,
-            readmem_5200,writemem_5200,0,0,
-			a5200_interrupt, TOTAL_LINES_60HZ	   /* every scanline */
-        }
-	},
-	/* frames per second, VBL handled by atari_interrupt */
-	FRAME_RATE_60HZ, 0,
-    1,
-	a5200_init_machine,
-	0,	/* stop_machine */
+	MDRV_CPU_MODIFY( "main" )
+	MDRV_CPU_MEMORY(readmem_a800,writemem_a800)
+	MDRV_CPU_VBLANK_INT(a800_interrupt, TOTAL_LINES_50HZ)
 
-	/* video hardware */
-	HWIDTH*8, TOTAL_LINES_60HZ, { MIN_X, MAX_X, MIN_Y, MAX_Y },
-    0,
-	sizeof(palette) / sizeof(palette[0]) / 3,
-	sizeof(colortable) / sizeof(colortable[0]),
-	atari_init_palette,
+	MDRV_MACHINE_INIT( a800 )
+	MDRV_FRAMES_PER_SECOND(FRAME_RATE_50HZ)
+	MDRV_SCREEN_SIZE(HWIDTH*8, TOTAL_LINES_50HZ)
+MACHINE_DRIVER_END
 
-	VIDEO_TYPE_RASTER,
-	0,
-	atari_vh_start,
-	atari_vh_stop,
-	atari_vh_screenrefresh,
 
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_POKEY,
-			&pokey_interface
-		}
-    }
-};
+static MACHINE_DRIVER_START( a800xl )
+	MDRV_IMPORT_FROM( atari_common )
+
+	MDRV_CPU_MODIFY( "main" )
+	MDRV_CPU_MEMORY(readmem_a800xl,writemem_a800xl)
+	MDRV_CPU_VBLANK_INT(a800xl_interrupt, TOTAL_LINES_60HZ)
+
+	MDRV_MACHINE_INIT( a800xl )
+	MDRV_FRAMES_PER_SECOND(FRAME_RATE_60HZ)
+	MDRV_SCREEN_SIZE(HWIDTH*8, TOTAL_LINES_60HZ)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( a5200 )
+	MDRV_IMPORT_FROM( atari_common_nodac )
+
+	MDRV_CPU_MODIFY( "main" )
+	MDRV_CPU_MEMORY(readmem_5200,writemem_5200)
+	MDRV_CPU_VBLANK_INT(a800xl_interrupt, TOTAL_LINES_60HZ)
+
+	MDRV_MACHINE_INIT( a5200 )
+	MDRV_FRAMES_PER_SECOND(FRAME_RATE_60HZ)
+	MDRV_SCREEN_SIZE(HWIDTH*8, TOTAL_LINES_60HZ)
+MACHINE_DRIVER_END
+
 
 ROM_START(a400)
 	ROM_REGION(0x14000,REGION_CPU1,0) /* 64K for the CPU + 2 * 8K for cartridges */

@@ -1477,6 +1477,7 @@ static void *generic_fopen(int pathc, const char **pathv, const char *gamename, 
 					ZIP *z = NULL;
 					struct zipent *ent = NULL;
 					const char *first_entry_name;
+					extern char *renamed_image;
 
 					if (((z = openzip(name)) != NULL) && ((ent = readzip(z)) != NULL))
 					{
@@ -1488,6 +1489,7 @@ static void *generic_fopen(int pathc, const char **pathv, const char *gamename, 
 
 						strcat(name, "/");
 						strcat(name, first_entry_name);
+						renamed_image = strdup(name);
 						LOG(("osd_fopen: opened a raw zip file; renaming as '%s'\n", name));
 						goto step5;
 					}

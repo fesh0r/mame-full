@@ -172,6 +172,9 @@ extern int mess_keep_going;
 int battery_load(const char *filename, void *buffer, int length);
 int battery_save(const char *filename, void *buffer, int length);
 
+/* handy wrapper for palette_set_color */
+void palette_set_colors(pen_t color_base, const UINT8 *colors, int color_count);
+
 /* RAM configuration calls */
 #define RAM_STRING_BUFLEN 16
 extern UINT32 mess_ram_size;

@@ -8,10 +8,13 @@
 
 #include "driver.h"
 #include "cpu/m6502/m6502.h"
-#include "machine/atari.h"
-#include "vidhrdw/atari.h"
+#include "includes/atari.h"
 
+#ifdef MAME_DEBUG
 #define VERBOSE 1
+#else
+#define VERBOSE 0
+#endif
 
 #if VERBOSE
 #define LOG(x)	logerror x

@@ -9,8 +9,7 @@
 #include <ctype.h>
 #include "driver.h"
 #include "cpu/m6502/m6502.h"
-#include "machine/atari.h"
-#include "vidhrdw/atari.h"
+#include "includes/atari.h"
 
 #define VERBOSE_POKEY	0
 #define VERBOSE_SERIAL	0
@@ -96,30 +95,28 @@ void a800_setbank(int n)
 	}
 }
 
-void a400_init_machine(void)
+static void machine_init_atari_generic(int machine_type, int has_cart, int has_pia)
 {
-	atari = ATARI_400;
+	atari = machine_type;
 
 	gtia_reset();
 	pokey_reset();
-	atari_pia_reset();
+	if (has_pia)
+		atari_pia_reset();
 	antic_reset();
 
-	if( a800_cart_loaded )
+	if (has_cart && a800_cart_loaded)
 		a800_setbank(1);
 }
 
-void a800_init_machine(void)
+MACHINE_INIT( a400 )
 {
-	atari = ATARI_800;
+	machine_init_atari_generic(ATARI_400, TRUE, TRUE);
+}
 
-	gtia_reset();
-	pokey_reset();
-	atari_pia_reset();
-	antic_reset();
-
-	if( a800_cart_loaded )
-		a800_setbank(1);
+MACHINE_INIT( a800 )
+{
+	machine_init_atari_generic(ATARI_800, TRUE, TRUE);
 }
 
 int a800_floppy_init(int id)
@@ -210,14 +207,9 @@ void a800_rom_exit(int id)
  *
  **************************************************************/
 
-void a800xl_init_machine(void)
+MACHINE_INIT( a800xl)
 {
-	atari = ATARI_800XL;
-
-	gtia_reset();
-	pokey_reset();
-	atari_pia_reset();
-	antic_reset();
+	machine_init_atari_generic(ATARI_800XL, FALSE, TRUE);
 	a800xl_mmu(atari_pia.w.pbout, atari_pia.w.pbout);
 }
 
@@ -276,12 +268,9 @@ int a800xl_id_rom(int id)
  *
  **************************************************************/
 
-void a5200_init_machine(void)
+MACHINE_INIT( a5200 )
 {
-	atari = ATARI_5200;
-	gtia_reset();
-	pokey_reset();
-	antic_reset();
+	machine_init_atari_generic(ATARI_5200, FALSE, FALSE);
 }
 
 int a5200_rom_init(int id)
@@ -602,20 +591,6 @@ static void open_floppy(int id)
 				(drv[id].heads == 1) ? "SS" : "DS",
 				(drv[id].density == 0) ? "SD" : (drv[id].density == 1) ? "MD" : "DD",
 				drv[id].seclen);
-	}
-}
-
-void a800_close_floppy (void)
-{
-	int i;
-
-	for (i = 0; i < 4; i ++)
-	{
-		if (drv[i].image)
-		{
-			free(drv[i].image);
-			drv[i].image = NULL;
-		}
 	}
 }
 

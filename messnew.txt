@@ -33,6 +33,9 @@ Source Changes:
 
 - Fixed some bugs that caused the battery backups in the NES and GB systems to
   be placed in odd directories. [Nate Woods]
+  
+- Added palette_set_colors() function to make it easy to initialize a palette
+  with a predefined list of colors. [Nate Woods]
 
 - Fixed bugs #192 and #200 - remember that:
 
