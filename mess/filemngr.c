@@ -695,11 +695,11 @@ int filemanager(struct mame_bitmap *bitmap, int selected)
 	const char *name;
 	const char *menu_item[40];
 	const char *menu_subitem[40];
-	int types[40];
+	const struct IODevice *devices[40];
 	int ids[40];
 	char flag[40];
 	char names[40][64];
-	int sel, total, arrowize, type, id;
+	int sel, total, arrowize, id;
 	const struct IODevice *dev;
 	mess_image *img;
 
@@ -709,17 +709,16 @@ int filemanager(struct mame_bitmap *bitmap, int selected)
 	/* Cycle through all devices for this system */
 	for (dev = Machine->devices; dev->type < IO_COUNT; dev++)
 	{
-		type = dev->type;
 		for (id = 0; id < dev->count; id++)
 		{
-			img = image_from_devtype_and_index(type, id);
+			img = image_from_device_and_index(dev, id);
 			strcpy( names[total], image_typename_id(img) );
 			menu_item[total] = (names[total]) ? names[total] : "---";
 			name = image_filename(img);
 			menu_subitem[total] = (name) ? name : "---";
 
 			flag[total] = 0;
-			types[total] = type;
+			devices[total] = dev;
 			ids[total] = id;
 
 			total++;
@@ -730,7 +729,7 @@ int filemanager(struct mame_bitmap *bitmap, int selected)
 	/* if the fileselect() mode is active */
 	if (sel & (2 << SEL_BITS))
 	{
-		img = image_from_devtype_and_index(types[previous_sel & SEL_MASK], ids[previous_sel & SEL_MASK]);
+		img = image_from_device_and_index(devices[previous_sel & SEL_MASK], ids[previous_sel & SEL_MASK]);
 		sel = fileselect(bitmap, selected & ~(2 << SEL_BITS), image_filename(img));
 		if (sel != 0 && sel != -1 && sel!=-2)
 			return sel | (2 << SEL_BITS);
@@ -743,7 +742,7 @@ int filemanager(struct mame_bitmap *bitmap, int selected)
 			previous_sel = previous_sel & SEL_MASK;
 
 			/* attempt a filename change */
-			img = image_from_devtype_and_index(types[previous_sel], ids[previous_sel]);
+			img = image_from_device_and_index(devices[previous_sel], ids[previous_sel]);
 			image_load(img, entered_filename[0] ? entered_filename : NULL);
 		}
 
@@ -782,7 +781,7 @@ int filemanager(struct mame_bitmap *bitmap, int selected)
 		{
 			/* yes */
 			sel &= SEL_MASK;
-			img = image_from_devtype_and_index(types[sel], ids[sel]);
+			img = image_from_device_and_index(devices[sel], ids[sel]);
 			image_load(img, NULL);
 		}
 
@@ -813,7 +812,7 @@ int filemanager(struct mame_bitmap *bitmap, int selected)
 		/* no, let the osd code have a crack at changing files */
 		else
 		{
-			img = image_from_devtype_and_index(types[sel], ids[sel]);
+			img = image_from_device_and_index(devices[sel], ids[sel]);
 			os_sel = osd_select_file(img, entered_filename);
 		}
 
