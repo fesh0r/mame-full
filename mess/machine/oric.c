@@ -501,48 +501,104 @@ static unsigned char port_3fb_w;
 
 static void oric_jasmin_set_mem_0x0c000(void)
 {
-	if ((port_3fa_w & 0x01)==0)
+	/* assumption:
+	1. It is possible to access all 16k overlay ram.
+	2. If os is enabled, and overlay ram is enabled, all 16k can be accessed.
+	3. if os is disabled, and overlay ram is enabled, jasmin rom takes priority.
+	*/
+
+	/* the ram is disabled in the jasmin rom which indicates that jasmin takes
+	priority over the ram */
+
+	/* basic rom disabled? */
+	if ((port_3fb_w & 0x01)==0)
 	{
-		/* overlay ram disabled */
+		/* no, it is enabled! */
 
-		if ((port_3fb_w & 0x01)==0)
+		/* overlay ram enabled? */
+		if ((port_3fa_w & 0x01)==0)
 		{
-			/* basic rom enabled */			
-			
+			unsigned char *rom_ptr;
 
+			/* no it is disabled */
+			logerror("&c000-&ffff is os rom\n");
+			
+			memory_set_bankhandler_r(1, 0, MRA_BANK1);
+			memory_set_bankhandler_r(2, 0, MRA_BANK2);
+			memory_set_bankhandler_r(3, 0, MRA_BANK3);
+			memory_set_bankhandler_w(5, 0, MWA_NOP);
+			memory_set_bankhandler_w(6, 0, MWA_NOP);
+			memory_set_bankhandler_w(7, 0, MWA_NOP);
+
+			rom_ptr = memory_region(REGION_CPU1) + 0x010000;
+			cpu_setbank(1, rom_ptr);
+			cpu_setbank(2, rom_ptr+0x02000);
+			cpu_setbank(3, rom_ptr+0x03800);
 		}
 		else
 		{
-			/* basic rom disabled */
+			logerror("&c000-&ffff is ram\n");
 
+			memory_set_bankhandler_r(1, 0, MRA_BANK1);
+			memory_set_bankhandler_r(2, 0, MRA_BANK2);
+			memory_set_bankhandler_r(3, 0, MRA_BANK3);
+			memory_set_bankhandler_w(5, 0, MWA_BANK5);
+			memory_set_bankhandler_w(6, 0, MWA_BANK6);
+			memory_set_bankhandler_w(7, 0, MWA_BANK7);
 
-
-		}
+			cpu_setbank(1, oric_ram_0x0c000);
+			cpu_setbank(2, oric_ram_0x0c000+0x02000);
+			cpu_setbank(3, oric_ram_0x0c000+0x03800);
+			cpu_setbank(5, oric_ram_0x0c000);
+			cpu_setbank(6, oric_ram_0x0c000+0x02000);
+			cpu_setbank(7, oric_ram_0x0c000+0x03800);
+		}		
 	}
 	else
 	{
-		/* overlay ram enabled */
+		/* yes, basic rom is disabled */
 
-		if ((port_3fb_w & 0x01)==0)
+		if ((port_3fa_w & 0x01)==0)
 		{
-			/* basic rom enabled */
+			/* overlay ram disabled */
 			
-
-
+			logerror("&c000-&f8ff is nothing!\n");
+			
+			memory_set_bankhandler_r(1, 0, MRA_NOP);
+			memory_set_bankhandler_r(2, 0, MRA_NOP);
+			memory_set_bankhandler_r(3, 0, MRA_NOP);
+			memory_set_bankhandler_w(5, 0, MWA_NOP);
+			memory_set_bankhandler_w(6, 0, MWA_NOP);
+			memory_set_bankhandler_w(7, 0, MWA_NOP);
 		}
 		else
 		{
-			/* basic rom disabled */
+			logerror("&c000-&f8ff is ram!\n");
 
+			memory_set_bankhandler_r(1, 0, MRA_BANK1);
+			memory_set_bankhandler_r(2, 0, MRA_BANK2);
+			memory_set_bankhandler_w(5, 0, MWA_BANK5);
+			memory_set_bankhandler_w(6, 0, MWA_BANK6);
 
-
+			cpu_setbank(1, oric_ram_0x0c000);
+			cpu_setbank(2, oric_ram_0x0c000+0x02000);
+			cpu_setbank(5, oric_ram_0x0c000);
+			cpu_setbank(6, oric_ram_0x0c000+0x02000);
 		}
 
+		{
+			/* basic rom disabled */
+			unsigned char *rom_ptr;
+
+			logerror("&f800-&ffff is jasmin rom\n"); 	
+			/* jasmin rom enabled */
+			memory_set_bankhandler_r(3, 0, MRA_BANK3);
+			memory_set_bankhandler_w(7, 0, MWA_BANK7);
+			rom_ptr = memory_region(REGION_CPU1) + 0x010000+0x04000+0x02000;
+			cpu_setbank(3, rom_ptr);
+			cpu_setbank(7, rom_ptr);		
+		}
 	}
-
-
-
-
 }
   
 static void oric_jasmin_wd179x_callback(int State)
@@ -606,6 +662,7 @@ WRITE_HANDLER(oric_jasmin_w)
 	{
 		/* microdisc floppy disc interface */
 		case 0x0f4:
+			logerror("cycles: %d\n",cpu_getcurrentcycles());
 			wd179x_command_w(0,data);
 			break;
 		case 0x0f5:
@@ -626,10 +683,12 @@ WRITE_HANDLER(oric_jasmin_w)
 			wd179x_reset();
 			break;
 		case 0x0fa:
+			logerror("jasmin overlay ram w: %02x PC: %04x\n",data,cpu_get_pc());
 			port_3fa_w = data;
 			oric_jasmin_set_mem_0x0c000();
 			break;
 		case 0x0fb:
+			logerror("jasmin romdis w: %02x PC: %04x\n",data,cpu_get_pc());
 			port_3fb_w = data;
 			oric_jasmin_set_mem_0x0c000();
 			break;
@@ -755,10 +814,15 @@ void	oric_microdisc_set_mem_0x0c000(void)
 		logerror("&e000-&ffff is os rom\n"); 
 		/* basic rom */
 		memory_set_bankhandler_r(2, 0, MRA_BANK2);
+		memory_set_bankhandler_r(3, 0, MRA_BANK3);
 		memory_set_bankhandler_w(6, 0, MWA_NOP);
+		memory_set_bankhandler_w(7, 0, MWA_NOP);
 		rom_ptr = memory_region(REGION_CPU1) + 0x010000;
 		cpu_setbank(2, rom_ptr+0x02000);
+		cpu_setbank(3, rom_ptr+0x03800);
 		cpu_setbank(6, rom_ptr+0x02000);
+		cpu_setbank(7, rom_ptr+0x03800);
+
 	}
 	else
 	{
@@ -768,20 +832,26 @@ void	oric_microdisc_set_mem_0x0c000(void)
 			unsigned char *rom_ptr;
 			logerror("&e000-&ffff is disk rom\n"); 
 			memory_set_bankhandler_r(2, 0, MRA_BANK2);
+			memory_set_bankhandler_r(3, 0, MRA_BANK3);
 			memory_set_bankhandler_w(6, 0, MWA_NOP);
-
+			memory_set_bankhandler_w(7, 0, MWA_NOP);
 			/* enable rom of microdisc interface */
 			rom_ptr = memory_region(REGION_CPU1) + 0x014000;
 			cpu_setbank(2, rom_ptr);
+			cpu_setbank(3, rom_ptr+0x01800);
 		}
 		else
 		{
 			logerror("&e000-&ffff is ram\n"); 
 			/* rom disabled enable ram */
 			memory_set_bankhandler_r(2, 0, MRA_BANK2);
+			memory_set_bankhandler_r(3, 0, MRA_BANK3);
 			memory_set_bankhandler_w(6, 0, MWA_BANK6);
+			memory_set_bankhandler_w(7, 0, MWA_BANK7);
 			cpu_setbank(2, oric_ram_0x0c000+0x02000);
+			cpu_setbank(3, oric_ram_0x0c000+0x03800);
 			cpu_setbank(6, oric_ram_0x0c000+0x02000);
+			cpu_setbank(7, oric_ram_0x0c000+0x03800);
 		}
 	}
 }
@@ -912,13 +982,17 @@ void oric_init_machine (void)
 			/* os rom */
 			memory_set_bankhandler_r(1, 0, MRA_BANK1);
 			memory_set_bankhandler_r(2, 0, MRA_BANK2);
+			memory_set_bankhandler_r(3, 0, MRA_BANK3);
 			memory_set_bankhandler_w(5, 0, MWA_NOP);
 			memory_set_bankhandler_w(6, 0, MWA_NOP);
+			memory_set_bankhandler_w(7, 0, MWA_NOP);
 			rom_ptr = memory_region(REGION_CPU1) + 0x010000;
 			cpu_setbank(1, rom_ptr);
-			cpu_setbank(5, rom_ptr);			
 			cpu_setbank(2, rom_ptr+0x02000);
+			cpu_setbank(3, rom_ptr+0x03800);
+			cpu_setbank(5, rom_ptr);			
 			cpu_setbank(6, rom_ptr+0x02000);			
+			cpu_setbank(7, rom_ptr+0x03800);			
 		}
 		break;
 		
@@ -934,8 +1008,8 @@ void oric_init_machine (void)
 
 		case ORIC_FLOPPY_INTERFACE_JASMIN:
 		{
-			port_3fa_w = 0;
-			port_3fb_w = 0;
+			/* romdis */
+			port_3fb_w = 1;
 			oric_jasmin_set_mem_0x0c000();
 		}
 		break;
