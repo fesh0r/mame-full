@@ -6,13 +6,13 @@
 it is from cpu to fdc */
 #define I8271_FLAGS_DATA_DIRECTION 0x02
 
-
-enum
+typedef enum
 {
 	I8271_STATE_EXECUTION_READ = 0,
 	I8271_STATE_EXECUTION_WRITE
-} I8271_STATE;
+} I8271_STATE_t;
 
+extern I8271_STATE_t I8271_STATE;
 
 
 typedef struct i8271_interface

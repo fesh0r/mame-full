@@ -11,6 +11,8 @@
 
 #include "i8271.h"
 
+I8271_STATE_t I8271_STATE;
+
 static void i8271_command_execute(void);
 static void i8271_command_continue(void);
 static void i8271_data_request(void);
