@@ -39,7 +39,8 @@ static int bdf_get_sectors_per_track(int drive, int side)
 	messbdf = get_messbdf(drive);
 	if (!messbdf)
 		return 0;
-	return bdf_get_geometry(messbdf->bdf)->sectors;
+	
+	return bdf_get_sector_count(messbdf->bdf, messbdf->track, side);
 }
 
 static void bdf_get_id_callback(int drive, chrn_id *id, int id_index, int side)
