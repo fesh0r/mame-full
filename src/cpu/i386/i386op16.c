@@ -2532,3 +2532,12 @@ static void I386OP(group0FBA_16)(void)		// Opcode 0x0f ba
 			break;
 	}
 }
+
+static void I386OP(es)(void)			// Opcode 0x26
+{
+	I.segment_prefix = 1;
+	I.segment_override = ES;
+	CYCLES(0);	// TODO: Specify cycle count
+	I386OP(decode_opcode)();
+}
+

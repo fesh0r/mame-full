@@ -1868,6 +1868,19 @@ static void I386OP(nop)(void)				// Opcode 0x90
 	CYCLES(3);
 }
 
+static void I386OP(int3)(void)				// Opcode 0xcc
+{
+	CYCLES(0);	// TODO: deduct proper cycle count
+	i386_interrupt(3);
+}
+
+static void I386OP(int)(void)				// Opcode 0xcd
+{
+	int interrupt = FETCH();
+	CYCLES(0);	// TODO: deduct proper cycle count
+	i386_interrupt(interrupt);
+}
+
 
 static void I386OP(invalid)(void)
 {

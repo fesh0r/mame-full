@@ -494,6 +494,13 @@ void osd_update_video_and_audio(struct mame_display *display)
 	const char *filename;
 	int cpunum;
 
+	/* if the visible area has changed, update it */
+	if (display->changed_flags & GAME_VISIBLE_AREA_CHANGED)
+	{
+		set_ui_visarea(display->game_visible_area.min_x, display->game_visible_area.min_y,
+			display->game_visible_area.max_x, display->game_visible_area.max_y);
+	}
+
 	/* if we have already aborted or completed, our work is done */
 	if ((state == STATE_ABORTED) || (state == STATE_DONE))
 		return;

@@ -461,9 +461,9 @@ WRITE_HANDLER(at_8042_8_w)
 READ32_HANDLER(at_8042_32_r)
 {
 	return (((data32_t) at_8042_8_r(offset * 4 + 0)) << 0)
-		|  (((data32_t) at_8042_8_r(offset * 4 + 0)) << 8)
-		|  (((data32_t) at_8042_8_r(offset * 4 + 0)) << 16)
-		|  (((data32_t) at_8042_8_r(offset * 4 + 0)) << 24);
+		|  (((data32_t) at_8042_8_r(offset * 4 + 1)) << 8)
+		|  (((data32_t) at_8042_8_r(offset * 4 + 2)) << 16)
+		|  (((data32_t) at_8042_8_r(offset * 4 + 3)) << 24);
 }
 
 

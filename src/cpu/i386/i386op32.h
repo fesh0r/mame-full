@@ -204,8 +204,8 @@ static void (*i386_opcode_table1_32[256])(void) =
 	I386OP(leave32),			/* 0xc9 */
 	I386OP(invalid),			/* 0xca */		/* TODO: RETF */
 	I386OP(invalid),			/* 0xcb */		/* TODO: RETF */
-	I386OP(invalid),			/* 0xcc */		/* TODO: INT 3 */
-	I386OP(invalid),			/* 0xcd */		/* TODO: INT */
+	I386OP(int3),				/* 0xcc */
+	I386OP(int),				/* 0xcd */
 	I386OP(invalid),			/* 0xce */		/* TODO: INTO */
 	I386OP(iret32),				/* 0xcf */
 	I386OP(groupD0_8),			/* 0xd0 */

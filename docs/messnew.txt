@@ -16,7 +16,12 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
-- [PC] Cleanups; code simplified and CGA video slightly faster now [Nate Woods]
+- [C64] Implemented natural keyboard support.  [Nate Woods]
+
+- [ORIC] Fixed fatal regression crash on startup.  (bug #538) [Nate Woods]
+
+- [PC] Cleanups; code simplified and CGA video slightly faster now.  [Nate
+  Woods]
 
 
 

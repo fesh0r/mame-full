@@ -1282,9 +1282,11 @@ MACHINE_INIT( oric )
 
 	wd179x_init(WD_TYPE_179X,oric_wd179x_callback);
 
-	apple2_slot6_init();
-
+	if (!memcmp(Machine->gamedrv->name, "prav", 4))
+		apple2_slot6_init();
 }
+
+
 
 MACHINE_STOP( oric )
 {

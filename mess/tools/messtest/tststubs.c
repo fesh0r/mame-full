@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <windows.h>
-#include "osdepend.h"
+#include "mame.h"
 
 int osd_init(void)
 {

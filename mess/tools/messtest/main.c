@@ -23,12 +23,16 @@ static struct rc_option opts[] =
 };
 
 
-/* ----------------------------------------------------------------------- */
+/*************************************
+ *
+ *	Differing RAM test
+ *
+ *  This test runs every driver that has configurable RAM twice, with
+ *  different default RAM values, and compares the runtime hashes.  If these
+ *  values differ, that is surely the result of an emulated crash
+ *
+ *************************************/
 
-/* this test runs every driver that has configurable RAM twice, with
- * different default RAM values, and compares the runtime hashes.  If these
- * values differ, that is surely the result of an emulated crash
- */
 
 static void differing_ram_test(void)
 {
@@ -100,6 +104,12 @@ static void differing_ram_test(void)
 
 
 
+/*************************************
+ *
+ *	Hashfile verification
+ *
+ *************************************/
+
 static void my_puts(const char *msg)
 {
 	puts(msg);
@@ -120,7 +130,11 @@ static void hash_test(void)
 
 
 
-/* ----------------------------------------------------------------------- */
+/*************************************
+ *
+ *	Main and argument parsing/handling
+ *
+ *************************************/
 
 static int handle_arg(char *arg)
 {
