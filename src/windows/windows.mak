@@ -36,4 +36,6 @@ endif
 # due to quirks of using /bin/sh, we need to explicitly specify the current path
 CURPATH = ./
 
+ifdef MESS
 include src/windowsui/windowsui.mak
+endif
