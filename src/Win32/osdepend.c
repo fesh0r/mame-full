@@ -32,7 +32,7 @@
 #include "DDrawWindow.h"
 #include "NullSound.h"
 
-#ifndef NOMIDAS
+#if defined(MIDAS)
 #include "MIDASSound.h"
 #endif
 
@@ -109,7 +109,7 @@ int osd_init()
     if (options->sound == SOUND_NONE)
         bNoSound = TRUE;
 
-#ifndef NOMIDAS
+#if defined(MIDAS)
     if (options->sound == SOUND_MIDAS)
         bUseMIDASSound = TRUE;
 #endif
@@ -153,7 +153,7 @@ int osd_init()
     if (bNoSound == TRUE)
         MAME32App.m_pSound = &NullSound;
     else
-#ifndef NOMIDAS
+#if defined(MIDAS)
     if (bUseMIDASSound == TRUE)
         MAME32App.m_pSound = &MIDASSound;
     else
@@ -776,11 +776,11 @@ void CLIB_DECL logerror(const char *text, ...)
     if (g_pErrorLog)
         vfprintf(g_pErrorLog, text, arg);
 
-	if (g_bOsDebug) {
-		char szBuffer[512];
-		_vsnprintf(szBuffer, sizeof(szBuffer) / sizeof(szBuffer[0]), text, arg);
-		OutputDebugString(szBuffer);
-	}
+    if (g_bOsDebug) {
+        char szBuffer[512];
+        _vsnprintf(szBuffer, sizeof(szBuffer) / sizeof(szBuffer[0]), text, arg);
+        OutputDebugString(szBuffer);
+    }
 
     va_end(arg);
 }

@@ -22,7 +22,7 @@
 
 #define SOUND_NONE   0
 
-#ifndef NOMIDAS
+#if defined(MIDAS)
 #define SOUND_MIDAS  (SOUND_NONE + 1)
 #else
 #define SOUND_MIDAS  SOUND_NONE

@@ -1,33 +1,23 @@
 /***************************************************************************
 
-    M.A.M.E.32  -  Multiple Arcade Machine Emulator for Win32
-    Win32 Portions Copyright (C) 1997-98 Michael Soderstrom and Chris Kirmse
+  M.A.M.E.32  -  Multiple Arcade Machine Emulator for Win32
+  Win32 Portions Copyright (C) 1997-2000 Michael Soderstrom and Chris Kirmse
     
-    This file is part of MAME32, and may only be used, modified and
-    distributed under the terms of the MAME license, in "readme.txt".
-    By continuing to use, modify or distribute this file you indicate
-    that you have read the license and understand and accept it fully.
+  This file is part of MAME32, and may only be used, modified and
+  distributed under the terms of the MAME license, in "readme.txt".
+  By continuing to use, modify or distribute this file you indicate
+  that you have read the license and understand and accept it fully.
 
  ***************************************************************************/
 
-#ifndef __WIN32UI_H__
-#define __WIN32UI_H__
+#ifndef WIN32UI_H
+#define WIN32UI_H
 
 #include "driver.h"
 #include "options.h"
 #include "ScreenShot.h"
 
 #define GAME_BROKEN (GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION)
-
-extern struct GameDriver driver_0;
-extern struct GameDriver driver_neogeo;
-#ifndef MESS
-extern struct GameDriver driver_playch10;
-#endif
-
-#define DRIVER_ROOT     &driver_0
-#define DRIVER_NEOGEO   &driver_neogeo
-#define DRIVER_PLAYCH10 &driver_playch10
 
 enum
 {
@@ -39,8 +29,6 @@ enum
 
 typedef struct
 {
-    BOOL in_list;
-    BOOL neogeo_clone;
     BOOL neogeo;
 } game_data_type;
 

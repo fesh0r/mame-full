@@ -204,6 +204,18 @@ static char *           GetRomList(int iGame);
 #define MAME32HELP "mame32.hlp"
 #endif
 
+#ifdef MESS
+/* MESS32 text files */
+#define HELPTEXT_RELEASE	"Mess.txt"
+#define HELPTEXT_WHATS_NEW	"Messnew.txt"
+#else
+/* MAME32 text files */
+#define HELPTEXT_RELEASE	"Readme.txt"
+#define HELPTEXT_WHATS_NEW	"Whatsnew.txt"
+#define HELPTEXT_CHEATS		"Cheat.doc"
+#define HELPTEXT_GAMELIST	"Gamelist.txt"
+#endif
+
 /***************************************************************************
     External variables
  ***************************************************************************/
@@ -390,11 +402,7 @@ static char *icon_names[] = {
 
 #define NUM_ICONS           (sizeof(icon_names) / sizeof(icon_names[0]))
 
-#define NUM_TOOLBUTTONS 11
-
-
-static TBBUTTON tbb[NUM_TOOLBUTTONS] = {
-    {0, 0,                  TBSTATE_ENABLED, TBSTYLE_SEP,        0, 0},
+static TBBUTTON tbb[] = {
     {0, ID_VIEW_FOLDERS,    TBSTATE_ENABLED, TBSTYLE_CHECK,      0, 0},
     {1, ID_VIEW_SCREEN_SHOT,TBSTATE_ENABLED, TBSTYLE_CHECK,      0, 1},
     {0, 0,                  TBSTATE_ENABLED, TBSTYLE_SEP,        0, 0},
@@ -406,6 +414,8 @@ static TBBUTTON tbb[NUM_TOOLBUTTONS] = {
     {6, ID_HELP_ABOUT,      TBSTATE_ENABLED, TBSTYLE_BUTTON,     0, 6},
     {7, ID_HELP_CONTENTS,   TBSTATE_ENABLED, TBSTYLE_BUTTON,     0, 7}
 };
+
+#define NUM_TOOLBUTTONS (sizeof(tbb) / sizeof(tbb[0]))
 
 #define NUM_TOOLTIPS 7
 
@@ -467,6 +477,10 @@ static BOOL bDoBroadcast;
 
 static int mame_debug = 0;
 
+#ifndef IsValidListControl
+#define IsValidListControl(hwnd)	((hwnd) == hwndList)
+#endif /* IsValidListControl */
+
 /***************************************************************************
     Global variables  
  ***************************************************************************/
@@ -513,26 +527,8 @@ struct GameDriver driver_neogeo =
 #endif
 	NOT_A_DRIVER,
 };
-#endif
-
-#if defined(TINY_COMPILE) || defined(NEOMAME)
-struct GameDriver driver_playch10 =
-{
-	__FILE__,
-	0,
-	"playch10 Fake driver",
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-#ifdef MESS
-	0,
-#endif
-	NOT_A_DRIVER,
-};
+#else
+extern struct GameDriver driver_neogeo;
 #endif
 
 /***************************************************************************
@@ -1131,7 +1127,6 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
     WNDCLASS    wndclass;
     RECT        rect;
     int         i;
-    struct GameDriver * drvr;
 
     mame32_message = RegisterWindowMessage("MAME32");
     bDoBroadcast = FALSE;
@@ -1181,43 +1176,20 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 
     for (i = 0; i < game_count; i++)
     {
-        int j;
-        BOOL neogeo_clone = FALSE;
-        BOOL neogeo       = FALSE;
-        BOOL found        = FALSE;
+        const struct GameDriver* pDriver;
+        BOOL bNeoGeo = FALSE;
 
-        drvr = (struct GameDriver *)drivers[i]->clone_of;
-        
-        if (drvr == DRIVER_NEOGEO)
-            neogeo = TRUE;
+        pDriver = drivers[i]->clone_of;
 
-        if (drvr != DRIVER_ROOT)
+        do
         {
-            for (j = 0; j < game_count; j++)
-            {
-                if (drvr == drivers[j])
-                {
-                    found = TRUE;
-                    if (drvr->clone_of == DRIVER_NEOGEO)
-                    {
-                        neogeo_clone = TRUE;
-                        neogeo = TRUE;
-                    }
-                    break;
-                }
-            }
+            if (pDriver == &driver_neogeo)
+                bNeoGeo = TRUE;
+            pDriver = pDriver->clone_of;
         }
-        if (!found
-#ifndef MESS
-        &&  drivers[i]->clone_of != DRIVER_NEOGEO
-        &&  drivers[i]->clone_of != DRIVER_PLAYCH10
-#endif
-        &&  drivers[i]->clone_of != DRIVER_ROOT)
-            found = TRUE;
+        while (pDriver && bNeoGeo == FALSE);
 
-        game_data[i].in_list = found;
-        game_data[i].neogeo_clone = neogeo_clone;
-        game_data[i].neogeo = neogeo;
+        game_data[i].neogeo = bNeoGeo;
     }
 
     // init files after OptionsInit to init paths
@@ -2457,12 +2429,7 @@ static char* TriStateToText(int nState)
 
 static LPCSTR GetCloneParent(int nItem)
 {
-    if (drivers[nItem]->clone_of != 0
-    &&  drivers[nItem]->clone_of != DRIVER_ROOT
-#ifndef MESS
-    &&  drivers[nItem]->clone_of != DRIVER_PLAYCH10
-#endif
-    &&  drivers[nItem]->clone_of != DRIVER_NEOGEO)
+    if (!(drivers[nItem]->clone_of->flags & NOT_A_DRIVER))
         return ModifyThe(drivers[nItem]->clone_of->description);
     return "";
 }
@@ -2659,7 +2626,6 @@ static BOOL MamePickerNotify(NMHDR *nm)
             }
 
             EnableSelection(pnmv->lParam);
-            UpdateHistory(pnmv->lParam);
         }
         return TRUE;
 
@@ -3266,6 +3232,7 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
                   LanguageDialogProc);
         return TRUE;
 
+#ifdef MAME32HELP
     case ID_HELP_CONTENTS:
         WinHelp(hMain, MAME32HELP, HELP_FINDER, 0);
         break;
@@ -3275,28 +3242,31 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
     case ID_HELP_QUICKSTART:
         WinHelp(hMain, MAME32HELP, HELP_CONTEXT, 101);        
         break;
+#endif /* MAME32HELP */
 
-#ifdef MESS
+#ifdef HELPTEXT_RELEASE
     case ID_HELP_RELEASE:
-        DisplayTextFile(hMain, "Mess.txt"); 
+        DisplayTextFile(hMain, HELPTEXT_RELEASE); 
         break;
+#endif /* HELPTEXT_RELEASE */
+
+#ifdef HELPTEXT_WHATS_NEW
     case ID_HELP_WHATS_NEW:
-        DisplayTextFile(hMain, "Messnew.txt");
+        DisplayTextFile(hMain, HELPTEXT_WHATS_NEW);
         break;
-#else
-    case ID_HELP_RELEASE:
-        DisplayTextFile(hMain, "Readme.txt"); 
-        break;
-    case ID_HELP_WHATS_NEW:
-        DisplayTextFile(hMain, "Whatsnew.txt");
-        break;
+#endif /* HELPTEXT_WHATS_NEW */
+
+#ifdef HELPTEXT_CHEATS
     case ID_HELP_CHEATS:
-        DisplayTextFile(hMain, "Cheat.doc"); 
+        DisplayTextFile(hMain, HELPTEXT_CHEATS); 
         break;
+#endif /* HELPTEXT_CHEATS */
+
+#ifdef HELPTEXT_GAMELIST
     case ID_HELP_GAMELIST:
-        DisplayTextFile(hMain, "Gamelist.txt"); 
+        DisplayTextFile(hMain, HELPTEXT_GAMELIST); 
         break;
-#endif
+#endif /* HELPTEXT_GAMELIST */
 
     case ID_HELP_ABOUT :
         DialogBox(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_ABOUT),
@@ -6149,13 +6119,8 @@ static BOOL ListCtrlOnErase(HWND hWnd, HDC hDC)
 	HRGN        rgnBitmap;
 	HPALETTE    hPAL;
 
-#ifdef MESS
-    if ((hWnd != hwndList) && (hWnd != hwndSoftware))
+	if (!IsValidListControl(hWnd))
         return 1;
-#else
-    if (hWnd != hwndList)
-        return 1;
-#endif
 
     GetClientRect(hWnd, &rcClient);
 
@@ -6226,13 +6191,8 @@ static BOOL ListCtrlOnPaint(HWND hWnd, UINT uMsg)
     HBITMAP     bitmap;
     HBITMAP     hOldBitmap;
 
-#ifdef MESS
-    if ((hWnd != hwndList) && (hWnd != hwndSoftware))
+	if (!IsValidListControl(hWnd))
         return 1;
-#else
-    if (hWnd != hwndList)
-        return 1;
-#endif
     
     hDC = BeginPaint(hWnd, &ps);
     rcClient = ps.rcPaint;

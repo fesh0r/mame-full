@@ -18,6 +18,11 @@
 
 #include <conio.h>
 
+/* Borland conio.h dos not include outp and inp, so use ours. */
+#if defined(__BORLANDC__)
+#include "portio.h"
+#endif
+
 #include "mame.h"
 #include "mame32.h"
 #include "m32util.h"

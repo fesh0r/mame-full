@@ -534,9 +534,7 @@ static void *File_fopen(const char *gamename,const char *filename,int filetype,i
         
                     break;
 
-    case OSD_FILETYPE_HIGHSCORE_DB:
     case OSD_FILETYPE_HISTORY:
-    case OSD_FILETYPE_CHEAT:
         /* only for reading */
         if (write)
         {
@@ -544,11 +542,18 @@ static void *File_fopen(const char *gamename,const char *filename,int filetype,i
             break;
             }
         mf->access_type = ACCESS_FILE;
-        /* open as ASCII files, not binary like the others */
-        mf->fptr = fopen(filename, write ? "w" : "r");
+        mf->fptr = fopen(filename, "rb");
         found = mf->fptr != 0;
         break;
 
+    case OSD_FILETYPE_CHEAT:
+        mf->access_type = ACCESS_FILE;
+        /* open as ASCII files, not binary like the others */
+        mf->fptr = fopen(filename, write ? "a" : "r");
+        found = mf->fptr != 0;
+        break;
+
+    case OSD_FILETYPE_HIGHSCORE_DB:
     case OSD_FILETYPE_LANGUAGE:
         /* only for reading */
         if (write)
@@ -558,7 +563,7 @@ static void *File_fopen(const char *gamename,const char *filename,int filetype,i
         }
         mf->access_type = ACCESS_FILE;
         /* open as ASCII files, not binary like the others */
-        mf->fptr = fopen(filename, write ? "w" : "r");
+        mf->fptr = fopen(filename, "r");
         found = mf->fptr != 0;
         break;
         
@@ -1025,21 +1030,17 @@ int File_fchecksum(const char *gamename, const char *filename, unsigned int *len
 
 static int File_fsize(void *file)
 {
-#ifdef MESS
-	long lPos, lRet;
-#endif
+    long lPos, lRet;
     mame_file *mf = file;
     
     switch (mf->access_type)
     {
-#ifdef MESS
-	case ACCESS_FILE:
-		lPos = ftell(mf->fptr);
-		fseek(mf->fptr, 0, SEEK_END);
-		lRet = ftell(mf->fptr);
-		fseek(mf->fptr, lPos, SEEK_SET);
-		return lRet;
-#endif
+    case ACCESS_FILE:
+        lPos = ftell(mf->fptr);
+        fseek(mf->fptr, 0, SEEK_END);
+        lRet = ftell(mf->fptr);
+        fseek(mf->fptr, lPos, SEEK_SET);
+        return lRet;
     case ACCESS_ZIP:
     case ACCESS_RAMFILE:
         return mf->file_length;

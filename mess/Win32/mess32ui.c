@@ -62,6 +62,8 @@ static BOOL CreateMessIcons(void);
 
 #define MAME32HELP "mess32.hlp"
 
+#define IsValidListControl(hwnd)	(((hwnd) == hwndList) || ((hwnd) == hwndSoftware))
+
 #include "win32ui.c"
 
 /* Taken from src/mess/msdos.c */

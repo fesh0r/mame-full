@@ -314,7 +314,7 @@
 #define _APS_3D_CONTROLS                     1
 #define _APS_NEXT_RESOURCE_VALUE        179
 #define _APS_NEXT_COMMAND_VALUE         40062
-#define _APS_NEXT_CONTROL_VALUE         1237
+#define _APS_NEXT_CONTROL_VALUE         1238
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

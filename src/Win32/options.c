@@ -428,11 +428,11 @@ void OptionsInit(int total_games)
     global.auto_frame_skip  = TRUE;
     global.frame_skip       = 0;
     global.use_dirty        = TRUE;
-    global.hscan_lines      = TRUE;
+    global.hscan_lines      = FALSE;
     global.vscan_lines      = FALSE;
     global.use_blit         = FALSE;
     global.disable_mmx      = TRUE;
-    global.scale            = 2;
+    global.scale            = 1;
     global.rotate           = ROTATE_NONE;
     global.flipx            = FALSE;
     global.flipy            = FALSE;
@@ -1850,16 +1850,7 @@ static void GetRegObj(HKEY hKey, REG_OPTIONS *regOpts)
 
 char * GetVersionString(void)
 {
-    static char tmp[120];
-
-#if defined(RELEASE_CANDIDATE)
-    sprintf(tmp,"0.%d RC%d - %s", MAME_VERSION, RELEASE_CANDIDATE, __DATE__);
-#elif defined(BETA_VERSION)
-    sprintf(tmp,"0.%d BETA %d - %s", MAME_VERSION, BETA_VERSION, __DATE__);
-#else
-    sprintf(tmp,"0.%d - %s", MAME_VERSION, __DATE__);
-#endif
-    return tmp;
+    return build_version;
 }
 
 /* End of options.c */

@@ -16,6 +16,8 @@
 
  ***************************************************************************/
 
+#define DIRECTINPUT_VERSION 0x0700
+
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <windowsx.h>

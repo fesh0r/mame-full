@@ -67,12 +67,6 @@ INLINE unsigned int osd_cycles(void)
 
 #else
 
-#define vec_mult _vec_mult
-INLINE int _vec_mult(int x, int y)
-{
-    return x * y;
-}
-
 #include "uclock.h"
 
 INLINE unsigned int osd_cycles(void)

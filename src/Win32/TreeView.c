@@ -493,6 +493,7 @@ void InitGames(UINT nGames)
                     AddGame(lpFolder, jj);
             }
             break;
+
         case FOLDER_NONWORKING:
             SetAllBits( lpFolder->m_lpGameBits, FALSE);
             for (jj = 0; jj < nGames; jj++)
@@ -502,32 +503,25 @@ void InitGames(UINT nGames)
                     AddGame(lpFolder, jj);
             }
             break;
+
         case FOLDER_ORIGINAL:
             SetAllBits( lpFolder->m_lpGameBits, FALSE);
             for (jj = 0; jj < nGames; jj++)
             {
-                if (drivers[jj]->clone_of == 0
-                ||  drivers[jj]->clone_of == DRIVER_ROOT
-#ifndef MESS
-                ||  drivers[jj]->clone_of == DRIVER_PLAYCH10
-#endif
-                ||  drivers[jj]->clone_of == DRIVER_NEOGEO)
+                if (drivers[jj]->clone_of->flags & NOT_A_DRIVER)
                     AddGame(lpFolder, jj);
             }
             break;
+
         case FOLDER_CLONES:
             SetAllBits( lpFolder->m_lpGameBits, FALSE);
             for (jj = 0; jj < nGames; jj++)
             {
-                if (drivers[jj]->clone_of != 0
-                &&  drivers[jj]->clone_of != DRIVER_ROOT
-#ifndef MESS
-                &&  drivers[jj]->clone_of != DRIVER_PLAYCH10
-#endif
-                &&  drivers[jj]->clone_of != DRIVER_NEOGEO)
+                if (!(drivers[jj]->clone_of->flags & NOT_A_DRIVER))
                     AddGame(lpFolder, jj);
             }
             break;
+
         case FOLDER_RASTER:
             SetAllBits( lpFolder->m_lpGameBits, FALSE);
             for (jj = 0; jj < nGames; jj++)
@@ -536,6 +530,7 @@ void InitGames(UINT nGames)
                     AddGame(lpFolder, jj);
             }
             break;
+
         case FOLDER_VECTOR:
             SetAllBits( lpFolder->m_lpGameBits, FALSE);
             for (jj = 0; jj < nGames; jj++)
@@ -544,6 +539,7 @@ void InitGames(UINT nGames)
                     AddGame(lpFolder, jj);
             }
             break;
+
         case FOLDER_TRACKBALL:
             SetAllBits( lpFolder->m_lpGameBits, FALSE);
             for (jj = 0; jj < nGames; jj++)
@@ -590,6 +586,7 @@ void InitGames(UINT nGames)
                     AddGame(lpFolder, jj);
             }
             break;
+
         case FOLDER_FAVORITE:
             SetAllBits( lpFolder->m_lpGameBits, FALSE);
             for (jj = 0; jj < nGames; jj++)
@@ -598,6 +595,7 @@ void InitGames(UINT nGames)
                     AddGame(lpFolder, jj);
             }
             break;
+
         case FOLDER_STEREO:
             SetAllBits( lpFolder->m_lpGameBits, FALSE);
             for (jj = 0; jj < nGames; jj++)
@@ -640,16 +638,12 @@ BOOL GameFiltered(int nGame, DWORD dwMask)
 
     /* Filter out clones? */
     if (dwMask & F_CLONES
-    && (drivers[nGame]->clone_of != 0
-    &&  drivers[nGame]->clone_of != DRIVER_ROOT
-#ifndef MESS
-    &&  drivers[nGame]->clone_of != DRIVER_PLAYCH10
-#endif
-    &&  drivers[nGame]->clone_of != DRIVER_NEOGEO))
+    &&  !(drivers[nGame]->clone_of->flags & NOT_A_DRIVER))
         return TRUE;
 
     /* Filter non working games */
-    if (dwMask & F_NONWORKING && drivers[nGame]->flags & GAME_BROKEN)
+    if (dwMask & F_NONWORKING
+    && (drivers[nGame]->flags & GAME_BROKEN))
         return TRUE;
 
 #ifdef MESS
@@ -688,12 +682,7 @@ BOOL GameFiltered(int nGame, DWORD dwMask)
 
     /* FIlter original games */
     if (dwMask & F_ORIGINALS
-    && (drivers[nGame]->clone_of == 0
-    ||  drivers[nGame]->clone_of == DRIVER_ROOT
-#ifndef MESS
-    ||  drivers[nGame]->clone_of == DRIVER_PLAYCH10
-#endif
-    ||  drivers[nGame]->clone_of == DRIVER_NEOGEO))
+    &&  (drivers[nGame]->clone_of->flags & NOT_A_DRIVER))
         return TRUE;
 
     /* Filter working games */

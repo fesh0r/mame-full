@@ -86,7 +86,7 @@ DEFS = \
         -DPNG_SAVE_SUPPORT \
         -DHAS_CPUS \
         -DHAS_SOUND \
-        -DLSB_FIRST \
+        -DLSB_FIRST=1 \
         -DZLIB_DLL \
         $(MAME_VERSION) \
         $(BETA_VERSION) \
@@ -96,18 +96,16 @@ DEFS = \
         $(MAME_DEBUG) \
         $(USE_FASTCALL)
 
-ifeq "$(TARGET)" "mess"
-DEFS += -DMESS=1 -DMAME32NAME='"MESS32"' -DMAMENAME='"MESS"'
-endif
-
 ifndef DEBUG
 DEFS += -DNDEBUG
 endif
 
+ifeq "$(TARGET)" "mess"
+DEFS += -DMESS=1 -DMAME32NAME='"MESS32"' -DMAMENAME='"MESS"'
+endif
+
 ifdef MIDAS
 DEFS += -DMIDAS
-else
-DEFS += -DNOMIDAS
 endif
 
 INCLUDES = \

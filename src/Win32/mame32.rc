@@ -220,7 +220,7 @@ VS_VERSION_INFO VERSIONINFO
 #else
  FILEFLAGS 0x0L
 #endif
- FILEOS 0x4L
+ FILEOS 0x40004L
  FILETYPE 0x1L
  FILESUBTYPE 0x0L
 BEGIN
@@ -238,29 +238,19 @@ BEGIN
             VALUE "Comments", "Multiple Arcade Machine Emulator for Win32\0"
             VALUE "CompanyName", "MAME Team\0"
             VALUE "FileDescription", "Multiple Arcade Machine Emulator for Win32\0"
-#endif
-            VALUE "FileVersion", "0, MAME_VERSION, 0, 0\0"
-#ifdef MESS
-            VALUE "InternalName", "MESS32\0"
-            VALUE "LegalCopyright", "Copyright © 1997-2000 Nicola Salmoria and the MAME/MESS team\0"
-#else
+            VALUE "FileVersion", "0, 37, 0, 0\0"
             VALUE "InternalName", "MAME32\0"
             VALUE "LegalCopyright", "Copyright © 1997-2000 Nicola Salmoria and the MAME team\0"
 #endif
             VALUE "LegalTrademarks", "\0"
 #ifdef MESS
             VALUE "OriginalFilename", "MESS32.exe\0"
-#else
-            VALUE "OriginalFilename", "MAME32.exe\0"
-#endif
-            VALUE "PrivateBuild", "\0"
-#ifdef MESS
             VALUE "ProductName", "MESS32\0"
 #else
+            VALUE "OriginalFilename", "MAME32.exe\0"
             VALUE "ProductName", "MAME32\0"
 #endif
-            VALUE "ProductVersion", "0, MAME_VERSION, 0, 0\0"
-            VALUE "SpecialBuild", "\0"
+            VALUE "ProductVersion", "0, 37, 0, 0\0"
         END
     END
     BLOCK "VarFileInfo"

@@ -303,6 +303,12 @@ static int Keyboard_readkey_unicode(int flush)
 
 void Keyboard_CustomizeInputportDefaults(int DefaultInput, struct ipd *defaults)
 {
+#ifndef NEOFREE
+#ifndef TINY_COMPILE
+    extern struct GameDriver driver_neogeo;
+#endif
+#endif
+
 	if (DefaultInput == INPUT_LAYOUT_HR
     ||  DefaultInput == INPUT_LAYOUT_HRSE)
 	{

@@ -255,7 +255,7 @@ BOOL FindRomSet(int game)
     {
         /* if the game is a clone, try loading the ROM from the main version */
         if (gamedrv->clone_of == 0
-        ||  gamedrv->clone_of == DRIVER_ROOT
+        ||  (gamedrv->clone_of->flags & NOT_A_DRIVER)
         ||  !osd_faccess(gamedrv->clone_of->name, OSD_FILETYPE_ROM))
             return FALSE;
     }
@@ -265,6 +265,7 @@ BOOL FindRomSet(int game)
     {
         for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
         {
+        	extern struct GameDriver driver_0;
             const struct GameDriver *drv;
 
             name = ROM_GETNAME(rom);
@@ -277,7 +278,7 @@ BOOL FindRomSet(int game)
 			{
 				err = osd_fchecksum(drv->name, name, &length, &icrc);
 				drv = drv->clone_of;
-			} while (err && drv && drv != DRIVER_ROOT);
+			} while (err && drv && drv != &driver_0);
 
 			if (err)
 				return FALSE;
@@ -2107,7 +2108,7 @@ static void InitializeSoundUI(HWND hwnd)
     if (hCtrl)
     {
         ComboBox_AddString(hCtrl, "No Sound");        
-#ifndef NOMIDAS
+#if defined(MIDAS)
         ComboBox_AddString(hCtrl, "MIDAS");
 #endif
         ComboBox_AddString(hCtrl, "DirectSound");
