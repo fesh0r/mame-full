@@ -21,13 +21,15 @@
 	 7/4/2002		AK - Free memory from battery load/save. General tidying.
 	13/4/2002		AK - Ok, don't free memory when we shutdown as that causes
 						 a crash on reset.
+	28/4/2002		AK - General code tidying.
+						 Fixed MBC3's RAM/RTC banking.
+						 Added support for games with more than 128 ROM banks.
 
 ***************************************************************************/
 #define __MACHINE_GB_C
 
 #include "driver.h"
 #include "machine/gb.h"
-#include "cpu/z80gb/z80gb.h"
 #include "includes/gb.h"
 
 static UINT8 MBCType;				   /* MBC type: 0 for none                        */
@@ -35,7 +37,7 @@ static UINT8 CartType;				   /* Cart Type (battery, ram, timer etc)         */
 static UINT8 *ROMMap[512];			   /* Addresses of ROM banks                      */
 static UINT16 ROMBank;				   /* Number of ROM bank currently used           */
 static UINT8 ROMMask;				   /* Mask for the ROM bank number                */
-static UINT8 ROMBanks;				   /* Total number of ROM banks                   */
+static UINT16 ROMBanks;				   /* Total number of ROM banks                   */
 static UINT8 *RAMMap[256];			   /* Addresses of RAM banks                      */
 static UINT8 RAMBank;				   /* Number of RAM bank currently used           */
 static UINT8 RAMMask;				   /* Mask for the RAM bank number                */
@@ -54,14 +56,13 @@ UINT8 *gb_ram;
 
 MACHINE_INIT( gb )
 {
-	gb_ram = memory_region (REGION_CPU1);
-
+	/* Initialize the memory banks */
+	MBC1Mode = 0;
+	MBC3RTCBank = 0;
 	ROMBank = 1;
 	RAMBank = 0;
 	cpu_setbank (1, ROMMap[ROMBank] ? ROMMap[ROMBank] : gb_ram + 0x4000);
 	cpu_setbank (2, RAMMap[RAMBank] ? RAMMap[RAMBank] : gb_ram + 0xA000);
-	MBC1Mode = 0;
-	MBC3RTCBank = 0;
 
 	/* Initialise the registers */
 	LCDSTAT = 0x00;
@@ -126,9 +127,8 @@ MACHINE_STOP( gb )
 		free( battery_ram );
 	}
 
-	/* We should releas memory here, but this function is called upon reset
-	   and we don't reload the rom, so we're going to have to leak for now.
-	*/
+	/* We should release memory here, but this function is called upon reset
+	   and we don't reload the rom, so we're going to have to leak for now. */
 /*	for( I = 0; I < RAMBanks; I++ )
 	{
 		free( RAMMap[I] );
@@ -164,8 +164,8 @@ WRITE_HANDLER ( gb_rom_bank_select )
 				ROMBank = data;
 			break;
 		case MBC3:
-		case HUC1:	/* Probably wrong */
-		case HUC3:	/* Probably wrong */
+		case HUC1:	/* NOTE: Probably wrong */
+		case HUC3:	/* NOTE: Probably wrong */
 			ROMBank = data;
 			break;
 		case MBC5:
@@ -214,21 +214,21 @@ WRITE_HANDLER ( gb_ram_bank_select )
 			}
 			break;
 		case MBC3:
-			if( data & 0x3 )
+			if( data & 0x8 )	/* RTC banks */
 			{
-				RAMBank = data & 0x3;
-			}
-			if( data & 0x8 )
-			{
-				MBC3RTCBank = data & 0x3;
+				MBC3RTCBank = (data & 0xf) - 8;
 				cpu_setbank (2, &MBC3RTCMap[MBC3RTCBank]);
 				return;
+			}
+			else	/* RAM banks */
+			{
+				RAMBank = data & 0x3;
 			}
 			break;
 		case MBC5:
 			if( CartType & RUMBLE )
 			{
-				logerror( "Rumble motor: %s\n", data & 0x8?"On":"Off" );
+				logerror( "Rumble motor: %s\n", data & 0x8 ? "On" : "Off" );
 				data &= 0x7;
 			}
 			RAMBank = data;
@@ -252,7 +252,7 @@ WRITE_HANDLER ( gb_mem_mode_select )
 		case MBC3:
 			if( CartType & TIMER )
 			{
-				/* RTC Latch goes here */
+				/* FIXME: RTC Latch goes here */
 			}
 			break;
 	}
@@ -261,7 +261,6 @@ WRITE_HANDLER ( gb_mem_mode_select )
 WRITE_HANDLER ( gb_w_io )
 {
 	static UINT8 timer_shifts[4] = {10, 4, 6, 8};
-	UINT8 *P;
 	static UINT8 bit_count = 0, byte_count = 0, start = 0, rest = 0;
 	static UINT8 sgb_data[16];
 	static UINT8 controller_no = 0, controller_mode = 0;
@@ -399,19 +398,20 @@ WRITE_HANDLER ( gb_w_io )
 		data = 0;
 		break;
 	case 0xFF46:						/* DMA - DMA Transfer and Start Address */
-		P = gb_ram + 0xFE00;
-		offset = (UINT16) data << 8;
-		for (data = 0; data < 0xA0; data++)
-			*P++ = cpu_readmem16 (offset++);
+		{
+			UINT8 *P = gb_ram + 0xFE00;
+			offset = (UINT16) data << 8;
+			for (data = 0; data < 0xA0; data++)
+				*P++ = cpu_readmem16 (offset++);
+		}
 		return;
 	case 0xFF47:						/* BGP - Background Palette */
 		gb_bpal[0] = Machine->remapped_colortable[(data & 0x03)];
 		gb_bpal[1] = Machine->remapped_colortable[(data & 0x0C) >> 2];
 		gb_bpal[2] = Machine->remapped_colortable[(data & 0x30) >> 4];
 		gb_bpal[3] = Machine->remapped_colortable[(data & 0xC0) >> 6];
-		/* This is so we can assign different colours to window tiles,
-		   even though the window shares the same palette data as the
-		   background */
+		/* So we can assign different colours to window tiles, even though
+		   the window shares the same palette data as the background */
 		gb_wpal[0] = Machine->remapped_colortable[(data & 0x03) + 12];
 		gb_wpal[1] = Machine->remapped_colortable[((data & 0x0C) >> 2) + 12];
 		gb_wpal[2] = Machine->remapped_colortable[((data & 0x30) >> 4) + 12];
@@ -440,11 +440,13 @@ WRITE_HANDLER ( gb_w_io )
 	gb_ram [offset] = data;
 }
 
+/* Interrupt Enable register */
 WRITE_HANDLER ( gb_w_ie )
 {
 	gb_ram[0xFFFF] = data & 0x1F;
 }
 
+/* IO read */
 READ_HANDLER ( gb_r_io )
 {
 	offset += 0xFF00;
@@ -503,7 +505,6 @@ READ_HANDLER ( gb_r_io )
 
 int gb_load_rom (int id)
 {
-	UINT8 *ROM = memory_region(REGION_CPU1);
 	static char *CartTypes[] =
 	{
 		"ROM ONLY",
@@ -650,8 +651,8 @@ int gb_load_rom (int id)
 		return INIT_FAIL;
 	}
 
-	ROM = gb_ram = memory_region(REGION_CPU1);
-	memset (ROM, 0, 0x10000);
+	gb_ram = memory_region(REGION_CPU1);
+	memset (gb_ram, 0, 0x10000);
 
 	/* FIXME should check first if a file is given, should give a more clear error */
 	if (!(F = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ)))
@@ -670,7 +671,7 @@ int gb_load_rom (int id)
 
 	osd_fclose (F);
 
-	/* FIXME should check first if a file is given, should give a more clear error */
+	/* FIXME: should check first if a file is given, should give a more clear error */
 	if (!(F = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ)))
 	{
 		logerror("image_fopen failed in gb_load_rom.\n");
@@ -694,11 +695,11 @@ int gb_load_rom (int id)
 	ROMBanks = 2 << gb_ram[0x0148];
 	RAMBanks = rambanks[gb_ram[0x0149] & 3];
 	Checksum = ((UINT16) gb_ram[0x014E] << 8) + gb_ram[0x014F];
-	/* File in our cart details */
+	/* Fill in our cart details */
 	switch( gb_ram[0x0147] )
 	{
 		case 0x00:
-			MBCType = 0;
+			MBCType = NONE;
 			CartType = 0;
 			break;
 		case 0x01:
@@ -722,10 +723,10 @@ int gb_load_rom (int id)
 			CartType = BATTERY;
 			break;
 		case 0x08:
-			MBCType = 0;
+			MBCType = NONE;
 			CartType = RAM;
 		case 0x09:
-			MBCType = 0;
+			MBCType = NONE;
 			CartType = RAM | BATTERY;
 			break;
 		case 0x0F:
@@ -781,7 +782,7 @@ int gb_load_rom (int id)
 			CartType = 0;
 			break;
 		default:
-			MBCType = 0;
+			MBCType = NONE;
 			CartType = UNKNOWN;
 	}
 
@@ -896,6 +897,7 @@ int gb_load_rom (int id)
 		}
 	}
 
+	/* Build rom bank Mask */
 	if (ROMBanks < 3)
 		ROMMask = 0;
 	else
@@ -903,6 +905,7 @@ int gb_load_rom (int id)
 		for (I = 1; I < ROMBanks; I <<= 1) ;
 		ROMMask = I - 1;
 	}
+	/* Build ram bank Mask */
 	if (!RAMMap[0])
 		RAMMask = 0;
 	else
@@ -985,7 +988,7 @@ void gb_scanline_interrupt (void)
 void gb_scanline_interrupt_set_mode0 (int param)
 {
 	/* Set Mode 0 lcdstate */
-	LCDSTAT = LCDSTAT & 0xFC;
+	LCDSTAT &= 0xFC;
 	/* Generate lcd interrupt if requested */
 	if( LCDSTAT & 0x08 )
 		cpu_set_irq_line(0, LCD_INT, HOLD_LINE);
