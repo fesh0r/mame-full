@@ -128,6 +128,10 @@ int image_battery_save(mess_image *img, const void *buffer, int length);
   type/id.
 ****************************************************************************/
 
+/* given a choice between image_instance_dev() and image_instance(),
+ * image_instance_dev() is preferred
+ */
+mess_image *image_instance_dev(const struct IODevice *dev, int id);
 mess_image *image_instance(int type, int id);
 int image_type(mess_image *img);
 int image_index(mess_image *img);

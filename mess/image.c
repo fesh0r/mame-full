@@ -70,42 +70,13 @@ void image_exit(mess_image *img)
 	tagpool_exit(&img->tagpool);
 }
 
-/* ----------------------------------------------------------------------- */
+/****************************************************************************
+  Device loading and unloading functions
 
-void *image_malloc(mess_image *img, size_t size)
-{
-	assert(img->status & (IMAGE_STATUS_ISLOADING | IMAGE_STATUS_ISLOADED));
-	return pool_malloc(&img->mempool, size);
-}
-
-void *image_realloc(mess_image *img, void *ptr, size_t size)
-{
-	assert(img->status & (IMAGE_STATUS_ISLOADING | IMAGE_STATUS_ISLOADED));
-	return pool_realloc(&img->mempool, ptr, size);
-}
-
-char *image_strdup(mess_image *img, const char *src)
-{
-	assert(img->status & (IMAGE_STATUS_ISLOADING | IMAGE_STATUS_ISLOADED));
-	return pool_strdup(&img->mempool, src);
-}
-
-void image_freeptr(mess_image *img, void *ptr)
-{
-	pool_freeptr(&img->mempool, ptr);
-}
-
-void *image_alloctag(mess_image *img, const char *tag, size_t size)
-{
-	return tagpool_alloc(&img->tagpool, tag, size);
-}
-
-void *image_lookuptag(mess_image *img, const char *tag)
-{
-	return tagpool_lookup(&img->tagpool, tag);
-}
-
-/* ----------------------------------------------------------------------- */
+  The UI can call image_load and image_unload to associate and disassociate
+  with disk images on disk.  In fact, devices that unmount on their own (like
+  Mac floppy drives) may call this from within a driver.
+****************************************************************************/
 
 int image_load(mess_image *img, const char *name)
 {
@@ -306,6 +277,345 @@ done:
 	return rc;
 }
 
+static mame_file *image_fopen_new(mess_image *img, int *effective_mode)
+{
+	mame_file *fref;
+	int effective_mode_local;
+	const struct IODevice *dev;
+
+	dev = image_device(img);
+
+	switch (dev->open_mode) {
+	case OSD_FOPEN_NONE:
+	default:
+		/* unsupported modes */
+		printf("Internal Error in file \""__FILE__"\", line %d\n", __LINE__);
+		fref = NULL;
+		effective_mode_local = OSD_FOPEN_NONE;
+		break;
+
+	case OSD_FOPEN_READ:
+	case OSD_FOPEN_WRITE:
+	case OSD_FOPEN_RW:
+	case OSD_FOPEN_RW_CREATE:
+		/* supported modes */
+		fref = image_fopen_custom(img, FILETYPE_IMAGE, dev->open_mode);
+		effective_mode_local = dev->open_mode;
+		break;
+
+	case OSD_FOPEN_RW_OR_READ:
+		/* R/W or read-only: emulated mode */
+		fref = image_fopen_custom(img, FILETYPE_IMAGE, OSD_FOPEN_RW);
+		if (fref)
+			effective_mode_local = OSD_FOPEN_RW;
+		else
+		{
+			fref = image_fopen_custom(img, FILETYPE_IMAGE, OSD_FOPEN_READ);
+			effective_mode_local = OSD_FOPEN_READ;
+		}
+		break;
+
+	case OSD_FOPEN_RW_CREATE_OR_READ:
+		/* R/W, read-only, or create new R/W image: emulated mode */
+		fref = image_fopen_custom(img, FILETYPE_IMAGE, OSD_FOPEN_RW);
+		if (fref)
+			effective_mode_local = OSD_FOPEN_RW;
+		else
+		{
+			fref = image_fopen_custom(img, FILETYPE_IMAGE, OSD_FOPEN_READ);
+			if (fref)
+				effective_mode_local = OSD_FOPEN_READ;
+			else
+			{
+				fref = image_fopen_custom(img, FILETYPE_IMAGE, OSD_FOPEN_RW_CREATE);
+				effective_mode_local = OSD_FOPEN_RW_CREATE;
+			}
+		}
+		break;
+
+	case OSD_FOPEN_READ_OR_WRITE:
+		/* read or write: emulated mode */
+		fref = image_fopen_custom(img, FILETYPE_IMAGE, OSD_FOPEN_READ);
+		if (fref)
+			effective_mode_local = OSD_FOPEN_READ;
+		else
+		{
+			fref = image_fopen_custom(img, FILETYPE_IMAGE, /*OSD_FOPEN_WRITE*/OSD_FOPEN_RW_CREATE);
+			effective_mode_local = OSD_FOPEN_WRITE;
+		}
+		break;
+	}
+
+	if (effective_mode)
+		*effective_mode = effective_mode_local;
+
+	return fref;
+}
+
+/****************************************************************************
+  Tag management functions.
+  
+  When devices have private data structures that need to be associated with a
+  device, it is recommended that image_alloctag() be called in the device
+  init function.  If the allocation succeeds, then a pointer will be returned
+  to a block of memory of the specified size that will last for the lifetime
+  of the emulation.  This pointer can be retrieved with image_lookuptag().
+
+  Note that since image_lookuptag() is used to index preallocated blocks of
+  memory, image_lookuptag() cannot fail legally.  In fact, an assert will be
+  raised if this happens
+****************************************************************************/
+
+void *image_alloctag(mess_image *img, const char *tag, size_t size)
+{
+	return tagpool_alloc(&img->tagpool, tag, size);
+}
+
+void *image_lookuptag(mess_image *img, const char *tag)
+{
+	return tagpool_lookup(&img->tagpool, tag);
+}
+
+/****************************************************************************
+  Accessor functions
+
+  These provide information about the device; and about the mounted image
+****************************************************************************/
+
+mame_file *image_fp(mess_image *img)
+{
+	return img->fp;
+}
+
+const struct IODevice *image_device(mess_image *img)
+{
+	return device_find(Machine->gamedrv, image_type(img));
+}
+
+int image_exists(mess_image *img)
+{
+	return image_filename(img) != NULL;
+}
+
+int image_slotexists(mess_image *img)
+{
+	return image_index(img) < device_count(image_type(img));
+}
+
+const char *image_filename(mess_image *img)
+{
+	return img->name;
+}
+
+const char *image_basename(mess_image *img)
+{
+	return osd_basename((char *) image_filename(img));
+}
+
+const char *image_filetype(mess_image *img)
+{
+	const char *s;
+	s = image_filename(img);
+	if (s)
+		s = strrchr(s, '.');
+	return s ? s+1 : NULL;
+}
+
+const char *image_filedir(mess_image *img)
+{
+	char *s;
+
+	if (!img->dir)
+	{
+		img->dir = image_strdup(img, img->name);
+		if (img->dir)
+		{
+			s = img->dir + strlen(img->dir);
+			while(--s > img->dir)
+			{
+				if (strchr("\\/:", *s))
+				{
+					*s = '\0';
+					if (osd_get_path_info(FILETYPE_IMAGE, 0, img->dir) == PATH_IS_DIRECTORY)
+						break;
+				}
+			}
+		}
+	}
+	return img->dir;
+}
+
+unsigned int image_length(mess_image *img)
+{
+	return img->length;
+}
+
+unsigned int image_crc(mess_image *img)
+{
+	return img->crc;
+}
+
+/****************************************************************************
+  Memory allocators
+
+  These allow memory to be allocated for the lifetime of a mounted image.
+  If these (and the above accessors) are used well enough, they should be
+  able to eliminate the need for a unload function.
+****************************************************************************/
+
+void *image_malloc(mess_image *img, size_t size)
+{
+	assert(img->status & (IMAGE_STATUS_ISLOADING | IMAGE_STATUS_ISLOADED));
+	return pool_malloc(&img->mempool, size);
+}
+
+void *image_realloc(mess_image *img, void *ptr, size_t size)
+{
+	assert(img->status & (IMAGE_STATUS_ISLOADING | IMAGE_STATUS_ISLOADED));
+	return pool_realloc(&img->mempool, ptr, size);
+}
+
+char *image_strdup(mess_image *img, const char *src)
+{
+	assert(img->status & (IMAGE_STATUS_ISLOADING | IMAGE_STATUS_ISLOADED));
+	return pool_strdup(&img->mempool, src);
+}
+
+void image_freeptr(mess_image *img, void *ptr)
+{
+	pool_freeptr(&img->mempool, ptr);
+}
+
+/****************************************************************************
+  CRC Accessor functions
+
+  When an image is mounted; these functions provide access to the information
+  pertaining to that image in the CRC database
+****************************************************************************/
+
+const char *image_longname(mess_image *img)
+{
+	return img->longname;
+}
+
+const char *image_manufacturer(mess_image *img)
+{
+	return img->manufacturer;
+}
+
+const char *image_year(mess_image *img)
+{
+	return img->year;
+}
+
+const char *image_playable(mess_image *img)
+{
+	return img->playable;
+}
+
+const char *image_extrainfo(mess_image *img)
+{
+	return img->extrainfo;
+}
+
+/****************************************************************************
+  Battery functions
+
+  These functions provide transparent access to battery-backed RAM on an
+  image; typically for cartridges.
+****************************************************************************/
+
+static char *battery_nvramfilename(mess_image *img)
+{
+	const char *filename;
+	filename = image_filename(img);
+	return strip_extension(osd_basename((char *) filename));
+}
+
+/* load battery backed nvram from a driver subdir. in the nvram dir. */
+int image_battery_load(mess_image *img, void *buffer, int length)
+{
+	mame_file *f;
+	int bytes_read = 0;
+	int result = FALSE;
+	char *nvram_filename;
+
+	/* some sanity checking */
+	if( buffer != NULL && length > 0 )
+	{
+		nvram_filename = battery_nvramfilename(img);
+		if (nvram_filename)
+		{
+			f = mame_fopen(Machine->gamedrv->name, nvram_filename, FILETYPE_NVRAM, 0);
+			if (f)
+			{
+				bytes_read = mame_fread(f, buffer, length);
+				mame_fclose(f);
+				result = TRUE;
+			}
+			free(nvram_filename);
+		}
+
+		/* fill remaining bytes (if necessary) */
+		memset(((char *) buffer) + bytes_read, '\0', length - bytes_read);
+	}
+	return result;
+}
+
+/* save battery backed nvram to a driver subdir. in the nvram dir. */
+int image_battery_save(mess_image *img, const void *buffer, int length)
+{
+	mame_file *f;
+	char *nvram_filename;
+
+	/* some sanity checking */
+	if( buffer != NULL && length > 0 )
+	{
+		nvram_filename = battery_nvramfilename(img);
+		if (nvram_filename)
+		{
+			f = mame_fopen(Machine->gamedrv->name, nvram_filename, FILETYPE_NVRAM, 1);
+			if (f)
+			{
+				mame_fwrite(f, buffer, length);
+				mame_fclose(f);
+				return TRUE;
+			}
+			free(nvram_filename);
+		}
+	}
+	return FALSE;
+}
+
+/****************************************************************************
+  Deprecated functions
+
+  The usage of these functions is to be phased out.  The first group because
+  they reflect the outdated fixed relationship between devices and their
+  type/id.
+****************************************************************************/
+
+mess_image *image_instance_dev(const struct IODevice *dev, int id)
+{
+	return image_instance(dev->type, id);
+}
+
+mess_image *image_instance(int type, int id)
+{
+	assert(id < device_count(type));
+	return &images[type][id];
+}
+
+int image_type(mess_image *img)
+{
+	return (img - &images[0][0]) / MAX_DEV_INSTANCES;
+}
+
+int image_index(mess_image *img)
+{
+	assert(img);
+	return (img - &images[0][0]) % MAX_DEV_INSTANCES;
+}
 
 mame_file *image_fopen_custom(mess_image *img, int filetype, int read_or_write)
 {
@@ -404,265 +714,4 @@ mame_file *image_fopen_custom(mess_image *img, int filetype, int read_or_write)
 
 	return file;
 }
-
-static mame_file *image_fopen_new(mess_image *img, int *effective_mode)
-{
-	mame_file *fref;
-	int effective_mode_local;
-	const struct IODevice *dev;
-
-	dev = image_device(img);
-
-	switch (dev->open_mode) {
-	case OSD_FOPEN_NONE:
-	default:
-		/* unsupported modes */
-		printf("Internal Error in file \""__FILE__"\", line %d\n", __LINE__);
-		fref = NULL;
-		effective_mode_local = OSD_FOPEN_NONE;
-		break;
-
-	case OSD_FOPEN_READ:
-	case OSD_FOPEN_WRITE:
-	case OSD_FOPEN_RW:
-	case OSD_FOPEN_RW_CREATE:
-		/* supported modes */
-		fref = image_fopen_custom(img, FILETYPE_IMAGE, dev->open_mode);
-		effective_mode_local = dev->open_mode;
-		break;
-
-	case OSD_FOPEN_RW_OR_READ:
-		/* R/W or read-only: emulated mode */
-		fref = image_fopen_custom(img, FILETYPE_IMAGE, OSD_FOPEN_RW);
-		if (fref)
-			effective_mode_local = OSD_FOPEN_RW;
-		else
-		{
-			fref = image_fopen_custom(img, FILETYPE_IMAGE, OSD_FOPEN_READ);
-			effective_mode_local = OSD_FOPEN_READ;
-		}
-		break;
-
-	case OSD_FOPEN_RW_CREATE_OR_READ:
-		/* R/W, read-only, or create new R/W image: emulated mode */
-		fref = image_fopen_custom(img, FILETYPE_IMAGE, OSD_FOPEN_RW);
-		if (fref)
-			effective_mode_local = OSD_FOPEN_RW;
-		else
-		{
-			fref = image_fopen_custom(img, FILETYPE_IMAGE, OSD_FOPEN_READ);
-			if (fref)
-				effective_mode_local = OSD_FOPEN_READ;
-			else
-			{
-				fref = image_fopen_custom(img, FILETYPE_IMAGE, OSD_FOPEN_RW_CREATE);
-				effective_mode_local = OSD_FOPEN_RW_CREATE;
-			}
-		}
-		break;
-
-	case OSD_FOPEN_READ_OR_WRITE:
-		/* read or write: emulated mode */
-		fref = image_fopen_custom(img, FILETYPE_IMAGE, OSD_FOPEN_READ);
-		if (fref)
-			effective_mode_local = OSD_FOPEN_READ;
-		else
-		{
-			fref = image_fopen_custom(img, FILETYPE_IMAGE, /*OSD_FOPEN_WRITE*/OSD_FOPEN_RW_CREATE);
-			effective_mode_local = OSD_FOPEN_WRITE;
-		}
-		break;
-	}
-
-	if (effective_mode)
-		*effective_mode = effective_mode_local;
-
-	return fref;
-}
-
-/* ----------------------------------------------------------------------- */
-
-const char *image_filename(mess_image *img)
-{
-	return img->name;
-}
-
-const char *image_basename(mess_image *img)
-{
-	return osd_basename((char *) image_filename(img));
-}
-
-const char *image_filetype(mess_image *img)
-{
-	const char *s;
-	s = image_filename(img);
-	if (s)
-		s = strrchr(s, '.');
-	return s ? s+1 : NULL;
-}
-
-const char *image_filedir(mess_image *img)
-{
-	char *s;
-
-	if (!img->dir)
-	{
-		img->dir = image_strdup(img, img->name);
-		if (img->dir)
-		{
-			s = img->dir + strlen(img->dir);
-			while(--s > img->dir)
-			{
-				if (strchr("\\/:", *s))
-				{
-					*s = '\0';
-					if (osd_get_path_info(FILETYPE_IMAGE, 0, img->dir) == PATH_IS_DIRECTORY)
-						break;
-				}
-			}
-		}
-	}
-	return img->dir;
-}
-
-int image_exists(mess_image *img)
-{
-	return image_filename(img) != NULL;
-}
-
-unsigned int image_length(mess_image *img)
-{
-	return img->length;
-}
-
-unsigned int image_crc(mess_image *img)
-{
-	return img->crc;
-}
-
-const char *image_longname(mess_image *img)
-{
-	return img->longname;
-}
-
-const char *image_manufacturer(mess_image *img)
-{
-	return img->manufacturer;
-}
-
-const char *image_year(mess_image *img)
-{
-	return img->year;
-}
-
-const char *image_playable(mess_image *img)
-{
-	return img->playable;
-}
-
-const char *image_extrainfo(mess_image *img)
-{
-	return img->extrainfo;
-}
-
-mame_file *image_fp(mess_image *img)
-{
-	return img->fp;
-}
-
-int image_type(mess_image *img)
-{
-	return (img - &images[0][0]) / MAX_DEV_INSTANCES;
-}
-
-int image_index(mess_image *img)
-{
-	assert(img);
-	return (img - &images[0][0]) % MAX_DEV_INSTANCES;
-}
-
-mess_image *image_instance(int type, int id)
-{
-	assert(id < device_count(type));
-	return &images[type][id];
-}
-
-const struct IODevice *image_device(mess_image *img)
-{
-	return device_find(Machine->gamedrv, image_type(img));
-}
-
-int image_slotexists(mess_image *img)
-{
-	return image_index(img) < device_count(image_type(img));
-}
-
-/***************************************************************************
-
-	Battery code
-
-***************************************************************************/
-
-static char *battery_nvramfilename(mess_image *img)
-{
-	const char *filename;
-	filename = image_filename(img);
-	return strip_extension(osd_basename((char *) filename));
-}
-
-/* load battery backed nvram from a driver subdir. in the nvram dir. */
-int image_battery_load(mess_image *img, void *buffer, int length)
-{
-	mame_file *f;
-	int bytes_read = 0;
-	int result = FALSE;
-	char *nvram_filename;
-
-	/* some sanity checking */
-	if( buffer != NULL && length > 0 )
-	{
-		nvram_filename = battery_nvramfilename(img);
-		if (nvram_filename)
-		{
-			f = mame_fopen(Machine->gamedrv->name, nvram_filename, FILETYPE_NVRAM, 0);
-			if (f)
-			{
-				bytes_read = mame_fread(f, buffer, length);
-				mame_fclose(f);
-				result = TRUE;
-			}
-			free(nvram_filename);
-		}
-
-		/* fill remaining bytes (if necessary) */
-		memset(((char *) buffer) + bytes_read, '\0', length - bytes_read);
-	}
-	return result;
-}
-
-/* save battery backed nvram to a driver subdir. in the nvram dir. */
-int image_battery_save(mess_image *img, const void *buffer, int length)
-{
-	mame_file *f;
-	char *nvram_filename;
-
-	/* some sanity checking */
-	if( buffer != NULL && length > 0 )
-	{
-		nvram_filename = battery_nvramfilename(img);
-		if (nvram_filename)
-		{
-			f = mame_fopen(Machine->gamedrv->name, nvram_filename, FILETYPE_NVRAM, 1);
-			if (f)
-			{
-				mame_fwrite(f, buffer, length);
-				mame_fclose(f);
-				return TRUE;
-			}
-			free(nvram_filename);
-		}
-	}
-	return FALSE;
-}
-
 
