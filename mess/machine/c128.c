@@ -95,8 +95,11 @@ WRITE_HANDLER( c128_write_d000 )
 			vdc8563_port_w (offset & 0xff, data);
 			break;
 		case 8: case 9: case 0xa: case 0xb:
-			c64_colorram[offset & 0x3ff] = data | 0xf0;
-			break;
+		    if (c64mode)
+			c64_colorram[(offset & 0x3ff)] = data | 0xf0;
+		    else
+			c64_colorram[(offset & 0x3ff)|((c64_port6510&3)<<10)] = data | 0xf0; // maybe all 8 bit connected!
+		    break;
 		case 0xc:
 			cia6526_0_port_w (offset & 0xff, data);
 			break;
@@ -715,7 +718,7 @@ static int c128_dma_read(int offset)
 			return c64_chargen[offset & 0xfff];
 		return c64_vicaddr[offset];
 	}
-	if ( ((c64_port6510&7)!=5)
+	if ( !(c64_port6510&4)
 		 && (((c128_vicaddr - c64_memory + offset) & 0x7000) == 0x1000) )
 		return c128_chargen[offset & 0xfff];
 	return c128_vicaddr[offset];
@@ -723,7 +726,8 @@ static int c128_dma_read(int offset)
 
 static int c128_dma_read_color (int offset)
 {
-	return c64_colorram[offset & 0x3ff] & 0xf;
+    if (c64mode) return c64_colorram[offset & 0x3ff] & 0xf;
+    return c64_colorram[(offset & 0x3ff)|((c64_port6510&0x3)<<10)] & 0xf;
 }
 
 static void c128_common_driver_init (void)
