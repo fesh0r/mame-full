@@ -8,6 +8,7 @@
 #include "includes/pc.h"
 
 #include "includes/pc_cga.h"
+#include "includes/state.h"
 
 #define VERBOSE_CGA 0		/* CGA (Color Graphics Adapter) */
 
@@ -1002,22 +1003,7 @@ void pc_cga_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 				fillbitmap(bitmap, Machine->pens[0], &Machine->visible_area);
     }
 
-
-#if 0
-	{
-		int x, i;
-		char text[40];
-		sprintf(text,"%.2x %.2x", input_port_16_r(0), input_port_17_r(0));
-
-		for (x=0, i=0; text[i]; i++, x+= Machine->uifont->width)
-		{
-			drawgfx (bitmap, Machine->uifont, text[i], 0, 0,
-					 0, x, 100, 0,
-					 TRANSPARENCY_NONE, 0);
-		}
-
-	}
-#endif
+//	state_display(bitmap);
 }
 
 static struct {

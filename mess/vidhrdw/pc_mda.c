@@ -6,6 +6,7 @@
 #include "includes/pc.h"
 
 #include "includes/pc_mda.h"
+#include "includes/state.h"
 
 #define VERBOSE_MDA 0		/* MDA (Monochrome Display Adapter) */
 
@@ -789,5 +790,7 @@ void pc_mda_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 			if (video_active && --video_active == 0)
 				fillbitmap(bitmap, Machine->pens[0], &Machine->visible_area);
     }
+
+//	state_display(bitmap);
 }
 

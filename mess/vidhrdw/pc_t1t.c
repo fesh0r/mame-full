@@ -6,6 +6,7 @@
 #include "includes/pc.h"
 
 #include "includes/pc_t1t.h"
+#include "includes/state.h"
 
 #define VERBOSE_T1T 0		/* T1T (Tandy 100 Graphics Adapter) */
 
@@ -1420,4 +1421,5 @@ void pc_t1t_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 			if( video_active && --video_active == 0 )
 				fillbitmap(bitmap, Machine->pens[0], &Machine->visible_area);
     }
+//	state_display(bitmap);
 }
