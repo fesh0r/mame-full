@@ -380,6 +380,6 @@ COMP ( 1983, apple2e,  0,        apple2e,  apple2,   apple2,   apple2,	"Apple Co
 COMP ( 1985, apple2ee, apple2e,  apple2ee, apple2,   apple2,   apple2,	"Apple Computer", "Apple //e (enhanced)" )
 COMP ( 1987, apple2ep, apple2e,  apple2ee, apple2,   apple2,   apple2,	"Apple Computer", "Apple //e (Platinum)" )
 COMP ( 1984, apple2c,  0,        apple2c,  apple2,   apple2,   apple2,	"Apple Computer", "Apple //c" )
-COMPX( 1986, apple2c0, apple2c,  apple2c,  apple2,   apple2,   apple2,	"Apple Computer", "Apple //c (3.5 ROM)",	GAME_NOT_WORKING )
+COMPX( 1985, apple2c0, apple2c,  apple2c,  apple2,   apple2,   apple2,	"Apple Computer", "Apple //c (3.5 ROM)",	GAME_NOT_WORKING )
 COMPX( 1988, apple2cp, apple2c,  apple2c,  apple2,   apple2,   apple2,	"Apple Computer", "Apple //c Plus",			GAME_NOT_WORKING )
 
