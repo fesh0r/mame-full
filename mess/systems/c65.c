@@ -651,7 +651,7 @@ extern void c65_runtime_loader_init(void)
 		if ( strcmp(drivers[i]->name,"c65d")==0) drivers[i]=&driver_c65d;
 		if ( strcmp(drivers[i]->name,"c65c")==0) drivers[i]=&driver_c65c;
 		if ( strcmp(drivers[i]->name,"c65ger")==0) drivers[i]=&driver_c65ger;
-		if ( strcmp(drivers[i]->name,"c64a")==0) drivers[i]=&driver_c65a;
+		if ( strcmp(drivers[i]->name,"c65a")==0) drivers[i]=&driver_c65a;
 	}
 }
 #endif
