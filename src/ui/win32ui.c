@@ -1618,9 +1618,15 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 
 	hTreeView = GetDlgItem(hMain, IDC_TREE);
 	hwndList  = GetDlgItem(hMain, IDC_LIST);
+
 #ifdef MESS
 	hwndSoftware	= GetDlgItem(hMain, IDC_LIST2);
 	assert(hwndSoftware);
+
+	{
+		extern const char *history_filename;
+		history_filename = "sysinfo.dat";
+	}
 #endif
 
 	if (!InitSplitters())

@@ -15,3 +15,6 @@ Source Changes:
 
 - [Win32 GUI] Fixed a bug that caused software specific screenshots to
   not show up if clicking between tabs.  [Nate Woods]
+  
+- [Win32] Fixed a bug that caused us to be looking for the MAME names of
+  sysinfo.dat and messinfo.dat (history.dat and mameinfo.dat).  [Nate Woods]
