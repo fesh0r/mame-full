@@ -20,6 +20,7 @@
 #define RRand(range) (random()%range)
 
 #include <math.h>
+#include <string.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/Xmd.h>
@@ -202,7 +203,7 @@ int sysdep_create_display(int depth)
   if((glxfx=getenv("MESA_GLX_FX")) && (glxfx[0]=='f'))
   {
     if(gl_res == NULL)
-      gl_res = "640x480";
+      gl_res = strdup("640x480");
   }
 
   if(gl_res!=NULL)
