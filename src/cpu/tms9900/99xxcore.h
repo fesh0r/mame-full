@@ -1463,6 +1463,8 @@ int TMS99XX_EXECUTE(int cycles)
 		{
 			if (mame_debug)
 			{
+				int icount_save = TMS99XX_ICOUNT;
+
 				I.FR[ 0] = READREG(R0);
 				I.FR[ 1] = READREG(R1);
 				I.FR[ 2] = READREG(R2);
@@ -1491,6 +1493,8 @@ int TMS99XX_EXECUTE(int cycles)
 				#endif
 
 				MAME_Debug();
+
+				TMS99XX_ICOUNT = icount_save;
 			}
 		}
 		#endif
@@ -1966,7 +1970,8 @@ static void reset_decrementer(void)
 		}
 		else
 		{	/* timer */
-			timer_adjust(I.timer, TIME_IN_CYCLES(I.decrementer_interval * 16L, cpu_getactivecpu()), 0, 0);
+			double period = TIME_IN_CYCLES(I.decrementer_interval * 16L, cpu_getactivecpu());
+			timer_adjust(I.timer, period, 0, period);
 		}
 	}
 }
@@ -2738,6 +2743,10 @@ static void contextswitch(UINT16 addr)
 
 #if HAS_MAPPING || HAS_PRIVILEGE
 
+/* priviledged context switch, that accurs after a reset, interrupt or XOP:
+we enter priviledged mode and select map file 0 before doing the context switch */
+/* For CPU that have no priviledge support, contextswitchX would behave the
+identically to contextswitch, so we can call contextswitch in all cases. */
 static void contextswitchX(UINT16 addr)
 {
 	UINT16 oldWP, oldpc, oldST;
@@ -2748,13 +2757,16 @@ static void contextswitchX(UINT16 addr)
 	setstat();
 	oldST = I.STATUS;
 
-	/* load vector */
-	#if HAS_MAPPING || HAS_PRIVILEGE
-		I.STATUS = oldST & ~ (ST_PR | ST_MF);
-	#else
-		#warning "Todo..."
+	/* enter priviledged mode and select map file 0 */
+	#if HAS_PRIVILEGE
+		I.STATUS &= ~ ST_PR;
+	#endif
+	#if HAS_MAPPING
+		I.STATUS &= ~ ST_MF;
 	#endif
 	getstat();
+
+	/* load vector */
 	I.WP = readword(addr) & ~1;
 	I.PC = readword(addr+2) & ~1;
 
