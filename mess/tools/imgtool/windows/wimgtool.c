@@ -33,6 +33,7 @@ struct wimgtool_info
 	mess_pile iconlist_extensions;
 
 	HIMAGELIST dragimage;
+	POINT dragpt;
 };
 
 
@@ -796,6 +797,8 @@ static LRESULT CALLBACK wimgtool_wndproc(HWND window, UINT message, WPARAM wpara
 	NMHDR *notify;
 	POINT pt;
 	LRESULT lres;
+	HWND target_window;
+	DWORD style;
 
 	info = get_wimgtool_info(window);
 
@@ -906,6 +909,7 @@ static LRESULT CALLBACK wimgtool_wndproc(HWND window, UINT message, WPARAM wpara
 					ImageList_BeginDrag(info->dragimage, 0, 0, 0);
 					ImageList_DragEnter(GetDesktopWindow(), pt.x, pt.y);
 					SetCapture(window);
+					info->dragpt = pt;
 					break;
 			}
 			break;
@@ -916,6 +920,7 @@ static LRESULT CALLBACK wimgtool_wndproc(HWND window, UINT message, WPARAM wpara
 				pt.x = LOWORD(lparam);
 				pt.y = HIWORD(lparam);
 				ClientToScreen(window, &pt);
+				info->dragpt = pt;
 
 				ImageList_DragMove(pt.x, pt.y);
 			}
@@ -924,11 +929,20 @@ static LRESULT CALLBACK wimgtool_wndproc(HWND window, UINT message, WPARAM wpara
 		case WM_LBUTTONUP:
 			if (info->dragimage)
 			{
+				target_window = WindowFromPoint(info->dragpt);
+
 				ImageList_DragLeave(info->listview);
 				ImageList_EndDrag();
 				ImageList_Destroy(info->dragimage);
 				ReleaseCapture();
 				info->dragimage = NULL;
+				info->dragpt.x = 0;
+				info->dragpt.y = 0;
+
+				style = GetWindowLong(target_window, GWL_EXSTYLE);
+				if (style & WS_EX_ACCEPTFILES)
+				{
+				}
 			}
 			break;
 

@@ -95,7 +95,7 @@ done:
 
 
 BOOL win_associate_extension(const struct win_association_info *assoc,
-	const char *extension)
+	const char *extension, BOOL is_set)
 {
 	HKEY key1 = NULL;
 	HKEY key2 = NULL;

@@ -15,7 +15,7 @@ BOOL win_association_exists(const struct win_association_info *assoc);
 BOOL win_is_extension_associated(const struct win_association_info *assoc,
 	const char *extension);
 BOOL win_associate_extension(const struct win_association_info *assoc,
-	const char *extension);
+	const char *extension, BOOL is_set);
 
 
 
