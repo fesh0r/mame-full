@@ -199,107 +199,60 @@
 	E000-FFFF ROM	  BIOS ROM
 ******************************************************************************/
 
-MEMORY_READ_START( readmem_a400 )
-	{ 0x0000, 0x3fff, MRA8_RAM },
-//	{ 0x4000, 0x9fff, MRA8_RAM },	/* optional RAM */
-	{ 0xa000, 0xbfff, MRA8_BANK1 },
-	{ 0xc000, 0xcfff, MRA8_ROM },
-	{ 0xd000, 0xd0ff, MRA_GTIA },
-	{ 0xd100, 0xd1ff, MRA8_NOP },
-	{ 0xd200, 0xd2ff, pokey1_r },
-    { 0xd300, 0xd3ff, MRA_PIA },
-	{ 0xd400, 0xd4ff, MRA_ANTIC },
-	{ 0xd500, 0xd7ff, MRA8_NOP },
-	{ 0xd800, 0xffff, MRA8_ROM },
-MEMORY_END
+static ADDRESS_MAP_START(a400_mem, ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x3fff) AM_RAM
+//	AM_RANGE(0x4000, 0x9fff) AM_RAM									/* optional RAM */
+	AM_RANGE(0xa000, 0xbfff) AM_READWRITE(MRA8_BANK1, MWA8_BANK1)
+	AM_RANGE(0xc000, 0xcfff) AM_ROM
+	AM_RANGE(0xd000, 0xd0ff) AM_READWRITE(atari_gtia_r, atari_gtia_w)
+	AM_RANGE(0xd100, 0xd1ff) AM_NOP
+	AM_RANGE(0xd200, 0xd2ff) AM_READWRITE(pokey1_r, pokey1_w)
+    AM_RANGE(0xd300, 0xd3ff) AM_READWRITE(atari_pia_r, atari_pia_w)
+	AM_RANGE(0xd400, 0xd4ff) AM_READWRITE(atari_antic_r, atari_antic_w)
+	AM_RANGE(0xd500, 0xd7ff) AM_NOP
+	AM_RANGE(0xd800, 0xffff) AM_ROM
+ADDRESS_MAP_END
 
-MEMORY_WRITE_START( writemem_a400 )
-	{ 0x0000, 0x3fff, MWA8_RAM },
-//	{ 0x4000, 0x9fff, MRA8_RAM },	/* optional RAM */
-	{ 0xa000, 0xbfff, MWA8_BANK1 },
-	{ 0xc000, 0xcfff, MWA8_ROM },
-	{ 0xd000, 0xd0ff, MWA_GTIA },
-	{ 0xd100, 0xd1ff, MWA8_NOP },
-	{ 0xd200, 0xd2ff, pokey1_w },
-    { 0xd300, 0xd3ff, MWA_PIA },
-	{ 0xd400, 0xd4ff, MWA_ANTIC },
-	{ 0xd500, 0xd7ff, MWA8_NOP },
-	{ 0xd800, 0xffff, MWA8_ROM },
-MEMORY_END
 
-MEMORY_READ_START( readmem_a800 )
-	{ 0x0000, 0x9fff, MRA8_RAM },
-	{ 0xa000, 0xbfff, MRA8_BANK1 },
-	{ 0xc000, 0xcfff, MRA8_ROM },
-	{ 0xd000, 0xd0ff, MRA_GTIA },
-	{ 0xd100, 0xd1ff, MRA8_NOP },
-	{ 0xd200, 0xd2ff, pokey1_r },
-    { 0xd300, 0xd3ff, MRA_PIA },
-	{ 0xd400, 0xd4ff, MRA_ANTIC },
-	{ 0xd500, 0xd7ff, MRA8_NOP },
-	{ 0xd800, 0xffff, MRA8_ROM },
-MEMORY_END
+static ADDRESS_MAP_START(a800_mem, ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x9fff) AM_RAM
+	AM_RANGE(0xa000, 0xbfff) AM_READWRITE(MRA8_BANK1, MWA8_BANK1)
+	AM_RANGE(0xc000, 0xcfff) AM_ROM
+	AM_RANGE(0xd000, 0xd0ff) AM_READWRITE(atari_gtia_r, atari_gtia_w)
+	AM_RANGE(0xd100, 0xd1ff) AM_NOP
+	AM_RANGE(0xd200, 0xd2ff) AM_READWRITE(pokey1_r, pokey1_w)
+    AM_RANGE(0xd300, 0xd3ff) AM_READWRITE(atari_pia_r, atari_pia_w)
+	AM_RANGE(0xd400, 0xd4ff) AM_READWRITE(atari_antic_r, atari_antic_w)
+	AM_RANGE(0xd500, 0xd7ff) AM_NOP
+	AM_RANGE(0xd800, 0xffff) AM_ROM
+ADDRESS_MAP_END
 
-MEMORY_WRITE_START( writemem_a800 )
-	{ 0x0000, 0x9fff, MWA8_RAM },
-	{ 0xa000, 0xbfff, MWA8_BANK1 },
-	{ 0xc000, 0xcfff, MWA8_ROM },
-	{ 0xd000, 0xd0ff, MWA_GTIA },
-	{ 0xd100, 0xd1ff, MWA8_NOP },
-	{ 0xd200, 0xd2ff, pokey1_w },
-    { 0xd300, 0xd3ff, MWA_PIA },
-	{ 0xd400, 0xd4ff, MWA_ANTIC },
-	{ 0xd500, 0xd7ff, MWA8_NOP },
-	{ 0xd800, 0xffff, MWA8_ROM },
-MEMORY_END
 
-MEMORY_READ_START( readmem_a800xl )
-	{ 0x0000, 0x4fff, MRA8_RAM },
-	{ 0x5000, 0x57ff, MRA8_BANK2 },
-	{ 0x5800, 0x9fff, MRA8_RAM },
-	{ 0xa000, 0xbfff, MRA8_BANK1 },
-	{ 0xc000, 0xcfff, MRA8_BANK3 },
-	{ 0xd000, 0xd0ff, MRA_GTIA },
-	{ 0xd100, 0xd1ff, MRA8_NOP },
-	{ 0xd200, 0xd2ff, pokey1_r },
-    { 0xd300, 0xd3ff, MRA_PIA },
-	{ 0xd400, 0xd4ff, MRA_ANTIC },
-	{ 0xd500, 0xd7ff, MRA8_NOP },
-	{ 0xd800, 0xffff, MRA8_BANK4 },
-MEMORY_END
+static ADDRESS_MAP_START(a800xl_mem, ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x4fff) AM_RAM
+	AM_RANGE(0x5000, 0x57ff) AM_READWRITE(MRA8_BANK2, MWA8_BANK2)
+	AM_RANGE(0x5800, 0x9fff) AM_RAM
+	AM_RANGE(0xa000, 0xbfff) AM_READWRITE(MRA8_BANK1, MWA8_BANK1)
+	AM_RANGE(0xc000, 0xcfff) AM_READWRITE(MRA8_BANK3, MWA8_BANK3)
+	AM_RANGE(0xd000, 0xd0ff) AM_READWRITE(atari_gtia_r, atari_gtia_w)
+	AM_RANGE(0xd100, 0xd1ff) AM_NOP
+	AM_RANGE(0xd200, 0xd2ff) AM_READWRITE(pokey1_r, pokey1_w)
+    AM_RANGE(0xd300, 0xd3ff) AM_READWRITE(atari_pia_r, atari_pia_w)
+	AM_RANGE(0xd400, 0xd4ff) AM_READWRITE(atari_antic_r, atari_antic_w)
+	AM_RANGE(0xd500, 0xd7ff) AM_NOP
+	AM_RANGE(0xd800, 0xffff) AM_READWRITE(MRA8_BANK4, MWA8_BANK4)
+ADDRESS_MAP_END
 
-MEMORY_WRITE_START( writemem_a800xl )
-	{ 0x0000, 0x4fff, MWA8_RAM },
-	{ 0x5000, 0x57ff, MWA8_BANK2 },
-	{ 0x5800, 0x9fff, MWA8_RAM },
-	{ 0xa000, 0xbfff, MWA8_BANK1 },
-	{ 0xc000, 0xcfff, MWA8_BANK3 },
-	{ 0xd000, 0xd0ff, MWA_GTIA },
-	{ 0xd100, 0xd1ff, MWA8_NOP },
-	{ 0xd200, 0xd2ff, pokey1_w },
-    { 0xd300, 0xd3ff, MWA_PIA },
-	{ 0xd400, 0xd4ff, MWA_ANTIC },
-	{ 0xd500, 0xd7ff, MWA8_NOP },
-	{ 0xd800, 0xffff, MWA_BANK4 },
-MEMORY_END
 
-MEMORY_READ_START( readmem_5200 )
-	{ 0x0000, 0x3fff, MRA8_RAM },
-	{ 0x4000, 0xbfff, MRA8_ROM },
-	{ 0xc000, 0xc0ff, MRA_GTIA },
-	{ 0xd400, 0xd5ff, MRA_ANTIC },
-	{ 0xe800, 0xe8ff, pokey1_r },
-    { 0xf800, 0xffff, MRA8_ROM },
-MEMORY_END
+static ADDRESS_MAP_START(a5200_mem, ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x3fff) AM_RAM
+	AM_RANGE(0x4000, 0xbfff) AM_ROM
+	AM_RANGE(0xc000, 0xc0ff) AM_READWRITE(atari_gtia_r, atari_gtia_w)
+	AM_RANGE(0xd400, 0xd5ff) AM_READWRITE(atari_antic_r, atari_antic_w)
+	AM_RANGE(0xe800, 0xe8ff) AM_READWRITE(pokey1_r, pokey1_w)
+	AM_RANGE(0xf800, 0xffff) AM_ROM
+ADDRESS_MAP_END
 
-MEMORY_WRITE_START( writemem_5200 )
-	{ 0x0000, 0x3fff, MWA8_RAM },
-	{ 0x4000, 0xbfff, MWA8_ROM },
-	{ 0xc000, 0xc0ff, MWA_GTIA },
-	{ 0xd400, 0xd5ff, MWA_ANTIC },
-	{ 0xe800, 0xe8ff, pokey1_w },
-    { 0xf800, 0xffff, MWA8_ROM },
-MEMORY_END
 
 INPUT_PORTS_START( a800 )
 
@@ -844,7 +797,7 @@ static MACHINE_DRIVER_START( a400 )
 	MDRV_IMPORT_FROM( atari_common )
 
 	MDRV_CPU_MODIFY( "main" )
-	MDRV_CPU_MEMORY(readmem_a400,writemem_a400)
+	MDRV_CPU_PROGRAM_MAP(a400_mem, 0)
 	MDRV_CPU_VBLANK_INT(a400_interrupt, TOTAL_LINES_60HZ)
 
 	MDRV_MACHINE_INIT( a400 )
@@ -857,7 +810,7 @@ static MACHINE_DRIVER_START( a400pal )
 	MDRV_IMPORT_FROM( atari_common )
 
 	MDRV_CPU_MODIFY( "main" )
-	MDRV_CPU_MEMORY(readmem_a400,writemem_a400)
+	MDRV_CPU_PROGRAM_MAP(a400_mem, 0)
 	MDRV_CPU_VBLANK_INT(a400_interrupt, TOTAL_LINES_50HZ)
 
 	MDRV_MACHINE_INIT( a400 )
@@ -870,7 +823,7 @@ static MACHINE_DRIVER_START( a800 )
 	MDRV_IMPORT_FROM( atari_common )
 
 	MDRV_CPU_MODIFY( "main" )
-	MDRV_CPU_MEMORY(readmem_a800,writemem_a800)
+	MDRV_CPU_PROGRAM_MAP(a800_mem, 0)
 	MDRV_CPU_VBLANK_INT(a800_interrupt, TOTAL_LINES_60HZ)
 
 	MDRV_MACHINE_INIT( a800 )
@@ -883,7 +836,7 @@ static MACHINE_DRIVER_START( a800pal )
 	MDRV_IMPORT_FROM( atari_common )
 
 	MDRV_CPU_MODIFY( "main" )
-	MDRV_CPU_MEMORY(readmem_a800,writemem_a800)
+	MDRV_CPU_PROGRAM_MAP(a800_mem, 0)
 	MDRV_CPU_VBLANK_INT(a800_interrupt, TOTAL_LINES_50HZ)
 
 	MDRV_MACHINE_INIT( a800 )
@@ -896,7 +849,7 @@ static MACHINE_DRIVER_START( a800xl )
 	MDRV_IMPORT_FROM( atari_common )
 
 	MDRV_CPU_MODIFY( "main" )
-	MDRV_CPU_MEMORY(readmem_a800xl,writemem_a800xl)
+	MDRV_CPU_PROGRAM_MAP(a800xl_mem, 0)
 	MDRV_CPU_VBLANK_INT(a800xl_interrupt, TOTAL_LINES_60HZ)
 
 	MDRV_MACHINE_INIT( a800xl )
@@ -909,7 +862,7 @@ static MACHINE_DRIVER_START( a5200 )
 	MDRV_IMPORT_FROM( atari_common_nodac )
 
 	MDRV_CPU_MODIFY( "main" )
-	MDRV_CPU_MEMORY(readmem_5200,writemem_5200)
+	MDRV_CPU_PROGRAM_MAP(a5200_mem, 0)
 	MDRV_CPU_VBLANK_INT(a5200_interrupt, TOTAL_LINES_60HZ)
 
 	MDRV_MACHINE_INIT( a5200 )

@@ -57,7 +57,7 @@ void antic_reset(void)
  * Read ANTIC hardware registers
  *
  **************************************************************/
-READ_HANDLER ( MRA_ANTIC )
+READ_HANDLER ( atari_antic_r )
 {
 	data8_t data = 0xff;
 
@@ -123,7 +123,7 @@ READ_HANDLER ( MRA_ANTIC )
  *
  **************************************************************/
 
-WRITE_HANDLER ( MWA_ANTIC )
+WRITE_HANDLER ( atari_antic_w )
 {
 	int temp;
 

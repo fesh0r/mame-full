@@ -29,7 +29,7 @@
 
 #define TRIGGER_HSYNC	64717
 
-#define READ_MEM(x) cpu_readmem16(x)
+#define READ_MEM(x) program_read_byte(x)
 
 /*static unsigned char *ROM; */
 

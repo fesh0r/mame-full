@@ -24,8 +24,6 @@ extern void tia_init(void);
 
 DEVICE_LOAD( a2600_cart );
 
-static UINT8* r6532_ram;
-
 
 
 DEVICE_LOAD( a2600_cart )
@@ -33,73 +31,23 @@ DEVICE_LOAD( a2600_cart )
 	UINT8* ROM = memory_region(REGION_CPU1);
 
 	if (mame_fsize(file) != 0x800 && mame_fsize(file) != 0x1000)
-	{
 		return INIT_FAIL;
-	}
 
 	mame_fread(file, ROM + 0x1000, mame_fsize(file));
 
 	if (mame_fsize(file) == 0x800)
-	{
 		memcpy(ROM + 0x1800, ROM + 0x1000, 0x800);
-	}
-
-	memcpy(ROM + 0x3000, ROM + 0x1000, 0x1000);
-	memcpy(ROM + 0x5000, ROM + 0x1000, 0x1000);
-	memcpy(ROM + 0x7000, ROM + 0x1000, 0x1000);
-	memcpy(ROM + 0x9000, ROM + 0x1000, 0x1000);
-	memcpy(ROM + 0xB000, ROM + 0x1000, 0x1000);
-	memcpy(ROM + 0xD000, ROM + 0x1000, 0x1000);
-	memcpy(ROM + 0xF000, ROM + 0x1000, 0x1000);
-
 	return 0;
 }
 
 
-static READ_HANDLER( ram_r )
-{
-	return r6532_ram[offset];
-}
+static ADDRESS_MAP_START(a2600_mem, ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x007F) AM_MIRROR(0x0100)	AM_READWRITE(tia_r, tia_w)
+	AM_RANGE(0x0080, 0x00FF) AM_MIRROR(0x0100)	AM_RAM
+	AM_RANGE(0x0280, 0x029F)					AM_READWRITE(r6532_0_r, r6532_0_w)
+	AM_RANGE(0x1000, 0x1FFF) AM_MIRROR(0xE000)	AM_ROM
+ADDRESS_MAP_END
 
-
-static WRITE_HANDLER( ram_w )
-{
-	r6532_ram[offset] = data;
-}
-
-
-static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x007F, tia_r },
-	{ 0x0080, 0x00FF, ram_r },
-	{ 0x0100, 0x017F, tia_r },
-	{ 0x0180, 0x01FF, ram_r },
-	{ 0x0280, 0x029F, r6532_0_r },
-	{ 0x1000, 0x1FFF, MRA8_ROM },
-	{ 0x3000, 0x3FFF, MRA8_ROM },
-	{ 0x5000, 0x5FFF, MRA8_ROM },
-	{ 0x7000, 0x7FFF, MRA8_ROM },
-	{ 0x9000, 0x9FFF, MRA8_ROM },
-	{ 0xB000, 0xBFFF, MRA8_ROM },
-	{ 0xD000, 0xDFFF, MRA8_ROM },
-	{ 0xF000, 0xFFFF, MRA8_ROM },
-MEMORY_END
-
-
-static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0x007F, tia_w },
-	{ 0x0080, 0x00FF, ram_w, &r6532_ram },
-	{ 0x0100, 0x017F, tia_w },
-	{ 0x0180, 0x01FF, ram_w },
-	{ 0x0280, 0x029F, r6532_0_w },
-	{ 0x1000, 0x1FFF, MWA8_ROM },
-	{ 0x3000, 0x3FFF, MWA8_ROM },
-	{ 0x5000, 0x5FFF, MWA8_ROM },
-	{ 0x7000, 0x7FFF, MWA8_ROM },
-	{ 0x9000, 0x9FFF, MWA8_ROM },
-	{ 0xB000, 0xBFFF, MWA8_ROM },
-	{ 0xD000, 0xDFFF, MWA8_ROM },
-	{ 0xF000, 0xFFFF, MWA8_ROM },
-MEMORY_END
 
 
 static READ_HANDLER( switch_A_r )
@@ -206,7 +154,7 @@ INPUT_PORTS_END
 static MACHINE_DRIVER_START( a2600 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502, 3584160 / 3)	/* actually M6507 */
-	MDRV_CPU_MEMORY(readmem, writemem)
+	MDRV_CPU_PROGRAM_MAP(a2600_mem, 0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 

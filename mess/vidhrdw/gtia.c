@@ -58,7 +58,7 @@ void gtia_reset(void)
 	int i;
     /* reset the GTIA read/write/helper registers */
 	for (i = 0; i < 32; i++)
-		MWA_GTIA(i,0);
+		atari_gtia_w(i,0);
     memset(&gtia.r, 0, sizeof(gtia.r));
 	if( Machine->drv->frames_per_second > 55 )
 		gtia.r.pal = 0xff;
@@ -85,7 +85,7 @@ void gtia_reset(void)
  *
  **************************************************************/
 
-READ_HANDLER ( MRA_GTIA )
+READ_HANDLER ( atari_gtia_r )
 {
     switch (offset & 31)
     {
@@ -279,7 +279,7 @@ static void recalc_m3(void)
     }
 }
 
-WRITE_HANDLER ( MWA_GTIA )
+WRITE_HANDLER ( atari_gtia_w )
 {
 	/* used for mixing hue/lum of different colors */
 	static UINT8 lumpm0=0,lumpm1=0,lumpm2=0,lumpm3=0,lumpm4=0;

@@ -61,13 +61,13 @@ DEVICE_UNLOAD( a800xl_cart );
 DEVICE_LOAD( a5200_cart );
 DEVICE_UNLOAD( a5200_cart );
 
-READ_HANDLER ( MRA_GTIA );
-READ_HANDLER ( MRA_PIA );
-READ_HANDLER ( MRA_ANTIC );
+READ_HANDLER ( atari_gtia_r );
+READ_HANDLER ( atari_pia_r );
+READ_HANDLER ( atari_antic_r );
 
-WRITE_HANDLER ( MWA_GTIA );
-WRITE_HANDLER ( MWA_PIA  );
-WRITE_HANDLER ( MWA_ANTIC );
+WRITE_HANDLER ( atari_gtia_w );
+WRITE_HANDLER ( atari_pia_w  );
+WRITE_HANDLER ( atari_antic_w );
 
 READ_HANDLER ( atari_serin_r );
 WRITE_HANDLER ( atari_serout_w );
@@ -454,11 +454,11 @@ void a800xl_interrupt(void);
 void a5200_interrupt(void);
 
 #if ACCURATE_ANTIC_READMEM
-#define RDANTIC()	cpu_readmem16(antic.dpage+antic.doffs)
-#define RDVIDEO(o)	cpu_readmem16(antic.vpage+((antic.voffs+(o))&VOFFS))
-#define RDCHGEN(o)	cpu_readmem16(antic.chbase+(o))
-#define RDPMGFXS(o) cpu_readmem16(antic.pmbase_s+(o)+(antic.scanline>>1))
-#define RDPMGFXD(o) cpu_readmem16(antic.pmbase_d+(o)+antic.scanline)
+#define RDANTIC()	program_read_byte(antic.dpage+antic.doffs)
+#define RDVIDEO(o)	program_read_byte(antic.vpage+((antic.voffs+(o))&VOFFS))
+#define RDCHGEN(o)	program_read_byte(antic.chbase+(o))
+#define RDPMGFXS(o) program_read_byte(antic.pmbase_s+(o)+(antic.scanline>>1))
+#define RDPMGFXD(o) program_read_byte(antic.pmbase_d+(o)+antic.scanline)
 #else
 #define RDANTIC()	Machine->memory_region[0][antic.dpage+antic.doffs]
 #define RDVIDEO(o)	Machine->memory_region[0][antic.vpage+((antic.voffs+(o))&VOFFS)]

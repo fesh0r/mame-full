@@ -192,7 +192,7 @@ DRVLIBS = \
 	$(OBJ)/amstrad.a  \
 	$(OBJ)/sega.a     \
 	$(OBJ)/acorn.a    \
-#	$(OBJ)/atari.a    \
+	$(OBJ)/atari.a    \
 #	$(OBJ)/advision.a \
 #	$(OBJ)/mbee.a	  \
 #	$(OBJ)/vtech.a	  \

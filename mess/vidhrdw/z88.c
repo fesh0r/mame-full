@@ -39,7 +39,6 @@ PALETTE_INIT( z88 )
 	memcpy(colortable, z88_colour_table, sizeof (z88_colour_table));
 }
 
-extern unsigned char *z88_memory;
 extern struct blink_hw blink;
 
 /* temp - change to gfxelement structure */
@@ -120,24 +119,19 @@ static void z88_vh_render_line(struct mame_bitmap *bitmap, int x, int y,int pen)
 /* convert absolute offset into correct address to get data from */
 static unsigned  char *z88_convert_address(unsigned long offset)
 {
-//        return z88_memory;
-
-        if (offset>(32*16384))
-        {
-			unsigned long get_offset;
-
-			get_offset = offset - (32*16384);
-
-			get_offset = get_offset & 0x01fffff;
-
-			return z88_memory + get_offset;
-        }
-        else
-        {
-			offset = offset & 0x01FFFF;
-
-            return memory_region(REGION_CPU1) + 0x010000 + offset;
-        }
+//        return mess_ram;
+	if (offset>(32*16384))
+	{
+		unsigned long get_offset;
+		get_offset = offset - (32*16384);
+		get_offset = get_offset & 0x01fffff;
+		return mess_ram + get_offset;
+	}
+	else
+	{
+		offset = offset & 0x01FFFF;
+		return memory_region(REGION_CPU1) + 0x010000 + offset;
+	}
 }
 
 
