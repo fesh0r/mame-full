@@ -734,17 +734,17 @@ void     cpu_writeport16bew_word        (offs_t offset, data16_t data);
 data8_t  cpu_readport16ledw              (offs_t offset);
 void     cpu_writeport16ledw             (offs_t offset, data8_t data);
 data16_t cpu_readport16ledw_word         (offs_t offset);
-void     cpu_writeport16lew_word         (offs_t offset, data16_t data);
-data32_t cpu_readport16lew_dword         (offs_t offset);
-void     cpu_writeport16lew_dword        (offs_t offset, data32_t data);
+void     cpu_writeport16ledw_word         (offs_t offset, data16_t data);
+data32_t cpu_readport16ledw_dword         (offs_t offset);
+void     cpu_writeport16ledw_dword        (offs_t offset, data32_t data);
 
 /* ----- declare 32-bit BE handlers ----- */
 data8_t  cpu_readport16bedw              (offs_t offset);
 void     cpu_writeport16bedw             (offs_t offset, data8_t data);
 data16_t cpu_readport16bedw_word         (offs_t offset);
 void     cpu_writeport16bew_word         (offs_t offset, data16_t data);
-data32_t cpu_readport16bew_dword         (offs_t offset);
-void     cpu_writeport16bew_dword        (offs_t offset, data32_t data);
+data32_t cpu_readport16bedw_dword         (offs_t offset);
+void     cpu_writeport16bedw_dword        (offs_t offset, data32_t data);
 
 /***************************************************************************
 
