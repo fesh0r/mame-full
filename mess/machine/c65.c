@@ -578,18 +578,29 @@ static int c65_io_on=0, c65_io_dc00_on=0;
 static void c65_bankswitch_interface(int value)
 {
 	static int old=0;
+	read8_handler rh;
+	write8_handler wh;
+
 	DBG_LOG (2, "c65 bankswitch", ("%.2x\n",value));
-	if (c65_io_on) {
-		if (value&1) {
-			cpu_setbank (8, c64_colorram+0x400);
-			cpu_setbank (9, c64_colorram+0x400);
-			memory_set_bankhandler_r (8, 0, MRA8_BANK8);
-			memory_set_bankhandler_w (9, 0, MWA8_BANK9);
-		} else {
-			memory_set_bankhandler_r (8, 0, c65_read_io_dc00);
-			memory_set_bankhandler_w (9, 0, c65_write_io_dc00);
+
+	if (c65_io_on)
+	{
+		if (value&1)
+		{
+			cpu_setbank (8, c64_colorram + 0x400);
+			cpu_setbank (9, c64_colorram + 0x400);
+			rh = MRA8_BANK8;
+			wh = MWA8_BANK9;
 		}
+		else
+		{
+			rh = c65_read_io_dc00;
+			wh = c65_write_io_dc00;
+		}
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0dc00, 0x0dfff, 0, rh);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0dc00, 0x0dfff, 0, wh);
 	}
+
 	c65_io_dc00_on=!(value&1);
 #if 0
 	/* cartridge roms !?*/
@@ -615,6 +626,8 @@ void c65_bankswitch (void)
 {
 	static int old = -1;
 	int data, loram, hiram, charen;
+	read8_handler rh4, rh8;
+	write8_handler wh5, wh9;
 
 	data = ((c64_port6510 & c64_ddr6510) | (c64_ddr6510 ^ 0xff)) & 7;
 	if (data == old)
@@ -648,30 +661,36 @@ void c65_bankswitch (void)
 	{
 		cpu_setbank (2, c64_memory + 0xa000);
 	}
+
 	if ((!c64_game && c64_exrom)
 		|| (charen && (loram || hiram)))
 	{
-		c65_io_on=1;
-		memory_set_bankhandler_r (4, 0, c65_read_io);
-		memory_set_bankhandler_w (5, 0, c65_write_io);
+		c65_io_on = 1;
+		rh4 = c65_read_io;
+		wh5 = c65_write_io;
 		cpu_setbank (6, c64_colorram);
 		cpu_setbank (7, c64_colorram);
 
-		if (c65_io_dc00_on) {
-			memory_set_bankhandler_r (8, 0, c65_read_io_dc00);
-			memory_set_bankhandler_w (9, 0, c65_write_io_dc00);
-		} else {
-			memory_set_bankhandler_r (8, 0, MRA8_BANK8);
-			memory_set_bankhandler_w (9, 0, MWA8_BANK9);
+		if (c65_io_dc00_on)
+		{
+			rh8 = c65_read_io_dc00;
+			wh9 = c65_write_io_dc00;
+		}
+		else
+		{
+			rh8 = MRA8_BANK8;
+			wh9 = MWA8_BANK9;
 			cpu_setbank (8, c64_colorram+0x400);
 			cpu_setbank (9, c64_colorram+0x400);
 		}
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0dc00, 0x0dfff, 0, rh8);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0dc00, 0x0dfff, 0, wh9);
 	}
 	else
 	{
-		c65_io_on=0;
-		memory_set_bankhandler_r (4, 0, MRA8_BANK4);
-		memory_set_bankhandler_w (5, 0, MWA8_BANK5);
+		c65_io_on = 0;
+		rh4 = MRA8_BANK4;
+		wh5 = MWA8_BANK5;
 		cpu_setbank(5, c64_memory+0xd000);
 		cpu_setbank(7, c64_memory+0xd800);
 		cpu_setbank(9, c64_memory+0xdc00);
@@ -688,6 +707,8 @@ void c65_bankswitch (void)
 			cpu_setbank (8, c64_memory + 0xdc00);
 		}
 	}
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0d000, 0x0d7ff, 0, rh4);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0d000, 0x0d7ff, 0, wh5);
 
 	if (!c64_game && c64_exrom)
 	{

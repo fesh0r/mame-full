@@ -34,7 +34,7 @@ void z180_get_info(UINT32 state, union cpuinfo *info);
 #if (HAS_8080 || HAS_8085A)
 #include "cpu/i8085/i8085.h"
 #endif
-#if (HAS_M6502 || HAS_M65C02 || HAS_M65SC02 || HAS_M6510 || HAS_M6510T || HAS_M7501 || HAS_M8502 || HAS_N2A03 || HAS_DECO16)
+#if (HAS_M6502 || HAS_M65C02 || HAS_M65SC02 || HAS_M6510 || HAS_M6510T || HAS_M7501 || HAS_M8502 || HAS_N2A03 || HAS_DECO16 || HAS_M6509)
 #include "cpu/m6502/m6502.h"
 #endif
 #if (HAS_M4510)
@@ -42,9 +42,6 @@ void z180_get_info(UINT32 state, union cpuinfo *info);
 #endif
 #if (HAS_M65CE02)
 #include "cpu/m6502/m65ce02.h"
-#endif
-#if (HAS_M6509)
-#include "cpu/m6502/m6509.h"
 #endif
 #if (HAS_H6280)
 #include "cpu/h6280/h6280.h"

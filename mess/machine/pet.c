@@ -289,46 +289,50 @@ static READ_HANDLER(cbm8096_io_r)
 */
 WRITE_HANDLER(cbm8096_w)
 {
-	if (data&0x80) {
-		if (data&0x40) {
-			memory_set_bankhandler_r(7, 0, cbm8096_io_r);
-			memory_set_bankhandler_w(7, 0, cbm8096_io_w);
-		} else {
-			memory_set_bankhandler_r(7, 0, MRA8_BANK7);
-			if (!(data&2)) {
-				memory_set_bankhandler_w(7, 0, MWA8_BANK7);
-			} else {
-				memory_set_bankhandler_w(7, 0, MWA8_NOP);
-			}
+	read8_handler rh;
+	write8_handler wh;
+
+	if (data&0x80)
+	{
+		if (data&0x40)
+		{
+			rh = cbm8096_io_r;
+			wh = cbm8096_io_w;
 		}
-		if (!(data&2)) {
-			memory_set_bankhandler_w(6, 0, MWA8_BANK6);
-			memory_set_bankhandler_w(8, 0, MWA8_BANK8);
-			memory_set_bankhandler_w(9, 0, MWA8_BANK9);
-		} else {
-			memory_set_bankhandler_w(6, 0, MWA8_NOP);
-			memory_set_bankhandler_w(8, 0, MWA8_NOP);
-			memory_set_bankhandler_w(9, 0, MWA8_NOP);
+		else
+		{
+			rh = MRA8_BANK7;
+			if (!(data&2))
+				wh = MWA8_BANK7;
+			else
+				wh = MWA8_NOP;
 		}
-		if (data&0x20) {
-			cpu_setbank(1,pet_memory+0x8000);
-			memory_set_bankhandler_w(1, 0, videoram_w);
-		} else {
-			if (!(data&1)) {
-				memory_set_bankhandler_w(1, 0, MWA8_BANK1);
-			} else {
-				memory_set_bankhandler_w(1, 0, MWA8_NOP);
-			}
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe800, 0xefff, 0, rh);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe800, 0xefff, 0, wh);
+
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xe7ff, 0, (data & 2) == 0 ? MWA8_BANK6 : MWA8_NOP);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xf000, 0xffef, 0, (data & 2) == 0 ? MWA8_BANK8 : MWA8_NOP);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xfff1, 0xffff, 0, (data & 2) == 0 ? MWA8_BANK9 : MWA8_NOP);
+
+		if (data&0x20)
+		{
+			cpu_setbank(1, pet_memory+0x8000);
+			wh = videoram_w;
 		}
-		if (!(data&1)) {
-			memory_set_bankhandler_w(2, 0, MWA8_BANK2);
-			memory_set_bankhandler_w(3, 0, MWA8_BANK3);
-			memory_set_bankhandler_w(4, 0, MWA8_BANK4);
-		} else {
-			memory_set_bankhandler_w(2, 0, MWA8_NOP);
-			memory_set_bankhandler_w(3, 0, MWA8_NOP);
-			memory_set_bankhandler_w(4, 0, MWA8_NOP);
+		else
+		{
+			if (!(data&1))
+				wh = MWA8_BANK1;
+			else
+				wh = MWA8_NOP;
 		}
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x8fff, 0, wh);
+
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x9000, 0x9fff, 0, (data & 1) == 0 ? MWA8_BANK2 : MWA8_NOP);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa000, 0xafff, 0, (data & 1) == 0 ? MWA8_BANK3 : MWA8_NOP);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb000, 0xbfff, 0, (data & 1) == 0 ? MWA8_BANK4 : MWA8_NOP);
+
+
 		if (data&4) {
 			if (!(data&0x20)) {
 				cpu_setbank(1,pet_memory+0x14000);
@@ -359,33 +363,38 @@ WRITE_HANDLER(cbm8096_w)
 			cpu_setbank(8, pet_memory+0x1b000);
 			cpu_setbank(9, pet_memory+0x1bff1);
 		}
-	} else {
-		cpu_setbank(1,pet_memory+0x8000);
-		memory_set_bankhandler_w(1, 0, videoram_w);
-		cpu_setbank(2,pet_memory+0x9000);
-		memory_set_bankhandler_w(2, 0, MWA8_ROM);
-		cpu_setbank(3,pet_memory+0xa000);
-		memory_set_bankhandler_w(3, 0, MWA8_ROM);
+	}
+	else
+	{
+		cpu_setbank(1, pet_memory + 0x8000);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x8fff, 0, videoram_w);
+
+		cpu_setbank(2, pet_memory + 0x9000);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x9000, 0x9fff, 0, MWA8_ROM);
+
+		cpu_setbank(3, pet_memory + 0xa000);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa000, 0xafff, 0, MWA8_ROM);
+
 		cpu_setbank(4,pet_memory+0xb000);
-		memory_set_bankhandler_w(4, 0, MWA8_ROM);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb000, 0xbfff, 0, MWA8_ROM);
 
 		cpu_setbank(6,pet_memory+0xc000);
-		memory_set_bankhandler_w(6, 0, MWA8_ROM);
-		memory_set_bankhandler_r(7, 0, cbm8096_io_r);
-		memory_set_bankhandler_w(7, 0, cbm8096_io_w);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xe7ff, 0, MWA8_ROM);
+
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe800, 0xefff, 0, cbm8096_io_r);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe800, 0xefff, 0, cbm8096_io_w);
+
 		cpu_setbank(8,pet_memory+0xf000);
-		memory_set_bankhandler_w(8, 0, MWA8_ROM);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xf000, 0xffef, 0, MWA8_ROM);
+
 		cpu_setbank(9,pet_memory+0xfff1);
-		memory_set_bankhandler_w(9, 0, MWA8_ROM);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xfff1, 0xffff, 0, MWA8_ROM);
 	}
 }
 
-extern READ_HANDLER(superpet_r)
+READ_HANDLER(superpet_r)
 {
-	int data=0xff;
-	switch (offset) {
-	}
-	return data;
+	return 0xff;
 }
 
 extern WRITE_HANDLER(superpet_w)

@@ -587,12 +587,12 @@ static void c64_bankswitch (int reset)
 //	    || (loram && hiram && !c64_exrom))
 	{
 		cpu_setbank (1, roml);
-		memory_set_bankhandler_w (2, 0, MWA8_RAM); // always ram: pitstop
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x9fff, 0, MWA8_RAM);	// always ram: pitstop
 	}
 	else
 	{
 		cpu_setbank (1, c64_memory + 0x8000);
-		memory_set_bankhandler_w (2, 0, MWA8_RAM);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x9fff, 0, MWA8_RAM);
 	}
 
 #if 1
@@ -617,13 +617,13 @@ static void c64_bankswitch (int reset)
 	if ((!c64_game && c64_exrom)
 		|| (charen && (loram || hiram)))
 	{
-		memory_set_bankhandler_r (5, 0, c64_read_io);
-		memory_set_bankhandler_w (6, 0, c64_write_io);
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd000, 0xdfff, 0, c64_read_io);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd000, 0xdfff, 0, c64_write_io);
 	}
 	else
 	{
-		memory_set_bankhandler_r (5, 0, MRA8_BANK5);
-		memory_set_bankhandler_w (6, 0, MWA8_BANK6);
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd000, 0xdfff, 0, MRA8_BANK5);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd000, 0xdfff, 0, MWA8_BANK6);
 		cpu_setbank (6, c64_memory + 0xd000);
 		if (!charen && (loram || hiram))
 		{
@@ -638,11 +638,11 @@ static void c64_bankswitch (int reset)
 	if (!c64_game && c64_exrom)
 	{
 		cpu_setbank (7, romh);
-		memory_set_bankhandler_w (8, 0, MWA8_NOP);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe000, 0xffff, 0, MWA8_NOP);
 	}
 	else
 	{
-		memory_set_bankhandler_w (8, 0, MWA8_RAM);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe000, 0xffff, 0, MWA8_RAM);
 		if (hiram)
 		{
 			cpu_setbank (7, c64_kernal);
@@ -652,8 +652,8 @@ static void c64_bankswitch (int reset)
 			cpu_setbank (7, c64_memory + 0xe000);
 		}
 	}
-	game=c64_game;
-	exrom=c64_exrom;
+	game = c64_game;
+	exrom = c64_exrom;
 	old = data;
 }
 
@@ -682,7 +682,8 @@ WRITE_HANDLER(c64_m6510_port_w)
 			c64_ddr6510 = data;
 	}
 	data = (c64_port6510 & c64_ddr6510) | (c64_ddr6510 ^ 0xff);
-	if (c64_tape_on) {
+	if (c64_tape_on)
+	{
 		vc20_tape_write (!(data & 8));
 		vc20_tape_motor (data & 0x20);
 	}
@@ -704,7 +705,8 @@ READ_HANDLER(c64_m6510_port_r)
 			data &= ~0x10;
 		if (c128 && !c128_capslock_r ())
 			data &= ~0x40;
-		if (c65 && C65_KEY_DIN) data &= ~0x40; /*? */
+		if (c65 && C65_KEY_DIN)
+			data &= ~0x40; /*? */
 		return data;
 	}
 	else
@@ -716,7 +718,8 @@ READ_HANDLER(c64_m6510_port_r)
 int c64_paddle_read (int which)
 {
 	int pot1=0xff, pot2=0xff, pot3=0xff, pot4=0xff, temp;
-	if (PADDLES34) {
+	if (PADDLES34)
+	{
 		if (which) pot4=PADDLE4_VALUE;
 		else pot3=PADDLE3_VALUE;
 	}

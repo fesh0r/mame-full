@@ -55,6 +55,9 @@
 #if (HAS_DECO16)
 #define SUBTYPE_DECO16	5
 #endif
+#if (HAS_M6509)
+#define SUBTYPE_M6509	6
+#endif
 
 enum {
 	M6502_PC=1, M6502_S, M6502_P, M6502_A, M6502_X, M6502_Y,
@@ -144,6 +147,23 @@ extern void m7501_get_info(UINT32 state, union cpuinfo *info);
 #define M8502_IRQ_LINE					M6502_IRQ_LINE
 
 extern void m8502_get_info(UINT32 state, union cpuinfo *info);
+#endif
+
+#ifdef HAS_M6509
+#define M6509_A 						M6502_A
+#define M6509_X 						M6502_X
+#define M6509_Y 						M6502_Y
+#define M6509_S 						M6502_S
+#define M6509_PC						M6502_PC
+#define M6509_P 						M6502_P
+#define M6509_EA						M6502_EA
+#define M6509_ZP						M6502_ZP
+#define M6509_NMI_STATE 				M6502_NMI_STATE
+#define M6509_IRQ_STATE 				M6502_IRQ_STATE
+
+#define M6509_IRQ_LINE					M6502_IRQ_LINE
+
+extern void m6509_get_info(UINT32 state, union cpuinfo *info);
 #endif
 
 

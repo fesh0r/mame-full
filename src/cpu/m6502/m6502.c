@@ -49,46 +49,6 @@
 #define LOG(x)
 #endif
 
-#ifdef RUNTIME_LOADER
-// currently debugger has symbols of 65ce02, 6509, 4510 so all in 1 library
-#include "m6509.h"
-#include "m65ce02.h"
-#include "m4510.h"
-
-struct cpu_interface
-m6502_interface=
-CPU0(M6502,    m6502,    1,  0,1.00,M6502_INT_NONE,    M6502_IRQ_LINE,  IRQ_LINE_NMI,  8, 16,     0,16,LE,1, 3),
-	m65c02_interface=
-CPU0(M65C02,   m65c02,   1,  0,1.00,M65C02_INT_NONE,   M65C02_INT_IRQ, M65C02_INT_NMI, 8, 16,     0,16,LE,1, 3),
-	m65sc02_interface=
-CPU0(M65SC02,  m65sc02,  1,  0,1.00,M65SC02_INT_NONE,  M65SC02_INT_IRQ,M65SC02_INT_NMI,8, 16,     0,16,LE,1, 3),
-	m6510_interface=
-CPU0(M6510,    m6510,    1,  0,1.00,M6510_INT_NONE,    M6510_INT_IRQ,  M6510_INT_NMI,  8, 16,     0,16,LE,1, 3),
-	m6510t_interface=
-CPU0(M6510T,   m6510t,   1,  0,1.00,M6510T_INT_NONE,   M6510T_INT_IRQ, M6510T_INT_NMI, 8, 16,     0,16,LE,1, 3),
-	m7501_interface=
-CPU0(M7501,    m7501,    1,  0,1.00,M7501_INT_NONE,    M7501_INT_IRQ,  M7501_INT_NMI,  8, 16,     0,16,LE,1, 3),
-	m8502_interface=
-CPU0(M8502,    m8502,    1,  0,1.00,M8502_INT_NONE,    M8502_INT_IRQ,  M8502_INT_NMI,  8, 16,     0,16,LE,1, 3),
-	n2a03_interface=
-CPU0(N2A03,    n2a03,    1,  0,1.00,N2A03_INT_NONE,    N2A03_INT_IRQ,  N2A03_INT_NMI,  8, 16,     0,16,LE,1, 3);
-
-extern void m6502_runtime_loader_init(void)
-{
-	cpuintf[CPU_M6502]=m6502_interface;
-	cpuintf[CPU_M6510]=m6510_interface;
-	cpuintf[CPU_M6510T]=m6510t_interface;
-	cpuintf[CPU_M7501]=m7501_interface;
-	cpuintf[CPU_M8502]=m8502_interface;
-	cpuintf[CPU_N2A03]=n2a03_interface;
-	cpuintf[CPU_M65C02]=m65c02_interface;
-	cpuintf[CPU_M65SC02]=m65sc02_interface;
-
-	m6509_runtime_loader_init();
-	m65ce02_runtime_loader_init();
-	m4510_runtime_loader_init();
-}
-#endif
 
 /* Layout of the registers in the debugger */
 static UINT8 m6502_reg_layout[] = {
@@ -133,6 +93,15 @@ int m6502_ICount = 0;
 
 static m6502_Regs m6502;
 
+
+typedef struct
+{
+	PAIR   pc_bank; 	   /* 4 bits, addressed over address 0 */
+	PAIR   ind_bank;	   /* 4 bits, addressed over address 1 */
+}	m6509_Regs;
+
+static m6509_Regs m6509;
+
 /***************************************************************
  * include the opcode macros, functions and tables
  ***************************************************************/
@@ -160,6 +129,10 @@ static m6502_Regs m6502;
 
 #if (HAS_DECO16)
 #include "tdeco16.c"
+#endif
+
+#if (HAS_M6509)
+#include "t6509.c"
 #endif
 
 /*****************************************************************************
@@ -690,6 +663,87 @@ static int deco16_execute(int cycles)
 
 
 
+/****************************************************************************
+ * 6509 section
+ *
+ * The basic difference is the amount of RAM these machines have been
+ * supplied with. The B128 and the CBM *10 models had 128k RAM, the others
+ * 256k. This implies some banking scheme, as the 6502 can only address 64k.
+ * And indeed those machines use a 6509, that can address 1 MByte of RAM. It
+ * has 2 registers at addresses 0 and 1. The indirect bank register at address
+ * 1 determines the bank (0-15) where the opcodes LDA (zp),Y and STA (zp),Y
+ * take the data from. The exec bank register at address 0 determines the bank
+ * where all other read and write addresses take place.
+ *
+ * VICE writes to bank register only with zeropage operand
+ *  0, 1 are bank register in all banks
+ * 
+ *  lda  (zp),y
+ *  sta  (zp),y
+ ****************************************************************************/
+#if (HAS_M6509)
+
+static void m6509_init(void)
+{
+	m6502.subtype = SUBTYPE_M6509;
+	m6502.insn = insn6509;
+	m6502_state_register("m6509");
+}
+
+unsigned m6509_dasm(char *buffer, unsigned pc)
+{
+#ifdef MAME_DEBUG
+	return Dasm6509( buffer, pc );
+#else
+	sprintf( buffer, "$%02X", cpu_readop(pc) );
+	return 1;
+#endif
+}
+
+/* Layout of the registers in the debugger */
+//static UINT8 m6509_reg_layout[] =
+//{
+//	M6509_A,M6509_X,M6509_Y,M6509_S,M6509_PC, M6509_P,-1,
+//	M6509_PC_BANK, M6509_IND_BANK, M6509_EA, M6509_ZP, -1,
+//	M6509_NMI_STATE, M6509_IRQ_STATE, M6509_SO_STATE, 0
+//};
+
+/* Layout of the debugger windows x,y,w,h */
+//static UINT8 m6509_win_layout[] =
+//{
+//	25, 0,55, 3,	/* register window (top, right rows) */
+//	 0, 0,24,22,	/* disassembler window (left colums) */
+//	25, 4,55, 8,	/* memory #1 window (right, upper middle) */
+//	25,13,55, 9,	/* memory #2 window (right, lower middle) */
+//	 0,23,80, 1,	/* command line window (bottom rows) */
+//};
+
+READ_HANDLER( m6509_read_00000 )
+{
+	return m6509.pc_bank.b.h2;
+}
+
+READ_HANDLER( m6509_read_00001 )
+{
+	return m6509.ind_bank.b.h2;
+}
+
+WRITE_HANDLER( m6509_write_00000 )
+{
+	m6509.pc_bank.b.h2 = data & 0x0f;
+	m6502.pc.w.h = m6509.pc_bank.w.h;
+	change_pc(PCD);
+}
+
+WRITE_HANDLER( m6509_write_00001 )
+{
+	m6509.ind_bank.b.h2 = data & 0x0f;
+}
+
+#endif
+
+
+
 /**************************************************************************
  * Generic set_info
  **************************************************************************/
@@ -1057,3 +1111,52 @@ void deco16_get_info(UINT32 state, union cpuinfo *info)
 	}
 }
 #endif
+
+
+#if (HAS_M6509)
+/**************************************************************************
+ * CPU-specific set_info
+ **************************************************************************/
+
+static void m6509_set_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		default:
+			m6502_set_info(state, info);
+			break;
+	}
+}
+
+void m6509_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_INIT:							info->init = m6509_init;				break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "M6509"); break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "MOS Technology 6509"); break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.0beta"); break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (c) 1998 Juergen Buchmueller\nCopyright (c) 2000 Peter Trauner\nall rights reserved."); break;
+
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 8;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 20;					break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_SET_INFO:						info->setinfo = m6509_set_info;		break;
+		//case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = m6509_reg_layout;				break;
+		//case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = m6509_win_layout;				break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = m6502_dasm;			break;
+
+		default:
+			m6502_get_info(state, info);
+			break;
+	}
+}
+
+#endif
+

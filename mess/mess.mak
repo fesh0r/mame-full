@@ -13,7 +13,7 @@ CPUS+=M6502@
 CPUS+=M65C02@
 CPUS+=M65SC02@
 #CPUS+=M65CE02@
-#CPUS+=M6509@
+CPUS+=M6509@
 CPUS+=M6510@
 CPUS+=M6510T@
 CPUS+=M7501@
@@ -333,35 +333,35 @@ $(OBJ)/cbmshare.a: \
 	$(OBJ)/mess/sndhrdw/sidvoice.o	\
 	$(OBJ)/mess/sndhrdw/sid6581.o	\
 	$(OBJ)/mess/machine/cbmdrive.o	\
-	$(OBJ)/mess/machine/cbmieeeb.o	\
-	$(OBJ)/mess/machine/cbmserb.o	\
-	$(OBJ)/mess/vidhrdw/vic6567.o	\
-	$(OBJ)/mess/machine/vc20tape.o	\
-	$(OBJ)/mess/machine/vc1541.o	\
-#	$(OBJ)/mess/machine/c64.o		\
+	$(OBJ)/mess/machine/vc1541.o	 \
+	$(OBJ)/mess/machine/cbmieeeb.o \
+	$(OBJ)/mess/machine/cbmserb.o  \
+	$(OBJ)/mess/machine/c64.o      \
+	$(OBJ)/mess/vidhrdw/vic6567.o	 \
+	$(OBJ)/mess/machine/vc20tape.o
 
 $(OBJ)/cbm.a: \
-	$(OBJ)/mess/vidhrdw/pet.o	     \
-	$(OBJ)/mess/systems/pet.o	     \
-	$(OBJ)/mess/systems/c64.o      \
-	$(OBJ)/mess/machine/vc20.o	 \
-	$(OBJ)/mess/systems/vc20.o	 \
-	$(OBJ)/mess/sndhrdw/ted7360.o  \
-	$(OBJ)/mess/sndhrdw/t6721.o    \
-	$(OBJ)/mess/machine/c16.o	     \
-	$(OBJ)/mess/systems/c16.o      \
-	$(OBJ)/mess/systems/cbmb.o	 \
-	$(OBJ)/mess/machine/cbmb.o	 \
-	$(OBJ)/mess/vidhrdw/cbmb.o	 \
-	$(OBJ)/mess/systems/c65.o	     \
-	$(OBJ)/mess/vidhrdw/vdc8563.o  \
-	$(OBJ)/mess/systems/c128.o     \
-	$(OBJ)/mess/sndhrdw/vic6560.o  \
-	$(OBJ)/mess/vidhrdw/ted7360.o  \
-	$(OBJ)/mess/vidhrdw/vic6560.o	\
-#	$(OBJ)/mess/machine/pet.o		\
-#	$(OBJ)/mess/machine/c65.o		\
-#	$(OBJ)/mess/machine/c128.o     \
+	$(OBJ)/mess/vidhrdw/pet.o		\
+	$(OBJ)/mess/systems/pet.o		\
+	$(OBJ)/mess/machine/pet.o		\
+	$(OBJ)/mess/systems/c64.o		\
+	$(OBJ)/mess/machine/vc20.o		\
+	$(OBJ)/mess/systems/vc20.o		\
+	$(OBJ)/mess/sndhrdw/ted7360.o	\
+	$(OBJ)/mess/sndhrdw/t6721.o		\
+	$(OBJ)/mess/machine/c16.o		\
+	$(OBJ)/mess/systems/c16.o		\
+	$(OBJ)/mess/systems/cbmb.o		\
+	$(OBJ)/mess/machine/cbmb.o		\
+	$(OBJ)/mess/vidhrdw/cbmb.o		\
+	$(OBJ)/mess/systems/c65.o		\
+	$(OBJ)/mess/machine/c65.o		\
+	$(OBJ)/mess/vidhrdw/vdc8563.o	\
+	$(OBJ)/mess/systems/c128.o		\
+	$(OBJ)/mess/machine/c128.o		\
+	$(OBJ)/mess/sndhrdw/vic6560.o	\
+	$(OBJ)/mess/vidhrdw/ted7360.o	\
+	$(OBJ)/mess/vidhrdw/vic6560.o  
 
 $(OBJ)/coco.a:   \
 	$(OBJ)/mess/machine/6883sam.o	\
