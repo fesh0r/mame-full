@@ -626,11 +626,10 @@ static	int 	S2650_relative[0x100] =
 /***************************************************************
  * M_SPSU
  * Store processor status upper (PSU) to register R0
- * Checks for External Sense IO port
  ***************************************************************/
 #define M_SPSU()												\
 {																\
-	R0 = ((S.psu & ~PSU34) | (cpu_readport(S2650_SENSE_PORT) & SI)); \
+	R0 = S.psu & ~PSU34;										\
 	SET_CC(R0); 												\
 }
 
@@ -676,7 +675,7 @@ static	int 	S2650_relative[0x100] =
  ***************************************************************/
 #define M_PPSU()												\
 {																\
-	UINT8 ppsu = (ARG() & ~PSU34) & ~SI;						\
+	UINT8 ppsu = ARG() & ~PSU34;								\
 	S.psu = S.psu | ppsu;										\
 }
 
@@ -700,9 +699,8 @@ static	int 	S2650_relative[0x100] =
 #define M_TPSU()												\
 {																\
 	UINT8 tpsu = ARG(); 										\
-    UINT8 rpsu = (S.psu | (cpu_readport(S2650_SENSE_PORT) & SI)); \
 	S.psl &= ~CC;												\
-	if( (rpsu & tpsu) != tpsu )									\
+	if( (S.psu & tpsu) != tpsu )								\
 		S.psl |= 0x80;											\
 }
 
@@ -747,7 +745,7 @@ void s2650_reset(void *param)
 {
 	memset(&S, 0, sizeof(S));
 	S.psl = COM | WC;
-	S.psu = 0;
+	S.psu = SI;
 }
 
 void s2650_exit(void)
@@ -866,7 +864,6 @@ void s2650_set_irq_line(int irqline, int state)
 			s2650_set_sense(1);
 		return;
 	}
-
 	S.irq_state = state;
 	CHECK_IRQ_LINE;
 }
@@ -899,9 +896,7 @@ void s2650_set_sense(int state)
 
 int s2650_get_sense(void)
 {
-	/* OR'd with Input to allow for external connections */
-
-    return (((S.psu & SI) ? 1 : 0) | ((cpu_readport(S2650_SENSE_PORT) & SI) ? 1 : 0));
+    return (S.psu & SI) ? 1 : 0;
 }
 
 static  int S2650_Cycles[0x100] = {

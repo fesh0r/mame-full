@@ -50,14 +50,14 @@
 	Apparel Night
 	(c)1986 NihonBussan Co.,Ltd. / Central Denshi.
 
-	Driver by Takahiro Nogi 2000/01/28 - 
+	Driver by Takahiro Nogi 2000/01/28 -
 
 ***************************************************************************/
 /***************************************************************************
 Memo:
 
 >>>>>>>	Games using 16bit color (seiha, iemoto, ojousan, bijokkoy, bijokkog)
-		has some wrong display (not initialized correctly). 
+		has some wrong display (not initialized correctly).
 
 >>>>>>>	Games using 12bit color (secolove, citylove) is currently set to
 		use 8-bit mode.
@@ -187,49 +187,37 @@ static void init_apparel(void)
 }
 
 
-static struct MemoryReadAddress readmem_mjsikaku[] =
-{
+static MEMORY_READ_START( readmem_mjsikaku )
 	{ 0x0000, 0xf7ff, MRA_ROM },
 	{ 0xf800, 0xffff, MRA_RAM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_mjsikaku[] =
-{
+static MEMORY_WRITE_START( writemem_mjsikaku )
 	{ 0x0000, 0xf7ff, MWA_ROM },
 	{ 0xf800, 0xffff, MWA_RAM, &nb1413m3_nvram, &nb1413m3_nvram_size },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress readmem_secolove[] =
-{
+static MEMORY_READ_START( readmem_secolove )
 	{ 0x0000, 0xefff, MRA_ROM },
 	{ 0xf000, 0xf7ff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_secolove[] =
-{
+static MEMORY_WRITE_START( writemem_secolove )
 	{ 0x0000, 0xefff, MWA_ROM },
 	{ 0xf000, 0xf7ff, MWA_RAM, &nb1413m3_nvram, &nb1413m3_nvram_size },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress readmem_ojousan[] =
-{
+static MEMORY_READ_START( readmem_ojousan )
 	{ 0x0000, 0x6fff, MRA_ROM },
 	{ 0x7000, 0x7fff, MRA_RAM },
 	{ 0x8000, 0xffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_ojousan[] =
-{
+static MEMORY_WRITE_START( writemem_ojousan )
 	{ 0x0000, 0x6fff, MWA_ROM },
 	{ 0x7000, 0x7fff, MWA_RAM, &nb1413m3_nvram, &nb1413m3_nvram_size },
 	{ 0x8000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 static READ_HANDLER( io_mjsikaku_r )
@@ -249,11 +237,9 @@ static READ_HANDLER( io_mjsikaku_r )
 	}
 }
 
-static struct IOReadPort readport_mjsikaku[] =
-{
+static PORT_READ_START( readport_mjsikaku )
 	{ 0x0000, 0xffff, io_mjsikaku_r },
-	{ -1 }
-};
+PORT_END
 
 static WRITE_HANDLER( io_mjsikaku_w )
 {
@@ -289,11 +275,9 @@ static WRITE_HANDLER( io_mjsikaku_w )
 	}
 }
 
-static struct IOWritePort writeport_mjsikaku[] =
-{
+static PORT_WRITE_START( writeport_mjsikaku )
 	{ 0x0000, 0xffff, io_mjsikaku_w },
-	{ -1 }
-};
+PORT_END
 
 static READ_HANDLER( io_otonano_r )
 {
@@ -313,11 +297,9 @@ static READ_HANDLER( io_otonano_r )
 	}
 }
 
-static struct IOReadPort readport_otonano[] =
-{
+static PORT_READ_START( readport_otonano )
 	{ 0x0000, 0xffff, io_otonano_r },
-	{ -1 }
-};
+PORT_END
 
 static WRITE_HANDLER( io_otonano_w )
 {
@@ -352,11 +334,9 @@ static WRITE_HANDLER( io_otonano_w )
 	}
 }
 
-static struct IOWritePort writeport_otonano[] =
-{
+static PORT_WRITE_START( writeport_otonano )
 	{ 0x0000, 0xffff, io_otonano_w },
-	{ -1 }
-};
+PORT_END
 
 static READ_HANDLER( io_kaguya_r )
 {
@@ -376,11 +356,9 @@ static READ_HANDLER( io_kaguya_r )
 	}
 }
 
-static struct IOReadPort readport_kaguya[] =
-{
+static PORT_READ_START( readport_kaguya )
 	{ 0x0000, 0xffff, io_kaguya_r },
-	{ -1 }
-};
+PORT_END
 
 static WRITE_HANDLER( io_kaguya_w )
 {
@@ -415,11 +393,9 @@ static WRITE_HANDLER( io_kaguya_w )
 	}
 }
 
-static struct IOWritePort writeport_kaguya[] =
-{
+static PORT_WRITE_START( writeport_kaguya )
 	{ 0x0000, 0xffff, io_kaguya_w },
-	{ -1 }
-};
+PORT_END
 
 static READ_HANDLER( io_secolove_r )
 {
@@ -439,11 +415,9 @@ static READ_HANDLER( io_secolove_r )
 	}
 }
 
-static struct IOReadPort readport_secolove[] =
-{
+static PORT_READ_START( readport_secolove )
 	{ 0x0000, 0xffff, io_secolove_r },
-	{ -1 }
-};
+PORT_END
 
 static WRITE_HANDLER( io_secolove_w )
 {
@@ -478,11 +452,9 @@ static WRITE_HANDLER( io_secolove_w )
 	}
 }
 
-static struct IOWritePort writeport_secolove[] =
-{
+static PORT_WRITE_START( writeport_secolove )
 	{ 0x0000, 0xffff, io_secolove_w },
-	{ -1 }
-};
+PORT_END
 
 static WRITE_HANDLER( io_iemoto_w )
 {
@@ -517,11 +489,9 @@ static WRITE_HANDLER( io_iemoto_w )
 	}
 }
 
-static struct IOWritePort writeport_iemoto[] =
-{
+static PORT_WRITE_START( writeport_iemoto )
 	{ 0x0000, 0xffff, io_iemoto_w },
-	{ -1 }
-};
+PORT_END
 
 static WRITE_HANDLER( io_seiha_w )
 {
@@ -558,11 +528,9 @@ static WRITE_HANDLER( io_seiha_w )
 	}
 }
 
-static struct IOWritePort writeport_seiha[] =
-{
+static PORT_WRITE_START( writeport_seiha )
 	{ 0x0000, 0xffff, io_seiha_w },
-	{ -1 }
-};
+PORT_END
 
 static WRITE_HANDLER( io_crystal2_w )
 {
@@ -597,11 +565,9 @@ static WRITE_HANDLER( io_crystal2_w )
 	}
 }
 
-static struct IOWritePort writeport_crystal2[] =
-{
+static PORT_WRITE_START( writeport_crystal2 )
 	{ 0x0000, 0xffff, io_crystal2_w },
-	{ -1 }
-};
+PORT_END
 
 static WRITE_HANDLER( io_bijokkoy_w )
 {
@@ -642,11 +608,9 @@ static WRITE_HANDLER( io_bijokkoy_w )
 	}
 }
 
-static struct IOWritePort writeport_bijokkoy[] =
-{
+static PORT_WRITE_START( writeport_bijokkoy )
 	{ 0x0000, 0xffff, io_bijokkoy_w },
-	{ -1 }
-};
+PORT_END
 
 
 INPUT_PORTS_START( mjsikaku )
@@ -679,7 +643,7 @@ INPUT_PORTS_START( mjsikaku )
 
 	PORT_START	/* (2) PORT 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// BUSY FLAG ?
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		// 
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
 	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )			// TEST
@@ -729,7 +693,7 @@ INPUT_PORTS_START( otonano )
 
 	PORT_START	/* (2) PORT 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// BUSY FLAG ?
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		// 
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
 	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )			// TEST
@@ -772,7 +736,7 @@ INPUT_PORTS_START( mjcamera )
 
 	PORT_START	/* (2) PORT 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// BUSY FLAG ?
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		// 
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
 	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )			// TEST
@@ -834,8 +798,8 @@ INPUT_PORTS_START( kaguya )
 
 	PORT_START	/* (2) PORT 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// BUSY FLAG ?
-//	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		// 
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SERVICE1 )		// 
+//	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SERVICE1 )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
 	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )			// TEST
@@ -893,7 +857,7 @@ INPUT_PORTS_START( secolove )
 
 	PORT_START	/* (2) PORT 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// BUSY FLAG ?
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		// 
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
 	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )			// TEST
@@ -966,7 +930,7 @@ INPUT_PORTS_START( citylove )
 
 	PORT_START	/* (2) PORT 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// BUSY FLAG ?
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		// 
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
 	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )			// TEST
@@ -1016,7 +980,7 @@ INPUT_PORTS_START( seiha )
 
 	PORT_START	/* (2) PORT 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// BUSY FLAG ?
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		// 
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
 	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )			// TEST
@@ -1070,7 +1034,7 @@ INPUT_PORTS_START( seiham )
 
 	PORT_START	/* (2) PORT 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// BUSY FLAG ?
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		// 
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
 	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )			// TEST
@@ -1109,7 +1073,7 @@ INPUT_PORTS_START( iemoto )
 
 	PORT_START	/* (2) PORT 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// BUSY FLAG ?
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		// 
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
 	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )			// TEST
@@ -1167,7 +1131,7 @@ INPUT_PORTS_START( bijokkoy )
 
 	PORT_START	/* (2) PORT 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// BUSY FLAG ?
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		// 
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
 	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )			// TEST
@@ -1235,7 +1199,7 @@ INPUT_PORTS_START( bijokkog )
 
 	PORT_START	/* (2) PORT 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// BUSY FLAG ?
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		// 
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
 	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )			// TEST
@@ -1301,7 +1265,7 @@ INPUT_PORTS_START( housemnq )
 
 	PORT_START	/* (2) PORT 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// BUSY FLAG ?
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		// 
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
 	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )			// TEST
@@ -1364,7 +1328,7 @@ INPUT_PORTS_START( housemn2 )
 
 	PORT_START	/* (2) PORT 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// BUSY FLAG ?
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		// 
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
 	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )			// TEST
@@ -1403,7 +1367,7 @@ INPUT_PORTS_START( ojousan )
 
 	PORT_START	/* (2) PORT 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// BUSY FLAG ?
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		// 
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
 	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )			// TEST
@@ -1456,7 +1420,7 @@ INPUT_PORTS_START( crystal2 )
 
 	PORT_START	/* (2) PORT 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// BUSY FLAG ?
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		// 
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
 	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )			// TEST
@@ -1529,7 +1493,7 @@ INPUT_PORTS_START( apparel )
 
 	PORT_START	/* (2) PORT 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// BUSY FLAG ?
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		// 
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
 	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )			// TEST
@@ -2104,21 +2068,20 @@ ROM_START( seiham )
 	ROM_LOAD( "seih_02m.bin", 0x08000, 0x08000, 0xa32cdb9a )
 
 	ROM_REGION( 0x30000, REGION_SOUND1 ) /* voice */
-	ROM_LOAD( "seih_03m.bin", 0x00000, 0x10000, 0x2bcf3d87 )
-	ROM_LOAD( "seih_04m.bin", 0x10000, 0x10000, 0x2fc905d0 )
-	ROM_LOAD( "seih_05m.bin", 0x20000, 0x10000, 0x8eace19c )
+	ROM_LOAD( "seiha03.3i",   0x00000, 0x10000, 0x2bcf3d87 )
+	ROM_LOAD( "seiha04.2i",   0x10000, 0x10000, 0x2fc905d0 )
+	ROM_LOAD( "seiha05.1i",   0x20000, 0x10000, 0x8eace19c )
 
 	ROM_REGION( 0x280000, REGION_GFX1 ) /* gfx */
-	ROM_LOAD( "seih_c1m.bin", 0x000000, 0x40000, 0x788cd3ca )
-	ROM_LOAD( "seih_c2m.bin", 0x040000, 0x40000, 0xa3175a8f )
-	ROM_LOAD( "seih_c3m.bin", 0x080000, 0x40000, 0xda46163e )
-	ROM_LOAD( "seih_c4m.bin", 0x0c0000, 0x40000, 0xea2b78b3 )
-	ROM_LOAD( "seih_c5m.bin", 0x100000, 0x40000, 0x0263ff75 )
-	ROM_LOAD( "seih_06m.bin", 0x180000, 0x10000, 0x9fefe2ca )
-	ROM_LOAD( "seih_07m.bin", 0x190000, 0x10000, 0xa7d438ec )
+	ROM_LOAD( "seiha19.1a",   0x000000, 0x40000, 0x788cd3ca )
+	ROM_LOAD( "seiha20.2a",   0x040000, 0x40000, 0xa3175a8f )
+	ROM_LOAD( "seiha21.3a",   0x080000, 0x40000, 0xda46163e )
+	ROM_LOAD( "seiha22.4a",   0x0c0000, 0x40000, 0xea2b78b3 )
+	ROM_LOAD( "seiha23.5a",   0x100000, 0x40000, 0x0263ff75 )
+	ROM_LOAD( "seiha06.8a",   0x180000, 0x10000, 0x9fefe2ca )
+	ROM_LOAD( "seiha07.9a",   0x190000, 0x10000, 0xa7d438ec )
 	ROM_LOAD( "seih_08m.bin", 0x1a0000, 0x10000, 0xe8e61e48 )
-//	ROM_LOAD( "seih_09m.bin", 0x1b0000, 0x10000, 0x00000000 )
-	ROM_LOAD( "seih_c6m.bin", 0x200000, 0x80000, 0xf1e9555e ) // Different Bank?
+	ROM_LOAD( "se1507.6a",    0x200000, 0x80000, 0xf1e9555e ) // Different Bank?
 ROM_END
 
 ROM_START( iemoto )
@@ -2281,14 +2244,14 @@ ROM_END
 
 
 //    YEAR,     NAME,   PARENT,  MACHINE,    INPUT,     INIT,    MONITOR, COMPANY, FULLNAME, FLAGS)
-GAMEX(1988, mjsikaku,        0, mjsikaku, mjsikaku, mjsikaku, ROT0_16BIT, "Nichibutsu", "Mahjong Sikaku (Japan)", GAME_NO_COCKTAIL)
-GAMEX(1988, mjsikakb, mjsikaku, mjsikaku, mjsikaku, mjsikaku, ROT0_16BIT, "Nichibutsu", "Mahjong Sikaku [TYPE-2] (Japan)", GAME_NO_COCKTAIL)
+GAMEX(1988, mjsikaku,        0, mjsikaku, mjsikaku, mjsikaku, ROT0_16BIT, "Nichibutsu", "Mahjong Sikaku (Japan set 1)", GAME_NO_COCKTAIL)
+GAMEX(1988, mjsikakb, mjsikaku, mjsikaku, mjsikaku, mjsikaku, ROT0_16BIT, "Nichibutsu", "Mahjong Sikaku (Japan set 2)", GAME_NO_COCKTAIL)
 GAMEX(1988,  otonano,        0,  otonano,  otonano,  otonano, ROT0_16BIT, "Apple", "Otona no Mahjong (Japan)", GAME_NO_COCKTAIL)
-GAMEX(1988, mjcamera,        0, mjcamera, mjcamera, mjcamera, ROT0_16BIT, "MIKI SHOJI.", "Mahjong Camera Kozou (Japan)", GAME_NO_COCKTAIL)
+GAMEX(1988, mjcamera,        0, mjcamera, mjcamera, mjcamera, ROT0_16BIT, "MIKI SHOJI", "Mahjong Camera Kozou (Japan)", GAME_NO_COCKTAIL)
 GAMEX(1986, secolove,        0, secolove, secolove, secolove, ROT0_16BIT, "Nichibutsu", "Second Love (Japan)", GAME_NO_COCKTAIL | GAME_WRONG_COLORS)
 GAMEX(1986, citylove,        0, citylove, citylove, citylove, ROT0_16BIT, "Nichibutsu", "City Love (Japan)", GAME_NO_COCKTAIL | GAME_WRONG_COLORS)
 GAMEX(1987,    seiha,        0,    seiha,    seiha,    seiha, ROT0_16BIT, "Nichibutsu", "Seiha (Japan)", GAME_NO_COCKTAIL | GAME_WRONG_COLORS)
-GAMEX(1987,   seiham,        0,   seiham,   seiham,   seiham, ROT0_16BIT, "Nichibutsu", "Seiha [BET] (Japan)", GAME_NO_COCKTAIL | GAME_WRONG_COLORS)
+GAMEX(1987,   seiham,    seiha,   seiham,   seiham,   seiham, ROT0_16BIT, "Nichibutsu", "Seiha [BET] (Japan)", GAME_NO_COCKTAIL | GAME_WRONG_COLORS)
 GAMEX(1987,   iemoto,        0,   iemoto,   iemoto,   iemoto, ROT0_16BIT, "Nichibutsu", "Iemoto (Japan)", GAME_NO_COCKTAIL | GAME_WRONG_COLORS)
 GAMEX(1987,  ojousan,        0,  ojousan,  ojousan,  ojousan, ROT0_16BIT, "Nichibutsu", "Ojousan (Japan)", GAME_NO_COCKTAIL | GAME_WRONG_COLORS)
 GAMEX(1987, bijokkoy,        0, bijokkoy, bijokkoy, bijokkoy, ROT0_16BIT, "Nichibutsu", "Bijokko Yume Monogatari (Japan)", GAME_NO_COCKTAIL | GAME_WRONG_COLORS)
@@ -2297,4 +2260,4 @@ GAMEX(1987, housemnq,        0, housemnq, housemnq, housemnq, ROT0_16BIT, "Nichi
 GAMEX(1987, housemn2,        0, housemn2, housemn2, housemn2, ROT0_16BIT, "Nichibutsu", "House Mannequin Roppongi Live hen (Japan)", GAME_NO_COCKTAIL | GAME_WRONG_COLORS | GAME_NOT_WORKING)
 GAMEX(1988,   kaguya,        0,   kaguya,   kaguya,   kaguya, ROT0_16BIT, "MIKI SHOJI", "Mahjong Kaguyahime [BET] (Japan)", GAME_NO_COCKTAIL)
 GAMEX(1986, crystal2,        0, crystal2, crystal2, crystal2,       ROT0, "Nichibutsu", "Crystal Gal 2 (Japan)", GAME_NO_COCKTAIL)
-GAMEX(1988,  apparel,        0,  apparel,  apparel,  apparel,       ROT0, "Central Denshi", "Apparel Night (Japan)", GAME_NO_COCKTAIL)
+GAMEX(1986,  apparel,        0,  apparel,  apparel,  apparel,       ROT0, "Central Denshi", "Apparel Night (Japan)", GAME_NO_COCKTAIL)

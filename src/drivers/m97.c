@@ -36,28 +36,23 @@ static WRITE_HANDLER( m97_coincounter_w )
 
 /***************************************************************************/
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x00000, 0x7ffff, MRA_ROM },
 	{ 0xa0000, 0xa3fff, MRA_RAM },
 	{ 0xd0000, 0xdffff, MRA_RAM },
 	{ 0xe0000, 0xe03ff, paletteram_r },
 	{ 0xffff0, 0xfffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x00000, 0x7ffff, MWA_ROM },
 	{ 0xd0000, 0xdffff, m90_video_w, &m90_video_data },
 	{ 0xa0000, 0xa3fff, MWA_RAM },
 	{ 0xe0000, 0xe03ff, paletteram_xBBBBBGGGGGRRRRR_w, &paletteram },
 	{ 0xffff0, 0xfffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort readport[] =
-{
+static PORT_READ_START( readport )
 	{ 0x00, 0x00, input_port_0_r }, /* Player 1 */
 	{ 0x01, 0x01, input_port_1_r }, /* Player 2 */
 	{ 0x02, 0x02, input_port_2_r }, /* Coins */
@@ -66,51 +61,40 @@ static struct IOReadPort readport[] =
 	{ 0x05, 0x05, input_port_7_r }, /* Dip 3 */
 	{ 0x06, 0x06, input_port_3_r }, /* Player 3 */
 	{ 0x07, 0x07, input_port_4_r }, /* Player 4 */
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort writeport[] =
-{
+static PORT_WRITE_START( writeport )
 	{ 0x00, 0x00, m72_sound_command_w },
 	{ 0x02, 0x02, m97_coincounter_w },
 	{ 0x03, 0x03, IOWP_NOP },
 	{ 0x80, 0x8f, m90_video_control_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 /*****************************************************************************/
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0xefff, MRA_ROM },
 	{ 0xf000, 0xffff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0xefff, MWA_ROM },
 	{ 0xf000, 0xffff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort sound_readport[] =
-{
+static PORT_READ_START( sound_readport )
 	{ 0x41, 0x41, YM2151_status_port_0_r },
 	{ 0x42, 0x42, soundlatch_r },
 //	{ 0x41, 0x41, m72_sample_r },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
-static struct IOWritePort sound_writeport[] =
-{
+static PORT_WRITE_START( sound_writeport )
 	{ 0x40, 0x40, YM2151_register_port_0_w },
 	{ 0x41, 0x41, YM2151_data_port_0_w },
 	{ 0x42, 0x42, m72_sound_irq_ack_w },
 //	{ 0x40, 0x41, rtype2_sample_addr_w },
 //	{ 0x42, 0x42, m72_sample_w },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
 /***************************************************************************/
 
@@ -386,7 +370,7 @@ ROM_START( bbmanwj )
 	ROM_LOAD( "bbm2_c2.bin",  0x080000, 0x40000, 0x9ac2142f )
 	ROM_LOAD( "bbm2_c3.bin",  0x000000, 0x40000, 0x47af1750 )
 
-	ROM_REGION( 0x20000, REGION_SOUND1 )	/* ADPCM samples */
+	ROM_REGION( 0x20000, REGION_SOUND1 )	/* samples */
 	ROM_LOAD( "bbm2_vo.bin",  0x0000, 0x20000, 0x0ae655ff )
 ROM_END
 
@@ -404,7 +388,7 @@ ROM_START( atompunk )
 	ROM_LOAD( "bbm2_c2.bin",  0x080000, 0x40000, 0x9ac2142f )
 	ROM_LOAD( "bbm2_c3.bin",  0x000000, 0x40000, 0x47af1750 )
 
-	ROM_REGION( 0x20000, REGION_SOUND1 )	/* ADPCM samples */
+	ROM_REGION( 0x20000, REGION_SOUND1 )	/* samples */
 	ROM_LOAD( "db_w04m.rom",           0x0000, 0x20000, 0x4ad889ed )
 ROM_END
 
@@ -424,7 +408,7 @@ ROM_START( quizf1 )
 	ROM_LOAD( "qf1-c2-.83",   0x100000, 0x80000, 0x0b1460ae )
 	ROM_LOAD( "qf1-c3-.84",   0x180000, 0x80000, 0x2d32ff37 )
 
-	ROM_REGION( 0x40000, REGION_SOUND1 )	/* ADPCM samples */
+	ROM_REGION( 0x40000, REGION_SOUND1 )	/* samples */
 	ROM_LOAD( "qf1-v0-.30",   0x0000, 0x40000, 0xb8d16e7c )
 ROM_END
 
@@ -442,7 +426,7 @@ ROM_START( riskchal )
 	ROM_LOAD( "rc_c2.rom",    0x100000, 0x80000, 0x687164d7 )
 	ROM_LOAD( "rc_c3.rom",    0x180000, 0x80000, 0xc86be6af )
 
-	ROM_REGION( 0x40000, REGION_SOUND1 )	/* ADPCM samples */
+	ROM_REGION( 0x40000, REGION_SOUND1 )	/* samples */
 	ROM_LOAD( "rc_v0.rom",    0x0000, 0x40000, 0xcddac360 )
 ROM_END
 
@@ -460,7 +444,7 @@ ROM_START( gussun )
 	ROM_LOAD( "rc_c2.rom",    0x100000, 0x80000, 0x687164d7 )
 	ROM_LOAD( "rc_c3.rom",    0x180000, 0x80000, 0xc86be6af )
 
-	ROM_REGION( 0x40000, REGION_SOUND1 )	/* ADPCM samples */
+	ROM_REGION( 0x40000, REGION_SOUND1 )	/* samples */
 	ROM_LOAD( "rc_v0.rom",    0x0000, 0x40000, 0xcddac360 )
 ROM_END
 

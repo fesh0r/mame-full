@@ -17,10 +17,10 @@ int magmax_vh_start(void);
 void magmax_vh_stop(void);
 
 extern unsigned short magmax_vreg;
-extern unsigned char magmax_scroll_x[];
-extern unsigned char magmax_scroll_y[];
-extern unsigned char * magmax_videoram;
-extern unsigned char * magmax_spriteram;
+extern data16_t *magmax_scroll_x;
+extern data16_t *magmax_scroll_y;
+extern data16_t *magmax_videoram;
+extern data16_t *magmax_spriteram;
 extern size_t magmax_spriteram_size;
 
 
@@ -30,10 +30,13 @@ static unsigned char sound_latch = 0;
 static unsigned char LS74_clr = 0;
 static unsigned char LS74_q   = 0;
 
-static WRITE_HANDLER( magmax_sound_w )
+static WRITE16_HANDLER( magmax_sound_w )
 {
-	sound_latch = data << 1;
-	cpu_set_irq_line(1, 0, ASSERT_LINE);
+	if (ACCESSING_LSB)
+	{
+		sound_latch = (data & 0xff) << 1;
+		cpu_set_irq_line(1, 0, ASSERT_LINE);
+	}
 }
 
 static READ_HANDLER( magmax_sound_irq_ack )
@@ -103,116 +106,67 @@ WRITE_HANDLER( ay8910_portA_0_w )
 
 }
 
-
-
-static WRITE_HANDLER( magmax_write )
+static WRITE16_HANDLER( magmax_vreg_w )
 {
-	switch (offset)
-	{
-		case 0x00: /* VRAM CONTROL REGISTER */
-			/* bit0 - coin counter 1    */
-			/* bit1 - coin counter 2    */
-			/* bit2 - flip screen (INV) */
-			/* bit3 - page bank to be displayed (PG) */
-			/* bit4 - sprite bank LSB (DP0) */
-			/* bit5 - sprite bank MSB (DP1) */
-			/* bit6 - BG display enable (BE)*/
-			magmax_vreg = COMBINE_WORD(magmax_vreg, data);
-			break;
-
-		case 0x02: /* SCROLL X */
-			COMBINE_WORD_MEM(magmax_scroll_x, data);
-			break;
-
-		case 0x04: /* SCROLL Y */
-			COMBINE_WORD_MEM(magmax_scroll_y, data);
-			break;
-
-		case 0x0c: /* SOUND COMMAND */
-			magmax_sound_w(0, data);
-			break;
-
-		case 0x0e: /* irq acknowledge */
-			break;
-
-		default:
-			logerror("offs:0x%02X data:0x%08X\n", offset, data);
-			break;
-	}
-}
-
-static READ_HANDLER( magmax_read )
-{
-	switch (offset)
-	{
-		case 0: /* PLAYER CONTROL 1 */
-			return readinputport(0);
-
-		case 2: /* PLAYER CONTROL 2 */
-			return readinputport(1);
-
-		case 4: /* START BUTTONS, COINS, TEST */
-			return readinputport(2);
-
-		case 6: /* DIPSWITCH A and B */
-			return ((readinputport(4) << 8) | readinputport(3));
-	}
-
-	return 0xffff;
+	/* VRAM CONTROL REGISTER */
+	/* bit0 - coin counter 1    */
+	/* bit1 - coin counter 2    */
+	/* bit2 - flip screen (INV) */
+	/* bit3 - page bank to be displayed (PG) */
+	/* bit4 - sprite bank LSB (DP0) */
+	/* bit5 - sprite bank MSB (DP1) */
+	/* bit6 - BG display enable (BE)*/
+	COMBINE_DATA(&magmax_vreg);
 }
 
 
-static struct MemoryReadAddress magmax_readmem[] =
-{
-	{ 0x000000, 0x013fff, MRA_ROM },
-	{ 0x018000, 0x018fff, MRA_BANK1 },
-	{ 0x020000, 0x0207ff, MRA_BANK2 },
-	{ 0x028000, 0x0281ff, MRA_BANK3 },
-	{ 0x030000, 0x03000f, magmax_read },
-	{ -1 }
-};
 
-static struct MemoryWriteAddress magmax_writemem[] =
-{
-	{ 0x000000, 0x013fff, MWA_ROM },
-	{ 0x018000, 0x018fff, MWA_BANK1 },
-	{ 0x020000, 0x0207ff, MWA_BANK2, &magmax_videoram },
-	{ 0x028000, 0x0281ff, MWA_BANK3, &magmax_spriteram, &magmax_spriteram_size },
-	{ 0x030010, 0x03001f, magmax_write },
-	{ -1 }
-};
+static MEMORY_READ16_START( magmax_readmem )
+	{ 0x000000, 0x013fff, MRA16_ROM },
+	{ 0x018000, 0x018fff, MRA16_RAM },
+	{ 0x020000, 0x0207ff, MRA16_RAM },
+	{ 0x028000, 0x0281ff, MRA16_RAM },
+	{ 0x030000, 0x030001, input_port_0_word_r },
+	{ 0x030002, 0x030003, input_port_1_word_r },
+	{ 0x030004, 0x030005, input_port_2_word_r },
+	{ 0x030006, 0x030007, input_port_3_word_r },
+MEMORY_END
 
-static struct MemoryReadAddress magmax_soundreadmem[] =
-{
+static MEMORY_WRITE16_START( magmax_writemem )
+	{ 0x000000, 0x013fff, MWA16_ROM },
+	{ 0x018000, 0x018fff, MWA16_RAM },
+	{ 0x020000, 0x0207ff, MWA16_RAM, &magmax_videoram },
+	{ 0x028000, 0x0281ff, MWA16_RAM, &magmax_spriteram, &magmax_spriteram_size },
+	{ 0x030010, 0x030011, magmax_vreg_w },
+	{ 0x030012, 0x030013, MWA16_RAM, &magmax_scroll_x },
+	{ 0x030014, 0x030015, MWA16_RAM, &magmax_scroll_y },
+	{ 0x03001c, 0x03001d, magmax_sound_w },
+	{ 0x03001e, 0x03001f, MWA16_NOP },	/* IRQ ack */
+MEMORY_END
+
+static MEMORY_READ_START( magmax_soundreadmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x4000, magmax_sound_irq_ack },
 	{ 0x6000, 0x67ff, MRA_RAM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress magmax_soundwritemem[] =
-{
+static MEMORY_WRITE_START( magmax_soundwritemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x6000, 0x67ff, MWA_RAM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct IOReadPort magmax_soundreadport[] =
-{
+static PORT_READ_START( magmax_soundreadport )
 	{ 0x06, 0x06, magmax_sound_r },
-	{ -1 }
-};
+PORT_END
 
-static struct IOWritePort magmax_soundwriteport[] =
-{
+static PORT_WRITE_START( magmax_soundwriteport )
 	{ 0x00, 0x00, AY8910_control_port_0_w },
 	{ 0x01, 0x01, AY8910_write_port_0_w },
 	{ 0x02, 0x02, AY8910_control_port_1_w },
 	{ 0x03, 0x03, AY8910_write_port_1_w },
 	{ 0x04, 0x04, AY8910_control_port_2_w },
 	{ 0x05, 0x05, AY8910_write_port_2_w },
-	{ -1 }
-};
+PORT_END
 
 
 INPUT_PORTS_START( magmax )
@@ -246,53 +200,51 @@ INPUT_PORTS_START( magmax )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START	/* Dipswitch 1 */
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x03, "3" )
-	PORT_DIPSETTING(    0x02, "4" )
-	PORT_DIPSETTING(    0x01, "5" )
-	PORT_DIPSETTING(    0x00, "6" )
-	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x0c, "30000 every" )
-	PORT_DIPSETTING(    0x04, "70000 every" )
-	PORT_DIPSETTING(    0x08, "50000 every" )
-	PORT_DIPSETTING(    0x00, "90000 every" )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
-	PORT_START	/* Dipswitch 2 */
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
-	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( 1C_6C ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x10, "Easy" )
-	PORT_DIPSETTING(    0x00, "Hard" )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_START	/* Dipswitch */
+	PORT_DIPNAME( 0x0003, 0x0003, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x0003, "3" )
+	PORT_DIPSETTING(      0x0002, "4" )
+	PORT_DIPSETTING(      0x0001, "5" )
+	PORT_DIPSETTING(      0x0000, "6" )
+	PORT_DIPNAME( 0x000c, 0x000c, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(      0x000c, "30000 every" )
+	PORT_DIPSETTING(      0x0004, "70000 every" )
+	PORT_DIPSETTING(      0x0008, "50000 every" )
+	PORT_DIPSETTING(      0x0000, "90000 every" )
+	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Upright ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0300, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x0c00, 0x0c00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(      0x0c00, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x1000, "Easy" )
+	PORT_DIPSETTING(      0x0000, "Hard" )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 INPUT_PORTS_END
 
 

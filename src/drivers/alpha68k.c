@@ -306,19 +306,16 @@ static READ_HANDLER( kyros_alpha_trigger_r )
 
 /******************************************************************************/
 
-static struct MemoryReadAddress kouyakyu_readmem[] =
-{
+static MEMORY_READ_START( kouyakyu_readmem )
 	{ 0x000000, 0x01ffff, MRA_ROM },
 	{ 0x040000, 0x040fff, MRA_BANK1 },
 	{ 0x080000, 0x081fff, MRA_BANK2 },
 	{ 0x0c0000, 0x0c0fff, MRA_BANK3 },
 	{ 0x100000, 0x1007ff, MRA_BANK4 },
 	{ 0x140000, 0x1407ff, MRA_BANK5 },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress kouyakyu_writemem[] =
-{
+static MEMORY_WRITE_START( kouyakyu_writemem )
 	{ 0x000000, 0x01ffff, MWA_ROM },
 	{ 0x040000, 0x040fff, MWA_BANK1, &shared_ram },
 	{ 0x080000, 0x080fff, kouyakyu_video_w, &videoram },
@@ -326,11 +323,9 @@ static struct MemoryWriteAddress kouyakyu_writemem[] =
 	{ 0x100000, 0x1007ff, MWA_BANK4 },
 	{ 0x140000, 0x1407ff, MWA_BANK5 },
 	{ 0x780000, 0x780001, MWA_NOP }, /* Watchdog? */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress kyros_readmem[] =
-{
+static MEMORY_READ_START( kyros_readmem )
 	{ 0x000000, 0x01ffff, MRA_ROM },
 	{ 0x020000, 0x020fff, MRA_BANK1 },
 	{ 0x040000, 0x041fff, MRA_BANK2 },
@@ -338,42 +333,34 @@ static struct MemoryReadAddress kyros_readmem[] =
 	{ 0x080000, 0x0801ff, kyros_alpha_trigger_r },
 	{ 0x0c0000, 0x0c0001, input_port_0_r },
 	{ 0x0e0000, 0x0e0001, kyros_dip_r },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress kyros_writemem[] =
-{
+static MEMORY_WRITE_START( kyros_writemem )
 	{ 0x000000, 0x01ffff, MWA_ROM },
 	{ 0x020000, 0x020fff, MWA_BANK1, &shared_ram },
 	{ 0x040000, 0x041fff, MWA_BANK2, &spriteram },
 	{ 0x060000, 0x060001, alpha68k_II_sound_w }, /* Watchdog? */
 	{ 0x0e0000, 0x0e0001, kyros_sound_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress alpha68k_I_readmem[] =
-{
+static MEMORY_READ_START( alpha68k_I_readmem )
 	{ 0x000000, 0x03ffff, MRA_ROM },
 	{ 0x080000, 0x083fff, MRA_BANK1 },
 //	{ 0x180008, 0x180009, control_2_r }, /* 1 byte */
 	{ 0x300000, 0x300001, control_1_r }, /* 2  */
 	{ 0x340000, 0x340001, control_1_r }, /* 2  */
 	{ 0x100000, 0x103fff, MRA_BANK2 },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress alpha68k_I_writemem[] =
-{
+static MEMORY_WRITE_START( alpha68k_I_writemem )
 	{ 0x000000, 0x03ffff, MWA_NOP },
 	{ 0x080000, 0x083fff, MWA_BANK1, &shared_ram },
 	{ 0x100000, 0x103fff, MWA_BANK2, &spriteram },
 	{ 0x180000, 0x180001, MWA_NOP }, /* Watchdog */
 	{ 0x380000, 0x380001, alpha68k_II_sound_w },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress alpha68k_II_readmem[] =
-{
+static MEMORY_READ_START( alpha68k_II_readmem )
 	{ 0x000000, 0x03ffff, MRA_ROM },
 	{ 0x040000, 0x040fff, MRA_BANK1 },
 	{ 0x080000, 0x080001, control_1_r }, /* Joysticks */
@@ -388,11 +375,9 @@ static struct MemoryReadAddress alpha68k_II_readmem[] =
 	{ 0x300000, 0x3001ff, alpha_II_trigger_r },
 	{ 0x400000, 0x400fff, paletteram_word_r },
 	{ 0x800000, 0x83ffff, MRA_BANK8 }, /* Extra code bank */
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress alpha68k_II_writemem[] =
-{
+static MEMORY_WRITE_START( alpha68k_II_writemem )
 	{ 0x000000, 0x03ffff, MWA_NOP },
 	{ 0x040000, 0x040fff, MWA_BANK1, &shared_ram },
 	{ 0x080000, 0x080001, alpha68k_II_sound_w },
@@ -401,11 +386,9 @@ static struct MemoryWriteAddress alpha68k_II_writemem[] =
 	{ 0x200000, 0x207fff, MWA_BANK2, &spriteram },
 	{ 0x300000, 0x3001ff, alpha_microcontroller_w },
 	{ 0x400000, 0x400fff, alpha68k_paletteram_w, &paletteram },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress alpha68k_V_readmem[] =
-{
+static MEMORY_READ_START( alpha68k_V_readmem )
 	{ 0x000000, 0x03ffff, MRA_ROM },
 	{ 0x040000, 0x043fff, MRA_BANK1 },
 	{ 0x080000, 0x080001, control_1_r }, /* Joysticks */
@@ -418,11 +401,9 @@ static struct MemoryReadAddress alpha68k_V_readmem[] =
 	{ 0x300000, 0x303fff, alpha_V_trigger_r },
 	{ 0x400000, 0x401fff, paletteram_word_r },
 	{ 0x800000, 0x83ffff, MRA_BANK8 },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress alpha68k_V_writemem[] =
-{
+static MEMORY_WRITE_START( alpha68k_V_writemem )
 	{ 0x000000, 0x03ffff, MWA_NOP },
 	{ 0x040000, 0x043fff, MWA_BANK1, &shared_ram },
 	{ 0x080000, 0x080001, alpha68k_V_sound_w },
@@ -432,8 +413,7 @@ static struct MemoryWriteAddress alpha68k_V_writemem[] =
 	{ 0x300000, 0x3001ff, alpha_microcontroller_w },
 	{ 0x303e00, 0x303fff, alpha_microcontroller_w }, /* Gang Wars mirror */
 	{ 0x400000, 0x401fff, alpha68k_paletteram_w, &paletteram },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 /******************************************************************************/
 
@@ -446,67 +426,52 @@ static WRITE_HANDLER( sound_bank_w )
 	cpu_setbank(7,&RAM[bankaddress]);
 }
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0xc000, 0xffff, MRA_BANK7 },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress kyros_sound_readmem[] =
-{
+static MEMORY_READ_START( kyros_sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0xc000, 0xc7ff, MRA_RAM },
 //	{ 0xe000, 0xe000, soundlatch_r },
 //	{ 0xc000, 0xffff, MRA_BANK7 },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress kyros_sound_writemem[] =
-{
+static MEMORY_WRITE_START( kyros_sound_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0xc000, 0xc7ff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress sstingry_sound_readmem[] =
-{
+static MEMORY_READ_START( sstingry_sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x83ff, MRA_RAM },
 //	{ 0xe000, 0xe000, soundlatch_r },
 //	{ 0xc000, 0xffff, MRA_BANK7 },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 static WRITE_HANDLER (soundram_mirror_w)
 {
 	sound_ram[offset]=data;
 }
 
-static struct MemoryWriteAddress sstingry_sound_writemem[] =
-{
+static MEMORY_WRITE_START( sstingry_sound_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x83ff, MWA_RAM, &sound_ram },
 //	{ 0xc000, 0xc3ff, soundram_mirror_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort sound_readport[] =
-{
+static PORT_READ_START( sound_readport )
 	{ 0x00, 0x00, soundlatch_r },
-	{ -1 }
-};
+PORT_END
 
-static struct IOWritePort sound_writeport[] =
-{
+static PORT_WRITE_START( sound_writeport )
 	{ 0x00, 0x00, soundlatch_clear_w },
 	{ 0x08, 0x08, DAC_0_signed_data_w },
 	{ 0x0a, 0x0a, YM2413_register_port_0_w },
@@ -514,11 +479,9 @@ static struct IOWritePort sound_writeport[] =
 	{ 0x0c, 0x0c, YM2203_control_port_0_w },
 	{ 0x0d, 0x0d, YM2203_write_port_0_w },
 	{ 0x0e, 0x0e, sound_bank_w },
-	{ -1 }
-};
+PORT_END
 
-static struct IOWritePort kyros_sound_writeport[] =
-{
+static PORT_WRITE_START( kyros_sound_writeport )
 //	{ 0x00, 0x00, soundlatch_clear_w },
 //	{ 0x08, 0x08, DAC_0_data_w },
 	{ 0x10, 0x10, YM2203_control_port_0_w },
@@ -527,8 +490,7 @@ static struct IOWritePort kyros_sound_writeport[] =
 	{ 0x81, 0x81, AY8910_control_port_0_w },
 	{ 0x90, 0x90, AY8910_write_port_1_w },
 	{ 0x91, 0x91, AY8910_control_port_1_w },
-	{ -1 }
-};
+PORT_END
 
 /******************************************************************************/
 
@@ -662,7 +624,7 @@ INPUT_PORTS_START( timesold )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START	/* Service + dip */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 
 	/* 2 physical sets of _6_ dip switches */
@@ -720,7 +682,7 @@ INPUT_PORTS_START( btlfield )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START	/* Service + dip */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 
 	/* 2 physical sets of _6_ dip switches */
@@ -778,7 +740,7 @@ INPUT_PORTS_START( skysoldr )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START	/* Service + dip */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 
 	/* 2 physical sets of _6_ dip switches */
@@ -853,7 +815,7 @@ INPUT_PORTS_START( goldmedl )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START	/* Service + dip */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 
 	/* 2 physical sets of _6_ dip switches */
@@ -912,7 +874,7 @@ INPUT_PORTS_START( skyadvnt )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START	/* Service + dip */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 
 	/* Dip 2: 6 way dip switch */
@@ -982,7 +944,7 @@ INPUT_PORTS_START( gangwars )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START	/* Service + dip */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 
 	/* Dip 2: 6 way dip switch */
@@ -1052,7 +1014,7 @@ INPUT_PORTS_START( sbasebal )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START	/* Service + dip */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 
 	/* Dip 2: 6 way dip switch */

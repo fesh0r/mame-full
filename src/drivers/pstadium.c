@@ -41,7 +41,7 @@
 	AV2 Mahjong No.1 Bay Bridge no Seijo
 	(c)1991 NihonBussan Co.,Ltd. / Miki Syouji / AV Japan
 
-	Driver by Takahiro Nogi 1999/12/02 - 
+	Driver by Takahiro Nogi 1999/12/02 -
 
 ***************************************************************************/
 /***************************************************************************
@@ -191,149 +191,117 @@ static void init_av2mj1(void)
 }
 
 
-static struct MemoryReadAddress readmem_pstadium[] =
-{
+static MEMORY_READ_START( readmem_pstadium )
 	{ 0x0000, 0xefff, MRA_ROM },
 	{ 0xf000, 0xf00f, pstadium_paltbl_r },
 	{ 0xf200, 0xf3ff, pstadium_palette_r },
 	{ 0xf800, 0xffff, MRA_RAM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_pstadium[] =
-{
+static MEMORY_WRITE_START( writemem_pstadium )
 	{ 0x0000, 0xefff, MWA_ROM },
 	{ 0xf000, 0xf00f, pstadium_paltbl_w },
 	{ 0xf200, 0xf3ff, pstadium_palette_w },
 	{ 0xf800, 0xffff, MWA_RAM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress readmem_triplew1[] =
-{
+static MEMORY_READ_START( readmem_triplew1 )
 	{ 0x0000, 0xefff, MRA_ROM },
 	{ 0xf000, 0xf1ff, pstadium_palette_r },
 	{ 0xf200, 0xf20f, pstadium_paltbl_r },
 	{ 0xf800, 0xffff, MRA_RAM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_triplew1[] =
-{
+static MEMORY_WRITE_START( writemem_triplew1 )
 	{ 0x0000, 0xefff, MWA_ROM },
 	{ 0xf000, 0xf1ff, pstadium_palette_w },
 	{ 0xf200, 0xf20f, pstadium_paltbl_w },
 	{ 0xf800, 0xffff, MWA_RAM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress readmem_triplew2[] =
-{
+static MEMORY_READ_START( readmem_triplew2 )
 	{ 0x0000, 0xefff, MRA_ROM },
 	{ 0xf000, 0xf1ff, pstadium_palette_r },
 	{ 0xf400, 0xf40f, pstadium_paltbl_r },
 	{ 0xf800, 0xffff, MRA_RAM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_triplew2[] =
-{
+static MEMORY_WRITE_START( writemem_triplew2 )
 	{ 0x0000, 0xefff, MWA_ROM },
 	{ 0xf000, 0xf1ff, pstadium_palette_w },
 	{ 0xf400, 0xf40f, pstadium_paltbl_w },
 	{ 0xf800, 0xffff, MWA_RAM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress readmem_mjlstory[] =
-{
+static MEMORY_READ_START( readmem_mjlstory )
 	{ 0x0000, 0xefff, MRA_ROM },
 	{ 0xf200, 0xf3ff, pstadium_palette_r },
 	{ 0xf700, 0xf70f, pstadium_paltbl_r },
 	{ 0xf800, 0xffff, MRA_RAM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_mjlstory[] =
-{
+static MEMORY_WRITE_START( writemem_mjlstory )
 	{ 0x0000, 0xefff, MWA_ROM },
 	{ 0xf200, 0xf3ff, pstadium_palette_w },
 	{ 0xf700, 0xf70f, pstadium_paltbl_w },
 	{ 0xf800, 0xffff, MWA_RAM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress readmem_galkoku[] =
-{
+static MEMORY_READ_START( readmem_galkoku )
 	{ 0x0000, 0xefff, MRA_ROM },
 	{ 0xf000, 0xf00f, pstadium_paltbl_r },
 	{ 0xf400, 0xf5ff, pstadium_palette_r },
 	{ 0xf800, 0xffff, MRA_RAM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_galkoku[] =
-{
+static MEMORY_WRITE_START( writemem_galkoku )
 	{ 0x0000, 0xefff, MWA_ROM },
 	{ 0xf000, 0xf00f, pstadium_paltbl_w },
 	{ 0xf400, 0xf5ff, galkoku_palette_w },
 	{ 0xf800, 0xffff, MWA_RAM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress readmem_galkaika[] =
-{
+static MEMORY_READ_START( readmem_galkaika )
 	{ 0x0000, 0xefff, MRA_ROM },
 	{ 0xf000, 0xf00f, pstadium_paltbl_r },
 	{ 0xf400, 0xf5ff, pstadium_palette_r },
 	{ 0xf800, 0xffff, MRA_RAM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_galkaika[] =
-{
+static MEMORY_WRITE_START( writemem_galkaika )
 	{ 0x0000, 0xefff, MWA_ROM },
 	{ 0xf000, 0xf00f, pstadium_paltbl_w },
 	{ 0xf400, 0xf5ff, galkaika_palette_w },
 	{ 0xf800, 0xffff, MWA_RAM, &nb1413m3_nvram, &nb1413m3_nvram_size },	// tokimbsj
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress readmem_tokyogal[] =
-{
+static MEMORY_READ_START( readmem_tokyogal )
 	{ 0x0000, 0xefff, MRA_ROM },
 	{ 0xf000, 0xf1ff, pstadium_palette_r },
 	{ 0xf400, 0xf40f, pstadium_paltbl_r },
 	{ 0xf800, 0xffff, MRA_RAM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_tokyogal[] =
-{
+static MEMORY_WRITE_START( writemem_tokyogal )
 	{ 0x0000, 0xefff, MWA_ROM },
 	{ 0xf000, 0xf1ff, galkaika_palette_w },
 	{ 0xf400, 0xf40f, pstadium_paltbl_w },
 	{ 0xf800, 0xffff, MWA_RAM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryReadAddress readmem_av2mj1[] =
-{
+static MEMORY_READ_START( readmem_av2mj1 )
 	{ 0x0000, 0xefff, MRA_ROM },
 	{ 0xf000, 0xf1ff, pstadium_palette_r },
 	{ 0xf500, 0xf50f, pstadium_paltbl_r },
 	{ 0xf800, 0xffff, MRA_RAM },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_av2mj1[] =
-{
+static MEMORY_WRITE_START( writemem_av2mj1 )
 	{ 0x0000, 0xefff, MWA_ROM },
 	{ 0xf000, 0xf1ff, pstadium_palette_w },
 	{ 0xf500, 0xf50f, pstadium_paltbl_w },
 	{ 0xf800, 0xffff, MWA_RAM },
-	{ -1 }
-};
+MEMORY_END
 
 
 static READ_HANDLER( io_pstadium_r )
@@ -352,11 +320,9 @@ static READ_HANDLER( io_pstadium_r )
 	}
 }
 
-static struct IOReadPort readport_pstadium[] =
-{
+static PORT_READ_START( readport_pstadium )
 	{ 0x0000, 0xffff, io_pstadium_r },
-	{ -1 }
-};
+PORT_END
 
 static WRITE_HANDLER( io_pstadium_w )
 {
@@ -387,11 +353,9 @@ static WRITE_HANDLER( io_pstadium_w )
 	}
 }
 
-static struct IOWritePort writeport_pstadium[] =
-{
+static PORT_WRITE_START( writeport_pstadium )
 	{ 0x0000, 0xffff, io_pstadium_w },
-	{ -1 }
-};
+PORT_END
 
 static READ_HANDLER( io_galkoku_r )
 {
@@ -411,11 +375,9 @@ static READ_HANDLER( io_galkoku_r )
 	}
 }
 
-static struct IOReadPort readport_galkoku[] =
-{
+static PORT_READ_START( readport_galkoku )
 	{ 0x0000, 0xffff, io_galkoku_r },
-	{ -1 }
-};
+PORT_END
 
 static WRITE_HANDLER( io_galkoku_w )
 {
@@ -449,45 +411,35 @@ static WRITE_HANDLER( io_galkoku_w )
 	}
 }
 
-static struct IOWritePort writeport_galkoku[] =
-{
+static PORT_WRITE_START( writeport_galkoku )
 	{ 0x0000, 0xffff, io_galkoku_w },
-	{ -1 }
-};
+PORT_END
 
 
-static struct MemoryReadAddress sound_readmem_pstadium[] =
-{
+static MEMORY_READ_START( sound_readmem_pstadium )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x7fff, MRA_RAM },
 	{ 0x8000, 0xffff, MRA_BANK1 },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem_pstadium[] =
-{
+static MEMORY_WRITE_START( sound_writemem_pstadium )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x7fff, MWA_RAM },
-	{ -1 }
-};
+MEMORY_END
 
 
-static struct IOReadPort sound_readport_pstadium[] =
-{
+static PORT_READ_START( sound_readport_pstadium )
 	{ 0x00, 0x00, pstadium_sound_r },
-	{ -1 }
-};
+PORT_END
 
-static struct IOWritePort sound_writeport_pstadium[] =
-{
+static PORT_WRITE_START( sound_writeport_pstadium )
 	{ 0x00, 0x00, DAC_0_signed_data_w },
 	{ 0x02, 0x02, DAC_1_signed_data_w },
 	{ 0x04, 0x04, pstadium_soundbank_w },
 	{ 0x06, 0x06, IOWP_NOP },
 	{ 0x80, 0x80, YM3812_control_port_0_w },
 	{ 0x81, 0x81, YM3812_write_port_0_w },
-	{ -1 }
-};
+PORT_END
 
 
 INPUT_PORTS_START( pstadium )
@@ -521,7 +473,7 @@ INPUT_PORTS_START( pstadium )
 
 	PORT_START	/* (2) PORT 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// BUSY FLAG ?
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		// 
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
 	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )			// TEST
@@ -567,7 +519,7 @@ INPUT_PORTS_START( triplew1 )
 
 	PORT_START	/* (2) PORT 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// BUSY FLAG ?
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		// 
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
 	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )			// TEST
@@ -613,7 +565,7 @@ INPUT_PORTS_START( ntopstar )
 
 	PORT_START	/* (2) PORT 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// BUSY FLAG ?
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		// 
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
 	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )			// TEST
@@ -659,7 +611,7 @@ INPUT_PORTS_START( mjlstory )
 
 	PORT_START	/* (2) PORT 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// BUSY FLAG ?
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		// 
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
 	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )			// TEST
@@ -705,7 +657,7 @@ INPUT_PORTS_START( vanilla )
 
 	PORT_START	/* (2) PORT 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// BUSY FLAG ?
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		// 
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
 	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )			// TEST
@@ -751,7 +703,7 @@ INPUT_PORTS_START( qmhayaku )
 
 	PORT_START	/* (2) PORT 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// BUSY FLAG ?
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		// 
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
 	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )			// TEST
@@ -794,7 +746,7 @@ INPUT_PORTS_START( galkoku )
 
 	PORT_START	/* (2) PORT 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// BUSY FLAG ?
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		// 
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
 	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )			// TEST
@@ -867,7 +819,7 @@ INPUT_PORTS_START( galkaika )
 
 	PORT_START	/* (2) PORT 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// BUSY FLAG ?
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		// 
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
 	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )			// TEST
@@ -940,7 +892,7 @@ INPUT_PORTS_START( tokyogal )
 
 	PORT_START	/* (2) PORT 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// BUSY FLAG ?
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		// 
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
 	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )			// TEST
@@ -1013,7 +965,7 @@ INPUT_PORTS_START( tokimbsj )
 
 	PORT_START	/* (2) PORT 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// BUSY FLAG ?
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		// 
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
 	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )			// TEST
@@ -1086,7 +1038,7 @@ INPUT_PORTS_START( mcontest )
 
 	PORT_START	/* (2) PORT 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// BUSY FLAG ?
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		// 
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
 	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )			// TEST
@@ -1140,7 +1092,7 @@ INPUT_PORTS_START( av2mj1 )
 
 	PORT_START	/* (2) PORT 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// BUSY FLAG ?
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		// 
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
 	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )			// TEST
@@ -1643,7 +1595,7 @@ ROM_START( av2mj1 )
 	ROM_LOAD( "4.bin",       0x000000, 0x20000, 0x18fe29c3 )
 	ROM_LOAD( "5.bin",       0x020000, 0x20000, 0x0eff4bbf )
 	ROM_LOAD( "6.bin",       0x040000, 0x20000, 0xac351796 )
-	ROM_LOAD( "mj-1802.bin", 0x180000, 0x80000, 0xe6213f10 )
+	ROM_LOAD( "mj-1802.bin", 0x180000, 0x80000, BADCRC( 0xe6213f10 ) )
 ROM_END
 
 

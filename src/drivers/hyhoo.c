@@ -8,7 +8,7 @@
 	Taisen Quiz HYHOO 2
 	(c)1987 NihonBussan Co.,Ltd.
 
-	Driver by Takahiro Nogi 2000/01/28 - 
+	Driver by Takahiro Nogi 2000/01/28 -
 
 ***************************************************************************/
 /***************************************************************************
@@ -38,19 +38,15 @@ static void init_hyhoo2(void)
 }
 
 
-static struct MemoryReadAddress readmem_hyhoo[] =
-{
+static MEMORY_READ_START( readmem_hyhoo )
 	{ 0x0000, 0xefff, MRA_ROM },
 	{ 0xf000, 0xffff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_hyhoo[] =
-{
+static MEMORY_WRITE_START( writemem_hyhoo )
 	{ 0x0000, 0xefff, MWA_ROM },
 	{ 0xf000, 0xffff, MWA_RAM, &nb1413m3_nvram, &nb1413m3_nvram_size },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 static READ_HANDLER( io_hyhoo_r )
@@ -73,11 +69,9 @@ static READ_HANDLER( io_hyhoo_r )
 	}
 }
 
-static struct IOReadPort readport_hyhoo[] =
-{
+static PORT_READ_START( readport_hyhoo )
 	{ 0x0000, 0xffff, io_hyhoo_r },
-	{ -1 }
-};
+PORT_END
 
 static WRITE_HANDLER( io_hyhoo_w )
 {
@@ -113,11 +107,9 @@ static WRITE_HANDLER( io_hyhoo_w )
 	}
 }
 
-static struct IOWritePort writeport_hyhoo[] =
-{
+static PORT_WRITE_START( writeport_hyhoo )
 	{ 0x0000, 0xffff, io_hyhoo_w },
-	{ -1 }
-};
+PORT_END
 
 
 INPUT_PORTS_START( hyhoo )
@@ -167,7 +159,7 @@ INPUT_PORTS_START( hyhoo )
 
 	PORT_START	/* (2) PORT 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// BUSY FLAG ?
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		// 
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )		// SERVICE
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )			// TEST
@@ -242,7 +234,7 @@ INPUT_PORTS_START( hyhoo2 )
 
 	PORT_START	/* (2) PORT 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// BUSY FLAG ?
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		// 
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )		// SERVICE
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
 	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )			// TEST

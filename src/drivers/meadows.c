@@ -101,7 +101,6 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "cpu/s2650/s2650.h"
 
 /*************************************************************/
 /*                                                           */
@@ -195,18 +194,18 @@ WRITE_HANDLER( meadows_hardware_w )
 /* Interrupt for the main cpu                                */
 /*                                                           */
 /*************************************************************/
-
-int meadows_interrupt(void)
+int     meadows_interrupt(void)
 {
-	static	int coin1_state = 0;
-
+static  int sense_state = 0;
+static	int coin1_state = 0;
 	/* preserve the actual cycle count */
     cycles_at_vsync = cycles_currently_ran();
-
+    /* fake something toggling the sense input line of the S2650 */
+	sense_state ^= 1;
+	cpu_set_irq_line( 0, 1, (sense_state) ? ASSERT_LINE : CLEAR_LINE);
 	if( input_port_3_r(0) & 0x01 ) {
 		if( !coin1_state ) {
 			coin1_state = 1;
-
 			/* S2650 interrupt vector */
 			cpu_irq_line_vector_w(0,0,0x82);
 			cpu_set_irq_line(0,0,PULSE_LINE);
@@ -275,67 +274,54 @@ static READ_HANDLER( sound_hardware_r )
     return data;
 }
 
-
-static READ_HANDLER( sound_hardware_sense )
+/*************************************************************/
+/*                                                           */
+/* Interrupt for the sound cpu                               */
+/*                                                           */
+/*************************************************************/
+static int sound_interrupt(void)
 {
-	return ((cpu_getiloops() & 1) ? 0x80 : 0x00);
-}
+	static	int sense_state = 0;
 
+    /* fake something toggling the sense input line of the S2650 */
+	sense_state ^= 1;
+	cpu_set_irq_line( 1, 1, (sense_state) ? ASSERT_LINE : CLEAR_LINE );
+	return ignore_interrupt();
+}
 
 /*************************************************************/
 /*                                                           */
 /* Memory layout                                             */
 /*                                                           */
 /*************************************************************/
-
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x0bff, MWA_ROM },
 	{ 0x0c00, 0x0c03, meadows_hardware_w },
 	{ 0x0d00, 0x0d0f, meadows_sprite_w },
 	{ 0x0e00, 0x0eff, MWA_RAM },
 	{ 0x1000, 0x1bff, MWA_ROM },
 	{ 0x1c00, 0x1fff, meadows_videoram_w, &videoram, &videoram_size },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x0bff, MRA_ROM },
 	{ 0x0c00, 0x0c03, meadows_hardware_r },
 	{ 0x0e00, 0x0eff, MRA_RAM },
 	{ 0x1000, 0x1bff, MRA_ROM },
 	{ 0x1c00, 0x1fff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort readport[] =
-{
-    { S2650_SENSE_PORT, S2650_SENSE_PORT, input_port_4_r },
-	{ -1 }
-};
-
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x0bff, MWA_ROM },
 	{ 0x0c00, 0x0c03, sound_hardware_w },
 	{ 0x0e00, 0x0eff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x0bff, MRA_ROM },
 	{ 0x0c00, 0x0c03, sound_hardware_r },
 	{ 0x0e00, 0x0eff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
-
-static struct IOReadPort sound_readport[] =
-{
-    { S2650_SENSE_PORT, S2650_SENSE_PORT, sound_hardware_sense },
-	{ -1 }
-};
+MEMORY_END
 
 INPUT_PORTS_START( meadows )
 	PORT_START		/* IN0 buttons */
@@ -378,10 +364,6 @@ INPUT_PORTS_START( meadows )
 	PORT_START		/* FAKE coinage */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x8e, IP_ACTIVE_LOW, IPT_UNUSED )
-
-	PORT_START	/* SENSE */
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
-
 INPUT_PORTS_END
 
 static struct GfxLayout charlayout =
@@ -431,7 +413,6 @@ static unsigned short colortable[ARTWORK_COLORS] =
 	0,0,
 	0,1,
 };
-
 static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
 {
 	memcpy(game_palette,palette,sizeof(palette));
@@ -461,16 +442,16 @@ static const struct MachineDriver machine_driver_deadeye =
 		{
 			CPU_S2650,
 			625000, 	/* 5MHz / 8 = 625 kHz */
-			readmem,writemem,readport,0,
+			readmem,writemem,0,0,
 			meadows_interrupt,1 	/* one interrupt per frame!? */
 		},
 		{
 			CPU_S2650 | CPU_AUDIO_CPU,
 			625000, 	/* 5MHz / 8 = 625 kHz */
 			sound_readmem,sound_writemem,
-			sound_readport,0,
 			0,0,
-			ignore_interrupt,38	/* 5000000/131072 interrupts per frame */
+			0,0,
+			sound_interrupt,38	/* 5000000/131072 interrupts per frame */
         }
     },
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -510,16 +491,16 @@ static const struct MachineDriver machine_driver_gypsyjug =
 		{
 			CPU_S2650,
 			625000, 	/* 5MHz / 8 = 625 kHz */
-			readmem,writemem,readport,0,
+			readmem,writemem,0,0,
 			meadows_interrupt,1 	/* one interrupt per frame!? */
 		},
 		{
 			CPU_S2650 | CPU_AUDIO_CPU,
 			625000, 	/* 5MHz / 8 = 625 kHz */
 			sound_readmem,sound_writemem,
-			sound_readport,0,
 			0,0,
-			ignore_interrupt,38	/* 5000000/131072 interrupts per frame */
+			0,0,
+			sound_interrupt,38	/* 5000000/131072 interrupts per frame */
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */

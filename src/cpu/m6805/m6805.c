@@ -21,11 +21,11 @@
   Additional Notes:
 
   K.Wilkins 18/03/99 - Added 63705 functonality and modified all CPU functions
-					   necessary to support:
-						   Variable width address bus
-						   Different stack pointer
-						   Alternate boot vectors
-						   Alternate interrups vectors
+                       necessary to support:
+                           Variable width address bus
+                           Different stack pointer
+                           Alternate boot vectors
+                           Alternate interrups vectors
 
 
 *****************************************************************************/
@@ -57,7 +57,7 @@ static UINT8 m6805_win_layout[] = {
 	 0, 0,26,22,	/* disassembler window (left colums) */
 	27, 5,53, 8,	/* memory #1 window (right, upper middle) */
 	27,14,53, 8,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
+     0,23,80, 1,    /* command line window (bottom rows) */
 };
 
 /* 6805 Registers */
@@ -67,7 +67,7 @@ typedef struct
 	UINT32	amask;			/* Address bus width */
 	UINT32	sp_mask;		/* Stack pointer address mask */
 	UINT32	sp_low; 		/* Stack pointer low water mark (or floor) */
-	PAIR	pc; 			/* Program counter */
+    PAIR    pc;             /* Program counter */
 	PAIR	s;				/* Stack pointer */
 	UINT8	a;				/* Accumulator */
 	UINT8	x;				/* Index register */
@@ -76,13 +76,13 @@ typedef struct
 	UINT8	pending_interrupts; /* MB */
 	int 	(*irq_callback)(int irqline);
 	int 	irq_state[8];		/* KW Additional lines for HD63705 */
-	int 	nmi_state;
+	int		nmi_state;
 } m6805_Regs;
 
 /* 6805 registers */
 static m6805_Regs m6805;
 
-#define SUBTYPE m6805.subtype	/* CPU Type */
+#define SUBTYPE	m6805.subtype	/* CPU Type */
 #define AMASK	m6805.amask 	/* address mask */
 #define SP_MASK m6805.sp_mask	/* stack pointer mask */
 #define SP_LOW	m6805.sp_low	/* stack pointer low water mark */
@@ -95,7 +95,7 @@ static m6805_Regs m6805;
 
 static PAIR ea; 		/* effective address */
 #define EAD ea.d
-#define EA	ea.w.l
+#define EA  ea.w.l
 
 /* public globals */
 int m6805_ICount=50000;
@@ -103,7 +103,7 @@ int m6805_ICount=50000;
 /* DS -- THESE ARE RE-DEFINED IN m6805.h TO RAM, ROM or FUNCTIONS IN cpuintrf.c */
 #define RM(Addr)			M6805_RDMEM((Addr) & AMASK)
 #define WM(Addr,Value)		M6805_WRMEM((Addr) & AMASK,Value)
-#define M_RDOP(Addr)		M6805_RDOP(Addr)
+#define M_RDOP(Addr)        M6805_RDOP(Addr)
 #define M_RDOP_ARG(Addr)	M6805_RDOP_ARG(Addr)
 
 /* macros to tweak the PC and SP */
@@ -120,8 +120,8 @@ int m6805_ICount=50000;
 #define PULLBYTE(b) rd_s_handler_b(&b)
 #define PULLWORD(w) rd_s_handler_w(&w)
 
-/* CC masks 	 H INZC
-			  7654 3210 */
+/* CC masks      H INZC
+              7654 3210	*/
 #define CFLAG 0x01
 #define ZFLAG 0x02
 #define NFLAG 0x04
@@ -135,7 +135,7 @@ int m6805_ICount=50000;
 #define CLR_ZC	  CC&=~(ZFLAG|CFLAG)
 
 /* macros for CC -- CC bits affected should be reset before calling */
-#define SET_Z(a)	   if(!a)SEZ
+#define SET_Z(a)       if(!a)SEZ
 #define SET_Z8(a)	   SET_Z((UINT8)a)
 #define SET_N8(a)	   CC|=((a&0x80)>>5)
 #define SET_H(a,b,r)   CC|=((a^b^r)&0x10)
@@ -221,7 +221,7 @@ static UINT8 flags8d[256]= /* decrement */
 /* what they say it is ... */
 static unsigned char cycles1[] =
 {
-	  /* 0	1  2  3  4	5  6  7  8	9  A  B  C	D  E  F */
+      /* 0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F */
   /*0*/ 10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,
   /*1*/  7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
   /*2*/  4, 0, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
@@ -242,7 +242,7 @@ static unsigned char cycles1[] =
 
 
 /* pre-clear a PAIR union; clearing h2 and h3 only might be faster? */
-#define CLEAR_PAIR(p)	p->d = 0
+#define CLEAR_PAIR(p)   p->d = 0
 
 INLINE void rd_s_handler_b( UINT8 *b )
 {
@@ -267,16 +267,16 @@ INLINE void wr_s_handler_b( UINT8 *b )
 
 INLINE void wr_s_handler_w( PAIR *p )
 {
-	SP_DEC;
+    SP_DEC;
 	WM( S, p->b.l );
-	SP_DEC;
+    SP_DEC;
 	WM( S, p->b.h );
 }
 
 INLINE void RM16( UINT32 Addr, PAIR *p )
 {
 	CLEAR_PAIR(p);
-	p->b.h = RM(Addr);
+    p->b.h = RM(Addr);
 	if( ++Addr > AMASK ) Addr = 0;
 	p->b.l = RM(Addr);
 }
@@ -302,7 +302,7 @@ static void Interrupt(void)
 		PUSHBYTE(m6805.x);
 		PUSHBYTE(m6805.a);
 		PUSHBYTE(m6805.cc);
-		SEI;
+        SEI;
 		/* no vectors supported, just do the callback to clear irq_state if needed */
 		if (m6805.irq_callback)
 			(*m6805.irq_callback)(0);
@@ -318,7 +318,7 @@ static void Interrupt(void)
 	if( (m6805.pending_interrupts & M6805_INT_IRQ) != 0 && (CC & IFLAG) == 0 )
 #endif
 	{
-		/* standard IRQ */
+        /* standard IRQ */
 #if (HAS_HD63705)
 		if(SUBTYPE!=SUBTYPE_HD63705)
 #endif
@@ -327,7 +327,7 @@ static void Interrupt(void)
 		PUSHBYTE(m6805.x);
 		PUSHBYTE(m6805.a);
 		PUSHBYTE(m6805.cc);
-		SEI;
+        SEI;
 		/* no vectors supported, just do the callback to clear irq_state if needed */
 		if (m6805.irq_callback)
 			(*m6805.irq_callback)(0);
@@ -337,7 +337,7 @@ static void Interrupt(void)
 		if(SUBTYPE==SUBTYPE_HD63705)
 		{
 			/* Need to add emulation of other interrupt sources here KW-2/4/99 */
-			/* This is just a quick patch for Namco System 2 operation		   */
+			/* This is just a quick patch for Namco System 2 operation         */
 
 			if((m6805.pending_interrupts&(1<<HD63705_INT_IRQ1))!=0)
 			{
@@ -402,7 +402,7 @@ void m6805_reset(void *param)
 	/* Initial stack pointer */
 	S = SP_MASK;
 	/* IRQ disabled */
-	SEI;
+    SEI;
 	RM16( AMASK - 1 , &pPC );
 }
 
@@ -418,7 +418,7 @@ unsigned m6805_get_context(void *dst)
 {
 	if( dst )
 		*(m6805_Regs*)dst = m6805;
-	return sizeof(m6805_Regs);
+    return sizeof(m6805_Regs);
 }
 
 
@@ -515,7 +515,7 @@ void m6805_set_reg(int regnum, unsigned val)
 				unsigned offset = S + 2 * (REG_SP_CONTENTS - regnum);
 				if( offset < SP_MASK )
 				{
-					WM( offset, (val >> 8) & 0xff );
+                    WM( offset, (val >> 8) & 0xff );
 					WM( offset+1, val & 0xff );
 				}
 			}
@@ -531,7 +531,7 @@ void m6805_set_nmi_line(int state)
 void m6805_set_irq_line(int irqline, int state)
 {
 	/* Basic 6805 only has one IRQ line */
-	/* See HD63705 specific version 	*/
+	/* See HD63705 specific version     */
 	if (m6805.irq_state[0] == state) return;
 
 	m6805.irq_state[0] = state;
@@ -868,9 +868,9 @@ const char *m6805_info(void *context, int regnum)
 	m6805_Regs *r = context;
 
 	which = ++which % 8;
-	buffer[which][0] = '\0';
+    buffer[which][0] = '\0';
 
-	if( !context )
+    if( !context )
 		r = &m6805;
 
 	switch( regnum )
@@ -886,28 +886,28 @@ const char *m6805_info(void *context, int regnum)
 		case CPU_INFO_FLAGS:
 			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
 				r->cc & 0x80 ? '?':'.',
-				r->cc & 0x40 ? '?':'.',
-				r->cc & 0x20 ? '?':'.',
-				r->cc & 0x10 ? 'H':'.',
-				r->cc & 0x08 ? 'I':'.',
-				r->cc & 0x04 ? 'N':'.',
-				r->cc & 0x02 ? 'Z':'.',
-				r->cc & 0x01 ? 'C':'.');
-			break;
+                r->cc & 0x40 ? '?':'.',
+                r->cc & 0x20 ? '?':'.',
+                r->cc & 0x10 ? 'H':'.',
+                r->cc & 0x08 ? 'I':'.',
+                r->cc & 0x04 ? 'N':'.',
+                r->cc & 0x02 ? 'Z':'.',
+                r->cc & 0x01 ? 'C':'.');
+            break;
 		case CPU_INFO_REG+M6805_A: sprintf(buffer[which], "A:%02X", r->a); break;
 		case CPU_INFO_REG+M6805_PC: sprintf(buffer[which], "PC:%04X", r->pc.w.l); break;
 		case CPU_INFO_REG+M6805_S: sprintf(buffer[which], "S:%02X", r->s.w.l); break;
 		case CPU_INFO_REG+M6805_X: sprintf(buffer[which], "X:%02X", r->x); break;
 		case CPU_INFO_REG+M6805_CC: sprintf(buffer[which], "CC:%02X", r->cc); break;
 		case CPU_INFO_REG+M6805_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->irq_state[0]); break;
-	}
+    }
 	return buffer[which];
 }
 
 unsigned m6805_dasm(char *buffer, unsigned pc)
 {
 #ifdef MAME_DEBUG
-	return Dasm6805(buffer,pc);
+    return Dasm6805(buffer,pc);
 #else
 	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
@@ -928,19 +928,19 @@ static UINT8 m68705_win_layout[] = {
 	 0, 0,26,22,	/* disassembler window (left colums) */
 	27, 5,53, 8,	/* memory #1 window (right, upper middle) */
 	27,14,53, 8,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
+     0,23,80, 1,    /* command line window (bottom rows) */
 };
 
 void m68705_reset(void *param)
 {
 	UINT32 *p_amask = param;
-    m6805_reset(param);
+	m6805_reset(param);
 	/* Overide default 6805 type */
 	m6805.subtype = SUBTYPE_M68705;
 	if (p_amask)
 		AMASK = *p_amask;
 	else
-		AMASK = 0x7ff;
+		AMASK = 0x7ff; /* default if no AMASK is specified */
 	RM16( AMASK-1, &m6805.pc );
 }
 void m68705_exit(void) { m6805_exit(); }
@@ -967,7 +967,7 @@ const char *m68705_info(void *context, int regnum)
 		case CPU_INFO_VERSION: return "1.1";
 		case CPU_INFO_REG_LAYOUT: return (const char*)m68705_reg_layout;
 		case CPU_INFO_WIN_LAYOUT: return (const char*)m68705_win_layout;
-	}
+    }
 	return m6805_info(context,regnum);
 }
 
@@ -997,7 +997,7 @@ static UINT8 hd63705_win_layout[] = {
 	 0, 0,26,22,	/* disassembler window (left colums) */
 	27, 5,53, 8,	/* memory #1 window (right, upper middle) */
 	27,14,53, 8,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
+     0,23,80, 1,    /* command line window (bottom rows) */
 };
 
 void hd63705_reset(void *param)
@@ -1013,7 +1013,7 @@ void hd63705_reset(void *param)
 	S = 0x17f;
 }
 void hd63705_exit(void) { m6805_exit(); }
-int hd63705_execute(int cycles) { return m6805_execute(cycles); }
+int	hd63705_execute(int cycles) { return m6805_execute(cycles); }
 unsigned hd63705_get_context(void *dst) { return m6805_get_context(dst); }
 void hd63705_set_context(void *src) { m6805_set_context(src); }
 unsigned hd63705_get_pc(void) { return m6805_get_pc(); }
@@ -1022,7 +1022,7 @@ unsigned hd63705_get_sp(void) { return m6805_get_sp(); }
 void hd63705_set_sp(unsigned val) { m6805_set_pc(val); }
 
 unsigned hd63705_get_reg(int regnum)  { return m6805_get_reg(regnum); }
-void hd63705_set_reg(int regnum, unsigned val)	{ m6805_set_reg(regnum,val); }
+void hd63705_set_reg(int regnum, unsigned val)  { m6805_set_reg(regnum,val); }
 
 void hd63705_set_nmi_line(int state)
 {
@@ -1081,9 +1081,9 @@ const char *hd63705_info(void *context, int regnum)
 	m6805_Regs *r = context;
 
 	which = ++which % 8;
-	buffer[which][0] = '\0';
+    buffer[which][0] = '\0';
 
-	if( !context )
+    if( !context )
 		r = &m6805;
 
 	switch( regnum )
@@ -1097,7 +1097,7 @@ const char *hd63705_info(void *context, int regnum)
 		case CPU_INFO_REG+HD63705_IRQ1_STATE: sprintf(buffer[which], "IRQ1:%X", r->irq_state[HD63705_INT_IRQ1]); return buffer[which];
 		case CPU_INFO_REG+HD63705_IRQ2_STATE: sprintf(buffer[which], "IRQ2:%X", r->irq_state[HD63705_INT_IRQ2]); return buffer[which];
 		case CPU_INFO_REG+HD63705_ADCONV_STATE: sprintf(buffer[which], "ADCONV:%X", r->irq_state[HD63705_INT_ADCONV]); return buffer[which];
-	}
+    }
 	return m6805_info(context,regnum);
 }
 
@@ -1111,4 +1111,3 @@ unsigned hd63705_dasm(char *buffer, unsigned pc)
 #endif
 }
 #endif
-

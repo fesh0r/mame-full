@@ -7,8 +7,8 @@
 
 Main  CPU   :	MC68000
 Sound CPU   :	Z80 [Optional]
-Sound Chips :	YMZ280B or
-				OKIM6295 x (1|2) + YM2203 [Optional]
+Sound Chips :	YMZ280B
+		 Or :	OKIM6295 x (1|2) + YM2203 [Optional]
 Other       :	EEPROM
 
 ---------------------------------------------------------------------------
@@ -47,28 +47,28 @@ int cave_spritetype;
 
 /* Variables defined in vidhrdw */
 
-extern unsigned char *cave_videoregs;
+extern data16_t *cave_videoregs;
 
-extern unsigned char *cave_vram_0, *cave_vctrl_0;
-extern unsigned char *cave_vram_1, *cave_vctrl_1;
-extern unsigned char *cave_vram_2, *cave_vctrl_2;
+extern data16_t *cave_vram_0, *cave_vctrl_0;
+extern data16_t *cave_vram_1, *cave_vctrl_1;
+extern data16_t *cave_vram_2, *cave_vctrl_2;
 
 
 /* Functions defined in vidhrdw */
 
-WRITE_HANDLER( cave_vram_0_w );
-WRITE_HANDLER( cave_vram_1_w );
-WRITE_HANDLER( cave_vram_2_w );
+WRITE16_HANDLER( cave_vram_0_w );
+WRITE16_HANDLER( cave_vram_1_w );
+WRITE16_HANDLER( cave_vram_2_w );
 
-WRITE_HANDLER( cave_vram_0_8x8_w );
-WRITE_HANDLER( cave_vram_1_8x8_w );
-WRITE_HANDLER( cave_vram_2_8x8_w );
+WRITE16_HANDLER( cave_vram_0_8x8_w );
+WRITE16_HANDLER( cave_vram_1_8x8_w );
+WRITE16_HANDLER( cave_vram_2_8x8_w );
 
-int  dfeveron_vh_start(void);
-int  ddonpach_vh_start(void);
-int  esprade_vh_start(void);
-int  guwange_vh_start(void);
-int  uopoko_vh_start(void);
+int dfeveron_vh_start(void);
+int ddonpach_vh_start(void);
+int esprade_vh_start(void);
+int guwange_vh_start(void);
+int uopoko_vh_start(void);
 
 
 void ddonpach_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
@@ -135,15 +135,15 @@ static void sound_irq_gen(int state)
 
 /* Reads the cause of the interrupt and clears the state */
 
-static READ_HANDLER( cave_irq_cause_r )
+static READ16_HANDLER( cave_irq_cause_r )
 {
 	int result = 0x0003;
 
 	if (vblank_irq)		result ^= 0x01;
 	if (unknown_irq)	result ^= 0x02;
 
-	if (offset == 4)	vblank_irq = 0;
-	if (offset == 6)	unknown_irq = 0;
+	if (offset == 4/2)	vblank_irq = 0;
+	if (offset == 6/2)	unknown_irq = 0;
 
 	update_irq_state();
 
@@ -152,15 +152,15 @@ static READ_HANDLER( cave_irq_cause_r )
 
 /* Is ddonpach different? This is probably wrong but it works */
 
-static READ_HANDLER( ddonpach_irq_cause_r )
+static READ16_HANDLER( ddonpach_irq_cause_r )
 {
 	int result = 0x0007;
 
 	if (vblank_irq)		result ^= 0x01;
 //	if (unknown_irq)	result ^= 0x02;
 
-	if (offset == 0)	vblank_irq = 0;
-//	if (offset == 4)	unknown_irq = 0;
+	if (offset == 0/2)	vblank_irq = 0;
+//	if (offset == 4/2)	unknown_irq = 0;
 
 	update_irq_state();
 
@@ -171,34 +171,30 @@ static READ_HANDLER( ddonpach_irq_cause_r )
 
 
 /* Handles writes to the YMZ280B */
-static WRITE_HANDLER( cave_sound_w )
+static WRITE16_HANDLER( cave_sound_w )
 {
-	if (!(data & 0x00ff0000))
+	if (ACCESSING_LSB)
 	{
-		if (offset & 2)
-			YMZ280B_data_0_w(offset, data & 0xff);
-		else
-			YMZ280B_register_0_w(offset, data & 0xff);
+		if (offset)	YMZ280B_data_0_w     (offset, data & 0xff);
+		else		YMZ280B_register_0_w (offset, data & 0xff);
 	}
 }
 
 
 /* Handles reads from the YMZ280B */
-static READ_HANDLER( cave_sound_r )
+static READ16_HANDLER( cave_sound_r )
 {
 	return YMZ280B_status_0_r(offset);
 }
 
 
-WRITE_HANDLER( cave_oki_0_w )
+WRITE16_HANDLER( cave_oki_0_w )
 {
-	if ( (data & 0x00ff0000) == 0 )
-		OKIM6295_data_0_w(0, data & 0xff);
+	if (ACCESSING_LSB)	OKIM6295_data_0_w(0, data & 0xff);
 }
-WRITE_HANDLER( cave_oki_1_w )
+WRITE16_HANDLER( cave_oki_1_w )
 {
-	if ( (data & 0x00ff0000) == 0 )
-		OKIM6295_data_1_w(0, data & 0xff);
+	if (ACCESSING_LSB)	OKIM6295_data_1_w(0, data & 0xff);
 }
 
 
@@ -220,9 +216,9 @@ static struct EEPROM_interface eeprom_interface =
 	"0100110000" 	// unlock command
 };
 
-WRITE_HANDLER( cave_eeprom_w )
+WRITE16_HANDLER( cave_eeprom_w )
 {
-	if ( (data & 0xFF000000) == 0 )  // even address
+	if ( ACCESSING_MSB )  // even address
 	{
 		// latch the bit
 		EEPROM_write_bit(data & 0x0800);
@@ -235,9 +231,9 @@ WRITE_HANDLER( cave_eeprom_w )
 	}
 }
 
-WRITE_HANDLER( guwange_eeprom_w )
+WRITE16_HANDLER( guwange_eeprom_w )
 {
-	if ( (data & 0x00FF0000) == 0 )  // odd address
+	if ( ACCESSING_LSB )  // odd address
 	{
 		// latch the bit
 		EEPROM_write_bit(data & 0x80);
@@ -272,14 +268,14 @@ void cave_nvram_handler(void *file,int read_or_write)
 
 ***************************************************************************/
 
-READ_HANDLER( cave_inputs_r )
+READ16_HANDLER( cave_inputs_r )
 {
 	switch (offset)
 	{
 		case 0:
 			return readinputport(0);
 
-		case 2:
+		case 1:
 			return	readinputport(1) |
 					( (EEPROM_read_bit() & 0x01) << 11 );
 
@@ -288,14 +284,14 @@ READ_HANDLER( cave_inputs_r )
 }
 
 
-READ_HANDLER( guwange_inputs_r )
+READ16_HANDLER( guwange_inputs_r )
 {
 	switch (offset)
 	{
 		case 0:
 			return readinputport(0);
 
-		case 2:
+		case 1:
 			return	readinputport(1) |
 					( (EEPROM_read_bit() & 0x01) << 7 );
 
@@ -321,42 +317,38 @@ READ_HANDLER( guwange_inputs_r )
 								Dangun Feveron
 ***************************************************************************/
 
-static struct MemoryReadAddress dfeveron_readmem[] =
-{
-	{ 0x000000, 0x0fffff, MRA_ROM					},	// ROM
-	{ 0x100000, 0x10ffff, MRA_BANK1					},	// RAM
-	{ 0x300002, 0x300003, cave_sound_r				},	// From sound
-/**/{ 0x400000, 0x407fff, MRA_BANK3					},	// Sprites
-/**/{ 0x408000, 0x40ffff, MRA_BANK4					},	// Sprites?
-/**/{ 0x500000, 0x507fff, MRA_BANK5					},	// Layer 0 (size?)
-/**/{ 0x600000, 0x607fff, MRA_BANK6					},	// Layer 1 (size?)
-/**/{ 0x708000, 0x708fff, MRA_BANK7					},	// Palette
-/**/{ 0x710000, 0x710fff, MRA_BANK8					},	// ?
-	{ 0x800000, 0x800007, cave_irq_cause_r			},	// ?
-/**/{ 0x900000, 0x900005, MRA_BANK10				},	// Layer 0 Control
-/**/{ 0xa00000, 0xa00005, MRA_BANK11				},	// Layer 1 Control
-	{ 0xb00000, 0xb00003, cave_inputs_r				},	// Inputs + EEPROM
-/**/{ 0xc00000, 0xc00001, MRA_BANK12				},	//
-	{ -1 }
-};
+static MEMORY_READ16_START( dfeveron_readmem )
+	{ 0x000000, 0x0fffff, MRA16_ROM				},	// ROM
+	{ 0x100000, 0x10ffff, MRA16_RAM				},	// RAM
+	{ 0x300002, 0x300003, cave_sound_r			},	// From sound
+/**/{ 0x400000, 0x407fff, MRA16_RAM				},	// Sprites
+/**/{ 0x408000, 0x40ffff, MRA16_RAM				},	// Sprites?
+/**/{ 0x500000, 0x507fff, MRA16_RAM				},	// Layer 0 (size?)
+/**/{ 0x600000, 0x607fff, MRA16_RAM				},	// Layer 1 (size?)
+/**/{ 0x708000, 0x708fff, MRA16_RAM				},	// Palette
+/**/{ 0x710000, 0x710fff, MRA16_RAM				},	// ?
+	{ 0x800000, 0x800007, cave_irq_cause_r		},	// ?
+/**/{ 0x900000, 0x900005, MRA16_RAM				},	// Layer 0 Control
+/**/{ 0xa00000, 0xa00005, MRA16_RAM				},	// Layer 1 Control
+	{ 0xb00000, 0xb00003, cave_inputs_r			},	// Inputs + EEPROM
+/**/{ 0xc00000, 0xc00001, MRA16_RAM				},	//
+MEMORY_END
 
-static struct MemoryWriteAddress dfeveron_writemem[] =
-{
-	{ 0x000000, 0x0fffff, MWA_ROM									},	// ROM
-	{ 0x100000, 0x10ffff, MWA_BANK1									},	// RAM
-	{ 0x300000, 0x300003, cave_sound_w								},	// To Sound
-	{ 0x400000, 0x407fff, MWA_BANK3, &spriteram, &spriteram_size	},	// Sprites
-	{ 0x408000, 0x40ffff, MWA_BANK4									},	// Sprites?
-	{ 0x500000, 0x507fff, cave_vram_0_w, &cave_vram_0				},	// Layer 0 (size?)
-	{ 0x600000, 0x607fff, cave_vram_1_w, &cave_vram_1				},	// Layer 1 (size?)
-	{ 0x708000, 0x708fff, paletteram_xGGGGGRRRRRBBBBB_word_w, &paletteram },	// Palette
-	{ 0x710c00, 0x710fff, MWA_BANK8									},	// ?
-	{ 0x800000, 0x80007f, MWA_BANK9,  &cave_videoregs				},	// Video Regs?
-	{ 0x900000, 0x900005, MWA_BANK10, &cave_vctrl_0					},	// Layer 0 Control
-	{ 0xa00000, 0xa00005, MWA_BANK11, &cave_vctrl_1					},	// Layer 1 Control
-	{ 0xc00000, 0xc00001, cave_eeprom_w								},	// EEPROM
-	{ -1 }
-};
+static MEMORY_WRITE16_START( dfeveron_writemem )
+	{ 0x000000, 0x0fffff, MWA16_ROM						},	// ROM
+	{ 0x100000, 0x10ffff, MWA16_RAM						},	// RAM
+	{ 0x300000, 0x300003, cave_sound_w					},	// To Sound
+	{ 0x400000, 0x407fff, MWA16_RAM, &spriteram16, &spriteram_size	},	// Sprites
+	{ 0x408000, 0x40ffff, MWA16_RAM									},	// Sprites?
+	{ 0x500000, 0x507fff, cave_vram_0_w, &cave_vram_0	},	// Layer 0 (size?)
+	{ 0x600000, 0x607fff, cave_vram_1_w, &cave_vram_1	},	// Layer 1 (size?)
+	{ 0x708000, 0x708fff, paletteram16_xGGGGGRRRRRBBBBB_word_w, &paletteram16 },	// Palette
+	{ 0x710c00, 0x710fff, MWA16_RAM						},	// ?
+	{ 0x800000, 0x80007f, MWA16_RAM, &cave_videoregs	},	// Video Regs?
+	{ 0x900000, 0x900005, MWA16_RAM, &cave_vctrl_0		},	// Layer 0 Control
+	{ 0xa00000, 0xa00005, MWA16_RAM, &cave_vctrl_1		},	// Layer 1 Control
+	{ 0xc00000, 0xc00001, cave_eeprom_w					},	// EEPROM
+MEMORY_END
 
 
 
@@ -364,44 +356,40 @@ static struct MemoryWriteAddress dfeveron_writemem[] =
 								Dodonpachi
 ***************************************************************************/
 
-static struct MemoryReadAddress ddonpach_readmem[] =
-{
-	{ 0x000000, 0x0fffff, MRA_ROM					},	// ROM
-	{ 0x100000, 0x10ffff, MRA_BANK1					},	// RAM
-	{ 0x300002, 0x300003, cave_sound_r				},	// From sound
-/**/{ 0x400000, 0x407fff, MRA_BANK3					},	// Sprites
-/**/{ 0x408000, 0x40ffff, MRA_BANK4					},	// Sprites?
-/**/{ 0x500000, 0x507fff, MRA_BANK5					},	// Layer 0 (size?)
-/**/{ 0x600000, 0x607fff, MRA_BANK6					},	// Layer 1 (size?)
-/**/{ 0x700000, 0x70ffff, MRA_BANK7					},	// Layer 2 (size?)
-	{ 0x800000, 0x800007, ddonpach_irq_cause_r		},	// ?
-/**/{ 0x900000, 0x900005, MRA_BANK9					},	// Layer 0 Control
-/**/{ 0xa00000, 0xa00005, MRA_BANK10				},	// Layer 1 Control
-/**/{ 0xb00000, 0xb00005, MRA_BANK11				},	// Layer 2 Control
-/**/{ 0xc00000, 0xc0ffff, MRA_BANK12				},	// Palette
-	{ 0xd00000, 0xd00003, cave_inputs_r				},	// Inputs + EEPROM
-/**/{ 0xe00000, 0xe00001, MRA_BANK13				},	//
-	{ -1 }
-};
+static MEMORY_READ16_START( ddonpach_readmem )
+	{ 0x000000, 0x0fffff, MRA16_ROM				},	// ROM
+	{ 0x100000, 0x10ffff, MRA16_RAM				},	// RAM
+	{ 0x300002, 0x300003, cave_sound_r			},	// From sound
+/**/{ 0x400000, 0x407fff, MRA16_RAM				},	// Sprites
+/**/{ 0x408000, 0x40ffff, MRA16_RAM				},	// Sprites?
+/**/{ 0x500000, 0x507fff, MRA16_RAM				},	// Layer 0 (size?)
+/**/{ 0x600000, 0x607fff, MRA16_RAM				},	// Layer 1 (size?)
+/**/{ 0x700000, 0x70ffff, MRA16_RAM				},	// Layer 2 (size?)
+	{ 0x800000, 0x800007, ddonpach_irq_cause_r	},	// ?
+/**/{ 0x900000, 0x900005, MRA16_RAM				},	// Layer 0 Control
+/**/{ 0xa00000, 0xa00005, MRA16_RAM				},	// Layer 1 Control
+/**/{ 0xb00000, 0xb00005, MRA16_RAM				},	// Layer 2 Control
+/**/{ 0xc00000, 0xc0ffff, MRA16_RAM				},	// Palette
+	{ 0xd00000, 0xd00003, cave_inputs_r			},	// Inputs + EEPROM
+/**/{ 0xe00000, 0xe00001, MRA16_RAM				},	//
+MEMORY_END
 
-static struct MemoryWriteAddress ddonpach_writemem[] =
-{
-	{ 0x000000, 0x0fffff, MWA_ROM									},	// ROM
-	{ 0x100000, 0x10ffff, MWA_BANK1									},	// RAM
-	{ 0x300000, 0x300003, cave_sound_w								},	// To Sound
-	{ 0x400000, 0x407fff, MWA_BANK3, &spriteram, &spriteram_size	},	// Sprites
-	{ 0x408000, 0x40ffff, MWA_BANK4									},	// Sprites?
-	{ 0x500000, 0x507fff, cave_vram_0_w, &cave_vram_0				},	// Layer 0 (size?)
-	{ 0x600000, 0x607fff, cave_vram_1_w, &cave_vram_1				},	// Layer 1 (size?)
-	{ 0x700000, 0x70ffff, cave_vram_2_8x8_w, &cave_vram_2			},	// Layer 2 (size?)
-	{ 0x800000, 0x80007f, MWA_BANK8,  &cave_videoregs				},	// Video Regs?
-	{ 0x900000, 0x900005, MWA_BANK9,  &cave_vctrl_0					},	// Layer 0 Control
-	{ 0xa00000, 0xa00005, MWA_BANK10, &cave_vctrl_1					},	// Layer 1 Control
-	{ 0xb00000, 0xb00005, MWA_BANK11, &cave_vctrl_2					},	// Layer 2 Control
-	{ 0xc00000, 0xc0ffff, paletteram_xGGGGGRRRRRBBBBB_word_w, &paletteram },	// Palette
-	{ 0xe00000, 0xe00001, cave_eeprom_w								},	// EEPROM
-	{ -1 }
-};
+static MEMORY_WRITE16_START( ddonpach_writemem )
+	{ 0x000000, 0x0fffff, MWA16_ROM							},	// ROM
+	{ 0x100000, 0x10ffff, MWA16_RAM							},	// RAM
+	{ 0x300000, 0x300003, cave_sound_w						},	// To Sound
+	{ 0x400000, 0x407fff, MWA16_RAM, &spriteram16, &spriteram_size	},	// Sprites
+	{ 0x408000, 0x40ffff, MWA16_RAM									},	// Sprites?
+	{ 0x500000, 0x507fff, cave_vram_0_w, &cave_vram_0		},	// Layer 0 (size?)
+	{ 0x600000, 0x607fff, cave_vram_1_w, &cave_vram_1		},	// Layer 1 (size?)
+	{ 0x700000, 0x70ffff, cave_vram_2_8x8_w, &cave_vram_2	},	// Layer 2 (size?)
+	{ 0x800000, 0x80007f, MWA16_RAM, &cave_videoregs		},	// Video Regs?
+	{ 0x900000, 0x900005, MWA16_RAM, &cave_vctrl_0			},	// Layer 0 Control
+	{ 0xa00000, 0xa00005, MWA16_RAM, &cave_vctrl_1			},	// Layer 1 Control
+	{ 0xb00000, 0xb00005, MWA16_RAM, &cave_vctrl_2			},	// Layer 2 Control
+	{ 0xc00000, 0xc0ffff, paletteram16_xGGGGGRRRRRBBBBB_word_w, &paletteram16 },	// Palette
+	{ 0xe00000, 0xe00001, cave_eeprom_w						},	// EEPROM
+MEMORY_END
 
 
 
@@ -409,43 +397,47 @@ static struct MemoryWriteAddress ddonpach_writemem[] =
 									Donpachi
 ***************************************************************************/
 
-READ_HANDLER( donpachi_videoregs_r )
+READ16_HANDLER( donpachi_videoregs_r )
 {
 	switch( offset )
 	{
-		case 0x00:
-//case 0x00:	return rand() & 0xffff;
-		case 0x02:
-		case 0x04:
-		case 0x06:	return cave_irq_cause_r(offset);
+		case 0:
+		case 1:
+		case 2:
+		case 3:	return cave_irq_cause_r(offset);
 
 		default:	return 0x0000;
 	}
 }
 
-WRITE_HANDLER( donpachi_videoregs_w )
+WRITE16_HANDLER( donpachi_videoregs_w )
 {
-	COMBINE_WORD_MEM(&cave_videoregs[offset],data);
+	COMBINE_DATA(&cave_videoregs[offset]);
+
 	switch( offset )
 	{
-//		case 0x78:	watchdog_reset_w(0,0);			break;
+//		case 0x78/2:	watchdog_reset16_w(0,0);	break;
 	}
 }
 
-static WRITE_HANDLER( nmk_oki6295_bankswitch_w )
+static WRITE16_HANDLER( nmk_oki6295_bankswitch_w )
 {
-	if ((data & 0x00ff0000) == 0)
+	if (ACCESSING_LSB)
 	{
 		/* The OKI6295 ROM space is divided in four banks, each one indepentently
 		   controlled. The sample table at the beginning of the addressing space is
 		   divided in four pages as well, banked together with the sample data. */
+
 		#define TABLESIZE 0x100
 		#define BANKSIZE 0x10000
-		int chip = (offset & 8) >> 3;
-		int banknum = (offset/2) & 3;
-		unsigned char *rom = memory_region(REGION_SOUND1 + chip);
-		int size = memory_region_length(REGION_SOUND1 + chip) - 0x40000;
-		int bankaddr = (data * BANKSIZE) % size;	// % used: size is not a power of 2
+
+		int chip	=	offset / 4;
+		int banknum	=	offset % 4;
+
+		unsigned char *rom	=	memory_region(REGION_SOUND1 + chip);
+		int size			=	memory_region_length(REGION_SOUND1 + chip) - 0x40000;
+
+		int bankaddr		=	(data * BANKSIZE) % size;	// % used: size is not a power of 2
 
 		/* copy the samples */
 		memcpy(rom + banknum * BANKSIZE,rom + 0x40000 + bankaddr,BANKSIZE);
@@ -459,46 +451,42 @@ static WRITE_HANDLER( nmk_oki6295_bankswitch_w )
 	}
 }
 
-static struct MemoryReadAddress donpachi_readmem[] =
-{
-	{ 0x000000, 0x07ffff, MRA_ROM					},	// ROM
-	{ 0x100000, 0x10ffff, MRA_BANK1					},	// RAM
-	{ 0x200000, 0x207fff, MRA_BANK2					},	// Layer 1
-	{ 0x300000, 0x307fff, MRA_BANK3					},	// Layer 0
-	{ 0x400000, 0x407fff, MRA_BANK4					},	// Layer 2
-	{ 0x500000, 0x507fff, MRA_BANK5					},	// Sprites
-	{ 0x508000, 0x50ffff, MRA_BANK6					},	// Sprites?
-/**/{ 0x600000, 0x600005, MRA_BANK7					},	// Layer 0 Control
-/**/{ 0x700000, 0x700005, MRA_BANK8					},	// Layer 1 Control
-/**/{ 0x800000, 0x800005, MRA_BANK9					},	// Layer 2 Control
+static MEMORY_READ16_START( donpachi_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM					},	// ROM
+	{ 0x100000, 0x10ffff, MRA16_RAM					},	// RAM
+	{ 0x200000, 0x207fff, MRA16_RAM					},	// Layer 1
+	{ 0x300000, 0x307fff, MRA16_RAM					},	// Layer 0
+	{ 0x400000, 0x407fff, MRA16_RAM					},	// Layer 2
+	{ 0x500000, 0x507fff, MRA16_RAM					},	// Sprites
+	{ 0x508000, 0x50ffff, MRA16_RAM					},	// Sprites?
+/**/{ 0x600000, 0x600005, MRA16_RAM					},	// Layer 0 Control
+/**/{ 0x700000, 0x700005, MRA16_RAM					},	// Layer 1 Control
+/**/{ 0x800000, 0x800005, MRA16_RAM					},	// Layer 2 Control
 	{ 0x900000, 0x90007f, donpachi_videoregs_r		},	// Video Regs?
-/**/{ 0xa08000, 0xa08fff, MRA_BANK10				},	// Palette
-	{ 0xb00000, 0xb00001, OKIM6295_status_0_r		},	// Sound
-	{ 0xb00010, 0xb00011, OKIM6295_status_1_r		},	//
+/**/{ 0xa08000, 0xa08fff, MRA16_RAM					},	// Palette
+	{ 0xb00000, 0xb00001, OKIM6295_status_0_lsb_r	},	// Sound
+	{ 0xb00010, 0xb00011, OKIM6295_status_1_lsb_r	},	//
 	{ 0xc00000, 0xc00003, cave_inputs_r				},	// Inputs + EEPROM
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress donpachi_writemem[] =
-{
-	{ 0x000000, 0x07ffff, MWA_ROM									},	// ROM
-	{ 0x100000, 0x10ffff, MWA_BANK1									},	// RAM
-	{ 0x200000, 0x207fff, cave_vram_1_w, &cave_vram_1				},	// Layer 1 (size?)
-	{ 0x300000, 0x307fff, cave_vram_0_w, &cave_vram_0				},	// Layer 0 (size?)
+static MEMORY_WRITE16_START( donpachi_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM									},	// ROM
+	{ 0x100000, 0x10ffff, MWA16_RAM									},	// RAM
+	{ 0x200000, 0x207fff, cave_vram_1_w,     &cave_vram_1			},	// Layer 1 (size?)
+	{ 0x300000, 0x307fff, cave_vram_0_w,     &cave_vram_0			},	// Layer 0 (size?)
 	{ 0x400000, 0x407fff, cave_vram_2_8x8_w, &cave_vram_2			},	// Layer 2 (size?)
-	{ 0x500000, 0x507fff, MWA_BANK5, &spriteram, &spriteram_size	},	// Sprites
-	{ 0x508000, 0x50ffff, MWA_BANK6									},	// Sprites?
-	{ 0x600000, 0x600005, MWA_BANK7,  &cave_vctrl_1					},	// Layer 1 Control
-	{ 0x700000, 0x700005, MWA_BANK8,  &cave_vctrl_0					},	// Layer 0 Control
-	{ 0x800000, 0x800005, MWA_BANK9,  &cave_vctrl_2					},	// Layer 2 Control
-	{ 0x900000, 0x90007f, donpachi_videoregs_w,  &cave_videoregs	},	// Video Regs?
-	{ 0xa08000, 0xa08fff, paletteram_xGGGGGRRRRRBBBBB_word_w, &paletteram },	// Palette
+	{ 0x500000, 0x507fff, MWA16_RAM, &spriteram16, &spriteram_size	},	// Sprites
+	{ 0x508000, 0x50ffff, MWA16_RAM									},	// Sprites?
+	{ 0x600000, 0x600005, MWA16_RAM,  &cave_vctrl_1					},	// Layer 1 Control
+	{ 0x700000, 0x700005, MWA16_RAM,  &cave_vctrl_0					},	// Layer 0 Control
+	{ 0x800000, 0x800005, MWA16_RAM,  &cave_vctrl_2					},	// Layer 2 Control
+	{ 0x900000, 0x90007f, donpachi_videoregs_w, &cave_videoregs		},	// Video Regs?
+	{ 0xa08000, 0xa08fff, paletteram16_xGGGGGRRRRRBBBBB_word_w, &paletteram16 },	// Palette
 	{ 0xb00000, 0xb00003, cave_oki_0_w								},	// Sound
 	{ 0xb00010, 0xb00013, cave_oki_1_w								},	//
 	{ 0xb00020, 0xb0002f, nmk_oki6295_bankswitch_w					},	//
 	{ 0xd00000, 0xd00001, cave_eeprom_w								},	// EEPROM
-	{ -1 }
-};
+MEMORY_END
 
 
 
@@ -506,44 +494,40 @@ static struct MemoryWriteAddress donpachi_writemem[] =
 									Esprade
 ***************************************************************************/
 
-static struct MemoryReadAddress esprade_readmem[] =
-{
-	{ 0x000000, 0x0fffff, MRA_ROM					},	// ROM
-	{ 0x100000, 0x10ffff, MRA_BANK1					},	// RAM
-	{ 0x300002, 0x300003, cave_sound_r				},	// From sound
-/**/{ 0x400000, 0x407fff, MRA_BANK3					},	// Sprites
-/**/{ 0x408000, 0x40ffff, MRA_BANK4					},	// Sprites?
-/**/{ 0x500000, 0x507fff, MRA_BANK5					},	// Layer 0 (size?)
-/**/{ 0x600000, 0x607fff, MRA_BANK6					},	// Layer 1 (size?)
-/**/{ 0x700000, 0x707fff, MRA_BANK7					},	// Layer 2 (size?)
-	{ 0x800000, 0x800007, cave_irq_cause_r			},	// ?
-/**/{ 0x900000, 0x900005, MRA_BANK9					},	// Layer 0 Control
-/**/{ 0xa00000, 0xa00005, MRA_BANK10				},	// Layer 1 Control
-/**/{ 0xb00000, 0xb00005, MRA_BANK11				},	// Layer 2 Control
-/**/{ 0xc00000, 0xc0ffff, MRA_BANK12				},	// Palette
-	{ 0xd00000, 0xd00003, cave_inputs_r				},	// Inputs + EEPROM
-/**/{ 0xe00000, 0xe00001, MRA_BANK13				},	//
-	{ -1 }
-};
+static MEMORY_READ16_START( esprade_readmem )
+	{ 0x000000, 0x0fffff, MRA16_ROM				},	// ROM
+	{ 0x100000, 0x10ffff, MRA16_RAM				},	// RAM
+	{ 0x300002, 0x300003, cave_sound_r			},	// From sound
+/**/{ 0x400000, 0x407fff, MRA16_RAM				},	// Sprites
+/**/{ 0x408000, 0x40ffff, MRA16_RAM				},	// Sprites?
+/**/{ 0x500000, 0x507fff, MRA16_RAM				},	// Layer 0 (size?)
+/**/{ 0x600000, 0x607fff, MRA16_RAM				},	// Layer 1 (size?)
+/**/{ 0x700000, 0x707fff, MRA16_RAM				},	// Layer 2 (size?)
+	{ 0x800000, 0x800007, cave_irq_cause_r		},	// ?
+/**/{ 0x900000, 0x900005, MRA16_RAM				},	// Layer 0 Control
+/**/{ 0xa00000, 0xa00005, MRA16_RAM				},	// Layer 1 Control
+/**/{ 0xb00000, 0xb00005, MRA16_RAM				},	// Layer 2 Control
+/**/{ 0xc00000, 0xc0ffff, MRA16_RAM				},	// Palette
+	{ 0xd00000, 0xd00003, cave_inputs_r			},	// Inputs + EEPROM
+/**/{ 0xe00000, 0xe00001, MRA16_RAM				},	//
+MEMORY_END
 
-static struct MemoryWriteAddress esprade_writemem[] =
-{
-	{ 0x000000, 0x0fffff, MWA_ROM									},	// ROM
-	{ 0x100000, 0x10ffff, MWA_BANK1									},	// RAM
+static MEMORY_WRITE16_START( esprade_writemem )
+	{ 0x000000, 0x0fffff, MWA16_ROM									},	// ROM
+	{ 0x100000, 0x10ffff, MWA16_RAM									},	// RAM
 	{ 0x300000, 0x300003, cave_sound_w								},	// To Sound
-	{ 0x400000, 0x407fff, MWA_BANK3, &spriteram, &spriteram_size	},	// Sprites
-	{ 0x408000, 0x40ffff, MWA_BANK4									},	// Sprites?
+	{ 0x400000, 0x407fff, MWA16_RAM, &spriteram16, &spriteram_size	},	// Sprites
+	{ 0x408000, 0x40ffff, MWA16_RAM									},	// Sprites?
 	{ 0x500000, 0x507fff, cave_vram_0_w, &cave_vram_0				},	// Layer 0 (size?)
 	{ 0x600000, 0x607fff, cave_vram_1_w, &cave_vram_1				},	// Layer 1 (size?)
 	{ 0x700000, 0x707fff, cave_vram_2_w, &cave_vram_2				},	// Layer 2 (size?)
-	{ 0x800000, 0x80007f, MWA_BANK8,  &cave_videoregs				},	// Video Regs?
-	{ 0x900000, 0x900005, MWA_BANK9,  &cave_vctrl_0					},	// Layer 0 Control
-	{ 0xa00000, 0xa00005, MWA_BANK10, &cave_vctrl_1					},	// Layer 1 Control
-	{ 0xb00000, 0xb00005, MWA_BANK11, &cave_vctrl_2					},	// Layer 2 Control
-	{ 0xc00000, 0xc0ffff, paletteram_xGGGGGRRRRRBBBBB_word_w, &paletteram },	// Palette
+	{ 0x800000, 0x80007f, MWA16_RAM, &cave_videoregs				},	// Video Regs?
+	{ 0x900000, 0x900005, MWA16_RAM, &cave_vctrl_0					},	// Layer 0 Control
+	{ 0xa00000, 0xa00005, MWA16_RAM, &cave_vctrl_1					},	// Layer 1 Control
+	{ 0xb00000, 0xb00005, MWA16_RAM, &cave_vctrl_2					},	// Layer 2 Control
+	{ 0xc00000, 0xc0ffff, paletteram16_xGGGGGRRRRRBBBBB_word_w, &paletteram16 },	// Palette
 	{ 0xe00000, 0xe00001, cave_eeprom_w								},	// EEPROM
-	{ -1 }
-};
+MEMORY_END
 
 
 
@@ -551,45 +535,41 @@ static struct MemoryWriteAddress esprade_writemem[] =
 									Guwange
 ***************************************************************************/
 
-static struct MemoryReadAddress guwange_readmem[] =
-{
-	{ 0x000000, 0x0fffff, MRA_ROM					},	// ROM
-	{ 0x200000, 0x20ffff, MRA_BANK1					},	// RAM
-	{ 0x300000, 0x300007, cave_irq_cause_r			},	// ?
-/**/{ 0x400000, 0x407fff, MRA_BANK3					},	// Sprites
-/**/{ 0x408000, 0x40ffff, MRA_BANK4					},	// Sprites?
-/**/{ 0x500000, 0x507fff, MRA_BANK5					},	// Layer 0 (size?)
-/**/{ 0x600000, 0x607fff, MRA_BANK6					},	// Layer 1 (size?)
-/**/{ 0x700000, 0x707fff, MRA_BANK7					},	// Layer 2 (size?)
-	{ 0x800002, 0x800003, cave_sound_r				},	// From sound
-/**/{ 0x900000, 0x900005, MRA_BANK9					},	// Layer 0 Control
-/**/{ 0xa00000, 0xa00005, MRA_BANK10				},	// Layer 1 Control
-/**/{ 0xb00000, 0xb00005, MRA_BANK11				},	// Layer 2 Control
-/**/{ 0xc00000, 0xc0ffff, MRA_BANK12				},	// Palette
-	{ 0xd00010, 0xd00013, guwange_inputs_r			},	// Inputs + EEPROM
-	{ -1 }
-};
+static MEMORY_READ16_START( guwange_readmem )
+	{ 0x000000, 0x0fffff, MRA16_ROM				},	// ROM
+	{ 0x200000, 0x20ffff, MRA16_RAM				},	// RAM
+	{ 0x300000, 0x300007, cave_irq_cause_r		},	// ?
+/**/{ 0x400000, 0x407fff, MRA16_RAM				},	// Sprites
+/**/{ 0x408000, 0x40ffff, MRA16_RAM				},	// Sprites?
+/**/{ 0x500000, 0x507fff, MRA16_RAM				},	// Layer 0 (size?)
+/**/{ 0x600000, 0x607fff, MRA16_RAM				},	// Layer 1 (size?)
+/**/{ 0x700000, 0x707fff, MRA16_RAM				},	// Layer 2 (size?)
+	{ 0x800002, 0x800003, cave_sound_r			},	// From sound
+/**/{ 0x900000, 0x900005, MRA16_RAM				},	// Layer 0 Control
+/**/{ 0xa00000, 0xa00005, MRA16_RAM				},	// Layer 1 Control
+/**/{ 0xb00000, 0xb00005, MRA16_RAM				},	// Layer 2 Control
+/**/{ 0xc00000, 0xc0ffff, MRA16_RAM				},	// Palette
+	{ 0xd00010, 0xd00013, guwange_inputs_r		},	// Inputs + EEPROM
+MEMORY_END
 
-static struct MemoryWriteAddress guwange_writemem[] =
-{
-	{ 0x000000, 0x0fffff, MWA_ROM									},	// ROM
-	{ 0x200000, 0x20ffff, MWA_BANK1									},	// RAM
-	{ 0x300000, 0x30007f, MWA_BANK8,  &cave_videoregs				},	// Video Regs?
-	{ 0x400000, 0x407fff, MWA_BANK3, &spriteram, &spriteram_size	},	// Sprites
-	{ 0x408000, 0x40ffff, MWA_BANK4									},	// Sprites?
+static MEMORY_WRITE16_START( guwange_writemem )
+	{ 0x000000, 0x0fffff, MWA16_ROM									},	// ROM
+	{ 0x200000, 0x20ffff, MWA16_RAM									},	// RAM
+	{ 0x300000, 0x30007f, MWA16_RAM, &cave_videoregs				},	// Video Regs?
+	{ 0x400000, 0x407fff, MWA16_RAM, &spriteram16, &spriteram_size	},	// Sprites
+	{ 0x408000, 0x40ffff, MWA16_RAM									},	// Sprites?
 	{ 0x500000, 0x507fff, cave_vram_0_w, &cave_vram_0				},	// Layer 0 (size?)
 	{ 0x600000, 0x607fff, cave_vram_1_w, &cave_vram_1				},	// Layer 1 (size?)
 	{ 0x700000, 0x707fff, cave_vram_2_w, &cave_vram_2				},	// Layer 2 (size?)
 	{ 0x800000, 0x800003, cave_sound_w								},	// To Sound
-	{ 0x900000, 0x900005, MWA_BANK9,  &cave_vctrl_0					},	// Layer 0 Control
-	{ 0xa00000, 0xa00005, MWA_BANK10, &cave_vctrl_1					},	// Layer 1 Control
-	{ 0xb00000, 0xb00005, MWA_BANK11, &cave_vctrl_2					},	// Layer 2 Control
-	{ 0xc00000, 0xc0ffff, paletteram_xGGGGGRRRRRBBBBB_word_w, &paletteram },	// Palette
+	{ 0x900000, 0x900005, MWA16_RAM, &cave_vctrl_0					},	// Layer 0 Control
+	{ 0xa00000, 0xa00005, MWA16_RAM, &cave_vctrl_1					},	// Layer 1 Control
+	{ 0xb00000, 0xb00005, MWA16_RAM, &cave_vctrl_2					},	// Layer 2 Control
+	{ 0xc00000, 0xc0ffff, paletteram16_xGGGGGRRRRRBBBBB_word_w, &paletteram16 },	// Palette
 	{ 0xd00010, 0xd00011, guwange_eeprom_w							},	// EEPROM
-//	{ 0xd00012, 0xd00013, MWA_NOP	},	// ?
-//	{ 0xd00014, 0xd00015, MWA_NOP	},	// ? $800068 in dfeveron ?
-	{ -1 }
-};
+//	{ 0xd00012, 0xd00013, MWA16_NOP				},	// ?
+//	{ 0xd00014, 0xd00015, MWA16_NOP				},	// ? $800068 in dfeveron ?
+MEMORY_END
 
 
 
@@ -597,36 +577,32 @@ static struct MemoryWriteAddress guwange_writemem[] =
 									Uo Poko
 ***************************************************************************/
 
-static struct MemoryReadAddress uopoko_readmem[] =
-{
-	{ 0x000000, 0x0fffff, MRA_ROM					},	// ROM
-	{ 0x100000, 0x10ffff, MRA_BANK1					},	// RAM
-	{ 0x300002, 0x300003, cave_sound_r				},	// From sound
-/**/{ 0x400000, 0x407fff, MRA_BANK3					},	// Sprites
-/**/{ 0x408000, 0x40ffff, MRA_BANK4					},	// Sprites?
-/**/{ 0x500000, 0x501fff, MRA_BANK5					},	// Layer 0 (size?)
-	{ 0x600000, 0x600007, cave_irq_cause_r			},	// ?
-/**/{ 0x700000, 0x700005, MRA_BANK7					},	// Layer 0 Control
-/**/{ 0x800000, 0x80ffff, MRA_BANK8					},	// Palette
-	{ 0x900000, 0x900003, cave_inputs_r				},	// Inputs + EEPROM
-/**/{ 0xa00000, 0xa00001, MRA_BANK9					},	//
-	{ -1 }
-};
+static MEMORY_READ16_START( uopoko_readmem )
+	{ 0x000000, 0x0fffff, MRA16_ROM				},	// ROM
+	{ 0x100000, 0x10ffff, MRA16_RAM				},	// RAM
+	{ 0x300002, 0x300003, cave_sound_r			},	// From sound
+/**/{ 0x400000, 0x407fff, MRA16_RAM				},	// Sprites
+/**/{ 0x408000, 0x40ffff, MRA16_RAM				},	// Sprites?
+/**/{ 0x500000, 0x501fff, MRA16_RAM				},	// Layer 0 (size?)
+	{ 0x600000, 0x600007, cave_irq_cause_r		},	// ?
+/**/{ 0x700000, 0x700005, MRA16_RAM				},	// Layer 0 Control
+/**/{ 0x800000, 0x80ffff, MRA16_RAM				},	// Palette
+	{ 0x900000, 0x900003, cave_inputs_r			},	// Inputs + EEPROM
+/**/{ 0xa00000, 0xa00001, MRA16_RAM				},	//
+MEMORY_END
 
-static struct MemoryWriteAddress uopoko_writemem[] =
-{
-	{ 0x000000, 0x0fffff, MWA_ROM									},	// ROM
-	{ 0x100000, 0x10ffff, MWA_BANK1									},	// RAM
+static MEMORY_WRITE16_START( uopoko_writemem )
+	{ 0x000000, 0x0fffff, MWA16_ROM									},	// ROM
+	{ 0x100000, 0x10ffff, MWA16_RAM									},	// RAM
 	{ 0x300000, 0x300003, cave_sound_w								},	// To Sound
-	{ 0x400000, 0x407fff, MWA_BANK3, &spriteram, &spriteram_size	},	// Sprites
-	{ 0x408000, 0x40ffff, MWA_BANK4									},	// Sprites?
+	{ 0x400000, 0x407fff, MWA16_RAM, &spriteram16, &spriteram_size	},	// Sprites
+	{ 0x408000, 0x40ffff, MWA16_RAM									},	// Sprites?
 	{ 0x500000, 0x501fff, cave_vram_0_w, &cave_vram_0				},	// Layer 0 (size?)
-	{ 0x600000, 0x60007f, MWA_BANK6,  &cave_videoregs				},	// Video Regs?
-	{ 0x700000, 0x700005, MWA_BANK7,  &cave_vctrl_0					},	// Layer 0 Control
-	{ 0x800000, 0x80ffff, paletteram_xGGGGGRRRRRBBBBB_word_w, &paletteram },	// Palette
+	{ 0x600000, 0x60007f, MWA16_RAM,     &cave_videoregs			},	// Video Regs?
+	{ 0x700000, 0x700005, MWA16_RAM,     &cave_vctrl_0				},	// Layer 0 Control
+	{ 0x800000, 0x80ffff, paletteram16_xGGGGGRRRRRBBBBB_word_w, &paletteram16 },	// Palette
 	{ 0xa00000, 0xa00001, cave_eeprom_w								},	// EEPROM
-	{ -1 }
-};
+MEMORY_END
 
 
 
@@ -918,7 +894,7 @@ static struct YMZ280Binterface ymz280b_intf =
 	1,
 	{ 16000000 },
 	{ REGION_SOUND1 },
-	{ YM2203_VOL(50,50) },
+	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
 	{ sound_irq_gen }
 };
 

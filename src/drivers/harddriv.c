@@ -162,16 +162,16 @@ void slapstic_init(int chip);
 
 
 /* from machine */
-extern UINT8 *hd68k_slapstic_base;
-extern UINT8 *hdgsp_speedup_addr[2];
+extern data16_t *hd68k_slapstic_base;
+extern data16_t *hdgsp_speedup_addr[2];
 extern offs_t hdgsp_speedup_pc;
-extern UINT8 *hdmsp_speedup_addr;
+extern data16_t *hdmsp_speedup_addr;
 extern offs_t hdmsp_speedup_pc;
 extern offs_t hdadsp_speedup_pc;
-extern UINT8 *hdmsp_ram;
-extern UINT8 *hddsk_ram;
-extern UINT8 *hddsk_rom;
-extern UINT8 *hddsk_zram;
+extern data16_t *hdmsp_ram;
+extern data16_t *hddsk_ram;
+extern data16_t *hddsk_rom;
+extern data16_t *hddsk_zram;
 
 void harddriv_init_machine(void);
 int hd68k_vblank_gen(void);
@@ -179,93 +179,93 @@ int hd68k_irq_gen(void);
 void hdgsp_irq_gen(int state);
 void hdmsp_irq_gen(int state);
 
-READ_HANDLER( hd68k_adsp_program_r );
-READ_HANDLER( hd68k_adsp_data_r );
-READ_HANDLER( hd68k_adsp_buffer_r );
-READ_HANDLER( hd68k_adsp_irq_state_r );
-READ_HANDLER( hd68k_ds3_irq_state_r );
-READ_HANDLER( hd68k_ds3_program_r );
-READ_HANDLER( hd68k_sound_reset_r );
-READ_HANDLER( hd68k_adc8_r );
-READ_HANDLER( hd68k_adc12_r );
-READ_HANDLER( hd68k_gsp_io_r );
-READ_HANDLER( hd68k_msp_io_r );
-READ_HANDLER( hd68k_duart_r );
-READ_HANDLER( hd68k_zram_r );
-READ_HANDLER( hd68k_port0_r );
-READ_HANDLER( hdadsp_special_r );
-READ_HANDLER( hdds3_special_r );
-READ_HANDLER( hdadsp_speedup_r );
-READ_HANDLER( hdadsp_speedup2_r );
-READ_HANDLER( hdgsp_speedup_r );
-READ_HANDLER( hdmsp_speedup_r );
-READ_HANDLER( hddsk_ram_r );
-READ_HANDLER( hddsk_zram_r );
-READ_HANDLER( hddsk_rom_r );
-READ_HANDLER( racedriv_68k_slapstic_r );
-READ_HANDLER( racedriv_asic65_r );
-READ_HANDLER( racedriv_asic65_io_r );
-READ_HANDLER( racedriv_asic61_r );
-READ_HANDLER( steeltal_68k_slapstic_r );
+READ16_HANDLER( hd68k_adsp_program_r );
+READ16_HANDLER( hd68k_adsp_data_r );
+READ16_HANDLER( hd68k_adsp_buffer_r );
+READ16_HANDLER( hd68k_adsp_irq_state_r );
+READ16_HANDLER( hd68k_ds3_irq_state_r );
+READ16_HANDLER( hd68k_ds3_program_r );
+READ16_HANDLER( hd68k_sound_reset_r );
+READ16_HANDLER( hd68k_adc8_r );
+READ16_HANDLER( hd68k_adc12_r );
+READ16_HANDLER( hd68k_gsp_io_r );
+READ16_HANDLER( hd68k_msp_io_r );
+READ16_HANDLER( hd68k_duart_r );
+READ16_HANDLER( hd68k_zram_r );
+READ16_HANDLER( hd68k_port0_r );
+READ16_HANDLER( hdadsp_special_r );
+READ16_HANDLER( hdds3_special_r );
+READ16_HANDLER( hdadsp_speedup_r );
+READ16_HANDLER( hdadsp_speedup2_r );
+READ16_HANDLER( hdgsp_speedup_r );
+READ16_HANDLER( hdmsp_speedup_r );
+READ16_HANDLER( hddsk_ram_r );
+READ16_HANDLER( hddsk_zram_r );
+READ16_HANDLER( hddsk_rom_r );
+READ16_HANDLER( racedriv_68k_slapstic_r );
+READ16_HANDLER( racedriv_asic65_r );
+READ16_HANDLER( racedriv_asic65_io_r );
+READ16_HANDLER( racedriv_asic61_r );
+READ16_HANDLER( steeltal_68k_slapstic_r );
 
-WRITE_HANDLER( hd68k_nwr_w );
-WRITE_HANDLER( hd68k_irq_ack_w );
-WRITE_HANDLER( hd68k_adsp_program_w );
-WRITE_HANDLER( hd68k_adsp_data_w );
-WRITE_HANDLER( hd68k_adsp_buffer_w );
-WRITE_HANDLER( hd68k_adsp_control_w );
-WRITE_HANDLER( hd68k_adsp_irq_clear_w );
-WRITE_HANDLER( hd68k_ds3_program_w );
-WRITE_HANDLER( hd68k_ds3_control_w );
-WRITE_HANDLER( hd68k_wr0_write );
-WRITE_HANDLER( hd68k_wr1_write );
-WRITE_HANDLER( hd68k_wr2_write );
-WRITE_HANDLER( hd68k_adc_control_w );
-WRITE_HANDLER( hd68k_gsp_io_w );
-WRITE_HANDLER( hd68k_msp_io_w );
-WRITE_HANDLER( hd68k_duart_w );
-WRITE_HANDLER( hd68k_zram_w );
-WRITE_HANDLER( hdgsp_io_w );
-WRITE_HANDLER( hdadsp_special_w );
-WRITE_HANDLER( hdds3_special_w );
-WRITE_HANDLER( hdadsp_speedup2_w );
-WRITE_HANDLER( hdgsp_speedup1_w );
-WRITE_HANDLER( hdgsp_speedup2_w );
-WRITE_HANDLER( hdmsp_speedup_w );
-WRITE_HANDLER( hddsk_ram_w );
-WRITE_HANDLER( hddsk_zram_w );
-WRITE_HANDLER( racedriv_68k_slapstic_w );
-WRITE_HANDLER( racedriv_asic65_w );
-WRITE_HANDLER( racedriv_asic61_w );
-WRITE_HANDLER( steeltal_68k_slapstic_w );
+WRITE16_HANDLER( hd68k_nwr_w );
+WRITE16_HANDLER( hd68k_irq_ack_w );
+WRITE16_HANDLER( hd68k_adsp_program_w );
+WRITE16_HANDLER( hd68k_adsp_data_w );
+WRITE16_HANDLER( hd68k_adsp_buffer_w );
+WRITE16_HANDLER( hd68k_adsp_control_w );
+WRITE16_HANDLER( hd68k_adsp_irq_clear_w );
+WRITE16_HANDLER( hd68k_ds3_program_w );
+WRITE16_HANDLER( hd68k_ds3_control_w );
+WRITE16_HANDLER( hd68k_wr0_write );
+WRITE16_HANDLER( hd68k_wr1_write );
+WRITE16_HANDLER( hd68k_wr2_write );
+WRITE16_HANDLER( hd68k_adc_control_w );
+WRITE16_HANDLER( hd68k_gsp_io_w );
+WRITE16_HANDLER( hd68k_msp_io_w );
+WRITE16_HANDLER( hd68k_duart_w );
+WRITE16_HANDLER( hd68k_zram_w );
+WRITE16_HANDLER( hdgsp_io_w );
+WRITE16_HANDLER( hdadsp_special_w );
+WRITE16_HANDLER( hdds3_special_w );
+WRITE16_HANDLER( hdadsp_speedup2_w );
+WRITE16_HANDLER( hdgsp_speedup1_w );
+WRITE16_HANDLER( hdgsp_speedup2_w );
+WRITE16_HANDLER( hdmsp_speedup_w );
+WRITE16_HANDLER( hddsk_ram_w );
+WRITE16_HANDLER( hddsk_zram_w );
+WRITE16_HANDLER( racedriv_68k_slapstic_w );
+WRITE16_HANDLER( racedriv_asic65_w );
+WRITE16_HANDLER( racedriv_asic61_w );
+WRITE16_HANDLER( steeltal_68k_slapstic_w );
 
 
 /* from sndhrdw */
-READ_HANDLER( hdsnd_data_r );
-READ_HANDLER( hdsnd_320port_r );
-READ_HANDLER( hdsnd_switches_r );
-READ_HANDLER( hdsnd_status_r );
-READ_HANDLER( hdsnd_320ram_r );
-READ_HANDLER( hdsnd_320com_r );
-READ_HANDLER( hdsnd_68k_r );
+READ16_HANDLER( hdsnd_data_r );
+READ16_HANDLER( hdsnd_320port_r );
+READ16_HANDLER( hdsnd_switches_r );
+READ16_HANDLER( hdsnd_status_r );
+READ16_HANDLER( hdsnd_320ram_r );
+READ16_HANDLER( hdsnd_320com_r );
+READ16_HANDLER( hdsnd_68k_r );
 
-WRITE_HANDLER( hdsnd_data_w );
-WRITE_HANDLER( hdsnd_latches_w );
-WRITE_HANDLER( hdsnd_speech_w );
-WRITE_HANDLER( hdsnd_irqclr_w );
-WRITE_HANDLER( hdsnd_320ram_w );
-WRITE_HANDLER( hdsnd_320com_w );
-WRITE_HANDLER( hdsnd_68k_w );
+WRITE16_HANDLER( hdsnd_data_w );
+WRITE16_HANDLER( hdsnd_latches_w );
+WRITE16_HANDLER( hdsnd_speech_w );
+WRITE16_HANDLER( hdsnd_irqclr_w );
+WRITE16_HANDLER( hdsnd_320ram_w );
+WRITE16_HANDLER( hdsnd_320com_w );
+WRITE16_HANDLER( hdsnd_68k_w );
 
 
 /* from vidhrdw */
 extern UINT8 hdgsp_multisync;
 extern UINT8 *hdgsp_vram;
-extern UINT8 *hdgsp_vram_2bpp;
-extern UINT8 *hdgsp_control_lo;
-extern UINT8 *hdgsp_control_hi;
-extern UINT8 *hdgsp_paletteram_lo;
-extern UINT8 *hdgsp_paletteram_hi;
+extern data16_t *hdgsp_vram_2bpp;
+extern data16_t *hdgsp_control_lo;
+extern data16_t *hdgsp_control_hi;
+extern data16_t *hdgsp_paletteram_lo;
+extern data16_t *hdgsp_paletteram_hi;
 extern size_t hdgsp_vram_size;
 
 int harddriv_vh_start(void);
@@ -277,18 +277,18 @@ void hdgsp_write_to_shiftreg(UINT32 address, UINT16 *shiftreg);
 void hdgsp_read_from_shiftreg(UINT32 address, UINT16 *shiftreg);
 void hdgsp_display_update(UINT32 offs, int rowbytes, int scanline);
 
-READ_HANDLER( hdgsp_vram_2bpp_r );
-READ_HANDLER( hdgsp_paletteram_lo_r );
-READ_HANDLER( hdgsp_paletteram_hi_r );
-READ_HANDLER( hdgsp_control_lo_r );
-READ_HANDLER( hdgsp_control_hi_r );
+READ16_HANDLER( hdgsp_vram_2bpp_r );
+READ16_HANDLER( hdgsp_paletteram_lo_r );
+READ16_HANDLER( hdgsp_paletteram_hi_r );
+READ16_HANDLER( hdgsp_control_lo_r );
+READ16_HANDLER( hdgsp_control_hi_r );
 
-WRITE_HANDLER( hdgsp_vram_1bpp_w );
-WRITE_HANDLER( hdgsp_vram_2bpp_w );
-WRITE_HANDLER( hdgsp_paletteram_lo_w );
-WRITE_HANDLER( hdgsp_paletteram_hi_w );
-WRITE_HANDLER( hdgsp_control_lo_w );
-WRITE_HANDLER( hdgsp_control_hi_w );
+WRITE16_HANDLER( hdgsp_vram_1bpp_w );
+WRITE16_HANDLER( hdgsp_vram_2bpp_w );
+WRITE16_HANDLER( hdgsp_paletteram_lo_w );
+WRITE16_HANDLER( hdgsp_paletteram_hi_w );
+WRITE16_HANDLER( hdgsp_control_lo_w );
+WRITE16_HANDLER( hdgsp_control_hi_w );
 
 
 
@@ -298,26 +298,23 @@ WRITE_HANDLER( hdgsp_control_hi_w );
  *
  *************************************/
 
-static struct MemoryReadAddress main_readmem[] =
-{
-	{ 0x000000, 0x1fffff, MRA_ROM },
-	{ 0xa80000, 0xafffff, input_port_1_r },
+static MEMORY_READ16_START( main_readmem )
+	{ 0x000000, 0x1fffff, MRA16_ROM },
+	{ 0xa80000, 0xafffff, input_port_1_word_r },
 	{ 0xb00000, 0xb7ffff, hd68k_adc8_r },
 	{ 0xb80000, 0xbfffff, hd68k_adc12_r },
 	{ 0xc00000, 0xc03fff, hd68k_gsp_io_r },
 	{ 0xc04000, 0xc07fff, hd68k_msp_io_r },
 	{ 0xff0000, 0xff001f, hd68k_duart_r },
 	{ 0xff4000, 0xff4fff, hd68k_zram_r },
-	{ 0xff8000, 0xffffff, MRA_BANK1 },
-	{ -1 }  /* end of table */
-};
+	{ 0xff8000, 0xffffff, MRA16_RAM },
+MEMORY_END
 
 
-static struct MemoryWriteAddress main_writemem[] =
-{
-	{ 0x000000, 0x1fffff, MWA_ROM },
+static MEMORY_WRITE16_START( main_writemem )
+	{ 0x000000, 0x1fffff, MWA16_ROM },
 	{ 0x604000, 0x607fff, hd68k_nwr_w },
-	{ 0x608000, 0x60bfff, MWA_NOP },	/* watchdog_reset_w */
+	{ 0x608000, 0x60bfff, MWA16_NOP },	/* watchdog_reset16_w */
 	{ 0x60c000, 0x60ffff, hd68k_irq_ack_w },
 	{ 0xa00000, 0xa7ffff, hd68k_wr0_write },
 	{ 0xa80000, 0xafffff, hd68k_wr1_write },
@@ -327,9 +324,8 @@ static struct MemoryWriteAddress main_writemem[] =
 	{ 0xc04000, 0xc07fff, hd68k_msp_io_w },
 	{ 0xff0000, 0xff001f, hd68k_duart_w },
 	{ 0xff4000, 0xff4fff, hd68k_zram_w, &atarigen_eeprom, &atarigen_eeprom_size },
-	{ 0xff8000, 0xffffff, MWA_BANK1 },
-	{ -1 }  /* end of table */
-};
+	{ 0xff8000, 0xffffff, MWA16_RAM },
+MEMORY_END
 
 
 
@@ -349,62 +345,54 @@ static struct tms34010_config gsp_config =
 };
 
 
-static struct MemoryReadAddress gsp_readmem_512k[] =
-{
-	{ TOBYTE(0x00000000), TOBYTE(0x0000200f), MRA_NOP },	/* used during self-test */
+static MEMORY_READ16_START( gsp_readmem_512k )
+	{ TOBYTE(0x00000000), TOBYTE(0x0000200f), MRA16_NOP },	/* used during self-test */
 	{ TOBYTE(0x02000000), TOBYTE(0x0207ffff), hdgsp_vram_2bpp_r },
 	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), tms34010_io_register_r },
 	{ TOBYTE(0xf4000000), TOBYTE(0xf40000ff), hdgsp_control_lo_r },
 	{ TOBYTE(0xf4800000), TOBYTE(0xf48000ff), hdgsp_control_hi_r },
 	{ TOBYTE(0xf5000000), TOBYTE(0xf5000fff), hdgsp_paletteram_lo_r },
 	{ TOBYTE(0xf5800000), TOBYTE(0xf5800fff), hdgsp_paletteram_hi_r },
-	{ TOBYTE(0xff800000), TOBYTE(0xffbfffff), MRA_BANK2 },
-	{ TOBYTE(0xffc00000), TOBYTE(0xffffffff), MRA_BANK3 },
-	{ -1 }  /* end of table */
-};
+	{ TOBYTE(0xff800000), TOBYTE(0xffbfffff), MRA16_BANK1 },
+	{ TOBYTE(0xffc00000), TOBYTE(0xffffffff), MRA16_RAM },
+MEMORY_END
 
 
-static struct MemoryWriteAddress gsp_writemem_512k[] =
-{
-	{ TOBYTE(0x00000000), TOBYTE(0x0000200f), MWA_NOP },	/* used during self-test */
+static MEMORY_WRITE16_START( gsp_writemem_512k )
+	{ TOBYTE(0x00000000), TOBYTE(0x0000200f), MWA16_NOP },	/* used during self-test */
 	{ TOBYTE(0x02000000), TOBYTE(0x0207ffff), hdgsp_vram_2bpp_w, &hdgsp_vram_2bpp },
 	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), hdgsp_io_w },
 	{ TOBYTE(0xf4000000), TOBYTE(0xf40000ff), hdgsp_control_lo_w, &hdgsp_control_lo },
 	{ TOBYTE(0xf4800000), TOBYTE(0xf48000ff), hdgsp_control_hi_w, &hdgsp_control_hi },
 	{ TOBYTE(0xf5000000), TOBYTE(0xf5007fff), hdgsp_paletteram_lo_w, &hdgsp_paletteram_lo },
 	{ TOBYTE(0xf5800000), TOBYTE(0xf5807fff), hdgsp_paletteram_hi_w, &hdgsp_paletteram_hi },
-	{ TOBYTE(0xff800000), TOBYTE(0xffbfffff), MWA_BANK2 },
-	{ TOBYTE(0xffc00000), TOBYTE(0xffffffff), MWA_BANK3, &hdgsp_vram, &hdgsp_vram_size },
-	{ -1 }  /* end of table */
-};
+	{ TOBYTE(0xff800000), TOBYTE(0xffbfffff), MWA16_BANK1 },
+	{ TOBYTE(0xffc00000), TOBYTE(0xffffffff), MWA16_RAM, (data16_t **)&hdgsp_vram, &hdgsp_vram_size },
+MEMORY_END
 
 
-static struct MemoryReadAddress gsp_readmem_1mb[] =
-{
-	{ TOBYTE(0x00000000), TOBYTE(0x0000200f), MRA_NOP },	/* used during self-test */
+static MEMORY_READ16_START( gsp_readmem_1mb )
+	{ TOBYTE(0x00000000), TOBYTE(0x0000200f), MRA16_NOP },	/* used during self-test */
 	{ TOBYTE(0x02000000), TOBYTE(0x0207ffff), hdgsp_vram_2bpp_r },
 	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), tms34010_io_register_r },
 	{ TOBYTE(0xf4000000), TOBYTE(0xf40000ff), hdgsp_control_lo_r },
 	{ TOBYTE(0xf4800000), TOBYTE(0xf48000ff), hdgsp_control_hi_r },
 	{ TOBYTE(0xf5000000), TOBYTE(0xf5000fff), hdgsp_paletteram_lo_r },
 	{ TOBYTE(0xf5800000), TOBYTE(0xf5800fff), hdgsp_paletteram_hi_r },
-	{ TOBYTE(0xff800000), TOBYTE(0xffffffff), MRA_BANK2 },
-	{ -1 }  /* end of table */
-};
+	{ TOBYTE(0xff800000), TOBYTE(0xffffffff), MRA16_BANK1 },
+MEMORY_END
 
 
-static struct MemoryWriteAddress gsp_writemem_1mb[] =
-{
-	{ TOBYTE(0x00000000), TOBYTE(0x0000200f), MWA_NOP },	/* used during self-test */
+static MEMORY_WRITE16_START( gsp_writemem_1mb )
+	{ TOBYTE(0x00000000), TOBYTE(0x0000200f), MWA16_NOP },	/* used during self-test */
 	{ TOBYTE(0x02000000), TOBYTE(0x0207ffff), hdgsp_vram_2bpp_w, &hdgsp_vram_2bpp },
 	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), hdgsp_io_w },
 	{ TOBYTE(0xf4000000), TOBYTE(0xf40000ff), hdgsp_control_lo_w, &hdgsp_control_lo },
 	{ TOBYTE(0xf4800000), TOBYTE(0xf48000ff), hdgsp_control_hi_w, &hdgsp_control_hi },
 	{ TOBYTE(0xf5000000), TOBYTE(0xf5007fff), hdgsp_paletteram_lo_w, &hdgsp_paletteram_lo },
 	{ TOBYTE(0xf5800000), TOBYTE(0xf5807fff), hdgsp_paletteram_hi_w, &hdgsp_paletteram_hi },
-	{ TOBYTE(0xff800000), TOBYTE(0xffffffff), MWA_BANK3, &hdgsp_vram, &hdgsp_vram_size },
-	{ -1 }  /* end of table */
-};
+	{ TOBYTE(0xff800000), TOBYTE(0xffffffff), MWA16_BANK1, (data16_t **)&hdgsp_vram, &hdgsp_vram_size },
+MEMORY_END
 
 
 
@@ -423,24 +411,20 @@ static struct tms34010_config msp_config =
 };
 
 
-static struct MemoryReadAddress msp_readmem[] =
-{
-	{ TOBYTE(0x00000000), TOBYTE(0x000fffff), MRA_BANK4 },
-	{ TOBYTE(0x00700000), TOBYTE(0x007fffff), MRA_BANK5 },
+static MEMORY_READ16_START( msp_readmem )
+	{ TOBYTE(0x00000000), TOBYTE(0x000fffff), MRA16_BANK2 },
+	{ TOBYTE(0x00700000), TOBYTE(0x007fffff), MRA16_BANK3 },
 	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), tms34010_io_register_r },
-	{ TOBYTE(0xfff00000), TOBYTE(0xffffffff), MRA_BANK6 },
-	{ -1 }  /* end of table */
-};
+	{ TOBYTE(0xfff00000), TOBYTE(0xffffffff), MRA16_RAM },
+MEMORY_END
 
 
-static struct MemoryWriteAddress msp_writemem[] =
-{
-	{ TOBYTE(0x00000000), TOBYTE(0x000fffff), MWA_BANK4 },
-	{ TOBYTE(0x00700000), TOBYTE(0x007fffff), MWA_BANK5 },
+static MEMORY_WRITE16_START( msp_writemem )
+	{ TOBYTE(0x00000000), TOBYTE(0x000fffff), MWA16_BANK2 },
+	{ TOBYTE(0x00700000), TOBYTE(0x007fffff), MWA16_BANK3 },
 	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), tms34010_io_register_w },
-	{ TOBYTE(0xfff00000), TOBYTE(0xffffffff), MWA_BANK6, &hdmsp_ram },
-	{ -1 }  /* end of table */
-};
+	{ TOBYTE(0xfff00000), TOBYTE(0xffffffff), MWA16_RAM, &hdmsp_ram },
+MEMORY_END
 
 
 
@@ -450,22 +434,18 @@ static struct MemoryWriteAddress msp_writemem[] =
  *
  *************************************/
 
-static struct MemoryReadAddress adsp_readmem[] =
-{
-	{ ADSP_DATA_ADDR_RANGE(0x0000, 0x1fff), MRA_RAM },
+static MEMORY_READ16_START( adsp_readmem )
+	{ ADSP_DATA_ADDR_RANGE(0x0000, 0x1fff), MRA16_RAM },
 	{ ADSP_DATA_ADDR_RANGE(0x2000, 0x200f), hdadsp_special_r },
-	{ ADSP_PGM_ADDR_RANGE (0x0000, 0x1fff), MRA_RAM },
-	{ -1 }  /* end of table */
-};
+	{ ADSP_PGM_ADDR_RANGE (0x0000, 0x1fff), MRA16_RAM },
+MEMORY_END
 
 
-static struct MemoryWriteAddress adsp_writemem[] =
-{
-	{ ADSP_DATA_ADDR_RANGE(0x0000, 0x1fff), MWA_RAM },
+static MEMORY_WRITE16_START( adsp_writemem )
+	{ ADSP_DATA_ADDR_RANGE(0x0000, 0x1fff), MWA16_RAM },
 	{ ADSP_DATA_ADDR_RANGE(0x2000, 0x200f), hdadsp_special_w },
-	{ ADSP_PGM_ADDR_RANGE (0x0000, 0x1fff), MWA_RAM },
-	{ -1 }  /* end of table */
-};
+	{ ADSP_PGM_ADDR_RANGE (0x0000, 0x1fff), MWA16_RAM },
+MEMORY_END
 
 
 
@@ -475,22 +455,18 @@ static struct MemoryWriteAddress adsp_writemem[] =
  *
  *************************************/
 
-static struct MemoryReadAddress ds3_readmem[] =
-{
-	{ ADSP_DATA_ADDR_RANGE(0x0000, 0x1fff), MRA_RAM },
+static MEMORY_READ16_START( ds3_readmem )
+	{ ADSP_DATA_ADDR_RANGE(0x0000, 0x1fff), MRA16_RAM },
 	{ ADSP_DATA_ADDR_RANGE(0x2000, 0x200f), hdds3_special_r },
-	{ ADSP_PGM_ADDR_RANGE (0x0000, 0x1fff), MRA_RAM },
-	{ -1 }  /* end of table */
-};
+	{ ADSP_PGM_ADDR_RANGE (0x0000, 0x1fff), MRA16_RAM },
+MEMORY_END
 
 
-static struct MemoryWriteAddress ds3_writemem[] =
-{
-	{ ADSP_DATA_ADDR_RANGE(0x0000, 0x1fff), MWA_RAM },
+static MEMORY_WRITE16_START( ds3_writemem )
+	{ ADSP_DATA_ADDR_RANGE(0x0000, 0x1fff), MWA16_RAM },
 	{ ADSP_DATA_ADDR_RANGE(0x2000, 0x200f), hdds3_special_w },
-	{ ADSP_PGM_ADDR_RANGE (0x0000, 0x1fff), MWA_RAM },
-	{ -1 }  /* end of table */
-};
+	{ ADSP_PGM_ADDR_RANGE (0x0000, 0x1fff), MWA16_RAM },
+MEMORY_END
 
 
 
@@ -501,32 +477,28 @@ static struct MemoryWriteAddress ds3_writemem[] =
  *************************************/
 
 #if 0
-static struct MemoryReadAddress snd_main_readmem[] =
-{
-	{ 0x000000, 0x01ffff, MRA_ROM },
+static MEMORY_READ16_START( snd_main_readmem )
+	{ 0x000000, 0x01ffff, MRA16_ROM },
 	{ 0xff0000, 0xff0fff, hdsnd_data_r },
 	{ 0xff1000, 0xff1fff, hdsnd_320port_r },
 	{ 0xff2000, 0xff2fff, hdsnd_switches_r },
 	{ 0xff3000, 0xff3fff, hdsnd_status_r },
 	{ 0xff4000, 0xff7fff, hdsnd_320ram_r },
 	{ 0xff8000, 0xffbfff, hdsnd_320com_r },
-	{ 0xffc000, 0xffffff, MRA_BANK7 },
-	{ -1 }  /* end of table */
-};
+	{ 0xffc000, 0xffffff, MRA16_RAM },
+MEMORY_END
 
 
-static struct MemoryWriteAddress snd_main_writemem[] =
-{
-	{ 0x000000, 0x01ffff, MWA_ROM },
+static MEMORY_WRITE16_START( snd_main_writemem )
+	{ 0x000000, 0x01ffff, MWA16_ROM },
 	{ 0xff0000, 0xff0fff, hdsnd_data_w },
 	{ 0xff1000, 0xff1fff, hdsnd_latches_w },
 	{ 0xff2000, 0xff2fff, hdsnd_speech_w },
 	{ 0xff3000, 0xff3fff, hdsnd_irqclr_w },
 	{ 0xff4000, 0xff7fff, hdsnd_320ram_w },
 	{ 0xff8000, 0xffbfff, hdsnd_320com_w },
-	{ 0xffc000, 0xffffff, MWA_BANK7 },
-	{ -1 }  /* end of table */
-};
+	{ 0xffc000, 0xffffff, MWA16_RAM },
+MEMORY_END
 #endif
 
 
@@ -1099,14 +1071,12 @@ static void init_driver(void)
 	atarigen_eeprom_default = default_eeprom;
 
 	/* install the non-multisync memory handlers */
-	install_mem_write_handler(1, TOBYTE(0x02000000), TOBYTE(0x0207ffff), hdgsp_vram_1bpp_w);
+	install_mem_write16_handler(1, TOBYTE(0x02000000), TOBYTE(0x0207ffff), hdgsp_vram_1bpp_w);
 
 	/* set up the port handlers */
-	install_mem_read_handler(0, 0x600000, 0x600001, hd68k_port0_r);
-/*
-    install_mem_read_handler(0, 0x840000, 0x84ffff, hdsnd_68k_r);
-	install_mem_write_handler(0, 0x840000, 0x84ffff, hdsnd_68k_w);
- */
+	install_mem_read16_handler(0, 0x600000, 0x600001, hd68k_port0_r);
+//	install_mem_read16_handler(0, 0x840000, 0x84ffff, hdsnd_68k_r);
+//	install_mem_write16_handler(0, 0x840000, 0x84ffff, hdsnd_68k_w);
 }
 
 
@@ -1117,10 +1087,10 @@ static void init_multisync(void)
 	atarigen_eeprom_default = NULL;
 
 	/* set up the port handlers */
-	install_mem_read_handler(0, 0x600000, 0x600001, atarigen_sound_upper_r);
-	install_mem_write_handler(0, 0x600000, 0x600001, atarigen_sound_upper_w);
-	install_mem_read_handler(0, 0x60c000, 0x60c001, hd68k_port0_r);
-	install_mem_read_handler(0, 0x604000, 0x607fff, hd68k_sound_reset_r);
+	install_mem_read16_handler(0, 0x600000, 0x600001, atarigen_sound_upper_r);
+	install_mem_write16_handler(0, 0x600000, 0x600001, atarigen_sound_upper_w);
+	install_mem_read16_handler(0, 0x60c000, 0x60c001, hd68k_port0_r);
+	install_mem_read16_handler(0, 0x604000, 0x607fff, hd68k_sound_reset_r);
 }
 
 
@@ -1128,21 +1098,21 @@ static void init_multisync(void)
 static void init_adsp(void)
 {
 	/* install ADSP program RAM */
-	install_mem_read_handler(0, 0x800000, 0x807fff, hd68k_adsp_program_r);
-	install_mem_write_handler(0, 0x800000, 0x807fff, hd68k_adsp_program_w);
+	install_mem_read16_handler(0, 0x800000, 0x807fff, hd68k_adsp_program_r);
+	install_mem_write16_handler(0, 0x800000, 0x807fff, hd68k_adsp_program_w);
 
 	/* install ADSP data RAM */
-	install_mem_read_handler(0, 0x808000, 0x80bfff, hd68k_adsp_data_r);
-	install_mem_write_handler(0, 0x808000, 0x80bfff, hd68k_adsp_data_w);
+	install_mem_read16_handler(0, 0x808000, 0x80bfff, hd68k_adsp_data_r);
+	install_mem_write16_handler(0, 0x808000, 0x80bfff, hd68k_adsp_data_w);
 
 	/* install ADSP serial buffer RAM */
-	install_mem_read_handler(0, 0x810000, 0x813fff, hd68k_adsp_buffer_r);
-	install_mem_write_handler(0, 0x810000, 0x813fff, hd68k_adsp_buffer_w);
+	install_mem_read16_handler(0, 0x810000, 0x813fff, hd68k_adsp_buffer_r);
+	install_mem_write16_handler(0, 0x810000, 0x813fff, hd68k_adsp_buffer_w);
 
 	/* install ADSP control locations */
-	install_mem_read_handler(0, 0x838000, 0x83ffff, hd68k_adsp_irq_state_r);
-	install_mem_write_handler(0, 0x818000, 0x81801f, hd68k_adsp_control_w);
-	install_mem_write_handler(0, 0x818060, 0x81807f, hd68k_adsp_irq_clear_w);
+	install_mem_read16_handler(0, 0x838000, 0x83ffff, hd68k_adsp_irq_state_r);
+	install_mem_write16_handler(0, 0x818000, 0x81801f, hd68k_adsp_control_w);
+	install_mem_write16_handler(0, 0x818060, 0x81807f, hd68k_adsp_irq_clear_w);
 }
 
 
@@ -1150,17 +1120,17 @@ static void init_adsp(void)
 static void init_ds3(void)
 {
 	/* install ADSP program RAM */
-	install_mem_read_handler(0, 0x800000, 0x807fff, hd68k_ds3_program_r);
-	install_mem_write_handler(0, 0x800000, 0x807fff, hd68k_ds3_program_w);
+	install_mem_read16_handler(0, 0x800000, 0x807fff, hd68k_ds3_program_r);
+	install_mem_write16_handler(0, 0x800000, 0x807fff, hd68k_ds3_program_w);
 
 	/* install ADSP data RAM */
-	install_mem_read_handler(0, 0x808000, 0x80bfff, hd68k_adsp_data_r);
-	install_mem_write_handler(0, 0x808000, 0x80bfff, hd68k_adsp_data_w);
+	install_mem_read16_handler(0, 0x808000, 0x80bfff, hd68k_adsp_data_r);
+	install_mem_write16_handler(0, 0x808000, 0x80bfff, hd68k_adsp_data_w);
 
 	/* install ADSP control locations */
-	install_mem_read_handler(0, 0x820800, 0x820801, hd68k_ds3_irq_state_r);
-	install_mem_write_handler(0, 0x821000, 0x821001, hd68k_adsp_irq_clear_w);
-	install_mem_write_handler(0, 0x823800, 0x82381f, hd68k_ds3_control_w);
+	install_mem_read16_handler(0, 0x820800, 0x820801, hd68k_ds3_irq_state_r);
+	install_mem_write16_handler(0, 0x821000, 0x821001, hd68k_adsp_irq_clear_w);
+	install_mem_write16_handler(0, 0x823800, 0x82381f, hd68k_ds3_control_w);
 
 /*
 	other DS3 addresses:
@@ -1217,27 +1187,27 @@ static void init_ds3(void)
 static void init_dsk(void)
 {
 	/* install extra ROM */
-	install_mem_read_handler(0, 0x940000, 0x95ffff, hddsk_rom_r);
-	hddsk_rom = memory_region(REGION_USER3) + 0x00000;
+	install_mem_read16_handler(0, 0x940000, 0x95ffff, hddsk_rom_r);
+	hddsk_rom = (data16_t *)(memory_region(REGION_USER3) + 0x00000);
 	
 	/* install extra RAM */
-	install_mem_read_handler(0, 0x900000, 0x90ffff, hddsk_ram_r);
-	install_mem_write_handler(0, 0x900000, 0x90ffff, hddsk_ram_w);
-	hddsk_ram = memory_region(REGION_USER3) + 0x20000;
+	install_mem_read16_handler(0, 0x900000, 0x90ffff, hddsk_ram_r);
+	install_mem_write16_handler(0, 0x900000, 0x90ffff, hddsk_ram_w);
+	hddsk_ram = (data16_t *)(memory_region(REGION_USER3) + 0x20000);
 	
 	/* install extra ZRAM */
-	install_mem_read_handler(0, 0x910000, 0x910fff, hddsk_zram_r);
-	install_mem_write_handler(0, 0x910000, 0x910fff, hddsk_zram_w);
-	hddsk_zram = memory_region(REGION_USER3) + 0x30000;
+	install_mem_read16_handler(0, 0x910000, 0x910fff, hddsk_zram_r);
+	install_mem_write16_handler(0, 0x910000, 0x910fff, hddsk_zram_w);
+	hddsk_zram = (data16_t *)(memory_region(REGION_USER3) + 0x30000);
 
 	/* install ASIC65 */
-	install_mem_write_handler(0, 0x914000, 0x917fff, racedriv_asic65_w);
-	install_mem_read_handler(0, 0x914000, 0x917fff, racedriv_asic65_r);
-	install_mem_read_handler(0, 0x918000, 0x91bfff, racedriv_asic65_io_r);
+	install_mem_write16_handler(0, 0x914000, 0x917fff, racedriv_asic65_w);
+	install_mem_read16_handler(0, 0x914000, 0x917fff, racedriv_asic65_r);
+	install_mem_read16_handler(0, 0x918000, 0x91bfff, racedriv_asic65_io_r);
 
 	/* install ASIC61 */
-	install_mem_write_handler(0, 0x85c000, 0x85c7ff, racedriv_asic61_w);
-	install_mem_read_handler(0, 0x85c000, 0x85c7ff, racedriv_asic61_r);
+	install_mem_write16_handler(0, 0x85c000, 0x85c7ff, racedriv_asic61_w);
+	install_mem_read16_handler(0, 0x85c000, 0x85c7ff, racedriv_asic61_r);
 }
 
 
@@ -1270,20 +1240,20 @@ static void init_harddriv(void)
 	init_driver_sound();
 
 	/* set up gsp speedup handler */
-	hdgsp_speedup_addr[0] = install_mem_write_handler(1, TOBYTE(0xfff9fc00), TOBYTE(0xfff9fc1f), hdgsp_speedup1_w);
-	hdgsp_speedup_addr[1] = install_mem_write_handler(1, TOBYTE(0xfffcfc00), TOBYTE(0xfffcfc1f), hdgsp_speedup2_w);
-	install_mem_read_handler(1, TOBYTE(0xfff9fc00), TOBYTE(0xfff9fc1f), hdgsp_speedup_r);
+	hdgsp_speedup_addr[0] = install_mem_write16_handler(1, TOBYTE(0xfff9fc00), TOBYTE(0xfff9fc1f), hdgsp_speedup1_w);
+	hdgsp_speedup_addr[1] = install_mem_write16_handler(1, TOBYTE(0xfffcfc00), TOBYTE(0xfffcfc1f), hdgsp_speedup2_w);
+	install_mem_read16_handler(1, TOBYTE(0xfff9fc00), TOBYTE(0xfff9fc1f), hdgsp_speedup_r);
 	hdgsp_speedup_pc = 0xffc00f10;
 
 	/* set up msp speedup handler */
-	hdmsp_speedup_addr = install_mem_write_handler(2, TOBYTE(0x00751b00), TOBYTE(0x00751b1f), hdmsp_speedup_w);
-	install_mem_read_handler(2, TOBYTE(0x00751b00), TOBYTE(0x00751b1f), hdmsp_speedup_r);
+	hdmsp_speedup_addr = install_mem_write16_handler(2, TOBYTE(0x00751b00), TOBYTE(0x00751b1f), hdmsp_speedup_w);
+	install_mem_read16_handler(2, TOBYTE(0x00751b00), TOBYTE(0x00751b1f), hdmsp_speedup_r);
 	hdmsp_speedup_pc = 0x00723b00;
 
 	/* set up adsp speedup handlers */
-	install_mem_read_handler(3, ADSP_DATA_ADDR_RANGE(0x1fff, 0x1fff), hdadsp_speedup_r);
-	install_mem_read_handler(3, ADSP_DATA_ADDR_RANGE(0x0958, 0x0958), hdadsp_speedup2_r);
-	install_mem_write_handler(3, ADSP_DATA_ADDR_RANGE(0x0033, 0x0033), hdadsp_speedup2_w);
+	install_mem_read16_handler(3, ADSP_DATA_ADDR_RANGE(0x1fff, 0x1fff), hdadsp_speedup_r);
+	install_mem_read16_handler(3, ADSP_DATA_ADDR_RANGE(0x0958, 0x0958), hdadsp_speedup2_r);
+	install_mem_write16_handler(3, ADSP_DATA_ADDR_RANGE(0x0033, 0x0033), hdadsp_speedup2_w);
 	hdadsp_speedup_pc = 0x139;
 }
 
@@ -1295,66 +1265,46 @@ static void init_stunrun(void)
 	init_adsp();
 
 	/* set up gsp speedup handler */
-	hdgsp_speedup_addr[0] = install_mem_write_handler(1, TOBYTE(0xfff9fc00), TOBYTE(0xfff9fc1f), hdgsp_speedup1_w);
-	hdgsp_speedup_addr[1] = install_mem_write_handler(1, TOBYTE(0xfffcfc00), TOBYTE(0xfffcfc1f), hdgsp_speedup2_w);
-	install_mem_read_handler(1, TOBYTE(0xfff9fc00), TOBYTE(0xfff9fc1f), hdgsp_speedup_r);
+	hdgsp_speedup_addr[0] = install_mem_write16_handler(1, TOBYTE(0xfff9fc00), TOBYTE(0xfff9fc1f), hdgsp_speedup1_w);
+	hdgsp_speedup_addr[1] = install_mem_write16_handler(1, TOBYTE(0xfffcfc00), TOBYTE(0xfffcfc1f), hdgsp_speedup2_w);
+	install_mem_read16_handler(1, TOBYTE(0xfff9fc00), TOBYTE(0xfff9fc1f), hdgsp_speedup_r);
 	hdgsp_speedup_pc = 0xfff41070;
 
 	/* set up adsp speedup handlers */
-	install_mem_read_handler(2, ADSP_DATA_ADDR_RANGE(0x1fff, 0x1fff), hdadsp_speedup_r);
-	install_mem_read_handler(2, ADSP_DATA_ADDR_RANGE(0x0958, 0x0958), hdadsp_speedup2_r);
-	install_mem_write_handler(2, ADSP_DATA_ADDR_RANGE(0x0033, 0x0033), hdadsp_speedup2_w);
+	install_mem_read16_handler(2, ADSP_DATA_ADDR_RANGE(0x1fff, 0x1fff), hdadsp_speedup_r);
+	install_mem_read16_handler(2, ADSP_DATA_ADDR_RANGE(0x0958, 0x0958), hdadsp_speedup2_r);
+	install_mem_write16_handler(2, ADSP_DATA_ADDR_RANGE(0x0033, 0x0033), hdadsp_speedup2_w);
 	hdadsp_speedup_pc = 0x147;
 
 	atarijsa_init(3, 14, 0, 0x0020);
 
 	/* speed up the 6502 */
 	atarigen_init_6502_speedup(3, 0x4159, 0x4171);
-	
-	/* display messages */
-	atarigen_show_sound_message();
 }
 
 
-static READ_HANDLER( steeltal_dummy_r )
+static READ16_HANDLER( steeltal_dummy_r )
 {
 	/* this is required so that INT 4 is recongized as a sound INT */
-	return 0xffff;
+	return ~0;
 }
 static void init_steeltal(void)
 {
-	UINT8 *base = memory_region(REGION_SOUND1);
-
 	/* initialize the boards */
 	init_multisync();
 	init_ds3();
 	
-	install_mem_read_handler(0, 0x908000, 0x908001, steeltal_dummy_r);
+	install_mem_read16_handler(0, 0x908000, 0x908001, steeltal_dummy_r);
 
 	/* set up the "slapstic" */
-	hd68k_slapstic_base = install_mem_read_handler(0, 0xe0000, 0xfffff, steeltal_68k_slapstic_r);
-	hd68k_slapstic_base = install_mem_write_handler(0, 0xe0000, 0xfffff, steeltal_68k_slapstic_w);
+	hd68k_slapstic_base = install_mem_read16_handler(0, 0xe0000, 0xfffff, steeltal_68k_slapstic_r);
+	hd68k_slapstic_base = install_mem_write16_handler(0, 0xe0000, 0xfffff, steeltal_68k_slapstic_w);
 
-	/* expand the ADPCM data to avoid lots of memcpy's during gameplay */
-	/* the upper 128k is fixed, the lower 128k is bankswitched */
-	memcpy(&base[0x00000], &base[0x80000], 0x20000);
-	memcpy(&base[0x40000], &base[0x80000], 0x20000);
-	memcpy(&base[0x80000], &base[0xa0000], 0x20000);
-	memcpy(&base[0xc0000], &base[0xc0000], 0x20000);
-
-	memcpy(&base[0x20000], &base[0xe0000], 0x20000);
-	memcpy(&base[0x60000], &base[0xe0000], 0x20000);
-	memcpy(&base[0xa0000], &base[0xe0000], 0x20000);
-	memcpy(&base[0xe0000], &base[0xe0000], 0x20000);
-
+	atarijsa3_init_adpcm(REGION_SOUND1);
 	atarijsa_init(4, 14, 0, 0x0020);
 
 	/* speed up the 6502 */
 /*	atarigen_init_6502_speedup(4, 0x4159, 0x4171);*/
-	
-	/* display messages */
-	atarigen_show_slapstic_message();
-	atarigen_show_sound_message();
 }
 
 
@@ -1368,11 +1318,8 @@ static void init_racedriv(void)
 
 	/* set up the slapstic */
 	slapstic_init(117);
-	hd68k_slapstic_base = install_mem_read_handler(0, 0xe0000, 0xfffff, racedriv_68k_slapstic_r);
-	hd68k_slapstic_base = install_mem_write_handler(0, 0xe0000, 0xfffff, racedriv_68k_slapstic_w);
-
-	/* display messages */
-	atarigen_show_slapstic_message();
+	hd68k_slapstic_base = install_mem_read16_handler(0, 0xe0000, 0xfffff, racedriv_68k_slapstic_r);
+	hd68k_slapstic_base = install_mem_write16_handler(0, 0xe0000, 0xfffff, racedriv_68k_slapstic_w);
 }
 
 
@@ -1386,11 +1333,8 @@ static void init_racedrvc(void)
 
 	/* set up the slapstic */
 	slapstic_init(117);
-	hd68k_slapstic_base = install_mem_read_handler(0, 0xe0000, 0xfffff, racedriv_68k_slapstic_r);
-	hd68k_slapstic_base = install_mem_write_handler(0, 0xe0000, 0xfffff, racedriv_68k_slapstic_w);
-
-	/* display messages */
-	atarigen_show_slapstic_message();
+	hd68k_slapstic_base = install_mem_read16_handler(0, 0xe0000, 0xfffff, racedriv_68k_slapstic_r);
+	hd68k_slapstic_base = install_mem_write16_handler(0, 0xe0000, 0xfffff, racedriv_68k_slapstic_w);
 }
 
 

@@ -100,8 +100,7 @@ static WRITE_HANDLER( soundcommand_w )
       cpu_set_irq_line(2, 0, HOLD_LINE);
 }
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x5fff, MRA_ROM },
 	{ 0x7b00, 0x7b00, MRA_NOP },	/* space for diagnostic ROM? The code looks */
 									/* for a string here, and jumps if it's present */
@@ -121,11 +120,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xc007, 0xc007, input_port_4_r },
 	{ 0xe000, 0xe000, retofinv_mcu_r },
 	{ 0xf800, 0xf800, cpu0_mf800_r },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x5fff, MWA_ROM },
 //	{ 0x7fff, 0x7fff, MWA_NOP },
 	{ 0x8000, 0x83ff, retofinv_fg_videoram_w, &retofinv_fg_videoram, &retofinv_videoram_size },
@@ -148,11 +145,9 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xd800, 0xd800, soundcommand_w },
 	{ 0xd000, 0xd000, MWA_NOP },
 	{ 0xe800, 0xe800, retofinv_mcu_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress readmem_sub[] =
-{
+static MEMORY_READ_START( readmem_sub )
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x8000, 0x83ff, retofinv_fg_videoram_r },
 	{ 0x8400, 0x87ff, retofinv_fg_colorram_r },
@@ -160,11 +155,9 @@ static struct MemoryReadAddress readmem_sub[] =
 	{ 0xa000, 0xa3ff, retofinv_bg_videoram_r },
 	{ 0xa400, 0xa7ff, retofinv_bg_colorram_r },
 	{ 0xc804, 0xc804, MRA_NOP },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_sub[] =
-{
+static MEMORY_WRITE_START( writemem_sub )
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x8000, 0x83ff, retofinv_fg_videoram_w },
 	{ 0x8400, 0x87ff, retofinv_fg_colorram_w },
@@ -172,40 +165,32 @@ static struct MemoryWriteAddress writemem_sub[] =
 	{ 0xa000, 0xa3ff, retofinv_bg_videoram_w },
 	{ 0xa400, 0xa7ff, retofinv_bg_colorram_w },
 	{ 0xc804, 0xc804, MWA_NOP },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress readmem_sound[] =
-{
+static MEMORY_READ_START( readmem_sound )
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x2000, 0x27ff, MRA_RAM },
 	{ 0x4000, 0x4000, soundlatch_r },
 	{ 0xe000, 0xe000, MRA_NOP },  		/* Rom version ? */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_sound[] =
-{
+static MEMORY_WRITE_START( writemem_sound )
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x2000, 0x27ff, MWA_RAM },
 	{ 0x6000, 0x6000, cpu2_m6000_w },
 	{ 0x8000, 0x8000, SN76496_0_w },
 	{ 0xa000, 0xa000, SN76496_1_w },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress mcu_readmem[] =
-{
+static MEMORY_READ_START( mcu_readmem )
 	{ 0x0000, 0x0000, retofinv_68705_portA_r },
 	{ 0x0001, 0x0001, retofinv_68705_portB_r },
 	{ 0x0002, 0x0002, retofinv_68705_portC_r },
 	{ 0x0010, 0x007f, MRA_RAM },
 	{ 0x0080, 0x07ff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress mcu_writemem[] =
-{
+static MEMORY_WRITE_START( mcu_writemem )
 	{ 0x0000, 0x0000, retofinv_68705_portA_w },
 	{ 0x0001, 0x0001, retofinv_68705_portB_w },
 	{ 0x0002, 0x0002, retofinv_68705_portC_w },
@@ -214,8 +199,7 @@ static struct MemoryWriteAddress mcu_writemem[] =
 	{ 0x0006, 0x0006, retofinv_68705_ddrC_w },
 	{ 0x0010, 0x007f, MWA_RAM },
 	{ 0x0080, 0x07ff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 

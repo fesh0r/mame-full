@@ -2,7 +2,7 @@
 
 	Irem M90 system games:
 
-	Hasamu	
+	Hasamu
 	Bomberman
 
 	Uses M72 sound hardware.
@@ -14,14 +14,8 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/irem_cpu.h"
+#include "sndhrdw/m72.h"
 
-void m72_init_sound(void);
-void m72_ym2151_irq_handler(int irq);
-WRITE_HANDLER( m72_sound_irq_ack_w );
-WRITE_HANDLER( m72_sound_command_w );
-WRITE_HANDLER( rtype2_sample_addr_w );
-WRITE_HANDLER( m72_sample_w );
-READ_HANDLER( m72_sample_r );
 
 extern unsigned char *m90_video_data;
 
@@ -43,51 +37,42 @@ static WRITE_HANDLER( m90_coincounter_w )
 
 /***************************************************************************/
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x00000, 0x3ffff, MRA_ROM },
 	{ 0x60000, 0x60fff, MRA_RAM },
 	{ 0xa0000, 0xa3fff, MRA_RAM },
 	{ 0xd0000, 0xdffff, MRA_RAM },
 	{ 0xe0000, 0xe03ff, paletteram_r },
 	{ 0xffff0, 0xfffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x00000, 0x3ffff, MWA_ROM },
 	{ 0xa0000, 0xa3fff, MWA_RAM },
 	{ 0xd0000, 0xdffff, m90_video_w, &m90_video_data },
 	{ 0xe0000, 0xe03ff, paletteram_xBBBBBGGGGGRRRRR_w, &paletteram },
 	{ 0xffff0, 0xfffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress bootleg_readmem[] =
-{
+static MEMORY_READ_START( bootleg_readmem )
 	{ 0x00000, 0x3ffff, MRA_ROM },
 	{ 0x60000, 0x60fff, MRA_RAM },
 	{ 0xa0000, 0xa3fff, MRA_RAM },
 	{ 0xd0000, 0xdffff, MRA_RAM },
 	{ 0xe0000, 0xe03ff, paletteram_r },
 	{ 0xffff0, 0xfffff, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress bootleg_writemem[] =
-{
+static MEMORY_WRITE_START( bootleg_writemem )
 	{ 0x00000, 0x3ffff, MWA_ROM },
 	{ 0x6000e, 0x60fff, MWA_RAM, &spriteram },
 	{ 0xa0000, 0xa3fff, MWA_RAM },
 	//{ 0xd0000, 0xdffff, m90_bootleg_video_w, &m90_video_data },
 	{ 0xe0000, 0xe03ff, paletteram_xBBBBBGGGGGRRRRR_w, &paletteram },
 	{ 0xffff0, 0xfffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort readport[] =
-{
+static PORT_READ_START( readport )
 	{ 0x00, 0x00, input_port_0_r }, /* Player 1 */
 	{ 0x01, 0x01, input_port_1_r }, /* Player 2 */
 	{ 0x02, 0x02, input_port_2_r }, /* Coins */
@@ -96,100 +81,89 @@ static struct IOReadPort readport[] =
 	{ 0x05, 0x05, input_port_6_r }, /* Dip 2 */
 	{ 0x06, 0x06, input_port_3_r }, /* Player 3 */
 	{ 0x07, 0x07, input_port_4_r }, /* Player 4 */
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort writeport[] =
-{
+static PORT_WRITE_START( writeport )
 	{ 0x00, 0x01, m72_sound_command_w },
 	{ 0x02, 0x03, m90_coincounter_w },
 	{ 0x80, 0x8f, m90_video_control_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 /*****************************************************************************/
 
-static struct MemoryReadAddress sound_readmem[] =
-{
+static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0xffff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress sound_writemem[] =
-{
+static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0xffff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort sound_readport[] =
-{
+static PORT_READ_START( sound_readport )
 	{ 0x01, 0x01, YM2151_status_port_0_r },
 	{ 0x80, 0x80, soundlatch_r },
 	{ 0x84, 0x84, m72_sample_r },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
-static struct IOWritePort sound_writeport[] =
-{
+static PORT_WRITE_START( sound_writeport )
 	{ 0x00, 0x00, YM2151_register_port_0_w },
 	{ 0x01, 0x01, YM2151_data_port_0_w },
 	{ 0x80, 0x81, rtype2_sample_addr_w },
 	{ 0x82, 0x82, m72_sample_w },
 	{ 0x83, 0x83, m72_sound_irq_ack_w },
-	{ -1 }  /* end of table */
-};
+PORT_END
 
 /*****************************************************************************/
 
 INPUT_PORTS_START( m90 )
-	PORT_START	
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 ) 
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 ) 
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 ) 
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 ) 
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED ) 
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED ) 
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 ) 
+	PORT_START
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
 
-	PORT_START	
+	PORT_START
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 ) 
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 ) 
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 ) 
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED ) 
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED ) 
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 ) 
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 
-	PORT_START	
+	PORT_START
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 ) 
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 ) 
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 ) 
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 ) //service?
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 ) 
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 ) 
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 
-	PORT_START	
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER3 ) 
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER3 ) 
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER3 ) 
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER3 ) 
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED ) 
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED ) 
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 ) 
+	PORT_START
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3 )
 
-	PORT_START	
+	PORT_START
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER4 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER4 ) 
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER4 ) 
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER4 ) 
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED ) 
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED ) 
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER4 ) 
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER4 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER4 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER4 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER4 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER4 )
 
 	PORT_START	/* Dip switch bank 1 */
@@ -399,19 +373,19 @@ static struct MachineDriver machine_driver_bootleg =
 
 ROM_START( hasamu )
 	ROM_REGION( 0x100000 * 2, REGION_CPU1 )
-	ROM_LOAD_V20_EVEN( "hasc-p1.bin",    0x00000, 0x20000, 0xa7c72f8 )
-	ROM_LOAD_V20_ODD ( "hasc-p0.bin",    0x00000, 0x20000, 0xbf137c3 )
+	ROM_LOAD_V20_EVEN( "hasc-p1.bin",    0x00000, 0x20000, 0x53df9834 )
+	ROM_LOAD_V20_ODD ( "hasc-p0.bin",    0x00000, 0x20000, 0xdff0ba6e )
 
 	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "hasc-sp.bin",    0x0000, 0x10000, 0xe693c32f )
+	ROM_LOAD( "hasc-sp.bin",    0x0000, 0x10000, 0x259b1687 )
 
 	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "hasc-c0.bin",    0x000000, 0x20000, 0x3c3613af )
-	ROM_LOAD( "hasc-c1.bin",    0x020000, 0x20000, 0x0700d406 )
-	ROM_LOAD( "hasc-c2.bin",    0x040000, 0x20000, 0x4c7c8bbc )
-	ROM_LOAD( "hasc-c3.bin",    0x060000, 0x20000, 0x695d2019 )
+	ROM_LOAD( "hasc-c0.bin",    0x000000, 0x20000, 0xdd5a2174 )
+	ROM_LOAD( "hasc-c1.bin",    0x020000, 0x20000, 0x76b8217c )
+	ROM_LOAD( "hasc-c2.bin",    0x040000, 0x20000, 0xd90f9a68 )
+	ROM_LOAD( "hasc-c3.bin",    0x060000, 0x20000, 0x6cfe0d39 )
 
-	ROM_REGION( 0x20000, REGION_SOUND1 )	/* ADPCM samples */
+	ROM_REGION( 0x20000, REGION_SOUND1 )	/* samples */
 	/* No samples */
 ROM_END
 
@@ -424,13 +398,13 @@ ROM_START( bombrman )
 	ROM_LOAD( "bbm-sp.bin",    0x0000, 0x10000, 0x251090cd )
 
 	ROM_REGION( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "db4-107.bin",   0x000000, 0x40000, 0x3c3613af )
-	ROM_LOAD( "db5-106.bin",   0x040000, 0x40000, 0x0700d406 )
-	ROM_LOAD( "db6-105.bin",   0x080000, 0x40000, 0x4c7c8bbc )
-	ROM_LOAD( "db7-104.bin",   0x0c0000, 0x40000, 0x695d2019 )
+	ROM_LOAD( "bbm-c3.bin",    0x000000, 0x40000, 0x3c3613af )
+	ROM_LOAD( "bbm-c2.bin",    0x040000, 0x40000, 0x0700d406 )
+	ROM_LOAD( "bbm-c1.bin",    0x080000, 0x40000, 0x4c7c8bbc )
+	ROM_LOAD( "bbm-c0.bin",    0x0c0000, 0x40000, 0x695d2019 )
 
-	ROM_REGION( 0x20000, REGION_SOUND1 )	/* ADPCM samples */
-	ROM_LOAD( "bbm-v0.bin",    0x0000, 0x20000, 0x154803cc )
+	ROM_REGION( 0x20000, REGION_SOUND1 )	/* samples */
+	/* Does this have a sample rom? (bbm-v0 was all FF) */
 ROM_END
 
 ROM_START( dynablsb )
@@ -439,15 +413,15 @@ ROM_START( dynablsb )
 	ROM_LOAD_V20_ODD ( "db3-25.bin",    0x00000, 0x20000, 0xbf3137c3 )
 
 	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-//	ROM_LOAD( "db1-17.bin",    0x0000, 0x10000, 0xe693c32f )
+	ROM_LOAD( "db1-17.bin",    0x0000, 0x10000, 0xe693c32f )
 
 	ROM_REGION( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "db4-107.bin",    0x000000, 0x40000, 0x3c3613af )
-	ROM_LOAD( "db5-106.bin",    0x040000, 0x40000, 0x0700d406 )
-	ROM_LOAD( "db6-105.bin",    0x080000, 0x40000, 0x4c7c8bbc )
-	ROM_LOAD( "db7-104.bin",    0x0c0000, 0x40000, 0x695d2019 )
+	ROM_LOAD( "bbm-c3.bin",    0x000000, 0x40000, 0x3c3613af )
+	ROM_LOAD( "bbm-c2.bin",    0x040000, 0x40000, 0x0700d406 )
+	ROM_LOAD( "bbm-c1.bin",    0x080000, 0x40000, 0x4c7c8bbc )
+	ROM_LOAD( "bbm-c0.bin",    0x0c0000, 0x40000, 0x695d2019 )
 
-	ROM_REGION( 0x20000, REGION_SOUND1 )	/* ADPCM samples */
+	ROM_REGION( 0x20000, REGION_SOUND1 )	/* samples */
 	/* Does this have a sample rom? */
 ROM_END
 
@@ -475,5 +449,5 @@ static void init_bombrman(void)
 }
 
 GAME( 1991, hasamu,   0,        m90,     m90, hasamu,   ROT0, "Irem", "Hasamu (Japan)" )
-GAME( 1992, bombrman, 0,        m90,     m90, bombrman, ROT0, "Irem (licensed from Hudson Soft)", "Bomberman" )
+GAME( 1992, bombrman, 0,        m90,     m90, bombrman, ROT0, "Irem (licensed from Hudson Soft)", "Bomberman (Japan)" )
 GAME( 1992, dynablsb, bombrman, bootleg, m90, m90,      ROT0, "bootleg", "Dynablaster (bootleg)" )

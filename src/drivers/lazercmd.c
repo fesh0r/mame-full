@@ -172,21 +172,21 @@ void lazercmd_marker_dirty(int marker);
  * Statics
  *
  *************************************************************/
-
 static int timer_count = 0;
-static int sense_state = 0;
 
 /*************************************************************
  * Interrupt for the cpu
  * Fake something toggling the sense input line of the S2650
  * The rate should be at about 1 Hz
  *************************************************************/
-
 static int lazercmd_timer(void)
 {
+	static int sense_state = 0;
+
 	if( ++timer_count >= 64*128 ) {
 		timer_count = 0;
-		sense_state ^= 0x80;
+		sense_state ^= 1;
+		cpu_set_irq_line( 0, 1, (sense_state) ? ASSERT_LINE : CLEAR_LINE );
 	}
     return ignore_interrupt();
 }
@@ -220,11 +220,6 @@ static READ_HANDLER( lazercmd_data_port_r )
 	int data;
 	data = input_port_2_r(0) & 0x0f;
 	return data;
-}
-
-static READ_HANDLER( lazercmd_sense_port_r )
-{
-	return sense_state;
 }
 
 static WRITE_HANDLER( lazercmd_hardware_w )
@@ -324,54 +319,42 @@ static READ_HANDLER( lazercmd_hardware_r )
     return data;
 }
 
-static struct MemoryWriteAddress lazercmd_writemem[] =
-{
+static MEMORY_WRITE_START( lazercmd_writemem )
 	{ 0x0000, 0x0bff, MWA_ROM },
 	{ 0x1c20, 0x1eff, videoram_w, &videoram, &videoram_size },
 	{ 0x1f00, 0x1f03, lazercmd_hardware_w },
-	{ -1 }					   /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress lazercmd_readmem[] =
-{
+static MEMORY_READ_START( lazercmd_readmem )
 	{ 0x0000, 0x0bff, MRA_ROM },
 	{ 0x1c20, 0x1eff, MRA_RAM },
 	{ 0x1f00, 0x1f03, lazercmd_hardware_r },
-	{ -1 }					   /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress medlanes_writemem[] =
-{
+static MEMORY_WRITE_START( medlanes_writemem )
 	{ 0x0000, 0x0bff, MWA_ROM },
 	{ 0x1000, 0x1800, MWA_ROM },
 	{ 0x1c20, 0x1eff, videoram_w, &videoram, &videoram_size },
 	{ 0x1f00, 0x1f03, medlanes_hardware_w },
-	{ -1 }					   /* end of table */
-};
+MEMORY_END
 
-static struct MemoryReadAddress medlanes_readmem[] =
-{
+static MEMORY_READ_START( medlanes_readmem )
 	{ 0x0000, 0x0bff, MRA_ROM },
 	{ 0x1000, 0x1800, MRA_ROM },
 	{ 0x1c20, 0x1eff, MRA_RAM },
 	{ 0x1f00, 0x1f03, lazercmd_hardware_r },
-	{ -1 }					   /* end of table */
-};
+MEMORY_END
 
-static struct IOWritePort lazercmd_writeport[] =
-{
+static PORT_WRITE_START( lazercmd_writeport )
 	{ S2650_CTRL_PORT, S2650_CTRL_PORT, lazercmd_ctrl_port_w },
 	{ S2650_DATA_PORT, S2650_DATA_PORT, lazercmd_data_port_w },
-	{ -1 }					   /* end of table */
-};
+PORT_END
 
-static struct IOReadPort lazercmd_readport[] =
-{
+static PORT_READ_START( lazercmd_readport )
 	{ S2650_CTRL_PORT, S2650_CTRL_PORT, lazercmd_ctrl_port_r },
 	{ S2650_DATA_PORT, S2650_DATA_PORT, lazercmd_data_port_r },
-    { S2650_SENSE_PORT, S2650_SENSE_PORT, lazercmd_sense_port_r },
-	{ -1 }					   /* end of table */
-};
+PORT_END
+
 
 INPUT_PORTS_START( lazercmd )
 	PORT_START					   /* IN0 player 1 controls */
@@ -489,15 +472,13 @@ static unsigned char palette[] =
 /*  Red Green Blue */
 	0x00,0x00,0x00,		/* black */
 	0xb0,0xb0,0xb0,		/* white */
-	0xff,0xff,0xff,		/* bright white */
+	0xff,0xff,0xff		/* bright white */
 };
-
 static unsigned short colortable[] =
 {
 	 1, 0,
 	 0, 1
 };
-
 static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
 {
 	memcpy(game_palette,palette,sizeof(palette));
