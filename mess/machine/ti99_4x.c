@@ -344,7 +344,7 @@ int ti99_floppy_init(int id, mame_file *fp, int open_mode)
 		done = FALSE;
 
 		/* Read sector 0 to identify format */
-		if ((! mame_fseek(fp, 0, SEEK_SET)) && (mame_fread(fp, & sec0, sizeof(sec0)) == sizeof(sec0)))
+		if (fp && (! mame_fseek(fp, 0, SEEK_SET)) && (mame_fread(fp, & sec0, sizeof(sec0)) == sizeof(sec0)))
 		{
 			/* If we have read the sector successfully, let us parse it */
 			totsecs = (sec0.totsecsMSB << 8) | sec0.totsecsLSB;
