@@ -4541,13 +4541,32 @@ $end
 
 $info=sms
 $bio
-Sega Master System
 
+Sega Master System (1987)
+------------------------------
+Bios = None required
 
-Usage Notes/Known Issues:
+The Master System (called Mark III in Japan) was Sega´s competitor for the NES. Though Sega constantly developed new (and good) games, the Master System never beat the NES. The MS was most successful in Europe, especially Great Britain, where most of the games were developed in the "final" days in 1993/94. Overall, about 6 million consoles were sold world-wide until the end of 1994. (note taken from www.eidolons-inn.de)
 
-This driver runs just about everything!.
+Features
+-------------
+CPU: Z80 at 4 MHz
+Custom video controller (VDP) derived from the TI chip TMS9918/9928
+Resolution: 256x192 tile-based screen in 16 colors
+Sprites: 64 at 8x8, 8x16 or 16x16
+Color Pallette: 64; 32 max on screen (16 for sprites, 16 for background)
+Scrolling: Hardware up/down/left/right - all or part of screen.
+Sound chip: Generic SN76489 sound chip (PSG) made by Texas Instruments
+Sound output: 3 square-wave sound and white noise/periodic noise channel
+Music: Yamaha YM2413 FM sound chip
 
+Links
+-------
+EIdolons inn - www.eidolons-inn.de
+
+MESS Emulation State
+--------------------
+This driver runs just about everything!
 
 $end
 
@@ -4555,14 +4574,40 @@ $end
 
 $info=snes
 $bio
-Super Nintendo Entertainment System
 
+Super Nintendo Entertainment System (1989)
+------------------------------
+Bios = None required
 
-Usage Notes/Known Issues:
+The Super Nintendo features true stereo sound, multiple scrolling backgrounds and almost twice the internal memory as its competition. The SNES was home to the biggest, baddest games of its day. With player's choice games like The Legend of Zelda: A Link to the Past, Donkey Kong Country and Super Metroid, the Super NES has sold more than 20 million systems in the U.S. and 46 million systems worldwide. (note taken from www.nintendo.com)
 
-This driver is preliminary, most images will not work. Super Mario World (US version) is
-playable.
+Features
+-------------
+CPU: Custom 16-bit - 65C816 at 3.58 MHz (Machine adjustable to 3.58, 2.68, and 1.79 Mhz)
+Co-processor: None (DSP and SuperFX were inside the cartridge of selected games )
+RAM: (?)
+Video RAM: (?)
 
+Color Palette: 32,768; 256 max on screen
+Maximum Screen Resolution: 512 x 448 pixels
+Max # of sprites: 128, 32 per scanline
+Max and Min Sprite Size: 64 x 64 pixels; 8 x 8 pixels
+Scrolling: Horizontal, Vertical, Diagonal
+
+Sound channels: 8 ADPCM with 64 Kb Ram
+Sound Processor: Sony SPC700 ("wavetable-like" music, near 16-bit sound quality playback(CD) & Q-Sound surround sound.)
+
+Cart Size: 4Mbit - 128 Megabit Max. (Tengay Maikio at 70+ Megabits is the largest game)
+Controller: 8-way direction pad with Select, Start, A, B, X, Y and 2 Flipper buttons labeled R and L
+Controller Response: 16ms
+
+Links
+-------
+Nintendo - www.nintendo.com
+
+MESS Emulation State
+--------------------
+This driver is preliminary and most images will not work. Super Mario World (US version) is playable.
 
 $end
 
@@ -7872,4 +7917,35 @@ Need to emulate pad system, add more interrupts and get some grafix working so w
 
 $end
 
+
+#---------------------------------------------------------------------------------------------#
+
+$info=gg
+$bio
+
+Sega Game Gear (1990)
+--------------------------
+Bios = None required
+
+The Game Gear is the portable version of the Sega Master System, with slightly enhanced graphics and stereo sound, but fully compatible (i.e. you could play SMS games on the GG with the use of a special adaptor). The Game Gear was sold 11 million times world-wide (2 million in Japan, 9 million in the rest of the world). (note taken from www.eidolons-inn.de)
+
+Features
+-------------
+CPU:  4 MHz Zilog Z80 
+Colors Palette: 512; 32 max on screen
+Resolution: 160x140 viewable from 256x224 
+Sprite size: 8x8 , 8x16 (16x16 in doubled mode) 
+Max # of sprites:  64 on screen; 128 in memory
+Sound:  6 channel FM, 2 channel noise - Stereo 
+Battery life:  6 hours on 6 AA batteries 
+
+Links
+-------
+EIdolons inn - www.eidolons-inn.de
+
+MESS Emulation State
+--------------------
+(?)
+
+#---------------------------------------------------------------------------------------------#
 
