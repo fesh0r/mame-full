@@ -9,33 +9,37 @@
 #define EXTERN extern
 #endif
 
+/* Interrupt flags */
 #define VBL_IFLAG 0x01
 #define LCD_IFLAG 0x02
 #define TIM_IFLAG 0x04
 #define SIO_IFLAG 0x08
 #define EXT_IFLAG 0x10
 
-#define VBL_INT 0
-#define LCD_INT 1
-#define TIM_INT 2
-#define SIO_INT 3
-#define EXT_INT 4
+/* Interrupts */
+#define VBL_INT 0     /* V-Blank    */
+#define LCD_INT 1     /* LCD Status */
+#define TIM_INT 2     /* Timer      */
+#define SIO_INT 3     /* Serial I/O */
+#define EXT_INT 4     /* Joypad     */
 
-#define MBC1  1
-#define MBC2  2
-#define MBC3  3
-#define MBC5  4
-#define TAMA5 5
-#define HUC1  6
-#define HUC3  7
+/* Memory bank controller types */
+#define NONE    0     /*  32KB ROM - No memory bank controller         */
+#define MBC1    1     /*  ~2MB ROM,   8KB RAM -or- 512KB ROM, 32KB RAM */
+#define MBC2    2     /* 256KB ROM,  32KB RAM                          */
+#define MBC3    3     /*   2MB ROM,  32KB RAM, RTC                     */
+#define MBC5    4     /*   8MB ROM, 128KB RAM (32KB w/ Rumble)         */
+#define TAMA5   5     /* ??? - Don't know what this is.                */
+#define HUC1    6     /*    ?? ROM,    ?? RAM - Hudson Soft Controller */
+#define HUC3    7     /*    ?? ROM,    ?? RAM - Hudson Soft Controller */
 
-#define RAM     0x01  /* Cartridge has RAM */
-#define BATTERY 0x02  /* Cartridge has a battery to save RAM */
-#define TIMER   0x04  /* Cartridge has a real-time-clock (MBC3 only) */
-#define RUMBLE  0x08  /* Cartridge has a rumble motor */
-#define SRAM    0x10  /* Cartridge has SRAM */
-#define UNKNOWN 0x80  /* Unknown cartridge type */
-
+/* Cartridge types */
+#define RAM     0x01  /* Cartridge has RAM                             */
+#define BATTERY 0x02  /* Cartridge has a battery to save RAM           */
+#define TIMER   0x04  /* Cartridge has a real-time-clock (MBC3 only)   */
+#define RUMBLE  0x08  /* Cartridge has a rumble motor (MBC5 only)      */
+#define SRAM    0x10  /* Cartridge has SRAM                            */
+#define UNKNOWN 0x80  /* Cartridge is of an unknown type               */
 
 extern UINT8 *gb_ram;
 
