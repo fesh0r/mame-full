@@ -41,9 +41,6 @@
 // from input.c
 extern UINT8 win_trying_to_quit;
 
-// from mamedbg.c
-extern int debug_key_pressed;
-
 // from timer.c
 extern void win_timer_enable(int enabled);
 
@@ -1560,7 +1557,7 @@ static int invoke_command(UINT command)
 
 #if HAS_DEBUGGER
 	case ID_OPTIONS_DEBUGGER:
-		debug_key_pressed = 1;
+		debug_halt_on_next_instruction();
 		break;
 #endif
 
