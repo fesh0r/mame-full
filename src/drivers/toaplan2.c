@@ -4637,7 +4637,7 @@ GAMEX( 1992, grindstm, vfive,    vfive,    grindstm, T2_Zx80,  ROT270, "Toaplan"
 GAMEX( 1992, grindsta, vfive,    vfive,    grindstm, T2_Zx80,  ROT270, "Toaplan", "Grind Stormer (older set)", GAME_NO_SOUND )
 GAMEX( 1993, vfive,    0,        vfive,    vfive,    T2_Zx80,  ROT270, "Toaplan", "V-Five (Japan)", GAME_NO_SOUND )
 GAMEX( 1993, batsugun, 0,        batsugun, batsugun, T2_Zx80,  ROT270, "Toaplan", "Batsugun", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1993, batugnsp, batsugun, batsugun, batsugun, T2_Zx80,  ROT270, "Toaplan", "'Batsugun (Special Ver.)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1993, batugnsp, batsugun, batsugun, batsugun, T2_Zx80,  ROT270, "Toaplan", "Batsugun (Special Ver.)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAME ( 1994, snowbro2, 0,        snowbro2, snowbro2, T2_noZ80, ROT0,   "[Toaplan] Hanafram", "Snow Bros. 2 / Otenki Paradise" )
 GAME ( 1993, mahoudai, 0,        mahoudai, mahoudai, T2_Z80,   ROT270, "Raizing (Able license)", "Mahou Daisakusen (Japan)" )
 GAME ( 1994, shippumd, 0,        shippumd, shippumd, T2_Z80,   ROT270, "Raizing/8ing", "Shippu Mahou Daisakusen (Japan)" )

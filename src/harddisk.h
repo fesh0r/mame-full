@@ -41,6 +41,7 @@
  *
  *************************************/
 
+#define HARD_DISK_HEADER_VERSION	1
 #define HARD_DISK_V1_HEADER_SIZE	76
 #define HARD_DISK_V2_HEADER_SIZE	80
 #define HARD_DISK_MAX_HEADER_SIZE	80

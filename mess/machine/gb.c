@@ -1692,7 +1692,7 @@ WRITE_HANDLER ( gbc_video_w )
 			if( data & 0x1 )
 			{
 				data = (gb_ram[offset] & 0x80)?0x00:0x80;
-/*				timer_set_overclock( 0, (data & 0x80)?2.0:1.0 );*/
+/*				cpunum_set_clockscale( 0, (data & 0x80)?2.0:1.0 );*/
 #ifdef V_GENERAL
 				logerror( "Switched to %s mode.\n", (data & 0x80) ? "FAST":"NORMAL" );
 #endif /* V_GENERAL */

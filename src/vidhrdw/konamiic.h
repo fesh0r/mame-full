@@ -237,6 +237,7 @@ WRITE16_HANDLER( K054157_ram_word_w );
 READ16_HANDLER( K054157_ram_half_word_r );
 WRITE16_HANDLER( K054157_ram_half_word_w );
 READ16_HANDLER( K054157_rom_word_r );
+READ16_HANDLER( K054157_rom_word_8000_r );
 WRITE16_HANDLER( K054157_word_w );
 WRITE16_HANDLER( K054157_b_word_w );
 void K054157_tilemap_update(void);

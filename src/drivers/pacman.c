@@ -136,7 +136,40 @@
 		$2AAE, $2BF4, $2E0A, $39D5, $39DA, $3AE2, $3AEA, $3EE0,
 		$3EE9, $3F07, $3F0D
 
-***************************************************************************/
+****************************************************************************
+
+Todo: fix the sets according to this
+
+Puckman is labeled wrong.  Puckman set 1 is
+likely a bootleg since the protection is patched out, set 2 would likely
+be correct if the roms were split differently.  Nicola had said that he
+had a readme that mentioned 2k roms, which is my understanding.
+Although the board will accept either, it is likely they were all 2k or
+all 4k, not mixed.  Also the set labeled "harder?" is not:
+
+Comparing files npacmod.6j and NAMCOPAC.6J
+
+00000031: AF 25    ;3031 is sub for fail rom check.
+00000032: C3 7C ;301c is sub for pass rom check
+00000033: 1C E6    ;so it now clears the sum (reg A) and
+00000034: 30 F0    ;jumps to pass if it fails rom check.
+
+000007F8: 31 30  c 1981 / c 1980
+
+0000080B: 40 4E  ghost / nickname
+0000080C: 47 49
+0000080D: 48 43
+0000080E: 4F 4B
+0000080F: 53 4E
+00000810: 54 41
+00000811: 40 4D
+00000812: 40 45
+
+00000FFF: 00 F1  checksum
+
+Dave Widel
+
+****************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
@@ -1724,44 +1757,116 @@ INPUT_PORTS_START( shootbul )
 	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( acitya )
+// New Atlantic City Action / Board Walk Casino Inputs //
+// Annoyingly enough, you can't get into service mode on bwcasino if the
+// cocktail mode is set. To test player 2's inputs, select Upright Mode on
+// the dipswitches, and enter test mode. Now select cocktail mode and you
+// can test everything. Wierd.
+
+INPUT_PORTS_START( bwcasino )
 	PORT_START /* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON6 | IPF_PLAYER2 | IPF_COCKTAIL )
 
 	PORT_START /* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )  PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )  PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER2 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON5 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON6 )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 
 	PORT_START /* DSW 1 */
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x03, "3" )
-	PORT_DIPSETTING(    0x02, "4" )
-	PORT_DIPSETTING(    0x01, "5" )
-	PORT_DIPSETTING(    0x00, "6" )
-	PORT_DIPNAME( 0x1c, 0x1c, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x1c, "Easiest" )
-	PORT_DIPSETTING(    0x18, "Very Easy" )
-	PORT_DIPSETTING(    0x14, "Easy" )
-	PORT_DIPSETTING(    0x10, "Normal" )
-	PORT_DIPSETTING(    0x0c, "Difficult" )
-	PORT_DIPSETTING(    0x08, "Very Difficult" )
-	PORT_DIPSETTING(    0x04, "Very Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x1e, 0x1e, "Hands per Game" )
+	PORT_DIPSETTING(    0x1e, "3" )
+	PORT_DIPSETTING(    0x1c, "4" )
+	PORT_DIPSETTING(    0x1a, "5" )
+	PORT_DIPSETTING(    0x18, "6" )
+	PORT_DIPSETTING(    0x16, "7" )
+	PORT_DIPSETTING(    0x14, "8" )
+	PORT_DIPSETTING(    0x12, "9" )
+	PORT_DIPSETTING(    0x10, "10" )
+	PORT_DIPSETTING(    0x0e, "11" )
+	PORT_DIPSETTING(    0x0c, "12" )
+	PORT_DIPSETTING(    0x0a, "13" )
+	PORT_DIPSETTING(    0x08, "14" )
+	PORT_DIPSETTING(    0x06, "15" )
+	PORT_DIPSETTING(    0x04, "16" )
+	PORT_DIPSETTING(    0x02, "17" )
+	PORT_DIPSETTING(    0x00, "18" )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START /* DSW 2 */
+	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
+INPUT_PORTS_END
+
+// ATLANTIC CITY ACTION (acitya)
+// Unlike "Boardwalk Casino", "Atlantic City Action" does not appear to
+// have a cocktail mode, and uses service button connected differently to
+// "Boardwalk"
+INPUT_PORTS_START( acitya )
+	PORT_START /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON5 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON6 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START /* DSW 1 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x1e, 0x1e, "Hands per Game" )
+	PORT_DIPSETTING(    0x1e, "3" )
+	PORT_DIPSETTING(    0x1c, "4" )
+	PORT_DIPSETTING(    0x1a, "5" )
+	PORT_DIPSETTING(    0x18, "6" )
+	PORT_DIPSETTING(    0x16, "7" )
+	PORT_DIPSETTING(    0x14, "8" )
+	PORT_DIPSETTING(    0x12, "9" )
+	PORT_DIPSETTING(    0x10, "10" )
+	PORT_DIPSETTING(    0x0e, "11" )
+	PORT_DIPSETTING(    0x0c, "12" )
+	PORT_DIPSETTING(    0x0a, "13" )
+	PORT_DIPSETTING(    0x08, "14" )
+	PORT_DIPSETTING(    0x06, "15" )
+	PORT_DIPSETTING(    0x04, "16" )
+	PORT_DIPSETTING(    0x02, "17" )
+	PORT_DIPSETTING(    0x00, "18" )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -3480,9 +3585,9 @@ GAMEX(1983, eggor,    0,        pacman,   mrtnt,    eyes,     ROT90,  "Telko", "
 GAME( 1985, lizwiz,   0,        pacman,   lizwiz,   0,        ROT90,  "Techstar (Sunn license)", "Lizard Wizard" )
 GAME( 1983, theglobp, suprglob, theglobp, theglobp, 0,        ROT90,  "Epos Corporation", "The Glob (Pac-Man hardware)" )
 GAME( 1984, beastf,   suprglob, theglobp, theglobp, 0,        ROT90,  "Epos Corporation", "Beastie Feastie" )
-GAME( 1983, acitya,   bwcasino, acitya,   acitya,   0,        ROT90,  "Epos Corporation", "Atlantic City Action" )
-GAME( 1983, bwcasino, 0,        acitya,   acitya,   0,        ROT90,  "Epos Corporation", "Boardwalk Casino" )
+GAME( 1983, bwcasino, 0,        acitya,   bwcasino, 0,        ROT90,  "Epos Corporation", "Boardwalk Casino" )
 GAME( 1982, dremshpr, 0,        dremshpr, dremshpr, 0,        ROT270, "Sanritsu", "Dream Shopper" )
+GAME( 1983, acitya,   bwcasino, acitya,   acitya,   0,        ROT90,  "Epos Corporation", "Atlantic City Action" )
 GAME( 1983, vanvan,   0,        vanvan,   vanvan,   0,        ROT270, "Sanritsu", "Van-Van Car" )
 GAME( 1983, vanvank,  vanvan,   vanvan,   vanvank,  0,        ROT270, "Karateco", "Van-Van Car (Karateco)" )
 GAMEX(1982, alibaba,  0,        alibaba,  alibaba,  0,        ROT90,  "Sega", "Ali Baba and 40 Thieves", GAME_WRONG_COLORS | GAME_UNEMULATED_PROTECTION )

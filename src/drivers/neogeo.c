@@ -9,6 +9,69 @@
 	Ernesto Corvi
 	Andrew Prime
 
+	Neogeo Motherboard (info - courtesy of Guru)
+	--------------------------------------------
+
+	PCB Layout (single slot, older version)
+
+	NEO-MVH MV1
+	|---------------------------------------------------------------------|
+	|       4558                                                          |
+	|                                          HC04  HC32                 |
+	|                      SP-S2.SP1  NEO-E0   000-L0.L0   LS244  AS04    |
+	|             YM2610                                                  |
+	| 4558                                                                |
+	|       4558                        5814  HC259   SFIX.SFIX           |
+	|                                                             NEO-I0  |
+	| HA13001 YM3016                    5814                              |
+	--|                                                                   |
+	  |     4558                                                          |
+	--|                                                 SM1.SM1   LS32    |
+	|                                                                     |
+	|                           LSPC-A0         PRO-C0            LS244   |
+	|                                                                     |
+	|J              68000                                                 |
+	|A                                                                    |
+	|M                                                                    |
+	|M                                                      NEO-ZMC2      |
+	|A                                                                    |
+	|   LS273  NEO-G0                          58256  58256     Z80A      |
+	|                           58256  58256   58256  58256     6116      |
+	|   LS273 5864                                                        |
+	--| LS05  5864  PRO-B0                                                |
+	  |                                                                   |
+	--|             LS06   HC32           D4990A    NEO-F0   24.000MHz    |
+	|                      DSW1    BATT3.6V 32.768kHz       NEO-D0        |
+	|                                           2003  2003                |
+	|---------------------------------------------------------------------|
+
+	Notes:
+	      68k clock: 12.000MHz
+	      Z80 clock: 4.000MHz
+	   YM2610 clock: 8.000MHz
+	          VSync: 60Hz
+	          HSync: 15.21kHz
+
+	         Custom SNK chips
+	         ----------------
+	         NEO-G0: QFP64
+	         NEO-E0: QFP64
+	         PRO-B0: QFP136
+	        LSPC-A0: QFP160
+	         PRO-C0: QFP136
+	         NEO-F0: QFP64
+	         NEO-D0: QFP64
+	       NEO-ZMC2: QFP80
+	         NEO-I0: QFP64
+
+	         ROMs        Type
+	         ----------------------------
+	         SP-S2.SP1   TC531024 (DIP40)
+	         000-L0.L0   TC531000 (DIP28)
+	         SFIX.SFIX   D27C1000 (DIP32)
+	         SM1.SM1     MB832001 (DIP32)
+
+	------------------------------------------------------
 
 	GRAPHICAL ISSUES :
 
@@ -198,6 +261,7 @@ removal of hacks to change region / get info memory card manager
 #include "machine/pd4990a.h"
 #include "cpu/z80/z80.h"
 #include "neogeo.h"
+#include "state.h"
 
 
 /* values probed by Razoola from the real board */
@@ -282,9 +346,10 @@ static WRITE16_HANDLER( neo_irqack_w )
 }
 
 
+static int fc = 0;
+
 static INTERRUPT_GEN( neogeo_interrupt )
 {
-	static int fc=0;
 	int line = RASTER_LINES - cpu_getiloops();
 
 	current_rasterline = line;
@@ -328,12 +393,12 @@ static INTERRUPT_GEN( neogeo_interrupt )
 }
 
 
+static int neogeo_raster_enable = 1;
+
 static void raster_interrupt(int busy)
 {
-	static int fc=0;
 	int line = RASTER_LINES - cpu_getiloops();
 	int do_refresh = 0;
-	static int neogeo_raster_enable = 1;
 
 	current_rasterline = line;
 
@@ -465,7 +530,8 @@ static WRITE16_HANDLER( neo_z80_w )
 	pending_command = 1;
 	cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);
 	/* spin for a while to let the Z80 read the command (fixes hanging sound in pspikes2) */
-	cpu_spinuntil_time(TIME_IN_USEC(10));
+//	cpu_spinuntil_time(TIME_IN_USEC(20));
+	cpu_boost_interleave(0, TIME_IN_USEC(20));
 }
 
 static int mjneogo_select;
@@ -555,7 +621,6 @@ static READ16_HANDLER( controller4_16_r )
 
 static WRITE16_HANDLER( neo_bankswitch_w )
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
 	int bankaddress;
 
 	if (memory_region_length(REGION_CPU1) <= 0x100000)
@@ -572,7 +637,7 @@ logerror("PC %06x: warning: bankswitch to empty bank %02x\n",activecpu_get_pc(),
 		bankaddress = 0x100000;
 	}
 
-	cpu_setbank(4,&RAM[bankaddress]);
+	neogeo_set_cpu1_second_bank(bankaddress);
 }
 
 
@@ -757,11 +822,16 @@ static MEMORY_WRITE_START( sound_writemem )
 MEMORY_END
 
 
+static UINT32 bank[4] = {
+	0x08000,
+	0x0c000,
+	0x0e000,
+	0x0f000
+};
+
+
 static READ_HANDLER( z80_port_r )
 {
-	static int bank[4];
-
-
 #if 0
 {
 	char buf[80];
@@ -791,8 +861,8 @@ static READ_HANDLER( z80_port_r )
 
 	case 0x08:
 		{
-			UINT8 *mem08 = memory_region(REGION_CPU2)+0x10000;
-			bank[3] = 0x0800 * ((offset >> 8) & 0x7f);
+			UINT8 *mem08 = memory_region(REGION_CPU2);
+			bank[3] = 0x0800 * ((offset >> 8) & 0x7f) + 0x10000;
 			cpu_setbank(8,&mem08[bank[3]]);
 			return 0;
 			break;
@@ -800,8 +870,8 @@ static READ_HANDLER( z80_port_r )
 
 	case 0x09:
 		{
-			UINT8 *mem08 = memory_region(REGION_CPU2)+0x10000;
-			bank[2] = 0x1000 * ((offset >> 8) & 0x3f);
+			UINT8 *mem08 = memory_region(REGION_CPU2);
+			bank[2] = 0x1000 * ((offset >> 8) & 0x3f) + 0x10000;
 			cpu_setbank(7,&mem08[bank[2]]);
 			return 0;
 			break;
@@ -809,8 +879,8 @@ static READ_HANDLER( z80_port_r )
 
 	case 0x0a:
 		{
-			UINT8 *mem08 = memory_region(REGION_CPU2)+0x10000;
-			bank[1] = 0x2000 * ((offset >> 8) & 0x1f);
+			UINT8 *mem08 = memory_region(REGION_CPU2);
+			bank[1] = 0x2000 * ((offset >> 8) & 0x1f) + 0x10000;
 			cpu_setbank(6,&mem08[bank[1]]);
 			return 0;
 			break;
@@ -818,8 +888,8 @@ static READ_HANDLER( z80_port_r )
 
 	case 0x0b:
 		{
-			UINT8 *mem08 = memory_region(REGION_CPU2)+0x10000;
-			bank[0] = 0x4000 * ((offset >> 8) & 0x0f);
+			UINT8 *mem08 = memory_region(REGION_CPU2);
+			bank[0] = 0x4000 * ((offset >> 8) & 0x0f) + 0x10000;
 			cpu_setbank(5,&mem08[bank[0]]);
 			return 0;
 			break;
@@ -1237,19 +1307,18 @@ struct YM2610interface neogeo_ym2610_interface =
 static MACHINE_DRIVER_START( neogeo )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD_TAG("main", M68000, 12000000)
+	MDRV_CPU_ADD_TAG("main", M68000, 12000000) /* verified */
 	MDRV_CPU_MEMORY(neogeo_readmem,neogeo_writemem)
 	MDRV_CPU_VBLANK_INT(neogeo_interrupt,RASTER_LINES)
 
-	MDRV_CPU_ADD(Z80, 6000000)
+	MDRV_CPU_ADD(Z80, 4000000) /* verified */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU | CPU_16BIT_PORT)
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 	MDRV_CPU_PORTS(neo_readio,neo_writeio)
 
-	/* Framerate should be 59, not 60?, with 59 the kof98 intro is correctly
-	   synced to the music, was neogeo067gre, should probably be verified against
-	   the original hardware */
-	MDRV_FRAMES_PER_SECOND(59)
+	/* using a framerate of 59 will fix the sync of the kof98 video / sound however
+	   using it would be a kludge as 60 has been measured using the hardware */
+	MDRV_FRAMES_PER_SECOND(60) /* verified */
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	MDRV_MACHINE_INIT(neogeo)
@@ -1259,8 +1328,10 @@ static MACHINE_DRIVER_START( neogeo )
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(40*8, 32*8)
 	/* Screen width *should* be 320, at least in the test mode for the crosshatch,
-	   this has been verified on original hardware, however some games don't look
-	   correct with a width of 320 (mslug ingame, kof98 title screen) */
+	   this has been verified on original hardware, glitches that occur at 320 in
+	   Metal Slug have been verified to also appear on the MVS itself so its
+	   probably correct in all cases, however to avoid confusion we use 304 unless
+	   a game *needs* 320 */
 //	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 30*8-1)
 	MDRV_VISIBLE_AREA(1*8, 39*8-1, 2*8, 30*8-1)
 	MDRV_GFXDECODE(neogeo_mvs_gfxdecodeinfo)
@@ -1293,8 +1364,40 @@ static MACHINE_DRIVER_START( raster_busy )
 	MDRV_IMPORT_FROM(raster)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_VBLANK_INT(neogeo_raster_interrupt_busy,RASTER_LINES)
+
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 30*8-1)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( neo320 )
+	MDRV_IMPORT_FROM(neogeo)
+	/* Screen width *should* be 320, at least in the test mode for the crosshatch,
+	   this has been verified on original hardware, glitches that occur at 320 in
+	   Metal Slug have been verified to also appear on the MVS itself so its
+	   probably correct in all cases, however to avoid confusion we use 304 unless
+	   a game *needs* 320 */
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 30*8-1)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( ras320 )
+	MDRV_IMPORT_FROM(raster)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 30*8-1)
+MACHINE_DRIVER_END
+
+
+/*
+these games benefit in places from 320 but also have slight glitches so i'm
+using 304 for them
+
+nam1975
+superspy
+fbfrenzy
+sengoku2
+bstars2
+quizdais
+ssideki
+aof3
+
+*/
 
 /******************************************************************************/
 
@@ -1319,6 +1422,7 @@ MACHINE_DRIVER_END
 //	ROM_LOAD16_WORD_SWAP_BIOS( 7, "uni-bios.10",  0x00000, 0x020000, CRC(0ce453a0) SHA1(3b4c0cd26c176fc6b26c3a2f95143dd478f6abf9) ) /* Universe Bios v1.0 (hack) */
 //	ROM_LOAD16_WORD_SWAP_BIOS( 8, "uni-bios.11",  0x00000, 0x020000, CRC(5dda0d84) SHA1(4153d533c02926a2577e49c32657214781ff29b7) ) /* Universe Bios v1.1 (hack) */
 //	ROM_LOAD16_WORD_SWAP_BIOS( 9, "neodebug.rom", 0x00000, 0x020000, CRC(698ebb7d) SHA1(081c49aa8cc7dad5939833dc1b18338321ea0a07) ) /* Debug (Development) Bios */
+//	ROM_LOAD16_WORD_SWAP_BIOS( 10, "aes-bios.bin",0x00000, 0x020000, CRC(d27a71f1) SHA1(1b3b22092f30c4d1b2c15f04d1670eb1e9fbea07) ) /* AES Console (Asia?) Bios */
 
 
 /* we only have one irritating maze bios and thats asia */
@@ -1710,6 +1814,28 @@ ROM_END
 ROM_START( kotm )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )
 	ROM_LOAD16_WORD_SWAP( "016-p1.bin", 0x000000, 0x080000, CRC(1b818731) SHA1(b98b1b33c0301fd79aac908f6b635dd00d1cb08d) )
+	ROM_LOAD16_WORD_SWAP( "016-p2.bin", 0x080000, 0x020000, CRC(12afdc2b) SHA1(3a95f5910cbb9f17e63ddece995c6e120fa2f622) )
+
+	NEO_SFIX_128K( "016-s1.bin", CRC(1a2eeeb3) SHA1(8d2b96d395020197bc59294b6b0c8d62b1d8d4dd) )
+
+	NEO_BIOS_SOUND_128K( "016-m1.bin", CRC(0296abcb) SHA1(560046f256cd339fa685d0d38d55317cb6adfa99) )
+
+	ROM_REGION( 0x200000, REGION_SOUND1, ROMREGION_SOUNDONLY )
+	ROM_LOAD( "016-v1.bin", 0x000000, 0x100000, CRC(86c0a502) SHA1(7fe2db0c64aefdd14d6c36f7fcd6442591e9a014) )
+	ROM_LOAD( "016-v2.bin", 0x100000, 0x100000, CRC(5bc23ec5) SHA1(f4ff5d20587469daa026d5c812739335ce53cfdf) )
+
+	NO_DELTAT_REGION
+
+	ROM_REGION( 0x400000, REGION_GFX3, 0 )
+	ROM_LOAD16_BYTE( "016-c1.bin", 0x000000, 0x100000, CRC(71471c25) SHA1(bc8e3fee56b33ef2bac5b4b852339d2fbcd09b7c) ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "016-c2.bin", 0x000001, 0x100000, CRC(320db048) SHA1(d6b43834de6f5442e23ca8fb26b3a36e96790d8d) ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "016-c3.bin", 0x200000, 0x100000, CRC(98de7995) SHA1(e33edf4d36c82196d2b474e37be180a05976f558) ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "016-c4.bin", 0x200001, 0x100000, CRC(070506e2) SHA1(3a2ec365e1d87a9c5ce1ee9bea88402a8eef4ed7) ) /* Plane 2,3 */
+ROM_END
+
+ROM_START( kotmh )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "016-hp1.bin",0x000000, 0x080000, CRC(b774621e) SHA1(7684b2e07163aec68cd083ef1d8900f855f6cb42) )
 	ROM_LOAD16_WORD_SWAP( "016-p2.bin", 0x080000, 0x020000, CRC(12afdc2b) SHA1(3a95f5910cbb9f17e63ddece995c6e120fa2f622) )
 
 	NEO_SFIX_128K( "016-s1.bin", CRC(1a2eeeb3) SHA1(8d2b96d395020197bc59294b6b0c8d62b1d8d4dd) )
@@ -2444,11 +2570,12 @@ ROM_START( androdun )
 
 	NO_DELTAT_REGION
 
-	ROM_REGION( 0x400000, REGION_GFX3, 0 )
+	ROM_REGION( 0x200000, REGION_GFX3, 0 )
 	ROM_LOAD16_BYTE( "049-c1.bin", 0x000000, 0x100000, CRC(7ace6db3) SHA1(c41cc9de8c0788dcc49ca494fd3bb3124062d9dd) ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "049-c2.bin", 0x000001, 0x100000, CRC(b17024f7) SHA1(fcf7efae48fcdccaf5255c145de414fb246128f0) ) /* Plane 2,3 */
-	ROM_LOAD16_BYTE( "049-c3.bin", 0x200000, 0x100000, CRC(2e0f3f9a) SHA1(8ee3442be92835922762420e8d0ff86dc14b3d69) ) /* Plane 0,1 */
-	ROM_LOAD16_BYTE( "049-c4.bin", 0x200001, 0x100000, CRC(4a19fb92) SHA1(171219f0b38a04bfcee5b823c043a8181dfc87f8) ) /* Plane 2,3 */
+	/* these just contain junk, probably shouldn't be here */
+//	ROM_LOAD16_BYTE( "049-c3.bin", 0x200000, 0x100000, CRC(2e0f3f9a) SHA1(8ee3442be92835922762420e8d0ff86dc14b3d69) ) /* Plane 0,1 */
+//	ROM_LOAD16_BYTE( "049-c4.bin", 0x200001, 0x100000, CRC(4a19fb92) SHA1(171219f0b38a04bfcee5b823c043a8181dfc87f8) ) /* Plane 2,3 */
 ROM_END
 
 ROM_START( ncommand )
@@ -2537,7 +2664,7 @@ ROM_START( wh1 )
 	ROM_LOAD16_BYTE( "053-c4.bin", 0x200001, 0x100000, CRC(9270d954) SHA1(a2ef909868f6b06cdcc22a63ddf6c96be12b999c) ) /* Plane 2,3 */
 ROM_END
 
-ROM_START( wh1a )
+ROM_START( wh1h )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )
 	ROM_LOAD16_WORD_SWAP( "053-p1.rom", 0x000000, 0x080000, CRC(ed29fde2) SHA1(52b8ca5b804f786f95e1dfb348d8c7b82f1d4ddf) )
 	ROM_LOAD16_WORD_SWAP( "053-p2.rom", 0x080000, 0x080000, CRC(98f2b158) SHA1(a64e1425970eb53cc910891db39973dee3d54ccc) )
@@ -2639,10 +2766,11 @@ ROM_START( wh2 )
 ROM_END
 
 ROM_START( fatfursp )
-	ROM_REGION( 0x200000, REGION_CPU1, 0 )
+	ROM_REGION( 0x180000, REGION_CPU1, 0 )
 	ROM_LOAD16_WORD_SWAP( "058-p1.bin", 0x000000, 0x100000, CRC(2f585ba2) SHA1(429b4bf43fb9b1082c15d645ca328f9d175b976b) )
 	ROM_LOAD16_WORD_SWAP( "058-p2.bin", 0x100000, 0x080000, CRC(d7c71a6b) SHA1(b3428063031a2e5857da40a5d2ffa87fb550c1bb) )
-	ROM_LOAD16_WORD_SWAP( "058-p3.bin", 0x180000, 0x080000, CRC(9f0c1e1a) SHA1(02861b0f230541becccc3df6a2c85dbe8733e7ce) )
+	/* rom below is just a modified p1 (no significant changes), doesn't seem to be on any boards */
+//	ROM_LOAD16_WORD_SWAP( "058-p3.bin", 0x180000, 0x080000, CRC(9f0c1e1a) SHA1(02861b0f230541becccc3df6a2c85dbe8733e7ce) )
 
 	NEO_SFIX_128K( "058-s1.bin", CRC(2df03197) SHA1(24083cfc97e720ac9e131c9fe37df57e27c49294) )
 
@@ -3165,7 +3293,8 @@ ROM_START( kof95 )
 	NEO_BIOS_SOUND_128K( "084-m1.bin", CRC(6f2d7429) SHA1(6f8462e4f07af82a5ca3197895d5dcbb67bdaa61) )
 
 	ROM_REGION( 0x900000, REGION_SOUND1, ROMREGION_SOUNDONLY )
-	ROM_LOAD( "084-v1.bin", 0x000000, 0x400000, CRC(21469561) SHA1(f35c72d31f026efc9e74bc4f198a123999ab3fc3) )
+//	ROM_LOAD( "084-v1.bin", 0x000000, 0x400000, CRC(21469561) SHA1(f35c72d31f026efc9e74bc4f198a123999ab3fc3) ) // bad old rom ?
+ 	ROM_LOAD( "084-v1.bin", 0x000000, 0x400000, CRC(84861b56) SHA1(1b6c91ddaed01f45eb9b7e49d9c2b9b479d50da6) )
 	ROM_LOAD( "084-v2.bin", 0x400000, 0x200000, CRC(b38a2803) SHA1(dbc2c8606ca09ed7ff20906b022da3cf053b2f09) )
 	/* 600000-7fffff empty */
 	ROM_LOAD( "084-v3.bin", 0x800000, 0x100000, CRC(d683a338) SHA1(eb9866b4b286edc09963cb96c43ce0a8fb09adbb) )
@@ -3173,6 +3302,8 @@ ROM_START( kof95 )
 	NO_DELTAT_REGION
 
 	ROM_REGION( 0x1a00000, REGION_GFX3, 0 )
+	/* old set had the roms like this */
+#if 0
 	ROM_LOAD16_BYTE( "084-c1.bin", 0x0400000, 0x200000, CRC(33bf8657) SHA1(79b0f0eb4e5c172f36c296ccabeb474804f7645a) ) /* Plane 0,1 */
 	ROM_CONTINUE(      			   0x0000000, 0x200000 )
 	ROM_LOAD16_BYTE( "084-c2.bin", 0x0400001, 0x200000, CRC(f21908a4) SHA1(a0bec5961396e62af553ba5293b1007cdf9fbf62) ) /* Plane 2,3 */
@@ -3181,6 +3312,41 @@ ROM_START( kof95 )
 	ROM_CONTINUE(      			   0x0800000, 0x200000 )
 	ROM_LOAD16_BYTE( "084-c4.bin", 0x0c00001, 0x200000, CRC(729db15d) SHA1(6167a601463d7aaba1c8d470b346a82e9aef8bb5) ) /* Plane 2,3 */
 	ROM_CONTINUE(      			   0x0800001, 0x200000 )
+#endif
+ 	ROM_LOAD16_BYTE( "084-c1.bin", 0x0000000, 0x400000, CRC(fe087e32) SHA1(e8e89faa616027e4fb9b8a865c1a67f409c93bdf) ) /* Plane 0,1 */
+ 	ROM_LOAD16_BYTE( "084-c2.bin", 0x0000001, 0x400000, CRC(07864e09) SHA1(0817fcfd75d0735fd8ff27561eaec371e4ff5829) ) /* Plane 2,3 */
+ 	ROM_LOAD16_BYTE( "084-c3.bin", 0x0800000, 0x400000, CRC(a4e65d1b) SHA1(740a405b40b3a4b324697d2652cae29ffe0ac0bd) ) /* Plane 0,1 */
+ 	ROM_LOAD16_BYTE( "084-c4.bin", 0x0800001, 0x400000, CRC(c1ace468) SHA1(74ea2a3cfd7b744f0988a05baaff10016ca8f625) ) /* Plane 2,3 */
+
+	ROM_LOAD16_BYTE( "084-c5.bin", 0x1000000, 0x200000, CRC(8a2c1edc) SHA1(67866651bc0ce27122285a66b0aab108acf3d065) ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "084-c6.bin", 0x1000001, 0x200000, CRC(f593ac35) SHA1(302c92c63f092a8d49429c3331e5e5678f0ea48d) ) /* Plane 2,3 */
+	/* 1400000-17fffff empty */
+	ROM_LOAD16_BYTE( "084-c7.bin", 0x1800000, 0x100000, CRC(9904025f) SHA1(eec770746a0ad073f7d353ab16a2cc3a5278d307) ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "084-c8.bin", 0x1800001, 0x100000, CRC(78eb0f9b) SHA1(2925ea21ed2ce167f08a25589e94f28643379034) ) /* Plane 2,3 */
+ROM_END
+
+ROM_START( kof95a )
+	ROM_REGION( 0x200000, REGION_CPU1, 0 )
+ 	ROM_LOAD16_WORD_SWAP( "084a-p1.bin",0x100000, 0x100000, CRC(2cba2716) SHA1(f6c2d0537c9c3e0938065c65b1797c47198fcff8) )
+	ROM_CONTINUE(						0x000000, 0x100000 )
+
+	NEO_SFIX_128K( "084-s1.bin", CRC(de716f8a) SHA1(f7386454a943ed5caf625f67ee1d0197b1c6fa13) )
+
+	NEO_BIOS_SOUND_128K( "084-m1.bin", CRC(6f2d7429) SHA1(6f8462e4f07af82a5ca3197895d5dcbb67bdaa61) )
+
+	ROM_REGION( 0x900000, REGION_SOUND1, ROMREGION_SOUNDONLY )
+ 	ROM_LOAD( "084-v1.bin", 0x000000, 0x400000, CRC(84861b56) SHA1(1b6c91ddaed01f45eb9b7e49d9c2b9b479d50da6) )
+	ROM_LOAD( "084-v2.bin", 0x400000, 0x200000, CRC(b38a2803) SHA1(dbc2c8606ca09ed7ff20906b022da3cf053b2f09) )
+	/* 600000-7fffff empty */
+	ROM_LOAD( "084-v3.bin", 0x800000, 0x100000, CRC(d683a338) SHA1(eb9866b4b286edc09963cb96c43ce0a8fb09adbb) )
+
+	NO_DELTAT_REGION
+
+	ROM_REGION( 0x1a00000, REGION_GFX3, 0 )
+ 	ROM_LOAD16_BYTE( "084-c1.bin", 0x0000000, 0x400000, CRC(fe087e32) SHA1(e8e89faa616027e4fb9b8a865c1a67f409c93bdf) ) /* Plane 0,1 */
+ 	ROM_LOAD16_BYTE( "084-c2.bin", 0x0000001, 0x400000, CRC(07864e09) SHA1(0817fcfd75d0735fd8ff27561eaec371e4ff5829) ) /* Plane 2,3 */
+ 	ROM_LOAD16_BYTE( "084-c3.bin", 0x0800000, 0x400000, CRC(a4e65d1b) SHA1(740a405b40b3a4b324697d2652cae29ffe0ac0bd) ) /* Plane 0,1 */
+ 	ROM_LOAD16_BYTE( "084-c4.bin", 0x0800001, 0x400000, CRC(c1ace468) SHA1(74ea2a3cfd7b744f0988a05baaff10016ca8f625) ) /* Plane 2,3 */
 	ROM_LOAD16_BYTE( "084-c5.bin", 0x1000000, 0x200000, CRC(8a2c1edc) SHA1(67866651bc0ce27122285a66b0aab108acf3d065) ) /* Plane 0,1 */
 	ROM_LOAD16_BYTE( "084-c6.bin", 0x1000001, 0x200000, CRC(f593ac35) SHA1(302c92c63f092a8d49429c3331e5e5678f0ea48d) ) /* Plane 2,3 */
 	/* 1400000-17fffff empty */
@@ -4316,7 +4482,7 @@ ROM_START( shocktro )
 	ROM_CONTINUE(      			   0x1800001, 0x200000 )
 ROM_END
 
-ROM_START( shocktrj )
+ROM_START( shocktra )
 	ROM_REGION( 0x500000, REGION_CPU1, 0 )
 	ROM_LOAD16_WORD_SWAP( "238-pg1.p1", 0x000000, 0x100000, CRC(efedf8dc) SHA1(f638df9bf7aa7d514ee2bccfc7f2adbf39ca83fc) )
 	ROM_LOAD16_WORD_SWAP( "238-p2.bin", 0x300000, 0x200000, CRC(646f6c76) SHA1(d8fb851414995ba09dbe397d9ed1c765a52d8e1e) )
@@ -4467,6 +4633,34 @@ ROM_START( kof98 )
 	NEO_SFIX_128K( "242-s1.bin", CRC(7f7b4805) SHA1(80ee6e5d0ece9c34ebca54b043a7cb33f9ff6b92) )
 
 	NEO_BIOS_SOUND_256K( "242-m1.bin", CRC(4e7a6b1b) SHA1(b54d08f88713ed0271aa06f9f7c9c572ef555b1a) )
+
+	ROM_REGION( 0x1000000, REGION_SOUND1, ROMREGION_SOUNDONLY )
+	ROM_LOAD( "242-v1.bin", 0x000000, 0x400000, CRC(b9ea8051) SHA1(49606f64eb249263b3341b4f50cc1763c390b2af) )
+	ROM_LOAD( "242-v2.bin", 0x400000, 0x400000, CRC(cc11106e) SHA1(d3108bc05c9bf041d4236b2fa0c66b013aa8db1b) )
+	ROM_LOAD( "242-v3.bin", 0x800000, 0x400000, CRC(044ea4e1) SHA1(062a2f2e52098d73bc31c9ad66f5db8080395ce8) )
+	ROM_LOAD( "242-v4.bin", 0xc00000, 0x400000, CRC(7985ea30) SHA1(54ed5f0324de6164ea81943ebccb3e8d298368ec) )
+
+	NO_DELTAT_REGION
+
+	ROM_REGION( 0x4000000, REGION_GFX3, 0 )
+	ROM_LOAD16_BYTE( "242-c1.bin", 0x0000000, 0x800000, CRC(e564ecd6) SHA1(78f22787a204f26bae9b2b1c945ddbc27143352f) ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "242-c2.bin", 0x0000001, 0x800000, CRC(bd959b60) SHA1(2c97c59e77c9a3fe7d664e741d37944f3d56c10b) ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "242-c3.bin", 0x1000000, 0x800000, CRC(22127b4f) SHA1(bd0d00f889d9da7c6ac48f287d9ed8c605ae22cf) ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "242-c4.bin", 0x1000001, 0x800000, CRC(0b4fa044) SHA1(fa13c3764fae6b035a626601bc43629f1ebaaffd) ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "242-c5.bin", 0x2000000, 0x800000, CRC(9d10bed3) SHA1(4d44addc7c808649bfb03ec45fb9529da413adff) ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "242-c6.bin", 0x2000001, 0x800000, CRC(da07b6a2) SHA1(9c3f0da7cde1ffa8feca89efc88f07096e502acf) ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "242-c7.bin", 0x3000000, 0x800000, CRC(f6d7a38a) SHA1(dd295d974dd4a7e5cb26a3ef3febcd03f28d522b) ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "242-c8.bin", 0x3000001, 0x800000, CRC(c823e045) SHA1(886fbf64bcb58bc4eabb1fc9262f6ac9901a0f28) ) /* Plane 2,3 */
+ROM_END
+
+ROM_START( kof98a )
+	ROM_REGION( 0x500000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "242-p1.bin", 0x000000, 0x100000, CRC(61ac868a) SHA1(26577264aa72d6af272952a876fcd3775f53e3fa) )
+	ROM_LOAD16_WORD_SWAP( "242-p2.bin", 0x100000, 0x400000, CRC(980aba4c) SHA1(5e735929ec6c3ca5b2efae3c7de47bcbb8ade2c5) )
+
+	NEO_SFIX_128K( "242-s1.bin", CRC(7f7b4805) SHA1(80ee6e5d0ece9c34ebca54b043a7cb33f9ff6b92) )
+
+	NEO_BIOS_SOUND_256K( "242-m1a.bin", CRC(4ef7016b) SHA1(4182235e963bd70d398a79abeb54ab4d62887c48) )
 
 	ROM_REGION( 0x1000000, REGION_SOUND1, ROMREGION_SOUNDONLY )
 	ROM_LOAD( "242-v1.bin", 0x000000, 0x400000, CRC(b9ea8051) SHA1(49606f64eb249263b3341b4f50cc1763c390b2af) )
@@ -5357,8 +5551,8 @@ ROM_START( kof2002 )
 	ROM_REGION( 0x20000, REGION_GFX2, 0 )
 	ROM_LOAD( "sfix.sfx",  0x000000, 0x20000, CRC(354029fc) SHA1(4ae4bf23b4c2acff875775d4cbff5583893ce2a1) )
 
-	ROM_REGION( 0x40000, REGION_USER4, 0 )
-	ROM_LOAD( "265-m1.bin", 0x00000, 0x40000, CRC(7dbab719) ) /* encrypted, we load it here for reference and replace with decrypted ROM */
+	ROM_REGION( 0x20000, REGION_USER4, 0 )
+	ROM_LOAD( "265-m1.bin", 0x00000, 0x20000, CRC(85aaa632) ) /* encrypted, we load it here for reference and replace with decrypted ROM */
 	NEO_BIOS_SOUND_128K( "265-m1d.bin", CRC(ab9d360e) ) /* decrypted */
 
 	ROM_REGION( 0x1000000, REGION_SOUND1, ROMREGION_SOUNDONLY )
@@ -5760,6 +5954,58 @@ DRIVER_INIT( mjneogeo )
 
 /******************************************************************************/
 
+static UINT32 cpu1_second_bankaddress;
+
+void neogeo_set_cpu1_second_bank(UINT32 bankaddress)
+{
+	data8_t *RAM = memory_region(REGION_CPU1);
+
+	cpu1_second_bankaddress = bankaddress;
+	cpu_setbank(4,&RAM[bankaddress]);
+}
+
+void neogeo_init_cpu2_setbank(void)
+{
+	UINT8 *mem08 = memory_region(REGION_CPU2);
+
+	cpu_setbank(5,&mem08[bank[0]]);
+	cpu_setbank(6,&mem08[bank[1]]);
+	cpu_setbank(7,&mem08[bank[2]]);
+	cpu_setbank(8,&mem08[bank[3]]);
+}
+
+static void neogeo_init_cpu_banks(void)
+{
+	neogeo_set_cpu1_second_bank(cpu1_second_bankaddress);
+	neogeo_init_cpu2_setbank();
+}
+
+void neogeo_register_main_savestate(void)
+{
+	state_save_register_UINT32("neogeo", 0, "neogeo_frame_counter",       &neogeo_frame_counter,       1);
+	state_save_register_UINT32("neogeo", 0, "neogeo_frame_counter_speed", &neogeo_frame_counter_speed, 1);
+	state_save_register_int   ("neogeo", 0, "current_rastercounter",      &current_rastercounter);
+	state_save_register_int   ("neogeo", 0, "current_rasterline",         &current_rasterline);
+	state_save_register_int   ("neogeo", 0, "scanline_read",              &scanline_read);
+	state_save_register_int   ("neogeo", 0, "irq2start",                  &irq2start);
+	state_save_register_int   ("neogeo", 0, "irq2control",                &irq2control);
+	state_save_register_UINT32("neogeo", 0, "irq2pos_value",              &irq2pos_value,              1);
+	state_save_register_int   ("neogeo", 0, "vblank_int",                 &vblank_int);
+	state_save_register_int   ("neogeo", 0, "scanline_int",               &scanline_int);
+	state_save_register_int   ("neogeo", 0, "fc",                         &fc);
+	state_save_register_int   ("neogeo", 0, "neogeo_raster_enable",       &neogeo_raster_enable);
+	state_save_register_int   ("neogeo", 0, "pending_command",            &pending_command);
+	state_save_register_int   ("neogeo", 0, "result_code",                &result_code);
+	state_save_register_int   ("neogeo", 0, "ts",                         &ts);
+	state_save_register_UINT32("neogeo", 0, "bank",                       bank,                        4);
+	state_save_register_int   ("neogeo", 0, "neogeo_rng",                 &neogeo_rng);
+	state_save_register_UINT32("neogeo", 0, "cpu1_second_bankaddress",    &cpu1_second_bankaddress,    1);
+
+	state_save_register_func_postload(neogeo_init_cpu_banks);
+}
+
+/******************************************************************************/
+
 /* A dummy driver, so that the bios can be debugged, and to serve as */
 /* parent for the NEOGEO_BIOS files, so that we do not have to include */
 /* them in every zip file */
@@ -5771,7 +6017,7 @@ GAMEX( 1990, neogeo, 0, neogeo, neogeo, neogeo, ROT0, "SNK", "Neo-Geo", NOT_A_DR
 
 /* SNK */
 GAME( 1990, nam1975,  neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "NAM-1975" )
-GAME( 1990, bstars,   neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Baseball Stars Professional" )
+GAME( 1990, bstars,   neogeo,   neo320, neogeo,  neogeo,   ROT0, "SNK", "Baseball Stars Professional" )
 GAME( 1990, tpgolf,   neogeo,   raster, neogeo,  neogeo,   ROT0, "SNK", "Top Player's Golf" )
 GAME( 1990, mahretsu, neogeo,   neogeo, mjneogeo,mjneogeo, ROT0, "SNK", "Mahjong Kyoretsuden" )
 GAME( 1990, ridhero,  neogeo,   raster, neogeo,  neogeo,   ROT0, "SNK", "Riding Hero (set 1)" )
@@ -5780,9 +6026,10 @@ GAME( 1991, alpham2,  neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Alpha M
 GAME( 1990, cyberlip, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Cyber-Lip" )
 GAME( 1990, superspy, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "The Super Spy" )
 GAME( 1992, mutnat,   neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Mutation Nation" )
-GAME( 1991, kotm,     neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "King of the Monsters" )
-GAME( 1991, sengoku,  neogeo,   raster, neogeo,  neogeo,   ROT0, "SNK", "Sengoku / Sengoku Denshou (set 1)" )
-GAME( 1991, sengokh,  sengoku,  raster, neogeo,  neogeo,   ROT0, "SNK", "Sengoku / Sengoku Denshou (set 2)" )
+GAME( 1991, kotm,     neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "King of the Monsters (set 1)" )
+GAME( 1991, kotmh,    kotm,     neogeo, neogeo,  neogeo,   ROT0, "SNK", "King of the Monsters (set 2)" )
+GAME( 1991, sengoku,  neogeo,   ras320, neogeo,  neogeo,   ROT0, "SNK", "Sengoku / Sengoku Denshou (set 1)" )
+GAME( 1991, sengokh,  sengoku,  ras320, neogeo,  neogeo,   ROT0, "SNK", "Sengoku / Sengoku Denshou (set 2)" )
 GAME( 1991, burningf, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Burning Fight (set 1)" )
 GAME( 1991, burningh, burningf, neogeo, neogeo,  neogeo,   ROT0, "SNK", "Burning Fight (set 2)" )
 GAME( 1990, lbowling, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "League Bowling" )
@@ -5790,89 +6037,91 @@ GAME( 1991, gpilots,  neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Ghost P
 GAME( 1990, joyjoy,   neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Puzzled / Joy Joy Kid" )
 GAME( 1991, quizdais, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Quiz Daisousa Sen - The Last Count Down" )
 GAME( 1992, lresort,  neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Last Resort" )
-GAME( 1991, eightman, neogeo,   raster, neogeo,  neogeo,   ROT0, "SNK / Pallas", "Eight Man" )
+GAME( 1991, eightman, neogeo,   ras320, neogeo,  neogeo,   ROT0, "SNK / Pallas", "Eight Man" )
 GAME( 1991, legendos, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Legend of Success Joe / Ashitano Joe Densetsu" )
 GAME( 1991, 2020bb,   neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK / Pallas", "2020 Super Baseball (set 1)" )
 GAME( 1991, 2020bbh,  2020bb,   neogeo, neogeo,  neogeo,   ROT0, "SNK / Pallas", "2020 Super Baseball (set 2)" )
 GAME( 1991, socbrawl, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Soccer Brawl" )
-GAME( 1991, fatfury1, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Fatal Fury - King of Fighters / Garou Densetsu - shukumei no tatakai" )
+GAME( 1991, fatfury1, neogeo,   neo320, neogeo,  neogeo,   ROT0, "SNK", "Fatal Fury - King of Fighters / Garou Densetsu - shukumei no tatakai" )
 GAME( 1991, roboarmy, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Robo Army" )
 GAME( 1992, fbfrenzy, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Football Frenzy" )
 GAME( 1992, kotm2,    neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "King of the Monsters 2 - The Next Thing" )
 GAME( 1993, sengoku2, neogeo,   raster, neogeo,  neogeo,   ROT0, "SNK", "Sengoku 2 / Sengoku Denshou 2")
 GAME( 1992, bstars2,  neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Baseball Stars 2" )
-GAME( 1992, quizdai2, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Quiz Meintantei Neo & Geo - Quiz Daisousa Sen part 2" )
-GAME( 1993, 3countb,  neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "3 Count Bout / Fire Suplex" )
+GAME( 1992, quizdai2, neogeo,   neo320, neogeo,  neogeo,   ROT0, "SNK", "Quiz Meitantei Neo & Geo - Quiz Daisousa Sen part 2" )
+GAME( 1993, 3countb,  neogeo,   neo320, neogeo,  neogeo,   ROT0, "SNK", "3 Count Bout / Fire Suplex" )
 GAME( 1992, aof,      neogeo,   raster, neogeo,  neogeo,   ROT0, "SNK", "Art of Fighting / Ryuuko no Ken" )
-GAME( 1993, samsho,   neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Samurai Shodown / Samurai Spirits" )
-GAME( 1994, tophuntr, neogeo,   raster, neogeo,  neogeo,   ROT0, "SNK", "Top Hunter - Roddy & Cathy" )
-GAME( 1992, fatfury2, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Fatal Fury 2 / Garou Densetsu 2 - arata-naru tatakai" )
+GAME( 1993, samsho,   neogeo,   neo320, neogeo,  neogeo,   ROT0, "SNK", "Samurai Shodown / Samurai Spirits" )
+GAME( 1994, tophuntr, neogeo,   ras320, neogeo,  neogeo,   ROT0, "SNK", "Top Hunter - Roddy & Cathy" )
+GAME( 1992, fatfury2, neogeo,   neo320, neogeo,  neogeo,   ROT0, "SNK", "Fatal Fury 2 / Garou Densetsu 2 - arata-naru tatakai" )
 GAME( 1992, ssideki,  neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Super Sidekicks / Tokuten Ou" )
 GAME( 1994, kof94,    neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "The King of Fighters '94" )
 GAME( 1994, aof2,     neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Art of Fighting 2 / Ryuuko no Ken 2" )
-GAME( 1993, fatfursp, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Fatal Fury Special / Garou Densetsu Special" )
+GAME( 1993, fatfursp, neogeo,   neo320, neogeo,  neogeo,   ROT0, "SNK", "Fatal Fury Special / Garou Densetsu Special" )
 GAME( 1995, savagere, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Savage Reign / Fu'un Mokushiroku - kakutou sousei" )
-GAME( 1994, ssideki2, neogeo,   raster, neogeo,  neogeo,   ROT0, "SNK", "Super Sidekicks 2 - The World Championship / Tokuten Ou 2 - real fight football" )
-GAME( 1994, samsho2,  neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Samurai Shodown II / Shin Samurai Spirits - Haohmaru jigokuhen" )
-GAME( 1995, fatfury3, neogeo,   raster, neogeo,  neogeo,   ROT0, "SNK", "Fatal Fury 3 - Road to the Final Victory / Garou Densetsu 3 - haruka-naru tatakai" )
-GAME( 1995, ssideki3, neogeo,   raster, neogeo,  neogeo,   ROT0, "SNK", "Super Sidekicks 3 - The Next Glory / Tokuten Ou 3 - eikoue no michi" )
-GAME( 1995, kof95,    neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "The King of Fighters '95" )
+GAME( 1994, ssideki2, neogeo,   ras320, neogeo,  neogeo,   ROT0, "SNK", "Super Sidekicks 2 - The World Championship / Tokuten Ou 2 - real fight football" )
+GAME( 1994, samsho2,  neogeo,   neo320, neogeo,  neogeo,   ROT0, "SNK", "Samurai Shodown II / Shin Samurai Spirits - Haohmaru jigokuhen" )
+GAME( 1995, fatfury3, neogeo,   ras320, neogeo,  neogeo,   ROT0, "SNK", "Fatal Fury 3 - Road to the Final Victory / Garou Densetsu 3 - haruka-naru tatakai" )
+GAME( 1995, ssideki3, neogeo,   ras320, neogeo,  neogeo,   ROT0, "SNK", "Super Sidekicks 3 - The Next Glory / Tokuten Ou 3 - eikoue no michi" )
+GAME( 1995, kof95,    neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "The King of Fighters '95 (set 1)" )
+GAME( 1995, kof95a,   kof95,    neogeo, neogeo,  neogeo,   ROT0, "SNK", "The King of Fighters '95 (set 2)" )
 GAME( 1995, samsho3,  neogeo,   raster, neogeo,  neogeo,   ROT0, "SNK", "Samurai Shodown III / Samurai Spirits - Zankurou Musouken" )
-GAME( 1995, rbff1,    neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Real Bout Fatal Fury / Real Bout Garou Densetsu" )
+GAME( 1995, rbff1,    neogeo,   neo320, neogeo,  neogeo,   ROT0, "SNK", "Real Bout Fatal Fury / Real Bout Garou Densetsu" )
 GAME( 1996, aof3,     neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Art of Fighting 3 - The Path of the Warrior / Art of Fighting - Ryuuko no Ken Gaiden" )
 GAME( 1996, kof96,    neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "The King of Fighters '96" )
-GAME( 1996, ssideki4, neogeo,   raster, neogeo,  neogeo,   ROT0, "SNK", "Ultimate 11 - The SNK Football Championship / Tokuten Ou - Honoo no Libero, The" )
+GAME( 1996, ssideki4, neogeo,   ras320, neogeo,  neogeo,   ROT0, "SNK", "Ultimate 11 - The SNK Football Championship / Tokuten Ou - Honoo no Libero, The" )
 GAME( 1996, kizuna,   neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Kizuna Encounter - Super Tag Battle / Fu'un Super Tag Battle" )
-GAME( 1996, samsho4,  neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Samurai Shodown IV - Amakusa's Revenge / Samurai Spirits - Amakusa Kourin" )
-GAME( 1996, rbffspec, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Real Bout Fatal Fury Special / Real Bout Garou Densetsu Special" )
+GAME( 1996, samsho4,  neogeo,   neo320, neogeo,  neogeo,   ROT0, "SNK", "Samurai Shodown IV - Amakusa's Revenge / Samurai Spirits - Amakusa Kourin" )
+GAME( 1996, rbffspec, neogeo,   neo320, neogeo,  neogeo,   ROT0, "SNK", "Real Bout Fatal Fury Special / Real Bout Garou Densetsu Special" )
 GAME( 1997, kof97,    neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "The King of Fighters '97 (set 1)" )
 GAME( 1997, kof97a,   kof97,    neogeo, neogeo,  neogeo,   ROT0, "SNK", "The King of Fighters '97 (set 2)" )
-GAME( 1997, lastblad, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Last Blade / Bakumatsu Roman - Gekka no Kenshi, The (set 1)" )
-GAME( 1997, lastblda, lastblad, neogeo, neogeo,  neogeo,   ROT0, "SNK", "Last Blade / Bakumatsu Roman - Gekka no Kenshi, The (set 2)" )
+GAME( 1997, lastblad, neogeo,   neo320, neogeo,  neogeo,   ROT0, "SNK", "Last Blade / Bakumatsu Roman - Gekka no Kenshi, The (set 1)" )
+GAME( 1997, lastblda, lastblad, neo320, neogeo,  neogeo,   ROT0, "SNK", "Last Blade / Bakumatsu Roman - Gekka no Kenshi, The (set 2)" )
 GAME( 1997, irrmaze,  neogeo,   neogeo, irrmaze, neogeo,   ROT0, "SNK / Saurus", "The Irritating Maze / Ultra Denryu Iraira Bou" )
-GAME( 1998, rbff2,    neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Real Bout Fatal Fury 2 - The Newcomers / Real Bout Garou Densetsu 2 - the newcomers (set 1)" )
-GAME( 1998, rbff2a,   rbff2,    neogeo, neogeo,  neogeo,   ROT0, "SNK", "Real Bout Fatal Fury 2 - The Newcomers / Real Bout Garou Densetsu 2 - the newcomers (set 2)" )
+GAME( 1998, rbff2,    neogeo,   neo320, neogeo,  neogeo,   ROT0, "SNK", "Real Bout Fatal Fury 2 - The Newcomers / Real Bout Garou Densetsu 2 - the newcomers (set 1)" )
+GAME( 1998, rbff2a,   rbff2,    neo320, neogeo,  neogeo,   ROT0, "SNK", "Real Bout Fatal Fury 2 - The Newcomers / Real Bout Garou Densetsu 2 - the newcomers (set 2)" )
 GAME( 1998, mslug2,   neogeo,   raster, neogeo,  neogeo,   ROT0, "SNK", "Metal Slug 2 - Super Vehicle-001/II" )
 GAME( 1998, kof98,    neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "The King of Fighters '98 - The Slugfest / King of Fighters '98 - dream match never ends" )
-GAME( 1998, lastbld2, neogeo,   raster, neogeo,  neogeo,   ROT0, "SNK", "Last Blade 2 / Bakumatsu Roman - Dai Ni Maku Gekka no Kenshi, The" )
-GAME( 1998, neocup98, neogeo,   raster, neogeo,  neogeo,   ROT0, "SNK", "Neo-Geo Cup '98 - The Road to the Victory" )
+GAME( 1998, kof98a,   kof98,    neogeo, neogeo,  neogeo,   ROT0, "SNK", "The King of Fighters '98 - The Slugfest / King of Fighters '98 - dream match never ends (alt m1)" )
+GAME( 1998, lastbld2, neogeo,   ras320, neogeo,  neogeo,   ROT0, "SNK", "Last Blade 2 / Bakumatsu Roman - Dai Ni Maku Gekka no Kenshi, The" )
+GAME( 1998, neocup98, neogeo,   ras320, neogeo,  neogeo,   ROT0, "SNK", "Neo-Geo Cup '98 - The Road to the Victory" )
 GAME( 1999, mslugx,   neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Metal Slug X - Super Vehicle-001" )
 GAME( 1999, kof99,    neogeo,   raster, neogeo,  kof99,    ROT0, "SNK", "The King of Fighters '99 - Millennium Battle" ) /* Encrypted Code & GFX */
 GAME( 1999, kof99e,   kof99,    raster, neogeo,  kof99,    ROT0, "SNK", "The King of Fighters '99 - Millennium Battle (earlier)" ) /* Encrypted Code & GFX */
 GAME( 1999, kof99n,   kof99,    raster, neogeo,  kof99n,   ROT0, "SNK", "The King of Fighters '99 - Millennium Battle (not encrypted)" )	/* Encrypted GFX */
 GAME( 1999, kof99p,   kof99,    raster, neogeo,  neogeo,   ROT0, "SNK", "The King of Fighters '99 - Millennium Battle (prototype)" )
-GAME( 1999, garou,    neogeo,   raster, neogeo,  garou,    ROT0, "SNK", "Garou - Mark of the Wolves (set 1)" ) /* Encrypted Code & GFX */
-GAME( 1999, garouo,   garou,    raster, neogeo,  garouo,   ROT0, "SNK", "Garou - Mark of the Wolves (set 2)" ) /* Encrypted Code & GFX */
-GAME( 1999, garoup,   garou,    raster, neogeo,  neogeo,   ROT0, "SNK", "Garou - Mark of the Wolves (prototype)" )
+GAME( 1999, garou,    neogeo,   ras320, neogeo,  garou,    ROT0, "SNK", "Garou - Mark of the Wolves (set 1)" ) /* Encrypted Code & GFX */
+GAME( 1999, garouo,   garou,    ras320, neogeo,  garouo,   ROT0, "SNK", "Garou - Mark of the Wolves (set 2)" ) /* Encrypted Code & GFX */
+GAME( 1999, garoup,   garou,    ras320, neogeo,  neogeo,   ROT0, "SNK", "Garou - Mark of the Wolves (prototype)" )
 GAME( 2000, mslug3,   neogeo,   raster, neogeo,  mslug3,   ROT0, "SNK", "Metal Slug 3" ) /* Encrypted Code & GFX */
 GAME( 2000, mslug3n,  mslug3,   raster, neogeo,  mslug3n,  ROT0, "SNK", "Metal Slug 3 (not encrypted)" ) /* Encrypted GFX */
 GAME( 2000, kof2000,  neogeo,   neogeo, neogeo,  kof2000,  ROT0, "SNK", "The King of Fighters 2000" ) /* Encrypted Code & GFX */
 GAME( 2000, kof2000n, kof2000,  neogeo, neogeo,  kof2000n, ROT0, "SNK", "The King of Fighters 2000 (not encrypted)" ) /* Encrypted GFX */
 GAME( 2001, zupapa,   neogeo,   neogeo, neogeo,  zupapa,   ROT0, "SNK", "Zupapa!" )	/* Encrypted GFX */
-GAME( 2001, sengoku3, neogeo,   neogeo, neogeo,  sengoku3, ROT0, "SNK", "Sengoku 3" )	/* Encrypted GFX */
+GAME( 2001, sengoku3, neogeo,   neo320, neogeo,  sengoku3, ROT0, "SNK", "Sengoku 3" )	/* Encrypted GFX */
 
 /* Alpha Denshi Co. / ADK (changed name in 1993) */
-GAME( 1990, maglord,  neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Alpha Denshi Co.", "Magician Lord (set 1)" )
-GAME( 1990, maglordh, maglord,  neogeo, neogeo,  neogeo,   ROT0, "Alpha Denshi Co.", "Magician Lord (set 2)" )
+GAME( 1990, maglord,  neogeo,   neo320, neogeo,  neogeo,   ROT0, "Alpha Denshi Co.", "Magician Lord (set 1)" )
+GAME( 1990, maglordh, maglord,  neo320, neogeo,  neogeo,   ROT0, "Alpha Denshi Co.", "Magician Lord (set 2)" )
 GAME( 1990, ncombat,  neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Alpha Denshi Co.", "Ninja Combat" )
-GAME( 1990, bjourney, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Alpha Denshi Co.", "Blue's Journey / Raguy" )
+GAME( 1990, bjourney, neogeo,   neo320, neogeo,  neogeo,   ROT0, "Alpha Denshi Co.", "Blue's Journey / Raguy" )
 GAME( 1991, crsword,  neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Alpha Denshi Co.", "Crossed Swords" )
-GAME( 1991, trally,   neogeo,   raster, neogeo,  neogeo,   ROT0, "Alpha Denshi Co.", "Thrash Rally" )
-GAME( 1992, ncommand, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Alpha Denshi Co.", "Ninja Commando" )
-GAME( 1992, wh1,      neogeo,   raster, neogeo,  neogeo,   ROT0, "Alpha Denshi Co.", "World Heroes (set 1)" )
-GAME( 1992, wh1a,     wh1,      raster, neogeo,  neogeo,   ROT0, "Alpha Denshi Co.", "World Heroes (set 2)" )
+GAME( 1991, trally,   neogeo,   ras320, neogeo,  neogeo,   ROT0, "Alpha Denshi Co.", "Thrash Rally" )
+GAME( 1992, ncommand, neogeo,   raster, neogeo,  neogeo,   ROT0, "Alpha Denshi Co.", "Ninja Commando" )
+GAME( 1992, wh1,      neogeo,   ras320, neogeo,  neogeo,   ROT0, "Alpha Denshi Co.", "World Heroes (set 1)" )
+GAME( 1992, wh1h,     wh1,      ras320, neogeo,  neogeo,   ROT0, "Alpha Denshi Co.", "World Heroes (set 2)" )
 GAME( 1993, wh2,      neogeo,   raster, neogeo,  neogeo,   ROT0, "ADK",              "World Heroes 2" )
 GAME( 1994, wh2j,     neogeo,   raster, neogeo,  neogeo,   ROT0, "ADK / SNK",        "World Heroes 2 Jet" )
 GAME( 1994, aodk,     neogeo,   raster, neogeo,  neogeo,   ROT0, "ADK / SNK",        "Aggressors of Dark Kombat / Tsuukai GANGAN Koushinkyoku" )
-GAME( 1995, whp,      neogeo,   neogeo, neogeo,  neogeo,   ROT0, "ADK / SNK",        "World Heroes Perfect" )
+GAME( 1995, whp,      neogeo,   neo320, neogeo,  neogeo,   ROT0, "ADK / SNK",        "World Heroes Perfect" )
 GAME( 1995, mosyougi, neogeo,   raster_busy, neogeo,  neogeo,   ROT0, "ADK / SNK",        "Syougi No Tatsujin - Master of Syougi" )
 GAME( 1996, overtop,  neogeo,   neogeo, neogeo,  neogeo,   ROT0, "ADK",              "Over Top" )
-GAME( 1996, ninjamas, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "ADK / SNK",        "Ninja Master's - haoh-ninpo-cho" )
+GAME( 1996, ninjamas, neogeo,   neo320, neogeo,  neogeo,   ROT0, "ADK / SNK",        "Ninja Master's - haoh-ninpo-cho" )
 GAME( 1996, twinspri, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "ADK",              "Twinkle Star Sprites" )
 
 /* Aicom */
-GAME( 1994, janshin,  neogeo,   neogeo, mjneogeo,mjneogeo, ROT0, "Aicom", "Jyanshin Densetsu - Quest of Jongmaster" )
-GAME( 1995, pulstar,  neogeo,   raster, neogeo,  neogeo,   ROT0, "Aicom", "Pulstar" )
+GAME( 1994, janshin,  neogeo,   neo320, mjneogeo,mjneogeo, ROT0, "Aicom", "Jyanshin Densetsu - Quest of Jongmaster" )
+GAME( 1995, pulstar,  neogeo,   ras320, neogeo,  neogeo,   ROT0, "Aicom", "Pulstar" )
 
 /* Data East Corporation */
 GAME( 1993, spinmast, neogeo,   raster, neogeo,  neogeo,   ROT0, "Data East Corporation", "Spin Master / Miracle Adventure" )
@@ -5883,7 +6132,7 @@ GAME( 1996, magdrop2, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Data East Corp
 GAME( 1997, magdrop3, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Data East Corporation", "Magical Drop III" )
 
 /* Eleven */
-GAME( 2000, nitd,     neogeo,   neogeo, neogeo,  nitd,     ROT0, "Eleven / Gavaking", "Nightmare in the Dark" ) /* Encrypted GFX */
+GAME( 2000, nitd,     neogeo,   neo320, neogeo,  nitd,     ROT0, "Eleven / Gavaking", "Nightmare in the Dark" ) /* Encrypted GFX */
 
 /* Face */
 GAME( 1994, gururin,  neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Face", "Gururin" )
@@ -5891,7 +6140,7 @@ GAME( 1997, miexchng, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Face", "Money 
 
 /* Hudson Soft */
 GAME( 1994, panicbom, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Eighting / Hudson", "Panic Bomber" )
-GAME( 1995, kabukikl, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Hudson", "Far East of Eden - Kabuki Klash / Tengai Makyou - Shin Den" )
+GAME( 1995, kabukikl, neogeo,   neo320, neogeo,  neogeo,   ROT0, "Hudson", "Far East of Eden - Kabuki Klash / Tengai Makyou - Shin Den" )
 GAME( 1997, neobombe, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Hudson", "Neo Bomberman" )
 
 /* Monolith Corp. */
@@ -5906,19 +6155,19 @@ GAME( 1996, mslug,    neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Nazca", "Metal
 GAME( 1994, zedblade, neogeo,   raster, neogeo,  neogeo,   ROT0, "NMK", "Zed Blade / Operation Ragnarok" )
 
 /* Psikyo */
-GAME( 1999, s1945p,   neogeo,   neogeo, neogeo,  s1945p,   ROT0, "Psikyo", "Strikers 1945 Plus" )	/* Encrypted GFX */
+GAME( 1999, s1945p,   neogeo,   neo320, neogeo,  s1945p,   ROT0, "Psikyo", "Strikers 1945 Plus" )	/* Encrypted GFX */
 
 /* Sammy */
 GAME( 1992, viewpoin, neogeo,   raster, neogeo,  neogeo,   ROT0, "Sammy", "Viewpoint" )
 
 /* Saurus */
-GAME( 1995, quizkof,  neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Saurus", "Quiz King of Fighters" )
-GAME( 1995, stakwin,  neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Saurus", "Stakes Winner / Stakes Winner - GI kinzen seihae no michi" )
-GAME( 1996, ragnagrd, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Saurus", "Ragnagard / Shin-Oh-Ken" )
+GAME( 1995, quizkof,  neogeo,   raster, neogeo,  neogeo,   ROT0, "Saurus", "Quiz King of Fighters" )
+GAME( 1995, stakwin,  neogeo,   neo320, neogeo,  neogeo,   ROT0, "Saurus", "Stakes Winner / Stakes Winner - GI kinzen seihae no michi" )
+GAME( 1996, ragnagrd, neogeo,   neo320, neogeo,  neogeo,   ROT0, "Saurus", "Ragnagard / Shin-Oh-Ken" )
 GAME( 1996, pgoal,    neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Saurus", "Pleasure Goal / Futsal - 5 on 5 Mini Soccer" )
-GAME( 1996, stakwin2, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Saurus", "Stakes Winner 2" )
-GAME( 1997, shocktro, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Saurus", "Shock Troopers" )
-GAME( 1997, shocktrj, shocktro, neogeo, neogeo,  neogeo,   ROT0, "Saurus", "Shock Troopers (Japan)" )
+GAME( 1996, stakwin2, neogeo,   neo320, neogeo,  neogeo,   ROT0, "Saurus", "Stakes Winner 2" )
+GAME( 1997, shocktro, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Saurus", "Shock Troopers (set 1)" )
+GAME( 1997, shocktra, shocktro, neogeo, neogeo,  neogeo,   ROT0, "Saurus", "Shock Troopers (set 2)" )
 GAME( 1998, shocktr2, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Saurus", "Shock Troopers - 2nd Squad" )
 
 /* Sunsoft */
@@ -5926,14 +6175,14 @@ GAME( 1995, galaxyfg, neogeo,   raster, neogeo,  neogeo,   ROT0, "Sunsoft", "Gal
 GAME( 1996, wakuwak7, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Sunsoft", "Waku Waku 7" )
 
 /* Taito */
-GAME( 1994, pbobblen, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Taito", "Puzzle Bobble / Bust-A-Move (Neo-Geo)" )
+GAME( 1994, pbobblen, neogeo,   neo320, neogeo,  neogeo,   ROT0, "Taito", "Puzzle Bobble / Bust-A-Move (Neo-Geo)" )
 GAME( 1999, pbobbl2n, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Taito (SNK license)", "Puzzle Bobble 2 / Bust-A-Move Again (Neo-Geo)" )
 
 /* Takara */
 GAME( 1995, marukodq, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Takara", "Chibi Marukochan Deluxe Quiz" )
 
 /* Technos */
-GAME( 1995, doubledr, neogeo,   raster, neogeo,  neogeo,   ROT0, "Technos", "Double Dragon (Neo-Geo)" )
+GAME( 1995, doubledr, neogeo,   ras320, neogeo,  neogeo,   ROT0, "Technos", "Double Dragon (Neo-Geo)" )
 GAME( 1995, gowcaizr, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Technos", "Voltage Fighter - Gowcaizer / Choujin Gakuen Gowcaizer")
 GAME( 1996, sdodgeb,  neogeo,   raster, neogeo,  neogeo,   ROT0, "Technos", "Super Dodge Ball / Kunio no Nekketsu Toukyuu Densetsu" )
 
@@ -5941,16 +6190,16 @@ GAME( 1996, sdodgeb,  neogeo,   raster, neogeo,  neogeo,   ROT0, "Technos", "Sup
 GAME( 1996, tws96,    neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Tecmo", "Tecmo World Soccer '96" )
 
 /* Yumekobo */
-GAME( 1998, blazstar, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Yumekobo", "Blazing Star" )
+GAME( 1998, blazstar, neogeo,   neo320, neogeo,  neogeo,   ROT0, "Yumekobo", "Blazing Star" )
 GAME( 1999, preisle2, neogeo,   neogeo, neogeo,  preisle2, ROT0, "Yumekobo", "Prehistoric Isle 2" ) /* Encrypted GFX */
 
 /* Viccom */
 GAME( 1994, fightfev, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Viccom", "Fight Fever / Crystal Legacy" )
 
 /* Video System Co. */
-GAME( 1994, pspikes2, neogeo,   raster, neogeo,  neogeo,   ROT0, "Video System Co.", "Power Spikes II" )
-GAME( 1994, sonicwi2, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Video System Co.", "Aero Fighters 2 / Sonic Wings 2" )
-GAME( 1995, sonicwi3, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Video System Co.", "Aero Fighters 3 / Sonic Wings 3" )
+GAME( 1994, pspikes2, neogeo,   ras320, neogeo,  neogeo,   ROT0, "Video System Co.", "Power Spikes II" )
+GAME( 1994, sonicwi2, neogeo,   neo320, neogeo,  neogeo,   ROT0, "Video System Co.", "Aero Fighters 2 / Sonic Wings 2" )
+GAME( 1995, sonicwi3, neogeo,   neo320, neogeo,  neogeo,   ROT0, "Video System Co.", "Aero Fighters 3 / Sonic Wings 3" )
 GAME( 1997, popbounc, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Video System Co.", "Pop 'n Bounce / Gapporin" )
 
 /* Visco */
@@ -5959,9 +6208,9 @@ GAME( 1995, puzzledp, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Taito (Visco l
 GAME( 1996, neomrdo,  neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Visco", "Neo Mr. Do!" )
 GAME( 1995, goalx3,   neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Visco", "Goal! Goal! Goal!" )
 GAME( 1996, neodrift, neogeo,   raster, neogeo,  neogeo,   ROT0, "Visco", "Neo Drift Out - New Technology" )
-GAME( 1996, breakers, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Visco", "Breakers" )
+GAME( 1996, breakers, neogeo,   neo320, neogeo,  neogeo,   ROT0, "Visco", "Breakers" )
 GAME( 1997, puzzldpr, puzzledp, neogeo, neogeo,  neogeo,   ROT0, "Taito (Visco license)", "Puzzle De Pon! R!" )
-GAME( 1998, breakrev, breakers, neogeo, neogeo,  neogeo,   ROT0, "Visco", "Breakers Revenge")
+GAME( 1998, breakrev, breakers, neo320, neogeo,  neogeo,   ROT0, "Visco", "Breakers Revenge")
 GAME( 1998, flipshot, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Visco", "Battle Flip Shot" )
 GAME( 1999, ctomaday, neogeo,   neogeo, neogeo,  neogeo,   ROT0, "Visco", "Captain Tomaday" )
 GAME( 1999, ganryu,   neogeo,   neogeo, neogeo,  ganryu,   ROT0, "Visco", "Musashi Ganryuuki" )	/* Encrypted GFX */

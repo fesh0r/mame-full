@@ -189,8 +189,8 @@ WRITE_HANDLER ( tandy1000_pio_w )
 		break;
 	case 2:
 		tandy_ppi.portc = data;
-		if (data&8) timer_set_overclock(0, 1);
-		else timer_set_overclock(0, 4.77/8);
+		if (data&8) cpunum_set_clockscale(0, 1);
+		else cpunum_set_clockscale(0, 4.77/8);
 		break;
 	}
 }

@@ -1306,7 +1306,7 @@ static void d_sam_set_mpurate(int val)
 	 * TODO:  Make the overclock more accurate.  In dual speed, ROM was a fast
 	 * access but RAM was not.  I don't know how to simulate this.
 	 */
-    timer_set_overclock(0, val ? 2 : 1);
+    cpunum_set_clockscale(0, val ? 2 : 1);
 }
 
 static void d_sam_set_pageonemode(int val)
@@ -2026,12 +2026,17 @@ static void coco3_setcartline(int data)
 	coco3_raise_interrupt(COCO3_INT_EI0, cart_line ? 1 : 0);
 }
 
+/* This function, and all calls of it, are hacks for bankswitched games */
 static int count_bank(void)
 {
-	unsigned int	crc;
-	/* This function, and all calls of it, are hacks for bankswitched games */
+	unsigned int crc;
+	mess_image *img;
 
-	crc = image_crc(cartslot_image());
+	img = cartslot_image();
+	if (!image_exists(img))
+		return FALSE;
+
+	crc = image_crc(img);
 
 	switch( crc )
 	{
@@ -2053,13 +2058,17 @@ static int count_bank(void)
 	}
 }
 
+/* This function, and all calls of it, are hacks for bankswitched games */
 static int is_Orch90(void)
 {
-	unsigned int	crc;
-	/* This function, and all calls of it, are hacks for bankswitched games */
+	unsigned int crc;
+	mess_image *img;
 
-	crc = image_crc(cartslot_image());
+	img = cartslot_image();
+	if (!image_exists(img))
+		return FALSE;
 
+	crc = image_crc(img);
 	return crc == 0x15FB39AF;
 }
 

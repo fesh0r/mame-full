@@ -172,7 +172,7 @@ static void z88_rtc_timer_callback(int dummy)
 			/* column has gone low in snooze/coma */
 			blink.sta |= STA_KEY;
 
-			timer_trigger(Z88_SNOOZE_TRIGGER);
+			cpu_trigger(Z88_SNOOZE_TRIGGER);
 		
 			z88_interrupt_refresh();
 		}

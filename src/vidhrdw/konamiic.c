@@ -3651,24 +3651,24 @@ READ16_HANDLER( K055673_GX6bpp_rom_word_r )
 
 	switch (offset)
 	{
-		case 0:	
+		case 0:
 			return ROM[romofs+3];
 			break;
-		case 1:	
+		case 1:
 			return ROM[romofs+4];
 			break;
-		case 2: 
-		case 3: 
+		case 2:
+		case 3:
 		       	return ROM[romofs+5];
 			break;
-		case 4:	
+		case 4:
 			return ROM[romofs];
 			break;
-		case 5:	
+		case 5:
 			return ROM[romofs+1];
 			break;
-		case 6:	
-		case 7:	
+		case 6:
+		case 7:
 		       	return ROM[romofs+2];
 			break;
 		default:
@@ -5212,6 +5212,17 @@ READ16_HANDLER( K054157_rom_word_r )
 	return K054157_rombase[addr+1] | (K054157_rombase[addr] << 8);
 }
 
+READ16_HANDLER( K054157_rom_word_8000_r )
+{
+	int addr = 0x8000*K054157_cur_rombank + 2*offset;
+
+//	usrintf_showmessage("%04x: addr %06x",activecpu_get_pc(),addr);
+
+//	printf("rd @ %x (bank %x, final %x)\n", offset*2, K054157_cur_rombank, addr);
+
+	return K054157_rombase[addr+1] | (K054157_rombase[addr] << 8);
+}
+
 WRITE16_HANDLER( K054157_ram_word_w )
 {
 	data16_t *adr = K054157_cur_rambase + offset;
@@ -5749,7 +5760,7 @@ static int K056832_rom_read_b(int offset, int blksize, int blksize2, int zerosec
 		K056832_rom_half = 1;
 	}
 
-	return ret;	
+	return ret;
 }
 
 READ16_HANDLER( K056832_5bpp_rom_word_r )

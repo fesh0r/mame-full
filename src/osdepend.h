@@ -362,20 +362,12 @@ void osd_pause(int paused);
 
 
 
-#if defined MAME_NET || defined XMAME_NET
+#ifdef MAME_NET
 /* network */
 int osd_net_init(void);
-#ifdef XMAME_NET
-int osd_net_active(void);
-#endif
 int osd_net_send(int player, unsigned char buf[], int *size);
 int osd_net_recv(int player, unsigned char buf[], int *size);
-#ifdef MAME_NET
 int osd_net_sync(void);
-#elif defined XMAME_NET
-void osd_net_sync(unsigned short input_port_values[MAX_INPUT_PORTS],
-                  unsigned short input_port_defaults[MAX_INPUT_PORTS]);
-#endif
 int osd_net_input_sync(void);
 int osd_net_exit(void);
 int osd_net_add_player(void);

@@ -47,6 +47,7 @@ extern UINT32 win_d3d_preprocess_tfactor;
 //============================================================
 
 #define SHOW_FLIP_TIMES 		0
+#define SHOW_MODE_SCORE 		0
 
 
 
@@ -498,7 +499,7 @@ int win_d3d_init(int width, int height, int depth, int attributes, double aspect
 
 	// set the cooperative level
 	// for non-window modes, we will use full screen here
-	result = IDirectDraw7_SetCooperativeLevel(ddraw7, win_video_window, win_window_mode ? DDSCL_NORMAL : DDSCL_ALLOWREBOOT | DDSCL_FULLSCREEN | DDSCL_EXCLUSIVE);
+	result = IDirectDraw7_SetCooperativeLevel(ddraw7, win_video_window, (win_window_mode ? DDSCL_NORMAL : DDSCL_ALLOWREBOOT | DDSCL_FULLSCREEN | DDSCL_EXCLUSIVE) | DDSCL_FPUPRESERVE);
 	if (result != DD_OK)
 	{
 		fprintf(stderr, "Error setting cooperative level: %08x\n", (UINT32)result);
@@ -512,7 +513,7 @@ int win_d3d_init(int width, int height, int depth, int attributes, double aspect
 	win_d3d_effects_init();
 
 	// set contraints on window size
-	if (win_d3d_use_scanlines || win_force_int_stretch)
+	if (win_d3d_use_scanlines && win_force_int_stretch == FORCE_INT_STRECT_AUTO)
 		win_default_constraints = win_d3d_effects_swapxy ? CONSTRAIN_INTEGER_WIDTH : CONSTRAIN_INTEGER_HEIGHT;
 
 	// full screen mode: set the resolution
@@ -657,7 +658,7 @@ static double compute_mode_score(int width, int height, int depth, int refresh)
 		{ { 0.00, 0.50, 0.75, 1.00 },	{ 0.00, 0.50, 0.75, 1.00 } }	// 32bpp source
 	};
 
-	double size_score, depth_score, refresh_score, final_score;
+	double size_score, aspect_score, depth_score, refresh_score, final_score;
 	int target_width, target_height;
 
 	// select wich depth matrix to use based on the game properties and enabled effects
@@ -676,7 +677,7 @@ static double compute_mode_score(int width, int height, int depth, int refresh)
 		target_width *= 2;
 
 	// determine the zoom level based on the number of scanlines of the game
-	if (win_keep_aspect && !win_force_int_stretch)
+	if (win_keep_aspect && win_force_int_stretch != FORCE_INT_STRECT_FULL)
 	{
 		if (blit_swapxy && win_default_constraints != CONSTRAIN_INTEGER_HEIGHT)
 		{
@@ -685,7 +686,7 @@ static double compute_mode_score(int width, int height, int depth, int refresh)
 				target_width = max_width * win_gfx_zoom;
 
 			// match height according to the aspect ratios of the game, screen, and display mode
-			target_height = (int)((double)target_width * width / aspect_ratio / height / win_screen_aspect + 0.5);
+			target_height = (int)((double)target_width * height / aspect_ratio / width * win_screen_aspect + 0.5);
 		}
 		else
 		{
@@ -708,8 +709,8 @@ static double compute_mode_score(int width, int height, int depth, int refresh)
 			target_height = max_height * win_gfx_zoom;
 	}
 
-	// compute initial score based on difference between target and current
-	size_score = 1.0 / (1.0 + fabs(width - target_width) + fabs(height - target_height));
+	// compute initial score based on difference between target and current (adjusted for zoom level)
+	size_score = 1.0 / (1.0 + (fabs(width - target_width) / win_screen_aspect + fabs(height - target_height)) / win_gfx_zoom);
 
 	// if we're looking for a particular mode, make sure it matches
 	if (win_gfx_width && win_gfx_height && (width != win_gfx_width || height != win_gfx_height))
@@ -722,6 +723,14 @@ static double compute_mode_score(int width, int height, int depth, int refresh)
 	// if mode is smaller than we'd like, it only scores up to 0.1
 	if (width < target_width || height < target_height)
 		size_score *= 0.1;
+
+	// now compute the aspect ratio score
+	if (win_d3d_use_rgbeffect)
+		// strongly prefer square pixels
+		aspect_score = 1.0 / (1.0 + fabs((double)width / height - win_screen_aspect) * 10.0);
+	else
+		// mildly prefer square pixels
+		aspect_score = 1.0 / (1.0 + fabs((double)width / height - win_screen_aspect));
 
 	// next compute depth score
 	depth_score = depth_matrix[(pref_depth + 7) / 8 - 1][matrix][(depth + 7) / 8 - 1];
@@ -745,8 +754,13 @@ static double compute_mode_score(int width, int height, int depth, int refresh)
 	if ((double)refresh < Machine->drv->frames_per_second)
 		refresh_score *= 0.1;
 
-	// weight size highest, followed by depth and refresh
-	final_score = (size_score * 100.0 + depth_score * 10.0 + refresh_score) / 111.0;
+	// weight size/aspect highest, followed by depth and refresh
+	final_score = (size_score * aspect_score * 100.0 + depth_score * 10.0 + refresh_score) / 111.0;
+
+#if SHOW_MODE_SCORE
+	fprintf(stderr, "%4ix%4i: size %1.6f aspect %1.4f depth %1.1f refresh %1.4f total %1.6f\n", width, height, size_score, aspect_score, depth_score, refresh_score, final_score);
+#endif
+
 	return final_score;
 }
 
@@ -1015,7 +1029,7 @@ static int create_effects_surfaces(void)
 		desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_VIDEOMEMORY;
 
 		// we can save video memory because we only need to partially cover the screen
-		if (!win_window_mode && win_keep_aspect)
+		if (!win_window_mode && win_keep_aspect && !win_force_int_stretch)
 		{
 			desc.dwWidth = primary_desc.dwWidth;
 			desc.dwHeight = (int)((double)primary_desc.dwHeight / aspect_ratio * win_screen_aspect + 0.5);
@@ -1489,6 +1503,10 @@ static void erase_surfaces(void)
 	if (preprocess_surface)
 		result = IDirectDrawSurface7_Blt(preprocess_surface, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &blitfx);
 
+	// erase the RGB effects surface
+	if (win_d3d_background_surface)
+		result = IDirectDrawSurface7_Blt(win_d3d_background_surface, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &blitfx);
+
 	win_d3d_effects_init();
 
 	if (!win_window_mode)
@@ -1692,7 +1710,6 @@ int win_d3d_draw(struct mame_bitmap *bitmap, const struct rectangle *bounds, voi
 		update = 1;
 	}
 
-#if 1
 	// if the surfaces are lost, restore them
 	if (IDirectDrawSurface7_IsLost(primary_surface) == DDERR_SURFACELOST)
 		restore_surfaces();
@@ -1700,11 +1717,7 @@ int win_d3d_draw(struct mame_bitmap *bitmap, const struct rectangle *bounds, voi
 	// render to the blit surface,
 	result = render_to_blit(bitmap, bounds, vector_dirty_pixels, update);
 
-
 	return result;
-#else
-	return 0;
-#endif
 }
 
 
@@ -2140,6 +2153,7 @@ tryagain:
 		IDirect3DDevice7_SetTextureStageState(d3d_device7, 0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
 		IDirect3DDevice7_SetTextureStageState(d3d_device7, 0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
 		IDirect3DDevice7_SetTextureStageState(d3d_device7, 0, D3DTSS_TEXCOORDINDEX, 0);
+		IDirect3DDevice7_SetTextureStageState(d3d_device7, 0, D3DTSS_ADDRESS, D3DTADDRESS_CLAMP);
 
 		// stage 1 isn't used
 		IDirect3DDevice7_SetTextureStageState(d3d_device7, 1, D3DTSS_COLOROP, D3DTOP_DISABLE);
@@ -2165,6 +2179,7 @@ tryagain:
 		IDirect3DDevice7_SetTextureStageState(d3d_device7, 0, D3DTSS_COLOROP, d3dtop_scanlines);
 		IDirect3DDevice7_SetTextureStageState(d3d_device7, 0, D3DTSS_ALPHAOP, D3DTOP_DISABLE);
 		IDirect3DDevice7_SetTextureStageState(d3d_device7, 0, D3DTSS_TEXCOORDINDEX, 1);
+		IDirect3DDevice7_SetTextureStageState(d3d_device7, 0, D3DTSS_ADDRESS, D3DTADDRESS_WRAP);
 
 		// stage 1 holds the image
 		IDirect3DDevice7_SetTextureStageState(d3d_device7, 1, D3DTSS_COLORARG1, D3DTA_TEXTURE);
@@ -2172,6 +2187,7 @@ tryagain:
 		IDirect3DDevice7_SetTextureStageState(d3d_device7, 1, D3DTSS_COLOROP, D3DTOP_MODULATE);
 		IDirect3DDevice7_SetTextureStageState(d3d_device7, 1, D3DTSS_ALPHAOP, D3DTOP_DISABLE);
 		IDirect3DDevice7_SetTextureStageState(d3d_device7, 1, D3DTSS_TEXCOORDINDEX, 0);
+		IDirect3DDevice7_SetTextureStageState(d3d_device7, 1, D3DTSS_ADDRESS, D3DTADDRESS_CLAMP);
 
 		// use the best scanline texture for the current zoom level
 		IDirect3DDevice7_SetTexture(d3d_device7, 0, win_d3d_scanline_surface[win_d3d_current_zoom >= 4 ? 1 : 0]);

@@ -94,7 +94,7 @@ READ_HANDLER ( MRA_ANTIC )
 		data = antic.r.antic09;
 		break;
 	case 10: /* WSYNC read */
-		timer_holdcpu_trigger(0,TRIGGER_HSYNC);
+		cpu_spinuntil_trigger(TRIGGER_HSYNC);
 		antic.w.wsync = 1;
 		data = antic.r.antic0a;
 		break;
@@ -208,7 +208,7 @@ WRITE_HANDLER ( MWA_ANTIC )
 		break;
 	case 10: /* WSYNC write */
 		LOG(("ANTIC 0A write WSYNC  $%02X\n", data));
-		timer_holdcpu_trigger(0,TRIGGER_HSYNC);
+		cpu_spinuntil_trigger(TRIGGER_HSYNC);
 		antic.w.wsync = 1;
 		break;
 	case 11:

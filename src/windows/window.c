@@ -543,12 +543,11 @@ int win_create_window(int width, int height, int depth, int attributes, double a
 		win_use_directx = USE_DDRAW;
 	
 	// determine the aspect ratio: hardware stretch case
-	if (!win_force_int_stretch && (win_use_directx == USE_D3D || (win_use_directx == USE_DDRAW && win_dd_hw_stretch)))
+	if (win_force_int_stretch != FORCE_INT_STRECT_FULL && (win_use_directx == USE_D3D || (win_use_directx == USE_DDRAW && win_dd_hw_stretch)))
 	{
 		aspect_ratio = aspect;
 	}
-
-	// determine the aspect ratio: software stretch case
+	// determine the aspect ratio: software stretch / full cleanstretch case
 	else
 	{
 		aspect_ratio = (double)width / (double)height;
@@ -556,6 +555,23 @@ int win_create_window(int width, int height, int depth, int attributes, double a
 			aspect_ratio *= 2.0;
 		else if (pixel_aspect_ratio == VIDEO_PIXEL_ASPECT_RATIO_1_2)
 			aspect_ratio /= 2.0;
+	}
+
+	win_default_constraints = 0;
+	switch (win_force_int_stretch)
+	{
+		// contrain height for full cleanstretch
+		case FORCE_INT_STRECT_FULL:
+			win_default_constraints = blit_swapxy ? CONSTRAIN_INTEGER_HEIGHT : CONSTRAIN_INTEGER_WIDTH;
+			break;
+		// contrain width (relative to the game)
+		case FORCE_INT_STRECT_HOR:
+			win_default_constraints = blit_swapxy ? CONSTRAIN_INTEGER_HEIGHT : CONSTRAIN_INTEGER_WIDTH;
+			break;
+		// contrain height (relative to the game)
+		case FORCE_INT_STRECT_VER:
+			win_default_constraints = blit_swapxy ? CONSTRAIN_INTEGER_WIDTH : CONSTRAIN_INTEGER_HEIGHT;
+			break;
 	}
 
 	// finish off by trying to initialize DirectX	
@@ -840,7 +856,7 @@ void win_constrain_to_aspect_ratio(RECT *rect, int adjustment, int constraints)
 	RECT rectcopy = *rect;
 
 	// adjust if hardware stretching
-	if (!win_force_int_stretch && (win_use_directx == USE_D3D || (win_use_directx == USE_DDRAW && win_dd_hw_stretch)))
+	if (win_force_int_stretch != FORCE_INT_STRECT_FULL && (win_use_directx == USE_D3D || (win_use_directx == USE_DDRAW && win_dd_hw_stretch)))
 		adjusted_ratio *= win_aspect_ratio_adjust;
 
 	// determine the minimum rect
@@ -879,26 +895,18 @@ void win_constrain_to_aspect_ratio(RECT *rect, int adjustment, int constraints)
 		int maxwidth = (rectcopy.right - rectcopy.left - extrawidth) / win_visible_width;
 
 		while (maxwidth > 1 && maxrect.bottom - maxrect.top < (int)((double)maxwidth * win_visible_width / adjusted_ratio + 0.5) + extraheight)
-		{
 			maxwidth--;
-		}
 		if (maxrect.right - maxrect.left > maxwidth * win_visible_width + extrawidth)
-		{
 			maxrect.right = maxrect.left + maxwidth * win_visible_width + extrawidth;
-		}
 	}
 	else if (constraints == CONSTRAIN_INTEGER_HEIGHT)
 	{
 		int maxheight = (rectcopy.bottom - rectcopy.top - extraheight) / win_visible_height;
 
 		while (maxheight > 1 && maxrect.right - maxrect.left < (int)((double)maxheight * win_visible_height * adjusted_ratio + 0.5) + extrawidth)
-		{
 			maxheight--;
-		}
 		if (maxrect.bottom - maxrect.top > maxheight * win_visible_height + extraheight)
-		{
 			maxrect.bottom = maxrect.top + maxheight * win_visible_height + extraheight;
-		}
 	}
 
 	// compute the maximum requested width/height

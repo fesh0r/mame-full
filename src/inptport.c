@@ -17,7 +17,7 @@ TODO:	remove the 1 analog device per port limitation
 #include "inputx.h"
 #endif
 
-#if defined MAME_NET || defined XMAME_NET
+#ifdef MAME_NET
 #include "network.h"
 
 static unsigned short input_port_defaults[MAX_INPUT_PORTS];
@@ -500,10 +500,6 @@ struct ik input_keywords[] =
 	{ "JOYCODE_1_BUTTON4",	  	IKT_STD,		JOYCODE_1_BUTTON4 },
 	{ "JOYCODE_1_BUTTON5",	  	IKT_STD,		JOYCODE_1_BUTTON5 },
 	{ "JOYCODE_1_BUTTON6",	  	IKT_STD,		JOYCODE_1_BUTTON6 },
-	{ "JOYCODE_1_BUTTON7",	  	IKT_STD,		JOYCODE_1_BUTTON7 },
-	{ "JOYCODE_1_BUTTON8",	  	IKT_STD,		JOYCODE_1_BUTTON8 },
-	{ "JOYCODE_1_BUTTON9",	  	IKT_STD,		JOYCODE_1_BUTTON9 },
-	{ "JOYCODE_1_BUTTON10",	  	IKT_STD,		JOYCODE_1_BUTTON10 },
 	{ "JOYCODE_1_START",	  	IKT_STD,		JOYCODE_1_START },
 	{ "JOYCODE_1_SELECT",	  	IKT_STD,		JOYCODE_1_SELECT },
 	{ "JOYCODE_2_LEFT",		  	IKT_STD,		JOYCODE_2_LEFT },
@@ -516,10 +512,6 @@ struct ik input_keywords[] =
 	{ "JOYCODE_2_BUTTON4",	  	IKT_STD,		JOYCODE_2_BUTTON4 },
 	{ "JOYCODE_2_BUTTON5",	  	IKT_STD,		JOYCODE_2_BUTTON5 },
 	{ "JOYCODE_2_BUTTON6",	  	IKT_STD,		JOYCODE_2_BUTTON6 },
-	{ "JOYCODE_2_BUTTON7",	  	IKT_STD,		JOYCODE_2_BUTTON7 },
-	{ "JOYCODE_2_BUTTON8",	  	IKT_STD,		JOYCODE_2_BUTTON8 },
-	{ "JOYCODE_2_BUTTON9",	  	IKT_STD,		JOYCODE_2_BUTTON9 },
-	{ "JOYCODE_2_BUTTON10",	  	IKT_STD,		JOYCODE_2_BUTTON10 },
 	{ "JOYCODE_2_START",	  	IKT_STD,		JOYCODE_2_START },
 	{ "JOYCODE_2_SELECT",	  	IKT_STD,		JOYCODE_2_SELECT },
 	{ "JOYCODE_3_LEFT",		  	IKT_STD,		JOYCODE_3_LEFT },
@@ -532,10 +524,6 @@ struct ik input_keywords[] =
 	{ "JOYCODE_3_BUTTON4",	  	IKT_STD,		JOYCODE_3_BUTTON4 },
 	{ "JOYCODE_3_BUTTON5",	  	IKT_STD,		JOYCODE_3_BUTTON5 },
 	{ "JOYCODE_3_BUTTON6",	  	IKT_STD,		JOYCODE_3_BUTTON6 },
-	{ "JOYCODE_3_BUTTON7",	  	IKT_STD,		JOYCODE_3_BUTTON6 },
-	{ "JOYCODE_3_BUTTON8",	  	IKT_STD,		JOYCODE_3_BUTTON6 },
-	{ "JOYCODE_3_BUTTON9",	  	IKT_STD,		JOYCODE_3_BUTTON6 },
-	{ "JOYCODE_3_BUTTON10",	  	IKT_STD,		JOYCODE_3_BUTTON6 },
 	{ "JOYCODE_3_START",	  	IKT_STD,		JOYCODE_3_START },
 	{ "JOYCODE_3_SELECT",	  	IKT_STD,		JOYCODE_3_SELECT },
 	{ "JOYCODE_4_LEFT",		  	IKT_STD,		JOYCODE_4_LEFT },
@@ -548,10 +536,6 @@ struct ik input_keywords[] =
 	{ "JOYCODE_4_BUTTON4",	  	IKT_STD,		JOYCODE_4_BUTTON4 },
 	{ "JOYCODE_4_BUTTON5",	  	IKT_STD,		JOYCODE_4_BUTTON5 },
 	{ "JOYCODE_4_BUTTON6",	  	IKT_STD,		JOYCODE_4_BUTTON6 },
-	{ "JOYCODE_4_BUTTON7",	  	IKT_STD,		JOYCODE_4_BUTTON7 },
-	{ "JOYCODE_4_BUTTON8",	  	IKT_STD,		JOYCODE_4_BUTTON8 },
-	{ "JOYCODE_4_BUTTON9",	  	IKT_STD,		JOYCODE_4_BUTTON9 },
-	{ "JOYCODE_4_BUTTON10",	  	IKT_STD,		JOYCODE_4_BUTTON10 },
 	{ "JOYCODE_4_START",	  	IKT_STD,		JOYCODE_4_START },
 	{ "JOYCODE_4_SELECT",	  	IKT_STD,		JOYCODE_4_SELECT },
 
@@ -2034,9 +2018,6 @@ profiler_mark(PROFILER_INPUT);
 #ifdef MAME_NET
 				if ( net_active() )
 					input_port_defaults[port] = input_port_value[port];
-#elif defined XMAME_NET
-				if ( osd_net_active() )
-					input_port_defaults[port] = input_port_value[port];
 #endif /* MAME_NET */
 			}
 
@@ -2228,9 +2209,6 @@ if (IP_GET_IMPULSE(in) == 0)
 #ifdef MAME_NET
 	if ( net_active() && (default_player != NET_SPECTATOR) )
 		net_input_sync((unsigned char *) input_port_value, (unsigned char *) input_port_defaults, MAX_INPUT_PORTS);
-#elif defined XMAME_NET
-	if ( osd_net_active() )
-		osd_net_sync(input_port_value, input_port_defaults);
 #endif /* MAME_NET */
 
 profiler_mark(PROFILER_END);

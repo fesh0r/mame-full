@@ -271,9 +271,9 @@ static void pc_generic_frame_interrupt(int has_turbo, void (*pc_timer)(void))
 		if (turboswitch !=(input_port_3_r(0)&2) )
 		{
 			if (input_port_3_r(0)&2)
-				timer_set_overclock(0, 1);
+				cpunum_set_clockscale(0, 1);
 			else
-				timer_set_overclock(0, 4.77/12);
+				cpunum_set_clockscale(0, 4.77/12);
 			turboswitch=input_port_3_r(0)&2;
 		}
 	}

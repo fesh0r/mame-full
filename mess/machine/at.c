@@ -120,17 +120,19 @@ void at_cga_frame_interrupt (void)
 {
 	static int turboswitch=-1;
 
-	if (turboswitch !=(input_port_3_r(0)&2)) {
+	if (turboswitch !=(input_port_3_r(0)&2))
+	{
 		if (input_port_3_r(0)&2)
-			timer_set_overclock(0, 1);
+			cpunum_set_clockscale(0, 1);
 		else
-			timer_set_overclock(0, 4.77/12);
+			cpunum_set_clockscale(0, 4.77/12);
 		turboswitch=input_port_3_r(0)&2;
 	}
 
 	pc_cga_timer();
 
-    if( !onscrd_active() && !setup_active() ) {
+    if( !onscrd_active() && !setup_active() )
+	{
 		at_keyboard_polling();
 		at_8042_time();
 	}
@@ -142,9 +144,9 @@ void at_vga_frame_interrupt (void)
 
 	if (turboswitch !=(input_port_3_r(0)&2)) {
 		if (input_port_3_r(0)&2)
-			timer_set_overclock(0, 1);
+			cpunum_set_clockscale(0, 1);
 		else
-			timer_set_overclock(0, 4.77/12);
+			cpunum_set_clockscale(0, 4.77/12);
 		turboswitch=input_port_3_r(0)&2;
 	}
 

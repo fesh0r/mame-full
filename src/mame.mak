@@ -818,6 +818,7 @@ $(OBJ)/gaelco.a: \
 	$(OBJ)/machine/wrally.o $(OBJ)/vidhrdw/wrally.o $(OBJ)/drivers/wrally.o \
 	$(OBJ)/vidhrdw/targeth.o $(OBJ)/drivers/targeth.o \
 	$(OBJ)/machine/gaelco2.o $(OBJ)/vidhrdw/gaelco2.o $(OBJ)/drivers/gaelco2.o \
+	$(OBJ)/vidhrdw/glass.o $(OBJ)/drivers/glass.o \
 
 $(OBJ)/kaneko.a: \
 	$(OBJ)/vidhrdw/airbustr.o $(OBJ)/drivers/airbustr.o \
@@ -930,7 +931,8 @@ $(OBJ)/igs.a: \
 	$(OBJ)/vidhrdw/iqblock.o $(OBJ)/drivers/iqblock.o \
 	$(OBJ)/drivers/chindrag.o \
 	$(OBJ)/drivers/grtwall.o \
-	$(OBJ)/machine/pgmcrypt.o $(OBJ)/vidhrdw/pgm.o $(OBJ)/drivers/pgm.o \
+	$(OBJ)/vidhrdw/pgm.o $(OBJ)/drivers/pgm.o \
+	$(OBJ)/machine/pgmprot.o $(OBJ)/machine/pgmcrypt.o \
 
 $(OBJ)/ramtek.a: \
 	$(OBJ)/vidhrdw/hitme.o $(OBJ)/drivers/hitme.o \

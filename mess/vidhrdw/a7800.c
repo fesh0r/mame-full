@@ -679,7 +679,7 @@ WRITE_HANDLER( a7800_MARIA_w )
 			maria_palette[0][3] = Machine->pens[data];
 			break;
 		case 0x04:
-			timer_holdcpu_trigger(0,TRIGGER_HSYNC);
+			cpu_spinuntil_trigger(TRIGGER_HSYNC);
 			maria_wsync=1;
 			break;
 

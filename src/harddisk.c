@@ -569,7 +569,7 @@ UINT32 hard_disk_write(void *disk, UINT32 lbasector, UINT32 numsectors, const vo
 	fileoffset = offset_from_mapentry(&info->map[block]);
 
 	/* if we already own the block, and we're not compressing things, just write through */
-	if ((fileoffset != 0) && (info->header.compression == HDCOMPRESSION_NONE))
+	if (fileoffset != 0 && info->header.compression == HDCOMPRESSION_NONE)
 	{
 		/* do the write */
 		count = (*interface.write)(info->file, fileoffset + offset * info->header.seclen, info->header.seclen, buffer);
@@ -604,6 +604,7 @@ UINT32 hard_disk_write(void *disk, UINT32 lbasector, UINT32 numsectors, const vo
 cleanup:
 	return 0;
 }
+
 
 
 /*************************************

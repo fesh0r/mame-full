@@ -396,6 +396,28 @@ static void K054539_stop_chip(int chip)
 static void K054539_w(int chip, offs_t offset, data8_t data)
 {
 	data8_t old = K054539_chips.chip[chip].regs[offset];
+	int voice, reg;
+
+	/* The K054539 has behavior like many other wavetable chips including
+ 	   the Ensoniq 550x and Gravis GF-1: if a voice is active, writing
+	   to it's current position is silently ignored.
+
+	   Dadandaan depends on this or the vocals go wrong.
+	   */
+	if (offset < 8*0x20)
+	{
+		voice = offset / 0x20;
+		reg = offset & ~0x20;
+
+		if(K054539_chips.chip[chip].regs[0x22c] & (1<<voice))
+		{
+			if (reg >= 0xc && reg <= 0xe)
+			{
+				return;
+			}
+		}
+	}
+
 	K054539_chips.chip[chip].regs[offset] = data;
 	switch(offset) {
 	case 0x13f: {

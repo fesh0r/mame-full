@@ -3011,7 +3011,7 @@ GAMEX( 1995, tkmmpzdm, konamigx, konamigx_6bpp, puzldama, konamigx, ROT0, "Konam
 GAMEX( 1995, dragoonj, konamigx, dragoonj, dragoonj, konamigx, ROT0, "Konami", "Dragoon Might (Ver JAA)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1996, sexyparo, konamigx, konamigx, gokuparo, konamigx, ROT0, "Konami", "Sexy Parodius (Ver JAA)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1996, daiskiss, konamigx, konamigx, gokuparo, konamigx, ROT0, "Konami", "Daisu-Kiss (Ver JAA)", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1996, tokkae,   konamigx, konamigx_6bpp, puzldama, konamigx, ROT0, "Konami", "Tokkae Puzzle-dama (Ver JAA)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1996, tokkae,   konamigx, konamigx_6bpp, puzldama, konamigx, ROT0, "Konami", "Taisen Tokkae-dama (Ver JAA)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1996, salmndr2, konamigx, konamigx_6bpp_2, gokuparo, konamigx, ROT0, "Konami", "Salamander 2 (JAA)", GAME_IMPERFECT_GRAPHICS )
 
 /* these games are unplayable due to protection */
