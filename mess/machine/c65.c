@@ -479,9 +479,9 @@ WRITE_HANDLER ( c65_write_io )
 		vic3_palette_w(offset-0x100,data);
 		break;
 	case 0x400:
-		if (offset<0x440) /* maybe 0x20 */
+		if (offset<0x420) /* maybe 0x20 */
 			sid6581_0_port_w (offset & 0x3f, data);
-		else if (offset<0x480)
+		else if (offset<0x440)
 			sid6581_1_port_w(offset&0x3f, data);
 		else
 			DBG_LOG (1, "io write", ("%.3x %.2x\n", offset, data));
@@ -532,9 +532,9 @@ static READ_HANDLER ( c65_read_io )
 		DBG_LOG (1, "io read", ("%.3x\n", offset));
 		break;
 	case 0x400:
-		if (offset<0x440)
+		if (offset<0x420)
 			return sid6581_0_port_r (offset & 0x3f);
-		if (offset<0x480)
+		if (offset<0x440)
 			return sid6581_1_port_r(offset&0x3f);
 		DBG_LOG (1, "io read", ("%.3x\n", offset));
 		break;
