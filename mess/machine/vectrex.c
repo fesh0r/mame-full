@@ -104,7 +104,7 @@ int vectrex_init_cart (int id)
 	}
 
 	if (Machine->scrbitmap)
-		vectrex_set_palette ();
+		vectrex_init_colors ();
 
 	return INIT_PASS;
 }
