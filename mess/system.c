@@ -441,6 +441,9 @@ TESTDRIVER( trs80pc3 )	/* Tandy TRS80 PC-3									*/
 
 	DRIVER( pc1350 )	/* Pocket Computer 1350 						  */
 
+	DRIVER( pc1403 )	/* Pocket Computer 1403 						  */
+	DRIVER( pc1403h )	/* Pocket Computer 1403H 						  */
+
 	DRIVER( mz700 ) 	/* 1982 Sharp MZ700 							  */
 	DRIVER( mz700j )	/* 1982 Sharp MZ700 Japan						  */
 TESTDRIVER( mz800  )	/* 1982 Sharp MZ800 							  */

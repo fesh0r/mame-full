@@ -1,7 +1,7 @@
 /******************************************************************************
  sharp pocket computers
  pc1401/pc1403
- Peter.Trauner@jk.uni-linz.ac.at May 2000
+ PeT mess@utanet.at May 2000
 ******************************************************************************/
 
 #include "driver.h"
@@ -11,6 +11,7 @@
 #include "includes/pc1401.h"
 #include "includes/pc1251.h"
 #include "includes/pc1350.h"
+#include "includes/pc1403.h"
 
 
 /* pc1430 no peek poke operations! */
@@ -84,7 +85,6 @@ static MEMORY_READ_START( pc1401_readmem )
 	{ 0x2000, 0x47ff, MRA_RAM },
 /*	{ 0x5000, 0x57ff, ? }, */
 	{ 0x6000, 0x67ff, pc1401_lcd_read },
-//	{ 0x6800, 0x685f, sc61860_read_internal },
 	{ 0x7000, 0x77ff, pc1401_lcd_read },
 	{ 0x8000, 0xffff, MRA_ROM },
 MEMORY_END
@@ -95,7 +95,6 @@ static MEMORY_WRITE_START( pc1401_writemem )
 	{ 0x4000, 0x47ff, MWA_RAM },
 /*	{ 0x5000, 0x57ff, ? }, */
 	{ 0x6000, 0x67ff, pc1401_lcd_write },
-//	{ 0x6800, 0x685f, sc61860_write_internal },
 	{ 0x7000, 0x77ff, pc1401_lcd_write },
 	{ 0x8000, 0xffff, MWA_ROM },
 MEMORY_END
@@ -106,7 +105,6 @@ static MEMORY_READ_START( pc1251_readmem )
 	{ 0x4000, 0x7fff, MRA_ROM },
 	{ 0xa000, 0xcbff, MRA_ROM },
 	{ 0xf800, 0xf8ff, pc1251_lcd_read },
-//	{ 0xff00, 0xff5f, sc61860_read_internal },
 MEMORY_END
 
 static MEMORY_WRITE_START( pc1251_writemem )
@@ -114,7 +112,6 @@ static MEMORY_WRITE_START( pc1251_writemem )
 	{ 0x4000, 0x7fff, MWA_ROM },
 //	{ 0xa000, 0xcbff, MWA_ROM }, // c600 b800 b000 a000 tested
 	{ 0xf800, 0xf8ff, pc1251_lcd_write },
-//	{ 0xff00, 0xff5f, sc61860_write_internal },
 MEMORY_END
 
 static MEMORY_READ_START( pc1350_readmem )
@@ -123,7 +120,6 @@ static MEMORY_READ_START( pc1350_readmem )
 	{ 0x4000, 0x5fff, MRA_RAM },
 	{ 0x6000, 0x6fff, MRA_RAM },
 	{ 0x7000, 0x7eff, pc1350_lcd_read },
-//	{ 0x7f00, 0x7f5f, sc61860_read_internal },
 	{ 0x8000, 0xffff, MRA_ROM },
 MEMORY_END
 
@@ -133,9 +129,25 @@ static MEMORY_WRITE_START( pc1350_writemem )
 	{ 0x4000, 0x5fff, MWA_RAM }, /*ram card 16k oder 8k */
 	{ 0x6000, 0x6fff, MWA_RAM },
 	{ 0x7000, 0x7eff, pc1350_lcd_write },
-//	{ 0x7f00, 0x7f5f, sc61860_write_internal },
 	{ 0x8000, 0xffff, MWA_ROM },
 MEMORY_END
+
+static MEMORY_READ_START( pc1403_readmem )
+	{ 0x0000, 0x1fff, MRA_ROM },
+{ 0x3000, 0x30bf, pc1403_lcd_read },    
+{ 0x3800, 0x3fff, pc1403_asic_read },    
+{ 0x4000, 0x7fff, MRA_BANK1 },
+{ 0x8000,0xffff, MRA_RAM },
+MEMORY_END
+
+static MEMORY_WRITE_START( pc1403_writemem )
+	{ 0x0000, 0x1fff, MWA_ROM },
+{ 0x3000, 0x30bf, pc1403_lcd_write },    
+{ 0x3800, 0x3fff, pc1403_asic_write },    
+{ 0x8000,0xffff, MWA_RAM },
+MEMORY_END
+
+
 
 #if 0
 static MEMORY_READ_START( pc1421_readmem )
@@ -170,98 +182,106 @@ MEMORY_END
 #define DIPS_HELPER(bit, name, keycode, r) \
    PORT_BITX(bit, IP_ACTIVE_HIGH, IPT_KEYBOARD, name, keycode, r)
 
-INPUT_PORTS_START( pc1401 )
-	PORT_START
-    PORT_BITX (0x80, 0x00, IPT_DIPSWITCH_NAME|IPF_TOGGLE,
-			   "Power",CODE_DEFAULT, CODE_NONE)
-	PORT_DIPSETTING( 0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING( 0x00, DEF_STR( On ) )
-	DIPS_HELPER( 0x40, "CAL", KEYCODE_F1, CODE_NONE)
-	DIPS_HELPER( 0x20, "BASIC", KEYCODE_F2, CODE_NONE)
-	DIPS_HELPER( 0x10, "BRK   ON", KEYCODE_F4, CODE_NONE)
-	DIPS_HELPER( 0x08, "DEF", KEYCODE_LALT, KEYCODE_RALT)
-	DIPS_HELPER( 0x04, "down", KEYCODE_DOWN, CODE_NONE)
-	DIPS_HELPER( 0x02, "up", KEYCODE_UP, CODE_NONE)
-	DIPS_HELPER( 0x01, "left  DEL", KEYCODE_LEFT, CODE_NONE)
-	PORT_START
+
+#define PC1401_HELPER1 \
+	PORT_START \
+	PORT_BITX (0x80, 0x00, IPT_DIPSWITCH_NAME|IPF_TOGGLE, \
+			   "Power",CODE_DEFAULT, CODE_NONE) \
+	PORT_DIPSETTING( 0x80, DEF_STR( Off ) ) \
+	PORT_DIPSETTING( 0x00, DEF_STR( On ) ) \
+	DIPS_HELPER( 0x40, "CAL", KEYCODE_F1, CODE_NONE) \
+	DIPS_HELPER( 0x20, "BASIC", KEYCODE_F2, CODE_NONE) \
+	DIPS_HELPER( 0x10, "BRK   ON", KEYCODE_F4, CODE_NONE) \
+	DIPS_HELPER( 0x08, "DEF", KEYCODE_LALT, KEYCODE_RALT) \
+	DIPS_HELPER( 0x04, "down", KEYCODE_DOWN, CODE_NONE) \
+	DIPS_HELPER( 0x02, "up", KEYCODE_UP, CODE_NONE) \
+	DIPS_HELPER( 0x01, "left  DEL", KEYCODE_LEFT, CODE_NONE) \
+	PORT_START \
 	DIPS_HELPER( 0x80, "right INS", KEYCODE_RIGHT, CODE_NONE)
-	DIPS_HELPER( 0x40, "SHIFT", KEYCODE_LSHIFT, KEYCODE_RSHIFT)
-	DIPS_HELPER( 0x20, "Q     !", KEYCODE_Q, CODE_NONE)
-	DIPS_HELPER( 0x10, "W     \"", KEYCODE_W, CODE_NONE)
-	DIPS_HELPER( 0x08, "E     #", KEYCODE_E, CODE_NONE)
-	DIPS_HELPER( 0x04, "R     $", KEYCODE_R, CODE_NONE)
-	DIPS_HELPER( 0x02, "T     %", KEYCODE_T, CODE_NONE)
-	DIPS_HELPER( 0x01, "Y     &", KEYCODE_Y, CODE_NONE)
-	PORT_START
-	DIPS_HELPER( 0x80, "U     ?", KEYCODE_U, CODE_NONE)
-	DIPS_HELPER( 0x40, "I     At", KEYCODE_I, CODE_NONE)
-	DIPS_HELPER( 0x20, "O     :", KEYCODE_O, CODE_NONE)
-	DIPS_HELPER( 0x10, "P     ;", KEYCODE_P, CODE_NONE)
-	DIPS_HELPER( 0x08, "A     INPUT", KEYCODE_A, CODE_NONE)
-	DIPS_HELPER( 0x04, "S     IF", KEYCODE_S, CODE_NONE)
-	DIPS_HELPER( 0x02, "D     THEN", KEYCODE_D, CODE_NONE)
-	DIPS_HELPER( 0x01, "F     GOTO", KEYCODE_F, CODE_NONE)
-	PORT_START
-	DIPS_HELPER( 0x80, "G     FOR", KEYCODE_G, CODE_NONE)
-	DIPS_HELPER( 0x40, "H     TO", KEYCODE_H, CODE_NONE)
-	DIPS_HELPER( 0x20, "J     STEP", KEYCODE_J, CODE_NONE)
-	DIPS_HELPER( 0x10, "K     NEXT", KEYCODE_K, CODE_NONE)
-	DIPS_HELPER( 0x08, "L     LIST", KEYCODE_L, CODE_NONE)
-	DIPS_HELPER( 0x04, ",     RUN", KEYCODE_COMMA, CODE_NONE)
-	DIPS_HELPER( 0x02, "Z     PRINT", KEYCODE_Z, CODE_NONE)
-	DIPS_HELPER( 0x01, "X     USING", KEYCODE_X, CODE_NONE)
-	PORT_START
-	DIPS_HELPER( 0x80, "C     GOSUB", KEYCODE_C, CODE_NONE)
-	DIPS_HELPER( 0x40, "V     RETURN", KEYCODE_V, CODE_NONE)
-	DIPS_HELPER( 0x20, "B     DIM", KEYCODE_B, CODE_NONE)
-	DIPS_HELPER( 0x10, "N     END", KEYCODE_N, CODE_NONE)
-	DIPS_HELPER( 0x08, "M     CSAVE", KEYCODE_M, CODE_NONE)
-	DIPS_HELPER( 0x04, "SPC   CLOAD", KEYCODE_SPACE, CODE_NONE)
-	DIPS_HELPER( 0x02, "ENTER N<>NP", KEYCODE_ENTER, CODE_NONE)
-	DIPS_HELPER( 0x01, "HYP   ARCHYP", CODE_DEFAULT, CODE_NONE)
-	PORT_START
-	DIPS_HELPER( 0x80, "SIN   SIN^-1", CODE_DEFAULT, CODE_NONE)
-	DIPS_HELPER( 0x40, "COS   COS^-1", CODE_DEFAULT, CODE_NONE)
-	DIPS_HELPER( 0x20, "TAN   TAN^-1", CODE_DEFAULT, CODE_NONE)
-	DIPS_HELPER( 0x10, "F<>E  TAB", CODE_DEFAULT, CODE_NONE)
-	DIPS_HELPER( 0x08, "C-CE  CA", KEYCODE_ESC, CODE_NONE)
-	DIPS_HELPER( 0x04, "->HEX ->DEC", CODE_DEFAULT, CODE_NONE)
-	DIPS_HELPER( 0x02, "->DEG ->D.MS", CODE_DEFAULT, CODE_NONE)
-	DIPS_HELPER( 0x01, "LN    e^x    E", CODE_DEFAULT, CODE_NONE)
-	PORT_START
- 	DIPS_HELPER( 0x80, "LOG   10^x   F", CODE_DEFAULT, CODE_NONE)
-	DIPS_HELPER( 0x40, "1/x   ->re", CODE_DEFAULT, CODE_NONE)
-	DIPS_HELPER( 0x20, "chnge STAT", CODE_DEFAULT, CODE_NONE)
-	DIPS_HELPER( 0x10, "EXP   Pi     A", CODE_DEFAULT, CODE_NONE)
-	DIPS_HELPER( 0x08, "y^x   xROOTy B", CODE_DEFAULT, CODE_NONE)
-	DIPS_HELPER( 0x04, "sqrt  3root  C", CODE_DEFAULT, CODE_NONE)
-	DIPS_HELPER( 0x02, "sqr   tri%   D", CODE_DEFAULT, CODE_NONE)
-	DIPS_HELPER( 0x01, "(     ->xy", KEYCODE_8, CODE_NONE)
-	PORT_START
-	DIPS_HELPER( 0x80, ")     n!", KEYCODE_9, CODE_NONE)
-	DIPS_HELPER( 0x40, "7     y mean", KEYCODE_7_PAD, CODE_NONE)
-	DIPS_HELPER( 0x20, "8     Sy", KEYCODE_8_PAD, CODE_NONE)
-	DIPS_HELPER( 0x10, "9     sigmay", KEYCODE_9_PAD, CODE_NONE)
-	DIPS_HELPER( 0x08, "/", KEYCODE_SLASH_PAD, CODE_NONE)
-	DIPS_HELPER( 0x04, "X->M  Sum y  Sum y^2", CODE_DEFAULT, CODE_NONE)
-	DIPS_HELPER( 0x02, "4     x mean", KEYCODE_4_PAD, CODE_NONE)
-	DIPS_HELPER( 0x01, "5     Sx", KEYCODE_5_PAD, CODE_NONE)
-	PORT_START
-	DIPS_HELPER( 0x80, "6     sigmax", KEYCODE_6_PAD, CODE_NONE)
-	DIPS_HELPER( 0x40, "*     <", KEYCODE_ASTERISK, CODE_NONE)
-	DIPS_HELPER( 0x20, "RM    (x,y)", CODE_DEFAULT, CODE_NONE)
-	DIPS_HELPER( 0x10, "1     r", KEYCODE_1_PAD, CODE_NONE)
-	DIPS_HELPER( 0x08, "2     a", KEYCODE_2_PAD, CODE_NONE)
-	DIPS_HELPER( 0x04, "3     b", KEYCODE_3_PAD, CODE_NONE)
-	DIPS_HELPER( 0x02, "-     >", KEYCODE_MINUS_PAD, CODE_NONE)
-	DIPS_HELPER( 0x01, "M+    DATA   CD", CODE_DEFAULT, CODE_NONE)
-	PORT_START
-	DIPS_HELPER( 0x80, "0     x'", KEYCODE_0_PAD, CODE_NONE)
-	DIPS_HELPER( 0x40, "+/-   y'", KEYCODE_NUMLOCK, CODE_NONE)
-	DIPS_HELPER( 0x20, ".     DRG", KEYCODE_DEL_PAD, CODE_NONE)
-	DIPS_HELPER( 0x10, "+     ^", KEYCODE_PLUS_PAD, CODE_NONE)
-	DIPS_HELPER( 0x08, "=", KEYCODE_ENTER_PAD, CODE_NONE)
-	DIPS_HELPER( 0x04, "Reset", KEYCODE_F3, CODE_NONE)
+
+#define PC1401_HELPER2 \
+	DIPS_HELPER( 0x20, "SHIFT", KEYCODE_LSHIFT, KEYCODE_RSHIFT) \
+	DIPS_HELPER( 0x10, "Q     !", KEYCODE_Q, CODE_NONE)\
+	DIPS_HELPER( 0x08, "W     \"", KEYCODE_W, CODE_NONE)\
+	DIPS_HELPER( 0x04, "E     #", KEYCODE_E, CODE_NONE)\
+	DIPS_HELPER( 0x02, "R     $", KEYCODE_R, CODE_NONE)\
+	DIPS_HELPER( 0x01, "T     %", KEYCODE_T, CODE_NONE)\
+	PORT_START\
+	DIPS_HELPER( 0x80, "Y     &", KEYCODE_Y, CODE_NONE)\
+	DIPS_HELPER( 0x40, "U     ?", KEYCODE_U, CODE_NONE)\
+	DIPS_HELPER( 0x20, "I     At", KEYCODE_I, CODE_NONE)\
+	DIPS_HELPER( 0x10, "O     :", KEYCODE_O, CODE_NONE)\
+	DIPS_HELPER( 0x08, "P     ;", KEYCODE_P, CODE_NONE)\
+	DIPS_HELPER( 0x04, "A     INPUT", KEYCODE_A, CODE_NONE)\
+	DIPS_HELPER( 0x02, "S     IF", KEYCODE_S, CODE_NONE)\
+	DIPS_HELPER( 0x01, "D     THEN", KEYCODE_D, CODE_NONE)\
+	PORT_START\
+	DIPS_HELPER( 0x80, "F     GOTO", KEYCODE_F, CODE_NONE)\
+	DIPS_HELPER( 0x40, "G     FOR", KEYCODE_G, CODE_NONE)\
+	DIPS_HELPER( 0x20, "H     TO", KEYCODE_H, CODE_NONE)\
+	DIPS_HELPER( 0x10, "J     STEP", KEYCODE_J, CODE_NONE)\
+	DIPS_HELPER( 0x08, "K     NEXT", KEYCODE_K, CODE_NONE)\
+	DIPS_HELPER( 0x04, "L     LIST", KEYCODE_L, CODE_NONE)\
+	DIPS_HELPER( 0x02, ",     RUN", KEYCODE_COMMA, CODE_NONE)\
+	DIPS_HELPER( 0x01, "Z     PRINT", KEYCODE_Z, CODE_NONE)\
+	PORT_START\
+	DIPS_HELPER( 0x80, "X     USING", KEYCODE_X, CODE_NONE)\
+	DIPS_HELPER( 0x40, "C     GOSUB", KEYCODE_C, CODE_NONE)\
+	DIPS_HELPER( 0x20, "V     RETURN", KEYCODE_V, CODE_NONE)\
+	DIPS_HELPER( 0x10, "B     DIM", KEYCODE_B, CODE_NONE)\
+	DIPS_HELPER( 0x08, "N     END", KEYCODE_N, CODE_NONE)\
+	DIPS_HELPER( 0x04, "M     CSAVE", KEYCODE_M, CODE_NONE)\
+	DIPS_HELPER( 0x02, "SPC   CLOAD", KEYCODE_SPACE, CODE_NONE)\
+	DIPS_HELPER( 0x01, "ENTER N<>NP", KEYCODE_ENTER, CODE_NONE)\
+	PORT_START\
+	DIPS_HELPER( 0x80, "HYP   ARCHYP", CODE_DEFAULT, CODE_NONE)\
+	DIPS_HELPER( 0x40, "SIN   SIN^-1", CODE_DEFAULT, CODE_NONE)\
+	DIPS_HELPER( 0x20, "COS   COS^-1", CODE_DEFAULT, CODE_NONE)\
+	DIPS_HELPER( 0x10, "TAN   TAN^-1", CODE_DEFAULT, CODE_NONE)\
+	DIPS_HELPER( 0x08, "F<>E  TAB", CODE_DEFAULT, CODE_NONE)\
+	DIPS_HELPER( 0x04, "C-CE  CA", KEYCODE_ESC, CODE_NONE)\
+	DIPS_HELPER( 0x02, "->HEX ->DEC", CODE_DEFAULT, CODE_NONE)\
+	DIPS_HELPER( 0x01, "->DEG ->D.MS", CODE_DEFAULT, CODE_NONE)\
+	PORT_START\
+	DIPS_HELPER( 0x80, "LN    e^x    E", CODE_DEFAULT, CODE_NONE)\
+ 	DIPS_HELPER( 0x40, "LOG   10^x   F", CODE_DEFAULT, CODE_NONE)\
+	DIPS_HELPER( 0x20, "1/x   ->re", CODE_DEFAULT, CODE_NONE)\
+	DIPS_HELPER( 0x10, "chnge STAT", CODE_DEFAULT, CODE_NONE)\
+	DIPS_HELPER( 0x08, "EXP   Pi     A", CODE_DEFAULT, CODE_NONE)\
+	DIPS_HELPER( 0x04, "y^x   xROOTy B", CODE_DEFAULT, CODE_NONE)\
+	DIPS_HELPER( 0x02, "sqrt  3root  C", CODE_DEFAULT, CODE_NONE)\
+	DIPS_HELPER( 0x01, "sqr   tri%   D", CODE_DEFAULT, CODE_NONE)\
+	PORT_START\
+	DIPS_HELPER( 0x80, "(     ->xy", KEYCODE_8, CODE_NONE)\
+	DIPS_HELPER( 0x40, ")     n!", KEYCODE_9, CODE_NONE)\
+	DIPS_HELPER( 0x20, "7     y mean", KEYCODE_7_PAD, CODE_NONE)\
+	DIPS_HELPER( 0x10, "8     Sy", KEYCODE_8_PAD, CODE_NONE)\
+	DIPS_HELPER( 0x08, "9     sigmay", KEYCODE_9_PAD, CODE_NONE)\
+	DIPS_HELPER( 0x04, "/", KEYCODE_SLASH_PAD, CODE_NONE)\
+	DIPS_HELPER( 0x02, "X->M  Sum y  Sum y^2", CODE_DEFAULT, CODE_NONE)\
+	DIPS_HELPER( 0x01, "4     x mean", KEYCODE_4_PAD, CODE_NONE)\
+	PORT_START\
+	DIPS_HELPER( 0x80, "5     Sx", KEYCODE_5_PAD, CODE_NONE)\
+	DIPS_HELPER( 0x40, "6     sigmax", KEYCODE_6_PAD, CODE_NONE)\
+	DIPS_HELPER( 0x20, "*     <", KEYCODE_ASTERISK, CODE_NONE)\
+	DIPS_HELPER( 0x10, "RM    (x,y)", CODE_DEFAULT, CODE_NONE)\
+	DIPS_HELPER( 0x08, "1     r", KEYCODE_1_PAD, CODE_NONE)\
+	DIPS_HELPER( 0x04, "2     a", KEYCODE_2_PAD, CODE_NONE)\
+	DIPS_HELPER( 0x02, "3     b", KEYCODE_3_PAD, CODE_NONE)\
+	DIPS_HELPER( 0x01, "-     >", KEYCODE_MINUS_PAD, CODE_NONE)\
+	PORT_START\
+	DIPS_HELPER( 0x80, "M+    DATA   CD", CODE_DEFAULT, CODE_NONE)\
+	DIPS_HELPER( 0x40, "0     x'", KEYCODE_0_PAD, CODE_NONE)\
+	DIPS_HELPER( 0x20, "+/-   y'", KEYCODE_NUMLOCK, CODE_NONE)\
+	DIPS_HELPER( 0x10, ".     DRG", KEYCODE_DEL_PAD, CODE_NONE)\
+	DIPS_HELPER( 0x08, "+     ^", KEYCODE_PLUS_PAD, CODE_NONE)\
+	DIPS_HELPER( 0x04, "=", KEYCODE_ENTER_PAD, CODE_NONE)\
+	DIPS_HELPER( 0x02, "Reset", KEYCODE_F3, CODE_NONE)
+
+INPUT_PORTS_START( pc1401 )
+    PC1401_HELPER1
+	PORT_BIT ( 0x40, 0x0,	 IPT_UNUSED )
+    PC1401_HELPER2
 	PORT_START
     PORT_DIPNAME   ( 0xc0, 0x80, "RAM")
 	PORT_DIPSETTING( 0x00, "2KB" )
@@ -277,6 +297,26 @@ INPUT_PORTS_START( pc1401 )
 	PORT_DIPSETTING( 6, "6" )
 	PORT_DIPSETTING( 7, "7/High" )
 INPUT_PORTS_END
+
+INPUT_PORTS_START( pc1403 )
+    PC1401_HELPER1
+	DIPS_HELPER( 0x40, "SML", KEYCODE_CAPSLOCK, CODE_NONE)
+    PC1401_HELPER2
+	PORT_START
+    PORT_DIPNAME   ( 0x80, 0x80, "RAM")
+	PORT_DIPSETTING( 0x00, "PC1403(8KB)" )
+	PORT_DIPSETTING( 0x80, "PC1403H(32KB)" )
+    PORT_DIPNAME   ( 7, 2, "Contrast")
+	PORT_DIPSETTING( 0, "0/Low" )
+	PORT_DIPSETTING( 1, "1" )
+	PORT_DIPSETTING( 2, "2" )
+	PORT_DIPSETTING( 3, "3" )
+	PORT_DIPSETTING( 4, "4" )
+	PORT_DIPSETTING( 5, "5" )
+	PORT_DIPSETTING( 6, "6" )
+	PORT_DIPSETTING( 7, "7/High" )
+INPUT_PORTS_END
+
 
 INPUT_PORTS_START( pc1251 )
 	PORT_START
@@ -698,6 +738,54 @@ static struct MachineDriver machine_driver_pc1350 =
         { 0 }
     }
 };
+static SC61860_CONFIG pc1403_config={
+	NULL, pc1403_brk,
+	pc1403_ina, pc1403_outa,
+};
+
+static struct MachineDriver machine_driver_pc1403 =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_SC61860,
+			192000,
+			pc1403_readmem,pc1403_writemem,0,0,
+			pocketc_frame_int, 1,
+			0,0,
+			&pc1403_config
+        }
+	},
+	/* frames per second, VBL duration */
+	20, DEFAULT_60HZ_VBLANK_DURATION, // very early and slow lcd
+	1,				/* single CPU */
+	pc1403_machine_init,
+	pc1403_machine_stop,
+
+	/*
+	   aim: show sharp with keyboard
+	   resolution depends on the dots of the lcd
+	   (lcd dot displayed as 2x2 pixel) */
+
+	848, 320, { 0, 848 - 1, 0, 320 - 1},
+//	848, 361, { 0, 848 - 1, 0, 361 - 1},
+	pc1401_gfxdecodeinfo,			   /* graphics decode info */
+	sizeof (pocketc_palette) / sizeof (pocketc_palette[0]) ,
+	sizeof (pocketc_colortable) / sizeof(pocketc_colortable[0][0]),
+	pocketc_init_colors,		/* convert color prom */
+
+	VIDEO_TYPE_RASTER| VIDEO_SUPPORTS_DIRTY,	/* video flags */
+	0,						/* obsolete */
+    pc1403_vh_start,
+	pocketc_vh_stop,
+	pc1403_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+        { 0 }
+    }
+};
 
 ROM_START(pc1401)
 	ROM_REGION(0x10000,REGION_CPU1,0)
@@ -729,6 +817,18 @@ ROM_START(pc1350)
 	ROM_REGION(0x100,REGION_GFX1,0)
 ROM_END
 
+ROM_START(pc1403)
+	ROM_REGION(0x10000,REGION_CPU1,0)
+    ROM_LOAD("introm.bin", 0x0000, 0x2000, 0x588c500b )
+	ROM_REGION(0x10000,REGION_USER1,0)
+    ROM_LOAD("extrom08.bin", 0x0000, 0x4000, 0x1fa65140 )
+    ROM_LOAD("extrom09.bin", 0x4000, 0x4000, 0x4a7da6ab )
+    ROM_LOAD("extrom0a.bin", 0x8000, 0x4000, 0x9925174f )
+    ROM_LOAD("extrom0b.bin", 0xc000, 0x4000, 0xfa5df9ec )
+	ROM_REGION(0x100,REGION_GFX1,0)
+ROM_END
+
+#define rom_pc1403h rom_pc1403
 
 static const struct IODevice io_pc1401[] = {
 //	IO_CASSETTE_WAVE(1,"wav\0",mycas_id,mycas_init,mycas_exit),
@@ -739,6 +839,10 @@ static const struct IODevice io_pc1401[] = {
 #define io_pc1350 io_pc1401
 #define io_pc1251 io_pc1401
 #define io_trs80pc3 io_pc1401
+
+// disk drive support
+#define io_pc1403 io_pc1401
+#define io_pc1403h io_pc1403
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      MONITOR	COMPANY   FULLNAME */
 
@@ -767,8 +871,9 @@ COMPX( 198?, pc1402,	  pc1401, 	pc1401,  pc1401, 	pc1401,	  "Sharp",  "Pocket Co
 
 /* 72kb rom, 32kb ram, cpu? 
    pc1360
-   pc1403/pc1403h
 */
+COMPX( 198?, pc1403,	0,	pc1403,		pc1403,		pc1403,	"Sharp", "Pocket Computer 1403", GAME_NOT_WORKING)
+COMPX( 198?, pc1403h,	pc1403,	pc1403,		pc1403,		pc1403,	"Sharp", "Pocket Computer 1403H", GAME_ALIAS|GAME_NOT_WORKING)
 
 /* cpu sc62015 esr-l
    pc-e500
@@ -788,6 +893,8 @@ extern void pocketc_runtime_loader_init(void)
 		if ( strcmp(drivers[i]->name,"pc1401")==0) drivers[i]=&driver_pc1401;
 		if ( strcmp(drivers[i]->name,"pc1402")==0) drivers[i]=&driver_pc1402;
 		if ( strcmp(drivers[i]->name,"pc1350")==0) drivers[i]=&driver_pc1350;
+		if ( strcmp(drivers[i]->name,"pc1403")==0) drivers[i]=&driver_pc1403;
+		if ( strcmp(drivers[i]->name,"pc1403h")==0) drivers[i]=&driver_pc1403h;
 	}
 }
 #endif
