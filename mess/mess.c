@@ -1052,6 +1052,7 @@ int messvaliditychecks(void)
 {
 	int i;
 	int error = 0;
+	const struct RomModule *region, *rom;
 
 	/* Check the device struct array */
 	i=0;
@@ -1082,6 +1083,16 @@ int messvaliditychecks(void)
 			{
 				assert(dev->type < IO_COUNT);
 				dev++;
+			}
+		}
+
+		/* this detects some inconsistencies in the ROM structures */
+		for (region = rom_first_region(drivers[i]); region; region = rom_next_region(region))
+		{
+			for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
+			{
+				char name[100];
+				sprintf(name,ROM_GETNAME(rom));
 			}
 		}
 

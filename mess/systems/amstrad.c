@@ -2772,11 +2772,13 @@ ROM_END
 
 /* this system must have a cartridge installed to run */
 ROM_START(cpc6128p)
+	ROM_REGION(0, REGION_CPU1,0)
 ROM_END
 
 
 /* this system must have a cartridge installed to run */
 ROM_START(cpc464p)
+	ROM_REGION(0, REGION_CPU1,0)
 ROM_END
 
 #define AMSTRAD_IO_SNAPSHOT \
