@@ -2,6 +2,26 @@ Xmame history:
 
 Last Modified by Lawrence Gold (gold@aros.net)
 
+Release 0.37b16.1
+	- Everything from MAME 0.37b16 except for steadykey support and the new
+	  RGB blitters.  These may be appearing in a later release.  :-)
+	- Added Matt Lowry's latest README, which has been missing from xmame
+	  for several releases.
+	- Fixed the contrib/porting/prep-new-mame script so it doesn't omit the
+	  README file.
+	- QNX Photon2 updates: A fix for dirio.c which allows xmess to compile
+	  under the QNX 6.1 internal beta; audio has better verbosity; fixed a
+	  bug which caused games utilizing a mouse to core dump.  (Travis Coady)
+	- Fixed some ANSI/ISO warnings in the GLmame code.
+	- Changed contrib/porting/prep-new-mame to reflect the new .txt files
+	  bundled with MAME.
+	- Updated contrib/porting/porting.txt to refer to src/windows rather
+	  than src/msdos for diffing between versions, since the Win32 target
+	  is now the primary one.
+	- Updated the docs to mention that KDE 2.2b1 has been reported to fix
+	  the xmame.x11 problem whereby the window never displays without using
+	  a workaround.
+
 Release 0.37b15.1 (xmame only)
 	- Everything from MAME 0.37b15 except for 'steadykey' support.
 	- Added an aRts sound server driver.  (Manuel Teira)
@@ -54,9 +74,9 @@ Release 0.37b13.2
 	- Added an updated romulan.pl to contrib/tools.  (Nathan Hand)
 	- Added an updated romalizer to contrib/tools.  (Christopher Stone)
 	- Adopted the directory layout used in MESS CVS.  Namely, all of the
-          xmame-specific directories have been moved into src/unix.  Releases
-          will now have symlinks to these directories in the root.
-        - Updated the docs to reflect the new mailing list address, courtesy of
+	  xmame-specific directories have been moved into src/unix.  Releases
+	  will now have symlinks to these directories in the root.
+	- Updated the docs to reflect the new mailing list address, courtesy of
 	  Pete French.
 	- Fixed an unmatched parenthesis error in src/drawgfx.c that was
 	  affecting non-Intel platforms.
@@ -66,7 +86,7 @@ Release 0.37b13.2
 	  fullscreen Photon2 support, and made other miscellaneous Photon2
 	  updates and fixes.  (Travis Coady)
 	- Updated GLMame to v0.85.  (Sven Goethel)
-        - Vector games now work with the SDL target.
+	- Vector games now work with the SDL target.
 
 Release 0.37b13.1 (xmame only)
 	- Everything from MAME 0.37b13.
