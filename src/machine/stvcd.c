@@ -114,6 +114,7 @@ UINT32		cdda_pos;
 
 
 
+
 ////////////////////////////////////////////////////////////////
 
 #define ISO_BUFF_SIZE	(2352 * 16)	// cache size
@@ -169,7 +170,7 @@ static UINT32	iso_type;		// 0 = ISO 1 = BIN
 
 
 
- void cdb_inject_file_info(UINT32 fid, UINT8 * dst){
+ void cdb_inject_file_info(UINT32 fid, /*UINT8 **/char * dst){
 
 	// converts standard cdb file info in saturn format
 	// and 'injects' it in the supplied destination. ;)
