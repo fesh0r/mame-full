@@ -13,6 +13,7 @@
 #include "includes/snes.h"
 
 static int channel;
+UINT8 fakeapu_port[4] = { 0xaa, 0xbb, 0x00, 0x00 };	/* This is just temporary */
 
 int snes_sh_start( const struct MachineSound *driver )
 {
@@ -173,4 +174,79 @@ WRITE_HANDLER( spc_w_io )
 			spc_ram[0xf0 + offset] = data;
 			break;
 	}
+}
+
+/* --- Fake APU stuff --- */
+/* This is here until I can get the 65816 and SPC700 to stay in sync with each
+ * other. */
+
+void snes_fakeapu_w_port( UINT8 port, UINT8 data )
+{
+	if( port == 0 )
+		fakeapu_port[3]++;
+
+	fakeapu_port[port] = data;
+}
+
+UINT8 snes_fakeapu_r_port( UINT8 port )
+{
+/*  G65816_PC=1, G65816_S, G65816_P, G65816_A, G65816_X, G65816_Y,
+ *  G65816_PB, G65816_DB, G65816_D, G65816_E,
+ *  G65816_NMI_STATE, G65816_IRQ_STATE
+ */
+
+	static UINT8 portcount = 0;
+	UINT8 retVal = 0;
+
+	switch( port )
+	{
+		case 0:
+		case 1:
+		{
+			switch( portcount )
+			{
+				case 0:
+				case 1:
+					retVal = fakeapu_port[port];
+					break;
+				case 2:
+					retVal = activecpu_get_reg(4) & 0xFF;
+					break;
+				case 3:
+					retVal = (activecpu_get_reg(4) >> 8) & 0xFF;
+					break;
+				case 4:
+					retVal = activecpu_get_reg(5) & 0xFF;
+					break;
+				case 5:
+					retVal = (activecpu_get_reg(5) >> 8) & 0xFF;
+					break;
+				case 6:
+					retVal = activecpu_get_reg(6) & 0xFF;
+					break;
+				case 7:
+					retVal = (activecpu_get_reg(6) >> 8) & 0xFF;
+					break;
+				case 8:
+					retVal = 0xAA;
+					break;
+				case 9:
+					retVal = 0xBB;
+					break;
+				case 10:
+				case 11:
+					retVal = rand() & 0xFF;
+					break;
+			}
+			portcount++;
+			if( portcount > 11 )
+				portcount = 0;
+			return retVal;
+		} break;
+		case 2:
+		case 3:
+			return fakeapu_port[port];
+	}
+
+	return fakeapu_port[port];
 }
