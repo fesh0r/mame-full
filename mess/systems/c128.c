@@ -1191,10 +1191,32 @@ ROM_END
 ROM_START (c128d)
 	ROM_REGION (0x132800, REGION_CPU1, 0)
 	ROM_LOAD ("318022.02", 0x100000, 0x8000, 0xaf1ae1e8)
-	ROM_LOAD ("318023.02", 0x100000, 0x8000, 0xeedc120a)
+	ROM_LOAD ("318023.02", 0x108000, 0x8000, 0xeedc120a)
 	ROM_LOAD ("390059.01", 0x120000, 0x2000, 0x6aaaafe6)
 	ROM_REGION (0x10000, REGION_CPU2, 0)
 	C1571_ROM(REGION_CPU3)
+	ROM_REGION (0x100, REGION_GFX1, 0)
+ROM_END
+
+// submitted as cost reduced set!
+ROM_START (c128dita)
+	ROM_REGION (0x132800, REGION_CPU1, 0)
+	ROM_LOAD ("318022.02", 0x100000, 0x8000, 0xaf1ae1e8)
+
+    // in a cost reduced set this should be 1 rom
+	ROM_LOAD ("251913.01", 0x108000, 0x4000, 0x0010ec31)
+//	ROM_LOAD ("901226.01", 0x108000, 0x2000, 0xf833d117)
+//	ROM_LOAD( "kern128d.ita", 0x10a000, 0x2000, 0xf1098d37 )
+	ROM_LOAD ("318079.01", 0x10c000, 0x4000, 0x66673e8b)
+
+    ROM_LOAD ("325167.01", 0x120000, 0x2000, 0xbad36b88) // taken from funet
+    // normally 1 rom
+//    ROM_LOAD ("325167.01b", 0x120000, 0x1000, 0xec4272ee) //standard c64 901226.01
+//    ROM_LOAD ("325167.01b", 0x121000, 0x1000, 0x2bc73556) // bad dump
+
+	ROM_REGION (0x10000, REGION_CPU2, 0)
+    // not included in submission
+//	C1571_ROM(REGION_CPU3)
 	ROM_REGION (0x100, REGION_GFX1, 0)
 ROM_END
 
@@ -1475,6 +1497,8 @@ static const struct IODevice io_c128d[] =
 #define io_c128ita io_c128
 #define io_c128swe io_c128
 #define io_c128nor io_c128
+//#define io_c128dita io_c128d
+#define io_c128dita io_c128
 
 /*	  YEAR	NAME		PARENT	MACHINE 	INPUT		INIT		COMPANY   FULLNAME */
 COMP (1985, c128,		0,		c128,		c128,		c128,		"Commodore Business Machines Co.","Commodore 128 NTSC")
@@ -1485,7 +1509,9 @@ COMP (1985, c128swe,	c128,	c128pal,	c128swe,	c128pal,	"Commodore Business Machin
 /* other countries spanish, belgium, norwegian */
 /* please leave the following as testdriver */
 COMPX (1985, c128nor,	c128,	c128pal,	c128ita,	c128pal,	"Commodore Business Machines Co.","Commodore 128 Norwegian (PAL)", GAME_NOT_WORKING)
-COMPX (1985, c128d,		c128,		c128d,		c128,		c128,		"Commodore Business Machines Co.","Commodore 128D NTSC", GAME_NOT_WORKING)
+COMPX (1985, c128d,	c128,	c128d,		c128,		c128,		"Commodore Business Machines Co.","Commodore 128D NTSC", GAME_NOT_WORKING)
+//COMPX (1985, c128dita,	c128,	c128d,		c128,		c128,		"Commodore Business Machines Co.","Commodore 128D Italian (PAL)", GAME_NOT_WORKING)
+COMPX (1985, c128dita,	c128,	c128pal,	c128ita,	c128pal,	"Commodore Business Machines Co.","Commodore 128D Italian (PAL)", GAME_NOT_WORKING)
 
 #ifdef RUNTIME_LOADER
 extern void c128_runtime_loader_init(void)
@@ -1499,6 +1525,7 @@ extern void c128_runtime_loader_init(void)
 		if ( strcmp(drivers[i]->name,"c128swe")==0) drivers[i]=&driver_c128swe;
 		if ( strcmp(drivers[i]->name,"c128nor")==0) drivers[i]=&driver_c128nor;
 		if ( strcmp(drivers[i]->name,"c128d")==0) drivers[i]=&driver_c128d;
+		if ( strcmp(drivers[i]->name,"c128dita")==0) drivers[i]=&driver_c128dita;
 	}
 }
 #endif
