@@ -15,6 +15,12 @@
  *	   tlindner@ix.netcom.com
  *   - This entire notice must remain in the source code.
  *
+ *****************************************************************************
+ *  Currently this source emulates a TMS70x0, not any of the other variants
+ *  Unimplemented is the MC pin which (in conjunection with IOCNT0 bits 7 and 6
+ *  control the memory mapping.
+ *
+ *	This source implements the MC pin at Vss and mode bits in single chip mode.
  *****************************************************************************/
 
 // SJE: Changed all references to ICount to icount (to match MAME requirements)
@@ -115,12 +121,11 @@ typedef struct
 	UINT8		sp;		/* Stack Pointer */
 	UINT8		sr;		/* Status Register */
 	UINT8		irq_state[3];	/* State of the three IRQs */
-	UINT8		rf[0x100];	/* Register file (SJE) */
+	UINT8		rf[0x80];	/* Register file (SJE) */
 	UINT8		pf[0x100];	/* Perpherial file */
 	int 		(*irq_callback)(int irqline);
 	INT8		t1_prescaler;	/* Timer 1 prescaler (5 bits) */
 	INT16		t1_decrementer;	/* Timer 1 decrementer (8 bits) */
-	UINT8		t1_capture_latch; /* Timer 1 INT3 capture latch */
 	UINT8		idle_state;	/* Set after the execution of an idle instruction */
 } tms7000_Regs;
 
@@ -187,7 +192,7 @@ void tms7000_init(void)
 	int cpu = cpu_getactivecpu();
 
 	memset(tms7000.pf, 0, 0x100);
-	memset(tms7000.rf, 0, 0x100);
+	memset(tms7000.rf, 0, 0x80);
 	
         /* Save register state */
 	state_save_register_UINT16("tms7000", cpu, "PC", &pPC, 1);
@@ -204,11 +209,10 @@ void tms7000_init(void)
         /* Save timer state */
 	state_save_register_INT8("tms7000", cpu, "t1_prescaler", &(tms7000.t1_prescaler), 1);
 	state_save_register_INT16("tms7000", cpu, "t1_decrementer", &(tms7000.t1_decrementer), 1);
-	state_save_register_UINT8("tms7000", cpu, "t1_capture latch", &(tms7000.t1_capture_latch), 1);
 
 	state_save_register_UINT8("tms7000", cpu, "idle state", &(tms7000.idle_state), 1);
         
-        tms7000_icount = 16;
+	tms7000_icount = 16;
 }
 
 void tms7000_reset(void *param)
@@ -276,7 +280,8 @@ static void tms7000_set_info(UINT32 state, union cpuinfo *info)
         case CPUINFO_INT_REGISTER + TMS7000_PC:	pPC = info->i; CHANGE_PC;	break;
         case CPUINFO_INT_SP:
         case CPUINFO_INT_REGISTER + TMS7000_SP:	pSP = info->i;	break;
-        case CPUINFO_INT_REGISTER + TMS7000_ST:	pSR = info->i; tms7000_check_IRQ_lines();	break;
+        case CPUINFO_INT_REGISTER + TMS7000_ST:	pSR = info->i;	tms7000_check_IRQ_lines();	break;
+		case CPUINFO_INT_REGISTER + TMS7000_IDLE: tms7000.idle_state = info->i;	break;
         
         /* --- the following bits of info are set as pointers to data or functions --- */
         case CPUINFO_PTR_IRQ_CALLBACK:	tms7000.irq_callback = info->irqcallback;	break;
@@ -317,7 +322,7 @@ void tms7000_get_info(UINT32 state, union cpuinfo *info)
         case CPUINFO_INT_IRQ_STATE + TMS7000_IRQ2_LINE:	info->i = tms7000.irq_state[TMS7000_IRQ2_LINE]; break;
         case CPUINFO_INT_IRQ_STATE + TMS7000_IRQ3_LINE:	info->i = tms7000.irq_state[TMS7000_IRQ3_LINE]; break;
     
-/*        case CPUINFO_INT_PREVIOUSPC:	info->i = ?;	break; */
+        case CPUINFO_INT_PREVIOUSPC:	info->i = 0; /* Not supported */	break;
 
         case CPUINFO_INT_PC:
         case CPUINFO_INT_REGISTER + TMS7000_PC:	info->i = pPC;	break;
@@ -334,7 +339,7 @@ void tms7000_get_info(UINT32 state, union cpuinfo *info)
         case CPUINFO_PTR_RESET:	info->reset = tms7000_reset;	break;
         case CPUINFO_PTR_EXIT:	info->exit = tms7000_exit;	break;
         case CPUINFO_PTR_EXECUTE:	info->execute = tms7000_execute;	break;
-        case CPUINFO_PTR_BURN:	info->burn = NULL;	break;
+        case CPUINFO_PTR_BURN:	info->burn = NULL;	/* Not supported */break;
         case CPUINFO_PTR_DISASSEMBLE:	info->disassemble = tms7000_dasm;	break;
         case CPUINFO_PTR_IRQ_CALLBACK:	info->irqcallback = tms7000.irq_callback; break;
         case CPUINFO_PTR_INSTRUCTION_COUNTER:	info->icount = &tms7000_icount;	break;
@@ -385,14 +390,16 @@ void tms7000_set_irq_line(int irqline, int state)
 	LOG(("TMS7000 (cpu #%d) set_irq_line (INT%d, state %d)\n", cpu_getactivecpu(), irqline+1, state));
 
 	if (state == CLEAR_LINE)
+	{
 		return;
+	}
 
 	tms7000.pf[0] |= (0x02 << (irqline * 2));	/* Set INTx iocntl0 flag */
 	
 	if( irqline == TMS7000_IRQ3_LINE )
 	{
-		/* Set capture latch */
-                tms7000.t1_capture_latch = tms7000.t1_decrementer & 0x00ff;
+		/* Latch the value in perpherial file register 3 */
+		WM( 0x0103, tms7000.t1_decrementer & 0x00ff );
 	}
 	
 	tms7000_check_IRQ_lines();
@@ -452,10 +459,7 @@ static void tms7000_do_interrupt( UINT16 address, UINT8 line )
 		tms7000.idle_state = 0;
 	}
 	
-	if( tms7000.irq_callback )
-		(void)(*tms7000.irq_callback)(line);
-	
-	tms7000.irq_state[ line ] = CLEAR_LINE;
+	(void)(*tms7000.irq_callback)(line);
 }
 
 #include "tms70op.c"
@@ -519,7 +523,7 @@ static void tms7000_service_timer1( void )
         if( --tms7000.t1_decrementer < 0 ) /* Decrement timer1 register and check for underflow */
         {
             tms7000.t1_decrementer = tms7000.pf[2]; /* Reload decrementer (8 bit) */
-            tms7000_set_irq_line( TMS7000_IRQ2_LINE, ASSERT_LINE); /* Fire interrupt */
+			cpu_set_irq_line( cpu_getactivecpu(), TMS7000_IRQ2_LINE, HOLD_LINE);
             
             /* Also, cascade out to timer 2 - timer 2 unimplemented */
         }
@@ -528,21 +532,15 @@ static void tms7000_service_timer1( void )
 
 WRITE_HANDLER( tms70x0_pf_w )	/* Perpherial file write */
 {
-	data8_t	temp1, temp2, temp3, temp4;
+	data8_t	temp1, temp2, temp3;
 	
 	switch( offset )
 	{
 		case 0x00:	/* IOCNT0, Input/Ouput control */
-			temp1 = data & 0x2a;				/* Record which bits to clear */
-			temp2 = tms7000.pf[0x00] & 0x2a;	/* Get copy of current bits */		
-			temp3 = (~temp1) & temp2;			/* Clear the requested bits */
-			temp4 = temp3 | (data & (~0x2a) );	/* OR in the remaining data */
-			
-			tms7000.pf[0x00] = temp4;
-			
-//			if( (data & 0x02) == 0x02 ) tms7000_set_irq_line(TMS7000_IRQ1_LINE, CLEAR_LINE);
-//			if( (data & 0x08) == 0x08 ) tms7000_set_irq_line(TMS7000_IRQ2_LINE, CLEAR_LINE);
-//			if( (data & 0x20) == 0x20 ) tms7000_set_irq_line(TMS7000_IRQ3_LINE, CLEAR_LINE);
+			temp1 = data & 0x2a;							/* Record which bits to clear */
+			temp2 = tms7000.pf[0x00] & 0x2a;				/* Get copy of current bits */		
+			temp3 = (~temp1) & temp2;						/* Clear the requested bits */
+			tms7000.pf[0x00] = temp3 | (data & (~0x2a) );	/* OR in the remaining data */
 			break;
 
 		case 0x03:	/* T1CTL, timer 1 control */
@@ -552,7 +550,7 @@ WRITE_HANDLER( tms70x0_pf_w )	/* Perpherial file write */
 				tms7000.t1_prescaler = tms7000.pf[3] & 0x1f; /* Reload prescaler (5 bit) */
 				tms7000.t1_decrementer = tms7000.pf[2]; /* Reload decrementer (8 bit) */
 			}
-			else /* Don't modify timer */
+			else /* Don't modify timer state, but still store data */
 			{
 				tms7000.pf[0x03] = data;
 			}
@@ -589,7 +587,7 @@ WRITE_HANDLER( tms70x0_pf_w )	/* Perpherial file write */
 READ_HANDLER( tms70x0_pf_r )	/* Perpherial file read */
 {
 	data8_t result;
-	data8_t	temp1, temp2, temp3, temp4;
+	data8_t	temp1, temp2, temp3;
 	
 	switch( offset )
 	{
@@ -602,7 +600,7 @@ READ_HANDLER( tms70x0_pf_r )	/* Perpherial file read */
 			break;
 
 		case 0x03:	/* T1CTL, timer 1 capture (latched by INT3) */
-			result = tms7000.t1_capture_latch;
+			result = tms7000.pf[0x03];
 			break;
 
 		case 0x04: /* Port A read */
@@ -618,18 +616,14 @@ READ_HANDLER( tms70x0_pf_r )	/* Perpherial file read */
 			temp1 = tms7000.pf[ 0x08 ] & tms7000.pf[ 0x09 ];	/* Get previous output bits */
 			temp2 = io_read_byte_8( TMS7000_PORTC );			/* Read port */
 			temp3 = temp2 & (~tms7000.pf[ 0x09 ]);				/* Mask off output bits */
-			temp4 = temp1 | temp3;								/* OR together */
-			
-			result = temp4;
+			result = temp1 | temp3;								/* OR together */
 			break;
 			
 		case 0x0a: /* Port D read */
 			temp1 = tms7000.pf[ 0x0a ] & tms7000.pf[ 0x0b ];	/* Get previous output bits */
 			temp2 = io_read_byte_8( TMS7000_PORTD );			/* Read port */
 			temp3 = temp2 & (~tms7000.pf[ 0x0b ]);				/* Mask off output bits */
-			temp4 = temp1 | temp3;								/* OR together */
-			
-			result = temp4;
+			result = temp1 | temp3;								/* OR together */
 			break;
 			
 		default:
