@@ -336,7 +336,8 @@ int  xf86_dga1_resize_display(void)
 
 void xf86_dga1_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *vis_area, struct rectangle *dirty_area,
-	  struct sysdep_palette_struct *palette, unsigned int flags)
+	  struct sysdep_palette_struct *palette, unsigned int flags,
+	  const char **status_msg)
 {
 	if(xf86_dga_fix_viewport)
 	{
