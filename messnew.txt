@@ -47,6 +47,13 @@ System Driver Changes:
 - [COCO3] Added support for Jeff Vavsaour's virtual hard disk. His Color
   Computer 3 emulator comes with an OS-9 driver. [tim lindner]
 
+- [PDP1] Added support for perforated tape and read-in mode.  Removed the
+  current image load hack, since the use of the perforated tape reader in
+  read-in mode enables the user to enter programs in an historically-correct
+  way.  Various additionnal bug-fixes and some code clean-up.
+  Simulation of CRT remanence. WARNING: .rim files must be run pressing
+  ENTER to switch into read-in mode! [Raphael Nabet]
+
 Source Changes:
 ---------------
 - The core is based on MAME 0.56.  This incorporates all features of the 
