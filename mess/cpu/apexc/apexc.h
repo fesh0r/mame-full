@@ -30,5 +30,5 @@ int apexc_execute(int cycles);
 
 #ifdef MAME_DEBUG
 unsigned DasmAPEXC(char *buffer, unsigned pc);
-#define apexc_readop(address)	cpu_readmem18bedw_dword(address << 2)
+#define apexc_readop(address)	cpu_readmem18bedw_dword((address) << 2)
 #endif
