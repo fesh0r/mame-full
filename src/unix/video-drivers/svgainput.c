@@ -321,7 +321,7 @@ void sysdep_display_update_mouse (void)
 	mouse_setposition_6d(0, 0, 0, 0, 0, 0, MOUSE_6DIM);
 }
 
-void sysdep_display_set_keybleds(int new_leds)
+void svga_input_set_keybleds(int new_leds)
 {
 	static int old_leds = 0;
 

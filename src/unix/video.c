@@ -84,11 +84,9 @@ struct rc_option video_opts[] = {
    { "Video Related",	NULL,			rc_seperator,	NULL,
      NULL,		0,			0,		NULL,
      NULL },
-#ifdef x11 /* currently only x11 has different video modes */   
-   { "x11-mode",	"x11",			rc_int,		&normal_params.video_mode,
+   { "video-mode",	"vidmod",		rc_int,		&normal_params.video_mode,
      "0",		0,			SYSDEP_DISPLAY_VIDEO_MODES-1, video_verify_mode,
-     "Select X11 video mode (if compiled in):\n0 Normal (hotkey left-alt + insert)\n1 XVideo (hotkey left-alt + home)\n2 OpenGL (hotkey left-alt + page-up)\n3 Glide (hotkey left-alt + delete)\n4 XIL (hotkey left-alt + end)" },
-#endif
+     NULL },
    { "fullscreen",   	NULL,    		rc_bool,	&normal_params.fullscreen,
      "0",           	0,       		0,		NULL,
      "Start in fullscreen mode (default: false)" },
@@ -216,9 +214,43 @@ struct rc_option video_opts[] = {
 static int video_verify_mode(struct rc_option *option, const char *arg,
 		int priority)
 {
+  const char *hotkey[] = {
+    "insert",
+    "home",
+    "page-up",
+    "delete",
+    "end"
+  };
+  static char help_buf[1024];
+  
+  if (!option->help)
+  {
+    char *dest = help_buf;
+    int bufsize = 1024;
+    int i,n;
+
+    n = snprintf(dest, bufsize, "Select video mode:");
+    dest    += n;
+    bufsize -= n;
+    for (i=0;i<SYSDEP_DISPLAY_VIDEO_MODES;i++)
+    {
+      /* mode available */
+      if(sysdep_display_properties.mode_info[i])
+      {
+        n = snprintf(dest, bufsize, "\n%d = %s (hotkey left-alt + %s)",
+          i, sysdep_display_properties.mode_name[i], hotkey[i]);
+        if ((n < 0) || (n >= (bufsize-1)))
+          break;
+        dest    += n;
+        bufsize -= n;
+      }
+    }
+    option->help = help_buf;
+  }
+  
   if(!sysdep_display_properties.mode_info[normal_params.video_mode])
   {
-    fprintf(stderr, "Error: x11-mode %d is not available\n",
+    fprintf(stderr, "Error: video mode %d is not available\n",
       normal_params.video_mode);
     return 1;
   }
@@ -839,9 +871,18 @@ void osd_update_video_and_audio(struct mame_display *display)
                     sysdep_display_check_effect_params(&normal_params);
 
                     /* is this going to fit? */
-                    scaled_width  = normal_params.width * normal_params.widthscale;
-                    scaled_height = normal_params.yarbsize? normal_params.yarbsize:
-                      normal_params.height * normal_params.heightscale;
+                    if (normal_params.orientation & SYSDEP_DISPLAY_SWAPXY)
+                    {
+                      scaled_width  = normal_params.yarbsize? normal_params.yarbsize:
+                        normal_params.height * normal_params.heightscale;
+                      scaled_height = normal_params.width * normal_params.widthscale;
+                    }
+                    else
+                    {
+                      scaled_width  = normal_params.width * normal_params.widthscale;
+                      scaled_height = normal_params.yarbsize? normal_params.yarbsize:
+                        normal_params.height * normal_params.heightscale;
+                    }
                     i++;
                   } while ((i <= (2*SYSDEP_DISPLAY_EFFECT_LAST)) &&
                            ((scaled_width  > sysdep_display_properties.max_width ) ||

@@ -5,5 +5,6 @@ int svga_input_init(void);
 int svga_input_open(void (*release_func)(void), void (*aqcuire_func)(void));
 void svga_input_close(void);
 void svga_input_exit(void);
+void svga_input_set_keybleds(int new_leds);
 
 #endif
