@@ -42,6 +42,28 @@ static MEMORY_WRITE_START (lisa_fdc_writemem)
 
 MEMORY_END
 
+static MEMORY_READ_START (lisa210_fdc_readmem)
+
+	{ 0x0000, 0x03ff, MRA_RAM },		/* RAM (shared with 68000) */
+	{ 0x0400, 0x07ff, MRA_NOP },
+	{ 0x0800, 0x0bff, lisa_fdc_io_r },	/* disk controller (IWM and TTL logic) */
+	{ 0x0c00, 0x0fff, MRA_NOP },
+	{ 0x1000, 0x1fff, MRA_ROM },		/* ROM */
+	{ 0x2000, 0xffff, lisa_fdc_r },		/* handler for wrap-around */
+
+MEMORY_END
+
+static MEMORY_WRITE_START (lisa210_fdc_writemem)
+
+	{ 0x0000, 0x03ff, MWA_RAM },		/* RAM (shared with 68000) */
+	{ 0x0400, 0x07ff, MWA_NOP },
+	{ 0x0800, 0x0bff, lisa_fdc_io_w },	/* disk controller (IWM and TTL logic) */
+	{ 0x0c00, 0x0fff, MWA_NOP },
+	{ 0x1000, 0x1fff, MWA_ROM },		/* ROM */
+	{ 0x2000, 0xffff, lisa_fdc_w },		/* handler for wrap-around */
+
+MEMORY_END
+
 static void lisa_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	palette[0*3 + 0] = 0xff;
@@ -74,7 +96,7 @@ static struct MachineDriver machine_driver_lisa =
 		},
 		{
 			/*CPU_M6504*/CPU_M6502,
-			1000000,			// ????
+			2000000,			/* 16/8 in when DIS asserted, 16/9 otherwise */
 			lisa_fdc_readmem,lisa_fdc_writemem,0,0,
 			0,0,
 		}
@@ -87,6 +109,102 @@ static struct MachineDriver machine_driver_lisa =
 	/* video hardware */
 	720, 360, /* screen width, screen height */
 	{ 0, 720-1, 0, 360-1 },			/* visible_area */
+
+	0,					/* graphics decode info */
+	2, 2,						/* number of colors, colortable size */
+	lisa_init_palette,				/* convert color prom */
+
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
+	0,
+	lisa_vh_start,
+	lisa_vh_stop,
+	lisa_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_SPEAKER,
+			& lisa_sh_interface
+		}
+	},
+
+	/*lisa_nvram_handler*/
+};
+
+static struct MachineDriver machine_driver_lisa210 =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M68000,
+			5000000,			/* +/- 5 Mhz */
+			lisa_readmem,lisa_writemem,0,0,
+			lisa_interrupt,1,
+		},
+		{
+			/*CPU_M6504*/CPU_M6502,
+			2000000,			/* 16/8 in when DIS asserted, 16/9 otherwise ??? */
+			lisa210_fdc_readmem,lisa210_fdc_writemem,0,0,
+			0,0,
+		}
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,		/* frames per second, vblank duration */
+	1,
+	lisa_init_machine,
+	0,
+
+	/* video hardware */
+	720, 360, /* screen width, screen height */
+	{ 0, 720-1, 0, 360-1 },			/* visible_area */
+
+	0,					/* graphics decode info */
+	2, 2,						/* number of colors, colortable size */
+	lisa_init_palette,				/* convert color prom */
+
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
+	0,
+	lisa_vh_start,
+	lisa_vh_stop,
+	lisa_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_SPEAKER,
+			& lisa_sh_interface
+		}
+	},
+
+	/*lisa_nvram_handler*/
+};
+
+static struct MachineDriver machine_driver_macxl =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M68000,
+			5000000,			/* +/- 5 Mhz */
+			lisa_readmem,lisa_writemem,0,0,
+			lisa_interrupt,1,
+		},
+		{
+			/*CPU_M6504*/CPU_M6502,
+			2000000,			/* 16/8 in when DIS asserted, 16/9 otherwise ??? */
+			lisa210_fdc_readmem,lisa210_fdc_writemem,0,0,
+			0,0,
+		}
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,		/* frames per second, vblank duration */
+	1,
+	lisa_init_machine,
+	0,
+
+	/* video hardware */
+	608, 431, /* screen width, screen height */
+	{ 0, 608-1, 0, 431-1 },			/* visible_area */
 
 	0,					/* graphics decode info */
 	2, 2,						/* number of colors, colortable size */
@@ -250,11 +368,26 @@ ROM_START( lisa210 )
 
 ROM_END
 
+ROM_START( macxl )
+	ROM_REGION16_BE(0x204000,REGION_CPU1, 0)	/* 68k rom and ram */
+	ROM_LOAD16_BYTE( "boot3a.hi", 0x000000, 0x2000, 0xadfd4516)
+	ROM_LOAD16_BYTE( "boot3a.lo", 0x000001, 0x2000, 0x546d6603)
+
+	ROM_REGION(0x2000,REGION_CPU2, 0)		/* 6504 RAM and ROM */
+	ROM_LOAD( "io88.rom", 0x1000, 0x1000, 0xe343fe74)
+
+	ROM_REGION(0x100,REGION_GFX1, 0)		/* video ROM (includes S/N) */
+	ROM_LOAD( "vidstate.rom", 0x00, 0x100, 0x75904783)
+
+	ROM_REGION(0x040000, REGION_USER1, 0)	/* 1 bit per byte of CPU RAM - used for parity check emulation */
+
+ROM_END
+
 /* Lisa should eventually support floppies, hard disks, etc. */
 static const struct IODevice io_lisa2[] = {
 	{
 		IO_FLOPPY,			/* type */
-		2,					/* count */
+		/*2*/1,					/* count */
 		"img\0image\0",		/* file extensions */
 		IO_RESET_NONE,		/* reset if file changed */
         NULL,               /* id */
@@ -274,8 +407,10 @@ static const struct IODevice io_lisa2[] = {
 };
 
 #define io_lisa210 io_lisa2 /* actually, there is an additionnal 10 meg HD, but it is not implemented... */
+#define io_macxl io_lisa210
 
 /*	   YEAR  NAME	   PARENT	 MACHINE   INPUT	 INIT	   COMPANY	 FULLNAME */
-COMPX( 1983, lisa2,    0,        lisa,     lisa,	 0,        "Apple Computer",  "Lisa2", GAME_NOT_WORKING )
-COMPX( 1983, lisa210,  lisa2,    lisa,     lisa,	 0,        "Apple Computer",  "Lisa2", GAME_NOT_WORKING )
+COMPX( 1984, lisa2,    0,        lisa,     lisa,	 lisa2,    "Apple Computer",  "Lisa2", GAME_NOT_WORKING )
+COMPX( 1984, lisa210,  lisa2,    lisa210,  lisa,	 lisa210,  "Apple Computer",  "Lisa2/10", GAME_NOT_WORKING )
+COMPX( 1985, macxl,    lisa2,    macxl,    lisa,	 mac_xl,   "Apple Computer",  "Macintosh XL", GAME_NOT_WORKING )
 
