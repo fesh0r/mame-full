@@ -66,19 +66,19 @@ IMAGEMODULE(
 static int xsa_image_init(STREAM *f, IMAGE **outimg)
 	{
 	XSA_IMAGE *image;
-	int pos, len;
+	int pos, len, size;
     UINT8 header[4], byt;
 	char *file_name, *file_name_new;
 
-	len=stream_size(f);
-	if (len < 5) return IMGTOOLERR_MODULENOTFOUND;
+	size = stream_size (f);
+	if (size < 5) return IMGTOOLERR_MODULENOTFOUND;
 	if (4 != stream_read (f, header, 4) ) return IMGTOOLERR_READERROR;
 	
     if (memcmp (header, "PCK\010", 4) )
 		return IMGTOOLERR_MODULENOTFOUND;
 	
-	if (4 != stream_read (f, &len, 4) ) return IMGTOOLERR_READERROR;
-	len = intelLong (len);
+	if (4 != stream_read (f, &size, 4) ) return IMGTOOLERR_READERROR;
+	size = intelLong (size);
 	if (4 != stream_read (f, header, 4) ) return IMGTOOLERR_READERROR;
 	
 	/* get name from XSA header, can't be longer than 8.3 really */
@@ -116,7 +116,7 @@ static int xsa_image_init(STREAM *f, IMAGE **outimg)
 	memset(image, 0, sizeof(XSA_IMAGE));
 	image->base.module = &imgmod_xsa;
 	image->file_handle = f;
-	image->size = len;
+	image->size = size;
 	image->file_name = file_name;
 
 	return 0;
