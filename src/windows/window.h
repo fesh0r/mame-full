@@ -58,6 +58,7 @@ extern int			color32_bdst_shift;
 int win32_init_window(void);
 int create_window(int width, int height, int depth, int attributes, int orientation);
 void destroy_window(void);
+void update_cursor_state(void);
 void toggle_maximize(void);
 void toggle_full_screen(void);
 

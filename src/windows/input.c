@@ -115,7 +115,7 @@ static DIPROPRANGE			joystick_range[MAX_JOYSTICKS][MAX_AXES];
 //============================================================
 
 // global input options
-struct rc_option input_opts[] = 
+struct rc_option input_opts[] =
 {
 	/* name, shortname, type, dest, deflt, min, max, func, help */
 	{ "Input device options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
@@ -357,12 +357,12 @@ static BOOL CALLBACK enum_keyboard_callback(LPCDIDEVICEINSTANCE instance, LPVOID
 	result = IDirectInput_CreateDevice(dinput, &instance->guidInstance, &keyboard_device[keyboard_count], NULL);
 	if (result != DI_OK)
 		goto cant_create_device;
-	
+
 	// try to get a version 2 device for it
 	result = IDirectInputDevice_QueryInterface(keyboard_device[keyboard_count], &IID_IDirectInputDevice2, (void **)&keyboard_device2[keyboard_count]);
 	if (result != DI_OK)
 		keyboard_device2[keyboard_count] = NULL;
-	
+
 	// get the caps
 	keyboard_caps[keyboard_count].dwSize = STRUCTSIZE(DIDEVCAPS);
 	result = IDirectInputDevice_GetCapabilities(keyboard_device[keyboard_count], &keyboard_caps[keyboard_count]);
@@ -373,7 +373,7 @@ static BOOL CALLBACK enum_keyboard_callback(LPCDIDEVICEINSTANCE instance, LPVOID
 	result = IDirectInputDevice_SetDataFormat(keyboard_device[keyboard_count], &c_dfDIKeyboard);
 	if (result != DI_OK)
 		goto cant_set_format;
-		
+
 	// set the cooperative level
 	result = IDirectInputDevice_SetCooperativeLevel(keyboard_device[keyboard_count], video_window,
 					DISCL_FOREGROUND | DISCL_NONEXCLUSIVE);
@@ -412,12 +412,12 @@ static BOOL CALLBACK enum_mouse_callback(LPCDIDEVICEINSTANCE instance, LPVOID re
 	result = IDirectInput_CreateDevice(dinput, &instance->guidInstance, &mouse_device[mouse_count], NULL);
 	if (result != DI_OK)
 		goto cant_create_device;
-	
+
 	// try to get a version 2 device for it
 	result = IDirectInputDevice_QueryInterface(mouse_device[mouse_count], &IID_IDirectInputDevice2, (void **)&mouse_device2[mouse_count]);
 	if (result != DI_OK)
 		mouse_device2[mouse_count] = NULL;
-	
+
 	// get the caps
 	mouse_caps[mouse_count].dwSize = STRUCTSIZE(DIDEVCAPS);
 	result = IDirectInputDevice_GetCapabilities(mouse_device[mouse_count], &mouse_caps[mouse_count]);
@@ -438,7 +438,7 @@ static BOOL CALLBACK enum_mouse_callback(LPCDIDEVICEINSTANCE instance, LPVOID re
 	result = IDirectInputDevice_SetDataFormat(mouse_device[mouse_count], &c_dfDIMouse);
 	if (result != DI_OK)
 		goto cant_set_format;
-		
+
 	// set the cooperative level
 	result = IDirectInputDevice_SetCooperativeLevel(mouse_device[mouse_count], video_window,
 					DISCL_FOREGROUND | DISCL_EXCLUSIVE);
@@ -483,7 +483,7 @@ static BOOL CALLBACK enum_joystick_callback(LPCDIDEVICEINSTANCE instance, LPVOID
 	result = IDirectInputDevice_QueryInterface(joystick_device[joystick_count], &IID_IDirectInputDevice2, (void **)&joystick_device2[joystick_count]);
 	if (result != DI_OK)
 		joystick_device2[joystick_count] = NULL;
-	
+
 	// get the caps
 	joystick_caps[joystick_count].dwSize = STRUCTSIZE(DIDEVCAPS);
 	result = IDirectInputDevice_GetCapabilities(joystick_device[joystick_count], &joystick_caps[joystick_count]);
@@ -504,9 +504,9 @@ static BOOL CALLBACK enum_joystick_callback(LPCDIDEVICEINSTANCE instance, LPVOID
 	result = IDirectInputDevice_SetDataFormat(joystick_device[joystick_count], &c_dfDIJoystick);
 	if (result != DI_OK)
 		goto cant_set_format;
-		
+
 	// set the cooperative level
-	result = IDirectInputDevice_SetCooperativeLevel(joystick_device[joystick_count], video_window, 
+	result = IDirectInputDevice_SetCooperativeLevel(joystick_device[joystick_count], video_window,
 					DISCL_FOREGROUND | DISCL_EXCLUSIVE);
 	if (result != DI_OK)
 		goto cant_set_coop_level;
@@ -534,7 +534,7 @@ out_of_joysticks:
 int win32_init_input(void)
 {
 	HRESULT result;
-	
+
 	// first attempt to initialize DirectInput
 	dinput_version = DIRECTINPUT_VERSION;
 	result = DirectInputCreate(GetModuleHandle(NULL), dinput_version, &dinput, NULL);
@@ -547,13 +547,13 @@ int win32_init_input(void)
 	}
 	if (verbose)
 		fprintf(stderr, "Using DirectInput %d\n", dinput_version >> 8);
-	
+
 	// initialize keyboard devices
 	keyboard_count = 0;
 	result = IDirectInput_EnumDevices(dinput, DIDEVTYPE_KEYBOARD, enum_keyboard_callback, 0, DIEDFL_ATTACHEDONLY);
 	if (result != DI_OK)
 		goto cant_init_keyboard;
-	
+
 	// initialize mouse devices
 	mouse_count = 0;
 	if (use_mouse)
@@ -571,18 +571,18 @@ int win32_init_input(void)
 		if (result != DI_OK)
 			goto cant_init_joystick;
 	}
-	
+
 	// init the keyboard list
 	init_keylist();
-	
+
 	// init the joystick list
 	init_joylist();
-	
+
 	// print the results
 	if (verbose)
 		fprintf(stderr, "Keyboards=%d  Mice=%d  Joysticks=%d\n", keyboard_count, mouse_count, joystick_count);
 	return 0;
-	
+
 cant_init_joystick:
 cant_init_mouse:
 cant_init_keyboard:
@@ -601,7 +601,7 @@ cant_create_dinput:
 void win32_shutdown_input(void)
 {
 	int i;
-	
+
 	// release all our keyboards
 	for (i = 0; i < keyboard_count; i++)
 		IDirectInputDevice_Release(keyboard_device[i]);
@@ -629,7 +629,7 @@ void win32_shutdown_input(void)
 void win32_pause_input(int paused)
 {
 	int i;
-	
+
 	// if paused, unacquire all devices
 	if (paused)
 	{
@@ -645,7 +645,7 @@ void win32_pause_input(int paused)
 		for (i = 0; i < mouse_count; i++)
 			IDirectInputDevice_Unacquire(mouse_device[i]);
 	}
-	
+
 	// otherwise, reacquire all devices
 	else
 	{
@@ -662,9 +662,10 @@ void win32_pause_input(int paused)
 			for (i = 0; i < mouse_count; i++)
 				IDirectInputDevice_Acquire(mouse_device[i]);
 	}
-	
+
 	// set the paused state
 	input_paused = paused;
+	update_cursor_state();
 }
 
 
@@ -678,13 +679,13 @@ void win32_poll_input(void)
 	HWND focus = GetFocus();
 	HRESULT result = 1;
 	int i, j;
-	
+
 	// remember when this happened
 	last_poll = ticker();
-	
+
 	// periodically process events, in case they're not coming through
 	process_events_periodic();
-	
+
 	// if we don't have focus, turn off all keys
 	if (!focus)
 	{
@@ -692,7 +693,7 @@ void win32_poll_input(void)
 		updatekeyboard();
 		return;
 	}
-	
+
 	// poll all keyboards
 	for (i = 0; i < keyboard_count; i++)
 	{
@@ -702,7 +703,7 @@ void win32_poll_input(void)
 
 		// get the state
 		result = IDirectInputDevice_GetDeviceState(keyboard_device[i], sizeof(keyboard_state[i]), &keyboard_state[i][0]);
-		
+
 		// handle lost inputs here
 		if ((result == DIERR_INPUTLOST || result == DIERR_NOTACQUIRED) && !input_paused)
 		{
@@ -710,20 +711,20 @@ void win32_poll_input(void)
 			if (result == DI_OK)
 				result = IDirectInputDevice_GetDeviceState(keyboard_device[i], sizeof(keyboard_state[i]), &keyboard_state[i][0]);
 		}
-		
+
 		// convert to 0 or 1
 		if (result == DI_OK)
 			for (j = 0; j < sizeof(keyboard_state[i]); j++)
 				keyboard_state[i][j] >>= 7;
 	}
-	
+
 	// if we couldn't poll the keyboard that way, poll it via GetAsyncKeyState
 	if (result != DI_OK)
 		for (i = 0; keylist[i].code; i++)
 		{
 			int dik = DICODE(keylist[i].code);
 			int vk = VKCODE(keylist[i].code);
-			
+
 			// if we have a non-zero VK, query it
 			if (vk)
 				keyboard_state[0][dik] = (GetAsyncKeyState(vk) >> 15) & 1;
@@ -731,11 +732,11 @@ void win32_poll_input(void)
 
 	// update the lagged keyboard
 	updatekeyboard();
-	
+
 	// if the debugger is up and visible, don't bother with the rest
 	if (debug_window != NULL && IsWindowVisible(debug_window))
 		return;
-	
+
 	// poll all joysticks
 	for (i = 0; i < joystick_count; i++)
 	{
@@ -745,7 +746,7 @@ void win32_poll_input(void)
 
 		// get the state
 		result = IDirectInputDevice_GetDeviceState(joystick_device[i], sizeof(joystick_state[i]), &joystick_state[i]);
-		
+
 		// handle lost inputs here
 		if ((result == DIERR_INPUTLOST || result == DIERR_NOTACQUIRED) && !input_paused)
 		{
@@ -765,7 +766,7 @@ void win32_poll_input(void)
 
 			// get the state
 			result = IDirectInputDevice_GetDeviceState(mouse_device[i], sizeof(mouse_state[i]), &mouse_state[i]);
-		
+
 			// handle lost inputs here
 			if ((result == DIERR_INPUTLOST || result == DIERR_NOTACQUIRED) && !input_paused)
 			{
@@ -775,7 +776,18 @@ void win32_poll_input(void)
 			}
 		}
 }
-	
+
+
+
+//============================================================
+//	is_mouse_captured
+//============================================================
+
+int is_mouse_captured(void)
+{
+	return (!input_paused && mouse_active && mouse_count > 0);
+}
+
 
 
 //============================================================
@@ -829,7 +841,7 @@ static void updatekeyboard(void)
 int osd_is_key_pressed(int keycode)
 {
 	int dik = DICODE(keycode);
-	
+
 	// make sure we've polled recently
 	if (ticker() > last_poll + TICKS_PER_SEC/4)
 		win32_poll_input();
@@ -904,12 +916,12 @@ static void init_keylist(void)
 			{
 				unsigned code, standardcode;
 				int entry;
-			
+
 				// find the table entry, if there is one
 				for (entry = 0; entry < ELEMENTS(key_trans_table); entry++)
 					if (key_trans_table[entry][DI_KEY] == key)
 						break;
-				
+
 				// compute the code, which encodes DirectInput, virtual, and ASCII codes
 				code = KEYCODE(key, 0, 0);
 				standardcode = KEYCODE_OTHER;
@@ -918,7 +930,7 @@ static void init_keylist(void)
 					code = KEYCODE(key, key_trans_table[entry][VIRTUAL_KEY], key_trans_table[entry][ASCII_KEY]);
 					standardcode = key_trans_table[entry][MAME_KEY];
 				}
-				
+
 				// fill in the key description
 				keylist[keycount].name = strcpy(namecopy, instance.tszName);
 				keylist[keycount].code = code;
@@ -927,7 +939,7 @@ static void init_keylist(void)
 			}
 		}
 	}
-	
+
 	// terminate the list
 	memset(&keylist[keycount], 0, sizeof(keylist[keycount]));
 }
@@ -957,7 +969,7 @@ static void init_joylist(void)
 			{
 				char *namecopy;
 				char tempname[MAX_PATH];
-				
+
 				// add mouse number to the name
 				if (mouse_count > 1)
 					sprintf(tempname, "Mouse %d %s", mouse + 1, instance.tszName);
@@ -973,7 +985,7 @@ static void init_joylist(void)
 					for (entry = 0; entry < ELEMENTS(joy_trans_table); entry++)
 						if (joy_trans_table[entry][0] == code)
 							break;
-					
+
 					// fill in the joy description
 					joylist[joycount].name = strcpy(namecopy, tempname);
 					joylist[joycount].code = code;
@@ -988,7 +1000,7 @@ static void init_joylist(void)
 	// now map joysticks
 	for (stick = 0; stick < joystick_count; stick++)
 	{
-		// loop over all axes 
+		// loop over all axes
 		for (axis = 0; axis < 3; axis++)
 		{
 			DIDEVICEOBJECTINSTANCE instance = { 0 };
@@ -1001,7 +1013,7 @@ static void init_joylist(void)
 			{
 				char *namecopy;
 				char tempname[MAX_PATH];
-				
+
 				// add negative value
 				// make the name for this item
 				sprintf(tempname, "J%d %s -", stick + 1, instance.tszName);
@@ -1015,7 +1027,7 @@ static void init_joylist(void)
 					for (entry = 0; entry < ELEMENTS(joy_trans_table); entry++)
 						if (joy_trans_table[entry][0] == code)
 							break;
-					
+
 					// fill in the joy description
 					joylist[joycount].name = strcpy(namecopy, tempname);
 					joylist[joycount].code = code;
@@ -1024,7 +1036,7 @@ static void init_joylist(void)
 						joylist[joycount].standardcode = joy_trans_table[entry][1];
 					joycount++;
 				}
-				
+
 				// add positive value
 				// make the name for this item
 				sprintf(tempname, "J%d %s +", stick + 1, instance.tszName);
@@ -1038,7 +1050,7 @@ static void init_joylist(void)
 					for (entry = 0; entry < ELEMENTS(joy_trans_table); entry++)
 						if (joy_trans_table[entry][0] == code)
 							break;
-					
+
 					// fill in the joy description
 					joylist[joycount].name = strcpy(namecopy, tempname);
 					joylist[joycount].code = code;
@@ -1047,7 +1059,7 @@ static void init_joylist(void)
 						joylist[joycount].standardcode = joy_trans_table[entry][1];
 					joycount++;
 				}
-				
+
 				// get the axis range while we're here
 				joystick_range[stick][axis].diph.dwSize = sizeof(DIPROPRANGE);
 				joystick_range[stick][axis].diph.dwHeaderSize = sizeof(joystick_range[stick][axis].diph);
@@ -1057,7 +1069,7 @@ static void init_joylist(void)
 			}
 		}
 
-		// loop over all buttons 
+		// loop over all buttons
 		for (button = 0; button < joystick_caps[stick].dwButtons; button++)
 		{
 			DIDEVICEOBJECTINSTANCE instance = { 0 };
@@ -1070,7 +1082,7 @@ static void init_joylist(void)
 			{
 				char *namecopy;
 				char tempname[MAX_PATH];
-				
+
 				// make the name for this item
 				sprintf(tempname, "J%d %s", stick + 1, instance.tszName);
 				namecopy = malloc(strlen(tempname) + 1);
@@ -1083,7 +1095,7 @@ static void init_joylist(void)
 					for (entry = 0; entry < ELEMENTS(joy_trans_table); entry++)
 						if (joy_trans_table[entry][0] == code)
 							break;
-					
+
 					// fill in the joy description
 					joylist[joycount].name = strcpy(namecopy, tempname);
 					joylist[joycount].code = code;
@@ -1122,16 +1134,16 @@ int osd_is_joy_pressed(int joycode)
 	int joyindex = JOYINDEX(joycode);
 	int joytype = JOYTYPE(joycode);
 	int joynum = JOYNUM(joycode);
-	
+
 	// switch off the type
 	switch (joytype)
 	{
 		case JOYTYPE_MOUSEBUTTON:
 			return mouse_state[joynum].rgbButtons[joyindex] >> 7;
-		
+
 		case JOYTYPE_BUTTON:
 			return joystick_state[joynum].rgbButtons[joyindex] >> 7;
-		
+
 		case JOYTYPE_AXIS_POS:
 		case JOYTYPE_AXIS_NEG:
 		{
@@ -1139,7 +1151,7 @@ int osd_is_joy_pressed(int joycode)
 			LONG top = joystick_range[joynum][joyindex].lMax;
 			LONG bottom = joystick_range[joynum][joyindex].lMin;
 			LONG middle = (top + bottom) / 2;
-			
+
 			// watch for movement 1/4 of the way along either axis
 			if (joytype == JOYTYPE_AXIS_POS)
 				return (val > middle + (top - middle) / 4);
@@ -1147,7 +1159,7 @@ int osd_is_joy_pressed(int joycode)
 				return (val < middle - (middle - bottom) / 4);
 		}
 	}
-	
+
 	// keep the compiler happy
 	return 0;
 }
@@ -1161,14 +1173,14 @@ int osd_is_joy_pressed(int joycode)
 void osd_analogjoy_read(int player, int *analog_x, int *analog_y)
 {
 	LONG top, bottom, middle;
-	
+
 	// if the mouse isn't yet active, make it so
 	if (!mouse_active)
 	{
 		mouse_active = 1;
 		win32_pause_input(0);
 	}
-	
+
 	// if out of range, skip it
 	if (player >= joystick_count)
 	{
@@ -1207,7 +1219,7 @@ void osd_trak_read(int player, int *deltax, int *deltay)
 		mouse_active = 1;
 		win32_pause_input(0);
 	}
-	
+
 	// return the latest mouse info
 	*deltax = mouse_state[player].lX;
 	*deltay = mouse_state[player].lY;
@@ -1287,7 +1299,7 @@ void osd_customize_inputport_defaults(struct ipd *defaults)
 		{
 			int j;
 
-			// map up/down/left/right to the numpad			
+			// map up/down/left/right to the numpad
 			for (j = 0; j < SEQ_MAX; j++)
 			{
 				if (defaults->seq[j] == KEYCODE_UP) defaults->seq[j] = KEYCODE_8_PAD;
@@ -1295,16 +1307,16 @@ void osd_customize_inputport_defaults(struct ipd *defaults)
 				if (defaults->seq[j] == KEYCODE_LEFT) defaults->seq[j] = KEYCODE_4_PAD;
 				if (defaults->seq[j] == KEYCODE_RIGHT) defaults->seq[j] = KEYCODE_6_PAD;
 			}
-			
+
 			// UI select is button 1
 			if (defaults->type == IPT_UI_SELECT) seq_set_1(&defaults->seq, KEYCODE_LCONTROL);
-			
+
 			// map to the old start/coinage
 			if (defaults->type == IPT_START1) seq_set_1(&defaults->seq, KEYCODE_1);
 			if (defaults->type == IPT_START2) seq_set_1(&defaults->seq, KEYCODE_2);
 			if (defaults->type == IPT_COIN1)  seq_set_1(&defaults->seq, KEYCODE_3);
 			if (defaults->type == IPT_COIN2)  seq_set_1(&defaults->seq, KEYCODE_4);
-			
+
 			// map left/right joysticks to the player1/2 joysticks
 			if (defaults->type == (IPT_JOYSTICKRIGHT_UP    | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_R);
 			if (defaults->type == (IPT_JOYSTICKRIGHT_DOWN  | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_F);
@@ -1314,7 +1326,7 @@ void osd_customize_inputport_defaults(struct ipd *defaults)
 			if (defaults->type == (IPT_JOYSTICKLEFT_DOWN   | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_2_PAD);
 			if (defaults->type == (IPT_JOYSTICKLEFT_LEFT   | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_4_PAD);
 			if (defaults->type == (IPT_JOYSTICKLEFT_RIGHT  | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_6_PAD);
-			
+
 			// make sure the buttons are mapped like the hotrod expects
 			if (defaults->type == (IPT_BUTTON1 | IPF_PLAYER1)) seq_set_3(&defaults->seq, KEYCODE_LCONTROL, CODE_OR, JOYCODE_1_BUTTON1);
 			if (defaults->type == (IPT_BUTTON2 | IPF_PLAYER1)) seq_set_3(&defaults->seq, KEYCODE_LALT, CODE_OR, JOYCODE_1_BUTTON2);

@@ -37,6 +37,7 @@
 
 // from input.c
 extern void win32_pause_input(int pause);
+extern int is_mouse_captured(void);
 extern UINT8 trying_to_quit;
 extern int verbose;
 
@@ -259,13 +260,13 @@ INLINE void compute_multipliers(const RECT *rect, int *xmult, int *ymult)
 	// first compute simply
 	*xmult = (rect->right - rect->left) / visible_width;
 	*ymult = (rect->bottom - rect->top) / visible_height;
-	
+
 	// clamp X to the max
 	if (*xmult > MAX_X_MULTIPLY)
 		*xmult = MAX_X_MULTIPLY;
 	if (*ymult > MAX_Y_MULTIPLY)
 		*ymult = MAX_Y_MULTIPLY;
-		
+
 	// adjust for pixel aspect ratio
 	if (pixel_aspect_ratio == VIDEO_PIXEL_ASPECT_RATIO_1_2)
 		if (*ymult > 1)
@@ -273,14 +274,14 @@ INLINE void compute_multipliers(const RECT *rect, int *xmult, int *ymult)
 	if (pixel_aspect_ratio == VIDEO_PIXEL_ASPECT_RATIO_2_1)
 		if (*xmult > 1)
 			*xmult &= ~1;
-	
+
 	// make sure we have at least 1
 	if (*xmult < 1)
 		*xmult = 1;
 	if (*ymult < 1)
 		*ymult = 1;
 }
-	
+
 
 
 //============================================================
@@ -295,7 +296,7 @@ INLINE void erase_outer_rect(RECT *outer, RECT *inner, HDC dc, LPDIRECTDRAWSURFA
 
 	// erase the blit surface
 	blitfx.DUMMYUNIONNAMEN(5).dwFillColor = 0;
-	
+
 	// clear the left edge
 	if (inner->left > outer->left)
 	{
@@ -306,7 +307,7 @@ INLINE void erase_outer_rect(RECT *outer, RECT *inner, HDC dc, LPDIRECTDRAWSURFA
 		if (dc)
 			FillRect(dc, &clear, brush);
 	}
-	
+
 	// clear the right edge
 	if (inner->right < outer->right)
 	{
@@ -328,7 +329,7 @@ INLINE void erase_outer_rect(RECT *outer, RECT *inner, HDC dc, LPDIRECTDRAWSURFA
 		if (dc)
 			FillRect(dc, &clear, brush);
 	}
-	
+
 	// clear the bottom edge
 	if (inner->bottom < outer->bottom)
 	{
@@ -352,17 +353,17 @@ INLINE void get_work_area(RECT *maximum)
 	if (SystemParametersInfo(SPI_GETWORKAREA, 0, maximum, 0))
 	{
 		// clamp to the width specified
-		if (gfx_width && (maximum->right - maximum->left) > gfx_width)
+		if (gfx_width && (maximum->right - maximum->left) > (gfx_width + wnd_extra_width()))
 		{
-			int diff = (maximum->right - maximum->left) - gfx_width;
+			int diff = (maximum->right - maximum->left) - (gfx_width + wnd_extra_width());
 			maximum->left += diff / 2;
 			maximum->right -= diff - (diff / 2);
 		}
-	
+
 		// clamp to the height specified
-		if (gfx_height && (maximum->bottom - maximum->top) > gfx_height)
+		if (gfx_height && (maximum->bottom - maximum->top) > (gfx_height + wnd_extra_height()))
 		{
-			int diff = (maximum->bottom - maximum->top) - gfx_height;
+			int diff = (maximum->bottom - maximum->top) - (gfx_height + wnd_extra_height());
 			maximum->top += diff / 2;
 			maximum->bottom -= diff - (diff / 2);
 		}
@@ -384,7 +385,7 @@ int win32_init_window(void)
 	if (!classes_created)
 	{
 		WNDCLASS wc = { 0 };
-		
+
 		// initialize the description of the window class
 		wc.lpszClassName 	= "MAME";
 		wc.hInstance 		= GetModuleHandle(NULL);
@@ -400,7 +401,7 @@ int win32_init_window(void)
 		// register the class; fail if we can't
 		if (!RegisterClass(&wc))
 			return 1;
-		
+
 		// possibly register the debug window class
 		if (options.mame_debug)
 		{
@@ -412,7 +413,7 @@ int win32_init_window(void)
 				return 1;
 		}
 	}
-	
+
 	// make the window title
 	sprintf(title, "MAME: %s [%s]", Machine->gamedrv->description, Machine->gamedrv->name);
 
@@ -422,7 +423,7 @@ int win32_init_window(void)
 			20, 20, 100, 100, NULL, NULL, GetModuleHandle(NULL), NULL);
 	if (!video_window)
 		return 1;
-	
+
 	// possibly create the debug window, but don't show it yet
 	if (options.mame_debug)
 		if (create_debug_window())
@@ -442,7 +443,7 @@ int win32_init_window(void)
 int create_window(int width, int height, int depth, int attributes, int orientation)
 {
 	int i, result;
-	
+
 	// clear the initial state
 	visible_area_set = 0;
 
@@ -458,17 +459,17 @@ int create_window(int width, int height, int depth, int attributes, int orientat
 	// handle failure if we couldn't create the video window
 	if (!video_window)
 		return 1;
-	
+
 	// allocate a temporary bitmap in case we need it
 	converted_bitmap = malloc(MAX_VIDEO_WIDTH * MAX_VIDEO_HEIGHT * 4);
 	if (!converted_bitmap)
 		return 1;
 
 	// adjust the window position
-	SetWindowPos(video_window, NULL, 20, 20, 
+	SetWindowPos(video_window, NULL, 20, 20,
 			width + wnd_extra_width() + 2, height + wnd_extra_height() + 2,
 			SWP_NOZORDER);
-	
+
 	// make sure we paint the window once here
 	update_video_window(NULL);
 
@@ -483,7 +484,7 @@ int create_window(int width, int height, int depth, int attributes, int orientat
 	max_width = width;
 	max_height = height;
 	pref_depth = depth;
-	
+
 	// fill in the bitmap info header
 	video_dib_info->bmiHeader.biSize			= sizeof(video_dib_info->bmiHeader);
 	video_dib_info->bmiHeader.biPlanes			= 1;
@@ -501,15 +502,15 @@ int create_window(int width, int height, int depth, int attributes, int orientat
 		video_dib_info->bmiColors[i].rgbGreen		= i;
 		video_dib_info->bmiColors[i].rgbBlue		= i;
 		video_dib_info->bmiColors[i].rgbReserved	= i;
-		
+
 		primary_palette_data[i].peRed	= i;
 		primary_palette_data[i].peGreen	= i;
 		primary_palette_data[i].peBlue	= i;
 	}
-	
+
 	// copy that same data into the debug DIB info
 	memcpy(debug_dib_info_data, video_dib_info_data, sizeof(debug_dib_info_data));
-	
+
 	// finish off by trying to initialize DirectDraw
 	if (use_ddraw)
 	{
@@ -528,7 +529,7 @@ int create_window(int width, int height, int depth, int attributes, int orientat
 			double den = (double)VIDEO_ASPECT_RATIO_DEN(attributes);
 			aspect_ratio = swap_xy ? den / num : num / den;
 		}
-		
+
 		// otherwise, attempt to deduce the result
 		else
 		{
@@ -571,6 +572,20 @@ void destroy_window(void)
 
 
 //============================================================
+//	update_cursor_state
+//============================================================
+
+void update_cursor_state(void)
+{
+	if (window_mode && !is_mouse_captured())
+		while (ShowCursor(TRUE) < 0) ;
+	else
+		while (ShowCursor(FALSE) >= 0) ;
+}
+
+
+
+//============================================================
 //	update_system_menu
 //============================================================
 
@@ -586,7 +601,7 @@ static void update_system_menu(void)
 	if (menu)
 		AppendMenu(menu, MF_ENABLED | MF_STRING, MENU_FULLSCREEN, "Full Screen\tAlt+Enter");
 }
-	
+
 
 
 //============================================================
@@ -631,22 +646,22 @@ static void draw_video_contents(HDC dc, struct osd_bitmap *bitmap, int update)
 		return;
 	}
 	last = bitmap;
-	
+
 	// if we're iconic, don't bother
 	if (IsIconic(video_window))
 		return;
-	
+
 	// handle forced updates
 	if (forced_updates)
 	{
 		forced_updates--;
 		update = 1;
 	}
-	
+
 	// if we have a blit surface, use that
 	if (use_ddraw && ddraw_draw_window(bitmap, update))
 		return;
-	
+
 	// draw to the window with a DIB
 	dib_draw_window(dc, bitmap, update);
 }
@@ -671,7 +686,7 @@ static LRESULT CALLBACK video_window_proc(HWND wnd, UINT message, WPARAM wparam,
 			EndPaint(wnd, &pstruct);
 			break;
 		}
-		
+
 		// get min/max info: set the minimum window size
 		case WM_GETMINMAXINFO:
 		{
@@ -680,7 +695,7 @@ static LRESULT CALLBACK video_window_proc(HWND wnd, UINT message, WPARAM wparam,
 			minmax->ptMinTrackSize.y = visible_height + 2 + wnd_extra_height();
 			break;
 		}
-		
+
 		// sizing: constrain to the aspect ratio unless control key is held down
 		case WM_SIZING:
 		{
@@ -690,7 +705,7 @@ static LRESULT CALLBACK video_window_proc(HWND wnd, UINT message, WPARAM wparam,
 			InvalidateRect(video_window, NULL, FALSE);
 			break;
 		}
-		
+
 		// syscommands: catch maximize
 		case WM_SYSCOMMAND:
 		{
@@ -707,14 +722,14 @@ static LRESULT CALLBACK video_window_proc(HWND wnd, UINT message, WPARAM wparam,
 			}
 			return DefWindowProc(wnd, message, wparam, lparam);
 		}
-		
+
 		// destroy: close down the app
 		case WM_DESTROY:
 			ddraw_kill();
 			trying_to_quit = 1;
 			video_window = 0;
 			break;
-	
+
 		// everything else: defaults
 		default:
 			return DefWindowProc(wnd, message, wparam, lparam);
@@ -768,19 +783,19 @@ static void constrain_to_aspect_ratio(RECT *rect, int adjustment)
 	// clamp the initial rect to its maxrect box
 	temp = *rect;
 	IntersectRect(rect, &temp, &maxrect);
-	
+
 	// if we're not forcing the aspect ratio, just return the intersection
 	if (!keepaspect)
 		return;
-	
+
 	// compute the new requested width/height
 	newwidth = rect->right - rect->left - extrawidth;
 	newheight = rect->bottom - rect->top - extraheight;
-	
+
 	// compute the adjusted width/height
 	adjwidth = (int)((double)newheight * adjusted_ratio);
 	adjheight = (int)((double)newwidth / adjusted_ratio);
-	
+
 	// if we're going to be too small, expand outward
 	if (adjwidth < minrect.right - minrect.left - extrawidth)
 	{
@@ -792,7 +807,7 @@ static void constrain_to_aspect_ratio(RECT *rect, int adjustment)
 		adjheight = minrect.bottom - minrect.top - extraheight;
 		newwidth = (int)((double)adjheight * adjusted_ratio);
 	}
-	
+
 	// if we're going to be too big, expand inward
 	if (adjwidth > maxrect.right - maxrect.left - extrawidth)
 	{
@@ -825,7 +840,7 @@ static void constrain_to_aspect_ratio(RECT *rect, int adjustment)
 				rect->bottom = rect->top + newheight + extraheight;
 			}
 			break;
-		
+
 		case WMSZ_BOTTOMRIGHT:
 			if (newwidth * adjheight > adjwidth * newheight)
 			{
@@ -838,22 +853,22 @@ static void constrain_to_aspect_ratio(RECT *rect, int adjustment)
 				rect->bottom = rect->top + newheight + extraheight;
 			}
 			break;
-		
+
 		case WMSZ_LEFT:
 			rect->top = rect->bottom - adjheight - extraheight;
 			rect->left = rect->right - newwidth - extrawidth;
 			break;
-		
+
 		case WMSZ_RIGHT:
 			rect->bottom = rect->top + adjheight + extraheight;
 			rect->right = rect->left + newwidth + extrawidth;
 			break;
-		
+
 		case WMSZ_TOP:
 			rect->left = rect->right - adjwidth - extrawidth;
 			rect->top = rect->bottom - newheight - extraheight;
 			break;
-		
+
 		case WMSZ_TOPLEFT:
 			if (newwidth * adjheight > adjwidth * newheight)
 			{
@@ -910,14 +925,35 @@ void adjust_window_for_visible(int min_x, int max_x, int min_y, int max_y)
 
 	// adjust the window
 	adjust_window();
-	
+
 	// first time through here, we need to show the window
 	if (!visible_area_set)
 	{
 		// let's also maximize the window
-		if (window_mode && maximize)
-			toggle_maximize();
-		
+		if (window_mode)
+		{
+			RECT bounds, work;
+
+			// compute the non-maximized bounds here
+			get_work_area(&work);
+			GetWindowRect(video_window, &bounds);
+			non_maximized_bounds.left = work.left + ((work.right - work.left) - (bounds.right - bounds.left)) / 2;
+			non_maximized_bounds.top = work.top + ((work.bottom - work.top) - (bounds.bottom - bounds.top)) / 2;
+			non_maximized_bounds.right = non_maximized_bounds.left + bounds.right - bounds.left;
+			non_maximized_bounds.bottom = non_maximized_bounds.top + bounds.bottom - bounds.top;
+
+			// if maximizing, toggle it
+			if (maximize)
+				toggle_maximize();
+
+			// otherwise, just enforce the bounds
+			else
+				SetWindowPos(video_window, NULL, non_maximized_bounds.left, non_maximized_bounds.top,
+						non_maximized_bounds.right - non_maximized_bounds.left,
+						non_maximized_bounds.bottom - non_maximized_bounds.top,
+						SWP_NOZORDER);
+		}
+
 		// kludge to fix full screen mode for the non-ddraw case
 		if (!use_ddraw && !window_mode)
 		{
@@ -925,12 +961,15 @@ void adjust_window_for_visible(int min_x, int max_x, int min_y, int max_y)
 			toggle_full_screen();
 			memset(&non_fullscreen_bounds, 0, sizeof(non_fullscreen_bounds));
 		}
-		
+
 		// show the result
 		ShowWindow(video_window, SW_SHOW);
 		SetForegroundWindow(video_window);
 		update_video_window(NULL);
-		
+
+		// update the cursor state
+		update_cursor_state();
+
 		// unpause the input devices
 		win32_pause_input(0);
 		visible_area_set = 1;
@@ -946,10 +985,10 @@ void adjust_window_for_visible(int min_x, int max_x, int min_y, int max_y)
 void toggle_maximize(void)
 {
 	RECT current, maximum;
-	
+
 	// get the current position
 	GetWindowRect(video_window, &current);
-	
+
 	// get the desktop work area
 	get_work_area(&maximum);
 
@@ -959,31 +998,31 @@ void toggle_maximize(void)
 	{
 		current = non_maximized_bounds;
 	}
-	
+
 	// otherwise, save the non_maximized_bounds position and set the new one
 	else
 	{
 		int xoffset, yoffset;
-	
+
 		// save the current location
 		non_maximized_bounds = current;
-		
+
 		// compute the max size
 		current = maximum;
 		constrain_to_aspect_ratio(&current, WMSZ_BOTTOMRIGHT);
-		
+
 		// if we're not stretching, compute the multipliers
 		if (!ddraw_stretch || !use_ddraw)
 		{
 			int xmult, ymult;
-			
+
 			current.right -= wnd_extra_width() + 2;
 			current.bottom -= wnd_extra_height() + 2;
 			compute_multipliers(&current, &xmult, &ymult);
 			current.right = current.left + visible_width * xmult + wnd_extra_width() + 2;
 			current.bottom = current.top + visible_height * ymult + wnd_extra_height() + 2;
 		}
-		
+
 		// center it
 		xoffset = ((maximum.right - maximum.left) - (current.right - current.left)) / 2;
 		yoffset = ((maximum.bottom - maximum.top) - (current.bottom - current.top)) / 2;
@@ -1018,15 +1057,15 @@ void toggle_full_screen(void)
 		primary_desc.dwHeight = device_data.dmPelsHeight;
 		primary_desc.ddpfPixelFormat.DUMMYUNIONNAMEN(1).dwRGBBitCount = device_data.dmBitsPerPel;
 	}
-	
+
 	// hide the window
 	ShowWindow(video_window, SW_HIDE);
 	if (window_mode && debug_window)
 		ShowWindow(debug_window, SW_HIDE);
-	
+
 	// toggle the window mode
 	window_mode = !window_mode;
-	
+
 	// adjust the window style and z order
 	if (window_mode)
 	{
@@ -1038,7 +1077,7 @@ void toggle_full_screen(void)
 		// force to the bottom, then back on top
 		SetWindowPos(video_window, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 		SetWindowPos(video_window, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
-		
+
 		// adjust the bounds
 		if (non_fullscreen_bounds.right != non_fullscreen_bounds.left)
 			SetWindowPos(video_window, HWND_TOP, non_fullscreen_bounds.left, non_fullscreen_bounds.top,
@@ -1054,7 +1093,7 @@ void toggle_full_screen(void)
 	{
 		// save the bounds
 		GetWindowRect(video_window, &non_fullscreen_bounds);
-		
+
 		// adjust the style
 		SetWindowLong(video_window, GWL_STYLE, FULLSCREEN_STYLE);
 		SetWindowLong(video_window, GWL_EXSTYLE, FULLSCREEN_STYLE_EX);
@@ -1063,21 +1102,21 @@ void toggle_full_screen(void)
 		// set topmost
 		SetWindowPos(video_window, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 	}
-	
+
 	// adjust the window to compensate for the change
 	adjust_window();
 	update_system_menu();
-	
+
 	// show and adjust the window
 	ShowWindow(video_window, SW_SHOW);
 	if (window_mode && debug_window)
 		ShowWindow(debug_window, SW_SHOW);
-	
+
 	// reinit
 	if (use_ddraw)
 		if (ddraw_init())
 			exit(1);
-	
+
 	// make sure the window is properly readjusted
 	adjust_window();
 }
@@ -1102,7 +1141,7 @@ static void adjust_window(void)
 		window = original;
 		constrain_to_aspect_ratio(&window, WMSZ_BOTTOMRIGHT);
 	}
-	
+
 	// in full screen, make sure it covers the primary display
 	else
 	{
@@ -1117,9 +1156,12 @@ static void adjust_window(void)
 		original.top != window.top ||
 		original.right != window.right ||
 		original.bottom != window.bottom)
-		SetWindowPos(video_window, window_mode ? HWND_TOP : HWND_TOPMOST, 
-				window.left, window.top, 
+		SetWindowPos(video_window, window_mode ? HWND_TOP : HWND_TOPMOST,
+				window.left, window.top,
 				window.right - window.left, window.bottom - window.top, 0);
+
+	// update the cursor state
+	update_cursor_state();
 }
 
 
@@ -1145,10 +1187,10 @@ void process_events_periodic(void)
 void process_events(void)
 {
 	MSG message;
-	
+
 	// remember the last time we did this
 	last_event_check = ticker();
-	
+
 	// loop over all messages in the queue
 	while (PeekMessage(&message, NULL, 0, 0, PM_REMOVE))
 	{
@@ -1158,7 +1200,7 @@ void process_events(void)
 			case WM_QUIT:
 				exit(0);
 				break;
-				
+
 			// ignore keyboard messages
 			case WM_SYSKEYUP:
 			case WM_SYSKEYDOWN:
@@ -1166,7 +1208,7 @@ void process_events(void)
 			case WM_KEYDOWN:
 			case WM_CHAR:
 				break;
-	
+
 			// process everything else
 			default:
 				TranslateMessage(&message);
@@ -1186,11 +1228,11 @@ void wait_for_vsync(void)
 {
 	HRESULT result;
 	BOOL is_vblank;
-	
+
 	// if we're not using DirectDraw, skip
 	if (!use_ddraw)
 		return;
-	
+
 	// if we're not already in VBLANK, wait for it
 	result = IDirectDraw_GetVerticalBlankStatus(ddraw, &is_vblank);
 	if (result == DD_OK && !is_vblank)
@@ -1210,7 +1252,7 @@ int osd_get_leds(void)
 
 	// get the current state
 	GetKeyboardState(&key_states[0]);
-	
+
 	// set the numl0ck bit
 	result |= (key_states[VK_NUMLOCK] & 1);
 	result |= (key_states[VK_CAPITAL] & 1) << 1;
@@ -1246,7 +1288,7 @@ void osd_set_leds(int state)
 	// see if the numlock key matches the state
 	oldstate = key_states[VK_NUMLOCK] & 1;
 	newstate = state & 1;
-	
+
 	// if not, simulate a key up/down
 	if (oldstate != newstate && osinfo.dwPlatformId != VER_PLATFORM_WIN32_WINDOWS)
 	{
@@ -1254,11 +1296,11 @@ void osd_set_leds(int state)
 		keybd_event(VK_NUMLOCK, 0x45, KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP, 0);
 	}
 	key_states[VK_NUMLOCK] = (key_states[VK_NUMLOCK] & ~1) | newstate;
-	
+
 	// see if the caps lock key matches the state
 	oldstate = key_states[VK_CAPITAL] & 1;
 	newstate = (state >> 1) & 1;
-	
+
 	// if not, simulate a key up/down
 	if (oldstate != newstate && osinfo.dwPlatformId != VER_PLATFORM_WIN32_WINDOWS)
 	{
@@ -1266,11 +1308,11 @@ void osd_set_leds(int state)
 		keybd_event(VK_CAPITAL, 0x3a, KEYEVENTF_KEYUP, 0);
 	}
 	key_states[VK_CAPITAL] = (key_states[VK_CAPITAL] & ~1) | newstate;
-		
+
 	// see if the scroll lock key matches the state
 	oldstate = key_states[VK_SCROLL] & 1;
 	newstate = (state >> 2) & 1;
-	
+
 	// if not, simulate a key up/down
 	if (oldstate != newstate && osinfo.dwPlatformId != VER_PLATFORM_WIN32_WINDOWS)
 	{
@@ -1278,7 +1320,7 @@ void osd_set_leds(int state)
 		keybd_event(VK_SCROLL, 0x46, KEYEVENTF_KEYUP, 0);
 	}
 	key_states[VK_SCROLL] = (key_states[VK_SCROLL] & ~1) | newstate;
-	
+
 	// if we're on Win9x, use SetKeyboardState
 	if (osinfo.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS)
 		SetKeyboardState(&key_states[0]);
@@ -1299,7 +1341,7 @@ void set_palette_entry(int index, UINT8 red, UINT8 green, UINT8 blue)
 		video_dib_info->bmiColors[index].rgbGreen = green;
 		video_dib_info->bmiColors[index].rgbBlue = blue;
 	}
-	
+
 	// set the DirectDraw colors
 	if (index < 256)
 	{
@@ -1307,7 +1349,7 @@ void set_palette_entry(int index, UINT8 red, UINT8 green, UINT8 blue)
 		primary_palette_data[index].peGreen = green;
 		primary_palette_data[index].peBlue = blue;
 	}
-	
+
 	// mark the local palette dirty
 	local_palette_dirty = 1;
 }
@@ -1321,11 +1363,11 @@ void set_palette_entry(int index, UINT8 red, UINT8 green, UINT8 blue)
 static UINT32 *prepare_palette(struct blit_params *params)
 {
 	int i;
-	
+
 	// destination 8bpp doesn't need a palette to do its blit
 	if (params->dstdepth == 8)
 		return NULL;
-	
+
 	// 8bpp source always needs a palette otherwise
 	if (params->srcdepth == 8)
 	{
@@ -1346,11 +1388,11 @@ static UINT32 *prepare_palette(struct blit_params *params)
 									 video_dib_info->bmiColors[i].rgbBlue);
 		return palette;
 	}
-	
+
 	// 16bpp source only needs a palette if RGB direct or modifiable
 	else if (params->srcdepth == 15 || params->srcdepth == 16)
 		return (params->dstdepth == 16) ? palette_16bit_lookup : palette_32bit_lookup;
-	
+
 	// nobody else needs it
 	return NULL;
 }
@@ -1368,11 +1410,11 @@ static void dib_draw_window(HDC dc, struct osd_bitmap *bitmap, int update)
 	int xmult, ymult;
 	RECT client;
 	int cx, cy;
-	
+
 	// compute the multipliers
 	GetClientRect(video_window, &client);
 	compute_multipliers(&client, &xmult, &ymult);
-	
+
 	// blit to our temporary bitmap
 	params.dstdata		= converted_bitmap;
 	params.dstpitch		= (((visible_width * xmult) + 3) & ~3) * depth / 8;
@@ -1382,7 +1424,7 @@ static void dib_draw_window(HDC dc, struct osd_bitmap *bitmap, int update)
 	params.dstxscale	= xmult;
 	params.dstyscale	= (!scanlines || ymult == 1) ? ymult : ymult - 1;
 	params.dstyskip		= (!scanlines || ymult == 1) ? 0 : 1;
-	
+
 	params.srcdata		= bitmap->line[0];
 	params.srcpitch		= bitmap->line[1] - bitmap->line[0];
 	params.srcdepth		= bitmap->depth;
@@ -1394,28 +1436,28 @@ static void dib_draw_window(HDC dc, struct osd_bitmap *bitmap, int update)
 
 	params.dirtydata	= use_dirty ? dirty_grid : NULL;
 	params.dirtypitch	= DIRTY_H;
-	
+
 	perform_blit(&params, update);
 
-	// fill in bitmap-specific info	
+	// fill in bitmap-specific info
 	video_dib_info->bmiHeader.biWidth = params.dstpitch / (depth / 8);
 	video_dib_info->bmiHeader.biHeight = -visible_height * ymult;
 	video_dib_info->bmiHeader.biBitCount = depth;
-	
+
 	// compute the center position
 	cx = client.left + ((client.right - client.left) - visible_width * xmult) / 2;
 	cy = client.top + ((client.bottom - client.top) - visible_height * ymult) / 2;
 
 	// blit to the screen
-	StretchDIBits(dc, cx, cy, visible_width * xmult, visible_height * ymult, 
+	StretchDIBits(dc, cx, cy, visible_width * xmult, visible_height * ymult,
 				0, 0, visible_width * xmult, visible_height * ymult,
 				converted_bitmap, video_dib_info, DIB_RGB_COLORS, SRCCOPY);
-	
+
 	// erase the edges if updating
 	if (update)
 	{
 		RECT inner;
-		
+
 		inner.left = cx;
 		inner.top = cy;
 		inner.right = cx + visible_width * xmult;
@@ -1442,12 +1484,12 @@ static int ddraw_init(void)
 		fprintf(stderr, "Error creating DirectDraw: %08x\n", (UINT32)result);
 		goto cant_create_ddraw;
 	}
-	
+
 	// see if we can get a DDraw4 object
 	result = IDirectDraw_QueryInterface(ddraw, &IID_IDirectDraw4, (void **)&ddraw4);
 	if (result != DD_OK)
 		ddraw4 = NULL;
-	
+
 	// get the capabilities
 	ddraw_caps.dwSize = sizeof(ddraw_caps);
 	hel_caps.dwSize = sizeof(hel_caps);
@@ -1457,13 +1499,13 @@ static int ddraw_init(void)
 		fprintf(stderr, "Error getting DirectDraw capabilities: %08x\n", (UINT32)result);
 		goto cant_get_caps;
 	}
-	
+
 	// determine if hardware stretching is available
 	if (ddraw_stretch)
 		ddraw_stretch = ((ddraw_caps.dwCaps & DDCAPS_BLTSTRETCH) != 0);
 	if (ddraw_stretch && verbose)
 		fprintf(stderr, "Hardware stretching supported\n");
-	
+
 	// set the cooperative level
 	// for non-window modes, we will use full screen here
 	result = IDirectDraw_SetCooperativeLevel(ddraw, video_window, window_mode ? DDSCL_NORMAL : DDSCL_FULLSCREEN | DDSCL_EXCLUSIVE);
@@ -1472,16 +1514,16 @@ static int ddraw_init(void)
 		fprintf(stderr, "Error setting cooperative level: %08x\n", (UINT32)result);
 		goto cant_set_coop_level;
 	}
-	
+
 	// full screen mode: set the resolution
 	changed_resolutions = 0;
 	if (ddraw_set_resolution())
 		goto cant_set_resolution;
-	
+
 	// create the surfaces
 	if (ddraw_create_surfaces())
 		goto cant_create_surfaces;
-	
+
 	// force some updates
 	forced_updates = 5;
 	mark_palette_dirty();
@@ -1516,7 +1558,7 @@ static void ddraw_kill(void)
 	// reset cooperative level
 	if (ddraw != NULL && video_window != 0)
 		IDirectDraw_SetCooperativeLevel(ddraw, video_window, DDSCL_NORMAL);
-	
+
 	// delete the core object
 	if (ddraw != NULL)
 		IDirectDraw_Release(ddraw);
@@ -1533,13 +1575,13 @@ static HRESULT WINAPI ddraw_enum_callback(LPDDSURFACEDESC desc, LPVOID context)
 {
 	int depth = desc->ddpfPixelFormat.DUMMYUNIONNAMEN(1).dwRGBBitCount;
 	double score;
-	
+
 	// make sure we have color masks
 	ddraw_compute_color_masks(desc);
 
 	// compute this mode's score
 	score = ddraw_compute_mode_score(desc->dwWidth, desc->dwHeight, depth, 0);
-	
+
 	// is it the best?
 	if (score > best_score)
 	{
@@ -1564,13 +1606,13 @@ static HRESULT WINAPI ddraw_enum2_callback(LPDDSURFACEDESC2 desc, LPVOID context
 	int refresh = (matchrefresh || gfx_refresh) ? desc->DUMMYUNIONNAMEN(2).dwRefreshRate : 0;
 	int depth = desc->ddpfPixelFormat.DUMMYUNIONNAMEN(1).dwRGBBitCount;
 	double score;
-	
+
 	// make sure we have color masks
 	ddraw_compute_color_masks((LPDDSURFACEDESC)desc);
 
 	// compute this mode's score
 	score = ddraw_compute_mode_score(desc->dwWidth, desc->dwHeight, depth, refresh);
-	
+
 	// is it the best?
 	if (score > best_score)
 	{
@@ -1603,7 +1645,7 @@ static double ddraw_compute_mode_score(int width, int height, int depth, int ref
 
 	double size_score, depth_score, refresh_score, final_score;
 	int target_width, target_height;
-	
+
 	// first compute a score based on size
 
 	// determine minimum requirements
@@ -1615,44 +1657,44 @@ static double ddraw_compute_mode_score(int width, int height, int depth, int ref
 		target_width *= 2, target_height *= 2;
 	if (pixel_aspect_ratio == VIDEO_PIXEL_ASPECT_RATIO_2_1)
 		target_width *= 2;
-	
+
 	// compute initial score based on difference between target and current
 	size_score = 1.0 / (1.0 + fabs(width - target_width) + fabs(height - target_height));
 
 	// if we're looking for a particular mode, make sure it matches
 	if (gfx_width && gfx_height && (width != gfx_width || height != gfx_height))
 		return 0.0;
-	
+
 	// if mode is too small, it's a zero, unless the user specified otherwise
 	if ((width < max_width || height < max_height) && (!gfx_width || !gfx_height))
 		return 0.0;
-	
+
 	// if mode is smaller than we'd like, it only scores up to 0.1
 	if (width < target_width || height < target_height)
 		size_score *= 0.1;
-	
+
 	// next compute depth score
 	depth_score = depth_matrix[(pref_depth + 7) / 8 - 1][needs_6bpp_per_gun][(depth + 7) / 8 - 1];
 
 	// hardware stretch requires 16bpp
 	if (ddraw_stretch && depth < 16)
 		return 0.0;
-	
+
 	// if we're looking for a particular depth, make sure it matches
 	if (gfx_depth && depth != gfx_depth)
 		return 0.0;
 
 	// finally, compute refresh score
 	refresh_score = 1.0 / (1.0 + fabs((double)refresh - Machine->drv->frames_per_second));
-	
+
 	// if we're looking for a particular refresh, make sure it matches
 	if (gfx_refresh && refresh && refresh != gfx_refresh)
 		return 0.0;
-	
+
 	// if refresh is smaller than we'd like, it only scores up to 0.1
 	if ((double)refresh < Machine->drv->frames_per_second)
 		refresh_score *= 0.1;
-	
+
 	// weight size highest, followed by depth and refresh
 	final_score = (size_score * 100.0 + depth_score * 10.0 + refresh_score) / 111.0;
 //	fprintf(stderr, "%4dx%4dx%2d @ %3dHz = %f (%f, %f, %f)\n", width, height, depth, refresh, final_score, size_score, depth_score, refresh_score);
@@ -1677,14 +1719,14 @@ static int ddraw_set_resolution(void)
 		// if we're only switching depth, set gfx_width and gfx_height to the current resolution
 		if (!switchres || !switchbpp)
 		{
-			// attempt to get the current display mode	
+			// attempt to get the current display mode
 			result = IDirectDraw_GetDisplayMode(ddraw, &currmode);
 			if (result != DD_OK)
 			{
 				fprintf(stderr, "Error getting display mode: %08x\n", (UINT32)result);
 				goto cant_get_mode;
 			}
-			
+
 			// force to the current width/height
 			if (!switchres)
 			{
@@ -1694,7 +1736,7 @@ static int ddraw_set_resolution(void)
 			if (!switchbpp)
 				gfx_depth = currmode.ddpfPixelFormat.DUMMYUNIONNAMEN(1).dwRGBBitCount;
 		}
-		
+
 		// enumerate display modes
 		best_score = 0.0;
 		if (ddraw4)
@@ -1706,10 +1748,10 @@ static int ddraw_set_resolution(void)
 			fprintf(stderr, "Error enumerating modes: %08x\n", (UINT32)result);
 			goto cant_enumerate_modes;
 		}
-		
+
 		if (verbose)
 			fprintf(stderr, "Best mode = %dx%dx%d @ %d Hz\n", best_width, best_height, best_depth, best_refresh);
-		
+
 		// set it
 		if (best_width != 0)
 		{
@@ -1726,20 +1768,20 @@ static int ddraw_set_resolution(void)
 			changed_resolutions = 1;
 		}
 	}
-	
-	// attempt to get the current display mode	
+
+	// attempt to get the current display mode
 	result = IDirectDraw_GetDisplayMode(ddraw, &currmode);
 	if (result != DD_OK)
 	{
 		fprintf(stderr, "Error getting display mode: %08x\n", (UINT32)result);
 		goto cant_get_mode;
 	}
-	
+
 	// compute the adjusted aspect ratio if the monitor smells horizontal
 	screen_aspect = (double)currmode.dwWidth / (double)currmode.dwHeight;
 	if (screen_aspect >= 1.25 && screen_aspect <= 1.6)
 		aspect_ratio_adjust = screen_aspect / (4.0 / 3.0);
-	
+
 	return 0;
 
 	// error handling - non fatal in general
@@ -1758,13 +1800,13 @@ cant_enumerate_modes:
 static int ddraw_create_surfaces(void)
 {
 	HRESULT result;
-	
+
 	// make a description of the primary surface
 	memset(&primary_desc, 0, sizeof(primary_desc));
 	primary_desc.dwSize = sizeof(primary_desc);
 	primary_desc.dwFlags = DDSD_CAPS;
 	primary_desc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
-	
+
 	// for full screen mode, allocate flipping surfaces
 	if (!window_mode && use_triplebuf)
 	{
@@ -1772,7 +1814,7 @@ static int ddraw_create_surfaces(void)
 		primary_desc.ddsCaps.dwCaps |= DDSCAPS_FLIP | DDSCAPS_COMPLEX;
 		primary_desc.dwBackBufferCount = 2;
 	}
-	
+
 	// then create the primary surface
 	result = IDirectDraw_CreateSurface(ddraw, &primary_desc, &primary_surface, NULL);
 	if (result != DD_OK)
@@ -1780,7 +1822,7 @@ static int ddraw_create_surfaces(void)
 		fprintf(stderr, "Error creating primary surface: %08x\n", (UINT32)result);
 		goto cant_create_primary;
 	}
-	
+
 	// get a description of the primary surface
 	result = IDirectDrawSurface_GetSurfaceDesc(primary_surface, &primary_desc);
 	if (result != DD_OK)
@@ -1788,7 +1830,7 @@ static int ddraw_create_surfaces(void)
 		fprintf(stderr, "Error getting primary surface desc: %08x\n", (UINT32)result);
 		goto cant_get_primary_desc;
 	}
-	
+
 	// if this is a full-screen, 8bpp video mode, make a palette
 	if (!window_mode && primary_desc.ddpfPixelFormat.DUMMYUNIONNAMEN(1).dwRGBBitCount == 8)
 	{
@@ -1802,14 +1844,14 @@ static int ddraw_create_surfaces(void)
 
 	// print out the good stuff
 	if (verbose)
-		fprintf(stderr, "Primary surface created: %dx%dx%d (R=%08x G=%08x B=%08x)\n", 
-				(int)primary_desc.dwWidth, 
-				(int)primary_desc.dwHeight, 
+		fprintf(stderr, "Primary surface created: %dx%dx%d (R=%08x G=%08x B=%08x)\n",
+				(int)primary_desc.dwWidth,
+				(int)primary_desc.dwHeight,
 				(int)primary_desc.ddpfPixelFormat.DUMMYUNIONNAMEN(1).dwRGBBitCount,
-				(UINT32)primary_desc.ddpfPixelFormat.DUMMYUNIONNAMEN(2).dwRBitMask, 
-				(UINT32)primary_desc.ddpfPixelFormat.DUMMYUNIONNAMEN(3).dwGBitMask, 
+				(UINT32)primary_desc.ddpfPixelFormat.DUMMYUNIONNAMEN(2).dwRBitMask,
+				(UINT32)primary_desc.ddpfPixelFormat.DUMMYUNIONNAMEN(3).dwGBitMask,
 				(UINT32)primary_desc.ddpfPixelFormat.DUMMYUNIONNAMEN(4).dwBBitMask);
-	
+
 	// full screen mode: get the back surface
 	back_surface = NULL;
 	if (!window_mode && use_triplebuf)
@@ -1822,7 +1864,7 @@ static int ddraw_create_surfaces(void)
 			goto cant_get_back_surface;
 		}
 	}
-	
+
 	// stretch mode: create a blit surface
 	if (ddraw_stretch)
 	{
@@ -1836,7 +1878,7 @@ static int ddraw_create_surfaces(void)
 		if (ddraw_create_clipper())
 			goto cant_init_clipper;
 	}
-	
+
 	// erase all the surfaces we created
 	ddraw_erase_surfaces();
 
@@ -1881,10 +1923,10 @@ static int ddraw_create_blit_surface(void)
 	blit_desc.dwWidth = max_width + 2;
 	blit_desc.dwHeight = max_height + 2;
 	blit_desc.ddsCaps.dwCaps = DDSCAPS_VIDEOMEMORY;
-	
+
 	// then create the blit surface
 	result = IDirectDraw_CreateSurface(ddraw, &blit_desc, &blit_surface, NULL);
-	
+
 	// fall back to system memory if video mem doesn't work
 	if (result != DD_OK)
 	{
@@ -1896,7 +1938,7 @@ static int ddraw_create_blit_surface(void)
 		fprintf(stderr, "Error creating blit surface: %08x\n", (UINT32)result);
 		goto cant_create_blit;
 	}
-	
+
 	// get a description of the blit surface
 	result = IDirectDrawSurface_GetSurfaceDesc(blit_surface, &blit_desc);
 	if (result != DD_OK)
@@ -1907,12 +1949,12 @@ static int ddraw_create_blit_surface(void)
 
 	// print out the good stuff
 	if (verbose)
-		fprintf(stderr, "Blit surface created: %dx%dx%d (R=%08x G=%08x B=%08x)\n", 
-				(int)blit_desc.dwWidth, 
-				(int)blit_desc.dwHeight, 
+		fprintf(stderr, "Blit surface created: %dx%dx%d (R=%08x G=%08x B=%08x)\n",
+				(int)blit_desc.dwWidth,
+				(int)blit_desc.dwHeight,
 				(int)blit_desc.ddpfPixelFormat.DUMMYUNIONNAMEN(1).dwRGBBitCount,
-				(UINT32)blit_desc.ddpfPixelFormat.DUMMYUNIONNAMEN(2).dwRBitMask, 
-				(UINT32)blit_desc.ddpfPixelFormat.DUMMYUNIONNAMEN(3).dwGBitMask, 
+				(UINT32)blit_desc.ddpfPixelFormat.DUMMYUNIONNAMEN(2).dwRBitMask,
+				(UINT32)blit_desc.ddpfPixelFormat.DUMMYUNIONNAMEN(3).dwGBitMask,
 				(UINT32)blit_desc.ddpfPixelFormat.DUMMYUNIONNAMEN(4).dwBBitMask);
 	return 0;
 
@@ -1924,7 +1966,7 @@ cant_get_blit_desc:
 cant_create_blit:
 	return 1;
 }
-	
+
 
 
 //============================================================
@@ -1942,7 +1984,7 @@ static int ddraw_create_palette(void)
 		fprintf(stderr, "Error creating palette: %08x\n", (UINT32)result);
 		goto cant_make_palette;
 	}
-	
+
 	// set the palette
 	result = IDirectDrawSurface_SetPalette(primary_surface, primary_palette);
 	if (result != DD_OK)
@@ -1979,12 +2021,12 @@ static void ddraw_set_brightness(void)
 		gamma_control = NULL;
 	}
 
-	// if we got it, proceed	
+	// if we got it, proceed
 	if (gamma_control)
 	{
 		DDGAMMARAMP ramp;
 		int i;
-		
+
 		// fill the gamma ramp
 		for (i = 0; i < 256; i++)
 		{
@@ -2018,7 +2060,7 @@ static int ddraw_create_clipper(void)
 		fprintf(stderr, "Error creating clipper: %08x\n", (UINT32)result);
 		goto cant_create_clipper;
 	}
-	
+
 	// set the clipper's hwnd
 	result = IDirectDrawClipper_SetHWnd(primary_clipper, 0, video_window);
 	if (result != DD_OK)
@@ -2055,12 +2097,12 @@ static void ddraw_erase_surfaces(void)
 	DDBLTFX blitfx = { sizeof(DDBLTFX) };
 	HRESULT result = DD_OK;
 	int i;
-	
+
 	// erase the blit surface
 	blitfx.DUMMYUNIONNAMEN(5).dwFillColor = 0;
 	if (blit_surface)
 		result = IDirectDrawSurface_Blt(blit_surface, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &blitfx);
-	
+
 	// loop through enough to get all the back buffers
 	if (!window_mode)
 	{
@@ -2090,12 +2132,12 @@ static void ddraw_release_surfaces(void)
 	if (blit_surface)
 		IDirectDrawSurface_Release(blit_surface);
 	blit_surface = NULL;
-	
+
 	// release the clipper
 	if (primary_clipper)
 		IDirectDrawClipper_Release(primary_clipper);
 	primary_clipper = NULL;
-	
+
 	// release the color controls
 	if (gamma_control)
 		IDirectDrawColorControl_Release(gamma_control);
@@ -2105,7 +2147,7 @@ static void ddraw_release_surfaces(void)
 	if (primary_palette)
 		IDirectDrawPalette_Release(primary_palette);
 	primary_palette = NULL;
-	
+
 	// release the primary surface
 	if (primary_surface)
 		IDirectDrawSurface_Release(primary_surface);
@@ -2132,7 +2174,7 @@ static void ddraw_compute_color_masks(const DDSURFACEDESC *desc)
 			temp >>= 1, color16_rdst_shift++;
 		while (!(temp & 0x80))
 			temp <<= 1, color16_rsrc_shift++;
-		
+
 		// green
 		color16_gdst_shift = color16_gsrc_shift = 0;
 		temp = desc->ddpfPixelFormat.DUMMYUNIONNAMEN(3).dwGBitMask;
@@ -2140,7 +2182,7 @@ static void ddraw_compute_color_masks(const DDSURFACEDESC *desc)
 			temp >>= 1, color16_gdst_shift++;
 		while (!(temp & 0x80))
 			temp <<= 1, color16_gsrc_shift++;
-		
+
 		// blue
 		color16_bdst_shift = color16_bsrc_shift = 0;
 		temp = desc->ddpfPixelFormat.DUMMYUNIONNAMEN(4).dwBBitMask;
@@ -2149,7 +2191,7 @@ static void ddraw_compute_color_masks(const DDSURFACEDESC *desc)
 		while (!(temp & 0x80))
 			temp <<= 1, color16_bsrc_shift++;
 	}
-	
+
 	// 24/32bpp case
 	else if (desc->ddpfPixelFormat.DUMMYUNIONNAMEN(1).dwRGBBitCount == 24 ||
 			 desc->ddpfPixelFormat.DUMMYUNIONNAMEN(1).dwRGBBitCount == 32)
@@ -2161,13 +2203,13 @@ static void ddraw_compute_color_masks(const DDSURFACEDESC *desc)
 		temp = desc->ddpfPixelFormat.DUMMYUNIONNAMEN(2).dwRBitMask;
 		while (!(temp & 1))
 			temp >>= 1, color32_rdst_shift++;
-		
+
 		// green
 		color32_gdst_shift = 0;
 		temp = desc->ddpfPixelFormat.DUMMYUNIONNAMEN(3).dwGBitMask;
 		while (!(temp & 1))
 			temp >>= 1, color32_gdst_shift++;
-		
+
 		// blue
 		color32_bdst_shift = 0;
 		temp = desc->ddpfPixelFormat.DUMMYUNIONNAMEN(4).dwBBitMask;
@@ -2185,7 +2227,7 @@ static void ddraw_compute_color_masks(const DDSURFACEDESC *desc)
 static int ddraw_draw_window(struct osd_bitmap *bitmap, int update)
 {
 	int result;
-	
+
 	// update the palette
 	if (update || local_palette_dirty)
 	{
@@ -2195,7 +2237,7 @@ static int ddraw_draw_window(struct osd_bitmap *bitmap, int update)
 			memset(dirty_grid, 1, sizeof(dirty_grid));
 		local_palette_dirty = 0;
 	}
-	
+
 	// if we're using hardware stretching, render to the blit surface,
 	// then blit that and stretch
 	if (ddraw_stretch)
@@ -2204,7 +2246,7 @@ static int ddraw_draw_window(struct osd_bitmap *bitmap, int update)
 	// otherwise, render directly to the primary/back surface
 	else
 		result = ddraw_render_to_primary(bitmap, update);
-	
+
 	return result;
 }
 
@@ -2220,13 +2262,14 @@ static int ddraw_render_to_blit(struct osd_bitmap *bitmap, int update)
 	struct blit_params params;
 	HRESULT result;
 	RECT src, dst;
-	
+
 tryagain:
 	// attempt to lock the blit surface
-	result = IDirectDrawSurface_Lock(blit_surface, NULL, &blit_desc, throttle ? DDLOCK_WAIT : 0, NULL);
+	result = IDirectDrawSurface_Lock(blit_surface, NULL, &blit_desc, (throttle || use_dirty) ? DDLOCK_WAIT : 0, NULL);
+
 	if (result == DDERR_SURFACELOST)
 		goto surface_lost;
-	
+
 	// if it was busy (and we're not throttling), just punt
 	if (result == DDERR_SURFACEBUSY || result == DDERR_WASSTILLDRAWING)
 		return 1;
@@ -2235,7 +2278,7 @@ tryagain:
 		fprintf(stderr, "Unable to lock blit_surface: %08x\n", (UINT32)result);
 		return 0;
 	}
-	
+
 	// perform the low-level blit
 	params.dstdata		= blit_desc.lpSurface;
 	params.dstpitch		= blit_desc.DUMMYUNIONNAMEN(1).lPitch;
@@ -2245,7 +2288,7 @@ tryagain:
 	params.dstxscale	= 1;
 	params.dstyscale	= 1;
 	params.dstyskip		= 0;
-	
+
 	params.srcdata		= bitmap->line[0];
 	params.srcpitch		= bitmap->line[1] - bitmap->line[0];
 	params.srcdepth		= bitmap->depth;
@@ -2254,10 +2297,10 @@ tryagain:
 	params.srcyoffs		= visible_rect.top;
 	params.srcwidth		= visible_width;
 	params.srcheight	= visible_height;
-	
+
 	params.dirtydata	= use_dirty ? dirty_grid : NULL;
 	params.dirtypitch	= DIRTY_H;
-	
+
 	perform_blit(&params, 0);
 
 	// unlock the surface
@@ -2275,11 +2318,11 @@ tryagain:
 		GetClientRect(video_window, &dst);
 		ClientToScreen(video_window, &((LPPOINT)&dst)[0]);
 		ClientToScreen(video_window, &((LPPOINT)&dst)[1]);
-		
+
 		// target surface is the primary
 		target_surface = primary_surface;
 	}
-	
+
 	// full screen mode
 	else
 	{
@@ -2288,21 +2331,21 @@ tryagain:
 		dst.right = primary_desc.dwWidth;
 		dst.bottom = primary_desc.dwHeight;
 		constrain_to_aspect_ratio(&dst, WMSZ_BOTTOMRIGHT);
-		
+
 		// center
 		dst.left += (primary_desc.dwWidth - (dst.right - dst.left)) / 2;
 		dst.top += (primary_desc.dwHeight - (dst.bottom - dst.top)) / 2;
 		dst.right += dst.left;
 		dst.bottom += dst.top;
-		
+
 		// target surface is the back buffer
 		target_surface = back_surface ? back_surface : primary_surface;
 	}
-	
+
 	// blit and flip
 	if (!ddraw_blit_flip(target_surface, &src, &dst, update))
 		return 0;
-	
+
 	return 1;
 
 surface_lost:
@@ -2311,7 +2354,7 @@ surface_lost:
 
 	// go ahead and adjust the window
 	adjust_window();
-	
+
 	// release and recreate the surfaces
 	ddraw_release_surfaces();
 	if (!ddraw_create_surfaces())
@@ -2330,15 +2373,15 @@ surface_lost:
 static int ddraw_blit_flip(LPDIRECTDRAWSURFACE target_surface, LPRECT src, LPRECT dst, int update)
 {
 	HRESULT result;
-	
+
 	// sync to VBLANK?
 	if ((wait_vsync || syncrefresh) && throttle && game_speed_percent > 95)
 	{
 		BOOL is_vblank;
-		
+
 		// this counts as idle time
 		profiler_mark(PROFILER_IDLE);
-		
+
 		result = IDirectDraw_GetVerticalBlankStatus(ddraw, &is_vblank);
 		if (!is_vblank)
 			result = IDirectDraw_WaitForVerticalBlank(ddraw, DDWAITVB_BLOCKBEGIN, 0);
@@ -2354,7 +2397,7 @@ tryagain:
 		goto surface_lost;
 	if (result != DD_OK && result != DDERR_WASSTILLDRAWING)
 	{
-		// otherwise, print the error and fall back	
+		// otherwise, print the error and fall back
 		fprintf(stderr, "Unable to blt blit_surface: %08x\n", (UINT32)result);
 		return 0;
 	}
@@ -2368,7 +2411,7 @@ tryagain:
 		outer.bottom = primary_desc.dwHeight;
 		erase_outer_rect(&outer, dst, NULL, target_surface);
 	}
-	
+
 	// full screen mode: flip
 	if (!window_mode && back_surface && result != DDERR_WASSTILLDRAWING)
 	{
@@ -2397,7 +2440,7 @@ surface_lost:
 
 	// go ahead and adjust the window
 	adjust_window();
-	
+
 	// release and recreate the surfaces
 	ddraw_release_surfaces();
 	if (!ddraw_create_surfaces())
@@ -2431,11 +2474,11 @@ tryagain:
 		ClientToScreen(video_window, &((LPPOINT)&outer)[0]);
 		ClientToScreen(video_window, &((LPPOINT)&outer)[1]);
 		inner = outer;
-		
+
 		// target surface is the primary
 		target_surface = primary_surface;
 	}
-	
+
 	// full screen mode
 	else
 	{
@@ -2445,20 +2488,20 @@ tryagain:
 		outer.bottom = primary_desc.dwHeight;
 		inner = outer;
 		constrain_to_aspect_ratio(&inner, WMSZ_BOTTOMRIGHT);
-		
+
 		// target surface is the back buffer
 		target_surface = back_surface ? back_surface : primary_surface;
 	}
-	
+
 	// compute the multipliers
 	compute_multipliers(&inner, &xmult, &ymult);
-	
+
 	// center within the display rect
 	inner.left = outer.left + ((outer.right - outer.left) - (visible_width * xmult)) / 2;
 	inner.top = outer.top + ((outer.bottom - outer.top) - (visible_height * ymult)) / 2;
 	inner.right = inner.left + visible_width * xmult;
 	inner.bottom = inner.top + visible_height * ymult;
-	
+
 	// make sure we're not clipped
 	if (window_mode)
 	{
@@ -2481,7 +2524,7 @@ tryagain:
 	result = IDirectDrawSurface_Lock(target_surface, NULL, &temp_desc, throttle ? DDLOCK_WAIT : 0, NULL);
 	if (result == DDERR_SURFACELOST)
 		goto surface_lost;
-	
+
 	// if it was busy (and we're not throttling), just punt
 	if (result == DDERR_SURFACEBUSY || result == DDERR_WASSTILLDRAWING)
 		return 1;
@@ -2490,7 +2533,7 @@ tryagain:
 		fprintf(stderr, "Unable to lock target_surface: %08x\n", (UINT32)result);
 		return 0;
 	}
-	
+
 	// perform the low-level blit
 	params.dstdata		= temp_desc.lpSurface;
 	params.dstpitch		= temp_desc.DUMMYUNIONNAMEN(1).lPitch;
@@ -2500,7 +2543,7 @@ tryagain:
 	params.dstxscale	= xmult;
 	params.dstyscale	= (!scanlines || ymult == 1) ? ymult : ymult - 1;
 	params.dstyskip		= (!scanlines || ymult == 1) ? 0 : 1;
-	
+
 	params.srcdata		= bitmap->line[0];
 	params.srcpitch		= bitmap->line[1] - bitmap->line[0];
 	params.srcdepth		= bitmap->depth;
@@ -2509,10 +2552,10 @@ tryagain:
 	params.srcyoffs		= visible_rect.top;
 	params.srcwidth		= visible_width;
 	params.srcheight	= visible_height;
-	
+
 	params.dirtydata	= use_dirty ? dirty_grid : NULL;
 	params.dirtypitch	= DIRTY_H;
-	
+
 	perform_blit(&params, update);
 
 	// unlock the surface
@@ -2550,7 +2593,7 @@ surface_lost:
 
 	// go ahead and adjust the window
 	adjust_window();
-	
+
 	// release and recreate the surfaces
 	ddraw_release_surfaces();
 	if (!ddraw_create_surfaces())
@@ -2585,17 +2628,17 @@ static int create_debug_window(void)
 
 	// create the window
 	debug_window = CreateWindowEx(DEBUG_WINDOW_STYLE_EX, "MAMEDebug", title, DEBUG_WINDOW_STYLE,
-			work_bounds.right - (bounds.right - bounds.left), 
-			work_bounds.bottom - (bounds.bottom - bounds.top), 
-			bounds.right - bounds.left, bounds.bottom - bounds.top, 
+			work_bounds.right - (bounds.right - bounds.left),
+			work_bounds.bottom - (bounds.bottom - bounds.top),
+			bounds.right - bounds.left, bounds.bottom - bounds.top,
 			video_window, NULL, GetModuleHandle(NULL), NULL);
 	if (!debug_window)
 		return 1;
 #endif
-	
+
 	return 0;
 }
-	
+
 
 
 //============================================================
@@ -2649,14 +2692,14 @@ static void draw_debug_contents(HDC dc, struct osd_bitmap *bitmap)
 		return;
 	}
 	last = bitmap;
-	
+
 	// if we're iconic, don't bother
 	if (IsIconic(debug_window))
 		return;
 
 	// default to using the raw bitmap data
 	bitmap_base = bitmap->line[0];
-		
+
 	// for 8bpp bitmaps, update the debug colors
 	for (i = 0; i < DEBUGGER_TOTAL_COLORS; i++)
 	{
@@ -2665,14 +2708,14 @@ static void draw_debug_contents(HDC dc, struct osd_bitmap *bitmap)
 		debug_dib_info->bmiColors[i].rgbBlue	= dbg_palette[i * 3 + 2];
 	}
 
-	// fill in bitmap-specific info	
+	// fill in bitmap-specific info
 	debug_dib_info->bmiHeader.biWidth = (bitmap->line[1] - bitmap->line[0]) / (bitmap->depth / 8);
 	debug_dib_info->bmiHeader.biHeight = -bitmap->height;
 	debug_dib_info->bmiHeader.biBitCount = bitmap->depth;
 
 	// blit to the screen
-	StretchDIBits(dc, 0, 0, bitmap->width, bitmap->height, 
-			0, 0, bitmap->width, bitmap->height, 
+	StretchDIBits(dc, 0, 0, bitmap->width, bitmap->height,
+			0, 0, bitmap->width, bitmap->height,
 			bitmap_base, debug_dib_info, DIB_RGB_COLORS, SRCCOPY);
 }
 
@@ -2696,7 +2739,7 @@ static LRESULT CALLBACK debug_window_proc(HWND wnd, UINT message, WPARAM wparam,
 			EndPaint(wnd, &pstruct);
 			break;
 		}
-		
+
 		// get min/max info: set the minimum window size
 		case WM_GETMINMAXINFO:
 		{
@@ -2705,19 +2748,19 @@ static LRESULT CALLBACK debug_window_proc(HWND wnd, UINT message, WPARAM wparam,
 			minmax->ptMinTrackSize.y = 480;
 			break;
 		}
-		
+
 		// sizing: constrain to the aspect ratio unless control key is held down
 		case WM_SIZING:
 		{
 			InvalidateRect(debug_window, NULL, FALSE);
 			break;
 		}
-		
+
 		// destroy: close down the app
 		case WM_DESTROY:
 			debug_window = 0;
 			break;
-	
+
 		// everything else: defaults
 		default:
 			return DefWindowProc(wnd, message, wparam, lparam);
@@ -2735,25 +2778,25 @@ static LRESULT CALLBACK debug_window_proc(HWND wnd, UINT message, WPARAM wparam,
 void osd_debugger_focus(int focus)
 {
 	debug_focus = focus;
-		
+
 	// if focused, make sure the window is visible
 	if (debug_focus && debug_window)
 	{
 		// if full screen, turn it off
 		if (!window_mode)
 			toggle_full_screen();
-	
+
 		// show and restore the window
 		ShowWindow(debug_window, SW_SHOW);
 		ShowWindow(debug_window, SW_RESTORE);
-		
+
 		// make frontmost
 		SetForegroundWindow(debug_window);
-		
+
 		// force an update
 		update_debug_window(NULL);
 	}
-	
+
 	// if not focuessed, bring the game frontmost
 	else if (!debug_focus && debug_window)
 	{

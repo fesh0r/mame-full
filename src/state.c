@@ -26,7 +26,7 @@ enum {
 	SS_MSB_FIRST = 0x02
 };
 
-#define VERBOSE
+//#define VERBOSE
 
 #ifdef VERBOSE
 #define TRACE(x) do {x;} while(0)
@@ -47,7 +47,9 @@ enum {
 	SS_DOUBLE
 };
 
+#ifdef VERBOSE
 static const char *ss_type[] =	{ "i8", "u8", "i16", "u16", "i32", "u32", "int", "dbl" };
+#endif
 static int		   ss_size[] =	{	 1,    1,	  2,	 2, 	4,	   4,	  4,	 8 };
 
 static void ss_c2(unsigned char *, unsigned);
@@ -156,7 +158,6 @@ void state_save_reset(void)
 				free(e->name);
 				free(e);
 				e = en;
-
 			}
 		}
 		free(m->name);
@@ -179,8 +180,8 @@ void state_save_reset(void)
 		f = fn;
 	}
 	ss_postfunc_reg = 0;
-	ss_current_tag = 0;
 
+	ss_current_tag = 0;
 	ss_dump_array = 0;
 	ss_dump_file = 0;
 	ss_dump_size = 0;

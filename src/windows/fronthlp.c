@@ -12,13 +12,13 @@
 
 #ifndef MESS
 enum { LIST_SHORT = 1, LIST_INFO, LIST_FULL, LIST_SAMDIR, LIST_ROMS, LIST_SAMPLES,
-		LIST_LMR, LIST_DETAILS, LIST_GAMELISTHEADER, LIST_GAMELISTFOOTER, LIST_GAMELIST,
+		LIST_LMR, LIST_DETAILS, LIST_GAMELIST,
 		LIST_GAMES, LIST_CLONES,
 		LIST_WRONGORIENTATION, LIST_WRONGFPS, LIST_CRC, LIST_DUPCRC, LIST_WRONGMERGE,
 		LIST_ROMSIZE, LIST_CPU, LIST_SOURCEFILE };
 #else
 enum { LIST_SHORT = 1, LIST_INFO, LIST_FULL, LIST_SAMDIR, LIST_ROMS, LIST_SAMPLES,
-		LIST_LMR, LIST_DETAILS, LIST_GAMELISTHEADER, LIST_GAMELISTFOOTER, LIST_GAMELIST,
+		LIST_LMR, LIST_DETAILS, LIST_GAMELIST,
 		LIST_GAMES, LIST_CLONES,
 		LIST_WRONGORIENTATION, LIST_WRONGFPS, LIST_CRC, LIST_DUPCRC, LIST_WRONGMERGE,
 		LIST_ROMSIZE, LIST_CPU, LIST_SOURCEFILE, LIST_MESSINFO };
@@ -53,8 +53,6 @@ struct rc_option frontend_opts[] = {
 	{ "listgames", NULL, rc_set_int, &list, NULL, LIST_GAMES, 0, NULL, "year, manufacturer and full name" },
 	{ "listdetails", NULL, rc_set_int, &list, NULL, LIST_DETAILS, 0, NULL, "detailed info" },
 	{ "gamelist", NULL, rc_set_int, &list, NULL, LIST_GAMELIST, 0, NULL, "output gamelist.txt main body" },
-	{ "gamelistheader", NULL, rc_set_int, &list, NULL, LIST_GAMELISTHEADER, 0, NULL, "output gamelist.txt header" },
-	{ "gamelistfooter", NULL, rc_set_int, &list, NULL, LIST_GAMELISTFOOTER, 0, NULL, "output gamelist.txt footer" },
 	{ "listsourcefile",	NULL, rc_set_int, &list, NULL, LIST_SOURCEFILE, 0, NULL, "driver sourcefile" },
 	{ "listinfo", "li", rc_set_int, &list, NULL, LIST_INFO, 0, NULL, "all available info on driver" },
 	{ "listclones", "lc", rc_set_int, &list, NULL, LIST_CLONES, 0, NULL, "show clones" },
@@ -739,7 +737,7 @@ int frontend_help (char *gamename)
 			return 0;
 			break;
 
-		case LIST_GAMELISTHEADER: /* GAMELIST.TXT */
+		case LIST_GAMELIST: /* GAMELIST.TXT */
 			printf("This is the complete list of games supported by MAME %s.\n",build_version);
 			if (!listclones)
 				printf("Variants of the same game are not included, you can use the -listclones command\n"
@@ -796,19 +794,7 @@ int frontend_help (char *gamename)
 			printf("|                                  |       |Correct|       |Screen | Internal |\n");
 			printf("| Game Name                        |Working|Colors | Sound | Flip  |   Name   |\n");
 			printf("+----------------------------------+-------+-------+-------+-------+----------+\n");
-			return 0;
-			break;
 
-		case LIST_GAMELISTFOOTER: /* GAMELIST.TXT */
-			printf("+----------------------------------+-------+-------+-------+-------+----------+\n\n");
-			printf("(1) There are variants of the game (usually bootlegs) that work correctly\n");
-#if (HAS_SAMPLES)
-			printf("(2) Needs samples provided separately\n");
-#endif
-			return 0;
-			break;
-
-		case LIST_GAMELIST: /* GAMELIST.TXT */
 			for (i = 0; drivers[i]; i++)
 				if ((listclones || drivers[i]->clone_of == 0
 						|| (drivers[i]->clone_of->flags & NOT_A_DRIVER)
@@ -921,6 +907,12 @@ int frontend_help (char *gamename)
 
 					printf("| %-8s |\n",drivers[i]->name);
 				}
+
+			printf("+----------------------------------+-------+-------+-------+-------+----------+\n\n");
+			printf("(1) There are variants of the game (usually bootlegs) that work correctly\n");
+#if (HAS_SAMPLES)
+			printf("(2) Needs samples provided separately\n");
+#endif
 			return 0;
 			break;
 

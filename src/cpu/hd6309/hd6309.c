@@ -626,17 +626,13 @@ void hd6309_init(void)
 	state_save_register_UINT16("hd6309", cpu, "X", &X, 1);
 	state_save_register_UINT16("hd6309", cpu, "Y", &Y, 1);
 	state_save_register_UINT16("hd6309", cpu, "V", &V, 1);
-	state_save_register_UINT16("hd6309", cpu, "D", &D, 1);
-	state_save_register_UINT16("hd6309", cpu, "W", &W, 1);
 	state_save_register_UINT8("hd6309", cpu, "DP", &DP, 1);
 	state_save_register_UINT8("hd6309", cpu, "CC", &CC, 1);
 	state_save_register_UINT8("hd6309", cpu, "MD", &MD, 1);
-	state_save_register_func_postload( &UpdateState );
 	state_save_register_UINT8("hd6309", cpu, "INT", &hd6309.int_state, 1);
 	state_save_register_UINT8("hd6309", cpu, "NMI", &hd6309.nmi_state, 1);
 	state_save_register_UINT8("hd6309", cpu, "IRQ", &hd6309.irq_state[0], 1);
 	state_save_register_UINT8("hd6309", cpu, "FIRQ", &hd6309.irq_state[1], 1);
-	
 }
 
 /****************************************************************************/
@@ -739,7 +735,7 @@ const char *hd6309_info(void *context, int regnum)
 	static int which = 0;
 	hd6309_Regs *r = context;
 
-	which = ++which % 16;
+	which = (which+1) % 16;
 	buffer[which][0] = '\0';
 	if( !context )
 		r = &hd6309;

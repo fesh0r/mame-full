@@ -14,7 +14,7 @@ $(OBJ)/windows/asmblit.o: src/windows/asmblit.asm
 	$(ASM) -o $@ $(ASMFLAGS) $(subst -D,-d,$(ASMDEFS)) $<
 
 # add our prefix files to the mix
-CFLAGS += -mwindows -include src/$(OS)/winprefix.h
+CFLAGS += -mwindows -include src/$(MAMEOS)/winprefix.h
 
 # add the windows libaries
 LIBS += -luser32 -lgdi32 -lddraw -ldsound -ldinput -ldxguid -lwinmm

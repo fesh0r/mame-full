@@ -2,13 +2,13 @@
 /*
  * Configuration routines.
  *
- * 20010424 BW uses Hans de Goede's rc subsystem 
+ * 20010424 BW uses Hans de Goede's rc subsystem
  *
  * TODO:
  * - norotate? funny, leads to option -nonorotate ...
- *   should possibly be renamed 
+ *   should possibly be renamed
  * - remove #ifdef MESS and provide generic hooks for projects using the MAME
- *   core 
+ *   core
  * - suggestion for new core options:
  *   gamma (is already osd_)
  *   sound (enable/disable sound)
@@ -18,12 +18,12 @@
  * - repair playback when no gamename given
  * - reintroduce override_rompath
  * - consolidate namespace "long_option" vs. "longoption" vs. "longopt"
- * 
+ *
  * other suggestions
  * - switchres --> switch_resolution, swres
  * - switchbpp --> switch_bpp, swbpp
  */
-	
+
 #include <ctype.h>
 #include <time.h>
 #include "driver.h"
@@ -66,7 +66,7 @@ extern char *cheatfile;
 
 void decompose_rom_sample_path (const char *_rompath, const char *_samplepath);
 
-static struct rc_option fileio_opts[] = 
+static struct rc_option fileio_opts[] =
 {
 	/* name, shortname, type, dest, deflt, min, max, func, help */
 	{ "Windows path and directory options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
@@ -209,7 +209,7 @@ static struct rc_option opts[] = {
 	{ "translucency", "tl", rc_bool, &options.translucency, "1", 0, 0, NULL, "draw translucent vectors" },
 	{ "beam", NULL, rc_float, &f_beam, "1.0", 1.0, 16.0, video_set_beam, "set beam width in vector games" },
 	{ "flicker", NULL, rc_float, &f_flicker, "0.0", 0.0, 100.0, video_set_flicker, "set flickering in vector games" },
-		
+
 	/* sound */
 	{ "Mame CORE sound options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
 	{ "samplerate", "sr", rc_int, &options.samplerate, "44100", 5000, 50000, NULL, "set samplerate" },
@@ -280,7 +280,7 @@ void show_fuzzy_matches(void)
 	struct { int fuzz; int index; } topten[10];
 	int i,j;
 	int fuzz; /* best fuzz factor so far */
-	
+
 	for (i = 0; i < 10; i++)
 	{
 		topten[i].fuzz = 9999;
@@ -310,8 +310,8 @@ void show_fuzzy_matches(void)
 	}
 }
 
-/* 
- * gamedrv  = NULL --> parse named configfile 
+/*
+ * gamedrv  = NULL --> parse named configfile
  * gamedrv != NULL --> parse gamename.ini and all parent.ini's (recursively)
  * return 0 --> no problem
  * return 1 --> something went wrong
@@ -321,7 +321,7 @@ int parse_config (const char* filename, const struct GameDriver *gamedrv)
 	FILE *f;
 	char buffer[128];
 	int retval = 0;
-			
+
 	if (gamedrv)
 	{
 		if (gamedrv->clone_of && strlen(gamedrv->clone_of->name))
@@ -331,7 +331,7 @@ int parse_config (const char* filename, const struct GameDriver *gamedrv)
 				return retval;
 		}
 		sprintf(buffer, "%s.ini", gamedrv->name);
-	}			
+	}
 	else
 	{
 		sprintf(buffer, "%s", filename);
@@ -339,9 +339,9 @@ int parse_config (const char* filename, const struct GameDriver *gamedrv)
 
 	if (verbose)
 		fprintf(stderr, "trying to parse %s\n", buffer);
-	
+
 	f = fopen (buffer, "r");
-	if (f) 
+	if (f)
 	{
 		if(rc_read(rc, f, buffer, 1, 1))
 		{
@@ -351,12 +351,12 @@ int parse_config (const char* filename, const struct GameDriver *gamedrv)
 		}
 	}
 
-	if (f) 
+	if (f)
 		fclose (f);
 
 	return retval;
 }
-	
+
 int parse_config_and_cmdline (int argc, char **argv)
 {
 	int game_index;
@@ -386,7 +386,7 @@ int parse_config_and_cmdline (int argc, char **argv)
 	/* parse the commandline */
 	if (rc_parse_commandline(rc, argc, argv, 2, config_handle_arg))
 	{
-		fprintf (stderr, "error while parsing cmdline");
+		fprintf (stderr, "error while parsing cmdline\n");
 		exit(1);
 	}
 
@@ -410,7 +410,7 @@ int parse_config_and_cmdline (int argc, char **argv)
 	if (showusage)
 	{
 		fprintf(stdout, "Usage: mame [game] [options]\n" "Options:\n");
-	
+
 		/* actual help message */
 		rc_print_help(rc, stdout);
 		exit(0);
@@ -503,7 +503,7 @@ int parse_config_and_cmdline (int argc, char **argv)
 
 	/* ok, got a gamename. now load gamename.ini */
 	/* this possibly checks for clonename.ini recursively! */
-	
+
 	if (readconfig)
 		if (parse_config (NULL, drivers[game_index]))
 			exit(1);
@@ -546,7 +546,7 @@ int parse_config_and_cmdline (int argc, char **argv)
 	else
 		pcrcfilename[0] = 0;
     #endif
-    
+
 /* FIXME */
 /*	logerror("cheatfile = %s - cheatdir = %s\n",cheatfile,cheatdir); */
 
@@ -555,7 +555,7 @@ int parse_config_and_cmdline (int argc, char **argv)
 		options.debug_width = 640;
 	if (options.debug_height == 0)
 		options.debug_height = 480;
-	
+
 	/* no sound is indicated by a 0 samplerate */
 	if (!enable_sound)
 		options.samplerate = 0;
@@ -567,7 +567,7 @@ int parse_config_and_cmdline (int argc, char **argv)
 static int config_handle_arg(char *arg)
 {
 	static int got_gamename = 0;
-	
+
 	if (!got_gamename) /* notice: for MESS game means system */
 	{
 		gamename     = arg;

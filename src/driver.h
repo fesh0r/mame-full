@@ -204,7 +204,7 @@ struct GameDriver
 #define GAME_NO_COCKTAIL			0x0200	/* screen flip support is missing */
 #define GAME_UNEMULATED_PROTECTION	0x0400	/* game's protection not fully emulated */
 #define GAME_IMPERFECT_GRAPHICS		0x0800	/* graphics are wrong/incomplete */
-#define NOT_A_DRIVER				0x4000	/* set by the fake "root" driver_ and by "containers" */
+#define NOT_A_DRIVER				0x4000	/* set by the fake "root" driver_0 and by "containers" */
 											/* e.g. driver_neogeo. */
 #ifdef MESS
 #define GAME_COMPUTER               0x8000  /* Driver is a computer (needs full keyboard) */

@@ -25,10 +25,10 @@ X86_ASM_68000 = 1
 # X86_ASM_68020 = 1
 
 # set this the operating system you're building for
-# OS = msdos
-OS = windows
-ifeq ($(OS),)
-OS = msdos
+# MAMEOS = msdos
+# MAMEOS = windows
+ifeq ($(MAMEOS),)
+MAMEOS = msdos
 endif
 
 # extension for executables
@@ -49,7 +49,7 @@ RM = @rm -f
 #PERL = @perl -w
 
 
-ifeq ($(OS),windows)
+ifeq ($(MAMEOS),windows)
 SUFFIX = w
 else
 SUFFIX =
@@ -83,10 +83,10 @@ EMULATOR = $(NAME)$(EXE)
 DEFS = -DX86_ASM -DLSB_FIRST -DINLINE="static __inline__" -Dasm=__asm__
 
 ifdef SYMBOLS
-CFLAGS = -Isrc -Isrc/$(OS) -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000 \
+CFLAGS = -Isrc -Isrc/$(MAMEOS) -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000 \
 	-O0 -Wall -Werror -Wno-unused -g
 else
-CFLAGS = -Isrc -Isrc/$(OS) -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000 \
+CFLAGS = -Isrc -Isrc/$(MAMEOS) -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000 \
 	-DNDEBUG \
 	$(ARCH) -O3 -fomit-frame-pointer -fstrict-aliasing \
 	-Werror -Wall -Wno-sign-compare -Wunused \
@@ -121,7 +121,7 @@ endif
 # platform .mak files will want to add to this
 LIBS = -lz
 
-OBJDIRS = obj $(OBJ) $(OBJ)/cpu $(OBJ)/sound $(OBJ)/$(OS) \
+OBJDIRS = obj $(OBJ) $(OBJ)/cpu $(OBJ)/sound $(OBJ)/$(MAMEOS) \
 	$(OBJ)/drivers $(OBJ)/machine $(OBJ)/vidhrdw $(OBJ)/sndhrdw
 ifdef MESS
 OBJDIRS += $(OBJ)/mess $(OBJ)/mess/systems $(OBJ)/mess/machine \
@@ -134,7 +134,7 @@ all:	maketree $(EMULATOR) extra
 include src/core.mak
 include src/$(TARGET).mak
 include src/rules.mak
-include src/$(OS)/$(OS).mak
+include src/$(MAMEOS)/$(MAMEOS).mak
 
 ifdef DEBUG
 DBGDEFS = -DMAME_DEBUG
@@ -170,7 +170,7 @@ $(OBJ)/cpuintrf.o: src/cpuintrf.c rules.mak
 endif
 
 # for Windows at least, we can't compile OS-specific code with -pedantic
-$(OBJ)/$(OS)/%.o: src/$(OS)/%.c
+$(OBJ)/$(MAMEOS)/%.o: src/$(MAMEOS)/%.c
 	@echo Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGS) -c $< -o $@
 

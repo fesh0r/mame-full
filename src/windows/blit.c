@@ -139,13 +139,13 @@ int perform_blit(const struct blit_params *blit, int update)
 	int dirty_index = (blit->dirtydata && !update) ? 1 : 0;
 	void (*func)(void);
 
-	asmblit_srcdata = (UINT8 *)blit->srcdata + blit->srcpitch * blit->srcyoffs + blit->srcdepth * blit->srcxoffs / 8;
+	asmblit_srcdata = (UINT8 *)blit->srcdata + blit->srcpitch * blit->srcyoffs + (srcdepth_index + 1) * blit->srcxoffs;
 	asmblit_srcpitch = blit->srcpitch;
 	asmblit_srcwidth = blit->srcwidth;
 	asmblit_srcheight = blit->srcheight;
 	asmblit_srclookup = blit->srclookup;
 	
-	asmblit_dstdata = (UINT8 *)blit->dstdata + blit->dstpitch * blit->dstyoffs + blit->dstdepth * blit->dstxoffs / 8;
+	asmblit_dstdata = (UINT8 *)blit->dstdata + blit->dstpitch * blit->dstyoffs + (dstdepth_index + 1) * blit->dstxoffs;
 	asmblit_dstpitch = blit->dstpitch;
 
 	asmblit_dirtydata = blit->dirtydata;
@@ -160,7 +160,7 @@ int perform_blit(const struct blit_params *blit, int update)
 	else
 	{
 		static int first_time = 1;
-//		if (first_time)
+		if (first_time)
 			fprintf(stderr, "blit_table[%d][%d][%d][%d][%d][%d]\n", srcdepth_index, dstdepth_index, blit->dstxscale - 1, blit->dstyscale - 1, scans_index, 0);
 		first_time = 0;
 		return 0;

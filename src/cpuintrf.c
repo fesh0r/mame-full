@@ -154,6 +154,9 @@
 #if (HAS_Z80GB)
 #include "mess/cpu/z80gb/z80gb.h"
 #endif
+#if (HAS_Z80_MSX)
+#include "cpu/z80/z80_msx.h"
+#endif
 
 #endif
 
@@ -654,7 +657,7 @@ struct cpu_interface cpuintf[] =
 	CPU0(LH5801,   lh5801,	 1,  0,1.00,LH5801_INT_NONE,   LH5801_IRQ,	   -1,			   8, 17,	  0,17,BE,1, 5	),
 #endif
 #if (HAS_PDP1)
-	CPU0(PDP1,	   pdp1,	 0,  0,1.00,0,				   -1,			   -1,			   32, 16,	  0,18,LE,1, 3	),
+	CPU0(PDP1,	   pdp1,	 0,  0,1.00,0,				   -1,			   -1,			   8, 16,	  0,18,LE,1, 3	),
 #endif
 #if (HAS_SATURN)
 #define saturn_ICount saturn_icount
@@ -672,6 +675,9 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_Z80GB)
 	CPU0(Z80GB,    z80gb,	 5,255,1.00,Z80GB_IGNORE_INT,  0,			   1,			   8, 16,	  0,16,LE,1, 4	),
+#endif
+#if (HAS_Z80_MSX)
+	CPU1(Z80_MSX,  z80_msx,	 1,255,1.00,Z80_IGNORE_INT,    Z80_IRQ_INT,    Z80_NMI_INT,    8, 16,	  0,16,LE,1, 4	),
 #endif
 #endif
 };
@@ -1034,7 +1040,7 @@ WRITE_HANDLER( watchdog_reset_w )
 READ_HANDLER( watchdog_reset_r )
 {
 	watchdog_reset();
-	return 0;
+	return 0xff;
 }
 
 WRITE16_HANDLER( watchdog_reset16_w )
@@ -1045,7 +1051,7 @@ WRITE16_HANDLER( watchdog_reset16_w )
 READ16_HANDLER( watchdog_reset16_r )
 {
 	watchdog_reset();
-	return 0;
+	return 0xffff;
 }
 
 
@@ -3423,21 +3429,22 @@ static unsigned Dummy_dasm(char *buffer, unsigned pc)
 	return 1;
 }
 
+#if (HAS_M68000 || HAS_M68010 || HAS_M68020 || HAS_M68EC020)
 void cpu_set_m68k_reset(int cpunum, void (*resetfn)(void))
 {
 	void m68k_set_reset_instr_callback(void  (*callback)(void));
 
-	if (1
-#if HAS_M68000
+	if ( 1
+#if (HAS_M68000)
 		&& CPU_TYPE(cpunum) != CPU_M68000
 #endif
-#if HAS_M68010
+#if (HAS_M68010)
 		&& CPU_TYPE(cpunum) != CPU_M68010
 #endif
-#if HAS_M68020
+#if (HAS_M68020)
 		&& CPU_TYPE(cpunum) != CPU_M68020
 #endif
-#if HAS_M68EC020
+#if (HAS_M68EC020)
 		&& CPU_TYPE(cpunum) != CPU_M68EC020
 #endif
 		)
@@ -3464,3 +3471,4 @@ void cpu_set_m68k_reset(int cpunum, void (*resetfn)(void))
 			if (cpu[activecpu].save_context) SETCONTEXT(activecpu, cpu[activecpu].context);
 	}
 }
+#endif

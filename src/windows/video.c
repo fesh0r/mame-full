@@ -36,7 +36,7 @@
 // from input.c
 extern void win32_poll_input(void);
 extern void win32_pause_input(int pause);
-
+extern UINT8 trying_to_quit;
 
 
 //============================================================
@@ -45,9 +45,6 @@ extern void win32_pause_input(int pause);
 
 // frameskipping
 #define FRAMESKIP_LEVELS		12
-
-// number of frames to toss out of the average FPS calculcation
-#define FRAMES_TO_SKIP			20
 
 // VERY IMPORTANT: osd_alloc_bitmap must allocate also a "safety area" 16 pixels wide all
 // around the bitmap. This is required because, for performance reasons, some graphic
@@ -143,6 +140,7 @@ static int vfcount;
 static TICKER start_time;
 static TICKER end_time;
 static int frames_displayed;
+static int frames_to_display;
 
 // frameskipping
 static int frameskip_counter;
@@ -211,11 +209,13 @@ struct rc_option video_opts[] =
 	{ "switchres", NULL, rc_bool, &switchres, "1", 0, 0, NULL, "switch resolutions to best fit" },
 	{ "switchbpp", NULL, rc_bool, &switchbpp, "1", 0, 0, NULL, "switch color depths to best fit" },
 	{ "maximize", "max", rc_bool, &maximize, "1", 0, 0, NULL, "start out maximized" },
-	{ "keepaspect", NULL, rc_bool, &keepaspect, "1", 0, 0, NULL, "enforce aspect ratio" },
+	{ "keepaspect", "ka", rc_bool, &keepaspect, "1", 0, 0, NULL, "enforce aspect ratio" },
 	{ "matchrefresh", NULL, rc_bool, &matchrefresh, "0", 0, 0, NULL, "attempt to match the game's refresh rate" },
 	{ "syncrefresh", NULL, rc_bool, &syncrefresh, "0", 0, 0, NULL, "syncronize only to the monitor refresh" },
 	{ "dirty", NULL, rc_bool, &use_dirty, "1", 0, 0, NULL, "enable dirty video optimization" },
-	{ "full_screen_brightness", "fsb", rc_float, &gfx_brightness, "1.0", 0.0, 4.0, NULL, "sets the brightness in full screen mode" },
+	{ "throttle", NULL, rc_bool, &throttle, "1", 0, 0, NULL, "throttle speed to the game's framerate" },
+	{ "full_screen_brightness", "fsb", rc_float, &gfx_brightness, "0.0", 0.0, 4.0, NULL, "sets the brightness in full screen mode" },
+	{ "frames_to_run", "ftr", rc_int, &frames_to_display, "0", 0, 0, NULL, "sets the number of frames to run within the game" },
 	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
 };
 
@@ -526,8 +526,8 @@ void osd_close_display(void)
 	destroy_window();
 
 	// print a final result to the stdout
-	if (frames_displayed > FRAMES_TO_SKIP)
-		printf("Average FPS: %f\n", (double)TICKS_PER_SEC / (end_time - start_time) * (frames_displayed - FRAMES_TO_SKIP));
+	if (frames_displayed != 0)
+		printf("Average FPS: %f (%d frames)\n", (double)TICKS_PER_SEC / (end_time - start_time) * frames_displayed, frames_displayed);
 
 	// free the array of dirty colors
 	free(dirtycolor);
@@ -1015,7 +1015,7 @@ void update_palette_8(void)
 void update_palette_16(void)
 {
 	int i;
-	
+
 	// any palette change here requires everything to be dirtied
 	if (use_dirty)
 		init_dirty(1);
@@ -1139,10 +1139,19 @@ static void render_frame(struct osd_bitmap *bitmap)
 	curr = ticker();
 
 	// update stats for the FPS average calculation
-	if (++frames_displayed == FRAMES_TO_SKIP)
-		start_time = curr;
+	if (start_time == 0)
+	{
+		// start the timer going 1 second into the game
+		if (timer_get_time() > 1.0)
+			start_time = curr;
+	}
 	else
+	{
+		frames_displayed++;
+		if (frames_displayed + 1 == frames_to_display)
+			trying_to_quit = 1;
 		end_time = curr;
+	}
 
 	// if we're at the start of a frameskip sequence, compute the speed
 	if (frameskip_counter == 0)

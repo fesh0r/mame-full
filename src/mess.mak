@@ -49,9 +49,9 @@ CPUS+=HD6309@
 CPUS+=M6809@
 #CPUS+=KONAMI@
 CPUS+=M68000@
-CPUS+=M68010@	#hack
-CPUS+=M68EC020@	#hack
-CPUS+=M68020@	#hack
+#CPUS+=M68010@
+#CPUS+=M68EC020@
+#CPUS+=M68020@
 #CPUS+=T11@
 CPUS+=S2650@
 CPUS+=F8@
@@ -646,7 +646,7 @@ $(OBJ)/intv.a:     \
 
 # MESS specific core $(OBJ)s
 COREOBJS += \
-	$(OBJ)/cheatms.o	       \
+	$(OBJ)/src/cheat.o	       \
 	$(OBJ)/mess/mess.o	       \
 	$(OBJ)/mess/system.o	       \
 	$(OBJ)/mess/config.o	       \

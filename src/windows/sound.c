@@ -48,8 +48,6 @@ extern int verbose;
 
 #define INGORE_UNDERFLOW_FRAMES	100
 
-#define THREAD_STACK			65536
-
 // the local buffer is what the stream buffer feeds from
 // note that this needs to be large enough to buffer at frameskip 11
 // for 30fps games like Tapper; we will scale the value down based

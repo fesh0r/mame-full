@@ -101,7 +101,7 @@ static void K051649_update(int ch, INT16 *buffer, int length)
 				int offs;
 
 				/* Amuse source:  Cab suggests this method gives greater resolution */
-				/* SY 20010402: the formula was incorrect (added (f+1) ) */
+				/* Sean Young 20010417: the formula is really: f = clock/(16*(f+1))*/
 				c+=(long)((((float)mclock / (float)((f+1) * 16))*(float)(1<<FREQBASEBITS)) / (float)(rate / 32));
 				offs = (c >> 16) & 0x1f;
 				*mix++ += (w[offs] * v)>>3;

@@ -303,8 +303,7 @@ dirty_count:	db	0
 		movzx	ebx,byte [esi+2*iter+1]
 		mov		eax,[ecx+eax*4]
 		mov		ebx,[ecx+ebx*4]
-		store_multiple2 ax,8*iter,ax,8*iter+2,%1,%2
-		store_multiple2 bx,8*iter+4,bx,8*iter+6,%1,%2
+		store_multiple2 eax,8*iter,ebx,8*iter+4,%1,%2
 		%assign iter iter+1
 	%endrep
 %endmacro
@@ -323,8 +322,8 @@ dirty_count:	db	0
 		movzx	ebx,byte [esi+2*iter+1]
 		mov		eax,[ecx+eax*4]
 		mov		ebx,[ecx+ebx*4]
-		store_multiple3 ax,12*iter,ax,12*iter+2,ax,12*iter+4,%1,%2
-		store_multiple3 bx,12*iter+6,bx,12*iter+8,bx,12*iter+10,%1,%2
+		store_multiple2 eax,12*iter,ax,12*iter+4,%1,%2
+		store_multiple2 bx,12*iter+6,ebx,12*iter+8,%1,%2
 		%assign iter iter+1
 	%endrep
 %endmacro
@@ -550,8 +549,7 @@ dirty_count:	db	0
 		movzx	ebx,word [esi+4*iter+2]
 		mov		eax,[ecx+eax*4]
 		mov		ebx,[ecx+ebx*4]
-		store_multiple2 ax,8*iter,ax,8*iter+2,%1,%2
-		store_multiple2 bx,8*iter+4,bx,8*iter+6,%1,%2
+		store_multiple2 eax,8*iter,ebx,8*iter+4,%1,%2
 		%assign iter iter+1
 	%endrep
 %endmacro
@@ -570,8 +568,8 @@ dirty_count:	db	0
 		movzx	ebx,word [esi+4*iter+2]
 		mov		eax,[ecx+eax*4]
 		mov		ebx,[ecx+ebx*4]
-		store_multiple3 ax,12*iter,ax,12*iter+2,ax,12*iter+4,%1,%2
-		store_multiple3 bx,12*iter+6,bx,12*iter+8,bx,12*iter+10,%1,%2
+		store_multiple2 eax,12*iter,ax,12*iter+4,%1,%2
+		store_multiple2 bx,12*iter+6,ebx,12*iter+8,%1,%2
 		%assign iter iter+1
 	%endrep
 %endmacro
@@ -1369,8 +1367,7 @@ _asmblit_%1_to_%2_%3x%4_sl%5_dirty%6:
 %endif
 
 	;// prepare
-	push	ebp
-	mov		edx,[esp+8]
+	pushad
 
 	;// load the source/dest pointers
 	mov		esi,[_asmblit_srcdata]
@@ -1452,7 +1449,7 @@ _asmblit_%1_to_%2_%3x%4_sl%5_dirty%6:
 	jne		near %%yloop
 
 	;// finish
-	pop		ebp
+	popad
 	ret
 %endmacro
 

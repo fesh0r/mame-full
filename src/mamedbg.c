@@ -543,7 +543,7 @@ static void toggle_cursor(struct osd_bitmap *bitmap, struct GfxElement *font)
 {
 	int sx, sy, x, y;
 	int saved_depth = Machine->color_depth;
-	
+
 	/* ASG: this allows the debug bitmap to be a different depth than the screen */
 	Machine->color_depth = bitmap->depth;
 	switch_ui_orientation();
@@ -1127,7 +1127,7 @@ const char *set_ea_info( int what, unsigned value, int size, int access )
 	const char *sign = "";
 	unsigned width, result;
 
-	which = ++which % 8;
+	which = (which+1) % 8;
 
 	if( access == EA_REL_PC )
 		/* PC relative calls set_ea_info with value = PC and size = offset */
@@ -1853,7 +1853,7 @@ static const char *name_rdmem( unsigned base )
 	const char *name;
 	char *dst;
 
-	which = ++which % 16;
+	which = (which+1) % 16;
 	dst = buffer[which];
 	*dst = '\0';
 
@@ -1978,7 +1978,7 @@ static const char *name_wrmem( unsigned base )
 	const char *name;
 	char *dst;
 
-	which = ++which % 16;
+	which = (which+1) % 16;
 	dst = buffer[which];
 	*dst = '\0';
 
@@ -2063,12 +2063,12 @@ static const char *name_memory( unsigned base )
 	/* both empty, so it's no specific region */
 	if( *rd == '\0' && *wr == '\0' )
 	{
-		which = ++which % 8;
+		which = (which+1) % 8;
 		sprintf(buffer[which], "N/A:%04X", base);
 		return buffer[which];
 	}
 
-	which = ++which % 8;
+	which = (which+1) % 8;
 
 	/* both names differ? */
 	if( strcmp(rd,wr) )
