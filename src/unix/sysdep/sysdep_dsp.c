@@ -85,10 +85,10 @@ static const struct plugin_struct *sysdep_dsp_plugins[] = {
    &sysdep_dsp_alsa,
 #endif
 #ifdef SYSDEP_DSP_ARTS_TEIRA
-   &sysdep_dsp_arts,
+   &sysdep_dsp_arts_teira,
 #endif
 #ifdef SYSDEP_DSP_ARTS_SMOTEK
-   &sysdep_dsp_arts,
+   &sysdep_dsp_arts_smotek,
 #endif
 #ifdef SYSDEP_DSP_SDL
    &sysdep_dsp_sdl,

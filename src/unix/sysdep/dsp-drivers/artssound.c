@@ -56,10 +56,10 @@ struct rc_option arts_dsp_opts[] = {
 };
 
 /* public variables */
-const struct plugin_struct sysdep_dsp_arts = {
-   "arts",
+const struct plugin_struct sysdep_dsp_arts_teira = {
+   "arts_teira",
    "sysdep_dsp",
-   "aRts DSP plugin",
+   "aRts DSP plugin by Manuel Teira",
    arts_dsp_opts, 
    NULL, /* no init */
    NULL, /* no exit */

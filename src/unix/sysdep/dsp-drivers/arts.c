@@ -50,10 +50,10 @@ static int arts_dsp_write(struct sysdep_dsp_struct *dsp, unsigned char *data,
    int count);
 
 /* public variables */
-const struct plugin_struct sysdep_dsp_arts = {
-   "arts",
+const struct plugin_struct sysdep_dsp_arts_smotek = {
+   "arts_smotek",
    "sysdep_dsp",
-   "aRts DSP plugin",
+   "aRts DSP plugin by Petr Smotek",
    NULL,
    NULL,
    NULL,

@@ -49,10 +49,10 @@ extern struct plugin_struct sysdep_dsp_esound;
 extern struct plugin_struct sysdep_dsp_alsa;
 #endif
 #ifdef SYSDEP_DSP_ARTS_TEIRA
-extern struct plugin_struct sysdep_dsp_arts;
+extern struct plugin_struct sysdep_dsp_arts_teira;
 #endif
 #ifdef SYSDEP_DSP_ARTS_SMOTEK
-extern struct plugin_struct sysdep_dsp_arts;
+extern struct plugin_struct sysdep_dsp_arts_smotek;
 #endif
 #ifdef SYSDEP_DSP_SDL
 extern struct plugin_struct sysdep_dsp_sdl;
