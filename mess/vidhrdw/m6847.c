@@ -18,7 +18,7 @@
 /* The "Back doors" are declared here */
 #include "includes/dragon.h"
 
-#define LOG_FS	1
+#define LOG_FS	0
 #define LOG_HS	0
 
 struct m6847_state {
