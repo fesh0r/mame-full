@@ -42,6 +42,7 @@ extern UINT32 a2;
 void apple2_init_common(int keyboard_type);
 DRIVER_INIT( apple2 );
 MACHINE_INIT( apple2 );
+MACHINE_STOP( apple2 );
 data8_t apple2_getfloatingbusvalue(void);
 
 void apple2_interrupt(void);
