@@ -12,13 +12,14 @@
 	The USB interface uses a Philips ISP1161A USB controller that supports
 	USB 2.0 full-speed (12 Mbit/s) and low-speed (1.5 Mbit/s) I/O (high speed
 	(480 Mbits/sec) is not supported, but it is hardly a problem since TI99 is
-	too slow to take advantage from high-speed).  The SmartMedia interface uses
+	too slow to take advantage from high speed).  The SmartMedia interface uses
 	a few TTL buffers.  The card also includes an 8MByte StrataFlash FEEPROM
 	and 1MByte of SRAM for DSR use.
 
 	TODO:
 	* Test SmartMedia support
 	* Implement USB controller and assorted USB devices
+	* Save DSR FEEPROM to disk
 
 	Raphael Nabet, 2004.
 */
@@ -64,8 +65,8 @@ static int input_latch, output_latch;
 
 /* The card has a 8-bit->16-bit demultiplexer that can be set-up to assume
 either that the LSByte of a word is accessed first or that the MSByte of a word
-is accessed first.  The former is true with ti99/4(a), the latter with the
-tms9995 CPU used by Geneve and ti99/8. */
+is accessed first.  The former is true with ti-99/4(a), the latter with the
+tms9995 CPU used by Geneve and ti-99/8. */
 static int tms9995_mode;
 
 /*
