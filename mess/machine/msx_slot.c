@@ -1699,17 +1699,25 @@ MSX_SLOT_INIT(crossblaim)
 
 MSX_SLOT_RESET(crossblaim)
 {
-	state->banks[0] = 0;
+	state->banks[0] = 1;
 }
 
 MSX_SLOT_MAP(crossblaim)
 {
 	UINT8 *mem;
 
+	/* This might look odd, but it's what happens on the real cartridge */
+
 	switch (page) {
 	case 0:
-		msx_cpu_setbank (1, msx1.empty);
-		msx_cpu_setbank (2, msx1.empty);
+		if (state->banks[0] < 2){
+			mem = state->mem + state->banks[0] * 0x4000;
+			msx_cpu_setbank (1, mem);
+			msx_cpu_setbank (2, mem + 0x2000);
+		} else {
+			msx_cpu_setbank (1, msx1.empty);
+			msx_cpu_setbank (2, msx1.empty);
+		}
 		break;
 	case 1:
 		msx_cpu_setbank (3, state->mem);
@@ -1721,18 +1729,32 @@ MSX_SLOT_MAP(crossblaim)
 		msx_cpu_setbank (6, mem + 0x2000);
 		break;
 	case 3:
-		msx_cpu_setbank (7, msx1.empty);
-		msx_cpu_setbank (8, msx1.empty);
+		if (state->banks[0] < 2){
+			mem = state->mem + state->banks[0] * 0x4000;
+			msx_cpu_setbank (7, mem);
+			msx_cpu_setbank (8, mem + 0x2000);
+		} else {
+			msx_cpu_setbank (7, msx1.empty);
+			msx_cpu_setbank (8, msx1.empty);
+		}
 	}
 }
 
 MSX_SLOT_WRITE(crossblaim)
 {
-	if (addr == 0x4045) {
-		state->banks[0] = val & 3;
-		if (msx1.state[2] == state) {
-			slot_crossblaim_map (state, 2);
-		}
+	UINT8 block = val & 3;
+
+	if (!block) block = 1;
+	state->banks[0] = block;
+
+	if (msx1.state[0] == state) {
+		slot_crossblaim_map (state, 0);
+	}
+	if (msx1.state[2] == state) {
+		slot_crossblaim_map (state, 2);
+	}
+	if (msx1.state[3] == state) {
+		slot_crossblaim_map (state, 3);
 	}
 }
 
