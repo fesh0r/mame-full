@@ -11,6 +11,18 @@ typedef struct {
 	UINT8 data;
 	UINT8 control;
 	double time_;
+	void *timer;
+
+	/* These bytes are used in the timer callback. When the timer callback
+	is executed, the control value is updated with the new data. The mask
+	defines the bits that are changing, and the data is the new data */
+	/* The user defined callback in CENTRONICS_CONFIG is called with the 
+	change. This allows systems that have interrupts triggered from the centronics
+	interface to function correctly. e.g. Amstrad NC100 */
+	/* mask of data to set in timer callback */
+	UINT8 new_control_mask;
+	/* data to set in timer callback */
+	UINT8 new_control_data;
 } CENTRONICS;
 
 static CENTRONICS cent[3]={
@@ -23,6 +35,18 @@ void centronics_config(int nr, CENTRONICS_CONFIG *config)
 {
 	CENTRONICS *This=cent+nr;
 	This->config=config;
+	This->timer = NULL;
+}
+
+/* exit and free up timer */
+void centronics_exit(int nr)
+{
+	CENTRONICS *This=cent+nr;
+	if (This->timer!=NULL)
+	{
+		timer_remove(This->timer);
+		This->timer = NULL;
+	}
 }
 
 void centronics_write_data(int nr, UINT8 data)
@@ -31,17 +55,48 @@ void centronics_write_data(int nr, UINT8 data)
 	This->data=data;
 }
 
+/* execute user callback in CENTRONICS_CONFIG when state of control from printer
+has changed */
+static void centronics_timer_callback(int nr)
+{
+	CENTRONICS *This=cent+nr;
+
+	/* don't re-trigger timer */
+	timer_reset(This->timer, TIME_NEVER);
+
+	/* update control state */
+	This->control &=~This->new_control_mask;
+	This->control |=This->new_control_data;
+
+	/* if callback is specified, call it with the new state of the outputs from the printer */
+	if (This->config->handshake_out)
+		This->config->handshake_out(nr, This->control, This->new_control_mask);
+}
+
 void centronics_write_handshake(int nr, int data, int mask)
 {
 	CENTRONICS *This=cent+nr;
 	
-	int neu=(data&mask)|(This->control&~mask);
+	int neu=(data&mask)|(This->control&(~mask));
 	
 	if (neu&CENTRONICS_NO_RESET) {
 		if ( !(This->control&CENTRONICS_STROBE) && (neu&CENTRONICS_STROBE) ) {
 			printer_output(nr, This->data);
-			// after a while a acknowledge should occur
-			This->time_=timer_get_time();
+			
+			/* setup timer for data acknowledge */
+
+			/* if timer has been setup, remove */
+			if (This->timer!=NULL)
+			{
+				timer_remove(This->timer);
+			}
+			/* set mask for data that has changed */
+			This->new_control_mask = CENTRONICS_ACKNOWLEDGE;
+			/* set data that has changed */
+			This->new_control_data = CENTRONICS_ACKNOWLEDGE;
+
+			/* setup a new timer */
+			This->timer = timer_set(TIME_IN_USEC(1), nr, centronics_timer_callback);
 		}
 	}
 	This->control=neu;
@@ -62,7 +117,9 @@ int centronics_read_handshake(int nr)
 	data|=CENTRONICS_NO_ERROR;
 	if (!printer_status(nr, 0)) data|=CENTRONICS_NO_PAPER;
 
-	if (timer_get_time()-This->time_<10e-6) data|=CENTRONICS_ACKNOWLEDGE;
+	/* state of acknowledge */
+	data|=(This->control & CENTRONICS_ACKNOWLEDGE);
+
 
 	return data;
 }
