@@ -62,6 +62,7 @@ extern WRITE_HANDLER ( gb_rom_bank_select );
 extern WRITE_HANDLER ( gb_ram_bank_select );
 extern WRITE_HANDLER ( gb_w_io );
 extern READ_HANDLER  ( gb_r_divreg );
+extern READ_HANDLER  ( gb_ser_regs );
 extern READ_HANDLER  ( gb_r_timer_cnt );
 extern int gb_load_rom (int id);
 extern int gb_id_rom (int id);
