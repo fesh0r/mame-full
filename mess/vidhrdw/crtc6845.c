@@ -14,7 +14,7 @@
 #include "includes/state.h"
 #include "includes/crtc6845.h"
 
-#define VERBOSE 2
+#define VERBOSE 0
 
 #if VERBOSE
 #define DBG_LOG(N,M,A)      \
