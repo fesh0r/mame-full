@@ -36,11 +36,14 @@
 
 	While the OS is not derived directly from the TI99/4(a) OS, there are
 	disturbing similarities: the Japanese title screen is virtually identical
-	to the TI-99 title screen, and the ROMs include a GPL interpreter (although
-	the Tutor GPL is incompatible with TI BASIC GPL).  Moreover, the Tutor
-	BASIC seems to be be derived from TI Extended BASIC.
+	to the TI-99 title screen.  Moreover, the Tutor BASIC seems to be be
+	derived from TI Extended BASIC, as both BASIC uses similar tokens and
+	syntax, and are partially written in GPL (there is therefore a GPL
+	interpreter in Tutor ROMs, although the Tutor GPL is incompatible with TI
+	GPL, does not seem to be used by any program other than Tutor Basic, and it
+	seems unlikely that the original Pyuuta had this GPL interpreter in ROMs).
 
-	It looks like TI has sold the licence of the TI BASIC to Tomy, probably
+	It appears that TI has sold the licence of the TI BASIC to Tomy, probably
 	after it terminated its TI99 series.  It is not impossible that the entire
 	Tutor concept is derived from a TI project under licence: this machine
 	looks like a crossbreed of the TI99/2 and the TI99/4 (or /4a, /4b, /5), and
