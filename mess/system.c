@@ -162,8 +162,8 @@ TESTDRIVER( saturn )	/* Sega Saturn										*/
 	/* NEC */
 	DRIVER( pce )		/* PC/Engine - Turbo Graphics-16  NEC 1989-1993		*/
 
-//	DRIVER( arcadia )	/* Emerson Arcadia 2001								*/
-//TESTDRIVER( vcg )		/* Palladium Video-Computer-Game					*/
+	DRIVER( arcadia )	/* Emerson Arcadia 2001								*/
+TESTDRIVER( vcg )		/* Palladium Video-Computer-Game					*/
 
 	/* GCE */
 	DRIVER( vectrex )	/* General Consumer Electric Vectrex - 1982-1984	*/
@@ -361,8 +361,8 @@ XL/XE 16kB OS roms
 //TESTDRIVER( c128d )		/* Commodore 128D - NTSC 							*/
 //TESTDRIVER( c128dita )	/* Commodore 128D - PAL (italian) cost reduced set	*/
 
-//TESTDRIVER( amiga ) 	/* Commodore Amiga									*/
-//TESTDRIVER( cdtv )
+TESTDRIVER( amiga ) 	/* Commodore Amiga									*/
+TESTDRIVER( cdtv )
 
 //	DRIVER( c65 )		/* C65 / C64DX (Prototype, NTSC, 911001)			*/
 //	DRIVER( c65e )		/* C65 / C64DX (Prototype, NTSC, 910828)			*/
@@ -592,7 +592,7 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 			*/
 	/* philips g7000 odyssey2 compatible */
 
 	/* COMPUKIT */
-//	DRIVER( uk101 ) 	/* 1979 UK101										*/
+	DRIVER( uk101 ) 	/* 1979 UK101										*/
 
 	/* OHIO SCIENTIFIC */
 //	DRIVER( superbrd )	/* 1979 Superboard II								*/
@@ -660,9 +660,9 @@ TESTDRIVER( comquest )	/* Comquest Plus German								*/
 //TESTDRIVER( hp48g ) 	/* HP48 G/GX										*/
 
 	/* SpectraVideo */
-//	DRIVER( svi318 ) 	/* SVI-318											*/
-//	DRIVER( svi328 ) 	/* SVI-328											*/
-//	DRIVER( svi328a ) 	/* SVI-328	(BASIC 1.11)							*/
+	DRIVER( svi318 ) 	/* SVI-318											*/
+	DRIVER( svi328 ) 	/* SVI-328											*/
+	DRIVER( svi328a ) 	/* SVI-328	(BASIC 1.11)							*/
 
 	/* Andrew Donald Booth (this is the name of the designer, not a company) */
 	DRIVER( apexc )		/* 1951(?) APEXC: All-Purpose Electronic X-ray Computer */

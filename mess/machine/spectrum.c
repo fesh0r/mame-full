@@ -361,30 +361,6 @@ static void spectrum_page_basicrom(void)
 	spectrum_update_paging();
 }
 
-/* Dump the state of registers after loading a snapshot to the log file for debugging */
-static void dump_registers(void)
-{
-	logerror("PC   = %04x\n", cpunum_get_reg(0, Z80_PC));
-	logerror("SP   = %04x\n", cpunum_get_reg(0, Z80_SP));
-	logerror("AF   = %04x\n", cpunum_get_reg(0, Z80_AF));
-	logerror("BC   = %04x\n", cpunum_get_reg(0, Z80_BC));
-	logerror("DE   = %04x\n", cpunum_get_reg(0, Z80_DE));
-	logerror("HL   = %04x\n", cpunum_get_reg(0, Z80_HL));
-	logerror("IX   = %04x\n", cpunum_get_reg(0, Z80_IX));
-	logerror("IY   = %04x\n", cpunum_get_reg(0, Z80_IY));
-	logerror("AF'  = %04x\n", cpunum_get_reg(0, Z80_AF2));
-	logerror("BC'  = %04x\n", cpunum_get_reg(0, Z80_BC2));
-	logerror("DE'  = %04x\n", cpunum_get_reg(0, Z80_DE2));
-	logerror("HL'  = %04x\n", cpunum_get_reg(0, Z80_HL2));
-	logerror("I    = %02x\n", cpunum_get_reg(0, Z80_I));
-	logerror("R    = %02x\n", cpunum_get_reg(0, Z80_R));
-	logerror("IFF1 = %02x\n", cpunum_get_reg(0, Z80_IFF1));
-	logerror("IFF2 = %02x\n", cpunum_get_reg(0, Z80_IFF2));
-	logerror("IM   = %02x\n", cpunum_get_reg(0, Z80_IM));
-	logerror("NMI  = %02x\n", cpunum_get_reg(0, Z80_NMI_STATE));
-	logerror("IRQ  = %02x\n", cpunum_get_reg(0, Z80_IRQ_STATE));
-}
-
 /*******************************************************************
  *
  *      Load a .SP file.
@@ -514,18 +490,15 @@ void spectrum_setup_sp(unsigned char *pSnapshot, unsigned long SnapshotSize)
 	}
 
 	data = (status & 0x10)>>4;
-	cpunum_set_reg(0, Z80_IRQ_STATE, data);
-
-	cpunum_set_reg(0, Z80_NMI_STATE, 0);
-	cpunum_set_reg(0, Z80_HALT, 0);
+	activecpu_set_irq_line(0, data);
+	activecpu_set_irq_line(IRQ_LINE_NMI, data);
+	activecpu_set_halt_line(0);
 
 	spectrum_page_basicrom();
 
 	/* memory dump */
 	for (i = 0; i < size; i++)
 		program_write_byte(i + offset, pSnapshot[38 + i]);
-
-	dump_registers();
 }
 
 /*******************************************************************
@@ -621,9 +594,9 @@ void spectrum_setup_sna(unsigned char *pSnapshot, unsigned long SnapshotSize)
 	set_last_border_color(pSnapshot[26] & 0x07);
 	force_border_redraw();
 
-	cpunum_set_reg(0, Z80_NMI_STATE, 0);
-	cpunum_set_reg(0, Z80_IRQ_STATE, 0);
-	cpunum_set_reg(0, Z80_HALT, 0);
+	activecpu_set_irq_line(0, data);
+	activecpu_set_irq_line(IRQ_LINE_NMI, data);
+	activecpu_set_halt_line(0);
 
 	if (SnapshotSize == 49179)
 		/* 48K Snapshot */
@@ -928,9 +901,9 @@ void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize)
 		/* cpunum_set_reg(0, Z80_IRQ_STATE, 1); */
 	}
 
-	cpunum_set_reg(0, Z80_NMI_STATE, 0);
-	cpunum_set_reg(0, Z80_IRQ_STATE, 0);
-	cpunum_set_reg(0, Z80_HALT, 0);
+	activecpu_set_irq_line(0, data);
+	activecpu_set_irq_line(IRQ_LINE_NMI, data);
+	activecpu_set_halt_line(0);
 
 	/* IFF2 */
 	if (pSnapshot[28] != 0)

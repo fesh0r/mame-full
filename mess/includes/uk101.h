@@ -2,7 +2,7 @@
 #define UK101_H
 
 /* machine/uk101.c */
-MACHINE_INIT( uk101 );
+DRIVER_INIT( uk101 );
 READ_HANDLER( uk101_acia0_casin );
 READ_HANDLER( uk101_acia0_statin );
 READ_HANDLER( uk101_keyb_r );

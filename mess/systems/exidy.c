@@ -207,19 +207,9 @@ static void exidy_hd6402_callback(int mask, int data)
 
 static void exidy_reset_timer_callback(int dummy)
 {
-	cpunum_set_pc(0,0x0e000);
+	cpunum_set_reg(0, REG_PC, 0x0e000);
 }
 
-#if 0
-static OPBASE_HANDLER( exidy_opbaseoverride )
-{
-	memory_set_opbase_handler(0,0);
-
-	cpunum_set_pc(0,0x0e000);
-
-	return (cpunum_get_pc(0) & 0x0ffff);
-}
-#endif
 static void exidy_printer_handshake_in(int number, int data, int mask)
 {
 	if (mask & CENTRONICS_ACKNOWLEDGE)

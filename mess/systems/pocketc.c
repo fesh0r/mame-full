@@ -80,103 +80,103 @@
 /* special keys
    red c-ce and reset; warm boot, program NOT lost*/
 
-static MEMORY_READ_START( pc1401_readmem )
-	{ 0x0000, 0x1fff, MRA8_ROM },
-	{ 0x2000, 0x47ff, MRA8_RAM },
+static ADDRESS_MAP_START( pc1401_readmem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x1fff) AM_READ( MRA8_ROM )
+	AM_RANGE( 0x2000, 0x47ff) AM_READ( MRA8_RAM )
 /*	{ 0x5000, 0x57ff, ? }, */
-	{ 0x6000, 0x67ff, pc1401_lcd_read },
-	{ 0x7000, 0x77ff, pc1401_lcd_read },
-	{ 0x8000, 0xffff, MRA8_ROM },
-MEMORY_END
+	AM_RANGE( 0x6000, 0x67ff) AM_READ( pc1401_lcd_read )
+	AM_RANGE( 0x7000, 0x77ff) AM_READ( pc1401_lcd_read )
+	AM_RANGE( 0x8000, 0xffff) AM_READ( MRA8_ROM )
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( pc1401_writemem )
-	{ 0x0000, 0x1fff, MWA8_ROM },
+static ADDRESS_MAP_START( pc1401_writemem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x1fff) AM_WRITE( MWA8_ROM )
 /*	{ 0x2000, 0x3fff, MWA8_RAM }, // done in pc1401_machine_init */
-	{ 0x4000, 0x47ff, MWA8_RAM },
+	AM_RANGE( 0x4000, 0x47ff) AM_WRITE( MWA8_RAM )
 /*	{ 0x5000, 0x57ff, ? }, */
-	{ 0x6000, 0x67ff, pc1401_lcd_write },
-	{ 0x7000, 0x77ff, pc1401_lcd_write },
-	{ 0x8000, 0xffff, MWA8_ROM },
-MEMORY_END
+	AM_RANGE( 0x6000, 0x67ff) AM_WRITE( pc1401_lcd_write )
+	AM_RANGE( 0x7000, 0x77ff) AM_WRITE( pc1401_lcd_write )
+	AM_RANGE( 0x8000, 0xffff) AM_WRITE( MWA8_ROM )
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( pc1251_readmem )
-	{ 0x0000, 0x1fff, MRA8_ROM },
+static ADDRESS_MAP_START( pc1251_readmem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x1fff) AM_READ( MRA8_ROM )
 //	{ 0x2000, 0x3fff, MRA8_RAM },
-	{ 0x4000, 0x7fff, MRA8_ROM },
-	{ 0xa000, 0xcbff, MRA8_ROM },
-	{ 0xf800, 0xf8ff, pc1251_lcd_read },
-MEMORY_END
+	AM_RANGE( 0x4000, 0x7fff) AM_READ( MRA8_ROM )
+	AM_RANGE( 0xa000, 0xcbff) AM_READ( MRA8_ROM )
+	AM_RANGE( 0xf800, 0xf8ff) AM_READ( pc1251_lcd_read )
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( pc1251_writemem )
-	{ 0x0000, 0x1fff, MWA8_ROM },
-	{ 0x4000, 0x7fff, MWA8_ROM },
+static ADDRESS_MAP_START( pc1251_writemem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x1fff) AM_WRITE( MWA8_ROM )
+	AM_RANGE( 0x4000, 0x7fff) AM_WRITE( MWA8_ROM )
 //	{ 0xa000, 0xcbff, MWA8_ROM }, // c600 b800 b000 a000 tested
-	{ 0xf800, 0xf8ff, pc1251_lcd_write },
-MEMORY_END
+	AM_RANGE( 0xf800, 0xf8ff) AM_WRITE( pc1251_lcd_write )
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( pc1350_readmem )
-	{ 0x0000, 0x1fff, MRA8_ROM },
-	{ 0x2000, 0x3fff, MRA8_RAM },
-	{ 0x4000, 0x5fff, MRA8_RAM },
-	{ 0x6000, 0x6fff, MRA8_RAM },
-	{ 0x7000, 0x7eff, pc1350_lcd_read },
-	{ 0x8000, 0xffff, MRA8_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( pc1350_readmem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x1fff) AM_READ( MRA8_ROM )
+	AM_RANGE( 0x2000, 0x3fff) AM_READ( MRA8_RAM )
+	AM_RANGE( 0x4000, 0x5fff) AM_READ( MRA8_RAM )
+	AM_RANGE( 0x6000, 0x6fff) AM_READ( MRA8_RAM )
+	AM_RANGE( 0x7000, 0x7eff) AM_READ( pc1350_lcd_read )
+	AM_RANGE( 0x8000, 0xffff) AM_READ( MRA8_ROM )
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( pc1350_writemem )
-	{ 0x0000, 0x1fff, MWA8_ROM },
-	{ 0x2000, 0x3fff, MWA8_RAM }, /*ram card 16k */
-	{ 0x4000, 0x5fff, MWA8_RAM }, /*ram card 16k oder 8k */
-	{ 0x6000, 0x6fff, MWA8_RAM },
-	{ 0x7000, 0x7eff, pc1350_lcd_write },
-	{ 0x8000, 0xffff, MWA8_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( pc1350_writemem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x1fff) AM_WRITE( MWA8_ROM )
+	AM_RANGE( 0x2000, 0x3fff) AM_WRITE( MWA8_RAM ) /*ram card 16k */
+	AM_RANGE( 0x4000, 0x5fff) AM_WRITE( MWA8_RAM ) /*ram card 16k oder 8k */
+	AM_RANGE( 0x6000, 0x6fff) AM_WRITE( MWA8_RAM )
+	AM_RANGE( 0x7000, 0x7eff) AM_WRITE( pc1350_lcd_write )
+	AM_RANGE( 0x8000, 0xffff) AM_WRITE( MWA8_ROM )
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( pc1403_readmem )
-	{ 0x0000, 0x1fff, MRA8_ROM },
-{ 0x3000, 0x30bf, pc1403_lcd_read },    
-{ 0x3800, 0x3fff, pc1403_asic_read },    
-{ 0x4000, 0x7fff, MRA8_BANK1 },
-{ 0xe000,0xffff, MRA8_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( pc1403_readmem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x1fff) AM_READ( MRA8_ROM )
+AM_RANGE( 0x3000, 0x30bf) AM_READ( pc1403_lcd_read )    
+AM_RANGE( 0x3800, 0x3fff) AM_READ( pc1403_asic_read )    
+AM_RANGE( 0x4000, 0x7fff) AM_READ( MRA8_BANK1 )
+AM_RANGE( 0xe000,0xffff) AM_READ( MRA8_RAM )
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( pc1403_writemem )
-	{ 0x0000, 0x1fff, MWA8_ROM },
-{ 0x3000, 0x30bf, pc1403_lcd_write },    
-{ 0x3800, 0x3fff, pc1403_asic_write },    
-{ 0xe000,0xffff, MWA8_RAM },
-MEMORY_END
+static ADDRESS_MAP_START( pc1403_writemem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x1fff) AM_WRITE( MWA8_ROM )
+AM_RANGE( 0x3000, 0x30bf) AM_WRITE( pc1403_lcd_write )    
+AM_RANGE( 0x3800, 0x3fff) AM_WRITE( pc1403_asic_write )    
+AM_RANGE( 0xe000,0xffff) AM_WRITE( MWA8_RAM )
+ADDRESS_MAP_END
 
 
 
 #if 0
-static MEMORY_READ_START( pc1421_readmem )
-	{ 0x0000, 0x1fff, MRA8_ROM },
-	{ 0x3800, 0x47ff, MRA8_RAM },
-	{ 0x8000, 0xffff, MRA8_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( pc1421_readmem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x1fff) AM_READ( MRA8_ROM )
+	AM_RANGE( 0x3800, 0x47ff) AM_READ( MRA8_RAM )
+	AM_RANGE( 0x8000, 0xffff) AM_READ( MRA8_ROM )
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( pc1421_writemem )
-	{ 0x0000, 0x1fff, MWA8_ROM },
-	{ 0x2000, 0x37ff, MWA8_RAM },
-	{ 0x3800, 0x47ff, MWA8_RAM },
-	{ 0x8000, 0xffff, MWA8_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( pc1421_writemem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x1fff) AM_WRITE( MWA8_ROM )
+	AM_RANGE( 0x2000, 0x37ff) AM_WRITE( MWA8_RAM )
+	AM_RANGE( 0x3800, 0x47ff) AM_WRITE( MWA8_RAM )
+	AM_RANGE( 0x8000, 0xffff) AM_WRITE( MWA8_ROM )
+ADDRESS_MAP_END
 
-static MEMORY_READ_START( pc1260_readmem )
-	{ 0x0000, 0x1fff, MRA8_ROM },
-	{ 0x4000, 0x5fff, MRA8_RAM },
-	{ 0x8000, 0xffff, MRA8_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( pc1260_readmem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x1fff) AM_READ( MRA8_ROM )
+	AM_RANGE( 0x4000, 0x5fff) AM_READ( MRA8_RAM )
+	AM_RANGE( 0x8000, 0xffff) AM_READ( MRA8_ROM )
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( pc1260_writemem )
-	{ 0x0000, 0x1fff, MWA8_ROM },
-	{ 0x4000, 0x57ff, MWA8_RAM }, /* 1261 */
-	{ 0x5800, 0x67ff, MWA8_RAM },
-	{ 0x6000, 0x6fff, MWA8_RAM },
+static ADDRESS_MAP_START( pc1260_writemem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x1fff) AM_WRITE( MWA8_ROM )
+	AM_RANGE( 0x4000, 0x57ff) AM_WRITE( MWA8_RAM ) /* 1261 */
+	AM_RANGE( 0x5800, 0x67ff) AM_WRITE( MWA8_RAM )
+	AM_RANGE( 0x6000, 0x6fff) AM_WRITE( MWA8_RAM )
 
-	{ 0x8000, 0xffff, MWA8_ROM },
-MEMORY_END
+	AM_RANGE( 0x8000, 0xffff) AM_WRITE( MWA8_ROM )
+ADDRESS_MAP_END
 #endif
 
 #define DIPS_HELPER(bit, name, keycode, r) \
@@ -591,7 +591,7 @@ static SC61860_CONFIG config={
 static MACHINE_DRIVER_START( pc1401 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", SC61860, 192000)        /* 7.8336 Mhz */
-	MDRV_CPU_MEMORY(pc1401_readmem,pc1401_writemem)
+	MDRV_CPU_PROGRAM_MAP(pc1401_readmem,pc1401_writemem)
 	MDRV_CPU_CONFIG(config)
 
 	MDRV_FRAMES_PER_SECOND(20)	/* very early and slow lcd */
@@ -635,7 +635,7 @@ static SC61860_CONFIG pc1251_config={
 static MACHINE_DRIVER_START( pc1251 )
 	MDRV_IMPORT_FROM( pc1401 )
 	MDRV_CPU_MODIFY( "main" )
-	MDRV_CPU_MEMORY( pc1251_readmem,pc1251_writemem )
+	MDRV_CPU_PROGRAM_MAP( pc1251_readmem,pc1251_writemem )
 	MDRV_CPU_CONFIG( pc1251_config )
 
 	MDRV_MACHINE_INIT( pc1251 )
@@ -662,7 +662,7 @@ static SC61860_CONFIG pc1350_config={
 static MACHINE_DRIVER_START( pc1350 )
 	MDRV_IMPORT_FROM( pc1401 )
 	MDRV_CPU_MODIFY( "main" )
-	MDRV_CPU_MEMORY( pc1350_readmem,pc1350_writemem )
+	MDRV_CPU_PROGRAM_MAP( pc1350_readmem,pc1350_writemem )
 	MDRV_CPU_CONFIG( pc1350_config )
 
 	MDRV_MACHINE_INIT( pc1350 )
@@ -693,7 +693,7 @@ static SC61860_CONFIG pc1403_config={
 static MACHINE_DRIVER_START( pc1403 )
 	MDRV_IMPORT_FROM( pc1401 )
 	MDRV_CPU_REPLACE( "main", SC61860, 256000 )
-	MDRV_CPU_MEMORY( pc1403_readmem,pc1403_writemem )
+	MDRV_CPU_PROGRAM_MAP( pc1403_readmem,pc1403_writemem )
 	MDRV_CPU_CONFIG( pc1403_config )
 
 	MDRV_MACHINE_INIT( pc1403 )

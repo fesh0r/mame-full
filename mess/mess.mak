@@ -231,12 +231,12 @@ DRVLIBS = \
 	$(OBJ)/apf.a      \
 	$(OBJ)/teamconc.a \
 	$(OBJ)/concept.a  \
-#	$(OBJ)/amiga.a    \
-#	$(OBJ)/svi.a      \
-#	$(OBJ)/tutor.a    \
-#	$(OBJ)/sharp.a    \
-#	$(OBJ)/aim65.a    \
-#	$(OBJ)/avigo.a    \
+	$(OBJ)/amiga.a    \
+	$(OBJ)/svi.a      \
+	$(OBJ)/tutor.a    \
+	$(OBJ)/sharp.a    \
+	$(OBJ)/aim65.a    \
+	$(OBJ)/avigo.a    \
 #	$(OBJ)/motorola.a \
 #	$(OBJ)/ssystem3.a \
 #	$(OBJ)/hp48.a     \
@@ -435,8 +435,8 @@ $(OBJ)/apple.a:   \
 
 
 $(OBJ)/avigo.a: \
-	$(OBJ)/mess/systems/avigo.o	 \
-	$(OBJ)/mess/vidhrdw/avigo.o
+	$(OBJ)/mess/vidhrdw/avigo.o		\
+#	$(OBJ)/mess/systems/avigo.o		\
 
 $(OBJ)/ti85.a: \
 	$(OBJ)/mess/systems/ti85.o		\
@@ -531,7 +531,7 @@ $(OBJ)/p2000.a:    \
 	$(OBJ)/mess/machine/mc6850.o	 \
 	$(OBJ)/mess/vidhrdw/uk101.o	 \
 	$(OBJ)/mess/systems/uk101.o	\
-#	$(OBJ)/mess/machine/uk101.o	 \
+	$(OBJ)/mess/machine/uk101.o	 \
 
 $(OBJ)/amstrad.a:  \
 	$(OBJ)/mess/systems/amstrad.o  \
@@ -659,7 +659,6 @@ $(OBJ)/samcoupe.a: \
 #	$(OBJ)/mess/machine/coupe.o	 \
 
 $(OBJ)/sharp.a:    \
-	$(OBJ)/mess/machine/mz700.o		\
 	$(OBJ)/mess/vidhrdw/mz700.o		\
 	$(OBJ)/mess/systems/mz700.o		\
 	$(OBJ)/mess/formats/mz_cas.o	\
@@ -672,7 +671,8 @@ $(OBJ)/sharp.a:    \
 	$(OBJ)/mess/machine/pc1350.o	\
 	$(OBJ)/mess/vidhrdw/pc1251.o	\
 	$(OBJ)/mess/machine/pc1251.o	\
-	$(OBJ)/mess/vidhrdw/pocketc.o  
+	$(OBJ)/mess/vidhrdw/pocketc.o  \
+#	$(OBJ)/mess/machine/mz700.o		\
 
 $(OBJ)/hp48.a:     \
 	$(OBJ)/mess/machine/hp48.o     \

@@ -170,19 +170,26 @@ const struct IODevice *device_first(const struct GameDriver *gamedrv);
 const struct IODevice *device_next(const struct GameDriver *gamedrv, const struct IODevice *dev);
 const struct IODevice *device_find(const struct GameDriver *gamedrv, int type);
 
-/* RAM configuration calls */
-#define RAM_STRING_BUFLEN 16
-extern UINT32 mess_ram_size;
-extern UINT8 *mess_ram;
-UINT32 ram_option(const struct GameDriver *gamedrv, unsigned int i);
-int ram_option_count(const struct GameDriver *gamedrv);
-int ram_is_valid_option(const struct GameDriver *gamedrv, UINT32 ram);
-UINT32 ram_default(const struct GameDriver *gamedrv);
-UINT32 ram_parse_string(const char *s);
-const char *ram_string(char *buffer, UINT32 ram);
-int ram_validate_option(void);
+/* --------------------------------------------------------------------------------------------- */
 
-void ram_dump(const char *filename);
+/* RAM configuration calls */
+extern UINT32 mess_ram_size;
+extern data8_t *mess_ram;
+
+/* RAM parsing options */
+#define RAM_STRING_BUFLEN 16
+UINT32		ram_option(const struct GameDriver *gamedrv, unsigned int i);
+int			ram_option_count(const struct GameDriver *gamedrv);
+int			ram_is_valid_option(const struct GameDriver *gamedrv, UINT32 ram);
+UINT32		ram_default(const struct GameDriver *gamedrv);
+UINT32		ram_parse_string(const char *s);
+const char *ram_string(char *buffer, UINT32 ram);
+int			ram_validate_option(void);
+void		ram_dump(const char *filename);
+
+data8_t *memory_install_ram8_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t ram_offset, int bank);
+
+/* --------------------------------------------------------------------------------------------- */
 
 /* dummy read handlers */
 READ_HANDLER(return8_00);

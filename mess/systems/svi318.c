@@ -17,59 +17,59 @@
 #include "formats/svi_cas.h"
 
 
-static MEMORY_READ_START (readmem)
-    { 0x0000, 0x7fff, MRA8_BANK1 },
-    { 0x8000, 0xbfff, MRA8_BANK2 },
-    { 0xc000, 0xffff, MRA8_BANK3 },
-MEMORY_END
+static ADDRESS_MAP_START (readmem, ADDRESS_SPACE_PROGRAM, 8)
+    AM_RANGE( 0x0000, 0x7fff) AM_READ( MRA8_BANK1 )
+    AM_RANGE( 0x8000, 0xbfff) AM_READ( MRA8_BANK2 )
+    AM_RANGE( 0xc000, 0xffff) AM_READ( MRA8_BANK3 )
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( writemem )
-    { 0x0000, 0x7fff, svi318_writemem0 },
-    { 0x8000, 0xffff, svi318_writemem1 },
-MEMORY_END
+static ADDRESS_MAP_START( writemem , ADDRESS_SPACE_PROGRAM, 8)
+    AM_RANGE( 0x0000, 0x7fff) AM_WRITE( svi318_writemem0 )
+    AM_RANGE( 0x8000, 0xffff) AM_WRITE( svi318_writemem1 )
+ADDRESS_MAP_END
 
 static READ_HANDLER (svi318_null_r)
 	{
 	return 0xff;
 	}
 
-static PORT_READ_START (readport)
-    { 0x00, 0x11, svi318_null_r },
-    { 0x12, 0x12, svi318_printer_r },
-    { 0x13, 0x2f, svi318_null_r },
+static ADDRESS_MAP_START (readport, ADDRESS_SPACE_IO, 8)
+    AM_RANGE( 0x00, 0x11) AM_READ( svi318_null_r )
+    AM_RANGE( 0x12, 0x12) AM_READ( svi318_printer_r )
+    AM_RANGE( 0x13, 0x2f) AM_READ( svi318_null_r )
 #ifdef SVI_DISK
-	{ 0x30, 0x30, wd179x_status_r },
-	{ 0x31, 0x31, wd179x_track_r },
-	{ 0x32, 0x32, wd179x_sector_r },
-	{ 0x33, 0x33, wd179x_data_r },
-	{ 0x34, 0x34, svi318_fdc_status_r },
+	AM_RANGE( 0x30, 0x30) AM_READ( wd179x_status_r )
+	AM_RANGE( 0x31, 0x31) AM_READ( wd179x_track_r )
+	AM_RANGE( 0x32, 0x32) AM_READ( wd179x_sector_r )
+	AM_RANGE( 0x33, 0x33) AM_READ( wd179x_data_r )
+	AM_RANGE( 0x34, 0x34) AM_READ( svi318_fdc_status_r )
 #endif
-    { 0x35, 0x83, svi318_null_r },
-    { 0x84, 0x84, TMS9928A_vram_r },
-    { 0x85, 0x85, TMS9928A_register_r },
-    { 0x86, 0x8f, svi318_null_r },
-	{ 0x90, 0x90, AY8910_read_port_0_r },
-    { 0x91, 0x95, svi318_null_r },
-    { 0x98, 0x9a, svi318_ppi_r },
-    { 0x9b, 0xff, svi318_null_r },
-PORT_END
+    AM_RANGE( 0x35, 0x83) AM_READ( svi318_null_r )
+    AM_RANGE( 0x84, 0x84) AM_READ( TMS9928A_vram_r )
+    AM_RANGE( 0x85, 0x85) AM_READ( TMS9928A_register_r )
+    AM_RANGE( 0x86, 0x8f) AM_READ( svi318_null_r )
+	AM_RANGE( 0x90, 0x90) AM_READ( AY8910_read_port_0_r )
+    AM_RANGE( 0x91, 0x95) AM_READ( svi318_null_r )
+    AM_RANGE( 0x98, 0x9a) AM_READ( svi318_ppi_r )
+    AM_RANGE( 0x9b, 0xff) AM_READ( svi318_null_r )
+ADDRESS_MAP_END
 
-static PORT_WRITE_START (writeport)
-    { 0x10, 0x11, svi318_printer_w },
+static ADDRESS_MAP_START (writeport, ADDRESS_SPACE_IO, 8)
+    AM_RANGE( 0x10, 0x11) AM_WRITE( svi318_printer_w )
 #ifdef SVI_DISK
-	{ 0x30, 0x30, wd179x_command_w },
-	{ 0x31, 0x31, wd179x_track_w },
-	{ 0x32, 0x32, wd179x_sector_w },
-	{ 0x33, 0x33, wd179x_data_w },
-	{ 0x34, 0x34, fdc_disk_motor_w },
-	{ 0x38, 0x38, fdc_density_side_w },
+	AM_RANGE( 0x30, 0x30) AM_WRITE( wd179x_command_w )
+	AM_RANGE( 0x31, 0x31) AM_WRITE( wd179x_track_w )
+	AM_RANGE( 0x32, 0x32) AM_WRITE( wd179x_sector_w )
+	AM_RANGE( 0x33, 0x33) AM_WRITE( wd179x_data_w )
+	AM_RANGE( 0x34, 0x34) AM_WRITE( fdc_disk_motor_w )
+	AM_RANGE( 0x38, 0x38) AM_WRITE( fdc_density_side_w )
 #endif
-    { 0x80, 0x80, TMS9928A_vram_w },
-    { 0x81, 0x81, TMS9928A_register_w },
-	{ 0x88, 0x88, AY8910_control_port_0_w },
- 	{ 0x8c, 0x8c, AY8910_write_port_0_w },
-    { 0x96, 0x97, svi318_ppi_w },
-PORT_END
+    AM_RANGE( 0x80, 0x80) AM_WRITE( TMS9928A_vram_w )
+    AM_RANGE( 0x81, 0x81) AM_WRITE( TMS9928A_register_w )
+	AM_RANGE( 0x88, 0x88) AM_WRITE( AY8910_control_port_0_w )
+ 	AM_RANGE( 0x8c, 0x8c) AM_WRITE( AY8910_write_port_0_w )
+    AM_RANGE( 0x96, 0x97) AM_WRITE( svi318_ppi_w )
+ADDRESS_MAP_END
 
 /*
 
@@ -333,8 +333,8 @@ static const TMS9928a_interface tms9928a_interface =
 static MACHINE_DRIVER_START( svi318 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 3579545)        /* 3.579545 Mhz */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(svi318_interrupt,1)
 	MDRV_FRAMES_PER_SECOND(50)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

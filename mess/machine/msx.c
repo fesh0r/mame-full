@@ -361,7 +361,7 @@ DRIVER_INIT( msx )
 				}
 			}
 		}
-		z80_set_cycle_table (z80_cycle_table[i].table, (void*)table);
+		activecpu_set_info_ptr(CPUINFO_PTR_Z80_CYCLE_TABLE, (void*)table);
 	}
 }
 
@@ -375,9 +375,10 @@ MACHINE_STOP( msx )
 {
 	int i;
 
-	for (i=0; z80_cycle_table[i].table != -1; i++) {
-		z80_set_cycle_table (z80_cycle_table[i].table, 
-						(void*)z80_cycle_table[i].old_table);
+	for (i=0; z80_cycle_table[i].table != -1; i++)
+	{
+		activecpu_set_info_ptr(CPUINFO_PTR_Z80_CYCLE_TABLE, (void*)table);
+			(void*)z80_cycle_table[i].old_table);
 	}
 }
 
@@ -907,17 +908,6 @@ void msx_memory_map_page (int page)
 	int slot_secondary;
 	slot_state *state;
 	const msx_slot *slot;
-
-	switch (page) {
-	case 1:
-		memory_set_bankhandler_r (3, 0, MRA8_BANK3);
-		memory_set_bankhandler_r (4, 0, MRA8_BANK4);
-		break;
-	case 2:
-		memory_set_bankhandler_r (5, 0, MRA8_BANK5);
-		memory_set_bankhandler_r (6, 0, MRA8_BANK6);
-		break;
-	}
 
 	slot_primary = (msx1.primary_slot >> (page * 2)) & 3;
 	slot_secondary = (msx1.secondary_slot[slot_primary] >> (page * 2)) & 3;

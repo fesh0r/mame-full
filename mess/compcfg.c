@@ -22,6 +22,8 @@ static int get_ram_options(const struct GameDriver *gamedrv, UINT32 *ram_options
 	return params.actual_ram_options;
 }
 
+
+
 UINT32 ram_option(const struct GameDriver *gamedrv, unsigned int i)
 {
 	UINT32 ram_options[MAX_RAM_OPTIONS];
@@ -30,6 +32,8 @@ UINT32 ram_option(const struct GameDriver *gamedrv, unsigned int i)
 	ram_optcount = get_ram_options(gamedrv, ram_options, sizeof(ram_options) / sizeof(ram_options[0]), NULL);
 	return i >= ram_optcount ? 0 : ram_options[i];
 }
+
+
 
 UINT32 ram_default(const struct GameDriver *gamedrv)
 {
@@ -41,11 +45,15 @@ UINT32 ram_default(const struct GameDriver *gamedrv)
 	return default_ram_option >= ram_optcount ? 0 : ram_options[default_ram_option];
 }
 
+
+
 int ram_option_count(const struct GameDriver *gamedrv)
 {
 	UINT32 ram_options[MAX_RAM_OPTIONS];
 	return get_ram_options(gamedrv, ram_options, sizeof(ram_options) / sizeof(ram_options[0]), NULL);
 }
+
+
 
 int ram_is_valid_option(const struct GameDriver *gamedrv, UINT32 ram)
 {
@@ -60,6 +68,8 @@ int ram_is_valid_option(const struct GameDriver *gamedrv, UINT32 ram)
 			return 1;
 	return 0;
 }
+
+
 
 UINT32 ram_parse_string(const char *s)
 {
@@ -90,6 +100,8 @@ UINT32 ram_parse_string(const char *s)
 	return ram;
 }
 
+
+
 const char *ram_string(char *buffer, UINT32 ram)
 {
 	const char *suffix;
@@ -111,3 +123,30 @@ const char *ram_string(char *buffer, UINT32 ram)
 	sprintf(buffer, "%u%s", ram, suffix);
 	return buffer;
 }
+
+
+
+/* ----------------------------------------------------------------------- */
+
+data8_t *memory_install_ram8_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t ram_offset, int bank)
+{
+	read8_handler read_bank = (read8_handler) (STATIC_BANK1 + bank - 1);
+	write8_handler write_bank = (write8_handler) (STATIC_BANK1 + bank - 1);
+	offs_t bank_size = end - start + 1;
+
+	cpu_setbank(bank, mess_ram + ram_offset);
+
+	memory_install_read8_handler(cpunum, spacenum, start,
+		MIN(end, start - ram_offset + mess_ram_size - 1), 0, read_bank);
+	memory_install_write8_handler(cpunum, spacenum, start,
+		MIN(end, start - ram_offset + mess_ram_size - 1), 0, write_bank);
+
+	if (bank_size > (mess_ram_size - ram_offset))
+	{
+		memory_install_read8_handler(cpunum, spacenum, start - ram_offset + mess_ram_size, end, 0, MRA8_ROM);
+		memory_install_write8_handler(cpunum, spacenum, start - ram_offset + mess_ram_size, end, 0, MWA8_ROM);
+	}
+	return mess_ram + ram_offset;
+}
+
+

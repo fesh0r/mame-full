@@ -78,93 +78,93 @@
 #define LOG(N,M,A)
 #endif
 
-MEMORY_READ_START( readmem_mz700 )
-	{ 0x00000, 0x00fff, MRA8_BANK1 },
-	{ 0x01000, 0x0cfff, MRA8_RAM },
-	{ 0x0d000, 0x0d7ff, MRA8_BANK6 },
-	{ 0x0d800, 0x0dfff, MRA8_BANK7 },
-	{ 0x0e000, 0x0ffff, MRA8_BANK8 },
+ADDRESS_MAP_START( readmem_mz700 , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x00000, 0x00fff) AM_READ( MRA8_BANK1 )
+	AM_RANGE( 0x01000, 0x0cfff) AM_READ( MRA8_RAM )
+	AM_RANGE( 0x0d000, 0x0d7ff) AM_READ( MRA8_BANK6 )
+	AM_RANGE( 0x0d800, 0x0dfff) AM_READ( MRA8_BANK7 )
+	AM_RANGE( 0x0e000, 0x0ffff) AM_READ( MRA8_BANK8 )
 #if 0 //mame37b9 traps
-	{ 0x10000, 0x10fff, MRA8_ROM },
-	{ 0x12000, 0x127ff, MRA8_RAM },
-	{ 0x12800, 0x12fff, MRA8_RAM },
-	{ 0x16000, 0x16fff, MRA8_RAM },
+	AM_RANGE( 0x10000, 0x10fff) AM_READ( MRA8_ROM )
+	AM_RANGE( 0x12000, 0x127ff) AM_READ( MRA8_RAM )
+	AM_RANGE( 0x12800, 0x12fff) AM_READ( MRA8_RAM )
+	AM_RANGE( 0x16000, 0x16fff) AM_READ( MRA8_RAM )
 #endif
-MEMORY_END
+ADDRESS_MAP_END
 
-MEMORY_WRITE_START( writemem_mz700 )
-	{ 0x00000, 0x00fff, MWA8_BANK1 },
-	{ 0x01000, 0x0cfff, MWA8_RAM },
-	{ 0x0d000, 0x0d7ff, MWA8_BANK6 },
-	{ 0x0d800, 0x0dfff, MWA8_BANK7 },
-	{ 0x0e000, 0x0ffff, MWA8_BANK8 },
+ADDRESS_MAP_START( writemem_mz700 , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x00000, 0x00fff) AM_WRITE( MWA8_BANK1 )
+	AM_RANGE( 0x01000, 0x0cfff) AM_WRITE( MWA8_RAM )
+	AM_RANGE( 0x0d000, 0x0d7ff) AM_WRITE( MWA8_BANK6 )
+	AM_RANGE( 0x0d800, 0x0dfff) AM_WRITE( MWA8_BANK7 )
+	AM_RANGE( 0x0e000, 0x0ffff) AM_WRITE( MWA8_BANK8 )
 #if 0
-	{ 0x12000, 0x127ff, videoram_w, &videoram, &videoram_size },
-	{ 0x12800, 0x12fff, colorram_w, &colorram },
-	{ 0x16000, 0x16fff, pcgram_w },
+	AM_RANGE( 0x12000, 0x127ff) AM_WRITE( videoram_w) AM_BASE( &videoram) AM_SIZE( &videoram_size )
+	AM_RANGE( 0x12800, 0x12fff) AM_WRITE( colorram_w) AM_BASE( &colorram )
+	AM_RANGE( 0x16000, 0x16fff) AM_WRITE( pcgram_w )
 #endif
-MEMORY_END
+ADDRESS_MAP_END
 
-PORT_READ_START( readport_mz700 )
-PORT_END
+ADDRESS_MAP_START( readport_mz700 , ADDRESS_SPACE_IO, 8)
+ADDRESS_MAP_END
 
-PORT_WRITE_START( writeport_mz700 )
-	{ 0xe0, 0xe6, mz700_bank_w },
-PORT_END
+ADDRESS_MAP_START( writeport_mz700 , ADDRESS_SPACE_IO, 8)
+	AM_RANGE( 0xe0, 0xe6) AM_WRITE( mz700_bank_w )
+ADDRESS_MAP_END
 
-MEMORY_READ_START( readmem_mz800 )
-	{ 0x00000, 0x00fff, MRA8_BANK1 },
-	{ 0x01000, 0x01fff, MRA8_BANK2 },
-	{ 0x02000, 0x07fff, MRA8_RAM },
-	{ 0x08000, 0x09fff, MRA8_BANK3 },
-	{ 0x0a000, 0x0bfff, MRA8_BANK4 },
-	{ 0x0c000, 0x0cfff, MRA8_BANK5 },
-	{ 0x0d000, 0x0d7ff, MRA8_BANK6 },
-	{ 0x0d800, 0x0dfff, MRA8_BANK7 },
-	{ 0x0e000, 0x0ffff, MRA8_BANK8 },
+ADDRESS_MAP_START( readmem_mz800 , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x00000, 0x00fff) AM_READ( MRA8_BANK1 )
+	AM_RANGE( 0x01000, 0x01fff) AM_READ( MRA8_BANK2 )
+	AM_RANGE( 0x02000, 0x07fff) AM_READ( MRA8_RAM )
+	AM_RANGE( 0x08000, 0x09fff) AM_READ( MRA8_BANK3 )
+	AM_RANGE( 0x0a000, 0x0bfff) AM_READ( MRA8_BANK4 )
+	AM_RANGE( 0x0c000, 0x0cfff) AM_READ( MRA8_BANK5 )
+	AM_RANGE( 0x0d000, 0x0d7ff) AM_READ( MRA8_BANK6 )
+	AM_RANGE( 0x0d800, 0x0dfff) AM_READ( MRA8_BANK7 )
+	AM_RANGE( 0x0e000, 0x0ffff) AM_READ( MRA8_BANK8 )
 #if 0
-	{ 0x10000, 0x10fff, MRA8_ROM },
-	{ 0x11000, 0x11fff, MRA8_ROM },
-	{ 0x12000, 0x15fff, MRA8_RAM },
+	AM_RANGE( 0x10000, 0x10fff) AM_READ( MRA8_ROM )
+	AM_RANGE( 0x11000, 0x11fff) AM_READ( MRA8_ROM )
+	AM_RANGE( 0x12000, 0x15fff) AM_READ( MRA8_RAM )
 #endif
-MEMORY_END
+ADDRESS_MAP_END
 
-MEMORY_WRITE_START( writemem_mz800 )
-	{ 0x00000, 0x00fff, MWA8_BANK1 },
-	{ 0x01000, 0x01fff, MWA8_BANK2 },
-	{ 0x02000, 0x07fff, MWA8_RAM },
-	{ 0x08000, 0x09fff, MWA8_BANK3 },
-	{ 0x0a000, 0x0bfff, MWA8_BANK4 },
-	{ 0x0c000, 0x0cfff, MWA8_BANK5 },
-	{ 0x0d000, 0x0d7ff, MWA8_BANK6 },
-	{ 0x0d800, 0x0dfff, MWA8_BANK7 },
-	{ 0x0e000, 0x0ffff, MWA8_BANK8 },
+ADDRESS_MAP_START( writemem_mz800 , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x00000, 0x00fff) AM_WRITE( MWA8_BANK1 )
+	AM_RANGE( 0x01000, 0x01fff) AM_WRITE( MWA8_BANK2 )
+	AM_RANGE( 0x02000, 0x07fff) AM_WRITE( MWA8_RAM )
+	AM_RANGE( 0x08000, 0x09fff) AM_WRITE( MWA8_BANK3 )
+	AM_RANGE( 0x0a000, 0x0bfff) AM_WRITE( MWA8_BANK4 )
+	AM_RANGE( 0x0c000, 0x0cfff) AM_WRITE( MWA8_BANK5 )
+	AM_RANGE( 0x0d000, 0x0d7ff) AM_WRITE( MWA8_BANK6 )
+	AM_RANGE( 0x0d800, 0x0dfff) AM_WRITE( MWA8_BANK7 )
+	AM_RANGE( 0x0e000, 0x0ffff) AM_WRITE( MWA8_BANK8 )
 #if 0
-	{ 0x10000, 0x10fff, MWA8_ROM },
-	{ 0x11000, 0x11fff, MWA8_ROM },
-    { 0x12000, 0x16fff, videoram_w, &videoram, &videoram_size },
-	{ 0x12800, 0x12fff, colorram_w, &colorram },
+	AM_RANGE( 0x10000, 0x10fff) AM_WRITE( MWA8_ROM )
+	AM_RANGE( 0x11000, 0x11fff) AM_WRITE( MWA8_ROM )
+    AM_RANGE( 0x12000, 0x16fff) AM_WRITE( videoram_w) AM_BASE( &videoram) AM_SIZE( &videoram_size )
+	AM_RANGE( 0x12800, 0x12fff) AM_WRITE( colorram_w) AM_BASE( &colorram )
 #endif
-MEMORY_END
+ADDRESS_MAP_END
 
-PORT_READ_START( readport_mz800 )
-	{ 0xce, 0xce, mz800_crtc_r },
-	{ 0xd0, 0xd7, mz800_mmio_r },
-	{ 0xe0, 0xe9, mz800_bank_r },
-	{ 0xea, 0xea, mz800_ramdisk_r },
-PORT_END
+ADDRESS_MAP_START( readport_mz800 , ADDRESS_SPACE_IO, 8)
+	AM_RANGE( 0xce, 0xce) AM_READ( mz800_crtc_r )
+	AM_RANGE( 0xd0, 0xd7) AM_READ( mz800_mmio_r )
+	AM_RANGE( 0xe0, 0xe9) AM_READ( mz800_bank_r )
+	AM_RANGE( 0xea, 0xea) AM_READ( mz800_ramdisk_r )
+ADDRESS_MAP_END
 
-PORT_WRITE_START( writeport_mz800 )
-	{ 0xcc, 0xcc, mz800_write_format_w },
-	{ 0xcd, 0xcd, mz800_read_format_w },
-	{ 0xce, 0xce, mz800_display_mode_w },
-	{ 0xcf, 0xcf, mz800_scroll_border_w },
-	{ 0xd0, 0xd7, mz800_mmio_w },
-	{ 0xe0, 0xe9, mz800_bank_w },
-	{ 0xea, 0xea, mz800_ramdisk_w },
-	{ 0xeb, 0xeb, mz800_ramaddr_w },
-	{ 0xf0, 0xf0, mz800_palette_w },
-PORT_END
+ADDRESS_MAP_START( writeport_mz800 , ADDRESS_SPACE_IO, 8)
+	AM_RANGE( 0xcc, 0xcc) AM_WRITE( mz800_write_format_w )
+	AM_RANGE( 0xcd, 0xcd) AM_WRITE( mz800_read_format_w )
+	AM_RANGE( 0xce, 0xce) AM_WRITE( mz800_display_mode_w )
+	AM_RANGE( 0xcf, 0xcf) AM_WRITE( mz800_scroll_border_w )
+	AM_RANGE( 0xd0, 0xd7) AM_WRITE( mz800_mmio_w )
+	AM_RANGE( 0xe0, 0xe9) AM_WRITE( mz800_bank_w )
+	AM_RANGE( 0xea, 0xea) AM_WRITE( mz800_ramdisk_w )
+	AM_RANGE( 0xeb, 0xeb) AM_WRITE( mz800_ramaddr_w )
+	AM_RANGE( 0xf0, 0xf0) AM_WRITE( mz800_palette_w )
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( mz700 )
 	PORT_START /* status */
@@ -290,7 +290,8 @@ static struct GfxLayout char_layout =
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &char_layout, 0, 256 },
-MEMORY_END	 /* end of array */
+	{-1}
+};	 /* end of array */
 
 static struct beep_interface mz700_beep_interface =
 {
@@ -311,8 +312,8 @@ static MACHINE_DRIVER_START(mz700)
 	MDRV_CPU_ADD(Z80, 3500000)
 	/*MDRV_CPU_FLAGS(0)*/
 	/*MDRV_CPU_CONFIG(0)*/
-	MDRV_CPU_MEMORY(readmem_mz700, writemem_mz700)
-	MDRV_CPU_PORTS(readport_mz700, writeport_mz700)
+	MDRV_CPU_PROGRAM_MAP(readmem_mz700, writemem_mz700)
+	MDRV_CPU_IO_MAP(readport_mz700, writeport_mz700)
 	/*MDRV_CPU_PERIODIC_INT(func, rate)*/
 
 	MDRV_FRAMES_PER_SECOND(50)
@@ -349,8 +350,8 @@ static MACHINE_DRIVER_START(mz800)
 	/* basic machine hardware */
 	/* Z80 CPU @ 3.5 MHz */
 	MDRV_CPU_ADD(Z80, 3500000)
-	MDRV_CPU_MEMORY(readmem_mz800, writemem_mz800)
-	MDRV_CPU_PORTS(readport_mz800, writeport_mz800)
+	MDRV_CPU_PROGRAM_MAP(readmem_mz800, writemem_mz800)
+	MDRV_CPU_IO_MAP(readport_mz800, writeport_mz800)
 
 	MDRV_FRAMES_PER_SECOND(50)
 	MDRV_VBLANK_DURATION(2500)

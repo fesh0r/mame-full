@@ -407,17 +407,17 @@ DEVICE_LOAD( svi318_floppy )
 */
 
 /* z80 stuff */
-static int z80_table_num[5] = { Z80_TABLE_op, Z80_TABLE_xy,
-    Z80_TABLE_ed, Z80_TABLE_cb, Z80_TABLE_xycb };
+//static int z80_table_num[5] = { Z80_TABLE_op, Z80_TABLE_xy,
+//    Z80_TABLE_ed, Z80_TABLE_cb, Z80_TABLE_xycb };
 static UINT8 *old_z80_tables[5], *z80_table;
 
 void svi318_vdp_interrupt (int i)
-	{
+{
     cpu_set_irq_line (0, 0, (i ? HOLD_LINE : CLEAR_LINE));
-	}
+}
 
 DRIVER_INIT( svi318 )
-	{
+{
 	int i,n;
 
     memset (&svi, 0, sizeof (svi) );
@@ -449,23 +449,23 @@ DRIVER_INIT( svi318 )
     if (!z80_table)
         logerror ("Cannot malloc z80 cycle table, using default values\n");
     else
-        {
+	{
         for (i=0;i<5;i++)
-            {
-            old_z80_tables[i] = (void *) z80_get_cycle_table (z80_table_num[i]);
+		{
+			old_z80_tables[i] = (void *) activecpu_get_info_ptr(CPUINFO_PTR_Z80_CYCLE_TABLE);
             for (n=0;n<256;n++)
-                {
+            {
                 z80_table[i*0x100+n] = old_z80_tables[i][n] + (i > 1 ? 2 : 1);
-                }
-            z80_set_cycle_table (i, z80_table + i*0x100);
             }
+			activecpu_set_info_ptr(CPUINFO_PTR_Z80_CYCLE_TABLE, z80_table + i*0x100);
         }
+    }
 
 #ifdef SVI_DISK
 	/* floppy */
 	wd179x_init (WD_TYPE_179X,svi_fdc_callback);
 #endif
-	}
+}
 
 MACHINE_INIT( svi318 )
 	{
@@ -501,13 +501,13 @@ MACHINE_STOP( svi318 )
 			}
 
     if (z80_table)
-        {
-        for (i=0;i<5;i++)
-            z80_set_cycle_table (i, old_z80_tables[i]);
+	{
+		for (i=0;i<5;i++)
+			activecpu_set_info_ptr(CPUINFO_PTR_Z80_CYCLE_TABLE, old_z80_tables[i]);
 
-        free (z80_table);
-        }
+		free (z80_table);
 	}
+}
 
 INTERRUPT_GEN( svi318_interrupt )
 	{

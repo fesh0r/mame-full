@@ -10,29 +10,29 @@
 #include "includes/riot6532.h"
 #include "includes/aim65.h"
 
-static MEMORY_READ_START( aim65_readmem )
+static ADDRESS_MAP_START( aim65_readmem , ADDRESS_SPACE_PROGRAM, 8)
 	//     -03ff 1k version
 	//     -0fff 4k version
-	{ 0x0000, 0x0fff, MRA8_RAM },
+	AM_RANGE( 0x0000, 0x0fff) AM_READ( MRA8_RAM )
 //	{ 0xa000, 0xa00f, via_1_r }, // user via
-	{ 0xa400, 0xa47f, MRA8_RAM }, // riot6532 ram
-	{ 0xa480, 0xa48f, riot_0_r },
-	{ 0xa800, 0xa80f, via_0_r },
-	{ 0xac00, 0xac03, pia_0_r },
-	{ 0xac04, 0xac43, MRA8_RAM },
-	{ 0xb000, 0xffff, MRA8_ROM },
-MEMORY_END
+	AM_RANGE( 0xa400, 0xa47f) AM_READ( MRA8_RAM ) // riot6532 ram
+	AM_RANGE( 0xa480, 0xa48f) AM_READ( riot_0_r )
+	AM_RANGE( 0xa800, 0xa80f) AM_READ( via_0_r )
+	AM_RANGE( 0xac00, 0xac03) AM_READ( pia_0_r )
+	AM_RANGE( 0xac04, 0xac43) AM_READ( MRA8_RAM )
+	AM_RANGE( 0xb000, 0xffff) AM_READ( MRA8_ROM )
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( aim65_writemem )
-	{ 0x0000, 0x0fff, MWA8_RAM },
+static ADDRESS_MAP_START( aim65_writemem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE( 0x0000, 0x0fff) AM_WRITE( MWA8_RAM )
 //	{ 0xa000, 0xa00f, via_1_w }, // user via
-	{ 0xa400, 0xa47f, MWA8_RAM }, // riot6532 ram
-	{ 0xa480, 0xa48f, riot_0_w },
-	{ 0xa800, 0xa80f, via_0_w },
-	{ 0xac00, 0xac03, pia_0_w },
-	{ 0xac04, 0xac43, MWA8_RAM },
-	{ 0xb000, 0xffff, MWA8_ROM },
-MEMORY_END
+	AM_RANGE( 0xa400, 0xa47f) AM_WRITE( MWA8_RAM ) // riot6532 ram
+	AM_RANGE( 0xa480, 0xa48f) AM_WRITE( riot_0_w )
+	AM_RANGE( 0xa800, 0xa80f) AM_WRITE( via_0_w )
+	AM_RANGE( 0xac00, 0xac03) AM_WRITE( pia_0_w )
+	AM_RANGE( 0xac04, 0xac43) AM_WRITE( MWA8_RAM )
+	AM_RANGE( 0xb000, 0xffff) AM_WRITE( MWA8_ROM )
+ADDRESS_MAP_END
 
 #define DIPS_HELPER(bit, name, keycode, r) \
    PORT_BITX(bit, IP_ACTIVE_HIGH, IPT_KEYBOARD, name, keycode, r)
@@ -144,7 +144,7 @@ static unsigned short aim65_colortable[1][2] = {
 static MACHINE_DRIVER_START( aim65 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502, 1000000)
-	MDRV_CPU_MEMORY(aim65_readmem,aim65_writemem)
+	MDRV_CPU_PROGRAM_MAP(aim65_readmem,aim65_writemem)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1)

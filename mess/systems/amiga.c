@@ -12,21 +12,21 @@ ernesto@imagina.com
 #include "vidhrdw/generic.h"
 #include "includes/amiga.h"
 
-static MEMORY_READ16_START(readmem)
-    { 0x000000, 0x07ffff, MRA16_RAM },            /* Chip Ram - 1Mb / 512k */
-    { 0xbfd000, 0xbfefff, amiga_cia_r },        /* 8510's CIA A and CIA B */
+static ADDRESS_MAP_START(readmem, ADDRESS_SPACE_PROGRAM, 16)
+    AM_RANGE( 0x000000, 0x07ffff) AM_READ( MRA16_RAM )            /* Chip Ram - 1Mb / 512k */
+    AM_RANGE( 0xbfd000, 0xbfefff) AM_READ( amiga_cia_r )        /* 8510's CIA A and CIA B */
 //  { 0xc00000, 0xd7ffff, MRA8_BANK1 },          /* Internal Expansion Ram - 1.5 Mb */
-    { 0xdbf000, 0xdfffff, amiga_custom_r },     /* Custom Chips */
-    { 0xf00000, 0xffffff, MRA16_BANK2 },          /* System ROM - mirror */
-MEMORY_END
+    AM_RANGE( 0xdbf000, 0xdfffff) AM_READ( amiga_custom_r )     /* Custom Chips */
+    AM_RANGE( 0xf00000, 0xffffff) AM_READ( MRA16_BANK2 )          /* System ROM - mirror */
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START(writemem)
-    { 0x000000, 0x07ffff, MWA16_RAM },            /* Chip Ram - 1Mb / 512k */
-    { 0xbfd000, 0xbfefff, amiga_cia_w },        /* 8510's CIA A and CIA B */
+static ADDRESS_MAP_START(writemem, ADDRESS_SPACE_PROGRAM, 16)
+    AM_RANGE( 0x000000, 0x07ffff) AM_WRITE( MWA16_RAM )            /* Chip Ram - 1Mb / 512k */
+    AM_RANGE( 0xbfd000, 0xbfefff) AM_WRITE( amiga_cia_w )        /* 8510's CIA A and CIA B */
 //  { 0xc00000, 0xd7ffff, MWA16_BANK1 },          /* Internal Expansion Ram - 1.5 Mb */
-    { 0xdbf000, 0xdfffff, amiga_custom_w },     /* Custom Chips */
-    { 0xf00000, 0xffffff, MWA16_ROM },            /* System ROM */
-MEMORY_END
+    AM_RANGE( 0xdbf000, 0xdfffff) AM_WRITE( amiga_custom_w )     /* Custom Chips */
+    AM_RANGE( 0xf00000, 0xffffff) AM_WRITE( MWA16_ROM )            /* System ROM */
+ADDRESS_MAP_END
 
 /**************************************************************************
 ***************************************************************************/
@@ -78,7 +78,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static MACHINE_DRIVER_START( ntsc )
 	/* basic machine hardware */
 	MDRV_CPU_ADD( M68000, 7159090)        /* 7.15909 Mhz (NTSC) */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(amiga_vblank_irq,1)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

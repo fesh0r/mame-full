@@ -253,8 +253,8 @@ static struct nec765_interface kc_fdc_interface=
 
 static void kc85_disk_reset_timer_callback(int dummy)
 {
-	cpunum_set_pc(1,0x0f000);
-	cpunum_set_pc(0,0x0f000);
+	cpunum_set_reg(1, REG_PC, 0x0f000);
+	cpunum_set_reg(0, REG_PC, 0x0f000);
 }
 
 static void kc_disc_interface_init(void)
@@ -1780,7 +1780,7 @@ static OPBASE_HANDLER( kc85_4_opbaseoverride )
 
 static void kc85_reset_timer_callback(int dummy)
 {
-	cpunum_set_pc(0,0x0f000);
+	cpunum_set_reg(0, REG_PC, 0x0f000);
 }
 
 READ_HANDLER ( kc85_pio_data_r )

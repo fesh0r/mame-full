@@ -550,9 +550,9 @@ static void ti8x_snapshot_setup_registers (UINT8 * data)
 
 	cpunum_set_reg(0, Z80_R, (reg[0x44]&0x7f) | (reg[0x48]&0x80));
 
-	cpunum_set_reg(0, Z80_NMI_STATE, 0);
-	cpunum_set_reg(0, Z80_IRQ_STATE, 0);
-	cpunum_set_reg(0, Z80_HALT, 0);
+	activecpu_set_irq_line(0, 0);
+	activecpu_set_irq_line(IRQ_LINE_NMI, 0);
+	cpunum_set_halt_line(0, 0);
 }
 
 static void ti85_setup_snapshot (UINT8 * data)

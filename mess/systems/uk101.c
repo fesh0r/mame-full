@@ -217,8 +217,6 @@ static MACHINE_DRIVER_START( uk101 )
 	MDRV_VBLANK_DURATION(2500)
 	MDRV_INTERLEAVE(1)
 
-	MDRV_MACHINE_INIT( uk101 )
-
     /* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32 * 8, 25 * 16)
@@ -272,6 +270,6 @@ SYSTEM_CONFIG_START(uk101)
 SYSTEM_CONFIG_END
 
 /*    YEAR	NAME		PARENT	COMPAT	MACHINE		INPUT	INIT	CONFIG  COMPANY				FULLNAME */
-COMP( 1979,	uk101,		0,		0,		uk101,		uk101,	0,		uk101,	"Compukit",			"UK101" )
-COMP( 1979, superbrd,	uk101,	0,		superbrd,	uk101,	0,		uk101,	"Ohio Scientific",	"Superboard II" )
+COMP( 1979,	uk101,		0,		0,		uk101,		uk101,	uk101,	uk101,	"Compukit",			"UK101" )
+COMP( 1979, superbrd,	uk101,	0,		superbrd,	uk101,	uk101,	uk101,	"Ohio Scientific",	"Superboard II" )
 

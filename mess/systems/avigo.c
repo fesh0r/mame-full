@@ -569,20 +569,20 @@ static MACHINE_STOP( avigo )
 }
 
 
-MEMORY_READ_START( readmem_avigo )
-	{0x00000, 0x03fff, MRA8_BANK1},
-	{0x04000, 0x07fff, MRA8_BANK2},
-	{0x08000, 0x0bfff, MRA8_BANK3},
-	{0x0c000, 0x0ffff, MRA8_BANK4},
-MEMORY_END
+ADDRESS_MAP_START( readmem_avigo , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x00000, 0x03fff) AM_READ( MRA8_BANK1)
+	AM_RANGE(0x04000, 0x07fff) AM_READ( MRA8_BANK2)
+	AM_RANGE(0x08000, 0x0bfff) AM_READ( MRA8_BANK3)
+	AM_RANGE(0x0c000, 0x0ffff) AM_READ( MRA8_BANK4)
+ADDRESS_MAP_END
 
 
-MEMORY_WRITE_START( writemem_avigo )
-	{0x00000, 0x03fff, MWA8_BANK5},
-	{0x04000, 0x07fff, MWA8_BANK6},
-	{0x08000, 0x0bfff, MWA8_BANK7},
-	{0x0c000, 0x0ffff, MWA8_BANK8},
-MEMORY_END
+ADDRESS_MAP_START( writemem_avigo , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x00000, 0x03fff) AM_WRITE( MWA8_BANK5)
+	AM_RANGE(0x04000, 0x07fff) AM_WRITE( MWA8_BANK6)
+	AM_RANGE(0x08000, 0x0bfff) AM_WRITE( MWA8_BANK7)
+	AM_RANGE(0x0c000, 0x0ffff) AM_WRITE( MWA8_BANK8)
+ADDRESS_MAP_END
 
 static READ_HANDLER(avigo_key_data_read_r)
 {
@@ -919,38 +919,38 @@ static READ_HANDLER(avigo_04_r)
 
 
 
-PORT_READ_START( readport_avigo )
-	{0x000, 0x000, avigo_unmapped_r},
-    {0x001, 0x001, avigo_key_data_read_r},
-	{0x002, 0x002, avigo_unmapped_r},
-	{0x003, 0x003, avigo_irq_r},
-	{0x004, 0x004, avigo_04_r},
-	{0x005, 0x005, avigo_rom_bank_l_r},
-	{0x006, 0x006, avigo_rom_bank_h_r},
-	{0x007, 0x007, avigo_ram_bank_l_r},
-	{0x008, 0x008, avigo_ram_bank_h_r},
-    {0x009, 0x009, avigo_ad_control_status_r},
-	{0x00a, 0x00f, avigo_unmapped_r},
-	{0x010, 0x01f, tc8521_r},
-	{0x020, 0x02c, avigo_unmapped_r},
-    {0x02d, 0x02d, avigo_ad_data_r},
-	{0x02e, 0x02f, avigo_unmapped_r},
-	{0x030, 0x037, uart8250_0_r},
-	{0x038, 0x0ff, avigo_unmapped_r},
-PORT_END
+ADDRESS_MAP_START( readport_avigo , ADDRESS_SPACE_IO, 8)
+	AM_RANGE(0x000, 0x000) AM_READ( avigo_unmapped_r)
+    AM_RANGE(0x001, 0x001) AM_READ( avigo_key_data_read_r)
+	AM_RANGE(0x002, 0x002) AM_READ( avigo_unmapped_r)
+	AM_RANGE(0x003, 0x003) AM_READ( avigo_irq_r)
+	AM_RANGE(0x004, 0x004) AM_READ( avigo_04_r)
+	AM_RANGE(0x005, 0x005) AM_READ( avigo_rom_bank_l_r)
+	AM_RANGE(0x006, 0x006) AM_READ( avigo_rom_bank_h_r)
+	AM_RANGE(0x007, 0x007) AM_READ( avigo_ram_bank_l_r)
+	AM_RANGE(0x008, 0x008) AM_READ( avigo_ram_bank_h_r)
+    AM_RANGE(0x009, 0x009) AM_READ( avigo_ad_control_status_r)
+	AM_RANGE(0x00a, 0x00f) AM_READ( avigo_unmapped_r)
+	AM_RANGE(0x010, 0x01f) AM_READ( tc8521_r)
+	AM_RANGE(0x020, 0x02c) AM_READ( avigo_unmapped_r)
+    AM_RANGE(0x02d, 0x02d) AM_READ( avigo_ad_data_r)
+	AM_RANGE(0x02e, 0x02f) AM_READ( avigo_unmapped_r)
+	AM_RANGE(0x030, 0x037) AM_READ( uart8250_0_r)
+	AM_RANGE(0x038, 0x0ff) AM_READ( avigo_unmapped_r)
+ADDRESS_MAP_END
 
-PORT_WRITE_START( writeport_avigo )
-	{0x001, 0x001, avigo_set_key_line_w},
-	{0x003, 0x003, avigo_irq_w},
-	{0x005, 0x005, avigo_rom_bank_l_w},
-	{0x006, 0x006, avigo_rom_bank_h_w},
-	{0x007, 0x007, avigo_ram_bank_l_w},
-	{0x008, 0x008, avigo_ram_bank_h_w},
-    {0x009, 0x009, avigo_ad_control_status_w},
-   	{0x010, 0x01f, tc8521_w},
-	{0x028, 0x028, avigo_speaker_w},
-	{0x030, 0x037, uart8250_0_w},
-PORT_END
+ADDRESS_MAP_START( writeport_avigo , ADDRESS_SPACE_IO, 8)
+	AM_RANGE(0x001, 0x001) AM_WRITE( avigo_set_key_line_w)
+	AM_RANGE(0x003, 0x003) AM_WRITE( avigo_irq_w)
+	AM_RANGE(0x005, 0x005) AM_WRITE( avigo_rom_bank_l_w)
+	AM_RANGE(0x006, 0x006) AM_WRITE( avigo_rom_bank_h_w)
+	AM_RANGE(0x007, 0x007) AM_WRITE( avigo_ram_bank_l_w)
+	AM_RANGE(0x008, 0x008) AM_WRITE( avigo_ram_bank_h_w)
+    AM_RANGE(0x009, 0x009) AM_WRITE( avigo_ad_control_status_w)
+   	AM_RANGE(0x010, 0x01f) AM_WRITE( tc8521_w)
+	AM_RANGE(0x028, 0x028) AM_WRITE( avigo_speaker_w)
+	AM_RANGE(0x030, 0x037) AM_WRITE( uart8250_0_w)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START(avigo)
@@ -994,8 +994,8 @@ static struct Speaker_interface avigo_speaker_interface=
 static MACHINE_DRIVER_START( avigo )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)
-	MDRV_CPU_MEMORY(readmem_avigo,writemem_avigo)
-	MDRV_CPU_PORTS(readport_avigo,writeport_avigo)
+	MDRV_CPU_PROGRAM_MAP(readmem_avigo,writemem_avigo)
+	MDRV_CPU_IO_MAP(readport_avigo,writeport_avigo)
 	MDRV_FRAMES_PER_SECOND(50)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1)
