@@ -10,6 +10,9 @@ System Driver Changes:
 ----------------------
 - [BBC] BBCB1770 merged into BBCB.  Also modernized the driver, added tape
   and split mode support.  [Gordon Jefferyes]
+  
+- [COCO3] Fixed a regression that prevented cartridges from loading on startup.
+  [Nate Woods]
 
 
 

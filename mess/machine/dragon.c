@@ -2276,7 +2276,7 @@ static void coco_setcartline(int data)
 static void coco3_setcartline(int data)
 {
 	/* If cart autostart enabled then start it, else do not autostart */
-	if (!readinputportbytag(DRAGON_COCO_CART_AUTOSTART) && cart_inserted)
+	if (readinputportbytag(DRAGON_COCO_CART_AUTOSTART) && cart_inserted)
 		cart_line = data;
 	else
 		cart_line = 0;
