@@ -266,9 +266,7 @@ static int video_verify_bpp(struct rc_option *option, const char *arg,
    int priority)
 {
 	if (options.color_depth != 0
-			&& options.color_depth != 8
 			&& options.color_depth != 15
-			&& options.color_depth != 16
 			&& options.color_depth != 32)
 	{
 		options.color_depth = 0;

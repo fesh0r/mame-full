@@ -40,9 +40,6 @@ static struct
 	int palette_dirty;
 } xf86ctx = {-1,NULL,FALSE,FALSE,FALSE,NULL,-1,-1,-1,0,NULL,{0},FALSE,FALSE};
 		
-static unsigned char *doublebuffer_buffer = NULL;
-
-
 int xf86_dga1_init(void)
 {
 	int i;
@@ -334,17 +331,6 @@ int xf86_dga1_create_display(int bitmap_depth)
 	if (x11_init_palette_info() != OSD_OK)
 	    return OSD_NOT_OK;
         
-        if (widthscale != 1 || heightscale != 1 ||
-	    yarbsize > visual_height)
-        {
-	   doublebuffer_buffer = malloc (visual_width * widthscale * depth / 8);
-	   if (doublebuffer_buffer == NULL)
-	   {
-	      fprintf(stderr, "Error: Couldn't alloc enough memory\n");
-	      return OSD_NOT_OK;
-	   }
-        }
-
 	if(xf86_dga_vidmode_check_exts())
 		return OSD_NOT_OK;
 
@@ -503,11 +489,6 @@ void xf86_dga1_update_display(struct mame_bitmap *bitmap)
 
 void xf86_dga1_close_display(void)
 {
-	if(doublebuffer_buffer)
-	{
-		free(doublebuffer_buffer);
-		doublebuffer_buffer = NULL;
-	}
 	if(xf86ctx.cmap)
 	{
 		XFreeColormap(display,xf86ctx.cmap);

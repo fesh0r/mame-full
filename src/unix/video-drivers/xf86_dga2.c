@@ -34,19 +34,15 @@ static struct
 	int grabbed_keybd;
 	int grabbed_mouse;
 	int old_grab_mouse;
-	unsigned char *base_addr;
 	int width;
 	Colormap cmap;
 	void (*xf86_dga_update_display_func)(struct mame_bitmap *bitmap);
 	XDGADevice *device;
 	XDGAMode *modes;
 	int vidmode_changed;
-	int palette_dirty;
-} xf86ctx = {-1,NULL,FALSE,FALSE,FALSE,NULL,-1,0,NULL,NULL,NULL,FALSE,FALSE};
+} xf86ctx = {-1,NULL,FALSE,FALSE,FALSE,-1,0,NULL,NULL,NULL,FALSE};
 	
 static Visual dga_xvisual;
-
-static unsigned char *doublebuffer_buffer = NULL;
 
 #ifdef TDFX_DGA_WORKAROUND
 static int current_X11_mode = 0;
@@ -280,7 +276,7 @@ static int xf86_dga_setup_graphics(XDGAMode modeinfo, int bitmap_depth)
 	
 	sizeof_pixel  = depth / 8;
 
-	xf86ctx.addr  = (unsigned char*)xf86ctx.base_addr;
+	xf86ctx.addr  = (unsigned char*)xf86ctx.device->data;
 #if 1
 	xf86ctx.addr += (((modeinfo.viewportWidth - visual_width*widthscale) / 2) & ~7)
 						* sizeof_pixel;
@@ -300,13 +296,12 @@ static int xf86_dga_setup_graphics(XDGAMode modeinfo, int bitmap_depth)
    mouse and keyboard can't be setup before the display has. */
 int xf86_dga2_create_display(int bitmap_depth)
 {
-	int bestmode;
+	int i,bestmode;
 	/* only have todo the fork's the first time we go DGA, otherwise people
 	   who do a lott of dga <-> window switching will get a lott of
 	   children */
 	static int first_time  = 1;
 	xf86_dga_first_click   = 0;
-	xf86ctx.palette_dirty  = FALSE;
 	xf86ctx.old_grab_mouse = x11_grab_mouse;
 	x11_grab_mouse         = FALSE;
 	
@@ -318,6 +313,14 @@ int xf86_dga2_create_display(int bitmap_depth)
 			return OSD_NOT_OK;
 		first_time = 0;
 	}
+
+	/* HACK HACK HACK, keys get stuck when they are pressed when
+	   XDGASetMode is called, so wait for all keys to be released */
+	do {
+	  char keys[32];
+	  XQueryKeymap(display, keys);
+	  for (i=0; (i<32) && (keys[i]==0); i++) {}
+	} while(i<32);
 
 	bestmode = xf86_dga_vidmode_find_best_vidmode(bitmap_depth);
 	if (!bestmode)
@@ -333,7 +336,6 @@ int xf86_dga2_create_display(int bitmap_depth)
 	}
 	xf86ctx.width = xf86ctx.device->mode.bytesPerScanline * 8
 		/ xf86ctx.device->mode.bitsPerPixel;
-	xf86ctx.base_addr = xf86ctx.device->data;
 	xf86ctx.vidmode_changed = TRUE;
 
 	depth = xf86ctx.device->mode.bitsPerPixel;
@@ -359,17 +361,6 @@ int xf86_dga2_create_display(int bitmap_depth)
 	if (x11_init_palette_info() != OSD_OK)
 	    return OSD_NOT_OK;
         
-        if (widthscale != 1 || heightscale != 1 ||
-	    yarbsize > visual_height)
-        {
-	   doublebuffer_buffer = malloc (visual_width * widthscale * depth / 8);
-	   if (doublebuffer_buffer == NULL)
-	   {
-	      fprintf(stderr, "Error: Couldn't alloc enough memory\n");
-	      return OSD_NOT_OK;
-	   }
-        }
-
 	if(xf86_dga_setup_graphics(xf86ctx.device->mode, bitmap_depth))
 		return OSD_NOT_OK;
 	
@@ -405,7 +396,7 @@ int xf86_dga2_create_display(int bitmap_depth)
 			BlackPixel(display, xf86ctx.screen));
 		XDGASync(display, xf86ctx.screen);
 	} else {
-		memset(xf86ctx.base_addr, 0,
+		memset(xf86ctx.device->data, 0,
 		       xf86ctx.device->mode.bytesPerScanline
 		       * xf86ctx.device->mode.imageHeight);
 	}
@@ -427,7 +418,6 @@ int xf86_dga2_modify_pen(int pen,
 	color.flags = DoRed | DoGreen | DoBlue;
 
 	XStoreColor(display,xf86ctx.cmap,&color);
-	xf86ctx.palette_dirty = TRUE;
 	return 0;
 }
 
@@ -498,11 +488,6 @@ void xf86_dga2_close_display(void)
 	{
 		XFree(xf86ctx.modes);
 		xf86ctx.modes = 0;
-	}
-	if(doublebuffer_buffer)
-	{
-		free(doublebuffer_buffer);
-		doublebuffer_buffer = NULL;
 	}
 	if(xf86ctx.cmap)
 	{
