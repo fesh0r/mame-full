@@ -7,15 +7,15 @@
   distributed under the terms of the MAME license, in "readme.txt".
   By continuing to use, modify or distribute this file you indicate
   that you have read the license and understand and accept it fully.
-	
+
 ***************************************************************************/
 
 /***************************************************************************
 
   file.c
-  
+
 	File handling code.
-	
+
 ***************************************************************************/
 
 #define WIN32_LEAN_AND_MEAN
@@ -124,7 +124,7 @@ int File_Init(void)
 }
 
 void File_Exit(void)
-{	 
+{
 	if (RomDirPath.m_Buf != NULL)
 	{
 		free(RomDirPath.m_Buf);
@@ -150,22 +150,22 @@ BOOL File_ExistZip(const char* gamename, int filetype)
 	char		name[FILENAME_MAX];
 	struct stat file_stat;
 	tDirPaths*	pDirPaths = NULL;
-	int 		index;
+	int 		the_index;
 	const char* dirname = NULL;
 
 	switch (filetype)
 	{
 	case OSD_FILETYPE_ROM:
 	case OSD_FILETYPE_SAMPLE:
-		
+
 		if (filetype == OSD_FILETYPE_ROM)
 			pDirPaths = &RomDirPath;
 		if (filetype == OSD_FILETYPE_SAMPLE)
 			pDirPaths = &SampleDirPath;
 
-		for (index = 0; index < pDirPaths->m_NumPaths; index++)
+		for (the_index = 0; the_index < pDirPaths->m_NumPaths; the_index++)
 		{
-			dirname = pDirPaths->m_Paths[index];
+			dirname = pDirPaths->m_Paths[the_index];
 
 			sprintf(name, "%s/%s.zip", dirname, gamename);
 			if (stat(name, &file_stat) == 0 && !(file_stat.st_mode & S_IFDIR))
@@ -192,7 +192,7 @@ BOOL File_Status(const char* gamename, const char* filename, int filetype)
 	const char*  dirname;
 	BOOL		 found = FALSE;
 	tDirPaths*	 pDirPaths;
-		
+
 	if (filetype == OSD_FILETYPE_ROM)
 		pDirPaths = &RomDirPath;
 	else
@@ -292,7 +292,7 @@ void* osd_fopen2(const char *gamename, const char *filename, int filetype, int o
 		/* Fallthrough to OSD_FILETYPE_SCREENSHOT */
 
 	case OSD_FILETYPE_SCREENSHOT:
-		
+
 		LOG(("osd_fopen: attempting to %s screenshot '%s' with name '%s'\n", openforwrite ? "write" : "read", filename, gamename));
 
 		if (openforwrite && imgType != PICT_SCREENSHOT)
@@ -402,7 +402,7 @@ void* osd_fopen2(const char *gamename, const char *filename, int filetype, int o
 }
 
 /***************************************************************************
- Internal functions  
+ Internal functions
 ***************************************************************************/
 
 static void File_SetPaths(tDirPaths* pDirPath, const char* path)
