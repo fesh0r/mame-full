@@ -14,6 +14,7 @@
 #include <X11/extensions/xf86dga.h>
 #include <X11/extensions/xf86vmode.h>
 #endif
+#include "driver.h"
 #include "xmame.h"
 #include "x11.h"
 
@@ -28,6 +29,7 @@ static void xf86_dga_update_display_8_to_32bpp(struct osd_bitmap *bitmap);
 static void xf86_dga_update_display_16_to_16bpp(struct osd_bitmap *bitmap);
 static void xf86_dga_update_display_16_to_24bpp(struct osd_bitmap *bitmap);
 static void xf86_dga_update_display_16_to_32bpp(struct osd_bitmap *bitmap);
+static void xf86_dga_update_display_rgb_direct(struct osd_bitmap *bitmap);
 
 static struct
 {
@@ -113,7 +115,12 @@ static int xf86_dga_vidmode_find_best_vidmode(int bitmap_depth)
 	{
 		if (mode_disabled(xf86ctx.modes[i].viewportWidth, xf86ctx.modes[i].viewportHeight, bitmap_depth))
 			continue;
-		if (xf86ctx.modes[i].depth < bitmap_depth)
+		if (Machine->drv->video_attributes & VIDEO_RGB_DIRECT)
+		{
+			if (xf86ctx.modes[i].bitsPerPixel != 32)
+				continue;
+		}
+		else if (xf86ctx.modes[i].depth < bitmap_depth)
 			continue;
 #if 0 /* DEBUG */
 		fprintf(stderr, "XDGA: info: found mode: %dx%d\n",
@@ -201,7 +208,12 @@ static int xf86_dga_setup_graphics(XDGAMode modeinfo, int bitmap_depth)
 {
 	int sizeof_pixel;
 
-	if (bitmap_depth == 16)
+	if (Machine->drv->video_attributes & VIDEO_RGB_DIRECT)
+	{
+		xf86ctx.xf86_dga_update_display_func =
+			xf86_dga_update_display_rgb_direct;
+	}
+	else if (bitmap_depth == 16)
 	{
 	    switch(depth)
 	    {
@@ -303,7 +315,10 @@ int xf86_dga2_create_display(int bitmap_depth)
 	xf86ctx.base_addr = xf86ctx.device->data;
 	xf86ctx.vidmode_changed = TRUE;
 
-	depth = xf86ctx.device->mode.depth;
+	if (Machine->drv->video_attributes & VIDEO_RGB_DIRECT)
+		depth = xf86ctx.device->mode.bitsPerPixel;
+	else
+		depth = xf86ctx.device->mode.depth;
 
 	fprintf(stderr_file,"VidMode Switching To Mode: %d x %d\n",
 		xf86ctx.device->mode.viewportWidth,
@@ -452,6 +467,16 @@ static void xf86_dga_update_display_16_to_24bpp(struct osd_bitmap *bitmap)
 }
 
 static void xf86_dga_update_display_16_to_32bpp(struct osd_bitmap *bitmap)
+{
+#include "blit.h"
+}
+
+#undef  INDIRECT
+#undef  SRC_PIXEL
+#define SRC_PIXEL unsigned int
+#undef  DEST_PIXEL
+#define DEST_PIXEL unsigned int
+static void xf86_dga_update_display_rgb_direct(struct osd_bitmap *bitmap)
 {
 #include "blit.h"
 }
