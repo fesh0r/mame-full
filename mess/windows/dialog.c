@@ -28,6 +28,10 @@
 #ifndef GWLP_USERDATA
 #define GWLP_USERDATA						GWL_USERDATA
 #endif
+
+#ifndef GWLP_WNDPROC
+#define GWLP_WNDPROC						GWL_WNDPROC
+#endif
 #endif /* _WIN64 */
 
 //============================================================
@@ -437,6 +441,109 @@ int win_dialog_add_combobox_item(void *dialog, const char *item_label, int item_
 	return 0;
 }
 
+//============================================================
+//	seqselect_wndproc
+//============================================================
+
+struct seqselect_stuff
+{
+	INT_PTR (CALLBACK *oldwndproc)(HWND editwnd, UINT msg, WPARAM wparam, LPARAM lparam);
+	InputSeq *code;
+	InputSeq newcode;
+};
+
+static INT_PTR CALLBACK seqselect_wndproc(HWND editwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+	const struct KeyboardInfo *keylist;
+	struct seqselect_stuff *stuff;
+	INT_PTR result;
+
+	stuff = (struct seqselect_stuff *) GetWindowLongPtr(editwnd, GWLP_USERDATA);
+
+	switch(msg) {
+	case WM_KEYDOWN:
+		keylist = osd_get_key_list();
+		while(keylist->name)
+		{
+			if (osd_is_key_pressed(keylist->code))
+			{
+				seq_set_1(&stuff->newcode, keylist->standardcode);
+				SetWindowText(editwnd, keylist->name);
+				SendMessage(editwnd, EM_SETSEL, 0, -1);
+				break;
+			}
+			keylist++;
+		}
+		result = 1;
+		break;
+
+	case WM_LBUTTONDOWN:
+	case WM_RBUTTONDOWN:
+		SetFocus(editwnd);
+		SendMessage(editwnd, EM_SETSEL, 0, -1);
+		result = 0;
+		break;
+
+	default:
+		result = stuff->oldwndproc(editwnd, msg, wparam, lparam);
+		break;
+	}
+	return result;
+}
+
+//============================================================
+//	seqselect_setup
+//============================================================
+
+static LRESULT seqselect_setup(HWND editwnd, UINT message, WPARAM wparam, LPARAM lparam)
+{
+	char buf[256];
+	struct seqselect_stuff *stuff = (struct seqselect_stuff *) lparam;
+	LONG_PTR oldwndproc;
+
+	memcpy(stuff->newcode, *(stuff->code), sizeof(stuff->newcode));
+	seq_name(stuff->code, buf, sizeof(buf) / sizeof(buf[0]));
+	SetWindowText(editwnd, buf);
+	oldwndproc = SetWindowLongPtr(editwnd, GWLP_WNDPROC, (LONG) seqselect_wndproc);
+	memcpy(&stuff->oldwndproc, &oldwndproc, sizeof(oldwndproc));
+	SetWindowLongPtr(editwnd, GWLP_USERDATA, lparam);
+	return 0;
+}
+
+//============================================================
+//	seqselect_apply
+//============================================================
+
+static LRESULT seqselect_apply(HWND editwnd, UINT message, WPARAM wparam, LPARAM lparam)
+{
+	struct seqselect_stuff *stuff;
+	stuff = (struct seqselect_stuff *) GetWindowLongPtr(editwnd, GWLP_USERDATA);
+	memcpy(*(stuff->code), stuff->newcode, sizeof(*(stuff->code)));
+	return 0;
+}
+
+//============================================================
+//	dialog_add_single_seqselect
+//============================================================
+
+static int dialog_add_single_seqselect(struct dialog_info *di, short x, short y,
+	short cx, short cy, InputSeq *code)
+{
+	struct seqselect_stuff *stuff;
+
+	if (dialog_write_item(di, WS_CHILD | WS_VISIBLE | SS_LEFT,
+			x, y, DIM_LABEL_WIDTH, DIM_ROW_HEIGHT, "", DLGITEM_EDIT))
+		return 1;
+	stuff = pool_malloc(&di->memory_pool, sizeof(struct seqselect_stuff));
+	if (!stuff)
+		return 1;
+	stuff->code = code;
+	if (dialog_add_trigger(di, di->item_count, TRIGGER_INITDIALOG, 0, seqselect_setup, di->item_count, (LPARAM) stuff, NULL))
+		return 1;
+	if (dialog_add_trigger(di, di->item_count, TRIGGER_APPLY, 0, seqselect_apply, 0, 0, NULL))
+		return 1;
+	return 0;
+}
 
 //============================================================
 //	win_dialog_add_seqselect
@@ -447,8 +554,6 @@ int win_dialog_add_seqselect(void *dialog, const char *item_label, InputSeq *cod
 	struct dialog_info *di = (struct dialog_info *) dialog;
 	short x;
 	short y;
-	char buf[256];
-	char *seq_n;
 
 	assert(item_label);
 
@@ -459,17 +564,11 @@ int win_dialog_add_seqselect(void *dialog, const char *item_label, InputSeq *cod
 			x, y, DIM_LABEL_WIDTH, DIM_ROW_HEIGHT, item_label, DLGITEM_STATIC))
 		return 1;
 
-	seq_name(code, buf, sizeof(buf) / sizeof(buf[0]));
-	seq_n = pool_strdup(&di->memory_pool, buf);
-
 	x += DIM_LABEL_WIDTH + DIM_HORIZONTAL_SPACING;
-	if (dialog_write_item(di, WS_CHILD | WS_VISIBLE | SS_LEFT,
-			x, y, DIM_LABEL_WIDTH, DIM_ROW_HEIGHT, seq_n, DLGITEM_STATIC))
+	if (dialog_add_single_seqselect(di, x, y, DIM_LABEL_WIDTH, DIM_ROW_HEIGHT, code))
 		return 1;
 
-
 	x += DIM_LABEL_WIDTH + DIM_HORIZONTAL_SPACING;
-
 	if (x > di->cx)
 		di->cx = x;
 	di->cy += DIM_ROW_HEIGHT + DIM_VERTICAL_SPACING * 2;

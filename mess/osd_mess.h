@@ -7,6 +7,9 @@
 /* changed a file.															*/
 int osd_select_file (int sel, char *filename);
 
+/* returns 1 if input of type IPT_KEYBOARD should be supressed */
+int osd_keyboard_disabled(void);
+
 /******************************************************************************
 
   Parallel processing (for SMP)
@@ -29,7 +32,7 @@ int osd_select_file (int sel, char *filename);
 	{
 		task(param, 0, 1);
 	}
-  */
+*/
 
 void osd_parallelize(void (*task)(void *param, int task_num, int task_count), void *param, int max_tasks);
 

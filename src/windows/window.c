@@ -671,6 +671,12 @@ static LRESULT CALLBACK video_window_proc(HWND wnd, UINT message, WPARAM wparam,
 	// handle a few messages
 	switch (message)
 	{
+		// non-client paint: punt if full screen
+		case WM_NCPAINT:
+			if (win_window_mode)
+				return DefWindowProc(wnd, message, wparam, lparam);
+			break;
+	
 		// paint: redraw the last bitmap
 		case WM_PAINT:
 		{

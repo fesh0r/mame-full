@@ -2065,6 +2065,11 @@ if (Machine->drv->vblank_duration == 0)
 					seq = input_port_seq(in);
 					if (seq_pressed(seq))
 					{
+#ifdef MESS
+						if (((in->type & ~IPF_MASK) == IPT_KEYBOARD) && osd_keyboard_disabled())
+							continue;
+#endif
+
 						/* skip if coin input and it's locked out */
 						if ((in->type & ~IPF_MASK) >= IPT_COIN1 &&
 							(in->type & ~IPF_MASK) <= IPT_COIN4 &&

@@ -85,7 +85,7 @@ int pc_floppy_init(int id, void *fp, int open_mode)
 			return INIT_PASS;
 		}
 	}
-	return INIT_FAIL;
+	return INIT_PASS;
 }
 
 void pc_floppy_exit(int id)

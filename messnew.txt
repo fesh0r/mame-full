@@ -102,8 +102,16 @@ Source Changes:
   input signals.  This process is far from perfect at this time.  In the
   future, it will be possible for drivers to customize the way that paste works
   for a more perfect translation.  [Nate Woods]
-  
-- Added a new osd_parallelize(), for basic SMP functionality.  [Nate Woods]
+
+- Added new PORT_KEYx macros that should be used in place of PORT_BITX when
+  mapping keyboards.  These macros also specify unicode values for the input
+  codes for natural keyboard support.  [Nate Woods]
+
+- Added a new osd_keyboard_disabled() call.  If this returns non-zero, then
+  the core will supress input of type IPT_KEYBOARD.  This is useful if a front
+  end wants to implement a natural keyboard.  [Nate Woods]
+
+- Added a new osd_parallelize() call, for basic SMP acceleration.  [Nate Woods]
 
 - Renamed osd_dir.h to osd_mess.h, to further reflect that it is more than just
   directory calls.  [Nate Woods]

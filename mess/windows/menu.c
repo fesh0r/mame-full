@@ -458,7 +458,9 @@ static void prepare_menus(void)
 	set_command_state(win_menu_bar, ID_OPTIONS_THROTTLE,	throttle					? MFS_CHECKED : MFS_ENABLED);
 
 	set_command_state(win_menu_bar, ID_KEYBOARD_EMULATED,	!win_use_natural_keyboard	? MFS_CHECKED : MFS_ENABLED);
-	set_command_state(win_menu_bar, ID_KEYBOARD_NATURAL,	win_use_natural_keyboard	? MFS_CHECKED : MFS_ENABLED);
+	set_command_state(win_menu_bar, ID_KEYBOARD_NATURAL,	inputx_can_post() ?
+															(win_use_natural_keyboard	? MFS_CHECKED : MFS_ENABLED)
+																						: MFS_GRAYED);
 
 	set_command_state(win_menu_bar, ID_FRAMESKIP_AUTO,		autoframeskip				? MFS_CHECKED : MFS_ENABLED);
 	for(i = 0; i < FRAMESKIP_LEVELS; i++)
@@ -669,5 +671,10 @@ LRESULT win_mess_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lpara
 		return DefWindowProc(wnd, message, wparam, lparam);
 	}
 	return 0;
+}
+
+int osd_keyboard_disabled(void)
+{
+	return win_use_natural_keyboard;
 }
 
