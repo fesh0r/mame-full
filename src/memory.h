@@ -54,7 +54,7 @@ extern "C" {
 ***************************************************************************/
 
 
-static float u2f(UINT32 v)
+INLINE float u2f(UINT32 v)
 {
 	union {
 		float ff;
@@ -64,7 +64,7 @@ static float u2f(UINT32 v)
 	return u.ff;
 }
 
-static UINT32 f2u(float f)
+INLINE UINT32 f2u(float f)
 {
 	union {
 		float ff;
@@ -74,7 +74,7 @@ static UINT32 f2u(float f)
 	return u.vv;
 }
 
-static float u2d(UINT64 v)
+INLINE float u2d(UINT64 v)
 {
 	union {
 		double dd;
@@ -84,7 +84,7 @@ static float u2d(UINT64 v)
 	return u.dd;
 }
 
-static UINT64 d2u(double d)
+INLINE UINT64 d2u(double d)
 {
 	union {
 		double dd;
