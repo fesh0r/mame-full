@@ -162,16 +162,16 @@ static int alsa_mixer_set(struct sysdep_mixer_struct *mixer,
    int channel, int left, int right)
 {
    int err;
-   long vol;
+   float vol;
    struct alsa_mixer_priv_data *priv = mixer->_priv;
    
-   vol = left * (priv->pmax - priv->pmin) / 100 + priv->pmin;
-   if((err = snd_mixer_selem_set_playback_volume(priv->elem, 0, vol)) < 0) {
+   vol = left * (priv->pmax - priv->pmin) / 100.0 + priv->pmin + 0.50;
+   if((err = snd_mixer_selem_set_playback_volume(priv->elem, 0, (long)vol)) < 0) {
      perror("error: error setting left channel");
      return -1;
    }
-   vol = right * (priv->pmax - priv->pmin) / 100 + priv->pmin;
-   if((err = snd_mixer_selem_set_playback_volume(priv->elem, 1, vol)) < 0) {
+   vol = right * (priv->pmax - priv->pmin) / 100.0 + priv->pmin + 0.50;
+   if((err = snd_mixer_selem_set_playback_volume(priv->elem, 1, (long)vol)) < 0) {
      perror("error: error setting right channel");
      return -1;
    }
@@ -185,9 +185,9 @@ static int alsa_mixer_get(struct sysdep_mixer_struct *mixer,
    struct alsa_mixer_priv_data *priv = mixer->_priv;
    
    snd_mixer_selem_get_playback_volume(priv->elem, 0, &vol);
-   *left = (vol - priv->pmin) * 100 / (priv->pmax - priv->pmin);
+   *left = (vol - priv->pmin) * 100.0 / (priv->pmax - priv->pmin) + 0.50;
    snd_mixer_selem_get_playback_volume(priv->elem, 1, &vol);
-   *right = (vol - priv->pmin) * 100 / (priv->pmax - priv->pmin);
+   *right = (vol - priv->pmin) * 100.0 / (priv->pmax - priv->pmin) + 0.50;
 
    return 0;
 }
