@@ -5,6 +5,7 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
+- [COCO] Update CRC for basic10.rom. Previous dump was bad. [tim lindner]
 
 Source Changes:
 ---------------
