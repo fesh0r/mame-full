@@ -172,7 +172,6 @@ typedef enum { AH,AL,CH,CL,DH,DL,BH,BL,SPH,SPL,BPH,BPL,IXH,IXL,IYH,IYL } BREGS;
 		int tmp;							\
 		I.regs.b[AL] = tmp = I.regs.b[AL] + param1;	\
 		I.AuxVal = 1;						\
-		I.CarryVal = tmp & 0x100;			\
 	}										\
 	if (CF || (I.regs.b[AL] > 0x9f))		\
 	{										\
