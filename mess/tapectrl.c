@@ -28,6 +28,7 @@ int tapecontrol(struct mame_bitmap *bitmap, int selected)
 	const char *menu_item[40];
 	const char *menu_subitem[40];
 	char flag[40];
+	char name[64];
 	mess_image *img;
 
 	int sel;
@@ -42,7 +43,8 @@ int tapecontrol(struct mame_bitmap *bitmap, int selected)
 	sel = selected - 1;
 
 	img = image_from_devtype_and_index(IO_CASSETTE, id);
-	menu_item[total] = image_typename_id(img);
+	strcpy( name, image_typename_id(img) );
+	menu_item[total] = name;
 	menu_subitem[total] = image_filename(img) ? image_filename(img) : "---";
 	flag[total] = 0;
 	total++;

@@ -698,6 +698,7 @@ int filemanager(struct mame_bitmap *bitmap, int selected)
 	int types[40];
 	int ids[40];
 	char flag[40];
+	char names[40][64];
 	int sel, total, arrowize, type, id;
 	const struct IODevice *dev;
 	mess_image *img;
@@ -712,8 +713,8 @@ int filemanager(struct mame_bitmap *bitmap, int selected)
 		for (id = 0; id < dev->count; id++)
 		{
 			img = image_from_devtype_and_index(type, id);
-			name = image_typename_id(img);
-			menu_item[total] = (name) ? name : "---";
+			strcpy( names[total], image_typename_id(img) );
+			menu_item[total] = (names[total]) ? names[total] : "---";
 			name = image_filename(img);
 			menu_subitem[total] = (name) ? name : "---";
 
