@@ -148,7 +148,7 @@ struct IODevice {
 	int count;
 	const char *file_extensions;
 	int reset_depth;
-	int (*id)(int id);
+	int (*verify_image)(int id);
 	int (*init)(int id);
 	void (*exit)(int id);
 	const void *(*info)(int id, int whatinfo);

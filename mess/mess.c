@@ -496,9 +496,13 @@ const char *device_extrainfo(int type, int id)
  ****************************************************************************/
 static int distribute_images(void)
 {
-	int i;
+	int i,j;
 
-	mess_printf("Distributing Images to Devices...\n");
+	logerror("Distributing Images to Devices...\n");
+	/* Set names to NULL */
+	for (i=0;i<IO_COUNT;i++)
+		for (j=0;j<MAX_INSTANCES;j++)
+			images[i][j].name = NULL;
 
 	for( i = 0; i < options.image_count; i++ )
 	{
@@ -554,10 +558,9 @@ int init_devices(const void *game)
 	const struct IODevice *dev = gamedrv->dev;
 	int i,id;
 
-	mess_printf("Initialising Devices...\n");
+	logerror("Initialising Devices...\n");
 
 	/* Check that the driver supports all devices requested (options struct)*/
-
 	for( i = 0; i < options.image_count; i++ )
 	{
 		if (supported_device(dev, options.image_files[i].type)==FALSE)
@@ -567,45 +570,58 @@ int init_devices(const void *game)
 		}
 	}
 
-	/* Ok! All devices are supported.  Now distribute them 	*/
-	/* to the appropriate device.....						*/
+	/* Ok! All devices are supported.  Now distribute them to the appropriate device..... */
 	if (distribute_images() == 1)
 		return 1;
 
-	/* Initialise all floppy drives here if the device is 	*/
-	/* Setting can be overriden by the drivers and UI		*/
+	/* Initialise all floppy drives here if the device is Setting can be overriden by the drivers and UI */
 	floppy_drives_init();
 
 	/* initialize all devices */
 	while( dev->count )
 	{
-
-		/* try and check for valid image */
-		/* compute 'partial' CRC for imageinfo if possible */
-		if( dev->id )
+		/* all instances */
+		for( id = 0; id < dev->count; id++ )
 		{
-			for( id = 0; id < dev->count; id++ )
+			mess_printf("***Initialising %s\n",device_typename(dev->type));
+			/********************************************************************
+			 * VALIDATE IMAGE
+			 ********************************************************************/
+			/* Is there an image specified? */
+			if(images[dev->type][id].name)
 			{
-				int result;
-
-				/* initialize */
-				result = (*dev->id)(id);
-				if( result != ID_OK)
+				/* Verify it! */
+				if( dev->verify_image )
 				{
-					mess_printf("Driver Reports Invalid Image\n");
+					int result;
+
+					/* initialize */
+					result = (*dev->verify_image)(id);
+					if( result != ID_OK)
+					{
+						mess_printf(" Driver Reports Invalid Image\n");
+					}
+					else
+					{
+						mess_printf(" Driver Reports Image ok\n");
+					}
+
+				}
+				else
+				{
+					mess_printf(" Note: Image [%s] for device [%s] cannot be verified!\n", images[dev->type][id].name, device_typename(dev->type));
 				}
 			}
-		}
-		else
-		{
-			logerror("%s does not support id!\n", device_typename(dev->type));
-		}
+			else
+			{
+				mess_printf(" Note: No image specified - skipping image_verify\n");
+			}
 
-		/* if this device supports initialize (it should!) */
-		if( dev->init )
-		{
-			/* all instances */
-			for( id = 0; id < dev->count; id++ )
+			/********************************************************************
+			 * INITIALISE DEVICE WITH IMAGE
+			 ********************************************************************/
+			/* if this device supports initialize (it should!) */
+			if( dev->init )
 			{
 				int result;
 
@@ -614,8 +630,12 @@ int init_devices(const void *game)
 
 				if( result != INIT_OK)
 				{
-					mess_printf("Driver Reports Initialisation [for %s device] failed\n",device_typename(dev->type));
+					mess_printf(" Driver Reports Initialisation [for %s device] failed\n",device_typename(dev->type));
 					return 1;
+				}
+				else
+				{
+					mess_printf(" Driver Reports Initialisation [for %s device] ok\n",device_typename(dev->type));
 				}
 
 				/* init succeeded */
@@ -624,15 +644,15 @@ int init_devices(const void *game)
 				{
 					floppy_device_common_init(id);
 				}
-
 			}
-		}
-		else
-		{
-			logerror("%s does not support init!\n", device_typename(dev->type));
+			else
+			{
+				mess_printf(" %s does not support init!\n", device_typename(dev->type));
+			}
 		}
 		dev++;
 	}
+	mess_printf("***Initialising Done\n");
 	return 0;
 }
 
