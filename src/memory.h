@@ -4,6 +4,9 @@
 #include "osd_cpu.h"
 #include <stddef.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define MAX_BANKS		16
 
@@ -49,6 +52,8 @@ struct MemoryReadAddress
 	offs_t start, end;
 	mem_read_handler handler;				/* see special values below */
 };
+
+#define MEMORY_TABLE_END { ~0 }
 
 #define MRA_NOP   0 						/* don't care, return 0 */
 #define MRA_RAM   ((mem_read_handler)-1)	/* plain RAM location (return its contents) */
@@ -394,6 +399,10 @@ the base of the memory.
 This can be used (carefully!) by drivers that wish to access memory directly
 without going through the readmem/writemem accessors (e.g., blitters). */
 unsigned char *findmemorychunk(int cpu, int offset, int *chunkstart, int *chunkend);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 
