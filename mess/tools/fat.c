@@ -59,7 +59,7 @@ typedef struct {
 } PARTITION_TABLE;
 
 static PARTITION_TABLE partition_table={
-	{  
+	{
 		// program searches active partition in table and loads its bootsector
 		0xfa ,0x2b, 0xc0 ,0x8e, 0xd0 ,0xb8, 0x00 ,0x7c,
 		0x8b ,0xe0, 0xfb ,0xfc, 0x2b ,0xc0, 0x8e, 0xd8,
@@ -128,7 +128,7 @@ static PARTITION_TABLE partition_table={
 /* byte alignment ! */
 /* I think not directly doable with every compiler */
 typedef struct {
-	char jump[3];
+	unsigned char jump[3];
 	char name[8];
 	littleuword sector_size;
 	unsigned char cluster_size;
@@ -169,9 +169,9 @@ static FAT_HEADER fat_header={
 	{ 0, 0 },
 	{ 0, 0 },
 	{ 0, 0 },
-	{ 
+	{
 		0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
-		// prints "cannot load dos press key to retry" 
+		// prints "cannot load dos press key to retry"
 		// reboots after keypress
 		0x4e, 0x41, 0x4d, 0x45, 0x20, 0x20, 0x20, 0x20,
 		0x46, 0x41, 0x54, 0x31, 0x32, 0x20, 0x20, 0x20,
@@ -1073,7 +1073,7 @@ static int fathd_image_create(STREAM *f, const ResolvedOption *options)
 			}
 		}
 	}
-	
+
 	return fat_create(f, &format);
 }
 
