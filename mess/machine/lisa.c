@@ -458,14 +458,10 @@ static void handle_mouse(int unused)
 		diff_x = new_mx - last_mx;
 
 		/* check for wrap */
-		/* does this code really work ??? */
-		if ((diff_x > 200) || (diff_x < -200))
-		{
-			if (diff_x < 0)
-				diff_x = - (256 + diff_x);
-			else
-				diff_x = 256 - diff_x;
-		}
+		if (diff_x > 0x80)
+			diff_x = 0x100-diff_x;
+		if  (diff_x < -0x80)
+			diff_x = -0x100-diff_x;
 
 		last_mx = new_mx;
 	}
@@ -475,14 +471,10 @@ static void handle_mouse(int unused)
 		diff_y = new_my - last_my;
 
 		/* check for wrap */
-		/* does this code really work ??? */
-		if (diff_y > 200 || diff_y < -200)
-		{
-			if (diff_y < 0)
-				diff_y = - (256 + diff_y);
-			else
-				diff_y = 256 - diff_y;
-		}
+		if (diff_y > 0x80)
+			diff_y = 0x100-diff_y;
+		if  (diff_y < -0x80)
+			diff_y = -0x100-diff_y;
 
 		last_my = new_my;
 	}

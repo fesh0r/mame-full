@@ -731,14 +731,10 @@ static void mouse_callback(void)
 		int		diff = new_mx - last_mx;
 
 		/* check for wrap */
-		/* does this code really work ??? */
-		if ((diff > 200) || (diff < -200))
-		{
-			if ( diff < 0 )
-				diff = - ( 256 + diff );
-			else
-				diff = 256 - diff;
-		}
+		if (diff > 0x80)
+			diff = 0x100-diff;
+		if  (diff < -0x80)
+			diff = -0x100-diff;
 
 		count_x += diff;
 
@@ -750,14 +746,10 @@ static void mouse_callback(void)
 		int		diff = new_my - last_my;
 
 		/* check for wrap */
-		/* does this code really work ??? */
-		if ( diff > 200 || diff < -200 )
-		{
-			if ( diff < 0 )
-				diff = - ( 256 + diff );
-			else
-				diff = 256 - diff;
-		}
+		if (diff > 0x80)
+			diff = 0x100-diff;
+		if  (diff < -0x80)
+			diff = -0x100-diff;
 
 		count_y += diff;
 
