@@ -553,16 +553,26 @@ void osd_debugger_focus(int debugger_has_focus)
 }
 
 /* Update the display. */
-void osd_update_video_and_audio(struct osd_bitmap *bitmap, struct osd_bitmap *debug_bitmap)
+void osd_update_video_and_audio(struct osd_bitmap *bitmap, struct osd_bitmap *debug_bitmap, int leds_status)
 {
    int i;
-   static int showfps=0, showfpstemp=0; 
+   static int showfps=0, showfpstemp=0, old_leds_status = 0; 
    int skip_this_frame;
    int need_to_clear_bitmap=0;
    
    /* save the active bitmap for use in osd_clearbitmap, I know this
       sucks blame the core ! */
    scrbitmap = bitmap;
+
+   if (leds_status != old_leds_status)
+   {
+      int leds_changes = old_leds_status ^ leds_status;
+      extern void osd_led_w(int led, int on);
+      old_leds_status = leds_status;
+      if (leds_changes & 1) osd_led_w(0, (leds_status & 1) ? 1 : 0);
+      if (leds_changes & 2) osd_led_w(0, (leds_status & 2) ? 1 : 0);
+      if (leds_changes & 4) osd_led_w(0, (leds_status & 4) ? 1 : 0);
+   }
    
    if (input_ui_pressed(IPT_UI_FRAMESKIP_INC))
    {
