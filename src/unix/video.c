@@ -539,8 +539,20 @@ int osd_skip_this_frame(void)
    return skip_next_frame;
 }
 
+/* HJB: unfinished implementation - needs to swap/save the palette */
+static int show_debugger;
+static int debugger_focus_changed;
+void osd_debugger_focus(int debugger_has_focus)
+{
+   if (show_debugger != debugger_has_focus)
+   {
+      show_debugger = debugger_has_focus;
+      debugger_focus_changed = 1;
+   }
+}
+
 /* Update the display. */
-void osd_update_video_and_audio(struct osd_bitmap *bitmap)
+void osd_update_video_and_audio(struct osd_bitmap *bitmap, struct osd_bitmap *debug_bitmap)
 {
    int i;
    static int showfps=0, showfpstemp=0; 
@@ -570,6 +582,22 @@ void osd_update_video_and_audio(struct osd_bitmap *bitmap)
 
       if (showfps == 0) showfpstemp = 2 * Machine->drv->frames_per_second;
    }
+
+   /* HJB: cut + paste from the msdos/video.c code */
+   if (debug_bitmap && keyboard_pressed_memory(KEYCODE_F5))
+   {
+       osd_debugger_focus(show_debugger ^ 1);
+   }
+   if (debugger_focus_changed)
+   {
+#if 0 /* there is no internal_set_visible_area yet and I dunno if that would be appropriate anyway */
+       if (show_debugger)
+           internal_set_visible_area(0,debug_bitmap->width-1,0,debug_bitmap->height);
+       else
+           internal_set_visible_area(vis_min_x,vis_max_x,vis_min_y,vis_max_y);
+#endif
+   }
+   /* HJB: end cut + paste */
 
    if (input_ui_pressed(IPT_UI_FRAMESKIP_DEC))
    {
