@@ -21,7 +21,7 @@
 		Hardware:
 			- Z80 CPU
             - 16c500c UART
-			-  28f008sa flash-file memory x 3 (3mb)
+			-  amd29f080 flash-file memory x 3 (3mb)
 			- 128k ram
 			- stylus pen
 			- touch-pad screen
@@ -39,7 +39,7 @@
  ******************************************************************************/
 #include "driver.h"
 #include "includes/avigo.h"
-#include "includes/28f008sa.h"
+#include "includes/am29f080.h"
 #include "includes/tc8521.h"
 #include "includes/uart8250.h"
 
@@ -91,7 +91,7 @@ static READ_HANDLER(avigo_flash_0x0000_read_handler)
 
         int flash_offset = offset;
 
-	return flash_bank_handler_r(0, flash_offset);
+	return amd_flash_bank_handler_r(0, flash_offset);
 }
 
 /* memory 0x04000-0x07fff */
@@ -103,7 +103,7 @@ static READ_HANDLER(avigo_flash_0x4000_read_handler)
 		logerror("flash offset: %04x offset: %04x\n",flash_offset, offset);
 
 
-        return flash_bank_handler_r(avigo_flash_at_0x4000, flash_offset);
+        return amd_flash_bank_handler_r(avigo_flash_at_0x4000, flash_offset);
 }
 
 /* memory 0x0000-0x03fff */
@@ -112,7 +112,7 @@ static WRITE_HANDLER(avigo_flash_0x0000_write_handler)
 
 	int flash_offset = offset;
 
-	flash_bank_handler_w(0, flash_offset, data);
+	amd_flash_bank_handler_w(0, flash_offset, data);
 }
 
 /* memory 0x04000-0x07fff */
@@ -123,7 +123,7 @@ static WRITE_HANDLER(avigo_flash_0x4000_write_handler)
 
 		logerror("flash offset: %04x offset: %04x\n",flash_offset, offset);
 
-        flash_bank_handler_w(avigo_flash_at_0x4000, flash_offset, data);
+        amd_flash_bank_handler_w(avigo_flash_at_0x4000, flash_offset, data);
 }
 
 /* memory 0x08000-0x0bfff */
@@ -134,7 +134,7 @@ static READ_HANDLER(avigo_flash_0x8000_read_handler)
 
 		logerror("flash offset: %04x offset: %04x\n",flash_offset, offset);
 
-        return flash_bank_handler_r(avigo_flash_at_0x8000, flash_offset);
+        return amd_flash_bank_handler_r(avigo_flash_at_0x8000, flash_offset);
 }
 
 /* memory 0x08000-0x0bfff */
@@ -145,7 +145,7 @@ static WRITE_HANDLER(avigo_flash_0x8000_write_handler)
 
 		logerror("flash offset: %04x offset: %04x\n",flash_offset, offset);
 
-        flash_bank_handler_w(avigo_flash_at_0x8000, flash_offset, data);
+        amd_flash_bank_handler_w(avigo_flash_at_0x8000, flash_offset, data);
 }
 
 
@@ -244,7 +244,16 @@ static void avigo_dummy_timer_callback(int dummy)
 /* does not do anything yet */
 static void avigo_tc8521_alarm_int(int state)
 {
+#if 0
+	avigo_irq &=~(1<<5);
 	
+	if (state)
+	{
+		avigo_irq |= (1<<5);
+	}
+
+	avigo_refresh_ints();
+#endif
 }
 
 
@@ -278,7 +287,7 @@ static void avigo_refresh_memory(void)
               break;
         }
 
-        addr = (unsigned char *)flash_get_base(avigo_flash_at_0x4000);
+        addr = (unsigned char *)amd_flash_get_base(avigo_flash_at_0x4000);
         addr = addr + (avigo_rom_bank_l<<14);
         cpu_setbank(2, addr);
         cpu_setbank(6, addr);
@@ -290,7 +299,7 @@ static void avigo_refresh_memory(void)
         {
 				/* %101 */
                 /* screen */
-                case 0x06:
+               case 0x06:
                 {
                         memory_set_bankhandler_w(7, 0, avigo_vid_memory_w);
                         memory_set_bankhandler_r(3, 0, avigo_vid_memory_r);
@@ -317,7 +326,7 @@ static void avigo_refresh_memory(void)
                         avigo_flash_at_0x8000 = 1;
 
 
-                        addr = (unsigned char *)flash_get_base(avigo_flash_at_0x8000);
+                        addr = (unsigned char *)amd_flash_get_base(avigo_flash_at_0x8000);
                         addr = addr + (avigo_ram_bank_l<<14);
                         cpu_setbank(3, addr);
                         cpu_setbank(7, addr);
@@ -336,7 +345,7 @@ static void avigo_refresh_memory(void)
                         avigo_flash_at_0x8000 = 0;
 
 
-                        addr = (unsigned char *)flash_get_base(avigo_flash_at_0x8000);
+                        addr = (unsigned char *)amd_flash_get_base(avigo_flash_at_0x8000);
                         addr = addr + (avigo_ram_bank_l<<14);
                         cpu_setbank(3, addr);
                         cpu_setbank(7, addr);
@@ -390,11 +399,11 @@ void avigo_init_machine(void)
 	unsigned char *addr;
 
 	/* initialise flash memory */
-	flash_init(0);
+	amd_flash_init(0);
 
-	flash_init(1);
+	amd_flash_init(1);
 	
-	flash_init(2);
+	amd_flash_init(2);
 
     /* install os into flash from rom image data */
 	{
@@ -405,7 +414,7 @@ void avigo_init_machine(void)
 		if (rom!=NULL)
 		{
 			/* copy first 1mb into first flash */
-			flash = (char *)flash_get_base(0);
+			flash = (char *)amd_flash_get_base(0);
 
 			if (flash!=NULL)
 			{
@@ -413,7 +422,7 @@ void avigo_init_machine(void)
 			}
 
 			/* copy second 1mb into second flash */
-			flash = (char *)flash_get_base(1);
+			flash = (char *)amd_flash_get_base(1);
 
 			if (flash!=NULL)
 			{
@@ -431,14 +440,14 @@ void avigo_init_machine(void)
 	memory they can be written to. */
 
 	
-	flash_restore(0, "avigof1.nv");
-	flash_reset(0);
+	amd_flash_restore(0, "avigof1.nv");
+	amd_flash_reset(0);
 
-    flash_restore(1, "avigof2.nv");
-    flash_reset(1);
+    amd_flash_restore(1, "avigof2.nv");
+    amd_flash_reset(1);
 
-    flash_restore(2, "avigof3.nv");
-    flash_reset(2);
+    amd_flash_restore(2, "avigof3.nv");
+    amd_flash_reset(2);
 
 	/* initialise settings for port data */
 	for (i=0; i<4; i++)
@@ -483,7 +492,7 @@ void avigo_init_machine(void)
 		memset(avigo_memory, 0, 128*1024);
 	}
 
-	addr = (unsigned char *)flash_get_base(0);
+	addr = (unsigned char *)amd_flash_get_base(0);
 	cpu_setbank(1, addr);
 	cpu_setbank(5, addr);
 
@@ -506,14 +515,14 @@ void avigo_init_machine(void)
 void avigo_shutdown_machine(void)
 {
 	/* store and free flash memory */
-	flash_store(0, "avigof1.nv");
-	flash_finish(0);
+	amd_flash_store(0, "avigof1.nv");
+	amd_flash_finish(0);
 
-    flash_store(1, "avigof2.nv");
-    flash_finish(1);
+    amd_flash_store(1, "avigof2.nv");
+    amd_flash_finish(1);
 
-    flash_store(2, "avigof3.nv");
-    flash_finish(2);
+    amd_flash_store(2, "avigof3.nv");
+    amd_flash_finish(2);
 
     tc8521_stop();
 
@@ -879,5 +888,4 @@ static const struct IODevice io_avigo[] =
 
 
 /*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT COMPANY   FULLNAME */
-COMP( 1997, avigo,   0,                avigo,  avigo,      0,       "Texas Instruments", "avigo")
-
+COMPX( 1997, avigo,   0,                avigo,  avigo,      0,       "Texas Instruments", "avigo",GAME_NOT_WORKING)
