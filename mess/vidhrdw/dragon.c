@@ -57,7 +57,6 @@ int coco3_gimevhreg[8];
  *************************************/
 
 static int coco3_hires;
-static int sam_videomode;
 static int coco3_blinkstatus;
 static int coco3_vidbase;
 
@@ -138,8 +137,6 @@ static int internal_video_start_coco(int m6847_version, void (*charproc)(UINT8))
 
 	if (video_start_m6847(&p))
 		return 1;
-
-	sam_videomode = 0;
 	return 0;
 }
 

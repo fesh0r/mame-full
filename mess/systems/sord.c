@@ -381,7 +381,7 @@ static DEVICE_LOAD( sord_cassette )
 static void sord_m5_ctc_interrupt(int state)
 {
 	//logerror("interrupting ctc %02x\r\n ",state);
-	cpu_set_irq_line(0, 0, state);
+	cpu_set_irq_line_and_vector( 0, 0, HOLD_LINE, Z80_VECTOR( 0, state));
 }
 
 static z80ctc_interface	sord_m5_ctc_intf =

@@ -14,6 +14,8 @@ System Driver Changes:
 
 - [APPLE2] Writing to disk images and ProDOS order (*.po) disk images are now
   supported.  [Nate Woods]
+  
+- [SORDM5] Fixed keyboard.  [Tim Schuerewegen]
 
 
 User Interface Changes:
