@@ -1708,6 +1708,14 @@ void osd_customize_inputport_defaults(struct ipd *defaults)
 			seq_copy(&idef->seq, &no_alt_tab_seq);
 		}
 
+#if WINDOW_HAS_MENU
+		if (idef->type == IPT_UI_THROTTLE)
+		{
+			static InputSeq empty_seq = SEQ_DEF_0;
+			seq_copy(&idef->seq, &empty_seq);
+		}
+#endif
+
 		// find the next one
 		idef++;
 	}
