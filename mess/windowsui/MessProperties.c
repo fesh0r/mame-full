@@ -287,18 +287,26 @@ static void RamSize_InitList(HWND hDlg, UINT32 default_ram)
 	int i, ramopt_count, sel, default_index;
 	UINT32 ramopt, default_ramopt;
 	HWND hRamComboBox, hRamCaption;
-	const struct GameDriver *gamedrv;
-
-	gamedrv = drivers[g_nGame];
-
-	/* how many RAM options do we have? */
-	ramopt_count = ram_option_count(gamedrv);
+	const struct GameDriver *gamedrv = NULL;
 
 	/* locate the controls */
 	hRamComboBox = GetDlgItem(hDlg, IDC_RAM_COMBOBOX);
 	hRamCaption = GetDlgItem(hDlg, IDC_RAM_CAPTION);
 	if (!hRamComboBox || !hRamCaption)
 		return;
+
+	/* figure out how many RAM options we have */
+	if (g_nGame >= 0)
+	{
+		/* ask the driver */
+		gamedrv = drivers[g_nGame];
+		ramopt_count = ram_option_count(gamedrv);
+	}
+	else
+	{
+		/* default options; in which case we are disabled */
+		ramopt_count = 0;
+	}
 
 	if (ramopt_count > 0)
 	{

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <ctype.h>
+#include <assert.h>
 #include "snprintf.h"
 #include "mess.h"
 
@@ -40,8 +41,13 @@ UINT32 ram_default(const struct GameDriver *gamedrv)
 
 int ram_option_count(const struct GameDriver *gamedrv)
 {
-	const struct ComputerConfigEntry *entry = gamedrv->compcfg;
-	int count = 0;
+	const struct ComputerConfigEntry *entry;
+	int count;
+
+	assert(gamedrv);
+
+	entry = gamedrv->compcfg;
+	count = 0;
 
 	if (entry)
 	{
