@@ -458,7 +458,7 @@ static const struct IODevice io_trs80[] = {
 		1,						/* count */
 		"cmd\0",                /* file extensions */
 		IO_RESET_CPU,			/* reset if file changed */
-		OSD_FOPEN_DUMMY,		/* open mode */
+		OSD_FOPEN_READ,			/* open mode */
 		0,
 		trs80_cmd_init, 		/* init */
 		trs80_cmd_exit, 		/* exit */
@@ -503,7 +503,7 @@ static const struct IODevice io_trs80l2[] = {
 		1,						/* count */
 		"cmd\0",                /* file extensions */
 		IO_RESET_CPU,			/* reset if file changed */
-		OSD_FOPEN_DUMMY,		/* open mode */
+		OSD_FOPEN_READ,			/* open mode */
 		0,
 		trs80_cmd_init, 		/* init */
 		trs80_cmd_exit, 		/* exit */

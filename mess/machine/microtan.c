@@ -487,7 +487,7 @@ int microtan_snapshot_init(int id)
 		return INIT_PASS;
 	}
 
-    file = image_fopen(IO_SNAPSHOT, id, OSD_FILETYPE_IMAGE, 0);
+    file = image_fopen_new(IO_SNAPSHOT, id, NULL);
     if (file)
     {
         snapshot_size = osd_fsize(file);
@@ -691,7 +691,7 @@ int microtan_hexfile_init(int id)
 		return INIT_PASS;
 	}
 
-    file = image_fopen(IO_QUICKLOAD, id, OSD_FILETYPE_IMAGE, 0);
+    file = image_fopen_new(IO_QUICKLOAD, id, NULL);
     if (file)
     {
         int size = osd_fsize(file);

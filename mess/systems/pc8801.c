@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.12 2002/09/08 19:12:01 npwoods Exp $
+  $Id: pc8801.c,v 1.13 2002/09/13 16:13:31 rnabet Exp $
 
 ***************************************************************************/
 
@@ -19,7 +19,7 @@ static const struct IODevice io_pc88srl[] = {
     2,                      /* count */
     "d88\0",                /* file extensions */
     IO_RESET_NONE,          /* reset if file changed */
-	OSD_FOPEN_DUMMY,		/* open mode */
+	OSD_FOPEN_RW_CREATE_OR_READ,/* open mode */
     0,
     d88image_floppy_init,   /* init */
     d88image_floppy_exit,   /* exit */

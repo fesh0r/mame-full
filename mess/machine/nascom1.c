@@ -182,7 +182,7 @@ int	nascom1_init_cartridge(int id)
 
 	return (1);
 
-	file = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
+	file = image_fopen_new(IO_CARTSLOT, id, NULL);
 	if (file)
 	{
 		done = 0;

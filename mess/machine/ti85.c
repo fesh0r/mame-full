@@ -524,7 +524,7 @@ int ti85_load_snap(int id)
 {
 	void *file;
 
-	file = image_fopen(IO_SNAPSHOT, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
+	file = image_fopen_new(IO_SNAPSHOT, id, NULL);
 
 	if (file)
 	{
@@ -771,7 +771,7 @@ int ti85_serial_init (int id)
 	ti85_free_serial_data_memory();
 	ti85_receive_serial (NULL,0);
 
-	file = image_fopen(IO_SERIAL, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
+	file = image_fopen_new(IO_SERIAL, id, NULL);
 
 	if (file)
 	{

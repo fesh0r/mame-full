@@ -605,7 +605,7 @@ static int serial_device_load(int type, int id, unsigned char **ptr, int *pDataS
 {
 	void *file;
 
-	file = image_fopen(type, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
+	file = image_fopen_new(type, id, NULL);
 
 	if (file)
 	{

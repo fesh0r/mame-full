@@ -575,7 +575,7 @@ int mekd2_rom_load(int id)
 
 	//if (name && name[0])
 	//{
-		file = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, 0);
+		file = image_fopen_new(IO_CARTSLOT, id, NULL);
 		if (file)
 		{
 			UINT16 addr, size;

@@ -73,7 +73,7 @@ int galaxy_load_snap(int id)
 	void *file;
 
 	logerror("galaxy_load_gal\n");
-	file = image_fopen(IO_SNAPSHOT, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
+	file = image_fopen_new(IO_SNAPSHOT, id, NULL);
 
 	if (file)
 	{

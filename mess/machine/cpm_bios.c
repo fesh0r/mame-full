@@ -250,18 +250,11 @@ int cpm_init(int n, const char *ids[])
 		if( ff[d] && strlen(device_filename(IO_FLOPPY,d)) )
 		{
 			{
-				mode[d] = 1;
-				fp[d] = image_fopen(IO_FLOPPY, d, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW);
-				if( !fp[d] )
-				{
-					mode[d] = 0;
-					fp[d] = image_fopen(IO_FLOPPY, d, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
-				}
-				if( !fp[d] )
-				{
-					mode[d] = 1;
-					fp[d] = image_fopen(IO_FLOPPY, d, OSD_FILETYPE_IMAGE, OSD_FOPEN_WRITE);
-				}
+				int effective_mode;
+
+				fp[d] = image_fopen_new(IO_FLOPPY, d, &effective_mode);
+				mode[d] = (fp[d]) && is_effective_mode_writable(effective_mode);
+
 				if( !fp[d] )
 				{
 					ff[d] = 0;

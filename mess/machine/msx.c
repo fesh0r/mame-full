@@ -113,7 +113,7 @@ int msx_load_rom (int id)
 		return 0;
 
     /* try to load it */
-    F = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, 0);
+    F = image_fopen_new(IO_CARTSLOT, id, NULL);
     if (!F) return 1;
     size = osd_fsize (F);
     if (size < 0x2000)

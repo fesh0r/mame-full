@@ -701,12 +701,12 @@ static int c16_rom_id (int id)
 	int retval = 0;
 	char magic[] = {0x43, 0x42, 0x4d}, buffer[sizeof (magic)];
 	const char *name = device_filename(IO_CARTSLOT,id);
-	FILE *romfile;
+	void *romfile;
 	char *cp;
 
 	logerror("c16_rom_id %s\n", name);
 	retval = 0;
-	if (!(romfile = (FILE*)image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, 0)))
+	if (!(romfile = image_fopen_new(IO_CARTSLOT, id, NULL)))
 	{
 		logerror("rom %s not found\n", name);
 		return 0;
@@ -738,7 +738,7 @@ static int c16_rom_id (int id)
 int c16_rom_init (int id)
 {
 	rom_specified[id] = device_filename(IO_CARTSLOT,id) != NULL;
-	return rom_specified[id] && !c16_rom_id(id) ? INIT_FAIL: INIT_PASS;
+	return (rom_specified[id] && !c16_rom_id(id)) ? INIT_FAIL: INIT_PASS;
 }
 
 
@@ -746,7 +746,7 @@ int c16_rom_load (int id)
 {
 	const char *name = device_filename(IO_CARTSLOT,id);
     UINT8 *mem = memory_region (REGION_CPU1);
-	FILE *fp;
+	void *fp;
 	int size, read;
 	char *cp;
 	static unsigned int addr = 0;
@@ -754,7 +754,7 @@ int c16_rom_load (int id)
 	if (name==NULL) return 1;
 	if (!c16_rom_id (id))
 		return 1;
-	fp = (FILE*)image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, 0);
+	fp = image_fopen_new(IO_CARTSLOT, id, NULL);
 	if (!fp)
 	{
 		logerror("%s file not found\n", name);

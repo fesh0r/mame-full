@@ -227,6 +227,7 @@ static unsigned long mfm_get_long(unsigned char *addr)
 	return Data;
 }
 
+#if 0
 /* check a mfm_disk image is valid */
 int	mfm_disk_floppy_id(int id)
 {
@@ -289,6 +290,7 @@ int	mfm_disk_floppy_id(int id)
 
 	return result;
 }
+#endif
 
 
 /* load image */

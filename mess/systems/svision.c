@@ -381,7 +381,7 @@ ROM_END
 
 static int svision_load_rom(int id)
 {
-	FILE *cartfile;
+	void *cartfile;
 	UINT8 *rom = memory_region(REGION_CPU1);
 	int size;
 
@@ -391,7 +391,7 @@ static int svision_load_rom(int id)
 		return 0;
 	}
 
-	if (!(cartfile = (FILE*)image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, 0)))
+	if (!(cartfile = image_fopen_new(IO_CARTSLOT, id, NULL)))
 	{
 		logerror("%s not found\n",device_filename(IO_CARTSLOT,id));
 		return 1;
@@ -421,7 +421,7 @@ static const struct IODevice io_svision[] = {
 		1,								/* count */
 		"bin\0",                        /* file extensions */
 		IO_RESET_CPU,					/* reset if file changed */
-		OSD_FOPEN_DUMMY,				/* open mode */
+		OSD_FOPEN_READ,					/* open mode */
 		0,
 		svision_load_rom, 				/* init */
 		NULL,							/* exit */

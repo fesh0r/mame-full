@@ -348,7 +348,7 @@ int vtech1_snapshot_id(int id)
     void *file;
 
 	logerror("VTECH snapshot_id\n");
-    file = image_fopen(IO_SNAPSHOT, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
+    file = image_fopen_new(IO_SNAPSHOT, id, NULL);
     if( file )
     {
         osd_fread(file, buff, sizeof(buff));
@@ -373,7 +373,7 @@ int vtech1_snapshot_init(int id)
 	void *file;
 
 	logerror("VTECH snapshot_init\n");
-    file = image_fopen(IO_SNAPSHOT, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
+    file = image_fopen_new(IO_SNAPSHOT, id, NULL);
     if( file )
 	{
 		vtech1_snapshot_size = osd_fsize(file);
@@ -420,23 +420,14 @@ int vtech1_floppy_id(int id)
 
 int vtech1_floppy_init(int id)
 {
-	/* first try to open existing image RW */
-	vtech1_fdc_wrprot[id] = 0x00;
-	vtech1_fdc_file[id] = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW);
-	/* failed? */
-	if( !vtech1_fdc_file[id] )
-	{
-		/* try to open existing image RO */
-		vtech1_fdc_wrprot[id] = 0x80;
-		vtech1_fdc_file[id] = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
-	}
-	/* failed? */
-	if( !vtech1_fdc_file[id] )
-	{
-		/* create new image RW */
+	int effective_mode;
+
+	vtech1_fdc_file[id] = image_fopen_new(IO_FLOPPY, id, &effective_mode);
+	if ((vtech1_fdc_file[id]) && is_effective_mode_writable(effective_mode))
 		vtech1_fdc_wrprot[id] = 0x00;
-		vtech1_fdc_file[id] = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW_CREATE);
-	}
+	else
+		vtech1_fdc_wrprot[id] = 0x80;
+
 	return INIT_PASS;
 }
 

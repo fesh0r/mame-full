@@ -1084,7 +1084,7 @@ int nes_init_cart (int id)
 {
 	const char *mapinfo;
 	int mapint1=0,mapint2=0,mapint3=0,mapint4=0,goodcrcinfo = 0;
-	FILE *romfile;
+	void *romfile;
 	char magic[4];
 	char skank[8];
 	int local_options = 0;
@@ -1102,7 +1102,7 @@ int nes_init_cart (int id)
 			return INIT_FAIL;
 	}
 
-	if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, 0)))
+	if (!(romfile = image_fopen_new(IO_CARTSLOT, id, NULL)))
 	{
 		logerror("image_fopen failed in nes_init_cart.\n");
 		return INIT_FAIL;
@@ -1291,7 +1291,7 @@ return crc;
 
 int nes_load_disk (int id)
 {
- 	FILE *diskfile;
+ 	void *diskfile;
 	unsigned char magic[4];
 
 	if (!device_filename(IO_FLOPPY,id))
@@ -1306,7 +1306,7 @@ int nes_load_disk (int id)
 			return INIT_PASS;
 	}
 
-	if (!(diskfile = image_fopen (IO_FLOPPY, id, OSD_FILETYPE_IMAGE, 0)))
+	if (!(diskfile = image_fopen_new(IO_FLOPPY, id, NULL)))
 	{
 		logerror("image_fopen failed in nes_load_disk for [%s].\n",device_filename(IO_FLOPPY,id));
 			return INIT_FAIL;

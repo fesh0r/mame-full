@@ -41,7 +41,7 @@ static int channelf_load_rom(int id)
 
     if (device_filename(IO_CARTSLOT,id) == NULL)
 		return INIT_PASS;
-	file = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, 0);
+	file = image_fopen_new(IO_CARTSLOT, id, NULL);
 	if (!file)
 		return INIT_FAIL;
 	size = osd_fread(file, &mem[0x0800], 0x0800);
@@ -235,7 +235,7 @@ static const struct IODevice io_channelf[] = {
 		1,					/* count */
 		"bin\0",            /* file extensions */
 		IO_RESET_CPU,		/* reset if file changed */
-		OSD_FOPEN_DUMMY,	/* open mode */
+		OSD_FOPEN_READ,		/* open mode */
 		0,
 		channelf_load_rom,	/* init */
 		NULL,				/* exit */

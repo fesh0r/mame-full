@@ -369,7 +369,7 @@ static int generic_pak_load(int id, UINT8 *rambase, UINT8 *rombase, UINT8 *pakba
 {
 	void *fp;
 
-	fp = image_fopen (IO_SNAPSHOT, id, OSD_FILETYPE_IMAGE, 0);
+	fp = image_fopen_new(IO_SNAPSHOT, id, NULL);
 	if (fp)
 	{
 		int paklength;
@@ -484,7 +484,7 @@ static int generic_rom_load(int id, UINT8 *dest, UINT16 destlength)
 
 	cart_inserted = 0;
 
-	fp = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, 0);
+	fp = image_fopen_new(IO_CARTSLOT, id, NULL);
 	if (fp) {
 
 		romsize = osd_fsize(fp);
@@ -540,7 +540,7 @@ int coco3_rom_load(int id)
 	int		count;
 	void	*fp;
 
-	fp = image_fopen(IO_CARTSLOT, 0, OSD_FILETYPE_IMAGE, 0);
+	fp = image_fopen_new(IO_CARTSLOT, 0, NULL);
 	count = count_bank();
 	if (fp)
 		osd_fclose(fp);
@@ -2115,7 +2115,7 @@ static void generic_setcartbank(int bank, UINT8 *cartpos)
 	if (count_bank() > 0) {
 		/* Pin variable to proper bit width */
 		bank &= count_bank();
-		fp = image_fopen(IO_CARTSLOT, 0, OSD_FILETYPE_IMAGE, 0);
+		fp = image_fopen_new(IO_CARTSLOT, 0, NULL);
 		if (fp) {
 			if (bank)
 				osd_fseek(fp, 0x4000 * bank, SEEK_SET);

@@ -230,7 +230,7 @@ static const struct IODevice io_galaxy[] = {
 		1,					/* count */
 		"gal\0",        	/* file extensions */
 		IO_RESET_CPU,		/* reset if file changed */
-		OSD_FOPEN_DUMMY,	/* open mode */
+		OSD_FOPEN_READ,		/* open mode */
 		NULL,               /* id */
 		galaxy_load_snap,	/* init */
 		galaxy_exit_snap,	/* exit */

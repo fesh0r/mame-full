@@ -62,7 +62,7 @@ static int vectrex_verify_cart (char *data)
 int vectrex_init_cart (int id)
 {
 	/*const char *name;*/
-	FILE *cartfile = 0;
+	void *cartfile = 0;
 
 	/* Set the whole cart ROM area to 1. This is needed to work around a bug (?)
 	 * in Minestorm where the exec-rom attempts to access a vector list here.
@@ -73,7 +73,7 @@ int vectrex_init_cart (int id)
 	if (id == 0)
 		artwork_use_device_art(IO_CARTSLOT, id, "mine");
 
-	cartfile = (FILE*)image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, 0);
+	cartfile = image_fopen_new(IO_CARTSLOT, id, NULL);
 	if (cartfile)
 	{
 		osd_fread (cartfile, memory_region(REGION_CPU1), 0x8000);

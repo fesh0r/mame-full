@@ -545,6 +545,7 @@ const void *wave_info(int id, int whatinfo)
 /*
 	hurk - no wave write support
 */
+#if 0
 int wave_init(int id, const char *name)
 {
 	void *file;
@@ -562,6 +563,7 @@ int wave_init(int id, const char *name)
     }
 	return INIT_FAIL;
 }
+#endif
 
 void wave_exit(int id)
 {

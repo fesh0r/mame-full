@@ -178,7 +178,7 @@ int jupiter_load_ace(int id)
 
 	done = 0;
 	jupiter_index = 0;
-	file = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, 0);
+	file = image_fopen_new(IO_CARTSLOT, id, NULL);
 	if (file)
 	{
 		if ((jupiter_data = malloc(0x6000)))

@@ -782,7 +782,7 @@ static const struct IODevice io_sms[] = {
 		1,							/* count */
 		"sms\0",					/* file extensions */
 		IO_RESET_CPU,				/* reset if file changed */
-		OSD_FOPEN_DUMMY,			/* open mode */
+		OSD_FOPEN_READ,				/* open mode */
 		0,
 		sms_init_cart,				/* init */
 		sms_exit_cart,				/* exit */
@@ -805,7 +805,7 @@ static const struct IODevice io_gamegear[] = {
 		1,							/* count */
 		"gg\0",						/* file extensions */
 		IO_RESET_CPU,				/* reset if file changed */
-		OSD_FOPEN_DUMMY,			/* open mode */
+		OSD_FOPEN_READ,				/* open mode */
 		0,
 		sms_init_cart,				/* init */
 		sms_exit_cart,				/* exit */

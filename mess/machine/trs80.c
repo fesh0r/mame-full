@@ -252,7 +252,7 @@ static void cmd_copy_callback(int param)
 
 int trs80_cmd_init(int id)
 {
-	void *file = image_fopen(IO_QUICKLOAD,id,OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
+	void *file = image_fopen_new(IO_QUICKLOAD, id, NULL);
 	if (file)
 	{
 		cmd_size = osd_fsize(file);

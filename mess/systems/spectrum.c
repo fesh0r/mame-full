@@ -2452,7 +2452,7 @@ ROM_END
    1,				   /* count */\
    "scr\0",            /* file extensions */\
    IO_RESET_CPU,	   /* reset if file changed */\
-	OSD_FOPEN_DUMMY,	/* open mode */\
+	OSD_FOPEN_READ,		/* open mode */\
    NULL,			   /* id */\
    spec_quick_init,    /* init */\
    spec_quick_exit,    /* exit */\
@@ -2473,7 +2473,7 @@ static const struct IODevice io_spectrum[] = {
 		1,					/* count */
 		"sna\0z80\0sp\0",	/* file extensions */
 		IO_RESET_CPU,		/* reset if file changed */
-		OSD_FOPEN_DUMMY,	/* open mode */
+		OSD_FOPEN_READ,		/* open mode */
 		0,
 		spectrum_snap_load,	/* init */
 		spectrum_snap_exit,	/* exit */
@@ -2494,7 +2494,7 @@ static const struct IODevice io_spectrum[] = {
 		1,					/* count */
 		"rom\0",			/* file extensions */
 		IO_RESET_CPU,		/* reset if file changed */
-		OSD_FOPEN_DUMMY,	/* open mode */
+		OSD_FOPEN_READ,		/* open mode */
 		0,
 		spectrum_cart_load,	/* init */
 		NULL,				/* exit */
@@ -2517,7 +2517,7 @@ static const struct IODevice io_specpls3[] = {
 		1,					/* count */
 		"sna\0z80\0sp\0",	/* file extensions */
 		IO_RESET_CPU,		/* reset if file changed */
-		OSD_FOPEN_DUMMY,	/* open mode */
+		OSD_FOPEN_READ,		/* open mode */
 		0,
 		spectrum_snap_load,	/* init */
 		spectrum_snap_exit,	/* exit */
@@ -2561,7 +2561,7 @@ static const struct IODevice io_ts2068[] = {
 		1,					/* count */
 		"sna\0z80\0sp\0",       /* file extensions */
 		IO_RESET_CPU,		/* reset if file changed */
-		OSD_FOPEN_DUMMY,	/* open mode */
+		OSD_FOPEN_READ,		/* open mode */
 		0,
 		spectrum_snap_load,	/* init */
 		spectrum_snap_exit,	/* exit */
@@ -2582,7 +2582,7 @@ static const struct IODevice io_ts2068[] = {
 		1,					/* count */
 		"dck\0",			/* file extensions */
 		IO_RESET_CPU,		/* reset if file changed */
-		OSD_FOPEN_DUMMY,	/* open mode */
+		OSD_FOPEN_READ,		/* open mode */
 		0,
 		timex_cart_load,	/* init */
 		timex_cart_exit,	/* exit */

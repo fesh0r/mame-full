@@ -439,7 +439,7 @@ static const struct IODevice io_apple2[] =
 		OSD_FOPEN_READ,		/* open mode */
         NULL,               /* id */
         apple2_floppy_init, /* init */
-        NULL,               /* exit */
+        apple2_floppy_exit, /* exit */
         NULL,               /* info */
         NULL,               /* open */
         NULL,               /* close */

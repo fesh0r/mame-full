@@ -49,7 +49,7 @@ static void atom_via_irq_func(int state)
 }
 
 /* printer status */
-READ_HANDLER(atom_via_in_a_func)
+static READ_HANDLER(atom_via_in_a_func)
 {
 	unsigned char data;
 
@@ -65,7 +65,7 @@ READ_HANDLER(atom_via_in_a_func)
 }
 
 /* printer data */
-WRITE_HANDLER(atom_via_out_a_func)
+static WRITE_HANDLER(atom_via_out_a_func)
 {
 	/* data is written to port, this causes a pulse on ca2 (printer /strobe input),
 	and data is written */
@@ -76,7 +76,7 @@ WRITE_HANDLER(atom_via_out_a_func)
 static unsigned char previous_ca2_data = 0;
 
 /* one of these is pulsed! */
-WRITE_HANDLER(atom_via_out_ca2_func)
+static WRITE_HANDLER(atom_via_out_ca2_func)
 {
 	/* change in state of ca2 output? */
 	if (((previous_ca2_data^data)&0x01)!=0)
@@ -265,7 +265,7 @@ static int atom_load(int type, int id, unsigned char **ptr)
 {
 	void *file;
 
-	file = image_fopen(type, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
+	file = image_fopen_new(type, id, NULL);
 
 	if (file)
 	{

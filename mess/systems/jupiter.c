@@ -239,7 +239,7 @@ static const struct IODevice io_jupiter[] = {
 		1,					/* count */
 		"ace\0",            /* file extensions */
 		IO_RESET_CPU,		/* reset if file changed */
-		OSD_FOPEN_DUMMY,	/* open mode */
+		OSD_FOPEN_READ,		/* open mode */
         NULL,               /* id */
 		jupiter_load_ace,	/* init */
 		jupiter_exit_ace,	/* exit */

@@ -136,7 +136,7 @@ int apple1_load_snap (int id)
 	}
 
 	/* Load the specified Snapshot */
-	if (!(snapfile = image_fopen (IO_SNAPSHOT, id, OSD_FILETYPE_IMAGE, 0)))
+	if (!(snapfile = image_fopen_new(IO_SNAPSHOT, id, NULL)))
 	{
 		logerror("Apple1 - Unable to locate snapshot: %s\n",device_filename(IO_SNAPSHOT,id) );
 		return INIT_FAIL;

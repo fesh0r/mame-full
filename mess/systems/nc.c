@@ -1794,7 +1794,7 @@ static const struct IODevice io_nc100[] =
 			1,                     /* count */
 			"crd\0card\0",          /* file extensions */
 			IO_RESET_NONE,			/* reset if file changed */
-			OSD_FOPEN_DUMMY,		/* open mode */
+			OSD_FOPEN_READ,			/* open mode */
 			0,
 			nc_pcmcia_card_load,	/* load */
 			nc_pcmcia_card_exit,	/* exit */
@@ -1814,7 +1814,7 @@ static const struct IODevice io_nc100[] =
 			1,                     /* count */
 			"txt\0",               /* file extensions */
 			IO_RESET_NONE,			/* reset if file changed */
-			OSD_FOPEN_DUMMY,		/* open mode */
+			OSD_FOPEN_READ,			/* open mode */
 			NULL,					/* id */
 			nc_serial_init,			/* load */
 			serial_device_exit,		/* exit */
@@ -1840,7 +1840,7 @@ static const struct IODevice io_nc200[] =
 			1,                     /* count */
 			"crd\0card\0",          /* file extensions */
 			IO_RESET_NONE,			/* reset if file changed */
-			OSD_FOPEN_DUMMY,		/* open mode */
+			OSD_FOPEN_READ,			/* open mode */
 			0,
 			nc_pcmcia_card_load,	/* load */
 			nc_pcmcia_card_exit,	/* exit */
@@ -1880,7 +1880,7 @@ static const struct IODevice io_nc200[] =
 			1,                     /* count */
 			"txt\0",               /* file extensions */
 			IO_RESET_NONE,			/* reset if file changed */
-			OSD_FOPEN_DUMMY,		/* open mode */
+			OSD_FOPEN_READ,			/* open mode */
 			NULL,					/* id */
 			nc_serial_init,			/* load */
 			serial_device_exit,		/* exit */

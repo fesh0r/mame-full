@@ -166,7 +166,7 @@ int mbee_rom_load(int id)
 {
     void *file;
 
-	file = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
+	file = image_fopen_new(IO_CARTSLOT, id, NULL);
 	if( file )
 	{
 		int size = osd_fsize(file);

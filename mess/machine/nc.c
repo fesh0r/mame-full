@@ -75,7 +75,7 @@ static int nc_card_load(int id, unsigned char **ptr)
 {
 	void *file;
 
-	file = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
+	file = image_fopen_new(IO_CARTSLOT, id, NULL);
 
 	if (file)
 	{

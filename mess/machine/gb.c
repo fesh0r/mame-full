@@ -1376,7 +1376,7 @@ int gb_load_rom (int id)
 	memset (gb_ram, 0, 0x10000);
 
 	/* FIXME should check first if a file is given, should give a more clear error */
-	if (!(F = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ)))
+	if (!(F = image_fopen_new(IO_CARTSLOT, id, NULL)))
 	{
 		logerror("image_fopen failed in gb_load_rom.\n");
 		return INIT_FAIL;
@@ -1387,17 +1387,26 @@ int gb_load_rom (int id)
    the reads fails and then check if we have 512 bytes too much, so its a file
    with header or not */
 
+#if 0
     for (J = 0x4000; J == 0x4000;)
 		J = osd_fread (F, gb_ram, 0x4000);
 
 	osd_fclose (F);
 
 	/* FIXME: should check first if a file is given, should give a more clear error */
-	if (!(F = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ)))
+	if (!(F = image_fopen_new(IO_CARTSLOT, id, NULL)))
 	{
 		logerror("image_fopen failed in gb_load_rom.\n");
 		return INIT_FAIL;
 	}
+#elif 0
+	osd_fseek(F, 0, SEEK_END);
+	J = osd_ftell(F) % 0x4000;
+
+	osd_fseek(F, 0, SEEK_SET);
+#else
+	J = device_length(IO_CARTSLOT, id) % 0x4000;
+#endif
 
 	if (J == 512)
 	{

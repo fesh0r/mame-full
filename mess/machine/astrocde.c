@@ -28,7 +28,7 @@ int astrocade_load_rom(int id)
 	int size = 0;
 
     /* load a cartidge  */
-	file = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, 0);
+	file = image_fopen_new(IO_CARTSLOT, id, NULL);
 	if (file)
 	{
 		size = osd_fread(file, memory_region(REGION_CPU1) + 0x2000, 0x8000);

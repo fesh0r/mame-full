@@ -42,19 +42,10 @@ int d88image_floppy_init(int id)
 	if (id < d88image_MAX_DRIVES)
 	{
 		d88image *w = &d88image_drives[id];
+		int effective_mode;
 
-		w->mode = 1;
-		w->image_file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW);
-		if( !w->image_file )
-		{
-			w->mode = 0;
-			w->image_file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
-			if( !w->image_file )
-			{
-				w->mode = 1;
-				w->image_file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW_CREATE);
-			}
-		}
+		w->image_file = image_fopen_new(IO_FLOPPY, id, &effective_mode);
+		w->mode = (w->image_file) && is_effective_mode_writable(effective_mode);
 
 		/* the following line is unsafe, but floppy_drives_init assumes we start on track 0,
 		so we need to reflect this */

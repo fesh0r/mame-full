@@ -808,7 +808,7 @@ int snes_load_rom(int id)
 	snes_ram = memory_region( REGION_CPU1 );
 	memset( snes_ram, 0, 0x1000000 );
 
-	if( !(file = image_fopen( IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ)))
+	if( !(file = image_fopen_new(IO_CARTSLOT, id, NULL)))
 	{
 		logerror( "image_fopen failed in snes_load_rom.\n" );
 		return INIT_FAIL;

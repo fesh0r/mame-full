@@ -155,7 +155,7 @@ int a800_rom_init(int id)
 	/* load an optional (dual) cartridge (e.g. basic.rom) */
 	if( device_filename(IO_CARTSLOT,id) && strlen(device_filename(IO_CARTSLOT,id) ) )
 	{
-		file = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, 0);
+		file = image_fopen_new(IO_CARTSLOT, id, NULL);
 		if( file )
 		{
 			if( id > 0 )
@@ -235,7 +235,7 @@ int a800xl_load_rom(int id)
 	/* load an optional (dual) cartidge (e.g. basic.rom) */
 	if( device_filename(IO_CARTSLOT,id) && strlen(device_filename(IO_CARTSLOT,id)) )
 	{
-		file = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, 0);
+		file = image_fopen_new(IO_CARTSLOT, id, NULL);
 		if( file )
 		{
 			size = osd_fread(file, &mem[0x14000], 0x2000);
@@ -280,7 +280,7 @@ int a5200_rom_init(int id)
 	/* load an optional (dual) cartidge */
 	if( device_filename(IO_CARTSLOT,id) && strlen(device_filename(IO_CARTSLOT,id) ) )
 	{
-		file = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, 0);
+		file = image_fopen_new(IO_CARTSLOT, id, NULL);
 		if (file)
 		{
 			size = osd_fread(file, &mem[0x4000], 0x8000);
@@ -402,36 +402,28 @@ static void open_floppy(int id)
 	if (!drv[id].image)
 	{
 		char *ext;
+		int effective_mode;
 
 		drv[id].image = malloc(MAXSIZE);
 		if (!drv[id].image)
 			return;
-		/* try to open the image read/write */
-		drv[id].mode = 1;
-		file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW);
-		if (!file)
+
+		/* open image */
+		file = image_fopen_new(IO_FLOPPY, id, &effective_mode);
+		/* tell whether the image is writable */
+		drv[id].mode = (file) && is_effective_mode_writable(effective_mode);
+		/* set up image if it has been created */
+		if ((file) && is_effective_mode_create(effective_mode))
 		{
-			/* if this fails, try to open it read only */
-			drv[id].mode = 0;
-			file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
+			int sector;
+			char buff[256];
+			memset(buff, 0, 256);
+			/* default to 720 sectors */
+			for( sector = 0; sector < 720; sector++ )
+				osd_fwrite(file, buff, 256);
+			osd_fseek(file, 0, SEEK_SET);
 		}
-		/* still failed, so create a new image */
-		if (!file)
-		{
-			/* if this fails, try to open it read only */
-			drv[id].mode = 1;
-			file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW_CREATE);
-			if( file )
-			{
-				int sector;
-				char buff[256];
-				memset(buff, 0, 256);
-				/* default to 720 sectors */
-				for( sector = 0; sector < 720; sector++ )
-					osd_fwrite(file, buff, 256);
-				osd_fseek(file, 0, SEEK_SET);
-			}
-		}
+
 		size = osd_fread(file, drv[id].image, MAXSIZE);
 		osd_fclose(file);
 		if( size <= 0 )

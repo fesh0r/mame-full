@@ -745,7 +745,7 @@ bbcb_user_via= {
 BBC Joystick Support
 **************************************/
 
-int BBC_get_analogue_input(int channel_number)
+static int BBC_get_analogue_input(int channel_number)
 {
 	switch(channel_number)
 	{
@@ -766,7 +766,7 @@ int BBC_get_analogue_input(int channel_number)
 	return 0;
 }
 
-void BBC_uPD7002_EOC(int data)
+static void BBC_uPD7002_EOC(int data)
 {
 	via_0_cb1_w(0,data);
 }
@@ -801,7 +801,7 @@ int bbc_floppy_init(int id)
 
 static int previous_i8271_int_state;
 
-void	bbc_i8271_interrupt(int state)
+static void	bbc_i8271_interrupt(int state)
 {
 	/* I'm assuming that the nmi is edge triggered */
 	/* a interrupt from the fdc will cause a change in line state, and
@@ -904,7 +904,7 @@ density disc image
 */
 
 
-void bbc_wd177x_callback(int event)
+static void bbc_wd177x_callback(int event)
 {
 	int state;
 	/* wd177x_IRQ_SET and latch bit 4 (nmi_enable) are NAND'ED together
@@ -976,7 +976,7 @@ void bbc_wd177x_callback(int event)
 }
 
 
-void bbc_wd177x_status_w(int offset,int data)
+static void bbc_wd177x_status_w(int offset,int data)
 {
 	int drive;
 	int density;
@@ -1073,14 +1073,14 @@ WRITE_HANDLER ( bbc_wd1770_write )
 int bbcb_load_rom(int id)
 {
 	UINT8 *mem = memory_region (REGION_USER1);
-	FILE *fp;
+	void *fp;
 	int size, read;
 	int addr = 0;
 
 
 	if (device_filename(IO_CARTSLOT,id)==NULL) return 0;
 
-	fp = (FILE*)image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, 0);
+	fp = image_fopen_new(IO_CARTSLOT, id, NULL);
 
 	if (!fp)
 	{

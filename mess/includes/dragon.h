@@ -158,7 +158,7 @@ extern int coco3_mmu_translatelogicaladdr(int logicaladdr);
 	1,							/* count */				\
 	"vhd\0",					/* file extensions */	\
 	IO_RESET_NONE,				/* reset depth */		\
-	OSD_FOPEN_DUMMY,			/* open mode */			\
+	OSD_FOPEN_RW_CREATE,		/* open mode */			\
 	NULL,						/* id */				\
 	coco_vhd_init,				/* init */				\
 	coco_vhd_exit,				/* exit */				\

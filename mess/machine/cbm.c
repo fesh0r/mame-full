@@ -16,7 +16,7 @@ quick;
 
 int cbm_quick_init (int id)
 {
-	FILE *fp;
+	void *fp;
 	int read;
 	char *cp;
 
@@ -27,7 +27,7 @@ int cbm_quick_init (int id)
 
 	quick.specified = 1;
 
-	fp = (FILE*)image_fopen (IO_QUICKLOAD, id, OSD_FILETYPE_IMAGE, 0);
+	fp = image_fopen_new(IO_QUICKLOAD, id, NULL);
 	if (!fp)
 		return INIT_FAIL;
 
@@ -205,7 +205,7 @@ static const struct IODevice *cbm_rom_find_device(void)
 
 int cbm_rom_init(int id)
 {
-	FILE *fp;
+	void *fp;
 	int i;
 	int size, j, read;
 	char *cp;
@@ -226,7 +226,7 @@ int cbm_rom_init(int id)
 
 	dev=cbm_rom_find_device();
 
-	fp = (FILE*)image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, 0);
+	fp = image_fopen_new(IO_CARTSLOT, id, NULL);
 	if (!fp)
 	{
 		logerror("%s file not found\n", device_filename(IO_CARTSLOT,id));

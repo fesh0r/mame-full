@@ -1706,7 +1706,7 @@ static const struct IODevice io_ibmpc[] = {
 		4,					/* count */
 		"img\0",            /* file extensions */
 		IO_RESET_CPU,		/* reset if file changed */
-		OSD_FOPEN_DUMMY,	/* open mode */
+		OSD_FOPEN_RW,		/* open mode */
         NULL,               /* id */
 		pc_harddisk_init,	/* init */
 		pc_harddisk_exit,	/* exit */

@@ -115,7 +115,7 @@ int spectrum_snap_load(int id)
 {
 	void *file;
 
-	file = image_fopen(IO_SNAPSHOT, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
+	file = image_fopen_new(IO_SNAPSHOT, id, NULL);
 
 	if (file)
 	{
@@ -1242,7 +1242,7 @@ int spec_quick_init(int id)
 
 /*	quick.name = name; */
 
-	fp = image_fopen(IO_QUICKLOAD, id, OSD_FILETYPE_IMAGE, 0);
+	fp = image_fopen_new(IO_QUICKLOAD, id, NULL);
 	if (!fp)
 		return INIT_FAIL;
 
@@ -1287,7 +1287,7 @@ int spectrum_cart_load(int id)
 	void *file;
 
 	logerror("Trying to load cartridge!\n");
-	file = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
+	file = image_fopen_new(IO_CARTSLOT, id, NULL);
 	if (file)
 	{
 		int datasize;
@@ -1332,7 +1332,7 @@ int timex_cart_load(int id)
 
 	logerror ("Trying to load cart\n");
 
-	file = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
+	file = image_fopen_new(IO_CARTSLOT, id, NULL);
 	if (file==NULL)
 	{
 		logerror ("Error opening cart file\n");

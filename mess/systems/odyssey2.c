@@ -202,7 +202,7 @@ static const struct IODevice io_odyssey2[] = {
 		1,					/* count */
 		"bin\0",            /* file extensions */
 		IO_RESET_CPU,		/* reset if file changed */
-		OSD_FOPEN_DUMMY,	/* open mode */
+		OSD_FOPEN_READ,		/* open mode */
 		NULL,				/* id */
 		odyssey2_load_rom,	/* init */
 		NULL,				/* exit */

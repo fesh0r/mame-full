@@ -601,7 +601,7 @@ MACHINE_INIT( vc20 )
 
 static int vc20_rom_id (int id)
 {
-	FILE *romfile;
+	void *romfile;
 	unsigned char magic[] =
 	{0x41, 0x30, 0x20, 0xc3, 0xc2, 0xcd};	/* A0 CBM at 0xa004 (module offset 4) */
 	unsigned char buffer[sizeof (magic)];
@@ -609,7 +609,7 @@ static int vc20_rom_id (int id)
 	int retval;
 
 	logerror("vc20_rom_id %s\n", device_filename(IO_CARTSLOT,id));
-	if (!(romfile = (FILE*)image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, 0)))
+	if (!(romfile = image_fopen_new(IO_CARTSLOT, id, NULL)))
 	{
 		logerror("rom %s not found\n", device_filename(IO_CARTSLOT,id));
 		return 0;
@@ -647,7 +647,7 @@ static int vc20_rom_id (int id)
 int vc20_rom_load (int id)
 {
 	UINT8 *mem = memory_region (REGION_CPU1);
-	FILE *fp;
+	void *fp;
 	int size, read;
 	char *cp;
 	int addr = 0;
@@ -658,7 +658,7 @@ int vc20_rom_load (int id)
 
 	if (!vc20_rom_id (id))
 		return 1;
-	fp = (FILE*)image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, 0);
+	fp = image_fopen_new(IO_CARTSLOT, id, NULL);
 	if (!fp)
 	{
 		logerror("%s file not found\n", device_filename(IO_CARTSLOT,id));

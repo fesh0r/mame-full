@@ -287,7 +287,7 @@ static void lynx_crc_keyword(int io_device, int id)
 
 static int lynx_init_cart(int id)
 {
-	FILE *cartfile;
+	void *cartfile;
 	UINT8 *rom = memory_region(REGION_USER1);
 	int size;
 	UINT8 header[0x40];
@@ -304,7 +304,7 @@ static int lynx_init_cart(int id)
 		return 0;
 	}
 
-	if (!(cartfile = (FILE*)image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, 0)))
+	if (!(cartfile = image_fopen_new(IO_CARTSLOT, id, NULL)))
 	{
 		logerror("%s not found\n",device_filename(IO_CARTSLOT,id));
 		return 1;
@@ -343,7 +343,7 @@ static int lynx_init_cart(int id)
 
 static int lynx_quickload(int id)
 {
-	FILE *cartfile;
+	void *cartfile;
 	UINT8 *rom = memory_region(REGION_CPU1);
 	int size;
 	UINT8 header[10]; // 80 08 dw Start dw Len B S 9 3
@@ -355,7 +355,7 @@ static int lynx_quickload(int id)
 		return 0;
 	}
 
-	if (!(cartfile = (FILE*)image_fopen(IO_QUICKLOAD, id, OSD_FILETYPE_IMAGE, 0)))
+	if (!(cartfile = image_fopen_new(IO_QUICKLOAD, id, NULL)))
 	{
 		logerror("%s not found\n",device_filename(IO_QUICKLOAD,id));
 		return 1;
@@ -391,7 +391,7 @@ static const struct IODevice io_lynx[] = {
 		1,								/* count */
 		"lnx\0",                        /* file extensions */
 		IO_RESET_CPU,					/* reset if file changed */
-		OSD_FOPEN_DUMMY,				/* open mode */
+		OSD_FOPEN_READ,					/* open mode */
 		0,
 		lynx_init_cart, 				/* init */
 		NULL,							/* exit */
@@ -412,7 +412,7 @@ static const struct IODevice io_lynx[] = {
 		1,								/* count */
 		"o\0",                        /* file extensions */
 		IO_RESET_CPU,					/* reset if file changed */
-		OSD_FOPEN_DUMMY,				/* open mode */
+		OSD_FOPEN_READ,					/* open mode */
 		0,
 		lynx_quickload, 				/* init */
 		NULL,							/* exit */

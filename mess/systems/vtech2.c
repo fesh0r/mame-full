@@ -579,7 +579,7 @@ static const struct IODevice io_laser[] = {
 		1,					/* count */
 		"rom\0",            /* file extensions */
 		IO_RESET_CPU,		/* reset if file changed */
-		OSD_FOPEN_DUMMY,	/* open mode */
+		OSD_FOPEN_READ,		/* open mode */
         0,
 		laser_rom_init, 	/* init */
 		laser_rom_exit, 	/* exit */
@@ -600,7 +600,7 @@ static const struct IODevice io_laser[] = {
 		2,					/* count */
 		"dsk\0",            /* file extensions */
 		IO_RESET_NONE,		/* reset if file changed */
-		OSD_FOPEN_DUMMY,	/* open mode */
+		OSD_FOPEN_READ,		/* open mode */
         0,
 		laser_floppy_init,	/* init */
 		laser_floppy_exit,	/* exit */

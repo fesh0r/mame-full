@@ -337,46 +337,46 @@ static int c1551_d64_command (CBM_Drive * c1551, unsigned char *name)
 
 static int c1551_fs_command (CBM_Drive * c1551, unsigned char *name)
 {
-	FILE *fp;
+	void *fp;
 	int type=0;
 	int read;
 	int i;
 	char n[32];
 
 	strcpy(n,(char*)name);
-	fp = (FILE*)osd_fopen (Machine->gamedrv->name, n, OSD_FILETYPE_IMAGE, 0);
+	fp = osd_fopen (Machine->gamedrv->name, n, OSD_FILETYPE_IMAGE, 0);
 
 	if (!fp)
 	{
 		for (i = 0; n[i] != 0; i++)
 			n[i] = tolower (n[i]);
-		fp = (FILE*)osd_fopen (Machine->gamedrv->name, n, OSD_FILETYPE_IMAGE, 0);
+		fp = osd_fopen (Machine->gamedrv->name, n, OSD_FILETYPE_IMAGE, 0);
 	}
 	if (!fp)
 	{
 		strcpy(n, (char*)name);
 		strcat ((char *) n, ".prg");
 
-		fp = (FILE*)osd_fopen (Machine->gamedrv->name, n, OSD_FILETYPE_IMAGE, 0);
+		fp = osd_fopen (Machine->gamedrv->name, n, OSD_FILETYPE_IMAGE, 0);
 	}
 	if (!fp)
 	{
 		for (i = 0; n[i] != 0; i++)
 			n[i] = tolower (n[i]);
-		fp = (FILE*)osd_fopen (Machine->gamedrv->name, n, OSD_FILETYPE_IMAGE, 0);
+		fp = osd_fopen (Machine->gamedrv->name, n, OSD_FILETYPE_IMAGE, 0);
 	}
 	if (!fp)
 	{
 		type=1;
 		strcpy(n,(char*)name);
 		strcat(n,".p00");
-		fp = (FILE*)osd_fopen (Machine->gamedrv->name, n, OSD_FILETYPE_IMAGE, 0);
+		fp = osd_fopen (Machine->gamedrv->name, n, OSD_FILETYPE_IMAGE, 0);
 	}
 	if (!fp)
 	{
 		for (i = 0; n[i] != 0; i++)
 			n[i] = tolower (n[i]);
-		fp = (FILE*)osd_fopen (Machine->gamedrv->name, n, OSD_FILETYPE_IMAGE, 0);
+		fp = osd_fopen (Machine->gamedrv->name, n, OSD_FILETYPE_IMAGE, 0);
 	}
 	if (fp)
 	{

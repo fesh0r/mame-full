@@ -20,9 +20,7 @@
 #include "includes/centroni.h"
 #include "printer.h"
 
-
-extern int apple2_floppy_init(int id);
-extern void apple2_floppy_exit(int id);
+#include "includes/apple2.h"
 
 /*
 	Explaination of memory regions:
@@ -572,7 +570,7 @@ static const struct IODevice io_prav8[] =
 		1,						/* count */
 		"dsk\0",                /* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
-		OSD_FOPEN_DUMMY,		/* open mode */
+		OSD_FOPEN_READ,			/* open mode */
 		NULL, 					/* id */
 		apple2_floppy_init,		/* init */
 		apple2_floppy_exit,		/* exit */

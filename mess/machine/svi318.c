@@ -53,7 +53,7 @@ int svi318_load_rom (int id)
 		return INIT_PASS;
 	}
 
-	f = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, 0);
+	f = image_fopen_new(IO_CARTSLOT, id, NULL);
 	if (f)
 	{
 		p = malloc (0x8000);

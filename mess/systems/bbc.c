@@ -1199,7 +1199,7 @@ static const struct IODevice io_bbcb[] = {
         4,                      /* count */
         "rom\0",                /* file extensions */
         IO_RESET_NONE,          /* reset if file changed */
-		OSD_FOPEN_DUMMY,		/* open mode */
+		OSD_FOPEN_READ,			/* open mode */
         0,
         bbcb_load_rom,          /* init */
         NULL,                   /* exit */
@@ -1243,7 +1243,7 @@ static const struct IODevice io_bbcb1770[] = {
         4,                      /* count */
         "rom\0",                /* file extensions */
         IO_RESET_NONE,          /* reset if file changed */
-		OSD_FOPEN_DUMMY,		/* open mode */
+		OSD_FOPEN_READ,			/* open mode */
         0,
         bbcb_load_rom,          /* init */
         NULL,                   /* exit */
@@ -1287,7 +1287,7 @@ static const struct IODevice io_bbcbp[] = {
         4,                      /* count */
         "rom\0",                /* file extensions */
         IO_RESET_NONE,          /* reset if file changed */
-		OSD_FOPEN_DUMMY,		/* open mode */
+		OSD_FOPEN_READ,			/* open mode */
         0,
         bbcb_load_rom,          /* init */
         NULL,                   /* exit */
@@ -1330,7 +1330,7 @@ static const struct IODevice io_bbcbp128[] = {
         4,                      /* count */
         "rom\0",                /* file extensions */
         IO_RESET_NONE,          /* reset if file changed */
-		OSD_FOPEN_DUMMY,		/* open mode */
+		OSD_FOPEN_READ,			/* open mode */
         0,
         bbcb_load_rom,          /* init */
         NULL,                   /* exit */

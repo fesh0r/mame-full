@@ -575,7 +575,7 @@ int sms_init_cart(int id) {
 		}
 	} else {
 		/* Get handle to the rom */
-		handle = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, 0);
+		handle = image_fopen_new(IO_CARTSLOT, id, NULL);
 		if (handle == NULL) {
 			logerror("Cannot open cartridge for read operation!\n");
 			return (INIT_FAIL);

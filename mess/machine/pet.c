@@ -559,7 +559,7 @@ int pet_rom_id (int id)
 
 	logerror("c64_rom_id %s\n", device_filename(IO_CARTSLOT,id));
 	retval = 0;
-	if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, 0)))
+	if (!(romfile = image_fopen_new(IO_CARTSLOT, id, NULL)))
 	{
 		logerror("rom %s not found\n", device_filename(IO_CARTSLOT,id));
 		return 0;

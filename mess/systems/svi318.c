@@ -398,7 +398,7 @@ static const struct IODevice io_svi318[] = {
     	1,              			/* count */
     	"rom\0",                    /* file extensions */
 		IO_RESET_NONE,				/* reset if file changed */
-		OSD_FOPEN_DUMMY,			/* open mode */
+		OSD_FOPEN_READ,				/* open mode */
     	0,
     	svi318_load_rom,            /* init */
     	svi318_exit_rom,            /* exit */

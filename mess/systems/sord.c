@@ -345,7 +345,7 @@ static int		sord_cartslot_init(int id)
 	if (strlen(device_filename(IO_CARTSLOT,id))==0)
 		return INIT_FAIL;
 
-	file = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
+	file = image_fopen_new(IO_CARTSLOT, id, NULL);
 
 	if (file)
 	{
@@ -885,7 +885,7 @@ ROM_END
 		1,						/* count */\
 		"rom\0",                /* file extensions */\
 		IO_RESET_NONE,			/* reset if file changed */\
-		OSD_FOPEN_DUMMY,		/* open mode */\
+		OSD_FOPEN_READ,			/* open mode */\
 		NULL,					/* id */\
 		sord_cartslot_init,		/* init */\
 		sord_cartslot_exit,		/* exit */\
