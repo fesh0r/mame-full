@@ -267,8 +267,9 @@ typedef struct GROM_port_t
 	unsigned int addr;
 	/* GROM data buffer */
 	UINT8 buf;
-	/* internal flip-flops which are set after the first access to GROM address, so that next access
-	is mapped LSB, and cleared after each data access */
+	/* internal flip-flops that are set after the first access to the GROM
+	address so that next access is mapped to the LSB, and cleared after each
+	data access */
 	char raddr_LSB, waddr_LSB;
 	/* flags for active GROM */
 	char cur_flags;
