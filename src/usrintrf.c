@@ -2136,7 +2136,7 @@ static int displaygameinfo(struct mame_bitmap *bitmap,int selected)
 		ui_displaymessagewindow(bitmap,buf);
 
 		sel = 0;
-		if (code_read_async() != CODE_NONE)
+		if (input_ui_posted() || (code_read_async() != CODE_NONE))
 			sel = -1;
 	}
 	else
