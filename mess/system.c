@@ -151,8 +151,6 @@ const struct GameDriver *drivers[] =
 				Apple IIgs ROM 3      August              1989
 				*/
 
-
-
 	/* ATARI */
 	DRIVER( a400 )		/* Atari 400                                      */
 	DRIVER( a400pal )		/* Atari 400 PAL                                  */
@@ -160,6 +158,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( a800pal )		/* Atari 800 PAL                                  */
 	DRIVER( a800xl )		/* Atari 800 XL 						  */
 
+#ifdef MESS_CBM
 	/* COMMODORE */
 	DRIVER( kim1 )		/* Commodore (MOS) KIM-1 1975                     */
 	DRIVER( c16 )		/* Commodore 16                                   */
@@ -214,7 +213,9 @@ const struct GameDriver *drivers[] =
 	DRIVER( cbm720 )
 
 	DRIVER( amiga )		/* Commodore Amiga                                */
+#endif
 
+#ifdef MESS_AMSTRAD
 	/* AMSTRAD */
 	DRIVER( cpc464 )		/* Amstrad (Schneider in Germany) 1984            */
 	DRIVER( cpc664 )		/* Amstrad (Schneider in Germany) 1985            */
@@ -231,6 +232,7 @@ const struct GameDriver *drivers[] =
 	/* VEB MIKROELEKTRONIK */
 	DRIVER( kccomp )		/* KC compact                                     */
 	DRIVER( kc85_4 )		/* KC 85/4							  */
+#endif
 
 	/* CANTAB */
 	DRIVER( jupiter )		/* Jupiter Ace						  */
@@ -288,6 +290,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( ti99_4a )		/* Texas Instruments TI 99/4A				  */
 	DRIVER( ti99_4ae )	/* Texas Instruments TI 99/4AE			  */
 
+#ifdef MESS_IBMPC
 	/* IBM & Clones */
 	DRIVER( pc )		/* IBM PC  - parent Driver, so no need            */
 	DRIVER( pcmda )		/* IBM PC/XT with MDA (MGA aka Hercules)		  */
@@ -303,6 +306,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( xtvga )		/*                                                */
 	DRIVER( atcga )		/*                                                */
   TESTDRIVER( atvga )		/*                                                */
+#endif
 
 	/* PHILIPS */
 	DRIVER( p2000t )		/* Philips - P2000T 					  */
@@ -314,6 +318,7 @@ const struct GameDriver *drivers[] =
 	/* OHIO SCIENTIFIC */
 	DRIVER( superbrd )	/*                  					  */
 
+#ifdef MESS_SINCLAIR
 	/* SINCLAIR */
 	DRIVER( zx80 )		/* Sinclair ZX-80						  */
 	DRIVER( zx81 )		/* Sinclair ZX-81						  */
@@ -338,6 +343,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( specp3sp )	/*                                                */
 	DRIVER( specpl3e )	/*                                                */
 	DRIVER( specpls4 )	/*                                                */
+#endif
 
 	/* ASCII & MICROSOFT */
 	DRIVER( msx )		/* MSX                                            */
@@ -358,6 +364,7 @@ const struct GameDriver *drivers[] =
 	/* MILES GORDON TECHNOLOGY */
 	DRIVER( coupe )		/*                      				  */
 
+#ifdef MESS_SHARP
 	/* SHARP */
 	DRIVER( pc1401 )		/* Pocket Computer 1401      				  */
 	DRIVER( pc1402 )		/* Pocket Computer 1402    				  */
@@ -365,6 +372,7 @@ const struct GameDriver *drivers[] =
 
 	DRIVER( mz700 )
 	DRIVER( mz700j )
+#endif
 
 	/* MOTOROLA */
   TESTDRIVER( mekd2 )		/* Motorola Evaluation Kit				  */

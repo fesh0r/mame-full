@@ -4,6 +4,14 @@ MESS = 1
 # core defines
 COREDEFS += -DNEOFREE -DMESS
 
+# to split the mess into parts
+# (problem with tinymess is to only compile for 1 system)
+#MESS_AMSTRAD = 1
+MESS_CBM = 1
+#MESS_IBMPC = 1
+MESS_SHARP = 1
+#MESS_SINCLAIR = 1
+
 # CPU cores used in MESS
 CPUS+=Z80@
 CPUS+=Z80GB@
@@ -68,20 +76,16 @@ DRVLIBS = $(OBJ)/advision.a \
           $(OBJ)/coleco.a   \
           $(OBJ)/atari.a    \
           $(OBJ)/nintendo.a \
-          $(OBJ)/cbm.a      \
           $(OBJ)/dragon.a   \
           $(OBJ)/kaypro.a   \
           $(OBJ)/trs80.a    \
           $(OBJ)/cgenie.a   \
           $(OBJ)/pdp1.a     \
-          $(OBJ)/sinclair.a \
           $(OBJ)/apple1.a   \
           $(OBJ)/apple2.a   \
           $(OBJ)/mac.a      \
           $(OBJ)/ti99.a     \
-          $(OBJ)/amstrad.a  \
           $(OBJ)/bally.a    \
-          $(OBJ)/pc.a       \
           $(OBJ)/p2000.a    \
           $(OBJ)/nec.a      \
           $(OBJ)/ep128.a    \
@@ -98,11 +102,36 @@ DRVLIBS = $(OBJ)/advision.a \
           $(OBJ)/samcoupe.a \
           $(OBJ)/gce.a      \
           $(OBJ)/kim1.a     \
-          $(OBJ)/sharp.a    \
           $(OBJ)/lisa.a     \
           $(OBJ)/aquarius.a \
           #$(OBJ)/motorola.a \
 
+ifdef MESS_AMSTRAD
+DRVLIBS += $(OBJ)/amstrad.a
+COREDEFS += -DMESS_AMSTRAD
+endif
+
+ifdef MESS_CBM
+DRVLIBS += $(OBJ)/cbm.a
+COREDEFS += -DMESS_CBM
+endif
+
+ifdef MESS_IBMPC
+DRVLIBS += $(OBJ)/pc.a
+COREDEFS += -DMESS_IBMPC
+endif
+
+ifdef MESS_SHARP
+DRVLIBS += $(OBJ)/sharp.a
+COREDEFS += -DMESS_SHARP
+endif
+
+ifdef MESS_SINCLAIR
+DRVLIBS += $(OBJ)/sinclair.a
+COREDEFS += -DMESS_SINCLAIR
+endif
+
+$(OBJ)/mess/system.o: src/mess.mak
 
 $(OBJ)/coleco.a:   \
           $(OBJ)/mess/vidhrdw/tms9928a.o \
@@ -264,7 +293,6 @@ $(OBJ)/bally.a:    \
           $(OBJ)/mess/systems/astrocde.o
 
 $(OBJ)/pc.a:       \
-          $(OBJ)/mess/machine/pit8253.o  \
           $(OBJ)/mess/machine/uart8250.o \
           $(OBJ)/mess/machine/tandy1t.o  \
           $(OBJ)/mess/machine/amstr_pc.o \
@@ -429,11 +457,25 @@ COREOBJS +=        \
           $(OBJ)/mess/config.o           \
           $(OBJ)/mess/filemngr.o         \
           $(OBJ)/mess/tapectrl.o         \
-          $(OBJ)/mess/machine/6522via.o  \
-          $(OBJ)/mess/machine/nec765.o   \
-          $(OBJ)/mess/machine/dsk.o      \
           $(OBJ)/mess/machine/wd179x.o   \
           $(OBJ)/mess/sndhrdw/beep.o     \
+          $(OBJ)/mess/machine/pit8253.o  \
+
+ifdef MESS_CBM
+COREOBJS += $(OBJ)/mess/machine/6522via.o
+endif
+
+ifndef MESS_IBMPC
+ifndef MESS_AMSTRAD
+ifndef MESS_SPECTRUM
+EXCLUDE_NEC765 = 1
+endif
+endif
+endif
+
+ifndef EXCLUDE_NEC765
+COREOBJS += $(OBJ)/mess/machine/dsk.o $(OBJ)/mess/machine/nec765.o
+endif
 
 # additional tools
 TOOLS += dat2html$(EXE) mkhdimg$(EXE) imgtool$(EXE)
@@ -447,6 +489,7 @@ mkhdimg$(EXE):  $(OBJ)/mess/tools/mkhdimg.o
 	$(LD) $(LDFLAGS) $^ -lz -o $@
 
 imgtool$(EXE):       \
+		  $(IMGTOOL_OBJS) \
           $(OBJ)/mess/tools/stubs.o   \
           $(OBJ)/mess/config.o        \
           $(OBJ)/unzip.o              \
@@ -454,9 +497,14 @@ imgtool$(EXE):       \
           $(OBJ)/mess/tools/imgtool.o \
           $(OBJ)/mess/tools/rsdos.o   \
           $(OBJ)/mess/tools/stream.o  \
-          $(OBJ)/mess/tools/crt.o     \
           $(OBJ)/mess/tools/t64.o     \
-          $(OBJ)/mess/tools/pchd.o
+          $(OBJ)/mess/tools/lynx.o    \
+          $(OBJ)/mess/tools/crt.o     \
+          $(OBJ)/mess/tools/d64.o     \
+          $(OBJ)/mess/tools/fat.o     \
+          $(OBJ)/mess/tools/pchd.o    \
+          $(OBJ)/mess/tools/zip.o     \
+          $(OBJ)/mess/tools/fs.o     
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ -lz -o $@
 
@@ -472,10 +520,10 @@ makedep/makedep$(EXE):
 	make -Cmakedep
 
 depend src/$(TARGET).dep: makedep/makedep$(EXE)
-	echo # $(TARGET) dependencies >src/$(TARGET).dep
-	makedep/makedep$(EXE) -fsrc/$(TARGET).dep -p$(TARGET).obj/ -- $(CFLAGS) -- src/*.c \
+	echo "#" $(TARGET) dependencies >src/$(TARGET).dep
+	makedep/makedep$(EXE) -fsrc/$(TARGET).dep -p$(TARGET).obj/ -Imess -- $(CFLAGS) -- src/*.c \
 	src/cpu/*/*.c src/sound/*.c mess/systems/*.c mess/machine/*.c mess/vidhrdw/*.c mess/sndhrdw/*.c \
 	mess/tools/*.c mess/formats/*.c
 
-# uncomment the following line to include dependencies
-# include src/$(TARGET).dep
+## uncomment the following line to include dependencies
+include src/$(TARGET).dep
