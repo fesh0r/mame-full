@@ -152,15 +152,6 @@ void osd_sound_enable (int enable_it)
    }
 }
 
-/* handle ugly dos fm-stuff */
-void osd_opl_control (int chip, int reg)
-{
-}
-
-void osd_opl_write (int chip, int data)
-{
-}
-
 int osd_start_audio_stream(int stereo)
 {
    type = SYSDEP_DSP_16BIT | (stereo? SYSDEP_DSP_STEREO:SYSDEP_DSP_MONO);
