@@ -96,6 +96,10 @@ endif
 OBJ     = $(TARGET).obj
 OBJDIRS = $(OBJ) $(OBJ)/cpu $(OBJ)/sound $(OBJ)/drivers $(OBJ)/machine \
 	$(OBJ)/vidhrdw $(OBJ)/sndhrdw
+ifeq ($(TARGET),mess)
+OBJDIRS += $(OBJ)/mess $(OBJ)/mess/systems $(OBJ)/mess/machine $(OBJ)/mess/vidhrdw \
+	$(OBJ)/mess/sndhrdw $(OBJ)/mess/tools $(OBJ)/mess/formats
+endif
 IMGTOOL_OBJS = $(OBJ)/unix.$(DISPLAY_METHOD)/dirio.o
 INCLUDE_PATH = -Isrc -Imess -Isrc/unix -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
 
