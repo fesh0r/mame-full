@@ -909,15 +909,17 @@ TESTDRIVER( arkblock )	/* bootleg */
 	DRIVER( kagekij )	/* (c) 1988 Taito Corporation (Japan) */
 
 	/* Taito L-System games */
+    DRIVER( raimais )   /* (c) 1988 Taito Corporation (Japan) */
 	DRIVER( fhawk )		/* (c) 1988 Taito Corporation (Japan) */
-	DRIVER( raimais )	/* (c) 1988 Taito Corporation (Japan) */
 	DRIVER( champwr )	/* (c) 1989 Taito Corporation Japan (World) */
 	DRIVER( champwru )	/* (c) 1989 Taito America Corporation (US) */
 	DRIVER( champwrj )	/* (c) 1989 Taito Corporation (Japan) */
-	DRIVER( puzznic )	/* (c) 1989 Taito Corporation (Japan) */
-	DRIVER( plotting )	/* (c) 1989 Taito Corporation Japan (World) */
+	DRIVER( kurikint )	/* (c) 1988 Taito Corporation Japan */
+	DRIVER( kurikina )	/* (c) 1988 Taito Corporation Japan */
+    DRIVER( plotting )  /* (c) 1989 Taito Corporation Japan (World) */
+    DRIVER( puzznic )   /* (c) 1989 Taito Corporation (Japan) */
+    DRIVER( horshoes )  /* (c) 1990 Taito America Corporation (US) */
 	DRIVER( palamed )	/* (c) 1990 Taito Corporation (Japan) */
-	DRIVER( horshoes )	/* (c) 1990 Taito America Corporation (US) */
 	DRIVER( cachat )	/* (c) 1993 Taito Corporation (Japan) */
 	DRIVER( plgirls )	/* (c) 1992 Hot-B. */
 	DRIVER( plgirls2 )	/* (c) 1993 Hot-B. */
