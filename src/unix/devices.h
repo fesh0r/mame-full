@@ -16,8 +16,13 @@
 #define JOY_LIST_LEN (JOY * JOY_LIST_TOTAL_ENTRIES)
 #define JOY_NAME_LEN 20
 
-/* only one mouse for now */
-#define MOUSE 1
+#ifndef USE_XINPUT_DEVICES
+  /* only one mouse for now */
+  #define MOUSE 1
+#else
+  /* now we have 4 */
+  #define MOUSE 4
+#endif
 #define MOUSE_BUTTONS 8
 #define MOUSE_AXIS 8
 
@@ -117,12 +122,13 @@ extern struct rc_option joy_pad_opts[];
 extern struct rc_option joy_x11_opts[];
 extern struct rc_option joy_usb_opts[];
 
+#include "joystick-drivers/XInputDevices.h"
+
 /*** prototypes ***/
 void joy_evaluate_moves(void);
 void joy_i386_init(void);
 void joy_pad_init(void);
 void joy_x11_init(void);
 void joy_usb_init(void);
-
 #undef EXTERN
 #endif

@@ -45,6 +45,11 @@ struct rc_option input_opts[] = {
    { NULL,		NULL,			rc_link,	joy_usb_opts,
      NULL,		0,			0,		NULL,
      NULL },
+#ifdef USE_XINPUT_DEVICES
+   { NULL,		NULL,			rc_link,        XInputDevices_opts,
+     NULL,		0,			0,		NULL,
+     NULL },
+#endif
    { "mouse",		"m",			rc_bool,	&use_mouse,
      "1",		0,			0,		NULL,
      "Enable/disable mouse (if supported)" },
@@ -185,7 +190,7 @@ int osd_input_initpost (void)
    int i;
    
    /* init the keyboard */
-   if (keyboard_init())
+   if (xmame_keyboard_init())
       return OSD_NOT_OK;
    
    /* joysticks */
@@ -241,6 +246,10 @@ int osd_input_initpost (void)
          joytype = JOY_NONE;
       }
    }
+
+   #ifdef USE_XINPUT_DEVICES
+      XInputDevices_init();
+   #endif
    
    return OSD_OK;
 }
@@ -249,7 +258,7 @@ void osd_input_close (void)
 {
    int i;
    
-   keyboard_exit();
+   xmame_keyboard_exit();
    
    for(i=0;i<JOY;i++)
       if(joy_data[i].fd >= 0)
@@ -264,6 +273,14 @@ const struct JoystickInfo *osd_get_joy_list(void)
 
 void osd_trak_read(int player,int *deltax,int *deltay)
 {
+#ifdef USE_XINPUT_DEVICES
+  if (player < XINPUT_JOYSTICK_1) {
+    XInputPollDevices(player,deltax,deltay);
+  } else {
+    *deltax = 0;
+    *deltay = 0;
+  }
+#else
    if (player < MOUSE && use_mouse)
    {
       *deltax = mouse_data[player].deltas[0];
@@ -274,6 +291,7 @@ void osd_trak_read(int player,int *deltax,int *deltay)
       *deltax = 0;
       *deltay = 0;
    }
+#endif
 }
 
 void osd_poll_joysticks (void)
