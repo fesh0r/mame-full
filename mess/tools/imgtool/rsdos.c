@@ -465,7 +465,6 @@ static int rsdos_diskimage_deletefile(IMAGE *img, const char *fname)
 	int err;
 	int pos;
 	unsigned char g, i;
-	UINT8 zero = 0;
 	UINT8 granule_count;
 	UINT8 granule_map[MAX_GRANULEMAP_SIZE];
 	rsdos_dirent ent;
