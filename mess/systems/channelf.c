@@ -74,7 +74,8 @@ void channelf_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 }
 
 static UINT8 latch[4];
-static int pal[64];
+static int palette_code[64];
+static int palette_offset[64];
 static int val = 0;
 static int row = 0;
 static int col = 0;
@@ -111,18 +112,47 @@ READ_HANDLER( channelf_port_5_r )
 	return data;
 }
 
-static void plot_4_pixel(int x, int y, int pen)
+static UINT8 palette[] = {
+	0x00, 0x00, 0x00,	/* black */
+	0xff, 0xff, 0xff,	/* white */
+	0xff, 0x00, 0x00,	/* red	 */
+	0x00, 0xff, 0x00,	/* green */
+	0x00, 0x00, 0xff,	/* blue  */
+	0xbf, 0xbf, 0xbf,	/* ltgray  */
+	0xbf, 0xff, 0xbf,	/* ltgreen */
+	0xbf, 0xbf, 0xff	/* ltblue  */
+};
+
+#define BLACK	0
+#define WHITE   1
+#define RED     2
+#define GREEN   3
+#define BLUE    4
+#define LTGRAY  5
+#define LTGREEN 6
+#define LTBLUE	7
+
+static UINT16 colormap[] = {
+	BLACK,   WHITE, WHITE, WHITE,
+	LTBLUE,  BLUE,  RED,   GREEN,
+	LTGRAY,  BLUE,  RED,   GREEN,
+	LTGREEN, BLUE,  RED,   GREEN,
+};
+
+static void plot_4_pixel(int x, int y, int color)
 {
+	int pen;
+
 	if (x < Machine->visible_area.min_x ||
 		x + 1 >= Machine->visible_area.max_x ||
 		y < Machine->visible_area.min_y ||
 		y + 1 >= Machine->visible_area.max_y)
 		return;
 
-	if (pen >= 16)
+	if (color >= 16)
 		return;
 
-    pen = Machine->pens[pen];
+    pen = Machine->pens[colormap[color]];
 
     plot_pixel(Machine->scrbitmap, x, y, pen);
 	plot_pixel(Machine->scrbitmap, x+1, y, pen);
@@ -130,10 +160,27 @@ static void plot_4_pixel(int x, int y, int pen)
 	plot_pixel(Machine->scrbitmap, x+1, y+1, pen);
 }
 
+int recalc_palette_offset(int code)
+{
+	switch(code)
+	{
+		case 0:
+			return 0;
+		case 8:
+			return 4;
+		case 3:
+			return 8;
+		case 15:
+			return 12;
+		default:
+			return 0; /* This is an error condition */
+	}
+}
+
 WRITE_HANDLER( channelf_port_0_w )
 {
-
 	LOG(("port_0_w: $%02x\n",data));
+
 /*
 	if (data & 0x40)
 		controller_enable = 1;
@@ -144,10 +191,19 @@ WRITE_HANDLER( channelf_port_0_w )
     if (data & 0x20)
 	{
         if (col == 125)
-			pal[row % 64] = (pal[row % 64] & 2) | ((data >> 1) & 1);
-		if (col == 126)
-			pal[row % 64] = (pal[row % 64] & 1) | (data & 2);
-		plot_4_pixel(col * 2, row * 2, pal[row % 64] * 4 + val);
+		{
+			palette_code[row] &= 0x03;
+			palette_code[row] |= (val << 2);
+			palette_offset[row] = recalc_palette_offset(palette_code[row]);
+		}
+		else if (col == 126)
+		{
+			palette_code[row] &= 0x0c;
+			palette_code[row] |= val;
+			palette_offset[row] = recalc_palette_offset(palette_code[row]);
+		}
+		else
+			plot_4_pixel(col * 2, row * 2, palette_offset[row]+val);
     }
 	latch[0] = data;
 }
@@ -158,27 +214,6 @@ WRITE_HANDLER( channelf_port_1_w )
 
     val = ((data ^ 0xff) >> 6) & 0x03;
 
-#if 0   /* I just can't understand that in channelf emu memory.c :-) */
-    int color;
-
-    switch (val)
-	{
-	case 0x3:
-		color = 4 + value;
-		break;
-	case 0x0:
-		color = 0 + value;
-		break;
-	case 0x3ff:
-		color = 8 + value;
-		break;
-	case 0x44:
-		color = 12 + value;
-		break;
-	default:
-		color = 4 + value;
-	}
-#endif
 	latch[1] = data;
 }
 
@@ -186,7 +221,7 @@ WRITE_HANDLER( channelf_port_4_w )
 {
 	LOG(("port_4_w: $%02x\n",data));
 
-    col = data ^ 0xff;
+    col = (data | 0x80) ^ 0xff;
 
     latch[2] = data;
 }
@@ -227,39 +262,39 @@ static struct MemoryWriteAddress writemem[] =
 
 static struct IOReadPort readport[] =
 {
-	{ 0x00, 0x00,	channelf_port_0_r },
-	{ 0x01, 0x01,	channelf_port_1_r },
-	{ 0x04, 0x04,	channelf_port_4_r },
-	{ 0x05, 0x05,	channelf_port_5_r },
+	{ 0x00, 0x00,	channelf_port_0_r }, /* Front panel switches */
+	{ 0x01, 0x01,	channelf_port_1_r }, /* Right controller     */
+	{ 0x04, 0x04,	channelf_port_4_r }, /* Left controller      */
+	{ 0x05, 0x05,	channelf_port_5_r }, /* ???                  */
     {-1}
 };
 
 static struct IOWritePort writeport[] =
 {
-	{ 0x00, 0x00,	channelf_port_0_w },
-	{ 0x01, 0x01,	channelf_port_1_w },
-	{ 0x04, 0x04,	channelf_port_4_w },
-	{ 0x05, 0x05,	channelf_port_5_w },
+	{ 0x00, 0x00,	channelf_port_0_w }, /* Enable Controllers & ARM WRT */
+	{ 0x01, 0x01,	channelf_port_1_w }, /* Video Write Data */
+	{ 0x04, 0x04,	channelf_port_4_w }, /* Video Horiz */
+	{ 0x05, 0x05,	channelf_port_5_w }, /* Video Vert & Sound */
     {-1}
 };
 
 INPUT_PORTS_START( channelf )
 	PORT_START /* Front panel buttons */
-	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_SELECT1 )
-	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_SELECT2 )
-	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_SELECT3 )
-	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_SELECT4 )
-	PORT_BIT ( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_SELECT1 )
+	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_SELECT2 )
+	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_SELECT3 )
+	PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_SELECT4 )
+	PORT_BIT ( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START /* Right controller */
-	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 )
-	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 )
-	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 )
-	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 )
-	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 	   | IPF_PLAYER1 )
-	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 	   | IPF_PLAYER1 )
-	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 	   | IPF_PLAYER1 )
-	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 	   | IPF_PLAYER1 )
+	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_PLAYER1 )
+	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 )
+	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 )
+	PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 )
+	PORT_BIT ( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 	   | IPF_PLAYER1 )
+	PORT_BIT ( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 	   | IPF_PLAYER1 )
+	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON3 	   | IPF_PLAYER1 )
+	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON4 	   | IPF_PLAYER1 )
 
 	PORT_START /* unused */
 	PORT_BIT ( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -267,65 +302,23 @@ INPUT_PORTS_START( channelf )
     PORT_START /* unused */
 	PORT_BIT ( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START /* Right controller */
-	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER2 )
-	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 )
-	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 )
-	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
-	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 	   | IPF_PLAYER2 )
-	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 	   | IPF_PLAYER2 )
-	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 	   | IPF_PLAYER2 )
-	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 	   | IPF_PLAYER2 )
+	PORT_START /* Left controller */
+	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_PLAYER2 )
+	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 )
+	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 )
+	PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
+	PORT_BIT ( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 	   | IPF_PLAYER2 )
+	PORT_BIT ( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 	   | IPF_PLAYER2 )
+	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON3 	   | IPF_PLAYER2 )
+	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON4 	   | IPF_PLAYER2 )
 
 INPUT_PORTS_END
-
-static UINT8 palette[] = {
-	0x00, 0x00, 0x00,	/* black */
-	0xff, 0xff, 0xff,	/* white */
-	0xff, 0x00, 0x00,	/* red	 */
-	0x00, 0xff, 0x00,	/* green */
-	0x00, 0x00, 0xff,	/* blue  */
-	0xbf, 0xbf, 0xbf,	/* ltgray  */
-	0xbf, 0xff, 0xbf,	/* ltgreen */
-	0xbf, 0xbf, 0xff	/* ltblue  */
-};
-
-#define BLACK	0
-#define WHITE   1
-#define RED     2
-#define GREEN   3
-#define BLUE    4
-#define LTGRAY  5
-#define LTGREEN 6
-#define LTBLUE	7
-
-static UINT16 colortable[] = {
-	BLACK,	BLACK,
-	WHITE,	BLACK,
-    WHITE,  BLACK,
-    WHITE,  BLACK,
-
-	LTBLUE, BLACK,
-	BLUE,	BLACK,
-	RED,	BLACK,
-	GREEN,	BLACK,
-
-	LTGRAY, BLACK,
-	BLUE,	BLACK,
-	RED,	BLACK,
-    GREEN,  BLACK,
-
-	LTGREEN,BLACK,
-	BLUE,	BLACK,
-	RED,	BLACK,
-	GREEN,	BLACK
-};
 
 /* Initialise the palette */
 static void init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
 {
 	memcpy(sys_palette,palette,sizeof(palette));
-	memcpy(sys_colortable,colortable,sizeof(colortable));
+	memcpy(sys_colortable,colormap,0);
 }
 
 static struct MachineDriver machine_driver_channelf =
@@ -334,7 +327,7 @@ static struct MachineDriver machine_driver_channelf =
 	{
 		{
 			CPU_F8,
-			2000000,	/* 2 MHz */
+			2000000,	/* 2 MHz ????? */
 			readmem,writemem,readport,writeport,
 			ignore_interrupt, 1
         }
@@ -346,9 +339,9 @@ static struct MachineDriver machine_driver_channelf =
 	NULL,					/* stop machine */
 
 	/* video hardware - include overscan */
-	122*2, 112*2, { 0, 122*2-1, 0, 112*2 - 1},
+	128*2, 64*2, { 0, 128*2 - 1, 0, 64*2 - 1},
 	NULL,
-	8, 16*2,
+	8, 0,
 	init_palette,			/* convert color prom */
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,	/* video flags */
