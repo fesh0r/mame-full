@@ -8,6 +8,9 @@ System Driver Changes:
 ----------------------
 - [Lviv] Support for .SAV snapshots. Joystick support. [Krzysztof Strzecha]
 
+- [SNES] Added support for fullgraphic VRAM transfers. Fixed VRAM reads. Fixed
+  a rare clip window bug. [Anthony Kruize]
+
 Source Changes:
 ---------------
 - Moved CRC handling to use the core fileio functions. [Nate Woods]
@@ -20,8 +23,7 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
-- [SNES] Added support for fullgraphic VRAM transfers. Fixed VRAM reads. Fixed
-  a rare clip window bug. [Anthony Kruize]
+(none)
 
 Source Changes:
 ---------------
