@@ -36,7 +36,27 @@
 #include "mamece.h"
 #include "resource.h"
 static HWND wince_menubar;
+
+struct commandmap_entry
+{
+	int menuitem_id;
+	int input_ui;
+	int state;	// 0=unchecked, 1=checked, -1=never checked
+	const int *stateptr;
+};
+
+extern int showfps;
+
+static struct commandmap_entry wince_commandmap[] =
+{
+	{ ID_FILE_PAUSE,			IPT_UI_PAUSE,			-1,	NULL},
+	{ IDOK,						IPT_UI_CANCEL,			-1,	NULL},
+#ifdef MAME_DEBUG
+	{ ID_OPTIONS_SHOWPROFILER,	IPT_UI_SHOW_PROFILER,	0,	NULL},
 #endif
+	{ ID_OPTIONS_SHOWFRAMERATE,	IPT_UI_SHOW_FPS,		0,	&showfps}
+};
+#endif // UNDER_CE
 
 #ifndef WMSZ_LEFT
 #define WMSZ_LEFT           1
@@ -191,8 +211,6 @@ static struct win_effect_data effect_table[] =
 	{ "rgbtiny", EFFECT_RGB_TINY,    2, 2, 2, 2 },
 	{ "scan75v", EFFECT_SCANLINE_75V,2, 2, 2, 2 },
 };
-
-
 
 //============================================================
 //	PROTOTYPES
@@ -494,6 +512,13 @@ int win_init_window(void)
 #ifdef UNDER_CE
 	gx_open_display(win_video_window, &win_color16_rsrc_shift, &win_color16_gsrc_shift, &win_color16_bsrc_shift,
 		&win_color16_rdst_shift, &win_color16_gdst_shift, &win_color16_bdst_shift);
+
+	{
+		int i;
+		for (i = 0; i < sizeof(wince_commandmap) / sizeof(wince_commandmap[0]); i++)
+			if (wince_commandmap[i].state != -1)
+				wince_commandmap[i].state = 0;
+	}
 #endif
 
 	return 0;
@@ -778,6 +803,27 @@ static void draw_video_contents(HDC dc, struct osd_bitmap *bitmap, int update)
 
 static LRESULT CALLBACK video_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam)
 {
+#ifdef UNDER_CE
+	if (wince_menubar)
+	{
+/*		int i;
+		for (i = 0; i < sizeof(wince_commandmap) / sizeof(wince_commandmap[0]); i++)
+		{
+			struct commandmap_entry *e = &wince_commandmap[i];
+			if ((e->state != -1) && (e->stateptr))
+			{
+				if (e->state != *(e->stateptr))
+				{
+					HMENU hSubMenu = CommandBar_GetMenu(wince_menubar, 0);
+					e->state = *(e->stateptr);
+					CheckMenuItem(hSubMenu, e->menuitem_id,
+						MF_BYCOMMAND | (e->state ? MF_CHECKED : MF_UNCHECKED));
+				}
+			}
+		}
+*/	}
+#endif
+
 	// handle a few messages
 	switch (message)
 	{
@@ -843,22 +889,12 @@ static LRESULT CALLBACK video_window_proc(HWND wnd, UINT message, WPARAM wparam,
 #ifdef UNDER_CE
 		case WM_COMMAND:
 			{
-				static int commandmap[] =
-				{
-					ID_FILE_PAUSE,				IPT_UI_PAUSE,
-					IDOK,						IPT_UI_CANCEL,
-#ifdef MAME_DEBUG
-					ID_OPTIONS_SHOWPROFILER,	IPT_UI_SHOW_PROFILER,
-#endif
-					ID_OPTIONS_SHOWFRAMERATE,	IPT_UI_SHOW_FPS
-				};
 				int i;
-
-				for (i = 0; i < sizeof(commandmap) / sizeof(commandmap[0]); i += 2)
+				for (i = 0; i < sizeof(wince_commandmap) / sizeof(wince_commandmap[0]); i++)
 				{
-					if (commandmap[i] == LOWORD(wparam))
+					if (wince_commandmap[i].menuitem_id == LOWORD(wparam))
 					{
-						input_ui_post(commandmap[i+1]);
+						input_ui_post(wince_commandmap[i].input_ui);
 						break;
 					}
 				}

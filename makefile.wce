@@ -238,6 +238,7 @@ LIBS = \
 	coredll.lib \
 	corelibc.lib \
 	aygshell.lib \
+	commctrl.lib \
 	uuid.lib \
 	gx.lib
 

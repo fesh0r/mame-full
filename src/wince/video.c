@@ -132,7 +132,7 @@ static TICKER last_skipcount0_time;
 static TICKER this_frame_base;
 
 // FPS display info
-static int showfps;
+int showfps;
 static int showfpstemp;
 static int vups;
 static int vfcount;
