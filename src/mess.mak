@@ -451,6 +451,7 @@ $(OBJ)/fairch.a: \
 
 $(OBJ)/ti99.a:	   \
 		$(OBJ)/mess/machine/tms9901.o  \
+		$(OBJ)/mess/sndhrdw/spchroms.o \
 		$(OBJ)/mess/machine/ti99_4x.o  \
 		$(OBJ)/mess/systems/ti99_4x.o  \
 		$(OBJ)/mess/systems/ti99_2.o	 \
@@ -664,6 +665,7 @@ COREOBJS += \
 		$(OBJ)/mess/printer.o \
 		$(OBJ)/mess/menuentr.o \
 		$(OBJ)/mess/utils.o \
+		$(OBJ)/mess/bcd.o \
 		$(OBJ)/mess/vidhrdw/state.o \
 		$(OBJ)/mess/vidhrdw/m6847.o	 \
 		$(OBJ)/mess/vidhrdw/m6845.o	 \
