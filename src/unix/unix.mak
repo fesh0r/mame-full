@@ -104,7 +104,7 @@ OBJDIRS = $(OBJ) \
 	$(OBJ)/cpu/z8000 $(OBJ)/cpu/tms32010 $(OBJ)/cpu/h6280 \
 	$(OBJ)/cpu/ccpu $(OBJ)/cpu/pdp1 $(OBJ)/cpu/konami $(OBJ)/cpu/nec \
 	$(OBJ)/cpu/gensync $(OBJ)/cpu/adsp2100 $(OBJ)/cpu/z80gb $(OBJ)/cpu/arm \
-	$(OBJ)/cpu/mips $(OBJ)/cpu/sc61860 \
+	$(OBJ)/cpu/mips $(OBJ)/cpu/sc61860 $(OBJ)/cpu/f8 $(OBJ)/cpu/g65816 \
 	$(OBJ)/mess $(OBJ)/mess/formats $(OBJ)/mess/systems $(OBJ)/mess/machine \
 	$(OBJ)/mess/vidhrdw $(OBJ)/mess/sndhrdw $(OBJ)/mess/tools
 
