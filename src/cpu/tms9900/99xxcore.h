@@ -272,6 +272,7 @@ Other references can be found on spies.com:
 	supported, and the CPU can be configured to output its IDLE state on the P16 I/O pin.
 */
 #define EXTERNAL_INSTRUCTION_DECODING (TMS99XX_MODEL != TI990_10_ID) && (TMS99XX_MODEL != TI9940_ID) && (TMS99XX_MODEL != TI9985_ID)
+#define EXTERNAL_INSTRUCTION_CALLBACK (TMS99XX_MODEL == TI990_10_ID)
 
 /*
 	ti990/10, ti990/12 and tms99000 support privileges
@@ -558,6 +559,12 @@ typedef struct
 
 	/* notify the driver of changes in IDLE state */
 	void (*idle_callback)(int state);
+
+#if EXTERNAL_INSTRUCTION_CALLBACK
+	void (*rset_callback)(void);
+	void (*lrex_callback)(void);
+	void (*ckon_ckof_callback)(int state);
+#endif
 
 } tms99xx_Regs;
 
@@ -1109,10 +1116,10 @@ WRITE_HANDLER(tms9995_internal2_w)
 #define WRITEREG(reg,data)    writeword(I.WP+reg,data)
 
 #if (TMS99XX_MODEL == TI990_10_ID)
-
+	#warning "Todo..."
 	READ16_HANDLER(ti990_10_mapper_cru_r)
 	{
-		
+		return 0;
 	}
 
 	WRITE16_HANDLER(ti990_10_mapper_cru_w)
@@ -1184,8 +1191,21 @@ void TMS99XX_INIT(void)
 {
 }
 
-void TMS99XX_RESET(void *param)
+void TMS99XX_RESET(void *p)
 {
+#if (TMS99XX_MODEL == TI990_10_ID)
+	ti990_10reset_param *param = (ti990_10reset_param *) p;
+#elif (TMS99XX_MODEL == TMS9995_ID)
+	tms9995reset_param *param = (tms9995reset_param *) p;
+#endif
+
+	#if (TMS99XX_MODEL == TI990_10_ID)
+		I.idle_callback = param ? param->idle_callback : NULL;
+		I.rset_callback = param ? param->rset_callback : NULL;
+		I.lrex_callback = param ? param->lrex_callback : NULL;
+		I.ckon_ckof_callback = param ? param->ckon_ckof_callback : NULL;
+	#endif
+
 	contextswitch(0x0000);
 
 	I.STATUS = 0; /* TMS9980 and TMS9995 Data Books say so */
@@ -1226,8 +1246,8 @@ void TMS99XX_RESET(void *param)
 		}
 		else
 		{
-			I.memory_wait_states_byte = (((tms9995reset_param *) param)->auto_wait_state) ? 4 : 0;
-			I.memory_wait_states_word = (((tms9995reset_param *) param)->auto_wait_state) ? 12 : 4;
+			I.memory_wait_states_byte = (param->auto_wait_state) ? 4 : 0;
+			I.memory_wait_states_word = (param->auto_wait_state) ? 12 : 4;
 		}
 
 		I.MID_flag = 0;
@@ -1236,7 +1256,7 @@ void TMS99XX_RESET(void *param)
 		set_flag0(0);
 		set_flag1(0);
 
-		/* Clear internal interupt latches */
+		/* Clear internal interrupt latches */
 		I.int_latch = 0;
 		I.flag &= 0xFFE3;
 	#endif
@@ -1468,7 +1488,7 @@ void TMS99XX_SET_CONTEXT(void *src)
 		I = *(tms99xx_Regs*)src;
 		/* We have to make additionnal checks, because Mame debugger can foolishly initialize
 		the context to all 0s */
-		#if (TMS99XX_MODEL == TMS9900_ID)
+		#if (TMS99XX_MODEL == TMS9900_ID) || (TMS99XX_MODEL == TI990_10_ID)
 			if (! I.irq_state)
 				I.irq_level = 16;
 		#elif ((TMS99XX_MODEL == TMS9980_ID) || (TMS99XX_MODEL == TMS9995_ID))
@@ -1491,6 +1511,7 @@ unsigned TMS99XX_GET_REG(int regnum)
 	switch( regnum )
 	{
 #if (TMS99XX_MODEL == TI990_10_ID)
+		#warning "todo: handle mapping"
 		case REG_PC: return (I.PC < 0xf800) ? I.PC : I.PC + 0x1f0000;
 #else
 		case REG_PC:
@@ -1527,8 +1548,15 @@ void TMS99XX_SET_REG(int regnum, unsigned val)
 	switch( regnum )
 	{
 #if (TMS99XX_MODEL == TI990_10_ID)
-		#warning "how should we handle this ???"
-		case REG_PC: I.PC = val & 0xffff; break;
+		#warning "todo: handle reverse mapping"
+		case REG_PC:
+			if (! I.mapping_on)
+			{
+				I.PC = val & 0xffff;
+			}
+			else
+				
+			break;
 #else
 		case REG_PC:
 #endif
@@ -1583,11 +1611,11 @@ void ti990_10_set_irq_line(int irqline, int state)
 			/* trick : 16 will always be bigger than the IM (0-15), so there will never be interrupts */
 		else
 		{
-	#if SILLY_INTERRUPT_HACK
-			I.irq_level = IRQ_MAGIC_LEVEL;
-	#else
-			I.irq_level = (* I.irq_callback)(0);
-	#endif
+			#if SILLY_INTERRUPT_HACK
+				I.irq_level = IRQ_MAGIC_LEVEL;
+			#else
+				I.irq_level = (* I.irq_callback)(0);
+			#endif
 		}
 
 		field_interrupt();  /* interrupt state is likely to have changed */
@@ -3175,13 +3203,17 @@ static void h0200(UINT16 opcode)
 
 		#if EXTERNAL_INSTRUCTION_DECODING
 			external_instruction_notify(3);
-		#else
-			/*if (I.rset_callback)
-				(*I.rset_callback)();*/
+		#endif
+
+		#if EXTERNAL_INSTRUCTION_CALLBACK
+			if (I.rset_callback)
+				(*I.rset_callback)();
 		#endif
 
 		CYCLES(5, 12, 7);
 		break;
+
+#if EXTERNAL_INSTRUCTION_DECODING
 
 	case 13:  /* CKON */
 	case 14:  /* CKOF */
@@ -3204,14 +3236,64 @@ static void h0200(UINT16 opcode)
 			}
 		#endif
 
-		#if EXTERNAL_INSTRUCTION_DECODING
-			external_instruction_notify((opcode & 0x00e0) >> 5);
-		#else
+		external_instruction_notify((opcode & 0x00e0) >> 5);
+
+		#if EXTERNAL_INSTRUCTION_CALLBACK
 			#warning "todo..."
 		#endif
 
-		CYCLES(5 /*6 for LREX*/, 12, 7);
+		CYCLES(Mooof!, 12, 7);
 		break;
+
+#elif EXTERNAL_INSTRUCTION_CALLBACK
+
+	case 13:  /* CKON */
+	case 14:  /* CKOF */
+		/* CKON -- ClocK ON */
+		/* Perform a special CRU write (code 5). */
+		/* An external circuitery could, for instance, enable the line clock interrupt (100Hz or 120Hz, depending on voltage). */
+		/* CKOF -- ClocK OFf */
+		/* Perform a special CRU write (code 6). */
+		/* An external circuitery could, for instance, disable the line clock interrupt. */
+		#if HAS_PRIVILEGE
+			if (I.STATUS & ST_PR)
+			{
+				HANDLE_PRIVILEGE_VIOLATION
+				break;
+			}
+		#endif
+
+		if (I.ckon_ckof_callback)
+			(*I.ckon_ckof_callback)((opcode & 0x0020) ? 1 : 0);
+
+
+		CYCLES(5, Mooof!, Mooof!);
+		break;
+
+	case 15:  /* LREX */
+		/* LREX -- Load or REstart eXecution */
+		/* Perform a special CRU write (code 7). */
+		/* An external circuitery could, for instance, activate the LOAD* line,
+		   causing a non-maskable LOAD interrupt (vector -1). */
+		#if HAS_PRIVILEGE
+			if (I.STATUS & ST_PR)
+			{
+				HANDLE_PRIVILEGE_VIOLATION
+				break;
+			}
+		#endif
+
+		if (I.lrex_callback)
+			(*I.lrex_callback)();
+
+		CYCLES(6, Mooof!, Mooof!);
+		break;
+
+#else
+
+	#warning "Should not happen..."
+
+#endif
 
 #endif
 	}

@@ -61,6 +61,17 @@ extern void ti990_10_set_irq_callback(int (*callback)(int irqline));
 extern const char *ti990_10_info(void *context, int regnum);
 extern unsigned ti990_10_dasm(char *buffer, unsigned pc);
 
+/*
+  structure with the parameters tms9995_reset wants.
+*/
+typedef struct ti990_10reset_param
+{
+	void (*idle_callback)(int state);
+	void (*rset_callback)(void);
+	void (*lrex_callback)(void);
+	void (*ckon_ckof_callback)(int state);
+} ti990_10reset_param;
+
 /* accessor for the internal ROM */
 extern READ16_HANDLER(ti990_10_internal_r);
 
