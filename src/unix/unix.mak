@@ -266,7 +266,6 @@ endif
 
 ifdef DEBUG
 MY_CFLAGS += -DMAME_DEBUG
-MY_LIBS   += -lcurses
 endif
 
 ifdef XMAME_NET
@@ -577,7 +576,7 @@ romcmp: $(OBJ)/romcmp.o $(OBJ)/unzip.o $(ZLIB)
 	$(CC_COMMENT) @echo 'Linking $@...'
 	$(CC_COMPILE) $(LD) $(LDFLAGS) $^ $(LIBS) -o $@
 
-chdman: $(OBJ)/chdman.o $(OBJ)/chd.o $(OBJ)/chdcd.o $(OBJ)/md5.o $(OBJ)/sha1.o $(OBJ)/version.o $(ZLIB)
+chdman: $(OBJ)/chdman.o $(OBJ)/chd.o $(OBJ)/chdcd.o $(OBJ)/cdrom.o $(OBJ)/md5.o $(OBJ)/sha1.o $(OBJ)/version.o $(ZLIB)
 	$(CC_COMMENT) @echo 'Linking $@...'
 	$(CC_COMPILE) $(LD) $(LDFLAGS) $^ $(LIBS) -o $@
 
