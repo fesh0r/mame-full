@@ -284,8 +284,7 @@ extern struct GameDriver driver_wbml;
 
 static void draw_sprite(struct osd_bitmap *bitmap,int spr_number)
 {
-	int sx,sy,col,row,height,src;
-	int bank;
+	int sy,row,height,src,bank;
 	unsigned char *sprite_base;
 	unsigned short *sprite_palette;
 	INT16 skip;	/* bytes to skip before drawing each row (can be negative) */
@@ -301,73 +300,70 @@ static void draw_sprite(struct osd_bitmap *bitmap,int spr_number)
 
 	height = sprite_base[SPR_Y_BOTTOM] - sprite_base[SPR_Y_TOP];
 	sprite_palette = Machine->remapped_colortable + 0x10 * spr_number;
-	sx = sprite_base[SPR_X_LO] + ((sprite_base[SPR_X_HI] & 0x01) << 8);
-	sx /= 2;	/* the hardware has sub-pixel placement, it seems */
-	if (Machine->gamedrv == &driver_wbml || Machine->gamedrv->clone_of == &driver_wbml)
-		sx += 7;
-	sy = sprite_base[SPR_Y_TOP] + 1;
+
+	sy = sprite_base[SPR_Y_TOP];// + 1;
 
 	/* graphics region #2 contains the packed sprite data */
 	gfx = &memory_region(REGION_GFX2)[bank];
 
 	for (row = 0;row < height;row++)
 	{
+		int x,x_flipped;
 		int y,y_flipped;
+		int src2;
 
-		src += skip;
+		src = src2 = src + skip;
 
+		/* the +1 prevents sprite lag in Wonder Boy */
+		x = sprite_base[SPR_X_LO] + ((sprite_base[SPR_X_HI] & 0x01) << 8) + 1;
+		if (Machine->gamedrv == &driver_wbml || Machine->gamedrv->clone_of == &driver_wbml)
+		{
+			x += 7*2;
+		}
+		x_flipped = x;
 		y = y_flipped = sy+row;
+
 		if (flip_screen)
 		{
 			y_flipped = 258 - sy - height + row;
+			x_flipped = (252*2) - x;
 		}
 
-		col = 0;
-		while (col < 256)	/* this is only a safety check, */
-							/* drawing is stopped by color == 15 */
+		x /= 2;	/* the hardware has sub-pixel placement, it seems */
+		x_flipped /= 2;
+
+		while (1)
 		{
-			int color1,color2,x,x_flipped;
+			int color1,color2,data;
 
-			if (src & 0x8000)	/* flip x */
+			data = gfx[src2 & 0x7fff];
+
+			if (src & 0x8000)
 			{
-				int offs,data;
+				src2--;
 
-				offs = (src - col / 2) & 0x7fff;
-
-				data = gfx[offs];
 				color1 = data & 0x0f;
 				color2 = data >> 4;
 			}
 			else
 			{
+				src2++;
 
-				int offs,data;
-
-				offs = (src + col / 2) & 0x7fff;
-
-				data = gfx[offs];
 				color1 = data >> 4;
 				color2 = data & 0x0f;
-			}
-
-			x = x_flipped = sx+col;
-			if (flip_screen)
-			{
-				x_flipped = 251 - x_flipped;
 			}
 
 			if (color1 == 15) break;
 			if (color1)
 				draw_pixel(bitmap,x,y,x_flipped,y_flipped,spr_number,sprite_palette[color1]);
-
 			x++;
 			x_flipped += flip_screen ? -1 : 1;
 
 			if (color2 == 15) break;
 			if (color2)
 				draw_pixel(bitmap,x,y,x_flipped,y_flipped,spr_number,sprite_palette[color2]);
-
-			col += 2;
+			x++;
+			x_flipped += flip_screen ? -1 : 1;
 		}
 	}
 }

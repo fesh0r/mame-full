@@ -8,7 +8,9 @@ driver by Jarek Parchanski, Nicola Salmoria, Mirko Buffoni
 Up'n Down, Mister Viking, Flicky, SWAT, Water Match and Bull Fight are known
 to run on IDENTICAL hardware (they were sold by Bally-Midway as ROM swaps).
 
-TODO: background is misplaced in wbmlju
+TODO: - background is misplaced in wbmlju
+	  - sprites stick in Pitfall II
+	  - sprite priorities are probably wrong
 
 ******************************************************************************/
 
@@ -1762,50 +1764,6 @@ static struct MachineDriver machine_driver_small =
 };
 
 
-static struct MachineDriver machine_driver_pitfall2 =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3650000,        	/* 3.65 MHz ? changing it to 4 makes the title disappear */
-			readmem,writemem,readport,writeport,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,        	/* 3 MHz ? */
-			sound_readmem,sound_writemem,0,0,
-			interrupt,4		 /* NMIs are caused by the main CPU */
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,   /* frames per second, vblank duration */
-	1,        		  /* single CPU, no need for interleaving */
-	system1_init_machine,
-
-	/* video hardware */
-	256, 256, { 0*8, 32*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	1536, 1536,
-	system1_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
-	0,
-	system1_vh_start,
-	system1_vh_stop,
-	system1_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SN76496,
-			&sn76496_interface
-		}
-	}
-};
-
-
 static struct MachineDriver machine_driver_hvymetal =
 {
 	/* basic machine hardware */
@@ -3415,8 +3373,8 @@ GAME (1984, swat,     0,        system1,  swat,     swat,     ROT270, "Coreland 
 GAME (1984, flicky,   0,        system1,  flicky,   flicky,   ROT0,   "Sega", "Flicky (set 1)" )
 GAME (1984, flicky2,  flicky,   system1,  flicky,   flicky,   ROT0,   "Sega", "Flicky (set 2)" )
 GAME (1984, bullfgtj, 0,        system1,  bullfgtj, bullfgtj, ROT0,   "Sega / Coreland", "The Tougyuu (Japan)" )	/* Bull Fight */
-GAME (1985, pitfall2, 0,        pitfall2, pitfall2, pitfall2, ROT0,   "Sega", "Pitfall II" )
-GAME (1985, pitfallu, pitfall2, pitfall2, pitfallu, 0,        ROT0,   "Sega", "Pitfall II (not encrypted)" )
+GAME (1985, pitfall2, 0,        system1,  pitfall2, pitfall2, ROT0,   "Sega", "Pitfall II" )
+GAME (1985, pitfallu, pitfall2, system1,  pitfallu, 0,        ROT0,   "Sega", "Pitfall II (not encrypted)" )
 GAME (1985, seganinj, 0,        system1,  seganinj, seganinj, ROT0,   "Sega", "Sega Ninja" )
 GAME (1985, seganinu, seganinj, system1,  seganinj, 0,        ROT0,   "Sega", "Sega Ninja (not encrypted)" )
 GAME (1985, nprinces, seganinj, system1,  seganinj, nprinces, ROT0,   "Sega", "Ninja Princess" )
