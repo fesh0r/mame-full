@@ -216,7 +216,8 @@ CPUOBJS = \
           $(OBJ)/cpu/g65816/g65816o2.o \
           $(OBJ)/cpu/g65816/g65816o3.o \
           $(OBJ)/cpu/g65816/g65816o4.o \
-	  $(OBJ)/cpu/cp1600/cp1600.o
+	  $(OBJ)/cpu/cp1600/cp1600.o \
+	  $(OBJ)/cpu/sh2/sh2.o
 
 DBGOBJS = \
           $(OBJ)/cpu/z80/z80dasm.o \
@@ -246,7 +247,8 @@ DBGOBJS = \
           $(OBJ)/cpu/sc61860/disasm.o \
           $(OBJ)/cpu/arm/dasm.o \
           $(OBJ)/cpu/g65816/g65816ds.o \
-	  $(OBJ)/cpu/cp1600/1600dasm.o
+	  $(OBJ)/cpu/cp1600/1600dasm.o \
+	  $(OBJ)/cpu/sh2/sh2dasm.o
 
 SNDOBJS = \
          $(OBJ)/sound/samples.o \
@@ -328,13 +330,14 @@ DRV_OBJS = \
           $(OBJ)/mess/machine/coleco.o   \
           $(OBJ)/mess/vidhrdw/coleco.o   \
           $(OBJ)/mess/systems/coleco.o	\
-          $(OBJ)/mess/vidhrdw/smsvdp.o   \
-          $(OBJ)/mess/machine/sms.o      \
-          $(OBJ)/mess/systems/sms.o      \
-          $(OBJ)/mess/vidhrdw/genesis.o  \
-          $(OBJ)/mess/machine/genesis.o  \
-          $(OBJ)/mess/sndhrdw/genesis.o  \
-          $(OBJ)/mess/systems/genesis.o	\
+	  $(OBJ)/mess/vidhrdw/smsvdp.o	 \
+	  $(OBJ)/mess/machine/sms.o	 \
+	  $(OBJ)/mess/systems/sms.o	 \
+	  $(OBJ)/mess/vidhrdw/genesis.o  \
+	  $(OBJ)/mess/machine/genesis.o  \
+	  $(OBJ)/mess/sndhrdw/genesis.o  \
+	  $(OBJ)/mess/systems/genesis.o  \
+	  $(OBJ)/mess/systems/saturn.o   \
           $(OBJ)/mess/machine/atari.o    \
           $(OBJ)/mess/vidhrdw/antic.o    \
           $(OBJ)/mess/vidhrdw/gtia.o     \
@@ -769,6 +772,9 @@ imgtool.exe:	$(IMGTOOL_OBJS)
 {src/cpu/cp1600}.c{$(OBJ)/cpu/cp1600}.o:
 	$(CC) $(DEFS) $(CFLAGS) -Fo$@ -c $<
 
+{src/cpu/sh2}.c{$(OBJ)/cpu/sh2}.o:
+	$(CC) $(DEFS) $(CFLAGS) -Fo$@ -c $<
+
 {src/vidhrdw}.c{$(OBJ)/vidhrdw}.o:
 	$(CC) $(DEFS) $(CFLAGS) -Fo$@ -c $<
 
@@ -903,6 +909,7 @@ maketree:
 	md $(OBJ)\cpu\g65816
 	md $(OBJ)\cpu\f8
 	md $(OBJ)\cpu\cp1600
+	md $(OBJ)\cpu\sh2
 	md $(OBJ)\sound
 	md $(OBJ)\drivers
 	md $(OBJ)\machine
@@ -962,6 +969,7 @@ clean:
 	del $(OBJ)\cpu\g65816\*.o
 	del $(OBJ)\cpu\f8\*.o
 	del $(OBJ)\cpu\cp1600\*.o
+	del $(OBJ)\cpu\sh2\*.o
 	del $(OBJ)\sound\*.o
 	del $(OBJ)\drivers\*.o
 	del $(OBJ)\machine\*.o
@@ -1025,6 +1033,7 @@ cleandebug:
 	del $(OBJ)\cpu\g65816\*.o
 	del $(OBJ)\cpu\f8\*.o
 	del $(OBJ)\cpu\cp1600\*.o
+	del $(OBJ)\cpu\sh2\*.o
 	del $(EXENAME)
 
 cleantiny:
