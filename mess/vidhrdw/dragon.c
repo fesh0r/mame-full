@@ -115,8 +115,9 @@ static int internal_dragon_vh_start(int m6847_version, void (*charproc)(UINT8))
 {
 	struct m6847_init_params p;
 
-	memset(&p, '\0', sizeof(p));
+	m6847_vh_normalparams(&p);
 	p.version = m6847_version;
+	p.clock = COCO_TIMER_CMPCARRIER;
 	p.artifactdipswitch = 12;
 	p.ram = memory_region(REGION_CPU1);
 	p.ramsize = 0x10000;
@@ -206,8 +207,9 @@ int coco3_vh_start(void)
     int i;
 	struct m6847_init_params p;
 
-	memset(&p, '\0', sizeof(p));
+	m6847_vh_normalparams(&p);
 	p.version = M6847_VERSION_M6847T1;
+	p.clock = COCO_TIMER_CMPCARRIER;
 	p.artifactdipswitch = 12;
 	p.ram = memory_region(REGION_CPU1);
 	p.ramsize = 0x10000;
@@ -466,8 +468,8 @@ int coco3_calculate_rows(int *bordertop, int *borderbottom)
 	switch((coco3_gimevhreg[1] & 0x60) >> 5) {
 	case 0:
 		rows = 192;
-		t = 37;
-		b = 34;
+		t = 36;
+		b = 35;
 		break;
 	case 1:
 		rows = 199;

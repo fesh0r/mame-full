@@ -283,6 +283,14 @@ static unsigned char fontdata8x12[] =
  * Initialization and termination
  * -------------------------------------------------- */
 
+void m6847_vh_normalparams(struct m6847_init_params *params)
+{
+	memset(params, '\0', sizeof(struct m6847_init_params));
+	params->version = M6847_VERSION_ORIGINAL;
+	params->artifactdipswitch = -1;
+	params->clock = TIME_IN_HZ(3588545.0);
+}
+
 void m6847_vh_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
 {
 	assert((sizeof(artifactfactors) / (sizeof(artifactfactors[0]) * 3)) == M6847_ARTIFACT_COLOR_COUNT);
@@ -353,7 +361,7 @@ int m6847_vh_start(const struct m6847_init_params *params)
  * Source: Motorola M6847 Manual
  * -------------------------------------------------- */
 
-#define CLK		TIME_IN_HZ(3588545.0)
+#define CLK		(the_state.initparams.clock)
 #define DHS_F	TIME_IN_NSEC(550)
 #define DHS_R	TIME_IN_NSEC(740)
 #define DFS_F	TIME_IN_NSEC(520)

@@ -3,6 +3,10 @@
 
 #include "vidhrdw/m6847.h"
 #include "includes/rstrbits.h"
+
+#define COCO_CPU_SPEED	(TIME_IN_HZ(894886))
+#define COCO_TIMER_CMPCARRIER	(COCO_CPU_SPEED * 0.25)
+
 /* ----------------------------------------------------------------------- *
  * Backdoors into mess/vidhrdw/m6847.c                                     *
  * ----------------------------------------------------------------------- */

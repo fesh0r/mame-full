@@ -135,12 +135,6 @@ static void coco_cartridge_enablesound(int enable);
 #define LOG_DEC_TIMER	0
 #endif /* MAME_DEBUG */
 
-#define COCO_CPU_SPEED	(TIME_IN_HZ(894886))
-
-#define COCO_TIMER_HSYNC		(COCO_CPU_SPEED * 57.0)
-#define COCO_TIMER_VSYNC		(COCO_CPU_SPEED * 14934.0)
-#define COCO_TIMER_CMPCARRIER	(COCO_CPU_SPEED * 0.25)
-
 static void coco3_timer_hblank(void);
 
 static struct pia6821_interface dragon_pia_intf[] =

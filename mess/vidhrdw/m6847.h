@@ -24,6 +24,7 @@ enum {
 
 struct m6847_init_params {
 	int version;				/* use one of the above initialization constants */
+	double clock;				/* the clock speed (normally ~3.58MHz) */
 	int artifactdipswitch;		/* dip switch that controls artifacting; -1 if NA */
 	UINT8 *ram;					/* the base of RAM */
 	int ramsize;				/* the size of accessible RAM */
@@ -33,6 +34,10 @@ struct m6847_init_params {
 	mem_write_handler fs_func;	/* Field sync */
 	double callback_delay;		/* Amount of time to wait before invoking callbacks (this is a CoCo related hack */
 };
+
+/* This call fills out the params structure with defaults; this is so I can
+ * change around the structure without breaking people's code */
+void m6847_vh_normalparams(struct m6847_init_params *params);
 
 void m6847_vh_init_palette(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom);
 int m6847_vh_start(const struct m6847_init_params *params);
