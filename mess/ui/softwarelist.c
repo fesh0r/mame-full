@@ -395,9 +395,6 @@ static BOOL ImageData_Realize(ImageData *img, enum RealizeLevel eRealize, mess_i
 {
 	BOOL bLearnedSomething = FALSE;
 	char *hash_ptr = NULL;
-#if HAS_HASH
-	mess_image_type *imgtype = NULL;
-#endif /* HAS_HASH */
 
 	/* Calculate image type */
 	if (!img->realized)
