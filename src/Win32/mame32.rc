@@ -2,7 +2,9 @@
 //
 #include "resource.h"
 
+#ifdef MESS
 #define MESS_PICKER
+#endif
 
 // Generated Help ID header file
 #define APSTUDIO_HIDDEN_SYMBOLS

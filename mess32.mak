@@ -768,7 +768,7 @@ $(OBJ)/cpu/t11/t11.o:           src/cpu/t11/t11.c src/cpu/t11/t11.h src/cpu/t11/
 $(OBJ)/cpu/m68000/m68kcpu.o:    $(OBJ)/cpu/m68000/m68kops.c src/cpu/m68000/m68kmake.c src/cpu/m68000/m68k_in.c
 $(OBJ)/cpu/ccpu/ccpu.o:         src/cpu/ccpu/ccpu.c src/cpu/ccpu/ccpu.h src/cpu/ccpu/ccputabl.c
 $(OBJ)/cpu/konami/konami.o:     src/cpu/konami/konami.c src/cpu/konami/konami.h src/cpu/konami/konamops.c src/cpu/konami/konamtbl.c
-$(OBJ)/mess/win32/mess32ui.o:	src/win32/mess32ui.c src/win32/win32ui.c src/win32/win32ui.h
+$(OBJ)/mess/win32/mess32ui.o:	mess/win32/mess32ui.c src/win32/win32ui.c src/win32/win32ui.h
 
 .IGNORE:
 
