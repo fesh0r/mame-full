@@ -1,5 +1,5 @@
 #include "driver.h"
-#include "rstrtrck.h"
+#include "includes/rstrtrck.h"
 #include "vidhrdw/generic.h"
 
 static struct rastertrack_interface *intf;
