@@ -415,7 +415,7 @@ static int concept_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 			type = "???";
 			break;
 		}
-		snprintf(ent->attr, ent->attr_len, type);
+		snprintf(ent->attr, ent->attr_len, "%s", type);
 
 		/* len in physrecs */
 		ent->filesize = get_UINT16xE(iter->image->dev_dir.vol_hdr.disk_flipped, iter->image->dev_dir.file_dir[iter->index].next_block)
