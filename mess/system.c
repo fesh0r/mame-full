@@ -672,16 +672,18 @@ XL/XE 16kB OS roms
 //	DRIVER( apexc )		/* 1951(?) APEXC: All-Purpose Electronic X-ray Computer */
 
 	/* Sony */
-//TESTDRIVER( psx )
-//TESTDRIVER( psxj22 )
-//TESTDRIVER( psxa22 )
-//TESTDRIVER( psxe22 )
-//TESTDRIVER( psxj30 )
-//TESTDRIVER( psxa30 )
-//TESTDRIVER( psxe30 )
-//TESTDRIVER( psxj40 )
-//TESTDRIVER( psxa41 )
-//TESTDRIVER( psxe41 )
+//	DRIVER( psx )
+//	DRIVER( psxe20 )
+//	DRIVER( psxa22 )
+//	DRIVER( psxe22 )
+//	DRIVER( psxj22 )
+//	DRIVER( psxj30 )
+//	DRIVER( psxe30 )
+//	DRIVER( psxa30 )
+//	DRIVER( psxj40 )
+//	DRIVER( psxa41 )
+//	DRIVER( psxe41 )
+//	DRIVER( psxa45 )
 
 	/* Corvus */
 //	DRIVER(concept)		/* 1982 Corvus Concept								*/
