@@ -345,7 +345,7 @@ int ti99_floppy_init(int id, void *fp, int open_mode)
 			basicdsk_set_geometry(id, 40, 1, 9, 256, 0, 0);
 			break;
 		case 2*40*18*256:	/* 360kbytes: DSDD */
-			basicdsk_set_geometry(id, 80, 2, 18, 256, 0, 0);
+			basicdsk_set_geometry(id, 40, 2, 18, 256, 0, 0);
 			break;
 		}
 
