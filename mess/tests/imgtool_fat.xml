@@ -107,11 +107,36 @@
 	</checkdirectory>
 	<checkdirectory path="/FOO"/>
 
-<!--
 	<deletedirectory path="/FOO"/>
 
 	<checkdirectory path="/"/>
--->
 </imgtooltest>
 
+<!-- Testing many files in a subdirectory
+<imgtooltest name="fat_005">
+	<createimage driver="pc_dsk_fat"/>
+	<createdirectory path="FOO"/>
+
+	<putfile name="\FOO\1.TXT"/>
+	<putfile name="\FOO\2.TXT"/>
+	<putfile name="\FOO\3.TXT"/>
+	<putfile name="\FOO\4.TXT"/>
+	<putfile name="\FOO\5.TXT"/>
+	<putfile name="\FOO\6.TXT"/>
+	<putfile name="\FOO\7.TXT"/>
+	<putfile name="\FOO\8.TXT"/>
+	<putfile name="\FOO\9.TXT"/>
+	<checkdirectory path="\FOO">
+		<entry name="1.TXT"/>
+		<entry name="2.TXT"/>
+		<entry name="3.TXT"/>
+		<entry name="4.TXT"/>
+		<entry name="5.TXT"/>
+		<entry name="6.TXT"/>
+		<entry name="7.TXT"/>
+		<entry name="8.TXT"/>
+		<entry name="9.TXT"/>
+	</checkdirectory>
+</imgtooltest>
+-->
 </tests>

@@ -646,6 +646,7 @@ static void fat_set_fat_entry(imgtool_image *image, UINT8 *fat_table, UINT32 fat
 
 	disk_info = (const struct fat_diskinfo *) imgtool_floppy_extrabytes(image);
 	bit_index = fat_entry * disk_info->fat_bits;
+	value &= 0xFFFFFFFF >> (32 - disk_info->fat_bits);
 
 	for (i = 0; i < disk_info->fat_count; i++)
 	{
@@ -784,7 +785,7 @@ static imgtoolerr_t fat_readwrite_file(imgtool_image *image, struct fat_file *fi
 	if (!file->directory)
 		buffer_len = MIN(buffer_len, file->filesize - file->index);
 
-	while(buffer_len > 0)
+	while(!file->eof && (buffer_len > 0))
 	{
 		sector_index = fat_get_filepos_sector_index(image, file);
 		if (sector_index == 0)
@@ -940,10 +941,10 @@ static imgtoolerr_t fat_set_file_size(imgtool_image *image, struct fat_file *fil
 					
 					write_cluster = cluster;
 				}
-				else if ((i >= new_cluster_count) && (cluster != 0xFFFFFFFF))
+				else if (i >= new_cluster_count)
 				{
 					/* we are shrinking the file; we need to unlink this node */
-					if ((cluster < 2) || (cluster < disk_info->total_clusters))
+					if ((cluster < 2) || (cluster >= disk_info->total_clusters))
 						cluster = 0xFFFFFFFF; /* ack file is corrupt! recover */
 					write_cluster = 0xFFFFFFFF;
 				}
@@ -952,7 +953,7 @@ static imgtoolerr_t fat_set_file_size(imgtool_image *image, struct fat_file *fil
 				if (write_cluster != 0)
 				{
 					if (last_cluster == 0)
-						file->first_cluster = write_cluster;
+						file->first_cluster = (write_cluster != 0xFFFFFFFF) ? write_cluster : 0;
 					else
 						fat_set_fat_entry(image, fat_table, last_cluster, write_cluster);
 				}
@@ -989,12 +990,12 @@ static imgtoolerr_t fat_set_file_size(imgtool_image *image, struct fat_file *fil
 	}
 
 	/* special case; clear out stale bytes on non-root directories */
-	if (file->directory)
+	if (file->directory && !delete_file)
 	{
 		if (file->root)
 			clear_size = MIN(file->filesize - new_size, FAT_DIRENT_SIZE);
 		else
-			clear_size = disk_info->cluster_size - (new_size % disk_info->cluster_size);
+			clear_size = (disk_info->cluster_size - (new_size % disk_info->cluster_size)) % disk_info->cluster_size;
 
 		if (clear_size > 0)
 		{
