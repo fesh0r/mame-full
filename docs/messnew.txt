@@ -17,7 +17,8 @@ New System Drivers Supported (in no particular order):
 
 User Interface Changes:
 -----------------------
-(none)
+- [Windows GUI] Fixed a small bug on the "Interface Options" dialog  (bug
+  #551) [Nate Woods]
 
 
 

@@ -1100,7 +1100,7 @@ BEGIN
 #ifdef MESS
     GROUPBOX        "System Selection",IDC_STATIC,5,5,190,189
     CONTROL         "&Search for new systems on start",IDC_START_GAME_CHECK,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,15,110,10,0,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,15,130,10,0,
                     HIDC_START_GAME_CHECK
     CONTROL         "Allow system selection by a &joystick (requires restart)",
                     IDC_JOY_GUI,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,30,
@@ -1152,7 +1152,7 @@ BEGIN
                     HIDC_SKIP_DISCLAIMER
 #ifdef MESS
     CONTROL         "Skip &system info",IDC_SKIP_GAME_INFO,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,209,28,60,10,0,
+                    BS_AUTOCHECKBOX | WS_TABSTOP,209,28,80,10,0,
                     HIDC_SKIP_GAME_INFO
 #else
     CONTROL         "Skip &game info",IDC_SKIP_GAME_INFO,"Button",
