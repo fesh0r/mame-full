@@ -768,7 +768,7 @@ static struct MachineDriver machine_driver_a2600 =
     {
         {
             CPU_M6502,
-            1190000,                    /* 1.19Mhz */
+            3584160/3,					/* 1.19Mhz */
             readmem, writemem, 0, 0,
             0, 0                        /* for screen updates per scanline */
 
@@ -780,8 +780,8 @@ static struct MachineDriver machine_driver_a2600 =
     a2600_stop_machine,                 /* stop_machine */
 
     /* video hardware */
-    228, 300,
-    {68, 227, 40, 299},
+    228, 262,
+    {68, 227, 40, 261},
     0,
     sizeof (palette) / sizeof (palette[0]) / 3,
     sizeof (colortable) / sizeof (colortable[0]),

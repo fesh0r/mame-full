@@ -84,7 +84,7 @@ UINT8 bit_flip_table[] = {
 };
 
 /* Back buffer */
-struct rectangle stella_size = {0, 227, 0, 281};
+struct rectangle stella_size = {0, 227, 0, 261};
 
 /* for detailed logging */
 #define TIA_VERBOSE 0
@@ -968,7 +968,7 @@ static void a2600_scanline_cb(void)
 	/* set color to background */
 	backcolor = tia.colreg.BK % Machine->drv->color_table_len;
 
-	if (((currentline + yys) <= 299) && (TIA_vblank == 0))
+	if (((currentline + yys) <= 261) && (TIA_vblank == 0))
 	{
 		/* now we have color, plot for 4 color cycles */
 		for (regpos = 0; regpos < 160; regpos++)
