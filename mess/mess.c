@@ -211,7 +211,11 @@ void *image_fopen(int type, int id, int filetype, int read_or_write)
 
 		logerror("image_fopen: found image %s for system %s\n", img->name, sysname);
         img->length = osd_fsize(file);
-		if (!img->crc) img->crc = osd_fcrc(file);
+		if (!img->crc) {
+			img->crc = osd_fcrc(file);
+		} else {
+			logerror("old CRC %ld\n",img->crc);
+		}
 		if( img->crc == 0 && img->length < 0x100000 )
 		{
 			logerror("image_fopen: calling osd_fchecksum() for %d bytes\n", img->length);
@@ -521,7 +525,7 @@ int init_devices(const void *game)
 
 		/* try and check for valid image and compute 'partial' CRC
 		   for imageinfo if possible */
-		if(0/*&&dev->id*/ )
+		if( dev->id )
 		{
 			for( id = 0; id < dev->count; id++ )
 			{
@@ -533,7 +537,7 @@ int init_devices(const void *game)
 				result = (*dev->id)(id);
 				logerror("%s id returns %d\n", device_typename_id(dev->type,id), result);
 
-                if( result != INIT_OK && filename )
+                if( result != ID_OK && filename )
 				{
 					mess_printf("%s id failed (%s)\n", device_typename_id(dev->type,id), filename);
 					return 1;
