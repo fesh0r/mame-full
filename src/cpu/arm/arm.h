@@ -29,8 +29,8 @@
  *	MEMORY MAP MACROS
  ***************************************************************************************************/
 
-#define ADSP_DATA_ADDR_RANGE(start, end) (ARM_DATA_OFFSET + ((start) << 1)), (ARM_DATA_OFFSET + ((end) << 1) + 1)
-#define ADSP_PGM_ADDR_RANGE(start, end)  (ARM_PGM_OFFSET + ((start) << 2)), (ARM_PGM_OFFSET + ((end) << 2) + 3)
+#define ARM_DATA_ADDR_RANGE(start, end) (ARM_DATA_OFFSET + ((start) << 1)), (ARM_DATA_OFFSET + ((end) << 1) + 1)
+#define ARM_PGM_ADDR_RANGE(start, end)  (ARM_PGM_OFFSET + ((start) << 2)), (ARM_PGM_OFFSET + ((end) << 2) + 3)
 
 
 /****************************************************************************************************
