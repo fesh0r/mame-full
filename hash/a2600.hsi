@@ -1,7 +1,6 @@
 <hashfile>
 	<!-- This MESS CRC file was generated from Cowering's Good databases (1.00) -->
 	<!-- Please keep this notice intact if editing this file -->
-	<!-- crc= Game Name | Year | Manufacturer | Emulation Status -->
 	<hash crc32="3795b948" name="11 Sprite Demo (Piero Cavina) (PD)"/>
 	<hash crc32="199883cc" name="128-in-1 Junior Console (Chip 1) (PAL) [!]"/>
 	<hash crc32="20133240" name="128-in-1 Junior Console (Chip 2) (PAL) [!]"/>
@@ -61,18 +60,24 @@
 	<hash crc32="be21377f" name="3-D Corridor Demo 2 (29-03-2003) (MP)"/>
 	<hash crc32="7322ebc6" name="3-D Tic-Tac-Toe (Atari) (PAL) [!]">
 		<year>1978</year>
+		<manufacturer>Atari</manufacturer>
 	</hash>
 	<hash crc32="418e6638" name="3-D Tic-Tac-Toe (Atari) (PAL) [p1][o1]">
 		<year>1978</year>
+		<manufacturer>Atari</manufacturer>
 	</hash>
 	<hash crc32="58805709" name="3-D Tic-Tac-Toe (Atari) [!]">
 		<year>1978</year>
+		<manufacturer>Atari</manufacturer>
 	</hash>
 	<hash crc32="a9f6c74d" name="3-D Tic-Tac-Toe (Atari) [o1]">
 		<year>1978</year>
+		<manufacturer>Atari</manufacturer>
 	</hash>
 	<hash crc32="e2dd8da6" name="3-D Tic-Tac-Toe (32-in-1) (Atari) (PAL) [!]"/>
+	<manufacturer>Atari</manufacturer>
 	<hash crc32="eaef28ea" name="32-in-1 (Atari) (PAL) [!]"/>
+	<manufacturer>Atari</manufacturer>
 	<hash crc32="69ca1a92" name="4 Pak (Dark Green) [p1][!]"/>
 	<hash crc32="caf86fa7" name="4 Pak (Light Green) [p1][!]"/>
 	<hash crc32="34a144f2" name="6 Digit Score Display (Robin Harbron) (PD)">
@@ -82,14 +87,16 @@
 		<year>2002</year>
 	</hash>
 	<hash crc32="b2fd509a" name="A-Team, The (Atari) (Prototype) (PAL) [!]"/>
+	<manufacturer>Atari</manufacturer>
 	<hash crc32="ea7df47f" name="A-Team, The (Atari) (Prototype) (PAL-60) [!]"/>
+	<manufacturer>Atari</manufacturer>
 	<hash crc32="74ea91dd" name="A-Team, The (Atari) (Prototype) [!]"/>
+	<manufacturer>Atari</manufacturer>
 	<hash crc32="b469dfdc" name="A-VCS-tec Challenge (beta 5) (PD)"/>
 	<hash crc32="14cddac7" name="Acid Drop (Salu) (PAL) [!]">
 		<year>1992</year>
 	</hash>
 	<hash crc32="95601a5f" name="Acid Drop (Salu) (PAL)">
-		<year>1992</year>
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="13160630" name="Acid Drop (NTSC Conversion) (TJ)"/>
@@ -101,12 +108,15 @@
 	</hash>
 	<hash crc32="18dc23f9" name="Adventure (Atari) (PAL) [!]">
 		<year>1978</year>
+		<manufacturer>Atari</manufacturer>
 	</hash>
 	<hash crc32="992ba79b" name="Adventure (Atari) [t1]">
 		<year>1978</year>
+		<manufacturer>Atari</manufacturer>
 	</hash>
 	<hash crc32="a6db4b3a" name="Adventure (Atari)">
 		<year>1978</year>
+		<manufacturer>Atari</manufacturer>
 	</hash>
 	<hash crc32="991e5f08" name="Adventure (Color Scrolling) [h1]"/>
 	<hash crc32="d2f65abf" name="Adventure (New Graphics) [h1]"/>
@@ -134,20 +144,26 @@
 	</hash>
 	<hash crc32="cf7f8944" name="Air-Sea Battle (Atari) (PAL) [!]">
 		<year>1977</year>
+		<manufacturer>Atari</manufacturer>
 	</hash>
 	<hash crc32="b090c2ec" name="Air-Sea Battle (Atari) (PAL) [p1][!]">
 		<year>1977</year>
+		<manufacturer>Atari</manufacturer>
 	</hash>
 	<hash crc32="1fc6c0f1" name="Air-Sea Battle (Atari) [!]">
 		<year>1977</year>
+		<manufacturer>Atari</manufacturer>
 	</hash>
 	<hash crc32="284b3a2c" name="Air-Sea Battle (Atari) [o1]">
 		<year>1977</year>
+		<manufacturer>Atari</manufacturer>
 	</hash>
 	<hash crc32="2a765130" name="Air-Sea Battle (Atari) [o1][h1]">
 		<year>1977</year>
+		<manufacturer>Atari</manufacturer>
 	</hash>
 	<hash crc32="5865356e" name="Air-Sea Battle (32-in-1) (Atari) (PAL) [!]"/>
+	<manufacturer>Atari</manufacturer>
 	<hash crc32="25c90ce7" name="Airlock (Data Age) [!]">
 		<year>1982</year>
 	</hash>
@@ -161,12 +177,15 @@
 	<hash crc32="b3f6d395" name="Alligator People (20th Century Fox) (Prototype) [!]"/>
 	<hash crc32="d1ed3112" name="Alpha Beam with Ernie (Atari) (PAL) [!]">
 		<year>1983</year>
+		<manufacturer>Atari</manufacturer>
 	</hash>
 	<hash crc32="943e8e12" name="Alpha Beam with Ernie (Atari) (PAL) [a1][!]">
 		<year>1983</year>
+		<manufacturer>Atari</manufacturer>
 	</hash>
 	<hash crc32="27c6b897" name="Alpha Beam with Ernie (Atari)">
 		<year>1983</year>
+		<manufacturer>Atari</manufacturer>
 	</hash>
 	<hash crc32="b6b4da71" name="Alpha Demo - The Beta Demo (MP)">
 		<year>2000</year>
@@ -204,6 +223,7 @@
 	<hash crc32="e7514705" name="Apples and Dolls (CCE)"/>
 	<hash crc32="87a8cb8b" name="Aquaventure (Atari) (Prototype)">
 		<year>1983</year>
+		<manufacturer>Atari</manufacturer>
 	</hash>
 	<hash crc32="7fa61fa0" name="Aquaventure (CCE)"/>
 	<hash crc32="4b9cc8c3" name="Arcade Golf (Sears) [o1]">
@@ -236,28 +256,35 @@
 	</hash>
 	<hash crc32="2e3deb79" name="Asterix (Atari) (PAL) [!]">
 		<year>1988</year>
+		<manufacturer>Atari</manufacturer>
 	</hash>
 	<hash crc32="6bee5479" name="Asterix (Atari) (PAL) [a1][!]">
 		<year>1988</year>
+		<manufacturer>Atari</manufacturer>
 	</hash>
 	<hash crc32="b238706d" name="Asterix (Atari) (Prototype) (NTSC)">
 		<year>1988</year>
+		<manufacturer>Atari</manufacturer>
 	</hash>
 	<hash crc32="94cacd1f" name="Asteroid 2 (Atari Freak 1 and Franklin Cruz)"/>
 	<hash crc32="0a2f8288" name="Asteroids (Atari) (PAL) [!]">
 		<year>1979</year>
+		<manufacturer>Atari</manufacturer>
 	</hash>
 	<hash crc32="e22bf19f" name="Asteroids (Atari) (PAL) [a1][!]">
 		<year>1979</year>
+		<manufacturer>Atari</manufacturer>
 	</hash>
 	<hash crc32="ce646f2d" name="Asteroids (Atari) (PAL) [a2][!]">
 		<year>1979</year>
+		<manufacturer>Atari</manufacturer>
 	</hash>
 	<hash crc32="c7d64c94" name="Asteroids (Atari) [!]">
 		<year>1979</year>
 	</hash>
 	<hash crc32="908a459c" name="Asteroids (Atari) [a1][!]">
 		<year>1979</year>
+		<manufacturer>Atari</manufacturer>
 	</hash>
 	<hash crc32="0267f7ed" name="Asteroids 2 (Asteroids Hack)"/>
 	<hash crc32="290aed4f" name="Asteroids DC+ by Thomas Jentzsch (Asteroids Hack)"/>
@@ -334,9 +361,11 @@
 	</hash>
 	<hash crc32="a3d119c6" name="Backgammon (Atari) (PAL) [!]">
 		<year>1978</year>
+		<manufacturer>Atari</manufacturer>
 	</hash>
 	<hash crc32="e2a7ffa6" name="Backgammon (Atari)">
 		<year>1978</year>
+		<manufacturer>Atari</manufacturer>
 	</hash>
 	<hash crc32="32d49e10" name="Backwards Cannonball v1 (Human Cannonball Hack)"/>
 	<hash crc32="ee91faa2" name="Backwards Cannonball v2 (Human Cannonball Hack)"/>
@@ -374,29 +403,38 @@
 	</hash>
 	<hash crc32="c207f43e" name="Basic Programming (Atari) (PAL) [!]">
 		<year>1978</year>
+		<manufacturer>Atari</manufacturer>
 	</hash>
 	<hash crc32="26a3c844" name="Basic Programming (Atari)">
 		<year>1978</year>
+		<manufacturer>Atari</manufacturer>
 	</hash>
 	<hash crc32="711a2340" name="Basketball (Atari) (PAL) [!]">
 		<year>1978</year>
+		<manufacturer>Atari</manufacturer>
 	</hash>
 	<hash crc32="2ce281c1" name="Basketball (Atari) [o1]">
 		<year>1978</year>
+		<manufacturer>Atari</manufacturer>
 	</hash>
 	<hash crc32="b31d49f0" name="Basketball (Atari)">
 		<year>1978</year>
+		<manufacturer>Atari</manufacturer>
 	</hash>
 	<hash crc32="958e0d64" name="Basketball (32-in-1) (Atari) (PAL) [!]"/>
+	<manufacturer>Atari</manufacturer>
 	<hash crc32="8ce397d1" name="Battle for Naboo by Josh (Atlantis Hack)"/>
 	<hash crc32="5cc921f6" name="Battlezone (Atari) (PAL) [!]">
 		<year>1983</year>
+		<manufacturer>Atari</manufacturer>
 	</hash>
 	<hash crc32="e71358d3" name="Battlezone (Atari) (PAL) [a1][!]">
 		<year>1983</year>
+		<manufacturer>Atari</manufacturer>
 	</hash>
 	<hash crc32="9155dd1d" name="Battlezone (Atari) [!]">
 		<year>1983</year>
+		<manufacturer>Atari</manufacturer>
 	</hash>
 	<hash crc32="6a5f1668" name="Battlezone TC by Thomas Jentzsch (2 joystick Hack)"/>
 	<hash crc32="a4fb69b1" name="Baubles (14-11-2001) (Jake Patterson) (PD)"/>
@@ -414,7 +452,6 @@
 		<year>1983</year>
 	</hash>
 	<hash crc32="3d642220" name="Beamrider (Activision)">
-		<year>1983</year>
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="9f46b2a9" name="Beanie Baby Bash by Inky (Beany Bopper Hack)"/>
@@ -438,15 +475,19 @@
 	</hash>
 	<hash crc32="d7f66624" name="Berzerk (Atari) (PAL) [!]">
 		<year>1982</year>
+		<manufacturer>Atari</manufacturer>
 	</hash>
 	<hash crc32="e3b6f475" name="Berzerk (Atari) (PAL) [p1][!]">
 		<year>1982</year>
+		<manufacturer>Atari</manufacturer>
 	</hash>
 	<hash crc32="edb95efa" name="Berzerk (Atari) (PAL) [p2][!]">
 		<year>1982</year>
+		<manufacturer>Atari</manufacturer>
 	</hash>
 	<hash crc32="2e8b4b5f" name="Berzerk (Atari)">
 		<year>1982</year>
+		<manufacturer>Atari</manufacturer>
 	</hash>
 	<hash crc32="f973d708" name="Berzerk (CCE)"/>
 	<hash crc32="8a2c4f09" name="Berzerk (Voice Enhanced) (Berzerk Hack)"/>
@@ -566,11 +607,9 @@
 		<year>1978</year>
 	</hash>
 	<hash crc32="1d53ca97" name="Bowling (Atari)">
-		<year>1978</year>
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="fc7f5a79" name="Bowling (Atari)">
-		<year>1978</year>
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="f6e07452" name="Bowling (Atari) [o1]">
@@ -648,7 +687,6 @@
 	<hash crc32="272b8856" name="Bugs Bunny (Atari) (Prototype) [!]"/>
 	<hash crc32="17a7d1bc" name="Bullet Demo (20-12-2002) (CT)"/>
 	<hash crc32="ca85f87d" name="Bump 'N' Jump (Mattel)">
-		<year>1983</year>
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="df2bc303" name="Bump 'N' Jump (Mattel)">
@@ -1100,7 +1138,6 @@
 		<year>1983</year>
 	</hash>
 	<hash crc32="41b6910b" name="Decathlon (Activision) (PAL)">
-		<year>1983</year>
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="91b8f1b2" name="Decathlon (Activision) [!]">
@@ -1121,7 +1158,6 @@
 		<year>1984</year>
 	</hash>
 	<hash crc32="d2adb289" name="Defender II (Atari)">
-		<year>1984</year>
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="93217704" name="Defender II (Atari)">
@@ -1474,7 +1510,6 @@
 		<year>1982</year>
 	</hash>
 	<hash crc32="6619edfc" name="Espial (Tigervision)">
-		<year>1983</year>
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="1f95351a" name="Espial (Tigervision)">
@@ -1547,7 +1582,6 @@
 		<year>1983</year>
 	</hash>
 	<hash crc32="7cf146eb" name="Fathom (Imagic)">
-		<year>1983</year>
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="93da13cc" name="Fathom (Imagic)">
@@ -2029,7 +2063,6 @@
 		<year>1984</year>
 	</hash>
 	<hash crc32="e3ddd5ce" name="Gyruss (Parker Bros)">
-		<year>1984</year>
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="0d78e8a9" name="Gyruss (Parker Bros)">
@@ -2567,6 +2600,7 @@
 	</hash>
 	<hash crc32="59b96db3" name="Lord of The Rings (Parker Bros) (Prototype)">
 		<year>1983</year>
+		<manufacturer>Parker Brothers</manufacturer>
 	</hash>
 	<hash crc32="75633f22" name="Lord of the Rings - Fellowship of the Ring by Adam Thornton (Dark Mage Hack) (PD) [a1]"/>
 	<hash crc32="9104ca48" name="Lord of the Rings - Fellowship of the Ring by Adam Thornton (Dark Mage Hack) (PD)"/>
@@ -2682,6 +2716,7 @@
 	<hash crc32="8b4e3fdc" name="Maze Demo 2 (PD)"/>
 	<hash crc32="add0115d" name="McDonald's (Parker Bros) (Prototype) [!]">
 		<year>1983</year>
+		<manufacturer>Parker Brothers</manufacturer>
 	</hash>
 	<hash crc32="42a22f23" name="Mega Force (20th Century Fox) (PAL) [!]">
 		<year>1982</year>
@@ -2842,6 +2877,7 @@
 	<hash crc32="ab0f6091" name="Monstercise (Atari) (Prototype)"/>
 	<hash crc32="e680a1c9" name="Montezuma's Revenge - Starring Panama Joe (Parker Bros)">
 		<year>1983</year>
+		<manufacturer>Parker Brothers</manufacturer>
 	</hash>
 	<hash crc32="329cd897" name="Montezuma's Revenge - Starring Panama Joe (PAL by Thomas Jentzsch)"/>
 	<hash crc32="25c293ea" name="Moon Patrol (Shock Vision-Brazil) [!]">
@@ -2918,6 +2954,7 @@
 	</hash>
 	<hash crc32="044735b9" name="Mr. Do!'s Castle (Parker Bros)">
 		<year>1983</year>
+		<manufacturer>Parker Brothers</manufacturer>
 	</hash>
 	<hash crc32="46871e25" name="Mr. Pac-Man (El Destructo)"/>
 	<hash crc32="719fbe14" name="Mr. Pac-Man (New start tune) (El Destructo)"/>
@@ -3433,9 +3470,11 @@
 	</hash>
 	<hash crc32="742ac749" name="Popeye (Parker Bros) (PAL) [!]">
 		<year>1983</year>
+		<manufacturer>Parker Brothers</manufacturer>
 	</hash>
 	<hash crc32="7d287f20" name="Popeye (Parker Bros) [!]">
 		<year>1983</year>
+		<manufacturer>Parker Brothers</manufacturer>
 	</hash>
 	<hash crc32="add0b98a" name="Porky's (20th Century Fox)">
 		<year>1983</year>
@@ -3503,9 +3542,9 @@
 	<hash crc32="ce63ff9b" name="Pyramid War (Suntek) (PAL)"/>
 	<hash crc32="541fbe98" name="Q-bert (Parker Bros) (PAL) [!]">
 		<year>1983</year>
+		<manufacturer>Parker Brothers</manufacturer>
 	</hash>
 	<hash crc32="c92042c4" name="Q-bert (Parker Bros) (PAL)">
-		<year>1983</year>
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="d605bb61" name="Q-bert (Atari) (PAL) [!]">
@@ -3516,9 +3555,11 @@
 	</hash>
 	<hash crc32="d9f499c5" name="Q-bert's Qubes (Parker Bros) [a1]">
 		<year>1983</year>
+		<manufacturer>Parker Brothers</manufacturer>
 	</hash>
 	<hash crc32="a87be8fd" name="Q-bert's Qubes (Parker Bros)">
 		<year>1983</year>
+		<manufacturer>Parker Brothers</manufacturer>
 	</hash>
 	<hash crc32="0a7c4f0f" name="Qb (0.06) (Retroactive)"/>
 	<hash crc32="9d8712db" name="Qb (0.11) (Retroactive) (PAL)"/>
@@ -3747,9 +3788,11 @@
 	<hash crc32="3dfee54b" name="Raumpatrouille (Starsoft) (PAL) [!]"/>
 	<hash crc32="d4f33bc9" name="Reactor (Parker Bros) (PAL) [!]">
 		<year>1982</year>
+		<manufacturer>Parker Brothers</manufacturer>
 	</hash>
 	<hash crc32="1619e222" name="Reactor (Parker Bros)">
 		<year>1982</year>
+		<manufacturer>Parker Brothers</manufacturer>
 	</hash>
 	<hash crc32="3c5a1b5f" name="RealSports Baseball (Atari)">
 		<year>1982</year>
@@ -4149,9 +4192,11 @@
 	<hash crc32="a1ecdf0e" name="Sky Patrol (Imagic) (Prototype)"/>
 	<hash crc32="21e1a9c7" name="Sky Skipper (Parker Bros) (PAL) [!]">
 		<year>1983</year>
+		<manufacturer>Parker Brothers</manufacturer>
 	</hash>
 	<hash crc32="cc6e0f22" name="Sky Skipper (Parker Bros)">
 		<year>1983</year>
+		<manufacturer>Parker Brothers</manufacturer>
 	</hash>
 	<hash crc32="6f5112ab" name="Slot Invaders by David Marli (Slot Machine Hack)"/>
 	<hash crc32="6463efcf" name="Slot Machine (Atari) (PAL) [!]">
@@ -4405,9 +4450,11 @@
 	<hash crc32="fbc1911d" name="Spider Maze (K-Tel Vision)"/>
 	<hash crc32="8feaaa0d" name="Spider-Man (Parker Bros) (PAL) [!]">
 		<year>1982</year>
+		<manufacturer>Parker Brothers</manufacturer>
 	</hash>
 	<hash crc32="4dfea848" name="Spider-Man (Parker Bros)">
 		<year>1982</year>
+		<manufacturer>Parker Brothers</manufacturer>
 	</hash>
 	<hash crc32="f873f7f9" name="Spider-Man (Starsoft) (PAL) [!]">
 		<year>1982</year>
@@ -4585,36 +4632,51 @@
 	<hash crc32="ed585369" name="Star Voyager (CCE) [p1]"/>
 	<hash crc32="2a2bd248" name="Star Wars - Death Star Battle (Parker Bros) (PAL) [!]">
 		<year>1983</year>
+		<manufacturer>Parker Brothers</manufacturer>
 	</hash>
 	<hash crc32="0886a55d" name="Star Wars - Death Star Battle (Parker Bros)">
 		<year>1983</year>
+		<manufacturer>Parker Brothers</manufacturer>
 	</hash>
 	<hash crc32="6ee8e4e1" name="Star Wars - Ewok Adventure (Parker Bros) (Prototype) (NTSC by Thomas Jentzsch)"/>
+	<manufacturer>Parker Brothers</manufacturer>
 	<hash crc32="d113f5fe" name="Star Wars - Ewok Adventure (Parker Bros) (Prototype) (PAL)"/>
+	<manufacturer>Parker Brothers</manufacturer>
 	<hash crc32="3bd1cda3" name="Star Wars - Jedi Arena (Parker Bros) (PAL) [!]">
 		<year>1983</year>
+		<manufacturer>Parker Brothers</manufacturer>
 	</hash>
 	<hash crc32="9e36d347" name="Star Wars - Jedi Arena (Parker Bros)">
 		<year>1983</year>
+		<manufacturer>Parker Brothers</manufacturer>
 	</hash>
 	<hash crc32="273bda48" name="Star Wars - The Arcade Game (Parker Bros) (PAL) [!]">
 		<year>1983</year>
+		<manufacturer>Parker Brothers</manufacturer>
 	</hash>
 	<hash crc32="65c31ca4" name="Star Wars - The Arcade Game (Parker Bros)">
 		<year>1983</year>
+		<manufacturer>Parker Brothers</manufacturer>
 	</hash>
 	<hash crc32="fa4a0e53" name="Star Wars - The Arcade Game (Parker Bros) (Prototype 010384)"/>
+	<manufacturer>Parker Brothers</manufacturer>
 	<hash crc32="47efd61d" name="Star Wars - The Arcade Game (Parker Bros) (Prototype 040584)"/>
+	<manufacturer>Parker Brothers</manufacturer>
 	<hash crc32="665077d0" name="Star Wars - The Arcade Game (Parker Bros) (Prototype 120583)"/>
+	<manufacturer>Parker Brothers</manufacturer>
 	<hash crc32="04b83443" name="Star Wars - The Arcade Game (Parker Bros) (Prototype 121583)"/>
+	<manufacturer>Parker Brothers</manufacturer>
 	<hash crc32="45449277" name="Star Wars - The Arcade Game (Parker Bros) (Prototype 122283)"/>
+	<manufacturer>Parker Brothers</manufacturer>
 	<hash crc32="39bc1d6c" name="Star Wars - The Arcade Game (Parker Bros) (Prototype 122383)"/>
+	<manufacturer>Parker Brothers</manufacturer>
 	<hash crc32="97403039" name="Star Wars - The Battle of Alderaan (Star Strike Hack)"/>
 	<hash crc32="b1ddc9a6" name="Star Wars - The Empire Strikes Back (Parker Bros) (PAL) [!]">
 		<year>1982</year>
 	</hash>
 	<hash crc32="ee8c9a89" name="Star Wars - The Empire Strikes Back (Parker Bros)">
 		<year>1982</year>
+		<manufacturer>Parker Brothers</manufacturer>
 	</hash>
 	<hash crc32="df27ab6c" name="Starfield (V1.0) (MP)">
 		<year>2002</year>
@@ -4666,9 +4728,11 @@
 	</hash>
 	<hash crc32="193579b0" name="Strawberry Shortcake - Musical Match-Ups (Parker Bros) (PAL) [!]">
 		<year>1983</year>
+		<manufacturer>Parker Brothers</manufacturer>
 	</hash>
 	<hash crc32="fb29e31f" name="Strawberry Shortcake - Musical Match-Ups (Parker Bros)">
 		<year>1983</year>
+		<manufacturer>Parker Brothers</manufacturer>
 	</hash>
 	<hash crc32="c39ab46a" name="Street Racer - Speedway II (Atari) (PAL) [!]">
 		<year>1978</year>
@@ -4758,13 +4822,14 @@
 	<hash crc32="9dc94535" name="Super Circus (PAL) [!]"/>
 	<hash crc32="380d78b3" name="Super Cobra (Parker Bros) (PAL) [!]">
 		<year>1982</year>
+		<manufacturer>Parker Brothers</manufacturer>
 	</hash>
 	<hash crc32="700972bf" name="Super Cobra (Parker Bros)">
-		<year>1982</year>
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="de97103d" name="Super Cobra (Parker Bros)">
 		<year>1982</year>
+		<manufacturer>Parker Brothers</manufacturer>
 	</hash>
 	<hash crc32="9c7e09d5" name="Super Congo Bongo (Larry Petit) (Congo Bongo Hack)">
 		<year>2003</year>
@@ -5152,6 +5217,7 @@
 	</hash>
 	<hash crc32="8fbe2b84" name="Tutankham (Parker Bros) (PAL) [!]">
 		<year>1983</year>
+		<manufacturer>Parker Brothers</manufacturer>
 	</hash>
 	<hash crc32="ec959bf2" name="Tutankham (Parker Bros)">
 		<year>1983</year>
