@@ -117,6 +117,8 @@ extern READ_HANDLER( coco_pia_1_r );
 extern READ_HANDLER( coco3_pia_1_r );
 extern void dragon_sound_update(void);
 
+extern void coco_set_halt_line(int halt_line);
+
 /* Returns whether a given piece of logical memory is contiguous or not */
 extern int coco3_mmu_ismemorycontiguous(int logicaladdr, int len);
 

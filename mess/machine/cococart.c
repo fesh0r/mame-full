@@ -99,7 +99,7 @@ static void raise_halt(int dummy)
 {
 	LOG(("cococart: Raising HALT\n" ));
 
-	cpu_set_halt_line(0, ASSERT_LINE);
+	coco_set_halt_line(ASSERT_LINE);
 }
 
 static void coco_fdc_callback(int event)
@@ -112,7 +112,7 @@ static void coco_fdc_callback(int event)
 	case WD179X_IRQ_SET:
 		intrq_state = ASSERT_LINE;
 		CLEAR_COCO_HALTENABLE;
-		cpu_set_halt_line(0, CLEAR_LINE);
+		coco_set_halt_line(CLEAR_LINE);
 		if( COCO_NMIENABLE )
 			timer_set( TIME_IN_USEC(0), 0, raise_nmi);
 		else
@@ -122,13 +122,13 @@ static void coco_fdc_callback(int event)
 		drq_state = CLEAR_LINE;
 		if( COCO_HALTENABLE )
 			timer_set( TIME_IN_CYCLES(7,0), 0, raise_halt);
-/*			cpu_set_halt_line(0, ASSERT_LINE);*/
+/*			coco_set_halt_line(ASSERT_LINE);*/
 		else
-			cpu_set_halt_line(0, CLEAR_LINE);
+			coco_set_halt_line(CLEAR_LINE);
 		break;
 	case WD179X_DRQ_SET:
 		drq_state = ASSERT_LINE;
-		cpu_set_halt_line(0, CLEAR_LINE);
+		coco_set_halt_line(CLEAR_LINE);
 		break;
 	}
 }
@@ -294,14 +294,14 @@ static void set_coco_dskreg(int data)
 
 	if( COCO_HALTENABLE && (drq_state == CLEAR_LINE) )
 		timer_set( TIME_IN_CYCLES(7,0), 0, raise_halt);
-/*		cpu_set_halt_line(0, ASSERT_LINE);*/
+/*		coco_set_halt_line(ASSERT_LINE);*/
 	else
-		cpu_set_halt_line(0, CLEAR_LINE);
+		coco_set_halt_line(CLEAR_LINE);
 
 	if( COCO_NMIENABLE  && (intrq_state == ASSERT_LINE) )
 	{
 		CLEAR_COCO_HALTENABLE;
-		cpu_set_halt_line(0, CLEAR_LINE);
+		coco_set_halt_line(CLEAR_LINE);
 		timer_set( TIME_IN_USEC(0), 0, raise_nmi);
 	}
 	else

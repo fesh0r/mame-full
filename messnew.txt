@@ -22,6 +22,10 @@ System Driver Changes:
 - [COCO] Fixed a OKI M6242B clock emulation problem and a problem with Disto
   Real Time Clock emulation. [tim lindner]
 
+- [COCO] Fixed a very ugly bug that could cause freezups under OS-9 and other
+  forms of disk accesses.  This was because interrupts were dropped when the
+  CPU is halted. (Bugs #197, #229) [Nate Woods]
+
 - [COCO3] Fixed a bug in the GIME video emulation that caused all parts of
   the $FF9B/D/E video registers to be used in lo-res mode; where in reality
   the low 16 bits are dropped.  This caused a bug in CoCoTracker that caused

@@ -604,7 +604,7 @@ enum {
 
 static void d_recalc_irq(void)
 {
-	if ((pia0_irq_a == ASSERT_LINE) || (pia0_irq_b == ASSERT_LINE))
+	if (((pia0_irq_a == ASSERT_LINE) || (pia0_irq_b == ASSERT_LINE)) && cpu_getstatus(0))
 		cpu_set_irq_line(0, M6809_IRQ_LINE, ASSERT_LINE);
 	else
 		cpu_set_irq_line(0, M6809_IRQ_LINE, CLEAR_LINE);
@@ -612,7 +612,7 @@ static void d_recalc_irq(void)
 
 static void d_recalc_firq(void)
 {
-	if ((pia1_firq_a == ASSERT_LINE) || (pia1_firq_b == ASSERT_LINE))
+	if (((pia1_firq_a == ASSERT_LINE) || (pia1_firq_b == ASSERT_LINE)) && cpu_getstatus(0))
 		cpu_set_irq_line(0, M6809_FIRQ_LINE, ASSERT_LINE);
 	else
 		cpu_set_irq_line(0, M6809_FIRQ_LINE, CLEAR_LINE);
@@ -625,7 +625,7 @@ static void coco3_recalc_irq(void)
 		gime_irq, pia0_irq_a, pia0_irq_b, coco3_gimereg[0] & 0x20 ? "enabled" : "disabled");
 #endif
 
-	if ((coco3_gimereg[0] & 0x20) && gime_irq)
+	if ((coco3_gimereg[0] & 0x20) && gime_irq && cpu_getstatus(0))
 		cpu_set_irq_line(0, M6809_IRQ_LINE, ASSERT_LINE);
 	else
 		d_recalc_irq();
@@ -633,7 +633,7 @@ static void coco3_recalc_irq(void)
 
 static void coco3_recalc_firq(void)
 {
-	if ((coco3_gimereg[0] & 0x10) && gime_firq)
+	if ((coco3_gimereg[0] & 0x10) && gime_firq && cpu_getstatus(0))
 		cpu_set_irq_line(0, M6809_FIRQ_LINE, ASSERT_LINE);
 	else
 		d_recalc_firq();
@@ -773,6 +773,32 @@ WRITE_HANDLER( coco3_m6847_fs_w )
 	pia_0_cb1_w(0, data);
 	coco3_raise_interrupt(COCO3_INT_VBORD, !data);
 }
+
+/***************************************************************************
+  Halt line
+***************************************************************************/
+
+static void d_recalc_interrupts(int dummy)
+{
+	d_recalc_firq();
+	d_recalc_irq();
+}
+
+static void coco3_recalc_interrupts(int dummy)
+{
+	coco3_recalc_firq();
+	coco3_recalc_irq();
+}
+
+static void (*recalc_interrupts)(int dummy);
+
+void coco_set_halt_line(int halt_line)
+{
+	cpu_set_halt_line(0, halt_line);
+	if (halt_line == CLEAR_LINE)
+		timer_set(TIME_IN_CYCLES(1,0), 0, recalc_interrupts);
+}
+
 
 /***************************************************************************
   Joystick Abstractions
@@ -2115,9 +2141,13 @@ static const struct cartridge_callback coco3_cartcallbacks =
 	coco3_setcartbank
 };
 
-static void generic_init_machine(struct pia6821_interface *piaintf, struct sam6883_interface *samintf, const struct cartridge_slot *cartinterface, const struct cartridge_callback *cartcallback)
+static void generic_init_machine(struct pia6821_interface *piaintf, struct sam6883_interface *samintf,
+	const struct cartridge_slot *cartinterface, const struct cartridge_callback *cartcallback,
+	void (*recalc_interrupts_)(int dummy))
 {
 	const struct cartridge_slot *cartslottype;
+
+	recalc_interrupts = recalc_interrupts_;
 
 	coco_rom = memory_region(REGION_CPU1);
 
@@ -2156,14 +2186,14 @@ MACHINE_INIT( dragon32 )
 {
 	cpu_setbank(1, &mess_ram[0]);
 	memory_set_bankhandler_w(1, 0, coco_ram_w);
-	generic_init_machine(coco_pia_intf, &coco_sam_intf, &cartridge_fdc_dragon, &coco_cartcallbacks);
+	generic_init_machine(coco_pia_intf, &coco_sam_intf, &cartridge_fdc_dragon, &coco_cartcallbacks, d_recalc_interrupts);
 }
 
 MACHINE_INIT( dragon64 )
 {
 	cpu_setbank(1, &mess_ram[0]);
 	memory_set_bankhandler_w(1, 0, coco_ram_w);
-	generic_init_machine(dragon64_pia_intf, &dragon64_sam_intf, &cartridge_fdc_dragon, &coco_cartcallbacks);
+	generic_init_machine(dragon64_pia_intf, &dragon64_sam_intf, &cartridge_fdc_dragon, &coco_cartcallbacks, d_recalc_interrupts);
 	acia_6551_init();
 	dragon64_sethipage(DRAGON64_ALL, 0);
 }
@@ -2172,14 +2202,14 @@ MACHINE_INIT( coco )
 {
 	cpu_setbank(1, &mess_ram[0]);
 	memory_set_bankhandler_w(1, 0, coco_ram_w);
-	generic_init_machine(coco_pia_intf, &coco_sam_intf, &cartridge_fdc_coco, &coco_cartcallbacks);
+	generic_init_machine(coco_pia_intf, &coco_sam_intf, &cartridge_fdc_coco, &coco_cartcallbacks, d_recalc_interrupts);
 }
 
 MACHINE_INIT( coco2 )
 {
 	cpu_setbank(1, &mess_ram[0]);
 	memory_set_bankhandler_w(1, 0, coco_ram_w);
-	generic_init_machine(coco2_pia_intf, &coco_sam_intf, &cartridge_fdc_coco, &coco_cartcallbacks);
+	generic_init_machine(coco2_pia_intf, &coco_sam_intf, &cartridge_fdc_coco, &coco_cartcallbacks, d_recalc_interrupts);
 }
 
 MACHINE_INIT( coco3 )
@@ -2196,7 +2226,7 @@ MACHINE_INIT( coco3 )
 		coco3_gimereg[i] = 0;
 	}
 
-	generic_init_machine(coco3_pia_intf, &coco3_sam_intf, &cartridge_fdc_coco, &coco3_cartcallbacks);
+	generic_init_machine(coco3_pia_intf, &coco3_sam_intf, &cartridge_fdc_coco, &coco3_cartcallbacks, coco3_recalc_interrupts);
 
 	coco3_mmu_update(0, 8);
 	coco3_timer_init();

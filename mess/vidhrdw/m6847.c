@@ -1369,6 +1369,8 @@ int internal_m6847_getadjustedscanline(void)
 
 void internal_m6847_vh_interrupt(int scanline, int rise_scanline, int fall_scanline)
 {
+	int new_fs;
+
 #if LOG_INTERRUPT
 	logerror("internal_m6847_vh_interrupt(): scanline=%d horzbeampos=%d\n", scanline, cpu_gethorzbeampos());
 #endif
@@ -1377,17 +1379,26 @@ void internal_m6847_vh_interrupt(int scanline, int rise_scanline, int fall_scanl
 	if (rise_scanline > fall_scanline)
 	{
 		if (scanline >= rise_scanline)
-			timer_set(DFS_R, 0, fs_rise);
+			new_fs = 1;
 		else if (scanline >= fall_scanline)
-			timer_set(DFS_F, 0, fs_fall);
+			new_fs = 0;
+		else
+			new_fs = 1;
 	}
 	else
 	{
 		if (scanline >= fall_scanline)
-			timer_set(DFS_F, 0, fs_fall);
+			new_fs = 0;
 		else if (scanline >= rise_scanline)
-			timer_set(DFS_R, 0, fs_rise);
+			new_fs = 1;
+		else
+			new_fs = 0;
 	}
+
+	if (new_fs && !the_state.fs)
+		timer_set(DFS_R, 0, fs_rise);
+	else if (!new_fs && the_state.fs)
+		timer_set(DFS_F, 0, fs_fall);
 
 	/* hsync interrupt */
 	timer_set(DHS_F, 0, hs_fall);
