@@ -411,5 +411,5 @@ static const struct IODevice io_genesis[] = {
 ***************************************************************************/
 
 /*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	  COMPANY	FULLNAME */
-CONS( 1988, genesis,  0,		genesis,  genesis,	0,		  "Sega",   "Sega Megadrive / Genesis" )
+CONS( 1988, genesis,  0,		genesis,  genesis,	0,		  "Sega",   "Megadrive / Genesis" )
 

@@ -524,10 +524,10 @@ static const struct IODevice io_nespal[] = {
 /*	   YEAR  NAME	   PARENT	 MACHINE   INPUT	 INIT	   COMPANY	 FULLNAME */
 #ifdef COLOR_INTENSITY
 CONSX( 1983, famicom,  0,		 nes,	   famicom,	 nes,	   "Nintendo", "Famicom", GAME_REQUIRES_16BIT )
-CONSX( 1985, nes,	   0,		 nes,	   nes, 	 nes,	   "Nintendo", "Nintendo Entertainment System", GAME_REQUIRES_16BIT )
+CONSX( 1985, nes,	   0,		 nes,	   nes, 	 nes,	   "Nintendo", "Nintendo Entertainment System (NTSC)", GAME_REQUIRES_16BIT )
 CONSX( 1987, nespal,   nes,		 nespal,   nes, 	 nespal,   "Nintendo", "Nintendo Entertainment System (PAL)", GAME_REQUIRES_16BIT )
 #else
 CONS( 1983, famicom,   0,		 nes,	   famicom,	 nes,	   "Nintendo", "Famicom" )
-CONS( 1985, nes,	   0,		 nes,	   nes, 	 nes,	   "Nintendo", "Nintendo Entertainment System" )
+CONS( 1985, nes,	   0,		 nes,	   nes, 	 nes,	   "Nintendo", "Nintendo Entertainment System (NTSC)" )
 CONS( 1987, nespal,	   nes,		 nespal,   nes, 	 nespal,   "Nintendo", "Nintendo Entertainment System (PAL)" )
 #endif

@@ -276,7 +276,7 @@ ROM_START(aquarius)
 	ROM_REGION(0x10000, REGION_CPU1)
 	ROM_LOAD("aq2.rom", 0x0000, 0x2000, 0xa2d15bcf)
 	ROM_REGION(0x0800, REGION_GFX1)
-	ROM_LOAD("aq2.chr", 0x0000, 0x0800, 0x00000000)
+	ROM_LOAD("aq2.chr", 0x0000, 0x0800, BADCRC(0x0b3edeed))
 ROM_END
 
 static	const	struct	IODevice	io_aquarius[] =

@@ -666,4 +666,4 @@ static const struct IODevice io_coupe[] =
 };
 
 /*    YEAR  NAME      PARENT    MACHINE         INPUT     INIT          COMPANY                 		  FULLNAME */
-COMP( 1989, coupe,	  0,        coupe,          coupe,    0,            "Miles Gordon Technology plc",    "Sam Coupe" )
+COMP( 1989, coupe,	  0,        coupe,          coupe,    0,            "Miles Gordon Technology plc",    "Sam Coupé" )

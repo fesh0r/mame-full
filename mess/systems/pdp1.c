@@ -258,4 +258,4 @@ static const struct IODevice io_pdp1[] = {
 ***************************************************************************/
 
 /*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	  COMPANY	FULLNAME */
-COMP( 1962, pdp1,	  0, 		pdp1,	  pdp1, 	0,		  "Digital Equipment Company",  "PDP1 Spacewar!" )
+COMP( 1962, pdp1,	  0, 		pdp1,	  pdp1, 	0,		  "Digital Equipment Company",  "PDP-1 (Spacewar!)" )

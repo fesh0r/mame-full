@@ -306,7 +306,7 @@ static	struct	MachineDriver	machine_driver_nascom2 =
 
 ROM_START(nascom1)
 	ROM_REGION(0x10000, REGION_CPU1)
-	ROM_LOAD("nasbugt2.rom", 0x0000, 0x0800, 0x00000001)
+	ROM_LOAD("nasbugt2.rom", 0x0000, 0x0400, 0xe371b58a)
 	ROM_REGION(0x0800, REGION_GFX1)
 	ROM_LOAD("nascom1.chr", 0x0000, 0x0800, 0x33e92a04)
 ROM_END
@@ -407,5 +407,5 @@ static	const	struct	IODevice	io_nascom2[] =
 };
 
 /*		YEAR	NAME		PARENT		MACHINE		INPUT		INIT	COMPANY		FULLNAME */
-COMP(	1978,	nascom1,	0,			nascom1,	nascom1,	0,		"Nascom",	"Nascom 1" )
-COMP(	1979,	nascom2,	nascom1,	nascom2,	nascom1,	0,		"Nascom",	"Nascom 2" )
+COMP(	1978,	nascom1,	0,			nascom1,	nascom1,	0,		"Nascom Microcomputers",	"Nascom 1" )
+COMP(	1979,	nascom2,	nascom1,	nascom2,	nascom1,	0,		"Nascom Microcomputers",	"Nascom 2" )

@@ -1908,8 +1908,8 @@ COMPX( 2000, specpls4, spectrum, spectrum,       spectrum, 0,            "Amstra
 COMP ( 1986, inves,    spectrum, spectrum,       spectrum, 0,            "Investronica",         "Inves Spectrum 48K+" )
 COMP ( 1985, tk90x,    spectrum, spectrum,       spectrum, 0,            "Micro Digital",        "TK90x Color Computer" )
 COMP ( 1986, tk95,     spectrum, spectrum,       spectrum, 0,            "Micro Digital",        "TK95 Color Computer" )
-COMP ( 198?, tc2048,   spectrum, tc2048,         spectrum, 0,            "Timex of Portugal",    "Timex Computer 2048" )
-COMP ( 1983, ts2068,   spectrum, ts2068,         spectrum, 0,            "Timex-Sinclair",       "Timex-Sinclair 2068" )
+COMP ( 198?, tc2048,   spectrum, tc2048,         spectrum, 0,            "Timex of Portugal",    "TC2048" )
+COMP ( 1983, ts2068,   spectrum, ts2068,         spectrum, 0,            "Timex Sinclair",       "TS2068" )
 
 COMPX( 1986, spec128,  0,        spectrum_128,   spectrum, 0,            "Sinclair Research",    "Spectrum 128K" ,GAME_NOT_WORKING)
 COMPX( 1986, specpls2, spec128,  spectrum_128,   spectrum, 0,            "Amstrad plc",          "Spectrum +2" ,GAME_NOT_WORKING)

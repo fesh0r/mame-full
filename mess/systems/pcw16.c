@@ -2046,4 +2046,4 @@ static const struct IODevice io_pcw16[] =
 };
 
 /*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT COMPANY   FULLNAME */
-COMP( 1995, pcw16,   0,	pcw16,  pcw16,	0,	 "Amstrad plc", "Amstrad PCW16")
+COMP( 1995, pcw16,   0,	pcw16,  pcw16,	0,	 "Amstrad plc", "PCW16")

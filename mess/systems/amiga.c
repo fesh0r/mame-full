@@ -167,5 +167,5 @@ static const struct IODevice io_amiga[] = {
 };
 
 /*	   YEAR  NAME	   PARENT	 MACHINE   INPUT	 INIT	   COMPANY	 FULLNAME */
-COMPX( 1984, amiga,    0,		 ntsc,	   amiga,	 0, 	   "Commodore Business Machines Co.",  "Amiga (NTSC)", GAME_NOT_WORKING | GAME_REQUIRES_16BIT )
+COMPX( 1984, amiga,    0,		 ntsc,	   amiga,	 0, 	   "Commodore Business Machines Co.",  "Amiga 500 (NTSC)", GAME_NOT_WORKING | GAME_REQUIRES_16BIT )
 

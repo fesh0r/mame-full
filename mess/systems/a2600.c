@@ -965,4 +965,4 @@ static const struct IODevice io_a2600[] =
 };
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
-CONSX(19??, a2600,	  0,		a2600,	  a2600,	a2600,	  "Atari",  "Atari 2600 - VCS", GAME_NOT_WORKING | GAME_NO_SOUND | GAME_WRONG_COLORS)
+CONSX(19??, a2600,	  0,		a2600,	  a2600,	a2600,	  "Atari",  "Atari 2600", GAME_NOT_WORKING | GAME_NO_SOUND | GAME_WRONG_COLORS)

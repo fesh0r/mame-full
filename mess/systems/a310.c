@@ -284,7 +284,7 @@ static const struct IODevice io_a310[] = {
 };
 
 /*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	  COMPANY	   FULLNAME */
-COMP( 1988, a310,	  0,		a310,	  a310, 	a310,	  "Archimedes","A310" )
+COMP( 1988, a310,	  0,		a310,	  a310, 	a310,	  "Acorn","Archimedes 310" )
 
 
 

@@ -275,4 +275,4 @@ static const struct IODevice io_atom[] =
 };
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
-COMP( 1979, atom,     0,        atom,     atom,     0,        "Acorn",  "Acorn Atom" )
+COMP( 1979, atom,     0,        atom,     atom,     0,        "Acorn",  "Atom" )

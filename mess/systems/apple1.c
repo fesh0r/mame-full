@@ -206,4 +206,4 @@ static	const	struct	IODevice io_apple1[] = {
 };
 
 /*    YEAR	NAME	PARENT	MACHINE	INPUT	INIT	COMPANY				FULLNAME */
-COMP( 1976,	apple1,	0,		apple1,	apple1,	0,		"Apple Computer",	"Apple 1 8k" )
+COMP( 1976,	apple1,	0,		apple1,	apple1,	0,		"Apple Computer",	"Apple I" )

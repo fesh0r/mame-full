@@ -590,10 +590,10 @@ static const struct IODevice io_c65[] =
 #define io_c65a io_c65
 
 /*    	YEAR	NAME    PARENT	MACHINE	INPUT	INIT 	COMPANY   							FULLNAME */
-COMPX (	199?, 	c65,	0,		c65,	c65,	c65,	"Commodore Business Machines Co.",	"C65/C64DX (Prototype) NTSC 91-10-01 4bcf", 		GAME_NOT_WORKING | GAME_IMPERFECT_SOUND)
-COMPX (	199?, 	c65e,	c65,		c65,	c65,	c65,	"Commodore Business Machines Co.",	"C65/C64DX (Prototype) NTSC 91-08-28 c9cd", 		GAME_NOT_WORKING | GAME_IMPERFECT_SOUND)
-COMPX (	199?, 	c65d,	c65,		c65,	c65,	c65,	"Commodore Business Machines Co.",	"C65/C64DX (Prototype) NTSC 91-06-26 888c", 		GAME_NOT_WORKING | GAME_IMPERFECT_SOUND)
-COMPX (	199?, 	c65c,	c65,		c65,	c65,	c65,	"Commodore Business Machines Co.",	"C65/C64DX (Prototype) NTSC 91-05-23 b96b", 		GAME_NOT_WORKING | GAME_IMPERFECT_SOUND)
-COMPX (	199?, 	c65ger,	c65,	c65pal,	c65ger,	c65pal,	"Commodore Business Machines Co.",	"C65/C64DX (Prototype) German (PAL) 91-04-29 e96a",	GAME_NOT_WORKING | GAME_IMPERFECT_SOUND)
-COMPX (	199?, 	c65a,	c65,		c65,	c65,	c65_alpha1,	"Commodore Business Machines Co.",	"C65/C64DX (Prototype) NTSC 91-01-11 caff", 		GAME_NOT_WORKING | GAME_IMPERFECT_SOUND)
+COMPX (	199?, 	c65,	0,		c65,	c65,	c65,	"Commodore Business Machines Co.",	"C65 / C64DX (Prototype, NTSC, 911001)", 		GAME_NOT_WORKING | GAME_IMPERFECT_SOUND)
+COMPX (	199?, 	c65e,	c65,		c65,	c65,	c65,	"Commodore Business Machines Co.",	"C65 / C64DX (Prototype, NTSC, 910828)", 		GAME_NOT_WORKING | GAME_IMPERFECT_SOUND)
+COMPX (	199?, 	c65d,	c65,		c65,	c65,	c65,	"Commodore Business Machines Co.",	"C65 / C64DX (Prototype, NTSC, 910626)", 		GAME_NOT_WORKING | GAME_IMPERFECT_SOUND)
+COMPX (	199?, 	c65c,	c65,		c65,	c65,	c65,	"Commodore Business Machines Co.",	"C65 / C64DX (Prototype, NTSC, 910523)", 		GAME_NOT_WORKING | GAME_IMPERFECT_SOUND)
+COMPX (	199?, 	c65ger,	c65,	c65pal,	c65ger,	c65pal,	"Commodore Business Machines Co.",	"C65 / C64DX (Prototype, German PAL, 910429)",	GAME_NOT_WORKING | GAME_IMPERFECT_SOUND)
+COMPX (	199?, 	c65a,	c65,		c65,	c65,	c65_alpha1,	"Commodore Business Machines Co.",	"C65 / C64DX (Prototype, NTSC, 910111)", 		GAME_NOT_WORKING | GAME_IMPERFECT_SOUND)
 

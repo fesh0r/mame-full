@@ -1275,7 +1275,7 @@ is banked. */
 #define ROM_PCW(model) \
 ROM_START(model) \
 	ROM_REGION(0x014000, REGION_CPU1) \
-	ROM_LOAD("pcwboot.bin", 0x010000, 608, 0x0) \
+	ROM_LOAD("pcwboot.bin", 0x010000, 608, BADCRC(0x679b0287)) \
 ROM_END \
 
 ROM_PCW(pcw8256)
@@ -1318,9 +1318,9 @@ static const struct IODevice io_pcw[] =
 /* these are all variants on the pcw design */
 /* major difference is memory configuration and drive type */
 /*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT COMPANY   FULLNAME */
-COMP( 198?, pcw8256,   0,		pcw,		pcw,	pcw8256,	 "Amstrad plc", "Amstrad PCW8256")
-COMP( 198?, pcw8512,   pcw8256,		pcw,		pcw,	pcw8512,	 "Amstrad plc", "Amstrad PCW8512")
-COMP( 198?, pcw9256,   pcw8256,		pcw,		pcw,	pcw9256,	 "Amstrad plc", "Amstrad PCW9256")
-COMP( 198?, pcw9512,   pcw8256,		pcw9512,	pcw,	pcw9512,	 "Amstrad plc", "Amstrad PCW9512 (+)")
-COMP( 198?, pcw10,	   pcw8256,		pcw9512,	pcw,	pcw10,	 "Amstrad plc", "Amstrad PCW10")
+COMP( 198?, pcw8256,   0,		pcw,		pcw,	pcw8256,	 "Amstrad plc", "PCW8256")
+COMP( 198?, pcw8512,   pcw8256,		pcw,		pcw,	pcw8512,	 "Amstrad plc", "PCW8512")
+COMP( 198?, pcw9256,   pcw8256,		pcw,		pcw,	pcw9256,	 "Amstrad plc", "PCW9256")
+COMP( 198?, pcw9512,   pcw8256,		pcw9512,	pcw,	pcw9512,	 "Amstrad plc", "PCW9512 (+)")
+COMP( 198?, pcw10,	   pcw8256,		pcw9512,	pcw,	pcw10,	 "Amstrad plc", "PCW10")
 

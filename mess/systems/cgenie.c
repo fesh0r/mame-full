@@ -598,5 +598,5 @@ static const struct IODevice io_cgenie[] = {
 };
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
-COMP( 1982, cgenie,   0,		cgenie,   cgenie,	cgenie,   "EACA Computers Ltd. Hongkong",  "Colour Genie EG2000" )
+COMP( 1982, cgenie,   0,		cgenie,   cgenie,	cgenie,   "EACA Computers Ltd.",  "Colour Genie EG2000" )
 

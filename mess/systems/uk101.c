@@ -301,7 +301,7 @@ ROM_START(superbrd)
 	ROM_LOAD("basus04.rom", 0xb800, 0x0800, 0x8ee6030e)
 	ROM_LOAD("monus02.rom", 0xf800, 0x0800, 0xe5b7028d)
 	ROM_REGION(0x800, REGION_GFX1)
-	ROM_LOAD("chgsuper.rom", 0x0000, 0x0800, 0x00000000)
+	ROM_LOAD("chgsuper.rom", 0x0000, 0x0800, BADCRC(0x00000000))
 ROM_END
 
 static	const	struct	IODevice	io_uk101[] =
@@ -353,6 +353,6 @@ static	const	struct	IODevice io_superbrd[] =
 };
 
 /*    YEAR	NAME		PARENT	MACHINE		INPUT	INIT	COMPANY				FULLNAME */
-COMP( 1979,	uk101,		0,		uk101,		uk101,	0,		"Compukit",			"Compukit UK101" )
+COMP( 1979,	uk101,		0,		uk101,		uk101,	0,		"Compukit",			"UK101" )
 COMP( 1979, superbrd,	uk101,	superbrd,	uk101,	0,		"Ohio Scientific",	"Superboard II" )
 
