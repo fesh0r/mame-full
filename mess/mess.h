@@ -179,6 +179,7 @@ extern const char *mess_path;
 
 /* artwork callbacks for MESS */
 extern struct artwork_callbacks mess_artwork_callbacks;
+void artwork_use_device_art(mess_image *img, const char *defaultartfile);
 
 #ifdef __cplusplus
 }
