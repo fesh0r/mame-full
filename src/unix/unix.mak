@@ -183,6 +183,16 @@ CONFIG  += -DSYSDEP_DSP_ALSA
 MY_LIBS += -lasound
 endif
 
+ifdef SOUND_ARTS_TEIRA
+CONFIG  += -DSYSDEP_DSP_ARTS_TEIRA `artsc-config --cflags`
+MY_LIBS += `artsc-config --libs`
+endif
+
+ifdef SOUND_ARTS_SMOTEK
+CONFIG  += -DSYSDEP_DSP_ARTS_SMOTEK `artsc-config --cflags`
+MY_LIBS += `artsc-config --libs`
+endif
+
 # Joystick drivers config
 ifdef JOY_I386
 CONFIG += -DI386_JOYSTICK
