@@ -72,7 +72,7 @@ void (*vector_add_point_function) (int, int, rgb_t, int) = vectrex_add_point;
 void vectrex_add_point (int x, int y, rgb_t color, int intensity)
 {
 	struct vectrex_point *newpoint;
- 
+
 	vectrex_point_index = (vectrex_point_index+1) % MAX_POINTS;
 	newpoint = &vectrex_points[vectrex_point_index];
 
@@ -93,7 +93,7 @@ VIDEO_UPDATE( vectrex )
 	double starttime, correction;
 
 	vectrex_configuration();
-	
+
 	starttime = timer_get_time() - vectrex_persistance;
 	if (starttime < 0) starttime = 0;
 
@@ -374,7 +374,7 @@ static struct via6522_interface spectrum1_via6522_interface =
 
 	vectrex_shift_reg_w
 };
-
+/*
 static const char *radius_8_led =
 	"     111111     \r"
 	"   1111111111   \r"
@@ -392,12 +392,11 @@ static const char *radius_8_led =
 	"  111111111111  \r"
 	"   1111111111   \r"
 	"     111111     \r";
+*/
 
 WRITE_HANDLER( raaspec_led_w )
 {
-	int i, y, width;
-	struct rectangle clip;
-	static int old_data=0;
+	struct rectangle;
 
 	logerror("Spectrum I+ LED: %i%i%i%i%i%i%i%i\n",
 				 (data>>7)&0x1, (data>>6)&0x1, (data>>5)&0x1, (data>>4)&0x1,

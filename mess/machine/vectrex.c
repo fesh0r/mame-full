@@ -46,8 +46,6 @@ static const double crazy_coaster_angles[3] = {0,0.1631, 0.3305};
 static const double unknown_game_angles[3] = {0,0.16666666, 0.33333333};
 static const double *vectrex_imager_angles = unknown_game_angles;
 static unsigned char vectrex_imager_pinlevel=0x00;
-static double imager_wheel_time = 0;
-
 
 static int vectrex_verify_cart (char *data)
 {
@@ -288,7 +286,7 @@ void vectrex_imager_right_eye (int param)
 		{
 			timer_set (rtime * 0.50, 1, vectrex_imager_right_eye);
 
-			/* Index hole sensor is connected to IO7 which triggers also CA1 of VIA */ 
+			/* Index hole sensor is connected to IO7 which triggers also CA1 of VIA */
 			via_0_ca1_w (0, 1);
 			via_0_ca1_w (0, 0);
 			vectrex_imager_pinlevel |= 0x80;
@@ -306,7 +304,7 @@ WRITE_HANDLER ( vectrex_psg_port_w )
 	double wavel, ang_acc, tmp;
 	int mcontrol;
 
-	mcontrol = data & 0x40; /* IO6 controls the imager motor */ 
+	mcontrol = data & 0x40; /* IO6 controls the imager motor */
 
 	if (!mcontrol && mcontrol ^ state)
 	{
