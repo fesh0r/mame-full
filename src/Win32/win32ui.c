@@ -904,7 +904,7 @@ void UpdateScreenShot(void)
         (nSplitterOffset[1] - nTreeWidth) - 2, (rect.bottom - rect.top) - 4 , TRUE);
 
     /* List control 2 */
-    MoveWindow(hwndImages, 2 + nSplitterOffset[1], rect.top + 2,
+    MoveWindow(hwndSoftware, 2 + nSplitterOffset[1], rect.top + 2,
         (nSplitterOffset[2] - nSplitterOffset[1]) - 2, (rect.bottom - rect.top) - 4 , TRUE);	
 #else
     /* List control */
@@ -1004,7 +1004,7 @@ void ResizePickerControls(HWND hWnd)
 
 #ifdef MESS_PICKER
     /* Image list control */
-    MoveWindow(hwndImages, 4 + nListWidth, rect.top + 2,
+    MoveWindow(hwndSoftware, 4 + nListWidth, rect.top + 2,
         (nListWidth2 - nListWidth) - 4, (rect.bottom - rect.top) - 4, TRUE);
 
     /* Splitter window #3 */
@@ -1209,8 +1209,8 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
     hTreeView       = GetDlgItem(hPicker, IDC_TREE);
     hwndList        = GetDlgItem(hPicker, IDC_LIST);
 #ifdef MESS_PICKER
-	hwndImages		= GetDlgItem(hPicker, IDC_LIST2);
-	assert(hwndImages);
+	hwndSoftware		= GetDlgItem(hPicker, IDC_LIST2);
+	assert(hwndSoftware);
 #endif
 
     InitSplitters();
@@ -1220,8 +1220,8 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
                 AdjustSplitter1Rect);
 #ifdef MESS_PICKER
     AddSplitter(GetDlgItem(hPicker, IDC_SPLITTER2), hwndList,
-                hwndImages,AdjustSplitter1Rect);
-    AddSplitter(GetDlgItem(hPicker, IDC_SPLITTER3), hwndImages,
+                hwndSoftware,AdjustSplitter1Rect);
+    AddSplitter(GetDlgItem(hPicker, IDC_SPLITTER3), hwndSoftware,
                 GetDlgItem(hPicker,IDC_SSFRAME),AdjustSplitter2Rect);
 #else
     AddSplitter(GetDlgItem(hPicker, IDC_SPLITTER2), hwndList,
@@ -1244,8 +1244,8 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
             if (hTreeView != NULL)
                 SetWindowFont(hTreeView, hFont, FALSE);
 #ifdef MESS_PICKER
-            if (hwndImages != NULL)
-                SetWindowFont(hwndImages, hFont, FALSE);
+            if (hwndSoftware != NULL)
+                SetWindowFont(hwndSoftware, hFont, FALSE);
 #endif
             SetWindowFont(GetDlgItem(hPicker, IDC_HISTORY), hFont, FALSE);
         }
@@ -1591,7 +1591,7 @@ static long WINAPI MameWindowProc(HWND hWnd,UINT message,UINT wParam,LONG lParam
             if (lpNmHdr->hwndFrom == hTreeView)
                 return TreeViewNotify( lpNmHdr );
 #ifdef MESS_PICKER
-            if (lpNmHdr->hwndFrom == hwndImages)
+            if (lpNmHdr->hwndFrom == hwndSoftware)
                 return MessPickerNotify( lpNmHdr );
 #endif
         }
@@ -2778,8 +2778,8 @@ static void SetView(int menu_id,int listview_style)
     SetWindowLong(hwndList,GWL_STYLE,
         (GetWindowLong(hwndList,GWL_STYLE) & ~LVS_TYPEMASK) | listview_style);
 #if defined(MESS) && defined(MESS_PICKER)
-	SetWindowLong(hwndImages,GWL_STYLE,
-		(GetWindowLong(hwndImages,GWL_STYLE) & ~LVS_TYPEMASK) | listview_style);
+	SetWindowLong(hwndSoftware,GWL_STYLE,
+		(GetWindowLong(hwndSoftware,GWL_STYLE) & ~LVS_TYPEMASK) | listview_style);
 #endif
 
     current_view_id = menu_id;
@@ -2793,7 +2793,7 @@ static void SetView(int menu_id,int listview_style)
     case ID_VIEW_SMALL_ICON:
         ListView_Arrange(hwndList, LVA_ALIGNTOP);
 #if defined(MESS) && defined(MESS_PICKER)
-		ListView_Arrange(hwndImages, LVA_ALIGNTOP);
+		ListView_Arrange(hwndSoftware, LVA_ALIGNTOP);
 #endif
         break;
     }
@@ -2932,8 +2932,8 @@ static void PickFont(void)
         ListView_SetTextColor(hwndList, textColor);
         TreeView_SetTextColor(hTreeView,textColor);
 #if defined(MESS) && defined(MESS_PICKER)
-		SetWindowFont(hwndImages, hFont, TRUE);
-		ListView_SetTextColor(hwndImages, textColor);
+		SetWindowFont(hwndSoftware, hFont, TRUE);
+		ListView_SetTextColor(hwndSoftware, textColor);
 #endif
         SetListFontColor(cf.rgbColors);
         SetWindowFont(GetDlgItem(hPicker, IDC_HISTORY), hFont, FALSE);
@@ -5375,8 +5375,8 @@ static void AdjustMetrics(void)
 
     ListView_SetTextColor(hwndList, textColor);
 #ifdef MESS_PICKER
-    ListView_SetBkColor(hwndImages, GetSysColor(COLOR_WINDOW));
-    ListView_SetTextColor(hwndImages, textColor);
+    ListView_SetBkColor(hwndSoftware, GetSysColor(COLOR_WINDOW));
+    ListView_SetTextColor(hwndSoftware, textColor);
 #endif
     TreeView_SetBkColor(hTreeView, GetSysColor(COLOR_WINDOW));
     TreeView_SetTextColor(hTreeView, textColor);
@@ -5611,6 +5611,7 @@ static void DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
     int         nColumnMax = 0;
     int         nResults = 0;
     int         order[COLUMN_MAX];
+
 
     nColumnMax = GetNumColumns(hwndList);
 
@@ -6066,7 +6067,7 @@ static BOOL ListCtrlOnErase(HWND hWnd, HDC hDC)
 	HPALETTE    hPAL;
 
 #ifdef MESS_PICKER
-    if ((hWnd != hwndList) && (hWnd != hwndImages))
+    if ((hWnd != hwndList) && (hWnd != hwndSoftware))
         return 1;
 #else
     if (hWnd != hwndList)
@@ -6143,7 +6144,7 @@ static BOOL ListCtrlOnPaint(HWND hWnd, UINT uMsg)
     HBITMAP     hOldBitmap;
 
 #ifdef MESS_PICKER
-    if ((hWnd != hwndList) && (hWnd != hwndImages))
+    if ((hWnd != hwndList) && (hWnd != hwndSoftware))
         return 1;
 #else
     if (hWnd != hwndList)

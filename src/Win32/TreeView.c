@@ -23,6 +23,7 @@
 #include <windowsx.h>
 #include <shellapi.h>
 #include <windowsx.h>
+#include "MAME32.h"
 #include "TreeView.h"
 #include "driver.h"
 #include "resource.h"
@@ -33,7 +34,6 @@
 #include <stdio.h>  /* for sprintf */
 #include <stdlib.h> /* For malloc and free */
 #include <commctrl.h>
-#include "mame32.h"
 
 /*
    For compilers that don't support nameless unions
