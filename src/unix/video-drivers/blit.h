@@ -38,6 +38,346 @@
 #define CORRECTED_DEST_WIDTH DEST_WIDTH
 #endif
 
+if (yarbsize) /* using arbitrary Y-scaling (Adam D. Moss <adam@gimp.org>) */
+{
+  switch(widthscale)
+    {
+#ifdef INDIRECT
+
+#ifdef BLIT_16BPP_HACK
+#define COPY_LINE2(SRC, END, DST) \
+      {\
+   unsigned short *src = (unsigned short *)(SRC); \
+   unsigned short *end = (unsigned short *)(END); \
+   unsigned int   *dst = (unsigned int   *)(DST); \
+   for(;src<end;src+=4,dst+=4) \
+   { \
+      *(dst  ) = INDIRECT[*(src  )]; \
+      *(dst+1) = INDIRECT[*(src+1)]; \
+      *(dst+2) = INDIRECT[*(src+2)]; \
+      *(dst+3) = INDIRECT[*(src+3)]; \
+   }\
+      }
+#elif defined PACK_BITS
+#define COPY_LINE2(SRC, END, DST) \
+      {\
+   SRC_PIXEL  *src = SRC; \
+   SRC_PIXEL  *end = END; \
+   DEST_PIXEL *dst = DST; \
+   for(;src<end;dst+=3,src+=4) \
+   { \
+      *(dst  ) = (INDIRECT[*(src  )]    ) | (INDIRECT[*(src+1)]<<24); \
+      *(dst+1) = (INDIRECT[*(src+1)]>> 8) | (INDIRECT[*(src+2)]<<16); \
+      *(dst+2) = (INDIRECT[*(src+2)]>>16) | (INDIRECT[*(src+3)]<< 8); \
+   }\
+      }
+#else /* normal indirect */
+#define COPY_LINE2(SRC, END, DST) \
+      {\
+   SRC_PIXEL  *src = SRC; \
+   SRC_PIXEL  *end = END; \
+   DEST_PIXEL *dst = DST; \
+   for(;src<end;src+=8,dst+=8) \
+   { \
+      *(dst  ) = INDIRECT[*(src  )]; \
+      *(dst+1) = INDIRECT[*(src+1)]; \
+      *(dst+2) = INDIRECT[*(src+2)]; \
+      *(dst+3) = INDIRECT[*(src+3)]; \
+      *(dst+4) = INDIRECT[*(src+4)]; \
+      *(dst+5) = INDIRECT[*(src+5)]; \
+      *(dst+6) = INDIRECT[*(src+6)]; \
+      *(dst+7) = INDIRECT[*(src+7)]; \
+   }\
+      }
+#endif /* dga_16bpp_hack / packed / normal indirect */
+
+#else  /* not indirect */
+#define COPY_LINE2(SRC, END, DST) \
+   memcpy(DST, SRC, ((END)-(SRC))*DEST_PIXEL_SIZE);
+#endif /* indirect */
+
+#define SCALE_Y(Y) (((Y)*yarbsize)/visual_height)
+#define REPS_FOR_Y(N,YV,YMAX) ((N)* ( (((YV)+1)*yarbsize)/(YMAX) - ((YV)*yarbsize)/(YMAX)))
+
+    case 1:
+#define SCALE_X(X) (X)
+#ifdef DOUBLEBUFFER
+
+#ifdef INDIRECT
+#define COPY_LINE_FOR_Y(YV, YMAX, SRC, END, DST) \
+{ \
+   int reps = REPS_FOR_Y(1, YV, YMAX); \
+   if (reps >0) COPY_LINE2(SRC, END, (DEST_PIXEL *)doublebuffer_buffer); \
+   while (reps-- >0) { memcpy((DST)+(reps*(CORRECTED_DEST_WIDTH)), doublebuffer_buffer, ((END)-(SRC))*DEST_PIXEL_SIZE*SCALE_X(1)); } \
+}
+#else
+#define COPY_LINE_FOR_Y(YV, YMAX, SRC, END, DST) \
+{ \
+   int reps = REPS_FOR_Y(1, YV, YMAX); \
+   while (reps-- >0) COPY_LINE2(SRC, END, (DST)+(reps*(CORRECTED_DEST_WIDTH)));\
+}
+#endif
+
+#else
+#define COPY_LINE_FOR_Y(YV, YMAX, SRC, END, DST) \
+{ \
+   int reps = REPS_FOR_Y(1, YV, YMAX); \
+   if (reps >0) COPY_LINE2(SRC, END, DST); \
+   while (reps-- >1) memcpy((DST)+(reps*(CORRECTED_DEST_WIDTH)), DST, ((END)-(SRC))*DEST_PIXEL_SIZE*SCALE_X(1)); \
+}
+#endif
+//#define COPY_LINE(SRC, END, DST) { COPY_LINE2(SRC, END, DST) }
+#include "blit_core.h"
+break;
+
+#undef SCALE_X
+#undef COPY_LINE2
+
+
+
+
+case 2:
+#define SCALE_X(X) ((X)*2)
+#ifdef INDIRECT
+
+#ifdef PACK_BITS
+#define COPY_LINE2(SRC, END, DST) \
+{ \
+   SRC_PIXEL  *src = SRC; \
+   SRC_PIXEL  *end = END; \
+   DEST_PIXEL *dst = DST; \
+   for(;src<end; src+=2, dst+=3) \
+   { \
+      *(dst  ) = (INDIRECT[*(src  )]    ) | (INDIRECT[*(src  )]<<24); \
+      *(dst+1) = (INDIRECT[*(src  )]>> 8) | (INDIRECT[*(src+1)]<<16); \
+      *(dst+2) = (INDIRECT[*(src+1)]>>16) | (INDIRECT[*(src+1)]<<8); \
+   } \
+}
+#else /* not pack bits */
+#define COPY_LINE2(SRC, END, DST) \
+{ \
+   SRC_PIXEL  *src = SRC; \
+   SRC_PIXEL  *end = END; \
+   DEST_PIXEL *dst = DST; \
+   for(;src<end; src+=8, dst+=16) \
+   { \
+      *(dst   ) = *(dst+ 1) = INDIRECT[*(src  )]; \
+      *(dst+ 2) = *(dst+ 3) = INDIRECT[*(src+1)]; \
+      *(dst+ 4) = *(dst+ 5) = INDIRECT[*(src+2)]; \
+      *(dst+ 6) = *(dst+ 7) = INDIRECT[*(src+3)]; \
+      *(dst+ 8) = *(dst+ 9) = INDIRECT[*(src+4)]; \
+      *(dst+10) = *(dst+11) = INDIRECT[*(src+5)]; \
+      *(dst+12) = *(dst+13) = INDIRECT[*(src+6)]; \
+      *(dst+14) = *(dst+15) = INDIRECT[*(src+7)]; \
+   } \
+}
+#endif /* pack bits */
+
+#else /* not indirect */
+
+#define COPY_LINE2(SRC, END, DST) \
+{ \
+   SRC_PIXEL  *src = SRC; \
+   SRC_PIXEL  *end = END; \
+   DEST_PIXEL *dst = DST; \
+   for(;src<end; src+=8, dst+=16) \
+   { \
+      *(dst   ) = *(dst+ 1) = *(src  ); \
+      *(dst+ 2) = *(dst+ 3) = *(src+1); \
+      *(dst+ 4) = *(dst+ 5) = *(src+2); \
+      *(dst+ 6) = *(dst+ 7) = *(src+3); \
+      *(dst+ 8) = *(dst+ 9) = *(src+4); \
+      *(dst+10) = *(dst+11) = *(src+5); \
+      *(dst+12) = *(dst+13) = *(src+6); \
+      *(dst+14) = *(dst+15) = *(src+7); \
+   } \
+}
+#endif
+#include "blit_core.h"
+break;
+
+#undef SCALE_X
+#undef COPY_LINE2
+
+
+
+
+case 3:
+#define SCALE_X(X)   ((X)*3)
+#ifdef INDIRECT
+
+#define COPY_LINE2(SRC, END, DST) \
+{ \
+   SRC_PIXEL  *src = SRC; \
+   SRC_PIXEL  *end = END; \
+   DEST_PIXEL *dst = DST; \
+   for(;src<end; src+=8, dst+=24) \
+   { \
+      *(dst   ) = *(dst+ 1) = *(dst+ 2) = INDIRECT[*(src  )]; \
+      *(dst+ 3) = *(dst+ 4) = *(dst+ 5) = INDIRECT[*(src+1)]; \
+      *(dst+ 6) = *(dst+ 7) = *(dst+ 8) = INDIRECT[*(src+2)]; \
+      *(dst+ 9) = *(dst+10) = *(dst+11) = INDIRECT[*(src+3)]; \
+      *(dst+12) = *(dst+13) = *(dst+14) = INDIRECT[*(src+4)]; \
+      *(dst+15) = *(dst+16) = *(dst+17) = INDIRECT[*(src+5)]; \
+      *(dst+18) = *(dst+19) = *(dst+20) = INDIRECT[*(src+6)]; \
+      *(dst+21) = *(dst+22) = *(dst+23) = INDIRECT[*(src+7)]; \
+   } \
+}
+#else /* not indirect */
+#define COPY_LINE2(SRC, END, DST) \
+{ \
+   SRC_PIXEL  *src = SRC; \
+   SRC_PIXEL  *end = END; \
+   DEST_PIXEL *dst = DST; \
+   for(;src<end; src+=8, dst+=24) \
+   { \
+      *(dst   ) = *(dst+ 1) = *(dst+ 2) = *(src  ); \
+      *(dst+ 3) = *(dst+ 4) = *(dst+ 5) = *(src+1); \
+      *(dst+ 6) = *(dst+ 7) = *(dst+ 8) = *(src+2); \
+      *(dst+ 9) = *(dst+10) = *(dst+11) = *(src+3); \
+      *(dst+12) = *(dst+13) = *(dst+14) = *(src+4); \
+      *(dst+15) = *(dst+16) = *(dst+17) = *(src+5); \
+      *(dst+18) = *(dst+19) = *(dst+20) = *(src+6); \
+      *(dst+21) = *(dst+22) = *(dst+23) = *(src+7); \
+   } \
+}
+#endif
+#include "blit_core.h"
+break;
+
+#undef SCALE_X
+#undef COPY_LINE2
+
+
+
+
+default:
+#define SCALE_X(X)   ((X)*widthscale)
+
+#ifdef INDIRECT
+
+#ifdef PACK_BITS
+#define COPY_LINE2(SRC, END, DST) \
+{ \
+   SRC_PIXEL  *src = SRC; \
+   SRC_PIXEL  *end = END; \
+   DEST_PIXEL *dst = DST; \
+   DEST_PIXEL pixel; \
+   int i, step=0; \
+   for(;src<end;src++) \
+   { \
+      pixel = INDIRECT[*src]; \
+      for(i=0; i<widthscale; i++,step=(step+1)&3) \
+      { \
+         switch(step) \
+         { \
+            case 0: \
+               *(dst  )  = pixel; \
+               break; \
+            case 1: \
+               *(dst  ) |= pixel << 24; \
+               *(dst+1)  = pixel >> 8; \
+               break; \
+            case 2: \
+               *(dst+1) |= pixel << 16; \
+               *(dst+2)  = pixel >> 16; \
+               break; \
+            case 3: \
+               *(dst+2) |= pixel << 8; \
+               dst+=3; \
+               break; \
+         } \
+      } \
+   } \
+}
+#else
+#define COPY_LINE2(SRC, END, DST) \
+{ \
+   SRC_PIXEL  *src = SRC; \
+   SRC_PIXEL  *end = END; \
+   DEST_PIXEL *dst = DST; \
+   int i; \
+   for(;src<end;src++) \
+   { \
+      const DEST_PIXEL v = INDIRECT[*(src)]; \
+      i=(widthscale+7)/8; \
+      dst+=widthscale&7; \
+      switch (widthscale&7) \
+      { \
+         case 0: do{  dst+=8; \
+                      *(dst-8) = v; \
+         case 7:      *(dst-7) = v; \
+         case 6:      *(dst-6) = v; \
+         case 5:      *(dst-5) = v; \
+         case 4:      *(dst-4) = v; \
+         case 3:      *(dst-3) = v; \
+         case 2:      *(dst-2) = v; \
+         case 1:      *(dst-1) = v; \
+                 } while(--i>0); \
+      } \
+   } \
+}
+#endif
+
+#else
+#define COPY_LINE2(SRC, END, DST) \
+{ \
+   SRC_PIXEL  *src = SRC; \
+   SRC_PIXEL  *end = END; \
+   DEST_PIXEL *dst = DST; \
+   int i; \
+   for(;src<end;src++) \
+   { \
+      const DEST_PIXEL v = *(src); \
+      i=(widthscale+7)/8; \
+      dst+=widthscale&7; \
+      switch (widthscale&7) \
+      { \
+         case 0: do{  dst+=8; \
+                      *(dst-8) = v; \
+         case 7:      *(dst-7) = v; \
+         case 6:      *(dst-6) = v; \
+         case 5:      *(dst-5) = v; \
+         case 4:      *(dst-4) = v; \
+         case 3:      *(dst-3) = v; \
+         case 2:      *(dst-2) = v; \
+         case 1:      *(dst-1) = v; \
+                 } while(--i>0); \
+      } \
+   } \
+}
+#endif
+#include "blit_core.h"
+break;
+
+#undef SCALE_X
+#undef COPY_LINE2
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#undef COPY_LINE
+
+#undef SCALE_Y
+#undef REPS_FOR_Y
+#undef COPY_LINE_FOR_Y
+
+#define COPY_LINE_FOR_Y(YV,YMAX, SRC,END,DST) COPY_LINE(SRC,END,DST)
+#define REPS_FOR_Y(N,YV,YMAX) SCALE_Y(N)
+    }
+}
+else
 switch (heightscale | (widthscale << 8) | (use_scanlines << 16))
 {
 /* 1x1 */
@@ -91,9 +431,7 @@ switch (heightscale | (widthscale << 8) | (use_scanlines << 16))
 #endif /* indirect */
 
 #define SCALE_X(X) (X)
-#define SCALE_X_8(X) ((X)<<3)
 #define SCALE_Y(Y) (Y)
-#define SCALE_Y_8(Y) ((Y)<<3)
 
 /* 1x1 we don't do scanlines with 1x1 */
 case 0x00101:
@@ -104,12 +442,10 @@ case 0x10101:
 break;
 
 #undef SCALE_Y
-#undef SCALE_Y_8
 
 /* 1x2 */
 
 #define SCALE_Y(Y)   ((Y)<<1)
-#define SCALE_Y_8(Y) ((Y)<<4)
 
 /* 1x2 no scanlines */
 case 0x00102:
@@ -152,9 +488,7 @@ break;
 
 #undef COPY_LINE2
 #undef SCALE_X
-#undef SCALE_X_8
 #undef SCALE_Y
-#undef SCALE_Y_8
 
 
 /* 2x2 */
@@ -210,9 +544,33 @@ break;
 #endif
 
 #define SCALE_X(X)   ((X)<<1)
-#define SCALE_X_8(X) ((X)<<4)
+#define SCALE_Y(Y)   ((Y))
+
+/* 2x1 no scanlines */
+case 0x00201:
+
+#ifdef DOUBLEBUFFER
+#define COPY_LINE(SRC, END, DST) \
+{ \
+   COPY_LINE2(SRC, END, (DEST_PIXEL *)doublebuffer_buffer) \
+   memcpy((DST), doublebuffer_buffer, ((END)-(SRC))*DEST_PIXEL_SIZE*2); \
+}
+#else
+#define COPY_LINE(SRC, END, DST) \
+{ \
+   COPY_LINE2(SRC, END, DST) \
+}
+#endif
+
+#include "blit_core.h"
+#undef COPY_LINE
+break;
+
+#undef SCALE_X
+#undef SCALE_Y
+
+#define SCALE_X(X)   ((X)<<1)
 #define SCALE_Y(Y)   ((Y)<<1)
-#define SCALE_Y_8(Y) ((Y)<<4)
 
 /* 2x2 no scanlines */
 case 0x00202:
@@ -255,9 +613,7 @@ break;
 
 #undef COPY_LINE2
 #undef SCALE_X
-#undef SCALE_X_8
 #undef SCALE_Y
-#undef SCALE_Y_8
 
 #ifndef PACK_BITS
 /* 3x3 */
@@ -299,9 +655,33 @@ break;
 #endif
 
 #define SCALE_X(X)   ((X)*3)
-#define SCALE_X_8(X) ((X)*24)
+#define SCALE_Y(Y)   ((Y))
+
+/* 3x1 no scanlines */
+case 0x00301:
+
+#ifdef DOUBLEBUFFER
+#define COPY_LINE(SRC, END, DST) \
+{ \
+   COPY_LINE2(SRC, END, (DEST_PIXEL *)doublebuffer_buffer) \
+   memcpy((DST), doublebuffer_buffer, ((END)-(SRC))*DEST_PIXEL_SIZE*3); \
+}
+#else
+#define COPY_LINE(SRC, END, DST) \
+{ \
+   COPY_LINE2(SRC, END, DST) \
+}
+#endif
+
+#include "blit_core.h"
+#undef COPY_LINE
+break;
+
+#undef SCALE_X
+#undef SCALE_Y
+
+#define SCALE_X(X)   ((X)*3)
 #define SCALE_Y(Y)   ((Y)*3)
-#define SCALE_Y_8(Y) ((Y)*24)
 
 /* 3x3 no scanlines */
 case 0x00303:
@@ -353,9 +733,7 @@ break;
 
 #undef COPY_LINE2
 #undef SCALE_X
-#undef SCALE_X_8
 #undef SCALE_Y
-#undef SCALE_Y_8
 
 /* 4x4 */
 
@@ -395,9 +773,7 @@ break;
 #endif
 
 #define SCALE_X(X)   ((X)<<2)
-#define SCALE_X_8(X) ((X)<<5)
 #define SCALE_Y(Y)   ((Y)<<2)
-#define SCALE_Y_8(Y) ((Y)<<5)
 
 /* 4x4 no scanlines */
 case 0x00404:
@@ -453,9 +829,7 @@ break;
 
 #undef COPY_LINE2
 #undef SCALE_X
-#undef SCALE_X_8
 #undef SCALE_Y
-#undef SCALE_Y_8
 
 #endif /* #ifndef PACK_BITS */
 
@@ -478,7 +852,7 @@ default:
    for(;src<end;src++) \
    { \
       pixel = INDIRECT[*src]; \
-      for(i=0; i<widthscale; i++,step=(step+1)%4) \
+      for(i=0; i<widthscale; i++,step=(step+1)&3) \
       { \
          switch(step) \
          { \
@@ -508,19 +882,20 @@ default:
    int i; \
    for(;src<end;src++) \
    { \
+      const DEST_PIXEL v = INDIRECT[*(src)]; \
       i=(widthscale+7)/8; \
-      dst+=widthscale%8; \
-      switch (widthscale%8) \
+      dst+=widthscale&7; \
+      switch (widthscale&7) \
       { \
          case 0: do{  dst+=8; \
-                      *(dst-8) = INDIRECT[*(src)]; \
-         case 7:      *(dst-7) = INDIRECT[*(src)]; \
-         case 6:      *(dst-6) = INDIRECT[*(src)]; \
-         case 5:      *(dst-5) = INDIRECT[*(src)]; \
-         case 4:      *(dst-4) = INDIRECT[*(src)]; \
-         case 3:      *(dst-3) = INDIRECT[*(src)]; \
-         case 2:      *(dst-2) = INDIRECT[*(src)]; \
-         case 1:      *(dst-1) = INDIRECT[*(src)]; \
+                      *(dst-8) = v; \
+         case 7:      *(dst-7) = v; \
+         case 6:      *(dst-6) = v; \
+         case 5:      *(dst-5) = v; \
+         case 4:      *(dst-4) = v; \
+         case 3:      *(dst-3) = v; \
+         case 2:      *(dst-2) = v; \
+         case 1:      *(dst-1) = v; \
                  } while(--i>0); \
       } \
    }
@@ -534,28 +909,27 @@ default:
    int i; \
    for(;src<end;src++) \
    { \
+      const DEST_PIXEL v = *(src); \
       i=(widthscale+7)/8; \
-      dst+=widthscale%8; \
-      switch (widthscale%8) \
+      dst+=widthscale&7; \
+      switch (widthscale&7) \
       { \
          case 0: do{  dst+=8; \
-                      *(dst-8) = *(src); \
-         case 7:      *(dst-7) = *(src); \
-         case 6:      *(dst-6) = *(src); \
-         case 5:      *(dst-5) = *(src); \
-         case 4:      *(dst-4) = *(src); \
-         case 3:      *(dst-3) = *(src); \
-         case 2:      *(dst-2) = *(src); \
-         case 1:      *(dst-1) = *(src); \
+                      *(dst-8) = v; \
+         case 7:      *(dst-7) = v; \
+         case 6:      *(dst-6) = v; \
+         case 5:      *(dst-5) = v; \
+         case 4:      *(dst-4) = v; \
+         case 3:      *(dst-3) = v; \
+         case 2:      *(dst-2) = v; \
+         case 1:      *(dst-1) = v; \
                  } while(--i>0); \
       } \
    }
 #endif
 
 #define SCALE_X(X)   ((X)*widthscale)
-#define SCALE_X_8(X) ((X)*widthscale*8)
 #define SCALE_Y(Y)   ((Y)*heightscale)
-#define SCALE_Y_8(Y) ((Y)*heightscale*8)
 
 /* should we use doublebuffering ? */
 #ifdef DOUBLEBUFFER
@@ -583,9 +957,7 @@ default:
 
 #undef COPY_LINE2
 #undef SCALE_X
-#undef SCALE_X_8
 #undef SCALE_Y
-#undef SCALE_Y_8
 
 break;      
 }
@@ -595,3 +967,7 @@ break;
 #endif
 #undef DEST_PIXEL_SIZE
 #undef CORRECTED_DEST_WIDTH
+
+
+#undef REPS_FOR_Y
+#undef COPY_LINE_FOR_Y
