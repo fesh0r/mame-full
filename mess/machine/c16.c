@@ -29,7 +29,7 @@ static UINT8 keyline[10] =
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
 };
 
-static void *rom_fp[2] = {0};
+static mame_file *rom_fp[2] = {0};
 
 /*
  * tia6523
@@ -695,7 +695,7 @@ MACHINE_INIT( c16 )
 
 }
 
-static int c16_rom_id (int id, void *romfile)
+static int c16_rom_id (int id, mame_file *romfile)
 {
     /* magic lowrom at offset 7: $43 $42 $4d */
 	/* if at offset 6 stands 1 it will immediatly jumped to offset 0 (0x8000) */

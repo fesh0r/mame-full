@@ -7,7 +7,7 @@
 
 /* ----------------------------------------------------------------------- */
 
-static void *image_fopen_new(int type, int id, int *effective_mode);
+static mame_file *image_fopen_new(int type, int id, int *effective_mode);
 
 
 struct image_info
@@ -236,7 +236,7 @@ static int read_crc_config (const char *file, int type, int id, const char* sysn
 }
 
 
-void *image_fopen_custom(int type, int id, int filetype, int read_or_write)
+mame_file *image_fopen_custom(int type, int id, int filetype, int read_or_write)
 {
 	struct image_info *img;
 	const char *sysname;
@@ -335,9 +335,9 @@ void *image_fopen_custom(int type, int id, int filetype, int read_or_write)
 	return file;
 }
 
-static void *image_fopen_new(int type, int id, int *effective_mode)
+static mame_file *image_fopen_new(int type, int id, int *effective_mode)
 {
-	void *fref;
+	mame_file *fref;
 	int effective_mode_local;
 	const struct IODevice *dev;
 

@@ -86,7 +86,7 @@ struct
 /* from sound/samples.c no changes (static declared) */
 /* readsamples not useable (loads files only from sample or game directory) */
 /* and doesn't search the rompath */
-static struct GameSample *vc20_read_wav_sample (void *f)
+static struct GameSample *vc20_read_wav_sample (mame_file *f)
 {
 	unsigned long offset = 0;
 	UINT32 length, rate, filesize, temp32;

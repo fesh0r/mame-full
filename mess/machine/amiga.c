@@ -621,7 +621,7 @@ typedef struct {
 	int dir;
 	int wprot;
 	int disk_changed;
-	void *f;
+	mame_file *f;
 	int cyl;
 	unsigned char mfm[544*2*11];
 	int	cached;

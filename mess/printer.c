@@ -7,7 +7,7 @@
 #include "printer.h"
 #include "image.h"
 
-static void *prn_ports[MAX_PRINTER]= { 0 };
+static mame_file *prn_ports[MAX_PRINTER]= { 0 };
 
 int printer_init(int id, mame_file *fp, int open_mode)
 {

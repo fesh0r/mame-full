@@ -456,7 +456,7 @@ int msx_load_rom (int id, mame_file *F, int open_mode)
 
 static int save_sram (int id, char *filename, UINT8* pmem, int size)
 {
-    void *F;
+    mame_file *F;
     int res;
 
     F = mame_fopen (Machine->gamedrv->name, filename, FILETYPE_MEMCARD, 1);
@@ -467,7 +467,7 @@ static int save_sram (int id, char *filename, UINT8* pmem, int size)
 
 void msx_exit_rom (int id)
 {
-    void *F;
+    mame_file *F;
     int size,res;
 
     if (msx1.cart[id].mem)
@@ -1535,7 +1535,7 @@ static int msx_cassette_fill_wave (INT16* samples, int wavlen, UINT8* casdata)
 	return cas_len;
 }
 
-static int check_fmsx_cas (void *f)
+static int check_fmsx_cas (mame_file *f)
 {
 	UINT8* casdata;
 	int caslen, ret;

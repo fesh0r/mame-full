@@ -334,7 +334,7 @@ WRITE16_HANDLER( intv_ram16_w )
 	intv_ram16[offset] = data&0xffff;
 }
 
-static int intv_load_rom_file(int id, void *romfile, int required)
+static int intv_load_rom_file(int id, mame_file *romfile, int required)
 {
     int i;
 

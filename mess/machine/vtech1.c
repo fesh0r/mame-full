@@ -38,7 +38,7 @@ int vtech1_latch = -1;
 #define TRKSIZE_VZ	0x9a0	/* arbitrary (actually from analyzing format) */
 #define TRKSIZE_FM	3172	/* size of a standard FM mode track */
 
-static void *vtech1_fdc_file[2] = {NULL, NULL};
+static mame_file *vtech1_fdc_file[2] = {NULL, NULL};
 static UINT8 vtech1_track_x2[2] = {80, 80};
 static UINT8 vtech1_fdc_wrprot[2] = {0x80, 0x80};
 static UINT8 vtech1_fdc_status = 0;
@@ -60,7 +60,7 @@ static void common_init_machine(void)
 	/* install DOS ROM ? */
     if( readinputport(0) & 0x40 )
     {
-		void *dos;
+		mame_file *dos;
 		UINT8 *ROM = memory_region(REGION_CPU1);
 
 		memset(vtech1_fdc_data, 0, TRKSIZE_FM);

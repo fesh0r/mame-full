@@ -600,7 +600,7 @@ MACHINE_INIT( vc20 )
 	via_0_ca1_w (0, vc20_via0_read_ca1(0) );
 }
 
-static int vc20_rom_id (int id, void *romfile)
+static int vc20_rom_id (int id, mame_file *romfile)
 {
 	unsigned char magic[] =
 	{0x41, 0x30, 0x20, 0xc3, 0xc2, 0xcd};	/* A0 CBM at 0xa004 (module offset 4) */

@@ -121,7 +121,7 @@ int a800_rom_init(int id, mame_file *fp, int open_mode)
 {
 	UINT8 *mem = memory_region(REGION_CPU1);
 	const char *filename;
-	void *monitor_fp;
+	mame_file *monitor_fp;
 	int size;
 
 	/* load an optional monitor.rom */
@@ -194,7 +194,7 @@ int a800xl_load_rom(int id, mame_file *fp, int open_mode)
 {
 	UINT8 *mem = memory_region(REGION_CPU1);
 	const char *filename;
-	void *basic_fp;
+	mame_file *basic_fp;
 	unsigned size;
 
 	filename = "basic.rom";

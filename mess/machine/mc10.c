@@ -31,7 +31,7 @@ void mc10_init_machine(void)
 	/* Install DOS ROM ? */
 	if( readinputport(7) & 0x40 )
 	{
-		void *rom = mame_fopen(Machine->gamedrv->name, "mc10ext.rom", FILETYPE_IMAGE, 0);
+		mame_file *rom = mame_fopen(Machine->gamedrv->name, "mc10ext.rom", FILETYPE_IMAGE, 0);
 		if( rom )
 			mame_fread(rom, memory_region(REGION_CPU1) + 0xc000, 0x2000);
 	}

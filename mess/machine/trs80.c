@@ -46,8 +46,8 @@ static UINT8 *cas_buff = NULL;
 static UINT32 cas_size = 0;
 
 /* current tape file handles */
-static void *tape_put_file = NULL;
-static void *tape_get_file = NULL;
+static mame_file *tape_put_file = NULL;
+static mame_file *tape_get_file = NULL;
 
 /* tape buffer for the first eight bytes at write (to extract a filename) */
 static UINT8 tape_buffer[8];

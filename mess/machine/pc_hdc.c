@@ -37,7 +37,7 @@
 #define MAX_HARD	4				/* up to four had disks */
 #define HDC_DMA 	3				/* DMA channel */
 
-void *pc_hdc_file[MAX_HARD];        /* up to four hard disk images */
+mame_file *pc_hdc_file[MAX_HARD];        /* up to four hard disk images */
 
 #define CMD_TESTREADY   0x00
 #define CMD_RECALIBRATE 0x01
@@ -139,7 +139,7 @@ static void pc_hdc_result(int n)
 
 static void execute_read(void)
 {
-	void *f = pc_hdc_file[idx];
+	mame_file *f = pc_hdc_file[idx];
 	UINT8 data[512], *src = data;
 	int size = sector_cnt[idx] * 512;
 	int read = 0, first = 1;
@@ -248,7 +248,7 @@ static void execute_read(void)
 
 static void execute_write(void)
 {
-	void *f = pc_hdc_file[idx];
+	mame_file *f = pc_hdc_file[idx];
 	UINT8 data[512], *dst = data;
 	int size = sector_cnt[idx] * 512;
 	int write = 512, first = 1;

@@ -507,7 +507,7 @@ static WRITE_HANDLER ( mtx_trap_write )
 		int length;
 		int filesize = 0;
 
-		void *f;
+		mame_file *f;
 		static char filename[64];
 
 		start = activecpu_get_reg(Z80_HL);

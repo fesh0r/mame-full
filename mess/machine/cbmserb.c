@@ -116,7 +116,7 @@ int cbm_drive_attach_fs (int id)
 	return 0;
 }
 
-static int d64_open (int id, void *in)
+static int d64_open (int id, mame_file *in)
 {
 	int size;
 

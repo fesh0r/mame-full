@@ -40,9 +40,9 @@ static int bdos_trk[NDSK] = {0,};	/* BDOS track number */
 static int bdos_sec[NDSK] = {0,};	/* BDOS sector number */
 static mame_file *fp[NDSK] = {NULL, };	/* image file pointer */
 static int ff[NDSK] = {0, };            /* image filenames specified flags */
-static void *lp = NULL; 			/* list file handle (ie. PIP LST:=X:FILE.EXT) */
-//static void *pp = NULL;			/* punch file handle (ie. PIP PUN:=X:FILE.EXT) */
-//static void *rp = NULL;			/* reader file handle (ie. PIP X:FILE.EXE=RDR:) */
+static mame_file *lp = NULL; 			/* list file handle (ie. PIP LST:=X:FILE.EXT) */
+//static mame_file *pp = NULL;			/* punch file handle (ie. PIP PUN:=X:FILE.EXT) */
+//static mame_file *rp = NULL;			/* reader file handle (ie. PIP X:FILE.EXE=RDR:) */
 static int dma = 0; 				/* DMA transfer address */
 
 static UINT8 zeropage0[8] =

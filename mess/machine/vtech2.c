@@ -30,7 +30,7 @@ static int laser_video_bank = 0;
 #define TRKSIZE_VZ	0x9a0	/* arbitrary (actually from analyzing format) */
 #define TRKSIZE_FM	3172	/* size of a standard FM mode track */
 
-static void *laser_fdc_file[2] = {NULL, NULL};
+static mame_file *laser_fdc_file[2] = {NULL, NULL};
 static UINT8 laser_track_x2[2] = {80, 80};
 static UINT8 laser_fdc_wrprot[2] = {0x80, 0x80};
 static UINT8 laser_fdc_status = 0;

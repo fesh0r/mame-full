@@ -633,7 +633,7 @@ static int svi318_cassette_fill_wave (INT16* samples, int wavlen, UINT8* casdata
 	return cas_len;
 	}
 
-static int check_svi_cas (void *f)
+static int check_svi_cas (mame_file *f)
 	{
 	UINT8* casdata;
 	int caslen, ret;
