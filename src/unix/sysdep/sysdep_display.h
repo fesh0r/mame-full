@@ -24,14 +24,11 @@
 #include "sysdep/sysdep_palette.h"
 #include "begin_code.h"
 
-/* mouse data */
-#ifndef USE_XINPUT_DEVICES
-/* only one mouse for now */
-#	define SYSDEP_DISPLAY_MOUSE_MAX	1
-#else
-/* now we have 5 */
-#	define SYSDEP_DISPLAY_MOUSE_MAX	5
-#endif
+/* 
+ * Assume 5 mice even if USE_XINPUT_DEVICES isn't defined, in case there are 
+ * multiple lightguns.
+ */
+#define SYSDEP_DISPLAY_MOUSE_MAX	5
 #define SYSDEP_DISPLAY_MOUSE_BUTTONS	8
 #define SYSDEP_DISPLAY_MOUSE_AXES	8
 
