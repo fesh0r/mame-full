@@ -1,42 +1,10 @@
 #!/usr/bin/perl
 
-###########################################################################
-# Nathan Hand (nathanh@manu.org.au) (c) May 2000
-#
-# redistribution under the GNU GPL v2 is permitted.
-#
-# simple utility to analyze a split romset built around zipfiles. doesn't
-# support any other method yet (directories, merged sets). unlikely to be
-# maintained. might be useful to developers of other romset analyzers. in
-# particular, i think the method used here to extract romset info and get
-# a high level storage of the data is really smick.
-#
-# how to use it? stick all your roms in zipfiles, using split romsets, so
-# that (for example) pacman plus two clones would be like this
-#
-#     (dir)/pacman.zip         - all roms for pacman original
-#     (dir)/pacmod.zip         - all roms in the pacmod clone
-#     (dir)/pacmanjp.zip       - all roms in the pacmanjp clone
-#
-# the terminology i use is that pacman is your "master" set, while pacmod
-# and pacmanjp are the "clone" sets. also pacmod is a "cousin" set of the
-# pacmanjp set. all the files that comprise the set are called "roms". my
-# script relies on the following layout.
-#
-#     (1) master zips contain master roms
-#     (2) clone zips contain clone roms
-#     (3) roms common to 2 or more cousins go in the master set
-#
-# the script reads each zipfile, makes sure all the roms are in the right
-# zipfiles, looks for extra files that shouldn't be there, etc.
-#
-# i've used this script to cleanup my sets. it found a number of errors i
-# didn't find with -verifyroms or other rom analyzers.
-###########################################################################
+require 5.000;
 
 # config options, nothing fancy
 
-$quiet = 1;
+$quiet = 0;
 $zipdir = "/usr/lib/games/xmame/roms";
 $unzip_binary = "unzip";
 $xmame_binary = "xmame";
@@ -56,13 +24,13 @@ foreach $zipfile (@zipfiles) {
                 $zipfile =~ s/\.zip$//;
 
                 ($dum, $len, $met, $siz, $rat, $dat, $tim, $crc, $nam) = @file;
-                push(@{$zips{$zipfile}}, "( name $nam size $len crc $crc )");
+                push(@{$zips{$zipfile}}, "name $nam size $len crc $crc");
         }
 }
 
 # examine listinfo, extract listinfo
 
-foreach $line (`$xmame_binary -listinfo`) {
+foreach $line (`$xmame_binary -listinfo 2>/dev/null`) {
         chop $line;
 
         if ($line eq "game (" || $line eq "resource (") {
@@ -94,6 +62,12 @@ foreach $line (`$xmame_binary -listinfo`) {
 
 foreach $set (keys %description) {
         @{$roms{$set}} = map {s/merge\s\S+\s//; $_} @{$roms{$set}};
+}
+
+# strip everything except name, size, crc
+
+foreach $set (keys %description) {
+        @{$roms{$set}} = map {s/.*(name\s\S+\ssize\s\S+\scrc\s\S+)\s.*/\1/; $_} @{$roms{$set}};
 }
 
 # strip master roms from clone sets
@@ -135,6 +109,26 @@ foreach $clone (keys %master) {
         push(@{$roms{$master{$clone}}}, keys(%mark));
 }
 
+# find sets without a correspondig zip
+
+local(%mark);
+grep($mark{$_}++, keys %zips);
+@missing_zips = grep(!$mark{$_}, keys %roms);
+
+foreach $zip (@missing_zips) {
+        print "zipfile $zip is missing!\n" unless $quiet;
+}
+
+# find zips without a corresponding rom
+
+local(%mark);
+grep($mark{$_}++, keys %roms);
+@extra_zips = grep(!$mark{$_}, keys %zips);
+
+foreach $zip (@extra_zips) {
+        print "what is zipfile $zip for?\n" unless $quiet;
+}
+
 # info received and mangled, time to analyse
 
 foreach $set (keys %description) {
@@ -146,14 +140,15 @@ foreach $set (keys %description) {
         grep($mark{$_}++, @{$roms{$set}});
         @extra_roms = grep(!$mark{$_}, @{$zips{$set}});
 
-        print "examining romset $set... ";
+        print "examining zipfile $set... " unless $quiet;
         print "broken!\n" if scalar(@missing_roms) || scalar(@extra_roms);
         print "perfect!\n" unless scalar(@missing_roms) || scalar(@extra_roms);
 
         foreach $rom (@missing_roms) {
-                print "\tmissing rom $rom\n";
+                print "\tmissing rom $rom\n" unless $quiet;
         }
         foreach $rom (@extra_roms) {
-                print "\textra rom $rom\n";
+                print "\textra rom $rom\n" unless $quiet;
         }
 }
+
