@@ -68,6 +68,43 @@
    fb377 
  */
 
+enum AT8042_TYPE { 
+	AT8042_STANDARD, 
+	AT8042_AT386 // hopefully this is not really a keyboard controller variant, 
+				 // but who knows; now it is needed
+};
+static struct {
+	AT8042_TYPE type;
+	UINT8 inport, outport, data;
+
+	struct {
+		bool received;
+		bool on;
+	} keyboard;
+	struct {
+		bool received;
+		bool on;
+	} mouse;
+
+	bool last_write_to_control;
+	bool sending;
+	bool send_to_mouse;
+
+	int operation_write_state;
+	int status_read_mode;
+
+	int speaker;
+
+	// temporary hack
+	int offset1;
+} at_8042={ 
+	AT8042_STANDARD,
+//	0x80 
+	0xa0 // ibmat bios wants 0x20 set! (keyboard locked when not set)
+};
+
+
+
 static void (*set_address_mask)(unsigned mask)=i286_set_address_mask;
 
 static DMA8237_CONFIG dma= { DMA8237_AT };
@@ -95,6 +132,7 @@ void init_at386(void)
 {
 	set_address_mask=i386_set_address_mask;
 	init_atcga();
+	at_8042.type=AT8042_AT386;
 }
 #endif
 
@@ -122,34 +160,6 @@ void at_machine_init(void)
 	dma8237_reset(dma8237);
 	dma8237_reset(dma8237+1);
 }
-
-static struct {
-	UINT8 inport, outport, data;
-
-	struct {
-		bool received;
-		bool on;
-	} keyboard;
-	struct {
-		bool received;
-		bool on;
-	} mouse;
-
-	bool last_write_to_control;
-	bool sending;
-	bool send_to_mouse;
-
-	int operation_write_state;
-	int status_read_mode;
-
-	int speaker;
-
-	// temporary hack
-	int offset1;
-} at_8042={ 
-//	0x80 
-	0xa0 // ibmat bios wants 0x20 set! (keyboard locked when not set)
-};
 
 static void at_8042_receive(UINT8 data)
 {
@@ -210,8 +220,10 @@ READ_HANDLER(at_8042_r)
 	switch (offset) {
 	case 0:
 		data=at_8042.data;
-		at_8042.keyboard.received=0;
-		at_8042.mouse.received=0;
+		if (at_8042.type!=AT8042_AT386) {
+			at_8042.keyboard.received=0; //at386 self test dont likes this
+			at_8042.mouse.received=0;
+		}
 		DBG_LOG(1,"AT 8042 read",("%.2x %02x\n",offset, data) );
 		break;
 	case 1:
