@@ -7,6 +7,7 @@
 #include <commctrl.h>
 #include <stdio.h>
 #include <math.h>
+#include <assert.h>
 
 #include "resource.h"
 #include "m32util.h"
@@ -268,6 +269,8 @@ BOOL IsControlDifferent(HWND hDlg,HWND hwnd_ctrl,options_type *o,options_type *b
 
 		if (GetDlgItem(hDlg,data_item->dwCtrlId) != hwnd_ctrl)
 			continue;
+
+		assert(((char *)data_item->encoded_var - (char *)o) < sizeof(*o));
 
 		// found the item, now compare the value
 

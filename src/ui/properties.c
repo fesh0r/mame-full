@@ -2231,10 +2231,15 @@ static void BuildDataMap(void)
 	DataMapAdd(IDC_D3D_ROTATE_EFFECTS,DM_BOOL,CT_BUTTON,&pGameOpts->d3d_rotate_effects,DM_BOOL,&pGameOpts->d3d_rotate_effects, 0, 0, 0);
 	DataMapAdd(IDC_D3D_SCANLINES_ENABLE,DM_BOOL, CT_BUTTON, &g_d3d_scanlines_enable, DM_BOOL, &pGameOpts->d3d_scanlines, 0, 0, 0);
 	DataMapAdd(IDC_D3D_SCANLINES, DM_INT,  CT_SLIDER,   &g_d3d_scanlines,          DM_INT, &pGameOpts->d3d_scanlines, 0, 0, AssignD3DScanlines);
-	DataMapAdd(IDC_D3D_SCANLINES_DISP, DM_NONE,  CT_NONE,   NULL, DM_INT, &g_d3d_scanlines, 0, 0, 0);
+
+//	NPW 28-Aug-2004 - Commenting this out because it seems to cause crashes	
+//	DataMapAdd(IDC_D3D_SCANLINES_DISP, DM_NONE,  CT_NONE,   NULL, DM_INT, &g_d3d_scanlines, 0, 0, 0);
+
 	DataMapAdd(IDC_D3D_FEEDBACK_ENABLE,DM_BOOL, CT_BUTTON, &g_d3d_feedback_enable, DM_BOOL, &pGameOpts->d3d_feedback, 0, 0, 0);
 	DataMapAdd(IDC_D3D_FEEDBACK,  DM_INT,  CT_SLIDER,   &g_d3d_feedback,           DM_INT, &pGameOpts->d3d_feedback, 0, 0, AssignD3DFeedback);
-	DataMapAdd(IDC_D3D_FEEDBACK_DISP,  DM_NONE,  CT_NONE,   NULL,  DM_INT, &g_d3d_scanlines, 0, 0, 0);
+
+//	NPW 28-Aug-2004 - Commenting this out because it seems to cause crashes	
+//	DataMapAdd(IDC_D3D_FEEDBACK_DISP,  DM_NONE,  CT_NONE,   NULL,  DM_INT, &g_d3d_scanlines, 0, 0, 0);
 
 	/* input */
 	DataMapAdd(IDC_DEFAULT_INPUT, DM_INT,  CT_COMBOBOX, &g_nInputIndex,            DM_STRING, &pGameOpts->ctrlr, 0, 0, AssignInput);
